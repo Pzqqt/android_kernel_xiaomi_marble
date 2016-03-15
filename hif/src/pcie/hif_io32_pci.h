@@ -101,8 +101,6 @@ extern int hif_target_sleep_state_adjust(struct hif_softc *scn,
 	do {struct hif_softc *unused = scn; \
 	    unused = unused; } while (0)
 
-#define A_TARGET_ACCESS_OK(scn) 1
-
 #define A_TARGET_ACCESS_LIKELY(scn) \
 	do {struct hif_softc *unused = scn; \
 	    unused = unused; } while (0)
@@ -204,8 +202,6 @@ do { \
 
 #define Q_TARGET_ACCESS_END(scn) \
 	hif_target_sleep_state_adjust(scn, true, false)
-
-#define A_TARGET_ACCESS_OK(scn) hif_target_forced_awake(scn)
 
 #if CONFIG_ATH_PCIE_ACCESS_LIKELY
 #define A_TARGET_ACCESS_LIKELY(scn) \

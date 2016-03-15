@@ -142,29 +142,6 @@ A_target_id_t hif_get_target_id(struct hif_softc *scn)
 	return scn->mem;
 }
 
-/**
- * hif_target_forced_awake(): hif_target_forced_awake
- * @scn: scn
- *
- * Return: bool
- */
-bool hif_target_forced_awake(struct hif_softc *scn)
-{
-	A_target_id_t addr = scn->mem;
-	bool awake;
-	bool forced_awake;
-
-	awake = hif_targ_is_awake(scn, addr);
-
-	forced_awake =
-		!!(hif_read32_mb
-			   (addr + PCIE_LOCAL_BASE_ADDRESS +
-			   PCIE_SOC_WAKE_ADDRESS) & PCIE_SOC_WAKE_V_MASK);
-
-	return awake && forced_awake;
-}
-
-
 static inline void hif_fw_event_handler(struct HIF_CE_state *hif_state)
 {
 	struct hif_msg_callbacks *msg_callbacks =

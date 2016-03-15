@@ -61,22 +61,7 @@
 	hif_write32_mb(sc->mem + PCIE_INTR_CLR_ADDRESS, 0); \
 	hif_read32_mb(sc->mem + PCIE_INTR_CLR_ADDRESS); \
 }
-
-#define HIF_PCI_TARG_IS_AWAKE(scn, mem) \
-{ \
-	return 1; \
-}
 #else
 #define PCI_CLR_CAUSE0_REGISTER(sc)
-
-#define HIF_PCI_TARG_IS_AWAKE(scn, mem) \
-{ \
-	uint32_t val; \
-	if (scn->recovery) \
-		return false; \
-	val = hif_read32_mb(mem + PCIE_LOCAL_BASE_ADDRESS \
-		+ RTC_STATE_ADDRESS); \
-	return RTC_STATE_V_GET(val) == RTC_STATE_V_ON; \
-}
 #endif
 #endif /* __IF_PCI_INTERNAL_H__ */

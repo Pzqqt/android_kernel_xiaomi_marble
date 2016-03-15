@@ -284,11 +284,6 @@ static irqreturn_t hif_pci_msi_fw_handler(int irq, void *arg)
 	return IRQ_HANDLED;
 }
 
-bool hif_targ_is_awake(struct hif_softc *scn, void *__iomem *mem)
-{
-	HIF_PCI_TARG_IS_AWAKE(scn, mem);
-}
-
 bool hif_pci_targ_is_present(struct hif_softc *scn, void *__iomem *mem)
 {
 	return 1;               /* FIX THIS */
@@ -336,6 +331,38 @@ inline void hif_pci_cancel_deferred_target_sleep(struct hif_softc *scn)
 #define A_PCIE_LOCAL_REG_WRITE(mem, addr, val) \
 	hif_write32_mb(((char *)(mem) + \
 	PCIE_LOCAL_BASE_ADDRESS + (uint32_t)(addr)), (val))
+
+#ifdef QCA_WIFI_3_0
+/**
+ * hif_targ_is_awake() - check to see if the target is awake
+ * @hif_ctx: hif context
+ *
+ * emulation never goes to sleep
+ *
+ * Return: true if target is awake
+ */
+bool hif_targ_is_awake(struct hif_softc *hif_ctx, void *__iomem *mem)
+{
+	return true;
+}
+#else
+/**
+ * hif_targ_is_awake() - check to see if the target is awake
+ * @hif_ctx: hif context
+ *
+ * Return: true if the targets clocks are on
+ */
+bool hif_targ_is_awake(struct hif_softc *scn, void *__iomem *mem)
+{
+	uint32_t val;
+
+	if (scn->recovery)
+		return false;
+	val = hif_read32_mb(mem + PCIE_LOCAL_BASE_ADDRESS
+		+ RTC_STATE_ADDRESS);
+	return RTC_STATE_V_GET(val) == RTC_STATE_V_ON;
+}
+#endif
 
 #define ATH_PCI_RESET_WAIT_MAX 10       /* Ms */
 static void hif_pci_device_reset(struct hif_pci_softc *sc)
@@ -2899,9 +2926,6 @@ uint32_t hif_target_read_checked(struct hif_softc *scn, uint32_t offset)
 	uint32_t value;
 	void *addr;
 
-	if (!A_TARGET_ACCESS_OK(scn))
-		hi_fdebug();
-
 	addr = scn->mem + offset;
 	value = A_PCI_READ32(addr);
 
@@ -2926,9 +2950,6 @@ hif_target_write_checked(struct hif_softc *scn, uint32_t offset, uint32_t value)
 {
 	void *addr;
 
-	if (!A_TARGET_ACCESS_OK(scn))
-		hi_fdebug();
-
 	addr = scn->mem + (offset);
 	hif_write32_mb(addr, value);
 
@@ -2944,17 +2965,6 @@ hif_target_write_checked(struct hif_softc *scn, uint32_t offset, uint32_t value)
 		pcie_access_log_seqnum++;
 		spin_unlock_irqrestore(&pcie_access_log_lock, irq_flags);
 	}
-}
-
-/**
- * hi_fdebug() - not needed in PCI
- *
- *
- * Return: n/a
- */
-void hi_fdebug(void)
-{
-	/* BUG_ON(1); */
 }
 
 /**

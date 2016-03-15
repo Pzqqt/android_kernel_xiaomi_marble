@@ -153,7 +153,6 @@ struct hif_softc {
 A_target_id_t hif_get_target_id(struct hif_softc *scn);
 void hif_dump_pipe_debug_count(struct hif_softc *scn);
 
-bool hif_target_forced_awake(struct hif_softc *scn);
 bool hif_max_num_receives_reached(struct hif_softc *scn, unsigned int count);
 int hif_bus_configure(struct hif_softc *scn);
 int hif_config_ce(struct hif_softc *scn);
@@ -176,7 +175,6 @@ int hif_get_device_type(uint32_t device_id,
 			uint32_t revision_id,
 			uint32_t *hif_type, uint32_t *target_type);
 /*These functions are exposed to HDD*/
-bool hif_targ_is_awake(struct hif_softc *scn, void *__iomem *mem);
 void hif_nointrs(struct hif_softc *scn);
 void hif_bus_close(struct hif_softc *ol_sc);
 QDF_STATUS hif_bus_open(struct hif_softc *ol_sc,
