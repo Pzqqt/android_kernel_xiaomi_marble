@@ -41,6 +41,43 @@
 #define Q_TARGET_ACCESS_END(scn) \
 	hif_target_sleep_state_adjust(scn, true, false)
 
+/*
+ * A_TARGET_ACCESS_LIKELY will not wait for the target to wake up before
+ * continuing execution.  Because A_TARGET_ACCESS_LIKELY does not guarantee
+ * that the target is awake before continuing, Q_TARGET_ACCESS macros must
+ * protect the actual target access.  Since Q_TARGET_ACCESS protect the actual
+ * target access, A_TARGET_ACCESS_LIKELY hints are optional.
+ *
+ * To ignore "LIKELY" hints, set CONFIG_TARGET_ACCESS_LIKELY to 0
+ * (slightly worse performance, less power)
+ *
+ * To use "LIKELY" hints, set CONFIG_TARGET_ACCESS_LIKELY to 1
+ * (slightly better performance, more power)
+ *
+ * note: if a bus doesn't use hif_target_sleep_state_adjust, this will have
+ * no impact.
+ */
+#define CONFIG_TARGET_ACCESS_LIKELY 0
+#if CONFIG_TARGET_ACCESS_LIKELY
+#define A_TARGET_ACCESS_LIKELY(scn) \
+	hif_target_sleep_state_adjust(scn, false, false)
+#define A_TARGET_ACCESS_UNLIKELY(scn) \
+	hif_target_sleep_state_adjust(scn, true, false)
+#else                           /* CONFIG_ATH_PCIE_ACCESS_LIKELY */
+#define A_TARGET_ACCESS_LIKELY(scn) \
+	do { \
+		unsigned long unused = (unsigned long)(scn); \
+		unused = unused; \
+	} while (0)
+
+#define A_TARGET_ACCESS_UNLIKELY(scn) \
+	do { \
+		unsigned long unused = (unsigned long)(scn); \
+		unused = unused; \
+	} while (0)
+#endif /* CONFIG_ATH_PCIE_ACCESS_LIKELY */
+
+
 #ifdef HIF_PCI
 #include "hif_io32_pci.h"
 #endif

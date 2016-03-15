@@ -47,8 +47,6 @@
  * Force 0 and consider moving corresponding code into
  * pci specific files
  */
-#define A_TARGET_ACCESS_LIKELY(scn)
-#define A_TARGET_ACCESS_UNLIKELY(scn)
 #define A_TARGET_ACCESS_BEGIN_RET_PTR(scn)
 #define A_TARGET_ACCESS_END_RET_PTR(scn)
 #define A_TARGET_ACCESS_BEGIN(scn)

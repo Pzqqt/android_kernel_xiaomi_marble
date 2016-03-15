@@ -48,18 +48,6 @@
 #define CONFIG_ATH_PCIE_AWAKE_WHILE_DRIVER_LOAD 1
 
 /*
- * When CONFIG_ATH_PCIE_MAX_PERF is 0:
- * To use LIKELY hints, set this to 1 (slightly better performance, more power)
- * To ignore "LIKELY" hints, set this to 0 (slightly worse performance,
- * less power)
- */
-#if defined(CONFIG_ATH_PCIE_MAX_PERF)
-#define CONFIG_ATH_PCIE_ACCESS_LIKELY 0
-#else
-#define CONFIG_ATH_PCIE_ACCESS_LIKELY 1
-#endif
-
-/*
  * PCI-E L1 ASPPM sub-states
  * To enable clock gating in L1 state, set this to 1.
  * (less power, slightly more wakeup latency)
@@ -90,14 +78,6 @@
 	    unused = unused; } while (0)
 
 #define A_TARGET_ACCESS_END(scn) \
-	do {struct hif_softc *unused = scn; \
-	    unused = unused; } while (0)
-
-#define A_TARGET_ACCESS_LIKELY(scn) \
-	do {struct hif_softc *unused = scn; \
-	    unused = unused; } while (0)
-
-#define A_TARGET_ACCESS_UNLIKELY(scn) \
 	do {struct hif_softc *unused = scn; \
 	    unused = unused; } while (0)
 
@@ -180,25 +160,6 @@ do { \
 	if (Q_TARGET_ACCESS_END(scn) < 0) \
 		return; \
 } while (0)
-
-#if CONFIG_ATH_PCIE_ACCESS_LIKELY
-#define A_TARGET_ACCESS_LIKELY(scn) \
-	hif_target_sleep_state_adjust(scn, false, false)
-#define A_TARGET_ACCESS_UNLIKELY(scn) \
-	hif_target_sleep_state_adjust(scn, true, false)
-#else                           /* CONFIG_ATH_PCIE_ACCESS_LIKELY */
-#define A_TARGET_ACCESS_LIKELY(scn) \
-	do { \
-		unsigned long unused = (unsigned long)(scn); \
-		unused = unused; \
-	} while (0)
-
-#define A_TARGET_ACCESS_UNLIKELY(scn) \
-	do { \
-		unsigned long unused = (unsigned long)(scn); \
-		unused = unused; \
-	} while (0)
-#endif /* CONFIG_ATH_PCIE_ACCESS_LIKELY */
 #endif /* CONFIG_ATH_PCIE_MAX_PERF */
 
 irqreturn_t hif_fw_interrupt_handler(int irq, void *arg);
