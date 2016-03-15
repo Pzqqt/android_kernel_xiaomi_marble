@@ -37,6 +37,7 @@
 #include "if_pci.h"
 #include "hif.h"
 #include "hif_main.h"
+#include "ce_main.h"
 #include "ce_api.h"
 #include "ce_internal.h"
 #include "ce_reg.h"
@@ -1348,6 +1349,65 @@ void hif_wake_target_cpu(struct hif_softc *scn)
 	QDF_ASSERT(rv == QDF_STATUS_SUCCESS);
 }
 
+/**
+ * soc_wake_reset() - allow the target to go to sleep
+ * @scn: hif_softc
+ *
+ * Clear the force wake register.  This is done by
+ * hif_sleep_entry and cancel defered timer sleep.
+ */
+static void soc_wake_reset(struct hif_softc *scn)
+{
+	hif_write32_mb(scn->mem +
+		PCIE_LOCAL_BASE_ADDRESS +
+		PCIE_SOC_WAKE_ADDRESS,
+		PCIE_SOC_WAKE_RESET);
+}
+
+/**
+ * hif_sleep_entry() - gate target sleep
+ * @arg: hif context
+ *
+ * This function is the callback for the sleep timer.
+ * Check if last force awake critical section was at least
+ * HIF_MIN_SLEEP_INACTIVITY_TIME_MS time ago.  if it was,
+ * allow the target to go to sleep and cancel the sleep timer.
+ * otherwise reschedule the sleep timer.
+ */
+static void hif_sleep_entry(void *arg)
+{
+	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)arg;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_state);
+	uint32_t idle_ms;
+
+	if (scn->recovery)
+		return;
+
+	if (hif_is_driver_unloading(scn))
+		return;
+
+	qdf_spin_lock_irqsave(&hif_state->keep_awake_lock);
+	if (hif_state->verified_awake == false) {
+		idle_ms = qdf_system_ticks_to_msecs(qdf_system_ticks()
+						    - hif_state->sleep_ticks);
+		if (idle_ms >= HIF_MIN_SLEEP_INACTIVITY_TIME_MS) {
+			if (!qdf_atomic_read(&scn->link_suspended)) {
+				soc_wake_reset(scn);
+				hif_state->fake_sleep = false;
+			}
+		} else {
+			qdf_timer_stop(&hif_state->sleep_timer);
+			qdf_timer_start(&hif_state->sleep_timer,
+				    HIF_SLEEP_INACTIVITY_TIMER_PERIOD_MS);
+		}
+	} else {
+		qdf_timer_stop(&hif_state->sleep_timer);
+		qdf_timer_start(&hif_state->sleep_timer,
+					HIF_SLEEP_INACTIVITY_TIMER_PERIOD_MS);
+	}
+	qdf_spin_unlock_irqrestore(&hif_state->keep_awake_lock);
+}
+
 #define HIF_HIA_MAX_POLL_LOOP    1000000
 #define HIF_HIA_POLLING_DELAY_MS 10
 
@@ -1635,8 +1695,20 @@ done:
 int hif_bus_configure(struct hif_softc *hif_sc)
 {
 	int status = 0;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_sc);
 
 	hif_ce_prepare_config(hif_sc);
+
+	/* initialize sleep state adjust variables */
+	hif_state->sleep_timer_init = true;
+	hif_state->keep_awake_count = 0;
+	hif_state->fake_sleep = false;
+	hif_state->sleep_ticks = 0;
+
+	qdf_timer_init(NULL, &hif_state->sleep_timer,
+			       hif_sleep_entry, (void *)hif_state,
+			       QDF_TIMER_TYPE_WAKE_APPS);
+	hif_state->sleep_timer_init = true;
 
 	if (ADRASTEA_BU) {
 		status = hif_wlan_enable(hif_sc);
@@ -1644,7 +1716,7 @@ int hif_bus_configure(struct hif_softc *hif_sc)
 		if (status) {
 			HIF_ERROR("%s: hif_wlan_enable error = %d",
 					__func__, status);
-			return status;
+			goto timer_free;
 		}
 	}
 
@@ -1685,6 +1757,11 @@ disable_wlan:
 	A_TARGET_ACCESS_UNLIKELY(hif_sc);
 	if (ADRASTEA_BU)
 		hif_wlan_disable(hif_sc);
+
+timer_free:
+	qdf_timer_stop(&hif_state->sleep_timer);
+	qdf_timer_free(&hif_state->sleep_timer);
+	hif_state->sleep_timer_init = false;
 
 	HIF_ERROR("%s: failed, status = %d", __func__, status);
 	return status;

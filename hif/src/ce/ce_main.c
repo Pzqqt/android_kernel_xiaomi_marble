@@ -1492,40 +1492,6 @@ static struct service_to_pipe target_service_to_ce_map_wlan_epping[] = {
 	{0, 0, 0,},             /* Must be last */
 };
 
-static void hif_sleep_entry(void *arg)
-{
-	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)arg;
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_state);
-	uint32_t idle_ms;
-
-	if (scn->recovery)
-		return;
-
-	if (hif_is_driver_unloading(scn))
-		return;
-
-	qdf_spin_lock_irqsave(&hif_state->keep_awake_lock);
-	if (hif_state->verified_awake == false) {
-		idle_ms = qdf_system_ticks_to_msecs(qdf_system_ticks()
-						    - hif_state->sleep_ticks);
-		if (idle_ms >= HIF_MIN_SLEEP_INACTIVITY_TIME_MS) {
-			if (!qdf_atomic_read(&scn->link_suspended)) {
-				soc_wake_reset(scn);
-				hif_state->fake_sleep = false;
-			}
-		} else {
-			qdf_timer_stop(&hif_state->sleep_timer);
-			qdf_timer_start(&hif_state->sleep_timer,
-				    HIF_SLEEP_INACTIVITY_TIMER_PERIOD_MS);
-		}
-	} else {
-		qdf_timer_stop(&hif_state->sleep_timer);
-		qdf_timer_start(&hif_state->sleep_timer,
-					HIF_SLEEP_INACTIVITY_TIMER_PERIOD_MS);
-	}
-	qdf_spin_unlock_irqrestore(&hif_state->keep_awake_lock);
-}
-
 /**
  * hif_get_target_ce_config() - get copy engine configuration
  * @target_ce_config_ret: basic copy engine configuration
@@ -1666,11 +1632,6 @@ void hif_unconfig_ce(struct hif_softc *hif_sc)
 			pipe_info->buf_sz = 0;
 		}
 	}
-	if (hif_state->sleep_timer_init) {
-		qdf_timer_stop(&hif_state->sleep_timer);
-		qdf_timer_free(&hif_state->sleep_timer);
-		hif_state->sleep_timer_init = false;
-	}
 	if (hif_sc->athdiag_procfs_inited) {
 		athdiag_procfs_remove();
 		hif_sc->athdiag_procfs_inited = false;
@@ -1701,14 +1662,6 @@ int hif_config_ce(struct hif_softc *scn)
 
 	scn->notice_send = true;
 
-	hif_state->keep_awake_count = 0;
-
-	hif_state->fake_sleep = false;
-	hif_state->sleep_ticks = 0;
-	qdf_timer_init(NULL, &hif_state->sleep_timer,
-			       hif_sleep_entry, (void *)hif_state,
-			       QDF_TIMER_TYPE_WAKE_APPS);
-	hif_state->sleep_timer_init = true;
 	hif_state->fw_indicator_address = FW_INDICATOR_ADDRESS;
 
 	hif_config_rri_on_ddr(scn);

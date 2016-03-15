@@ -291,18 +291,5 @@ static inline void ce_irq_disable(struct hif_softc *scn, int ce_id)
 	/* For Rome only need to wake up target */
 	A_TARGET_ACCESS_BEGIN(scn);
 }
-/**
- * soc_wake_reset() - soc_wake_reset
- * @scn: hif_softc
- *
- * Return: void
- */
-static inline void soc_wake_reset(struct hif_softc *scn)
-{
-	hif_write32_mb(scn->mem +
-		PCIE_LOCAL_BASE_ADDRESS +
-		PCIE_SOC_WAKE_ADDRESS,
-		PCIE_SOC_WAKE_RESET);
-}
 #endif /* HIF_PCI */
 #endif /* __HIF_IO32_PCI_H__ */
