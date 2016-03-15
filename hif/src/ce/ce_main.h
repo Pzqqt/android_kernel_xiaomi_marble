@@ -133,4 +133,13 @@ struct HIF_CE_state {
 	struct CE_handle *ce_diag;
 };
 int hif_dump_ce_registers(struct hif_softc *scn);
+
+int hif_wlan_enable(struct hif_softc *scn);
+void hif_wlan_disable(struct hif_softc *scn);
+void hif_get_target_ce_config(struct CE_pipe_config **target_ce_config_ret,
+		int *target_ce_config_sz_ret,
+		struct service_to_pipe **target_service_to_ce_map_ret,
+		int *target_service_to_ce_map_sz_ret,
+		struct shadow_reg_cfg **target_shadow_reg_cfg_ret,
+		int *shadow_cfg_sz_ret);
 #endif /* __CE_H__ */

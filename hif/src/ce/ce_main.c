@@ -1499,31 +1499,6 @@ static struct service_to_pipe target_service_to_ce_map_wlan_epping[] = {
 	{0, 0, 0,},             /* Must be last */
 };
 
-#ifdef HIF_PCI
-/*
- * Send an interrupt to the device to wake up the Target CPU
- * so it has an opportunity to notice any changed state.
- */
-void hif_wake_target_cpu(struct hif_softc *scn)
-{
-	QDF_STATUS rv;
-	uint32_t core_ctrl;
-	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
-
-	rv = hif_diag_read_access(hif_hdl,
-				  SOC_CORE_BASE_ADDRESS | CORE_CTRL_ADDRESS,
-				  &core_ctrl);
-	QDF_ASSERT(rv == QDF_STATUS_SUCCESS);
-	/* A_INUM_FIRMWARE interrupt to Target CPU */
-	core_ctrl |= CORE_CTRL_CPU_INTR_MASK;
-
-	rv = hif_diag_write_access(hif_hdl,
-				   SOC_CORE_BASE_ADDRESS | CORE_CTRL_ADDRESS,
-				   core_ctrl);
-	QDF_ASSERT(rv == QDF_STATUS_SUCCESS);
-}
-#endif
-
 static void hif_sleep_entry(void *arg)
 {
 	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)arg;
@@ -1557,272 +1532,41 @@ static void hif_sleep_entry(void *arg)
 	}
 	qdf_spin_unlock_irqrestore(&hif_state->keep_awake_lock);
 }
-#define HIF_HIA_MAX_POLL_LOOP    1000000
-#define HIF_HIA_POLLING_DELAY_MS 10
 
-#ifndef HIF_PCI
-int hif_set_hia(struct hif_softc *scn)
+/**
+ * hif_get_target_ce_config() - get copy engine configuration
+ * @target_ce_config_ret: basic copy engine configuration
+ * @target_ce_config_sz_ret: size of the basic configuration in bytes
+ * @target_service_to_ce_map_ret: service mapping for the copy engines
+ * @target_service_to_ce_map_sz_ret: size of the mapping in bytes
+ * @target_shadow_reg_cfg_ret: shadow register configuration
+ * @shadow_cfg_sz_ret: size of the shadow register configuration in bytes
+ *
+ * providing accessor to these values outside of this file.
+ * currently these are stored in static pointers to const sections.
+ * there are multiple configurations that are selected from at compile time.
+ * Runtime selection would need to consider mode, target type and bus type.
+ *
+ * Return: return by parameter.
+ */
+void hif_get_target_ce_config(struct CE_pipe_config **target_ce_config_ret,
+		int *target_ce_config_sz_ret,
+		struct service_to_pipe **target_service_to_ce_map_ret,
+		int *target_service_to_ce_map_sz_ret,
+		struct shadow_reg_cfg **target_shadow_reg_cfg_ret,
+		int *shadow_cfg_sz_ret)
 {
-	return 0;
+	*target_ce_config_ret = target_ce_config;
+	*target_ce_config_sz_ret = target_ce_config_sz;
+	*target_service_to_ce_map_ret = target_service_to_ce_map;
+	*target_service_to_ce_map_sz_ret = target_service_to_ce_map_sz;
+
+	if (target_shadow_reg_cfg_ret)
+		*target_shadow_reg_cfg_ret = target_shadow_reg_cfg;
+
+	if (shadow_cfg_sz_ret)
+		*shadow_cfg_sz_ret = shadow_cfg_sz;
 }
-#else
-int hif_set_hia(struct hif_softc *scn)
-{
-	QDF_STATUS rv;
-	uint32_t interconnect_targ_addr = 0;
-	uint32_t pcie_state_targ_addr = 0;
-	uint32_t pipe_cfg_targ_addr = 0;
-	uint32_t svc_to_pipe_map = 0;
-	uint32_t pcie_config_flags = 0;
-	uint32_t flag2_value = 0;
-	uint32_t flag2_targ_addr = 0;
-#ifdef QCA_WIFI_3_0
-	uint32_t host_interest_area = 0;
-	uint8_t i;
-#else
-	uint32_t ealloc_value = 0;
-	uint32_t ealloc_targ_addr = 0;
-	uint8_t banks_switched = 1;
-	uint32_t chip_id;
-#endif
-	uint32_t pipe_cfg_addr;
-	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
-	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
-	uint32_t target_type = tgt_info->target_type;
-
-	HIF_TRACE("%s: E", __func__);
-
-	if (ADRASTEA_BU)
-		return QDF_STATUS_SUCCESS;
-
-#ifdef QCA_WIFI_3_0
-	i = 0;
-	while (i < HIF_HIA_MAX_POLL_LOOP) {
-		host_interest_area = hif_read32_mb(scn->mem +
-						A_SOC_CORE_SCRATCH_0_ADDRESS);
-		if ((host_interest_area & 0x01) == 0) {
-			qdf_mdelay(HIF_HIA_POLLING_DELAY_MS);
-			host_interest_area = 0;
-			i++;
-			if (i > HIF_HIA_MAX_POLL_LOOP && (i % 1000 == 0)) {
-				HIF_ERROR("%s: poll timeout(%d)", __func__, i);
-			}
-		} else {
-			host_interest_area &= (~0x01);
-			hif_write32_mb(scn->mem + 0x113014, 0);
-			break;
-		}
-	}
-
-	if (i >= HIF_HIA_MAX_POLL_LOOP) {
-		HIF_ERROR("%s: hia polling timeout", __func__);
-		return -EIO;
-	}
-
-	if (host_interest_area == 0) {
-		HIF_ERROR("%s: host_interest_area = 0", __func__);
-		return -EIO;
-	}
-
-	interconnect_targ_addr = host_interest_area +
-			offsetof(struct host_interest_area_t,
-			hi_interconnect_state);
-
-	flag2_targ_addr = host_interest_area +
-			offsetof(struct host_interest_area_t, hi_option_flag2);
-
-#else
-	interconnect_targ_addr = hif_hia_item_address(target_type,
-		offsetof(struct host_interest_s, hi_interconnect_state));
-	ealloc_targ_addr = hif_hia_item_address(target_type,
-		offsetof(struct host_interest_s, hi_early_alloc));
-	flag2_targ_addr = hif_hia_item_address(target_type,
-		offsetof(struct host_interest_s, hi_option_flag2));
-#endif
-	/* Supply Target-side CE configuration */
-	rv = hif_diag_read_access(hif_hdl, interconnect_targ_addr,
-			  &pcie_state_targ_addr);
-	if (rv != QDF_STATUS_SUCCESS) {
-		HIF_ERROR("%s: interconnect_targ_addr = 0x%0x, ret = %d",
-			  __func__, interconnect_targ_addr, rv);
-		goto done;
-	}
-	if (pcie_state_targ_addr == 0) {
-		rv = QDF_STATUS_E_FAILURE;
-		HIF_ERROR("%s: pcie state addr is 0", __func__);
-		goto done;
-	}
-	pipe_cfg_addr = pcie_state_targ_addr +
-			  offsetof(struct pcie_state_s,
-			  pipe_cfg_addr);
-	rv = hif_diag_read_access(hif_hdl,
-			  pipe_cfg_addr,
-			  &pipe_cfg_targ_addr);
-	if (rv != QDF_STATUS_SUCCESS) {
-		HIF_ERROR("%s: pipe_cfg_addr = 0x%0x, ret = %d",
-			__func__, pipe_cfg_addr, rv);
-		goto done;
-	}
-	if (pipe_cfg_targ_addr == 0) {
-		rv = QDF_STATUS_E_FAILURE;
-		HIF_ERROR("%s: pipe cfg addr is 0", __func__);
-		goto done;
-	}
-
-	rv = hif_diag_write_mem(hif_hdl, pipe_cfg_targ_addr,
-			(uint8_t *) target_ce_config,
-			target_ce_config_sz);
-
-	if (rv != QDF_STATUS_SUCCESS) {
-		HIF_ERROR("%s: write pipe cfg (%d)", __func__, rv);
-		goto done;
-	}
-
-	rv = hif_diag_read_access(hif_hdl,
-			  pcie_state_targ_addr +
-			  offsetof(struct pcie_state_s,
-			   svc_to_pipe_map),
-			  &svc_to_pipe_map);
-	if (rv != QDF_STATUS_SUCCESS) {
-		HIF_ERROR("%s: get svc/pipe map (%d)", __func__, rv);
-		goto done;
-	}
-	if (svc_to_pipe_map == 0) {
-		rv = QDF_STATUS_E_FAILURE;
-		HIF_ERROR("%s: svc_to_pipe map is 0", __func__);
-		goto done;
-	}
-
-	rv = hif_diag_write_mem(hif_hdl,
-			svc_to_pipe_map,
-			(uint8_t *) target_service_to_ce_map,
-			target_service_to_ce_map_sz);
-	if (rv != QDF_STATUS_SUCCESS) {
-		HIF_ERROR("%s: write svc/pipe map (%d)", __func__, rv);
-		goto done;
-	}
-
-	rv = hif_diag_read_access(hif_hdl,
-			pcie_state_targ_addr +
-			offsetof(struct pcie_state_s,
-			config_flags),
-			&pcie_config_flags);
-	if (rv != QDF_STATUS_SUCCESS) {
-		HIF_ERROR("%s: get pcie config_flags (%d)", __func__, rv);
-		goto done;
-	}
-#if (CONFIG_PCIE_ENABLE_L1_CLOCK_GATE)
-	pcie_config_flags |= PCIE_CONFIG_FLAG_ENABLE_L1;
-#else
-	pcie_config_flags &= ~PCIE_CONFIG_FLAG_ENABLE_L1;
-#endif /* CONFIG_PCIE_ENABLE_L1_CLOCK_GATE */
-	pcie_config_flags |= PCIE_CONFIG_FLAG_CLK_SWITCH_WAIT;
-#if (CONFIG_PCIE_ENABLE_AXI_CLK_GATE)
-	pcie_config_flags |= PCIE_CONFIG_FLAG_AXI_CLK_GATE;
-#endif
-	rv = hif_diag_write_mem(hif_hdl,
-			pcie_state_targ_addr +
-			offsetof(struct pcie_state_s,
-			config_flags),
-			(uint8_t *) &pcie_config_flags,
-			sizeof(pcie_config_flags));
-	if (rv != QDF_STATUS_SUCCESS) {
-		HIF_ERROR("%s: write pcie config_flags (%d)", __func__, rv);
-		goto done;
-	}
-
-#ifndef QCA_WIFI_3_0
-	/* configure early allocation */
-	ealloc_targ_addr = hif_hia_item_address(target_type,
-						offsetof(
-						struct host_interest_s,
-						hi_early_alloc));
-
-	rv = hif_diag_read_access(hif_hdl, ealloc_targ_addr,
-			&ealloc_value);
-	if (rv != QDF_STATUS_SUCCESS) {
-		HIF_ERROR("%s: get early alloc val (%d)", __func__, rv);
-		goto done;
-	}
-
-	/* 1 bank is switched to IRAM, except ROME 1.0 */
-	ealloc_value |=
-		((HI_EARLY_ALLOC_MAGIC << HI_EARLY_ALLOC_MAGIC_SHIFT) &
-		 HI_EARLY_ALLOC_MAGIC_MASK);
-
-	rv = hif_diag_read_access(hif_hdl,
-			  CHIP_ID_ADDRESS |
-			  RTC_SOC_BASE_ADDRESS, &chip_id);
-	if (rv != QDF_STATUS_SUCCESS) {
-		HIF_ERROR("%s: get chip id val (%d)", __func__, rv);
-		goto done;
-	}
-	if (CHIP_ID_VERSION_GET(chip_id) == 0xD) {
-		tgt_info->target_revision = CHIP_ID_REVISION_GET(chip_id);
-		switch (CHIP_ID_REVISION_GET(chip_id)) {
-		case 0x2:       /* ROME 1.3 */
-			/* 2 banks are switched to IRAM */
-			banks_switched = 2;
-			break;
-		case 0x4:       /* ROME 2.1 */
-		case 0x5:       /* ROME 2.2 */
-			banks_switched = 6;
-			break;
-		case 0x8:       /* ROME 3.0 */
-		case 0x9:       /* ROME 3.1 */
-		case 0xA:       /* ROME 3.2 */
-			banks_switched = 9;
-			break;
-		case 0x0:       /* ROME 1.0 */
-		case 0x1:       /* ROME 1.1 */
-		default:
-			/* 3 banks are switched to IRAM */
-			banks_switched = 3;
-			break;
-		}
-	}
-
-	ealloc_value |=
-		((banks_switched << HI_EARLY_ALLOC_IRAM_BANKS_SHIFT)
-		 & HI_EARLY_ALLOC_IRAM_BANKS_MASK);
-
-	rv = hif_diag_write_access(hif_hdl,
-				ealloc_targ_addr,
-				ealloc_value);
-	if (rv != QDF_STATUS_SUCCESS) {
-		HIF_ERROR("%s: set early alloc val (%d)", __func__, rv);
-		goto done;
-	}
-#endif
-
-	/* Tell Target to proceed with initialization */
-	flag2_targ_addr = hif_hia_item_address(target_type,
-						offsetof(
-						struct host_interest_s,
-						hi_option_flag2));
-
-	rv = hif_diag_read_access(hif_hdl, flag2_targ_addr,
-			  &flag2_value);
-	if (rv != QDF_STATUS_SUCCESS) {
-		HIF_ERROR("%s: get option val (%d)", __func__, rv);
-		goto done;
-	}
-
-	flag2_value |= HI_OPTION_EARLY_CFG_DONE;
-	rv = hif_diag_write_access(hif_hdl, flag2_targ_addr,
-			   flag2_value);
-	if (rv != QDF_STATUS_SUCCESS) {
-		HIF_ERROR("%s: set option val (%d)", __func__, rv);
-		goto done;
-	}
-
-	hif_wake_target_cpu(scn);
-
-done:
-
-	return rv;
-}
-#endif
 
 /**
  * hif_wlan_enable(): call the platform driver to enable wlan
@@ -1839,15 +1583,17 @@ int hif_wlan_enable(struct hif_softc *scn)
 	enum icnss_driver_mode mode;
 	uint32_t con_mode = hif_get_conparam(scn);
 
-	cfg.num_ce_tgt_cfg = target_ce_config_sz /
-		sizeof(struct CE_pipe_config);
-	cfg.ce_tgt_cfg = (struct ce_tgt_pipe_cfg *)target_ce_config;
-	cfg.num_ce_svc_pipe_cfg = target_service_to_ce_map_sz /
-		sizeof(struct service_to_pipe);
-	cfg.ce_svc_cfg = (struct ce_svc_pipe_cfg *)target_service_to_ce_map;
-	cfg.num_shadow_reg_cfg = shadow_cfg_sz / sizeof(struct shadow_reg_cfg);
-	cfg.shadow_reg_cfg =
-		(struct icnss_shadow_reg_cfg *)	target_shadow_reg_cfg;
+	hif_get_target_ce_config((struct CE_pipe_config **)&cfg.ce_tgt_cfg,
+			&cfg.num_ce_tgt_cfg,
+			(struct service_to_pipe **)&cfg.ce_svc_cfg,
+			&cfg.num_ce_svc_pipe_cfg,
+			(struct shadow_reg_cfg **)&cfg.shadow_reg_cfg,
+			&cfg.num_shadow_reg_cfg);
+
+	/* translate from structure size to array size */
+	cfg.num_ce_tgt_cfg /= sizeof(struct CE_pipe_config);
+	cfg.num_ce_svc_pipe_cfg /= sizeof(struct service_to_pipe);
+	cfg.num_shadow_reg_cfg /= sizeof(struct shadow_reg_cfg);
 
 	if (QDF_GLOBAL_FTM_MODE == con_mode)
 		mode = ICNSS_FTM;

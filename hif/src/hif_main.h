@@ -159,11 +159,8 @@ int hif_bus_configure(struct hif_softc *scn);
 int hif_config_ce(struct hif_softc *scn);
 void hif_unconfig_ce(struct hif_softc *scn);
 void hif_ce_prepare_config(struct hif_softc *scn);
-int hif_set_hia(struct hif_softc *scn);
 QDF_STATUS hif_ce_open(struct hif_softc *scn);
 void hif_ce_close(struct hif_softc *scn);
-int hif_wlan_enable(struct hif_softc *scn);
-void hif_wlan_disable(struct hif_softc *scn);
 int athdiag_procfs_init(void *scn);
 void athdiag_procfs_remove(void);
 /* routine to modify the initial buffer count to be allocated on an os
