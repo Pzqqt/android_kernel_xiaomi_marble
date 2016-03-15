@@ -2869,7 +2869,6 @@ static int hif_log_soc_wakeup_timeout(struct hif_pci_softc *sc)
  *
  * Return: int
  */
-#if ((CONFIG_ATH_PCIE_MAX_PERF == 0) && CONFIG_ATH_PCIE_AWAKE_WHILE_DRIVER_LOAD)
 int hif_pci_target_sleep_state_adjust(struct hif_softc *scn,
 			      bool sleep_ok, bool wait_for_it)
 {
@@ -2984,14 +2983,6 @@ int hif_pci_target_sleep_state_adjust(struct hif_softc *scn,
 
 	return 0;
 }
-#else
-inline int
-hif_pci_sleep_state_adjust(struct hif_softc *scn,
-			      bool sleep_ok, bool wait_for_it)
-{
-	return 0;
-}
-#endif
 
 #ifdef CONFIG_ATH_PCIE_ACCESS_DEBUG
 uint32_t hif_target_read_checked(struct hif_softc *scn, uint32_t offset)

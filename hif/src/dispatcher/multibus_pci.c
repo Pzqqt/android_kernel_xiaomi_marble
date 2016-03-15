@@ -28,6 +28,8 @@
 #include "hif.h"
 #include "multibus.h"
 #include "pci_api.h"
+#include "hif_io32.h"
+#include "dummy.h"
 
 /**
  * hif_initialize_pci_ops() - initialize the pci ops
@@ -43,8 +45,13 @@ QDF_STATUS hif_initialize_pci_ops(struct hif_bus_ops *bus_ops)
 	bus_ops->hif_reset_soc = &hif_pci_reset_soc;
 	bus_ops->hif_bus_suspend = &hif_pci_bus_suspend;
 	bus_ops->hif_bus_resume = &hif_pci_bus_resume;
-	bus_ops->hif_target_sleep_state_adjust =
-		&hif_pci_target_sleep_state_adjust;
+
+	if (CONFIG_ATH_PCIE_MAX_PERF == 0)
+		bus_ops->hif_target_sleep_state_adjust =
+			&hif_pci_target_sleep_state_adjust;
+	else
+		bus_ops->hif_target_sleep_state_adjust =
+			&hif_dummy_target_sleep_state_adjust;
 
 	return QDF_STATUS_SUCCESS;
 }
