@@ -261,7 +261,8 @@ void priv_dump_agc(struct hif_softc *scn)
 	int i, len = 30;        /* check this value for Rome and Peregrine */
 	uint32_t chain0, chain1, chain_mask, val;
 
-	A_TARGET_ACCESS_BEGIN(scn);
+	if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+		return;
 
 	chain_mask =
 		get_target_reg_bits(scn->mem, BB_multichain_enable,
@@ -305,7 +306,7 @@ void priv_dump_agc(struct hif_softc *scn)
 	hif_write32_mb(scn->mem + BB_gains_min_offsets,
 		      g_priv_dump_ctx.gain_min_offsets_orig);
 
-	A_TARGET_ACCESS_END(scn);
+	Q_TARGET_ACCESS_END(scn);
 
 	return;
 }

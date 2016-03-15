@@ -652,7 +652,8 @@ static void hif_dump_pci_registers(struct hif_softc *scn)
 	uint32_t wrapper_idx[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 	uint32_t ce_base;
 
-	A_TARGET_ACCESS_BEGIN(scn);
+	if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+		return;
 
 	/* DEBUG_INPUT_SEL_SRC = 0x6 */
 	val =
@@ -766,7 +767,7 @@ static void hif_dump_pci_registers(struct hif_softc *scn)
 				    WLAN_DEBUG_OUT_OFFSET));
 	}
 
-	A_TARGET_ACCESS_END(scn);
+	Q_TARGET_ACCESS_END(scn);
 }
 
 /**

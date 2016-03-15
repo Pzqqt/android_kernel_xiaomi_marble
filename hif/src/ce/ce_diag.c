@@ -60,14 +60,17 @@ hif_dump_target_memory(struct hif_opaque_softc *hif_ctx, void *ramdump_base,
 	uint32_t j = 0;
 	u8 *temp = ramdump_base;
 
-	A_TARGET_ACCESS_BEGIN(scn);
+	if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+		return;
+
 	while (j < size) {
 		val = hif_read32_mb(scn->mem + loc + j);
 		qdf_mem_copy(temp, &val, 4);
 		j += 4;
 		temp += 4;
 	}
-	A_TARGET_ACCESS_END(scn);
+
+	Q_TARGET_ACCESS_END(scn);
 }
 /*
  * TBDXXX: Should be a function call specific to each Target-type.

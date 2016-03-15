@@ -1209,7 +1209,9 @@ void ce_per_engine_servicereap(struct hif_softc *scn, unsigned int ce_id)
 	uint32_t toeplitz_hash_result;
 	struct CE_state *CE_state = scn->ce_id_to_state[ce_id];
 
-	A_TARGET_ACCESS_BEGIN(scn);
+	if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+		return;
+
 	hif_record_ce_desc_event(scn, ce_id, HIF_CE_REAP_ENTRY,
 			NULL, NULL, 0);
 
@@ -1269,7 +1271,7 @@ void ce_per_engine_servicereap(struct hif_softc *scn, unsigned int ce_id)
 
 	hif_record_ce_desc_event(scn, ce_id, HIF_CE_REAP_EXIT,
 			NULL, NULL, 0);
-	A_TARGET_ACCESS_END(scn);
+	Q_TARGET_ACCESS_END(scn);
 }
 
 #endif /*ATH_11AC_TXCOMPACT */
@@ -1513,7 +1515,9 @@ void ce_per_engine_service_any(int irq, struct hif_softc *scn)
 	int CE_id;
 	uint32_t intr_summary;
 
-	A_TARGET_ACCESS_BEGIN(scn);
+	if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+		return;
+
 	if (!qdf_atomic_read(&scn->tasklet_from_intr)) {
 		for (CE_id = 0; CE_id < scn->ce_count; CE_id++) {
 			struct CE_state *CE_state = scn->ce_id_to_state[CE_id];
@@ -1523,7 +1527,7 @@ void ce_per_engine_service_any(int irq, struct hif_softc *scn)
 			}
 		}
 
-		A_TARGET_ACCESS_END(scn);
+		Q_TARGET_ACCESS_END(scn);
 		return;
 	}
 
@@ -1539,7 +1543,7 @@ void ce_per_engine_service_any(int irq, struct hif_softc *scn)
 		ce_per_engine_service(scn, CE_id);
 	}
 
-	A_TARGET_ACCESS_END(scn);
+	Q_TARGET_ACCESS_END(scn);
 }
 
 /*
@@ -1557,7 +1561,10 @@ ce_per_engine_handler_adjust(struct CE_state *CE_state,
 	struct hif_softc *scn = CE_state->scn;
 
 	CE_state->disable_copy_compl_intr = disable_copy_compl_intr;
-	A_TARGET_ACCESS_BEGIN(scn);
+
+	if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+		return;
+
 	if ((!disable_copy_compl_intr) &&
 	    (CE_state->send_cb || CE_state->recv_cb)) {
 		CE_COPY_COMPLETE_INTR_ENABLE(scn, ctrl_addr);
@@ -1570,8 +1577,7 @@ ce_per_engine_handler_adjust(struct CE_state *CE_state,
 	} else {
 		CE_WATERMARK_INTR_DISABLE(scn, ctrl_addr);
 	}
-	A_TARGET_ACCESS_END(scn);
-
+	Q_TARGET_ACCESS_END(scn);
 }
 
 /*Iterate the CE_state list and disable the compl interrupt
@@ -1581,7 +1587,9 @@ void ce_disable_any_copy_compl_intr_nolock(struct hif_softc *scn)
 {
 	int CE_id;
 
-	A_TARGET_ACCESS_BEGIN(scn);
+	if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+		return;
+
 	for (CE_id = 0; CE_id < scn->ce_count; CE_id++) {
 		struct CE_state *CE_state = scn->ce_id_to_state[CE_id];
 		uint32_t ctrl_addr = CE_state->ctrl_addr;
@@ -1596,14 +1604,16 @@ void ce_disable_any_copy_compl_intr_nolock(struct hif_softc *scn)
 			CE_WATERMARK_INTR_DISABLE(scn, ctrl_addr);
 		}
 	}
-	A_TARGET_ACCESS_END(scn);
+	Q_TARGET_ACCESS_END(scn);
 }
 
 void ce_enable_any_copy_compl_intr_nolock(struct hif_softc *scn)
 {
 	int CE_id;
 
-	A_TARGET_ACCESS_BEGIN(scn);
+	if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+		return;
+
 	for (CE_id = 0; CE_id < scn->ce_count; CE_id++) {
 		struct CE_state *CE_state = scn->ce_id_to_state[CE_id];
 		uint32_t ctrl_addr = CE_state->ctrl_addr;
@@ -1622,7 +1632,7 @@ void ce_enable_any_copy_compl_intr_nolock(struct hif_softc *scn)
 			CE_WATERMARK_INTR_ENABLE(scn, ctrl_addr);
 		}
 	}
-	A_TARGET_ACCESS_END(scn);
+	Q_TARGET_ACCESS_END(scn);
 }
 
 /**

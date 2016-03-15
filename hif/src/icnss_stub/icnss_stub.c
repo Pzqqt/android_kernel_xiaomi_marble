@@ -289,7 +289,9 @@ void icnss_dispatch_ce_irq(struct hif_softc *scn)
 	if (scn->hif_init_done != true)
 		return;
 
-	A_TARGET_ACCESS_BEGIN(scn);
+	if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+		return;
+
 	intr_summary = CE_INTERRUPT_SUMMARY(scn);
 
 	if (intr_summary == 0) {
@@ -305,10 +307,10 @@ void icnss_dispatch_ce_irq(struct hif_softc *scn)
 					(SOC_CORE_BASE_ADDRESS |
 					PCIE_INTR_ENABLE_ADDRESS));
 		}
-		A_TARGET_ACCESS_END(scn);
+		Q_TARGET_ACCESS_END(scn);
 		return;
 	} else {
-		A_TARGET_ACCESS_END(scn);
+		Q_TARGET_ACCESS_END(scn);
 	}
 
 	scn->ce_irq_summary = intr_summary;

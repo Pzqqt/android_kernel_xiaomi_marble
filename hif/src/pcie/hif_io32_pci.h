@@ -73,13 +73,6 @@
 #define CONFIG_PCIE_ENABLE_AXI_CLK_GATE 0
 
 #if CONFIG_ATH_PCIE_MAX_PERF
-#define A_TARGET_ACCESS_BEGIN(scn) \
-	do {struct hif_softc *unused = scn; \
-	    unused = unused; } while (0)
-
-#define A_TARGET_ACCESS_END(scn) \
-	do {struct hif_softc *unused = scn; \
-	    unused = unused; } while (0)
 
 #define A_TARGET_ACCESS_BEGIN_RET(scn) \
 	do {struct hif_softc *unused = scn; \
@@ -127,12 +120,6 @@ do { \
 		return NULL; \
 } while (0)
 
-#define A_TARGET_ACCESS_BEGIN(scn) \
-do { \
-	if (Q_TARGET_ACCESS_BEGIN(scn) < 0) \
-		return; \
-} while (0)
-
 #define A_TARGET_ACCESS_END_RET(scn)	\
 do { \
 	if (Q_TARGET_ACCESS_END(scn) < 0) \
@@ -149,11 +136,6 @@ do { \
 do { \
 	if (Q_TARGET_ACCESS_END(scn) < 0) \
 		return NULL; \
-} while (0)
-#define A_TARGET_ACCESS_END(scn) \
-do { \
-	if (Q_TARGET_ACCESS_END(scn) < 0) \
-		return; \
 } while (0)
 #endif /* CONFIG_ATH_PCIE_MAX_PERF */
 
@@ -190,7 +172,8 @@ static inline void ce_irq_enable(struct hif_softc *scn, int ce_id)
 		}
 	}
 	if (scn->hif_init_done == true)
-		A_TARGET_ACCESS_END(scn);
+		Q_TARGET_ACCESS_END(scn);
+
 	qdf_spin_unlock_irqrestore(&sc->irq_lock);
 
 	/* check for missed firmware crash */
@@ -206,7 +189,9 @@ static inline void ce_irq_enable(struct hif_softc *scn, int ce_id)
 static inline void ce_irq_disable(struct hif_softc *scn, int ce_id)
 {
 	/* For Rome only need to wake up target */
-	A_TARGET_ACCESS_BEGIN(scn);
+	/* target access is maintained untill interrupts are re-enabled */
+	Q_TARGET_ACCESS_BEGIN(scn);
+
 }
 #endif /* HIF_PCI */
 #endif /* __HIF_IO32_PCI_H__ */
