@@ -490,6 +490,7 @@ void hif_get_hw_info(struct hif_opaque_softc *scn, u32 *version, u32 *revision,
 void hif_lro_flush_cb_register(struct hif_opaque_softc *scn,
 			       void (handler)(void *), void *data);
 void hif_lro_flush_cb_deregister(struct hif_opaque_softc *scn);
+bool hif_needs_bmi(struct hif_opaque_softc *scn);
 struct hif_target_info *hif_get_target_info_handle(struct hif_opaque_softc *
 						   scn);
 struct hif_config_info *hif_get_ini_handle(struct hif_opaque_softc *scn);

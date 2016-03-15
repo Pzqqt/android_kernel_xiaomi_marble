@@ -792,6 +792,18 @@ end:
 }
 
 /**
+ * hif_needs_bmi() - return true if the soc needs bmi through the driver
+ * @hif_ctx: hif context
+ *
+ * Return: true if the soc needs driver bmi otherwise false
+ */
+bool hif_needs_bmi(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+	return hif_sc->bus_type != QDF_BUS_TYPE_SNOC;
+}
+
+/**
  * Target info and ini parameters are global to the driver
  * Hence these structures are exposed to all the modules in
  * the driver and they don't need to maintains multiple copies
