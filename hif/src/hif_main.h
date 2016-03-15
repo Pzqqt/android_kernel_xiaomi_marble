@@ -153,7 +153,15 @@ void hif_dump_pipe_debug_count(struct hif_softc *scn);
 
 bool hif_target_forced_awake(struct hif_softc *scn);
 bool hif_max_num_receives_reached(struct hif_softc *scn, unsigned int count);
+int hif_bus_configure(struct hif_softc *scn);
 int hif_config_ce(struct hif_softc *scn);
+void hif_unconfig_ce(struct hif_softc *scn);
+void hif_ce_prepare_config(struct hif_softc *scn);
+int hif_set_hia(struct hif_softc *scn);
+QDF_STATUS hif_ce_open(struct hif_softc *scn);
+void hif_ce_close(struct hif_softc *scn);
+int hif_wlan_enable(struct hif_softc *scn);
+void hif_wlan_disable(struct hif_softc *scn);
 int athdiag_procfs_init(void *scn);
 void athdiag_procfs_remove(void);
 /* routine to modify the initial buffer count to be allocated on an os

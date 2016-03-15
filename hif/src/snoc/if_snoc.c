@@ -93,7 +93,7 @@ void hif_reset_soc(struct hif_opaque_softc *hif_ctx)
  */
 void hif_disable_isr(struct hif_opaque_softc *hif_ctx)
 {
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx)
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	hif_nointrs(scn);
 	ce_tasklet_kill(scn);
@@ -124,7 +124,7 @@ static void hif_dump_snoc_registers(struct hif_softc *scn)
 int hif_dump_registers(struct hif_opaque_softc *hif_ctx)
 {
 	int status;
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx)
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	status = hif_dump_ce_registers(scn);
 	if (status)
@@ -186,6 +186,7 @@ void hif_disable_aspm(struct hif_opaque_softc *hif_ctx)
  */
 void hif_bus_close(struct hif_softc *scn)
 {
+	hif_ce_close(scn);
 }
 
 /**
@@ -206,7 +207,62 @@ int hif_bus_get_context_size(void)
  */
 QDF_STATUS hif_bus_open(struct hif_softc *scn, enum qdf_bus_type bus_type)
 {
+	return hif_ce_open(scn);
+}
+
+/**
+ * hif_snoc_get_soc_info() - populates scn with hw info
+ *
+ * fills in the virtual and physical base address as well as
+ * soc version info.
+ *
+ * return 0 or QDF_STATUS_E_FAILURE
+ */
+static QDF_STATUS hif_snoc_get_soc_info(struct hif_softc *scn)
+{
+	int ret;
+	struct icnss_soc_info soc_info;
+
+	cdf_mem_zero(&soc_info, sizeof(soc_info));
+
+	ret = icnss_get_soc_info(&soc_info);
+	if (ret < 0) {
+		HIF_ERROR("%s: icnss_get_soc_info error = %d", __func__, ret);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	scn->mem = soc_info.v_addr;
+	scn->mem_pa = soc_info.p_addr;
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * hif_bus_configure() - configure the snoc bus
+ * @scn: pointer to the hif context.
+ *
+ * return: 0 for success. nonzero for failure.
+ */
+int hif_bus_configure(struct hif_softc *scn)
+{
+	int ret;
+
+	ret = hif_snoc_get_soc_info(scn);
+	if (ret)
+		return ret;
+
+	hif_ce_prepare_config(scn);
+
+	ret = hif_wlan_enable(scn);
+	if (ret) {
+		HIF_ERROR("%s: hif_wlan_enable error = %d",
+				__func__, ret);
+		return ret;
+	}
+
+	ret = hif_config_ce(scn);
+	if (ret)
+		hif_wlan_disable(scn);
+	return ret;
 }
 
 /**

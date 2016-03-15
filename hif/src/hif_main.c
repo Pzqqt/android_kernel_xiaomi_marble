@@ -556,12 +556,13 @@ QDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 	if (ADRASTEA_BU)
 		hif_vote_link_up(hif_ctx);
 
-	if (hif_config_ce(scn)) {
+	if (hif_bus_configure(scn)) {
 		HIF_ERROR("%s: Target probe failed.", __func__);
 		hif_disable_bus(scn);
 		status = QDF_STATUS_E_FAILURE;
 		return status;
 	}
+
 	/*
 	 * Flag to avoid potential unallocated memory access from MSI
 	 * interrupt handler which could get scheduled as soon as MSI
@@ -569,15 +570,6 @@ QDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 	 * in where MSI is enabled before the memory, that will be
 	 * in interrupt handlers, is allocated.
 	 */
-
-#ifdef HIF_PCI
-	status = hif_configure_irq(scn);
-	if (status < 0) {
-		HIF_ERROR("%s: ERROR - configure_IRQ_and_CE failed, status = %d",
-			   __func__, status);
-		return QDF_STATUS_E_FAILURE;
-	}
-#endif
 
 	scn->hif_init_done = true;
 

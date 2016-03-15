@@ -41,6 +41,7 @@
 #include "ce_internal.h"
 #include "ce_reg.h"
 #include "bmi_msg.h"            /* TARGET_TYPE_ */
+#include "ce_bmi.h"
 #include "regtable.h"
 #include "ol_fw.h"
 #include <linux/debugfs.h>
@@ -1202,7 +1203,92 @@ QDF_STATUS hif_bus_open(struct hif_softc *ol_sc, enum qdf_bus_type bus_type)
 
 	qdf_spinlock_create(&sc->irq_lock);
 
-	return QDF_STATUS_SUCCESS;
+	return hif_ce_open(ol_sc);
+}
+
+#ifdef BMI_RSP_POLLING
+#define BMI_RSP_CB_REGISTER 0
+#else
+#define BMI_RSP_CB_REGISTER 1
+#endif
+
+/**
+ * hif_register_bmi_callbacks() - register bmi callbacks
+ * @hif_sc: hif context
+ *
+ * Bmi phase uses different copy complete callbacks than mission mode.
+ */
+static void hif_register_bmi_callbacks(struct hif_softc *hif_sc)
+{
+	struct HIF_CE_pipe_info *pipe_info;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_sc);
+
+	/*
+	 * Initially, establish CE completion handlers for use with BMI.
+	 * These are overwritten with generic handlers after we exit BMI phase.
+	 */
+	pipe_info = &hif_state->pipe_info[BMI_CE_NUM_TO_TARG];
+	ce_send_cb_register(pipe_info->ce_hdl, hif_bmi_send_done, pipe_info, 0);
+
+	if (BMI_RSP_CB_REGISTER) {
+		pipe_info = &hif_state->pipe_info[BMI_CE_NUM_TO_HOST];
+		ce_recv_cb_register(
+			pipe_info->ce_hdl, hif_bmi_recv_data, pipe_info, 0);
+	}
+}
+
+/**
+ * hif_bus_configure() - configure the pcie bus
+ * @hif_sc: pointer to the hif context.
+ *
+ * return: 0 for success. nonzero for failure.
+ */
+int hif_bus_configure(struct hif_softc *hif_sc)
+{
+	int status = 0;
+
+	hif_ce_prepare_config(hif_sc);
+
+	if (ADRASTEA_BU) {
+		status = hif_wlan_enable(hif_sc);
+
+		if (status) {
+			HIF_ERROR("%s: hif_wlan_enable error = %d",
+					__func__, status);
+			return status;
+		}
+	}
+
+	A_TARGET_ACCESS_LIKELY(hif_sc);
+	status = hif_config_ce(hif_sc);
+	if (status)
+		goto disable_wlan;
+
+	status = hif_set_hia(hif_sc);
+	if (status)
+		goto unconfig_ce;
+
+	HIF_INFO_MED("%s: hif_set_hia done", __func__);
+
+	hif_register_bmi_callbacks(hif_sc);
+
+	status = hif_configure_irq(hif_sc);
+	if (status < 0)
+		goto unconfig_ce;
+
+	A_TARGET_ACCESS_UNLIKELY(hif_sc);
+
+	return status;
+
+unconfig_ce:
+	hif_unconfig_ce(hif_sc);
+disable_wlan:
+	A_TARGET_ACCESS_UNLIKELY(hif_sc);
+	if (ADRASTEA_BU)
+		hif_wlan_disable(hif_sc);
+
+	HIF_ERROR("%s: failed, status = %d", __func__, status);
+	return status;
 }
 
 /**
@@ -1210,11 +1296,13 @@ QDF_STATUS hif_bus_open(struct hif_softc *ol_sc, enum qdf_bus_type bus_type)
  *
  * Return: n/a
  */
-void hif_bus_close(struct hif_softc *ol_sc)
+void hif_bus_close(struct hif_softc *hif_sc)
 {
-	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(ol_sc);
+	struct hif_pci_softc *hif_pci_sc = HIF_GET_PCI_SOFTC(hif_sc);
 
-	hif_pm_runtime_close(sc);
+	hif_pm_runtime_close(hif_pci_sc);
+
+	hif_ce_close(hif_sc);
 }
 
 #define BAR_NUM 0
@@ -1952,7 +2040,7 @@ static void hif_runtime_pm_set_state_suspended(struct hif_softc *scn)
 
 static inline struct hif_pci_softc *get_sc(void *hif_ctx)
 {
-	struct hif_pci_softc *scn = HIF_GET_PCI_SOFTC(hif_ctx)
+	struct hif_pci_softc *scn = HIF_GET_PCI_SOFTC(hif_ctx);
 
 	if (NULL == scn) {
 		HIF_ERROR("%s: Could not disable ASPM scn is null",

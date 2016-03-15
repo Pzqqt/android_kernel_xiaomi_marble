@@ -1827,9 +1827,9 @@ done:
  * This function passes the con_mode and CE configuration to
  * platform driver to enable wlan.
  *
- * Return: void
+ * Return: linux error code
  */
-static int hif_wlan_enable(struct hif_softc *scn)
+int hif_wlan_enable(struct hif_softc *scn)
 {
 	struct icnss_wlan_enable_cfg cfg;
 	enum icnss_driver_mode mode;
@@ -1855,26 +1855,15 @@ static int hif_wlan_enable(struct hif_softc *scn)
 	return icnss_wlan_enable(&cfg, mode, QWLAN_VERSIONSTR);
 }
 
-/*
- * Called from PCI layer whenever a new PCI device is probed.
- * Initializes per-device HIF state and notifies the main
- * driver that a new HIF device is present.
+/**
+ * hif_ce_prepare_config() - load the correct static tables.
+ * @scn: hif context
+ *
+ * Epping uses different static attribute tables than mission mode.
  */
-int hif_config_ce(struct hif_softc *scn)
+void hif_ce_prepare_config(struct hif_softc *scn)
 {
-	struct HIF_CE_pipe_info *pipe_info;
-	int pipe_num;
 	uint32_t mode = hif_get_conparam(scn);
-#ifdef ADRASTEA_SHADOW_REGISTERS
-	int i;
-#endif
-	QDF_STATUS rv = QDF_STATUS_SUCCESS;
-	int ret;
-	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
-	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
-	struct icnss_soc_info soc_info;
-	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
-
 	/* if epping is enabled we need to use the epping configuration. */
 	if (WLAN_IS_EPPING_ENABLED(mode)) {
 		if (WLAN_IS_EPPING_IRQ(mode))
@@ -1888,28 +1877,86 @@ int hif_config_ce(struct hif_softc *scn)
 		target_service_to_ce_map_sz =
 			sizeof(target_service_to_ce_map_wlan_epping);
 	}
+}
 
-	ret = hif_wlan_enable(scn);
-
-	if (ret) {
-		HIF_ERROR("%s: hif_wlan_enable error = %d", __func__, ret);
-		return QDF_STATUS_NOT_INITIALIZED;
-	}
-
-	scn->notice_send = true;
-
-	qdf_mem_zero(&soc_info, sizeof(soc_info));
-	ret = icnss_get_soc_info(scn, &soc_info);
-	if (ret < 0) {
-		HIF_ERROR("%s: icnss_get_soc_info error = %d", __func__, ret);
-		return QDF_STATUS_NOT_INITIALIZED;
-	}
-
-	scn->mem = soc_info.v_addr;
-	scn->mem_pa = soc_info.p_addr;
-	tgt_info->soc_version = soc_info.version;
+/**
+ * hif_ce_open() - do ce specific allocations
+ * @hif_sc: pointer to hif context
+ *
+ * return: 0 for success or QDF_STATUS_E_NOMEM
+ */
+QDF_STATUS hif_ce_open(struct hif_softc *hif_sc)
+{
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_sc);
 
 	qdf_spinlock_create(&hif_state->keep_awake_lock);
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * hif_ce_close() - do ce specific free
+ * @hif_sc: pointer to hif context
+ */
+void hif_ce_close(struct hif_softc *hif_sc)
+{
+}
+
+/**
+ * hif_unconfig_ce() - ensure resources from hif_config_ce are freed
+ * @hif_sc: hif context
+ *
+ * uses state variables to support cleaning up when hif_config_ce fails.
+ */
+void hif_unconfig_ce(struct hif_softc *hif_sc)
+{
+	int pipe_num;
+	struct HIF_CE_pipe_info *pipe_info;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_sc);
+
+	for (pipe_num = 0; pipe_num < hif_sc->ce_count; pipe_num++) {
+		pipe_info = &hif_state->pipe_info[pipe_num];
+		if (pipe_info->ce_hdl) {
+			ce_unregister_irq(hif_state, (1 << pipe_num));
+			hif_sc->request_irq_done = false;
+			ce_fini(pipe_info->ce_hdl);
+			pipe_info->ce_hdl = NULL;
+			pipe_info->buf_sz = 0;
+		}
+	}
+	if (hif_state->sleep_timer_init) {
+		qdf_timer_stop(&hif_state->sleep_timer);
+		qdf_timer_free(&hif_state->sleep_timer);
+		hif_state->sleep_timer_init = false;
+	}
+	if (hif_sc->athdiag_procfs_inited) {
+		athdiag_procfs_remove();
+		hif_sc->athdiag_procfs_inited = false;
+	}
+}
+
+/**
+ * hif_config_ce() - configure copy engines
+ * @scn: hif context
+ *
+ * Prepares fw, copy engine hardware and host sw according
+ * to the attributes selected by hif_ce_prepare_config.
+ *
+ * also calls athdiag_procfs_init
+ *
+ * return: 0 for success nonzero for failure.
+ */
+int hif_config_ce(struct hif_softc *scn)
+{
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
+	struct HIF_CE_pipe_info *pipe_info;
+	int pipe_num;
+#ifdef ADRASTEA_SHADOW_REGISTERS
+	int i;
+#endif
+	QDF_STATUS rv = QDF_STATUS_SUCCESS;
+
+	scn->notice_send = true;
 
 	hif_state->keep_awake_count = 0;
 
@@ -1920,6 +1967,7 @@ int hif_config_ce(struct hif_softc *scn)
 			       QDF_TIMER_TYPE_WAKE_APPS);
 	hif_state->sleep_timer_init = true;
 	hif_state->fw_indicator_address = FW_INDICATOR_ADDRESS;
+
 #ifdef HIF_PCI
 #if CONFIG_ATH_PCIE_MAX_PERF || CONFIG_ATH_PCIE_AWAKE_WHILE_DRIVER_LOAD
 	/* Force AWAKE forever/till the driver is loaded */
@@ -1932,7 +1980,6 @@ int hif_config_ce(struct hif_softc *scn)
 
 	/* During CE initializtion */
 	scn->ce_count = HOST_CE_COUNT;
-	A_TARGET_ACCESS_LIKELY(scn);
 	for (pipe_num = 0; pipe_num < scn->ce_count; pipe_num++) {
 		struct CE_attr *attr;
 
@@ -1975,32 +2022,9 @@ int hif_config_ce(struct hif_softc *scn)
 	}
 	scn->athdiag_procfs_inited = true;
 
-	/*
-	 * Initially, establish CE completion handlers for use with BMI.
-	 * These are overwritten with generic handlers after we exit BMI phase.
-	 */
-	pipe_info = &hif_state->pipe_info[BMI_CE_NUM_TO_TARG];
-#ifdef HIF_PCI
-	ce_send_cb_register(
-	   pipe_info->ce_hdl, hif_bmi_send_done, pipe_info, 0);
-#ifndef BMI_RSP_POLLING
-	pipe_info = &hif_state->pipe_info[BMI_CE_NUM_TO_HOST];
-	ce_recv_cb_register(
-	   pipe_info->ce_hdl, hif_bmi_recv_data, pipe_info, 0);
-#endif
-#endif
 	HIF_INFO_MED("%s: ce_init done", __func__);
 
-	rv = hif_set_hia(scn);
-
-	HIF_INFO_MED("%s: hif_set_hia done", __func__);
-
-	A_TARGET_ACCESS_UNLIKELY(scn);
-
-	if (rv != QDF_STATUS_SUCCESS)
-		goto err;
-	else
-		init_tasklet_workers(hif_hdl);
+	init_tasklet_workers(hif_hdl);
 
 	HIF_TRACE("%s: X, ret = %d\n", __func__, rv);
 
@@ -2013,37 +2037,14 @@ int hif_config_ce(struct hif_softc *scn)
 	}
 #endif
 
-
 	return rv != QDF_STATUS_SUCCESS;
 
 err:
 	/* Failure, so clean up */
-	for (pipe_num = 0; pipe_num < scn->ce_count; pipe_num++) {
-		pipe_info = &hif_state->pipe_info[pipe_num];
-		if (pipe_info->ce_hdl) {
-			ce_unregister_irq(hif_state, (1 << pipe_num));
-			scn->request_irq_done = false;
-			ce_fini(pipe_info->ce_hdl);
-			pipe_info->ce_hdl = NULL;
-			pipe_info->buf_sz = 0;
-		}
-	}
-	if (hif_state->sleep_timer_init) {
-		qdf_timer_stop(&hif_state->sleep_timer);
-		qdf_timer_free(&hif_state->sleep_timer);
-		hif_state->sleep_timer_init = false;
-	}
-
-	athdiag_procfs_remove();
-	scn->athdiag_procfs_inited = false;
+	hif_unconfig_ce(scn);
 	HIF_TRACE("%s: X, ret = %d\n", __func__, rv);
 	return QDF_STATUS_SUCCESS != QDF_STATUS_E_FAILURE;
 }
-
-
-
-
-
 
 #ifdef IPA_OFFLOAD
 /**
