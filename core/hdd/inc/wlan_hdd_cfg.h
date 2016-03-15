@@ -2911,6 +2911,11 @@ enum dot11p_mode {
 #define CFG_INFORM_BSS_RSSI_RAW_MAX                (1)
 #define CFG_INFORM_BSS_RSSI_RAW_DEFAULT            (1)
 
+/* GPIO pin to toggle when capture tsf */
+#define CFG_SET_TSF_GPIO_PIN_NAME                  "gtsf_gpio_pin"
+#define CFG_SET_TSF_GPIO_PIN_MIN                   (0)
+#define CFG_SET_TSF_GPIO_PIN_MAX                   (255)
+#define CFG_SET_TSF_GPIO_PIN_DEFAULT               (34)
 
 /*
  * OBSS scan parameters
@@ -3579,6 +3584,7 @@ struct hdd_config {
 	uint16_t obss_passive_dwelltime;
 	uint16_t obss_width_trigger_interval;
 	uint8_t inform_bss_rssi_raw;
+	uint32_t tsf_gpio_pin;
 #ifdef QCA_WIFI_3_0_EMU
 	bool enable_m2m_limitation;
 #endif

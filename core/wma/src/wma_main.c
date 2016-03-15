@@ -5123,6 +5123,10 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 		wma_get_temperature(wma_handle);
 		qdf_mem_free(msg->bodyptr);
 		break;
+	case WMA_TSF_GPIO_PIN:
+		wma_set_tsf_gpio_pin(wma_handle, msg->bodyval);
+		break;
+
 #ifdef DHCP_SERVER_OFFLOAD
 	case WMA_SET_DHCP_SERVER_OFFLOAD_CMD:
 		wma_process_dhcpserver_offload(wma_handle,

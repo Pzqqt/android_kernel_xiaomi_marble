@@ -419,24 +419,39 @@ error:
 		wmi_buf_free(buf);
 	return status;
 }
-#else
-QDF_STATUS wma_capture_tsf(tp_wma_handle wma_handle, uint32_t vdev_id)
-{
-	return QDF_STATUS_SUCCESS;
-}
 
-QDF_STATUS wma_reset_tsf_gpio(tp_wma_handle wma_handle, uint32_t vdev_id)
+/**
+ * wma_set_tsf_gpio_pin() - send wmi cmd to configure gpio pin
+ * @handle: wma handler
+ * @pin: GPIO pin id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wma_set_tsf_gpio_pin(WMA_HANDLE handle, uint32_t pin)
 {
-	return QDF_STATUS_SUCCESS;
-}
+	tp_wma_handle wma = (tp_wma_handle)handle;
+	struct pdev_params pdev_param = {0};
+	int32_t ret;
 
-int wma_vdev_tsf_handler(void *handle, uint8_t *data, uint32_t data_len)
-{
-	return 0;
+	if (!wma || !wma->wmi_handle) {
+		WMA_LOGE("%s: WMA is closed, can not set gpio", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	WMA_LOGD("%s: set tsf gpio pin: %d", __func__, pin);
+
+	pdev_param.param_id = WMI_PDEV_PARAM_WNTS_CONFIG;
+	pdev_param.param_value = pin;
+	ret = wmi_unified_pdev_param_send(wma->wmi_handle,
+					 &pdev_param,
+					 WMA_WILDCARD_PDEV_ID);
+	if (ret) {
+		WMA_LOGE("%s: Failed to set tsf gpio pin (%d)", __func__, ret);
+		return QDF_STATUS_E_FAILURE;
+	}
+	return QDF_STATUS_SUCCESS;
 }
 #endif
-
-
 
 #ifdef FEATURE_WLAN_LPHB
 /**

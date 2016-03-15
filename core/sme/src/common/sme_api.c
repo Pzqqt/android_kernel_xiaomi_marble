@@ -7310,26 +7310,57 @@ QDF_STATUS sme_preferred_network_found_ind(tHalHandle hHal, void *pMsg)
 
 /*
  * sme_set_tsfcb() - Set callback for TSF capture
- * @hHal: Handler return by macOpen
+ * @h_hal: Handler return by mac_open
  * @cb_fn: Callback function pointer
  * @db_ctx: Callback data
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_set_tsfcb(tHalHandle hHal,
+QDF_STATUS sme_set_tsfcb(tHalHandle h_hal,
 	int (*cb_fn)(void *cb_ctx, struct stsf *ptsf), void *cb_ctx)
 {
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	tpAniSirGlobal mac = PMAC_STRUCT(h_hal);
 	QDF_STATUS status;
 
-	status = sme_acquire_global_lock(&pMac->sme);
+	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		pMac->sme.get_tsf_cb = cb_fn;
-		pMac->sme.get_tsf_cxt = cb_ctx;
-		sme_release_global_lock(&pMac->sme);
+		mac->sme.get_tsf_cb = cb_fn;
+		mac->sme.get_tsf_cxt = cb_ctx;
+		sme_release_global_lock(&mac->sme);
 	}
 	return status;
 }
+
+#ifdef WLAN_FEATURE_TSF
+/*
+ * sme_set_tsf_gpio() - set gpio pin that be toggled when capture tef
+ * @h_hal: Handler return by mac_open
+ * @pinvalue: gpio pin id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_set_tsf_gpio(tHalHandle h_hal, uint32_t pinvalue)
+{
+	QDF_STATUS status;
+	cds_msg_t tsf_msg = {0};
+	tpAniSirGlobal mac = PMAC_STRUCT(h_hal);
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		tsf_msg.type = WMA_TSF_GPIO_PIN;
+		tsf_msg.reserved = 0;
+		tsf_msg.bodyval = pinvalue;
+
+		status = cds_mq_post_message(CDS_MQ_ID_WMA, &tsf_msg);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			sms_log(mac, LOGE, "Unable to post WMA_TSF_GPIO_PIN");
+			status = QDF_STATUS_E_FAILURE;
+		}
+		sme_release_global_lock(&mac->sme);
+	}
+	return status;
+}
+#endif
 
 QDF_STATUS sme_get_cfg_valid_channels(tHalHandle hHal, uint8_t *aValidChannels,
 				      uint32_t *len)
