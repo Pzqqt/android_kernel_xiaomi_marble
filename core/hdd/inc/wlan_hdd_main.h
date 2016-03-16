@@ -1647,12 +1647,12 @@ static inline void hdd_set_tso_flags(hdd_context_t *hdd_ctx,
 #endif /* FEATURE_TSO */
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-static inline bool is_roaming_offload_enabled(hdd_context_t *hdd_ctx)
+static inline bool roaming_offload_enabled(hdd_context_t *hdd_ctx)
 {
 	return hdd_ctx->config->isRoamOffloadEnabled;
 }
 #else
-static inline bool is_roaming_offload_enabled(hdd_context_t *hdd_ctx)
+static inline bool roaming_offload_enabled(hdd_context_t *hdd_ctx)
 {
 	return false;
 }

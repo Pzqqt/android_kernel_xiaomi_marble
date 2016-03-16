@@ -4717,7 +4717,7 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 		hddLog(LOGE, FL("Invalid Channel [%d]"), channel);
 		return -EINVAL;
 	}
-	if (is_roaming_offload_enabled(hdd_ctx)) {
+	if (roaming_offload_enabled(hdd_ctx)) {
 		hdd_wma_send_fastreassoc_cmd((int)adapter->sessionId,
 					targetApBssid, (int)channel);
 		goto exit;

@@ -2184,7 +2184,7 @@ __wlan_hdd_cfg80211_get_features(struct wiphy *wiphy,
 		return -EPERM;
 	}
 
-	if (is_roaming_offload_enabled(hdd_ctx_ptr)) {
+	if (roaming_offload_enabled(hdd_ctx_ptr)) {
 		hddLog(LOG1, FL("Key Mgmt Offload is supported"));
 		wlan_hdd_cfg80211_set_feature(feature_flags,
 				QCA_WLAN_VENDOR_FEATURE_KEY_MGMT_OFFLOAD);
@@ -3128,7 +3128,7 @@ int wlan_hdd_send_roam_auth_event(hdd_context_t *hdd_ctx_ptr, uint8_t *bssid,
 		return -EINVAL;
 	}
 
-	if (!is_roaming_offload_enabled(hdd_ctx_ptr) ||
+	if (!roaming_offload_enabled(hdd_ctx_ptr) ||
 			!roam_info_ptr->roamSynchInProgress)
 		return 0;
 
