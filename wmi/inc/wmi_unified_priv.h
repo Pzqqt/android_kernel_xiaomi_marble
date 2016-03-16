@@ -576,7 +576,7 @@ QDF_STATUS (*send_get_buf_extscan_hotlist_cmd)(wmi_unified_t wmi_handle,
  * @buf: Buffer containing the wmi INIT command
  * @buf_len: Length of the buffer
  */
-struct wmi_init_cmd {
+struct wmi_cmd_init {
 	wmi_buf_t buf;
 	uint32_t buf_len;
 };
@@ -598,7 +598,7 @@ struct wmi_unified {
 	int wmi_stop_in_progress;
 	struct _wmi_abi_version fw_abi_version;
 	struct _wmi_abi_version final_abi_vers;
-	struct wmi_init_cmd saved_wmi_init_cmd;
+	struct wmi_cmd_init saved_wmi_init_cmd;
 	uint32_t num_of_diag_events_logs;
 	uint32_t *events_logs_list;
 	struct host_offload_req_param arp_info;
