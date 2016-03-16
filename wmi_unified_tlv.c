@@ -411,7 +411,7 @@ QDF_STATUS send_green_ap_ps_cmd_tlv(wmi_unified_t wmi_handle,
 		   WMITLV_TAG_STRUC_wmi_pdev_green_ap_ps_enable_cmd_fixed_param,
 		   WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_pdev_green_ap_ps_enable_cmd_fixed_param));
-	cmd->reserved0 = 0;
+	cmd->pdev_id = 0;
 	cmd->enable = value;
 
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -542,7 +542,7 @@ send_pdev_param_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_TAG_STRUC_wmi_pdev_set_param_cmd_fixed_param,
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_pdev_set_param_cmd_fixed_param));
-	cmd->reserved0 = 0;
+	cmd->pdev_id = 0;
 	cmd->param_id = param->param_id;
 	cmd->param_value = param->param_value;
 	WMI_LOGD("Setting pdev param = %x, value = %u", param->param_id,
@@ -6001,7 +6001,7 @@ QDF_STATUS send_pktlog_wmi_send_cmd_tlv(wmi_unified_t wmi_handle,
 		     WMITLV_TAG_STRUC_wmi_pdev_pktlog_disable_cmd_fixed_param,
 		     WMITLV_GET_STRUCT_TLVLEN
 		     (wmi_pdev_pktlog_disable_cmd_fixed_param));
-		disable_cmd->reserved0 = 0;
+		disable_cmd->pdev_id = 0;
 		if (wmi_unified_cmd_send(wmi_handle, buf, len,
 					 WMI_PDEV_PKTLOG_DISABLE_CMDID)) {
 			WMI_LOGE("failed to send pktlog disable cmdid");
