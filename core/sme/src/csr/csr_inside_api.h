@@ -100,8 +100,11 @@
  * can be of a fraction of 3/4 of the total command timeout value.
  * ***************************************************************************/
 #define CSR_ACTIVE_LIST_CMD_TIMEOUT_VALUE (1000*30*4)
+#ifdef QCA_WIFI_3_0_EMU
+#define CSR_ACTIVE_SCAN_LIST_CMD_TIMEOUT (1000*30*20)
+#else
 #define CSR_ACTIVE_SCAN_LIST_CMD_TIMEOUT (1000*30)
-
+#endif
 #define CSR_MAX_BSSID_COUNT     ((CSR_ACTIVE_LIST_CMD_TIMEOUT_VALUE/4000) * 3)
 #define CSR_CUSTOM_CONC_GO_BI    100
 
