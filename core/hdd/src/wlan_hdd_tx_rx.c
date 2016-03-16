@@ -63,11 +63,6 @@
 #define HDD_EAPOL_KEY_INFO_OFFSET        (19)
 #define HDD_EAPOL_DEST_MAC_OFFSET        (0)
 #define HDD_EAPOL_SRC_MAC_OFFSET         (6)
-#define EAPOL_MASK                       0x8013
-#define EAPOL_M1_BIT_MASK                0x8000
-#define EAPOL_M2_BIT_MASK                0x0001
-#define EAPOL_M3_BIT_MASK                0x8013
-#define EAPOL_M4_BIT_MASK                0x0003
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
 const uint8_t hdd_wmm_ac_to_highest_up[] = {
@@ -882,27 +877,10 @@ void wlan_hdd_log_eapol(struct sk_buff *skb,
 {
 	int ret;
 	struct host_event_wlan_eapol eapol_params;
-	uint16_t key_info;
-	const char *packet_type = "UND";
 
 	ret = wlan_hdd_get_eapol_params(skb, &eapol_params, event_type);
 	if (!ret)
-		return;
-
-	wlan_hdd_event_eapol_log(eapol_params);
-	key_info = eapol_params.eapol_key_info & EAPOL_MASK;
-	if (key_info == EAPOL_M1_BIT_MASK)
-		packet_type = "M1";
-	else if (key_info == EAPOL_M2_BIT_MASK)
-		packet_type = "M2";
-	else if (key_info == EAPOL_M3_BIT_MASK)
-		packet_type = "M3";
-	else if (key_info == EAPOL_M4_BIT_MASK)
-		packet_type = "M4";
-
-	hdd_notice("%s: %s packet", eapol_params.event_sub_type ==
-		WIFI_EVENT_DRIVER_EAPOL_FRAME_RECEIVED ?
-		"RX" : "TX", packet_type);
+		wlan_hdd_event_eapol_log(eapol_params);
 }
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
