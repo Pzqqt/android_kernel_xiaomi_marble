@@ -578,10 +578,10 @@ hif_send_head(struct hif_opaque_softc *hif_ctx,
 	 */
 	ce_sendlist_init(&sendlist);
 	do {
-		uint32_t frag_paddr;
+		cdf_dma_addr_t frag_paddr;
 		int frag_bytes;
 
-		frag_paddr = cdf_nbuf_get_frag_paddr_lo(nbuf, nfrags);
+		frag_paddr = cdf_nbuf_get_frag_paddr(nbuf, nfrags);
 		frag_bytes = cdf_nbuf_get_frag_len(nbuf, nfrags);
 		/*
 		 * Clear the packet offset for all but the first CE desc.
@@ -654,7 +654,7 @@ void hif_send_complete_check(struct hif_opaque_softc *hif_ctx, uint8_t pipe,
 			return;
 		}
 	}
-#ifdef  ATH_11AC_TXCOMPACT
+#ifdef ATH_11AC_TXCOMPACT
 	ce_per_engine_servicereap(scn, pipe);
 #else
 	ce_per_engine_service(scn, pipe);
@@ -985,7 +985,7 @@ static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info)
 			return 1;
 		}
 
-		CE_data = cdf_nbuf_get_frag_paddr_lo(nbuf, 0);
+		CE_data = cdf_nbuf_get_frag_paddr(nbuf, 0);
 
 		cdf_os_mem_dma_sync_single_for_device(scn->cdf_dev, CE_data,
 					       buf_sz, DMA_FROM_DEVICE);
@@ -1009,13 +1009,13 @@ static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info)
 		bufs_posted++;
 	}
 	pipe_info->nbuf_alloc_err_count =
-		(pipe_info->nbuf_alloc_err_count > bufs_posted)?
+		(pipe_info->nbuf_alloc_err_count > bufs_posted) ?
 		pipe_info->nbuf_alloc_err_count - bufs_posted : 0;
 	pipe_info->nbuf_dma_err_count =
-		(pipe_info->nbuf_dma_err_count > bufs_posted)?
+		(pipe_info->nbuf_dma_err_count > bufs_posted) ?
 		pipe_info->nbuf_dma_err_count - bufs_posted : 0;
 	pipe_info->nbuf_ce_enqueue_err_count =
-		(pipe_info->nbuf_ce_enqueue_err_count > bufs_posted)?
+		(pipe_info->nbuf_ce_enqueue_err_count > bufs_posted) ?
 	     pipe_info->nbuf_ce_enqueue_err_count - bufs_posted : 0;
 
 	cdf_spin_unlock_bh(&pipe_info->recv_bufs_needed_lock);

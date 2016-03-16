@@ -567,7 +567,7 @@ int ce_send_fast(struct CE_handle *copyeng, cdf_nbuf_t *msdus,
 		 * structure instead?
 		 */
 		/* HTT/HTC header can be passed as a argument */
-		dma_addr = cdf_nbuf_get_frag_paddr_lo(msdu, 0);
+		dma_addr = cdf_nbuf_get_frag_paddr(msdu, 0);
 		shadow_src_desc->buffer_addr = (uint32_t)(dma_addr &
 							  0xFFFFFFFF);
 		user_flags = cdf_nbuf_data_attr_get(msdu) & DESC_DATA_FLAG_MASK;
@@ -600,7 +600,7 @@ int ce_send_fast(struct CE_handle *copyeng, cdf_nbuf_t *msdus,
 		 * Now fill out the ring descriptor for the actual data
 		 * packet
 		 */
-		dma_addr = cdf_nbuf_get_frag_paddr_lo(msdu, 1);
+		dma_addr = cdf_nbuf_get_frag_paddr(msdu, 1);
 		shadow_src_desc->buffer_addr = (uint32_t)(dma_addr &
 							  0xFFFFFFFF);
 		/*
@@ -1722,7 +1722,7 @@ void ce_pkt_dl_len_set(void *hif_sc, u_int32_t pkt_download_len)
 
 	ce_state->download_len = pkt_download_len;
 
-	cdf_print("%s CE %d Pkt download length %d\n", __func__,
+	cdf_print("%s CE %d Pkt download length %d", __func__,
 		  ce_state->id, ce_state->download_len);
 }
 #else
