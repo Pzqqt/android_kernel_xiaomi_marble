@@ -358,7 +358,6 @@ int32_t send_packet_log_enable_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  Return: 0  on success and -ve on failure.
  */
 int32_t send_beacon_send_cmd_non_tlv(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct beacon_params *param)
 {
 	return 0;
@@ -373,7 +372,6 @@ int32_t send_beacon_send_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  Return: 0  on success and -ve on failure.
  */
 int32_t send_peer_assoc_cmd_non_tlv(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct peer_assoc_params *param)
 {
 	return 0;
@@ -388,7 +386,6 @@ int32_t send_peer_assoc_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  Return: 0  on success and -ve on failure.
  */
 int32_t send_scan_start_cmd_non_tlv(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct scan_start_params *param)
 {
 	return 0;
@@ -403,7 +400,6 @@ int32_t send_scan_start_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  Return: 0  on success and -ve on failure.
  */
 int32_t send_scan_stop_cmd_non_tlv(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct scan_stop_params *param)
 {
 	return 0;
@@ -418,7 +414,6 @@ int32_t send_scan_stop_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  Return: 0  on success and -ve on failure.
  */
 int32_t send_scan_chan_list_cmd_non_tlv(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct scan_chan_list_params *param)
 {
 	return 0;
