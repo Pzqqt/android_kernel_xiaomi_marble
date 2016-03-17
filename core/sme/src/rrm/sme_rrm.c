@@ -520,28 +520,37 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 	counter = 0;
 	while (scan_results) {
 		next_result = sme_scan_result_get_next(mac_ctx, result_handle);
+		sms_log(mac_ctx, LOG1, "Scan res timer:%lu, rrm scan timer:%lu",
+				scan_results->timer, rrm_scan_timer);
 		if (scan_results->timer >= rrm_scan_timer)
 			scanresults_arr[counter++] = scan_results;
 		scan_results = next_result;
 		if (counter >= SIR_BCN_REPORT_MAX_BSS_DESC)
 			break;
 	}
-	if (counter) {
-		sms_log(mac_ctx, LOG1,
-			FL(" Number of BSS Desc with RRM Scan %d "),
+	/*
+	 * The beacon report should be sent whether the counter is zero or
+	 * non-zero. There might be a few scan results in the cache but not
+	 * actually are a result of this scan. During that scenario, the
+	 * counter will be zero. The report should be sent and LIM will further
+	 * cleanup the RRM to accept the further incoming requests
+	 * In case the counter is Zero, the pScanResultsArr will be NULL.
+	 * The next level routine does a check for the measurementDone to
+	 * determine whether to send a report or not.
+	 */
+	sms_log(mac_ctx, LOG1, FL(" Number of BSS Desc with RRM Scan %d "),
 			counter);
 #ifdef FEATURE_WLAN_ESE
-		if (eRRM_MSG_SOURCE_ESE_UPLOAD == rrm_ctx->msgSource)
-			status = sme_ese_send_beacon_req_scan_results(mac_ctx,
-					session_id, chan_list[0],
-					scanresults_arr, measurementdone,
-					counter);
-		else
+	if (eRRM_MSG_SOURCE_ESE_UPLOAD == rrm_ctx->msgSource)
+		status = sme_ese_send_beacon_req_scan_results(mac_ctx,
+				session_id, chan_list[0],
+				scanresults_arr, measurementdone,
+				counter);
+	else
 #endif /* FEATURE_WLAN_ESE */
-			status = sme_rrm_send_beacon_report_xmit_ind(mac_ctx,
-					scanresults_arr, measurementdone,
-					counter);
-	}
+		status = sme_rrm_send_beacon_report_xmit_ind(mac_ctx,
+				scanresults_arr, measurementdone,
+				counter);
 	sme_scan_result_purge(mac_ctx, result_handle);
 	return status;
 }
