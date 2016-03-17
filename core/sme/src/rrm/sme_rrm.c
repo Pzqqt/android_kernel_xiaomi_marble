@@ -475,6 +475,7 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 	if (filter.SSIDs.SSIDList)
 		qdf_mem_free(filter.SSIDs.SSIDList);
 
+	sms_log(mac_ctx, LOG1, FL("RRM Measurement Done %d"), measurementdone);
 	if (NULL == result_handle) {
 		/*
 		 * no scan results
@@ -540,17 +541,19 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 	 */
 	sms_log(mac_ctx, LOG1, FL(" Number of BSS Desc with RRM Scan %d "),
 			counter);
+	if (counter || measurementdone) {
 #ifdef FEATURE_WLAN_ESE
-	if (eRRM_MSG_SOURCE_ESE_UPLOAD == rrm_ctx->msgSource)
-		status = sme_ese_send_beacon_req_scan_results(mac_ctx,
-				session_id, chan_list[0],
-				scanresults_arr, measurementdone,
-				counter);
-	else
+		if (eRRM_MSG_SOURCE_ESE_UPLOAD == rrm_ctx->msgSource)
+			status = sme_ese_send_beacon_req_scan_results(mac_ctx,
+					session_id, chan_list[0],
+					scanresults_arr, measurementdone,
+					counter);
+		else
 #endif /* FEATURE_WLAN_ESE */
-		status = sme_rrm_send_beacon_report_xmit_ind(mac_ctx,
-				scanresults_arr, measurementdone,
-				counter);
+			status = sme_rrm_send_beacon_report_xmit_ind(mac_ctx,
+					scanresults_arr, measurementdone,
+					counter);
+	}
 	sme_scan_result_purge(mac_ctx, result_handle);
 	return status;
 }
