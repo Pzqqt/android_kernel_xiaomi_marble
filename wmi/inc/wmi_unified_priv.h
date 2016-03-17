@@ -190,6 +190,30 @@ int32_t (*send_set_mimops_cmd)(wmi_unified_t wmi_handle,
 
 int32_t (*send_set_sta_uapsd_auto_trig_cmd)(wmi_unified_t wmi_handle,
 				struct sta_uapsd_trig_params *param);
+
+int32_t (*send_ocb_set_utc_time_cmd)(wmi_unified_t wmi_handle,
+				struct ocb_utc_param *utc);
+
+int32_t (*send_ocb_get_tsf_timer_cmd)(wmi_unified_t wmi_handle,
+			  uint8_t vdev_id);
+
+int32_t (*send_ocb_start_timing_advert_cmd)(wmi_unified_t wmi_handle,
+	struct ocb_timing_advert_param *timing_advert);
+
+int32_t (*send_ocb_stop_timing_advert_cmd)(wmi_unified_t wmi_handle,
+	struct ocb_timing_advert_param *timing_advert);
+
+int32_t (*send_dcc_get_stats_cmd)(wmi_unified_t wmi_handle,
+		     struct dcc_get_stats_param *get_stats_param);
+
+int32_t (*send_dcc_clear_stats_cmd)(wmi_unified_t wmi_handle,
+				uint32_t vdev_id, uint32_t dcc_stats_bitmap);
+
+int32_t (*send_dcc_update_ndl_cmd)(wmi_unified_t wmi_handle,
+		       struct dcc_update_ndl_param *update_ndl_param);
+
+int32_t (*send_ocb_set_config_cmd)(wmi_unified_t wmi_handle,
+		  struct ocb_config_param *config, uint32_t *ch_mhz);
 };
 
 struct wmi_unified {

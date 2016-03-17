@@ -40,6 +40,10 @@
 #define WMI_SMPS_MASK_LOWER_16BITS 0xFF
 #define WMI_SMPS_MASK_UPPER_3BITS 0x7
 #define WMI_SMPS_PARAM_VALUE_S 29
+/* The size of the utc time in bytes. */
+#define WMI_SIZE_UTC_TIME (10)
+/* The size of the utc time error in bytes. */
+#define WMI_SIZE_UTC_TIME_ERROR (5)
 /**
  * struct vdev_create_params - vdev create cmd parameter
  * @if_id: interface id
@@ -562,6 +566,145 @@ struct sta_uapsd_trig_params {
 		uint8_t peer_addr[IEEE80211_ADDR_LEN];
 		uint8_t *auto_triggerparam;
 		uint32_t num_ac;
+};
+
+/**
+ * struct ocb_utc_param
+ * @vdev_id: session id
+ * @utc_time: number of nanoseconds from Jan 1st 1958
+ * @time_error: the error in the UTC time. All 1's for unknown
+ */
+struct ocb_utc_param {
+	uint32_t vdev_id;
+	uint8_t utc_time[WMI_SIZE_UTC_TIME];
+	uint8_t time_error[WMI_SIZE_UTC_TIME_ERROR];
+};
+
+/**
+ * struct ocb_timing_advert_param
+ * @vdev_id: session id
+ * @chan_freq: frequency on which to advertise
+ * @repeat_rate: the number of times it will send TA in 5 seconds
+ * @timestamp_offset: offset of the timestamp field in the TA frame
+ * @time_value_offset: offset of the time_value field in the TA frame
+ * @template_length: size in bytes of the TA frame
+ * @template_value: the TA frame
+ */
+struct ocb_timing_advert_param {
+	uint32_t vdev_id;
+	uint32_t chan_freq;
+	uint32_t repeat_rate;
+	uint32_t timestamp_offset;
+	uint32_t time_value_offset;
+	uint32_t template_length;
+	uint8_t *template_value;
+};
+
+/**
+ * struct dcc_get_stats_param
+ * @vdev_id: session id
+ * @channel_count: number of dcc channels
+ * @request_array_len: size in bytes of the request array
+ * @request_array: the request array
+ */
+struct dcc_get_stats_param {
+	uint32_t vdev_id;
+	uint32_t channel_count;
+	uint32_t request_array_len;
+	void *request_array;
+};
+
+/**
+ * struct dcc_update_ndl_param
+ * @vdev_id: session id
+ * @channel_count: number of channels to be updated
+ * @dcc_ndl_chan_list_len: size in bytes of the ndl_chan array
+ * @dcc_ndl_chan_list: the ndl_chan array
+ * @dcc_ndl_active_state_list_len: size in bytes of the active_state array
+ * @dcc_ndl_active_state_list: the active state array
+ */
+struct dcc_update_ndl_param {
+	uint32_t vdev_id;
+	uint32_t channel_count;
+	uint32_t dcc_ndl_chan_list_len;
+	void *dcc_ndl_chan_list;
+	uint32_t dcc_ndl_active_state_list_len;
+	void *dcc_ndl_active_state_list;
+};
+
+/**
+ * struct ocb_config_sched
+ * @chan_freq: frequency of the channel
+ * @total_duration: duration of the schedule
+ * @guard_interval: guard interval on the start of the schedule
+ */
+struct ocb_config_sched {
+	uint32_t chan_freq;
+	uint32_t total_duration;
+	uint32_t guard_interval;
+};
+
+/**
+ * OCB structures
+ */
+
+#define WMI_NUM_AC			(4)
+#define WMI_OCB_CHANNEL_MAX	(5)
+#define WMI_MAX_NUM_AC 4
+struct wmi_ocb_qos_params {
+	uint8_t aifsn;
+	uint8_t cwmin;
+	uint8_t cwmax;
+};
+/**
+ * struct ocb_config_channel
+ * @chan_freq: frequency of the channel
+ * @bandwidth: bandwidth of the channel, either 10 or 20 MHz
+ * @mac_address: MAC address assigned to this channel
+ * @qos_params: QoS parameters
+ * @max_pwr: maximum transmit power of the channel (dBm)
+ * @min_pwr: minimum transmit power of the channel (dBm)
+ * @reg_pwr: maximum transmit power specified by the regulatory domain (dBm)
+ * @antenna_max: maximum antenna gain specified by the regulatory domain (dB)
+ */
+struct ocb_config_channel {
+	uint32_t chan_freq;
+	uint32_t bandwidth;
+	struct cdf_mac_addr mac_address;
+	struct wmi_ocb_qos_params qos_params[WMI_MAX_NUM_AC];
+	uint32_t max_pwr;
+	uint32_t min_pwr;
+	uint8_t reg_pwr;
+	uint8_t antenna_max;
+	uint16_t flags;
+};
+
+/**
+ * struct ocb_config_param
+ * @session_id: session id
+ * @channel_count: number of channels
+ * @schedule_size: size of the channel schedule
+ * @flags: reserved
+ * @channels: array of OCB channels
+ * @schedule: array of OCB schedule elements
+ * @dcc_ndl_chan_list_len: size of the ndl_chan array
+ * @dcc_ndl_chan_list: array of dcc channel info
+ * @dcc_ndl_active_state_list_len: size of the active state array
+ * @dcc_ndl_active_state_list: array of active states
+ * @adapter: the OCB adapter
+ * @dcc_stats_callback: callback for the response event
+ */
+struct ocb_config_param {
+	uint8_t session_id;
+	uint32_t channel_count;
+	uint32_t schedule_size;
+	uint32_t flags;
+	struct ocb_config_channel *channels;
+	struct ocb_config_sched *schedule;
+	uint32_t dcc_ndl_chan_list_len;
+	void *dcc_ndl_chan_list;
+	uint32_t dcc_ndl_active_state_list_len;
+	void *dcc_ndl_active_state_list;
 };
 #endif /* _WMI_UNIFIED_PARAM_H_ */
 
