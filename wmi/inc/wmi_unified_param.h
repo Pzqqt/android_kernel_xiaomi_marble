@@ -44,6 +44,19 @@
 #define WMI_SIZE_UTC_TIME (10)
 /* The size of the utc time error in bytes. */
 #define WMI_SIZE_UTC_TIME_ERROR (5)
+#define WMI_MCC_MIN_CHANNEL_QUOTA             20
+#define WMI_MCC_MAX_CHANNEL_QUOTA             80
+#define WMI_MCC_MIN_NON_ZERO_CHANNEL_LATENCY  30
+#define WMI_BEACON_TX_BUFFER_SIZE             (512)
+#define WMI_WIFI_SCANNING_MAC_OUI_LENGTH      3
+#define WMI_EXTSCAN_MAX_SIGNIFICANT_CHANGE_APS   64
+#define WMI_RSSI_THOLD_DEFAULT   -300
+#define WMI_NLO_FREQ_THRESH          1000
+#define WMI_SEC_TO_MSEC(sec)         (sec * 1000)
+#define WMI_MSEC_TO_USEC(msec)	     (msec * 1000)
+#define WMI_ETH_LEN      64
+#define WMI_QOS_NUM_TSPEC_MAX 2
+#define WMI_QOS_NUM_AC_MAX 4
 /**
  * struct vdev_create_params - vdev create cmd parameter
  * @if_id: interface id
@@ -705,6 +718,42 @@ struct ocb_config_param {
 	void *dcc_ndl_chan_list;
 	uint32_t dcc_ndl_active_state_list_len;
 	void *dcc_ndl_active_state_list;
+};
+
+/**
+ * struct t_thermal_cmd_params - thermal command parameters
+ * @min_temp: minimum temprature
+ * @max_temp: maximum temprature
+ * @thermal_enable: thermal enable
+ */
+struct thermal_cmd_params {
+	uint16_t min_temp;
+	uint16_t max_temp;
+	uint8_t thermal_enable;
+};
+
+#define WMI_LRO_IPV4_SEED_ARR_SZ 5
+#define WMI_LRO_IPV6_SEED_ARR_SZ 11
+
+/**
+ * struct wmi_lro_config_cmd_t - set LRO init parameters
+ * @lro_enable: indicates whether lro is enabled
+ * @tcp_flag: If the TCP flags from the packet do not match
+ * the values in this field after masking with TCP flags mask
+ * below, packet is not LRO eligible
+ * @tcp_flag_mask: field for comparing the TCP values provided
+ * above with the TCP flags field in the received packet
+ * @toeplitz_hash_ipv4: contains seed needed to compute the flow id
+ * 5-tuple toeplitz hash for ipv4 packets
+ * @toeplitz_hash_ipv6: contains seed needed to compute the flow id
+ * 5-tuple toeplitz hash for ipv6 packets
+ */
+struct wmi_lro_config_cmd_t {
+	uint32_t lro_enable;
+	uint32_t tcp_flag:9,
+		tcp_flag_mask:9;
+	uint32_t toeplitz_hash_ipv4[WMI_LRO_IPV4_SEED_ARR_SZ];
+	uint32_t toeplitz_hash_ipv6[WMI_LRO_IPV6_SEED_ARR_SZ];
 };
 #endif /* _WMI_UNIFIED_PARAM_H_ */
 

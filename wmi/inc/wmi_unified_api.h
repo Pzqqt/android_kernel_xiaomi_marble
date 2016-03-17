@@ -367,6 +367,23 @@ int32_t wmi_unified_ocb_get_tsf_timer(void *wmi_hdl,
 int wmi_unified_ocb_start_timing_advert(void *wmi_hdl,
 	struct ocb_timing_advert_param *timing_advert);
 
+int32_t wmi_unified_lro_config_cmd(void *wmi_hdl,
+	 struct wmi_lro_config_cmd_t *wmi_lro_cmd);
+
+int32_t wmi_unified_set_thermal_mgmt_cmd(void *wmi_hdl,
+				struct thermal_cmd_params *thermal_info);
+
+int32_t wmi_unified_set_mcc_channel_time_quota_cmd
+	(void *wmi_hdl,
+	uint32_t adapter_1_chan_freq,
+	uint32_t adapter_1_quota, uint32_t adapter_2_chan_freq);
+
+int32_t wmi_unified_set_mcc_channel_time_latency_cmd
+	(void *wmi_hdl,
+	uint32_t mcc_channel_freq, uint32_t mcc_channel_time_latency);
+
+int32_t wmi_unified_set_enable_disable_mcc_adaptive_scheduler_cmd(
+		   void *wmi_hdl, uint32_t mcc_adaptive_scheduler);
 int32_t wmi_unified_ocb_set_utc_time_cmd(void *wmi_hdl,
 			  struct ocb_utc_param *utc);
 int32_t wmi_unified_dcc_get_stats_cmd(void *wmi_hdl,

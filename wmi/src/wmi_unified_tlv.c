@@ -1851,6 +1851,7 @@ int32_t send_set_sta_uapsd_auto_trig_cmd_tlv(wmi_unified_t wmi_handle,
 		WMA_LOGE("Failed to send set uapsd param ret = %d", ret);
 		wmi_buf_free(buf);
 	}
+
 	return ret;
 }
 
@@ -2493,6 +2494,345 @@ int send_ocb_set_config_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return 0;
 }
+
+/**
+ * send_set_enable_disable_mcc_adaptive_scheduler_cmd_tlv() -enable/disable mcc scheduler
+ * @wmi_handle: wmi handle
+ * @mcc_adaptive_scheduler: enable/disable
+ *
+ * This function enable/disable mcc adaptive scheduler in fw.
+ *
+ * Return: CDF_STATUS_SUCCESS for sucess or error code
+ */
+int32_t send_set_enable_disable_mcc_adaptive_scheduler_cmd_tlv(
+		   wmi_unified_t wmi_handle, uint32_t mcc_adaptive_scheduler)
+{
+	int ret = -1;
+	wmi_buf_t buf = 0;
+	wmi_resmgr_adaptive_ocs_enable_disable_cmd_fixed_param *cmd = NULL;
+	uint16_t len =
+		sizeof(wmi_resmgr_adaptive_ocs_enable_disable_cmd_fixed_param);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGP("%s : wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_resmgr_adaptive_ocs_enable_disable_cmd_fixed_param *)
+		wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_resmgr_adaptive_ocs_enable_disable_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_resmgr_adaptive_ocs_enable_disable_cmd_fixed_param));
+	cmd->enable = mcc_adaptive_scheduler;
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_RESMGR_ADAPTIVE_OCS_ENABLE_DISABLE_CMDID);
+	if (ret) {
+		WMA_LOGP("%s: Failed to send enable/disable MCC"
+			 " adaptive scheduler command", __func__);
+		cdf_nbuf_free(buf);
+	}
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_set_mcc_channel_time_latency_cmd_tlv() -set MCC channel time latency
+ * @wmi: wmi handle
+ * @mcc_channel: mcc channel
+ * @mcc_channel_time_latency: MCC channel time latency.
+ *
+ * Currently used to set time latency for an MCC vdev/adapter using operating
+ * channel of it and channel number. The info is provided run time using
+ * iwpriv command: iwpriv <wlan0 | p2p0> setMccLatency <latency in ms>.
+ *
+ * Return: CDF status
+ */
+int32_t send_set_mcc_channel_time_latency_cmd_tlv(wmi_unified_t wmi_handle,
+	uint32_t mcc_channel_freq, uint32_t mcc_channel_time_latency)
+{
+	int ret = -1;
+	wmi_buf_t buf = 0;
+	wmi_resmgr_set_chan_latency_cmd_fixed_param *cmdTL = NULL;
+	uint16_t len = 0;
+	uint8_t *buf_ptr = NULL;
+	wmi_resmgr_chan_latency chan_latency;
+	/* Note: we only support MCC time latency for a single channel */
+	uint32_t num_channels = 1;
+	uint32_t chan1_freq = mcc_channel_freq;
+	uint32_t latency_chan1 = mcc_channel_time_latency;
+
+
+	/* If 0ms latency is provided, then FW will set to a default.
+	 * Otherwise, latency must be at least 30ms.
+	 */
+	if ((latency_chan1 > 0) &&
+	    (latency_chan1 < WMI_MCC_MIN_NON_ZERO_CHANNEL_LATENCY)) {
+		WMA_LOGE("%s: Invalid time latency for Channel #1 = %dms "
+			 "Minimum is 30ms (or 0 to use default value by "
+			 "firmware)", __func__, latency_chan1);
+		return CDF_STATUS_E_INVAL;
+	}
+
+	/*   Set WMI CMD for channel time latency here */
+	len = sizeof(wmi_resmgr_set_chan_latency_cmd_fixed_param) +
+	      WMI_TLV_HDR_SIZE +  /*Place holder for chan_time_latency array */
+	      num_channels * sizeof(wmi_resmgr_chan_latency);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	cmdTL = (wmi_resmgr_set_chan_latency_cmd_fixed_param *)
+		wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmdTL->tlv_header,
+		WMITLV_TAG_STRUC_wmi_resmgr_set_chan_latency_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_resmgr_set_chan_latency_cmd_fixed_param));
+	cmdTL->num_chans = num_channels;
+	/* Update channel time latency information for home channel(s) */
+	buf_ptr += sizeof(*cmdTL);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
+		       num_channels * sizeof(wmi_resmgr_chan_latency));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	chan_latency.chan_mhz = chan1_freq;
+	chan_latency.latency = latency_chan1;
+	cdf_mem_copy(buf_ptr, &chan_latency, sizeof(chan_latency));
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_RESMGR_SET_CHAN_LATENCY_CMDID);
+	if (ret) {
+		WMA_LOGE("%s: Failed to send MCC Channel Time Latency command",
+			 __func__);
+		cdf_nbuf_free(buf);
+		CDF_ASSERT(0);
+		return CDF_STATUS_E_FAILURE;
+	}
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_set_mcc_channel_time_quota_cmd_tlv() -set MCC channel time quota
+ * @wmi: wmi handle
+ * @adapter_1_chan_number: adapter 1 channel number
+ * @adapter_1_quota: adapter 1 quota
+ * @adapter_2_chan_number: adapter 2 channel number
+ *
+ * Return: CDF status
+ */
+int32_t send_set_mcc_channel_time_quota_cmd_tlv(wmi_unified_t wmi_handle,
+	uint32_t adapter_1_chan_freq,
+	uint32_t adapter_1_quota, uint32_t adapter_2_chan_freq)
+{
+	int ret = -1;
+	wmi_buf_t buf = 0;
+	uint16_t len = 0;
+	uint8_t *buf_ptr = NULL;
+	wmi_resmgr_set_chan_time_quota_cmd_fixed_param *cmdTQ = NULL;
+	wmi_resmgr_chan_time_quota chan_quota;
+	uint32_t quota_chan1 = adapter_1_quota;
+	/* Knowing quota of 1st chan., derive quota for 2nd chan. */
+	uint32_t quota_chan2 = 100 - quota_chan1;
+	/* Note: setting time quota for MCC requires info for 2 channels */
+	uint32_t num_channels = 2;
+	uint32_t chan1_freq = adapter_1_chan_freq;
+	uint32_t chan2_freq = adapter_2_chan_freq;
+
+	WMA_LOGD("%s: freq1:%dMHz, Quota1:%dms, "
+		 "freq2:%dMHz, Quota2:%dms", __func__,
+		 chan1_freq, quota_chan1, chan2_freq,
+		 quota_chan2);
+
+	/*
+	 * Perform sanity check on time quota values provided.
+	 */
+	if (quota_chan1 < WMI_MCC_MIN_CHANNEL_QUOTA ||
+	    quota_chan1 > WMI_MCC_MAX_CHANNEL_QUOTA) {
+		WMA_LOGE("%s: Invalid time quota for Channel #1=%dms. Minimum "
+			 "is 20ms & maximum is 80ms", __func__, quota_chan1);
+		return CDF_STATUS_E_INVAL;
+	}
+	/* Set WMI CMD for channel time quota here */
+	len = sizeof(wmi_resmgr_set_chan_time_quota_cmd_fixed_param) +
+	      WMI_TLV_HDR_SIZE +       /* Place holder for chan_time_quota array */
+	      num_channels * sizeof(wmi_resmgr_chan_time_quota);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
+		CDF_ASSERT(0);
+		return CDF_STATUS_E_NOMEM;
+	}
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	cmdTQ = (wmi_resmgr_set_chan_time_quota_cmd_fixed_param *)
+		wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmdTQ->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_resmgr_set_chan_time_quota_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_resmgr_set_chan_time_quota_cmd_fixed_param));
+	cmdTQ->num_chans = num_channels;
+
+	/* Update channel time quota information for home channel(s) */
+	buf_ptr += sizeof(*cmdTQ);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
+		       num_channels * sizeof(wmi_resmgr_chan_time_quota));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	chan_quota.chan_mhz = chan1_freq;
+	chan_quota.channel_time_quota = quota_chan1;
+	cdf_mem_copy(buf_ptr, &chan_quota, sizeof(chan_quota));
+	/* Construct channel and quota record for the 2nd MCC mode. */
+	buf_ptr += sizeof(chan_quota);
+	chan_quota.chan_mhz = chan2_freq;
+	chan_quota.channel_time_quota = quota_chan2;
+	cdf_mem_copy(buf_ptr, &chan_quota, sizeof(chan_quota));
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_RESMGR_SET_CHAN_TIME_QUOTA_CMDID);
+	if (ret) {
+		WMA_LOGE("Failed to send MCC Channel Time Quota command");
+		cdf_nbuf_free(buf);
+		CDF_ASSERT(0);
+		return CDF_STATUS_E_FAILURE;
+	}
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_set_thermal_mgmt_cmd_tlv() - set thermal mgmt command to fw
+ * @wmi_handle: Pointer to wmi handle
+ * @thermal_info: Thermal command information
+ *
+ * This function sends the thermal management command
+ * to the firmware
+ *
+ * Return: CDF_STATUS_SUCCESS for success otherwise failure
+ */
+int32_t send_set_thermal_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
+				struct thermal_cmd_params *thermal_info)
+{
+	wmi_thermal_mgmt_cmd_fixed_param *cmd = NULL;
+	wmi_buf_t buf = NULL;
+	int status = 0;
+	uint32_t len = 0;
+
+	len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("Failed to allocate buffer to send set key cmd");
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	cmd = (wmi_thermal_mgmt_cmd_fixed_param *) wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_thermal_mgmt_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_thermal_mgmt_cmd_fixed_param));
+
+	cmd->lower_thresh_degreeC = thermal_info->min_temp;
+	cmd->upper_thresh_degreeC = thermal_info->max_temp;
+	cmd->enable = thermal_info->thermal_enable;
+
+	WMA_LOGE("TM Sending thermal mgmt cmd: low temp %d, upper temp %d, enabled %d",
+		cmd->lower_thresh_degreeC, cmd->upper_thresh_degreeC, cmd->enable);
+
+	status = wmi_unified_cmd_send(wmi_handle, buf, len,
+				      WMI_THERMAL_MGMT_CMDID);
+	if (status) {
+		cdf_nbuf_free(buf);
+		WMA_LOGE("%s:Failed to send thermal mgmt command", __func__);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+
+/**
+ * send_lro_config_cmd_tlv() - process the LRO config command
+ * @wmi: Pointer to WMA handle
+ * @wmi_lro_cmd: Pointer to LRO configuration parameters
+ *
+ * This function sends down the LRO configuration parameters to
+ * the firmware to enable LRO, sets the TCP flags and sets the
+ * seed values for the toeplitz hash generation
+ *
+ * Return: CDF_STATUS_SUCCESS for success otherwise failure
+ */
+int32_t send_lro_config_cmd_tlv(wmi_unified_t wmi_handle,
+	 struct wmi_lro_config_cmd_t *wmi_lro_cmd)
+{
+	wmi_lro_info_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int status;
+
+
+	buf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
+	if (!buf) {
+		WMA_LOGE("Failed to allocate buffer to send set key cmd");
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	cmd = (wmi_lro_info_cmd_fixed_param *) wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		 WMITLV_TAG_STRUC_wmi_lro_info_cmd_fixed_param,
+		 WMITLV_GET_STRUCT_TLVLEN(wmi_lro_info_cmd_fixed_param));
+
+	cmd->lro_enable = wmi_lro_cmd->lro_enable;
+	WMI_LRO_INFO_TCP_FLAG_VALS_SET(cmd->tcp_flag_u32,
+		 wmi_lro_cmd->tcp_flag);
+	WMI_LRO_INFO_TCP_FLAGS_MASK_SET(cmd->tcp_flag_u32,
+		 wmi_lro_cmd->tcp_flag_mask);
+	cmd->toeplitz_hash_ipv4_0_3 =
+		 wmi_lro_cmd->toeplitz_hash_ipv4[0];
+	cmd->toeplitz_hash_ipv4_4_7 =
+		 wmi_lro_cmd->toeplitz_hash_ipv4[1];
+	cmd->toeplitz_hash_ipv4_8_11 =
+		 wmi_lro_cmd->toeplitz_hash_ipv4[2];
+	cmd->toeplitz_hash_ipv4_12_15 =
+		 wmi_lro_cmd->toeplitz_hash_ipv4[3];
+	cmd->toeplitz_hash_ipv4_16 =
+		 wmi_lro_cmd->toeplitz_hash_ipv4[4];
+
+	cmd->toeplitz_hash_ipv6_0_3 =
+		 wmi_lro_cmd->toeplitz_hash_ipv6[0];
+	cmd->toeplitz_hash_ipv6_4_7 =
+		 wmi_lro_cmd->toeplitz_hash_ipv6[1];
+	cmd->toeplitz_hash_ipv6_8_11 =
+		 wmi_lro_cmd->toeplitz_hash_ipv6[2];
+	cmd->toeplitz_hash_ipv6_12_15 =
+		 wmi_lro_cmd->toeplitz_hash_ipv6[3];
+	cmd->toeplitz_hash_ipv6_16_19 =
+		 wmi_lro_cmd->toeplitz_hash_ipv6[4];
+	cmd->toeplitz_hash_ipv6_20_23 =
+		 wmi_lro_cmd->toeplitz_hash_ipv6[5];
+	cmd->toeplitz_hash_ipv6_24_27 =
+		 wmi_lro_cmd->toeplitz_hash_ipv6[6];
+	cmd->toeplitz_hash_ipv6_28_31 =
+		 wmi_lro_cmd->toeplitz_hash_ipv6[7];
+	cmd->toeplitz_hash_ipv6_32_35 =
+		 wmi_lro_cmd->toeplitz_hash_ipv6[8];
+	cmd->toeplitz_hash_ipv6_36_39 =
+		 wmi_lro_cmd->toeplitz_hash_ipv6[9];
+	cmd->toeplitz_hash_ipv6_40 =
+		 wmi_lro_cmd->toeplitz_hash_ipv6[10];
+
+	WMA_LOGD("WMI_LRO_CONFIG: lro_enable %d, tcp_flag 0x%x",
+		cmd->lro_enable, cmd->tcp_flag_u32);
+
+	status = wmi_unified_cmd_send(wmi_handle, buf,
+		 sizeof(*cmd), WMI_LRO_CONFIG_CMDID);
+	if (status) {
+		cdf_nbuf_free(buf);
+		WMA_LOGE("%s:Failed to send WMI_LRO_CONFIG_CMDID", __func__);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -2538,6 +2878,14 @@ struct wmi_ops tlv_ops =  {
 	.send_ocb_set_config_cmd = send_ocb_set_config_cmd_tlv,
 	.send_ocb_stop_timing_advert_cmd = send_ocb_stop_timing_advert_cmd_tlv,
 	.send_ocb_start_timing_advert_cmd = send_ocb_start_timing_advert_cmd_tlv,
+	.send_set_enable_disable_mcc_adaptive_scheduler_cmd =
+		 send_set_enable_disable_mcc_adaptive_scheduler_cmd_tlv,
+	.send_set_mcc_channel_time_latency_cmd =
+			 send_set_mcc_channel_time_latency_cmd_tlv,
+	.send_set_mcc_channel_time_quota_cmd =
+			 send_set_mcc_channel_time_quota_cmd_tlv,
+	.send_set_thermal_mgmt_cmd = send_set_thermal_mgmt_cmd_tlv,
+	.send_lro_config_cmd = send_lro_config_cmd_tlv,
 
 	/* TODO - Add other tlv apis here */
 };
