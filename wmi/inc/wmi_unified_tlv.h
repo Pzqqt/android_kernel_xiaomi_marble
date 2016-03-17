@@ -458,3 +458,79 @@ CDF_STATUS send_init_cmd_tlv(wmi_unified_t wmi_handle,
 CDF_STATUS send_saved_init_cmd_tlv(wmi_unified_t wmi_handle);
 
 CDF_STATUS save_fw_version_cmd_tlv(wmi_unified_t wmi_handle, void *evt_buf);
+
+CDF_STATUS check_and_update_fw_version_cmd_tlv(wmi_unified_t wmi_hdl, void *ev);
+
+CDF_STATUS send_set_base_macaddr_indicate_cmd_tlv(wmi_unified_t wmi_handle,
+					 uint8_t *custom_addr);
+
+CDF_STATUS send_log_supported_evt_cmd_tlv(wmi_unified_t wmi_handle,
+		uint8_t *event,
+		uint32_t len);
+
+CDF_STATUS send_enable_specific_fw_logs_cmd_tlv(wmi_unified_t wmi_handle,
+		struct wmi_wifi_start_log *start_log);
+
+CDF_STATUS send_flush_logs_to_fw_cmd_tlv(wmi_unified_t wmi_handle);
+
+CDF_STATUS send_soc_set_pcl_cmd_tlv(wmi_unified_t wmi_handle,
+				struct wmi_pcl_list *msg);
+
+CDF_STATUS send_soc_set_hw_mode_cmd_tlv(wmi_unified_t wmi_handle,
+				uint32_t hw_mode_index);
+
+CDF_STATUS send_soc_set_dual_mac_config_cmd_tlv(wmi_unified_t wmi_handle,
+		struct wmi_dual_mac_config *msg);
+
+CDF_STATUS send_enable_arp_ns_offload_cmd_tlv(wmi_unified_t wmi_handle,
+			   struct host_offload_req_param *param, bool arp_only,
+			   uint8_t vdev_id);
+
+CDF_STATUS send_set_led_flashing_cmd_tlv(wmi_unified_t wmi_handle,
+				struct flashing_req_params *flashing);
+
+CDF_STATUS send_app_type1_params_in_fw_cmd_tlv(wmi_unified_t wmi_handle,
+				   struct app_type1_params *app_type1_params);
+
+CDF_STATUS
+send_set_ssid_hotlist_cmd_tlv(wmi_unified_t wmi_handle,
+		     struct ssid_hotlist_request_params *request);
+
+CDF_STATUS send_process_roam_synch_complete_cmd_tlv(wmi_unified_t wmi_handle,
+		 uint8_t vdev_id);
+
+CDF_STATUS send_unit_test_cmd_tlv(wmi_unified_t wmi_handle,
+			       struct wmi_unit_test_cmd *wmi_utest);
+
+CDF_STATUS send_roam_invoke_cmd_tlv(wmi_unified_t wmi_handle,
+		struct wmi_roam_invoke_cmd *roaminvoke,
+		uint32_t ch_hz);
+
+CDF_STATUS send_roam_scan_offload_cmd_tlv(wmi_unified_t wmi_handle,
+					 uint32_t command, uint32_t vdev_id);
+
+CDF_STATUS send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
+					    wmi_ap_profile *ap_profile_p,
+					    uint32_t vdev_id);
+
+CDF_STATUS send_roam_scan_offload_scan_period_cmd_tlv(wmi_unified_t wmi_handle,
+					     uint32_t scan_period,
+					     uint32_t scan_age,
+					     uint32_t vdev_id);
+
+CDF_STATUS send_roam_scan_offload_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
+				   uint8_t chan_count,
+				   uint8_t *chan_list,
+				   uint8_t list_type, uint32_t vdev_id);
+
+CDF_STATUS send_roam_scan_offload_rssi_change_cmd_tlv(wmi_unified_t wmi_handle,
+	uint32_t vdev_id,
+	int32_t rssi_change_thresh,
+	uint32_t bcn_rssi_weight,
+	uint32_t hirssi_delay_btw_scans);
+
+CDF_STATUS send_get_buf_extscan_hotlist_cmd_tlv(wmi_unified_t wmi_handle,
+				   struct ext_scan_setbssi_hotlist_params *
+				   photlist, int *buf_len);
+#endif
+

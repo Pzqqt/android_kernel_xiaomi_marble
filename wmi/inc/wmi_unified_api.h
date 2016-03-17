@@ -657,4 +657,75 @@ CDF_STATUS wmi_unified_send_init_cmd(void *wmi_hdl,
 		bool action);
 
 CDF_STATUS wmi_unified_send_saved_init_cmd(void *wmi_hdl);
+
+CDF_STATUS wmi_unified_set_base_macaddr_indicate_cmd(void *wmi_hdl,
+					 uint8_t *custom_addr);
+
+CDF_STATUS wmi_unified_log_supported_evt_cmd(void *wmi_hdl,
+		uint8_t *event,
+		uint32_t len);
+
+CDF_STATUS wmi_unified_enable_specific_fw_logs_cmd(void *wmi_hdl,
+		struct wmi_wifi_start_log *start_log);
+
+CDF_STATUS wmi_unified_flush_logs_to_fw_cmd(void *wmi_hdl);
+
+CDF_STATUS wmi_unified_soc_set_pcl_cmd(void *wmi_hdl,
+				struct wmi_pcl_list *msg);
+
+CDF_STATUS wmi_unified_soc_set_hw_mode_cmd(void *wmi_hdl,
+				uint32_t hw_mode_index);
+
+CDF_STATUS wmi_unified_soc_set_dual_mac_config_cmd(void *wmi_hdl,
+		struct wmi_dual_mac_config *msg);
+
+CDF_STATUS wmi_unified_enable_arp_ns_offload_cmd(void *wmi_hdl,
+			   struct host_offload_req_param *param, bool arp_only,
+			   uint8_t vdev_id);
+
+CDF_STATUS wmi_unified_set_led_flashing_cmd(void *wmi_hdl,
+				struct flashing_req_params *flashing);
+
+CDF_STATUS wmi_unified_app_type1_params_in_fw_cmd(void *wmi_hdl,
+				   struct app_type1_params *app_type1_params);
+
+CDF_STATUS wmi_unified_set_ssid_hotlist_cmd(void *wmi_hdl,
+		     struct ssid_hotlist_request_params *request);
+
+CDF_STATUS wmi_unified_roam_synch_complete_cmd(void *wmi_hdl,
+		 uint8_t vdev_id);
+
+CDF_STATUS wmi_unified_unit_test_cmd(void *wmi_hdl,
+			       struct wmi_unit_test_cmd *wmi_utest);
+
+CDF_STATUS wmi_unified_roam_invoke_cmd(void *wmi_hdl,
+		struct wmi_roam_invoke_cmd *roaminvoke,
+		uint32_t ch_hz);
+
+CDF_STATUS wmi_unified_roam_scan_offload_cmd(void *wmi_hdl,
+					 uint32_t command, uint32_t vdev_id);
+
+CDF_STATUS wmi_unified_send_roam_scan_offload_ap_cmd(void *wmi_hdl,
+					    wmi_ap_profile *ap_profile_p,
+					    uint32_t vdev_id);
+
+CDF_STATUS wmi_unified_roam_scan_offload_scan_period(void *wmi_hdl,
+					     uint32_t scan_period,
+					     uint32_t scan_age,
+					     uint32_t vdev_id);
+
+CDF_STATUS wmi_unified_roam_scan_offload_chan_list_cmd(void *wmi_hdl,
+				   uint8_t chan_count,
+				   uint8_t *chan_list,
+				   uint8_t list_type, uint32_t vdev_id);
+
+CDF_STATUS wmi_unified_roam_scan_offload_rssi_change_cmd(void *wmi_hdl,
+			  uint32_t vdev_id,
+			  int32_t rssi_change_thresh,
+			  uint32_t bcn_rssi_weight,
+			  uint32_t hirssi_delay_btw_scans);
+
+CDF_STATUS wmi_unified_get_buf_extscan_hotlist_cmd(void *wmi_hdl,
+				   struct ext_scan_setbssi_hotlist_params *
+				   photlist, int *buf_len);
 #endif /* _WMI_UNIFIED_API_H_ */

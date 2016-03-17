@@ -31,6 +31,7 @@
 #include "wmi_unified_priv.h"
 #include "wma_api.h"
 #include "wma.h"
+#include "wmi_version_whitelist.h"
 
 /**
  * send_vdev_create_cmd_tlv() - send VDEV create command to fw
@@ -8133,6 +8134,1376 @@ CDF_STATUS check_and_update_fw_version_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return CDF_STATUS_SUCCESS;
 }
+
+/**
+ * send_set_base_macaddr_indicate_cmd_tlv() - set base mac address in fw
+ * @wmi_handle: wmi handle
+ * @custom_addr: base mac address
+ *
+ * Return: 0 for success or error code
+ */
+CDF_STATUS send_set_base_macaddr_indicate_cmd_tlv(wmi_unified_t wmi_handle,
+					 uint8_t *custom_addr)
+{
+	wmi_pdev_set_base_macaddr_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int err;
+
+	buf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
+	if (!buf) {
+		WMA_LOGE("Failed to allocate buffer to send base macaddr cmd");
+		return -ENOMEM;
+	}
+
+	cmd = (wmi_pdev_set_base_macaddr_cmd_fixed_param *) wmi_buf_data(buf);
+	cdf_mem_zero(cmd, sizeof(*cmd));
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		   WMITLV_TAG_STRUC_wmi_pdev_set_base_macaddr_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_pdev_set_base_macaddr_cmd_fixed_param));
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(custom_addr, &cmd->base_macaddr);
+	err = wmi_unified_cmd_send(wmi_handle, buf,
+				   sizeof(*cmd),
+				   WMI_PDEV_SET_BASE_MACADDR_CMDID);
+	if (err) {
+		WMA_LOGE("Failed to send set_base_macaddr cmd");
+		cdf_mem_free(buf);
+		return -EIO;
+	}
+
+	return 0;
+}
+
+/**
+ * send_log_supported_evt_cmd_tlv() - Enable/Disable FW diag/log events
+ * @handle: wmi handle
+ * @event:  Event received from FW
+ * @len:    Length of the event
+ *
+ * Enables the low frequency events and disables the high frequency
+ * events. Bit 17 indicates if the event if low/high frequency.
+ * 1 - high frequency, 0 - low frequency
+ *
+ * Return: 0 on successfully enabling/disabling the events
+ */
+CDF_STATUS send_log_supported_evt_cmd_tlv(wmi_unified_t wmi_handle,
+		uint8_t *event,
+		uint32_t len)
+{
+	uint32_t num_of_diag_events_logs;
+	wmi_diag_event_log_config_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+	uint32_t *cmd_args, *evt_args;
+	uint32_t buf_len, i;
+
+	WMI_DIAG_EVENT_LOG_SUPPORTED_EVENTID_param_tlvs *param_buf;
+	wmi_diag_event_log_supported_event_fixed_params *wmi_event;
+
+	WMA_LOGI("Received WMI_DIAG_EVENT_LOG_SUPPORTED_EVENTID");
+
+	param_buf = (WMI_DIAG_EVENT_LOG_SUPPORTED_EVENTID_param_tlvs *) event;
+	if (!param_buf) {
+		WMA_LOGE("Invalid log supported event buffer");
+		return -EINVAL;
+	}
+	wmi_event = param_buf->fixed_param;
+	num_of_diag_events_logs = wmi_event->num_of_diag_events_logs;
+	evt_args = param_buf->diag_events_logs_list;
+	if (!evt_args) {
+		WMA_LOGE("%s: Event list is empty, num_of_diag_events_logs=%d",
+				__func__, num_of_diag_events_logs);
+		return -EINVAL;
+	}
+
+	WMA_LOGD("%s: num_of_diag_events_logs=%d",
+			__func__, num_of_diag_events_logs);
+
+	/* Free any previous allocation */
+	if (wmi_handle->events_logs_list)
+		cdf_mem_free(wmi_handle->events_logs_list);
+
+	/* Store the event list for run time enable/disable */
+	wmi_handle->events_logs_list = cdf_mem_malloc(num_of_diag_events_logs *
+			sizeof(uint32_t));
+	if (!wmi_handle->events_logs_list) {
+		WMA_LOGE("%s: event log list memory allocation failed",
+				__func__);
+		return -ENOMEM;
+	}
+	wmi_handle->num_of_diag_events_logs = num_of_diag_events_logs;
+
+	/* Prepare the send buffer */
+	buf_len = sizeof(*cmd) + WMI_TLV_HDR_SIZE +
+		(num_of_diag_events_logs * sizeof(uint32_t));
+
+	buf = wmi_buf_alloc(wmi_handle, buf_len);
+	if (!buf) {
+		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+		cdf_mem_free(wmi_handle->events_logs_list);
+		wmi_handle->events_logs_list = NULL;
+		return -ENOMEM;
+	}
+
+	cmd = (wmi_diag_event_log_config_fixed_param *) wmi_buf_data(buf);
+	buf_ptr = (uint8_t *) cmd;
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+			WMITLV_TAG_STRUC_wmi_diag_event_log_config_fixed_param,
+			WMITLV_GET_STRUCT_TLVLEN(
+				wmi_diag_event_log_config_fixed_param));
+
+	cmd->num_of_diag_events_logs = num_of_diag_events_logs;
+
+	buf_ptr += sizeof(wmi_diag_event_log_config_fixed_param);
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
+			(num_of_diag_events_logs * sizeof(uint32_t)));
+
+	cmd_args = (uint32_t *) (buf_ptr + WMI_TLV_HDR_SIZE);
+
+	/* Populate the events */
+	for (i = 0; i < num_of_diag_events_logs; i++) {
+		/* Low freq (0) - Enable (1) the event
+		 * High freq (1) - Disable (0) the event
+		 */
+		WMI_DIAG_ID_ENABLED_DISABLED_SET(cmd_args[i],
+				!(WMI_DIAG_FREQUENCY_GET(evt_args[i])));
+		/* Set the event ID */
+		WMI_DIAG_ID_SET(cmd_args[i],
+				WMI_DIAG_ID_GET(evt_args[i]));
+		/* Set the type */
+		WMI_DIAG_TYPE_SET(cmd_args[i],
+				WMI_DIAG_TYPE_GET(evt_args[i]));
+		/* Storing the event/log list in WMA */
+		wmi_handle->events_logs_list[i] = evt_args[i];
+	}
+
+	if (wmi_unified_cmd_send(wmi_handle, buf, buf_len,
+				WMI_DIAG_EVENT_LOG_CONFIG_CMDID)) {
+		WMA_LOGE("%s: WMI_DIAG_EVENT_LOG_CONFIG_CMDID failed",
+				__func__);
+		wmi_buf_free(buf);
+		/* Not clearing events_logs_list, though wmi cmd failed.
+		 * Host can still have this list
+		 */
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+/**
+ * send_enable_specific_fw_logs_cmd_tlv() - Start/Stop logging of diag log id
+ * @wmi_handle: wmi handle
+ * @start_log: Start logging related parameters
+ *
+ * Send the command to the FW based on which specific logging of diag
+ * event/log id can be started/stopped
+ *
+ * Return: None
+ */
+CDF_STATUS send_enable_specific_fw_logs_cmd_tlv(wmi_unified_t wmi_handle,
+		struct wmi_wifi_start_log *start_log)
+{
+	wmi_diag_event_log_config_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+	uint32_t len, count, log_level, i;
+	uint32_t *cmd_args;
+	uint32_t total_len;
+	count = 0;
+
+	if (!wmi_handle->events_logs_list) {
+		WMA_LOGE("%s: Not received event/log list from FW, yet",
+				__func__);
+		return -ENOMEM;
+	}
+	/* total_len stores the number of events where BITS 17 and 18 are set.
+	 * i.e., events of high frequency (17) and for extended debugging (18)
+	 */
+	total_len = 0;
+	for (i = 0; i < wmi_handle->num_of_diag_events_logs; i++) {
+		if ((WMI_DIAG_FREQUENCY_GET(wmi_handle->events_logs_list[i])) &&
+		    (WMI_DIAG_EXT_FEATURE_GET(wmi_handle->events_logs_list[i])))
+			total_len++;
+	}
+
+	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE +
+		(total_len * sizeof(uint32_t));
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+		return -ENOMEM;
+	}
+	cmd = (wmi_diag_event_log_config_fixed_param *) wmi_buf_data(buf);
+	buf_ptr = (uint8_t *) cmd;
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+			WMITLV_TAG_STRUC_wmi_diag_event_log_config_fixed_param,
+			WMITLV_GET_STRUCT_TLVLEN(
+				wmi_diag_event_log_config_fixed_param));
+
+	cmd->num_of_diag_events_logs = total_len;
+
+	buf_ptr += sizeof(wmi_diag_event_log_config_fixed_param);
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
+			(total_len * sizeof(uint32_t)));
+
+	cmd_args = (uint32_t *) (buf_ptr + WMI_TLV_HDR_SIZE);
+
+	if (start_log->verbose_level >= LOG_LEVEL_ACTIVE)
+		log_level = 1;
+	else
+		log_level = 0;
+
+	WMA_LOGD("%s: Length:%d, Log_level:%d", __func__, total_len, log_level);
+	for (i = 0; i < wmi_handle->num_of_diag_events_logs; i++) {
+		uint32_t val = wmi_handle->events_logs_list[i];
+		if ((WMI_DIAG_FREQUENCY_GET(val)) &&
+				(WMI_DIAG_EXT_FEATURE_GET(val))) {
+
+			WMI_DIAG_ID_SET(cmd_args[count],
+					WMI_DIAG_ID_GET(val));
+			WMI_DIAG_TYPE_SET(cmd_args[count],
+					WMI_DIAG_TYPE_GET(val));
+			WMI_DIAG_ID_ENABLED_DISABLED_SET(cmd_args[count],
+					log_level);
+			WMA_LOGD("%s: Idx:%d, val:%x", __func__, i, val);
+			count++;
+		}
+	}
+
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				WMI_DIAG_EVENT_LOG_CONFIG_CMDID)) {
+		WMA_LOGE("%s: WMI_DIAG_EVENT_LOG_CONFIG_CMDID failed",
+				__func__);
+		wmi_buf_free(buf);
+		return -EINVAL;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_flush_logs_to_fw_cmd_tlv() - Send log flush command to FW
+ * @wmi_handle: WMI handle
+ *
+ * This function is used to send the flush command to the FW,
+ * that will flush the fw logs that are residue in the FW
+ *
+ * Return: None
+ */
+CDF_STATUS send_flush_logs_to_fw_cmd_tlv(wmi_unified_t wmi_handle)
+{
+	wmi_debug_mesg_flush_fixed_param *cmd;
+	wmi_buf_t buf;
+	int len = sizeof(*cmd);
+	int ret;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGP("%s: wmi_buf_alloc failed", __func__);
+		return -ENOMEM;
+	}
+
+	cmd = (wmi_debug_mesg_flush_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+			WMITLV_TAG_STRUC_wmi_debug_mesg_flush_fixed_param,
+			WMITLV_GET_STRUCT_TLVLEN(
+				wmi_debug_mesg_flush_fixed_param));
+	cmd->reserved0 = 0;
+
+	ret = wmi_unified_cmd_send(wmi_handle,
+			buf,
+			len,
+			WMI_DEBUG_MESG_FLUSH_CMDID);
+	if (ret != EOK) {
+		WMA_LOGE("Failed to send WMI_DEBUG_MESG_FLUSH_CMDID");
+		wmi_buf_free(buf);
+		return -EINVAL;
+	}
+	WMA_LOGI("Sent WMI_DEBUG_MESG_FLUSH_CMDID to FW");
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_soc_set_pcl_cmd_tlv() - Send WMI_SOC_SET_PCL_CMDID to FW
+ * @wmi_handle: wmi handle
+ * @msg: PCL structure containing the PCL and the number of channels
+ *
+ * WMI_SOC_SET_PCL_CMDID provides a Preferred Channel List (PCL) to the WLAN
+ * firmware. The DBS Manager is the consumer of this information in the WLAN
+ * firmware. The channel list will be used when a Virtual DEVice (VDEV) needs
+ * to migrate to a new channel without host driver involvement. An example of
+ * this behavior is Legacy Fast Roaming (LFR 3.0). Generally, the host will
+ * manage the channel selection without firmware involvement.
+ *
+ * Return: Success if the cmd is sent successfully to the firmware
+ */
+CDF_STATUS send_soc_set_pcl_cmd_tlv(wmi_unified_t wmi_handle,
+				struct wmi_pcl_list *msg)
+{
+	wmi_soc_set_pcl_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+	uint32_t *cmd_args, i, len;
+
+	len = sizeof(*cmd) +
+		WMI_TLV_HDR_SIZE + (msg->pcl_len * sizeof(uint32_t));
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_soc_set_pcl_cmd_fixed_param *) wmi_buf_data(buf);
+	buf_ptr = (uint8_t *) cmd;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_soc_set_pcl_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(wmi_soc_set_pcl_cmd_fixed_param));
+	cmd->num_chan = msg->pcl_len;
+	WMA_LOGI("%s: PCL len:%d", __func__, cmd->num_chan);
+
+	buf_ptr += sizeof(wmi_soc_set_pcl_cmd_fixed_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
+			(msg->pcl_len * sizeof(uint32_t)));
+	cmd_args = (uint32_t *) (buf_ptr + WMI_TLV_HDR_SIZE);
+	for (i = 0; i < msg->pcl_len ; i++) {
+		cmd_args[i] = msg->pcl_list[i];
+		WMA_LOGI("%s: PCL chan:%d", __func__, cmd_args[i]);
+	}
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				WMI_SOC_SET_PCL_CMDID)) {
+		WMA_LOGE("%s: Failed to send WMI_SOC_SET_PCL_CMDID", __func__);
+		cdf_nbuf_free(buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_soc_set_hw_mode_cmd_tlv() - Send WMI_SOC_SET_HW_MODE_CMDID to FW
+ * @wmi_handle: wmi handle
+ * @msg: Structure containing the following parameters
+ *
+ * - hw_mode_index: The HW_Mode field is a enumerated type that is selected
+ * from the HW_Mode table, which is returned in the WMI_SERVICE_READY_EVENTID.
+ *
+ * Provides notification to the WLAN firmware that host driver is requesting a
+ * HardWare (HW) Mode change. This command is needed to support iHelium in the
+ * configurations that include the Dual Band Simultaneous (DBS) feature.
+ *
+ * Return: Success if the cmd is sent successfully to the firmware
+ */
+CDF_STATUS send_soc_set_hw_mode_cmd_tlv(wmi_unified_t wmi_handle,
+				uint32_t hw_mode_index)
+{
+	wmi_soc_set_hw_mode_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint32_t len;
+
+	len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_soc_set_hw_mode_cmd_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_soc_set_hw_mode_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(wmi_soc_set_hw_mode_cmd_fixed_param));
+	cmd->hw_mode_index = hw_mode_index;
+	WMA_LOGI("%s: HW mode index:%d", __func__, cmd->hw_mode_index);
+
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				WMI_SOC_SET_HW_MODE_CMDID)) {
+		WMA_LOGE("%s: Failed to send WMI_SOC_SET_HW_MODE_CMDID",
+			__func__);
+		cdf_nbuf_free(buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_soc_set_dual_mac_config_cmd_tlv() - Set dual mac config to FW
+ * @wmi_handle: wmi handle
+ * @msg: Dual MAC config parameters
+ *
+ * Configures WLAN firmware with the dual MAC features
+ *
+ * Return: CDF_STATUS. 0 on success.
+ */
+CDF_STATUS send_soc_set_dual_mac_config_cmd_tlv(wmi_unified_t wmi_handle,
+		struct wmi_dual_mac_config *msg)
+{
+	wmi_soc_set_dual_mac_config_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint32_t len;
+
+	len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	cmd = (wmi_soc_set_dual_mac_config_cmd_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_soc_set_dual_mac_config_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+			wmi_soc_set_dual_mac_config_cmd_fixed_param));
+	cmd->concurrent_scan_config_bits = msg->scan_config;
+	cmd->fw_mode_config_bits = msg->fw_mode_config;
+	WMA_LOGI("%s: scan_config:%x fw_mode_config:%x",
+			__func__, msg->scan_config, msg->fw_mode_config);
+
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				WMI_SOC_SET_DUAL_MAC_CONFIG_CMDID)) {
+		WMA_LOGE("%s: Failed to send WMI_SOC_SET_DUAL_MAC_CONFIG_CMDID",
+				__func__);
+		cdf_nbuf_free(buf);
+	}
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_enable_arp_ns_offload_cmd_tlv() - enable ARP NS offload
+ * @wma: wmi handle
+ * @tpSirHostOffloadReq: offload request
+ * @arp_only: flag
+ *
+ * To configure ARP NS off load data to firmware
+ * when target goes to wow mode.
+ *
+ * Return: CDF Status
+ */
+CDF_STATUS send_enable_arp_ns_offload_cmd_tlv(wmi_unified_t wmi_handle,
+			   struct host_offload_req_param *param, bool arp_only,
+			   uint8_t vdev_id)
+{
+	int32_t i;
+	int32_t res;
+	WMI_SET_ARP_NS_OFFLOAD_CMD_fixed_param *cmd;
+	WMI_NS_OFFLOAD_TUPLE *ns_tuple;
+	WMI_ARP_OFFLOAD_TUPLE *arp_tuple;
+	A_UINT8 *buf_ptr;
+	wmi_buf_t buf;
+	int32_t len;
+	uint32_t count = 0, num_ns_ext_tuples = 0;
+
+
+	if (!arp_only)
+		count = param->num_ns_offload_count;
+	/*
+	 * TLV place holder size for array of NS tuples
+	 * TLV place holder size for array of ARP tuples
+	 */
+	len = sizeof(WMI_SET_ARP_NS_OFFLOAD_CMD_fixed_param) + WMI_TLV_HDR_SIZE +
+	      WMI_MAX_NS_OFFLOADS * sizeof(WMI_NS_OFFLOAD_TUPLE) + WMI_TLV_HDR_SIZE +
+	      WMI_MAX_ARP_OFFLOADS * sizeof(WMI_ARP_OFFLOAD_TUPLE);
+
+	/*
+	 * If there are more than WMI_MAX_NS_OFFLOADS addresses then allocate
+	 * extra length for extended NS offload tuples which follows ARP offload
+	 * tuples. Host needs to fill this structure in following format:
+	 * 2 NS ofload tuples
+	 * 2 ARP offload tuples
+	 * N numbers of extended NS offload tuples if HDD has given more than
+	 * 2 NS offload addresses
+	 */
+	if (!arp_only && count > WMI_MAX_NS_OFFLOADS) {
+		num_ns_ext_tuples = count - WMI_MAX_NS_OFFLOADS;
+		len += WMI_TLV_HDR_SIZE + num_ns_ext_tuples *
+					sizeof(WMI_NS_OFFLOAD_TUPLE);
+	}
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+		cdf_mem_free(param);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (A_UINT8 *) wmi_buf_data(buf);
+	cmd = (WMI_SET_ARP_NS_OFFLOAD_CMD_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_WMI_SET_ARP_NS_OFFLOAD_CMD_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (WMI_SET_ARP_NS_OFFLOAD_CMD_fixed_param));
+	cmd->flags = 0;
+	cmd->vdev_id = vdev_id;
+	if (!arp_only)
+		cmd->num_ns_ext_tuples = num_ns_ext_tuples;
+
+	WMA_LOGD("ARP NS Offload vdev_id: %d", cmd->vdev_id);
+
+	/* Have copy of arp info to send along with NS, Since FW expects
+	 * both ARP and NS info in single cmd */
+	if (arp_only)
+		cdf_mem_copy(&wmi_handle->arp_info, param,
+			     sizeof(tSirHostOffloadReq));
+
+	buf_ptr += sizeof(WMI_SET_ARP_NS_OFFLOAD_CMD_fixed_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       (WMI_MAX_NS_OFFLOADS * sizeof(WMI_NS_OFFLOAD_TUPLE)));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	for (i = 0; i < WMI_MAX_NS_OFFLOADS; i++) {
+		ns_tuple = (WMI_NS_OFFLOAD_TUPLE *) buf_ptr;
+		WMITLV_SET_HDR(&ns_tuple->tlv_header,
+			       WMITLV_TAG_STRUC_WMI_NS_OFFLOAD_TUPLE,
+			       (sizeof(WMI_NS_OFFLOAD_TUPLE) -
+				WMI_TLV_HDR_SIZE));
+
+		/* Fill data only for NS offload in the first ARP tuple for LA */
+		if (!arp_only &&
+		    ((param->enableOrDisable & SIR_OFFLOAD_ENABLE))) {
+			ns_tuple->flags |= WMI_NSOFF_FLAGS_VALID;
+
+#ifdef WLAN_NS_OFFLOAD
+			/*Copy the target/solicitation/remote ip addr */
+			if (param->nsOffloadInfo.
+			    targetIPv6AddrValid[i])
+				A_MEMCPY(&ns_tuple->target_ipaddr[0],
+					 &param->nsOffloadInfo.
+					 targetIPv6Addr[i],
+					 sizeof(WMI_IPV6_ADDR));
+			A_MEMCPY(&ns_tuple->solicitation_ipaddr,
+				 &param->nsOffloadInfo.
+				 selfIPv6Addr[i], sizeof(WMI_IPV6_ADDR));
+			WMA_LOGD("NS solicitedIp: %pI6, targetIp: %pI6",
+				 &param->nsOffloadInfo.selfIPv6Addr[i],
+				 &param->nsOffloadInfo.
+				 targetIPv6Addr[i]);
+
+			/* target MAC is optional, check if it is valid,
+			 * if this is not valid, the target will use the known
+			 * local MAC address rather than the tuple
+			 */
+			WMI_CHAR_ARRAY_TO_MAC_ADDR(param->
+					nsOffloadInfo.self_macaddr.bytes,
+					&ns_tuple->target_mac);
+#endif /* WLAN_NS_OFFLOAD */
+			if ((ns_tuple->target_mac.mac_addr31to0 != 0) ||
+			    (ns_tuple->target_mac.mac_addr47to32 != 0)) {
+				ns_tuple->flags |= WMI_NSOFF_FLAGS_MAC_VALID;
+			}
+		}
+		buf_ptr += sizeof(WMI_NS_OFFLOAD_TUPLE);
+	}
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       (WMI_MAX_ARP_OFFLOADS * sizeof(WMI_ARP_OFFLOAD_TUPLE)));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	for (i = 0; i < WMI_MAX_ARP_OFFLOADS; i++) {
+		arp_tuple = (WMI_ARP_OFFLOAD_TUPLE *) buf_ptr;
+		WMITLV_SET_HDR(&arp_tuple->tlv_header,
+			       WMITLV_TAG_STRUC_WMI_ARP_OFFLOAD_TUPLE,
+			       WMITLV_GET_STRUCT_TLVLEN(WMI_ARP_OFFLOAD_TUPLE));
+
+		/* Fill data for ARP and NS in the first tupple for LA */
+		if ((wmi_handle->arp_info.enableOrDisable & SIR_OFFLOAD_ENABLE)
+		    && (i == 0)) {
+			/*Copy the target ip addr and flags */
+			arp_tuple->flags = WMI_ARPOFF_FLAGS_VALID;
+			A_MEMCPY(&arp_tuple->target_ipaddr,
+				 wmi_handle->arp_info.params.hostIpv4Addr,
+				 SIR_IPV4_ADDR_LEN);
+			WMA_LOGD("ARPOffload IP4 address: %pI4",
+				 wmi_handle->arp_info.params.hostIpv4Addr);
+		}
+		buf_ptr += sizeof(WMI_ARP_OFFLOAD_TUPLE);
+	}
+
+	/* Populate extended NS offload tuples */
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+					(num_ns_ext_tuples*sizeof(WMI_NS_OFFLOAD_TUPLE)));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	if (num_ns_ext_tuples) {
+		for (i = WMI_MAX_NS_OFFLOADS; i < count; i++) {
+			ns_tuple = (WMI_NS_OFFLOAD_TUPLE *)buf_ptr;
+			WMITLV_SET_HDR(&ns_tuple->tlv_header,
+				WMITLV_TAG_STRUC_WMI_NS_OFFLOAD_TUPLE,
+				(sizeof(WMI_NS_OFFLOAD_TUPLE)-WMI_TLV_HDR_SIZE));
+
+			/* Fill data only for NS offload in the first ARP tuple for LA */
+			if (!arp_only  &&
+				((param->enableOrDisable & SIR_OFFLOAD_ENABLE))) {
+				ns_tuple->flags |= WMI_NSOFF_FLAGS_VALID;
+#ifdef WLAN_NS_OFFLOAD
+				/*Copy the target/solicitation/remote ip addr */
+				if (param->nsOffloadInfo.targetIPv6AddrValid[i])
+					A_MEMCPY(&ns_tuple->target_ipaddr[0],
+						&param->nsOffloadInfo.targetIPv6Addr[i],
+						sizeof(WMI_IPV6_ADDR));
+				A_MEMCPY(&ns_tuple->solicitation_ipaddr,
+					&param->nsOffloadInfo.selfIPv6Addr[i],
+					sizeof(WMI_IPV6_ADDR));
+				WMA_LOGD("Index %d NS solicitedIp: %pI6, targetIp: %pI6", i,
+					&param->nsOffloadInfo.selfIPv6Addr[i],
+					&param->nsOffloadInfo.targetIPv6Addr[i]);
+
+				/* target MAC is optional, check if it is valid, if this is not valid,
+				 * the target will use the known local MAC address rather than the tuple */
+				 WMI_CHAR_ARRAY_TO_MAC_ADDR(
+					param->nsOffloadInfo.self_macaddr.bytes,
+					&ns_tuple->target_mac);
+#endif
+				if ((ns_tuple->target_mac.mac_addr31to0 != 0) ||
+					(ns_tuple->target_mac.mac_addr47to32 != 0)) {
+					ns_tuple->flags |= WMI_NSOFF_FLAGS_MAC_VALID;
+				}
+			}
+			buf_ptr += sizeof(WMI_NS_OFFLOAD_TUPLE);
+		}
+	}
+
+	res = wmi_unified_cmd_send(wmi_handle, buf, len,
+				     WMI_SET_ARP_NS_OFFLOAD_CMDID);
+	if (res) {
+		WMA_LOGE("Failed to enable ARP NDP/NSffload");
+		wmi_buf_free(buf);
+		cdf_mem_free(param);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	cdf_mem_free(param);
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_set_ssid_hotlist_cmd_tlv() - Handle an SSID hotlist set request
+ * @wmi_handle: wmi handle
+ * @request: SSID hotlist set request
+ *
+ * Return: CDF_STATUS enumeration
+ */
+CDF_STATUS
+send_set_ssid_hotlist_cmd_tlv(wmi_unified_t wmi_handle,
+		     struct ssid_hotlist_request_params *request)
+{
+	wmi_extscan_configure_hotlist_ssid_monitor_cmd_fixed_param *cmd;
+	wmi_buf_t wmi_buf;
+	uint32_t len;
+	uint32_t array_size;
+	uint8_t *buf_ptr;
+
+	/* length of fixed portion */
+	len = sizeof(*cmd);
+
+	/* length of variable portion */
+	array_size =
+		request->ssid_count * sizeof(wmi_extscan_hotlist_ssid_entry);
+	len += WMI_TLV_HDR_SIZE + array_size;
+
+	wmi_buf = wmi_buf_alloc(wmi_handle, len);
+	if (!wmi_buf) {
+		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
+	cmd = (wmi_extscan_configure_hotlist_ssid_monitor_cmd_fixed_param *)
+						buf_ptr;
+	WMITLV_SET_HDR
+		(&cmd->tlv_header,
+		 WMITLV_TAG_STRUC_wmi_extscan_configure_hotlist_ssid_monitor_cmd_fixed_param,
+		 WMITLV_GET_STRUCT_TLVLEN
+			(wmi_extscan_configure_hotlist_ssid_monitor_cmd_fixed_param));
+
+	cmd->request_id = request->request_id;
+	cmd->requestor_id = 0;
+	cmd->vdev_id = request->session_id;
+	cmd->table_id = 0;
+	cmd->lost_ap_scan_count = request->lost_ssid_sample_size;
+	cmd->total_entries = request->ssid_count;
+	cmd->num_entries_in_page = request->ssid_count;
+	cmd->first_entry_index = 0;
+
+	buf_ptr += sizeof(*cmd);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, array_size);
+
+	if (request->ssid_count) {
+		wmi_extscan_hotlist_ssid_entry *entry;
+		int i;
+
+		buf_ptr += WMI_TLV_HDR_SIZE;
+		entry = (wmi_extscan_hotlist_ssid_entry *)buf_ptr;
+		for (i = 0; i < request->ssid_count; i++) {
+			WMITLV_SET_HDR
+				(entry,
+				 WMITLV_TAG_ARRAY_STRUC,
+				 WMITLV_GET_STRUCT_TLVLEN
+					(wmi_extscan_hotlist_ssid_entry));
+			entry->ssid.ssid_len = request->ssids[i].ssid.length;
+			cdf_mem_copy(entry->ssid.ssid,
+				     request->ssids[i].ssid.mac_ssid,
+				     request->ssids[i].ssid.length);
+			entry->band = request->ssids[i].band;
+			entry->min_rssi = request->ssids[i].rssi_low;
+			entry->max_rssi = request->ssids[i].rssi_high;
+			entry++;
+		}
+		cmd->mode = WMI_EXTSCAN_MODE_START;
+	} else {
+		cmd->mode = WMI_EXTSCAN_MODE_STOP;
+	}
+
+	if (wmi_unified_cmd_send
+		(wmi_handle, wmi_buf, len,
+		 WMI_EXTSCAN_CONFIGURE_HOTLIST_SSID_MONITOR_CMDID)) {
+		WMA_LOGE("%s: failed to send command", __func__);
+		wmi_buf_free(wmi_buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_process_roam_synch_complete_cmd_tlv() - roam synch complete command to fw.
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ *
+ * This function sends roam synch complete event to fw.
+ *
+ * Return: CDF STATUS
+ */
+CDF_STATUS send_process_roam_synch_complete_cmd_tlv(wmi_unified_t wmi_handle,
+		 uint8_t vdev_id)
+{
+	wmi_roam_synch_complete_fixed_param *cmd;
+	wmi_buf_t wmi_buf;
+	uint8_t *buf_ptr;
+	uint16_t len;
+	len = sizeof(wmi_roam_synch_complete_fixed_param);
+
+	wmi_buf = wmi_buf_alloc(wmi_handle, len);
+	if (!wmi_buf) {
+		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_roam_synch_complete_fixed_param *) wmi_buf_data(wmi_buf);
+	buf_ptr = (uint8_t *) cmd;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_roam_synch_complete_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_roam_synch_complete_fixed_param));
+	cmd->vdev_id = vdev_id;
+	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
+				 WMI_ROAM_SYNCH_COMPLETE)) {
+		WMA_LOGP("%s: failed to send roam synch confirmation",
+			 __func__);
+		cdf_nbuf_free(wmi_buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_unit_test_cmd_tlv() - send unit test command to fw.
+ * @wmi_handle: wmi handle
+ * @wmi_utest: unit test command
+ *
+ * This function send unit test command to fw.
+ *
+ * Return: CDF STATUS
+ */
+CDF_STATUS send_unit_test_cmd_tlv(wmi_unified_t wmi_handle,
+			       struct wmi_unit_test_cmd *wmi_utest)
+{
+	wmi_unit_test_cmd_fixed_param *cmd;
+	wmi_buf_t wmi_buf;
+	uint8_t *buf_ptr;
+	int i;
+	uint16_t len, args_tlv_len;
+	A_UINT32 *unit_test_cmd_args;
+
+	args_tlv_len =
+		WMI_TLV_HDR_SIZE + wmi_utest->num_args * sizeof(A_UINT32);
+	len = sizeof(wmi_unit_test_cmd_fixed_param) + args_tlv_len;
+
+	wmi_buf = wmi_buf_alloc(wmi_handle, len);
+	if (!wmi_buf) {
+		WMA_LOGE("%s: wmai_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_unit_test_cmd_fixed_param *) wmi_buf_data(wmi_buf);
+	buf_ptr = (uint8_t *) cmd;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_unit_test_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_unit_test_cmd_fixed_param));
+	cmd->vdev_id = wmi_utest->vdev_id;
+	cmd->module_id = wmi_utest->module_id;
+	cmd->num_args = wmi_utest->num_args;
+	buf_ptr += sizeof(wmi_unit_test_cmd_fixed_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
+		       (wmi_utest->num_args * sizeof(uint32_t)));
+	unit_test_cmd_args = (A_UINT32 *) (buf_ptr + WMI_TLV_HDR_SIZE);
+	WMA_LOGI("%s: %d num of args = ", __func__, wmi_utest->num_args);
+	for (i = 0; (i < wmi_utest->num_args && i < WMI_MAX_NUM_ARGS); i++) {
+		unit_test_cmd_args[i] = wmi_utest->args[i];
+		WMA_LOGI("%d,", wmi_utest->args[i]);
+	}
+	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
+				 WMI_UNIT_TEST_CMDID)) {
+		WMA_LOGP("%s: failed to send unit test command", __func__);
+		cdf_nbuf_free(wmi_buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_roam_invoke_cmd_tlv() - send roam invoke command to fw.
+ * @wmi_handle: wma handle
+ * @roaminvoke: roam invoke command
+ *
+ * Send roam invoke command to fw for fastreassoc.
+ *
+ * Return: CDF STATUS
+ */
+CDF_STATUS send_roam_invoke_cmd_tlv(wmi_unified_t wmi_handle,
+		struct wmi_roam_invoke_cmd *roaminvoke,
+		uint32_t ch_hz)
+{
+	wmi_roam_invoke_cmd_fixed_param *cmd;
+	wmi_buf_t wmi_buf;
+	u_int8_t *buf_ptr;
+	u_int16_t len, args_tlv_len;
+	A_UINT32 *channel_list;
+	wmi_mac_addr *bssid_list;
+
+	/* Host sends only one channel and one bssid */
+	args_tlv_len = 2 * WMI_TLV_HDR_SIZE + sizeof(A_UINT32) +
+			sizeof(wmi_mac_addr);
+	len = sizeof(wmi_roam_invoke_cmd_fixed_param) + args_tlv_len;
+	wmi_buf = wmi_buf_alloc(wmi_handle, len);
+	if (!wmi_buf) {
+		WMA_LOGE("%s: wmai_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_roam_invoke_cmd_fixed_param *)wmi_buf_data(wmi_buf);
+	buf_ptr = (u_int8_t *) cmd;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+	WMITLV_TAG_STRUC_wmi_roam_invoke_cmd_fixed_param,
+	WMITLV_GET_STRUCT_TLVLEN(wmi_roam_invoke_cmd_fixed_param));
+	cmd->vdev_id = roaminvoke->vdev_id;
+	cmd->flags = 0;
+	cmd->roam_scan_mode = 0;
+	cmd->roam_ap_sel_mode = 0;
+	cmd->roam_delay = 0;
+	cmd->num_chan = 1;
+	cmd->num_bssid = 1;
+	buf_ptr += sizeof(wmi_roam_invoke_cmd_fixed_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
+				(sizeof(u_int32_t)));
+	channel_list = (A_UINT32 *)(buf_ptr + WMI_TLV_HDR_SIZE);
+	*channel_list = ch_hz;
+	buf_ptr += sizeof(A_UINT32) + WMI_TLV_HDR_SIZE;
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_FIXED_STRUC,
+				(sizeof(wmi_mac_addr)));
+	bssid_list = (wmi_mac_addr *)(buf_ptr + WMI_TLV_HDR_SIZE);
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(roaminvoke->bssid, bssid_list);
+	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
+					WMI_ROAM_INVOKE_CMDID)) {
+		WMA_LOGP("%s: failed to send roam invoke command", __func__);
+		wmi_buf_free(wmi_buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_roam_scan_offload_cmd_tlv() - set roam offload command
+ * @wmi_handle: wmi handle
+ * @command: command
+ * @vdev_id: vdev id
+ *
+ * This function set roam offload command to fw.
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_roam_scan_offload_cmd_tlv(wmi_unified_t wmi_handle,
+					 uint32_t command, uint32_t vdev_id)
+{
+	CDF_STATUS cdf_status;
+	wmi_roam_scan_cmd_fixed_param *cmd_fp;
+	wmi_buf_t buf = NULL;
+	int status = 0;
+	int len;
+	uint8_t *buf_ptr;
+
+	len = sizeof(wmi_roam_scan_cmd_fixed_param);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+
+	cmd_fp = (wmi_roam_scan_cmd_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&cmd_fp->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_roam_scan_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_roam_scan_cmd_fixed_param));
+	cmd_fp->vdev_id = vdev_id;
+	cmd_fp->command_arg = command;
+
+	status = wmi_unified_cmd_send(wmi_handle, buf,
+				      len, WMI_ROAM_SCAN_CMD);
+	if (status != EOK) {
+		WMA_LOGE("wmi_unified_cmd_send WMI_ROAM_SCAN_CMD returned Error %d",
+			status);
+		cdf_status = CDF_STATUS_E_FAILURE;
+		goto error;
+	}
+
+	WMA_LOGI("%s: WMA --> WMI_ROAM_SCAN_CMD", __func__);
+	return CDF_STATUS_SUCCESS;
+
+error:
+	wmi_buf_free(buf);
+
+	return cdf_status;
+}
+
+/**
+ * send_roam_scan_offload_ap_profile_cmd_tlv() - set roam ap profile in fw
+ * @wmi_handle: wmi handle
+ * @ap_profile_p: ap profile
+ * @vdev_id: vdev id
+ *
+ * Send WMI_ROAM_AP_PROFILE to firmware
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
+					    wmi_ap_profile *ap_profile_p,
+					    uint32_t vdev_id)
+{
+	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	wmi_buf_t buf = NULL;
+	int status = 0;
+	int len;
+	uint8_t *buf_ptr;
+	wmi_roam_ap_profile_fixed_param *roam_ap_profile_fp;
+
+	len = sizeof(wmi_roam_ap_profile_fixed_param) + sizeof(wmi_ap_profile);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	roam_ap_profile_fp = (wmi_roam_ap_profile_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&roam_ap_profile_fp->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_roam_ap_profile_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_roam_ap_profile_fixed_param));
+	/* fill in threshold values */
+	roam_ap_profile_fp->vdev_id = vdev_id;
+	roam_ap_profile_fp->id = 0;
+	buf_ptr += sizeof(wmi_roam_ap_profile_fixed_param);
+
+	cdf_mem_copy(buf_ptr, ap_profile_p, sizeof(wmi_ap_profile));
+	WMITLV_SET_HDR(buf_ptr,
+		       WMITLV_TAG_STRUC_wmi_ap_profile,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_ap_profile));
+	status = wmi_unified_cmd_send(wmi_handle, buf,
+				      len, WMI_ROAM_AP_PROFILE);
+	if (status != EOK) {
+		WMA_LOGE("wmi_unified_cmd_send WMI_ROAM_AP_PROFILE returned Error %d",
+			status);
+		cdf_status = CDF_STATUS_E_FAILURE;
+		goto error;
+	}
+
+	WMA_LOGI("WMA --> WMI_ROAM_AP_PROFILE and other parameters");
+	return CDF_STATUS_SUCCESS;
+error:
+	wmi_buf_free(buf);
+
+	return cdf_status;
+}
+
+/**
+ * send_roam_scan_offload_scan_period_cmd_tlv() - set roam offload scan period
+ * @wmi_handle: wmi handle
+ * @scan_period: scan period
+ * @scan_age: scan age
+ * @vdev_id: vdev id
+ *
+ * Send WMI_ROAM_SCAN_PERIOD parameters to fw.
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_roam_scan_offload_scan_period_cmd_tlv(wmi_unified_t wmi_handle,
+					     uint32_t scan_period,
+					     uint32_t scan_age,
+					     uint32_t vdev_id)
+{
+	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	wmi_buf_t buf = NULL;
+	int status = 0;
+	int len;
+	uint8_t *buf_ptr;
+	wmi_roam_scan_period_fixed_param *scan_period_fp;
+
+	/* Send scan period values */
+	len = sizeof(wmi_roam_scan_period_fixed_param);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	scan_period_fp = (wmi_roam_scan_period_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&scan_period_fp->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_roam_scan_period_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_roam_scan_period_fixed_param));
+	/* fill in scan period values */
+	scan_period_fp->vdev_id = vdev_id;
+	scan_period_fp->roam_scan_period = scan_period; /* 20 seconds */
+	scan_period_fp->roam_scan_age = scan_age;
+
+	status = wmi_unified_cmd_send(wmi_handle, buf,
+				      len, WMI_ROAM_SCAN_PERIOD);
+	if (status != EOK) {
+		WMA_LOGE("wmi_unified_cmd_send WMI_ROAM_SCAN_PERIOD returned Error %d",
+			status);
+		cdf_status = CDF_STATUS_E_FAILURE;
+		goto error;
+	}
+
+	WMA_LOGI("%s: WMA --> WMI_ROAM_SCAN_PERIOD roam_scan_period=%d, roam_scan_age=%d",
+		__func__, scan_period, scan_age);
+	return CDF_STATUS_SUCCESS;
+error:
+	wmi_buf_free(buf);
+
+	return cdf_status;
+}
+
+/**
+ * send_roam_scan_offload_chan_list_cmd_tlv() - set roam offload channel list
+ * @wmi_handle: wmi handle
+ * @chan_count: channel count
+ * @chan_list: channel list
+ * @list_type: list type
+ * @vdev_id: vdev id
+ *
+ * Set roam offload channel list.
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_roam_scan_offload_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
+				   uint8_t chan_count,
+				   uint8_t *chan_list,
+				   uint8_t list_type, uint32_t vdev_id)
+{
+	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	wmi_buf_t buf = NULL;
+	int status = 0;
+	int len, list_tlv_len;
+	int i;
+	uint8_t *buf_ptr;
+	wmi_roam_chan_list_fixed_param *chan_list_fp;
+	A_UINT32 *roam_chan_list_array;
+
+	if (chan_count == 0) {
+		WMA_LOGD("%s : invalid number of channels %d", __func__,
+			 chan_count);
+		return CDF_STATUS_E_EMPTY;
+	}
+	/* Channel list is a table of 2 TLV's */
+	list_tlv_len = WMI_TLV_HDR_SIZE + chan_count * sizeof(A_UINT32);
+	len = sizeof(wmi_roam_chan_list_fixed_param) + list_tlv_len;
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	chan_list_fp = (wmi_roam_chan_list_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&chan_list_fp->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_roam_chan_list_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_roam_chan_list_fixed_param));
+	chan_list_fp->vdev_id = vdev_id;
+	chan_list_fp->num_chan = chan_count;
+	if (chan_count > 0 && list_type == CHANNEL_LIST_STATIC) {
+		/* external app is controlling channel list */
+		chan_list_fp->chan_list_type =
+			WMI_ROAM_SCAN_CHAN_LIST_TYPE_STATIC;
+	} else {
+		/* umac supplied occupied channel list in LFR */
+		chan_list_fp->chan_list_type =
+			WMI_ROAM_SCAN_CHAN_LIST_TYPE_DYNAMIC;
+	}
+
+	buf_ptr += sizeof(wmi_roam_chan_list_fixed_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
+		       (chan_list_fp->num_chan * sizeof(uint32_t)));
+	roam_chan_list_array = (A_UINT32 *) (buf_ptr + WMI_TLV_HDR_SIZE);
+	WMA_LOGI("%s: %d channels = ", __func__, chan_list_fp->num_chan);
+	for (i = 0; ((i < chan_list_fp->num_chan) &&
+		     (i < WMI_ROAM_MAX_CHANNELS)); i++) {
+		roam_chan_list_array[i] = chan_list[i];
+		WMA_LOGI("%d,", roam_chan_list_array[i]);
+	}
+
+	status = wmi_unified_cmd_send(wmi_handle, buf,
+				      len, WMI_ROAM_CHAN_LIST);
+	if (status != EOK) {
+		WMA_LOGE("wmi_unified_cmd_send WMI_ROAM_CHAN_LIST returned Error %d",
+			status);
+		cdf_status = CDF_STATUS_E_FAILURE;
+		goto error;
+	}
+
+	WMA_LOGI("%s: WMA --> WMI_ROAM_SCAN_CHAN_LIST", __func__);
+	return CDF_STATUS_SUCCESS;
+error:
+	wmi_buf_free(buf);
+
+	return cdf_status;
+}
+
+/**
+ * send_roam_scan_offload_rssi_change_cmd_tlv() - set roam offload RSSI th
+ * @wmi_handle: wmi handle
+ * @rssi_change_thresh: RSSI Change threshold
+ * @bcn_rssi_weight: beacon RSSI weight
+ * @vdev_id: vdev id
+ *
+ * Send WMI_ROAM_SCAN_RSSI_CHANGE_THRESHOLD parameters to fw.
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_roam_scan_offload_rssi_change_cmd_tlv(wmi_unified_t wmi_handle,
+	uint32_t vdev_id,
+	int32_t rssi_change_thresh,
+	uint32_t bcn_rssi_weight,
+	uint32_t hirssi_delay_btw_scans)
+{
+	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	wmi_buf_t buf = NULL;
+	int status = 0;
+	int len;
+	uint8_t *buf_ptr;
+	wmi_roam_scan_rssi_change_threshold_fixed_param *rssi_change_fp;
+
+	/* Send rssi change parameters */
+	len = sizeof(wmi_roam_scan_rssi_change_threshold_fixed_param);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	rssi_change_fp =
+		(wmi_roam_scan_rssi_change_threshold_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&rssi_change_fp->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_roam_scan_rssi_change_threshold_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_roam_scan_rssi_change_threshold_fixed_param));
+	/* fill in rssi change threshold (hysteresis) values */
+	rssi_change_fp->vdev_id = vdev_id;
+	rssi_change_fp->roam_scan_rssi_change_thresh = rssi_change_thresh;
+	rssi_change_fp->bcn_rssi_weight = bcn_rssi_weight;
+	rssi_change_fp->hirssi_delay_btw_scans = hirssi_delay_btw_scans;
+
+	status = wmi_unified_cmd_send(wmi_handle, buf,
+				      len, WMI_ROAM_SCAN_RSSI_CHANGE_THRESHOLD);
+	if (status != EOK) {
+		WMA_LOGE("wmi_unified_cmd_send WMI_ROAM_SCAN_RSSI_CHANGE_THRESHOLD returned Error %d",
+			status);
+		cdf_status = CDF_STATUS_E_FAILURE;
+		goto error;
+	}
+
+	WMA_LOGI(FL("roam_scan_rssi_change_thresh=%d, bcn_rssi_weight=%d"),
+		rssi_change_thresh, bcn_rssi_weight);
+	WMA_LOGI(FL("hirssi_delay_btw_scans=%d"), hirssi_delay_btw_scans);
+	return CDF_STATUS_SUCCESS;
+error:
+	wmi_buf_free(buf);
+
+	return cdf_status;
+}
+
+/** wmi_get_hotlist_entries_per_page() - hotlist entries per page
+ * @wmi_handle: wmi handle.
+ * @cmd: size of command structure.
+ * @per_entry_size: per entry size.
+ *
+ * This utility function calculates how many hotlist entries can
+ * fit in one page.
+ *
+ * Return: number of entries
+ */
+static inline int wmi_get_hotlist_entries_per_page(wmi_unified_t wmi_handle,
+						   size_t cmd_size,
+						   size_t per_entry_size)
+{
+	uint32_t avail_space = 0;
+	int num_entries = 0;
+	uint16_t max_msg_len = wmi_get_max_msg_len(wmi_handle);
+
+	/* Calculate number of hotlist entries that can
+	 * be passed in wma message request.
+	 */
+	avail_space = max_msg_len - cmd_size;
+	num_entries = avail_space / per_entry_size;
+	return num_entries;
+}
+
+/**
+ * send_get_buf_extscan_hotlist_cmd_tlv() - prepare hotlist command
+ * @wmi_handle: wmi handle
+ * @photlist: hotlist command params
+ * @buf_len: buffer length
+ *
+ * This function fills individual elements for  hotlist request and
+ * TLV for bssid entries
+ *
+ * Return: CDF Status.
+ */
+CDF_STATUS send_get_buf_extscan_hotlist_cmd_tlv(wmi_unified_t wmi_handle,
+					   struct ext_scan_setbssi_hotlist_params *
+					   photlist, int *buf_len)
+{
+	wmi_extscan_configure_hotlist_monitor_cmd_fixed_param *cmd = NULL;
+	wmi_extscan_hotlist_entry *dest_hotlist;
+	struct ap_threshold_params *src_ap = photlist->ap;
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+
+	int j, index = 0;
+	int cmd_len = 0;
+	int num_entries;
+	int min_entries = 0;
+	int numap = photlist->numAp;
+	int len = sizeof(*cmd);
+
+	len += WMI_TLV_HDR_SIZE;
+	cmd_len = len;
+
+	num_entries = wmi_get_hotlist_entries_per_page(wmi_handle,
+							cmd_len,
+							sizeof(*dest_hotlist));
+	/* setbssid hotlist expects the bssid list
+	 * to be non zero value
+	 */
+	if (!numap) {
+		WMA_LOGE("%s: Invalid number of bssid's", __func__);
+		return CDF_STATUS_E_INVAL;
+	}
+
+	/* Split the hot list entry pages and send multiple command
+	 * requests if the buffer reaches the maximum request size
+	 */
+	while (index < numap) {
+		min_entries = CDF_MIN(num_entries, numap);
+		len += min_entries * sizeof(wmi_extscan_hotlist_entry);
+		buf = wmi_buf_alloc(wmi_handle, len);
+		if (!buf) {
+			WMA_LOGP("%s: wmi_buf_alloc failed", __func__);
+			return CDF_STATUS_E_FAILURE;
+		}
+		buf_ptr = (uint8_t *) wmi_buf_data(buf);
+		cmd = (wmi_extscan_configure_hotlist_monitor_cmd_fixed_param *)
+		      buf_ptr;
+		WMITLV_SET_HDR(&cmd->tlv_header,
+			       WMITLV_TAG_STRUC_wmi_extscan_configure_hotlist_monitor_cmd_fixed_param,
+			       WMITLV_GET_STRUCT_TLVLEN
+				       (wmi_extscan_configure_hotlist_monitor_cmd_fixed_param));
+
+		/* Multiple requests are sent until the num_entries_in_page
+		 * matches the total_entries
+		 */
+		cmd->request_id = photlist->requestId;
+		cmd->vdev_id = photlist->sessionId;
+		cmd->total_entries = numap;
+		cmd->mode = 1;
+		cmd->num_entries_in_page = min_entries;
+		cmd->lost_ap_scan_count = photlist->lost_ap_sample_size;
+		cmd->first_entry_index = index;
+
+		WMA_LOGD("%s: vdev id:%d total_entries: %d num_entries: %d lost_ap_sample_size: %d",
+			__func__, cmd->vdev_id, cmd->total_entries,
+			cmd->num_entries_in_page,
+			cmd->lost_ap_scan_count);
+
+		buf_ptr += sizeof(*cmd);
+		WMITLV_SET_HDR(buf_ptr,
+			       WMITLV_TAG_ARRAY_STRUC,
+			       min_entries * sizeof(wmi_extscan_hotlist_entry));
+		dest_hotlist = (wmi_extscan_hotlist_entry *)
+			       (buf_ptr + WMI_TLV_HDR_SIZE);
+
+		/* Populate bssid, channel info and rssi
+		 * for the bssid's that are sent as hotlists.
+		 */
+		for (j = 0; j < min_entries; j++) {
+			WMITLV_SET_HDR(dest_hotlist,
+				       WMITLV_TAG_STRUC_wmi_extscan_bucket_cmd_fixed_param,
+				       WMITLV_GET_STRUCT_TLVLEN
+					       (wmi_extscan_hotlist_entry));
+
+			dest_hotlist->min_rssi = src_ap->low;
+			WMI_CHAR_ARRAY_TO_MAC_ADDR(src_ap->bssid.bytes,
+						   &dest_hotlist->bssid);
+
+			WMA_LOGD("%s:channel:%d min_rssi %d",
+				 __func__, dest_hotlist->channel,
+				 dest_hotlist->min_rssi);
+			WMA_LOGD
+				("%s: bssid mac_addr31to0: 0x%x, mac_addr47to32: 0x%x",
+				__func__, dest_hotlist->bssid.mac_addr31to0,
+				dest_hotlist->bssid.mac_addr47to32);
+			dest_hotlist++;
+			src_ap++;
+		}
+		buf_ptr += WMI_TLV_HDR_SIZE +
+			   (min_entries * sizeof(wmi_extscan_hotlist_entry));
+
+		if (wmi_unified_cmd_send(wmi_handle, buf, len,
+					 WMI_EXTSCAN_CONFIGURE_HOTLIST_MONITOR_CMDID)) {
+			WMA_LOGE("%s: failed to send command", __func__);
+			cdf_nbuf_free(buf);
+			return CDF_STATUS_E_FAILURE;
+		}
+		index = index + min_entries;
+		num_entries = numap - min_entries;
+		len = cmd_len;
+	}
+	return CDF_STATUS_SUCCESS;
+}
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -8291,8 +9662,38 @@ struct wmi_ops tlv_ops =  {
 	.send_init_cmd = send_init_cmd_tlv,
 	.save_fw_version_cmd = save_fw_version_cmd_tlv,
 	.check_and_update_fw_version_cmd =
-		  check_and_update_fw_version_cmd_tlv,
+		 check_and_update_fw_version_cmd_tlv,
 	.send_saved_init_cmd = send_saved_init_cmd_tlv,
+	.send_set_base_macaddr_indicate_cmd =
+		 send_set_base_macaddr_indicate_cmd_tlv,
+	.send_log_supported_evt_cmd = send_log_supported_evt_cmd_tlv,
+	.send_enable_specific_fw_logs_cmd =
+		 send_enable_specific_fw_logs_cmd_tlv,
+	.send_flush_logs_to_fw_cmd = send_flush_logs_to_fw_cmd_tlv,
+	.send_soc_set_pcl_cmd = send_soc_set_pcl_cmd_tlv,
+	.send_soc_set_hw_mode_cmd = send_soc_set_hw_mode_cmd_tlv,
+	.send_soc_set_dual_mac_config_cmd =
+		 send_soc_set_dual_mac_config_cmd_tlv,
+	.send_enable_arp_ns_offload_cmd =
+		 send_enable_arp_ns_offload_cmd_tlv,
+	.send_app_type1_params_in_fw_cmd =
+		 send_app_type1_params_in_fw_cmd_tlv,
+	.send_set_ssid_hotlist_cmd = send_set_ssid_hotlist_cmd_tlv,
+	.send_process_roam_synch_complete_cmd =
+		 send_process_roam_synch_complete_cmd_tlv,
+	.send_unit_test_cmd = send_unit_test_cmd_tlv,
+	.send_roam_invoke_cmd = send_roam_invoke_cmd_tlv,
+	.send_roam_scan_offload_cmd = send_roam_scan_offload_cmd_tlv,
+	.send_roam_scan_offload_ap_profile_cmd =
+			send_roam_scan_offload_ap_profile_cmd_tlv,
+	.send_roam_scan_offload_scan_period_cmd =
+		 send_roam_scan_offload_scan_period_cmd_tlv,
+	.send_roam_scan_offload_chan_list_cmd =
+		 send_roam_scan_offload_chan_list_cmd_tlv,
+	.send_roam_scan_offload_rssi_change_cmd =
+		 send_roam_scan_offload_rssi_change_cmd_tlv,
+	.send_get_buf_extscan_hotlist_cmd =
+		 send_get_buf_extscan_hotlist_cmd_tlv,
 	/* TODO - Add other tlv apis here */
 };
 
