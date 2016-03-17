@@ -2364,7 +2364,7 @@ typedef enum {
 #define CFG_ROAMING_OFFLOAD_NAME                "gRoamOffloadEnabled"
 #define CFG_ROAMING_OFFLOAD_MIN                 (0)
 #define CFG_ROAMING_OFFLOAD_MAX                 (1)
-#define CFG_ROAMING_OFFLOAD_DEFAULT             (0)
+#define CFG_ROAMING_OFFLOAD_DEFAULT             (1)
 #endif
 
 #define CFG_IPA_UC_TX_BUF_COUNT_NAME               "IpaUcTxBufCount"
