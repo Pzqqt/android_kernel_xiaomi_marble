@@ -763,6 +763,39 @@ static uint8_t *get_wmi_cmd_string(WMI_CMD_ID wmi_command)
 		CASE_RETURN_STRING(WMI_BPF_GET_VDEV_STATS_CMDID);
 		CASE_RETURN_STRING(WMI_BPF_SET_VDEV_INSTRUCTIONS_CMDID);
 		CASE_RETURN_STRING(WMI_BPF_DEL_VDEV_INSTRUCTIONS_CMDID);
+		CASE_RETURN_STRING(WMI_NDI_GET_CAP_REQ_CMDID);
+		CASE_RETURN_STRING(WMI_NDP_INITIATOR_REQ_CMDID);
+		CASE_RETURN_STRING(WMI_NDP_RESPONDER_REQ_CMDID);
+		CASE_RETURN_STRING(WMI_NDP_END_REQ_CMDID);
+		CASE_RETURN_STRING(WMI_PEER_UPDATE_WDS_ENTRY_CMDID);
+		CASE_RETURN_STRING(WMI_PEER_ADD_PROXY_STA_ENTRY_CMDID);
+		CASE_RETURN_STRING(WMI_PDEV_FIPS_CMDID);
+		CASE_RETURN_STRING(WMI_PDEV_SMART_ANT_ENABLE_CMDID);
+		CASE_RETURN_STRING(WMI_PDEV_SMART_ANT_SET_RX_ANTENNA_CMDID);
+		CASE_RETURN_STRING(WMI_PDEV_SET_ANTENNA_SWITCH_TABLE_CMDID);
+		CASE_RETURN_STRING(WMI_PDEV_SET_CTL_TABLE_CMDID);
+		CASE_RETURN_STRING(WMI_PDEV_SET_MIMOGAIN_TABLE_CMDID);
+		CASE_RETURN_STRING(WMI_PDEV_GET_TPC_CMDID);
+		CASE_RETURN_STRING(WMI_MIB_STATS_ENABLE_CMDID);
+		CASE_RETURN_STRING(WMI_PDEV_GET_ANI_CCK_CONFIG_CMDID);
+		CASE_RETURN_STRING(WMI_PDEV_GET_ANI_OFDM_CONFIG_CMDID);
+		CASE_RETURN_STRING(WMI_VDEV_RATEMASK_CMDID);
+		CASE_RETURN_STRING(WMI_VDEV_ATF_REQUEST_CMDID);
+		CASE_RETURN_STRING(WMI_VDEV_SET_DSCP_TID_MAP_CMDID);
+		CASE_RETURN_STRING(WMI_VDEV_FILTER_NEIGHBOR_RX_PACKETS_CMDID);
+		CASE_RETURN_STRING(WMI_VDEV_SET_QUIET_MODE_CMDID);
+		CASE_RETURN_STRING(WMI_PEER_SMART_ANT_SET_TX_ANTENNA_CMDID);
+		CASE_RETURN_STRING(WMI_PEER_SMART_ANT_SET_TRAIN_INFO_CMDID);
+		CASE_RETURN_STRING(WMI_PEER_SMART_ANT_SET_NODE_CONFIG_OPS_CMDID);
+		CASE_RETURN_STRING(WMI_PEER_ATF_REQUEST_CMDID);
+		CASE_RETURN_STRING(WMI_FWTEST_CMDID);
+		CASE_RETURN_STRING(WMI_QBOOST_CFG_CMDID);
+		CASE_RETURN_STRING(WMI_PDEV_GET_NFCAL_POWER_CMDID);
+		CASE_RETURN_STRING(WMI_PDEV_SET_PCL_CMDID);
+		CASE_RETURN_STRING(WMI_PDEV_SET_HW_MODE_CMDID);
+		CASE_RETURN_STRING(WMI_PDEV_SET_MAC_CONFIG_CMDID);
+		CASE_RETURN_STRING(WMI_PDEV_SET_ANTENNA_MODE_CMDID);
+		CASE_RETURN_STRING(WMI_ROAM_SET_MBO_PARAM_CMDID);
 
 	}
 
@@ -967,7 +1000,9 @@ int wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
 	idx = wmi_handle->max_event_idx;
 	wmi_handle->event_handler[idx] = handler_func;
 	wmi_handle->event_id[idx] = event_id;
+	qdf_spin_lock_bh(&wmi_handle->ctx_lock);
 	wmi_handle->ctx[idx] = rx_ctx;
+	qdf_spin_unlock_bh(&wmi_handle->ctx_lock);
 	wmi_handle->max_event_idx++;
 
 	return 0;
@@ -1082,7 +1117,9 @@ void wmi_control_rx(void *ctx, HTC_PACKET *htc_packet)
 		qdf_nbuf_free(evt_buf);
 		return;
 	}
+	qdf_spin_lock_bh(&wmi_handle->ctx_lock);
 	exec_ctx = wmi_handle->ctx[idx];
+	qdf_spin_unlock_bh(&wmi_handle->ctx_lock);
 
 	if (exec_ctx == WMI_RX_WORK_CTX) {
 		wmi_process_fw_event_worker_thread_ctx
@@ -1282,6 +1319,7 @@ void *wmi_unified_attach(void *scn_handle,
 	/* Assign target cookie capablity */
 	wmi_handle->use_cookie = use_cookie;
 	wmi_handle->osdev = osdev;
+	qdf_spinlock_create(&wmi_handle->ctx_lock);
 
 	return wmi_handle;
 }
@@ -1305,6 +1343,7 @@ void wmi_unified_detach(struct wmi_unified *wmi_handle)
 		buf = qdf_nbuf_queue_remove(&wmi_handle->event_queue);
 	}
 	qdf_spin_unlock_bh(&wmi_handle->eventq_lock);
+	qdf_spinlock_destroy(&wmi_handle->ctx_lock);
 	if (wmi_handle != NULL) {
 		OS_FREE(wmi_handle);
 		wmi_handle = NULL;
