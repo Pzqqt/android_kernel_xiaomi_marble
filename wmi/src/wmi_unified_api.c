@@ -591,3 +591,181 @@ int32_t wmi_unified_scan_chan_list_cmd_send(void *wmi_hdl,
 
 	return CDF_STATUS_E_FAILURE;
 }
+
+/**
+ *  wmi_mgmt_unified_cmd_send() - management cmd over wmi layer
+ *  @wmi_hdl      : handle to WMI.
+ *  @param    : pointer to hold mgmt cmd parameter
+ *
+ *  Return: 0  on success and -ve on failure.
+ */
+int32_t wmi_mgmt_unified_cmd_send(void *wmi_hdl,
+				struct wmi_mgmt_params *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_mgmt_cmd)
+		return wmi_handle->ops->send_mgmt_cmd(wmi_handle,
+				  param);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_modem_power_state() - set modem power state to fw
+ * @wmi_hdl: wmi handle
+ * @param_value: parameter value
+ *
+ * Return: 0 for success or error code
+ */
+int32_t wmi_unified_modem_power_state(void *wmi_hdl,
+		uint32_t param_value)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_modem_power_state_cmd)
+		return wmi_handle->ops->send_modem_power_state_cmd(wmi_handle,
+				  param_value);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_set_sta_ps_mode() - set sta powersave params in fw
+ * @wmi_hdl: wmi handle
+ * @vdev_id: vdev id
+ * @val: value
+ *
+ * Return: 0 for success or error code.
+ */
+int32_t wmi_unified_set_sta_ps_mode(void *wmi_hdl,
+			       uint32_t vdev_id, uint8_t val)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_set_sta_ps_mode_cmd)
+		return wmi_handle->ops->send_set_sta_ps_mode_cmd(wmi_handle,
+				  vdev_id, val);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_set_mimops() - set MIMO powersave
+ * @wmi_hdl: wmi handle
+ * @vdev_id: vdev id
+ * @value: value
+ *
+ * Return: CDF_STATUS_SUCCESS for success or error code.
+ */
+int32_t wmi_unified_set_mimops(void *wmi_hdl, uint8_t vdev_id, int value)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_set_mimops_cmd)
+		return wmi_handle->ops->send_set_mimops_cmd(wmi_handle,
+				  vdev_id, value);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_set_smps_params() - set smps params
+ * @wmi_hdl: wmi handle
+ * @vdev_id: vdev id
+ * @value: value
+ *
+ * Return: CDF_STATUS_SUCCESS for success or error code.
+ */
+int32_t wmi_unified_set_smps_params(void *wmi_hdl, uint8_t vdev_id,
+			       int value)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_set_smps_params_cmd)
+		return wmi_handle->ops->send_set_smps_params_cmd(wmi_handle,
+				  vdev_id, value);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+
+/**
+ * wmi_set_p2pgo_oppps_req() - send p2p go opp power save request to fw
+ * @wmi_hdl: wmi handle
+ * @opps: p2p opp power save parameters
+ *
+ * Return: none
+ */
+int32_t wmi_unified_set_p2pgo_oppps_req(void *wmi_hdl,
+		struct p2p_ps_params *oppps)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_set_p2pgo_oppps_req_cmd)
+		return wmi_handle->ops->send_set_p2pgo_oppps_req_cmd(wmi_handle,
+				  oppps);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_set_p2pgo_noa_req_cmd() - send p2p go noa request to fw
+ * @wmi_hdl: wmi handle
+ * @noa: p2p power save parameters
+ *
+ * Return: none
+ */
+int32_t wmi_unified_set_p2pgo_noa_req_cmd(void *wmi_hdl,
+			struct p2p_ps_params *noa)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_set_p2pgo_noa_req_cmd)
+		return wmi_handle->ops->send_set_p2pgo_noa_req_cmd(wmi_handle,
+				  noa);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_get_temperature() - get pdev temperature req
+ * @wmi_hdl: wmi handle
+ *
+ * Return: CDF_STATUS_SUCCESS for success or error code.
+ */
+int32_t wmi_unified_get_temperature(void *wmi_hdl)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_get_temperature_cmd)
+		return wmi_handle->ops->send_get_temperature_cmd(wmi_handle);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_set_sta_uapsd_auto_trig_cmd() - set uapsd auto trigger command
+ * @wmi_hdl: wmi handle
+ * @end_set_sta_ps_mode_cmd: cmd paramter strcture
+ *
+ * This function sets the trigger
+ * uapsd params such as service interval, delay interval
+ * and suspend interval which will be used by the firmware
+ * to send trigger frames periodically when there is no
+ * traffic on the transmit side.
+ *
+ * Return: 0 for success or error code.
+ */
+int32_t
+wmi_unified_set_sta_uapsd_auto_trig_cmd(void *wmi_hdl,
+				struct sta_uapsd_trig_params *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_set_sta_uapsd_auto_trig_cmd)
+		return wmi_handle->ops->send_set_sta_uapsd_auto_trig_cmd(wmi_handle,
+					param);
+
+	return CDF_STATUS_E_FAILURE;
+}

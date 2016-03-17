@@ -127,3 +127,29 @@ int32_t send_scan_stop_cmd_tlv(wmi_unified_t wmi_handle,
 int32_t send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
 				struct scan_chan_list_params *param);
 
+int32_t send_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
+				struct wmi_mgmt_params *param);
+
+int32_t send_modem_power_state_cmd_tlv(wmi_unified_t wmi_handle,
+		uint32_t param_value);
+
+int32_t send_set_sta_ps_mode_cmd_tlv(wmi_unified_t wmi_handle,
+			       uint32_t vdev_id, uint8_t val);
+
+int32_t send_set_sta_uapsd_auto_trig_cmd_tlv(wmi_unified_t wmi_handle,
+				struct sta_uapsd_trig_params *param);
+
+int32_t send_get_temperature_cmd_tlv(wmi_unified_t wmi_handle);
+
+int32_t send_set_p2pgo_oppps_req_cmd_tlv(wmi_unified_t wmi_handle,
+		struct p2p_ps_params *oppps);
+
+int32_t send_set_p2pgo_noa_req_cmd_tlv(wmi_unified_t wmi_handle,
+			struct p2p_ps_params *noa);
+
+int32_t send_set_smps_params_cmd_tlv(wmi_unified_t wmi_handle, uint8_t vdev_id,
+			       int value);
+
+int32_t send_set_mimops_cmd_tlv(wmi_unified_t wmi_handle,
+			uint8_t vdev_id, int value);
+
