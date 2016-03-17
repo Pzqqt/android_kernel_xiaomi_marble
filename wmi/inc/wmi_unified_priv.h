@@ -337,6 +337,164 @@ CDF_STATUS (*send_process_ll_stats_get_cmd)
 CDF_STATUS (*send_get_stats_cmd)(wmi_unified_t wmi_handle,
 		       struct pe_stats_req  *get_stats_param,
 			   uint8_t addr[IEEE80211_ADDR_LEN]);
+
+CDF_STATUS (*send_snr_request_cmd)(wmi_unified_t wmi_handle);
+
+CDF_STATUS (*send_snr_cmd)(wmi_unified_t wmi_handle, uint8_t vdev_id);
+
+CDF_STATUS (*send_link_status_req_cmd)(wmi_unified_t wmi_handle,
+				 struct link_status_params *link_status);
+
+CDF_STATUS (*send_lphb_config_hbenable_cmd)(wmi_unified_t wmi_handle,
+				wmi_hb_set_enable_cmd_fixed_param *params);
+
+CDF_STATUS (*send_lphb_config_tcp_params_cmd)(wmi_unified_t wmi_handle,
+				    wmi_hb_set_tcp_params_cmd_fixed_param *lphb_conf_req);
+
+CDF_STATUS (*send_lphb_config_tcp_pkt_filter_cmd)(wmi_unified_t wmi_handle,
+				wmi_hb_set_tcp_pkt_filter_cmd_fixed_param *g_hb_tcp_filter_fp);
+
+CDF_STATUS (*send_lphb_config_udp_params_cmd)(wmi_unified_t wmi_handle,
+				    wmi_hb_set_udp_params_cmd_fixed_param *lphb_conf_req);
+
+CDF_STATUS (*send_lphb_config_udp_pkt_filter_cmd)(wmi_unified_t wmi_handle,
+					wmi_hb_set_udp_pkt_filter_cmd_fixed_param *lphb_conf_req);
+
+CDF_STATUS (*send_process_dhcp_ind_cmd)(wmi_unified_t wmi_handle,
+				wmi_peer_set_param_cmd_fixed_param *ta_dhcp_ind);
+
+CDF_STATUS (*send_get_link_speed_cmd)(wmi_unified_t wmi_handle,
+			wmi_mac_addr peer_macaddr);
+
+CDF_STATUS (*send_egap_conf_params_cmd)(wmi_unified_t wmi_handle,
+				     wmi_ap_ps_egap_param_cmd_fixed_param *egap_params);
+
+CDF_STATUS (*send_fw_profiling_cmd)(wmi_unified_t wmi_handle,
+			uint32_t cmd, uint32_t value1, uint32_t value2);
+
+CDF_STATUS (*send_wow_sta_ra_filter_cmd)(wmi_unified_t wmi_handle,
+				   uint8_t vdev_id, uint8_t default_pattern,
+				   uint16_t rate_limit_interval);
+
+CDF_STATUS (*send_nat_keepalive_en_cmd)(wmi_unified_t wmi_handle, uint8_t vdev_id);
+
+CDF_STATUS (*send_start_oem_data_cmd)(wmi_unified_t wmi_handle,
+			  uint8_t data_len,
+			  uint8_t *data);
+
+CDF_STATUS
+(*send_dfs_phyerr_filter_offload_en_cmd)(wmi_unified_t wmi_handle,
+			bool dfs_phyerr_filter_offload);
+
+CDF_STATUS (*send_pktlog_wmi_send_cmd)(wmi_unified_t wmi_handle,
+				   WMI_PKTLOG_EVENT pktlog_event,
+				   WMI_CMD_ID cmd_id);
+
+CDF_STATUS (*send_add_wow_wakeup_event_cmd)(wmi_unified_t wmi_handle,
+					uint32_t vdev_id,
+					uint32_t bitmap,
+					bool enable);
+
+CDF_STATUS (*send_wow_patterns_to_fw_cmd)(wmi_unified_t wmi_handle,
+				uint8_t vdev_id, uint8_t ptrn_id,
+				const uint8_t *ptrn, uint8_t ptrn_len,
+				uint8_t ptrn_offset, const uint8_t *mask,
+				uint8_t mask_len, bool user,
+				uint8_t default_patterns);
+
+CDF_STATUS (*send_wow_delete_pattern_cmd)(wmi_unified_t wmi_handle, uint8_t ptrn_id,
+					uint8_t vdev_id);
+
+CDF_STATUS (*send_host_wakeup_ind_to_fw_cmd)(wmi_unified_t wmi_handle);
+
+CDF_STATUS (*send_del_ts_cmd)(wmi_unified_t wmi_handle, uint8_t vdev_id,
+				uint8_t ac);
+
+CDF_STATUS (*send_aggr_qos_cmd)(wmi_unified_t wmi_handle,
+		      struct aggr_add_ts_param *aggr_qos_rsp_msg);
+
+CDF_STATUS (*send_add_ts_cmd)(wmi_unified_t wmi_handle,
+		 struct add_ts_param *msg);
+
+CDF_STATUS (*send_enable_disable_packet_filter_cmd)(wmi_unified_t wmi_handle,
+					uint8_t vdev_id, bool enable);
+
+CDF_STATUS (*send_config_packet_filter_cmd)(wmi_unified_t wmi_handle,
+		uint8_t vdev_id, struct rcv_pkt_filter_config *rcv_filter_param,
+		uint8_t filter_id, bool enable);
+
+CDF_STATUS (*send_add_clear_mcbc_filter_cmd)(wmi_unified_t wmi_handle,
+				     uint8_t vdev_id,
+				     struct cdf_mac_addr multicast_addr,
+				     bool clearList);
+
+CDF_STATUS (*send_gtk_offload_cmd)(wmi_unified_t wmi_handle, uint8_t vdev_id,
+					   struct gtk_offload_params *params,
+					   bool enable_offload,
+					   uint32_t gtk_offload_opcode);
+
+CDF_STATUS (*send_process_gtk_offload_getinfo_cmd)(wmi_unified_t wmi_handle,
+				uint8_t vdev_id,
+				uint64_t offload_req_opcode);
+
+CDF_STATUS (*send_process_add_periodic_tx_ptrn_cmd)(wmi_unified_t wmi_handle,
+						struct periodic_tx_pattern  *
+						pAddPeriodicTxPtrnParams,
+						uint8_t vdev_id);
+
+CDF_STATUS (*send_process_del_periodic_tx_ptrn_cmd)(wmi_unified_t wmi_handle,
+						uint8_t vdev_id,
+						uint8_t pattern_id);
+
+CDF_STATUS (*send_stats_ext_req_cmd)(wmi_unified_t wmi_handle,
+			struct stats_ext_params *preq);
+
+CDF_STATUS (*send_enable_ext_wow_cmd)(wmi_unified_t wmi_handle,
+			struct ext_wow_params *params);
+
+CDF_STATUS (*send_set_app_type2_params_in_fw_cmd)(wmi_unified_t wmi_handle,
+					  struct app_type2_params *appType2Params);
+
+CDF_STATUS (*send_set_auto_shutdown_timer_cmd)(wmi_unified_t wmi_handle,
+						  uint32_t timer_val);
+
+CDF_STATUS (*send_nan_req_cmd)(wmi_unified_t wmi_handle,
+			struct nan_req_params *nan_req);
+
+CDF_STATUS (*send_process_dhcpserver_offload_cmd)(wmi_unified_t wmi_handle,
+				struct dhcp_offload_info_params *pDhcpSrvOffloadInfo);
+
+CDF_STATUS (*send_process_ch_avoid_update_cmd)(wmi_unified_t wmi_handle);
+
+CDF_STATUS (*send_regdomain_info_to_fw_cmd)(wmi_unified_t wmi_handle,
+				   uint32_t reg_dmn, uint16_t regdmn2G,
+				   uint16_t regdmn5G, int8_t ctl2G,
+				   int8_t ctl5G);
+
+CDF_STATUS (*send_set_tdls_offchan_mode_cmd)(wmi_unified_t wmi_handle,
+			      struct tdls_channel_switch_params *chan_switch_params);
+
+CDF_STATUS (*send_update_fw_tdls_state_cmd)(wmi_unified_t wmi_handle,
+					 void *tdls_param, uint8_t tdls_state);
+
+CDF_STATUS (*send_update_tdls_peer_state_cmd)(wmi_unified_t wmi_handle,
+			       struct tdls_peer_state_params *peerStateParams,
+				   uint32_t *ch_mhz);
+
+
+CDF_STATUS (*send_process_fw_mem_dump_cmd)(wmi_unified_t wmi_handle,
+					struct fw_dump_req_param *mem_dump_req);
+
+CDF_STATUS (*send_process_set_ie_info_cmd)(wmi_unified_t wmi_handle,
+				   struct vdev_ie_info_param *ie_info);
+/**
+ * struct wmi_init_cmd - Saved wmi INIT command
+ * @buf: Buffer containing the wmi INIT command
+ * @buf_len: Length of the buffer
+ */
+struct wmi_init_cmd {
+	wmi_buf_t buf;
+	uint32_t buf_len;
 };
 
 struct wmi_unified {
@@ -354,6 +512,12 @@ struct wmi_unified {
 	cdf_nbuf_queue_t event_queue;
 	struct work_struct rx_event_work;
 	int wmi_stop_in_progress;
+	struct _wmi_abi_version fw_abi_version;
+	struct _wmi_abi_version final_abi_vers;
+	struct wmi_init_cmd saved_wmi_init_cmd;
+	uint32_t num_of_diag_events_logs;
+	uint32_t *events_logs_list;
+	struct host_offload_req_param arp_info;
 #ifdef WLAN_OPEN_SOURCE
 	struct fwdebug dbglog;
 	struct dentry *debugfs_phy;
