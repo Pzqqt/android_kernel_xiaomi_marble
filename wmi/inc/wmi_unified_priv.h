@@ -69,6 +69,7 @@ struct fwdebug {
 
 struct wmi_unified {
 	ol_scn_t scn_handle;    /* handle to device */
+	osdev_t  osdev; /* handle to use OS-independent services */
 	cdf_atomic_t pending_cmds;
 	HTC_ENDPOINT_ID wmi_endpoint_id;
 	uint16_t max_msg_len;
@@ -79,6 +80,7 @@ struct wmi_unified {
 	cdf_spinlock_t eventq_lock;
 	cdf_nbuf_queue_t event_queue;
 	struct work_struct rx_event_work;
+	int wmi_stop_in_progress;
 #ifdef WLAN_OPEN_SOURCE
 	struct fwdebug dbglog;
 	struct dentry *debugfs_phy;
@@ -96,5 +98,8 @@ struct wmi_unified {
 
 	int (*wma_process_fw_event_handler_cbk)(struct wmi_unified *wmi_handle,
 						wmi_buf_t evt_buf);
+	struct wmi_ops ops;
+	void *event_handler_cookie[WMI_UNIFIED_MAX_EVENT];
+	bool use_cookie;
 };
 #endif
