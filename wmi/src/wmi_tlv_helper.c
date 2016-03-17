@@ -117,10 +117,10 @@ A_UINT32 wmitlv_get_attributes(A_UINT32 is_cmd_id, A_UINT32 cmd_event_id,
 
 	if (is_cmd_id) {
 		pAttrArrayList = &cmd_attr_list[0];
-		num_entries = CDF_ARRAY_SIZE(cmd_attr_list);
+		num_entries = QDF_ARRAY_SIZE(cmd_attr_list);
 	} else {
 		pAttrArrayList = &evt_attr_list[0];
-		num_entries = CDF_ARRAY_SIZE(evt_attr_list);
+		num_entries = QDF_ARRAY_SIZE(evt_attr_list);
 	}
 
 	for (i = 0; i < num_entries; i++) {

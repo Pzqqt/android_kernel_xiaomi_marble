@@ -30,7 +30,7 @@
  */
 
 #include "ol_if_athvar.h"
-#include <cdf_memory.h>         /* cdf_mem_malloc,free, etc. */
+#include <qdf_mem.h>         /* qdf_mem_malloc,free, etc. */
 #include <osdep.h>
 #include "htc_api.h"
 #include "wmi.h"
@@ -40,7 +40,7 @@
 /* Following macro definitions use OS or platform specific functions */
 #define dummy_print(fmt, ...) {}
 #define wmi_tlv_print_verbose dummy_print
-#define wmi_tlv_print_error   cdf_print
+#define wmi_tlv_print_error   qdf_print
 #define wmi_tlv_OS_MEMCPY     OS_MEMCPY
 #define wmi_tlv_OS_MEMZERO    OS_MEMZERO
 #define wmi_tlv_OS_MEMMOVE    OS_MEMMOVE
@@ -50,5 +50,5 @@
 	{ \
 		(ptr) = os_malloc(NULL, (numBytes), GFP_ATOMIC); \
 	}
-#define wmi_tlv_os_mem_free   cdf_mem_free
+#define wmi_tlv_os_mem_free   qdf_mem_free
 #endif
