@@ -51,11 +51,9 @@ typedef cdf_nbuf_t wmi_buf_t;
  * @wma_process_fw_event_handler_cbk: generic event handler callback
  */
 struct wmi_rx_ops {
-	void (*service_ready_cbk)(void *ctx, void *ev);
-	void (*service_ready_ext_cbk)(void *ctx, void *ev);
-	void (*ready_cbk)(void *ctx, void *ev);
+
 	int (*wma_process_fw_event_handler_cbk)(void *ctx,
-				  void *ev);
+				  void *ev, uint8_t rx_ctx);
 };
 
 /**
@@ -67,6 +65,17 @@ struct wmi_rx_ops {
 enum wmi_target_type {
 	WMI_TLV_TARGET,
 	WMI_NON_TLV_TARGET
+};
+
+/**
+ * enum wmi_rx_exec_ctx - wmi rx execution context
+ * @WMI_RX_WORK_CTX: work queue context execution provided by WMI layer
+ * @WMI_RX_UMAC_CTX: execution context provided by umac layer
+ *
+ */
+enum wmi_rx_exec_ctx {
+	WMI_RX_WORK_CTX,
+	WMI_RX_UMAC_CTX
 };
 
 /**
@@ -126,17 +135,21 @@ wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t buflen,
 		     WMI_CMD_ID cmd_id);
 
 /**
- * WMI event handler register function
+ * wmi_unified_register_event_handler() - WMI event handler
+ * registration function
  *
- *  @param wmi_handle      : handle to WMI.
- *  @param event_id        : WMI event ID
- *  @param handler_func    : Event handler call back function
+ * @wmi_handle:   handle to WMI.
+ * @event_id:     WMI event ID
+ * @handler_func: Event handler call back function
+ * @rx_ctx: rx event processing context
+ *
  *  @return 0  on success and -ve on failure.
  */
 int
 wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
 				   WMI_EVT_ID event_id,
-				   wmi_unified_event_handler handler_func);
+				   wmi_unified_event_handler handler_func,
+				   uint8_t rx_ctx);
 
 /**
  * WMI event handler unregister function
@@ -179,7 +192,6 @@ int wmi_get_pending_cmds(wmi_unified_t wmi_handle);
 /**
    WMI API to set target suspend state
  */
-
 void wmi_set_target_suspend(wmi_unified_t wmi_handle, bool val);
 
 #ifdef FEATURE_RUNTIME_PM
@@ -197,6 +209,7 @@ static inline bool wmi_get_runtime_pm_inprogress(wmi_unified_t wmi_handle)
 	return false;
 }
 #endif
+
 
 /**
  * WMA Callback to process fw event.
