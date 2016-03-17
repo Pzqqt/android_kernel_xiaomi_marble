@@ -7839,6 +7839,300 @@ CDF_STATUS send_process_set_ie_info_cmd_tlv(wmi_unified_t wmi_handle,
 	return ret;
 }
 
+
+void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
+				wmi_resource_config *tgt_res_cfg)
+{
+	resource_cfg->num_peers = tgt_res_cfg->num_peers;
+	resource_cfg->num_offload_peers = tgt_res_cfg->num_offload_peers;
+	resource_cfg->num_offload_reorder_buffs =
+			tgt_res_cfg->num_offload_reorder_buffs;
+	resource_cfg->num_peer_keys = tgt_res_cfg->num_peer_keys;
+	resource_cfg->num_tids = tgt_res_cfg->num_tids;
+	resource_cfg->ast_skid_limit = tgt_res_cfg->ast_skid_limit;
+	resource_cfg->tx_chain_mask = tgt_res_cfg->tx_chain_mask;
+	resource_cfg->rx_chain_mask = tgt_res_cfg->rx_chain_mask;
+	resource_cfg->rx_timeout_pri[0] = tgt_res_cfg->rx_timeout_pri[0];
+	resource_cfg->rx_timeout_pri[1] = tgt_res_cfg->rx_timeout_pri[1];
+	resource_cfg->rx_timeout_pri[2] = tgt_res_cfg->rx_timeout_pri[2];
+	resource_cfg->rx_timeout_pri[3] = tgt_res_cfg->rx_timeout_pri[3];
+	resource_cfg->rx_decap_mode = tgt_res_cfg->rx_decap_mode;
+	resource_cfg->scan_max_pending_req =
+			tgt_res_cfg->scan_max_pending_req;
+	resource_cfg->bmiss_offload_max_vdev =
+			tgt_res_cfg->bmiss_offload_max_vdev;
+	resource_cfg->roam_offload_max_vdev =
+			tgt_res_cfg->roam_offload_max_vdev;
+	resource_cfg->roam_offload_max_ap_profiles =
+			tgt_res_cfg->roam_offload_max_ap_profiles;
+	resource_cfg->num_mcast_groups = tgt_res_cfg->num_mcast_groups;
+	resource_cfg->num_mcast_table_elems =
+			tgt_res_cfg->num_mcast_table_elems;
+	resource_cfg->mcast2ucast_mode = tgt_res_cfg->mcast2ucast_mode;
+	resource_cfg->tx_dbg_log_size = tgt_res_cfg->tx_dbg_log_size;
+	resource_cfg->num_wds_entries = tgt_res_cfg->num_wds_entries;
+	resource_cfg->dma_burst_size = tgt_res_cfg->dma_burst_size;
+	resource_cfg->mac_aggr_delim = tgt_res_cfg->mac_aggr_delim;
+	resource_cfg->rx_skip_defrag_timeout_dup_detection_check =
+		tgt_res_cfg->rx_skip_defrag_timeout_dup_detection_check;
+	resource_cfg->vow_config = tgt_res_cfg->vow_config;
+	resource_cfg->gtk_offload_max_vdev = tgt_res_cfg->gtk_offload_max_vdev;
+	resource_cfg->num_msdu_desc = tgt_res_cfg->num_msdu_desc;
+	resource_cfg->max_frag_entries = tgt_res_cfg->max_frag_entries;
+	resource_cfg->num_tdls_vdevs = tgt_res_cfg->num_tdls_vdevs;
+	resource_cfg->num_tdls_conn_table_entries =
+			tgt_res_cfg->num_tdls_conn_table_entries;
+	resource_cfg->beacon_tx_offload_max_vdev =
+			tgt_res_cfg->beacon_tx_offload_max_vdev;
+	resource_cfg->num_multicast_filter_entries =
+			tgt_res_cfg->num_multicast_filter_entries;
+	resource_cfg->num_wow_filters =
+			tgt_res_cfg->num_wow_filters;
+	resource_cfg->num_keep_alive_pattern =
+			tgt_res_cfg->num_keep_alive_pattern;
+	resource_cfg->keep_alive_pattern_size =
+			tgt_res_cfg->keep_alive_pattern_size;
+	resource_cfg->max_tdls_concurrent_sleep_sta =
+			tgt_res_cfg->max_tdls_concurrent_sleep_sta;
+	resource_cfg->max_tdls_concurrent_buffer_sta =
+			tgt_res_cfg->max_tdls_concurrent_buffer_sta;
+	resource_cfg->wmi_send_separate =
+			tgt_res_cfg->wmi_send_separate;
+	resource_cfg->num_ocb_vdevs =
+			tgt_res_cfg->num_ocb_vdevs;
+	resource_cfg->num_ocb_channels =
+			tgt_res_cfg->num_ocb_channels;
+	resource_cfg->num_ocb_schedules =
+			tgt_res_cfg->num_ocb_schedules;
+
+}
+
+/**
+ * send_init_cmd_tlv() - wmi init command
+ * @wmi_handle:      pointer to wmi handle
+ * @res_cfg:         resource config
+ * @num_mem_chunks:  no of mem chunck
+ * @mem_chunk:       pointer to mem chunck structure
+ *
+ * This function sends IE information to firmware
+ *
+ * Return: CDF_STATUS_SUCCESS for success otherwise failure
+ *
+ */
+CDF_STATUS send_init_cmd_tlv(wmi_unified_t wmi_handle,
+		wmi_resource_config *tgt_res_cfg,
+		uint8_t num_mem_chunks, struct wmi_host_mem_chunk *mem_chunks,
+		bool action)
+{
+	wmi_buf_t buf;
+	wmi_init_cmd_fixed_param *cmd;
+	wmi_abi_version my_vers;
+	int num_whitelist;
+	uint8_t *buf_ptr;
+	wmi_resource_config *resource_cfg;
+	wlan_host_memory_chunk *host_mem_chunks;
+	uint32_t mem_chunk_len = 0;
+	uint16_t idx;
+	int len;
+	int ret;
+
+	len = sizeof(*cmd) + sizeof(wmi_resource_config) + WMI_TLV_HDR_SIZE;
+	mem_chunk_len = (sizeof(wlan_host_memory_chunk) * MAX_MEM_CHUNKS);
+	buf = wmi_buf_alloc(wmi_handle, len + mem_chunk_len);
+	if (!buf) {
+		WMA_LOGD("%s: wmi_buf_alloc failed\n", __func__);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	cmd = (wmi_init_cmd_fixed_param *) buf_ptr;
+	resource_cfg = (wmi_resource_config *) (buf_ptr + sizeof(*cmd));
+
+	host_mem_chunks = (wlan_host_memory_chunk *)
+		(buf_ptr + sizeof(*cmd) + sizeof(wmi_resource_config)
+		 + WMI_TLV_HDR_SIZE);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+			WMITLV_TAG_STRUC_wmi_init_cmd_fixed_param,
+			WMITLV_GET_STRUCT_TLVLEN(wmi_init_cmd_fixed_param));
+
+	cdf_mem_copy(resource_cfg, tgt_res_cfg, sizeof(wmi_resource_config));
+	WMITLV_SET_HDR(&resource_cfg->tlv_header,
+			WMITLV_TAG_STRUC_wmi_resource_config,
+			WMITLV_GET_STRUCT_TLVLEN(wmi_resource_config));
+
+	for (idx = 0; idx < num_mem_chunks; ++idx) {
+		WMITLV_SET_HDR(&(host_mem_chunks[idx].tlv_header),
+				WMITLV_TAG_STRUC_wlan_host_memory_chunk,
+				WMITLV_GET_STRUCT_TLVLEN
+				(wlan_host_memory_chunk));
+		host_mem_chunks[idx].ptr = mem_chunks[idx].paddr;
+		host_mem_chunks[idx].size = mem_chunks[idx].len;
+		host_mem_chunks[idx].req_id = mem_chunks[idx].req_id;
+		WMA_LOGD("chunk %d len %d requested ,ptr  0x%x ",
+				idx, host_mem_chunks[idx].size,
+				host_mem_chunks[idx].ptr);
+	}
+	cmd->num_host_mem_chunks = num_mem_chunks;
+	len += (num_mem_chunks * sizeof(wlan_host_memory_chunk));
+	WMITLV_SET_HDR((buf_ptr + sizeof(*cmd) + sizeof(wmi_resource_config)),
+			WMITLV_TAG_ARRAY_STRUC,
+			(sizeof(wlan_host_memory_chunk) *
+			 num_mem_chunks));
+
+	num_whitelist = sizeof(version_whitelist) /
+		sizeof(wmi_whitelist_version_info);
+	my_vers.abi_version_0 = WMI_ABI_VERSION_0;
+	my_vers.abi_version_1 = WMI_ABI_VERSION_1;
+	my_vers.abi_version_ns_0 = WMI_ABI_VERSION_NS_0;
+	my_vers.abi_version_ns_1 = WMI_ABI_VERSION_NS_1;
+	my_vers.abi_version_ns_2 = WMI_ABI_VERSION_NS_2;
+	my_vers.abi_version_ns_3 = WMI_ABI_VERSION_NS_3;
+
+	wmi_cmp_and_set_abi_version(num_whitelist, version_whitelist,
+			&my_vers,
+			&wmi_handle->fw_abi_version,
+			&cmd->host_abi_vers);
+
+	WMA_LOGD("%s: INIT_CMD version: %d, %d, 0x%x, 0x%x, 0x%x, 0x%x",
+		__func__, WMI_VER_GET_MAJOR(cmd->host_abi_vers.abi_version_0),
+			WMI_VER_GET_MINOR(cmd->host_abi_vers.abi_version_0),
+			cmd->host_abi_vers.abi_version_ns_0,
+			cmd->host_abi_vers.abi_version_ns_1,
+			cmd->host_abi_vers.abi_version_ns_2,
+			cmd->host_abi_vers.abi_version_ns_3);
+
+	/* Save version sent from host -
+	 * Will be used to check ready event
+	 */
+	cdf_mem_copy(&wmi_handle->final_abi_vers, &cmd->host_abi_vers,
+			sizeof(wmi_abi_version));
+
+	if (action) {
+		ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_INIT_CMDID);
+		if (ret) {
+			WMA_LOGE(FL("Failed to send set WMI INIT command ret = %d"), ret);
+			wmi_buf_free(buf);
+			return CDF_STATUS_E_FAILURE;
+		}
+	} else {
+		wmi_handle->saved_wmi_init_cmd.buf = buf;
+		wmi_handle->saved_wmi_init_cmd.buf_len = len;
+	}
+
+	return CDF_STATUS_SUCCESS;
+
+}
+
+/**
+ * send_saved_init_cmd_tlv() - wmi init command
+ * @wmi_handle:      pointer to wmi handle
+ *
+ * This function sends IE information to firmware
+ *
+ * Return: CDF_STATUS_SUCCESS for success otherwise failure
+ *
+ */
+CDF_STATUS send_saved_init_cmd_tlv(wmi_unified_t wmi_handle)
+{
+	int status;
+
+	if (!wmi_handle->saved_wmi_init_cmd.buf ||
+			!wmi_handle->saved_wmi_init_cmd.buf_len) {
+		WMA_LOGP("Service ready ext event w/o WMI_SERVICE_EXT_MSG!");
+		return CDF_STATUS_E_FAILURE;
+	}
+	status = wmi_unified_cmd_send(wmi_handle,
+				wmi_handle->saved_wmi_init_cmd.buf,
+				wmi_handle->saved_wmi_init_cmd.buf_len,
+				WMI_INIT_CMDID);
+	if (status) {
+		WMA_LOGE(FL("Failed to send set WMI INIT command ret = %d"), status);
+		wmi_buf_free(wmi_handle->saved_wmi_init_cmd.buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+	wmi_handle->saved_wmi_init_cmd.buf = NULL;
+	wmi_handle->saved_wmi_init_cmd.buf_len = 0;
+
+	return CDF_STATUS_SUCCESS;
+}
+
+CDF_STATUS save_fw_version_cmd_tlv(wmi_unified_t wmi_handle, void *evt_buf)
+{
+	WMI_SERVICE_READY_EVENTID_param_tlvs *param_buf;
+	wmi_service_ready_event_fixed_param *ev;
+
+
+	param_buf = (WMI_SERVICE_READY_EVENTID_param_tlvs *) evt_buf;
+
+	ev = (wmi_service_ready_event_fixed_param *) param_buf->fixed_param;
+	if (!ev)
+		cdf_assert(0);
+
+	/*Save fw version from service ready message */
+	/*This will be used while sending INIT message */
+	cdf_mem_copy(&wmi_handle->fw_abi_version, &ev->fw_abi_vers,
+			sizeof(wmi_handle->fw_abi_version));
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * wmi_unified_save_fw_version_cmd() - save fw version
+ * @wmi_handle:      pointer to wmi handle
+ * @res_cfg:         resource config
+ * @num_mem_chunks:  no of mem chunck
+ * @mem_chunk:       pointer to mem chunck structure
+ *
+ * This function sends IE information to firmware
+ *
+ * Return: CDF_STATUS_SUCCESS for success otherwise failure
+ *
+ */
+CDF_STATUS check_and_update_fw_version_cmd_tlv(wmi_unified_t wmi_handle,
+					  void *evt_buf)
+{
+	WMI_READY_EVENTID_param_tlvs *param_buf = NULL;
+	wmi_ready_event_fixed_param *ev = NULL;
+
+	param_buf = (WMI_READY_EVENTID_param_tlvs *) evt_buf;
+	ev = param_buf->fixed_param;
+
+	if (!wmi_versions_are_compatible(&wmi_handle->final_abi_vers,
+				&ev->fw_abi_vers)) {
+		/*
+		 * Error: Our host version and the given firmware version
+		 * are incompatible.
+		 **/
+		WMA_LOGD("%s: Error: Incompatible WMI version."
+			"Host: %d,%d,0x%x 0x%x 0x%x 0x%x, FW: %d,%d,0x%x 0x%x 0x%x 0x%x\n",
+				__func__,
+			WMI_VER_GET_MAJOR(wmi_handle->final_abi_vers.
+				abi_version_0),
+			WMI_VER_GET_MINOR(wmi_handle->final_abi_vers.
+				abi_version_0),
+			wmi_handle->final_abi_vers.abi_version_ns_0,
+			wmi_handle->final_abi_vers.abi_version_ns_1,
+			wmi_handle->final_abi_vers.abi_version_ns_2,
+			wmi_handle->final_abi_vers.abi_version_ns_3,
+			WMI_VER_GET_MAJOR(ev->fw_abi_vers.abi_version_0),
+			WMI_VER_GET_MINOR(ev->fw_abi_vers.abi_version_0),
+			ev->fw_abi_vers.abi_version_ns_0,
+			ev->fw_abi_vers.abi_version_ns_1,
+			ev->fw_abi_vers.abi_version_ns_2,
+			ev->fw_abi_vers.abi_version_ns_3);
+
+		return CDF_STATUS_E_FAILURE;
+	}
+	cdf_mem_copy(&wmi_handle->final_abi_vers, &ev->fw_abi_vers,
+			sizeof(wmi_abi_version));
+	cdf_mem_copy(&wmi_handle->fw_abi_version, &ev->fw_abi_vers,
+			sizeof(wmi_abi_version));
+
+
+	return CDF_STATUS_SUCCESS;
+}
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -7994,6 +8288,11 @@ struct wmi_ops tlv_ops =  {
 	.send_update_tdls_peer_state_cmd = send_update_tdls_peer_state_cmd_tlv,
 	.send_process_fw_mem_dump_cmd = send_process_fw_mem_dump_cmd_tlv,
 	.send_process_set_ie_info_cmd = send_process_set_ie_info_cmd_tlv,
+	.send_init_cmd = send_init_cmd_tlv,
+	.save_fw_version_cmd = save_fw_version_cmd_tlv,
+	.check_and_update_fw_version_cmd =
+		  check_and_update_fw_version_cmd_tlv,
+	.send_saved_init_cmd = send_saved_init_cmd_tlv,
 	/* TODO - Add other tlv apis here */
 };
 
