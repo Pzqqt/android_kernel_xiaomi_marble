@@ -109,9 +109,6 @@ sys_bbt_process_message_core(tpAniSirGlobal mac_ctx, tpSirMsgQ msg,
 	cds_pkt_t *vos_pkt = (cds_pkt_t *) msg->bodyptr;
 	QDF_STATUS qdf_status =
 		wma_ds_peek_rx_packet_info(vos_pkt, &bd_ptr, false);
-	uint8_t sessionid;
-	tpPESession pe_session;
-	tpSirMacMgmtHdr mac_hdr;
 
 	mac_ctx->sys.gSysBbtReceived++;
 
@@ -130,19 +127,7 @@ sys_bbt_process_message_core(tpAniSirGlobal mac_ctx, tpSirMsgQ msg,
 	framecount = mac_ctx->sys.gSysFrameCount[type][subtype];
 
 	if (type == SIR_MAC_MGMT_FRAME) {
-		if (true == mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running) {
-			mac_hdr = WMA_GET_RX_MAC_HEADER(bd_ptr);
-			pe_session = pe_find_session_by_bssid(mac_ctx,
-					mac_hdr->bssId,
-					&sessionid);
-			if (pe_session &&
-				(pe_session->pePersona == QDF_SAP_MODE)) {
-				QDF_TRACE(QDF_MODULE_ID_SYS,
-					QDF_TRACE_LEVEL_INFO_HIGH,
-					FL("CAC timer is running, dropping the mgmt frame"));
-				goto fail;
-			}
-		}
+		tpSirMacMgmtHdr mac_hdr;
 
 		/*
 		 * Drop beacon frames in deferred state to avoid VOSS run out of
@@ -169,27 +154,26 @@ sys_bbt_process_message_core(tpAniSirGlobal mac_ctx, tpSirMsgQ msg,
 			goto fail;
 		}
 
+		mac_hdr = WMA_GET_RX_MAC_HEADER(bd_ptr);
+		if (subtype == SIR_MAC_MGMT_ASSOC_REQ) {
+			sys_log(mac_ctx, LOG1,
+				FL("ASSOC REQ frame allowed: da: " MAC_ADDRESS_STR ", sa: " MAC_ADDRESS_STR ", bssid: " MAC_ADDRESS_STR ", Assoc Req count so far: %d\n"),
+				MAC_ADDR_ARRAY(mac_hdr->da),
+				MAC_ADDR_ARRAY(mac_hdr->sa),
+				MAC_ADDR_ARRAY(mac_hdr->bssId),
+				mac_ctx->sys.gSysFrameCount[type][subtype]);
+		}
 		if (subtype == SIR_MAC_MGMT_DEAUTH) {
-			tpSirMacMgmtHdr mac_hdr = WMA_GET_RX_MAC_HEADER(bd_ptr);
-			sys_log(mac_ctx, LOGE,
-				FL("DEAUTH frame allowed: "
-					"da: " MAC_ADDRESS_STR ", "
-					"sa: " MAC_ADDRESS_STR ", "
-					"bssid: " MAC_ADDRESS_STR ", "
-					"DEAUTH count so far: %d\n"),
+			sys_log(mac_ctx, LOG1,
+				FL("DEAUTH frame allowed: da: " MAC_ADDRESS_STR ", sa: " MAC_ADDRESS_STR ", bssid: " MAC_ADDRESS_STR ", DEAUTH count so far: %d\n"),
 				MAC_ADDR_ARRAY(mac_hdr->da),
 				MAC_ADDR_ARRAY(mac_hdr->sa),
 				MAC_ADDR_ARRAY(mac_hdr->bssId),
 				mac_ctx->sys.gSysFrameCount[type][subtype]);
 		}
 		if (subtype == SIR_MAC_MGMT_DISASSOC) {
-			tpSirMacMgmtHdr mac_hdr = WMA_GET_RX_MAC_HEADER(bd_ptr);
-			sys_log(mac_ctx, LOGE,
-				FL("DISASSOC frame allowed: "
-					"da: " MAC_ADDRESS_STR ", "
-					"sa: " MAC_ADDRESS_STR ", "
-					"bssid: " MAC_ADDRESS_STR ", "
-					"DISASSOC count so far: %d\n"),
+			sys_log(mac_ctx, LOG1,
+				FL("DISASSOC frame allowed: da: " MAC_ADDRESS_STR ", sa: " MAC_ADDRESS_STR ", bssid: " MAC_ADDRESS_STR ", DISASSOC count so far: %d\n"),
 				MAC_ADDR_ARRAY(mac_hdr->da),
 				MAC_ADDR_ARRAY(mac_hdr->sa),
 				MAC_ADDR_ARRAY(mac_hdr->bssId),

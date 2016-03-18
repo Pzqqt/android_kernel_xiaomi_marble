@@ -160,10 +160,6 @@ void lim_send_heart_beat_timeout_ind(tpAniSirGlobal pMac, tpPESession psessionEn
 tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(tpAniSirGlobal pMac,
 						 uint8_t *pRxPacketInfo,
 						 uint32_t subType);
-bool lim_is_deauth_diassoc_for_drop(tpAniSirGlobal mac, uint8_t *rx_pkt_info);
-#ifdef WLAN_FEATURE_11W
-bool lim_is_assoc_req_for_drop(tpAniSirGlobal mac, uint8_t *rx_pkt_info);
-#endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	struct sSirSmeRoamOffloadSynchInd *roam_sync_ind_ptr,

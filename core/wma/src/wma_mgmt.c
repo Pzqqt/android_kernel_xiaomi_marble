@@ -2859,6 +2859,96 @@ int wma_process_rmf_frame(tp_wma_handle wma_handle,
 #endif
 
 /**
+ * wma_is_pkt_drop_candidate() - check if the mgmt frame should be droppped
+ * @wma_handle: wma handle
+ * @peer_addr: peer MAC address
+ * @subtype: Management frame subtype
+ *
+ * This function is used to decide if a particular management frame should be
+ * dropped to prevent DOS attack. Timestamp is used to decide the DOS attack.
+ *
+ * Return: true if the packet should be dropped and false oterwise
+ */
+static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
+				      uint8_t *peer_addr, uint8_t subtype)
+{
+	struct ol_txrx_peer_t *peer;
+	struct ol_txrx_pdev_t *pdev_ctx;
+	uint8_t peer_id;
+	bool should_drop = false;
+
+	/*
+	 * Currently this function handles only Disassoc,
+	 * Deauth and Assoc req frames. Return false for
+	 * all other frames.
+	 */
+	if (subtype != IEEE80211_FC0_SUBTYPE_DISASSOC &&
+	    subtype != IEEE80211_FC0_SUBTYPE_DEAUTH &&
+	    subtype != IEEE80211_FC0_SUBTYPE_ASSOC_REQ) {
+		should_drop = false;
+		goto end;
+	}
+
+	pdev_ctx = cds_get_context(QDF_MODULE_ID_TXRX);
+	if (!pdev_ctx) {
+		WMA_LOGE(FL("Failed to get the context"));
+		should_drop = true;
+		goto end;
+	}
+
+	peer = ol_txrx_find_peer_by_addr(pdev_ctx, peer_addr, &peer_id);
+	if (!peer) {
+		if (SIR_MAC_MGMT_ASSOC_REQ != subtype) {
+			WMA_LOGI(
+			   FL("Received mgmt frame: %0x from unknow peer: %pM"),
+			   subtype, peer_addr);
+			should_drop = true;
+		}
+		goto end;
+	}
+
+	switch (subtype) {
+	case SIR_MAC_MGMT_ASSOC_REQ:
+		if (peer->last_assoc_rcvd) {
+			if (qdf_get_system_timestamp() - peer->last_assoc_rcvd <
+				WMA_MGMT_FRAME_DETECT_DOS_TIMER) {
+				    WMA_LOGI(FL("Dropping Assoc Req received"));
+				    should_drop = true;
+			}
+		}
+		peer->last_assoc_rcvd = qdf_get_system_timestamp();
+		break;
+	case SIR_MAC_MGMT_DISASSOC:
+		if (peer->last_disassoc_rcvd) {
+			if (qdf_get_system_timestamp() -
+				peer->last_disassoc_rcvd <
+				WMA_MGMT_FRAME_DETECT_DOS_TIMER) {
+				    WMA_LOGI(FL("Dropping DisAssoc received"));
+				    should_drop = true;
+			}
+		}
+		peer->last_disassoc_rcvd = qdf_get_system_timestamp();
+		break;
+	case SIR_MAC_MGMT_DEAUTH:
+		if (peer->last_deauth_rcvd) {
+			if (qdf_get_system_timestamp() -
+				peer->last_deauth_rcvd <
+				WMA_MGMT_FRAME_DETECT_DOS_TIMER) {
+				    WMA_LOGI(FL("Dropping Deauth received"));
+				    should_drop = true;
+			}
+		}
+		peer->last_deauth_rcvd = qdf_get_system_timestamp();
+		break;
+	default:
+		break;
+	}
+
+end:
+	return should_drop;
+}
+
+/**
  * wma_mgmt_rx_process() - process management rx frame.
  * @handle: wma handle
  * @data: rx data
@@ -3028,6 +3118,12 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 #endif /* WLAN_FEATURE_11W */
 	rx_pkt->pkt_meta.sessionId =
 		(vdev_id == WMA_INVALID_VDEV_ID ? 0 : vdev_id);
+
+	if (wma_is_pkt_drop_candidate(wma_handle, wh->i_addr2, mgt_subtype)) {
+		cds_pkt_return_packet(rx_pkt);
+		return -EINVAL;
+	}
+
 	wma_handle->mgmt_rx(wma_handle, rx_pkt);
 	return 0;
 }

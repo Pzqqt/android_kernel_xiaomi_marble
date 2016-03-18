@@ -803,6 +803,17 @@ lim_handle80211_frames(tpAniSirGlobal pMac, tpSirMsgQ limMsg, uint8_t *pDeferMsg
 	isFrmFt = WMA_GET_RX_FT_DONE(pRxPacketInfo);
 	fc = pHdr->fc;
 
+	if (pMac->sap.SapDfsInfo.is_dfs_cac_timer_running) {
+		psessionEntry = pe_find_session_by_bssid(pMac,
+					pHdr->bssId, &sessionId);
+		if (psessionEntry &&
+		    (QDF_SAP_MODE == psessionEntry->pePersona)) {
+			lim_log(pMac, LOG1,
+				FL("CAC timer running - drop the frame"));
+			goto end;
+		}
+	}
+
 #ifdef WLAN_DUMP_MGMTFRAMES
 	lim_log(pMac, LOGE,
 		FL("ProtVersion %d, Type %d, Subtype %d rateIndex=%d"),
