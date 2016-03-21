@@ -564,11 +564,10 @@ static int cds_mc_thread(void *Arg)
 				clear_bit(MC_SUSPEND_EVENT_MASK,
 					  &pSchedContext->mcEventFlag);
 				spin_lock(&pSchedContext->McThreadLock);
-
+				INIT_COMPLETION(pSchedContext->ResumeMcEvent);
 				/* Mc Thread Suspended */
 				complete(&pHddCtx->mc_sus_event_var);
 
-				INIT_COMPLETION(pSchedContext->ResumeMcEvent);
 				spin_unlock(&pSchedContext->McThreadLock);
 
 				/* Wait foe Resume Indication */
@@ -866,9 +865,9 @@ static int cds_ol_rx_thread(void *arg)
 				clear_bit(RX_SUSPEND_EVENT_MASK,
 					  &pSchedContext->ol_rx_event_flag);
 				spin_lock(&pSchedContext->ol_rx_thread_lock);
-				complete(&pSchedContext->ol_suspend_rx_event);
 				INIT_COMPLETION
 					(pSchedContext->ol_resume_rx_event);
+				complete(&pSchedContext->ol_suspend_rx_event);
 				spin_unlock(&pSchedContext->ol_rx_thread_lock);
 				wait_for_completion_interruptible
 					(&pSchedContext->ol_resume_rx_event);
