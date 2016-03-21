@@ -79,7 +79,7 @@
  * fall back to using the immediate work queue.
  */
 #define qdf_sysctl_decl(f, ctl, write, filp, buffer, lenp, ppos) \
-	f(struct ctl_table *ctl, int write, void *buffer, \
+	f(struct ctl_table *ctl, int32_t write, void *buffer, \
 	size_t *lenp, loff_t *ppos)
 
 #define QDF_SYSCTL_PROC_DOINTVEC(ctl, write, filp, buffer, lenp, ppos) \
@@ -134,10 +134,11 @@ static inline qdf_time_t os_get_timestamp(void)
 
 struct _NIC_DEV;
 
-static inline unsigned char *os_malloc(osdev_t pNicDev,
-					unsigned long ulSizeInBytes, int gfp)
+static inline unsigned char *os_malloc(osdev_t nic_dev,
+				       unsigned long size_in_bytes,
+				       int32_t gfp)
 {
-		return qdf_mem_malloc(ulSizeInBytes);
+	return qdf_mem_malloc(size_in_bytes);
 }
 
 #define OS_FREE(_p)                     qdf_mem_free(_p)

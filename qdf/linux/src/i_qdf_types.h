@@ -32,6 +32,26 @@
 
 #if !defined(__I_QDF_TYPES_H)
 #define __I_QDF_TYPES_H
+
+#include <qdf_status.h>
+
+#ifndef __KERNEL__
+#define __iomem
+#endif
+#include <asm/types.h>
+#include <asm/byteorder.h>
+#include <linux/version.h>
+
+#ifndef __ahdecl
+#ifdef __i386__
+#define __ahdecl   __attribute__((regparm(0)))
+#else
+#define __ahdecl
+#endif
+#endif
+
+#ifdef __KERNEL__
+#include <generated/autoconf.h>
 #include <linux/list.h>
 #include <linux/mutex.h>
 #include <linux/types.h>
@@ -42,17 +62,6 @@
 #include <linux/interrupt.h>
 #include <linux/version.h>
 #include <asm/div64.h>
-#include <qdf_status.h>
-
-#ifndef __KERNEL__
-#define __iomem
-#endif
-#include <asm/types.h>
-#include <asm/byteorder.h>
-#include <linux/version.h>
-
-#ifdef __KERNEL__
-#include <generated/autoconf.h>
 #include <linux/compiler.h>
 #include <linux/dma-mapping.h>
 #include <linux/wireless.h>
@@ -69,20 +78,13 @@
 typedef unsigned long dma_addr_t;
 #endif
 
-#ifndef __ahdecl
-#ifdef __i386__
-#define __ahdecl   __attribute__((regparm(0)))
-#else
-#define __ahdecl
-#endif
-#endif
-
 #define SIOCGIWAP       0
 #define IWEVCUSTOM      0
 #define IWEVREGISTERED  0
 #define IWEVEXPIRED     0
 #define SIOCGIWSCAN     0
 #define DMA_TO_DEVICE   0
+#define DMA_BIDIRECTIONAL 0
 #define DMA_FROM_DEVICE 0
 #define __iomem
 #endif /* __KERNEL__ */
@@ -233,7 +235,11 @@ enum __qdf_net_wireless_evcode {
 
 #define __QDF_DMA_BIDIRECTIONAL  DMA_BIDIRECTIONAL
 #define __QDF_DMA_TO_DEVICE      DMA_TO_DEVICE
+#ifndef __ubicom32__
 #define __QDF_DMA_FROM_DEVICE    DMA_FROM_DEVICE
+#else
+#define __QDF_DMA_FROM_DEVICE    DMA_TO_DEVICE
+#endif
 #define __qdf_inline             inline
 
 /*

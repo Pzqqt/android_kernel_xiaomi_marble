@@ -51,33 +51,6 @@ enum qdf_nbuf_exemption_type {
 	QDF_NBUF_EXEMPT_ON_KEY_MAPPING_KEY_UNAVAILABLE
 };
 
-
-/**
- * QDF_NET_CMD - These control/get info from the device
- */
-#define QDF_NET_CMD(_x) \
-	QDF_NET_CMD_GET_##_x, \
-	QDF_NET_CMD_SET_##_x
-
-/**
- * qdf_net_cmd_t - Get/Set commands from anet to qdf_drv
- */
-typedef enum {
-	QDF_NET_CMD(LINK_INFO),
-	QDF_NET_CMD(POLL_INFO),
-	QDF_NET_CMD(CKSUM_INFO),
-	QDF_NET_CMD(RING_INFO),
-	QDF_NET_CMD(MAC_ADDR),
-	QDF_NET_CMD(MTU),
-	QDF_NET_CMD_GET_DMA_INFO,
-	QDF_NET_CMD_GET_OFFLOAD_CAP,
-	QDF_NET_CMD_GET_STATS,
-	QDF_NET_CMD_ADD_VID,
-	QDF_NET_CMD_DEL_VID,
-	QDF_NET_CMD_SET_MCAST,
-	QDF_NET_CMD_GET_MCAST_CAP
-} qdf_net_cmd_t;
-
 typedef __wsum_t wsum_t;
 typedef __in6_addr_t in6_addr_t;
 
@@ -92,6 +65,11 @@ typedef __in6_addr_t in6_addr_t;
 
 #define QDF_ETH_TYPE_IPV4              0x0800  /* IPV4 */
 #define QDF_ETH_TYPE_IPV6              0x86dd  /* IPV6 */
+
+typedef struct qdf_net_ethaddr {
+	uint8_t addr[QDF_NET_ETH_LEN];
+} qdf_net_ethaddr_t;
+
 
 typedef struct {
 	uint16_t  source;
@@ -162,18 +140,6 @@ typedef struct {
  * qdf_net_cmd_vid_t - Command for set/unset vid
  */
 typedef uint16_t qdf_net_cmd_vid_t ;        /*get/set vlan id*/
-
-/**
- * qdf_net_devaddr_t - Command for getting general stats from a device
- * @num: No. of mcast addresses
- * @da_addr: Destination address
- */
-typedef struct qdf_net_devaddr {
-	uint32_t num;
-	uint8_t  *da_addr[QDF_NET_MAX_MCAST_ADDR];
-} qdf_net_devaddr_t;
-
-typedef qdf_net_devaddr_t qdf_net_cmd_mcaddr_t;
 
 /**
  * typedef qdf_nbuf_tx_cksum_t - transmit checksum offload types

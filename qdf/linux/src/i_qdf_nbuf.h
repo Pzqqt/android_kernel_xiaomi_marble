@@ -39,9 +39,9 @@
 #include <linux/dma-mapping.h>
 #include <asm/cacheflush.h>
 #include <qdf_types.h>
+#include <qdf_net_types.h>
 #include <qdf_status.h>
 #include <qdf_util.h>
-#include <qdf_net_types.h>
 #include <qdf_mem.h>
 #include <linux/tcp.h>
 #include <qdf_util.h>
@@ -473,10 +473,6 @@ void __qdf_nbuf_frag_info(struct sk_buff *skb, qdf_sglist_t  *sg);
 QDF_STATUS __qdf_nbuf_frag_map(
 	qdf_device_t osdev, __qdf_nbuf_t nbuf,
 	int offset, qdf_dma_dir_t dir, int cur_frag);
-QDF_STATUS
-__qdf_nbuf_get_vlan_info(qdf_net_handle_t hdl, struct sk_buff *skb,
-		qdf_net_vlanhdr_t *vlan);
-
 
 #ifdef QCA_PKT_PROTO_TRACE
 void __qdf_nbuf_trace_update(struct sk_buff *buf, char *event_string);

@@ -57,20 +57,6 @@ typedef struct qdf_sglist {
 #define QDF_MAX_SCATTER __QDF_MAX_SCATTER
 
 /**
- * QDF_MAX - get maximum of two values
- * @_x: 1st arguement
- * @_y: 2nd arguement
- */
-#define QDF_MAX(_x, _y) (((_x) > (_y)) ? (_x) : (_y))
-
-/**
- * QDF_MIN - get minimum of two values
- * @_x: 1st arguement
- * @_y: 2nd arguement
- */
-#define QDF_MIN(_x, _y) (((_x) < (_y)) ? (_x) : (_y))
-
-/**
  * QDF_SWAP_U16 - swap input u16 value
  * @_x: variable to swap
  */
@@ -229,6 +215,7 @@ typedef void (*qdf_timer_func_t)(void *);
 
 #define qdf_offsetof(type, field) offsetof(type, field)
 
+#ifdef CONFIG_MCL
 /**
  * typedef QDF_MODULE_ID - QDF Module IDs
  * @QDF_MODULE_ID_TLSHIM: TLSHIM module ID
@@ -284,12 +271,6 @@ typedef enum {
 	QDF_MODULE_ID_MAX
 } QDF_MODULE_ID;
 
-#define qdf_print(args...) \
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR, ## args)
-#define qdf_vprint    __qdf_vprint
-#define qdf_snprint   __qdf_snprint
-
-
 /**
  * enum tQDF_ADAPTER_MODE - Concurrency role.
  * @QDF_STA_MODE: STA mode
@@ -334,6 +315,17 @@ enum tQDF_GLOBAL_CON_MODE {
 	QDF_GLOBAL_EPPING_MODE = 8,
 	QDF_GLOBAL_MAX_MODE
 };
+
+#define qdf_print(args...) \
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR, ## args)
+#define qdf_vprint    __qdf_vprint
+#define qdf_snprint   __qdf_snprint
+#else
+
+#define qdf_print printk
+
+#endif /* CONFIG_MCL */
+
 
 
 

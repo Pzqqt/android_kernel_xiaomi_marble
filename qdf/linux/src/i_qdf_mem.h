@@ -94,8 +94,8 @@ typedef struct __qdf_mempool_ctxt {
 	u_int32_t max_elem;
 	u_int32_t free_cnt;
 } __qdf_mempool_ctxt_t;
-#endif
-typedef __qdf_mempool_ctxt_t *__qdf_mempool_t;
+
+#endif /* __KERNEL__ */
 
 /* typedef for dma_data_direction */
 typedef enum dma_data_direction __dma_data_direction;

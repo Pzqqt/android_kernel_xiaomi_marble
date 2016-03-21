@@ -36,8 +36,8 @@
 #ifdef CONFIG_MCL
 #include <i_host_diag_core_event.h>
 #include <cds_api.h>
-#endif
 #include <ani_global.h>
+#endif
 #include <i_qdf_lock.h>
 #include <hif.h>
 
@@ -382,6 +382,7 @@ QDF_STATUS qdf_wake_lock_destroy(qdf_wake_lock_t *lock)
 }
 EXPORT_SYMBOL(qdf_wake_lock_destroy);
 
+#ifdef CONFIG_MCL
 /**
  * qdf_runtime_pm_get() - do a get opperation on the device
  *
@@ -538,6 +539,8 @@ void qdf_runtime_lock_deinit(qdf_runtime_lock_t lock)
 	hif_runtime_lock_deinit(hif_ctx, lock);
 }
 EXPORT_SYMBOL(qdf_runtime_lock_deinit);
+
+#endif /* CONFIG_MCL */
 
 /**
  * qdf_spinlock_acquire() - acquires a spin lock

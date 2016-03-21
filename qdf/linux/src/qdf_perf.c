@@ -40,6 +40,7 @@
 #include <linux/spinlock.h>
 
 #include <qdf_perf.h>
+#ifdef QCA_PERF_PROFILING
 
 qdf_perf_entry_t     perf_root = {{0, 0} };
 
@@ -193,3 +194,5 @@ void __qdf_perf_end(qdf_perf_id_t id)
 	api_tbl[entry->type].sample(entry, 1);
 }
 EXPORT_SYMBOL(__qdf_perf_end);
+
+#endif /* QCA_PERF_PROFILING */

@@ -76,9 +76,11 @@ struct s_qdf_mem_struct {
 
 int qdf_dbg_mask;
 qdf_declare_param(qdf_dbg_mask, int);
+EXPORT_SYMBOL(qdf_dbg_mask);
 
 u_int8_t prealloc_disabled = 1;
 qdf_declare_param(prealloc_disabled, byte);
+EXPORT_SYMBOL(prealloc_disabled);
 
 /**
  * __qdf_mempool_init() - Create and initialize memory pool

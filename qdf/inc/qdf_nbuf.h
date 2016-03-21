@@ -325,6 +325,8 @@ qdf_nbuf_frag_push_head(qdf_nbuf_t buf,
 	__qdf_nbuf_frag_push_head(buf, frag_len, frag_vaddr, frag_paddr);
 }
 
+#define qdf_nbuf_num_frags_init(_nbuf) __qdf_nbuf_num_frags_init((_nbuf))
+
 /* For efficiency, it is the responsibility of the caller to ensure that val
  * is either 0 or 1.
  */
@@ -1176,13 +1178,6 @@ static inline qdf_nbuf_tx_cksum_t
 qdf_nbuf_tx_cksum_info(qdf_nbuf_t buf, uint8_t **hdr_off, uint8_t **where)
 {
 	return __qdf_nbuf_tx_cksum_info(buf, hdr_off, where);
-}
-
-static inline QDF_STATUS
-qdf_nbuf_get_vlan_info(qdf_net_handle_t hdl, qdf_nbuf_t buf,
-		qdf_net_vlanhdr_t *vlan)
-{
-	return __qdf_nbuf_get_vlan_info(hdl, buf, vlan);
 }
 
 static inline void qdf_nbuf_reset_ctxt(__qdf_nbuf_t nbuf)

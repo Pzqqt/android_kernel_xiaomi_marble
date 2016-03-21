@@ -72,6 +72,20 @@
 #define qdf_target_assert_always(expr)  __qdf_target_assert(expr)
 
 /**
+ * QDF_MAX - get maximum of two values
+ * @_x: 1st arguement
+ * @_y: 2nd arguement
+ */
+#define QDF_MAX(_x, _y) (((_x) > (_y)) ? (_x) : (_y))
+
+/**
+ * QDF_MIN - get minimum of two values
+ * @_x: 1st arguement
+ * @_y: 2nd arguement
+ */
+#define QDF_MIN(_x, _y) (((_x) < (_y)) ? (_x) : (_y))
+
+/**
  * qdf_status_to_os_return - returns the status to OS.
  * @status: enum QDF_STATUS
  *

@@ -72,6 +72,18 @@ typedef enum {
 	QDF_TRACE_LEVEL_MAX
 } QDF_TRACE_LEVEL;
 
+/*
+ * Log levels
+ */
+#define QDF_DEBUG_FUNCTRACE     0x01
+#define QDF_DEBUG_LEVEL0        0x02
+#define QDF_DEBUG_LEVEL1        0x04
+#define QDF_DEBUG_LEVEL2        0x08
+#define QDF_DEBUG_LEVEL3        0x10
+#define QDF_DEBUG_ERROR         0x20
+#define QDF_DEBUG_CFG           0x40
+
+#ifdef CONFIG_MCL
 /* By default Data Path module will have all log levels enabled, except debug
  * log level. Debug level will be left up to the framework or user space modules
  * to be enabled when issue is detected
@@ -188,17 +200,6 @@ enum  QDF_DP_TRACE_ID {
 
 };
 
-/*
- * Log levels
- */
-#define QDF_DEBUG_FUNCTRACE     0x01
-#define QDF_DEBUG_LEVEL0        0x02
-#define QDF_DEBUG_LEVEL1        0x04
-#define QDF_DEBUG_LEVEL2        0x08
-#define QDF_DEBUG_LEVEL3        0x10
-#define QDF_DEBUG_ERROR         0x20
-#define QDF_DEBUG_CFG           0x40
-
 /**
  * struct qdf_dp_trace_record_s - Describes a record in DP trace
  * @time: time when it got stored
@@ -311,7 +312,7 @@ void qdf_dp_display_record(struct qdf_dp_trace_record_s *record,
  *
  */
 void __printf(3, 4) qdf_trace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
-				  char *str_format, ...);
+		   char *str_format, ...);
 
 void qdf_trace_hex_dump(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 			void *data, int buf_len);
@@ -323,39 +324,10 @@ void qdf_trace_set_value(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 
 void qdf_trace_set_module_trace_level(QDF_MODULE_ID module, uint32_t level);
 
-/* QDF_TRACE is the macro invoked to add trace messages to code.  See the
- * documenation for qdf_trace_msg() for the parameters etc. for this function.
- *
- * NOTE:  Code QDF_TRACE() macros into the source code.  Do not code directly
- * to the qdf_trace_msg() function.
- *
- * NOTE 2:  qdf tracing is totally turned off if WLAN_DEBUG is *not* defined.
- * This allows us to build 'performance' builds where we can measure performance
- * without being bogged down by all the tracing in the code
- */
-
-#ifdef CONFIG_MCL
-#if defined(WLAN_DEBUG)
-#define QDF_TRACE qdf_trace_msg
-#define QDF_TRACE_HEX_DUMP qdf_trace_hex_dump
-#else
-#define QDF_TRACE(arg ...)
-#define QDF_TRACE_HEX_DUMP(arg ...)
-#endif
-#else
-#define QDF_TRACE qdf_trace
-
-#define qdf_trace(log_level, args...) \
-		do {	\
-			extern int qdf_dbg_mask; \
-			if (qdf_dbg_mask >= log_level) { \
-				printk("qdf: "args); \
-				printk("\n"); \
-			} \
-		} while (0)
-#endif
 void __printf(3, 4) qdf_snprintf(char *str_buffer, unsigned int size,
-				 char *str_format, ...);
+		  char *str_format, ...);
+
 #define QDF_SNPRINTF qdf_snprintf
+#endif /* CONFIG_MCL */
 
 #endif /* __QDF_TRACE_H */

@@ -39,8 +39,40 @@
 #define __printf(a, b)
 #endif
 
+#ifdef CONFIG_MCL
 /* Include Files */
 #include <cds_packet.h>
+
+/* QDF_TRACE is the macro invoked to add trace messages to code.  See the
+ * documenation for qdf_trace_msg() for the parameters etc. for this function.
+ *
+ * NOTE:  Code QDF_TRACE() macros into the source code.  Do not code directly
+ * to the qdf_trace_msg() function.
+ *
+ * NOTE 2:  qdf tracing is totally turned off if WLAN_DEBUG is *not* defined.
+ * This allows us to build 'performance' builds where we can measure performance
+ * without being bogged down by all the tracing in the code
+ */
+#if defined(WLAN_DEBUG)
+#define QDF_TRACE qdf_trace_msg
+#define QDF_TRACE_HEX_DUMP qdf_trace_hex_dump
+#else
+#define QDF_TRACE(arg ...)
+#define QDF_TRACE_HEX_DUMP(arg ...)
+#endif
+#else
+
+#define qdf_trace(log_level, args...) \
+		do {	\
+			extern int qdf_dbg_mask; \
+			if (qdf_dbg_mask >= log_level) { \
+				printk("qdf: "args); \
+				printk("\n"); \
+			} \
+		} while (0)
+#define QDF_TRACE printk
+
+#endif /* CONFIG_MCL */
 
 #define QDF_ENABLE_TRACING
 
