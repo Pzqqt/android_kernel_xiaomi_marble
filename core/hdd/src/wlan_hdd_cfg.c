@@ -3711,6 +3711,14 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		CFG_ROAM_DENSE_RSSI_THRE_OFFSET_MIN,
 		CFG_ROAM_DENSE_RSSI_THRE_OFFSET_MAX),
 
+	REG_VARIABLE(CFG_IGNORE_PEER_HT_MODE_NAME, WLAN_PARAM_Integer,
+			struct hdd_config, ignore_peer_ht_opmode,
+			VAR_FLAGS_OPTIONAL |
+			VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+			CFG_IGNORE_PEER_HT_MODE_DEFAULT,
+			CFG_IGNORE_PEER_HT_MODE_MIN,
+			CFG_IGNORE_PEER_HT_MODE_MAX),
+
 	REG_VARIABLE(CFG_ROAM_DENSE_MIN_APS, WLAN_PARAM_Integer,
 		struct hdd_config, roam_dense_min_aps,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -5302,6 +5310,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		CFG_ROAM_DENSE_RSSI_THRE_OFFSET,
 		pHddCtx->config->roam_dense_rssi_thresh_offset);
 	hdd_info("Name = [%s] Value = [%u]",
+		CFG_IGNORE_PEER_HT_MODE_NAME,
+		pHddCtx->config->ignore_peer_ht_opmode);
+	hdd_info("Name = [%s] Value = [%u]",
 		CFG_ROAM_DENSE_MIN_APS,
 		pHddCtx->config->roam_dense_min_aps);
 }
@@ -6745,6 +6756,8 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 			pHddCtx->config->obss_active_dwelltime;
 	smeConfig->csrConfig.obss_passive_dwelltime =
 			pHddCtx->config->obss_passive_dwelltime;
+	smeConfig->csrConfig.ignore_peer_ht_opmode =
+			pConfig->ignore_peer_ht_opmode;
 
 	status = sme_update_config(pHddCtx->hHal, smeConfig);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {

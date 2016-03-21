@@ -199,7 +199,8 @@ ap_beacon_process_24_ghz(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	 * 11b because if that's needed then our operating mode would have
 	 * already been set to legacy in the previous blocks.
 	 */
-	if (eSIR_HT_OP_MODE_OVERLAP_LEGACY == bcn_struct->HTInfo.opMode) {
+	if ((eSIR_HT_OP_MODE_OVERLAP_LEGACY == bcn_struct->HTInfo.opMode) &&
+		!mac_ctx->roam.configParam.ignore_peer_ht_opmode) {
 		if (eSIR_HT_OP_MODE_OVERLAP_LEGACY == mac_ctx->lim.gHTOperMode
 		    || eSIR_HT_OP_MODE_MIXED == mac_ctx->lim.gHTOperMode)
 			return;

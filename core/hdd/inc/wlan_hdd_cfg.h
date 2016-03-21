@@ -2930,6 +2930,15 @@ enum dot11p_mode {
 #define CFG_ROAM_DENSE_RSSI_THRE_OFFSET_DEFAULT (0)
 
 /*
+ * Enabling gignore_peer_ht_opmode will enable 11g
+ * protection only when there is a 11g AP in vicinity.
+ */
+#define CFG_IGNORE_PEER_HT_MODE_NAME       "gignore_peer_ht_opmode"
+#define CFG_IGNORE_PEER_HT_MODE_MIN        (0)
+#define CFG_IGNORE_PEER_HT_MODE_MAX        (1)
+#define CFG_IGNORE_PEER_HT_MODE_DEFAULT    (0)
+
+/*
  * Dense Roam Min APs
  * minimum number of AP required for dense roam
  * FW will consider environment as dense once it detects #APs
@@ -3530,6 +3539,7 @@ struct hdd_config {
 #endif
 	uint32_t roam_dense_traffic_thresh;
 	uint32_t roam_dense_rssi_thresh_offset;
+	bool ignore_peer_ht_opmode;
 	uint32_t roam_dense_min_aps;
 };
 

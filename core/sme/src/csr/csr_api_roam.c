@@ -2343,7 +2343,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 
 		pMac->sme.ps_global_info.ps_enabled =
 			pParam->is_ps_enabled;
-
+		pMac->roam.configParam.ignore_peer_ht_opmode =
+			pParam->ignore_peer_ht_opmode;
 		pMac->policy_manager_enabled = pParam->policy_manager_enabled;
 		pMac->fine_time_meas_cap = pParam->fine_time_meas_cap;
 		pMac->dual_mac_feature_disable =
@@ -2534,6 +2535,8 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 		pMac->roam.configParam.obss_active_dwelltime;
 	pParam->obss_passive_dwelltime =
 		pMac->roam.configParam.obss_passive_dwelltime;
+	pParam->ignore_peer_ht_opmode =
+		pMac->roam.configParam.ignore_peer_ht_opmode;
 	pParam->enableHtSmps = pMac->roam.configParam.enableHtSmps;
 	pParam->htSmps = pMac->roam.configParam.htSmps;
 	pParam->send_smps_action = pMac->roam.configParam.send_smps_action;

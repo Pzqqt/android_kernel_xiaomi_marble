@@ -638,6 +638,7 @@ typedef struct tagCsrConfig {
 	uint32_t obss_width_interval;
 	uint32_t obss_active_dwelltime;
 	uint32_t obss_passive_dwelltime;
+	bool ignore_peer_ht_opmode;
 } tCsrConfig;
 
 typedef struct tagCsrChannelPowerInfo {
