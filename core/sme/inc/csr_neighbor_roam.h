@@ -364,11 +364,11 @@ QDF_STATUS csr_neighbor_roam_offload_update_preauth_list(tpAniSirGlobal pMac,
 		roam_offload_synch_ind *roam_synch_ind_ptr, uint8_t sessionId);
 void csr_roam_synch_callback(tpAniSirGlobal mac,
 	roam_offload_synch_ind *roam_synch_data,
-	tpSirBssDescription  bss_desc_ptr, uint8_t reason);
+	tpSirBssDescription  bss_desc_ptr, enum sir_roam_op_code reason);
 #else
 static inline void csr_roam_synch_callback(tpAniSirGlobal mac,
 	roam_offload_synch_ind *roam_synch_data,
-	tpSirBssDescription  bss_desc_ptr, uint8_t reason)
+	tpSirBssDescription  bss_desc_ptr, enum sir_roam_op_code reason)
 {}
 #endif
 void csr_neighbor_roam_state_transition(tpAniSirGlobal mac_ctx,

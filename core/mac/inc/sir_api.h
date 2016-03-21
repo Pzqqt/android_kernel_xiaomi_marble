@@ -170,10 +170,21 @@ typedef enum {
 #define SIR_UAPSD_FLAG_ACBE     (1 << SIR_UAPSD_BITOFFSET_ACBE)
 #define SIR_UAPSD_GET(ac, mask)      (((mask) & (SIR_UAPSD_FLAG_ ## ac)) >> SIR_UAPSD_BITOFFSET_ ## ac)
 
-#define ROAM_SYNCH_PROPAGATION 1
-#define ROAMING_TX_QUEUE_DISABLE 2
 #endif
 
+/**
+ * enum sir_roam_op_code - Operation to be done by the callback.
+ * @SIR_ROAM_SYNCH_PROPAGATION: Propagate the new BSS info after roaming.
+ * @SIR_ROAMING_DEREGISTER_STA: Deregister the old STA after roaming.
+ * @SIR_ROAMING_TX_QUEUE_DISABLE: Disable the network queues while roaming.
+ * @SIR_ROAMING_TX_QUEUE_ENABLE: Enable back the n/w queues in case roam fails.
+ */
+enum sir_roam_op_code {
+	SIR_ROAM_SYNCH_PROPAGATION = 1,
+	SIR_ROAMING_DEREGISTER_STA,
+	SIR_ROAMING_TX_QUEUE_DISABLE,
+	SIR_ROAMING_TX_QUEUE_ENABLE,
+};
 /**
  * Module ID definitions.
  */

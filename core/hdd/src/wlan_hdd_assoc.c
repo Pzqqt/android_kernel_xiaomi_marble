@@ -4038,6 +4038,18 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		       FL("hdd_ReassocScenario set to: %d, due to eCSR_ROAM_FT_START, session: %d"),
 		       pHddStaCtx->hdd_ReassocScenario, pAdapter->sessionId);
 		break;
+	case eCSR_ROAM_DISABLE_QUEUES:
+		hdd_info("Disabling queues");
+		wlan_hdd_netif_queue_control(pAdapter,
+				WLAN_NETIF_TX_DISABLE,
+				WLAN_CONTROL_PATH);
+		break;
+	case eCSR_ROAM_ENABLE_QUEUES:
+		hdd_info("Enabling queues");
+		wlan_hdd_netif_queue_control(pAdapter,
+				WLAN_WAKE_ALL_NETIF_QUEUE,
+				WLAN_CONTROL_PATH);
+		break;
 
 	case eCSR_ROAM_SHOULD_ROAM:
 		/* notify apps that we can't pass traffic anymore */

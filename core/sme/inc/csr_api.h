@@ -493,6 +493,8 @@ typedef enum {
 	eCSR_ROAM_DFS_CHAN_SW_NOTIFY,
 	eCSR_ROAM_EXT_CHG_CHNL_IND,
 	eCSR_ROAM_STATUS_UPDATE_HW_MODE,
+	eCSR_ROAM_DISABLE_QUEUES,
+	eCSR_ROAM_ENABLE_QUEUES,
 } eRoamCmdStatus;
 
 /* comment inside indicates what roaming callback gets */

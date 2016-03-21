@@ -1883,7 +1883,7 @@ void wma_fill_roam_synch_buffer(tp_wma_handle wma,
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&synch_event->bssid,
 				   roam_synch_ind_ptr->bssid.bytes);
 	wma->csr_roam_synch_cb((tpAniSirGlobal)wma->mac_context,
-		roam_synch_ind_ptr, NULL, ROAMING_TX_QUEUE_DISABLE);
+		roam_synch_ind_ptr, NULL, SIR_ROAMING_DEREGISTER_STA);
 	/* Beacon/Probe Rsp data */
 	roam_synch_ind_ptr->beaconProbeRespOffset =
 		sizeof(roam_offload_synch_ind);
@@ -2088,7 +2088,7 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 			roam_synch_ind_ptr, bss_desc_ptr);
 	wma_roam_update_vdev(wma, roam_synch_ind_ptr);
 	wma->csr_roam_synch_cb((tpAniSirGlobal)wma->mac_context,
-		roam_synch_ind_ptr, bss_desc_ptr, ROAM_SYNCH_PROPAGATION);
+		roam_synch_ind_ptr, bss_desc_ptr, SIR_ROAM_SYNCH_PROPAGATION);
 	wma_process_roam_synch_complete(wma, synch_event->vdev_id);
 cleanup_label:
 	if (roam_synch_ind_ptr->join_rsp)
@@ -2380,7 +2380,6 @@ void wma_process_unit_test_cmd(WMA_HANDLE handle,
 }
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-
 /**
  * wma_roam_ho_fail_handler() - LFR3.0 roam hand off failed handler
  * @wma: wma handle
@@ -5367,6 +5366,8 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	WMI_ROAM_EVENTID_param_tlvs *param_buf;
 	wmi_roam_event_fixed_param *wmi_event;
+	struct sSirSmeRoamOffloadSynchInd *roam_synch_data;
+	enum sir_roam_op_code op_code = {0};
 
 	param_buf = (WMI_ROAM_EVENTID_param_tlvs *) event_buf;
 	if (!param_buf) {
@@ -5375,9 +5376,9 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 	}
 
 	wmi_event = param_buf->fixed_param;
-	WMA_LOGD("%s: Reason %x for vdevid %x, rssi %d",
-		 __func__, wmi_event->reason, wmi_event->vdev_id,
-		 wmi_event->rssi);
+	WMA_LOGD("%s: Reason %x, Notif %x for vdevid %x, rssi %d",
+		 __func__, wmi_event->reason, wmi_event->notif,
+		 wmi_event->vdev_id, wmi_event->rssi);
 
 	switch (wmi_event->reason) {
 	case WMI_ROAM_REASON_BMISS:
@@ -5403,6 +5404,22 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		wma_roam_ho_fail_handler(wma_handle, wmi_event->vdev_id);
 		break;
 #endif
+	case WMI_ROAM_REASON_INVALID:
+		roam_synch_data = qdf_mem_malloc(sizeof(*roam_synch_data));
+		if (NULL == roam_synch_data) {
+			WMA_LOGE("Memory unavailable for roam synch data");
+			return -ENOMEM;
+		}
+		if (wmi_event->notif == WMI_ROAM_NOTIF_ROAM_START)
+			op_code = SIR_ROAMING_TX_QUEUE_DISABLE;
+		if (wmi_event->notif == WMI_ROAM_NOTIF_ROAM_ABORT)
+			op_code = SIR_ROAMING_TX_QUEUE_ENABLE;
+		roam_synch_data->roamedVdevId = wmi_event->vdev_id;
+		wma_handle->csr_roam_synch_cb(
+				(tpAniSirGlobal)wma_handle->mac_context,
+				roam_synch_data, NULL, op_code);
+		qdf_mem_free(roam_synch_data);
+		break;
 	default:
 		WMA_LOGD("%s:Unhandled Roam Event %x for vdevid %x", __func__,
 			 wmi_event->reason, wmi_event->vdev_id);

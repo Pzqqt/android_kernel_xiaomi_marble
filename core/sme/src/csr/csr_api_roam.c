@@ -18693,7 +18693,7 @@ void csr_roam_fill_tdls_info(tCsrRoamInfo *roam_info, tpSirSmeJoinRsp join_rsp)
  */
 void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 		roam_offload_synch_ind *roam_synch_data,
-		tpSirBssDescription  bss_desc, uint8_t reason)
+		tpSirBssDescription  bss_desc, enum sir_roam_op_code reason)
 {
 	uint8_t session_id = roam_synch_data->roamedVdevId;
 	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
@@ -18721,9 +18721,26 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 		return;
 	}
 	session->roam_synch_in_progress = true;
-	if (reason == ROAMING_TX_QUEUE_DISABLE) {
+	switch (reason) {
+	case SIR_ROAMING_DEREGISTER_STA:
 		csr_roam_call_callback(mac_ctx, session_id, NULL, 0,
 				eCSR_ROAM_FT_START, eSIR_SME_SUCCESS);
+		sme_release_global_lock(&mac_ctx->sme);
+		return;
+	case SIR_ROAMING_TX_QUEUE_DISABLE:
+		csr_roam_call_callback(mac_ctx, session_id, NULL, 0,
+				eCSR_ROAM_DISABLE_QUEUES, eSIR_SME_SUCCESS);
+		sme_release_global_lock(&mac_ctx->sme);
+		return;
+	case SIR_ROAMING_TX_QUEUE_ENABLE:
+		csr_roam_call_callback(mac_ctx, session_id, NULL, 0,
+				eCSR_ROAM_ENABLE_QUEUES, eSIR_SME_SUCCESS);
+		sme_release_global_lock(&mac_ctx->sme);
+		return;
+	case SIR_ROAM_SYNCH_PROPAGATION:
+		break;
+	default:
+		sms_log(mac_ctx, LOGE, FL("LFR3: callback reason %d"), reason);
 		sme_release_global_lock(&mac_ctx->sme);
 		return;
 	}

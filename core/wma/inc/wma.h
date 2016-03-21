@@ -1339,7 +1339,8 @@ typedef struct {
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	void (*csr_roam_synch_cb)(tpAniSirGlobal mac,
 		roam_offload_synch_ind *roam_synch_data,
-		tpSirBssDescription  bss_desc_ptr, uint8_t reason);
+		tpSirBssDescription  bss_desc_ptr,
+		enum sir_roam_op_code reason);
 	QDF_STATUS (*pe_roam_synch_cb)(tpAniSirGlobal mac,
 		roam_offload_synch_ind *roam_synch_data,
 		tpSirBssDescription  bss_desc_ptr);
