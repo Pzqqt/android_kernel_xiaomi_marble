@@ -51,7 +51,7 @@ typedef struct qdf_mc_timer_platform_s {
 	struct timer_list timer;
 	int thread_id;
 	uint32_t cookie;
-	spinlock_t spinlock;
+	qdf_spinlock_t spinlock;
 } qdf_mc_timer_platform_t;
 
 #ifdef __cplusplus
