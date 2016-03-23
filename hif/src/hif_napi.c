@@ -427,7 +427,7 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx, struct napi_struct *napi,
 		QDF_ASSERT(hif != NULL); /* emit a warning if hif NULL */
 	else {
 		rc = ce_per_engine_service(hif, NAPI_ID2PIPE(napi_info->id));
-		HIF_INFO_HI("%s: ce_per_engine_service processed %d msgs",
+		NAPI_DEBUG("%s: ce_per_engine_service processed %d msgs",
 			    __func__, rc);
 	}
 	napi_info->stats[cpu].napi_workdone += rc;
