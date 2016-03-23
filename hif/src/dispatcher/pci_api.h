@@ -46,3 +46,6 @@ int hif_pci_bus_configure(struct hif_softc *scn);
 void hif_pci_irq_disable(struct hif_softc *scn, int ce_id);
 void hif_pci_irq_enable(struct hif_softc *scn, int ce_id);
 int hif_pci_dump_registers(struct hif_softc *scn);
+void hif_pci_enable_power_management(struct hif_softc *hif_ctx,
+				 bool is_packet_log_enabled);
+void hif_pci_disable_power_management(struct hif_softc *hif_ctx);

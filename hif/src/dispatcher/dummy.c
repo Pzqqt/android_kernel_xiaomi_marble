@@ -94,3 +94,20 @@ int hif_dummy_target_sleep_state_adjust(struct hif_softc *scn,
 {
 	return 0;
 }
+
+/**
+ * hif_dummy_enable_power_management - dummy call
+ * hif_ctx: hif context
+ * is_packet_log_enabled: true if packet log is enabled
+ */
+void hif_dummy_enable_power_management(struct hif_softc *hif_ctx,
+				 bool is_packet_log_enabled)
+{}
+
+/**
+ * hif_dummy_disable_power_management - dummy call
+ * hif_ctx: hif context
+ * is_packet_log_enabled: true if packet log is enabled
+ */
+void hif_dummy_disable_power_management(struct hif_softc *hif_ctx)
+{}

@@ -1178,12 +1178,9 @@ static void hif_disable_power_gating(struct hif_opaque_softc *hif_ctx)
  *
  * enables pcie L1 power states
  */
-static void hif_enable_power_gating(struct hif_opaque_softc *hif_ctx)
+static void hif_enable_power_gating(struct hif_pci_softc *sc)
 {
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
-
-	if (NULL == scn) {
+	if (NULL == sc) {
 		HIF_ERROR("%s: Could not disable ASPM scn is null",
 		       __func__);
 		return;
@@ -1202,11 +1199,10 @@ static void hif_enable_power_gating(struct hif_opaque_softc *hif_ctx)
  * the soc sleep after the driver finishes loading and re-enabling
  * aspm (hif_enable_power_gating).
  */
-void hif_enable_power_management(struct hif_opaque_softc *hif_ctx,
+void hif_pci_enable_power_management(struct hif_softc *hif_sc,
 				 bool is_packet_log_enabled)
 {
-	struct hif_pci_softc *pci_ctx = HIF_GET_PCI_SOFTC(hif_ctx);
-	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+	struct hif_pci_softc *pci_ctx = HIF_GET_PCI_SOFTC(hif_sc);
 
 	if (pci_ctx == NULL) {
 		HIF_ERROR("%s, hif_ctx null", __func__);
@@ -1216,7 +1212,7 @@ void hif_enable_power_management(struct hif_opaque_softc *hif_ctx,
 	hif_pm_runtime_start(pci_ctx);
 
 	if (!is_packet_log_enabled)
-		hif_enable_power_gating(hif_ctx);
+		hif_enable_power_gating(pci_ctx);
 
 	if (!CONFIG_ATH_PCIE_MAX_PERF &&
 	    CONFIG_ATH_PCIE_AWAKE_WHILE_DRIVER_LOAD) {
@@ -1234,7 +1230,7 @@ void hif_enable_power_management(struct hif_opaque_softc *hif_ctx,
  * if runtime pm is not started. Should be updated to take care
  * of aspm and soc sleep for driver load.
  */
-void hif_disable_power_management(struct hif_opaque_softc *hif_ctx)
+void hif_pci_disable_power_management(struct hif_softc *hif_ctx)
 {
 	struct hif_pci_softc *pci_ctx = HIF_GET_PCI_SOFTC(hif_ctx);
 

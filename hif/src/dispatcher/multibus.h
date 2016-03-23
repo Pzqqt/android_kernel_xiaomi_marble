@@ -54,6 +54,10 @@ struct hif_bus_ops {
 	void (*hif_irq_disable)(struct hif_softc *hif_sc, int ce_id);
 	void (*hif_irq_enable)(struct hif_softc *hif_sc, int ce_id);
 	int (*hif_dump_registers)(struct hif_softc *hif_sc);
+
+	void (*hif_enable_power_management)(struct hif_softc *hif_ctx,
+				 bool is_packet_log_enabled);
+	void (*hif_disable_power_management)(struct hif_softc *hif_ctx);
 };
 
 #ifdef HIF_SNOC

@@ -32,4 +32,6 @@ int hif_dummy_bus_suspend(struct hif_softc *hif_ctx);
 int hif_dummy_bus_resume(struct hif_softc *hif_ctx);
 int hif_dummy_target_sleep_state_adjust(struct hif_softc *scn,
 					bool sleep_ok, bool wait_for_it);
-
+void hif_dummy_enable_power_management(struct hif_softc *hif_ctx,
+				 bool is_packet_log_enabled);
+void hif_dummy_disable_power_management(struct hif_softc *hif_ctx);

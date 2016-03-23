@@ -220,3 +220,35 @@ int hif_dump_registers(struct hif_opaque_softc *hif_hdl)
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_hdl);
 	return hif_sc->bus_ops.hif_dump_registers(hif_sc);
 }
+
+/**
+ * hif_enable_power_management() - enable power management after driver load
+ * @hif_hdl: opaque pointer to the hif context
+ * is_packet_log_enabled: true if packet log is enabled
+ *
+ * Driver load and firmware download are done in a high performance mode.
+ * Enable power management after the driver is loaded.
+ * packet log can require fewer power management features to be enabled.
+ */
+void hif_enable_power_management(struct hif_opaque_softc *hif_hdl,
+				 bool is_packet_log_enabled)
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_hdl);
+	hif_sc->bus_ops.hif_enable_power_management(hif_sc,
+				    is_packet_log_enabled);
+}
+
+/**
+ * hif_disable_power_management() - reset the bus power management
+ * @hif_hdl: opaque pointer to the hif context
+ *
+ * return the power management of the bus to its default state.
+ * This isn't necessarily a complete reversal of its counterpart.
+ * This should be called when unloading the driver.
+ */
+void hif_disable_power_management(struct hif_opaque_softc *hif_hdl)
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_hdl);
+	hif_sc->bus_ops.hif_disable_power_management(hif_sc);
+}
+

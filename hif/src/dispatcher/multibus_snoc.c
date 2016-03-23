@@ -57,6 +57,10 @@ QDF_STATUS hif_initialize_snoc_ops(struct hif_bus_ops *bus_ops)
 	bus_ops->hif_irq_disable = &hif_snoc_irq_disable;
 	bus_ops->hif_irq_enable = &hif_snoc_irq_enable;
 	bus_ops->hif_dump_registers = &hif_snoc_dump_registers;
+	bus_ops->hif_enable_power_management =
+		&hif_dummy_enable_power_management;
+	bus_ops->hif_disable_power_management =
+		&hif_dummy_disable_power_management;
 
 	return QDF_STATUS_SUCCESS;
 }

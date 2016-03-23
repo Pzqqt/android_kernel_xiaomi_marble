@@ -67,6 +67,11 @@ QDF_STATUS hif_initialize_pci_ops(struct hif_softc *hif_sc)
 	bus_ops->hif_irq_disable = &hif_pci_irq_disable;
 	bus_ops->hif_irq_enable = &hif_pci_irq_enable;
 	bus_ops->hif_dump_registers = &hif_pci_dump_registers;
+	bus_ops->hif_enable_power_management =
+		&hif_pci_enable_power_management;
+	bus_ops->hif_disable_power_management =
+		&hif_pci_disable_power_management;
+
 
 	return QDF_STATUS_SUCCESS;
 }
