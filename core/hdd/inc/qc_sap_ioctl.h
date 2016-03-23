@@ -245,6 +245,7 @@ enum {
 	QCSAP_START_FW_PROFILING,
 	QCSAP_CAP_TSF,
 	QCSAP_GET_TSF,
+	QCSAP_PARAM_CONC_SYSTEM_PREF
 };
 
 int iw_softap_get_channel_list(struct net_device *dev,

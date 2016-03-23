@@ -216,6 +216,7 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 /* Private sub ioctl for starting/stopping the profiling */
 #define WE_START_FW_PROFILE                      87
 #define WE_SET_CHANNEL                        88
+#define WE_SET_CONC_SYSTEM_PREF               89
 
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_NONE_GET_INT    (SIOCIWFIRSTPRIV + 1)
@@ -6274,7 +6275,19 @@ static int __iw_setint_getnone(struct net_device *dev,
 		}
 		break;
 	}
+	case WE_SET_CONC_SYSTEM_PREF:
+	{
+		hdd_info("New preference: %d", set_value);
+		if (!((set_value >= CFG_CONC_SYSTEM_PREF_MIN) &&
+				(set_value <= CFG_CONC_SYSTEM_PREF_MAX))) {
+			hdd_err("Invalid system preference %d", set_value);
+			return -EINVAL;
+		}
 
+		/* hdd_ctx, hdd_ctx->config are already checked for null */
+		hdd_ctx->config->conc_system_pref = set_value;
+		break;
+	}
 	default:
 	{
 		hddLog(LOGE, "%s: Invalid sub command %d", __func__,
@@ -10321,6 +10334,10 @@ static const struct iw_priv_args we_private_args[] = {
 	{WE_SET_CHANNEL,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0, "setChanChange" },
+
+	{WE_SET_CONC_SYSTEM_PREF,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	 0, "setConcSysPref" },
 
 	{WLAN_PRIV_SET_NONE_GET_INT,
 	 0,
