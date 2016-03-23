@@ -3896,8 +3896,6 @@ static void hdd_unregister_notifiers(hdd_context_t *hdd_ctx)
  */
 static void hdd_exit_netlink_services(hdd_context_t *hdd_ctx)
 {
-	cnss_diag_notify_wlan_close();
-
 	hdd_close_cesium_nl_sock();
 
 	ptt_sock_deactivate_svc();

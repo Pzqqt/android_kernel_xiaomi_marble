@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -118,7 +118,6 @@ dbglog_set_mod_enable_bitmap(wmi_unified_t wmi_handle,
 
 /** Register the cnss_diag activate with the wlan driver */
 int cnss_diag_activate_service(void);
-int cnss_diag_notify_wlan_close(void);
 
 #ifdef __cplusplus
 }

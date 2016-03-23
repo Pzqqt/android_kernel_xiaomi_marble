@@ -1675,7 +1675,6 @@ err_cds_close:
 	if (pHddCtx) {
 		/* Unregister the Net Device Notifier */
 		unregister_netdevice_notifier(&hdd_netdev_notifier);
-		cnss_diag_notify_wlan_close();
 		ptt_sock_deactivate_svc();
 
 		nl_srv_exit();
