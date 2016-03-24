@@ -828,44 +828,44 @@ static inline uint8_t wma_parse_mpdudensity(uint8_t mpdudensity)
  * This function send peer assoc command to firmware with
  * different parameters.
  *
- * Return: 0 for success or error code
+ * Return: QDF_STATUS
  */
-int32_t wmi_unified_send_peer_assoc(tp_wma_handle wma,
+QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 				    tSirNwType nw_type,
 				    tpAddStaParams params)
 {
 	ol_txrx_pdev_handle pdev;
-	wmi_peer_assoc_complete_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	int32_t len;
+	struct peer_assoc_params *cmd;
 	int32_t ret, max_rates, i;
 	uint8_t rx_stbc, tx_stbc;
-	uint8_t *rate_pos, *buf_ptr;
+	uint8_t *rate_pos;
 	wmi_rate_set peer_legacy_rates, peer_ht_rates;
-	wmi_vht_rate_set *mcs;
-	uint32_t num_peer_legacy_rates;
-	uint32_t num_peer_ht_rates;
 	uint32_t num_peer_11b_rates = 0;
 	uint32_t num_peer_11a_rates = 0;
 	uint32_t phymode;
 	uint32_t peer_nss = 1;
 	struct wma_txrx_node *intr = NULL;
+	QDF_STATUS status;
 
-	if (NULL == params) {
-		WMA_LOGE("%s: params is NULL", __func__);
-		return -EINVAL;
+	cmd = qdf_mem_malloc(sizeof(struct peer_assoc_params));
+	if (!cmd) {
+		WMA_LOGE("Failed to allocate peer_assoc_params param");
+		return QDF_STATUS_E_NOMEM;
 	}
+
 	intr = &wma->interfaces[params->smesessionId];
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (NULL == pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
-		return -EINVAL;
+		qdf_mem_free(cmd);
+		return QDF_STATUS_E_INVAL;
 	}
 
 	qdf_mem_zero(&peer_legacy_rates, sizeof(wmi_rate_set));
 	qdf_mem_zero(&peer_ht_rates, sizeof(wmi_rate_set));
+	qdf_mem_zero(cmd, sizeof(struct peer_assoc_params));
 
 	phymode = wma_peer_phymode(nw_type, params->staType,
 				   params->htCapable,
@@ -893,11 +893,9 @@ int32_t wmi_unified_send_peer_assoc(tp_wma_handle wma,
 	    (phymode == MODE_11B && num_peer_11b_rates == 0)) {
 		WMA_LOGW("%s: Invalid phy rates. phymode 0x%x, 11b_rates %d, 11a_rates %d",
 			__func__, phymode, num_peer_11b_rates, num_peer_11a_rates);
-		return -EINVAL;
+		qdf_mem_free(cmd);
+		return QDF_STATUS_E_INVAL;
 	}
-	/* Set the Legacy Rates to Word Aligned */
-	num_peer_legacy_rates = roundup(peer_legacy_rates.num_rates,
-					sizeof(uint32_t));
 
 	/* HT Rateset */
 	max_rates = sizeof(peer_ht_rates.rates) /
@@ -933,28 +931,6 @@ int32_t wmi_unified_send_peer_assoc(tp_wma_handle wma,
 		qdf_mem_copy((uint8_t *) peer_ht_rates.rates, temp_ni_rates,
 			     peer_ht_rates.num_rates);
 	}
-
-	/* Set the Peer HT Rates to Word Aligned */
-	num_peer_ht_rates = roundup(peer_ht_rates.num_rates, sizeof(uint32_t));
-
-	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE + /* Place holder for peer legacy rate array */
-	      (num_peer_legacy_rates * sizeof(uint8_t)) + /* peer legacy rate array size */
-	      WMI_TLV_HDR_SIZE + /* Place holder for peer Ht rate array */
-	      (num_peer_ht_rates * sizeof(uint8_t)) +   /* peer HT rate array size */
-	      sizeof(wmi_vht_rate_set);
-
-	buf = wmi_buf_alloc(wma->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
-		return -ENOMEM;
-	}
-
-	buf_ptr = (uint8_t *) wmi_buf_data(buf);
-	cmd = (wmi_peer_assoc_complete_cmd_fixed_param *) buf_ptr;
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_peer_assoc_complete_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_peer_assoc_complete_cmd_fixed_param));
 
 	/* in ap/ibss mode and for tdls peer, use mac address of the peer in
 	 * the other end as the new peer address; in sta mode, use bss id to
@@ -1076,7 +1052,7 @@ int32_t wmi_unified_send_peer_assoc(tp_wma_handle wma,
 			WMA_LOGE
 				("Set WMI_VDEV_PARAM_DROP_UNENCRY Param status:%d\n",
 				ret);
-			qdf_nbuf_free(buf);
+			qdf_mem_free(cmd);
 			return ret;
 		}
 	}
@@ -1096,24 +1072,16 @@ int32_t wmi_unified_send_peer_assoc(tp_wma_handle wma,
 		cmd->peer_rate_caps |= WMI_RC_DS_FLAG;
 
 	/* Update peer legacy rate information */
-	buf_ptr += sizeof(*cmd);
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, num_peer_legacy_rates);
-	buf_ptr += WMI_TLV_HDR_SIZE;
-	cmd->num_peer_legacy_rates = peer_legacy_rates.num_rates;
-	qdf_mem_copy(buf_ptr, peer_legacy_rates.rates,
+	cmd->peer_legacy_rates.num_rates = peer_legacy_rates.num_rates;
+	qdf_mem_copy(cmd->peer_legacy_rates.rates, peer_legacy_rates.rates,
 		     peer_legacy_rates.num_rates);
 
 	/* Update peer HT rate information */
-	buf_ptr += num_peer_legacy_rates;
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, num_peer_ht_rates);
-	buf_ptr += WMI_TLV_HDR_SIZE;
-	cmd->num_peer_ht_rates = peer_ht_rates.num_rates;
-	qdf_mem_copy(buf_ptr, peer_ht_rates.rates, peer_ht_rates.num_rates);
+	cmd->peer_ht_rates.num_rates = peer_ht_rates.num_rates;
+	qdf_mem_copy(cmd->peer_ht_rates.rates, peer_ht_rates.rates,
+				 peer_ht_rates.num_rates);
 
 	/* VHT Rates */
-	buf_ptr += num_peer_ht_rates;
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_STRUC_wmi_vht_rate_set,
-		       WMITLV_GET_STRUCT_TLVLEN(wmi_vht_rate_set));
 
 	cmd->peer_nss = peer_nss;
 	/*
@@ -1131,18 +1099,18 @@ int32_t wmi_unified_send_peer_assoc(tp_wma_handle wma,
 	WMA_LOGD("peer_nss %d peer_ht_rates.num_rates %d ", cmd->peer_nss,
 		 peer_ht_rates.num_rates);
 
-	mcs = (wmi_vht_rate_set *) buf_ptr;
+	cmd->vht_capable = params->vhtCapable;
 	if (params->vhtCapable) {
 #define VHT2x2MCSMASK 0xc
-		mcs->rx_max_rate = params->supportedRates.vhtRxHighestDataRate;
-		mcs->rx_mcs_set = params->supportedRates.vhtRxMCSMap;
-		mcs->tx_max_rate = params->supportedRates.vhtTxHighestDataRate;
-		mcs->tx_mcs_set = params->supportedRates.vhtTxMCSMap;
+		cmd->rx_max_rate = params->supportedRates.vhtRxHighestDataRate;
+		cmd->rx_mcs_set = params->supportedRates.vhtRxMCSMap;
+		cmd->tx_max_rate = params->supportedRates.vhtTxHighestDataRate;
+		cmd->tx_mcs_set = params->supportedRates.vhtTxMCSMap;
 
 		if (params->vhtSupportedRxNss) {
 			cmd->peer_nss = params->vhtSupportedRxNss;
 		} else {
-			cmd->peer_nss = ((mcs->rx_mcs_set & VHT2x2MCSMASK)
+			cmd->peer_nss = ((cmd->rx_mcs_set & VHT2x2MCSMASK)
 					 == VHT2x2MCSMASK) ? 1 : 2;
 		}
 	}
@@ -1166,14 +1134,14 @@ int32_t wmi_unified_send_peer_assoc(tp_wma_handle wma,
 		 cmd->peer_mpdu_density, params->encryptType,
 		 cmd->peer_vht_caps);
 
-	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
-				   WMI_PEER_ASSOC_CMDID);
-	if (ret != EOK) {
+	status = wmi_unified_peer_assoc_send(wma->wmi_handle,
+					 cmd);
+	if (QDF_IS_STATUS_ERROR(status))
 		WMA_LOGP("%s: Failed to send peer assoc command ret = %d",
 			 __func__, ret);
-		qdf_nbuf_free(buf);
-	}
-	return ret;
+	qdf_mem_free(cmd);
+
+	return status;
 }
 
 /**

@@ -617,7 +617,7 @@ int wma_vdev_install_key_complete_event_handler(void *handle,
 						uint8_t *event,
 						uint32_t len);
 
-int32_t wmi_unified_send_peer_assoc(tp_wma_handle wma,
+QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 					   tSirNwType nw_type,
 					   tpAddStaParams params);
 

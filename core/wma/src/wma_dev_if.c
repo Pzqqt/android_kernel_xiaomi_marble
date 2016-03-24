@@ -3364,7 +3364,7 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 			WMA_LOGD("Sent PKT_PWR_SAVE_5G_EBT cmd to target, val = %x, status = %d",
 				pps_val, status);
 
-		wmi_unified_send_peer_assoc(wma, add_bss->nwType,
+		wma_send_peer_assoc(wma, add_bss->nwType,
 					    &add_bss->staContext);
 		peer_assoc_sent = true;
 #ifdef WLAN_FEATURE_11W
@@ -3589,7 +3589,7 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 		WMA_LOGE(FL("WMI_SERVICE_PEER_ASSOC_CONF not enabled"));
 	}
 
-	ret = wmi_unified_send_peer_assoc(wma, add_sta->nwType, add_sta);
+	ret = wma_send_peer_assoc(wma, add_sta->nwType, add_sta);
 	if (ret) {
 		add_sta->status = QDF_STATUS_E_FAILURE;
 		wma_remove_peer(wma, add_sta->staMac, add_sta->smesessionId,
@@ -3805,11 +3805,11 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 			WMA_LOGE(FL("WMI_SERVICE_PEER_ASSOC_CONF not enabled"));
 		}
 
-		WMA_LOGD("%s: changeSta, calling wmi_unified_send_peer_assoc",
+		WMA_LOGD("%s: changeSta, calling wma_send_peer_assoc",
 			 __func__);
 
 		ret =
-			wmi_unified_send_peer_assoc(wma, add_sta->nwType, add_sta);
+			wma_send_peer_assoc(wma, add_sta->nwType, add_sta);
 		if (ret) {
 			add_sta->status = QDF_STATUS_E_FAILURE;
 			wma_remove_peer(wma, add_sta->staMac,
@@ -3909,7 +3909,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 		if (wma_is_roam_synch_in_progress(wma, params->smesessionId)) {
 			/* iface->nss = params->nss; */
 			/*In LFR2.0, the following operations are performed as
-			 * part of wmi_unified_send_peer_assoc. As we are
+			 * part of wma_send_peer_assoc. As we are
 			 * skipping this operation, we are just executing the
 			 * following which are useful for LFR3.0.*/
 			ol_txrx_peer_state_update(pdev, params->bssId,
@@ -3946,7 +3946,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 			WMA_LOGE(FL("WMI_SERVICE_PEER_ASSOC_CONF not enabled"));
 		}
 
-		ret = wmi_unified_send_peer_assoc(wma,
+		ret = wma_send_peer_assoc(wma,
 				iface->nwType,
 				(tAddStaParams *) iface->addBssStaContext);
 		if (ret) {
