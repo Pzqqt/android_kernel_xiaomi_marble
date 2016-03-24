@@ -2765,6 +2765,17 @@ typedef struct {
 	* larger than 32 bits.
 	*/
 	A_UINT32 tsf_delta;
+	/*
+	 * The lower 32 bits of the TSF (rx_tsf_l32) is copied by FW from
+	 * TSF timestamp in the RX MAC descriptor provided by HW.
+	 */
+	A_UINT32 rx_tsf_l32;
+
+	/*
+	 *The Upper 32 bits (rx_tsf_u32) is filled by reading the TSF register
+	 * after the packet is received.
+	 */
+	A_UINT32 rx_tsf_u32;
 	/* This TLV is followed by array of bytes:
 	 * // management frame buffer
 	 *   A_UINT8 bufp[];
@@ -4793,6 +4804,15 @@ typedef struct {
 #define WMI_UNIFIED_VDEV_SUBTYPE_P2P_GO     0x3
 #define WMI_UNIFIED_VDEV_SUBTYPE_PROXY_STA  0x4
 #define WMI_UNIFIED_VDEV_SUBTYPE_MESH       0x5
+/*
+ * new subtype for 11S mesh is required as 11S functionality differs
+ * in many ways from proprietary mesh
+ * 11S uses 6-addr frame format and supports peering between mesh
+ * stations and dynamic best path selection between mesh stations.
+ * While in proprietary mesh, neighboring mesh station MAC is manually
+ * added to AST table for traffic flow between mesh stations
+ */
+#define WMI_UNIFIED_VDEV_SUBTYPE_MESH_11S   0x6
 
 /** values for vdev_start_request flags */
 /** Indicates that AP VDEV uses hidden ssid. only valid for
@@ -5293,6 +5313,13 @@ typedef enum {
 
 	/* VDEV capabilities */
 	WMI_VDEV_PARAM_CAPABILITIES, /* see capabilities defs below */
+	/*
+	 * Increment TSF in micro seconds to avoid beacon collision on mesh VAP
+	 * The host must ensure that either no other vdevs share the TSF with
+	 * this vdev, or else that it is acceptable to apply this TSF adjustment
+	 * to all vdevs sharing the TSF
+	 */
+	WMI_VDEV_PARAM_TSF_INCREMENT,
 } WMI_VDEV_PARAM;
 
 /* vdev capabilities bit mask */
