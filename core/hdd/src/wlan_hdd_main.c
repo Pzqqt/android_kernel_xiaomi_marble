@@ -6085,6 +6085,132 @@ QDF_STATUS hdd_register_for_sap_restart_with_channel_switch(void)
 }
 #endif
 
+#ifdef CONFIG_CNSS
+/**
+ * hdd_get_cnss_wlan_mac_buff() - API to query platform driver for MAC address
+ * @dev: Device Pointer
+ * @num: Number of Valid Mac address
+ *
+ * Return: Pointer to MAC address buffer
+ */
+static uint8_t *hdd_get_cnss_wlan_mac_buff(struct device *dev, uint32_t *num)
+{
+	return cnss_common_get_wlan_mac_address(dev, num);
+}
+#else
+static uint8_t *hdd_get_cnss_wlan_mac_buff(struct device *dev, uint32_t *num)
+{
+	*num = 0;
+	return NULL;
+}
+#endif
+
+/**
+ * hdd_populate_random_mac_addr() - API to populate random mac addresses
+ * @hdd_ctx: HDD Context
+ * @num: Number of random mac addresses needed
+ *
+ * Generate random addresses using bit manipulation on the base mac address
+ *
+ * Return: None
+ */
+static void hdd_populate_random_mac_addr(hdd_context_t *hdd_ctx, uint32_t num)
+{
+	uint32_t start_idx = QDF_MAX_CONCURRENCY_PERSONA - num;
+	uint32_t iter;
+	struct hdd_config *ini = hdd_ctx->config;
+	uint8_t *buf = NULL;
+	uint8_t macaddr_b3, tmp_br3;
+	uint8_t *src = ini->intfMacAddr[0].bytes;
+
+	for (iter = start_idx; iter < QDF_MAX_CONCURRENCY_PERSONA; ++iter) {
+		buf = ini->intfMacAddr[iter].bytes;
+		qdf_mem_copy(buf, src, QDF_MAC_ADDR_SIZE);
+		macaddr_b3 = buf[3];
+		tmp_br3 = ((macaddr_b3 >> 4 & INTF_MACADDR_MASK) + iter) &
+			INTF_MACADDR_MASK;
+		macaddr_b3 += tmp_br3;
+		macaddr_b3 ^= (1 << INTF_MACADDR_MASK);
+		buf[0] |= 0x02;
+		buf[3] = macaddr_b3;
+		hdd_info(FL(MAC_ADDRESS_STR), MAC_ADDR_ARRAY(buf));
+	}
+}
+
+/**
+ * hdd_cnss_wlan_mac() - API to get mac addresses from cnss platform driver
+ * @hdd_ctx: HDD Context
+ *
+ * API to get mac addresses from platform driver and update the driver
+ * structures and configure FW with the base mac address.
+ * Return: int
+ */
+static int hdd_cnss_wlan_mac(hdd_context_t *hdd_ctx)
+{
+	uint32_t no_of_mac_addr, iter;
+	uint32_t max_mac_addr = QDF_MAX_CONCURRENCY_PERSONA;
+	uint32_t mac_addr_size = QDF_MAC_ADDR_SIZE;
+	uint8_t *addr, *buf;
+	struct device *dev = hdd_ctx->parent_dev;
+	struct hdd_config *ini = hdd_ctx->config;
+	tSirMacAddr mac_addr;
+	QDF_STATUS status;
+
+	addr = hdd_get_cnss_wlan_mac_buff(dev, &no_of_mac_addr);
+
+	if (no_of_mac_addr == 0 || !addr) {
+		hdd_warn("Platform Driver Doesn't have wlan mac addresses");
+		return -EINVAL;
+	}
+
+	if (no_of_mac_addr > max_mac_addr)
+		no_of_mac_addr = max_mac_addr;
+
+	qdf_mem_copy(&mac_addr, addr, mac_addr_size);
+
+	for (iter = 0; iter < no_of_mac_addr; ++iter, addr += mac_addr_size) {
+		buf = ini->intfMacAddr[iter].bytes;
+		qdf_mem_copy(buf, addr, QDF_MAC_ADDR_SIZE);
+		hdd_info(FL(MAC_ADDRESS_STR), MAC_ADDR_ARRAY(buf));
+	}
+
+	status = sme_set_custom_mac_addr(mac_addr);
+
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		return -EAGAIN;
+	if (no_of_mac_addr < max_mac_addr)
+		hdd_populate_random_mac_addr(hdd_ctx, max_mac_addr -
+					     no_of_mac_addr);
+	return 0;
+}
+
+/**
+ * hdd_initialize_mac_address() - API to get wlan mac addresses
+ * @hdd_ctx: HDD Context
+ *
+ * Get MAC addresses from platform driver or wlan_mac.bin. If platform driver
+ * is provisioned with mac addresses, driver uses it, else it will use
+ * wlan_mac.bin to update HW MAC addresses.
+ *
+ * Return: None
+ */
+static void hdd_initialize_mac_address(hdd_context_t *hdd_ctx)
+{
+	QDF_STATUS status;
+	int ret;
+
+	ret = hdd_cnss_wlan_mac(hdd_ctx);
+	if (ret == 0)
+		return;
+
+	hdd_warn("Can't update mac config via platform driver ret:%d", ret);
+
+	status = hdd_update_mac_config(hdd_ctx);
+
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_warn("can't update mac config, using MAC from ini file");
+}
+
 /**
  * hdd_tsf_init() - Initialize the TSF synchronization interface
  * @hdd_ctx: HDD global context
@@ -6176,11 +6302,7 @@ static int hdd_pre_enable_configure(hdd_context_t *hdd_ctx)
 		goto out;
 	}
 
-	status = hdd_update_mac_config(hdd_ctx);
-	if (QDF_STATUS_SUCCESS != status) {
-		hdd_warn("can't update mac config, using MAC from ini file: %d",
-			 status);
-	}
+	hdd_initialize_mac_address(hdd_ctx);
 
 	/*
 	 * Set the MAC Address Currently this is used by HAL to add self sta.
