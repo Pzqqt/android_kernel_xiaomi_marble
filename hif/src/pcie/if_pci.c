@@ -1128,6 +1128,34 @@ static void hif_pm_runtime_open(struct hif_pci_softc *sc)
 }
 
 /**
+ * hif_pm_runtime_sanitize_on_exit(): sanitize the pm usage count and state
+ * @sc: pci context
+ *
+ * Ensure we have only one vote against runtime suspend before closing
+ * the runtime suspend feature.
+ *
+ * all gets by the wlan driver should have been returned
+ * one vote should remain as part of cnss_runtime_exit
+ *
+ * needs to be revisited if we share the root complex.
+ */
+static void hif_pm_runtime_sanitize_on_exit(struct hif_pci_softc *sc)
+{
+	if (atomic_read(&sc->dev->power.usage_count) != 1)
+		hif_pci_runtime_pm_warn(sc, "Driver UnLoaded");
+
+	/* ensure 1 and only 1 usage count so that when the wlan
+	 * driver is re-insmodded runtime pm won't be
+	 * disabled also ensures runtime pm doesn't get
+	 * broken on by being less than 1.
+	 */
+	if (atomic_read(&sc->dev->power.usage_count) <= 0)
+		atomic_set(&sc->dev->power.usage_count, 1);
+	while (atomic_read(&sc->dev->power.usage_count) > 1)
+		hif_pm_runtime_put_auto(sc->dev);
+}
+
+/**
  * hif_pm_runtime_close(): close runtime pm
  * @sc: pci bus handle
  *
@@ -1139,6 +1167,8 @@ static void hif_pm_runtime_close(struct hif_pci_softc *sc)
 		return;
 	else
 		hif_pm_runtime_stop(sc);
+
+	hif_pm_runtime_sanitize_on_exit(sc);
 }
 
 
