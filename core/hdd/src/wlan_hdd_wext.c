@@ -766,36 +766,6 @@ error:
 }
 
 /**
- * hdd_get_ibss_peer_info_cb() - IBSS Peer Info Callback
- * @pUserData: user context originally passed to SME; we pass hdd adapter
- * @pPeerInfoRsp: IBSS Peer information
- *
- * Return: None
- */
-void hdd_get_ibss_peer_info_cb(void *pUserData, void *pPeerInfoRsp)
-{
-	hdd_adapter_t *pAdapter = (hdd_adapter_t *) pUserData;
-	hdd_ibss_peer_info_t *pPeerInfo = (hdd_ibss_peer_info_t *) pPeerInfoRsp;
-	hdd_station_ctx_t *pStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-	uint8_t i;
-
-	if (NULL != pPeerInfo && QDF_STATUS_SUCCESS == pPeerInfo->status) {
-		pStaCtx->ibss_peer_info.status = pPeerInfo->status;
-		pStaCtx->ibss_peer_info.numIBSSPeers = pPeerInfo->numIBSSPeers;
-		for (i = 0; i < pPeerInfo->numIBSSPeers; i++) {
-			memcpy(&pStaCtx->ibss_peer_info.ibssPeerList[i],
-			       &pPeerInfo->ibssPeerList[i],
-			       sizeof(hdd_ibss_peer_info_params_t));
-		}
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-			  "%s] PEER_INFO_CMD_STATUS is not SUCCESS", __func__);
-	}
-
-	complete(&pAdapter->ibss_peer_info_comp);
-}
-
-/**
  * hdd_wlan_get_ibss_mac_addr_from_staid() - Get IBSS MAC address
  * @pAdapter: Adapter upon which the IBSS client is active
  * @staIdx: Station index of the IBSS peer
@@ -832,7 +802,7 @@ QDF_STATUS hdd_wlan_get_ibss_peer_info(hdd_adapter_t *pAdapter, uint8_t staIdx)
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 	hdd_station_ctx_t *pStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-	hdd_ibss_peer_info_t *pPeerInfo = &pStaCtx->ibss_peer_info;
+	tSirPeerInfoRspParams *pPeerInfo = &pStaCtx->ibss_peer_info;
 
 	status =
 		sme_request_ibss_peer_info(hHal, pAdapter, hdd_get_ibss_peer_info_cb,
@@ -852,29 +822,16 @@ QDF_STATUS hdd_wlan_get_ibss_peer_info(hdd_adapter_t *pAdapter, uint8_t staIdx)
 		}
 
 		/** Print the peer info */
-		pr_info("pPeerInfo->numIBSSPeers = %d ",
-			pPeerInfo->numIBSSPeers);
-		pr_info
-			("============================================================");
+		hdd_info("pPeerInfo->numIBSSPeers = %d ", pPeerInfo->numPeers);
 		{
-			struct qdf_mac_addr *macAddr =
-				hdd_wlan_get_ibss_mac_addr_from_staid(pAdapter,
-								      staIdx);
-			uint32_t txRateMbps =
-				((pPeerInfo->ibssPeerList[0].txRate) * 500 * 1000) /
-				1000000;
+			uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
+			uint32_t tx_rate = pPeerInfo->peerInfoParams[0].txRate;
 
-			if (NULL != macAddr) {
-				pr_info("PEER ADDR :" MAC_ADDRESS_STR
-					" TxRate: %d Mbps  RSSI: %d",
-					MAC_ADDR_ARRAY(macAddr->bytes),
-					(int)txRateMbps,
-					(int)pPeerInfo->ibssPeerList[0].rssi);
-			} else {
-				QDF_TRACE(QDF_MODULE_ID_HDD,
-					  QDF_TRACE_LEVEL_ERROR,
-					  " ERROR: PEER MAC ADDRESS NOT FOUND ");
-			}
+			qdf_mem_copy(mac_addr, pPeerInfo->peerInfoParams[0].
+					mac_addr, sizeof(mac_addr));
+			hdd_info("PEER ADDR : %pM TxRate: %d Mbps  RSSI: %d",
+				mac_addr, (int)tx_rate,
+				(int)pPeerInfo->peerInfoParams[0].rssi);
 		}
 	} else {
 		hddLog(QDF_TRACE_LEVEL_WARN,
@@ -897,7 +854,7 @@ QDF_STATUS hdd_wlan_get_ibss_peer_info_all(hdd_adapter_t *pAdapter)
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 	hdd_station_ctx_t *pStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-	hdd_ibss_peer_info_t *pPeerInfo = &pStaCtx->ibss_peer_info;
+	tSirPeerInfoRspParams *pPeerInfo = &pStaCtx->ibss_peer_info;
 	int i;
 
 	status =
@@ -917,32 +874,20 @@ QDF_STATUS hdd_wlan_get_ibss_peer_info_all(hdd_adapter_t *pAdapter)
 		}
 
 		/** Print the peer info */
-		pr_info("pPeerInfo->numIBSSPeers = %d ",
-			(int)pPeerInfo->numIBSSPeers);
-		pr_info
-			("============================================================");
-		for (i = 0; i < pPeerInfo->numIBSSPeers; i++) {
-			uint8_t staIdx = pPeerInfo->ibssPeerList[i].staIdx;
-			struct qdf_mac_addr *macAddr =
-				hdd_wlan_get_ibss_mac_addr_from_staid(pAdapter,
-								      staIdx);
-			uint32_t txRateMbps =
-				((pPeerInfo->ibssPeerList[0].txRate) * 500 * 1000) /
-				1000000;
+		hdd_info("pPeerInfo->numIBSSPeers = %d ",
+			(int)pPeerInfo->numPeers);
+		for (i = 0; i < pPeerInfo->numPeers; i++) {
+			uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
+			uint32_t tx_rate;
 
-			pr_info("STAIDX:%d ",
-				(int)pPeerInfo->ibssPeerList[i].staIdx);
-			if (NULL != macAddr) {
-				pr_info(" PEER ADDR :" MAC_ADDRESS_STR
-					" TxRate: %d Mbps RSSI: %d",
-					MAC_ADDR_ARRAY(macAddr->bytes),
-					(int)txRateMbps,
-					(int)pPeerInfo->ibssPeerList[i].rssi);
-			} else {
-				QDF_TRACE(QDF_MODULE_ID_HDD,
-					  QDF_TRACE_LEVEL_ERROR,
-					  " ERROR: PEER MAC ADDRESS NOT FOUND ");
-			}
+			tx_rate = pPeerInfo->peerInfoParams[i].txRate;
+			qdf_mem_copy(mac_addr,
+				pPeerInfo->peerInfoParams[i].mac_addr,
+				sizeof(mac_addr));
+
+			hdd_info(" PEER ADDR : %pM TxRate: %d Mbps RSSI: %d",
+				mac_addr, (int)tx_rate,
+				(int)pPeerInfo->peerInfoParams[i].rssi);
 		}
 	} else {
 		hddLog(QDF_TRACE_LEVEL_WARN,

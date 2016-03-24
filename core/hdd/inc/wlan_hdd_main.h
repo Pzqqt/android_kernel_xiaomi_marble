@@ -627,29 +627,6 @@ typedef struct hdd_cfg80211_state_s {
 	eP2PActionFrameState actionFrmState;
 } hdd_cfg80211_state_t;
 
-
-/*---------------------------------------------------------------------------
-   hdd_ibss_peer_info_params_t
-   ---------------------------------------------------------------------------*/
-typedef struct {
-	uint8_t staIdx;         /* StaIdx */
-	uint32_t txRate;        /* Current Tx Rate */
-	uint32_t mcsIndex;      /* MCS Index */
-	uint32_t txRateFlags;   /* TxRate Flags */
-	int8_t rssi;            /* RSSI */
-} hdd_ibss_peer_info_params_t;
-
-typedef struct {
-	/** Request status */
-	uint32_t status;
-
-	/** Number of peers */
-	uint8_t numIBSSPeers;
-
-	/** Peer Info parameters */
-	hdd_ibss_peer_info_params_t ibssPeerList[MAX_IBSS_PEERS];
-} hdd_ibss_peer_info_t;
-
 struct hdd_station_ctx {
 	/** Handle to the Wireless Extension State */
 	hdd_wext_state_t WextState;
@@ -676,7 +653,7 @@ struct hdd_station_ctx {
 
 	/*Save the wep/wpa-none keys */
 	tCsrRoamSetKey ibss_enc_key;
-	hdd_ibss_peer_info_t ibss_peer_info;
+	tSirPeerInfoRspParams ibss_peer_info;
 
 	bool hdd_ReassocScenario;
 
@@ -1657,5 +1634,8 @@ static inline bool roaming_offload_enabled(hdd_context_t *hdd_ctx)
 	return false;
 }
 #endif
+
+void hdd_get_ibss_peer_info_cb(void *pUserData,
+				tSirPeerInfoRspParams *pPeerInfo);
 
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

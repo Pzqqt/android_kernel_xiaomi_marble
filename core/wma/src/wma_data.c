@@ -2002,13 +2002,12 @@ int wma_ibss_peer_info_event_handler(void *handle, uint8_t *data,
 	cds_msg_t cds_msg;
 	wmi_peer_info *peer_info;
 	ol_txrx_pdev_handle pdev;
-	struct ol_txrx_peer_t *peer;
 	tSirIbssPeerInfoParams *pSmeRsp;
 	uint32_t count, num_peers, status;
 	tSirIbssGetPeerInfoRspParams *pRsp;
 	WMI_PEER_INFO_EVENTID_param_tlvs *param_tlvs;
 	wmi_peer_info_event_fixed_param *fix_param;
-	uint8_t peer_mac[IEEE80211_ADDR_LEN], staIdx;
+	uint8_t peer_mac[IEEE80211_ADDR_LEN];
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (NULL == pdev) {
@@ -2044,27 +2043,16 @@ int wma_ibss_peer_info_event_handler(void *handle, uint8_t *data,
 
 		WMI_MAC_ADDR_TO_CHAR_ARRAY(&peer_info->peer_mac_address,
 					   peer_mac);
-		peer = ol_txrx_find_peer_by_addr(pdev, peer_mac, &staIdx);
-		if (NULL == peer) {
-			WMA_LOGE("%s: peer 0x:%2x:0x%2x:0x%2x:0x%2x:0x%2x:0x%2x does not"
-				" exist could not populate response", __func__,
-				peer_mac[0], peer_mac[1], peer_mac[2],
-				peer_mac[3], peer_mac[4], peer_mac[5]);
-
-			pSmeRsp->staIdx = 0xff; /*fill invalid staIdx */
-			peer_info++;
-			continue;
-		}
-		pSmeRsp->staIdx = staIdx;
+		qdf_mem_copy(pSmeRsp->mac_addr, peer_mac,
+			sizeof(pSmeRsp->mac_addr));
 		pSmeRsp->mcsIndex = 0;
 		pSmeRsp->rssi = peer_info->rssi + WMA_TGT_NOISE_FLOOR_DBM;
 		pSmeRsp->txRate = peer_info->data_rate;
 		pSmeRsp->txRateFlags = 0;
 
-		WMA_LOGE("%s: peer 0x:%2x:0x%2x:0x%2x:0x%2x:0x%2x:0x%2x staIdx %d "
-			"rssi %d txRate %d", __func__, peer_mac[0], peer_mac[1],
-			peer_mac[2], peer_mac[3], peer_mac[4], peer_mac[5],
-			staIdx, pSmeRsp->rssi, pSmeRsp->txRate);
+		WMA_LOGE("peer " MAC_ADDRESS_STR "rssi %d txRate %d",
+			MAC_ADDR_ARRAY(peer_mac),
+			pSmeRsp->rssi, pSmeRsp->txRate);
 
 		peer_info++;
 	}

@@ -423,21 +423,20 @@ static int hdd_parse_setrmcrate_command(uint8_t *pValue,
 }
 
 /**
- * hdd_cfg80211_get_ibss_peer_info_cb() - Callback function for IBSS
- * Peer Info request
- * @pUserData:		Adapter private data
- * @pPeerInfoRsp:	Peer info response
+ * hdd_get_ibss_peer_info_cb() - IBSS peer Info request callback
+ * @UserData: Adapter private data
+ * @pPeerInfoRsp: Peer info response
  *
  * This is an asynchronous callback function from SME when the peer info
  * is received
  *
  * Return: 0 for success non-zero for failure
  */
-static void
-hdd_cfg80211_get_ibss_peer_info_cb(void *pUserData, void *pPeerInfoRsp)
+void
+hdd_get_ibss_peer_info_cb(void *pUserData,
+				tSirPeerInfoRspParams *pPeerInfo)
 {
 	hdd_adapter_t *adapter = (hdd_adapter_t *) pUserData;
-	hdd_ibss_peer_info_t *pPeerInfo = (hdd_ibss_peer_info_t *)pPeerInfoRsp;
 	hdd_station_ctx_t *pStaCtx;
 	uint8_t i;
 
@@ -451,21 +450,19 @@ hdd_cfg80211_get_ibss_peer_info_cb(void *pUserData, void *pPeerInfoRsp)
 
 	pStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	if (NULL != pPeerInfo && QDF_STATUS_SUCCESS == pPeerInfo->status) {
-		pStaCtx->ibss_peer_info.status = pPeerInfo->status;
-		pStaCtx->ibss_peer_info.numIBSSPeers = pPeerInfo->numIBSSPeers;
+		/* validate number of peers */
+		if (pPeerInfo->numPeers < SIR_MAX_NUM_STA_IN_IBSS) {
+			pStaCtx->ibss_peer_info.status = pPeerInfo->status;
+			pStaCtx->ibss_peer_info.numPeers = pPeerInfo->numPeers;
 
-		/* Paranoia check */
-		if (pPeerInfo->numIBSSPeers < MAX_IBSS_PEERS) {
-			for (i = 0; i < pPeerInfo->numIBSSPeers; i++) {
-				memcpy(&pStaCtx->ibss_peer_info.ibssPeerList[i],
-				       &pPeerInfo->ibssPeerList[i],
-				       sizeof(hdd_ibss_peer_info_params_t));
+			for (i = 0; i < pPeerInfo->numPeers; i++) {
+				pStaCtx->ibss_peer_info.peerInfoParams[i] =
+					pPeerInfo->peerInfoParams[i];
 			}
-			hddLog(LOG1, FL("Peer Info copied in HDD"));
+			hdd_info("Peer Info copied in HDD");
 		} else {
-			hddLog(LOG1,
-			       FL("Number of peers %d returned is more than limit %d"),
-			       pPeerInfo->numIBSSPeers, MAX_IBSS_PEERS);
+			hdd_info("Number of peers %d returned is more than limit %d",
+				pPeerInfo->numPeers, SIR_MAX_NUM_STA_IN_IBSS);
 		}
 	} else {
 		hddLog(LOG1, FL("peerInfo returned is NULL"));
@@ -492,7 +489,7 @@ QDF_STATUS hdd_cfg80211_get_ibss_peer_info_all(hdd_adapter_t *adapter)
 	INIT_COMPLETION(adapter->ibss_peer_info_comp);
 
 	retStatus = sme_request_ibss_peer_info(hHal, adapter,
-					hdd_cfg80211_get_ibss_peer_info_cb,
+					hdd_get_ibss_peer_info_cb,
 					true, 0xFF);
 
 	if (QDF_STATUS_SUCCESS == retStatus) {
@@ -536,7 +533,7 @@ hdd_cfg80211_get_ibss_peer_info(hdd_adapter_t *adapter, uint8_t staIdx)
 	INIT_COMPLETION(adapter->ibss_peer_info_comp);
 
 	retStatus = sme_request_ibss_peer_info(hHal, adapter,
-				hdd_cfg80211_get_ibss_peer_info_cb,
+				hdd_get_ibss_peer_info_cb,
 				false, staIdx);
 
 	if (QDF_STATUS_SUCCESS == retStatus) {
@@ -5328,8 +5325,7 @@ static int drv_cmd_get_ibss_peer_info_all(hdd_adapter_t *adapter,
 	char *extra = NULL;
 	int idx = 0;
 	int length = 0;
-	struct qdf_mac_addr *macAddr;
-	uint32_t txRateMbps = 0;
+	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
 	uint32_t numOfBytestoPrint = 0;
 
 	if (QDF_IBSS_MODE != adapter->device_mode) {
@@ -5366,51 +5362,34 @@ static int drv_cmd_get_ibss_peer_info_all(hdd_adapter_t *adapter,
 
 		/* Copy number of stations */
 		length = scnprintf(extra, WLAN_MAX_BUF_SIZE, "%d ",
-				   pHddStaCtx->ibss_peer_info.
-				   numIBSSPeers);
+				   pHddStaCtx->ibss_peer_info.numPeers);
 		numOfBytestoPrint = length;
-		for (idx = 0; idx < pHddStaCtx->ibss_peer_info.numIBSSPeers;
-		     idx++) {
-			macAddr = hdd_wlan_get_ibss_mac_addr_from_staid
-					(adapter,
-					 pHddStaCtx->ibss_peer_info.
-					 ibssPeerList[idx].staIdx);
-			if (NULL != macAddr) {
-				txRateMbps = ((pHddStaCtx->
-					ibss_peer_info.
-						ibssPeerList[idx].txRate)
-						* 500 * 1000) / 1000000;
-				length += scnprintf((extra + length),
-						WLAN_MAX_BUF_SIZE - length,
-						"%02x:%02x:%02x:%02x:%02x:%02x %d %d ",
-						macAddr->bytes[0],
-						macAddr->bytes[1],
-						macAddr->bytes[2],
-						macAddr->bytes[3],
-						macAddr->bytes[4],
-						macAddr->bytes[5],
-						(int)txRateMbps,
-						(int)pHddStaCtx->
-							ibss_peer_info.
-							ibssPeerList[idx].
-								rssi);
-			} else {
-				QDF_TRACE(QDF_MODULE_ID_HDD,
-					  QDF_TRACE_LEVEL_ERROR,
-					  "%s: MAC ADDR is NULL for staIdx: %d",
-					  __func__,
-					  pHddStaCtx->
-						ibss_peer_info.
-							ibssPeerList[idx].
-								staIdx);
-			}
+		for (idx = 0; idx < pHddStaCtx->ibss_peer_info.numPeers;
+								idx++) {
+			int8_t rssi;
+			uint32_t tx_rate;
 
+			qdf_mem_copy(mac_addr,
+				pHddStaCtx->ibss_peer_info.peerInfoParams[idx].
+				mac_addr, sizeof(mac_addr));
+
+			tx_rate =
+				pHddStaCtx->ibss_peer_info.peerInfoParams[idx].
+									txRate;
+			rssi = pHddStaCtx->ibss_peer_info.peerInfoParams[idx].
+									rssi;
+
+			length += scnprintf((extra + length),
+				WLAN_MAX_BUF_SIZE - length,
+				"%02x:%02x:%02x:%02x:%02x:%02x %d %d ",
+				mac_addr[0], mac_addr[1], mac_addr[2],
+				mac_addr[3], mac_addr[4], mac_addr[5],
+				tx_rate, rssi);
 			/*
-			 * QDF_TRACE() macro has limitation of 512 bytes
-			 * for the print buffer. Hence printing the data
-			 * in two chunks. The first chunk will have the data
-			 * for 16 devices and the second chunk will
-			 * have the rest.
+			 * cdf_trace_msg has limitation of 512 bytes for the
+			 * print buffer. Hence printing the data in two chunks.
+			 * The first chunk will have the data for 16 devices
+			 * and the second chunk will have the rest.
 			 */
 			if (idx < NUM_OF_STA_DATA_TO_PRINT)
 				numOfBytestoPrint = length;
@@ -5484,8 +5463,6 @@ static int drv_cmd_get_ibss_peer_info(hdd_adapter_t *adapter,
 	char extra[128] = { 0 };
 	uint32_t length = 0;
 	uint8_t staIdx = 0;
-	uint32_t txRateMbps = 0;
-	uint32_t txRate;
 	struct qdf_mac_addr peerMacAddr;
 
 	if (QDF_IBSS_MODE != adapter->device_mode) {
@@ -5523,7 +5500,7 @@ static int drv_cmd_get_ibss_peer_info(hdd_adapter_t *adapter,
 		goto exit;
 	}
 
-	/* Get station index for the peer mac address */
+	/* Get station index for the peer mac address and sanitize it */
 	hdd_ibss_get_sta_id(pHddStaCtx, &peerMacAddr, &staIdx);
 
 	if (staIdx > MAX_IBSS_PEERS) {
@@ -5538,13 +5515,13 @@ static int drv_cmd_get_ibss_peer_info(hdd_adapter_t *adapter,
 	/* Handle the command */
 	status = hdd_cfg80211_get_ibss_peer_info(adapter, staIdx);
 	if (QDF_STATUS_SUCCESS == status) {
-		txRate = pHddStaCtx->ibss_peer_info.ibssPeerList[0].txRate;
-		txRateMbps = (txRate * 500 * 1000) / 1000000;
+		uint32_t txRate =
+			pHddStaCtx->ibss_peer_info.peerInfoParams[0].txRate;
 
 		length = scnprintf(extra, sizeof(extra), "%d %d",
-				   (int)txRateMbps,
-				   (int)pHddStaCtx->ibss_peer_info.
-				   ibssPeerList[0].rssi);
+				(int)txRate,
+				(int)pHddStaCtx->ibss_peer_info.
+				peerInfoParams[0].rssi);
 
 		/* Copy the data back into buffer */
 		if (copy_to_user(priv_data->buf, &extra, length + 1)) {

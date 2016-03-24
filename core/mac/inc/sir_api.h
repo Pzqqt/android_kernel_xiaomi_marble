@@ -3744,15 +3744,20 @@ typedef struct {
 	/* of peer with staIdx is reported */
 } tSirIbssGetPeerInfoReqParams, *tpSirIbssGetPeerInfoReqParams;
 
-/*---------------------------------------------------------------------------
-* tSirIbssGetPeerInfoParams
-*--------------------------------------------------------------------------*/
+/**
+ * typedef struct - tSirIbssGetPeerInfoParams
+ * @mac_addr: mac address received from target
+ * @txRate: TX rate
+ * @mcsIndex: MCS index
+ * @txRateFlags: TX rate flags
+ * @rssi: RSSI
+ */
 typedef struct {
-	uint8_t staIdx;         /* StaIdx */
-	uint32_t txRate;        /* Tx Rate */
-	uint32_t mcsIndex;      /* MCS Index */
-	uint32_t txRateFlags;   /* TxRate Flags */
-	int8_t rssi;            /* RSSI */
+	uint8_t  mac_addr[QDF_MAC_ADDR_SIZE];
+	uint32_t txRate;
+	uint32_t mcsIndex;
+	uint32_t txRateFlags;
+	int8_t  rssi;
 } tSirIbssPeerInfoParams;
 
 typedef struct {

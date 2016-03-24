@@ -105,7 +105,8 @@ typedef enum eSmeState {
 #define SME_IS_READY(pMac)  (SME_STATE_READY == (pMac)->sme.state)
 
 /* HDD Callback function */
-typedef void (*pIbssPeerInfoCb)(void *pUserData, void *infoParam);
+typedef void (*pIbssPeerInfoCb)(void *pUserData,
+					tSirPeerInfoRspParams *infoParam);
 
 /* Peer info */
 typedef struct tagSmePeerInfoHddCbkInfo {
