@@ -51,15 +51,16 @@
 #define REG_RULE_2412_2462    REG_RULE(2412-10, 2462+10, 40, 0, 20, 0)
 
 #define REG_RULE_2467_2472    REG_RULE(2467-10, 2472+10, 40, 0, 20, \
-			      NL80211_RRF_PASSIVE_SCAN)
-
-#define REG_RULE_2484         REG_RULE(2484-10, 2484+10, 40, 0, 20, \
-		NL80211_RRF_PASSIVE_SCAN | NL80211_RRF_NO_OFDM)
-
-#define REG_RULE_5180_5320    REG_RULE(5180-10, 5320+10, 80, 0, 20, \
 		NL80211_RRF_PASSIVE_SCAN | NL80211_RRF_NO_IBSS)
 
-#define REG_RULE_5500_5720    REG_RULE(5500-10, 5720+10, 80, 0, 20, \
+#define REG_RULE_2484         REG_RULE(2484-10, 2484+10, 20, 0, 20, \
+		NL80211_RRF_PASSIVE_SCAN | NL80211_RRF_NO_IBSS | \
+				       NL80211_RRF_NO_OFDM)
+
+#define REG_RULE_5180_5320    REG_RULE(5180-10, 5320+10, 160, 0, 20, \
+		NL80211_RRF_PASSIVE_SCAN | NL80211_RRF_NO_IBSS)
+
+#define REG_RULE_5500_5720    REG_RULE(5500-10, 5720+10, 160, 0, 20, \
 		NL80211_RRF_PASSIVE_SCAN | NL80211_RRF_NO_IBSS)
 
 #define REG_RULE_5745_5925    REG_RULE(5745-10, 5925+10, 80, 0, 20, \
@@ -399,6 +400,7 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 			}
 			cds_chan->pwr_limit = wiphy_chan->max_power;
 			cds_chan->flags = wiphy_chan->flags;
+
 		}
 	}
 
