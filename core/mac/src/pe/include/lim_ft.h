@@ -67,7 +67,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 		tpSirMsgQ limMsgQ, tpPESession psessionEntry);
 void lim_process_mlm_reassoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg);
 void lim_preauth_scan_event_handler(tpAniSirGlobal mac_ctx,
-				enum lim_scan_event_type event,
+				enum sir_scan_event_type event,
 				uint8_t session_id,
 				uint32_t scan_id);
 QDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
@@ -95,7 +95,7 @@ static inline void lim_process_mlm_reassoc_req(tpAniSirGlobal mac_ctx,
 		uint32_t *msg)
 {}
 static inline void lim_preauth_scan_event_handler(tpAniSirGlobal mac_ctx,
-		enum lim_scan_event_type event,
+		enum sir_scan_event_type event,
 		uint8_t session_id, uint32_t scan_id)
 {}
 static inline int lim_process_ft_pre_auth_req(tpAniSirGlobal pMac,

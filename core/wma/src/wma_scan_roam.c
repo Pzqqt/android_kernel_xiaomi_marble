@@ -3173,7 +3173,7 @@ int wma_nlo_scan_cmp_evt_handler(void *handle, uint8_t *event,
 				WIFI_POWER_EVENT_WAKELOCK_PNO);
 		qdf_mem_zero(scan_event, sizeof(tSirScanOffloadEvent));
 		scan_event->reasonCode = eSIR_PNO_SCAN_SUCCESS;
-		scan_event->event = LIM_SCAN_EVENT_COMPLETED;
+		scan_event->event = SIR_SCAN_EVENT_COMPLETED;
 		scan_event->sessionId = nlo_event->vdev_id;
 		wma_send_msg(wma, WMA_RX_SCAN_EVENT, (void *)scan_event, 0);
 	} else {
@@ -5248,7 +5248,7 @@ int wma_scan_event_callback(WMA_HANDLE handle, uint8_t *data,
 	if (scan_event->scanId ==
 		wma_handle->interfaces[vdev_id].p2p_scan_info.scan_id) {
 		scan_event->p2pScanType = P2P_SCAN_TYPE_LISTEN;
-		if  (scan_event->event == LIM_SCAN_EVENT_COMPLETED)
+		if  (scan_event->event == SIR_SCAN_EVENT_COMPLETED)
 			wma_reset_p2p_scan_info(wma_handle, vdev_id);
 	}
 	scan_event->sessionId = vdev_id;
@@ -5286,7 +5286,7 @@ int wma_scan_event_callback(WMA_HANDLE handle, uint8_t *data,
 
 	/* Stop scan completion timeout if event is WMI_SCAN_EVENT_COMPLETED */
 	if (scan_event->event ==
-			(enum lim_scan_event_type) WMI_SCAN_EVENT_COMPLETED) {
+			(enum sir_scan_event_type) WMI_SCAN_EVENT_COMPLETED) {
 		WMA_LOGE("scan complete:scan_id 0x%x, requestor 0x%x, vdev %d",
 			 wmi_event->scan_id, wmi_event->requestor, vdev_id);
 	}
