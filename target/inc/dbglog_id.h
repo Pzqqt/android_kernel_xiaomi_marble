@@ -1571,6 +1571,22 @@ extern "C" {
 #define EXTSCAN_CONFIG_WLAN_CHANGE_TABLE                40
 #define EXTSCAN_EVENT_SEND_FAILED                       41
 
+/* ERE DBGIDs */
+#define ERE_DBGID_DEFINITION_START                       0
+#define ERE_DBGID_VDEV_ATTACH                            1
+#define ERE_DBGID_VDEV_DETACH                            2
+#define ERE_DBGID_ENABLE_CMD                             3
+#define ERE_DBGID_STATUS_ENABLED                         4
+#define ERE_DBGID_STATUS_DISABLED                        5
+#define ERE_DBGID_ISROUTE_TABLE_EMPTY                    6
+#define ERE_DBGID_HASH_VALUE                             7
+#define ERE_DBGID_MATCH_REQ                              8
+#define ERE_DBGID_ADD_ROUTE_DBG                          9
+#define ERE_DBGID_ADD_ROUTE_ENTRY                       10
+#define ERE_DBGID_STATS_TX                              11
+#define ERE_DBGID_STATS_RX                              12
+#define ERE_DBGID_DEFINITION_END                        13
+
 /* NLO DBGIDs */
 #define NLO_DBGID_SSID_TO_BE_SCANNED_LIST 0
 #define NLO_DBGID_SSID_TO_BE_SKIPPED_LIST 1
