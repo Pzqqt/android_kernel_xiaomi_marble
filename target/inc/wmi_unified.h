@@ -4312,6 +4312,12 @@ typedef struct {
 	A_UINT32 cca_busy_time;
 } wmi_channel_stats;
 
+/*
+ * Each step represents 0.5 dB.  The starting value is 0 dBm.
+ * Thus the TPC levels cover 0 dBm to 31.5 dBm inclusive in 0.5 dB steps.
+ */
+#define MAX_TPC_LEVELS 64
+
 /* radio statistics */
 typedef struct {
 	A_UINT32 tlv_header;
@@ -4338,6 +4344,8 @@ typedef struct {
 	A_UINT32 on_time_hs20;
 	/** number of channels */
 	A_UINT32 num_channels;
+	/** tx time (in milliseconds) per TPC level (0.5 dBm) */
+	A_UINT32 tx_time_per_tpc[MAX_TPC_LEVELS];
 } wmi_radio_link_stats;
 
 /** Radio statistics (once started) do not stop or get reset unless wifi_clear_link_stats is invoked */
