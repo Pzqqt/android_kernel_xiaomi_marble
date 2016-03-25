@@ -37,6 +37,7 @@ extern "C" {
 #include <qdf_lock.h>
 #include <qdf_timer.h>
 #include <qdf_atomic.h>
+#include <qdf_event.h>
 #include "hif.h"
 #include <htc.h>
 #include "htc_api.h"
