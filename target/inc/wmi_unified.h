@@ -7468,10 +7468,15 @@ typedef struct {
 	A_UINT32 reason;
 	/** associated AP's rssi calculated by FW when reason code is WMI_ROAM_REASON_LOW_RSSI*/
 	A_UINT32 rssi;
+	/** roam notification */
+	A_UINT32 notif;
 
 } wmi_roam_event_fixed_param;
 
 /* roam_reason: bits 0-3 */
+
+/** invalid reason. Do not interpret reason field */
+#define WMI_ROAM_REASON_INVALID   0x0
 #define WMI_ROAM_REASON_BETTER_AP 0x1 /** found a better AP */
 #define WMI_ROAM_REASON_BMISS     0x2 /** beacon miss detected */
 #define WMI_ROAM_REASON_DEAUTH    0x2 /** deauth/disassoc received */
@@ -7513,6 +7518,14 @@ typedef enum {
 #define WMI_GET_ROAM_SUBNET_CHANGE_STATUS(roam_reason) \
 	(((roam_reason) & WMI_ROAM_SUBNET_CHANGE_STATUS_MASK) >> \
 	WMI_ROAM_SUBNET_CHANGE_STATUS_SHIFT)
+
+/* roaming notification */
+/** invalid notification. Do not interpret notif field  */
+#define WMI_ROAM_NOTIF_INVALID     0x0
+/** indicate that roaming is started. sent only in non WOW state */
+#define WMI_ROAM_NOTIF_ROAM_START  0x1
+/** indicate that roaming is aborted. sent only in non WOW state */
+#define WMI_ROAM_NOTIF_ROAM_ABORT  0x2
 
 /**whenever RIC request information change, host driver should pass all ric related information to firmware (now only support tsepc)
  * Once, 11r roaming happens, firmware can generate RIC request in reassoc request based on these informations
