@@ -1586,6 +1586,28 @@ extern "C" {
 #define ERE_DBGID_STATS_TX                              11
 #define ERE_DBGID_STATS_RX                              12
 #define ERE_DBGID_DEFINITION_END                        13
+/* IDs 14 - 251 reserved for ERE */
+
+/* Timekeeper debug IDs */
+#define TIMEKEEPER_INIT                                 252
+#define TIMEKEEPER_OPEN                                 253
+#define TIMEKEEPER_CLOSE                                254
+#define TIMEKEEPER_NEGOTIATE                            255
+#define TIMEKEEPER_TMR_HNDLR                            256
+#define TIMEKEEPER_UNITTEST                             257
+#define TIMEKEEPER_LF_TMR_HNDLR                         258
+#define TIMEKEEPER_DEINIT                               259
+#define TIMEKEEPER_SLOTBITMAP                           260
+#define TIMEKEEPER_CANCEL_SLOTBITMAP                    261
+#define TIMEKEEPER_CONFIRM_SLOTBITMAP                   262
+#define TIMEKEEPER_RESOLVE_SLOTBITMAP                   263
+#define TIMEKEEPER_ADD_CHAN_ELEMENT                     264
+#define TIMEKEEPER_REMOVE_CHAN_ELEMENT                  265
+#define TIMEKEEPER_FIND_CHAN_ELEMENT                    266
+#define TIMEKEEPER_QUERY_COMMITTED_SLOTBITMAP           267
+#define TIMEKEEPER_ENCODE_SLOTBITMAP                    268
+#define TIMEKEEPER_SLOT_ARRAY_DBG                       269
+#define TIMEKEEPER_POPULATE_MASTER                      270
 
 /* NLO DBGIDs */
 #define NLO_DBGID_SSID_TO_BE_SCANNED_LIST 0

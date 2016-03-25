@@ -13631,10 +13631,6 @@ typedef struct {
 	A_UINT32 vdev_id;
 	/* action type, refer to wmi_tsf_tstamp_action */
 	A_UINT32 tsf_action;
-	/* low 32 bits of qtimer */
-	A_UINT32 qtimer_low;
-	/* high 32 bits of qtimer */
-	A_UINT32 qtimer_high;
 } wmi_vdev_tsf_tstamp_action_cmd_fixed_param;
 
 typedef struct {
@@ -13647,6 +13643,10 @@ typedef struct {
 	A_UINT32 tsf_low;
 	/* high 32 bit of tsf */
 	A_UINT32 tsf_high;
+	/* low 32 bits of qtimer */
+	A_UINT32 qtimer_low;
+	/* high 32 bits of qtimer */
+	A_UINT32 qtimer_high;
 } wmi_vdev_tsf_report_event_fixed_param;
 
 typedef struct {
