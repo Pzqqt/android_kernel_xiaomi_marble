@@ -1568,6 +1568,23 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_ENABLE_HOST_SSDP_MIN,
 		     CFG_ENABLE_HOST_SSDP_MAX),
 
+#ifdef FEATURE_RUNTIME_PM
+	REG_VARIABLE(CFG_ENABLE_RUNTIME_PM, WLAN_PARAM_Integer,
+		     struct hdd_config, runtime_pm,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ENABLE_RUNTIME_PM_DEFAULT,
+		     CFG_ENABLE_RUNTIME_PM_MIN,
+		     CFG_ENABLE_RUNTIME_PM_MAX),
+
+	REG_VARIABLE(CFG_RUNTIME_PM_DELAY_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, runtime_pm_delay,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_RUNTIME_PM_DELAY_DEFAULT,
+		     CFG_RUNTIME_PM_DELAY_MIN,
+		     CFG_RUNTIME_PM_DELAY_MAX),
+#endif
+
+
 	REG_VARIABLE(CFG_ENABLE_HOST_NSOFFLOAD_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, fhostNSOffload,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -4489,6 +4506,21 @@ static void hdd_set_power_save_offload_config(hdd_context_t *pHddCtx)
 
 }
 
+#ifdef FEATURE_RUNTIME_PM
+static void hdd_cfg_print_runtime_pm(hdd_context_t *hdd_ctx)
+{
+	hdd_info("Name = [gRuntimePM] Value = [%u] ",
+		 hdd_ctx->config->runtime_pm);
+
+	hdd_info("Name = [gRuntimePMDelay] Value = [%u] ",
+		 hdd_ctx->config->runtime_pm_delay);
+}
+#else
+static void hdd_cfg_print_runtime_pm(hdd_context_t *hdd_ctx)
+{
+}
+#endif
+
 /**
  * hdd_cfg_print() - print the hdd configuration
  * @iniTable: pointer to hdd context
@@ -4758,6 +4790,7 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		  pHddCtx->config->fhostArpOffload);
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [ssdp] Value = [%u] ", pHddCtx->config->ssdp);
+	hdd_cfg_print_runtime_pm(pHddCtx);
 #ifdef FEATURE_WLAN_RA_FILTERING
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [RArateLimitInterval] Value = [%u] ",

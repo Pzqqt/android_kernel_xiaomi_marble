@@ -1009,6 +1009,28 @@ typedef enum {
 #define CFG_ENABLE_HOST_SSDP_MAX               (1)
 #define CFG_ENABLE_HOST_SSDP_DEFAULT           (1)
 
+#ifdef FEATURE_RUNTIME_PM
+/*
+ * config item to enable runtime suspend
+ * 1 means runtime suspend is enabled
+ * by default runtime suspend is disabled
+ */
+#define CFG_ENABLE_RUNTIME_PM                  "gRuntimePM"
+#define CFG_ENABLE_RUNTIME_PM_MIN              (0)
+#define CFG_ENABLE_RUNTIME_PM_MAX              (1)
+#define CFG_ENABLE_RUNTIME_PM_DEFAULT          (0)
+
+/*
+ * config item for runtime pm's inactivity timer.
+ * the wlan driver will wait for this number of miliseconds
+ * of inactivity before performing a runtime suspend.
+ */
+#define CFG_RUNTIME_PM_DELAY_NAME               "gRuntimePMDelay"
+#define CFG_RUNTIME_PM_DELAY_MIN                (100)
+#define CFG_RUNTIME_PM_DELAY_MAX                (10000)
+#define CFG_RUNTIME_PM_DELAY_DEFAULT            (500)
+#endif
+
 #define CFG_ENABLE_HOST_NSOFFLOAD_NAME         "hostNSOffload"
 #define CFG_ENABLE_HOST_NSOFFLOAD_MIN          (0)
 #define CFG_ENABLE_HOST_NSOFFLOAD_MAX          (1)
@@ -3070,6 +3092,12 @@ struct hdd_config {
 	uint8_t mcastBcastFilterSetting;
 	bool fhostArpOffload;
 	bool ssdp;
+
+#ifdef FEATURE_RUNTIME_PM
+	bool runtime_pm;
+	uint32_t runtime_pm_delay;
+#endif
+
 #ifdef FEATURE_WLAN_RA_FILTERING
 	bool IsRArateLimitEnabled;
 	uint16_t RArateLimitInterval;

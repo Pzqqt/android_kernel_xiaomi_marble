@@ -7005,6 +7005,27 @@ static void hdd_update_ol_config(hdd_context_t *hdd_ctx)
 	ol_init_ini_config(ol_ctx, &cfg);
 }
 
+#ifdef FEATURE_RUNTIME_PM
+/**
+ * hdd_populate_runtime_cfg() - populate runtime configuration
+ * @hdd_ctx: hdd context
+ * @cfg: pointer to the configuration memory being populated
+ *
+ * Return: void
+ */
+static void hdd_populate_runtime_cfg(hdd_context_t *hdd_ctx,
+				     struct hif_config_info *cfg)
+{
+	cfg->enable_runtime_pm = hdd_ctx->config->runtime_pm;
+	cfg->runtime_pm_delay = hdd_ctx->config->runtime_pm_delay;
+}
+#else
+static void hdd_populate_runtime_cfg(hdd_context_t *hdd_ctx,
+				     struct hif_config_info *cfg)
+{
+}
+#endif
+
 /**
  * hdd_update_hif_config - API to update HIF configuration parameters
  * @hdd_ctx: HDD Context
@@ -7020,6 +7041,7 @@ static void hdd_update_hif_config(hdd_context_t *hdd_ctx)
 		return;
 
 	cfg.enable_self_recovery = hdd_ctx->config->enableSelfRecovery;
+	hdd_populate_runtime_cfg(hdd_ctx, &cfg);
 	hif_init_ini_config(scn, &cfg);
 }
 
