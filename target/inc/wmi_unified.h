@@ -2314,6 +2314,11 @@ typedef struct {
 	 * Value 0 means host doesn't given any limit to FW.
 	 */
 	A_UINT32 max_bssid_rx_filters;
+	/**
+	 * Use PDEV ID instead of MAC ID, added for backward compatibility with
+	 * older host which is using MAC ID. 1 means PDEV ID, 0 means MAC ID.
+	 */
+	A_UINT32 use_pdev_id;
 } wmi_resource_config;
 
 #define WMI_RSRC_CFG_FLAG_SET(word32, flag, value) \
@@ -7312,10 +7317,14 @@ typedef struct wmi_bcn_send_from_host {
 	A_UINT32 tlv_header;            /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_bcn_send_from_host_cmd_fixed_param  */
 	A_UINT32 vdev_id;
 	A_UINT32 data_len;
-	A_UINT32 frag_ptr;              /* Physical address of the frame */
+	union {
+		A_UINT32 frag_ptr; /* Physical address of the frame */
+		A_UINT32 frag_ptr_lo; /* LSB of physical address of the frame */
+	};
 	A_UINT32 frame_ctrl;            /* farme ctrl to setup PPDU desc */
 	A_UINT32 dtim_flag;             /* to control CABQ traffic */
 	A_UINT32 bcn_antenna;   /* Antenna for beacon transmission */
+	A_UINT32 frag_ptr_hi; /* MSBs of physical address of the frame */
 } wmi_bcn_send_from_host_cmd_fixed_param;
 
 /* cmd to support bcn snd for all vaps at once */
