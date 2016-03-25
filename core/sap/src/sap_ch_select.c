@@ -1897,9 +1897,9 @@ bool sap_filter_over_lap_ch(ptSapContext pSapCtx, uint16_t chNum)
  */
 static uint8_t sap_select_channel_no_scan_result(ptSapContext sap_ctx)
 {
-	enum channel_state ch_type;
 	uint32_t start_ch_num, end_ch_num;
 #ifdef FEATURE_WLAN_CH_AVOID
+	enum channel_state ch_type;
 	uint8_t i, first_safe_ch_in_range = SAP_CHANNEL_NOT_SELECTED;
 #endif
 	start_ch_num = sap_ctx->acs_cfg->start_ch;

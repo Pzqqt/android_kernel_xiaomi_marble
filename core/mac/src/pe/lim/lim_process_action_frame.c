@@ -1345,7 +1345,7 @@ __lim_process_radio_measure_request(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 				    tpPESession psessionEntry)
 {
 	tpSirMacMgmtHdr pHdr;
-	tDot11fRadioMeasurementRequest frm;
+	tDot11fRadioMeasurementRequest *frm;
 	uint32_t frameLen, nStatus;
 	uint8_t *pBody;
 
@@ -1361,31 +1361,38 @@ __lim_process_radio_measure_request(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		frameLen + sizeof(tSirMacMgmtHdr), 0,
 		WMA_GET_RX_CH(pRxPacketInfo), psessionEntry, 0);
 
+	frm = qdf_mem_malloc(sizeof(*frm));
+	if (frm == NULL) {
+		lim_log(pMac, LOGE,
+			FL("Failed to alloc memory for tDot11fRadioMeasurementRequest"));
+		return;
+	}
+
 	/**Unpack the received frame */
-	nStatus =
-		dot11f_unpack_radio_measurement_request(pMac, pBody, frameLen, &frm);
+	nStatus = dot11f_unpack_radio_measurement_request(pMac,
+								pBody,
+								frameLen, frm);
 
 	if (DOT11F_FAILED(nStatus)) {
 		lim_log(pMac, LOGE,
-			FL
-				("Failed to unpack and parse a Radio Measure request (0x%08x, %d bytes):"),
+			FL("Failed to unpack and parse a Radio Measure request (0x%08x, %d bytes):"),
 			nStatus, frameLen);
 		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pBody, frameLen);
-		       )
-		return;
+		       (pMac, SIR_DBG_MODULE_ID, LOG2, pBody, frameLen);)
+		    goto err;
 	} else if (DOT11F_WARNED(nStatus)) {
 		lim_log(pMac, LOGW,
-			FL
-				("There were warnings while unpacking a Radio Measure request (0x%08x, %d bytes):"),
+			FL("There were warnings while unpacking a Radio Measure request (0x%08x, %d bytes):"),
 			nStatus, frameLen);
 		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pBody, frameLen);
-		       )
+		       (pMac, SIR_DBG_MODULE_ID, LOG2, pBody, frameLen);)
 	}
 	/* Call rrm function to handle the request. */
 
-	rrm_process_radio_measurement_request(pMac, pHdr->sa, &frm, psessionEntry);
+	rrm_process_radio_measurement_request(pMac, pHdr->sa, frm,
+					      psessionEntry);
+err:
+	qdf_mem_free(frm);
 }
 
 static void
