@@ -939,7 +939,7 @@ sap_find_target_channel_in_channel_matrix(ptSapContext sapContext,
 }
 
 /**
- * sap_mark_channels_leaking_into_nol() - to mark channel leaking in to nol
+ * sap_mark_leaking_ch() - to mark channel leaking in to nol
  * @sap_ctx: pointer to SAP context
  * @ch_width: channel width
  * @nol: nol info
@@ -954,7 +954,7 @@ sap_find_target_channel_in_channel_matrix(ptSapContext sapContext,
  */
 
 QDF_STATUS
-sap_mark_channels_leaking_into_nol(ptSapContext sap_ctx,
+sap_mark_leaking_ch(ptSapContext sap_ctx,
 		enum phy_ch_width ch_width,
 		tSapDfsNolInfo *nol,
 		uint8_t temp_ch_lst_sz,
@@ -994,7 +994,7 @@ sap_mark_channels_leaking_into_nol(ptSapContext sap_ctx,
 		/*
 		 * following is based on assumption that both temp_ch_lst
 		 * and target channel matrix are in increasing order of
-		 * channelID
+		 * ch_id
 		 */
 		for (j = 0, k = 0; j < temp_ch_lst_sz && k < num_channel;) {
 			if (temp_ch_lst[j] == 0) {
@@ -1100,7 +1100,8 @@ static uint8_t sap_populate_available_channels(chan_bonding_bitmap *bitmap,
 				SAP_40MHZ_MASK_L) == SAP_40MHZ_MASK_L) {
 				avail_chnl[chnl_count++] = start_channel;
 				avail_chnl[chnl_count++] = start_channel + 4;
-			} else if ((bitmap->chanBondingSet[i].channelMap &
+			}
+			if ((bitmap->chanBondingSet[i].channelMap &
 				SAP_40MHZ_MASK_H) == SAP_40MHZ_MASK_H) {
 				avail_chnl[chnl_count++] = start_channel + 8;
 				avail_chnl[chnl_count++] = start_channel + 12;
@@ -1227,73 +1228,50 @@ bool sap_check_in_avoid_ch_list(ptSapContext sap_ctx, uint8_t channel)
 }
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
-/*
- * This function randomly pick up an AVAILABLE channel
+/**
+ * sap_apply_rules() - validates channels in sap_ctx channel list
+ * @sap_ctx: sap context pointer
+ *
+ * This function takes the channel list in sap_ctx and marks invalid channel
+ * based on following rules:
+ * -> invalid due to different reg domain dfs channel list
+ * -> already present in NOL
+ * -> outside ACS range or not
+ * -> not usable due to another SAP operating MCC mode in same channel
+ * -> preferred location is indoors or outdoors
+ *
+ * Return: number of valid channels after applying all the rules
  */
-static uint8_t sap_random_channel_sel(ptSapContext sapContext)
+static uint8_t sap_apply_rules(ptSapContext sap_ctx)
 {
-	uint32_t random_byte = 0;
-	uint8_t available_ch_cnt = 0;
-	uint8_t  avail_dfs_chan_count = 0;
-	uint8_t  avail_non_dfs_chan_count = 0;
-	uint8_t valid_chnl_count = 0;
-	uint8_t availableChannels[WNI_CFG_VALID_CHANNEL_LIST_LEN] = { 0, };
-	uint8_t  avail_dfs_chan_list[WNI_CFG_VALID_CHANNEL_LIST_LEN] = {0,};
-	uint8_t  avail_non_dfs_chan_list[WNI_CFG_VALID_CHANNEL_LIST_LEN] = {0,};
-	uint8_t target_channel = 0;
-	bool isChannelNol = false;
-	bool isOutOfRange = false;
-	chan_bonding_bitmap channelBitmap;
-	uint8_t i = 0;
-	uint8_t channelID;
-	tHalHandle hHal = CDS_GET_HAL_CB(sapContext->p_cds_gctx);
-	tpAniSirGlobal pMac;
-	enum phy_ch_width ch_width;
-	uint8_t   *tmp_ch_lst = NULL;
-	uint8_t   dfs_region;
+	uint8_t num_valid_ch, dfs_region, i = 0, ch_id;
+	tAll5GChannelList *sap_all_ch = &sap_ctx->SapAllChnlList;
+	bool is_ch_nol = false;
+	bool is_out_of_range = false;
+	tpAniSirGlobal mac_ctx;
+	tHalHandle hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
+	uint8_t preferred_location;
 
-	if (NULL == hHal) {
+	if (NULL == hal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  FL("invalid hHal"));
-		return target_channel;
+			  FL("hal pointer NULL"));
+		return 0;
 	}
 
-	pMac = PMAC_STRUCT(hHal);
-	if (NULL == pMac) {
+	mac_ctx = PMAC_STRUCT(hal);
+	if (NULL == mac_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  FL("invalid pMac"));
-		return target_channel;
+			  FL("mac_ctx pointer NULL"));
+		return 0;
 	}
 
-	/*
-	 * Retrieve the original one and store it.
-	 * use the stored original value when you call this function next time
-	 * so fall back mechanism always starts with original ini value.
-	 */
-	if (pMac->sap.SapDfsInfo.orig_chanWidth == 0) {
-		pMac->sap.SapDfsInfo.orig_chanWidth =
-					sapContext->ch_width_orig;
-		ch_width = pMac->sap.SapDfsInfo.orig_chanWidth;
-	} else {
-		ch_width = pMac->sap.SapDfsInfo.orig_chanWidth;
-	}
-
-	if (sap_get_5ghz_channel_list(sapContext)) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_LOW,
-			  FL("Getting 5Ghz channel list failed"));
-		return target_channel;
-	}
-
+	preferred_location =
+		mac_ctx->sap.SapDfsInfo.sap_operating_chan_preferred_location;
 	cds_get_dfs_region(&dfs_region);
-
-	/*
-	 * valid_chnl_count will be used to find number of valid channels
-	 * after following for loop ends
-	 */
-	valid_chnl_count = sapContext->SapAllChnlList.numChannel;
 	/* loop to check ACS range or NOL channels */
-	for (i = 0; i < sapContext->SapAllChnlList.numChannel; i++) {
-		channelID = sapContext->SapAllChnlList.channelList[i].channel;
+	num_valid_ch = sap_all_ch->numChannel;
+	for (i = 0; i < sap_all_ch->numChannel; i++) {
+		ch_id = sap_all_ch->channelList[i].channel;
 
 		/*
 		 * IN MKK DFS REGION CHECK IF THE FOLLOWING TWO
@@ -1316,15 +1294,13 @@ static uint8_t sap_random_channel_sel(ptSapContext sapContext)
 			/*
 			 * Check for JAPAN W53 Channel operation capability
 			 */
-			if (true == sap_dfs_is_w53_invalid(hHal, channelID)) {
+			if (true == sap_dfs_is_w53_invalid(hal, ch_id)) {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_INFO_LOW,
-					  FL
-					  ("index:%d, Channel=%d Invalid,Japan W53 Disabled"),
-					  i, channelID);
-				sapContext->SapAllChnlList.channelList[i].
-					valid = false;
-				valid_chnl_count--;
+					  FL("index:%d, Channel=%d Invalid,Japan W53 Disabled"),
+					  i, ch_id);
+				sap_all_ch->channelList[i].valid = false;
+				num_valid_ch--;
 				continue;
 			}
 
@@ -1336,384 +1312,428 @@ static uint8_t sap_random_channel_sel(ptSapContext sapContext)
 			 * domain to Invalid.
 			 */
 			if (false ==
-			    sap_dfs_is_channel_in_preferred_location(hHal,
-								channelID)) {
+			    sap_dfs_is_channel_in_preferred_location(hal,
+								ch_id)) {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_INFO_LOW,
-					  FL
-					  ("CHAN=%d is invalid,preferred Channel Location %d Only"),
-					  channelID,
-					  pMac->sap.SapDfsInfo.
-					  sap_operating_chan_preferred_location);
-				sapContext->SapAllChnlList.channelList[i].
-					valid = false;
-				valid_chnl_count--;
+					  FL("CHAN=%d is invalid,preferred Channel Location %d Only"),
+					  ch_id, preferred_location);
+				sap_all_ch->channelList[i].valid = false;
+				num_valid_ch--;
 				continue;
 			}
 		}
 
-		if (cds_get_channel_state(channelID) ==
-		    CHANNEL_STATE_DFS) {
-			isChannelNol =
-				sap_dfs_is_channel_in_nol_list(sapContext,
-						channelID,
-						PHY_SINGLE_CHANNEL_CENTERED);
-			if (true == isChannelNol) {
+		if (cds_get_channel_state(ch_id) == CHANNEL_STATE_DFS) {
+			is_ch_nol = sap_dfs_is_channel_in_nol_list(sap_ctx,
+					ch_id, PHY_SINGLE_CHANNEL_CENTERED);
+			if (true == is_ch_nol) {
 				/*
 				 * Mark this channel invalid since it is still
 				 * in DFS Non-Occupancy-Period which is 30 mins.
 				 */
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_INFO_LOW,
-					  FL
-					  ("index: %d, Channel = %d Present in NOL LIST"),
-					  i, channelID);
-				sapContext->SapAllChnlList.channelList[i].
-					valid = false;
-				valid_chnl_count--;
+					  FL("index: %d, Channel = %d Present in NOL LIST"),
+					  i, ch_id);
+				sap_all_ch->channelList[i].valid = false;
+				num_valid_ch--;
 				continue;
 			}
 		}
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 		/* avoid ch on which another MDM AP in MCC mode is detected */
-		if (pMac->sap.sap_channel_avoidance
-		    && sapContext->sap_detected_avoid_ch_ie.present) {
-			if (sap_check_in_avoid_ch_list(sapContext, channelID)) {
+		if (mac_ctx->sap.sap_channel_avoidance
+		    && sap_ctx->sap_detected_avoid_ch_ie.present) {
+			if (sap_check_in_avoid_ch_list(sap_ctx, ch_id)) {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_INFO_LOW,
 					  FL("index: %d, Channel = %d, avoided due to presence of another AP+AP MCC device in same channel."),
-					  i, channelID);
-				sapContext->SapAllChnlList.channelList[i].
-					valid = false;
+					  i, ch_id);
+				sap_all_ch->channelList[i].valid = false;
 			}
 		}
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
 		/* check if the channel is within ACS channel range */
-		isOutOfRange = sap_acs_channel_check(sapContext, channelID);
-		if (true == isOutOfRange) {
+		is_out_of_range = sap_acs_channel_check(sap_ctx, ch_id);
+		if (true == is_out_of_range) {
 			/*
 			 * mark this channel invalid since it is out of ACS
 			 * channel range
 			 */
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_LOW,
-				  FL
-				  ("index: %d, Channel = %d out of ACS channel range"),
-				  i, channelID);
-			sapContext->SapAllChnlList.channelList[i].valid = false;
-			valid_chnl_count--;
+				  FL("index: %d, Channel = %d out of ACS channel range"),
+				  i, ch_id);
+			sap_all_ch->channelList[i].valid = false;
+			num_valid_ch--;
 			continue;
 		}
 	} /* end of check for NOL or ACS channels */
+	return num_valid_ch;
+}
 
-	/* valid_chnl_count now have number of valid channels */
-	tmp_ch_lst = qdf_mem_malloc(valid_chnl_count);
-	if (tmp_ch_lst == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-				  FL("sapdfs: memory alloc failed"));
-		return target_channel;
+/**
+ * select_rand_from_lst() - selects random channel from given list
+ * @mac_ctx: mac context pointer
+ * @ch_lst: channel list
+ * @num_ch: number of channels
+ *
+ * Return: new target channel randomly selected
+ */
+static uint8_t select_rand_from_lst(tpAniSirGlobal mac_ctx, uint8_t *ch_lst,
+				    uint8_t num_ch)
+{
+	uint32_t rand_byte = 0;
+	uint8_t i, target_channel, non_dfs_num_ch = 0, dfs_num_ch = 0;
+	uint8_t dfs_ch[WNI_CFG_VALID_CHANNEL_LIST_LEN] = {0};
+	uint8_t non_dfs_ch[WNI_CFG_VALID_CHANNEL_LIST_LEN] = {0};
+	if (num_ch) {
+		for (i = 0; i < num_ch; i++) {
+			if (CDS_IS_DFS_CH(ch_lst[i]))
+				dfs_ch[dfs_num_ch++] = ch_lst[i];
+			else
+				non_dfs_ch[non_dfs_num_ch++] = ch_lst[i];
+		}
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_LOW,
+			  FL("No target channel found"));
+		return 0;
 	}
 
-	do {
-		uint8_t   j = 0;
-#ifdef WLAN_ENABLE_CHNL_MATRIX_RESTRICTION
-		tSapDfsNolInfo *nol = pMac->sap.SapDfsInfo.sapDfsChannelNolList;
-#endif
+	cds_rand_get_bytes(0, (uint8_t *)&rand_byte, 1);
 
-		/* prepare temp list of just the valid channels */
-		for (i = 0; i < sapContext->SapAllChnlList.numChannel; i++) {
-			if (sapContext->SapAllChnlList.channelList[i].valid) {
-				QDF_TRACE(QDF_MODULE_ID_SAP,
-					  QDF_TRACE_LEVEL_ERROR,
-					  FL
-					  ("sapdfs: Adding Channel = %d to temp List"),
-					  sapContext->SapAllChnlList.
-						channelList[i].channel);
-				tmp_ch_lst[j++] = sapContext->SapAllChnlList.
-							channelList[i].channel;
+	/* Give preference to non-DFS channel */
+	if (!mac_ctx->f_prefer_non_dfs_on_radar) {
+		i = (rand_byte + qdf_mc_timer_get_system_ticks()) % num_ch;
+		target_channel = ch_lst[i];
+	} else if (non_dfs_num_ch) {
+		i = (rand_byte + qdf_mc_timer_get_system_ticks()) %
+							non_dfs_num_ch;
+		target_channel = non_dfs_ch[i];
+	} else {
+		i = (rand_byte + qdf_mc_timer_get_system_ticks()) % dfs_num_ch;
+		target_channel = dfs_ch[i];
+	}
+
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_LOW,
+		  FL("sapdfs: New Channel width = %d"),
+		  mac_ctx->sap.SapDfsInfo.new_chanWidth);
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_LOW,
+		  FL("sapdfs: target_channel = %d"), target_channel);
+
+	return target_channel;
+}
+
+/**
+ * sap_find_ch_wh_fallback() - find given channel width from given list of
+ * channels
+ * @mac_ctx: mac context pointer
+ * @ch_wd: channel width to find
+ * @ch_lst: list of channels
+ * @num_ch: number of channels
+ *
+ * This function tries to find given channel width and returns new target ch.
+ * If not found updates ch_wd to next lower channel width.
+ *
+ * Return: new target channel if successful, 0 otherwise
+ */
+static uint8_t sap_find_ch_wh_fallback(tpAniSirGlobal mac_ctx,
+				       enum phy_ch_width *ch_wd,
+				       uint8_t *ch_lst,
+				       uint8_t num_ch)
+{
+	bool flag = false;
+	uint32_t rand_byte = 0;
+	chan_bonding_bitmap ch_map = { { {0} } };
+	uint8_t count = 0, i, index = 0, final_cnt = 0, target_channel = 0;
+	uint8_t primary_seg_start_ch = 0, sec_seg_ch = 0, new_160_start_ch = 0;
+	uint8_t final_lst[WNI_CFG_VALID_CHANNEL_LIST_LEN] = {0};
+
+	/* initialize ch_map for all 80 MHz bands: we have 6 80MHz bands */
+	ch_map.chanBondingSet[0].startChannel = 36;
+	ch_map.chanBondingSet[1].startChannel = 52;
+	ch_map.chanBondingSet[2].startChannel = 100;
+	ch_map.chanBondingSet[3].startChannel = 116;
+	ch_map.chanBondingSet[4].startChannel = 132;
+	ch_map.chanBondingSet[5].startChannel = 149;
+
+	/* now loop through leakage free list */
+	for (i = 0; i < num_ch; i++) {
+		/* add tmp ch to bitmap */
+		if (ch_lst[i] == 0)
+			continue;
+
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
+			  FL("sapdfs: Channel=%d added to bitmap"),
+			  ch_lst[i]);
+		sap_set_bitmap(&ch_map, ch_lst[i]);
+	}
+
+	/* populate available channel list from bitmap */
+	final_cnt = sap_populate_available_channels(&ch_map, *ch_wd, final_lst);
+	/* If no valid ch bonding found, fallback */
+	if (final_cnt == 0) {
+		if ((*ch_wd == CH_WIDTH_160MHZ) ||
+			(*ch_wd == CH_WIDTH_80P80MHZ) ||
+			(*ch_wd == CH_WIDTH_80MHZ)) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_WARN,
+				  FL("sapdfs:Changing chanWidth from [%d] to 40Mhz"),
+				  *ch_wd);
+			*ch_wd = CH_WIDTH_40MHZ;
+		} else if (*ch_wd == CH_WIDTH_40MHZ) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_WARN,
+				  FL("sapdfs:No 40MHz cb found, falling to 20MHz"));
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_WARN,
+				  FL("sapdfs:Changing chanWidth from [%d] to [%d]"),
+				  *ch_wd, CH_WIDTH_20MHZ);
+			*ch_wd = CH_WIDTH_20MHZ;
+		}
+		return 0;
+	}
+
+	/* ch count should be > 8 to switch new channel in 160Mhz band */
+	if (((*ch_wd == CH_WIDTH_160MHZ) || (*ch_wd == CH_WIDTH_80P80MHZ)) &&
+			(final_cnt < SIR_DFS_MAX_20M_SUB_CH)) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_WARN,
+			FL("sapdfs:Changing chanWidth from [%d] to [%d]"),
+			*ch_wd, CH_WIDTH_80MHZ);
+		*ch_wd = CH_WIDTH_80MHZ;
+		return 0;
+	}
+	if (*ch_wd == CH_WIDTH_160MHZ) {
+		/*
+		 * NA supports only 2 blocks for 160Mhz bandwidth i.e 36-64 &
+		 * 100-128 and all the channels in these blocks are continuous
+		 * and seperated by 4Mhz.
+		 */
+		for (i = 1; ((i < final_cnt)); i++) {
+			if ((final_lst[i] - final_lst[i-1]) == 4)
+				count++;
+			else
+				count = 0;
+			if (count == SIR_DFS_MAX_20M_SUB_CH - 1) {
+				flag = true;
+				new_160_start_ch = final_lst[i-7];
+				break;
 			}
 		}
+	} else if (*ch_wd == CH_WIDTH_80P80MHZ) {
+		flag = true;
+	}
+	if ((flag == false) && (*ch_wd > CH_WIDTH_80MHZ)) {
+		*ch_wd = CH_WIDTH_80MHZ;
+		return 0;
+	}
 
+	if (*ch_wd == CH_WIDTH_160MHZ) {
+		cds_rand_get_bytes(0, (uint8_t *)&rand_byte, 1);
+		rand_byte = (rand_byte + qdf_mc_timer_get_system_ticks())
+				% SIR_DFS_MAX_20M_SUB_CH;
+		target_channel = new_160_start_ch + (rand_byte * 4);
+	} else if (*ch_wd == CH_WIDTH_80P80MHZ) {
+		cds_rand_get_bytes(0, (uint8_t *)&rand_byte, 1);
+		index = (rand_byte + qdf_mc_timer_get_system_ticks()) %
+			final_cnt;
+		target_channel = final_lst[index];
+		index -= (index % 4);
+		primary_seg_start_ch = final_lst[index];
+
+		/* reset channels associate with primary 80Mhz */
+		for (i = 0; i < 4; i++)
+			final_lst[i + index] = 0;
+		/* select and calculate center freq for secondary segement */
+		for (i = 0; i < final_cnt / 4; i++) {
+			if (final_lst[i * 4] &&
+			    (abs(primary_seg_start_ch - final_lst[i * 4]) >
+				(SIR_DFS_MAX_20M_SUB_CH * 2))) {
+				sec_seg_ch = final_lst[i * 4] +
+				SIR_80MHZ_START_CENTER_CH_DIFF;
+				break;
+			}
+		}
+		if (!sec_seg_ch && (final_cnt == SIR_DFS_MAX_20M_SUB_CH))
+			*ch_wd = CH_WIDTH_160MHZ;
+		else if (!sec_seg_ch)
+			*ch_wd = CH_WIDTH_80MHZ;
+
+		mac_ctx->sap.SapDfsInfo.new_ch_params.center_freq_seg1
+								= sec_seg_ch;
+
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_LOW,
+			FL("sapdfs: New Center Freq Seg1 = %d"), sec_seg_ch);
+	} else {
+		target_channel = select_rand_from_lst(mac_ctx, final_lst,
+						      final_cnt);
+	}
+	return target_channel;
+}
+
+/**
+ * sap_random_channel_sel() - This function randomly pick up an available
+ * channel
+ * @sap_ctx:        sap context.
+ *
+ * This function first eliminates invalid channel, then selects random channel
+ * using following algorithm:
+ * PASS: 1 - invalidate ch in sap_ctx->all_ch_lst as per rules
+ * PASS: 2 - now mark channels that will leak into NOL
+ * PASS: 3 - from leakage_adjusted_lst, either select random channel (for 20MHz)
+ *           or find given channel width possible. if not found fallback to
+ *           lower channel width and try again. once given channel width found
+ *           use random channel from give possibilities.
+ * Return: channel number picked
+ */
+static uint8_t sap_random_channel_sel(ptSapContext sap_ctx)
+{
+	uint8_t j = 0, i = 0, final_cnt = 0, target_channel = 0;
+	/* count and ch list after applying all rules */
+	uint8_t rule_adjusted_cnt, *rule_adjusted_lst;
+	/* ch list after invalidating channels leaking into NOL */
+	uint8_t *leakage_adjusted_lst;
+	/* final list of channel from which random channel will be selected */
+	uint8_t final_lst[WNI_CFG_VALID_CHANNEL_LIST_LEN] = {0};
+	tAll5GChannelList *all_ch = &sap_ctx->SapAllChnlList;
+	tHalHandle hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
+	tpAniSirGlobal mac_ctx;
+	/* channel width for current iteration */
+	enum phy_ch_width ch_wd;
 #ifdef WLAN_ENABLE_CHNL_MATRIX_RESTRICTION
-		QDF_TRACE(QDF_MODULE_ID_SAP,
-			  QDF_TRACE_LEVEL_ERROR,
-			  FL
-			  ("sapdfs: Processing temp channel list against NOL.")
-			  );
-		if (QDF_STATUS_SUCCESS !=
-			sap_mark_channels_leaking_into_nol(sapContext,
-							   ch_width,
-							   nol,
-							   valid_chnl_count,
-							   tmp_ch_lst)) {
-			qdf_mem_free(tmp_ch_lst);
-			return target_channel;
+	tSapDfsNolInfo *nol;
+#endif
+
+	if (NULL == hal) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  FL("invalid hal"));
+		return 0;
+	}
+
+	mac_ctx = PMAC_STRUCT(hal);
+	if (NULL == mac_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  FL("invalid mac_ctx"));
+		return 0;
+	}
+
+	/*
+	 * Retrieve the original one and store it.
+	 * use the stored original value when you call this function next time
+	 * so fall back mechanism always starts with original ini value.
+	 */
+	if (mac_ctx->sap.SapDfsInfo.orig_chanWidth == 0) {
+		ch_wd = sap_ctx->ch_width_orig;
+		mac_ctx->sap.SapDfsInfo.orig_chanWidth = ch_wd;
+	} else {
+		ch_wd = mac_ctx->sap.SapDfsInfo.orig_chanWidth;
+	}
+
+	if (sap_get_5ghz_channel_list(sap_ctx)) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_LOW,
+			  FL("Getting 5Ghz channel list failed"));
+		return 0;
+	}
+
+	/* PASS: 1 - invalidate ch in sap_ctx->all_ch_lst as per rules */
+	rule_adjusted_cnt = sap_apply_rules(sap_ctx);
+	if (0 == rule_adjusted_cnt) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  FL("No channels left after applying rules."));
+		return 0;
+	}
+
+	/* this is list we get after applying all rules */
+	rule_adjusted_lst = qdf_mem_malloc(rule_adjusted_cnt);
+
+	/* list adjusted after leakage has been marked */
+	leakage_adjusted_lst = qdf_mem_malloc(rule_adjusted_cnt);
+	if (rule_adjusted_lst == NULL || leakage_adjusted_lst == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				  FL("sapdfs: memory alloc failed"));
+		qdf_mem_free(rule_adjusted_lst);
+		qdf_mem_free(leakage_adjusted_lst);
+		return 0;
+	}
+
+	/* copy valid ch from sap_ctx->all_ch_lst into rule_adjusted_lst */
+	for (i = 0, j = 0; i < all_ch->numChannel; i++) {
+		if (!all_ch->channelList[i].valid)
+			continue;
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_LOW,
+			  FL("sapdfs: Adding Channel = %d to temp List"),
+			  all_ch->channelList[i].channel);
+		rule_adjusted_lst[j++] = all_ch->channelList[i].channel;
+	}
+
+	/*
+	 * do - while loop for fallback mechanism. at each channel width this
+	 * will try to find channel bonding, if not fall back to lower ch width
+	 */
+	do {
+		/* save rules adjusted lst */
+		qdf_mem_copy(leakage_adjusted_lst, rule_adjusted_lst,
+			     rule_adjusted_cnt);
+#ifdef WLAN_ENABLE_CHNL_MATRIX_RESTRICTION
+		nol = mac_ctx->sap.SapDfsInfo.sapDfsChannelNolList;
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  FL("sapdfs: Processing tmp ch list against NOL."));
+		/* PASS: 2 - now mark channels that will leak into NOL */
+		if (sap_mark_leaking_ch(sap_ctx, ch_wd, nol, rule_adjusted_cnt,
+				leakage_adjusted_lst) != QDF_STATUS_SUCCESS) {
+			qdf_mem_free(rule_adjusted_lst);
+			qdf_mem_free(leakage_adjusted_lst);
+			return 0;
 		}
 #endif
-		qdf_mem_zero(availableChannels, sizeof(availableChannels));
-		qdf_mem_zero(&channelBitmap, sizeof(channelBitmap));
-		channelBitmap.chanBondingSet[0].startChannel = 36;
-		channelBitmap.chanBondingSet[1].startChannel = 52;
-		channelBitmap.chanBondingSet[2].startChannel = 100;
-		channelBitmap.chanBondingSet[3].startChannel = 116;
-		channelBitmap.chanBondingSet[3].startChannel = 132;
-		channelBitmap.chanBondingSet[4].startChannel = 149;
-		/* now loop through whatever is left of channel list */
-		QDF_TRACE(QDF_MODULE_ID_SAP,
-			  QDF_TRACE_LEVEL_ERROR,
-			  FL("sapdfs: Moving temp channel list to final."));
-		for (i = 0; i < valid_chnl_count; i++) {
+		if (ch_wd == CH_WIDTH_20MHZ) {
 			/*
-			 * add channel from temp channel list to bitmap or fianl
-			 * channel list (in case of 20MHz width)
+			 * PASS: 3 - from leakage_adjusted_lst, prepare valid
+			 * ch list and use random number from that
 			 */
-			if (tmp_ch_lst[i] != 0) {
+			for (i = 0; i < rule_adjusted_cnt; i++) {
+				if (leakage_adjusted_lst[i] == 0)
+					continue;
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_DEBUG,
-					  FL("sapdfs: processing channel: %d "),
-					  tmp_ch_lst[i]);
-				/*
-				 * for 20MHz, directly create available
-				 * channel list
-				 */
-				if (ch_width == CH_WIDTH_20MHZ) {
-					QDF_TRACE(QDF_MODULE_ID_SAP,
-						  QDF_TRACE_LEVEL_DEBUG,
-						  FL
-						  ("sapdfs: Channel=%d added to available list"),
-						  tmp_ch_lst[i]);
-					availableChannels[available_ch_cnt++] =
-						tmp_ch_lst[i];
-				} else {
-					QDF_TRACE(QDF_MODULE_ID_SAP,
-						  QDF_TRACE_LEVEL_DEBUG,
-						  FL("sapdfs: Channel=%d added to bitmap"),
-						  tmp_ch_lst[i]);
-					sap_set_bitmap(&channelBitmap,
-						       tmp_ch_lst[i]);
-				}
+					  FL("sapdfs: Channel=%d added to available list"),
+					  leakage_adjusted_lst[i]);
+				final_lst[final_cnt] = leakage_adjusted_lst[i];
+				final_cnt++;
 			}
+			target_channel = select_rand_from_lst(mac_ctx,
+							final_lst, final_cnt);
+			break;
 		}
 
 		/*
-		 * if 40 MHz or 80 MHz, populate available
-		 * channel list from bitmap
+		 * PASS: 3 - following function will check from valid channels
+		 * left if given ch_wd can be supported. if not reduce ch_wd
+		 * (fallback), then continue with reduced ch_wd
 		 */
-		if (ch_width != CH_WIDTH_20MHZ) {
-			bool flag = false;
-			uint8_t count = 0, new_160_startchannel = 0;
-			uint8_t index = 0, sec_seg_ch = 0;
-			uint8_t primary_seg_start_ch = 0;
-			available_ch_cnt =
-				sap_populate_available_channels(&channelBitmap,
-							ch_width,
-							availableChannels);
+		target_channel = sap_find_ch_wh_fallback(mac_ctx, &ch_wd,
+							   leakage_adjusted_lst,
+							   rule_adjusted_cnt);
+		/*
+		 * if target channel is 0, no channel bonding was found
+		 * ch_wd would have been updated for fallback
+		 */
+		if (0 == target_channel)
+			continue;
+		else
+			break;
+	} while (true);
 
-			/*
-			 * If no valid channel bonding found,
-			 * fallback to lower bandwidth
-			 */
-			if (available_ch_cnt == 0) {
-				if ((ch_width == CH_WIDTH_160MHZ) ||
-					(ch_width == CH_WIDTH_80P80MHZ) ||
-					(ch_width == CH_WIDTH_80MHZ)) {
-					QDF_TRACE(QDF_MODULE_ID_SAP,
-						  QDF_TRACE_LEVEL_WARN,
-						  FL("sapdfs:Changing chanWidth from [%d] to 40Mhz"),
-						  ch_width);
-					ch_width = CH_WIDTH_40MHZ;
-					continue;
-				} else if (ch_width == CH_WIDTH_40MHZ) {
-					QDF_TRACE(QDF_MODULE_ID_SAP,
-						  QDF_TRACE_LEVEL_WARN,
-						  FL
-						  ("sapdfs:No 40MHz cb found, falling to 20MHz"));
-					QDF_TRACE(QDF_MODULE_ID_SAP,
-						  QDF_TRACE_LEVEL_WARN,
-						  FL
-						  ("sapdfs:Changing chanWidth from [%d] to [%d]"),
-						  ch_width,
-						  CH_WIDTH_20MHZ);
-					ch_width = CH_WIDTH_20MHZ;
-					/* continue to start of do loop */
-					continue;
-				}
-			}
+	if (target_channel)
+		mac_ctx->sap.SapDfsInfo.new_chanWidth = ch_wd;
 
-			/*
-			 * Number of channel count should be more than 8 to
-			 * switch new channel in 160Mhz band
-			 */
-			if (((ch_width == CH_WIDTH_160MHZ) ||
-				(ch_width == CH_WIDTH_80P80MHZ)) &&
-				(available_ch_cnt < SIR_DFS_MAX_20M_SUB_CH)) {
-				QDF_TRACE(QDF_MODULE_ID_SAP,
-					QDF_TRACE_LEVEL_WARN,
-					FL("sapdfs:Changing chanWidth from [%d] to [%d]"),
-					ch_width, CH_WIDTH_80MHZ);
-				ch_width = CH_WIDTH_80MHZ;
-				continue;
-			}
-			if (ch_width == CH_WIDTH_160MHZ) {
-				/*
-				 * NA supports only 2 blocks for 160Mhz
-				 * bandwidth i.e 36-64 & 100-128 and
-				 * all the channels in these blocks are
-				 * continuous and seperated by 4Mhz.
-				 */
-				for (i = 1; ((i < available_ch_cnt)); i++) {
-					if ((availableChannels[i] -
-						availableChannels[i-1]) == 4)
-						count++;
-					else
-						count = 0;
-					if (count ==
-						SIR_DFS_MAX_20M_SUB_CH - 1) {
-						flag = true;
-						new_160_startchannel =
-							availableChannels[i-7];
-						break;
-					}
-				}
-			} else if (ch_width == CH_WIDTH_80P80MHZ) {
-					flag = true;
-			}
-			if ((flag == false) && (ch_width > CH_WIDTH_80MHZ)) {
-				ch_width = CH_WIDTH_80MHZ;
-				continue;
-			}
-
-			if (ch_width == CH_WIDTH_160MHZ) {
-				cds_rand_get_bytes(0, (uint8_t *)&random_byte,
-						   1);
-				random_byte = (random_byte +
-						qdf_mc_timer_get_system_ticks())
-						% SIR_DFS_MAX_20M_SUB_CH;
-				pMac->sap.SapDfsInfo.new_chanWidth = ch_width;
-				target_channel = new_160_startchannel +
-							(random_byte * 4);
-				QDF_TRACE(QDF_MODULE_ID_SAP,
-					QDF_TRACE_LEVEL_INFO_LOW,
-					FL("sapdfs: New Channel width = %d"),
-					pMac->sap.SapDfsInfo.new_chanWidth);
-				QDF_TRACE(QDF_MODULE_ID_SAP,
-					QDF_TRACE_LEVEL_INFO_LOW,
-					FL("sapdfs: target_channel = %d"),
-					target_channel);
-
-				qdf_mem_free(tmp_ch_lst);
-				return target_channel;
-			} else if (ch_width == CH_WIDTH_80P80MHZ) {
-				cds_rand_get_bytes(0,
-						(uint8_t *)&random_byte, 1);
-				index = (random_byte +
-					qdf_mc_timer_get_system_ticks()) %
-					available_ch_cnt;
-				target_channel = availableChannels[index];
-				index -= (index % 4);
-				primary_seg_start_ch = availableChannels[index];
-
-				/* reset channels associate with primary 80Mhz */
-				for (i = 0; i < 4; i++)
-					availableChannels[i + index] = 0;
-				/*
-				 * select and calculate center frequency for
-				 * secondary segement
-				 */
-				for (i = 0; i < available_ch_cnt / 4; i++) {
-					if (availableChannels[i * 4] &&
-					    (abs(primary_seg_start_ch -
-						 availableChannels[i * 4]) >
-						(SIR_DFS_MAX_20M_SUB_CH * 2))) {
-
-						sec_seg_ch =
-						  availableChannels[i * 4] +
-						SIR_80MHZ_START_CENTER_CH_DIFF;
-
-						break;
-					}
-				}
-				if (!sec_seg_ch &&
-					(available_ch_cnt ==
-						SIR_DFS_MAX_20M_SUB_CH))
-					ch_width = CH_WIDTH_160MHZ;
-				else if (!sec_seg_ch)
-					ch_width = CH_WIDTH_80MHZ;
-
-				pMac->sap.SapDfsInfo.new_ch_params.center_freq_seg1
-						= sec_seg_ch;
-				pMac->sap.SapDfsInfo.new_chanWidth = ch_width;
-
-				QDF_TRACE(QDF_MODULE_ID_SAP,
-					QDF_TRACE_LEVEL_INFO_LOW,
-					FL("sapdfs: New Channel width = %d"),
-					pMac->sap.SapDfsInfo.new_chanWidth);
-				QDF_TRACE(QDF_MODULE_ID_SAP,
-					QDF_TRACE_LEVEL_INFO_LOW,
-					FL("sapdfs: New Center Freq Seg1 = %d"),
-					sec_seg_ch);
-				QDF_TRACE(QDF_MODULE_ID_SAP,
-					QDF_TRACE_LEVEL_INFO_LOW,
-					FL("sapdfs: target_channel = %d"),
-					target_channel);
-
-				qdf_mem_free(tmp_ch_lst);
-
-				return target_channel;
-			}
-			/*
-			 * by now, available channels list will be populated or
-			 * no channels are avaialbe
-			 */
-			if (available_ch_cnt) {
-				for (i = 0; i < available_ch_cnt; i++) {
-					if (CDS_IS_DFS_CH(availableChannels[i])) {
-						avail_dfs_chan_list[
-							avail_dfs_chan_count++] =
-								availableChannels[i];
-					} else {
-						avail_non_dfs_chan_list[
-							avail_non_dfs_chan_count++] =
-								availableChannels[i];
-					}
-				}
-			} else {
-				QDF_TRACE(QDF_MODULE_ID_SAP,
-						QDF_TRACE_LEVEL_INFO_LOW,
-						FL("No target channel found"));
-			}
-
-			cds_rand_get_bytes(0, (uint8_t *)&random_byte, 1);
-
-			/* Give preference to non-DFS channel */
-			if (!pMac->f_prefer_non_dfs_on_radar) {
-				i = (random_byte + qdf_mc_timer_get_system_ticks()) %
-					available_ch_cnt;
-				target_channel = availableChannels[i];
-			} else if (avail_non_dfs_chan_count) {
-				i = (random_byte + qdf_mc_timer_get_system_ticks()) %
-					avail_non_dfs_chan_count;
-				target_channel = avail_non_dfs_chan_list[i];
-			} else {
-				i = (random_byte + qdf_mc_timer_get_system_ticks()) %
-					avail_dfs_chan_count;
-				target_channel = avail_dfs_chan_list[i];
-			}
-		}
-		pMac->sap.SapDfsInfo.new_chanWidth = ch_width;
-		QDF_TRACE(QDF_MODULE_ID_SAP,
-				QDF_TRACE_LEVEL_INFO_LOW,
-				FL("sapdfs: New Channel width = %d"),
-				pMac->sap.SapDfsInfo.new_chanWidth);
-		QDF_TRACE(QDF_MODULE_ID_SAP,
-				QDF_TRACE_LEVEL_INFO_LOW,
-				FL("sapdfs: target_channel = %d"),
-				target_channel);
-		break;
-	/* this loop will iterate at max 3 times */
-	} while (1);
-	qdf_mem_free(tmp_ch_lst);
+	qdf_mem_free(rule_adjusted_lst);
+	qdf_mem_free(leakage_adjusted_lst);
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_LOW,
+		FL("sapdfs: New Channel width = %d"),
+		mac_ctx->sap.SapDfsInfo.new_chanWidth);
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_LOW,
+		FL("sapdfs: target_channel = %d"),
+		target_channel);
 	return target_channel;
 }
 
@@ -3329,7 +3349,7 @@ static QDF_STATUS sap_fsm_state_ch_select(ptSapContext sap_ctx,
 		temp_chan = sap_ctx->channel;
 		p_nol = mac_ctx->sap.SapDfsInfo.sapDfsChannelNolList;
 
-		sap_mark_channels_leaking_into_nol(sap_ctx,
+		sap_mark_leaking_ch(sap_ctx,
 			cbmode, p_nol, 1, &temp_chan);
 
 		/*
