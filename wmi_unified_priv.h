@@ -641,4 +641,15 @@ struct wmi_unified {
 };
 struct wmi_ops *wmi_get_tlv_ops(void);
 struct wmi_ops *wmi_get_non_tlv_ops(void);
+
+/**
+ * wmi_align() - provides word aligned parameter
+ * @param: parameter to be aligned
+ *
+ * Return: word aligned parameter
+ */
+static inline uint32_t wmi_align(uint32_t param)
+{
+	return roundup(param, sizeof(uint32_t));
+}
 #endif
