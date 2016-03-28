@@ -1215,11 +1215,17 @@ QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 	int32_t len;
 	uint8_t *buf_ptr;
 	int ret;
+	uint32_t peer_legacy_rates_align;
+	uint32_t peer_ht_rates_align;
+
+
+	peer_legacy_rates_align = wmi_align(param->peer_legacy_rates.num_rates);
+	peer_ht_rates_align = wmi_align(param->peer_ht_rates.num_rates);
 
 	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE +
-	      (param->num_peer_legacy_rates * sizeof(uint8_t)) +
+	      (peer_legacy_rates_align * sizeof(uint8_t)) +
 	      WMI_TLV_HDR_SIZE +
-	      (param->num_peer_ht_rates * sizeof(uint8_t)) +
+	      (peer_ht_rates_align * sizeof(uint8_t)) +
 	      sizeof(wmi_vht_rate_set);
 
 	buf = wmi_buf_alloc(wmi_handle, len);
@@ -1234,7 +1240,10 @@ QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_TAG_STRUC_wmi_peer_assoc_complete_cmd_fixed_param,
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_peer_assoc_complete_cmd_fixed_param));
+
 	cmd->vdev_id = param->vdev_id;
+	qdf_mem_copy(&cmd->peer_macaddr, &param->peer_macaddr,
+				 sizeof(param->peer_macaddr));
 	cmd->peer_new_assoc = param->peer_new_assoc;
 	cmd->peer_associd = param->peer_associd;
 	cmd->peer_flags = param->peer_flags;
@@ -1244,31 +1253,29 @@ QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->peer_ht_caps = param->peer_ht_caps;
 	cmd->peer_max_mpdu = param->peer_max_mpdu;
 	cmd->peer_mpdu_density = param->peer_mpdu_density;
-	cmd->num_peer_legacy_rates = param->num_peer_legacy_rates;
-	cmd->num_peer_ht_rates = param->num_peer_ht_rates;
 	cmd->peer_vht_caps = param->peer_vht_caps;
 	cmd->peer_phymode = param->peer_phymode;
 
 	/* Update peer legacy rate information */
 	buf_ptr += sizeof(*cmd);
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
-				   param->num_peer_legacy_rates);
+				peer_legacy_rates_align);
 	buf_ptr += WMI_TLV_HDR_SIZE;
-	cmd->num_peer_legacy_rates = param->num_peer_legacy_rates;
+	cmd->num_peer_legacy_rates = param->peer_legacy_rates.num_rates;
 	qdf_mem_copy(buf_ptr, param->peer_legacy_rates.rates,
 		     param->peer_legacy_rates.num_rates);
 
 	/* Update peer HT rate information */
-	buf_ptr += param->num_peer_legacy_rates;
+	buf_ptr += param->peer_legacy_rates.num_rates;
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
-			  param->num_peer_ht_rates);
+			  peer_ht_rates_align);
 	buf_ptr += WMI_TLV_HDR_SIZE;
-	cmd->num_peer_ht_rates = param->num_peer_ht_rates;
+	cmd->num_peer_ht_rates = param->peer_ht_rates.num_rates;
 	qdf_mem_copy(buf_ptr, param->peer_ht_rates.rates,
 				 param->peer_ht_rates.num_rates);
 
 	/* VHT Rates */
-	buf_ptr += param->num_peer_ht_rates;
+	buf_ptr += param->peer_ht_rates.num_rates;
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_STRUC_wmi_vht_rate_set,
 		       WMITLV_GET_STRUCT_TLVLEN(wmi_vht_rate_set));
 
