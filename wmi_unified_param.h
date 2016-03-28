@@ -851,7 +851,7 @@ struct wmi_gtx_config {
  * @ucProxyProbeReqValidIEBmap: valid IE bitmap
  */
 struct wmi_probe_resp_params {
-	uint8_t  bssId[WMI_ETH_LEN];
+	uint8_t  bssId[IEEE80211_ADDR_LEN];
 	uint8_t *pProbeRespTemplate;
 	uint32_t probeRespTemplateLen;
 	uint32_t ucProxyProbeReqValidIEBmap[8];
@@ -1623,7 +1623,7 @@ struct delts_req_info {
 struct del_ts_params {
 	uint16_t staIdx;
 	uint16_t tspecIdx;
-	uint8_t bssId[WMI_ETH_LEN];
+	uint8_t bssId[IEEE80211_ADDR_LEN];
 	uint8_t sessionId;
 	uint8_t userPrio;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
@@ -1950,7 +1950,7 @@ struct tdls_peer_cap_params {
  */
 struct tdls_peer_state_params {
 	uint32_t vdevId;
-	uint8_t peerMacAddr[WMI_ETH_LEN];
+	uint8_t peerMacAddr[IEEE80211_ADDR_LEN];
 	uint32_t peerState;
 	struct tdls_peer_cap_params peerCap;
 };
@@ -2003,7 +2003,7 @@ struct wmi_tdls_params {
  */
 struct tdls_channel_switch_params {
 	uint32_t    vdev_id;
-	uint8_t     peer_mac_addr[WMI_ETH_LEN];
+	uint8_t     peer_mac_addr[IEEE80211_ADDR_LEN];
 	uint16_t    tdls_off_ch_bw_offset;
 	uint8_t     tdls_off_ch;
 	uint8_t     tdls_sw_mode;
