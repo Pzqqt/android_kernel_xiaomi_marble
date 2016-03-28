@@ -391,8 +391,6 @@ struct beacon_params {
  * @peer_ht_info: peer HT info
  * @peer_legacy_rates: peer legacy rates
  * @peer_ht_rates: peer ht rates
- * @num_peer_legacy_rates: no of peer legacy rates
- * @num_peer_ht_rates: no of peer ht rates
  * @rx_max_rate: max rx rates
  * @rx_mcs_set: rx mcs
  * @tx_max_rate: max tx rates
@@ -417,8 +415,6 @@ struct peer_assoc_params {
 	uint32_t peer_ht_info[2];
 	wmi_rate_set peer_legacy_rates;
 	wmi_rate_set peer_ht_rates;
-	uint32_t num_peer_legacy_rates;
-	uint32_t num_peer_ht_rates;
 	uint32_t rx_max_rate;
 	uint32_t rx_mcs_set;
 	uint32_t tx_max_rate;
