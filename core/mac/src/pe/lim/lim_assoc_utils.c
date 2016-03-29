@@ -1782,8 +1782,8 @@ lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 
 		psessionEntry->supported_nss_1x1 =
 			((pRates->supportedMCSSet[1] != 0) ? false : true);
-		PELOG1(lim_log(pMac, LOG1, FL("HT supported nss 1x1: %d"),
-			      psessionEntry->supported_nss_1x1);)
+		lim_log(pMac, LOG1, FL("HT supported nss 1x1: %d"),
+			psessionEntry->supported_nss_1x1);
 	}
 	lim_populate_vht_mcs_set(pMac, pRates, pVHTCaps, psessionEntry);
 	return eSIR_SUCCESS;

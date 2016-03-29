@@ -787,7 +787,7 @@ populate_dot11f_ht_caps(tpAniSirGlobal pMac,
 	/* If STA mode, session supported NSS > 1 and
 	 * SMPS enabled publish HT SMPS IE
 	 */
-	if (psessionEntry && (!pMac->lteCoexAntShare) &&
+	if (psessionEntry &&
 	    LIM_IS_STA_ROLE(psessionEntry) &&
 	    (psessionEntry->enableHtSmps) &&
 	    (!psessionEntry->supported_nss_1x1)) {
