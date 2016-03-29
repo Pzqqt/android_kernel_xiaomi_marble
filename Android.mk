@@ -48,7 +48,7 @@ ifeq ($(WLAN_PROPRIETARY),1)
 	KBUILD_OPTIONS += WLAN_COMMON_ROOT=../../../opensource/wlan/qca-wifi-host-cmn
 else
 	KBUILD_OPTIONS := WLAN_ROOT=../$(WLAN_BLD_DIR)/qcacld-3.0
-	KBUILD_OPTIONS += WLAN_COMMON_ROOT=../../opensource/wlan/qca-wifi-host-cmn
+	KBUILD_OPTIONS += WLAN_COMMON_ROOT=../../../opensource/wlan/qca-wifi-host-cmn
 endif # WLAN_PROPRIETARY
 KBUILD_OPTIONS += WLAN_COMMON_INC=../vendor/qcom/opensource/wlan/qca-wifi-host-cmn
 
