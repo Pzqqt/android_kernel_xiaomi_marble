@@ -185,17 +185,16 @@ struct vdev_start_params {
 	uint32_t dtim_period;
 	int32_t max_txpow;
 	bool is_restart;
+	bool is_half_rate;
+	bool is_quarter_rate;
+	uint32_t dis_hw_ack;
+	uint32_t flag_dfs;
+	uint8_t hidden_ssid;
+	uint8_t pmf_enabled;
 	struct mac_ssid ssid;
+	uint32_t num_noa_descriptors;
 	uint32_t preferred_rx_streams;
 	uint32_t preferred_tx_streams;
-	bool intr_update;
-	wmi_ssid *intr_ssid;
-	uint32_t *intr_flags;
-	uint32_t *requestor_id;
-	uint32_t *disable_hw_ack;
-	uint32_t *info;
-	uint32_t *reg_info_1;
-	uint32_t *reg_info_2;
 };
 
 /**
