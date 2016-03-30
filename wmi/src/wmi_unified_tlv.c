@@ -200,7 +200,7 @@ QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 	len = sizeof(*cmd) + sizeof(wmi_channel) + WMI_TLV_HDR_SIZE;
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
-		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
+		WMI_LOGE("%s : wmi_buf_alloc failed", __func__);
 		return QDF_STATUS_E_NOMEM;
 	}
 	buf_ptr = (uint8_t *) wmi_buf_data(buf);
@@ -216,13 +216,21 @@ QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 
 	/* Fill channel info */
 	chan->mhz = req->chan_freq;
+
 	WMI_SET_CHANNEL_MODE(chan, req->chan_mode);
+
 	chan->band_center_freq1 = req->band_center_freq1;
 	chan->band_center_freq2 = req->band_center_freq2;
-	WMI_SET_CHANNEL_FLAG(chan, req->flags);
 
-	if (req->is_dfs)
-		cmd->disable_hw_ack = true;
+	if (req->is_half_rate)
+		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_HALF_RATE);
+	else if (req->is_quarter_rate)
+		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_QUARTER_RATE);
+
+	if (req->is_dfs) {
+		WMI_SET_CHANNEL_FLAG(chan, req->flag_dfs);
+		cmd->disable_hw_ack = req->dis_hw_ack;
+	}
 
 	cmd->beacon_interval = req->beacon_intval;
 	cmd->dtim_period = req->dtim_period;
@@ -231,6 +239,9 @@ QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 	WMI_SET_CHANNEL_MAX_TX_POWER(chan, req->max_txpow);
 
 	if (!req->is_restart) {
+		cmd->beacon_interval = req->beacon_intval;
+		cmd->dtim_period = req->dtim_period;
+
 		/* Copy the SSID */
 		if (req->ssid.length) {
 			if (req->ssid.length < sizeof(cmd->ssid.ssid))
@@ -240,9 +251,15 @@ QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 			qdf_mem_copy(cmd->ssid.ssid, req->ssid.mac_ssid,
 				     cmd->ssid.ssid_len);
 		}
+
+		if (req->hidden_ssid)
+			cmd->flags |= WMI_UNIFIED_VDEV_START_HIDDEN_SSID;
+
+		if (req->pmf_enabled)
+			cmd->flags |= WMI_UNIFIED_VDEV_START_PMF_ENABLED;
 	}
 
-	cmd->num_noa_descriptors = 0;
+	cmd->num_noa_descriptors = req->num_noa_descriptors;
 	cmd->preferred_rx_streams = req->preferred_rx_streams;
 	cmd->preferred_tx_streams = req->preferred_tx_streams;
 
@@ -251,8 +268,7 @@ QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
 		       cmd->num_noa_descriptors *
 		       sizeof(wmi_p2p_noa_descriptor));
-
-	WMA_LOGA("\n%s: vdev_id %d freq %d chanmode %d is_dfs %d "
+	WMI_LOGA("\n%s: vdev_id %d freq %d chanmode %d is_dfs %d "
 		"beacon interval %d dtim %d center_chan %d center_freq2 %d "
 		"reg_info_1: 0x%x reg_info_2: 0x%x, req->max_txpow: 0x%x "
 		"Tx SS %d, Rx SS %d",
@@ -262,35 +278,20 @@ QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 		chan->reg_info_1, chan->reg_info_2, req->max_txpow,
 		req->preferred_tx_streams, req->preferred_rx_streams);
 
-	/* Store vdev params in SAP mode which can be used in vdev restart */
-	if (req->intr_update) {
-		req->intr_ssid->ssid_len = cmd->ssid.ssid_len;
-		qdf_mem_copy(req->intr_ssid->ssid,
-					cmd->ssid.ssid, cmd->ssid.ssid_len);
-		*req->intr_flags = cmd->flags;
-		*req->requestor_id = cmd->requestor_id;
-		*req->disable_hw_ack = cmd->disable_hw_ack;
-		*req->info = chan->info;
-		*req->reg_info_1 = chan->reg_info_1;
-		*req->reg_info_2 = chan->reg_info_2;
-	}
-
 	if (req->is_restart)
 		ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 					   WMI_VDEV_RESTART_REQUEST_CMDID);
-	 else
+	else
 		ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 					   WMI_VDEV_START_REQUEST_CMDID);
-
-	if (ret < 0) {
-		WMA_LOGP("%s: Failed to send vdev start command", __func__);
+	 if (ret) {
+		WMI_LOGP("%s: Failed to send vdev start command", __func__);
 		qdf_nbuf_free(buf);
 		return QDF_STATUS_E_FAILURE;
-	}
+	 }
 
 	return QDF_STATUS_SUCCESS;
 }
-
 
 /**
  * send_hidden_ssid_vdev_restart_cmd_tlv() - restart vdev to set hidden ssid
