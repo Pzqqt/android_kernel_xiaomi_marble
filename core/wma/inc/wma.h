@@ -800,6 +800,7 @@ typedef struct {
  * @vht_capable: VHT capablity flag
  * @ht_capable: HT capablity flag
  * @mhz: channel frequency in KHz
+ * @chan_width: channel bandwidth
  * @vdev_up: is vdev up or not
  * @tsfadjust: TSF adjust
  * @addBssStaContext: add bss context
@@ -863,6 +864,7 @@ struct wma_txrx_node {
 	uint8_t vht_capable;
 	uint8_t ht_capable;
 	A_UINT32 mhz;
+	enum phy_ch_width chan_width;
 	bool vdev_up;
 	uint64_t tsfadjust;
 	void *addBssStaContext;

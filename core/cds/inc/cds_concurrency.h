@@ -474,6 +474,7 @@ enum cds_band {
  *
  * @mode: connection type
  * @chan: channel of the connection
+ * @bw: channel bandwidth used for the connection
  * @mac: The HW mac it is running
  * @tx_spatial_stream: Tx spatial stream used by the connection
  * @rx_spatial_stream: Tx spatial stream used by the connection
@@ -484,6 +485,7 @@ enum cds_band {
 struct cds_conc_connection_info {
 	enum cds_con_mode mode;
 	uint8_t       chan;
+	enum hw_mode_bandwidth bw;
 	uint8_t       mac;
 	enum cds_chain_mode chain_mask;
 	uint8_t       tx_spatial_stream;
