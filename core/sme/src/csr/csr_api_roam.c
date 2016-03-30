@@ -8638,11 +8638,19 @@ static void csr_roam_roaming_state_reassoc_rsp_processor(tpAniSirGlobal pMac,
 		&pMac->roam.neighborRoamInfo[pSmeJoinRsp->sessionId];
 	tCsrRoamInfo roamInfo;
 	uint32_t roamId = 0;
+	tCsrRoamSession *csr_session;
 
 	if (eSIR_SME_SUCCESS == pSmeJoinRsp->statusCode) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  FL("CSR SmeReassocReq Successful"));
 		result = eCsrReassocSuccess;
+		csr_session = CSR_GET_SESSION(pMac, pSmeJoinRsp->sessionId);
+		if (NULL != csr_session) {
+			csr_session->supported_nss_1x1 =
+				pSmeJoinRsp->supported_nss_1x1;
+			sms_log(pMac, LOG1, FL("SME session supported nss: %d"),
+				csr_session->supported_nss_1x1);
+		}
 		/*
 		 * Since the neighbor roam algorithm uses reassoc req for
 		 * handoff instead of join, we need the response contents while

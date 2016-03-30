@@ -1399,7 +1399,7 @@ tSirRetStatus lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
 	}
 	rates->vhtTxHighestDataRate = (uint16_t) val;
 
-	if (peer_vht_caps == NULL)
+	if ((peer_vht_caps == NULL) || (!peer_vht_caps->present))
 		return eSIR_SUCCESS;
 
 	rates->vhtTxHighestDataRate =

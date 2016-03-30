@@ -1729,11 +1729,19 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		session->htSmpsvalue = sme_join_req->htSmps;
 		session->send_smps_action =
 			sme_join_req->send_smps_action;
+		/*
+		 * By default supported NSS 1x1 is set to true
+		 * and later on updated while determining session
+		 * supported rates which is the intersection of
+		 * self and peer rates
+		 */
+		session->supported_nss_1x1 = true;
 		lim_log(mac_ctx, LOG1,
-			FL("enable Smps: %d mode: %d send action: %d"),
+			FL("enable Smps: %d mode: %d send action: %d supported nss 1x1: %d"),
 			session->enableHtSmps,
 			session->htSmpsvalue,
-			session->send_smps_action);
+			session->send_smps_action,
+			session->supported_nss_1x1);
 
 		/*Store Persona */
 		session->pePersona = sme_join_req->staPersona;
@@ -2154,10 +2162,11 @@ static void __lim_process_sme_reassoc_req(tpAniSirGlobal mac_ctx,
 	session_entry->send_smps_action =
 		reassoc_req->send_smps_action;
 	lim_log(mac_ctx, LOG1,
-		FL("enableHtSmps: %d htSmps: %d send action: %d"),
+		FL("enableHtSmps: %d htSmps: %d send action: %d supported nss 1x1: %d"),
 		session_entry->enableHtSmps,
 		session_entry->htSmpsvalue,
-		session_entry->send_smps_action);
+		session_entry->send_smps_action,
+		session_entry->supported_nss_1x1);
 	/*
 	 * Reassociate request is expected
 	 * in link established state only.
