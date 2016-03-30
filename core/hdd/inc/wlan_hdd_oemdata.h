@@ -37,7 +37,7 @@
 #ifdef FEATURE_OEM_DATA_SUPPORT
 
 #ifndef OEM_DATA_REQ_SIZE
-#define OEM_DATA_REQ_SIZE 280
+#define OEM_DATA_REQ_SIZE 500
 #endif
 
 #ifndef OEM_DATA_RSP_SIZE
