@@ -61,6 +61,7 @@
 #define WMI_IPV4_ADDR_LEN       4
 #define WMI_KEEP_ALIVE_NULL_PKT              1
 #define WMI_KEEP_ALIVE_UNSOLICIT_ARP_RSP     2
+#define WMI_MAC_MAX_KEY_LENGTH          32
 #define WMI_KRK_KEY_LEN     16
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 #define WMI_BTK_KEY_LEN     32
@@ -854,6 +855,36 @@ struct wmi_probe_resp_params {
 	uint8_t *pProbeRespTemplate;
 	uint32_t probeRespTemplateLen;
 	uint32_t ucProxyProbeReqValidIEBmap[8];
+};
+
+/* struct set_key_params: structure containing
+ *                        installation key parameters
+ * @vdev_id: vdev id
+ * @key_len: key length
+ * @key_idx: key index
+ * @peer_mac: peer mac address
+ * @key_flags: key flags, 0:pairwise key, 1:group key, 2:static key
+ * @key_cipher: key cipher based on security mode
+ * @key_txmic_len: tx mic length
+ * @key_rxmic_len: rx mic length
+ * @rx_iv: receive IV, applicable only in case of WAPI
+ * @tx_iv: transmit IV, applicable only in case of WAPI
+ * @key_data: key data
+ */
+struct set_key_params {
+	uint8_t vdev_id;
+	uint16_t key_len;
+	uint32_t key_idx;
+	uint8_t peer_mac[IEEE80211_ADDR_LEN];
+	uint32_t key_flags;
+	uint32_t key_cipher;
+	uint32_t key_txmic_len;
+	uint32_t key_rxmic_len;
+#ifdef FEATURE_WLAN_WAPI
+	uint8_t rx_iv[16];
+	uint8_t tx_iv[16];
+#endif
+	uint8_t key_data[WMI_MAC_MAX_KEY_LENGTH];
 };
 
 /**

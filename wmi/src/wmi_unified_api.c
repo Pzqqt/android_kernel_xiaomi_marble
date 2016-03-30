@@ -1210,6 +1210,25 @@ QDF_STATUS wmi_unified_probe_rsp_tmpl_send_cmd(void *wmi_hdl,
 }
 
 /**
+ * wmi_unified_setup_install_key_cmd - send key to install to fw
+ * @wmi_hdl: wmi handle
+ * @key_params: key parameters
+ *
+ * Return: 0 for success or error code
+ */
+QDF_STATUS wmi_unified_setup_install_key_cmd(void *wmi_hdl,
+				struct set_key_params *key_params)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_setup_install_key_cmd)
+		return wmi_handle->ops->send_setup_install_key_cmd(wmi_handle,
+							key_params);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  * wmi_unified_p2p_go_set_beacon_ie_cmd() - set beacon IE for p2p go
  * @wma_handle: wma handle
  * @vdev_id: vdev id
