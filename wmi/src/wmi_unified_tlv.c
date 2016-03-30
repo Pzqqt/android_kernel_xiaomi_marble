@@ -9319,7 +9319,6 @@ QDF_STATUS send_enable_arp_ns_offload_cmd_tlv(wmi_unified_t wmi_handle,
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
 		WMI_LOGE("%s: wmi_buf_alloc failed", __func__);
-		qdf_mem_free(param);
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -9340,7 +9339,7 @@ QDF_STATUS send_enable_arp_ns_offload_cmd_tlv(wmi_unified_t wmi_handle,
 	 * both ARP and NS info in single cmd */
 	if (arp_only)
 		qdf_mem_copy(&wmi_handle->arp_info, param,
-			     sizeof(tSirHostOffloadReq));
+			sizeof(struct host_offload_req_param));
 
 	buf_ptr += sizeof(WMI_SET_ARP_NS_OFFLOAD_CMD_fixed_param);
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
@@ -9462,11 +9461,9 @@ QDF_STATUS send_enable_arp_ns_offload_cmd_tlv(wmi_unified_t wmi_handle,
 	if (res) {
 		WMI_LOGE("Failed to enable ARP NDP/NSffload");
 		wmi_buf_free(buf);
-		qdf_mem_free(param);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	qdf_mem_free(param);
 	return QDF_STATUS_SUCCESS;
 }
 
