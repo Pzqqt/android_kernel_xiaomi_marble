@@ -2942,7 +2942,7 @@ enum dot11p_mode {
 #define CFG_ENABLE_M2M_LIMITATION              "gEnableM2MLimitation"
 #define CFG_ENABLE_M2M_LIMITATION_MIN          (0)
 #define CFG_ENABLE_M2M_LIMITATION_MAX          (1)
-#define CFG_ENABLE_M2M_LIMITATION_DEFAULT      (1)
+#define CFG_ENABLE_M2M_LIMITATION_DEFAULT      (0)
 #endif /* QCA_WIFI_3_0_EMU */
 
 /*
