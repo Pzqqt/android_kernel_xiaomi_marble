@@ -129,7 +129,7 @@ typedef void (*ol_txrx_tx_flow_control_fp)(void *osif_dev,
  * @data_vdev - handle to the OSIF virtual device object
  * @msdu_list - list of network buffers
  */
-typedef int (*ol_txrx_rx_fp)(void *osif_dev, qdf_nbuf_t msdu_list);
+typedef QDF_STATUS (*ol_txrx_rx_fp)(void *osif_dev, qdf_nbuf_t msdu_list);
 
 /**
  * ol_txrx_rx_check_wai_fp - OSIF WAPI receive function
