@@ -7934,6 +7934,15 @@ enum cds_conc_next_action cds_get_pref_hw_mode_for_chan(uint32_t vdev_id,
 	uint32_t conn_index = 0;
 	bool found = false;
 	uint8_t old_band, new_band;
+#ifdef QCA_WIFI_3_0_EMU
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return CDS_NOP;
+	}
+#endif
 
 	while (CONC_CONNECTION_LIST_VALID_INDEX(conn_index)) {
 		if ((vdev_id == conc_connection_list[conn_index].vdev_id) &&
@@ -7969,6 +7978,14 @@ enum cds_conc_next_action cds_get_pref_hw_mode_for_chan(uint32_t vdev_id,
 
 	switch (num_connections) {
 	case 1:
+#ifdef QCA_WIFI_3_0_EMU
+		/* For M2M emulation only: if it is a connection on 2.4,
+		 * request DBS
+		 */
+		if (hdd_ctx->config->enable_m2m_limitation &&
+				CDS_IS_CHANNEL_24GHZ(target_channel))
+			return CDS_DBS_DOWNGRADE;
+#endif
 		/* The driver would already be in the required hw mode */
 		return CDS_NOP;
 	case 2:
