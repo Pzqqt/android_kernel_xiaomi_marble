@@ -1689,16 +1689,16 @@ ol_txrx_get_vdev_mac_addr(ol_txrx_vdev_handle vdev)
 }
 
 /**
- * ol_txrx_get_vdev_struct_mac_addr() - Return handle to struct cdf_mac_addr of
+ * ol_txrx_get_vdev_struct_mac_addr() - Return handle to struct qdf_mac_addr of
  * vdev
  * @vdev: vdev handle
  *
- * Return: Handle to struct cdf_mac_addr
+ * Return: Handle to struct qdf_mac_addr
  */
-struct cdf_mac_addr *
+struct qdf_mac_addr *
 ol_txrx_get_vdev_struct_mac_addr(ol_txrx_vdev_handle vdev)
 {
-	return (struct cdf_mac_addr *)&(vdev->mac_addr);
+	return (struct qdf_mac_addr *)&(vdev->mac_addr);
 }
 
 /**
@@ -1794,18 +1794,18 @@ ol_txrx_remove_peers_for_vdev(ol_txrx_vdev_handle vdev,
 {
 	ol_txrx_peer_handle peer, temp;
 	/* remove all remote peers for vdev */
-	cdf_spin_lock_bh(&vdev->pdev->peer_ref_mutex);
+	qdf_spin_lock_bh(&vdev->pdev->peer_ref_mutex);
 
 	temp = NULL;
 	TAILQ_FOREACH_REVERSE(peer, &vdev->peer_list, peer_list_t,
 			      peer_list_elem) {
 		if (temp) {
-			cdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
-			if (cdf_atomic_read(&temp->delete_in_progress) == 0) {
+			qdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
+			if (qdf_atomic_read(&temp->delete_in_progress) == 0) {
 				callback(callback_context, temp->mac_addr.raw,
 					vdev->vdev_id, temp, false);
 			}
-			cdf_spin_lock_bh(&vdev->pdev->peer_ref_mutex);
+			qdf_spin_lock_bh(&vdev->pdev->peer_ref_mutex);
 		}
 		/* self peer is deleted last */
 		if (peer == TAILQ_FIRST(&vdev->peer_list)) {
@@ -1824,7 +1824,7 @@ ol_txrx_remove_peers_for_vdev(ol_txrx_vdev_handle vdev,
 			 vdev->vdev_id, peer, false);
 	}
 
-	cdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
+	qdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
 }
 
 /**
@@ -1891,7 +1891,7 @@ ol_txrx_get_ocb_chan_info(ol_txrx_vdev_handle vdev)
  * @param data_peer - which peer has changed its state
  * @param state - the new state of the peer
  *
- * Return: CDF Status
+ * Return: QDF Status
  */
 QDF_STATUS ol_txrx_peer_state_update(struct ol_txrx_pdev_t *pdev,
 				     uint8_t *peer_mac,

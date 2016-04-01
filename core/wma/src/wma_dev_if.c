@@ -1236,7 +1236,7 @@ static void wma_recreate_ibss_vdev_and_bss_peer(tp_wma_handle wma,
 	struct add_sta_self_params add_sta_self_param;
 	struct del_sta_self_params del_sta_param;
 	QDF_STATUS status;
-	struct cdf_mac_addr *mac_addr;
+	struct qdf_mac_addr *mac_addr;
 	uint8_t *mac_addr_raw;
 
 	if (!wma) {
@@ -1258,7 +1258,7 @@ static void wma_recreate_ibss_vdev_and_bss_peer(tp_wma_handle wma,
 	}
 
 	qdf_copy_macaddr(
-		(struct cdf_mac_addr *) &(add_sta_self_param.self_mac_addr),
+		(struct qdf_mac_addr *) &(add_sta_self_param.self_mac_addr),
 		mac_addr);
 	add_sta_self_param.session_id = vdev_id;
 	add_sta_self_param.type = WMI_VDEV_TYPE_IBSS;
@@ -1268,7 +1268,7 @@ static void wma_recreate_ibss_vdev_and_bss_peer(tp_wma_handle wma,
 	/* delete old ibss vdev */
 	del_sta_param.session_id = vdev_id;
 	qdf_mem_copy((void *)del_sta_param.self_mac_addr,
-		     (void *)mac_addr, CDF_MAC_ADDR_SIZE);
+		     (void *)mac_addr, QDF_MAC_ADDR_SIZE);
 	wma_vdev_detach(wma, &del_sta_param, 0);
 
 	/* create new vdev for ibss */
@@ -2888,7 +2888,7 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	struct del_sta_self_params del_sta_param;
 	tSetBssKeyParams key_info;
 	struct sir_hw_mode_params hw_mode = {0};
-	struct cdf_mac_addr *mac_addr;
+	struct qdf_mac_addr *mac_addr;
 
 	vdev = wma_find_vdev_by_addr(wma, add_bss->selfMacAddr, &vdev_id);
 	if (!vdev) {
@@ -2924,7 +2924,7 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 
 		/* remove the non-ibss vdev */
 		qdf_copy_macaddr(
-			(struct cdf_mac_addr *) &(del_sta_param.self_mac_addr),
+			(struct qdf_mac_addr *) &(del_sta_param.self_mac_addr),
 			mac_addr);
 		del_sta_param.session_id = vdev_id;
 		del_sta_param.status = 0;

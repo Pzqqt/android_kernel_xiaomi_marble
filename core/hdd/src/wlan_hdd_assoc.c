@@ -1191,7 +1191,7 @@ QDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
 {
 	QDF_STATUS err;
 	uint8_t *peer_mac_addr;
-	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	ol_txrx_vdev_handle vdev;
 	ol_txrx_peer_handle peer;
 
