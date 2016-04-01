@@ -865,7 +865,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t len,
 		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Target is suspended", __func__);
 		QDF_ASSERT(0);
-		return -EBUSY;
+		return QDF_STATUS_E_BUSY;
 	}
 
 	/* Do sanity check on the TLV parameter structure */
@@ -877,7 +877,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t len,
 			QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
 			"\nERROR: %s: Invalid WMI Param Buffer for Cmd:%d",
 				__func__, cmd_id);
-			return -EINVAL;
+			return QDF_STATUS_E_INVAL;
 		}
 	}
 
@@ -885,7 +885,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t len,
 		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
 			 "%s, Failed to send cmd %x, no memory",
 			 __func__, cmd_id);
-		return -ENOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	WMI_SET_FIELD(qdf_nbuf_data(buf), WMI_CMD_HDR, COMMANDID, cmd_id);
@@ -900,7 +900,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t len,
 		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
 		    "%s: MAX 1024 WMI Pending cmds reached.", __func__);
 		QDF_BUG(0);
-		return -EBUSY;
+		return QDF_STATUS_E_BUSY;
 	}
 
 	pkt = qdf_mem_malloc(sizeof(*pkt));
@@ -909,7 +909,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t len,
 		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
 			 "%s, Failed to alloc htc packet %x, no memory",
 			 __func__, cmd_id);
-		return -ENOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	SET_HTC_PACKET_INFO_TX(pkt,
