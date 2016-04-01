@@ -1296,11 +1296,12 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 	bytes = sizeof(tSirMacMgmtHdr) + payload;
 
 	if (assoc_req != NULL) {
-		addn_ie_len = (pe_session->addIeParams.assocRespDataLen != 0);
+		addn_ie_len = pe_session->addIeParams.assocRespDataLen;
 
 		/* Nonzero length indicates Assoc rsp IE available */
-		if (addn_ie_len <= WNI_CFG_ASSOC_RSP_ADDNIE_DATA_LEN
-		    && (bytes + addn_ie_len) <= SIR_MAX_PACKET_SIZE) {
+		if (addn_ie_len > 0 &&
+		    addn_ie_len <= WNI_CFG_ASSOC_RSP_ADDNIE_DATA_LEN &&
+		    (bytes + addn_ie_len) <= SIR_MAX_PACKET_SIZE) {
 			qdf_mem_copy(add_ie,
 				pe_session->addIeParams.assocRespData_buff,
 				pe_session->addIeParams.assocRespDataLen);
