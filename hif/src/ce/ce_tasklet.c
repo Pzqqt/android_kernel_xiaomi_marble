@@ -204,7 +204,7 @@ static void ce_tasklet(unsigned long data)
 		CE_state->lro_flush_cb(CE_state->lro_data);
 	}
 
-	if (ce_check_rx_pending(scn, tasklet_entry->ce_id)) {
+	if (ce_check_rx_pending(CE_state)) {
 		/*
 		 * There are frames pending, schedule tasklet to process them.
 		 * Enable the interrupt only when there is no pending frames in

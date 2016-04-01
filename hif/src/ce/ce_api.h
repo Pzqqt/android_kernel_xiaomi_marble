@@ -472,7 +472,7 @@ static inline void ce_pkt_error_count_incr(
 		+= 1;
 }
 
-bool ce_check_rx_pending(struct hif_softc *scn, int ce_id);
+bool ce_check_rx_pending(struct CE_state *CE_state);
 #if defined(FEATURE_LRO)
 void ce_lro_flush_cb_register(struct hif_opaque_softc *scn,
 	 void (handler)(void *), void *data);

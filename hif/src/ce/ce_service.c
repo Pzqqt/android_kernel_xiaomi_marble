@@ -1982,14 +1982,13 @@ bool ce_get_rx_pending(struct hif_softc *scn)
 
 /**
  * ce_check_rx_pending() - ce_check_rx_pending
- * @scn: hif_softc
- * @ce_id: ce_id
+ * @CE_state: context of the copy engine to check
  *
- * Return: bool
+ * Return: true if there per_engine_service
+ *	didn't process all the rx descriptors.
  */
-bool ce_check_rx_pending(struct hif_softc *scn, int ce_id)
+bool ce_check_rx_pending(struct CE_state *CE_state)
 {
-	struct CE_state *CE_state = scn->ce_id_to_state[ce_id];
 	if (qdf_atomic_read(&CE_state->rx_pending))
 		return true;
 	else
