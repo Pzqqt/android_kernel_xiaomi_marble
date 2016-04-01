@@ -7446,7 +7446,7 @@ QDF_STATUS send_gtk_offload_cmd_tlv(wmi_unified_t wmi_handle, uint8_t vdev_id,
 	cmd->vdev_id = vdev_id;
 
 	/* Request target to enable GTK offload */
-	if (enable_offload) {
+	if (enable_offload == WMI_GTK_OFFLOAD_ENABLE) {
 		cmd->flags = gtk_offload_opcode;
 
 		/* Copy the keys and replay counter */
