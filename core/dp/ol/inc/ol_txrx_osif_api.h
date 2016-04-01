@@ -35,6 +35,7 @@
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include "cds_sched.h"
 #include "ol_txrx_ctrl_api.h"
+#include <cdp_txrx_peer_ops.h>
 
 /**
  * struct ol_rx_cached_buf - rx cached buffer

@@ -48,6 +48,7 @@
 #include <linux/ip.h>
 #include <wlan_hdd_softap_tx_rx.h>
 #include <ol_txrx_osif_api.h>
+#include <cdp_txrx_peer_ops.h>
 
 #include "cds_sched.h"
 

@@ -40,6 +40,7 @@
 #include "sch_api.h"
 #include "wma_api.h"
 #include "ol_txrx.h"
+#include <cdp_txrx_peer_ops.h>
 
 /* Structure definitions for WLAN_SET_DOT11P_CHANNEL_SCHED */
 #define AIFSN_MIN		(2)

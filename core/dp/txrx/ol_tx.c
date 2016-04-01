@@ -52,6 +52,7 @@
 #include <htc_api.h>    /* Layering violation, but required for fast path */
 #include <htt_internal.h>
 #include <htt_types.h>        /* htc_endpoint */
+#include <cdp_txrx_peer_ops.h>
 
 int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t *msdus,
 		 unsigned int num_msdus, unsigned int transfer_id);

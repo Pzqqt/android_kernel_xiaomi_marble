@@ -57,6 +57,7 @@
 #include "wlan_hdd_stats.h"
 #include "qdf_types.h"
 #include "qdf_trace.h"
+#include <cdp_txrx_peer_ops.h>
 
 #include <net/addrconf.h>
 #include <linux/wireless.h>

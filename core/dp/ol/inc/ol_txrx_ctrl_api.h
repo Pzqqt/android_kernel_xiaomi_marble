@@ -397,26 +397,6 @@ ol_txrx_peer_keyinstalled_state_update(ol_txrx_peer_handle data_peer,
 ol_txrx_peer_handle
 ol_txrx_peer_find_by_addr(ol_txrx_pdev_handle pdev, uint8_t *peer_mac_addr);
 
-/**
- * @brief Find a txrx peer handle from a peer's local ID
- * @details
- *  The control SW typically uses the txrx peer handle to refer to the peer.
- *  In unusual circumstances, if it is infeasible for the control SW maintain
- *  the txrx peer handle but it can maintain a small integer local peer ID,
- *  this function allows the peer handled to be retrieved, based on the local
- *  peer ID.
- *
- * @param pdev - the data physical device object
- * @param local_peer_id - the ID txrx assigned locally to the peer in question
- * @return handle to the txrx peer object
- */
-#if QCA_SUPPORT_TXRX_LOCAL_PEER_ID
-ol_txrx_peer_handle
-ol_txrx_peer_find_by_local_id(ol_txrx_pdev_handle pdev, uint8_t local_peer_id);
-#else
-#define ol_txrx_peer_find_by_local_id(pdev, local_peer_id) NULL
-#endif
-
 struct ol_txrx_peer_stats_t {
 	struct {
 		struct {
@@ -468,7 +448,6 @@ QDF_STATUS ol_txrx_get_vdevid(struct ol_txrx_peer_t *peer, uint8_t *vdev_id);
 
 void *ol_txrx_get_vdev_by_sta_id(uint8_t sta_id);
 
-
 #define OL_TXRX_INVALID_LOCAL_PEER_ID 0xffff
 
 #define OL_TXRX_RSSI_INVALID 0xffff
@@ -498,67 +477,6 @@ int16_t ol_txrx_peer_rssi(ol_txrx_peer_handle peer);
 #define ol_txrx_peer_rssi(peer) OL_TXRX_RSSI_INVALID
 #endif /* QCA_SUPPORT_PEER_DATA_RX_RSSI */
 
-#if QCA_SUPPORT_TXRX_LOCAL_PEER_ID
-#else
-#endif
-
-#ifdef QCA_COMPUTE_TX_DELAY
-/**
- * @brief updates the compute interval period for TSM stats.
- * @details
- * @param interval - interval for stats computation
- */
-void ol_tx_set_compute_interval(ol_txrx_pdev_handle pdev, uint32_t interval);
-
-/**
- * @brief Return the uplink (transmitted) packet count and loss count.
- * @details
- *  This function will be called for getting uplink packet count and
- *  loss count for given stream (access category) a regular interval.
- *  This also resets the counters hence, the value returned is packets
- *  counted in last 5(default) second interval. These counter are
- *  incremented per access category in ol_tx_completion_handler()
- *
- * @param category - access category of interest
- * @param out_packet_count - number of packets transmitted
- * @param out_packet_loss_count - number of packets lost
- */
-void
-ol_tx_packet_count(ol_txrx_pdev_handle pdev,
-		   uint16_t *out_packet_count,
-		   uint16_t *out_packet_loss_count, int category);
-#endif
-
-/**
- * @brief Return the average delays for tx frames.
- * @details
- *  Return the average of the total time tx frames spend within the driver
- *  and the average time tx frames take to be transmitted.
- *  These averages are computed over a 5 second time interval.
- *  These averages are computed separately for separate access categories,
- *  if the QCA_COMPUTE_TX_DELAY_PER_AC flag is set.
- *
- * @param pdev - the data physical device instance
- * @param queue_delay_microsec - average time tx frms spend in the WLAN driver
- * @param tx_delay_microsec - average time for frames to be transmitted
- * @param category - category (TID) of interest
- */
-#ifdef QCA_COMPUTE_TX_DELAY
-void
-ol_tx_delay(ol_txrx_pdev_handle pdev,
-	    uint32_t *queue_delay_microsec,
-	    uint32_t *tx_delay_microsec, int category);
-#else
-static inline void
-ol_tx_delay(ol_txrx_pdev_handle pdev,
-	    uint32_t *queue_delay_microsec,
-	    uint32_t *tx_delay_microsec, int category)
-{
-	/* no-op version if QCA_COMPUTE_TX_DELAY is not set */
-	*queue_delay_microsec = *tx_delay_microsec = 0;
-}
-#endif
-
 /*
  * Bins used for reporting delay histogram:
  * bin 0:  0 - 10  ms delay
@@ -569,77 +487,6 @@ ol_tx_delay(ol_txrx_pdev_handle pdev,
  * bin 5: > 160 ms delay
  */
 #define QCA_TX_DELAY_HIST_REPORT_BINS 6
-/**
- * @brief Provide a histogram of tx queuing delays.
- * @details
- *  Return a histogram showing the number of tx frames of the specified
- *  category for each of the delay levels in the histogram bin spacings
- *  listed above.
- *  These histograms are computed over a 5 second time interval.
- *  These histograms are computed separately for separate access categories,
- *  if the QCA_COMPUTE_TX_DELAY_PER_AC flag is set.
- *
- * @param pdev - the data physical device instance
- * @param bin_values - an array of QCA_TX_DELAY_HIST_REPORT_BINS elements
- *      This array gets filled in with the histogram bin counts.
- * @param category - category (TID) of interest
- */
-#ifdef QCA_COMPUTE_TX_DELAY
-void
-ol_tx_delay_hist(ol_txrx_pdev_handle pdev, uint16_t *bin_values, int category);
-#else
-static inline void
-ol_tx_delay_hist(ol_txrx_pdev_handle pdev, uint16_t *bin_values, int category)
-{
-	/* no-op version if QCA_COMPUTE_TX_DELAY is not set */
-	qdf_assert(bin_values);
-	qdf_mem_zero(bin_values,
-		     QCA_TX_DELAY_HIST_REPORT_BINS * sizeof(*bin_values));
-}
-#endif
-
-#if defined(QCA_SUPPORT_TX_THROTTLE)
-/**
- * @brief Set the thermal mitgation throttling level.
- * @details
- *  This function applies only to LL systems. This function is used set the
- *  tx throttle level used for thermal mitigation
- *
- * @param pdev - the physics device being throttled
- */
-void ol_tx_throttle_set_level(struct ol_txrx_pdev_t *pdev, int level);
-#else
-static inline void ol_tx_throttle_set_level(struct ol_txrx_pdev_t *pdev,
-					    int level)
-{
-	/* no-op */
-}
-#endif /* QCA_SUPPORT_TX_THROTTLE */
-
-#if defined(QCA_SUPPORT_TX_THROTTLE)
-/**
- * @brief Configure the thermal mitgation throttling period.
- * @details
- *  This function applies only to LL systems. This function is used set the
- *  period over which data will be throttled
- *
- * @param pdev - the physics device being throttled
- */
-void ol_tx_throttle_init_period(struct ol_txrx_pdev_t *pdev, int period);
-#else
-static inline void ol_tx_throttle_init_period(struct ol_txrx_pdev_t *pdev,
-					      int period)
-{
-	/* no-op */
-}
-#endif /* QCA_SUPPORT_TX_THROTTLE */
-
-void ol_txrx_display_stats(uint16_t bitmap);
-void ol_txrx_clear_stats(uint16_t bitmap);
-int ol_txrx_stats(uint8_t vdev_id, char *buffer, unsigned buf_len);
-
-QDF_STATUS ol_txrx_register_ocb_peer(void *cds_ctx, uint8_t *mac_addr,
-				     uint8_t *peer_id);
 
 void ol_txrx_set_ocb_peer(struct ol_txrx_pdev_t *pdev,
 			  struct ol_txrx_peer_t *peer);

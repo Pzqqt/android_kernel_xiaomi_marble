@@ -43,6 +43,8 @@
 #include <ol_txrx_htt_api.h>    /* htt_tx_status */
 
 #include <ol_ctrl_txrx_api.h>
+#include <cdp_txrx_tx_delay.h>
+#include <ol_txrx_types.h>      /* ol_txrx_vdev_t, etc */
 #include <ol_tx_desc.h>         /* ol_tx_desc_find, ol_tx_desc_frame_free */
 #ifdef QCA_COMPUTE_TX_DELAY
 #endif
@@ -651,12 +653,29 @@ ol_tx_inspect_handler(ol_txrx_pdev_handle pdev,
 }
 
 #ifdef QCA_COMPUTE_TX_DELAY
-
+/**
+ * @brief updates the compute interval period for TSM stats.
+ * @details
+ * @param interval - interval for stats computation
+ */
 void ol_tx_set_compute_interval(ol_txrx_pdev_handle pdev, uint32_t interval)
 {
 	pdev->tx_delay.avg_period_ticks = qdf_system_msecs_to_ticks(interval);
 }
 
+/**
+ * @brief Return the uplink (transmitted) packet count and loss count.
+ * @details
+ *  This function will be called for getting uplink packet count and
+ *  loss count for given stream (access category) a regular interval.
+ *  This also resets the counters hence, the value returned is packets
+ *  counted in last 5(default) second interval. These counter are
+ *  incremented per access category in ol_tx_completion_handler()
+ *
+ * @param category - access category of interest
+ * @param out_packet_count - number of packets transmitted
+ * @param out_packet_loss_count - number of packets lost
+ */
 void
 ol_tx_packet_count(ol_txrx_pdev_handle pdev,
 		   uint16_t *out_packet_count,

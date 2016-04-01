@@ -40,6 +40,7 @@
 #include <wlan_hdd_includes.h>
 #include <cds_api.h>
 #include <net/arp.h>
+#include <cdp_txrx_stats.h>
 #include "sir_params.h"
 #include "csr_api.h"
 #include "csr_inside_api.h"

@@ -40,6 +40,7 @@
 #include <linux/wireless.h>
 #include <linux/semaphore.h>
 #include <linux/compat.h>
+#include <cdp_txrx_stats.h>
 #include <cds_api.h>
 #include <cds_sched.h>
 #include <linux/etherdevice.h>

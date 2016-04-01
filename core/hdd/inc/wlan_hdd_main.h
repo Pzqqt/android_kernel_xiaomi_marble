@@ -66,6 +66,7 @@
 #include "ol_txrx_ctrl_api.h"
 #include <wlan_hdd_lro.h>
 #include "cdp_txrx_flow_ctrl_legacy.h"
+#include <cdp_txrx_peer_ops.h>
 
 /*---------------------------------------------------------------------------
    Preprocessor definitions and constants

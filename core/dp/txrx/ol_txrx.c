@@ -50,6 +50,9 @@
 #include <ol_txrx_api.h>
 #include <ol_txrx_dbg.h>
 #include <cdp_txrx_ocb.h>
+#include <ol_txrx_ctrl_api.h>
+#include <cdp_txrx_stats.h>
+#include <ol_txrx_osif_api.h>
 /* header files for our internal definitions */
 #include <ol_txrx_internal.h>   /* TXRX_ASSERT, etc. */
 #include <wdi_event.h>          /* WDI events */
@@ -67,6 +70,7 @@
 #include <cdp_txrx_flow_ctrl_legacy.h>
 #include <cdp_txrx_ipa.h>
 #include "wma.h"
+#include <cdp_txrx_peer_ops.h>
 #ifndef REMOVE_PKT_LOG
 #include "pktlog_ac.h"
 #endif
@@ -185,6 +189,19 @@ uint16_t ol_txrx_local_peer_id(ol_txrx_peer_handle peer)
 	return peer->local_id;
 }
 
+/**
+ * @brief Find a txrx peer handle from a peer's local ID
+ * @details
+ *  The control SW typically uses the txrx peer handle to refer to the peer.
+ *  In unusual circumstances, if it is infeasible for the control SW maintain
+ *  the txrx peer handle but it can maintain a small integer local peer ID,
+ *  this function allows the peer handled to be retrieved, based on the local
+ *  peer ID.
+ *
+ * @param pdev - the data physical device object
+ * @param local_peer_id - the ID txrx assigned locally to the peer in question
+ * @return handle to the txrx peer object
+ */
 ol_txrx_peer_handle
 ol_txrx_peer_find_by_local_id(struct ol_txrx_pdev_t *pdev,
 			      uint8_t local_peer_id)
@@ -1860,9 +1877,25 @@ ol_txrx_get_ocb_chan_info(ol_txrx_vdev_handle vdev)
 	return vdev->ocb_channel_info;
 }
 
-QDF_STATUS
-ol_txrx_peer_state_update(struct ol_txrx_pdev_t *pdev, uint8_t *peer_mac,
-			  enum ol_txrx_peer_state state)
+/**
+ * @brief specify the peer's authentication state
+ * @details
+ *  Specify the peer's authentication state (none, connected, authenticated)
+ *  to allow the data SW to determine whether to filter out invalid data frames.
+ *  (In the "connected" state, where security is enabled, but authentication
+ *  has not completed, tx and rx data frames other than EAPOL or WAPI should
+ *  be discarded.)
+ *  This function is only relevant for systems in which the tx and rx filtering
+ *  are done in the host rather than in the target.
+ *
+ * @param data_peer - which peer has changed its state
+ * @param state - the new state of the peer
+ *
+ * Return: CDF Status
+ */
+QDF_STATUS ol_txrx_peer_state_update(struct ol_txrx_pdev_t *pdev,
+				     uint8_t *peer_mac,
+				     enum ol_txrx_peer_state state)
 {
 	struct ol_txrx_peer_t *peer;
 
