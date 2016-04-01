@@ -5329,6 +5329,38 @@ QDF_STATUS send_pno_stop_cmd_tlv(wmi_unified_t wmi_handle, uint8_t vdev_id)
 }
 
 /**
+ * wmi_set_pno_channel_prediction() - Set PNO channel prediction
+ * @buf_ptr:      Buffer passed by upper layers
+ * @pno:          Buffer to be sent to the firmware
+ *
+ * Copy the PNO Channel prediction configuration parameters
+ * passed by the upper layers to a WMI format TLV and send it
+ * down to the firmware.
+ *
+ * Return: None
+ */
+static void wmi_set_pno_channel_prediction(uint8_t *buf_ptr,
+		struct pno_scan_req_params *pno)
+{
+	nlo_channel_prediction_cfg *channel_prediction_cfg =
+		(nlo_channel_prediction_cfg *) buf_ptr;
+	WMITLV_SET_HDR(&channel_prediction_cfg->tlv_header,
+			WMITLV_TAG_ARRAY_BYTE,
+			WMITLV_GET_STRUCT_TLVLEN(nlo_channel_prediction_cfg));
+	channel_prediction_cfg->enable = pno->pno_channel_prediction;
+	channel_prediction_cfg->top_k_num = pno->top_k_num_of_channels;
+	channel_prediction_cfg->stationary_threshold = pno->stationary_thresh;
+	channel_prediction_cfg->full_scan_period_ms =
+		pno->channel_prediction_full_scan;
+	buf_ptr += sizeof(nlo_channel_prediction_cfg);
+	WMI_LOGD("enable: %d, top_k_num: %d, stat_thresh: %d, full_scan: %d",
+			channel_prediction_cfg->enable,
+			channel_prediction_cfg->top_k_num,
+			channel_prediction_cfg->stationary_threshold,
+			channel_prediction_cfg->full_scan_period_ms);
+}
+
+/**
  * send_pno_start_cmd_tlv() - PNO start request
  * @wmi_handle: wmi handle
  * @pno: PNO request
@@ -5454,6 +5486,7 @@ QDF_STATUS send_pno_start_cmd_tlv(wmi_unified_t wmi_handle,
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
 			sizeof(nlo_channel_prediction_cfg));
 	buf_ptr += WMI_TLV_HDR_SIZE;
+	wmi_set_pno_channel_prediction(buf_ptr, pno);
 	buf_ptr += WMI_TLV_HDR_SIZE;
 	/** TODO: Discrete firmware doesn't have command/option to configure
 	 * App IE which comes from wpa_supplicant as of part PNO start request.
