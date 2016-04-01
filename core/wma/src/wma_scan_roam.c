@@ -44,6 +44,8 @@
 #include "wni_cfg.h"
 #include "cfg_api.h"
 #include "wlan_tgt_def_config.h"
+#include <cdp_txrx_peer_ops.h>
+#include <cdp_txrx_cfg.h>
 
 #include "qdf_nbuf.h"
 #include "qdf_types.h"
@@ -4911,10 +4913,10 @@ QDF_STATUS  wma_ipa_offload_enable_disable(tp_wma_handle wma,
 		struct sir_ipa_offload_enable_disable *ipa_offload)
 {
 	ol_txrx_vdev_handle vdev;
-	struct txrx_pdev_cfg_t *cfg;
 	int32_t intra_bss_fwd = 0;
 	struct ipa_offload_control_params params = {0};
 	QDF_STATUS status;
+	uint8_t rx_fwd_disabled;
 
 	if (!wma || !wma->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not issue  cmd",
@@ -4955,11 +4957,11 @@ QDF_STATUS  wma_ipa_offload_enable_disable(tp_wma_handle wma,
 		return QDF_STATUS_SUCCESS;
 
 	/* Disable Intra-BSS FWD offload when gDisableIntraBssFwd=1 in INI */
-	cfg = (struct txrx_pdev_cfg_t *)vdev->pdev->ctrl_pdev;
-	if (!ipa_offload->enable || cfg->rx_fwd_disabled) {
+	rx_fwd_disabled = ol_txrx_is_rx_fwd_disabled(vdev);
+	if (!ipa_offload->enable || rx_fwd_disabled) {
 		WMA_LOGE("%s: ipa_offload->enable=%d, rx_fwd_disabled=%d",
 				__func__,
-				ipa_offload->enable, cfg->rx_fwd_disabled);
+				ipa_offload->enable, rx_fwd_disabled);
 		intra_bss_fwd = 1;
 	}
 

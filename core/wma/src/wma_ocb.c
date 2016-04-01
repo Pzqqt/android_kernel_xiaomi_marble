@@ -34,6 +34,7 @@
 #include "wma_ocb.h"
 #include "wmi_unified_api.h"
 #include "cds_utils.h"
+#include <cdp_txrx_ocb.h>
 
 /**
  * wma_ocb_resp() - send the OCB set config response via callback
@@ -48,36 +49,40 @@ int wma_ocb_set_config_resp(tp_wma_handle wma_handle, uint8_t status)
 	struct sir_ocb_config *req = wma_handle->ocb_config_req;
 	ol_txrx_vdev_handle vdev = (req ?
 		wma_handle->interfaces[req->session_id].handle : NULL);
+	struct ol_txrx_ocb_set_chan ocb_set_chan;
 
 	/*
 	 * If the command was successful, save the channel information in the
 	 * vdev.
 	 */
 	if (status == QDF_STATUS_SUCCESS && vdev && req) {
-		if (vdev->ocb_channel_info)
-			qdf_mem_free(vdev->ocb_channel_info);
-		vdev->ocb_channel_count =
+		ocb_set_chan.ocb_channel_info = ol_txrx_get_ocb_chan_info(vdev);
+		if (ocb_set_chan.ocb_channel_info)
+			qdf_mem_free(ocb_set_chan.ocb_channel_info);
+		ocb_set_chan.ocb_channel_count =
 			req->channel_count;
 		if (req->channel_count) {
 			int i;
-			int buf_size = sizeof(*vdev->ocb_channel_info) *
+			int buf_size = sizeof(*ocb_set_chan.ocb_channel_info) *
 			    req->channel_count;
-			vdev->ocb_channel_info =
+			ocb_set_chan.ocb_channel_info =
 				qdf_mem_malloc(buf_size);
-			if (!vdev->ocb_channel_info)
+			if (!ocb_set_chan.ocb_channel_info)
 				return -ENOMEM;
-			qdf_mem_zero(vdev->ocb_channel_info, buf_size);
+			qdf_mem_zero(ocb_set_chan.ocb_channel_info, buf_size);
 			for (i = 0; i < req->channel_count; i++) {
-				vdev->ocb_channel_info[i].chan_freq =
+				ocb_set_chan.ocb_channel_info[i].chan_freq =
 					req->channels[i].chan_freq;
 				if (req->channels[i].flags &
 					OCB_CHANNEL_FLAG_DISABLE_RX_STATS_HDR)
-					vdev->ocb_channel_info[i].
+					ocb_set_chan.ocb_channel_info[i].
 					disable_rx_stats_hdr = 1;
 			}
 		} else {
-			vdev->ocb_channel_info = 0;
+			ocb_set_chan.ocb_channel_info = 0;
+			ocb_set_chan.ocb_channel_count = 0;
 		}
+		ol_txrx_set_ocb_chan_info(vdev, ocb_set_chan);
 	}
 
 	/* Free the configuration that was saved in wma_ocb_set_config. */

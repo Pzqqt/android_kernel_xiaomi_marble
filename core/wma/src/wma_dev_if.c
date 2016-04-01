@@ -69,6 +69,9 @@
 #include "wma_ocb.h"
 #include "cdp_txrx_cfg.h"
 #include "cdp_txrx_flow_ctrl_legacy.h"
+#include <cdp_txrx_peer_ops.h>
+#include <cdp_txrx_cfg.h>
+#include <cdp_txrx_cmn.h>
 
 /**
  * wma_find_vdev_by_addr() - find vdev_id from mac address
@@ -1018,6 +1021,7 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 	uint32_t peer_tid_bitmap = PEER_ALL_TID_BITMASK;
 	uint8_t *peer_addr = bssid;
 	struct peer_flush_params param = {0};
+	uint8_t *peer_mac_addr;
 
 	if (!wma->interfaces[vdev_id].peer_count) {
 		WMA_LOGE("%s: Can't remove peer with peer_addr %pM vdevid %d peer_count %d",
@@ -1027,6 +1031,14 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 	}
 	if (peer)
 		ol_txrx_peer_detach(peer);
+
+	peer_mac_addr = ol_txrx_peer_get_peer_mac_addr(peer);
+	if (peer_mac_addr == NULL) {
+		WMA_LOGE("%s: peer mac addr is NULL, Can't remove peer with peer_addr %pM vdevid %d peer_count %d",
+			 __func__, bssid, vdev_id,
+			 wma->interfaces[vdev_id].peer_count);
+		return;
+	}
 
 	wma->interfaces[vdev_id].peer_count--;
 	WMA_LOGE("%s: Removed peer with peer_addr %pM vdevid %d peer_count %d",
@@ -1040,10 +1052,10 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 	wmi_unified_peer_flush_tids_send(wma->wmi_handle, bssid,
 					 &param);
 
-	if ((peer) && (wma_is_vdev_in_ibss_mode(wma, vdev_id))) {
+	if (wma_is_vdev_in_ibss_mode(wma, vdev_id)) {
 		WMA_LOGD("%s: bssid %pM peer->mac_addr %pM", __func__,
-			 bssid, peer->mac_addr.raw);
-		peer_addr = peer->mac_addr.raw;
+			 bssid, peer_mac_addr);
+		peer_addr = peer_mac_addr;
 	}
 
 	wmi_unified_peer_delete_send(wma->wmi_handle, peer_addr, vdev_id);
@@ -1070,6 +1082,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, ol_txrx_pdev_handle pdev,
 {
 	ol_txrx_peer_handle peer;
 	struct peer_create_params param = {0};
+	uint8_t *mac_addr_raw;
 
 	if (++wma->interfaces[vdev_id].peer_count >
 	    wma->wlan_resource_config.num_peers) {
@@ -1101,10 +1114,15 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, ol_txrx_pdev_handle pdev,
 	WMA_LOGE("%s: Created peer with peer_addr %pM vdev_id %d, peer_count - %d",
 		__func__, peer_addr, vdev_id, wma->interfaces[vdev_id].peer_count);
 
+	mac_addr_raw = ol_txrx_get_vdev_mac_addr(vdev);
+	if (mac_addr_raw == NULL) {
+		WMA_LOGE("%s: peer mac addr is NULL", __func__);
+		return QDF_STATUS_E_FAULT;
+	}
+
 	/* for each remote ibss peer, clear its keys */
 	if (wma_is_vdev_in_ibss_mode(wma, vdev_id) &&
-	    qdf_mem_cmp(peer_addr, vdev->mac_addr.raw,
-				IEEE80211_ADDR_LEN)) {
+	    qdf_mem_cmp(peer_addr, mac_addr_raw, IEEE80211_ADDR_LEN)) {
 
 		tSetStaKeyParams key_info;
 		WMA_LOGD("%s: remote ibss peer %pM key clearing\n", __func__,
@@ -1141,7 +1159,6 @@ err:
 static void wma_delete_all_ibss_peers(tp_wma_handle wma, A_UINT32 vdev_id)
 {
 	ol_txrx_vdev_handle vdev;
-	ol_txrx_peer_handle peer, temp;
 
 	if (!wma || vdev_id > wma->max_bssid)
 		return;
@@ -1151,31 +1168,9 @@ static void wma_delete_all_ibss_peers(tp_wma_handle wma, A_UINT32 vdev_id)
 		return;
 
 	/* remove all remote peers of IBSS */
-	qdf_spin_lock_bh(&vdev->pdev->peer_ref_mutex);
-
-	temp = NULL;
-	TAILQ_FOREACH_REVERSE(peer, &vdev->peer_list, peer_list_t, peer_list_elem) {
-		if (temp) {
-			qdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
-			if (qdf_atomic_read(&temp->delete_in_progress) == 0) {
-				wma_remove_peer(wma, temp->mac_addr.raw,
-					vdev_id, temp, false);
-			}
-			qdf_spin_lock_bh(&vdev->pdev->peer_ref_mutex);
-		}
-		/* self peer is deleted last */
-		if (peer == TAILQ_FIRST(&vdev->peer_list)) {
-			WMA_LOGE("%s: self peer removed by caller ", __func__);
-			break;
-		} else
-			temp = peer;
-	}
-	qdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
-
-	/* remove IBSS bss peer last */
-	peer = TAILQ_FIRST(&vdev->peer_list);
-	wma_remove_peer(wma, wma->interfaces[vdev_id].bssid, vdev_id, peer,
-			false);
+	ol_txrx_remove_peers_for_vdev(vdev,
+			(ol_txrx_vdev_peer_remove_cb)wma_remove_peer, wma,
+			true);
 }
 #else
 /**
@@ -1210,7 +1205,6 @@ static void wma_delete_all_ibss_peers(tp_wma_handle wma, A_UINT32 vdev_id)
 static void wma_delete_all_ap_remote_peers(tp_wma_handle wma, A_UINT32 vdev_id)
 {
 	ol_txrx_vdev_handle vdev;
-	ol_txrx_peer_handle peer, temp;
 
 	if (!wma || vdev_id > wma->max_bssid)
 		return;
@@ -1221,28 +1215,8 @@ static void wma_delete_all_ap_remote_peers(tp_wma_handle wma, A_UINT32 vdev_id)
 
 	WMA_LOGE("%s: vdev_id - %d", __func__, vdev_id);
 	/* remove all remote peers of SAP */
-	qdf_spin_lock_bh(&vdev->pdev->peer_ref_mutex);
-
-	temp = NULL;
-	TAILQ_FOREACH_REVERSE(peer, &vdev->peer_list, peer_list_t,
-			      peer_list_elem) {
-		if (temp) {
-			qdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
-			if (qdf_atomic_read(&temp->delete_in_progress) == 0) {
-				wma_remove_peer(wma, temp->mac_addr.raw,
-						vdev_id, temp, false);
-			}
-			qdf_spin_lock_bh(&vdev->pdev->peer_ref_mutex);
-		}
-		/* self peer is deleted by caller */
-		if (peer == TAILQ_FIRST(&vdev->peer_list)) {
-			WMA_LOGE("%s: self peer removed by caller ", __func__);
-			break;
-		} else
-			temp = peer;
-	}
-
-	qdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
+	ol_txrx_remove_peers_for_vdev(vdev,
+		(ol_txrx_vdev_peer_remove_cb)wma_remove_peer, wma, false);
 }
 
 #ifdef QCA_IBSS_SUPPORT
@@ -1258,9 +1232,12 @@ static void wma_recreate_ibss_vdev_and_bss_peer(tp_wma_handle wma,
 						uint8_t vdev_id)
 {
 	ol_txrx_vdev_handle vdev;
+	ol_txrx_pdev_handle pdev;
 	struct add_sta_self_params add_sta_self_param;
 	struct del_sta_self_params del_sta_param;
 	QDF_STATUS status;
+	struct cdf_mac_addr *mac_addr;
+	uint8_t *mac_addr_raw;
 
 	if (!wma) {
 		WMA_LOGE("%s: Null wma handle", __func__);
@@ -1273,9 +1250,16 @@ static void wma_recreate_ibss_vdev_and_bss_peer(tp_wma_handle wma,
 		return;
 	}
 
+	mac_addr = ol_txrx_get_vdev_struct_mac_addr(vdev);
+	if (mac_addr == NULL) {
+		WMA_LOGE("%s: mac_addr is NULL for vdev with id %d", __func__,
+			 vdev_id);
+		return;
+	}
+
 	qdf_copy_macaddr(
-		(struct qdf_mac_addr *) &(add_sta_self_param.self_mac_addr),
-		(struct qdf_mac_addr *) &(vdev->mac_addr));
+		(struct cdf_mac_addr *) &(add_sta_self_param.self_mac_addr),
+		mac_addr);
 	add_sta_self_param.session_id = vdev_id;
 	add_sta_self_param.type = WMI_VDEV_TYPE_IBSS;
 	add_sta_self_param.sub_type = 0;
@@ -1284,7 +1268,7 @@ static void wma_recreate_ibss_vdev_and_bss_peer(tp_wma_handle wma,
 	/* delete old ibss vdev */
 	del_sta_param.session_id = vdev_id;
 	qdf_mem_copy((void *)del_sta_param.self_mac_addr,
-		     (void *)&(vdev->mac_addr), QDF_MAC_ADDR_SIZE);
+		     (void *)mac_addr, CDF_MAC_ADDR_SIZE);
 	wma_vdev_detach(wma, &del_sta_param, 0);
 
 	/* create new vdev for ibss */
@@ -1294,19 +1278,22 @@ static void wma_recreate_ibss_vdev_and_bss_peer(tp_wma_handle wma,
 		return;
 	}
 
+	mac_addr_raw = ol_txrx_get_vdev_mac_addr(vdev);
 	/* Register with TxRx Module for Data Ack Complete Cb */
 	ol_txrx_data_tx_cb_set(vdev, wma_data_tx_ack_comp_hdlr, wma);
 	WMA_LOGA("new IBSS vdev created with mac %pM",
 		 add_sta_self_param.self_mac_addr);
 
+	pdev = ol_txrx_get_pdev_from_vdev(vdev);
+
 	/* create ibss bss peer */
-	status = wma_create_peer(wma, vdev->pdev, vdev, vdev->mac_addr.raw,
+	status = wma_create_peer(wma, pdev, vdev, mac_addr_raw,
 				 WMI_PEER_TYPE_DEFAULT, vdev_id, false);
 	if (status != QDF_STATUS_SUCCESS)
 		WMA_LOGE("%s: Failed to create IBSS bss peer", __func__);
 	else
 		WMA_LOGA("IBSS BSS peer created with mac %pM",
-			 vdev->mac_addr.raw);
+			 mac_addr_raw);
 }
 #else
 /**
@@ -2901,6 +2888,7 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	struct del_sta_self_params del_sta_param;
 	tSetBssKeyParams key_info;
 	struct sir_hw_mode_params hw_mode = {0};
+	struct cdf_mac_addr *mac_addr;
 
 	vdev = wma_find_vdev_by_addr(wma, add_bss->selfMacAddr, &vdev_id);
 	if (!vdev) {
@@ -2925,17 +2913,19 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 			 __func__, vdev_id);
 
 		/* remove peers on the existing non-ibss vdev */
-		TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
-			WMA_LOGE("%s: peer found for vdev id %d. deleting the peer",
-				__func__, vdev_id);
-			wma_remove_peer(wma, (uint8_t *) &vdev->mac_addr,
-					vdev_id, peer, false);
+		ol_txrx_remove_peers_for_vdev_no_lock(vdev,
+			(ol_txrx_vdev_peer_remove_cb)wma_remove_peer, wma);
+		mac_addr = ol_txrx_get_vdev_struct_mac_addr(vdev);
+		if (mac_addr == NULL) {
+			WMA_LOGE("%s: mac_addr is NULL for vdev with id %d",
+				 __func__, vdev_id);
+			goto send_fail_resp;
 		}
 
 		/* remove the non-ibss vdev */
 		qdf_copy_macaddr(
-			(struct qdf_mac_addr *) &(del_sta_param.self_mac_addr),
-			(struct qdf_mac_addr *) &(vdev->mac_addr));
+			(struct cdf_mac_addr *) &(del_sta_param.self_mac_addr),
+			mac_addr);
 		del_sta_param.session_id = vdev_id;
 		del_sta_param.status = 0;
 
@@ -3473,7 +3463,7 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 		goto send_rsp;
 	}
 
-	iface = &wma->interfaces[vdev->vdev_id];
+	iface = &wma->interfaces[add_sta->smesessionId];
 	peer = ol_txrx_find_peer_by_addr_and_vdev(pdev,
 						  vdev,
 						  add_sta->staMac, &peer_id);
@@ -3706,7 +3696,7 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 
 		qdf_mem_zero(peerStateParams, sizeof(*peerStateParams));
 		peerStateParams->peerState = WMI_TDLS_PEER_STATE_PEERING;
-		peerStateParams->vdevId = vdev->vdev_id;
+		peerStateParams->vdevId = add_sta->smesessionId;
 		qdf_mem_copy(&peerStateParams->peerMacAddr,
 			     &add_sta->staMac, sizeof(tSirMacAddr));
 		wma_update_tdls_peer_state(wma, peerStateParams);
@@ -3826,7 +3816,9 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 		status = QDF_STATUS_E_FAILURE;
 		goto out;
 	}
-	if (peer != NULL && peer->state == OL_TXRX_PEER_STATE_DISC) {
+
+	if (peer != NULL &&
+	    (ol_txrx_get_peer_state(peer) == OL_TXRX_PEER_STATE_DISC)) {
 		/*
 		 * This is the case for reassociation.
 		 * peer state update and peer_assoc is required since it
@@ -4014,8 +4006,9 @@ static void wma_delete_sta_req_ap_mode(tp_wma_handle wma,
 				       tpDeleteStaParams del_sta)
 {
 	ol_txrx_pdev_handle pdev;
-	struct ol_txrx_peer_t *peer;
+	ol_txrx_peer_handle peer;
 	struct wma_target_req *msg;
+	uint8_t *peer_mac_addr;
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
@@ -4032,8 +4025,9 @@ static void wma_delete_sta_req_ap_mode(tp_wma_handle wma,
 		del_sta->status = QDF_STATUS_E_FAILURE;
 		goto send_del_rsp;
 	}
+	peer_mac_addr = ol_txrx_peer_get_peer_mac_addr(peer);
 
-	wma_remove_peer(wma, peer->mac_addr.raw, del_sta->smesessionId, peer,
+	wma_remove_peer(wma, peer_mac_addr, del_sta->smesessionId, peer,
 			false);
 	del_sta->status = QDF_STATUS_SUCCESS;
 
@@ -4080,33 +4074,7 @@ send_del_rsp:
  */
 static void wma_del_tdls_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 {
-	ol_txrx_pdev_handle pdev;
-	ol_txrx_vdev_handle vdev;
-	struct ol_txrx_peer_t *peer;
 	tTdlsPeerStateParams *peerStateParams;
-
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-
-	if (NULL == pdev) {
-		WMA_LOGE("%s: Failed to find pdev", __func__);
-		del_sta->status = QDF_STATUS_E_FAILURE;
-		goto send_del_rsp;
-	}
-
-	vdev = wma_find_vdev_by_id(wma, del_sta->smesessionId);
-	if (!vdev) {
-		WMA_LOGE("%s: Failed to find vdev", __func__);
-		del_sta->status = QDF_STATUS_E_FAILURE;
-		goto send_del_rsp;
-	}
-
-	peer = ol_txrx_peer_find_by_local_id(pdev, del_sta->staIdx);
-	if (!peer) {
-		WMA_LOGE("%s: Failed to get peer handle using peer id %d",
-			 __func__, del_sta->staIdx);
-		del_sta->status = QDF_STATUS_E_FAILURE;
-		goto send_del_rsp;
-	}
 
 	peerStateParams = qdf_mem_malloc(sizeof(tTdlsPeerStateParams));
 	if (!peerStateParams) {
@@ -4118,7 +4086,7 @@ static void wma_del_tdls_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 
 	qdf_mem_zero(peerStateParams, sizeof(*peerStateParams));
 	peerStateParams->peerState = WMA_TDLS_PEER_STATE_TEARDOWN;
-	peerStateParams->vdevId = vdev->vdev_id;
+	peerStateParams->vdevId = del_sta->smesessionId;
 	qdf_mem_copy(&peerStateParams->peerMacAddr,
 		     &del_sta->staMac, sizeof(tSirMacAddr));
 
@@ -4322,9 +4290,9 @@ void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
 		wma->interfaces[params->smesessionId].psnr_req = NULL;
 	}
 
-	if (wlan_op_mode_ibss == txrx_vdev->opmode) {
+	if (wlan_op_mode_ibss == ol_txrx_get_opmode(txrx_vdev))
 		wma->ibss_started = 0;
-	}
+
 	if (wma_is_roam_synch_in_progress(wma, params->smesessionId)) {
 		roam_synch_in_progress = true;
 		WMA_LOGD("LFR3:%s: Setting vdev_up to FALSE for session %d",

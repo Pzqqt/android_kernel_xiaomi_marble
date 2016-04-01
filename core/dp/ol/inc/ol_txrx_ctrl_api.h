@@ -40,6 +40,7 @@
 #include <ol_txrx_api.h>        /* ol_sec_type */
 #include <wlan_defs.h>          /* MAX_SPATIAL_STREAM */
 #include <cdp_txrx_cmn.h>       /* ol_pdev_handle, ol_vdev_handle, etc */
+#include <cdp_txrx_cfg.h>
 
 #define OL_ATH_TX_DRAIN_WAIT_DELAY 50
 

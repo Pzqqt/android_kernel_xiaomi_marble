@@ -68,6 +68,8 @@
 #include "cdp_txrx_flow_ctrl_legacy.h"
 #include "cdp_txrx_cmn.h"
 #include "cdp_txrx_misc.h"
+#include <cdp_txrx_peer_ops.h>
+#include <cdp_txrx_cfg.h>
 
 typedef struct {
 	int32_t rate;
@@ -964,7 +966,7 @@ int wma_peer_state_change_event_handler(void *handle,
 		return -EINVAL;
 	}
 
-	if (vdev->opmode == wlan_op_mode_sta
+	if (ol_txrx_get_opmode(vdev) == wlan_op_mode_sta
 	    && event->state == WMI_PEER_STATE_AUTHORIZED) {
 		/*
 		 * set event so that hdd
@@ -976,7 +978,7 @@ int wma_peer_state_change_event_handler(void *handle,
 				 __func__);
 			return -EINVAL;
 		}
-		wma_handle->peer_authorized_cb(vdev->vdev_id);
+		wma_handle->peer_authorized_cb(event->vdev_id);
 #endif
 	}
 
@@ -2227,6 +2229,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	uint8_t proto_type = 0;
 #endif /* QCA_PKT_PROTO_TRACE */
 	struct wmi_mgmt_params mgmt_param = {0};
+	ol_pdev_handle ctrl_pdev;
 
 	if (NULL == wma_handle) {
 		WMA_LOGE("wma_handle is NULL");
@@ -2457,8 +2460,12 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	is_high_latency =
-		ol_cfg_is_high_latency(txrx_vdev->pdev->ctrl_pdev);
+	ctrl_pdev = ol_txrx_get_ctrl_pdev_from_vdev(txrx_vdev);
+	if (ctrl_pdev == NULL) {
+		WMA_LOGE("ol_pdev_handle is NULL\n");
+		return QDF_STATUS_E_FAILURE;
+	}
+	is_high_latency = ol_cfg_is_high_latency(ctrl_pdev);
 
 	downld_comp_required = tx_frm_download_comp_cb && is_high_latency;
 

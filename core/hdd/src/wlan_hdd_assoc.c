@@ -1189,9 +1189,11 @@ QDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
 				 enum ol_txrx_peer_state sta_state,
 				 bool roam_synch_in_progress)
 {
-	struct ol_txrx_peer_t *peer;
 	QDF_STATUS err;
-	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	uint8_t *peer_mac_addr;
+	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	ol_txrx_vdev_handle vdev;
+	ol_txrx_peer_handle peer;
 
 	if (!pdev) {
 		hdd_err("Failed to get txrx context");
@@ -1207,8 +1209,13 @@ QDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
 	if (!peer)
 		return QDF_STATUS_E_FAULT;
 
-	err = ol_txrx_peer_state_update(pdev,
-			(u_int8_t *) peer->mac_addr.raw, sta_state);
+	peer_mac_addr = ol_txrx_peer_get_peer_mac_addr(peer);
+	if (peer_mac_addr == NULL) {
+		hddLog(LOGE, "peer mac addr is NULL");
+		return QDF_STATUS_E_FAULT;
+	}
+
+	err = ol_txrx_peer_state_update(pdev, peer_mac_addr, sta_state);
 	if (err != QDF_STATUS_SUCCESS) {
 		hddLog(LOGE, "peer state update failed");
 		return QDF_STATUS_E_FAULT;
@@ -1224,7 +1231,7 @@ QDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
 		INIT_COMPLETION(pAdapter->sta_authorized_event);
 #endif
 
-		err = sme_set_peer_authorized(peer->mac_addr.raw,
+		err = sme_set_peer_authorized(peer_mac_addr,
 				hdd_set_peer_authorized_event,
 				pAdapter->sessionId);
 		if (err != QDF_STATUS_SUCCESS) {
@@ -1245,8 +1252,9 @@ QDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
 				hddLog(LOG1, "%s: timeout waiting for sta_authorized_event",
 					__func__);
 			}
-			ol_txrx_vdev_unpause(peer->vdev,
-				OL_TXQ_PAUSE_REASON_PEER_UNAUTHORIZED);
+			vdev = ol_txrx_get_vdev_for_peer(peer);
+			ol_txrx_vdev_unpause(vdev,
+					OL_TXQ_PAUSE_REASON_PEER_UNAUTHORIZED);
 #endif
 		}
 	}

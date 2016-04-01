@@ -60,6 +60,8 @@
  */
 #define MAX_NUM_PEER_ID_PER_PEER 8
 
+#define OL_TXRX_INVALID_NUM_PEERS (-1)
+
 #define OL_TXRX_MAC_ADDR_LEN 6
 
 /* OL_TXRX_NUM_EXT_TIDS -

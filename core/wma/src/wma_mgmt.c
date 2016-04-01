@@ -67,6 +67,11 @@
 #include "wma_internal.h"
 #include "cds_concurrency.h"
 #include "cdp_txrx_flow_ctrl_legacy.h"
+#include <cdp_txrx_peer_ops.h>
+#include <cdp_txrx_pmf.h>
+#include <cdp_txrx_cfg.h>
+#include <cdp_txrx_cmn.h>
+#include <cdp_txrx_misc.h>
 
 /**
  * wma_send_bcn_buf_ll() - prepare and send beacon buffer to fw for LL
@@ -1455,7 +1460,9 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint32_t i;
 	uint32_t def_key_idx = 0;
+	uint32_t wlan_opmode;
 	ol_txrx_vdev_handle txrx_vdev;
+	uint8_t *mac_addr;
 
 	WMA_LOGD("BSS key setup");
 	txrx_vdev = wma_find_vdev_by_id(wma_handle, key_info->smesessionId);
@@ -1464,13 +1471,14 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 		key_info->status = QDF_STATUS_E_FAILURE;
 		goto out;
 	}
+	wlan_opmode = ol_txrx_get_opmode(txrx_vdev);
 
 	/*
 	 * For IBSS, WMI expects the BSS key to be set per peer key
 	 * So cache the BSS key in the wma_handle and re-use it when the
 	 * STA key is been setup for a peer
 	 */
-	if (wlan_op_mode_ibss == txrx_vdev->opmode) {
+	if (wlan_op_mode_ibss == wlan_opmode) {
 		key_info->status = QDF_STATUS_SUCCESS;
 		if (wma_handle->ibss_started > 0)
 			goto out;
@@ -1484,16 +1492,22 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 	key_params.key_type = key_info->encType;
 	key_params.singl_tid_rc = key_info->singleTidRc;
 	key_params.unicast = false;
-	if (txrx_vdev->opmode == wlan_op_mode_sta) {
+	if (wlan_opmode == wlan_op_mode_sta) {
 		qdf_mem_copy(key_params.peer_mac,
 			wma_handle->interfaces[key_info->smesessionId].bssid,
 			IEEE80211_ADDR_LEN);
 	} else {
+		mac_addr = ol_txrx_get_vdev_mac_addr(txrx_vdev);
+		if (mac_addr == NULL) {
+			WMA_LOGE("%s: mac_addr is NULL for vdev with id %d",
+				 __func__, key_info->smesessionId);
+			goto out;
+		}
 		/* vdev mac address will be passed for all other modes */
-		qdf_mem_copy(key_params.peer_mac, txrx_vdev->mac_addr.raw,
+		qdf_mem_copy(key_params.peer_mac, mac_addr,
 			     IEEE80211_ADDR_LEN);
 		WMA_LOGA("BSS Key setup with vdev_mac %pM\n",
-			 txrx_vdev->mac_addr.raw);
+			 mac_addr);
 	}
 
 	if (key_info->numKeys == 0 &&
@@ -1530,7 +1544,7 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 			 key_info->key[i].keyLength);
 
 		status = wma_setup_install_key_cmd(wma_handle, &key_params,
-						txrx_vdev->opmode);
+						   wlan_opmode);
 		if (status == QDF_STATUS_E_NOMEM) {
 			WMA_LOGE("%s:Failed to setup install key buf",
 				 __func__);
@@ -1608,18 +1622,17 @@ void wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
 		return;
 	}
 
-	new_peer_num = vdev->ibss_peer_num + peer_num_delta;
-	if (new_peer_num > MAX_IBSS_PEERS || new_peer_num < 0) {
+	/* adjust peer numbers */
+	new_peer_num = ol_txrx_update_ibss_add_peer_num_of_vdev(vdev,
+								peer_num_delta);
+	if (OL_TXRX_INVALID_NUM_PEERS == new_peer_num) {
 		WMA_LOGE("new peer num %d out of valid boundary", new_peer_num);
 		return;
 	}
 
-	/* adjust peer numbers */
-	vdev->ibss_peer_num = new_peer_num;
-
 	/* reset timer value if all peers departed */
 	if (new_peer_num == 0) {
-		vdev->ibss_peer_heart_beat_timer = 0;
+		ol_txrx_set_ibss_vdev_heart_beat_timer(vdev, 0);
 		return;
 	}
 
@@ -1630,14 +1643,12 @@ void wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
 			 new_timer_value_sec, new_peer_num);
 		return;
 	}
-	if (new_timer_value_sec == vdev->ibss_peer_heart_beat_timer) {
+	if (new_timer_value_sec ==
+	    ol_txrx_set_ibss_vdev_heart_beat_timer(vdev, new_timer_value_sec)) {
 		WMA_LOGD("timer value %d stays same, no need to notify target",
 			 new_timer_value_sec);
 		return;
 	}
-
-	/* send new timer value to target */
-	vdev->ibss_peer_heart_beat_timer = new_timer_value_sec;
 
 	new_timer_value_ms = ((uint32_t) new_timer_value_sec) * 1000;
 
@@ -1671,6 +1682,7 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 	uint32_t i;
 	uint32_t def_key_idx = 0;
 	ol_txrx_vdev_handle txrx_vdev;
+	int opmode;
 
 	WMA_LOGD("BSS key setup for peer");
 	txrx_vdev = wma_find_vdev_by_id(wma_handle, key_info->smesessionId);
@@ -1681,11 +1693,13 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 	}
 
 	qdf_mem_set(&key_params, sizeof(key_params), 0);
+	opmode = ol_txrx_get_opmode(txrx_vdev);
+	qdf_mem_set(&key_params, sizeof(key_params), 0);
 	key_params.vdev_id = key_info->smesessionId;
 	key_params.key_type = key_info->encType;
 	key_params.singl_tid_rc = key_info->singleTidRc;
 	key_params.unicast = false;
-	ASSERT(wlan_op_mode_ibss == txrx_vdev->opmode);
+	ASSERT(wlan_op_mode_ibss == opmode);
 
 	qdf_mem_copy(key_params.peer_mac, peer_macaddr.bytes,
 			IEEE80211_ADDR_LEN);
@@ -1719,7 +1733,7 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 			 key_info->key[i].keyLength);
 
 		status = wma_setup_install_key_cmd(wma_handle, &key_params,
-						txrx_vdev->opmode);
+						   opmode);
 		if (status == QDF_STATUS_E_NOMEM) {
 			WMA_LOGE("%s:Failed to setup install key buf",
 				 __func__);
@@ -1747,10 +1761,11 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	ol_txrx_pdev_handle txrx_pdev;
 	ol_txrx_vdev_handle txrx_vdev;
-	struct ol_txrx_peer_t *peer;
+	ol_txrx_peer_handle peer;
 	uint8_t num_keys = 0, peer_id;
 	struct wma_set_key_params key_params;
 	uint32_t def_key_idx = 0;
+	int opmode;
 
 	WMA_LOGD("STA key setup");
 
@@ -1777,11 +1792,12 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 		key_info->status = QDF_STATUS_E_FAILURE;
 		goto out;
 	}
+	opmode = ol_txrx_get_opmode(txrx_vdev);
 
 	if (key_info->defWEPIdx == WMA_INVALID_KEY_IDX &&
 	    (key_info->encType == eSIR_ED_WEP40 ||
 	     key_info->encType == eSIR_ED_WEP104) &&
-	    txrx_vdev->opmode != wlan_op_mode_ap) {
+	    opmode != wlan_op_mode_ap) {
 		wma_read_cfg_wepkey(wma_handle, key_info->key,
 				    &def_key_idx, &num_keys);
 		key_info->defWEPIdx = def_key_idx;
@@ -1828,7 +1844,7 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 
 		key_params.key_len = key_info->key[i].keyLength;
 		status = wma_setup_install_key_cmd(wma_handle, &key_params,
-						txrx_vdev->opmode);
+						   opmode);
 		if (status == QDF_STATUS_E_NOMEM) {
 			WMA_LOGE("%s:Failed to setup install key buf",
 				 __func__);
@@ -1850,7 +1866,7 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 	/* In IBSS mode, set the BSS KEY for this peer
 	 * BSS key is supposed to be cache into wma_handle
 	 */
-	if (wlan_op_mode_ibss == txrx_vdev->opmode) {
+	if (wlan_op_mode_ibss == opmode) {
 		wma_set_ibsskey_helper(wma_handle, &wma_handle->ibsskey_info,
 				       key_info->peer_macaddr);
 	}
@@ -2691,9 +2707,7 @@ wma_is_ccmp_pn_replay_attack(void *cds_ctx, struct ieee80211_frame *wh,
 	}
 
 	new_pn = wma_extract_ccmp_pn(ccmp_ptr);
-	last_pn_valid = &peer->last_rmf_pn_valid;
-	last_pn = &peer->last_rmf_pn;
-	rmf_pn_replays = &peer->rmf_pn_replays;
+	ol_txrx_get_pn_info(peer, &last_pn_valid, &last_pn, &rmf_pn_replays);
 
 	if (*last_pn_valid) {
 		if (new_pn > *last_pn) {

@@ -5468,7 +5468,8 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 	uint32_t i;
 	ol_txrx_pdev_handle pdev;
 	uint8_t peer_id;
-	struct ol_txrx_peer_t *peer;
+	ol_txrx_peer_handle peer;
+	uint8_t *peer_mac_addr;
 	int ret = 0;
 	uint32_t *ch_mhz;
 
@@ -5521,12 +5522,13 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 			ret = -EIO;
 			goto end_tdls_peer_state;
 		}
+		peer_mac_addr = ol_txrx_peer_get_peer_mac_addr(peer);
 
 		WMA_LOGD("%s: calling wma_remove_peer for peer " MAC_ADDRESS_STR
 			 " vdevId: %d", __func__,
-			 MAC_ADDR_ARRAY(peer->mac_addr.raw),
+			 MAC_ADDR_ARRAY(peer_mac_addr),
 			 peerStateParams->vdevId);
-		wma_remove_peer(wma_handle, peer->mac_addr.raw,
+		wma_remove_peer(wma_handle, peer_mac_addr,
 				peerStateParams->vdevId, peer, false);
 	}
 

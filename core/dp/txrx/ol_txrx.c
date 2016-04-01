@@ -49,6 +49,7 @@
 /* header files for our own APIs */
 #include <ol_txrx_api.h>
 #include <ol_txrx_dbg.h>
+#include <cdp_txrx_ocb.h>
 /* header files for our internal definitions */
 #include <ol_txrx_internal.h>   /* TXRX_ASSERT, etc. */
 #include <wdi_event.h>          /* WDI events */
@@ -1584,6 +1585,279 @@ static A_STATUS ol_tx_filter_non_auth(struct ol_txrx_msdu_info_t *tx_msdu_info)
 static A_STATUS ol_tx_filter_pass_thru(struct ol_txrx_msdu_info_t *tx_msdu_info)
 {
 	return A_OK;
+}
+
+/**
+ * ol_txrx_peer_get_peer_mac_addr() - return mac_addr from peer handle.
+ * @peer: handle to peer
+ *
+ * returns mac addrs for module which do not know peer type
+ *
+ * Return: the mac_addr from peer
+ */
+uint8_t *
+ol_txrx_peer_get_peer_mac_addr(ol_txrx_peer_handle peer)
+{
+	if (!peer)
+		return NULL;
+
+	return peer->mac_addr.raw;
+}
+
+/**
+ * ol_txrx_get_pn_info() - Returns pn info from peer
+ * @peer: handle to peer
+ * @last_pn_valid: return last_rmf_pn_valid value from peer.
+ * @last_pn: return last_rmf_pn value from peer.
+ * @rmf_pn_replays: return rmf_pn_replays value from peer.
+ *
+ * Return: NONE
+ */
+void
+ol_txrx_get_pn_info(ol_txrx_peer_handle peer, uint8_t **last_pn_valid,
+		    uint64_t **last_pn, uint32_t **rmf_pn_replays)
+{
+	*last_pn_valid = &peer->last_rmf_pn_valid;
+	*last_pn = &peer->last_rmf_pn;
+	*rmf_pn_replays = &peer->rmf_pn_replays;
+}
+
+/**
+ * ol_txrx_get_opmode() - Return operation mode of vdev
+ * @vdev: vdev handle
+ *
+ * Return: operation mode.
+ */
+int ol_txrx_get_opmode(ol_txrx_vdev_handle vdev)
+{
+	return vdev->opmode;
+}
+
+/**
+ * ol_txrx_get_peer_state() - Return peer state of peer
+ * @peer: peer handle
+ *
+ * Return: return peer state
+ */
+int ol_txrx_get_peer_state(ol_txrx_peer_handle peer)
+{
+	return peer->state;
+}
+
+/**
+ * ol_txrx_get_vdev_for_peer() - Return vdev from peer handle
+ * @peer: peer handle
+ *
+ * Return: vdev handle from peer
+ */
+ol_txrx_vdev_handle
+ol_txrx_get_vdev_for_peer(ol_txrx_peer_handle peer)
+{
+	return peer->vdev;
+}
+
+/**
+ * ol_txrx_get_vdev_mac_addr() - Return mac addr of vdev
+ * @vdev: vdev handle
+ *
+ * Return: vdev mac address
+ */
+uint8_t *
+ol_txrx_get_vdev_mac_addr(ol_txrx_vdev_handle vdev)
+{
+	if (!vdev)
+		return NULL;
+
+	return vdev->mac_addr.raw;
+}
+
+/**
+ * ol_txrx_get_vdev_struct_mac_addr() - Return handle to struct cdf_mac_addr of
+ * vdev
+ * @vdev: vdev handle
+ *
+ * Return: Handle to struct cdf_mac_addr
+ */
+struct cdf_mac_addr *
+ol_txrx_get_vdev_struct_mac_addr(ol_txrx_vdev_handle vdev)
+{
+	return (struct cdf_mac_addr *)&(vdev->mac_addr);
+}
+
+/**
+ * ol_txrx_get_pdev_from_vdev() - Return handle to pdev of vdev
+ * @vdev: vdev handle
+ *
+ * Return: Handle to pdev
+ */
+ol_txrx_pdev_handle ol_txrx_get_pdev_from_vdev(ol_txrx_vdev_handle vdev)
+{
+	return vdev->pdev;
+}
+
+/**
+ * ol_txrx_get_ctrl_pdev_from_vdev() - Return control pdev of vdev
+ * @vdev: vdev handle
+ *
+ * Return: Handle to control pdev
+ */
+ol_pdev_handle
+ol_txrx_get_ctrl_pdev_from_vdev(ol_txrx_vdev_handle vdev)
+{
+	return vdev->pdev->ctrl_pdev;
+}
+
+/**
+ * ol_txrx_is_rx_fwd_disabled() - returns the rx_fwd_disabled status on vdev
+ * @vdev: vdev handle
+ *
+ * Return: Rx Fwd disabled status
+ */
+uint8_t
+ol_txrx_is_rx_fwd_disabled(ol_txrx_vdev_handle vdev)
+{
+	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)
+					vdev->pdev->ctrl_pdev;
+	return cfg->rx_fwd_disabled;
+}
+
+/**
+ * ol_txrx_update_ibss_add_peer_num_of_vdev() - update and return peer num
+ * @vdev: vdev handle
+ * @peer_num_delta: peer nums to be adjusted
+ *
+ * Return: -1 for failure or total peer nums after adjustment.
+ */
+int16_t
+ol_txrx_update_ibss_add_peer_num_of_vdev(ol_txrx_vdev_handle vdev,
+					 int16_t peer_num_delta)
+{
+	int16_t new_peer_num;
+
+	new_peer_num = vdev->ibss_peer_num + peer_num_delta;
+	if (new_peer_num > MAX_IBSS_PEERS || new_peer_num < 0)
+		return OL_TXRX_INVALID_NUM_PEERS;
+
+	vdev->ibss_peer_num = new_peer_num;
+
+	return new_peer_num;
+}
+
+/**
+ * ol_txrx_set_ibss_vdev_heart_beat_timer() - Update ibss vdev heart
+ * beat timer
+ * @vdev: vdev handle
+ * @timer_value_sec: new heart beat timer value
+ *
+ * Return: Old timer value set in vdev.
+ */
+uint16_t ol_txrx_set_ibss_vdev_heart_beat_timer(ol_txrx_vdev_handle vdev,
+						uint16_t timer_value_sec)
+{
+	uint16_t old_timer_value = vdev->ibss_peer_heart_beat_timer;
+
+	vdev->ibss_peer_heart_beat_timer = timer_value_sec;
+
+	return old_timer_value;
+}
+
+/**
+ * ol_txrx_remove_peers_for_vdev() - remove all vdev peers with lock held
+ * @vdev: vdev handle
+ * @callback: callback function to remove the peer.
+ * @callback_context: handle for callback function
+ * @remove_last_peer: Does it required to last peer.
+ *
+ * Return: NONE
+ */
+void
+ol_txrx_remove_peers_for_vdev(ol_txrx_vdev_handle vdev,
+			      ol_txrx_vdev_peer_remove_cb callback,
+			      void *callback_context, bool remove_last_peer)
+{
+	ol_txrx_peer_handle peer, temp;
+	/* remove all remote peers for vdev */
+	cdf_spin_lock_bh(&vdev->pdev->peer_ref_mutex);
+
+	temp = NULL;
+	TAILQ_FOREACH_REVERSE(peer, &vdev->peer_list, peer_list_t,
+			      peer_list_elem) {
+		if (temp) {
+			cdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
+			if (cdf_atomic_read(&temp->delete_in_progress) == 0) {
+				callback(callback_context, temp->mac_addr.raw,
+					vdev->vdev_id, temp, false);
+			}
+			cdf_spin_lock_bh(&vdev->pdev->peer_ref_mutex);
+		}
+		/* self peer is deleted last */
+		if (peer == TAILQ_FIRST(&vdev->peer_list)) {
+			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+				   "%s: self peer removed by caller ",
+				   __func__);
+			break;
+		} else
+			temp = peer;
+	}
+
+	if (remove_last_peer) {
+		/* remove IBSS bss peer last */
+		peer = TAILQ_FIRST(&vdev->peer_list);
+		callback(callback_context, (uint8_t *) &vdev->mac_addr,
+			 vdev->vdev_id, peer, false);
+	}
+
+	cdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
+}
+
+/**
+ * ol_txrx_remove_peers_for_vdev_no_lock() - remove vdev peers with no lock.
+ * @vdev: vdev handle
+ * @callback: callback function to remove the peer.
+ * @callback_context: handle for callback function
+ *
+ * Return: NONE
+ */
+void
+ol_txrx_remove_peers_for_vdev_no_lock(ol_txrx_vdev_handle vdev,
+			      ol_txrx_vdev_peer_remove_cb callback,
+			      void *callback_context)
+{
+	ol_txrx_peer_handle peer = NULL;
+
+	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			   "%s: peer found for vdev id %d. deleting the peer",
+			   __func__, vdev->vdev_id);
+		callback(callback_context, (uint8_t *)&vdev->mac_addr,
+				vdev->vdev_id, peer, false);
+	}
+}
+
+/**
+ * ol_txrx_set_ocb_chan_info() - set OCB channel info to vdev.
+ * @vdev: vdev handle
+ * @ocb_set_chan: OCB channel information to be set in vdev.
+ *
+ * Return: NONE
+ */
+void ol_txrx_set_ocb_chan_info(ol_txrx_vdev_handle vdev,
+			  struct ol_txrx_ocb_set_chan ocb_set_chan)
+{
+	vdev->ocb_channel_info = ocb_set_chan.ocb_channel_info;
+	vdev->ocb_channel_count = ocb_set_chan.ocb_channel_count;
+}
+
+/**
+ * ol_txrx_get_ocb_chan_info() - return handle to vdev ocb_channel_info
+ * @vdev: vdev handle
+ *
+ * Return: handle to struct ol_txrx_ocb_chan_info
+ */
+struct ol_txrx_ocb_chan_info *
+ol_txrx_get_ocb_chan_info(ol_txrx_vdev_handle vdev)
+{
+	return vdev->ocb_channel_info;
 }
 
 QDF_STATUS
