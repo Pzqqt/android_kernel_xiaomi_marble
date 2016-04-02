@@ -121,6 +121,7 @@
  * @type: Type
  * @age: Age
  * @tsf_delta: tsf delta from FW
+ * @beacon_tsf: original beacon TSF
  */
 typedef struct {
 	u8 element_id;
@@ -131,6 +132,7 @@ typedef struct {
 	u32 type;
 	u32 age;
 	u32 tsf_delta;
+	u64 beacon_tsf;
 } __attribute__ ((packed)) qcom_ie_age;
 #endif
 

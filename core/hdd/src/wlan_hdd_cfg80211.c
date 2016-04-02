@@ -7835,6 +7835,8 @@ wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 	qie_age->age =
 		qdf_mc_timer_get_system_ticks() - bss_desc->nReceivedTime;
 	qie_age->tsf_delta = bss_desc->tsf_delta;
+	memcpy(&qie_age->beacon_tsf, bss_desc->timeStamp,
+	       sizeof(qie_age->beacon_tsf));
 #endif
 
 	memcpy(mgmt->u.probe_resp.variable, ie, ie_length);
