@@ -64,6 +64,10 @@ enum hdd_tsf_capture_state {
 void wlan_hdd_tsf_init(struct hdd_context_s *hdd_ctx);
 int hdd_capture_tsf(struct hdd_adapter_s *adapter, uint32_t *buf, int len);
 int hdd_indicate_tsf(struct hdd_adapter_s *adapter, uint32_t *buf, int len);
+int wlan_hdd_cfg80211_handle_tsf_cmd(struct wiphy *wiphy,
+					struct wireless_dev *wdev,
+					const void *data,
+					int data_len);
 #else
 static inline void wlan_hdd_tsf_init(struct hdd_context_s *hdd_ctx)
 {
@@ -78,6 +82,14 @@ static inline int hdd_indicate_tsf(struct hdd_adapter_s *adapter, uint32_t *buf,
 
 static inline int
 hdd_capture_tsf(struct hdd_adapter_s *adapter, uint32_t *buf, int len)
+{
+	return -ENOTSUPP;
+}
+
+static inline int wlan_hdd_cfg80211_handle_tsf_cmd(struct wiphy *wiphy,
+					struct wireless_dev *wdev,
+					const void *data,
+					int data_len)
 {
 	return -ENOTSUPP;
 }

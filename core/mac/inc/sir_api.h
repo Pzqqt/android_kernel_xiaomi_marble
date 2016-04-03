@@ -5589,6 +5589,8 @@ struct sir_sme_ext_cng_chan_ind {
  * @vdev_id: vdev id
  * @tsf_low: low 32bits of tsf
  * @tsf_high: high 32bits of tsf
+ * @soc_timer_low: low 32bits of synced SOC timer value
+ * @soc_timer_high: high 32bits of synced SOC timer value
  *
  * driver use this struct to store the tsf info
  */
@@ -5596,6 +5598,8 @@ struct stsf {
 	uint32_t vdev_id;
 	uint32_t tsf_low;
 	uint32_t tsf_high;
+	uint32_t soc_timer_low;
+	uint32_t soc_timer_high;
 };
 
 /**

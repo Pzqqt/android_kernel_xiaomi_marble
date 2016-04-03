@@ -83,6 +83,7 @@
 #include "wlan_hdd_memdump.h"
 
 #include "wlan_hdd_ocb.h"
+#include "wlan_hdd_tsf.h"
 
 #include "wlan_hdd_subnet_detect.h"
 
@@ -1052,6 +1053,12 @@ static const struct nl80211_vendor_cmd_info wlan_hdd_cfg80211_vendor_events[] = 
 		.subcmd = QCA_NL80211_VENDOR_SUBCMD_WIFI_LOGGER_MEMORY_DUMP
 	},
 #endif /* WLAN_FEATURE_MEMDUMP */
+#ifdef WLAN_FEATURE_TSF
+	[QCA_NL80211_VENDOR_SUBCMD_TSF_INDEX] = {
+		.vendor_id = QCA_NL80211_VENDOR_ID,
+		.subcmd = QCA_NL80211_VENDOR_SUBCMD_TSF
+	},
+#endif
 	[QCA_NL80211_VENDOR_SUBCMD_SCAN_DONE_INDEX] = {
 		.vendor_id = QCA_NL80211_VENDOR_ID,
 		.subcmd = QCA_NL80211_VENDOR_SUBCMD_SCAN_DONE
@@ -5550,6 +5557,16 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 			WIPHY_VENDOR_CMD_NEED_RUNNING,
 		.doit = wlan_hdd_cfg80211_set_probable_oper_channel
 	},
+#ifdef WLAN_FEATURE_TSF
+	{
+		.info.vendor_id = QCA_NL80211_VENDOR_ID,
+		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_TSF,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+			WIPHY_VENDOR_CMD_NEED_NETDEV |
+			WIPHY_VENDOR_CMD_NEED_RUNNING,
+		.doit = wlan_hdd_cfg80211_handle_tsf_cmd
+	},
+#endif
 #ifdef FEATURE_WLAN_TDLS
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,

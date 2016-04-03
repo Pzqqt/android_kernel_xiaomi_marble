@@ -960,6 +960,7 @@ struct hdd_adapter_s {
 	uint32_t tsf_high;
 	/* TSF capture state */
 	enum hdd_tsf_capture_state tsf_state;
+	uint64_t tsf_sync_soc_timer;
 #endif
 
 	hdd_cfg80211_state_t cfg80211State;

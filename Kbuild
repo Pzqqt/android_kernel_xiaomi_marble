@@ -134,6 +134,9 @@ ifeq ($(KERNEL_BUILD), 0)
 	#Flag to enable offload packets feature
 	CONFIG_WLAN_OFFLOAD_PACKETS := y
 
+	#enable TSF get feature
+	CONFIG_WLAN_SYNC_TSF := y
+
 	#Flag to enable memdump feature
 	CONFIG_WLAN_FEATURE_MEMDUMP := y
 
