@@ -35,6 +35,7 @@
 #include "qdf_lock.h"
 #include "qdf_mc_timer.h"
 #include "qdf_module.h"
+#include <qdf_trace.h>
 
 #if defined(CONFIG_CNSS)
 #include <net/cnss.h>

@@ -215,7 +215,6 @@ typedef void (*qdf_timer_func_t)(void *);
 
 #define qdf_offsetof(type, field) offsetof(type, field)
 
-#ifdef CONFIG_MCL
 /**
  * typedef QDF_MODULE_ID - QDF Module IDs
  * @QDF_MODULE_ID_TLSHIM: TLSHIM module ID
@@ -273,6 +272,7 @@ typedef enum {
 	QDF_MODULE_ID_MAX
 } QDF_MODULE_ID;
 
+#ifdef CONFIG_MCL
 /**
  * enum tQDF_ADAPTER_MODE - Concurrency role.
  * @QDF_STA_MODE: STA mode
@@ -324,16 +324,13 @@ enum tQDF_GLOBAL_CON_MODE {
 
 #define qdf_print(args...) \
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR, ## args)
-#define qdf_vprint    __qdf_vprint
-#define qdf_snprint   __qdf_snprint
+
 #else
-
 #define qdf_print printk
-
 #endif /* CONFIG_MCL */
 
-
-
+#define qdf_vprint    __qdf_vprint
+#define qdf_snprint   __qdf_snprint
 
 #ifdef WLAN_OPEN_P2P_INTERFACE
 /* This should match with WLAN_MAX_INTERFACES */

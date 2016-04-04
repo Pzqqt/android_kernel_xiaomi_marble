@@ -70,7 +70,7 @@
 				printk("\n"); \
 			} \
 		} while (0)
-#define QDF_TRACE printk
+#define QDF_TRACE(x, y, args...) printk(args)
 
 #endif /* CONFIG_MCL */
 

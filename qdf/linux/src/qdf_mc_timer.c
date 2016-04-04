@@ -310,7 +310,7 @@ QDF_STATUS qdf_mc_timer_init(qdf_mc_timer_t *timer, QDF_TIMER_TYPE timer_type,
 	/* set the various members of the timer structure
 	 * with arguments passed or with default values
 	 */
-	spin_lock_init(&timer->platform_info.spinlock);
+	qdf_spinlock_create(&timer->platform_info.spinlock);
 	if (QDF_TIMER_TYPE_SW == timer_type)
 		init_timer_deferrable(&(timer->platform_info.timer));
 	else
@@ -454,7 +454,6 @@ EXPORT_SYMBOL(qdf_mc_timer_destroy);
 QDF_STATUS qdf_mc_timer_destroy(qdf_mc_timer_t *timer)
 {
 	QDF_STATUS v_status = QDF_STATUS_SUCCESS;
-	unsigned long flags;
 
 	/* check for invalid pointer */
 	if (NULL == timer) {
@@ -471,7 +470,7 @@ QDF_STATUS qdf_mc_timer_destroy(qdf_mc_timer_t *timer)
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_INVAL;
 	}
-	spin_lock_irqsave(&timer->platform_info.spinlock, flags);
+	qdf_spin_lock_irqsave(&timer->platform_info.spinlock);
 
 	switch (timer->state) {
 
@@ -501,11 +500,11 @@ QDF_STATUS qdf_mc_timer_destroy(qdf_mc_timer_t *timer)
 	if (QDF_STATUS_SUCCESS == v_status) {
 		timer->platform_info.cookie = LINUX_INVALID_TIMER_COOKIE;
 		timer->state = QDF_TIMER_STATE_UNUSED;
-		spin_unlock_irqrestore(&timer->platform_info.spinlock, flags);
+		qdf_spin_unlock_irqrestore(&timer->platform_info.spinlock);
 		return v_status;
 	}
 
-	spin_unlock_irqrestore(&timer->platform_info.spinlock, flags);
+	qdf_spin_unlock_irqrestore(&timer->platform_info.spinlock);
 
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: Cannot destroy timer in state = %d", __func__,
