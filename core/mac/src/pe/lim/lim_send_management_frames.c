@@ -2010,6 +2010,27 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 
 	sme_sessionid = session->smeSessionId;
 
+	if (wep_bit == LIM_WEP_IN_FC) {
+		/*
+		 * Auth frame3 to be sent with encrypted framebody
+		 *
+		 * Allocate buffer for Authenticaton frame of size
+		 * equal to management frame header length plus 2 bytes
+		 * each for auth algorithm number, transaction number,
+		 * status code, 128 bytes for challenge text and
+		 * 4 bytes each for IV & ICV.
+		 */
+		lim_log(mac_ctx, LOG1,
+			FL("Sending encrypted auth frame to " MAC_ADDRESS_STR
+			   "- wait_for_ack %d"), MAC_ADDR_ARRAY(peer_addr),
+			   wait_for_ack);
+
+		frame_len = sizeof(tSirMacMgmtHdr) + LIM_ENCR_AUTH_BODY_LEN;
+		body_len = LIM_ENCR_AUTH_BODY_LEN;
+
+		goto alloc_packet;
+	}
+
 	lim_log(mac_ctx, LOG1,
 		FL("Sending Auth seq# %d status %d (%d) wait_for_ack %d to "
 		MAC_ADDRESS_STR),
@@ -2084,35 +2105,18 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 		break;
 
 	case SIR_MAC_AUTH_FRAME_3:
-		if (wep_bit == LIM_WEP_IN_FC) {
-			/*
-			 * Auth frame3 to be sent with encrypted framebody
-			 *
-			 * Allocate buffer for Authenticaton frame of size
-			 * equal to management frame header length plus 2 bytes
-			 * each for auth algorithm number, transaction number,
-			 * status code, 128 bytes for challenge text and
-			 * 4 bytes each for IV & ICV.
-			 */
+		/*
+		 * Auth frame3 to be sent without encrypted framebody
+		 *
+		 * Allocate buffer for Authenticaton frame of size equal
+		 * to management frame header length plus 2 bytes each
+		 * for auth algorithm number, transaction number and
+		 * status code.
+		 */
 
-			frame_len = sizeof(tSirMacMgmtHdr) +
-					LIM_ENCR_AUTH_BODY_LEN;
-			body_len = LIM_ENCR_AUTH_BODY_LEN;
-		} else {
-
-			/*
-			 * Auth frame3 to be sent without encrypted framebody
-			 *
-			 * Allocate buffer for Authenticaton frame of size equal
-			 * to management frame header length plus 2 bytes each
-			 * for auth algorithm number, transaction number and
-			 * status code.
-			 */
-
-			frame_len = sizeof(tSirMacMgmtHdr) +
-				   SIR_MAC_AUTH_CHALLENGE_OFFSET;
-			body_len = SIR_MAC_AUTH_CHALLENGE_OFFSET;
-		}
+		frame_len = sizeof(tSirMacMgmtHdr) +
+			   SIR_MAC_AUTH_CHALLENGE_OFFSET;
+		body_len = SIR_MAC_AUTH_CHALLENGE_OFFSET;
 		break;
 
 	case SIR_MAC_AUTH_FRAME_4:
@@ -2128,8 +2132,12 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 		body_len = SIR_MAC_AUTH_CHALLENGE_OFFSET;
 
 		break;
+	default:
+		lim_log(mac_ctx, LOGE, FL("Invalid auth transaction seq num."));
+		return;
 	} /* switch (auth_frame->authTransactionSeqNumber) */
 
+alloc_packet:
 	qdf_status = cds_packet_alloc((uint16_t) frame_len, (void **)&frame,
 				 (void **)&packet);
 
@@ -2160,10 +2168,7 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 		qdf_mem_copy(body, (uint8_t *) auth_frame, body_len);
 
 		lim_log(mac_ctx, LOG1,
-			FL("*** Sending Auth seq# 3 status %d (%d) to"
-				MAC_ADDRESS_STR),
-			auth_frame->authStatusCode,
-			(auth_frame->authStatusCode == eSIR_MAC_SUCCESS_STATUS),
+			FL("Sending Auth seq# 3 to " MAC_ADDRESS_STR),
 			MAC_ADDR_ARRAY(mac_hdr->da));
 
 	} else {
