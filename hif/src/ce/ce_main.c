@@ -1974,7 +1974,7 @@ int hif_ce_fastpath_cb_register(fastpath_msg_handler handler, void *context)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	for (i = 0; i < CE_COUNT_MAX; i++) {
+	for (i = 0; i < scn->ce_count; i++) {
 		ce_state = scn->ce_id_to_state[i];
 		if (ce_state->htt_rx_data) {
 			ce_state->fastpath_handler = handler;
@@ -2175,7 +2175,7 @@ void ce_lro_flush_cb_register(struct hif_opaque_softc *hif_hdl,
 
 	QDF_ASSERT(scn != NULL);
 
-	for (i = 0; i < CE_COUNT_MAX; i++) {
+	for (i = 0; i < scn->ce_count; i++) {
 		ce_state = scn->ce_id_to_state[i];
 		if (ce_state->htt_rx_data) {
 			ce_state->lro_flush_cb = handler;
@@ -2201,7 +2201,7 @@ void ce_lro_flush_cb_deregister(struct hif_opaque_softc *hif_hdl)
 
 	QDF_ASSERT(scn != NULL);
 
-	for (i = 0; i < CE_COUNT_MAX; i++) {
+	for (i = 0; i < scn->ce_count; i++) {
 		ce_state = scn->ce_id_to_state[i];
 		if (ce_state->htt_rx_data) {
 			ce_state->lro_flush_cb = NULL;
@@ -2431,7 +2431,12 @@ int hif_dump_ce_registers(struct hif_softc *scn)
 	uint16_t i;
 	QDF_STATUS status;
 
-	for (i = 0; i < CE_COUNT_MAX; i++, ce_reg_address += CE_OFFSET) {
+	for (i = 0; i < scn->ce_count; i++, ce_reg_address += CE_OFFSET) {
+		if (scn->ce_id_to_state[i] == NULL) {
+			HIF_DBG("CE%d not used.", i);
+			continue;
+		}
+
 		status = hif_diag_read_mem(hif_hdl, ce_reg_address,
 					   (uint8_t *) &ce_reg_values[i][0],
 					   ce_reg_word_size * sizeof(uint32_t));

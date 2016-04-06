@@ -331,13 +331,14 @@ const char *ce_name[ICNSS_MAX_IRQ_REGISTRATIONS] = {
 QDF_STATUS ce_unregister_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 {
 	int id;
+	int ce_count = HIF_GET_SOFTC(hif_ce_state)->ce_count;
 	int ret;
 
 	if (hif_ce_state == NULL) {
 		HIF_WARN("%s: hif_ce_state = NULL", __func__);
 		return QDF_STATUS_SUCCESS;
 	}
-	for (id = 0; id < CE_COUNT_MAX; id++) {
+	for (id = 0; id < ce_count; id++) {
 		if ((mask & (1 << id)) && hif_ce_state->tasklets[id].inited) {
 			ret = icnss_ce_free_irq(id,
 					&hif_ce_state->tasklets[id]);
@@ -362,11 +363,12 @@ QDF_STATUS ce_unregister_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 QDF_STATUS ce_register_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 {
 	int id;
+	int ce_count = HIF_GET_SOFTC(hif_ce_state)->ce_count;
 	int ret;
 	unsigned long irqflags = IRQF_TRIGGER_RISING;
 	uint32_t done_mask = 0;
 
-	for (id = 0; id < CE_COUNT_MAX; id++) {
+	for (id = 0; id < ce_count; id++) {
 		if ((mask & (1 << id)) && hif_ce_state->tasklets[id].inited) {
 			ret = icnss_ce_request_irq(id,
 				hif_snoc_interrupt_handler,

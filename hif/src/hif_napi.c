@@ -94,7 +94,7 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 
 		NAPI_DEBUG("NAPI structures initialized");
 	}
-	for (i = 0; i < CE_COUNT_MAX; i++) {
+	for (i = 0; i < hif->ce_count; i++) {
 		ce_state = hif->ce_id_to_state[i];
 		NAPI_DEBUG("ce %d: htt_rx=%d htt_rx=%d",
 			   i, ce_state->htt_rx_data,
