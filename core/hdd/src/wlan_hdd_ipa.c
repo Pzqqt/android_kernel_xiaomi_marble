@@ -1743,19 +1743,11 @@ end:
  *
  * Return: none
  */
-#ifdef CONFIG_CNSS
-static void hdd_ipa_init_uc_op_work(struct work_struct *work,
-					work_func_t work_handler)
-{
-	cnss_init_work(work, work_handler);
-}
-#else
 static void hdd_ipa_init_uc_op_work(struct work_struct *work,
 					work_func_t work_handler)
 {
 	INIT_WORK(work, work_handler);
 }
-#endif
 
 
 /**
@@ -2353,19 +2345,11 @@ int hdd_ipa_set_perf_level(hdd_context_t *hdd_ctx, uint64_t tx_packets,
  *
  * Return: none
  */
-#ifdef CONFIG_CNSS
-static void  hdd_ipa_init_uc_rm_work(struct work_struct *work,
-					work_func_t work_handler)
-{
-	cnss_init_work(work, work_handler);
-}
-#else
 static void hdd_ipa_init_uc_rm_work(struct work_struct *work,
 					work_func_t work_handler)
 {
 	INIT_WORK(work, work_handler);
 }
-#endif
 
 /**
  * hdd_ipa_setup_rm() - Setup IPA resource management
@@ -2430,13 +2414,8 @@ static int hdd_ipa_setup_rm(struct hdd_ipa_priv *hdd_ipa)
 	}
 
 	qdf_wake_lock_create(&hdd_ipa->wake_lock, "wlan_ipa");
-#ifdef CONFIG_CNSS
-	cnss_init_delayed_work(&hdd_ipa->wake_lock_work,
-			       hdd_ipa_wake_lock_timer_func);
-#else
 	INIT_DELAYED_WORK(&hdd_ipa->wake_lock_work,
 			  hdd_ipa_wake_lock_timer_func);
-#endif
 	qdf_spinlock_create(&hdd_ipa->rm_lock);
 	hdd_ipa->rm_state = HDD_IPA_RM_RELEASED;
 	hdd_ipa->wake_lock_released = true;
@@ -4045,11 +4024,7 @@ QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
 		qdf_spinlock_create(&iface_context->interface_lock);
 	}
 
-#ifdef CONFIG_CNSS
-	cnss_init_work(&hdd_ipa->pm_work, hdd_ipa_pm_send_pkt_to_tl);
-#else
 	INIT_WORK(&hdd_ipa->pm_work, hdd_ipa_pm_send_pkt_to_tl);
-#endif
 	qdf_spinlock_create(&hdd_ipa->pm_lock);
 	qdf_nbuf_queue_init(&hdd_ipa->pm_queue_head);
 

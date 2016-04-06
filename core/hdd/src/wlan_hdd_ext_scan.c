@@ -772,9 +772,8 @@ wlan_hdd_cfg80211_extscan_full_scan_result_event(void *ctx,
 {
 	hdd_context_t *pHddCtx = (hdd_context_t *) ctx;
 	struct sk_buff *skb = NULL;
-#ifdef CONFIG_CNSS
 	struct timespec ts;
-#endif
+
 	int flags = cds_get_gfp_flags();
 
 	ENTER();
@@ -804,12 +803,12 @@ wlan_hdd_cfg80211_extscan_full_scan_result_event(void *ctx,
 	}
 
 	pData->ap.channel = cds_chan_to_freq(pData->ap.channel);
-#ifdef CONFIG_CNSS
+
 	/* Android does not want the time stamp from the frame.
 	   Instead it wants a monotonic increasing value since boot */
-	cnss_get_monotonic_boottime(&ts);
+	get_monotonic_boottime(&ts);
 	pData->ap.ts = ((u64)ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
-#endif
+
 	hddLog(LOG1, "Req Id %u More Data %u", pData->requestId,
 	       pData->moreData);
 	hddLog(LOG1, "AP Info: Timestamp %llu Ssid: %s "

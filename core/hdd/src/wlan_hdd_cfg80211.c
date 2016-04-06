@@ -42,9 +42,6 @@
 #include <net/arp.h>
 #include <net/cfg80211.h>
 #include <qdf_trace.h>
-#ifdef CONFIG_CNSS
-#include <net/cnss.h>
-#endif
 #include <wlan_hdd_wowl.h>
 #include <ani_global.h>
 #include "sir_params.h"
@@ -1791,13 +1788,8 @@ void wlan_hdd_cfg80211_acs_ch_select_evt(hdd_adapter_t *adapter)
 	con_sap_adapter = hdd_get_con_sap_adapter(adapter, false);
 	if (con_sap_adapter &&
 		test_bit(ACS_PENDING, &con_sap_adapter->event_flags)) {
-#ifdef CONFIG_CNSS
-		cnss_init_delayed_work(&con_sap_adapter->acs_pending_work,
-				      wlan_hdd_cfg80211_start_pending_acs);
-#else
 		INIT_DELAYED_WORK(&con_sap_adapter->acs_pending_work,
 				      wlan_hdd_cfg80211_start_pending_acs);
-#endif
 		/* Lets give 500ms for OBSS + START_BSS to complete */
 		schedule_delayed_work(&con_sap_adapter->acs_pending_work,
 							msecs_to_jiffies(500));
@@ -7826,9 +7818,7 @@ wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 	int rssi = 0;
 	hdd_context_t *pHddCtx;
 	int status;
-#ifdef CONFIG_CNSS
 	struct timespec ts;
-#endif
 	struct hdd_config *cfg_param;
 
 	ENTER();
@@ -7847,18 +7837,11 @@ wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 
 	memcpy(mgmt->bssid, bss_desc->bssId, ETH_ALEN);
 
-#ifdef CONFIG_CNSS
 	/* Android does not want the timestamp from the frame.
 	   Instead it wants a monotonic increasing value */
-	cnss_get_monotonic_boottime(&ts);
+	get_monotonic_boottime(&ts);
 	mgmt->u.probe_resp.timestamp =
 		((u64) ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
-#else
-	/* keep old behavior for non-open source (for now) */
-	memcpy(&mgmt->u.probe_resp.timestamp, bss_desc->timeStamp,
-	       sizeof(bss_desc->timeStamp));
-
-#endif
 
 	mgmt->u.probe_resp.beacon_int = bss_desc->beaconInterval;
 	mgmt->u.probe_resp.capab_info = bss_desc->capabilityInfo;

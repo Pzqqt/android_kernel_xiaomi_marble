@@ -1608,11 +1608,7 @@ QDF_STATUS cds_get_vdev_types(enum tQDF_ADAPTER_MODE mode, uint32_t *type,
  */
 void cds_flush_work(void *work)
 {
-#if defined (CONFIG_CNSS)
-	cnss_flush_work(work);
-#elif defined (WLAN_OPEN_SOURCE)
 	cancel_work_sync(work);
-#endif
 }
 
 /**
@@ -1623,11 +1619,7 @@ void cds_flush_work(void *work)
  */
 void cds_flush_delayed_work(void *dwork)
 {
-#if defined (CONFIG_CNSS)
-	cnss_flush_delayed_work(dwork);
-#elif defined (WLAN_OPEN_SOURCE)
 	cancel_delayed_work_sync(dwork);
-#endif
 }
 
 /**
@@ -1706,15 +1698,10 @@ void cds_trigger_recovery(void)
 
 uint64_t cds_get_monotonic_boottime(void)
 {
-#ifdef CONFIG_CNSS
 	struct timespec ts;
 
-	cnss_get_monotonic_boottime(&ts);
+	get_monotonic_boottime(&ts);
 	return ((uint64_t) ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
-#else
-	return ((uint64_t)qdf_system_ticks_to_msecs(qdf_system_ticks()) *
-			 1000);
-#endif
 }
 
 /**

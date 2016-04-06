@@ -2541,26 +2541,16 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 		 * Workqueue which gets scheduled in IPv4 notification
 		 * callback
 		 */
-#ifdef CONFIG_CNSS
-		cnss_init_work(&adapter->ipv4NotifierWorkQueue,
-			       hdd_ipv4_notifier_work_queue);
-#else
 		INIT_WORK(&adapter->ipv4NotifierWorkQueue,
 			  hdd_ipv4_notifier_work_queue);
-#endif
 
 #ifdef WLAN_NS_OFFLOAD
 		/*
 		 * Workqueue which gets scheduled in IPv6
 		 * notification callback.
 		 */
-#ifdef CONFIG_CNSS
-		cnss_init_work(&adapter->ipv6NotifierWorkQueue,
-			       hdd_ipv6_notifier_work_queue);
-#else
 		INIT_WORK(&adapter->ipv6NotifierWorkQueue,
 			  hdd_ipv6_notifier_work_queue);
-#endif
 #endif
 		status = hdd_register_interface(adapter, rtnl_held);
 		if (QDF_STATUS_SUCCESS != status) {

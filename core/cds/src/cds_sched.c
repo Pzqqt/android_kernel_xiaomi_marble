@@ -46,9 +46,6 @@
 #include <linux/spinlock.h>
 #include <linux/kthread.h>
 #include <linux/cpu.h>
-#if defined(QCA_CONFIG_SMP) && defined(CONFIG_CNSS)
-#include <net/cnss.h>
-#endif
 /* Preprocessor Definitions and Constants */
 #define CDS_SCHED_THREAD_HEART_BEAT    INFINITE
 /* Milli seconds to delay SSR thread when an Entry point is Active */
@@ -89,13 +86,7 @@ static QDF_STATUS cds_alloc_ol_rx_pkt_freeq(p_cds_sched_context pSchedContext);
 #define CDS_CORE_PER_CLUSTER (4)
 static int cds_set_cpus_allowed_ptr(struct task_struct *task, unsigned long cpu)
 {
-#ifdef WLAN_OPEN_SOURCE
 	return set_cpus_allowed_ptr(task, cpumask_of(cpu));
-#elif defined(CONFIG_CNSS)
-	return cnss_set_cpus_allowed_ptr(task, cpu);
-#else
-	return 0;
-#endif
 }
 
 /**

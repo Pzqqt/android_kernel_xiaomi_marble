@@ -247,12 +247,6 @@
  */
 #define WLAN_TFC_IPAUC_TX_DESC_RESERVE   100
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
-#ifdef CONFIG_CNSS
-#define cfg80211_vendor_cmd_reply(skb) cnss_vendor_cmd_reply(skb)
-#endif
-#endif
-
 /*
  * NET_NAME_UNKNOWN is only introduced after Kernel 3.17, to have a macro
  * here if the Kernel version is less than 3.17 to avoid the interleave

@@ -1882,12 +1882,7 @@ QDF_STATUS hdd_wmm_acquire_access(hdd_adapter_t *pAdapter,
 	pQosContext->magic = HDD_WMM_CTX_MAGIC;
 	pQosContext->is_inactivity_timer_running = false;
 
-#ifdef CONFIG_CNSS
-	cnss_init_work(&pQosContext->wmmAcSetupImplicitQos,
-		       hdd_wmm_do_implicit_qos);
-#else
 	INIT_WORK(&pQosContext->wmmAcSetupImplicitQos, hdd_wmm_do_implicit_qos);
-#endif
 
 	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: Scheduling work for AC %d, context %p",

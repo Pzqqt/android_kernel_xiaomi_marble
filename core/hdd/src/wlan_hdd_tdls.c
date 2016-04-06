@@ -750,19 +750,10 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 		pHddCtx->tdls_mode = eTDLS_SUPPORT_ENABLED;
 	}
 
-#ifdef CONFIG_CNSS
-	cnss_init_work(&pHddTdlsCtx->implicit_setup, wlan_hdd_tdls_pre_setup);
-#else
 	INIT_WORK(&pHddTdlsCtx->implicit_setup, wlan_hdd_tdls_pre_setup);
-#endif
 
-#ifdef CONFIG_CNSS
-	cnss_init_delayed_work(&pHddCtx->tdls_scan_ctxt.tdls_scan_work,
-			       wlan_hdd_tdls_schedule_scan);
-#else
 	INIT_DELAYED_WORK(&pHddCtx->tdls_scan_ctxt.tdls_scan_work,
 			  wlan_hdd_tdls_schedule_scan);
-#endif
 
 	/*
 	 * Release tdls lock before calling in SME api

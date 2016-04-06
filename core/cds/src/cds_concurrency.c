@@ -6389,13 +6389,8 @@ QDF_STATUS cds_check_and_restart_sap(eCsrRoamResult roam_result,
 	 * creating workqueue then our main thread might go to sleep
 	 * which is not acceptable.
 	 */
-#ifdef CONFIG_CNSS
-	cnss_init_work(&hdd_ctx->sap_start_work,
-			cds_sap_restart_handle);
-#else
 	INIT_WORK(&hdd_ctx->sap_start_work,
 			cds_sap_restart_handle);
-#endif
 	schedule_work(&hdd_ctx->sap_start_work);
 	return QDF_STATUS_SUCCESS;
 }

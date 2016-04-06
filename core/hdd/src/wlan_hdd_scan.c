@@ -1331,13 +1331,8 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			 */
 			pAdapter->request = request;
 
-#ifdef CONFIG_CNSS
-			cnss_init_work(&pAdapter->scan_block_work,
-				       wlan_hdd_cfg80211_scan_block_cb);
-#else
 			INIT_WORK(&pAdapter->scan_block_work,
 				  wlan_hdd_cfg80211_scan_block_cb);
-#endif
 			schedule_work(&pAdapter->scan_block_work);
 			return 0;
 		}
