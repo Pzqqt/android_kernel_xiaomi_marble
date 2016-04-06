@@ -54,6 +54,7 @@
 #include "qwlan_version.h"
 #include "bmi.h"
 #include "cdp_txrx_bus.h"
+#include "pld_common.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -61,25 +62,7 @@
 #define WLAN_MODULE_NAME  "wlan"
 #endif
 
-#ifdef HIF_PCI
-#ifdef CONFIG_CNSS
-#define WLAN_HDD_REGISTER_DRIVER(wlan_drv_ops) \
-	cnss_wlan_register_driver(wlan_drv_ops)
-#define WLAN_HDD_UNREGISTER_DRIVER(wlan_drv_ops) \
-	cnss_wlan_unregister_driver(wlan_drv_ops)
-#else
-#define WLAN_HDD_REGISTER_DRIVER(wlan_drv_ops) \
-	pci_register_driver(wlan_drv_ops)
-#define WLAN_HDD_UNREGISTER_DRIVER(wlan_drv_ops) \
-	pci_unregister_driver(wlan_drv_ops)
-#endif /* CONFIG_CNSS */
-#else
-#define WLAN_HDD_REGISTER_DRIVER(wlan_drv_ops) \
-	icnss_register_driver(wlan_drv_ops)
-#define WLAN_HDD_UNREGISTER_DRIVER(wlan_drv_ops) \
-	icnss_unregister_driver(wlan_drv_ops)
-#endif /* HIF_PCI */
-#define DISABLE_KRAIT_IDLE_PS_VAL	1
+#define DISABLE_KRAIT_IDLE_PS_VAL      1
 
 /*
  * In BMI Phase we are only sending small chunk (256 bytes) of the FW image at
@@ -207,6 +190,26 @@ static void hdd_deinit_cds_hif_context(void)
 		hdd_err("Failed to reset CDS HIF Context");
 
 	return;
+}
+
+/**
+ * to_bus_type() - Map PLD bus type to low level bus type
+ * @bus_type: PLD bus type
+ *
+ * Map PLD bus type to low level bus type.
+ *
+ * Return: low level bus type.
+ */
+static enum qdf_bus_type to_bus_type(enum pld_bus_type bus_type)
+{
+	switch (bus_type) {
+	case PLD_BUS_TYPE_PCIE:
+		return QDF_BUS_TYPE_PCI;
+	case PLD_BUS_TYPE_SNOC:
+		return QDF_BUS_TYPE_SNOC;
+	default:
+		return QDF_BUS_TYPE_NONE;
+	}
 }
 
 /**
@@ -790,268 +793,181 @@ static int wlan_hdd_runtime_resume(void)
 }
 #endif
 
-#ifdef HIF_PCI
 /**
- * wlan_hdd_pci_probe() - probe callback for pci platform driver
- * @pdev: bus dev
+ * wlan_hdd_pld_probe() - probe function registered to PLD
+ * @dev: device
+ * @pld_bus_type: PLD bus type
+ * @bdev: bus device structure
+ * @id: bus identifier for shared busses
  *
- * Return: void
+ * Return: 0 on success
  */
-static int wlan_hdd_pci_probe(struct pci_dev *pdev,
-	const struct pci_device_id *id)
+static int wlan_hdd_pld_probe(struct device *dev,
+		   enum pld_bus_type pld_bus_type,
+		   void *bdev, void *id)
 {
-	return wlan_hdd_probe(&pdev->dev, pdev, (void *)id,
-			QDF_BUS_TYPE_PCI, false);
+	enum qdf_bus_type bus_type;
+
+	bus_type = to_bus_type(pld_bus_type);
+	if (bus_type == QDF_BUS_TYPE_NONE) {
+		hdd_err("Invalid bus type %d->%d",
+			pld_bus_type, bus_type);
+		return -EINVAL;
+	}
+
+	return wlan_hdd_probe(dev, bdev, id, bus_type, false);
 }
 
 /**
- * wlan_hdd_pci_remove() - wlan_hdd_pci_remove
+ * wlan_hdd_pld_remove() - remove function registered to PLD
+ * @dev: device
+ * @pld_bus_type: PLD bus type
  *
  * Return: void
  */
-void wlan_hdd_pci_remove(struct pci_dev *pdev)
+static void wlan_hdd_pld_remove(struct device *dev,
+		     enum pld_bus_type bus_type)
 {
 	wlan_hdd_remove();
 }
 
 /**
- * wlan_hdd_pci_reinit() - wlan_hdd_pci_reinit
- * @pdev: bus dev
- * @id: bus id
- *
- * Return: int
- */
-int wlan_hdd_pci_reinit(struct pci_dev *pdev,
-	const struct pci_device_id *id)
-{
-	return wlan_hdd_probe(&pdev->dev, pdev, (void *)id,
-			QDF_BUS_TYPE_PCI, true);
-}
-
-/**
- * wlan_hdd_pci_shutdown() - wlan_hdd_pci_shutdown
- * @pdev: pdev
+ * wlan_hdd_pld_shutdown() - shutdown function registered to PLD
+ * @dev: device
+ * @pld_bus_type: PLD bus type
  *
  * Return: void
  */
-void wlan_hdd_pci_shutdown(struct pci_dev *pdev)
+static void wlan_hdd_pld_shutdown(struct device *dev,
+		       enum pld_bus_type bus_type)
 {
 	wlan_hdd_shutdown();
 }
 
 /**
- * wlan_hdd_pci_crash_shutdown() - wlan_hdd_pci_crash_shutdown
- * @pdev: pdev
+ * wlan_hdd_pld_reinit() - reinit function registered to PLD
+ * @dev: device
+ * @pld_bus_type: PLD bus type
+ * @bdev: bus device structure
+ * @id: bus identifier for shared busses
+ *
+ * Return: 0 on success
+ */
+static int wlan_hdd_pld_reinit(struct device *dev,
+		    enum pld_bus_type pld_bus_type,
+		    void *bdev, void *id)
+{
+	enum qdf_bus_type bus_type;
+
+	bus_type = to_bus_type(pld_bus_type);
+	if (bus_type == QDF_BUS_TYPE_NONE) {
+		hdd_err("Invalid bus type %d->%d",
+			pld_bus_type, bus_type);
+		return -EINVAL;
+	}
+
+	return wlan_hdd_probe(dev, bdev, id, bus_type, true);
+}
+
+/**
+ * wlan_hdd_pld_crash_shutdown() - crash_shutdown function registered to PLD
+ * @dev: device
+ * @pld_bus_type: PLD bus type
  *
  * Return: void
  */
-void wlan_hdd_pci_crash_shutdown(struct pci_dev *pdev)
+static void wlan_hdd_pld_crash_shutdown(struct device *dev,
+			     enum pld_bus_type bus_type)
 {
 	wlan_hdd_crash_shutdown();
 }
 
 /**
- * wlan_hdd_pci_notify_handler() - wlan_hdd_pci_notify_handler
- * @pdev: pdev
- * @state: state
+ * wlan_hdd_pld_suspend() - suspend function registered to PLD
+ * @dev: device
+ * @pld_bus_type: PLD bus type
+ * @state: PM state
  *
- * Return: void
+ * Return: 0 on success
  */
-void wlan_hdd_pci_notify_handler(struct pci_dev *pdev, int state)
-{
-	wlan_hdd_notify_handler(state);
-}
+static int wlan_hdd_pld_suspend(struct device *dev,
+		     enum pld_bus_type bus_type,
+		     pm_message_t state)
 
-/**
- * wlan_hdd_pci_suspend() - wlan_hdd_pci_suspend
- * @pdev: pdev
- * @state: state
- *
- * Return: void
- */
-static int wlan_hdd_pci_suspend(struct pci_dev *pdev, pm_message_t state)
 {
 	return wlan_hdd_bus_suspend(state);
 }
 
 /**
- * wlan_hdd_pci_resume() - wlan_hdd_pci_resume
- * @pdev: pdev
+ * wlan_hdd_pld_resume() - resume function registered to PLD
+ * @dev: device
+ * @pld_bus_type: PLD bus type
  *
- * Return: void
+ * Return: 0 on success
  */
-static int wlan_hdd_pci_resume(struct pci_dev *pdev)
+static int wlan_hdd_pld_resume(struct device *dev,
+		    enum pld_bus_type bus_type)
 {
 	return wlan_hdd_bus_resume();
 }
 
+/**
+ * wlan_hdd_pld_notify_handler() - notify_handler function registered to PLD
+ * @dev: device
+ * @pld_bus_type: PLD bus type
+ * @state: Modem power state
+ *
+ * Return: void
+ */
+static void wlan_hdd_pld_notify_handler(struct device *dev,
+			     enum pld_bus_type bus_type,
+			     int state)
+{
+	wlan_hdd_notify_handler(state);
+}
+
 #ifdef FEATURE_RUNTIME_PM
 /**
- * wlan_hdd_pci_runtime_suspend() - wlan_hdd_pci_suspend
- * @pdev: pdev
- * @state: state
+ * wlan_hdd_pld_runtime_suspend() - runtime suspend function registered to PLD
+ * @dev: device
+ * @pld_bus_type: PLD bus type
  *
- * Return: success or errno
+ * Return: 0 on success
  */
-static int wlan_hdd_pci_runtime_suspend(struct pci_dev *pdev)
+static int wlan_hdd_pld_runtime_suspend(struct device *dev,
+					enum pld_bus_type bus_type)
 {
 	return wlan_hdd_runtime_suspend();
 }
 
 /**
- * wlan_hdd_pci_runtime_resume() - runtime resume callback to register with pci
- * @pdev: pci device id
+ * wlan_hdd_pld_runtime_resume() - runtime resume function registered to PLD
+ * @dev: device
+ * @pld_bus_type: PLD bus type
  *
- * Return: success or errno
+ * Return: 0 on success
  */
-static int wlan_hdd_pci_runtime_resume(struct pci_dev *pdev)
+static int wlan_hdd_pld_runtime_resume(struct device *dev,
+				       enum pld_bus_type bus_type)
 {
 	return wlan_hdd_runtime_resume();
 }
 #endif
 
-#else
-/**
- * wlan_hdd_snoc_probe() - wlan_hdd_snoc_probe
- * @dev: dev
- *
- * Return: int
- */
-static int wlan_hdd_snoc_probe(struct device *dev)
-{
-	return wlan_hdd_probe(dev, NULL, NULL, QDF_BUS_TYPE_SNOC, false);
-}
-
-/**
- * wlan_hdd_snoc_remove() - wlan_hdd_snoc_remove
- * @dev: dev
- *
- * Return: void
- */
-void wlan_hdd_snoc_remove(struct device *dev)
-{
-	wlan_hdd_remove();
-}
-
-/**
- * wlan_hdd_snoc_shutdown() - wlan_hdd_snoc_shutdown
- * @dev: dev
- *
- * Return: void
- */
-void wlan_hdd_snoc_shutdown(struct device *dev)
-{
-	wlan_hdd_shutdown();
-}
-
-/**
- * wlan_hdd_snoc_reinit() - wlan_hdd_snoc_reinit
- * @dev: dev
- *
- * Return: int
- */
-int wlan_hdd_snoc_reinit(struct device *dev)
-{
-	return wlan_hdd_probe(dev, NULL, NULL, QDF_BUS_TYPE_SNOC, true);
-}
-
-/**
- * wlan_hdd_snoc_crash_shutdown() - wlan_hdd_snoc_crash_shutdown
- * @dev: dev
- *
- * Return: void
- */
-void wlan_hdd_snoc_crash_shutdown(void *pdev)
-{
-	wlan_hdd_crash_shutdown();
-}
-
-/**
- * wlan_hdd_snoc_suspend() - wlan_hdd_snoc_suspend
- * @dev: dev
- * @state: state
- *
- * Return: int
- */
-static int wlan_hdd_snoc_suspend(struct device *dev, pm_message_t state)
-{
-	return wlan_hdd_bus_suspend(state);
-}
-
-/**
- * wlan_hdd_snoc_resume() - wlan_hdd_snoc_resume
- * @dev: dev
- *
- * Return: int
- */
-static int wlan_hdd_snoc_resume(struct device *dev)
-{
-	return wlan_hdd_bus_resume();
-}
-#endif /* HIF_PCI */
-
-#ifdef HIF_PCI
-static struct pci_device_id wlan_hdd_pci_id_table[] = {
-	{ 0x168c, 0x003c, PCI_ANY_ID, PCI_ANY_ID },
-	{ 0x168c, 0x003e, PCI_ANY_ID, PCI_ANY_ID },
-	{ 0x168c, 0x0041, PCI_ANY_ID, PCI_ANY_ID },
-	{ 0x168c, 0xabcd, PCI_ANY_ID, PCI_ANY_ID },
-	{ 0x168c, 0x7021, PCI_ANY_ID, PCI_ANY_ID },
-	{ 0 }
-};
-
-#ifdef CONFIG_CNSS
-
+struct pld_driver_ops wlan_drv_ops = {
+	.probe      = wlan_hdd_pld_probe,
+	.remove     = wlan_hdd_pld_remove,
+	.shutdown   = wlan_hdd_pld_shutdown,
+	.reinit     = wlan_hdd_pld_reinit,
+	.crash_shutdown = wlan_hdd_pld_crash_shutdown,
+	.suspend    = wlan_hdd_pld_suspend,
+	.resume     = wlan_hdd_pld_resume,
+	.modem_status = wlan_hdd_pld_notify_handler,
 #ifdef FEATURE_RUNTIME_PM
-struct cnss_wlan_runtime_ops runtime_pm_ops = {
-	.runtime_suspend = wlan_hdd_pci_runtime_suspend,
-	.runtime_resume = wlan_hdd_pci_runtime_resume,
-};
-#endif
-
-struct cnss_wlan_driver wlan_drv_ops = {
-	.name       = "wlan_hdd_pci",
-	.id_table   = wlan_hdd_pci_id_table,
-	.probe      = wlan_hdd_pci_probe,
-	.remove     = wlan_hdd_pci_remove,
-	.reinit     = wlan_hdd_pci_reinit,
-	.shutdown   = wlan_hdd_pci_shutdown,
-	.crash_shutdown = wlan_hdd_pci_crash_shutdown,
-	.modem_status   = wlan_hdd_pci_notify_handler,
-#ifdef ATH_BUS_PM
-	.suspend    = wlan_hdd_pci_suspend,
-	.resume     = wlan_hdd_pci_resume,
-#endif /* ATH_BUS_PM */
-#ifdef FEATURE_RUNTIME_PM
-	.runtime_ops = &runtime_pm_ops,
+        .runtime_suspend = wlan_hdd_pld_runtime_suspend,
+        .runtime_resume = wlan_hdd_pld_runtime_resume,
 #endif
 };
-#else
-MODULE_DEVICE_TABLE(pci, wlan_hdd_pci_id_table);
-struct pci_driver wlan_drv_ops = {
-	.name       = "wlan_hdd_pci",
-	.id_table   = wlan_hdd_pci_id_table,
-	.probe      = wlan_hdd_pci_probe,
-	.remove     = wlan_hdd_pci_remove,
-#ifdef ATH_BUS_PM
-	.suspend    = wlan_hdd_pci_suspend,
-	.resume     = wlan_hdd_pci_resume,
-#endif /* ATH_BUS_PM */
-
-};
-#endif /* CONFIG_CNSS */
-#else
-struct icnss_driver_ops wlan_drv_ops = {
-	.name       = "wlan_hdd_drv",
-	.probe      = wlan_hdd_snoc_probe,
-	.remove     = wlan_hdd_snoc_remove,
-	.shutdown   = wlan_hdd_snoc_shutdown,
-	.reinit     = wlan_hdd_snoc_reinit,
-	.crash_shutdown = wlan_hdd_snoc_crash_shutdown,
-	.suspend    = wlan_hdd_snoc_suspend,
-	.resume     = wlan_hdd_snoc_resume,
-};
-#endif
 
 /**
  * wlan_hdd_register_driver() - wlan_hdd_register_driver
@@ -1060,7 +976,7 @@ struct icnss_driver_ops wlan_drv_ops = {
  */
 int wlan_hdd_register_driver(void)
 {
-	return WLAN_HDD_REGISTER_DRIVER(&wlan_drv_ops);
+	return pld_register_driver(&wlan_drv_ops);
 }
 
 /**
@@ -1070,5 +986,5 @@ int wlan_hdd_register_driver(void)
  */
 void wlan_hdd_unregister_driver(void)
 {
-	WLAN_HDD_UNREGISTER_DRIVER(&wlan_drv_ops);
+	pld_unregister_driver();
 }

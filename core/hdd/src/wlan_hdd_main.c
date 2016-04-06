@@ -91,6 +91,7 @@
 #include "cds_regdomain.h"
 #include "cdp_txrx_flow_ctrl_v2.h"
 #endif /* FEATURE_WLAN_CH_AVOID */
+#include "pld_common.h"
 #include "wlan_hdd_ocb.h"
 #include "wlan_hdd_nan.h"
 #include "wlan_hdd_debugfs.h"
@@ -7287,6 +7288,8 @@ static int __hdd_module_init(void)
 	pr_info("%s: Loading driver v%s\n", WLAN_MODULE_NAME,
 		QWLAN_VERSIONSTR TIMER_MANAGER_STR MEMORY_DEBUG_STR);
 
+	pld_init();
+
 	qdf_wake_lock_create(&wlan_wake_lock, "wlan");
 
 	hdd_set_conparam((uint32_t) con_mode);
@@ -7302,6 +7305,7 @@ static int __hdd_module_init(void)
 	return 0;
 out:
 	qdf_wake_lock_destroy(&wlan_wake_lock);
+	pld_deinit();
 	return ret;
 }
 
@@ -7318,6 +7322,8 @@ static void __hdd_module_exit(void)
 	wlan_hdd_unregister_driver();
 
 	qdf_wake_lock_destroy(&wlan_wake_lock);
+
+	pld_deinit();
 
 	return;
 }
