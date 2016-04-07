@@ -119,4 +119,8 @@ config QCACLD_WLAN_LFR2
 	bool "Enable the WLAN Legacy Fast Roaming feature Version 2"
 	default n
 
+config PKT_PROTO_TRACE
+	bool "Enable packet trace feature"
+	default n
+
 endif # QCA_CLD_WLAN

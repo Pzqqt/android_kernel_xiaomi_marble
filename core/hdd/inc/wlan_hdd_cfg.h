@@ -2121,15 +2121,18 @@ typedef enum {
 
 /*
  * Connection related log Enable/Disable.
- * 0x1 - Enable mgmt pkt logs (no probe req/rsp).
+ * 0x1 - Enable mgmt pkt logs (excpet probe req/rsp, beacons).
  * 0x2 - Enable EAPOL pkt logs.
  * 0x4 - Enable DHCP pkt logs.
+ * 0x8 - Enable mgmt action frames logs.
  * 0x0 - Disable all the above connection related logs.
+ *
+ * The default value of 0x0F will enable all the above logs.
  */
 #define CFG_ENABLE_DEBUG_CONNECT_ISSUE             "gEnableDebugLog"
 #define CFG_ENABLE_DEBUG_CONNECT_ISSUE_MIN         (0)
 #define CFG_ENABLE_DEBUG_CONNECT_ISSUE_MAX         (0xFF)
-#define CFG_ENABLE_DEBUG_CONNECT_ISSUE_DEFAULT     (0)
+#define CFG_ENABLE_DEBUG_CONNECT_ISSUE_DEFAULT     (0x0F)
 
 /* This will be used only for debugging purpose, will be removed after sometime */
 #define CFG_ENABLE_RX_THREAD                       "gEnableRxThread"
