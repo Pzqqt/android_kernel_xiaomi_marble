@@ -263,13 +263,6 @@ static int hdd_ocb_register_sta(hdd_adapter_t *adapter)
 	sta_desc.sta_id = peer_id;
 	sta_desc.is_qos_enabled = 1;
 
-	qdf_status = ol_txrx_register_peer(&sta_desc);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hddLog(LOGE, FL("Failed to register. Status= %d [0x%08X]"),
-		       qdf_status, qdf_status);
-		return -EINVAL;
-	}
-
 	/* Register the vdev transmit and receive functions */
 	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
 	txrx_ops.rx.rx = hdd_rx_packet_cbk;
@@ -277,6 +270,13 @@ static int hdd_ocb_register_sta(hdd_adapter_t *adapter)
 		 ol_txrx_get_vdev_from_vdev_id(adapter->sessionId),
 		 adapter, &txrx_ops);
 	adapter->tx_fn = txrx_ops.tx.tx;
+
+	qdf_status = ol_txrx_register_peer(&sta_desc);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		hddLog(LOGE, FL("Failed to register. Status= %d [0x%08X]"),
+		       qdf_status, qdf_status);
+		return -EINVAL;
+	}
 
 	if (pHddStaCtx->conn_info.staId[0] != 0 &&
 	     pHddStaCtx->conn_info.staId[0] != peer_id) {

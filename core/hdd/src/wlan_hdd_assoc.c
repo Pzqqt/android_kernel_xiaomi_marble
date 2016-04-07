@@ -1303,6 +1303,14 @@ static QDF_STATUS hdd_roam_register_sta(hdd_adapter_t *pAdapter,
 		staDesc.is_wapi_supported = 0;
 #endif /* FEATURE_WLAN_WAPI */
 
+	/* Register the vdev transmit and receive functions */
+	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
+	txrx_ops.rx.rx = hdd_rx_packet_cbk;
+	ol_txrx_vdev_register(
+		 ol_txrx_get_vdev_from_vdev_id(pAdapter->sessionId),
+		 pAdapter, &txrx_ops);
+	pAdapter->tx_fn = txrx_ops.tx.tx;
+
 	qdf_status = ol_txrx_register_peer(&staDesc);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -1311,14 +1319,6 @@ static QDF_STATUS hdd_roam_register_sta(hdd_adapter_t *pAdapter,
 			qdf_status, qdf_status);
 		return qdf_status;
 	}
-
-	/* Register the vdev transmit and receive functions */
-	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
-	txrx_ops.rx.rx = hdd_rx_packet_cbk;
-	ol_txrx_vdev_register(
-		 ol_txrx_get_vdev_from_vdev_id(pAdapter->sessionId),
-		 pAdapter, &txrx_ops);
-	pAdapter->tx_fn = txrx_ops.tx.tx;
 
 	if (!pRoamInfo->fAuthRequired) {
 		/*
@@ -2868,6 +2868,13 @@ QDF_STATUS hdd_roam_register_tdlssta(hdd_adapter_t *pAdapter,
 	(hdd_wmm_is_active(pAdapter)) ? (staDesc.is_qos_enabled = 1)
 	: (staDesc.is_qos_enabled = 0);
 
+	/* Register the vdev transmit and receive functions */
+	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
+	txrx_ops.rx.rx = hdd_rx_packet_cbk;
+	ol_txrx_vdev_register(
+		 ol_txrx_get_vdev_from_vdev_id(pAdapter->sessionId),
+		 pAdapter, &txrx_ops);
+	pAdapter->tx_fn = txrx_ops.tx.tx;
 
 	/* Register the Station with TL...  */
 	qdf_status = ol_txrx_register_peer(&staDesc);
@@ -2876,14 +2883,6 @@ QDF_STATUS hdd_roam_register_tdlssta(hdd_adapter_t *pAdapter,
 			qdf_status, qdf_status);
 		return qdf_status;
 	}
-
-	/* Register the vdev transmit and receive functions */
-	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
-	txrx_ops.rx.rx = hdd_rx_packet_cbk;
-	ol_txrx_vdev_register(
-		 ol_txrx_get_vdev_from_vdev_id(pAdapter->sessionId),
-		 pAdapter, &txrx_ops);
-	pAdapter->tx_fn = txrx_ops.tx.tx;
 
 	return qdf_status;
 }

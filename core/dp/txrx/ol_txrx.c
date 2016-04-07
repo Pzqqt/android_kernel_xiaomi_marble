@@ -1389,7 +1389,7 @@ void ol_txrx_flush_rx_frames(struct ol_txrx_peer_t *peer,
 
 	qdf_spin_lock_bh(&peer->peer_info_lock);
 
-	if (peer->state >= OL_TXRX_PEER_STATE_CONN)
+	if (peer->state >= OL_TXRX_PEER_STATE_CONN && peer->vdev->rx)
 		data_rx = peer->vdev->rx;
 	else
 		drop = true;
@@ -3461,7 +3461,8 @@ static void ol_rx_data_cb(struct ol_txrx_peer_t *peer,
 		goto free_buf;
 
 	qdf_spin_lock_bh(&peer->peer_info_lock);
-	if (qdf_unlikely(!(peer->state >= OL_TXRX_PEER_STATE_CONN))) {
+	if (qdf_unlikely(!(peer->state >= OL_TXRX_PEER_STATE_CONN) ||
+					 !peer->vdev->rx)) {
 		qdf_spin_unlock_bh(&peer->peer_info_lock);
 		goto free_buf;
 	}

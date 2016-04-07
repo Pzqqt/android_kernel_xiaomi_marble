@@ -706,14 +706,6 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 		  "HDD SOFTAP register TL QoS_enabled=%d",
 		  staDesc.is_qos_enabled);
 
-	qdf_status = ol_txrx_register_peer(&staDesc);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
-			  "SOFTAP ol_txrx_register_peer() failed to register.  Status= %d [0x%08X]",
-			  qdf_status, qdf_status);
-		return qdf_status;
-	}
-
 	/* Register the vdev transmit and receive functions */
 	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
 	txrx_ops.rx.rx = hdd_softap_rx_packet_cbk;
@@ -721,6 +713,14 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 		 ol_txrx_get_vdev_from_vdev_id(pAdapter->sessionId),
 		 pAdapter, &txrx_ops);
 	pAdapter->tx_fn = txrx_ops.tx.tx;
+
+	qdf_status = ol_txrx_register_peer(&staDesc);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
+			  "SOFTAP ol_txrx_register_peer() failed to register.  Status= %d [0x%08X]",
+			  qdf_status, qdf_status);
+		return qdf_status;
+	}
 
 	/* if ( WPA ), tell TL to go to 'connected' and after keys come to the
 	 * driver then go to 'authenticated'.  For all other authentication
