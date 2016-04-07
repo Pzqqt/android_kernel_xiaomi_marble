@@ -71,6 +71,7 @@
 #include "sme_power_save_api.h"
 #include "cds_concurrency.h"
 #include "cdp_txrx_flow_ctrl_v2.h"
+#include "pld_common.h"
 
 /* Preprocessor definitions and constants */
 #define HDD_SSR_BRING_UP_TIME 30000
@@ -1794,9 +1795,7 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 	result = wlan_hdd_validate_context(pHddCtx);
 	if (0 != result)
 		return result;
-#ifdef CONFIG_CNSS
-	cnss_request_bus_bandwidth(CNSS_BUS_WIDTH_MEDIUM);
-#endif
+	pld_request_bus_bandwidth(pHddCtx->parent_dev, PLD_BUS_WIDTH_MEDIUM);
 
 	/* Resume MC thread */
 	if (pHddCtx->isMcThreadSuspended) {
@@ -2065,9 +2064,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 			 NO_SESSION, pHddCtx->isWiphySuspended));
 	pHddCtx->isWiphySuspended = true;
 
-#ifdef CONFIG_CNSS
-	cnss_request_bus_bandwidth(CNSS_BUS_WIDTH_NONE);
-#endif
+	pld_request_bus_bandwidth(pHddCtx->parent_dev, PLD_BUS_WIDTH_NONE);
 
 	EXIT();
 	return 0;

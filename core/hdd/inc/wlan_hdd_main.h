@@ -335,13 +335,13 @@ extern spinlock_t hdd_context_lock;
  * @interval_tx:	# of tx packets received in the last 100ms interval
  * @total_rx:		# of total rx packets received on interface
  * @total_tx:		# of total tx packets received on interface
- * @next_vote_level:	cnss_bus_width_type voting level (high or low)
+ * @next_vote_level:	pld_bus_width_type voting level (high or low)
  *			determined on the basis of total tx and rx packets
  *			received in the last 100ms interval
- * @next_rx_level:	cnss_bus_width_type voting level (high or low)
+ * @next_rx_level:	pld_bus_width_type voting level (high or low)
  *			determined on the basis of rx packets received in the
  *			last 100ms interval
- * @next_tx_level:	cnss_bus_width_type voting level (high or low)
+ * @next_tx_level:	pld_bus_width_type voting level (high or low)
  *			determined on the basis of tx packets received in the
  *			last 100ms interval
  *

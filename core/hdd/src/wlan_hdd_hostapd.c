@@ -62,9 +62,7 @@
 #include "wni_cfg.h"
 #include "wlan_hdd_misc.h"
 #include <cds_utils.h>
-#if defined CONFIG_CNSS
-#include <net/cnss.h>
-#endif
+#include "pld_common.h"
 
 #include "wma.h"
 #ifdef DEBUG
@@ -899,9 +897,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	uint8_t cc_len = WLAN_SVC_COUNTRY_CODE_LEN;
 	hdd_adapter_t *con_sap_adapter;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-#if defined CONFIG_CNSS
 	int ret = 0;
-#endif
 
 	dev = (struct net_device *)usrDataForCallback;
 	if (!dev) {
@@ -1771,47 +1767,37 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	case eSAP_DFS_NOL_GET:
 		hddLog(LOG1,
 		       FL("Received eSAP_DFS_NOL_GET event"));
-#if defined CONFIG_CNSS
-		/* get the dfs nol from cnss */
-		ret =
-			cnss_wlan_get_dfs_nol(pSapEvent->sapevt.sapDfsNolInfo.
-					      pDfsList,
-					      pSapEvent->sapevt.sapDfsNolInfo.
-					      sDfsList);
+
+		/* get the dfs nol from PLD */
+		ret = pld_wlan_get_dfs_nol(pHddCtx->parent_dev,
+					   pSapEvent->sapevt.sapDfsNolInfo.
+					   pDfsList,
+					   pSapEvent->sapevt.sapDfsNolInfo.
+					   sDfsList);
 
 		if (ret > 0) {
-			hddLog(LOG2,
-				FL("Get %d bytes of dfs nol from cnss"), ret);
+			hdd_info("Get %d bytes of dfs nol from PLD", ret);
 			return QDF_STATUS_SUCCESS;
 		} else {
-			hddLog(LOG2,
-				FL("No dfs nol entry in CNSS, ret: %d"), ret);
+			hdd_info("No dfs nol entry in PLD, ret: %d", ret);
 			return QDF_STATUS_E_FAULT;
 		}
-#else
-		return QDF_STATUS_E_FAILURE;
-#endif
 	case eSAP_DFS_NOL_SET:
 		hddLog(LOG1, FL("Received eSAP_DFS_NOL_SET event"));
-#if defined CONFIG_CNSS
-		/* set the dfs nol to cnss */
-		ret =
-			cnss_wlan_set_dfs_nol(pSapEvent->sapevt.sapDfsNolInfo.
-					      pDfsList,
-					      pSapEvent->sapevt.sapDfsNolInfo.
-					      sDfsList);
+
+		/* set the dfs nol to PLD */
+		ret = pld_wlan_set_dfs_nol(pHddCtx->parent_dev,
+					   pSapEvent->sapevt.sapDfsNolInfo.
+					   pDfsList,
+					   pSapEvent->sapevt.sapDfsNolInfo.
+					   sDfsList);
 
 		if (ret) {
-			hddLog(LOG2,
-			       FL("Failed to set dfs nol - ret: %d"),
-			       ret);
+			hdd_info("Failed to set dfs nol - ret: %d", ret);
 		} else {
-			hddLog(LOG2, FL(" Set %d bytes dfs nol to cnss"),
-			       pSapEvent->sapevt.sapDfsNolInfo.sDfsList);
+			hdd_info(" Set %d bytes dfs nol to PLD",
+				 pSapEvent->sapevt.sapDfsNolInfo.sDfsList);
 		}
-#else
-		return QDF_STATUS_E_FAILURE;
-#endif
 		return QDF_STATUS_SUCCESS;
 	case eSAP_ACS_CHANNEL_SELECTED:
 		hddLog(LOG1, FL("ACS Completed for wlan%d"),

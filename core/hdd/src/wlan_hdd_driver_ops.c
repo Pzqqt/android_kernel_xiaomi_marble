@@ -30,13 +30,6 @@
 
 #include <linux/platform_device.h>
 #include <linux/pci.h>
-#ifdef HIF_PCI
-#ifdef CONFIG_CNSS
-#include <net/cnss.h>
-#endif /* CONFIG_CNSS */
-#else
-#include <soc/qcom/icnss.h>
-#endif /* HIF_PCI */
 #include "cds_api.h"
 #include "qdf_status.h"
 #include "qdf_lock.h"
@@ -71,25 +64,16 @@
  * The delay incurred for resuming from IDLE/SA PS is huge during driver load.
  * So prevent APPS IDLE/SA PS durint driver load for reducing interrupt latency.
  */
-#ifdef CONFIG_CNSS
-static inline void hdd_request_pm_qos(int val)
+
+static inline void hdd_request_pm_qos(struct device *dev, int val)
 {
-	cnss_request_pm_qos(val);
+	pld_request_pm_qos(dev, val);
 }
 
-static inline void hdd_remove_pm_qos(void)
+static inline void hdd_remove_pm_qos(struct device *dev)
 {
-	cnss_remove_pm_qos();
+	pld_remove_pm_qos(dev);
 }
-#else
-static inline void hdd_request_pm_qos(int val)
-{
-}
-
-static inline void hdd_remove_pm_qos(void)
-{
-}
-#endif
 
 /**
  * hdd_set_recovery_in_progress() - API to set recovery in progress
@@ -346,7 +330,7 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 	* The Fix is to not allow Krait to enter Idle Power Save during driver
 	* load.
 	*/
-	hdd_request_pm_qos(DISABLE_KRAIT_IDLE_PS_VAL);
+	hdd_request_pm_qos(dev, DISABLE_KRAIT_IDLE_PS_VAL);
 
 	if (reinit) {
 		cds_set_recovery_in_progress(true);
@@ -399,7 +383,7 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 	}
 
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
-	hdd_remove_pm_qos();
+	hdd_remove_pm_qos(dev);
 
 	return 0;
 
@@ -415,19 +399,14 @@ err_hdd_deinit:
 	hdd_deinit();
 out:
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
-	hdd_remove_pm_qos();
+	hdd_remove_pm_qos(dev);
 	return ret;
 }
 
-#ifdef CONFIG_CNSS
-static inline void hdd_cnss_driver_unloading(void)
+static inline void hdd_pld_driver_unloading(struct device *dev)
 {
-	cnss_set_driver_status(CNSS_LOAD_UNLOAD);
+	pld_set_driver_status(dev, PLD_LOAD_UNLOAD);
 }
-#else
-static inline void hdd_cnss_driver_unloading(void) { }
-#endif
-
 
 /**
  * wlan_hdd_remove() - wlan_hdd_remove
@@ -437,7 +416,7 @@ static inline void hdd_cnss_driver_unloading(void) { }
  *
  * Return: void
  */
-static void wlan_hdd_remove(void)
+static void wlan_hdd_remove(struct device *dev)
 {
 	void *hif_ctx;
 
@@ -456,7 +435,7 @@ static void wlan_hdd_remove(void)
 	if (!cds_wait_for_external_threads_completion(__func__))
 		hdd_err("External threads are still active attempting driver unload anyway");
 
-	hdd_cnss_driver_unloading();
+	hdd_pld_driver_unloading(dev);
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 
@@ -492,7 +471,7 @@ static void wlan_hdd_shutdown(void)
 		hdd_err("Load/unload in progress, ignore SSR shutdown");
 		return;
 	}
-	/* this is for cases, where shutdown invoked from CNSS */
+	/* this is for cases, where shutdown invoked from platform */
 	cds_set_recovery_in_progress(true);
 
 	if (!cds_wait_for_external_threads_completion(__func__))
@@ -680,7 +659,7 @@ static int wlan_hdd_bus_resume(void)
  *
  * Return: 0 or errno
  */
-static int __wlan_hdd_runtime_suspend(void)
+static int __wlan_hdd_runtime_suspend(struct device *dev)
 {
 	void *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
@@ -711,7 +690,7 @@ static int __wlan_hdd_runtime_suspend(void)
 	if (status)
 		goto resume_wma;
 
-	status = cnss_auto_suspend();
+	status = pld_auto_suspend(dev);
 	if (status)
 		goto resume_hif;
 
@@ -740,12 +719,12 @@ process_failure:
  *
  * Return: 0 or errno
  */
-static int wlan_hdd_runtime_suspend(void)
+static int wlan_hdd_runtime_suspend(struct device *dev)
 {
 	int ret;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_runtime_suspend();
+	ret = __wlan_hdd_runtime_suspend(dev);
 	cds_ssr_unprotect(__func__);
 
 	return ret;
@@ -759,14 +738,14 @@ static int wlan_hdd_runtime_suspend(void)
  *
  * Return: success since failure is a bug
  */
-static int __wlan_hdd_runtime_resume(void)
+static int __wlan_hdd_runtime_resume(struct device *dev)
 {
 	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	void *htc_ctx = cds_get_context(QDF_MODULE_ID_HTC);
 	void *txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	hif_pre_runtime_resume(hif_ctx);
-	QDF_BUG(!cnss_auto_resume());
+	QDF_BUG(!pld_auto_resume(dev));
 	QDF_BUG(!hif_runtime_resume(hif_ctx));
 	QDF_BUG(!wma_runtime_resume());
 	QDF_BUG(!htc_runtime_resume(htc_ctx));
@@ -783,12 +762,12 @@ static int __wlan_hdd_runtime_resume(void)
  *
  * Return: success since failure is a bug
  */
-static int wlan_hdd_runtime_resume(void)
+static int wlan_hdd_runtime_resume(struct device *dev)
 {
 	int ret;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_runtime_resume();
+	ret = __wlan_hdd_runtime_resume(dev);
 	cds_ssr_unprotect(__func__);
 
 	return ret;
@@ -830,7 +809,7 @@ static int wlan_hdd_pld_probe(struct device *dev,
 static void wlan_hdd_pld_remove(struct device *dev,
 		     enum pld_bus_type bus_type)
 {
-	wlan_hdd_remove();
+	wlan_hdd_remove(dev);
 }
 
 /**
@@ -939,7 +918,7 @@ static void wlan_hdd_pld_notify_handler(struct device *dev,
 static int wlan_hdd_pld_runtime_suspend(struct device *dev,
 					enum pld_bus_type bus_type)
 {
-	return wlan_hdd_runtime_suspend();
+	return wlan_hdd_runtime_suspend(dev);
 }
 
 /**
@@ -952,7 +931,7 @@ static int wlan_hdd_pld_runtime_suspend(struct device *dev,
 static int wlan_hdd_pld_runtime_resume(struct device *dev,
 				       enum pld_bus_type bus_type)
 {
-	return wlan_hdd_runtime_resume();
+	return wlan_hdd_runtime_resume(dev);
 }
 #endif
 

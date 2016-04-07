@@ -74,9 +74,7 @@
 #include <linux/ctype.h>
 #include <linux/compat.h>
 #ifdef MSM_PLATFORM
-#ifdef CONFIG_CNSS
 #include <soc/qcom/subsystem_restart.h>
-#endif
 #endif
 #include <wlan_hdd_hostapd.h>
 #include <wlan_hdd_softap_tx_rx.h>
@@ -85,9 +83,6 @@
 #include "wma_types.h"
 #include "wlan_hdd_tdls.h"
 #ifdef FEATURE_WLAN_CH_AVOID
-#ifdef CONFIG_CNSS
-#include <net/cnss.h>
-#endif
 #include "cds_regdomain.h"
 #include "cdp_txrx_flow_ctrl_v2.h"
 #endif /* FEATURE_WLAN_CH_AVOID */
@@ -105,7 +100,6 @@
 #include "cds_concurrency.h"
 #include "wlan_hdd_tsf.h"
 #include "wlan_hdd_green_ap.h"
-#include "platform_icnss.h"
 #include "bmi.h"
 #include <wlan_hdd_regulatory.h>
 
@@ -2114,23 +2108,6 @@ static QDF_STATUS hdd_sme_close_session_callback(void *pContext)
 	}
 
 	clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
-
-#if !defined (CONFIG_CNSS) && \
-	!defined (WLAN_OPEN_SOURCE)
-	/*
-	 * need to make sure all of our scheduled work has completed.
-	 * This callback is called from MC thread context, so it is safe to
-	 * to call below flush workqueue API from here.
-	 *
-	 * Even though this is called from MC thread context, if there is a faulty
-	 * work item in the system, that can hang this call forever.  So flushing
-	 * this global work queue is not safe; and now we make sure that
-	 * individual work queues are stopped correctly. But the cancel work queue
-	 * is a GPL only API, so the proprietary  version of the driver would still
-	 * rely on the global work queue flush.
-	 */
-	flush_scheduled_work();
-#endif
 
 	/*
 	 * We can be blocked while waiting for scheduled work to be
@@ -4584,7 +4561,7 @@ static int hdd_wiphy_init(hdd_context_t *hdd_ctx)
 }
 
 /**
- * hdd_cnss_request_bus_bandwidth() - Function to control bus bandwidth
+ * hdd_pld_request_bus_bandwidth() - Function to control bus bandwidth
  * @hdd_ctx - handle to hdd context
  * @tx_packets - transmit packet count
  * @rx_packets - receive packet count
@@ -4595,26 +4572,25 @@ static int hdd_wiphy_init(hdd_context_t *hdd_ctx)
  * Returns: None
  */
 #ifdef MSM_PLATFORM
-void hdd_cnss_request_bus_bandwidth(hdd_context_t *hdd_ctx,
+void hdd_pld_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 			const uint64_t tx_packets, const uint64_t rx_packets)
 {
-#ifdef CONFIG_CNSS
 	uint64_t total = tx_packets + rx_packets;
 	uint64_t temp_rx = 0;
 	uint64_t temp_tx = 0;
-	enum cnss_bus_width_type next_vote_level = CNSS_BUS_WIDTH_NONE;
+	enum pld_bus_width_type next_vote_level = PLD_BUS_WIDTH_NONE;
 	enum wlan_tp_level next_rx_level = WLAN_SVC_TP_NONE;
 	enum wlan_tp_level next_tx_level = WLAN_SVC_TP_NONE;
 
 
 	if (total > hdd_ctx->config->busBandwidthHighThreshold)
-		next_vote_level = CNSS_BUS_WIDTH_HIGH;
+		next_vote_level = PLD_BUS_WIDTH_HIGH;
 	else if (total > hdd_ctx->config->busBandwidthMediumThreshold)
-		next_vote_level = CNSS_BUS_WIDTH_MEDIUM;
+		next_vote_level = PLD_BUS_WIDTH_MEDIUM;
 	else if (total > hdd_ctx->config->busBandwidthLowThreshold)
-		next_vote_level = CNSS_BUS_WIDTH_LOW;
+		next_vote_level = PLD_BUS_WIDTH_LOW;
 	else
-		next_vote_level = CNSS_BUS_WIDTH_NONE;
+		next_vote_level = PLD_BUS_WIDTH_NONE;
 
 	hdd_ctx->hdd_txrx_hist[hdd_ctx->hdd_txrx_hist_idx].next_vote_level =
 							next_vote_level;
@@ -4623,7 +4599,7 @@ void hdd_cnss_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 		hdd_debug("trigger level %d, tx_packets: %lld, rx_packets: %lld",
 			 next_vote_level, tx_packets, rx_packets);
 		hdd_ctx->cur_vote_level = next_vote_level;
-		cnss_request_bus_bandwidth(next_vote_level);
+		pld_request_bus_bandwidth(hdd_ctx->parent_dev, next_vote_level);
 	}
 
 	/* fine-tuning parameters for RX Flows */
@@ -4674,7 +4650,6 @@ void hdd_cnss_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 								next_tx_level;
 	hdd_ctx->hdd_txrx_hist_idx++;
 	hdd_ctx->hdd_txrx_hist_idx &= NUM_TX_RX_HISTOGRAM_MASK;
-#endif
 }
 
 #define HDD_BW_GET_DIFF(_x, _y) (unsigned long)((ULONG_MAX - (_y)) + (_x) + 1)
@@ -4745,7 +4720,7 @@ static void hdd_bus_bw_compute_cbk(void *priv)
 		return;
 	}
 
-	hdd_cnss_request_bus_bandwidth(hdd_ctx, tx_packets, rx_packets);
+	hdd_pld_request_bus_bandwidth(hdd_ctx, tx_packets, rx_packets);
 
 	hdd_ipa_set_perf_level(hdd_ctx, tx_packets, rx_packets);
 	hdd_ipa_uc_stat_request(adapter, 2);
@@ -5026,7 +5001,7 @@ static void hdd_enable_fastpath(struct hdd_config *hdd_cfg,
 }
 #endif
 
-#if defined(FEATURE_WLAN_CH_AVOID) && defined(CONFIG_CNSS)
+#if defined(FEATURE_WLAN_CH_AVOID)
 /**
  * hdd_set_thermal_level_cb() - set thermal level callback function
  * @context:	hdd context pointer
@@ -5244,7 +5219,8 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 	       FL("number of unsafe channels is %d "),
 	       hdd_ctxt->unsafe_channel_count);
 
-	if (cnss_set_wlan_unsafe_channel(hdd_ctxt->unsafe_channel_list,
+	if (pld_set_wlan_unsafe_channel(hdd_ctxt->parent_dev,
+					hdd_ctxt->unsafe_channel_list,
 				hdd_ctxt->unsafe_channel_count)) {
 		hdd_err("Failed to set unsafe channel");
 
@@ -5322,7 +5298,7 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
  * @hdd_ctx:	HDD global context
  *
  * Initialize the channel avoidance logic by retrieving the unsafe
- * channel list from the CNSS platform driver and plumbing the data
+ * channel list from the platform driver and plumbing the data
  * down to the lower layers.  Then subscribe to subsequent channel
  * avoidance events.
  *
@@ -5333,7 +5309,8 @@ static void hdd_init_channel_avoidance(hdd_context_t *hdd_ctx)
 	uint16_t unsafe_channel_count;
 	int index;
 
-	cnss_get_wlan_unsafe_channel(hdd_ctx->unsafe_channel_list,
+	pld_get_wlan_unsafe_channel(hdd_ctx->parent_dev,
+				    hdd_ctx->unsafe_channel_list,
 				     &(hdd_ctx->unsafe_channel_count),
 				     sizeof(uint16_t) * NUM_CHANNELS);
 
@@ -5359,7 +5336,7 @@ static void hdd_init_channel_avoidance(hdd_context_t *hdd_ctx)
 static void hdd_set_thermal_level_cb(void *context, u_int8_t level)
 {
 }
-#endif /* defined(FEATURE_WLAN_CH_AVOID) && defined(CONFIG_CNSS) */
+#endif /* defined(FEATURE_WLAN_CH_AVOID) */
 
 /**
  * hdd_indicate_mgmt_frame() - Wrapper to indicate management frame to
@@ -5665,7 +5642,8 @@ hdd_context_t *hdd_context_create(struct device *dev, void *hif_sc)
 
 	hdd_ctx->target_type = tgt_info->target_type;
 
-	icnss_set_fw_debug_mode(hdd_ctx->config->enable_fw_log);
+	pld_set_fw_debug_mode(hdd_ctx->parent_dev,
+			      hdd_ctx->config->enable_fw_log);
 
 	hdd_enable_fastpath(hdd_ctx->config, hif_sc);
 
@@ -6775,19 +6753,6 @@ void wlan_hdd_send_version_pkg(uint32_t fw_version,
 {
 	int ret = 0;
 	struct wlan_version_data data;
-#ifdef CONFIG_CNSS
-	struct cnss_platform_cap cap;
-
-	ret = cnss_get_platform_cap(&cap);
-	if (ret) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("platform capability info from CNSS not available"));
-		return;
-	}
-
-	if (!(cap.cap_flag & CNSS_HAS_UART_ACCESS))
-		return;
-#endif
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam())
 		return;
