@@ -89,7 +89,7 @@ int hif_napi_enabled(struct hif_opaque_softc *hif, int ce);
 /* called from hdd (napi_poll), using napi id as a selector */
 void hif_napi_enable_irq(struct hif_opaque_softc *hif, int id);
 
-/* called by ce_tasklet.c::ce_irq_handler */
+/* called by ce_tasklet.c::ce_dispatch_interrupt*/
 int hif_napi_schedule(struct hif_opaque_softc *scn, int ce_id);
 
 /* called by hdd_napi, which is called by kernel */

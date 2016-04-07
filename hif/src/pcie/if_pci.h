@@ -146,7 +146,6 @@ struct hif_pci_softc {
 };
 
 bool hif_pci_targ_is_present(struct hif_softc *scn, void *__iomem *mem);
-void icnss_dispatch_ce_irq(struct hif_softc *scn);
 int hif_configure_irq(struct hif_softc *sc);
 void hif_pci_cancel_deferred_target_sleep(struct hif_softc *scn);
 

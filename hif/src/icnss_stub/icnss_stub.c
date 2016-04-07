@@ -36,8 +36,6 @@
 #include "qwlan_version.h"
 #include <net/cnss.h>
 
-static int icnss_get_irq_num(int ce_id);
-
 /**
  * struct icnss_stub_entry
  *
@@ -63,9 +61,6 @@ struct icnss_stub_context {
 	struct icnss_stub_entry stub[ICNSS_MAX_IRQ_REGISTRATIONS];
 	uint32_t regged_irq;
 };
-
-static struct icnss_stub_context cnss_stub;
-
 #ifndef QCA_WIFI_3_0_ADRASTEA
 /**
  * icnss_wlan_enable() - icnss_wlan_enable
@@ -210,16 +205,6 @@ int icnss_ce_request_irq(int ce_id,
 	unsigned long flags, const char *name,
 	void *context)
 {
-	if (ce_id >= ICNSS_MAX_IRQ_REGISTRATIONS) {
-		HIF_ERROR("%s: invalid ce_id = %d", __func__, ce_id);
-		return -EINVAL;
-	}
-
-	cnss_stub.stub[ce_id].irq_handler = handler;
-	cnss_stub.stub[ce_id].ce_id = ce_id;
-	cnss_stub.stub[ce_id].data = context;
-	cnss_stub.stub[ce_id].name = name;
-	cnss_stub.regged_irq |= (1 << ce_id);
 	return 0;
 }
 
@@ -231,141 +216,12 @@ int icnss_ce_request_irq(int ce_id,
  */
 int icnss_ce_free_irq(int ce_id, void *context)
 {
-	if (ce_id >= ICNSS_MAX_IRQ_REGISTRATIONS) {
-		HIF_ERROR("%s: invalid ce_id = %d", __func__, ce_id);
-		return -EINVAL;
-	}
-
-	if (cnss_stub.stub[ce_id].data != context) {
-		HIF_ERROR("%s: context match failure for ce_id %d",
-		__func__, ce_id);
-		return -EINVAL;
-	}
-
-	if (cnss_stub.regged_irq & (1 << ce_id)) {
-		cnss_stub.stub[ce_id].irq_handler = NULL;
-		cnss_stub.stub[ce_id].ce_id = 0;
-		cnss_stub.stub[ce_id].data = 0;
-		cnss_stub.stub[ce_id].name = NULL;
-		cnss_stub.regged_irq &= ~(1 << ce_id);
-	}
 	return 0;
-}
-
-/**
- * icnss_dispatch_one_ce_irq() - icnss_dispatch_one_ce_irq
- * @ce_id: ce_id
- *
- * Return: irqreturn_t
- */
-static irqreturn_t icnss_dispatch_one_ce_irq(int ce_id)
-{
-	irqreturn_t ret = IRQ_NONE;
-
-	if (cnss_stub.stub[ce_id].irq_handler)
-		ret = cnss_stub.stub[ce_id].irq_handler(
-			icnss_get_irq_num(ce_id),
-			(void *)cnss_stub.stub[ce_id].data);
-	else
-		HIF_ERROR(
-			"%sd: error - ce_id = %d, no IRQ handler",
-			__func__, ce_id);
-
-	return ret;
-}
-
-/**
- * icnss_dispatch_ce_irq() - icnss_dispatch_ce_irq
- * @scn: scn
- *
- * Return: N/A
- */
-void icnss_dispatch_ce_irq(struct hif_softc *scn)
-{
-	uint32_t intr_summary;
-	int id;
-	irqreturn_t ret;
-
-	if (scn->hif_init_done != true)
-		return;
-
-	if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
-		return;
-
-	intr_summary = CE_INTERRUPT_SUMMARY(scn);
-
-	if (intr_summary == 0) {
-		if ((scn->target_status != OL_TRGET_STATUS_RESET) &&
-			(!qdf_atomic_read(&scn->link_suspended))) {
-
-			hif_write32_mb(scn->mem +
-				(SOC_CORE_BASE_ADDRESS |
-				PCIE_INTR_ENABLE_ADDRESS),
-				HOST_GROUP0_MASK);
-
-			hif_read32_mb(scn->mem +
-					(SOC_CORE_BASE_ADDRESS |
-					PCIE_INTR_ENABLE_ADDRESS));
-		}
-		Q_TARGET_ACCESS_END(scn);
-		return;
-	} else {
-		Q_TARGET_ACCESS_END(scn);
-	}
-
-	scn->ce_irq_summary = intr_summary;
-	for (id = 0; intr_summary && (id < scn->ce_count); id++) {
-		if (intr_summary & (1 << id)) {
-			intr_summary &= ~(1 << id);
-			ret = icnss_dispatch_one_ce_irq(id);
-		}
-	}
-}
-
-/**
- * icnss_get_soc_info() - get soc info
- *
- * This function query the soc information from the platform
- * driver
- *
- * @info: struct icnss_soc_info
- *
- * Return: 0 for success
- */
-int icnss_get_soc_info(void *hif_ctx, struct icnss_soc_info *info)
-{
-	struct hif_softc *scn = hif_ctx;
-
-	if (!scn) {
-		HIF_ERROR("%s: SCN = NULL", __func__);
-		return -EINVAL;
-	}
-
-	info->v_addr = scn->mem;
-	info->p_addr = scn->mem_pa;
-	info->version = 0;
-	return 0;
-}
-
-
-/* icnss_get_irq_num() - generate a number to represent an irq number
-*/
-static int icnss_get_irq_num(int ce_id)
-{
-	if (ce_id < CE_COUNT_MAX && ce_id >= 0)
-		return ce_id + 100;
-
-	pr_err("icnss: No irq registered for CE id %d\n", ce_id);
-	return -EINVAL;
 }
 
 int icnss_get_ce_id(int irq)
 {
-	int ce_id = irq - 100;
-	if (ce_id < CE_COUNT_MAX && ce_id >= 0)
-		return ce_id;
-
-	pr_err("icnss: No matching CE id for irq %d\n", irq);
+	pr_err("icnss: icnss not valid for pci %d\n", irq);
 	return -EINVAL;
 }
 #endif /* HIF_PCI */

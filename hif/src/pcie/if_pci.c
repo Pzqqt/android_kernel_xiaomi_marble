@@ -124,6 +124,54 @@ void hif_pci_route_adrastea_interrupt(struct hif_pci_softc *sc)
 }
 #endif
 
+/**
+ * pci_dispatch_ce_irq() - pci_dispatch_ce_irq
+ * @scn: scn
+ *
+ * Return: N/A
+ */
+static void pci_dispatch_interrupt(struct hif_softc *scn)
+{
+	uint32_t intr_summary;
+	int id;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+
+	if (scn->hif_init_done != true)
+		return;
+
+	if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+		return;
+
+	intr_summary = CE_INTERRUPT_SUMMARY(scn);
+
+	if (intr_summary == 0) {
+		if ((scn->target_status != OL_TRGET_STATUS_RESET) &&
+			(!qdf_atomic_read(&scn->link_suspended))) {
+
+			hif_write32_mb(scn->mem +
+				(SOC_CORE_BASE_ADDRESS |
+				PCIE_INTR_ENABLE_ADDRESS),
+				HOST_GROUP0_MASK);
+
+			hif_read32_mb(scn->mem +
+					(SOC_CORE_BASE_ADDRESS |
+					PCIE_INTR_ENABLE_ADDRESS));
+		}
+		Q_TARGET_ACCESS_END(scn);
+		return;
+	} else {
+		Q_TARGET_ACCESS_END(scn);
+	}
+
+	scn->ce_irq_summary = intr_summary;
+	for (id = 0; intr_summary && (id < scn->ce_count); id++) {
+		if (intr_summary & (1 << id)) {
+			intr_summary &= ~(1 << id);
+			ce_dispatch_interrupt(id,  &hif_state->tasklets[id]);
+		}
+	}
+}
+
 static irqreturn_t hif_pci_interrupt_handler(int irq, void *arg)
 {
 	struct hif_pci_softc *sc = (struct hif_pci_softc *)arg;
@@ -249,7 +297,7 @@ static irqreturn_t hif_pci_interrupt_handler(int irq, void *arg)
 		qdf_atomic_inc(&scn->active_tasklet_cnt);
 		tasklet_schedule(&sc->intr_tq);
 	} else {
-		icnss_dispatch_ce_irq(scn);
+		pci_dispatch_interrupt(scn);
 	}
 
 	return IRQ_HANDLED;

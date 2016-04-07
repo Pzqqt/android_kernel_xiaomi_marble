@@ -39,6 +39,7 @@
 #include "ce_api.h"
 #include "ce_reg.h"
 #include "ce_internal.h"
+#include "ce_tasklet.h"
 #ifdef CONFIG_CNSS
 #include <net/cnss.h>
 #include "platform_icnss.h"
@@ -249,20 +250,33 @@ void ce_tasklet_kill(struct hif_softc *scn)
 		}
 	qdf_atomic_set(&scn->active_tasklet_cnt, 0);
 }
+
 /**
- * ce_irq_handler() - ce_irq_handler
- * @ce_id: ce_id
+ * hif_snoc_interrupt_handler() - hif_snoc_interrupt_handler
+ * @irq: irq coming from kernel
  * @context: context
  *
  * Return: N/A
  */
-static irqreturn_t ce_irq_handler(int irq, void *context)
+static irqreturn_t hif_snoc_interrupt_handler(int irq, void *context)
 {
 	struct ce_tasklet_entry *tasklet_entry = context;
+	return ce_dispatch_interrupt(icnss_get_ce_id(irq), tasklet_entry);
+}
+
+/**
+ * ce_dispatch_interrupt() - dispatch an interrupt to a processing context
+ * @ce_id: ce_id
+ * @tasklet_entry: context
+ *
+ * Return: N/A
+ */
+irqreturn_t ce_dispatch_interrupt(int ce_id,
+				  struct ce_tasklet_entry *tasklet_entry)
+{
 	struct HIF_CE_state *hif_ce_state = tasklet_entry->hif_ce_state;
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ce_state);
 	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
-	int ce_id = icnss_get_ce_id(irq);
 
 	if (tasklet_entry->ce_id != ce_id) {
 		HIF_ERROR("%s: ce_id (expect %d, received %d) does not match",
@@ -354,7 +368,8 @@ QDF_STATUS ce_register_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 
 	for (id = 0; id < CE_COUNT_MAX; id++) {
 		if ((mask & (1 << id)) && hif_ce_state->tasklets[id].inited) {
-			ret = icnss_ce_request_irq(id, ce_irq_handler,
+			ret = icnss_ce_request_irq(id,
+				hif_snoc_interrupt_handler,
 				irqflags, ce_name[id],
 				&hif_ce_state->tasklets[id]);
 			if (ret) {
