@@ -129,10 +129,6 @@ ifeq ($(KERNEL_BUILD), 0)
                 CONFIG_LINUX_QCMBR :=y
         endif
 
-        ifeq ($(CONFIG_CNSS_EOS),y)
-        CONFIG_FEATURE_BMI_2 :=y
-        endif
-
 	CONFIG_MPC_UT_FRAMEWORK := y
 
 	#Flag to enable offload packets feature
@@ -675,11 +671,7 @@ BMI_INC := -I$(WLAN_ROOT)/$(BMI_DIR)/inc
 
 BMI_OBJS := $(BMI_DIR)/src/bmi.o \
             $(BMI_DIR)/src/ol_fw.o
-ifeq ($(CONFIG_FEATURE_BMI_2), y)
-BMI_OBJS += $(BMI_DIR)/src/bmi_2.o
-else
 BMI_OBJS += $(BMI_DIR)/src/bmi_1.o
-endif
 
 ########### WMI ###########
 WMI_ROOT_DIR := wmi
@@ -1013,10 +1005,6 @@ CDEFINES += -DFEATURE_NAPI
 ifeq ($(CONFIG_WLAN_NAPI_DEBUG), y)
 CDEFINES += -DFEATURE_NAPI_DEBUG
 endif
-endif
-
-ifeq ($(CONFIG_FEATURE_BMI_2), y)
-CDEFINES += -DFEATURE_BMI_2
 endif
 
 ifeq (y,$(findstring y,$(CONFIG_ARCH_MSM) $(CONFIG_ARCH_QCOM)))

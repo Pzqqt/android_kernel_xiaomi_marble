@@ -30,38 +30,6 @@
 
 /* APIs visible to the driver */
 
-/* BMI_1 refers QCA6174 target; the ADDR is AXI addr */
-#define BMI_1_TEST_ADDR	(0xa0000)
-/* BMI_2 ; */
-#define BMI_2_TEST_ADDR	(0x6E0000)
-/* Enable BMI_TEST COMMANDs; The Value 0x09 is randomly choosen */
-#define BMI_TEST_ENABLE (0x09)
-
-#ifndef CONFIG_CNSS
-#define SHOULD_RUN_BMI_TEST_COMMANDS false
-#else
-#define SHOULD_RUN_BMI_TEST_COMMANDS (BMI_TEST_ENABLE == cnss_get_bmi_setup())
-#endif
-
-static QDF_STATUS
-bmi_command_test(uint32_t command, uint32_t address, uint8_t *data,
-				uint32_t length, struct ol_context *ol_ctx)
-{
-	switch (command) {
-	case BMI_NO_COMMAND:
-		return bmi_no_command(ol_ctx);
-	case BMI_WRITE_MEMORY:
-		return bmi_write_memory(address, data, length, ol_ctx);
-	case BMI_READ_MEMORY:
-		return bmi_read_memory(address, data, length, ol_ctx);
-	case BMI_EXECUTE:
-		return bmi_execute(address, (uint32_t *)data, ol_ctx);
-	default:
-		break;
-	}
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS bmi_init(struct ol_context *ol_ctx)
 {
 	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
@@ -214,43 +182,6 @@ bmi_get_target_info(struct bmi_target_info *targ_info,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef FEATURE_BMI_2
-static inline uint32_t bmi_get_test_addr(void)
-{
-	return BMI_2_TEST_ADDR;
-}
-#else
-static inline uint32_t bmi_get_test_addr(void)
-{
-	return BMI_1_TEST_ADDR;
-}
-#endif
-
-/**
- * run_bmi_test() - run some bmi tests
- * @ol_ctx: bmi context
- *
- */
-static void run_bmi_test(struct ol_context *ol_ctx)
-{
-	uint8_t data[10], out[10];
-	uint32_t address;
-	int32_t ret;
-
-	ret = snprintf(data, 10, "ABCDEFGHI");
-	BMI_DBG("ret:%d writing data:%s\n", ret, data);
-	address = bmi_get_test_addr();
-
-	if (bmi_init(ol_ctx) != QDF_STATUS_SUCCESS) {
-		BMI_WARN("BMI_INIT Failed; No Memory!");
-		return;
-	}
-	bmi_command_test(BMI_NO_COMMAND, address, data, 9, ol_ctx);
-	bmi_command_test(BMI_WRITE_MEMORY, address, data, 9, ol_ctx);
-	bmi_command_test(BMI_READ_MEMORY, address, out, 9, ol_ctx);
-	BMI_DBG("Output:%s", out);
-}
-
 QDF_STATUS bmi_download_firmware(struct ol_context *ol_ctx)
 {
 	struct hif_opaque_softc *scn = ol_ctx->scn;
@@ -264,8 +195,6 @@ QDF_STATUS bmi_download_firmware(struct ol_context *ol_ctx)
 		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
-	if (SHOULD_RUN_BMI_TEST_COMMANDS)
-		run_bmi_test(ol_ctx);
 	return bmi_firmware_download(ol_ctx);
 }
 

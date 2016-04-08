@@ -1264,9 +1264,7 @@ QDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 		/* Execute the OTP code only if entry found and downloaded */
 		if (status == EOK) {
 			param = 0;
-#ifndef FEATURE_BMI_2
 			bmi_execute(address, &param, ol_ctx);
-#endif
 		} else if (status < 0) {
 			return status;
 		}
@@ -1275,9 +1273,7 @@ QDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 	if (ol_transfer_bin_file(ol_ctx, ATH_SETUP_FILE,
 		BMI_SEGMENTED_WRITE_ADDR, true) == EOK) {
 		param = 0;
-#ifndef FEATURE_BMI_2
 		bmi_execute(address, &param, ol_ctx);
-#endif
 	}
 
 	/* Download Target firmware
