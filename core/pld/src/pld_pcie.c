@@ -198,6 +198,48 @@ static void pld_pcie_notify_handler(struct pci_dev *pdev, int state)
 		pld_context->ops->modem_status(&pdev->dev,
 					       PLD_BUS_TYPE_PCIE, state);
 }
+
+#ifdef FEATURE_RUNTIME_PM
+/**
+ * pld_pcie_runtime_suspend() - PM runtime suspend
+ * @pdev: PCIE device
+ *
+ * PM runtime suspend callback function.
+ *
+ * Return: int
+ */
+static int pld_pcie_runtime_suspend(struct pci_dev *pdev)
+{
+	struct pld_context *pld_context;
+
+	pld_context = pld_get_global_context();
+	if (pld_context->ops->runtime_suspend)
+		return pld_context->ops->runtime_suspend(&pdev->dev,
+							 PLD_BUS_TYPE_PCIE);
+
+	return -ENODEV;
+}
+
+/**
+ * pld_pcie_runtime_resume() - PM runtime resume
+ * @pdev: PCIE device
+ *
+ * PM runtime resume callback function.
+ *
+ * Return: int
+ */
+static int pld_pcie_runtime_resume(struct pci_dev *pdev)
+{
+	struct pld_context *pld_context;
+
+	pld_context = pld_get_global_context();
+	if (pld_context->ops->runtime_resume)
+		return pld_context->ops->runtime_resume(&pdev->dev,
+							PLD_BUS_TYPE_PCIE);
+
+	return -ENODEV;
+}
+#endif
 #endif
 
 /**
@@ -246,6 +288,13 @@ static struct pci_device_id pld_pcie_id_table[] = {
 };
 
 #ifdef CONFIG_CNSS
+#ifdef FEATURE_RUNTIME_PM
+struct cnss_wlan_runtime_ops runtime_pm_ops = {
+	.runtime_suspend = pld_pcie_runtime_suspend,
+	.runtime_resume = pld_pcie_runtime_resume,
+};
+#endif
+
 struct cnss_wlan_driver pld_pcie_ops = {
 	.name       = "pld_pcie",
 	.id_table   = pld_pcie_id_table,
@@ -258,6 +307,9 @@ struct cnss_wlan_driver pld_pcie_ops = {
 #ifdef CONFIG_PM
 	.suspend    = pld_pcie_suspend,
 	.resume     = pld_pcie_resume,
+#endif
+#ifdef FEATURE_RUNTIME_PM
+	.runtime_ops = &runtime_pm_ops,
 #endif
 };
 
