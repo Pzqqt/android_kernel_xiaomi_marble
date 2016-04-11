@@ -621,8 +621,7 @@ void ol_target_failure(void *instance, QDF_STATUS status)
 	struct ol_config_info *ini_cfg = ol_get_ini_handle(ol_ctx);
 	int ret;
 #endif
-	ol_target_status target_status =
-			hif_get_target_status(scn);
+	enum hif_target_status target_status = hif_get_target_status(scn);
 
 	if (hif_get_bus_type(scn) == QDF_BUS_TYPE_SNOC) {
 		BMI_ERR("SNOC doesn't suppor this code path!");
@@ -631,12 +630,12 @@ void ol_target_failure(void *instance, QDF_STATUS status)
 
 	qdf_event_set(&wma->recovery_event);
 
-	if (OL_TRGET_STATUS_RESET == target_status) {
+	if (TARGET_STATUS_RESET == target_status) {
 		BMI_ERR("Target is already asserted, ignore!");
 		return;
 	}
 
-	hif_set_target_status(scn, OL_TRGET_STATUS_RESET);
+	hif_set_target_status(scn, TARGET_STATUS_RESET);
 
 	if (cds_is_driver_recovering()) {
 		BMI_ERR("%s: Recovery in progress, ignore!\n", __func__);

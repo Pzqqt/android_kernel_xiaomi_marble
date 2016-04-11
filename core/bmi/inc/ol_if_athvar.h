@@ -45,7 +45,6 @@
 #endif
 
 #include "ol_ctrl_addba_api.h"
-typedef void *hif_handle_t;
 
 struct ol_version {
 	uint32_t host_ver;
@@ -54,13 +53,6 @@ struct ol_version {
 	uint32_t wlan_ver_1;
 	uint32_t abi_ver;
 };
-
-typedef enum _ol_target_status {
-	OL_TRGET_STATUS_CONNECTED = 0,  /* target connected */
-	OL_TRGET_STATUS_RESET,  /* target got reset */
-	OL_TRGET_STATUS_EJECT,  /* target got ejected */
-	OL_TRGET_STATUS_SUSPEND /*target got suspend */
-} ol_target_status;
 
 enum ol_ath_tx_ecodes {
 	TX_IN_PKT_INCR = 0,
