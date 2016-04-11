@@ -1115,3 +1115,43 @@ int pld_get_ce_id(struct device *dev, int irq)
 
 	return ret;
 }
+
+/**
+ * pld_lock_pm_sem() - Lock PM semaphore
+ * @dev: device
+ *
+ * Return: void
+ */
+void pld_lock_pm_sem(struct device *dev)
+{
+	switch (pld_get_bus_type(dev)) {
+	case PLD_BUS_TYPE_PCIE:
+		cnss_lock_pm_sem();
+		break;
+	case PLD_BUS_TYPE_SNOC:
+		break;
+	default:
+		pr_err("Invalid device type\n");
+		break;
+	}
+}
+
+/**
+ * pld_release_pm_sem() - Release PM semaphore
+ * @dev: device
+ *
+ * Return: void
+ */
+void pld_release_pm_sem(struct device *dev)
+{
+	switch (pld_get_bus_type(dev)) {
+	case PLD_BUS_TYPE_PCIE:
+		cnss_release_pm_sem();
+		break;
+	case PLD_BUS_TYPE_SNOC:
+		break;
+	default:
+		pr_err("Invalid device type\n");
+		break;
+	}
+}

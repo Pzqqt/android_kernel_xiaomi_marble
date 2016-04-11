@@ -342,5 +342,7 @@ void pld_enable_irq(struct device *dev, unsigned int ce_id);
 void pld_disable_irq(struct device *dev, unsigned int ce_id);
 int pld_get_soc_info(struct device *dev, struct pld_soc_info *info);
 int pld_get_ce_id(struct device *dev, int irq);
+void pld_lock_pm_sem(struct device *dev);
+void pld_release_pm_sem(struct device *dev);
 
 #endif

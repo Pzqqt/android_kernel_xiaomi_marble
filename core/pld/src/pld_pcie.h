@@ -179,6 +179,14 @@ static inline int cnss_auto_resume(void)
 {
 	return 0;
 }
+static void cnss_lock_pm_sem(void)
+{
+	return;
+}
+static void cnss_release_pm_sem(void)
+{
+	return;
+}
 #else
 int pld_pcie_get_fw_files_for_target(struct pld_fw_files *pfw_files,
 				     u32 target_type, u32 target_version);
