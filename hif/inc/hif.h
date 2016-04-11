@@ -45,6 +45,7 @@ extern "C" {
 
 typedef struct htc_callbacks HTC_CALLBACKS;
 typedef void __iomem *A_target_id_t;
+typedef void *hif_handle_t;
 
 #define HIF_TYPE_AR6002   2
 #define HIF_TYPE_AR6003   3
@@ -373,6 +374,13 @@ struct hif_msg_callbacks {
 	void (*fwEventHandler)(void *context, QDF_STATUS status);
 };
 
+enum hif_target_status {
+	TARGET_STATUS_CONNECTED = 0,  /* target connected */
+	TARGET_STATUS_RESET,  /* target got reset */
+	TARGET_STATUS_EJECT,  /* target got ejected */
+	TARGET_STATUS_SUSPEND /*target got suspend */
+};
+
 #define HIF_DATA_ATTR_SET_TX_CLASSIFY(attr, v) \
 	(attr |= (v & 0x01) << 5)
 #define HIF_DATA_ATTR_SET_ENCAPSULATION_TYPE(attr, v) \
@@ -525,8 +533,9 @@ struct hif_target_info *hif_get_target_info_handle(struct hif_opaque_softc *
 						   scn);
 struct hif_config_info *hif_get_ini_handle(struct hif_opaque_softc *scn);
 struct ramdump_info *hif_get_ramdump_ctx(struct hif_opaque_softc *hif_ctx);
-ol_target_status hif_get_target_status(struct hif_opaque_softc *hif_ctx);
-void hif_set_target_status(struct hif_opaque_softc *hif_ctx, ol_target_status);
+enum hif_target_status hif_get_target_status(struct hif_opaque_softc *hif_ctx);
+void hif_set_target_status(struct hif_opaque_softc *hif_ctx, enum
+			   hif_target_status);
 void hif_init_ini_config(struct hif_opaque_softc *hif_ctx,
 			 struct hif_config_info *cfg);
 

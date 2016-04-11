@@ -33,7 +33,6 @@
 #include <linux/interrupt.h>
 
 #define ATH_DBG_DEFAULT   0
-#include <ol_if_athvar.h>
 #include "hif.h"
 #include "cepci.h"
 #include "ce_main.h"

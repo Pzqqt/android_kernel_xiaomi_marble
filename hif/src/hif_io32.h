@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -29,7 +29,6 @@
 #define __HIF_IO32_H__
 
 #include <linux/io.h>
-#include "ol_if_athvar.h"
 #include "hif.h"
 
 #define hif_read32_mb(addr)         ioread32((void __iomem *)addr)

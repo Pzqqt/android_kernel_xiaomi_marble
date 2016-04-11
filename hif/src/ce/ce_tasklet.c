@@ -201,7 +201,7 @@ static void ce_tasklet(unsigned long data)
 		return;
 	}
 
-	if (scn->target_status != OL_TRGET_STATUS_RESET)
+	if (scn->target_status != TARGET_STATUS_RESET)
 		hif_irq_enable(scn, tasklet_entry->ce_id);
 
 	hif_record_ce_desc_event(scn, tasklet_entry->ce_id, HIF_CE_TASKLET_EXIT,

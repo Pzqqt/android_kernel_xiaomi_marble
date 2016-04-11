@@ -31,7 +31,6 @@
 #include <linux/version.h>      /* We're doing kernel work */
 #include <linux/proc_fs.h>      /* Necessary because we use the proc fs */
 #include <asm/uaccess.h>        /* for copy_from_user */
-#include "ol_if_athvar.h"
 #include "hif.h"
 #if defined(HIF_USB)
 #include "if_usb.h"

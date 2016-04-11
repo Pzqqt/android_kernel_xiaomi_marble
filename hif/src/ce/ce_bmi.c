@@ -31,7 +31,6 @@
 #include "qdf_status.h"
 #include <qdf_atomic.h>         /* qdf_atomic_read */
 #include <targaddrs.h>
-#include <bmi_msg.h>
 #include "hif_io32.h"
 #include <hif.h>
 #include "regtable.h"

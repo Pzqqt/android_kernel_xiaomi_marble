@@ -31,10 +31,8 @@
 #include "qdf_status.h"
 #include <qdf_atomic.h>         /* qdf_atomic_read */
 #include <targaddrs.h>
-#include <bmi_msg.h>
 #include "hif_io32.h"
 #include <hif.h>
-#include <htc_services.h>
 #include "regtable.h"
 #define ATH_MODULE_NAME hif
 #include <a_debug.h>
@@ -610,7 +608,7 @@ void hif_crash_shutdown(struct hif_opaque_softc *hif_ctx)
 		return;
 	}
 
-	if (OL_TRGET_STATUS_RESET == scn->target_status) {
+	if (TARGET_STATUS_RESET == scn->target_status) {
 		HIF_INFO_MED("%s: Target is already asserted, ignore!",
 			    __func__);
 		return;
@@ -818,9 +816,9 @@ void hif_lro_flush_cb_deregister(struct hif_opaque_softc *scn)
  * hif_get_target_status - API to get target status
  * @hif_ctx: HIF Context
  *
- * Return: enum ol_target_status
+ * Return: enum hif_target_status
  */
-ol_target_status hif_get_target_status(struct hif_opaque_softc *hif_ctx)
+enum hif_target_status hif_get_target_status(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
@@ -834,8 +832,8 @@ ol_target_status hif_get_target_status(struct hif_opaque_softc *hif_ctx)
  *
  * Return: void
  */
-void hif_set_target_status(struct hif_opaque_softc *hif_ctx,
-			   ol_target_status status)
+void hif_set_target_status(struct hif_opaque_softc *hif_ctx, enum
+			   hif_target_status status)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 

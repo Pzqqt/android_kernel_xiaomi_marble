@@ -32,7 +32,8 @@
 #include "hif_main.h"
 #include "multibus.h"
 #include "ce_main.h"
-
+#include "htc_services.h"
+#include "a_types.h"
 /**
  * hif_intialize_default_ops() - intializes default operations values
  *

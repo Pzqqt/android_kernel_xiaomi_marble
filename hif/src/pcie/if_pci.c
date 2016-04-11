@@ -144,7 +144,7 @@ static void pci_dispatch_interrupt(struct hif_softc *scn)
 	intr_summary = CE_INTERRUPT_SUMMARY(scn);
 
 	if (intr_summary == 0) {
-		if ((scn->target_status != OL_TRGET_STATUS_RESET) &&
+		if ((scn->target_status != TARGET_STATUS_RESET) &&
 			(!qdf_atomic_read(&scn->link_suspended))) {
 
 			hif_write32_mb(scn->mem +
@@ -899,7 +899,7 @@ static void wlan_tasklet(unsigned long data)
 
 	if (!ADRASTEA_BU) {
 		(irqreturn_t) hif_fw_interrupt_handler(sc->irq_event, scn);
-		if (scn->target_status == OL_TRGET_STATUS_RESET)
+		if (scn->target_status == TARGET_STATUS_RESET)
 			goto end;
 	}
 
@@ -2029,7 +2029,7 @@ static void wlan_tasklet_msi(unsigned long data)
 	if (entry->id == HIF_MAX_TASKLET_NUM) {
 		/* the last tasklet is for fw IRQ */
 		(irqreturn_t)hif_fw_interrupt_handler(sc->irq_event, scn);
-		if (scn->target_status == OL_TRGET_STATUS_RESET)
+		if (scn->target_status == TARGET_STATUS_RESET)
 			goto irq_handled;
 	} else if (entry->id < scn->ce_count) {
 		ce_per_engine_service(scn, entry->id);
@@ -3320,7 +3320,7 @@ void hif_pci_irq_enable(struct hif_softc *scn, int ce_id)
 	if (scn->ce_irq_summary == 0) {
 		/* Enable Legacy PCI line interrupts */
 		if (LEGACY_INTERRUPTS(sc) &&
-			(scn->target_status != OL_TRGET_STATUS_RESET) &&
+			(scn->target_status != TARGET_STATUS_RESET) &&
 			(!qdf_atomic_read(&scn->link_suspended))) {
 
 			hif_write32_mb(scn->mem +

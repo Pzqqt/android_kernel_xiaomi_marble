@@ -117,7 +117,7 @@ struct hif_softc {
 	bool request_irq_done;
 	/* Packet statistics */
 	struct hif_ce_stats pkt_stats;
-	ol_target_status target_status;
+	enum hif_target_status target_status;
 
 	struct targetdef_s *targetdef;
 	struct ce_reg_def *target_ce_def;

@@ -25,14 +25,12 @@
  * to the Linux Foundation.
  */
 
-#include "bmi_msg.h"
 #include "targaddrs.h"
 #include "cepci.h"
 #include "regtable.h"
 #include "ar9888def.h"
 #include "ar6320def.h"
 #include "ar6320v2def.h"
-#include "ol_if_athvar.h"
 #include "hif_main.h"
 #include "adrastea_reg_def.h"
 

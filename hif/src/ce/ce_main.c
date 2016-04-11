@@ -30,7 +30,6 @@
 #include "qdf_status.h"
 #include <qdf_atomic.h>         /* qdf_atomic_read */
 #include <targaddrs.h>
-#include <bmi_msg.h>
 #include "hif_io32.h"
 #include <hif.h>
 #include "regtable.h"
@@ -1132,8 +1131,7 @@ hif_pci_ce_send_done(struct CE_handle *copyeng, void *ce_context,
 		 * when last fragment is complteted.
 		 */
 		if (transfer_context != CE_SENDLIST_ITEM_CTXT) {
-			if (scn->target_status
-					== OL_TRGET_STATUS_RESET)
+			if (scn->target_status == TARGET_STATUS_RESET)
 				qdf_nbuf_free(transfer_context);
 			else
 				msg_callbacks->txCompletionHandler(
@@ -1208,7 +1206,7 @@ hif_pci_ce_recv_data(struct CE_handle *copyeng, void *ce_context,
 
 		atomic_inc(&pipe_info->recv_bufs_needed);
 		hif_post_recv_buffers_for_pipe(pipe_info);
-		if (scn->target_status == OL_TRGET_STATUS_RESET)
+		if (scn->target_status == TARGET_STATUS_RESET)
 			qdf_nbuf_free(transfer_context);
 		else
 			hif_ce_do_recv(msg_callbacks, transfer_context,
