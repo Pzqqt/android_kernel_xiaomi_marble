@@ -29,9 +29,9 @@
 #define __CNSS_STUB_H__
 
 #ifndef CONFIG_CNSS
-inline void cnss_wlan_pci_link_down(void) {}
+static inline void cnss_wlan_pci_link_down(void) {}
 
-inline int cnss_pcie_shadow_control(struct pci_dev *dev, bool enable)
+static inline int cnss_pcie_shadow_control(struct pci_dev *dev, bool enable)
 {
 	return 0;
 }
