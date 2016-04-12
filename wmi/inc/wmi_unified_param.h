@@ -1061,6 +1061,10 @@ struct roam_offload_scan_params {
  *                            unit is dB above NF
  * @roam_earlystop_thres_max: Maximum RSSI threshold value for early stop,
  *                            unit is dB above NF
+ * @dense_rssi_thresh_offset: dense roam RSSI threshold difference
+ * @dense_min_aps_cnt: dense roam minimum APs
+ * @initial_dense_status: dense status detected by host
+ * @traffic_threshold: dense roam RSSI threshold
  */
 struct roam_offload_scan_rssi_params {
 	int8_t rssi_thresh;
@@ -1079,6 +1083,10 @@ struct roam_offload_scan_rssi_params {
 	uint32_t good_rssi_threshold;
 	uint32_t roam_earlystop_thres_min;
 	uint32_t roam_earlystop_thres_max;
+	int dense_rssi_thresh_offset;
+	int dense_min_aps_cnt;
+	int initial_dense_status;
+	int traffic_threshold;
 };
 
 /**
