@@ -236,4 +236,5 @@ static inline bool __qdf_is_macaddr_equal(struct qdf_mac_addr *mac_addr1,
 #define __qdf_rmb()                rmb()
 #define __qdf_mb()                 mb()
 
+#define __qdf_roundup(x, y) roundup(x, y)
 #endif /*_I_QDF_UTIL_H*/

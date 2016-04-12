@@ -112,6 +112,14 @@ static inline int qdf_status_to_os_return(QDF_STATUS status)
  */
 #define QDF_IS_PWR2(value) (((value) ^ ((value)-1)) == ((value) << 1) - 1)
 
+/**
+ * qdf_roundup() - roundup the input value
+ * @x: value to roundup
+ * @y: input value rounded to multiple of this
+ *
+ * Return: rounded value
+ */
+#define qdf_roundup(x, y) __qdf_roundup(x, y)
 
 /**
  * qdf_is_macaddr_equal() - compare two QDF MacAddress
