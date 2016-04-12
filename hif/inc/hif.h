@@ -54,7 +54,6 @@ typedef void __iomem *A_target_id_t;
 #define HIF_TYPE_AR6320V2 8
 /* For attaching Peregrine 2.0 board host_reg_tbl only */
 #define HIF_TYPE_AR9888V2 8
-#define HIF_TYPE_QCA6180  9
 #define HIF_TYPE_ADRASTEA 10
 
 #define TARGET_TYPE_UNKNOWN   0
@@ -76,8 +75,6 @@ typedef void __iomem *A_target_id_t;
 #define TARGET_TYPE_AR6320V3    13
 /* For Tufello1.0 target_reg_tbl ID*/
 #define TARGET_TYPE_QCA9377V1   14
-/* For QCA6180 target */
-#define TARGET_TYPE_QCA6180     15
 /* For Adrastea target */
 #define TARGET_TYPE_ADRASTEA     16
 

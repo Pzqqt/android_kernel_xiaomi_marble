@@ -1993,42 +1993,6 @@ bool ce_check_rx_pending(struct CE_state *CE_state)
 		return false;
 }
 
-/**
- * ce_enable_msi(): write the msi configuration to the target
- * @scn: hif context
- * @CE_id: which copy engine will be configured for msi interupts
- * @msi_addr_lo: Hardware will write to this address to generate an interrupt
- * @msi_addr_hi: Hardware will write to this address to generate an interrupt
- * @msi_data: Hardware will write this data to generate an interrupt
- *
- * should be done in the initialization sequence so no locking would be needed
- */
-void ce_enable_msi(struct hif_softc *scn, unsigned int CE_id,
-				   uint32_t msi_addr_lo, uint32_t msi_addr_hi,
-				   uint32_t msi_data)
-{
-#ifdef WLAN_ENABLE_QCA6180
-	struct CE_state *CE_state;
-	A_target_id_t targid;
-	u_int32_t ctrl_addr;
-	uint32_t tmp;
-
-	CE_state = scn->ce_id_to_state[CE_id];
-	if (!CE_state) {
-		HIF_ERROR("%s: error - CE_state = NULL", __func__);
-		return;
-	}
-	targid = TARGID(sc);
-	ctrl_addr = CE_state->ctrl_addr;
-	CE_MSI_ADDR_LOW_SET(scn, ctrl_addr, msi_addr_lo);
-	CE_MSI_ADDR_HIGH_SET(scn, ctrl_addr, msi_addr_hi);
-	CE_MSI_DATA_SET(scn, ctrl_addr, msi_data);
-	tmp = CE_CTRL_REGISTER1_GET(scn, ctrl_addr);
-	tmp |= (1 << CE_MSI_ENABLE_BIT);
-	CE_CTRL_REGISTER1_SET(scn, ctrl_addr, tmp);
-#endif
-}
-
 #ifdef IPA_OFFLOAD
 /**
  * ce_ipa_get_resource() - get uc resource on copyengine

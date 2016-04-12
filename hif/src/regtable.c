@@ -32,7 +32,6 @@
 #include "ar9888def.h"
 #include "ar6320def.h"
 #include "ar6320v2def.h"
-#include "qca6180def.h"
 #include "ol_if_athvar.h"
 #include "hif_main.h"
 #include "adrastea_reg_def.h"
@@ -51,10 +50,6 @@ void target_register_tbl_attach(struct hif_softc *scn, u32 target_type)
 	case TARGET_TYPE_AR6320V2:
 		scn->targetdef = &ar6320v2_targetdef;
 		scn->target_ce_def = &ar6320v2_ce_targetdef;
-		break;
-	case TARGET_TYPE_QCA6180:
-		scn->targetdef = &qca6180_targetdef;
-		scn->target_ce_def = &qca6180_ce_targetdef;
 		break;
 	case TARGET_TYPE_ADRASTEA:
 		scn->targetdef = &adrastea_targetdef;
@@ -76,10 +71,6 @@ void hif_register_tbl_attach(struct hif_softc *scn, u32 hif_type)
 		break;
 	case HIF_TYPE_AR6320V2:
 		scn->hostdef = &ar6320v2_hostdef;
-		break;
-	case HIF_TYPE_QCA6180:
-		scn->hostdef = &qca6180_hostdef;
-		scn->host_shadow_regs = &qca6180_host_shadow_regs;
 		break;
 	case HIF_TYPE_ADRASTEA:
 		scn->hostdef = &adrastea_hostdef;

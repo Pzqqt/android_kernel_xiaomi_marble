@@ -563,8 +563,9 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 			dma_addr = src_ring->base_addr_CE_space;
 			CE_SRC_RING_BASE_ADDR_SET(scn, ctrl_addr,
 				 (uint32_t)(dma_addr & 0xFFFFFFFF));
-#ifdef WLAN_ENABLE_QCA6180
-			{
+
+			/* if SR_BA_ADDRESS_HIGH register exists */
+			if (SR_BA_ADDRESS_HIGH) {
 				uint32_t tmp;
 				tmp = CE_SRC_RING_BASE_ADDR_HIGH_GET(
 				   scn, ctrl_addr);
@@ -573,7 +574,6 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 				CE_SRC_RING_BASE_ADDR_HIGH_SET(scn,
 					 ctrl_addr, (uint32_t)dma_addr);
 			}
-#endif
 			CE_SRC_RING_SZ_SET(scn, ctrl_addr, nentries);
 			CE_SRC_RING_DMAX_SET(scn, ctrl_addr, attr->src_sz_max);
 #ifdef BIG_ENDIAN_HOST
@@ -696,8 +696,9 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 			dma_addr = dest_ring->base_addr_CE_space;
 			CE_DEST_RING_BASE_ADDR_SET(scn, ctrl_addr,
 				 (uint32_t)(dma_addr & 0xFFFFFFFF));
-#ifdef WLAN_ENABLE_QCA6180
-			{
+
+			/* if DR_BA_ADDRESS_HIGH exists */
+			if (DR_BA_ADDRESS_HIGH) {
 				uint32_t tmp;
 				tmp = CE_DEST_RING_BASE_ADDR_HIGH_GET(scn,
 						ctrl_addr);
@@ -706,7 +707,7 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 				CE_DEST_RING_BASE_ADDR_HIGH_SET(scn,
 					ctrl_addr, (uint32_t)dma_addr);
 			}
-#endif
+
 			CE_DEST_RING_SZ_SET(scn, ctrl_addr, nentries);
 #ifdef BIG_ENDIAN_HOST
 			/* Enable Dest ring byte swap for big endian host */

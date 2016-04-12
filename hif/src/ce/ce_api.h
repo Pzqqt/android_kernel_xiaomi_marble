@@ -296,11 +296,6 @@ unsigned int ce_recv_entries_done(struct CE_handle *copyeng);
 /* Data is byte-swapped */
 #define CE_RECV_FLAG_SWAPPED            1
 
-void ce_enable_msi(struct hif_softc *scn,
-		   unsigned int CE_id,
-		   uint32_t msi_addr_lo,
-		   uint32_t msi_addr_hi,
-		   uint32_t msi_data);
 /*
  * Supply data for the next completed unprocessed receive descriptor.
  *

@@ -289,8 +289,6 @@ uint32_t hif_hia_item_address(uint32_t target_type, uint32_t item_offset)
 	case TARGET_TYPE_AR6320:
 	case TARGET_TYPE_AR6320V2:
 		return AR6320_HOST_INTEREST_ADDRESS + item_offset;
-	case TARGET_TYPE_QCA6180:
-		return QCA6180_HOST_INTEREST_ADDRESS + item_offset;
 	case TARGET_TYPE_ADRASTEA:
 		/* ADRASTEA doesn't have a host interest address */
 		ASSERT(0);
@@ -687,19 +685,12 @@ int hif_get_device_type(uint32_t device_id,
 	int ret = 0;
 
 	switch (device_id) {
-#ifdef QCA_WIFI_3_0_ADRASTEA
 	case ADRASTEA_DEVICE_ID:
 	case ADRASTEA_DEVICE_ID_P2_E12:
 
 		*hif_type = HIF_TYPE_ADRASTEA;
 		*target_type = TARGET_TYPE_ADRASTEA;
 		break;
-#else
-	case QCA6180_DEVICE_ID:
-		*hif_type = HIF_TYPE_QCA6180;
-		*target_type = TARGET_TYPE_QCA6180;
-		break;
-#endif
 
 	case AR9888_DEVICE_ID:
 		*hif_type = HIF_TYPE_AR9888;
