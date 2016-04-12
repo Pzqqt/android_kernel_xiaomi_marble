@@ -5109,6 +5109,41 @@ int wma_bus_resume(void)
 }
 
 /**
+ * wma_suspend_target_timeout() - Handles the target suspend timeout
+ * @is_self_recovery_enabled: Is self recovery enabled or not
+ *
+ * Return: NONE
+ */
+#ifdef QCA_WIFI_3_0_ADRASTEA
+static inline void wma_suspend_target_timeout(bool is_self_recovery_enabled)
+{
+	if (cds_is_driver_recovering()) {
+		WMA_LOGE("%s: recovery is in progress, ignore!", __func__);
+	} else {
+		if (is_self_recovery_enabled) {
+			cds_trigger_recovery();
+		} else {
+			QDF_BUG(0);
+		}
+	}
+}
+#else /* ROME chipset */
+static inline void wma_suspend_target_timeout(bool is_self_recovery_enabled)
+{
+	if (cds_is_load_or_unload_in_progress() || cds_is_driver_recovering()) {
+		WMA_LOGE("%s: Unloading/Loading/recovery is in progress, Ignore!",
+			 __func__);
+	} else {
+		if (is_self_recovery_enabled) {
+			cds_trigger_recovery();
+		} else {
+			QDF_BUG(0);
+		}
+	}
+}
+#endif
+
+/**
  * wma_suspend_target() - suspend target
  * @handle: wma handle
  * @disable_target_intr: disable target interrupt
@@ -5152,17 +5187,7 @@ QDF_STATUS wma_suspend_target(WMA_HANDLE handle, int disable_target_intr)
 	    != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to get ACK from firmware for pdev suspend");
 		wmi_set_target_suspend(wma_handle->wmi_handle, false);
-#ifdef CONFIG_CNSS
-		if (!cds_is_driver_recovering()) {
-			if (pmac->sme.enableSelfRecovery) {
-				cds_trigger_recovery();
-			} else {
-				QDF_BUG(0);
-			}
-		} else {
-			WMA_LOGE("%s: LOGP is in progress, ignore!", __func__);
-		}
-#endif
+		wma_suspend_target_timeout(pmac->sme.enableSelfRecovery);
 		return QDF_STATUS_E_FAULT;
 	}
 
