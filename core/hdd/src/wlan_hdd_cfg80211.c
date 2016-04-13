@@ -3154,6 +3154,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	u32 modulated_dtim;
 	u16 stats_avg_factor;
 	u32 guard_time;
+	u32 ftm_capab;
 	QDF_STATUS status;
 
 	ENTER_DEV(dev);
@@ -3174,6 +3175,18 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		      wlan_hdd_wifi_config_policy)) {
 		hddLog(LOGE, FL("invalid attr"));
 		return -EINVAL;
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_FINE_TIME_MEASUREMENT]) {
+		ftm_capab = nla_get_u32(tb[
+			QCA_WLAN_VENDOR_ATTR_CONFIG_FINE_TIME_MEASUREMENT]);
+		hdd_ctx->config->fine_time_meas_cap =
+			hdd_ctx->fine_time_meas_cap_target & ftm_capab;
+		sme_update_fine_time_measurement_capab(hdd_ctx->hHal,
+			hdd_ctx->config->fine_time_meas_cap);
+		hdd_info("FTM capability: user value: 0x%x, target value: 0x%x, final value: 0x%x",
+			 ftm_capab, hdd_ctx->fine_time_meas_cap_target,
+			 hdd_ctx->config->fine_time_meas_cap);
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_MODULATED_DTIM]) {

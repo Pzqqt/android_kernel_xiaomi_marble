@@ -1332,6 +1332,11 @@ struct hdd_context_s {
 	 * switch.
 	 */
 	struct mutex dfs_lock;
+	/*
+	 * place to store FTM capab of target. This allows changing of FTM capab
+	 * at runtime and intersecting it with target capab before updating.
+	 */
+	uint32_t fine_time_meas_cap_target;
 };
 
 /*---------------------------------------------------------------------------
