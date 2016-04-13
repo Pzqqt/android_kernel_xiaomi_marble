@@ -42,17 +42,6 @@
 #include "hif_main.h"
 #include "hif_debug.h"
 
-/**
- * Following features are not supported for snoc bus
- * Force 0 and consider moving corresponding code into
- * pci specific files
- */
-#define ADRASTEA_CE_INTR_ENABLES 0x002F00A8
-#define ADRASTEA_CE_INTR_ENABLES_SET "COMING IN REGISTER SET36"
-#define ADRASTEA_CE_INTR_ENABLES_CLEAR "COMING IN REGISTER SET36"
-
-#define ADRASTEA_CE_INTR_STATUS 0x002F00AC
-
 static inline void ce_enable_irq_in_individual_register(struct hif_softc *scn,
 		int ce_id)
 {
@@ -69,61 +58,5 @@ static inline void ce_disable_irq_in_individual_register(struct hif_softc *scn,
 	offset = HOST_IE_ADDRESS + CE_BASE_ADDRESS(ce_id);
 	hif_write32_mb(scn->mem + offset, 0);
 	hif_read32_mb(scn->mem + offset);
-}
-
-static inline void ce_read_irq_group_status(struct hif_softc *scn)
-{
-	uint32_t group_status = 0;
-	group_status = hif_read32_mb(scn->mem +
-			ADRASTEA_CE_INTR_STATUS);
-}
-
-static inline void ce_clear_irq_group_status(struct hif_softc *scn, int mask)
-{
-	uint32_t group_status = 0;
-	group_status = hif_read32_mb(scn->mem +
-			ADRASTEA_CE_INTR_STATUS);
-
-	hif_write32_mb(scn->mem +
-			ADRASTEA_CE_INTR_STATUS, mask);
-
-	group_status = hif_read32_mb(scn->mem +
-			ADRASTEA_CE_INTR_STATUS);
-}
-
-/* this will need to be changed when we move to reg set 36
- * because we will have set & clear registers provided
- */
-static inline void ce_enable_irq_in_group_reg(struct hif_softc *scn,
-		int mask)
-{
-	int new_mask = 0;
-	new_mask = hif_read32_mb(scn->mem +
-			ADRASTEA_CE_INTR_ENABLES);
-
-	new_mask |= mask;
-
-	hif_write32_mb(scn->mem +
-			ADRASTEA_CE_INTR_ENABLES, new_mask);
-	mask = hif_read32_mb(scn->mem +
-			ADRASTEA_CE_INTR_ENABLES);
-}
-
-/* this will need to be changed when we move to reg set 36
- * because we will have set & clear registers provided
- */
-static inline void ce_disable_irq_in_group_reg(struct hif_softc *scn,
-		int mask)
-{
-	int new_mask = 0;
-	new_mask = hif_read32_mb(scn->mem +
-			ADRASTEA_CE_INTR_ENABLES);
-
-	new_mask &= ~mask;
-
-	hif_write32_mb(scn->mem +
-			ADRASTEA_CE_INTR_ENABLES, new_mask);
-	mask = hif_read32_mb(scn->mem +
-			ADRASTEA_CE_INTR_ENABLES);
 }
 #endif

@@ -267,9 +267,7 @@ void hif_snoc_nointrs(struct hif_softc *scn)
 void hif_snoc_irq_enable(struct hif_softc *scn,
 		int ce_id)
 {
-	icnss_enable_irq(ce_id);
 	ce_enable_irq_in_individual_register(scn, ce_id);
-	ce_enable_irq_in_group_reg(scn, 1<<ce_id);
 }
 
 /**
@@ -281,7 +279,5 @@ void hif_snoc_irq_enable(struct hif_softc *scn,
  */
 void hif_snoc_irq_disable(struct hif_softc *scn, int ce_id)
 {
-	ce_disable_irq_in_group_reg(scn, 1<<ce_id);
-	ce_clear_irq_group_status(scn, 1<<ce_id);
 	ce_disable_irq_in_individual_register(scn, ce_id);
 }
