@@ -103,9 +103,7 @@ static uint32_t hdd_napi_get_map(void)
  */
 int hdd_napi_create(void)
 {
-	struct hif_opaque_softc *hif_ctx;
-	uint8_t ul, dl;
-	int     ul_polled, dl_polled;
+	struct  hif_opaque_softc *hif_ctx;
 	int     rc = 0;
 
 	NAPI_DEBUG("-->");
@@ -115,30 +113,15 @@ int hdd_napi_create(void)
 		QDF_ASSERT(NULL != hif_ctx);
 		rc = -EFAULT;
 	} else {
-		/*
-		 * Note: hif_service_to_pipe returns one pipe id per service.
-		 * For multi-queue NAPI for Adrastea, we will use multiple
-		 * services/calls.
-		 * For Rome, there is only one service, hence a single call
-		 */
-		if (QDF_STATUS_SUCCESS !=
-		    hif_map_service_to_pipe(hif_ctx, HTT_DATA_MSG_SVC,
-					    &ul, &dl, &ul_polled, &dl_polled)) {
-			hdd_err("cannot map service to pipe");
-			rc = -EINVAL;
-		} else {
-			rc = hif_napi_create(hif_ctx, dl, hdd_napi_poll,
-					     QCA_NAPI_BUDGET,
-					     QCA_NAPI_DEF_SCALE);
-			if (rc < 0)
-				hdd_err("ERR(%d) creating NAPI on pipe %d",
-					rc, dl);
-			else {
-				hdd_info("napi instance %d created on pipe %d",
-					 rc, dl);
-				/* rc = (0x01 << rc); -- phase 2 */
-			}
-		}
+		rc = hif_napi_create(hif_ctx, hdd_napi_poll,
+				     QCA_NAPI_BUDGET,
+				     QCA_NAPI_DEF_SCALE);
+		if (rc < 0)
+			hdd_err("ERR(%d) creating NAPI instances",
+				rc);
+		else
+			hdd_info("napi instances were created. Map=0x%x", rc);
+
 	}
 	NAPI_DEBUG("<-- [rc=%d]", rc);
 

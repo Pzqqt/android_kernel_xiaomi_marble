@@ -245,8 +245,16 @@ static int hdd_hif_open(struct device *dev, void *bdev, const hif_bus_id *bid,
 		goto err_hif_close;
 	}
 
-	ret = hdd_napi_create();
-	if (hdd_napi_enabled(HDD_NAPI_ANY)) {
+	status = hif_enable(hif_ctx, dev, bdev, bid, bus_type,
+			    (reinit == true) ?  HIF_ENABLE_TYPE_REINIT :
+			    HIF_ENABLE_TYPE_PROBE);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("hif_enable error = %d, reinit = %d",
+			status, reinit);
+		ret = qdf_status_to_os_return(status);
+		goto err_hif_close;
+	} else {
+		ret = hdd_napi_create();
 		hdd_info("hdd_napi_create returned: %d", ret);
 		if (ret <= 0) {
 			hdd_err("NAPI creation error, rc: 0x%x, reinit = %d",
@@ -256,20 +264,7 @@ static int hdd_hif_open(struct device *dev, void *bdev, const hif_bus_id *bid,
 		}
 	}
 
-	status = hif_enable(hif_ctx, dev, bdev, bid, bus_type,
-			    (reinit == true) ?  HIF_ENABLE_TYPE_REINIT :
-			    HIF_ENABLE_TYPE_PROBE);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("hif_enable error = %d, reinit = %d",
-			status, reinit);
-		ret = qdf_status_to_os_return(status);
-		goto err_napi_destroy;
-	}
-
 	return 0;
-
-err_napi_destroy:
-	hdd_napi_destroy(true);
 
 err_hif_close:
 	hdd_deinit_cds_hif_context();
