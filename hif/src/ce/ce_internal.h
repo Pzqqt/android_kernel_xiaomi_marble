@@ -357,8 +357,18 @@ struct ce_sendlist_s {
 	} item[CE_SENDLIST_ITEMS_MAX];
 };
 
+#ifdef WLAN_FEATURE_FASTPATH
 void ce_h2t_tx_ce_cleanup(struct CE_handle *ce_hdl);
 void ce_t2h_msg_ce_cleanup(struct CE_handle *ce_hdl);
+#else
+static inline void ce_h2t_tx_ce_cleanup(struct CE_handle *ce_hdl)
+{
+}
+
+static inline void ce_t2h_msg_ce_cleanup(struct CE_handle *ce_hdl)
+{
+}
+#endif
 
 /* which ring of a CE? */
 #define CE_RING_SRC  0

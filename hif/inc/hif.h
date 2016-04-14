@@ -308,6 +308,8 @@ QDF_STATUS hif_diag_write_access(struct hif_opaque_softc *scn, uint32_t address,
 QDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *scn, uint32_t address,
 		       uint8_t *data, int nbytes);
 
+typedef void (*fastpath_msg_handler)(void *, qdf_nbuf_t *, uint32_t);
+
 /*
  * Set the FASTPATH_mode_on flag in sc, for use by data path
  */
@@ -315,8 +317,14 @@ QDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *scn, uint32_t address,
 void hif_enable_fastpath(struct hif_opaque_softc *hif_ctx);
 bool hif_is_fastpath_mode_enabled(struct hif_opaque_softc *hif_ctx);
 void *hif_get_ce_handle(struct hif_opaque_softc *hif_ctx, int);
+int hif_ce_fastpath_cb_register(fastpath_msg_handler handler, void *context);
+#else
+static inline int hif_ce_fastpath_cb_register(fastpath_msg_handler handler,
+					      void *context)
+{
+	return QDF_STATUS_E_FAILURE;
+}
 #endif
-void hif_update_fastpath_recv_bufs_cnt(struct hif_opaque_softc *scn);
 
 /*
  * Enable/disable CDC max performance workaround
@@ -385,10 +393,6 @@ struct hif_msg_callbacks {
 
 struct hif_bus_id;
 typedef struct hif_bus_id hif_bus_id;
-
-typedef int (*fastpath_msg_handler)(void *, qdf_nbuf_t *, uint32_t);
-int
-hif_ce_fastpath_cb_register(fastpath_msg_handler, void *context);
 
 void hif_post_init(struct hif_opaque_softc *scn, void *hHTC,
 		   struct hif_msg_callbacks *callbacks);
@@ -515,8 +519,6 @@ void hif_set_target_status(struct hif_opaque_softc *hif_ctx, ol_target_status);
 void hif_init_ini_config(struct hif_opaque_softc *hif_ctx,
 			 struct hif_config_info *cfg);
 
-bool ce_is_fastpath_enabled(struct hif_opaque_softc *scn);
-bool ce_is_fastpath_handler_registered(struct CE_state *ce_state);
 #ifdef __cplusplus
 }
 #endif

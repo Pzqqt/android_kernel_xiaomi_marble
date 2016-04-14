@@ -184,16 +184,4 @@ static inline unsigned char *os_malloc(osdev_t nic_dev,
 #define    SET_NETDEV_DEV(ndev, pdev)
 #endif
 
-#define OS_SYNC_SINGLE_FOR_CPU(pdev, paddr_lo, len, oprn)  \
-{						           \
-	dma_sync_single_for_cpu(pdev, paddr_lo, len, oprn); \
-}
-
-#define OS_SYNC_SINGLE_FOR_DEVICE(pdev, paddr_lo, len, oprn) \
-{							     \
-	dma_sync_single_for_device(pdev, paddr_lo, len, oprn);\
-}
-
-#define SLOTS_PER_TX 2
-
 #endif /* end of _OSDEP_H */

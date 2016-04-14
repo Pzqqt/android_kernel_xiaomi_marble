@@ -276,6 +276,10 @@ void qdf_mem_dma_sync_single_for_device(qdf_device_t osdev,
 					qdf_size_t size,
 					__dma_data_direction direction);
 
+void qdf_mem_dma_sync_single_for_cpu(qdf_device_t osdev,
+					qdf_dma_addr_t bus_addr,
+					qdf_size_t size,
+					__dma_data_direction direction);
 /**
  * qdf_str_len() - returns the length of a string
  * @str: input string

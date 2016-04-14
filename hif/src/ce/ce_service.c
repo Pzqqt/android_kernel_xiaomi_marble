@@ -36,9 +36,6 @@
 #include "epping_main.h"
 #include "hif_main.h"
 #include "hif_debug.h"
-#include "ol_txrx_types.h"
-#include <cds_api.h>
-#include <osdep.h>
 
 #ifdef IPA_OFFLOAD
 #ifdef QCA_WIFI_3_0
@@ -528,14 +525,30 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t *msdus,
 	u_int32_t ctrl_addr = ce_state->ctrl_addr;
 	unsigned int nentries_mask = src_ring->nentries_mask;
 	unsigned int write_index;
+	unsigned int sw_index;
 	unsigned int frag_len;
 	qdf_nbuf_t msdu;
 	int i;
 	uint64_t dma_addr;
-	uint32_t user_flags = 0;
+	uint32_t user_flags;
 
 	qdf_spin_lock_bh(&ce_state->ce_index_lock);
+	Q_TARGET_ACCESS_BEGIN(scn);
+
+	src_ring->sw_index = CE_SRC_RING_READ_IDX_GET_FROM_DDR(scn, ctrl_addr);
 	write_index = src_ring->write_index;
+	sw_index = src_ring->sw_index;
+
+	if (qdf_unlikely(CE_RING_DELTA(nentries_mask, write_index, sw_index - 1)
+			 < (SLOTS_PER_DATAPATH_TX * num_msdus))) {
+		HIF_ERROR("Source ring full, required %d, available %d",
+		      (SLOTS_PER_DATAPATH_TX * num_msdus),
+		      CE_RING_DELTA(nentries_mask, write_index, sw_index - 1));
+		OL_ATH_CE_PKT_ERROR_COUNT_INCR(scn, CE_RING_DELTA_FAIL);
+		Q_TARGET_ACCESS_END(scn);
+		qdf_spin_unlock_bh(&ce_state->ce_index_lock);
+		return 0;
+	}
 
 	/* 2 msdus per packet */
 	for (i = 0; i < num_msdus; i++) {
@@ -631,6 +644,7 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t *msdus,
 		}
 	}
 
+	Q_TARGET_ACCESS_END(scn);
 	qdf_spin_unlock_bh(&ce_state->ce_index_lock);
 
 	/*
@@ -640,6 +654,44 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t *msdus,
 	 */
 	ASSERT(i == num_msdus);
 	return i;
+}
+
+/**
+ * ce_is_fastpath_enabled() - returns true if fastpath mode is enabled
+ * @scn: Handle to HIF context
+ *
+ * Return: true if fastpath is enabled else false.
+ */
+static bool ce_is_fastpath_enabled(struct hif_softc *scn)
+{
+	return scn->fastpath_mode_on;
+}
+
+/**
+ * ce_is_fastpath_handler_registered() - return true for datapath CEs and if
+ * fastpath is enabled.
+ * @ce_state: handle to copy engine
+ *
+ * Return: true if fastpath handler is registered for datapath CE.
+ */
+static bool ce_is_fastpath_handler_registered(struct CE_state *ce_state)
+{
+	if (ce_state->fastpath_handler)
+		return true;
+	else
+		return false;
+}
+
+
+#else
+static inline bool ce_is_fastpath_enabled(struct hif_softc *scn)
+{
+	return false;
+}
+
+static inline bool ce_is_fastpath_handler_registered(struct CE_state *ce_state)
+{
+	return false;
 }
 #endif /* WLAN_FEATURE_FASTPATH */
 
@@ -675,9 +727,7 @@ ce_recv_buf_enqueue(struct CE_handle *copyeng,
 	}
 
 	if ((CE_RING_DELTA(nentries_mask, write_index, sw_index - 1) > 0) ||
-	    (ce_is_fastpath_enabled((struct hif_opaque_softc *)scn) &&
-	     CE_state->htt_rx_data &&
-	     (CE_RING_DELTA(nentries_mask, write_index, sw_index - 1) == 0))) {
+	    (ce_is_fastpath_enabled(scn) && CE_state->htt_rx_data)) {
 		struct CE_dest_desc *dest_ring_base =
 			(struct CE_dest_desc *)dest_ring->base_addr_owner_space;
 		struct CE_dest_desc *dest_desc =
@@ -1272,42 +1322,17 @@ void ce_per_engine_servicereap(struct hif_softc *scn, unsigned int ce_id)
 
 #endif /*ATH_11AC_TXCOMPACT */
 
-#ifdef WLAN_FEATURE_FASTPATH
-
-/**
- * ce_tx_completion() - reap off the CE source ring when CE completion happens
- * @ce_state: Handle to CE
- * @num_tx_cmpls: Number of completions handled
- *
- * API to reap off the CE source ring when CE completion happens:
- * Update number of src_ring entries based on number of completions.
- *
- * Return: None
+/*
+ * Number of times to check for any pending tx/rx completion on
+ * a copy engine, this count should be big enough. Once we hit
+ * this threashold we'll not check for any Tx/Rx comlpetion in same
+ * interrupt handling. Note that this threashold is only used for
+ * Rx interrupt processing, this can be used tor Tx as well if we
+ * suspect any infinite loop in checking for pending Tx completion.
  */
-static void
-ce_tx_completion(struct CE_state *ce_state, uint32_t num_tx_cmpls)
-{
-	struct CE_ring_state *src_ring = ce_state->src_ring;
-	uint32_t nentries_mask = src_ring->nentries_mask;
+#define CE_TXRX_COMP_CHECK_THRESHOLD 20
 
-	ASSERT(num_tx_cmpls);
-
-	qdf_spin_lock(&ce_state->ce_index_lock);
-
-	/*
-	 * This locks the index manipulation of this CE with those done
-	 * in ce_send_fast().
-	 */
-
-	/*
-	 * Advance the s/w index:
-	 * This effectively simulates completing the CE ring descriptors
-	 */
-	src_ring->sw_index = CE_RING_IDX_ADD(nentries_mask, src_ring->sw_index,
-					     num_tx_cmpls);
-	qdf_spin_unlock(&ce_state->ce_index_lock);
-}
-
+#ifdef WLAN_FEATURE_FASTPATH
 /**
  * ce_fastpath_rx_handle() - Updates write_index and calls fastpath msg handler
  * @ce_state: handle to copy engine state
@@ -1323,28 +1348,23 @@ static void ce_fastpath_rx_handle(struct CE_state *ce_state,
 {
 	struct hif_softc *scn = ce_state->scn;
 	struct CE_ring_state *dest_ring = ce_state->dest_ring;
-	struct CE_state *ce_tx_cmpl_state = scn->ce_id_to_state[CE_HTT_H2T_MSG];
 	uint32_t nentries_mask = dest_ring->nentries_mask;
-	uint32_t tx_cmpls;
 	uint32_t write_index;
 
-	tx_cmpls = (ce_state->fastpath_handler)(ce_state->context, cmpl_msdus,
-						num_cmpls);
+	(ce_state->fastpath_handler)(ce_state->context, cmpl_msdus, num_cmpls);
 
 	/* Update Destination Ring Write Index */
 	write_index = dest_ring->write_index;
 	write_index = CE_RING_IDX_ADD(nentries_mask, write_index, num_cmpls);
 	CE_DEST_RING_WRITE_IDX_SET(scn, ctrl_addr, write_index);
 	dest_ring->write_index = write_index;
-	ce_tx_completion(ce_tx_cmpl_state, tx_cmpls);
 }
 
-#define MSG_FLUSH_NUM 20
+#define MSG_FLUSH_NUM 6
 /**
  * ce_per_engine_service_fast() - CE handler routine to service fastpath messages
  * @scn: hif_context
- * @ce_id: COpy engine ID
- * Function:
+ * @ce_id: Copy engine ID
  * 1) Go through the CE ring, and find the completions
  * 2) For valid completions retrieve context (nbuf) for per_transfer_context[]
  * 3) Unmap buffer & accumulate in an array.
@@ -1353,8 +1373,7 @@ static void ce_fastpath_rx_handle(struct CE_state *ce_state,
  * Return: void
  */
 
-static int
-ce_per_engine_service_fast(struct hif_softc *scn, int ce_id)
+static void ce_per_engine_service_fast(struct hif_softc *scn, int ce_id)
 {
 	struct CE_state *ce_state = scn->ce_id_to_state[ce_id];
 	struct CE_ring_state *dest_ring = ce_state->dest_ring;
@@ -1371,6 +1390,7 @@ ce_per_engine_service_fast(struct hif_softc *scn, int ce_id)
 	qdf_nbuf_t cmpl_msdus[MSG_FLUSH_NUM];
 	uint32_t ctrl_addr = ce_state->ctrl_addr;
 	uint32_t nbuf_cmpl_idx = 0;
+	unsigned int more_comp_cnt = 0;
 
 more_data:
 	if (ce_int_status == (1 << ce_id)) {
@@ -1422,9 +1442,10 @@ more_data:
 			 */
 			paddr_lo = QDF_NBUF_CB_PADDR(nbuf);
 
-			OS_SYNC_SINGLE_FOR_CPU(scn->qdf_dev->dev, paddr_lo,
-				      (skb_end_pointer(nbuf) - (nbuf)->data),
-				      DMA_FROM_DEVICE);
+			qdf_mem_dma_sync_single_for_cpu(scn->qdf_dev,
+					paddr_lo,
+					(skb_end_pointer(nbuf) - (nbuf)->data),
+					DMA_FROM_DEVICE);
 			qdf_nbuf_put_tail(nbuf, nbytes);
 
 			qdf_assert_always(nbuf->data != NULL);
@@ -1462,30 +1483,23 @@ more_data:
 		CE_ENGINE_INT_STATUS_CLEAR(scn, ctrl_addr,
 					   HOST_IS_COPY_COMPLETE_MASK);
 	}
-	ce_int_status = CE_ENGINE_INT_STATUS_GET(scn, ctrl_addr);
-	if (ce_int_status & CE_WATERMARK_MASK)
-		goto more_data;
-
-	return QDF_STATUS_SUCCESS;
+	if (ce_recv_entries_done_nolock(scn, ce_state)) {
+		if (more_comp_cnt++ < CE_TXRX_COMP_CHECK_THRESHOLD) {
+			goto more_data;
+		} else {
+			HIF_ERROR("%s:Potential infinite loop detected during Rx processing nentries_mask:0x%x sw read_idx:0x%x hw read_idx:0x%x",
+				  __func__, nentries_mask,
+				  ce_state->dest_ring->sw_index,
+				  CE_DEST_RING_READ_IDX_GET(scn, ctrl_addr));
+		}
+	}
 }
 
 #else
-static int
-ce_per_engine_service_fast(struct hif_softc *scn, int ce_id)
+static void ce_per_engine_service_fast(struct hif_softc *scn, int ce_id)
 {
-	return QDF_STATUS_E_FAILURE;
 }
 #endif /* WLAN_FEATURE_FASTPATH */
-
-/*
- * Number of times to check for any pending tx/rx completion on
- * a copy engine, this count should be big enough. Once we hit
- * this threashold we'll not check for any Tx/Rx comlpetion in same
- * interrupt handling. Note that this threashold is only used for
- * Rx interrupt processing, this can be used tor Tx as well if we
- * suspect any infinite loop in checking for pending Tx completion.
- */
-#define CE_TXRX_COMP_CHECK_THRESHOLD 20
 
 /*
  * Guts of interrupt handler for per-engine interrupts on a particular CE.
@@ -1524,12 +1538,12 @@ int ce_per_engine_service(struct hif_softc *scn, unsigned int CE_id)
 	 * With below check we make sure CE we are handling is datapath CE and
 	 * fastpath is enabled.
 	 */
-	if (ce_is_fastpath_handler_registered(CE_state))
+	if (ce_is_fastpath_handler_registered(CE_state)) {
 		/* For datapath only Rx CEs */
-		if (!ce_per_engine_service_fast(scn, CE_id)) {
-			qdf_spin_unlock(&CE_state->ce_index_lock);
-			return 0;
-		}
+		ce_per_engine_service_fast(scn, CE_id);
+		qdf_spin_unlock(&CE_state->ce_index_lock);
+		return CE_state->receive_count;
+	}
 
 	/* Clear force_break flag and re-initialize receive_count to 0 */
 

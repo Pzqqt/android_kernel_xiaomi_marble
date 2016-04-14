@@ -726,6 +726,53 @@ error_no_dma_mem:
 
 #ifdef WLAN_FEATURE_FASTPATH
 /**
+ * hif_enable_fastpath() Update that we have enabled fastpath mode
+ * @hif_ctx: HIF context
+ *
+ * For use in data path
+ *
+ * Retrun: void
+ */
+void hif_enable_fastpath(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	HIF_INFO("Enabling fastpath mode\n");
+	scn->fastpath_mode_on = true;
+}
+
+/**
+ * hif_is_fastpath_mode_enabled - API to query if fasthpath mode is enabled
+ * @hif_ctx: HIF Context
+ *
+ * For use in data path to skip HTC
+ *
+ * Return: bool
+ */
+bool hif_is_fastpath_mode_enabled(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	return scn->fastpath_mode_on;
+}
+
+/**
+ * hif_get_ce_handle - API to get CE handle for FastPath mode
+ * @hif_ctx: HIF Context
+ * @id: CopyEngine Id
+ *
+ * API to return CE handle for fastpath mode
+ *
+ * Return: void
+ */
+void *hif_get_ce_handle(struct hif_opaque_softc *hif_ctx, int id)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	return scn->ce_id_to_state[id];
+}
+
+/**
  * ce_h2t_tx_ce_cleanup() Place holder function for H2T CE cleanup.
  * No processing is required inside this function.
  * @ce_hdl: Cope engine handle
@@ -803,13 +850,49 @@ void ce_t2h_msg_ce_cleanup(struct CE_handle *ce_hdl)
 			qdf_nbuf_free(nbuf);
 	}
 }
+
+/**
+ * hif_update_fastpath_recv_bufs_cnt() - Increments the Rx buf count by 1
+ * @scn: HIF handle
+ *
+ * Datapath Rx CEs are special case, where we reuse all the message buffers.
+ * Hence we have to post all the entries in the pipe, even, in the beginning
+ * unlike for other CE pipes where one less than dest_nentries are filled in
+ * the beginning.
+ *
+ * Return: None
+ */
+static void hif_update_fastpath_recv_bufs_cnt(struct hif_softc *scn)
+{
+	int pipe_num;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+
+	if (scn->fastpath_mode_on == false)
+		return;
+
+	for (pipe_num = 0; pipe_num < scn->ce_count; pipe_num++) {
+		struct HIF_CE_pipe_info *pipe_info =
+			&hif_state->pipe_info[pipe_num];
+		struct CE_state *ce_state =
+			scn->ce_id_to_state[pipe_info->pipe_num];
+
+		if (ce_state->htt_rx_data)
+			atomic_inc(&pipe_info->recv_bufs_needed);
+	}
+}
 #else
-void ce_h2t_tx_ce_cleanup(struct CE_handle *ce_hdl)
+static inline void hif_update_fastpath_recv_bufs_cnt(struct hif_softc *scn)
 {
 }
 
-void ce_t2h_msg_ce_cleanup(struct CE_handle *ce_hdl)
+static inline bool ce_is_fastpath_enabled(struct hif_softc *scn)
 {
+	return false;
+}
+
+static inline bool ce_is_fastpath_handler_registered(struct CE_state *ce_state)
+{
+	return false;
 }
 #endif /* WLAN_FEATURE_FASTPATH */
 
@@ -1387,6 +1470,8 @@ QDF_STATUS hif_start(struct hif_opaque_softc *hif_ctx)
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 
+	hif_update_fastpath_recv_bufs_cnt(scn);
+
 	hif_msg_callbacks_install(scn);
 
 	if (hif_completion_thread_startup(hif_state))
@@ -1399,55 +1484,6 @@ QDF_STATUS hif_start(struct hif_opaque_softc *hif_ctx)
 
 	return QDF_STATUS_SUCCESS;
 }
-
-#ifdef WLAN_FEATURE_FASTPATH
-/**
- * hif_enable_fastpath() Update that we have enabled fastpath mode
- * @hif_ctx: HIF context
- *
- * For use in data path
- *
- * Retrun: void
- */
-void hif_enable_fastpath(struct hif_opaque_softc *hif_ctx)
-{
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-
-	HIF_INFO("Enabling fastpath mode\n");
-	scn->fastpath_mode_on = true;
-}
-
-/**
- * hif_is_fastpath_mode_enabled - API to query if fasthpath mode is enabled
- * @hif_ctx: HIF Context
- *
- * For use in data path to skip HTC
- *
- * Return: bool
- */
-bool hif_is_fastpath_mode_enabled(struct hif_opaque_softc *hif_ctx)
-{
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-
-	return scn->fastpath_mode_on;
-}
-
-/**
- * hif_get_ce_handle - API to get CE handle for FastPath mode
- * @hif_ctx: HIF Context
- * @id: CopyEngine Id
- *
- * API to return CE handle for fastpath mode
- *
- * Return: void
- */
-void *hif_get_ce_handle(struct hif_opaque_softc *hif_ctx, int id)
-{
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-
-	return scn->ce_id_to_state[id];
-}
-#endif /* WLAN_FEATURE_FASTPATH */
 
 void hif_recv_buffer_cleanup_on_pipe(struct HIF_CE_pipe_info *pipe_info)
 {
@@ -1731,80 +1767,6 @@ void hif_ce_close(struct hif_softc *hif_sc)
 {
 }
 
-#ifdef WLAN_FEATURE_FASTPATH
-/**
- * ce_is_fastpath_enabled() - returns true if fastpath mode is enabled
- * @scn: Handle to HIF context
- *
- * Return: true if fastpath is enabled else false.
- */
-bool ce_is_fastpath_enabled(struct hif_opaque_softc *hif_hdl)
-{
-	return HIF_GET_SOFTC(hif_hdl)->fastpath_mode_on;
-}
-
-/**
- * ce_is_fastpath_handler_registered() - return true for datapath CEs and if
- * fastpath is enabled.
- * @ce_state: handle to copy engine
- *
- * Return: true if fastpath handler is registered for datapath CE.
- */
-bool ce_is_fastpath_handler_registered(struct CE_state *ce_state)
-{
-	if (ce_state->fastpath_handler)
-		return true;
-	else
-		return false;
-}
-
-/**
- * hif_update_fastpath_recv_bufs_cnt() - Increments the Rx buf count by 1
- * @scn: HIF handle
- *
- * Datapath Rx CEs are special case, where we reuse all the message buffers.
- * Hence we have to post all the entries in the pipe, even, in the beginning
- * unlike for other CE pipes where one less than dest_nentries are filled in
- * the beginning.
- *
- * Return: None
- */
-void hif_update_fastpath_recv_bufs_cnt(struct hif_opaque_softc *hif_hdl)
-{
-	int pipe_num;
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
-	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
-
-	if (scn->fastpath_mode_on == false)
-		return;
-
-	for (pipe_num = 0; pipe_num < scn->ce_count; pipe_num++) {
-		struct HIF_CE_pipe_info *pipe_info =
-			&hif_state->pipe_info[pipe_num];
-		struct CE_state *ce_state =
-			scn->ce_id_to_state[pipe_info->pipe_num];
-
-		if (ce_state->htt_rx_data)
-			atomic_inc(&pipe_info->recv_bufs_needed);
-	}
-}
-#else
-bool ce_is_fastpath_enabled(struct hif_opaque_softc *scn)
-{
-	return false;
-}
-
-void hif_update_fastpath_recv_bufs_cnt(struct hif_opaque_softc *scn)
-{
-}
-
-bool ce_is_fastpath_handler_registered(struct CE_state *ce_state)
-{
-	return false;
-}
-
-#endif /* WLAN_FEATURE_FASTPATH */
-
 /**
  * hif_unconfig_ce() - ensure resources from hif_config_ce are freed
  * @hif_sc: hif context
@@ -2001,11 +1963,6 @@ int hif_ce_fastpath_cb_register(fastpath_msg_handler handler, void *context)
 		}
 	}
 
-	return QDF_STATUS_SUCCESS;
-}
-#else
-int hif_ce_fastpath_cb_register(fastpath_msg_handler handler, void *context)
-{
 	return QDF_STATUS_SUCCESS;
 }
 #endif

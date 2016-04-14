@@ -935,19 +935,37 @@ EXPORT_SYMBOL(qdf_mem_free_consistent);
  * @osdev: OS device handle
  * @bus_addr: dma address to give to the device
  * @size: Size of the memory block
- * @direction: direction data will be dma'ed
+ * @direction: direction data will be DMAed
  *
  * Assign memory to the remote device.
  * The cache lines are flushed to ram or invalidated as needed.
  *
  * Return: none
  */
-inline void
-qdf_mem_dma_sync_single_for_device(qdf_device_t osdev, qdf_dma_addr_t bus_addr,
-				   qdf_size_t size,
-				   enum dma_data_direction direction)
+void qdf_mem_dma_sync_single_for_device(qdf_device_t osdev,
+					qdf_dma_addr_t bus_addr,
+					qdf_size_t size,
+					enum dma_data_direction direction)
 {
 	dma_sync_single_for_device(osdev->dev, bus_addr,  size, direction);
 }
 EXPORT_SYMBOL(qdf_mem_dma_sync_single_for_device);
 
+/**
+ * qdf_mem_dma_sync_single_for_cpu() - assign memory to CPU
+ * @osdev: OS device handle
+ * @bus_addr: dma address to give to the cpu
+ * @size: Size of the memory block
+ * @direction: direction data will be DMAed
+ *
+ * Assign memory to the CPU.
+ *
+ * Return: none
+ */
+void qdf_mem_dma_sync_single_for_cpu(qdf_device_t osdev,
+				     qdf_dma_addr_t bus_addr,
+				     qdf_size_t size,
+				     enum dma_data_direction direction)
+{
+	dma_sync_single_for_cpu(osdev->dev, bus_addr,  size, direction);
+}
