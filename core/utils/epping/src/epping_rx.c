@@ -142,6 +142,7 @@ void epping_rx(void *ctx, HTC_PACKET *pPacket)
 			pktSkb->protocol = eth_type_trans(pktSkb, pktSkb->dev);
 			++pAdapter->stats.rx_packets;
 			pAdapter->stats.rx_bytes += pktSkb->len;
+			qdf_net_buf_debug_release_skb(pktSkb);
 			if (hdd_napi_enabled(HDD_NAPI_ANY))
 				netif_receive_skb(pktSkb);
 			else
