@@ -766,6 +766,8 @@ typedef enum {
 	WMI_LRO_CONFIG_CMDID,
 	/*transfer data from host to firmware to write flash */
 	WMI_TRANSFER_DATA_TO_FLASH_CMDID,
+	/** Command to enable/disable filtering of multicast IP with unicast mac */
+	WMI_CONFIG_ENHANCED_MCAST_FILTER_CMDID,
 	/* GPIO Configuration */
 	WMI_GPIO_CONFIG_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_GPIO),
 	WMI_GPIO_OUTPUT_CMDID,
@@ -14324,6 +14326,26 @@ typedef struct {
 	/* Return status. 0 for success, non-zero otherwise */
 	A_UINT32 status;
 } wmi_transfer_data_to_flash_complete_event_fixed_param;
+
+typedef enum {
+	ENHANCED_MCAST_FILTER_DISABLED,
+	ENHANCED_MCAST_FILTER_ENABLED
+} ENHANCED_MCAST_FILTER_CONFIG;
+
+/*
+ * Command to enable/disable filtering of multicast IP with unicast mac
+ */
+typedef struct {
+	/*
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_config_enhanced_mcast_filter_fixed_param
+	 */
+	A_UINT32 tlv_header;
+	/* Unique id identifying the VDEV */
+	A_UINT32 vdev_id;
+	/* 1 = enable 0 = disable (see ENHANCED_MCAST_FILTER_CONFIG) */
+	A_UINT32 enable;
+} wmi_config_enhanced_mcast_filter_cmd_fixed_param;
 
 /*
  * This structure is used to report SMPS force mode set complete to host.

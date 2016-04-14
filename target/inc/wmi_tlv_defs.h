@@ -688,6 +688,7 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_pdev_set_hw_mode_response_vdev_mac_entry,
 	WMITLV_TAG_STRUC_wmi_pdev_set_mac_config_response_event_fixed_param,
 	WMITLV_TAG_STRUC_WMI_COEX_CONFIG_CMD_fixed_param,
+	WMITLV_TAG_STRUC_wmi_config_enhanced_mcast_filter_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -964,7 +965,8 @@ typedef enum {
 	OP(WMI_PDEV_SET_MAC_CONFIG_CMDID) \
 	OP(WMI_PDEV_SET_ANTENNA_MODE_CMDID) \
 	OP(WMI_VDEV_SET_QUIET_MODE_CMDID) \
-	OP(WMI_COEX_CONFIG_CMDID)
+	OP(WMI_COEX_CONFIG_CMDID) \
+	OP(WMI_CONFIG_ENHANCED_MCAST_FILTER_CMDID)
 
 /*
  * IMPORTANT: Please add _ALL_ WMI Events Here.
@@ -2424,6 +2426,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_LRO_CONFIG_CMDID);
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_transfer_data_to_flash_cmd_fixed_param, wmi_transfer_data_to_flash_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_TRANSFER_DATA_TO_FLASH_CMDID);
+
+#define WMITLV_TABLE_WMI_CONFIG_ENHANCED_MCAST_FILTER_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_config_enhanced_mcast_filter_fixed_param, wmi_config_enhanced_mcast_filter_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_CONFIG_ENHANCED_MCAST_FILTER_CMDID);
 
 /* MAWC sensor report indication cmd */
 #define WMITLV_TABLE_WMI_MAWC_SENSOR_REPORT_IND_CMDID(id, op, buf, len) \
