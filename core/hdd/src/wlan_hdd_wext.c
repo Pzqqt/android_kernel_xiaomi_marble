@@ -7021,6 +7021,11 @@ static int __iw_set_three_ints_getnone(struct net_device *dev,
 
 	ENTER_DEV(dev);
 
+	if (!capable(CAP_NET_ADMIN)) {
+		hddLog(LOGE, FL("permission check failed"));
+		return -EPERM;
+	}
+
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
 		return ret;
