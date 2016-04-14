@@ -1505,8 +1505,8 @@ void __qdf_nbuf_sync_single_for_cpu(
 		qdf_print("ERROR: NBUF mapped physical address is NULL\n");
 		return;
 	}
-/*    dma_sync_single_for_cpu(osdev->dev, QDF_NBUF_CB_PADDR(buf),
-      buf->end - buf->data, dir);    */
+	dma_sync_single_for_cpu(osdev->dev, QDF_NBUF_CB_PADDR(buf),
+		skb_end_offset(buf) - skb_headroom(buf), dir);
 }
 EXPORT_SYMBOL(__qdf_nbuf_sync_single_for_cpu);
 #endif

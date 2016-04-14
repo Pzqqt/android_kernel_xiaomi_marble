@@ -588,6 +588,7 @@ static inline uint32_t __qdf_nbuf_tailroom(struct sk_buff *skb)
  * Return: New data pointer of this buf after data has been pushed,
  *         or NULL if there is not enough room in this buf.
  */
+#ifdef CONFIG_MCL
 static inline uint8_t *__qdf_nbuf_push_head(struct sk_buff *skb, size_t size)
 {
 	if (QDF_NBUF_CB_PADDR(skb))
@@ -595,6 +596,12 @@ static inline uint8_t *__qdf_nbuf_push_head(struct sk_buff *skb, size_t size)
 
 	return skb_push(skb, size);
 }
+#else
+static inline uint8_t *__qdf_nbuf_push_head(struct sk_buff *skb, size_t size)
+{
+	return skb_push(skb, size);
+}
+#endif
 
 /**
  * __qdf_nbuf_put_tail() - Puts data in the end
@@ -624,6 +631,7 @@ static inline uint8_t *__qdf_nbuf_put_tail(struct sk_buff *skb, size_t size)
  * Return: New data pointer of this buf after data has been popped,
  *	   or NULL if there is not sufficient data to pull.
  */
+#ifdef CONFIG_MCL
 static inline uint8_t *__qdf_nbuf_pull_head(struct sk_buff *skb, size_t size)
 {
 	if (QDF_NBUF_CB_PADDR(skb))
@@ -631,7 +639,12 @@ static inline uint8_t *__qdf_nbuf_pull_head(struct sk_buff *skb, size_t size)
 
 	return skb_pull(skb, size);
 }
-
+#else
+static inline uint8_t *__qdf_nbuf_pull_head(struct sk_buff *skb, size_t size)
+{
+	return skb_pull(skb, size);
+}
+#endif
 /**
  * __qdf_nbuf_trim_tail() - trim data out from the end
  * @skb: Pointer to network buffer
