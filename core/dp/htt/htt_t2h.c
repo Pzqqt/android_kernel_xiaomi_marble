@@ -44,7 +44,6 @@
 #include <ol_htt_tx_api.h>
 #include <ol_txrx_htt_api.h>    /* htt_tx_status */
 
-#include <osdep.h>
 #include <htt_internal.h>       /* HTT_TX_SCHED, etc. */
 #include <pktlog_ac_fmt.h>
 #include <wdi_event.h>
@@ -133,8 +132,8 @@ static void htt_rx_frag_set_last_msdu(struct htt_pdev_t *pdev, qdf_nbuf_t msg)
 }
 
 /* Target to host Msg/event  handler  for low priority messages*/
-void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg, bool
-			    free_msg_buf)
+void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
+			    bool free_msg_buf)
 {
 	struct htt_pdev_t *pdev = (struct htt_pdev_t *)context;
 	uint32_t *msg_word;
@@ -698,10 +697,11 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 		QDF_NBUF_CB_PADDR(_buf) -= (HTC_HEADER_LEN +		\
 					HTC_HDR_ALIGNMENT_PADDING);	\
 		qdf_nbuf_init_fast((_buf));				\
-		OS_SYNC_SINGLE_FOR_DEVICE(dev, (QDF_NBUF_CB_PADDR(_buf)),	\
-					  (skb_end_pointer(_buf) -	\
-					   (_buf)->data) ,		\
-					   PCI_DMA_FROMDEVICE);         \
+		qdf_mem_dma_sync_single_for_device(dev,			\
+					(QDF_NBUF_CB_PADDR(_buf)),	\
+					(skb_end_pointer(_buf) -	\
+					(_buf)->data) ,			\
+					PCI_DMA_FROMDEVICE);		\
 	} while (0)
 
 /**
@@ -710,11 +710,10 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
  * @cmpl_msdus: netbuf completions
  * @num_cmpls: number of completions to be handled
  *
- * Return: Number of completions handled
+ * Return: None
  */
-int
-htt_t2h_msg_handler_fast(void *context, qdf_nbuf_t *cmpl_msdus,
-			 uint32_t num_cmpls)
+void htt_t2h_msg_handler_fast(void *context, qdf_nbuf_t *cmpl_msdus,
+			      uint32_t num_cmpls)
 {
 	struct htt_pdev_t *pdev = (struct htt_pdev_t *)context;
 	qdf_nbuf_t htt_t2h_msg;
@@ -722,7 +721,6 @@ htt_t2h_msg_handler_fast(void *context, qdf_nbuf_t *cmpl_msdus,
 	uint32_t i;
 	enum htt_t2h_msg_type msg_type;
 	uint32_t msg_len;
-	uint32_t num_htt_tx_cmpls = 0;
 
 	for (i = 0; i < num_cmpls; i++) {
 		htt_t2h_msg = cmpl_msdus[i];
@@ -807,7 +805,6 @@ htt_t2h_msg_handler_fast(void *context, qdf_nbuf_t *cmpl_msdus,
 			ol_tx_completion_handler(pdev->txrx_pdev, num_msdus,
 						 status, msg_word + 1);
 
-			num_htt_tx_cmpls += SLOTS_PER_TX;
 			break;
 		}
 		case HTT_T2H_MSG_TYPE_RX_PN_IND:
@@ -866,7 +863,6 @@ htt_t2h_msg_handler_fast(void *context, qdf_nbuf_t *cmpl_msdus,
 			}
 			ol_tx_inspect_handler(pdev->txrx_pdev,
 					      num_msdus, msg_word + 1);
-			num_htt_tx_cmpls += SLOTS_PER_TX;
 			break;
 		}
 		case HTT_T2H_MSG_TYPE_RX_IN_ORD_PADDR_IND:
@@ -915,16 +911,9 @@ htt_t2h_msg_handler_fast(void *context, qdf_nbuf_t *cmpl_msdus,
 		};
 
 		/* Re-initialize the indication buffer */
-		HTT_T2H_MSG_BUF_REINIT(htt_t2h_msg, pdev->osdev->dev);
+		HTT_T2H_MSG_BUF_REINIT(htt_t2h_msg, pdev->osdev);
 		qdf_nbuf_set_pktlen(htt_t2h_msg, 0);
 	}
-	return num_htt_tx_cmpls;
-}
-#else
-int htt_t2h_msg_handler_fast(void *context, qdf_nbuf_t *cmpl_msdus,
-			     uint32_t num_cmpls)
-{
-	return 0;
 }
 #endif /* WLAN_FEATURE_FASTPATH */
 

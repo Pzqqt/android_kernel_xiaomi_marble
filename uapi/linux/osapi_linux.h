@@ -231,6 +231,7 @@ void a_netbuf_queue_init(A_NETBUF_QUEUE_T *q);
 #include "ath_carr_pltfrm.h"
 #endif /* QCA_PARTNER_PLATFORM */
 
+#define SLOTS_PER_DATAPATH_TX 2
 #else                           /* __KERNEL__ */
 
 #ifdef __GNUC__
