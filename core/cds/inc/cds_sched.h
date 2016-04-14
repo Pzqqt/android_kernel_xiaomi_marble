@@ -288,7 +288,9 @@ typedef struct _cds_context_type {
 	qdf_event_t connection_update_done_evt;
 	qdf_mutex_t qdf_conc_list_lock;
 	qdf_mc_timer_t dbs_opportunistic_timer;
-
+#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
+	void (*sap_restart_chan_switch_cb)(void *, uint32_t, uint32_t);
+#endif
 } cds_context_type, *p_cds_contextType;
 
 /*---------------------------------------------------------------------------

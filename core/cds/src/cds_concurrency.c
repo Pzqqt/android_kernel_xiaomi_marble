@@ -6604,6 +6604,13 @@ static void cds_check_sta_ap_concurrent_ch_intf(void *data)
 	tHalHandle *hal_handle;
 	hdd_ap_ctx_t *hdd_ap_ctx;
 	uint16_t intf_ch = 0;
+	p_cds_contextType cds_ctx;
+
+	cds_ctx = cds_get_global_context();
+	if (!cds_ctx) {
+		cds_err("Invalid CDS context");
+		return;
+	}
 
 	cds_info("cds_concurrent_open_sessions_running: %d",
 		cds_concurrent_open_sessions_running());
@@ -6642,7 +6649,18 @@ static void cds_check_sta_ap_concurrent_ch_intf(void *data)
 			hdd_ap_ctx->sapConfig.channel,
 			hdd_ap_ctx->sapConfig.sec_ch,
 			&hdd_ap_ctx->sapConfig.ch_params);
-	cds_restart_sap(ap_adapter);
+
+	if ((hdd_ctx->config->WlanMccToSccSwitchMode ==
+		QDF_MCC_TO_SCC_SWITCH_FORCE_WITHOUT_DISCONNECTION) &&
+		(cds_ctx->sap_restart_chan_switch_cb)) {
+		cds_info("SAP chan change without restart");
+		cds_ctx->sap_restart_chan_switch_cb(ap_adapter,
+				hdd_ap_ctx->sapConfig.channel,
+				hdd_ap_ctx->sapConfig.ch_params.ch_width);
+	} else {
+		cds_restart_sap(ap_adapter);
+	}
+
 }
 /**
  * cds_check_concurrent_intf_and_restart_sap() - Check concurrent change intf
@@ -7989,3 +8007,30 @@ QDF_STATUS cds_handle_hw_mode_change_on_csa(uint16_t session_id,
 	}
 	return status;
 }
+
+#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
+/**
+ * cds_register_sap_restart_channel_switch_cb() - Register callback for SAP
+ * channel switch without restart
+ * @sap_restart_chan_switch_cb: Callback to perform channel switch
+ *
+ * Registers callback to perform channel switch without having to actually
+ * restart the beaconing entity
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cds_register_sap_restart_channel_switch_cb(
+		void (*sap_restart_chan_switch_cb)(void *, uint32_t, uint32_t))
+{
+	p_cds_contextType cds_ctx;
+
+	cds_ctx = cds_get_global_context();
+	if (!cds_ctx) {
+		cds_err("Invalid CDS context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cds_ctx->sap_restart_chan_switch_cb = sap_restart_chan_switch_cb;
+	return QDF_STATUS_SUCCESS;
+}
+#endif

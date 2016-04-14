@@ -681,4 +681,8 @@ QDF_STATUS cds_stop_start_opportunistic_timer(void);
 QDF_STATUS cds_handle_hw_mode_change_on_csa(uint16_t session_id,
 		uint8_t channel, uint8_t *bssid, void *dst, void *src,
 		uint32_t numbytes);
+#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
+QDF_STATUS cds_register_sap_restart_channel_switch_cb(
+		void (*sap_restart_chan_switch_cb)(void *, uint32_t, uint32_t));
+#endif
 #endif /* __CDS_CONCURRENCY_H */

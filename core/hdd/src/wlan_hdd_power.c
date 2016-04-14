@@ -1594,6 +1594,12 @@ QDF_STATUS hdd_wlan_re_init(void *hif_sc)
 
 	sme_ext_scan_register_callback(pHddCtx->hHal,
 				wlan_hdd_cfg80211_extscan_callback);
+
+	qdf_status = hdd_register_for_sap_restart_with_channel_switch();
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+		/* Error already logged */
+		goto err_cds_disable;
+
 	sme_set_rssi_threshold_breached_cb(pHddCtx->hHal, hdd_rssi_threshold_breached);
 
 #ifdef WLAN_FEATURE_LPSS

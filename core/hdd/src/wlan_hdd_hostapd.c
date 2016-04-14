@@ -2098,6 +2098,39 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 	return ret;
 }
 
+#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
+/**
+ * hdd_sap_restart_with_channel_switch() - SAP channel change with E/CSA
+ * @ap_adapter: HDD adapter
+ * @target_channel: Channel to which switch must happen
+ * @target_bw: Bandwidth of the target channel
+ *
+ * Invokes the necessary API to perform channel switch for the SAP or GO
+ *
+ * Return: None
+ */
+void hdd_sap_restart_with_channel_switch(hdd_adapter_t *ap_adapter,
+					uint32_t target_channel,
+					uint32_t target_bw)
+{
+	struct net_device *dev = ap_adapter->dev;
+	int ret;
+
+	ENTER();
+
+	if (!dev) {
+		hdd_err("Invalid dev pointer");
+		return;
+	}
+
+	ret = hdd_softap_set_channel_change(dev, target_channel, target_bw);
+	if (ret) {
+		hdd_err("channel switch failed");
+		return;
+	}
+}
+#endif
+
 int
 static __iw_softap_set_ini_cfg(struct net_device *dev,
 			       struct iw_request_info *info,

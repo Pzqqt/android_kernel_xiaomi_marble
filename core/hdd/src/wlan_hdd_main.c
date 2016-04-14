@@ -5542,6 +5542,29 @@ static inline bool hdd_hold_rtnl_lock(void) { return false; }
 static inline void hdd_release_rtnl_lock(void) { }
 #endif
 
+#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
+/**
+ * hdd_register_for_sap_restart_with_channel_switch() - Register for SAP channel
+ * switch without restart
+ *
+ * Registers callback function to change the operating channel of SAP by using
+ * channel switch announcements instead of restarting SAP.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_register_for_sap_restart_with_channel_switch(void)
+{
+	QDF_STATUS status;
+
+	status = cds_register_sap_restart_channel_switch_cb(
+			(void *)hdd_sap_restart_with_channel_switch);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("restart cb registration failed");
+
+	return status;
+}
+#endif
+
 /**
  * hdd_wlan_startup() - HDD init function
  * @dev:	Pointer to the underlying device
@@ -5851,6 +5874,11 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 	sme_ext_scan_register_callback(hdd_ctx->hHal,
 				       wlan_hdd_cfg80211_extscan_callback);
+
+	status = hdd_register_for_sap_restart_with_channel_switch();
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		/* Error already logged */
+		goto err_unreg_netdev_notifier;
 
 	sme_set_rssi_threshold_breached_cb(hdd_ctx->hHal,
 				hdd_rssi_threshold_breached);
