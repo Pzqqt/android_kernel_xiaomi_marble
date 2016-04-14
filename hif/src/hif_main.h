@@ -138,7 +138,7 @@ struct hif_softc {
 	atomic_t link_suspended;
 	uint32_t *vaddr_rri_on_ddr;
 	int linkstate_vote;
-	int fastpath_mode_on;
+	bool fastpath_mode_on;
 	atomic_t tasklet_from_intr;
 	int htc_endpoint;
 	qdf_dma_addr_t mem_pa;

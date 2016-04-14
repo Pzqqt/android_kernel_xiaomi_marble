@@ -108,6 +108,8 @@ struct CE_state {
 
 #ifdef WLAN_FEATURE_FASTPATH
 	u_int32_t download_len; /* pkt download length for source ring */
+	fastpath_msg_handler fastpath_handler;
+	void *context;
 #endif /* WLAN_FEATURE_FASTPATH */
 
 	ce_send_cb send_cb;
@@ -355,9 +357,8 @@ struct ce_sendlist_s {
 	} item[CE_SENDLIST_ITEMS_MAX];
 };
 
-#ifdef WLAN_FEATURE_FASTPATH
 void ce_h2t_tx_ce_cleanup(struct CE_handle *ce_hdl);
-#endif
+void ce_t2h_msg_ce_cleanup(struct CE_handle *ce_hdl);
 
 /* which ring of a CE? */
 #define CE_RING_SRC  0

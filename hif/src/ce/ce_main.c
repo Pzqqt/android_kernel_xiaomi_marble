@@ -50,6 +50,7 @@
 #include "ce_tasklet.h"
 #include "platform_icnss.h"
 #include "qwlan_version.h"
+#include <cds_api.h>
 
 #define CE_POLL_TIMEOUT 10      /* ms */
 
@@ -755,8 +756,59 @@ ce_h2t_tx_ce_cleanup(struct CE_handle *ce_hdl)
 		qdf_assert_always(sw_index == write_index);
 	}
 }
+
+/**
+ * ce_t2h_msg_ce_cleanup() - Cleanup buffers on the t2h datapath msg queue.
+ * @ce_hdl: Handle to CE
+ *
+ * These buffers are never allocated on the fly, but
+ * are allocated only once during HIF start and freed
+ * only once during HIF stop.
+ * NOTE:
+ * The assumption here is there is no in-flight DMA in progress
+ * currently, so that buffers can be freed up safely.
+ *
+ * Return: NONE
+ */
+void ce_t2h_msg_ce_cleanup(struct CE_handle *ce_hdl)
+{
+	struct CE_state *ce_state = (struct CE_state *)ce_hdl;
+	struct CE_ring_state *dst_ring = ce_state->dest_ring;
+	qdf_nbuf_t nbuf;
+	int i;
+
+	if (!ce_state->fastpath_handler)
+		return;
+	/*
+	 * when fastpath_mode is on and for datapath CEs. Unlike other CE's,
+	 * this CE is completely full: does not leave one blank space, to
+	 * distinguish between empty queue & full queue. So free all the
+	 * entries.
+	 */
+	for (i = 0; i < dst_ring->nentries; i++) {
+		nbuf = dst_ring->per_transfer_context[i];
+
+		/*
+		 * The reasons for doing this check are:
+		 * 1) Protect against calling cleanup before allocating buffers
+		 * 2) In a corner case, FASTPATH_mode_on may be set, but we
+		 *    could have a partially filled ring, because of a memory
+		 *    allocation failure in the middle of allocating ring.
+		 *    This check accounts for that case, checking
+		 *    fastpath_mode_on flag or started flag would not have
+		 *    covered that case. This is not in performance path,
+		 *    so OK to do this.
+		 */
+		if (nbuf)
+			qdf_nbuf_free(nbuf);
+	}
+}
 #else
 void ce_h2t_tx_ce_cleanup(struct CE_handle *ce_hdl)
+{
+}
+
+void ce_t2h_msg_ce_cleanup(struct CE_handle *ce_hdl)
 {
 }
 #endif /* WLAN_FEATURE_FASTPATH */
@@ -770,7 +822,7 @@ void ce_fini(struct CE_handle *copyeng)
 	CE_state->state = CE_UNUSED;
 	scn->ce_id_to_state[CE_id] = NULL;
 	if (CE_state->src_ring) {
-		/* Cleanup the HTT Tx ring */
+		/* Cleanup the datapath Tx ring */
 		ce_h2t_tx_ce_cleanup(copyeng);
 
 		if (CE_state->src_ring->shadow_base_unaligned)
@@ -788,6 +840,9 @@ void ce_fini(struct CE_handle *copyeng)
 		qdf_mem_free(CE_state->src_ring);
 	}
 	if (CE_state->dest_ring) {
+		/* Cleanup the datapath Rx ring */
+		ce_t2h_msg_ce_cleanup(copyeng);
+
 		if (CE_state->dest_ring->base_addr_owner_space_unaligned)
 			qdf_mem_free_consistent(scn->qdf_dev,
 						scn->qdf_dev->dev,
@@ -1359,7 +1414,7 @@ void hif_enable_fastpath(struct hif_opaque_softc *hif_ctx)
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	HIF_INFO("Enabling fastpath mode\n");
-	scn->fastpath_mode_on = 1;
+	scn->fastpath_mode_on = true;
 }
 
 /**
@@ -1676,6 +1731,80 @@ void hif_ce_close(struct hif_softc *hif_sc)
 {
 }
 
+#ifdef WLAN_FEATURE_FASTPATH
+/**
+ * ce_is_fastpath_enabled() - returns true if fastpath mode is enabled
+ * @scn: Handle to HIF context
+ *
+ * Return: true if fastpath is enabled else false.
+ */
+bool ce_is_fastpath_enabled(struct hif_opaque_softc *hif_hdl)
+{
+	return HIF_GET_SOFTC(hif_hdl)->fastpath_mode_on;
+}
+
+/**
+ * ce_is_fastpath_handler_registered() - return true for datapath CEs and if
+ * fastpath is enabled.
+ * @ce_state: handle to copy engine
+ *
+ * Return: true if fastpath handler is registered for datapath CE.
+ */
+bool ce_is_fastpath_handler_registered(struct CE_state *ce_state)
+{
+	if (ce_state->fastpath_handler)
+		return true;
+	else
+		return false;
+}
+
+/**
+ * hif_update_fastpath_recv_bufs_cnt() - Increments the Rx buf count by 1
+ * @scn: HIF handle
+ *
+ * Datapath Rx CEs are special case, where we reuse all the message buffers.
+ * Hence we have to post all the entries in the pipe, even, in the beginning
+ * unlike for other CE pipes where one less than dest_nentries are filled in
+ * the beginning.
+ *
+ * Return: None
+ */
+void hif_update_fastpath_recv_bufs_cnt(struct hif_opaque_softc *hif_hdl)
+{
+	int pipe_num;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+
+	if (scn->fastpath_mode_on == false)
+		return;
+
+	for (pipe_num = 0; pipe_num < scn->ce_count; pipe_num++) {
+		struct HIF_CE_pipe_info *pipe_info =
+			&hif_state->pipe_info[pipe_num];
+		struct CE_state *ce_state =
+			scn->ce_id_to_state[pipe_info->pipe_num];
+
+		if (ce_state->htt_rx_data)
+			atomic_inc(&pipe_info->recv_bufs_needed);
+	}
+}
+#else
+bool ce_is_fastpath_enabled(struct hif_opaque_softc *scn)
+{
+	return false;
+}
+
+void hif_update_fastpath_recv_bufs_cnt(struct hif_opaque_softc *scn)
+{
+}
+
+bool ce_is_fastpath_handler_registered(struct CE_state *ce_state)
+{
+	return false;
+}
+
+#endif /* WLAN_FEATURE_FASTPATH */
+
 /**
  * hif_unconfig_ce() - ensure resources from hif_config_ce are freed
  * @hif_sc: hif context
@@ -1841,6 +1970,45 @@ err:
 	HIF_TRACE("%s: X, ret = %d\n", __func__, rv);
 	return QDF_STATUS_SUCCESS != QDF_STATUS_E_FAILURE;
 }
+
+#ifdef WLAN_FEATURE_FASTPATH
+/**
+ * hif_ce_fastpath_cb_register() - Register callback for fastpath msg handler
+ * @handler: Callback funtcion
+ * @context: handle for callback function
+ *
+ * Return: QDF_STATUS_SUCCESS on success or QDF_STATUS_E_FAILURE
+ */
+int hif_ce_fastpath_cb_register(fastpath_msg_handler handler, void *context)
+{
+	struct hif_softc *scn =
+	    (struct hif_softc *)cds_get_context(QDF_MODULE_ID_HIF);
+	struct CE_state *ce_state;
+	int i;
+
+	QDF_ASSERT(scn != NULL);
+
+	if (!scn->fastpath_mode_on) {
+		HIF_WARN("Fastpath mode disabled\n");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	for (i = 0; i < CE_COUNT_MAX; i++) {
+		ce_state = scn->ce_id_to_state[i];
+		if (ce_state->htt_rx_data) {
+			ce_state->fastpath_handler = handler;
+			ce_state->context = context;
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+int hif_ce_fastpath_cb_register(fastpath_msg_handler handler, void *context)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 #ifdef IPA_OFFLOAD
 /**
