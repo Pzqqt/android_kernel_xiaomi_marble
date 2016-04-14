@@ -1348,6 +1348,28 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		(uint32_t) rx_auth_frm_body->authStatusCode,
 		(uint32_t) mac_ctx->lim.gLimNumPreAuthContexts);
 
+	/*
+	 * IOT Workaround: with invalid WEP key, some APs reply
+	 * AuthFrame 4 with invalid seqNumber. This AuthFrame
+	 * will be dropped by driver, thus driver sends the
+	 * generic status code instead of protocol status code.
+	 * As a workaround, override AuthFrame 4's seqNumber.
+	 */
+	if ((pe_session->limMlmState ==
+		eLIM_MLM_WT_AUTH_FRAME4_STATE) &&
+		(rx_auth_frm_body->authTransactionSeqNumber !=
+		SIR_MAC_AUTH_FRAME_1) &&
+		(rx_auth_frm_body->authTransactionSeqNumber !=
+		SIR_MAC_AUTH_FRAME_2) &&
+		(rx_auth_frm_body->authTransactionSeqNumber !=
+		SIR_MAC_AUTH_FRAME_3)) {
+		lim_log(mac_ctx, LOGW,
+			FL("Override AuthFrame 4's seqNumber to 4."));
+		rx_auth_frm_body->authTransactionSeqNumber =
+			SIR_MAC_AUTH_FRAME_4;
+	}
+
+
 	switch (rx_auth_frm_body->authTransactionSeqNumber) {
 	case SIR_MAC_AUTH_FRAME_1:
 		lim_process_auth_frame_type1(mac_ctx,
