@@ -82,7 +82,7 @@ ol_tx_register_global_mgmt_pool(struct ol_txrx_pdev_t *pdev)
 static void
 ol_tx_deregister_global_mgmt_pool(struct ol_txrx_pdev_t *pdev)
 {
-	ol_tx_delete_flow_pool(pdev->mgmt_pool);
+	ol_tx_delete_flow_pool(pdev->mgmt_pool, false);
 	return;
 }
 #else
@@ -121,14 +121,27 @@ void ol_tx_register_flow_control(struct ol_txrx_pdev_t *pdev)
  */
 void ol_tx_deregister_flow_control(struct ol_txrx_pdev_t *pdev)
 {
+	int i = 0;
+	struct ol_tx_flow_pool_t *pool = NULL;
+
 	if (!ol_tx_get_is_mgmt_over_wmi_enabled())
 		ol_tx_deregister_global_mgmt_pool(pdev);
 
-	qdf_spinlock_destroy(&pdev->tx_desc.flow_pool_list_lock);
-	if (!TAILQ_EMPTY(&pdev->tx_desc.flow_pool_list)) {
+	qdf_spin_lock_bh(&pdev->tx_desc.flow_pool_list_lock);
+	while (!TAILQ_EMPTY(&pdev->tx_desc.flow_pool_list)) {
+		pool = TAILQ_FIRST(&pdev->tx_desc.flow_pool_list);
+		if (!pool)
+			break;
+		qdf_spin_unlock_bh(&pdev->tx_desc.flow_pool_list_lock);
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-			"flow pool list is not empty!!!\n");
+			"flow pool list is not empty %d!!!\n", i++);
+		if (i == 1)
+			ol_tx_dump_flow_pool_info();
+		ol_tx_delete_flow_pool(pool, true);
+		qdf_spin_lock_bh(&pdev->tx_desc.flow_pool_list_lock);
 	}
+	qdf_spin_unlock_bh(&pdev->tx_desc.flow_pool_list_lock);
+	qdf_spinlock_destroy(&pdev->tx_desc.flow_pool_list_lock);
 }
 
 /**
@@ -381,13 +394,16 @@ struct ol_tx_flow_pool_t *ol_tx_create_flow_pool(uint8_t flow_pool_id,
 /**
  * ol_tx_delete_flow_pool() - delete flow pool
  * @pool: flow pool pointer
+ * @force: free pool forcefully
  *
  * Delete flow_pool if all tx descriptors are available.
  * Otherwise put it in FLOW_POOL_INVALID state.
+ * If force is set then pull all available descriptors to
+ * global pool.
  *
  * Return: 0 for success or error
  */
-int ol_tx_delete_flow_pool(struct ol_tx_flow_pool_t *pool)
+int ol_tx_delete_flow_pool(struct ol_tx_flow_pool_t *pool, bool force)
 {
 	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	uint16_t i, size;
@@ -405,7 +421,7 @@ int ol_tx_delete_flow_pool(struct ol_tx_flow_pool_t *pool)
 	qdf_spin_unlock_bh(&pdev->tx_desc.flow_pool_list_lock);
 
 	qdf_spin_lock_bh(&pool->flow_pool_lock);
-	if (pool->avail_desc == pool->flow_pool_size)
+	if (pool->avail_desc == pool->flow_pool_size || force == true)
 		pool->status = FLOW_POOL_INACTIVE;
 	else
 		pool->status = FLOW_POOL_INVALID;
@@ -481,7 +497,7 @@ int ol_tx_free_invalid_flow_pool(struct ol_tx_flow_pool_t *pool)
 		"%s: invalid pool deleted %d\n",
 		 __func__, pdev->tx_desc.num_invalid_bin);
 
-	return ol_tx_delete_flow_pool(pool);
+	return ol_tx_delete_flow_pool(pool, false);
 }
 
 /**
@@ -624,7 +640,7 @@ void ol_tx_flow_pool_map_handler(uint8_t flow_id, uint8_t flow_type,
 		break;
 	default:
 		if (pool_create)
-			ol_tx_delete_flow_pool(pool);
+			ol_tx_delete_flow_pool(pool, false);
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 		   "%s: flow type %d not supported !!!\n",
 		   __func__, type);
@@ -684,7 +700,7 @@ void ol_tx_flow_pool_unmap_handler(uint8_t flow_id, uint8_t flow_type,
 	}
 
 	/* only delete if all descriptors are available */
-	ol_tx_delete_flow_pool(pool);
+	ol_tx_delete_flow_pool(pool, false);
 
 	return;
 }

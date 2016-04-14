@@ -1025,7 +1025,6 @@ void ol_txrx_pdev_detach(ol_txrx_pdev_handle pdev, int force)
 #endif
 #endif
 	ol_tso_seg_list_deinit(pdev);
-	ol_tx_deregister_flow_control(pdev);
 
 	if (force) {
 		/*
@@ -1045,6 +1044,7 @@ void ol_txrx_pdev_detach(ol_txrx_pdev_handle pdev, int force)
 		ol_txrx_peer_find_hash_erase(pdev);
 	}
 
+	ol_tx_deregister_flow_control(pdev);
 	/* Stop the communication between HTT and target at first */
 	htt_detach_target(pdev->htt_pdev);
 
