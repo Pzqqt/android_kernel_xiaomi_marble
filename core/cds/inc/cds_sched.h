@@ -296,7 +296,6 @@ typedef struct _cds_context_type {
 /*---------------------------------------------------------------------------
    Function declarations and documenation
    ---------------------------------------------------------------------------*/
-
 #ifdef QCA_CONFIG_SMP
 /*---------------------------------------------------------------------------
    \brief cds_drop_rxpkt_by_staid() - API to drop pending Rx packets for a sta
@@ -357,6 +356,70 @@ void cds_free_ol_rx_pkt(p_cds_sched_context pSchedContext,
    \sa cds_free_ol_rx_pkt_freeq()
    -------------------------------------------------------------------------*/
 void cds_free_ol_rx_pkt_freeq(p_cds_sched_context pSchedContext);
+#else
+/**
+ * cds_drop_rxpkt_by_staid() - api to drop pending rx packets for a sta
+ * @pSchedContext: Pointer to the global CDS Sched Context
+ * @staId: Station Id
+ *
+ * This api drops queued packets for a station, to drop all the pending
+ * packets the caller has to send WLAN_MAX_STA_COUNT as staId.
+ *
+ * Return: none
+ */
+static inline
+void cds_drop_rxpkt_by_staid(p_cds_sched_context pSchedContext, uint16_t staId)
+{
+}
+
+/**
+ * cds_indicate_rxpkt() - API to Indicate rx data packet
+ * @pSchedContext: pointer to  CDS Sched Context
+ * @pkt: CDS OL RX pkt pointer containing to RX data message buffer
+ *
+ * Return: none
+ */
+static inline
+void cds_indicate_rxpkt(p_cds_sched_context pSchedContext,
+			struct cds_ol_rx_pkt *pkt)
+{
+}
+
+/**
+ * cds_alloc_ol_rx_pkt() - API to return next available cds message
+ * @pSchedContext: pointer to  CDS Sched Context
+ *
+ * Return: none
+ */
+static inline
+struct cds_ol_rx_pkt *cds_alloc_ol_rx_pkt(p_cds_sched_context pSchedContext)
+{
+}
+
+/**
+ * cds_free_ol_rx_pkt() - API to release cds message to the freeq
+ * @pSchedContext: pointer to  CDS Sched Context
+ * @pkt: CDS message buffer to be returned to free queue
+ *
+ * Return: none
+ */
+static inline
+void cds_free_ol_rx_pkt(p_cds_sched_context pSchedContext,
+			 struct cds_ol_rx_pkt *pkt)
+{
+}
+
+/**
+ * cds_free_ol_rx_pkt_freeq() - Free cds buffer free queue
+ * @pSchedContext: pointer to  CDS Sched Context
+ * @pkt: CDS message buffer to be returned to free queue
+ *
+ * Return: none
+ */
+static inline
+void cds_free_ol_rx_pkt_freeq(p_cds_sched_context pSchedContext)
+{
+}
 #endif
 
 /*---------------------------------------------------------------------------
