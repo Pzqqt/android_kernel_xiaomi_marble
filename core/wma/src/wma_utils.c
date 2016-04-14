@@ -406,6 +406,7 @@ int wma_stats_ext_event_handler(void *handle, uint8_t *event_buf,
 }
 #endif /* WLAN_FEATURE_STATS_EXT */
 
+
 /**
  * wma_profile_data_report_event_handler() - fw profiling handler
  * @handle:     wma handle
@@ -423,6 +424,7 @@ int wma_profile_data_report_event_handler(void *handle, uint8_t *event_buf,
 	uint32_t i = 0;
 	uint32_t entries;
 	uint8_t *buf_ptr;
+	char temp_str[150];
 	param_buf = (WMI_WLAN_PROFILE_DATA_EVENTID_param_tlvs *) event_buf;
 
 	if (!param_buf) {
@@ -452,19 +454,14 @@ int wma_profile_data_report_event_handler(void *handle, uint8_t *event_buf,
 		profile_ctx->rx_mpdu_cnt,
 		profile_ctx->bin_count);
 
+	QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
+		  "Profile ID: Count: TOT: Min: Max: hist_intvl: hist[0]: hist[1]:hist[2]");
+
 	for (i = 0; i < entries; i++) {
 		if (i == WMI_WLAN_PROFILE_MAX_BIN_CNT)
 			break;
-		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
-			"Profile ID: %d\n"
-			"Profile Count: %d\n"
-			"Profile TOT: %d\n"
-			"Profile Min: %d\n"
-			"Profile Max: %d\n"
-			"Profile hist_intvl: %d\n"
-			"Profile hist[0]: %d\n"
-			"Profile hist[1]: %d\n"
-			"Profile hist[2]: %d\n",
+		snprintf(temp_str, sizeof(temp_str),
+			 " %d : %d : %d : %d : %d : %d : %d : %d : %d",
 			profile_data[i].id,
 			profile_data[i].cnt,
 			profile_data[i].tot,
@@ -474,6 +471,8 @@ int wma_profile_data_report_event_handler(void *handle, uint8_t *event_buf,
 			profile_data[i].hist[0],
 			profile_data[i].hist[1],
 			profile_data[i].hist[2]);
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
+			"%s", temp_str);
 	}
 
 	return 0;
@@ -1782,6 +1781,32 @@ int32_t wma_txrx_fw_stats_reset(tp_wma_handle wma_handle,
 	((_mask) = 1 << (_rate_info))
 #endif
 
+#ifdef HELIUMPLUS
+bool wma_is_valid_fw_stats_cmd(uint32_t value)
+{
+	if (value > (HTT_DBG_NUM_STATS + 1) ||
+		value == (HTT_DBG_STATS_RX_RATE_INFO + 1) ||
+		value == (HTT_DBG_STATS_TX_RATE_INFO + 1) ||
+		value == (HTT_DBG_STATS_TXBF_MUSU_NDPA_PKT + 1)) {
+		WMA_LOGE("%s: Not supported", __func__);
+		return false;
+	}
+	return true;
+}
+#else
+bool wma_is_valid_fw_stats_cmd(uint32_t value)
+{
+	if (value > (HTT_DBG_NUM_STATS + 1) ||
+		value == (HTT_DBG_STATS_RX_RATE_INFO_V2 + 1) ||
+		value == (HTT_DBG_STATS_TX_RATE_INFO_V2 + 1) ||
+		value == (HTT_DBG_STATS_TXBF_MUSU_NDPA_PKT + 1)) {
+		WMA_LOGE("%s: Not supported", __func__);
+		return false;
+	}
+	return true;
+}
+#endif
+
 /**
  * wma_set_txrx_fw_stats_level() - set txrx fw stats level
  * @wma_handle: wma handle
@@ -1802,84 +1827,15 @@ int32_t wma_set_txrx_fw_stats_level(tp_wma_handle wma_handle,
 		WMA_LOGE("%s:Invalid vdev handle", __func__);
 		return -EINVAL;
 	}
+
+	if (wma_is_valid_fw_stats_cmd(value) == false)
+		return -EINVAL;
+
 	qdf_mem_zero(&req, sizeof(req));
 	req.print.verbose = 1;
 
-	switch (value) {
-	/* txrx_fw_stats 1 */
-	case WMA_FW_PHY_STATS:
-		l_up_mask = 1 << HTT_DBG_STATS_WAL_PDEV_TXRX;
-		break;
-
-	/* txrx_fw_stats 2 */
-	case WMA_FW_RX_REORDER_STATS:
-		l_up_mask = 1 << HTT_DBG_STATS_RX_REORDER;
-		break;
-
-	/* txrx_fw_stats 3 */
-	case WMA_FW_RX_RC_STATS:
-		SET_UPLOAD_MASK(l_up_mask, HTT_DBG_STATS_RX_RATE_INFO);
-		break;
-
-	/* txrx_fw_stats 5 */
-	case WMA_FW_TX_CONCISE_STATS:
-		req.print.concise = 1;
-		/* No break here, since l_up_mask is same for
-		 * both WMA_FW_TX_CONCISE_STATS & WMA_FW_TX_PPDU_STATS */
-
-	/* txrx_fw_stats 4 */
-	case WMA_FW_TX_PPDU_STATS:
-		l_up_mask = 1 << HTT_DBG_STATS_TX_PPDU_LOG;
-		break;
-
-	/* txrx_fw_stats 6 */
-	case WMA_FW_TX_RC_STATS:
-		SET_UPLOAD_MASK(l_up_mask, HTT_DBG_STATS_TX_RATE_INFO);
-		break;
-
-	/* txrx_fw_stats 12 */
-	/*
-	 * This is 1:1 correspondence with WMA defined value
-	 * and the f/w bitmask.
-	 */
-	case WMA_FW_RX_REM_RING_BUF:
-		l_up_mask = 1 << HTT_DBG_STATS_RX_REMOTE_RING_BUFFER_INFO;
-		break;
-
-	/* txrx_fw_stats 7 */
-	case WMA_FW_TXBF_INFO_STATS:
-		l_up_mask = 1 << HTT_DBG_STATS_TXBF_INFO;
-		break;
-
-	/* txrx_fw_stats 8 */
-	case WMA_FW_SND_INFO_STATS:
-		l_up_mask = 1 << HTT_DBG_STATS_SND_INFO;
-		break;
-
-	/* txrx_fw_stats 9 */
-	case WMA_FW_ERROR_INFO_STATS:
-		l_up_mask = 1 << HTT_DBG_STATS_ERROR_INFO;
-		break;
-
-	/* txrx_fw_stats 10 */
-	case WMA_FW_TX_SELFGEN_INFO_STATS:
-		l_up_mask = 1 << HTT_DBG_STATS_TX_SELFGEN_INFO;
-		break;
-
-	/* txrx_fw_stats 15 */
-	/*
-	 * This is 1:1 correspondence with WMA defined value
-	 * and the f/w bitmask.
-	 */
-	case WMA_FW_RX_TXBF_MUSU_NDPA:
-		l_up_mask = 1 << HTT_DBG_STATS_TXBF_MUSU_NDPA_PKT;
-		break;
-
-	default:
-		qdf_print("%s %d Invalid value %d\n",
-				__func__, __LINE__, value);
-		return 0;
-	}
+	/* TODO: Need to check how to avoid mem leak*/
+	l_up_mask = 1 << (value - 1);
 	req.stats_type_upload_mask = l_up_mask;
 
 	ol_txrx_fw_stats_get(vdev, &req, true);
