@@ -67,17 +67,18 @@ enum napi_decision_vector {
  * > 0: id of the created object (for multi-NAPI, number of objects created)
  */
 int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
-		    uint8_t            pipe_id,
 		    int (*poll)(struct napi_struct *, int),
 		    int                budget,
 		    int                scale)
 {
+	int i;
 	struct qca_napi_data *napid;
 	struct qca_napi_info *napii;
+	struct CE_state      *ce_state;
 	struct hif_softc *hif = HIF_GET_SOFTC(hif_ctx);
 
-	NAPI_DEBUG("-->(pipe=%d, budget=%d, scale=%d)",
-		   pipe_id, budget, scale);
+	NAPI_DEBUG("-->(budget=%d, scale=%d)",
+		   budget, scale);
 	NAPI_DEBUG("hif->napi_data.state = 0x%08x",
 		   hif->napi_data.state);
 	NAPI_DEBUG("hif->napi_data.ce_map = 0x%08x",
@@ -88,40 +89,52 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 		memset(napid, 0, sizeof(struct qca_napi_data));
 		mutex_init(&(napid->mutex));
 
-		init_dummy_netdev(&(napid->netdev));
-
 		napid->state |= HIF_NAPI_INITED;
 		HIF_INFO("%s: NAPI structures initialized", __func__);
 
 		NAPI_DEBUG("NAPI structures initialized");
 	}
-	napii = &(napid->napis[pipe_id]);
-	memset(napii, 0, sizeof(struct qca_napi_info));
-	napii->scale = scale;
-	napii->id    = NAPI_PIPE2ID(pipe_id);
+	for (i = 0; i < CE_COUNT_MAX; i++) {
+		ce_state = hif->ce_id_to_state[i];
+		NAPI_DEBUG("ce %d: htt_rx=%d htt_rx=%d",
+			   i, ce_state->htt_rx_data,
+			   ce_state->htt_tx_data);
+		if (!ce_state->htt_rx_data)
+			continue;
 
-	NAPI_DEBUG("adding napi=%p to netdev=%p (poll=%p, bdgt=%d)",
-		   &(napii->napi), &(napid->netdev), poll, budget);
-	netif_napi_add(&(napid->netdev), &(napii->napi), poll, budget);
+		/* Now this is a CE where we need NAPI on */
+		NAPI_DEBUG("Creating NAPI on pipe %d", i);
 
-	NAPI_DEBUG("after napi_add");
-	NAPI_DEBUG("napi=0x%p, netdev=0x%p",
-		   &(napii->napi), &(napid->netdev));
-	NAPI_DEBUG("napi.dev_list.prev=0x%p, next=0x%p",
-		   napii->napi.dev_list.prev, napii->napi.dev_list.next);
-	NAPI_DEBUG("dev.napi_list.prev=0x%p, next=0x%p",
-		   napid->netdev.napi_list.prev, napid->netdev.napi_list.next);
+		napii = &(napid->napis[i]);
+		memset(napii, 0, sizeof(struct qca_napi_info));
+		napii->scale = scale;
+		napii->id    = NAPI_PIPE2ID(i);
+		init_dummy_netdev(&(napii->netdev));
 
-	/* It is OK to change the state variable below without protection
-	 * as there should be no-one around yet
-	 */
-	napid->ce_map |= (0x01 << pipe_id);
-	HIF_INFO("%s: NAPI id %d created for pipe %d", __func__,
-		 napii->id, pipe_id);
+		NAPI_DEBUG("adding napi=%p to netdev=%p (poll=%p, bdgt=%d)",
+			   &(napii->napi), &(napii->netdev), poll, budget);
+		netif_napi_add(&(napii->netdev), &(napii->napi), poll, budget);
 
-	NAPI_DEBUG("NAPI id %d created for pipe %d", napii->id, pipe_id);
-	NAPI_DEBUG("<--napi_id=%d]", napii->id);
-	return napii->id;
+		NAPI_DEBUG("after napi_add");
+		NAPI_DEBUG("napi=0x%p, netdev=0x%p",
+			   &(napii->napi), &(napii->netdev));
+		NAPI_DEBUG("napi.dev_list.prev=0x%p, next=0x%p",
+			   napii->napi.dev_list.prev,
+			   napii->napi.dev_list.next);
+		NAPI_DEBUG("dev.napi_list.prev=0x%p, next=0x%p",
+			   napii->netdev.napi_list.prev,
+			   napii->netdev.napi_list.next);
+
+		/* It is OK to change the state variable below without
+		 * protection as there should be no-one around yet
+		 */
+		napid->ce_map |= (0x01 << i);
+		HIF_INFO("%s: NAPI id %d created for pipe %d", __func__,
+			 napii->id, i);
+	}
+	NAPI_DEBUG("NAPI idscreated for pipe all applicable pipes");
+	NAPI_DEBUG("<--napi_instances_map=%x]", napid->ce_map);
+	return napid->ce_map;
 }
 
 /**
@@ -186,8 +199,8 @@ int hif_napi_destroy(struct hif_opaque_softc *hif_ctx,
 				  napii->napi.dev_list.prev,
 				  napii->napi.dev_list.next);
 			NAPI_DEBUG("dev.napi_l.prv=0x%p, next=0x%p",
-				   napid->netdev.napi_list.prev,
-				   napid->netdev.napi_list.next);
+				   napii->netdev.napi_list.prev,
+				   napii->netdev.napi_list.next);
 
 			netif_napi_del(&(napii->napi));
 

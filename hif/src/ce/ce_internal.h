@@ -140,6 +140,10 @@ struct CE_state {
 	/* epping */
 	bool timer_inited;
 	qdf_timer_t poll_timer;
+
+	/* datapath - for faster access, use bools instead of a bitmap */
+	bool htt_tx_data;
+	bool htt_rx_data;
 	void (*lro_flush_cb)(void *);
 	void *lro_data;
 };

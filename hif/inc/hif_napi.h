@@ -70,7 +70,6 @@ enum qca_napi_event {
  */
 
 int hif_napi_create(struct hif_opaque_softc   *hif,
-		    uint8_t            pipe_id,
 		    int (*poll)(struct napi_struct *, int),
 		    int                budget,
 		    int                scale);

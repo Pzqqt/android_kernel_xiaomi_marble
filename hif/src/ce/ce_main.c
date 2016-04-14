@@ -101,6 +101,262 @@ static unsigned int roundup_pwr2(unsigned int n)
 	return 0;
 }
 
+#define ADRASTEA_SRC_WR_INDEX_OFFSET 0x3C
+#define ADRASTEA_DST_WR_INDEX_OFFSET 0x40
+
+static struct shadow_reg_cfg target_shadow_reg_cfg_map[] = {
+	{ 0, ADRASTEA_SRC_WR_INDEX_OFFSET},
+	{ 3, ADRASTEA_SRC_WR_INDEX_OFFSET},
+	{ 4, ADRASTEA_SRC_WR_INDEX_OFFSET},
+	{ 5, ADRASTEA_SRC_WR_INDEX_OFFSET},
+	{ 7, ADRASTEA_SRC_WR_INDEX_OFFSET},
+	{ 1, ADRASTEA_DST_WR_INDEX_OFFSET},
+	{ 2, ADRASTEA_DST_WR_INDEX_OFFSET},
+	{ 7, ADRASTEA_DST_WR_INDEX_OFFSET},
+	{ 8, ADRASTEA_DST_WR_INDEX_OFFSET},
+};
+
+
+
+/* CE_PCI TABLE */
+/*
+ * NOTE: the table below is out of date, though still a useful reference.
+ * Refer to target_service_to_ce_map and hif_map_service_to_pipe for the actual
+ * mapping of HTC services to HIF pipes.
+ */
+/*
+ * This authoritative table defines Copy Engine configuration and the mapping
+ * of services/endpoints to CEs.  A subset of this information is passed to
+ * the Target during startup as a prerequisite to entering BMI phase.
+ * See:
+ *    target_service_to_ce_map - Target-side mapping
+ *    hif_map_service_to_pipe      - Host-side mapping
+ *    target_ce_config         - Target-side configuration
+ *    host_ce_config           - Host-side configuration
+   ============================================================================
+   Purpose    | Service / Endpoint   | CE   | Dire | Xfer     | Xfer
+ |                      |      | ctio | Size     | Frequency
+ |                      |      | n    |          |
+   ============================================================================
+   tx         | HTT_DATA (downlink)  | CE 0 | h->t | medium - | very frequent
+   descriptor |                      |      |      | O(100B)  | and regular
+   download   |                      |      |      |          |
+   ----------------------------------------------------------------------------
+   rx         | HTT_DATA (uplink)    | CE 1 | t->h | small -  | frequent and
+   indication |                      |      |      | O(10B)   | regular
+   upload     |                      |      |      |          |
+   ----------------------------------------------------------------------------
+   MSDU       | DATA_BK (uplink)     | CE 2 | t->h | large -  | rare
+   upload     |                      |      |      | O(1000B) | (frequent
+   e.g. noise |                      |      |      |          | during IP1.0
+   packets    |                      |      |      |          | testing)
+   ----------------------------------------------------------------------------
+   MSDU       | DATA_BK (downlink)   | CE 3 | h->t | large -  | very rare
+   download   |                      |      |      | O(1000B) | (frequent
+   e.g.       |                      |      |      |          | during IP1.0
+   misdirecte |                      |      |      |          | testing)
+   d EAPOL    |                      |      |      |          |
+   packets    |                      |      |      |          |
+   ----------------------------------------------------------------------------
+   n/a        | DATA_BE, DATA_VI     | CE 2 | t->h |          | never(?)
+ | DATA_VO (uplink)     |      |      |          |
+   ----------------------------------------------------------------------------
+   n/a        | DATA_BE, DATA_VI     | CE 3 | h->t |          | never(?)
+ | DATA_VO (downlink)   |      |      |          |
+   ----------------------------------------------------------------------------
+   WMI events | WMI_CONTROL (uplink) | CE 4 | t->h | medium - | infrequent
+ |                      |      |      | O(100B)  |
+   ----------------------------------------------------------------------------
+   WMI        | WMI_CONTROL          | CE 5 | h->t | medium - | infrequent
+   messages   | (downlink)           |      |      | O(100B)  |
+ |                      |      |      |          |
+   ----------------------------------------------------------------------------
+   n/a        | HTC_CTRL_RSVD,       | CE 1 | t->h |          | never(?)
+ | HTC_RAW_STREAMS      |      |      |          |
+ | (uplink)             |      |      |          |
+   ----------------------------------------------------------------------------
+   n/a        | HTC_CTRL_RSVD,       | CE 0 | h->t |          | never(?)
+ | HTC_RAW_STREAMS      |      |      |          |
+ | (downlink)           |      |      |          |
+   ----------------------------------------------------------------------------
+   diag       | none (raw CE)        | CE 7 | t<>h |    4     | Diag Window
+ |                      |      |      |          | infrequent
+   ============================================================================
+ */
+
+/*
+ * Map from service/endpoint to Copy Engine.
+ * This table is derived from the CE_PCI TABLE, above.
+ * It is passed to the Target at startup for use by firmware.
+ */
+static struct service_to_pipe target_service_to_ce_map_wlan[] = {
+	{
+		WMI_DATA_VO_SVC,
+		PIPEDIR_OUT,    /* out = UL = host -> target */
+		3,
+	},
+	{
+		WMI_DATA_VO_SVC,
+		PIPEDIR_IN,     /* in = DL = target -> host */
+		2,
+	},
+	{
+		WMI_DATA_BK_SVC,
+		PIPEDIR_OUT,    /* out = UL = host -> target */
+		3,
+	},
+	{
+		WMI_DATA_BK_SVC,
+		PIPEDIR_IN,     /* in = DL = target -> host */
+		2,
+	},
+	{
+		WMI_DATA_BE_SVC,
+		PIPEDIR_OUT,    /* out = UL = host -> target */
+		3,
+	},
+	{
+		WMI_DATA_BE_SVC,
+		PIPEDIR_IN,     /* in = DL = target -> host */
+		2,
+	},
+	{
+		WMI_DATA_VI_SVC,
+		PIPEDIR_OUT,    /* out = UL = host -> target */
+		3,
+	},
+	{
+		WMI_DATA_VI_SVC,
+		PIPEDIR_IN,     /* in = DL = target -> host */
+		2,
+	},
+	{
+		WMI_CONTROL_SVC,
+		PIPEDIR_OUT,    /* out = UL = host -> target */
+		3,
+	},
+	{
+		WMI_CONTROL_SVC,
+		PIPEDIR_IN,     /* in = DL = target -> host */
+		2,
+	},
+	{
+		HTC_CTRL_RSVD_SVC,
+		PIPEDIR_OUT,    /* out = UL = host -> target */
+		0,              /* could be moved to 3 (share with WMI) */
+	},
+	{
+		HTC_CTRL_RSVD_SVC,
+		PIPEDIR_IN,     /* in = DL = target -> host */
+		2,
+	},
+	{
+		HTC_RAW_STREAMS_SVC, /* not currently used */
+		PIPEDIR_OUT,    /* out = UL = host -> target */
+		0,
+	},
+	{
+		HTC_RAW_STREAMS_SVC, /* not currently used */
+		PIPEDIR_IN,     /* in = DL = target -> host */
+		2,
+	},
+	{
+		HTT_DATA_MSG_SVC,
+		PIPEDIR_OUT,    /* out = UL = host -> target */
+		4,
+	},
+	{
+		HTT_DATA_MSG_SVC,
+		PIPEDIR_IN,     /* in = DL = target -> host */
+		1,
+	},
+	{
+		WDI_IPA_TX_SVC,
+		PIPEDIR_OUT,    /* in = DL = target -> host */
+		5,
+	},
+	/* (Additions here) */
+
+	{                       /* Must be last */
+		0,
+		0,
+		0,
+	},
+};
+
+static struct service_to_pipe *target_service_to_ce_map =
+	target_service_to_ce_map_wlan;
+static int target_service_to_ce_map_sz = sizeof(target_service_to_ce_map_wlan);
+
+static struct shadow_reg_cfg *target_shadow_reg_cfg = target_shadow_reg_cfg_map;
+static int shadow_cfg_sz = sizeof(target_shadow_reg_cfg_map);
+
+static struct service_to_pipe target_service_to_ce_map_wlan_epping[] = {
+	{WMI_DATA_VO_SVC, PIPEDIR_OUT, 3,},     /* out = UL = host -> target */
+	{WMI_DATA_VO_SVC, PIPEDIR_IN, 2,},      /* in = DL = target -> host */
+	{WMI_DATA_BK_SVC, PIPEDIR_OUT, 4,},     /* out = UL = host -> target */
+	{WMI_DATA_BK_SVC, PIPEDIR_IN, 1,},      /* in = DL = target -> host */
+	{WMI_DATA_BE_SVC, PIPEDIR_OUT, 3,},     /* out = UL = host -> target */
+	{WMI_DATA_BE_SVC, PIPEDIR_IN, 2,},      /* in = DL = target -> host */
+	{WMI_DATA_VI_SVC, PIPEDIR_OUT, 3,},     /* out = UL = host -> target */
+	{WMI_DATA_VI_SVC, PIPEDIR_IN, 2,},      /* in = DL = target -> host */
+	{WMI_CONTROL_SVC, PIPEDIR_OUT, 3,},     /* out = UL = host -> target */
+	{WMI_CONTROL_SVC, PIPEDIR_IN, 2,},      /* in = DL = target -> host */
+	{HTC_CTRL_RSVD_SVC, PIPEDIR_OUT, 0,},   /* out = UL = host -> target */
+	{HTC_CTRL_RSVD_SVC, PIPEDIR_IN, 2,},    /* in = DL = target -> host */
+	{HTC_RAW_STREAMS_SVC, PIPEDIR_OUT, 0,}, /* out = UL = host -> target */
+	{HTC_RAW_STREAMS_SVC, PIPEDIR_IN, 2,},  /* in = DL = target -> host */
+	{HTT_DATA_MSG_SVC, PIPEDIR_OUT, 4,},    /* out = UL = host -> target */
+	{HTT_DATA_MSG_SVC, PIPEDIR_IN, 1,},     /* in = DL = target -> host */
+	{0, 0, 0,},             /* Must be last */
+};
+
+/**
+ * ce_mark_datapath() - marks the ce_state->htt_rx_data accordingly
+ * @ce_state : pointer to the state context of the CE
+ *
+ * Description:
+ *   Sets htt_rx_data attribute of the state structure if the
+ *   CE serves one of the HTT DATA services.
+ *
+ * Return:
+ *  false (attribute set to false)
+ *  true  (attribute set to true);
+ */
+bool ce_mark_datapath(struct CE_state *ce_state)
+{
+	struct service_to_pipe *svc_map;
+	size_t map_sz;
+	int    i;
+	bool   rc = false;
+
+	if (ce_state != NULL) {
+		if (WLAN_IS_EPPING_ENABLED(hif_get_conparam(ce_state->scn))) {
+			svc_map = target_service_to_ce_map_wlan_epping;
+			map_sz = sizeof(target_service_to_ce_map_wlan_epping) /
+				sizeof(struct service_to_pipe);
+		} else {
+			svc_map = target_service_to_ce_map_wlan;
+			map_sz = sizeof(target_service_to_ce_map_wlan) /
+				sizeof(struct service_to_pipe);
+		}
+		for (i = 0; i < map_sz; i++) {
+			if ((svc_map[i].pipenum == ce_state->id) &&
+			    ((svc_map[i].service_id == HTT_DATA_MSG_SVC)  ||
+			     (svc_map[i].service_id == HTT_DATA2_MSG_SVC) ||
+			     (svc_map[i].service_id == HTT_DATA3_MSG_SVC))) {
+				/* HTT CEs are unidirectional */
+				if (svc_map[i].pipedir == PIPEDIR_IN)
+					ce_state->htt_rx_data = true;
+				else
+					ce_state->htt_tx_data = true;
+				rc = true;
+			}
+		}
+	}
+	return rc;
+}
+
 /*
  * Initialize a Copy Engine based on caller-supplied attributes.
  * This may be called once to initialize both source and destination
@@ -456,6 +712,9 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 	if (Q_TARGET_ACCESS_END(scn) < 0)
 		goto error_target_access;
 
+	/* update the htt_data attribute */
+	ce_mark_datapath(CE_state);
+
 	return (struct CE_handle *)CE_state;
 
 error_target_access:
@@ -486,7 +745,7 @@ ce_h2t_tx_ce_cleanup(struct CE_handle *ce_hdl)
 	struct hif_softc *sc = ce_state->scn;
 	uint32_t sw_index, write_index;
 
-	if (sc->fastpath_mode_on && (ce_state->id == CE_HTT_H2T_MSG)) {
+	if (sc->fastpath_mode_on && ce_state->htt_tx_data) {
 		HIF_INFO("%s %d Fastpath mode ON, Cleaning up HTT Tx CE\n",
 			  __func__, __LINE__);
 		sw_index = src_ring->sw_index;
@@ -1296,217 +1555,6 @@ void hif_stop(struct hif_opaque_softc *hif_ctx)
 	hif_state->started = false;
 }
 
-#define ADRASTEA_SRC_WR_INDEX_OFFSET 0x3C
-#define ADRASTEA_DST_WR_INDEX_OFFSET 0x40
-
-
-static struct shadow_reg_cfg target_shadow_reg_cfg_map[] = {
-	{ 0, ADRASTEA_SRC_WR_INDEX_OFFSET},
-	{ 3, ADRASTEA_SRC_WR_INDEX_OFFSET},
-	{ 4, ADRASTEA_SRC_WR_INDEX_OFFSET},
-	{ 5, ADRASTEA_SRC_WR_INDEX_OFFSET},
-	{ 7, ADRASTEA_SRC_WR_INDEX_OFFSET},
-	{ 1, ADRASTEA_DST_WR_INDEX_OFFSET},
-	{ 2, ADRASTEA_DST_WR_INDEX_OFFSET},
-	{ 7, ADRASTEA_DST_WR_INDEX_OFFSET},
-	{ 8, ADRASTEA_DST_WR_INDEX_OFFSET},
-};
-
-
-
-/* CE_PCI TABLE */
-/*
- * NOTE: the table below is out of date, though still a useful reference.
- * Refer to target_service_to_ce_map and hif_map_service_to_pipe for the actual
- * mapping of HTC services to HIF pipes.
- */
-/*
- * This authoritative table defines Copy Engine configuration and the mapping
- * of services/endpoints to CEs.  A subset of this information is passed to
- * the Target during startup as a prerequisite to entering BMI phase.
- * See:
- *    target_service_to_ce_map - Target-side mapping
- *    hif_map_service_to_pipe      - Host-side mapping
- *    target_ce_config         - Target-side configuration
- *    host_ce_config           - Host-side configuration
-   ============================================================================
-   Purpose    | Service / Endpoint   | CE   | Dire | Xfer     | Xfer
- |                      |      | ctio | Size     | Frequency
- |                      |      | n    |          |
-   ============================================================================
-   tx         | HTT_DATA (downlink)  | CE 0 | h->t | medium - | very frequent
-   descriptor |                      |      |      | O(100B)  | and regular
-   download   |                      |      |      |          |
-   ----------------------------------------------------------------------------
-   rx         | HTT_DATA (uplink)    | CE 1 | t->h | small -  | frequent and
-   indication |                      |      |      | O(10B)   | regular
-   upload     |                      |      |      |          |
-   ----------------------------------------------------------------------------
-   MSDU       | DATA_BK (uplink)     | CE 2 | t->h | large -  | rare
-   upload     |                      |      |      | O(1000B) | (frequent
-   e.g. noise |                      |      |      |          | during IP1.0
-   packets    |                      |      |      |          | testing)
-   ----------------------------------------------------------------------------
-   MSDU       | DATA_BK (downlink)   | CE 3 | h->t | large -  | very rare
-   download   |                      |      |      | O(1000B) | (frequent
-   e.g.       |                      |      |      |          | during IP1.0
-   misdirecte |                      |      |      |          | testing)
-   d EAPOL    |                      |      |      |          |
-   packets    |                      |      |      |          |
-   ----------------------------------------------------------------------------
-   n/a        | DATA_BE, DATA_VI     | CE 2 | t->h |          | never(?)
- | DATA_VO (uplink)     |      |      |          |
-   ----------------------------------------------------------------------------
-   n/a        | DATA_BE, DATA_VI     | CE 3 | h->t |          | never(?)
- | DATA_VO (downlink)   |      |      |          |
-   ----------------------------------------------------------------------------
-   WMI events | WMI_CONTROL (uplink) | CE 4 | t->h | medium - | infrequent
- |                      |      |      | O(100B)  |
-   ----------------------------------------------------------------------------
-   WMI        | WMI_CONTROL          | CE 5 | h->t | medium - | infrequent
-   messages   | (downlink)           |      |      | O(100B)  |
- |                      |      |      |          |
-   ----------------------------------------------------------------------------
-   n/a        | HTC_CTRL_RSVD,       | CE 1 | t->h |          | never(?)
- | HTC_RAW_STREAMS      |      |      |          |
- | (uplink)             |      |      |          |
-   ----------------------------------------------------------------------------
-   n/a        | HTC_CTRL_RSVD,       | CE 0 | h->t |          | never(?)
- | HTC_RAW_STREAMS      |      |      |          |
- | (downlink)           |      |      |          |
-   ----------------------------------------------------------------------------
-   diag       | none (raw CE)        | CE 7 | t<>h |    4     | Diag Window
- |                      |      |      |          | infrequent
-   ============================================================================
- */
-
-/*
- * Map from service/endpoint to Copy Engine.
- * This table is derived from the CE_PCI TABLE, above.
- * It is passed to the Target at startup for use by firmware.
- */
-static struct service_to_pipe target_service_to_ce_map_wlan[] = {
-	{
-		WMI_DATA_VO_SVC,
-		PIPEDIR_OUT,    /* out = UL = host -> target */
-		3,
-	},
-	{
-		WMI_DATA_VO_SVC,
-		PIPEDIR_IN,     /* in = DL = target -> host */
-		2,
-	},
-	{
-		WMI_DATA_BK_SVC,
-		PIPEDIR_OUT,    /* out = UL = host -> target */
-		3,
-	},
-	{
-		WMI_DATA_BK_SVC,
-		PIPEDIR_IN,     /* in = DL = target -> host */
-		2,
-	},
-	{
-		WMI_DATA_BE_SVC,
-		PIPEDIR_OUT,    /* out = UL = host -> target */
-		3,
-	},
-	{
-		WMI_DATA_BE_SVC,
-		PIPEDIR_IN,     /* in = DL = target -> host */
-		2,
-	},
-	{
-		WMI_DATA_VI_SVC,
-		PIPEDIR_OUT,    /* out = UL = host -> target */
-		3,
-	},
-	{
-		WMI_DATA_VI_SVC,
-		PIPEDIR_IN,     /* in = DL = target -> host */
-		2,
-	},
-	{
-		WMI_CONTROL_SVC,
-		PIPEDIR_OUT,    /* out = UL = host -> target */
-		3,
-	},
-	{
-		WMI_CONTROL_SVC,
-		PIPEDIR_IN,     /* in = DL = target -> host */
-		2,
-	},
-	{
-		HTC_CTRL_RSVD_SVC,
-		PIPEDIR_OUT,    /* out = UL = host -> target */
-		0,              /* could be moved to 3 (share with WMI) */
-	},
-	{
-		HTC_CTRL_RSVD_SVC,
-		PIPEDIR_IN,     /* in = DL = target -> host */
-		2,
-	},
-	{
-		HTC_RAW_STREAMS_SVC, /* not currently used */
-		PIPEDIR_OUT,    /* out = UL = host -> target */
-		0,
-	},
-	{
-		HTC_RAW_STREAMS_SVC, /* not currently used */
-		PIPEDIR_IN,     /* in = DL = target -> host */
-		2,
-	},
-	{
-		HTT_DATA_MSG_SVC,
-		PIPEDIR_OUT,    /* out = UL = host -> target */
-		4,
-	},
-	{
-		HTT_DATA_MSG_SVC,
-		PIPEDIR_IN,     /* in = DL = target -> host */
-		1,
-	},
-	{
-		WDI_IPA_TX_SVC,
-		PIPEDIR_OUT,    /* in = DL = target -> host */
-		5,
-	},
-	/* (Additions here) */
-
-	{                       /* Must be last */
-		0,
-		0,
-		0,
-	},
-};
-
-static struct service_to_pipe *target_service_to_ce_map =
-	target_service_to_ce_map_wlan;
-static int target_service_to_ce_map_sz = sizeof(target_service_to_ce_map_wlan);
-
-static struct shadow_reg_cfg *target_shadow_reg_cfg = target_shadow_reg_cfg_map;
-static int shadow_cfg_sz = sizeof(target_shadow_reg_cfg_map);
-
-static struct service_to_pipe target_service_to_ce_map_wlan_epping[] = {
-	{WMI_DATA_VO_SVC, PIPEDIR_OUT, 3,},     /* out = UL = host -> target */
-	{WMI_DATA_VO_SVC, PIPEDIR_IN, 2,},      /* in = DL = target -> host */
-	{WMI_DATA_BK_SVC, PIPEDIR_OUT, 4,},     /* out = UL = host -> target */
-	{WMI_DATA_BK_SVC, PIPEDIR_IN, 1,},      /* in = DL = target -> host */
-	{WMI_DATA_BE_SVC, PIPEDIR_OUT, 3,},     /* out = UL = host -> target */
-	{WMI_DATA_BE_SVC, PIPEDIR_IN, 2,},      /* in = DL = target -> host */
-	{WMI_DATA_VI_SVC, PIPEDIR_OUT, 3,},     /* out = UL = host -> target */
-	{WMI_DATA_VI_SVC, PIPEDIR_IN, 2,},      /* in = DL = target -> host */
-	{WMI_CONTROL_SVC, PIPEDIR_OUT, 3,},     /* out = UL = host -> target */
-	{WMI_CONTROL_SVC, PIPEDIR_IN, 2,},      /* in = DL = target -> host */
-	{HTC_CTRL_RSVD_SVC, PIPEDIR_OUT, 0,},   /* out = UL = host -> target */
-	{HTC_CTRL_RSVD_SVC, PIPEDIR_IN, 2,},    /* in = DL = target -> host */
-	{HTC_RAW_STREAMS_SVC, PIPEDIR_OUT, 0,}, /* out = UL = host -> target */
-	{HTC_RAW_STREAMS_SVC, PIPEDIR_IN, 2,},  /* in = DL = target -> host */
-	{HTT_DATA_MSG_SVC, PIPEDIR_OUT, 4,},    /* out = UL = host -> target */
-	{HTT_DATA_MSG_SVC, PIPEDIR_IN, 1,},     /* in = DL = target -> host */
-	{0, 0, 0,},             /* Must be last */
-};
-
 /**
  * hif_get_target_ce_config() - get copy engine configuration
  * @target_ce_config_ret: basic copy engine configuration
@@ -1967,22 +2015,18 @@ u32 shadow_dst_wr_ind_addr(struct hif_softc *scn, u32 ctrl_addr)
 void ce_lro_flush_cb_register(struct hif_opaque_softc *hif_hdl,
 	 void (handler)(void *), void *data)
 {
-	uint8_t ul, dl;
-	int ul_polled, dl_polled;
+	int i;
+	struct CE_state *ce_state;
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
 
 	QDF_ASSERT(scn != NULL);
 
-	if (QDF_STATUS_SUCCESS !=
-		 hif_map_service_to_pipe(hif_hdl, HTT_DATA_MSG_SVC,
-			 &ul, &dl, &ul_polled, &dl_polled)) {
-		printk("%s cannot map service to pipe\n", __FUNCTION__);
-		return;
-	} else {
-		struct CE_state *ce_state;
-		ce_state = scn->ce_id_to_state[dl];
-		ce_state->lro_flush_cb = handler;
-		ce_state->lro_data = data;
+	for (i = 0; i < CE_COUNT_MAX; i++) {
+		ce_state = scn->ce_id_to_state[i];
+		if (ce_state->htt_rx_data) {
+			ce_state->lro_flush_cb = handler;
+			ce_state->lro_data = data;
+		}
 	}
 }
 
@@ -1997,22 +2041,18 @@ void ce_lro_flush_cb_register(struct hif_opaque_softc *hif_hdl,
  */
 void ce_lro_flush_cb_deregister(struct hif_opaque_softc *hif_hdl)
 {
-	uint8_t ul, dl;
-	int ul_polled, dl_polled;
+	int i;
+	struct CE_state *ce_state;
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
 
 	QDF_ASSERT(scn != NULL);
 
-	if (QDF_STATUS_SUCCESS !=
-		 hif_map_service_to_pipe(hif_hdl, HTT_DATA_MSG_SVC,
-			 &ul, &dl, &ul_polled, &dl_polled)) {
-		printk("%s cannot map service to pipe\n", __FUNCTION__);
-		return;
-	} else {
-		struct CE_state *ce_state;
-		ce_state = scn->ce_id_to_state[dl];
-		ce_state->lro_flush_cb = NULL;
-		ce_state->lro_data = NULL;
+	for (i = 0; i < CE_COUNT_MAX; i++) {
+		ce_state = scn->ce_id_to_state[i];
+		if (ce_state->htt_rx_data) {
+			ce_state->lro_flush_cb = NULL;
+			ce_state->lro_data = NULL;
+		}
 	}
 }
 #endif

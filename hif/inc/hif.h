@@ -116,6 +116,7 @@ struct qca_napi_stat {
  * instances.
  */
 struct qca_napi_info {
+	struct net_device    netdev; /* dummy net_dev */
 	struct napi_struct   napi;    /* one NAPI Instance per CE in phase I */
 	uint8_t              scale;   /* currently same on all instances */
 	uint8_t              id;
@@ -138,7 +139,6 @@ struct qca_napi_data {
 					instances, indexed by pipe_id,
 					not used by clients (clients use an
 					id returned by create) */
-	struct net_device    netdev; /* dummy net_dev */
 	struct qca_napi_info napis[CE_COUNT_MAX];
 };
 
