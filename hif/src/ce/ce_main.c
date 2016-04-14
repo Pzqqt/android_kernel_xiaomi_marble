@@ -2102,7 +2102,8 @@ u32 shadow_sr_wr_ind_addr(struct hif_softc *scn, u32 ctrl_addr)
 		addr = SHADOW_VALUE7;
 		break;
 	default:
-		HIF_ERROR("invalid CE ctrl_addr\n");
+		HIF_ERROR("invalid CE ctrl_addr %d",
+			COPY_ENGINE_ID(ctrl_addr));
 		QDF_ASSERT(0);
 
 	}
@@ -2131,7 +2132,8 @@ u32 shadow_dst_wr_ind_addr(struct hif_softc *scn, u32 ctrl_addr)
 		addr = SHADOW_VALUE20;
 		break;
 	default:
-		HIF_ERROR("invalid CE ctrl_addr\n");
+		HIF_ERROR("invalid CE ctrl_addr %d",
+			COPY_ENGINE_ID(ctrl_addr));
 		QDF_ASSERT(0);
 	}
 
