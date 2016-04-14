@@ -397,6 +397,10 @@ int htt_htc_attach(struct htt_pdev_t *pdev)
 	HTC_SERVICE_CONNECT_RESP response;
 	A_STATUS status;
 
+	if (QDF_STATUS_SUCCESS !=
+	    hif_ce_fastpath_cb_register(htt_t2h_msg_handler_fast, pdev))
+		qdf_print("failed to register fastpath callback\n");
+
 	qdf_mem_set(&connect, sizeof(connect), 0);
 	qdf_mem_set(&response, sizeof(response), 0);
 

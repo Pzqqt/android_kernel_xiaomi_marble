@@ -431,6 +431,8 @@ void htt_rx_detach(struct htt_pdev_t *pdev);
 int htt_htc_attach(struct htt_pdev_t *pdev);
 
 void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt);
+int htt_t2h_msg_handler_fast(void *htt_pdev, qdf_nbuf_t *cmpl_msdus,
+			     uint32_t num_cmpls);
 
 void htt_h2t_send_complete(void *context, HTC_PACKET *pkt);
 

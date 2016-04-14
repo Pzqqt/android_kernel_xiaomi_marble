@@ -44,6 +44,7 @@
 #include <ol_htt_tx_api.h>
 #include <ol_txrx_htt_api.h>    /* htt_tx_status */
 
+#include <osdep.h>
 #include <htt_internal.h>       /* HTT_TX_SCHED, etc. */
 #include <pktlog_ac_fmt.h>
 #include <wdi_event.h>
@@ -132,7 +133,8 @@ static void htt_rx_frag_set_last_msdu(struct htt_pdev_t *pdev, qdf_nbuf_t msg)
 }
 
 /* Target to host Msg/event  handler  for low priority messages*/
-void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg)
+void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg, bool
+			    free_msg_buf)
 {
 	struct htt_pdev_t *pdev = (struct htt_pdev_t *)context;
 	uint32_t *msg_word;
@@ -473,7 +475,8 @@ void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg)
 		break;
 	};
 	/* Free the indication buffer */
-	qdf_nbuf_free(htt_t2h_msg);
+	if (free_msg_buf)
+		qdf_nbuf_free(htt_t2h_msg);
 }
 
 /* Generic Target to host Msg/event  handler  for low priority messages
@@ -680,7 +683,7 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 	}
 
 	default:
-		htt_t2h_lp_msg_handler(context, htt_t2h_msg);
+		htt_t2h_lp_msg_handler(context, htt_t2h_msg, true);
 		return;
 
 	};
@@ -688,6 +691,242 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 	/* Free the indication buffer */
 	qdf_nbuf_free(htt_t2h_msg);
 }
+
+#ifdef WLAN_FEATURE_FASTPATH
+#define HTT_T2H_MSG_BUF_REINIT(_buf, dev)				\
+	do {								\
+		QDF_NBUF_CB_PADDR(_buf) -= (HTC_HEADER_LEN +		\
+					HTC_HDR_ALIGNMENT_PADDING);	\
+		qdf_nbuf_init_fast((_buf));				\
+		OS_SYNC_SINGLE_FOR_DEVICE(dev, (QDF_NBUF_CB_PADDR(_buf)),	\
+					  (skb_end_pointer(_buf) -	\
+					   (_buf)->data) ,		\
+					   PCI_DMA_FROMDEVICE);         \
+	} while (0)
+
+/**
+ * htt_t2h_msg_handler_fast() -  Fastpath specific message handler
+ * @context: HTT context
+ * @cmpl_msdus: netbuf completions
+ * @num_cmpls: number of completions to be handled
+ *
+ * Return: Number of completions handled
+ */
+int
+htt_t2h_msg_handler_fast(void *context, qdf_nbuf_t *cmpl_msdus,
+			 uint32_t num_cmpls)
+{
+	struct htt_pdev_t *pdev = (struct htt_pdev_t *)context;
+	qdf_nbuf_t htt_t2h_msg;
+	uint32_t *msg_word;
+	uint32_t i;
+	enum htt_t2h_msg_type msg_type;
+	uint32_t msg_len;
+	uint32_t num_htt_tx_cmpls = 0;
+
+	for (i = 0; i < num_cmpls; i++) {
+		htt_t2h_msg = cmpl_msdus[i];
+		msg_len = qdf_nbuf_len(htt_t2h_msg);
+
+		/*
+		 * Move the data pointer to point to HTT header
+		 * past the HTC header + HTC header alignment padding
+		 */
+		qdf_nbuf_pull_head(htt_t2h_msg, HTC_HEADER_LEN +
+				   HTC_HDR_ALIGNMENT_PADDING);
+
+		/* confirm alignment */
+		HTT_ASSERT3((((unsigned long) qdf_nbuf_data(htt_t2h_msg)) & 0x3)
+			    == 0);
+
+		msg_word = (u_int32_t *) qdf_nbuf_data(htt_t2h_msg);
+		msg_type = HTT_T2H_MSG_TYPE_GET(*msg_word);
+
+		switch (msg_type) {
+		case HTT_T2H_MSG_TYPE_RX_IND:
+		{
+			unsigned int num_mpdu_ranges;
+			unsigned int num_msdu_bytes;
+			u_int16_t peer_id;
+			u_int8_t tid;
+
+			peer_id = HTT_RX_IND_PEER_ID_GET(*msg_word);
+			tid = HTT_RX_IND_EXT_TID_GET(*msg_word);
+
+			num_msdu_bytes =
+				HTT_RX_IND_FW_RX_DESC_BYTES_GET(
+				*(msg_word + 2 +
+				  HTT_RX_PPDU_DESC_SIZE32));
+			/*
+			 * 1 word for the message header,
+			 * HTT_RX_PPDU_DESC_SIZE32 words for the FW
+			 * rx PPDU desc.
+			 * 1 word to specify the number of MSDU bytes,
+			 * 1 word for every 4 MSDU bytes (round up),
+			 * 1 word for the MPDU range header
+			 */
+			pdev->rx_mpdu_range_offset_words =
+				(HTT_RX_IND_HDR_BYTES + num_msdu_bytes + 3) >>
+				2;
+			num_mpdu_ranges =
+				HTT_RX_IND_NUM_MPDU_RANGES_GET(*(msg_word
+								 + 1));
+			pdev->rx_ind_msdu_byte_idx = 0;
+			ol_rx_indication_handler(pdev->txrx_pdev, htt_t2h_msg,
+						 peer_id, tid, num_mpdu_ranges);
+			break;
+		}
+		case HTT_T2H_MSG_TYPE_TX_COMPL_IND:
+		{
+			int num_msdus;
+			enum htt_tx_status status;
+
+			/* status - no enum translation needed */
+			status = HTT_TX_COMPL_IND_STATUS_GET(*msg_word);
+			num_msdus = HTT_TX_COMPL_IND_NUM_GET(*msg_word);
+			if (num_msdus & 0x1) {
+				struct htt_tx_compl_ind_base *compl =
+					(void *)msg_word;
+
+				/*
+				 * Host CPU endianness can be different
+				 * from FW CPU. This can result in even
+				 * and odd MSDU IDs being switched. If
+				 * this happens, copy the switched final
+				 * odd MSDU ID from location
+				 * payload[size], to location
+				 * payload[size-1],where the message
+				 * handler function expects to find it
+				 */
+				if (compl->payload[num_msdus] !=
+				    HTT_TX_COMPL_INV_MSDU_ID) {
+					compl->payload[num_msdus - 1] =
+						compl->payload[num_msdus];
+				}
+			}
+			ol_tx_completion_handler(pdev->txrx_pdev, num_msdus,
+						 status, msg_word + 1);
+
+			num_htt_tx_cmpls += SLOTS_PER_TX;
+			break;
+		}
+		case HTT_T2H_MSG_TYPE_RX_PN_IND:
+		{
+			u_int16_t peer_id;
+			u_int8_t tid, pn_ie_cnt, *pn_ie = NULL;
+			int seq_num_start, seq_num_end;
+
+			/*First dword */
+			peer_id = HTT_RX_PN_IND_PEER_ID_GET(*msg_word);
+			tid = HTT_RX_PN_IND_EXT_TID_GET(*msg_word);
+
+			msg_word++;
+			/*Second dword */
+			seq_num_start =
+				HTT_RX_PN_IND_SEQ_NUM_START_GET(*msg_word);
+			seq_num_end =
+				HTT_RX_PN_IND_SEQ_NUM_END_GET(*msg_word);
+			pn_ie_cnt =
+				HTT_RX_PN_IND_PN_IE_CNT_GET(*msg_word);
+
+			msg_word++;
+			/*Third dword*/
+			if (pn_ie_cnt)
+				pn_ie = (u_int8_t *)msg_word;
+
+			ol_rx_pn_ind_handler(pdev->txrx_pdev, peer_id, tid,
+				seq_num_start, seq_num_end, pn_ie_cnt, pn_ie);
+
+			break;
+		}
+		case HTT_T2H_MSG_TYPE_TX_INSPECT_IND:
+		{
+			int num_msdus;
+
+			num_msdus = HTT_TX_COMPL_IND_NUM_GET(*msg_word);
+			if (num_msdus & 0x1) {
+				struct htt_tx_compl_ind_base *compl =
+					(void *)msg_word;
+
+				/*
+				 * Host CPU endianness can be different
+				 * from FW CPU. This * can result in
+				 * even and odd MSDU IDs being switched.
+				 * If this happens, copy the switched
+				 * final odd MSDU ID from location
+				 * payload[size], to location
+				 * payload[size-1], where the message
+				 * handler function expects to find it
+				 */
+				if (compl->payload[num_msdus] !=
+				    HTT_TX_COMPL_INV_MSDU_ID) {
+					compl->payload[num_msdus - 1] =
+					compl->payload[num_msdus];
+				}
+			}
+			ol_tx_inspect_handler(pdev->txrx_pdev,
+					      num_msdus, msg_word + 1);
+			num_htt_tx_cmpls += SLOTS_PER_TX;
+			break;
+		}
+		case HTT_T2H_MSG_TYPE_RX_IN_ORD_PADDR_IND:
+		{
+			u_int16_t peer_id;
+			u_int8_t tid;
+			u_int8_t offload_ind, frag_ind;
+
+			if (qdf_unlikely(
+				  !pdev->cfg.is_full_reorder_offload)) {
+				qdf_print("HTT_T2H_MSG_TYPE_RX_IN_ORD_PADDR_IND not supported when full reorder offload is disabled\n");
+				break;
+			}
+
+			if (qdf_unlikely(
+				pdev->txrx_pdev->cfg.is_high_latency)) {
+				qdf_print("HTT_T2H_MSG_TYPE_RX_IN_ORD_PADDR_IND not supported on high latency\n");
+				break;
+			}
+
+			peer_id = HTT_RX_IN_ORD_PADDR_IND_PEER_ID_GET(
+							*msg_word);
+			tid = HTT_RX_IN_ORD_PADDR_IND_EXT_TID_GET(
+							*msg_word);
+			offload_ind =
+				HTT_RX_IN_ORD_PADDR_IND_OFFLOAD_GET(
+							*msg_word);
+			frag_ind = HTT_RX_IN_ORD_PADDR_IND_FRAG_GET(
+							*msg_word);
+
+			if (qdf_unlikely(frag_ind)) {
+				ol_rx_frag_indication_handler(
+				pdev->txrx_pdev, htt_t2h_msg, peer_id,
+				tid);
+				break;
+			}
+
+			ol_rx_in_order_indication_handler(
+					pdev->txrx_pdev, htt_t2h_msg,
+					peer_id, tid, offload_ind);
+			break;
+		}
+		default:
+			htt_t2h_lp_msg_handler(context, htt_t2h_msg, false);
+			break;
+		};
+
+		/* Re-initialize the indication buffer */
+		HTT_T2H_MSG_BUF_REINIT(htt_t2h_msg, pdev->osdev->dev);
+		qdf_nbuf_set_pktlen(htt_t2h_msg, 0);
+	}
+	return num_htt_tx_cmpls;
+}
+#else
+int htt_t2h_msg_handler_fast(void *context, qdf_nbuf_t *cmpl_msdus,
+			     uint32_t num_cmpls)
+{
+	return 0;
+}
+#endif /* WLAN_FEATURE_FASTPATH */
 
 /*--- target->host HTT message Info Element access methods ------------------*/
 
