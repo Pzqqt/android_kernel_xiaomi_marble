@@ -13448,10 +13448,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		/* bsstype */
 		dwTmp = csr_translate_bsstype_to_mac_type
 						(pProfile->BSSType);
-		/* Override BssType for BTAMP */
-		if (dwTmp == eSIR_BTAMP_STA_MODE)
-			dwTmp = eSIR_BTAMP_AP_MODE;
-			csr_join_req->bsstype = dwTmp;
+		csr_join_req->bsstype = dwTmp;
 		/* dot11mode */
 		ucDot11Mode =
 			csr_translate_to_wni_cfg_dot11_mode(pMac,

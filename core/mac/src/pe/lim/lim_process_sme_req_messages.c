@@ -367,17 +367,11 @@ __lim_fresh_scan_reqd(tpAniSirGlobal mac_ctx, uint8_t return_fresh_results)
 			mac_ctx->lim.gpSession[i].limSmeState);
 		if (mac_ctx->lim.gpSession[i].valid == true) {
 			if (!((((mac_ctx->lim.gpSession[i].bssType ==
-					eSIR_INFRASTRUCTURE_MODE) ||
-				(mac_ctx->lim.gpSession[i].limSystemRole ==
-					eLIM_BT_AMP_STA_ROLE)) &&
+					eSIR_INFRASTRUCTURE_MODE)) &&
 				(mac_ctx->lim.gpSession[i].limSmeState ==
 					eLIM_SME_LINK_EST_STATE)) ||
 			      (((mac_ctx->lim.gpSession[i].bssType ==
-					eSIR_IBSS_MODE) ||
-				(mac_ctx->lim.gpSession[i].limSystemRole ==
-					eLIM_BT_AMP_AP_ROLE) ||
-				(mac_ctx->lim.gpSession[i].limSystemRole ==
-					eLIM_BT_AMP_STA_ROLE)) &&
+					eSIR_IBSS_MODE)) &&
 			       (mac_ctx->lim.gpSession[i].limSmeState ==
 					eLIM_SME_NORMAL_STATE)) ||
 			      ((((mac_ctx->lim.gpSession[i].bssType ==
@@ -828,14 +822,6 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 
 			break;
 
-		case eSIR_BTAMP_AP_MODE:
-			session->limSystemRole = eLIM_BT_AMP_AP_ROLE;
-			break;
-
-		case eSIR_BTAMP_STA_MODE:
-			session->limSystemRole = eLIM_BT_AMP_STA_ROLE;
-			break;
-
 		/*
 		 * There is one more mode called auto mode.
 		 * which is used no where
@@ -849,23 +835,22 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		}
 
 		/*
-		 * BT-AMP: Allocate memory for the array of
+		 * Allocate memory for the array of
 		 * parsed (Re)Assoc request structure
 		 */
-		if ((sme_start_bss_req->bssType == eSIR_BTAMP_AP_MODE) ||
-		    (sme_start_bss_req->bssType == eSIR_INFRA_AP_MODE)) {
+		if (sme_start_bss_req->bssType == eSIR_INFRA_AP_MODE) {
 			session->parsedAssocReq =
 				qdf_mem_malloc(session->dph.dphHashTable.
-					       size * sizeof(tpSirAssocReq));
+						size * sizeof(tpSirAssocReq));
 			if (NULL == session->parsedAssocReq) {
 				lim_log(mac_ctx, LOGW,
-					FL("AllocateMemory() failed"));
+						FL("AllocateMemory() failed"));
 				ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
 				goto free;
 			}
 			qdf_mem_set(session->parsedAssocReq,
-				(session->dph.dphHashTable.size *
-				sizeof(tpSirAssocReq)), 0);
+					(session->dph.dphHashTable.size *
+					sizeof(tpSirAssocReq)), 0);
 		}
 
 		if (!sme_start_bss_req->channelId) {
@@ -969,9 +954,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		/* Fill PE session Id from the session Table */
 		mlm_start_req->sessionId = session->peSessionId;
 
-		if ((mlm_start_req->bssType == eSIR_BTAMP_STA_MODE) ||
-		    (mlm_start_req->bssType == eSIR_BTAMP_AP_MODE) ||
-		    (mlm_start_req->bssType == eSIR_INFRA_AP_MODE)) {
+		if (mlm_start_req->bssType == eSIR_INFRA_AP_MODE) {
 			/*
 			 * Copy the BSSId from sessionTable to
 			 * mlmStartReq struct
@@ -1872,8 +1855,6 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 
 		if (session->bssType == eSIR_INFRASTRUCTURE_MODE) {
 			session->limSystemRole = eLIM_STA_ROLE;
-		} else if (session->bssType == eSIR_BTAMP_AP_MODE) {
-			session->limSystemRole = eLIM_BT_AMP_STA_ROLE;
 		} else {
 			/*
 			 * Throw an error and return and make
@@ -2473,7 +2454,6 @@ static void __lim_process_sme_disassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBu
 
 	switch (GET_LIM_SYSTEM_ROLE(psessionEntry)) {
 	case eLIM_STA_ROLE:
-	case eLIM_BT_AMP_STA_ROLE:
 		switch (psessionEntry->limSmeState) {
 		case eLIM_SME_ASSOCIATED_STATE:
 		case eLIM_SME_LINK_EST_STATE:
@@ -2559,7 +2539,6 @@ static void __lim_process_sme_disassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBu
 		break;
 
 	case eLIM_AP_ROLE:
-	case eLIM_BT_AMP_AP_ROLE:
 		/* Fall through */
 		break;
 
@@ -2676,7 +2655,6 @@ static void __lim_process_sme_disassoc_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBu
 
 	switch (GET_LIM_SYSTEM_ROLE(psessionEntry)) {
 	case eLIM_STA_ROLE:
-	case eLIM_BT_AMP_STA_ROLE:      /* To test reconn */
 		if ((psessionEntry->limSmeState != eLIM_SME_IDLE_STATE) &&
 		    (psessionEntry->limSmeState != eLIM_SME_WT_DISASSOC_STATE)
 		    && (psessionEntry->limSmeState !=
@@ -2811,8 +2789,6 @@ static void __lim_process_sme_deauth_req(tpAniSirGlobal mac_ctx,
 
 	switch (GET_LIM_SYSTEM_ROLE(session_entry)) {
 	case eLIM_STA_ROLE:
-	case eLIM_BT_AMP_STA_ROLE:
-
 		switch (session_entry->limSmeState) {
 		case eLIM_SME_ASSOCIATED_STATE:
 		case eLIM_SME_LINK_EST_STATE:
@@ -3023,12 +2999,10 @@ __lim_process_sme_set_context_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			      session_entry, 0, 0);
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
-	if (((LIM_IS_STA_ROLE(session_entry) ||
-	    LIM_IS_BT_AMP_STA_ROLE(session_entry)) &&
+	if ((LIM_IS_STA_ROLE(session_entry) &&
 	    (session_entry->limSmeState == eLIM_SME_LINK_EST_STATE)) ||
 	    ((LIM_IS_IBSS_ROLE(session_entry) ||
-	    LIM_IS_AP_ROLE(session_entry) ||
-	    LIM_IS_BT_AMP_AP_ROLE(session_entry)) &&
+	    LIM_IS_AP_ROLE(session_entry)) &&
 	    (session_entry->limSmeState == eLIM_SME_NORMAL_STATE))) {
 		/* Trigger MLM_SETKEYS_REQ */
 		mlm_set_key_req = qdf_mem_malloc(sizeof(tLimMlmSetKeysReq));
@@ -3317,9 +3291,7 @@ lim_get_wpspbc_sessions_end:
 static void __lim_counter_measures(tpAniSirGlobal pMac, tpPESession psessionEntry)
 {
 	tSirMacAddr mac = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-	if (LIM_IS_AP_ROLE(psessionEntry) ||
-	    LIM_IS_BT_AMP_AP_ROLE(psessionEntry) ||
-	    LIM_IS_BT_AMP_STA_ROLE(psessionEntry))
+	if (LIM_IS_AP_ROLE(psessionEntry))
 		lim_send_disassoc_mgmt_frame(pMac, eSIR_MAC_MIC_FAILURE_REASON,
 					     mac, psessionEntry, false);
 };
@@ -3429,8 +3401,7 @@ __lim_handle_sme_stop_bss_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	psessionEntry->transactionId = smetransactionId;
 
 	/* BTAMP_STA and STA_IN_IBSS should NOT send Disassoc frame */
-	if (!LIM_IS_IBSS_ROLE(psessionEntry) &&
-	    !LIM_IS_BT_AMP_STA_ROLE(psessionEntry)) {
+	if (!LIM_IS_IBSS_ROLE(psessionEntry)) {
 		tSirMacAddr bcAddr = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 		if (stopBssReq.reasonCode == eSIR_SME_MIC_COUNTER_MEASURES)
 			/* Send disassoc all stations associated thru TKIP */
@@ -3577,8 +3548,7 @@ void __lim_process_sme_assoc_cnf_new(tpAniSirGlobal mac_ctx, uint32_t msg_type,
 		goto end;
 	}
 
-	if ((!LIM_IS_AP_ROLE(session_entry) &&
-	    !LIM_IS_BT_AMP_AP_ROLE(session_entry)) ||
+	if ((!LIM_IS_AP_ROLE(session_entry)) ||
 	    ((session_entry->limSmeState != eLIM_SME_NORMAL_STATE) &&
 	    (session_entry->limSmeState !=
 			eLIM_SME_NORMAL_CHANNEL_SCAN_STATE))) {
@@ -3731,8 +3701,7 @@ static void __lim_process_sme_addts_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 		       pSirAddts->req.tspec.tsinfo.traffic.userPrio);
 	       )
 
-	if (!LIM_IS_STA_ROLE(psessionEntry) &&
-	    !LIM_IS_BT_AMP_STA_ROLE(psessionEntry)) {
+	if (!LIM_IS_STA_ROLE(psessionEntry)) {
 		PELOGE(lim_log(pMac, LOGE, "AddTs received on AP - ignoring");)
 		lim_send_sme_addts_rsp(pMac, pSirAddts->rspReqd, eSIR_FAILURE,
 				       psessionEntry, pSirAddts->req.tspec,
@@ -3977,8 +3946,7 @@ void lim_process_sme_addts_rsp_timeout(tpAniSirGlobal pMac, uint32_t param)
 		return;
 	}
 
-	if (!LIM_IS_STA_ROLE(psessionEntry) &&
-	    !LIM_IS_BT_AMP_STA_ROLE(psessionEntry)) {
+	if (!LIM_IS_STA_ROLE(psessionEntry)) {
 		lim_log(pMac, LOGW, "AddtsRspTimeout in non-Sta role (%d)",
 			GET_LIM_SYSTEM_ROLE(psessionEntry));
 		pMac->lim.gLimAddtsSent = false;
