@@ -536,6 +536,27 @@ static void lim_update_stads_ext_cap(tpAniSirGlobal mac_ctx,
 }
 
 /**
+ * lim_stop_reassoc_retry_timer() - Cleanup after reassoc response is received
+ *  @mac_ctx: Global MAC context
+ *
+ *  Stop the reassoc retry timer and release the stored reassoc request.
+ *
+ *  Return: None
+ */
+void lim_stop_reassoc_retry_timer(tpAniSirGlobal mac_ctx)
+{
+	mac_ctx->lim.reAssocRetryAttempt = 0;
+	if ((NULL != mac_ctx->lim.pSessionEntry)
+		&& (NULL !=
+			mac_ctx->lim.pSessionEntry->pLimMlmReassocRetryReq)) {
+		qdf_mem_free(
+			mac_ctx->lim.pSessionEntry->pLimMlmReassocRetryReq);
+		mac_ctx->lim.pSessionEntry->pLimMlmReassocRetryReq = NULL;
+	}
+	lim_deactivate_and_change_timer(mac_ctx, eLIM_REASSOC_FAIL_TIMER);
+}
+
+/**
  * lim_process_assoc_rsp_frame() - Processes assoc response
  * @mac_ctx: Pointer to Global MAC structure
  * @rx_packet_info    - A pointer to Rx packet info structure
@@ -793,20 +814,8 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 	/* Stop Association failure timer */
 	if (subtype == LIM_ASSOC)
 		lim_deactivate_and_change_timer(mac_ctx, eLIM_ASSOC_FAIL_TIMER);
-	else {
-		/* Stop Reassociation failure timer */
-		mac_ctx->lim.reAssocRetryAttempt = 0;
-		if ((NULL != mac_ctx->lim.pSessionEntry)
-		    && (NULL !=
-			mac_ctx->lim.pSessionEntry->pLimMlmReassocRetryReq)) {
-			qdf_mem_free(
-			mac_ctx->lim.pSessionEntry->pLimMlmReassocRetryReq);
-			mac_ctx->lim.pSessionEntry->pLimMlmReassocRetryReq =
-				NULL;
-		}
-		lim_deactivate_and_change_timer(mac_ctx,
-			eLIM_REASSOC_FAIL_TIMER);
-	}
+	else
+		lim_stop_reassoc_retry_timer(mac_ctx);
 
 	if (assoc_rsp->statusCode != eSIR_MAC_SUCCESS_STATUS
 #ifdef WLAN_FEATURE_11W
