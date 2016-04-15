@@ -8921,6 +8921,13 @@ static int wlan_hdd_set_filter(hdd_context_t *hdd_ctx,
 				request->params_data[i].data_offset,
 				request->params_data[i].data_length);
 
+			if (sizeof(packetFilterSetReq.paramsData[i].compareData)
+				< (request->params_data[i].data_length)) {
+				hdd_err("Error invalid data length %d",
+					request->params_data[i].data_length);
+				return -EINVAL;
+			}
+
 			memcpy(&packetFilterSetReq.paramsData[i].compareData,
 			       request->params_data[i].compare_data,
 			       request->params_data[i].data_length);
