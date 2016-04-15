@@ -6138,9 +6138,12 @@ struct dfs_ieee80211_channel *wma_dfs_configure_channel(
 		dfs_ic->ic_curchan->ic_ieee_ext = ext_channel;
 
 		/* verify both the 80MHz are DFS bands or not */
-		if (CHANNEL_STATE_DFS == cds_get_channel_state(req->chan) &&
-		    CHANNEL_STATE_DFS == cds_get_channel_state(ext_channel -
-						WMA_80MHZ_START_CENTER_CH_DIFF))
+		if ((CHANNEL_STATE_DFS ==
+		     cds_get_5g_bonded_channel_state(req->chan ,
+						     CH_WIDTH_80MHZ)) &&
+		    (CHANNEL_STATE_DFS == cds_get_5g_bonded_channel_state(
+			    ext_channel - WMA_80MHZ_START_CENTER_CH_DIFF,
+			    CH_WIDTH_80MHZ)))
 			dfs_ic->ic_curchan->ic_80p80_both_dfs = true;
 		break;
 	case CH_WIDTH_160MHZ:

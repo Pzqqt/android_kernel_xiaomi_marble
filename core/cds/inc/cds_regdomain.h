@@ -525,20 +525,6 @@ struct country_code_to_reg_dmn {
 };
 
 /**
- * struct ch_params_s
- * @ch_width: channel width
- * @sec_ch_offset: secondary channel offset
- * @center_freq_seg0: center freq for segment 0
- * @center_freq_seg1: center freq for segment 1
- */
-struct ch_params_s {
-	enum phy_ch_width ch_width;
-	uint8_t sec_ch_offset;
-	uint8_t center_freq_seg0;
-	uint8_t center_freq_seg1;
-};
-
-/**
  * struct reg_dmn: regulatory domain structure
  * @reg_dmn: regulatory domain
  * @conformance_test_limit:  CTL limit

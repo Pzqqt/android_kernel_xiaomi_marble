@@ -77,6 +77,64 @@ typedef enum {
 	REGDOMAIN_COUNT
 } v_REGDOMAIN_t;
 
+
+/**
+ * enum channel_enum: channel enumeration
+ * @CHAN_ENUM_1: channel number 1
+ * @CHAN_ENUM_2: channel number 2
+ * @CHAN_ENUM_3: channel number 3
+ * @CHAN_ENUM_4: channel number 4
+ * @CHAN_ENUM_5: channel number 5
+ * @CHAN_ENUM_6: channel number 6
+ * @CHAN_ENUM_7: channel number 7
+ * @CHAN_ENUM_8: channel number 8
+ * @CHAN_ENUM_9: channel number 9
+ * @CHAN_ENUM_10: channel number 10
+ * @CHAN_ENUM_11: channel number 11
+ * @CHAN_ENUM_12: channel number 12
+ * @CHAN_ENUM_13: channel number 13
+ * @CHAN_ENUM_14: channel number 14
+ * @CHAN_ENUM_36: channel number 36
+ * @CHAN_ENUM_40: channel number 40
+ * @CHAN_ENUM_44: channel number 44
+ * @CHAN_ENUM_48: channel number 48
+ * @CHAN_ENUM_52: channel number 52
+ * @CHAN_ENUM_56: channel number 56
+ * @CHAN_ENUM_60: channel number 60
+ * @CHAN_ENUM_64: channel number 64
+ * @CHAN_ENUM_100: channel number 100
+ * @CHAN_ENUM_104: channel number 104
+ * @CHAN_ENUM_108: channel number 108
+ * @CHAN_ENUM_112: channel number 112
+ * @CHAN_ENUM_116: channel number 116
+ * @CHAN_ENUM_120: channel number 120
+ * @CHAN_ENUM_124: channel number 124
+ * @CHAN_ENUM_128: channel number 128
+ * @CHAN_ENUM_132: channel number 132
+ * @CHAN_ENUM_136: channel number 136
+ * @CHAN_ENUM_140: channel number 140
+ * @CHAN_ENUM_144: channel number 144
+ * @CHAN_ENUM_149: channel number 149
+ * @CHAN_ENUM_153: channel number 153
+ * @CHAN_ENUM_157: channel number 157
+ * @CHAN_ENUM_161: channel number 161
+ * @CHAN_ENUM_165: channel number 165
+ * @CHAN_ENUM_170: channel number 108
+ * @CHAN_ENUM_171: channel number 112
+ * @CHAN_ENUM_172: channel number 116
+ * @CHAN_ENUM_173: channel number 120
+ * @CHAN_ENUM_174: channel number 124
+ * @CHAN_ENUM_175: channel number 128
+ * @CHAN_ENUM_176: channel number 132
+ * @CHAN_ENUM_177: channel number 136
+ * @CHAN_ENUM_178: channel number 140
+ * @CHAN_ENUM_179: channel number 144
+ * @CHAN_ENUM_180: channel number 149
+ * @CHAN_ENUM_181: channel number 153
+ * @CHAN_ENUM_182: channel number 157
+ * @CHAN_ENUM_183: channel number 161
+ * @CHAN_ENUM_184: channel number 165
+ */
 enum channel_enum {
 	CHAN_ENUM_1 = 0,
 	CHAN_ENUM_2,
@@ -155,22 +213,20 @@ enum channel_enum {
 
 /**
  * enum channel_state: channel state
- *
  * @CHANNEL_STATE_DISABLE: channel disabled
- * @CHANNEL_STATE_ENABLE: tx/rx enabled
  * @CHANNEL_STATE_DFS: rx enabled, tx DFS
+ * @CHANNEL_STATE_ENABLE: tx/rx enabled
  * @CHANNEL_STATE_INVALID: not a valid channel
  */
 enum channel_state {
 	CHANNEL_STATE_DISABLE,
-	CHANNEL_STATE_ENABLE,
 	CHANNEL_STATE_DFS,
-	CHANNEL_STATE_INVALID
+	CHANNEL_STATE_ENABLE,
+	CHANNEL_STATE_INVALID,
 };
 
 /**
  * struct regulatory_channel: regulatory channel
- *
  * @state: channel state
  * @flags: channel flags
  * @pwr_limit: channel tx power limit
@@ -183,7 +239,6 @@ struct regulatory_channel {
 
 /**
  * struct chan_map: channel mapping
- *
  * @center_freq: channel center freq
  * @chan_num: channel number
  */
@@ -194,7 +249,6 @@ struct chan_map {
 
 /**
  * struct channel_power: channel power
- *
  * @chan_num: channel number
  * @power: tx power
  */
@@ -205,7 +259,6 @@ struct channel_power {
 
 /**
  * enum country_src: country source
- *
  * @SOURCE_QUERY: source query
  * @SOURCE_CORE: source regulatory core
  * @SOURCE_DRIVER: source driver
@@ -222,7 +275,6 @@ enum country_src {
 
 /**
  * struct regulatory: regulatory information
- *
  * @reg_domain: regulatory domain pair
  * @eeprom_rd_ext: eeprom value
  * @country_code: current country in integer
@@ -248,25 +300,41 @@ struct regulatory {
 };
 
 /**
- * phy_ch_width - channel width
- * @CH_WIDTH_20MHZ: channel width 20 MHz
- * @CH_WIDTH_40MHZ: channel width 40 MHz
- * @CH_WIDTH_80MHZ: channel width 80MHz
- * @CH_WIDTH_160MHZ: channel width 160 MHz
- * @CH_WIDTH_80P80MHZ: channel width 160MHz(80+80)
- * @CH_WIDTH_5MHZ: channel width 5MHz
- * @CH_WIDTH_10MHZ: channel width 10MHz
+ * enum phy_ch_width - physical layer channel width
+ * @CH_WIDTH_20MHZ: channel width 20 mhz
+ * @CH_WIDTH_40MHZ: channel width 40 mhz
+ * @CH_WIDTH_80MHZ: channel width 80 mhz
+ * @CH_WIDTH_160MHZ: channel width 160 mhz
+ * @CH_WIDTH_80P80MHZ: channel width 80+80 mhz
+ * @CH_WIDTH_5MHZ: channel width 5 mhz
+ * @CH_WIDTH_10MHZ: channel width 10 mhz
+ * @CH_WIDTH_INVALID: invalid channel width
+ * @CH_WIDTH_MAX: maximum channel width
  */
 enum phy_ch_width {
 	CH_WIDTH_20MHZ = 0,
-	CH_WIDTH_40MHZ = 1,
-	CH_WIDTH_80MHZ = 2,
-	CH_WIDTH_160MHZ = 3,
-	CH_WIDTH_80P80MHZ = 4,
-	CH_WIDTH_5MHZ = 5,
-	CH_WIDTH_10MHZ = 6,
-	CH_WIDTH_INVALID = 7,
+	CH_WIDTH_40MHZ,
+	CH_WIDTH_80MHZ,
+	CH_WIDTH_160MHZ,
+	CH_WIDTH_80P80MHZ,
+	CH_WIDTH_5MHZ,
+	CH_WIDTH_10MHZ,
+	CH_WIDTH_INVALID,
 	CH_WIDTH_MAX
+};
+
+/**
+ * struct ch_params_s
+ * @ch_width: channel width
+ * @sec_ch_offset: secondary channel offset
+ * @center_freq_seg0: center freq for segment 0
+ * @center_freq_seg1: center freq for segment 1
+ */
+struct ch_params_s {
+	enum phy_ch_width ch_width;
+	uint8_t sec_ch_offset;
+	uint8_t center_freq_seg0;
+	uint8_t center_freq_seg1;
 };
 
 extern const struct chan_map chan_mapping[NUM_CHANNELS];
@@ -286,11 +354,16 @@ enum channel_state cds_get_channel_state(uint32_t chan_num);
 QDF_STATUS cds_get_dfs_region(uint8_t *dfs_region);
 QDF_STATUS cds_put_dfs_region(uint8_t dfs_region);
 
-bool cds_is_dsrc_channel(uint16_t);
-enum channel_state cds_get_bonded_channel_state(uint32_t chan_num,
-					   enum phy_ch_width chan_width);
+bool cds_is_dsrc_channel(uint16_t center_freq);
+enum channel_state cds_get_5g_bonded_channel_state(uint16_t chan_num,
+						 enum phy_ch_width chan_width);
 
-enum phy_ch_width cds_get_max_channel_bw(uint32_t chan_num);
+enum channel_state cds_get_2g_bonded_channel_state(uint16_t chan_num,
+						   enum phy_ch_width chan_width,
+						   uint16_t sec_ch);
+
+void cds_set_channel_params(uint16_t oper_ch, uint16_t ht_offset_2g,
+			    struct ch_params_s *ch_params);
 
 QDF_STATUS cds_set_reg_domain(void *client_ctxt, v_REGDOMAIN_t reg_domain);
 QDF_STATUS cds_put_default_country(uint8_t *def_country);

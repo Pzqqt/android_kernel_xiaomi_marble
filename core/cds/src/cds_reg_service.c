@@ -101,9 +101,58 @@ const struct chan_map chan_mapping[NUM_CHANNELS] = {
 	[CHAN_ENUM_184] = {5920, 184},
 };
 
+/**
+ * struct bonded_chan
+ * @start_ch: start channel
+ * @end_ch: end channel
+ */
+struct bonded_chan {
+	uint16_t start_ch;
+	uint16_t end_ch;
+};
+
+static const struct bonded_chan bonded_chan_40mhz_array[] = {
+	{36, 40},
+	{44, 48},
+	{52, 56},
+	{60, 64},
+	{100, 104},
+	{108, 112},
+	{116, 120},
+	{124, 128},
+	{132, 136},
+	{140, 144},
+	{149, 153},
+	{157, 161}
+};
+
+static const struct bonded_chan bonded_chan_80mhz_array[] = {
+	{36, 48},
+	{52, 64},
+	{100, 112},
+	{116, 128},
+	{132, 144},
+	{149, 161}
+};
+
+static const struct bonded_chan bonded_chan_160mhz_array[] = {
+	{36, 64},
+	{100, 128}
+};
+
+static const enum phy_ch_width next_lower_bw[] = {
+	[CH_WIDTH_80P80MHZ] = CH_WIDTH_160MHZ,
+	[CH_WIDTH_160MHZ] = CH_WIDTH_80MHZ,
+	[CH_WIDTH_80MHZ] = CH_WIDTH_40MHZ,
+	[CH_WIDTH_40MHZ] = CH_WIDTH_20MHZ,
+	[CH_WIDTH_20MHZ] = CH_WIDTH_10MHZ,
+	[CH_WIDTH_10MHZ] = CH_WIDTH_5MHZ,
+	[CH_WIDTH_5MHZ] = CH_WIDTH_INVALID
+};
+
 struct regulatory_channel reg_channels[NUM_CHANNELS];
-uint8_t default_country[CDS_COUNTRY_CODE_LEN + 1];
-uint8_t dfs_region;
+static uint8_t default_country[CDS_COUNTRY_CODE_LEN + 1];
+static uint8_t dfs_region;
 
 /**
  * cds_get_channel_list_with_power() - retrieve channel list with power
@@ -121,15 +170,7 @@ QDF_STATUS cds_get_channel_list_with_power(struct channel_power
 
 	if (base_channels && num_base_channels) {
 		count = 0;
-		for (i = 0; i <= CHAN_ENUM_14; i++) {
-			if (reg_channels[i].state) {
-				base_channels[count].chan_num =
-					chan_mapping[i].chan_num;
-				base_channels[count++].power =
-					reg_channels[i].pwr_limit;
-			}
-		}
-		for (i = CHAN_ENUM_36; i <= CHAN_ENUM_184; i++) {
+		for (i = 0; i < NUM_CHANNELS; i++) {
 			if (reg_channels[i].state) {
 				base_channels[count].chan_num =
 					chan_mapping[i].chan_num;
@@ -203,82 +244,308 @@ enum channel_state cds_get_channel_state(uint32_t chan_num)
 
 
 /**
- * cds_get_bonded_channel_state() - get the bonded channel state
- * @channel_num: channel number
+ * cds_search_5g_bonded_chan_array() - get ptr to bonded channel
+ * @oper_ch: operating channel number
+ * @bonded_chan_ar: bonded channel array
+ * @bonded_chan_ptr_ptr: bonded channel ptr ptr
+ *
+ * Return: bonded channel state
+ */
+static enum channel_state cds_search_5g_bonded_chan_array(uint32_t oper_chan,
+							const struct bonded_chan
+							bonded_chan_ar[],
+							uint16_t array_size,
+							const struct bonded_chan
+							**bonded_chan_ptr_ptr)
+{
+	int i;
+	uint8_t chan_num;
+	const struct bonded_chan *bonded_chan_ptr = NULL;
+	enum channel_state chan_state = CHANNEL_STATE_INVALID;
+	enum channel_state temp_chan_state;
+
+	for (i = 0; i < array_size; i++) {
+		if ((oper_chan >= bonded_chan_ar[i].start_ch) &&
+		    (oper_chan <= bonded_chan_ar[i].end_ch)) {
+			bonded_chan_ptr =  &(bonded_chan_ar[i]);
+			break;
+		}
+	}
+
+	if (NULL == bonded_chan_ptr)
+		return chan_state;
+
+	*bonded_chan_ptr_ptr = bonded_chan_ptr;
+	chan_num =  bonded_chan_ptr->start_ch;
+	while (chan_num <= bonded_chan_ptr->end_ch) {
+		temp_chan_state = cds_get_channel_state(chan_num);
+		if (temp_chan_state < chan_state)
+			chan_state = temp_chan_state;
+		chan_num = chan_num + 4;
+	}
+
+	return chan_state;
+}
+
+/**
+ * cds_search_5g_bonded_channel() - get the 5G bonded channel state
+ * @chan_num: channel number
+ * @ch_width: channel width
+ * @bonded_chan_ptr_ptr: bonded channel ptr ptr
  *
  * Return: channel state
  */
-enum channel_state cds_get_bonded_channel_state(uint32_t chan_num,
-					   enum phy_ch_width ch_width)
+static enum channel_state cds_search_5g_bonded_channel(uint32_t chan_num,
+						enum phy_ch_width ch_width,
+						const struct bonded_chan
+						**bonded_chan_ptr_ptr)
+{
+
+	if (CH_WIDTH_80P80MHZ == ch_width)
+		return cds_search_5g_bonded_chan_array(chan_num,
+						       bonded_chan_80mhz_array,
+						       QDF_ARRAY_SIZE(bonded_chan_80mhz_array),
+						       bonded_chan_ptr_ptr);
+	else if (CH_WIDTH_160MHZ == ch_width)
+		return cds_search_5g_bonded_chan_array(chan_num,
+						       bonded_chan_160mhz_array,
+						       QDF_ARRAY_SIZE(bonded_chan_160mhz_array),
+						       bonded_chan_ptr_ptr);
+	else if (CH_WIDTH_80MHZ == ch_width)
+		return cds_search_5g_bonded_chan_array(chan_num,
+						       bonded_chan_80mhz_array,
+						       QDF_ARRAY_SIZE(bonded_chan_80mhz_array),
+						       bonded_chan_ptr_ptr);
+	else if (CH_WIDTH_40MHZ == ch_width)
+		return cds_search_5g_bonded_chan_array(chan_num,
+						       bonded_chan_40mhz_array,
+						       QDF_ARRAY_SIZE(bonded_chan_40mhz_array),
+						       bonded_chan_ptr_ptr);
+	else
+		return cds_get_channel_state(chan_num);
+}
+
+/**
+ * cds_get_2g_bonded_channel_state() - get the 2G bonded channel state
+ * @oper_ch: operating channel
+ * @ch_width: channel width
+ * @sec_ch: secondary channel
+ *
+ * Return: channel state
+ */
+enum channel_state cds_get_2g_bonded_channel_state(uint16_t oper_ch,
+						  enum phy_ch_width ch_width,
+						  uint16_t sec_ch)
 {
 	enum channel_enum chan_enum;
+	enum channel_state chan_state;
 	bool bw_enabled = false;
+	enum channel_state chan_state2 = CHANNEL_STATE_INVALID;
 
-	chan_enum = cds_get_channel_enum(chan_num);
-	if (INVALID_CHANNEL == chan_enum)
+	if (CH_WIDTH_40MHZ < ch_width)
 		return CHANNEL_STATE_INVALID;
 
-	if (reg_channels[chan_enum].state) {
-		if (CH_WIDTH_5MHZ == ch_width)
-			bw_enabled = 1;
-		else if (CH_WIDTH_10MHZ == ch_width)
-			bw_enabled = !(reg_channels[chan_enum].flags &
-				       IEEE80211_CHAN_NO_10MHZ);
-		else if (CH_WIDTH_20MHZ == ch_width)
-			bw_enabled = !(reg_channels[chan_enum].flags &
-				       IEEE80211_CHAN_NO_20MHZ);
-		else if (CH_WIDTH_40MHZ == ch_width)
-			bw_enabled = !(reg_channels[chan_enum].flags &
-				       IEEE80211_CHAN_NO_HT40);
-		else if (CH_WIDTH_80MHZ == ch_width)
-			bw_enabled = !(reg_channels[chan_enum].flags &
-				       IEEE80211_CHAN_NO_80MHZ);
-		else if (CH_WIDTH_160MHZ == ch_width)
-			bw_enabled = !(reg_channels[chan_enum].flags &
-				       IEEE80211_CHAN_NO_160MHZ);
+	if (CH_WIDTH_40MHZ == ch_width) {
+		if ((sec_ch + 4 != oper_ch) ||
+		    (oper_ch + 4 != sec_ch))
+			return CHANNEL_STATE_INVALID;
+		chan_state2 = cds_get_channel_state(sec_ch);
+		if (CHANNEL_STATE_INVALID == chan_state2)
+			return chan_state2;
 	}
 
+	chan_state = cds_get_channel_state(oper_ch);
+	if (chan_state2 < chan_state)
+		chan_state = chan_state2;
+
+	if ((CHANNEL_STATE_INVALID == chan_state) ||
+	    (CHANNEL_STATE_DISABLE == chan_state))
+		return chan_state;
+
+	chan_enum = cds_get_channel_enum(oper_ch);
+	if (CH_WIDTH_5MHZ == ch_width)
+		bw_enabled = true;
+	else if (CH_WIDTH_10MHZ == ch_width)
+		bw_enabled = !(reg_channels[chan_enum].flags &
+			       IEEE80211_CHAN_NO_10MHZ);
+	else if (CH_WIDTH_20MHZ == ch_width)
+		bw_enabled = !(reg_channels[chan_enum].flags &
+			       IEEE80211_CHAN_NO_20MHZ);
+	else if (CH_WIDTH_40MHZ == ch_width)
+		bw_enabled = !(reg_channels[chan_enum].flags &
+			       IEEE80211_CHAN_NO_HT40);
+
 	if (bw_enabled)
-		return reg_channels[chan_enum].state;
+		return chan_state;
 	else
 		return CHANNEL_STATE_DISABLE;
 }
 
 /**
- * cds_get_max_channel_bw() - get the max channel bandwidth
- * @channel_num: channel number
+ * cds_get_5g_bonded_channel_state() - get the 5G bonded channel state
+ * @chan_num: channel number
+ * @ch_width: channel width
  *
- * Return: channel_width
+ * Return: channel state
  */
-enum phy_ch_width cds_get_max_channel_bw(uint32_t chan_num)
+enum channel_state cds_get_5g_bonded_channel_state(
+	uint16_t chan_num,
+	enum phy_ch_width ch_width)
 {
 	enum channel_enum chan_enum;
-	enum phy_ch_width chan_bw = CH_WIDTH_INVALID;
+	enum channel_state chan_state;
+	bool bw_enabled = false;
+	const struct bonded_chan *bonded_chan_ptr = NULL;
+
+	if (CH_WIDTH_80P80MHZ < ch_width)
+		return CHANNEL_STATE_INVALID;
+
+	chan_state = cds_search_5g_bonded_channel(chan_num, ch_width,
+						  &bonded_chan_ptr);
+
+	if ((CHANNEL_STATE_INVALID == chan_state) ||
+	    (CHANNEL_STATE_DISABLE == chan_state))
+		return chan_state;
 
 	chan_enum = cds_get_channel_enum(chan_num);
+	if (CH_WIDTH_5MHZ == ch_width)
+		bw_enabled = true;
+	else if (CH_WIDTH_10MHZ == ch_width)
+		bw_enabled = !(reg_channels[chan_enum].flags &
+			       IEEE80211_CHAN_NO_10MHZ);
+	else if (CH_WIDTH_20MHZ == ch_width)
+		bw_enabled = !(reg_channels[chan_enum].flags &
+			       IEEE80211_CHAN_NO_20MHZ);
+	else if (CH_WIDTH_40MHZ == ch_width)
+		bw_enabled = !(reg_channels[chan_enum].flags &
+			       IEEE80211_CHAN_NO_HT40);
+	else if (CH_WIDTH_80MHZ == ch_width)
+		bw_enabled = !(reg_channels[chan_enum].flags &
+			       IEEE80211_CHAN_NO_80MHZ);
+	else if (CH_WIDTH_160MHZ == ch_width)
+		bw_enabled = !(reg_channels[chan_enum].flags &
+			       IEEE80211_CHAN_NO_160MHZ);
+	else if (CH_WIDTH_80P80MHZ == ch_width)
+		bw_enabled = !(reg_channels[chan_enum].flags &
+			       IEEE80211_CHAN_NO_80MHZ);
 
-	if ((INVALID_CHANNEL != chan_enum) &&
-	    (CHANNEL_STATE_DISABLE != reg_channels[chan_enum].state)) {
+	if (bw_enabled)
+		return chan_state;
+	else
+		return CHANNEL_STATE_DISABLE;
+}
 
-		if (!(reg_channels[chan_enum].flags &
-		      IEEE80211_CHAN_NO_160MHZ))
-			chan_bw = CH_WIDTH_160MHZ;
-		else if (!(reg_channels[chan_enum].flags &
-			   IEEE80211_CHAN_NO_80MHZ))
-			chan_bw = CH_WIDTH_80MHZ;
-		else if (!(reg_channels[chan_enum].flags &
-			   IEEE80211_CHAN_NO_HT40))
-			chan_bw = CH_WIDTH_40MHZ;
-		else if (!(reg_channels[chan_enum].flags &
-			   IEEE80211_CHAN_NO_20MHZ))
-			chan_bw = CH_WIDTH_20MHZ;
-		else if (!(reg_channels[chan_enum].flags &
-			   IEEE80211_CHAN_NO_10MHZ))
-			chan_bw = CH_WIDTH_10MHZ;
-		else
-			chan_bw = CH_WIDTH_5MHZ;
+
+/**
+ * cds_set_5g_channel_params() - set the 5G bonded channel parameters
+ * @oper_ch: opetrating channel
+ * @ch_params: channel parameters
+ *
+ * Return: void
+ */
+static void cds_set_5g_channel_params(uint16_t oper_ch,
+				      struct ch_params_s *ch_params)
+{
+	enum channel_state chan_state = CHANNEL_STATE_ENABLE;
+	enum channel_state chan_state2 = CHANNEL_STATE_ENABLE;
+	const struct bonded_chan *bonded_chan_ptr;
+
+	if (CH_WIDTH_MAX >= ch_params->ch_width)
+		ch_params->ch_width = CH_WIDTH_80P80MHZ;
+
+	while (ch_params->ch_width != CH_WIDTH_INVALID) {
+		chan_state = cds_search_5g_bonded_channel(oper_ch,
+							  ch_params->ch_width,
+							  &bonded_chan_ptr);
+
+		chan_state = cds_get_5g_bonded_channel_state(oper_ch,
+							  ch_params->ch_width);
+
+		if (CH_WIDTH_80P80MHZ == ch_params->ch_width)
+			chan_state2 = cds_get_5g_bonded_channel_state(
+				ch_params->center_freq_seg1 - 2,
+				CH_WIDTH_80MHZ);
+
+		if (chan_state2 < chan_state)
+			chan_state = chan_state2;
+		if ((CHANNEL_STATE_ENABLE == chan_state) ||
+		    (CHANNEL_STATE_DFS == chan_state)) {
+			if (CH_WIDTH_20MHZ >= ch_params->ch_width)
+				ch_params->sec_ch_offset
+					= PHY_SINGLE_CHANNEL_CENTERED;
+			else if (CH_WIDTH_40MHZ == ch_params->ch_width) {
+				if (oper_ch == bonded_chan_ptr->start_ch)
+					ch_params->sec_ch_offset =
+						PHY_DOUBLE_CHANNEL_LOW_PRIMARY;
+				else
+					ch_params->sec_ch_offset =
+						PHY_DOUBLE_CHANNEL_HIGH_PRIMARY;
+			}
+
+			ch_params->center_freq_seg0 =
+				(bonded_chan_ptr->start_ch +
+				 bonded_chan_ptr->end_ch)/2;
+			break;
+		}
+
+		ch_params->ch_width = next_lower_bw[ch_params->ch_width];
 	}
-	return chan_bw;
+}
+
+/**
+ * cds_set_2g_channel_params() - set the 2.4G bonded channel parameters
+ * @oper_ch: operating channel
+ * @ch_params: channel parameters
+ * @sec_ch_2g: 2.4G secondary channel
+ *
+ * Return: void
+ */
+static void cds_set_2g_channel_params(uint16_t oper_ch,
+			       struct ch_params_s *ch_params,
+			       uint16_t sec_ch_2g)
+{
+	enum channel_state chan_state = CHANNEL_STATE_ENABLE;
+
+	if (CH_WIDTH_MAX >= ch_params->ch_width)
+		ch_params->ch_width = CH_WIDTH_80P80MHZ;
+
+	while (ch_params->ch_width != CH_WIDTH_INVALID) {
+		chan_state = cds_get_2g_bonded_channel_state(oper_ch,
+							    ch_params->ch_width,
+							    sec_ch_2g);
+		if (CHANNEL_STATE_ENABLE == chan_state) {
+			if (CH_WIDTH_40MHZ == ch_params->ch_width) {
+				if (oper_ch < sec_ch_2g)
+					ch_params->sec_ch_offset =
+						PHY_DOUBLE_CHANNEL_LOW_PRIMARY;
+				else
+					ch_params->sec_ch_offset =
+						PHY_DOUBLE_CHANNEL_HIGH_PRIMARY;
+			} else
+				ch_params->sec_ch_offset =
+					PHY_SINGLE_CHANNEL_CENTERED;
+			break;
+		}
+
+		ch_params->ch_width = next_lower_bw[ch_params->ch_width];
+	}
+}
+
+/**
+ * cds_set_channel_params() - set the bonded channel parameters
+ * @oper_ch: operating channel
+ * @sec_ch_2g: 2.4G secondary channel
+ * @ch_params: chanel parameters
+ *
+ * Return: void
+ */
+void cds_set_channel_params(uint16_t oper_ch, uint16_t sec_ch_2g,
+			    struct ch_params_s *ch_params)
+{
+	if (CDS_IS_CHANNEL_5GHZ(oper_ch))
+		cds_set_5g_channel_params(oper_ch, ch_params);
+	else if  (CDS_IS_CHANNEL_24GHZ(oper_ch))
+		cds_set_2g_channel_params(oper_ch, ch_params, sec_ch_2g);
 }
 
 /**
@@ -347,9 +614,9 @@ bool cds_is_dsrc_channel(uint16_t center_freq)
 {
 	if (center_freq >= 5852 &&
 	    center_freq <= 5920)
-		return 1;
+		return true;
 
-	return 0;
+	return false;
 }
 
 /**
