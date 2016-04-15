@@ -615,7 +615,8 @@ extern "C" {
 #define SCAN_SEND_PROBE_REQ_INFO                    45
 #define SCAN_SM_CANCEL                              46
 #define SCAN_SM_PROBE_REQ_FRAME_SEND_FAILED         47
-#define SCAN_DBGID_DEFINITION_END                   48
+#define SCAN_SCH_BANNED_MODULE                      48
+#define SCAN_DBGID_DEFINITION_END                   49
 
 #define BEACON_EVENT_SWBA_SEND_FAILED               0
 #define BEACON_EVENT_EARLY_RX_BMISS_STATUS          1
@@ -1245,7 +1246,9 @@ extern "C" {
 #define WLAN_STATS_DBGID_EST_LINKSPEED_CHAN_TIME_END     3
 #define WLAN_STATS_DBGID_EST_LINKSPEED_CALC              4
 #define WLAN_STATS_DBGID_EST_LINKSPEED_UPDATE_HOME_CHAN  5
-#define WLAN_STATS_DBGID_DEFINITION_END                  6
+#define WLAN_STATS_DBGID_RSSI                            6
+#define WLAN_STATS_DBGID_CNE_RSSI                        7
+#define WLAN_STATS_DBGID_DEFINITION_END                  8
 /* NAN DBGIDs */
 #define NAN_DBGID_START                             0
 
