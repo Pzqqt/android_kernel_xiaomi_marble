@@ -43,7 +43,6 @@
 #ifdef CONFIG_CNSS
 #include <net/cnss.h>
 #endif
-#include "epping_main.h"
 #include "hif_debug.h"
 
 /* Track a BMI transaction that is in progress */

@@ -26,7 +26,6 @@
  */
 
 #include "hif.h"
-#include "epping_main.h"
 #include "hif_main.h"
 #include "multibus.h"
 #include "pci_api.h"
@@ -52,7 +51,7 @@ QDF_STATUS hif_initialize_pci_ops(struct hif_softc *hif_sc)
 
 	/* do not put the target to sleep for epping or maxperf mode */
 	if (CONFIG_ATH_PCIE_MAX_PERF == 0 &&
-	    !WLAN_IS_EPPING_ENABLED(hif_get_conparam(hif_sc)))
+	    !QDF_IS_EPPING_ENABLED(hif_get_conparam(hif_sc)))
 		bus_ops->hif_target_sleep_state_adjust =
 			&hif_pci_target_sleep_state_adjust;
 	else

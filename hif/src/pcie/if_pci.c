@@ -52,7 +52,6 @@
 #else
 #include "cnss_stub.h"
 #endif
-#include "epping_main.h"
 #include "mp_dev.h"
 #include "hif_debug.h"
 
@@ -1113,7 +1112,7 @@ static void hif_pm_runtime_start(struct hif_pci_softc *sc)
 		return;
 	}
 
-	if (mode == QDF_GLOBAL_FTM_MODE || WLAN_IS_EPPING_ENABLED(mode)) {
+	if (mode == QDF_GLOBAL_FTM_MODE || QDF_IS_EPPING_ENABLED(mode)) {
 		HIF_INFO("%s: RUNTIME PM is disabled for FTM/EPPING mode\n",
 				__func__);
 		return;
@@ -1145,7 +1144,7 @@ static void hif_pm_runtime_stop(struct hif_pci_softc *sc)
 	if (!ol_sc->hif_config.enable_runtime_pm)
 		return;
 
-	if (mode == QDF_GLOBAL_FTM_MODE || WLAN_IS_EPPING_ENABLED(mode))
+	if (mode == QDF_GLOBAL_FTM_MODE || QDF_IS_EPPING_ENABLED(mode))
 		return;
 
 	cnss_runtime_exit(sc->dev);

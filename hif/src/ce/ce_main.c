@@ -42,7 +42,6 @@
 #ifdef CONFIG_CNSS
 #include <net/cnss.h>
 #endif
-#include "epping_main.h"
 #include "hif_debug.h"
 #include "ce_internal.h"
 #include "ce_reg.h"
@@ -358,7 +357,7 @@ bool ce_mark_datapath(struct CE_state *ce_state)
 	bool   rc = false;
 
 	if (ce_state != NULL) {
-		if (WLAN_IS_EPPING_ENABLED(hif_get_conparam(ce_state->scn))) {
+		if (QDF_IS_EPPING_ENABLED(hif_get_conparam(ce_state->scn))) {
 			svc_map = target_service_to_ce_map_wlan_epping;
 			map_sz = sizeof(target_service_to_ce_map_wlan_epping) /
 				sizeof(struct service_to_pipe);
@@ -1737,7 +1736,7 @@ int hif_wlan_enable(struct hif_softc *scn)
 
 	if (QDF_GLOBAL_FTM_MODE == con_mode)
 		mode = ICNSS_FTM;
-	else if (WLAN_IS_EPPING_ENABLED(con_mode))
+	else if (QDF_IS_EPPING_ENABLED(con_mode))
 		mode = ICNSS_EPPING;
 	else
 		mode = ICNSS_MISSION;
@@ -1747,6 +1746,8 @@ int hif_wlan_enable(struct hif_softc *scn)
 	else
 		return icnss_wlan_enable(&cfg, mode, QWLAN_VERSIONSTR);
 }
+
+#define CE_EPPING_USES_IRQ true
 
 /**
  * hif_ce_prepare_config() - load the correct static tables.
@@ -1758,8 +1759,8 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 {
 	uint32_t mode = hif_get_conparam(scn);
 	/* if epping is enabled we need to use the epping configuration. */
-	if (WLAN_IS_EPPING_ENABLED(mode)) {
-		if (WLAN_IS_EPPING_IRQ(mode))
+	if (QDF_IS_EPPING_ENABLED(mode)) {
+		if (CE_EPPING_USES_IRQ)
 			host_ce_config = host_ce_config_wlan_epping_irq;
 		else
 			host_ce_config = host_ce_config_wlan_epping_poll;
@@ -2241,7 +2242,7 @@ int hif_map_service_to_pipe(struct hif_opaque_softc *hif_hdl, uint16_t svc_id,
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
 	uint32_t mode = hif_get_conparam(scn);
 
-	if (WLAN_IS_EPPING_ENABLED(mode)) {
+	if (QDF_IS_EPPING_ENABLED(mode)) {
 		tgt_svc_map_to_use = target_service_to_ce_map_wlan_epping;
 		sz_tgt_svc_map_to_use =
 			sizeof(target_service_to_ce_map_wlan_epping);

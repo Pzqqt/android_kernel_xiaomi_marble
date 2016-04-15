@@ -33,7 +33,6 @@
 #include "ce_reg.h"
 #include "qdf_lock.h"
 #include "regtable.h"
-#include "epping_main.h"
 #include "hif_main.h"
 #include "hif_debug.h"
 
@@ -1612,7 +1611,7 @@ more_completions:
 			 &toeplitz_hash_result) == QDF_STATUS_SUCCESS) {
 
 			if (CE_id != CE_HTT_H2T_MSG ||
-			    WLAN_IS_EPPING_ENABLED(mode)) {
+			    QDF_IS_EPPING_ENABLED(mode)) {
 				qdf_spin_unlock(&CE_state->ce_index_lock);
 				CE_state->send_cb((struct CE_handle *)CE_state,
 						  CE_context, transfer_context,
@@ -1684,7 +1683,7 @@ more_watermarks:
 	 * we find no more events to process.
 	 */
 	if (CE_state->recv_cb && ce_recv_entries_done_nolock(scn, CE_state)) {
-		if (WLAN_IS_EPPING_ENABLED(mode) ||
+		if (QDF_IS_EPPING_ENABLED(mode) ||
 		    more_comp_cnt++ < CE_TXRX_COMP_CHECK_THRESHOLD) {
 			goto more_completions;
 		} else {
@@ -1698,7 +1697,7 @@ more_watermarks:
 	}
 
 	if (CE_state->send_cb && ce_send_entries_done_nolock(scn, CE_state)) {
-		if (WLAN_IS_EPPING_ENABLED(mode) ||
+		if (QDF_IS_EPPING_ENABLED(mode) ||
 		    more_snd_comp_cnt++ < CE_TXRX_COMP_CHECK_THRESHOLD) {
 			goto more_completions;
 		} else {

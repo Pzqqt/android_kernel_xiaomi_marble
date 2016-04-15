@@ -322,6 +322,8 @@ enum tQDF_GLOBAL_CON_MODE {
 	QDF_GLOBAL_MAX_MODE
 };
 
+#define  QDF_IS_EPPING_ENABLED(mode) (mode == QDF_GLOBAL_EPPING_MODE)
+
 #define qdf_print(args...) \
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR, ## args)
 

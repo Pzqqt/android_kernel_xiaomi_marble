@@ -47,7 +47,6 @@
 #ifdef CONFIG_CNSS
 #include <net/cnss.h>
 #endif
-#include "epping_main.h"
 #include "hif_debug.h"
 #include "mp_dev.h"
 #include "platform_icnss.h"
@@ -310,7 +309,7 @@ uint32_t hif_hia_item_address(uint32_t target_type, uint32_t item_offset)
  */
 bool hif_max_num_receives_reached(struct hif_softc *scn, unsigned int count)
 {
-	if (WLAN_IS_EPPING_ENABLED(hif_get_conparam(scn)))
+	if (QDF_IS_EPPING_ENABLED(hif_get_conparam(scn)))
 		return count > 120;
 	else
 		return count > MAX_NUM_OF_RECEIVES;
@@ -535,7 +534,7 @@ void hif_wlan_disable(struct hif_softc *scn)
 
 	if (QDF_GLOBAL_FTM_MODE == con_mode)
 		mode = ICNSS_FTM;
-	else if (WLAN_IS_EPPING_ENABLED(con_mode))
+	else if (QDF_IS_EPPING_ENABLED(con_mode))
 		mode = ICNSS_EPPING;
 	else
 		mode = ICNSS_MISSION;

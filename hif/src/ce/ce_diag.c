@@ -44,7 +44,6 @@
 #include <net/cnss.h>
 #endif
 #include "hif_debug.h"
-#include "epping_main.h"
 
 void
 hif_dump_target_memory(struct hif_opaque_softc *hif_ctx, void *ramdump_base,
