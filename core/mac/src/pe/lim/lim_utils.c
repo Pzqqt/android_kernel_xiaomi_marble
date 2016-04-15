@@ -3049,8 +3049,7 @@ lim_enable_11a_protection(tpAniSirGlobal mac_ctx,
 	 * If we are AP and HT capable, we need to set the HT OP mode
 	 * appropriately.
 	 */
-	if ((LIM_IS_AP_ROLE(pe_session) || LIM_IS_BT_AMP_AP_ROLE(pe_session))
-	    && (true == pe_session->htCapability)) {
+	if (LIM_IS_AP_ROLE(pe_session) && (true == pe_session->htCapability)) {
 		if (overlap) {
 			mac_ctx->lim.gLimOverlap11aParams.protectionEnabled =
 				true;
@@ -3309,46 +3308,8 @@ lim_handle_enable11g_protection_enabled(tpAniSirGlobal mac_ctx,
 						session_entry);
 			}
 		}
-	} else if (LIM_IS_BT_AMP_AP_ROLE(session_entry) &&
-			(true == session_entry->htCapability) && overlap) {
-		session_entry->gLimOlbcParams.protectionEnabled = true;
-		if ((eSIR_HT_OP_MODE_OVERLAP_LEGACY !=
-			mac_ctx->lim.gHTOperMode) &&
-			(eSIR_HT_OP_MODE_MIXED !=
-				mac_ctx->lim.gHTOperMode)) {
-			mac_ctx->lim.gHTOperMode =
-				eSIR_HT_OP_MODE_OVERLAP_LEGACY;
-		}
-		/*
-		 * CR-263021: OBSS bit is not switching back to 0 after
-		 * disabling the overlapping legacy BSS
-		 */
-		/*
-		 * This fixes issue of OBSS bit not set after 11b, 11g station
-		 * leaves
-		 */
-		lim_enable_ht_rifs_protection(mac_ctx, true, overlap,
-				beaconparams, session_entry);
-		/*
-		 * Not processing OBSS bit from other APs, as we are already
-		 * taking care of Protection from overlapping BSS based on erp
-		 * IE or useProtection bit
-		 */
-		lim_enable_ht_obss_protection(mac_ctx, true, overlap,
-				beaconparams, session_entry);
-	} else if (LIM_IS_BT_AMP_AP_ROLE(session_entry) &&
-			(true == session_entry->htCapability) && !overlap) {
-		session_entry->gLim11bParams.protectionEnabled = true;
-		if (eSIR_HT_OP_MODE_MIXED !=
-			mac_ctx->lim.gHTOperMode) {
-			mac_ctx->lim.gHTOperMode =
-				eSIR_HT_OP_MODE_MIXED;
-			lim_enable_ht_rifs_protection(mac_ctx, true,
-					overlap, beaconparams, session_entry);
-			lim_enable_ht_obss_protection(mac_ctx, true,
-					overlap, beaconparams, session_entry);
-		}
 	}
+
 	/* This part is common for staiton as well. */
 	if (false == session_entry->beaconParams.llbCoexist) {
 		lim_log(mac_ctx, LOG1, FL("=> 11G Protection Enabled"));
@@ -3481,99 +3442,8 @@ lim_handle_11g_protection_for_11bcoexist(tpAniSirGlobal mac_ctx,
 				PARAM_llBCOEXIST_CHANGED;
 		}
 	}
-	if (LIM_IS_BT_AMP_AP_ROLE(session_entry) && overlap) {
-		/* Overlap Legacy protection disabled. */
-		session_entry->gLimOlbcParams.protectionEnabled = false;
-
-		/* We need to take care of HT OP mode iff we are HT AP. */
-		if (session_entry->htCapability) {
-			/*
-			 * no HT op mode change if any of the overlap protection
-			 * enabled.
-			 */
-			if (!(mac_ctx->lim.gLimOverlap11gParams.
-					protectionEnabled ||
-				mac_ctx->lim.gLimOverlapHt20Params.
-					protectionEnabled ||
-				mac_ctx->lim.gLimOverlapNonGfParams.
-					protectionEnabled) &&
-				/*
-				 * Check if there is a need to change HT
-				 * OP mode.
-				 */
-				(eSIR_HT_OP_MODE_OVERLAP_LEGACY ==
-						mac_ctx->lim.gHTOperMode)) {
-				lim_enable_ht_rifs_protection(mac_ctx,
-					false, overlap, beaconparams,
-					session_entry);
-				lim_enable_ht_obss_protection(mac_ctx,
-					false, overlap, beaconparams,
-					session_entry);
-				if (session_entry->gLimHt20Params.
-						protectionEnabled)
-					mac_ctx->lim.gHTOperMode =
-					    eSIR_HT_OP_MODE_NO_LEGACY_20MHZ_HT;
-				else
-					mac_ctx->lim.gHTOperMode =
-							eSIR_HT_OP_MODE_PURE;
-			}
-		}
-	} else if (LIM_IS_BT_AMP_AP_ROLE(session_entry) && !overlap) {
-		/* Disable protection from 11B stations. */
-		session_entry->gLim11bParams.protectionEnabled = false;
-		/* Check if any other non-HT protection enabled. */
-		if (!session_entry->gLim11gParams.protectionEnabled) {
-			/* Right now we are in HT OP Mixed mode. */
-			/* Change HT op mode appropriately. */
-			lim_enable_ht_obss_protection(mac_ctx, false,
-					overlap, beaconparams, session_entry);
-			/*
-			 * Change HT OP mode to 01 if any overlap protection
-			 * enabled
-			 */
-			if (session_entry->gLimOlbcParams.protectionEnabled ||
-				mac_ctx->lim.gLimOverlap11gParams.
-					protectionEnabled ||
-				mac_ctx->lim.gLimOverlapHt20Params.
-					protectionEnabled ||
-				mac_ctx->lim.gLimOverlapNonGfParams.
-					protectionEnabled) {
-				mac_ctx->lim.gHTOperMode =
-					eSIR_HT_OP_MODE_OVERLAP_LEGACY;
-				lim_enable_ht_rifs_protection(mac_ctx,
-						true, overlap, beaconparams,
-						session_entry);
-			} else if (session_entry->gLimHt20Params.
-				protectionEnabled) {
-				mac_ctx->lim.gHTOperMode =
-					eSIR_HT_OP_MODE_NO_LEGACY_20MHZ_HT;
-				lim_enable_ht_rifs_protection(mac_ctx,
-						false, overlap, beaconparams,
-						session_entry);
-			} else {
-				mac_ctx->lim.gHTOperMode =
-					eSIR_HT_OP_MODE_PURE;
-				lim_enable_ht_rifs_protection(mac_ctx,
-						false, overlap, beaconparams,
-						session_entry);
-			}
-		}
-	}
-	if (LIM_IS_BT_AMP_AP_ROLE(session_entry)) {
-		if (!session_entry->gLimOlbcParams.protectionEnabled &&
-			!session_entry->gLim11bParams.protectionEnabled) {
-			lim_log(mac_ctx, LOG1,
-				FL("===> 11G Protection Disabled"));
-			beaconparams->llbCoexist =
-				session_entry->beaconParams.llbCoexist =
-								false;
-			beaconparams->paramChangeBitmap |=
-				PARAM_llBCOEXIST_CHANGED;
-		}
-	}
 	/* For station role */
-	if (!LIM_IS_AP_ROLE(session_entry) &&
-			!LIM_IS_BT_AMP_AP_ROLE(session_entry)) {
+	if (!LIM_IS_AP_ROLE(session_entry)) {
 		lim_log(mac_ctx, LOG1, FL("===> 11G Protection Disabled"));
 		beaconparams->llbCoexist =
 			session_entry->beaconParams.llbCoexist = false;
@@ -3656,14 +3526,6 @@ lim_enable_ht_protection_from11g(tpAniSirGlobal pMac, uint8_t enable,
 				       FL("overlap protection from 11g is disabled"));
 			       );
 			return eSIR_SUCCESS;
-		} else if (LIM_IS_BT_AMP_AP_ROLE(psessionEntry) &&
-			  (!pMac->lim.cfgProtection.overlapFromllg)) {
-			/* protection disabled. */
-			PELOG3(lim_log
-				       (pMac, LOG3,
-				       FL("overlap protection from 11g is disabled"));
-			       );
-			return eSIR_SUCCESS;
 		}
 	} else {
 		/* normal protection config check */
@@ -3718,43 +3580,6 @@ lim_enable_ht_protection_from11g(tpAniSirGlobal pMac, uint8_t enable,
 				if (eSIR_HT_OP_MODE_MIXED !=
 				    psessionEntry->htOperMode) {
 					psessionEntry->htOperMode =
-						eSIR_HT_OP_MODE_MIXED;
-					lim_enable_ht_rifs_protection(pMac, true,
-								      overlap,
-								      pBeaconParams,
-								      psessionEntry);
-					lim_enable_ht_obss_protection(pMac, true,
-								      overlap,
-								      pBeaconParams,
-								      psessionEntry);
-				}
-			}
-		} else if (LIM_IS_BT_AMP_AP_ROLE(psessionEntry)) {
-			if (overlap) {
-				pMac->lim.gLimOverlap11gParams.
-				protectionEnabled = true;
-				/* 11g exists in overlap BSS. */
-				/* need not to change the operating mode to overlap_legacy */
-				/* if higher or same protection operating mode is enabled right now. */
-				if ((eSIR_HT_OP_MODE_OVERLAP_LEGACY !=
-				     pMac->lim.gHTOperMode)
-				    && (eSIR_HT_OP_MODE_MIXED !=
-					pMac->lim.gHTOperMode)) {
-					pMac->lim.gHTOperMode =
-						eSIR_HT_OP_MODE_OVERLAP_LEGACY;
-					lim_enable_ht_rifs_protection(pMac, true,
-								      overlap,
-								      pBeaconParams,
-								      psessionEntry);
-				}
-			} else {
-				/* 11g is associated to an AP operating in 11n mode. */
-				/* Change the HT operating mode to 'mixed mode'. */
-				psessionEntry->gLim11gParams.protectionEnabled =
-					true;
-				if (eSIR_HT_OP_MODE_MIXED !=
-				    pMac->lim.gHTOperMode) {
-					pMac->lim.gHTOperMode =
 						eSIR_HT_OP_MODE_MIXED;
 					lim_enable_ht_rifs_protection(pMac, true,
 								      overlap,
@@ -3890,109 +3715,6 @@ lim_enable_ht_protection_from11g(tpAniSirGlobal pMac, uint8_t enable,
 			    protectionEnabled
 			    && !psessionEntry->gLim11gParams.
 			    protectionEnabled) {
-				PELOG1(lim_log
-					       (pMac, LOG1,
-					       FL
-						       ("===> Protection from 11G Disabled"));
-				       )
-				pBeaconParams->llgCoexist =
-					psessionEntry->beaconParams.llgCoexist =
-						false;
-				pBeaconParams->paramChangeBitmap |=
-					PARAM_llGCOEXIST_CHANGED;
-			}
-		} else if (LIM_IS_BT_AMP_AP_ROLE(psessionEntry)) {
-			if (overlap) {
-				/* Overlap Legacy protection disabled. */
-				pMac->lim.gLimOverlap11gParams.
-				protectionEnabled = false;
-
-				/* no HT op mode change if any of the overlap protection enabled. */
-				if (!
-				    (psessionEntry->gLimOlbcParams.
-				     protectionEnabled
-				     || psessionEntry->gLimOverlapHt20Params.
-				     protectionEnabled
-				     || psessionEntry->gLimOverlapNonGfParams.
-				     protectionEnabled)) {
-					/* Check if there is a need to change HT OP mode. */
-					if (eSIR_HT_OP_MODE_OVERLAP_LEGACY ==
-					    pMac->lim.gHTOperMode) {
-						lim_enable_ht_rifs_protection(pMac,
-									      false,
-									      overlap,
-									      pBeaconParams,
-									      psessionEntry);
-						lim_enable_ht_obss_protection(pMac,
-									      false,
-									      overlap,
-									      pBeaconParams,
-									      psessionEntry);
-
-						if (psessionEntry->
-						    gLimHt20Params.
-						    protectionEnabled)
-							pMac->lim.gHTOperMode =
-								eSIR_HT_OP_MODE_NO_LEGACY_20MHZ_HT;
-						else
-							pMac->lim.gHTOperMode =
-								eSIR_HT_OP_MODE_PURE;
-					}
-				}
-			} else {
-				/* Disable protection from 11G stations. */
-				psessionEntry->gLim11gParams.protectionEnabled =
-					false;
-				/* Check if any other non-HT protection enabled. */
-				if (!psessionEntry->gLim11bParams.
-				    protectionEnabled) {
-
-					/* Right now we are in HT OP Mixed mode. */
-					/* Change HT op mode appropriately. */
-					lim_enable_ht_obss_protection(pMac, false,
-								      overlap,
-								      pBeaconParams,
-								      psessionEntry);
-
-					/* Change HT OP mode to 01 if any overlap protection enabled */
-					if (psessionEntry->gLimOlbcParams.
-					    protectionEnabled
-					    || pMac->lim.gLimOverlap11gParams.
-					    protectionEnabled
-					    || pMac->lim.gLimOverlapHt20Params.
-					    protectionEnabled
-					    || pMac->lim.gLimOverlapNonGfParams.
-					    protectionEnabled) {
-						pMac->lim.gHTOperMode =
-							eSIR_HT_OP_MODE_OVERLAP_LEGACY;
-						lim_enable_ht_rifs_protection(pMac,
-									      true,
-									      overlap,
-									      pBeaconParams,
-									      psessionEntry);
-					} else if (psessionEntry->
-						   gLimHt20Params.
-						   protectionEnabled) {
-						pMac->lim.gHTOperMode =
-							eSIR_HT_OP_MODE_NO_LEGACY_20MHZ_HT;
-						lim_enable_ht_rifs_protection(pMac,
-									      false,
-									      overlap,
-									      pBeaconParams,
-									      psessionEntry);
-					} else {
-						pMac->lim.gHTOperMode =
-							eSIR_HT_OP_MODE_PURE;
-						lim_enable_ht_rifs_protection(pMac,
-									      false,
-									      overlap,
-									      pBeaconParams,
-									      psessionEntry);
-					}
-				}
-			}
-			if (!pMac->lim.gLimOverlap11gParams.protectionEnabled &&
-			    !psessionEntry->gLim11gParams.protectionEnabled) {
 				PELOG1(lim_log
 					       (pMac, LOG1,
 					       FL
@@ -4159,28 +3881,6 @@ static void lim_handle_ht20protection_enabled(tpAniSirGlobal mac_ctx,
 			lim_enable_ht_obss_protection(mac_ctx, false,
 				overlap, beaconparams, session_entry);
 		}
-	} else if (LIM_IS_BT_AMP_AP_ROLE(session_entry) && overlap) {
-			mac_ctx->lim.gLimOverlapHt20Params.protectionEnabled =
-				true;
-		if ((eSIR_HT_OP_MODE_OVERLAP_LEGACY !=
-				mac_ctx->lim.gHTOperMode) &&
-			(eSIR_HT_OP_MODE_MIXED !=
-				mac_ctx->lim.gHTOperMode)) {
-			mac_ctx->lim.gHTOperMode =
-				eSIR_HT_OP_MODE_OVERLAP_LEGACY;
-			lim_enable_ht_rifs_protection(mac_ctx, true,
-				overlap, beaconparams, session_entry);
-		}
-	} else if (LIM_IS_BT_AMP_AP_ROLE(session_entry) && !overlap) {
-		session_entry->gLimHt20Params.protectionEnabled = true;
-		if (eSIR_HT_OP_MODE_PURE == mac_ctx->lim.gHTOperMode) {
-			mac_ctx->lim.gHTOperMode =
-				eSIR_HT_OP_MODE_NO_LEGACY_20MHZ_HT;
-			lim_enable_ht_rifs_protection(mac_ctx, false,
-				overlap, beaconparams, session_entry);
-			lim_enable_ht_obss_protection(mac_ctx, false,
-				overlap, beaconparams, session_entry);
-		}
 	}
 	/* This part is common for staiton as well. */
 	if (false == session_entry->beaconParams.ht20Coexist) {
@@ -4275,60 +3975,7 @@ static void lim_handle_ht20coexist_ht20protection(tpAniSirGlobal mac_ctx,
 		beaconparams->paramChangeBitmap |=
 			PARAM_HT20MHZCOEXIST_CHANGED;
 	}
-	if (LIM_IS_BT_AMP_AP_ROLE(session_entry) && overlap) {
-		/* Overlap Legacy protection disabled. */
-		mac_ctx->lim.gLimOverlapHt20Params.protectionEnabled = false;
-		/*
-		 * no HT op mode change if any of the overlap
-		 * protection enabled.
-		 */
-		if (!(session_entry->gLimOlbcParams.protectionEnabled ||
-			mac_ctx->lim.gLimOverlap11gParams.protectionEnabled ||
-			mac_ctx->lim.gLimOverlapHt20Params.protectionEnabled ||
-			mac_ctx->lim.gLimOverlapNonGfParams.protectionEnabled)
-			/*
-			 * Check if there is a need to change
-			 * HT OP mode.
-			 */
-			&& (eSIR_HT_OP_MODE_OVERLAP_LEGACY ==
-				mac_ctx->lim.gHTOperMode)) {
-			if (session_entry->gLimHt20Params.protectionEnabled) {
-				mac_ctx->lim.gHTOperMode =
-					eSIR_HT_OP_MODE_NO_LEGACY_20MHZ_HT;
-				lim_enable_ht_rifs_protection(mac_ctx, false,
-					overlap, beaconparams, session_entry);
-				lim_enable_ht_obss_protection(mac_ctx, false,
-					overlap, beaconparams, session_entry);
-			} else {
-				mac_ctx->lim.gHTOperMode = eSIR_HT_OP_MODE_PURE;
-			}
-		}
-	} else if (LIM_IS_BT_AMP_AP_ROLE(session_entry) && !overlap) {
-		/* Disable protection from 11G stations. */
-		session_entry->gLimHt20Params.protectionEnabled = false;
-
-		/* Change HT op mode appropriately. */
-		if (eSIR_HT_OP_MODE_NO_LEGACY_20MHZ_HT ==
-				mac_ctx->lim.gHTOperMode) {
-			mac_ctx->lim.gHTOperMode =
-				eSIR_HT_OP_MODE_PURE;
-			lim_enable_ht_rifs_protection(mac_ctx, false,
-				overlap, beaconparams, session_entry);
-			lim_enable_ht_obss_protection(mac_ctx, false,
-				overlap, beaconparams, session_entry);
-		}
-	}
-	if (LIM_IS_BT_AMP_AP_ROLE(session_entry)) {
-		lim_log(mac_ctx, LOG1,
-			FL("===> Protection from HT 20 Disabled"));
-		beaconparams->ht20MhzCoexist =
-			session_entry->beaconParams.ht20Coexist = false;
-		beaconparams->paramChangeBitmap |=
-			PARAM_HT20MHZCOEXIST_CHANGED;
-	}
-
-	if (!LIM_IS_AP_ROLE(session_entry) &&
-			!LIM_IS_BT_AMP_AP_ROLE(session_entry)) {
+	if (!LIM_IS_AP_ROLE(session_entry)) {
 		/* For station role */
 		lim_log(mac_ctx, LOG1,
 			FL("===> Protection from HT20 Disabled"));
@@ -5089,8 +4736,7 @@ lim_validate_delts_req(tpAniSirGlobal mac_ctx, tpSirDeltsReq delts_req,
 		return eSIR_FAILURE;
 	}
 
-	if (LIM_IS_STA_ROLE(psession_entry) ||
-		LIM_IS_BT_AMP_STA_ROLE(psession_entry)) {
+	if (LIM_IS_STA_ROLE(psession_entry)) {
 		uint32_t val;
 
 		/* station always talks to the AP */
@@ -5974,14 +5620,6 @@ void lim_update_beacon(tpAniSirGlobal mac_ctx)
 					is_dfs_cac_timer_running)
 				lim_send_beacon_ind(mac_ctx,
 						&mac_ctx->lim.gpSession[i]);
-		} else if (((mac_ctx->lim.gpSession[i].limSystemRole ==
-						eLIM_BT_AMP_AP_ROLE) ||
-				(mac_ctx->lim.gpSession[i].limSystemRole ==
-						eLIM_BT_AMP_STA_ROLE)) &&
-				(mac_ctx->lim.gpSession[i].statypeForBss ==
-							STA_ENTRY_SELF)){
-			sch_set_fixed_beacon_fields(mac_ctx,
-						&mac_ctx->lim.gpSession[i]);
 		}
 	}
 }
@@ -6075,10 +5713,8 @@ tpPESession lim_is_ap_session_active(tpAniSirGlobal pMac)
 	uint8_t i;
 
 	for (i = 0; i < pMac->lim.maxBssId; i++) {
-		if ((pMac->lim.gpSession[i].valid) &&
-		    ((pMac->lim.gpSession[i].limSystemRole == eLIM_AP_ROLE) ||
-		     (pMac->lim.gpSession[i].limSystemRole ==
-		      eLIM_BT_AMP_AP_ROLE)))
+		if (pMac->lim.gpSession[i].valid &&
+		    (pMac->lim.gpSession[i].limSystemRole == eLIM_AP_ROLE))
 			return &pMac->lim.gpSession[i];
 	}
 
@@ -6532,8 +6168,7 @@ lim_set_protected_bit(tpAniSirGlobal pMac,
 	uint16_t aid;
 	tpDphHashNode pStaDs;
 
-	if (LIM_IS_AP_ROLE(psessionEntry) ||
-	    LIM_IS_BT_AMP_AP_ROLE(psessionEntry)) {
+	if (LIM_IS_AP_ROLE(psessionEntry)) {
 
 		pStaDs = dph_lookup_hash_entry(pMac, peer, &aid,
 					       &psessionEntry->dph.dphHashTable);
@@ -7085,8 +6720,6 @@ const char *lim_bss_type_to_string(const uint16_t bss_type)
 	CASE_RETURN_STRING(eSIR_INFRASTRUCTURE_MODE);
 	CASE_RETURN_STRING(eSIR_INFRA_AP_MODE);
 	CASE_RETURN_STRING(eSIR_IBSS_MODE);
-	CASE_RETURN_STRING(eSIR_BTAMP_STA_MODE);
-	CASE_RETURN_STRING(eSIR_BTAMP_AP_MODE);
 	CASE_RETURN_STRING(eSIR_AUTO_MODE);
 	default:
 		return "Unknown bss_type";
