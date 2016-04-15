@@ -108,10 +108,6 @@ QDF_STATUS send_stats_request_cmd_non_tlv(wmi_unified_t wmi_handle,
 				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct stats_request_params *param);
 
-QDF_STATUS send_packet_log_enable_cmd_non_tlv(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
-				struct packet_enable_params *param);
-
 QDF_STATUS send_beacon_send_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct beacon_params *param);
 
