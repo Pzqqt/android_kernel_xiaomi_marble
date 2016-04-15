@@ -1042,8 +1042,7 @@ static HTC_SEND_QUEUE_RESULT htc_try_send(HTC_TARGET *target,
 	}
 
 	/* increment tx processing count on entry */
-	qdf_atomic_inc(&pEndpoint->TxProcessCount);
-	if (qdf_atomic_read(&pEndpoint->TxProcessCount) > 1) {
+	if (qdf_atomic_inc_return(&pEndpoint->TxProcessCount) > 1) {
 		/* another thread or task is draining the TX queues on this endpoint
 		 * that thread will reset the tx processing count when the queue is drained */
 		qdf_atomic_dec(&pEndpoint->TxProcessCount);
@@ -1122,9 +1121,10 @@ static HTC_SEND_QUEUE_RESULT htc_try_send(HTC_TARGET *target,
 
 	}
 
-	UNLOCK_HTC_TX(target);
 	/* done with this endpoint, we can clear the count */
 	qdf_atomic_init(&pEndpoint->TxProcessCount);
+
+	UNLOCK_HTC_TX(target);
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_SEND, ("-htc_try_send:  \n"));
 
