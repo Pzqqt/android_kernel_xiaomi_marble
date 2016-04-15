@@ -10510,12 +10510,11 @@ struct wmi_ops tlv_ops =  {
 };
 
 /**
- * wmi_get_tlv_ops() - gives pointer to wmi tlv ops
+ * wmi_tlv_attach() - Attach TLV APIs
  *
- * Return: pointer to wmi tlv ops
+ * Return: None
  */
-struct wmi_ops *wmi_get_tlv_ops(void)
+void wmi_tlv_attach(wmi_unified_t wmi_handle)
 {
-	return &tlv_ops;
+	wmi_handle->ops = &tlv_ops;
 }
-

@@ -34,7 +34,9 @@
 #include "a_debug.h"
 #include "ol_if_athvar.h"
 #include "ol_defines.h"
+#ifndef WMI_NON_TLV_SUPPORT
 #include "ol_fw.h"
+#endif
 #include "htc_api.h"
 #include "htc_api.h"
 #include "dbglog_host.h"
@@ -159,7 +161,6 @@ wmi_mgmt_event_log_buffer[WMI_MGMT_EVENT_DEBUG_MAX_ENTRY];
 
 #endif /*WMI_INTERFACE_EVENT_LOGGING */
 
-static void __wmi_control_rx(struct wmi_unified *wmi_handle, wmi_buf_t evt_buf);
 int wmi_get_host_credits(wmi_unified_t wmi_handle);
 /* WMI buffer APIs */
 
@@ -242,6 +243,7 @@ uint16_t wmi_get_max_msg_len(wmi_unified_t wmi_handle)
 	return wmi_handle->max_msg_len - WMI_MIN_HEAD_ROOM;
 }
 
+#ifndef WMI_NON_TLV_SUPPORT
 static uint8_t *get_wmi_cmd_string(WMI_CMD_ID wmi_command)
 {
 	switch (wmi_command) {
@@ -578,10 +580,10 @@ static uint8_t *get_wmi_cmd_string(WMI_CMD_ID wmi_command)
 		 * as we MUST have a fixed value here to maintain compatibility between
 		 * UTF and the ART2 driver
 		 */
-		/** UTF WMI commands */
+		/* UTF WMI commands */
 		CASE_RETURN_STRING(WMI_PDEV_UTF_CMDID);
 
-		/** set debug log config */
+		/* set debug log config */
 		CASE_RETURN_STRING(WMI_DBGLOG_CFG_CMDID);
 		/* QVIT specific command id */
 		CASE_RETURN_STRING(WMI_PDEV_QVIT_CMDID);
@@ -662,7 +664,7 @@ static uint8_t *get_wmi_cmd_string(WMI_CMD_ID wmi_command)
 		CASE_RETURN_STRING(WMI_RMC_CONFIG_CMDID);
 
 		/* WLAN MHF offload commands */
-		/** enable/disable MHF offload */
+		/* enable/disable MHF offload */
 		CASE_RETURN_STRING(WMI_MHF_OFFLOAD_SET_MODE_CMDID);
 		/* Plumb routing table for MHF offload */
 		CASE_RETURN_STRING(WMI_MHF_OFFLOAD_PLUMB_ROUTING_TBL_CMDID);
@@ -820,6 +822,7 @@ static inline void wma_log_cmd_id(WMI_CMD_ID cmd_id)
 		 get_wmi_cmd_string(cmd_id), cmd_id);
 }
 #endif
+#endif
 
 /**
  * wmi_is_runtime_pm_cmd() - check if a cmd is from suspend resume sequence
@@ -827,6 +830,7 @@ static inline void wma_log_cmd_id(WMI_CMD_ID cmd_id)
  *
  * Return: true if the command is part of the suspend resume sequence.
  */
+#ifndef WMI_NON_TLV_SUPPORT
 static bool wmi_is_runtime_pm_cmd(WMI_CMD_ID cmd_id)
 {
 	switch (cmd_id) {
@@ -844,6 +848,34 @@ static bool wmi_is_runtime_pm_cmd(WMI_CMD_ID cmd_id)
 		return false;
 	}
 }
+
+/**
+ * wmi_is_pm_resume_cmd() - check if a cmd is part of the resume sequence
+ * @cmd_id: command to check
+ *
+ * Return: true if the command is part of the resume sequence.
+ */
+static bool wmi_is_pm_resume_cmd(WMI_CMD_ID cmd_id)
+{
+	switch (cmd_id) {
+	case WMI_WOW_HOSTWAKEUP_FROM_SLEEP_CMDID:
+	case WMI_PDEV_RESUME_CMDID:
+		return true;
+
+	default:
+		return false;
+	}
+}
+#else
+static bool wmi_is_runtime_pm_cmd(WMI_CMD_ID cmd_id)
+{
+	return false;
+}
+static bool wmi_is_pm_resume_cmd(WMI_CMD_ID cmd_id)
+{
+	return false;
+}
+#endif
 
 /**
  * wmi_unified_cmd_send() - WMI command API
@@ -865,16 +897,21 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t len,
 		if (wmi_is_runtime_pm_cmd(cmd_id))
 			htc_tag = HTC_TX_PACKET_TAG_AUTO_PM;
 	} else if (qdf_atomic_read(&wmi_handle->is_target_suspended) &&
-	    ((WMI_WOW_HOSTWAKEUP_FROM_SLEEP_CMDID != cmd_id) &&
-	     (WMI_PDEV_RESUME_CMDID != cmd_id))) {
+		(!wmi_is_pm_resume_cmd(cmd_id))) {
 		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Target is suspended", __func__);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_BUSY;
 	}
+	if (wmi_handle->wmi_stopinprogress) {
+		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
+			"WMI  stop in progress\n");
+		return -EINVAL;
+	}
 
 	/* Do sanity check on the TLV parameter structure */
-	{
+#ifndef WMI_NON_TLV_SUPPORT
+	if (wmi_handle->target_type == WMI_TLV_TARGET) {
 		void *buf_ptr = (void *)qdf_nbuf_data(buf);
 
 		if (wmitlv_check_command_tlv_params(NULL, buf_ptr, len, cmd_id)
@@ -885,6 +922,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t len,
 			return QDF_STATUS_E_INVAL;
 		}
 	}
+#endif
 
 	if (qdf_nbuf_push_head(buf, sizeof(WMI_CMD_HDR)) == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
@@ -899,7 +937,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t len,
 	if (qdf_atomic_read(&wmi_handle->pending_cmds) >= WMI_MAX_CMDS) {
 		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
 		    "\n%s: hostcredits = %d", __func__,
-		     wmi_get_host_credits(wmi_handle));
+		wmi_get_host_credits(wmi_handle));
 		htc_dump_counter_info(wmi_handle->htc_handle);
 		qdf_atomic_dec(&wmi_handle->pending_cmds);
 		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
@@ -923,8 +961,9 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t len,
 			       wmi_handle->wmi_endpoint_id, htc_tag);
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(pkt, buf);
-
+#ifndef WMI_NON_TLV_SUPPORT
 	wma_log_cmd_id(cmd_id);
+#endif
 
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 	qdf_spin_lock_bh(&wmi_handle->wmi_record_lock);
@@ -961,10 +1000,11 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t len,
  * Return: event handler's index
  */
 int wmi_unified_get_event_handler_ix(wmi_unified_t wmi_handle,
-				     WMI_EVT_ID event_id)
+				     uint32_t event_id)
 {
 	uint32_t idx = 0;
 	int32_t invalid_idx = -1;
+
 	for (idx = 0; (idx < wmi_handle->max_event_idx &&
 		       idx < WMI_UNIFIED_MAX_EVENT); ++idx) {
 		if (wmi_handle->event_id[idx] == event_id &&
@@ -986,25 +1026,37 @@ int wmi_unified_get_event_handler_ix(wmi_unified_t wmi_handle,
  * Return: 0 on success
  */
 int wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
-				       WMI_EVT_ID event_id,
+				       uint32_t event_id,
 				       wmi_unified_event_handler handler_func,
 				       uint8_t rx_ctx)
 {
 	uint32_t idx = 0;
+	uint32_t evt_id;
 
-	if (wmi_unified_get_event_handler_ix(wmi_handle, event_id) != -1) {
-		qdf_print("%s : event handler already registered 0x%x \n",
-		       __func__, event_id);
+#ifdef WMI_TLV_AND_NON_TLV_SUPPORT
+	if (event_id >= wmi_events_max ||
+		wmi_handle->wmi_events[event_id] == WMI_EVENT_ID_INVALID) {
+		qdf_print("%s: Event id %d is unavailable\n",
+				 __func__, event_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+	evt_id = wmi_handle->wmi_events[event_id];
+#else
+	evt_id = event_id;
+#endif
+	if (wmi_unified_get_event_handler_ix(wmi_handle, evt_id) != -1) {
+		qdf_print("%s : event handler already registered 0x%x\n",
+		       __func__, evt_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (wmi_handle->max_event_idx == WMI_UNIFIED_MAX_EVENT) {
-		qdf_print("%s : no more event handlers 0x%x \n",
-		       __func__, event_id);
+		qdf_print("%s : no more event handlers 0x%x\n",
+		       __func__, evt_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	idx = wmi_handle->max_event_idx;
 	wmi_handle->event_handler[idx] = handler_func;
-	wmi_handle->event_id[idx] = event_id;
+	wmi_handle->event_id[idx] = evt_id;
 	qdf_spin_lock_bh(&wmi_handle->ctx_lock);
 	wmi_handle->ctx[idx] = rx_ctx;
 	qdf_spin_unlock_bh(&wmi_handle->ctx_lock);
@@ -1021,14 +1073,27 @@ int wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
  * Return: 0 on success
  */
 int wmi_unified_unregister_event_handler(wmi_unified_t wmi_handle,
-					 WMI_EVT_ID event_id)
+					 uint32_t event_id)
 {
 	uint32_t idx = 0;
+	uint32_t evt_id;
 
-	idx = wmi_unified_get_event_handler_ix(wmi_handle, event_id);
+#ifdef WMI_TLV_AND_NON_TLV_SUPPORT
+	if (event_id >= wmi_events_max ||
+		wmi_handle->wmi_events[event_id] == WMI_EVENT_ID_INVALID) {
+		qdf_print("%s: Event id %d is unavailable\n",
+				 __func__, event_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+	evt_id = wmi_handle->wmi_events[event_id];
+#else
+	evt_id = event_id;
+#endif
+
+	idx = wmi_unified_get_event_handler_ix(wmi_handle, evt_id);
 	if (idx == -1) {
-		qdf_print("%s : event handler is not registered: event id 0x%x \n",
-		       __func__, event_id);
+		qdf_print("%s : event handler is not registered: evt id 0x%x\n",
+		       __func__, evt_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	wmi_handle->event_handler[idx] = NULL;
@@ -1046,6 +1111,7 @@ int wmi_unified_unregister_event_handler(wmi_unified_t wmi_handle,
  * wmi_process_fw_event_default_ctx() - process in default caller context
  * @wmi_handle: handle to wmi
  * @htc_packet: pointer to htc packet
+ * @exec_ctx: execution context for wmi fw event
  *
  * Event process by below function will be in default caller context.
  * wmi internally provides rx work thread processing context.
@@ -1058,8 +1124,13 @@ static void wmi_process_fw_event_default_ctx(struct wmi_unified *wmi_handle,
 	wmi_buf_t evt_buf;
 	evt_buf = (wmi_buf_t) htc_packet->pPktContext;
 
+#ifdef WMI_NON_TLV_SUPPORT
+	wmi_handle->rx_ops.wma_process_fw_event_handler_cbk
+		(wmi_handle->scn_handle, evt_buf, exec_ctx);
+#else
 	wmi_handle->rx_ops.wma_process_fw_event_handler_cbk(wmi_handle,
 					 evt_buf, exec_ctx);
+#endif
 
 	return;
 }
@@ -1086,10 +1157,12 @@ static void wmi_process_fw_event_worker_thread_ctx
 	id = WMI_GET_FIELD(qdf_nbuf_data(evt_buf), WMI_CMD_HDR, COMMANDID);
 	data = qdf_nbuf_data(evt_buf);
 
+#ifdef WMI_INTERFACE_EVENT_LOGGING
 	qdf_spin_lock_bh(&wmi_handle->wmi_record_lock);
 	/* Exclude 4 bytes of TLV header */
 	WMI_RX_EVENT_RECORD(id, ((uint8_t *) data + 4));
 	qdf_spin_unlock_bh(&wmi_handle->wmi_record_lock);
+#endif
 	qdf_spin_lock_bh(&wmi_handle->eventq_lock);
 	qdf_nbuf_queue_add(&wmi_handle->event_queue, evt_buf);
 	qdf_spin_unlock_bh(&wmi_handle->eventq_lock);
@@ -1166,7 +1239,9 @@ void __wmi_control_rx(struct wmi_unified *wmi_handle, wmi_buf_t evt_buf)
 	uint8_t *data;
 	uint32_t len;
 	void *wmi_cmd_struct_ptr = NULL;
+#ifndef WMI_NON_TLV_SUPPORT
 	int tlv_ok_status = 0;
+#endif
 	uint32_t idx = 0;
 
 	id = WMI_GET_FIELD(qdf_nbuf_data(evt_buf), WMI_CMD_HDR, COMMANDID);
@@ -1177,16 +1252,21 @@ void __wmi_control_rx(struct wmi_unified *wmi_handle, wmi_buf_t evt_buf)
 	data = qdf_nbuf_data(evt_buf);
 	len = qdf_nbuf_len(evt_buf);
 
-	/* Validate and pad(if necessary) the TLVs */
-	tlv_ok_status = wmitlv_check_and_pad_event_tlvs(wmi_handle->scn_handle,
+#ifndef WMI_NON_TLV_SUPPORT
+	if (wmi_handle->target_type == WMI_TLV_TARGET) {
+		/* Validate and pad(if necessary) the TLVs */
+		tlv_ok_status =
+			wmitlv_check_and_pad_event_tlvs(wmi_handle->scn_handle,
 							data, len, id,
 							&wmi_cmd_struct_ptr);
-	if (tlv_ok_status != 0) {
-		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
-			"%s: Error: id=0x%d, wmitlv check status=%d\n",
-		       __func__, id, tlv_ok_status);
-		goto end;
+		if (tlv_ok_status != 0) {
+			QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
+				"%s: Error: id=0x%d, wmitlv check status=%d\n",
+				__func__, id, tlv_ok_status);
+			goto end;
+		}
 	}
+#endif
 
 	idx = wmi_unified_get_event_handler_ix(wmi_handle, id);
 	if (idx == A_ERROR) {
@@ -1206,12 +1286,19 @@ void __wmi_control_rx(struct wmi_unified *wmi_handle, wmi_buf_t evt_buf)
 	qdf_spin_unlock_bh(&wmi_handle->wmi_record_lock);
 #endif
 	/* Call the WMI registered event handler */
-	wmi_handle->event_handler[idx] (wmi_handle->scn_handle,
-					wmi_cmd_struct_ptr, len);
+	if (wmi_handle->target_type == WMI_TLV_TARGET)
+		wmi_handle->event_handler[idx] (wmi_handle->scn_handle,
+			wmi_cmd_struct_ptr, len);
+	else
+		wmi_handle->event_handler[idx] (wmi_handle->scn_handle,
+			data, len);
 
 end:
 	/* Free event buffer and allocated event tlv */
-	wmitlv_free_allocated_event_tlvs(id, &wmi_cmd_struct_ptr);
+#ifndef WMI_NON_TLV_SUPPORT
+	if (wmi_handle->target_type == WMI_TLV_TARGET)
+		wmitlv_free_allocated_event_tlvs(id, &wmi_cmd_struct_ptr);
+#endif
 	qdf_nbuf_free(evt_buf);
 
 }
@@ -1290,17 +1377,24 @@ void *wmi_unified_attach(void *scn_handle,
 			 bool use_cookie, struct wmi_rx_ops *rx_ops)
 {
 	struct wmi_unified *wmi_handle;
+
+#ifndef WMI_NON_TLV_SUPPORT
 	wmi_handle =
 		(struct wmi_unified *)os_malloc(NULL,
 				sizeof(struct wmi_unified),
 				GFP_ATOMIC);
+#else
+	wmi_handle =
+		(struct wmi_unified *) qdf_mem_malloc(
+			sizeof(struct wmi_unified));
+#endif
 	if (wmi_handle == NULL) {
 		qdf_print("allocation of wmi handle failed %zu\n",
 			sizeof(struct wmi_unified));
 		return NULL;
 	}
 	OS_MEMZERO(wmi_handle, sizeof(struct wmi_unified));
-	wmi_handle->scn_handle = (ol_scn_t *)scn_handle;
+	wmi_handle->scn_handle = scn_handle;
 	qdf_atomic_init(&wmi_handle->pending_cmds);
 	qdf_atomic_init(&wmi_handle->is_target_suspended);
 	wmi_runtime_pm_init(wmi_handle);
@@ -1317,13 +1411,15 @@ void *wmi_unified_attach(void *scn_handle,
 	/* Attach mc_thread context processing function */
 	wmi_handle->rx_ops.wma_process_fw_event_handler_cbk =
 				rx_ops->wma_process_fw_event_handler_cbk;
+	wmi_handle->target_type = target_type;
 	if (target_type == WMI_TLV_TARGET)
-		wmi_handle->ops = wmi_get_tlv_ops();
+		wmi_tlv_attach(wmi_handle);
 	else
-		wmi_handle->ops = wmi_get_non_tlv_ops();
+		wmi_non_tlv_attach(wmi_handle);
 	/* Assign target cookie capablity */
 	wmi_handle->use_cookie = use_cookie;
 	wmi_handle->osdev = osdev;
+	wmi_handle->wmi_stopinprogress = 0;
 	qdf_spinlock_create(&wmi_handle->ctx_lock);
 
 	return wmi_handle;
@@ -1385,10 +1481,19 @@ wmi_unified_remove_work(struct wmi_unified *wmi_handle)
 		"Done: %s", __func__);
 }
 
+/**
+ * wmi_htc_tx_complete() - Process htc tx completion
+ *
+ * @ctx: handle to wmi
+ * @htc_packet: pointer to htc packet
+ *
+ * @Return: none.
+ */
 void wmi_htc_tx_complete(void *ctx, HTC_PACKET *htc_pkt)
 {
 	struct wmi_unified *wmi_handle = (struct wmi_unified *)ctx;
 	wmi_buf_t wmi_cmd_buf = GET_HTC_PACKET_NET_BUF_CONTEXT(htc_pkt);
+
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 	uint32_t cmd_id;
 #endif
@@ -1481,7 +1586,7 @@ wmi_unified_connect_htc_service(struct wmi_unified *wmi_handle,
  */
 int wmi_get_host_credits(wmi_unified_t wmi_handle)
 {
-	int host_credits;
+	int host_credits = 0;
 
 	htc_get_control_endpoint_tx_host_credits(wmi_handle->htc_handle,
 						 &host_credits);
@@ -1489,7 +1594,8 @@ int wmi_get_host_credits(wmi_unified_t wmi_handle)
 }
 
 /**
- * wmi_get_pending_cmds() - WMI API to get WMI Pending Commands in the HTC queue
+ * wmi_get_pending_cmds() - WMI API to get WMI Pending Commands in the HTC
+ *                          queue
  *
  * @wmi_handle: handle to WMI.
  *
@@ -1513,3 +1619,30 @@ void wmi_set_target_suspend(wmi_unified_t wmi_handle, A_BOOL val)
 	qdf_atomic_set(&wmi_handle->is_target_suspended, val);
 }
 
+#ifdef WMI_NON_TLV_SUPPORT
+/**
+ * API to flush all the previous packets  associated with the wmi endpoint
+ *
+ * @param wmi_handle      : handle to WMI.
+ */
+void
+wmi_flush_endpoint(wmi_unified_t wmi_handle)
+{
+	htc_flush_endpoint(wmi_handle->htc_handle,
+		wmi_handle->wmi_endpoint_id, 0);
+}
+
+/**
+ * generic function to block unified WMI command
+ * @param wmi_handle      : handle to WMI.
+ * @return 0  on success and -ve on failure.
+ */
+int
+wmi_stop(wmi_unified_t wmi_handle)
+{
+	QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_INFO,
+			"WMI Stop\n");
+	wmi_handle->wmi_stopinprogress = 1;
+	return 0;
+}
+#endif
