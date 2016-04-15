@@ -604,9 +604,7 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 		     session->selfMacAddr, sizeof(tSirMacAddr));
 
 	addbss_param->bssType = mlm_start_req->bssType;
-	if ((mlm_start_req->bssType == eSIR_IBSS_MODE) ||
-	    (mlm_start_req->bssType == eSIR_BTAMP_AP_MODE) ||
-	    (mlm_start_req->bssType == eSIR_BTAMP_STA_MODE)) {
+	if ((mlm_start_req->bssType == eSIR_IBSS_MODE)) {
 		addbss_param->operMode = BSS_OPERATIONAL_MODE_STA;
 	} else if (mlm_start_req->bssType == eSIR_INFRA_AP_MODE) {
 		addbss_param->operMode = BSS_OPERATIONAL_MODE_AP;
@@ -962,8 +960,7 @@ lim_process_mlm_post_join_suspend_link(tpAniSirGlobal mac_ctx,
 	mac_ctx->lim.limTimers.gLimJoinFailureTimer.sessionId =
 		session->peSessionId;
 
-	lnk_state = (LIM_IS_BT_AMP_STA_ROLE(session) ?
-		eSIR_LINK_BTAMP_PREASSOC_STATE : eSIR_LINK_PREASSOC_STATE);
+	lnk_state = eSIR_LINK_PREASSOC_STATE;
 	lim_log(mac_ctx, LOG1, FL("[lim_process_mlm_join_req]: lnk_state:%d"),
 		lnk_state);
 
@@ -1034,8 +1031,7 @@ static void lim_process_mlm_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 		goto error;
 	}
 
-	if ((!LIM_IS_AP_ROLE(session) &&
-	     !LIM_IS_BT_AMP_AP_ROLE(session)) &&
+	if (!LIM_IS_AP_ROLE(session) &&
 	     ((session->limMlmState == eLIM_MLM_IDLE_STATE) ||
 	     (session->limMlmState == eLIM_MLM_JOINED_STATE)) &&
 	     (SIR_MAC_GET_ESS
@@ -1126,8 +1122,7 @@ static bool lim_is_auth_req_expected(tpAniSirGlobal mac_ctx,
 	 * supported.
 	 */
 
-	flag = ((((LIM_IS_STA_ROLE(session) ||
-		   LIM_IS_BT_AMP_STA_ROLE(session)) &&
+	flag = (((LIM_IS_STA_ROLE(session) &&
 		 ((session->limMlmState == eLIM_MLM_JOINED_STATE) ||
 		  (session->limMlmState ==
 					eLIM_MLM_LINK_ESTABLISHED_STATE))) ||
@@ -1169,7 +1164,7 @@ static bool lim_is_preauth_ctx_exists(tpAniSirGlobal mac_ctx,
 	preauth_node = lim_search_pre_auth_list(mac_ctx,
 				mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr);
 
-	fl = (((LIM_IS_STA_ROLE(session) || LIM_IS_BT_AMP_STA_ROLE(session)) &&
+	fl = (((LIM_IS_STA_ROLE(session)) &&
 	       (session->limMlmState == eLIM_MLM_LINK_ESTABLISHED_STATE) &&
 	      ((stads != NULL) &&
 	       (mac_ctx->lim.gpLimMlmAuthReq->authType ==
@@ -1372,8 +1367,7 @@ static void lim_process_mlm_assoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 
 	sir_copy_mac_addr(curr_bssId, session_entry->bssId);
 
-	if (!((!LIM_IS_AP_ROLE(session_entry) &&
-	    !LIM_IS_BT_AMP_AP_ROLE(session_entry)) &&
+	if (!(!LIM_IS_AP_ROLE(session_entry) &&
 		(session_entry->limMlmState == eLIM_MLM_AUTHENTICATED_STATE ||
 		 session_entry->limMlmState == eLIM_MLM_JOINED_STATE) &&
 		(!qdf_mem_cmp(mlm_assoc_req->peerMacAddr,
@@ -1422,19 +1416,6 @@ static void lim_process_mlm_assoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	/* Prepare and send Association request frame */
 	lim_send_assoc_req_mgmt_frame(mac_ctx, mlm_assoc_req, session_entry);
 
-	/*
-	 * Set the link state to postAssoc, so HW can start receiving frames
-	 * from AP.
-	 */
-	if ((session_entry->bssType == eSIR_BTAMP_STA_MODE) ||
-	    ((session_entry->bssType == eSIR_BTAMP_AP_MODE)
-	     && LIM_IS_BT_AMP_STA_ROLE(session_entry))) {
-		if (lim_set_link_state(mac_ctx, eSIR_LINK_BTAMP_POSTASSOC_STATE,
-					curr_bssId, session_entry->selfMacAddr,
-					NULL, NULL) != eSIR_SUCCESS)
-			lim_log(mac_ctx, LOGE,
-				FL("Failed to set the LinkState"));
-	}
 	/* Start association failure timer */
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_TIMER_ACTIVATE,
 			 session_entry->peSessionId, eLIM_ASSOC_FAIL_TIMER));
@@ -1509,7 +1490,6 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 
 	switch (GET_LIM_SYSTEM_ROLE(session)) {
 	case eLIM_STA_ROLE:
-	case eLIM_BT_AMP_STA_ROLE:
 		if (!qdf_is_macaddr_equal(&mlm_disassocreq->peer_macaddr,
 				     &curr_bssid)) {
 			lim_log(mac_ctx, LOGW,
@@ -1852,7 +1832,6 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 
 	switch (GET_LIM_SYSTEM_ROLE(session)) {
 	case eLIM_STA_ROLE:
-	case eLIM_BT_AMP_STA_ROLE:
 		switch (session->limMlmState) {
 		case eLIM_MLM_IDLE_STATE:
 			/*
@@ -2157,7 +2136,6 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 
 	switch (GET_LIM_SYSTEM_ROLE(session)) {
 	case eLIM_STA_ROLE:
-	case eLIM_BT_AMP_STA_ROLE:
 		/*
 		 * In case of TDLS, peerMac address need not be BssId. Skip this
 		 * check if TDLS is enabled.
@@ -2727,7 +2705,7 @@ lim_process_assoc_failure_timeout(tpAniSirGlobal mac_ctx, uint32_t msg_type)
 	lim_log(mac_ctx, LOG1,
 		FL("Re/Association Response not received before timeout "));
 
-	if ((LIM_IS_AP_ROLE(session) || LIM_IS_BT_AMP_AP_ROLE(session)) ||
+	if ((LIM_IS_AP_ROLE(session)) ||
 	    ((session->limMlmState != eLIM_MLM_WT_ASSOC_RSP_STATE) &&
 	    (session->limMlmState != eLIM_MLM_WT_REASSOC_RSP_STATE) &&
 	    (session->limMlmState != eLIM_MLM_WT_FT_REASSOC_RSP_STATE))) {

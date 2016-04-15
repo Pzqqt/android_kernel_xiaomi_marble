@@ -225,8 +225,7 @@ void lim_handle_del_bss_in_re_assoc_context(tpAniSirGlobal pMac,
 		psessionEntry->limSmeState = eLIM_SME_WT_REASSOC_STATE;
 		lim_delete_dph_hash_entry(pMac, pStaDs->staAddr,
 					  pStaDs->assocId, psessionEntry);
-		if (LIM_IS_STA_ROLE(psessionEntry) ||
-		    LIM_IS_BT_AMP_STA_ROLE(psessionEntry)) {
+		if (LIM_IS_STA_ROLE(psessionEntry)) {
 			psessionEntry->limMlmState =
 				eLIM_MLM_IDLE_STATE;
 		}
@@ -416,8 +415,7 @@ bool lim_is_reassoc_in_progress(tpAniSirGlobal pMac, tpPESession psessionEntry)
 {
 	if (psessionEntry == NULL)
 		return false;
-	if ((LIM_IS_STA_ROLE(psessionEntry) ||
-	    LIM_IS_BT_AMP_STA_ROLE(psessionEntry)) &&
+	if ((LIM_IS_STA_ROLE(psessionEntry)) &&
 	    ((psessionEntry->limSmeState == eLIM_SME_WT_REASSOC_STATE) ||
 	    (psessionEntry->limSmeState ==
 		      eLIM_SME_WT_REASSOC_LINK_FAIL_STATE)))

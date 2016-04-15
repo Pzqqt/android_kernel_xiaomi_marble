@@ -69,10 +69,8 @@ void lim_process_mlm_disassoc_cnf(tpAniSirGlobal, uint32_t *);
 void lim_process_mlm_deauth_ind(tpAniSirGlobal, uint32_t *);
 void lim_process_mlm_deauth_cnf(tpAniSirGlobal, uint32_t *);
 void lim_process_mlm_purge_sta_ind(tpAniSirGlobal, uint32_t *);
-void lim_get_session_info(tpAniSirGlobal pMac, uint8_t *, uint8_t *, uint16_t *);
-static void
-lim_process_btamp_add_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
-			      tpPESession psessionEntry);
+void lim_get_session_info(tpAniSirGlobal pMac, uint8_t *, uint8_t *,
+				uint16_t *);
 /**
  * lim_process_mlm_rsp_messages()
  *
@@ -256,17 +254,12 @@ void lim_process_mlm_start_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 		MTRACE(mac_trace
 			       (pMac, TRACE_CODE_SME_STATE, psessionEntry->peSessionId,
 			       psessionEntry->limSmeState));
-		if (psessionEntry->bssType == eSIR_BTAMP_STA_MODE) {
-			lim_log(pMac, LOG1,
-				FL("*** Started BSS in BT_AMP STA SIDE***"));
-		} else if (psessionEntry->bssType == eSIR_BTAMP_AP_MODE) {
-			lim_log(pMac, LOG1,
-				FL("*** Started BSS in BT_AMP AP SIDE***"));
-		} else if (psessionEntry->bssType == eSIR_INFRA_AP_MODE) {
+		if (psessionEntry->bssType == eSIR_INFRA_AP_MODE) {
 			lim_log(pMac, LOG1,
 				FL("*** Started BSS in INFRA AP SIDE***"));
-		} else
-			PELOG1(lim_log(pMac, LOG1, FL("*** Started BSS ***"));)
+		} else {
+			lim_log(pMac, LOG1, FL("*** Started BSS ***"));
+		}
 	} else {
 		/* Start BSS is a failure */
 		pe_delete_session(pMac, psessionEntry);
@@ -572,8 +565,7 @@ void lim_process_mlm_auth_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg)
 
 	if ((session_entry->limSmeState != eLIM_SME_WT_AUTH_STATE &&
 		session_entry->limSmeState != eLIM_SME_WT_PRE_AUTH_STATE) ||
-		LIM_IS_AP_ROLE(session_entry) ||
-		LIM_IS_BT_AMP_AP_ROLE(session_entry)) {
+		LIM_IS_AP_ROLE(session_entry)) {
 		/**
 		 * Should not have received AUTH confirm
 		 * from MLM in other states or on AP.
@@ -735,8 +727,7 @@ void lim_process_mlm_assoc_cnf(tpAniSirGlobal mac_ctx,
 		return;
 	}
 	if (session_entry->limSmeState != eLIM_SME_WT_ASSOC_STATE ||
-		 LIM_IS_AP_ROLE(session_entry) ||
-		 LIM_IS_BT_AMP_AP_ROLE(session_entry)) {
+		 LIM_IS_AP_ROLE(session_entry)) {
 		/*
 		 * Should not have received Assocication confirm
 		 * from MLM in other states OR on AP.
@@ -982,13 +973,12 @@ void lim_process_mlm_disassoc_ind(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	case eLIM_STA_IN_IBSS_ROLE:
 		break;
 	case eLIM_STA_ROLE:
-	case eLIM_BT_AMP_STA_ROLE:
 		psessionEntry->limSmeState = eLIM_SME_WT_DISASSOC_STATE;
 		MTRACE(mac_trace
 			       (pMac, TRACE_CODE_SME_STATE, psessionEntry->peSessionId,
 			       psessionEntry->limSmeState));
 		break;
-	default:        /* eLIM_AP_ROLE //eLIM_BT_AMP_AP_ROLE */
+	default:        /* eLIM_AP_ROLE */
 		PELOG1(lim_log(pMac, LOG1,
 			       FL("*** Peer staId=%d Disassociated ***"),
 			       pMlmDisassocInd->aid);
@@ -1028,8 +1018,7 @@ void lim_process_mlm_disassoc_cnf(tpAniSirGlobal mac_ctx,
 		eLIM_LINK_MONITORING_DISASSOC) ?
 		eSIR_SME_LOST_LINK_WITH_PEER_RESULT_CODE :
 		disassoc_cnf->resultCode;
-	if (LIM_IS_STA_ROLE(session_entry) ||
-		LIM_IS_BT_AMP_STA_ROLE(session_entry)) {
+	if (LIM_IS_STA_ROLE(session_entry)) {
 		/* Disassociate Confirm from MLM */
 		if ((session_entry->limSmeState != eLIM_SME_WT_DISASSOC_STATE)
 			&& (session_entry->limSmeState !=
@@ -1074,8 +1063,7 @@ void lim_process_mlm_disassoc_cnf(tpAniSirGlobal mac_ctx,
 				disassoc_cnf->aid, session_entry->smeSessionId,
 				session_entry->transactionId, session_entry);
 		}
-	} else if (LIM_IS_AP_ROLE(session_entry) ||
-			LIM_IS_BT_AMP_AP_ROLE(session_entry)) {
+	} else if (LIM_IS_AP_ROLE(session_entry)) {
 		lim_send_sme_disassoc_ntf(mac_ctx, disassoc_cnf->peerMacAddr,
 			result_code, disassoc_cnf->disassocTrigger,
 			disassoc_cnf->aid, session_entry->smeSessionId,
@@ -1119,7 +1107,6 @@ void lim_process_mlm_deauth_ind(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	case eLIM_STA_IN_IBSS_ROLE:
 		break;
 	case eLIM_STA_ROLE:
-	case eLIM_BT_AMP_STA_ROLE:
 		psessionEntry->limSmeState = eLIM_SME_WT_DEAUTH_STATE;
 		MTRACE(mac_trace
 			       (pMac, TRACE_CODE_SME_STATE, psessionEntry->peSessionId,
@@ -1185,8 +1172,7 @@ void lim_process_mlm_deauth_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 		     eSIR_SME_LOST_LINK_WITH_PEER_RESULT_CODE :
 		     pMlmDeauthCnf->resultCode;
 	aid = LIM_IS_AP_ROLE(psessionEntry) ? pMlmDeauthCnf->aid : 1;
-	if (LIM_IS_STA_ROLE(psessionEntry) ||
-	    LIM_IS_BT_AMP_STA_ROLE(psessionEntry)) {
+	if (LIM_IS_STA_ROLE(psessionEntry)) {
 		/* Deauth Confirm from MLM */
 		if ((psessionEntry->limSmeState != eLIM_SME_WT_DISASSOC_STATE)
 			&& psessionEntry->limSmeState !=
@@ -1267,7 +1253,6 @@ void lim_process_mlm_purge_sta_ind(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	case eLIM_STA_IN_IBSS_ROLE:
 		break;
 	case eLIM_STA_ROLE:
-	case eLIM_BT_AMP_STA_ROLE:
 	default:        /* eLIM_AP_ROLE */
 		if (LIM_IS_STA_ROLE(psessionEntry) &&
 		   (psessionEntry->limSmeState !=
@@ -1290,8 +1275,7 @@ void lim_process_mlm_purge_sta_ind(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 			       FL("*** Cleanup completed for staId=%d ***"),
 			       pMlmPurgeStaInd->aid);
 		       )
-		if (LIM_IS_STA_ROLE(psessionEntry) ||
-		    LIM_IS_BT_AMP_STA_ROLE(psessionEntry)) {
+		if (LIM_IS_STA_ROLE(psessionEntry)) {
 			psessionEntry->limSmeState = eLIM_SME_IDLE_STATE;
 			MTRACE(mac_trace
 				       (pMac, TRACE_CODE_SME_STATE,
@@ -1368,8 +1352,7 @@ void lim_process_mlm_set_keys_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	*/
 	if (eSIR_SME_SUCCESS == pMlmSetKeysCnf->resultCode) {
 		psessionEntry->is_key_installed = 1;
-		if (LIM_IS_AP_ROLE(psessionEntry) ||
-			LIM_IS_BT_AMP_AP_ROLE(psessionEntry)) {
+		if (LIM_IS_AP_ROLE(psessionEntry)) {
 			sta_ds = dph_lookup_hash_entry(pMac,
 				pMlmSetKeysCnf->peer_macaddr.bytes,
 				&aid, &psessionEntry->dph.dphHashTable);
@@ -1452,12 +1435,6 @@ error:
 	session_entry->pLimJoinReq = NULL;
 	/* Delete teh session if JOIN failure occurred. */
 	if (result_code != eSIR_SME_SUCCESS) {
-		if (lim_set_link_state(mac_ctx, eSIR_LINK_DOWN_STATE,
-			session_entry->bssId,
-			session_entry->selfMacAddr, NULL, NULL)
-			 != eSIR_SUCCESS)
-			lim_log(mac_ctx, LOGE,
-				FL("Failed to set the DownState."));
 		if (lim_set_link_state
 			(mac_ctx, eSIR_LINK_IDLE_STATE,
 			session_entry->bssId,
@@ -1498,8 +1475,7 @@ void lim_process_mlm_add_sta_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
 	/* in the case of nested request the new request initiated from the response will take care of resetting */
 	/* the deffered flag. */
 	SET_LIM_PROCESS_DEFD_MESGS(pMac, true);
-	if (LIM_IS_BT_AMP_AP_ROLE(psessionEntry) ||
-	    LIM_IS_AP_ROLE(psessionEntry)) {
+	if (LIM_IS_AP_ROLE(psessionEntry)) {
 		lim_process_ap_mlm_add_sta_rsp(pMac, limMsgQ, psessionEntry);
 		return;
 	}
@@ -1662,11 +1638,9 @@ void lim_process_mlm_del_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
 	SET_LIM_PROCESS_DEFD_MESGS(pMac, true);
 	pMac->sys.gSysFrameCount[SIR_MAC_MGMT_FRAME][SIR_MAC_MGMT_DEAUTH] = 0;
 
-	if ((LIM_IS_BT_AMP_AP_ROLE(psessionEntry) ||
-	    LIM_IS_BT_AMP_STA_ROLE(psessionEntry) ||
-	    LIM_IS_AP_ROLE(psessionEntry)) &&
+	if (LIM_IS_AP_ROLE(psessionEntry) &&
 	    (psessionEntry->statypeForBss == STA_ENTRY_SELF)) {
-		lim_process_bt_amp_ap_mlm_del_bss_rsp(pMac, limMsgQ, psessionEntry);
+		lim_process_ap_mlm_del_bss_rsp(pMac, limMsgQ, psessionEntry);
 		return;
 	}
 	lim_process_sta_mlm_del_bss_rsp(pMac, limMsgQ, psessionEntry);
@@ -1743,8 +1717,7 @@ end:
 	}
 	if (pStaDs == NULL)
 		return;
-	if ((LIM_IS_STA_ROLE(psessionEntry) ||
-	    LIM_IS_BT_AMP_STA_ROLE(psessionEntry)) &&
+	if ((LIM_IS_STA_ROLE(psessionEntry)) &&
 	    (psessionEntry->limSmeState !=
 			eLIM_SME_WT_DISASSOC_STATE &&
 	    psessionEntry->limSmeState !=
@@ -1762,7 +1735,7 @@ end:
 	return;
 }
 
-void lim_process_bt_amp_ap_mlm_del_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
+void lim_process_ap_mlm_del_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
 					   tpPESession psessionEntry)
 {
 	tSirResultCodes rc = eSIR_SME_SUCCESS;
@@ -1868,9 +1841,8 @@ void lim_process_mlm_del_sta_rsp(tpAniSirGlobal mac_ctx,
 		return;
 	}
 
-	if (LIM_IS_BT_AMP_AP_ROLE(session_entry) ||
-		LIM_IS_AP_ROLE(session_entry)) {
-		lim_process_bt_amp_ap_mlm_del_sta_rsp(mac_ctx, msg,
+	if (LIM_IS_AP_ROLE(session_entry)) {
+		lim_process_ap_mlm_del_sta_rsp(mac_ctx, msg,
 				session_entry);
 		return;
 	}
@@ -1878,16 +1850,16 @@ void lim_process_mlm_del_sta_rsp(tpAniSirGlobal mac_ctx,
 }
 
 /**
- * lim_process_bt_amp_ap_mlm_del_sta_rsp() - Process WMA_DEL_STA_RSP
+ * lim_process_ap_mlm_del_sta_rsp() - Process WMA_DEL_STA_RSP
  * @mac_ctx: Global pointer to MAC context
  * @msg: Received message
  * @session_entry: Session entry
  *
- * Process WMA_DEL_STA_RSP for AP or bt_amp_ap role
+ * Process WMA_DEL_STA_RSP for AP role
  *
  * Retunrn: None
  */
-void lim_process_bt_amp_ap_mlm_del_sta_rsp(tpAniSirGlobal mac_ctx,
+void lim_process_ap_mlm_del_sta_rsp(tpAniSirGlobal mac_ctx,
 					   tpSirMsgQ msg,
 					   tpPESession session_entry)
 {
@@ -2718,10 +2690,6 @@ void lim_process_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 				}
 				lim_post_sme_message(mac_ctx, LIM_MLM_START_CNF,
 					(uint32_t *) &mlm_start_cnf);
-			} else if ((bss_type == eSIR_BTAMP_AP_MODE) ||
-					(bss_type == eSIR_BTAMP_STA_MODE)) {
-				lim_process_btamp_add_bss_rsp(mac_ctx, msg,
-					session_entry);
 			} else
 				lim_process_ap_mlm_add_bss_rsp(mac_ctx, msg);
 		} else {
@@ -3029,25 +2997,6 @@ static void lim_process_switch_channel_join_req(
 		goto error;
 	}
 
-	/*
-	 * eSIR_BTAMP_AP_MODE stroed as bss type in session
-	 * Table when join req is received, is to be veified
-	 */
-	if (session_entry->bssType == eSIR_BTAMP_AP_MODE) {
-		if (lim_set_link_state
-			(mac_ctx, eSIR_LINK_BTAMP_PREASSOC_STATE,
-			session_entry->bssId, session_entry->selfMacAddr,
-			NULL, NULL) != eSIR_SUCCESS) {
-			PELOGE(lim_log
-				(mac_ctx, LOGE,
-				FL("Sessionid: %d Set link state "
-				"failed!! BSSID:" MAC_ADDRESS_STR),
-				session_entry->peSessionId,
-				MAC_ADDR_ARRAY(session_entry->bssId));)
-			goto error;
-		}
-	}
-
 	session_entry->limPrevMlmState = session_entry->limMlmState;
 	session_entry->limMlmState = eLIM_MLM_WT_JOIN_BEACON_STATE;
 	lim_log(mac_ctx, LOG1,
@@ -3264,59 +3213,6 @@ void lim_process_switch_channel_rsp(tpAniSirGlobal pMac, void *body)
 		break;
 	}
 	qdf_mem_free(body);
-}
-
-/* Added For BT -AMP Support */
-static void
-lim_process_btamp_add_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
-			      tpPESession psessionEntry)
-{
-	tLimMlmStartCnf mlmStartCnf;
-	tpAddBssParams pAddBssParams = (tpAddBssParams) limMsgQ->bodyptr;
-
-	if (NULL == pAddBssParams) {
-		lim_log(pMac, LOGE, FL("Invalid body pointer in message"));
-		goto end;
-	}
-	if (QDF_STATUS_SUCCESS == pAddBssParams->status) {
-		lim_log(pMac, LOG2,
-			FL("WMA_ADD_BSS_RSP returned with QDF_STATUS_SUCCESS"));
-		if (psessionEntry->bssType == eSIR_BTAMP_AP_MODE) {
-			if (lim_set_link_state
-				    (pMac, eSIR_LINK_BTAMP_AP_STATE,
-				    psessionEntry->bssId, psessionEntry->selfMacAddr,
-				    NULL, NULL) != eSIR_SUCCESS)
-				goto end;
-		} else if (psessionEntry->bssType == eSIR_BTAMP_STA_MODE) {
-			if (lim_set_link_state
-				    (pMac, eSIR_LINK_SCAN_STATE, psessionEntry->bssId,
-				    psessionEntry->selfMacAddr, NULL,
-				    NULL) != eSIR_SUCCESS)
-				goto end;
-		}
-		/* Set MLME state */
-		psessionEntry->limMlmState = eLIM_MLM_BSS_STARTED_STATE;
-		psessionEntry->statypeForBss = STA_ENTRY_SELF; /* to know session started for peer or for self */
-		psessionEntry->bssIdx = (uint8_t) pAddBssParams->bssIdx;
-		sch_edca_profile_update(pMac, psessionEntry);
-		lim_init_peer_idxpool(pMac, psessionEntry);
-
-		/* Apply previously set configuration at HW */
-		lim_apply_configuration(pMac, psessionEntry);
-		psessionEntry->staId = pAddBssParams->staContext.staIdx;
-		mlmStartCnf.resultCode = eSIR_SME_SUCCESS;
-	} else {
-		lim_log(pMac, LOGE, FL("WMA_ADD_BSS_REQ failed with status %d"),
-			pAddBssParams->status);
-		mlmStartCnf.resultCode = eSIR_SME_HAL_SEND_MESSAGE_FAIL;
-	}
-	mlmStartCnf.sessionId = psessionEntry->peSessionId;
-	lim_post_sme_message(pMac, LIM_MLM_START_CNF, (uint32_t *) &mlmStartCnf);
-end:
-	if (0 != limMsgQ->bodyptr) {
-		qdf_mem_free(pAddBssParams);
-		limMsgQ->bodyptr = NULL;
-	}
 }
 
 void lim_send_beacon_ind(tpAniSirGlobal pMac, tpPESession psessionEntry)

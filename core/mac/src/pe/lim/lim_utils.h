@@ -406,11 +406,11 @@ void lim_update_beacon(tpAniSirGlobal pMac);
 
 void lim_process_ap_mlm_add_sta_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
 		tpPESession psessionEntry);
-void lim_process_bt_amp_ap_mlm_del_bss_rsp(tpAniSirGlobal pMac,
+void lim_process_ap_mlm_del_bss_rsp(tpAniSirGlobal pMac,
 		tpSirMsgQ limMsgQ,
 		tpPESession psessionEntry);
 
-void lim_process_bt_amp_ap_mlm_del_sta_rsp(tpAniSirGlobal pMac,
+void lim_process_ap_mlm_del_sta_rsp(tpAniSirGlobal pMac,
 		tpSirMsgQ limMsgQ,
 		tpPESession psessionEntry);
 
