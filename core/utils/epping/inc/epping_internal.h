@@ -111,7 +111,7 @@ typedef struct epping_context {
 	void *p_cds_context;    /* CDS context */
 	struct device *parent_dev;      /* Pointer to the parent device */
 	epping_ctx_state_t e_ctx_state;
-	int wow_nack;
+	bool wow_nack;
 	void *epping_adapter;
 	HTC_HANDLE HTCHandle;
 	HTC_ENDPOINT_ID EppingEndpoint[EPPING_MAX_NUM_EPIDS];

@@ -3246,7 +3246,7 @@ QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 #endif /* CONFIG_CNSS */
 
 	qdf_event_reset(&wma->target_suspend);
-	wma->wow_nack = 0;
+	wma->wow_nack = false;
 
 	host_credits = wmi_get_host_credits(wma->wmi_handle);
 	wmi_pending_cmds = wmi_get_pending_cmds(wma->wmi_handle);
@@ -5925,14 +5925,14 @@ QDF_STATUS wma_suspend_target(WMA_HANDLE handle, int disable_target_intr)
 
 /**
  * wma_target_suspend_acknowledge() - update target susspend status
- * @context: wma context
+ * @context: HTC_INIT_INFO->context
+ * @wow_nack: true when wow is rejected
  *
  * Return: none
  */
-void wma_target_suspend_acknowledge(void *context)
+void wma_target_suspend_acknowledge(void *context, bool wow_nack)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-	int wow_nack = *((int *)context);
 
 	if (NULL == wma) {
 		WMA_LOGE("%s: wma is NULL", __func__);

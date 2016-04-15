@@ -151,10 +151,13 @@ void epping_close(void)
 	qdf_mem_free(to_free);
 }
 
-static void epping_target_suspend_acknowledge(void *context)
+/**
+ * epping_target_suspend_acknowledge() - process wow ack/nack from fw
+ * @context: HTC_INIT_INFO->context
+ * @wow_nack: true when wow is rejected
+ */
+static void epping_target_suspend_acknowledge(void *context, bool wow_nack)
 {
-	int wow_nack = *((int *)context);
-
 	if (NULL == g_epping_ctx) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: epping_ctx is NULL", __func__);
