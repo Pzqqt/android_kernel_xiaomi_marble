@@ -29,7 +29,6 @@
 #include "wmi_unified_api.h"
 #include "wmi.h"
 #include "wmi_unified_priv.h"
-#include "wma_api.h"
 #include "wma.h"
 #include "wmi_version_whitelist.h"
 

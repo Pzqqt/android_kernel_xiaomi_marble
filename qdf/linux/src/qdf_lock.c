@@ -35,7 +35,6 @@
 #endif
 #ifdef CONFIG_MCL
 #include <i_host_diag_core_event.h>
-#include <cds_api.h>
 #include <ani_global.h>
 #endif
 #include <i_qdf_lock.h>
