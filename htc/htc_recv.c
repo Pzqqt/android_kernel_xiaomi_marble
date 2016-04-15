@@ -398,7 +398,7 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 		if (htc_ep_id == ENDPOINT_0) {
 			uint16_t message_id;
 			HTC_UNKNOWN_MSG *htc_msg;
-			int wow_nack = 0;
+			bool wow_nack;
 
 			/* remove HTC header */
 			qdf_nbuf_pull_head(netbuf, HTC_HDR_LENGTH);
@@ -437,19 +437,20 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 				qdf_event_set(&target->ctrl_response_valid);
 				break;
 			case HTC_MSG_SEND_SUSPEND_COMPLETE:
-				wow_nack = 0;
+				wow_nack = false;
 				LOCK_HTC_CREDIT(target);
 				htc_credit_record(HTC_SUSPEND_ACK,
 					pEndpoint->TxCredits,
 					HTC_PACKET_QUEUE_DEPTH(
 						&pEndpoint->TxQueue));
 				UNLOCK_HTC_CREDIT(target);
-				target->HTCInitInfo.
-				TargetSendSuspendComplete((void *)
-							  &wow_nack);
+				target->HTCInitInfo.TargetSendSuspendComplete(
+					target->HTCInitInfo.pContext,
+					wow_nack);
+
 				break;
 			case HTC_MSG_NACK_SUSPEND:
-				wow_nack = 1;
+				wow_nack = true;
 				LOCK_HTC_CREDIT(target);
 				htc_credit_record(HTC_SUSPEND_ACK,
 					pEndpoint->TxCredits,
@@ -457,9 +458,9 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 						&pEndpoint->TxQueue));
 				UNLOCK_HTC_CREDIT(target);
 
-				target->HTCInitInfo.
-				TargetSendSuspendComplete((void *)
-							  &wow_nack);
+				target->HTCInitInfo.TargetSendSuspendComplete(
+					target->HTCInitInfo.pContext,
+					wow_nack);
 				break;
 			}
 

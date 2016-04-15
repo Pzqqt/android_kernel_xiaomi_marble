@@ -54,7 +54,7 @@ typedef void (*HTC_TARGET_FAILURE)(void *Instance, QDF_STATUS Status);
 typedef struct _HTC_INIT_INFO {
 	void *pContext;         /* context for target notifications */
 	void (*TargetFailure)(void *Instance, QDF_STATUS Status);
-	void (*TargetSendSuspendComplete)(void *ctx);
+	void (*TargetSendSuspendComplete)(void *ctx, bool is_nack);
 } HTC_INIT_INFO;
 
 /* Struct for HTC layer packet stats*/
