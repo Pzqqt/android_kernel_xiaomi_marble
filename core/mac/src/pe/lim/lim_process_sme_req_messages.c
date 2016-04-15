@@ -1967,13 +1967,9 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		session->maxTxPower =
 			QDF_MIN(reg_max, (local_power_constraint));
 #endif
-#if defined WLAN_VOWIFI_DEBUG
-		lim_log(mac_ctx, LOGE,
-			"Regulatory max = %d, local power constraint = %d"
-			reg_max, local_power_constraint);
-		lim_log(mac_ctx, LOGE, FL(" max tx = %d"),
-			session->maxTxPower);
-#endif
+		lim_log(mac_ctx, LOG1,
+			FL("Reg max = %d, local power con = %d, max tx = %d"),
+			reg_max, local_power_constraint, session->maxTxPower);
 
 		if (session->gLimCurrentBssUapsd) {
 			session->gUapsdPerAcBitmask =
@@ -2254,12 +2250,9 @@ static void __lim_process_sme_reassoc_req(tpAniSirGlobal mac_ctx,
 		&session_entry->gLimCurrentBssUapsd,
 		&local_pwr_constraint, session_entry);
 	session_entry->maxTxPower = QDF_MIN(reg_max, (local_pwr_constraint));
-#if defined WLAN_VOWIFI_DEBUG
 	lim_log(mac_ctx, LOGE,
-		"Regulatory max = %d, local pwr constraint = %d, max tx = %d",
-		reg_max, local_pwr_constraint,
-		session_entry->maxTxPower);
-#endif
+		FL("Reg max = %d, local pwr constraint = %d, max tx = %d"),
+		reg_max, local_pwr_constraint, session_entry->maxTxPower);
 	/* Copy the SSID from session entry to local variable */
 	session_entry->limReassocSSID.length = reassoc_req->ssId.length;
 	qdf_mem_copy(session_entry->limReassocSSID.ssId,
@@ -4489,10 +4482,7 @@ lim_send_set_max_tx_power_req(tpAniSirGlobal pMac, int8_t txPower,
 	tSirMsgQ msgQ;
 
 	if (pSessionEntry == NULL) {
-		PELOGE(lim_log
-			       (pMac, LOGE, "%s:%d: Inavalid parameters", __func__,
-			       __LINE__);
-		       )
+		lim_log(pMac, LOGE, FL("Inavalid parameters"));
 		return eSIR_FAILURE;
 	}
 
@@ -4502,14 +4492,6 @@ lim_send_set_max_tx_power_req(tpAniSirGlobal pMac, int8_t txPower,
 			FL("Unable to allocate memory for pMaxTxParams "));
 		return eSIR_MEM_ALLOC_FAILED;
 
-	}
-#if defined(WLAN_VOWIFI_DEBUG) || defined(FEATURE_WLAN_ESE)
-	lim_log(pMac, LOG1,
-		FL("pMaxTxParams allocated...will be freed in other module"));
-#endif
-	if (pMaxTxParams == NULL) {
-		lim_log(pMac, LOGE, FL("pMaxTxParams is NULL"));
-		return eSIR_FAILURE;
 	}
 	pMaxTxParams->power = txPower;
 	qdf_mem_copy(pMaxTxParams->bssId.bytes, pSessionEntry->bssId,
@@ -4521,9 +4503,7 @@ lim_send_set_max_tx_power_req(tpAniSirGlobal pMac, int8_t txPower,
 	msgQ.type = WMA_SET_MAX_TX_POWER_REQ;
 	msgQ.bodyptr = pMaxTxParams;
 	msgQ.bodyval = 0;
-	PELOG1(lim_log
-		       (pMac, LOG1, FL("Posting WMA_SET_MAX_TX_POWER_REQ to WMA"));
-	       )
+	lim_log(pMac, LOG1, FL("Post WMA_SET_MAX_TX_POWER_REQ to WMA"));
 	MTRACE(mac_trace_msg_tx(pMac, pSessionEntry->peSessionId, msgQ.type));
 	retCode = wma_post_ctrl_msg(pMac, &msgQ);
 	if (eSIR_SUCCESS != retCode) {

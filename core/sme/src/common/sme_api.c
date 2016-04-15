@@ -2515,10 +2515,6 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 		break;
 	case eWNI_SME_NEIGHBOR_REPORT_IND:
 	case eWNI_SME_BEACON_REPORT_REQ_IND:
-#if defined WLAN_VOWIFI_DEBUG
-		sms_log(pMac, LOGE, FL("Received RRM message. Message Id = %d"),
-			pMsg->type);
-#endif
 		if (pMsg->bodyptr) {
 			status = sme_rrm_msg_processor(pMac, pMsg->type,
 						       pMsg->bodyptr);

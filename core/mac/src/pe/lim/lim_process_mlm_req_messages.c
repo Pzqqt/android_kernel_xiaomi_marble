@@ -201,9 +201,7 @@ lim_change_channel_with_callback(tpAniSirGlobal mac_ctx, uint8_t new_chan,
 				 uint32_t *cbdata, tpPESession session_entry)
 {
 	/* Sanity checks for the current and new channel */
-#if defined WLAN_VOWIFI_DEBUG
-	lim_log(mac_ctx, LOGE, FL("Switching channel to %d"), new_chan);
-#endif
+	lim_log(mac_ctx, LOG1, FL("Switching channel to %d"), new_chan);
 	session_entry->channelChangeReasonCode =
 		LIM_SWITCH_CHANNEL_OPERATION;
 
