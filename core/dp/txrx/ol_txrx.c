@@ -470,7 +470,7 @@ void htt_pkt_log_init(struct ol_txrx_pdev_t *handle, void *scn)
 		return;
 
 	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE &&
-			!WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
+			!QDF_IS_EPPING_ENABLED(cds_get_conparam())) {
 		ol_pl_sethandle(&handle->pl_dev, scn);
 		if (pktlogmod_init(scn))
 			qdf_print("%s: pktlogmod_init failed", __func__);
@@ -489,7 +489,7 @@ void htt_pkt_log_init(struct ol_txrx_pdev_t *handle, void *scn)
 void htt_pktlogmod_exit(struct ol_txrx_pdev_t *handle, void *scn)
 {
 	if (scn && cds_get_conparam() != QDF_GLOBAL_FTM_MODE &&
-		!WLAN_IS_EPPING_ENABLED(cds_get_conparam()) &&
+		!QDF_IS_EPPING_ENABLED(cds_get_conparam()) &&
 			handle->pkt_log_init) {
 		pktlogmod_exit(scn);
 		handle->pkt_log_init = false;

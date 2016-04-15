@@ -5723,7 +5723,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 	ENTER();
 
-	if (WLAN_IS_EPPING_ENABLED(con_mode)) {
+	if (QDF_IS_EPPING_ENABLED(con_mode)) {
 		ret = epping_enable(dev);
 		EXIT();
 		return ret;

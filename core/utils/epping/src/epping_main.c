@@ -165,6 +165,27 @@ static void epping_target_suspend_acknowledge(void *context)
 }
 
 /**
+ * epping_update_ol_config - API to update ol configuration parameters
+ *
+ * Return: void
+ */
+static void epping_update_ol_config(void)
+{
+	struct ol_config_info cfg;
+	struct ol_context *ol_ctx = cds_get_context(QDF_MODULE_ID_BMI);
+
+	if (!ol_ctx)
+		return;
+
+	cfg.enable_self_recovery = 0;
+	cfg.enable_uart_print = 0;
+	cfg.enable_fw_log = 0;
+	cfg.enable_ramdump_collection = 0;
+	cfg.enable_lpass_support = 0;
+
+	ol_init_ini_config(ol_ctx, &cfg);
+}
+/**
  * epping_enable(): End point ping driver enable Function
  *
  * This is the driver enable function - called by HDD to enable
@@ -221,6 +242,7 @@ int epping_enable(struct device *parent_dev)
 	pEpping_ctx->target_type = tgt_info->target_type;
 
 	ol_ctx = cds_get_context(QDF_MODULE_ID_BMI);
+	epping_update_ol_config();
 #ifndef FEATURE_BMI_2
 	/* Initialize BMI and Download firmware */
 	if (bmi_download_firmware(ol_ctx)) {

@@ -173,7 +173,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 #endif
 		break;
 	case ATH_FIRMWARE_FILE:
-		if (WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
+		if (QDF_IS_EPPING_ENABLED(cds_get_conparam())) {
 #if defined(CONFIG_CNSS)
 			filename = bmi_ctx->fw_files.epping_file;
 #else
@@ -237,7 +237,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 		break;
 	case ATH_SETUP_FILE:
 		if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE &&
-		    !WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
+		    !QDF_IS_EPPING_ENABLED(cds_get_conparam())) {
 #ifdef CONFIG_CNSS
 			BMI_INFO("%s: no Setup file defined", __func__);
 			return -1;
@@ -1332,9 +1332,7 @@ QDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 			(uint8_t *) &address, 4, ol_ctx);
 	}
 
-	if (ini_cfg->enable_uart_print ||
-	    (WLAN_IS_EPPING_ENABLED(cds_get_conparam()) &&
-	     WLAN_IS_EPPING_FW_UART(cds_get_conparam()))) {
+	if (ini_cfg->enable_uart_print) {
 		switch (target_version) {
 		case AR6004_VERSION_REV1_3:
 			param = 11;

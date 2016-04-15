@@ -41,10 +41,6 @@
 #include <qdf_lock.h>
 #include <qdf_types.h>
 
-#define WLAN_IS_EPPING_ENABLED(x)       (x == QDF_GLOBAL_EPPING_MODE)
-#define WLAN_IS_EPPING_IRQ(x)           1
-#define WLAN_IS_EPPING_FW_UART(x)       0
-
 /* epping_main signatures */
 int epping_open(void);
 void epping_close(void);

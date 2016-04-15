@@ -353,7 +353,7 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 		cds_set_load_in_progress(true);
 	}
 
-	if (WLAN_IS_EPPING_ENABLED(mode)) {
+	if (QDF_IS_EPPING_ENABLED(mode)) {
 		status = epping_open();
 		if (status != QDF_STATUS_SUCCESS)
 			goto err_hdd_deinit;
@@ -403,7 +403,7 @@ err_bmi_close:
 err_hif_close:
 	hdd_hif_close(hif_ctx);
 err_epping_close:
-	if (WLAN_IS_EPPING_ENABLED(mode))
+	if (QDF_IS_EPPING_ENABLED(mode))
 		epping_close();
 err_hdd_deinit:
 	cds_set_load_in_progress(false);
@@ -457,7 +457,7 @@ static void wlan_hdd_remove(void)
 
 	hif_disable_power_management(hif_ctx);
 
-	if (WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
+	if (QDF_IS_EPPING_ENABLED(cds_get_conparam())) {
 		epping_disable();
 		epping_close();
 	} else {
@@ -493,7 +493,7 @@ static void wlan_hdd_shutdown(void)
 	if (!cds_wait_for_external_threads_completion(__func__))
 		hdd_err("Host is not ready for SSR, attempting anyway");
 
-	if (!WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
+	if (!QDF_IS_EPPING_ENABLED(cds_get_conparam())) {
 		hif_disable_isr(hif_ctx);
 		hdd_wlan_shutdown();
 	}
@@ -527,7 +527,7 @@ void wlan_hdd_crash_shutdown(void)
  */
 void wlan_hdd_notify_handler(int state)
 {
-	if (!WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
+	if (!QDF_IS_EPPING_ENABLED(cds_get_conparam())) {
 		int ret = 0;
 		ret = hdd_wlan_notify_modem_power_state(state);
 		if (ret < 0)
