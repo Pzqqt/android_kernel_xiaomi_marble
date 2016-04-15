@@ -280,23 +280,23 @@ typedef enum {
  * @QDF_FTM_MODE: FTM mode
  * @QDF_IBSS_MODE: IBSS mode
  * @QDF_P2P_DEVICE_MODE: P2P device mode
- * @QDF_EPPING_MODE: EPPING device mode
  * @QDF_OCB_MODE: OCB device mode
+ * @QDF_EPPING_MODE: EPPING device mode
  * @QDF_MAX_NO_OF_MODE: Max place holder
  *
  * These are generic IDs that identify the various roles
  * in the software system
  */
 enum tQDF_ADAPTER_MODE {
-	QDF_STA_MODE = 0,
-	QDF_SAP_MODE = 1,
+	QDF_STA_MODE,
+	QDF_SAP_MODE,
 	QDF_P2P_CLIENT_MODE,
 	QDF_P2P_GO_MODE,
 	QDF_FTM_MODE,
 	QDF_IBSS_MODE,
 	QDF_P2P_DEVICE_MODE,
-	QDF_EPPING_MODE,
 	QDF_OCB_MODE,
+	QDF_EPPING_MODE,
 	QDF_MAX_NO_OF_MODE
 };
 
