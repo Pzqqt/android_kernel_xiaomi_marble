@@ -42,7 +42,7 @@
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 #include "host_diag_core_log.h"
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
-#include "cds_regdomain_common.h"
+
 /* When beacon filtering is enabled, firmware will
  * analyze the selected beacons received during BMPS,
  * and monitor any changes in the IEs as listed below.

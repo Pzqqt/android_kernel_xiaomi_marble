@@ -68,7 +68,6 @@
 #include <qdf_types.h>
 #include "wma.h"
 #include "cds_regdomain.h"
-#include "cds_regdomain_common.h"
 
 static regdm_supp_op_classes regdm_curr_supp_opp_classes = { 0 };
 
@@ -556,7 +555,7 @@ uint16_t cds_regdm_set_curr_opclasses(uint8_t num_classes, uint8_t *class)
 {
 	uint8_t i;
 
-	if (SIR_MAC_MAX_SUPP_OPER_CLASSES < num_classes) {
+	if (CDS_MAX_SUPP_OPER_CLASSES < num_classes) {
 		qdf_print(KERN_ERR "%s: Invalid numClasses (%d)\n",
 			  __func__, num_classes);
 		return -1;

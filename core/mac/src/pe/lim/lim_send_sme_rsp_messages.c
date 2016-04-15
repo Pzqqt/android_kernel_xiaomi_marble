@@ -55,7 +55,7 @@
 #include "lim_session_utils.h"
 #include "lim_types.h"
 #include "sir_api.h"
-#include "cds_regdomain_common.h"
+#include "cds_regdomain.h"
 #include "lim_send_messages.h"
 
 static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,

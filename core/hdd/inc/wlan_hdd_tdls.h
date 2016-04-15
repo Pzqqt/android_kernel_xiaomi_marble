@@ -342,7 +342,7 @@ typedef struct _hddTdlsPeer_t {
 	uint8_t supported_channels_len;
 	uint8_t supported_channels[SIR_MAC_MAX_SUPP_CHANNELS];
 	uint8_t supported_oper_classes_len;
-	uint8_t supported_oper_classes[SIR_MAC_MAX_SUPP_OPER_CLASSES];
+	uint8_t supported_oper_classes[CDS_MAX_SUPP_OPER_CLASSES];
 	bool isForcedPeer;
 	uint8_t op_class_for_pref_off_chan;
 	uint8_t pref_off_chan_num;

@@ -75,7 +75,7 @@
 #include "lim_assoc_utils.h"
 #include "dph_hash_table.h"
 #include "wma_types.h"
-#include "cds_regdomain_common.h"
+#include "cds_regdomain.h"
 
 /* define NO_PAD_TDLS_MIN_8023_SIZE to NOT padding: See CR#447630
    There was IOT issue with cisco 1252 open mode, where it pads
@@ -2556,7 +2556,7 @@ void populate_dot11f_tdls_offchannel_params(tpAniSirGlobal pMac,
 	uint8_t chanOffset;
 	uint8_t op_class;
 	uint8_t numClasses;
-	uint8_t classes[SIR_MAC_MAX_SUPP_OPER_CLASSES];
+	uint8_t classes[CDS_MAX_SUPP_OPER_CLASSES];
 	if (wlan_cfg_get_str(pMac, WNI_CFG_VALID_CHANNEL_LIST,
 			     validChan, &numChans) != eSIR_SUCCESS) {
 		/**

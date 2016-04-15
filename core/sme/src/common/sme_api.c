@@ -54,7 +54,7 @@
 #ifdef WLAN_FEATURE_NAN
 #include "nan_api.h"
 #endif
-#include "cds_regdomain_common.h"
+#include "cds_regdomain.h"
 #include "cfg_api.h"
 #include "sme_power_save_api.h"
 #include "wma.h"

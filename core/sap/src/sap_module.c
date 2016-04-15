@@ -52,7 +52,7 @@
 #include "sap_internal.h"
 #include "sme_inside.h"
 #include "cds_ieee80211_common_i.h"
-#include "cds_regdomain_common.h"
+#include "cds_regdomain.h"
 #include "cds_concurrency.h"
 
 /*----------------------------------------------------------------------------

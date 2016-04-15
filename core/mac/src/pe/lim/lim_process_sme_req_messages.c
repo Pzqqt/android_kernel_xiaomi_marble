@@ -62,7 +62,7 @@
 
 
 #include <lim_ft.h>
-#include "cds_regdomain_common.h"
+#include "cds_regdomain.h"
 
 /*
  * This overhead is time for sending NOA start to host in case of GO/sending

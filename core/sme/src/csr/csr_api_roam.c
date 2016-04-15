@@ -49,7 +49,6 @@
 #include "mac_trace.h"
 #include "csr_neighbor_roam.h"
 #include "cds_regdomain.h"
-#include "cds_regdomain_common.h"
 #include "cds_utils.h"
 #include "sir_types.h"
 #include "cfg_api.h"
@@ -18411,7 +18410,7 @@ csr_update_op_class_array(tpAniSirGlobal mac_ctx,
 		ch_name, num_channels);
 
 	for (idx = 0; idx < num_channels
-		&& *i < (SIR_MAC_MAX_SUPP_OPER_CLASSES - 1); idx++) {
+		&& *i < (CDS_MAX_SUPP_OPER_CLASSES - 1); idx++) {
 		for (ch_bandwidth = BW20; ch_bandwidth < BWALL;
 			ch_bandwidth++) {
 			class = cds_regdm_get_opclass_from_channel(
@@ -18422,7 +18421,7 @@ csr_update_op_class_array(tpAniSirGlobal mac_ctx,
 				channel_info->channelList[idx], class);
 
 			found = false;
-			for (j = 0; j < SIR_MAC_MAX_SUPP_OPER_CLASSES - 1;
+			for (j = 0; j < CDS_MAX_SUPP_OPER_CLASSES - 1;
 				j++) {
 				if (op_classes[j] == class) {
 					found = true;
@@ -18450,7 +18449,7 @@ void csr_init_operating_classes(tHalHandle hHal)
 	uint8_t j = 0;
 	uint8_t swap = 0;
 	uint8_t numClasses = 0;
-	uint8_t opClasses[SIR_MAC_MAX_SUPP_OPER_CLASSES] = {0,};
+	uint8_t opClasses[CDS_MAX_SUPP_OPER_CLASSES] = {0,};
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
 	sms_log(pMac, LOG1, FL("Current Country = %c%c"),

@@ -47,7 +47,7 @@
 #include "wmm_apsd.h"
 #include "rrm_api.h"
 
-#include "cds_regdomain_common.h"
+#include "cds_regdomain.h"
 
 /* ////////////////////////////////////////////////////////////////////// */
 void dot11f_log(tpAniSirGlobal pMac, int loglevel, const char *pString, ...)

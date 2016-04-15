@@ -260,7 +260,7 @@ typedef struct tagCsrStaParams {
 	uint8_t supported_channels_len;
 	uint8_t supported_channels[SIR_MAC_MAX_SUPP_CHANNELS];
 	uint8_t supported_oper_classes_len;
-	uint8_t supported_oper_classes[SIR_MAC_MAX_SUPP_OPER_CLASSES];
+	uint8_t supported_oper_classes[CDS_MAX_SUPP_OPER_CLASSES];
 } tCsrStaParams;
 
 typedef struct tagCsrScanRequest {
@@ -1477,7 +1477,7 @@ typedef struct tagCsrLinkEstablishParams {
 	uint8_t supportedChannelsLen;
 	uint8_t supportedChannels[SIR_MAC_MAX_SUPP_CHANNELS];
 	uint8_t supportedOperClassesLen;
-	uint8_t supportedOperClasses[SIR_MAC_MAX_SUPP_OPER_CLASSES];
+	uint8_t supportedOperClasses[CDS_MAX_SUPP_OPER_CLASSES];
 } tCsrTdlsLinkEstablishParams;
 
 typedef struct tagCsrTdlsSendMgmt {

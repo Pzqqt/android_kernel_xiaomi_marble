@@ -45,6 +45,7 @@
 #include "sir_mac_prot_def.h"
 #include "ani_system_defs.h"
 #include "sir_params.h"
+#include "cds_regdomain.h"
 
 #define OFFSET_OF(structType, fldName)   (&((structType *)0)->fldName)
 
@@ -3417,7 +3418,7 @@ typedef struct {
 	uint8_t supportedChannelsLen;
 	uint8_t supportedChannels[SIR_MAC_MAX_SUPP_CHANNELS];
 	uint8_t supportedOperClassesLen;
-	uint8_t supportedOperClasses[SIR_MAC_MAX_SUPP_OPER_CLASSES];
+	uint8_t supportedOperClasses[CDS_MAX_SUPP_OPER_CLASSES];
 } tSirTdlsLinkEstablishReq, *tpSirTdlsLinkEstablishReq;
 
 /* TDLS Request struct SME-->PE */

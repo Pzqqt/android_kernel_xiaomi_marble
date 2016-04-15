@@ -37,7 +37,6 @@
 #include "sme_api.h"
 #include "wlan_hdd_main.h"
 #include "cds_regdomain.h"
-#include "cds_regdomain_common.h"
 #include "wlan_hdd_regulatory.h"
 
 #define WORLD_SKU_MASK      0x00F0
