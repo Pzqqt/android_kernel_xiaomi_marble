@@ -190,8 +190,7 @@ lim_process_deauth_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		return;
 	}
 
-	if (LIM_IS_AP_ROLE(psessionEntry) ||
-	    LIM_IS_BT_AMP_AP_ROLE(psessionEntry)) {
+	if (LIM_IS_AP_ROLE(psessionEntry)) {
 		switch (reasonCode) {
 		case eSIR_MAC_UNSPEC_FAILURE_REASON:
 		case eSIR_MAC_DEAUTH_LEAVING_BSS_REASON:
@@ -210,8 +209,7 @@ lim_process_deauth_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 
 			break;
 		}
-	} else if (LIM_IS_STA_ROLE(psessionEntry) ||
-		   LIM_IS_BT_AMP_STA_ROLE(psessionEntry)) {
+	} else if (LIM_IS_STA_ROLE(psessionEntry)) {
 		switch (reasonCode) {
 		case eSIR_MAC_UNSPEC_FAILURE_REASON:
 		case eSIR_MAC_PREV_AUTH_NOT_VALID_REASON:
@@ -342,7 +340,6 @@ lim_process_deauth_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	/* Check for pre-assoc states */
 	switch (GET_LIM_SYSTEM_ROLE(psessionEntry)) {
 	case eLIM_STA_ROLE:
-	case eLIM_BT_AMP_STA_ROLE:
 		switch (psessionEntry->limMlmState) {
 		case eLIM_MLM_WT_AUTH_FRAME2_STATE:
 			/**
@@ -516,7 +513,7 @@ lim_process_deauth_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	case eLIM_AP_ROLE:
 		break;
 
-	default:                /* eLIM_AP_ROLE or eLIM_BT_AMP_AP_ROLE */
+	default:
 
 		return;
 	} /* end switch (pMac->lim.gLimSystemRole) */

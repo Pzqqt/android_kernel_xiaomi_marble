@@ -2148,8 +2148,7 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 	mac_hdr->fc.wep = wep_bit;
 
 	/* Prepare BSSId */
-	if (LIM_IS_AP_ROLE(session) ||
-	    LIM_IS_BT_AMP_AP_ROLE(session))
+	if (LIM_IS_AP_ROLE(session))
 		qdf_mem_copy((uint8_t *) mac_hdr->bssId,
 			     (uint8_t *) session->bssId,
 			     sizeof(tSirMacAddr));

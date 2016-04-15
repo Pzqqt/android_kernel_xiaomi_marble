@@ -326,9 +326,7 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 		FL("Create a new PE session(%d), BSSID: "MAC_ADDRESS_STR" Max No. of STA %d"),
 		session_ptr->peSessionId, MAC_ADDR_ARRAY(bssid), numSta);
 
-	if (eSIR_INFRA_AP_MODE == bssType
-	    || eSIR_IBSS_MODE == bssType
-	    || eSIR_BTAMP_AP_MODE == bssType) {
+	if (eSIR_INFRA_AP_MODE == bssType || eSIR_IBSS_MODE == bssType) {
 		session_ptr->pSchProbeRspTemplate =
 			qdf_mem_malloc(SCH_MAX_PROBE_RESP_SIZE);
 		session_ptr->pSchBeaconFrameBegin =

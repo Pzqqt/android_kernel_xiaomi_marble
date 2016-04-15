@@ -930,8 +930,7 @@ lim_handle80211_frames(tpAniSirGlobal pMac, tpSirMsgQ limMsg, uint8_t *pDeferMsg
 		switch (fc.subType) {
 		case SIR_MAC_MGMT_ASSOC_REQ:
 			/* Make sure the role supports Association */
-			if (LIM_IS_BT_AMP_AP_ROLE(psessionEntry) ||
-			    LIM_IS_AP_ROLE(psessionEntry))
+			if (LIM_IS_AP_ROLE(psessionEntry))
 				lim_process_assoc_req_frame(pMac,
 							    pRxPacketInfo,
 							    LIM_ASSOC,
@@ -955,8 +954,7 @@ lim_handle80211_frames(tpAniSirGlobal pMac, tpSirMsgQ limMsg, uint8_t *pDeferMsg
 
 		case SIR_MAC_MGMT_REASSOC_REQ:
 			/* Make sure the role supports Reassociation */
-			if (LIM_IS_BT_AMP_AP_ROLE(psessionEntry) ||
-			    LIM_IS_AP_ROLE(psessionEntry)) {
+			if (LIM_IS_AP_ROLE(psessionEntry)) {
 				lim_process_assoc_req_frame(pMac,
 							    pRxPacketInfo,
 							    LIM_REASSOC,
@@ -2145,8 +2143,6 @@ static void lim_process_normal_hdd_msg(tpAniSirGlobal mac_ctx, tSirMsgQ *msg,
 
 	/* Added For BT-AMP Support */
 	if ((mac_ctx->lim.gLimSystemRole == eLIM_AP_ROLE)
-		|| (mac_ctx->lim.gLimSystemRole == eLIM_BT_AMP_AP_ROLE)
-		|| (mac_ctx->lim.gLimSystemRole == eLIM_BT_AMP_STA_ROLE)
 		|| (mac_ctx->lim.gLimSystemRole == eLIM_UNKNOWN_ROLE)) {
 		/*
 		 * This check is required only for the AP and in 2 cases.

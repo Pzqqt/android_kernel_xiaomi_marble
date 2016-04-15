@@ -87,8 +87,7 @@ void lim_process_mlm_reassoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 		reassoc_req->sessionId, GET_LIM_SYSTEM_ROLE(session),
 		session->limMlmState, MAC_ADDR_ARRAY(reassoc_req->peerMacAddr));
 
-	if ((LIM_IS_AP_ROLE(session) ||
-		LIM_IS_BT_AMP_AP_ROLE(session)) ||
+	if (LIM_IS_AP_ROLE(session) ||
 		(session->limMlmState !=
 		eLIM_MLM_LINK_ESTABLISHED_STATE)) {
 		/*
@@ -262,7 +261,7 @@ void lim_process_mlm_reassoc_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		return;
 	}
 	if ((session->limSmeState != eLIM_SME_WT_REASSOC_STATE) ||
-	    LIM_IS_AP_ROLE(session) || LIM_IS_BT_AMP_AP_ROLE(session)) {
+	    LIM_IS_AP_ROLE(session)) {
 		/*
 		 * Should not have received Reassocication confirm
 		 * from MLM in other states OR on AP.

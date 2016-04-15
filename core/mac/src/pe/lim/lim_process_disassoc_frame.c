@@ -237,8 +237,7 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		}
 	}
 
-	if (LIM_IS_AP_ROLE(psessionEntry) ||
-	    LIM_IS_BT_AMP_AP_ROLE(psessionEntry)) {
+	if (LIM_IS_AP_ROLE(psessionEntry)) {
 		switch (reasonCode) {
 		case eSIR_MAC_UNSPEC_FAILURE_REASON:
 		case eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON:
@@ -261,8 +260,7 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 			       )
 			break;
 		}
-	} else if ((LIM_IS_STA_ROLE(psessionEntry) ||
-		   LIM_IS_BT_AMP_STA_ROLE(psessionEntry)) &&
+	} else if (LIM_IS_STA_ROLE(psessionEntry) &&
 		   ((psessionEntry->limSmeState != eLIM_SME_WT_JOIN_STATE) &&
 		   (psessionEntry->limSmeState != eLIM_SME_WT_AUTH_STATE) &&
 		   (psessionEntry->limSmeState != eLIM_SME_WT_ASSOC_STATE) &&

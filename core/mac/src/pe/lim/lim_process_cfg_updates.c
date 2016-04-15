@@ -540,9 +540,7 @@ void lim_apply_configuration(tpAniSirGlobal pMac, tpPESession psessionEntry)
 
 	/* Added for BT - AMP Support */
 	if (LIM_IS_AP_ROLE(psessionEntry) ||
-	    LIM_IS_BT_AMP_AP_ROLE(psessionEntry) ||
-	    LIM_IS_IBSS_ROLE(psessionEntry) ||
-	    LIM_IS_BT_AMP_STA_ROLE(psessionEntry)) {
+	    LIM_IS_IBSS_ROLE(psessionEntry)) {
 		/* This check is required to ensure the beacon generation is not done
 		   as a part of join request for a BT-AMP station */
 

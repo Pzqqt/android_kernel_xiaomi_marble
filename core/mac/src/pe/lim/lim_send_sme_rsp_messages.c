@@ -1023,11 +1023,8 @@ lim_send_sme_disassoc_ntf(tpAniSirGlobal pMac,
 
 error:
 	/* Delete the PE session Created */
-	if ((psessionEntry != NULL) &&
-	    (LIM_IS_STA_ROLE(psessionEntry) ||
-	    LIM_IS_BT_AMP_STA_ROLE(psessionEntry))) {
+	if ((psessionEntry != NULL) && LIM_IS_STA_ROLE(psessionEntry))
 		pe_delete_session(pMac, psessionEntry);
-	}
 
 	if (false == failure)
 		lim_send_sme_disassoc_deauth_ntf(pMac, QDF_STATUS_SUCCESS,

@@ -373,8 +373,6 @@ lim_process_probe_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	}
 	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	if (LIM_IS_AP_ROLE(session) ||
-		LIM_IS_BT_AMP_AP_ROLE(session) ||
-		LIM_IS_BT_AMP_STA_ROLE(session) ||
 		(LIM_IS_IBSS_ROLE(session) &&
 			 (WMA_GET_RX_BEACON_SENT(rx_pkt_info)))) {
 		frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
@@ -606,9 +604,7 @@ lim_process_probe_req_frame_multiple_bss(tpAniSirGlobal mac_ctx,
 			lim_indicate_probe_req_to_hdd(mac_ctx,
 					buf_descr, session);
 		if (LIM_IS_AP_ROLE(session) ||
-			LIM_IS_IBSS_ROLE(session) ||
-			LIM_IS_BT_AMP_AP_ROLE(session) ||
-			LIM_IS_BT_AMP_STA_ROLE(session))
+			LIM_IS_IBSS_ROLE(session))
 			lim_process_probe_req_frame(mac_ctx,
 					buf_descr, session);
 	}

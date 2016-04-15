@@ -407,10 +407,6 @@ lim_is_sme_start_bss_req_valid(tpAniSirGlobal mac_ctx,
 		break;
 	case eSIR_IBSS_MODE:
 		break;
-	case eSIR_BTAMP_STA_MODE:
-		break;
-	case eSIR_BTAMP_AP_MODE:
-		break;
 	case eSIR_INFRA_AP_MODE:
 		break;
 	default:
