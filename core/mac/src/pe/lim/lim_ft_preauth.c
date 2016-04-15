@@ -457,8 +457,6 @@ void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal pMac, tSirRetStatus status,
 
 		if (pftSessionEntry->bssType == eSIR_INFRASTRUCTURE_MODE)
 			pftSessionEntry->limSystemRole = eLIM_STA_ROLE;
-		else if (pftSessionEntry->bssType == eSIR_BTAMP_AP_MODE)
-			pftSessionEntry->limSystemRole = eLIM_BT_AMP_STA_ROLE;
 		else
 			lim_log(pMac, LOGE, FL("Invalid bss type"));
 		pftSessionEntry->limPrevSmeState = pftSessionEntry->limSmeState;

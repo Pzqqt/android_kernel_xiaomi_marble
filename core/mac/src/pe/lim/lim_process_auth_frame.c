@@ -83,14 +83,12 @@ static inline unsigned int is_auth_valid(tpAniSirGlobal pMac,
 
 	if (((auth->authTransactionSeqNumber == SIR_MAC_AUTH_FRAME_1) ||
 	    (auth->authTransactionSeqNumber == SIR_MAC_AUTH_FRAME_3)) &&
-	    (LIM_IS_STA_ROLE(sessionEntry) ||
-	    LIM_IS_BT_AMP_STA_ROLE(sessionEntry)))
+	    (LIM_IS_STA_ROLE(sessionEntry)))
 		valid = 0;
 
 	if (((auth->authTransactionSeqNumber == SIR_MAC_AUTH_FRAME_2) ||
 	    (auth->authTransactionSeqNumber == SIR_MAC_AUTH_FRAME_4)) &&
-	    (LIM_IS_AP_ROLE(sessionEntry) ||
-	    LIM_IS_BT_AMP_AP_ROLE(sessionEntry)))
+	    (LIM_IS_AP_ROLE(sessionEntry)))
 		valid = 0;
 
 	if (((auth->authTransactionSeqNumber == SIR_MAC_AUTH_FRAME_3) ||
@@ -521,8 +519,7 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 		 * Check if a Reassociation is in progress and this is a
 		 * Pre-Auth frame
 		 */
-		if ((LIM_IS_STA_ROLE(pe_session) ||
-		     LIM_IS_BT_AMP_STA_ROLE(pe_session)) &&
+		if (LIM_IS_STA_ROLE(pe_session) &&
 		    (pe_session->limSmeState == eLIM_SME_WT_REASSOC_STATE) &&
 		    (rx_auth_frm_body->authStatusCode ==
 				eSIR_MAC_SUCCESS_STATUS) &&
@@ -783,7 +780,6 @@ static void lim_process_auth_frame_type3(tpAniSirGlobal mac_ctx,
 	}
 
 	if (LIM_IS_AP_ROLE(pe_session) ||
-			LIM_IS_BT_AMP_AP_ROLE(pe_session) ||
 			LIM_IS_IBSS_ROLE(pe_session)) {
 		/*
 		 * Check if wep bit was set in FC. If not set,
@@ -1149,8 +1145,7 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		 * of wep bit (this status code does not exist though) or
 		 * Out-of-sequence-Authentication-Frame status code.
 		 */
-		if (LIM_IS_STA_ROLE(pe_session) ||
-				LIM_IS_BT_AMP_STA_ROLE(pe_session)) {
+		if (LIM_IS_STA_ROLE(pe_session)) {
 			auth_frame.authAlgoNumber = eSIR_SHARED_KEY;
 			auth_frame.authTransactionSeqNumber =
 				SIR_MAC_AUTH_FRAME_4;

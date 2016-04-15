@@ -573,8 +573,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		return;
 	}
 
-	if (LIM_IS_AP_ROLE(session_entry) ||
-		LIM_IS_BT_AMP_AP_ROLE(session_entry)) {
+	if (LIM_IS_AP_ROLE(session_entry)) {
 		/*
 		 * Should not have received Re/Association
 		 * Response frame on AP. Log error
@@ -842,10 +841,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		return;
 	}
 #endif
-	if (!((session_entry->bssType == eSIR_BTAMP_STA_MODE) ||
-		((session_entry->bssType == eSIR_BTAMP_AP_MODE) &&
-		LIM_IS_BT_AMP_STA_ROLE(session_entry)) ||
-		lim_is_roam_synch_in_progress(session_entry))) {
+	if (!lim_is_roam_synch_in_progress(session_entry)) {
 		if (lim_set_link_state
 			(mac_ctx, eSIR_LINK_POSTASSOC_STATE,
 			session_entry->bssId,

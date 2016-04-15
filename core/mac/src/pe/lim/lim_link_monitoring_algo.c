@@ -102,8 +102,7 @@ static void lim_delete_sta_util(tpAniSirGlobal mac_ctx, tpDeleteStaContext msg,
 		return;
 	}
 
-	if (LIM_IS_BT_AMP_AP_ROLE(session_entry) ||
-	    LIM_IS_AP_ROLE(session_entry)) {
+	if (LIM_IS_AP_ROLE(session_entry)) {
 		lim_log(mac_ctx, LOG1,
 			FL("Delete Station staId: %d, assocId: %d"),
 			msg->staId, msg->assocId);
@@ -432,8 +431,7 @@ void lim_handle_heart_beat_failure(tpAniSirGlobal mac_ctx,
 	/* Ensure HB Status for the session has been reseted */
 	session->LimHBFailureStatus = false;
 
-	if ((LIM_IS_STA_ROLE(session) ||
-	     LIM_IS_BT_AMP_STA_ROLE(session)) &&
+	if (LIM_IS_STA_ROLE(session) &&
 	    (session->limMlmState == eLIM_MLM_LINK_ESTABLISHED_STATE) &&
 	    (session->limSmeState != eLIM_SME_WT_DISASSOC_STATE) &&
 	    (session->limSmeState != eLIM_SME_WT_DEAUTH_STATE)) {

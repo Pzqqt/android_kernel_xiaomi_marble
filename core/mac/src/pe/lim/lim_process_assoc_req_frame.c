@@ -1740,7 +1740,7 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		session->peSessionId, GET_LIM_SYSTEM_ROLE(session),
 		session->limMlmState, MAC_ADDR_ARRAY(hdr->sa));
 
-	if (LIM_IS_STA_ROLE(session) || LIM_IS_BT_AMP_STA_ROLE(session)) {
+	if (LIM_IS_STA_ROLE(session)) {
 		lim_log(mac_ctx, LOGE,
 			FL("Rcvd unexpected ASSOC REQ, sessionid: %d sys sub_type=%d for role=%d from: "
 			   MAC_ADDRESS_STR),

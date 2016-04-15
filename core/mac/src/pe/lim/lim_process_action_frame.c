@@ -717,8 +717,7 @@ static void __lim_process_add_ts_rsp(tpAniSirGlobal mac_ctx,
 	frameLen = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
 
 	lim_log(mac_ctx, LOGW, "Recv AddTs Response");
-	if (LIM_IS_AP_ROLE(session) ||
-	    LIM_IS_BT_AMP_AP_ROLE(session)) {
+	if (LIM_IS_AP_ROLE(session)) {
 		lim_log(mac_ctx, LOGW,
 			FL("AddTsRsp recvd at AP: ignoring"));
 		return;
@@ -1015,8 +1014,7 @@ static void __lim_process_del_ts_req(tpAniSirGlobal mac_ctx,
 		}
 	}
 
-	if (!LIM_IS_AP_ROLE(session) &&
-	    !LIM_IS_BT_AMP_AP_ROLE(session))
+	if (!LIM_IS_AP_ROLE(session))
 		lim_send_sme_delts_ind(mac_ctx, &delts, aid, session);
 
 	/* try to delete the TS */
@@ -1680,8 +1678,7 @@ lim_drop_unprotected_action_frame(tpAniSirGlobal pMac, tpPESession psessionEntry
 	tpDphHashNode pStaDs;
 	bool rmfConnection = false;
 
-	if (LIM_IS_AP_ROLE(psessionEntry) ||
-	    LIM_IS_BT_AMP_AP_ROLE(psessionEntry)) {
+	if (LIM_IS_AP_ROLE(psessionEntry)) {
 		pStaDs =
 			dph_lookup_hash_entry(pMac, pHdr->sa, &aid,
 					      &psessionEntry->dph.dphHashTable);
