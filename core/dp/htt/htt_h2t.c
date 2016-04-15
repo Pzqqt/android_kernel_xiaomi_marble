@@ -178,6 +178,10 @@ A_STATUS htt_h2t_frag_desc_bank_cfg_msg(struct htt_pdev_t *pdev)
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
 
 	rc = htc_send_pkt(pdev->htc_pdev, &pkt->htc_pkt);
+#ifdef ATH_11AC_TXCOMPACT
+	if (rc == A_OK)
+		htt_htc_misc_pkt_list_add(pdev, pkt);
+#endif
 
 	return rc;
 }
