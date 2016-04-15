@@ -272,6 +272,10 @@ struct targetdef_s {
 	uint32_t d_Q6_CLEAR_REGISTER_0;
 	uint32_t d_Q6_CLEAR_REGISTER_1;
 #endif
+
+#ifdef CONFIG_BYPASS_QMI
+	uint32_t d_BYPASS_QMI_TEMP_REGISTER;
+#endif
 };
 
 #define A_SOC_CORE_PCIE_INTR_ENABLE_GRP0_Q6_MASK \
@@ -697,6 +701,11 @@ struct targetdef_s {
 	(scn->targetdef->d_Q6_CLEAR_REGISTER_0)
 #define Q6_CLEAR_REGISTER_1 \
 	(scn->targetdef->d_Q6_CLEAR_REGISTER_1)
+#endif
+
+#ifdef CONFIG_BYPASS_QMI
+#define BYPASS_QMI_TEMP_REGISTER \
+	(scn->targetdef->d_BYPASS_QMI_TEMP_REGISTER)
 #endif
 
 struct hostdef_s {

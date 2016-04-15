@@ -63,6 +63,12 @@ static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info);
 /* #define BMI_RSP_POLLING */
 #define BMI_RSP_TO_MILLISEC  1000
 
+#ifdef CONFIG_BYPASS_QMI
+#define BYPASS_QMI 1
+#else
+#define BYPASS_QMI 0
+#endif
+
 
 static int hif_post_recv_buffers(struct hif_softc *scn);
 static void hif_config_rri_on_ddr(struct hif_softc *scn);
@@ -1570,7 +1576,10 @@ int hif_wlan_enable(struct hif_softc *scn)
 	else
 		mode = ICNSS_MISSION;
 
-	return icnss_wlan_enable(&cfg, mode, QWLAN_VERSIONSTR);
+	if (BYPASS_QMI)
+		return 0;
+	else
+		return icnss_wlan_enable(&cfg, mode, QWLAN_VERSIONSTR);
 }
 
 /**
@@ -1647,6 +1656,46 @@ void hif_unconfig_ce(struct hif_softc *hif_sc)
 	}
 }
 
+#ifdef CONFIG_BYPASS_QMI
+#define FW_SHARED_MEM (2 * 1024 * 1024)
+
+/**
+ * hif_post_static_buf_to_target() - post static buffer to WLAN FW
+ * @scn: pointer to HIF structure
+ *
+ * WLAN FW needs 2MB memory from DDR when QMI is disabled.
+ *
+ * Return: void
+ */
+static void hif_post_static_buf_to_target(struct hif_softc *scn)
+{
+	uint32_t CE_data;
+	uint8_t *g_fw_mem;
+	uint32_t phys_addr;
+
+	g_fw_mem = kzalloc(FW_SHARED_MEM, GFP_KERNEL);
+
+	CE_data = dma_map_single(scn->cdf_dev->dev, g_fw_mem,
+				 FW_SHARED_MEM, CDF_DMA_FROM_DEVICE);
+	HIF_TRACE("g_fw_mem %p physical 0x%x\n", g_fw_mem, CE_data);
+
+	if (dma_mapping_error(scn->cdf_dev->dev, CE_data)) {
+		pr_err("DMA map failed\n");
+		return;
+	}
+
+	phys_addr = virt_to_phys((scn->mem + BYPASS_QMI_TEMP_REGISTER));
+	hif_write32_mb(scn->mem + BYPASS_QMI_TEMP_REGISTER, CE_data);
+	HIF_TRACE("Write phy address 0x%x into scratch reg %p phy add 0x%x",
+		  CE_data, (scn->mem + BYPASS_QMI_TEMP_REGISTER), phys_addr);
+}
+#else
+static inline void hif_post_static_buf_to_target(struct hif_softc *scn)
+{
+	return;
+}
+#endif
+
 /**
  * hif_config_ce() - configure copy engines
  * @scn: hif context
@@ -1670,6 +1719,8 @@ int hif_config_ce(struct hif_softc *scn)
 	QDF_STATUS rv = QDF_STATUS_SUCCESS;
 
 	scn->notice_send = true;
+
+	hif_post_static_buf_to_target(scn);
 
 	hif_state->fw_indicator_address = FW_INDICATOR_ADDRESS;
 
