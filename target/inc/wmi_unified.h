@@ -1937,6 +1937,7 @@ typedef struct {
 	wmi_abi_version fw_abi_vers;
 	wmi_mac_addr mac_addr;
 	A_UINT32 status;
+	A_UINT32 num_dscp_table;
 } wmi_ready_event_fixed_param;
 
 typedef struct {
@@ -3969,6 +3970,7 @@ typedef struct {
 	A_UINT32 vdev_id;
 	/** map indicating DSCP to TID conversion */
 	A_UINT32 dscp_to_tid_map[WMI_DSCP_MAP_MAX];
+	A_UINT32 enable_override;
 } wmi_vdev_set_dscp_tid_map_cmd_fixed_param;
 
 /** Fixed rate (rate-code) for broadcast/ multicast data frames */
