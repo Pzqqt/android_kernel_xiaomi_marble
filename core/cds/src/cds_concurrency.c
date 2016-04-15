@@ -4251,6 +4251,7 @@ QDF_STATUS cds_decr_connection_count(uint32_t vdev_id)
  * @len:	Number of channels
  * @order:	no order OR 2.4 Ghz channel followed by 5 Ghz
  *	channel OR 5 Ghz channel followed by 2.4 Ghz channel
+ * @skip_dfs_channel: if this flag is true then skip the dfs channel
  *
  *
  * This function provides the channel(s) on which current
@@ -4259,7 +4260,8 @@ QDF_STATUS cds_decr_connection_count(uint32_t vdev_id)
  * Return: QDF_STATUS
  */
 QDF_STATUS cds_get_connection_channels(uint8_t *channels,
-			uint32_t *len, uint8_t order)
+			uint32_t *len, uint8_t order,
+			bool skip_dfs_channel)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint32_t conn_index = 0, num_channels = 0;
@@ -4273,45 +4275,55 @@ QDF_STATUS cds_get_connection_channels(uint8_t *channels,
 
 	if (0 == order) {
 		while (CONC_CONNECTION_LIST_VALID_INDEX(conn_index)) {
-			channels[num_channels++] =
-				conc_connection_list[conn_index++].chan;
+			if (skip_dfs_channel && CDS_IS_DFS_CH(
+					conc_connection_list[conn_index].chan))
+				conn_index++;
+			else
+				channels[num_channels++] =
+					conc_connection_list[conn_index++].chan;
 		}
 		*len = num_channels;
 	} else if (1 == order) {
 		while (CONC_CONNECTION_LIST_VALID_INDEX(conn_index)) {
 			if (CDS_IS_CHANNEL_24GHZ(
-				conc_connection_list[conn_index].chan)) {
+					conc_connection_list[conn_index].chan))
 				channels[num_channels++] =
 					conc_connection_list[conn_index++].chan;
-			} else
+			else
 				conn_index++;
 		}
 		conn_index = 0;
 		while (CONC_CONNECTION_LIST_VALID_INDEX(conn_index)) {
-			if (CDS_IS_CHANNEL_5GHZ(
-				conc_connection_list[conn_index].chan)) {
+			if (skip_dfs_channel && CDS_IS_DFS_CH(
+					conc_connection_list[conn_index].chan))
+				conn_index++;
+			else if (CDS_IS_CHANNEL_5GHZ(
+					conc_connection_list[conn_index].chan))
 				channels[num_channels++] =
 					conc_connection_list[conn_index++].chan;
-			} else
+			else
 				conn_index++;
 		}
 		*len = num_channels;
 	} else if (2 == order) {
 		while (CONC_CONNECTION_LIST_VALID_INDEX(conn_index)) {
-			if (CDS_IS_CHANNEL_5GHZ(
-				conc_connection_list[conn_index].chan)) {
+			if (skip_dfs_channel && CDS_IS_DFS_CH(
+					conc_connection_list[conn_index].chan))
+				conn_index++;
+			else if (CDS_IS_CHANNEL_5GHZ(
+					conc_connection_list[conn_index].chan))
 				channels[num_channels++] =
 					conc_connection_list[conn_index++].chan;
-			} else
+			else
 				conn_index++;
 		}
 		conn_index = 0;
 		while (CONC_CONNECTION_LIST_VALID_INDEX(conn_index)) {
 			if (CDS_IS_CHANNEL_24GHZ(
-				conc_connection_list[conn_index].chan)) {
+					conc_connection_list[conn_index].chan))
 				channels[num_channels++] =
 					conc_connection_list[conn_index++].chan;
-			} else
+			else
 				conn_index++;
 		}
 		*len = num_channels;
@@ -4319,6 +4331,7 @@ QDF_STATUS cds_get_connection_channels(uint8_t *channels,
 		cds_err("unknown order %d", order);
 		status = QDF_STATUS_E_FAILURE;
 	}
+
 	return status;
 }
 
@@ -4393,7 +4406,8 @@ void cds_update_with_safe_channel_list(uint8_t *pcl_channels, uint32_t *len)
  * @hdd_ctx:	HDD Context
  * @pcl:	The preferred channel list enum
  * @pcl_channels: PCL channels
- * @len: lenght of the PCL
+ * @len: length of the PCL
+ * @mode: concurrency mode for which channel list is requested
  *
  * This function provides the actual channel list based on the
  * current regulatory domain derived using preferred channel
@@ -4402,7 +4416,7 @@ void cds_update_with_safe_channel_list(uint8_t *pcl_channels, uint32_t *len)
  * Return: Channel List
  */
 QDF_STATUS cds_get_channel_list(enum cds_pcl_type pcl,
-			uint8_t *pcl_channels, uint32_t *len)
+		uint8_t *pcl_channels, uint32_t *len, enum cds_con_mode mode)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint32_t num_channels = WNI_CFG_VALID_CHANNEL_LIST_LEN;
@@ -4410,6 +4424,7 @@ QDF_STATUS cds_get_channel_list(enum cds_pcl_type pcl,
 	uint8_t channel_list[MAX_NUM_CHAN] = {0};
 	uint8_t channel_list_24[MAX_NUM_CHAN] = {0};
 	uint8_t channel_list_5[MAX_NUM_CHAN] = {0};
+	bool skip_dfs_channel = false;
 	hdd_context_t *hdd_ctx;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
@@ -4443,6 +4458,17 @@ QDF_STATUS cds_get_channel_list(enum cds_pcl_type pcl,
 		cds_err("No valid channel");
 		return status;
 	}
+
+	/*
+	 * if you have atleast one STA connection then don't fill DFS channels
+	 * in the preferred channel list
+	 */
+	if (((mode == CDS_SAP_MODE) || (mode == CDS_P2P_GO_MODE)) &&
+	    (cds_mode_specific_connection_count(CDS_STA_MODE, NULL) > 0)) {
+		cds_info("STA present, skip DFS channels from pcl for SAP/Go");
+		skip_dfs_channel = true;
+	}
+
 	/* Let's divide the list in 2.4 & 5 Ghz lists */
 	while ((channel_list[chan_index] <= 11) &&
 		(chan_index_24 < MAX_NUM_CHAN))
@@ -4457,9 +4483,15 @@ QDF_STATUS cds_get_channel_list(enum cds_pcl_type pcl,
 					channel_list[chan_index++];
 		}
 	}
-	while ((chan_index < num_channels) &&
-		(chan_index_5 < MAX_NUM_CHAN))
+
+	while ((chan_index < num_channels) && (chan_index_5 < MAX_NUM_CHAN)) {
+		if ((true == skip_dfs_channel) &&
+		    CDS_IS_DFS_CH(channel_list[chan_index])) {
+			chan_index++;
+			continue;
+		}
 		channel_list_5[chan_index_5++] = channel_list[chan_index++];
+	}
 
 	num_channels = 0;
 	switch (pcl) {
@@ -4478,7 +4510,7 @@ QDF_STATUS cds_get_channel_list(enum cds_pcl_type pcl,
 	case CDS_SCC_CH:
 	case CDS_MCC_CH:
 		cds_get_connection_channels(
-			channel_list, &num_channels, 0);
+			channel_list, &num_channels, 0, skip_dfs_channel);
 		qdf_mem_copy(pcl_channels, channel_list, num_channels);
 		*len = num_channels;
 		status = QDF_STATUS_SUCCESS;
@@ -4486,7 +4518,7 @@ QDF_STATUS cds_get_channel_list(enum cds_pcl_type pcl,
 	case CDS_SCC_CH_24G:
 	case CDS_MCC_CH_24G:
 		cds_get_connection_channels(
-			channel_list, &num_channels, 0);
+			channel_list, &num_channels, 0, skip_dfs_channel);
 		qdf_mem_copy(pcl_channels, channel_list, num_channels);
 		*len = num_channels;
 		qdf_mem_copy(&pcl_channels[num_channels],
@@ -4497,7 +4529,7 @@ QDF_STATUS cds_get_channel_list(enum cds_pcl_type pcl,
 	case CDS_SCC_CH_5G:
 	case CDS_MCC_CH_5G:
 		cds_get_connection_channels(
-			channel_list, &num_channels, 0);
+			channel_list, &num_channels, 0, skip_dfs_channel);
 		qdf_mem_copy(pcl_channels, channel_list,
 			num_channels);
 		*len = num_channels;
@@ -4512,7 +4544,7 @@ QDF_STATUS cds_get_channel_list(enum cds_pcl_type pcl,
 			chan_index_24);
 		*len = chan_index_24;
 		cds_get_connection_channels(
-			channel_list, &num_channels, 0);
+			channel_list, &num_channels, 0, skip_dfs_channel);
 		qdf_mem_copy(&pcl_channels[chan_index_24],
 			channel_list, num_channels);
 		*len += num_channels;
@@ -4524,7 +4556,7 @@ QDF_STATUS cds_get_channel_list(enum cds_pcl_type pcl,
 			chan_index_5);
 		*len = chan_index_5;
 		cds_get_connection_channels(
-			channel_list, &num_channels, 0);
+			channel_list, &num_channels, 0, skip_dfs_channel);
 		qdf_mem_copy(&pcl_channels[chan_index_5],
 			channel_list, num_channels);
 		*len += num_channels;
@@ -4532,7 +4564,7 @@ QDF_STATUS cds_get_channel_list(enum cds_pcl_type pcl,
 		break;
 	case CDS_SCC_ON_24_SCC_ON_5:
 		cds_get_connection_channels(
-			channel_list, &num_channels, 1);
+			channel_list, &num_channels, 1, skip_dfs_channel);
 		qdf_mem_copy(pcl_channels, channel_list,
 			num_channels);
 		*len = num_channels;
@@ -4540,14 +4572,14 @@ QDF_STATUS cds_get_channel_list(enum cds_pcl_type pcl,
 		break;
 	case CDS_SCC_ON_5_SCC_ON_24:
 		cds_get_connection_channels(
-			channel_list, &num_channels, 2);
+			channel_list, &num_channels, 2, skip_dfs_channel);
 		qdf_mem_copy(pcl_channels, channel_list, num_channels);
 		*len = num_channels;
 		status = QDF_STATUS_SUCCESS;
 		break;
 	case CDS_SCC_ON_24_SCC_ON_5_24G:
 		cds_get_connection_channels(
-			channel_list, &num_channels, 1);
+			channel_list, &num_channels, 1, skip_dfs_channel);
 		qdf_mem_copy(pcl_channels, channel_list, num_channels);
 		*len = num_channels;
 		qdf_mem_copy(&pcl_channels[num_channels],
@@ -4557,7 +4589,7 @@ QDF_STATUS cds_get_channel_list(enum cds_pcl_type pcl,
 		break;
 	case CDS_SCC_ON_24_SCC_ON_5_5G:
 		cds_get_connection_channels(
-			channel_list, &num_channels, 1);
+			channel_list, &num_channels, 1, skip_dfs_channel);
 		qdf_mem_copy(pcl_channels, channel_list, num_channels);
 		*len = num_channels;
 		qdf_mem_copy(&pcl_channels[num_channels],
@@ -4567,7 +4599,7 @@ QDF_STATUS cds_get_channel_list(enum cds_pcl_type pcl,
 		break;
 	case CDS_SCC_ON_5_SCC_ON_24_24G:
 		cds_get_connection_channels(
-			channel_list, &num_channels, 2);
+			channel_list, &num_channels, 2, skip_dfs_channel);
 		qdf_mem_copy(pcl_channels, channel_list, num_channels);
 		*len = num_channels;
 		qdf_mem_copy(&pcl_channels[num_channels],
@@ -4577,7 +4609,7 @@ QDF_STATUS cds_get_channel_list(enum cds_pcl_type pcl,
 		break;
 	case CDS_SCC_ON_5_SCC_ON_24_5G:
 		cds_get_connection_channels(
-			channel_list, &num_channels, 2);
+			channel_list, &num_channels, 2, skip_dfs_channel);
 		qdf_mem_copy(pcl_channels, channel_list, num_channels);
 		*len = num_channels;
 		qdf_mem_copy(&pcl_channels[num_channels],
@@ -4743,7 +4775,7 @@ QDF_STATUS cds_get_pcl(enum cds_con_mode mode,
 	/* once the PCL enum is obtained find out the exact channel list with
 	 * help from sme_get_cfg_valid_channels
 	 */
-	status = cds_get_channel_list(pcl, pcl_channels, len);
+	status = cds_get_channel_list(pcl, pcl_channels, len, mode);
 	if (status == QDF_STATUS_SUCCESS) {
 		uint32_t i;
 		cds_debug("pcl len:%d", *len);
@@ -4944,9 +4976,41 @@ bool cds_allow_concurrency(enum cds_con_mode mode,
 			num_connections))
 				goto done;
 
-		/* don't allow MCC if SAP/GO on DFS channel or about to come up
-		* on DFS channel
-		*/
+		/*
+		 * If you already have STA connection then don't
+		 * allow any other persona to make connection on DFS channel
+		 * because STA might be on non-DFS right now but later on as
+		 * part of roaming if STA connects to DFS channel which happens
+		 * to be different than requested DFS channel then MCC DFS
+		 * scenario will be encountered
+		 */
+		count = cds_mode_specific_connection_count(CDS_STA_MODE,
+								list);
+		if ((count > 0) && CDS_IS_DFS_CH(channel)) {
+			/* err msg */
+			cds_err("STA active, don't allow DFS channel for 2nd connection");
+#ifndef QCA_WIFI_3_0_EMU
+			/*
+			 * REMOVE THIS COMMENT ONCE QCA_WIFI_3_0_EMU
+			 * FLAG GETS REMOVED
+			 * ==================================================
+			 * As on emulation we can support only 2 nodes max, if
+			 * we don't allow STA DFS (ch.100) + SAP DFS (ch.100)
+			 * then we can't test the mechanism on other device
+			 * where corresponding SAP DFS(ch.100) + STA DFS(
+			 * STA is trying to come up and as a result it will push
+			 * SAP on this device to non-dfs through CSA IE)
+			 * will trigger CSA.
+			 * =================================================
+			 */
+			goto done;
+#endif
+		}
+
+		/*
+		 * don't allow MCC if SAP/GO on DFS channel or about to come up
+		 * on DFS channel
+		 */
 		count = cds_mode_specific_connection_count(
 				CDS_P2P_GO_MODE, list);
 		while (index < count) {
@@ -8068,3 +8132,107 @@ QDF_STATUS cds_register_sap_restart_channel_switch_cb(
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+
+
+/**
+ * cds_get_nondfs_preferred_channel() - to get non-dfs preferred channel
+ *                                           for given mode
+ * @mode: mode for which preferred non-dfs channel is requested
+ * @for_existing_conn: flag to indicate if preferred channel is requested
+ *                     for existing connection
+ *
+ * this routine will return non-dfs channel
+ * 1) for getting non-dfs preferred channel, first we check if there are any
+ *    other connection exist whose channel is non-dfs. if yes then return that
+ *    channel so that we can accommodate upto 3 mode concurrency.
+ * 2) if there no any other connection present then query concurrency module
+ *    to give preferred channel list. once we get preferred channel list, loop
+ *    through list to find first non-dfs channel from ascending order.
+ *
+ * Return: uint8_t non-dfs channel
+ */
+uint8_t
+cds_get_nondfs_preferred_channel(enum cds_con_mode mode,
+		bool for_existing_conn)
+{
+	uint8_t pcl_channels[NUM_CHANNELS];
+	/*
+	 * in worst case if we can't find any channel at all
+	 * then return 2.4G channel, so atleast we won't fall
+	 * under 5G MCC scenario
+	 */
+	uint8_t channel = CDS_24_GHZ_CHANNEL_6;
+	uint32_t i, pcl_len;
+
+	if (true == for_existing_conn) {
+		/*
+		 * First try to see if there is any non-dfs channel already
+		 * present in current connection table. If yes then return
+		 * that channel
+		 */
+		if (true == cds_is_any_nondfs_chnl_present(&channel))
+			return channel;
+
+		if (QDF_STATUS_SUCCESS != cds_get_pcl_for_existing_conn(mode,
+					&pcl_channels[0], &pcl_len))
+			return channel;
+	} else {
+		if (QDF_STATUS_SUCCESS != cds_get_pcl(mode,
+					&pcl_channels[0], &pcl_len))
+			return channel;
+	}
+
+	for (i = 0; i < pcl_len; i++) {
+#ifdef QCA_WIFI_3_0_EMU
+		/*
+		 * for Emulation platform MCC is not allowed.
+		 * so better don't return 5G channel as this API mostly
+		 * called when one more persona wants to come up on 5G band
+		 */
+		if (CDS_IS_CHANNEL_5GHZ(pcl_channels[i])) {
+			continue;
+		}
+#endif
+		if (CDS_IS_DFS_CH(pcl_channels[i])) {
+			continue;
+		} else {
+			channel = pcl_channels[i];
+			break;
+		}
+	}
+	return channel;
+}
+/**
+ * cds_is_any_nondfs_chnl_present() - Find any non-dfs channel from conc table
+ * @channel: pointer to channel which needs to be filled
+ *
+ * In-case if any connection is already present whose channel is none dfs then
+ * return that channel
+ *
+ * Return: true up-on finding non-dfs channel else false
+ */
+bool cds_is_any_nondfs_chnl_present(uint8_t *channel)
+{
+	cds_context_type *cds_ctx;
+	bool status = false;
+	uint32_t conn_index = 0;
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return false;
+	}
+	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
+	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
+			conn_index++) {
+		if (conc_connection_list[conn_index].in_use &&
+		    !CDS_IS_DFS_CH(conc_connection_list[conn_index].chan)) {
+			*channel = conc_connection_list[conn_index].chan;
+			status = true;
+		}
+	}
+	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
+	return status;
+}
+

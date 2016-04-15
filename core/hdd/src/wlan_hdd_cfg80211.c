@@ -7902,6 +7902,107 @@ void hdd_select_cbmode(hdd_adapter_t *pAdapter, uint8_t operationChannel)
 				&ch_params);
 }
 
+/**
+ * wlan_hdd_handle_sap_sta_dfs_conc() - to handle SAP STA DFS conc
+ * @adapter: STA adapter
+ * @roam_profile: STA roam profile
+ *
+ * This routine will move SAP from dfs to non-dfs, if sta is coming up.
+ *
+ * Return: false if sta-sap conc is not allowed, else return true
+ */
+static bool wlan_hdd_handle_sap_sta_dfs_conc(hdd_adapter_t *adapter,
+						tCsrRoamProfile *roam_profile)
+{
+	hdd_context_t *hdd_ctx;
+	hdd_adapter_t *ap_adapter;
+	hdd_ap_ctx_t *hdd_ap_ctx;
+	hdd_hostapd_state_t *hostapd_state;
+	uint8_t channel = 0;
+	QDF_STATUS status;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("HDD context is NULL");
+		return true;
+	}
+
+	ap_adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
+	/* probably no sap running, no handling required */
+	if (ap_adapter == NULL)
+		return true;
+
+	/*
+	 * sap is not in started state, so it is fine to go ahead with sta.
+	 * if sap is currently doing CAC then don't allow sta to go further.
+	 */
+	if (!test_bit(SOFTAP_BSS_STARTED, &(ap_adapter)->event_flags) &&
+	    (hdd_ctx->dev_dfs_cac_status != DFS_CAC_IN_PROGRESS))
+		return true;
+
+	if (hdd_ctx->dev_dfs_cac_status == DFS_CAC_IN_PROGRESS) {
+		hdd_err("Concurrent SAP is in CAC state, STA is not allowed");
+		return false;
+	}
+
+	/*
+	 * log and return error, if we allow STA to go through, we don't
+	 * know what is going to happen better stop sta connection
+	 */
+	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(ap_adapter);
+	if (NULL == hdd_ap_ctx) {
+		hdd_err("AP context not found");
+		return false;
+	}
+
+	/* sap is on non-dfs channel, nothing to handle */
+	if (!CDS_IS_DFS_CH(hdd_ap_ctx->operatingChannel)) {
+		hdd_info("sap is on non-dfs channel, sta is allowed");
+		return true;
+	}
+	/*
+	 * find out by looking in to scan cache where sta is going to
+	 * connect by passing its roam_profile. if channel is 0 or DFS then
+	 * better to call pcl and find out the best channel. if channel
+	 * is non-dfs then better move SAP to STA's channel to make
+	 * scc, so we have room for 3port MCC scenario
+	 */
+	status = cds_get_channel_from_scan_result(adapter,
+			roam_profile, &channel);
+
+	if ((QDF_STATUS_SUCCESS != status) || (0 == channel) ||
+	    CDS_IS_DFS_CH(channel))
+		channel = cds_get_nondfs_preferred_channel(CDS_SAP_MODE,
+								true);
+
+	hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(ap_adapter);
+	qdf_event_reset(&hostapd_state->qdf_event);
+	status = wlansap_set_channel_change_with_csa(
+			WLAN_HDD_GET_SAP_CTX_PTR(ap_adapter), channel,
+			hdd_ap_ctx->sapConfig.ch_width_orig);
+
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_err("Set channel with CSA IE failed, can't allow STA");
+		return false;
+	}
+
+	/*
+	 * wait here for SAP to finish the channel switch. When channel
+	 * switch happens, SAP sends few beacons with CSA_IE. After
+	 * successfully Transmission of those beacons, it will move its
+	 * state from started to disconnected and move to new channel.
+	 * once it moves to new channel, sap again moves its state
+	 * machine from disconnected to started and set this event.
+	 * wait for 10 secs to finish this.
+	 */
+	status = qdf_wait_single_event(&hostapd_state->qdf_event, 10000);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("wait for qdf_event failed, STA not allowed!!");
+		return false;
+	}
+
+	return true;
+}
 
 /*
  * FUNCTION: wlan_hdd_cfg80211_connect_start
@@ -8130,9 +8231,20 @@ int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 				return 0;
 		}
 
+		if (pHddCtx->config->policy_manager_enabled &&
+			(false == wlan_hdd_handle_sap_sta_dfs_conc(pAdapter,
+				pRoamProfile))) {
+			hdd_err("sap-sta conc will fail, can't allow sta");
+			hdd_conn_set_connection_state(pAdapter,
+					eConnectionState_NotConnected);
+			return -ENOMEM;
+		}
+
 		sme_config = qdf_mem_malloc(sizeof(*sme_config));
 		if (!sme_config) {
 			hdd_err("unable to allocate sme_config");
+			hdd_conn_set_connection_state(pAdapter,
+					eConnectionState_NotConnected);
 			return -ENOMEM;
 		}
 		qdf_mem_zero(sme_config, sizeof(*sme_config));
