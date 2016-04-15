@@ -615,10 +615,8 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 
 	if (pftSessionEntry->bssType == eSIR_INFRASTRUCTURE_MODE) {
 		pftSessionEntry->limSystemRole = eLIM_STA_ROLE;
-	} else if (pftSessionEntry->bssType == eSIR_BTAMP_AP_MODE) {
-		pftSessionEntry->limSystemRole = eLIM_BT_AMP_STA_ROLE;
 	} else {
-		/* Throw an error and return and make sure to delete the session. */
+		/* Throw an error & return & make sure to delete the session */
 		lim_log(pMac, LOGE, FL("Invalid bss type"));
 	}
 

@@ -725,8 +725,6 @@ tSirRetStatus cfg_get_capability_info(tpAniSirGlobal pMac, uint16_t *pCap,
 	if (LIM_IS_IBSS_ROLE(sessionEntry))
 		pCapInfo->ibss = 1;     /* IBSS bit */
 	else if (LIM_IS_AP_ROLE(sessionEntry) ||
-		LIM_IS_BT_AMP_AP_ROLE(sessionEntry) ||
-		LIM_IS_BT_AMP_STA_ROLE(sessionEntry) ||
 		LIM_IS_STA_ROLE(sessionEntry))
 		pCapInfo->ess = 1;      /* ESS bit */
 	else if (LIM_IS_P2P_DEVICE_ROLE(sessionEntry)) {

@@ -482,8 +482,6 @@ typedef enum eSirBssType {
 	eSIR_INFRASTRUCTURE_MODE,
 	eSIR_INFRA_AP_MODE,     /* Added for softAP support */
 	eSIR_IBSS_MODE,
-	eSIR_BTAMP_STA_MODE,    /* Added for BT-AMP support */
-	eSIR_BTAMP_AP_MODE,     /* Added for BT-AMP support */
 	eSIR_AUTO_MODE,
 	eSIR_DONOT_USE_BSS_TYPE = SIR_MAX_ENUM_SIZE
 } tSirBssType;
