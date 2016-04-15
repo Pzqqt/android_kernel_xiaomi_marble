@@ -686,59 +686,36 @@ void lim_send_p2p_action_frame(tpAniSirGlobal mac_ctx,
 	}
 
 #ifdef WLAN_FEATURE_11W
-	action_hdr = (tpSirMacActionFrameHdr) (frame + sizeof(tSirMacMgmtHdr));
+	action_hdr = (tpSirMacActionFrameHdr)
+		(frame + sizeof(tSirMacMgmtHdr));
+	mac_hdr = (tpSirMacMgmtHdr) frame;
+	session_entry = pe_find_session_by_bssid(mac_ctx,
+		(uint8_t *) mb_msg->data + BSSID_OFFSET,
+		&session_id);
 
 	/*
-	 * Setting Protected bit for SA_QUERY Action Frame
-	 * This has to be based on the current Connection with the
-	 * station lim_set_protected_bit API will set the protected bit
-	 * if PMF
+	 * Check for session corresponding to ADDR2 as supplicant
+	 * is filling ADDR2  with BSSID
 	 */
-	if ((SIR_MAC_MGMT_ACTION == fc->subType) &&
-		(SIR_MAC_ACTION_SA_QUERY == action_hdr->category)) {
-		mac_hdr = (tpSirMacMgmtHdr) frame;
+	if (NULL == session_entry) {
 		session_entry = pe_find_session_by_bssid(mac_ctx,
-			(uint8_t *) mb_msg->data + BSSID_OFFSET,
-			&session_id);
-
-		/*
-		 * Check for session corresponding to ADDR2 ss supplicant
-		 * is filling ADDR2  with BSSID
-		 */
-		if (NULL == session_entry) {
-			session_entry = pe_find_session_by_bssid(mac_ctx,
-				(uint8_t *) mb_msg->data + ADDR2_OFFSET,
-				 &session_id);
-		}
-
-		if (NULL != session_entry) {
-			lim_set_protected_bit(mac_ctx, session_entry,
-			mac_hdr->da, mac_hdr);
-		} else {
-			lim_log(mac_ctx, LOGE,
-				FL("Dropping SA Query - PE Session not found"));
-			lim_send_sme_rsp(mac_ctx,
-				eWNI_SME_ACTION_FRAME_SEND_CNF,
-				QDF_STATUS_E_FAILURE, mb_msg->sessionId, 0);
-			cds_packet_free((void *)packet);
-			return;
-		}
-
-		/*
-		 * If wep bit is not set in MAC header then we are trying to
-		 * send SA Query via non PMF connection. Drop the packet.
-		 */
-		if (0 == mac_hdr->fc.wep) {
-			lim_log(mac_ctx, LOGE,
-				FL("Dropping SA Query due to non PMF conne."));
-			lim_send_sme_rsp(mac_ctx,
-				eWNI_SME_ACTION_FRAME_SEND_CNF,
-				QDF_STATUS_E_FAILURE, mb_msg->sessionId, 0);
-			cds_packet_free((void *)packet);
-			return;
-		}
+			(uint8_t *) mb_msg->data + ADDR2_OFFSET,
+			 &session_id);
 	}
+	/*
+	 * Setting Protected bit only for Robust Action Frames
+	 * This has to be based on the current Connection with the
+	 * station. lim_set_protected_bit API will set the protected
+	 * bit if connection is PMF
+	 */
+	if (session_entry && (SIR_MAC_MGMT_ACTION == fc->subType) &&
+		session_entry->limRmfEnabled &&
+		(!lim_is_group_addr(mac_hdr->da)) &&
+		lim_is_robust_mgmt_action_frame(action_hdr->category))
+		lim_set_protected_bit(mac_ctx, session_entry,
+					mac_hdr->da, mac_hdr);
 #endif
+
 	lim_tx_action_frame(mac_ctx, mb_msg, msg_len, packet, frame);
 	return;
 }

@@ -602,4 +602,5 @@ static inline void lim_deactivate_and_change_timer_host_roam(
 {}
 #endif
 
+bool lim_is_robust_mgmt_action_frame(uint8_t action_category);
 #endif /* __LIM_UTILS_H */

@@ -128,6 +128,7 @@
 #define SIR_MAC_ACTION_SPECTRUM_MGMT   0
 #define SIR_MAC_ACTION_QOS_MGMT        1
 #define SIR_MAC_ACTION_DLP             2
+#define SIR_MAC_ACTION_BLKACK          3
 #define SIR_MAC_ACTION_PUBLIC_USAGE    4
 #define SIR_MAC_ACTION_RRM             5
 #define SIR_MAC_ACTION_FAST_BSS_TRNST  6
