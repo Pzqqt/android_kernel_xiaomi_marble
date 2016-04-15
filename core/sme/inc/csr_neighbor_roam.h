@@ -187,8 +187,6 @@ QDF_STATUS csr_neighbor_roam_prepare_scan_profile_filter(tpAniSirGlobal pMac,
 QDF_STATUS csr_neighbor_roam_preauth_rsp_handler(tpAniSirGlobal pMac,
 		uint8_t sessionId, tSirRetStatus limStatus);
 bool csr_neighbor_roam_is11r_assoc(tpAniSirGlobal pMac, uint8_t sessionId);
-QDF_STATUS csr_neighbor_roam_create_chan_list_from_neighbor_report(
-		tpAniSirGlobal pMac, uint8_t sessionId);
 #ifdef WLAN_FEATURE_HOST_ROAM
 void csr_neighbor_roam_tranistion_preauth_done_to_disconnected(
 		tpAniSirGlobal pMac, uint8_t sessionId);
