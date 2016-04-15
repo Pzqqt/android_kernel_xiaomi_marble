@@ -1456,7 +1456,6 @@ struct wifi_scan_cmd_req_params {
 	struct wifi_scan_bucket_params buckets[WMI_WLAN_EXTSCAN_MAX_BUCKETS];
 };
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
 #define WMI_CFG_VALID_CHANNEL_LIST_LEN    100
 
 /**
@@ -1491,7 +1490,7 @@ struct plm_req_params {
 	uint8_t session_id;
 	bool enable;
 };
-#endif
+
 #define MAX_SSID_ALLOWED_LIST    4
 #define MAX_BSSID_AVOID_LIST     16
 #define MAX_BSSID_FAVORED      16
