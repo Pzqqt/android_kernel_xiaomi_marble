@@ -505,6 +505,48 @@ static int hdd_indicate_scan_result(hdd_scan_info_t *scanInfo,
 	return 0;
 }
 
+/**
+ * wlan_hdd_is_scan_pending() - Utility function to check pending scans
+ * @adapter: Pointer to the adapter
+ *
+ * Utility function to check pending scans on a particular adapter
+ *
+ * Return: true if scans are pending, false otherwise
+ */
+static bool wlan_hdd_is_scan_pending(hdd_adapter_t *adapter)
+{
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	qdf_list_node_t *pnode = NULL, *ppnode = NULL;
+	struct hdd_scan_req *hdd_scan_req;
+
+	qdf_spin_lock(&hdd_ctx->hdd_scan_req_q_lock);
+
+	if (qdf_list_empty(&hdd_ctx->hdd_scan_req_q)) {
+		qdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
+		return false;
+	}
+
+	if (QDF_STATUS_SUCCESS != qdf_list_peek_front(&hdd_ctx->hdd_scan_req_q,
+							&ppnode)) {
+		qdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
+		hdd_err("Failed to remove Scan Req from queue");
+		return false;
+	}
+
+	do {
+		pnode = ppnode;
+		hdd_scan_req = (struct hdd_scan_req *)pnode;
+		/* Any scan pending on the adapter */
+		if (adapter == hdd_scan_req->adapter) {
+			qdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
+			return true;
+		}
+	} while (QDF_STATUS_SUCCESS ==
+		qdf_list_peek_next(&hdd_ctx->hdd_scan_req_q, pnode, &ppnode));
+
+	qdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
+	return false;
+}
 
 /**
  * wlan_hdd_scan_request_enqueue() - enqueue Scan Request
@@ -647,7 +689,6 @@ hdd_scan_request_callback(tHalHandle halHandle, void *pContext,
 	uint8_t source;
 	struct cfg80211_scan_request *req;
 	uint32_t timestamp;
-	uint32_t size = 0;
 
 	ENTER();
 	hddLog(LOGW,
@@ -673,12 +714,9 @@ hdd_scan_request_callback(tHalHandle halHandle, void *pContext,
 		hdd_err("Got unexpected request struct for Scan id %d",
 			scanId);
 
-	qdf_spin_lock(&hddctx->hdd_scan_req_q_lock);
-	size = qdf_list_size(&(hddctx->hdd_scan_req_q));
-	if (!size)
-		/* Scan is no longer pending */
+	/* Scan is no longer pending */
+	if (!wlan_hdd_is_scan_pending(pAdapter))
 		pAdapter->scan_info.mScanPending = false;
-	qdf_spin_unlock(&hddctx->hdd_scan_req_q_lock);
 
 	/* notify any applications that may be interested */
 	memset(&wrqu, '\0', sizeof(wrqu));
@@ -1138,14 +1176,12 @@ static QDF_STATUS hdd_cfg80211_scan_done_callback(tHalHandle halHandle,
 		aborted = true;
 	}
 
-	qdf_spin_lock(&hddctx->hdd_scan_req_q_lock);
-	size = qdf_list_size(&(hddctx->hdd_scan_req_q));
-	if (!size) {
+	if (!wlan_hdd_is_scan_pending(pAdapter)) {
 		/* Scan is no longer pending */
 		pScanInfo->mScanPending = false;
 		complete(&pScanInfo->abortscan_event_var);
 	}
-	qdf_spin_unlock(&hddctx->hdd_scan_req_q_lock);
+
 	/*
 	 * Scan can be triggred from NL or vendor scan
 	 * - If scan is triggered from NL then cfg80211 scan done should be
@@ -1159,7 +1195,10 @@ static QDF_STATUS hdd_cfg80211_scan_done_callback(tHalHandle halHandle,
 		hdd_vendor_scan_callback(pAdapter, req, aborted);
 
 allow_suspend:
+	qdf_spin_lock(&hddctx->hdd_scan_req_q_lock);
+	size = qdf_list_size(&hddctx->hdd_scan_req_q);
 	if (!size) {
+		qdf_spin_unlock(&hddctx->hdd_scan_req_q_lock);
 		/* release the wake lock at the end of the scan */
 		hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_SCAN);
 
@@ -1171,6 +1210,9 @@ allow_suspend:
 		 */
 		hdd_prevent_suspend_timeout(1000,
 			WIFI_POWER_EVENT_WAKELOCK_SCAN);
+	} else {
+		/* Release the spin lock */
+		qdf_spin_unlock(&hddctx->hdd_scan_req_q_lock);
 	}
 
 #ifdef FEATURE_WLAN_TDLS
