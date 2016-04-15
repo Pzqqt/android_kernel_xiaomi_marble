@@ -142,7 +142,6 @@ typedef enum {
 } eCsrPhyMode;
 
 typedef enum {
-	eCSR_BSS_TYPE_NONE,
 	eCSR_BSS_TYPE_INFRASTRUCTURE,
 	eCSR_BSS_TYPE_INFRA_AP,   /* SoftAP AP */
 	eCSR_BSS_TYPE_IBSS,       /* IBSS network we'll NOT start */

@@ -5591,6 +5591,42 @@ const char *sme_request_type_to_string(const uint8_t request_type)
 	}
 }
 
+/**
+ * sme_bsstype_to_string() - converts bss type to string.
+ * @bss_type: bss type enum
+ *
+ * Return: printable string for bss type
+ */
+const char *sme_bss_type_to_string(const uint8_t bss_type)
+{
+	switch (bss_type) {
+	CASE_RETURN_STRING(eCSR_BSS_TYPE_INFRASTRUCTURE);
+	CASE_RETURN_STRING(eCSR_BSS_TYPE_INFRA_AP);
+	CASE_RETURN_STRING(eCSR_BSS_TYPE_IBSS);
+	CASE_RETURN_STRING(eCSR_BSS_TYPE_START_IBSS);
+	CASE_RETURN_STRING(eCSR_BSS_TYPE_ANY);
+	default:
+		return "unknown bss type";
+	}
+}
+
+/**
+ * sme_scantype_to_string() - converts scan type to string.
+ * @scan_type: scan type enum
+ *
+ * Return: printable string for scan type
+ */
+const char *sme_scan_type_to_string(const uint8_t scan_type)
+{
+	switch (scan_type) {
+	CASE_RETURN_STRING(eSIR_PASSIVE_SCAN);
+	CASE_RETURN_STRING(eSIR_ACTIVE_SCAN);
+	CASE_RETURN_STRING(eSIR_BEACON_TABLE);
+	default:
+		return "unknown scan type";
+	}
+}
+
 QDF_STATUS csr_add_to_channel_list_front(uint8_t *pChannelList,
 					 int numChannels, uint8_t channel)
 {

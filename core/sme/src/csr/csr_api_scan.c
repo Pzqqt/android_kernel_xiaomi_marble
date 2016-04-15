@@ -49,7 +49,6 @@
 #include "wma_types.h"
 #include "cds_utils.h"
 #include "cfg_api.h"
-#include "lim_api.h"
 #include "wma.h"
 
 #include "cds_concurrency.h"
@@ -4867,10 +4866,10 @@ QDF_STATUS csr_send_mb_scan_req(tpAniSirGlobal pMac, uint16_t sessionId,
 			pScanReqParam->hiddenSsid);
 		sms_log(pMac, LOG1,
 			FL("scanType = %s (%u) BSSType = %s (%u) numOfSSIDs = %d"
-			   " numOfChannels = %d requestType = %s (%d) p2pSearch = %d\n"),
-			lim_scan_type_to_string(pScanReq->scanType),
+				" numOfChannels = %d requestType = %s (%d) p2pSearch = %d\n"),
+			sme_scan_type_to_string(pScanReq->scanType),
 			pScanReq->scanType,
-			lim_bss_type_to_string(pScanReq->BSSType),
+			sme_bss_type_to_string(pScanReq->BSSType),
 			pScanReq->BSSType,
 			pScanReq->SSIDs.numOfSSIDs,
 			pScanReq->ChannelInfo.numOfChannels,
@@ -5017,8 +5016,8 @@ send_scan_req:
 	sms_log(pMac, LOG1,
 		FL("scanId %d domainIdCurrent %d scanType %s (%d) bssType %s (%d) requestType %s (%d) numChannels %d"),
 		pMsg->scan_id, pMac->scan.domainIdCurrent,
-		lim_scan_type_to_string(pMsg->scanType), pMsg->scanType,
-		lim_bss_type_to_string(pMsg->bssType), pMsg->bssType,
+		sme_scan_type_to_string(pMsg->scanType), pMsg->scanType,
+		sme_bss_type_to_string(pMsg->bssType), pMsg->bssType,
 		sme_request_type_to_string(pScanReq->requestType),
 		pScanReq->requestType, pMsg->channelList.numChannels);
 

@@ -35,7 +35,6 @@
 #include "ani_global.h"          /* for tpAniSirGlobal */
 #include "wma_types.h"
 #include "wma_if.h"          /* for STA_INVALID_IDX. */
-#include "lim_utils.h"
 #include "cds_mq.h"
 #include "csr_inside_api.h"
 #include "sms_debug.h"
@@ -91,9 +90,6 @@ static bool b_roam_scan_offload_started;
    ------------------------------------------------------------------------*/
 static tCsrRoamSession csr_roam_roam_session[CSR_ROAM_SESSION_MAX];
 
-/*--------------------------------------------------------------------------
-   Type declarations
-   ------------------------------------------------------------------------*/
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 int diag_auth_type_from_csr_type(eCsrAuthType authType)
 {
@@ -7330,7 +7326,7 @@ QDF_STATUS csr_roam_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 	pSession->join_bssid_count = 0;
 	sms_log(pMac, LOG1,
 		FL("called  BSSType = %s (%d) authtype = %d  encryType = %d"),
-		lim_bss_type_to_string(pProfile->BSSType),
+		sme_bss_type_to_string(pProfile->BSSType),
 		pProfile->BSSType, pProfile->AuthType.authType[0],
 		pProfile->EncryptionType.encryptionType[0]);
 	csr_roam_cancel_roaming(pMac, sessionId);
@@ -7526,7 +7522,7 @@ csr_roam_reassoc(tpAniSirGlobal mac_ctx, uint32_t session_id,
 	}
 	sms_log(mac_ctx, LOG1,
 		FL("called  BSSType = %s (%d) authtype = %d  encryType = %d"),
-		lim_bss_type_to_string(profile->BSSType),
+		sme_bss_type_to_string(profile->BSSType),
 		profile->BSSType, profile->AuthType.authType[0],
 		profile->EncryptionType.encryptionType[0]);
 	csr_roam_cancel_roaming(mac_ctx, session_id);
@@ -14782,7 +14778,7 @@ QDF_STATUS csr_process_add_sta_session_command(tpAniSirGlobal pMac,
 
 	add_sta_self_req = qdf_mem_malloc(sizeof(struct add_sta_self_params));
 	if (NULL == add_sta_self_req) {
-		lim_log(pMac, LOGP,
+		sms_log(pMac, LOGP,
 			FL
 			("Unable to allocate memory for tAddSelfStaParams"));
 		return status;
@@ -14800,15 +14796,14 @@ QDF_STATUS csr_process_add_sta_session_command(tpAniSirGlobal pMac,
 	msg.bodyptr = add_sta_self_req;
 	msg.bodyval = 0;
 
-	lim_log(pMac, LOG1,
+	sms_log(pMac, LOG1,
 		 FL
 		 ("Send WMA_ADD_STA_SELF_REQ for selfMac=" MAC_ADDRESS_STR),
 		 MAC_ADDR_ARRAY(add_sta_self_req->self_mac_addr));
-	MTRACE(mac_trace_msg_tx(pMac, NO_SESSION, msg.type));
 	status = wma_post_ctrl_msg(pMac, &msg);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		lim_log(pMac, LOGP, FL("wma_post_ctrl_msg failed"));
+		sms_log(pMac, LOGP, FL("wma_post_ctrl_msg failed"));
 		qdf_mem_free(add_sta_self_req);
 		add_sta_self_req = NULL;
 	}
@@ -14999,7 +14994,7 @@ QDF_STATUS csr_process_del_sta_session_command(tpAniSirGlobal pMac,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	del_sta_self_req = qdf_mem_malloc(sizeof(struct del_sta_self_params));
 	if (NULL == del_sta_self_req) {
-		lim_log(pMac, LOGP,
+		sms_log(pMac, LOGP,
 			FL(" mem alloc failed for tDelStaSelfParams"));
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -15016,7 +15011,6 @@ QDF_STATUS csr_process_del_sta_session_command(tpAniSirGlobal pMac,
 
 	sms_log(pMac, LOG1,
 		FL("sending WMA_DEL_STA_SELF_REQ"));
-	MTRACE(mac_trace_msg_tx(pMac, NO_SESSION, msg.type));
 	status = wma_post_ctrl_msg(pMac, &msg);
 	if (status != QDF_STATUS_SUCCESS) {
 		sms_log(pMac, LOGP, FL("wma_post_ctrl_msg failed"));

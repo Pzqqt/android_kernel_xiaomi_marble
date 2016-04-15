@@ -30,7 +30,6 @@
 #include "csr_inside_api.h"
 #include "sme_inside.h"
 #include "p2p_api.h"
-#include "lim_api.h"
 #include "cfg_api.h"
 #include "wma.h"
 

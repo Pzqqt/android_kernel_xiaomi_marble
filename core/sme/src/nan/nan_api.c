@@ -30,8 +30,8 @@
 #include "csr_inside_api.h"
 #include "sme_inside.h"
 #include "nan_api.h"
-#include "lim_api.h"
 #include "cfg_api.h"
+#include "wma_types.h"
 
 /******************************************************************************
  * Function: sme_nan_register_callback

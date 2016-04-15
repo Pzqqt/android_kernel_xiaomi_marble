@@ -28,8 +28,6 @@
 #if !defined(__SME_FTAPI_H)
 #define __SME_FTAPI_H
 
-#include <lim_ft_defs.h>
-
 typedef enum eFTIEState {
 	eFT_START_READY,        /* Start before and after 11r assoc */
 	eFT_AUTH_REQ_READY,     /* When we have recvd the 1st or nth auth req */
