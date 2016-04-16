@@ -4013,6 +4013,53 @@ static QDF_STATUS wma_add_clear_mcbc_filter(tp_wma_handle wma_handle,
 }
 
 /**
+ * wma_config_enhance_multicast_offload() - config enhance multicast offload
+ * @wma_handle: wma handle
+ * @vdev_id: vdev id
+ * @action: enable or disable enhance multicast offload
+ *
+ * Return: none
+ */
+static void wma_config_enhance_multicast_offload(tp_wma_handle wma_handle,
+						uint8_t vdev_id,
+						uint8_t action)
+{
+	int status;
+	wmi_buf_t buf;
+	wmi_config_enhanced_mcast_filter_cmd_fixed_param *cmd;
+
+	buf = wmi_buf_alloc(wma_handle->wmi_handle, sizeof(*cmd));
+	if (!buf) {
+		WMA_LOGE("Failed to allocate buffer to send set key cmd");
+		return;
+	}
+
+	cmd = (wmi_config_enhanced_mcast_filter_cmd_fixed_param *)
+							wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		 WMITLV_TAG_STRUC_wmi_config_enhanced_mcast_filter_fixed_param,
+		 WMITLV_GET_STRUCT_TLVLEN(wmi_config_enhanced_mcast_filter_cmd_fixed_param));
+
+	cmd->vdev_id = vdev_id;
+	cmd->enable = ((0 == action) ? ENHANCED_MCAST_FILTER_DISABLED :
+			ENHANCED_MCAST_FILTER_ENABLED);
+
+	WMA_LOGD("%s: config enhance multicast offload action %d for vdev %d",
+		__func__, action, vdev_id);
+
+	status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf,
+			sizeof(*cmd), WMI_CONFIG_ENHANCED_MCAST_FILTER_CMDID);
+	if (status) {
+		qdf_nbuf_free(buf);
+		WMA_LOGE("%s:Failed to send WMI_CONFIG_ENHANCED_MCAST_FILTER_CMDID",
+			__func__);
+	}
+
+	return;
+}
+
+/**
  * wma_process_mcbc_set_filter_req() - process mcbc set filter request
  * @wma_handle: wma handle
  * @mcbc_param: mcbc params
@@ -4036,6 +4083,21 @@ QDF_STATUS wma_process_mcbc_set_filter_req(tp_wma_handle wma_handle,
 			 mcbc_param->bssid.bytes);
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	/*
+	 * Configure enhance multicast offload feature for filtering out
+	 * multicast IP data packets transmitted using unicast MAC address
+	 */
+	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
+		WMI_SERVICE_ENHANCED_MCAST_FILTER)) {
+		WMA_LOGD("%s: FW supports enhance multicast offload", __func__);
+		wma_config_enhance_multicast_offload(wma_handle, vdev_id,
+			mcbc_param->action);
+	} else {
+		WMA_LOGD("%s: FW does not support enhance multicast offload",
+		__func__);
+	}
+
 	/* set mcbc_param->action to clear MCList and reset
 	 * to configure the MCList in FW
 	 */
