@@ -58,7 +58,7 @@ static struct hdd_context_s *p_hdd_ctx;
 static int populate_oem_data_cap(hdd_adapter_t *adapter,
 				 t_iw_oem_data_cap *data_cap)
 {
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS status;
 	struct hdd_config *config;
 	uint32_t num_chan;
 	uint8_t *chan_list;
@@ -94,7 +94,7 @@ static int populate_oem_data_cap(hdd_adapter_t *adapter,
 	data_cap->supported_bands = config->nBandCapability;
 
 	/* request for max num of channels */
-	num_chan = WNI_CFG_VALID_CHANNEL_LIST_LEN;
+	num_chan = OEM_CAP_MAX_NUM_CHANNELS;
 	status = sme_get_cfg_valid_channels(hdd_ctx->hHal,
 					    &chan_list[0], &num_chan);
 	if (QDF_STATUS_SUCCESS != status) {
