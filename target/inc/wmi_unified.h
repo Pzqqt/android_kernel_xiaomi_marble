@@ -337,6 +337,8 @@ typedef enum {
 	WMI_PDEV_SET_MAC_CONFIG_CMDID,
 	/** Set per band and per pdev antenna chains */
 	WMI_PDEV_SET_ANTENNA_MODE_CMDID,
+	/** Periodic channel stats request command */
+	WMI_SET_PERIODIC_CHANNEL_STATS_CONFIG_CMDID,
 
 	/* VDEV(virtual device) specific commands */
 	/** vdev create */
@@ -6719,7 +6721,11 @@ typedef struct {
 	/** channel tx power per throughput */
 	A_UINT32 chan_tx_pwr_tp;
 	/** rx frame count (cumulative) */
-	A_UINT32   rx_frame_count;
+	A_UINT32 rx_frame_count;
+	/** BSS rx cycle count */
+	A_UINT32 my_bss_rx_cycle_count;
+	/** b-mode data rx time (units are microseconds) */
+	A_UINT32 rx_11b_mode_data_duration;
 } wmi_chan_info_event_fixed_param;
 
 /**
@@ -6791,7 +6797,11 @@ typedef struct _wlan_dcs_im_tgt_stats {
 
 	/** CCK phy error count, MAC_PCU_PHY_ERR_CNT_2_ADDRESS */
 	A_UINT32 reg_cck_phyerr_cnt;            /* CCK err count since last reset, read from register */
+	/** Channel noise floor (units are dBm) */
+	A_INT32 chan_nf;
 
+	/** BSS rx cycle count */
+	A_UINT32 my_bss_rx_cycle_count;
 } wlan_dcs_im_tgt_stats_t;
 
 /**
@@ -15072,6 +15082,22 @@ typedef struct {
 	/* Allow/disallow flag - see WMI_MWSCOEX_CHAN_AVD_RPT enum */
 	A_UINT32 rpt_allow;
 } WMI_CHAN_AVOID_RPT_ALLOW_CMD_fixed_param;
+
+/*
+ * Periodic channel stats WMI command structure
+ * WMI_SET_PERIODIC_CHANNEL_STATS_CONFIG_CMDID
+ */
+typedef struct {
+	/*
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_set_periodic_channel_stats_config_fixed_param
+	 */
+	A_UINT32 tlv_header;
+	/** 1 = enable, 0 = disable */
+	A_UINT32 enable;
+	/** periodic stats duration (units are milliseconds) */
+	A_UINT32 stats_period;
+} wmi_set_periodic_channel_stats_config_fixed_param;
 
 /* ADD NEW DEFS HERE */
 
