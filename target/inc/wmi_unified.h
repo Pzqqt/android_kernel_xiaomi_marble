@@ -390,6 +390,8 @@ typedef enum {
 	WMI_VDEV_FILTER_NEIGHBOR_RX_PACKETS_CMDID,
 	/** set quiet ie parameters. primarily used in AP mode */
 	WMI_VDEV_SET_QUIET_MODE_CMDID,
+	/** To set custom aggregation size for per vdev */
+	WMI_VDEV_SET_CUSTOM_AGGR_SIZE_CMDID,
 
 	/* peer specific commands */
 
@@ -3159,6 +3161,29 @@ typedef struct {
 	A_UINT32 next_start; /* offset in TUs */
 	A_UINT32 enabled;    /* enable/disable */
 } wmi_vdev_set_quiet_cmd_fixed_param;
+
+typedef struct {
+	/*
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_vdev_set_custom_aggr_size_cmd_fixed_param
+	 */
+	A_UINT32 tlv_header;
+	/*
+	 * vdev id indicating to which the vdev custom aggregation size
+	 * will be applied.
+	 */
+	A_UINT32 vdev_id;
+	/*
+	 * Size for tx aggregation (max MPDUs per A-MPDU) for the vdev
+	 * mentioned in vdev id
+	 */
+	A_UINT32 tx_aggr_size;
+	/*
+	 * Size for rx aggregation (block ack window size limit) for
+	 * the vdev mentioned in vdev id
+	 */
+	A_UINT32 rx_aggr_size;
+} wmi_vdev_set_custom_aggr_size_cmd_fixed_param;
 
 /*
  * Command to enable/disable Green AP Power Save.

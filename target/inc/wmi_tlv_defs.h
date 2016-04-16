@@ -691,6 +691,7 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_config_enhanced_mcast_filter_fixed_param,
 	WMITLV_TAG_STRUC_WMI_CHAN_AVOID_RPT_ALLOW_CMD_fixed_param,
 	WMITLV_TAG_STRUC_wmi_set_periodic_channel_stats_config_fixed_param,
+	WMITLV_TAG_STRUC_wmi_vdev_set_custom_aggr_size_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -970,7 +971,8 @@ typedef enum {
 	OP(WMI_COEX_CONFIG_CMDID) \
 	OP(WMI_CONFIG_ENHANCED_MCAST_FILTER_CMDID) \
 	OP(WMI_CHAN_AVOID_RPT_ALLOW_CMDID) \
-	OP(WMI_SET_PERIODIC_CHANNEL_STATS_CONFIG_CMDID)
+	OP(WMI_SET_PERIODIC_CHANNEL_STATS_CONFIG_CMDID) \
+	OP(WMI_VDEV_SET_CUSTOM_AGGR_SIZE_CMDID)
 
 /*
  * IMPORTANT: Please add _ALL_ WMI Events Here.
@@ -1998,6 +2000,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_QUIET_MODE_CMDID);
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_vdev_set_quiet_cmd_fixed_param, wmi_vdev_set_quiet_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SET_QUIET_MODE_CMDID);
+
+/* Setting custom aggregation size using command */
+#define WMITLV_TABLE_WMI_VDEV_SET_CUSTOM_AGGR_SIZE_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_vdev_set_custom_aggr_size_cmd_fixed_param, wmi_vdev_set_custom_aggr_size_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SET_CUSTOM_AGGR_SIZE_CMDID);
 
 /* Vdev create Cmd */
 #define WMITLV_TABLE_WMI_VDEV_CREATE_CMDID(id, op, buf, len) \
