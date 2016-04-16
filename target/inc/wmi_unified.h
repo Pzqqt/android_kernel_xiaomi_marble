@@ -339,6 +339,8 @@ typedef enum {
 	WMI_PDEV_SET_ANTENNA_MODE_CMDID,
 	/** Periodic channel stats request command */
 	WMI_SET_PERIODIC_CHANNEL_STATS_CONFIG_CMDID,
+	/** WMI command for power debug framework */
+	WMI_PDEV_WAL_POWER_DEBUG_CMDID,
 
 	/* VDEV(virtual device) specific commands */
 	/** vdev create */
@@ -1872,6 +1874,11 @@ typedef struct {
 	 * within the time limit described in the MPDU maximum density field.
 	 */
 	A_UINT32 mpdu_density; /* units are microseconds */
+	/*
+	 * Maximum no of BSSID based RX filters host can program
+	 * Value 0 means FW hasn't given any limit to host.
+	 */
+	A_UINT32 max_bssid_rx_filters;
 } wmi_service_ready_ext_event_fixed_param;
 
 typedef enum {
@@ -2302,6 +2309,11 @@ typedef struct {
 	 * packet filtering instructions
 	 */
 	A_UINT32 bpf_instruction_size;
+	/**
+	 * Maximum no of BSSID based RX filters host would program
+	 * Value 0 means host doesn't given any limit to FW.
+	 */
+	A_UINT32 max_bssid_rx_filters;
 } wmi_resource_config;
 
 #define WMI_RSRC_CFG_FLAG_SET(word32, flag, value) \
@@ -3161,9 +3173,16 @@ typedef struct {
 
 /*Command to set/unset chip in quiet mode*/
 typedef struct {
-	A_UINT32 tlv_header;            /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_set_quiet_cmd_fixed_param */
-	A_UINT32 reserved0;
-	/** placeholder for pdev_id of future multiple MAC products. Init. to 0. */
+	/*
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_pdev_set_quiet_cmd_fixed_param
+	 */
+	A_UINT32 tlv_header;
+	/*
+	 * pdev_id for identifying the MAC, See macros
+	 * starting with WMI_PDEV_ID_ for values.
+	 */
+	A_UINT32 pdev_id;
 	A_UINT32 period;                /*period in TUs */
 	A_UINT32 duration;              /*duration in TUs */
 	A_UINT32 next_start;            /*offset in TUs */
@@ -4598,14 +4617,21 @@ enum {
 typedef struct {
 	A_UINT32 tlv_header;            /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_suspend_cmd_fixed_param  */
 	/* suspend option sent to target */
-	A_UINT32 reserved0;                          /** placeholder for pdev_id of future multiple MAC products. Init. to 0. */
+	/*
+	 * pdev_id for identifying the MAC, See macros
+	 * starting with WMI_PDEV_ID_ for values.
+	 */
+	A_UINT32 pdev_id;
 	A_UINT32 suspend_opt;
 } wmi_pdev_suspend_cmd_fixed_param;
 
 typedef struct {
 	A_UINT32 tlv_header;            /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_resume_cmd_fixed_param  */
-	/** Reserved for future use */
-	A_UINT32 reserved0;
+	/*
+	 * pdev_id for identifying the MAC, See macros
+	 * starting with WMI_PDEV_ID_ for values.
+	 */
+	A_UINT32 pdev_id;
 } wmi_pdev_resume_cmd_fixed_param;
 
 typedef struct {
@@ -4802,8 +4828,13 @@ typedef struct {
 	A_UINT32 vdev_subtype;
 	/** VDEV MAC address */
 	wmi_mac_addr vdev_macaddr;
-	/* Number of configured txrx streams */
+	/** Number of configured txrx streams */
 	A_UINT32 num_cfg_txrx_streams;
+	/*
+	 * pdev_id for identifying the MAC,
+	 * See macros starting with WMI_PDEV_ID_ for values.
+	 */
+	A_UINT32 pdev_id;
 	/*
 	 * This TLV is followed by another TLV of array of structures
 	 * wmi_vdev_txrx_streams cfg_txrx_streams[];
@@ -5869,6 +5900,15 @@ enum wmi_ap_ps_peer_param_max_sp {
 	MAX_WMI_AP_PS_PEER_PARAM_MAX_SP,
 };
 
+/** param values for WMI_AP_PS_PEER_PARAM_SIFS_RESP_FRMTYPE */
+enum wmi_ap_ps_param_sifs_resp_frmtype {
+	WMI_SIFS_RESP_PSPOLL    = (1 << 0),
+	WMI_SIFS_RESP_UAPSD     = (1 << 1),
+	WMI_SIFS_RESP_QBST_EXP  = (1 << 2),
+	WMI_SIFS_RESP_QBST_DATA = (1 << 3),
+	WMI_SIFS_RESP_QBST_BAR  = (1 << 4),
+};
+
 /**
  * AP power save parameter
  * Set a power save specific parameter for a peer station
@@ -5898,7 +5938,10 @@ enum wmi_ap_ps_peer_param {
 
 	/** Time in seconds for aging out buffered frames for STA in power save */
 	WMI_AP_PS_PEER_PARAM_AGEOUT_TIME = 2,
-	/** Specify frame types that are considered SIFS RESP trigger frame */
+	/**
+	 * Specify frame types that are considered SIFS RESP trigger frame
+	 * (see enum wmi_ap_ps_param_sifs_resp_frmtype)
+	 */
 	WMI_AP_PS_PEER_PARAM_SIFS_RESP_FRMTYPE = 3,
 
 	/*
@@ -5919,7 +5962,7 @@ typedef struct {
 	wmi_mac_addr peer_macaddr;
 	/** AP powersave param (see enum wmi_ap_ps_peer_param) */
 	A_UINT32 param;
-	/** AP powersave param value */
+	/** AP powersave param value (see defines) */
 	A_UINT32 value;
 } wmi_ap_ps_peer_cmd_fixed_param;
 
@@ -6907,6 +6950,10 @@ typedef struct {
 	 * Type of the event present, either the cw interference event, or the wlan_im stats
 	 */
 	A_UINT32 interference_type;             /* type of interference, wlan or cw */
+	/** pdev_id for identifying the MAC
+	 * See macros starting with WMI_PDEV_ID_ for values.
+	 */
+	A_UINT32 pdev_id;
 	/*
 	 * Following this struct are these TLVs. Note that they are both array of structures
 	 * but can have at most one element. Which TLV is empty or has one element depends
@@ -9521,8 +9568,10 @@ typedef struct {
 	 *  WMITLV_TAG_STRUC_wmi_dfs_phyerr_filter_dis_cmd_fixed_param
 	 */
 	A_UINT32 tlv_header;
-	/** Reserved for future use */
-	A_UINT32 reserved0;
+	/** pdev_id for identifying the MAC
+	 * See macros starting with WMI_PDEV_ID_ for values.
+	 */
+	A_UINT32 pdev_id;
 } wmi_dfs_phyerr_filter_dis_cmd_fixed_param;
 
 /** TDLS COMMANDS */
@@ -15187,6 +15236,27 @@ typedef struct {
 	/** periodic stats duration (units are milliseconds) */
 	A_UINT32 stats_period;
 } wmi_set_periodic_channel_stats_config_fixed_param;
+
+typedef struct {
+	/*
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_pdev_wal_power_debug_cmd_fixed_param
+	 */
+	A_UINT32 tlv_header;
+	/*
+	 * pdev_id for identifying the MAC
+	 * See macros starting with WMI_PDEV_ID_ for values.
+	 */
+	A_UINT32 pdev_id;
+	/* Identify the wlan module */
+	A_UINT32 module_id;
+	/* Num of elements in the following args[] array */
+	A_UINT32 num_args;
+/**
+ * Following this structure are the TLVs:
+ *   A_UINT32 args[];
+ **/
+} wmi_pdev_wal_power_debug_cmd_fixed_param;
 
 /* ADD NEW DEFS HERE */
 

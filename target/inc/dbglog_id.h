@@ -1671,7 +1671,7 @@ extern "C" {
 #define  DCC_DBGID_RX_PATH                              269
 #define  DCC_DBGID_TX_PATH                              270
 
-/* RSSI Threshold Monitor DBGIDs*/
+/* RSSI Threshold Monitor DBGIDs */
 #define RSSI_MONITOR_DBGID_DEFINITION_START               0
 #define RSSI_MONITOR_VDEV_INIT                            1
 #define RSSI_MONITOR_VDEV_FREE                            2
@@ -1687,6 +1687,12 @@ extern "C" {
 #define RSSI_MONITOR_DELIVER_EVENT                       12
 #define RSSI_MONITOR_UPDATE_BEACON_RSSI                  13
 #define RSSI_MONITOR_DBGID_DEFINITION_END                14
+
+/* QBOOST DBGIDs */
+#define WLAN_MODULE_QBOOST_DEFINITION_START               0
+#define WLAN_MODULE_QBOOST_DBGID_WLAN_PEER_NOT_FOUND      1
+#define WLAN_MODULE_QBOOST_DEFINITION_END                 2
+
 
 #ifdef __cplusplus
 }
