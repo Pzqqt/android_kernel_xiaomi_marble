@@ -847,7 +847,7 @@ void htt_tx_desc_display(void *tx_desc)
 #endif
 
 #ifdef IPA_OFFLOAD
-#ifdef QCA_WIFI_2_0
+#ifdef QCA_WIFI_3_0
 /**
  * htt_tx_ipa_uc_wdi_tx_buf_alloc() - Alloc WDI TX buffers
  * @pdev: htt context
@@ -859,65 +859,6 @@ void htt_tx_desc_display(void *tx_desc)
  *
  * Return: 0 success
  */
-int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
-			 unsigned int uc_tx_buf_sz,
-			 unsigned int uc_tx_buf_cnt,
-			 unsigned int uc_tx_partition_base)
-{
-	unsigned int tx_buffer_count;
-	qdf_nbuf_t buffer_vaddr;
-	qdf_dma_addr_t buffer_paddr;
-	uint32_t *header_ptr;
-	uint32_t *ring_vaddr;
-#define IPA_UC_TX_BUF_FRAG_DESC_OFFSET 16
-#define IPA_UC_TX_BUF_FRAG_HDR_OFFSET 32
-
-	ring_vaddr = pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr;
-	/* Allocate TX buffers as many as possible */
-	for (tx_buffer_count = 0;
-	     tx_buffer_count < (uc_tx_buf_cnt - 1); tx_buffer_count++) {
-		buffer_vaddr = qdf_nbuf_alloc(pdev->osdev,
-					      uc_tx_buf_sz, 0, 4, false);
-		if (!buffer_vaddr) {
-			qdf_print("%s: TX BUF alloc fail, loop index: %d",
-				  __func__, tx_buffer_count);
-			return tx_buffer_count;
-		}
-
-		/* Init buffer */
-		qdf_mem_zero(qdf_nbuf_data(buffer_vaddr), uc_tx_buf_sz);
-		header_ptr = (uint32_t *) qdf_nbuf_data(buffer_vaddr);
-
-		/* HTT control header */
-		*header_ptr = HTT_IPA_UC_OFFLOAD_TX_HEADER_DEFAULT;
-		header_ptr++;
-
-		/* PKT ID */
-		*header_ptr |= ((uint16_t) uc_tx_partition_base +
-				tx_buffer_count) << 16;
-
-		qdf_nbuf_map(pdev->osdev, buffer_vaddr, QDF_DMA_BIDIRECTIONAL);
-		buffer_paddr = qdf_nbuf_get_frag_paddr(buffer_vaddr, 0);
-		header_ptr++;
-		*header_ptr = (uint32_t) (buffer_paddr +
-						IPA_UC_TX_BUF_FRAG_DESC_OFFSET);
-		header_ptr++;
-		*header_ptr = 0xFFFFFFFF;
-
-		/* FRAG Header */
-		header_ptr++;
-		*header_ptr = buffer_paddr + IPA_UC_TX_BUF_FRAG_HDR_OFFSET;
-
-		*ring_vaddr = buffer_paddr;
-		pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[tx_buffer_count] =
-			buffer_vaddr;
-		/* Memory barrier to ensure actual value updated */
-
-		ring_vaddr++;
-	}
-	return tx_buffer_count;
-}
-#else
 int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 			 unsigned int uc_tx_buf_sz,
 			 unsigned int uc_tx_buf_cnt,
@@ -985,6 +926,65 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 		/* Memory barrier to ensure actual value updated */
 
 		ring_vaddr += 2;
+	}
+	return tx_buffer_count;
+}
+#else
+int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
+			 unsigned int uc_tx_buf_sz,
+			 unsigned int uc_tx_buf_cnt,
+			 unsigned int uc_tx_partition_base)
+{
+	unsigned int tx_buffer_count;
+	qdf_nbuf_t buffer_vaddr;
+	qdf_dma_addr_t buffer_paddr;
+	uint32_t *header_ptr;
+	uint32_t *ring_vaddr;
+#define IPA_UC_TX_BUF_FRAG_DESC_OFFSET 16
+#define IPA_UC_TX_BUF_FRAG_HDR_OFFSET 32
+
+	ring_vaddr = pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr;
+	/* Allocate TX buffers as many as possible */
+	for (tx_buffer_count = 0;
+	     tx_buffer_count < (uc_tx_buf_cnt - 1); tx_buffer_count++) {
+		buffer_vaddr = qdf_nbuf_alloc(pdev->osdev,
+					      uc_tx_buf_sz, 0, 4, false);
+		if (!buffer_vaddr) {
+			qdf_print("%s: TX BUF alloc fail, loop index: %d",
+				  __func__, tx_buffer_count);
+			return tx_buffer_count;
+		}
+
+		/* Init buffer */
+		qdf_mem_zero(qdf_nbuf_data(buffer_vaddr), uc_tx_buf_sz);
+		header_ptr = (uint32_t *) qdf_nbuf_data(buffer_vaddr);
+
+		/* HTT control header */
+		*header_ptr = HTT_IPA_UC_OFFLOAD_TX_HEADER_DEFAULT;
+		header_ptr++;
+
+		/* PKT ID */
+		*header_ptr |= ((uint16_t) uc_tx_partition_base +
+				tx_buffer_count) << 16;
+
+		qdf_nbuf_map(pdev->osdev, buffer_vaddr, QDF_DMA_BIDIRECTIONAL);
+		buffer_paddr = qdf_nbuf_get_frag_paddr(buffer_vaddr, 0);
+		header_ptr++;
+		*header_ptr = (uint32_t) (buffer_paddr +
+						IPA_UC_TX_BUF_FRAG_DESC_OFFSET);
+		header_ptr++;
+		*header_ptr = 0xFFFFFFFF;
+
+		/* FRAG Header */
+		header_ptr++;
+		*header_ptr = buffer_paddr + IPA_UC_TX_BUF_FRAG_HDR_OFFSET;
+
+		*ring_vaddr = buffer_paddr;
+		pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[tx_buffer_count] =
+			buffer_vaddr;
+		/* Memory barrier to ensure actual value updated */
+
+		ring_vaddr++;
 	}
 	return tx_buffer_count;
 }
