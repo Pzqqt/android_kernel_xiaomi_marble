@@ -802,6 +802,123 @@ QDF_STATUS wma_get_link_speed(WMA_HANDLE handle, tSirLinkSpeedInfo *pLinkSpeed)
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+* wma_add_beacon_filter() - Issue WMI command to set beacon filter
+* @wma: wma handler
+* @filter_params: beacon_filter_param to set
+*
+* Return: Return QDF_STATUS
+*/
+QDF_STATUS wma_add_beacon_filter(WMA_HANDLE handle,
+				struct beacon_filter_param *filter_params)
+{
+	int i;
+	wmi_buf_t wmi_buf;
+	u_int8_t *buf;
+	A_UINT32 *ie_map;
+	int ret;
+	tp_wma_handle wma = (tp_wma_handle) handle;
+	wmi_add_bcn_filter_cmd_fixed_param *cmd;
+	int len = sizeof(wmi_add_bcn_filter_cmd_fixed_param);
+
+	len += WMI_TLV_HDR_SIZE;
+	len += BCN_FLT_MAX_ELEMS_IE_LIST*sizeof(A_UINT32);
+
+	if (!wma || !wma->wmi_handle) {
+		WMA_LOGE("%s: WMA is closed, can not issue set beacon filter",
+			__func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wmi_buf = wmi_buf_alloc(wma->wmi_handle, len);
+	if (!wmi_buf) {
+		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	buf = (u_int8_t *) wmi_buf_data(wmi_buf);
+
+	cmd = (wmi_add_bcn_filter_cmd_fixed_param *)wmi_buf_data(wmi_buf);
+	cmd->vdev_id = filter_params->vdev_id;
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+			WMITLV_TAG_STRUC_wmi_add_bcn_filter_cmd_fixed_param,
+			WMITLV_GET_STRUCT_TLVLEN(
+				wmi_add_bcn_filter_cmd_fixed_param));
+
+	buf += sizeof(wmi_add_bcn_filter_cmd_fixed_param);
+
+	WMITLV_SET_HDR(buf, WMITLV_TAG_ARRAY_UINT32,
+			(BCN_FLT_MAX_ELEMS_IE_LIST * sizeof(u_int32_t)));
+
+	ie_map = (A_UINT32 *)(buf + WMI_TLV_HDR_SIZE);
+	for (i = 0; i < BCN_FLT_MAX_ELEMS_IE_LIST; i++) {
+		ie_map[i] = filter_params->ie_map[i];
+		WMA_LOGD("beacon filter ie map = %u", ie_map[i]);
+	}
+
+	ret = wmi_unified_cmd_send(wma->wmi_handle, wmi_buf, len,
+			WMI_ADD_BCN_FILTER_CMDID);
+	if (ret) {
+		WMA_LOGE("Failed to send wmi add beacon filter = %d",
+				ret);
+		wmi_buf_free(wmi_buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+	WMA_LOGD("added beacon filter = %d", ret);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+* wma_remove_beacon_filter() - Issue WMI command to remove beacon filter
+* @wma: wma handler
+* @filter_params: beacon_filter_params
+*
+* Return: Return QDF_STATUS
+*/
+QDF_STATUS wma_remove_beacon_filter(WMA_HANDLE handle,
+				struct beacon_filter_param *filter_params)
+{
+	wmi_buf_t buf;
+	tp_wma_handle wma = (tp_wma_handle) handle;
+	wmi_rmv_bcn_filter_cmd_fixed_param *cmd;
+	int len = sizeof(wmi_rmv_bcn_filter_cmd_fixed_param);
+	int ret;
+
+	if (!wma || !wma->wmi_handle) {
+		WMA_LOGE("%s: WMA is closed, cannot issue remove beacon filter",
+			__func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	buf = wmi_buf_alloc(wma->wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_rmv_bcn_filter_cmd_fixed_param *)wmi_buf_data(buf);
+	cmd->vdev_id = filter_params->vdev_id;
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+			WMITLV_TAG_STRUC_wmi_rmv_bcn_filter_cmd_fixed_param,
+			WMITLV_GET_STRUCT_TLVLEN(
+				wmi_rmv_bcn_filter_cmd_fixed_param));
+
+	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
+			WMI_RMV_BCN_FILTER_CMDID);
+	if (ret) {
+		WMA_LOGE("Failed to send wmi remove beacon filter = %d",
+				ret);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+	WMA_LOGD("removed beacon filter = %d", ret);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+
 #ifdef FEATURE_GREEN_AP
 
 /**

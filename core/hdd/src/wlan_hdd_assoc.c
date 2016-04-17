@@ -110,6 +110,19 @@ uint8_t ccp_rsn_oui08[HDD_RSN_OUI_SIZE] = { 0x00, 0x0F, 0xAC, 0x05 };
 #define HDD_PEER_AUTHORIZE_WAIT 10
 
 /**
+ * beacon_filter_table - table of IEs used for beacon filtering
+ */
+static const int beacon_filter_table[] = {
+	SIR_MAC_DS_PARAM_SET_EID,
+	SIR_MAC_ERP_INFO_EID,
+	SIR_MAC_EDCA_PARAM_SET_EID,
+	SIR_MAC_QOS_CAPABILITY_EID,
+	SIR_MAC_HT_INFO_EID,
+	SIR_MAC_VHT_OPMODE_EID,
+	SIR_MAC_VHT_OPERATION_EID,
+};
+
+/**
  * hdd_conn_set_authenticated() - set authentication state
  * @pAdapter: pointer to the adapter
  * @authState: authentication state
@@ -310,6 +323,53 @@ hdd_conn_save_connected_bss_type(hdd_station_ctx_t *pHddStaCtx,
 		QDF_ASSERT(0);
 		break;
 	}
+}
+
+/**
+ * hdd_remove_beacon_filter() - remove beacon filter
+ * @adapter: Pointer to the hdd adapter
+ *
+ * Return: 0 on success and errno on failure
+ */
+static int hdd_remove_beacon_filter(hdd_adapter_t *adapter)
+{
+	QDF_STATUS status;
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	status = sme_remove_beacon_filter(hdd_ctx->hHal,
+				adapter->sessionId);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("sme_remove_beacon_filter() failed");
+		return -EFAULT;
+	}
+
+	return 0;
+}
+
+/**
+ * hdd_add_beacon_filter() - add beacon filter
+ * @adapter: Pointer to the hdd adapter
+ *
+ * Return: 0 on success and errno on failure
+ */
+static int hdd_add_beacon_filter(hdd_adapter_t *adapter)
+{
+	int i;
+	uint32_t ie_map[SIR_BCN_FLT_MAX_ELEMS_IE_LIST] = {0};
+	QDF_STATUS status;
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	for (i = 0; i < ARRAY_SIZE(beacon_filter_table); i++)
+		qdf_set_bit((beacon_filter_table[i] - 1),
+				(unsigned long int *)ie_map);
+
+	status = sme_add_beacon_filter(hdd_ctx->hHal,
+				adapter->sessionId, ie_map);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("sme_add_beacon_filter() failed");
+		return -EFAULT;
+	}
+	return 0;
 }
 
 /**
@@ -1086,6 +1146,9 @@ static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 
 	hdd_wmm_adapter_clear(pAdapter);
 	sme_ft_reset(WLAN_HDD_GET_HAL_CTX(pAdapter), pAdapter->sessionId);
+	if (hdd_remove_beacon_filter(pAdapter) != 0)
+		hdd_err("hdd_remove_beacon_filter() failed");
+
 	if (eCSR_ROAM_IBSS_LEAVE == roamStatus) {
 		uint8_t i;
 		sta_id = pHddStaCtx->broadcast_ibss_staid;
@@ -1775,6 +1838,9 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 		/* Save the connection info from CSR... */
 		hdd_conn_save_connect_info(pAdapter, pRoamInfo,
 					   eCSR_BSS_TYPE_INFRASTRUCTURE);
+
+		if (hdd_add_beacon_filter(pAdapter) != 0)
+			hdd_err("hdd_add_beacon_filter() failed");
 #ifdef FEATURE_WLAN_WAPI
 		if (pRoamInfo->u.pConnectedProfile->AuthType ==
 		    eCSR_AUTH_TYPE_WAPI_WAI_CERTIFICATE

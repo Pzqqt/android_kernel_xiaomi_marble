@@ -5541,6 +5541,18 @@ struct egap_conf_params {
 	uint32_t   flags;
 };
 
+#define SIR_BCN_FLT_MAX_ELEMS_IE_LIST 8
+/**
+ * struct beacon_filter_param - parameters for beacon filtering
+ * @vdev_id: vdev id
+ * @ie_map: bitwise map of IEs that needs to be filtered
+ *
+ */
+struct beacon_filter_param {
+	uint32_t   vdev_id;
+	uint32_t   ie_map[SIR_BCN_FLT_MAX_ELEMS_IE_LIST];
+};
+
 /**
  * struct csa_offload_params - CSA offload request parameters
  * @channel: channel

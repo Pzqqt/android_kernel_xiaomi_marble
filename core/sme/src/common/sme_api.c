@@ -15464,3 +15464,97 @@ bool sme_is_sta_smps_allowed(tHalHandle hal, uint8_t session_id)
 
 	return (csr_session->supported_nss_1x1 == true) ? false : true;
 }
+
+/**
+ * sme_add_beacon_filter() - set the beacon filter configuration
+ * @hal: The handle returned by macOpen
+ * @session_id: session id
+ * @ie_map: bitwise array of IEs
+ *
+ * Return: Return QDF_STATUS, otherwise appropriate failure code
+ */
+QDF_STATUS sme_add_beacon_filter(tHalHandle hal,
+				 uint32_t session_id,
+				 uint32_t *ie_map)
+{
+	cds_msg_t message;
+	QDF_STATUS qdf_status;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct beacon_filter_param *filter_param;
+
+	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
+		sms_log(mac_ctx, LOGE,
+			"CSR session not valid: %d",
+			session_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	filter_param = qdf_mem_malloc(sizeof(*filter_param));
+	if (NULL == filter_param) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"%s: fail to alloc filter_param", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	filter_param->vdev_id = session_id;
+
+	qdf_mem_copy(filter_param->ie_map, ie_map,
+			BCN_FLT_MAX_ELEMS_IE_LIST * sizeof(uint32_t));
+
+	message.type = WMA_ADD_BCN_FILTER_CMDID;
+	message.bodyptr = filter_param;
+	qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
+					&message);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			"%s: Not able to post msg to WDA!",
+			__func__);
+
+		qdf_mem_free(filter_param);
+	}
+	return qdf_status;
+}
+
+/**
+ * sme_remove_beacon_filter() - set the beacon filter configuration
+ * @hal: The handle returned by macOpen
+ * @session_id: session id
+ *
+ * Return: Return QDF_STATUS, otherwise appropriate failure code
+ */
+QDF_STATUS sme_remove_beacon_filter(tHalHandle hal, uint32_t session_id)
+{
+	cds_msg_t message;
+	QDF_STATUS qdf_status;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct beacon_filter_param *filter_param;
+
+	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
+		sms_log(mac_ctx, LOGE,
+			"CSR session not valid: %d",
+			session_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	filter_param = qdf_mem_malloc(sizeof(*filter_param));
+	if (NULL == filter_param) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"%s: fail to alloc filter_param", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	filter_param->vdev_id = session_id;
+
+	message.type = WMA_REMOVE_BCN_FILTER_CMDID;
+	message.bodyptr = filter_param;
+	qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
+					&message);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			"%s: Not able to post msg to WDA!",
+			__func__);
+
+		qdf_mem_free(filter_param);
+	}
+	return qdf_status;
+}

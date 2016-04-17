@@ -1103,4 +1103,7 @@ QDF_STATUS sme_update_mimo_power_save(tHalHandle hHal,
 				      bool send_smps_action);
 
 bool sme_is_sta_smps_allowed(tHalHandle hHal, uint8_t session_id);
+QDF_STATUS sme_add_beacon_filter(tHalHandle hal,
+				uint32_t session_id, uint32_t *ie_map);
+QDF_STATUS sme_remove_beacon_filter(tHalHandle hal, uint32_t session_id);
 #endif /* #if !defined( __SME_API_H ) */

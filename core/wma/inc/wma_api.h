@@ -223,6 +223,11 @@ int wma_lro_init(struct wma_lro_config_cmd_t *lro_config);
 #endif
 bool wma_is_scan_simultaneous_capable(void);
 
+QDF_STATUS wma_remove_beacon_filter(WMA_HANDLE wma,
+				struct beacon_filter_param *filter_params);
+
+QDF_STATUS wma_add_beacon_filter(WMA_HANDLE wma,
+				struct beacon_filter_param *filter_params);
 #ifdef FEATURE_GREEN_AP
 void wma_setup_egap_support(struct wma_tgt_cfg *tgt_cfg, WMA_HANDLE handle);
 void wma_register_egap_event_handle(WMA_HANDLE handle);
