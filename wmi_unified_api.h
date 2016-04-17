@@ -448,7 +448,8 @@ QDF_STATUS wmi_unified_set_mcc_channel_time_latency_cmd
 	uint32_t mcc_channel_freq, uint32_t mcc_channel_time_latency);
 
 QDF_STATUS wmi_unified_set_enable_disable_mcc_adaptive_scheduler_cmd(
-		   void *wmi_hdl, uint32_t mcc_adaptive_scheduler);
+		   void *wmi_hdl, uint32_t mcc_adaptive_scheduler,
+		   uint32_t pdev_id);
 
 #ifndef WMI_NON_TLV_SUPPORT
 QDF_STATUS wmi_unified_bcn_buf_ll_cmd(void *wmi_hdl,
