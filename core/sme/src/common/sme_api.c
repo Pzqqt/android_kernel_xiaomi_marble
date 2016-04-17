@@ -12421,6 +12421,16 @@ QDF_STATUS sme_init_thermal_info(tHalHandle hHal, tSmeThermalParams thermalParam
 
 	pWmaParam->thermalMgmtEnabled = thermalParam.smeThermalMgmtEnabled;
 	pWmaParam->throttlePeriod = thermalParam.smeThrottlePeriod;
+
+	pWmaParam->throttle_duty_cycle_tbl[0] =
+		thermalParam.sme_throttle_duty_cycle_tbl[0];
+	pWmaParam->throttle_duty_cycle_tbl[1] =
+		thermalParam.sme_throttle_duty_cycle_tbl[1];
+	pWmaParam->throttle_duty_cycle_tbl[2] =
+		thermalParam.sme_throttle_duty_cycle_tbl[2];
+	pWmaParam->throttle_duty_cycle_tbl[3] =
+		thermalParam.sme_throttle_duty_cycle_tbl[3];
+
 	pWmaParam->thermalLevels[0].minTempThreshold =
 		thermalParam.smeThermalLevels[0].smeMinTempThreshold;
 	pWmaParam->thermalLevels[0].maxTempThreshold =

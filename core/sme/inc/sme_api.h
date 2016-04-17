@@ -159,11 +159,14 @@ typedef struct {
 } tSmeThermalLevelInfo;
 
 #define SME_MAX_THERMAL_LEVELS (4)
+#define SME_MAX_THROTTLE_LEVELS (4)
+
 typedef struct {
 	/* Array of thermal levels */
 	tSmeThermalLevelInfo smeThermalLevels[SME_MAX_THERMAL_LEVELS];
 	uint8_t smeThermalMgmtEnabled;
 	uint32_t smeThrottlePeriod;
+	uint8_t sme_throttle_duty_cycle_tbl[SME_MAX_THROTTLE_LEVELS];
 } tSmeThermalParams;
 
 typedef enum {

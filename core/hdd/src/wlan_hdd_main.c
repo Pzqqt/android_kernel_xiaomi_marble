@@ -5508,6 +5508,15 @@ static int hdd_init_thermal_info(hdd_context_t *hdd_ctx)
 		hdd_ctx->config->thermalMitigationEnable;
 	thermal_param.smeThrottlePeriod = hdd_ctx->config->throttlePeriod;
 
+	thermal_param.sme_throttle_duty_cycle_tbl[0] =
+		hdd_ctx->config->throttle_dutycycle_level0;
+	thermal_param.sme_throttle_duty_cycle_tbl[1] =
+		hdd_ctx->config->throttle_dutycycle_level1;
+	thermal_param.sme_throttle_duty_cycle_tbl[2] =
+		hdd_ctx->config->throttle_dutycycle_level2;
+	thermal_param.sme_throttle_duty_cycle_tbl[3] =
+		hdd_ctx->config->throttle_dutycycle_level3;
+
 	thermal_param.smeThermalLevels[0].smeMinTempThreshold =
 		hdd_ctx->config->thermalTempMinLevel0;
 	thermal_param.smeThermalLevels[0].smeMaxTempThreshold =
