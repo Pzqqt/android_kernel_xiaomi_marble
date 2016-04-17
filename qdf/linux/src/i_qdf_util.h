@@ -128,6 +128,17 @@ static inline int __qdf_status_to_os_return(QDF_STATUS status)
 	}
 }
 
+/**
+ * __qdf_set_bit() - set bit in address
+ * @nr: bit number to be set
+ * @addr: address buffer pointer
+ *
+ * Return: none
+ */
+static inline void __qdf_set_bit(unsigned int nr, unsigned long *addr)
+{
+	__set_bit(nr, addr);
+}
 
 /**
  * __qdf_set_macaddr_broadcast() - set a QDF MacAddress to the 'broadcast'

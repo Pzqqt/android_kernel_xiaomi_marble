@@ -97,6 +97,15 @@ static inline int qdf_status_to_os_return(QDF_STATUS status)
 }
 
 /**
+ * qdf_set_bit() - set bit in address
+ * @nr: bit number to be set
+ * @addr: address buffer pointer
+ *
+ * Return: none
+ */
+#define qdf_set_bit(nr, addr)    __qdf_set_bit(nr, addr)
+
+/**
  * qdf_container_of - cast a member of a structure out to the containing
  * structure
  * @ptr: the pointer to the member.
