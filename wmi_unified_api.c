@@ -1099,13 +1099,14 @@ QDF_STATUS wmi_unified_ocb_set_config(void *wmi_hdl,
  * Return: QDF_STATUS_SUCCESS for sucess or error code
  */
 QDF_STATUS wmi_unified_set_enable_disable_mcc_adaptive_scheduler_cmd(
-		void *wmi_hdl, uint32_t mcc_adaptive_scheduler)
+		void *wmi_hdl, uint32_t mcc_adaptive_scheduler,
+		uint32_t pdev_id)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
 	if (wmi_handle->ops->send_set_enable_disable_mcc_adaptive_scheduler_cmd)
 		return wmi_handle->ops->send_set_enable_disable_mcc_adaptive_scheduler_cmd(wmi_handle,
-					mcc_adaptive_scheduler);
+					mcc_adaptive_scheduler, pdev_id);
 
 	return QDF_STATUS_E_FAILURE;
 }

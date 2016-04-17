@@ -63,6 +63,7 @@ QDF_STATUS send_vdev_create_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->vdev_id = param->if_id;
 	cmd->vdev_type = param->type;
 	cmd->vdev_subtype = param->subtype;
+	cmd->pdev_id = WMI_PDEV_ID_SOC;
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(macaddr, &cmd->vdev_macaddr);
 	WMI_LOGD("%s: ID = %d VAP Addr = %02x:%02x:%02x:%02x:%02x:%02x",
 		 __func__, param->if_id,
@@ -806,7 +807,7 @@ QDF_STATUS send_resume_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_TAG_STRUC_wmi_pdev_resume_cmd_fixed_param,
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_pdev_resume_cmd_fixed_param));
-	cmd->pdev_id = 0;
+	cmd->pdev_id = WMI_PDEV_ID_SOC;
 	ret = wmi_unified_cmd_send(wmi_handle, wmibuf, sizeof(*cmd),
 				   WMI_PDEV_RESUME_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
@@ -2693,7 +2694,8 @@ QDF_STATUS send_ocb_set_config_cmd_tlv(wmi_unified_t wmi_handle,
  * Return: QDF_STATUS_SUCCESS for sucess or error code
  */
 QDF_STATUS send_set_enable_disable_mcc_adaptive_scheduler_cmd_tlv(
-		   wmi_unified_t wmi_handle, uint32_t mcc_adaptive_scheduler)
+		wmi_unified_t wmi_handle, uint32_t mcc_adaptive_scheduler,
+		uint32_t pdev_id)
 {
 	QDF_STATUS ret;
 	wmi_buf_t buf = 0;
@@ -2714,6 +2716,7 @@ QDF_STATUS send_set_enable_disable_mcc_adaptive_scheduler_cmd_tlv(
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_resmgr_adaptive_ocs_enable_disable_cmd_fixed_param));
 	cmd->enable = mcc_adaptive_scheduler;
+	cmd->pdev_id = pdev_id;
 
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_RESMGR_ADAPTIVE_OCS_ENABLE_DISABLE_CMDID);
@@ -6789,6 +6792,7 @@ QDF_STATUS send_pktlog_wmi_send_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_GET_STRUCT_TLVLEN
 		       (wmi_pdev_pktlog_enable_cmd_fixed_param));
 		cmd->evlist = PKTLOG_EVENT;
+		cmd->pdev_id = WMI_PDEV_ID_SOC;
 		if (wmi_unified_cmd_send(wmi_handle, buf, len,
 					 WMI_PDEV_PKTLOG_ENABLE_CMDID)) {
 			WMI_LOGE("failed to send pktlog enable cmdid");
@@ -6808,7 +6812,7 @@ QDF_STATUS send_pktlog_wmi_send_cmd_tlv(wmi_unified_t wmi_handle,
 		     WMITLV_TAG_STRUC_wmi_pdev_pktlog_disable_cmd_fixed_param,
 		     WMITLV_GET_STRUCT_TLVLEN
 		     (wmi_pdev_pktlog_disable_cmd_fixed_param));
-		disable_cmd->pdev_id = 0;
+		disable_cmd->pdev_id = WMI_PDEV_ID_SOC;
 		if (wmi_unified_cmd_send(wmi_handle, buf, len,
 					 WMI_PDEV_PKTLOG_DISABLE_CMDID)) {
 			WMI_LOGE("failed to send pktlog disable cmdid");
@@ -8969,6 +8973,7 @@ QDF_STATUS send_set_base_macaddr_indicate_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_pdev_set_base_macaddr_cmd_fixed_param));
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(custom_addr, &cmd->base_macaddr);
+	cmd->pdev_id = WMI_PDEV_ID_SOC;
 	err = wmi_unified_cmd_send(wmi_handle, buf,
 				   sizeof(*cmd),
 				   WMI_PDEV_SET_BASE_MACADDR_CMDID);
