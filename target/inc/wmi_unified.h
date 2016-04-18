@@ -233,6 +233,7 @@ typedef enum {
 	WMI_GRP_PMF_OFFLOAD,
 	WMI_GRP_BPF_OFFLOAD, /* Berkeley Packet Filter */
 	WMI_GRP_NAN_DATA,
+	WMI_GRP_PROTOTYPE,
 } WMI_GRP_ID;
 
 #define WMI_CMD_GRP_START_ID(grp_id) (((grp_id) << 12) | 0x1)
@@ -959,7 +960,8 @@ typedef enum {
 	 * NDI - NAN Data Interface
 	 * NDP - NAN Data Path
 	 */
-	WMI_NDI_GET_CAP_REQ_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_NAN_DATA),
+	/* Commands in prototyping phase */
+	WMI_NDI_GET_CAP_REQ_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_PROTOTYPE),
 	WMI_NDP_INITIATOR_REQ_CMDID,
 	WMI_NDP_RESPONDER_REQ_CMDID,
 	WMI_NDP_END_REQ_CMDID,
@@ -1338,12 +1340,11 @@ typedef enum {
 	WMI_MAWC_ENABLE_SENSOR_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_MAWC),
 
 	/** pkt filter (BPF) offload relevant events */
-	WMI_BPF_CAPABILIY_INFO_EVENTID =
-				WMI_EVT_GRP_START_ID(WMI_GRP_BPF_OFFLOAD),
+	WMI_BPF_CAPABILIY_INFO_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_BPF_OFFLOAD),
 	WMI_BPF_VDEV_STATS_INFO_EVENTID,
 
-	/** NAN Data Events */
-	WMI_NDI_CAP_RSP_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_NAN_DATA),
+	/* Events in Prototyping phase */
+	WMI_NDI_CAP_RSP_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_PROTOTYPE),
 	WMI_NDP_INITIATOR_RSP_EVENTID,
 	WMI_NDP_RESPONDER_RSP_EVENTID,
 	WMI_NDP_END_RSP_EVENTID,
@@ -1373,12 +1374,6 @@ typedef enum {
 #define WMI_SSID_LIST_TAG		 0x2
 #define WMI_BSSID_LIST_TAG		 0x3
 #define WMI_IE_TAG			 0x4
-#define WMI_NDP_CFG_TAG                  0x5
-#define WMI_NDP_QOS_CFG_TAG              0x6
-#define WMI_NDP_APP_INFO_TAG             0x7
-#define WMI_NDP_END_REQ_LIST_TAG         0x8
-#define WMI_NDP_END_RSP_PER_NDI_LIST_TAG 0x9
-#define WMI_NDP_END_INDICATION_LIST_TAG  0xA
 
 typedef struct {
 	A_UINT32 tlv_header;            /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_channel */
@@ -6765,8 +6760,8 @@ typedef struct {
 	/** total number of negotiated ht rate set. Also the sizeof
 	 *  peer_ht_rates[] */
 	A_UINT32 num_peer_ht_rates;
-	/**
-	 * Bitmap providing QCA proprietary mapping of bandwidths to max Rx NSS
+	/*
+	 * Bitmap providing customized mapping of bandwidths to max Rx NSS
 	 * for this peer.
 	 * This is required since 802.11 standard currently facilitates peer to
 	 * be able to advertise only a single max Rx NSS value across all
@@ -10981,7 +10976,9 @@ typedef struct {
 	A_UINT32 vdev_id;
 	/** NAN interface MAC address */
 	wmi_mac_addr nan_interface_macaddr;
-} wmi_nan_disc_iface_created_event_fixed_param;
+} wmi_nan_disc_iface_created_event_fixed_param_PROTOTYPE;
+
+#define wmi_nan_disc_iface_created_event_fixed_param wmi_nan_disc_iface_created_event_fixed_param_PROTOTYPE
 
 /**
  * Event to indicate NAN discovery interface deleted
@@ -10994,7 +10991,9 @@ typedef struct {
 	A_UINT32 tlv_header;
 	/** Unique id identifying the VDEV */
 	A_UINT32 vdev_id;
-} wmi_nan_disc_iface_deleted_event_fixed_param;
+} wmi_nan_disc_iface_deleted_event_fixed_param_PROTOTYPE;
+
+#define wmi_nan_disc_iface_deleted_event_fixed_param wmi_nan_disc_iface_deleted_event_fixed_param_PROTOTYPE
 
 /**
  * Event to indicate NAN device started new cluster
@@ -11009,7 +11008,9 @@ typedef struct {
 	A_UINT32 vdev_id;
 	/** NAN Cluster ID */
 	A_UINT32 nan_cluster_id;
-} wmi_nan_started_cluster_event_fixed_param;
+} wmi_nan_started_cluster_event_fixed_param_PROTOTYPE;
+
+#define wmi_nan_started_cluster_event_fixed_param wmi_nan_started_cluster_event_fixed_param_PROTOTYPE
 
 /**
  * Event to indicate NAN device joined to cluster
@@ -11024,7 +11025,9 @@ typedef struct {
 	A_UINT32 vdev_id;
 	/** NAN Cluster ID */
 	A_UINT32 nan_cluster_id;
-} wmi_nan_joined_cluster_event_fixed_param;
+} wmi_nan_joined_cluster_event_fixed_param_PROTOTYPE;
+
+#define wmi_nan_joined_cluster_event_fixed_param wmi_nan_joined_cluster_event_fixed_param_PROTOTYPE
 
 /** NAN DATA CMD's */
 
@@ -11039,34 +11042,9 @@ typedef struct {
 	A_UINT32 tlv_header;
 	/** unique id generated in upper layer for the transaction */
 	A_UINT32 transaction_id;
-} wmi_ndi_get_cap_req_fixed_param;
+} wmi_ndi_get_cap_req_fixed_param_PROTOTYPE;
 
-/**
- * NDP configuration (Security and/or QOS)
- */
-typedef struct {
-	A_UINT32 tag; /** WMI_NDP_CFG_TAG */
-	A_UINT32 ndp_cfg_len; /** ndp_cfg length in byte */
-	A_UINT32 ndp_cfg[1]; /** Security/QoS configuration */
-} wmi_ndp_cfg;
-
-/**
- * NDP QOS configuration
- */
-typedef struct {
-	A_UINT32 tag; /** WMI_NDP_QOS_CFG_TAG */
-	A_UINT32 ndp_qos_cfg_len; /** ndp_qos_cfg length in byte */
-	A_UINT32 ndp_qos_cfg[1]; /** QoS configuration */
-} wmi_ndp_qos_cfg;
-
-/**
- * NDP application information
- */
-typedef struct {
-	A_UINT32 tag; /** WMI_NDP_APP_INFO_TAG */
-	A_UINT32 ndp_app_info_len; /** ndp_app_info length in byte */
-	A_UINT32 ndp_app_info[1]; /** App/Service information */
-} wmi_ndp_app_info;
+#define wmi_ndi_get_cap_req_fixed_param wmi_ndi_get_cap_req_fixed_param_PROTOTYPE
 
 /**
  * NDP Response code
@@ -11075,7 +11053,9 @@ typedef enum {
 	NDP_RSP_CODE_REQUEST_ACCEPT = 0x00,
 	NDP_RSP_CODE_REQUEST_REJECT = 0x01,
 	NDP_RSP_CODE_REQUEST_DEFER  = 0x02,
-} wmi_ndp_rsp_code;
+} wmi_ndp_rsp_code_PROTOTYPE;
+
+#define wmi_ndp_rsp_code wmi_ndp_rsp_code_PROTOTYPE
 
 /**
  * NDP Initiator requesting a data session
@@ -11094,17 +11074,20 @@ typedef struct {
 	A_UINT32 service_instance_id;
 	/** Discovery MAC addr of the publisher/peer */
 	wmi_mac_addr peer_discovery_mac_addr;
-	/** Number of bytes in TLV wmi_ndp_cfg */
+	/* Actual number of bytes in TLV ndp_cfg */
 	A_UINT32 ndp_cfg_len;
-	/** Number of bytes in TLV wmi_ndp_app_info */
+	/* Actual number of bytes in TLV ndp_app_info */
 	A_UINT32 ndp_app_info_len;
 	/**
 	 * TLV (tag length value ) parameters follow the ndp_initiator_req
 	 * structure. The TLV's are:
-	 * wmi_ndp_cfg ndp_cfg[];
-	 * wmi_ndp_app_info ndp_app_info[];
+	 * wmi_channel channel;
+	 * A_UINT8 ndp_cfg[];
+	 * A_UINT8 ndp_app_info[];
 	 */
-} wmi_ndp_initiator_req_fixed_param;
+} wmi_ndp_initiator_req_fixed_param_PROTOTYPE;
+
+#define wmi_ndp_initiator_req_fixed_param wmi_ndp_initiator_req_fixed_param_PROTOTYPE
 
 /**
  * Initiate a data response on the responder side
@@ -11127,54 +11110,55 @@ typedef struct {
 	A_UINT32 ndp_instance_id;
 	/** Response Code defined in wmi_ndp_rsp_code */
 	A_UINT32 rsp_code;
-	/** Number of bytes in TLV wmi_ndp_cfg */
+	/** Number of bytes in TLV ndp_cfg */
 	A_UINT32 ndp_cfg_len;
-	/** Number of bytes in TLV wmi_ndp_app_info */
+	/** Number of bytes in TLV ndp_app_info */
 	A_UINT32 ndp_app_info_len;
 	/**
 	 * TLV (tag length value ) parameters follow the ndp_responder_req
 	 * structure. The TLV's are:
-	 * wmi_ndp_cfg ndp_cfg[];
-	 * wmi_ndp_app_info ndp_app_info[];
+	 * A_UINT8 ndp_cfg[];
+	 * A_UINT8 ndp_app_info[];
 	 */
-} wmi_ndp_responder_req_fixed_param;
+} wmi_ndp_responder_req_fixed_param_PROTOTYPE;
+
+#define wmi_ndp_responder_req_fixed_param wmi_ndp_responder_req_fixed_param_PROTOTYPE
 
 /**
  * NDP end type
  */
 typedef enum {
-	NDP_END_TYPE_UNSPECIFIED = 0x00,
-	NDP_END_TYPE_PEER_UNAVAILABLE = 0x01,
-	NDP_END_TYPE_OTA_FRAME = 0x02,
-} wmi_ndp_end_type;
+	WMI_NDP_END_TYPE_UNSPECIFIED = 0x00,
+	WMI_NDP_END_TYPE_PEER_UNAVAILABLE = 0x01,
+	WMI_NDP_END_TYPE_OTA_FRAME = 0x02,
+} wmi_ndp_end_type_PROTOTYPE;
+
+#define wmi_ndp_end_type wmi_ndp_end_type_PROTOTYPE
 
 /**
  * NDP end reason code
  */
 typedef enum {
-	NDP_END_REASON_UNSPECIFIED = 0x00,
-	NDP_END_REASON_INACTIVITY = 0x01,
-	NDP_END_REASON_PEER_DATA_END = 0x02,
-} wmi_ndp_end_reason_code;
+	WMI_NDP_END_REASON_UNSPECIFIED = 0x00,
+	WMI_NDP_END_REASON_INACTIVITY = 0x01,
+	WMI_NDP_END_REASON_PEER_DATA_END = 0x02,
+} wmi_ndp_end_reason_code_PROTOTYPE;
+
+#define wmi_ndp_end_reason_code wmi_ndp_end_reason_code_PROTOTYPE
 
 /**
  * NDP end request
  */
 typedef struct {
+	/* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_ndp_end_req */
+	A_UINT32 tlv_header;
 	/** reason_code  defined in  wmi_ndp_end_reason_code */
 	A_UINT32 reason_code;
 	/** NDP instance id */
 	A_UINT32 ndp_instance_id;
-} wmi_ndp_end_req;
+} wmi_ndp_end_req_PROTOTYPE;
 
-/**
- * NDP end request list
- */
-typedef struct {
-	A_UINT32 tag;/** WMI_NDP_END_REQ_LIST_TAG  */
-	A_UINT32 num_ndp_end_reqs; /** number of wmi_ndp_end_req */
-	wmi_ndp_end_req ndp_end_reqs[1];
-} wmi_ndp_end_req_list;
+#define wmi_ndp_end_req wmi_ndp_end_req_PROTOTYPE
 
 /**
  * NDP End request
@@ -11187,16 +11171,14 @@ typedef struct {
 	A_UINT32 tlv_header;
 	/** unique id generated in upper layer for the transaction */
 	A_UINT32 transaction_id;
-	/** Number of ndp instances in wmi_ndp_end_req_list */
-	A_UINT32 num_ndp_instances;
-	/** Number of bytes in TLV wmi_ndp_end_req_list */
-	A_UINT32 ndp_end_req_len;
 	/**
 	 * TLV (tag length value ) parameters follow the ndp_end_req
 	 * structure. The TLV's are:
-	 * wmi_ndp_end_req wmi_ndp_end_req_list[];
+	 * wmi_ndp_end_req ndp_end_req_list[];
 	 */
-} wmi_ndp_end_req_fixed_param;
+} wmi_ndp_end_req_fixed_param_PROTOTYPE;
+
+#define wmi_ndp_end_req_fixed_param wmi_ndp_end_req_fixed_param_PROTOTYPE
 
 /* NAN DATA RSP EVENTS */
 
@@ -11213,11 +11195,13 @@ typedef struct {
 	A_UINT32 transaction_id;
 	/** Max ndi interface support */
 	A_UINT32 max_ndi_interfaces;
-	/** Max ndp per ndi support */
-	A_UINT32 max_ndp_per_ndi;
+	/** Max ndp sessions can support */
+	A_UINT32 max_ndp_sessions;
 	/** Max number of peer's per ndi */
 	A_UINT32 max_peers_per_ndi;
-} wmi_ndi_cap_rsp_event_fixed_param;
+} wmi_ndi_cap_rsp_event_fixed_param_PROTOTYPE;
+
+#define wmi_ndi_cap_rsp_event_fixed_param wmi_ndi_cap_rsp_event_fixed_param_PROTOTYPE
 
 /**
  * NDP command response code
@@ -11225,7 +11209,9 @@ typedef struct {
 typedef enum {
 	NDP_CMD_RSP_STATUS_SUCCESS = 0x00,
 	NDP_CMD_RSP_STATUS_ERROR = 0x01,
-} wmi_ndp_cmd_rsp_status;
+} wmi_ndp_cmd_rsp_status_PROTOTYPE;
+
+#define wmi_ndp_cmd_rsp_status wmi_ndp_cmd_rsp_status_PROTOTYPE
 
 /**
  * NDP command reason code
@@ -11239,7 +11225,17 @@ typedef enum {
 	NDP_INVALID_APP_INFO_LEN_PARAM = 0x05,
 	NDP_INVALID_NDP_INSTANCE_ID_PARAM = 0x06,
 	NDP_INVALID_RSP_CODE_PARAM = 0x07,
-} wmi_ndp_cmd_reason_code;
+	NDP_INVALID_CHANNEL_PARAM = 0x08,
+	NDP_INVALID_APP_INFO = 0x09,
+	NDP_INVALID_NDP_CFG = 0x0A,
+	NDP_INVALID_NDP_CFG_LEN_PARAM = 0x0B,
+	NDP_INVALID_NUM_NDP_INSTANCES_PARAM = 0x0C,
+	NDP_INVALID_NDP_END_REQ_LEN_PARAM = 0x0D,
+	NDP_INVALID_NDP_END_REQ = 0x0E,
+	NDP_REACHED_MAX_NDP_INSTANCES = 0x0F,
+} wmi_ndp_cmd_reason_code_PROTOTYPE;
+
+#define wmi_ndp_cmd_reason_code wmi_ndp_cmd_reason_code_PROTOTYPE
 
 /**
  * Event response for wmi_ndp_initiator_req
@@ -11258,7 +11254,14 @@ typedef struct {
 	A_UINT32 rsp_status;
 	/** Reason code defined in wmi_ndp_cmd_reason_code */
 	A_UINT32 reason_code;
-} wmi_ndp_initiator_rsp_event_fixed_param;
+	/*
+	 * Unique token Id generated on the initiator/responder
+	 * side used for a NDP session between two NAN devices
+	 */
+	A_UINT32 ndp_instance_id;
+} wmi_ndp_initiator_rsp_event_fixed_param_PROTOTYPE;
+
+#define wmi_ndp_initiator_rsp_event_fixed_param wmi_ndp_initiator_rsp_event_fixed_param_PROTOTYPE
 
 /**
  * Event response for wmi_ndp_responder_req cmd
@@ -11277,30 +11280,49 @@ typedef struct {
 	A_UINT32 rsp_status;
 	/** Reason code defined in wmi_ndp_cmd_reason_code */
 	A_UINT32 reason_code;
-} wmi_ndp_responder_rsp_event_fixed_param;
+	/*
+	 * Unique token Id generated on the initiator/responder
+	 * side used for a NDP session between two NAN devices
+	 */
+	A_UINT32 ndp_instance_id;
+	/* NDI mac address of the peer */
+	wmi_mac_addr peer_ndi_mac_addr;
+} wmi_ndp_responder_rsp_event_fixed_param_PROTOTYPE;
+
+#define wmi_ndp_responder_rsp_event_fixed_param wmi_ndp_responder_rsp_event_fixed_param_PROTOTYPE
+/**
+ * Active ndp instance id
+ */
+typedef struct {
+	/*
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_active_ndp_instance_id
+	 */
+	A_UINT32 tlv_header;
+	/* NDP instance id */
+	A_UINT32 ndp_instance_id;
+} wmi_active_ndp_instance_id_PROTOTYPE;
+
+#define wmi_active_ndp_instance_id wmi_active_ndp_instance_id_PROTOTYPE
 
 /**
  * NDP end response per ndi
  */
 typedef struct {
+	/*
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_ndp_end_rsp_per_ndi
+	 */
+	A_UINT32 tlv_header;
 	/** Unique id identifying the VDEV */
 	A_UINT32 vdev_id;
 	/** Peer MAC addr */
 	wmi_mac_addr peer_mac_addr;
 	/** Number of active ndps on this ndi */
 	A_UINT32 num_active_ndps_on_ndi;
-} wmi_ndp_end_rsp_per_ndi;
+} wmi_ndp_end_rsp_per_ndi_PROTOTYPE;
 
-/**
- * NDP end response per ndi list
- */
-typedef struct {
-	/** WMI_NDP_END_RSP_PER_NDI_LIST_TAG */
-	A_UINT32 tag;
-	/** Number of ndp_end_rsp_per_ndi */
-	A_UINT32 num_ndp_end_rsp_per_ndis;
-	wmi_ndp_end_rsp_per_ndi ndp_end_rsp_per_ndis[1];
-} wmi_ndp_end_rsp_per_ndi_list;
+#define wmi_ndp_end_rsp_per_ndi wmi_ndp_end_rsp_per_ndi_PROTOTYPE
 
 /**
  * Event response for wmi_ndp_end_req cmd
@@ -11317,14 +11339,15 @@ typedef struct {
 	A_UINT32 rsp_status;
 	/** Reason code defined in wmi_ndp_cmd_reason_code */
 	A_UINT32 reason_code;
-	/** Number of bytes in TLV wmi_ndp_end_rsp_per_ndi */
-	A_UINT32 data_end_req_rsp_len;
 	/**
 	 * TLV (tag length value ) parameters follow the ndp_end_rsp
 	 * structure. The TLV's are:
 	 * wmi_ndp_end_rsp_per_ndi ndp_end_rsp_per_ndis[];
+	 * wmi_active_ndp_instance_id active_ndp_instances_id[];
 	 */
-} wmi_ndp_end_rsp_event_fixed_param;
+} wmi_ndp_end_rsp_event_fixed_param_PROTOTYPE;
+
+#define wmi_ndp_end_rsp_event_fixed_param wmi_ndp_end_rsp_event_fixed_param_PROTOTYPE
 
 /** NAN DATA EVENTS */
 
@@ -11334,7 +11357,9 @@ typedef struct {
 typedef enum {
 	WMI_NDP_INITIATOR_ROLE,
 	WMI_NDP_RESPONDER_ROLE,
-} wmi_ndp_self_role;
+} wmi_ndp_self_role_PROTOTYPE;
+
+#define wmi_ndp_self_role wmi_ndp_self_role_PROTOTYPE
 
 /**
  * NDP accept policy
@@ -11342,7 +11367,9 @@ typedef enum {
 typedef enum {
 	WMI_NDP_ACCEPT_POLICY_NONE,
 	WMI_NDP_ACCEPT_POLICY_ALL,
-} wmi_ndp_accept_policy;
+} wmi_ndp_accept_policy_PROTOTYPE;
+
+#define wmi_ndp_accept_policy wmi_ndp_accept_policy_PROTOTYPE
 
 /**
  * Event indication received on the responder side when a NDP Initiator request/
@@ -11368,7 +11395,9 @@ typedef struct {
 	/** Unique Instance Id corresponding to a service/session. */
 	A_UINT32 service_instance_id;
 	/** Discovery MAC addr of the peer/initiator */
-	wmi_mac_addr peer_disc_mac_addr;
+	wmi_mac_addr peer_discovery_mac_addr;
+	/* NDI mac address of the peer */
+	wmi_mac_addr peer_ndi_mac_addr;
 	/**
 	 * Unique token Id generated on the initiator/responder
 	 * side used for a NDP session between two NAN devices
@@ -11381,10 +11410,12 @@ typedef struct {
 	/**
 	 * TLV (tag length value ) parameters follow the ndp_indication
 	 * structure. The TLV's are:
-	 * wmi_ndp_cfg ndp_cfg[];
-	 * wmi_ndp_app_info ndp_app_info[];
+	 * A_UINT8 ndp_cfg[];
+	 * A_UINT8 ndp_app_info[];
 	 */
-} wmi_ndp_indication_event_fixed_param;
+} wmi_ndp_indication_event_fixed_param_PROTOTYPE;
+
+#define wmi_ndp_indication_event_fixed_param wmi_ndp_indication_event_fixed_param_PROTOTYPE
 
 /**
  * Event indication of data confirm is received on both
@@ -11417,56 +11448,37 @@ typedef struct {
 	/**
 	 * TLV (tag length value ) parameters follow the ndp_confirm
 	 * structure. The TLV's are:
-	 * wmi_ndp_cfg ndp_cfg[];
-	 * wmi_ndp_app_info ndp_app_info[];
+	 * A_UINT8 ndp_cfg[];
+	 * A_UINT8 ndp_app_info[];
 	 */
-} wmi_ndp_confirm_event_fixed_param;
+} wmi_ndp_confirm_event_fixed_param_PROTOTYPE;
+
+#define wmi_ndp_confirm_event_fixed_param wmi_ndp_confirm_event_fixed_param_PROTOTYPE
 
 /**
- * NDP end indication
- */
-typedef struct {
-	/** type defined in  wmi_ndp_end_type */
-	A_UINT32 type;
-	/** reason_code  defined in  wmi_ndp_end_reason_code */
-	A_UINT32 reason_code;
-	/** NDP instance id */
-	A_UINT32 ndp_instance_id;
-} wmi_ndp_end_indication;
-
-/**
- * NDP end indication list
- */
-typedef struct {
-	/** WMI_NDP_END_INDICATION_LIST_TAG */
-	A_UINT32 tag;
-	/** Number of ndp_end_rsp_per_ndi */
-	A_UINT32 num_ndp_end_indications;
-	wmi_ndp_end_indication ndp_end_indications[1];
-} wmi_ndp_end_indication_list;
-
-/**
- * Event indication received on the initiator/responder side
- * terminating a NDP session
+ * Event indication received on the initiator/responder side terminating a NDP session
  */
 typedef struct {
 	/*
 	 * TLV tag and len; tag equals
-	 * WMITLV_TAG_STRUC_wmi_ndp_end_indication_event_fixed_param
+	 * WMITLV_TAG_STRUC_wmi_ndp_end_indication
 	 */
 	A_UINT32 tlv_header;
-	/** Unique id identifying the VDEV */
+	/** type defined in  wmi_ndp_end_type */
+	A_UINT32 type;
+	/* Unique id identifying the VDEV */
 	A_UINT32 vdev_id;
-	/** Number of ndp instances in wmi_ndp_end_indication */
-	A_UINT32 num_ndp_instances;
-	/** Number of bytes in TLV wmi_ndp_end_indication */
-	A_UINT32 data_end_event_len;
-	/**
-	 * TLV (tag length value ) parameters follow the ndp_end_indication
-	 * structure. The TLV's are:
-	 * wmi_ndp_end_indication ndp_end_indications[];
-	 */
-} wmi_ndp_end_indication_event_fixed_param;
+	/** reason_code  defined in  wmi_ndp_end_reason_code */
+	A_UINT32 reason_code;
+	/** NDP instance id */
+	A_UINT32 ndp_instance_id;
+	/* NDI MAC addr of the peer */
+	wmi_mac_addr peer_ndi_mac_addr;
+	/* Number of active ndps on this peer */
+	A_UINT32 num_active_ndps_on_peer;
+} wmi_ndp_end_indication_PROTOTYPE;
+
+#define wmi_ndp_end_indication wmi_ndp_end_indication_PROTOTYPE
 
 typedef struct {
 	A_UINT32 tlv_header;
