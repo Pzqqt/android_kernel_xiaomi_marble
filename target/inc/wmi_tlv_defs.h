@@ -693,6 +693,11 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_set_periodic_channel_stats_config_fixed_param,
 	WMITLV_TAG_STRUC_wmi_vdev_set_custom_aggr_size_cmd_fixed_param,
 	WMITLV_TAG_STRUC_wmi_pdev_wal_power_debug_cmd_fixed_param,
+	WMITLV_TAG_STRUC_WMI_MAC_PHY_CAPABILITIES,
+	WMITLV_TAG_STRUC_WMI_HW_MODE_CAPABILITIES,
+	WMITLV_TAG_STRUC_WMI_SOC_MAC_PHY_HW_MODE_CAPS,
+	WMITLV_TAG_STRUC_WMI_HAL_REG_CAPABILITIES_EXT,
+	WMITLV_TAG_STRUC_WMI_SOC_HAL_REG_CAPABILITIES,
 } WMITLV_TAG_ID;
 
 /*
@@ -2814,7 +2819,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_SERVICE_READY_EVENTID);
 
 /* Service Ready Extension event */
 #define WMITLV_TABLE_WMI_SERVICE_READY_EXT_EVENTID(id, op, buf, len) \
-	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_service_ready_ext_event_fixed_param, wmi_service_ready_ext_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_service_ready_ext_event_fixed_param, wmi_service_ready_ext_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_WMI_SOC_MAC_PHY_HW_MODE_CAPS, WMI_SOC_MAC_PHY_HW_MODE_CAPS, soc_hw_mode_caps, WMITLV_SIZE_FIX) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_STRUC, WMI_HW_MODE_CAPABILITIES, hw_mode_caps, WMITLV_SIZE_VAR) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_STRUC, WMI_MAC_PHY_CAPABILITIES, mac_phy_caps, WMITLV_SIZE_VAR) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_WMI_SOC_HAL_REG_CAPABILITIES, WMI_SOC_HAL_REG_CAPABILITIES, soc_hal_reg_caps, WMITLV_SIZE_FIX) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_STRUC, WMI_HAL_REG_CAPABILITIES_EXT, hal_reg_caps, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_SERVICE_READY_EXT_EVENTID);
 
 /* Ready event */

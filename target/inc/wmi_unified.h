@@ -1477,6 +1477,8 @@ typedef enum {
 #define WMI_HT_CAP_MPDU_DENSITY           0x0700        /* MPDU Density */
 #define WMI_HT_CAP_MPDU_DENSITY_MASK_SHIFT 8
 #define WMI_HT_CAP_HT40_SGI               0x0800
+#define WMI_HT_CAP_RX_LDPC                0x1000   /* LDPC RX support */
+#define WMI_HT_CAP_TX_LDPC                0x2000   /* LDPC TX support */
 
 /* These macros should be used when we wish to advertise STBC support for
  * only 1SS or 2SS or 3SS. */
@@ -1489,7 +1491,9 @@ typedef enum {
 				WMI_HT_CAP_HT40_SGI      | \
 				WMI_HT_CAP_TX_STBC       | \
 				WMI_HT_CAP_RX_STBC       | \
-				WMI_HT_CAP_LDPC)
+				WMI_HT_CAP_LDPC          | \
+				WMI_HT_CAP_TX_LDPC       | \
+				WMI_HT_CAP_RX_LDPC)
 
 /* WMI_VHT_CAP_* these maps to ieee 802.11ac vht capability information
    field. The fields not defined here are not supported, or reserved.
@@ -1521,6 +1525,7 @@ typedef enum {
 #define WMI_VHT_CAP_MAX_AMPDU_LEN_EXP_SHIFT      23
 #define WMI_VHT_CAP_RX_FIXED_ANT                 0x10000000
 #define WMI_VHT_CAP_TX_FIXED_ANT                 0x20000000
+#define WMI_VHT_CAP_TX_LDPC                      0x40000000
 
 /* TEMPORARY:
  * Preserve the incorrect old name as an alias for the correct new name
@@ -1547,6 +1552,7 @@ typedef enum {
 				 WMI_VHT_CAP_TX_STBC             |	\
 				 WMI_VHT_CAP_RX_STBC_MASK        |	\
 				 WMI_VHT_CAP_RX_LDPC             |	\
+				 WMI_VHT_CAP_TX_LDPC             |	\
 				 WMI_VHT_CAP_MAX_AMPDU_LEN_EXP   |	\
 				 WMI_VHT_CAP_RX_FIXED_ANT        |	\
 				 WMI_VHT_CAP_TX_FIXED_ANT)
@@ -15279,6 +15285,196 @@ typedef struct {
  *   A_UINT32 args[];
  **/
 } wmi_pdev_wal_power_debug_cmd_fixed_param;
+
+typedef enum {
+	    WLAN_2G_CAPABILITY = 0x1,
+	    WLAN_5G_CAPABILITY = 0x2,
+} WLAN_BAND_CAPABILITY;
+
+#define WMI_SUPPORT_11B_GET(flags) WMI_GET_BITS(flags, 0, 1)
+#define WMI_SUPPORT_11B_SET(flags, value) WMI_SET_BITS(flags, 0, 1, value)
+
+#define WMI_SUPPORT_11G_GET(flags) WMI_GET_BITS(flags, 1, 1)
+#define WMI_SUPPORT_11G_SET(flags, value) WMI_SET_BITS(flags, 1, 1, value)
+
+#define WMI_SUPPORT_11A_GET(flags) WMI_GET_BITS(flags, 2, 1)
+#define WMI_SUPPORT_11A_SET(flags, value) WMI_SET_BITS(flags, 2, 1, value)
+
+#define WMI_SUPPORT_11N_GET(flags) WMI_GET_BITS(flags, 3, 1)
+#define WMI_SUPPORT_11N_SET(flags, value) WMI_SET_BITS(flags, 3, 1, value)
+
+#define WMI_SUPPORT_11AC_GET(flags) WMI_GET_BITS(flags, 4, 1)
+#define WMI_SUPPORT_11AC_SET(flags, value) WMI_SET_BITS(flags, 4, 1, value)
+
+#define WMI_SUPPORT_11AX_GET(flags) WMI_GET_BITS(flags, 5, 1)
+#define WMI_SUPPORT_11AX_SET(flags, value) WMI_SET_BITS(flags, 5, 1, value)
+
+typedef struct {
+	/*
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_WMI_MAC_PHY_CAPABILITIES
+	 */
+	A_UINT32 tlv_header;
+	/*
+	 * hw_mode_id - identify a particular set of HW characteristics, as
+	 * specified by the subsequent fields. WMI_MAC_PHY_CAPABILITIES element
+	 * must be mapped to its parent WMI_HW_MODE_CAPABILITIES element using
+	 * hw_mode_id. No particular ordering of WMI_MAC_PHY_CAPABILITIES
+	 * elements should be assumed, though in practice the elements may
+	 * always be ordered by hw_mode_id
+	 */
+	A_UINT32 hw_mode_id;
+	/*
+	 * pdev_id starts with 1. pdev_id 1 => phy_id 0,
+	 * pdev_id 2 => phy_id 1
+	 */
+	A_UINT32 pdev_id;
+	/* phy id. Starts with 0 */
+	A_UINT32 phy_id;
+	/* supported modulations */
+	union {
+		A_UINT32 supports_11b:1,
+			 supports_11g:1,
+			 supports_11a:1,
+			 supports_11n:1,
+			 supports_11ac:1,
+			 supports_11ax:1;
+		A_UINT32 supported_flags;
+	};
+	/* supported bands, enum WLAN_BAND_CAPABILITY */
+	A_UINT32 supported_bands;
+	/*
+	 * ampdu density 0 for no restriction, 1 for 1/4 us, 2 for 1/2 us,
+	 * 3 for 1 us,4 for 2 us, 5 for 4 us, 6 for 8 us,7 for 16 us
+	 */
+	A_UINT32 ampdu_density;
+	/* max bw supported 2G, enum wmi_channel_width */
+	A_UINT32 max_bw_supported_2G;
+	/* WMI HT Capability, WMI_HT_CAP defines */
+	A_UINT32 ht_cap_info_2G;
+	/* VHT capability info field of 802.11ac, WMI_VHT_CAP defines */
+	A_UINT32 vht_cap_info_2G;
+	/*
+	 * VHT Supported MCS Set field Rx/Tx same
+	 * The max VHT-MCS for n SS subfield (where n = 1,...,8) is encoded as
+	 * follows
+	 * - 0 indicates support for VHT-MCS 0-7 for n spatial streams
+	 * - 1 indicates support for VHT-MCS 0-8 for n spatial streams
+	 * - 2 indicates support for VHT-MCS 0-9 for n spatial streams
+	 * - 3 indicates that n spatial streams is not supported
+	 */
+	A_UINT32 vht_supp_mcs_2G;
+	/* HE capability info field of 802.11ax, WMI_HE_CAP defines */
+	A_UINT32 he_cap_info_2G;
+	/* HE Supported MCS Set field Rx/Tx same */
+	A_UINT32 he_supp_mcs_2G;
+	/* Valid Transmit chain mask */
+	A_UINT32 tx_chain_mask_2G;
+	/* Valid Receive chain mask */
+	A_UINT32 rx_chain_mask_2G;
+	/* max bw supported 5G, enum wmi_channel_width */
+	A_UINT32 max_bw_supported_5G;
+	/* WMI HT Capability, WMI_HT_CAP defines */
+	A_UINT32 ht_cap_info_5G;
+	/* VHT capability info field of 802.11ac, WMI_VHT_CAP defines */
+	A_UINT32 vht_cap_info_5G;
+	/*
+	 * VHT Supported MCS Set field Rx/Tx same
+	 * The max VHT-MCS for n SS subfield (where n = 1,...,8) is encoded as
+	 * follows
+	 * - 0 indicates support for VHT-MCS 0-7 for n spatial streams
+	 * - 1 indicates support for VHT-MCS 0-8 for n spatial streams
+	 * - 2 indicates support for VHT-MCS 0-9 for n spatial streams
+	 * - 3 indicates that n spatial streams is not supported
+	 */
+	A_UINT32 vht_supp_mcs_5G;
+	/* HE capability info field of 802.11ax, WMI_HE_CAP defines */
+	A_UINT32 he_cap_info_5G;
+	/* HE Supported MCS Set field Rx/Tx same */
+	A_UINT32 he_supp_mcs_5G;
+	/* Valid Transmit chain mask */
+	A_UINT32 tx_chain_mask_5G;
+	/* Valid Receive chain mask */
+	A_UINT32 rx_chain_mask_5G;
+} WMI_MAC_PHY_CAPABILITIES;
+
+typedef struct {
+	/*
+	 * TLV tag and len; tag equal
+	 * WMITLV_TAG_STRUC_WMI_HW_MODE_CAPABILITIES
+	 */
+	A_UINT32 tlv_header;
+	/*
+	 * hw_mode_id - identify a particular set of HW characteristics,
+	 * as specified by the subsequent fields
+	 */
+	A_UINT32 hw_mode_id;
+	/* BIT0 represents phy_id 0, BIT1 represent phy_id 1 and so on */
+	A_UINT32 phy_id_map;
+	/*
+	 * number of bits set in phy_id_map represents number of
+	 * WMI_MAC_PHY_CAPABILITIES TLV's
+	 * one for each active PHY for current HW mode
+	 * identified by hw_mode_id. For example for
+	 * DBS/SBS mode there will be 2
+	 * WMI_MAC_PHY_CAPABILITIES TLVs and for
+	 * single MAC modes it
+	 * will be 1 WMI_MAC_PHY_CAPABILITIES
+	 * TLVs
+	 */
+} WMI_HW_MODE_CAPABILITIES;
+
+typedef struct {
+	/*
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_WMI_SOC_MAC_PHY_HW_MODE_CAPS
+	 */
+	A_UINT32 tlv_header;
+	/* num HW modes */
+	A_UINT32 num_hw_modes;
+	/* num_hw_modes WMI_HW_MODE_CAPABILITIES TLV's */
+} WMI_SOC_MAC_PHY_HW_MODE_CAPS;
+
+/*Below are Reg caps per PHY. Please note PHY ID starts with 0.*/
+typedef struct {
+	/*
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_WMI_HAL_REG_CAPABILITIES_EXT
+	 */
+	A_UINT32 tlv_header;
+	/* phy id */
+	A_UINT32 phy_id;
+	/* regdomain value specified in EEPROM */
+	A_UINT32 eeprom_reg_domain;
+	/* regdomain */
+	A_UINT32 eeprom_reg_domain_ext;
+	/*
+	 * CAP1 capabilities bit map, see REGDMN_CAP1_
+	 * defines
+	 */
+	A_UINT32 regcap1;
+	/*
+	 * REGDMN EEPROM CAP, see
+	 * REGDMN_EEPROM_EEREGCAP_ defines
+	 */
+	A_UINT32 regcap2;
+	/* REGDMN MODE, see REGDMN_MODE_ enum */
+	A_UINT32 wireless_modes;
+	A_UINT32 low_2ghz_chan;
+	A_UINT32 high_2ghz_chan;
+	A_UINT32 low_5ghz_chan;
+	A_UINT32 high_5ghz_chan;
+} WMI_HAL_REG_CAPABILITIES_EXT;
+
+typedef struct {
+	/*
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_WMI_SOC_HAL_REG_CAPABILITIES
+	 */
+	A_UINT32 tlv_header;
+	/* num_phy WMI_HAL_REG_CAPABILITIES_EXT TLV's */
+	A_UINT32 num_phy;
+} WMI_SOC_HAL_REG_CAPABILITIES;
 
 /* ADD NEW DEFS HERE */
 
