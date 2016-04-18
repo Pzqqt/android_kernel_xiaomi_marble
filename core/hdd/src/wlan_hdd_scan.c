@@ -2243,17 +2243,6 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 	hddLog(LOG1, FL("Number of hidden networks being Configured = %d"),
 		  request->n_ssids);
 
-	hddLog(LOG1, FL("request->ie_len = %zu"), request->ie_len);
-	if ((0 < request->ie_len) && (NULL != request->ie)) {
-		pPnoRequest->us24GProbeTemplateLen = request->ie_len;
-		memcpy(&pPnoRequest->p24GProbeTemplate, request->ie,
-		       pPnoRequest->us24GProbeTemplateLen);
-
-		pPnoRequest->us5GProbeTemplateLen = request->ie_len;
-		memcpy(&pPnoRequest->p5GProbeTemplate, request->ie,
-		       pPnoRequest->us5GProbeTemplateLen);
-	}
-
 	/*
 	 * Before Kernel 4.4
 	 *   Driver gets only one time interval which is hard coded in

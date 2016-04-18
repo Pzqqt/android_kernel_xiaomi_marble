@@ -16227,122 +16227,6 @@ csr_update_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
-static tSirRetStatus
-csr_roam_scan_offload_populate_mac_header(tpAniSirGlobal pMac,
-					  uint8_t *pBD,
-					  uint8_t type,
-					  uint8_t subType,
-					  tSirMacAddr peerAddr,
-					  tSirMacAddr selfMacAddr)
-{
-	tSirRetStatus statusCode = eSIR_SUCCESS;
-	tpSirMacMgmtHdr pMacHdr;
-
-	/* Prepare MAC management header */
-	pMacHdr = (tpSirMacMgmtHdr) (pBD);
-
-	/* Prepare FC */
-	pMacHdr->fc.protVer = SIR_MAC_PROTOCOL_VERSION;
-	pMacHdr->fc.type = type;
-	pMacHdr->fc.subType = subType;
-
-	/* Prepare Address 1 */
-	qdf_mem_copy((uint8_t *) pMacHdr->da, (uint8_t *) peerAddr,
-		     sizeof(tSirMacAddr));
-
-	sir_copy_mac_addr(pMacHdr->sa, selfMacAddr);
-
-	/* Prepare Address 3 */
-	qdf_mem_copy((uint8_t *) pMacHdr->bssId, (uint8_t *) peerAddr,
-		     sizeof(tSirMacAddr));
-	return statusCode;
-} /*** csr_roam_scan_offload_populate_mac_header() ***/
-
-static tSirRetStatus
-csr_roam_scan_offload_prepare_probe_req_template(tpAniSirGlobal pMac,
-						 uint8_t nChannelNum,
-						 uint32_t dot11mode,
-						 tSirMacAddr selfMacAddr,
-						 uint8_t *pFrame,
-						 uint16_t *pusLen,
-						 tCsrRoamSession *psession)
-{
-	tDot11fProbeRequest pr;
-	uint32_t nStatus, nBytes, nPayload;
-	tSirRetStatus nSirStatus;
-	/*Bcast tx */
-	tSirMacAddr bssId = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-	/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-	qdf_mem_set((uint8_t *) &pr, sizeof(pr), 0);
-
-	populate_dot11f_supp_rates(pMac, nChannelNum, &pr.SuppRates, NULL);
-
-	if (WNI_CFG_DOT11_MODE_11B != dot11mode) {
-		populate_dot11f_ext_supp_rates1(pMac, nChannelNum,
-						&pr.ExtSuppRates);
-	}
-
-	if (IS_DOT11_MODE_HT(dot11mode)) {
-		populate_dot11f_ht_caps(pMac, NULL, &pr.HTCaps);
-		pr.HTCaps.advCodingCap = psession->htConfig.ht_rx_ldpc;
-		pr.HTCaps.txSTBC = psession->htConfig.ht_tx_stbc;
-		pr.HTCaps.rxSTBC = psession->htConfig.ht_rx_stbc;
-		if (!psession->htConfig.ht_sgi) {
-			pr.HTCaps.shortGI20MHz = pr.HTCaps.shortGI40MHz = 0;
-		}
-	}
-
-	nStatus = dot11f_get_packed_probe_request_size(pMac, &pr, &nPayload);
-	if (DOT11F_FAILED(nStatus)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "Failed to calculate the packed size f"
-			  "or a Probe Request (0x%08x).\n", nStatus);
-
-		nPayload = sizeof(tDot11fProbeRequest);
-	} else if (DOT11F_WARNED(nStatus)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "There were warnings while calculating"
-			  "the packed size for a Probe Request ("
-			  "0x%08x).\n", nStatus);
-	}
-
-	nBytes = nPayload + sizeof(tSirMacMgmtHdr);
-
-	/* Prepare outgoing frame */
-	qdf_mem_set(pFrame, nBytes, 0);
-
-	nSirStatus =
-		csr_roam_scan_offload_populate_mac_header(pMac, pFrame,
-							  SIR_MAC_MGMT_FRAME,
-							  SIR_MAC_MGMT_PROBE_REQ, bssId,
-							  selfMacAddr);
-
-	if (eSIR_SUCCESS != nSirStatus) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "Failed to populate the buffer descriptor for a Probe Request (%d).\n",
-			  nSirStatus);
-		return nSirStatus;
-	}
-
-	nStatus = dot11f_pack_probe_request(pMac, &pr, pFrame +
-					    sizeof(tSirMacMgmtHdr),
-					    nPayload, &nPayload);
-	if (DOT11F_FAILED(nStatus)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "Failed to pack a Probe Request (0x%08x).\n",
-			  nStatus);
-		return eSIR_FAILURE;
-	} else if (DOT11F_WARNED(nStatus)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "There were warnings while packing a Probe Request (0x%08x).\n",
-			  nStatus);
-	}
-
-	*pusLen = nPayload + sizeof(tSirMacMgmtHdr);
-	return eSIR_SUCCESS;
-}
-
 /**
  * csr_check_band_channel_match() - check if passed band and channel match
  * paramters
@@ -16722,16 +16606,6 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 	dot11_mode = (uint8_t) csr_translate_to_wni_cfg_dot11_mode(mac_ctx,
 				csr_find_best_phy_mode(mac_ctx,
 					mac_ctx->roam.configParam.phyMode));
-	csr_roam_scan_offload_prepare_probe_req_template(mac_ctx,
-		SIR_ROAM_SCAN_24G_DEFAULT_CH, dot11_mode,
-		session->selfMacAddr.bytes, req_buf->p24GProbeTemplate,
-		&req_buf->us24GProbeTemplateLen, session);
-
-	csr_roam_scan_offload_prepare_probe_req_template(mac_ctx,
-		SIR_ROAM_SCAN_5G_DEFAULT_CH, dot11_mode,
-		session->selfMacAddr.bytes,
-		req_buf->p5GProbeTemplate, &req_buf->us5GProbeTemplateLen,
-		session);
 	req_buf->allowDFSChannelRoam =
 	mac_ctx->roam.configParam.allowDFSChannelRoam;
 	req_buf->early_stop_scan_enable =

@@ -2744,12 +2744,6 @@ QDF_STATUS wma_pno_start(tp_wma_handle wma, tpSirPNOScanReq pno)
 	params->active_max_time = pno->active_max_time;
 	params->passive_min_time = pno->passive_min_time;
 	params->passive_max_time = pno->passive_max_time;
-	params->us24GProbeTemplateLen = pno->us24GProbeTemplateLen;
-	qdf_mem_copy(params->p24GProbeTemplate, pno->p24GProbeTemplate,
-				WMI_PNO_MAX_PB_REQ_SIZE);
-	params->us5GProbeTemplateLen = pno->us5GProbeTemplateLen;
-	qdf_mem_copy(params->p5GProbeTemplate, pno->p5GProbeTemplate,
-				WMI_PNO_MAX_PB_REQ_SIZE);
 #ifdef FEATURE_WLAN_SCAN_PNO
 	params->pno_channel_prediction = pno->pno_channel_prediction;
 	params->top_k_num_of_channels = pno->top_k_num_of_channels;

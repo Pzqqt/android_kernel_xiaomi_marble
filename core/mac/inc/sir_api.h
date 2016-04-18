@@ -2771,10 +2771,6 @@ typedef struct sSirPNOScanReq {
 	uint32_t        passive_min_time;
 	uint32_t        passive_max_time;
 
-	uint16_t us24GProbeTemplateLen;
-	uint8_t p24GProbeTemplate[SIR_PNO_MAX_PB_REQ_SIZE];
-	uint16_t us5GProbeTemplateLen;
-	uint8_t p5GProbeTemplate[SIR_PNO_MAX_PB_REQ_SIZE];
 #ifdef FEATURE_WLAN_SCAN_PNO
 	bool pno_channel_prediction;
 	uint8_t top_k_num_of_channels;
@@ -2920,20 +2916,6 @@ typedef struct sSirRoamOffloadScanReq {
 	uint8_t ValidChannelCount;
 	uint8_t ValidChannelList[SIR_ROAM_MAX_CHANNELS];
 	bool IsESEAssoc;
-	uint16_t us24GProbeTemplateLen;
-	uint8_t p24GProbeTemplate[SIR_ROAM_SCAN_MAX_PB_REQ_SIZE];
-	uint16_t us5GProbeTemplateLen;
-	uint8_t p5GProbeTemplate[SIR_ROAM_SCAN_MAX_PB_REQ_SIZE];
-	uint8_t ReservedBytes[SIR_ROAM_SCAN_RESERVED_BYTES];
-	/*ReservedBytes is to add any further params in future
-	   without changing the interface params on Host
-	   and firmware.The firmware right now checks
-	   if the size of this structure matches and then
-	   proceeds with the processing of the command.
-	   So, in future, if there is any need to add
-	   more params, pick the memory from reserved
-	   bytes and keep deducting the reserved bytes
-	   by the amount of bytes picked. */
 	uint8_t nProbes;
 	uint16_t HomeAwayTime;
 	tSirRoamNetworkType ConnectedNetwork;
