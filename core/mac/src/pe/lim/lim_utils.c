@@ -832,6 +832,14 @@ void lim_print_mac_addr(tpAniSirGlobal pMac, tSirMacAddr macAddr, uint8_t logLev
 
 void lim_reset_deferred_msg_q(tpAniSirGlobal pMac)
 {
+	tSirMsgQ *read_msg;
+
+	if (pMac->lim.gLimDeferredMsgQ.size > 0) {
+		while ((read_msg = lim_read_deferred_msg_q(pMac)) != NULL) {
+			pe_free_msg(pMac, read_msg);
+		}
+	}
+
 	pMac->lim.gLimDeferredMsgQ.size =
 		pMac->lim.gLimDeferredMsgQ.write =
 			pMac->lim.gLimDeferredMsgQ.read = 0;
