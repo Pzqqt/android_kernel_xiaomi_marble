@@ -1937,8 +1937,8 @@ QDF_STATUS sme_update_is_ese_feature_enabled(tHalHandle hHal,
 		  pMac->roam.configParam.isEseIniFeatureEnabled,
 		  isEseIniFeatureEnabled);
 	pMac->roam.configParam.isEseIniFeatureEnabled = isEseIniFeatureEnabled;
-	csr_neighbor_roam_update_ese_mode_enabled(pMac, sessionId,
-						  isEseIniFeatureEnabled);
+	csr_neighbor_roam_update_fast_roaming_enabled(
+			pMac, sessionId, isEseIniFeatureEnabled);
 
 	if (true == isEseIniFeatureEnabled)
 		sme_update_fast_transition_enabled(hHal, true);
@@ -8837,19 +8837,10 @@ QDF_STATUS sme_set_roam_opportunistic_scan_threshold_diff(tHalHandle hHal,
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_neighbor_roam_set_opportunistic_scan_threshold_diff(pMac,
-										 sessionId,
-										 nOpportunisticThresholdDiff);
+		status = csr_neighbor_roam_update_config(pMac, sessionId,
+				nOpportunisticThresholdDiff,
+				REASON_OPPORTUNISTIC_THRESH_DIFF_CHANGED);
 		if (QDF_IS_STATUS_SUCCESS(status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-				  "LFR runtime successfully set "
-				  "opportunistic threshold diff to %d"
-				  " - old value is %d - roam state is %d",
-				  nOpportunisticThresholdDiff,
-				  pMac->roam.configParam.neighborRoamConfig.
-				  nOpportunisticThresholdDiff,
-				  pMac->roam.neighborRoamInfo[sessionId].
-				  neighborRoamState);
 			pMac->roam.configParam.neighborRoamConfig.
 			nOpportunisticThresholdDiff =
 				nOpportunisticThresholdDiff;
@@ -8895,18 +8886,10 @@ QDF_STATUS sme_set_roam_rescan_rssi_diff(tHalHandle hHal,
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_neighbor_roam_set_roam_rescan_rssi_diff(pMac, sessionId,
-								     nRoamRescanRssiDiff);
+		status = csr_neighbor_roam_update_config(pMac, sessionId,
+				nRoamRescanRssiDiff,
+				REASON_ROAM_RESCAN_RSSI_DIFF_CHANGED);
 		if (QDF_IS_STATUS_SUCCESS(status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-				  "LFR runtime successfully set "
-				  "opportunistic threshold diff to %d"
-				  " - old value is %d - roam state is %d",
-				  nRoamRescanRssiDiff,
-				  pMac->roam.configParam.neighborRoamConfig.
-				  nRoamRescanRssiDiff,
-				  pMac->roam.neighborRoamInfo[sessionId].
-				  neighborRoamState);
 			pMac->roam.configParam.neighborRoamConfig.
 			nRoamRescanRssiDiff = nRoamRescanRssiDiff;
 		}
@@ -8950,18 +8933,10 @@ QDF_STATUS sme_set_roam_bmiss_first_bcnt(tHalHandle hHal,
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_neighbor_roam_set_roam_bmiss_first_bcnt(pMac, sessionId,
-								     nRoamBmissFirstBcnt);
+		status = csr_neighbor_roam_update_config(pMac, sessionId,
+				nRoamBmissFirstBcnt,
+				REASON_ROAM_BMISS_FIRST_BCNT_CHANGED);
 		if (QDF_IS_STATUS_SUCCESS(status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-				  "LFR runtime successfully set "
-				  "beacon miss first beacon count to %d"
-				  " - old value is %d - roam state is %d",
-				  nRoamBmissFirstBcnt,
-				  pMac->roam.configParam.neighborRoamConfig.
-				  nRoamBmissFirstBcnt,
-				  pMac->roam.neighborRoamInfo[sessionId].
-				  neighborRoamState);
 			pMac->roam.configParam.neighborRoamConfig.
 			nRoamBmissFirstBcnt = nRoamBmissFirstBcnt;
 		}
@@ -9003,18 +8978,10 @@ QDF_STATUS sme_set_roam_bmiss_final_bcnt(tHalHandle hHal,
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_neighbor_roam_set_roam_bmiss_final_bcnt(pMac, sessionId,
-								     nRoamBmissFinalBcnt);
+		status = csr_neighbor_roam_update_config(pMac, sessionId,
+				nRoamBmissFinalBcnt,
+				REASON_ROAM_BMISS_FINAL_BCNT_CHANGED);
 		if (QDF_IS_STATUS_SUCCESS(status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-				  "LFR runtime successfully set "
-				  "beacon miss final beacon count to %d"
-				  " - old value is %d - roam state is %d",
-				  nRoamBmissFinalBcnt,
-				  pMac->roam.configParam.neighborRoamConfig.
-				  nRoamBmissFinalBcnt,
-				  pMac->roam.neighborRoamInfo[sessionId].
-				  neighborRoamState);
 			pMac->roam.configParam.neighborRoamConfig.
 			nRoamBmissFinalBcnt = nRoamBmissFinalBcnt;
 		}
@@ -9058,18 +9025,10 @@ QDF_STATUS sme_set_roam_beacon_rssi_weight(tHalHandle hHal,
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_neighbor_roam_set_roam_beacon_rssi_weight(pMac, sessionId,
-								       nRoamBeaconRssiWeight);
+		status = csr_neighbor_roam_update_config(pMac, sessionId,
+				nRoamBeaconRssiWeight,
+				REASON_ROAM_BEACON_RSSI_WEIGHT_CHANGED);
 		if (QDF_IS_STATUS_SUCCESS(status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-				  "LFR runtime successfully set "
-				  "beacon miss final beacon count to %d"
-				  " - old value is %d - roam state is %d",
-				  nRoamBeaconRssiWeight,
-				  pMac->roam.configParam.neighborRoamConfig.
-				  nRoamBeaconRssiWeight,
-				  pMac->roam.neighborRoamInfo[sessionId].
-				  neighborRoamState);
 			pMac->roam.configParam.neighborRoamConfig.
 			nRoamBeaconRssiWeight = nRoamBeaconRssiWeight;
 		}
@@ -9109,18 +9068,10 @@ QDF_STATUS sme_set_neighbor_lookup_rssi_threshold
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_neighbor_roam_set_lookup_rssi_threshold(pMac, sessionId,
-								     neighborLookupRssiThreshold);
+		status = csr_neighbor_roam_update_config(pMac,
+				sessionId, neighborLookupRssiThreshold,
+				REASON_LOOKUP_THRESH_CHANGED);
 		if (QDF_IS_STATUS_SUCCESS(status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-				  "LFR runtime successfully set Lookup threshold to %d - old value is %d - roam state is %s",
-				  neighborLookupRssiThreshold,
-				  pMac->roam.configParam.neighborRoamConfig.
-				  nNeighborLookupRssiThreshold,
-				  mac_trace_get_neighbour_roam_state(pMac->roam.
-								     neighborRoamInfo
-								     [sessionId].
-								     neighborRoamState));
 			pMac->roam.configParam.neighborRoamConfig.
 			nNeighborLookupRssiThreshold =
 				neighborLookupRssiThreshold;

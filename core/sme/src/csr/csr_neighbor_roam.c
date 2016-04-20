@@ -49,6 +49,19 @@
 #include "cds_concurrency.h"
 
 #define NEIGHBOR_ROAM_DEBUG sms_log
+static const char *lfr_get_config_item_string(uint8_t reason)
+{
+	switch (reason) {
+	CASE_RETURN_STRING(REASON_LOOKUP_THRESH_CHANGED);
+	CASE_RETURN_STRING(REASON_OPPORTUNISTIC_THRESH_DIFF_CHANGED);
+	CASE_RETURN_STRING(REASON_ROAM_RESCAN_RSSI_DIFF_CHANGED);
+	CASE_RETURN_STRING(REASON_ROAM_BMISS_FIRST_BCNT_CHANGED);
+	CASE_RETURN_STRING(REASON_ROAM_BMISS_FINAL_BCNT_CHANGED);
+	CASE_RETURN_STRING(REASON_ROAM_BEACON_RSSI_WEIGHT_CHANGED);
+	default:
+		return "unknown";
+	}
+}
 
 static void csr_neighbor_roam_reset_channel_info(tpCsrNeighborRoamChannelInfo
 						 rChInfo);
@@ -127,8 +140,6 @@ csr_neighbor_roam_update_fast_roaming_enabled(tpAniSirGlobal pMac,
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 		&pMac->roam.neighborRoamInfo[sessionId];
-	/* set fast roam enable/disable flag */
-	pMac->roam.configParam.isFastRoamIniFeatureEnabled = fastRoamEnabled;
 
 	switch (pNeighborRoamInfo->neighborRoamState) {
 	case eCSR_NEIGHBOR_ROAM_STATE_CONNECTED:
@@ -158,315 +169,73 @@ csr_neighbor_roam_update_fast_roaming_enabled(tpAniSirGlobal pMac,
 	}
 	return qdf_status;
 }
-
-#ifdef FEATURE_WLAN_ESE
-QDF_STATUS csr_neighbor_roam_update_ese_mode_enabled(tpAniSirGlobal pMac,
-						     uint8_t sessionId,
-						     const bool eseMode)
+QDF_STATUS csr_neighbor_roam_update_config(tpAniSirGlobal mac_ctx,
+		uint8_t session_id, uint8_t value, uint8_t reason)
 {
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
-	    &pMac->roam.neighborRoamInfo[sessionId];
+	    &mac_ctx->roam.neighborRoamInfo[session_id];
+	tpCsrNeighborRoamCfgParams cfg_params;
+	eCsrNeighborRoamState state;
+	uint8_t old_value;
 
-	switch (pNeighborRoamInfo->neighborRoamState) {
-	case eCSR_NEIGHBOR_ROAM_STATE_CONNECTED:
-		if (true == eseMode) {
-			csr_roam_offload_scan(pMac, sessionId,
-					   ROAM_SCAN_OFFLOAD_START,
-					   REASON_CONNECT);
-		} else if (false == eseMode) {
-			csr_roam_offload_scan(pMac, sessionId,
-					   ROAM_SCAN_OFFLOAD_STOP,
-					   REASON_DISCONNECTED);
+	if (NULL == pNeighborRoamInfo) {
+		sms_log(mac_ctx, LOG1, FL("Invalid Session ID %d"), session_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+	cfg_params = &pNeighborRoamInfo->cfgParams;
+	state = pNeighborRoamInfo->neighborRoamState;
+	if ((state == eCSR_NEIGHBOR_ROAM_STATE_CONNECTED) ||
+			state == eCSR_NEIGHBOR_ROAM_STATE_INIT) {
+		switch (reason) {
+		case REASON_LOOKUP_THRESH_CHANGED:
+			old_value = cfg_params->neighborLookupThreshold;
+			cfg_params->neighborLookupThreshold = value;
+			pNeighborRoamInfo->currentNeighborLookupThreshold =
+				value;
+			break;
+		case REASON_OPPORTUNISTIC_THRESH_DIFF_CHANGED:
+			old_value = cfg_params->nOpportunisticThresholdDiff;
+			cfg_params->nOpportunisticThresholdDiff = value;
+			pNeighborRoamInfo->currentOpportunisticThresholdDiff =
+				value;
+			break;
+		case REASON_ROAM_RESCAN_RSSI_DIFF_CHANGED:
+			old_value = cfg_params->nRoamRescanRssiDiff;
+			cfg_params->nRoamRescanRssiDiff = value;
+			pNeighborRoamInfo->currentRoamRescanRssiDiff = value;
+			break;
+		case REASON_ROAM_BMISS_FIRST_BCNT_CHANGED:
+			old_value = cfg_params->nRoamBmissFirstBcnt;
+			cfg_params->nRoamBmissFirstBcnt = value;
+			pNeighborRoamInfo->currentRoamBmissFirstBcnt = value;
+			break;
+		case REASON_ROAM_BMISS_FINAL_BCNT_CHANGED:
+			old_value = cfg_params->nRoamBmissFinalBcnt;
+			cfg_params->nRoamBmissFinalBcnt = value;
+			pNeighborRoamInfo->currentRoamBmissFinalBcnt = value;
+			break;
+		case REASON_ROAM_BEACON_RSSI_WEIGHT_CHANGED:
+			old_value = cfg_params->nRoamBeaconRssiWeight;
+			cfg_params->nRoamBeaconRssiWeight = value;
+			pNeighborRoamInfo->currentRoamBeaconRssiWeight = value;
+			break;
+		default:
+			sms_log(mac_ctx, LOG2, FL("Unknown update cfg reason"));
+			return QDF_STATUS_E_FAILURE;
 		}
-		break;
-
-	case eCSR_NEIGHBOR_ROAM_STATE_INIT:
-		NEIGHBOR_ROAM_DEBUG(pMac,
-				    LOG2,
-				    FL
-				    ("Currently in INIT state, Nothing to do"));
-		break;
-
-	default:
-		NEIGHBOR_ROAM_DEBUG(pMac, LOGE,
-				    FL
-				    ("Unexpected state %d, returning failure"),
-				    pNeighborRoamInfo->neighborRoamState);
-		break;
+	} else {
+		sms_log(mac_ctx, LOGE, FL("Unexpected state %s, return fail"),
+			mac_trace_get_neighbour_roam_state(state));
+		return QDF_STATUS_E_FAILURE;
 	}
-	return qdf_status;
-}
-#endif
-
-QDF_STATUS csr_neighbor_roam_set_lookup_rssi_threshold(tpAniSirGlobal pMac,
-						uint8_t sessionId,
-						uint8_t
-						  neighborLookupRssiThreshold)
-{
-	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
-	    &pMac->roam.neighborRoamInfo[sessionId];
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-
-	switch (pNeighborRoamInfo->neighborRoamState) {
-	case eCSR_NEIGHBOR_ROAM_STATE_CONNECTED:
-		NEIGHBOR_ROAM_DEBUG(pMac, LOG2,
-				FL("Currently in CONNECTED state, "
-				"sending ROAM_SCAN_OFFLOAD_UPDATE_CFG."));
-		pNeighborRoamInfo->cfgParams.neighborLookupThreshold =
-		    neighborLookupRssiThreshold;
-		pNeighborRoamInfo->currentNeighborLookupThreshold =
-		    pNeighborRoamInfo->cfgParams.neighborLookupThreshold;
-		csr_roam_offload_scan(pMac, sessionId,
-				   ROAM_SCAN_OFFLOAD_UPDATE_CFG,
-				   REASON_LOOKUP_THRESH_CHANGED);
-		break;
-
-	case eCSR_NEIGHBOR_ROAM_STATE_INIT:
-		NEIGHBOR_ROAM_DEBUG(pMac, LOG2,
-				    FL("Currently in INIT state, "
-				       "just set lookupRssi threshold."));
-		pNeighborRoamInfo->cfgParams.neighborLookupThreshold =
-		    neighborLookupRssiThreshold;
-		pNeighborRoamInfo->currentNeighborLookupThreshold =
-		    pNeighborRoamInfo->cfgParams.neighborLookupThreshold;
-		break;
-
-	default:
-		NEIGHBOR_ROAM_DEBUG(pMac, LOGE,
-				    FL
-				    ("Unexpected state %s, returning failure"),
-				    mac_trace_get_neighbour_roam_state
-				    (pNeighborRoamInfo->neighborRoamState));
-		qdf_status = QDF_STATUS_E_FAILURE;
-		break;
+	if (state == eCSR_NEIGHBOR_ROAM_STATE_CONNECTED) {
+		sms_log(mac_ctx, LOG2, FL("CONNECTED, send update cfg cmd"));
+		csr_roam_offload_scan(mac_ctx, session_id,
+			ROAM_SCAN_OFFLOAD_UPDATE_CFG, reason);
 	}
-	return qdf_status;
-}
-
-QDF_STATUS
-csr_neighbor_roam_set_opportunistic_scan_threshold_diff(tpAniSirGlobal pMac,
-						uint8_t sessionId,
-						uint8_t
-						    nOpportunisticThresholdDiff)
-{
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
-	    &pMac->roam.neighborRoamInfo[sessionId];
-
-	switch (pNeighborRoamInfo->neighborRoamState) {
-	case eCSR_NEIGHBOR_ROAM_STATE_CONNECTED:
-		NEIGHBOR_ROAM_DEBUG(pMac, LOG2,
-				    FL("Currently in CONNECTED state, "
-				       "sending ROAM_SCAN_OFFLOAD_UPDATE_CFG"));
-		pNeighborRoamInfo->cfgParams.nOpportunisticThresholdDiff =
-		    nOpportunisticThresholdDiff;
-		pNeighborRoamInfo->currentOpportunisticThresholdDiff =
-		    nOpportunisticThresholdDiff;
-
-		csr_roam_offload_scan(pMac,
-				   sessionId,
-				   ROAM_SCAN_OFFLOAD_UPDATE_CFG,
-				   REASON_OPPORTUNISTIC_THRESH_DIFF_CHANGED);
-		break;
-
-	case eCSR_NEIGHBOR_ROAM_STATE_INIT:
-		NEIGHBOR_ROAM_DEBUG(pMac, LOG2,
-				FL("Currently in INIT state, "
-				   "just set opportunistic threshold diff"));
-		pNeighborRoamInfo->cfgParams.nOpportunisticThresholdDiff =
-		    nOpportunisticThresholdDiff;
-		pNeighborRoamInfo->currentOpportunisticThresholdDiff =
-		    nOpportunisticThresholdDiff;
-		break;
-
-	default:
-		NEIGHBOR_ROAM_DEBUG(pMac, LOGE,
-				    FL("Unexpected state %d returning failure"),
-				    pNeighborRoamInfo->neighborRoamState);
-		qdf_status = QDF_STATUS_E_FAILURE;
-		break;
-	}
-	return qdf_status;
-}
-
-QDF_STATUS
-csr_neighbor_roam_set_roam_rescan_rssi_diff(tpAniSirGlobal pMac,
-					    uint8_t sessionId,
-					    uint8_t nRoamRescanRssiDiff)
-{
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
-	    &pMac->roam.neighborRoamInfo[sessionId];
-
-	switch (pNeighborRoamInfo->neighborRoamState) {
-	case eCSR_NEIGHBOR_ROAM_STATE_CONNECTED:
-		NEIGHBOR_ROAM_DEBUG(pMac, LOG2,
-				FL("Currently in CONNECTED state, "
-				   "sending ROAM_SCAN_OFFLOAD_UPDATE_CFG."));
-		pNeighborRoamInfo->cfgParams.nRoamRescanRssiDiff =
-		    nRoamRescanRssiDiff;
-		pNeighborRoamInfo->currentRoamRescanRssiDiff =
-		    nRoamRescanRssiDiff;
-		csr_roam_offload_scan(pMac, sessionId,
-				   ROAM_SCAN_OFFLOAD_UPDATE_CFG,
-				   REASON_ROAM_RESCAN_RSSI_DIFF_CHANGED);
-		break;
-
-	case eCSR_NEIGHBOR_ROAM_STATE_INIT:
-		NEIGHBOR_ROAM_DEBUG(pMac, LOG2,
-				    FL("Currently in INIT state, "
-				       "just set rescan rssi diff"));
-		pNeighborRoamInfo->cfgParams.nRoamRescanRssiDiff =
-		    nRoamRescanRssiDiff;
-		pNeighborRoamInfo->currentRoamRescanRssiDiff =
-		    nRoamRescanRssiDiff;
-		break;
-
-	default:
-		NEIGHBOR_ROAM_DEBUG(pMac, LOGE,
-				    FL("Unexpected state %d returning failure"),
-				    pNeighborRoamInfo->neighborRoamState);
-		qdf_status = QDF_STATUS_E_FAILURE;
-		break;
-	}
-	return qdf_status;
-}
-
-QDF_STATUS
-csr_neighbor_roam_set_roam_bmiss_first_bcnt(tpAniSirGlobal pMac,
-					    uint8_t sessionId,
-					    uint8_t nRoamBmissFirstBcnt)
-{
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
-	    &pMac->roam.neighborRoamInfo[sessionId];
-
-	switch (pNeighborRoamInfo->neighborRoamState) {
-	case eCSR_NEIGHBOR_ROAM_STATE_CONNECTED:
-		NEIGHBOR_ROAM_DEBUG(pMac, LOG2,
-				FL("Currently in CONNECTED state, "
-				   "sending ROAM_SCAN_OFFLOAD_UPDATE_CFG."));
-		pNeighborRoamInfo->cfgParams.nRoamBmissFirstBcnt =
-		    nRoamBmissFirstBcnt;
-		pNeighborRoamInfo->currentRoamBmissFirstBcnt =
-		    nRoamBmissFirstBcnt;
-
-		csr_roam_offload_scan(pMac,
-				   sessionId,
-				   ROAM_SCAN_OFFLOAD_UPDATE_CFG,
-				   REASON_ROAM_BMISS_FIRST_BCNT_CHANGED);
-		break;
-
-	case eCSR_NEIGHBOR_ROAM_STATE_INIT:
-		NEIGHBOR_ROAM_DEBUG(pMac,
-		  LOG2, FL
-		  ("Currently in INIT state, safe to set roam rescan rssi diff"));
-		pNeighborRoamInfo->cfgParams.nRoamBmissFirstBcnt =
-		    nRoamBmissFirstBcnt;
-		pNeighborRoamInfo->currentRoamBmissFirstBcnt =
-		    nRoamBmissFirstBcnt;
-		break;
-
-	default:
-		NEIGHBOR_ROAM_DEBUG(pMac,
-				    LOGE,
-				    FL("Unexpected state %d returning failure"),
-				    pNeighborRoamInfo->neighborRoamState);
-		qdf_status = QDF_STATUS_E_FAILURE;
-		break;
-	}
-	return qdf_status;
-}
-
-QDF_STATUS
-csr_neighbor_roam_set_roam_bmiss_final_bcnt(tpAniSirGlobal pMac,
-					    uint8_t sessionId,
-					    uint8_t nRoamBmissFinalBcnt)
-{
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
-	    &pMac->roam.neighborRoamInfo[sessionId];
-
-	switch (pNeighborRoamInfo->neighborRoamState) {
-	case eCSR_NEIGHBOR_ROAM_STATE_CONNECTED:
-		NEIGHBOR_ROAM_DEBUG(pMac, LOG2,
-				    FL("Currently in CONNECTED state, "
-				       "sending ROAM_SCAN_OFFLOAD_UPDATE_CFG."));
-		pNeighborRoamInfo->cfgParams.nRoamBmissFinalBcnt =
-		    nRoamBmissFinalBcnt;
-		pNeighborRoamInfo->currentRoamBmissFinalBcnt =
-		    nRoamBmissFinalBcnt;
-
-		csr_roam_offload_scan(pMac, sessionId,
-				   ROAM_SCAN_OFFLOAD_UPDATE_CFG,
-				   REASON_ROAM_BMISS_FINAL_BCNT_CHANGED);
-		break;
-
-	case eCSR_NEIGHBOR_ROAM_STATE_INIT:
-		NEIGHBOR_ROAM_DEBUG(pMac, LOG2,
-				    FL("Currently in INIT state, "
-				       "just set roam fianl bmiss count"));
-		pNeighborRoamInfo->cfgParams.nRoamBmissFinalBcnt =
-		    nRoamBmissFinalBcnt;
-		pNeighborRoamInfo->currentRoamBmissFinalBcnt =
-		    nRoamBmissFinalBcnt;
-		break;
-
-	default:
-		NEIGHBOR_ROAM_DEBUG(pMac,
-				    LOGE,
-				    FL("Unexpected state %d returning failure"),
-				    pNeighborRoamInfo->neighborRoamState);
-		qdf_status = QDF_STATUS_E_FAILURE;
-		break;
-	}
-	return qdf_status;
-}
-
-QDF_STATUS
-csr_neighbor_roam_set_roam_beacon_rssi_weight(tpAniSirGlobal pMac,
-					      uint8_t sessionId,
-					      uint8_t nRoamBeaconRssiWeight)
-{
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
-	    &pMac->roam.neighborRoamInfo[sessionId];
-
-	switch (pNeighborRoamInfo->neighborRoamState) {
-	case eCSR_NEIGHBOR_ROAM_STATE_CONNECTED:
-		NEIGHBOR_ROAM_DEBUG(pMac, LOG2,
-				FL("Currently in CONNECTED state, "
-				   "sending ROAM_SCAN_OFFLOAD_UPDATE_CFG."));
-		pNeighborRoamInfo->cfgParams.nRoamBeaconRssiWeight =
-		    nRoamBeaconRssiWeight;
-		pNeighborRoamInfo->currentRoamBeaconRssiWeight =
-		    nRoamBeaconRssiWeight;
-
-		csr_roam_offload_scan(pMac, sessionId,
-				   ROAM_SCAN_OFFLOAD_UPDATE_CFG,
-				   REASON_ROAM_BEACON_RSSI_WEIGHT_CHANGED);
-		break;
-
-	case eCSR_NEIGHBOR_ROAM_STATE_INIT:
-		NEIGHBOR_ROAM_DEBUG(pMac, LOG2,
-				    FL("Currently in INIT state, "
-				       "just set roam beacon rssi weight"));
-		pNeighborRoamInfo->cfgParams.nRoamBeaconRssiWeight =
-		    nRoamBeaconRssiWeight;
-		pNeighborRoamInfo->currentRoamBeaconRssiWeight =
-		    nRoamBeaconRssiWeight;
-		break;
-
-	default:
-		NEIGHBOR_ROAM_DEBUG(pMac,
-				    LOGE,
-				    FL("Unexpected state %d returning failure"),
-				    pNeighborRoamInfo->neighborRoamState);
-		qdf_status = QDF_STATUS_E_FAILURE;
-		break;
-	}
-	return qdf_status;
+	sms_log(mac_ctx, LOG2, FL("LFR config for %s changed from %d to %d"),
+			lfr_get_config_item_string(reason), old_value, value);
+	return QDF_STATUS_SUCCESS;
 }
 
 /*CleanUP Routines*/

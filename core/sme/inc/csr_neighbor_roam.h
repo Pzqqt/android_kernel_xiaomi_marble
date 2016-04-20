@@ -265,23 +265,10 @@ static inline bool csr_neighbor_roam_is_handoff_in_progress(tpAniSirGlobal pMac,
 }
 #endif
 bool csr_neighbor_middle_of_roaming(tpAniSirGlobal pMac, uint8_t sessionId);
-QDF_STATUS csr_neighbor_roam_set_lookup_rssi_threshold(tpAniSirGlobal pMac,
-		uint8_t sessionId, uint8_t neighborLookupRssiThreshold);
-QDF_STATUS csr_neighbor_roam_set_opportunistic_scan_threshold_diff(
-		tpAniSirGlobal pMac, uint8_t sessionId,
-		uint8_t nOpportunisticThresholdDiff);
-QDF_STATUS csr_neighbor_roam_set_roam_rescan_rssi_diff(tpAniSirGlobal pMac,
-		uint8_t sessionId, uint8_t nRoamRescanRssiDiff);
-QDF_STATUS csr_neighbor_roam_set_roam_bmiss_first_bcnt(tpAniSirGlobal pMac,
-		uint8_t sessionId, uint8_t nRoamBmissFirstBcnt);
-QDF_STATUS csr_neighbor_roam_set_roam_bmiss_final_bcnt(tpAniSirGlobal pMac,
-		uint8_t sessionId, uint8_t nRoamBmissFinalBcnt);
-QDF_STATUS csr_neighbor_roam_set_roam_beacon_rssi_weight(tpAniSirGlobal pMac,
-		uint8_t sessionId, uint8_t nRoamBeaconRssiWeight);
+QDF_STATUS csr_neighbor_roam_update_config(tpAniSirGlobal mac_ctx,
+		uint8_t session_id, uint8_t value, uint8_t reason);
 QDF_STATUS csr_neighbor_roam_update_fast_roaming_enabled(tpAniSirGlobal pMac,
 		uint8_t sessionId, const bool fastRoamEnabled);
-QDF_STATUS csr_neighbor_roam_update_ese_mode_enabled(tpAniSirGlobal pMac,
-		uint8_t sessionId, const bool eseMode);
 QDF_STATUS csr_neighbor_roam_channels_filter_by_current_band(
 		tpAniSirGlobal pMac, uint8_t sessionId,
 		uint8_t *pInputChannelList,
