@@ -546,6 +546,8 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 	if (!generate_rsp) {
 		WMA_LOGE("Call txrx detach w/o callback for vdev %d", vdev_id);
 		ol_txrx_vdev_detach(iface->handle, NULL, NULL);
+		iface->handle = NULL;
+		wma_handle->interfaces[vdev_id].is_vdev_valid = false;
 		goto out;
 	}
 
@@ -573,6 +575,8 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 	}
 	WMA_LOGD("Call txrx detach with callback for vdev %d", vdev_id);
 	ol_txrx_vdev_detach(iface->handle, NULL, NULL);
+	iface->handle = NULL;
+	wma_handle->interfaces[vdev_id].is_vdev_valid = false;
 
 	/*
 	 * send the response immediately if WMI_SERVICE_SYNC_DELETE_CMDS
@@ -1525,6 +1529,7 @@ ol_txrx_vdev_handle wma_vdev_attach(tp_wma_handle wma_handle,
 	tSirMacHTCapabilityInfo *phtCapInfo;
 	cds_msg_t sme_msg = { 0 };
 	struct vdev_create_params params = { 0 };
+	u_int8_t vdev_id;
 
 	if (NULL == mac) {
 		WMA_LOGE("%s: Failed to get mac", __func__);
@@ -1546,6 +1551,8 @@ ol_txrx_vdev_handle wma_vdev_attach(tp_wma_handle wma_handle,
 			 __func__);
 		goto end;
 	}
+
+	vdev_id = self_sta_req->session_id;
 
 	txrx_vdev_type = wma_get_txrx_vdev_type(self_sta_req->type);
 
@@ -1652,6 +1659,7 @@ ol_txrx_vdev_handle wma_vdev_attach(tp_wma_handle wma_handle,
 		}
 	}
 
+	wma_handle->interfaces[vdev_id].is_vdev_valid = true;
 	ret = wma_vdev_set_param(wma_handle->wmi_handle,
 				self_sta_req->session_id,
 				WMI_VDEV_PARAM_MCC_RTSCTS_PROTECTION_ENABLE,

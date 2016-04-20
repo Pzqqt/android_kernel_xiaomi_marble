@@ -991,6 +991,7 @@ struct wma_txrx_node {
 	uint8_t wep_default_key_idx;
 	tSirHostOffloadReq arp_offload_req;
 	tSirHostOffloadReq ns_offload_req;
+	bool is_vdev_valid;
 };
 
 #if defined(QCA_WIFI_FTM)
