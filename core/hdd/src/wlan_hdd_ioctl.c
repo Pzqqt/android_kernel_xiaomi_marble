@@ -6611,6 +6611,15 @@ static int drv_cmd_set_antenna_mode(hdd_adapter_t *adapter,
 		goto exit;
 	}
 
+	/* Check TDLS status and update antenna mode */
+	if ((QDF_STA_MODE == adapter->device_mode) &&
+	    cds_is_sta_active_connection_exists() &&
+	    (hdd_ctx->connected_peer_count > 0)) {
+		ret = wlan_hdd_tdls_antenna_switch(hdd_ctx, adapter);
+		if (0 != ret)
+			goto exit;
+	}
+
 	params.set_antenna_mode_resp =
 	    (void *)wlan_hdd_soc_set_antenna_mode_cb;
 	hdd_info("Set antenna mode rx chains: %d tx chains: %d",

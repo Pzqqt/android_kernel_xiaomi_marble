@@ -1259,6 +1259,8 @@ struct hdd_context_s {
 	int32_t tdls_fw_off_chan_mode;
 	bool enable_tdls_connection_tracker;
 	uint8_t tdls_external_peer_count;
+	bool tdls_nss_switch_in_progress;
+	int32_t tdls_teardown_peers_cnt;
 #endif
 
 	void *hdd_ipa;

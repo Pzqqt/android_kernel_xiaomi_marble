@@ -669,6 +669,9 @@ void wlan_hdd_tdls_update_rx_pkt_cnt(hdd_adapter_t *adapter,
 int hdd_set_tdls_scan_type(hdd_context_t *hdd_ctx, int val);
 void hdd_tdls_context_init(hdd_context_t *hdd_ctx);
 void hdd_tdls_context_destroy(hdd_context_t *hdd_ctx);
+int wlan_hdd_tdls_antenna_switch(hdd_context_t *hdd_ctx,
+				 hdd_adapter_t *adapter);
+
 #else
 static inline void hdd_tdls_notify_mode_change(hdd_adapter_t *adapter,
 				hdd_context_t *hddctx)
@@ -691,6 +694,12 @@ static inline void wlan_hdd_tdls_update_rx_pkt_cnt(hdd_adapter_t *adapter,
 }
 static inline void hdd_tdls_context_init(hdd_context_t *hdd_ctx) { }
 static inline void hdd_tdls_context_destroy(hdd_context_t *hdd_ctx) { }
+
+static inline int wlan_hdd_tdls_antenna_switch(hdd_context_t *hdd_ctx,
+					       hdd_adapter_t *adapter)
+{
+	return 0;
+}
 #endif /* End of FEATURE_WLAN_TDLS */
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
