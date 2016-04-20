@@ -42,8 +42,6 @@
 #include "qdf_trace.h"
 #ifdef CONFIG_CNSS
 #include <net/cnss.h>
-#else
-#include "cnss_stub.h"
 #endif
 #include "epping_main.h"
 #include "hif_debug.h"

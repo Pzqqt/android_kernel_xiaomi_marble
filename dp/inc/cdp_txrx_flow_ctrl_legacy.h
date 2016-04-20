@@ -108,8 +108,23 @@ ol_txrx_ll_set_tx_pause_q_depth(uint8_t vdev_id, int pause_q_depth);
 
 void ol_txrx_vdev_flush(ol_txrx_vdev_handle data_vdev);
 
+#ifdef CONFIG_ICNSS
+static inline void ol_txrx_vdev_pause(ol_txrx_vdev_handle vdev, uint32_t reason)
+{
+	return;
+}
+#else
 void ol_txrx_vdev_pause(ol_txrx_vdev_handle vdev, uint32_t reason);
+#endif
 
+#ifdef CONFIG_ICNSS
+static inline void ol_txrx_vdev_unpause(ol_txrx_vdev_handle data_vdev,
+					uint32_t reason)
+{
+	return;
+}
+#else
 void ol_txrx_vdev_unpause(ol_txrx_vdev_handle data_vdev, uint32_t reason);
+#endif
 
 #endif /* _CDP_TXRX_FC_LEG_H_ */

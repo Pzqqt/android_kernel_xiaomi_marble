@@ -31,7 +31,6 @@
 #ifndef _CDP_TXRX_IPA_H_
 #define _CDP_TXRX_IPA_H_
 
-#ifdef IPA_OFFLOAD
 
 /**
  * ol_txrx_ipa_resources - Resources needed for IPA
@@ -55,6 +54,8 @@ struct ol_txrx_ipa_resources {
 	qdf_dma_addr_t rx2_proc_done_idx_paddr;
 	void *rx2_proc_done_idx_vaddr;
 };
+
+#ifdef IPA_OFFLOAD
 
 void
 ol_txrx_ipa_uc_get_resource(ol_txrx_pdev_handle pdev,
