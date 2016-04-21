@@ -9238,29 +9238,37 @@ QDF_STATUS send_flush_logs_to_fw_cmd_tlv(wmi_unified_t wmi_handle)
 }
 
 /**
- * send_soc_set_pcl_cmd_tlv() - Send WMI_SOC_SET_PCL_CMDID to FW
+ * send_pdev_set_pcl_cmd_tlv() - Send WMI_SOC_SET_PCL_CMDID to FW
  * @wmi_handle: wmi handle
  * @msg: PCL structure containing the PCL and the number of channels
  *
- * WMI_SOC_SET_PCL_CMDID provides a Preferred Channel List (PCL) to the WLAN
+ * WMI_PDEV_SET_PCL_CMDID provides a Preferred Channel List (PCL) to the WLAN
  * firmware. The DBS Manager is the consumer of this information in the WLAN
  * firmware. The channel list will be used when a Virtual DEVice (VDEV) needs
  * to migrate to a new channel without host driver involvement. An example of
  * this behavior is Legacy Fast Roaming (LFR 3.0). Generally, the host will
  * manage the channel selection without firmware involvement.
  *
+ * WMI_PDEV_SET_PCL_CMDID will carry only the weight list and not the actual
+ * channel list. The weights corresponds to the channels sent in
+ * WMI_SCAN_CHAN_LIST_CMDID. The channels from PCL would be having a higher
+ * weightage compared to the non PCL channels.
+ *
  * Return: Success if the cmd is sent successfully to the firmware
  */
-QDF_STATUS send_soc_set_pcl_cmd_tlv(wmi_unified_t wmi_handle,
-				struct wmi_pcl_list *msg)
+QDF_STATUS send_pdev_set_pcl_cmd_tlv(wmi_unified_t wmi_handle,
+				struct wmi_pcl_chan_weights *msg)
 {
-	wmi_soc_set_pcl_cmd_fixed_param *cmd;
+	wmi_pdev_set_pcl_cmd_fixed_param *cmd;
 	wmi_buf_t buf;
 	uint8_t *buf_ptr;
 	uint32_t *cmd_args, i, len;
+	uint32_t chan_len;
+
+	chan_len = msg->saved_num_chan;
 
 	len = sizeof(*cmd) +
-		WMI_TLV_HDR_SIZE + (msg->pcl_len * sizeof(uint32_t));
+		WMI_TLV_HDR_SIZE + (chan_len * sizeof(uint32_t));
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
@@ -9268,25 +9276,28 @@ QDF_STATUS send_soc_set_pcl_cmd_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	cmd = (wmi_soc_set_pcl_cmd_fixed_param *) wmi_buf_data(buf);
+	cmd = (wmi_pdev_set_pcl_cmd_fixed_param *) wmi_buf_data(buf);
 	buf_ptr = (uint8_t *) cmd;
 	WMITLV_SET_HDR(&cmd->tlv_header,
-		WMITLV_TAG_STRUC_wmi_soc_set_pcl_cmd_fixed_param,
-		WMITLV_GET_STRUCT_TLVLEN(wmi_soc_set_pcl_cmd_fixed_param));
-	cmd->num_chan = msg->pcl_len;
-	WMI_LOGI("%s: PCL len:%d", __func__, cmd->num_chan);
+		WMITLV_TAG_STRUC_wmi_pdev_set_pcl_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(wmi_pdev_set_pcl_cmd_fixed_param));
 
-	buf_ptr += sizeof(wmi_soc_set_pcl_cmd_fixed_param);
+	cmd->pdev_id = WMI_PDEV_ID_SOC;
+	cmd->num_chan = chan_len;
+	WMA_LOGI("%s: Total chan (PCL) len:%d", __func__, cmd->num_chan);
+
+	buf_ptr += sizeof(wmi_pdev_set_pcl_cmd_fixed_param);
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
-			(msg->pcl_len * sizeof(uint32_t)));
+			(chan_len * sizeof(uint32_t)));
 	cmd_args = (uint32_t *) (buf_ptr + WMI_TLV_HDR_SIZE);
-	for (i = 0; i < msg->pcl_len ; i++) {
-		cmd_args[i] = msg->pcl_list[i];
-		WMI_LOGI("%s: PCL chan:%d", __func__, cmd_args[i]);
+	for (i = 0; i < chan_len ; i++) {
+		cmd_args[i] = msg->weighed_valid_list[i];
+		WMA_LOGI("%s: chan:%d weight:%d", __func__,
+			msg->saved_chan_list[i], cmd_args[i]);
 	}
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
-				WMI_SOC_SET_PCL_CMDID)) {
-		WMI_LOGE("%s: Failed to send WMI_SOC_SET_PCL_CMDID", __func__);
+				WMI_PDEV_SET_PCL_CMDID)) {
+		WMI_LOGE("%s: Failed to send WMI_PDEV_SET_PCL_CMDID", __func__);
 		qdf_nbuf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -10471,7 +10482,7 @@ struct wmi_ops tlv_ops =  {
 	.send_enable_specific_fw_logs_cmd =
 		 send_enable_specific_fw_logs_cmd_tlv,
 	.send_flush_logs_to_fw_cmd = send_flush_logs_to_fw_cmd_tlv,
-	.send_soc_set_pcl_cmd = send_soc_set_pcl_cmd_tlv,
+	.send_pdev_set_pcl_cmd = send_pdev_set_pcl_cmd_tlv,
 	.send_soc_set_hw_mode_cmd = send_soc_set_hw_mode_cmd_tlv,
 	.send_soc_set_dual_mac_config_cmd =
 		 send_soc_set_dual_mac_config_cmd_tlv,

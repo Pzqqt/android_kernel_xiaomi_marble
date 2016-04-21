@@ -2892,7 +2892,7 @@ QDF_STATUS wmi_unified_flush_logs_to_fw_cmd(void *wmi_hdl)
 }
 
 /**
- * wmi_unified_soc_set_pcl_cmd() - Send WMI_SOC_SET_PCL_CMDID to FW
+ * wmi_unified_pdev_set_pcl_cmd() - Send WMI_SOC_SET_PCL_CMDID to FW
  * @wmi_hdl: wmi handle
  * @msg: PCL structure containing the PCL and the number of channels
  *
@@ -2905,13 +2905,13 @@ QDF_STATUS wmi_unified_flush_logs_to_fw_cmd(void *wmi_hdl)
  *
  * Return: Success if the cmd is sent successfully to the firmware
  */
-QDF_STATUS wmi_unified_soc_set_pcl_cmd(void *wmi_hdl,
-				struct wmi_pcl_list *msg)
+QDF_STATUS wmi_unified_pdev_set_pcl_cmd(void *wmi_hdl,
+				struct wmi_pcl_chan_weights *msg)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
-	if (wmi_handle->ops->send_soc_set_pcl_cmd)
-		return wmi_handle->ops->send_soc_set_pcl_cmd(wmi_handle, msg);
+	if (wmi_handle->ops->send_pdev_set_pcl_cmd)
+		return wmi_handle->ops->send_pdev_set_pcl_cmd(wmi_handle, msg);
 
 	return QDF_STATUS_E_FAILURE;
 }
