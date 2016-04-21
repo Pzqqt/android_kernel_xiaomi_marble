@@ -1569,6 +1569,15 @@ ol_txrx_peer_attach(ol_txrx_vdev_handle vdev, uint8_t *peer_mac_addr)
 #ifdef QCA_SUPPORT_PEER_DATA_RX_RSSI
 	peer->rssi_dbm = HTT_RSSI_INVALID;
 #endif
+	if ((QDF_GLOBAL_MONITOR_MODE == cds_get_conparam()) &&
+	    !pdev->self_peer) {
+		pdev->self_peer = peer;
+		/*
+		 * No Tx in monitor mode, otherwise results in target assert.
+		 * Setting disable_intrabss_fwd to true
+		 */
+		ol_vdev_rx_set_intrabss_fwd(vdev, true);
+	}
 
 	ol_txrx_local_peer_id_alloc(pdev, peer);
 

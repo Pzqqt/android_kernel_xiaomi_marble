@@ -51,6 +51,7 @@
 #include "qdf_types.h"
 #include "qdf_mem.h"
 #include "ol_txrx_peer_find.h"
+#include "ol_htt_api.h"
 
 #include "wma_types.h"
 #include "lim_api.h"
@@ -97,8 +98,6 @@ enum extscan_report_events_type {
 #define WMA_EXTSCAN_CYCLE_WAKE_LOCK_DURATION (5 * 1000) /* in msec */
 #endif
 
-void ol_cfg_update_mon_chan(ol_txrx_pdev_handle pdev, int mon_ch,
-			    int mon_ch_freq);
 /**
  * wma_set_p2p_scan_info() - set p2p scan info in wma handle
  * @wma_handle: wma handle

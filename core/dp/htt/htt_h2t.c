@@ -51,6 +51,7 @@
 #include <ol_htt_tx_api.h>
 
 #include <htt_internal.h>
+#include <cds_concurrency.h>
 
 #define HTT_MSG_BUF_SIZE(msg_bytes) \
 	((msg_bytes) + HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING)
@@ -356,6 +357,18 @@ A_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev)
 	enable_ppdu_start = 0;
 	enable_ppdu_end = 0;
 #endif
+	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam()) {
+		enable_ctrl_data  = 1;
+		enable_mgmt_data  = 1;
+		enable_null_data  = 1;
+		enable_phy_data   = 1;
+		enable_hdr        = 1;
+		enable_ppdu_start = 1;
+		enable_ppdu_end   = 1;
+		/* Disable ASPM for monitor mode */
+		qdf_print("Monitor mode is enabled\n");
+	}
+
 	HTT_RX_RING_CFG_ENABLED_802_11_HDR_SET(*msg_word, enable_hdr);
 	HTT_RX_RING_CFG_ENABLED_MSDU_PAYLD_SET(*msg_word, 1);
 	HTT_RX_RING_CFG_ENABLED_PPDU_START_SET(*msg_word, enable_ppdu_start);

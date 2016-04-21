@@ -257,6 +257,12 @@ struct rx_ppdu_start {
 	uint32_t service:16, /* [15:0] */
 		reserved_9:16; /* [31:16] */
 };
+
+#define VHT_SIG_A_1(rx_desc) ((rx_desc)->ppdu_start.ht_sig_vht_sig_ah_sig_a_1)
+#define VHT_SIG_A_2(rx_desc) ((rx_desc)->ppdu_start.ht_sig_vht_sig_ah_sig_a_2)
+#define TSF_TIMESTAMP(rx_desc) \
+((rx_desc)->ppdu_end.rx_pkt_end.phy_timestamp_1_lower_32)
+
 struct rx_location_info {
 	volatile
 	uint32_t rtt_fac_legacy:14, /* [13:0] */
@@ -469,6 +475,10 @@ struct rx_ppdu_start {
 		reserved_9:16; /* [31:16] */
 };
 
+#define VHT_SIG_A_1(rx_desc) ((rx_desc)->ppdu_start.ht_sig_vht_sig_a_1)
+#define VHT_SIG_A_2(rx_desc) ((rx_desc)->ppdu_start.ht_sig_vht_sig_a_2)
+
+#define TSF_TIMESTAMP(rx_desc) ((rx_desc)->ppdu_end.tsf_timestamp)
 
 struct rx_mpdu_start {
 	volatile

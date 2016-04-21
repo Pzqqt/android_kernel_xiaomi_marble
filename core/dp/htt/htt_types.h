@@ -211,6 +211,16 @@ struct msdu_ext_desc_t {
 };
 #endif  /* defined(HELIUMPLUS_PADDR64) */
 
+/**
+ * struct mon_channel
+ * @ch_num: Monitor mode capture channel number
+ * @ch_freq: channel frequency.
+ */
+struct mon_channel {
+	uint32_t ch_num;
+	uint32_t ch_freq;
+};
+
 struct htt_pdev_t {
 	ol_pdev_handle ctrl_pdev;
 	ol_txrx_pdev_handle txrx_pdev;
@@ -385,6 +395,7 @@ struct htt_pdev_t {
 	struct rx_buf_debug *rx_buff_list;
 	int rx_buff_index;
 #endif
+	struct mon_channel mon_ch_info;
 };
 
 #define HTT_EPID_GET(_htt_pdev_hdl)  \

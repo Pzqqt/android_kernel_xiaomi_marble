@@ -362,4 +362,7 @@ static inline void htt_ipa_uc_detach(struct htt_pdev_t *pdev)
 }
 #endif /* IPA_OFFLOAD */
 
+void htt_rx_mon_note_capture_channel(htt_pdev_handle pdev, int mon_ch);
+
+void ol_htt_mon_note_chan(ol_txrx_pdev_handle pdev, int mon_ch);
 #endif /* _OL_HTT_API__H_ */

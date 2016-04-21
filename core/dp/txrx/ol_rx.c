@@ -57,6 +57,7 @@
 #include <ipv6_defs.h>          /* IPv6 header defs */
 #include <ol_vowext_dbg_defs.h>
 #include <wma.h>
+#include <cds_concurrency.h>
 
 #ifdef HTT_RX_RESTORE
 #if  defined(CONFIG_CNSS)
@@ -1243,7 +1244,10 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 	qdf_nbuf_t head_msdu, tail_msdu = NULL;
 
 	if (pdev) {
-		peer = ol_txrx_peer_find_by_id(pdev, peer_id);
+		if (qdf_unlikely(QDF_GLOBAL_MONITOR_MODE == cds_get_conparam()))
+			peer = pdev->self_peer;
+		else
+			peer = ol_txrx_peer_find_by_id(pdev, peer_id);
 		htt_pdev = pdev->htt_pdev;
 	} else {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
@@ -1374,6 +1378,17 @@ ol_rx_offload_paddr_deliver_ind_handler(htt_pdev_handle htt_pdev,
 	htt_rx_msdu_buff_replenish(htt_pdev);
 }
 
+/**
+ * ol_htt_mon_note_chan() - Update monitor channel information
+ * @pdev:  handle to the physical device
+ * @mon_ch: Monitor channel
+ *
+ * Return: None
+ */
+void ol_htt_mon_note_chan(ol_txrx_pdev_handle pdev, int mon_ch)
+{
+	htt_rx_mon_note_capture_channel(pdev->htt_pdev, mon_ch);
+}
 
 #ifdef NEVERDEFINED
 /**

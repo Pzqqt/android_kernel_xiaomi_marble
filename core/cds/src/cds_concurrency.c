@@ -3394,6 +3394,7 @@ void cds_set_concurrency_mode(enum tQDF_ADAPTER_MODE mode)
 	case QDF_P2P_GO_MODE:
 	case QDF_SAP_MODE:
 	case QDF_IBSS_MODE:
+	case QDF_MONITOR_MODE:
 		hdd_ctx->concurrency_mode |= (1 << mode);
 		hdd_ctx->no_of_open_sessions[mode]++;
 		break;
@@ -3428,6 +3429,7 @@ void cds_clear_concurrency_mode(enum tQDF_ADAPTER_MODE mode)
 	case QDF_P2P_CLIENT_MODE:
 	case QDF_P2P_GO_MODE:
 	case QDF_SAP_MODE:
+	case QDF_MONITOR_MODE:
 		hdd_ctx->no_of_open_sessions[mode]--;
 		if (!(hdd_ctx->no_of_open_sessions[mode]))
 			hdd_ctx->concurrency_mode &= (~(1 << mode));

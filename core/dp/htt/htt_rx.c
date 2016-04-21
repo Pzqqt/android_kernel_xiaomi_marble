@@ -53,10 +53,18 @@
 
 #include <cds_ieee80211_common.h>   /* ieee80211_frame, ieee80211_qoscntl */
 #include <cds_ieee80211_defines.h>  /* ieee80211_rx_status */
+#include <cds_utils.h>
+#include <cds_concurrency.h>
 
 #ifdef DEBUG_DMA_DONE
 #include <asm/barrier.h>
 #include <wma_api.h>
+#endif
+
+#ifdef HTT_DEBUG_DATA
+#define HTT_PKT_DUMP(x) x
+#else
+#define HTT_PKT_DUMP(x) /* no-op */
 #endif
 
 /* AR9888v1 WORKAROUND for EV#112367 */
@@ -1151,14 +1159,477 @@ htt_rx_offload_paddr_msdu_pop_ll(htt_pdev_handle pdev,
 	return 0;
 }
 
-extern void
-dump_pkt(qdf_nbuf_t nbuf, uint32_t nbuf_paddr, int len);
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#if HTT_PADDR64
+#define NEXT_FIELD_OFFSET_IN32 2
+#else /* ! HTT_PADDR64 */
+#define NEXT_FIELD_OFFSET_IN32 1
+#endif /* HTT_PADDR64 */
+
+/**
+ * htt_mon_rx_handle_amsdu_packet() - Handle consecutive fragments of amsdu
+ * @msdu: pointer to first msdu of amsdu
+ * @pdev: Handle to htt_pdev_handle
+ * @msg_word: Input and output variable, so pointer to HTT msg pointer
+ * @amsdu_len: remaining length of all N-1 msdu msdu's
+ *
+ * This function handles the (N-1) msdu's of amsdu, N'th msdu is already
+ * handled by calling function. N-1 msdu's are tied using frags_list.
+ * msdu_info field updated by FW indicates if this is last msdu. All the
+ * msdu's before last msdu will be of MAX payload.
+ *
+ * Return: 1 on success and 0 on failure.
+ */
+int htt_mon_rx_handle_amsdu_packet(qdf_nbuf_t msdu, htt_pdev_handle pdev,
+				   uint32_t **msg_word, uint32_t amsdu_len)
+{
+	qdf_nbuf_t frag_nbuf;
+	qdf_nbuf_t prev_frag_nbuf;
+	uint32_t len;
+	uint32_t last_frag;
+
+	*msg_word += HTT_RX_IN_ORD_PADDR_IND_MSDU_DWORDS;
+	frag_nbuf = htt_rx_in_order_netbuf_pop(pdev,
+				HTT_RX_IN_ORD_PADDR_IND_PADDR_GET(**msg_word));
+	if (qdf_unlikely(NULL == frag_nbuf)) {
+		qdf_print("%s: netbuf pop failed!\n", __func__);
+		return 0;
+	}
+	last_frag = ((struct htt_rx_in_ord_paddr_ind_msdu_t *)*msg_word)->
+		msdu_info;
+	qdf_nbuf_append_ext_list(msdu, frag_nbuf, amsdu_len);
+	qdf_nbuf_set_pktlen(frag_nbuf, HTT_RX_BUF_SIZE);
+	qdf_nbuf_unmap(pdev->osdev, frag_nbuf, QDF_DMA_FROM_DEVICE);
+	/* For msdu's other than parent will not have htt_host_rx_desc_base */
+	len = MIN(amsdu_len, HTT_RX_BUF_SIZE);
+	amsdu_len -= len;
+	qdf_nbuf_trim_tail(frag_nbuf, HTT_RX_BUF_SIZE - len);
+
+	HTT_PKT_DUMP(qdf_trace_hex_dump(QDF_MODULE_ID_TXRX,
+					QDF_TRACE_LEVEL_FATAL,
+					qdf_nbuf_data(frag_nbuf),
+					qdf_nbuf_len(frag_nbuf)));
+	prev_frag_nbuf = frag_nbuf;
+	while (!last_frag) {
+		*msg_word += HTT_RX_IN_ORD_PADDR_IND_MSDU_DWORDS;
+		frag_nbuf = htt_rx_in_order_netbuf_pop(pdev,
+				HTT_RX_IN_ORD_PADDR_IND_PADDR_GET(**msg_word));
+		last_frag = ((struct htt_rx_in_ord_paddr_ind_msdu_t *)
+			     *msg_word)->msdu_info;
+
+		if (qdf_unlikely(NULL == frag_nbuf)) {
+			qdf_print("%s: netbuf pop failed!\n", __func__);
+			prev_frag_nbuf->next = NULL;
+			return 0;
+		}
+		qdf_nbuf_set_pktlen(frag_nbuf, HTT_RX_BUF_SIZE);
+		qdf_nbuf_unmap(pdev->osdev, frag_nbuf, QDF_DMA_FROM_DEVICE);
+
+		len = MIN(amsdu_len, HTT_RX_BUF_SIZE);
+		amsdu_len -= len;
+		qdf_nbuf_trim_tail(frag_nbuf, HTT_RX_BUF_SIZE - len);
+		HTT_PKT_DUMP(qdf_trace_hex_dump(QDF_MODULE_ID_TXRX,
+						QDF_TRACE_LEVEL_FATAL,
+						qdf_nbuf_data(frag_nbuf),
+						qdf_nbuf_len(frag_nbuf)));
+
+		qdf_nbuf_set_next(prev_frag_nbuf, frag_nbuf);
+		prev_frag_nbuf = frag_nbuf;
+	}
+	qdf_nbuf_set_next(prev_frag_nbuf, NULL);
+	return 1;
+}
+
+/**
+ * htt_mon_rx_get_phy_info() - Get rate interms of 500Kbps.
+ * @rx_desc: Pointer to struct htt_host_rx_desc_base
+ * @rx_status: Return variable updated with phy_info in rx_status
+ *
+ * If l_sig_rate_select is 0:
+ * 0x8: OFDM 48 Mbps
+ * 0x9: OFDM 24 Mbps
+ * 0xA: OFDM 12 Mbps
+ * 0xB: OFDM 6 Mbps
+ * 0xC: OFDM 54 Mbps
+ * 0xD: OFDM 36 Mbps
+ * 0xE: OFDM 18 Mbps
+ * 0xF: OFDM 9 Mbps
+ * If l_sig_rate_select is 1:
+ * 0x8: CCK 11 Mbps long preamble
+ * 0x9: CCK 5.5 Mbps long preamble
+ * 0xA: CCK 2 Mbps long preamble
+ * 0xB: CCK 1 Mbps long preamble
+ * 0xC: CCK 11 Mbps short preamble
+ * 0xD: CCK 5.5 Mbps short preamble
+ * 0xE: CCK 2 Mbps short preamble
+ *
+ * Return: None
+ */
+static void htt_mon_rx_get_phy_info(struct htt_host_rx_desc_base *rx_desc,
+				    struct mon_rx_status *rx_status)
+{
+#define SHORT_PREAMBLE 1
+#define LONG_PREAMBLE  0
+	char rate = 0x0;
+	uint8_t preamble = SHORT_PREAMBLE;
+	uint8_t preamble_type = rx_desc->ppdu_start.preamble_type;
+	uint8_t mcs = 0, nss = 0, sgi = 0, bw = 0, beamformed = 0;
+	uint16_t vht_flags = 0;
+	uint32_t l_sig_rate_select = rx_desc->ppdu_start.l_sig_rate_select;
+	uint32_t l_sig_rate = rx_desc->ppdu_start.l_sig_rate;
+	bool is_stbc = 0, ldpc = 0;
+
+	if (l_sig_rate_select == 0) {
+		switch (l_sig_rate) {
+		case 0x8:
+			rate = 0x60;
+			break;
+		case 0x9:
+			rate = 0x30;
+			break;
+		case 0xA:
+			rate = 0x18;
+			break;
+		case 0xB:
+			rate = 0x0c;
+			break;
+		case 0xC:
+			rate = 0x6c;
+			break;
+		case 0xD:
+			rate = 0x48;
+			break;
+		case 0xE:
+			rate = 0x24;
+			break;
+		case 0xF:
+			rate = 0x12;
+			break;
+		default:
+			break;
+		}
+	} else if (l_sig_rate_select == 1) {
+		switch (l_sig_rate) {
+		case 0x8:
+			rate = 0x16;
+			preamble = LONG_PREAMBLE;
+			break;
+		case 0x9:
+			rate = 0x0B;
+			preamble = LONG_PREAMBLE;
+			break;
+		case 0xA:
+			rate = 0x04;
+			preamble = LONG_PREAMBLE;
+			break;
+		case 0xB:
+			rate = 0x02;
+			preamble = LONG_PREAMBLE;
+			break;
+		case 0xC:
+			rate = 0x16;
+			break;
+		case 0xD:
+			rate = 0x0B;
+			break;
+		case 0xE:
+			rate = 0x04;
+			break;
+		default:
+			break;
+		}
+	} else {
+		qdf_print("Invalid rate info\n");
+	}
+
+	switch (preamble_type) {
+	case 8:
+		is_stbc = ((VHT_SIG_A_2(rx_desc) >> 4) & 3);
+		/* fallthrough */
+	case 9:
+		vht_flags = 1;
+		sgi = (VHT_SIG_A_2(rx_desc) >> 7) & 0x01;
+		bw = (VHT_SIG_A_1(rx_desc) >> 7) & 0x01;
+		mcs = (VHT_SIG_A_1(rx_desc) & 0x7f);
+		nss = mcs>>3;
+		beamformed =
+			(VHT_SIG_A_2(rx_desc) >> 8) & 0x1;
+		break;
+	case 0x0c:
+		vht_flags = 1;
+		is_stbc = (VHT_SIG_A_2(rx_desc) >> 3) & 1;
+		ldpc = (VHT_SIG_A_2(rx_desc) >> 2) & 1;
+		/* fallthrough */
+	case 0x0d:
+	{
+		uint8_t gid_in_sig = ((VHT_SIG_A_1(rx_desc) >> 4) & 0x3f);
+
+		vht_flags = 1;
+		sgi = VHT_SIG_A_2(rx_desc) & 0x01;
+		bw = (VHT_SIG_A_1(rx_desc) & 0x03);
+		if (gid_in_sig == 0 || gid_in_sig == 63) {
+			/* SU case */
+			mcs = (VHT_SIG_A_2(rx_desc) >> 4) &
+				0xf;
+			nss = (VHT_SIG_A_1(rx_desc) >> 10) &
+				0x7;
+		} else {
+			/* SU case */
+			uint8_t sta_user_pos =
+				(uint8_t)((rx_desc->ppdu_start.reserved_4a >> 8)
+					  & 0x3);
+			mcs = (rx_desc->ppdu_start.vht_sig_b >> 16);
+			if (bw >= 2)
+				mcs >>= 3;
+			else if (bw > 0)
+				mcs >>= 1;
+			mcs &= 0xf;
+			nss = (((VHT_SIG_A_1(rx_desc) >> 10) +
+				sta_user_pos * 3) & 0x7);
+		}
+		beamformed = (VHT_SIG_A_2(rx_desc) >> 8) & 0x1;
+	}
+		/* fallthrough */
+	default:
+		break;
+	}
+
+	rx_status->mcs = mcs;
+	rx_status->nr_ant = nss;
+	rx_status->is_stbc = is_stbc;
+	rx_status->sgi = sgi;
+	rx_status->ldpc = ldpc;
+	rx_status->beamformed = beamformed;
+	rx_status->vht_flag_values3[0] = mcs << 0x4;
+	rx_status->rate = rate;
+	rx_status->vht_flags = vht_flags;
+	rx_status->rtap_flags |= ((preamble == SHORT_PREAMBLE) ? BIT(1) : 0);
+	rx_status->vht_flag_values2 = 0x01 < bw;
+}
+
+/**
+ * htt_mon_rx_get_rtap_flags() - Get radiotap flags
+ * @rx_desc: Pointer to struct htt_host_rx_desc_base
+ *
+ * Return: Bitmapped radiotap flags.
+ */
+static uint8_t htt_mon_rx_get_rtap_flags(struct htt_host_rx_desc_base *rx_desc)
+{
+	uint8_t rtap_flags = 0;
+
+	/* WEP40 || WEP104 || WEP128 */
+	if (rx_desc->mpdu_start.encrypt_type == 0 ||
+	    rx_desc->mpdu_start.encrypt_type == 1 ||
+	    rx_desc->mpdu_start.encrypt_type == 3)
+		rtap_flags |= BIT(2);
+
+	/* IEEE80211_RADIOTAP_F_FRAG */
+	if (rx_desc->attention.fragment)
+		rtap_flags |= BIT(3);
+
+	/* IEEE80211_RADIOTAP_F_FCS */
+	rtap_flags |= BIT(4);
+
+	/* IEEE80211_RADIOTAP_F_BADFCS */
+	if (rx_desc->mpdu_end.fcs_err)
+		rtap_flags |= BIT(6);
+
+	return rtap_flags;
+}
+
+/**
+ * htt_rx_mon_get_rx_status() - Update information about the rx status,
+ * which is used later for radiotap updation.
+ * @rx_desc: Pointer to struct htt_host_rx_desc_base
+ * @rx_status: Return variable updated with rx_status
+ *
+ * Return: None
+ */
+void htt_rx_mon_get_rx_status(htt_pdev_handle pdev,
+			      struct htt_host_rx_desc_base *rx_desc,
+			      struct mon_rx_status *rx_status)
+{
+	uint16_t channel_flags = 0;
+	struct mon_channel *ch_info = &pdev->mon_ch_info;
+
+	rx_status->tsft = (u_int64_t)TSF_TIMESTAMP(rx_desc);
+	rx_status->chan_freq = ch_info->ch_freq;
+	rx_status->chan_num = ch_info->ch_num;
+	htt_mon_rx_get_phy_info(rx_desc, rx_status);
+	rx_status->rtap_flags |= htt_mon_rx_get_rtap_flags(rx_desc);
+	channel_flags |= rx_desc->ppdu_start.l_sig_rate_select ?
+		IEEE80211_CHAN_CCK : IEEE80211_CHAN_OFDM;
+	channel_flags |=
+		(cds_chan_to_band(ch_info->ch_num) == CDS_BAND_2GHZ ?
+		IEEE80211_CHAN_2GHZ : IEEE80211_CHAN_5GHZ);
+
+	rx_status->chan_flags = channel_flags;
+	rx_status->ant_signal_db = rx_desc->ppdu_start.rssi_comb;
+}
 
 #ifdef RX_HASH_DEBUG
 #define HTT_RX_CHECK_MSDU_COUNT(msdu_count) HTT_ASSERT_ALWAYS(msdu_count)
 #else
 #define HTT_RX_CHECK_MSDU_COUNT(msdu_count)     /* no-op */
 #endif
+
+/**
+ * htt_rx_mon_amsdu_rx_in_order_pop_ll() - Monitor mode HTT Rx in order pop
+ * function
+ * @pdev: Handle to htt_pdev_handle
+ * @rx_ind_msg: In order indication message.
+ * @head_msdu: Return variable pointing to head msdu.
+ * @tail_msdu: Return variable pointing to tail msdu.
+ *
+ * This function pops the msdu based on paddr:length of inorder indication
+ * message.
+ *
+ * Return: 1 for success, 0 on failure.
+ */
+int htt_rx_mon_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
+					qdf_nbuf_t rx_ind_msg,
+					qdf_nbuf_t *head_msdu,
+					qdf_nbuf_t *tail_msdu)
+{
+	qdf_nbuf_t msdu, next;
+	uint8_t *rx_ind_data;
+	uint32_t *msg_word;
+	uint32_t msdu_count;
+	struct htt_host_rx_desc_base *rx_desc;
+	struct mon_rx_status rx_status = {0};
+	uint32_t amsdu_len;
+	uint32_t len;
+	uint32_t last_frag;
+
+	HTT_ASSERT1(htt_rx_in_order_ring_elems(pdev) != 0);
+
+	rx_ind_data = qdf_nbuf_data(rx_ind_msg);
+	msg_word = (uint32_t *)rx_ind_data;
+
+	HTT_PKT_DUMP(qdf_trace_hex_dump(QDF_MODULE_ID_TXRX,
+					QDF_TRACE_LEVEL_FATAL,
+					(void *)rx_ind_data,
+					(int)qdf_nbuf_len(rx_ind_msg)));
+
+	/* Get the total number of MSDUs */
+	msdu_count = HTT_RX_IN_ORD_PADDR_IND_MSDU_CNT_GET(*(msg_word + 1));
+	HTT_RX_CHECK_MSDU_COUNT(msdu_count);
+
+	msg_word = (uint32_t *)(rx_ind_data +
+				 HTT_RX_IN_ORD_PADDR_IND_HDR_BYTES);
+
+	(*head_msdu) = msdu = htt_rx_in_order_netbuf_pop(pdev,
+				HTT_RX_IN_ORD_PADDR_IND_PADDR_GET(*msg_word));
+
+	if (qdf_unlikely(NULL == msdu)) {
+		qdf_print("%s: netbuf pop failed!\n", __func__);
+		*tail_msdu = NULL;
+		return 0;
+	}
+	while (msdu_count > 0) {
+
+		msdu_count--;
+		/*
+		 * Set the netbuf length to be the entire buffer length
+		 * initially, so the unmap will unmap the entire buffer.
+		 */
+		qdf_nbuf_set_pktlen(msdu, HTT_RX_BUF_SIZE);
+		qdf_nbuf_unmap(pdev->osdev, msdu, QDF_DMA_FROM_DEVICE);
+
+		/*
+		 * cache consistency has been taken care of by the
+		 * qdf_nbuf_unmap
+		 */
+		rx_desc = htt_rx_desc(msdu);
+		HTT_PKT_DUMP(htt_print_rx_desc(rx_desc));
+		/*
+		 * Make the netbuf's data pointer point to the payload rather
+		 * than the descriptor.
+		 */
+		htt_rx_mon_get_rx_status(pdev, rx_desc, &rx_status);
+		/*
+		 * 350 bytes of RX_STD_DESC size should be sufficient for
+		 * radiotap.
+		 */
+		qdf_nbuf_update_radiotap(&rx_status, msdu,
+						  HTT_RX_STD_DESC_RESERVATION);
+		amsdu_len = HTT_RX_IN_ORD_PADDR_IND_MSDU_LEN_GET(*(msg_word +
+						NEXT_FIELD_OFFSET_IN32));
+
+		/*
+		 * MAX_RX_PAYLOAD_SZ when we have AMSDU packet. amsdu_len in
+		 * which case is the total length of sum of all AMSDU's
+		 */
+		len = MIN(amsdu_len, MAX_RX_PAYLOAD_SZ);
+		amsdu_len -= len;
+		qdf_nbuf_trim_tail(msdu,
+			   HTT_RX_BUF_SIZE -
+			   (RX_STD_DESC_SIZE + len));
+
+
+		HTT_PKT_DUMP(qdf_trace_hex_dump(QDF_MODULE_ID_TXRX,
+						QDF_TRACE_LEVEL_FATAL,
+						qdf_nbuf_data(msdu),
+						qdf_nbuf_len(msdu)));
+		last_frag = ((struct htt_rx_in_ord_paddr_ind_msdu_t *)
+			     msg_word)->msdu_info;
+
+#undef NEXT_FIELD_OFFSET_IN32
+		/* Handle amsdu packet */
+		if (!last_frag) {
+			/*
+			 * For AMSDU packet msdu->len is sum of all the msdu's
+			 * length, msdu->data_len is sum of length's of
+			 * remaining msdu's other than parent.
+			 */
+			if (!htt_mon_rx_handle_amsdu_packet(msdu, pdev,
+							    &msg_word,
+							    amsdu_len)) {
+				qdf_print("%s: failed to handle amsdu packet\n",
+					     __func__);
+				return 0;
+			}
+		}
+		/* check if this is the last msdu */
+		if (msdu_count) {
+			msg_word += HTT_RX_IN_ORD_PADDR_IND_MSDU_DWORDS;
+			next = htt_rx_in_order_netbuf_pop(pdev,
+				HTT_RX_IN_ORD_PADDR_IND_PADDR_GET(*msg_word));
+			if (qdf_unlikely(NULL == next)) {
+				qdf_print("%s: netbuf pop failed!\n",
+					     __func__);
+				*tail_msdu = NULL;
+				return 0;
+			}
+			qdf_nbuf_set_next(msdu, next);
+			msdu = next;
+		} else {
+			*tail_msdu = msdu;
+			qdf_nbuf_set_next(msdu, NULL);
+		}
+	}
+
+	return 1;
+}
+
+/**
+ * htt_rx_mon_note_capture_channel() - Make note of channel to update in
+ * radiotap
+ * @pdev: handle to htt_pdev
+ * @mon_ch: capture channel number.
+ *
+ * Return: None
+ */
+void htt_rx_mon_note_capture_channel(htt_pdev_handle pdev, int mon_ch)
+{
+	struct mon_channel *ch_info = &pdev->mon_ch_info;
+
+	ch_info->ch_num = mon_ch;
+	ch_info->ch_freq = cds_chan_to_freq(mon_ch);
+}
+
+extern void
+dump_pkt(qdf_nbuf_t nbuf, uint32_t nbuf_paddr, int len);
 
 /* Return values: 1 - success, 0 - failure */
 int
@@ -2230,6 +2701,9 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 		htt_rx_frag_pop = htt_rx_amsdu_pop_ll;
 		htt_rx_mpdu_desc_list_next = htt_rx_mpdu_desc_list_next_ll;
 	}
+
+	if (cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE)
+		htt_rx_amsdu_pop = htt_rx_mon_amsdu_rx_in_order_pop_ll;
 
 	htt_rx_offload_msdu_pop = htt_rx_offload_msdu_pop_ll;
 	htt_rx_mpdu_desc_retry = htt_rx_mpdu_desc_retry_ll;

@@ -767,6 +767,7 @@ struct ol_txrx_pdev_t {
 		void *lro_data;
 		void (*lro_flush_cb)(void *);
 	} lro_info;
+	struct ol_txrx_peer_t *self_peer;
 };
 
 struct ol_txrx_ocb_chan_info {
