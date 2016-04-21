@@ -1014,63 +1014,6 @@ bool csr_neighbor_roam_connected_profile_match(tpAniSirGlobal pMac,
 }
 
 /**
- * csr_neighbor_roam_prepare_non_occupied_channel_list() - prepare non-occup CL
- * @pMac: The handle returned by mac_open
- * @pInputChannelList: The default channels list
- * @numOfChannels: The number of channels in the default channels list
- * @pOutputChannelList: The place to put the non-occupied channel list
- * @pOutputNumOfChannels: Number of channels in the non-occupied channel list
- *
- * This function is used to prepare a channel list that is derived from
- * the list of valid channels and does not include those in the occupied list
- *
- * Return QDF_STATUS
- */
-QDF_STATUS
-csr_neighbor_roam_prepare_non_occupied_channel_list(tpAniSirGlobal pMac,
-		uint8_t sessionId, uint8_t *pInputChannelList,
-		uint8_t numOfChannels, uint8_t *pOutputChannelList,
-		uint8_t *pOutputNumOfChannels)
-{
-	uint8_t i = 0;
-	uint8_t outputNumOfChannels = 0;
-	uint8_t numOccupiedChannels =
-			pMac->scan.occupiedChannels[sessionId].numChannels;
-	uint8_t *pOccupiedChannelList =
-			pMac->scan.occupiedChannels[sessionId].channelList;
-
-	for (i = 0; i < numOfChannels; i++) {
-		if (csr_is_channel_present_in_list
-				(pOccupiedChannelList, numOccupiedChannels,
-				 pInputChannelList[i]))
-			continue;
-		/*
-		 * DFS channel will be added in the list only when the
-		 * DFS Roaming scan flag is enabled
-		 */
-		if (CDS_IS_DFS_CH(pInputChannelList[i])) {
-			if (CSR_ROAMING_DFS_CHANNEL_DISABLED !=
-				pMac->roam.configParam.allowDFSChannelRoam) {
-				pOutputChannelList[outputNumOfChannels++] =
-						pInputChannelList[i];
-			}
-		} else {
-			pOutputChannelList[outputNumOfChannels++] =
-						pInputChannelList[i];
-		}
-	}
-
-	sms_log(pMac, LOG2,
-		FL("Number of channels in the valid channel list=%d; "
-		   "Number of channels in the non-occupied list list=%d"),
-		numOfChannels, outputNumOfChannels);
-
-	/* Return the number of channels */
-	*pOutputNumOfChannels = outputNumOfChannels;
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * csr_roam_reset_roam_params - API to reset the roaming parameters
  * @mac_ctx:          Pointer to the global MAC structure
  *
