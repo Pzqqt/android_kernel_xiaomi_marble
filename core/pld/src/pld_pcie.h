@@ -88,6 +88,13 @@ static inline void *cnss_get_fw_ptr(void)
 }
 #endif
 
+#if (!defined(CONFIG_CNSS)) || (!defined(CONFIG_PCI_MSM))
+static inline int cnss_wlan_pm_control(bool vote)
+{
+	return 0;
+}
+#endif
+
 #ifndef CONFIG_CNSS
 static inline int
 pld_pcie_get_fw_files_for_target(struct pld_fw_files *pfw_files,
@@ -128,10 +135,6 @@ static inline int cnss_wlan_set_dfs_nol(void *info, u16 info_len)
 	return 0;
 }
 static inline int cnss_wlan_get_dfs_nol(void *info, u16 info_len)
-{
-	return 0;
-}
-static inline int cnss_wlan_pm_control(bool vote)
 {
 	return 0;
 }
