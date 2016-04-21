@@ -702,6 +702,7 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_tx_power_level_stats_evt_fixed_param,
 	WMITLV_TAG_STRUC_wmi_scan_adaptive_dwell_parameters_tlv,
 	WMITLV_TAG_STRUC_wmi_scan_adaptive_dwell_config_fixed_param,
+	WMITLV_TAG_STRUC_wmi_wow_set_action_wake_up_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -985,7 +986,8 @@ typedef enum {
 	OP(WMI_VDEV_SET_CUSTOM_AGGR_SIZE_CMDID) \
 	OP(WMI_PDEV_WAL_POWER_DEBUG_CMDID) \
 	OP(WMI_VDEV_WISA_CMDID) \
-	OP(WMI_SCAN_ADAPTIVE_DWELL_CONFIG_CMDID)
+	OP(WMI_SCAN_ADAPTIVE_DWELL_CONFIG_CMDID) \
+	OP(WMI_WOW_SET_ACTION_WAKE_UP_CMDID)
 
 /*
  * IMPORTANT: Please add _ALL_ WMI Events Here.
@@ -1593,6 +1595,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_WOW_UDP_SVC_OFLD_CMDID);
 	   WMI_WOW_HOSTWAKEUP_GPIO_PIN_PATTERN_CONFIG_CMD_fixed_param, fixed_param,\
 	   WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_WOW_HOSTWAKEUP_GPIO_PIN_PATTERN_CONFIG_CMDID);
+
+#define WMITLV_TABLE_WMI_WOW_SET_ACTION_WAKE_UP_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_wow_set_action_wake_up_cmd_fixed_param, WMI_WOW_SET_ACTION_WAKE_UP_CMD_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_WOW_SET_ACTION_WAKE_UP_CMDID);
 
 /* Wow enable/disable wake up Cmd */
 #define WMITLV_TABLE_WMI_WOW_ENABLE_DISABLE_WAKE_EVENT_CMDID(id,op,buf,len) \

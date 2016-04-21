@@ -633,6 +633,9 @@ typedef enum {
 	/* configure WOW host wakeup PIN pattern */
 	WMI_WOW_HOSTWAKEUP_GPIO_PIN_PATTERN_CONFIG_CMDID,
 
+	/* Set which action category should wake the host from suspend */
+	WMI_WOW_SET_ACTION_WAKE_UP_CMDID,
+
 	/* RTT measurement related cmd */
 	/** request to make an RTT measurement */
 	WMI_RTT_MEASREQ_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_RTT),
@@ -8420,6 +8423,32 @@ typedef struct {
 	/* repeat times for pulse (0xffffffff means forever) */
 	A_UINT32 repeat_cnt;
 } WMI_WOW_HOSTWAKEUP_GPIO_PIN_PATTERN_CONFIG_CMD_fixed_param;
+
+#define MAX_SUPPORTED_ACTION_CATEGORY           256
+#define MAX_SUPPORTED_ACTION_CATEGORY_ELE_LIST  (MAX_SUPPORTED_ACTION_CATEGORY/32)
+
+typedef enum {
+	WOW_ACTION_WAKEUP_OPERATION_RESET = 0,
+	WOW_ACTION_WAKEUP_OPERATION_SET,
+	WOW_ACTION_WAKEUP_OPERATION_ADD_SET,
+	WOW_ACTION_WAKEUP_OPERATION_DELETE_SET,
+} WOW_ACTION_WAKEUP_OPERATION;
+
+typedef struct {
+	/*
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_WMI_WOW_SET_ACTION_WAKE_UP_CMD_fixed_param
+	 */
+	A_UINT32 tlv_header;
+	A_UINT32 vdev_id;
+	/*
+	 * 0 reset to fw default, 1 set the bits, 2 add the setting bits,
+	 * 3 delete the setting bits
+	 */
+	A_UINT32 operation;
+	A_UINT32 action_category_map[MAX_SUPPORTED_ACTION_CATEGORY_ELE_LIST];
+} WMI_WOW_SET_ACTION_WAKE_UP_CMD_fixed_param;
+
 
 typedef struct wow_event_info_s {
 	A_UINT32 tlv_header;            /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WOW_EVENT_INFO_fixed_param  */
