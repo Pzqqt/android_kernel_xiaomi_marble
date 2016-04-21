@@ -1817,14 +1817,14 @@ ol_txrx_remove_peers_for_vdev(ol_txrx_vdev_handle vdev,
 			temp = peer;
 	}
 
+	qdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
+
 	if (remove_last_peer) {
 		/* remove IBSS bss peer last */
 		peer = TAILQ_FIRST(&vdev->peer_list);
 		callback(callback_context, (uint8_t *) &vdev->mac_addr,
 			 vdev->vdev_id, peer, false);
 	}
-
-	qdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
 }
 
 /**
