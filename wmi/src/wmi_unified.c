@@ -1400,11 +1400,7 @@ void *wmi_unified_attach(void *scn_handle,
 	wmi_runtime_pm_init(wmi_handle);
 	qdf_spinlock_create(&wmi_handle->eventq_lock);
 	qdf_nbuf_queue_init(&wmi_handle->event_queue);
-#ifdef CONFIG_CNSS
-	cnss_init_work(&wmi_handle->rx_event_work, wmi_rx_event_work);
-#else
 	INIT_WORK(&wmi_handle->rx_event_work, wmi_rx_event_work);
-#endif
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 	qdf_spinlock_create(&wmi_handle->wmi_record_lock);
 #endif

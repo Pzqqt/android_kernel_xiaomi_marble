@@ -99,19 +99,11 @@ static bool work_initialized;
  *
  * Return: N/A
  */
-#ifdef CONFIG_CNSS
-static void init_tasklet_work(struct work_struct *work,
-			      work_func_t work_handler)
-{
-	cnss_init_work(work, work_handler);
-}
-#else
 static void init_tasklet_work(struct work_struct *work,
 			      work_func_t work_handler)
 {
 	INIT_WORK(work, work_handler);
 }
-#endif
 
 /**
  * init_tasklet_workers() - init_tasklet_workers

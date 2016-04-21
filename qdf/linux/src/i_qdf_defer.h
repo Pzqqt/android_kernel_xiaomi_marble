@@ -36,9 +36,6 @@
 #include <linux/version.h>
 #include <linux/workqueue.h>
 #include <linux/interrupt.h>
-#ifdef CONFIG_CNSS
-#include <net/cnss.h>
-#endif
 #include <qdf_types.h>
 #include <qdf_status.h>
 #include <qdf_trace.h>
@@ -177,11 +174,7 @@ static inline QDF_STATUS __qdf_init_work(qdf_handle_t hdl,
 {
 	work->fn = func;
 	work->arg = arg;
-#ifdef CONFIG_CNSS
-	cnss_init_work(&work->work, __qdf_defer_func);
-#else
 	INIT_WORK(&work->work, __qdf_defer_func);
-#endif
 	return QDF_STATUS_SUCCESS;
 }
 

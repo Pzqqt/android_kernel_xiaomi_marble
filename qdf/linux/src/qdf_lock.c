@@ -30,9 +30,6 @@
 #include <qdf_trace.h>
 
 #include <qdf_types.h>
-#ifdef CONFIG_CNSS
-#include <net/cnss.h>
-#endif
 #ifdef CONFIG_MCL
 #include <i_host_diag_core_event.h>
 #include <ani_global.h>
@@ -249,13 +246,8 @@ EXPORT_SYMBOL(qdf_mutex_release);
  */
 static const char *qdf_wake_lock_name(qdf_wake_lock_t *lock)
 {
-#if defined CONFIG_CNSS
 	if (lock->name)
 		return lock->name;
-#elif defined(WLAN_OPEN_SOURCE) && defined(CONFIG_HAS_WAKELOCK)
-	if (lock->ws.name)
-		return lock->ws.name;
-#endif
 	return "UNNAMED_WAKELOCK";
 }
 EXPORT_SYMBOL(qdf_wake_lock_name);
@@ -271,11 +263,7 @@ EXPORT_SYMBOL(qdf_wake_lock_name);
  */
 QDF_STATUS qdf_wake_lock_create(qdf_wake_lock_t *lock, const char *name)
 {
-#if defined CONFIG_CNSS
-	cnss_pm_wake_lock_init(lock, name);
-#elif defined(WLAN_OPEN_SOURCE) && defined(CONFIG_HAS_WAKELOCK)
-	wake_lock_init(lock, WAKE_LOCK_SUSPEND, name);
-#endif
+	wakeup_source_init(lock, name);
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(qdf_wake_lock_create);
@@ -296,11 +284,7 @@ QDF_STATUS qdf_wake_lock_acquire(qdf_wake_lock_t *lock, uint32_t reason)
 			WIFI_POWER_EVENT_DEFAULT_WAKELOCK_TIMEOUT,
 			WIFI_POWER_EVENT_WAKELOCK_TAKEN);
 #endif
-#if defined CONFIG_CNSS
-	cnss_pm_wake_lock(lock);
-#elif defined(WLAN_OPEN_SOURCE) && defined(CONFIG_HAS_WAKELOCK)
-	wake_lock(lock);
-#endif
+	__pm_stay_awake(lock);
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(qdf_wake_lock_acquire);
@@ -328,11 +312,7 @@ QDF_STATUS qdf_wake_lock_timeout_acquire(qdf_wake_lock_t *lock, uint32_t msec,
 				WIFI_POWER_EVENT_WAKELOCK_TAKEN);
 	}
 #endif
-#if defined CONFIG_CNSS
-	cnss_pm_wake_lock_timeout(lock, msec);
-#elif defined(WLAN_OPEN_SOURCE) && defined(CONFIG_HAS_WAKELOCK)
-	wake_lock_timeout(lock, msecs_to_jiffies(msec));
-#endif
+	__pm_wakeup_event(lock, msec);
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(qdf_wake_lock_timeout_acquire);
@@ -353,11 +333,7 @@ QDF_STATUS qdf_wake_lock_release(qdf_wake_lock_t *lock, uint32_t reason)
 			WIFI_POWER_EVENT_DEFAULT_WAKELOCK_TIMEOUT,
 			WIFI_POWER_EVENT_WAKELOCK_RELEASED);
 #endif
-#if defined CONFIG_CNSS
-	cnss_pm_wake_lock_release(lock);
-#elif defined(WLAN_OPEN_SOURCE) && defined(CONFIG_HAS_WAKELOCK)
-	wake_unlock(lock);
-#endif
+	__pm_relax(lock);
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(qdf_wake_lock_release);
@@ -372,11 +348,7 @@ EXPORT_SYMBOL(qdf_wake_lock_release);
  */
 QDF_STATUS qdf_wake_lock_destroy(qdf_wake_lock_t *lock)
 {
-#if defined CONFIG_CNSS
-	cnss_pm_wake_lock_destroy(lock);
-#elif defined(WLAN_OPEN_SOURCE) && defined(CONFIG_HAS_WAKELOCK)
-	wake_lock_destroy(lock);
-#endif
+	wakeup_source_trash(lock);
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(qdf_wake_lock_destroy);

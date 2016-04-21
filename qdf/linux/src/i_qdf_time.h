@@ -178,21 +178,14 @@ static inline bool __qdf_system_time_after_eq(__qdf_time_t a, __qdf_time_t b)
  *
  * Return: Time in microseconds
  */
-#ifdef CONFIG_CNSS
 static inline uint64_t __qdf_get_monotonic_boottime(void)
 {
 	struct timespec ts;
 
-	cnss_get_monotonic_boottime(&ts);
+	get_monotonic_boottime(&ts);
 
 	return ((uint64_t) ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
 }
-#else
-static inline uint64_t __qdf_get_monotonic_boottime(void)
-{
-	return __qdf_system_ticks_to_msecs(__qdf_system_ticks()) * 1000;
-}
-#endif /* CONFIG_CNSS */
 
 #ifdef QCA_WIFI_3_0_ADRASTEA
 
@@ -229,15 +222,11 @@ static inline uint64_t __qdf_get_log_timestamp(void)
  */
 static inline uint64_t __qdf_get_log_timestamp(void)
 {
-#ifdef CONFIG_CNSS
 	struct timespec ts;
 
-	cnss_get_boottime(&ts);
+	ktime_get_ts(&ts);
 
 	return ((uint64_t) ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
-#else
-	return __qdf_system_ticks_to_msecs(__qdf_system_ticks()) * 1000;
-#endif /* CONFIG_CNSS */
 }
 #endif /* QCA_WIFI_3_0_ADRASTEA */
 
