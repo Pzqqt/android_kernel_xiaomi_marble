@@ -1436,6 +1436,42 @@ bool hdd_is_valid_mac_address(const uint8_t *pMacAddr)
 }
 
 /**
+ * __hdd__mon_open() - HDD Open function
+ * @dev: Pointer to net_device structure
+ *
+ * This is called in response to ifconfig up
+ *
+ * Return: 0 for success; non-zero for failure
+ */
+static int __hdd_mon_open(struct net_device *dev)
+{
+	int ret;
+
+	ENTER_DEV(dev);
+	ret = hdd_set_mon_rx_cb(dev);
+	return ret;
+}
+
+/**
+ * hdd_mon_open() - Wrapper function for __hdd_mon_open to protect it from SSR
+ * @dev:	Pointer to net_device structure
+ *
+ * This is called in response to ifconfig up
+ *
+ * Return: 0 for success; non-zero for failure
+ */
+int hdd_mon_open(struct net_device *dev)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __hdd_mon_open(dev);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
+/**
  * __hdd_open() - HDD Open function
  * @dev:	Pointer to net_device structure
  *
@@ -1892,9 +1928,44 @@ static struct net_device_ops wlan_drv_ops = {
 #endif
 };
 
+/* Monitor mode net_device_ops, doesnot Tx and most of operations. */
+static struct net_device_ops wlan_mon_drv_ops = {
+	.ndo_open = hdd_mon_open,
+	.ndo_stop = hdd_stop,
+	.ndo_get_stats = hdd_get_stats,
+};
+
+/**
+ * hdd_set_station_ops() - update net_device ops for monitor mode
+ * @pWlanDev: Handle to struct net_device to be updated.
+ * Return: None
+ */
 void hdd_set_station_ops(struct net_device *pWlanDev)
 {
-	pWlanDev->netdev_ops = &wlan_drv_ops;
+	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam())
+		pWlanDev->netdev_ops = &wlan_mon_drv_ops;
+	else
+		pWlanDev->netdev_ops = &wlan_drv_ops;
+}
+
+/**
+ * hdd_mon_mode_ether_setup() - Update monitor mode struct net_device.
+ * @dev: Handle to struct net_device to be updated.
+ *
+ * Return: None
+ */
+static void hdd_mon_mode_ether_setup(struct net_device *dev)
+{
+	dev->header_ops         = NULL;
+	dev->type               = ARPHRD_IEEE80211_RADIOTAP;
+	dev->hard_header_len    = ETH_HLEN;
+	dev->mtu                = ETH_DATA_LEN;
+	dev->addr_len           = ETH_ALEN;
+	dev->tx_queue_len       = 1000; /* Ethernet wants good queues */
+	dev->flags              = IFF_BROADCAST|IFF_MULTICAST;
+	dev->priv_flags        |= IFF_TX_SKB_SHARING;
+
+	memset(dev->broadcast, 0xFF, ETH_ALEN);
 }
 
 /**
@@ -1922,7 +1993,9 @@ static hdd_adapter_t *hdd_alloc_station_adapter(hdd_context_t *hdd_ctx,
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0)) || defined(WITH_BACKPORTS)
 				   name_assign_type,
 #endif
-				   ether_setup, NUM_TX_QUEUES);
+				(QDF_GLOBAL_MONITOR_MODE == cds_get_conparam() ?
+				hdd_mon_mode_ether_setup : ether_setup),
+				NUM_TX_QUEUES);
 
 	if (pWlanDev != NULL) {
 
@@ -2434,6 +2507,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 	case QDF_P2P_CLIENT_MODE:
 	case QDF_P2P_DEVICE_MODE:
 	case QDF_OCB_MODE:
+	case QDF_MONITOR_MODE:
 	{
 		adapter = hdd_alloc_station_adapter(hdd_ctx, macAddr,
 						    name_assign_type,
@@ -2450,6 +2524,8 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 			adapter->wdev.iftype = NL80211_IFTYPE_P2P_CLIENT;
 		else if (QDF_P2P_DEVICE_MODE == session_type)
 			adapter->wdev.iftype = NL80211_IFTYPE_P2P_DEVICE;
+		else if (QDF_MONITOR_MODE == session_type)
+			adapter->wdev.iftype = NL80211_IFTYPE_MONITOR;
 		else
 			adapter->wdev.iftype = NL80211_IFTYPE_STATION;
 
@@ -5636,6 +5712,21 @@ static inline int hdd_open_p2p_interface(struct hdd_context_t *hdd_ctx,
 #endif
 
 /**
+ * hdd_open_monitor_interface() - Open monitor mode interface
+ * @hdd_ctx: HDD context
+ * @rtnl_held: True if RTNL lock is held
+ *
+ * Return: Primary adapter on success and PTR_ERR on failure
+ */
+static hdd_adapter_t *hdd_open_monitor_interface(hdd_context_t *hdd_ctx,
+						 bool rtnl_held)
+{
+	return hdd_open_adapter(hdd_ctx, QDF_MONITOR_MODE, "wlan%d",
+				wlan_hdd_get_intf_addr(hdd_ctx),
+				NET_NAME_UNKNOWN, rtnl_held);
+}
+
+/**
  * hdd_open_interfaces - Open all required interfaces
  * hdd_ctx:	HDD context
  * rtnl_held: True if RTNL lock is held
@@ -6059,7 +6150,10 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 	rtnl_held = hdd_hold_rtnl_lock();
 
-	adapter = hdd_open_interfaces(hdd_ctx, rtnl_held);
+	if (QDF_GLOBAL_MONITOR_MODE == hdd_get_conparam())
+		adapter = hdd_open_monitor_interface(hdd_ctx, rtnl_held);
+	else
+		adapter = hdd_open_interfaces(hdd_ctx, rtnl_held);
 
 	if (IS_ERR(adapter)) {
 		ret = PTR_ERR(adapter);

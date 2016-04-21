@@ -494,6 +494,7 @@ typedef enum eSirBssType {
 	eSIR_INFRA_AP_MODE,     /* Added for softAP support */
 	eSIR_IBSS_MODE,
 	eSIR_AUTO_MODE,
+	eSIR_MONITOR_MODE,
 	eSIR_DONOT_USE_BSS_TYPE = SIR_MAX_ENUM_SIZE
 } tSirBssType;
 
@@ -2428,6 +2429,18 @@ typedef struct sSirUpdateParams {
 	uint8_t sessionId;      /* Session ID */
 	uint8_t ssidHidden;     /* Hide SSID */
 } tSirUpdateParams, *tpSirUpdateParams;
+
+/**
+ * struct sir_create_session - Used for creating session in monitor mode
+ * @type: SME host message type.
+ * @msg_len: Length of the message.
+ * @bss_id: bss_id for creating the session.
+ */
+struct sir_create_session {
+	uint16_t type;
+	uint16_t msg_len;
+	struct qdf_mac_addr bss_id;
+};
 
 /* Beacon Interval */
 typedef struct sSirChangeBIParams {

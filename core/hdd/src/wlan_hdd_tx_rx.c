@@ -55,6 +55,7 @@
 #include "wlan_hdd_lro.h"
 
 #include "cdp_txrx_peer_ops.h"
+#include "ol_txrx.h"
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 #define HDD_EAPOL_ETHER_TYPE             (0x888E)
@@ -670,6 +671,84 @@ QDF_STATUS hdd_deinit_tx_rx(hdd_adapter_t *pAdapter)
 }
 
 /**
+ * hdd_mon_rx_packet_cbk() - Receive callback registered with OL layer.
+ * @context: [in] pointer to qdf context
+ * @rxBuf:      [in] pointer to rx qdf_nbuf
+ *
+ * TL will call this to notify the HDD when one or more packets were
+ * received for a registered STA.
+ *
+ * Return: QDF_STATUS_E_FAILURE if any errors encountered, QDF_STATUS_SUCCESS
+ * otherwise
+ */
+static QDF_STATUS hdd_mon_rx_packet_cbk(void *context, qdf_nbuf_t rxbuf)
+{
+	hdd_adapter_t *adapter;
+	int rxstat;
+	struct sk_buff *skb;
+	struct sk_buff *skb_next;
+	unsigned int cpu_index;
+
+	/* Sanity check on inputs */
+	if ((NULL == context) || (NULL == rxbuf)) {
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Null params being passed", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	adapter = (hdd_adapter_t *)context;
+	if ((NULL == adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
+			  "invalid adapter %p", adapter);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cpu_index = wlan_hdd_get_cpu();
+
+	/* walk the chain until all are processed */
+	skb = (struct sk_buff *) rxbuf;
+	while (NULL != skb) {
+		skb_next = skb->next;
+		skb->dev = adapter->dev;
+
+		++adapter->hdd_stats.hddTxRxStats.rxPackets[cpu_index];
+		++adapter->stats.rx_packets;
+		adapter->stats.rx_bytes += skb->len;
+
+		/* Remove SKB from internal tracking table before submitting
+		 * it to stack
+		 */
+		qdf_net_buf_debug_release_skb(skb);
+
+		/*
+		 * If this is not a last packet on the chain
+		 * Just put packet into backlog queue, not scheduling RX sirq
+		 */
+		if (skb->next) {
+			rxstat = netif_rx(skb);
+		} else {
+			/*
+			 * This is the last packet on the chain
+			 * Scheduling rx sirq
+			 */
+			rxstat = netif_rx_ni(skb);
+		}
+
+		if (NET_RX_SUCCESS == rxstat)
+			++adapter->
+				hdd_stats.hddTxRxStats.rxDelivered[cpu_index];
+		else
+			++adapter->hdd_stats.hddTxRxStats.rxRefused[cpu_index];
+
+		skb = skb_next;
+	}
+
+	adapter->dev->last_rx = jiffies;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * hdd_rx_packet_cbk() - Receive packet handler
  * @context: pointer to HDD context
  * @rxBuf: pointer to rx qdf_nbuf
@@ -1108,3 +1187,45 @@ void wlan_hdd_netif_queue_control(hdd_adapter_t *adapter,
 	return;
 }
 
+/**
+ * hdd_set_mon_rx_cb() - Set Monitor mode Rx callback
+ * @dev:        Pointer to net_device structure
+ *
+ * Return: 0 for success; non-zero for failure
+ */
+int hdd_set_mon_rx_cb(struct net_device *dev)
+{
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	hdd_context_t *hdd_ctx =  WLAN_HDD_GET_CTX(adapter);
+	int ret;
+	QDF_STATUS qdf_status;
+	struct ol_txrx_desc_type sta_desc = {0};
+	struct ol_txrx_ops txrx_ops;
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
+	txrx_ops.rx.rx = hdd_mon_rx_packet_cbk;
+	ol_txrx_vdev_register(
+		 ol_txrx_get_vdev_from_vdev_id(adapter->sessionId),
+		 adapter, &txrx_ops);
+	/* peer is created wma_vdev_attach->wma_create_peer */
+	qdf_status = ol_txrx_register_peer(&sta_desc);
+	if (QDF_STATUS_SUCCESS != qdf_status) {
+		hdd_err("WLANTL_RegisterSTAClient() failed to register. Status= %d [0x%08X]",
+			qdf_status, qdf_status);
+		goto exit;
+	}
+
+	qdf_status = sme_create_mon_session(hdd_ctx->hHal,
+				     adapter->macAddressCurrent.bytes);
+	if (QDF_STATUS_SUCCESS != qdf_status) {
+		hdd_err("sme_create_mon_session() failed to register. Status= %d [0x%08X]",
+			qdf_status, qdf_status);
+	}
+exit:
+	ret = qdf_status_to_os_return(qdf_status);
+	return ret;
+}

@@ -367,6 +367,7 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 
 #define WE_SET_DUAL_MAC_SCAN_CONFIG    21
 #define WE_SET_DUAL_MAC_FW_MODE_CONFIG 22
+#define WE_SET_MON_MODE_CHAN 23
 
 #ifdef FEATURE_WLAN_TDLS
 #undef  MAX_VAR_ARGS
@@ -9728,6 +9729,53 @@ static int iw_set_band_config(struct net_device *dev,
 	return ret;
 }
 
+/**
+ * wlan_hdd_set_mon_chan() - Set capture channel on the monitor mode interface.
+ * @adapter: Handle to adapter
+ * @chan: Monitor mode channel
+ * @bandwidth: Capture channel bandwidth
+ *
+ * Return: 0 on success else error code.
+ */
+static int wlan_hdd_set_mon_chan(hdd_adapter_t *adapter, uint32_t chan,
+				 uint32_t bandwidth)
+{
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	hdd_station_ctx_t *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct hdd_mon_set_ch_info *ch_info = &sta_ctx->ch_info;
+	QDF_STATUS status;
+	tHalHandle hal_hdl = hdd_ctx->hHal;
+	struct qdf_mac_addr bssid;
+	tCsrRoamProfile roam_profile;
+	struct ch_params_s ch_params;
+
+	if (QDF_GLOBAL_MONITOR_MODE != hdd_get_conparam()) {
+		hdd_err("Not supported, device is not in monitor mode");
+		return -EINVAL;
+	}
+
+	hdd_info("Set monitor mode Channel %d", chan);
+	hdd_select_cbmode(adapter, chan);
+	roam_profile.ChannelInfo.ChannelList = &ch_info->channel;
+	roam_profile.ChannelInfo.numOfChannels = 1;
+	roam_profile.phyMode = ch_info->phy_mode;
+	roam_profile.ch_params.ch_width = bandwidth;
+
+	qdf_mem_copy(bssid.bytes, adapter->macAddressCurrent.bytes,
+		     QDF_MAC_ADDR_SIZE);
+
+	ch_params.ch_width = bandwidth;
+	sme_set_ch_params(hal_hdl, ch_info->phy_mode, chan, 0, &ch_params);
+	status = sme_roam_channel_change_req(hal_hdl, bssid, &ch_params,
+					     &roam_profile);
+	if (status) {
+		hdd_err("Status: %d Failed to set sme_roam Channel for monitor mode",
+			status);
+	}
+
+	return qdf_status_to_os_return(status);
+}
+
 static int __iw_set_two_ints_getnone(struct net_device *dev,
 				     struct iw_request_info *info,
 				     union iwreq_data *wrqu, char *extra)
@@ -9792,6 +9840,9 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 		       value[1], value[2]);
 		if (value[1] == DUMP_DP_TRACE)
 			qdf_dp_trace_dump_all(value[2]);
+		break;
+	case WE_SET_MON_MODE_CHAN:
+		ret = wlan_hdd_set_mon_chan(pAdapter, value[1], value[2]);
 		break;
 	default:
 		hddLog(LOGE, "%s: Invalid IOCTL command %d", __func__, sub_cmd);
@@ -11013,6 +11064,10 @@ static const struct iw_priv_args we_private_args[] = {
 	{WE_DUMP_DP_TRACE_LEVEL,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
 	 0, "dump_dp_trace"}
+	,
+	{WE_SET_MON_MODE_CHAN,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
+	 0, "setMonChan"}
 	,
 };
 

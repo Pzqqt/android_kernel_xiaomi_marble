@@ -128,11 +128,9 @@ static inline void wlan_hdd_log_eapol(struct sk_buff *skb,
 }
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
-
 const char *hdd_reason_type_to_string(enum netif_reason_type reason);
 const char *hdd_action_type_to_string(enum netif_action_type action);
 void wlan_hdd_netif_queue_control(hdd_adapter_t *adapter,
 		enum netif_action_type action, enum netif_reason_type reason);
-
-
+int hdd_set_mon_rx_cb(struct net_device *dev);
 #endif /* end #if !defined(WLAN_HDD_TX_RX_H) */

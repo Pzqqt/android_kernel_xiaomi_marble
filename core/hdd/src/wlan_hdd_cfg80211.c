@@ -505,6 +505,24 @@ wlan_hdd_p2p_p2p_iface_limit[] = {
 	},
 };
 
+static const struct ieee80211_iface_limit
+	wlan_hdd_mon_iface_limit[] = {
+	{
+		.max = 3,       /* Monitor interface */
+		.types = BIT(NL80211_IFTYPE_MONITOR),
+	},
+};
+
+static struct ieee80211_iface_combination
+	wlan_hdd_mon_iface[] = {
+	{
+		.limits = wlan_hdd_mon_iface_limit,
+		.max_interfaces = 3,
+		.num_different_channels = 2,
+		.n_limits = ARRAY_SIZE(wlan_hdd_mon_iface_limit),
+	},
+};
+
 static struct ieee80211_iface_combination
 	wlan_hdd_iface_combination[] = {
 	/* STA */
@@ -5908,26 +5926,35 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 
 	wiphy->max_acl_mac_addrs = MAX_ACL_MAC_ADDRESS;
 
-	/* Supports STATION & AD-HOC modes right now */
-	wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION)
-				 | BIT(NL80211_IFTYPE_ADHOC)
-				 | BIT(NL80211_IFTYPE_P2P_CLIENT)
-				 | BIT(NL80211_IFTYPE_P2P_GO)
-				 | BIT(NL80211_IFTYPE_AP);
+	if (cds_get_conparam() != QDF_GLOBAL_MONITOR_MODE) {
+		/* Supports STATION & AD-HOC modes right now */
+		wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION)
+					 | BIT(NL80211_IFTYPE_ADHOC)
+					 | BIT(NL80211_IFTYPE_P2P_CLIENT)
+					 | BIT(NL80211_IFTYPE_P2P_GO)
+					 | BIT(NL80211_IFTYPE_AP);
 
-	if (pCfg->advertiseConcurrentOperation) {
-		if (pCfg->enableMCC) {
-			int i;
-			for (i = 0; i < ARRAY_SIZE(wlan_hdd_iface_combination);
-			     i++) {
-				if (!pCfg->allowMCCGODiffBI)
-					wlan_hdd_iface_combination[i].
-					beacon_int_infra_match = true;
+		if (pCfg->advertiseConcurrentOperation) {
+			if (pCfg->enableMCC) {
+				int i;
+
+				for (i = 0;
+				     i < ARRAY_SIZE(wlan_hdd_iface_combination);
+				     i++) {
+					if (!pCfg->allowMCCGODiffBI)
+						wlan_hdd_iface_combination[i].
+						beacon_int_infra_match = true;
+				}
 			}
+			wiphy->n_iface_combinations =
+				ARRAY_SIZE(wlan_hdd_iface_combination);
+			wiphy->iface_combinations = wlan_hdd_iface_combination;
 		}
+	} else {
+		wiphy->interface_modes = BIT(NL80211_IFTYPE_MONITOR);
 		wiphy->n_iface_combinations =
-			ARRAY_SIZE(wlan_hdd_iface_combination);
-		wiphy->iface_combinations = wlan_hdd_iface_combination;
+			ARRAY_SIZE(wlan_hdd_mon_iface);
+		wiphy->iface_combinations = wlan_hdd_mon_iface;
 	}
 
 	/* Before registering we need to update the ht capabilitied based
@@ -8242,6 +8269,10 @@ void hdd_select_cbmode(hdd_adapter_t *pAdapter, uint8_t operationChannel)
 	uint8_t iniDot11Mode = (WLAN_HDD_GET_CTX(pAdapter))->config->dot11Mode;
 	eHddDot11Mode hddDot11Mode = iniDot11Mode;
 	struct ch_params_s ch_params;
+	hdd_station_ctx_t *station_ctx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	uint32_t cb_mode;
+	struct hdd_mon_set_ch_info *ch_info = &station_ctx->ch_info;
+
 	ch_params.ch_width =
 			(WLAN_HDD_GET_CTX(pAdapter))->config->vhtChannelWidth;
 
@@ -8264,10 +8295,20 @@ void hdd_select_cbmode(hdd_adapter_t *pAdapter, uint8_t operationChannel)
 		break;
 	}
 	/* This call decides required channel bonding mode */
-	sme_set_ch_params((WLAN_HDD_GET_CTX(pAdapter)->hHal),
+	cb_mode = sme_set_ch_params((WLAN_HDD_GET_CTX(pAdapter)->hHal),
 				hdd_cfg_xlate_to_csr_phy_mode(hddDot11Mode),
 				operationChannel, 0,
 				&ch_params);
+
+	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam()) {
+		ch_info->channel_width = ch_params.ch_width;
+		ch_info->phy_mode = hdd_cfg_xlate_to_csr_phy_mode(hddDot11Mode);
+		ch_info->channel = operationChannel;
+		ch_info->cb_mode = cb_mode;
+		hdd_info("ch_info width %d, phymode %d channel %d",
+			 ch_info->channel_width, ch_info->phy_mode,
+			 ch_info->channel);
+	}
 }
 
 /**
@@ -11842,6 +11883,93 @@ enum cds_con_mode wlan_hdd_convert_nl_iftype_to_hdd_type(
 }
 
 /**
+ * wlan_hdd_cfg80211_set_mon_ch() - Set monitor mode capture channel
+ * @wiphy: Handle to struct wiphy to get handle to module context.
+ * @chandef: Contains information about the capture channel to be set.
+ *
+ * This interface is called if and only if monitor mode interface alone is
+ * active.
+ *
+ * Return: 0 success or error code on failure.
+ */
+static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
+				       struct cfg80211_chan_def *chandef)
+{
+	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	hdd_adapter_t *adapter;
+	hdd_station_ctx_t *sta_ctx;
+	struct hdd_mon_set_ch_info *ch_info;
+	QDF_STATUS status;
+	tHalHandle hal_hdl;
+	struct qdf_mac_addr bssid;
+	tCsrRoamProfile roam_profile;
+	struct ch_params_s ch_params;
+	int ret;
+	uint16_t chan_num = cds_freq_to_chan(chandef->chan->center_freq);
+
+	ENTER();
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret)
+		return ret;
+
+	hal_hdl = hdd_ctx->hHal;
+
+	adapter = hdd_get_adapter(hdd_ctx, QDF_MONITOR_MODE);
+	if (!adapter)
+		return -EIO;
+
+	hdd_info("%s: set monitor mode Channel %d and freq %d",
+		 adapter->dev->name, chan_num, chandef->chan->center_freq);
+
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	ch_info = &sta_ctx->ch_info;
+	hdd_select_cbmode(adapter, chan_num);
+	roam_profile.ChannelInfo.ChannelList = &ch_info->channel;
+	roam_profile.ChannelInfo.numOfChannels = 1;
+	roam_profile.phyMode = ch_info->phy_mode;
+	roam_profile.ch_params.ch_width = chandef->width;
+
+	qdf_mem_copy(bssid.bytes, adapter->macAddressCurrent.bytes,
+		     QDF_MAC_ADDR_SIZE);
+
+	ch_params.ch_width = chandef->width;
+	sme_set_ch_params(hal_hdl, ch_info->phy_mode, chan_num, 0,
+			  &ch_params);
+	status = sme_roam_channel_change_req(hal_hdl, bssid, &ch_params,
+						 &roam_profile);
+	if (status) {
+		hdd_err("Status: %d Failed to set sme_RoamChannel for monitor mode",
+			status);
+		ret = qdf_status_to_os_return(status);
+		return ret;
+	}
+	EXIT();
+	return 0;
+}
+
+/**
+ * wlan_hdd_cfg80211_set_mon_ch() - Set monitor mode capture channel
+ * @wiphy: Handle to struct wiphy to get handle to module context.
+ * @chandef: Contains information about the capture channel to be set.
+ *
+ * This interface is called if and only if monitor mode interface alone is
+ * active.
+ *
+ * Return: 0 success or error code on failure.
+ */
+static int wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
+				       struct cfg80211_chan_def *chandef)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_set_mon_ch(wiphy, chandef);
+	cds_ssr_unprotect(__func__);
+	return ret;
+}
+
+/**
  * struct cfg80211_ops - cfg80211_ops
  *
  * @add_virtual_intf: Add virtual interface
@@ -11956,4 +12084,5 @@ static struct cfg80211_ops wlan_hdd_cfg80211_ops = {
 #ifdef CHANNEL_SWITCH_SUPPORTED
 	.channel_switch = wlan_hdd_cfg80211_channel_switch,
 #endif
+	.set_monitor_channel = wlan_hdd_cfg80211_set_mon_ch,
 };

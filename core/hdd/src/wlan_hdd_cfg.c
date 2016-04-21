@@ -44,6 +44,7 @@
 #include <csr_api.h>
 #include <wlan_hdd_misc.h>
 #include <wlan_hdd_napi.h>
+#include <cds_concurrency.h>
 
 static void
 cb_notify_set_roam_prefer5_g_hz(hdd_context_t *pHddCtx, unsigned long notifyId)
@@ -5475,6 +5476,66 @@ config_exit:
 }
 
 /**
+ * hdd_disable_runtime_pm() - Override to disable runtime_pm.
+ * @cfg_ini: Handle to struct hdd_config
+ *
+ * Return: None
+ */
+#ifdef FEATURE_RUNTIME_PM
+static void hdd_disable_runtime_pm(struct hdd_config *cfg_ini)
+{
+	cfg_ini->runtime_pm = 0;
+}
+#else
+static void hdd_disable_runtime_pm(struct hdd_config *cfg_ini)
+{
+}
+#endif
+
+/**
+ * hdd_disable_auto_shutdown() - Override to disable auto_shutdown.
+ * @cfg_ini: Handle to struct hdd_config
+ *
+ * Return: None
+ */
+#ifdef FEATURE_WLAN_AUTO_SHUTDOWN
+static void hdd_disable_auto_shutdown(struct hdd_config *cfg_ini)
+{
+	cfg_ini->WlanAutoShutdown = 0;
+}
+#else
+static void hdd_disable_auto_shutdown(struct hdd_config *cfg_ini)
+{
+}
+#endif
+
+/**
+ * hdd_override_all_ps() - overrides to disables all the powersave features.
+ * @hdd_ctx: Pointer to HDD context.
+ * Overrides below powersave ini configurations.
+ * gEnableImps=0
+ * gEnableBmps=0
+ * gRuntimePM=0
+ * gWlanAutoShutdown = 0
+ * gEnableSuspend=0
+ * gEnablePowerSaveOffload=0
+ * gEnableWoW=0
+ *
+ * Return: None
+ */
+static void hdd_override_all_ps(hdd_context_t *hdd_ctx)
+{
+	struct hdd_config *cfg_ini = hdd_ctx->config;
+
+	cfg_ini->fIsImpsEnabled = 0;
+	cfg_ini->is_ps_enabled = 0;
+	hdd_disable_runtime_pm(cfg_ini);
+	hdd_disable_auto_shutdown(cfg_ini);
+	cfg_ini->enablePowersaveOffload = 0;
+	cfg_ini->wowEnable = 0;
+}
+
+/**
  * hdd_parse_config_ini() - parse the ini configuration file
  * @pHddCtx: the pointer to hdd context
  *
@@ -5577,6 +5638,8 @@ QDF_STATUS hdd_parse_config_ini(hdd_context_t *pHddCtx)
 		hdd_napi_event(NAPI_EVT_INI_FILE,
 			       (void *)pHddCtx->config->napi_enable);
 #endif /* FEATURE_NAPI */
+	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam())
+		hdd_override_all_ps(pHddCtx);
 
 config_exit:
 	release_firmware(fw);

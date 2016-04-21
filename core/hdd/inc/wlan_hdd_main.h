@@ -631,6 +631,20 @@ typedef struct hdd_cfg80211_state_s {
 	eP2PActionFrameState actionFrmState;
 } hdd_cfg80211_state_t;
 
+/**
+ * struct hdd_mon_set_ch_info - Holds monitor mode channel switch params
+ * @channel: Channel number.
+ * @cb_mode: Channel bonding
+ * @channel_width: Channel width 0/1/2 for 20/40/80MHz respectively.
+ * @phy_mode: PHY mode
+ */
+struct hdd_mon_set_ch_info {
+	uint8_t channel;
+	uint8_t cb_mode;
+	uint32_t channel_width;
+	eCsrPhyMode phy_mode;
+};
+
 struct hdd_station_ctx {
 	/** Handle to the Wireless Extension State */
 	hdd_wext_state_t WextState;
@@ -665,6 +679,8 @@ struct hdd_station_ctx {
 	int staDebugState;
 
 	uint8_t broadcast_ibss_staid;
+
+	struct hdd_mon_set_ch_info ch_info;
 };
 
 #define BSS_STOP    0
