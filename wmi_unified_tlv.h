@@ -492,8 +492,8 @@ QDF_STATUS send_enable_specific_fw_logs_cmd_tlv(wmi_unified_t wmi_handle,
 
 QDF_STATUS send_flush_logs_to_fw_cmd_tlv(wmi_unified_t wmi_handle);
 
-QDF_STATUS send_soc_set_pcl_cmd_tlv(wmi_unified_t wmi_handle,
-				struct wmi_pcl_list *msg);
+QDF_STATUS send_pdev_set_pcl_cmd_tlv(wmi_unified_t wmi_handle,
+				struct wmi_pcl_chan_weights *msg);
 
 QDF_STATUS send_soc_set_hw_mode_cmd_tlv(wmi_unified_t wmi_handle,
 				uint32_t hw_mode_index);

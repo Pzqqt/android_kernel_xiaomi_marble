@@ -705,8 +705,8 @@ QDF_STATUS wmi_unified_enable_specific_fw_logs_cmd(void *wmi_hdl,
 
 QDF_STATUS wmi_unified_flush_logs_to_fw_cmd(void *wmi_hdl);
 
-QDF_STATUS wmi_unified_soc_set_pcl_cmd(void *wmi_hdl,
-				struct wmi_pcl_list *msg);
+QDF_STATUS wmi_unified_pdev_set_pcl_cmd(void *wmi_hdl,
+				struct wmi_pcl_chan_weights *msg);
 
 QDF_STATUS wmi_unified_soc_set_hw_mode_cmd(void *wmi_hdl,
 				uint32_t hw_mode_index);
