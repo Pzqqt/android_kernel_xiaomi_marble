@@ -182,6 +182,7 @@ ol_txrx_map_to_netif_reason_type(uint32_t reason)
 	}
 }
 
+#ifndef CONFIG_ICNSS
 /**
  * ol_txrx_vdev_pause() - pause vdev network queues
  * @vdev: vdev handle
@@ -233,6 +234,7 @@ void ol_txrx_vdev_unpause(ol_txrx_vdev_handle vdev, uint32_t reason)
 			netif_reason);
 
 }
+#endif
 
 /**
  * ol_txrx_pdev_pause() - pause network queues for each vdev
