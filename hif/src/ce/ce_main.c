@@ -1588,9 +1588,9 @@ void hif_send_buffer_cleanup_on_pipe(struct HIF_CE_pipe_info *pipe_info)
 			 * by checking whether it's the endpoint
 			 * which they are queued in.
 			 */
-			if (id == scn->htc_endpoint)
+			if (id == scn->htc_htt_tx_endpoint)
 				return;
-			/* Indicate the completion to higer
+			/* Indicate the completion to higher
 			 * layer to free the buffer */
 			hif_state->msg_callbacks_current.
 			txCompletionHandler(hif_state->

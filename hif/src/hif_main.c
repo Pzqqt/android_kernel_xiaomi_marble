@@ -333,14 +333,14 @@ qdf_size_t init_buffer_count(qdf_size_t maxSize)
 }
 
 /**
- * hif_save_htc_htt_config_endpoint():
- * hif_save_htc_htt_config_endpoint
- * @htc_endpoint: htc_endpoint
+ * hif_save_htc_htt_config_endpoint() - save htt_tx_endpoint
+ * @hif_ctx: hif context
+ * @htc_htt_tx_endpoint: htt_tx_endpoint
  *
  * Return: void
  */
 void hif_save_htc_htt_config_endpoint(struct hif_opaque_softc *hif_ctx,
-							int htc_endpoint)
+							int htc_htt_tx_endpoint)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
@@ -350,7 +350,7 @@ void hif_save_htc_htt_config_endpoint(struct hif_opaque_softc *hif_ctx,
 		return;
 	}
 
-	scn->htc_endpoint = htc_endpoint;
+	scn->htc_htt_tx_endpoint = htc_htt_tx_endpoint;
 }
 
 /**

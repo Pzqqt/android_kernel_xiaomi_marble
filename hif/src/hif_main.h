@@ -140,7 +140,7 @@ struct hif_softc {
 	int linkstate_vote;
 	bool fastpath_mode_on;
 	atomic_t tasklet_from_intr;
-	int htc_endpoint;
+	int htc_htt_tx_endpoint;
 	qdf_dma_addr_t mem_pa;
 	bool athdiag_procfs_inited;
 #ifdef FEATURE_NAPI

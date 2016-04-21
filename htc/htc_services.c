@@ -332,10 +332,6 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 
 	} while (false);
 
-	if (HTT_SERVICE_GROUP == (pConnectReq->service_id >> 8))
-		hif_save_htc_htt_config_endpoint(target->hif_dev,
-						 assignedEndpoint);
-
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRC, ("-htc_connect_service\n"));
 
 	return status;

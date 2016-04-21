@@ -430,7 +430,7 @@ void hif_get_hw_info(struct hif_opaque_softc *scn, u32 *version, u32 *revision,
 void hif_disable_isr(struct hif_opaque_softc *scn);
 void hif_reset_soc(struct hif_opaque_softc *scn);
 void hif_save_htc_htt_config_endpoint(struct hif_opaque_softc *hif_ctx,
-				      int htc_endpoint);
+				      int htc_htt_tx_endpoint);
 struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx, uint32_t mode,
 				  enum qdf_bus_type bus_type,
 				  struct hif_driver_state_callbacks *cbk);
