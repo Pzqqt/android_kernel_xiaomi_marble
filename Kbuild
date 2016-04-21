@@ -98,7 +98,7 @@ ifeq ($(KERNEL_BUILD), 0)
 	CONFIG_QCOM_VOWIFI_11R := y
 
 	ifneq ($(CONFIG_QCA_CLD_WLAN),)
-		ifeq (y,$(filter y,$(CONFIG_CNSS) $(CONFIG_ICNSS)))
+		ifeq (y,$(findstring y,$(CONFIG_CNSS) $(CONFIG_ICNSS)))
 		#Flag to enable Protected Managment Frames (11w) feature
 		CONFIG_WLAN_FEATURE_11W := y
 		#Flag to enable LTE CoEx feature
@@ -985,11 +985,7 @@ ifeq ($(CONFIG_FEATURE_BMI_2), y)
 CDEFINES += -DFEATURE_BMI_2
 endif
 
-ifeq ($(CONFIG_ARCH_MSM), y)
-CDEFINES += -DMSM_PLATFORM
-endif
-
-ifeq ($(CONFIG_ARCH_MSMCOBALT), y)
+ifeq (y,$(findstring y,$(CONFIG_ARCH_MSM) $(CONFIG_ARCH_QCOM)))
 CDEFINES += -DMSM_PLATFORM
 endif
 
