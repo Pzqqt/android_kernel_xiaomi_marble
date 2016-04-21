@@ -1836,25 +1836,17 @@ void hif_unconfig_ce(struct hif_softc *hif_sc)
  */
 static void hif_post_static_buf_to_target(struct hif_softc *scn)
 {
-	uint32_t CE_data;
-	uint8_t *g_fw_mem;
-	uint32_t phys_addr;
+	void *target_va;
+	phys_addr_t target_pa;
 
-	g_fw_mem = kzalloc(FW_SHARED_MEM, GFP_KERNEL);
-
-	CE_data = dma_map_single(scn->cdf_dev->dev, g_fw_mem,
-				 FW_SHARED_MEM, CDF_DMA_FROM_DEVICE);
-	HIF_TRACE("g_fw_mem %p physical 0x%x\n", g_fw_mem, CE_data);
-
-	if (dma_mapping_error(scn->cdf_dev->dev, CE_data)) {
-		pr_err("DMA map failed\n");
+	target_va = qdf_mem_alloc_consistent(scn->qdf_dev, scn->qdf_dev->dev,
+				FW_SHARED_MEM, &target_pa);
+	if (NULL == target_va) {
+		HIF_TRACE("Memory allocation failed could not post target buf");
 		return;
 	}
-
-	phys_addr = virt_to_phys((scn->mem + BYPASS_QMI_TEMP_REGISTER));
-	hif_write32_mb(scn->mem + BYPASS_QMI_TEMP_REGISTER, CE_data);
-	HIF_TRACE("Write phy address 0x%x into scratch reg %p phy add 0x%x",
-		  CE_data, (scn->mem + BYPASS_QMI_TEMP_REGISTER), phys_addr);
+	hif_write32_mb(scn->mem + BYPASS_QMI_TEMP_REGISTER, target_pa);
+	HIF_TRACE("target va %pK target pa %pa", target_va, &target_pa);
 }
 #else
 static inline void hif_post_static_buf_to_target(struct hif_softc *scn)
