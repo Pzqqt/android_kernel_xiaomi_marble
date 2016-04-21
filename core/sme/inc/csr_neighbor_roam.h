@@ -360,8 +360,6 @@ QDF_STATUS csr_roam_read_tsf(tpAniSirGlobal pMac, uint8_t *pTimestamp,
 		const uint8_t sessionId);
 #endif /* FEATURE_WLAN_ESE */
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-QDF_STATUS csr_neighbor_roam_offload_update_preauth_list(tpAniSirGlobal pMac,
-		roam_offload_synch_ind *roam_synch_ind_ptr, uint8_t sessionId);
 void csr_roam_synch_callback(tpAniSirGlobal mac,
 	roam_offload_synch_ind *roam_synch_data,
 	tpSirBssDescription  bss_desc_ptr, enum sir_roam_op_code reason);

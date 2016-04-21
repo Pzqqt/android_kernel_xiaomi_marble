@@ -4064,7 +4064,6 @@ typedef struct sSirSmeRoamOffloadSynchInd {
 	void *add_bss_params;
 	tpSirSmeJoinRsp join_rsp;
 	uint16_t aid;
-	tpSirBssDescription  bss_desc_ptr;
 } roam_offload_synch_ind;
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD

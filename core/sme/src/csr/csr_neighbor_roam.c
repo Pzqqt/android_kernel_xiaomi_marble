@@ -566,68 +566,6 @@ void csr_neighbor_roam_reset_init_state_control_info(tpAniSirGlobal pMac,
 	csr_neighbor_roam_reset_report_scan_state_control_info(pMac, sessionId);
 }
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-/**
- * csr_neighbor_roam_offload_update_preauth_list()
- *
- * @mac_ctx: Pointer to Global MAC structure
- * @session_id: Session ID
- * @roam_sync_ind_ptr: Roam offload sync Ind Info
- *
- * This function handles the RoamOffloadSynch and adds the
- * roamed AP to the preauth done list
- *
- * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE otherwise
- */
-QDF_STATUS
-csr_neighbor_roam_offload_update_preauth_list(tpAniSirGlobal pMac,
-	roam_offload_synch_ind *roam_sync_ind_ptr, uint8_t session_id)
-{
-	tpCsrNeighborRoamControlInfo neighbor_roam_info_ptr =
-		&pMac->roam.neighborRoamInfo[session_id];
-	tpCsrNeighborRoamBSSInfo bss_info_ptr;
-	uint16_t bss_desc_len;
-
-	if (neighbor_roam_info_ptr->neighborRoamState !=
-	    eCSR_NEIGHBOR_ROAM_STATE_CONNECTED) {
-		NEIGHBOR_ROAM_DEBUG(pMac, LOGW,
-			FL("LFR3:Roam Offload Synch Ind received in state %d"),
-			neighbor_roam_info_ptr->neighborRoamState);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	bss_info_ptr = qdf_mem_malloc(sizeof(tCsrNeighborRoamBSSInfo));
-	if (NULL == bss_info_ptr) {
-		sms_log(pMac, LOGE,
-		FL("LFR3:Memory allocation for Neighbor Roam BSS Info failed"));
-		return QDF_STATUS_E_NOMEM;
-	}
-	bss_desc_len = roam_sync_ind_ptr->bss_desc_ptr->length +
-		     sizeof(roam_sync_ind_ptr->bss_desc_ptr->length);
-	bss_info_ptr->pBssDescription = qdf_mem_malloc(bss_desc_len);
-	if (bss_info_ptr->pBssDescription != NULL) {
-		qdf_mem_copy(bss_info_ptr->pBssDescription,
-			     roam_sync_ind_ptr->bss_desc_ptr,
-			     bss_desc_len);
-	} else {
-		sms_log(pMac, LOGE,
-		FL("LFR3:Mem alloc for Neighbor Roam BSS Descriptor failed"));
-		qdf_mem_free(bss_info_ptr);
-		return QDF_STATUS_E_NOMEM;
-
-	}
-	csr_ll_insert_tail(&neighbor_roam_info_ptr->FTRoamInfo.preAuthDoneList,
-			   &bss_info_ptr->List, LL_ACCESS_LOCK);
-
-	csr_neighbor_roam_state_transition(pMac,
-			eCSR_NEIGHBOR_ROAM_STATE_PREAUTH_DONE, session_id);
-	neighbor_roam_info_ptr->FTRoamInfo.numPreAuthRetries = 0;
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		  "LFR3:Entry added to Auth Done List");
-
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 /**
  * csr_neighbor_roam_prepare_scan_profile_filter()
  *
