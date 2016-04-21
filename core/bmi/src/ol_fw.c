@@ -59,8 +59,11 @@ static uint32_t refclk_speed_to_hz[] = {
 	52000000,               /* SOC_REFCLK_52_MHZ */
 };
 
+#if  defined(CONFIG_CNSS)
 static int ol_target_coredump(void *inst, void *memory_block,
 					uint32_t block_len);
+#endif
+
 #ifdef FEATURE_SECURE_FIRMWARE
 static int ol_check_fw_hash(const u8 *data, u32 fw_size, ATH_BIN_FILE file)
 {
@@ -150,7 +153,9 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 #endif
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
 	uint32_t target_type = tgt_info->target_type;
+#if defined(CONFIG_CNSS)
 	struct bmi_info *bmi_ctx = GET_BMI_CONTEXT(ol_ctx);
+#endif
 	qdf_device_t qdf_dev = ol_ctx->qdf_dev;
 
 	switch (file) {
@@ -612,8 +617,10 @@ void ol_target_failure(void *instance, QDF_STATUS status)
 	struct ol_context *ol_ctx = instance;
 	struct hif_opaque_softc *scn = ol_ctx->scn;
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+#ifdef CONFIG_CNSS
 	struct ol_config_info *ini_cfg = ol_get_ini_handle(ol_ctx);
 	int ret;
+#endif
 	ol_target_status target_status =
 			hif_get_target_status(scn);
 
@@ -1218,9 +1225,9 @@ QDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 	struct ol_config_info *ini_cfg = ol_get_ini_handle(ol_ctx);
 	uint32_t target_type = tgt_info->target_type;
 	uint32_t target_version = tgt_info->target_version;
+#ifdef CONFIG_CNSS
 	struct bmi_info *bmi_ctx = GET_BMI_CONTEXT(ol_ctx);
 
-#ifdef CONFIG_CNSS
 	if (0 != cnss_get_fw_files_for_target(&bmi_ctx->fw_files,
 					      target_type,
 					      target_version)) {
@@ -1328,7 +1335,7 @@ QDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 	if (ini_cfg->enable_uart_print ||
 	    (WLAN_IS_EPPING_ENABLED(cds_get_conparam()) &&
 	     WLAN_IS_EPPING_FW_UART(cds_get_conparam()))) {
-		switch (tgt_info->target_version) {
+		switch (target_version) {
 		case AR6004_VERSION_REV1_3:
 			param = 11;
 			break;
@@ -1427,6 +1434,7 @@ int ol_diag_read(struct hif_opaque_softc *scn, uint8_t *buffer,
 		return -EIO;
 }
 
+#if  defined(CONFIG_CNSS)
 static int ol_ath_get_reg_table(uint32_t target_version,
 				tgt_reg_table *reg_table)
 {
@@ -1461,7 +1469,10 @@ static int ol_ath_get_reg_table(uint32_t target_version,
 
 	return section_len;
 }
+#endif
 
+
+#if  defined(CONFIG_CNSS)
 static int ol_diag_read_reg_loc(struct hif_opaque_softc *scn, uint8_t *buffer,
 				uint32_t buffer_len)
 {
@@ -1527,6 +1538,7 @@ static int ol_diag_read_reg_loc(struct hif_opaque_softc *scn, uint8_t *buffer,
 out:
 	return result;
 }
+#endif
 
 void ol_dump_target_memory(struct hif_opaque_softc *scn, void *memory_block)
 {
@@ -1552,6 +1564,8 @@ void ol_dump_target_memory(struct hif_opaque_softc *scn, void *memory_block)
 	}
 }
 
+
+#if  defined(CONFIG_CNSS)
 /**
  * ol_target_coredump() - API to collect target ramdump
  * @inst - private context
@@ -1638,6 +1652,7 @@ static int ol_target_coredump(void *inst, void *memory_block,
 	}
 	return ret;
 }
+#endif
 
 /**
  * ol_get_ini_handle() - API to get Ol INI configuration

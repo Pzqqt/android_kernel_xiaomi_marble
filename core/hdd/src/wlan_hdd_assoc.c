@@ -1259,7 +1259,6 @@ QDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
 	QDF_STATUS err;
 	uint8_t *peer_mac_addr;
 	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	ol_txrx_vdev_handle vdev;
 	ol_txrx_peer_handle peer;
 
 	if (!pdev) {
@@ -1309,6 +1308,7 @@ QDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
 		if (pAdapter->device_mode == QDF_STA_MODE ||
 		    pAdapter->device_mode == QDF_P2P_CLIENT_MODE) {
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || defined(QCA_LL_TX_FLOW_CONTROL_V2)
+			ol_txrx_vdev_handle vdev;
 			unsigned long rc;
 
 			/* wait for event from firmware to set the event */

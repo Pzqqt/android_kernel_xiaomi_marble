@@ -22,8 +22,8 @@ ifeq ($(KERNEL_BUILD),1)
 	# Need to explicitly define for Kernel-based builds
 	MODNAME := wlan
 	WLAN_ROOT := drivers/staging/qcacld-3.0
-	WLAN_COMMON_ROOT := drivers/staging/qca-wifi-host-cmn
-	WLAN_COMMON_INC := $(WLAN_COMMON_ROOT)
+	WLAN_COMMON_ROOT := ../qca-wifi-host-cmn
+	WLAN_COMMON_INC := $(WLAN_ROOT)/$(WLAN_COMMON_ROOT)
 endif
 
 # Make WLAN as open-source driver by default
@@ -227,6 +227,11 @@ endif
 ifeq ($(CONFIG_ROME_IF),pci)
 	CONFIG_ATH_PCI := 1
 endif
+
+ifeq ($(CONFIG_ROME_IF),snoc)
+	CONFIG_HIF_SNOC:= 1
+endif
+
 ifeq ($(CONFIG_ROME_IF),usb)
 #CONFIG_ATH_PCI := 1
 endif
@@ -784,6 +789,7 @@ HIF_INC += -I$(WLAN_COMMON_INC)/$(HIF_SNOC_DIR)
 endif
 
 HIF_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/ath_procfs.o \
+		$(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_bmi.o \
 		$(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_diag.o \
 		$(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_main.o \
 		$(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_service.o \
@@ -801,7 +807,6 @@ HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_napi.o
 endif
 
 HIF_PCIE_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_PCIE_DIR)/if_pci.o
-HIF_PCIE_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_bmi.o
 HIF_SNOC_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_SNOC_DIR)/if_snoc.o
 
 HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/multibus.o

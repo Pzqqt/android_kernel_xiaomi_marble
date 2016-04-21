@@ -390,7 +390,6 @@ epping_adapter_t *epping_add_adapter(epping_context_t *pEpping_ctx,
 int epping_connect_service(epping_context_t *pEpping_ctx)
 {
 	int status, i;
-	int ret = -1;
 	HTC_SERVICE_CONNECT_REQ connect;
 	HTC_SERVICE_CONNECT_RESP response;
 
@@ -421,9 +420,9 @@ int epping_connect_service(epping_context_t *pEpping_ctx)
 	status = htc_connect_service(pEpping_ctx->HTCHandle, &connect, &response);
 	if (status != EOK) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
-			   "Failed to connect to Endpoint Ping BE service status:%d \n",
+			   "Failed to connect to Endpoint Ping BE service status:%d\n",
 			   status);
-		return -1;;
+		return status;
 	} else {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "eppingtest BE endpoint:%d\n", response.Endpoint);
@@ -435,9 +434,9 @@ int epping_connect_service(epping_context_t *pEpping_ctx)
 	status = htc_connect_service(pEpping_ctx->HTCHandle, &connect, &response);
 	if (status != EOK) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
-			   "Failed to connect to Endpoint Ping BK service status:%d \n",
+			   "Failed to connect to Endpoint Ping BK service status:%d\n",
 			   status);
-		return ret;
+		return status;
 	} else {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "eppingtest BK endpoint:%d\n", response.Endpoint);

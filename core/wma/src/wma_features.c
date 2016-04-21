@@ -5695,21 +5695,18 @@ QDF_STATUS wma_suspend_target(WMA_HANDLE handle, int disable_target_intr)
 	QDF_STATUS status;
 	struct suspend_params param = {0};
 
-#ifdef CONFIG_CNSS
 	tpAniSirGlobal pmac = cds_get_context(QDF_MODULE_ID_PE);
-#endif
 
 	if (!wma_handle || !wma_handle->wmi_handle) {
 		WMA_LOGE("WMA is closed. can not issue suspend cmd");
 		return QDF_STATUS_E_INVAL;
 	}
 
-#ifdef CONFIG_CNSS
 	if (NULL == pmac) {
 		WMA_LOGE("%s: Unable to get PE context", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
-#endif
+
 	qdf_event_reset(&wma_handle->target_suspend);
 	param.disable_target_intr = disable_target_intr;
 	status = wmi_unified_suspend_send(wma_handle->wmi_handle,
@@ -5772,7 +5769,6 @@ void wma_target_suspend_acknowledge(void *context)
  */
 QDF_STATUS wma_resume_target(WMA_HANDLE handle)
 {
-	int ret;
 	tp_wma_handle wma = (tp_wma_handle) handle;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 #ifdef CONFIG_CNSS
@@ -5818,7 +5814,7 @@ QDF_STATUS wma_resume_target(WMA_HANDLE handle)
 	if (QDF_STATUS_SUCCESS == qdf_status)
 		wmi_set_target_suspend(wma->wmi_handle, false);
 
-	return ret;
+	return qdf_status;
 }
 
 #ifdef FEATURE_WLAN_TDLS

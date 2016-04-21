@@ -37,6 +37,12 @@
 /* Enable BMI_TEST COMMANDs; The Value 0x09 is randomly choosen */
 #define BMI_TEST_ENABLE (0x09)
 
+#ifndef CONFIG_CNSS
+#define SHOULD_RUN_BMI_TEST_COMMANDS false
+#else
+#define SHOULD_RUN_BMI_TEST_COMMANDS (BMI_TEST_ENABLE == cnss_get_bmi_setup())
+#endif
+
 static QDF_STATUS
 bmi_command_test(uint32_t command, uint32_t address, uint8_t *data,
 				uint32_t length, struct ol_context *ol_ctx)
@@ -220,11 +226,33 @@ static inline uint32_t bmi_get_test_addr(void)
 }
 #endif
 
-QDF_STATUS bmi_download_firmware(struct ol_context *ol_ctx)
+/**
+ * run_bmi_test() - run some bmi tests
+ * @ol_ctx: bmi context
+ *
+ */
+static void run_bmi_test(struct ol_context *ol_ctx)
 {
 	uint8_t data[10], out[10];
 	uint32_t address;
 	int32_t ret;
+
+	ret = snprintf(data, 10, "ABCDEFGHI");
+	BMI_DBG("ret:%d writing data:%s\n", ret, data);
+	address = bmi_get_test_addr();
+
+	if (bmi_init(ol_ctx) != QDF_STATUS_SUCCESS) {
+		BMI_WARN("BMI_INIT Failed; No Memory!");
+		return;
+	}
+	bmi_command_test(BMI_NO_COMMAND, address, data, 9, ol_ctx);
+	bmi_command_test(BMI_WRITE_MEMORY, address, data, 9, ol_ctx);
+	bmi_command_test(BMI_READ_MEMORY, address, out, 9, ol_ctx);
+	BMI_DBG("Output:%s", out);
+}
+
+QDF_STATUS bmi_download_firmware(struct ol_context *ol_ctx)
+{
 	struct hif_opaque_softc *scn = ol_ctx->scn;
 
 	if (NO_BMI || !hif_needs_bmi(scn))
@@ -235,23 +263,9 @@ QDF_STATUS bmi_download_firmware(struct ol_context *ol_ctx)
 		bmi_assert(0);
 		return QDF_STATUS_NOT_INITIALIZED;
 	}
-#ifdef CONFIG_CNSS
-	if (BMI_TEST_ENABLE == cnss_get_bmi_setup()) {
-		ret = snprintf(data, 10, "ABCDEFGHI");
-		BMI_DBG("ret:%d writing data:%s\n", ret, data);
-		address = bmi_get_test_addr();
 
-		if (bmi_init(ol_ctx) != QDF_STATUS_SUCCESS) {
-			BMI_WARN("BMI_INIT Failed; No Memory!");
-			goto end;
-		}
-		bmi_command_test(BMI_NO_COMMAND, address, data, 9, ol_ctx);
-		bmi_command_test(BMI_WRITE_MEMORY, address, data, 9, ol_ctx);
-		bmi_command_test(BMI_READ_MEMORY, address, out, 9, ol_ctx);
-		BMI_DBG("Output:%s", out);
-	}
-#endif
-end:
+	if (SHOULD_RUN_BMI_TEST_COMMANDS)
+		run_bmi_test(ol_ctx);
 	return bmi_firmware_download(ol_ctx);
 }
 
