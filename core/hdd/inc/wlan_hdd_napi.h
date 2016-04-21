@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -68,7 +68,7 @@ struct qca_napi_data *hdd_napi_get_all(void);
 #define HDD_NAPI_ANY (-1)
 
 static inline int hdd_napi_enabled(int id) { return 0; }
-static inline int hdd_napi_create(void) { return -EPERM; }
+static inline int hdd_napi_create(void) { return 0; }
 static inline int hdd_napi_destroy(int force) { return 0; }
 static inline int hdd_napi_stats(char *buf, int max, char *indp,
 				 struct qca_napi_data *napid)
