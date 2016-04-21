@@ -165,7 +165,11 @@ typedef enum {
 	/* periodic channel stats service */
 	WMI_SERVICE_PERIODIC_CHAN_STAT_SUPPORT,
 	WMI_SERVICE_MESH_11S,             /* 11s mesh service support */
-
+	/*
+	 * FW+HW supports 10 MHz(half rate) and 5 MHz(quarter rate) channel
+	 * bandwidth
+	 */
+	WMI_SERVICE_HALF_RATE_QUARTER_RATE_SUPPORT,
 	WMI_MAX_SERVICE = 128             /* max service */
 } WMI_SERVICE;
 
