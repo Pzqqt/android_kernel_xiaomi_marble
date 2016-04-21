@@ -46,9 +46,7 @@
 #include <linux/semaphore.h>
 #endif
 #include <linux/interrupt.h>
-#if defined(WLAN_OPEN_SOURCE) && defined(CONFIG_HAS_WAKELOCK)
-#include <linux/wakelock.h>
-#endif
+#include <linux/pm_wakeup.h>
 
 /* define for flag */
 #define QDF_LINUX_UNLOCK_BH  1
@@ -93,13 +91,7 @@ typedef struct __qdf_spinlock {
 
 typedef struct semaphore __qdf_semaphore_t;
 
-#if defined CONFIG_CNSS
 typedef struct wakeup_source qdf_wake_lock_t;
-#elif defined(WLAN_OPEN_SOURCE) && defined(CONFIG_HAS_WAKELOCK)
-typedef struct wake_lock qdf_wake_lock_t;
-#else
-typedef int qdf_wake_lock_t;
-#endif
 
 #define LINUX_LOCK_COOKIE 0x12345678
 
