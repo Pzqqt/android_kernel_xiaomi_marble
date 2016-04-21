@@ -1798,6 +1798,7 @@ QDF_STATUS wma_open(void *cds_context,
 	wma_handle->dfs_radar_indication_cb = radar_ind_cb;
 	wma_handle->old_hw_mode_index = WMA_DEFAULT_HW_MODE_INDEX;
 	wma_handle->new_hw_mode_index = WMA_DEFAULT_HW_MODE_INDEX;
+	wma_handle->saved_chan.num_channels = 0;
 
 	qdf_status = qdf_event_create(&wma_handle->wma_ready_event);
 	if (qdf_status != QDF_STATUS_SUCCESS) {
@@ -5165,9 +5166,9 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 			(struct fw_dump_req *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
-	case SIR_HAL_SOC_SET_PCL_TO_FW:
-		wma_send_soc_set_pcl_cmd(wma_handle,
-					(struct sir_pcl_list *)msg->bodyptr);
+	case SIR_HAL_PDEV_SET_PCL_TO_FW:
+		wma_send_pdev_set_pcl_cmd(wma_handle,
+				(struct wmi_pcl_chan_weights *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case SIR_HAL_SOC_SET_HW_MODE:
@@ -5297,30 +5298,49 @@ void wma_log_completion_timeout(void *data)
 }
 
 /**
- * wma_send_soc_set_pcl_cmd() - Send WMI_SOC_SET_PCL_CMDID to FW
+ * wma_send_pdev_set_pcl_cmd() - Send WMI_SOC_SET_PCL_CMDID to FW
  * @wma_handle: WMA handle
  * @msg: PCL structure containing the PCL and the number of channels
  *
- * WMI_SOC_SET_PCL_CMDID provides a Preferred Channel List (PCL) to the WLAN
+ * WMI_PDEV_SET_PCL_CMDID provides a Preferred Channel List (PCL) to the WLAN
  * firmware. The DBS Manager is the consumer of this information in the WLAN
  * firmware. The channel list will be used when a Virtual DEVice (VDEV) needs
  * to migrate to a new channel without host driver involvement. An example of
  * this behavior is Legacy Fast Roaming (LFR 3.0). Generally, the host will
  * manage the channel selection without firmware involvement.
  *
+ * WMI_PDEV_SET_PCL_CMDID will carry only the weight list and not the actual
+ * channel list. The weights corresponds to the channels sent in
+ * WMI_SCAN_CHAN_LIST_CMDID. The channels from PCL would be having a higher
+ * weightage compared to the non PCL channels.
+ *
  * Return: Success if the cmd is sent successfully to the firmware
  */
-QDF_STATUS wma_send_soc_set_pcl_cmd(tp_wma_handle wma_handle,
-				struct sir_pcl_list *msg)
+QDF_STATUS wma_send_pdev_set_pcl_cmd(tp_wma_handle wma_handle,
+				struct wmi_pcl_chan_weights *msg)
 {
+	uint32_t i;
+	QDF_STATUS status;
+
 	if (!wma_handle) {
 		WMA_LOGE("%s: WMA handle is NULL. Cannot issue command",
 				__func__);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	if (wmi_unified_soc_set_pcl_cmd(wma_handle->wmi_handle,
-				(struct wmi_pcl_list *) msg))
+	for (i = 0; i < wma_handle->saved_chan.num_channels; i++) {
+		msg->saved_chan_list[i] =
+			wma_handle->saved_chan.channel_list[i];
+	}
+
+	msg->saved_num_chan = wma_handle->saved_chan.num_channels;
+	status = cds_get_valid_chan_weights((struct sir_pcl_chan_weights *)msg);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		WMA_LOGE("%s: Error in creating weighed pcl", __func__);
+		return status;
+	}
+
+	if (wmi_unified_pdev_set_pcl_cmd(wma_handle->wmi_handle, msg))
 		return QDF_STATUS_E_FAILURE;
 
 	return QDF_STATUS_SUCCESS;

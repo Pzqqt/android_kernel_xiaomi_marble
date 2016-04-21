@@ -1042,6 +1042,17 @@ struct wma_ini_config {
 };
 
 /**
+ * struct wmi_valid_channels - Channel details part of WMI_SCAN_CHAN_LIST_CMDID
+ * @num_channels: Number of channels
+ * @channel_list: Channel list
+ */
+struct wma_valid_channels {
+	uint8_t num_channels;
+	uint8_t channel_list[MAX_NUM_CHAN];
+};
+
+
+/**
  * struct t_wma_handle - wma context
  * @wmi_handle: wmi handle
  * @htc_handle: htc handle
@@ -1165,6 +1176,7 @@ struct wma_ini_config {
  * @service_ready_ext_evt: Wait event for service ready ext
  * @wmi_cmd_rsp_wake_lock: wmi command response wake lock
  * @wmi_cmd_rsp_runtime_lock: wmi command response bus lock
+ * @saved_chan: saved channel list sent as part of WMI_SCAN_CHAN_LIST_CMDID
  */
 typedef struct {
 	void *wmi_handle;
@@ -1350,6 +1362,7 @@ typedef struct {
 	qdf_runtime_lock_t wma_runtime_resume_lock;
 	uint32_t fine_time_measurement_cap;
 	struct wma_ini_config ini_config;
+	struct wma_valid_channels saved_chan;
 } t_wma_handle, *tp_wma_handle;
 
 /**
@@ -1956,8 +1969,8 @@ void wma_log_completion_timeout(void *data);
 QDF_STATUS wma_set_rssi_monitoring(tp_wma_handle wma,
 					struct rssi_monitor_req *req);
 
-QDF_STATUS wma_send_soc_set_pcl_cmd(tp_wma_handle wma_handle,
-		struct sir_pcl_list *msg);
+QDF_STATUS wma_send_pdev_set_pcl_cmd(tp_wma_handle wma_handle,
+		struct wmi_pcl_chan_weights *msg);
 
 QDF_STATUS wma_send_soc_set_hw_mode_cmd(tp_wma_handle wma_handle,
 		struct sir_hw_mode *msg);

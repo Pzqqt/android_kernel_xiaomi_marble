@@ -642,6 +642,7 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 	WMA_LOGD("no of channels = %d", chan_list->numChan);
 	tchan_info = scan_ch_param.chan_info;
 	scan_ch_param.num_scan_chans = chan_list->numChan;
+	wma_handle->saved_chan.num_channels = chan_list->numChan;
 
 	for (i = 0; i < chan_list->numChan; ++i) {
 		tchan_info->mhz =
@@ -649,8 +650,11 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 		tchan_info->band_center_freq1 =
 					  tchan_info->mhz;
 		tchan_info->band_center_freq2 = 0;
+		wma_handle->saved_chan.channel_list[i] =
+				chan_list->chanParam[i].chanId;
 
-		WMA_LOGD("chan[%d] = %u", i, tchan_info->mhz);
+		WMA_LOGD("chan[%d] = freq:%u chan:%d", i, tchan_info->mhz,
+			chan_list->chanParam[i].chanId);
 		if (chan_list->chanParam[i].dfsSet) {
 			WMI_SET_CHANNEL_FLAG(tchan_info, WMI_CHAN_FLAG_PASSIVE);
 			WMA_LOGI("chan[%d] DFS[%d]\n",

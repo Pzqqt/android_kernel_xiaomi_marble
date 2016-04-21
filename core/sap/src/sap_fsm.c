@@ -4488,7 +4488,8 @@ static QDF_STATUS sap_get_5ghz_channel_list(ptSapContext sapContext)
 	}
 
 	status = cds_get_pcl_for_existing_conn(CDS_SAP_MODE,
-			pcl.pcl_list, &pcl.pcl_len);
+			pcl.pcl_list, &pcl.pcl_len,
+			pcl.weight_list, QDF_ARRAY_SIZE(pcl.weight_list));
 	if (status != QDF_STATUS_SUCCESS) {
 		cds_err("Get PCL failed");
 		return status;

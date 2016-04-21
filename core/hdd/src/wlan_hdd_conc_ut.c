@@ -625,7 +625,7 @@ void wlan_hdd_one_connection_scenario(hdd_context_t *hdd_ctx)
 	enum cds_con_mode sub_type;
 	enum cds_conc_priority_mode system_pref =
 			hdd_ctx->config->conc_system_pref;
-	uint8_t pcl[MAX_NUM_CHAN] = {0};
+	uint8_t pcl[MAX_NUM_CHAN] = {0}, weight_list[MAX_NUM_CHAN] = {0};
 	uint32_t pcl_len = 0;
 	bool status = false;
 	enum cds_pcl_type pcl_type;
@@ -651,7 +651,8 @@ void wlan_hdd_one_connection_scenario(hdd_context_t *hdd_ctx)
 		pcl_type = get_pcl_from_first_conn_table(sub_type, system_pref);
 
 		/* check PCL value for second connection is correct or no */
-		cds_get_pcl(sub_type, pcl, &pcl_len);
+		cds_get_pcl(sub_type, pcl, &pcl_len,
+				weight_list, QDF_ARRAY_SIZE(weight_list));
 		status = wlan_hdd_validate_pcl(hdd_ctx,
 				pcl_type, pcl, pcl_len, 0, 0,
 				reason, sizeof(reason));
@@ -671,7 +672,7 @@ void wlan_hdd_two_connections_scenario(hdd_context_t *hdd_ctx,
 {
 	uint8_t vdevid = 0, tx_stream = 2, rx_stream = 2;
 	uint8_t type = WMI_VDEV_TYPE_STA, channel_id = first_chnl, mac_id = 1;
-	uint8_t pcl[MAX_NUM_CHAN] = {0};
+	uint8_t pcl[MAX_NUM_CHAN] = {0}, weight_list[MAX_NUM_CHAN] = {0};
 	uint32_t pcl_len = 0;
 	enum cds_chain_mode chain_mask = first_chain_mask;
 	enum cds_con_mode sub_type, next_sub_type, dummy_type;
@@ -723,7 +724,8 @@ void wlan_hdd_two_connections_scenario(hdd_context_t *hdd_ctx,
 					next_sub_type, system_pref,
 					wma_is_hw_dbs_capable());
 			/* check PCL for second connection is correct or no */
-			cds_get_pcl(next_sub_type, pcl, &pcl_len);
+			cds_get_pcl(next_sub_type, pcl, &pcl_len,
+				weight_list, QDF_ARRAY_SIZE(weight_list));
 			status = wlan_hdd_validate_pcl(hdd_ctx,
 					pcl_type, pcl, pcl_len, channel_id, 0,
 					reason, sizeof(reason));
@@ -749,7 +751,7 @@ void wlan_hdd_three_connections_scenario(hdd_context_t *hdd_ctx,
 	uint8_t channel_id_1 = first_chnl, channel_id_2 = second_chnl;
 	uint8_t mac_id_1, mac_id_2;
 	uint8_t type_1 = WMI_VDEV_TYPE_STA, type_2 = WMI_VDEV_TYPE_STA;
-	uint8_t pcl[MAX_NUM_CHAN] = {0};
+	uint8_t pcl[MAX_NUM_CHAN] = {0}, weight_list[MAX_NUM_CHAN] = {0};
 	uint32_t pcl_len = 0;
 	enum cds_chain_mode chain_mask_1;
 	enum cds_chain_mode chain_mask_2;
@@ -838,7 +840,9 @@ void wlan_hdd_three_connections_scenario(hdd_context_t *hdd_ctx,
 					   system_pref,
 					   wma_is_hw_dbs_capable());
 				cds_get_pcl(next_sub_type,
-						pcl, &pcl_len);
+						pcl, &pcl_len,
+						weight_list,
+						QDF_ARRAY_SIZE(weight_list));
 				status = wlan_hdd_validate_pcl(hdd_ctx,
 						pcl_type, pcl, pcl_len,
 						channel_id_1, channel_id_2,

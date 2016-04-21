@@ -7927,13 +7927,15 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	case WE_POLICY_MANAGER_PCL_CMD:
 	{
 		uint8_t pcl[MAX_NUM_CHAN] = {0};
+		uint8_t weight_list[MAX_NUM_CHAN] = {0};
 		uint32_t pcl_len = 0, i = 0;
 
 		hddLog(LOGE,
 			FL("<iwpriv wlan0 pm_pcl> is called\n"));
 
 		cds_get_pcl(apps_args[0],
-				pcl, &pcl_len);
+				pcl, &pcl_len,
+				weight_list, QDF_ARRAY_SIZE(weight_list));
 		pr_info("PCL list for role[%d] is {", apps_args[0]);
 		for (i = 0 ; i < pcl_len; i++)
 			pr_info(" %d, ", pcl[i]);

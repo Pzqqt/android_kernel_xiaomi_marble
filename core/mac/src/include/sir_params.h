@@ -421,7 +421,7 @@ typedef struct sSirMbMsgP2p {
 
 #define SIR_HAL_FLUSH_LOG_TO_FW            (SIR_HAL_ITC_MSG_TYPES_BEGIN + 160)
 
-#define SIR_HAL_SOC_SET_PCL_TO_FW          (SIR_HAL_ITC_MSG_TYPES_BEGIN + 161)
+#define SIR_HAL_PDEV_SET_PCL_TO_FW         (SIR_HAL_ITC_MSG_TYPES_BEGIN + 161)
 
 /* 162 unused */
 

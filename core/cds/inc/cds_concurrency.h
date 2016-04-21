@@ -47,6 +47,51 @@
 #define CONNECTION_UPDATE_TIMEOUT 1000
 #endif
 
+/* Some max value greater than the max length of the channel list */
+#define MAX_WEIGHT_OF_PCL_CHANNELS 255
+/* Some fixed weight difference between the groups */
+#define PCL_GROUPS_WEIGHT_DIFFERENCE 20
+
+/* Currently max, only 3 groups are possible as per 'enum cds_pcl_type'.
+ * i.e., in a PCL only 3 groups of channels can be present
+ * e.g., SCC channel on 2.4 Ghz, SCC channel on 5 Ghz & 5 Ghz channels.
+ * Group 1 has highest priority, group 2 has the next higher priority
+ * and so on.
+ */
+#define WEIGHT_OF_GROUP1_PCL_CHANNELS MAX_WEIGHT_OF_PCL_CHANNELS
+#define WEIGHT_OF_GROUP2_PCL_CHANNELS \
+		(WEIGHT_OF_GROUP1_PCL_CHANNELS - PCL_GROUPS_WEIGHT_DIFFERENCE)
+#define WEIGHT_OF_GROUP3_PCL_CHANNELS \
+		(WEIGHT_OF_GROUP2_PCL_CHANNELS - PCL_GROUPS_WEIGHT_DIFFERENCE)
+
+#define WEIGHT_OF_NON_PCL_CHANNELS 1
+
+/**
+ * enum cds_pcl_group_id - Identifies the pcl groups to be used
+ * @CDS_PCL_GROUP_ID1_ID2: Use weights of group1 and group2
+ * @CDS_PCL_GROUP_ID2_ID2: Use weights of group2 and group3
+ *
+ * Since maximum of three groups are possible, this will indicate which
+ * PCL group needs to be used.
+ */
+enum cds_pcl_group_id {
+	CDS_PCL_GROUP_ID1_ID2,
+	CDS_PCL_GROUP_ID2_ID3,
+};
+
+/**
+ * cds_pcl_channel_order - Order in which the PCL is requested
+ * @CDS_PCL_ORDER_NONE: no order
+ * @CDS_PCL_ORDER_24G_THEN_5G: 2.4 Ghz channel followed by 5 Ghz channel
+ * @CDS_PCL_ORDER_5G_THEN_2G: 5 Ghz channel followed by 2.4 Ghz channel
+ *
+ * Order in which the PCL is requested
+ */
+enum cds_pcl_channel_order {
+	CDS_PCL_ORDER_NONE,
+	CDS_PCL_ORDER_24G_THEN_5G,
+	CDS_PCL_ORDER_5G_THEN_2G,
+};
 
 /**
  * enum cds_max_rx_ss - Maximum number of receive spatial streams
@@ -588,7 +633,8 @@ void cds_decr_session_set_pcl(enum tQDF_ADAPTER_MODE mode,
 QDF_STATUS cds_init_policy_mgr(void);
 QDF_STATUS cds_deinit_policy_mgr(void);
 QDF_STATUS cds_get_pcl(enum cds_con_mode mode,
-				uint8_t *pcl_Channels, uint32_t *len);
+			uint8_t *pcl_channels, uint32_t *len,
+			uint8_t *pcl_weight, uint32_t weight_len);
 uint8_t cds_get_nondfs_preferred_channel(enum cds_con_mode mode,
 					bool for_existing_conn);
 bool cds_is_any_nondfs_chnl_present(uint8_t *channel);
@@ -697,5 +743,7 @@ QDF_STATUS cds_register_sap_restart_channel_switch_cb(
 		void (*sap_restart_chan_switch_cb)(void *, uint32_t, uint32_t));
 #endif
 QDF_STATUS cds_get_pcl_for_existing_conn(enum cds_con_mode mode,
-			uint8_t *pcl_ch, uint32_t *len);
+			uint8_t *pcl_ch, uint32_t *len,
+			uint8_t *weight_list, uint32_t weight_len);
+QDF_STATUS cds_get_valid_chan_weights(struct sir_pcl_chan_weights *weight);
 #endif /* __CDS_CONCURRENCY_H */

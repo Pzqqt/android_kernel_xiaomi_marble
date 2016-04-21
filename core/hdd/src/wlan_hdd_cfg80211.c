@@ -1396,6 +1396,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_ACS_MAX + 1];
 	bool ht_enabled, ht40_enabled, vht_enabled;
 	uint8_t ch_width;
+	uint8_t weight_list[MAX_NUM_CHAN];
 
 	/* ***Note*** Donot set SME config related to ACS operation here because
 	 * ACS operation is not synchronouse and ACS for Second AP may come when
@@ -1532,8 +1533,9 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 
 	/* consult policy manager to get PCL */
 	status = cds_get_pcl(CDS_SAP_MODE,
-					sap_config->acs_cfg.pcl_channels,
-					&sap_config->acs_cfg.pcl_ch_count);
+				sap_config->acs_cfg.pcl_channels,
+				&sap_config->acs_cfg.pcl_ch_count,
+				weight_list, QDF_ARRAY_SIZE(weight_list));
 	if (QDF_STATUS_SUCCESS != status)
 		hddLog(LOGE, FL("Get PCL failed"));
 
@@ -4215,7 +4217,7 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
 	int i, ret = 0;
 	QDF_STATUS status;
-	uint8_t pcl[MAX_NUM_CHAN];
+	uint8_t pcl[MAX_NUM_CHAN], weight_list[MAX_NUM_CHAN];
 	uint32_t pcl_len = 0;
 	uint32_t freq_list[MAX_NUM_CHAN];
 	enum cds_con_mode intf_mode;
@@ -4249,7 +4251,8 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 
 	hdd_debug("Userspace requested pref freq list");
 
-	status = cds_get_pcl(intf_mode, pcl, &pcl_len);
+	status = cds_get_pcl(intf_mode, pcl, &pcl_len,
+				weight_list, QDF_ARRAY_SIZE(weight_list));
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Get pcl failed");
 		return -EINVAL;

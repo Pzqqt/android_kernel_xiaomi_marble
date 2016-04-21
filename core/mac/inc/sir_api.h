@@ -3205,11 +3205,34 @@ enum set_hw_mode_status {
 /**
  * struct sir_pcl_list - Format of PCL
  * @pcl_list: List of preferred channels
+ * @weight_list: Weights of the PCL
  * @pcl_len: Number of channels in the PCL
  */
 struct sir_pcl_list {
 	uint8_t pcl_list[128];
+	uint8_t weight_list[128];
 	uint32_t pcl_len;
+};
+
+/**
+ * struct sir_pcl_chan_weights - Params to get the valid weighed list
+ * @pcl_list: Preferred channel list already sorted in the order of preference
+ * @pcl_len: Length of the PCL
+ * @saved_chan_list: Valid channel list updated as part of
+ * WMA_UPDATE_CHAN_LIST_REQ
+ * @saved_num_chan: Length of the valid channel list
+ * @weighed_valid_list: Weights of the valid channel list. This will have one
+ * to one mapping with valid_chan_list. FW expects channel order and size to be
+ * as per the list provided in WMI_SCAN_CHAN_LIST_CMDID.
+ * @weight_list: Weights assigned by policy manager
+ */
+struct sir_pcl_chan_weights {
+	uint8_t pcl_list[128];
+	uint32_t pcl_len;
+	uint8_t saved_chan_list[128];
+	uint32_t saved_num_chan;
+	uint8_t weighed_valid_list[128];
+	uint8_t weight_list[128];
 };
 
 /**

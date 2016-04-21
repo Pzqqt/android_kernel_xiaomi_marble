@@ -1991,6 +1991,7 @@ csr_parse_scan_results(tpAniSirGlobal pMac,
 	eCsrAuthType auth = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 	uint32_t len = 0;
 	enum cds_con_mode new_mode;
+	uint8_t weight_list[MAX_NUM_CHAN];
 
 
 	csr_ll_lock(&pMac->scan.scanResultList);
@@ -1999,7 +2000,8 @@ csr_parse_scan_results(tpAniSirGlobal pMac,
 		if (cds_map_concurrency_mode(
 					&pFilter->csrPersona, &new_mode)) {
 			status = cds_get_pcl(new_mode,
-				&pFilter->pcl_channels.channelList[0], &len);
+				&pFilter->pcl_channels.channelList[0], &len,
+				weight_list, QDF_ARRAY_SIZE(weight_list));
 			pFilter->pcl_channels.numChannels = (uint8_t)len;
 		}
 	}
