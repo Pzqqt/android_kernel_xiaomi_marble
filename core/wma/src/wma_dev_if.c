@@ -54,6 +54,7 @@
 #include "lim_session_utils.h"
 
 #include "cds_utils.h"
+#include "cds_concurrency.h"
 
 #if !defined(REMOVE_PKT_LOG)
 #include "pktlog_ac.h"
@@ -206,6 +207,8 @@ enum wlan_op_mode wma_get_txrx_vdev_type(uint32_t type)
 		vdev_type = wlan_op_mode_ocb;
 		break;
 	case WMI_VDEV_TYPE_MONITOR:
+		vdev_type = wlan_op_mode_monitor;
+		break;
 	default:
 		WMA_LOGE("Invalid vdev type %u", type);
 		vdev_type = wlan_op_mode_unknown;
@@ -909,8 +912,11 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 		}
 		params->smpsMode = host_map_smps_mode(resp_event->smps_mode);
 		params->status = resp_event->status;
-		if (resp_event->resp_type == WMI_VDEV_RESTART_RESP_EVENT &&
-		    (iface->type == WMI_VDEV_TYPE_STA)) {
+		if (((resp_event->resp_type == WMI_VDEV_RESTART_RESP_EVENT) &&
+		    (iface->type == WMI_VDEV_TYPE_STA)) ||
+		    ((resp_event->resp_type == WMI_VDEV_START_RESP_EVENT) &&
+		     (iface->type == WMI_VDEV_TYPE_MONITOR))) {
+
 			param.vdev_id = resp_event->vdev_id;
 			param.assoc_id = iface->aid;
 			status = wmi_unified_vdev_up_send(wma->wmi_handle,
@@ -1574,7 +1580,8 @@ ol_txrx_vdev_handle wma_vdev_attach(tp_wma_handle wma_handle,
 
 	if (((self_sta_req->type == WMI_VDEV_TYPE_AP) &&
 	    (self_sta_req->sub_type == WMI_UNIFIED_VDEV_SUBTYPE_P2P_DEVICE)) ||
-	    (self_sta_req->type == WMI_VDEV_TYPE_OCB)) {
+	    (self_sta_req->type == WMI_VDEV_TYPE_OCB) ||
+	    (self_sta_req->type == WMI_VDEV_TYPE_MONITOR)) {
 		WMA_LOGA("Creating self peer %pM, vdev_id %hu",
 			 self_sta_req->self_mac_addr, self_sta_req->session_id);
 		status = wma_create_peer(wma_handle, txrx_pdev,
@@ -1799,7 +1806,7 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	 */
 	params.is_dfs = req->is_dfs;
 	params.is_restart = isRestart;
-	if (req->is_dfs) {
+	if ((QDF_GLOBAL_MONITOR_MODE != cds_get_conparam()) && req->is_dfs) {
 		params.flag_dfs = WMI_CHAN_FLAG_DFS;
 		temp_chan_info |=  (1 << WMI_CHAN_FLAG_DFS);
 		params.dis_hw_ack = true;

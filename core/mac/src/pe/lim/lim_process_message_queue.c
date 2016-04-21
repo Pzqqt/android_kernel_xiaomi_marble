@@ -1472,6 +1472,11 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		qdf_mem_free(msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
+	case eWNI_SME_MON_INIT_SESSION:
+		lim_mon_init_session(mac_ctx, msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		msg->bodyptr = NULL;
+		break;
 	case SIR_HAL_P2P_NOA_START_IND:
 		session_entry = &mac_ctx->lim.gpSession[0];
 		lim_log(mac_ctx, LOG1, "LIM received NOA start %x", msg->type);

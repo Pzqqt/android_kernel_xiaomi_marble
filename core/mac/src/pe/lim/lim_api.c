@@ -2169,3 +2169,29 @@ QDF_STATUS pe_release_global_lock(tAniSirLim *psPe)
 	return status;
 }
 
+/**
+ * lim_mon_init_session() - create PE session for monitor mode operation
+ * @mac_ptr: mac pointer
+ * @msg: Pointer to struct sir_create_session type.
+ *
+ * Return: NONE
+ */
+void lim_mon_init_session(tpAniSirGlobal mac_ptr,
+			  struct sir_create_session *msg)
+{
+	tpPESession psession_entry;
+	uint8_t session_id;
+
+	lim_print_mac_addr(mac_ptr, msg->bss_id.bytes, LOGE);
+	psession_entry = pe_create_session(mac_ptr, msg->bss_id.bytes,
+					   &session_id,
+					   mac_ptr->lim.maxStation,
+					   eSIR_MONITOR_MODE);
+	if (psession_entry == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+			  ("Monitor mode: Session Can not be created"));
+		lim_print_mac_addr(mac_ptr, msg->bss_id.bytes, LOGE);
+		return;
+	}
+	psession_entry->vhtCapability = 1;
+}

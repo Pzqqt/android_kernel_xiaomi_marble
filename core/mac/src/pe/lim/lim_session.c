@@ -295,6 +295,8 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 	session_ptr->gLimNumOfCurrentSTAs = 0;
 	/* Copy the BSSID to the session table */
 	sir_copy_mac_addr(session_ptr->bssId, bssid);
+	if (bssType == eSIR_MONITOR_MODE)
+		sir_copy_mac_addr(pMac->lim.gpSession[i].selfMacAddr, bssid);
 	session_ptr->valid = true;
 	/* Intialize the SME and MLM states to IDLE */
 	session_ptr->limMlmState = eLIM_MLM_IDLE_STATE;
@@ -355,6 +357,10 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 	}
 	if (eSIR_INFRASTRUCTURE_MODE == bssType)
 		lim_ft_open(pMac, &pMac->lim.gpSession[i]);
+
+	if (eSIR_MONITOR_MODE == bssType)
+		lim_ft_open(pMac, &pMac->lim.gpSession[i]);
+
 	if (eSIR_INFRA_AP_MODE == bssType) {
 		session_ptr->old_protection_state = 0;
 		session_ptr->mac_ctx = (void *)pMac;
