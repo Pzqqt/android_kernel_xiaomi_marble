@@ -204,10 +204,17 @@ static inline uint64_t __qdf_get_monotonic_boottime(void)
  *
  * Return: QTIMER(19.2 MHz) clock ticks
  */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
+static inline uint64_t __qdf_get_log_timestamp(void)
+{
+	return arch_counter_get_cntvct();
+}
+#else
 static inline uint64_t __qdf_get_log_timestamp(void)
 {
 	return arch_counter_get_cntpct();
 }
+#endif /* LINUX_VERSION_CODE */
 #else
 
 /**
