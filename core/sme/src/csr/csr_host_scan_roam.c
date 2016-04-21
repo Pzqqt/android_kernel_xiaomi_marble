@@ -151,7 +151,6 @@ csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 	tpCsrNeighborRoamControlInfo n_roam_info =
 		&mac_ctx->roam.neighborRoamInfo[sessionid];
 	tpCsrNeighborRoamBSSInfo bss_info;
-	uint32_t cur_ap_rssi;
 	uint32_t age_ticks = 0;
 	uint32_t limit_ticks =
 		qdf_system_msecs_to_ticks(ROAM_AP_AGE_LIMIT_MS);
@@ -167,15 +166,6 @@ csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 	uint16_t qavail;
 	bool voadmitted;
 #endif
-	/*
-	 * Find out the Current AP RSSI and keep it handy to check if
-	 * it is better than the RSSI of the AP which we are
-	 * going to roam.If so, we are going to continue with the
-	 * current AP.
-	 */
-	cur_ap_rssi = csr_get_current_ap_rssi(mac_ctx, scan_results_list,
-				sessionid);
-
 	/*
 	 * Expecting the scan result already to be in the sorted order based on
 	 * RSSI. Based on the previous state we need to check whether the list

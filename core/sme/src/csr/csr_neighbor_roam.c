@@ -728,42 +728,6 @@ csr_neighbor_roam_prepare_scan_profile_filter(tpAniSirGlobal pMac,
 	return QDF_STATUS_SUCCESS;
 }
 
-uint32_t csr_get_current_ap_rssi(tpAniSirGlobal pMac,
-				 tScanResultHandle *pScanResultList,
-				 uint8_t sessionId)
-{
-	tCsrScanResultInfo *pScanResult;
-	tpCsrNeighborRoamControlInfo nbr_roam_info =
-		&pMac->roam.neighborRoamInfo[sessionId];
-	/* We are setting this as default value to make sure we return this value,
-	   when we do not see this AP in the scan result for some reason.However,it is
-	   less likely that we are associated to an AP and do not see it in the scan list */
-	uint32_t CurrAPRssi = -125;
-
-	while (NULL !=
-	       (pScanResult = csr_scan_result_get_next(pMac, *pScanResultList))) {
-		if (true !=
-		    qdf_mem_cmp(pScanResult->BssDescriptor.bssId,
-				    nbr_roam_info->currAPbssid.bytes,
-				    sizeof(tSirMacAddr))) {
-			/* We got a match with the currently associated AP.
-			 * Capture the RSSI value and complete the while loop.
-			 * The while loop is completed in order to make the current entry go back to NULL,
-			 * and in the next while loop, it properly starts searching from the head of the list.
-			 * TODO: Can also try setting the current entry directly to NULL as soon as we find the new AP*/
-
-			CurrAPRssi =
-				(int)pScanResult->BssDescriptor.rssi * (-1);
-
-		} else {
-			continue;
-		}
-	}
-
-	return CurrAPRssi;
-
-}
-
 /**
  * csr_neighbor_roam_channels_filter_by_current_band()
  *

@@ -393,8 +393,6 @@ static inline void csr_neighbor_roam_send_lfr_metric_event(
 {}
 #endif
 QDF_STATUS csr_roam_stop_wait_for_key_timer(tpAniSirGlobal pMac);
-uint32_t csr_get_current_ap_rssi(tpAniSirGlobal pMac,
-		tScanResultHandle *pScanResultList, uint8_t sessionId);
 QDF_STATUS csr_roam_copy_connected_profile(tpAniSirGlobal pMac,
 		uint32_t sessionId, tCsrRoamProfile *pDstProfile);
 
