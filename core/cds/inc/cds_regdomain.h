@@ -290,6 +290,7 @@ enum country_code {
 	CTRY_JAPAN49 = 4049,
 	CTRY_JAPAN55 = 4055,
 	CTRY_JAPAN56 = 4056,
+	CTRY_XA = 4100,
 };
 
 enum reg_domain {

@@ -379,7 +379,8 @@ static const struct country_code_to_reg_dmn g_all_countries[] = {
 	{CTRY_WALLIS_AND_FUTUNA, ETSI1_WORLD, "WF" "WALLIS"},
 	{CTRY_YEMEN, NULL1_WORLD, "YE", "YEMEN"},
 	{CTRY_ZIMBABWE, ETSI1_WORLD, "ZW", "ZIMBABWE"},
-	{CTRY_JAPAN14, MKK5_MKKA2, "JP", "JAPAN"}
+	{CTRY_JAPAN14, MKK5_MKKA2, "JP", "JAPAN"},
+	{CTRY_XA, MKK5_MKKA2, "XA", "JAPAN PASSIVE"}
 };
 
 static const struct reg_dmn g_reg_dmns[] = {
