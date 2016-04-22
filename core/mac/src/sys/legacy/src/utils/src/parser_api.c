@@ -977,8 +977,7 @@ populate_dot11f_vht_caps(tpAniSirGlobal pMac,
 				    nCfgValue);
 
 		pDot11f->ldpcCodingCap = (nCfgValue & 0x0001);
-		if (psessionEntry->vhtTxChannelWidthSet <
-			WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ) {
+		if (psessionEntry->ch_width < CH_WIDTH_80MHZ) {
 			 pDot11f->shortGI80MHz = 0;
 		} else {
 			nCfgValue = 0;
@@ -989,8 +988,7 @@ populate_dot11f_vht_caps(tpAniSirGlobal pMac,
 			pDot11f->shortGI80MHz = (nCfgValue & 0x0001);
 		}
 
-		if (psessionEntry->vhtTxChannelWidthSet <
-			WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ) {
+		if (psessionEntry->ch_width < CH_WIDTH_160MHZ) {
 			pDot11f->shortGI160and80plus80MHz = 0;
 		} else {
 			nCfgValue = 0;
