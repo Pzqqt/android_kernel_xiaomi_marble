@@ -33,6 +33,9 @@
 
 #define MAX_PENDING_LOG 5
 
+/* (30 Mins) */
+#define MIN_TIME_REQUIRED_FOR_NEXT_BUG_REPORT (30 * 60 * 1000)
+
 /*
  * enum scan_source - scan request source
  *
