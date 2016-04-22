@@ -12042,6 +12042,11 @@ csr_roam_get_phy_mode_band_for_bss(tpAniSirGlobal mac_ctx,
 		cfg_dot11_mode = eCSR_CFG_DOT11_MODE_11B;
 	}
 
+	if (IS_24G_CH(opr_chn) &&
+	   (false == mac_ctx->roam.configParam.enableVhtFor24GHz) &&
+	   (eCSR_CFG_DOT11_MODE_11AC == cfg_dot11_mode ||
+	    eCSR_CFG_DOT11_MODE_11AC_ONLY == cfg_dot11_mode))
+		cfg_dot11_mode = eCSR_CFG_DOT11_MODE_11N;
 	/*
 	 * Incase of WEP Security encryption type is coming as part of add key.
 	 * So while STart BSS dont have information
@@ -18070,6 +18075,12 @@ QDF_STATUS csr_roam_channel_change_req(tpAniSirGlobal pMac,
 	pMsg->ch_width = profile->ch_params.ch_width;
 	pMsg->dot11mode = csr_translate_to_wni_cfg_dot11_mode(pMac,
 					pMac->roam.configParam.uCfgDot11Mode);
+	if (IS_24G_CH(pMsg->targetChannel) &&
+	   (false == pMac->roam.configParam.enableVhtFor24GHz) &&
+	   (WNI_CFG_DOT11_MODE_11AC == pMsg->dot11mode ||
+	    WNI_CFG_DOT11_MODE_11AC_ONLY == pMsg->dot11mode))
+		pMsg->dot11mode = WNI_CFG_DOT11_MODE_11N;
+
 	pMsg->center_freq_seg_0 = ch_params->center_freq_seg0;
 	pMsg->center_freq_seg_1 = ch_params->center_freq_seg1;
 	qdf_mem_copy(pMsg->bssid, bssid.bytes, QDF_MAC_ADDR_SIZE);
