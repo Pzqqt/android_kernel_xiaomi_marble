@@ -2633,8 +2633,8 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			if (pFc->subType == SIR_MAC_MGMT_ACTION)
 				proto_type = cds_pkt_get_proto_type(tx_frame,
 						pMac->fEnableDebugLog,
-						NBUF_PKT_TRAC_TYPE_MGMT_ACTION);
-			if (proto_type & NBUF_PKT_TRAC_TYPE_MGMT_ACTION)
+						CDS_PKT_TRAC_TYPE_MGMT_ACTION);
+			if (proto_type & CDS_PKT_TRAC_TYPE_MGMT_ACTION)
 				cds_pkt_trace_buf_update("WM:T:MACT");
 			qdf_nbuf_trace_set_proto_type(tx_frame, proto_type);
 #endif /* QCA_PKT_PROTO_TRACE */
