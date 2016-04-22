@@ -434,9 +434,10 @@ int htt_update_endpoint(struct htt_pdev_t *pdev,
 		QDF_BUG(service_id == HTT_DATA_MSG_SVC);
 
 		pdev->htc_tx_endpoint = ep;
+		hif_save_htc_htt_config_endpoint(hif_ctx, ep);
 		rc = 1;
 	}
-		return rc;
+	return rc;
 }
 
 int htt_htc_attach(struct htt_pdev_t *pdev, uint16_t service_id)
