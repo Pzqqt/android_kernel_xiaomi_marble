@@ -3585,7 +3585,9 @@ struct hdd_config {
 	uint16_t obss_passive_dwelltime;
 	uint16_t obss_width_trigger_interval;
 	uint8_t inform_bss_rssi_raw;
+#ifdef WLAN_FEATURE_TSF
 	uint32_t tsf_gpio_pin;
+#endif
 #ifdef QCA_WIFI_3_0_EMU
 	bool enable_m2m_limitation;
 #endif
