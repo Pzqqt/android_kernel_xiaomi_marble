@@ -135,6 +135,12 @@ end:
 }
 #endif
 
+#ifdef QCA_SIGNED_SPLIT_BINARY_SUPPORT
+#define SIGNED_SPLIT_BINARY_VALUE true
+#else
+#define SIGNED_SPLIT_BINARY_VALUE false
+#endif
+
 static int
 __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 				  uint32_t address, bool compressed)
@@ -146,11 +152,9 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 	uint32_t fw_entry_size;
 	uint8_t *temp_eeprom;
 	uint32_t board_data_size;
-#ifdef QCA_SIGNED_SPLIT_BINARY_SUPPORT
 	bool bin_sign = false;
 	int bin_off, bin_len;
 	SIGN_HEADER_T *sign_header;
-#endif
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
 	uint32_t target_type = tgt_info->target_type;
 #if defined(CONFIG_CNSS)
@@ -168,9 +172,9 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 #else
 		filename = QCA_OTP_FILE;
 #endif
-#ifdef QCA_SIGNED_SPLIT_BINARY_SUPPORT
-		bin_sign = true;
-#endif
+		if (SIGNED_SPLIT_BINARY_VALUE)
+			bin_sign = true;
+
 		break;
 	case ATH_FIRMWARE_FILE:
 		if (QDF_IS_EPPING_ENABLED(cds_get_conparam())) {
@@ -190,9 +194,8 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 #else
 			filename = QCA_UTF_FIRMWARE_FILE;
 #endif
-#ifdef QCA_SIGNED_SPLIT_BINARY_SUPPORT
-			bin_sign = true;
-#endif
+			if (SIGNED_SPLIT_BINARY_VALUE)
+				bin_sign = true;
 			BMI_INFO("%s: Loading firmware file %s",
 						__func__, filename);
 			break;
@@ -203,9 +206,8 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 #else
 		filename = QCA_FIRMWARE_FILE;
 #endif
-#ifdef QCA_SIGNED_SPLIT_BINARY_SUPPORT
-		bin_sign = true;
-#endif
+		if (SIGNED_SPLIT_BINARY_VALUE)
+			bin_sign = true;
 		break;
 	case ATH_PATCH_FILE:
 		BMI_INFO("%s: no Patch file defined", __func__);
@@ -218,9 +220,9 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 #else
 			filename = QCA_BOARD_DATA_FILE;
 #endif
-#ifdef QCA_SIGNED_SPLIT_BINARY_SUPPORT
-			bin_sign = true;
-#endif
+			if (SIGNED_SPLIT_BINARY_VALUE)
+				bin_sign = true;
+
 			BMI_INFO("%s: Loading board data file %s",
 						__func__, filename);
 			break;
@@ -231,9 +233,9 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 #else
 		filename = QCA_BOARD_DATA_FILE;
 #endif
-#ifdef QCA_SIGNED_SPLIT_BINARY_SUPPORT
-		bin_sign = false;
-#endif
+		if (SIGNED_SPLIT_BINARY_VALUE)
+			bin_sign = false;
+
 		break;
 	case ATH_SETUP_FILE:
 		if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE &&
@@ -243,9 +245,10 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 			return -1;
 #else
 			filename = QCA_SETUP_FILE;
-#ifdef QCA_SIGNED_SPLIT_BINARY_SUPPORT
-			bin_sign = true;
-#endif
+
+			if (SIGNED_SPLIT_BINARY_VALUE)
+				bin_sign = true;
+
 			BMI_INFO("%s: Loading setup file %s",
 			       __func__, filename);
 #endif /* CONFIG_CNSS */
@@ -362,8 +365,8 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 			fw_entry_size = board_data_size;
 		}
 	}
-#ifdef QCA_SIGNED_SPLIT_BINARY_SUPPORT
-	if (bin_sign) {
+
+	if (bin_sign && SIGNED_SPLIT_BINARY_VALUE) {
 		uint32_t chip_id;
 
 		if (fw_entry_size < sizeof(SIGN_HEADER_T)) {
@@ -417,7 +420,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 		}
 	}
 
-	if (bin_sign) {
+	if (bin_sign && SIGNED_SPLIT_BINARY_VALUE) {
 		bin_off += bin_len;
 		bin_len = sign_header->total_len - sign_header->rampatch_len;
 
@@ -429,23 +432,6 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 				BMI_ERR("sign stream error");
 		}
 	}
-#else
-	if (compressed) {
-		status = bmi_fast_download(address,
-					   (uint8_t *) fw_entry->data,
-					   fw_entry_size, ol_ctx);
-	} else {
-		if (file == ATH_BOARD_DATA_FILE && fw_entry->data) {
-			status = bmi_write_memory(address,
-						  (uint8_t *) temp_eeprom,
-						  fw_entry_size, ol_ctx);
-		} else {
-			status = bmi_write_memory(address,
-						  (uint8_t *) fw_entry->data,
-						  fw_entry_size, ol_ctx);
-		}
-	}
-#endif /* QCA_SIGNED_SPLIT_BINARY_SUPPORT */
 
 end:
 	if (temp_eeprom)

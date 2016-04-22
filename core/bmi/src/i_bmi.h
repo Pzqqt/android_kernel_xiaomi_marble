@@ -187,6 +187,8 @@ QDF_STATUS bmi_firmware_download(struct ol_context *ol_ctx);
 QDF_STATUS bmi_done_local(struct ol_context *ol_ctx);
 QDF_STATUS ol_download_firmware(struct ol_context *ol_ctx);
 QDF_STATUS ol_configure_target(struct ol_context *ol_ctx);
+QDF_STATUS bmi_sign_stream_start(uint32_t address, uint8_t *buffer,
+				 uint32_t length, struct ol_context *ol_ctx);
 void ramdump_work_handler(void *arg);
 struct ol_config_info *ol_get_ini_handle(struct ol_context *ol_ctx);
 #endif
