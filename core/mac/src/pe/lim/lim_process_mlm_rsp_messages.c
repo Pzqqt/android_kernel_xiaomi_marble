@@ -3207,6 +3207,7 @@ void lim_process_switch_channel_rsp(tpAniSirGlobal pMac, void *body)
 		 * the policy manager connection table needs to be updated.
 		 */
 		cds_update_connection_info(psessionEntry->smeSessionId);
+		cds_set_do_hw_mode_change_flag(true);
 	}
 	break;
 	default:

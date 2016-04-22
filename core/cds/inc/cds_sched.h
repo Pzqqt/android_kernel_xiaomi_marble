@@ -291,6 +291,7 @@ typedef struct _cds_context_type {
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	void (*sap_restart_chan_switch_cb)(void *, uint32_t, uint32_t);
 #endif
+	bool do_hw_mode_change;
 } cds_context_type, *p_cds_contextType;
 
 /*---------------------------------------------------------------------------

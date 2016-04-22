@@ -172,6 +172,18 @@ enum cds_con_mode {
 };
 
 /**
+ * enum cds_mac_use - MACs that are used
+ * @CDS_MAC0: Only MAC0 is used
+ * @CDS_MAC1: Only MAC1 is used
+ * @CDS_MAC0_AND_MAC1: Both MAC0 and MAC1 are used
+ */
+enum cds_mac_use {
+	CDS_MAC0 = 1,
+	CDS_MAC1 = 2,
+	CDS_MAC0_AND_MAC1 = 3
+};
+
+/**
  * enum cds_pcl_type - Various types of Preferred channel list (PCL).
  *
  * @CDS_NONE: No channel preference
@@ -481,8 +493,8 @@ enum cds_two_connection_mode {
  * @CDS_NOP: No action
  * @CDS_DBS: switch to DBS mode
  * @CDS_DBS_DOWNGRADE: switch to DBS mode & downgrade to 1x1
- * @CDS_MCC: switch to MCC/SCC mode
- * @CDS_MCC_UPGRADE: switch to MCC/SCC mode & upgrade to 2x2
+ * @CDS_SINGLE_MAC: switch to MCC/SCC mode
+ * @CDS_SINGLE_MAC_UPGRADE: switch to MCC/SCC mode & upgrade to 2x2
  * @CDS_MAX_CONC_PRIORITY_MODE: Max place holder
  *
  * These are generic IDs that identify the various roles
@@ -492,8 +504,8 @@ enum cds_conc_next_action {
 	CDS_NOP = 0,
 	CDS_DBS,
 	CDS_DBS_DOWNGRADE,
-	CDS_MCC,
-	CDS_MCC_UPGRADE,
+	CDS_SINGLE_MAC,
+	CDS_SINGLE_MAC_UPGRADE,
 	CDS_MAX_CONC_NEXT_ACTION
 };
 
@@ -540,8 +552,6 @@ struct cds_conc_connection_info {
 	bool          in_use;
 };
 
-enum cds_conc_next_action cds_get_pref_hw_mode_for_chan(uint32_t vdev_id,
-		uint32_t target_channel);
 bool cds_is_connection_in_progress(void);
 void cds_dump_concurrency_info(void);
 void cds_set_concurrency_mode(enum tQDF_ADAPTER_MODE mode);
@@ -746,4 +756,8 @@ QDF_STATUS cds_get_pcl_for_existing_conn(enum cds_con_mode mode,
 			uint8_t *pcl_ch, uint32_t *len,
 			uint8_t *weight_list, uint32_t weight_len);
 QDF_STATUS cds_get_valid_chan_weights(struct sir_pcl_chan_weights *weight);
+QDF_STATUS cds_set_hw_mode_on_channel_switch(uint8_t session_id);
+void cds_set_do_hw_mode_change_flag(bool flag);
+bool cds_is_hw_mode_change_after_vdev_up(void);
+void cds_dump_connection_status_info(void);
 #endif /* __CDS_CONCURRENCY_H */

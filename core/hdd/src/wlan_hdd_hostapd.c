@@ -706,7 +706,7 @@ hdd_update_chandef(hdd_adapter_t *hostapd_adapter,
  * Return: Success on intimating userspace
  *
  */
-QDF_STATUS hdd_chan_change_notify(hdd_adapter_t *hostapd_adapter,
+QDF_STATUS hdd_chan_change_notify(hdd_adapter_t *adapter,
 		struct net_device *dev,
 		uint8_t oper_chan)
 {
@@ -716,7 +716,7 @@ QDF_STATUS hdd_chan_change_notify(hdd_adapter_t *hostapd_adapter,
 	eCsrPhyMode phy_mode;
 	ePhyChanBondState cb_mode;
 	uint32_t freq;
-	tHalHandle  hal = WLAN_HDD_GET_HAL_CTX(hostapd_adapter);
+	tHalHandle  hal = WLAN_HDD_GET_HAL_CTX(adapter);
 
 	if (NULL == hal) {
 		hdd_err("hal is NULL");
@@ -725,14 +725,18 @@ QDF_STATUS hdd_chan_change_notify(hdd_adapter_t *hostapd_adapter,
 
 	freq = cds_chan_to_freq(oper_chan);
 
-	chan = __ieee80211_get_channel(hostapd_adapter->wdev.wiphy, freq);
+	chan = __ieee80211_get_channel(adapter->wdev.wiphy, freq);
 
 	if (!chan) {
 		hdd_err("Invalid input frequency for channel conversion");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	phy_mode = hdd_sap_get_phymode(hostapd_adapter);
+	if (adapter->device_mode == QDF_SAP_MODE ||
+	    adapter->device_mode == QDF_P2P_GO_MODE)
+		phy_mode = hdd_sap_get_phymode(adapter);
+	else
+		phy_mode = sme_get_phy_mode(hal);
 
 	if (oper_chan <= 14)
 		cb_mode = sme_get_cb_phy_state_from_cb_ini_value(
@@ -767,7 +771,7 @@ QDF_STATUS hdd_chan_change_notify(hdd_adapter_t *hostapd_adapter,
 
 	if ((phy_mode == eCSR_DOT11_MODE_11ac) ||
 	    (phy_mode == eCSR_DOT11_MODE_11ac_ONLY))
-		hdd_update_chandef(hostapd_adapter, &chandef, cb_mode);
+		hdd_update_chandef(adapter, &chandef, cb_mode);
 
 	cfg80211_ch_switch_notify(dev, &chandef);
 
@@ -1099,6 +1103,15 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		cds_dump_concurrency_info();
 		/* Send SCC/MCC Switching event to IPA */
 		hdd_ipa_send_mcc_scc_msg(pHddCtx, pHddCtx->mcc_mode);
+
+		if (cds_is_hw_mode_change_after_vdev_up()) {
+			hdd_info("check for possible hw mode change");
+			status = cds_set_hw_mode_on_channel_switch(
+					pHostapdAdapter->sessionId);
+			if (QDF_IS_STATUS_ERROR(status))
+				hdd_info("set hw mode change not done");
+			cds_set_do_hw_mode_change_flag(false);
+		}
 		break;          /* Event will be sent after Switch-Case stmt */
 
 	case eSAP_STOP_BSS_EVENT:

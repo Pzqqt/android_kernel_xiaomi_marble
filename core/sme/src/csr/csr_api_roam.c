@@ -10250,6 +10250,7 @@ csr_roam_chk_lnk_swt_ch_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	uint32_t sessionId = CSR_SESSION_ID_INVALID;
 	QDF_STATUS status;
 	tpSirSmeSwitchChannelInd pSwitchChnInd;
+	tCsrRoamInfo roamInfo;
 
 	/* in case of STA, the SWITCH_CHANNEL originates from its AP */
 	sms_log(mac_ctx, LOGW, FL("eWNI_SME_SWITCH_CHL_IND from SME"));
@@ -10272,6 +10273,12 @@ csr_roam_chk_lnk_swt_ch_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 			session->pConnectBssDesc->channelId =
 				(uint8_t) pSwitchChnInd->newChannelId;
 		}
+
+		qdf_mem_set(&roamInfo, sizeof(tCsrRoamInfo), 0);
+		roamInfo.chan_info.chan_id = pSwitchChnInd->newChannelId;
+		status = csr_roam_call_callback(mac_ctx, sessionId,
+				&roamInfo, 0, eCSR_ROAM_STA_CHANNEL_SWITCH,
+				eCSR_ROAM_RESULT_NONE);
 	}
 }
 

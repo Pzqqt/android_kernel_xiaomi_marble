@@ -73,6 +73,8 @@
 #include <cdp_txrx_cfg.h>
 #include <cdp_txrx_cmn.h>
 
+#include "cds_concurrency.h"
+
 /**
  * wma_find_vdev_by_addr() - find vdev_id from mac address
  * @wma: wma handle
@@ -790,6 +792,7 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (NULL == mac_ctx) {
 		WMA_LOGE("%s: Failed to get mac_ctx", __func__);
+		cds_set_do_hw_mode_change_flag(false);
 		return -EINVAL;
 	}
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
@@ -798,12 +801,14 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 	param_buf = (WMI_VDEV_START_RESP_EVENTID_param_tlvs *) cmd_param_info;
 	if (!param_buf) {
 		WMA_LOGE("Invalid start response event buffer");
+		cds_set_do_hw_mode_change_flag(false);
 		return -EINVAL;
 	}
 
 	resp_event = param_buf->fixed_param;
 	if (!resp_event) {
 		WMA_LOGE("Invalid start response event buffer");
+		cds_set_do_hw_mode_change_flag(false);
 		return -EINVAL;
 	}
 
@@ -857,6 +862,7 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 			    wma->interfaces[resp_event->vdev_id].bssid,
 				&param) != QDF_STATUS_SUCCESS) {
 			WMA_LOGE("%s : failed to send vdev up", __func__);
+			cds_set_do_hw_mode_change_flag(false);
 			return -EEXIST;
 		}
 		qdf_atomic_set(&wma->interfaces[resp_event->vdev_id].
@@ -871,6 +877,7 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 	if (!req_msg) {
 		WMA_LOGE("%s: Failed to lookup request message for vdev %d",
 			 __func__, resp_event->vdev_id);
+		cds_set_do_hw_mode_change_flag(false);
 		return -EINVAL;
 	}
 
@@ -889,6 +896,7 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 		if (!params) {
 			WMA_LOGE("%s: channel switch params is NULL for vdev %d",
 				__func__, resp_event->vdev_id);
+			cds_set_do_hw_mode_change_flag(false);
 			return -EINVAL;
 		}
 
@@ -913,6 +921,7 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 					 __func__, resp_event->vdev_id);
 				wma->interfaces[resp_event->vdev_id].vdev_up =
 					false;
+				cds_set_do_hw_mode_change_flag(false);
 			} else {
 				wma->interfaces[resp_event->vdev_id].vdev_up =
 					true;
@@ -932,6 +941,7 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 					     iface->bssid,
 					     &param) != QDF_STATUS_SUCCESS) {
 			WMA_LOGE(FL("failed to send vdev up"));
+			cds_set_do_hw_mode_change_flag(false);
 			return -EEXIST;
 		}
 		iface->vdev_up = true;
@@ -3802,6 +3812,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 				     &param) != QDF_STATUS_SUCCESS) {
 		WMA_LOGP("%s: Failed to send vdev up cmd: vdev %d bssid %pM",
 			 __func__, params->smesessionId, params->bssId);
+		cds_set_do_hw_mode_change_flag(false);
 		status = QDF_STATUS_E_FAILURE;
 	} else {
 		wma->interfaces[params->smesessionId].vdev_up = true;

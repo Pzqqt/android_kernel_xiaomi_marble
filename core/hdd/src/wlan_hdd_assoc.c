@@ -4296,6 +4296,19 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		break;
 	}
 #endif /* FEATURE_WLAN_ESE */
+	case eCSR_ROAM_STA_CHANNEL_SWITCH:
+		hdd_info("channel switch for session:%d to channel:%d",
+			pAdapter->sessionId, pRoamInfo->chan_info.chan_id);
+
+		status = hdd_chan_change_notify(pAdapter, pAdapter->dev,
+						pRoamInfo->chan_info.chan_id);
+		if (QDF_IS_STATUS_ERROR(status))
+			hdd_err("channel change notification failed");
+
+		status = cds_set_hw_mode_on_channel_switch(pAdapter->sessionId);
+		if (QDF_IS_STATUS_ERROR(status))
+			hdd_info("set hw mode change not done");
+		break;
 	default:
 		break;
 	}

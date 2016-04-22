@@ -5630,18 +5630,6 @@ struct csa_offload_params {
 };
 
 /**
- * struct sir_saved_csa_params - saved csa offload params
- * @message_type: Message type
- * @length: Message length
- * @session_id: Session id
- */
-struct sir_saved_csa_params {
-	uint16_t message_type;
-	uint16_t length;
-	uint32_t session_id;
-};
-
-/**
  * enum obss_ht40_scancmd_type - obss scan command type
  * @HT40_OBSS_SCAN_PARAM_START: OBSS scan start
  * @HT40_OBSS_SCAN_PARAM_UPDATE: OBSS scan param update

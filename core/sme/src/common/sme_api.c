@@ -155,8 +155,6 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 	struct sir_set_hw_mode_resp *param;
 	enum sir_conn_update_reason reason;
 	tSmeCmd *saved_cmd;
-	tCsrRoamInfo roam_info = {0};
-	QDF_STATUS status;
 
 	sms_log(mac, LOG1, FL("%s"), __func__);
 	param = (struct sir_set_hw_mode_resp *)msg;
@@ -251,34 +249,6 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 			saved_cmd = NULL;
 			mac->sme.saved_scan_cmd = NULL;
 		}
-	} else if (reason == SIR_UPDATE_REASON_CHANNEL_SWITCH) {
-		csr_roam_call_callback(mac,
-				command->u.set_hw_mode_cmd.session_id,
-				&roam_info, 0,
-				eCSR_ROAM_STATUS_UPDATE_HW_MODE,
-				eCSR_ROAM_RESULT_UPDATE_HW_MODE);
-	} else if (reason == SIR_UPDATE_REASON_CHANNEL_SWITCH_STA) {
-		struct sir_saved_csa_params *msg;
-
-		sms_log(mac, LOG1, FL("process channel switch sta"));
-		msg = qdf_mem_malloc(sizeof(*msg));
-		if (!msg) {
-			sms_log(mac, LOGE,
-					FL("memory alloc fail for csa "));
-			goto end;
-		}
-
-		msg->message_type = SIR_LIM_CSA_POST_HW_MODE_CHANGE;
-		msg->length = sizeof(*msg);
-		msg->session_id = command->u.set_hw_mode_cmd.session_id;
-
-		status = cds_send_mb_message_to_mac(msg);
-		if (!QDF_IS_STATUS_SUCCESS(status))
-			sms_log(mac, LOGE,
-					FL("failed to process csa params"));
-		else
-			sms_log(mac, LOG1,
-					FL("csa after hw mode change"));
 	}
 
 end:

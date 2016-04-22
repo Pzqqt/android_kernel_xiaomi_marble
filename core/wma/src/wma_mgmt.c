@@ -2343,6 +2343,7 @@ void wma_send_beacon(tp_wma_handle wma, tpSendbeaconParams bcn_info)
 						  &param);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			WMA_LOGE("%s : failed to send vdev up", __func__);
+			cds_set_do_hw_mode_change_flag(false);
 			return;
 		}
 		wma->interfaces[vdev_id].vdev_up = true;

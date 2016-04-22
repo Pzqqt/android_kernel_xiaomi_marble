@@ -2085,6 +2085,8 @@ static void cds_update_conc_list(uint32_t conn_index,
 	conc_connection_list[conn_index].original_nss = original_nss;
 	conc_connection_list[conn_index].vdev_id = vdev_id;
 	conc_connection_list[conn_index].in_use = in_use;
+
+	cds_dump_connection_status_info();
 }
 
 /**
@@ -2239,6 +2241,7 @@ static void cds_update_hw_mode_conn_info(uint32_t num_vdev_mac_entries,
 			  conc_connection_list[conn_index].rx_spatial_stream);
 		}
 	}
+	cds_dump_connection_status_info();
 	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 }
 
@@ -3588,7 +3591,7 @@ enum cds_conc_next_action cds_need_opportunistic_upgrade(void)
 		return upgrade;
 	}
 
-	/* Are both mac's still in use*/
+	/* Are both mac's still in use */
 	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
 		conn_index++) {
 		cds_debug("index:%d mac:%d in_use:%d chan:%d org_nss:%d",
@@ -3599,13 +3602,13 @@ enum cds_conc_next_action cds_need_opportunistic_upgrade(void)
 			conc_connection_list[conn_index].original_nss);
 		if ((conc_connection_list[conn_index].mac == 0) &&
 			conc_connection_list[conn_index].in_use) {
-			mac |= 1;
-			if (3 == mac)
+			mac |= CDS_MAC0;
+			if (CDS_MAC0_AND_MAC1 == mac)
 				goto done;
 		} else if ((conc_connection_list[conn_index].mac == 1) &&
 			conc_connection_list[conn_index].in_use) {
-			mac |= 2;
-			if (3 == mac)
+			mac |= CDS_MAC1;
+			if (CDS_MAC0_AND_MAC1 == mac)
 				goto done;
 		}
 	}
@@ -3618,13 +3621,13 @@ enum cds_conc_next_action cds_need_opportunistic_upgrade(void)
 	}
 #endif
 	/* Let's request for single MAC mode */
-	upgrade = CDS_MCC;
+	upgrade = CDS_SINGLE_MAC;
 	/* Is there any connection had an initial connection with 2x2 */
 	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
 		conn_index++) {
 		if ((conc_connection_list[conn_index].original_nss == 1) &&
 			conc_connection_list[conn_index].in_use) {
-			upgrade = CDS_MCC_UPGRADE;
+			upgrade = CDS_SINGLE_MAC_UPGRADE;
 			goto done;
 		}
 	}
@@ -3954,6 +3957,8 @@ QDF_STATUS cds_init_policy_mgr(void)
 		cds_err("connection_update_done_evt init failed");
 		return status;
 	}
+
+	cds_ctx->do_hw_mode_change = false;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -5976,7 +5981,7 @@ bool cds_wait_for_nss_update(uint8_t action)
 				break;
 			}
 		}
-	} else if (CDS_MCC == action) {
+	} else if (CDS_SINGLE_MAC == action) {
 		for (conn_index = 0;
 			conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
 			conn_index++) {
@@ -6046,7 +6051,7 @@ void cds_nss_update_cb(void *context, uint8_t tx_status, uint8_t vdev_id,
 		conc_connection_list[conn_index].rx_spatial_stream = 1;
 		wait = cds_wait_for_nss_update(next_action);
 		break;
-	case CDS_MCC:
+	case CDS_SINGLE_MAC:
 		conc_connection_list[conn_index].tx_spatial_stream = 2;
 		conc_connection_list[conn_index].rx_spatial_stream = 2;
 		wait = cds_wait_for_nss_update(next_action);
@@ -6196,8 +6201,8 @@ QDF_STATUS cds_next_actions(uint32_t session_id,
 	 */
 	if ((((CDS_DBS_DOWNGRADE == action) || (CDS_DBS == action))
 		&& hw_mode.dbs_cap) ||
-		(((CDS_MCC_UPGRADE == action) || (CDS_MCC == action))
-		&& !hw_mode.dbs_cap)) {
+		(((CDS_SINGLE_MAC_UPGRADE == action) ||
+		(CDS_SINGLE_MAC == action)) && !hw_mode.dbs_cap)) {
 		cds_err("driver is already in %s mode, no further action needed",
 				(hw_mode.dbs_cap) ? "dbs" : "non dbs");
 		return QDF_STATUS_E_ALREADY;
@@ -6222,16 +6227,16 @@ QDF_STATUS cds_next_actions(uint32_t session_id,
 						HW_MODE_AGILE_DFS_NONE,
 						reason);
 		break;
-	case CDS_MCC_UPGRADE:
+	case CDS_SINGLE_MAC_UPGRADE:
 		/*
 		* check if we have a beaconing entity that advertised 2x2
 		* intially. If yes, update the beacon template & notify FW.
 		* Once FW confirms beacon updated, send the HW mode change req
 		*/
-		status = cds_complete_action(CDS_RX_NSS_2, CDS_MCC, reason,
-						session_id);
+		status = cds_complete_action(CDS_RX_NSS_2, CDS_SINGLE_MAC,
+						reason, session_id);
 		break;
-	case CDS_MCC:
+	case CDS_SINGLE_MAC:
 		status = cds_pdev_set_hw_mode(session_id,
 						HW_MODE_SS_2x2,
 						HW_MODE_80_MHZ,
@@ -8073,22 +8078,19 @@ QDF_STATUS qdf_init_connection_update(void)
 }
 
 /**
- * cds_get_pref_hw_mode_for_chan() - Get preferred hw mode for new channel
- * @vdev_id: vdev id whose target channel needs to change
- * @target_channel: Target channel
+ * cds_get_current_pref_hw_mode() - Get the current preferred hw mode
  *
- * Get the preferred hw mode based on the vdev whose channel is going to change
+ * Get the preferred hw mode based on the current connection combinations
  *
- * Return: No change (CDS_NOP), MCC (CDS_MCC_UPGRADE), DBS (CDS_DBS_DOWNGRADE)
+ * Return: No change (CDS_NOP), MCC (CDS_SINGLE_MAC_UPGRADE),
+ *         DBS (CDS_DBS_DOWNGRADE)
  */
-enum cds_conc_next_action cds_get_pref_hw_mode_for_chan(uint32_t vdev_id,
-		uint32_t target_channel)
+enum cds_conc_next_action cds_get_current_pref_hw_mode(void)
 {
 	uint32_t num_connections;
-	uint32_t conn_index = 0;
-	bool found = false;
-	uint8_t old_band, new_band;
-#ifdef QCA_WIFI_3_0_EMU
+	uint8_t band1, band2, band3;
+	struct sir_hw_mode_params hw_mode;
+	QDF_STATUS status;
 	hdd_context_t *hdd_ctx;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
@@ -8096,40 +8098,22 @@ enum cds_conc_next_action cds_get_pref_hw_mode_for_chan(uint32_t vdev_id,
 		cds_err("HDD context is NULL");
 		return CDS_NOP;
 	}
-#endif
 
-	while (CONC_CONNECTION_LIST_VALID_INDEX(conn_index)) {
-		if ((vdev_id == conc_connection_list[conn_index].vdev_id) &&
-			(conc_connection_list[conn_index].in_use == true)) {
-			found = true;
-			break;
-		}
-		conn_index++;
-	}
-
-	if (!found) {
-		cds_err("vdev_id:%d not available in the conn info", vdev_id);
+	status = wma_get_current_hw_mode(&hw_mode);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		cds_err("wma_get_current_hw_mode failed");
 		return CDS_NOP;
 	}
-
-	old_band = cds_chan_to_band(conc_connection_list[conn_index].chan);
-	new_band = cds_chan_to_band(target_channel);
 
 	num_connections = cds_get_connection_count();
 
-	cds_debug("vdev_id:%d conn_index:%d target_channel:%d chan[0]:%d chan[1]:%d chan[2]:%d num_connections:%d",
-		vdev_id, conn_index, target_channel,
+	cds_debug("chan[0]:%d chan[1]:%d chan[2]:%d num_connections:%d dbs:%d",
 		conc_connection_list[0].chan, conc_connection_list[1].chan,
-		conc_connection_list[2].chan,
-		num_connections);
+		conc_connection_list[2].chan, num_connections, hw_mode.dbs_cap);
 
-	/* If the band of the new channel to which the switching is done is same
-	 * as the band of the old channel, then there is no need for a hw mode
-	 * change. The driver would already be in the required hw mode.
+	/* If the band of operation of both the MACs is the same,
+	 * single MAC is preferred, otherwise DBS is preferred.
 	 */
-	if (old_band == new_band)
-		return CDS_NOP;
-
 	switch (num_connections) {
 	case 1:
 #ifdef QCA_WIFI_3_0_EMU
@@ -8137,69 +8121,33 @@ enum cds_conc_next_action cds_get_pref_hw_mode_for_chan(uint32_t vdev_id,
 		 * request DBS
 		 */
 		if (hdd_ctx->config->enable_m2m_limitation &&
-				CDS_IS_CHANNEL_24GHZ(target_channel))
+		    CDS_IS_CHANNEL_24GHZ(conc_connection_list[0].chan))
 			return CDS_DBS_DOWNGRADE;
 #endif
 		/* The driver would already be in the required hw mode */
 		return CDS_NOP;
 	case 2:
-		/* If the band of the new channel, is same as that of the band
-		 * of the channel on the other interface, the driver needs to
-		 * move to single MAC.
-		 *
-		 * If the band of the new channel, is different than that of the
-		 * band of the channel on the other interface, the driver needs
-		 * to move to DBS.
-		 */
-		if (conn_index == 0) {
-			if (new_band == cds_chan_to_band(
-					conc_connection_list[1].chan))
-				return CDS_MCC_UPGRADE;
-			else if (new_band != cds_chan_to_band(
-					conc_connection_list[1].chan))
-				return CDS_DBS_DOWNGRADE;
-		} else {
-			if (new_band == cds_chan_to_band(
-					conc_connection_list[0].chan))
-				return CDS_MCC_UPGRADE;
-			else if (new_band != cds_chan_to_band(
-					conc_connection_list[0].chan))
-				return CDS_DBS_DOWNGRADE;
-		}
+		band1 = cds_chan_to_band(conc_connection_list[0].chan);
+		band2 = cds_chan_to_band(conc_connection_list[1].chan);
+		if ((band1 == band2) && (hw_mode.dbs_cap))
+			return CDS_SINGLE_MAC_UPGRADE;
+		else if ((band1 != band2) && (!hw_mode.dbs_cap))
+			return CDS_DBS_DOWNGRADE;
+		else
+			return CDS_NOP;
+
 	case 3:
-		/* If the band of the new channel, is same as that of the band
-		 * of the channel on the other two interfaces, the driver needs
-		 * to move to single MAC.
-		 *
-		 * If the band of the new channel, is different than that of the
-		 * band of the channel on the other two interfaces, the driver
-		 * needs to move to DBS.
-		 */
-		if (conn_index == 0) {
-			if ((new_band == cds_chan_to_band(
-					conc_connection_list[1].chan)) &&
-				(new_band == cds_chan_to_band(
-					conc_connection_list[2].chan)))
-				return CDS_MCC_UPGRADE;
-			else
-				return CDS_DBS_DOWNGRADE;
-		} else if (conn_index == 1) {
-			if ((new_band == cds_chan_to_band(
-					conc_connection_list[0].chan)) &&
-				(new_band == cds_chan_to_band(
-					conc_connection_list[2].chan)))
-				return CDS_MCC_UPGRADE;
-			else
-				return CDS_DBS_DOWNGRADE;
-		} else {
-			if ((new_band == cds_chan_to_band(
-					conc_connection_list[0].chan)) &&
-				(new_band == cds_chan_to_band(
-					conc_connection_list[1].chan)))
-				return CDS_MCC_UPGRADE;
-			else
-				return CDS_DBS_DOWNGRADE;
-		}
+		band1 = cds_chan_to_band(conc_connection_list[0].chan);
+		band2 = cds_chan_to_band(conc_connection_list[1].chan);
+		band3 = cds_chan_to_band(conc_connection_list[2].chan);
+		if (((band1 == band2) && (band2 == band3)) &&
+		    (hw_mode.dbs_cap))
+			return CDS_SINGLE_MAC_UPGRADE;
+		else if (((band1 != band2) || (band2 != band3) ||
+			(band1 != band3)) && (!hw_mode.dbs_cap))
+			return CDS_DBS_DOWNGRADE;
+		else
+			return CDS_NOP;
 	default:
 		cds_err("unexpected num_connections value %d",
 				num_connections);
@@ -8236,87 +8184,6 @@ QDF_STATUS cds_stop_start_opportunistic_timer(void)
 		return status;
 	}
 
-	return status;
-}
-
-/**
- * cds_handle_hw_mode_change_on_csa() - handle hw mode change for csa
- * @session_id: SME session id
- * @channel: given channel
- * @bssid: pointer to bssid
- * @dst: pointer to dest buffer
- * @src: pointer to src buffer
- * @numbytes: number of bytes to copy from src to dst
- *
- * Use this function to decide whether the hw mode upgrage or downgrade
- * is required based on session_id and given channel
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS cds_handle_hw_mode_change_on_csa(uint16_t session_id,
-		uint8_t channel, uint8_t *bssid, void *dst, void *src,
-		uint32_t numbytes)
-{
-	enum cds_conc_next_action action;
-	QDF_STATUS status;
-
-	/*
-	 * Since all the write to the policy manager table happens in the
-	 * MC thread context and this channel change event is also processed
-	 * in the MC thread context, explicit lock/unlock of qdf_conc_list_lock
-	 * is not done here
-	 */
-	action = cds_get_pref_hw_mode_for_chan(session_id, channel);
-
-	if (action == CDS_NOP) {
-		cds_info("no need for hw mode change");
-		/* Proceed with processing csa params. So, not freeing it */
-		return QDF_STATUS_SUCCESS;
-	}
-	cds_info("session:%d action:%d", session_id, action);
-
-	/*
-	 *     1. Start opportunistic timer
-	 *     2. Do vdev restart on the new channel (by the caller)
-	 *     3. PM will check if MCC upgrade can be done after timer expiry
-	 */
-	if (action == CDS_MCC_UPGRADE) {
-		status = cds_stop_start_opportunistic_timer();
-		if (QDF_IS_STATUS_SUCCESS(status))
-			cds_info("opportunistic timer for MCC upgrade");
-
-		/*
-		 * After opportunistic timer is triggered, we can go ahead
-		 * with processing the csa params. So, not freeing the memory
-		 * through 'err' label.
-		 */
-		return QDF_STATUS_SUCCESS;
-	}
-
-	/*
-	 *     CDS_DBS_DOWNGRADE:
-	 *     1. PM will initiate HW mode change to DBS rightaway
-	 *     2. Do vdev restart on the new channel (on getting hw mode resp)
-	 */
-	status = cds_next_actions(session_id, action,
-				SIR_UPDATE_REASON_CHANNEL_SWITCH_STA);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		cds_err("no set hw mode command was issued");
-		/* Proceed with processing csa params. So, not freeing it */
-		return QDF_STATUS_SUCCESS;
-	} else {
-		if ((NULL == dst) || (NULL == src)) {
-			cds_err("given buffers are null, can't copy csa param");
-			return QDF_STATUS_E_FAILURE;
-		}
-		/* Save the csa params to be used after DBS downgrade */
-		qdf_mem_copy(dst, src, numbytes);
-		cds_info("saved csa params for dbs downgrade for bssid %pM",
-				bssid);
-
-		/* Returning error so that csa params are not processed here */
-		status = QDF_STATUS_E_FAILURE;
-	}
 	return status;
 }
 
@@ -8499,4 +8366,167 @@ QDF_STATUS cds_get_valid_chan_weights(struct sir_pcl_chan_weights *weight)
 	}
 
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * cds_set_hw_mode_on_channel_switch() - Set hw mode after channel switch
+ * @session_id: Session ID
+ *
+ * Sets hw mode after doing a channel switch
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cds_set_hw_mode_on_channel_switch(uint8_t session_id)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE, qdf_status;
+	cds_context_type *cds_ctx;
+	enum cds_conc_next_action action;
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return status;
+	}
+
+	if (!(hdd_ctx->config->policy_manager_enabled &&
+				wma_is_hw_dbs_capable())) {
+		cds_err("PM/DBS is disabled");
+		return status;
+	}
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				FL("Invalid CDS Context"));
+		return status;
+	}
+
+	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
+
+	action = cds_get_current_pref_hw_mode();
+
+	if ((action != CDS_DBS_DOWNGRADE) &&
+	    (action != CDS_SINGLE_MAC_UPGRADE)) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				FL("Invalid action: %d"), action);
+		status = QDF_STATUS_SUCCESS;
+		goto done;
+	}
+
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+			FL("action:%d session id:%d"),
+			action, session_id);
+
+	/* Opportunistic timer is started, PM will check if MCC upgrade can be
+	 * done on timer expiry. This avoids any possible ping pong effect
+	 * as well.
+	 */
+	if (action == CDS_SINGLE_MAC_UPGRADE) {
+		qdf_status = cds_stop_start_opportunistic_timer();
+		if (QDF_IS_STATUS_SUCCESS(qdf_status))
+			cds_info("opportunistic timer for MCC upgrade");
+		goto done;
+	}
+
+	/* For DBS, we want to move right away to DBS mode */
+	status = cds_next_actions(session_id, action,
+			SIR_UPDATE_REASON_CHANNEL_SWITCH);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				FL("no set hw mode command was issued"));
+		goto done;
+	}
+done:
+	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
+	/* success must be returned only when a set hw mode was done */
+	return status;
+}
+
+/**
+ * cds_dump_connection_status_info() - Dump the concurrency information
+ *
+ * Prints the concurrency information such as tx/rx spatial stream, chainmask,
+ * etc.
+ *
+ * Return: None
+ */
+void cds_dump_connection_status_info(void)
+{
+	cds_context_type *cds_ctx;
+	uint32_t i;
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return;
+	}
+
+	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
+		cds_debug("%d: use:%d vdev:%d tx:%d rx:%d mode:%d mac:%d chan:%d chainmask:%d orig nss:%d bw:%d",
+				i, conc_connection_list[i].in_use,
+				conc_connection_list[i].vdev_id,
+				conc_connection_list[i].tx_spatial_stream,
+				conc_connection_list[i].rx_spatial_stream,
+				conc_connection_list[i].mode,
+				conc_connection_list[i].mac,
+				conc_connection_list[i].chan,
+				conc_connection_list[i].chain_mask,
+				conc_connection_list[i].original_nss,
+				conc_connection_list[i].bw);
+	}
+}
+
+/**
+ * cds_set_do_hw_mode_change_flag() - Set flag to indicate hw mode change
+ * @flag: Indicate if hw mode change is required or not
+ *
+ * Set the flag to indicate whether a hw mode change is required after a
+ * vdev up or not. Flag value of true indicates that a hw mode change is
+ * required after vdev up.
+ *
+ * Return: None
+ */
+void cds_set_do_hw_mode_change_flag(bool flag)
+{
+	cds_context_type *cds_ctx;
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return;
+	}
+
+	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
+	cds_ctx->do_hw_mode_change = flag;
+	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
+
+	cds_debug("hw_mode_change_channel:%d", flag);
+}
+
+/**
+ * cds_is_hw_mode_change_after_vdev_up() - Check if hw mode change is needed
+ *
+ * Returns the flag which indicates if a hw mode change is required after
+ * vdev up.
+ *
+ * Return: True if hw mode change is required, false otherwise
+ */
+bool cds_is_hw_mode_change_after_vdev_up(void)
+{
+	cds_context_type *cds_ctx;
+	bool flag;
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return INVALID_CHANNEL_ID;
+	}
+
+	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
+	flag = cds_ctx->do_hw_mode_change;
+	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
+
+	return flag;
 }
