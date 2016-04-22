@@ -483,14 +483,14 @@ QDF_STATUS wma_start_scan(tp_wma_handle wma_handle,
 	struct scan_start_params cmd = {0};
 	tSirScanOffloadEvent *scan_event;
 
-	cmd.chan_list = qdf_mem_malloc(sizeof(uint32_t) *
-			   scan_req->channelList.numChannels);
-	if (NULL == cmd.chan_list) {
-		qdf_status = QDF_STATUS_E_NOMEM;
-		goto error;
+	if (scan_req->channelList.numChannels > 0) {
+		cmd.chan_list = qdf_mem_malloc(sizeof(uint32_t) *
+				scan_req->channelList.numChannels);
+		if (NULL == cmd.chan_list) {
+			qdf_status = QDF_STATUS_E_NOMEM;
+			goto error;
+		}
 	}
-	qdf_mem_zero((void *)cmd.chan_list, sizeof(uint32_t) *
-		scan_req->channelList.numChannels);
 	if (scan_req->sessionId > wma_handle->max_bssid) {
 		WMA_LOGE("%s: Invalid vdev_id %d, msg_type : 0x%x", __func__,
 			 scan_req->sessionId, msg_type);
