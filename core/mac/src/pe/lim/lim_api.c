@@ -1699,8 +1699,6 @@ void lim_fill_join_rsp_ht_caps(tpPESession session, tpSirSmeJoinRsp join_rsp)
 	ht_profile->dot11mode = session->dot11mode;
 	ht_profile->htCapability = session->htCapability;
 	ht_profile->vhtCapability = session->vhtCapability;
-	ht_profile->vhtTxChannelWidthSet =
-		session->vhtTxChannelWidthSet;
 	ht_profile->apCenterChan = session->ch_center_freq_seg0;
 	ht_profile->apChanWidth = session->ch_width;
 }

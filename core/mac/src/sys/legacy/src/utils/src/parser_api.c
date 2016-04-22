@@ -304,7 +304,7 @@ populate_dot11_supp_operating_classes(tpAniSirGlobal mac_ptr,
 {
 	uint8_t ch_bandwidth;
 
-	if (session_entry->vhtTxChannelWidthSet == eHT_CHANNEL_WIDTH_80MHZ) {
+	if (session_entry->ch_width == CH_WIDTH_80MHZ) {
 		ch_bandwidth = BW80;
 	} else {
 		switch (session_entry->htSecondaryChannelOffset) {

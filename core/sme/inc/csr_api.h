@@ -939,7 +939,6 @@ typedef struct tagCsrRoamHTProfile {
 	uint8_t htRecommendedTxWidthSet;
 	ePhyChanBondState htSecondaryChannelOffset;
 	uint8_t vhtCapability;
-	uint8_t vhtTxChannelWidthSet;
 	uint8_t apCenterChan;
 	uint8_t apChanWidth;
 } tCsrRoamHTProfile;

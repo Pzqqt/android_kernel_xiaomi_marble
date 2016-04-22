@@ -5946,7 +5946,6 @@ static void csr_roam_copy_ht_profile(tCsrRoamHTProfile *dst_profile,
 	dst_profile->htSecondaryChannelOffset =
 		src_profile->htSecondaryChannelOffset;
 	dst_profile->vhtCapability = src_profile->vhtCapability;
-	dst_profile->vhtTxChannelWidthSet = src_profile->vhtTxChannelWidthSet;
 	dst_profile->apCenterChan = src_profile->apCenterChan;
 	dst_profile->apChanWidth = src_profile->apChanWidth;
 }

@@ -123,8 +123,6 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 			beacon_struct->VHTOperation.present &&
 			session->vhtCapability) {
 			session->vhtCapabilityPresentInBeacon = 1;
-			session->vhtTxChannelWidthSet =
-				beacon_struct->VHTOperation.chanWidth;
 			if (((beacon_struct->Vendor1IEPresent &&
 				beacon_struct->vendor2_ie.present &&
 				beacon_struct->Vendor3IEPresent)) &&

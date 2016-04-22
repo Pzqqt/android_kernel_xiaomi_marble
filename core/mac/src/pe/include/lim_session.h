@@ -309,7 +309,6 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 
 	tBeaconParams beaconParams;
 	uint8_t vhtCapability;
-	uint8_t vhtTxChannelWidthSet;
 	tLimOperatingModeInfo gLimOperatingMode;
 	uint8_t vhtCapabilityPresentInBeacon;
 	uint8_t ch_center_freq_seg0;

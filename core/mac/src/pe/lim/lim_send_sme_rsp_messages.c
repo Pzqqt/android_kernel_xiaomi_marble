@@ -353,8 +353,6 @@ static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 			ht_profile->htCapability = session_entry->htCapability;
 			ht_profile->vhtCapability =
 				session_entry->vhtCapability;
-			ht_profile->vhtTxChannelWidthSet =
-				session_entry->vhtTxChannelWidthSet;
 			ht_profile->apCenterChan = session_entry->ch_center_freq_seg0;
 			ht_profile->apChanWidth = session_entry->ch_width;
 		}
@@ -648,8 +646,6 @@ lim_send_sme_start_bss_rsp(tpAniSirGlobal pMac,
 					psessionEntry->htCapability;
 				pSirSmeRsp->HTProfile.vhtCapability =
 					psessionEntry->vhtCapability;
-				pSirSmeRsp->HTProfile.vhtTxChannelWidthSet =
-					psessionEntry->vhtTxChannelWidthSet;
 				pSirSmeRsp->HTProfile.apCenterChan =
 					psessionEntry->ch_center_freq_seg0;
 				pSirSmeRsp->HTProfile.apChanWidth =
