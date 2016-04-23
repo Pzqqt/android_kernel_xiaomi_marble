@@ -1986,7 +1986,7 @@ static int wmi_unified_probe_rsp_tmpl_send(tp_wma_handle wma,
 	params.pProbeRespTemplate = probe_rsp_info->pProbeRespTemplate;
 	params.probeRespTemplateLen = probe_rsp_info->probeRespTemplateLen;
 	qdf_mem_copy(params.bssId, probe_rsp_info->bssId,
-				WMI_ETH_LEN);
+		     IEEE80211_ADDR_LEN);
 	qdf_mem_copy(params.ucProxyProbeReqValidIEBmap,
 		probe_rsp_info->ucProxyProbeReqValidIEBmap,
 		8 * sizeof(uint32_t));

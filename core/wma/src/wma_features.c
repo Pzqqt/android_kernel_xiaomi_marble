@@ -5949,7 +5949,7 @@ QDF_STATUS wma_set_tdls_offchan_mode(WMA_HANDLE handle,
 	params.oper_class = chan_switch_params->oper_class;
 	params.is_responder = chan_switch_params->is_responder;
 	qdf_mem_copy(params.peer_mac_addr, chan_switch_params->peer_mac_addr,
-							WMI_ETH_LEN);
+		     IEEE80211_ADDR_LEN);
 
 	ret = wmi_unified_set_tdls_offchan_mode_cmd(wma_handle->wmi_handle,
 							&params);
