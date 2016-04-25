@@ -463,6 +463,96 @@ void __qdf_nbuf_reg_trace_cb(qdf_nbuf_trace_update_t cb_func_ptr)
 }
 EXPORT_SYMBOL(__qdf_nbuf_reg_trace_cb);
 
+/**
+ * __qdf_nbuf_is_ipv4_pkt() - check if packet is a ipv4 packet
+ * @skb: Pointer to network buffer
+ *
+ * This api is for Tx packets.
+ *
+ * Return: true if packet is ipv4 packet
+ *	   false otherwise
+ */
+bool __qdf_nbuf_is_ipv4_pkt(struct sk_buff *skb)
+{
+	if (qdf_nbuf_get_protocol(skb) == htons(ETH_P_IP))
+		return true;
+	else
+		return false;
+}
+
+/**
+ * __qdf_nbuf_is_ipv4_dhcp_pkt() - check if skb data is a dhcp packet
+ * @skb: Pointer to network buffer
+ *
+ * This api is for ipv4 packet.
+ *
+ * Return: true if packet is DHCP packet
+ *	   false otherwise
+ */
+bool __qdf_nbuf_is_ipv4_dhcp_pkt(struct sk_buff *skb)
+{
+	uint16_t sport;
+	uint16_t dport;
+
+	sport = (uint16_t)(*(uint16_t *)(skb->data + QDF_NBUF_TRAC_IPV4_OFFSET +
+					 QDF_NBUF_TRAC_IPV4_HEADER_SIZE));
+	dport = (uint16_t)(*(uint16_t *)(skb->data + QDF_NBUF_TRAC_IPV4_OFFSET +
+					 QDF_NBUF_TRAC_IPV4_HEADER_SIZE +
+					 sizeof(uint16_t)));
+
+	if (((sport == QDF_SWAP_U16(QDF_NBUF_TRAC_DHCP_SRV_PORT)) &&
+	     (dport == QDF_SWAP_U16(QDF_NBUF_TRAC_DHCP_CLI_PORT))) ||
+	    ((sport == QDF_SWAP_U16(QDF_NBUF_TRAC_DHCP_CLI_PORT)) &&
+	     (dport == QDF_SWAP_U16(QDF_NBUF_TRAC_DHCP_SRV_PORT))))
+		return true;
+	else
+		return false;
+}
+
+/**
+ * __qdf_nbuf_is_ipv4_eapol_pkt() - check if skb data is a eapol packet
+ * @skb: Pointer to network buffer
+ *
+ * This api is for ipv4 packet.
+ *
+ * Return: true if packet is EAPOL packet
+ *	   false otherwise.
+ */
+bool __qdf_nbuf_is_ipv4_eapol_pkt(struct sk_buff *skb)
+{
+	uint16_t ether_type;
+
+	ether_type = (uint16_t)(*(uint16_t *)(skb->data +
+				QDF_NBUF_TRAC_ETH_TYPE_OFFSET));
+
+	if (ether_type == QDF_SWAP_U16(QDF_NBUF_TRAC_EAPOL_ETH_TYPE))
+		return true;
+	else
+		return false;
+}
+
+/**
+ * __qdf_nbuf_is_ipv4_arp_pkt() - check if skb data is a eapol packet
+ * @skb: Pointer to network buffer
+ *
+ * This api is for ipv4 packet.
+ *
+ * Return: true if packet is ARP packet
+ *	   false otherwise.
+ */
+bool __qdf_nbuf_is_ipv4_arp_pkt(struct sk_buff *skb)
+{
+	uint16_t ether_type;
+
+	ether_type = (uint16_t)(*(uint16_t *)(skb->data +
+				QDF_NBUF_TRAC_ETH_TYPE_OFFSET));
+
+	if (ether_type == QDF_SWAP_U16(QDF_NBUF_TRAC_ARP_ETH_TYPE))
+		return true;
+	else
+		return false;
+}
+
 #ifdef QCA_PKT_PROTO_TRACE
 /**
  * __qdf_nbuf_trace_update() - update trace event

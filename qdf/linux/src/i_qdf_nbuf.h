@@ -480,6 +480,11 @@ void __qdf_nbuf_trace_update(struct sk_buff *buf, char *event_string);
 #define __qdf_nbuf_trace_update(skb, event_string)
 #endif /* QCA_PKT_PROTO_TRACE */
 
+bool __qdf_nbuf_is_ipv4_pkt(struct sk_buff *skb);
+bool __qdf_nbuf_is_ipv4_dhcp_pkt(struct sk_buff *skb);
+bool __qdf_nbuf_is_ipv4_eapol_pkt(struct sk_buff *skb);
+bool __qdf_nbuf_is_ipv4_arp_pkt(struct sk_buff *skb);
+
 /**
  * __qdf_to_status() - OS to QDF status conversion
  * @error : OS error
@@ -729,6 +734,11 @@ static inline uint8_t *__qdf_nbuf_head(struct sk_buff *skb)
 static inline uint8_t *__qdf_nbuf_data(struct sk_buff *skb)
 {
 	return skb->data;
+}
+
+static inline uint8_t *__qdf_nbuf_data_addr(struct sk_buff *skb)
+{
+	return (uint8_t *)&skb->data;
 }
 
 /**

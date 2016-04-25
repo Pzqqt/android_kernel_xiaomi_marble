@@ -40,13 +40,33 @@
 #include <i_qdf_trace.h>
 #include <qdf_net_types.h>
 
-#define IPA_NBUF_OWNER_ID 0xaa55aa55
-#define QDF_NBUF_PKT_TRAC_TYPE_EAPOL   0x02
-#define QDF_NBUF_PKT_TRAC_TYPE_DHCP    0x04
-#define QDF_NBUF_PKT_TRAC_TYPE_MGMT_ACTION    0x08
-#define QDF_NBUF_PKT_TRAC_MAX_STRING   12
-#define QDF_NBUF_PKT_TRAC_PROTO_STRING 4
-#define QDF_NBUF_PKT_ERROR  1
+#define IPA_NBUF_OWNER_ID			0xaa55aa55
+#define QDF_NBUF_PKT_TRAC_TYPE_EAPOL		0x02
+#define QDF_NBUF_PKT_TRAC_TYPE_DHCP		0x04
+#define QDF_NBUF_PKT_TRAC_TYPE_MGMT_ACTION	0x08
+#define QDF_NBUF_PKT_TRAC_TYPE_ARP		0x10
+#define QDF_NBUF_PKT_TRAC_MAX_STRING		12
+#define QDF_NBUF_PKT_TRAC_PROTO_STRING		4
+#define QDF_NBUF_PKT_ERROR			1
+
+#define QDF_NBUF_TRAC_IPV4_OFFSET		14
+#define QDF_NBUF_TRAC_IPV4_HEADER_SIZE		20
+#define QDF_NBUF_TRAC_DHCP_SRV_PORT		67
+#define QDF_NBUF_TRAC_DHCP_CLI_PORT		68
+#define QDF_NBUF_TRAC_ETH_TYPE_OFFSET		12
+#define QDF_NBUF_TRAC_EAPOL_ETH_TYPE		0x888E
+#define QDF_NBUF_TRAC_ARP_ETH_TYPE		0x0806
+#define QDF_NBUF_DEST_MAC_OFFSET		0
+#define QDF_NBUF_SRC_MAC_OFFSET			6
+
+/* EAPOL Related MASK */
+#define EAPOL_PACKET_TYPE_OFFSET		15
+#define EAPOL_KEY_INFO_OFFSET			19
+#define EAPOL_MASK				0x8013
+#define EAPOL_M1_BIT_MASK			0x8000
+#define EAPOL_M2_BIT_MASK			0x0001
+#define EAPOL_M3_BIT_MASK			0x8013
+#define EAPOL_M4_BIT_MASK			0x0003
 
 /* Tracked Packet types */
 #define QDF_NBUF_TX_PKT_INVALID              0
@@ -64,8 +84,6 @@
 #define QDF_NBUF_TX_PKT_CE                   8
 #define QDF_NBUF_TX_PKT_FREE                 9
 #define QDF_NBUF_TX_PKT_STATE_MAX            10
-
-#define QDF_NBUF_IPA_CHECK_MASK              0x80000000
 
 /**
  * struct mon_rx_status - This will have monitor mode rx_status extracted from
@@ -109,6 +127,23 @@ struct mon_rx_status {
 	uint8_t  ldpc;
 	uint8_t  beamformed;
 };
+
+/* DHCP Related Mask */
+#define DHCP_OPTION53			(0x35)
+#define DHCP_OPTION53_LENGTH		(1)
+#define DHCP_OPTION53_OFFSET		(0x11A)
+#define DHCP_OPTION53_LENGTH_OFFSET	(0x11B)
+#define DHCP_OPTION53_STATUS_OFFSET	(0x11C)
+#define DHCPDISCOVER			(1)
+#define DHCPOFFER			(2)
+#define DHCPREQUEST			(3)
+#define DHCPDECLINE			(4)
+#define DHCPACK				(5)
+#define DHCPNAK				(6)
+#define DHCPRELEASE			(7)
+#define DHCPINFORM			(8)
+
+#define QDF_NBUF_IPA_CHECK_MASK		0x80000000
 
 /**
  * @qdf_nbuf_t - Platform indepedent packet abstraction
@@ -554,6 +589,17 @@ static inline uint8_t *qdf_nbuf_head(qdf_nbuf_t buf)
 static inline uint8_t *qdf_nbuf_data(qdf_nbuf_t buf)
 {
 	return __qdf_nbuf_data(buf);
+}
+
+/**
+ * qdf_nbuf_data_addr() - Return the address of skb->data
+ * @buf: Network buffer
+ *
+ * Return: Data address
+ */
+static inline uint8_t *qdf_nbuf_data_addr(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_data_addr(buf);
 }
 
 /**
@@ -1067,6 +1113,62 @@ static inline uint8_t qdf_nbuf_get_tx_parallel_dnload_frm(qdf_nbuf_t buf)
 }
 
 /**
+ * qdf_nbuf_is_ipv4_pkt() - check if packet is a ipv4 packet or not
+ * @buf:  buffer
+ *
+ * This api is for Tx packets.
+ *
+ * Return: true if packet is ipv4 packet
+ */
+static inline
+bool qdf_nbuf_is_ipv4_pkt(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_is_ipv4_pkt(buf);
+}
+
+/**
+ * qdf_nbuf_is_ipv4_dhcp_pkt() - check if packet is a dhcp packet or not
+ * @buf:  buffer
+ *
+ * This api is for ipv4 packet.
+ *
+ * Return: true if packet is DHCP packet
+ */
+static inline
+bool qdf_nbuf_is_ipv4_dhcp_pkt(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_is_ipv4_dhcp_pkt(buf);
+}
+
+/**
+ * qdf_nbuf_is_ipv4_eapol_pkt() - check if packet is a eapol packet or not
+ * @buf:  buffer
+ *
+ * This api is for ipv4 packet.
+ *
+ * Return: true if packet is EAPOL packet
+ */
+static inline
+bool qdf_nbuf_is_ipv4_eapol_pkt(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_is_ipv4_eapol_pkt(buf);
+}
+
+/**
+ * qdf_nbuf_is_ipv4_arp_pkt() - check if packet is a arp packet or not
+ * @buf:  buffer
+ *
+ * This api is for ipv4 packet.
+ *
+ * Return: true if packet is ARP packet
+ */
+static inline
+bool qdf_nbuf_is_ipv4_arp_pkt(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_is_ipv4_arp_pkt(buf);
+}
+
+/**
  * qdf_invalidate_range() - invalidate the virtual address range specified by
  *			start and end addresses.
  * Note: This does not write back the cache entries.
@@ -1161,7 +1263,6 @@ static inline qdf_nbuf_t qdf_nbuf_inc_users(qdf_nbuf_t nbuf)
 {
 	return __qdf_nbuf_inc_users(nbuf);
 }
-
 
 /**
  * qdf_nbuf_data_attr_get() - Get data_attr field from cvg_nbuf_cb

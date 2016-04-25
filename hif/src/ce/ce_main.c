@@ -1222,7 +1222,7 @@ hif_send_head(struct hif_opaque_softc *hif_ctx,
 
 	QDF_NBUF_UPDATE_TX_PKT_COUNT(nbuf, QDF_NBUF_TX_PKT_HIF);
 	DPTRACE(qdf_dp_trace(nbuf, QDF_DP_TRACE_HIF_PACKET_PTR_RECORD,
-				(uint8_t *)(qdf_nbuf_data(nbuf)),
+				qdf_nbuf_data_addr(nbuf),
 				sizeof(qdf_nbuf_data(nbuf))));
 	status = ce_sendlist_send(ce_hdl, nbuf, &sendlist, transfer_id);
 	QDF_ASSERT(status == QDF_STATUS_SUCCESS);

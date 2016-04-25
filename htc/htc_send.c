@@ -1410,7 +1410,7 @@ A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, qdf_nbuf_t netbuf, int Epid,
 
 	QDF_NBUF_UPDATE_TX_PKT_COUNT(netbuf, QDF_NBUF_TX_PKT_HTC);
 	DPTRACE(qdf_dp_trace(netbuf, QDF_DP_TRACE_HTC_PACKET_PTR_RECORD,
-				(uint8_t *)(qdf_nbuf_data(netbuf)),
+				qdf_nbuf_data_addr(netbuf),
 				sizeof(qdf_nbuf_data(netbuf))));
 	status = hif_send_head(target->hif_dev,
 			       pEndpoint->UL_PipeID,
@@ -1545,7 +1545,7 @@ A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket,
 	}
 	QDF_NBUF_UPDATE_TX_PKT_COUNT(netbuf, QDF_NBUF_TX_PKT_HTC);
 	DPTRACE(qdf_dp_trace(netbuf, QDF_DP_TRACE_HTC_PACKET_PTR_RECORD,
-				(uint8_t *)(qdf_nbuf_data(netbuf)),
+				qdf_nbuf_data_addr(netbuf),
 				sizeof(qdf_nbuf_data(netbuf))));
 
 	/* send what we can */
