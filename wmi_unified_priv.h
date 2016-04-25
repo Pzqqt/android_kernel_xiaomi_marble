@@ -1099,6 +1099,9 @@ QDF_STATUS (*extract_vdev_extd_stats)(wmi_unified_t wmi_handle, void *evt_buf,
 
 QDF_STATUS (*send_power_dbg_cmd)(wmi_unified_t wmi_handle,
 				struct wmi_power_dbg_params *param);
+
+QDF_STATUS (*send_adapt_dwelltime_params_cmd)(wmi_unified_t wmi_handle,
+			struct wmi_adaptive_dwelltime_params *dwelltime_params);
 };
 
 struct target_abi_version {

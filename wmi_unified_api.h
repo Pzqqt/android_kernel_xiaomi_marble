@@ -1229,4 +1229,7 @@ QDF_STATUS wmi_extract_vdev_extd_stats(void *wmi_hdl, void *evt_buf,
 
 QDF_STATUS wmi_unified_send_power_dbg_cmd(void *wmi_hdl,
 				struct wmi_power_dbg_params *param);
+QDF_STATUS wmi_unified_send_adapt_dwelltime_params_cmd(void *wmi_hdl,
+				   struct wmi_adaptive_dwelltime_params *
+				   wmi_param);
 #endif /* _WMI_UNIFIED_API_H_ */
