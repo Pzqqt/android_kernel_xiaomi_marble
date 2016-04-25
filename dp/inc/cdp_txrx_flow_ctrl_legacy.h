@@ -45,7 +45,7 @@
  * @WLAN_NETIF_CARRIER_OFF: off carrier
  */
 enum netif_action_type {
-	WLAN_STOP_ALL_NETIF_QUEUE,
+	WLAN_STOP_ALL_NETIF_QUEUE = 1,
 	WLAN_START_ALL_NETIF_QUEUE,
 	WLAN_WAKE_ALL_NETIF_QUEUE,
 	WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
@@ -68,7 +68,7 @@ enum netif_action_type {
  * @WLAN_THERMAL_MITIGATION: because of thermal mitigation
  */
 enum netif_reason_type {
-	WLAN_CONTROL_PATH,
+	WLAN_CONTROL_PATH = 1,
 	WLAN_DATA_FLOW_CONTROL,
 	WLAN_FW_PAUSE,
 	WLAN_TX_ABORT,
