@@ -2995,10 +2995,10 @@ ol_txrx_stats(uint8_t vdev_id, char *buffer, unsigned buf_len)
 
 void ol_txrx_stats_display(ol_txrx_pdev_handle pdev)
 {
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR, "txrx stats:");
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		  "  tx: sent %lld msdus (%lld B), "
-		  "      rejected %lld (%lld B), dropped %lld (%lld B)",
+		  "TX PATH Statistics:");
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		  "sent %lld msdus (%lld B), rejected %lld (%lld B), dropped %lld (%lld B)",
 		  pdev->stats.pub.tx.delivered.pkts,
 		  pdev->stats.pub.tx.delivered.bytes,
 		  pdev->stats.pub.tx.dropped.host_reject.pkts,
@@ -3038,18 +3038,46 @@ void ol_txrx_stats_display(ol_txrx_pdev_handle pdev)
 		  pdev->stats.pub.tx.comp_histogram.pkts_51_60,
 		  pdev->stats.pub.tx.comp_histogram.pkts_61_plus);
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		  "  rx: %lld ppdus, %lld mpdus, %lld msdus, %lld bytes, %lld errs",
+		  "RX PATH Statistics:");
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		  "%lld ppdus, %lld mpdus, %lld msdus, %lld bytes\n"
+		  "dropped: err %lld (%lld B), peer_invalid %lld (%lld B), mic_err %lld (%lld B)",
 		  pdev->stats.priv.rx.normal.ppdus,
 		  pdev->stats.priv.rx.normal.mpdus,
 		  pdev->stats.pub.rx.delivered.pkts,
 		  pdev->stats.pub.rx.delivered.bytes,
-		  pdev->stats.priv.rx.err.mpdu_bad);
+		  pdev->stats.pub.rx.dropped_err.pkts,
+		  pdev->stats.pub.rx.dropped_err.bytes,
+		  pdev->stats.pub.rx.dropped_peer_invalid.pkts,
+		  pdev->stats.pub.rx.dropped_peer_invalid.bytes,
+		  pdev->stats.pub.rx.dropped_mic_err.pkts,
+		  pdev->stats.pub.rx.dropped_mic_err.bytes);
+
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 		  "  fwd to stack %d, fwd to fw %d, fwd to stack & fw  %d\n",
 		  pdev->stats.pub.rx.intra_bss_fwd.packets_stack,
 		  pdev->stats.pub.rx.intra_bss_fwd.packets_fwd,
 		  pdev->stats.pub.rx.intra_bss_fwd.packets_stack_n_fwd);
+
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		  "rx packets per HTT indication:\n"
+		  "Single Packet  %d\n"
+		  " 2-10 Packets  %d\n"
+		  "11-20 Packets  %d\n"
+		  "21-30 Packets  %d\n"
+		  "31-40 Packets  %d\n"
+		  "41-50 Packets  %d\n"
+		  "51-60 Packets  %d\n"
+		  "  60+ Packets  %d\n",
+		  pdev->stats.pub.rx.rx_ind_histogram.pkts_1,
+		  pdev->stats.pub.rx.rx_ind_histogram.pkts_2_10,
+		  pdev->stats.pub.rx.rx_ind_histogram.pkts_11_20,
+		  pdev->stats.pub.rx.rx_ind_histogram.pkts_21_30,
+		  pdev->stats.pub.rx.rx_ind_histogram.pkts_31_40,
+		  pdev->stats.pub.rx.rx_ind_histogram.pkts_41_50,
+		  pdev->stats.pub.rx.rx_ind_histogram.pkts_51_60,
+		  pdev->stats.pub.rx.rx_ind_histogram.pkts_61_plus);
 }
 
 void ol_txrx_stats_clear(ol_txrx_pdev_handle pdev)
@@ -3563,6 +3591,8 @@ static void ol_rx_data_cb(struct ol_txrx_pdev_t *pdev,
 		ret = data_rx(osif_dev, buf);
 		if (ret != QDF_STATUS_SUCCESS) {
 			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Frame Rx to HDD failed");
+			if (pdev)
+				TXRX_STATS_MSDU_INCR(pdev, rx.dropped_err, buf);
 			qdf_nbuf_free(buf);
 		}
 		buf = next_buf;
@@ -3574,6 +3604,9 @@ free_buf:
 	buf = buf_list;
 	while (buf) {
 		next_buf = qdf_nbuf_queue_next(buf);
+		if (pdev)
+			TXRX_STATS_MSDU_INCR(pdev,
+				 rx.dropped_peer_invalid, buf);
 		qdf_nbuf_free(buf);
 		buf = next_buf;
 	}
@@ -3675,6 +3708,9 @@ drop_rx_buf:
 	buf = rx_buf_list;
 	while (buf) {
 		next_buf = qdf_nbuf_queue_next(buf);
+		if (pdev)
+			TXRX_STATS_MSDU_INCR(pdev,
+				rx.dropped_peer_invalid, buf);
 		qdf_nbuf_free(buf);
 		buf = next_buf;
 	}

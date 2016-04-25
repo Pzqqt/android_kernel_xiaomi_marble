@@ -103,6 +103,41 @@ void ol_rx_trigger_restore(htt_pdev_handle htt_pdev, qdf_nbuf_t head_msdu,
 }
 #endif
 
+/**
+ * ol_rx_update_histogram_stats() - update rx histogram statistics
+ * @msdu_count: msdu count
+ *
+ * Return: none
+ */
+void ol_rx_update_histogram_stats(uint32_t msdu_count)
+{
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if (!pdev) {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			"%s pdev is NULL\n", __func__);
+		return;
+	}
+
+	if (msdu_count > 60) {
+		TXRX_STATS_ADD(pdev, pub.rx.rx_ind_histogram.pkts_61_plus, 1);
+	} else if (msdu_count > 50) {
+		TXRX_STATS_ADD(pdev, pub.rx.rx_ind_histogram.pkts_51_60, 1);
+	} else if (msdu_count > 40) {
+		TXRX_STATS_ADD(pdev, pub.rx.rx_ind_histogram.pkts_41_50, 1);
+	} else if (msdu_count > 30) {
+		TXRX_STATS_ADD(pdev, pub.rx.rx_ind_histogram.pkts_31_40, 1);
+	} else if (msdu_count > 20) {
+		TXRX_STATS_ADD(pdev, pub.rx.rx_ind_histogram.pkts_21_30, 1);
+	} else if (msdu_count > 10) {
+		TXRX_STATS_ADD(pdev, pub.rx.rx_ind_histogram.pkts_11_20, 1);
+	} else if (msdu_count > 1) {
+		TXRX_STATS_ADD(pdev, pub.rx.rx_ind_histogram.pkts_2_10, 1);
+	} else if (msdu_count == 1) {
+		TXRX_STATS_ADD(pdev, pub.rx.rx_ind_histogram.pkts_1, 1);
+	}
+}
+
 static void ol_rx_process_inv_peer(ol_txrx_pdev_handle pdev,
 				   void *rx_mpdu_desc, qdf_nbuf_t msdu)
 {
@@ -808,6 +843,7 @@ ol_rx_mic_error_handler(
 	struct ol_txrx_vdev_t *vdev = NULL;
 
 	if (pdev) {
+		TXRX_STATS_MSDU_INCR(pdev, rx.dropped_mic_err, msdu);
 		peer = ol_txrx_peer_find_by_id(pdev, peer_id);
 		if (peer) {
 			vdev = peer->vdev;
@@ -1298,6 +1334,8 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 		while (head_msdu) {
 			qdf_nbuf_t msdu = head_msdu;
 			head_msdu = qdf_nbuf_next(head_msdu);
+			TXRX_STATS_MSDU_INCR(pdev,
+				 rx.dropped_peer_invalid, msdu);
 			htt_rx_desc_frame_free(htt_pdev, msdu);
 		}
 		return;

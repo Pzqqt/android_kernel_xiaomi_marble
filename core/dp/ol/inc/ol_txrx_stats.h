@@ -80,6 +80,7 @@ struct ol_txrx_stats_tx_dropped {
 	   couldn't get an ack for */
 	struct ol_txrx_stats_elem no_ack;
 };
+
 struct ol_txrx_stats_tx_histogram {
 	uint32_t pkts_1;
 	uint32_t pkts_2_10;
@@ -112,6 +113,16 @@ struct ol_txrx_stats_tx {
 /*
  * RX
  */
+struct ol_txrx_stats_rx_histogram {
+	uint32_t pkts_1;
+	uint32_t pkts_2_10;
+	uint32_t pkts_11_20;
+	uint32_t pkts_21_30;
+	uint32_t pkts_31_40;
+	uint32_t pkts_41_50;
+	uint32_t pkts_51_60;
+	uint32_t pkts_61_plus;
+};
 struct ol_txrx_stats_rx_ibss_fwd {
 	/* MSDUs forwarded to network stack */
 	u_int32_t packets_stack;
@@ -123,7 +134,11 @@ struct ol_txrx_stats_rx_ibss_fwd {
 struct ol_txrx_stats_rx {
 	/* MSDUs given to the OS shim */
 	struct ol_txrx_stats_elem delivered;
+	struct ol_txrx_stats_elem dropped_err;
+	struct ol_txrx_stats_elem dropped_mic_err;
+	struct ol_txrx_stats_elem dropped_peer_invalid;
 	struct ol_txrx_stats_rx_ibss_fwd intra_bss_fwd;
+	struct ol_txrx_stats_rx_histogram rx_ind_histogram;
 };
 struct ol_txrx_stats {
 	struct ol_txrx_stats_tx tx;

@@ -56,6 +56,7 @@ void
 ol_rx_offload_paddr_deliver_ind_handler(htt_pdev_handle htt_pdev,
 					uint32_t msdu_count,
 					uint32_t *msg_word);
+void ol_rx_update_histogram_stats(uint32_t msdu_count);
 
 void
 ol_rx_mic_error_handler(
