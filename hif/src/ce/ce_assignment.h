@@ -120,7 +120,7 @@ static struct CE_pipe_config target_ce_config_wlan[] = {
 	{ /* CE5 */ 5, PIPEDIR_OUT, 1024,   64,
 		(CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,},
 	/* Reserved for target autonomous HIF_memcpy */
-	{ /* CE6 */ 6, PIPEDIR_INOUT, 32, 4096, CE_ATTR_FLAGS, 0,},
+	{ /* CE6 */ 6, PIPEDIR_INOUT, 32, 16384, CE_ATTR_FLAGS, 0,},
 	/* CE7 used only by Host */
 	{ /* CE7 */ 7, PIPEDIR_INOUT_H2H, 0, 0,
 		(CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,},
