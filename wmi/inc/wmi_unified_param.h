@@ -259,6 +259,22 @@ typedef enum {
 } WMI_HOST_WLAN_PHY_MODE;
 
 
+/**
+ * enum wmi_dwelltime_adaptive_mode: dwelltime_mode
+ * @WMI_DWELL_MODE_DEFAULT: Use firmware default mode
+ * @WMI_DWELL_MODE_CONSERVATIVE: Conservative adaptive mode
+ * @WMI_DWELL_MODE_MODERATE: Moderate adaptive mode
+ * @WMI_DWELL_MODE_AGGRESSIVE: Aggressive adaptive mode
+ * @WMI_DWELL_MODE_STATIC: static adaptive mode
+ */
+enum wmi_dwelltime_adaptive_mode {
+	WMI_DWELL_MODE_DEFAULT = 0,
+	WMI_DWELL_MODE_CONSERVATIVE = 1,
+	WMI_DWELL_MODE_MODERATE = 2,
+	WMI_DWELL_MODE_AGGRESSIVE = 3,
+	WMI_DWELL_MODE_STATIC = 4
+};
+
 #define MAX_NUM_CHAN 128
 
 /**
@@ -1840,6 +1856,13 @@ struct pno_nw_type {
  * @p24GProbeTemplate: 2.4G probe template
  * @us5GProbeTemplateLen: 5G probe template length
  * @p5GProbeTemplate: 5G probe template
+ * @pno_channel_prediction: PNO channel prediction feature status
+ * @top_k_num_of_channels: top K number of channels are used for tanimoto
+ * distance calculation.
+ * @stationary_thresh: threshold value to determine that the STA is stationary.
+ * @pnoscan_adaptive_dwell_mode: adaptive dwelltime mode for pno scan
+ * @channel_prediction_full_scan: periodic timer upon which a full scan needs
+ * to be triggered.
  */
 struct pno_scan_req_params {
 	uint8_t enable;
@@ -1862,6 +1885,7 @@ struct pno_scan_req_params {
 	bool pno_channel_prediction;
 	uint8_t top_k_num_of_channels;
 	uint8_t stationary_thresh;
+	enum wmi_dwelltime_adaptive_mode pnoscan_adaptive_dwell_mode;
 	uint32_t channel_prediction_full_scan;
 #endif
 };
@@ -1976,6 +2000,7 @@ struct wifi_scan_bucket_params {
  * @min_dwell_time_passive: per bucket minimum passive dwell time
  * @max_dwell_time_passive: per bucket maximum passive dwell time
  * @configuration_flags: configuration flags
+ * @extscan_adaptive_dwell_mode: adaptive dwelltime mode for extscan
  * @buckets: buckets array
  */
 struct wifi_scan_cmd_req_params {
@@ -1994,6 +2019,7 @@ struct wifi_scan_cmd_req_params {
 	uint32_t min_dwell_time_passive;
 	uint32_t max_dwell_time_passive;
 	uint32_t configuration_flags;
+	enum wmi_dwelltime_adaptive_mode extscan_adaptive_dwell_mode;
 	struct wifi_scan_bucket_params buckets[WMI_WLAN_EXTSCAN_MAX_BUCKETS];
 };
 
@@ -6303,5 +6329,24 @@ struct wmi_power_dbg_params {
 	uint32_t args[WMI_MAX_POWER_DBG_ARGS];
 };
 
+/**
+ * struct wmi_adaptive_dwelltime_params - the adaptive dwelltime params
+ * @vdev_id: vdev id
+ * @is_enabled: Adaptive dwell time is enabled/disabled
+ * @dwelltime_mode: global default adaptive dwell mode
+ * @lpf_weight: weight to calculate the average low pass
+ * filter for channel congestion
+ * @passive_mon_intval: intval to monitor wifi activity in passive scan in msec
+ * @wifi_act_threshold: % of wifi activity used in passive scan 0-100
+ *
+ */
+struct wmi_adaptive_dwelltime_params {
+	uint32_t vdev_id;
+	bool is_enabled;
+	enum wmi_dwelltime_adaptive_mode dwelltime_mode;
+	uint8_t lpf_weight;
+	uint8_t passive_mon_intval;
+	uint8_t wifi_act_threshold;
+};
 #endif /* _WMI_UNIFIED_PARAM_H_ */
 

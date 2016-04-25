@@ -6016,6 +6016,26 @@ QDF_STATUS wmi_extract_vdev_extd_stats(void *wmi_hdl, void *evt_buf,
 	if (wmi_handle->ops->extract_vdev_extd_stats)
 		return wmi_handle->ops->extract_vdev_extd_stats(wmi_handle,
 				evt_buf, index, vdev_extd_stats);
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_send_adapt_dwelltime_params_cmd() - send wmi cmd of
+ * adaptive dwelltime configuration params
+ * @wma_handle:  wma handler
+ * @dwelltime_params: pointer to dwelltime_params
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF failure reason code for failure
+ */
+QDF_STATUS wmi_unified_send_adapt_dwelltime_params_cmd(void *wmi_hdl,
+			struct wmi_adaptive_dwelltime_params *dwelltime_params)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_adapt_dwelltime_params_cmd)
+		return wmi_handle->ops->
+			send_adapt_dwelltime_params_cmd(wmi_handle,
+				  dwelltime_params);
 
 	return QDF_STATUS_E_FAILURE;
 }
