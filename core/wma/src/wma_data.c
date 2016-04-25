@@ -999,6 +999,7 @@ QDF_STATUS wma_set_enable_disable_mcc_adaptive_scheduler(uint32_t
 							 mcc_adaptive_scheduler)
 {
 	tp_wma_handle wma = NULL;
+	uint32_t pdev_id;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (NULL == wma) {
@@ -1006,8 +1007,17 @@ QDF_STATUS wma_set_enable_disable_mcc_adaptive_scheduler(uint32_t
 		return QDF_STATUS_E_FAULT;
 	}
 
+	/* In WMI_RESMGR_ADAPTIVE_OCS_ENABLE_DISABLE_CMDID fw cannot
+	 * determine the PDEV on its own, Host needs to specify the PDEV
+	 * ID in the command.
+	 */
+	if (wma->wlan_resource_config.use_pdev_id)
+		pdev_id = WMA_MAC_TO_PDEV_MAP(0);
+	else
+		pdev_id = WMI_PDEV_ID_SOC;
+
 	return wmi_unified_set_enable_disable_mcc_adaptive_scheduler_cmd(
-			wma->wmi_handle, mcc_adaptive_scheduler);
+			wma->wmi_handle, mcc_adaptive_scheduler, pdev_id);
 }
 
 /**
