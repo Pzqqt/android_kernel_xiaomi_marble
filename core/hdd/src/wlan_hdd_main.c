@@ -4213,6 +4213,7 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 
 free_hdd_ctx:
 
+	wlan_hdd_deinit_tx_rx_histogram(hdd_ctx);
 	wiphy_unregister(wiphy);
 
 	hdd_context_destroy(hdd_ctx);
@@ -4755,6 +4756,38 @@ static void hdd_bus_bw_compute_cbk(void *priv)
 #endif
 
 /**
+ * wlan_hdd_init_tx_rx_histogram() - init tx/rx histogram stats
+ * @hdd_ctx: hdd context
+ *
+ * Return: 0 for success or error code
+ */
+int wlan_hdd_init_tx_rx_histogram(hdd_context_t *hdd_ctx)
+{
+	hdd_ctx->hdd_txrx_hist = qdf_mem_malloc(
+		(sizeof(struct hdd_tx_rx_histogram) * NUM_TX_RX_HISTOGRAM));
+	if (hdd_ctx->hdd_txrx_hist == NULL) {
+		hdd_err("%s: Failed malloc for hdd_txrx_hist", __func__);
+		return -ENOMEM;
+	}
+	return 0;
+}
+
+/**
+ * wlan_hdd_deinit_tx_rx_histogram() - deinit tx/rx histogram stats
+ * @hdd_ctx: hdd context
+ *
+ * Return: none
+ */
+void wlan_hdd_deinit_tx_rx_histogram(hdd_context_t *hdd_ctx)
+{
+	if (hdd_ctx->hdd_txrx_hist) {
+		qdf_mem_free(hdd_ctx->hdd_txrx_hist);
+		hdd_ctx->hdd_txrx_hist = NULL;
+	}
+}
+
+
+/**
  * wlan_hdd_display_tx_rx_histogram() - display tx rx histogram
  * @hdd_ctx: hdd context
  *
@@ -4804,7 +4837,8 @@ void wlan_hdd_display_tx_rx_histogram(hdd_context_t *hdd_ctx)
 void wlan_hdd_clear_tx_rx_histogram(hdd_context_t *hdd_ctx)
 {
 	hdd_ctx->hdd_txrx_hist_idx = 0;
-	qdf_mem_zero(hdd_ctx->hdd_txrx_hist, sizeof(hdd_ctx->hdd_txrx_hist));
+	qdf_mem_zero(hdd_ctx->hdd_txrx_hist,
+		(sizeof(struct hdd_tx_rx_histogram) * NUM_TX_RX_HISTOGRAM));
 }
 
 /**
@@ -5643,9 +5677,14 @@ hdd_context_t *hdd_context_create(struct device *dev, void *hif_sc)
 
 	cds_set_multicast_logging(hdd_ctx->config->multicast_host_fw_msgs);
 
+	status = wlan_hdd_init_tx_rx_histogram(hdd_ctx);
+	if (status)
+		goto err_free_config;
+
 	ret = hdd_logging_sock_activate_svc(hdd_ctx);
 	if (ret)
-		goto err_free_config;
+		goto err_free_histogram;
+
 
 	/*
 	 * Update QDF trace levels based upon the code. The multicast
@@ -5659,6 +5698,9 @@ skip_multicast_logging:
 	hdd_set_trace_level_for_each(hdd_ctx);
 
 	return hdd_ctx;
+
+err_free_histogram:
+	wlan_hdd_deinit_tx_rx_histogram(hdd_ctx);
 
 err_free_config:
 	qdf_mem_free(hdd_ctx->config);

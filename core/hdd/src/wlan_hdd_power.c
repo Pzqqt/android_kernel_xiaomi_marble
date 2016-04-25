@@ -1684,7 +1684,7 @@ err_cds_close:
 		/* Free up dynamically allocated members inside HDD Adapter */
 		kfree(pHddCtx->config);
 		pHddCtx->config = NULL;
-
+		wlan_hdd_deinit_tx_rx_histogram(pHddCtx);
 		wiphy_unregister(pHddCtx->wiphy);
 		wiphy_free(pHddCtx->wiphy);
 
