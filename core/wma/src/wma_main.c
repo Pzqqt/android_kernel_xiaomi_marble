@@ -5316,6 +5316,11 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 			(struct egap_conf_params *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
+	case WMA_SET_ADAPT_DWELLTIME_CONF_PARAMS:
+		wma_send_adapt_dwelltime_params(wma_handle,
+			(struct adaptive_dwelltime_params *)msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
 	case WMA_HT40_OBSS_SCAN_IND:
 		wma_send_ht40_obss_scanind(wma_handle,
 			(struct obss_ht40_scanind *)msg->bodyptr);

@@ -6326,6 +6326,42 @@ out:
 }
 
 /**
+ * hdd_adaptive_dwelltime_init() - initialization for adaptive dwell time config
+ * @hdd_ctx: HDD context
+ *
+ * This function sends the adaptive dwell time config configuration to the
+ * firmware via WMA
+ *
+ * Return: 0 - success, < 0 - failure
+ */
+static int hdd_adaptive_dwelltime_init(hdd_context_t *hdd_ctx)
+{
+	QDF_STATUS status;
+	struct adaptive_dwelltime_params dwelltime_params;
+
+	dwelltime_params.is_enabled =
+			hdd_ctx->config->adaptive_dwell_mode_enabled;
+	dwelltime_params.dwelltime_mode =
+			hdd_ctx->config->global_adapt_dwelltime_mode;
+	dwelltime_params.lpf_weight =
+			hdd_ctx->config->adapt_dwell_lpf_weight;
+	dwelltime_params.passive_mon_intval =
+			hdd_ctx->config->adapt_dwell_passive_mon_intval;
+	dwelltime_params.wifi_act_threshold =
+			hdd_ctx->config->adapt_dwell_wifi_act_threshold;
+
+	status = sme_set_adaptive_dwelltime_config(hdd_ctx->hHal,
+						   &dwelltime_params);
+
+	hdd_debug("Sending Adaptive Dwelltime Configuration to fw");
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("Failed to send Adaptive Dwelltime configuration!");
+		return -EAGAIN;
+	}
+	return 0;
+}
+
+/**
  * hdd_wlan_startup() - HDD init function
  * @dev:	Pointer to the underlying device
  *
@@ -6508,6 +6544,9 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 	if (0 != hdd_lro_init(hdd_ctx))
 		hdd_err("Unable to initialize LRO in fw");
+
+	if (0 != hdd_adaptive_dwelltime_init(hdd_ctx))
+		hdd_err("Unable to send adaptive dwelltime setting to FW");
 
 	hddtxlimit.txPower2g = hdd_ctx->config->TxPower2g;
 	hddtxlimit.txPower5g = hdd_ctx->config->TxPower5g;

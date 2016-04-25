@@ -710,6 +710,8 @@ void sme_set_pno_channel_prediction(tpSirPNOScanReq request_buf,
 		mac_ctx->roam.configParam.stationary_thresh;
 	request_buf->channel_prediction_full_scan =
 		mac_ctx->roam.configParam.channel_prediction_full_scan;
+	request_buf->pnoscan_adaptive_dwell_mode =
+		mac_ctx->roam.configParam.pnoscan_adaptive_dwell_mode;
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			FL("channel_prediction: %d, top_k_num_of_channels: %d"),
 			request_buf->pno_channel_prediction,
@@ -799,6 +801,8 @@ QDF_STATUS sme_set_ps_preferred_network_list(tHalHandle hal_ctx,
 			mac_ctx->roam.configParam.nPassiveMaxChnTimeConc;
 		request_buf->passive_min_time =
 			mac_ctx->roam.configParam.nPassiveMinChnTimeConc;
+		request_buf->pnoscan_adaptive_dwell_mode =
+			mac_ctx->roam.configParam.pnoscan_adaptive_dwell_mode;
 	} else {
 		request_buf->active_max_time =
 			mac_ctx->roam.configParam.nActiveMaxChnTime;
@@ -808,6 +812,8 @@ QDF_STATUS sme_set_ps_preferred_network_list(tHalHandle hal_ctx,
 			mac_ctx->roam.configParam.nPassiveMaxChnTime;
 		request_buf->passive_min_time =
 			mac_ctx->roam.configParam.nPassiveMinChnTime;
+		request_buf->pnoscan_adaptive_dwell_mode =
+			mac_ctx->roam.configParam.pnoscan_adaptive_dwell_mode;
 	}
 
 	msg.type = WMA_SET_PNO_REQ;

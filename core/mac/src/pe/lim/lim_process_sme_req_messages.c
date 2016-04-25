@@ -1300,6 +1300,8 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 	pScanOffloadReq->restTime = pScanReq->restTime;
 	pScanOffloadReq->min_rest_time = pScanReq->min_rest_time;
 	pScanOffloadReq->idle_time = pScanReq->idle_time;
+	pScanOffloadReq->scan_adaptive_dwell_mode =
+			pScanReq->scan_adaptive_dwell_mode;
 
 	/* for normal scan, the value for p2pScanType should be 0
 	   always */
@@ -1309,6 +1311,8 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 	pScanOffloadReq->sessionId = pScanReq->sessionId;
 	pScanOffloadReq->scan_id = pScanReq->scan_id;
 	pScanOffloadReq->scan_requestor_id = USER_SCAN_REQUESTOR_ID;
+	pScanOffloadReq->scan_adaptive_dwell_mode =
+			pScanReq->scan_adaptive_dwell_mode;
 
 	if (pScanOffloadReq->sessionId >= pMac->lim.maxBssId)
 		lim_log(pMac, LOGE, FL("Invalid pe sessionID : %d"),

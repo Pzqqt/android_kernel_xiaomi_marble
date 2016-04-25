@@ -231,6 +231,8 @@ QDF_STATUS wma_remove_beacon_filter(WMA_HANDLE wma,
 
 QDF_STATUS wma_add_beacon_filter(WMA_HANDLE wma,
 				struct beacon_filter_param *filter_params);
+QDF_STATUS wma_send_adapt_dwelltime_params(WMA_HANDLE handle,
+			struct adaptive_dwelltime_params *dwelltime_params);
 #ifdef FEATURE_GREEN_AP
 void wma_setup_egap_support(struct wma_tgt_cfg *tgt_cfg, WMA_HANDLE handle);
 void wma_register_egap_event_handle(WMA_HANDLE handle);

@@ -1128,4 +1128,6 @@ QDF_STATUS sme_set_bpf_instructions(tHalHandle hal,
 				struct sir_bpf_set_offload *);
 
 QDF_STATUS sme_create_mon_session(tHalHandle hal_handle, uint8_t *bssid);
+QDF_STATUS sme_set_adaptive_dwelltime_config(tHalHandle hal,
+			struct adaptive_dwelltime_params *dwelltime_params);
 #endif /* #if !defined( __SME_API_H ) */

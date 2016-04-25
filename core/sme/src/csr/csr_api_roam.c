@@ -2338,6 +2338,11 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.roam_params.traffic_threshold =
 			pParam->roam_dense_traffic_thresh;
 
+		pMac->roam.configParam.scan_adaptive_dwell_mode =
+			pParam->scan_adaptive_dwell_mode;
+		pMac->roam.configParam.roamscan_adaptive_dwell_mode =
+			pParam->roamscan_adaptive_dwell_mode;
+
 		/* update p2p offload status */
 		pMac->pnoOffload = pParam->pnoOffload;
 
@@ -2534,6 +2539,10 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->roam_dense_traffic_thresh =
 			cfg_params->roam_params.traffic_threshold;
 
+	pParam->scan_adaptive_dwell_mode =
+			cfg_params->scan_adaptive_dwell_mode;
+	pParam->roamscan_adaptive_dwell_mode =
+			cfg_params->roamscan_adaptive_dwell_mode;
 	pParam->conc_custom_rule1 = cfg_params->conc_custom_rule1;
 	pParam->conc_custom_rule2 = cfg_params->conc_custom_rule2;
 	pParam->is_sta_connection_in_5gz_enabled =
@@ -16699,6 +16708,8 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 		  req_buf->early_stop_scan_enable,
 		  req_buf->early_stop_scan_min_threshold,
 		  req_buf->early_stop_scan_max_threshold);
+	req_buf->roamscan_adaptive_dwell_mode =
+		mac_ctx->roam.configParam.roamscan_adaptive_dwell_mode;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	req_buf->RoamOffloadEnabled = csr_roamIsRoamOffloadEnabled(mac_ctx);
 	req_buf->RoamKeyMgmtOffloadEnabled = session->RoamKeyMgmtOffloadEnabled;

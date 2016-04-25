@@ -3646,6 +3646,14 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_CHANNEL_PREDICTION_FULL_SCAN_MS_DEFAULT,
 		     CFG_CHANNEL_PREDICTION_FULL_SCAN_MS_MIN,
 		     CFG_CHANNEL_PREDICTION_FULL_SCAN_MS_MAX),
+
+	REG_VARIABLE(CFG_ADAPTIVE_PNOSCAN_DWELL_MODE_NAME,
+		     WLAN_PARAM_Integer,
+		     struct hdd_config, pnoscan_adaptive_dwell_mode,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ADAPTIVE_PNOSCAN_DWELL_MODE_DEFAULT,
+		     CFG_ADAPTIVE_PNOSCAN_DWELL_MODE_MIN,
+		     CFG_ADAPTIVE_PNOSCAN_DWELL_MODE_MAX),
 #endif
 
 	REG_VARIABLE(CFG_TX_CHAIN_MASK_CCK, WLAN_PARAM_Integer,
@@ -3904,6 +3912,62 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		CFG_ENABLE_DP_TRACE_DEFAULT,
 		CFG_ENABLE_DP_TRACE_MIN,
 		CFG_ENABLE_DP_TRACE_MAX),
+
+	REG_VARIABLE(CFG_ADAPTIVE_SCAN_DWELL_MODE_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, scan_adaptive_dwell_mode,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_ADAPTIVE_SCAN_DWELL_MODE_DEFAULT,
+		CFG_ADAPTIVE_SCAN_DWELL_MODE_MIN,
+		CFG_ADAPTIVE_SCAN_DWELL_MODE_MAX),
+
+	REG_VARIABLE(CFG_ADAPTIVE_ROAMSCAN_DWELL_MODE_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, roamscan_adaptive_dwell_mode,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_ADAPTIVE_ROAMSCAN_DWELL_MODE_DEFAULT,
+		CFG_ADAPTIVE_ROAMSCAN_DWELL_MODE_MIN,
+		CFG_ADAPTIVE_ROAMSCAN_DWELL_MODE_MAX),
+
+	REG_VARIABLE(CFG_ADAPTIVE_EXTSCAN_DWELL_MODE_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, extscan_adaptive_dwell_mode,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_ADAPTIVE_EXTSCAN_DWELL_MODE_DEFAULT,
+		CFG_ADAPTIVE_EXTSCAN_DWELL_MODE_MIN,
+		CFG_ADAPTIVE_EXTSCAN_DWELL_MODE_MAX),
+
+	REG_VARIABLE(CFG_ADAPTIVE_DWELL_MODE_ENABLED_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, adaptive_dwell_mode_enabled,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_ADAPTIVE_DWELL_MODE_ENABLED_DEFAULT,
+		CFG_ADAPTIVE_DWELL_MODE_ENABLED_MIN,
+		CFG_ADAPTIVE_DWELL_MODE_ENABLED_MAX),
+
+	REG_VARIABLE(CFG_GLOBAL_ADAPTIVE_DWELL_MODE_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, global_adapt_dwelltime_mode,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_GLOBAL_ADAPTIVE_DWELL_MODE_DEFAULT,
+		CFG_GLOBAL_ADAPTIVE_DWELL_MODE_MIN,
+		CFG_GLOBAL_ADAPTIVE_DWELL_MODE_MAX),
+
+	REG_VARIABLE(CFG_ADAPT_DWELL_LPF_WEIGHT_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, adapt_dwell_lpf_weight,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_ADAPT_DWELL_LPF_WEIGHT_DEFAULT,
+		CFG_ADAPT_DWELL_LPF_WEIGHT_MIN,
+		CFG_ADAPT_DWELL_LPF_WEIGHT_MAX),
+
+	REG_VARIABLE(CFG_ADAPT_DWELL_PASMON_INTVAL_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, adapt_dwell_passive_mon_intval,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_ADAPT_DWELL_PASMON_INTVAL_DEFAULT,
+		CFG_ADAPT_DWELL_PASMON_INTVAL_MIN,
+		CFG_ADAPT_DWELL_PASMON_INTVAL_MAX),
+
+	REG_VARIABLE(CFG_ADAPT_DWELL_WIFI_THRESH_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, adapt_dwell_wifi_act_threshold,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_ADAPT_DWELL_WIFI_THRESH_DEFAULT,
+		CFG_ADAPT_DWELL_WIFI_THRESH_MIN,
+		CFG_ADAPT_DWELL_WIFI_THRESH_MAX),
 };
 
 
@@ -5462,6 +5526,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hddLog(LOGE, "Name = [%s] Value = [%u]",
 			CFG_CHANNEL_PREDICTION_FULL_SCAN_MS_NAME,
 			pHddCtx->config->channel_prediction_full_scan);
+	hddLog(LOGE, "Name = [%s] Value = [%u]",
+			CFG_ADAPTIVE_PNOSCAN_DWELL_MODE_NAME,
+			pHddCtx->config->pnoscan_adaptive_dwell_mode);
 #endif
 	hddLog(LOGE, "Name = [%s] Value = [%d]",
 		  CFG_EARLY_STOP_SCAN_ENABLE,
@@ -5506,7 +5573,6 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_info("Name = [%s] Value = [%u]",
 		CFG_IDLE_TIME_NAME,
 		pHddCtx->config->idle_time_conc);
-
 
 	hdd_info("Name = [%s] Value = [%u]",
 		CFG_ENABLE_EDCA_INI_NAME,
@@ -5553,6 +5619,30 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_info("Name = [%s] Value = [%u]",
 		CFG_ENABLE_DP_TRACE,
 		pHddCtx->config->enable_dp_trace);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_ADAPTIVE_SCAN_DWELL_MODE_NAME,
+		pHddCtx->config->scan_adaptive_dwell_mode);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_ADAPTIVE_ROAMSCAN_DWELL_MODE_NAME,
+		pHddCtx->config->roamscan_adaptive_dwell_mode);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_ADAPTIVE_EXTSCAN_DWELL_MODE_NAME,
+		pHddCtx->config->extscan_adaptive_dwell_mode);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_ADAPTIVE_DWELL_MODE_ENABLED_NAME,
+		pHddCtx->config->adaptive_dwell_mode_enabled);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_GLOBAL_ADAPTIVE_DWELL_MODE_NAME,
+		pHddCtx->config->global_adapt_dwelltime_mode);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_ADAPT_DWELL_LPF_WEIGHT_NAME,
+		pHddCtx->config->adapt_dwell_lpf_weight);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_ADAPT_DWELL_PASMON_INTVAL_NAME,
+		pHddCtx->config->adapt_dwell_passive_mon_intval);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_ADAPT_DWELL_WIFI_THRESH_NAME,
+		pHddCtx->config->adapt_dwell_wifi_act_threshold);
 }
 
 
@@ -6735,6 +6825,8 @@ void hdd_set_pno_channel_prediction_config(
 		hdd_ctx->config->stationary_thresh;
 	sme_config->csrConfig.channel_prediction_full_scan =
 		hdd_ctx->config->channel_prediction_full_scan;
+	sme_config->csrConfig.pnoscan_adaptive_dwell_mode =
+		hdd_ctx->config->pnoscan_adaptive_dwell_mode;
 }
 #endif
 /**
@@ -7062,6 +7154,10 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 			pConfig->ignore_peer_ht_opmode;
 	smeConfig->csrConfig.enable_fatal_event =
 			pConfig->enable_fatal_event;
+	smeConfig->csrConfig.scan_adaptive_dwell_mode =
+			pHddCtx->config->scan_adaptive_dwell_mode;
+	smeConfig->csrConfig.roamscan_adaptive_dwell_mode =
+			pHddCtx->config->roamscan_adaptive_dwell_mode;
 
 	smeConfig->csrConfig.enable_edca_params =
 			pConfig->enable_edca_params;

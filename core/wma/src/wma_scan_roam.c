@@ -267,6 +267,9 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 	else
 		WMA_LOGD("OFDM_RATES not included in 11B mode");
 
+	WMI_SCAN_SET_DWELL_MODE(cmd->scan_ctrl_flags,
+			scan_req->scan_adaptive_dwell_mode);
+
 	/* Do not combine multiple channels in a single burst. Come back
 	 * to home channel for data traffic after every foreign channel.
 	 * By default, prefer throughput performance over scan cycle time.
@@ -1273,6 +1276,9 @@ void wma_roam_scan_fill_scan_params(tp_wma_handle wma_handle,
 					WMI_SCAN_FLAG_FORCE_ACTIVE_ON_DFS;
 			}
 		}
+		WMI_SCAN_SET_DWELL_MODE(scan_params->scan_ctrl_flags,
+				roam_req->roamscan_adaptive_dwell_mode);
+
 	} else {
 		/* roam_req = NULL during initial or pre-assoc invocation */
 		scan_params->dwell_time_active =
@@ -2754,6 +2760,7 @@ QDF_STATUS wma_pno_start(tp_wma_handle wma, tpSirPNOScanReq pno)
 	params->active_max_time = pno->active_max_time;
 	params->passive_min_time = pno->passive_min_time;
 	params->passive_max_time = pno->passive_max_time;
+	params->pnoscan_adaptive_dwell_mode = pno->pnoscan_adaptive_dwell_mode;
 #ifdef FEATURE_WLAN_SCAN_PNO
 	params->pno_channel_prediction = pno->pno_channel_prediction;
 	params->top_k_num_of_channels = pno->top_k_num_of_channels;
@@ -4464,6 +4471,7 @@ QDF_STATUS wma_get_buf_extscan_start_cmd(tp_wma_handle wma_handle,
 			       WMI_SCAN_ADD_OFDM_RATES |
 			       WMI_SCAN_ADD_SPOOFED_MAC_IN_PROBE_REQ |
 			       WMI_SCAN_ADD_DS_IE_IN_PROBE_REQ;
+
 	cmd->scan_priority = WMI_SCAN_PRIORITY_HIGH;
 	cmd->num_ssids = 0;
 	cmd->num_bssid = 0;
@@ -4622,6 +4630,8 @@ QDF_STATUS wma_start_extscan(tp_wma_handle wma,
 	params->max_dwell_time_active = pstart->max_dwell_time_active;
 	params->max_dwell_time_passive = pstart->max_dwell_time_passive;
 	params->configuration_flags = pstart->configuration_flags;
+	params->extscan_adaptive_dwell_mode =
+			pstart->extscan_adaptive_dwell_mode;
 	for (i = 0; i < WMI_WLAN_EXTSCAN_MAX_BUCKETS; i++) {
 		params->buckets[i].bucket = pstart->buckets[i].bucket;
 		params->buckets[i].band =

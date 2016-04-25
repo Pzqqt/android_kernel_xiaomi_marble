@@ -604,6 +604,7 @@ QDF_STATUS csr_scan_request(tpAniSirGlobal pMac, uint16_t sessionId,
 		sms_log(pMac, LOG1, FL("updating dwell time for first scan %u"),
 			scan_req->maxChnTime);
 	}
+	scan_req->scan_adaptive_dwell_mode = cfg_prm->scan_adaptive_dwell_mode;
 
 	status = csr_scan_copy_request(pMac, &scan_cmd->u.scanCmd.u.scanRequest,
 				       scan_req);
@@ -4999,6 +5000,7 @@ QDF_STATUS csr_send_mb_scan_req(tpAniSirGlobal pMac, uint16_t sessionId,
 		}
 	}
 	pMsg->scanType = scanType;
+	pMsg->scan_adaptive_dwell_mode = pScanReq->scan_adaptive_dwell_mode;
 
 	pMsg->numSsid = (pScanReq->SSIDs.numOfSSIDs < SIR_SCAN_MAX_NUM_SSID) ?
 			 pScanReq->SSIDs.numOfSSIDs : SIR_SCAN_MAX_NUM_SSID;

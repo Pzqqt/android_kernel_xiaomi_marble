@@ -7187,6 +7187,8 @@ void sme_update_roam_pno_channel_prediction_config(
 			csr_config->stationary_thresh;
 		mac_ctx->roam.configParam.channel_prediction_full_scan =
 			csr_config->channel_prediction_full_scan;
+		mac_ctx->roam.configParam.pnoscan_adaptive_dwell_mode =
+			csr_config->pnoscan_adaptive_dwell_mode;
 	} else if (copy_from_to == ROAM_CONFIG_TO_SME_CONFIG) {
 		csr_config->pno_channel_prediction =
 			mac_ctx->roam.configParam.pno_channel_prediction;
@@ -7196,6 +7198,8 @@ void sme_update_roam_pno_channel_prediction_config(
 			mac_ctx->roam.configParam.stationary_thresh;
 		csr_config->channel_prediction_full_scan =
 			mac_ctx->roam.configParam.channel_prediction_full_scan;
+		csr_config->pnoscan_adaptive_dwell_mode =
+			mac_ctx->roam.configParam.pnoscan_adaptive_dwell_mode;
 	}
 
 }
@@ -15762,6 +15766,47 @@ QDF_STATUS sme_create_mon_session(tHalHandle hal_handle, tSirMacAddr bss_id)
 		msg->msg_len = sizeof(*msg);
 		qdf_mem_copy(msg->bss_id.bytes, bss_id, QDF_MAC_ADDR_SIZE);
 		status = cds_send_mb_message_to_mac(msg);
+	}
+	return status;
+}
+
+
+/**
+ * sme_set_adaptive_dwelltime_config() - Update Adaptive dwelltime configuration
+ * @hal: The handle returned by macOpen
+ * @params: adaptive_dwelltime_params config
+ *
+ * Return: QDF_STATUS if adaptive dwell time update
+ * configuration sucsess else failure status
+ */
+QDF_STATUS sme_set_adaptive_dwelltime_config(tHalHandle hal,
+			struct adaptive_dwelltime_params *params)
+{
+	cds_msg_t message;
+	QDF_STATUS status;
+	struct adaptive_dwelltime_params *dwelltime_params;
+
+	dwelltime_params = qdf_mem_malloc(sizeof(*dwelltime_params));
+	if (NULL == dwelltime_params) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"%s: fail to alloc dwelltime_params", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	dwelltime_params->is_enabled = params->is_enabled;
+	dwelltime_params->dwelltime_mode = params->dwelltime_mode;
+	dwelltime_params->lpf_weight = params->lpf_weight;
+	dwelltime_params->passive_mon_intval = params->passive_mon_intval;
+	dwelltime_params->wifi_act_threshold = params->wifi_act_threshold;
+
+	message.type = WMA_SET_ADAPT_DWELLTIME_CONF_PARAMS;
+	message.bodyptr = dwelltime_params;
+	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &message);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			"%s: Not able to post msg to WMA!", __func__);
+
+		qdf_mem_free(dwelltime_params);
 	}
 	return status;
 }

@@ -278,6 +278,7 @@ typedef struct tagCsrScanRequest {
 	uint32_t idle_time;
 	uint32_t uIEFieldLen;
 	uint8_t *pIEField;
+	enum wmi_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
 	eCsrRequestType requestType; /* 11d scan or full scan */
 	bool p2pSearch;
 	bool skipDfsChnlInP2pSearch;
@@ -1203,6 +1204,7 @@ typedef struct tagCsrConfigParam {
 	bool pno_channel_prediction;
 	uint8_t top_k_num_of_channels;
 	uint8_t stationary_thresh;
+	enum wmi_dwelltime_adaptive_mode pnoscan_adaptive_dwell_mode;
 	uint32_t channel_prediction_full_scan;
 #endif
 	bool early_stop_scan_enable;
@@ -1244,6 +1246,8 @@ typedef struct tagCsrConfigParam {
 	uint32_t edca_bk_aifs;
 	uint32_t edca_be_aifs;
 	bool enable_fatal_event;
+	enum wmi_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
+	enum wmi_dwelltime_adaptive_mode roamscan_adaptive_dwell_mode;
 } tCsrConfigParam;
 
 /* Tush */

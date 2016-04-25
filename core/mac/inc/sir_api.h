@@ -46,6 +46,7 @@
 #include "ani_system_defs.h"
 #include "sir_params.h"
 #include "cds_regdomain.h"
+#include "wmi_unified_param.h"
 
 #define OFFSET_OF(structType, fldName)   (&((structType *)0)->fldName)
 
@@ -761,6 +762,7 @@ typedef struct sSirSmeScanReq {
 	 * WNI_CFG_PASSIVE_MAXIMUM_CHANNEL_TIME) is used.
 	 */
 	uint32_t maxChannelTime;
+	enum wmi_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
 	/**
 	 * returnAfterFirstMatch can take following values:
 	 * 0x00 - Return SCAN_RSP message after complete channel scan
@@ -2778,6 +2780,7 @@ typedef struct sSirPNOScanReq {
 	bool pno_channel_prediction;
 	uint8_t top_k_num_of_channels;
 	uint8_t stationary_thresh;
+	enum wmi_dwelltime_adaptive_mode pnoscan_adaptive_dwell_mode;
 	uint32_t channel_prediction_full_scan;
 #endif
 } tSirPNOScanReq, *tpSirPNOScanReq;
@@ -2952,6 +2955,7 @@ typedef struct sSirRoamOffloadScanReq {
 	uint8_t early_stop_scan_enable;
 	int8_t early_stop_scan_min_threshold;
 	int8_t early_stop_scan_max_threshold;
+	enum wmi_dwelltime_adaptive_mode roamscan_adaptive_dwell_mode;
 } tSirRoamOffloadScanReq, *tpSirRoamOffloadScanReq;
 
 typedef struct sSirRoamOffloadScanRsp {
@@ -3577,6 +3581,7 @@ typedef struct sSirScanOffloadReq {
 	/*in units of milliseconds, ignored when not connected*/
 	uint32_t idle_time;
 	tSirP2pScanType p2pScanType;
+	enum wmi_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
 	uint16_t uIEFieldLen;
 	uint16_t uIEFieldOffset;
 	tSirChannelList channelList;
@@ -4422,6 +4427,7 @@ typedef struct {
 	uint32_t min_dwell_time_passive;
 	uint32_t max_dwell_time_passive;
 	uint32_t configuration_flags;
+	enum wmi_dwelltime_adaptive_mode extscan_adaptive_dwell_mode;
 	tSirWifiScanBucketSpec buckets[WLAN_EXTSCAN_MAX_BUCKETS];
 } tSirWifiScanCmdReqParams, *tpSirWifiScanCmdReqParams;
 
@@ -5622,6 +5628,26 @@ struct egap_conf_params {
 struct beacon_filter_param {
 	uint32_t   vdev_id;
 	uint32_t   ie_map[SIR_BCN_FLT_MAX_ELEMS_IE_LIST];
+};
+
+/**
+ * struct adaptive_dwelltime_params - the adaptive dwelltime params
+ * @vdev_id: vdev id
+ * @is_enabled: Adaptive dwell time is enabled/disabled
+ * @dwelltime_mode: global default adaptive dwell mode
+ * @lpf_weight: weight to calculate the average low pass
+ * filter for channel congestion
+ * @passive_mon_intval: intval to monitor wifi activity in passive scan in msec
+ * @wifi_act_threshold: % of wifi activity used in passive scan 0-100
+ *
+ */
+struct adaptive_dwelltime_params {
+	uint32_t  vdev_id;
+	bool      is_enabled;
+	uint8_t   dwelltime_mode;
+	uint8_t   lpf_weight;
+	uint8_t   passive_mon_intval;
+	uint8_t   wifi_act_threshold;
 };
 
 /**

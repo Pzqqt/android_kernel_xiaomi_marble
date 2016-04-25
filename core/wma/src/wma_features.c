@@ -1174,6 +1174,33 @@ QDF_STATUS wma_remove_beacon_filter(WMA_HANDLE handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * wma_send_adapt_dwelltime_params() - send adaptive dwelltime configuration
+ * params to firmware
+ * @wma_handle:	 wma handler
+ * @dwelltime_params: pointer to dwelltime_params
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF failure reason code for failure
+ */
+QDF_STATUS wma_send_adapt_dwelltime_params(WMA_HANDLE handle,
+			struct adaptive_dwelltime_params *dwelltime_params)
+{
+	tp_wma_handle wma_handle = (tp_wma_handle) handle;
+	struct wmi_adaptive_dwelltime_params wmi_param = {0};
+	int32_t err;
+
+	wmi_param.is_enabled = dwelltime_params->is_enabled;
+	wmi_param.dwelltime_mode = dwelltime_params->dwelltime_mode;
+	wmi_param.lpf_weight = dwelltime_params->lpf_weight;
+	wmi_param.passive_mon_intval = dwelltime_params->passive_mon_intval;
+	wmi_param.wifi_act_threshold = dwelltime_params->wifi_act_threshold;
+	err = wmi_unified_send_adapt_dwelltime_params_cmd(wma_handle->
+					wmi_handle, &wmi_param);
+	if (err)
+		return QDF_STATUS_E_FAILURE;
+
+	return QDF_STATUS_SUCCESS;
+}
 
 #ifdef FEATURE_GREEN_AP
 
