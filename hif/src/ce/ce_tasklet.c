@@ -40,10 +40,7 @@
 #include "ce_reg.h"
 #include "ce_internal.h"
 #include "ce_tasklet.h"
-#ifdef CONFIG_CNSS
-#include <net/cnss.h>
-#endif
-#include "platform_icnss.h"
+#include "pld_common.h"
 #include "hif_debug.h"
 #include "hif_napi.h"
 
@@ -308,7 +305,10 @@ static bool hif_fake_aps_resume(void)
 static irqreturn_t hif_snoc_interrupt_handler(int irq, void *context)
 {
 	struct ce_tasklet_entry *tasklet_entry = context;
-	return ce_dispatch_interrupt(icnss_get_ce_id(irq), tasklet_entry);
+	struct hif_softc *scn = HIF_GET_SOFTC(tasklet_entry->hif_ce_state);
+
+	return ce_dispatch_interrupt(pld_get_ce_id(scn->qdf_dev->dev, irq),
+				     tasklet_entry);
 }
 
 /**
@@ -416,7 +416,7 @@ irqreturn_t ce_dispatch_interrupt(int ce_id,
  *
  * @ce_name: ce_name
  */
-const char *ce_name[ICNSS_MAX_IRQ_REGISTRATIONS] = {
+const char *ce_name[] = {
 	"WLAN_CE_0",
 	"WLAN_CE_1",
 	"WLAN_CE_2",
@@ -445,20 +445,23 @@ QDF_STATUS ce_unregister_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 	int id;
 	int ce_count;
 	int ret;
+	struct hif_softc *scn;
 
 	if (hif_ce_state == NULL) {
 		HIF_WARN("%s: hif_ce_state = NULL", __func__);
 		return QDF_STATUS_SUCCESS;
 	}
 
-	ce_count = HIF_GET_SOFTC(hif_ce_state)->ce_count;
+	scn = HIF_GET_SOFTC(hif_ce_state);
+	ce_count = scn->ce_count;
+
 	for (id = 0; id < ce_count; id++) {
 		if ((mask & (1 << id)) && hif_ce_state->tasklets[id].inited) {
-			ret = icnss_ce_free_irq(id,
+			ret = pld_ce_free_irq(scn->qdf_dev->dev, id,
 					&hif_ce_state->tasklets[id]);
 			if (ret < 0)
 				HIF_ERROR(
-					"%s: icnss_unregister_irq error - ce_id = %d, ret = %d",
+					"%s: pld_unregister_irq error - ce_id = %d, ret = %d",
 					__func__, id, ret);
 		}
 	}
@@ -477,14 +480,17 @@ QDF_STATUS ce_unregister_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 QDF_STATUS ce_register_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 {
 	int id;
-	int ce_count = HIF_GET_SOFTC(hif_ce_state)->ce_count;
+	int ce_count;
 	int ret;
 	unsigned long irqflags = IRQF_TRIGGER_RISING;
 	uint32_t done_mask = 0;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ce_state);
+
+	ce_count = scn->ce_count;
 
 	for (id = 0; id < ce_count; id++) {
 		if ((mask & (1 << id)) && hif_ce_state->tasklets[id].inited) {
-			ret = icnss_ce_request_irq(id,
+			ret = pld_ce_request_irq(scn->qdf_dev->dev, id,
 				hif_snoc_interrupt_handler,
 				irqflags, ce_name[id],
 				&hif_ce_state->tasklets[id]);

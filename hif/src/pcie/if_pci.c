@@ -47,16 +47,11 @@
 #include <linux/seq_file.h>
 #include "qdf_status.h"
 #include "qdf_atomic.h"
-#ifdef CONFIG_CNSS
-#include <net/cnss.h>
-#else
-#include "cnss_stub.h"
-#endif
+#include "pld_common.h"
 #include "mp_dev.h"
 #include "hif_debug.h"
 
 #include "if_pci_internal.h"
-#include "icnss_stub.h"
 #include "ce_tasklet.h"
 #include "targaddrs.h"
 
@@ -88,19 +83,6 @@ struct ce_irq_reg_table {
 	uint32_t irq_status;
 };
 
-#if !defined(QCA_WIFI_3_0_ADRASTEA)
-static inline void cnss_intr_notify_q6(void)
-{
-}
-#endif
-
-#if !defined(QCA_WIFI_3_0_ADRASTEA)
-static inline void *cnss_get_target_smem(void)
-{
-	return NULL;
-}
-#endif
-
 #ifndef QCA_WIFI_3_0_ADRASTEA
 static inline void hif_pci_route_adrastea_interrupt(struct hif_pci_softc *sc)
 {
@@ -124,7 +106,7 @@ void hif_pci_route_adrastea_interrupt(struct hif_pci_softc *sc)
 		hif_write32_mb(sc->mem + Q6_ENABLE_REGISTER_1, 0);
 
 		if (scn->notice_send)
-			cnss_intr_notify_q6();
+			pld_intr_notify_q6(sc->dev);
 	}
 }
 #endif
@@ -1130,7 +1112,7 @@ static void hif_pm_runtime_start(struct hif_pci_softc *sc)
 	HIF_INFO("%s: Enabling RUNTIME PM, Delay: %d ms", __func__,
 			ol_sc->hif_config.runtime_pm_delay);
 
-	cnss_runtime_init(sc->dev, ol_sc->hif_config.runtime_pm_delay);
+	pld_runtime_init(sc->dev, ol_sc->hif_config.runtime_pm_delay);
 	qdf_atomic_set(&sc->pm_state, HIF_PM_RUNTIME_STATE_ON);
 	hif_runtime_pm_debugfs_create(sc);
 }
@@ -1153,7 +1135,7 @@ static void hif_pm_runtime_stop(struct hif_pci_softc *sc)
 	if (mode == QDF_GLOBAL_FTM_MODE || QDF_IS_EPPING_ENABLED(mode))
 		return;
 
-	cnss_runtime_exit(sc->dev);
+	pld_runtime_exit(sc->dev);
 	hif_pm_runtime_resume(sc->dev);
 
 	qdf_atomic_set(&sc->pm_state, HIF_PM_RUNTIME_STATE_NONE);
@@ -2496,7 +2478,7 @@ static void hif_runtime_prevent_linkdown(struct hif_softc *scn, bool flag)
 }
 #endif
 
-#if defined(CONFIG_CNSS) && defined(CONFIG_PCI_MSM)
+#if defined(CONFIG_PCI_MSM)
 /**
  * hif_bus_prevent_linkdown(): allow or permit linkdown
  * @flag: true prevents linkdown, false allows
@@ -2511,7 +2493,7 @@ void hif_pci_prevent_linkdown(struct hif_softc *scn, bool flag)
 	HIF_ERROR("wlan: %s pcie power collapse",
 			(flag ? "disable" : "enable"));
 	hif_runtime_prevent_linkdown(scn, flag);
-	cnss_wlan_pm_control(flag);
+	pld_wlan_pm_control(scn->qdf_dev->dev, flag);
 }
 #else
 void hif_pci_prevent_linkdown(struct hif_softc *scn, bool flag)
@@ -3064,7 +3046,7 @@ static int hif_log_soc_wakeup_timeout(struct hif_pci_softc *sc)
 	if (cbk->set_recovery_in_progress)
 		cbk->set_recovery_in_progress(cbk->context, true);
 
-	cnss_wlan_pci_link_down();
+	pld_is_pci_link_down(sc->dev);
 	return -EACCES;
 }
 

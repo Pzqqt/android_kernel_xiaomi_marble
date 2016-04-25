@@ -38,6 +38,7 @@
 #include "ce_main.h"
 #include "ce_tasklet.h"
 #include "snoc_api.h"
+#include "pld_common.h"
 
 /**
  * hif_disable_isr(): disable isr
@@ -130,13 +131,13 @@ QDF_STATUS hif_snoc_open(struct hif_softc *hif_ctx, enum qdf_bus_type bus_type)
 static QDF_STATUS hif_snoc_get_soc_info(struct hif_softc *scn)
 {
 	int ret;
-	struct icnss_soc_info soc_info;
+	struct pld_soc_info soc_info;
 
 	qdf_mem_zero(&soc_info, sizeof(soc_info));
 
-	ret = icnss_get_soc_info(&soc_info);
+	ret = pld_get_soc_info(scn->qdf_dev->dev, &soc_info);
 	if (ret < 0) {
-		HIF_ERROR("%s: icnss_get_soc_info error = %d", __func__, ret);
+		HIF_ERROR("%s: pld_get_soc_info error = %d", __func__, ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -192,7 +193,7 @@ static inline int hif_snoc_get_target_type(struct hif_softc *ol_sc,
 	struct device *dev, void *bdev, const hif_bus_id *bid,
 	uint32_t *hif_type, uint32_t *target_type)
 {
-	/* TODO: need to use CNSS's HW version. Hard code for now */
+	/* TODO: need to use HW version. Hard code for now */
 #ifdef QCA_WIFI_3_0_ADRASTEA
 	*hif_type = HIF_TYPE_ADRASTEA;
 	*target_type = TARGET_TYPE_ADRASTEA;

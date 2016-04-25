@@ -38,9 +38,6 @@
 #include "hif_main.h"
 #include "ce_api.h"
 #include "qdf_trace.h"
-#ifdef CONFIG_CNSS
-#include <net/cnss.h>
-#endif
 #include "hif_debug.h"
 
 void

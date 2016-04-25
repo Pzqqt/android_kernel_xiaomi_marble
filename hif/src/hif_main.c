@@ -41,13 +41,9 @@
 #if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB)
 #include "ce_api.h"
 #include "ce_tasklet.h"
-#include "platform_icnss.h"
 #endif
 #include "qdf_trace.h"
 #include "qdf_status.h"
-#ifdef CONFIG_CNSS
-#include <net/cnss.h>
-#endif
 #include "hif_debug.h"
 #include "mp_dev.h"
 
