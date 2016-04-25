@@ -2647,6 +2647,10 @@ void populate_dot11f_tdls_offchannel_params(tpAniSirGlobal pMac,
 	uint8_t op_class;
 	uint8_t numClasses;
 	uint8_t classes[CDS_MAX_SUPP_OPER_CLASSES];
+	uint32_t band;
+	uint8_t nss_2g;
+	uint8_t nss_5g;
+
 	if (wlan_cfg_get_str(pMac, WNI_CFG_VALID_CHANNEL_LIST,
 			     validChan, &numChans) != eSIR_SUCCESS) {
 		/**
@@ -2658,15 +2662,32 @@ void populate_dot11f_tdls_offchannel_params(tpAniSirGlobal pMac,
 		return;
 	}
 
-	/* validating the channel list for DFS channels */
+	if (IS_5G_CH(psessionEntry->currentOperChannel))
+		band = eCSR_BAND_5G;
+	else
+		band = eCSR_BAND_24;
+
+	nss_5g = QDF_MIN(pMac->vdev_type_nss_5g.tdls,
+			 pMac->user_configured_nss);
+	nss_2g = QDF_MIN(pMac->vdev_type_nss_2g.tdls,
+			 pMac->user_configured_nss);
+
+	/* validating the channel list for DFS and 2G channels */
 	for (i = 0U; i < numChans; i++) {
-		if (CHANNEL_STATE_DFS ==
-		    cds_get_channel_state(validChan[i])) {
+		if (band == eCSR_BAND_24) {
+			if (CHANNEL_STATE_DFS ==
+			    cds_get_channel_state(validChan[i])) {
+				lim_log(pMac, LOG1,
+					FL("skipping DFS channel %d from the valid channel list"),
+					validChan[i]);
+				continue;
+			}
+		} else if ((NSS_2x2_MODE == nss_5g) &&
+			   (NSS_1x1_MODE == nss_2g) &&
+			   (true == cds_skip_dfs_and_2g(validChan[i]))) {
 			lim_log(pMac, LOG1,
-				FL(
-				   "skipping DFS channel %d from the valid channel list"
-				  ),
-				validChan[i]);
+				FL("skipping channel %d, nss_5g: %d, nss_2g: %d"),
+				validChan[i], nss_5g, nss_2g);
 			continue;
 		}
 
