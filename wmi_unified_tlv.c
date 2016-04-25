@@ -4232,6 +4232,69 @@ QDF_STATUS send_roam_scan_offload_rssi_thresh_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * send_adapt_dwelltime_params_cmd_tlv() - send wmi cmd of adaptive dwelltime
+ * configuration params
+ * @wma_handle:  wma handler
+ * @dwelltime_params: pointer to dwelltime_params
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF failure reason code for failure
+ */
+QDF_STATUS send_adapt_dwelltime_params_cmd_tlv(wmi_unified_t wmi_handle,
+		struct wmi_adaptive_dwelltime_params *dwelltime_params)
+{
+	wmi_scan_adaptive_dwell_config_fixed_param *dwell_param;
+	wmi_scan_adaptive_dwell_parameters_tlv *cmd;
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+	int32_t err;
+	int len;
+
+	len = sizeof(wmi_scan_adaptive_dwell_config_fixed_param);
+	len += WMI_TLV_HDR_SIZE; /* TLV for ext_thresholds*/
+	len += sizeof(wmi_scan_adaptive_dwell_parameters_tlv);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s :Failed to allocate buffer to send cmd",
+				__func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	dwell_param = (wmi_scan_adaptive_dwell_config_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&dwell_param->tlv_header,
+		WMITLV_TAG_STRUC_wmi_scan_adaptive_dwell_config_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN
+		(wmi_scan_adaptive_dwell_config_fixed_param));
+
+	dwell_param->enable = dwelltime_params->is_enabled;
+	buf_ptr += sizeof(wmi_scan_adaptive_dwell_config_fixed_param);
+	WMITLV_SET_HDR(buf_ptr,
+			WMITLV_TAG_ARRAY_STRUC,
+			sizeof(wmi_scan_adaptive_dwell_parameters_tlv));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	cmd = (wmi_scan_adaptive_dwell_parameters_tlv *) buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+			WMITLV_TAG_STRUC_wmi_scan_adaptive_dwell_parameters_tlv,
+			WMITLV_GET_STRUCT_TLVLEN(
+				wmi_scan_adaptive_dwell_parameters_tlv));
+
+	cmd->default_adaptive_dwell_mode = dwelltime_params->dwelltime_mode;
+	cmd->adapative_lpf_weight = dwelltime_params->lpf_weight;
+	cmd->passive_monitor_interval_ms = dwelltime_params->passive_mon_intval;
+	cmd->wifi_activity_threshold_pct = dwelltime_params->wifi_act_threshold;
+	err = wmi_unified_cmd_send(wmi_handle, buf,
+			len, WMI_SCAN_ADAPTIVE_DWELL_CONFIG_CMDID);
+	if (err) {
+		WMI_LOGE("Failed to send adapt dwelltime cmd err=%d", err);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+
+/**
  * send_roam_scan_filter_cmd_tlv() - Filter to be applied while roaming
  * @wmi_handle:     wmi handle
  * @roam_req:       Request which contains the filters
@@ -4979,6 +5042,8 @@ QDF_STATUS wmi_get_buf_extscan_start_cmd(wmi_unified_t wmi_handle,
 			       WMI_SCAN_ADD_OFDM_RATES |
 			       WMI_SCAN_ADD_SPOOFED_MAC_IN_PROBE_REQ |
 			       WMI_SCAN_ADD_DS_IE_IN_PROBE_REQ;
+	WMI_SCAN_SET_DWELL_MODE(cmd->scan_ctrl_flags,
+			pstart->extscan_adaptive_dwell_mode);
 	cmd->scan_priority = WMI_SCAN_PRIORITY_HIGH;
 	cmd->num_ssids = 0;
 	cmd->num_bssid = 0;
@@ -5425,6 +5490,8 @@ QDF_STATUS send_pno_start_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->vdev_id = pno->sessionId;
 	cmd->flags = WMI_NLO_CONFIG_START | WMI_NLO_CONFIG_SSID_HIDE_EN;
 
+	WMI_SCAN_SET_DWELL_MODE(cmd->flags,
+			pno->pnoscan_adaptive_dwell_mode);
 	/* Current FW does not support min-max range for dwell time */
 	cmd->active_dwell_time = pno->active_max_time;
 	cmd->passive_dwell_time = pno->passive_max_time;
@@ -11673,6 +11740,8 @@ struct wmi_ops tlv_ops =  {
 		 send_roam_scan_offload_rssi_change_cmd_tlv,
 	.send_get_buf_extscan_hotlist_cmd =
 		 send_get_buf_extscan_hotlist_cmd_tlv,
+	.send_adapt_dwelltime_params_cmd =
+		send_adapt_dwelltime_params_cmd_tlv,
 	.init_cmd_send = init_cmd_send_tlv,
 	.get_target_cap_from_service_ready = extract_service_ready_tlv,
 	.extract_hal_reg_cap = extract_hal_reg_cap_tlv,
