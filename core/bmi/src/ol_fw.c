@@ -141,6 +141,12 @@ end:
 #define SIGNED_SPLIT_BINARY_VALUE false
 #endif
 
+#ifdef CONFIG_CNSS
+#define CONFIG_CNSS_DEFINED true
+#else
+#define CONFIG_CNSS_DEFINED false
+#endif
+
 static int
 __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 				  uint32_t address, bool compressed)
@@ -158,7 +164,9 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
 	uint32_t target_type = tgt_info->target_type;
 #if defined(CONFIG_CNSS)
+	/* fw_files variable used in filename assignment macros */
 	struct bmi_info *bmi_ctx = GET_BMI_CONTEXT(ol_ctx);
+	struct cnss_fw_files *fw_files = &bmi_ctx->fw_files;
 #endif
 	qdf_device_t qdf_dev = ol_ctx->qdf_dev;
 
@@ -167,33 +175,21 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 		BMI_ERR("%s: Unknown file type", __func__);
 		return -1;
 	case ATH_OTP_FILE:
-#if defined(CONFIG_CNSS)
-		filename = bmi_ctx->fw_files.otp_data;
-#else
 		filename = QCA_OTP_FILE;
-#endif
 		if (SIGNED_SPLIT_BINARY_VALUE)
 			bin_sign = true;
 
 		break;
 	case ATH_FIRMWARE_FILE:
 		if (QDF_IS_EPPING_ENABLED(cds_get_conparam())) {
-#if defined(CONFIG_CNSS)
-			filename = bmi_ctx->fw_files.epping_file;
-#else
 			filename = QCA_FIRMWARE_EPPING_FILE;
-#endif
 			BMI_INFO("%s: Loading epping firmware file %s",
 						__func__, filename);
 			break;
 		}
 #ifdef QCA_WIFI_FTM
 		if (cds_get_conparam() == QDF_GLOBAL_FTM_MODE) {
-#if defined(CONFIG_CNSS)
-			filename = bmi_ctx->fw_files.utf_file;
-#else
 			filename = QCA_UTF_FIRMWARE_FILE;
-#endif
 			if (SIGNED_SPLIT_BINARY_VALUE)
 				bin_sign = true;
 			BMI_INFO("%s: Loading firmware file %s",
@@ -201,11 +197,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 			break;
 		}
 #endif
-#if defined(CONFIG_CNSS)
-		filename = bmi_ctx->fw_files.image_file;
-#else
 		filename = QCA_FIRMWARE_FILE;
-#endif
 		if (SIGNED_SPLIT_BINARY_VALUE)
 			bin_sign = true;
 		break;
@@ -213,13 +205,11 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 		BMI_INFO("%s: no Patch file defined", __func__);
 		return 0;
 	case ATH_BOARD_DATA_FILE:
+
 #ifdef QCA_WIFI_FTM
 		if (cds_get_conparam() == QDF_GLOBAL_FTM_MODE) {
-#if defined(CONFIG_CNSS)
-			filename = bmi_ctx->fw_files.utf_board_data;
-#else
-			filename = QCA_BOARD_DATA_FILE;
-#endif
+			filename = QCA_UTF_BOARD_DATA_FILE;
+
 			if (SIGNED_SPLIT_BINARY_VALUE)
 				bin_sign = true;
 
@@ -228,22 +218,19 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 			break;
 		}
 #endif /* QCA_WIFI_FTM */
-#if defined(CONFIG_CNSS)
-		filename = bmi_ctx->fw_files.board_data;
-#else
 		filename = QCA_BOARD_DATA_FILE;
-#endif
+
 		if (SIGNED_SPLIT_BINARY_VALUE)
 			bin_sign = false;
 
 		break;
 	case ATH_SETUP_FILE:
-		if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE &&
-		    !QDF_IS_EPPING_ENABLED(cds_get_conparam())) {
-#ifdef CONFIG_CNSS
+		if (CONFIG_CNSS_DEFINED ||
+		    cds_get_conparam() == QDF_GLOBAL_FTM_MODE ||
+		    QDF_IS_EPPING_ENABLED(cds_get_conparam())) {
 			BMI_INFO("%s: no Setup file defined", __func__);
 			return -1;
-#else
+		} else {
 			filename = QCA_SETUP_FILE;
 
 			if (SIGNED_SPLIT_BINARY_VALUE)
@@ -251,10 +238,6 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 
 			BMI_INFO("%s: Loading setup file %s",
 			       __func__, filename);
-#endif /* CONFIG_CNSS */
-		} else {
-			BMI_INFO("%s: no Setup file needed", __func__);
-			return -1;
 		}
 		break;
 	}
