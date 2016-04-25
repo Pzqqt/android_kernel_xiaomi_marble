@@ -548,6 +548,8 @@ ol_txrx_pdev_post_attach(ol_txrx_pdev_handle pdev)
 
 	desc_pool_size = ol_tx_get_desc_global_pool_size(pdev);
 
+	ol_tx_desc_dup_detect_init(pdev, desc_pool_size);
+
 	setup_fastpath_ce_handles(osc, pdev);
 
 	ret = htt_attach(pdev->htt_pdev, desc_pool_size);
@@ -1080,6 +1082,8 @@ void ol_txrx_pdev_detach(ol_txrx_pdev_handle pdev, int force)
 
 	htt_detach(pdev->htt_pdev);
 	htt_pdev_free(pdev->htt_pdev);
+
+	ol_tx_desc_dup_detect_deinit(pdev);
 
 	ol_txrx_peer_find_detach(pdev);
 

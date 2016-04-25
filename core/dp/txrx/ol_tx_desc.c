@@ -122,6 +122,7 @@ struct ol_tx_desc_t *ol_tx_desc_alloc(struct ol_txrx_pdev_t *pdev,
 	qdf_spin_lock_bh(&pdev->tx_mutex);
 	if (pdev->tx_desc.freelist) {
 		tx_desc = ol_tx_get_desc_global_pool(pdev);
+		ol_tx_desc_dup_detect_set(pdev, tx_desc);
 		ol_tx_desc_sanity_checks(pdev, tx_desc);
 		ol_tx_desc_compute_delay(tx_desc);
 	}
@@ -165,6 +166,7 @@ struct ol_tx_desc_t *ol_tx_desc_alloc(struct ol_txrx_pdev_t *pdev,
 		qdf_spin_lock_bh(&pool->flow_pool_lock);
 		if (pool->avail_desc) {
 			tx_desc = ol_tx_get_desc_flow_pool(pool);
+			ol_tx_desc_dup_detect_set(pdev, tx_desc);
 			if (qdf_unlikely(pool->avail_desc < pool->stop_th)) {
 				pool->status = FLOW_POOL_ACTIVE_PAUSED;
 				qdf_spin_unlock_bh(&pool->flow_pool_lock);
@@ -239,6 +241,7 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 			ol_tso_free_segment(pdev, tx_desc->tso_desc);
 		}
 	}
+	ol_tx_desc_dup_detect_reset(pdev, tx_desc);
 	ol_tx_desc_reset_pkt_type(tx_desc);
 	ol_tx_desc_reset_timestamp(tx_desc);
 
@@ -271,6 +274,7 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 	ol_tx_desc_reset_timestamp(tx_desc);
 
 	qdf_spin_lock_bh(&pool->flow_pool_lock);
+	ol_tx_desc_dup_detect_reset(pdev, tx_desc);
 	ol_tx_put_desc_flow_pool(pool, tx_desc);
 	switch (pool->status) {
 	case FLOW_POOL_ACTIVE_PAUSED:
@@ -366,7 +370,6 @@ struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 	}
 
 	/* initialize the HW tx descriptor */
-
 	htt_tx_desc_init(pdev->htt_pdev, tx_desc->htt_tx_desc,
 			 tx_desc->htt_tx_desc_paddr,
 			 ol_tx_desc_id(pdev, tx_desc), netbuf, &msdu_info->htt,
