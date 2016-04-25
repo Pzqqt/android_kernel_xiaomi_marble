@@ -14460,6 +14460,20 @@ QDF_STATUS sme_update_nss(tHalHandle h_hal, uint8_t nss)
 }
 
 /**
+ * sme_update_user_configured_nss() - sets the nss based on user request
+ * @hal: Pointer to HAL
+ * @nss: number of streams
+ *
+ * Return: None
+ */
+void sme_update_user_configured_nss(tHalHandle hal, uint8_t nss)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+
+	mac_ctx->user_configured_nss = nss;
+}
+
+/**
  * sme_set_rssi_threshold_breached_cb() - set rssi threshold breached callback
  * @hal: global hal handle
  * @cb: callback function pointer

@@ -1084,6 +1084,7 @@ typedef struct sAniSirGlobal {
 	bool first_scan_done;
 	int8_t first_scan_bucket_threshold;
 	enum auth_tx_ack_status auth_ack_status;
+	uint8_t user_configured_nss;
 } tAniSirGlobal;
 
 typedef enum {

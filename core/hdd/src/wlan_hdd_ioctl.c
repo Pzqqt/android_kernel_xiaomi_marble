@@ -6665,10 +6665,19 @@ static int drv_cmd_set_antenna_mode(hdd_adapter_t *adapter,
 		goto exit;
 	}
 
-	hdd_info("Successfully switched to mode: %d x %d", mode, mode);
-	ret = 0;
 	hdd_ctx->current_antenna_mode = mode;
+	/* Update the user requested nss in the mac context.
+	 * This will be used in tdls protocol engine to form tdls
+	 * Management frames.
+	 */
+	sme_update_user_configured_nss(
+		hdd_ctx->hHal,
+		hdd_ctx->current_antenna_mode);
 
+	hdd_info("Successfully switched to mode: %d x %d",
+		 hdd_ctx->current_antenna_mode,
+		 hdd_ctx->current_antenna_mode);
+	ret = 0;
 exit:
 	hdd_info("Set antenna status: %d current mode: %d",
 		 ret, hdd_ctx->current_antenna_mode);

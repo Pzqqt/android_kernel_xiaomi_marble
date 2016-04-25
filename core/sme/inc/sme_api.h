@@ -978,6 +978,7 @@ QDF_STATUS sme_register_mgmt_frame_ind_callback(tHalHandle hal,
 			sir_mgmt_frame_ind_callback callback);
 
 QDF_STATUS sme_update_nss(tHalHandle h_hal, uint8_t nss);
+void sme_update_user_configured_nss(tHalHandle hal, uint8_t nss);
 
 bool sme_is_any_session_in_connected_state(tHalHandle h_hal);
 

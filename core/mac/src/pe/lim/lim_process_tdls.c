@@ -548,6 +548,7 @@ static void populate_dot11f_tdls_ht_vht_cap(tpAniSirGlobal pMac,
 	else
 		nss = pMac->vdev_type_nss_2g.tdls;
 
+	nss = QDF_MIN(nss, pMac->user_configured_nss);
 	if (IS_DOT11_MODE_HT(selfDot11Mode)) {
 		/* Include HT Capability IE */
 		populate_dot11f_ht_caps(pMac, NULL, htCap);
@@ -2266,6 +2267,9 @@ lim_tdls_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode stads,
 		nss = mac_ctx->vdev_type_nss_5g.tdls;
 	else
 		nss = mac_ctx->vdev_type_nss_2g.tdls;
+
+	nss = QDF_MIN(nss, mac_ctx->user_configured_nss);
+
 	/* compute the matching MCS rate set, if peer is 11n capable and self mode is 11n */
 #ifdef FEATURE_WLAN_TDLS
 	if (stads->mlmStaContext.htCapability)
