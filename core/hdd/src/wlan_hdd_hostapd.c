@@ -6409,6 +6409,8 @@ hdd_adapter_t *hdd_wlan_create_ap_dev(hdd_context_t *pHddCtx,
 
 		SET_NETDEV_DEV(pWlanHostapdDev, pHddCtx->parent_dev);
 		spin_lock_init(&pHostapdAdapter->pause_map_lock);
+		pHostapdAdapter->start_time =
+			pHostapdAdapter->last_time = qdf_system_ticks();
 	}
 	return pHostapdAdapter;
 }

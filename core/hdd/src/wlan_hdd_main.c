@@ -2060,6 +2060,7 @@ static hdd_adapter_t *hdd_alloc_station_adapter(hdd_context_t *hdd_ctx,
 		SET_NETDEV_DEV(pWlanDev, hdd_ctx->parent_dev);
 		hdd_wmm_init(adapter);
 		spin_lock_init(&adapter->pause_map_lock);
+		adapter->start_time = adapter->last_time = qdf_system_ticks();
 	}
 
 	return adapter;
@@ -4819,24 +4820,40 @@ void wlan_hdd_display_netif_queue_history(hdd_context_t *hdd_ctx)
 	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
 	QDF_STATUS status;
 	int i;
+	qdf_time_t total, pause, unpause, curr_time;
 
 	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
 	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
 		adapter = adapter_node->pAdapter;
 
 		hddLog(QDF_TRACE_LEVEL_ERROR,
-			"Session_id %d device mode %d current index %d",
-			adapter->sessionId, adapter->device_mode,
-			adapter->history_index);
+			"Session_id %d device mode %d",
+			adapter->sessionId, adapter->device_mode);
 
 		hddLog(QDF_TRACE_LEVEL_ERROR,
 			"Netif queue operation statistics:");
 		hddLog(QDF_TRACE_LEVEL_ERROR,
 			"Current pause_map value %x", adapter->pause_map);
+		curr_time = qdf_system_ticks();
+		total = curr_time - adapter->start_time;
+		if (adapter->pause_map) {
+			pause = adapter->total_pause_time +
+				curr_time - adapter->last_time;
+			unpause = adapter->total_unpause_time;
+		} else {
+			unpause = adapter->total_unpause_time +
+				  curr_time - adapter->last_time;
+			pause = adapter->total_pause_time;
+		}
 		hddLog(QDF_TRACE_LEVEL_ERROR,
-			"  reason_type: pause_cnt: unpause_cnt");
+			"Total: %ums Pause: %ums Unpause: %ums",
+			qdf_system_ticks_to_msecs(total),
+			qdf_system_ticks_to_msecs(pause),
+			qdf_system_ticks_to_msecs(unpause));
+		hddLog(QDF_TRACE_LEVEL_ERROR,
+			"reason_type: pause_cnt: unpause_cnt");
 
-		for (i = 0; i < WLAN_REASON_TYPE_MAX; i++) {
+		for (i = 1; i < WLAN_REASON_TYPE_MAX; i++) {
 			hddLog(QDF_TRACE_LEVEL_ERROR,
 				"%s: %d: %d",
 				hdd_reason_type_to_string(i),
@@ -4845,7 +4862,8 @@ void wlan_hdd_display_netif_queue_history(hdd_context_t *hdd_ctx)
 		}
 
 		hddLog(QDF_TRACE_LEVEL_ERROR,
-			"Netif queue operation history:");
+			"Netif queue operation history: current index %d",
+			adapter->history_index);
 		hddLog(QDF_TRACE_LEVEL_ERROR,
 			"index: time: action_type: reason_type: pause_map");
 
@@ -4888,7 +4906,10 @@ void wlan_hdd_clear_netif_queue_history(hdd_context_t *hdd_ctx)
 					sizeof(adapter->queue_oper_stats));
 		qdf_mem_zero(adapter->queue_oper_history,
 					sizeof(adapter->queue_oper_history));
-
+		adapter->history_index = 0;
+		adapter->start_time = adapter->last_time = qdf_system_ticks();
+		adapter->total_pause_time = 0;
+		adapter->total_unpause_time = 0;
 		status = hdd_get_next_adapter(hdd_ctx, adapter_node, &next);
 		adapter_node = next;
 	}

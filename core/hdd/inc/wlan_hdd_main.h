@@ -1035,7 +1035,10 @@ struct hdd_adapter_s {
 	/* BITMAP indicating pause reason */
 	uint32_t pause_map;
 	spinlock_t pause_map_lock;
-
+	qdf_time_t start_time;
+	qdf_time_t last_time;
+	qdf_time_t total_pause_time;
+	qdf_time_t total_unpause_time;
 	uint8_t history_index;
 	struct hdd_netif_queue_history
 		 queue_oper_history[WLAN_HDD_MAX_HISTORY_ENTRY];
