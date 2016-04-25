@@ -5446,6 +5446,8 @@ fail:
 QDF_STATUS wma_send_soc_set_dual_mac_config(tp_wma_handle wma_handle,
 		struct sir_dual_mac_config *msg)
 {
+	QDF_STATUS status;
+
 	if (!wma_handle) {
 		WMA_LOGE("%s: WMA handle is NULL. Cannot issue command",
 				__func__);
@@ -5457,11 +5459,16 @@ QDF_STATUS wma_send_soc_set_dual_mac_config(tp_wma_handle wma_handle,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
+	status = wmi_unified_soc_set_dual_mac_config_cmd(wma_handle->wmi_handle,
+				(struct wmi_dual_mac_config *)msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE("%s: Failed to send WMI_SOC_SET_DUAL_MAC_CONFIG_CMDID: %d",
+				__func__, status);
+		return status;
+	}
 
-	if (wmi_unified_soc_set_dual_mac_config_cmd(wma_handle->wmi_handle,
-				(struct wmi_dual_mac_config *)msg))
-		WMA_LOGE("%s: Failed to send WMI_SOC_SET_DUAL_MAC_CONFIG_CMDID",
-				__func__);
+	wma_handle->dual_mac_cfg.req_scan_config = msg->scan_config;
+	wma_handle->dual_mac_cfg.req_fw_mode_config = msg->fw_mode_config;
 
 	return QDF_STATUS_SUCCESS;
 }
