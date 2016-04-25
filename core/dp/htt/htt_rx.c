@@ -81,8 +81,9 @@
 #define HTT_RX_HOST_LATENCY_MAX_MS 20 /* ms */	/* very conservative */
 #endif
 
+ /* very conservative to ensure enough buffers are allocated */
 #ifndef HTT_RX_HOST_LATENCY_WORST_LIKELY_MS
-#define HTT_RX_HOST_LATENCY_WORST_LIKELY_MS 10 /* ms */	/* conservative */
+#define HTT_RX_HOST_LATENCY_WORST_LIKELY_MS 20
 #endif
 
 #ifndef HTT_RX_RING_REFILL_RETRY_TIME_MS
@@ -203,7 +204,9 @@ static int htt_rx_ring_fill_level(struct htt_pdev_t *pdev)
 
 	size = ol_cfg_max_thruput_mbps(pdev->ctrl_pdev) *
 		1000 /* 1e6 bps/mbps / 1e3 ms per sec = 1000 */  /
-		8 * HTT_RX_AVG_FRM_BYTES * HTT_RX_HOST_LATENCY_WORST_LIKELY_MS;
+		(8 * HTT_RX_AVG_FRM_BYTES) * HTT_RX_HOST_LATENCY_WORST_LIKELY_MS;
+
+	size = qdf_get_pwr2(size);
 	/*
 	 * Make sure the fill level is at least 1 less than the ring size.
 	 * Leaving 1 element empty allows the SW to easily distinguish
