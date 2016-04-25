@@ -607,7 +607,7 @@ int htt_tx_send_std(htt_pdev_handle pdev, qdf_nbuf_t msdu, uint16_t msdu_id)
 
 	QDF_NBUF_UPDATE_TX_PKT_COUNT(msdu, QDF_NBUF_TX_PKT_HTT);
 	DPTRACE(qdf_dp_trace(msdu, QDF_DP_TRACE_HTT_PACKET_PTR_RECORD,
-				(uint8_t *)(qdf_nbuf_data(msdu)),
+				qdf_nbuf_data_addr(msdu),
 				sizeof(qdf_nbuf_data(msdu))));
 	if (qdf_nbuf_queue_len(&pdev->txnbufq) > 0) {
 		HTT_TX_NBUF_QUEUE_ADD(pdev, msdu);
@@ -749,7 +749,7 @@ htt_tx_send_base(htt_pdev_handle pdev,
 	qdf_nbuf_trace_update(msdu, "HT:T:");
 	QDF_NBUF_UPDATE_TX_PKT_COUNT(msdu, QDF_NBUF_TX_PKT_HTT);
 	DPTRACE(qdf_dp_trace(msdu, QDF_DP_TRACE_HTT_PACKET_PTR_RECORD,
-				(uint8_t *)(qdf_nbuf_data(msdu)),
+				qdf_nbuf_data_addr(msdu),
 				sizeof(qdf_nbuf_data(msdu))));
 	htc_send_data_pkt(pdev->htc_pdev, &pkt->htc_pkt, more_data);
 

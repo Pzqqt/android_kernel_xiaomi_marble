@@ -72,8 +72,6 @@ void ol_txrx_vdev_pause(ol_txrx_vdev_handle vdev, uint32_t reason)
 	vdev->ll_pause.is_q_paused = true;
 	qdf_spin_unlock_bh(&vdev->ll_pause.mutex);
 
-	DPTRACE(qdf_dp_trace(NULL, QDF_DP_TRACE_VDEV_PAUSE,
-				NULL, 0));
 	TX_SCHED_DEBUG_PRINT("Leave %s\n", __func__);
 }
 
@@ -107,8 +105,6 @@ void ol_txrx_vdev_unpause(ol_txrx_vdev_handle vdev, uint32_t reason)
 	} else {
 		qdf_spin_unlock_bh(&vdev->ll_pause.mutex);
 	}
-	DPTRACE(qdf_dp_trace(NULL, QDF_DP_TRACE_VDEV_UNPAUSE,
-				NULL, 0));
 	TX_SCHED_DEBUG_PRINT("Leave %s\n", __func__);
 }
 

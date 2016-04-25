@@ -106,28 +106,6 @@ static inline void hdd_get_tx_resource(hdd_adapter_t *adapter,
 }
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
-#ifdef FEATURE_WLAN_DIAG_SUPPORT
-/**
- * wlan_hdd_log_eapol() - Function to check and extract EAPOL params
- * @skb:               skb data
- * @event_type:        One of enum wifi_connectivity_events to indicate Tx/Rx
- *
- * This function parses the input skb data to get the EAPOL params,if the
- * packet is EAPOL and store it in the pointer passed as input
- *
- * Return: None
- *
- */
-void wlan_hdd_log_eapol(struct sk_buff *skb,
-		uint8_t event_type);
-#else
-static inline void wlan_hdd_log_eapol(struct sk_buff *skb,
-		uint8_t event_type)
-{
-
-}
-#endif /* FEATURE_WLAN_DIAG_SUPPORT */
-
 const char *hdd_reason_type_to_string(enum netif_reason_type reason);
 const char *hdd_action_type_to_string(enum netif_action_type action);
 void wlan_hdd_netif_queue_control(hdd_adapter_t *adapter,

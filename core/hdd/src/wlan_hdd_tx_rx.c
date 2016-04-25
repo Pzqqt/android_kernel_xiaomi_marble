@@ -57,15 +57,6 @@
 #include "cdp_txrx_peer_ops.h"
 #include "ol_txrx.h"
 
-#ifdef FEATURE_WLAN_DIAG_SUPPORT
-#define HDD_EAPOL_ETHER_TYPE             (0x888E)
-#define HDD_EAPOL_ETHER_TYPE_OFFSET      (12)
-#define HDD_EAPOL_PACKET_TYPE_OFFSET     (15)
-#define HDD_EAPOL_KEY_INFO_OFFSET        (19)
-#define HDD_EAPOL_DEST_MAC_OFFSET        (0)
-#define HDD_EAPOL_SRC_MAC_OFFSET         (6)
-#endif /* FEATURE_WLAN_DIAG_SUPPORT */
-
 const uint8_t hdd_wmm_ac_to_highest_up[] = {
 	SME_QOS_WMM_UP_RESV,
 	SME_QOS_WMM_UP_EE,
@@ -223,32 +214,6 @@ void hdd_get_tx_resource(hdd_adapter_t *adapter,
 
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
-/**
- * wlan_hdd_is_eapol() - Function to check if frame is EAPOL or not
- * @skb:    skb data
- *
- * This function checks if the frame is an EAPOL frame or not
- *
- * Return: true (1) if packet is EAPOL
- *
- */
-static bool wlan_hdd_is_eapol(struct sk_buff *skb)
-{
-	uint16_t ether_type;
-
-	if (!skb) {
-		hdd_err(FL("skb is NULL"));
-		return false;
-	}
-
-	ether_type = (uint16_t)(*(uint16_t *)
-			(skb->data + HDD_ETHERTYPE_802_1_X_FRAME_OFFSET));
-
-	if (ether_type == QDF_SWAP_U16(HDD_ETHERTYPE_802_1_X))
-		return true;
-
-	return false;
-}
 
 /**
  * wlan_hdd_is_eapol_or_wai() - Check if frame is EAPOL or WAPI
@@ -456,9 +421,6 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		skb->queue_mapping = hdd_linux_up_to_ac_map[up];
 	}
 
-	wlan_hdd_log_eapol(skb,
-			   WIFI_EVENT_DRIVER_EAPOL_FRAME_TRANSMIT_REQUESTED);
-
 #ifdef QCA_PKT_PROTO_TRACE
 	if ((hddCtxt->config->gEnableDebugLog & CDS_PKT_TRAC_TYPE_EAPOL) ||
 	    (hddCtxt->config->gEnableDebugLog & CDS_PKT_TRAC_TYPE_DHCP)) {
@@ -478,18 +440,21 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	/* Zero out skb's context buffer for the driver to use */
 	qdf_mem_set(skb->cb, sizeof(skb->cb), 0);
+	qdf_dp_trace_log_pkt(pAdapter->sessionId, skb,
+		WIFI_EVENT_DRIVER_EAPOL_FRAME_TRANSMIT_REQUESTED);
 	QDF_NBUF_CB_TX_PACKET_TRACK(skb) = QDF_NBUF_TX_PKT_DATA_TRACK;
 	QDF_NBUF_UPDATE_TX_PKT_COUNT(skb, QDF_NBUF_TX_PKT_HDD);
 
 	qdf_dp_trace_set_track(skb);
 	DPTRACE(qdf_dp_trace(skb, QDF_DP_TRACE_HDD_PACKET_PTR_RECORD,
-				(uint8_t *)skb->data, sizeof(skb->data)));
+				(uint8_t *)&skb->data, sizeof(skb->data)));
 	DPTRACE(qdf_dp_trace(skb, QDF_DP_TRACE_HDD_PACKET_RECORD,
 				(uint8_t *)skb->data, qdf_nbuf_len(skb)));
-	if (qdf_nbuf_len(skb) > QDF_DP_TRACE_RECORD_SIZE)
+	if (qdf_nbuf_len(skb) > QDF_DP_TRACE_RECORD_SIZE) {
 		DPTRACE(qdf_dp_trace(skb, QDF_DP_TRACE_HDD_PACKET_RECORD,
 				(uint8_t *)&skb->data[QDF_DP_TRACE_RECORD_SIZE],
 				(qdf_nbuf_len(skb)-QDF_DP_TRACE_RECORD_SIZE)));
+	}
 
 	/* Check if station is connected */
 	if (OL_TXRX_PEER_STATE_CONN ==
@@ -812,7 +777,8 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		return QDF_STATUS_SUCCESS;
 	}
 
-	wlan_hdd_log_eapol(skb, WIFI_EVENT_DRIVER_EAPOL_FRAME_RECEIVED);
+	qdf_dp_trace_log_pkt(pAdapter->sessionId,
+		skb, WIFI_EVENT_DRIVER_EAPOL_FRAME_RECEIVED);
 
 #ifdef QCA_PKT_PROTO_TRACE
 	if ((pHddCtx->config->gEnableDebugLog & CDS_PKT_TRAC_TYPE_EAPOL) ||
@@ -868,100 +834,6 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 
 	return QDF_STATUS_SUCCESS;
 }
-
-#ifdef FEATURE_WLAN_DIAG_SUPPORT
-
-/**
- * wlan_hdd_get_eapol_params() - Function to extract EAPOL params
- * @skb:                sbb data
- * @eapol_params:       Pointer to hold the parsed EAPOL params
- * @event_type:         Event type to indicate Tx/Rx
- *
- * This function parses the input skb data and return the EAPOL parameters if
- * the packet is an eapol packet.
- *
- * Return: -EINVAL if the packet is not an EAPOL packet and 0 on success
- *
- */
-static int wlan_hdd_get_eapol_params(struct sk_buff *skb,
-		struct host_event_wlan_eapol *eapol_params,
-		uint8_t event_type)
-{
-	bool ret;
-	uint8_t packet_type;
-
-	ret = wlan_hdd_is_eapol(skb);
-
-	if (!ret)
-		return -EINVAL;
-
-	packet_type = (uint8_t)(*(uint8_t *)
-			(skb->data + HDD_EAPOL_PACKET_TYPE_OFFSET));
-
-	eapol_params->eapol_packet_type = packet_type;
-	eapol_params->eapol_key_info = (uint16_t)(*(uint16_t *)
-			(skb->data + HDD_EAPOL_KEY_INFO_OFFSET));
-	eapol_params->event_sub_type = event_type;
-	eapol_params->eapol_rate = 0;/* As of now, zero */
-
-	qdf_mem_copy(eapol_params->dest_addr,
-			(skb->data + HDD_EAPOL_DEST_MAC_OFFSET),
-			sizeof(eapol_params->dest_addr));
-	qdf_mem_copy(eapol_params->src_addr,
-			(skb->data + HDD_EAPOL_SRC_MAC_OFFSET),
-			sizeof(eapol_params->src_addr));
-	return 0;
-}
-
-/**
- * wlan_hdd_event_eapol_log() - Function to log EAPOL events
- * @eapol_params:    Structure containing EAPOL params
- *
- * This function logs the parsed EAPOL params
- *
- * Return: None
- *
- */
-static void wlan_hdd_event_eapol_log(struct host_event_wlan_eapol eapol_params)
-{
-	WLAN_HOST_DIAG_EVENT_DEF(wlan_diag_event, struct host_event_wlan_eapol);
-
-	wlan_diag_event.event_sub_type = eapol_params.event_sub_type;
-	wlan_diag_event.eapol_packet_type = eapol_params.eapol_packet_type;
-	wlan_diag_event.eapol_key_info = eapol_params.eapol_key_info;
-	wlan_diag_event.eapol_rate = eapol_params.eapol_rate;
-	qdf_mem_copy(wlan_diag_event.dest_addr,
-			eapol_params.dest_addr,
-			sizeof(wlan_diag_event.dest_addr));
-	qdf_mem_copy(wlan_diag_event.src_addr,
-			eapol_params.src_addr,
-			sizeof(wlan_diag_event.src_addr));
-
-	WLAN_HOST_DIAG_EVENT_REPORT(&wlan_diag_event, EVENT_WLAN_EAPOL);
-}
-
-/**
- * wlan_hdd_log_eapol() - Logs the EAPOL parameters of a packet
- * @skb:               skb data
- * @event_type:        One of enum wifi_connectivity_events to indicate Tx/Rx
- *
- * This function parses the input skb data to get the EAPOL params and log
- * them to user space, if the packet is EAPOL
- *
- * Return: None
- *
- */
-void wlan_hdd_log_eapol(struct sk_buff *skb,
-		uint8_t event_type)
-{
-	int ret;
-	struct host_event_wlan_eapol eapol_params;
-
-	ret = wlan_hdd_get_eapol_params(skb, &eapol_params, event_type);
-	if (!ret)
-		wlan_hdd_event_eapol_log(eapol_params);
-}
-#endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
 /**
  * hdd_reason_type_to_string() - return string conversion of reason type

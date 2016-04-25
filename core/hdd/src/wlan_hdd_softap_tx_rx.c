@@ -289,7 +289,7 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	}
 #endif
 
-	wlan_hdd_log_eapol(skb,
+	qdf_dp_trace_log_pkt(pAdapter->sessionId, skb,
 			   WIFI_EVENT_DRIVER_EAPOL_FRAME_TRANSMIT_REQUESTED);
 
 #ifdef QCA_PKT_PROTO_TRACE
@@ -316,7 +316,7 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	qdf_dp_trace_set_track(skb);
 	DPTRACE(qdf_dp_trace(skb, QDF_DP_TRACE_HDD_PACKET_PTR_RECORD,
-				(uint8_t *)skb->data, sizeof(skb->data)));
+				(uint8_t *)&skb->data, sizeof(skb->data)));
 	DPTRACE(qdf_dp_trace(skb, QDF_DP_TRACE_HDD_PACKET_RECORD,
 				(uint8_t *)skb->data, qdf_nbuf_len(skb)));
 	if (qdf_nbuf_len(skb) > QDF_DP_TRACE_RECORD_SIZE)
@@ -583,7 +583,8 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 	++pAdapter->stats.rx_packets;
 	pAdapter->stats.rx_bytes += skb->len;
 
-	wlan_hdd_log_eapol(skb, WIFI_EVENT_DRIVER_EAPOL_FRAME_RECEIVED);
+	qdf_dp_trace_log_pkt(pAdapter->sessionId,
+		skb, WIFI_EVENT_DRIVER_EAPOL_FRAME_RECEIVED);
 
 #ifdef QCA_PKT_PROTO_TRACE
 	if ((pHddCtx->config->gEnableDebugLog & CDS_PKT_TRAC_TYPE_EAPOL) ||
