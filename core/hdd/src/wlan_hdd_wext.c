@@ -428,7 +428,6 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_SET_FW_CRASH_INJECT    2
 #endif
 #define WE_DUMP_DP_TRACE_LEVEL    3
-#define DUMP_DP_TRACE       0
 /* Private sub ioctl for enabling and setting histogram interval of profiling */
 #define WE_ENABLE_FW_PROFILE    4
 #define WE_SET_FW_PROFILE_HIST_INTVL    5
@@ -9844,6 +9843,8 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 		       value[1], value[2]);
 		if (value[1] == DUMP_DP_TRACE)
 			qdf_dp_trace_dump_all(value[2]);
+		else if (value[1] == ENABLE_DP_TRACE_LIVE_MODE)
+			qdf_dp_trace_enable_live_mode();
 		break;
 	case WE_SET_MON_MODE_CHAN:
 		ret = wlan_hdd_set_mon_chan(pAdapter, value[1], value[2]);

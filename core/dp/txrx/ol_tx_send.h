@@ -52,7 +52,7 @@ void ol_tx_discard_target_frms(ol_txrx_pdev_handle pdev);
  */
 void
 ol_tx_send(struct ol_txrx_pdev_t *pdev,
-	   struct ol_tx_desc_t *tx_desc, qdf_nbuf_t msdu);
+	   struct ol_tx_desc_t *tx_desc, qdf_nbuf_t msdu, uint8_t vdev_id);
 
 /**
  * @brief Send a tx batch download to the target.

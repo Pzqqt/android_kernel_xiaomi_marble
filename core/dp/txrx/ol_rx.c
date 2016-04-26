@@ -1361,6 +1361,11 @@ ol_rx_in_order_deliver(struct ol_txrx_vdev_t *vdev,
 	while (msdu) {
 		qdf_nbuf_t next = qdf_nbuf_next(msdu);
 
+		DPTRACE(qdf_dp_trace(msdu,
+			QDF_DP_TRACE_RX_TXRX_PACKET_PTR_RECORD,
+			qdf_nbuf_data_addr(msdu),
+			sizeof(qdf_nbuf_data(msdu)), QDF_RX));
+
 		OL_RX_PEER_STATS_UPDATE(peer, msdu);
 		OL_RX_ERR_STATISTICS_1(vdev->pdev, vdev, peer, rx_desc,
 				       OL_RX_ERR_NONE);
@@ -1375,6 +1380,16 @@ ol_rx_in_order_deliver(struct ol_txrx_vdev_t *vdev,
 			  0 /* don't print contents */);
 
 	ol_rx_data_process(peer, msdu_list);
+}
+
+void ol_rx_log_packet(htt_pdev_handle htt_pdev,
+		uint8_t peer_id, qdf_nbuf_t msdu)
+{
+	struct ol_txrx_peer_t *peer;
+
+	peer = ol_txrx_peer_find_by_id(htt_pdev->txrx_pdev, peer_id);
+	if (peer)
+		qdf_dp_trace_log_pkt(peer->vdev->vdev_id, msdu, QDF_RX);
 }
 
 void
@@ -1396,6 +1411,13 @@ ol_rx_offload_paddr_deliver_ind_handler(htt_pdev_handle htt_pdev,
 
 		peer = ol_txrx_peer_find_by_id(htt_pdev->txrx_pdev, peer_id);
 		if (peer) {
+			qdf_dp_trace_set_track(head_buf, QDF_RX);
+			qdf_dp_trace_log_pkt(peer->vdev->vdev_id,
+				head_buf, QDF_RX);
+			DPTRACE(qdf_dp_trace(head_buf,
+				QDF_DP_TRACE_RX_OFFLOAD_HTT_PACKET_PTR_RECORD,
+				qdf_nbuf_data_addr(head_buf),
+				sizeof(qdf_nbuf_data(head_buf)), QDF_RX));
 			ol_rx_data_process(peer, head_buf);
 		} else {
 			buf = head_buf;

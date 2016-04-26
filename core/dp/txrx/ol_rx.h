@@ -52,6 +52,8 @@ ol_rx_in_order_deliver(struct ol_txrx_vdev_t *vdev,
 		       struct ol_txrx_peer_t *peer,
 		       unsigned tid, qdf_nbuf_t head_msdu);
 
+void ol_rx_log_packet(htt_pdev_handle htt_pdev,
+		 uint8_t peer_id, qdf_nbuf_t msdu);
 void
 ol_rx_offload_paddr_deliver_ind_handler(htt_pdev_handle htt_pdev,
 					uint32_t msdu_count,

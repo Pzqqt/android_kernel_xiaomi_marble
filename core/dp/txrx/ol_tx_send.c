@@ -175,7 +175,7 @@ ol_tx_send_base(struct ol_txrx_pdev_t *pdev,
 
 void
 ol_tx_send(struct ol_txrx_pdev_t *pdev,
-	   struct ol_tx_desc_t *tx_desc, qdf_nbuf_t msdu)
+	   struct ol_tx_desc_t *tx_desc, qdf_nbuf_t msdu, uint8_t vdev_id)
 {
 	int msdu_credit_consumed;
 	uint16_t id;
@@ -186,7 +186,8 @@ ol_tx_send(struct ol_txrx_pdev_t *pdev,
 	QDF_NBUF_UPDATE_TX_PKT_COUNT(msdu, QDF_NBUF_TX_PKT_TXRX);
 	DPTRACE(qdf_dp_trace_ptr(msdu, QDF_DP_TRACE_TXRX_PACKET_PTR_RECORD,
 				qdf_nbuf_data_addr(msdu),
-				sizeof(qdf_nbuf_data(msdu)), tx_desc->id, 0));
+				sizeof(qdf_nbuf_data(msdu)), tx_desc->id,
+				vdev_id));
 	failed = htt_tx_send_std(pdev->htt_pdev, msdu, id);
 	if (qdf_unlikely(failed)) {
 		OL_TX_TARGET_CREDIT_INCR_INT(pdev, msdu_credit_consumed);

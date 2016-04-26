@@ -96,7 +96,6 @@
 #define SAP_24GHZ_CH_COUNT (14)
 #define ACS_SCAN_EXPIRY_TIMEOUT_S 4
 
-#define DUMP_DP_TRACE       0
 
 /* Function definitions */
 

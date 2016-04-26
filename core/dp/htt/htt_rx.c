@@ -1643,11 +1643,14 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 	unsigned int msdu_count = 0;
 	uint8_t offload_ind;
 	struct htt_host_rx_desc_base *rx_desc;
+	uint8_t peer_id;
 
 	HTT_ASSERT1(htt_rx_in_order_ring_elems(pdev) != 0);
 
 	rx_ind_data = qdf_nbuf_data(rx_ind_msg);
 	msg_word = (uint32_t *) rx_ind_data;
+	peer_id = HTT_RX_IN_ORD_PADDR_IND_PEER_ID_GET(
+					*(u_int32_t *)rx_ind_data);
 
 	offload_ind = HTT_RX_IN_ORD_PADDR_IND_OFFLOAD_GET(*msg_word);
 
@@ -1690,7 +1693,6 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 
 		/* cache consistency has been taken care of by qdf_nbuf_unmap */
 		rx_desc = htt_rx_desc(msdu);
-
 		htt_rx_extract_lro_info(msdu, rx_desc);
 
 		/*
@@ -1698,12 +1700,20 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 		 * than the descriptor.
 		 */
 		qdf_nbuf_pull_head(msdu, HTT_RX_STD_DESC_RESERVATION);
+
+		qdf_dp_trace_set_track(msdu, QDF_RX);
+		QDF_NBUF_CB_TX_PACKET_TRACK(msdu) = QDF_NBUF_TX_PKT_DATA_TRACK;
+		ol_rx_log_packet(pdev, peer_id, msdu);
+		DPTRACE(qdf_dp_trace(msdu,
+			QDF_DP_TRACE_RX_HTT_PACKET_PTR_RECORD,
+			qdf_nbuf_data_addr(msdu),
+			sizeof(qdf_nbuf_data(msdu)), QDF_RX));
+
 #if HTT_PADDR64
 #define NEXT_FIELD_OFFSET_IN32 2
 #else /* ! HTT_PADDR64 */
 #define NEXT_FIELD_OFFSET_IN32 1
 #endif /* HTT_PADDR64 */
-#
 		qdf_nbuf_trim_tail(msdu,
 				   HTT_RX_BUF_SIZE -
 				   (RX_STD_DESC_SIZE +
@@ -1720,11 +1730,8 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 
 		if (qdf_unlikely((*((u_int8_t *) &rx_desc->fw_desc.u.val)) &
 				    FW_RX_DESC_MIC_ERR_M)) {
-			u_int8_t tid =
+			uint8_t tid =
 				HTT_RX_IN_ORD_PADDR_IND_EXT_TID_GET(
-					*(u_int32_t *)rx_ind_data);
-			u_int16_t peer_id =
-				HTT_RX_IN_ORD_PADDR_IND_PEER_ID_GET(
 					*(u_int32_t *)rx_ind_data);
 			ol_rx_mic_error_handler(pdev->txrx_pdev, tid, peer_id,
 						rx_desc, msdu);

@@ -293,7 +293,7 @@ qdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 			 */
 			htt_tx_desc_display(tx_desc->htt_tx_desc);
 
-			ol_tx_send(vdev->pdev, tx_desc, msdu);
+			ol_tx_send(vdev->pdev, tx_desc, msdu, vdev->vdev_id);
 
 			if (msdu_info.tso_info.curr_seg) {
 				msdu_info.tso_info.curr_seg =
@@ -351,7 +351,7 @@ qdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 		 * tx_send call.
 		 */
 		next = qdf_nbuf_next(msdu);
-		ol_tx_send(vdev->pdev, tx_desc, msdu);
+		ol_tx_send(vdev->pdev, tx_desc, msdu, vdev->vdev_id);
 		msdu = next;
 	}
 	return NULL;            /* all MSDUs were accepted */
@@ -583,7 +583,7 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 				    QDF_DP_TRACE_TXRX_FAST_PACKET_PTR_RECORD,
 				    qdf_nbuf_data_addr(msdu),
 				    sizeof(qdf_nbuf_data(msdu)),
-				     tx_desc->id, 0));
+				     tx_desc->id, vdev->vdev_id));
 				/*
 				 * If debug display is enabled, show the meta
 				 * data being downloaded to the target via the
@@ -681,7 +681,8 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 			DPTRACE(qdf_dp_trace_ptr(msdu,
 				QDF_DP_TRACE_TXRX_FAST_PACKET_PTR_RECORD,
 				qdf_nbuf_data_addr(msdu),
-				sizeof(qdf_nbuf_data(msdu)), tx_desc->id, 0));
+				sizeof(qdf_nbuf_data(msdu)), tx_desc->id,
+				vdev->vdev_id));
 			/*
 			 * If debug display is enabled, show the meta-data being
 			 * downloaded to the target via the HTT tx descriptor.
@@ -821,7 +822,7 @@ ol_tx_vdev_pause_queue_append(struct ol_txrx_vdev_t *vdev,
 		DPTRACE(qdf_dp_trace(msdu_list,
 				QDF_DP_TRACE_TXRX_QUEUE_PACKET_PTR_RECORD,
 				qdf_nbuf_data_addr(msdu_list),
-				sizeof(qdf_nbuf_data(msdu_list))));
+				sizeof(qdf_nbuf_data(msdu_list)), QDF_TX));
 
 		vdev->ll_pause.txq.depth++;
 		if (!vdev->ll_pause.txq.head) {
@@ -1088,7 +1089,7 @@ ol_tx_non_std_ll(ol_txrx_vdev_handle vdev,
 		 * downloaded to the target via the HTT tx descriptor.
 		 */
 		htt_tx_desc_display(tx_desc->htt_tx_desc);
-		ol_tx_send(vdev->pdev, tx_desc, msdu);
+		ol_tx_send(vdev->pdev, tx_desc, msdu, vdev->vdev_id);
 		msdu = next;
 	}
 	return NULL;            /* all MSDUs were accepted */
@@ -1410,7 +1411,7 @@ qdf_nbuf_t ol_tx_reinject(struct ol_txrx_vdev_t *vdev,
 
 	htt_tx_desc_set_peer_id(tx_desc->htt_tx_desc, peer_id);
 
-	ol_tx_send(vdev->pdev, tx_desc, msdu);
+	ol_tx_send(vdev->pdev, tx_desc, msdu, vdev->vdev_id);
 
 	return NULL;
 }
