@@ -6400,6 +6400,9 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	if (ret)
 		goto err_wiphy_unregister;
 
+	if (hdd_ctx->config->enable_dp_trace)
+		qdf_dp_trace_init();
+
 	if (hdd_ipa_init(hdd_ctx) == QDF_STATUS_E_FAILURE)
 		goto err_wiphy_unregister;
 

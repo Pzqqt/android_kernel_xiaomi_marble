@@ -3107,6 +3107,15 @@ enum dot11p_mode {
 #define CFG_EDCA_BE_AIFS_VALUE_MAX        (15)
 #define CFG_EDCA_BE_AIFS_VALUE_DEFAULT    (3)
 
+/*
+ * Enable/disable DPTRACE
+ * Enabling this might have performace impact.
+ */
+#define CFG_ENABLE_DP_TRACE		"enable_dp_trace"
+#define CFG_ENABLE_DP_TRACE_MIN		(0)
+#define CFG_ENABLE_DP_TRACE_MAX		(1)
+#define CFG_ENABLE_DP_TRACE_DEFAULT	(0)
+
 /*---------------------------------------------------------------------------
    Type declarations
    -------------------------------------------------------------------------*/
@@ -3726,6 +3735,7 @@ struct hdd_config {
 	uint32_t edca_be_aifs;
 	bool enable_fatal_event;
 	bool bpf_enabled;
+	bool enable_dp_trace;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

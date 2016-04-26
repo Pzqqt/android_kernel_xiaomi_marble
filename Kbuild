@@ -59,9 +59,11 @@ ifeq ($(KERNEL_BUILD), 0)
 	ifneq ($(TARGET_BUILD_VARIANT),user)
 		ifeq ($(CONFIG_SLUB_DEBUG_ON),y)
 			CONFIG_PKT_PROTO_TRACE := y
+			CONFIG_FEATURE_DP_TRACE := y
 		else
 			ifeq ($(findstring perf,$(KERNEL_DEFCONFIG)),)
 				CONFIG_PKT_PROTO_TRACE := y
+				CONFIG_FEATURE_DP_TRACE := y
 			endif
 		endif
 	endif
@@ -1014,6 +1016,10 @@ endif
 
 ifeq ($(CONFIG_WLAN_FASTPATH), y)
 CDEFINES +=	-DWLAN_FEATURE_FASTPATH
+endif
+
+ifeq ($(CONFIG_FEATURE_DP_TRACE), y)
+CDEFINES +=	-DFEATURE_DP_TRACE
 endif
 
 ifeq ($(CONFIG_WLAN_NAPI), y)

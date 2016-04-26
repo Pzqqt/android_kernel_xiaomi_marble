@@ -3898,6 +3898,12 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			CFG_EDCA_BE_AIFS_VALUE_MIN,
 			CFG_EDCA_BE_AIFS_VALUE_MAX),
 
+	REG_VARIABLE(CFG_ENABLE_DP_TRACE, WLAN_PARAM_Integer,
+		struct hdd_config, enable_dp_trace,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_ENABLE_DP_TRACE_DEFAULT,
+		CFG_ENABLE_DP_TRACE_MIN,
+		CFG_ENABLE_DP_TRACE_MAX),
 };
 
 
@@ -5544,6 +5550,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_info("Name = [%s] Value = [%u]",
 		CFG_EDCA_BE_AIFS_VALUE_NAME,
 		pHddCtx->config->edca_be_aifs);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_ENABLE_DP_TRACE,
+		pHddCtx->config->enable_dp_trace);
 }
 
 

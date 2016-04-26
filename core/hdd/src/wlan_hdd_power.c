@@ -1582,6 +1582,9 @@ QDF_STATUS hdd_wlan_re_init(void *hif_sc)
 		}
 	}
 
+	if (pHddCtx->config->enable_dp_trace)
+		qdf_dp_trace_init();
+
 	if (hdd_ipa_uc_ssr_reinit())
 		hddLog(LOGE, "%s: HDD IPA UC reinit failed", __func__);
 
