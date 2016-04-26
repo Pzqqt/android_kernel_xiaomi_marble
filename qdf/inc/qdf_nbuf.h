@@ -66,6 +66,50 @@
 #define QDF_NBUF_TX_PKT_STATE_MAX            10
 
 #define QDF_NBUF_IPA_CHECK_MASK              0x80000000
+
+/**
+ * struct mon_rx_status - This will have monitor mode rx_status extracted from
+ * htt_rx_desc used later to update radiotap information.
+ * @tsft: Time Synchronization Function timer
+ * @chan_freq: Capture channel frequency
+ * @chan_num: Capture channel number
+ * @chan_flags: Bitmap of Channel flags, IEEE80211_CHAN_TURBO,
+ *              IEEE80211_CHAN_CCK...
+ * @vht_flags: VHT flgs, only present for VHT frames.
+ * @vht_flag_values1-5: Contains corresponding data for flags field
+ * @rate: Rate in terms 500Kbps
+ * @rtap_flags: Bit map of available fields in the radiotap
+ * @ant_signal_db: Rx packet RSSI
+ * @nr_ant: Number of Antennas used for streaming
+ * @mcs: MCS index of Rx frame
+ * @is_stbc: Is STBC enabled
+ * @sgi: Rx frame short guard interval
+ * @ldpc: ldpc enabled
+ * @beamformed: Is frame beamformed.
+ */
+struct mon_rx_status {
+	uint64_t tsft;
+	uint16_t chan_freq;
+	uint16_t chan_num;
+	uint16_t chan_flags;
+	uint16_t vht_flags;
+	uint16_t vht_flag_values6;
+	uint8_t  rate;
+	uint8_t  rtap_flags;
+	uint8_t  ant_signal_db;
+	uint8_t  nr_ant;
+	uint8_t  mcs;
+	uint8_t  vht_flag_values1;
+	uint8_t  vht_flag_values2;
+	uint8_t  vht_flag_values3[4];
+	uint8_t  vht_flag_values4;
+	uint8_t  vht_flag_values5;
+	uint8_t  is_stbc;
+	uint8_t  sgi;
+	uint8_t  ldpc;
+	uint8_t  beamformed;
+};
+
 /**
  * @qdf_nbuf_t - Platform indepedent packet abstraction
  */
@@ -1315,4 +1359,15 @@ qdf_nbuf_get_priv_ptr(qdf_nbuf_t buf)
 {
 	return __qdf_nbuf_get_priv_ptr(buf);
 }
+
+/**
+ * qdf_nbuf_update_radiotap() - update radiotap at head of nbuf.
+ * @rx_status: rx_status containing required info to update radiotap
+ * @nbuf: Pointer to nbuf
+ * @headroom_sz: Available headroom size
+ *
+ * Return: radiotap length.
+ */
+unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
+				      qdf_nbuf_t nbuf, uint32_t headroom_sz);
 #endif /* _QDF_NBUF_H */

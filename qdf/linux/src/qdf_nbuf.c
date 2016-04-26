@@ -40,6 +40,7 @@
 #include <qdf_status.h>
 #include <qdf_lock.h>
 #include <qdf_trace.h>
+#include <net/ieee80211_radiotap.h>
 
 #if defined(FEATURE_TSO)
 #include <net/ipv6.h>
@@ -1549,3 +1550,139 @@ __qdf_nbuf_sync_for_cpu(qdf_device_t osdev,
 EXPORT_SYMBOL(__qdf_nbuf_sync_for_cpu);
 #endif
 
+/**
+ * qdf_nbuf_update_radiotap_vht_flags() - Update radiotap header VHT flags
+ * @rx_status: Pointer to rx_status.
+ * @rtap_buf: Buf to which VHT info has to be updated.
+ * @rtap_len: Current length of radiotap buffer
+ *
+ * Return: Length of radiotap after VHT flags updated.
+ */
+static unsigned int qdf_nbuf_update_radiotap_vht_flags(
+					struct mon_rx_status *rx_status,
+					int8_t *rtap_buf,
+					uint32_t rtap_len)
+{
+	uint16_t vht_flags = 0;
+
+	/* IEEE80211_RADIOTAP_VHT u16, u8, u8, u8[4], u8, u8, u16 */
+	vht_flags |= IEEE80211_RADIOTAP_VHT_KNOWN_STBC |
+		IEEE80211_RADIOTAP_VHT_KNOWN_GI |
+		IEEE80211_RADIOTAP_VHT_KNOWN_LDPC_EXTRA_OFDM_SYM |
+		IEEE80211_RADIOTAP_VHT_KNOWN_BEAMFORMED |
+		IEEE80211_RADIOTAP_VHT_KNOWN_BANDWIDTH;
+	put_unaligned_le16(vht_flags, &rtap_buf[rtap_len]);
+	rtap_len += 2;
+	rtap_buf[rtap_len] |=
+		(rx_status->is_stbc ?
+		 IEEE80211_RADIOTAP_VHT_FLAG_STBC : 0) |
+		(rx_status->sgi ? IEEE80211_RADIOTAP_VHT_FLAG_SGI : 0) |
+		(rx_status->ldpc ?
+		 IEEE80211_RADIOTAP_VHT_FLAG_LDPC_EXTRA_OFDM_SYM : 0) |
+		(rx_status->beamformed ?
+		 IEEE80211_RADIOTAP_VHT_FLAG_BEAMFORMED : 0);
+
+	rtap_len += 1;
+	rtap_buf[rtap_len] = (rx_status->vht_flag_values2);
+	rtap_len += 1;
+	rtap_buf[rtap_len] = (rx_status->vht_flag_values3[0]);
+	rtap_len += 1;
+	rtap_buf[rtap_len] = (rx_status->vht_flag_values3[1]);
+	rtap_len += 1;
+	rtap_buf[rtap_len] = (rx_status->vht_flag_values3[2]);
+	rtap_len += 1;
+	rtap_buf[rtap_len] = (rx_status->vht_flag_values3[3]);
+	rtap_len += 1;
+	rtap_buf[rtap_len] = (rx_status->vht_flag_values4);
+	rtap_len += 1;
+	rtap_buf[rtap_len] = (rx_status->vht_flag_values5);
+	rtap_len += 1;
+	put_unaligned_le16(rx_status->vht_flag_values6,
+			   &rtap_buf[rtap_len]);
+	rtap_len += 2;
+
+	return rtap_len;
+}
+
+#define NORMALIZED_TO_NOISE_FLOOR (-96)
+
+/* This is the length for radiotap, combined length
+ * (Mandatory part struct ieee80211_radiotap_header + RADIOTAP_HEADER_LEN)
+ * cannot be more than available headroom_sz.
+ * Max size current radiotap we are populating is less than 100 bytes,
+ * increase this when we add more radiotap elements.
+ */
+#define RADIOTAP_HEADER_LEN (sizeof(struct ieee80211_radiotap_header) + 100)
+
+/**
+ * qdf_nbuf_update_radiotap() - Update radiotap header from rx_status
+ * @rx_status: Pointer to rx_status.
+ * @nbuf:      nbuf pointer to which radiotap has to be updated
+ * @headroom_sz: Available headroom size.
+ *
+ * Return: length of rtap_len updated.
+ */
+unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
+				      qdf_nbuf_t nbuf, u_int32_t headroom_sz)
+{
+	uint8_t rtap_buf[RADIOTAP_HEADER_LEN] = {0};
+	struct ieee80211_radiotap_header *rthdr =
+		(struct ieee80211_radiotap_header *)rtap_buf;
+	uint32_t rtap_hdr_len = sizeof(struct ieee80211_radiotap_header);
+	uint32_t rtap_len = rtap_hdr_len;
+
+	/* IEEE80211_RADIOTAP_TSFT              __le64       microseconds*/
+	rthdr->it_present = cpu_to_le32(1 << IEEE80211_RADIOTAP_TSFT);
+	put_unaligned_le64(rx_status->tsft, &rtap_buf[rtap_len]);
+	rtap_len += 8;
+
+	/* IEEE80211_RADIOTAP_FLAGS u8 */
+	rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_FLAGS);
+	rtap_buf[rtap_len] = rx_status->rtap_flags;
+	rtap_len += 1;
+
+	/* IEEE80211_RADIOTAP_RATE  u8           500kb/s */
+	rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_RATE);
+	rtap_buf[rtap_len] = rx_status->rate;
+	rtap_len += 1;
+	rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_CHANNEL);
+	/* IEEE80211_RADIOTAP_CHANNEL 2 x __le16   MHz, bitmap */
+	put_unaligned_le16(rx_status->chan_freq, &rtap_buf[rtap_len]);
+	rtap_len += 2;
+	/* Channel flags. */
+	put_unaligned_le16(rx_status->chan_flags, &rtap_buf[rtap_len]);
+	rtap_len += 2;
+
+	/* IEEE80211_RADIOTAP_DBM_ANTSIGNAL s8  decibels from one milliwatt
+	 *					(dBm)
+	 */
+	rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_DBM_ANTSIGNAL);
+	/*
+	 * rssi_comb is int dB, need to convert it to dBm.
+	 * normalize value to noise floor of -96 dBm
+	 */
+	rtap_buf[rtap_len] = rx_status->ant_signal_db +
+		NORMALIZED_TO_NOISE_FLOOR;
+	rtap_len += 1;
+
+	/* IEEE80211_RADIOTAP_ANTENNA   u8      antenna index */
+	rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_ANTENNA);
+	rtap_buf[rtap_len] = rx_status->nr_ant;
+	rtap_len += 1;
+	if (rx_status->vht_flags) {
+		/* IEEE80211_RADIOTAP_VHT u16, u8, u8, u8[4], u8, u8, u16 */
+		rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_VHT);
+		rtap_len = qdf_nbuf_update_radiotap_vht_flags(rx_status,
+							      rtap_buf,
+							      rtap_len);
+	}
+	rthdr->it_len = cpu_to_le16(rtap_len);
+
+	if ((headroom_sz  - rtap_len) < 0) {
+		qdf_print("ERROR: not enough space to update radiotap\n");
+		return 0;
+	}
+	qdf_nbuf_pull_head(nbuf, headroom_sz  - rtap_len);
+	qdf_mem_copy(qdf_nbuf_data(nbuf), rtap_buf, rtap_len);
+	return rtap_len;
+}
