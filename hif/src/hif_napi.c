@@ -391,6 +391,9 @@ int hif_napi_schedule(struct hif_opaque_softc *hif_ctx, int ce_id)
 	int cpu = smp_processor_id();
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
+	hif_record_ce_desc_event(scn,  ce_id, NAPI_SCHEDULE,
+				 NULL, NULL, 0);
+
 	scn->napi_data.napis[ce_id].stats[cpu].napi_schedules++;
 	NAPI_DEBUG("scheduling napi %d (ce:%d)",
 		   scn->napi_data.napis[ce_id].id, ce_id);
@@ -436,6 +439,9 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx, struct napi_struct *napi,
 		container_of(napi, struct qca_napi_info, napi);
 	napi_info->stats[cpu].napi_polls++;
 
+	hif_record_ce_desc_event(hif, NAPI_ID2PIPE(napi_info->id),
+				 NAPI_POLL_ENTER, NULL, NULL, cpu);
+
 	if (unlikely(NULL == hif))
 		QDF_ASSERT(hif != NULL); /* emit a warning if hif NULL */
 	else {
@@ -468,6 +474,9 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx, struct napi_struct *napi,
 
 	if ((ce_state != NULL && !ce_check_rx_pending(ce_state)) || 0 == rc) {
 		napi_info->stats[cpu].napi_completes++;
+
+		hif_record_ce_desc_event(hif, ce_state->id, NAPI_COMPLETE,
+					 NULL, NULL, 0);
 		/* enable interrupts */
 		napi_complete(napi);
 		if (NULL != hif) {
@@ -480,6 +489,9 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx, struct napi_struct *napi,
 		NAPI_DEBUG("%s:%d: napi_complete + enabling the interrupts",
 			   __func__, __LINE__);
 	}
+
+	hif_record_ce_desc_event(hif, NAPI_ID2PIPE(napi_info->id),
+				 NAPI_POLL_EXIT, NULL, NULL, normalized);
 
 	NAPI_DEBUG("%s <--[normalized=%d]", _func__, normalized);
 	return normalized;

@@ -538,6 +538,10 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t *msdus,
 	write_index = src_ring->write_index;
 	sw_index = src_ring->sw_index;
 
+	hif_record_ce_desc_event(scn, ce_state->id,
+				FAST_TX_SOFTWARE_INDEX_UPDATE,
+				NULL, NULL, write_index);
+
 	if (qdf_unlikely(CE_RING_DELTA(nentries_mask, write_index, sw_index - 1)
 			 < (SLOTS_PER_DATAPATH_TX * num_msdus))) {
 		HIF_ERROR("Source ring full, required %d, available %d",
@@ -634,6 +638,10 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t *msdus,
 		src_ring->write_index = write_index;
 
 		if (hif_pm_runtime_get(hif_hdl) == 0) {
+			hif_record_ce_desc_event(scn, ce_state->id,
+						 FAST_TX_WRITE_INDEX_UPDATE,
+						 NULL, NULL, write_index);
+
 			/* Don't call WAR_XXX from here
 			 * Just call XXX instead, that has the reqd. intel
 			 */
@@ -1355,6 +1363,11 @@ static void ce_fastpath_rx_handle(struct CE_state *ce_state,
 	/* Update Destination Ring Write Index */
 	write_index = dest_ring->write_index;
 	write_index = CE_RING_IDX_ADD(nentries_mask, write_index, num_cmpls);
+
+	hif_record_ce_desc_event(scn, ce_state->id,
+			FAST_RX_WRITE_INDEX_UPDATE,
+			NULL, NULL, write_index);
+
 	CE_DEST_RING_WRITE_IDX_SET(scn, ctrl_addr, write_index);
 	dest_ring->write_index = write_index;
 }
@@ -1456,6 +1469,11 @@ more_data:
 			 * reusing the buffers
 			 */
 			if (nbuf_cmpl_idx == MSG_FLUSH_NUM) {
+				hif_record_ce_desc_event(scn, ce_state->id,
+						 FAST_RX_SOFTWARE_INDEX_UPDATE,
+						 NULL, NULL, sw_index);
+				dest_ring->sw_index = sw_index;
+
 				qdf_spin_unlock(&ce_state->ce_index_lock);
 				ce_fastpath_rx_handle(ce_state, cmpl_msdus,
 						      MSG_FLUSH_NUM, ctrl_addr);
@@ -1464,6 +1482,12 @@ more_data:
 			}
 
 		}
+
+		hif_record_ce_desc_event(scn, ce_state->id,
+					 FAST_RX_SOFTWARE_INDEX_UPDATE,
+					 NULL, NULL, sw_index);
+
+		dest_ring->sw_index = sw_index;
 
 		/*
 		 * If there are not enough completions to fill the array,
@@ -1477,8 +1501,6 @@ more_data:
 			nbuf_cmpl_idx = 0;
 		}
 		qdf_atomic_set(&ce_state->rx_pending, 0);
-		dest_ring->sw_index = sw_index;
-
 		CE_ENGINE_INT_STATUS_CLEAR(scn, ctrl_addr,
 					   HOST_IS_COPY_COMPLETE_MASK);
 	}

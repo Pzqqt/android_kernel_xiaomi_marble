@@ -300,12 +300,25 @@ union ce_desc {
  * @HIF_TX_GATHER_DESC_POST: post gather desc. (no write index update)
  * @HIF_TX_DESC_POST: event recorded before updating write index of TX ring.
  * @HIF_TX_DESC_COMPLETION: event recorded before updating sw index of TX ring.
+ * @FAST_RX_WRITE_INDEX_UPDATE: event recorded before updating the write index
+ *	of the RX ring in fastpath
+ * @FAST_RX_SOFTWARE_INDEX_UPDATE: event recorded before updating the software
+ *	index of the RX ring in fastpath
+ * @FAST_TX_WRITE_INDEX_UPDATE: event recorded before updating the write index
+ *	of the TX ring in fastpath
+ * @FAST_TX_SOFTWARE_INDEX_UPDATE: event recorded before updating the software
+ *	index of the RX ring in fastpath
+ *
  * @HIF_IRQ_EVENT: event recorded in the irq before scheduling the bh
  * @HIF_CE_TASKLET_ENTRY: records the start of the ce_tasklet
  * @HIF_CE_TASKLET_RESCHEDULE: records the rescheduling of the wlan_tasklet
  * @HIF_CE_TASKLET_EXIT: records the exit of the wlan tasklet without reschedule
  * @HIF_CE_REAP_ENTRY: records when we process completion outside of a bh
  * @HIF_CE_REAP_EXIT:  records when we process completion outside of a bh
+ * @NAPI_SCHEDULE: records when napi is scheduled from the irq context
+ * @NAPI_POLL_ENTER: records the start of the napi poll function
+ * @NAPI_COMPLETE: records when interrupts are reenabled
+ * @NAPI_POLL_EXIT: records when the napi poll function returns
  */
 enum hif_ce_event_type {
 	HIF_RX_DESC_POST,
@@ -313,12 +326,21 @@ enum hif_ce_event_type {
 	HIF_TX_GATHER_DESC_POST,
 	HIF_TX_DESC_POST,
 	HIF_TX_DESC_COMPLETION,
-	HIF_IRQ_EVENT,
+	FAST_RX_WRITE_INDEX_UPDATE,
+	FAST_RX_SOFTWARE_INDEX_UPDATE,
+	FAST_TX_WRITE_INDEX_UPDATE,
+	FAST_TX_SOFTWARE_INDEX_UPDATE,
+
+	HIF_IRQ_EVENT = 0x10,
 	HIF_CE_TASKLET_ENTRY,
 	HIF_CE_TASKLET_RESCHEDULE,
 	HIF_CE_TASKLET_EXIT,
 	HIF_CE_REAP_ENTRY,
 	HIF_CE_REAP_EXIT,
+	NAPI_SCHEDULE,
+	NAPI_POLL_ENTER,
+	NAPI_COMPLETE,
+	NAPI_POLL_EXIT,
 };
 
 void ce_init_ce_desc_event_log(int ce_id, int size);
