@@ -850,6 +850,20 @@ qdf_nbuf_append_ext_list(qdf_nbuf_t head_buf, qdf_nbuf_t ext_list,
 }
 
 /**
+ * qdf_nbuf_get_ext_list() - Get the link to extended nbuf list.
+ * @head_buf: Network buf holding head segment (single)
+ *
+ * This ext_list is populated when we have Jumbo packet, for example in case of
+ * monitor mode amsdu packet reception, and are stiched using frags_list.
+ *
+ * Return: Network buf list holding linked extensions from head buf.
+ */
+static inline qdf_nbuf_t qdf_nbuf_get_ext_list(qdf_nbuf_t head_buf)
+{
+	return (qdf_nbuf_t)__qdf_nbuf_get_ext_list(head_buf);
+}
+
+/**
  * qdf_nbuf_get_tx_cksum() - gets the tx checksum offload demand
  * @buf: Network buffer
  *

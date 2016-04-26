@@ -682,8 +682,9 @@ void qdf_net_buf_debug_add_node(qdf_nbuf_t net_buf, size_t size,
 
 	if (p_node) {
 		qdf_print(
-			  "Double allocation of skb ! Already allocated from %s %d",
-			  p_node->file_name, p_node->line_num);
+			  "Double allocation of skb ! Already allocated from %p %s %d current alloc from %p %s %d",
+			  p_node->net_buf, p_node->file_name, p_node->line_num,
+			  net_buf, file_name, line_num);
 		QDF_ASSERT(0);
 		goto done;
 	} else {
@@ -771,6 +772,7 @@ EXPORT_SYMBOL(qdf_net_buf_debug_delete_node);
 
 /**
  * qdf_net_buf_debug_release_skb() - release skb to avoid memory leak
+ * @net_buf: Network buf holding head segment (single)
  *
  * WLAN driver module whose allocated SKB is freed by network stack are
  * suppose to call this API before returning SKB to network stack such
@@ -780,6 +782,19 @@ EXPORT_SYMBOL(qdf_net_buf_debug_delete_node);
  */
 void qdf_net_buf_debug_release_skb(qdf_nbuf_t net_buf)
 {
+	qdf_nbuf_t ext_list = qdf_nbuf_get_ext_list(net_buf);
+
+	while (ext_list) {
+		/*
+		 * Take care to free if it is Jumbo packet connected using
+		 * frag_list
+		 */
+		qdf_nbuf_t next;
+
+		next = qdf_nbuf_queue_next(ext_list);
+		qdf_net_buf_debug_delete_node(ext_list);
+		ext_list = next;
+	}
 	qdf_net_buf_debug_delete_node(net_buf);
 }
 EXPORT_SYMBOL(qdf_net_buf_debug_release_skb);

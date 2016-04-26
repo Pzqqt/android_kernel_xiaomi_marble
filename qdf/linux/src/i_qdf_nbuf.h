@@ -861,6 +861,20 @@ __qdf_nbuf_append_ext_list(struct sk_buff *skb_head,
 }
 
 /**
+ * __qdf_nbuf_get_ext_list() - Get the link to extended nbuf list.
+ * @head_buf: Network buf holding head segment (single)
+ *
+ * This ext_list is populated when we have Jumbo packet, for example in case of
+ * monitor mode amsdu packet reception, and are stiched using frags_list.
+ *
+ * Return: Network buf list holding linked extensions from head buf.
+ */
+static inline struct sk_buff *__qdf_nbuf_get_ext_list(struct sk_buff *head_buf)
+{
+	return (skb_shinfo(head_buf)->frag_list);
+}
+
+/**
  * __qdf_nbuf_tx_free() - free skb list
  * @skb: Pointer to network buffer
  * @tx_err: TX error
