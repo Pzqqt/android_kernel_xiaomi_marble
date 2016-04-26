@@ -3367,6 +3367,12 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 			break;
 		}
 
+		if (pHddCtx->tdls_nss_switch_in_progress) {
+			hdd_err("TDLS antenna switch is in progress, ignore SHOULD_DISCOVER");
+			status = QDF_STATUS_SUCCESS;
+			break;
+		}
+
 		curr_peer =
 			wlan_hdd_tdls_get_peer(pAdapter,
 					       pRoamInfo->peerMac.bytes,
