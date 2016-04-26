@@ -16064,7 +16064,8 @@ QDF_STATUS sme_set_bpf_instructions(tHalHandle hal,
 	cds_msg_t           cds_msg;
 	struct sir_bpf_set_offload *set_offload;
 
-	set_offload = qdf_mem_malloc(sizeof(*set_offload));
+	set_offload = qdf_mem_malloc(sizeof(*set_offload) +
+					req->current_length);
 
 	if (NULL == set_offload) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -16078,14 +16079,8 @@ QDF_STATUS sme_set_bpf_instructions(tHalHandle hal,
 	set_offload->total_length = req->total_length;
 	set_offload->current_length = req->current_length;
 	if (set_offload->total_length) {
-		set_offload->program = qdf_mem_malloc(sizeof(uint8_t) *
-						req->current_length);
-		if (NULL == set_offload->program) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				FL("Failed to alloc instruction memory"));
-			qdf_mem_free(set_offload);
-			return QDF_STATUS_E_NOMEM;
-		}
+		set_offload->program = ((uint8_t *)set_offload) +
+					sizeof(*set_offload);
 		qdf_mem_copy(set_offload->program, req->program,
 				set_offload->current_length);
 	}
@@ -16100,16 +16095,12 @@ QDF_STATUS sme_set_bpf_instructions(tHalHandle hal,
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				FL("Post BPF set offload msg fail"));
 			status = QDF_STATUS_E_FAILURE;
-			if (set_offload->total_length)
-				qdf_mem_free(set_offload->program);
 			qdf_mem_free(set_offload);
 		}
 		sme_release_global_lock(&mac_ctx->sme);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				FL("sme_acquire_global_lock failed"));
-		if (set_offload->total_length)
-			qdf_mem_free(set_offload->program);
 		qdf_mem_free(set_offload);
 	}
 	return status;

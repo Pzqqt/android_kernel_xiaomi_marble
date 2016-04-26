@@ -7907,7 +7907,6 @@ QDF_STATUS wma_set_bpf_instructions(tp_wma_handle wma,
 		buf_ptr += WMI_TLV_HDR_SIZE;
 		qdf_mem_copy(buf_ptr, bpf_set_offload->program,
 					bpf_set_offload->current_length);
-		qdf_mem_free(bpf_set_offload->program);
 	}
 
 	if (wmi_unified_cmd_send(wma->wmi_handle, wmi_buf, len,
