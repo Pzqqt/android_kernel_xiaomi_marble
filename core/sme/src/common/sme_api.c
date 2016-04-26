@@ -14445,7 +14445,7 @@ QDF_STATUS sme_wifi_start_logger(tHalHandle hal,
 	status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac, LOGE,
-			FL("vos_mq_post_message failed!(err=%d)"),
+			FL("cds_mq_post_message failed!(err=%d)"),
 			status);
 		qdf_mem_free(req_msg);
 		status = QDF_STATUS_E_FAILURE;
@@ -15628,4 +15628,129 @@ QDF_STATUS sme_remove_beacon_filter(tHalHandle hal, uint32_t session_id)
 		qdf_mem_free(filter_param);
 	}
 	return qdf_status;
+}
+
+
+/**
+ * sme_get_bpf_offload_capabilities() - Get length for BPF offload
+ * @hal: Global HAL handle
+ * This function constructs the cds message and fill in message type,
+ * post the same to WDA.
+ * Return: QDF_STATUS enumeration
+ */
+QDF_STATUS sme_get_bpf_offload_capabilities(tHalHandle hal)
+{
+	QDF_STATUS          status     = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal      mac_ctx      = PMAC_STRUCT(hal);
+	cds_msg_t           cds_msg;
+
+	sms_log(mac_ctx, LOG1, FL("enter"));
+
+	status = sme_acquire_global_lock(&mac_ctx->sme);
+	if (QDF_STATUS_SUCCESS == status) {
+		/* Serialize the req through MC thread */
+		cds_msg.bodyptr = NULL;
+		cds_msg.type = WDA_BPF_GET_CAPABILITIES_REQ;
+		status = cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_msg);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+					FL("Post bpf get offload msg fail"));
+			status = QDF_STATUS_E_FAILURE;
+		}
+		sme_release_global_lock(&mac_ctx->sme);
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			FL("sme_acquire_global_lock error"));
+	}
+	sms_log(mac_ctx, LOG1, FL("exit"));
+	return status;
+}
+
+
+/**
+ * sme_set_bpf_instructions() - Set BPF bpf filter instructions.
+ * @hal: HAL handle
+ * @bpf_set_offload: struct to set bpf filter instructions.
+ *
+ * Return: QDF_STATUS enumeration.
+ */
+QDF_STATUS sme_set_bpf_instructions(tHalHandle hal,
+				    struct sir_bpf_set_offload *req)
+{
+	QDF_STATUS          status     = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal      mac_ctx    = PMAC_STRUCT(hal);
+	cds_msg_t           cds_msg;
+	struct sir_bpf_set_offload *set_offload;
+
+	set_offload = qdf_mem_malloc(sizeof(*set_offload));
+
+	if (NULL == set_offload) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			FL("Failed to alloc set_offload"));
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	set_offload->session_id = req->session_id;
+	set_offload->filter_id = req->filter_id;
+	set_offload->current_offset = req->current_offset;
+	set_offload->total_length = req->total_length;
+	if (set_offload->total_length) {
+		set_offload->current_length = req->current_length;
+		set_offload->program = qdf_mem_malloc(sizeof(uint8_t) *
+						req->current_length);
+		qdf_mem_copy(set_offload->program, req->program,
+				set_offload->current_length);
+	}
+	status = sme_acquire_global_lock(&mac_ctx->sme);
+	if (QDF_STATUS_SUCCESS == status) {
+		/* Serialize the req through MC thread */
+		cds_msg.bodyptr = set_offload;
+		cds_msg.type = WDA_BPF_SET_INSTRUCTIONS_REQ;
+		status = cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_msg);
+
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				FL("Post BPF set offload msg fail"));
+			status = QDF_STATUS_E_FAILURE;
+			if (set_offload->total_length)
+				qdf_mem_free(set_offload->program);
+			qdf_mem_free(set_offload);
+		}
+		sme_release_global_lock(&mac_ctx->sme);
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				FL("sme_acquire_global_lock failed"));
+		if (set_offload->total_length)
+			qdf_mem_free(set_offload->program);
+		qdf_mem_free(set_offload);
+	}
+	return status;
+}
+
+/**
+ * sme_bpf_offload_register_callback() - Register get bpf offload callbacK
+ *
+ * @hal - MAC global handle
+ * @callback_routine - callback routine from HDD
+ *
+ * This API is invoked by HDD to register its callback in SME
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_bpf_offload_register_callback(tHalHandle hal,
+				void (*pbpf_get_offload_cb)(void *context,
+					struct sir_bpf_get_offload *))
+{
+	QDF_STATUS status   = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal mac  = PMAC_STRUCT(hal);
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		mac->sme.pbpf_get_offload_cb = pbpf_get_offload_cb;
+		sme_release_global_lock(&mac->sme);
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			FL("sme_acquire_global_lock failed"));
+	}
+	return status;
 }

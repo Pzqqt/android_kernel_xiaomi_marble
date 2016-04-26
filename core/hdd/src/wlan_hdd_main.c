@@ -1337,6 +1337,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	hdd_info("Init current antenna mode: %d",
 		 hdd_ctx->current_antenna_mode);
 
+	hdd_ctx->bpf_enabled = cfg->bpf_enabled;
 }
 
 /**
@@ -5413,6 +5414,8 @@ static int hdd_context_init(hdd_context_t *hdd_ctx)
 	init_completion(&hdd_ctx->mc_sus_event_var);
 	init_completion(&hdd_ctx->ready_to_suspend);
 
+	hdd_init_bpf_completion();
+
 	qdf_spinlock_create(&hdd_ctx->connection_status_lock);
 
 	qdf_spinlock_create(&hdd_ctx->hdd_adapter_lock);
@@ -6167,6 +6170,11 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 	sme_set_rssi_threshold_breached_cb(hdd_ctx->hHal,
 				hdd_rssi_threshold_breached);
+
+	status = sme_bpf_offload_register_callback(hdd_ctx->hHal,
+							hdd_get_bpf_offload_cb);
+	if (QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("set bpf offload callback failed");
 
 	hdd_cfg80211_link_layer_stats_init(hdd_ctx);
 	wlan_hdd_tsf_init(hdd_ctx);

@@ -3605,6 +3605,7 @@ struct hdd_config {
 	bool ignore_peer_ht_opmode;
 	uint32_t roam_dense_min_aps;
 	bool enable_fatal_event;
+	bool bpf_enabled;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

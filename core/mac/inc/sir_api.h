@@ -5713,4 +5713,40 @@ struct obss_scanparam {
 	uint16_t obss_activity_threshold;
 };
 
+/**
+ * struct sir_bpf_set_offload - set bpf filter instructions
+ * @session_id: session identifier
+ * @version: host bpf version
+ * @filter_id: Filter ID for BPF filter
+ * @total_length: The total length of the full instruction
+ *                total_length equal to 0 means reset
+ * @current_offset: current offset, 0 means start a new setting
+ * @current_length: Length of current @program
+ * @program: BPF instructions
+ */
+struct sir_bpf_set_offload {
+	uint8_t  session_id;
+	uint32_t version;
+	uint32_t filter_id;
+	uint32_t total_length;
+	uint32_t current_offset;
+	uint32_t current_length;
+	uint8_t  *program;
+};
+
+/**
+ * struct sir_bpf_offload_capabilities - get bpf Capabilities
+ * @bpf_version: fw's implement version
+ * @max_bpf_filters: max filters that fw supports
+ * @max_bytes_for_bpf_inst: the max bytes that can be used as bpf instructions
+ * @remaining_bytes_for_bpf_inst: remaining bytes for bpf instructions
+ *
+ */
+struct sir_bpf_get_offload {
+	uint32_t bpf_version;
+	uint32_t max_bpf_filters;
+	uint32_t max_bytes_for_bpf_inst;
+	uint32_t remaining_bytes_for_bpf_inst;
+};
+
 #endif /* __SIR_API_H */

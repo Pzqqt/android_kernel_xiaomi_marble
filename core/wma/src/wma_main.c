@@ -2063,6 +2063,10 @@ QDF_STATUS wma_open(void *cds_context,
 					   WMI_PEER_DELETE_RESP_EVENTID,
 					   wma_peer_delete_handler,
 					   WMA_RX_SERIALIZER_CTX);
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+					   WMI_BPF_CAPABILIY_INFO_EVENTID,
+					   wma_get_bpf_caps_event_handler,
+					   WMA_RX_SERIALIZER_CTX);
 	return QDF_STATUS_SUCCESS;
 
 err_dbglog_init:
@@ -5313,6 +5317,13 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 		break;
 	case WMA_REMOVE_BCN_FILTER_CMDID:
 		wma_remove_beacon_filter(wma_handle, msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case WDA_BPF_GET_CAPABILITIES_REQ:
+		wma_get_bpf_capabilities(wma_handle);
+		break;
+	case WDA_BPF_SET_INSTRUCTIONS_REQ:
+		wma_set_bpf_instructions(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 

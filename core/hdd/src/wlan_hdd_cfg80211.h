@@ -344,6 +344,7 @@ enum qca_nl80211_vendor_subcmds {
 	QCA_NL80211_VENDOR_SUBCMD_OFFLOADED_PACKETS = 79,
 	QCA_NL80211_VENDOR_SUBCMD_MONITOR_RSSI = 80,
 
+	QCA_NL80211_VENDOR_SUBCMD_PACKET_FILTER = 83,
 	/* OCB commands */
 	QCA_NL80211_VENDOR_SUBCMD_OCB_SET_CONFIG = 92,
 	QCA_NL80211_VENDOR_SUBCMD_OCB_SET_UTC_TIME = 93,
@@ -2139,6 +2140,40 @@ enum qca_wlan_vendor_attr_rssi_monitoring {
 };
 
 /**
+ * enum set_reset_packet_filter - set packet filter control commands
+ * @QCA_WLAN_SET_PACKET_FILTER: Set Packet Filter
+ * @QCA_WLAN_GET_PACKET_FILTER: Get Packet filter
+ */
+enum set_reset_packet_filter {
+	QCA_WLAN_SET_PACKET_FILTER = 1,
+	QCA_WLAN_GET_PACKET_FILTER = 2,
+};
+
+/**
+ * enum qca_wlan_vendor_attr_packet_filter - BPF control commands
+ * @QCA_WLAN_VENDOR_ATTR_PACKET_FILTER_INVALID: Invalid
+ * @QCA_WLAN_VENDOR_ATTR_SET_RESET_PACKET_FILTER: Filter ID
+ * @QCA_WLAN_VENDOR_ATTR_PACKET_FILTER_VERSION: Filter Version
+ * @QCA_WLAN_VENDOR_ATTR_PACKET_FILTER_SIZE: Total Length
+ * @QCA_WLAN_VENDOR_ATTR_PACKET_FILTER_CURRENT_OFFSET: Current offset
+ * @QCA_WLAN_VENDOR_ATTR_PACKET_FILTER_PROGRAM: length of BPF instructions
+ */
+enum qca_wlan_vendor_attr_packet_filter {
+	QCA_WLAN_VENDOR_ATTR_PACKET_FILTER_INVALID = 0,
+	QCA_WLAN_VENDOR_ATTR_SET_RESET_PACKET_FILTER,
+	QCA_WLAN_VENDOR_ATTR_PACKET_FILTER_VERSION,
+	QCA_WLAN_VENDOR_ATTR_PACKET_FILTER_ID,
+	QCA_WLAN_VENDOR_ATTR_PACKET_FILTER_SIZE,
+	QCA_WLAN_VENDOR_ATTR_PACKET_FILTER_CURRENT_OFFSET,
+	QCA_WLAN_VENDOR_ATTR_PACKET_FILTER_PROGRAM,
+
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_PACKET_FILTER_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_PACKET_FILTER_MAX =
+	QCA_WLAN_VENDOR_ATTR_PACKET_FILTER_AFTER_LAST - 1,
+};
+
+/**
  * enum qca_vendor_attr_get_preferred_freq_list - get preferred channel list
  * @QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_INVALID: invalid value
  * @QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_IFACE_TYPE: interface type
@@ -2435,4 +2470,7 @@ int wlan_hdd_disable_dfs_chan_scan(hdd_context_t *hdd_ctx,
 
 int wlan_hdd_cfg80211_update_band(struct wiphy *wiphy,
 				  eCsrBand eBand);
+
+void hdd_get_bpf_offload_cb(void *hdd_context, struct sir_bpf_get_offload *);
+void hdd_init_bpf_completion(void);
 #endif

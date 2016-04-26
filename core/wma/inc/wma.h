@@ -2048,5 +2048,12 @@ QDF_STATUS wma_ht40_stop_obss_scan(tp_wma_handle wma_handle,
 				int32_t vdev_id);
 QDF_STATUS wma_send_ht40_obss_scanind(tp_wma_handle wma,
 	struct obss_ht40_scanind *req);
+
+int wma_get_bpf_caps_event_handler(void *handle,
+				u_int8_t *cmd_param_info,
+				u_int32_t len);
+QDF_STATUS wma_get_bpf_capabilities(tp_wma_handle wma);
+QDF_STATUS wma_set_bpf_instructions(tp_wma_handle wma,
+			struct sir_bpf_set_offload *bpf_set_offload);
 #endif
 struct wma_ini_config *wma_get_ini_handle(tp_wma_handle wma_handle);

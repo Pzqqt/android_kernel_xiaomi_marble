@@ -1117,4 +1117,12 @@ bool sme_is_sta_smps_allowed(tHalHandle hHal, uint8_t session_id);
 QDF_STATUS sme_add_beacon_filter(tHalHandle hal,
 				uint32_t session_id, uint32_t *ie_map);
 QDF_STATUS sme_remove_beacon_filter(tHalHandle hal, uint32_t session_id);
+QDF_STATUS sme_bpf_offload_register_callback(tHalHandle hal,
+					void (*pbpf_get_offload_cb)(void *,
+					struct sir_bpf_get_offload *));
+
+QDF_STATUS sme_get_bpf_offload_capabilities(tHalHandle hal);
+QDF_STATUS sme_set_bpf_instructions(tHalHandle hal,
+				struct sir_bpf_set_offload *);
+
 #endif /* #if !defined( __SME_API_H ) */
