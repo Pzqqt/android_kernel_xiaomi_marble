@@ -13437,6 +13437,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 	struct ps_global_info *ps_global_info = &pMac->sme.ps_global_info;
 	struct ps_params *ps_param = &ps_global_info->ps_params[sessionId];
 	uint8_t ese_config = 0;
+	tpCsrNeighborRoamControlInfo neigh_roam_info;
 
 
 	if (!pSession) {
@@ -13448,6 +13449,20 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		sms_log(pMac, LOGE, FL(" pBssDescription is NULL"));
 		return QDF_STATUS_E_FAILURE;
 	}
+	neigh_roam_info = &pMac->roam.neighborRoamInfo[sessionId];
+	if ((eWNI_SME_REASSOC_REQ == messageType) ||
+		CDS_IS_CHANNEL_5GHZ(pBssDescription->channelId) ||
+		(abs(pBssDescription->rssi) <
+		 (neigh_roam_info->cfgParams.neighborLookupThreshold +
+		  neigh_roam_info->cfgParams.hi_rssi_scan_rssi_delta))) {
+		pSession->disable_hi_rssi = true;
+		sms_log(pMac, LOG1,
+			FL("Disabling HI_RSSI feature, AP channel=%d, rssi=%d"),
+			pBssDescription->channelId, pBssDescription->rssi);
+	} else {
+		pSession->disable_hi_rssi = false;
+	}
+
 
 	do {
 		pSession->joinFailStatusCode.statusCode = eSIR_SME_SUCCESS;
@@ -16948,14 +16963,11 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 	 * is useful only if we are connected to a 2.4 GHz AP and we wish
 	 * to connect to a better 5GHz AP is available.
 	 */
-	if (CDS_IS_CHANNEL_5GHZ(op_channel)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			"Disabling HI_RSSI feature as connected AP is 5GHz");
+	if (session->disable_hi_rssi)
 		req_buf->hi_rssi_scan_rssi_delta = 0;
-	} else {
+	else
 		req_buf->hi_rssi_scan_rssi_delta =
 			roam_info->cfgParams.hi_rssi_scan_rssi_delta;
-	}
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		"hi_rssi:delta=%d, max_count=%d, delay=%d, ub=%d",
 			req_buf->hi_rssi_scan_rssi_delta,

@@ -990,6 +990,7 @@ typedef struct tagCsrRoamSession {
 	bool ch_switch_in_progress;
 	bool roam_synch_in_progress;
 	bool supported_nss_1x1;
+	bool disable_hi_rssi;
 } tCsrRoamSession;
 
 typedef struct tagCsrRoamStruct {
