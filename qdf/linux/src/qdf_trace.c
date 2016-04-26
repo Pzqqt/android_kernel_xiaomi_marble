@@ -103,6 +103,7 @@ static t_qdf_trace_data g_qdf_trace_data;
 static tp_qdf_trace_cb qdf_trace_cb_table[QDF_MODULE_ID_MAX];
 static tp_qdf_trace_cb qdf_trace_restore_cb_table[QDF_MODULE_ID_MAX];
 
+#ifdef FEATURE_DP_TRACE
 /* Static and Global variables */
 static spinlock_t l_dp_trace_lock;
 
@@ -119,7 +120,7 @@ static struct s_qdf_dp_trace_data g_qdf_dp_trace_data;
  * are stored in qdf_dp_trace_cb_table, callbacks are initialized during init
  */
 static tp_qdf_dp_trace_cb qdf_dp_trace_cb_table[QDF_DP_TRACE_MAX];
-
+#endif
 /**
  * qdf_trace_set_level() - Set the trace level for a particular module
  * @module: Module id
@@ -715,6 +716,7 @@ void qdf_trace_dump_all(void *p_mac, uint8_t code, uint8_t session,
 }
 EXPORT_SYMBOL(qdf_trace_dump_all);
 
+#ifdef FEATURE_DP_TRACE
 /**
  * qdf_dp_trace_init() - enables the DP trace
  * Called during driver load and it enables DP trace
@@ -1510,3 +1512,4 @@ void qdf_dp_trace_dump_all(uint32_t count)
 	}
 }
 EXPORT_SYMBOL(qdf_dp_trace_dump_all);
+#endif

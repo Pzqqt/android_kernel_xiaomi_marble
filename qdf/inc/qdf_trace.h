@@ -154,7 +154,11 @@ typedef struct s_qdf_trace_data {
 #define CASE_RETURN_STRING(str) case ((str)): return (uint8_t *)(# str);
 
 /* DP Trace Implementation */
+#ifdef FEATURE_DP_TRACE
 #define DPTRACE(p) p
+#else
+#define DPTRACE(p)
+#endif
 
 #define MAX_QDF_DP_TRACE_RECORDS       4000
 #define QDF_DP_TRACE_RECORD_SIZE       16
@@ -333,8 +337,12 @@ void qdf_trace_init(void);
 void qdf_trace_enable(uint32_t, uint8_t enable);
 void qdf_trace_dump_all(void *, uint8_t, uint8_t, uint32_t, uint32_t);
 
-void qdf_dp_trace_spin_lock_init(void);
+
+#ifdef FEATURE_DP_TRACE
+void qdf_dp_trace_log_pkt(uint8_t session_id, struct sk_buff *skb,
+				uint8_t event_type);
 void qdf_dp_trace_init(void);
+void qdf_dp_trace_spin_lock_init(void);
 void qdf_dp_trace_set_value(uint8_t proto_bitmap, uint8_t no_of_records,
 			 uint8_t verbosity);
 void qdf_dp_trace_set_track(qdf_nbuf_t nbuf);
@@ -356,8 +364,30 @@ qdf_dp_trace_proto_pkt(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
 		enum qdf_proto_subtype subtype, enum qdf_proto_dir dir);
 void qdf_dp_display_proto_pkt(struct qdf_dp_trace_record_s *record,
 				uint16_t index);
+#else
+static inline
 void qdf_dp_trace_log_pkt(uint8_t session_id, struct sk_buff *skb,
-				uint8_t event_type);
+				uint8_t event_type)
+{
+}
+static inline
+void qdf_dp_trace_init(void)
+{
+}
+static inline
+void qdf_dp_trace_set_track(qdf_nbuf_t nbuf)
+{
+}
+static inline
+void qdf_dp_trace_set_value(uint8_t proto_bitmap, uint8_t no_of_records,
+			 uint8_t verbosity)
+{
+}
+static inline
+void qdf_dp_trace_dump_all(uint32_t count)
+{
+}
+#endif
 
 
 /**
