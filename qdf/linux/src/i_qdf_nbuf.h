@@ -136,7 +136,12 @@ struct qdf_nbuf_cb {
 			uint32_t tcp_ack_num;
 			uint32_t flow_id_toeplitz;
 			uint32_t map_index;
-		} rx; /* 24 bytes */
+			union {
+				uint8_t packet_state;
+				uint8_t dp_trace:1,
+						rsrvd:7;
+			} trace;
+		} rx; /* 20 bytes */
 
 		/* Note: MAX: 40 bytes */
 		struct {
@@ -228,6 +233,8 @@ struct qdf_nbuf_cb {
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.tcp_ack_num)
 #define QDF_NBUF_CB_RX_FLOW_ID_TOEPLITZ(skb) \
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.flow_id_toeplitz)
+#define QDF_NBUF_CB_RX_DP_TRACE(skb) \
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.trace.dp_trace)
 
 #define QDF_NBUF_CB_TX_EXTRA_FRAG_VADDR(skb) \
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.extra_frag.vaddr)

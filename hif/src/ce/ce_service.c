@@ -497,7 +497,8 @@ ce_sendlist_send(struct CE_handle *copyeng,
 		DPTRACE(qdf_dp_trace((qdf_nbuf_t)per_transfer_context,
 			QDF_DP_TRACE_CE_PACKET_PTR_RECORD,
 			(uint8_t *)&(((qdf_nbuf_t)per_transfer_context)->data),
-			sizeof(((qdf_nbuf_t)per_transfer_context)->data)));
+			sizeof(((qdf_nbuf_t)per_transfer_context)->data),
+			QDF_TX));
 	} else {
 		/*
 		 * Probably not worth the additional complexity to support
@@ -672,7 +673,7 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t *msdus,
 		DPTRACE(qdf_dp_trace(msdu,
 			QDF_DP_TRACE_CE_FAST_PACKET_PTR_RECORD,
 			qdf_nbuf_data_addr(msdu),
-			sizeof(qdf_nbuf_data(msdu))));
+			sizeof(qdf_nbuf_data(msdu)), QDF_TX));
 	}
 
 	/* Write the final index to h/w one-shot */
