@@ -5598,7 +5598,7 @@ int __wma_bus_resume(WMA_HANDLE handle)
 	WMA_LOGE("%s: wow mode %d", __func__, wow_mode);
 
 	if (!wow_mode)
-		return wma_resume_target(handle);
+		return qdf_status_to_os_return(wma_resume_target(handle));
 
 	status = wma_disable_wow_in_fw(handle);
 	return qdf_status_to_os_return(status);
