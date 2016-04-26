@@ -7244,6 +7244,8 @@ void csr_scan_active_list_timeout_handle(void *userData)
 			FL(" Failed to post message to LIM"));
 		qdf_mem_free(msg);
 	}
+	csr_save_scan_results(mac_ctx, scan_cmd->u.scanCmd.reason,
+		scan_cmd->sessionId);
 	csr_release_scan_command(mac_ctx, scan_cmd, eCSR_SCAN_FAILURE);
 	return;
 }
