@@ -36,10 +36,7 @@
 #include "i_ar6320v2_regtable.h"
 #include "epping_main.h"
 #include "ce_reg.h"
-#if  defined(CONFIG_CNSS)
-#include <net/cnss.h>
-#endif
-
+#include "pld_common.h"
 #include "i_bmi.h"
 #include "qwlan_version.h"
 #include "cds_concurrency.h"
@@ -59,19 +56,16 @@ static uint32_t refclk_speed_to_hz[] = {
 	52000000,               /* SOC_REFCLK_52_MHZ */
 };
 
-#if  defined(CONFIG_CNSS)
 static int ol_target_coredump(void *inst, void *memory_block,
 					uint32_t block_len);
-#endif
 
 #ifdef FEATURE_SECURE_FIRMWARE
-static int ol_check_fw_hash(const u8 *data, u32 fw_size, ATH_BIN_FILE file)
+static int ol_check_fw_hash(struct device *dev,
+			    const u8 *data, u32 fw_size, ATH_BIN_FILE file)
 {
 	u8 *hash = NULL;
-#ifdef CONFIG_CNSS
 	u8 *fw_mem = NULL;
 	u8 digest[SHA256_DIGEST_SIZE];
-#endif
 	u8 temp[SHA256_DIGEST_SIZE] = { };
 	int ret = 0;
 
@@ -105,8 +99,7 @@ static int ol_check_fw_hash(const u8 *data, u32 fw_size, ATH_BIN_FILE file)
 		goto end;
 	}
 
-#ifdef CONFIG_CNSS
-	fw_mem = (u8 *)cnss_get_fw_ptr();
+	fw_mem = pld_get_fw_ptr(dev);
 	if (!fw_mem || (fw_size > MAX_FIRMWARE_SIZE)) {
 		BMI_ERR("No Memory to copy FW data");
 		ret = -1;
@@ -114,7 +107,7 @@ static int ol_check_fw_hash(const u8 *data, u32 fw_size, ATH_BIN_FILE file)
 	}
 	qdf_mem_copy(fw_mem, data, fw_size);
 
-	ret = cnss_get_sha_hash(fw_mem, fw_size, "sha256", digest);
+	ret = pld_get_sha_hash(dev, fw_mem, fw_size, "sha256", digest);
 
 	if (ret) {
 		BMI_ERR("Sha256 Hash computation failed err:%d", ret);
@@ -129,7 +122,6 @@ static int ol_check_fw_hash(const u8 *data, u32 fw_size, ATH_BIN_FILE file)
 				   hash, SHA256_DIGEST_SIZE);
 		ret = QDF_STATUS_E_FAILURE;
 	}
-#endif
 end:
 	return ret;
 }
@@ -279,7 +271,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 
 #ifdef FEATURE_SECURE_FIRMWARE
 
-	if (ol_check_fw_hash(fw_entry->data, fw_entry_size, file)) {
+	if (ol_check_fw_hash(qdf_dev->dev, fw_entry->data, fw_entry_size, file)) {
 		BMI_ERR("Hash Check failed for file:%s", filename);
 		status = QDF_STATUS_E_FAILURE;
 		goto end;
@@ -439,22 +431,17 @@ ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 				uint32_t address, bool compressed)
 {
 	int ret;
+	qdf_device_t qdf_dev = ol_ctx->qdf_dev;
 
-#ifdef CONFIG_CNSS
 	/* Wait until suspend and resume are completed before loading FW */
-	cnss_lock_pm_sem();
-#endif
+	pld_lock_pm_sem(qdf_dev->dev);
 
 	ret = __ol_transfer_bin_file(ol_ctx, file, address, compressed);
 
-#ifdef CONFIG_CNSS
-	cnss_release_pm_sem();
-#endif
+	pld_release_pm_sem(qdf_dev->dev);
 
 	return ret;
 }
-
-#if  defined(CONFIG_CNSS)
 
 /**
  * struct ramdump_info: Structure to hold ramdump information
@@ -468,27 +455,39 @@ struct ramdump_info {
 	unsigned long size;
 };
 
-#if defined(CONFIG_CNSS) && !defined(QCA_WIFI_3_0)
-static inline void ol_get_ramdump_mem(struct ramdump_info *info)
+#if !defined(QCA_WIFI_3_0)
+static inline void ol_get_ramdump_mem(struct device *dev,
+				      struct ramdump_info *info)
 {
-	info->base = cnss_get_virt_ramdump_mem(&info->size);
+	info->base = pld_get_virt_ramdump_mem(dev, &info->size);
 }
 #else
-static inline void ol_get_ramdump_mem(struct ramdump_info *info) { }
+static inline void ol_get_ramdump_mem(struct device *dev,
+				      struct ramdump_info *info) { }
 #endif
 
 int ol_copy_ramdump(struct hif_opaque_softc *scn)
 {
 	int ret = -1;
+	struct hif_opaque_softc **ol_ctx_ptr = &scn;
+	struct ol_context *ol_ctx;
+	qdf_device_t qdf_dev;
+	struct ramdump_info *info;
 
-	struct ramdump_info *info = qdf_mem_malloc(sizeof(struct ramdump_info));
+	ol_ctx = container_of(ol_ctx_ptr, struct ol_context , scn);
+	if (!ol_ctx) {
+		BMI_ERR("%s: Invalid ol_ctx\n", __func__);
+		return -EINVAL;
+	}
+	qdf_dev = ol_ctx->qdf_dev;
 
+	info = qdf_mem_malloc(sizeof(struct ramdump_info));
 	if (!info) {
 		BMI_ERR("%s Memory for Ramdump Allocation failed", __func__);
 		return -ENOMEM;
 	}
 
-	ol_get_ramdump_mem(info);
+	ol_get_ramdump_mem(qdf_dev->dev, info);
 
 	if (!info->base || !info->size) {
 		BMI_ERR("%s:ramdump collection fail", __func__);
@@ -510,6 +509,8 @@ void ramdump_work_handler(void *data)
 	struct hif_target_info *tgt_info;
 	struct ol_context *ol_ctx = data;
 	struct hif_opaque_softc *ramdump_scn = ol_ctx->scn;
+	qdf_device_t qdf_dev = ol_ctx->qdf_dev;
+	struct ol_config_info *ini_cfg = ol_get_ini_handle(ol_ctx);
 
 	if (!ramdump_scn) {
 		BMI_ERR("%s:Ramdump_scn is null:", __func__);
@@ -535,7 +536,7 @@ void ramdump_work_handler(void *data)
 			sizeof(uint32_t)) != QDF_STATUS_SUCCESS) {
 		BMI_ERR("HifDiagReadiMem FW Dump Area Pointer failed!");
 		ol_copy_ramdump(ramdump_scn);
-		cnss_device_crashed();
+		pld_device_crashed(qdf_dev->dev);
 		return;
 	}
 
@@ -555,41 +556,33 @@ void ramdump_work_handler(void *data)
 
 	BMI_ERR("%s: RAM dump collecting completed!", __func__);
 	/* notify SSR framework the target has crashed. */
-	cnss_device_crashed();
+	pld_device_crashed(qdf_dev->dev);
 	return;
 
 out_fail:
 	/* Silent SSR on dump failure */
-#ifdef CNSS_SELF_RECOVERY
-	cnss_device_self_recovery();
-#else
-	cnss_device_crashed();
-#endif
+	if (ini_cfg->enable_self_recovery)
+		pld_device_self_recovery(qdf_dev->dev);
+	else
+		pld_device_crashed(qdf_dev->dev);
 	return;
 }
 
-static void fw_indication_work_handler(struct work_struct *fw_indication)
+void fw_indication_work_handler(void *data)
 {
-	cnss_device_self_recovery();
-}
+	struct ol_context *ol_ctx = data;
+	qdf_device_t qdf_dev = ol_ctx->qdf_dev;
 
-static DECLARE_WORK(fw_indication_work, fw_indication_work_handler);
-
-void ol_schedule_fw_indication_work(struct hif_opaque_softc *scn)
-{
-	schedule_work(&fw_indication_work);
+	pld_device_self_recovery(qdf_dev->dev);
 }
-#endif
 
 void ol_target_failure(void *instance, QDF_STATUS status)
 {
 	struct ol_context *ol_ctx = instance;
 	struct hif_opaque_softc *scn = ol_ctx->scn;
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-#ifdef CONFIG_CNSS
 	struct ol_config_info *ini_cfg = ol_get_ini_handle(ol_ctx);
 	int ret;
-#endif
 	enum hif_target_status target_status = hif_get_target_status(scn);
 
 	if (hif_get_bus_type(scn) == QDF_BUS_TYPE_SNOC) {
@@ -618,27 +611,23 @@ void ol_target_failure(void *instance, QDF_STATUS status)
 	}
 	cds_set_recovery_in_progress(true);
 
-#ifdef CONFIG_CNSS
 	ret = hif_check_fw_reg(scn);
 	if (0 == ret) {
 		if (ini_cfg->enable_self_recovery) {
-			ol_schedule_fw_indication_work(scn);
+			qdf_sched_work(0, &ol_ctx->fw_indication_work);
 			return;
 		}
 	} else if (-1 == ret) {
 		return;
 	}
-#endif
 
 	BMI_ERR("XXX TARGET ASSERTED XXX");
 
-#if  defined(CONFIG_CNSS)
 	/* Collect the RAM dump through a workqueue */
 	if (ini_cfg->enable_ramdump_collection)
 		qdf_sched_work(0, &ol_ctx->ramdump_work);
 	else
 		pr_debug("%s: athdiag read for target reg\n", __func__);
-#endif
 
 	return;
 }
@@ -646,14 +635,13 @@ void ol_target_failure(void *instance, QDF_STATUS status)
 QDF_STATUS ol_configure_target(struct ol_context *ol_ctx)
 {
 	uint32_t param;
-#ifdef CONFIG_CNSS
-	struct cnss_platform_cap cap;
+	struct pld_platform_cap cap;
 	int ret;
-#endif
 	struct hif_opaque_softc *scn = ol_ctx->scn;
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
 	struct ol_config_info *ini_cfg = ol_get_ini_handle(ol_ctx);
 	uint32_t target_type = tgt_info->target_type;
+	qdf_device_t qdf_dev = ol_ctx->qdf_dev;
 
 	/* Tell target which HTC version it is used */
 	param = HTC_PROTOCOL_VERSION;
@@ -718,13 +706,11 @@ QDF_STATUS ol_configure_target(struct ol_context *ol_ctx)
 	}
 #endif /* CONFIG_CDC_MAX_PERF_WAR */
 
-#ifdef CONFIG_CNSS
-
-	ret = cnss_get_platform_cap(&cap);
+	ret = pld_get_platform_cap(qdf_dev->dev, &cap);
 	if (ret)
-		BMI_ERR("platform capability info from CNSS not available");
+		BMI_ERR("platform capability info not available");
 
-	if (!ret && cap.cap_flag & CNSS_HAS_EXTERNAL_SWREG) {
+	if (!ret && cap.cap_flag & PLD_HAS_EXTERNAL_SWREG) {
 		if (bmi_read_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_option_flag2)),
 			(uint8_t *)&param, 4, ol_ctx) != QDF_STATUS_SUCCESS) {
@@ -742,7 +728,6 @@ QDF_STATUS ol_configure_target(struct ol_context *ol_ctx)
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
-#endif
 
 #ifdef WLAN_FEATURE_LPSS
 	if (ini_cfg->enable_lpass_support) {
@@ -1157,16 +1142,16 @@ end:
 	return status;
 }
 
-#ifdef CONFIG_CNSS
 /* AXI Start Address */
 #define TARGET_ADDR (0xa0000)
 
 void ol_transfer_codeswap_struct(struct ol_context *ol_ctx)
 {
-	struct codeswap_codeseg_info wlan_codeswap;
+	struct pld_codeswap_codeseg_info wlan_codeswap;
 	QDF_STATUS rv;
+	qdf_device_t qdf_dev = ol_ctx->qdf_dev;
 
-	if (cnss_get_codeswap_struct(&wlan_codeswap)) {
+	if (pld_get_codeswap_struct(qdf_dev->dev, &wlan_codeswap)) {
 		BMI_ERR("%s: failed to get codeswap structure", __func__);
 		return;
 	}
@@ -1181,7 +1166,6 @@ void ol_transfer_codeswap_struct(struct ol_context *ol_ctx)
 	}
 	BMI_INFO("codeswap structure is successfully downloaded");
 }
-#endif
 
 QDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 {
@@ -1193,16 +1177,17 @@ QDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 	struct ol_config_info *ini_cfg = ol_get_ini_handle(ol_ctx);
 	uint32_t target_type = tgt_info->target_type;
 	uint32_t target_version = tgt_info->target_version;
-#ifdef CONFIG_CNSS
 	struct bmi_info *bmi_ctx = GET_BMI_CONTEXT(ol_ctx);
+	qdf_device_t qdf_dev = ol_ctx->qdf_dev;
 
-	if (0 != cnss_get_fw_files_for_target(&bmi_ctx->fw_files,
+	if (0 != pld_get_fw_files_for_target(qdf_dev->dev,
+					     &bmi_ctx->fw_files,
 					      target_type,
 					      target_version)) {
-		BMI_ERR("%s: No FW files from CNSS driver", __func__);
+		BMI_ERR("%s: No FW files from platform driver", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-#endif
+
 	/* Transfer Board Data from Target EEPROM to Target RAM */
 	/* Determine where in Target RAM to write Board Data */
 	bmi_read_memory(hif_hia_item_address(target_type,
@@ -1256,9 +1241,8 @@ QDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 		BMI_INFO("%s: Using 0x%x for the remainder of init",
 				__func__, address);
 
-#ifdef CONFIG_CNSS
 		ol_transfer_codeswap_struct(ol_ctx);
-#endif
+
 		status = ol_transfer_bin_file(ol_ctx, ATH_OTP_FILE,
 						address, true);
 		/* Execute the OTP code only if entry found and downloaded */
@@ -1396,7 +1380,6 @@ int ol_diag_read(struct hif_opaque_softc *scn, uint8_t *buffer,
 		return -EIO;
 }
 
-#if  defined(CONFIG_CNSS)
 static int ol_ath_get_reg_table(uint32_t target_version,
 				tgt_reg_table *reg_table)
 {
@@ -1431,10 +1414,7 @@ static int ol_ath_get_reg_table(uint32_t target_version,
 
 	return section_len;
 }
-#endif
 
-
-#if  defined(CONFIG_CNSS)
 static int ol_diag_read_reg_loc(struct hif_opaque_softc *scn, uint8_t *buffer,
 				uint32_t buffer_len)
 {
@@ -1500,7 +1480,6 @@ static int ol_diag_read_reg_loc(struct hif_opaque_softc *scn, uint8_t *buffer,
 out:
 	return result;
 }
-#endif
 
 void ol_dump_target_memory(struct hif_opaque_softc *scn, void *memory_block)
 {
@@ -1526,8 +1505,6 @@ void ol_dump_target_memory(struct hif_opaque_softc *scn, void *memory_block)
 	}
 }
 
-
-#if  defined(CONFIG_CNSS)
 /**
  * ol_target_coredump() - API to collect target ramdump
  * @inst - private context
@@ -1614,7 +1591,6 @@ static int ol_target_coredump(void *inst, void *memory_block,
 	}
 	return ret;
 }
-#endif
 
 /**
  * ol_get_ini_handle() - API to get Ol INI configuration

@@ -1,5 +1,5 @@
 /*
- * copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -512,7 +512,10 @@ QDF_STATUS ol_cds_init(qdf_device_t qdf_dev, void *hif_ctx)
 	ol_info->scn = hif_ctx;
 	ol_info->tgt_def.targetdef = hif_get_targetdef(hif_ctx);
 
-	qdf_create_work(qdf_dev, &ol_info->ramdump_work, ramdump_work_handler, ol_info);
+	qdf_create_work(qdf_dev, &ol_info->ramdump_work,
+			ramdump_work_handler, ol_info);
+	qdf_create_work(qdf_dev, &ol_info->fw_indication_work,
+			fw_indication_work_handler, ol_info);
 
 	return status;
 }

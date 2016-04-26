@@ -40,10 +40,6 @@
 #include "ol_params.h"
 #include <wdi_event_api.h>
 
-#ifdef CONFIG_CNSS
-#include <net/cnss.h>
-#endif
-
 #include "ol_ctrl_addba_api.h"
 
 struct ol_version {

@@ -31,14 +31,11 @@
 #ifndef _I_BMI_H_
 #define _I_BMI_H_
 
-#ifdef CONFIG_CNSS
-#include <net/cnss.h>
-#endif
-
 #include "hif.h"
 #include "bmi_msg.h"
 #include "bmi.h"
 #include "ol_fw.h"
+#include "pld_common.h"
 
 #ifdef CONFIG_CNSS
 #define QCA_FIRMWARE_FILE		fw_files->image_file
@@ -149,9 +146,7 @@ struct bmi_info {
 	dma_addr_t bmi_cmd_da;
 	dma_addr_t bmi_rsp_da;
 	bool bmi_done;
-#ifdef CONFIG_CNSS
-	struct cnss_fw_files fw_files;
-#endif
+	struct pld_fw_files fw_files;
 };
 
 /**
@@ -160,7 +155,8 @@ struct bmi_info {
  * @cal_in_flash: For Firmware Flash Download
  * @qdf_dev: QDF Device
  * @scn: HIF Context
- * @ramdump_work: WorkQueue for Ramdump collection
+ * @ramdump_work: Work for Ramdump collection
+ * @fw_indication_work: Work for Fw inciation
  * @tgt_def: Target Defnition pointer
  *
  * Structure to hold all ol BMI/Ramdump info
@@ -171,6 +167,7 @@ struct ol_context {
 	uint8_t *cal_in_flash;
 	qdf_device_t qdf_dev;
 	qdf_work_t ramdump_work;
+	qdf_work_t fw_indication_work;
 	struct hif_opaque_softc *scn;
 	struct targetdef_t {
 		struct targetdef_s *targetdef;
@@ -202,5 +199,6 @@ QDF_STATUS ol_configure_target(struct ol_context *ol_ctx);
 QDF_STATUS bmi_sign_stream_start(uint32_t address, uint8_t *buffer,
 				 uint32_t length, struct ol_context *ol_ctx);
 void ramdump_work_handler(void *arg);
+void fw_indication_work_handler(void *arg);
 struct ol_config_info *ol_get_ini_handle(struct ol_context *ol_ctx);
 #endif
