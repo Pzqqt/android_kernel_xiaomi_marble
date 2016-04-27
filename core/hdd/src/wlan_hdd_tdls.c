@@ -108,6 +108,41 @@ void hdd_send_wlan_tdls_teardown_event(uint32_t reason,
 	WLAN_HOST_DIAG_EVENT_REPORT(&tdls_tear_down,
 		EVENT_WLAN_TDLS_TEARDOWN);
 }
+
+/**
+ * hdd_wlan_tdls_enable_link_event()- send TDLS enable link event
+ * @peer_mac: peer mac
+ * @is_off_chan_supported: Does peer supports off chan
+ * @is_off_chan_configured: If off channel is configured
+ * @is_off_chan_established: If off chan is established
+ *
+ * This Function send TDLS enable link diag event
+ *
+ * Return: void.
+ */
+
+void hdd_wlan_tdls_enable_link_event(const uint8_t *peer_mac,
+				uint8_t is_off_chan_supported,
+				uint8_t is_off_chan_configured,
+				uint8_t is_off_chan_established)
+{
+	WLAN_HOST_DIAG_EVENT_DEF(tdls_event,
+		struct host_event_tdls_enable_link);
+
+	qdf_mem_copy(tdls_event.peer_mac,
+			peer_mac, MAC_ADDR_LEN);
+
+	tdls_event.is_off_chan_supported =
+			is_off_chan_supported;
+	tdls_event.is_off_chan_configured =
+			is_off_chan_configured;
+	tdls_event.is_off_chan_established =
+			is_off_chan_established;
+
+	WLAN_HOST_DIAG_EVENT_REPORT(&tdls_event,
+		EVENT_WLAN_TDLS_ENABLE_LINK);
+}
+
 #endif
 
 /**
@@ -4458,7 +4493,9 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 				}
 			}
 		}
-
+		hdd_wlan_tdls_enable_link_event(peer,
+			pTdlsPeer->isOffChannelSupported,
+			0, 0);
 	}
 	break;
 	case NL80211_TDLS_DISABLE_LINK:

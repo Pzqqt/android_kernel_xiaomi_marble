@@ -652,10 +652,20 @@ static inline void hdd_tdls_pre_init(hdd_context_t *hdd_ctx) { }
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 void hdd_send_wlan_tdls_teardown_event(uint32_t reason,
 					uint8_t *peer_mac);
+void hdd_wlan_tdls_enable_link_event(const uint8_t *peer_mac,
+	uint8_t is_off_chan_supported,
+	uint8_t is_off_chan_configured,
+	uint8_t is_off_chan_established);
 #else
 static inline
 void hdd_send_wlan_tdls_teardown_event(uint32_t reason,
 					uint8_t *peer_mac) {}
+static inline
+void hdd_wlan_tdls_enable_link_event(const uint8_t *peer_mac,
+	uint8_t is_off_chan_supported,
+	uint8_t is_off_chan_configured,
+	uint8_t is_off_chan_established) {}
+
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
 #endif /* __HDD_TDLS_H */
