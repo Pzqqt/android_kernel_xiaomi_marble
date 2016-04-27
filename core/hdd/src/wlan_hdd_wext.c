@@ -9758,7 +9758,7 @@ static int wlan_hdd_set_mon_chan(hdd_adapter_t *adapter, uint32_t chan,
 		     QDF_MAC_ADDR_SIZE);
 
 	ch_params.ch_width = bandwidth;
-	sme_set_ch_params(hal_hdl, ch_info->phy_mode, chan, 0, &ch_params);
+	cds_set_channel_params(chan, 0, &ch_params);
 	status = sme_roam_channel_change_req(hal_hdl, bssid, &ch_params,
 					     &roam_profile);
 	if (status) {

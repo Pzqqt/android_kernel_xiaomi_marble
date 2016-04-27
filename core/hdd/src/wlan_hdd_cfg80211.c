@@ -5438,9 +5438,7 @@ __wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
 		ap_ctx->sapConfig.ch_params.ch_width =
 					ap_ctx->sapConfig.ch_width_orig;
 
-		sme_set_ch_params(hdd_ctx->hHal,
-				ap_ctx->sapConfig.SapHw_mode,
-				ap_ctx->sapConfig.channel,
+		cds_set_channel_params(ap_ctx->sapConfig.channel,
 				ap_ctx->sapConfig.sec_ch,
 				&ap_ctx->sapConfig.ch_params);
 
@@ -8533,8 +8531,8 @@ void hdd_select_cbmode(hdd_adapter_t *pAdapter, uint8_t operationChannel)
 	eHddDot11Mode hddDot11Mode = iniDot11Mode;
 	struct ch_params_s ch_params;
 	hdd_station_ctx_t *station_ctx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-	uint32_t cb_mode;
 	struct hdd_mon_set_ch_info *ch_info = &station_ctx->ch_info;
+	uint8_t sec_ch = 0;
 
 	ch_params.ch_width =
 			(WLAN_HDD_GET_CTX(pAdapter))->config->vhtChannelWidth;
@@ -8557,17 +8555,26 @@ void hdd_select_cbmode(hdd_adapter_t *pAdapter, uint8_t operationChannel)
 		hddDot11Mode = iniDot11Mode;
 		break;
 	}
+	/*
+	 * CDS api expects secondary channel for calculating
+	 * the channel params
+	 */
+	if ((ch_params.ch_width == CH_WIDTH_40MHZ) &&
+	    (CDS_IS_CHANNEL_24GHZ(operationChannel))) {
+		if (operationChannel >= 1 && operationChannel <= 5)
+			sec_ch = operationChannel + 4;
+		else if (operationChannel >= 6 && operationChannel <= 13)
+			sec_ch = operationChannel - 4;
+	}
+
 	/* This call decides required channel bonding mode */
-	cb_mode = sme_set_ch_params((WLAN_HDD_GET_CTX(pAdapter)->hHal),
-				hdd_cfg_xlate_to_csr_phy_mode(hddDot11Mode),
-				operationChannel, 0,
-				&ch_params);
+	cds_set_channel_params(operationChannel, sec_ch, &ch_params);
 
 	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam()) {
 		ch_info->channel_width = ch_params.ch_width;
 		ch_info->phy_mode = hdd_cfg_xlate_to_csr_phy_mode(hddDot11Mode);
 		ch_info->channel = operationChannel;
-		ch_info->cb_mode = cb_mode;
+		ch_info->cb_mode = ch_params.ch_width;
 		hdd_info("ch_info width %d, phymode %d channel %d",
 			 ch_info->channel_width, ch_info->phy_mode,
 			 ch_info->channel);
@@ -12161,6 +12168,7 @@ static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 	struct qdf_mac_addr bssid;
 	tCsrRoamProfile roam_profile;
 	struct ch_params_s ch_params;
+	uint8_t sec_ch = 0;
 	int ret;
 	uint16_t chan_num = cds_freq_to_chan(chandef->chan->center_freq);
 
@@ -12191,8 +12199,18 @@ static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 		     QDF_MAC_ADDR_SIZE);
 
 	ch_params.ch_width = chandef->width;
-	sme_set_ch_params(hal_hdl, ch_info->phy_mode, chan_num, 0,
-			  &ch_params);
+	/*
+	 * CDS api expects secondary channel for calculating
+	 * the channel params
+	 */
+	if ((ch_params.ch_width == CH_WIDTH_40MHZ) &&
+	    (CDS_IS_CHANNEL_24GHZ(chan_num))) {
+		if (chan_num >= 1 && chan_num <= 5)
+			sec_ch = chan_num + 4;
+		else if (chan_num >= 6 && chan_num <= 13)
+			sec_ch = chan_num - 4;
+	}
+	cds_set_channel_params(chan_num, sec_ch, &ch_params);
 	status = sme_roam_channel_change_req(hal_hdl, bssid, &ch_params,
 						 &roam_profile);
 	if (status) {

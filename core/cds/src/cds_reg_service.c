@@ -713,26 +713,3 @@ uint16_t cds_bw_value(enum phy_ch_width bw)
 	}
 }
 
-/**
- * cds_set_ch_params() - set channel parameters
- * @ch: channel
- * @phy_mode: physical mode
- * @ch_param: channel parameters will be returned
- *
- * Return: None
- */
-void cds_set_ch_params(uint8_t ch, uint32_t phy_mode,
-		       struct ch_params_s *ch_params)
-{
-	tHalHandle *hal_ctx = cds_get_context(QDF_MODULE_ID_PE);
-	if (!hal_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			("Invalid hal_ctx pointer"));
-		return;
-	}
-	/*
-	 * TODO: remove SME call and move the SME set channel
-	 * param functionality to CDS.
-	 */
-	sme_set_ch_params(hal_ctx, phy_mode, ch, 0, ch_params);
-}

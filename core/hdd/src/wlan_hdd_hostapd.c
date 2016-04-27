@@ -7309,7 +7309,6 @@ int wlan_hdd_setup_driver_overrides(hdd_adapter_t *ap_adapter)
 {
 	tsap_Config_t *sap_cfg = &ap_adapter->sessionCtx.ap.sapConfig;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
-	tHalHandle h_hal = WLAN_HDD_GET_HAL_CTX(ap_adapter);
 
 	if (ap_adapter->device_mode == QDF_SAP_MODE &&
 				hdd_ctx->config->force_sap_acs)
@@ -7343,7 +7342,7 @@ int wlan_hdd_setup_driver_overrides(hdd_adapter_t *ap_adapter)
 				eHT_CHANNEL_WIDTH_20MHZ;
 	}
 	sap_cfg->ch_params.ch_width = sap_cfg->ch_width_orig;
-	sme_set_ch_params(h_hal, sap_cfg->SapHw_mode, sap_cfg->channel,
+	cds_set_channel_params(sap_cfg->channel,
 				sap_cfg->sec_ch, &sap_cfg->ch_params);
 
 	return 0;

@@ -3392,9 +3392,8 @@ static QDF_STATUS sap_fsm_state_ch_select(ptSapContext sap_ctx,
 				  sap_ctx->channel, ch);
 
 			sap_ctx->channel = ch;
-			sme_set_ch_params(hal, sap_ctx->csr_roamProfile.phyMode,
-				sap_ctx->channel, sap_ctx->secondary_ch,
-				&sap_ctx->ch_params);
+			cds_set_channel_params(sap_ctx->channel,
+				sap_ctx->secondary_ch, &sap_ctx->ch_params);
 		}
 		if (sap_ctx->channel > 14 &&
 		    (sap_ctx->csr_roamProfile.phyMode == eCSR_DOT11_MODE_11g ||
@@ -3499,13 +3498,12 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(ptSapContext sap_ctx,
 		 * Radar found while performing channel availability
 		 * check, need to switch the channel again
 		 */
-		eCsrPhyMode phymode = sap_ctx->csr_roamProfile.phyMode;
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			  "ENTERTRED CAC WAIT STATE-->eSAP_DISCONNECTING\n");
 		if (mac_ctx->sap.SapDfsInfo.target_channel) {
-			sme_set_ch_params(hal, phymode,
-				   mac_ctx->sap.SapDfsInfo.target_channel, 0,
-				   &sap_ctx->ch_params);
+			cds_set_channel_params(
+				mac_ctx->sap.SapDfsInfo.target_channel, 0,
+				&sap_ctx->ch_params);
 		}
 
 		for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {

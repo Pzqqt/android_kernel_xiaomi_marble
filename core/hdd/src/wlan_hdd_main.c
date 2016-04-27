@@ -5181,9 +5181,7 @@ void hdd_restart_sap(hdd_adapter_t *adapter, uint8_t channel)
 	hdd_info("chan:%d width:%d",
 		channel, hdd_ap_ctx->sapConfig.ch_width_orig);
 
-	sme_set_ch_params(hal_handle,
-			hdd_ap_ctx->sapConfig.SapHw_mode,
-			hdd_ap_ctx->sapConfig.channel,
+	cds_set_channel_params(hdd_ap_ctx->sapConfig.channel,
 			hdd_ap_ctx->sapConfig.sec_ch,
 			&hdd_ap_ctx->sapConfig.ch_params);
 

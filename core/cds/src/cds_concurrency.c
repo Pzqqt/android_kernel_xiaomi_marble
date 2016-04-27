@@ -6378,11 +6378,10 @@ QDF_STATUS cds_check_and_restart_sap(eCsrRoamResult roam_result,
 	}
 	hdd_ap_ctx->sapConfig.ch_params.ch_width =
 		hdd_ap_ctx->sapConfig.ch_width_orig;
-	sme_set_ch_params(WLAN_HDD_GET_HAL_CTX(sap_adapter),
-			hdd_ap_ctx->sapConfig.SapHw_mode,
-			hdd_ap_ctx->operatingChannel,
-			hdd_ap_ctx->sapConfig.sec_ch,
-			&hdd_ap_ctx->sapConfig.ch_params);
+
+	cds_set_channel_params(hdd_ap_ctx->operatingChannel,
+		hdd_ap_ctx->sapConfig.sec_ch,
+		&hdd_ap_ctx->sapConfig.ch_params);
 	/*
 	 * Create a workqueue and let the workqueue handle the restart
 	 * of sap task. if we directly call sap restart function without
@@ -6947,9 +6946,7 @@ static void cds_check_sta_ap_concurrent_ch_intf(void *data)
 	hdd_ap_ctx->sapConfig.channel = intf_ch;
 	hdd_ap_ctx->sapConfig.ch_params.ch_width =
 		hdd_ap_ctx->sapConfig.ch_width_orig;
-	sme_set_ch_params(hal_handle,
-			hdd_ap_ctx->sapConfig.SapHw_mode,
-			hdd_ap_ctx->sapConfig.channel,
+	cds_set_channel_params(hdd_ap_ctx->sapConfig.channel,
 			hdd_ap_ctx->sapConfig.sec_ch,
 			&hdd_ap_ctx->sapConfig.ch_params);
 

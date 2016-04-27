@@ -583,9 +583,6 @@ int32_t cds_fill_some_regulatory_info(struct regulatory *reg);
 int32_t cds_get_country_from_alpha2(uint8_t *alpha2);
 void cds_fill_and_send_ctl_to_fw(struct regulatory *reg);
 void cds_set_wma_dfs_region(uint8_t dfs_region);
-
-void cds_set_ch_params(uint8_t ch, uint32_t phy_mode,
-		       struct ch_params_s *ch_params);
 uint16_t cds_reg_dmn_get_opclass_from_channel(uint8_t *country,
 					      uint8_t channel,
 					      uint8_t offset);

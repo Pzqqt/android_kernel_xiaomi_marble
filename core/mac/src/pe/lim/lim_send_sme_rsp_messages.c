@@ -2114,9 +2114,8 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 
 				ch_params.ch_width =
 					chnl_switch_info->newChanWidth;
-				cds_set_ch_params(csa_params->channel,
-						eCSR_DOT11_MODE_11ac,
-						&ch_params);
+				cds_set_channel_params(csa_params->channel,
+						0, &ch_params);
 				chnl_switch_info->newCenterChanFreq0 =
 					ch_params.center_freq_seg0;
 				/*
@@ -2156,9 +2155,9 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 								CH_WIDTH_40MHZ;
 					ch_params.ch_width =
 						chnl_switch_info->newChanWidth;
-					cds_set_ch_params(csa_params->channel,
-							eCSR_DOT11_MODE_11n,
-							&ch_params);
+					cds_set_channel_params(
+							csa_params->channel,
+							0, &ch_params);
 					lim_ch_switch->ch_center_freq_seg0 =
 						ch_params.center_freq_seg0;
 					lim_ch_switch->sec_ch_offset =
@@ -2179,9 +2178,8 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 				lim_ch_switch->state =
 				     eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY;
 				ch_params.ch_width = CH_WIDTH_40MHZ;
-				cds_set_ch_params(csa_params->channel,
-						eCSR_DOT11_MODE_11n,
-						&ch_params);
+				cds_set_channel_params(csa_params->channel,
+						0, &ch_params);
 				lim_ch_switch->ch_center_freq_seg0 =
 					ch_params.center_freq_seg0;
 				lim_ch_switch->sec_ch_offset =

@@ -189,11 +189,9 @@ QDF_STATUS wlansap_scan_callback(tHalHandle hal_handle,
 	}
 
 	sap_ctx->ch_params.ch_width = sap_ctx->acs_cfg->ch_width;
-	sme_set_ch_params(hal_handle,
-			sap_ctx->csr_roamProfile.phyMode,
-			sap_ctx->channel,
-			sap_ctx->secondary_ch,
-			&sap_ctx->ch_params);
+	cds_set_channel_params(sap_ctx->channel,
+		sap_ctx->secondary_ch,
+		&sap_ctx->ch_params);
 #ifdef SOFTAP_CHANNEL_RANGE
 	if (sap_ctx->channelList != NULL) {
 		/* Always free up the memory for channel selection whatever
@@ -241,9 +239,7 @@ void sap_config_acs_result(tHalHandle hal, ptSapContext sap_ctx,
 	struct ch_params_s ch_params = {0};
 
 	ch_params.ch_width = sap_ctx->acs_cfg->ch_width;
-	sme_set_ch_params(hal, sap_ctx->csr_roamProfile.phyMode, channel,
-				sec_ch, &ch_params);
-
+	cds_set_channel_params(channel, sec_ch, &ch_params);
 	sap_ctx->acs_cfg->ch_width = ch_params.ch_width;
 	if (sap_ctx->acs_cfg->ch_width > CH_WIDTH_40MHZ)
 		sap_ctx->acs_cfg->vht_seg0_center_ch =
@@ -525,7 +521,6 @@ wlansap_roam_process_dfs_chansw_update(tHalHandle hHal,
 	uint8_t intf;
 	QDF_STATUS qdf_status;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hHal);
-	eCsrPhyMode phy_mode = sap_ctx->csr_roamProfile.phyMode;
 	uint8_t dfs_beacon_start_req = 0;
 
 	if (sap_ctx->csr_roamProfile.disableDFSChSwitch) {
@@ -572,9 +567,9 @@ wlansap_roam_process_dfs_chansw_update(tHalHandle hHal,
 	 * currently. For e.g. 20/40/80 MHz operation
 	 */
 	if (mac_ctx->sap.SapDfsInfo.target_channel)
-		sme_set_ch_params(hHal, phy_mode,
-				  mac_ctx->sap.SapDfsInfo.target_channel, 0,
-				  &sap_ctx->ch_params);
+		cds_set_channel_params(mac_ctx->sap.SapDfsInfo.target_channel,
+			0, &sap_ctx->ch_params);
+
 	/*
 	 * Fetch the number of SAP interfaces. If the number of sap Interface
 	 * more than one then we will make is_sap_ready_for_chnl_chng to true

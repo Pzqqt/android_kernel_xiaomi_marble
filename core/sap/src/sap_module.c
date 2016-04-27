@@ -1565,13 +1565,8 @@ wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel,
 							new_ch_params.ch_width,
 							target_bw);
 			}
-
-			sme_set_ch_params(hHal,
-					sapContext->csr_roamProfile.phyMode,
-					targetChannel,
-					0,
-					&pMac->sap.SapDfsInfo.new_ch_params);
-
+			cds_set_channel_params(targetChannel,
+				0, &pMac->sap.SapDfsInfo.new_ch_params);
 			/*
 			 * Set the CSA IE required flag.
 			 */
@@ -2303,7 +2298,7 @@ wlansap_channel_change_request(void *pSapCtx, uint8_t target_channel)
 	 * which will result in channel width changing dynamically.
 	 */
 	ch_params = &mac_ctx->sap.SapDfsInfo.new_ch_params;
-	sme_set_ch_params(hHal, phy_mode, target_channel, 0, ch_params);
+	cds_set_channel_params(target_channel, 0, ch_params);
 	sapContext->ch_params.ch_width = ch_params->ch_width;
 	/* Update the channel as this will be used to
 	 * send event to supplicant
@@ -2445,10 +2440,8 @@ QDF_STATUS wlansap_dfs_send_csa_ie_request(void *pSapCtx)
 
 	pMac->sap.SapDfsInfo.new_ch_params.ch_width =
 				pMac->sap.SapDfsInfo.new_chanWidth;
-
-	sme_set_ch_params(hHal, sapContext->csr_roamProfile.phyMode,
-				pMac->sap.SapDfsInfo.target_channel, 0,
-				&pMac->sap.SapDfsInfo.new_ch_params);
+	cds_set_channel_params(pMac->sap.SapDfsInfo.target_channel,
+				0, &pMac->sap.SapDfsInfo.new_ch_params);
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			"%s: chan:%d req:%d width:%d off:%d",
