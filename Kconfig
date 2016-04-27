@@ -111,11 +111,11 @@ config WLAN_SYNC_TSF
 	bool "Enable QCOM sync multi devices tsf feature"
 	default n
 
-config FEATURE_LFR_SUBNET_DETECTION
+config LFR_SUBNET_DETECTION
 	bool "Enable LFR Subnet Change Detection"
 	default n
 
-config FEATURE_WLAN_MCC_TO_SCC_SWITCH
+config MCC_TO_SCC_SWITCH
 	bool "Enable MCC to SCC Switch Logic"
 	default n
 
