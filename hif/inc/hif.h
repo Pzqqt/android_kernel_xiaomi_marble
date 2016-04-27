@@ -461,6 +461,9 @@ QDF_STATUS hif_start(struct hif_opaque_softc *scn);
 void hif_stop(struct hif_opaque_softc *scn);
 void hif_flush_surprise_remove(struct hif_opaque_softc *scn);
 void hif_dump(struct hif_opaque_softc *scn, uint8_t CmdId, bool start);
+void hif_trigger_dump(struct hif_opaque_softc *hif_ctx,
+		      uint8_t cmd_id, bool start);
+
 QDF_STATUS hif_send_head(struct hif_opaque_softc *scn, uint8_t PipeID,
 				  uint32_t transferID, uint32_t nbytes,
 				  qdf_nbuf_t wbuf, uint32_t data_attr);

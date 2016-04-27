@@ -32,5 +32,5 @@ void priv_dump_agc(struct hif_softc *scn);
 void priv_start_cap_chaninfo(struct hif_softc *scn);
 void priv_dump_chaninfo(struct hif_softc *scn);
 void priv_dump_bbwatchdog(struct hif_softc *scn);
-void hif_shut_down_device(struct hif_opaque_softc *scn);
+void hif_shutdown_device(struct hif_opaque_softc *scn);
 #endif /* __MP_DEV_H__ */

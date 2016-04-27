@@ -44,10 +44,9 @@
 #include "hif_debug.h"
 
 void
-hif_dump_target_memory(struct hif_opaque_softc *hif_ctx, void *ramdump_base,
+hif_ce_dump_target_memory(struct hif_softc *scn, void *ramdump_base,
 						uint32_t address, uint32_t size)
 {
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	uint32_t loc = address;
 	uint32_t val = 0;
 	uint32_t j = 0;

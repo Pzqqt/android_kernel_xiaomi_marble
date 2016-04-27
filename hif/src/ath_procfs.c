@@ -36,7 +36,7 @@
 #include "if_usb.h"
 #endif
 #if defined(HIF_SDIO)
-#include "if_ath_sdio.h"
+#include "if_sdio.h"
 #endif
 #include "hif_debug.h"
 

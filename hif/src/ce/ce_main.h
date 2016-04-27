@@ -157,8 +157,28 @@ struct shadow_reg_cfg {
 	uint16_t reg_offset;
 };
 
+void hif_ce_stop(struct hif_softc *scn);
 int hif_dump_ce_registers(struct hif_softc *scn);
+void
+hif_ce_dump_target_memory(struct hif_softc *scn, void *ramdump_base,
+			  uint32_t address, uint32_t size);
 
+#ifdef IPA_OFFLOAD
+void hif_ce_ipa_get_ce_resource(struct hif_softc *scn,
+			     qdf_dma_addr_t *ce_sr_base_paddr,
+			     uint32_t *ce_sr_ring_size,
+			     qdf_dma_addr_t *ce_reg_paddr);
+#else
+static inline
+void hif_ce_ipa_get_ce_resource(struct hif_softc *scn,
+			     qdf_dma_addr_t *ce_sr_base_paddr,
+			     uint32_t *ce_sr_ring_size,
+			     qdf_dma_addr_t *ce_reg_paddr)
+{
+	return;
+}
+
+#endif
 int hif_wlan_enable(struct hif_softc *scn);
 void hif_wlan_disable(struct hif_softc *scn);
 void hif_get_target_ce_config(struct CE_pipe_config **target_ce_config_ret,

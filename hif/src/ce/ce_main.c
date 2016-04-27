@@ -53,6 +53,14 @@
 
 #define CE_POLL_TIMEOUT 10      /* ms */
 
+#define AGC_DUMP         1
+#define CHANINFO_DUMP    2
+#define BB_WATCHDOG_DUMP 3
+#ifdef CONFIG_ATH_PCIE_ACCESS_DEBUG
+#define PCIE_ACCESS_DUMP 4
+#endif
+#include "mp_dev.h"
+
 /* Forward references */
 static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info);
 
@@ -78,6 +86,53 @@ static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info);
 
 static int hif_post_recv_buffers(struct hif_softc *scn);
 static void hif_config_rri_on_ddr(struct hif_softc *scn);
+
+/**
+ * hif_target_access_log_dump() - dump access log
+ *
+ * dump access log
+ *
+ * Return: n/a
+ */
+#ifdef CONFIG_ATH_PCIE_ACCESS_DEBUG
+static void hif_target_access_log_dump(void)
+{
+	hif_target_dump_access_log();
+}
+#endif
+
+
+void hif_trigger_dump(struct hif_opaque_softc *hif_ctx,
+		      uint8_t cmd_id, bool start)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	switch (cmd_id) {
+	case AGC_DUMP:
+		if (start)
+			priv_start_agc(scn);
+		else
+			priv_dump_agc(scn);
+		break;
+	case CHANINFO_DUMP:
+		if (start)
+			priv_start_cap_chaninfo(scn);
+		else
+			priv_dump_chaninfo(scn);
+		break;
+	case BB_WATCHDOG_DUMP:
+		priv_dump_bbwatchdog(scn);
+		break;
+#ifdef CONFIG_ATH_PCIE_ACCESS_DEBUG
+	case PCIE_ACCESS_DUMP:
+		hif_target_access_log_dump();
+		break;
+#endif
+	default:
+		HIF_ERROR("%s: Invalid htc dump command", __func__);
+		break;
+	}
+}
 
 static void ce_poll_timeout(void *arg)
 {
@@ -1805,10 +1860,9 @@ void hif_flush_surprise_remove(struct hif_opaque_softc *hif_ctx)
 	hif_buffer_cleanup(hif_state);
 }
 
-void hif_stop(struct hif_opaque_softc *hif_ctx)
+void hif_ce_stop(struct hif_softc *scn)
 {
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	int pipe_num;
 
 	scn->hif_init_done = false;
@@ -2202,7 +2256,7 @@ int hif_ce_fastpath_cb_register(struct hif_opaque_softc *hif_ctx,
 
 #ifdef IPA_OFFLOAD
 /**
- * hif_ipa_get_ce_resource() - get uc resource on hif
+ * hif_ce_ipa_get_ce_resource() - get uc resource on hif
  * @scn: bus context
  * @ce_sr_base_paddr: copyengine source ring base physical address
  * @ce_sr_ring_size: copyengine source ring size
@@ -2214,12 +2268,11 @@ int hif_ce_fastpath_cb_register(struct hif_opaque_softc *hif_ctx,
  *
  * Return: None
  */
-void hif_ipa_get_ce_resource(struct hif_opaque_softc *hif_ctx,
+void hif_ce_ipa_get_ce_resource(struct hif_softc *scn,
 			     qdf_dma_addr_t *ce_sr_base_paddr,
 			     uint32_t *ce_sr_ring_size,
 			     qdf_dma_addr_t *ce_reg_paddr)
 {
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	struct HIF_CE_pipe_info *pipe_info =
 		&(hif_state->pipe_info[HIF_PCI_IPA_UC_ASSIGNED_CE]);
@@ -2774,4 +2827,105 @@ void hif_disable_interrupt(struct hif_opaque_softc *osc, uint32_t pipe_num)
 	Q_TARGET_ACCESS_BEGIN(scn);
 	CE_COPY_COMPLETE_INTR_DISABLE(scn, ctrl_addr);
 	Q_TARGET_ACCESS_END(scn);
+}
+
+/**
+ * hif_fw_event_handler() - hif fw event handler
+ * @hif_state: pointer to hif ce state structure
+ *
+ * Process fw events and raise HTC callback to process fw events.
+ *
+ * Return: none
+ */
+static inline void hif_fw_event_handler(struct HIF_CE_state *hif_state)
+{
+	struct hif_msg_callbacks *msg_callbacks =
+		&hif_state->msg_callbacks_current;
+
+	if (!msg_callbacks->fwEventHandler)
+		return;
+
+	msg_callbacks->fwEventHandler(msg_callbacks->Context,
+			QDF_STATUS_E_FAILURE);
+}
+
+#ifndef QCA_WIFI_3_0
+/**
+ * hif_fw_interrupt_handler() - FW interrupt handler
+ * @irq: irq number
+ * @arg: the user pointer
+ *
+ * Called from the PCI interrupt handler when a
+ * firmware-generated interrupt to the Host.
+ *
+ * Return: status of handled irq
+ */
+irqreturn_t hif_fw_interrupt_handler(int irq, void *arg)
+{
+	struct hif_softc *scn = arg;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+	uint32_t fw_indicator_address, fw_indicator;
+
+	if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+		return ATH_ISR_NOSCHED;
+
+	fw_indicator_address = hif_state->fw_indicator_address;
+	/* For sudden unplug this will return ~0 */
+	fw_indicator = A_TARGET_READ(scn, fw_indicator_address);
+
+	if ((fw_indicator != ~0) && (fw_indicator & FW_IND_EVENT_PENDING)) {
+		/* ACK: clear Target-side pending event */
+		A_TARGET_WRITE(scn, fw_indicator_address,
+			       fw_indicator & ~FW_IND_EVENT_PENDING);
+		if (Q_TARGET_ACCESS_END(scn) < 0)
+			return ATH_ISR_SCHED;
+
+		if (hif_state->started) {
+			hif_fw_event_handler(hif_state);
+		} else {
+			/*
+			 * Probable Target failure before we're prepared
+			 * to handle it.  Generally unexpected.
+			 */
+			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
+				("%s: Early firmware event indicated\n",
+				 __func__));
+		}
+	} else {
+		if (Q_TARGET_ACCESS_END(scn) < 0)
+			return ATH_ISR_SCHED;
+	}
+
+	return ATH_ISR_SCHED;
+}
+#else
+irqreturn_t hif_fw_interrupt_handler(int irq, void *arg)
+{
+	return ATH_ISR_SCHED;
+}
+#endif /* #ifdef QCA_WIFI_3_0 */
+
+
+/**
+ * hif_wlan_disable(): call the platform driver to disable wlan
+ * @scn: HIF Context
+ *
+ * This function passes the con_mode to platform driver to disable
+ * wlan.
+ *
+ * Return: void
+ */
+void hif_wlan_disable(struct hif_softc *scn)
+{
+	enum icnss_driver_mode mode;
+	uint32_t con_mode = hif_get_conparam(scn);
+
+	if (QDF_GLOBAL_FTM_MODE == con_mode)
+		mode = ICNSS_FTM;
+	else if (QDF_IS_EPPING_ENABLED(con_mode))
+		mode = ICNSS_EPPING;
+	else
+		mode = ICNSS_MISSION;
+
+	icnss_wlan_disable(mode);
 }
