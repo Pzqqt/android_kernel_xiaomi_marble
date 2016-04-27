@@ -2535,6 +2535,19 @@ lim_process_assoc_failure_timeout(tpAniSirGlobal mac_ctx, uint32_t msg_type)
 	lim_log(mac_ctx, LOG1,
 		FL("Re/Association Response not received before timeout "));
 
+	/*
+	 * Send Deauth to handle the scenareo where association timeout happened
+	 * when device has missed the assoc resp sent by peer.
+	 * By sending deauth try to clear the session created on peer device.
+	 */
+	lim_log(mac_ctx, LOGE,
+		FL("Sessionid: %d try sending deauth on channel %d to BSSID: "
+		MAC_ADDRESS_STR), session->peSessionId,
+		session->currentOperChannel,
+		MAC_ADDR_ARRAY(session->bssId));
+	lim_send_deauth_mgmt_frame(mac_ctx, eSIR_MAC_UNSPEC_FAILURE_REASON,
+		session->bssId, session, false);
+
 	if ((LIM_IS_AP_ROLE(session)) ||
 	    ((session->limMlmState != eLIM_MLM_WT_ASSOC_RSP_STATE) &&
 	    (session->limMlmState != eLIM_MLM_WT_REASSOC_RSP_STATE) &&
