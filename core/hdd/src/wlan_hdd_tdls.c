@@ -143,6 +143,25 @@ void hdd_wlan_tdls_enable_link_event(const uint8_t *peer_mac,
 		EVENT_WLAN_TDLS_ENABLE_LINK);
 }
 
+/**
+ * hdd_wlan_block_scan_by_tdls_event()- send event
+ * if scan is blocked by tdls
+ *
+ * This Function send send diag event if scan is
+ * blocked by tdls
+ *
+ * Return: void.
+ */
+void hdd_wlan_block_scan_by_tdls_event(void)
+{
+	WLAN_HOST_DIAG_EVENT_DEF(tdls_scan_block_status,
+		struct host_event_tdls_scan_rejected);
+
+	tdls_scan_block_status.status = true;
+	WLAN_HOST_DIAG_EVENT_REPORT(&tdls_scan_block_status,
+		EVENT_TDLS_SCAN_BLOCK);
+}
+
 #endif
 
 /**

@@ -349,6 +349,18 @@ struct host_event_offload_req {
 	uint8_t state;
 };
 
+/**
+ * struct host_event_tdls_scan_rejected - scan
+ * rejected due to tdls
+ * @status: rejected status
+ *
+ * This structure contains scan rejected due to
+ * tdls event info
+ */
+struct host_event_tdls_scan_rejected {
+	uint8_t status;
+};
+
 /*-------------------------------------------------------------------------
    Function declarations and documenation
    ------------------------------------------------------------------------*/
