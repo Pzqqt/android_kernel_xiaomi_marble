@@ -2401,26 +2401,26 @@ fail:
 }
 
 /**
- * wma_soc_hw_mode_transition_evt_handler() - HW mode transition evt handler
+ * wma_pdev_hw_mode_transition_evt_handler() - HW mode transition evt handler
  * @handle: WMI handle
  * @event:  Event recevied from FW
  * @len:    Length of the event
  *
- * Event handler for WMI_SOC_HW_MODE_TRANSITION_EVENTID that indicates an
+ * Event handler for WMI_PDEV_HW_MODE_TRANSITION_EVENTID that indicates an
  * asynchronous hardware mode transition. This event notifies the host driver
  * that firmware independently changed the hardware mode for some reason, such
  * as Coex, LFR 3.0, etc
  *
  * Return: Success on receiving valid params from FW
  */
-static int wma_soc_hw_mode_transition_evt_handler(void *handle,
+static int wma_pdev_hw_mode_transition_evt_handler(void *handle,
 		uint8_t *event,
 		uint32_t len)
 {
 	uint32_t i;
-	WMI_SOC_HW_MODE_TRANSITION_EVENTID_param_tlvs *param_buf;
-	wmi_soc_hw_mode_transition_event_fixed_param *wmi_event;
-	wmi_soc_set_hw_mode_response_vdev_mac_entry *vdev_mac_entry;
+	WMI_PDEV_HW_MODE_TRANSITION_EVENTID_param_tlvs *param_buf;
+	wmi_pdev_hw_mode_transition_event_fixed_param *wmi_event;
+	wmi_pdev_set_hw_mode_response_vdev_mac_entry *vdev_mac_entry;
 	struct sir_hw_mode_trans_ind *hw_mode_trans_ind;
 	tp_wma_handle wma = (tp_wma_handle) handle;
 
@@ -2430,10 +2430,10 @@ static int wma_soc_hw_mode_transition_evt_handler(void *handle,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	param_buf = (WMI_SOC_HW_MODE_TRANSITION_EVENTID_param_tlvs *) event;
+	param_buf = (WMI_PDEV_HW_MODE_TRANSITION_EVENTID_param_tlvs *) event;
 	if (!param_buf) {
 		/* This is an async event. So, not sending any event to LIM */
-		WMA_LOGE("Invalid WMI_SOC_HW_MODE_TRANSITION_EVENTID event");
+		WMA_LOGE("Invalid WMI_PDEV_HW_MODE_TRANSITION_EVENTID event");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -2453,13 +2453,22 @@ static int wma_soc_hw_mode_transition_evt_handler(void *handle,
 		wmi_event->new_hw_mode_index, wmi_event->num_vdev_mac_entries);
 
 	vdev_mac_entry =
-		param_buf->wmi_soc_set_hw_mode_response_vdev_mac_mapping;
+		param_buf->wmi_pdev_set_hw_mode_response_vdev_mac_mapping;
 
 	/* Store the vdev-mac map in WMA and prepare to send to HDD  */
 	for (i = 0; i < wmi_event->num_vdev_mac_entries; i++) {
-		uint32_t vdev_id, mac_id;
+		uint32_t vdev_id, mac_id, pdev_id;
 		vdev_id = vdev_mac_entry[i].vdev_id;
-		mac_id = vdev_mac_entry[i].mac_id;
+		pdev_id = vdev_mac_entry[i].pdev_id;
+
+		if (pdev_id == WMI_PDEV_ID_SOC) {
+			WMA_LOGE("%s: soc level id received for mac id)",
+					__func__);
+			QDF_BUG(0);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		mac_id = WMA_PDEV_TO_MAC_MAP(vdev_mac_entry[i].pdev_id);
 
 		WMA_LOGI("%s: vdev_id:%d mac_id:%d",
 				__func__, vdev_id, mac_id);
@@ -2476,7 +2485,7 @@ static int wma_soc_hw_mode_transition_evt_handler(void *handle,
 		__func__, wma->old_hw_mode_index, wma->new_hw_mode_index);
 
 	/* Pass the message to PE */
-	wma_send_msg(wma, SIR_HAL_SOC_HW_MODE_TRANS_IND,
+	wma_send_msg(wma, SIR_HAL_PDEV_HW_MODE_TRANS_IND,
 		     (void *) hw_mode_trans_ind, 0);
 
 	return QDF_STATUS_SUCCESS;
@@ -2803,8 +2812,8 @@ QDF_STATUS wma_start(void *cds_ctx)
 
 	/* Initialize the WMI_SOC_HW_MODE_TRANSITION_EVENTID event handler */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-			WMI_SOC_HW_MODE_TRANSITION_EVENTID,
-			wma_soc_hw_mode_transition_evt_handler,
+			WMI_PDEV_HW_MODE_TRANSITION_EVENTID,
+			wma_pdev_hw_mode_transition_evt_handler,
 			WMA_RX_SERIALIZER_CTX);
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to register hw mode transition event cb");

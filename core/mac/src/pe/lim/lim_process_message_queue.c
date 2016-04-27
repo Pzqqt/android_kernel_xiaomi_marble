@@ -2051,7 +2051,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
-	case SIR_HAL_SOC_HW_MODE_TRANS_IND:
+	case SIR_HAL_PDEV_HW_MODE_TRANS_IND:
 		lim_process_hw_mode_trans_ind(mac_ctx, msg->bodyptr);
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
