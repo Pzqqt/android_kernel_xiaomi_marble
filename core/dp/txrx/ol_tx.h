@@ -47,6 +47,12 @@ qdf_nbuf_t ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list);
 
 qdf_nbuf_t ol_tx_ll_queue(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list);
 
+#ifdef CONFIG_HL_SUPPORT
+#define OL_TX_SEND ol_tx_hl
+#else
+#define OL_TX_SEND OL_TX_LL
+#endif
+
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 #define OL_TX_LL ol_tx_ll_queue
 #else
@@ -67,6 +73,29 @@ void ol_tx_pdev_ll_pause_queue_send_all(struct ol_txrx_pdev_t *pdev)
 	return;
 }
 #endif
+
+/**
+ * ol_tx_non_std_hl() - send non std tx frame.
+ * @vdev: the virtual device sending the data
+ * @tx_spec: indicate what non-standard transmission actions to apply
+ * @msdu_list: the tx frames to send
+ *
+ * Return: NULL if all MSDUs are accepted
+ */
+qdf_nbuf_t
+ol_tx_non_std_hl(ol_txrx_vdev_handle data_vdev,
+		 enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list);
+
+/**
+ * ol_tx_hl() - transmit tx frames for a HL system.
+ * @vdev: the virtual device transmit the data
+ * @msdu_list: the tx frames to send
+ *
+ * Return: NULL if all MSDUs are accepted
+ */
+qdf_nbuf_t
+ol_tx_hl(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list);
+
 qdf_nbuf_t
 ol_tx_non_std_ll(ol_txrx_vdev_handle data_vdev,
 		 enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list);

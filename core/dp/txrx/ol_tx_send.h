@@ -35,11 +35,20 @@
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <cdp_txrx_cmn.h>       /* ol_txrx_vdev_t, etc. */
 
+#if defined(CONFIG_HL_SUPPORT)
+
+static inline void ol_tx_discard_target_frms(ol_txrx_pdev_handle pdev)
+{
+	return;
+}
+#else
+
 /**
  * @flush the ol tx when surprise remove.
  *
  */
 void ol_tx_discard_target_frms(ol_txrx_pdev_handle pdev);
+#endif
 
 /**
  * @brief Send a tx frame to the target.

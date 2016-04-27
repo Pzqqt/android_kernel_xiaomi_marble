@@ -47,15 +47,20 @@
 #include <ol_txrx_types.h>      /* ol_txrx_vdev_t, etc */
 #include <ol_tx_desc.h>         /* ol_tx_desc_find, ol_tx_desc_frame_free */
 #ifdef QCA_COMPUTE_TX_DELAY
+#include <ol_tx_classify.h>     /* ol_tx_dest_addr_find */
 #endif
 #include <ol_txrx_internal.h>   /* OL_TX_DESC_NO_REFS, etc. */
 #include <ol_osif_txrx_api.h>
 #include <ol_tx.h>              /* ol_tx_reinject */
 
 #include <ol_cfg.h>             /* ol_cfg_is_high_latency */
+#include <ol_tx_sched.h>
 #ifdef QCA_SUPPORT_SW_TXRX_ENCAP
 #include <ol_txrx_encap.h>      /* OL_TX_RESTORE_HDR, etc */
 #endif
+#include <ol_tx_queue.h>
+#include <ol_txrx.h>
+
 
 #ifdef TX_CREDIT_RECLAIM_SUPPORT
 
@@ -73,7 +78,8 @@
 
 #endif /* TX_CREDIT_RECLAIM_SUPPORT */
 
-#if defined(TX_CREDIT_RECLAIM_SUPPORT)
+#if defined(CONFIG_HL_SUPPORT) || defined(TX_CREDIT_RECLAIM_SUPPORT)
+
 /*
  * HL needs to keep track of the amount of credit available to download
  * tx frames to the target - the download scheduler decides when to
@@ -83,53 +89,87 @@
  * of the target_tx_credit, to determine when to poll for tx completion
  * messages.
  */
-#define OL_TX_TARGET_CREDIT_ADJUST(factor, pdev, msdu) \
-	qdf_atomic_add(	\
-		factor * htt_tx_msdu_credit(msdu), &pdev->target_tx_credit)
-#define OL_TX_TARGET_CREDIT_DECR(pdev, msdu) \
-	OL_TX_TARGET_CREDIT_ADJUST(-1, pdev, msdu)
-#define OL_TX_TARGET_CREDIT_INCR(pdev, msdu) \
-	OL_TX_TARGET_CREDIT_ADJUST(1, pdev, msdu)
-#define OL_TX_TARGET_CREDIT_DECR_INT(pdev, delta) \
-	qdf_atomic_add(-1 * delta, &pdev->target_tx_credit)
-#define OL_TX_TARGET_CREDIT_INCR_INT(pdev, delta) \
-	qdf_atomic_add(delta, &pdev->target_tx_credit)
+static inline void
+ol_tx_target_credit_decr_int(struct ol_txrx_pdev_t *pdev, int delta)
+{
+	qdf_atomic_add(-1 * delta, &pdev->target_tx_credit);
+}
+
+static inline void
+ol_tx_target_credit_incr_int(struct ol_txrx_pdev_t *pdev, int delta)
+{
+	qdf_atomic_add(delta, &pdev->target_tx_credit);
+}
 #else
-/*
- * LL does not need to keep track of target credit.
- * Since the host tx descriptor pool size matches the target's,
- * we know the target has space for the new tx frame if the host's
- * tx descriptor allocation succeeded.
- */
-#define OL_TX_TARGET_CREDIT_ADJUST(factor, pdev, msdu)  /* no-op */
-#define OL_TX_TARGET_CREDIT_DECR(pdev, msdu)    /* no-op */
-#define OL_TX_TARGET_CREDIT_INCR(pdev, msdu)    /* no-op */
-#define OL_TX_TARGET_CREDIT_DECR_INT(pdev, delta)       /* no-op */
-#define OL_TX_TARGET_CREDIT_INCR_INT(pdev, delta)       /* no-op */
+
+static inline void
+ol_tx_target_credit_decr_int(struct ol_txrx_pdev_t *pdev, int delta)
+{
+	return;
+}
+
+static inline void
+ol_tx_target_credit_incr_int(struct ol_txrx_pdev_t *pdev, int delta)
+{
+	return;
+}
 #endif
 
-#ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
-#define OL_TX_FLOW_CT_UNPAUSE_OS_Q(pdev)				\
-	do {								\
-		struct ol_txrx_vdev_t *vdev;				\
-		TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {	\
-			if (qdf_atomic_read(&vdev->os_q_paused) &&	\
-			    (vdev->tx_fl_hwm != 0)) {			\
-				qdf_spin_lock(&pdev->tx_mutex);		\
-				if (pdev->tx_desc.num_free >		\
-				    vdev->tx_fl_hwm) {			\
-					qdf_atomic_set(&vdev->os_q_paused, 0); \
-					qdf_spin_unlock(&pdev->tx_mutex); \
-					ol_txrx_flow_control_cb(vdev, true);\
-				}					\
-				else {					\
-					qdf_spin_unlock(&pdev->tx_mutex); \
-				}					\
-			}						\
-		}							\
-	} while (0)
+#if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL)
+
+/**
+ * ol_tx_flow_ct_unpause_os_q() - Unpause OS Q
+ * @pdev: physical device object
+ *
+ *
+ * Return: None
+ */
+static void ol_tx_flow_ct_unpause_os_q(ol_txrx_pdev_handle pdev)
+{
+	struct ol_txrx_vdev_t *vdev;
+	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+		if (qdf_atomic_read(&vdev->os_q_paused) &&
+		    (vdev->tx_fl_hwm != 0)) {
+			qdf_spin_lock(&pdev->tx_mutex);
+			if (pdev->tx_desc.num_free > vdev->tx_fl_hwm) {
+				qdf_atomic_set(&vdev->os_q_paused, 0);
+				qdf_spin_unlock(&pdev->tx_mutex);
+				ol_txrx_flow_control_cb(vdev, true);
+			} else {
+				qdf_spin_unlock(&pdev->tx_mutex);
+			}
+		}
+	}
+}
+#elif defined(CONFIG_HL_SUPPORT) && defined(CONFIG_PER_VDEV_TX_DESC_POOL)
+
+static void ol_tx_flow_ct_unpause_os_q(ol_txrx_pdev_handle pdev)
+{
+	struct ol_txrx_vdev_t *vdev;
+	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+		if (qdf_atomic_read(&vdev->os_q_paused) &&
+		    (vdev->tx_fl_hwm != 0)) {
+			qdf_spin_lock(&pdev->tx_mutex);
+			if (((ol_tx_desc_pool_size_hl(
+					vdev->pdev->ctrl_pdev) >> 1)
+					- TXRX_HL_TX_FLOW_CTRL_MGMT_RESERVED)
+					- qdf_atomic_read(&vdev->tx_desc_count)
+					> vdev->tx_fl_hwm) {
+				qdf_atomic_set(&vdev->os_q_paused, 0);
+				qdf_spin_unlock(&pdev->tx_mutex);
+				vdev->osif_flow_control_cb(vdev, true);
+			} else {
+				qdf_spin_unlock(&pdev->tx_mutex);
+			}
+		}
+	}
+}
 #else
-#define OL_TX_FLOW_CT_UNPAUSE_OS_Q(pdev)
+
+static inline void ol_tx_flow_ct_unpause_os_q(ol_txrx_pdev_handle pdev)
+{
+	return;
+}
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
 static inline uint16_t
@@ -145,7 +185,7 @@ ol_tx_send_base(struct ol_txrx_pdev_t *pdev,
 			      qdf_nbuf_len(msdu));
 
 	msdu_credit_consumed = htt_tx_msdu_credit(msdu);
-	OL_TX_TARGET_CREDIT_DECR_INT(pdev, msdu_credit_consumed);
+	ol_tx_target_credit_decr_int(pdev, msdu_credit_consumed);
 	OL_TX_CREDIT_RECLAIM(pdev);
 
 	/*
@@ -190,7 +230,7 @@ ol_tx_send(struct ol_txrx_pdev_t *pdev,
 				vdev_id));
 	failed = htt_tx_send_std(pdev->htt_pdev, msdu, id);
 	if (qdf_unlikely(failed)) {
-		OL_TX_TARGET_CREDIT_INCR_INT(pdev, msdu_credit_consumed);
+		ol_tx_target_credit_incr_int(pdev, msdu_credit_consumed);
 		ol_tx_desc_frame_free_nonstd(pdev, tx_desc, 1 /* had error */);
 	}
 }
@@ -212,7 +252,7 @@ ol_tx_send_batch(struct ol_txrx_pdev_t *pdev,
 		msdu_id_storage = ol_tx_msdu_id_storage(rejected);
 		tx_desc = ol_tx_desc_find(pdev, *msdu_id_storage);
 
-		OL_TX_TARGET_CREDIT_INCR(pdev, rejected);
+		ol_tx_target_credit_incr(pdev, rejected);
 		ol_tx_desc_frame_free_nonstd(pdev, tx_desc, 1 /* had error */);
 
 		rejected = next;
@@ -235,7 +275,7 @@ ol_tx_send_nonstd(struct ol_txrx_pdev_t *pdev,
 	if (failed) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 			   "Error: freeing tx frame after htt_tx failed");
-		OL_TX_TARGET_CREDIT_INCR_INT(pdev, msdu_credit_consumed);
+		ol_tx_target_credit_incr_int(pdev, msdu_credit_consumed);
 		ol_tx_desc_frame_free_nonstd(pdev, tx_desc, 1 /* had error */);
 	}
 }
@@ -266,7 +306,7 @@ ol_tx_download_done_base(struct ol_txrx_pdev_t *pdev,
 	}
 
 	if (status != A_OK) {
-		OL_TX_TARGET_CREDIT_INCR(pdev, msdu);
+		ol_tx_target_credit_incr(pdev, msdu);
 		ol_tx_desc_frame_free_nonstd(pdev, tx_desc,
 					     1 /* download err */);
 	} else {
@@ -340,9 +380,15 @@ static void
 ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
 		    enum htt_tx_status status,
 		    uint16_t *desc_ids, int num_msdus);
-#define OL_TX_DELAY_COMPUTE ol_tx_delay_compute
+
 #else
-#define OL_TX_DELAY_COMPUTE(pdev, status, desc_ids, num_msdus)  /* no-op */
+static inline void
+ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
+		    enum htt_tx_status status,
+		    uint16_t *desc_ids, int num_msdus)
+{
+	return;
+}
 #endif /* QCA_COMPUTE_TX_DELAY */
 
 #ifndef OL_TX_RESTORE_HDR
@@ -469,8 +515,11 @@ void ol_tx_credit_completion_handler(ol_txrx_pdev_handle pdev, int credits)
 {
 	ol_tx_target_credit_update(pdev, credits);
 
+	if (pdev->cfg.is_high_latency)
+		ol_tx_sched(pdev);
+
 	/* UNPAUSE OS Q */
-	OL_TX_FLOW_CT_UNPAUSE_OS_Q(pdev);
+	ol_tx_flow_ct_unpause_os_q(pdev);
 }
 
 /* WARNING: ol_tx_inspect_handler()'s bahavior is similar to that of
@@ -495,7 +544,7 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 	ol_tx_desc_list tx_descs;
 	TAILQ_INIT(&tx_descs);
 
-	OL_TX_DELAY_COMPUTE(pdev, status, desc_ids, num_msdus);
+	ol_tx_delay_compute(pdev, status, desc_ids, num_msdus);
 
 	for (i = 0; i < num_msdus; i++) {
 		tx_desc_id = desc_ids[i];
@@ -507,6 +556,7 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 			qdf_nbuf_data_addr(netbuf),
 			sizeof(qdf_nbuf_data(netbuf)), tx_desc->id, status));
 		qdf_runtime_pm_put();
+		ol_tx_desc_update_group_credit(pdev, tx_desc_id, 1, 0, status);
 		/* Per SDU update of byte count */
 		byte_cnt += qdf_nbuf_len(netbuf);
 		if (OL_TX_DESC_NO_REFS(tx_desc)) {
@@ -540,13 +590,157 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 					   status != htt_tx_status_ok);
 	}
 
-	OL_TX_TARGET_CREDIT_ADJUST(num_msdus, pdev, NULL);
+	if (pdev->cfg.is_high_latency) {
+		/*
+		 * Credit was already explicitly updated by HTT,
+		 * but update the number of available tx descriptors,
+		 * then invoke the scheduler, since new credit is probably
+		 * available now.
+		 */
+		qdf_atomic_add(num_msdus, &pdev->tx_queue.rsrc_cnt);
+		ol_tx_sched(pdev);
+	} else {
+		ol_tx_target_credit_adjust(num_msdus, pdev, NULL);
+	}
 
 	/* UNPAUSE OS Q */
-	OL_TX_FLOW_CT_UNPAUSE_OS_Q(pdev);
+	ol_tx_flow_ct_unpause_os_q(pdev);
 	/* Do one shot statistics */
 	TXRX_STATS_UPDATE_TX_STATS(pdev, status, num_msdus, byte_cnt);
 }
+
+#ifdef FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL
+
+void ol_tx_desc_update_group_credit(ol_txrx_pdev_handle pdev,
+		u_int16_t tx_desc_id, int credit, u_int8_t absolute,
+		enum htt_tx_status status)
+{
+	uint8_t i, is_member;
+	uint16_t vdev_id_mask;
+	struct ol_tx_desc_t *tx_desc;
+
+	tx_desc = ol_tx_desc_find(pdev, tx_desc_id);
+	for (i = 0; i < OL_TX_MAX_TXQ_GROUPS; i++) {
+		vdev_id_mask =
+			OL_TXQ_GROUP_VDEV_ID_MASK_GET(
+					pdev->txq_grps[i].membership);
+		is_member = OL_TXQ_GROUP_VDEV_ID_BIT_MASK_GET(vdev_id_mask,
+				tx_desc->vdev->vdev_id);
+		if (is_member) {
+			ol_txrx_update_group_credit(&pdev->txq_grps[i],
+						    credit, absolute);
+			break;
+		}
+	}
+	ol_tx_update_group_credit_stats(pdev);
+}
+
+#ifdef DEBUG_HL_LOGGING
+
+void ol_tx_update_group_credit_stats(ol_txrx_pdev_handle pdev)
+{
+	uint16_t curr_index;
+	uint8_t i;
+
+	qdf_spin_lock_bh(&pdev->grp_stat_spinlock);
+	pdev->grp_stats.last_valid_index++;
+	if (pdev->grp_stats.last_valid_index > (OL_TX_GROUP_STATS_LOG_SIZE
+				- 1)) {
+		pdev->grp_stats.last_valid_index -= OL_TX_GROUP_STATS_LOG_SIZE;
+		pdev->grp_stats.wrap_around = 1;
+	}
+	curr_index = pdev->grp_stats.last_valid_index;
+
+	for (i = 0; i < OL_TX_MAX_TXQ_GROUPS; i++) {
+		pdev->grp_stats.stats[curr_index].grp[i].member_vdevs =
+			OL_TXQ_GROUP_VDEV_ID_MASK_GET(
+					pdev->txq_grps[i].membership);
+		pdev->grp_stats.stats[curr_index].grp[i].credit =
+			qdf_atomic_read(&pdev->txq_grps[i].credit);
+	}
+
+	qdf_spin_unlock_bh(&pdev->grp_stat_spinlock);
+}
+
+void ol_tx_dump_group_credit_stats(ol_txrx_pdev_handle pdev)
+{
+	uint16_t i, j, is_break = 0;
+	int16_t curr_index, old_index, wrap_around;
+	uint16_t curr_credit, old_credit, mem_vdevs;
+
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		  "Group credit stats:");
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		  "  No: GrpID: Credit: Change: vdev_map");
+
+	qdf_spin_lock_bh(&pdev->grp_stat_spinlock);
+	curr_index = pdev->grp_stats.last_valid_index;
+	wrap_around = pdev->grp_stats.wrap_around;
+	qdf_spin_unlock_bh(&pdev->grp_stat_spinlock);
+
+	if (curr_index < 0) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "Not initialized");
+		return;
+	}
+
+	for (i = 0; i < OL_TX_GROUP_STATS_LOG_SIZE; i++) {
+		old_index = curr_index - 1;
+		if (old_index < 0) {
+			if (wrap_around == 0)
+				is_break = 1;
+			else
+				old_index = OL_TX_GROUP_STATS_LOG_SIZE - 1;
+		}
+
+		for (j = 0; j < OL_TX_MAX_TXQ_GROUPS; j++) {
+			qdf_spin_lock_bh(&pdev->grp_stat_spinlock);
+			curr_credit =
+				pdev->grp_stats.stats[curr_index].
+								grp[j].credit;
+			if (!is_break)
+				old_credit =
+					pdev->grp_stats.stats[old_index].
+								grp[j].credit;
+
+			mem_vdevs =
+				pdev->grp_stats.stats[curr_index].grp[j].
+								member_vdevs;
+			qdf_spin_unlock_bh(&pdev->grp_stat_spinlock);
+
+			if (!is_break)
+				QDF_TRACE(QDF_MODULE_ID_TXRX,
+					  QDF_TRACE_LEVEL_ERROR,
+					  "%4d: %5d: %6d %6d %8x",
+					  curr_index, j,
+					  curr_credit,
+					  (curr_credit - old_credit),
+					  mem_vdevs);
+			else
+				QDF_TRACE(QDF_MODULE_ID_TXRX,
+					  QDF_TRACE_LEVEL_ERROR,
+					  "%4d: %5d: %6d %6s %8x",
+					  curr_index, j,
+					  curr_credit, "NA", mem_vdevs);
+		}
+
+		if (is_break)
+			break;
+
+		curr_index = old_index;
+	}
+}
+
+void ol_tx_clear_group_credit_stats(ol_txrx_pdev_handle pdev)
+{
+	qdf_spin_lock_bh(&pdev->grp_stat_spinlock);
+	qdf_mem_zero(&pdev->grp_stats, sizeof(pdev->grp_stats));
+	pdev->grp_stats.last_valid_index = -1;
+	pdev->grp_stats.wrap_around = 0;
+	qdf_spin_unlock_bh(&pdev->grp_stat_spinlock);
+}
+#endif
+#endif
 
 /*
  * ol_tx_single_completion_handler performs the same tx completion
@@ -581,8 +775,18 @@ ol_tx_single_completion_handler(ol_txrx_pdev_handle pdev,
 			      qdf_atomic_read(&pdev->target_tx_credit),
 			      1, qdf_atomic_read(&pdev->target_tx_credit) + 1);
 
-
-	qdf_atomic_add(1, &pdev->target_tx_credit);
+	if (pdev->cfg.is_high_latency) {
+		/*
+		 * Credit was already explicitly updated by HTT,
+		 * but update the number of available tx descriptors,
+		 * then invoke the scheduler, since new credit is probably
+		 * available now.
+		 */
+		qdf_atomic_add(1, &pdev->tx_queue.rsrc_cnt);
+		ol_tx_sched(pdev);
+	} else {
+		qdf_atomic_add(1, &pdev->target_tx_credit);
+	}
 }
 
 /* WARNING: ol_tx_inspect_handler()'s bahavior is similar to that of
@@ -649,7 +853,12 @@ ol_tx_inspect_handler(ol_txrx_pdev_handle pdev,
 			      qdf_atomic_read(&pdev->target_tx_credit) +
 			      num_msdus);
 
-	OL_TX_TARGET_CREDIT_ADJUST(num_msdus, pdev, NULL);
+	if (pdev->cfg.is_high_latency) {
+		/* credit was already explicitly updated by HTT */
+		ol_tx_sched(pdev);
+	} else {
+		ol_tx_target_credit_adjust(num_msdus, pdev, NULL);
+	}
 }
 
 #ifdef QCA_COMPUTE_TX_DELAY
@@ -777,31 +986,6 @@ ol_tx_delay_hist(ol_txrx_pdev_handle pdev,
 }
 
 #ifdef QCA_COMPUTE_TX_DELAY_PER_TID
-static inline uint8_t *ol_tx_dest_addr_find(struct ol_txrx_pdev_t *pdev,
-					    qdf_nbuf_t tx_nbuf)
-{
-	uint8_t *hdr_ptr;
-	void *datap = qdf_nbuf_data(tx_nbuf);
-
-	if (pdev->frame_format == wlan_frm_fmt_raw) {
-		/* adjust hdr_ptr to RA */
-		struct ieee80211_frame *wh = (struct ieee80211_frame *)datap;
-		hdr_ptr = wh->i_addr1;
-	} else if (pdev->frame_format == wlan_frm_fmt_native_wifi) {
-		/* adjust hdr_ptr to RA */
-		struct ieee80211_frame *wh = (struct ieee80211_frame *)datap;
-		hdr_ptr = wh->i_addr1;
-	} else if (pdev->frame_format == wlan_frm_fmt_802_3) {
-		hdr_ptr = datap;
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "Invalid standard frame type: %d",
-			  pdev->frame_format);
-		qdf_assert(0);
-		hdr_ptr = NULL;
-	}
-	return hdr_ptr;
-}
 
 static uint8_t
 ol_tx_delay_tid_from_l3_hdr(struct ol_txrx_pdev_t *pdev,

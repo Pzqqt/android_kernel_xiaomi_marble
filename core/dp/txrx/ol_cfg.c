@@ -57,6 +57,36 @@ void ol_tx_set_flow_control_parameters(struct txrx_pdev_cfg_t *cfg_ctx,
 }
 #endif
 
+#ifdef CONFIG_HL_SUPPORT
+
+/**
+ * ol_pdev_cfg_param_update() - assign download size of tx frame for txrx
+ *				    pdev that will be used across datapath
+ * @cfg_ctx: ptr to config parameter for txrx pdev
+ *
+ * Return: None
+ */
+static inline
+void ol_pdev_cfg_param_update(struct txrx_pdev_cfg_t *cfg_ctx)
+{
+	cfg_ctx->is_high_latency = 1;
+	/* 802.1Q and SNAP / LLC headers are accounted for elsewhere */
+	cfg_ctx->tx_download_size = 1500;
+	cfg_ctx->tx_free_at_download = 0;
+}
+#else
+
+static inline
+void ol_pdev_cfg_param_update(struct txrx_pdev_cfg_t *cfg_ctx)
+{
+	/*
+	 * Need to change HTT_LL_TX_HDR_SIZE_IP accordingly.
+	 * Include payload, up to the end of UDP header for IPv4 case
+	 */
+	cfg_ctx->tx_download_size = 16;
+}
+#endif
+
 #if CFG_TGT_DEFAULT_RX_SKIP_DEFRAG_TIMEOUT_DUP_DETECTION_CHECK
 static inline
 uint8_t ol_defrag_timeout_check(void)
@@ -86,6 +116,7 @@ uint8_t ol_defrag_timeout_check(void)
  *
  * Return: the control device object
  */
+
 ol_pdev_handle ol_pdev_cfg_attach(qdf_device_t osdev,
 				  struct txrx_pdev_cfg_param_t cfg_param)
 {
@@ -97,11 +128,8 @@ ol_pdev_handle ol_pdev_cfg_attach(qdf_device_t osdev,
 		return NULL;
 	}
 
-	/*
-	 * Need to change HTT_LL_TX_HDR_SIZE_IP accordingly.
-	 * Include payload, up to the end of UDP header for IPv4 case
-	 */
-	cfg_ctx->tx_download_size = 16;
+	ol_pdev_cfg_param_update(cfg_ctx);
+
 	/* temporarily diabled PN check for Riva/Pronto */
 	cfg_ctx->rx_pn_check = 1;
 	cfg_ctx->defrag_timeout_check = ol_defrag_timeout_check();
@@ -248,6 +276,21 @@ int ol_cfg_tx_free_at_download(ol_pdev_handle pdev)
 	return cfg->tx_free_at_download;
 }
 
+void ol_cfg_set_tx_free_at_download(ol_pdev_handle pdev)
+{
+	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
+	cfg->tx_free_at_download = 1;
+}
+
+
+#ifdef CONFIG_HL_SUPPORT
+uint16_t ol_cfg_target_tx_credit(ol_pdev_handle pdev)
+{
+	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
+	return cfg->target_tx_credit;
+}
+#else
+
 uint16_t ol_cfg_target_tx_credit(ol_pdev_handle pdev)
 {
 	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
@@ -259,6 +302,7 @@ uint16_t ol_cfg_target_tx_credit(ol_pdev_handle pdev)
 
 	return rc;
 }
+#endif
 
 int ol_cfg_tx_download_size(ol_pdev_handle pdev)
 {
@@ -326,6 +370,7 @@ int ol_cfg_get_tx_flow_start_queue_offset(ol_pdev_handle pdev)
 	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
 	return cfg->tx_flow_start_queue_offset;
 }
+
 #endif
 
 #ifdef IPA_OFFLOAD

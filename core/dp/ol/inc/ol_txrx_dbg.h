@@ -134,7 +134,26 @@ void ol_rx_pn_trace_display(ol_txrx_pdev_handle pdev, int just_once);
 /* uncomment this to enable the tx queue log feature */
 /* #define ENABLE_TX_QUEUE_LOG 1 */
 
-#define ol_tx_queue_log_display(pdev)
+#if defined(DEBUG_HL_LOGGING) && defined(CONFIG_HL_SUPPORT)
+
+void
+ol_tx_queue_log_display(ol_txrx_pdev_handle pdev);
+void ol_tx_queue_log_clear(ol_txrx_pdev_handle pdev);
+#else
+
+static inline void
+ol_tx_queue_log_display(ol_txrx_pdev_handle pdev)
+{
+	return;
+}
+
+static inline
+void ol_tx_queue_log_clear(ol_txrx_pdev_handle pdev)
+{
+	return;
+}
+#endif /* defined(DEBUG_HL_LOGGING) && defined(CONFIG_HL_SUPPORT) */
+
 
 /*----------------------------------------*/
 

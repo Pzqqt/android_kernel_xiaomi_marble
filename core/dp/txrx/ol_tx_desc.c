@@ -105,7 +105,56 @@ static inline void ol_tx_desc_reset_timestamp(struct ol_tx_desc_t *tx_desc)
 }
 #endif
 
+#ifdef CONFIG_HL_SUPPORT
+
+/**
+ * ol_tx_desc_vdev_update() - vedv assign.
+ * @tx_desc: tx descriptor pointer
+ * @vdev: vdev handle
+ *
+ * Return: None
+ */
+static inline void
+ol_tx_desc_vdev_update(struct ol_tx_desc_t *tx_desc,
+		       struct ol_txrx_vdev_t *vdev)
+{
+	tx_desc->vdev = vdev;
+}
+#else
+
+static inline void
+ol_tx_desc_vdev_update(struct ol_tx_desc_t *tx_desc,
+		       struct ol_txrx_vdev_t *vdev)
+{
+	return;
+}
+#endif
+
+#ifdef CONFIG_PER_VDEV_TX_DESC_POOL
+
+/**
+ * ol_tx_desc_count_inc() - tx desc count increment for desc allocation.
+ * @vdev: vdev handle
+ *
+ * Return: None
+ */
+static inline void
+ol_tx_desc_count_inc(struct ol_txrx_vdev_t *vdev)
+{
+	qdf_atomic_inc(&vdev->tx_desc_count);
+}
+#else
+
+static inline void
+ol_tx_desc_count_inc(struct ol_txrx_vdev_t *vdev)
+{
+	return;
+}
+
+#endif
+
 #ifndef QCA_LL_TX_FLOW_CONTROL_V2
+
 /**
  * ol_tx_desc_alloc() - allocate descriptor from freelist
  * @pdev: pdev handle
@@ -127,6 +176,13 @@ struct ol_tx_desc_t *ol_tx_desc_alloc(struct ol_txrx_pdev_t *pdev,
 		ol_tx_desc_compute_delay(tx_desc);
 	}
 	qdf_spin_unlock_bh(&pdev->tx_mutex);
+
+	if (!tx_desc)
+		return NULL;
+
+	ol_tx_desc_vdev_update(tx_desc, vdev);
+	ol_tx_desc_count_inc(vdev);
+
 	return tx_desc;
 }
 
@@ -220,6 +276,53 @@ ol_tx_desc_alloc_wrapper(struct ol_txrx_pdev_t *pdev,
 #endif
 #endif
 
+/**
+ * ol_tx_desc_alloc_hl() - allocate tx descriptor
+ * @pdev: pdev handle
+ * @vdev: vdev handle
+ * @msdu_info: tx msdu info
+ *
+ * Return: tx descriptor pointer/ NULL in case of error
+ */
+static struct ol_tx_desc_t *
+ol_tx_desc_alloc_hl(struct ol_txrx_pdev_t *pdev,
+		    struct ol_txrx_vdev_t *vdev,
+		    struct ol_txrx_msdu_info_t *msdu_info)
+{
+	struct ol_tx_desc_t *tx_desc;
+
+	tx_desc = ol_tx_desc_alloc_wrapper(pdev, vdev, msdu_info);
+	if (!tx_desc)
+		return NULL;
+
+	qdf_atomic_dec(&pdev->tx_queue.rsrc_cnt);
+
+	return tx_desc;
+}
+
+#if defined(CONFIG_PER_VDEV_TX_DESC_POOL) && defined(CONFIG_HL_SUPPORT)
+
+/**
+ * ol_tx_desc_vdev_rm() - decrement the tx desc count for vdev.
+ * @tx_desc: tx desc
+ *
+ * Return: None
+ */
+static inline void
+ol_tx_desc_vdev_rm(struct ol_tx_desc_t *tx_desc)
+{
+	qdf_atomic_dec(&tx_desc->vdev->tx_desc_count);
+	tx_desc->vdev = NULL;
+}
+#else
+
+static inline void
+ol_tx_desc_vdev_rm(struct ol_tx_desc_t *tx_desc)
+{
+	return;
+}
+#endif
+
 #ifndef QCA_LL_TX_FLOW_CONTROL_V2
 /**
  * ol_tx_desc_free() - put descriptor to freelist
@@ -246,6 +349,8 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 	ol_tx_desc_reset_timestamp(tx_desc);
 
 	ol_tx_put_desc_global_pool(pdev, tx_desc);
+	ol_tx_desc_vdev_rm(tx_desc);
+
 	qdf_spin_unlock_bh(&pdev->tx_mutex);
 }
 
@@ -313,7 +418,7 @@ void
 dump_pkt(qdf_nbuf_t nbuf, qdf_dma_addr_t nbuf_paddr, int len)
 {
 	qdf_print("%s: Pkt: VA 0x%p PA 0x%llx len %d\n", __func__,
-		  qdf_nbuf_data(nbuf), nbuf_paddr, len);
+		  qdf_nbuf_data(nbuf), (long long unsigned int)nbuf_paddr, len);
 	print_hex_dump(KERN_DEBUG, "Pkt:   ", DUMP_PREFIX_ADDRESS, 16, 4,
 		       qdf_nbuf_data(nbuf), len, true);
 }
@@ -488,6 +593,52 @@ struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 #if defined(HELIUMPLUS_DEBUG)
 	dump_frag_desc("ol_tx_desc_ll()", tx_desc);
 #endif
+	return tx_desc;
+}
+
+struct ol_tx_desc_t *
+ol_tx_desc_hl(
+	struct ol_txrx_pdev_t *pdev,
+	struct ol_txrx_vdev_t *vdev,
+	qdf_nbuf_t netbuf,
+	struct ol_txrx_msdu_info_t *msdu_info)
+{
+	struct ol_tx_desc_t *tx_desc;
+
+	/* FIX THIS: these inits should probably be done by tx classify */
+	msdu_info->htt.info.vdev_id = vdev->vdev_id;
+	msdu_info->htt.info.frame_type = pdev->htt_pkt_type;
+	msdu_info->htt.action.cksum_offload = qdf_nbuf_get_tx_cksum(netbuf);
+	switch (qdf_nbuf_get_exemption_type(netbuf)) {
+	case QDF_NBUF_EXEMPT_NO_EXEMPTION:
+	case QDF_NBUF_EXEMPT_ON_KEY_MAPPING_KEY_UNAVAILABLE:
+		/* We want to encrypt this frame */
+		msdu_info->htt.action.do_encrypt = 1;
+		break;
+	case QDF_NBUF_EXEMPT_ALWAYS:
+		/* We don't want to encrypt this frame */
+		msdu_info->htt.action.do_encrypt = 0;
+		break;
+	default:
+		qdf_assert(0);
+		break;
+	}
+
+	/* allocate the descriptor */
+	tx_desc = ol_tx_desc_alloc_hl(pdev, vdev, msdu_info);
+	if (!tx_desc)
+		return NULL;
+
+	/* initialize the SW tx descriptor */
+	tx_desc->netbuf = netbuf;
+	/* fix this - get pkt_type from msdu_info */
+	tx_desc->pkt_type = OL_TX_FRM_STD;
+
+#ifdef QCA_SUPPORT_SW_TXRX_ENCAP
+	tx_desc->orig_l2_hdr_bytes = 0;
+#endif
+	/* the HW tx descriptor will be initialized later by the caller */
+
 	return tx_desc;
 }
 

@@ -1019,6 +1019,10 @@ ol_rx_deliver(struct ol_txrx_vdev_t *vdev,
 		qdf_nbuf_t next = qdf_nbuf_next(msdu);
 
 		rx_desc = htt_rx_msdu_desc_retrieve(pdev->htt_pdev, msdu);
+		/* for HL, point to payload right now*/
+		if (pdev->cfg.is_high_latency)
+			qdf_nbuf_pull_head(msdu,
+				htt_rx_msdu_rx_desc_size_hl(htt_pdev, rx_desc));
 
 #ifdef QCA_SUPPORT_SW_TXRX_ENCAP
 		info.is_msdu_cmpl_mpdu =

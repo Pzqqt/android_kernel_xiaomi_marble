@@ -72,6 +72,31 @@ struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 				   qdf_nbuf_t netbuf,
 				   struct ol_txrx_msdu_info_t *msdu_info);
 
+
+/**
+ * @brief Allocate and initialize a tx descriptor for a HL system.
+ * @details
+ *  Allocate a tx descriptor pair for a new tx frame - a SW tx descriptor
+ *  for private use within the host data SW, and a HTT tx descriptor for
+ *  downloading tx meta-data to the target FW/HW.
+ *  Fill in the fields of this pair of tx descriptors based on the
+ *  information in the netbuf.
+ *
+ * @param pdev - the data physical device sending the data
+ *      (for accessing the tx desc pool)
+ * @param vdev - the virtual device sending the data
+ *      (for specifying the transmitter address for multicast / broadcast data)
+ * @param netbuf - the tx frame
+ * @param msdu_info - tx meta-data
+ */
+struct ol_tx_desc_t *
+ol_tx_desc_hl(
+		struct ol_txrx_pdev_t *pdev,
+		struct ol_txrx_vdev_t *vdev,
+		qdf_nbuf_t netbuf,
+		struct ol_txrx_msdu_info_t *msdu_info);
+
+
 /**
  * @brief Use a tx descriptor ID to find the corresponding desriptor object.
  *

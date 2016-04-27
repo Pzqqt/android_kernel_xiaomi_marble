@@ -559,6 +559,36 @@ NOT_IP_TCP:
 				     is_mcast);				\
 	} while (false)
 
+#ifdef CONFIG_HL_SUPPORT
+
+	/**
+	 * ol_rx_err_inv_get_wifi_header() - retrieve wifi header
+	 * @pdev: handle to the physical device
+	 * @rx_msdu: msdu of which header needs to be retrieved
+	 *
+	 * Return: wifi header
+	 */
+	static inline
+	struct ieee80211_frame *ol_rx_err_inv_get_wifi_header(
+		struct ol_pdev_t *pdev, qdf_nbuf_t rx_msdu)
+	{
+		return NULL;
+	}
+#else
+
+	static inline
+	struct ieee80211_frame *ol_rx_err_inv_get_wifi_header(
+		struct ol_pdev_t *pdev, qdf_nbuf_t rx_msdu)
+	{
+		struct ieee80211_frame *wh = NULL;
+		if (ol_cfg_frame_type(pdev) == wlan_frm_fmt_native_wifi)
+			/* For windows, it is always native wifi header .*/
+			wh = (struct ieee80211_frame *)qdf_nbuf_data(rx_msdu);
+
+		return wh;
+	}
+#endif
+
 #define OL_RX_ERR_INV_PEER_STATISTICS(pdev, rx_msdu)			\
 	do {								\
 		struct ieee80211_frame *wh = NULL;			\
@@ -568,11 +598,7 @@ NOT_IP_TCP:
 		/*wh = (struct ieee80211_frame *) */			\
 		/*htt_rx_mpdu_wifi_hdr_retrieve(pdev->htt_pdev, rx_desc);*/ \
 		/* this only apply to LL device.*/			\
-		if (ol_cfg_frame_type(pdev->ctrl_pdev) ==		\
-		    wlan_frm_fmt_native_wifi) {				\
-			/* For windows, it is always native wifi header .*/ \
-			wh = (struct ieee80211_frame *)qdf_nbuf_data(rx_msdu); \
-		}							\
+		wh = ol_rx_err_inv_get_wifi_header(pdev->ctrl_pdev, rx_msdu); \
 		ol_rx_err_inv_peer_statistics(pdev->ctrl_pdev,		\
 					      wh, OL_RX_ERR_UNKNOWN_PEER); \
 	} while (false)
@@ -733,5 +759,14 @@ NOT_IP_TCP:
 #define TXRX_STATS_TSO_RST_SEG_IDX(pdev) /* no-op */
 
 #endif /* FEATURE_TSO_DEBUG */
+
+#ifdef FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL
+
+void
+ol_txrx_update_group_credit(
+	struct ol_tx_queue_group_t *group,
+	int32_t credit,
+	u_int8_t absolute);
+#endif
 
 #endif /* _OL_TXRX_INTERNAL__H_ */

@@ -121,7 +121,18 @@ static inline void ol_rx_fwd_to_tx(struct ol_txrx_vdev_t *vdev, qdf_nbuf_t msdu)
 	 */
 	qdf_nbuf_set_next(msdu, NULL);  /* add NULL terminator */
 
-	msdu = OL_TX_LL(vdev, msdu);
+	/* for HL, point to payload before send to tx again.*/
+		if (pdev->cfg.is_high_latency) {
+			void *rx_desc;
+
+			rx_desc = htt_rx_msdu_desc_retrieve(pdev->htt_pdev,
+							    msdu);
+			qdf_nbuf_pull_head(msdu,
+				htt_rx_msdu_rx_desc_size_hl(pdev->htt_pdev,
+							    rx_desc));
+		}
+
+	msdu = OL_TX_SEND(vdev, msdu);
 
 	if (msdu) {
 		/*
@@ -131,6 +142,7 @@ static inline void ol_rx_fwd_to_tx(struct ol_txrx_vdev_t *vdev, qdf_nbuf_t msdu)
 		 */
 		qdf_nbuf_tx_free(msdu, QDF_NBUF_PKT_ERROR);
 	}
+	return;
 }
 
 void
@@ -232,6 +244,7 @@ ol_rx_fwd_check(struct ol_txrx_vdev_t *vdev,
 			ol_rx_deliver(vdev, peer, tid, deliver_list_head);
 		}
 	}
+	return;
 }
 
 /*

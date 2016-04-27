@@ -398,17 +398,85 @@ void ol_txrx_peer_find_detach(struct ol_txrx_pdev_t *pdev)
 
 /*=== function definitions for message handling =============================*/
 
+#if defined(CONFIG_HL_SUPPORT)
+
 void
 ol_rx_peer_map_handler(ol_txrx_pdev_handle pdev,
 		       uint16_t peer_id,
 		       uint8_t vdev_id, uint8_t *peer_mac_addr, int tx_ready)
 {
 	ol_txrx_peer_find_add_id(pdev, peer_mac_addr, peer_id);
+	if (!tx_ready) {
+		struct ol_txrx_peer_t *peer;
+		peer = ol_txrx_peer_find_by_id(pdev, peer_id);
+		if (!peer) {
+			/* ol_txrx_peer_detach called before peer map arrived*/
+			return;
+		} else {
+			if (tx_ready) {
+				int i;
+				/* unpause all tx queues now, since the
+				 * target is ready
+				 */
+				for (i = 0; i < QDF_ARRAY_SIZE(peer->txqs);
+									i++)
+					ol_txrx_peer_tid_unpause(peer, i);
+
+			} else {
+				/* walk through paused mgmt queue,
+				 * update tx descriptors
+				 */
+				ol_tx_queue_decs_reinit(peer, peer_id);
+
+				/* keep non-mgmt tx queues paused until assoc
+				 * is finished tx queues were paused in
+				 * ol_txrx_peer_attach*/
+				/* unpause tx mgmt queue */
+				ol_txrx_peer_tid_unpause(peer,
+							 HTT_TX_EXT_TID_MGMT);
+			}
+		}
+	}
 }
 
 void ol_txrx_peer_tx_ready_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 {
+	struct ol_txrx_peer_t *peer;
+	peer = ol_txrx_peer_find_by_id(pdev, peer_id);
+	if (peer) {
+		int i;
+		/*
+		 * Unpause all data tx queues now that the target is ready.
+		 * The mgmt tx queue was not paused, so skip it.
+		 */
+		for (i = 0; i < QDF_ARRAY_SIZE(peer->txqs); i++) {
+			if (i == HTT_TX_EXT_TID_MGMT)
+				continue; /* mgmt tx queue was not paused */
+
+			ol_txrx_peer_tid_unpause(peer, i);
+		}
+	}
 }
+#else
+
+void
+ol_rx_peer_map_handler(ol_txrx_pdev_handle pdev,
+		       uint16_t peer_id,
+		       uint8_t vdev_id,
+		       uint8_t *peer_mac_addr,
+		       int tx_ready)
+{
+	ol_txrx_peer_find_add_id(pdev, peer_mac_addr, peer_id);
+
+}
+
+void ol_txrx_peer_tx_ready_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
+{
+	return;
+}
+
+#endif
+
 
 void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 {

@@ -104,16 +104,178 @@ const struct ol_rx_defrag_cipher f_wep = {
 	0,
 };
 
-inline struct ieee80211_frame *ol_rx_frag_get_mac_hdr(
+#if defined(CONFIG_HL_SUPPORT)
+
+/**
+ * ol_rx_frag_get_mac_hdr() - retrieve mac header
+ * @htt_pdev: pointer to htt pdev handle
+ * @frag: rx fragment
+ *
+ * Return: pointer to ieee mac header of frag
+ */
+static struct ieee80211_frame *ol_rx_frag_get_mac_hdr(
+	htt_pdev_handle htt_pdev, qdf_nbuf_t frag)
+{
+	void *rx_desc;
+	int rx_desc_len;
+
+	rx_desc = htt_rx_msdu_desc_retrieve(htt_pdev, frag);
+	rx_desc_len = htt_rx_msdu_rx_desc_size_hl(htt_pdev, rx_desc);
+	return (struct ieee80211_frame *)(qdf_nbuf_data(frag) + rx_desc_len);
+}
+
+/**
+ * ol_rx_frag_pull_hdr() - point to payload of rx frag
+ * @htt_pdev: pointer to htt pdev handle
+ * @frag: rx fragment
+ * @hdrsize: header size
+ *
+ * Return: None
+ */
+static void ol_rx_frag_pull_hdr(htt_pdev_handle htt_pdev,
+	qdf_nbuf_t frag, int hdrsize)
+{
+	void *rx_desc;
+	int rx_desc_len;
+
+	rx_desc = htt_rx_msdu_desc_retrieve(htt_pdev, frag);
+	rx_desc_len = htt_rx_msdu_rx_desc_size_hl(htt_pdev, rx_desc);
+	qdf_nbuf_pull_head(frag, rx_desc_len + hdrsize);
+}
+
+/**
+ * ol_rx_frag_clone() - clone the rx frag
+ * @frag: rx fragment to clone from
+ *
+ * Return: cloned buffer
+ */
+static inline qdf_nbuf_t
+ol_rx_frag_clone(qdf_nbuf_t frag)
+{
+	return qdf_nbuf_clone(frag);
+}
+
+/**
+ * ol_rx_frag_desc_adjust() - adjust rx frag descriptor position
+ * @pdev: pointer to txrx handle
+ * @msdu: msdu
+ * @rx_desc_old_position: rx descriptor old position
+ * @ind_old_position:index of old position
+ * @rx_desc_len: rx desciptor length
+ *
+ * Return: None
+ */
+static void
+ol_rx_frag_desc_adjust(ol_txrx_pdev_handle pdev,
+		       qdf_nbuf_t msdu,
+			void **rx_desc_old_position,
+			void **ind_old_position, int *rx_desc_len)
+{
+	*rx_desc_old_position = htt_rx_msdu_desc_retrieve(pdev->htt_pdev,
+									msdu);
+	*ind_old_position = *rx_desc_old_position - HTT_RX_IND_HL_BYTES;
+	*rx_desc_len = htt_rx_msdu_rx_desc_size_hl(pdev->htt_pdev,
+			*rx_desc_old_position);
+}
+
+/**
+ * ol_rx_frag_restructure() - point to payload for HL
+ * @pdev: physical device object
+ * @msdu: the buffer containing the MSDU payload
+ * @rx_desc_old_position: rx MSDU descriptor
+ * @ind_old_position: rx msdu indication
+ * @f_type: pointing to rx defrag cipher
+ * @rx_desc_len: length by which rx descriptor to move
+ *
+ * Return: None
+ */
+static void
+ol_rx_frag_restructure(
+	ol_txrx_pdev_handle pdev,
+	qdf_nbuf_t msdu,
+	void *rx_desc_old_position,
+	void *ind_old_position,
+	const struct ol_rx_defrag_cipher *f_type,
+	int rx_desc_len)
+{
+	if ((ind_old_position == NULL) || (rx_desc_old_position == NULL)) {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			   "ind_old_position,rx_desc_old_position is NULL\n");
+		ASSERT(0);
+		return;
+	}
+	/* move rx description*/
+	qdf_mem_move(rx_desc_old_position + f_type->ic_header,
+		     rx_desc_old_position, rx_desc_len);
+	/* move rx indication*/
+	qdf_mem_move(ind_old_position + f_type->ic_header, ind_old_position,
+		     HTT_RX_IND_HL_BYTES);
+}
+
+/**
+ * ol_rx_get_desc_len() - point to payload for HL
+ * @htt_pdev: the HTT instance the rx data was received on
+ * @wbuf: buffer containing the MSDU payload
+ * @rx_desc_old_position: rx MSDU descriptor
+ *
+ * Return: Return the HL rx desc size
+ */
+static
+int ol_rx_get_desc_len(htt_pdev_handle htt_pdev,
+			qdf_nbuf_t wbuf,
+			void **rx_desc_old_position)
+{
+	int rx_desc_len = 0;
+	*rx_desc_old_position = htt_rx_msdu_desc_retrieve(htt_pdev, wbuf);
+	rx_desc_len = htt_rx_msdu_rx_desc_size_hl(htt_pdev,
+			*rx_desc_old_position);
+
+	return rx_desc_len;
+}
+
+/**
+ * ol_rx_defrag_push_rx_desc() - point to payload for HL
+ * @nbuf: buffer containing the MSDU payload
+ * @rx_desc_old_position: rx MSDU descriptor
+ * @ind_old_position: rx msdu indication
+ * @rx_desc_len: HL rx desc size
+ *
+ * Return: Return the HL rx desc size
+ */
+static
+void ol_rx_defrag_push_rx_desc(qdf_nbuf_t nbuf,
+				void *rx_desc_old_position,
+				void *ind_old_position,
+				int rx_desc_len)
+{
+	qdf_nbuf_push_head(nbuf, rx_desc_len);
+	qdf_mem_move(
+		qdf_nbuf_data(nbuf), rx_desc_old_position, rx_desc_len);
+	qdf_mem_move(
+		qdf_nbuf_data(nbuf) - HTT_RX_IND_HL_BYTES, ind_old_position,
+		HTT_RX_IND_HL_BYTES);
+}
+#else
+
+static inline struct ieee80211_frame *ol_rx_frag_get_mac_hdr(
 	htt_pdev_handle htt_pdev,
 	qdf_nbuf_t frag)
 {
 	return
 		(struct ieee80211_frame *) qdf_nbuf_data(frag);
 }
-#define ol_rx_frag_pull_hdr(pdev, frag, hdrsize) \
+
+static inline void ol_rx_frag_pull_hdr(htt_pdev_handle htt_pdev,
+	qdf_nbuf_t frag, int hdrsize)
+{
 	qdf_nbuf_pull_head(frag, hdrsize);
-#define OL_RX_FRAG_CLONE(frag) NULL     /* no-op */
+}
+
+static inline qdf_nbuf_t
+ol_rx_frag_clone(qdf_nbuf_t frag)
+{
+	return NULL;
+}
 
 static inline void
 ol_rx_frag_desc_adjust(ol_txrx_pdev_handle pdev,
@@ -125,6 +287,38 @@ ol_rx_frag_desc_adjust(ol_txrx_pdev_handle pdev,
 	*ind_old_position = NULL;
 	*rx_desc_len = 0;
 }
+
+static inline void
+ol_rx_frag_restructure(
+		ol_txrx_pdev_handle pdev,
+		qdf_nbuf_t msdu,
+		void *rx_desc_old_position,
+		void *ind_old_position,
+		const struct ol_rx_defrag_cipher *f_type,
+		int rx_desc_len)
+{
+	/* no op */
+	return;
+}
+
+static inline
+int ol_rx_get_desc_len(htt_pdev_handle htt_pdev,
+			qdf_nbuf_t wbuf,
+			void **rx_desc_old_position)
+{
+	return 0;
+}
+
+static inline
+void ol_rx_defrag_push_rx_desc(qdf_nbuf_t nbuf,
+			void *rx_desc_old_position,
+			void *ind_old_position,
+			int rx_desc_len)
+{
+	return;
+}
+#endif /* CONFIG_HL_SUPPORT */
+
 
 /*
  * Process incoming fragments
@@ -302,7 +496,7 @@ ol_rx_fraglist_insert(htt_pdev_handle htt_pdev,
 	qdf_nbuf_t frag_clone;
 
 	qdf_assert(frag);
-	frag_clone = OL_RX_FRAG_CLONE(frag);
+	frag_clone = ol_rx_frag_clone(frag);
 	frag = frag_clone ? frag_clone : frag;
 
 	mac_hdr = (struct ieee80211_frame *)
@@ -608,6 +802,13 @@ ol_rx_frag_tkip_decap(ol_txrx_pdev_handle pdev,
 		return OL_RX_DEFRAG_ERR;
 
 	qdf_mem_move(origHdr + f_tkip.ic_header, origHdr, hdrlen);
+	ol_rx_frag_restructure(
+			pdev,
+			msdu,
+			rx_desc_old_position,
+			ind_old_position,
+			&f_tkip,
+			rx_desc_len);
 	qdf_nbuf_pull_head(msdu, f_tkip.ic_header);
 	qdf_nbuf_trim_tail(msdu, f_tkip.ic_trailer);
 	return OL_RX_DEFRAG_OK;
@@ -630,6 +831,13 @@ ol_rx_frag_wep_decap(ol_txrx_pdev_handle pdev, qdf_nbuf_t msdu, uint16_t hdrlen)
 			       &ind_old_position, &rx_desc_len);
 	origHdr = (uint8_t *) (qdf_nbuf_data(msdu) + rx_desc_len);
 	qdf_mem_move(origHdr + f_wep.ic_header, origHdr, hdrlen);
+	ol_rx_frag_restructure(
+			pdev,
+			msdu,
+			rx_desc_old_position,
+			ind_old_position,
+			&f_wep,
+			rx_desc_len);
 	qdf_nbuf_pull_head(msdu, f_wep.ic_header);
 	qdf_nbuf_trim_tail(msdu, f_wep.ic_trailer);
 	return OL_RX_DEFRAG_OK;
@@ -694,6 +902,13 @@ ol_rx_frag_ccmp_decap(ol_txrx_pdev_handle pdev,
 		return OL_RX_DEFRAG_ERR;
 
 	qdf_mem_move(origHdr + f_ccmp.ic_header, origHdr, hdrlen);
+	ol_rx_frag_restructure(
+			pdev,
+			nbuf,
+			rx_desc_old_position,
+			ind_old_position,
+			&f_ccmp,
+			rx_desc_len);
 	qdf_nbuf_pull_head(nbuf, f_ccmp.ic_header);
 
 	return OL_RX_DEFRAG_OK;
@@ -788,6 +1003,7 @@ ol_rx_defrag_mic(ol_txrx_pdev_handle pdev,
 	void *rx_desc_old_position = NULL;
 	void *ind_old_position = NULL;
 	int rx_desc_len = 0;
+	htt_pdev_handle htt_pdev = pdev->htt_pdev;
 
 	ol_rx_frag_desc_adjust(pdev,
 			       wbuf,
@@ -831,7 +1047,8 @@ ol_rx_defrag_mic(ol_txrx_pdev_handle pdev,
 		if (wbuf == NULL)
 			return OL_RX_DEFRAG_ERR;
 
-		rx_desc_len = 0;
+		rx_desc_len = ol_rx_get_desc_len(htt_pdev, wbuf,
+						 &rx_desc_old_position);
 
 		if (space != 0) {
 			const uint8_t *data_next;
@@ -1008,6 +1225,9 @@ void ol_rx_defrag_nwifi_to_8023(ol_txrx_pdev_handle pdev, qdf_nbuf_t msdu)
 
 	qdf_mem_copy(eth_hdr->ethertype, llchdr.ethertype,
 		     sizeof(llchdr.ethertype));
+
+	ol_rx_defrag_push_rx_desc(msdu, rx_desc_old_position,
+					  ind_old_position, rx_desc_len);
 }
 
 /*
@@ -1057,6 +1277,9 @@ ol_rx_defrag_qos_decap(ol_txrx_pdev_handle pdev,
 		 */
 		if (wh)
 			wh->i_fc[0] &= ~IEEE80211_FC0_SUBTYPE_QOS;
+
+		ol_rx_defrag_push_rx_desc(nbuf, rx_desc_old_position,
+					  ind_old_position, rx_desc_len);
 
 	}
 }
