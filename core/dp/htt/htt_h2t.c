@@ -86,6 +86,18 @@ void htt_h2t_send_complete(void *context, HTC_PACKET *htc_pkt)
 		send_complete_part2(htt_pkt->pdev_ctxt, htc_pkt->Status, netbuf,
 				    htt_pkt->msdu_id);
 	}
+
+	if (pdev->cfg.is_high_latency && !pdev->cfg.default_tx_comp_req) {
+		int32_t credit_delta;
+
+		qdf_atomic_add(1, &pdev->htt_tx_credit.bus_delta);
+		credit_delta = htt_tx_credit_update(pdev);
+
+		if (credit_delta)
+			ol_tx_credit_completion_handler(pdev->txrx_pdev,
+							credit_delta);
+	}
+
 	/* free the htt_htc_pkt / HTC_PACKET object */
 	htt_htc_pkt_free(pdev, htt_pkt);
 }
@@ -194,10 +206,20 @@ A_STATUS htt_h2t_ver_req_msg(struct htt_pdev_t *pdev)
 	struct htt_htc_pkt *pkt;
 	qdf_nbuf_t msg;
 	uint32_t *msg_word;
+	uint32_t msg_size;
+	uint32_t max_tx_group;
 
 	pkt = htt_htc_pkt_alloc(pdev);
 	if (!pkt)
 		return A_ERROR; /* failure */
+
+	max_tx_group = ol_tx_get_max_tx_groups_supported(pdev->txrx_pdev);
+
+	if (max_tx_group)
+		msg_size = HTT_VER_REQ_BYTES +
+			sizeof(struct htt_option_tlv_mac_tx_queue_groups_t);
+	else
+		msg_size = HTT_VER_REQ_BYTES;
 
 	/* show that this is not a tx frame download
 	 * (not required, but helpful)
@@ -206,7 +228,7 @@ A_STATUS htt_h2t_ver_req_msg(struct htt_pdev_t *pdev)
 	pkt->pdev_ctxt = NULL;  /* not used during send-done callback */
 
 	/* reserve room for the HTC header */
-	msg = qdf_nbuf_alloc(pdev->osdev, HTT_MSG_BUF_SIZE(HTT_VER_REQ_BYTES),
+	msg = qdf_nbuf_alloc(pdev->osdev, HTT_MSG_BUF_SIZE(msg_size),
 			     HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING, 4,
 			     true);
 	if (!msg) {
@@ -220,7 +242,7 @@ A_STATUS htt_h2t_ver_req_msg(struct htt_pdev_t *pdev)
 	 * separately during the below call to qdf_nbuf_push_head.
 	 * The contribution from the HTC header is added separately inside HTC.
 	 */
-	qdf_nbuf_put_tail(msg, HTT_VER_REQ_BYTES);
+	qdf_nbuf_put_tail(msg, msg_size);
 
 	/* fill in the message contents */
 	msg_word = (uint32_t *) qdf_nbuf_data(msg);
@@ -230,6 +252,18 @@ A_STATUS htt_h2t_ver_req_msg(struct htt_pdev_t *pdev)
 
 	*msg_word = 0;
 	HTT_H2T_MSG_TYPE_SET(*msg_word, HTT_H2T_MSG_TYPE_VERSION_REQ);
+
+	if (max_tx_group) {
+		*(msg_word + 1) = 0;
+
+		/* Fill Group Info */
+		HTT_OPTION_TLV_TAG_SET(*(msg_word+1),
+				       HTT_OPTION_TLV_TAG_MAX_TX_QUEUE_GROUPS);
+		HTT_OPTION_TLV_LENGTH_SET(*(msg_word+1),
+			(sizeof(struct htt_option_tlv_mac_tx_queue_groups_t)/
+			 sizeof(uint32_t)));
+		HTT_OPTION_TLV_VALUE0_SET(*(msg_word+1), max_tx_group);
+	}
 
 	SET_HTC_PACKET_INFO_TX(&pkt->htc_pkt,
 			       htt_h2t_send_complete_free_netbuf,
@@ -246,10 +280,14 @@ A_STATUS htt_h2t_ver_req_msg(struct htt_pdev_t *pdev)
 	htc_send_pkt(pdev->htc_pdev, &pkt->htc_pkt);
 #endif
 
+	if ((pdev->cfg.is_high_latency) &&
+	    (!pdev->cfg.default_tx_comp_req))
+		ol_tx_target_credit_update(pdev->txrx_pdev, -1);
+
 	return A_OK;
 }
 
-A_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev)
+QDF_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev)
 {
 	struct htt_htc_pkt *pkt;
 	qdf_nbuf_t msg;
@@ -445,6 +483,148 @@ A_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev)
 	return A_OK;
 }
 
+QDF_STATUS
+htt_h2t_rx_ring_cfg_msg_hl(struct htt_pdev_t *pdev)
+{
+	struct htt_htc_pkt *pkt;
+	qdf_nbuf_t msg;
+	u_int32_t *msg_word;
+
+	pkt = htt_htc_pkt_alloc(pdev);
+	if (!pkt)
+		return A_ERROR; /* failure */
+
+	/* show that this is not a tx frame download
+	 * (not required, but helpful) */
+	pkt->msdu_id = HTT_TX_COMPL_INV_MSDU_ID;
+	pkt->pdev_ctxt = NULL; /* not used during send-done callback */
+
+	msg = qdf_nbuf_alloc(
+		pdev->osdev,
+		HTT_MSG_BUF_SIZE(HTT_RX_RING_CFG_BYTES(1)),
+		/* reserve room for the HTC header */
+		HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING, 4, true);
+	if (!msg) {
+		htt_htc_pkt_free(pdev, pkt);
+		return A_ERROR; /* failure */
+	}
+	/*
+	 * Set the length of the message.
+	 * The contribution from the HTC_HDR_ALIGNMENT_PADDING is added
+	 * separately during the below call to adf_nbuf_push_head.
+	 * The contribution from the HTC header is added separately inside HTC.
+	 */
+	qdf_nbuf_put_tail(msg, HTT_RX_RING_CFG_BYTES(1));
+
+	/* fill in the message contents */
+	msg_word = (u_int32_t *)qdf_nbuf_data(msg);
+
+	/* rewind beyond alignment pad to get to the HTC header reserved area */
+	qdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
+
+	*msg_word = 0;
+	HTT_H2T_MSG_TYPE_SET(*msg_word, HTT_H2T_MSG_TYPE_RX_RING_CFG);
+	HTT_RX_RING_CFG_NUM_RINGS_SET(*msg_word, 1);
+
+	msg_word++;
+	*msg_word = 0;
+	HTT_RX_RING_CFG_IDX_SHADOW_REG_PADDR_SET(
+			*msg_word, pdev->rx_ring.alloc_idx.paddr);
+
+	msg_word++;
+	*msg_word = 0;
+	HTT_RX_RING_CFG_BASE_PADDR_SET(*msg_word, pdev->rx_ring.base_paddr);
+
+	msg_word++;
+	*msg_word = 0;
+	HTT_RX_RING_CFG_LEN_SET(*msg_word, pdev->rx_ring.size);
+	HTT_RX_RING_CFG_BUF_SZ_SET(*msg_word, HTT_RX_BUF_SIZE);
+
+	/* FIX THIS: if the FW creates a complete translated rx descriptor,
+	 * then the MAC DMA of the HW rx descriptor should be disabled. */
+	msg_word++;
+	*msg_word = 0;
+
+	HTT_RX_RING_CFG_ENABLED_802_11_HDR_SET(*msg_word, 0);
+	HTT_RX_RING_CFG_ENABLED_MSDU_PAYLD_SET(*msg_word, 1);
+	HTT_RX_RING_CFG_ENABLED_PPDU_START_SET(*msg_word, 0);
+	HTT_RX_RING_CFG_ENABLED_PPDU_END_SET(*msg_word, 0);
+	HTT_RX_RING_CFG_ENABLED_MPDU_START_SET(*msg_word, 0);
+	HTT_RX_RING_CFG_ENABLED_MPDU_END_SET(*msg_word,   0);
+	HTT_RX_RING_CFG_ENABLED_MSDU_START_SET(*msg_word, 0);
+	HTT_RX_RING_CFG_ENABLED_MSDU_END_SET(*msg_word,   0);
+	HTT_RX_RING_CFG_ENABLED_RX_ATTN_SET(*msg_word,    0);
+	/* always present? */
+	HTT_RX_RING_CFG_ENABLED_FRAG_INFO_SET(*msg_word,  0);
+	HTT_RX_RING_CFG_ENABLED_UCAST_SET(*msg_word, 1);
+	HTT_RX_RING_CFG_ENABLED_MCAST_SET(*msg_word, 1);
+	/* Must change to dynamic enable at run time
+	 * rather than at compile time
+	 */
+	HTT_RX_RING_CFG_ENABLED_CTRL_SET(*msg_word, 0);
+	HTT_RX_RING_CFG_ENABLED_MGMT_SET(*msg_word, 0);
+	HTT_RX_RING_CFG_ENABLED_NULL_SET(*msg_word, 0);
+	HTT_RX_RING_CFG_ENABLED_PHY_SET(*msg_word, 0);
+
+	msg_word++;
+	*msg_word = 0;
+	HTT_RX_RING_CFG_OFFSET_802_11_HDR_SET(*msg_word,
+					      0);
+	HTT_RX_RING_CFG_OFFSET_MSDU_PAYLD_SET(*msg_word,
+					      0);
+
+	msg_word++;
+	*msg_word = 0;
+	HTT_RX_RING_CFG_OFFSET_PPDU_START_SET(*msg_word,
+					      0);
+	HTT_RX_RING_CFG_OFFSET_PPDU_END_SET(*msg_word,
+					    0);
+
+	msg_word++;
+	*msg_word = 0;
+	HTT_RX_RING_CFG_OFFSET_MPDU_START_SET(*msg_word,
+					      0);
+	HTT_RX_RING_CFG_OFFSET_MPDU_END_SET(*msg_word,
+					    0);
+
+	msg_word++;
+	*msg_word = 0;
+	HTT_RX_RING_CFG_OFFSET_MSDU_START_SET(*msg_word,
+					      0);
+	HTT_RX_RING_CFG_OFFSET_MSDU_END_SET(*msg_word,
+					    0);
+
+	msg_word++;
+	*msg_word = 0;
+	HTT_RX_RING_CFG_OFFSET_RX_ATTN_SET(*msg_word,
+					   0);
+	HTT_RX_RING_CFG_OFFSET_FRAG_INFO_SET(*msg_word,
+					     0);
+
+	SET_HTC_PACKET_INFO_TX(
+		&pkt->htc_pkt,
+		htt_h2t_send_complete_free_netbuf,
+		qdf_nbuf_data(msg),
+		qdf_nbuf_len(msg),
+		pdev->htc_tx_endpoint,
+		1); /* tag - not relevant here */
+
+	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
+
+#ifdef ATH_11AC_TXCOMPACT
+	if (htc_send_pkt(pdev->htc_pdev, &pkt->htc_pkt) == A_OK)
+		htt_htc_misc_pkt_list_add(pdev, pkt);
+#else
+	htc_send_pkt(pdev->htc_pdev, &pkt->htc_pkt);
+#endif
+
+	if ((pdev->cfg.is_high_latency) &&
+	    (!pdev->cfg.default_tx_comp_req))
+		ol_tx_target_credit_update(pdev->txrx_pdev, -1);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 int
 htt_h2t_dbg_stats_get(struct htt_pdev_t *pdev,
 		      uint32_t stats_type_upload_mask,
@@ -533,6 +713,10 @@ htt_h2t_dbg_stats_get(struct htt_pdev_t *pdev,
 	htc_send_pkt(pdev->htc_pdev, &pkt->htc_pkt);
 #endif
 
+	if ((pdev->cfg.is_high_latency) &&
+	    (!pdev->cfg.default_tx_comp_req))
+		ol_tx_target_credit_update(pdev->txrx_pdev, -1);
+
 	return 0;
 }
 
@@ -588,6 +772,10 @@ A_STATUS htt_h2t_sync_msg(struct htt_pdev_t *pdev, uint8_t sync_cnt)
 #else
 	htc_send_pkt(pdev->htc_pdev, &pkt->htc_pkt);
 #endif
+
+	if ((pdev->cfg.is_high_latency) &&
+	    (!pdev->cfg.default_tx_comp_req))
+		ol_tx_target_credit_update(pdev->txrx_pdev, -1);
 
 	return A_OK;
 }
@@ -655,6 +843,10 @@ htt_h2t_aggr_cfg_msg(struct htt_pdev_t *pdev,
 #else
 	htc_send_pkt(pdev->htc_pdev, &pkt->htc_pkt);
 #endif
+
+	if ((pdev->cfg.is_high_latency) &&
+	    (!pdev->cfg.default_tx_comp_req))
+		ol_tx_target_credit_update(pdev->txrx_pdev, -1);
 
 	return 0;
 }

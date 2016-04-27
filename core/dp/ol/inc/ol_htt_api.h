@@ -365,4 +365,23 @@ static inline void htt_ipa_uc_detach(struct htt_pdev_t *pdev)
 void htt_rx_mon_note_capture_channel(htt_pdev_handle pdev, int mon_ch);
 
 void ol_htt_mon_note_chan(ol_txrx_pdev_handle pdev, int mon_ch);
+
+#if defined(DEBUG_HL_LOGGING) && defined(CONFIG_HL_SUPPORT)
+
+void htt_dump_bundle_stats(struct htt_pdev_t *pdev);
+void htt_clear_bundle_stats(struct htt_pdev_t *pdev);
+#else
+
+static inline void htt_dump_bundle_stats(struct htt_pdev_t *pdev)
+{
+	return;
+}
+
+static inline void htt_clear_bundle_stats(struct htt_pdev_t *pdev)
+{
+	return;
+}
+#endif
+
+
 #endif /* _OL_HTT_API__H_ */

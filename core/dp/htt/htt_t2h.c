@@ -58,34 +58,24 @@
 #define DEBUG_CREDIT 0
 #endif
 
-static uint8_t *htt_t2h_mac_addr_deswizzle(uint8_t *tgt_mac_addr,
-					   uint8_t *buffer)
+#if defined(CONFIG_HL_SUPPORT)
+
+
+
+/**
+ * htt_rx_frag_set_last_msdu() - set last msdu bit in rx descriptor
+ *				 for recieved frames
+ * @pdev: Handle (pointer) to HTT pdev.
+ * @msg: htt recieved msg
+ *
+ * Return: None
+ */
+static inline
+void htt_rx_frag_set_last_msdu(struct htt_pdev_t *pdev, qdf_nbuf_t msg)
 {
-#ifdef BIG_ENDIAN_HOST
-	/*
-	 * The host endianness is opposite of the target endianness.
-	 * To make uint32_t elements come out correctly, the target->host
-	 * upload has swizzled the bytes in each uint32_t element of the
-	 * message.
-	 * For byte-array message fields like the MAC address, this
-	 * upload swizzling puts the bytes in the wrong order, and needs
-	 * to be undone.
-	 */
-	buffer[0] = tgt_mac_addr[3];
-	buffer[1] = tgt_mac_addr[2];
-	buffer[2] = tgt_mac_addr[1];
-	buffer[3] = tgt_mac_addr[0];
-	buffer[4] = tgt_mac_addr[7];
-	buffer[5] = tgt_mac_addr[6];
-	return buffer;
-#else
-	/*
-	 * The host endianness matches the target endianness -
-	 * we can use the mac addr directly from the message buffer.
-	 */
-	return tgt_mac_addr;
-#endif
+	return;
 }
+#else
 
 static void htt_rx_frag_set_last_msdu(struct htt_pdev_t *pdev, qdf_nbuf_t msg)
 {
@@ -130,6 +120,36 @@ static void htt_rx_frag_set_last_msdu(struct htt_pdev_t *pdev, qdf_nbuf_t msg)
 	*((uint8_t *) &rx_desc->fw_desc.u.val) = *p_fw_msdu_rx_desc;
 	rx_desc->msdu_end.last_msdu = 1;
 	qdf_nbuf_map(pdev->osdev, msdu, QDF_DMA_FROM_DEVICE);
+}
+#endif
+
+static uint8_t *htt_t2h_mac_addr_deswizzle(uint8_t *tgt_mac_addr,
+					   uint8_t *buffer)
+{
+#ifdef BIG_ENDIAN_HOST
+	/*
+	 * The host endianness is opposite of the target endianness.
+	 * To make uint32_t elements come out correctly, the target->host
+	 * upload has swizzled the bytes in each uint32_t element of the
+	 * message.
+	 * For byte-array message fields like the MAC address, this
+	 * upload swizzling puts the bytes in the wrong order, and needs
+	 * to be undone.
+	 */
+	buffer[0] = tgt_mac_addr[3];
+	buffer[1] = tgt_mac_addr[2];
+	buffer[2] = tgt_mac_addr[1];
+	buffer[3] = tgt_mac_addr[0];
+	buffer[4] = tgt_mac_addr[7];
+	buffer[5] = tgt_mac_addr[6];
+	return buffer;
+#else
+	/*
+	 * The host endianness matches the target endianness -
+	 * we can use the mac addr directly from the message buffer.
+	 */
+	return tgt_mac_addr;
+#endif
 }
 
 /* Target to host Msg/event  handler  for low priority messages*/
@@ -284,9 +304,25 @@ void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 	case HTT_T2H_MSG_TYPE_MGMT_TX_COMPL_IND:
 	{
 		struct htt_mgmt_tx_compl_ind *compl_msg;
+		int32_t credit_delta = 1;
 
 		compl_msg =
 			(struct htt_mgmt_tx_compl_ind *)(msg_word + 1);
+
+		if (pdev->cfg.is_high_latency) {
+			if (!pdev->cfg.default_tx_comp_req) {
+				qdf_atomic_add(credit_delta,
+					       &pdev->htt_tx_credit.
+								target_delta);
+				credit_delta = htt_tx_credit_update(pdev);
+			}
+			if (credit_delta)
+				ol_tx_target_credit_update(
+						pdev->txrx_pdev, credit_delta);
+		}
+		ol_tx_desc_update_group_credit(
+			pdev->txrx_pdev, compl_msg->desc_id, 1,
+			0, compl_msg->status);
 
 		if (!ol_tx_get_is_mgmt_over_wmi_enabled()) {
 			ol_tx_single_completion_handler(pdev->txrx_pdev,
@@ -330,6 +366,15 @@ void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 			HTT_TX_CREDIT_DELTA_ABS_GET(*msg_word);
 		sign = HTT_TX_CREDIT_SIGN_BIT_GET(*msg_word) ? -1 : 1;
 		htt_credit_delta = sign * htt_credit_delta_abs;
+
+		if (pdev->cfg.is_high_latency &&
+		    !pdev->cfg.default_tx_comp_req) {
+			qdf_atomic_add(htt_credit_delta,
+				       &pdev->htt_tx_credit.target_delta);
+			htt_credit_delta = htt_tx_credit_update(pdev);
+		}
+
+		htt_tx_group_credit_process(pdev, msg_word);
 		ol_tx_credit_completion_handler(pdev->txrx_pdev,
 						htt_credit_delta);
 		break;
@@ -535,6 +580,10 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 		ol_rx_indication_handler(pdev->txrx_pdev,
 					 htt_t2h_msg, peer_id,
 					 tid, num_mpdu_ranges);
+
+		if (pdev->cfg.is_high_latency)
+			return;
+
 		break;
 	}
 	case HTT_T2H_MSG_TYPE_TX_COMPL_IND:
@@ -563,6 +612,27 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 					compl->payload[num_msdus];
 			}
 		}
+
+		if (pdev->cfg.is_high_latency) {
+			if (!pdev->cfg.default_tx_comp_req) {
+				int credit_delta;
+
+				qdf_atomic_add(num_msdus,
+					       &pdev->htt_tx_credit.
+								target_delta);
+				credit_delta = htt_tx_credit_update(pdev);
+
+				if (credit_delta) {
+					ol_tx_target_credit_update(
+							pdev->txrx_pdev,
+							credit_delta);
+				}
+			} else {
+				ol_tx_target_credit_update(pdev->txrx_pdev,
+							   num_msdus);
+			}
+		}
+
 		ol_tx_completion_handler(pdev->txrx_pdev, num_msdus,
 					 status, msg_word + 1);
 		HTT_TX_SCHED(pdev);
@@ -634,6 +704,12 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 			qdf_print("HTT_T2H_MSG_TYPE_RX_IN_ORD_PADDR_IND not ");
 			qdf_print("supported when full reorder offload is ");
 			qdf_print("disabled in the configuration.\n");
+			break;
+		}
+
+		if (qdf_unlikely(pdev->cfg.is_high_latency)) {
+			qdf_print("HTT_T2H_MSG_TYPE_RX_IN_ORD_PADDR_IND ");
+			qdf_print("not supported on high latency.\n");
 			break;
 		}
 

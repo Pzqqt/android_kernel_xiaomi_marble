@@ -420,7 +420,17 @@ static inline void htt_print_rx_desc(struct htt_host_rx_desc_base *rx_desc)
 
 #endif
 
+#ifdef CONFIG_HL_SUPPORT
+
+static inline void htt_tx_resume_handler(void *context)
+{
+	return;
+}
+#else
+
 void htt_tx_resume_handler(void *);
+#endif
+
 #ifdef ATH_11AC_TXCOMPACT
 #define HTT_TX_SCHED htt_tx_sched
 #else
@@ -433,7 +443,16 @@ void htt_tx_detach(struct htt_pdev_t *pdev);
 
 int htt_rx_attach(struct htt_pdev_t *pdev);
 
+#if defined(CONFIG_HL_SUPPORT)
+
+static inline void htt_rx_detach(struct htt_pdev_t *pdev)
+{
+	return;
+}
+#else
+
 void htt_rx_detach(struct htt_pdev_t *pdev);
+#endif
 
 int htt_htc_attach(struct htt_pdev_t *pdev, uint16_t service_id);
 
@@ -458,8 +477,11 @@ A_STATUS
 htt_h2t_frag_desc_bank_cfg_msg(struct htt_pdev_t *pdev);
 #endif /* defined(HELIUMPLUS_PADDR64) */
 
-extern A_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev);
-extern A_STATUS (*htt_h2t_rx_ring_cfg_msg)(struct htt_pdev_t *pdev);
+extern QDF_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev);
+
+extern QDF_STATUS htt_h2t_rx_ring_cfg_msg_hl(struct htt_pdev_t *pdev);
+
+extern QDF_STATUS (*htt_h2t_rx_ring_cfg_msg)(struct htt_pdev_t *pdev);
 
 HTC_SEND_FULL_ACTION htt_h2t_full(void *context, HTC_PACKET *pkt);
 
@@ -537,6 +559,44 @@ static inline int htt_rx_ipa_uc_detach(struct htt_pdev_t *pdev)
 	return 0;
 }
 #endif /* IPA_OFFLOAD */
+
+/* Maximum Outstanding Bus Download */
+#define HTT_MAX_BUS_CREDIT 33
+
+#ifdef CONFIG_HL_SUPPORT
+
+/**
+ * htt_tx_credit_update() - check for diff in bus delta and target delta
+ * @pdev: pointer to htt device.
+ *
+ * Return: min of bus delta and target delta
+ */
+int
+htt_tx_credit_update(struct htt_pdev_t *pdev);
+#else
+
+static inline int
+htt_tx_credit_update(struct htt_pdev_t *pdev)
+{
+	return 0;
+}
+#endif
+
+
+#ifdef FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL
+
+#define HTT_TX_GROUP_INDEX_OFFSET \
+(sizeof(struct htt_txq_group) / sizeof(u_int32_t))
+
+void htt_tx_group_credit_process(struct htt_pdev_t *pdev, u_int32_t *msg_word);
+#else
+
+static inline
+void htt_tx_group_credit_process(struct htt_pdev_t *pdev, u_int32_t *msg_word)
+{
+	return;
+}
+#endif
 
 #ifdef DEBUG_RX_RING_BUFFER
 /**

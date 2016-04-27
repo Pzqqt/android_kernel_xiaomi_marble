@@ -55,7 +55,7 @@
 #include <cds_ieee80211_defines.h>  /* ieee80211_rx_status */
 #include <cds_utils.h>
 #include <cds_concurrency.h>
-
+#include "ol_txrx_types.h"
 #ifdef DEBUG_DMA_DONE
 #include <asm/barrier.h>
 #include <wma_api.h>
@@ -159,6 +159,169 @@ void htt_rx_hash_deinit(struct htt_pdev_t *pdev)
 	pdev->rx_ring.hash_table = NULL;
 }
 
+/*
+ * This function is used both below within this file (which the compiler
+ * will hopefully inline), and out-line from other files via the
+ * htt_rx_msdu_first_msdu_flag function pointer.
+ */
+
+static inline bool
+htt_rx_msdu_first_msdu_flag_hl(htt_pdev_handle pdev, void *msdu_desc)
+{
+	return ((u_int8_t *)msdu_desc - sizeof(struct hl_htt_rx_ind_base))
+		[HTT_ENDIAN_BYTE_IDX_SWAP(HTT_RX_IND_HL_FLAG_OFFSET)] &
+		HTT_RX_IND_HL_FLAG_FIRST_MSDU ? true : false;
+}
+
+u_int16_t
+htt_rx_msdu_rx_desc_size_hl(
+	htt_pdev_handle pdev,
+	void *msdu_desc
+		)
+{
+	return ((u_int8_t *)(msdu_desc) - HTT_RX_IND_HL_BYTES)
+		[HTT_ENDIAN_BYTE_IDX_SWAP(HTT_RX_IND_HL_RX_DESC_LEN_OFFSET)];
+}
+
+/**
+ * htt_rx_mpdu_desc_retry_hl() - Returns the retry bit from the Rx descriptor
+ *                               for the High Latency driver
+ * @pdev: Handle (pointer) to HTT pdev.
+ * @mpdu_desc: Void pointer to the Rx descriptor for MPDU
+ *             before the beginning of the payload.
+ *
+ *  This function returns the retry bit of the 802.11 header for the
+ *  provided rx MPDU descriptor. For the high latency driver, this function
+ *  pretends as if the retry bit is never set so that the mcast duplicate
+ *  detection never fails.
+ *
+ * Return:        boolean -- false always for HL
+ */
+static inline bool
+htt_rx_mpdu_desc_retry_hl(htt_pdev_handle pdev, void *mpdu_desc)
+{
+	return false;
+}
+
+#ifdef CONFIG_HL_SUPPORT
+u_int16_t
+htt_rx_mpdu_desc_seq_num_hl(htt_pdev_handle pdev, void *mpdu_desc)
+{
+	if (pdev->rx_desc_size_hl) {
+		return pdev->cur_seq_num_hl =
+			(u_int16_t)(HTT_WORD_GET(*(u_int32_t *)mpdu_desc,
+						HTT_HL_RX_DESC_MPDU_SEQ_NUM));
+	} else {
+		return (u_int16_t)(pdev->cur_seq_num_hl);
+	}
+}
+#endif
+
+void
+htt_rx_mpdu_desc_pn_hl(
+	htt_pdev_handle pdev,
+	void *mpdu_desc,
+	union htt_rx_pn_t *pn,
+	int pn_len_bits)
+{
+	if (htt_rx_msdu_first_msdu_flag_hl(pdev, mpdu_desc) == true) {
+		/* Fix Me: only for little endian */
+		struct hl_htt_rx_desc_base *rx_desc =
+			(struct hl_htt_rx_desc_base *)mpdu_desc;
+		u_int32_t *word_ptr = (u_int32_t *)pn->pn128;
+
+		/* TODO: for Host of big endian */
+		switch (pn_len_bits) {
+		case 128:
+			/* bits 128:64 */
+			*(word_ptr + 3) = rx_desc->pn_127_96;
+			/* bits 63:0 */
+			*(word_ptr + 2) = rx_desc->pn_95_64;
+		case 48:
+			/* bits 48:0
+			 * copy 64 bits
+			 */
+			*(word_ptr + 1) = rx_desc->u0.pn_63_32;
+		case 24:
+			/* bits 23:0
+			 * copy 32 bits
+			 */
+			*(word_ptr + 0) = rx_desc->pn_31_0;
+			break;
+		default:
+			qdf_print(
+				"Error: invalid length spec (%d bits) for PN\n",
+				pn_len_bits);
+			qdf_assert(0);
+			break;
+		};
+	} else {
+		/* not first msdu, no pn info */
+		qdf_print(
+			"Error: get pn from a not-first msdu.\n");
+		qdf_assert(0);
+	}
+}
+
+/**
+ * htt_rx_mpdu_desc_tid_hl() - Returns the TID value from the Rx descriptor
+ *                             for High Latency driver
+ * @pdev:                        Handle (pointer) to HTT pdev.
+ * @mpdu_desc:                   Void pointer to the Rx descriptor for the MPDU
+ *                               before the beginning of the payload.
+ *
+ * This function returns the TID set in the 802.11 QoS Control for the MPDU
+ * in the packet header, by looking at the mpdu_start of the Rx descriptor.
+ * Rx descriptor gets a copy of the TID from the MAC.
+ * For the HL driver, this is currently uimplemented and always returns
+ * an invalid tid. It is the responsibility of the caller to make
+ * sure that return value is checked for valid range.
+ *
+ * Return:        Invalid TID value (0xff) for HL driver.
+ */
+static inline uint8_t
+htt_rx_mpdu_desc_tid_hl(htt_pdev_handle pdev, void *mpdu_desc)
+{
+	return 0xff;  /* Invalid TID */
+}
+
+static inline bool
+htt_rx_msdu_desc_completes_mpdu_hl(htt_pdev_handle pdev, void *msdu_desc)
+{
+	return (
+		((u_int8_t *)(msdu_desc) - sizeof(struct hl_htt_rx_ind_base))
+		[HTT_ENDIAN_BYTE_IDX_SWAP(HTT_RX_IND_HL_FLAG_OFFSET)]
+		& HTT_RX_IND_HL_FLAG_LAST_MSDU)
+		? true : false;
+}
+
+static inline int
+htt_rx_msdu_has_wlan_mcast_flag_hl(htt_pdev_handle pdev, void *msdu_desc)
+{
+	/* currently, only first msdu has hl rx_desc */
+	return htt_rx_msdu_first_msdu_flag_hl(pdev, msdu_desc) == true;
+}
+
+static inline bool
+htt_rx_msdu_is_wlan_mcast_hl(htt_pdev_handle pdev, void *msdu_desc)
+{
+	struct hl_htt_rx_desc_base *rx_desc =
+		(struct hl_htt_rx_desc_base *)msdu_desc;
+
+	return
+		HTT_WORD_GET(*(u_int32_t *)rx_desc, HTT_HL_RX_DESC_MCAST_BCAST);
+}
+
+static inline int
+htt_rx_msdu_is_frag_hl(htt_pdev_handle pdev, void *msdu_desc)
+{
+	struct hl_htt_rx_desc_base *rx_desc =
+		(struct hl_htt_rx_desc_base *)msdu_desc;
+
+	return
+		HTT_WORD_GET(*(u_int32_t *)rx_desc, HTT_HL_RX_DESC_MCAST_BCAST);
+}
+
 static bool
 htt_rx_msdu_first_msdu_flag_ll(htt_pdev_handle pdev, void *msdu_desc)
 {
@@ -169,6 +332,8 @@ htt_rx_msdu_first_msdu_flag_ll(htt_pdev_handle pdev, void *msdu_desc)
 		  RX_MSDU_END_4_FIRST_MSDU_MASK) >>
 		 RX_MSDU_END_4_FIRST_MSDU_LSB);
 }
+
+#ifndef CONFIG_HL_SUPPORT
 
 static int htt_rx_ring_size(struct htt_pdev_t *pdev)
 {
@@ -231,6 +396,7 @@ static void htt_rx_ring_refill_retry(void *arg)
 	htt_pdev_handle pdev = (htt_pdev_handle) arg;
 	htt_rx_msdu_buff_replenish(pdev);
 }
+#endif
 
 void htt_rx_ring_fill_n(struct htt_pdev_t *pdev, int num)
 {
@@ -351,6 +517,8 @@ unsigned int htt_rx_in_order_ring_elems(struct htt_pdev_t *pdev)
 		pdev->rx_ring.size_mask;
 }
 
+#ifndef CONFIG_HL_SUPPORT
+
 void htt_rx_detach(struct htt_pdev_t *pdev)
 {
 	qdf_timer_stop(&pdev->rx_ring.refill_retry_timer);
@@ -404,6 +572,7 @@ void htt_rx_detach(struct htt_pdev_t *pdev)
 				   qdf_get_dma_mem_context((&pdev->rx_ring.buf),
 							   memctx));
 }
+#endif
 
 /*--- rx descriptor field access functions ----------------------------------*/
 /*
@@ -719,8 +888,74 @@ htt_set_checksum_result_ll(htt_pdev_handle pdev, qdf_nbuf_t msdu,
 #undef MAX_IP_VER
 #undef MAX_PROTO_VAL
 }
+
+#if defined(CONFIG_HL_SUPPORT)
+
+static void
+htt_set_checksum_result_hl(qdf_nbuf_t msdu,
+			   struct htt_host_rx_desc_base *rx_desc)
+{
+	u_int8_t flag = ((u_int8_t *)rx_desc -
+				sizeof(struct hl_htt_rx_ind_base))[
+					HTT_ENDIAN_BYTE_IDX_SWAP(
+						HTT_RX_IND_HL_FLAG_OFFSET)];
+
+	int is_ipv6 = flag & HTT_RX_IND_HL_FLAG_IPV6 ? 1 : 0;
+	int is_tcp = flag & HTT_RX_IND_HL_FLAG_TCP ? 1 : 0;
+	int is_udp = flag & HTT_RX_IND_HL_FLAG_UDP ? 1 : 0;
+
+	qdf_nbuf_rx_cksum_t cksum = {
+		QDF_NBUF_RX_CKSUM_NONE,
+		QDF_NBUF_RX_CKSUM_NONE,
+		0
+	};
+
+	switch ((is_udp << 2) | (is_tcp << 1) | (is_ipv6 << 0)) {
+	case 0x4:
+		cksum.l4_type = QDF_NBUF_RX_CKSUM_UDP;
+		break;
+	case 0x2:
+		cksum.l4_type = QDF_NBUF_RX_CKSUM_TCP;
+		break;
+	case 0x5:
+		cksum.l4_type = QDF_NBUF_RX_CKSUM_UDPIPV6;
+		break;
+	case 0x3:
+		cksum.l4_type = QDF_NBUF_RX_CKSUM_TCPIPV6;
+		break;
+	default:
+		cksum.l4_type = QDF_NBUF_RX_CKSUM_NONE;
+		break;
+	}
+	if (cksum.l4_type != (qdf_nbuf_l4_rx_cksum_type_t)
+				QDF_NBUF_RX_CKSUM_NONE) {
+		cksum.l4_result = flag & HTT_RX_IND_HL_FLAG_C4_FAILED ?
+			QDF_NBUF_RX_CKSUM_NONE :
+				QDF_NBUF_RX_CKSUM_TCP_UDP_UNNECESSARY;
+	}
+	qdf_nbuf_set_rx_cksum(msdu, &cksum);
+}
+#endif
+
 #else
-#define htt_set_checksum_result_ll(pdev, msdu, rx_desc) /* no-op */
+
+static inline
+void htt_set_checksum_result_ll(htt_pdev_handle pdev, qdf_nbuf_t msdu,
+			   struct htt_host_rx_desc_base *rx_desc)
+{
+	return;
+}
+
+#if defined(CONFIG_HL_SUPPORT)
+
+static inline
+void htt_set_checksum_result_hl(qdf_nbuf_t msdu,
+			   struct htt_host_rx_desc_base *rx_desc)
+{
+	return;
+}
+#endif
+
 #endif
 
 #ifdef DEBUG_DMA_DONE
@@ -1073,6 +1308,70 @@ htt_rx_amsdu_pop_ll(htt_pdev_handle pdev,
 	 */
 	return msdu_chaining;
 }
+
+#if defined(CONFIG_HL_SUPPORT)
+
+static int
+htt_rx_amsdu_pop_hl(
+	htt_pdev_handle pdev,
+	qdf_nbuf_t rx_ind_msg,
+	qdf_nbuf_t *head_msdu,
+	qdf_nbuf_t *tail_msdu)
+{
+	pdev->rx_desc_size_hl =
+		(qdf_nbuf_data(rx_ind_msg))
+		[HTT_ENDIAN_BYTE_IDX_SWAP(
+				HTT_RX_IND_HL_RX_DESC_LEN_OFFSET)];
+
+	/* point to the rx desc */
+	qdf_nbuf_pull_head(rx_ind_msg,
+			   sizeof(struct hl_htt_rx_ind_base));
+	*head_msdu = *tail_msdu = rx_ind_msg;
+
+	htt_set_checksum_result_hl(rx_ind_msg,
+				   (struct htt_host_rx_desc_base *)
+				   (qdf_nbuf_data(rx_ind_msg)));
+
+	qdf_nbuf_set_next(*tail_msdu, NULL);
+	return 0;
+}
+
+static int
+htt_rx_frag_pop_hl(
+	htt_pdev_handle pdev,
+	qdf_nbuf_t frag_msg,
+	qdf_nbuf_t *head_msdu,
+	qdf_nbuf_t *tail_msdu)
+{
+	qdf_nbuf_pull_head(frag_msg, HTT_RX_FRAG_IND_BYTES);
+	pdev->rx_desc_size_hl =
+		(qdf_nbuf_data(frag_msg))
+		[HTT_ENDIAN_BYTE_IDX_SWAP(
+				HTT_RX_IND_HL_RX_DESC_LEN_OFFSET)];
+
+	/* point to the rx desc */
+	qdf_nbuf_pull_head(frag_msg,
+			   sizeof(struct hl_htt_rx_ind_base));
+	*head_msdu = *tail_msdu = frag_msg;
+
+	qdf_nbuf_set_next(*tail_msdu, NULL);
+	return 0;
+}
+
+static inline int
+htt_rx_offload_msdu_pop_hl(htt_pdev_handle pdev,
+			   qdf_nbuf_t offload_deliver_msg,
+			   int *vdev_id,
+			   int *peer_id,
+			   int *tid,
+			   u_int8_t *fw_desc,
+			   qdf_nbuf_t *head_buf,
+			   qdf_nbuf_t *tail_buf)
+{
+	return 0;
+}
+
+#endif
 
 int
 htt_rx_offload_msdu_pop_ll(htt_pdev_handle pdev,
@@ -2260,6 +2559,152 @@ void *htt_rx_in_ord_mpdu_desc_list_next_ll(htt_pdev_handle pdev,
 	return (void *)htt_rx_desc(netbuf);
 }
 
+#if defined(CONFIG_HL_SUPPORT)
+
+/**
+ * htt_rx_mpdu_desc_list_next_hl() - provides an abstract way to obtain
+ *				     the next MPDU descriptor
+ * @pdev: the HTT instance the rx data was received on
+ * @rx_ind_msg: the netbuf containing the rx indication message
+ *
+ * for HL, the returned value is not mpdu_desc,
+ * it's translated hl_rx_desc just after the hl_ind_msg
+ * for HL AMSDU, we can't point to payload now, because
+ * hl rx desc is not fixed, we can't retrive the desc
+ * by minus rx_desc_size when release. keep point to hl rx desc
+ * now
+ *
+ * Return: next abstract rx descriptor from the series of MPDUs
+ *		   referenced by an rx ind msg
+ */
+static inline void *
+htt_rx_mpdu_desc_list_next_hl(htt_pdev_handle pdev, qdf_nbuf_t rx_ind_msg)
+{
+	void *mpdu_desc = (void *)qdf_nbuf_data(rx_ind_msg);
+	return mpdu_desc;
+}
+
+/**
+ * htt_rx_msdu_desc_retrieve_hl() - Retrieve a previously-stored rx descriptor
+ *				    from a MSDU buffer
+ * @pdev: the HTT instance the rx data was received on
+ * @msdu - the buffer containing the MSDU payload
+ *
+ * currently for HL AMSDU, we don't point to payload.
+ * we shift to payload in ol_rx_deliver later
+ *
+ * Return: the corresponding abstract rx MSDU descriptor
+ */
+static inline void *
+htt_rx_msdu_desc_retrieve_hl(htt_pdev_handle pdev, qdf_nbuf_t msdu)
+{
+	return qdf_nbuf_data(msdu);
+}
+
+static
+bool htt_rx_mpdu_is_encrypted_hl(htt_pdev_handle pdev, void *mpdu_desc)
+{
+	if (htt_rx_msdu_first_msdu_flag_hl(pdev, mpdu_desc) == true) {
+		/* Fix Me: only for little endian */
+		struct hl_htt_rx_desc_base *rx_desc =
+			(struct hl_htt_rx_desc_base *)mpdu_desc;
+
+		return HTT_WORD_GET(*(u_int32_t *)rx_desc,
+					HTT_HL_RX_DESC_MPDU_ENC);
+	} else {
+		/* not first msdu, no encrypt info for hl */
+		qdf_print(
+			"Error: get encrypted from a not-first msdu.\n");
+		qdf_assert(0);
+		return false;
+	}
+}
+
+static inline bool
+htt_rx_msdu_chan_info_present_hl(htt_pdev_handle pdev, void *mpdu_desc)
+{
+	if (htt_rx_msdu_first_msdu_flag_hl(pdev, mpdu_desc) == true &&
+	    HTT_WORD_GET(*(u_int32_t *)mpdu_desc,
+			 HTT_HL_RX_DESC_CHAN_INFO_PRESENT))
+		return true;
+
+	return false;
+}
+
+static bool
+htt_rx_msdu_center_freq_hl(htt_pdev_handle pdev,
+			   struct ol_txrx_peer_t *peer,
+			   void *mpdu_desc,
+			   uint16_t *primary_chan_center_freq_mhz,
+			   uint16_t *contig_chan1_center_freq_mhz,
+			   uint16_t *contig_chan2_center_freq_mhz,
+			   uint8_t *phy_mode)
+{
+	int pn_len, index;
+	uint32_t *chan_info;
+
+	index = htt_rx_msdu_is_wlan_mcast(pdev, mpdu_desc) ?
+		txrx_sec_mcast : txrx_sec_ucast;
+
+	pn_len = (peer ?
+			pdev->txrx_pdev->rx_pn[peer->security[index].sec_type].
+								len : 0);
+	chan_info = (uint32_t *)((uint8_t *)mpdu_desc +
+			HTT_HL_RX_DESC_PN_OFFSET + pn_len);
+
+	if (htt_rx_msdu_chan_info_present_hl(pdev, mpdu_desc)) {
+		if (primary_chan_center_freq_mhz)
+			*primary_chan_center_freq_mhz =
+				HTT_WORD_GET(
+					*chan_info,
+					HTT_CHAN_INFO_PRIMARY_CHAN_CENTER_FREQ);
+		if (contig_chan1_center_freq_mhz)
+			*contig_chan1_center_freq_mhz =
+				HTT_WORD_GET(
+					*chan_info,
+					HTT_CHAN_INFO_CONTIG_CHAN1_CENTER_FREQ);
+		chan_info++;
+		if (contig_chan2_center_freq_mhz)
+			*contig_chan2_center_freq_mhz =
+				HTT_WORD_GET(
+					*chan_info,
+					HTT_CHAN_INFO_CONTIG_CHAN2_CENTER_FREQ);
+		if (phy_mode)
+			*phy_mode =
+				HTT_WORD_GET(*chan_info,
+					     HTT_CHAN_INFO_PHY_MODE);
+		return true;
+	}
+
+	if (primary_chan_center_freq_mhz)
+		*primary_chan_center_freq_mhz = 0;
+	if (contig_chan1_center_freq_mhz)
+		*contig_chan1_center_freq_mhz = 0;
+	if (contig_chan2_center_freq_mhz)
+		*contig_chan2_center_freq_mhz = 0;
+	if (phy_mode)
+		*phy_mode = 0;
+	return false;
+}
+
+static bool
+htt_rx_msdu_desc_key_id_hl(htt_pdev_handle htt_pdev,
+			   void *mpdu_desc, u_int8_t *key_id)
+{
+	if (htt_rx_msdu_first_msdu_flag_hl(htt_pdev, mpdu_desc) == true) {
+		/* Fix Me: only for little endian */
+		struct hl_htt_rx_desc_base *rx_desc =
+			(struct hl_htt_rx_desc_base *)mpdu_desc;
+
+		*key_id = rx_desc->key_id_oct;
+		return true;
+	}
+
+	return false;
+}
+
+#endif
+
 void *htt_rx_msdu_desc_retrieve_ll(htt_pdev_handle pdev, qdf_nbuf_t msdu)
 {
 	return htt_rx_desc(msdu);
@@ -2329,16 +2774,36 @@ void htt_rx_msdu_desc_free(htt_pdev_handle htt_pdev, qdf_nbuf_t msdu)
 	 */
 }
 
+#if defined(CONFIG_HL_SUPPORT)
+
+/**
+ * htt_rx_fill_ring_count() - replenish rx msdu buffer
+ * @pdev: Handle (pointer) to HTT pdev.
+ *
+ * This funciton will replenish the rx buffer to the max number
+ * that can be kept in the ring
+ *
+ * Return: None
+ */
+static inline void htt_rx_fill_ring_count(htt_pdev_handle pdev)
+{
+	return;
+}
+#else
+
+static void htt_rx_fill_ring_count(htt_pdev_handle pdev)
+{
+	int num_to_fill;
+	num_to_fill = pdev->rx_ring.fill_level - pdev->rx_ring.fill_cnt;
+	htt_rx_ring_fill_n(pdev, num_to_fill /* okay if <= 0 */);
+}
+#endif
+
 void htt_rx_msdu_buff_replenish(htt_pdev_handle pdev)
 {
-	if (qdf_atomic_dec_and_test(&pdev->rx_ring.refill_ref_cnt)) {
-		int num_to_fill;
-		num_to_fill = pdev->rx_ring.fill_level -
-			pdev->rx_ring.fill_cnt;
+	if (qdf_atomic_dec_and_test(&pdev->rx_ring.refill_ref_cnt))
+		htt_rx_fill_ring_count(pdev);
 
-		htt_rx_ring_fill_n(pdev,
-				   num_to_fill /* okay if <= 0 */);
-	}
 	qdf_atomic_inc(&pdev->rx_ring.refill_ref_cnt);
 }
 
@@ -2614,6 +3079,51 @@ void htt_rx_hash_dump_table(struct htt_pdev_t *pdev)
 /* move the function to the end of file
  * to omit ll/hl pre-declaration
  */
+
+#if defined(CONFIG_HL_SUPPORT)
+
+int htt_rx_attach(struct htt_pdev_t *pdev)
+{
+	pdev->rx_ring.size = HTT_RX_RING_SIZE_MIN;
+	HTT_ASSERT2(IS_PWR2(pdev->rx_ring.size));
+	pdev->rx_ring.size_mask = pdev->rx_ring.size - 1;
+	/* host can force ring base address if it wish to do so */
+	pdev->rx_ring.base_paddr = 0;
+	htt_rx_amsdu_pop = htt_rx_amsdu_pop_hl;
+	htt_rx_frag_pop = htt_rx_frag_pop_hl;
+	htt_rx_offload_msdu_pop = htt_rx_offload_msdu_pop_hl;
+	htt_rx_mpdu_desc_list_next = htt_rx_mpdu_desc_list_next_hl;
+	htt_rx_mpdu_desc_retry = htt_rx_mpdu_desc_retry_hl;
+	htt_rx_mpdu_desc_seq_num = htt_rx_mpdu_desc_seq_num_hl;
+	htt_rx_mpdu_desc_pn = htt_rx_mpdu_desc_pn_hl;
+	htt_rx_mpdu_desc_tid = htt_rx_mpdu_desc_tid_hl;
+	htt_rx_msdu_desc_completes_mpdu = htt_rx_msdu_desc_completes_mpdu_hl;
+	htt_rx_msdu_first_msdu_flag = htt_rx_msdu_first_msdu_flag_hl;
+	htt_rx_msdu_has_wlan_mcast_flag = htt_rx_msdu_has_wlan_mcast_flag_hl;
+	htt_rx_msdu_is_wlan_mcast = htt_rx_msdu_is_wlan_mcast_hl;
+	htt_rx_msdu_is_frag = htt_rx_msdu_is_frag_hl;
+	htt_rx_msdu_desc_retrieve = htt_rx_msdu_desc_retrieve_hl;
+	htt_rx_mpdu_is_encrypted = htt_rx_mpdu_is_encrypted_hl;
+	htt_rx_msdu_desc_key_id = htt_rx_msdu_desc_key_id_hl;
+	htt_rx_msdu_chan_info_present = htt_rx_msdu_chan_info_present_hl;
+	htt_rx_msdu_center_freq = htt_rx_msdu_center_freq_hl;
+
+	/*
+	 * HL case, the rx descriptor can be different sizes for
+	 * different sub-types of RX_IND messages, e.g. for the
+	 * initial vs. interior vs. final MSDUs within a PPDU.
+	 * The size of each RX_IND message's rx desc is read from
+	 * a field within the RX_IND message itself.
+	 * In the meantime, until the rx_desc_size_hl variable is
+	 * set to its real value based on the RX_IND message,
+	 * initialize it to a reasonable value (zero).
+	 */
+	pdev->rx_desc_size_hl = 0;
+	return 0;	/* success */
+}
+
+#else
+
 int htt_rx_attach(struct htt_pdev_t *pdev)
 {
 	qdf_dma_addr_t paddr;
@@ -2763,6 +3273,7 @@ fail2:
 fail1:
 	return 1;               /* failure */
 }
+#endif
 
 #ifdef IPA_OFFLOAD
 #ifdef QCA_WIFI_3_0

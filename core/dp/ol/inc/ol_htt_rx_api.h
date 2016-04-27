@@ -824,11 +824,13 @@ void
 htt_rx_frag_ind_flush_seq_num_range(htt_pdev_handle pdev,
 				    qdf_nbuf_t rx_frag_ind_msg,
 				    int *seq_num_start, int *seq_num_end);
+
 /**
- * @brief Return the HL rx desc size
- * @param pdev - the HTT instance the rx data was received on
- * @param msdu_desc - the hl rx desc pointer
+ * htt_rx_msdu_rx_desc_size_hl() - Return the HL rx desc size
+ * @pdev: the HTT instance the rx data was received on.
+ * @msdu_desc: the hl rx desc pointer
  *
+ * Return: HL rx desc size
  */
 uint16_t htt_rx_msdu_rx_desc_size_hl(htt_pdev_handle pdev, void *msdu_desc);
 

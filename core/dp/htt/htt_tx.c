@@ -228,6 +228,7 @@ int htt_tx_frag_alloc(htt_pdev_handle pdev,
 	return 0;
 }
 #else
+
 /**
  * htt_tx_desc_get_size() - get tx descripotrs size
  * @pdev:	htt device instance pointer
@@ -238,21 +239,27 @@ int htt_tx_frag_alloc(htt_pdev_handle pdev,
  */
 static inline void htt_tx_desc_get_size(struct htt_pdev_t *pdev)
 {
-	/*
-	 * Start with the size of the base struct
-	 * that actually gets downloaded.
-	 *
-	 * Add the fragmentation descriptor elements.
-	 * Add the most that the OS may deliver, plus one more
-	 * in case the txrx code adds a prefix fragment (for
-	 * TSO or audio interworking SNAP header)
-	 */
-	pdev->tx_descs.size =
+	if (pdev->cfg.is_high_latency) {
+		pdev->tx_descs.size = sizeof(struct htt_host_tx_desc_t);
+	} else {
+		/*
+		 * Start with the size of the base struct
+		 * that actually gets downloaded.
+		 *
+		 * Add the fragmentation descriptor elements.
+		 * Add the most that the OS may deliver, plus one more
+		 * in case the txrx code adds a prefix fragment (for
+		 * TSO or audio interworking SNAP header)
+		 */
+		pdev->tx_descs.size =
 		sizeof(struct htt_host_tx_desc_t)
 		+ (ol_cfg_netbuf_frags_max(pdev->ctrl_pdev) + 1) * 8
-		   /* 2x uint32_t */
+		/* 2x uint32_t */
 		+ 4; /* uint32_t fragmentation list terminator */
+	}
 }
+
+#ifndef CONFIG_HL_SUPPORT
 
 /**
  * htt_tx_frag_desc_field_update() - Update fragment descriptor field
@@ -273,6 +280,7 @@ static void htt_tx_frag_desc_field_update(struct htt_pdev_t *pdev,
 	*fptr = (uint32_t)htt_tx_get_paddr(pdev, (char *)desc_v_ptr) +
 		HTT_TX_DESC_LEN;
 }
+#endif
 
 /**
  * htt_tx_frag_desc_attach() - Attach fragment descriptor
@@ -300,6 +308,8 @@ static inline int htt_tx_frag_desc_attach(struct htt_pdev_t *pdev,
 static void htt_tx_frag_desc_detach(struct htt_pdev_t *pdev) {}
 #endif /* HELIUMPLUS */
 
+#ifdef CONFIG_HL_SUPPORT
+
 /**
  * htt_tx_attach() - Attach HTT device instance
  * @pdev:		htt device instance pointer
@@ -309,6 +319,180 @@ static void htt_tx_frag_desc_detach(struct htt_pdev_t *pdev) {}
  *
  * Return: 0 Success
  */
+int htt_tx_attach(struct htt_pdev_t *pdev, int desc_pool_elems)
+{
+	int i, i_int, pool_size;
+	uint32_t **p;
+	uint32_t num_link = 0;
+	uint16_t num_page, num_desc_per_page;
+	void **cacheable_pages = NULL;
+
+	htt_tx_desc_get_size(pdev);
+
+	/*
+	 * Make sure tx_descs.size is a multiple of 4-bytes.
+	 * It should be, but round up just to be sure.
+	 */
+	pdev->tx_descs.size = (pdev->tx_descs.size + 3) & (~0x3);
+
+	pdev->tx_descs.pool_elems = desc_pool_elems;
+	pdev->tx_descs.alloc_cnt = 0;
+	pool_size = pdev->tx_descs.pool_elems * pdev->tx_descs.size;
+	qdf_mem_multi_pages_alloc(pdev->osdev, &pdev->tx_descs.desc_pages,
+				  pdev->tx_descs.size,
+				  pdev->tx_descs.pool_elems,
+				  qdf_get_dma_mem_context((&pdev->tx_descs),
+							  memctx), true);
+	if ((0 == pdev->tx_descs.desc_pages.num_pages) ||
+	    (NULL == pdev->tx_descs.desc_pages.cacheable_pages)) {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			   "HTT desc alloc fail");
+		goto out_fail;
+	}
+	num_page = pdev->tx_descs.desc_pages.num_pages;
+	num_desc_per_page = pdev->tx_descs.desc_pages.num_element_per_page;
+
+	/* link tx descriptors into a freelist */
+	cacheable_pages = pdev->tx_descs.desc_pages.cacheable_pages;
+
+	pdev->tx_descs.freelist = (uint32_t *)cacheable_pages[0];
+	p = (uint32_t **)pdev->tx_descs.freelist;
+	for (i = 0; i < num_page; i++) {
+		for (i_int = 0; i_int < num_desc_per_page; i_int++) {
+			if (i_int == (num_desc_per_page - 1)) {
+				/*
+				 * Last element on this page,
+				 * should point next page
+				 */
+				if (!cacheable_pages[i + 1]) {
+					TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+						   "over flow num link %d\n",
+						   num_link);
+					goto free_htt_desc;
+				}
+				*p = (uint32_t *)cacheable_pages[i + 1];
+			} else {
+				*p = (uint32_t *)
+					(((char *)p) + pdev->tx_descs.size);
+			}
+			num_link++;
+			p = (uint32_t **) *p;
+			/* Last link established exit */
+			if (num_link == (pdev->tx_descs.pool_elems - 1))
+				break;
+		}
+	}
+	*p = NULL;
+
+	if (htt_tx_frag_desc_attach(pdev, desc_pool_elems)) {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			   "HTT Frag descriptor alloc fail");
+		goto free_htt_desc;
+	}
+
+	/* success */
+	return 0;
+
+free_htt_desc:
+	qdf_mem_multi_pages_free(pdev->osdev, &pdev->tx_descs.desc_pages,
+				 qdf_get_dma_mem_context((&pdev->tx_descs),
+							 memctx), true);
+out_fail:
+	return -ENOBUFS;
+}
+
+void htt_tx_detach(struct htt_pdev_t *pdev)
+{
+	if (!pdev) {
+		qdf_print("htt tx detach invalid instance");
+		return;
+	}
+
+	htt_tx_frag_desc_detach(pdev);
+	qdf_mem_multi_pages_free(pdev->osdev, &pdev->tx_descs.desc_pages,
+				 qdf_get_dma_mem_context((&pdev->tx_descs),
+							 memctx), true);
+}
+
+/**
+ * htt_tx_set_frag_desc_addr() - set up the fragmentation descriptor address
+ * @pdev: pointer to the HTT instance making the allocation
+ * @htt_tx_desc: Host tx decriptor that does not include HTC hdr
+ * @index: index to alloc htt tx desc
+ *
+ *
+ * Return: None
+ */
+static inline void
+htt_tx_set_frag_desc_addr(struct htt_pdev_t *pdev,
+			  struct htt_tx_msdu_desc_t *htt_tx_desc,
+			  uint16_t index)
+{
+	return;
+}
+
+/**
+ * htt_tx_desc_frags_table_set() - set up the descriptor and payload
+ *				   to correspondinf fragments
+ * @pdev: pointer to the HTT instance making the allocation
+ * @htt_tx_desc: Host tx decriptor that does not include HTC hdr
+ * @paddr: fragment physical address
+ * @frag_desc_paddr_lo: frag descriptor address
+ * @reset: reset
+ *
+ * Return: None
+ */
+void htt_tx_desc_frags_table_set(htt_pdev_handle pdev,
+				 void *desc,
+				 qdf_dma_addr_t paddr,
+				 qdf_dma_addr_t frag_desc_paddr,
+				 int reset)
+{
+	/* fragments table only applies to LL systems */
+	return;
+}
+
+/**
+ * htt_tx_credit_update() - get the number of credits by which the amount of
+ *			    target credits needs to be updated
+ * @pdev: htt context
+ *
+ * Return: number of credits
+ */
+int htt_tx_credit_update(struct htt_pdev_t *pdev)
+{
+	int credit_delta;
+	credit_delta = QDF_MIN(qdf_atomic_read(
+			&pdev->htt_tx_credit.target_delta),
+			qdf_atomic_read(&pdev->htt_tx_credit.bus_delta));
+	if (credit_delta) {
+		qdf_atomic_add(-credit_delta,
+			       &pdev->htt_tx_credit.target_delta);
+		qdf_atomic_add(-credit_delta,
+			       &pdev->htt_tx_credit.bus_delta);
+	}
+	return credit_delta;
+}
+
+/**
+ * htt_tx_get_paddr() - get physical address for htt desc
+ *
+ * Get HTT descriptor physical address from virtaul address
+ * Find page first and find offset
+ * Not required for HL systems
+ *
+ * Return: Physical address of descriptor
+ */
+static inline
+qdf_dma_addr_t htt_tx_get_paddr(htt_pdev_handle pdev,
+				char *target_vaddr)
+{
+	return 0;
+}
+
+
+#else
+
 int htt_tx_attach(struct htt_pdev_t *pdev, int desc_pool_elems)
 {
 	int i, i_int, pool_size;
@@ -399,14 +583,55 @@ void htt_tx_detach(struct htt_pdev_t *pdev)
 		qdf_get_dma_mem_context((&pdev->tx_descs), memctx), false);
 }
 
-/**
- * htt_tx_get_paddr() - get physical address for htt desc
- *
- * Get HTT descriptor physical address from virtaul address
- * Find page first and find offset
- *
- * Return: Physical address of descriptor
- */
+static void
+htt_tx_set_frag_desc_addr(struct htt_pdev_t *pdev,
+			  struct htt_tx_msdu_desc_t *htt_tx_desc,
+			  uint16_t index)
+{
+	uint32_t *fragmentation_descr_field_ptr;
+	fragmentation_descr_field_ptr = (uint32_t *)
+		((uint32_t *)htt_tx_desc) +
+		HTT_TX_DESC_FRAGS_DESC_PADDR_OFFSET_DWORD;
+	/*
+	 * The fragmentation descriptor is allocated from consistent
+	 * memory. Therefore, we can use the address directly rather
+	 * than having to map it from a virtual/CPU address to a
+	 * physical/bus address.
+	 */
+	htt_tx_frag_desc_field_update(pdev, fragmentation_descr_field_ptr,
+				      index, htt_tx_desc);
+
+		return;
+}
+
+void htt_tx_desc_frags_table_set(htt_pdev_handle pdev,
+				 void *htt_tx_desc,
+				 qdf_dma_addr_t paddr,
+				 qdf_dma_addr_t frag_desc_paddr,
+				 int reset)
+{
+	uint32_t *fragmentation_descr_field_ptr;
+
+	fragmentation_descr_field_ptr = (uint32_t *)
+		((uint32_t *) htt_tx_desc) +
+		HTT_TX_DESC_FRAGS_DESC_PADDR_OFFSET_DWORD;
+	if (reset) {
+#if defined(HELIUMPLUS_PADDR64)
+		*fragmentation_descr_field_ptr = frag_desc_paddr;
+#else
+		*fragmentation_descr_field_ptr =
+			htt_tx_get_paddr(pdev, htt_tx_desc) + HTT_TX_DESC_LEN;
+#endif
+	} else {
+		*fragmentation_descr_field_ptr = paddr;
+	}
+}
+
+void htt_tx_pending_discard(htt_pdev_handle pdev)
+{
+	htc_flush_surprise_remove(pdev->htc_pdev);
+}
+
 static qdf_dma_addr_t htt_tx_get_paddr(htt_pdev_handle pdev,
 				char *target_vaddr)
 {
@@ -434,6 +659,8 @@ static qdf_dma_addr_t htt_tx_get_paddr(htt_pdev_handle pdev,
 	return page_info->page_p_addr + offset;
 }
 
+#endif
+
 /*--- descriptor allocation functions ---------------------------------------*/
 
 void *htt_tx_desc_alloc(htt_pdev_handle pdev, qdf_dma_addr_t *paddr,
@@ -441,7 +668,6 @@ void *htt_tx_desc_alloc(htt_pdev_handle pdev, qdf_dma_addr_t *paddr,
 {
 	struct htt_host_tx_desc_t *htt_host_tx_desc;    /* includes HTC hdr */
 	struct htt_tx_msdu_desc_t *htt_tx_desc; /* doesn't include  HTC hdr */
-	uint32_t *fragmentation_descr_field_ptr;
 
 	htt_host_tx_desc = (struct htt_host_tx_desc_t *)pdev->tx_descs.freelist;
 	if (!htt_host_tx_desc)
@@ -461,17 +687,7 @@ void *htt_tx_desc_alloc(htt_pdev_handle pdev, qdf_dma_addr_t *paddr,
 	 * would be helpful to have separate htt_tx_desc_alloc functions for
 	 * HL vs. LL, to remove the below conditional branch.
 	 */
-	fragmentation_descr_field_ptr = (uint32_t *)
-		((uint32_t *) htt_tx_desc) +
-		HTT_TX_DESC_FRAGS_DESC_PADDR_OFFSET_DWORD;
-	/*
-	 * The fragmentation descriptor is allocated from consistent
-	 * memory. Therefore, we can use the address directly rather
-	 * than having to map it from a virtual/CPU address to a
-	 * physical/bus address.
-	 */
-	htt_tx_frag_desc_field_update(pdev, fragmentation_descr_field_ptr,
-		index, htt_tx_desc);
+	htt_tx_set_frag_desc_addr(pdev, htt_tx_desc, index);
 
 	/*
 	 * Include the headroom for the HTC frame header when specifying the
@@ -502,38 +718,10 @@ void htt_tx_desc_free(htt_pdev_handle pdev, void *tx_desc)
 
 /*--- descriptor field access methods ---------------------------------------*/
 
-void htt_tx_desc_frags_table_set(htt_pdev_handle pdev,
-				 void *htt_tx_desc,
-				 qdf_dma_addr_t paddr,
-				 qdf_dma_addr_t frag_desc_paddr,
-				 int reset)
-{
-	uint32_t *fragmentation_descr_field_ptr;
-
-	fragmentation_descr_field_ptr = (uint32_t *)
-		((uint32_t *) htt_tx_desc) +
-		HTT_TX_DESC_FRAGS_DESC_PADDR_OFFSET_DWORD;
-	if (reset) {
-#if defined(HELIUMPLUS_PADDR64)
-		*fragmentation_descr_field_ptr = frag_desc_paddr;
-#else
-		*fragmentation_descr_field_ptr =
-			htt_tx_get_paddr(pdev, htt_tx_desc) + HTT_TX_DESC_LEN;
-#endif
-	} else {
-		*fragmentation_descr_field_ptr = paddr;
-	}
-}
-
 /* PUT THESE AS inline IN ol_htt_tx_api.h */
 
 void htt_tx_desc_flag_postponed(htt_pdev_handle pdev, void *desc)
 {
-}
-
-void htt_tx_pending_discard(htt_pdev_handle pdev)
-{
-	htc_flush_surprise_remove(pdev->htc_pdev);
 }
 
 void htt_tx_desc_flag_batch_more(htt_pdev_handle pdev, void *desc)
@@ -628,6 +816,7 @@ int htt_tx_send_std(htt_pdev_handle pdev, qdf_nbuf_t msdu, uint16_t msdu_id)
 
 }
 
+#ifndef CONFIG_HL_SUPPORT
 #ifdef FEATURE_RUNTIME_PM
 /**
  * htt_tx_resume_handler() - resume callback for the htt endpoint
@@ -644,6 +833,7 @@ void htt_tx_resume_handler(void *context)
 #else
 void
 htt_tx_resume_handler(void *context) { }
+#endif
 #endif
 
 qdf_nbuf_t
@@ -1420,6 +1610,9 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 		HTT_TX_DESC_EXT_TID_SET(local_word0, msdu_info->info.ext_tid);
 		HTT_TX_DESC_CKSUM_OFFLOAD_SET(local_word0,
 					      msdu_info->action.cksum_offload);
+		if (pdev->cfg.is_high_latency)
+			HTT_TX_DESC_TX_COMP_SET(local_word0, msdu_info->action.
+								tx_comp_req);
 		HTT_TX_DESC_NO_ENCRYPT_SET(local_word0,
 					   msdu_info->action.do_encrypt ?
 					   0 : 1);
@@ -1509,4 +1702,54 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 
 	qdf_nbuf_data_attr_set(msdu, data_attr);
 }
+
+#ifdef FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL
+
+/**
+ * htt_tx_group_credit_process() - process group data for
+ *				   credit update indication
+ * @pdev: pointer to htt device.
+ * @msg_word: htt msg
+ *
+ * Return: None
+ */
+void htt_tx_group_credit_process(struct htt_pdev_t *pdev, u_int32_t *msg_word)
+{
+	int group_credit_sign;
+	int32_t group_credit;
+	u_int32_t group_credit_abs, vdev_id_mask, ac_mask;
+	u_int8_t group_abs, group_id;
+	u_int8_t group_offset = 0, more_group_present = 0;
+	more_group_present = HTT_TX_CREDIT_TXQ_GRP_GET(*msg_word);
+
+	while (more_group_present) {
+		/* Parse the Group Data */
+		group_id = HTT_TXQ_GROUP_ID_GET(*(msg_word+1
+						+group_offset));
+		group_credit_abs =
+			HTT_TXQ_GROUP_CREDIT_COUNT_GET(*(msg_word+1
+						+group_offset));
+		group_credit_sign =
+			HTT_TXQ_GROUP_SIGN_GET(*(msg_word+1
+						+group_offset)) ? -1 : 1;
+		group_credit = group_credit_sign * group_credit_abs;
+		group_abs = HTT_TXQ_GROUP_ABS_GET(*(msg_word+1
+						+group_offset));
+
+		vdev_id_mask =
+			HTT_TXQ_GROUP_VDEV_ID_MASK_GET(*(msg_word+2
+						+group_offset));
+		ac_mask = HTT_TXQ_GROUP_AC_MASK_GET(*(msg_word+2
+						+group_offset));
+
+		ol_txrx_update_tx_queue_groups(pdev->txrx_pdev, group_id,
+					       group_credit, group_abs,
+					       vdev_id_mask, ac_mask);
+		more_group_present = HTT_TXQ_GROUP_EXT_GET(*(msg_word+1
+						+group_offset));
+		group_offset += HTT_TX_GROUP_INDEX_OFFSET;
+	}
+	ol_tx_update_group_credit_stats(pdev->txrx_pdev);
+}
+#endif
 

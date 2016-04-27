@@ -153,6 +153,147 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 
 void ol_tx_credit_completion_handler(ol_txrx_pdev_handle pdev, int credits);
 
+struct rate_report_t {
+	u_int16_t id;
+	u_int16_t phy:4;
+	u_int32_t rate;
+};
+
+#if defined(CONFIG_HL_SUPPORT) && defined(QCA_BAD_PEER_TX_FLOW_CL)
+
+/**
+ * @brief Process a link status report for all peers.
+ * @details
+ *  The ol_txrx_peer_link_status_handler function performs basic peer link
+ *  status analysis
+ *
+ *  According to the design, there are 3 kinds of peers which will be
+ *  treated differently:
+ *  1) normal: not do any flow control for the peer
+ *  2) limited: will apply flow control for the peer, but frames are allowed
+ *              to send
+ *  3) paused: will apply flow control for the peer, no frame is allowed
+ *             to send
+ *
+ * @param pdev - the data physical device that sent the tx frames
+ * @param status - the number of peers need to be handled
+ * @param peer_link_report - the link status dedail message
+ */
+void
+ol_txrx_peer_link_status_handler(
+	ol_txrx_pdev_handle pdev,
+	u_int16_t peer_num,
+	struct rate_report_t *peer_link_status);
+
+
+#else
+static inline void ol_txrx_peer_link_status_handler(
+	ol_txrx_pdev_handle pdev,
+	u_int16_t peer_num,
+	struct rate_report_t *peer_link_status)
+{
+	return;
+}
+#endif
+
+
+#ifdef FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL
+
+/**
+ * ol_txrx_update_tx_queue_groups() - update vdev tx queue group if
+ *				      vdev id mask and ac mask is not matching
+ * @pdev: the data physical device
+ * @group_id: TXQ group id
+ * @credit: TXQ group credit count
+ * @absolute: TXQ group absolute
+ * @vdev_id_mask: TXQ vdev group id mask
+ * @ac_mask: TQX access category mask
+ *
+ * Return: None
+ */
+void
+ol_txrx_update_tx_queue_groups(
+	ol_txrx_pdev_handle pdev,
+	u_int8_t group_id,
+	int32_t credit,
+	u_int8_t absolute,
+	u_int32_t vdev_id_mask,
+	u_int32_t ac_mask
+);
+
+/**
+ * ol_tx_desc_update_group_credit() - update group credits for txq group
+ * @pdev: the data physical device
+ * @tx_desc_id: desc id of tx completion message
+ * @credit: number of credits to update
+ * @absolute: absolute value
+ * @status: tx completion message status
+ *
+ * Return: None
+ */
+void
+ol_tx_desc_update_group_credit(
+	ol_txrx_pdev_handle pdev,
+	u_int16_t tx_desc_id,
+	int credit, u_int8_t absolute, enum htt_tx_status status);
+
+#ifdef DEBUG_HL_LOGGING
+
+/**
+ * ol_tx_update_group_credit_stats() - update group credits stats for txq groups
+ * @pdev: the data physical device
+ *
+ * Return: None
+ */
+void
+ol_tx_update_group_credit_stats(ol_txrx_pdev_handle pdev);
+
+/**
+ * ol_tx_dump_group_credit_stats() - dump group credits stats for txq groups
+ * @pdev: the data physical device
+ *
+ * Return: None
+ */
+void
+ol_tx_dump_group_credit_stats(ol_txrx_pdev_handle pdev);
+
+/**
+ * ol_tx_clear_group_credit_stats() - clear group credits stats for txq groups
+ * @pdev: the data physical device
+ *
+ * Return: None
+ */
+void
+ol_tx_clear_group_credit_stats(ol_txrx_pdev_handle pdev);
+#else
+
+static inline void ol_tx_update_group_credit_stats(ol_txrx_pdev_handle pdev)
+{
+	return;
+}
+
+static inline void ol_tx_dump_group_credit_stats(ol_txrx_pdev_handle pdev)
+{
+	return;
+}
+
+static inline void ol_tx_clear_group_credit_stats(ol_txrx_pdev_handle pdev)
+{
+	return;
+}
+#endif
+
+#else
+static inline void
+ol_tx_desc_update_group_credit(
+	ol_txrx_pdev_handle pdev,
+	u_int16_t tx_desc_id,
+	int credit, u_int8_t absolute, enum htt_tx_status status)
+{
+	return;
+}
+#endif
+
 /**
  * @brief Init the total amount of target credit.
  * @details
@@ -575,5 +716,23 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 				  qdf_nbuf_t rx_ind_msg,
 				  uint16_t peer_id,
 				  uint8_t tid, uint8_t is_offload);
+
+#ifdef FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL
+
+/**
+ * ol_tx_get_max_tx_groups_supported() - get max TCQ groups supported
+ * @pdev: the data physical device that received the frames
+ *
+ * Return: number of max groups supported
+ */
+u_int32_t ol_tx_get_max_tx_groups_supported(struct ol_txrx_pdev_t *pdev);
+#else
+
+static inline u_int32_t
+ol_tx_get_max_tx_groups_supported(struct ol_txrx_pdev_t *pdev)
+{
+	return 0;
+}
+#endif
 
 #endif /* _OL_TXRX_HTT_API__H_ */
