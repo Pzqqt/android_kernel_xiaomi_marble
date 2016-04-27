@@ -43,6 +43,8 @@
 
 /* Type declarations */
 
+#define FL(x)    "%s: %d: " x, __func__, __LINE__
+
 /**
  * typedef enum QDF_TRACE_LEVEL - Debug Trace level
  * @QDF_TRACE_LEVEL_NONE: no trace will be logged. This value is in place
