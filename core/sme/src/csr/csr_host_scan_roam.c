@@ -203,6 +203,25 @@ void csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 					  "SKIP-currently associated AP");
 				continue;
 			}
+
+			/*
+			 * Continue if MCC is disabled in INI and if AP
+			 * will create MCC
+			 */
+			if (cds_concurrent_open_sessions_running() &&
+			   !mac_ctx->roam.configParam.fenableMCCMode) {
+				uint8_t conc_channel;
+
+				conc_channel =
+				  csr_get_concurrent_operation_channel(mac_ctx);
+				if (conc_channel &&
+				   (conc_channel !=
+				   scan_result->BssDescriptor.channelId)) {
+					sms_log(mac_ctx, LOG1, FL("MCC not supported so Ignore AP on channel %d"),
+					  scan_result->BssDescriptor.channelId);
+					continue;
+				}
+			}
 			/*
 			 * In case of reassoc requested by upper layer, look
 			 * for exact match of bssid & channel. csr cache might
