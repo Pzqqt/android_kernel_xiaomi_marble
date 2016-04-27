@@ -3258,7 +3258,7 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 					roamId, u1, u2);
 	}
 	/*
-	 * EVENT_WLAN_STATUS: eCSR_ROAM_ASSOCIATION_COMPLETION,
+	 * EVENT_WLAN_STATUS_V2: eCSR_ROAM_ASSOCIATION_COMPLETION,
 	 *                    eCSR_ROAM_LOSTLINK,
 	 *                    eCSR_ROAM_DISASSOCIATED,
 	 */
@@ -3292,13 +3292,14 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 			(uint8_t) diag_enc_type_from_csr_type(
 				pRoamInfo->u.pConnectedProfile->EncryptionType);
 		qdf_mem_copy(connectionStatus.ssid,
-				pRoamInfo->u.pConnectedProfile->SSID.ssId, 6);
+				pRoamInfo->u.pConnectedProfile->SSID.ssId,
+				pRoamInfo->u.pConnectedProfile->SSID.length);
 
 		connectionStatus.reason = eCSR_REASON_UNSPECIFIED;
 		qdf_mem_copy(&pMac->sme.eventPayload, &connectionStatus,
 				sizeof(host_event_wlan_status_payload_type));
 		WLAN_HOST_DIAG_EVENT_REPORT(&connectionStatus,
-				EVENT_WLAN_STATUS);
+				EVENT_WLAN_STATUS_V2);
 	}
 	if ((eCSR_ROAM_MIC_ERROR_IND == u1)
 			|| (eCSR_ROAM_RESULT_MIC_FAILURE == u2)) {
@@ -3311,7 +3312,7 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 		connectionStatus.eventId = eCSR_WLAN_STATUS_DISCONNECT;
 		connectionStatus.reason = eCSR_REASON_MIC_ERROR;
 		WLAN_HOST_DIAG_EVENT_REPORT(&connectionStatus,
-				EVENT_WLAN_STATUS);
+				EVENT_WLAN_STATUS_V2);
 	}
 	if (eCSR_ROAM_RESULT_FORCED == u2) {
 		qdf_mem_copy(&connectionStatus, &pMac->sme.eventPayload,
@@ -3323,7 +3324,7 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 		connectionStatus.eventId = eCSR_WLAN_STATUS_DISCONNECT;
 		connectionStatus.reason = eCSR_REASON_USER_REQUESTED;
 		WLAN_HOST_DIAG_EVENT_REPORT(&connectionStatus,
-				EVENT_WLAN_STATUS);
+				EVENT_WLAN_STATUS_V2);
 	}
 	if (eCSR_ROAM_RESULT_DISASSOC_IND == u2) {
 		qdf_mem_copy(&connectionStatus, &pMac->sme.eventPayload,
@@ -3339,7 +3340,7 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 				pRoamInfo->reasonCode;
 
 		WLAN_HOST_DIAG_EVENT_REPORT(&connectionStatus,
-				EVENT_WLAN_STATUS);
+				EVENT_WLAN_STATUS_V2);
 	}
 	if (eCSR_ROAM_RESULT_DEAUTH_IND == u2) {
 		qdf_mem_copy(&connectionStatus, &pMac->sme.eventPayload,
@@ -3354,7 +3355,7 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 			connectionStatus.reasonDisconnect =
 				pRoamInfo->reasonCode;
 		WLAN_HOST_DIAG_EVENT_REPORT(&connectionStatus,
-				EVENT_WLAN_STATUS);
+				EVENT_WLAN_STATUS_V2);
 	}
 #endif /* FEATURE_WLAN_DIAG_SUPPORT_CSR */
 	return status;
@@ -9638,7 +9639,7 @@ QDF_STATUS csr_roam_process_set_key_command(tpAniSirGlobal pMac, tSmeCmd *pComma
 		qdf_mem_set(&setKeyEvent,
 			    sizeof(host_event_wlan_security_payload_type), 0);
 		if (qdf_is_macaddr_group(&pCommand->u.setKeyCmd.peermac)) {
-			setKeyEvent.eventId = WLAN_SECURITY_EVENT_SET_GTK_REQ;
+			setKeyEvent.eventId = WLAN_SECURITY_EVENT_SET_BCAST_REQ;
 			setKeyEvent.encryptionModeMulticast =
 				(uint8_t) diag_enc_type_from_csr_type(pCommand->u.
 								      setKeyCmd.encType);
@@ -9647,7 +9648,8 @@ QDF_STATUS csr_roam_process_set_key_command(tpAniSirGlobal pMac, tSmeCmd *pComma
 								      connectedProfile.
 								      EncryptionType);
 		} else {
-			setKeyEvent.eventId = WLAN_SECURITY_EVENT_SET_PTK_REQ;
+			setKeyEvent.eventId =
+				WLAN_SECURITY_EVENT_SET_UNICAST_REQ;
 			setKeyEvent.encryptionModeUnicast =
 				(uint8_t) diag_enc_type_from_csr_type(pCommand->u.
 								      setKeyCmd.encType);
@@ -9709,10 +9711,10 @@ QDF_STATUS csr_roam_process_set_key_command(tpAniSirGlobal pMac, tSmeCmd *pComma
 			if (qdf_is_macaddr_group(
 					&pCommand->u.setKeyCmd.peermac)) {
 				setKeyEvent.eventId =
-					WLAN_SECURITY_EVENT_SET_GTK_RSP;
+					WLAN_SECURITY_EVENT_SET_BCAST_RSP;
 			} else {
 				setKeyEvent.eventId =
-					WLAN_SECURITY_EVENT_SET_PTK_RSP;
+					WLAN_SECURITY_EVENT_SET_UNICAST_RSP;
 			}
 			setKeyEvent.status = WLAN_SECURITY_STATUS_FAILURE;
 			WLAN_HOST_DIAG_EVENT_REPORT(&setKeyEvent,
@@ -10842,9 +10844,11 @@ csr_roam_diag_set_ctx_rsp(tpAniSirGlobal mac_ctx,
 	qdf_mem_set(&setKeyEvent,
 		    sizeof(host_event_wlan_security_payload_type), 0);
 	if (qdf_is_macaddr_group(&pRsp->peer_macaddr))
-		setKeyEvent.eventId = WLAN_SECURITY_EVENT_SET_GTK_RSP;
+		setKeyEvent.eventId =
+			WLAN_SECURITY_EVENT_SET_BCAST_RSP;
 	else
-		setKeyEvent.eventId = WLAN_SECURITY_EVENT_SET_PTK_RSP;
+		setKeyEvent.eventId =
+			WLAN_SECURITY_EVENT_SET_UNICAST_RSP;
 	setKeyEvent.encryptionModeMulticast =
 		(uint8_t) diag_enc_type_from_csr_type(
 				session->connectedProfile.mcEncryptionType);
@@ -17942,7 +17946,7 @@ void csr_roaming_report_diag_event(tpAniSirGlobal mac_ctx,
 		return;
 	}
 	roam_connection.reason = reason;
-	WLAN_HOST_DIAG_EVENT_REPORT(&roam_connection, EVENT_WLAN_STATUS);
+	WLAN_HOST_DIAG_EVENT_REPORT(&roam_connection, EVENT_WLAN_STATUS_V2);
 }
 #endif
 

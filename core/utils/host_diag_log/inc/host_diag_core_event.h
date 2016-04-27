@@ -71,11 +71,11 @@ typedef struct {
 } host_event_wlan_security_payload_type;
 
 /*-------------------------------------------------------------------------
-   Event ID: EVENT_WLAN_STATUS
+   Event ID: EVENT_WLAN_STATUS_V2
    ------------------------------------------------------------------------*/
 typedef struct {
 	uint8_t eventId;
-	uint8_t ssid[6];
+	uint8_t ssid[32];
 	uint8_t bssType;
 	uint8_t rssi;
 	uint8_t channel;
