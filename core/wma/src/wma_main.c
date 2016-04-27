@@ -2269,7 +2269,7 @@ static int wma_flush_complete_evt_handler(void *handle,
 				reason_code);
 		status = cds_set_log_completion(WLAN_LOG_TYPE_FATAL,
 				WLAN_LOG_INDICATOR_FIRMWARE,
-				reason_code);
+				reason_code, false);
 		if (QDF_STATUS_SUCCESS != status) {
 			WMA_LOGE("%s: Failed to set log trigger params",
 					__func__);

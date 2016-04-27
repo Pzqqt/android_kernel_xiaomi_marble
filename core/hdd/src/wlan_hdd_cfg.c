@@ -3772,6 +3772,15 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		CFG_ROAM_DENSE_MIN_APS_MIN,
 		CFG_ROAM_DENSE_MIN_APS_MAX),
 
+	REG_VARIABLE(CFG_ENABLE_FATAL_EVENT_TRIGGER, WLAN_PARAM_Integer,
+			struct hdd_config, enable_fatal_event,
+			VAR_FLAGS_OPTIONAL |
+			VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+			CFG_ENABLE_FATAL_EVENT_TRIGGER_DEFAULT,
+			CFG_ENABLE_FATAL_EVENT_TRIGGER_MIN,
+			CFG_ENABLE_FATAL_EVENT_TRIGGER_MAX),
+
+
 };
 
 
@@ -5363,6 +5372,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		CFG_IGNORE_PEER_HT_MODE_NAME,
 		pHddCtx->config->ignore_peer_ht_opmode);
 	hdd_info("Name = [%s] Value = [%u]",
+		CFG_ENABLE_FATAL_EVENT_TRIGGER,
+		pHddCtx->config->enable_fatal_event);
+	hdd_info("Name = [%s] Value = [%u]",
 		CFG_ROAM_DENSE_MIN_APS,
 		pHddCtx->config->roam_dense_min_aps);
 }
@@ -6808,6 +6820,8 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 			pHddCtx->config->obss_passive_dwelltime;
 	smeConfig->csrConfig.ignore_peer_ht_opmode =
 			pConfig->ignore_peer_ht_opmode;
+	smeConfig->csrConfig.enable_fatal_event =
+			pConfig->enable_fatal_event;
 
 	status = sme_update_config(pHddCtx->hHal, smeConfig);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {

@@ -1221,6 +1221,7 @@ typedef struct tagCsrConfigParam {
 	uint32_t obss_active_dwelltime;
 	uint32_t obss_passive_dwelltime;
 	bool ignore_peer_ht_opmode;
+	bool enable_fatal_event;
 } tCsrConfigParam;
 
 /* Tush */

@@ -209,6 +209,7 @@ typedef struct _cds_sched_context {
  * @indicator: Source of bug report
  * @reason_code: Reason code for bug report
  * @is_report_in_progress: If bug report is in progress
+ * @recovery_needed: if recovery is needed after report completion
  *
  * This structure internally stores the log related params
  */
@@ -217,6 +218,7 @@ struct cds_log_complete {
 	uint32_t indicator;
 	uint32_t reason_code;
 	bool is_report_in_progress;
+	bool recovery_needed;
 };
 
 /*
@@ -292,6 +294,7 @@ typedef struct _cds_context_type {
 	void (*sap_restart_chan_switch_cb)(void *, uint32_t, uint32_t);
 #endif
 	bool do_hw_mode_change;
+	bool enable_fatal_event;
 } cds_context_type, *p_cds_contextType;
 
 /*---------------------------------------------------------------------------

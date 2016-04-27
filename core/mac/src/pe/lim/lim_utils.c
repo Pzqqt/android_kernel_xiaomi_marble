@@ -868,6 +868,10 @@ uint8_t lim_write_deferred_msg_q(tpAniSirGlobal mac_ctx, tpSirMsgQ lim_msg)
 				FL("queue->MsgQ full Msg:%d Msgs Failed:%d"),
 				lim_msg->type,
 				++mac_ctx->lim.deferredMsgCnt);
+			cds_flush_logs(WLAN_LOG_TYPE_NON_FATAL,
+				WLAN_LOG_INDICATOR_HOST_DRIVER,
+				WLAN_LOG_REASON_QUEUE_FULL,
+				true, false);
 		} else {
 			mac_ctx->lim.deferredMsgCnt++;
 		}

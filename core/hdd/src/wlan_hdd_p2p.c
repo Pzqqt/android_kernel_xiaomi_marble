@@ -319,6 +319,10 @@ void wlan_hdd_cancel_existing_remain_on_channel(hdd_adapter_t *pAdapter)
 			hddLog(LOGE,
 			       "%s: timeout waiting for remain on channel ready indication",
 			       __func__);
+			cds_flush_logs(WLAN_LOG_TYPE_FATAL,
+				WLAN_LOG_INDICATOR_HOST_DRIVER,
+				WLAN_LOG_REASON_HDD_TIME_OUT,
+				true, false);
 		}
 
 		INIT_COMPLETION(pAdapter->cancel_rem_on_chan_var);
@@ -1171,6 +1175,10 @@ int __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 				 cds_get_driver_state());
 			return -EAGAIN;
 		}
+		cds_flush_logs(WLAN_LOG_TYPE_FATAL,
+			WLAN_LOG_INDICATOR_HOST_DRIVER,
+			WLAN_LOG_REASON_HDD_TIME_OUT,
+			true, false);
 	}
 	INIT_COMPLETION(pAdapter->cancel_rem_on_chan_var);
 	/* Issue abort remain on chan request to sme.

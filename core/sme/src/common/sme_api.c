@@ -621,8 +621,16 @@ tSmeCmd *sme_get_command_buffer(tpAniSirGlobal pMac)
 		sme_command_queue_full++;
 		csr_ll_unlock(&pMac->roam.roamCmdPendingList);
 
-		/* panic with out-of-command */
-		QDF_BUG(0);
+		if (pMac->roam.configParam.enable_fatal_event)
+			cds_flush_logs(WLAN_LOG_TYPE_FATAL,
+				WLAN_LOG_INDICATOR_HOST_DRIVER,
+				WLAN_LOG_REASON_SME_OUT_OF_CMD_BUF,
+				false,
+				pMac->sme.enableSelfRecovery ? true : false);
+		else if (pMac->sme.enableSelfRecovery)
+			cds_trigger_recovery();
+		else
+			QDF_BUG(0);
 	}
 
 	/* memset to zero */
@@ -11682,19 +11690,41 @@ void sme_save_active_cmd_stats(tHalHandle hHal)
 
 void active_list_cmd_timeout_handle(void *userData)
 {
-	if (NULL == userData)
-		return;
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-		  "%s: Active List command timeout Cmd List Count %d", __func__,
-		  csr_ll_count(&((tpAniSirGlobal) userData)->sme.
-			       smeCmdActiveList));
-	sme_get_command_q_status((tHalHandle) userData);
+	tHalHandle hal = (tHalHandle)userData;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 
-	if (((tpAniSirGlobal) userData)->sme.enableSelfRecovery) {
-		sme_save_active_cmd_stats((tHalHandle) userData);
+	if (NULL == mac_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			"%s: mac_ctx is null", __func__);
+		return;
+	}
+	/* Return if no cmd pending in active list as
+	 * in this case we should not be here.
+	 */
+	if (0 == csr_ll_count(&mac_ctx->sme.smeCmdActiveList))
+		return;
+	sms_log(mac_ctx, LOGE,
+		FL("Active List command timeout Cmd List Count %d"),
+		  csr_ll_count(&mac_ctx->sme.smeCmdActiveList));
+	sme_get_command_q_status(hal);
+
+	if (mac_ctx->roam.configParam.enable_fatal_event)
+		cds_flush_logs(WLAN_LOG_TYPE_FATAL,
+			WLAN_LOG_INDICATOR_HOST_DRIVER,
+			WLAN_LOG_REASON_SME_COMMAND_STUCK,
+			false,
+			mac_ctx->sme.enableSelfRecovery ? true : false);
+	else
+		qdf_trace_dump_all(mac_ctx, 0, 0, 500, 0);
+
+	if (mac_ctx->sme.enableSelfRecovery) {
+		sme_save_active_cmd_stats(hal);
 		cds_trigger_recovery();
 	} else {
-		QDF_BUG(0);
+		if (!mac_ctx->roam.configParam.enable_fatal_event &&
+		   !(cds_is_load_or_unload_in_progress() ||
+		    cds_is_driver_recovering()))
+			QDF_BUG(0);
 	}
 }
 

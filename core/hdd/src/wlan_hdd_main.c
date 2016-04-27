@@ -5355,6 +5355,8 @@ hdd_context_t *hdd_init_context(struct device *dev, void *hif_sc)
 	hdd_notice("Setting configuredMcastBcastFilter: %d",
 		   hdd_ctx->config->mcastBcastFilterSetting);
 
+	cds_set_fatal_event(hdd_ctx->config->enable_fatal_event);
+
 	hdd_override_ini_config(hdd_ctx);
 
 	ret = wlan_hdd_cfg80211_init(dev, hdd_ctx->wiphy, hdd_ctx->config);

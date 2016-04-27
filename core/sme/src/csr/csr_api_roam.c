@@ -2353,6 +2353,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->early_stop_scan_min_threshold;
 		pMac->roam.configParam.early_stop_scan_max_threshold =
 			pParam->early_stop_scan_max_threshold;
+		pMac->roam.configParam.enable_fatal_event =
+			pParam->enable_fatal_event;
 
 	}
 	return status;
@@ -2536,6 +2538,8 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->enableHtSmps = pMac->roam.configParam.enableHtSmps;
 	pParam->htSmps = pMac->roam.configParam.htSmps;
 	pParam->send_smps_action = pMac->roam.configParam.send_smps_action;
+	pParam->enable_fatal_event =
+		pMac->roam.configParam.enable_fatal_event;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -8672,6 +8676,10 @@ static void csr_roam_roaming_state_reassoc_rsp_processor(tpAniSirGlobal pMac,
 			"CSR SmeReassocReq failed with statusCode= 0x%08X [%d]",
 			pSmeJoinRsp->statusCode, pSmeJoinRsp->statusCode);
 		result = eCsrReassocFailure;
+		cds_flush_logs(WLAN_LOG_TYPE_FATAL,
+			WLAN_LOG_INDICATOR_HOST_DRIVER,
+			WLAN_LOG_REASON_ROAM_FAIL,
+			true, false);
 		if ((eSIR_SME_FT_REASSOC_TIMEOUT_FAILURE ==
 		     pSmeJoinRsp->statusCode)
 		    || (eSIR_SME_FT_REASSOC_FAILURE ==

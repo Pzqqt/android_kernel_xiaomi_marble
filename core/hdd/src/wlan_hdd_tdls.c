@@ -3983,7 +3983,11 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 				cds_get_driver_state());
 			return -EAGAIN;
 		}
-
+		if (rc <= 0)
+			cds_flush_logs(WLAN_LOG_TYPE_FATAL,
+				WLAN_LOG_INDICATOR_HOST_DRIVER,
+				WLAN_LOG_REASON_HDD_TIME_OUT,
+				true, false);
 		pAdapter->mgmtTxCompletionStatus = false;
 		return -EINVAL;
 	}

@@ -3563,7 +3563,8 @@ static int __wlan_hdd_cfg80211_wifi_logger_get_ring_data(struct wiphy *wiphy,
 
 	status = cds_flush_logs(WLAN_LOG_TYPE_NON_FATAL,
 			WLAN_LOG_INDICATOR_FRAMEWORK,
-			WLAN_LOG_REASON_CODE_UNUSED);
+			WLAN_LOG_REASON_CODE_UNUSED,
+			true, false);
 	if (QDF_STATUS_SUCCESS != status) {
 		hddLog(LOGE, FL("Failed to trigger bug report"));
 		return -EINVAL;

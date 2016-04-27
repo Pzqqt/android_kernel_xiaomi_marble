@@ -231,16 +231,25 @@ void cds_set_multicast_logging(uint8_t value);
 uint8_t cds_is_multicast_logging(void);
 QDF_STATUS cds_set_log_completion(uint32_t is_fatal,
 		uint32_t type,
-		uint32_t sub_type);
-void cds_get_log_completion(uint32_t *is_fatal,
+		uint32_t sub_type,
+		bool recovery_needed);
+void cds_get_and_reset_log_completion(uint32_t *is_fatal,
 		uint32_t *type,
-		uint32_t *sub_type);
+		uint32_t *sub_type,
+		bool *recovery_needed);
 bool cds_is_log_report_in_progress(void);
+bool cds_is_fatal_event_enabled(void);
+uint32_t cds_get_log_indicator(void);
+void cds_set_fatal_event(bool value);
+void cds_wlan_flush_host_logs_for_fatal(void);
+
 void cds_init_log_completion(void);
 void cds_deinit_log_completion(void);
 QDF_STATUS cds_flush_logs(uint32_t is_fatal,
 		uint32_t indicator,
-		uint32_t reason_code);
+		uint32_t reason_code,
+		bool dump_mac_trace,
+		bool recovery_needed);
 void cds_logging_set_fw_flush_complete(void);
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT

@@ -2995,6 +2995,15 @@ enum dot11p_mode {
 #define CFG_ROAM_DENSE_MIN_APS_MAX     (5)
 #define CFG_ROAM_DENSE_MIN_APS_DEFAULT (1)
 
+/*
+ * Enable/Disable to initiate BUG report in case of fatal event
+ * Default: Enable
+ */
+#define CFG_ENABLE_FATAL_EVENT_TRIGGER                 "gEnableFatalEvent"
+#define CFG_ENABLE_FATAL_EVENT_TRIGGER_MIN             (0)
+#define CFG_ENABLE_FATAL_EVENT_TRIGGER_MAX             (1)
+#define CFG_ENABLE_FATAL_EVENT_TRIGGER_DEFAULT         (1)
+
 /*---------------------------------------------------------------------------
    Type declarations
    -------------------------------------------------------------------------*/
@@ -3595,6 +3604,7 @@ struct hdd_config {
 	uint32_t roam_dense_rssi_thresh_offset;
 	bool ignore_peer_ht_opmode;
 	uint32_t roam_dense_min_aps;
+	bool enable_fatal_event;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
