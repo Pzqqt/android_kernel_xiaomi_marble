@@ -361,6 +361,24 @@ struct host_event_tdls_scan_rejected {
 	uint8_t status;
 };
 
+/**
+ * struct host_event_tdls_tx_rx_mgmt - for TX RX management frame
+ * @event_id: event ID
+ * @tx_rx: tx or rx
+ * @type: type of frame
+ * @action_sub_type: action frame type
+ * @peer_mac: peer mac
+ *
+ * This structure contains tdls TX RX management frame info
+ */
+struct host_event_tdls_tx_rx_mgmt {
+	uint8_t event_id;
+	uint8_t tx_rx;
+	uint8_t type;
+	uint8_t action_sub_type;
+	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
+};
+
 /*-------------------------------------------------------------------------
    Function declarations and documenation
    ------------------------------------------------------------------------*/

@@ -2757,6 +2757,10 @@ tSirRetStatus lim_process_sme_tdls_mgmt_send_req(tpAniSirGlobal mac_ctx,
 		goto lim_tdls_send_mgmt_error;
 	}
 
+	cds_tdls_tx_rx_mgmt_event(SIR_MAC_ACTION_TDLS,
+		SIR_MAC_ACTION_TX, SIR_MAC_MGMT_ACTION,
+		send_req->reqType, send_req->peer_mac.bytes);
+
 	switch (send_req->reqType) {
 	case SIR_MAC_TDLS_DIS_REQ:
 		lim_log(mac_ctx, LOG1, FL("Transmit Discovery Request Frame"));

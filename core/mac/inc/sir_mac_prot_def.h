@@ -145,6 +145,9 @@
 #define SIR_MAC_ACTION_FST            18
 #define SIR_MAC_ACTION_VHT            21
 
+#define SIR_MAC_ACTION_TX             1
+#define SIR_MAC_ACTION_RX             2
+
 /* QoS management action codes */
 
 #define SIR_MAC_QOS_ADD_TS_REQ      0

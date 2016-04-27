@@ -242,4 +242,17 @@ QDF_STATUS cds_flush_logs(uint32_t is_fatal,
 		uint32_t indicator,
 		uint32_t reason_code);
 void cds_logging_set_fw_flush_complete(void);
+
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+void cds_tdls_tx_rx_mgmt_event(uint8_t event_id, uint8_t tx_rx,
+			uint8_t type, uint8_t sub_type, uint8_t *peer_mac);
+#else
+static inline
+void cds_tdls_tx_rx_mgmt_event(uint8_t event_id, uint8_t tx_rx,
+			uint8_t type, uint8_t sub_type, uint8_t *peer_mac)
+
+{
+}
+#endif /* FEATURE_WLAN_DIAG_SUPPORT */
+
 #endif /* if !defined __CDS_API_H */

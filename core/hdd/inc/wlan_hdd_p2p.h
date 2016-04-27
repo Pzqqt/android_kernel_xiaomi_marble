@@ -51,6 +51,9 @@
 #define WLAN_HDD_80211_FRM_DA_OFFSET             4
 #define P2P_WILDCARD_SSID_LEN                    7
 #define P2P_WILDCARD_SSID                        "DIRECT-"
+#define WLAN_HDD_80211_PEER_ADDR_OFFSET (WLAN_HDD_80211_FRM_DA_OFFSET + \
+					 MAC_ADDR_LEN)
+
 
 #ifdef QCA_WIFI_3_0_EMU
 #define P2P_ROC_DURATION_MULTIPLIER_GO_PRESENT   2

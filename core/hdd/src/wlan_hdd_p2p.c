@@ -2247,8 +2247,8 @@ void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 					     + 2], SIR_MAC_P2P_OUI,
 					    SIR_MAC_P2P_OUI_SIZE)) {
 			/* P2P action frames */
-				u8 *macFrom =
-					&pbFrames[WLAN_HDD_80211_FRM_DA_OFFSET + 6];
+				u8 *macFrom = &pbFrames
+					[WLAN_HDD_80211_PEER_ADDR_OFFSET];
 				actionFrmType =
 					pbFrames
 					[WLAN_HDD_PUBLIC_ACTION_FRAME_TYPE_OFFSET];
@@ -2409,8 +2409,8 @@ void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 			else if (pbFrames
 				 [WLAN_HDD_PUBLIC_ACTION_FRAME_OFFSET + 1] ==
 				 WLAN_HDD_PUBLIC_ACTION_TDLS_DISC_RESP) {
-				u8 *mac =
-					&pbFrames[WLAN_HDD_80211_FRM_DA_OFFSET + 6];
+				u8 *mac = &pbFrames
+					[WLAN_HDD_80211_PEER_ADDR_OFFSET];
 
 				hddLog(LOG1,
 				       "[TDLS] TDLS Discovery Response,"
@@ -2420,6 +2420,10 @@ void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 				wlan_hdd_tdls_set_rssi(pAdapter, mac, rxRssi);
 				wlan_hdd_tdls_recv_discovery_resp(pAdapter,
 								  mac);
+				cds_tdls_tx_rx_mgmt_event(SIR_MAC_ACTION_TDLS,
+				   SIR_MAC_ACTION_RX, SIR_MAC_MGMT_ACTION,
+				   WLAN_HDD_PUBLIC_ACTION_TDLS_DISC_RESP,
+				   &pbFrames[WLAN_HDD_80211_PEER_ADDR_OFFSET]);
 			}
 #endif
 		}
@@ -2437,6 +2441,10 @@ void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 				       "[TDLS] %s <--- OTA",
 				       tdls_action_frame_type[actionFrmType]);
 			}
+			cds_tdls_tx_rx_mgmt_event(SIR_MAC_ACTION_TDLS,
+				SIR_MAC_ACTION_RX, SIR_MAC_MGMT_ACTION,
+				actionFrmType,
+				&pbFrames[WLAN_HDD_80211_PEER_ADDR_OFFSET]);
 		}
 
 		if ((pbFrames[WLAN_HDD_PUBLIC_ACTION_FRAME_OFFSET] ==

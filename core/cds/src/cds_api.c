@@ -130,6 +130,36 @@ void cds_deinit(void)
 	return;
 }
 
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+/**
+ * cds_tdls_tx_rx_mgmt_event()- send tdls mgmt rx tx event
+ * @event_id: event id
+ * @tx_rx: tx or rx
+ * @type: type of frame
+ * @action_sub_type: action frame type
+ * @peer_mac: peer mac
+ *
+ * This Function sends tdls mgmt rx tx diag event
+ *
+ * Return: void.
+ */
+void cds_tdls_tx_rx_mgmt_event(uint8_t event_id, uint8_t tx_rx,
+		uint8_t type, uint8_t action_sub_type, uint8_t *peer_mac)
+{
+	WLAN_HOST_DIAG_EVENT_DEF(tdls_tx_rx_mgmt,
+		struct host_event_tdls_tx_rx_mgmt);
+
+	tdls_tx_rx_mgmt.event_id = event_id;
+	tdls_tx_rx_mgmt.tx_rx = tx_rx;
+	tdls_tx_rx_mgmt.type = type;
+	tdls_tx_rx_mgmt.action_sub_type = action_sub_type;
+	qdf_mem_copy(tdls_tx_rx_mgmt.peer_mac,
+			peer_mac, CDS_MAC_ADDRESS_LEN);
+	WLAN_HOST_DIAG_EVENT_REPORT(&tdls_tx_rx_mgmt,
+				EVENT_WLAN_TDLS_TX_RX_MGMT);
+}
+#endif
+
 #ifdef WLAN_FEATURE_NAN
 /**
  * cds_set_nan_enable() - set nan enable flag in mac open param
