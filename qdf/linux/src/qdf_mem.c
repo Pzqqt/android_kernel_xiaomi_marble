@@ -73,7 +73,7 @@ struct s_qdf_mem_struct {
 #endif
 
 /* Preprocessor Definitions and Constants */
-#define QDF_GET_MEMORY_TIME_THRESHOLD 3000
+#define QDF_GET_MEMORY_TIME_THRESHOLD 300
 
 int qdf_dbg_mask;
 qdf_declare_param(qdf_dbg_mask, int);
