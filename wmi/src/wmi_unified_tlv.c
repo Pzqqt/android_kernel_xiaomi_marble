@@ -28,8 +28,8 @@
 #include "wmi_unified_tlv.h"
 #include "wmi_unified_api.h"
 #include "wmi.h"
+#include "wmi_version.h"
 #include "wmi_unified_priv.h"
-#include "wma.h"
 #include "wmi_version_whitelist.h"
 
 /**
@@ -1573,7 +1573,6 @@ QDF_STATUS send_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mgmt_tx_send_cmd_fixed_param *cmd;
 	int32_t cmd_len;
 	uint64_t dma_addr;
-	struct wmi_desc_t *wmi_desc = NULL;
 	void *qdf_ctx = param->qdf_ctx;
 	uint8_t *bufp;
 	int32_t bufp_len = (param->frm_len < mgmt_tx_dl_frm_len) ? param->frm_len :
@@ -1597,16 +1596,7 @@ QDF_STATUS send_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
 
 	cmd->vdev_id = param->vdev_id;
 
-	wmi_desc = param->wmi_desc;
-	if (!wmi_desc) {
-		WMI_LOGE("%s: Failed to get wmi_desc", __func__);
-		goto err1;
-	}
-	wmi_desc->nbuf = param->tx_frame;
-	wmi_desc->tx_cmpl_cb = param->tx_complete_cb;
-	wmi_desc->ota_post_proc_cb = param->tx_ota_post_proc_cb;
-
-	cmd->desc_id = wmi_desc->desc_id;
+	cmd->desc_id = param->desc_id;
 	cmd->chanfreq = param->chanfreq;
 	bufp += sizeof(wmi_mgmt_tx_send_cmd_fixed_param);
 	WMITLV_SET_HDR(bufp, WMITLV_TAG_ARRAY_BYTE, roundup(bufp_len,
@@ -3135,12 +3125,6 @@ QDF_STATUS send_set_sta_keep_alive_cmd_tlv(wmi_unified_t wmi_handle,
 	QDF_STATUS ret;
 
 	WMI_LOGD("%s: Enter", __func__);
-
-	if (params->timeperiod > WNI_CFG_INFRA_STA_KEEP_ALIVE_PERIOD_STAMAX) {
-		WMI_LOGE("Invalid period %d Max limit %d", params->timeperiod,
-			WNI_CFG_INFRA_STA_KEEP_ALIVE_PERIOD_STAMAX);
-		return QDF_STATUS_E_FAILURE;
-	}
 
 	len = sizeof(*cmd) + sizeof(*arp_rsp);
 	buf = wmi_buf_alloc(wmi_handle, len);
@@ -4947,7 +4931,7 @@ QDF_STATUS wmi_get_buf_extscan_start_cmd(wmi_unified_t wmi_handle,
 	cmd->base_period = pstart->basePeriod;
 	cmd->num_buckets = nbuckets;
 	cmd->configuration_flags = 0;
-	if (pstart->configuration_flags & EXTSCAN_LP_EXTENDED_BATCHING)
+	if (pstart->configuration_flags & WMI_EXTSCAN_LP_EXTENDED_BATCHING)
 		cmd->configuration_flags |= WMI_EXTSCAN_EXTENDED_BATCHING_EN;
 	WMI_LOGI("%s: configuration_flags: 0x%x", __func__,
 			cmd->configuration_flags);
@@ -7185,7 +7169,7 @@ QDF_STATUS send_aggr_qos_cmd_tlv(wmi_unified_t wmi_handle,
 				       (wmi_vdev_wmm_addts_cmd_fixed_param));
 			cmd->vdev_id = aggr_qos_rsp_msg->sessionId;
 			cmd->ac =
-				TID_TO_WME_AC(aggr_qos_rsp_msg->tspec[i].tsinfo.
+				WMI_TID_TO_AC(aggr_qos_rsp_msg->tspec[i].tsinfo.
 					      traffic.userPrio);
 			cmd->medium_time_us =
 				aggr_qos_rsp_msg->tspec[i].mediumTime * 32;
@@ -7426,8 +7410,7 @@ QDF_STATUS send_add_clear_mcbc_filter_cmd_tlv(wmi_unified_t wmi_handle,
 	}
 	WMI_LOGD("Action:%d; vdev_id:%d; clearList:%d",
 		 cmd->action, vdev_id, clearList);
-	WMI_LOGD("MCBC MAC Addr: "MAC_ADDRESS_STR,
-		 MAC_ADDR_ARRAY(multicast_addr.bytes));
+	WMI_LOGD("MCBC MAC Addr: %pM", multicast_addr.bytes);
 
 	return 0;
 }
@@ -8509,7 +8492,7 @@ QDF_STATUS send_process_fw_mem_dump_cmd_tlv(wmi_unified_t wmi_handle,
 {
 	wmi_get_fw_mem_dump_fixed_param *cmd;
 	wmi_fw_mem_dump *dump_params;
-	struct fw_dump_seg_req *seg_req;
+	struct wmi_fw_dump_seg_req *seg_req;
 	int32_t len;
 	wmi_buf_t buf;
 	u_int8_t *buf_ptr;
@@ -8552,7 +8535,7 @@ QDF_STATUS send_process_fw_mem_dump_cmd_tlv(wmi_unified_t wmi_handle,
 	WMI_LOGI(FL("request_id:%d num_seg:%d"),
 		    mem_dump_req->request_id, mem_dump_req->num_seg);
 	for (loop = 0; loop < cmd->num_fw_mem_dump_segs; loop++) {
-		seg_req = (struct fw_dump_seg_req *)
+		seg_req = (struct wmi_fw_dump_seg_req *)
 			  ((uint8_t *)(mem_dump_req->segment) +
 			    loop * sizeof(*seg_req));
 		WMITLV_SET_HDR(&dump_params->tlv_header,
@@ -9166,7 +9149,7 @@ QDF_STATUS send_enable_specific_fw_logs_cmd_tlv(wmi_unified_t wmi_handle,
 
 	cmd_args = (uint32_t *) (buf_ptr + WMI_TLV_HDR_SIZE);
 
-	if (start_log->verbose_level >= LOG_LEVEL_ACTIVE)
+	if (start_log->verbose_level >= WMI_LOG_LEVEL_ACTIVE)
 		log_level = 1;
 	else
 		log_level = 0;
@@ -9492,7 +9475,7 @@ QDF_STATUS send_enable_arp_ns_offload_cmd_tlv(wmi_unified_t wmi_handle,
 
 		/* Fill data only for NS offload in the first ARP tuple for LA */
 		if (!arp_only &&
-		    ((param->enableOrDisable & SIR_OFFLOAD_ENABLE))) {
+		    ((param->enableOrDisable & WMI_OFFLOAD_ENABLE))) {
 			ns_tuple->flags |= WMI_NSOFF_FLAGS_VALID;
 
 #ifdef WLAN_NS_OFFLOAD
@@ -9537,13 +9520,13 @@ QDF_STATUS send_enable_arp_ns_offload_cmd_tlv(wmi_unified_t wmi_handle,
 			       WMITLV_GET_STRUCT_TLVLEN(WMI_ARP_OFFLOAD_TUPLE));
 
 		/* Fill data for ARP and NS in the first tupple for LA */
-		if ((wmi_handle->arp_info.enableOrDisable & SIR_OFFLOAD_ENABLE)
+		if ((wmi_handle->arp_info.enableOrDisable & WMI_OFFLOAD_ENABLE)
 		    && (i == 0)) {
 			/*Copy the target ip addr and flags */
 			arp_tuple->flags = WMI_ARPOFF_FLAGS_VALID;
 			A_MEMCPY(&arp_tuple->target_ipaddr,
 				 wmi_handle->arp_info.params.hostIpv4Addr,
-				 SIR_IPV4_ADDR_LEN);
+				 WMI_IPV4_ADDR_LEN);
 			WMI_LOGD("ARPOffload IP4 address: %pI4",
 				 wmi_handle->arp_info.params.hostIpv4Addr);
 		}
@@ -9564,7 +9547,8 @@ QDF_STATUS send_enable_arp_ns_offload_cmd_tlv(wmi_unified_t wmi_handle,
 
 			/* Fill data only for NS offload in the first ARP tuple for LA */
 			if (!arp_only  &&
-				((param->enableOrDisable & SIR_OFFLOAD_ENABLE))) {
+				((param->enableOrDisable &
+					WMI_OFFLOAD_ENABLE))) {
 				ns_tuple->flags |= WMI_NSOFF_FLAGS_VALID;
 #ifdef WLAN_NS_OFFLOAD
 				/*Copy the target/solicitation/remote ip addr */
@@ -10066,7 +10050,7 @@ QDF_STATUS send_roam_scan_offload_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
 			       (wmi_roam_chan_list_fixed_param));
 	chan_list_fp->vdev_id = vdev_id;
 	chan_list_fp->num_chan = chan_count;
-	if (chan_count > 0 && list_type == CHANNEL_LIST_STATIC) {
+	if (chan_count > 0 && list_type == WMI_CHANNEL_LIST_STATIC) {
 		/* external app is controlling channel list */
 		chan_list_fp->chan_list_type =
 			WMI_ROAM_SCAN_CHAN_LIST_TYPE_STATIC;
