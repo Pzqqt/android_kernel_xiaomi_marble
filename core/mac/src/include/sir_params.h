@@ -411,8 +411,8 @@ typedef struct sSirMbMsgP2p {
 #define SIR_HAL_DEL_PERIODIC_TX_PTRN_IND   (SIR_HAL_ITC_MSG_TYPES_BEGIN + 153)
 
 /* Messages between 156 to 157 are not used */
-#define SIR_HAL_SOC_DUAL_MAC_CFG_REQ       (SIR_HAL_ITC_MSG_TYPES_BEGIN + 154)
-#define SIR_HAL_SOC_DUAL_MAC_CFG_RESP      (SIR_HAL_ITC_MSG_TYPES_BEGIN + 155)
+#define SIR_HAL_PDEV_DUAL_MAC_CFG_REQ      (SIR_HAL_ITC_MSG_TYPES_BEGIN + 154)
+#define SIR_HAL_PDEV_MAC_CFG_RESP          (SIR_HAL_ITC_MSG_TYPES_BEGIN + 155)
 
 /* For IBSS peer info related messages */
 #define SIR_HAL_IBSS_PEER_INFO_REQ         (SIR_HAL_ITC_MSG_TYPES_BEGIN + 158)

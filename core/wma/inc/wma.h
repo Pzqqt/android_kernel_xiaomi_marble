@@ -1985,7 +1985,7 @@ QDF_STATUS wma_send_pdev_set_hw_mode_cmd(tp_wma_handle wma_handle,
 		struct sir_hw_mode *msg);
 QDF_STATUS wma_get_scan_id(uint32_t *scan_id);
 
-QDF_STATUS wma_send_soc_set_dual_mac_config(tp_wma_handle wma_handle,
+QDF_STATUS wma_send_pdev_set_dual_mac_config(tp_wma_handle wma_handle,
 		struct sir_dual_mac_config *msg);
 QDF_STATUS wma_send_pdev_set_antenna_mode(tp_wma_handle wma_handle,
 		struct sir_antenna_mode_param *msg);

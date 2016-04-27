@@ -2056,7 +2056,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
-	case SIR_HAL_SOC_DUAL_MAC_CFG_RESP:
+	case SIR_HAL_PDEV_MAC_CFG_RESP:
 		lim_process_dual_mac_cfg_resp(mac_ctx, msg->bodyptr);
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;

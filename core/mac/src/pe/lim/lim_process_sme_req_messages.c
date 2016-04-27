@@ -238,10 +238,10 @@ static QDF_STATUS lim_process_set_dual_mac_cfg_req(tpAniSirGlobal mac,
 	/* Other parameters are not needed for WMA */
 
 	cds_message.bodyptr = req_msg;
-	cds_message.type    = SIR_HAL_SOC_DUAL_MAC_CFG_REQ;
+	cds_message.type    = SIR_HAL_PDEV_DUAL_MAC_CFG_REQ;
 
 	lim_log(mac, LOG1,
-		FL("Post SIR_HAL_SOC_DUAL_MAC_CFG_REQ to WMA: %x %x"),
+		FL("Post SIR_HAL_PDEV_DUAL_MAC_CFG_REQ to WMA: %x %x"),
 		req_msg->scan_config, req_msg->fw_mode_config);
 	status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {

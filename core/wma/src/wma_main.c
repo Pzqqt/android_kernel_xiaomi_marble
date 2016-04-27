@@ -2483,25 +2483,25 @@ static int wma_soc_hw_mode_transition_evt_handler(void *handle,
 }
 
 /**
- * wma_soc_set_dual_mode_config_resp_evt_handler() - Dual mode evt handler
+ * wma_pdev_set_dual_mode_config_resp_evt_handler() - Dual mode evt handler
  * @handle: WMI handle
  * @event:  Event received from FW
  * @len:    Length of the event
  *
  * Notifies the host driver of the completion or failure of a
- * WMI_SOC_SET_DUAL_MAC_CONFIG_CMDID command. This event would be returned to
+ * WMI_PDEV_SET_MAC_CONFIG_CMDID command. This event would be returned to
  * the host driver once the firmware has completed a reconfiguration of the Scan
  * and FW mode configuration. This changes could include entering or leaving a
  * dual mac configuration for either scan and/or more permanent firmware mode.
  *
  * Return: Success on receiving valid params from FW
  */
-static int wma_soc_set_dual_mode_config_resp_evt_handler(void *handle,
+static int wma_pdev_set_dual_mode_config_resp_evt_handler(void *handle,
 		uint8_t *event,
 		uint32_t len)
 {
-	WMI_SOC_SET_DUAL_MAC_CONFIG_RESP_EVENTID_param_tlvs *param_buf;
-	wmi_soc_set_dual_mac_config_response_event_fixed_param *wmi_event;
+	WMI_PDEV_SET_MAC_CONFIG_RESP_EVENTID_param_tlvs *param_buf;
+	wmi_pdev_set_mac_config_response_event_fixed_param *wmi_event;
 	tp_wma_handle wma = (tp_wma_handle) handle;
 	struct sir_dual_mac_config_resp *dual_mac_cfg_resp;
 
@@ -2522,7 +2522,7 @@ static int wma_soc_set_dual_mode_config_resp_evt_handler(void *handle,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	param_buf = (WMI_SOC_SET_DUAL_MAC_CONFIG_RESP_EVENTID_param_tlvs *)
+	param_buf = (WMI_PDEV_SET_MAC_CONFIG_RESP_EVENTID_param_tlvs *)
 		event;
 	if (!param_buf) {
 		WMA_LOGE("%s: Invalid event", __func__);
@@ -2545,7 +2545,7 @@ static int wma_soc_set_dual_mode_config_resp_evt_handler(void *handle,
 	}
 
 	/* Pass the message to PE */
-	wma_send_msg(wma, SIR_HAL_SOC_DUAL_MAC_CFG_RESP,
+	wma_send_msg(wma, SIR_HAL_PDEV_MAC_CFG_RESP,
 			(void *) dual_mac_cfg_resp, 0);
 
 	return QDF_STATUS_SUCCESS;
@@ -2553,7 +2553,7 @@ static int wma_soc_set_dual_mode_config_resp_evt_handler(void *handle,
 fail:
 	WMA_LOGE("%s: Sending fail response to LIM", __func__);
 	dual_mac_cfg_resp->status = SET_HW_MODE_STATUS_ECANCELED;
-	wma_send_msg(wma, SIR_HAL_SOC_DUAL_MAC_CFG_RESP,
+	wma_send_msg(wma, SIR_HAL_PDEV_MAC_CFG_RESP,
 			(void *) dual_mac_cfg_resp, 0);
 
 	return QDF_STATUS_E_FAILURE;
@@ -2814,8 +2814,8 @@ QDF_STATUS wma_start(void *cds_ctx)
 
 	/* Initialize the set dual mac configuration event handler */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-			WMI_SOC_SET_DUAL_MAC_CONFIG_RESP_EVENTID,
-			wma_soc_set_dual_mode_config_resp_evt_handler,
+			WMI_PDEV_SET_MAC_CONFIG_RESP_EVENTID,
+			wma_pdev_set_dual_mode_config_resp_evt_handler,
 			WMA_RX_SERIALIZER_CTX);
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to register hw mode transition event cb");
@@ -5258,8 +5258,8 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 			(struct sir_dcc_update_ndl *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
-	case SIR_HAL_SOC_DUAL_MAC_CFG_REQ:
-		wma_send_soc_set_dual_mac_config(wma_handle,
+	case SIR_HAL_PDEV_DUAL_MAC_CFG_REQ:
+		wma_send_pdev_set_dual_mac_config(wma_handle,
 				(struct sir_dual_mac_config *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
@@ -5443,7 +5443,7 @@ fail:
 }
 
 /**
- * wma_send_soc_set_dual_mac_config() - Set dual mac config to FW
+ * wma_send_pdev_set_dual_mac_config() - Set dual mac config to FW
  * @wma_handle: WMA handle
  * @msg: Dual MAC config parameters
  *
@@ -5451,7 +5451,7 @@ fail:
  *
  * Return: QDF_STATUS. 0 on success.
  */
-QDF_STATUS wma_send_soc_set_dual_mac_config(tp_wma_handle wma_handle,
+QDF_STATUS wma_send_pdev_set_dual_mac_config(tp_wma_handle wma_handle,
 		struct sir_dual_mac_config *msg)
 {
 	QDF_STATUS status;
@@ -5467,10 +5467,11 @@ QDF_STATUS wma_send_soc_set_dual_mac_config(tp_wma_handle wma_handle,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	status = wmi_unified_soc_set_dual_mac_config_cmd(wma_handle->wmi_handle,
+	status = wmi_unified_pdev_set_dual_mac_config_cmd(
+				wma_handle->wmi_handle,
 				(struct wmi_dual_mac_config *)msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMA_LOGE("%s: Failed to send WMI_SOC_SET_DUAL_MAC_CONFIG_CMDID: %d",
+		WMA_LOGE("%s: Failed to send WMI_PDEV_SET_DUAL_MAC_CONFIG_CMDID: %d",
 				__func__, status);
 		return status;
 	}
