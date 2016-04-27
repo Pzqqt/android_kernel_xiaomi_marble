@@ -703,6 +703,7 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_scan_adaptive_dwell_parameters_tlv,
 	WMITLV_TAG_STRUC_wmi_scan_adaptive_dwell_config_fixed_param,
 	WMITLV_TAG_STRUC_wmi_wow_set_action_wake_up_cmd_fixed_param,
+	WMITLV_TAG_STRUC_wmi_ndp_end_rsp_per_ndi,
 } WMITLV_TAG_ID;
 
 /*

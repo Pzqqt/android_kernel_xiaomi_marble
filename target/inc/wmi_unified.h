@@ -11247,8 +11247,6 @@ typedef enum {
 typedef struct {
 	/* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_ndp_end_req */
 	A_UINT32 tlv_header;
-	/** reason_code  defined in  wmi_ndp_end_reason_code */
-	A_UINT32 reason_code;
 	/** NDP instance id */
 	A_UINT32 ndp_instance_id;
 } wmi_ndp_end_req_PROTOTYPE;
@@ -11540,6 +11538,10 @@ typedef struct {
 	A_UINT32 ndp_cfg_len;
 	/** Number of bytes in TLV wmi_ndp_app_info */
 	A_UINT32 ndp_app_info_len;
+	/** Reason Code */
+	A_UINT32 reason_code;
+	/** Number of active ndps on this peer */
+	A_UINT32 num_active_ndps_on_peer;
 	/**
 	 * TLV (tag length value ) parameters follow the ndp_confirm
 	 * structure. The TLV's are:
