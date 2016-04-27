@@ -3089,7 +3089,7 @@ QDF_STATUS wmi_unified_soc_set_hw_mode_cmd(void *wmi_hdl,
 }
 
 /**
- * wmi_unified_soc_set_dual_mac_config_cmd() - Set dual mac config to FW
+ * wmi_unified_pdev_set_dual_mac_config_cmd() - Set dual mac config to FW
  * @wmi_hdl: wmi handle
  * @msg: Dual MAC config parameters
  *
@@ -3097,13 +3097,13 @@ QDF_STATUS wmi_unified_soc_set_hw_mode_cmd(void *wmi_hdl,
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failures.
  */
-QDF_STATUS wmi_unified_soc_set_dual_mac_config_cmd(void *wmi_hdl,
+QDF_STATUS wmi_unified_pdev_set_dual_mac_config_cmd(void *wmi_hdl,
 		struct wmi_dual_mac_config *msg)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
-	if (wmi_handle->ops->send_soc_set_dual_mac_config_cmd)
-		return wmi_handle->ops->send_soc_set_dual_mac_config_cmd(wmi_handle,
+	if (wmi_handle->ops->send_pdev_set_dual_mac_config_cmd)
+		return wmi_handle->ops->send_pdev_set_dual_mac_config_cmd(wmi_handle,
 				  msg);
 
 	return QDF_STATUS_E_FAILURE;
