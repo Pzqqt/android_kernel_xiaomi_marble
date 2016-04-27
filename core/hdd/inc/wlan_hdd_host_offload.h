@@ -57,4 +57,13 @@ typedef struct {
 	struct qdf_mac_addr bssId;
 } tHostOffloadRequest, *tpHostOffloadRequest;
 
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+void hdd_wlan_offload_event(uint8_t type, uint8_t state);
+#else
+static inline
+void hdd_wlan_offload_event(uint8_t type, uint8_t state)
+{
+}
+#endif /* FEATURE_WLAN_DIAG_SUPPORT */
+
 #endif /* __WLAN_HDD_HOST_OFFLOAD_H__ */

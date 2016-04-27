@@ -337,6 +337,18 @@ struct host_event_suspend {
 	uint8_t state;
 };
 
+/**
+ * struct host_event_offload_req - offload state
+ * @offload_type: offload type
+ * @state: enabled or disabled state
+ *
+ * This structure contains offload diag event info
+ */
+struct host_event_offload_req {
+	uint8_t offload_type;
+	uint8_t state;
+};
+
 /*-------------------------------------------------------------------------
    Function declarations and documenation
    ------------------------------------------------------------------------*/
