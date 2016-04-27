@@ -9310,7 +9310,7 @@ QDF_STATUS send_pdev_set_pcl_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
- * send_soc_set_hw_mode_cmd_tlv() - Send WMI_SOC_SET_HW_MODE_CMDID to FW
+ * send_pdev_set_hw_mode_cmd_tlv() - Send WMI_PDEV_SET_HW_MODE_CMDID to FW
  * @wmi_handle: wmi handle
  * @msg: Structure containing the following parameters
  *
@@ -9323,10 +9323,10 @@ QDF_STATUS send_pdev_set_pcl_cmd_tlv(wmi_unified_t wmi_handle,
  *
  * Return: Success if the cmd is sent successfully to the firmware
  */
-QDF_STATUS send_soc_set_hw_mode_cmd_tlv(wmi_unified_t wmi_handle,
+QDF_STATUS send_pdev_set_hw_mode_cmd_tlv(wmi_unified_t wmi_handle,
 				uint32_t hw_mode_index)
 {
-	wmi_soc_set_hw_mode_cmd_fixed_param *cmd;
+	wmi_pdev_set_hw_mode_cmd_fixed_param *cmd;
 	wmi_buf_t buf;
 	uint32_t len;
 
@@ -9338,16 +9338,18 @@ QDF_STATUS send_soc_set_hw_mode_cmd_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	cmd = (wmi_soc_set_hw_mode_cmd_fixed_param *) wmi_buf_data(buf);
+	cmd = (wmi_pdev_set_hw_mode_cmd_fixed_param *) wmi_buf_data(buf);
 	WMITLV_SET_HDR(&cmd->tlv_header,
-		WMITLV_TAG_STRUC_wmi_soc_set_hw_mode_cmd_fixed_param,
-		WMITLV_GET_STRUCT_TLVLEN(wmi_soc_set_hw_mode_cmd_fixed_param));
+		WMITLV_TAG_STRUC_wmi_pdev_set_hw_mode_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(wmi_pdev_set_hw_mode_cmd_fixed_param));
+
+	cmd->pdev_id = WMI_PDEV_ID_SOC;
 	cmd->hw_mode_index = hw_mode_index;
 	WMI_LOGI("%s: HW mode index:%d", __func__, cmd->hw_mode_index);
 
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
-				WMI_SOC_SET_HW_MODE_CMDID)) {
-		WMI_LOGE("%s: Failed to send WMI_SOC_SET_HW_MODE_CMDID",
+				WMI_PDEV_SET_HW_MODE_CMDID)) {
+		WMI_LOGE("%s: Failed to send WMI_PDEV_SET_HW_MODE_CMDID",
 			__func__);
 		qdf_nbuf_free(buf);
 		return QDF_STATUS_E_FAILURE;
@@ -10488,7 +10490,7 @@ struct wmi_ops tlv_ops =  {
 		 send_enable_specific_fw_logs_cmd_tlv,
 	.send_flush_logs_to_fw_cmd = send_flush_logs_to_fw_cmd_tlv,
 	.send_pdev_set_pcl_cmd = send_pdev_set_pcl_cmd_tlv,
-	.send_soc_set_hw_mode_cmd = send_soc_set_hw_mode_cmd_tlv,
+	.send_pdev_set_hw_mode_cmd = send_pdev_set_hw_mode_cmd_tlv,
 	.send_soc_set_dual_mac_config_cmd =
 		 send_soc_set_dual_mac_config_cmd_tlv,
 	.send_enable_arp_ns_offload_cmd =

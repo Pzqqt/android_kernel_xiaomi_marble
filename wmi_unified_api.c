@@ -3081,8 +3081,8 @@ QDF_STATUS wmi_unified_soc_set_hw_mode_cmd(void *wmi_hdl,
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
-	if (wmi_handle->ops->send_soc_set_hw_mode_cmd)
-		return wmi_handle->ops->send_soc_set_hw_mode_cmd(wmi_handle,
+	if (wmi_handle->ops->send_pdev_set_hw_mode_cmd)
+		return wmi_handle->ops->send_pdev_set_hw_mode_cmd(wmi_handle,
 				  hw_mode_index);
 
 	return QDF_STATUS_E_FAILURE;
