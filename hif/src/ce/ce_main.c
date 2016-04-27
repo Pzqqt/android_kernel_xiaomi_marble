@@ -48,7 +48,6 @@
 #include "ce_tasklet.h"
 #include "platform_icnss.h"
 #include "qwlan_version.h"
-#include <cds_api.h>
 
 #define CE_POLL_TIMEOUT 10      /* ms */
 
@@ -1960,11 +1959,12 @@ err:
  *
  * Return: QDF_STATUS_SUCCESS on success or QDF_STATUS_E_FAILURE
  */
-int hif_ce_fastpath_cb_register(fastpath_msg_handler handler, void *context)
+int hif_ce_fastpath_cb_register(struct hif_opaque_softc *hif_ctx,
+				fastpath_msg_handler handler,
+				void *context)
 {
-	struct hif_softc *scn =
-	    (struct hif_softc *)cds_get_context(QDF_MODULE_ID_HIF);
 	struct CE_state *ce_state;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	int i;
 
 	QDF_ASSERT(scn != NULL);

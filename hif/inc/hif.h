@@ -311,9 +311,11 @@ typedef void (*fastpath_msg_handler)(void *, qdf_nbuf_t *, uint32_t);
 void hif_enable_fastpath(struct hif_opaque_softc *hif_ctx);
 bool hif_is_fastpath_mode_enabled(struct hif_opaque_softc *hif_ctx);
 void *hif_get_ce_handle(struct hif_opaque_softc *hif_ctx, int);
-int hif_ce_fastpath_cb_register(fastpath_msg_handler handler, void *context);
+int hif_ce_fastpath_cb_register(struct hif_opaque_softc *hif_ctx,
+				fastpath_msg_handler handler, void *context);
 #else
-static inline int hif_ce_fastpath_cb_register(fastpath_msg_handler handler,
+static inline int hif_ce_fastpath_cb_register(struct hif_opaque_softc *hif_ctx,
+					      fastpath_msg_handler handler,
 					      void *context)
 {
 	return QDF_STATUS_E_FAILURE;
