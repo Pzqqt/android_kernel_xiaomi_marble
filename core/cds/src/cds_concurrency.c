@@ -2379,7 +2379,7 @@ void cds_set_dual_mac_fw_mode_config(uint8_t dbs, uint8_t dfs)
 }
 
 /**
- * cds_soc_set_hw_mode_cb() - Callback for set hw mode
+ * cds_pdev_set_hw_mode_cb() - Callback for set hw mode
  * @status: Status
  * @cfgd_hw_mode_index: Configured HW mode index
  * @num_vdev_mac_entries: Number of vdev-mac id mapping that follows
@@ -2391,7 +2391,7 @@ void cds_set_dual_mac_fw_mode_config(uint8_t dbs, uint8_t dfs)
  *
  * Return: None
  */
-static void cds_soc_set_hw_mode_cb(uint32_t status,
+static void cds_pdev_set_hw_mode_cb(uint32_t status,
 				 uint32_t cfgd_hw_mode_index,
 				 uint32_t num_vdev_mac_entries,
 				 struct sir_vdev_mac_map *vdev_mac_map)
@@ -2498,7 +2498,7 @@ static void cds_hw_mode_transition_cb(uint32_t old_hw_mode_index,
 }
 
 /**
- * cds_soc_set_hw_mode() - Set HW mode command to SME
+ * cds_pdev_set_hw_mode() - Set HW mode command to SME
  * @session_id: Session ID
  * @mac0_ss: MAC0 spatial stream configuration
  * @mac0_bw: MAC0 bandwidth configuration
@@ -2526,7 +2526,7 @@ static void cds_hw_mode_transition_cb(uint32_t old_hw_mode_index,
  *
  * Return: Success if the message made it down to the next layer
  */
-QDF_STATUS cds_soc_set_hw_mode(uint32_t session_id,
+QDF_STATUS cds_pdev_set_hw_mode(uint32_t session_id,
 		enum hw_mode_ss_config mac0_ss,
 		enum hw_mode_bandwidth mac0_bw,
 		enum hw_mode_ss_config mac1_ss,
@@ -2554,14 +2554,14 @@ QDF_STATUS cds_soc_set_hw_mode(uint32_t session_id,
 	}
 
 	msg.hw_mode_index = hw_mode_index;
-	msg.set_hw_mode_cb = (void *)cds_soc_set_hw_mode_cb;
+	msg.set_hw_mode_cb = (void *)cds_pdev_set_hw_mode_cb;
 	msg.reason = reason;
 	msg.session_id = session_id;
 
 	cds_info("set hw mode to sme: hw_mode_index: %d session:%d reason:%d",
 		msg.hw_mode_index, msg.session_id, msg.reason);
 
-	status = sme_soc_set_hw_mode(hdd_ctx->hHal, msg);
+	status = sme_pdev_set_hw_mode(hdd_ctx->hHal, msg);
 	if (status != QDF_STATUS_SUCCESS) {
 		cds_err("Failed to set hw mode to SME");
 		return status;
@@ -6214,7 +6214,7 @@ QDF_STATUS cds_next_actions(uint32_t session_id,
 						session_id);
 		break;
 	case CDS_DBS:
-		status = cds_soc_set_hw_mode(session_id,
+		status = cds_pdev_set_hw_mode(session_id,
 						HW_MODE_SS_1x1,
 						HW_MODE_80_MHZ,
 						HW_MODE_SS_1x1, HW_MODE_40_MHZ,
@@ -6232,7 +6232,7 @@ QDF_STATUS cds_next_actions(uint32_t session_id,
 						session_id);
 		break;
 	case CDS_MCC:
-		status = cds_soc_set_hw_mode(session_id,
+		status = cds_pdev_set_hw_mode(session_id,
 						HW_MODE_SS_2x2,
 						HW_MODE_80_MHZ,
 						HW_MODE_SS_0x0, HW_MODE_BW_NONE,

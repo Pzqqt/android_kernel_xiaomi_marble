@@ -14918,14 +14918,14 @@ QDF_STATUS sme_pdev_set_pcl(tHalHandle hal,
 }
 
 /*
- * sme_soc_set_hw_mode() - Send WMI_SOC_SET_HW_MODE_CMDID to the WMA
+ * sme_pdev_set_hw_mode() - Send WMI_PDEV_SET_HW_MODE_CMDID to the WMA
  * @hal: Handle returned by macOpen
  * @msg: HW mode structure containing hw mode and callback details
  *
- * Sends the command to CSR to send WMI_SOC_SET_HW_MODE_CMDID to FW
+ * Sends the command to CSR to send WMI_PDEV_SET_HW_MODE_CMDID to FW
  * Return: QDF_STATUS_SUCCESS on successful posting
  */
-QDF_STATUS sme_soc_set_hw_mode(tHalHandle hal,
+QDF_STATUS sme_pdev_set_hw_mode(tHalHandle hal,
 		struct sir_hw_mode msg)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;

@@ -2290,23 +2290,24 @@ static int wma_flush_complete_evt_handler(void *handle,
 }
 
 /**
- * wma_soc_set_hw_mode_resp_evt_handler() - Set HW mode resp evt handler
+ * wma_pdev_set_hw_mode_resp_evt_handler() - Set HW mode resp evt handler
  * @handle: WMI handle
  * @event:  Event recevied from FW
  * @len:    Length of the event
  *
- * Event handler for WMI_SOC_SET_HW_MODE_RESP_EVENTID that is sent to host
- * driver in response to a WMI_SOC_SET_HW_MODE_CMDID being sent to WLAN firmware
+ * Event handler for WMI_PDEV_SET_HW_MODE_RESP_EVENTID that is sent to host
+ * driver in response to a WMI_PDEV_SET_HW_MODE_CMDID being sent to WLAN
+ * firmware
  *
  * Return: Success on receiving valid params from FW
  */
-static int wma_soc_set_hw_mode_resp_evt_handler(void *handle,
+static int wma_pdev_set_hw_mode_resp_evt_handler(void *handle,
 		uint8_t *event,
 		uint32_t len)
 {
-	WMI_SOC_SET_HW_MODE_RESP_EVENTID_param_tlvs *param_buf;
-	wmi_soc_set_hw_mode_response_event_fixed_param *wmi_event;
-	wmi_soc_set_hw_mode_response_vdev_mac_entry *vdev_mac_entry;
+	WMI_PDEV_SET_HW_MODE_RESP_EVENTID_param_tlvs *param_buf;
+	wmi_pdev_set_hw_mode_response_event_fixed_param *wmi_event;
+	wmi_pdev_set_hw_mode_response_vdev_mac_entry *vdev_mac_entry;
 	uint32_t i;
 	struct sir_set_hw_mode_resp *hw_mode_resp;
 	tp_wma_handle wma = (tp_wma_handle) handle;
@@ -2328,9 +2329,9 @@ static int wma_soc_set_hw_mode_resp_evt_handler(void *handle,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	param_buf = (WMI_SOC_SET_HW_MODE_RESP_EVENTID_param_tlvs *) event;
+	param_buf = (WMI_PDEV_SET_HW_MODE_RESP_EVENTID_param_tlvs *) event;
 	if (!param_buf) {
-		WMA_LOGE("Invalid WMI_SOC_SET_HW_MODE_RESP_EVENTID event");
+		WMA_LOGE("Invalid WMI_PDEV_SET_HW_MODE_RESP_EVENTID event");
 		/* Need to send response back to upper layer to free
 		 * active command list
 		 */
@@ -2347,13 +2348,20 @@ static int wma_soc_set_hw_mode_resp_evt_handler(void *handle,
 			wmi_event->cfgd_hw_mode_index,
 			wmi_event->num_vdev_mac_entries);
 	vdev_mac_entry =
-		param_buf->wmi_soc_set_hw_mode_response_vdev_mac_mapping;
+		param_buf->wmi_pdev_set_hw_mode_response_vdev_mac_mapping;
 
 	/* Store the vdev-mac map in WMA and prepare to send to PE  */
 	for (i = 0; i < wmi_event->num_vdev_mac_entries; i++) {
-		uint32_t vdev_id, mac_id;
+		uint32_t vdev_id, mac_id, pdev_id;
 		vdev_id = vdev_mac_entry[i].vdev_id;
-		mac_id = vdev_mac_entry[i].mac_id;
+		pdev_id = vdev_mac_entry[i].pdev_id;
+		if (pdev_id == WMI_PDEV_ID_SOC) {
+			WMA_LOGE("%s: soc level id received for mac id)",
+				__func__);
+			QDF_BUG(0);
+			goto fail;
+		}
+		mac_id = WMA_PDEV_TO_MAC_MAP(vdev_mac_entry[i].pdev_id);
 
 		WMA_LOGI("%s: vdev_id:%d mac_id:%d",
 			__func__, vdev_id, mac_id);
@@ -2376,7 +2384,7 @@ static int wma_soc_set_hw_mode_resp_evt_handler(void *handle,
 	WMA_LOGI("%s: Updated: old_hw_mode_index:%d new_hw_mode_index:%d",
 		__func__, wma->old_hw_mode_index, wma->new_hw_mode_index);
 
-	wma_send_msg(wma, SIR_HAL_SOC_SET_HW_MODE_RESP,
+	wma_send_msg(wma, SIR_HAL_PDEV_SET_HW_MODE_RESP,
 		     (void *) hw_mode_resp, 0);
 
 	return QDF_STATUS_SUCCESS;
@@ -2386,7 +2394,7 @@ fail:
 	hw_mode_resp->status = SET_HW_MODE_STATUS_ECANCELED;
 	hw_mode_resp->cfgd_hw_mode_index = 0;
 	hw_mode_resp->num_vdev_mac_entries = 0;
-	wma_send_msg(wma, SIR_HAL_SOC_SET_HW_MODE_RESP,
+	wma_send_msg(wma, SIR_HAL_PDEV_SET_HW_MODE_RESP,
 			(void *) hw_mode_resp, 0);
 
 	return QDF_STATUS_E_FAILURE;
@@ -2782,10 +2790,10 @@ QDF_STATUS wma_start(void *cds_ctx)
 		goto end;
 	}
 
-	/* Initialize the WMI_SOC_SET_HW_MODE_RESP_EVENTID event handler */
+	/* Initialize the wma_pdev_set_hw_mode_resp_evt_handler event handler */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-			WMI_SOC_SET_HW_MODE_RESP_EVENTID,
-			wma_soc_set_hw_mode_resp_evt_handler,
+			WMI_PDEV_SET_HW_MODE_RESP_EVENTID,
+			wma_pdev_set_hw_mode_resp_evt_handler,
 			WMA_RX_SERIALIZER_CTX);
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to register set hw mode resp event cb");
@@ -5205,8 +5213,8 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 				(struct wmi_pcl_chan_weights *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
-	case SIR_HAL_SOC_SET_HW_MODE:
-		wma_send_soc_set_hw_mode_cmd(wma_handle,
+	case SIR_HAL_PDEV_SET_HW_MODE:
+		wma_send_pdev_set_hw_mode_cmd(wma_handle,
 				(struct sir_hw_mode *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
@@ -5381,7 +5389,7 @@ QDF_STATUS wma_send_pdev_set_pcl_cmd(tp_wma_handle wma_handle,
 }
 
 /**
- * wma_send_soc_set_hw_mode_cmd() - Send WMI_SOC_SET_HW_MODE_CMDID to FW
+ * wma_send_pdev_set_hw_mode_cmd() - Send WMI_PDEV_SET_HW_MODE_CMDID to FW
  * @wma_handle: WMA handle
  * @msg: Structure containing the following parameters
  *
@@ -5394,7 +5402,7 @@ QDF_STATUS wma_send_pdev_set_pcl_cmd(tp_wma_handle wma_handle,
  *
  * Return: Success if the cmd is sent successfully to the firmware
  */
-QDF_STATUS wma_send_soc_set_hw_mode_cmd(tp_wma_handle wma_handle,
+QDF_STATUS wma_send_pdev_set_hw_mode_cmd(tp_wma_handle wma_handle,
 				struct sir_hw_mode *msg)
 {
 	struct sir_set_hw_mode_resp *param;
@@ -5429,7 +5437,7 @@ fail:
 	param->cfgd_hw_mode_index = 0;
 	param->num_vdev_mac_entries = 0;
 	WMA_LOGE("%s: Sending HW mode fail response to LIM", __func__);
-	wma_send_msg(wma_handle, SIR_HAL_SOC_SET_HW_MODE_RESP,
+	wma_send_msg(wma_handle, SIR_HAL_PDEV_SET_HW_MODE_RESP,
 			(void *) param, 0);
 	return QDF_STATUS_SUCCESS;
 }

@@ -165,7 +165,7 @@ static QDF_STATUS lim_process_set_hw_mode(tpAniSirGlobal mac, uint32_t *msg)
 	/* Other parameters are not needed for WMA */
 
 	cds_message.bodyptr = req_msg;
-	cds_message.type    = SIR_HAL_SOC_SET_HW_MODE;
+	cds_message.type    = SIR_HAL_PDEV_SET_HW_MODE;
 
 	lim_log(mac, LOG1, FL("Posting SIR_HAL_SOC_SET_HW_MOD to WMA"));
 	status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);

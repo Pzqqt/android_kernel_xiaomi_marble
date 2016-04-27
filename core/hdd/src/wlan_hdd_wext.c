@@ -8041,7 +8041,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		if (apps_args[0] == 0) {
 			hddLog(LOGE,
 				FL("set hw mode for single mac\n"));
-			cds_soc_set_hw_mode(
+			cds_pdev_set_hw_mode(
 					pAdapter->sessionId,
 					HW_MODE_SS_2x2,
 					HW_MODE_80_MHZ,
@@ -8052,7 +8052,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		} else if (apps_args[0] == 1) {
 			hddLog(LOGE,
 				FL("set hw mode for dual mac\n"));
-			cds_soc_set_hw_mode(
+			cds_pdev_set_hw_mode(
 					pAdapter->sessionId,
 					HW_MODE_SS_1x1,
 					HW_MODE_80_MHZ,

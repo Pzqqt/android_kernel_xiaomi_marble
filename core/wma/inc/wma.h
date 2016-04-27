@@ -1981,7 +1981,7 @@ QDF_STATUS wma_set_rssi_monitoring(tp_wma_handle wma,
 QDF_STATUS wma_send_pdev_set_pcl_cmd(tp_wma_handle wma_handle,
 		struct wmi_pcl_chan_weights *msg);
 
-QDF_STATUS wma_send_soc_set_hw_mode_cmd(tp_wma_handle wma_handle,
+QDF_STATUS wma_send_pdev_set_hw_mode_cmd(tp_wma_handle wma_handle,
 		struct sir_hw_mode *msg);
 QDF_STATUS wma_get_scan_id(uint32_t *scan_id);
 

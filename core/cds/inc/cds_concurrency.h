@@ -698,7 +698,7 @@ static inline struct cds_conc_connection_info *cds_get_conn_info(uint32_t *len)
 
 enum cds_con_mode cds_convert_device_mode_to_qdf_type(
 				enum tQDF_ADAPTER_MODE device_mode);
-QDF_STATUS cds_soc_set_hw_mode(uint32_t session_id,
+QDF_STATUS cds_pdev_set_hw_mode(uint32_t session_id,
 		enum hw_mode_ss_config mac0_ss,
 		enum hw_mode_bandwidth mac0_bw,
 		enum hw_mode_ss_config mac1_ss,
