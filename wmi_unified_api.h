@@ -769,7 +769,7 @@ QDF_STATUS wmi_unified_pdev_set_pcl_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_soc_set_hw_mode_cmd(void *wmi_hdl,
 				uint32_t hw_mode_index);
 
-QDF_STATUS wmi_unified_soc_set_dual_mac_config_cmd(void *wmi_hdl,
+QDF_STATUS wmi_unified_pdev_set_dual_mac_config_cmd(void *wmi_hdl,
 		struct wmi_dual_mac_config *msg);
 
 QDF_STATUS wmi_unified_enable_arp_ns_offload_cmd(void *wmi_hdl,
