@@ -295,20 +295,6 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 					WMA_3PORT_CONC_SCAN_MAX_BURST_DURATION;
 				break;
 			}
-			if (wma_is_sap_active(wma_handle)) {
-				/* Background scan while SoftAP is sending beacons.
-				 * Max duration of CTS2self is 32 ms, which limits
-				 * the dwell time.
-				 */
-				cmd->dwell_time_active =
-				   QDF_MIN(scan_req->maxChannelTime,
-					   (WMA_CTS_DURATION_MS_MAX -
-					    WMA_ROAM_SCAN_CHANNEL_SWITCH_TIME));
-				cmd->dwell_time_passive =
-					cmd->dwell_time_active;
-				cmd->burst_duration = 0;
-				break;
-			}
 			if (wma_handle->miracast_value &&
 					wma_is_mcc_24G(wma_handle)) {
 				cmd->max_rest_time =
@@ -412,6 +398,20 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 			WMA_LOGE("Invalid scan type");
 			goto error;
 		}
+	}
+
+	if (wma_is_sap_active(wma_handle)) {
+		/* P2P/STA scan while SoftAP is sending beacons.
+		 * Max duration of CTS2self is 32 ms, which limits the
+		 * dwell time.
+		 */
+		cmd->dwell_time_active =
+			QDF_MIN(scan_req->maxChannelTime,
+					(WMA_CTS_DURATION_MS_MAX -
+					 WMA_ROAM_SCAN_CHANNEL_SWITCH_TIME));
+		cmd->dwell_time_passive =
+			cmd->dwell_time_active;
+		cmd->burst_duration = 0;
 	}
 
 	cmd->n_probes = (cmd->repeat_probe_time > 0) ?
