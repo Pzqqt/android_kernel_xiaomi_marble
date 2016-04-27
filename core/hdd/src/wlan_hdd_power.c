@@ -87,6 +87,25 @@ enum hdd_power_mode {
 	DRIVER_POWER_MODE_ACTIVE = 1,
 };
 
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+/**
+ * hdd_wlan_suspend_resume_event()- send suspend/resume state
+ * @state: suspend/resume state
+ *
+ * This Function send send suspend resume state diag event
+ *
+ * Return: void.
+ */
+void hdd_wlan_suspend_resume_event(uint8_t state)
+{
+	WLAN_HOST_DIAG_EVENT_DEF(suspend_state, struct host_event_suspend);
+	qdf_mem_zero(&suspend_state, sizeof(suspend_state));
+
+	suspend_state.state = state;
+	WLAN_HOST_DIAG_EVENT_REPORT(&suspend_state, EVENT_WLAN_SUSPEND_RESUME);
+}
+#endif
+
 /* Function and variables declarations */
 
 extern struct notifier_block hdd_netdev_notifier;
@@ -1137,6 +1156,7 @@ hdd_suspend_wlan(void (*callback)(void *callbackContext, bool suspended),
 			callbackContext);
 
 	pHddCtx->hdd_wlan_suspended = true;
+	hdd_wlan_suspend_resume_event(HDD_WLAN_EARLY_SUSPEND);
 
 	return;
 }
@@ -1170,6 +1190,7 @@ static void hdd_resume_wlan(void)
 	}
 
 	pHddCtx->hdd_wlan_suspended = false;
+	hdd_wlan_suspend_resume_event(HDD_WLAN_EARLY_RESUME);
 
 	/*loop through all adapters. Concurrency */
 	status = hdd_get_front_adapter(pHddCtx, &pAdapterNode);

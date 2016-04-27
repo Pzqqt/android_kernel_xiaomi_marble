@@ -56,6 +56,7 @@ typedef enum {
 	EVENT_WLAN_LOG_COMPLETE = 0xAA7, /* 16 bytes payload */
 	EVENT_WLAN_TDLS_TEARDOWN = 0xAB5,
 	EVENT_WLAN_TDLS_ENABLE_LINK = 0XAB6,
+	EVENT_WLAN_SUSPEND_RESUME = 0xAB7,
 
 	EVENT_MAX_ID = 0x0FFF
 } event_id_enum_type;

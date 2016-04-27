@@ -126,6 +126,22 @@ struct pkt_filter_cfg {
 
 #endif
 
+/**
+ * enum suspend_resume_state - Suspend resume state
+ * @HDD_WLAN_EARLY_SUSPEND: Early suspend state.
+ * @HDD_WLAN_SUSPEND: Suspend state.
+ * @HDD_WLAN_EARLY_RESUME: Early resume state.
+ * @HDD_WLAN_RESUME: Resume state.
+ *
+ * Suspend state to indicate in diag event of suspend resume.
+ */
+enum suspend_resume_state {
+	 HDD_WLAN_EARLY_SUSPEND,
+	 HDD_WLAN_SUSPEND,
+	 HDD_WLAN_EARLY_RESUME,
+	 HDD_WLAN_RESUME
+};
+
 
 /* SSR shutdown & re-init functions */
 QDF_STATUS hdd_wlan_shutdown(void);
@@ -170,5 +186,13 @@ int wlan_hdd_ipv4_changed(struct notifier_block *nb,
 
 int wlan_hdd_ipv6_changed(struct notifier_block *nb,
 				unsigned long data, void *arg);
+
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+void hdd_wlan_suspend_resume_event(uint8_t state);
+#else
+static inline
+void hdd_wlan_suspend_resume_event(uint8_t state) {}
+#endif /* FEATURE_WLAN_DIAG_SUPPORT */
+
 
 #endif /* __WLAN_HDD_POWER_H */
