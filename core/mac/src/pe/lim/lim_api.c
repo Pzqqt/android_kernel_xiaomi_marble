@@ -1289,9 +1289,10 @@ lim_enc_type_matched(tpAniSirGlobal mac_ctx,
 		FL("Beacon/Probe:: Privacy :%d WPA Present:%d RSN Present: %d"),
 		bcn->capabilityInfo.privacy, bcn->wpaPresent, bcn->rsnPresent);
 	lim_log(mac_ctx, LOG1,
-		FL("session:: Privacy :%d EncyptionType: %d OSEN %d"),
+		FL("session:: Privacy :%d EncyptionType: %d OSEN %d WPS %d"),
 		SIR_MAC_GET_PRIVACY(session->limCurrentBssCaps),
-		session->encryptType, session->isOSENConnection);
+		session->encryptType, session->isOSENConnection,
+		session->wps_registration);
 
 	/*
 	 * This is handled by sending probe req due to IOT issues so
@@ -1327,12 +1328,18 @@ lim_enc_type_matched(tpAniSirGlobal mac_ctx,
 		(session->encryptType == eSIR_ED_AES_128_CMAC)))
 		return true;
 
-	/* For HS2.0, RSN ie is not present
+	/*
+	 * For HS2.0, RSN ie is not present
 	 * in beacon. Therefore no need to
 	 * check for security type in case
 	 * OSEN session.
+	 * For WPS registration session no need to detect
+	 * detect security mismatch as it wont match and
+	 * driver may end up sending probe request without
+	 * WPS IE during WPS registration process.
 	 */
-	if (session->isOSENConnection)
+	if (session->isOSENConnection ||
+	   session->wps_registration)
 		return true;
 
 	return false;

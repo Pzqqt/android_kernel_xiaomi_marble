@@ -1089,6 +1089,7 @@ typedef struct sSirSmeJoinReq {
 	uint8_t cc_switch_mode;
 #endif
 	enum tQDF_ADAPTER_MODE staPersona;       /* Persona */
+	bool wps_registration;
 	ePhyChanBondState cbMode;       /* Pass CB mode value in Join. */
 
 	/*This contains the UAPSD Flag for all 4 AC

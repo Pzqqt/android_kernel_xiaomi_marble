@@ -13769,6 +13769,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			pMac->roam.configParam.cc_switch_mode;
 #endif
 		csr_join_req->staPersona = (uint8_t) pProfile->csrPersona;
+		csr_join_req->wps_registration = pProfile->bWPSAssociation;
 		csr_join_req->cbMode = (uint8_t) pSession->bssParams.cbMode;
 		sms_log(pMac, LOG2,
 			  FL("CSR PERSONA=%d CSR CbMode %d"),

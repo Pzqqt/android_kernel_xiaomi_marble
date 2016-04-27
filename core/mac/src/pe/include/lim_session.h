@@ -261,6 +261,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	uint8_t ssidHidden;
 	bool fwdWPSPBCProbeReq;
 	uint8_t wps_state;
+	bool wps_registration;
 
 	uint8_t limQosEnabled:1;        /* 11E */
 	uint8_t limWmeEnabled:1;        /* WME */
