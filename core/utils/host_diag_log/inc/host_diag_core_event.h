@@ -299,6 +299,18 @@ struct host_event_wlan_log_complete {
 	uint32_t reserved;
 };
 
+/**
+ * struct host_event_tdls_teardown - tdls teardown diag event
+ * @reason: reason for tear down
+ * @peer_mac: peer mac
+ *
+ * This structure contains tdls teardown diag event info
+ */
+struct host_event_tdls_teardown {
+	uint32_t reason;
+	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
+};
+
 /*-------------------------------------------------------------------------
    Function declarations and documenation
    ------------------------------------------------------------------------*/

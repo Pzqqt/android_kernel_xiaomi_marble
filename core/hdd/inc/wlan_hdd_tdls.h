@@ -161,6 +161,30 @@ typedef enum eTDLSLinkStatus {
 } tTDLSLinkStatus;
 
 /**
+ * enum tdls_teardown_reason - Reason for TDLS teardown
+ * @eTDLS_TEARDOWN_EXT_CTRL: Reason ext ctrl.
+ * @eTDLS_TEARDOWN_CONCURRENCY: Reason concurrency.
+ * @eTDLS_TEARDOWN_RSSI_THRESHOLD: Reason rssi threshold.
+ * @eTDLS_TEARDOWN_TXRX_THRESHOLD: Reason txrx threshold.
+ * @eTDLS_TEARDOWN_BTCOEX: Reason BTCOEX.
+ * @eTDLS_TEARDOWN_SCAN: Reason scan.
+ * @eTDLS_TEARDOWN_BSS_DISCONNECT: Reason bss disconnected.
+ * @eTDLS_TEARDOWN_ANTENNA_SWITCH: Disconnected due to antenna switch
+ *
+ * Reason to indicate in diag event of tdls teardown.
+ */
+enum tdls_teardown_reason {
+	eTDLS_TEARDOWN_EXT_CTRL,
+	eTDLS_TEARDOWN_CONCURRENCY,
+	eTDLS_TEARDOWN_RSSI_THRESHOLD,
+	eTDLS_TEARDOWN_TXRX_THRESHOLD,
+	eTDLS_TEARDOWN_BTCOEX,
+	eTDLS_TEARDOWN_SCAN,
+	eTDLS_TEARDOWN_BSS_DISCONNECT,
+	eTDLS_TEARDOWN_ANTENNA_SWITCH,
+};
+
+/**
  * enum tTDLSLinkReason - tdls link reason
  *
  * @eTDLS_LINK_SUCCESS: Success
@@ -624,5 +648,14 @@ static inline void wlan_hdd_tdls_exit(hdd_adapter_t *adapter)
 
 static inline void hdd_tdls_pre_init(hdd_context_t *hdd_ctx) { }
 #endif /* End of FEATURE_WLAN_TDLS */
+
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+void hdd_send_wlan_tdls_teardown_event(uint32_t reason,
+					uint8_t *peer_mac);
+#else
+static inline
+void hdd_send_wlan_tdls_teardown_event(uint32_t reason,
+					uint8_t *peer_mac) {}
+#endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
 #endif /* __HDD_TDLS_H */

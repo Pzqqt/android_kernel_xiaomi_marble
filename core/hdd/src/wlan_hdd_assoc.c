@@ -3209,6 +3209,8 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 						pRoamInfo->peerMac.bytes, true);
 		wlan_hdd_tdls_indicate_teardown(pAdapter, curr_peer,
 						pRoamInfo->reasonCode);
+		hdd_send_wlan_tdls_teardown_event(eTDLS_TEARDOWN_BSS_DISCONNECT,
+						curr_peer->peerMac);
 		status = QDF_STATUS_SUCCESS;
 		break;
 	}
@@ -3388,6 +3390,9 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 				wlan_hdd_tdls_indicate_teardown
 					(pHddTdlsCtx->pAdapter, curr_peer,
 					reason);
+				hdd_send_wlan_tdls_teardown_event(
+					eTDLS_TEARDOWN_BSS_DISCONNECT,
+					curr_peer->peerMac);
 			} else {
 				hddLog(LOGE,
 					  FL
@@ -3436,6 +3441,9 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 				wlan_hdd_tdls_indicate_teardown
 					(pHddTdlsCtx->pAdapter, curr_peer,
 					reason);
+				hdd_send_wlan_tdls_teardown_event(
+					eTDLS_TEARDOWN_BSS_DISCONNECT,
+					curr_peer->peerMac);
 			} else {
 				hddLog(LOGE,
 					  FL

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -54,6 +54,7 @@ typedef enum {
 	EVENT_WLAN_WAKE_LOCK = 0xAA2, /* 96 bytes payload */
 	EVENT_WLAN_BEACON_RECEIVED = 0xAA6, /* FW event: 2726 */
 	EVENT_WLAN_LOG_COMPLETE = 0xAA7, /* 16 bytes payload */
+	EVENT_WLAN_TDLS_TEARDOWN = 0xAB5,
 
 	EVENT_MAX_ID = 0x0FFF
 } event_id_enum_type;

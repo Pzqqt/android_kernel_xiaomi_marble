@@ -85,6 +85,31 @@ static void wlan_hdd_tdls_determine_channel_opclass(hdd_context_t *hddctx,
 	}
 }
 
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+/**
+ * hdd_send_wlan_tdls_teardown_event()- send TDLS teardown event
+ * @reason: reason for tear down.
+ * @peer_mac: peer mac
+ *
+ * This Function sends TDLS teardown diag event
+ *
+ * Return: void.
+ */
+void hdd_send_wlan_tdls_teardown_event(uint32_t reason,
+					uint8_t *peer_mac)
+{
+	WLAN_HOST_DIAG_EVENT_DEF(tdls_tear_down,
+		struct host_event_tdls_teardown);
+	qdf_mem_zero(&tdls_tear_down,
+			sizeof(tdls_tear_down));
+
+	tdls_tear_down.reason = reason;
+	qdf_mem_copy(tdls_tear_down.peer_mac, peer_mac, MAC_ADDR_LEN);
+	WLAN_HOST_DIAG_EVENT_REPORT(&tdls_tear_down,
+		EVENT_WLAN_TDLS_TEARDOWN);
+}
+#endif
+
 /**
  * wlan_hdd_tdls_hash_key() - calculate tdls hash key given mac address
  * @mac: mac address
@@ -168,6 +193,8 @@ void wlan_hdd_tdls_disable_offchan_and_teardown_links(hdd_context_t *hddctx)
 					curr_peer->pHddTdlsCtx->pAdapter,
 					curr_peer,
 					eSIR_MAC_TDLS_TEARDOWN_UNSPEC_REASON);
+		hdd_send_wlan_tdls_teardown_event(eTDLS_TEARDOWN_CONCURRENCY,
+			curr_peer->peerMac);
 	}
 }
 
@@ -2764,6 +2791,9 @@ int wlan_hdd_tdls_scan_callback(hdd_adapter_t *pAdapter, struct wiphy *wiphy,
 						(connectedPeerList[i]->pHddTdlsCtx->
 						pAdapter, connectedPeerList[i],
 						eSIR_MAC_TDLS_TEARDOWN_UNSPEC_REASON);
+					hdd_send_wlan_tdls_teardown_event(
+						eTDLS_TEARDOWN_SCAN,
+						connectedPeerList[i]->peerMac);
 				}
 			}
 			/* schedule scan */
@@ -4117,6 +4147,9 @@ int wlan_hdd_tdls_extctrl_deconfig_peer(hdd_adapter_t *pAdapter,
 	} else {
 		wlan_hdd_tdls_indicate_teardown(pAdapter, pTdlsPeer,
 						eSIR_MAC_TDLS_TEARDOWN_UNSPEC_REASON);
+		hdd_send_wlan_tdls_teardown_event(
+			eTDLS_TEARDOWN_EXT_CTRL,
+			pTdlsPeer->peerMac);
 	}
 	if (0 != wlan_hdd_tdls_set_force_peer(pAdapter, peer, false)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
