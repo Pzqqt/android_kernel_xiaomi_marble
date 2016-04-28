@@ -1208,6 +1208,26 @@ QDF_STATUS wmi_unified_lro_config_cmd(void *wmi_hdl,
 
 #ifndef WMI_NON_TLV_SUPPORT
 /**
+ * wmi_unified_peer_rate_report_cmd() - process the peer rate report command
+ * @wmi_hdl: Pointer to wmi handle
+ * @rate_report_params: Pointer to peer rate report parameters
+ *
+ *
+ * Return: QDF_STATUS_SUCCESS for success otherwise failure
+ */
+QDF_STATUS wmi_unified_peer_rate_report_cmd(void *wmi_hdl,
+		struct wmi_peer_rate_report_params *rate_report_params)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_peer_rate_report_cmd)
+		return wmi_handle->ops->send_peer_rate_report_cmd(wmi_handle,
+					rate_report_params);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  * wmi_unified_bcn_buf_ll_cmd() - prepare and send beacon buffer to fw for LL
  * @wmi_hdl: wmi handle
  * @param: bcn ll cmd parameter

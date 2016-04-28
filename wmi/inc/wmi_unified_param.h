@@ -197,6 +197,7 @@
 #define WMI_HOST_TPC_TX_NUM_CHAIN	4
 #define WMI_HOST_RXG_CAL_CHAN_MAX	4
 #define WMI_HOST_MAX_NUM_CHAINS	4
+#define WMI_MAX_NUM_OF_RATE_THRESH   4
 
 #include "qdf_atomic.h"
 
@@ -1337,6 +1338,67 @@ struct ocb_config_param {
 	void *dcc_ndl_chan_list;
 	uint32_t dcc_ndl_active_state_list_len;
 	void *dcc_ndl_active_state_list;
+};
+
+enum wmi_peer_rate_report_cond_phy_type {
+	WMI_PEER_RATE_REPORT_COND_11B = 0,
+	WMI_PEER_RATE_REPORT_COND_11A_G,
+	WMI_PEER_RATE_REPORT_COND_11N,
+	WMI_PEER_RATE_REPORT_COND_11AC,
+	WMI_PEER_RATE_REPORT_COND_MAX_NUM
+};
+
+/**
+ * struct report_rate_delta - peer specific parameters
+ * @percent: percentage
+ * @delta_min: rate min delta
+ */
+struct report_rate_delta {
+	A_UINT32 percent; /* in unit of 12.5% */
+	A_UINT32 delta_min;  /* in unit of Mbps */
+};
+
+/**
+ * struct report_rate_per_phy - per phy report parameters
+ * @cond_flags: condition flag val
+ * @delta: rate delta
+ * @report_rate_threshold: rate threshold
+ */
+struct report_rate_per_phy {
+	/*
+	 * PEER_RATE_REPORT_COND_FLAG_DELTA,
+	 * PEER_RATE_REPORT_COND_FLAG_THRESHOLD
+	 * Any of these two conditions or both of
+	 * them can be set.
+	 */
+	A_UINT32 cond_flags;
+	struct report_rate_delta delta;
+	/*
+	 * In unit of Mbps. There are at most 4 thresholds
+	 * If the threshold count is less than 4, set zero to
+	 * the one following the last threshold
+	 */
+	A_UINT32 report_rate_threshold[WMI_MAX_NUM_OF_RATE_THRESH];
+};
+
+/**
+ * struct peer_rate_report_params - peer rate report parameters
+ * @rate_report_enable: enable rate report param
+ * @backoff_time: backoff time
+ * @timer_period: timer
+ * @report_per_phy: report per phy type
+ */
+struct wmi_peer_rate_report_params {
+	A_UINT32 rate_report_enable;
+	A_UINT32 backoff_time;            /* in unit of msecond */
+	A_UINT32 timer_period;            /* in unit of msecond */
+	/*
+	 *In the following field, the array index means the phy type,
+	 * please see enum wmi_peer_rate_report_cond_phy_type for detail
+	 */
+	struct report_rate_per_phy report_per_phy[
+				WMI_PEER_RATE_REPORT_COND_MAX_NUM];
+
 };
 
 /**
