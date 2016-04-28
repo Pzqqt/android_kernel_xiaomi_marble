@@ -3588,8 +3588,10 @@ QDF_STATUS hdd_abort_mac_scan_all_adapters(hdd_context_t *hdd_ctx)
 
 #ifdef WLAN_NS_OFFLOAD
 /**
- * hdd_wlan_unregister_ip6_notifier() - unregister IP6 change notifier
+ * hdd_wlan_unregister_ip6_notifier() - unregister IPv6 change notifier
  * @hdd_ctx: Pointer to hdd context
+ *
+ * Unregister for IPv6 address change notifications.
  *
  * Return: None
  */
@@ -3601,42 +3603,52 @@ static void hdd_wlan_unregister_ip6_notifier(hdd_context_t *hdd_ctx)
 }
 
 /**
- * hdd_wlan_register_ip6_notifier() - register IP6 change notifier
+ * hdd_wlan_register_ip6_notifier() - register IPv6 change notifier
  * @hdd_ctx: Pointer to hdd context
  *
- * Return: None
+ * Register for IPv6 address change notifications.
+ *
+ * Return: 0 on success and errno on failure.
  */
-static void hdd_wlan_register_ip6_notifier(hdd_context_t *hdd_ctx)
+static int hdd_wlan_register_ip6_notifier(hdd_context_t *hdd_ctx)
 {
 	int ret;
 
 	hdd_ctx->ipv6_notifier.notifier_call = wlan_hdd_ipv6_changed;
 	ret = register_inet6addr_notifier(&hdd_ctx->ipv6_notifier);
-	if (ret)
-		hddLog(LOGE, FL("Failed to register IPv6 notifier"));
-	else
-		hdd_info("Registered IPv6 notifier");
+	if (ret) {
+		hdd_err("Failed to register IPv6 notifier: %d", ret);
+		goto out;
+	}
 
-	return;
+	hdd_info("Registered IPv6 notifier");
+out:
+	return ret;
 }
 #else
 /**
- * hdd_wlan_unregister_ip6_notifier() - unregister IP6 change notifier
+ * hdd_wlan_unregister_ip6_notifier() - unregister IPv6 change notifier
  * @hdd_ctx: Pointer to hdd context
+ *
+ * Unregister for IPv6 address change notifications.
  *
  * Return: None
  */
 static void hdd_wlan_unregister_ip6_notifier(hdd_context_t *hdd_ctx)
 {
 }
+
 /**
- * hdd_wlan_register_ip6_notifier() - register IP6 change notifier
+ * hdd_wlan_register_ip6_notifier() - register IPv6 change notifier
  * @hdd_ctx: Pointer to hdd context
+ *
+ * Register for IPv6 address change notifications.
  *
  * Return: None
  */
-static void hdd_wlan_register_ip6_notifier(hdd_context_t *hdd_ctx)
+static int hdd_wlan_register_ip6_notifier(hdd_context_t *hdd_ctx)
 {
+	return 0;
 }
 #endif
 
@@ -3771,6 +3783,63 @@ static inline int hdd_logging_sock_deactivate_svc(hdd_context_t *hdd_ctx)
 #endif
 
 /**
+ * hdd_register_notifiers - Register netdev notifiers.
+ * @hdd_ctx: HDD context
+ *
+ * Register netdev notifiers like IPv4 and IPv6.
+ *
+ * Return: 0 on success and errno on failure
+ */
+static int hdd_register_notifiers(hdd_context_t *hdd_ctx)
+{
+	int ret;
+
+	ret = register_netdevice_notifier(&hdd_netdev_notifier);
+	if (ret) {
+		hdd_err("register_netdevice_notifier failed: %d", ret);
+		goto out;
+	}
+
+	ret = hdd_wlan_register_ip6_notifier(hdd_ctx);
+	if (ret)
+		goto unregister_notifier;
+
+	hdd_ctx->ipv4_notifier.notifier_call = wlan_hdd_ipv4_changed;
+	ret = register_inetaddr_notifier(&hdd_ctx->ipv4_notifier);
+	if (ret) {
+		hdd_err("Failed to register IPv4 notifier: %d", ret);
+		goto unregister_ip6_notifier;
+	}
+
+	return 0;
+
+unregister_ip6_notifier:
+	hdd_wlan_unregister_ip6_notifier(hdd_ctx);
+unregister_notifier:
+	unregister_netdevice_notifier(&hdd_netdev_notifier);
+out:
+	return ret;
+
+}
+
+/**
+ * hdd_unregister_notifiers - Unregister netdev notifiers.
+ * @hdd_ctx: HDD context
+ *
+ * Unregister netdev notifiers like IPv4 and IPv6.
+ *
+ * Return: None.
+ */
+static void hdd_unregister_notifiers(hdd_context_t *hdd_ctx)
+{
+	hdd_wlan_unregister_ip6_notifier(hdd_ctx);
+
+	unregister_inetaddr_notifier(&hdd_ctx->ipv4_notifier);
+
+	unregister_netdevice_notifier(&hdd_netdev_notifier);
+}
+
+/**
  * hdd_exit_netlink_services - Exit netlink services
  * @hdd_ctx: HDD context
  *
@@ -3881,11 +3950,6 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 
 	ENTER();
 
-	hddLog(LOGE, FL("Unregister IPv6 notifier"));
-	hdd_wlan_unregister_ip6_notifier(hdd_ctx);
-	hddLog(LOGE, FL("Unregister IPv4 notifier"));
-	unregister_inetaddr_notifier(&hdd_ctx->ipv4_notifier);
-
 	hdd_unregister_wext_all_adapters(hdd_ctx);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
@@ -3894,6 +3958,8 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 		hdd_alert("FTM driver unloaded");
 		goto free_hdd_ctx;
 	}
+
+	hdd_unregister_notifiers(hdd_ctx);
 
 	/*
 	 * Cancel any outstanding scan requests.  We are about to close all
@@ -5908,12 +5974,6 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	hdd_release_rtnl_lock();
 	rtnl_held = false;
 
-	ret = register_netdevice_notifier(&hdd_netdev_notifier);
-	if (ret < 0) {
-		hdd_err("register_netdevice_notifier failed: %d", ret);
-		goto err_exit_nl_srv;
-	}
-
 #ifdef WLAN_FEATURE_HOLD_RX_WAKELOCK
 	/* Initialize the wake lcok */
 	qdf_wake_lock_create(&hdd_ctx->rx_wake_lock, "qcom_rx_wakelock");
@@ -5985,8 +6045,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 	status = hdd_register_for_sap_restart_with_channel_switch();
 	if (!QDF_IS_STATUS_SUCCESS(status))
-		/* Error already logged */
-		goto err_unreg_netdev_notifier;
+		goto err_exit_nl_srv;
 
 	sme_set_rssi_threshold_breached_cb(hdd_ctx->hHal,
 				hdd_rssi_threshold_breached);
@@ -6009,39 +6068,23 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	INIT_DELAYED_WORK(&hdd_ctx->roc_req_work, wlan_hdd_roc_request_dequeue);
 #endif
 
-	/*
-	 * Register IPv6 notifier to notify if any change in IP
-	 * So that we can reconfigure the offload parameters
-	*/
-	hdd_wlan_register_ip6_notifier(hdd_ctx);
-
-	/*
-	 * Register IPv4 notifier to notify if any change in IP
-	 * So that we can reconfigure the offload parameters
-	 */
-	hdd_ctx->ipv4_notifier.notifier_call = wlan_hdd_ipv4_changed;
-	ret = register_inetaddr_notifier(&hdd_ctx->ipv4_notifier);
-	if (ret)
-		hddLog(LOGE, FL("Failed to register IPv4 notifier"));
-	else
-		hdd_info("Registered IPv4 notifier");
-
 	wlan_hdd_dcc_register_for_dcc_stats_event(hdd_ctx);
 
 	if (hdd_ctx->config->dual_mac_feature_disable) {
 		status = wlan_hdd_disable_all_dual_mac_features(hdd_ctx);
 		if (status != QDF_STATUS_SUCCESS) {
 			hdd_err("Failed to disable dual mac features");
-			goto err_unreg_netdev_notifier;
+			goto err_exit_nl_srv;
 		}
 	}
+
+	ret = hdd_register_notifiers(hdd_ctx);
+	if (ret)
+		goto err_exit_nl_srv;
 
 	memdump_init();
 
 	goto success;
-
-err_unreg_netdev_notifier:
-	unregister_netdevice_notifier(&hdd_netdev_notifier);
 
 err_exit_nl_srv:
 	hdd_exit_netlink_services(hdd_ctx);
