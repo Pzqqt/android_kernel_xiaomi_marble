@@ -50,6 +50,9 @@ int iw_get_scan(struct net_device *dev, struct iw_request_info *info,
 int iw_set_scan(struct net_device *dev, struct iw_request_info *info,
 		union iwreq_data *wrqu, char *extra);
 
+int hdd_scan_context_init(hdd_context_t *hdd_ctx);
+void hdd_scan_context_destroy(hdd_context_t *hdd_ctx);
+
 int wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			   struct cfg80211_scan_request *request);
 

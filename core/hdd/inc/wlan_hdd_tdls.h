@@ -631,7 +631,8 @@ int hdd_set_tdls_offchannel(hdd_context_t *hdd_ctx, int offchannel);
 int hdd_set_tdls_secoffchanneloffset(hdd_context_t *hdd_ctx, int offchanoffset);
 int hdd_set_tdls_offchannelmode(hdd_adapter_t *adapter, int offchanmode);
 int hdd_set_tdls_scan_type(hdd_context_t *hdd_ctx, int val);
-void hdd_tdls_pre_init(hdd_context_t *hdd_ctx);
+void hdd_tdls_context_init(hdd_context_t *hdd_ctx);
+void hdd_tdls_context_destroy(hdd_context_t *hdd_ctx);
 
 #else
 static inline void hdd_tdls_notify_mode_change(hdd_adapter_t *adapter,
@@ -646,7 +647,8 @@ static inline void wlan_hdd_tdls_exit(hdd_adapter_t *adapter)
 {
 }
 
-static inline void hdd_tdls_pre_init(hdd_context_t *hdd_ctx) { }
+static inline void hdd_tdls_context_init(hdd_context_t *hdd_ctx) { }
+static inline void hdd_tdls_context_destroy(hdd_context_t *hdd_ctx) { }
 #endif /* End of FEATURE_WLAN_TDLS */
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT

@@ -102,16 +102,24 @@
 /* Function definitions */
 
 /**
- * hdd_hostapd_channel_wakelock_init() - init the channel wakelock
- * @pHddCtx: pointer to hdd context
+ * hdd_sap_context_init() - Initialize SAP context.
+ * @hdd_ctx:	HDD context.
  *
- * Return: None
+ * Initialize SAP context.
+ *
+ * Return: 0 on success.
  */
-void hdd_hostapd_channel_wakelock_init(hdd_context_t *pHddCtx)
+int hdd_sap_context_init(hdd_context_t *hdd_ctx)
 {
-	/* Initialize the wakelock */
-	qdf_wake_lock_create(&pHddCtx->sap_dfs_wakelock, "sap_dfs_wakelock");
-	atomic_set(&pHddCtx->sap_dfs_ref_cnt, 0);
+	qdf_wake_lock_create(&hdd_ctx->sap_dfs_wakelock, "sap_dfs_wakelock");
+	atomic_set(&hdd_ctx->sap_dfs_ref_cnt, 0);
+
+	mutex_init(&hdd_ctx->sap_lock);
+	qdf_wake_lock_create(&hdd_ctx->sap_wake_lock, "qcom_sap_wakelock");
+
+	mutex_init(&hdd_ctx->dfs_lock);
+
+	return 0;
 }
 
 /**
@@ -187,25 +195,31 @@ void hdd_hostapd_channel_prevent_suspend(hdd_adapter_t *pAdapter,
 }
 
 /**
- * hdd_hostapd_channel_wakelock_deinit() - destroy the channel wakelock
+ * hdd_sap_context_destroy() - Destroy SAP context
  *
- * @pHddCtx: pointer to hdd context
+ * @hdd_ctx:	HDD context.
+ *
+ * Destroy SAP context.
  *
  * Return: None
  */
-void hdd_hostapd_channel_wakelock_deinit(hdd_context_t *pHddCtx)
+void hdd_sap_context_destroy(hdd_context_t *hdd_ctx)
 {
-	if (atomic_read(&pHddCtx->sap_dfs_ref_cnt)) {
-		/* Release wakelock */
-		qdf_wake_lock_release(&pHddCtx->sap_dfs_wakelock,
+	if (atomic_read(&hdd_ctx->sap_dfs_ref_cnt)) {
+		qdf_wake_lock_release(&hdd_ctx->sap_dfs_wakelock,
 				      WIFI_POWER_EVENT_WAKELOCK_DRIVER_EXIT);
-		/* Reset the reference count */
-		atomic_set(&pHddCtx->sap_dfs_ref_cnt, 0);
-		hddLog(LOGE, FL("DFS: allowing suspend"));
+
+		atomic_set(&hdd_ctx->sap_dfs_ref_cnt, 0);
+		hdd_warn("DFS: Allowing suspend");
 	}
 
-	/* Destroy lock */
-	qdf_wake_lock_destroy(&pHddCtx->sap_dfs_wakelock);
+	qdf_wake_lock_destroy(&hdd_ctx->sap_dfs_wakelock);
+
+	mutex_destroy(&hdd_ctx->sap_lock);
+	qdf_wake_lock_destroy(&hdd_ctx->sap_wake_lock);
+
+	mutex_destroy(&hdd_ctx->dfs_lock);
+
 }
 
 /**

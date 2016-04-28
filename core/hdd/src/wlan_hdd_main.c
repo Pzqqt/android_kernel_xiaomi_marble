@@ -55,6 +55,7 @@
 #include "wlan_hdd_ftm.h"
 #include "wlan_hdd_power.h"
 #include "wlan_hdd_stats.h"
+#include "wlan_hdd_scan.h"
 #include "qdf_types.h"
 #include "qdf_trace.h"
 #include <cdp_txrx_peer_ops.h>
@@ -3914,19 +3915,93 @@ out:
 	return ret;
 }
 
+#ifdef WLAN_FEATURE_HOLD_RX_WAKELOCK
+/**
+ * hdd_rx_wake_lock_destroy() - Destroy RX wakelock
+ * @hdd_ctx:	HDD context.
+ *
+ * Destroy RX wakelock.
+ *
+ * Return: None.
+ */
+static void hdd_rx_wake_lock_destroy(hdd_context_t *hdd_ctx)
+{
+	qdf_wake_lock_destroy(&hdd_ctx->rx_wake_lock);
+}
 
 /**
- * hdd_free_context - Free HDD context
- * @hdd_ctx:	HDD context to be freed.
+ * hdd_rx_wake_lock_create() - Create RX wakelock
+ * @hdd_ctx:	HDD context.
  *
- * Free config and HDD context.
+ * Create RX wakelock.
+ *
+ * Return: None.
+ */
+static void hdd_rx_wake_lock_create(hdd_context_t *hdd_ctx)
+{
+	qdf_wake_lock_create(&hdd_ctx->rx_wake_lock, "qcom_rx_wakelock");
+}
+#else
+static void hdd_rx_wake_lock_destroy(hdd_context_t *hdd_ctx) { }
+static void hdd_rx_wake_lock_create(hdd_context_t *hdd_ctx) { }
+#endif
+
+/**
+ * hdd_roc_context_init() - Init ROC context
+ * @hdd_ctx:	HDD context.
+ *
+ * Initialize ROC context.
+ *
+ * Return: 0 on success and errno on failure.
+ */
+static int hdd_roc_context_init(hdd_context_t *hdd_ctx)
+{
+	qdf_spinlock_create(&hdd_ctx->hdd_roc_req_q_lock);
+	qdf_list_create(&hdd_ctx->hdd_roc_req_q, MAX_ROC_REQ_QUEUE_ENTRY);
+
+	INIT_DELAYED_WORK(&hdd_ctx->roc_req_work, wlan_hdd_roc_request_dequeue);
+
+	return 0;
+}
+
+/**
+ * hdd_roc_context_destroy() - Destroy ROC context
+ * @hdd_ctx:	HDD context.
+ *
+ * Destroy roc list and flush the pending roc work.
+ *
+ * Return: None.
+ */
+static void hdd_roc_context_destroy(hdd_context_t *hdd_ctx)
+{
+	flush_delayed_work(&hdd_ctx->roc_req_work);
+	qdf_list_destroy(&hdd_ctx->hdd_roc_req_q);
+}
+
+/**
+ * hdd_context_destroy() - Destroy HDD context
+ * @hdd_ctx:	HDD context to be destroyed.
+ *
+ * Free config and HDD context as well as destroy all the resources.
  *
  * Return: None
  */
-static void hdd_free_context(hdd_context_t *hdd_ctx)
+static void hdd_context_destroy(hdd_context_t *hdd_ctx)
 {
 	if (QDF_GLOBAL_FTM_MODE != hdd_get_conparam())
 		hdd_logging_sock_deactivate_svc(hdd_ctx);
+
+	hdd_roc_context_destroy(hdd_ctx);
+
+	hdd_sap_context_destroy(hdd_ctx);
+
+	hdd_rx_wake_lock_destroy(hdd_ctx);
+
+	hdd_tdls_context_destroy(hdd_ctx);
+
+	hdd_scan_context_destroy(hdd_ctx);
+
+	qdf_list_destroy(&hdd_ctx->hddAdapters);
 
 	qdf_mem_free(hdd_ctx->config);
 	hdd_ctx->config = NULL;
@@ -4039,14 +4114,6 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 		       FL("Failed to close CDS Scheduler"));
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
-#ifdef WLAN_FEATURE_HOLD_RX_WAKELOCK
-	/* Destroy the wake lock */
-	qdf_wake_lock_destroy(&hdd_ctx->rx_wake_lock);
-#endif
-	/* Destroy the wake lock */
-	qdf_wake_lock_destroy(&hdd_ctx->sap_wake_lock);
-
-	hdd_hostapd_channel_wakelock_deinit(hdd_ctx);
 
 	/*
 	 * Close CDS
@@ -4065,8 +4132,6 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 
 	/* Free up RoC request queue and flush workqueue */
 	cds_flush_work(&hdd_ctx->roc_req_work);
-	qdf_list_destroy(&hdd_ctx->hdd_roc_req_q);
-	qdf_list_destroy(&hdd_ctx->hdd_scan_req_q);
 
 	if (!QDF_IS_STATUS_SUCCESS(cds_deinit_policy_mgr())) {
 		hdd_err("Failed to deinit policy manager");
@@ -4077,7 +4142,7 @@ free_hdd_ctx:
 
 	wiphy_unregister(wiphy);
 
-	hdd_free_context(hdd_ctx);
+	hdd_context_destroy(hdd_ctx);
 }
 
 void __hdd_wlan_exit(void)
@@ -5329,7 +5394,77 @@ static void hdd_set_trace_level_for_each(hdd_context_t *hdd_ctx)
 }
 
 /**
- * hdd_init_context - Alloc and initialize HDD context
+ * hdd_context_init() - Initialize HDD context
+ * @hdd_ctx:	HDD context.
+ *
+ * Initialize HDD context along with all the feature specific contexts.
+ *
+ * return: 0 on success and errno on failure.
+ */
+static int hdd_context_init(hdd_context_t *hdd_ctx)
+{
+	int ret;
+
+	hdd_ctx->ioctl_scan_mode = eSIR_ACTIVE_SCAN;
+	hdd_ctx->max_intf_count = CSR_ROAM_SESSION_MAX;
+
+	hdd_init_ll_stats_ctx();
+
+	init_completion(&hdd_ctx->mc_sus_event_var);
+	init_completion(&hdd_ctx->ready_to_suspend);
+
+	qdf_spinlock_create(&hdd_ctx->connection_status_lock);
+
+	qdf_spinlock_create(&hdd_ctx->hdd_adapter_lock);
+	qdf_list_create(&hdd_ctx->hddAdapters, MAX_NUMBER_OF_ADAPTERS);
+
+	init_completion(&hdd_ctx->set_antenna_mode_cmpl);
+
+	ret = hdd_scan_context_init(hdd_ctx);
+	if (ret)
+		goto list_destroy;
+
+	hdd_tdls_context_init(hdd_ctx);
+
+	hdd_rx_wake_lock_create(hdd_ctx);
+
+	ret = hdd_sap_context_init(hdd_ctx);
+	if (ret)
+		goto scan_destroy;
+
+	ret = hdd_roc_context_init(hdd_ctx);
+	if (ret)
+		goto sap_destroy;
+
+	wlan_hdd_cfg80211_extscan_init(hdd_ctx);
+
+	hdd_init_offloaded_packets_ctx(hdd_ctx);
+
+	ret = wlan_hdd_cfg80211_init(hdd_ctx->parent_dev, hdd_ctx->wiphy,
+				     hdd_ctx->config);
+	if (ret)
+		goto roc_destroy;
+
+	return 0;
+
+roc_destroy:
+	hdd_roc_context_destroy(hdd_ctx);
+
+sap_destroy:
+	hdd_sap_context_destroy(hdd_ctx);
+
+scan_destroy:
+	hdd_scan_context_destroy(hdd_ctx);
+	hdd_rx_wake_lock_destroy(hdd_ctx);
+	hdd_tdls_context_destroy(hdd_ctx);
+
+list_destroy:
+	qdf_list_destroy(&hdd_ctx->hddAdapters);
+	return ret;
+}
+
+/**
+ * hdd_context_create() - Allocate and inialize HDD context.
  * @dev:	Pointer to the underlying device
  * @hif_sc:	HIF context
  *
@@ -5338,7 +5473,7 @@ static void hdd_set_trace_level_for_each(hdd_context_t *hdd_ctx)
  *
  * Return: HDD context on success and ERR_PTR on failure
  */
-hdd_context_t *hdd_init_context(struct device *dev, void *hif_sc)
+hdd_context_t *hdd_context_create(struct device *dev, void *hif_sc)
 {
 	QDF_STATUS status;
 	int ret = 0;
@@ -5363,6 +5498,7 @@ hdd_context_t *hdd_init_context(struct device *dev, void *hif_sc)
 	}
 
 	hdd_ctx->pcds_context = p_cds_context;
+	hdd_ctx->parent_dev = dev;
 
 	hdd_ctx->config = qdf_mem_malloc(sizeof(struct hdd_config));
 	if (hdd_ctx->config == NULL) {
@@ -5380,39 +5516,6 @@ hdd_context_t *hdd_init_context(struct device *dev, void *hif_sc)
 		goto err_free_config;
 	}
 
-	((cds_context_type *) (p_cds_context))->pHDDContext = (void *)hdd_ctx;
-
-	hdd_ctx->parent_dev = dev;
-
-	hdd_ctx->ioctl_scan_mode = eSIR_ACTIVE_SCAN;
-
-	hdd_init_ll_stats_ctx();
-
-	init_completion(&hdd_ctx->mc_sus_event_var);
-	init_completion(&hdd_ctx->ready_to_suspend);
-
-	qdf_spinlock_create(&hdd_ctx->connection_status_lock);
-	qdf_spinlock_create(&hdd_ctx->sched_scan_lock);
-
-	qdf_spinlock_create(&hdd_ctx->hdd_adapter_lock);
-	qdf_list_create(&hdd_ctx->hddAdapters, MAX_NUMBER_OF_ADAPTERS);
-
-	wlan_hdd_cfg80211_extscan_init(hdd_ctx);
-
-	hdd_tdls_pre_init(hdd_ctx);
-	mutex_init(&hdd_ctx->dfs_lock);
-	mutex_init(&hdd_ctx->sap_lock);
-
-	init_completion(&hdd_ctx->set_antenna_mode_cmpl);
-
-	hdd_ctx->target_type = tgt_info->target_type;
-
-	hdd_init_offloaded_packets_ctx(hdd_ctx);
-
-	icnss_set_fw_debug_mode(hdd_ctx->config->enable_fw_log);
-
-	hdd_ctx->max_intf_count = CSR_ROAM_SESSION_MAX;
-
 	hdd_ctx->configuredMcastBcastFilter =
 		hdd_ctx->config->mcastBcastFilterSetting;
 
@@ -5423,12 +5526,16 @@ hdd_context_t *hdd_init_context(struct device *dev, void *hif_sc)
 
 	hdd_override_ini_config(hdd_ctx);
 
-	ret = wlan_hdd_cfg80211_init(dev, hdd_ctx->wiphy, hdd_ctx->config);
+	((cds_context_type *) (p_cds_context))->pHDDContext = (void *)hdd_ctx;
 
-	if (ret) {
-		hdd_err("CFG80211 wiphy init failed: %d", ret);
+	ret = hdd_context_init(hdd_ctx);
+
+	if (ret)
 		goto err_free_config;
-	}
+
+	hdd_ctx->target_type = tgt_info->target_type;
+
+	icnss_set_fw_debug_mode(hdd_ctx->config->enable_fw_log);
 
 	hdd_enable_fastpath(hdd_ctx->config, hif_sc);
 
@@ -5793,7 +5900,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 		return ret;
 	}
 
-	hdd_ctx = hdd_init_context(dev, hif_sc);
+	hdd_ctx = hdd_context_create(dev, hif_sc);
 
 	if (IS_ERR(hdd_ctx))
 		return PTR_ERR(hdd_ctx);
@@ -5974,15 +6081,6 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	hdd_release_rtnl_lock();
 	rtnl_held = false;
 
-#ifdef WLAN_FEATURE_HOLD_RX_WAKELOCK
-	/* Initialize the wake lcok */
-	qdf_wake_lock_create(&hdd_ctx->rx_wake_lock, "qcom_rx_wakelock");
-#endif
-	/* Initialize the wake lcok */
-	qdf_wake_lock_create(&hdd_ctx->sap_wake_lock, "qcom_sap_wakelock");
-
-	hdd_hostapd_channel_wakelock_init(hdd_ctx);
-
 	if (hdd_ctx->config->fIsImpsEnabled)
 		hdd_set_idle_ps_config(hdd_ctx, true);
 	else
@@ -6057,17 +6155,6 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 				  hdd_ctx->target_hw_version,
 				  hdd_ctx->target_hw_name);
 
-	qdf_spinlock_create(&hdd_ctx->hdd_roc_req_q_lock);
-	qdf_list_create((&hdd_ctx->hdd_roc_req_q), MAX_ROC_REQ_QUEUE_ENTRY);
-	qdf_spinlock_create(&hdd_ctx->hdd_scan_req_q_lock);
-	qdf_list_create((&hdd_ctx->hdd_scan_req_q), CFG_MAX_SCAN_COUNT_MAX);
-#ifdef CONFIG_CNSS
-	cnss_init_delayed_work(&hdd_ctx->roc_req_work,
-			wlan_hdd_roc_request_dequeue);
-#else
-	INIT_DELAYED_WORK(&hdd_ctx->roc_req_work, wlan_hdd_roc_request_dequeue);
-#endif
-
 	wlan_hdd_dcc_register_for_dcc_stats_event(hdd_ctx);
 
 	if (hdd_ctx->config->dual_mac_feature_disable) {
@@ -6121,7 +6208,7 @@ err_cds_close:
 	cds_close(hdd_ctx->pcds_context);
 
 err_hdd_free_context:
-	hdd_free_context(hdd_ctx);
+	hdd_context_destroy(hdd_ctx);
 	QDF_BUG(1);
 
 	return -EIO;

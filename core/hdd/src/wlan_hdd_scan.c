@@ -2495,3 +2495,34 @@ void hdd_cleanup_scan_queue(hdd_context_t *hdd_ctx)
 
 	return;
 }
+
+/**
+ * hdd_scan_context_destroy() - Destroy scan context
+ * @hdd_ctx:	HDD context.
+ *
+ * Destroy scan context.
+ *
+ * Return: None.
+ */
+void hdd_scan_context_destroy(hdd_context_t *hdd_ctx)
+{
+	qdf_list_destroy(&hdd_ctx->hdd_scan_req_q);
+}
+
+/**
+ * hdd_scan_context_init() - Initialize scan context
+ * @hdd_ctx:	HDD context.
+ *
+ * Initialize scan related resources like spin lock and lists.
+ *
+ * Return: 0 on success and errno on failure.
+ */
+int hdd_scan_context_init(hdd_context_t *hdd_ctx)
+{
+	qdf_spinlock_create(&hdd_ctx->sched_scan_lock);
+
+	qdf_spinlock_create(&hdd_ctx->hdd_scan_req_q_lock);
+	qdf_list_create(&hdd_ctx->hdd_scan_req_q, CFG_MAX_SCAN_COUNT_MAX);
+
+	return 0;
+}

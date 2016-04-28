@@ -98,8 +98,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter);
 void hdd_set_ap_ops(struct net_device *pWlanHostapdDev);
 int hdd_hostapd_stop(struct net_device *dev);
-void hdd_hostapd_channel_wakelock_init(hdd_context_t *pHddCtx);
-void hdd_hostapd_channel_wakelock_deinit(hdd_context_t *pHddCtx);
+int hdd_sap_context_init(hdd_context_t *hdd_ctx);
+void hdd_sap_context_destroy(hdd_context_t *hdd_ctx);
 #ifdef FEATURE_WLAN_FORCE_SAP_SCC
 void hdd_restart_softap(hdd_context_t *pHddCtx, hdd_adapter_t *pAdapter);
 #endif /* FEATURE_WLAN_FORCE_SAP_SCC */

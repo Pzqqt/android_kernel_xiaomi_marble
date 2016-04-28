@@ -589,18 +589,29 @@ static void wlan_hdd_tdls_del_non_forced_peers(tdlsCtx_t *hdd_tdls_ctx)
 }
 
 /**
- * hdd_tdls_pre_init - TDLS pre init
+ * hdd_tdls_context_init() - Init TDLS context
  * @hdd_ctx:	HDD context
  *
- * tdls_lock is initialized before an hdd_open_adapter ( which is
- * invoked by other instances also) to protect the concurrent
- * access for the Adapters by TDLS module.
+ * Initialize TDLS global context.
  *
  * Return: None
  */
-void hdd_tdls_pre_init(hdd_context_t *hdd_ctx)
+void hdd_tdls_context_init(hdd_context_t *hdd_ctx)
 {
 	mutex_init(&hdd_ctx->tdls_lock);
+}
+
+/**
+ * hdd_tdls_context_destroy() - Destroy TDLS context
+ * @hdd_ctx:	HDD context
+ *
+ * Destroy TDLS global context.
+ *
+ * Return: None
+ */
+void hdd_tdls_context_destroy(hdd_context_t *hdd_ctx)
+{
+	mutex_destroy(&hdd_ctx->tdls_lock);
 }
 
 /**
