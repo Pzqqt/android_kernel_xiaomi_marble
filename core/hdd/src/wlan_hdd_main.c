@@ -5874,6 +5874,95 @@ static void hdd_tsf_init(hdd_context_t *hdd_ctx)
 #endif
 
 /**
+ * hdd_pre_enable_configure() - Configurations prior to cds_enable
+ * @hdd_ctx:	HDD context
+ *
+ * Pre configurations to be done at lower layer before calling cds enable.
+ *
+ * Return: 0 on success and errno on failure.
+ */
+static int hdd_pre_enable_configure(hdd_context_t *hdd_ctx)
+{
+	int ret;
+	QDF_STATUS status;
+	tSirRetStatus hal_status;
+
+	ol_txrx_register_pause_cb(wlan_hdd_txrx_pause_cb);
+
+	/*
+	 * Set 802.11p config
+	 * TODO-OCB: This has been temporarily added here to ensure this
+	 * parameter is set in CSR when we init the channel list. This should
+	 * be removed once the 5.9 GHz channels are added to the regulatory
+	 * domain.
+	 */
+	hdd_set_dot11p_config(hdd_ctx);
+
+	/*
+	 * Note that the cds_pre_enable() sequence triggers the cfg download.
+	 * The cfg download must occur before we update the SME config
+	 * since the SME config operation must access the cfg database
+	 */
+	status = hdd_set_sme_config(hdd_ctx);
+
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_alert("Failed hdd_set_sme_config: %d", status);
+		ret = qdf_status_to_os_return(status);
+		goto out;
+	}
+
+	ret = wma_cli_set_command(0, WMI_PDEV_PARAM_TX_CHAIN_MASK_1SS,
+				  hdd_ctx->config->tx_chain_mask_1ss,
+				  PDEV_CMD);
+	if (0 != ret) {
+		hdd_err("WMI_PDEV_PARAM_TX_CHAIN_MASK_1SS failed %d", ret);
+		goto out;
+	}
+
+	hdd_program_country_code(hdd_ctx);
+
+	status = hdd_set_sme_chan_list(hdd_ctx);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_alert("Failed to init channel list: %d", status);
+		ret = qdf_status_to_os_return(status);
+		goto out;
+	}
+
+	/* Apply the cfg.ini to cfg.dat */
+	if (!hdd_update_config_dat(hdd_ctx)) {
+		hdd_alert("config update failed");
+		ret = -EINVAL;
+		goto out;
+	}
+
+	status = hdd_update_mac_config(hdd_ctx);
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_warn("can't update mac config, using MAC from ini file: %d",
+			 status);
+	}
+
+	/*
+	 * Set the MAC Address Currently this is used by HAL to add self sta.
+	 * Remove this once self sta is added as part of session open.
+	 */
+	hal_status = cfg_set_str(hdd_ctx->hHal, WNI_CFG_STA_ID,
+				     hdd_ctx->config->intfMacAddr[0].bytes,
+				     sizeof(hdd_ctx->config->intfMacAddr[0]));
+
+	if (!IS_SIR_STATUS_SUCCESS(hal_status)) {
+		hdd_err("Failed to set MAC Address. HALStatus is %08d [x%08x]",
+			hal_status, hal_status);
+		ret = -EINVAL;
+		goto out;
+	}
+
+	hdd_init_channel_avoidance(hdd_ctx);
+
+out:
+	return ret;
+}
+
+/**
  * hdd_wlan_startup() - HDD init function
  * @dev:	Pointer to the underlying device
  *
@@ -5889,8 +5978,6 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	int ret;
 	tSirTxPowerLimit hddtxlimit;
 	bool rtnl_held;
-	tSirRetStatus hal_status;
-	int ret_val;
 
 	ENTER();
 
@@ -5937,80 +6024,15 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 		goto err_cds_close;
 	}
 
-	ol_txrx_register_pause_cb(wlan_hdd_txrx_pause_cb);
-
-	ret_val = hdd_wiphy_init(hdd_ctx);
-
-	if (ret_val) {
-		hdd_alert("failed to initialize wiphy");
+	ret = hdd_wiphy_init(hdd_ctx);
+	if (ret) {
+		hdd_alert("Failed to initialize wiphy: %d", ret);
 		goto err_cds_close;
 	}
 
-	/*
-	 * Set 802.11p config
-	 * TODO-OCB: This has been temporarily added here to ensure this
-	 * parameter is set in CSR when we init the channel list. This should
-	 * be removed once the 5.9 GHz channels are added to the regulatory
-	 * domain.
-	 */
-	hdd_set_dot11p_config(hdd_ctx);
-
-	/*
-	 * Note that the cds_pre_enable() sequence triggers the cfg download.
-	 * The cfg download must occur before we update the SME config
-	 * since the SME config operation must access the cfg database
-	 */
-	status = hdd_set_sme_config(hdd_ctx);
-
-	if (QDF_STATUS_SUCCESS != status) {
-		hddLog(QDF_TRACE_LEVEL_FATAL, FL("Failed hdd_set_sme_config"));
+	ret = hdd_pre_enable_configure(hdd_ctx);
+	if (ret)
 		goto err_wiphy_unregister;
-	}
-
-	ret = wma_cli_set_command(0, WMI_PDEV_PARAM_TX_CHAIN_MASK_1SS,
-				  hdd_ctx->config->tx_chain_mask_1ss,
-				  PDEV_CMD);
-	if (0 != ret) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       "%s: WMI_PDEV_PARAM_TX_CHAIN_MASK_1SS failed %d",
-		       __func__, ret);
-	}
-
-	hdd_program_country_code(hdd_ctx);
-
-	status = hdd_set_sme_chan_list(hdd_ctx);
-	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(QDF_TRACE_LEVEL_FATAL,
-		       FL("Failed to init channel list"));
-		goto err_wiphy_unregister;
-	}
-
-	/* Apply the cfg.ini to cfg.dat */
-	if (false == hdd_update_config_dat(hdd_ctx)) {
-		hddLog(QDF_TRACE_LEVEL_FATAL,
-		       FL("config update failed"));
-		goto err_wiphy_unregister;
-	}
-
-	if (QDF_STATUS_SUCCESS != hdd_update_mac_config(hdd_ctx)) {
-		hddLog(QDF_TRACE_LEVEL_WARN,
-		       FL("can't update mac config, using MAC from ini file"));
-	}
-
-	/*
-	 * Set the MAC Address Currently this is used by HAL to add self sta.
-	 * Remove this once self sta is added as part of session open.
-	 */
-	hal_status = cfg_set_str(hdd_ctx->hHal, WNI_CFG_STA_ID,
-				     hdd_ctx->config->intfMacAddr[0].bytes,
-				     sizeof(hdd_ctx->config->intfMacAddr[0]));
-
-	if (!IS_SIR_STATUS_SUCCESS(hal_status)) {
-		hdd_err("Failed to set MAC Address. HALStatus is %08d [x%08x]",
-			hal_status, hal_status);
-		ret = -EINVAL;
-		goto err_wiphy_unregister;
-	}
 
 	if (hdd_ipa_init(hdd_ctx) == QDF_STATUS_E_FAILURE)
 		goto err_wiphy_unregister;
@@ -6024,8 +6046,6 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 		hddLog(QDF_TRACE_LEVEL_FATAL, FL("cds_enable failed"));
 		goto err_ipa_cleanup;
 	}
-
-	hdd_init_channel_avoidance(hdd_ctx);
 
 	status = hdd_post_cds_enable_config(hdd_ctx);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -6070,7 +6090,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	ret = hdd_init_netlink_services(hdd_ctx);
 
 	if (ret)
-		goto err_debugfs_exit;
+		goto err_close_adapter;
 
 	/*
 	 * Action frame registered in one adapter which will
@@ -6180,9 +6200,6 @@ err_exit_nl_srv:
 		hdd_err("Failed to deinit policy manager");
 		/* Proceed and complete the clean up */
 	}
-
-err_debugfs_exit:
-	hdd_debugfs_exit(adapter);
 
 err_close_adapter:
 	hdd_release_rtnl_lock();
