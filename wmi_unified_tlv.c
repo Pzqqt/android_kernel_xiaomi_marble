@@ -3023,6 +3023,71 @@ QDF_STATUS send_lro_config_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * send_peer_rate_report_cmd_tlv() - process the peer rate report command
+ * @wmi_handle: Pointer to wmi handle
+ * @rate_report_params: Pointer to peer rate report parameters
+ *
+ *
+ * Return: QDF_STATUS_SUCCESS for success otherwise failure
+ */
+QDF_STATUS send_peer_rate_report_cmd_tlv(wmi_unified_t wmi_handle,
+	 struct wmi_peer_rate_report_params *rate_report_params)
+{
+	wmi_peer_set_rate_report_condition_fixed_param *cmd = NULL;
+	wmi_buf_t buf = NULL;
+	QDF_STATUS status = 0;
+	uint32_t len = 0;
+	uint32_t i, j;
+
+	len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("Failed to alloc buf to peer_set_condition cmd\n");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cmd = (wmi_peer_set_rate_report_condition_fixed_param *)
+		wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(
+	&cmd->tlv_header,
+	WMITLV_TAG_STRUC_wmi_peer_set_rate_report_condition_fixed_param,
+	WMITLV_GET_STRUCT_TLVLEN(
+		wmi_peer_set_rate_report_condition_fixed_param));
+
+	cmd->enable_rate_report  = rate_report_params->rate_report_enable;
+	cmd->report_backoff_time = rate_report_params->backoff_time;
+	cmd->report_timer_period = rate_report_params->timer_period;
+	for (i = 0; i < PEER_RATE_REPORT_COND_MAX_NUM; i++) {
+		cmd->cond_per_phy[i].val_cond_flags        =
+			rate_report_params->report_per_phy[i].cond_flags;
+		cmd->cond_per_phy[i].rate_delta.min_delta  =
+			rate_report_params->report_per_phy[i].delta.delta_min;
+		cmd->cond_per_phy[i].rate_delta.percentage =
+			rate_report_params->report_per_phy[i].delta.percent;
+		for (j = 0; j < MAX_NUM_OF_RATE_THRESH; j++) {
+			cmd->cond_per_phy[i].rate_threshold[j] =
+			rate_report_params->report_per_phy[i].
+						report_rate_threshold[j];
+		}
+	}
+
+	WMI_LOGE("%s enable %d backoff_time %d period %d\n", __func__,
+		 cmd->enable_rate_report,
+		 cmd->report_backoff_time, cmd->report_timer_period);
+
+	status = wmi_unified_cmd_send(wmi_handle, buf, len,
+			WMI_PEER_SET_RATE_REPORT_CONDITION_CMDID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_nbuf_free(buf);
+		WMI_LOGE("%s:Failed to send peer_set_report_cond command",
+			 __func__);
+	}
+	return status;
+}
+
+/**
  * send_bcn_buf_ll_cmd_tlv() - prepare and send beacon buffer to fw for LL
  * @wmi_handle: wmi handle
  * @param: bcn ll cmd parameter
@@ -11599,6 +11664,7 @@ struct wmi_ops tlv_ops =  {
 			 send_set_mcc_channel_time_quota_cmd_tlv,
 	.send_set_thermal_mgmt_cmd = send_set_thermal_mgmt_cmd_tlv,
 	.send_lro_config_cmd = send_lro_config_cmd_tlv,
+	.send_peer_rate_report_cmd = send_peer_rate_report_cmd_tlv,
 	.send_bcn_buf_ll_cmd = send_bcn_buf_ll_cmd_tlv,
 	.send_set_sta_sa_query_param_cmd = send_set_sta_sa_query_param_cmd_tlv,
 	.send_set_sta_keep_alive_cmd = send_set_sta_keep_alive_cmd_tlv,
