@@ -725,6 +725,7 @@ typedef struct wlan_dbg_txbf_snd_stats {
 	A_UINT32 cbf_40[4];
 	A_UINT32 cbf_80[4];
 	A_UINT32 sounding[9];
+	A_UINT32 cbf_160[4];
 } wlan_dbg_txbf_snd_stats_t;
 
 typedef struct wlan_dbg_wifi2_error_stats {
