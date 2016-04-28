@@ -2685,11 +2685,15 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		chanfreq = wma_handle->interfaces[vdev_id].scan_info.chan_freq;
 		WMA_LOGI("%s: Preauth frame on channel %d", __func__, chanfreq);
 	} else if (pFc->subType == SIR_MAC_MGMT_PROBE_RSP) {
-		chanfreq = wma_handle->interfaces[vdev_id].mhz;
-		WMA_LOGI("%s: Probe response frame on channel %d", __func__,
-			 chanfreq);
-		WMA_LOGI("%s: Probe response frame on vdev id %d", __func__,
-			 vdev_id);
+		if ((wma_is_vdev_in_ap_mode(wma_handle, vdev_id)) &&
+		    (0 != wma_handle->interfaces[vdev_id].mhz))
+			chanfreq = wma_handle->interfaces[vdev_id].mhz;
+		else
+			chanfreq = channel_freq;
+		WMA_LOGI("%s: Probe response frame on channel %d vdev:%d",
+			__func__, chanfreq, vdev_id);
+		if (wma_is_vdev_in_ap_mode(wma_handle, vdev_id) && !chanfreq)
+			WMA_LOGE("%s: AP oper chan is zero", __func__);
 	} else if (pFc->subType == SIR_MAC_MGMT_ACTION) {
 		chanfreq = channel_freq;
 	} else {
