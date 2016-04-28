@@ -314,6 +314,9 @@ QDF_STATUS (*send_lro_config_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_set_thermal_mgmt_cmd)(wmi_unified_t wmi_handle,
 				struct thermal_cmd_params *thermal_info);
 
+QDF_STATUS (*send_peer_rate_report_cmd)(wmi_unified_t wmi_handle,
+	 struct wmi_peer_rate_report_params *rate_report_params);
+
 QDF_STATUS (*send_set_mcc_channel_time_quota_cmd)
 	(wmi_unified_t wmi_handle,
 	uint32_t adapter_1_chan_freq,

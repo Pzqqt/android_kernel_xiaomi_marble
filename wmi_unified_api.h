@@ -438,6 +438,9 @@ QDF_STATUS wmi_unified_lro_config_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_set_thermal_mgmt_cmd(void *wmi_hdl,
 				struct thermal_cmd_params *thermal_info);
 
+QDF_STATUS wmi_unified_peer_rate_report_cmd(void *wmi_hdl,
+		struct wmi_peer_rate_report_params *rate_report_params);
+
 QDF_STATUS wmi_unified_set_mcc_channel_time_quota_cmd
 	(void *wmi_hdl,
 	uint32_t adapter_1_chan_freq,
