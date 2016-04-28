@@ -2048,7 +2048,7 @@ static void lim_fill_assoc_ind_vht_info(tpAniSirGlobal mac_ctx,
 
 	if (session_entry->limRFBand == SIR_BAND_2_4_GHZ) {
 		if (session_entry->vhtCapability && assoc_req->VHTCaps.present)
-			assoc_ind->chan_info.info = MODE_11AC_VHT20;
+			assoc_ind->chan_info.info = MODE_11AC_VHT20_2G;
 		else if (session_entry->htCapability
 			    && assoc_req->HTCaps.present)
 			assoc_ind->chan_info.info = MODE_11NG_HT20;

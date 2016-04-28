@@ -1710,10 +1710,10 @@ WLAN_PHY_MODE wma_peer_phymode(tSirNwType nw_type, uint8_t sta_type,
 			WMA_LOGE("80/160 MHz BW sent in 11G, configured 40MHz");
 		if (ch_width)
 			phymode = (is_vht) ?
-				MODE_11AC_VHT40 : MODE_11NG_HT40;
+				MODE_11AC_VHT40_2G : MODE_11NG_HT40;
 		else
 			phymode = (is_vht) ?
-				MODE_11AC_VHT20 : MODE_11NG_HT20;
+				MODE_11AC_VHT20_2G : MODE_11NG_HT20;
 		break;
 	case eSIR_11A_NW_TYPE:
 		if (!(is_ht || is_vht)) {
