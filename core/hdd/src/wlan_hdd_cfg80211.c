@@ -7150,6 +7150,71 @@ static int wlan_hdd_cfg80211_get_wakelock_stats(struct wiphy *wiphy,
 	return ret;
 }
 
+/**
+ *__wlan_hdd_cfg80211_setband() - set band
+ * @wiphy: Pointer to wireless phy
+ * @wdev: Pointer to wireless device
+ * @data: Pointer to data
+ * @data_len: Length of @data
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int __wlan_hdd_cfg80211_setband(struct wiphy *wiphy,
+				       struct wireless_dev *wdev,
+				       const void *data, int data_len)
+{
+	struct net_device *dev = wdev->netdev;
+	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_MAX + 1];
+	int ret;
+	static const struct nla_policy policy[QCA_WLAN_VENDOR_ATTR_MAX + 1]
+		= {[QCA_WLAN_VENDOR_ATTR_SETBAND_VALUE] = { .type = NLA_U32 } };
+
+	ENTER();
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret)
+		return ret;
+
+	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_MAX, data, data_len, policy)) {
+		hdd_err(FL("Invalid ATTR"));
+		return -EINVAL;
+	}
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_SETBAND_VALUE]) {
+		hdd_err(FL("attr SETBAND_VALUE failed"));
+		return -EINVAL;
+	}
+
+	ret = hdd_set_band(dev,
+			nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_SETBAND_VALUE]));
+
+	EXIT();
+	return ret;
+}
+
+/**
+ * wlan_hdd_cfg80211_setband() - Wrapper to setband
+ * @wiphy:    wiphy structure pointer
+ * @wdev:     Wireless device structure pointer
+ * @data:     Pointer to the data received
+ * @data_len: Length of @data
+ *
+ * Return: 0 on success; errno on failure
+ */
+static int wlan_hdd_cfg80211_setband(struct wiphy *wiphy,
+				    struct wireless_dev *wdev,
+				    const void *data, int data_len)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_setband(wiphy, wdev, data, data_len);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
 const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
@@ -7699,6 +7764,13 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 			 WIPHY_VENDOR_CMD_NEED_RUNNING,
 		.doit = wlan_hdd_cfg80211_get_wakelock_stats
 	},
+	{
+		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_SETBAND,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+					WIPHY_VENDOR_CMD_NEED_NETDEV |
+					WIPHY_VENDOR_CMD_NEED_RUNNING,
+		.doit = wlan_hdd_cfg80211_setband
+	}
 };
 
 /**
