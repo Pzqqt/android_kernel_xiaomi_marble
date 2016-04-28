@@ -137,6 +137,14 @@ void htt_htc_misc_pkt_pool_free(struct htt_pdev_t *pdev)
 }
 #endif
 
+
+/* AR6004 don't need HTT layer. */
+#ifdef AR6004_HW
+#define NO_HTT_NEEDED true
+#else
+#define NO_HTT_NEEDED false
+#endif
+
 /**
  * htt_pdev_alloc() - allocate HTT pdev
  * @txrx_pdev: txrx pdev
@@ -152,6 +160,10 @@ htt_pdev_alloc(ol_txrx_pdev_handle txrx_pdev,
 	   HTC_HANDLE htc_pdev, qdf_device_t osdev)
 {
 	struct htt_pdev_t *pdev;
+	struct hif_opaque_softc *osc =  cds_get_context(QDF_MODULE_ID_HIF);
+
+	if (!osc)
+		goto fail1;
 
 	pdev = qdf_mem_malloc(sizeof(*pdev));
 	if (!pdev)
@@ -186,14 +198,14 @@ htt_pdev_alloc(ol_txrx_pdev_handle txrx_pdev,
 	HTT_SET_WIFI_IP(pdev, 2, 0);
 #endif /* defined(HELIUMPLUS_PADDR64) */
 
+	if (NO_HTT_NEEDED)
+		goto success;
 	/*
 	 * Connect to HTC service.
 	 * This has to be done before calling htt_rx_attach,
 	 * since htt_rx_attach involves sending a rx ring configure
 	 * message to the target.
 	 */
-/* AR6004 don't need HTT layer. */
-#ifndef AR6004_HW
 	if (htt_htc_attach(pdev, HTT_DATA_MSG_SVC))
 		goto fail2;
 	if (htt_htc_attach(pdev, HTT_DATA2_MSG_SVC))
@@ -204,11 +216,10 @@ htt_pdev_alloc(ol_txrx_pdev_handle txrx_pdev,
 		;
 	/* TODO: enable the following line once FW is ready */
 	/* goto fail2; */
-	if (hif_ce_fastpath_cb_register(htt_t2h_msg_handler_fast, pdev))
+	if (hif_ce_fastpath_cb_register(osc, htt_t2h_msg_handler_fast, pdev))
 		qdf_print("failed to register fastpath callback\n");
 
-#endif
-
+success:
 	return pdev;
 
 fail2:
