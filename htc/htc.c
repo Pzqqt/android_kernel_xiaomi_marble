@@ -145,6 +145,7 @@ static void htc_cleanup(HTC_TARGET *target)
 
 	if (target->hif_dev != NULL) {
 		hif_detach_htc(target->hif_dev);
+		hif_mask_interrupt_call(target->hif_dev);
 		target->hif_dev = NULL;
 	}
 
@@ -353,6 +354,40 @@ void htc_control_tx_complete(void *Context, HTC_PACKET *pPacket)
 #define MAX_MESSAGE_SIZE 1536
 
 /**
+ * htc_setup_epping_credit_allocation() - allocate credits/HTC buffers to WMI
+ * @scn: pointer to hif_opaque_softc
+ * @pEntry: pointer to tx credit allocation entry
+ * @credits: number of credits
+ *
+ * Return: None
+ */
+static void
+htc_setup_epping_credit_allocation(struct hif_opaque_softc *scn,
+				   HTC_SERVICE_TX_CREDIT_ALLOCATION *pEntry,
+				   int credits)
+{
+	switch (hif_get_bus_type(scn)) {
+	case QDF_BUS_TYPE_PCI:
+		pEntry++;
+		pEntry->service_id = WMI_DATA_BE_SVC;
+		pEntry->CreditAllocation = (credits >> 1);
+
+		pEntry++;
+		pEntry->service_id = WMI_DATA_BK_SVC;
+		pEntry->CreditAllocation = (credits >> 1);
+		break;
+	case QDF_BUS_TYPE_SDIO:
+		pEntry++;
+		pEntry->service_id = WMI_DATA_BE_SVC;
+		pEntry->CreditAllocation = credits;
+		break;
+	default:
+		break;
+	}
+	return;
+}
+
+/**
  * htc_setup_target_buffer_assignments() - setup target buffer assignments
  * @target: HTC Target Pointer
  *
@@ -409,12 +444,9 @@ A_STATUS htc_setup_target_buffer_assignments(HTC_TARGET *target)
 		 * BE and BK services to stress the bus so that the total credits
 		 * are equally distributed to BE and BK services.
 		 */
-		pEntry->service_id = WMI_DATA_BE_SVC;
-		pEntry->CreditAllocation = (credits >> 1);
 
-		pEntry++;
-		pEntry->service_id = WMI_DATA_BK_SVC;
-		pEntry->CreditAllocation = (credits >> 1);
+		htc_setup_epping_credit_allocation(target->hif_dev,
+						   pEntry, credits);
 	}
 
 	if (A_SUCCESS(status)) {
@@ -845,6 +877,60 @@ void htc_ipa_get_ce_resource(HTC_HANDLE htc_handle,
 	}
 }
 #endif /* IPA_OFFLOAD */
+
+#if defined(DEBUG_HL_LOGGING) && defined(CONFIG_HL_SUPPORT)
+
+void htc_dump_bundle_stats(HTC_HANDLE HTCHandle)
+{
+	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(HTCHandle);
+	int total, i;
+
+	total = 0;
+	for (i = 0; i < HTC_MAX_MSG_PER_BUNDLE_RX; i++)
+		total += target->rx_bundle_stats[i];
+
+	if (total) {
+		AR_DEBUG_PRINTF(ATH_DEBUG_ANY, ("RX Bundle stats:\n"));
+		AR_DEBUG_PRINTF(ATH_DEBUG_ANY, ("Total RX packets: %d\n",
+						total));
+		AR_DEBUG_PRINTF(ATH_DEBUG_ANY, (
+				"Number of bundle: Number of packets\n"));
+		for (i = 0; i < HTC_MAX_MSG_PER_BUNDLE_RX; i++)
+			AR_DEBUG_PRINTF(ATH_DEBUG_ANY,
+					("%10d:%10d(%2d%s)\n", (i+1),
+					 target->rx_bundle_stats[i],
+					 ((target->rx_bundle_stats[i]*100)/
+					  total), "%"));
+	}
+
+
+	total = 0;
+	for (i = 0; i < HTC_MAX_MSG_PER_BUNDLE_TX; i++)
+		total += target->tx_bundle_stats[i];
+
+	if (total) {
+		AR_DEBUG_PRINTF(ATH_DEBUG_ANY, ("TX Bundle stats:\n"));
+		AR_DEBUG_PRINTF(ATH_DEBUG_ANY, ("Total TX packets: %d\n",
+						total));
+		AR_DEBUG_PRINTF(ATH_DEBUG_ANY,
+				("Number of bundle: Number of packets\n"));
+		for (i = 0; i < HTC_MAX_MSG_PER_BUNDLE_TX; i++)
+			AR_DEBUG_PRINTF(ATH_DEBUG_ANY,
+					("%10d:%10d(%2d%s)\n", (i+1),
+					 target->tx_bundle_stats[i],
+					 ((target->tx_bundle_stats[i]*100)/
+					  total), "%"));
+	}
+}
+
+void htc_clear_bundle_stats(HTC_HANDLE HTCHandle)
+{
+	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(HTCHandle);
+
+	qdf_mem_zero(&target->rx_bundle_stats, sizeof(target->rx_bundle_stats));
+	qdf_mem_zero(&target->tx_bundle_stats, sizeof(target->tx_bundle_stats));
+}
+#endif
 
 /**
  * htc_vote_link_down - API to vote for link down

@@ -48,6 +48,55 @@ void htc_global_credit_flow_enable(void)
 	htc_credit_flow = 1;
 }
 
+#ifdef HIF_SDIO
+
+/**
+ * htc_alt_data_credit_size_update() - update tx credit size info
+ *				on max bundle size
+ * @target: hif context
+ * @ul_pipe: endpoint ul pipe id
+ * @dl_pipe: endpoint dl pipe id
+ * @txCreditSize: endpoint tx credit size
+ *
+ *
+ * When AltDataCreditSize is non zero, it indicates the credit size for
+ * HTT and all other services on Mbox0. Mbox1 has WMI_CONTROL_SVC which
+ * uses the default credit size. Use AltDataCreditSize only when
+ * mailbox is swapped. Mailbox swap bit is set by bmi_target_ready at
+ * the end of BMI phase.
+ *
+ * The Credit Size is a parameter associated with the mbox rather than
+ * a service. Multiple services can run on this mbox.
+ *
+ * If AltDataCreditSize is 0, that means the firmware doesn't support
+ * this feature. Default to the TargetCreditSize
+ *
+ * Return: None
+ */
+static inline void
+htc_alt_data_credit_size_update(HTC_TARGET *target,
+				uint8_t *ul_pipe,
+				uint8_t *dl_pipe,
+				int *txCreditSize)
+{
+	if ((target->AltDataCreditSize) &&
+	    (*ul_pipe == 1) && (*dl_pipe == 0))
+		*txCreditSize = target->AltDataCreditSize;
+
+	return;
+}
+#else
+
+static inline void
+htc_alt_data_credit_size_update(HTC_TARGET *target,
+				uint8_t *ul_pipe,
+				uint8_t *dl_pipe,
+				int *txCreditSize)
+{
+	return;
+}
+#endif
+
 A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 			     HTC_SERVICE_CONNECT_REQ *pConnectReq,
 			     HTC_SERVICE_CONNECT_RESP *pConnectResp)
@@ -318,6 +367,11 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 		if (A_FAILED(status)) {
 			break;
 		}
+
+		htc_alt_data_credit_size_update(target,
+						&pEndpoint->UL_PipeID,
+						&pEndpoint->DL_PipeID,
+						&pEndpoint->TxCreditSize);
 
 		qdf_assert(!pEndpoint->dl_is_polled);   /* not currently supported */
 

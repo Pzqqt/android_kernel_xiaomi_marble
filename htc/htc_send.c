@@ -298,6 +298,57 @@ void free_htc_bundle_packet(HTC_TARGET *target, HTC_PACKET *pPacket)
 	UNLOCK_HTC_TX(target);
 }
 
+#if defined(DEBUG_HL_LOGGING) && defined(CONFIG_HL_SUPPORT)
+
+/**
+ * htc_send_update_tx_bundle_stats() - update tx bundle stats depends
+ *				on max bundle size
+ * @target: hif context
+ * @data_len: tx data len
+ * @TxCreditSize: endpoint tx credit size
+ *
+ * Return: None
+ */
+static inline void
+htc_send_update_tx_bundle_stats(HTC_TARGET *target,
+				qdf_size_t data_len,
+				int TxCreditSize)
+{
+	if ((data_len / TxCreditSize) <= HTC_MAX_MSG_PER_BUNDLE_TX)
+		target->tx_bundle_stats[(data_len / TxCreditSize) - 1]++;
+
+	return;
+}
+
+/**
+ * htc_issue_tx_bundle_stats_inc() - increment in tx bundle stats
+ *				on max bundle size
+ * @target: hif context
+ *
+ * Return: None
+ */
+static inline void
+htc_issue_tx_bundle_stats_inc(HTC_TARGET *target)
+{
+	target->tx_bundle_stats[0]++;
+}
+#else
+
+static inline void
+htc_send_update_tx_bundle_stats(HTC_TARGET *target,
+				qdf_size_t data_len,
+				int TxCreditSize)
+{
+	return;
+}
+
+static inline void
+htc_issue_tx_bundle_stats_inc(HTC_TARGET *target)
+{
+	return;
+}
+#endif
+
 #if defined(HIF_USB) || defined(HIF_SDIO)
 #ifdef ENABLE_BUNDLE_TX
 static A_STATUS htc_send_bundled_netbuf(HTC_TARGET *target,
@@ -327,6 +378,10 @@ static A_STATUS htc_send_bundled_netbuf(HTC_TARGET *target,
 		  pEndpoint->TxCreditSize,
 		  data_len, data_len / pEndpoint->TxCreditSize);
 #endif
+
+	htc_send_update_tx_bundle_stats(target, data_len,
+					pEndpoint->TxCreditSize);
+
 	status = hif_send_head(target->hif_dev,
 			       pEndpoint->UL_PipeID,
 			       pEndpoint->Id, data_len,
@@ -543,6 +598,7 @@ static A_STATUS htc_issue_packets(HTC_TARGET *target,
 			  pEndpoint->TxCreditSize,
 			  HTC_HDR_LENGTH + pPacket->ActualLength);
 #endif
+		htc_issue_tx_bundle_stats_inc(target);
 
 		target->ce_send_cnt++;
 
@@ -1585,6 +1641,8 @@ A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket,
 			  HTC_HDR_LENGTH + pPacket->ActualLength);
 #endif
 
+		htc_issue_tx_bundle_stats_inc(target);
+
 		if (qdf_unlikely(A_FAILED(status))) {
 			LOCK_HTC_TX(target);
 			pEndpoint->ul_outstanding_cnt--;
@@ -1759,7 +1817,7 @@ QDF_STATUS htc_tx_completion_handler(void *Context,
 	return QDF_STATUS_SUCCESS;
 }
 
-#if WLAN_FEATURE_FASTPATH
+#ifdef WLAN_FEATURE_FASTPATH
 /**
  * htc_ctrl_msg_cmpl(): checks for tx completion for the endpoint specified
  * @HTC_HANDLE : pointer to the htc target context

@@ -730,4 +730,23 @@ void htc_ipa_get_ce_resource(HTC_HANDLE htc_handle,
 			ce_reg_paddr)                      /* NO-OP */
 #endif /* IPA_OFFLOAD */
 
+#if defined(DEBUG_HL_LOGGING) && defined(CONFIG_HL_SUPPORT)
+
+/**
+ * htc_dump_bundle_stats() - dump tx and rx htc message bundle stats
+ * @HTCHandle: htc handle
+ *
+ * Return: None
+ */
+void htc_dump_bundle_stats(HTC_HANDLE HTCHandle);
+
+/**
+ * htc_clear_bundle_stats() - clear tx and rx htc message bundle stats
+ * @HTCHandle: htc handle
+ *
+ * Return: None
+ */
+void htc_clear_bundle_stats(HTC_HANDLE HTCHandle);
+#endif
+
 #endif /* _HTC_API_H_ */
