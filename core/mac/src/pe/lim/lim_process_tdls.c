@@ -846,10 +846,64 @@ static void populate_dotf_tdls_vht_aid(tpAniSirGlobal pMac, uint32_t selfDot11Mo
 	}
 }
 
+#ifdef CONFIG_HL_SUPPORT
+
+/**
+ * wma_tx_frame_with_tx_complete_send() - Send tx frames on Direct link or AP link
+ *				       depend on reason code
+ * @pMac: pointer to MAC Sirius parameter structure
+ * @pPacket: pointer to mgmt packet
+ * @nBytes: number of bytes to send
+ * @tid:tid value for AC
+ * @pFrame: pointer to tdls frame
+ * @smeSessionId:session id
+ * @flag: tdls flag
+ *
+ * Send TDLS Teardown frame on Direct link or AP link, depends on reason code.
+ *
+ * Return: None
+ */
+static inline QDF_STATUS
+wma_tx_frame_with_tx_complete_send(tpAniSirGlobal pMac, void *pPacket,
+				uint16_t nBytes,
+				uint8_t tid,
+				uint8_t *pFrame,
+				uint8_t smeSessionId, bool flag)
+{
+	return wma_tx_frameWithTxComplete(pMac, pPacket,
+					  (uint16_t) nBytes,
+					  TXRX_FRM_802_11_DATA,
+					  ANI_TXDIR_TODS,
+					  tid,
+					  lim_tx_complete, pFrame,
+					  lim_mgmt_tx_complete,
+					  HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME,
+					  smeSessionId, flag, 0);
+}
+#else
+
+static inline QDF_STATUS
+wma_tx_frame_with_tx_complete_send(tpAniSirGlobal pMac, void *pPacket,
+				uint16_t nBytes,
+				uint8_t tid,
+				uint8_t *pFrame,
+				uint8_t smeSessionId, bool flag)
+{
+	return wma_tx_frameWithTxComplete(pMac, pPacket,
+					  (uint16_t) nBytes,
+					  TXRX_FRM_802_11_DATA,
+					  ANI_TXDIR_TODS,
+					  tid,
+					  lim_tx_complete, pFrame,
+					  lim_mgmt_tx_complete,
+					  HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME,
+					  smeSessionId, false, 0);
+}
+#endif
+
 /*
  * TDLS setup Request frame on AP link
  */
-
 tSirRetStatus lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
 						 struct qdf_mac_addr peer_mac,
 						 uint8_t dialog,
@@ -1108,14 +1162,11 @@ tSirRetStatus lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
 
 	pMac->lim.mgmtFrameSessionId = psessionEntry->peSessionId;
 
-	qdf_status = wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
-					      TXRX_FRM_802_11_DATA,
-					      ANI_TXDIR_TODS,
-					      TID_AC_VI,
-					      lim_tx_complete, pFrame,
-					      lim_mgmt_tx_complete,
-					      HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME,
-					      smeSessionId, false, 0);
+	qdf_status = wma_tx_frame_with_tx_complete_send(pMac, pPacket,
+						     (uint16_t) nBytes,
+						     TID_AC_VI,
+						     pFrame,
+						     smeSessionId, true);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		pMac->lim.mgmtFrameSessionId = 0xff;
@@ -1310,14 +1361,13 @@ tSirRetStatus lim_send_tdls_teardown_frame(tpAniSirGlobal pMac,
 
 	pMac->lim.mgmtFrameSessionId = psessionEntry->peSessionId;
 
-	qdf_status = wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
-					      TXRX_FRM_802_11_DATA,
-					      ANI_TXDIR_TODS,
-					      TID_AC_VI,
-					      lim_tx_complete, pFrame,
-					      lim_mgmt_tx_complete,
-					      HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME,
-					      smeSessionId, false, 0);
+	qdf_status = wma_tx_frame_with_tx_complete_send(pMac, pPacket,
+						     (uint16_t) nBytes,
+						     TID_AC_VI,
+						     pFrame,
+						     smeSessionId,
+						     (reason == eSIR_MAC_TDLS_TEARDOWN_PEER_UNREACHABLE)
+						     ? true : false);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		pMac->lim.mgmtFrameSessionId = 0xff;
@@ -1588,14 +1638,11 @@ static tSirRetStatus lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
 
 	pMac->lim.mgmtFrameSessionId = psessionEntry->peSessionId;
 
-	qdf_status = wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
-					      TXRX_FRM_802_11_DATA,
-					      ANI_TXDIR_TODS,
-					      TID_AC_VI,
-					      lim_tx_complete, pFrame,
-					      lim_mgmt_tx_complete,
-					      HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME,
-					      smeSessionId, false, 0);
+	qdf_status = wma_tx_frame_with_tx_complete_send(pMac, pPacket,
+						     (uint16_t) nBytes,
+						     TID_AC_VI,
+						     pFrame,
+						     smeSessionId, true);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		pMac->lim.mgmtFrameSessionId = 0xff;
@@ -1808,14 +1855,11 @@ tSirRetStatus lim_send_tdls_link_setup_cnf_frame(tpAniSirGlobal pMac,
 
 	pMac->lim.mgmtFrameSessionId = psessionEntry->peSessionId;
 
-	qdf_status = wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
-					      TXRX_FRM_802_11_DATA,
-					      ANI_TXDIR_TODS,
-					      TID_AC_VI,
-					      lim_tx_complete, pFrame,
-					      lim_mgmt_tx_complete,
-					      HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME,
-					      smeSessionId, false, 0);
+	qdf_status = wma_tx_frame_with_tx_complete_send(pMac, pPacket,
+						     (uint16_t) nBytes,
+						     TID_AC_VI,
+						     pFrame,
+						     smeSessionId, true);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		pMac->lim.mgmtFrameSessionId = 0xff;

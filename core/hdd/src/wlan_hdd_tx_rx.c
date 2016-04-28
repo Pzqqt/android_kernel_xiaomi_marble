@@ -96,6 +96,53 @@ void hdd_tx_resume_timer_expired_handler(void *adapter_context)
 				   WLAN_CONTROL_PATH);
 	return;
 }
+#if defined(CONFIG_PER_VDEV_TX_DESC_POOL)
+
+/**
+ * hdd_tx_resume_false() - Resume OS TX Q false leads to queue disabling
+ * @pAdapter: pointer to hdd adapter
+ * @tx_resume: TX Q resume trigger
+ *
+ *
+ * Return: None
+ */
+static void
+hdd_tx_resume_false(hdd_adapter_t *pAdapter, bool tx_resume)
+{
+	if (true == tx_resume)
+		return;
+
+	/* Pause TX  */
+	hdd_notice("Disabling queues");
+	wlan_hdd_netif_queue_control(pAdapter, WLAN_STOP_ALL_NETIF_QUEUE,
+				     WLAN_DATA_FLOW_CONTROL);
+
+	if (QDF_TIMER_STATE_STOPPED ==
+			qdf_mc_timer_get_current_state(&pAdapter->
+						       tx_flow_control_timer)) {
+		QDF_STATUS status;
+		status = qdf_mc_timer_start(&pAdapter->tx_flow_control_timer,
+				WLAN_HDD_TX_FLOW_CONTROL_OS_Q_BLOCK_TIME);
+
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			hdd_err("Failed to start tx_flow_control_timer");
+		else
+			pAdapter->hdd_stats.hddTxRxStats.txflow_timer_cnt++;
+	}
+
+	pAdapter->hdd_stats.hddTxRxStats.txflow_pause_cnt++;
+	pAdapter->hdd_stats.hddTxRxStats.is_txflow_paused = true;
+
+	return;
+}
+#else
+
+static inline void
+hdd_tx_resume_false(hdd_adapter_t *pAdapter, bool tx_resume)
+{
+	return;
+}
+#endif
 
 /**
  * hdd_tx_resume_cb() - Resume OS TX Q.
@@ -135,6 +182,8 @@ void hdd_tx_resume_cb(void *adapter_context, bool tx_resume)
 					 WLAN_WAKE_ALL_NETIF_QUEUE,
 					 WLAN_DATA_FLOW_CONTROL);
 	}
+	hdd_tx_resume_false(pAdapter, tx_resume);
+
 	return;
 }
 
