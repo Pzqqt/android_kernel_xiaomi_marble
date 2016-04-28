@@ -76,6 +76,7 @@
 #include "dph_hash_table.h"
 #include "wma_types.h"
 #include "cds_regdomain.h"
+#include "cds_utils.h"
 
 /* define NO_PAD_TDLS_MIN_8023_SIZE to NOT padding: See CR#447630
    There was IOT issue with cisco 1252 open mode, where it pads
@@ -2674,21 +2675,22 @@ void populate_dot11f_tdls_offchannel_params(tpAniSirGlobal pMac,
 
 	/* validating the channel list for DFS and 2G channels */
 	for (i = 0U; i < numChans; i++) {
-		if (band == eCSR_BAND_24) {
-			if (CHANNEL_STATE_DFS ==
-			    cds_get_channel_state(validChan[i])) {
-				lim_log(pMac, LOG1,
-					FL("skipping DFS channel %d from the valid channel list"),
-					validChan[i]);
-				continue;
-			}
-		} else if ((NSS_2x2_MODE == nss_5g) &&
-			   (NSS_1x1_MODE == nss_2g) &&
-			   (true == cds_skip_dfs_and_2g(validChan[i]))) {
+		if ((band == eCSR_BAND_5G) &&
+		    (NSS_2x2_MODE == nss_5g) &&
+		    (NSS_1x1_MODE == nss_2g) &&
+		    (true == CDS_IS_DFS_CH(validChan[i]))) {
 			lim_log(pMac, LOG1,
 				FL("skipping channel %d, nss_5g: %d, nss_2g: %d"),
 				validChan[i], nss_5g, nss_2g);
 			continue;
+		} else {
+			if (true == cds_is_dsrc_channel(
+				cds_chan_to_freq(validChan[i]))) {
+				lim_log(pMac, LOG1,
+					FL("skipping channel %d from the valid channel list"),
+					validChan[i]);
+				continue;
+			}
 		}
 
 		if (valid_count >= ARRAY_SIZE(suppChannels->bands))

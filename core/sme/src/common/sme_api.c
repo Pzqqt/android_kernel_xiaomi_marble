@@ -10126,19 +10126,16 @@ QDF_STATUS sme_update_tdls_peer_state(tHalHandle hHal,
 	num = 0;
 	for (i = 0; i < peerStateParams->peerCap.peerChanLen; i++) {
 		chanId = peerStateParams->peerCap.peerChan[i];
-		if (!csr_roam_is_channel_valid(pMac, chanId))
-			continue;
-		peer_cap->peerChan[num].chanId = chanId;
-		peer_cap->peerChan[num].pwr =
-					csr_get_cfg_max_tx_power(pMac, chanId);
-
-		if (cds_get_channel_state(chanId) == CHANNEL_STATE_DFS)
-			peer_cap->peerChan[num].dfsSet =
-					true;
-		else
-			peer_cap->peerChan[num].dfsSet =
-					false;
-		num++;
+		if (csr_roam_is_channel_valid(pMac, chanId) &&
+		    !(cds_get_channel_state(chanId) ==
+		      CHANNEL_STATE_DFS) &&
+		    !cds_is_dsrc_channel(cds_chan_to_freq(chanId))) {
+			peer_cap->peerChan[num].chanId = chanId;
+			peer_cap->peerChan[num].pwr =
+				csr_get_cfg_max_tx_power(pMac, chanId);
+			peer_cap->peerChan[num].dfsSet = false;
+			num++;
+		}
 	}
 	peer_cap->peerChanLen = num;
 	peer_cap->peerOperClassLen =
