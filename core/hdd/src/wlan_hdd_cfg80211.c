@@ -11694,16 +11694,14 @@ static int __wlan_hdd_cfg80211_testmode(struct wiphy *wiphy,
 		void *buf;
 		QDF_STATUS status;
 		if (!tb[WLAN_HDD_TM_ATTR_DATA]) {
-			hddLog(LOGE,
-			       FL
-				       ("WLAN_HDD_TM_ATTR_DATA attribute is invalid"));
+			hdd_err("WLAN_HDD_TM_ATTR_DATA attribute is invalid");
 			return -EINVAL;
 		}
 
 		buf = nla_data(tb[WLAN_HDD_TM_ATTR_DATA]);
 		buf_len = nla_len(tb[WLAN_HDD_TM_ATTR_DATA]);
 
-		pr_info("****FTM Tx cmd len = %d*****\n", buf_len);
+		hdd_info("****FTM Tx cmd len = %d*****", buf_len);
 
 		status = wlan_hdd_ftm_testmode_cmd(buf, buf_len);
 
@@ -11785,7 +11783,7 @@ void wlan_hdd_testmode_rx_event(void *buf, size_t buf_len)
 	    nla_put(skb, WLAN_HDD_TM_ATTR_DATA, buf_len, buf))
 		goto nla_put_failure;
 
-	pr_info("****FTM Rx cmd len = %zu*****\n", buf_len);
+	hdd_info("****FTM Rx cmd len = %zu*****", buf_len);
 
 	cfg80211_testmode_event(skb, GFP_KERNEL);
 	return;

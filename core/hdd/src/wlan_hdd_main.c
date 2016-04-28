@@ -4068,6 +4068,8 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 
 	hdd_unregister_wext_all_adapters(hdd_ctx);
 
+	hdd_exit_netlink_services(hdd_ctx);
+
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_disable_ftm(hdd_ctx);
 
@@ -4168,8 +4170,6 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 	cds_close(p_cds_context);
 
 	hdd_wlan_green_ap_deinit(hdd_ctx);
-
-	hdd_exit_netlink_services(hdd_ctx);
 
 	hdd_close_all_adapters(hdd_ctx, false);
 
@@ -6117,11 +6117,14 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	if (IS_ERR(hdd_ctx))
 		return PTR_ERR(hdd_ctx);
 
+	ret = hdd_init_netlink_services(hdd_ctx);
+	if (ret)
+		goto err_hdd_free_context;
+
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		ret = hdd_enable_ftm(hdd_ctx);
-
 		if (ret)
-			goto err_hdd_free_context;
+			goto err_exit_nl_srv;
 
 		goto success;
 	}
@@ -6131,7 +6134,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	status = cds_open();
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(QDF_TRACE_LEVEL_FATAL, FL("cds_open failed"));
-		goto err_hdd_free_context;
+		goto err_exit_nl_srv;
 	}
 
 	wlan_hdd_update_wiphy(hdd_ctx->wiphy, hdd_ctx->config);
@@ -6215,11 +6218,6 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	/* FW capabilities received, Set the Dot11 mode */
 	sme_setdef_dot11mode(hdd_ctx->hHal);
 
-	ret = hdd_init_netlink_services(hdd_ctx);
-
-	if (ret)
-		goto err_close_adapter;
-
 	/*
 	 * Action frame registered in one adapter which will
 	 * applicable to all interfaces
@@ -6257,14 +6255,14 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	status = cds_init_policy_mgr();
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("Policy manager initialization failed");
-		goto err_exit_nl_srv;
+		goto err_debugfs_exit;
 	}
 
 	ret = hdd_init_thermal_info(hdd_ctx);
 
 	if (ret) {
 		hdd_err("Error while initializing thermal information");
-		goto err_exit_nl_srv;
+		goto err_debugfs_exit;
 	}
 
 	if (0 != hdd_lro_init(hdd_ctx))
@@ -6326,13 +6324,8 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 	goto success;
 
-err_exit_nl_srv:
-	hdd_exit_netlink_services(hdd_ctx);
-
-	if (!QDF_IS_STATUS_SUCCESS(cds_deinit_policy_mgr())) {
-		hdd_err("Failed to deinit policy manager");
-		/* Proceed and complete the clean up */
-	}
+err_debugfs_exit:
+	hdd_debugfs_exit(adapter);
 
 err_close_adapter:
 	hdd_release_rtnl_lock();
@@ -6357,6 +6350,14 @@ err_cds_close:
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
 	}
 	cds_close(hdd_ctx->pcds_context);
+
+err_exit_nl_srv:
+	hdd_exit_netlink_services(hdd_ctx);
+
+	if (!QDF_IS_STATUS_SUCCESS(cds_deinit_policy_mgr())) {
+		hdd_err("Failed to deinit policy manager");
+		/* Proceed and complete the clean up */
+	}
 
 err_hdd_free_context:
 	hdd_context_destroy(hdd_ctx);
