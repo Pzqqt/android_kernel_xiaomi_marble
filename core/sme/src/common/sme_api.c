@@ -13304,6 +13304,39 @@ QDF_STATUS sme_reset_bss_hotlist(tHalHandle hHal,
 	return status;
 }
 
+/**
+ * sme_send_wisa_params(): Pass WISA mode to WMA
+ * @hal: HAL context
+ * @wisa_params: pointer to WISA params struct
+ * @sessionId: SME session id
+ *
+ * Pass WISA params to WMA
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_set_wisa_params(tHalHandle hal,
+				struct sir_wisa_params *wisa_params)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+	cds_msg_t cds_message;
+	struct sir_wisa_params *cds_msg_wisa_params;
+
+	cds_msg_wisa_params = qdf_mem_malloc(sizeof(struct sir_wisa_params));
+	if (!cds_msg_wisa_params)
+		return QDF_STATUS_E_NOMEM;
+
+	*cds_msg_wisa_params = *wisa_params;
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		cds_message.bodyptr = cds_msg_wisa_params;
+		cds_message.type = WMA_SET_WISA_PARAMS;
+		status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
+		sme_release_global_lock(&mac->sme);
+	}
+	return status;
+}
+
 /* ---------------------------------------------------------------------------
     \fn sme_set_significant_change
     \brief  SME API to set significant change

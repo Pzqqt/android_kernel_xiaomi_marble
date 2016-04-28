@@ -1101,11 +1101,9 @@ static inline QDF_STATUS wma_set_tsf_gpio_pin(WMA_HANDLE handle, uint32_t pin)
 	return QDF_STATUS_E_INVAL;
 }
 #endif
-
-
+QDF_STATUS wma_set_wisa_params(tp_wma_handle wma, struct sir_wisa_params *wisa);
 
 #ifdef WLAN_FEATURE_NAN
-
 QDF_STATUS wma_nan_req(void *wma_ptr, tpNanRequest nan_req);
 #endif
 

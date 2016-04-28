@@ -601,6 +601,7 @@ uint8_t *mac_trace_get_wma_msg_string(uint16_t wma_msg)
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 		CASE_RETURN_STRING(WMA_SET_RSSI_MONITOR_REQ);
 		CASE_RETURN_STRING(WMA_FW_MEM_DUMP_REQ);
+		CASE_RETURN_STRING(WMA_SET_WISA_PARAMS);
 	default:
 		return (uint8_t *) "UNKNOWN";
 		break;

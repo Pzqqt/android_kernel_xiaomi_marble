@@ -459,6 +459,51 @@ QDF_STATUS wma_set_tsf_gpio_pin(WMA_HANDLE handle, uint32_t pin)
 }
 #endif
 
+/**
+ * wma_set_wisa_params(): Set WISA features related params in FW
+ * @wma_handle: WMA handle
+ * @wisa: Pointer to WISA param struct
+ *
+ * Return: CDF status
+ */
+QDF_STATUS wma_set_wisa_params(tp_wma_handle wma_handle,
+				struct sir_wisa_params *wisa)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	wmi_buf_t buf;
+	wmi_vdev_wisa_cmd_fixed_param *cmd;
+	int ret, len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
+	if (!buf) {
+		WMA_LOGP("%s: failed to allocate memory for WISA params",
+			 __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_vdev_wisa_cmd_fixed_param *) wmi_buf_data(buf);
+	cmd->wisa_mode = wisa->mode;
+	cmd->vdev_id = wisa->vdev_id;
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_vdev_wisa_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+				wmi_vdev_wisa_cmd_fixed_param));
+
+	ret = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
+				   WMI_VDEV_WISA_CMDID);
+	if (ret != EOK) {
+		WMA_LOGE("wmi_unified_cmd_send returned Error %d", status);
+		status = QDF_STATUS_E_FAILURE;
+		goto error;
+	}
+	return QDF_STATUS_SUCCESS;
+
+error:
+	wmi_buf_free(buf);
+	return status;
+}
+
 #ifdef FEATURE_WLAN_LPHB
 /**
  * wma_lphb_conf_hbenable() - enable command of LPHB configuration requests

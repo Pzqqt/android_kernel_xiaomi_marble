@@ -2780,7 +2780,7 @@ static int __wlan_hdd_cfg80211_disable_dfs_chan_scan(struct wiphy *wiphy,
  *
  * @wiphy: wiphy device pointer
  * @wdev: wireless device pointer
- * @data: Vendof command data buffer
+ * @data: Vendor command data buffer
  * @data_len: Buffer length
  *
  * Handles QCA_WLAN_VENDOR_ATTR_SET_NO_DFS_FLAG_MAX. Validate it and
@@ -2799,6 +2799,95 @@ static int wlan_hdd_cfg80211_disable_dfs_chan_scan(struct wiphy *wiphy,
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_cfg80211_disable_dfs_chan_scan(wiphy, wdev,
 							data, data_len);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
+static const struct nla_policy
+wlan_hdd_wisa_cmd_policy[QCA_WLAN_VENDOR_ATTR_WISA_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_WISA_MODE] = {.type = NLA_U32 },
+};
+
+/**
+ * __wlan_hdd_cfg80211_handle_wisa_cmd() - Handle WISA vendor cmd
+ * @wiphy: wiphy device pointer
+ * @wdev: wireless device pointer
+ * @data: Vendor command data buffer
+ * @data_len: Buffer length
+ *
+ * Handles QCA_WLAN_VENDOR_SUBCMD_WISA. Validate cmd attributes and
+ * setup WISA Mode features.
+ *
+ * Return: Success(0) or reason code for failure
+ */
+static int __wlan_hdd_cfg80211_handle_wisa_cmd(struct wiphy *wiphy,
+		struct wireless_dev *wdev, const void *data, int data_len)
+{
+	struct net_device *dev = wdev->netdev;
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	hdd_context_t *hdd_ctx  = wiphy_priv(wiphy);
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_WISA_MAX + 1];
+	struct sir_wisa_params wisa;
+	int ret_val;
+	QDF_STATUS status;
+	bool wisa_mode;
+
+	ENTER_DEV(dev);
+	ret_val = wlan_hdd_validate_context(hdd_ctx);
+	if (ret_val)
+		goto err;
+
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("Command not allowed in FTM mode");
+		return -EPERM;
+	}
+
+	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_WISA_MAX, data, data_len,
+		      wlan_hdd_wisa_cmd_policy)) {
+		hdd_err("Invalid WISA cmd attributes");
+		ret_val = -EINVAL;
+		goto err;
+	}
+	if (!tb[QCA_WLAN_VENDOR_ATTR_WISA_MODE]) {
+		hdd_err("Invalid WISA mode");
+		ret_val = -EINVAL;
+		goto err;
+	}
+
+	wisa_mode = !!nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_WISA_MODE]);
+	hdd_info("WISA Mode: %d", wisa_mode);
+	wisa.mode = wisa_mode;
+	wisa.vdev_id = adapter->sessionId;
+	status = sme_set_wisa_params(hdd_ctx->hHal, &wisa);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		ret_val = -EINVAL;
+err:
+	EXIT();
+	return ret_val;
+}
+
+/**
+ * wlan_hdd_cfg80211_handle_wisa_cmd() - Handle WISA vendor cmd
+ * @wiphy:          corestack handler
+ * @wdev:           wireless device
+ * @data:           data
+ * @data_len:       data length
+ *
+ * Handles QCA_WLAN_VENDOR_SUBCMD_WISA. Validate cmd attributes and
+ * setup WISA mode features.
+ *
+ * Return: Success(0) or reason code for failure
+ */
+static int wlan_hdd_cfg80211_handle_wisa_cmd(struct wiphy *wiphy,
+						   struct wireless_dev *wdev,
+						   const void *data,
+						   int data_len)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_handle_wisa_cmd(wiphy, wdev, data, data_len);
 	cds_ssr_unprotect(__func__);
 
 	return ret;
@@ -5442,7 +5531,13 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 			WIPHY_VENDOR_CMD_NEED_NETDEV,
 		.doit = wlan_hdd_cfg80211_disable_dfs_chan_scan
 	},
-
+	{
+		.info.vendor_id = QCA_NL80211_VENDOR_ID,
+		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_WISA,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+			WIPHY_VENDOR_CMD_NEED_NETDEV,
+		.doit = wlan_hdd_cfg80211_handle_wisa_cmd
+	},
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
 		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_DO_ACS,

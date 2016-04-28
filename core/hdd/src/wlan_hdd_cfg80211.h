@@ -259,6 +259,7 @@ typedef enum {
  * @QCA_NL80211_VENDOR_SUBCMD_SET_TXPOWER_SCALE: set tx power by percentage
  * @QCA_NL80211_VENDOR_SUBCMD_SET_TXPOWER_SCALE_DECR_DB: reduce tx power by DB
  * @QCA_NL80211_VENDOR_SUBCMD_TSF: TSF operations command
+ * @QCA_NL80211_VENDOR_SUBCMD_WISA: WISA mode configuration
  */
 
 enum qca_nl80211_vendor_subcmds {
@@ -379,7 +380,7 @@ enum qca_nl80211_vendor_subcmds {
 	/* Tx power scaling in db subcommands */
 	QCA_NL80211_VENDOR_SUBCMD_SET_TXPOWER_SCALE_DECR_DB = 115,
 	QCA_NL80211_VENDOR_SUBCMD_TSF = 119,
-
+	QCA_NL80211_VENDOR_SUBCMD_WISA = 120,
 };
 
 /**
@@ -1563,6 +1564,21 @@ enum qca_wlan_vendor_attr_set_no_dfs_flag {
 		QCA_WLAN_VENDOR_ATTR_SET_NO_DFS_FLAG_AFTER_LAST - 1,
 };
 
+/**
+ * enum qca_vendor_attr_wisa_cmd
+ * @QCA_WLAN_VENDOR_ATTR_WISA_INVALID: Invalid attr
+ * @QCA_WLAN_VENDOR_ATTR_WISA_MODE: WISA mode value attr (u32)
+ * @QCA_WLAN_VENDOR_ATTR_WISA_AFTER_LAST: After last
+ * @QCA_WLAN_VENDOR_ATTR_WISA_MAX: Max Value
+ * WISA setup vendor commands
+ */
+enum qca_vendor_attr_wisa_cmd {
+	QCA_WLAN_VENDOR_ATTR_WISA_INVALID = 0,
+	QCA_WLAN_VENDOR_ATTR_WISA_MODE,
+	QCA_WLAN_VENDOR_ATTR_WISA_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_WISA_MAX =
+		QCA_WLAN_VENDOR_ATTR_WISA_AFTER_LAST - 1
+};
 
 /**
  * enum qca_wlan_vendor_attr_roam_auth - vendor event for roaming

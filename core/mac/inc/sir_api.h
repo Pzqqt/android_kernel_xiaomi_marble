@@ -4462,6 +4462,15 @@ typedef struct {
 *tpSirExtScanResetBssidHotlistReqParams;
 
 /**
+ * struct sir_wisa_params - WISA Mode Parameters
+ * @mode: WISA mode
+ * @session_id: Session ID of vdev
+ */
+struct sir_wisa_params {
+	bool mode;
+	uint8_t vdev_id;
+};
+/**
  * struct sir_ssid_hotlist_param - param for SSID Hotlist
  * @ssid: SSID which is being hotlisted
  * @band: Band in which the given SSID should be scanned
