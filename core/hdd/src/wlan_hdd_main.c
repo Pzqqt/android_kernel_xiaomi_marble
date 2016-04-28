@@ -3935,10 +3935,8 @@ static int hdd_init_netlink_services(hdd_context_t *hdd_ctx)
 	}
 
 	ret = hdd_open_cesium_nl_sock();
-	if (ret) {
-		hdd_alert("hdd_open_cesium_nl_sock failed");
-		goto err_ptt_deactivate;
-	}
+	if (ret)
+		hdd_warn("hdd_open_cesium_nl_sock failed");
 
 	ret = cnss_diag_activate_service();
 	if (ret) {
@@ -3950,7 +3948,6 @@ static int hdd_init_netlink_services(hdd_context_t *hdd_ctx)
 
 err_close_cesium:
 	hdd_close_cesium_nl_sock();
-err_ptt_deactivate:
 	ptt_sock_deactivate_svc();
 err_nl_srv:
 	nl_srv_exit();

@@ -2422,7 +2422,7 @@ static void hdd_tx_fail_ind_callback(uint8_t *MacAddr, uint8_t seqNo)
 
 	payload_len = ETH_ALEN;
 
-	if (0 == cesium_pid) {
+	if (0 == cesium_pid || cesium_nl_srv_sock == NULL) {
 		hdd_err("cesium process not registered");
 		return;
 	}
