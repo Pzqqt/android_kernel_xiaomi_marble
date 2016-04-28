@@ -44,8 +44,11 @@
 #include "wmi_unified.h"
 #include "wni_cfg.h"
 #include "cfg_api.h"
+#if defined(CONFIG_HL_SUPPORT)
+#include "wlan_tgt_def_config_hl.h"
+#else
 #include "wlan_tgt_def_config.h"
-
+#endif
 #include "qdf_nbuf.h"
 #include "qdf_types.h"
 #include "qdf_mem.h"
@@ -2677,7 +2680,8 @@ QDF_STATUS wma_start(void *cds_ctx)
 	}
 #endif /* FEATURE_WLAN_SCAN_PNO */
 
-#if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || defined(QCA_LL_TX_FLOW_CONTROL_V2)
+#if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || \
+	defined(QCA_LL_TX_FLOW_CONTROL_V2) || defined(CONFIG_HL_SUPPORT)
 	WMA_LOGE("MCC TX Pause Event Handler register");
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					WMI_TX_PAUSE_EVENTID,
@@ -4987,7 +4991,14 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 	case WMA_SET_THERMAL_LEVEL:
 		wma_process_set_thermal_level(wma_handle, msg->bodyval);
 		break;
-
+#ifdef CONFIG_HL_SUPPORT
+	case WMA_INIT_BAD_PEER_TX_CTL_INFO_CMD:
+		wma_process_init_bad_peer_tx_ctl_info(
+			wma_handle,
+			(struct t_bad_peer_txtcl_config *)msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+			break;
+#endif
 	case WMA_SET_P2P_GO_NOA_REQ:
 		wma_process_set_p2pgo_noa_req(wma_handle,
 					      (tP2pPsParams *) msg->bodyptr);

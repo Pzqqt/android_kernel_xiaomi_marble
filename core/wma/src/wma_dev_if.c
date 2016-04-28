@@ -42,7 +42,6 @@
 #include "wmi_unified.h"
 #include "wni_cfg.h"
 #include "cfg_api.h"
-#include "wlan_tgt_def_config.h"
 
 #include "qdf_nbuf.h"
 #include "qdf_types.h"
@@ -73,6 +72,8 @@
 #include <cdp_txrx_peer_ops.h>
 #include <cdp_txrx_cfg.h>
 #include <cdp_txrx_cmn.h>
+#include "ol_txrx.h"
+
 
 #include "cds_concurrency.h"
 
@@ -3488,6 +3489,7 @@ send_rsp:
 }
 
 #ifdef FEATURE_WLAN_TDLS
+
 /**
  * wma_add_tdls_sta() - process add sta request in TDLS mode
  * @wma: wma handle
@@ -3529,6 +3531,9 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 
 	if (0 == add_sta->updateSta) {
 		/* its a add sta request * */
+
+		ol_txrx_copy_mac_addr_raw(vdev, add_sta->bssId);
+
 		WMA_LOGD("%s: addSta, calling wma_create_peer for %pM, vdev_id %hu",
 			__func__, add_sta->staMac, add_sta->smesessionId);
 
@@ -3549,6 +3554,9 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 			add_sta->status = QDF_STATUS_E_FAILURE;
 			wma_remove_peer(wma, add_sta->staMac,
 					add_sta->smesessionId, peer, false);
+
+			ol_txrx_add_last_real_peer(pdev, vdev, &peer_id);
+
 			goto send_rsp;
 		}
 
@@ -3582,6 +3590,9 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 			add_sta->status = QDF_STATUS_E_FAILURE;
 			wma_remove_peer(wma, add_sta->staMac,
 					add_sta->smesessionId, peer, false);
+
+			ol_txrx_add_last_real_peer(pdev, vdev, &peer_id);
+
 			goto send_rsp;
 		}
 
@@ -3616,6 +3627,8 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 			add_sta->status = QDF_STATUS_E_FAILURE;
 			wma_remove_peer(wma, add_sta->staMac,
 					add_sta->smesessionId, peer, false);
+			ol_txrx_add_last_real_peer(pdev, vdev, &peer_id);
+
 			goto send_rsp;
 		}
 	}

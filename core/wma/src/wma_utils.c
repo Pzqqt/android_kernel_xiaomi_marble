@@ -42,7 +42,6 @@
 #include "wmi_unified.h"
 #include "wni_cfg.h"
 #include "cfg_api.h"
-#include "wlan_tgt_def_config.h"
 
 #include "qdf_nbuf.h"
 #include "qdf_types.h"

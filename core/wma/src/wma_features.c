@@ -45,7 +45,6 @@
 #include "cfg_api.h"
 #include "ol_txrx_ctrl_api.h"
 #include <cdp_txrx_tx_delay.h>
-#include "wlan_tgt_def_config.h"
 #include <cdp_txrx_peer_ops.h>
 
 #include "qdf_nbuf.h"
@@ -70,6 +69,7 @@
 #include "dfs.h"
 #include "radar_filters.h"
 #include "wma_internal.h"
+#include "ol_txrx.h"
 
 #ifndef ARRAY_LENGTH
 #define ARRAY_LENGTH(a)         (sizeof(a) / sizeof((a)[0]))
@@ -6449,6 +6449,7 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 	uint8_t *peer_mac_addr;
 	int ret = 0;
 	uint32_t *ch_mhz;
+	bool restore_last_peer = false;
 
 	if (!wma_handle || !wma_handle->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not issue cmd", __func__);
@@ -6500,6 +6501,7 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 			goto end_tdls_peer_state;
 		}
 		peer_mac_addr = ol_txrx_peer_get_peer_mac_addr(peer);
+		restore_last_peer = is_vdev_restore_last_peer(peer);
 
 		WMA_LOGD("%s: calling wma_remove_peer for peer " MAC_ADDRESS_STR
 			 " vdevId: %d", __func__,
@@ -6507,6 +6509,8 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 			 peerStateParams->vdevId);
 		wma_remove_peer(wma_handle, peer_mac_addr,
 				peerStateParams->vdevId, peer, false);
+		ol_txrx_update_last_real_peer(pdev, peer, &peer_id,
+					      restore_last_peer);
 	}
 
 end_tdls_peer_state:

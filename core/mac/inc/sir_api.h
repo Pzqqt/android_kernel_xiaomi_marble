@@ -4030,6 +4030,34 @@ typedef struct sSirTxPowerLimit {
 	uint32_t txPower5g;
 } tSirTxPowerLimit;
 
+enum bad_peer_thresh_levels {
+	WLAN_WMA_IEEE80211_B_LEVEL = 0,
+	WLAN_WMA_IEEE80211_AG_LEVEL,
+	WLAN_WMA_IEEE80211_N_LEVEL,
+	WLAN_WMA_IEEE80211_AC_LEVEL,
+	WLAN_WMA_IEEE80211_AX_LEVEL,
+	WLAN_WMA_IEEE80211_MAX_LEVEL,
+};
+
+#define NUM_OF_RATE_THRESH_MAX    (4)
+struct t_bad_peer_info {
+	uint32_t cond;
+	uint32_t delta;
+	uint32_t percentage;
+	uint32_t thresh[NUM_OF_RATE_THRESH_MAX];
+	uint32_t txlimit;
+};
+
+struct t_bad_peer_txtcl_config {
+	/* Array of thermal levels */
+	struct t_bad_peer_info threshold[WLAN_WMA_IEEE80211_MAX_LEVEL];
+	uint32_t enable;
+	uint32_t period;
+	uint32_t txq_limit;
+	uint32_t tgt_backoff;
+	uint32_t tgt_report_prd;
+};
+
 /* notify MODEM power state to FW */
 typedef struct {
 	uint32_t param;

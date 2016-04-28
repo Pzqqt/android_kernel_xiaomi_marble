@@ -43,7 +43,6 @@
 #include "wmi_unified.h"
 #include "wni_cfg.h"
 #include "cfg_api.h"
-#include "wlan_tgt_def_config.h"
 #include <cdp_txrx_peer_ops.h>
 #include <cdp_txrx_cfg.h>
 
