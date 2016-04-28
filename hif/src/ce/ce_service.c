@@ -497,6 +497,8 @@ ce_buffer_addr_hi_set(struct CE_src_desc *shadow_src_desc,
 }
 #endif
 
+#define SLOTS_PER_DATAPATH_TX 2
+
 /**
  * ce_send_fast() CE layer Tx buffer posting function
  * @copyeng: copy engine handle
@@ -513,7 +515,6 @@ ce_buffer_addr_hi_set(struct CE_src_desc *shadow_src_desc,
  *
  * Return: No. of packets that could be sent
  */
-
 int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t *msdus,
 		 unsigned int num_msdus, unsigned int transfer_id)
 {
