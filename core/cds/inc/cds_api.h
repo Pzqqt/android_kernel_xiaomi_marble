@@ -264,4 +264,6 @@ void cds_tdls_tx_rx_mgmt_event(uint8_t event_id, uint8_t tx_rx,
 }
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
+int cds_get_radio_index(void);
+QDF_STATUS cds_set_radio_index(int radio_index);
 #endif /* if !defined __CDS_API_H */

@@ -983,8 +983,11 @@ void *cds_get_context(QDF_MODULE_ID moduleId)
 v_CONTEXT_t cds_get_global_context(void)
 {
 	if (gp_cds_context == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: global cds context is NULL", __func__);
+		/*
+		 * To avoid recursive call, this should not change to
+		 * QDF_TRACE().
+		 */
+		pr_err("%s: global cds context is NULL", __func__);
 	}
 
 	return gp_cds_context;
@@ -2190,3 +2193,45 @@ void cds_set_fatal_event(bool value)
 	p_cds_context->enable_fatal_event = value;
 }
 
+/**
+ * cds_get_radio_index() - get radio index
+ *
+ * Return: radio index otherwise, -EINVAL
+ */
+int cds_get_radio_index(void)
+{
+	p_cds_contextType p_cds_context;
+
+	p_cds_context = cds_get_global_context();
+	if (!p_cds_context) {
+		/*
+		 * To avoid recursive call, this should not change to
+		 * QDF_TRACE().
+		 */
+		pr_err("%s: cds context is invalid\n", __func__);
+		return -EINVAL;
+	}
+
+	return p_cds_context->radio_index;
+}
+
+/**
+ * cds_set_radio_index() - set radio index
+ * @radio_index:	the radio index to set
+ *
+ * Return: QDF status
+ */
+QDF_STATUS cds_set_radio_index(int radio_index)
+{
+	p_cds_contextType p_cds_context;
+
+	p_cds_context = cds_get_global_context();
+	if (!p_cds_context) {
+		pr_err("%s: cds context is invalid\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	p_cds_context->radio_index = radio_index;
+
+	return QDF_STATUS_SUCCESS;
+}

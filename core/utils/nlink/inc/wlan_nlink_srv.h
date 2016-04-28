@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -49,7 +49,7 @@
 
 typedef int (*nl_srv_msg_callback)(struct sk_buff *skb);
 
-int nl_srv_init(void);
+int nl_srv_init(void *wiphy);
 void nl_srv_exit(void);
 int nl_srv_register(tWlanNlModTypes msg_type, nl_srv_msg_callback msg_handler);
 int nl_srv_unregister(tWlanNlModTypes msg_type,

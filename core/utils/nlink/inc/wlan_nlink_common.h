@@ -108,6 +108,12 @@ typedef struct sAniHdr {
 	unsigned short length;
 } tAniHdr, tAniMsgHdr;
 
+typedef struct sAniNlMsg {
+	struct nlmsghdr nlh;    /* Netlink Header */
+	int radio;              /* unit number of the radio */
+	tAniHdr wmsg;           /* Airgo Message Header */
+} tAniNlHdr;
+
 struct wlan_status_data {
 	uint8_t lpss_support;
 	uint8_t is_on;

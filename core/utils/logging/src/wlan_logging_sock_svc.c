@@ -253,10 +253,11 @@ static int wlan_queue_logmsg_for_app(void)
 
 #ifdef QCA_WIFI_3_0_ADRASTEA
 /**
- * wlan_add_user_log_time_stamp() - add time stamp in WLAN log buffer
+ * wlan_add_user_log_radio_time_stamp() - add radio and time stamp in log buffer
  * @tbuf: Pointer to time stamp buffer
  * @tbuf_sz: Time buffer size
  * @ts: Time stamp value
+ * @radoi: the radio index
  *
  * For adrastea time stamp is QTIMER raw tick which will be used by cnss_diag
  * to convert it into user visible time stamp. In adrstea FW also uses QTIMER
@@ -266,19 +267,22 @@ static int wlan_queue_logmsg_for_app(void)
  * For discrete solution e.g rome use system tick and convert it into
  * seconds.milli seconds
  */
-static int wlan_add_user_log_time_stamp(char *tbuf, size_t tbuf_sz, uint64_t ts)
+static int wlan_add_user_log_radio_time_stamp(char *tbuf, size_t tbuf_sz,
+					      uint64_t ts, int radio)
 {
 	int tlen;
 
-	tlen = scnprintf(tbuf, tbuf_sz, "[%s][%llu] ", current->comm, ts);
+	tlen = scnprintf(tbuf, tbuf_sz, "R%d: [%s][%llu] ",
+			 radio, current->comm, ts);
 	return tlen;
 }
 #else
 /**
- * wlan_add_user_log_time_stamp() - add time stamp in WLAN log buffer
+ * wlan_add_user_log_radio_time_stamp() - add radio and time stamp in log buffer
  * @tbuf: Pointer to time stamp buffer
  * @tbuf_sz: Time buffer size
  * @ts: Time stamp value
+ * @radio: the radio index
  *
  * For adrastea time stamp QTIMER raw tick which will be used by cnss_diag
  * to convert it into user visible time stamp
@@ -286,14 +290,15 @@ static int wlan_add_user_log_time_stamp(char *tbuf, size_t tbuf_sz, uint64_t ts)
  * For discrete solution e.g rome use system tick and convert it into
  * seconds.milli seconds
  */
-static int wlan_add_user_log_time_stamp(char *tbuf, size_t tbuf_sz, uint64_t ts)
+static int wlan_add_user_log_radio_time_stamp(char *tbuf, size_t tbuf_sz,
+					      uint64_t ts, int radio)
 {
 	int tlen;
 	uint32_t rem;
 
 	rem = do_div(ts, QDF_MC_TIMER_TO_SEC_UNIT);
-	tlen = scnprintf(tbuf, tbuf_sz, "[%s][%lu.%06lu] ", current->comm,
-			(unsigned long) ts, (unsigned long)rem);
+	tlen = scnprintf(tbuf, tbuf_sz, "R%d: [%s][%lu.%06lu] ", radio,
+			 current->comm, (unsigned long) ts, (unsigned long)rem);
 	return tlen;
 }
 #endif
@@ -309,8 +314,11 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 	bool wake_up_thread = false;
 	unsigned long flags;
 	uint64_t ts;
+	int radio;
 
-	if (!cds_is_multicast_logging()) {
+	radio = cds_get_radio_index();
+
+	if (!cds_is_multicast_logging() || radio == -EINVAL) {
 		/*
 		 * This is to make sure that we print the logs to kmsg console
 		 * when no logger app is running. This is also needed to
@@ -319,12 +327,20 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 		 * register with driver immediately and start logging all the
 		 * messages.
 		 */
-		pr_info("%s\n", to_be_sent);
+		/*
+		 * R%d: if the radio index is invalid, just post the message
+		 * to console.
+		 * Also the radio index shouldn't happen to be EINVAL, but if
+		 * that happen just print it, so that the logging would be
+		 * aware the cnss_logger is somehow failed.
+		 */
+		pr_info("R%d: %s\n", radio, to_be_sent);
 		return 0;
 	}
 
 	ts = qdf_get_log_timestamp();
-	tlen = wlan_add_user_log_time_stamp(tbuf, sizeof(tbuf), ts);
+	tlen = wlan_add_user_log_radio_time_stamp(tbuf, sizeof(tbuf), ts,
+						  radio);
 
 	/* 1+1 indicate '\n'+'\0' */
 	total_log_len = length + tlen + 1 + 1;

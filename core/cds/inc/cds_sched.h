@@ -279,6 +279,9 @@ typedef struct _cds_context_type {
 	/* Configuration handle used to get system configuration */
 	void *cfg_ctx;
 
+	/* radio index per driver */
+	int radio_index;
+
 	bool is_wakelock_log_enabled;
 	uint32_t wakelock_log_level;
 	uint32_t connectivity_log_level;

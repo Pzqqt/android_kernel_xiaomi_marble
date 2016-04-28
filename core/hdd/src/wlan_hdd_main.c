@@ -3916,11 +3916,12 @@ static int hdd_init_netlink_services(hdd_context_t *hdd_ctx)
 {
 	int ret;
 
-	ret = nl_srv_init();
+	ret = wlan_hdd_nl_init(hdd_ctx);
 	if (ret) {
 		hdd_alert("nl_srv_init failed: %d", ret);
 		goto out;
 	}
+	cds_set_radio_index(hdd_ctx->radio_index);
 
 	ret = oem_activate_service(hdd_ctx);
 	if (ret) {

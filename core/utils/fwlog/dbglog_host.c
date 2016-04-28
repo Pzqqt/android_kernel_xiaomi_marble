@@ -1608,6 +1608,9 @@ int send_fw_diag_nl_data(const uint8_t *buffer, A_UINT32 len,
 	struct sk_buff *skb_out;
 	struct nlmsghdr *nlh;
 	int res = 0;
+	tAniNlHdr *wnl;
+	int radio;
+	int msg_len;
 
 	if (WARN_ON(len > ATH6KL_FWLOG_PAYLOAD_SIZE))
 		return -ENODEV;
@@ -1615,15 +1618,25 @@ int send_fw_diag_nl_data(const uint8_t *buffer, A_UINT32 len,
 	if (nl_srv_is_initialized() != 0)
 		return -EIO;
 
+	radio = cds_get_radio_index();
+	if (radio == -EINVAL)
+		return -EIO;
+
 	if (cds_is_multicast_logging()) {
-		skb_out = nlmsg_new(len, 0);
+		msg_len = len + sizeof(radio);
+		skb_out = nlmsg_new(msg_len, GFP_KERNEL);
 		if (!skb_out) {
 			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 					("Failed to allocate new skb\n"));
 			return -ENOMEM;
 		}
-		nlh = nlmsg_put(skb_out, 0, 0, WLAN_NL_MSG_CNSS_DIAG, len, 0);
-		memcpy(nlmsg_data(nlh), buffer, len);
+		nlh = nlmsg_put(skb_out, 0, 0, WLAN_NL_MSG_CNSS_DIAG, msg_len,
+				0);
+		wnl = (tAniNlHdr *)nlh;
+		wnl->radio = radio;
+
+		/* data buffer offset from nlmsg_hdr + sizeof(int) radio */
+		memcpy(nlmsg_data(nlh) + sizeof(radio), buffer, len);
 
 		res = nl_srv_bcast(skb_out);
 		if (res < 0) {
@@ -1684,6 +1697,8 @@ send_diag_netlink_data(const uint8_t *buffer, A_UINT32 len, A_UINT32 cmd)
 	int res = 0;
 	struct dbglog_slot *slot;
 	size_t slot_len;
+	tAniNlHdr *wnl;
+	int radio;
 
 	if (WARN_ON(len > ATH6KL_FWLOG_PAYLOAD_SIZE))
 		return -ENODEV;
@@ -1691,10 +1706,15 @@ send_diag_netlink_data(const uint8_t *buffer, A_UINT32 len, A_UINT32 cmd)
 	if (nl_srv_is_initialized() != 0)
 		return -EIO;
 
-	if (cds_is_multicast_logging()) {
-		slot_len = sizeof(*slot) + ATH6KL_FWLOG_PAYLOAD_SIZE;
+	radio = cds_get_radio_index();
+	if (radio == -EINVAL)
+		return -EIO;
 
-		skb_out = nlmsg_new(slot_len, 0);
+	if (cds_is_multicast_logging()) {
+		slot_len = sizeof(*slot) + ATH6KL_FWLOG_PAYLOAD_SIZE +
+				sizeof(radio);
+
+		skb_out = nlmsg_new(slot_len, GFP_KERNEL);
 		if (!skb_out) {
 			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 					("Failed to allocate new skb\n"));
@@ -1703,7 +1723,10 @@ send_diag_netlink_data(const uint8_t *buffer, A_UINT32 len, A_UINT32 cmd)
 
 		nlh = nlmsg_put(skb_out, 0, 0, WLAN_NL_MSG_CNSS_DIAG,
 				slot_len, 0);
-		slot = (struct dbglog_slot *)nlmsg_data(nlh);
+		wnl = (tAniNlHdr *)nlh;
+		wnl->radio = radio;
+		/* data buffer offset from: nlmsg_hdr + sizeof(int) radio */
+		slot = (struct dbglog_slot *) (nlmsg_data(nlh) + sizeof(radio));
 		slot->diag_type = cmd;
 		slot->timestamp = cpu_to_le32(jiffies);
 		slot->length = cpu_to_le32(len);
@@ -1731,6 +1754,8 @@ dbglog_process_netlink_data(wmi_unified_t wmi_handle, const uint8_t *buffer,
 	int res = 0;
 	struct dbglog_slot *slot;
 	size_t slot_len;
+	tAniNlHdr *wnl;
+	int radio;
 
 	if (WARN_ON(len > ATH6KL_FWLOG_PAYLOAD_SIZE))
 		return -ENODEV;
@@ -1738,10 +1763,15 @@ dbglog_process_netlink_data(wmi_unified_t wmi_handle, const uint8_t *buffer,
 	if (nl_srv_is_initialized() != 0)
 		return -EIO;
 
-	if (cds_is_multicast_logging()) {
-		slot_len = sizeof(*slot) + ATH6KL_FWLOG_PAYLOAD_SIZE;
+	radio = cds_get_radio_index();
+	if (radio == -EINVAL)
+		return -EIO;
 
-		skb_out = nlmsg_new(slot_len, 0);
+	if (cds_is_multicast_logging()) {
+		slot_len = sizeof(*slot) + ATH6KL_FWLOG_PAYLOAD_SIZE +
+				sizeof(radio);
+
+		skb_out = nlmsg_new(slot_len, GFP_KERNEL);
 		if (!skb_out) {
 			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 					("Failed to allocate new skb\n"));
@@ -1750,7 +1780,10 @@ dbglog_process_netlink_data(wmi_unified_t wmi_handle, const uint8_t *buffer,
 
 		nlh = nlmsg_put(skb_out, 0, 0, WLAN_NL_MSG_CNSS_DIAG,
 				slot_len, 0);
-		slot = (struct dbglog_slot *)nlmsg_data(nlh);
+		wnl = (tAniNlHdr *)nlh;
+		wnl->radio = radio;
+		/* data buffer offset from: nlmsg_hdr + sizeof(int) radio */
+		slot = (struct dbglog_slot *) (nlmsg_data(nlh) + sizeof(radio));
 		slot->diag_type = (A_UINT32) DIAG_TYPE_FW_DEBUG_MSG;
 		slot->timestamp = cpu_to_le32(jiffies);
 		slot->length = cpu_to_le32(len);

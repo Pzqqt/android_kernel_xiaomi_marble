@@ -1403,6 +1403,9 @@ struct hdd_context_s {
 	/* Current number of TX X RX chains being used */
 	enum antenna_mode current_antenna_mode;
 	bool bpf_enabled;
+
+	/* the radio index assigned by cnss_logger */
+	int radio_index;
 };
 
 /*---------------------------------------------------------------------------
@@ -1682,4 +1685,43 @@ static inline bool roaming_offload_enabled(hdd_context_t *hdd_ctx)
 void hdd_get_ibss_peer_info_cb(void *pUserData,
 				tSirPeerInfoRspParams *pPeerInfo);
 
+#ifdef CONFIG_CNSS_LOGGER
+/**
+ * wlan_hdd_nl_init() - wrapper function to CNSS_LOGGER case
+ * @hdd_ctx:	the hdd context pointer
+ *
+ * The nl_srv_init() will call to cnss_logger_device_register() and
+ * expect to get a radio_index from cnss_logger module and assign to
+ * hdd_ctx->radio_index, then to maintain the consistency to original
+ * design, adding the radio_index check here, then return the error
+ * code if radio_index is not assigned correctly, which means the nl_init
+ * from cnss_logger is failed.
+ *
+ * Return: 0 if successfully, otherwise error code
+ */
+static inline int wlan_hdd_nl_init(hdd_context_t *hdd_ctx)
+{
+	hdd_ctx->radio_index = nl_srv_init(hdd_ctx->wiphy);
+
+	/* radio_index is assigned from 0, so only >=0 will be valid index  */
+	if (hdd_ctx->radio_index >= 0)
+		return 0;
+	else
+		return -EINVAL;
+}
+#else
+/**
+ * wlan_hdd_nl_init() - wrapper function to non CNSS_LOGGER case
+ * @hdd_ctx:	the hdd context pointer
+ *
+ * In case of non CNSS_LOGGER case, the nl_srv_init() will initialize
+ * the netlink socket and return the success or not.
+ *
+ * Return: the return value from  nl_srv_init()
+ */
+static inline int wlan_hdd_nl_init(hdd_context_t *hdd_ctx)
+{
+	return nl_srv_init(hdd_ctx->wiphy);
+}
+#endif
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */
