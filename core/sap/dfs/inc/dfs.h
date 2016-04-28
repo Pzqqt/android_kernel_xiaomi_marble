@@ -101,6 +101,16 @@
 #define DFS_80P80_SEG0 0
 #define DFS_80P80_SEG1 1
 
+/**
+ * @DFS_RADAR_SUMMARY_REPORT_VERSION_2: DFS-2 radar summary report
+ * @DFS_RADAR_SUMMARY_REPORT_VERSION_3: DFS-3 radar summary report
+ */
+enum {
+	DFS_RADAR_SUMMARY_REPORT_VERSION_2 = 1,
+	DFS_RADAR_SUMMARY_REPORT_VERSION_3 = 2,
+};
+
+
 /*
  * Constants to use for chirping detection.
  *
@@ -286,6 +296,19 @@ struct dfs_event {
 	uint32_t re_freq_hi;    /* Upper bounds of frequency, KHz */
 	int sidx;               /* Pulse Index as in radar summary report */
 	int radar_80p80_segid;  /* 80p80 segment ID as in radar sum report */
+	int delta_peak;         /* delta peak reported in radar summary */
+	int delta_diff;         /* delta diff reported in radar summary */
+	int agc_total_gain;     /* agc total gain reported in radar summary */
+	int agc_mb_gain;        /* agc mb gain reported in radar summary */
+	int radar_subchan_mask; /* subchan mask reported in radar summary */
+	int pulse_height;       /* pulse height reported in radar summary */
+	int triggering_agc_event; /* triggering agc reported in radar summary */
+	int pulse_rssi;         /* rssi of phyerr reported in radar summary */
+	int radar_fft_pri80_inband_power; /* Pri80MHz pwr reported in summary */
+	int radar_fft_ext80_inband_power; /* Ext80MHz pwr reported in summary */
+	int rsu_version; /* Radar summary report version */
+	int phyerr_serial_num; /* phyerr seq num queued for pattern matching */
+	int peak_mag; /* Peak mag reported in radar search FFT report */
 	STAILQ_ENTRY(dfs_event) re_list;        /* List of radar events */
 } qdf_packed;
 #ifdef WIN32
@@ -737,6 +760,30 @@ struct dfs_phy_err {
 	 * when SAP is operating in 80p80 channel width.
 	 */
 	int radar_80p80_segid;
+	/* delta peak reported in radar summary */
+	int delta_peak;
+	/* delta diff reported in radar summary */
+	int delta_diff;
+	/* agc total gain reported in radar summary */
+	int agc_total_gain;
+	/* agc mb gain reported in radar summary */
+	int agc_mb_gain;
+	/* subchan mask reported in radar summary */
+	int radar_subchan_mask;
+	/* pulse height reported in radar summary */
+	int pulse_height;
+	/* triggering agc reported in radar summary */
+	int triggering_agc_event;
+	/* rssi of phyerr reported in radar summary */
+	int pulse_rssi;
+	/* Pri80MHz pwr reported in summary */
+	int radar_fft_pri80_inband_power;
+	/* Ext80MHz pwr reported in summary */
+	int radar_fft_ext80_inband_power;
+	/* Peak mag reported in radar search FFT report */
+	int peak_mag;
+	/* Radar summary report version */
+	int rsu_version;
 };
 
 /* Attach, detach, handle ioctl prototypes */

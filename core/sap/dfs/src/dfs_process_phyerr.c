@@ -560,6 +560,9 @@ dfs_process_phyerr(struct ieee80211com *ic, void *buf, uint16_t datalen,
 					      r_fulltsf, &e,
 					      enable_log) == 0) {
 			dfs->dfs_phyerr_reject_count++;
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+				  "%s:Rejected phyerr count after parsing=%d\n",
+				  __func__, dfs->dfs_phyerr_reject_count);
 			return;
 		} else {
 			if (dfs->dfs_phyerr_freq_min > e.freq)
@@ -737,6 +740,22 @@ dfs_process_phyerr(struct ieee80211com *ic, void *buf, uint16_t datalen,
 		event->re_chanindex = dfs->dfs_curchan_radindex;
 		event->re_flags = 0;
 		event->sidx = e.sidx;
+		if (e.rsu_version == DFS_RADAR_SUMMARY_REPORT_VERSION_3) {
+			event->delta_peak = e.delta_peak;
+			event->delta_diff = e.delta_diff;
+			event->agc_total_gain = e.agc_total_gain;
+			event->agc_mb_gain = e.agc_mb_gain;
+			event->radar_subchan_mask = e.radar_subchan_mask;
+			event->pulse_height = e.pulse_height;
+			event->triggering_agc_event = e.triggering_agc_event;
+			event->pulse_rssi = e.pulse_rssi;
+			event->radar_fft_pri80_inband_power =
+					e.radar_fft_pri80_inband_power;
+			event->radar_fft_ext80_inband_power =
+					e.radar_fft_ext80_inband_power;
+			event->rsu_version = e.rsu_version;
+			event->peak_mag = e.peak_mag;
+		}
 		/*
 		 * Copy the segment ID of the phyerror
 		 * from the radar summary report only
@@ -825,6 +844,35 @@ dfs_process_phyerr(struct ieee80211com *ic, void *buf, uint16_t datalen,
 			event->re_ts = (e.rs_tstamp) & DFS_TSMASK;
 			event->re_rssi = e.rssi;
 			event->sidx = e.sidx;
+			if (e.rsu_version ==
+				DFS_RADAR_SUMMARY_REPORT_VERSION_3) {
+				event->delta_peak = e.delta_peak;
+				event->delta_diff = e.delta_diff;
+				event->agc_total_gain = e.agc_total_gain;
+				event->agc_mb_gain = e.agc_mb_gain;
+				event->radar_subchan_mask = e.radar_subchan_mask;
+				event->pulse_height = e.pulse_height;
+				event->triggering_agc_event =
+						e.triggering_agc_event;
+				event->pulse_rssi = e.pulse_rssi;
+				event->radar_fft_pri80_inband_power =
+						e.radar_fft_pri80_inband_power;
+				event->radar_fft_ext80_inband_power =
+						e.radar_fft_ext80_inband_power;
+				event->rsu_version = e.rsu_version;
+				event->phyerr_serial_num =
+						dfs->dfs_phyerr_queued_count;
+				event->peak_mag = e.peak_mag;
+			}
+			/*
+			 * Copy the segment ID of the phyerror
+			 * from the radar summary report only
+			 * if SAP is operating in 80p80 mode
+			 * and both primary and extension segments
+			 * are DFS.
+			 */
+			if (chan->ic_80p80_both_dfs)
+				event->radar_80p80_segid = e.radar_80p80_segid;
 
 			/*
 			 * Handle chirp flags.

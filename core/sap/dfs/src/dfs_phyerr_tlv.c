@@ -35,16 +35,6 @@
 #include "dfs_phyerr.h"
 #include "dfs_phyerr_tlv.h"
 
-/**
- * enum RADAR_SUMMARY_VERSION - Radar summary report version
- * @DFS_RADAR_SUMMARY_REPORT_VERSION_2: DFS-2 radar summary report
- * @DFS_RADAR_SUMMARY_REPORT_VERSION_3: DFS-3 radar summary report
- */
-typedef enum {
-DFS_RADAR_SUMMARY_REPORT_VERSION_2 = 1,
-DFS_RADAR_SUMMARY_REPORT_VERSION_3 = 2,
-} RADAR_SUMMARY_VERSION;
-
 /*
  * Parsed radar status
  */
@@ -62,7 +52,7 @@ struct rx_radar_status {
 	int agc_mb_gain;
 	/*Parsed only for DFS-3*/
 	int radar_subchan_mask;
-	RADAR_SUMMARY_VERSION rsu_version;
+	int rsu_version;
 	/*
 	 * The parameters below are present only in
 	 * DFS-3 radar summary report and need to be
@@ -882,8 +872,23 @@ dfs_process_phyerr_bb_tlv(struct ath_dfs *dfs, void *buf, uint16_t datalen,
 	 * Copy the segment ID from the radar summary report
 	 * only when radar summary report version is DFS-3.
 	 */
-	if (rs.rsu_version == DFS_RADAR_SUMMARY_REPORT_VERSION_3)
+	if (rs.rsu_version == DFS_RADAR_SUMMARY_REPORT_VERSION_3) {
 		e->radar_80p80_segid = rs.radar_80p80_segid;
+		e->delta_peak = rs.delta_peak;
+		e->delta_diff = rs.delta_diff;
+		e->agc_total_gain = rs.agc_total_gain;
+		e->agc_mb_gain = rs.agc_mb_gain;
+		e->radar_subchan_mask = rs.radar_subchan_mask;
+		e->pulse_height = rs.pulse_height;
+		e->triggering_agc_event = rs.triggering_agc_event;
+		e->pulse_rssi = rs.pulse_rssi;
+		e->radar_fft_pri80_inband_power =
+				rs.radar_fft_pri80_inband_power;
+		e->radar_fft_ext80_inband_power =
+				rs.radar_fft_ext80_inband_power;
+		e->rsu_version = rs.rsu_version;
+		e->peak_mag = rsfr.peak_mag;
+	}
 	/*
 	 * XXX TODO: add a "chirp detection enabled" capability or config
 	 * bit somewhere, in case for some reason the hardware chirp

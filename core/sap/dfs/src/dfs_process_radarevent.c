@@ -115,8 +115,6 @@ static inline uint8_t dfs_process_pulse_dur(struct ath_dfs *dfs, uint8_t re_dur)
 int dfs_process_radarevent(struct ath_dfs *dfs,
 				struct dfs_ieee80211_channel *chan)
 {
-/* commenting for now to validate radar indication msg to SAP */
-/* #if 0 */
 	struct dfs_event re, *event;
 	struct dfs_state *rs = NULL;
 	struct dfs_filtertype *ft;
@@ -129,9 +127,7 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 	struct dfs_pulseline *pl;
 	static uint32_t diff_ts;
 	int ext_chan_event_flag = 0;
-#if 0
-	int pri_multiplier = 2;
-#endif
+	int is_hw_chirp = 0;
 	int i;
 	int seg_id = DFS_80P80_SEG0;
 	struct dfs_delayline *dl;
@@ -404,11 +400,30 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 			dfs->radar_log[i].dur = re.re_dur;
 			dfs->dfs_event_log_count++;
 		}
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-			  "%s[%d]:xxxxx ts =%u re.re_dur=%u re.re_rssi =%u diff =%u pl->pl_lastelem.p_time=%llu xxxxx",
-			  __func__, __LINE__, (uint32_t) this_ts, re.re_dur,
-			  re.re_rssi, diff_ts,
-			  (unsigned long long)pl->pl_elems[index].p_time);
+		if (re.rsu_version == DFS_RADAR_SUMMARY_REPORT_VERSION_3) {
+			if ((re.re_flags & DFS_EVENT_HW_CHIRP) ==
+							DFS_EVENT_HW_CHIRP)
+				is_hw_chirp = 1;
+
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+				  "\n %s[%d]:PHYERR# = %d ts = %u  diff_ts = %u ppdu_rssi = %u dur = %u is_hw_chirp = %d segid = %d sidx = %d peak_mag = %d delta_peak = %d delta_diff = %d agc_total_gain = %d agc_mb_gain = %d radar_subchan_mask = 0x%x pulse_height = %d triggering_agc_event = %d rs_pulse_rssi = %d pri80_inband_power = %d ext80_inband_power = %d \n",
+				  __func__, __LINE__,
+				  re.phyerr_serial_num, (uint32_t) this_ts,
+				  diff_ts, re.re_rssi, re.re_dur, is_hw_chirp,
+				  re.radar_80p80_segid, re.sidx, re.peak_mag,
+				  re.delta_peak, re.delta_diff,
+				  re.agc_total_gain, re.agc_mb_gain,
+				  re.radar_subchan_mask, re.pulse_height,
+				  re.triggering_agc_event, re.pulse_rssi,
+				  re.radar_fft_pri80_inband_power,
+				  re.radar_fft_ext80_inband_power);
+		} else {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+				  "%s[%d]:xxxxx ts =%u re.re_dur=%u re.re_rssi =%u diff =%u pl->pl_lastelem.p_time=%llu xxxxx",
+				  __func__, __LINE__, (uint32_t) this_ts, re.re_dur,
+				  re.re_rssi, diff_ts,
+				  (unsigned long long)pl->pl_elems[index].p_time);
+		}
 
 		/* If diff_ts is very small, we might be getting false pulse detects
 		 * due to heavy interference. We might be getting spectral splatter
