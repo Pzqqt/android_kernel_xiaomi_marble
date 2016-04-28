@@ -450,7 +450,7 @@ static void cds_set_5g_channel_params(uint16_t oper_ch,
 	enum channel_state chan_state2 = CHANNEL_STATE_ENABLE;
 	const struct bonded_chan *bonded_chan_ptr;
 
-	if (CH_WIDTH_MAX >= ch_params->ch_width)
+	if (CH_WIDTH_MAX <= ch_params->ch_width)
 		ch_params->ch_width = CH_WIDTH_80P80MHZ;
 
 	while (ch_params->ch_width != CH_WIDTH_INVALID) {
@@ -506,8 +506,8 @@ static void cds_set_2g_channel_params(uint16_t oper_ch,
 {
 	enum channel_state chan_state = CHANNEL_STATE_ENABLE;
 
-	if (CH_WIDTH_MAX >= ch_params->ch_width)
-		ch_params->ch_width = CH_WIDTH_80P80MHZ;
+	if (CH_WIDTH_MAX <= ch_params->ch_width)
+		ch_params->ch_width = CH_WIDTH_40MHZ;
 
 	while (ch_params->ch_width != CH_WIDTH_INVALID) {
 		chan_state = cds_get_2g_bonded_channel_state(oper_ch,
