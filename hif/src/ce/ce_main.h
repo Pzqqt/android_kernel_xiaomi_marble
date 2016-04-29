@@ -126,7 +126,7 @@ struct HIF_CE_state {
 	bool fake_sleep;
 	qdf_timer_t sleep_timer;
 	bool sleep_timer_init;
-	unsigned long sleep_ticks;
+	qdf_time_t sleep_ticks;
 
 	/* Per-pipe state. */
 	struct HIF_CE_pipe_info pipe_info[CE_COUNT_MAX];

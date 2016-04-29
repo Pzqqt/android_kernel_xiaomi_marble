@@ -43,7 +43,7 @@ typedef __qdf_time_t qdf_time_t;
  *
  * Return: ticks
  */
-static inline unsigned long qdf_system_ticks(void)
+static inline qdf_time_t qdf_system_ticks(void)
 {
 	return __qdf_system_ticks();
 }
@@ -65,7 +65,7 @@ static inline uint32_t qdf_system_ticks_to_msecs(unsigned long clock_ticks)
  *
  * Return: unsigned long number of ticks
  */
-static inline unsigned long qdf_system_msecs_to_ticks(uint32_t msecs)
+static inline qdf_time_t qdf_system_msecs_to_ticks(uint32_t msecs)
 {
 	return __qdf_system_msecs_to_ticks(msecs);
 }
@@ -74,9 +74,9 @@ static inline unsigned long qdf_system_msecs_to_ticks(uint32_t msecs)
  * qdf_get_system_uptime - Return a monotonically increasing time
  * This increments once per HZ ticks
  *
- * Return: unsigned long system up time
+ * Return: qdf_time_t system up time in ticks
  */
-static inline unsigned long qdf_get_system_uptime(void)
+static inline qdf_time_t qdf_get_system_uptime(void)
 {
 	return __qdf_get_system_uptime();
 }
@@ -84,7 +84,7 @@ static inline unsigned long qdf_get_system_uptime(void)
 /**
  * qdf_get_system_timestamp - Return current timestamp
  *
- * Return: unsigned long
+ * Return: unsigned long timestamp in ms.
  */
 static inline unsigned long qdf_get_system_timestamp(void)
 {

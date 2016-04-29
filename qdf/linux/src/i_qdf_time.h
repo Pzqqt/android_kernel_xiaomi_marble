@@ -84,7 +84,7 @@ static inline __qdf_time_t __qdf_get_system_uptime(void)
 	return jiffies;
 }
 
-static inline __qdf_time_t __qdf_get_system_timestamp(void)
+static inline unsigned long __qdf_get_system_timestamp(void)
 {
 	return (jiffies / HZ) * 1000 + (jiffies % HZ) * (1000 / HZ);
 }
