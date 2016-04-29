@@ -136,6 +136,7 @@ struct CE_state {
 	bool force_break;	/* Flag to indicate whether to
 				 * break out the DPC context */
 
+	qdf_time_t ce_service_yield_time;
 	unsigned int receive_count;	/* count Num Of Receive Buffers
 					 * handled for one interrupt
 					 * DPC routine */
@@ -387,6 +388,9 @@ struct ce_sendlist_s {
 		uint32_t user_flags;
 	} item[CE_SENDLIST_ITEMS_MAX];
 };
+
+bool hif_ce_service_should_yield(struct hif_softc *scn, struct CE_state
+				 *ce_state);
 
 #ifdef WLAN_FEATURE_FASTPATH
 void ce_h2t_tx_ce_cleanup(struct CE_handle *ce_hdl);

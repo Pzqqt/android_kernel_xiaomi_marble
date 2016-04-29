@@ -1352,7 +1352,6 @@ hif_pci_ce_recv_data(struct CE_handle *copyeng, void *ce_context,
 #endif
 	struct hif_msg_callbacks *msg_callbacks =
 		&hif_state->msg_callbacks_current;
-	uint32_t count;
 
 	do {
 #ifdef HIF_PCI
@@ -1373,8 +1372,7 @@ hif_pci_ce_recv_data(struct CE_handle *copyeng, void *ce_context,
 		/* Set up force_break flag if num of receices reaches
 		 * MAX_NUM_OF_RECEIVES */
 		ce_state->receive_count++;
-		count = ce_state->receive_count;
-		if (qdf_unlikely(hif_max_num_receives_reached(scn, count))) {
+		if (qdf_unlikely(hif_ce_service_should_yield(scn, ce_state))) {
 			ce_state->force_break = 1;
 			break;
 		}

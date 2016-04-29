@@ -189,6 +189,22 @@ inline void ce_init_ce_desc_event_log(int ce_id, int size)
 }
 #endif
 
+/**
+ * hif_ce_service_should_yield() - return true if the service is hogging the cpu
+ * @scn: hif context
+ * @ce_state: context of the copy engine being serviced
+ *
+ * Return: true if the service should yield
+ */
+bool hif_ce_service_should_yield(struct hif_softc *scn,
+				 struct CE_state *ce_state)
+{
+	bool yield = qdf_system_time_after_eq(qdf_system_ticks(),
+					     ce_state->ce_service_yield_time) ||
+		     hif_max_num_receives_reached(scn, ce_state->receive_count);
+	return yield;
+}
+
 /*
  * Support for Copy Engine hardware, which is mainly used for
  * communication between Host and Target over a PCIe interconnect.
@@ -1738,6 +1754,7 @@ static void ce_per_engine_service_fast(struct hif_softc *scn, int ce_id)
 }
 #endif /* WLAN_FEATURE_FASTPATH */
 
+#define CE_PER_ENGINE_SERVICE_MAX_TIME_JIFFIES 2
 /*
  * Guts of interrupt handler for per-engine interrupts on a particular CE.
  *
@@ -1746,7 +1763,6 @@ static void ce_per_engine_service_fast(struct hif_softc *scn, int ce_id)
  *
  * Returns: number of messages processed
  */
-
 int ce_per_engine_service(struct hif_softc *scn, unsigned int CE_id)
 {
 	struct CE_state *CE_state = scn->ce_id_to_state[CE_id];
@@ -1790,6 +1806,8 @@ int ce_per_engine_service(struct hif_softc *scn, unsigned int CE_id)
 	/* NAPI: scn variables- thread/multi-processing safety? */
 	CE_state->receive_count = 0;
 	CE_state->force_break = 0;
+	CE_state->ce_service_yield_time = qdf_system_ticks() +
+		CE_PER_ENGINE_SERVICE_MAX_TIME_JIFFIES;
 more_completions:
 	if (CE_state->recv_cb) {
 
