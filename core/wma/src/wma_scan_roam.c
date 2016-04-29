@@ -2078,15 +2078,12 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 		goto cleanup_label;
 	}
 	bss_desc_ptr = qdf_mem_malloc(sizeof(tSirBssDescription) + ie_len);
-	roam_synch_ind_ptr->join_rsp = qdf_mem_malloc(sizeof(tSirSmeJoinRsp));
-	if ((NULL == roam_synch_ind_ptr->join_rsp) || (NULL == bss_desc_ptr)) {
+	if (NULL == bss_desc_ptr) {
 		WMA_LOGE("LFR3: mem alloc failed!");
 		QDF_ASSERT(bss_desc_ptr != NULL);
-		QDF_ASSERT(roam_synch_ind_ptr->join_rsp != NULL);
 		status =  -ENOMEM;
 		goto cleanup_label;
 	}
-	qdf_mem_zero(roam_synch_ind_ptr->join_rsp, sizeof(tSirSmeJoinRsp));
 	qdf_mem_zero(bss_desc_ptr, sizeof(tSirBssDescription) + ie_len);
 	wma->pe_roam_synch_cb((tpAniSirGlobal)wma->mac_context,
 			roam_synch_ind_ptr, bss_desc_ptr);

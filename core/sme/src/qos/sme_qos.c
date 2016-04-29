@@ -4632,7 +4632,12 @@ QDF_STATUS sme_qos_process_reassoc_success_ev(tpAniSirGlobal mac_ctx,
 			if (csr_roam_session &&
 			    csr_roam_session->connectedInfo.nRICRspLength) {
 				status = sme_qos_process_ft_reassoc_rsp_ev(
-						mac_ctx, sessionid, event_info);
+						mac_ctx, sessionid,
+						event_info);
+			} else {
+				QDF_TRACE(QDF_MODULE_ID_SME,
+					QDF_TRACE_LEVEL_ERROR, FL(
+					"session or RIC data is not present"));
 			}
 		}
 #ifdef FEATURE_WLAN_ESE

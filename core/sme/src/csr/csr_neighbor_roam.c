@@ -1397,8 +1397,8 @@ static void csr_neighbor_roam_info_ctx_init(
 		ngbr_roam_info->is11rAssoc = true;
 	} else
 		ngbr_roam_info->is11rAssoc = false;
-	NEIGHBOR_ROAM_DEBUG(pMac, LOG2, FL("11rAssoc is = %d"),
-		ngbr_roam_info->is11rAssoc);
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH,
+			FL("11rAssoc is = %d"), ngbr_roam_info->is11rAssoc);
 
 #ifdef FEATURE_WLAN_ESE
 	/* Based on the auth scheme tell if we are 11r */
@@ -1408,9 +1408,9 @@ static void csr_neighbor_roam_info_ctx_init(
 		ngbr_roam_info->isESEAssoc = true;
 	} else
 		ngbr_roam_info->isESEAssoc = false;
-	NEIGHBOR_ROAM_DEBUG(pMac, LOG2,
-		FL("isESEAssoc is = %d ft = %d"),
-		ngbr_roam_info->isESEAssoc, init_ft_flag);
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH,
+			FL("isESEAssoc is = %d ft = %d"),
+			ngbr_roam_info->isESEAssoc, init_ft_flag);
 #endif
 	/* If "Legacy Fast Roaming" is enabled */
 	if (csr_roam_is_fast_roam_enabled(pMac, session_id))

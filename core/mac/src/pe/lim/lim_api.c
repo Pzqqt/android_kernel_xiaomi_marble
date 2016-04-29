@@ -1878,6 +1878,7 @@ QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	tpAddBssParams add_bss_params;
 	uint8_t local_nss;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	uint16_t join_rsp_len;
 
 	if (!roam_sync_ind_ptr) {
 		lim_log(mac_ctx, LOGE, FL("LFR3:roam_sync_ind_ptr is NULL"));
@@ -1987,6 +1988,31 @@ QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	curr_sta_ds->nss = local_nss;
 	ft_session_ptr->limMlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;
 	lim_init_tdls_data(mac_ctx, ft_session_ptr);
+	join_rsp_len = ft_session_ptr->RICDataLen + sizeof(tSirSmeJoinRsp) -
+			sizeof(uint8_t);
+	roam_sync_ind_ptr->join_rsp = qdf_mem_malloc(join_rsp_len);
+	if (NULL == roam_sync_ind_ptr->join_rsp) {
+		lim_log(mac_ctx, LOGE, FL("LFR3:mem alloc failed"));
+		ft_session_ptr->bRoamSynchInProgress = false;
+		if (mac_ctx->roam.pReassocResp)
+			qdf_mem_free(mac_ctx->roam.pReassocResp);
+		mac_ctx->roam.pReassocResp = NULL;
+		return QDF_STATUS_E_NOMEM;
+	}
+	qdf_mem_zero(roam_sync_ind_ptr->join_rsp, join_rsp_len);
+
+	lim_log(mac_ctx, LOG1, FL("Session RicLength = %d"),
+			ft_session_ptr->RICDataLen);
+	if (ft_session_ptr->ricData != NULL) {
+		roam_sync_ind_ptr->join_rsp->parsedRicRspLen =
+			ft_session_ptr->RICDataLen;
+		qdf_mem_copy(roam_sync_ind_ptr->join_rsp->frames,
+				ft_session_ptr->ricData,
+				roam_sync_ind_ptr->join_rsp->parsedRicRspLen);
+		qdf_mem_free(ft_session_ptr->ricData);
+		ft_session_ptr->ricData = NULL;
+		ft_session_ptr->RICDataLen = 0;
+	}
 	roam_sync_ind_ptr->join_rsp->vht_channel_width =
 		ft_session_ptr->ch_width;
 	roam_sync_ind_ptr->join_rsp->staId = curr_sta_ds->staIndex;

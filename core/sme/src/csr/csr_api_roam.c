@@ -18723,6 +18723,7 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	struct qdf_mac_addr bcast_mac = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
 	tpAddBssParams add_bss_params;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	uint16_t len;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	tSirSmeHTProfile *src_profile = NULL;
 	tCsrRoamHTProfile *dst_profile = NULL;
@@ -18883,6 +18884,19 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 			FL("LFR3:Clear Connected info"));
 	csr_roam_free_connected_info(mac_ctx,
 			&session->connectedInfo);
+	len = roam_synch_data->join_rsp->parsedRicRspLen;
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+			FL("LFR3: RIC length - %d"), len);
+	if (len) {
+		session->connectedInfo.pbFrames =
+			qdf_mem_malloc(len);
+		if (session->connectedInfo.pbFrames != NULL) {
+			qdf_mem_copy(session->connectedInfo.pbFrames,
+				roam_synch_data->join_rsp->frames, len);
+			session->connectedInfo.nRICRspLength =
+				roam_synch_data->join_rsp->parsedRicRspLen;
+		}
+	}
 	conn_profile->vht_channel_width =
 		roam_synch_data->join_rsp->vht_channel_width;
 	add_bss_params = (tpAddBssParams)roam_synch_data->add_bss_params;
