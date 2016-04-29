@@ -2195,24 +2195,31 @@ u32 shadow_dst_wr_ind_addr(struct hif_softc *scn, u32 ctrl_addr)
  *
  * Store the LRO flush callback provided
  *
- * Return: none
+ * Return: Number of instances the callback is registered for
  */
-void ce_lro_flush_cb_register(struct hif_opaque_softc *hif_hdl,
-	 void (handler)(void *), void *data)
+int ce_lro_flush_cb_register(struct hif_opaque_softc *hif_hdl,
+			     void (handler)(void *), void *data)
 {
+	int rc = 0;
 	int i;
 	struct CE_state *ce_state;
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
 
 	QDF_ASSERT(scn != NULL);
 
-	for (i = 0; i < scn->ce_count; i++) {
-		ce_state = scn->ce_id_to_state[i];
-		if (ce_state->htt_rx_data) {
-			ce_state->lro_flush_cb = handler;
-			ce_state->lro_data = data;
+	if (scn != NULL) {
+		for (i = 0; i < scn->ce_count; i++) {
+			ce_state = scn->ce_id_to_state[i];
+			if ((ce_state != NULL) && (ce_state->htt_rx_data)) {
+				ce_state->lro_flush_cb = handler;
+				ce_state->lro_data = data;
+				rc++;
+			}
 		}
+	} else {
+		HIF_ERROR("%s: hif_state NULL!", __func__);
 	}
+	return rc;
 }
 
 /**
@@ -2222,23 +2229,29 @@ void ce_lro_flush_cb_register(struct hif_opaque_softc *hif_hdl,
  *
  * Remove the LRO flush callback
  *
- * Return: none
+ * Return: Number of instances the callback is de-registered
  */
-void ce_lro_flush_cb_deregister(struct hif_opaque_softc *hif_hdl)
+int ce_lro_flush_cb_deregister(struct hif_opaque_softc *hif_hdl)
 {
+	int rc = 0;
 	int i;
 	struct CE_state *ce_state;
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
 
 	QDF_ASSERT(scn != NULL);
-
-	for (i = 0; i < scn->ce_count; i++) {
-		ce_state = scn->ce_id_to_state[i];
-		if (ce_state->htt_rx_data) {
-			ce_state->lro_flush_cb = NULL;
-			ce_state->lro_data = NULL;
+	if (scn != NULL) {
+		for (i = 0; i < scn->ce_count; i++) {
+			ce_state = scn->ce_id_to_state[i];
+			if ((ce_state != NULL) && (ce_state->htt_rx_data)) {
+				ce_state->lro_flush_cb = NULL;
+				ce_state->lro_data = NULL;
+				rc++;
+			}
 		}
+	} else {
+		HIF_ERROR("%s: hif_state NULL!", __func__);
 	}
+	return rc;
 }
 #endif
 
@@ -2256,20 +2269,24 @@ void ce_lro_flush_cb_deregister(struct hif_opaque_softc *hif_hdl)
  *			indicating if the DL CE for this service
  *			is polled is returned.
  *
- * Return: Indicates whether this operation was successful.
+ * Return: Indicates whether the service has been found in the table.
+ *         Upon return, ul_is_polled is updated only if ul_pipe is updated.
+ *         There will be warning logs if either leg has not been updated
+ *         because it missed the entry in the table (but this is not an err).
  */
-
 int hif_map_service_to_pipe(struct hif_opaque_softc *hif_hdl, uint16_t svc_id,
 			uint8_t *ul_pipe, uint8_t *dl_pipe, int *ul_is_polled,
 			int *dl_is_polled)
 {
-	int status = QDF_STATUS_SUCCESS;
+	int status = QDF_STATUS_E_INVAL;
 	unsigned int i;
 	struct service_to_pipe element;
 	struct service_to_pipe *tgt_svc_map_to_use;
 	size_t sz_tgt_svc_map_to_use;
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
 	uint32_t mode = hif_get_conparam(scn);
+	bool dl_updated = false;
+	bool ul_updated = false;
 
 	if (QDF_IS_EPPING_ENABLED(mode)) {
 		tgt_svc_map_to_use = target_service_to_ce_map_wlan_epping;
@@ -2286,17 +2303,25 @@ int hif_map_service_to_pipe(struct hif_opaque_softc *hif_hdl, uint16_t svc_id,
 
 		memcpy(&element, &tgt_svc_map_to_use[i], sizeof(element));
 		if (element.service_id == svc_id) {
-
-			if (element.pipedir == PIPEDIR_OUT)
+			if (element.pipedir == PIPEDIR_OUT) {
 				*ul_pipe = element.pipenum;
-
-			else if (element.pipedir == PIPEDIR_IN)
+				*ul_is_polled =
+					(host_ce_config[*ul_pipe].flags &
+					 CE_ATTR_DISABLE_INTR) != 0;
+				ul_updated = true;
+			} else if (element.pipedir == PIPEDIR_IN) {
 				*dl_pipe = element.pipenum;
+				dl_updated = true;
+			}
+			status = QDF_STATUS_SUCCESS;
 		}
 	}
-
-	*ul_is_polled =
-		(host_ce_config[*ul_pipe].flags & CE_ATTR_DISABLE_INTR) != 0;
+	if (ul_updated == false)
+		HIF_WARN("%s: ul pipe is NOT updated for service %d",
+			 __func__, svc_id);
+	if (dl_updated == false)
+		HIF_WARN("%s: dl pipe is NOT updated for service %d",
+			 __func__, svc_id);
 
 	return status;
 }
