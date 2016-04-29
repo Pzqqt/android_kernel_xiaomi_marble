@@ -3919,8 +3919,11 @@ void ol_register_lro_flush_cb(void (handler)(void *), void *data)
 		(struct hif_opaque_softc *)cds_get_context(QDF_MODULE_ID_HIF);
 	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	pdev->lro_info.lro_flush_cb = handler;
-	pdev->lro_info.lro_data = data;
+	if (pdev != NULL) {
+		pdev->lro_info.lro_flush_cb = handler;
+		pdev->lro_info.lro_data = data;
+	} else
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "%s: pdev NULL!", __func__);
 
 	hif_lro_flush_cb_register(hif_device, ol_txrx_lro_flush, pdev);
 }
@@ -3942,8 +3945,11 @@ void ol_deregister_lro_flush_cb(void)
 
 	hif_lro_flush_cb_deregister(hif_device);
 
-	pdev->lro_info.lro_flush_cb = NULL;
-	pdev->lro_info.lro_data = NULL;
+	if (pdev != NULL) {
+		pdev->lro_info.lro_flush_cb = NULL;
+		pdev->lro_info.lro_data = NULL;
+	} else
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "%s: pdev NULL!", __func__);
 }
 #endif /* FEATURE_LRO */
 
