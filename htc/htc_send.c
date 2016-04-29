@@ -329,9 +329,10 @@ static A_STATUS htc_send_bundled_netbuf(HTC_TARGET *target,
 #endif
 	status = hif_send_head(target->hif_dev,
 			       pEndpoint->UL_PipeID,
-			       pEndpoint->Id, data_len, bundleBuf, data_attr);
+			       pEndpoint->Id, data_len,
+			       bundleBuf, data_attr);
 	if (status != A_OK) {
-		qdf_print("%s:hif_send_head failed(len=%d).\n", __FUNCTION__,
+		qdf_print("%s:hif_send_head failed(len=%zu).\n", __func__,
 			  data_len);
 	}
 	return status;

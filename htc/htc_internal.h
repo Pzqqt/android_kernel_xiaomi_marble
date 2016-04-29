@@ -49,9 +49,12 @@ extern "C" {
 #define HTC_TARGET_CREDIT_INTR_MASK         0xF0
 #define HTC_MIN_MSG_PER_BUNDLE              2
 #if defined(HIF_USB)
-#define HTC_MAX_MSG_PER_BUNDLE              9
+#define HTC_MAX_MSG_PER_BUNDLE_RX           11
+#define HTC_MAX_MSG_PER_BUNDLE_TX           8
 #else
+#define HTC_MAX_MSG_PER_BUNDLE_RX           64
 #define HTC_MAX_MSG_PER_BUNDLE              16
+#define HTC_MAX_MSG_PER_BUNDLE_TX           32
 #endif
 /*
  * HTC_MAX_TX_BUNDLE_SEND_LIMIT -
@@ -185,6 +188,10 @@ typedef struct _HTC_TARGET {
 	uint32_t TX_comp_cnt;
 	uint8_t MaxMsgsPerHTCBundle;
 	qdf_work_t queue_kicker;
+#if defined(DEBUG_HL_LOGGING) && defined(CONFIG_HL_SUPPORT)
+	A_UINT32 rx_bundle_stats[HTC_MAX_MSG_PER_BUNDLE_RX];
+	A_UINT32 tx_bundle_stats[HTC_MAX_MSG_PER_BUNDLE_TX];
+#endif
 	uint32_t con_mode;
 } HTC_TARGET;
 
