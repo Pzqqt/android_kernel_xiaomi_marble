@@ -4036,11 +4036,9 @@ void __hdd_wlan_exit(void)
 
 	memdump_deinit();
 
-#ifdef QCA_PKT_PROTO_TRACE
-	cds_pkt_proto_trace_close();
-#endif
 	/* Do all the cleanup before deregistering the driver */
 	hdd_wlan_exit(hdd_ctx);
+
 	EXIT();
 }
 
@@ -5862,8 +5860,6 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 		       FL("hdd_post_cds_enable_config failed"));
 		goto err_cds_disable;
 	}
-
-	cds_pkt_proto_trace_init();
 
 	rtnl_held = hdd_hold_rtnl_lock();
 

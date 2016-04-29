@@ -76,42 +76,37 @@ uint8_t cds_pkt_get_proto_type
 	(struct sk_buff *skb, uint8_t tracking_map, uint8_t dot11_type);
 
 #ifdef QCA_PKT_PROTO_TRACE
-/*---------------------------------------------------------------------------
-
-* brief cds_pkt_trace_buf_update() -
-      Update storage buffer with interest event string
-
-* event_string Event String may packet type or outstanding event
-
-   ---------------------------------------------------------------------------*/
+/**
+ * cds_pkt_trace_buf_update() - Update storage buffer with interest event string
+ * @event_string: string may be a packet type or an outstanding event
+ *
+ * Return: none
+ */
 void cds_pkt_trace_buf_update(char *event_string);
 
-/*---------------------------------------------------------------------------
-
-* brief cds_pkt_trace_buf_dump() -
-      Dump stored information into kernel log
-
-   ---------------------------------------------------------------------------*/
+/**
+ * cds_pkt_trace_buf_dump() - Dump stored information into kernel log
+ *
+ * Return: none
+ */
 void cds_pkt_trace_buf_dump(void);
 
-/*---------------------------------------------------------------------------
-
-* brief cds_pkt_proto_trace_init() -
-      Initialize protocol trace functionality, allocate required resource
-
-   ---------------------------------------------------------------------------*/
+/**
+ * cds_pkt_proto_trace_init() - Initialize protocol trace functionality
+ *
+ * Return: none
+ */
 void cds_pkt_proto_trace_init(void);
 
-/*---------------------------------------------------------------------------
-
-* brief cds_pkt_proto_trace_close() -
-      Free required resource
-
-   ---------------------------------------------------------------------------*/
-void cds_pkt_proto_trace_close(void);
+/**
+ * cds_pkt_proto_trace_deinit() - Free protocol trace buffer resource
+ *
+ * Return: none
+ */
+void cds_pkt_proto_trace_deinit(void);
 #else
 static inline void cds_pkt_proto_trace_init(void) { }
-static inline void cds_pkt_proto_trace_close(void) {}
+static inline void cds_pkt_proto_trace_deinit(void) {}
 #endif /* QCA_PKT_PROTO_TRACE */
 
 /**

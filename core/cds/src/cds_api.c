@@ -223,6 +223,9 @@ QDF_STATUS cds_open(void)
 	/* Initialize bug reporting structure */
 	cds_init_log_completion();
 
+	/* Initialize protocol trace functionality */
+	cds_pkt_proto_trace_init();
+
 	/* Initialize the probe event */
 	if (qdf_event_create(&gp_cds_context->ProbeEvent) != QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
@@ -852,6 +855,9 @@ QDF_STATUS cds_close(v_CONTEXT_t cds_context)
 			  "%s: failed to destroy ProbeEvent", __func__);
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
+
+	/* De-Initialize protocol trace functionality */
+	cds_pkt_proto_trace_deinit();
 
 	cds_deinit_log_completion();
 

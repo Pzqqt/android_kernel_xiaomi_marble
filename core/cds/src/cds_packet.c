@@ -181,12 +181,12 @@ uint8_t cds_pkt_get_proto_type(struct sk_buff *skb, uint8_t tracking_map,
 }
 
 #ifdef QCA_PKT_PROTO_TRACE
-/*---------------------------------------------------------------------------
-* @brief cds_pkt_trace_buf_update() -
-      Update storage buffer with interest event string
-
-* event_string Event String may packet type or outstanding event
-   ---------------------------------------------------------------------------*/
+/**
+ * cds_pkt_trace_buf_update() - Update storage buffer with interest event string
+ * @event_string: string may be a packet type or an outstanding event
+ *
+ * Return: none
+ */
 void cds_pkt_trace_buf_update(char *event_string)
 {
 	uint32_t slot;
@@ -194,6 +194,11 @@ void cds_pkt_trace_buf_update(char *event_string)
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
 		  "%s %d, %s", __func__, __LINE__, event_string);
 	qdf_spinlock_acquire(&trace_buffer_lock);
+	if (!trace_buffer) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			"trace_buffer is null");
+		goto release_lock;
+	}
 	slot = trace_buffer_order % CDS_PKT_TRAC_MAX_TRACE_BUF;
 	trace_buffer[slot].order = trace_buffer_order;
 	trace_buffer[slot].event_time = qdf_mc_timer_get_system_time();
@@ -204,20 +209,27 @@ void cds_pkt_trace_buf_update(char *event_string)
 		     (CDS_PKT_TRAC_MAX_STRING_LEN < strlen(event_string)) ?
 		     CDS_PKT_TRAC_MAX_STRING_LEN : strlen(event_string));
 	trace_buffer_order++;
-	qdf_spinlock_release(&trace_buffer_lock);
 
+release_lock:
+	qdf_spinlock_release(&trace_buffer_lock);
 	return;
 }
 
-/*---------------------------------------------------------------------------
-* @brief cds_pkt_trace_buf_dump() -
-      Dump stored information into kernel log
-   ---------------------------------------------------------------------------*/
+/**
+ * cds_pkt_trace_buf_dump() - Dump stored information into kernel log
+ *
+ * Return: none
+ */
 void cds_pkt_trace_buf_dump(void)
 {
 	uint32_t slot, idx;
 
 	qdf_spinlock_acquire(&trace_buffer_lock);
+	if (!trace_buffer) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			"trace_buffer is null");
+		goto release_lock;
+	}
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 		  "PACKET TRACE DUMP START Current Timestamp %u",
 		  (unsigned int)qdf_mc_timer_get_system_time());
@@ -245,15 +257,16 @@ void cds_pkt_trace_buf_dump(void)
 
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 		  "PACKET TRACE DUMP END");
+release_lock:
 	qdf_spinlock_release(&trace_buffer_lock);
-
 	return;
 }
 
-/*---------------------------------------------------------------------------
-* @brief cds_pkt_proto_trace_init() -
-      Initialize protocol trace functionality, allocate required resource
-   ---------------------------------------------------------------------------*/
+/**
+ * cds_pkt_proto_trace_init() - Initialize protocol trace functionality
+ *
+ * Return: none
+ */
 void cds_pkt_proto_trace_init(void)
 {
 	/* Init spin lock to protect global memory */
@@ -269,17 +282,18 @@ void cds_pkt_proto_trace_init(void)
 	return;
 }
 
-/*---------------------------------------------------------------------------
-* @brief cds_pkt_proto_trace_close() -
-      Free required resource
-   ---------------------------------------------------------------------------*/
-void cds_pkt_proto_trace_close(void)
+/**
+ * cds_pkt_proto_trace_deinit() - Free trace_buffer resource
+ *
+ * Return: none
+ */
+void cds_pkt_proto_trace_deinit(void)
 {
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 		  "%s %d", __func__, __LINE__);
 	qdf_mem_free(trace_buffer);
+	trace_buffer = NULL;
 	qdf_spinlock_destroy(&trace_buffer_lock);
-
 	return;
 }
 #endif /* QCA_PKT_PROTO_TRACE */
