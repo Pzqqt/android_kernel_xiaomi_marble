@@ -33,8 +33,10 @@
 #include <qdf_lock.h>           /* qdf_spinlock */
 #include <qdf_atomic.h>         /* qdf_atomic_read */
 
+#if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB)
 /* Required for WLAN_FEATURE_FASTPATH */
 #include <ce_api.h>
+#endif
 /* header files for utilities */
 #include <cds_queue.h>          /* TAILQ */
 
@@ -70,6 +72,7 @@
 #include <cdp_txrx_flow_ctrl_legacy.h>
 #include <cdp_txrx_ipa.h>
 #include "wma.h"
+#include "hif.h"
 #include <cdp_txrx_peer_ops.h>
 #ifndef REMOVE_PKT_LOG
 #include "pktlog_ac.h"
@@ -556,8 +559,8 @@ ol_txrx_pdev_post_attach(ol_txrx_pdev_handle pdev)
 	if (ret)
 		goto ol_attach_fail;
 
-	/* Update CE's pkt download length */
-	ce_pkt_dl_len_set((void *)osc, htt_pkt_dl_len_get(pdev->htt_pdev));
+	/* Update bus pkt download length */
+	hif_bus_pkt_dl_len_set((void *)osc, htt_pkt_dl_len_get(pdev->htt_pdev));
 
 	/* Attach micro controller data path offload resource */
 	if (ol_cfg_ipa_uc_offload_enabled(pdev->ctrl_pdev))
