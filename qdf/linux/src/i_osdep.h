@@ -40,20 +40,6 @@
 #include <sys/queue.h>
 #endif
 
-/**
- * enum qdf_bus_type - Supported Bus types
- * @QDF_BUS_TYPE_PCI: PCI Bus
- * @QDF_BUS_TYPE_AHB: AHB Bus
- * @QDF_BUS_TYPE_SNOC: SNOC Bus
- * @QDF_BUS_TYPE_SIM: Simulator
- */
-enum qdf_bus_type {
-	QDF_BUS_TYPE_PCI,
-	QDF_BUS_TYPE_AHB,
-	QDF_BUS_TYPE_SNOC,
-	QDF_BUS_TYPE_SIM
-};
-
 /*
  * Byte Order stuff
  */

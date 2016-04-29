@@ -148,6 +148,20 @@ struct __qdf_mempool_ctxt;
 #define MAX_MEM_POOLS 64
 
 /**
+ * enum qdf_bus_type - Supported Bus types
+ * @QDF_BUS_TYPE_PCI: PCI Bus
+ * @QDF_BUS_TYPE_AHB: AHB Bus
+ * @QDF_BUS_TYPE_SNOC: SNOC Bus
+ * @QDF_BUS_TYPE_SIM: Simulator
+ */
+enum qdf_bus_type {
+	QDF_BUS_TYPE_PCI,
+	QDF_BUS_TYPE_AHB,
+	QDF_BUS_TYPE_SNOC,
+	QDF_BUS_TYPE_SIM
+};
+
+/**
  * struct __qdf_device - generic qdf device type
  * @drv: Pointer to driver
  * @drv_hdl: Pointer to driver handle
@@ -167,6 +181,7 @@ struct __qdf_device {
 	__qdf_resource_t res;
 	__qdf_os_intr func;
 	struct __qdf_mempool_ctxt *mem_pool[MAX_MEM_POOLS];
+	enum qdf_bus_type bus_type;
 };
 typedef struct __qdf_device *__qdf_device_t;
 
