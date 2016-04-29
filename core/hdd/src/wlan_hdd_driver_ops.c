@@ -303,12 +303,14 @@ static void hdd_hif_close(void *hif_ctx)
  *
  * Return: void
  */
-void hdd_init_qdf_ctx(struct device *dev, void *bdev)
+void hdd_init_qdf_ctx(struct device *dev, void *bdev,
+		 enum qdf_bus_type bus_type)
 {
 	qdf_device_t qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
 	qdf_dev->dev = dev;
 	qdf_dev->drv_hdl = bdev;
+	qdf_dev->bus_type = bus_type;
 }
 
 /**
@@ -362,7 +364,7 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 			goto err_hdd_deinit;
 	}
 
-	hdd_init_qdf_ctx(dev, bdev);
+	hdd_init_qdf_ctx(dev, bdev, bus_type);
 
 	ret = hdd_hif_open(dev, bdev, bid, bus_type, reinit);
 
