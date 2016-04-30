@@ -880,10 +880,10 @@ struct ol_txrx_vdev_t {
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 	struct ol_tx_flow_pool_t *pool;
 #endif
-
 	/* intra bss forwarded tx and rx packets count */
 	uint64_t fwd_tx_packets;
 	uint64_t fwd_rx_packets;
+	bool is_wisa_mode_enable;
 };
 
 struct ol_rx_reorder_array_elem_t {

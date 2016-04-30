@@ -392,28 +392,6 @@ void htt_detach_target(htt_pdev_handle pdev)
 {
 }
 
-#ifdef WLAN_FEATURE_FASTPATH
-/**
- * htt_pkt_dl_len_get() HTT packet download length for fastpath case
- *
- * @htt_dev: pointer to htt device.
- *
- * As fragment one already downloaded HTT/HTC header, download length is
- * remaining bytes.
- *
- * Return: download length
- */
-int htt_pkt_dl_len_get(struct htt_pdev_t *htt_dev)
-{
-	return htt_dev->download_len - sizeof(struct htt_host_tx_desc_t);
-}
-#else
-int htt_pkt_dl_len_get(struct htt_pdev_t *htt_dev)
-{
-	return 0;
-}
-#endif
-
 static inline
 int htt_update_endpoint(struct htt_pdev_t *pdev,
 			uint16_t service_id, HTC_ENDPOINT_ID ep)

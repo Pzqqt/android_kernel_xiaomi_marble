@@ -559,9 +559,6 @@ ol_txrx_pdev_post_attach(ol_txrx_pdev_handle pdev)
 	if (ret)
 		goto ol_attach_fail;
 
-	/* Update bus pkt download length */
-	hif_bus_pkt_dl_len_set((void *)osc, htt_pkt_dl_len_get(pdev->htt_pdev));
-
 	/* Attach micro controller data path offload resource */
 	if (ol_cfg_ipa_uc_offload_enabled(pdev->ctrl_pdev))
 		if (htt_ipa_uc_attach(pdev->htt_pdev))
@@ -4019,4 +4016,20 @@ ol_txrx_vdev_handle ol_txrx_get_vdev_from_vdev_id(uint8_t vdev_id)
 	}
 
 	return vdev;
+}
+
+/**
+ * ol_txrx_set_wisa_mode() - set wisa mode
+ * @vdev: vdev handle
+ * @enable: enable flag
+ *
+ * Return: QDF STATUS
+ */
+QDF_STATUS ol_txrx_set_wisa_mode(ol_txrx_vdev_handle vdev, bool enable)
+{
+	if (!vdev)
+		return QDF_STATUS_E_INVAL;
+
+	vdev->is_wisa_mode_enable = enable;
+	return QDF_STATUS_SUCCESS;
 }

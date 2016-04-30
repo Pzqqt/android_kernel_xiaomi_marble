@@ -36,6 +36,7 @@
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <cdp_txrx_cmn.h>       /* ol_txrx_vdev_t, etc. */
 #include <ol_txrx_internal.h>   /*TXRX_ASSERT2 */
+#include <ol_htt_tx_api.h>
 
 #define DIV_BY_8	3
 #define DIV_BY_32	5
@@ -373,5 +374,12 @@ void ol_tx_desc_dup_detect_reset(struct ol_txrx_pdev_t *pdev,
 {
 }
 #endif
+
+enum extension_header_type
+ol_tx_get_ext_header_type(struct ol_txrx_vdev_t *vdev,
+	qdf_nbuf_t netbuf);
+enum extension_header_type
+ol_tx_get_wisa_ext_type(qdf_nbuf_t netbuf);
+
 
 #endif /* _OL_TX_DESC__H_ */

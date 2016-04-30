@@ -605,6 +605,10 @@ int htt_tx_send_std(htt_pdev_handle pdev, qdf_nbuf_t msdu, uint16_t msdu_id)
 		download_len = packet_len;
 	}
 
+	if (QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_EXT_HEADER(msdu))
+		download_len += sizeof(struct htt_tx_msdu_desc_ext_t);
+
+
 	QDF_NBUF_UPDATE_TX_PKT_COUNT(msdu, QDF_NBUF_TX_PKT_HTT);
 	DPTRACE(qdf_dp_trace(msdu, QDF_DP_TRACE_HTT_PACKET_PTR_RECORD,
 				qdf_nbuf_data_addr(msdu),
@@ -1154,3 +1158,355 @@ htt_tx_desc_fill_tso_info(htt_pdev_handle pdev, void *desc,
 	}
 }
 #endif /* FEATURE_TSO */
+
+/**
+ * htt_get_ext_tid() - get ext_tid value
+ * @type: extension header type
+ * @ext_header_data: header data
+ * @msdu_info: msdu info
+ *
+ * Return: ext_tid value
+ */
+static inline
+int htt_get_ext_tid(enum extension_header_type type,
+	void *ext_header_data, struct htt_msdu_info_t *msdu_info)
+{
+	if (type == OCB_MODE_EXT_HEADER && ext_header_data)
+		return ((struct ocb_tx_ctrl_hdr_t *)ext_header_data)->ext_tid;
+	else
+		return msdu_info->info.ext_tid;
+}
+
+/**
+ * htt_get_channel_freq() - get channel frequency
+ * @type: extension header type
+ * @ext_header_data: header data
+ *
+ * Return: channel frequency number
+ */
+static inline
+int htt_get_channel_freq(enum extension_header_type type,
+	void *ext_header_data)
+{
+	if (type == OCB_MODE_EXT_HEADER && ext_header_data)
+		return ((struct ocb_tx_ctrl_hdr_t *)ext_header_data)
+							->channel_freq;
+	else
+		return HTT_INVALID_CHANNEL;
+}
+
+/**
+ * htt_fill_ocb_ext_header() - fill OCB extension header
+ * @msdu: network buffer
+ * @local_desc_ext: extension descriptor
+ * @type: extension header type
+ * @ext_header_data: header data
+ * @is_dsrc: is dsrc is eenabled or not
+ *
+ * Return: none
+ */
+static
+void htt_fill_ocb_ext_header(qdf_nbuf_t msdu,
+	struct htt_tx_msdu_desc_ext_t *local_desc_ext,
+	enum extension_header_type type, void *ext_header_data)
+{
+	struct ocb_tx_ctrl_hdr_t *tx_ctrl =
+		(struct ocb_tx_ctrl_hdr_t *)ext_header_data;
+
+	if (tx_ctrl->all_flags == 0)
+		return;
+	/*
+	  * Copy the info that was read from TX control header from the
+	  * user application to the extended HTT header.
+	  * First copy everything
+	  * to a local temp structure, and then copy everything to the
+	  * actual uncached structure in one go to save memory writes.
+	  */
+	local_desc_ext->valid_pwr = tx_ctrl->valid_pwr;
+	local_desc_ext->valid_mcs_mask = tx_ctrl->valid_datarate;
+	local_desc_ext->valid_retries = tx_ctrl->valid_retries;
+	local_desc_ext->valid_expire_tsf = tx_ctrl->valid_expire_tsf;
+	local_desc_ext->valid_chainmask = tx_ctrl->valid_chain_mask;
+
+	local_desc_ext->pwr = tx_ctrl->pwr;
+	if (tx_ctrl->valid_datarate &&
+			tx_ctrl->datarate <= htt_ofdm_datarate_max)
+		local_desc_ext->mcs_mask =
+			(1 << (tx_ctrl->datarate + 4));
+	local_desc_ext->retry_limit = tx_ctrl->retry_limit;
+	local_desc_ext->expire_tsf_lo = tx_ctrl->expire_tsf_lo;
+	local_desc_ext->expire_tsf_hi = tx_ctrl->expire_tsf_hi;
+	local_desc_ext->chain_mask = tx_ctrl->chain_mask;
+	local_desc_ext->is_dsrc = 1;
+	qdf_nbuf_push_head(msdu, sizeof(struct htt_tx_msdu_desc_ext_t));
+	qdf_mem_copy(qdf_nbuf_data(msdu), local_desc_ext,
+			sizeof(struct htt_tx_msdu_desc_ext_t));
+	QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_EXT_HEADER(msdu) = 1;
+}
+
+/**
+ * htt_fill_wisa_ext_header() - fill WiSA extension header
+ * @msdu: network buffer
+ * @local_desc_ext: extension descriptor
+ * @type: extension header type
+ * @ext_header_data: header data
+ *
+ * Return: none
+ */
+static
+void htt_fill_wisa_ext_header(qdf_nbuf_t msdu,
+	struct htt_tx_msdu_desc_ext_t *local_desc_ext,
+	enum extension_header_type type, void *ext_header_data)
+{
+	void *qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	QDF_STATUS status;
+
+	local_desc_ext->valid_mcs_mask = 1;
+	if (WISA_MODE_EXT_HEADER_6MBPS == type)
+		local_desc_ext->mcs_mask = htt_ofdm_datarate_6_mbps;
+	else
+		local_desc_ext->mcs_mask = htt_ofdm_datarate_24_mbps;
+	local_desc_ext->valid_nss_mask = 1;
+	local_desc_ext->nss_mask = 1;
+	local_desc_ext->valid_bandwidth = 1;
+	local_desc_ext->bandwidth_mask = htt_tx_bandwidth_20MHz;
+	local_desc_ext->valid_guard_interval = 1;
+	local_desc_ext->guard_interval = htt_tx_guard_interval_regular;
+
+	/*
+	 * Do dma_unmap and dma_map again if already mapped
+	 * as adding extra bytes in skb
+	 */
+	if (QDF_NBUF_CB_PADDR(msdu) != 0)
+		qdf_nbuf_unmap_single(qdf_ctx, msdu, QDF_DMA_TO_DEVICE);
+
+	qdf_nbuf_push_head(msdu, sizeof(struct htt_tx_msdu_desc_ext_t));
+	qdf_mem_copy(qdf_nbuf_data(msdu), local_desc_ext,
+			sizeof(struct htt_tx_msdu_desc_ext_t));
+
+	if (QDF_NBUF_CB_PADDR(msdu) != 0) {
+		status = qdf_nbuf_map_single(qdf_ctx, msdu, QDF_DMA_TO_DEVICE);
+		if (qdf_unlikely(status != QDF_STATUS_SUCCESS)) {
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
+				"%s: nbuf map failed", __func__);
+			return;
+		}
+	}
+	QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_EXT_HEADER(msdu) = 1;
+}
+
+/**
+ * htt_push_ext_header() - fill extension header
+ * @msdu: network buffer
+ * @local_desc_ext: extension descriptor
+ * @type: extension header type
+ * @ext_header_data: header data
+ * @is_dsrc: is dsrc is eenabled or not
+ *
+ * Return: none
+ */
+static
+void htt_push_ext_header(qdf_nbuf_t msdu,
+	struct htt_tx_msdu_desc_ext_t *local_desc_ext,
+	enum extension_header_type type, void *ext_header_data)
+{
+	switch (type) {
+	case OCB_MODE_EXT_HEADER:
+		htt_fill_ocb_ext_header(msdu, local_desc_ext,
+					type, ext_header_data);
+		break;
+	case WISA_MODE_EXT_HEADER_6MBPS:
+	case WISA_MODE_EXT_HEADER_24MBPS:
+		htt_fill_wisa_ext_header(msdu, local_desc_ext,
+					type, ext_header_data);
+		break;
+	default:
+		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO,
+			"Invalid EXT header type %d\n", type);
+		break;
+	}
+}
+
+/**
+ * htt_tx_desc_init() - Initialize the per packet HTT Tx descriptor
+ * @pdev:		  The handle of the physical device sending the
+ *			  tx data
+ * @htt_tx_desc:	  Abstract handle to the tx descriptor
+ * @htt_tx_desc_paddr_lo: Physical address of the HTT tx descriptor
+ * @msdu_id:		  ID to tag the descriptor with.
+ *			  The FW sends this ID back to host as a cookie
+ *			  during Tx completion, which the host uses to
+ *			  identify the MSDU.
+ *			  This ID is an index into the OL Tx desc. array.
+ * @msdu:		  The MSDU that is being prepared for transmission
+ * @msdu_info:		  Tx MSDU meta-data
+ * @tso_info:		  Storage for TSO meta-data
+ * @ext_header_data:      extension header data
+ * @type:                 extension header type
+ *
+ * This function initializes the HTT tx descriptor.
+ * HTT Tx descriptor is a host-f/w interface structure, and meta-data
+ * accompanying every packet downloaded to f/w via the HTT interface.
+ */
+void
+htt_tx_desc_init(htt_pdev_handle pdev,
+		 void *htt_tx_desc,
+		 qdf_dma_addr_t htt_tx_desc_paddr,
+		 uint16_t msdu_id,
+		 qdf_nbuf_t msdu, struct htt_msdu_info_t *msdu_info,
+		 struct qdf_tso_info_t *tso_info,
+		 void *ext_header_data,
+		 enum extension_header_type type)
+{
+	uint8_t  pkt_type, pkt_subtype = 0, ce_pkt_type = 0;
+	uint32_t hw_classify = 0, data_attr = 0;
+	uint32_t *word0, *word1, local_word3;
+#if HTT_PADDR64
+	uint32_t *word4;
+#else /* ! HTT_PADDR64 */
+	uint32_t *word3;
+#endif /* HTT_PADDR64 */
+	uint32_t local_word0, local_word1;
+	struct htt_host_tx_desc_t *htt_host_tx_desc =
+		(struct htt_host_tx_desc_t *)
+		(((char *)htt_tx_desc) - HTT_TX_DESC_VADDR_OFFSET);
+	bool desc_ext_required = (type != EXT_HEADER_NOT_PRESENT);
+	uint16_t channel_freq;
+	void *qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	QDF_STATUS status;
+
+	word0 = (uint32_t *) htt_tx_desc;
+	word1 = word0 + 1;
+	/*
+	 * word2 is frag desc pointer
+	 * word3 or 4 is peer_id
+	 */
+#if HTT_PADDR64
+	word4 = word0 + 4;      /* Dword 3 */
+#else /* ! HTT_PADDR64  */
+	word3 = word0 + 3;      /* Dword 3 */
+#endif /* HTT_PADDR64 */
+
+	pkt_type = msdu_info->info.l2_hdr_type;
+
+	if (qdf_likely(pdev->cfg.ce_classify_enabled)) {
+		if (qdf_likely(pkt_type == htt_pkt_type_eth2 ||
+			pkt_type == htt_pkt_type_ethernet))
+			qdf_nbuf_tx_info_get(msdu, pkt_type, pkt_subtype,
+				     hw_classify);
+
+		ce_pkt_type = htt_to_ce_pkt_type[pkt_type];
+		if (0xffffffff == ce_pkt_type) {
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+			"Invalid HTT pkt type %d\n", pkt_type);
+			return;
+		}
+	}
+
+	/*
+	 * HTT Tx Desc is in uncached memory. Used cached writes per word, to
+	 * reduce unnecessary memory access.
+	 */
+
+	local_word0 = 0;
+	if (msdu_info) {
+		HTT_H2T_MSG_TYPE_SET(local_word0, HTT_H2T_MSG_TYPE_TX_FRM);
+		HTT_TX_DESC_PKT_TYPE_SET(local_word0, pkt_type);
+		HTT_TX_DESC_PKT_SUBTYPE_SET(local_word0, pkt_subtype);
+		HTT_TX_DESC_VDEV_ID_SET(local_word0, msdu_info->info.vdev_id);
+		HTT_TX_DESC_EXT_TID_SET(local_word0, htt_get_ext_tid(type,
+						ext_header_data, msdu_info));
+		HTT_TX_DESC_EXTENSION_SET(local_word0, desc_ext_required);
+		HTT_TX_DESC_EXT_TID_SET(local_word0, msdu_info->info.ext_tid);
+		HTT_TX_DESC_CKSUM_OFFLOAD_SET(local_word0,
+					      msdu_info->action.cksum_offload);
+		HTT_TX_DESC_NO_ENCRYPT_SET(local_word0,
+					   msdu_info->action.do_encrypt ?
+					   0 : 1);
+	}
+
+	*word0 = local_word0;
+
+	local_word1 = 0;
+
+	if (tso_info->is_tso)
+		HTT_TX_DESC_FRM_LEN_SET(local_word1, tso_info->total_len);
+	else
+		HTT_TX_DESC_FRM_LEN_SET(local_word1, qdf_nbuf_len(msdu));
+
+	HTT_TX_DESC_FRM_ID_SET(local_word1, msdu_id);
+	*word1 = local_word1;
+
+	/* Initialize peer_id to INVALID_PEER because
+	   this is NOT Reinjection path */
+	local_word3 = HTT_INVALID_PEER;
+	channel_freq = htt_get_channel_freq(type, ext_header_data);
+	if (channel_freq != HTT_INVALID_CHANNEL)
+		HTT_TX_DESC_CHAN_FREQ_SET(local_word3, channel_freq);
+#if HTT_PADDR64
+	*word4 = local_word3;
+#else /* ! HTT_PADDR64 */
+	*word3 = local_word3;
+#endif /* HTT_PADDR64 */
+
+	/*
+	 *  If any of the tx control flags are set, then we need the extended
+	 *  HTT header.
+	 */
+	if (desc_ext_required) {
+		struct htt_tx_msdu_desc_ext_t local_desc_ext = {0};
+
+		htt_push_ext_header(msdu, &local_desc_ext,
+			type, ext_header_data);
+	}
+
+	/*
+	 * Specify that the data provided by the OS is a bytestream,
+	 * and thus should not be byte-swapped during the HIF download
+	 * even if the host is big-endian.
+	 * There could be extra fragments added before the OS's fragments,
+	 * e.g. for TSO, so it's incorrect to clear the frag 0 wordstream flag.
+	 * Instead, clear the wordstream flag for the final fragment, which
+	 * is certain to be (one of the) fragment(s) provided by the OS.
+	 * Setting the flag for this final fragment suffices for specifying
+	 * all fragments provided by the OS rather than added by the driver.
+	 */
+	qdf_nbuf_set_frag_is_wordstream(msdu, qdf_nbuf_get_num_frags(msdu) - 1,
+					0);
+
+	if (QDF_NBUF_CB_PADDR(msdu) == 0) {
+		status = qdf_nbuf_map_single(qdf_ctx, msdu, QDF_DMA_TO_DEVICE);
+		if (qdf_unlikely(status != QDF_STATUS_SUCCESS)) {
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				"%s: nbuf map failed", __func__);
+			return;
+		}
+	}
+
+	/* store a link to the HTT tx descriptor within the netbuf */
+	qdf_nbuf_frag_push_head(msdu, sizeof(struct htt_host_tx_desc_t),
+				(char *)htt_host_tx_desc, /* virtual addr */
+				htt_tx_desc_paddr);
+
+	/*
+	 * Indicate that the HTT header (and HTC header) is a meta-data
+	 * "wordstream", i.e. series of uint32_t, rather than a data
+	 * bytestream.
+	 * This allows the HIF download to byteswap the HTT + HTC headers if
+	 * the host is big-endian, to convert to the target's little-endian
+	 * format.
+	 */
+	qdf_nbuf_set_frag_is_wordstream(msdu, 0, 1);
+
+	if (qdf_likely(pdev->cfg.ce_classify_enabled &&
+		(msdu_info->info.l2_hdr_type != htt_pkt_type_mgmt))) {
+		uint32_t pkt_offset = qdf_nbuf_get_frag_len(msdu, 0);
+
+		data_attr = hw_classify << QDF_CE_TX_CLASSIFY_BIT_S;
+		data_attr |= ce_pkt_type << QDF_CE_TX_PKT_TYPE_BIT_S;
+		data_attr |= pkt_offset  << QDF_CE_TX_PKT_OFFSET_BIT_S;
+	}
+
+	qdf_nbuf_data_attr_set(msdu, data_attr);
+}
+

@@ -40,6 +40,7 @@ void ol_txrx_peer_unref_delete(struct ol_txrx_peer_t *peer);
 
 ol_txrx_vdev_handle ol_txrx_get_vdev_from_vdev_id(uint8_t vdev_id);
 
-
 void htt_pkt_log_init(struct ol_txrx_pdev_t *handle, void *scn);
+QDF_STATUS ol_txrx_set_wisa_mode(ol_txrx_vdev_handle vdev,
+			bool enable);
 #endif /* _OL_TXRX__H_ */

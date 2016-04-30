@@ -2575,9 +2575,6 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		/* Zero out skb's context buffer for the driver to use */
 		qdf_mem_set(skb->cb, sizeof(skb->cb), 0);
 
-		/* Do the DMA Mapping */
-		qdf_nbuf_map_single(pdev->osdev, skb, QDF_DMA_TO_DEVICE);
-
 		/* Terminate the (single-element) list of tx frames */
 		skb->next = NULL;
 
@@ -2593,8 +2590,6 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 
 		if (ret) {
 			WMA_LOGE("TxRx Rejected. Fail to do Tx");
-			qdf_nbuf_unmap_single(pdev->osdev, skb,
-					      QDF_DMA_TO_DEVICE);
 			/* Call Download Cb so that umac can free the buffer */
 			if (tx_frm_download_comp_cb)
 				tx_frm_download_comp_cb(wma_handle->mac_context,
