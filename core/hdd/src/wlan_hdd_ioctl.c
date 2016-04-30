@@ -27,6 +27,9 @@
 
 /* Include Files */
 
+/* denote that this file does not allow legacy hddLog */
+#define HDD_DISALLOW_LEGACY_HDDLOG 1
+
 #include <wlan_hdd_includes.h>
 #include <wlan_hdd_wowl.h>
 #include "wlan_hdd_trace.h"
@@ -136,8 +139,7 @@ static void hdd_get_tsm_stats_cb(tAniTrafStrmMetrics tsm_metrics,
 	hdd_adapter_t *adapter = NULL;
 
 	if (NULL == context) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       "%s: Bad param, context [%p]", __func__, context);
+		hdd_err("Bad param, context [%p]", context);
 		return;
 	}
 
@@ -158,9 +160,8 @@ static void hdd_get_tsm_stats_cb(tAniTrafStrmMetrics tsm_metrics,
 		 * nothing we can do
 		 */
 		spin_unlock(&hdd_context_lock);
-		hddLog(QDF_TRACE_LEVEL_WARN,
-		       "%s: Invalid context, adapter [%p] magic [%08x]",
-		       __func__, adapter, stats_context->magic);
+		hdd_warn("Invalid context, adapter [%p] magic [%08x]",
+			  adapter, stats_context->magic);
 		return;
 	}
 
@@ -201,8 +202,7 @@ QDF_STATUS hdd_get_tsm_stats(hdd_adapter_t *adapter,
 	hdd_context_t *hdd_ctx = NULL;
 
 	if (NULL == adapter) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       "%s: adapter is NULL", __func__);
+		hdd_err("adapter is NULL");
 		return QDF_STATUS_E_FAULT;
 	}
 
@@ -220,17 +220,14 @@ QDF_STATUS hdd_get_tsm_stats(hdd_adapter_t *adapter,
 				    hdd_sta_ctx->conn_info.bssId,
 				    &context, hdd_ctx->pcds_context, tid);
 	if (QDF_STATUS_SUCCESS != hstatus) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       "%s: Unable to retrieve statistics", __func__);
+		hdd_err("Unable to retrieve statistics");
 		vstatus = QDF_STATUS_E_FAULT;
 	} else {
 		/* request was sent -- wait for the response */
 		rc = wait_for_completion_timeout(&context.completion,
 				msecs_to_jiffies(WLAN_WAIT_TIME_STATS));
 		if (!rc) {
-			hddLog(QDF_TRACE_LEVEL_ERROR,
-			       "%s: SME timed out while retrieving statistics",
-			       __func__);
+			hdd_err("SME timed out while retrieving statistics");
 			vstatus = QDF_STATUS_E_TIMEOUT;
 		}
 	}
@@ -305,7 +302,7 @@ static int hdd_parse_setrmcenable_command(uint8_t *pValue,
 
 	*pRmcEnable = tempInt;
 
-	hddLog(LOG1, FL("ucRmcEnable: %d"), *pRmcEnable);
+	hdd_info("ucRmcEnable: %d", *pRmcEnable);
 
 	return 0;
 }
@@ -350,7 +347,7 @@ static int hdd_parse_setrmcactionperiod_command(uint8_t *pValue,
 
 	*pActionPeriod = tempInt;
 
-	hddLog(LOG1, FL("uActionPeriod: %d"), *pActionPeriod);
+	hdd_info("uActionPeriod: %d", *pActionPeriod);
 
 	return 0;
 }
@@ -392,8 +389,7 @@ static int hdd_parse_setrmcrate_command(uint8_t *pValue,
 
 	switch (tempInt) {
 	default:
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_WARN,
-			  "Unsupported rate: %d", tempInt);
+		hdd_warn("Unsupported rate: %d", tempInt);
 		return -EINVAL;
 	case 0:
 	case 6:
@@ -417,7 +413,7 @@ static int hdd_parse_setrmcrate_command(uint8_t *pValue,
 		break;
 	}
 
-	hddLog(LOG1, FL("Rate: %d"), *pRate);
+	hdd_info("Rate: %d", *pRate);
 
 	return 0;
 }
@@ -443,8 +439,7 @@ hdd_get_ibss_peer_info_cb(void *pUserData,
 	/* Sanity check */
 	if ((NULL == adapter) ||
 	    (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_FATAL,
-			  "invalid adapter or adapter has invalid magic");
+		hdd_alert("invalid adapter or adapter has invalid magic");
 		return;
 	}
 
@@ -465,7 +460,7 @@ hdd_get_ibss_peer_info_cb(void *pUserData,
 				pPeerInfo->numPeers, SIR_MAX_NUM_STA_IN_IBSS);
 		}
 	} else {
-		hddLog(LOG1, FL("peerInfo returned is NULL"));
+		hdd_info("peerInfo returned is NULL");
 	}
 
 	complete(&adapter->ibss_peer_info_comp);
@@ -499,16 +494,12 @@ QDF_STATUS hdd_cfg80211_get_ibss_peer_info_all(hdd_adapter_t *adapter)
 
 		/* status will be 0 if timed out */
 		if (!rc) {
-			hddLog(QDF_TRACE_LEVEL_WARN,
-			       "%s: Warning: IBSS_PEER_INFO_TIMEOUT",
-			       __func__);
+			hdd_warn("Warning: IBSS_PEER_INFO_TIMEOUT");
 			retStatus = QDF_STATUS_E_FAILURE;
 			return retStatus;
 		}
 	} else {
-		hddLog(QDF_TRACE_LEVEL_WARN,
-		       "%s: Warning: sme_request_ibss_peer_info Request failed",
-		       __func__);
+		hdd_warn("Warning: sme_request_ibss_peer_info Request failed");
 	}
 
 	return retStatus;
@@ -543,16 +534,12 @@ hdd_cfg80211_get_ibss_peer_info(hdd_adapter_t *adapter, uint8_t staIdx)
 
 		/* status = 0 on timeout */
 		if (!rc) {
-			hddLog(QDF_TRACE_LEVEL_WARN,
-			       "%s: Warning: IBSS_PEER_INFO_TIMEOUT",
-			       __func__);
+			hdd_warn("Warning: IBSS_PEER_INFO_TIMEOUT");
 			retStatus = QDF_STATUS_E_FAILURE;
 			return retStatus;
 		}
 	} else {
-		hddLog(QDF_TRACE_LEVEL_WARN,
-		       "%s: Warning: sme_request_ibss_peer_info Request failed",
-		       __func__);
+		hdd_warn("Warning: sme_request_ibss_peer_info Request failed");
 	}
 
 	return retStatus;
@@ -613,8 +600,7 @@ static void hdd_get_band_helper(hdd_context_t *hdd_ctx, int *pBand)
 		break;
 
 	default:
-		hddLog(QDF_TRACE_LEVEL_WARN, "%s: Invalid Band %d", __func__,
-		       band);
+		hdd_warn("Invalid Band %d", band);
 		*pBand = -1;
 		break;
 	}
@@ -663,11 +649,8 @@ static int _hdd_parse_bssid_and_chan(const uint8_t **data,
 
 	v = sscanf(in_ptr, "%17s", mac_addr);
 	if (!((1 == v) && hdd_is_valid_mac_address(mac_addr))) {
-		hddLog(LOGE,
-			FL(
-			   "Invalid MAC address or All hex inputs are not read (%d)"
-			),
-			v);
+		hdd_err("Invalid MAC address or All hex inputs are not read (%d)",
+			 v);
 		goto error;
 	}
 
@@ -808,7 +791,7 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *pValue,
 	 */
 	*pBuf = qdf_mem_malloc((*pBufLen + 1) / 2);
 	if (NULL == *pBuf) {
-		hddLog(LOGE, FL("qdf_mem_malloc failed"));
+		hdd_err("qdf_mem_malloc failed");
 		return -ENOMEM;
 	}
 
@@ -882,7 +865,7 @@ hdd_reassoc(hdd_adapter_t *adapter, const uint8_t *bssid,
 
 	/* if not associated, no need to proceed with reassoc */
 	if (eConnectionState_Associated != pHddStaCtx->conn_info.connState) {
-		hddLog(QDF_TRACE_LEVEL_INFO, "%s: Not associated", __func__);
+		hdd_info("Not associated");
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -893,8 +876,7 @@ hdd_reassoc(hdd_adapter_t *adapter, const uint8_t *bssid,
 	 */
 	if (!memcmp(bssid, pHddStaCtx->conn_info.bssId.bytes,
 			QDF_MAC_ADDR_SIZE)) {
-		hddLog(LOG1,
-		       FL("Reassoc BSSID is same as currently associated AP bssid"));
+		hdd_info("Reassoc BSSID is same as currently associated AP bssid");
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -902,8 +884,7 @@ hdd_reassoc(hdd_adapter_t *adapter, const uint8_t *bssid,
 	/* Check channel number is a valid channel number */
 	if (QDF_STATUS_SUCCESS !=
 	    wlan_hdd_validate_operation_channel(adapter, channel)) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, "%s: Invalid Channel %d",
-		       __func__, channel);
+		hdd_err("Invalid Channel %d", channel);
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -948,8 +929,7 @@ static int hdd_parse_reassoc_v1(hdd_adapter_t *adapter, const char *command)
 
 	ret = hdd_parse_reassoc_command_v1_data(command, bssid, &channel);
 	if (ret) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       "%s: Failed to parse reassoc command data", __func__);
+		hdd_err("Failed to parse reassoc command data");
 	} else {
 		ret = hdd_reassoc(adapter, bssid, channel);
 	}
@@ -978,7 +958,7 @@ static int hdd_parse_reassoc_v2(hdd_adapter_t *adapter, const char *command)
 	memcpy(&params, command + 8, sizeof(params));
 
 	if (!mac_pton(params.bssid, (u8 *) &bssid)) {
-		hddLog(LOGE, "%s: MAC address parsing failed", __func__);
+		hdd_err("MAC address parsing failed");
 		ret = -EINVAL;
 	} else {
 		ret = hdd_reassoc(adapter, bssid, params.channel);
@@ -1070,7 +1050,7 @@ hdd_sendactionframe(hdd_adapter_t *adapter, const uint8_t *bssid,
 
 	/* if not associated, no need to send action frame */
 	if (eConnectionState_Associated != pHddStaCtx->conn_info.connState) {
-		hddLog(QDF_TRACE_LEVEL_INFO, "%s: Not associated", __func__);
+		hdd_info("Not associated");
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -1081,7 +1061,7 @@ hdd_sendactionframe(hdd_adapter_t *adapter, const uint8_t *bssid,
 	 */
 	if (memcmp(bssid, pHddStaCtx->conn_info.bssId.bytes,
 			QDF_MAC_ADDR_SIZE)) {
-		hddLog(LOG1, FL("STA is not associated to this AP"));
+		hdd_info("STA is not associated to this AP");
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -1099,11 +1079,10 @@ hdd_sendactionframe(hdd_adapter_t *adapter, const uint8_t *bssid,
 			if (channel != 0) {
 				if (channel !=
 				    pHddStaCtx->conn_info.operationChannel) {
-					hddLog(QDF_TRACE_LEVEL_INFO,
-					       "%s: channel(%d) is different from operating channel(%d)",
-					       __func__, channel,
-					       pHddStaCtx->conn_info.
-					       operationChannel);
+					hdd_info("channel(%d) is different from operating channel(%d)",
+						  channel,
+						  pHddStaCtx->conn_info.
+						  operationChannel);
 					ret = -EINVAL;
 					goto exit;
 				}
@@ -1129,8 +1108,7 @@ hdd_sendactionframe(hdd_adapter_t *adapter, const uint8_t *bssid,
 		}
 	}
 	if (chan.center_freq == 0) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, "%s:invalid channel number %d",
-		       __func__, channel);
+		hdd_err("Invalid channel number %d", channel);
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -1138,7 +1116,7 @@ hdd_sendactionframe(hdd_adapter_t *adapter, const uint8_t *bssid,
 	frame_len = payload_len + 24;
 	frame = qdf_mem_malloc(frame_len);
 	if (!frame) {
-		hddLog(LOGE, FL("memory allocation failed"));
+		hdd_err("memory allocation failed");
 		ret = -ENOMEM;
 		goto exit;
 	}
@@ -1208,8 +1186,7 @@ hdd_parse_sendactionframe_v1(hdd_adapter_t *adapter, const char *command)
 						  &dwell_time, &payload,
 						  &payload_len);
 	if (ret) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       "%s: Failed to parse send action frame data", __func__);
+		hdd_err("Failed to parse send action frame data");
 	} else {
 		ret = hdd_sendactionframe(adapter, bssid, channel,
 					  dwell_time, payload_len, payload);
@@ -1248,7 +1225,7 @@ hdd_parse_sendactionframe_v2(hdd_adapter_t *adapter, const char *command)
 	memcpy(params, command + 16, sizeof(*params));
 
 	if (!mac_pton(params->bssid, (u8 *) &bssid)) {
-		hddLog(LOGE, "%s: MAC address parsing failed", __func__);
+		hdd_err("MAC address parsing failed");
 		ret = -EINVAL;
 	} else {
 		ret = hdd_sendactionframe(adapter, bssid, params->channel,
@@ -1362,8 +1339,7 @@ hdd_parse_channellist(const uint8_t *pValue, uint8_t *pChannelList,
 
 	*pNumChannels = tempInt;
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "Number of channels are: %d", *pNumChannels);
+	hdd_info("Number of channels are: %d", *pNumChannels);
 
 	for (j = 0; j < (*pNumChannels); j++) {
 		/*
@@ -1410,8 +1386,7 @@ hdd_parse_channellist(const uint8_t *pValue, uint8_t *pChannelList,
 		}
 		pChannelList[j] = tempInt;
 
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "Channel %d added to preferred channel list",
+		hdd_info("Channel %d added to preferred channel list",
 			  pChannelList[j]);
 	}
 
@@ -1447,9 +1422,7 @@ hdd_parse_set_roam_scan_channels_v1(hdd_adapter_t *adapter,
 
 	ret = hdd_parse_channellist(command, channel_list, &num_chan);
 	if (ret) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to parse channel list information",
-			  __func__);
+		hdd_err("Failed to parse channel list information");
 		goto exit;
 	}
 
@@ -1458,9 +1431,8 @@ hdd_parse_set_roam_scan_channels_v1(hdd_adapter_t *adapter,
 			 adapter->sessionId, num_chan));
 
 	if (num_chan > WNI_CFG_VALID_CHANNEL_LIST_LEN) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: number of channels (%d) supported exceeded max (%d)",
-			  __func__, num_chan, WNI_CFG_VALID_CHANNEL_LIST_LEN);
+		hdd_err("number of channels (%d) supported exceeded max (%d)",
+			 num_chan, WNI_CFG_VALID_CHANNEL_LIST_LEN);
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -1470,9 +1442,7 @@ hdd_parse_set_roam_scan_channels_v1(hdd_adapter_t *adapter,
 						  adapter->sessionId,
 						  channel_list, num_chan);
 	if (QDF_STATUS_SUCCESS != status) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to update channel list information",
-			  __func__);
+		hdd_err("Failed to update channel list information");
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -1516,9 +1486,8 @@ hdd_parse_set_roam_scan_channels_v2(hdd_adapter_t *adapter,
 
 	num_chan = *value++;
 	if (num_chan > WNI_CFG_VALID_CHANNEL_LIST_LEN) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: number of channels (%d) supported exceeded max (%d)",
-			  __func__, num_chan, WNI_CFG_VALID_CHANNEL_LIST_LEN);
+		hdd_err("number of channels (%d) supported exceeded max (%d)",
+			  num_chan, WNI_CFG_VALID_CHANNEL_LIST_LEN);
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -1530,8 +1499,7 @@ hdd_parse_set_roam_scan_channels_v2(hdd_adapter_t *adapter,
 	for (i = 0; i < num_chan; i++) {
 		channel = *value++;
 		if (channel > WNI_CFG_CURRENT_CHANNEL_STAMAX) {
-			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-				  "%s: index %d invalid channel %d", __func__,
+			hdd_err("index %d invalid channel %d",
 				  i, channel);
 			ret = -EINVAL;
 			goto exit;
@@ -1543,9 +1511,7 @@ hdd_parse_set_roam_scan_channels_v2(hdd_adapter_t *adapter,
 						  adapter->sessionId,
 						  channel_list, num_chan);
 	if (QDF_STATUS_SUCCESS != status) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to update channel list information",
-			  __func__);
+		hdd_err("Failed to update channel list information");
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -1660,8 +1626,7 @@ QDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 		return QDF_STATUS_E_FAILURE;
 
 	pPlmRequest->diag_token = content;
-	hddLog(QDF_TRACE_LEVEL_DEBUG, "diag token %d",
-	       pPlmRequest->diag_token);
+	hdd_debug("diag token %d", pPlmRequest->diag_token);
 	cmdPtr = strpbrk(cmdPtr, " ");
 
 	if (NULL == cmdPtr)
@@ -1681,11 +1646,9 @@ QDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 		return QDF_STATUS_E_FAILURE;
 
 	pPlmRequest->meas_token = content;
-	hddLog(QDF_TRACE_LEVEL_DEBUG, "meas token %d",
-	       pPlmRequest->meas_token);
+	hdd_debug("meas token %d", pPlmRequest->meas_token);
 
-	hddLog(QDF_TRACE_LEVEL_ERROR,
-	       "PLM req %s", pPlmRequest->enable ? "START" : "STOP");
+	hdd_err("PLM req %s", pPlmRequest->enable ? "START" : "STOP");
 	if (pPlmRequest->enable) {
 
 		cmdPtr = strpbrk(cmdPtr, " ");
@@ -1710,8 +1673,7 @@ QDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 			return QDF_STATUS_E_FAILURE;
 
 		pPlmRequest->numBursts = content;
-		hddLog(QDF_TRACE_LEVEL_DEBUG, "num burst %d",
-		       pPlmRequest->numBursts);
+		hdd_debug("num burst %d", pPlmRequest->numBursts);
 		cmdPtr = strpbrk(cmdPtr, " ");
 
 		if (NULL == cmdPtr)
@@ -1734,8 +1696,7 @@ QDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 			return QDF_STATUS_E_FAILURE;
 
 		pPlmRequest->burstInt = content;
-		hddLog(QDF_TRACE_LEVEL_DEBUG, "burst Int %d",
-		       pPlmRequest->burstInt);
+		hdd_debug("burst Int %d", pPlmRequest->burstInt);
 		cmdPtr = strpbrk(cmdPtr, " ");
 
 		if (NULL == cmdPtr)
@@ -1758,8 +1719,7 @@ QDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 			return QDF_STATUS_E_FAILURE;
 
 		pPlmRequest->measDuration = content;
-		hddLog(QDF_TRACE_LEVEL_DEBUG, "measDur %d",
-		       pPlmRequest->measDuration);
+		hdd_debug("measDur %d", pPlmRequest->measDuration);
 		cmdPtr = strpbrk(cmdPtr, " ");
 
 		if (NULL == cmdPtr)
@@ -1782,8 +1742,7 @@ QDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 			return QDF_STATUS_E_FAILURE;
 
 		pPlmRequest->burstLen = content;
-		hddLog(QDF_TRACE_LEVEL_DEBUG, "burstLen %d",
-		       pPlmRequest->burstLen);
+		hdd_debug("burstLen %d", pPlmRequest->burstLen);
 		cmdPtr = strpbrk(cmdPtr, " ");
 
 		if (NULL == cmdPtr)
@@ -1806,8 +1765,8 @@ QDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 			return QDF_STATUS_E_FAILURE;
 
 		pPlmRequest->desiredTxPwr = content;
-		hddLog(QDF_TRACE_LEVEL_DEBUG,
-		       "desiredTxPwr %d", pPlmRequest->desiredTxPwr);
+		hdd_debug("desiredTxPwr %d",
+			   pPlmRequest->desiredTxPwr);
 
 		for (count = 0; count < QDF_MAC_ADDR_SIZE; count++) {
 			cmdPtr = strpbrk(cmdPtr, " ");
@@ -1856,8 +1815,7 @@ QDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 			return QDF_STATUS_E_FAILURE;
 
 		pPlmRequest->plmNumCh = content;
-		hddLog(QDF_TRACE_LEVEL_DEBUG, "numch %d",
-		       pPlmRequest->plmNumCh);
+		hdd_debug("numch %d", pPlmRequest->plmNumCh);
 
 		/* Channel numbers */
 		for (count = 0; count < pPlmRequest->plmNumCh; count++) {
@@ -1883,8 +1841,7 @@ QDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 				return QDF_STATUS_E_FAILURE;
 
 			pPlmRequest->plmChList[count] = content;
-			hddLog(QDF_TRACE_LEVEL_DEBUG, " ch- %d",
-			       pPlmRequest->plmChList[count]);
+			hdd_debug(" ch- %d", pPlmRequest->plmChList[count]);
 		}
 	}
 	/* If PLM START */
@@ -1900,7 +1857,7 @@ static void wlan_hdd_ready_to_extwow(void *callbackContext, bool is_success)
 
 	rc = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != rc) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, FL("HDD context is not valid"));
+		hdd_err("HDD context is not valid");
 		return;
 	}
 	hdd_ctx->ext_wow_should_suspend = is_success;
@@ -1924,17 +1881,15 @@ static int hdd_enable_ext_wow(hdd_adapter_t *adapter,
 						&wlan_hdd_ready_to_extwow,
 						hdd_ctx);
 	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("sme_configure_ext_wow returned failure %d"),
-		       qdf_ret_status);
+		hdd_err("sme_configure_ext_wow returned failure %d",
+			 qdf_ret_status);
 		return -EPERM;
 	}
 
 	rc = wait_for_completion_timeout(&hdd_ctx->ready_to_extwow,
 			msecs_to_jiffies(WLAN_WAIT_TIME_READY_TO_EXTWOW));
 	if (!rc) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to get ready to extwow", __func__);
+		hdd_err("Failed to get ready to extwow");
 		return -EPERM;
 	}
 
@@ -1943,29 +1898,24 @@ static int hdd_enable_ext_wow(hdd_adapter_t *adapter,
 			pm_message_t state;
 
 			state.event = PM_EVENT_SUSPEND;
-			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-				  "%s: Received ready to ExtWoW. Going to suspend",
-				  __func__);
+			hdd_info("Received ready to ExtWoW. Going to suspend");
 
 			rc = wlan_hdd_cfg80211_suspend_wlan(hdd_ctx->wiphy, NULL);
 			if (rc < 0) {
-				QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-					"%s: wlan_hdd_cfg80211_suspend_wlan failed, error = %d",
-					__func__, rc);
+				hdd_err("wlan_hdd_cfg80211_suspend_wlan failed, error = %d",
+					 rc);
 				return rc;
 			}
 			qdf_ret_status = wlan_hdd_bus_suspend(state);
 			if (qdf_ret_status != QDF_STATUS_SUCCESS) {
-				QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-					"%s: wlan_hdd_suspend failed, status = %d",
-					__func__, qdf_ret_status);
+				hdd_err("wlan_hdd_suspend failed, status = %d",
+					 qdf_ret_status);
 				wlan_hdd_cfg80211_resume_wlan(hdd_ctx->wiphy);
 				return -EPERM;
 			}
 		}
 	} else {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Received ready to ExtWoW failure", __func__);
+		hdd_err("Received ready to ExtWoW failure");
 		return -EPERM;
 	}
 
@@ -1981,13 +1931,13 @@ static int hdd_enable_ext_wow_parser(hdd_adapter_t *adapter, int vdev_id,
 
 	rc = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != rc) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, FL("HDD context is not valid"));
+		hdd_err("HDD context is not valid");
 		return -EINVAL;
 	}
 
 	if (value < EXT_WOW_TYPE_APP_TYPE1 ||
 	    value > EXT_WOW_TYPE_APP_TYPE1_2) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, FL("Invalid type"));
+		hdd_err("Invalid type");
 		return -EINVAL;
 	}
 
@@ -2002,8 +1952,8 @@ static int hdd_enable_ext_wow_parser(hdd_adapter_t *adapter, int vdev_id,
 		 hdd_ctx->is_extwow_app_type2_param_set)
 		params.type = value;
 	else {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("Set app params before enable it value %d"), value);
+		hdd_err("Set app params before enable it value %d",
+			 value);
 		return -EINVAL;
 	}
 
@@ -2025,9 +1975,8 @@ static int hdd_set_app_type1_params(tHalHandle hHal,
 
 	qdf_ret_status = sme_configure_app_type1_params(hHal, &params);
 	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("sme_configure_app_type1_params returned failure %d"),
-		       qdf_ret_status);
+		hdd_err("sme_configure_app_type1_params returned failure %d",
+			 qdf_ret_status);
 		return -EPERM;
 	}
 
@@ -2045,13 +1994,12 @@ static int hdd_set_app_type1_parser(hdd_adapter_t *adapter,
 
 	rc = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != rc) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, FL("HDD context is not valid"));
+		hdd_err("HDD context is not valid");
 		return -EINVAL;
 	}
 
 	if (2 != sscanf(arg, "%8s %16s", id, password)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  FL("Invalid Number of arguments"));
+		hdd_err("Invalid Number of arguments");
 		return -EINVAL;
 	}
 
@@ -2064,9 +2012,8 @@ static int hdd_set_app_type1_parser(hdd_adapter_t *adapter,
 	params.pass_length = strlen(password);
 	qdf_mem_copy(params.password, password, params.pass_length);
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: %d %pM %.8s %u %.16s %u",
-		  __func__, params.vdev_id, params.wakee_mac_addr.bytes,
+	hdd_info("%d %pM %.8s %u %.16s %u",
+		  params.vdev_id, params.wakee_mac_addr.bytes,
 		  params.identification_id, params.id_length,
 		  params.password, params.pass_length);
 
@@ -2083,9 +2030,8 @@ static int hdd_set_app_type2_params(tHalHandle hHal,
 
 	qdf_ret_status = sme_configure_app_type2_params(hHal, &params);
 	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("sme_configure_app_type2_params returned failure %d"),
-		       qdf_ret_status);
+		hdd_err("sme_configure_app_type2_params returned failure %d",
+			 qdf_ret_status);
 		return -EPERM;
 	}
 
@@ -2104,7 +2050,7 @@ static int hdd_set_app_type2_parser(hdd_adapter_t *adapter,
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, FL("HDD context is not valid"));
+		hdd_err("HDD context is not valid");
 		return -EINVAL;
 	}
 
@@ -2126,8 +2072,7 @@ static int hdd_set_app_type2_parser(hdd_adapter_t *adapter,
 		     (unsigned int *)&params.tcp_rx_timeout_val);
 
 	if (ret != 15 && ret != 7) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "Invalid Number of arguments");
+		hdd_err("Invalid Number of arguments");
 		return -EINVAL;
 	}
 
@@ -2135,15 +2080,13 @@ static int hdd_set_app_type2_parser(hdd_adapter_t *adapter,
 	    sscanf(mac_addr, "%02x:%02x:%02x:%02x:%02x:%02x", &gateway_mac[0],
 		   &gateway_mac[1], &gateway_mac[2], &gateway_mac[3],
 		   &gateway_mac[4], &gateway_mac[5])) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "Invalid MacAddress Input %s", mac_addr);
+		hdd_err("Invalid MacAddress Input %s", mac_addr);
 		return -EINVAL;
 	}
 
 	if (params.tcp_src_port > WLAN_HDD_MAX_TCP_PORT ||
 	    params.tcp_dst_port > WLAN_HDD_MAX_TCP_PORT) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "Invalid TCP Port Number");
+		hdd_err("Invalid TCP Port Number");
 		return -EINVAL;
 	}
 
@@ -2182,9 +2125,8 @@ static int hdd_set_app_type2_parser(hdd_adapter_t *adapter,
 			params.tcp_rx_timeout_val :
 			hdd_ctx->config->extWowApp2TcpRxTimeout;
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: %pM %.16s %u %u %u %u %u %u %u %u %u %u %u %u %u",
-		  __func__, gateway_mac, rc4_key, params.ip_id,
+	hdd_info("%pM %.16s %u %u %u %u %u %u %u %u %u %u %u %u %u",
+		  gateway_mac, rc4_key, params.ip_id,
 		  params.ip_device_ip, params.ip_server_ip, params.tcp_seq,
 		  params.tcp_ack_seq, params.tcp_src_port, params.tcp_dst_port,
 		  params.keepalive_init, params.keepalive_min,
@@ -2245,8 +2187,7 @@ static int hdd_parse_setmaxtxpower_command(uint8_t *pValue, int *pTxPower)
 
 	*pTxPower = tempInt;
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "SETMAXTXPOWER: %d", *pTxPower);
+	hdd_info("SETMAXTXPOWER: %d", *pTxPower);
 
 	return 0;
 } /* End of hdd_parse_setmaxtxpower_command */
@@ -2257,9 +2198,7 @@ static int hdd_get_dwell_time(struct hdd_config *pCfg, uint8_t *command,
 	int ret = 0;
 
 	if (!pCfg || !command || !extra || !len) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: argument passed for GETDWELLTIME is incorrect",
-			  __func__);
+		hdd_err("argument passed for GETDWELLTIME is incorrect");
 		ret = -EINVAL;
 		return ret;
 	}
@@ -2302,8 +2241,7 @@ static int hdd_set_dwell_time(hdd_adapter_t *adapter, uint8_t *command)
 	pCfg = (WLAN_HDD_GET_CTX(adapter))->config;
 	hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 	if (!pCfg || !hHal) {
-		hddLog(LOGE,
-			FL("argument passed for SETDWELLTIME is incorrect"));
+		hdd_err("argument passed for SETDWELLTIME is incorrect");
 		return -EINVAL;
 	}
 
@@ -2315,8 +2253,7 @@ static int hdd_set_dwell_time(hdd_adapter_t *adapter, uint8_t *command)
 		temp = kstrtou32(value, 10, &val);
 		if (temp != 0 || val < CFG_ACTIVE_MAX_CHANNEL_TIME_MIN ||
 		    val > CFG_ACTIVE_MAX_CHANNEL_TIME_MAX) {
-			hddLog(LOGE,
-				FL("argument passed for SETDWELLTIME ACTIVE MAX is incorrect"));
+			hdd_err("argument passed for SETDWELLTIME ACTIVE MAX is incorrect");
 			return -EFAULT;
 		}
 		pCfg->nActiveMaxChnTime = val;
@@ -2327,8 +2264,7 @@ static int hdd_set_dwell_time(hdd_adapter_t *adapter, uint8_t *command)
 		temp = kstrtou32(value, 10, &val);
 		if (temp != 0 || val < CFG_ACTIVE_MIN_CHANNEL_TIME_MIN ||
 		    val > CFG_ACTIVE_MIN_CHANNEL_TIME_MAX) {
-			hddLog(LOGE,
-				FL("argument passed for SETDWELLTIME ACTIVE MIN is incorrect"));
+			hdd_err("argument passed for SETDWELLTIME ACTIVE MIN is incorrect");
 			return -EFAULT;
 		}
 		pCfg->nActiveMinChnTime = val;
@@ -2339,8 +2275,7 @@ static int hdd_set_dwell_time(hdd_adapter_t *adapter, uint8_t *command)
 		temp = kstrtou32(value, 10, &val);
 		if (temp != 0 || val < CFG_PASSIVE_MAX_CHANNEL_TIME_MIN ||
 		    val > CFG_PASSIVE_MAX_CHANNEL_TIME_MAX) {
-			hddLog(LOGE,
-				FL("argument passed for SETDWELLTIME PASSIVE MAX is incorrect"));
+			hdd_err("argument passed for SETDWELLTIME PASSIVE MAX is incorrect");
 			return -EFAULT;
 		}
 		pCfg->nPassiveMaxChnTime = val;
@@ -2351,8 +2286,7 @@ static int hdd_set_dwell_time(hdd_adapter_t *adapter, uint8_t *command)
 		temp = kstrtou32(value, 10, &val);
 		if (temp != 0 || val < CFG_PASSIVE_MIN_CHANNEL_TIME_MIN ||
 		    val > CFG_PASSIVE_MIN_CHANNEL_TIME_MAX) {
-			hddLog(LOGE,
-				FL("argument passed for SETDWELLTIME PASSIVE MIN is incorrect"));
+			hdd_err("argument passed for SETDWELLTIME PASSIVE MIN is incorrect");
 			return -EFAULT;
 		}
 		pCfg->nPassiveMinChnTime = val;
@@ -2363,8 +2297,7 @@ static int hdd_set_dwell_time(hdd_adapter_t *adapter, uint8_t *command)
 		temp = kstrtou32(value, 10, &val);
 		if (temp != 0 || val < CFG_ACTIVE_MAX_CHANNEL_TIME_MIN ||
 		    val > CFG_ACTIVE_MAX_CHANNEL_TIME_MAX) {
-			hddLog(LOGE,
-				FL("argument passed for SETDWELLTIME is incorrect"));
+			hdd_err("argument passed for SETDWELLTIME is incorrect");
 			return -EFAULT;
 		}
 		pCfg->nActiveMaxChnTime = val;
@@ -2383,8 +2316,7 @@ static void hdd_get_link_status_cb(uint8_t status, void *context)
 	hdd_adapter_t *adapter;
 
 	if (NULL == context) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, "%s: Bad context [%p]",
-		       __func__, context);
+		hdd_err("Bad context [%p]", context);
 		return;
 	}
 
@@ -2400,9 +2332,8 @@ static void hdd_get_link_status_cb(uint8_t status, void *context)
 		 * nothing we can do
 		 */
 		spin_unlock(&hdd_context_lock);
-		hddLog(QDF_TRACE_LEVEL_WARN,
-		       "%s: Invalid context, adapter [%p] magic [%08x]",
-		       __func__, adapter, pLinkContext->magic);
+		hdd_warn("Invalid context, adapter [%p] magic [%08x]",
+			  adapter, pLinkContext->magic);
 		return;
 	}
 
@@ -2461,7 +2392,7 @@ static int wlan_hdd_get_link_status(hdd_adapter_t *adapter)
 		/* If not associated, then expected link status return
 		 * value is 0
 		 */
-		hddLog(LOG1, FL("Not associated!"));
+		hdd_info("Not associated!");
 		return 0;
 	}
 
@@ -2472,16 +2403,14 @@ static int wlan_hdd_get_link_status(hdd_adapter_t *adapter)
 				      hdd_get_link_status_cb,
 				      &context, adapter->sessionId);
 	if (QDF_STATUS_SUCCESS != hstatus) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       "%s: Unable to retrieve link status", __func__);
+		hdd_err("Unable to retrieve link status");
 		/* return a cached value */
 	} else {
 		/* request is sent -- wait for the response */
 		rc = wait_for_completion_timeout(&context.completion,
 				msecs_to_jiffies(WLAN_WAIT_TIME_LINK_STATUS));
 		if (!rc)
-			hddLog(QDF_TRACE_LEVEL_ERROR,
-			       FL("SME timed out while retrieving link status"));
+			hdd_err("SME timed out while retrieving link status");
 	}
 
 	spin_lock(&hdd_context_lock);
@@ -2502,25 +2431,22 @@ static void hdd_tx_fail_ind_callback(uint8_t *MacAddr, uint8_t seqNo)
 	payload_len = ETH_ALEN;
 
 	if (0 == cesium_pid) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       "%s: cesium process not registered", __func__);
+		hdd_err("cesium process not registered");
 		return;
 	}
 
 	skb = nlmsg_new(payload_len, GFP_ATOMIC);
 	if (skb == NULL) {
-		hddLog(LOGE,
-			FL("nlmsg_new() failed for msg size[%d]"),
-			NLMSG_SPACE(payload_len));
+		hdd_err("nlmsg_new() failed for msg size[%d]",
+			 NLMSG_SPACE(payload_len));
 		return;
 	}
 
 	nlh = nlmsg_put(skb, cesium_pid, seqNo, 0, payload_len, NLM_F_REQUEST);
 
 	if (NULL == nlh) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       "%s: nlmsg_put() failed for msg size[%d]",
-		       __func__, NLMSG_SPACE(payload_len));
+		hdd_err("nlmsg_put() failed for msg size[%d]",
+			 NLMSG_SPACE(payload_len));
 
 		kfree_skb(skb);
 		return;
@@ -2530,9 +2456,8 @@ static void hdd_tx_fail_ind_callback(uint8_t *MacAddr, uint8_t seqNo)
 	memcpy(data, MacAddr, ETH_ALEN);
 
 	if (nlmsg_unicast(cesium_nl_srv_sock, skb, cesium_pid) < 0) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       "%s: nlmsg_unicast() failed for msg size[%d]",
-		      __func__, NLMSG_SPACE(payload_len));
+		hdd_err("nlmsg_unicast() failed for msg size[%d]",
+			 NLMSG_SPACE(payload_len));
 	}
 
 	return;
@@ -2687,8 +2612,8 @@ static int hdd_parse_ese_beacon_req(uint8_t *pValue,
 
 	pEseBcnReq->numBcnReqIe = tempInt;
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "Number of Bcn Req Ie fields(%d)", pEseBcnReq->numBcnReqIe);
+	hdd_info("Number of Bcn Req Ie fields(%d)",
+		  pEseBcnReq->numBcnReqIe);
 
 	for (j = 0; j < (pEseBcnReq->numBcnReqIe); j++) {
 		for (i = 0; i < 4; i++) {
@@ -2724,9 +2649,7 @@ static int hdd_parse_ese_beacon_req(uint8_t *pValue,
 			switch (i) {
 			case 0: /* Measurement token */
 				if (tempInt <= 0) {
-					QDF_TRACE(QDF_MODULE_ID_HDD,
-						  QDF_TRACE_LEVEL_ERROR,
-						  "Invalid Measurement Token(%d)",
+					hdd_err("Invalid Measurement Token(%d)",
 						  tempInt);
 					return -EINVAL;
 				}
@@ -2738,9 +2661,7 @@ static int hdd_parse_ese_beacon_req(uint8_t *pValue,
 				if ((tempInt <= 0) ||
 				    (tempInt >
 				     WNI_CFG_CURRENT_CHANNEL_STAMAX)) {
-					QDF_TRACE(QDF_MODULE_ID_HDD,
-						  QDF_TRACE_LEVEL_ERROR,
-						  "Invalid Channel Number(%d)",
+					hdd_err("Invalid Channel Number(%d)",
 						  tempInt);
 					return -EINVAL;
 				}
@@ -2750,9 +2671,7 @@ static int hdd_parse_ese_beacon_req(uint8_t *pValue,
 			case 2: /* Scan mode */
 				if ((tempInt < eSIR_PASSIVE_SCAN)
 				    || (tempInt > eSIR_BEACON_TABLE)) {
-					QDF_TRACE(QDF_MODULE_ID_HDD,
-						  QDF_TRACE_LEVEL_ERROR,
-						  "Invalid Scan Mode(%d) Expected{0|1|2}",
+					hdd_err("Invalid Scan Mode(%d) Expected{0|1|2}",
 						  tempInt);
 					return -EINVAL;
 				}
@@ -2766,9 +2685,7 @@ static int hdd_parse_ese_beacon_req(uint8_t *pValue,
 				    ((tempInt < 0) &&
 				     (pEseBcnReq->bcnReq[j].scanMode ==
 						eSIR_BEACON_TABLE))) {
-					QDF_TRACE(QDF_MODULE_ID_HDD,
-						  QDF_TRACE_LEVEL_ERROR,
-						  "Invalid Measurement Duration(%d)",
+					hdd_err("Invalid Measurement Duration(%d)",
 						  tempInt);
 					return -EINVAL;
 				}
@@ -2780,8 +2697,7 @@ static int hdd_parse_ese_beacon_req(uint8_t *pValue,
 	}
 
 	for (j = 0; j < pEseBcnReq->numBcnReqIe; j++) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-			  "Index(%d) Measurement Token(%u) Channel(%u) Scan Mode(%u) Measurement Duration(%u)",
+		hdd_info("Index(%d) Measurement Token(%u) Channel(%u) Scan Mode(%u) Measurement Duration(%u)",
 			  j,
 			  pEseBcnReq->bcnReq[j].measurementToken,
 			  pEseBcnReq->bcnReq[j].channel,
@@ -2846,7 +2762,7 @@ static int hdd_parse_get_cckm_ie(uint8_t *pValue, uint8_t **pCckmIe,
 	 */
 	*pCckmIe = qdf_mem_malloc((*pCckmIeLen + 1) / 2);
 	if (NULL == *pCckmIe) {
-		hddLog(LOGE, FL("qdf_mem_malloc failed"));
+		hdd_err("qdf_mem_malloc failed");
 		return -ENOMEM;
 	}
 	qdf_mem_zero(*pCckmIe, (*pCckmIeLen + 1) / 2);
@@ -2874,19 +2790,16 @@ int wlan_hdd_set_mc_rate(hdd_adapter_t *pAdapter, int targetRate)
 	struct hdd_config *pConfig = NULL;
 
 	if (pHddCtx == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: HDD context is null", __func__);
+		hdd_err("HDD context is null");
 		return -EINVAL;
 	}
 	if ((QDF_IBSS_MODE != pAdapter->device_mode) &&
 	    (QDF_SAP_MODE != pAdapter->device_mode) &&
 	    (QDF_STA_MODE != pAdapter->device_mode)) {
-		hddLog(LOGE,
-			FL("Received SETMCRATE cmd in invalid mode %s(%d)"),
-			hdd_device_mode_to_string(pAdapter->device_mode),
-			pAdapter->device_mode);
-		hddLog(LOGE,
-			FL("SETMCRATE cmd is allowed only in STA, IBSS or SOFTAP mode"));
+		hdd_err("Received SETMCRATE cmd in invalid mode %s(%d)",
+			 hdd_device_mode_to_string(pAdapter->device_mode),
+			 pAdapter->device_mode);
+		hdd_err("SETMCRATE cmd is allowed only in STA, IBSS or SOFTAP mode");
 		return -EINVAL;
 	}
 	pConfig = pHddCtx->config;
@@ -2897,15 +2810,13 @@ int wlan_hdd_set_mc_rate(hdd_adapter_t *pAdapter, int targetRate)
 	rateUpdate.mcastDataRate5GHz = targetRate;
 	rateUpdate.bcastDataRate = -1;
 	qdf_copy_macaddr(&rateUpdate.bssid, &pAdapter->macAddressCurrent);
-	hddLog(LOG1,
-		FL("MC Target rate %d, mac = %pM, dev_mode %s(%d)"),
-		rateUpdate.mcastDataRate24GHz, rateUpdate.bssid.bytes,
-		hdd_device_mode_to_string(pAdapter->device_mode),
-		pAdapter->device_mode);
+	hdd_info("MC Target rate %d, mac = %pM, dev_mode %s(%d)",
+		  rateUpdate.mcastDataRate24GHz, rateUpdate.bssid.bytes,
+		  hdd_device_mode_to_string(pAdapter->device_mode),
+		  pAdapter->device_mode);
 	status = sme_send_rate_update_ind(pHddCtx->hHal, &rateUpdate);
 	if (QDF_STATUS_SUCCESS != status) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, "%s: SETMCRATE failed",
-		       __func__);
+		hdd_err("SETMCRATE failed");
 		return -EFAULT;
 	}
 	return 0;
@@ -2931,9 +2842,7 @@ static int drv_cmd_p2p_dev_addr(hdd_adapter_t *adapter,
 
 	if (copy_to_user(priv_data->buf, hdd_ctx->p2pDeviceAddress.bytes,
 			 sizeof(tSirMacAddr))) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       "%s: failed to copy data to user buffer",
-		       __func__);
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 	}
 
@@ -3000,10 +2909,9 @@ static int drv_cmd_set_band(hdd_adapter_t *adapter,
 	 * First 8 bytes will have "SETBAND " and
 	 * 9 byte will have band setting value
 	 */
-	hddLog(QDF_TRACE_LEVEL_INFO,
-	       "%s: SetBandCommand Info  comm %s UL %d, TL %d",
-	       __func__, command, priv_data->used_len,
-	       priv_data->total_len);
+	hdd_info("SetBandCommand Info  comm %s UL %d, TL %d",
+		  command, priv_data->used_len,
+		  priv_data->total_len);
 
 	/* Change band request received */
 	ret = hdd_set_band_helper(adapter->dev, ptr);
@@ -3047,13 +2955,10 @@ static int drv_cmd_country(hdd_adapter_t *adapter,
 			&adapter->change_country_code,
 			 msecs_to_jiffies(WLAN_WAIT_TIME_COUNTRY));
 		if (!rc)
-			hddLog(QDF_TRACE_LEVEL_ERROR,
-			       "%s: SME while setting country code timed out",
-			       __func__);
+			hdd_err("SME while setting country code timed out");
 	} else {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       "%s: SME Change Country code fail, status=%d",
-		       __func__, status);
+		hdd_err("SME Change Country code fail, status %d",
+			 status);
 		ret = -EINVAL;
 	}
 
@@ -3082,12 +2987,9 @@ static int drv_cmd_set_roam_trigger(hdd_adapter_t *adapter,
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: kstrtou8 failed Input value may be out of range[%d - %d]",
-			  __func__,
-			  CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MIN,
-			  CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MAX);
+		hdd_err("kstrtou8 failed Input value may be out of range[%d - %d]",
+			CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MIN,
+			CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MAX);
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -3096,9 +2998,7 @@ static int drv_cmd_set_roam_trigger(hdd_adapter_t *adapter,
 
 	if ((lookUpThreshold < CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MIN)
 	    || (lookUpThreshold > CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MAX)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "Neighbor lookup threshold value %d is out of range (Min: %d Max: %d)",
+		hdd_err("Neighbor lookup threshold value %d is out of range (Min: %d Max: %d)",
 			  lookUpThreshold,
 			  CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MIN,
 			  CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MAX);
@@ -3109,9 +3009,7 @@ static int drv_cmd_set_roam_trigger(hdd_adapter_t *adapter,
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_SETROAMTRIGGER_IOCTL,
 			 adapter->sessionId, lookUpThreshold));
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Received Command to Set Roam trigger (Neighbor lookup threshold) = %d",
-		  __func__,
+	hdd_info("Received Command to Set Roam trigger (Neighbor lookup threshold) = %d",
 		  lookUpThreshold);
 
 	hdd_ctx->config->nNeighborLookupRssiThreshold = lookUpThreshold;
@@ -3119,10 +3017,7 @@ static int drv_cmd_set_roam_trigger(hdd_adapter_t *adapter,
 							adapter->sessionId,
 							lookUpThreshold);
 	if (QDF_STATUS_SUCCESS != status) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to set roam trigger, try again",
-			  __func__);
+		hdd_err("Failed to set roam trigger, try again");
 		ret = -EPERM;
 		goto exit;
 	}
@@ -3151,10 +3046,7 @@ static int drv_cmd_get_roam_trigger(hdd_adapter_t *adapter,
 	len = scnprintf(extra, sizeof(extra), "%s %d", command, rssi);
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to copy data to user buffer",
-			  __func__);
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 	}
 
@@ -3185,24 +3077,19 @@ static int drv_cmd_set_roam_scan_period(hdd_adapter_t *adapter,
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: kstrtou8 failed Input value may be out of range[%d - %d]",
-			  __func__,
-			  (CFG_EMPTY_SCAN_REFRESH_PERIOD_MIN / 1000),
-			  (CFG_EMPTY_SCAN_REFRESH_PERIOD_MAX / 1000));
+		hdd_err("kstrtou8 failed Input value may be out of range[%d - %d]",
+			(CFG_EMPTY_SCAN_REFRESH_PERIOD_MIN / 1000),
+			(CFG_EMPTY_SCAN_REFRESH_PERIOD_MAX / 1000));
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	if ((roamScanPeriod < (CFG_EMPTY_SCAN_REFRESH_PERIOD_MIN / 1000))
 	    || (roamScanPeriod > (CFG_EMPTY_SCAN_REFRESH_PERIOD_MAX / 1000))) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "Roam scan period value %d is out of range (Min: %d Max: %d)",
-			  roamScanPeriod,
-			  (CFG_EMPTY_SCAN_REFRESH_PERIOD_MIN / 1000),
-			  (CFG_EMPTY_SCAN_REFRESH_PERIOD_MAX / 1000));
+		hdd_err("Roam scan period value %d is out of range (Min: %d Max: %d)",
+			roamScanPeriod,
+			(CFG_EMPTY_SCAN_REFRESH_PERIOD_MIN / 1000),
+			(CFG_EMPTY_SCAN_REFRESH_PERIOD_MAX / 1000));
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -3211,9 +3098,7 @@ static int drv_cmd_set_roam_scan_period(hdd_adapter_t *adapter,
 			 adapter->sessionId, roamScanPeriod));
 	neighborEmptyScanRefreshPeriod = roamScanPeriod * 1000;
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Received Command to Set roam scan period (Empty Scan refresh period) = %d",
-		  __func__,
+	hdd_info("Received Command to Set roam scan period (Empty Scan refresh period) = %d",
 		  roamScanPeriod);
 
 	hdd_ctx->config->nEmptyScanRefreshPeriod =
@@ -3248,8 +3133,7 @@ static int drv_cmd_get_roam_scan_period(hdd_adapter_t *adapter,
 	/* Returned value is in units of seconds */
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-		hddLog(LOGE,
-			FL("failed to copy data to user buffer"));
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 	}
 
@@ -3279,12 +3163,9 @@ static int drv_cmd_set_roam_scan_refresh_period(hdd_adapter_t *adapter,
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: kstrtou8 failed Input value may be out of range[%d - %d]",
-			  __func__,
-			  CFG_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD_MIN / 1000,
-			  CFG_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD_MAX / 1000);
+		hdd_err("kstrtou8 failed Input value may be out of range[%d - %d]",
+			CFG_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD_MIN / 1000,
+			CFG_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD_MAX / 1000);
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -3293,22 +3174,18 @@ static int drv_cmd_set_roam_scan_refresh_period(hdd_adapter_t *adapter,
 		(CFG_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD_MIN / 1000))
 	    || (roamScanRefreshPeriod >
 		(CFG_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD_MAX / 1000))) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "Neighbor scan results refresh period value %d is out of range (Min: %d Max: %d)",
-			  roamScanRefreshPeriod,
-			  (CFG_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD_MIN
-					   / 1000),
-			  (CFG_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD_MAX
-					   / 1000));
+		hdd_err("Neighbor scan results refresh period value %d is out of range (Min: %d Max: %d)",
+			roamScanRefreshPeriod,
+			(CFG_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD_MIN
+			 / 1000),
+			(CFG_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD_MAX
+			 / 1000));
 		ret = -EINVAL;
 		goto exit;
 	}
 	neighborScanRefreshPeriod = roamScanRefreshPeriod * 1000;
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Received Command to Set roam scan refresh period (Scan refresh period) = %d",
-		  __func__,
+	hdd_info("Received Command to Set roam scan refresh period (Scan refresh period) = %d",
 		  roamScanRefreshPeriod);
 
 	hdd_ctx->config->nNeighborResultsRefreshPeriod =
@@ -3339,10 +3216,7 @@ static int drv_cmd_get_roam_scan_refresh_period(hdd_adapter_t *adapter,
 	/* Returned value is in units of seconds */
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to copy data to user buffer",
-			  __func__);
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 	}
 
@@ -3369,29 +3243,24 @@ static int drv_cmd_set_roam_mode(hdd_adapter_t *adapter,
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: kstrtou8 failed range [%d - %d]",
-			  __func__, CFG_LFR_FEATURE_ENABLED_MIN,
-			  CFG_LFR_FEATURE_ENABLED_MAX);
+		hdd_err("kstrtou8 failed range [%d - %d]",
+			CFG_LFR_FEATURE_ENABLED_MIN,
+			CFG_LFR_FEATURE_ENABLED_MAX);
 		ret = -EINVAL;
 		goto exit;
 	}
 	if ((roamMode < CFG_LFR_FEATURE_ENABLED_MIN) ||
 	    (roamMode > CFG_LFR_FEATURE_ENABLED_MAX)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "Roam Mode value %d is out of range (Min: %d Max: %d)",
-			  roamMode,
-			  CFG_LFR_FEATURE_ENABLED_MIN,
-			  CFG_LFR_FEATURE_ENABLED_MAX);
+		hdd_err("Roam Mode value %d is out of range (Min: %d Max: %d)",
+			roamMode,
+			CFG_LFR_FEATURE_ENABLED_MIN,
+			CFG_LFR_FEATURE_ENABLED_MAX);
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
-		  "%s: Received Command to Set Roam Mode = %d",
-		  __func__, roamMode);
+	hdd_debug("Received Command to Set Roam Mode = %d",
+		  roamMode);
 	/*
 	 * Note that
 	 *     SETROAMMODE 0 is to enable LFR while
@@ -3453,10 +3322,7 @@ static int drv_cmd_get_roam_mode(hdd_adapter_t *adapter,
 	len = scnprintf(extra, sizeof(extra), "%s %d", command, roamMode);
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to copy data to user buffer",
-			  __func__);
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 	}
 
@@ -3483,30 +3349,25 @@ static int drv_cmd_set_roam_delta(hdd_adapter_t *adapter,
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: kstrtou8 failed range [%d - %d]",
-			  __func__, CFG_ROAM_RSSI_DIFF_MIN,
-			  CFG_ROAM_RSSI_DIFF_MAX);
+		hdd_err("kstrtou8 failed range [%d - %d]",
+			CFG_ROAM_RSSI_DIFF_MIN,
+			CFG_ROAM_RSSI_DIFF_MAX);
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	if ((roamRssiDiff < CFG_ROAM_RSSI_DIFF_MIN) ||
 	    (roamRssiDiff > CFG_ROAM_RSSI_DIFF_MAX)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "Roam rssi diff value %d is out of range (Min: %d Max: %d)",
-			  roamRssiDiff,
-			  CFG_ROAM_RSSI_DIFF_MIN,
-			  CFG_ROAM_RSSI_DIFF_MAX);
+		hdd_err("Roam rssi diff value %d is out of range (Min: %d Max: %d)",
+			roamRssiDiff,
+			CFG_ROAM_RSSI_DIFF_MIN,
+			CFG_ROAM_RSSI_DIFF_MAX);
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Received Command to Set roam rssi diff = %d",
-		  __func__, roamRssiDiff);
+	hdd_info("Received Command to Set roam rssi diff = %d",
+		  roamRssiDiff);
 
 	hdd_ctx->config->RoamRssiDiff = roamRssiDiff;
 	sme_update_roam_rssi_diff(hdd_ctx->hHal,
@@ -3538,10 +3399,7 @@ static int drv_cmd_get_roam_delta(hdd_adapter_t *adapter,
 	len = QDF_MIN(priv_data->total_len, len + 1);
 
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to copy data to user buffer",
-			  __func__);
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 	}
 
@@ -3569,10 +3427,7 @@ static int drv_cmd_get_band(hdd_adapter_t *adapter,
 	len = QDF_MIN(priv_data->total_len, len + 1);
 
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to copy data to user buffer",
-			  __func__);
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 	}
 
@@ -3606,10 +3461,7 @@ static int drv_cmd_get_roam_scan_channels(hdd_adapter_t *adapter,
 					       ChannelList,
 					       &numChannels,
 					       adapter->sessionId)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_FATAL,
-			  "%s: failed to get roam scan channel list",
-			  __func__);
+		hdd_alert("failed to get roam scan channel list");
 		ret = -EFAULT;
 		goto exit;
 	}
@@ -3630,10 +3482,7 @@ static int drv_cmd_get_roam_scan_channels(hdd_adapter_t *adapter,
 
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to copy data to user buffer",
-			  __func__);
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 		goto exit;
 	}
@@ -3660,10 +3509,7 @@ static int drv_cmd_get_ccx_mode(hdd_adapter_t *adapter,
 	if (eseMode &&
 	    hdd_is_okc_mode_enabled(hdd_ctx) &&
 	    sme_get_is_ft_feature_enabled(hdd_ctx->hHal)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_WARN,
-			  "%s: OKC/ESE/11R are supported simultaneously hence this operation is not permitted!",
-			  __func__);
+		hdd_warn("OKC/ESE/11R are supported simultaneously hence this operation is not permitted!");
 		ret = -EPERM;
 		goto exit;
 	}
@@ -3672,10 +3518,7 @@ static int drv_cmd_get_ccx_mode(hdd_adapter_t *adapter,
 			"GETCCXMODE", eseMode);
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to copy data to user buffer",
-			  __func__);
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 		goto exit;
 	}
@@ -3702,10 +3545,7 @@ static int drv_cmd_get_okc_mode(hdd_adapter_t *adapter,
 	if (okcMode &&
 	    sme_get_is_ese_feature_enabled(hdd_ctx->hHal) &&
 	    sme_get_is_ft_feature_enabled(hdd_ctx->hHal)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_WARN,
-			  "%s: OKC/ESE/11R are supported simultaneously hence this operation is not permitted!",
-			  __func__);
+		hdd_warn("OKC/ESE/11R are supported simultaneously hence this operation is not permitted!");
 		ret = -EPERM;
 		goto exit;
 	}
@@ -3715,10 +3555,7 @@ static int drv_cmd_get_okc_mode(hdd_adapter_t *adapter,
 	len = QDF_MIN(priv_data->total_len, len + 1);
 
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to copy data to user buffer",
-			  __func__);
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 		goto exit;
 	}
@@ -3743,10 +3580,7 @@ static int drv_cmd_get_fast_roam(hdd_adapter_t *adapter,
 	len = QDF_MIN(priv_data->total_len, len + 1);
 
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to copy data to user buffer",
-			  __func__);
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 	}
 
@@ -3769,10 +3603,7 @@ static int drv_cmd_get_fast_transition(hdd_adapter_t *adapter,
 	len = QDF_MIN(priv_data->total_len, len + 1);
 
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to copy data to user buffer",
-			  __func__);
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 	}
 
@@ -3799,24 +3630,19 @@ static int drv_cmd_set_roam_scan_channel_min_time(hdd_adapter_t *adapter,
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: kstrtou8 failed range [%d - %d]",
-			  __func__,
-			  CFG_NEIGHBOR_SCAN_MIN_CHAN_TIME_MIN,
-			  CFG_NEIGHBOR_SCAN_MIN_CHAN_TIME_MAX);
+		hdd_err("kstrtou8 failed range [%d - %d]",
+			CFG_NEIGHBOR_SCAN_MIN_CHAN_TIME_MIN,
+			CFG_NEIGHBOR_SCAN_MIN_CHAN_TIME_MAX);
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	if ((minTime < CFG_NEIGHBOR_SCAN_MIN_CHAN_TIME_MIN) ||
 	    (minTime > CFG_NEIGHBOR_SCAN_MIN_CHAN_TIME_MAX)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "scan min channel time value %d is out of range (Min: %d Max: %d)",
-			  minTime,
-			  CFG_NEIGHBOR_SCAN_MIN_CHAN_TIME_MIN,
-			  CFG_NEIGHBOR_SCAN_MIN_CHAN_TIME_MAX);
+		hdd_err("scan min channel time value %d is out of range (Min: %d Max: %d)",
+			minTime,
+			CFG_NEIGHBOR_SCAN_MIN_CHAN_TIME_MIN,
+			CFG_NEIGHBOR_SCAN_MIN_CHAN_TIME_MAX);
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -3824,9 +3650,8 @@ static int drv_cmd_set_roam_scan_channel_min_time(hdd_adapter_t *adapter,
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_SETROAMSCANCHANNELMINTIME_IOCTL,
 			 adapter->sessionId, minTime));
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Received Command to change channel min time = %d",
-		  __func__, minTime);
+	hdd_info("Received Command to change channel min time = %d",
+		  minTime);
 
 	hdd_ctx->config->nNeighborScanMinChanTime = minTime;
 	sme_set_neighbor_scan_min_chan_time(hdd_ctx->hHal,
@@ -3868,10 +3693,7 @@ static int drv_cmd_get_roam_scan_channel_min_time(hdd_adapter_t *adapter,
 			 adapter->sessionId, val));
 
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to copy data to user buffer",
-			  __func__);
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 	}
 
@@ -3898,31 +3720,25 @@ static int drv_cmd_set_scan_channel_time(hdd_adapter_t *adapter,
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: kstrtou16 failed range [%d - %d]",
-			  __func__,
-			  CFG_NEIGHBOR_SCAN_MAX_CHAN_TIME_MIN,
-			  CFG_NEIGHBOR_SCAN_MAX_CHAN_TIME_MAX);
+		hdd_err("kstrtou16 failed range [%d - %d]",
+			CFG_NEIGHBOR_SCAN_MAX_CHAN_TIME_MIN,
+			CFG_NEIGHBOR_SCAN_MAX_CHAN_TIME_MAX);
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	if ((maxTime < CFG_NEIGHBOR_SCAN_MAX_CHAN_TIME_MIN) ||
 	    (maxTime > CFG_NEIGHBOR_SCAN_MAX_CHAN_TIME_MAX)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "lfr mode value %d is out of range (Min: %d Max: %d)",
-			  maxTime,
-			  CFG_NEIGHBOR_SCAN_MAX_CHAN_TIME_MIN,
-			  CFG_NEIGHBOR_SCAN_MAX_CHAN_TIME_MAX);
+		hdd_err("lfr mode value %d is out of range (Min: %d Max: %d)",
+			maxTime,
+			CFG_NEIGHBOR_SCAN_MAX_CHAN_TIME_MIN,
+			CFG_NEIGHBOR_SCAN_MAX_CHAN_TIME_MAX);
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Received Command to change channel max time = %d",
-		  __func__, maxTime);
+	hdd_info("Received Command to change channel max time = %d",
+		  maxTime);
 
 	hdd_ctx->config->nNeighborScanMaxChanTime = maxTime;
 	sme_set_neighbor_scan_max_chan_time(hdd_ctx->hHal,
@@ -3951,10 +3767,7 @@ static int drv_cmd_get_scan_channel_time(hdd_adapter_t *adapter,
 	len = QDF_MIN(priv_data->total_len, len + 1);
 
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-			 QDF_TRACE(QDF_MODULE_ID_HDD,
-			 QDF_TRACE_LEVEL_ERROR,
-			 "%s: failed to copy data to user buffer",
-			 __func__);
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 	}
 
@@ -3981,31 +3794,25 @@ static int drv_cmd_set_scan_home_time(hdd_adapter_t *adapter,
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: kstrtou16 failed range [%d - %d]",
-			  __func__,
-			  CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MIN,
-			  CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MAX);
+		hdd_err("kstrtou16 failed range [%d - %d]",
+			CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MIN,
+			CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MAX);
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	if ((val < CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MIN) ||
 	    (val > CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MAX)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "scan home time value %d is out of range (Min: %d Max: %d)",
-			  val,
-			  CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MIN,
-			  CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MAX);
+		hdd_err("scan home time value %d is out of range (Min: %d Max: %d)",
+			val,
+			CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MIN,
+			CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MAX);
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Received Command to change scan home time = %d",
-		  __func__, val);
+	hdd_info("Received Command to change scan home time = %d",
+		  val);
 
 	hdd_ctx->config->nNeighborScanPeriod = val;
 	sme_set_neighbor_scan_period(hdd_ctx->hHal,
@@ -4034,10 +3841,7 @@ static int drv_cmd_get_scan_home_time(hdd_adapter_t *adapter,
 	len = QDF_MIN(priv_data->total_len, len + 1);
 
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to copy data to user buffer",
-			  __func__);
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 	}
 
@@ -4064,29 +3868,24 @@ static int drv_cmd_set_roam_intra_band(hdd_adapter_t *adapter,
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: kstrtou8 failed range [%d - %d]",
-			  __func__, CFG_ROAM_INTRA_BAND_MIN,
-			  CFG_ROAM_INTRA_BAND_MAX);
+		hdd_err("kstrtou8 failed range [%d - %d]",
+			CFG_ROAM_INTRA_BAND_MIN,
+			CFG_ROAM_INTRA_BAND_MAX);
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	if ((val < CFG_ROAM_INTRA_BAND_MIN) ||
 	    (val > CFG_ROAM_INTRA_BAND_MAX)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "intra band mode value %d is out of range (Min: %d Max: %d)",
-			  val,
-			  CFG_ROAM_INTRA_BAND_MIN,
-			  CFG_ROAM_INTRA_BAND_MAX);
+		hdd_err("intra band mode value %d is out of range (Min: %d Max: %d)",
+			val,
+			CFG_ROAM_INTRA_BAND_MIN,
+			CFG_ROAM_INTRA_BAND_MAX);
 		ret = -EINVAL;
 		goto exit;
 	}
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Received Command to change intra band = %d",
-		  __func__, val);
+	hdd_info("Received Command to change intra band = %d",
+		  val);
 
 	hdd_ctx->config->nRoamIntraBand = val;
 	sme_set_roam_intra_band(hdd_ctx->hHal, val);
@@ -4111,10 +3910,7 @@ static int drv_cmd_get_roam_intra_band(hdd_adapter_t *adapter,
 			"GETROAMINTRABAND", val);
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to copy data to user buffer",
-			  __func__);
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 	}
 
@@ -4141,30 +3937,25 @@ static int drv_cmd_set_scan_n_probes(hdd_adapter_t *adapter,
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: kstrtou8 failed range [%d - %d]",
-			  __func__, CFG_ROAM_SCAN_N_PROBES_MIN,
-			  CFG_ROAM_SCAN_N_PROBES_MAX);
+		hdd_err("kstrtou8 failed range [%d - %d]",
+			CFG_ROAM_SCAN_N_PROBES_MIN,
+			CFG_ROAM_SCAN_N_PROBES_MAX);
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	if ((nProbes < CFG_ROAM_SCAN_N_PROBES_MIN) ||
 	    (nProbes > CFG_ROAM_SCAN_N_PROBES_MAX)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "NProbes value %d is out of range (Min: %d Max: %d)",
-			  nProbes,
-			  CFG_ROAM_SCAN_N_PROBES_MIN,
-			  CFG_ROAM_SCAN_N_PROBES_MAX);
+		hdd_err("NProbes value %d is out of range (Min: %d Max: %d)",
+			nProbes,
+			CFG_ROAM_SCAN_N_PROBES_MIN,
+			CFG_ROAM_SCAN_N_PROBES_MAX);
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Received Command to Set nProbes = %d",
-		  __func__, nProbes);
+	hdd_info("Received Command to Set nProbes = %d",
+		  nProbes);
 
 	hdd_ctx->config->nProbes = nProbes;
 	sme_update_roam_scan_n_probes(hdd_ctx->hHal,
@@ -4188,10 +3979,7 @@ static int drv_cmd_get_scan_n_probes(hdd_adapter_t *adapter,
 	len = scnprintf(extra, sizeof(extra), "%s %d", command, val);
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to copy data to user buffer",
-			  __func__);
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 	}
 
@@ -4220,21 +4008,16 @@ static int drv_cmd_set_scan_home_away_time(hdd_adapter_t *adapter,
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: kstrtou8 failed range [%d - %d]",
-			  __func__,
-			  CFG_ROAM_SCAN_HOME_AWAY_TIME_MIN,
-			  CFG_ROAM_SCAN_HOME_AWAY_TIME_MAX);
+		hdd_err("kstrtou8 failed range [%d - %d]",
+			CFG_ROAM_SCAN_HOME_AWAY_TIME_MIN,
+			CFG_ROAM_SCAN_HOME_AWAY_TIME_MAX);
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	if ((homeAwayTime < CFG_ROAM_SCAN_HOME_AWAY_TIME_MIN) ||
 	    (homeAwayTime > CFG_ROAM_SCAN_HOME_AWAY_TIME_MAX)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "homeAwayTime value %d is out of range (Min: %d Max: %d)",
+		hdd_err("homeAwayTime value %d is out of range (Min: %d Max: %d)",
 			  homeAwayTime,
 			  CFG_ROAM_SCAN_HOME_AWAY_TIME_MIN,
 			  CFG_ROAM_SCAN_HOME_AWAY_TIME_MAX);
@@ -4242,9 +4025,8 @@ static int drv_cmd_set_scan_home_away_time(hdd_adapter_t *adapter,
 		goto exit;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Received Command to Set scan away time = %d",
-		  __func__, homeAwayTime);
+	hdd_info("Received Command to Set scan away time = %d",
+		  homeAwayTime);
 
 	if (hdd_ctx->config->nRoamScanHomeAwayTime !=
 	    homeAwayTime) {
@@ -4274,10 +4056,7 @@ static int drv_cmd_get_scan_home_away_time(hdd_adapter_t *adapter,
 	len = QDF_MIN(priv_data->total_len, len + 1);
 
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to copy data to user buffer",
-			  __func__);
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 	}
 
@@ -4313,10 +4092,7 @@ static int drv_cmd_set_wes_mode(hdd_adapter_t *adapter,
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: kstrtou8 failed range [%d - %d]",
-			  __func__,
+		hdd_err("kstrtou8 failed range [%d - %d]",
 			  CFG_ENABLE_WES_MODE_NAME_MIN,
 			  CFG_ENABLE_WES_MODE_NAME_MAX);
 		ret = -EINVAL;
@@ -4325,9 +4101,7 @@ static int drv_cmd_set_wes_mode(hdd_adapter_t *adapter,
 
 	if ((wesMode < CFG_ENABLE_WES_MODE_NAME_MIN) ||
 	    (wesMode > CFG_ENABLE_WES_MODE_NAME_MAX)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "WES Mode value %d is out of range (Min: %d Max: %d)",
+		hdd_err("WES Mode value %d is out of range (Min: %d Max: %d)",
 			  wesMode,
 			  CFG_ENABLE_WES_MODE_NAME_MIN,
 			  CFG_ENABLE_WES_MODE_NAME_MAX);
@@ -4335,9 +4109,8 @@ static int drv_cmd_set_wes_mode(hdd_adapter_t *adapter,
 		goto exit;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Received Command to Set WES Mode rssi diff = %d",
-		  __func__, wesMode);
+	hdd_info("Received Command to Set WES Mode rssi diff = %d",
+		  wesMode);
 
 	hdd_ctx->config->isWESModeEnabled = wesMode;
 	sme_update_wes_mode(hdd_ctx->hHal, wesMode, adapter->sessionId);
@@ -4360,10 +4133,7 @@ static int drv_cmd_get_wes_mode(hdd_adapter_t *adapter,
 	len = scnprintf(extra, sizeof(extra), "%s %d", command, wesMode);
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to copy data to user buffer",
-			  __func__);
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 	}
 
@@ -4391,16 +4161,13 @@ static int drv_cmd_set_opportunistic_rssi_diff(hdd_adapter_t *adapter,
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: kstrtou8 failed.", __func__);
+		hdd_err("kstrtou8 failed.");
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Received Command to Set Opportunistic Threshold diff = %d",
-		  __func__, nOpportunisticThresholdDiff);
+	hdd_info("Received Command to Set Opportunistic Threshold diff = %d",
+		  nOpportunisticThresholdDiff);
 
 	sme_set_roam_opportunistic_scan_threshold_diff(hdd_ctx->hHal,
 				adapter->sessionId,
@@ -4425,10 +4192,7 @@ static int drv_cmd_get_opportunistic_rssi_diff(hdd_adapter_t *adapter,
 	len = scnprintf(extra, sizeof(extra), "%s %d", command, val);
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to copy data to user buffer",
-			  __func__);
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 	}
 
@@ -4455,16 +4219,13 @@ static int drv_cmd_set_roam_rescan_rssi_diff(hdd_adapter_t *adapter,
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: kstrtou8 failed.", __func__);
+		hdd_err("kstrtou8 failed.");
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Received Command to Set Roam Rescan RSSI Diff = %d",
-		  __func__, nRoamRescanRssiDiff);
+	hdd_info("Received Command to Set Roam Rescan RSSI Diff = %d",
+		  nRoamRescanRssiDiff);
 
 	sme_set_roam_rescan_rssi_diff(hdd_ctx->hHal,
 				      adapter->sessionId,
@@ -4488,10 +4249,7 @@ static int drv_cmd_get_roam_rescan_rssi_diff(hdd_adapter_t *adapter,
 	len = scnprintf(extra, sizeof(extra), "%s %d", command, val);
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to copy data to user buffer",
-			  __func__);
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 	}
 
@@ -4518,10 +4276,8 @@ static int drv_cmd_set_fast_roam(hdd_adapter_t *adapter,
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: kstrtou8 failed range [%d - %d]",
-			  __func__, CFG_LFR_FEATURE_ENABLED_MIN,
+		hdd_err("kstrtou8 failed range [%d - %d]",
+			  CFG_LFR_FEATURE_ENABLED_MIN,
 			  CFG_LFR_FEATURE_ENABLED_MAX);
 		ret = -EINVAL;
 		goto exit;
@@ -4529,9 +4285,7 @@ static int drv_cmd_set_fast_roam(hdd_adapter_t *adapter,
 
 	if ((lfrMode < CFG_LFR_FEATURE_ENABLED_MIN) ||
 	    (lfrMode > CFG_LFR_FEATURE_ENABLED_MAX)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "lfr mode value %d is out of range (Min: %d Max: %d)",
+		hdd_err("lfr mode value %d is out of range (Min: %d Max: %d)",
 			  lfrMode,
 			  CFG_LFR_FEATURE_ENABLED_MIN,
 			  CFG_LFR_FEATURE_ENABLED_MAX);
@@ -4539,9 +4293,8 @@ static int drv_cmd_set_fast_roam(hdd_adapter_t *adapter,
 		goto exit;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Received Command to change lfr mode = %d",
-		  __func__, lfrMode);
+	hdd_info("Received Command to change lfr mode = %d",
+		  lfrMode);
 
 	hdd_ctx->config->isFastRoamIniFeatureEnabled = lfrMode;
 	sme_update_is_fast_roam_ini_feature_enabled(hdd_ctx->hHal,
@@ -4573,10 +4326,7 @@ static int drv_cmd_set_fast_transition(hdd_adapter_t *adapter,
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: kstrtou8 failed range [%d - %d]",
-			  __func__,
+		hdd_err("kstrtou8 failed range [%d - %d]",
 			  CFG_FAST_TRANSITION_ENABLED_NAME_MIN,
 			  CFG_FAST_TRANSITION_ENABLED_NAME_MAX);
 		ret = -EINVAL;
@@ -4585,9 +4335,7 @@ static int drv_cmd_set_fast_transition(hdd_adapter_t *adapter,
 
 	if ((ft < CFG_FAST_TRANSITION_ENABLED_NAME_MIN) ||
 	    (ft > CFG_FAST_TRANSITION_ENABLED_NAME_MAX)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "ft mode value %d is out of range (Min: %d Max: %d)",
+		hdd_err("ft mode value %d is out of range (Min: %d Max: %d)",
 			  ft,
 			  CFG_FAST_TRANSITION_ENABLED_NAME_MIN,
 			  CFG_FAST_TRANSITION_ENABLED_NAME_MAX);
@@ -4595,9 +4343,7 @@ static int drv_cmd_set_fast_transition(hdd_adapter_t *adapter,
 		goto exit;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Received Command to change ft mode = %d",
-		  __func__, ft);
+	hdd_info("Received Command to change ft mode = %d", ft);
 
 	hdd_ctx->config->isFastTransitionEnabled = ft;
 	sme_update_fast_transition_enabled(hdd_ctx->hHal, ft);
@@ -4615,7 +4361,7 @@ static void hdd_wma_send_fastreassoc_cmd(int sessionId, tSirMacAddr bssid,
 
 	fastreassoc = qdf_mem_malloc(sizeof(*fastreassoc));
 	if (NULL == fastreassoc) {
-		hddLog(LOGE, FL("qdf_mem_malloc failed for fastreassoc"));
+		hdd_err("qdf_mem_malloc failed for fastreassoc");
 		return;
 	}
 	fastreassoc->vdev_id = sessionId;
@@ -4633,8 +4379,7 @@ static void hdd_wma_send_fastreassoc_cmd(int sessionId, tSirMacAddr bssid,
 	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA,
 								&msg)) {
 		qdf_mem_free(fastreassoc);
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-		FL("Not able to post ROAM_INVOKE_CMD message to WMA"));
+		hdd_err("Not able to post ROAM_INVOKE_CMD message to WMA");
 	}
 }
 #else
@@ -4668,9 +4413,7 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 
 	/* if not associated, no need to proceed with reassoc */
 	if (eConnectionState_Associated != pHddStaCtx->conn_info.connState) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_INFO,
-			  "%s:Not associated!", __func__);
+		hdd_info("Not associated!");
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -4678,10 +4421,7 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 	ret = hdd_parse_reassoc_command_v1_data(value, targetApBssid,
 						&channel);
 	if (ret) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to parse reassoc command data",
-			  __func__);
+		hdd_err("Failed to parse reassoc command data");
 		goto exit;
 	}
 
@@ -4695,12 +4435,10 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 		/* Reassoc to same AP, only supported for Open Security*/
 		if ((pHddStaCtx->conn_info.ucEncryptionType ||
 			  pHddStaCtx->conn_info.mcEncryptionType)) {
-			hddLog(LOGE,
-			  FL("Reassoc to same AP, only supported for Open Security"));
+			hdd_err("Reassoc to same AP, only supported for Open Security");
 			return -ENOTSUPP;
 		}
-		hddLog(LOG1,
-		  FL("Reassoc BSSID is same as currently associated AP bssid"));
+		hdd_info("Reassoc BSSID is same as currently associated AP bssid");
 		sme_get_modify_profile_fields(hdd_ctx->hHal, adapter->sessionId,
 				&modProfileFields);
 		sme_roam_reassoc(hdd_ctx->hHal, adapter->sessionId,
@@ -4711,7 +4449,7 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 	/* Check channel number is a valid channel number */
 	if (QDF_STATUS_SUCCESS !=
 		wlan_hdd_validate_operation_channel(adapter, channel)) {
-		hddLog(LOGE, FL("Invalid Channel [%d]"), channel);
+		hdd_err("Invalid Channel [%d]", channel);
 		return -EINVAL;
 	}
 	if (roaming_offload_enabled(hdd_ctx)) {
@@ -4750,16 +4488,13 @@ static int drv_cmd_set_roam_scan_control(hdd_adapter_t *adapter,
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: kstrtou8 failed ", __func__);
+		hdd_err("kstrtou8 failed ");
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Received Command to Set roam scan control = %d",
-		  __func__, roamScanControl);
+	hdd_info("Received Command to Set roam scan control = %d",
+		  roamScanControl);
 
 	if (0 != roamScanControl) {
 		ret = 0; /* return success but ignore param value "true" */
@@ -4791,10 +4526,7 @@ static int drv_cmd_set_okc_mode(hdd_adapter_t *adapter,
 	if (sme_get_is_ese_feature_enabled(hdd_ctx->hHal) &&
 	    hdd_is_okc_mode_enabled(hdd_ctx) &&
 	    sme_get_is_ft_feature_enabled(hdd_ctx->hHal)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_WARN,
-			  "%s: OKC/ESE/11R are supported simultaneously hence this operation is not permitted!",
-			  __func__);
+		hdd_warn("OKC/ESE/11R are supported simultaneously hence this operation is not permitted!");
 		ret = -EPERM;
 		goto exit;
 	}
@@ -4809,10 +4541,8 @@ static int drv_cmd_set_okc_mode(hdd_adapter_t *adapter,
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: kstrtou8 failed range [%d - %d]",
-			  __func__, CFG_OKC_FEATURE_ENABLED_MIN,
+		hdd_err("kstrtou8 failed range [%d - %d]",
+			  CFG_OKC_FEATURE_ENABLED_MIN,
 			  CFG_OKC_FEATURE_ENABLED_MAX);
 		ret = -EINVAL;
 		goto exit;
@@ -4820,18 +4550,15 @@ static int drv_cmd_set_okc_mode(hdd_adapter_t *adapter,
 
 	if ((okcMode < CFG_OKC_FEATURE_ENABLED_MIN) ||
 	    (okcMode > CFG_OKC_FEATURE_ENABLED_MAX)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "Okc mode value %d is out of range (Min: %d Max: %d)",
+		hdd_err("Okc mode value %d is out of range (Min: %d Max: %d)",
 			  okcMode,
 			  CFG_OKC_FEATURE_ENABLED_MIN,
 			  CFG_OKC_FEATURE_ENABLED_MAX);
 		ret = -EINVAL;
 		goto exit;
 	}
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Received Command to change okc mode = %d",
-		  __func__, okcMode);
+	hdd_info("Received Command to change okc mode = %d",
+		  okcMode);
 
 	hdd_ctx->config->isOkcIniFeatureEnabled = okcMode;
 
@@ -4854,10 +4581,7 @@ static int drv_cmd_get_roam_scan_control(hdd_adapter_t *adapter,
 			command, roamScanControl);
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to copy data to user buffer",
-			  __func__);
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 	}
 
@@ -4875,19 +4599,15 @@ static int drv_cmd_bt_coex_mode(hdd_adapter_t *adapter,
 
 	bcMode = command + 11;
 	if ('1' == *bcMode) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_DEBUG,
-			  FL("BTCOEXMODE %d"), *bcMode);
+		hdd_debug("BTCOEXMODE %d", *bcMode);
 		hdd_ctx->btCoexModeSet = true;
 		ret = wlan_hdd_scan_abort(adapter);
 		if (ret < 0) {
-			hddLog(LOGE,
-			    FL("Failed to abort existing scan status:%d"), ret);
+			hdd_err("Failed to abort existing scan status: %d",
+				ret);
 		}
 	} else if ('2' == *bcMode) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_DEBUG,
-			  FL("BTCOEXMODE %d"), *bcMode);
+		hdd_debug("BTCOEXMODE %d", *bcMode);
 		hdd_ctx->btCoexModeSet = false;
 	}
 
@@ -4930,10 +4650,7 @@ static int drv_cmd_get_dwell_time(hdd_adapter_t *adapter,
 	ret = hdd_get_dwell_time(pCfg, command, extra, sizeof(extra), &len);
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (ret != 0 || copy_to_user(priv_data->buf, &extra, len)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to copy data to user buffer",
-			  __func__);
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 		goto exit;
 	}
@@ -4966,9 +4683,7 @@ static int drv_cmd_miracast(hdd_adapter_t *adapter,
 
 	pHddCtx = WLAN_HDD_GET_CTX(adapter);
 	if (0 != wlan_hdd_validate_context(pHddCtx)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			"%s pHddCtx is not valid, Unable to set miracast mode",
-			 __func__);
+		hdd_err("pHddCtx is not valid, Unable to set miracast mode");
 		return -EINVAL;
 	}
 
@@ -4982,20 +4697,14 @@ static int drv_cmd_miracast(hdd_adapter_t *adapter,
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: kstrtou8 failed range ",
-			  __func__);
+		hdd_err("kstrtou8 failed range ");
 		ret = -EINVAL;
 		goto exit;
 	}
 	if ((filterType < WLAN_HDD_DRIVER_MIRACAST_CFG_MIN_VAL)
 	    || (filterType >
 		WLAN_HDD_DRIVER_MIRACAST_CFG_MAX_VAL)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: Accepted Values are 0 to 2. 0-Disabled, 1-Source, 2-Sink ",
-			  __func__);
+		hdd_err("Accepted Values are 0 to 2. 0-Disabled, 1-Source, 2-Sink ");
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -5004,7 +4713,7 @@ static int drv_cmd_miracast(hdd_adapter_t *adapter,
 
 	ret_status = sme_set_miracast(hHal, filterType);
 	if (QDF_STATUS_SUCCESS != ret_status) {
-		hddLog(LOGE, "Failed to set miracast");
+		hdd_err("Failed to set miracast");
 		return -EBUSY;
 	}
 
@@ -5088,24 +4797,21 @@ static int drv_cmd_set_ibss_beacon_oui_data(hdd_adapter_t *adapter,
 
 
 	if (QDF_IBSS_MODE != adapter->device_mode) {
-		hddLog(LOG1, FL("Device_mode %s(%d) not IBSS"),
-			hdd_device_mode_to_string(adapter->device_mode),
-			adapter->device_mode);
+		hdd_info("Device_mode %s(%d) not IBSS",
+			  hdd_device_mode_to_string(adapter->device_mode),
+			  adapter->device_mode);
 		return ret;
 	}
 
 	pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: received command %s", __func__,
-		  ((char *)value));
+	hdd_info("received command %s", ((char *)value));
 
 
 	/* validate argument of command */
 	if (strlen(value) <= command_len) {
-		hddLog(LOGE,
-			FL("No arguements in command length %zu"),
-			strlen(value));
+		hdd_err("No arguments in command length %zu",
+			 strlen(value));
 		ret = -EFAULT;
 		goto exit;
 	}
@@ -5116,18 +4822,16 @@ static int drv_cmd_set_ibss_beacon_oui_data(hdd_adapter_t *adapter,
 
 	/* oui_data can't be less than 3 bytes */
 	if (command_len < (2 * WLAN_HDD_IBSS_MIN_OUI_DATA_LENGTH)) {
-		hddLog(LOGE,
-			FL("Invalid SETIBSSBEACONOUIDATA command length %d"),
-			command_len);
+		hdd_err("Invalid SETIBSSBEACONOUIDATA command length %d",
+			 command_len);
 		ret = -EFAULT;
 		goto exit;
 	}
 
 	ibss_ie = qdf_mem_malloc(command_len);
 	if (!ibss_ie) {
-		hddLog(LOGE,
-			FL("Could not allocate memory for command length %d"),
-			command_len);
+		hdd_err("Could not allocate memory for command length %d",
+			 command_len);
 		ret = -ENOMEM;
 		goto exit;
 	}
@@ -5137,8 +4841,8 @@ static int drv_cmd_set_ibss_beacon_oui_data(hdd_adapter_t *adapter,
 							     &oui_length,
 							     command_len);
 	if (ibss_ie_length <= (2 * WLAN_HDD_IBSS_MIN_OUI_DATA_LENGTH)) {
-		hddLog(LOGE, FL("Could not parse command %s return length %d"),
-			value, ibss_ie_length);
+		hdd_err("Could not parse command %s return length %d",
+			 value, ibss_ie_length);
 		ret = -EFAULT;
 		qdf_mem_free(ibss_ie);
 		goto exit;
@@ -5157,10 +4861,10 @@ static int drv_cmd_set_ibss_beacon_oui_data(hdd_adapter_t *adapter,
 	ibssModifyIE.pIEBuffer = ibss_ie;
 	ibssModifyIE.oui_length = oui_length;
 
-	hddLog(LOGW, FL("ibss_ie length %d oui_length %d ibss_ie:"),
-		ibss_ie_length, oui_length);
+	hdd_warn("ibss_ie length %d oui_length %d ibss_ie:",
+		 ibss_ie_length, oui_length);
 	while (i < ibssModifyIE.ieBufferlength)
-		hddLog(LOGW, FL("0x%x"), ibss_ie[i++]);
+		hdd_warn("0x%x", ibss_ie[i++]);
 
 	/* Probe Bcn modification */
 	sme_modify_add_ie(WLAN_HDD_GET_HAL_CTX(adapter),
@@ -5175,9 +4879,7 @@ static int drv_cmd_set_ibss_beacon_oui_data(hdd_adapter_t *adapter,
 	status = sme_send_cesium_enable_ind((tHalHandle)(hdd_ctx->hHal),
 					     adapter->sessionId);
 	if (QDF_STATUS_SUCCESS != status) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "Could not send cesium enable indication %d",
+		hdd_err("Could not send cesium enable indication %d",
 			  status);
 		ret = -EINVAL;
 		goto exit;
@@ -5200,27 +4902,22 @@ static int drv_cmd_set_rmc_enable(hdd_adapter_t *adapter,
 
 	if ((QDF_IBSS_MODE != adapter->device_mode) &&
 	    (QDF_SAP_MODE != adapter->device_mode)) {
-		hddLog(LOGE,
-			"Received SETRMCENABLE cmd in invalid mode %s(%d)",
-			hdd_device_mode_to_string(adapter->device_mode),
-			adapter->device_mode);
-		hddLog(LOGE,
-			"SETRMCENABLE cmd is allowed only in IBSS/SOFTAP mode");
+		hdd_err("Received SETRMCENABLE cmd in invalid mode %s(%d)",
+			 hdd_device_mode_to_string(adapter->device_mode),
+			 adapter->device_mode);
+		hdd_err("SETRMCENABLE cmd is allowed only in IBSS/SOFTAP mode");
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	status = hdd_parse_setrmcenable_command(value, &ucRmcEnable);
 	if (status) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "Invalid SETRMCENABLE command ");
+		hdd_err("Invalid SETRMCENABLE command ");
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: ucRmcEnable %d ", __func__, ucRmcEnable);
+	hdd_info("ucRmcEnable %d ", ucRmcEnable);
 
 	if (true == ucRmcEnable) {
 		status = sme_enable_rmc((tHalHandle)
@@ -5231,19 +4928,15 @@ static int drv_cmd_set_rmc_enable(hdd_adapter_t *adapter,
 							(hdd_ctx->hHal),
 						     adapter->sessionId);
 	} else {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "Invalid SETRMCENABLE command %d",
-			  ucRmcEnable);
+		hdd_err("Invalid SETRMCENABLE command %d",
+			ucRmcEnable);
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	if (QDF_STATUS_SUCCESS != status) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: SETRMC %d failed status %d",
-			  __func__, ucRmcEnable, status);
+		hdd_err("SETRMC %d failed status %d",
+			ucRmcEnable, status);
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -5265,35 +4958,29 @@ static int drv_cmd_set_rmc_action_period(hdd_adapter_t *adapter,
 
 	if ((QDF_IBSS_MODE != adapter->device_mode) &&
 	    (QDF_SAP_MODE != adapter->device_mode)) {
-		hddLog(LOGE, "Received SETRMC cmd in invalid mode %s(%d)",
+		hdd_err("Received SETRMC cmd in invalid mode %s(%d)",
 			hdd_device_mode_to_string(adapter->device_mode),
 			adapter->device_mode);
-		hddLog(LOGE,
-			"SETRMC cmd is allowed only in IBSS/SOFTAP mode");
+		hdd_err("SETRMC cmd is allowed only in IBSS/SOFTAP mode");
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	status = hdd_parse_setrmcactionperiod_command(value, &uActionPeriod);
 	if (status) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "Invalid SETRMCACTIONPERIOD command ");
+		hdd_err("Invalid SETRMCACTIONPERIOD command ");
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: uActionPeriod %d ", __func__,
+	hdd_info("uActionPeriod %d ",
 		  uActionPeriod);
 
 	if (sme_cfg_set_int(hdd_ctx->hHal,
 			    WNI_CFG_RMC_ACTION_PERIOD_FREQUENCY,
 			    uActionPeriod)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: Could not set SETRMCACTIONPERIOD %d",
-			  __func__, uActionPeriod);
+		hdd_err("Could not set SETRMCACTIONPERIOD %d",
+			  uActionPeriod);
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -5301,9 +4988,7 @@ static int drv_cmd_set_rmc_action_period(hdd_adapter_t *adapter,
 	status = sme_send_rmc_action_period((tHalHandle)(hdd_ctx->hHal),
 					    adapter->sessionId);
 	if (QDF_STATUS_SUCCESS != status) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "Could not send cesium enable indication %d",
+		hdd_err("Could not send cesium enable indication %d",
 			  status);
 		ret = -EINVAL;
 		goto exit;
@@ -5336,9 +5021,7 @@ static int drv_cmd_get_ibss_peer_info_all(hdd_adapter_t *adapter,
 	}
 
 	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Received GETIBSSPEERINFOALL Command",
-		  __func__);
+	hdd_info("Received GETIBSSPEERINFOALL Command");
 
 	/* Handle the command */
 	status = hdd_cfg80211_get_ibss_peer_info_all(adapter);
@@ -5352,10 +5035,7 @@ static int drv_cmd_get_ibss_peer_info_all(hdd_adapter_t *adapter,
 		extra = kmalloc(WLAN_MAX_BUF_SIZE, GFP_KERNEL);
 
 		if (NULL == extra) {
-			QDF_TRACE(QDF_MODULE_ID_HDD,
-				  QDF_TRACE_LEVEL_ERROR,
-				  "%s:kmalloc failed",
-				  __func__);
+			hdd_err("kmalloc failed");
 			ret = -EINVAL;
 			goto exit;
 		}
@@ -5401,45 +5081,32 @@ static int drv_cmd_get_ibss_peer_info_all(hdd_adapter_t *adapter,
 		 * it in two shots
 		 */
 		if (copy_to_user(priv_data->buf, extra, numOfBytestoPrint)) {
-			QDF_TRACE(QDF_MODULE_ID_HDD,
-				  QDF_TRACE_LEVEL_ERROR,
-				  "%s: Copy into user data buffer failed ",
-				  __func__);
+			hdd_err("Copy into user data buffer failed ");
 			ret = -EFAULT;
 			goto exit;
 		}
 
 		priv_data->buf[numOfBytestoPrint] = '\0';
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_INFO_MED, "%s",
-			  priv_data->buf);
+		hdd_debug("%s", priv_data->buf);
 
 		if (length > numOfBytestoPrint) {
 			if (copy_to_user
 				    (priv_data->buf + numOfBytestoPrint,
 				    extra + numOfBytestoPrint,
 				    length - numOfBytestoPrint + 1)) {
-				QDF_TRACE(QDF_MODULE_ID_HDD,
-					  QDF_TRACE_LEVEL_ERROR,
-					  "%s: Copy into user data buffer failed ",
-					  __func__);
+				hdd_err("Copy into user data buffer failed ");
 				ret = -EFAULT;
 				goto exit;
 			}
-			QDF_TRACE(QDF_MODULE_ID_HDD,
-				  QDF_TRACE_LEVEL_INFO_MED,
-				  "%s",
-				  &priv_data->buf[numOfBytestoPrint]);
+			hdd_debug("%s", &priv_data->buf[numOfBytestoPrint]);
 		}
 
 		/* Free temporary buffer */
 		kfree(extra);
 	} else {
 		/* Command failed, log error */
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: GETIBSSPEERINFOALL command failed with status code %d",
-			  __func__, status);
+		hdd_err("GETIBSSPEERINFOALL command failed with status code %d",
+			  status);
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -5474,17 +5141,12 @@ static int drv_cmd_get_ibss_peer_info(hdd_adapter_t *adapter,
 
 	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Received GETIBSSPEERINFO Command",
-		  __func__);
+	hdd_info("Received GETIBSSPEERINFO Command");
 
 	/* if there are no peers, no need to continue with the command */
 	if (eConnectionState_IbssConnected !=
 	    pHddStaCtx->conn_info.connState) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_INFO,
-			  "%s:No IBSS Peers coalesced",
-			  __func__);
+		hdd_info("No IBSS Peers coalesced");
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -5492,10 +5154,7 @@ static int drv_cmd_get_ibss_peer_info(hdd_adapter_t *adapter,
 	/* Parse the incoming command buffer */
 	status = hdd_parse_get_ibss_peer_info(value, &peerMacAddr);
 	if (QDF_STATUS_SUCCESS != status) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid GETIBSSPEERINFO command",
-			  __func__);
+		hdd_err("Invalid GETIBSSPEERINFO command");
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -5504,10 +5163,7 @@ static int drv_cmd_get_ibss_peer_info(hdd_adapter_t *adapter,
 	hdd_ibss_get_sta_id(pHddStaCtx, &peerMacAddr, &staIdx);
 
 	if (staIdx > MAX_IBSS_PEERS) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid StaIdx %d returned",
-			  __func__, staIdx);
+		hdd_err("Invalid StaIdx %d returned", staIdx);
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -5525,26 +5181,20 @@ static int drv_cmd_get_ibss_peer_info(hdd_adapter_t *adapter,
 
 		/* Copy the data back into buffer */
 		if (copy_to_user(priv_data->buf, &extra, length + 1)) {
-			QDF_TRACE(QDF_MODULE_ID_HDD,
-				  QDF_TRACE_LEVEL_ERROR,
-				  "%s: copy data to user buffer failed GETIBSSPEERINFO command",
-				  __func__);
+			hdd_err("copy data to user buffer failed GETIBSSPEERINFO command");
 			ret = -EFAULT;
 			goto exit;
 		}
 	} else {
 		/* Command failed, log error */
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: GETIBSSPEERINFO command failed with status code %d",
-			  __func__, status);
+		hdd_err("GETIBSSPEERINFO command failed with status code %d",
+			  status);
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	/* Success ! */
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_MED,
-		  "%s", priv_data->buf);
+	hdd_debug("%s", priv_data->buf);
 	ret = 0;
 
 exit:
@@ -5567,26 +5217,21 @@ static int drv_cmd_set_rmc_tx_rate(hdd_adapter_t *adapter,
 
 	if ((QDF_IBSS_MODE != adapter->device_mode) &&
 	    (QDF_SAP_MODE != adapter->device_mode)) {
-		hddLog(LOGE,
-			"Received SETRMCTXRATE cmd in invalid mode %s(%d)",
-			hdd_device_mode_to_string(adapter->device_mode),
-			adapter->device_mode);
-		hddLog(LOGE,
-			"SETRMCTXRATE cmd is allowed only in IBSS/SOFTAP mode");
+		hdd_err("Received SETRMCTXRATE cmd in invalid mode %s(%d)",
+			 hdd_device_mode_to_string(adapter->device_mode),
+			 adapter->device_mode);
+		hdd_err("SETRMCTXRATE cmd is allowed only in IBSS/SOFTAP mode");
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	status = hdd_parse_setrmcrate_command(value, &uRate, &txFlags);
 	if (status) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "Invalid SETRMCTXRATE command ");
+		hdd_err("Invalid SETRMCTXRATE command ");
 		ret = -EINVAL;
 		goto exit;
 	}
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: uRate %d ", __func__, uRate);
+	hdd_info("uRate %d ", uRate);
 	/* -1 implies ignore this param */
 	rateUpdateParams.ucastDataRate = -1;
 
@@ -5625,15 +5270,11 @@ static int drv_cmd_set_ibss_tx_fail_event(hdd_adapter_t *adapter,
 	ret = hdd_parse_ibsstx_fail_event_params(value, &tx_fail_count, &pid);
 
 	if (0 != ret) {
-		hddLog(QDF_TRACE_LEVEL_INFO,
-		       "%s: Failed to parse SETIBSSTXFAILEVENT arguments",
-		       __func__);
+		hdd_info("Failed to parse SETIBSSTXFAILEVENT arguments");
 		goto exit;
 	}
 
-	hddLog(QDF_TRACE_LEVEL_INFO,
-	       "%s: tx_fail_cnt=%hhu, pid=%hu", __func__,
-	       tx_fail_count, pid);
+	hdd_info("tx_fail_cnt=%hhu, pid=%hu", tx_fail_count, pid);
 
 	if (0 == tx_fail_count) {
 		/* Disable TX Fail Indication */
@@ -5643,10 +5284,7 @@ static int drv_cmd_set_ibss_tx_fail_event(hdd_adapter_t *adapter,
 						       NULL)) {
 			cesium_pid = 0;
 		} else {
-			QDF_TRACE(QDF_MODULE_ID_HDD,
-				  QDF_TRACE_LEVEL_ERROR,
-				  "%s: failed to disable TX Fail Event ",
-				  __func__);
+			hdd_err("failed to disable TX Fail Event ");
 			ret = -EINVAL;
 		}
 	} else {
@@ -5655,15 +5293,10 @@ static int drv_cmd_set_ibss_tx_fail_event(hdd_adapter_t *adapter,
 				tx_fail_count,
 				(void *)hdd_tx_fail_ind_callback)) {
 			cesium_pid = pid;
-			QDF_TRACE(QDF_MODULE_ID_HDD,
-				  QDF_TRACE_LEVEL_INFO,
-				  "%s: Registered Cesium pid %u",
-				  __func__, cesium_pid);
+			hdd_info("Registered Cesium pid %u",
+				  cesium_pid);
 		} else {
-			QDF_TRACE(QDF_MODULE_ID_HDD,
-				  QDF_TRACE_LEVEL_ERROR,
-				  "%s: Failed to enable TX Fail Monitoring",
-				  __func__);
+			hdd_err("Failed to enable TX Fail Monitoring");
 			ret = -EINVAL;
 		}
 	}
@@ -5687,17 +5320,11 @@ static int drv_cmd_set_ccx_roam_scan_channels(hdd_adapter_t *adapter,
 
 	ret = hdd_parse_channellist(value, ChannelList, &numChannels);
 	if (ret) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to parse channel list information",
-			  __func__);
+		hdd_err("Failed to parse channel list information");
 		goto exit;
 	}
 	if (numChannels > WNI_CFG_VALID_CHANNEL_LIST_LEN) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: number of channels (%d) supported exceeded max (%d)",
-			  __func__,
+		hdd_err("number of channels (%d) supported exceeded max (%d)",
 			  numChannels,
 			  WNI_CFG_VALID_CHANNEL_LIST_LEN);
 		ret = -EINVAL;
@@ -5708,10 +5335,7 @@ static int drv_cmd_set_ccx_roam_scan_channels(hdd_adapter_t *adapter,
 						    ChannelList,
 						    numChannels);
 	if (QDF_STATUS_SUCCESS != status) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to update channel list information",
-			  __func__);
+		hdd_err("Failed to update channel list information");
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -5746,9 +5370,7 @@ static int drv_cmd_get_tsm_stats(hdd_adapter_t *adapter,
 
 	/* if not associated, return error */
 	if (eConnectionState_Associated != pHddStaCtx->conn_info.connState) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s:Not associated!", __func__);
+		hdd_err("Not associated!");
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -5763,38 +5385,28 @@ static int drv_cmd_get_tsm_stats(hdd_adapter_t *adapter,
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: kstrtou8 failed range [%d - %d]",
-			  __func__, TID_MIN_VALUE,
+		hdd_err("kstrtou8 failed range [%d - %d]",
+			  TID_MIN_VALUE,
 			  TID_MAX_VALUE);
 		ret = -EINVAL;
 		goto exit;
 	}
 	if ((tid < TID_MIN_VALUE) || (tid > TID_MAX_VALUE)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "tid value %d is out of range (Min: %d Max: %d)",
+		hdd_err("tid value %d is out of range (Min: %d Max: %d)",
 			  tid, TID_MIN_VALUE, TID_MAX_VALUE);
 		ret = -EINVAL;
 		goto exit;
 	}
-	QDF_TRACE(QDF_MODULE_ID_HDD,
-		  QDF_TRACE_LEVEL_INFO,
-		  "%s: Received Command to get tsm stats tid = %d",
-		  __func__, tid);
+	hdd_info("Received Command to get tsm stats tid = %d",
+		 tid);
 	if (QDF_STATUS_SUCCESS !=
 	    hdd_get_tsm_stats(adapter, tid, &tsm_metrics)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to get tsm stats",
-			  __func__);
+		hdd_err("failed to get tsm stats");
 		ret = -EFAULT;
 		goto exit;
 	}
-	QDF_TRACE(QDF_MODULE_ID_HDD,
-		  QDF_TRACE_LEVEL_INFO,
-		  "UplinkPktQueueDly(%d) UplinkPktQueueDlyHist[0](%d) UplinkPktQueueDlyHist[1](%d) UplinkPktQueueDlyHist[2](%d) UplinkPktQueueDlyHist[3](%d) UplinkPktTxDly(%u) UplinkPktLoss(%d) UplinkPktCount(%d) RoamingCount(%d) RoamingDly(%d)",
+	hdd_info(
+		"UplinkPktQueueDly(%d) UplinkPktQueueDlyHist[0](%d) UplinkPktQueueDlyHist[1](%d) UplinkPktQueueDlyHist[2](%d) UplinkPktQueueDlyHist[3](%d) UplinkPktTxDly(%u) UplinkPktLoss(%d) UplinkPktCount(%d) RoamingCount(%d) RoamingDly(%d)",
 		  tsm_metrics.UplinkPktQueueDly,
 		  tsm_metrics.UplinkPktQueueDlyHist[0],
 		  tsm_metrics.UplinkPktQueueDlyHist[1],
@@ -5827,10 +5439,7 @@ static int drv_cmd_get_tsm_stats(hdd_adapter_t *adapter,
 			tsm_metrics.RoamingDly);
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to copy data to user buffer",
-			  __func__);
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 		goto exit;
 	}
@@ -5852,18 +5461,13 @@ static int drv_cmd_set_cckm_ie(hdd_adapter_t *adapter,
 
 	ret = hdd_parse_get_cckm_ie(value, &cckmIe, &cckmIeLen);
 	if (ret) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to parse cckm ie data",
-			  __func__);
+		hdd_err("Failed to parse cckm ie data");
 		goto exit;
 	}
 
 	if (cckmIeLen > DOT11F_IE_RSN_MAX_LEN) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: CCKM Ie input length is more than max[%d]",
-			  __func__, DOT11F_IE_RSN_MAX_LEN);
+		hdd_err("CCKM Ie input length is more than max[%d]",
+			  DOT11F_IE_RSN_MAX_LEN);
 		if (NULL != cckmIe) {
 			qdf_mem_free(cckmIe);
 			cckmIe = NULL;
@@ -5903,15 +5507,12 @@ static int drv_cmd_ccx_beacon_req(hdd_adapter_t *adapter,
 
 	ret = hdd_parse_ese_beacon_req(value, &eseBcnReq);
 	if (ret) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to parse ese beacon req",
-			  __func__);
+		hdd_err("Failed to parse ese beacon req");
 		goto exit;
 	}
 
 	if (!hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
-		hddLog(QDF_TRACE_LEVEL_INFO, FL("Not associated"));
+		hdd_info("Not associated");
 		hdd_indicate_ese_bcn_report_no_results(adapter,
 			eseBcnReq.bcnReq[0].measurementToken,
 			0x02, /* BIT(1) set for measurement done */
@@ -5924,16 +5525,13 @@ static int drv_cmd_ccx_beacon_req(hdd_adapter_t *adapter,
 					    &eseBcnReq);
 
 	if (QDF_STATUS_E_RESOURCES == status) {
-		hddLog(QDF_TRACE_LEVEL_INFO,
-		       FL("sme_set_ese_beacon_request failed (%d), a request already in progress"),
-		       status);
+		hdd_info("sme_set_ese_beacon_request failed (%d), a request already in progress",
+			  status);
 		ret = -EBUSY;
 		goto exit;
 	} else if (QDF_STATUS_SUCCESS != status) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: sme_set_ese_beacon_request failed (%d)",
-			  __func__, status);
+		hdd_err("sme_set_ese_beacon_request failed (%d)",
+			status);
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -5984,9 +5582,7 @@ static int drv_cmd_max_tx_power(hdd_adapter_t *adapter,
 
 	status = hdd_parse_setmaxtxpower_command(value, &txPower);
 	if (status) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "Invalid MAXTXPOWER command ");
+		hdd_err("Invalid MAXTXPOWER command ");
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -6001,8 +5597,8 @@ static int drv_cmd_max_tx_power(hdd_adapter_t *adapter,
 		qdf_copy_macaddr(&selfMac,
 				 &adapter->macAddressCurrent);
 
-		hddLog(QDF_TRACE_LEVEL_INFO,
-		       "Device mode %d max tx power %d selfMac: " MAC_ADDRESS_STR " bssId: " MAC_ADDRESS_STR " ",
+		hdd_info("Device mode %d max tx power %d selfMac: "
+			 MAC_ADDRESS_STR " bssId: " MAC_ADDRESS_STR " ",
 		       adapter->device_mode, txPower,
 		       MAC_ADDR_ARRAY(selfMac.bytes),
 		       MAC_ADDR_ARRAY(bssid.bytes));
@@ -6010,15 +5606,11 @@ static int drv_cmd_max_tx_power(hdd_adapter_t *adapter,
 		smeStatus = sme_set_max_tx_power(hdd_ctx->hHal,
 						 bssid, selfMac, txPower);
 		if (QDF_STATUS_SUCCESS != status) {
-			hddLog(QDF_TRACE_LEVEL_ERROR,
-			       "%s:Set max tx power failed",
-			       __func__);
+			hdd_err("Set max tx power failed");
 			ret = -EINVAL;
 			goto exit;
 		}
-		hddLog(QDF_TRACE_LEVEL_INFO,
-		       "%s: Set max tx power success",
-		       __func__);
+		hdd_info("Set max tx power success");
 		qdf_status = hdd_get_next_adapter(hdd_ctx, pAdapterNode,
 						  &pNext);
 		pAdapterNode = pNext;
@@ -6048,10 +5640,8 @@ static int drv_cmd_set_dfs_scan_mode(hdd_adapter_t *adapter,
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: kstrtou8 failed range [%d - %d]",
-			  __func__, CFG_ROAMING_DFS_CHANNEL_MIN,
+		hdd_err("kstrtou8 failed range [%d - %d]",
+			  CFG_ROAMING_DFS_CHANNEL_MIN,
 			  CFG_ROAMING_DFS_CHANNEL_MAX);
 		ret = -EINVAL;
 		goto exit;
@@ -6059,9 +5649,7 @@ static int drv_cmd_set_dfs_scan_mode(hdd_adapter_t *adapter,
 
 	if ((dfsScanMode < CFG_ROAMING_DFS_CHANNEL_MIN) ||
 	    (dfsScanMode > CFG_ROAMING_DFS_CHANNEL_MAX)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "dfsScanMode value %d is out of range (Min: %d Max: %d)",
+		hdd_err("dfsScanMode value %d is out of range (Min: %d Max: %d)",
 			  dfsScanMode,
 			  CFG_ROAMING_DFS_CHANNEL_MIN,
 			  CFG_ROAMING_DFS_CHANNEL_MAX);
@@ -6069,9 +5657,8 @@ static int drv_cmd_set_dfs_scan_mode(hdd_adapter_t *adapter,
 		goto exit;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Received Command to Set DFS Scan Mode = %d",
-		  __func__, dfsScanMode);
+	hdd_info("Received Command to Set DFS Scan Mode = %d",
+		  dfsScanMode);
 
 	/* When DFS scanning is disabled, the DFS channels need to be
 	 * removed from the operation of device.
@@ -6080,8 +5667,7 @@ static int drv_cmd_set_dfs_scan_mode(hdd_adapter_t *adapter,
 			(dfsScanMode == CFG_ROAMING_DFS_CHANNEL_DISABLED));
 	if (ret < 0) {
 		/* Some conditions prevented it from disabling DFS channels */
-		hddLog(LOGE,
-		       FL("disable/enable DFS channel request was denied"));
+		hdd_err("disable/enable DFS channel request was denied");
 		goto exit;
 	}
 
@@ -6107,10 +5693,7 @@ static int drv_cmd_get_dfs_scan_mode(hdd_adapter_t *adapter,
 	len = scnprintf(extra, sizeof(extra), "%s %d", command, dfsScanMode);
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to copy data to user buffer",
-			  __func__);
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 	}
 
@@ -6131,10 +5714,7 @@ static int drv_cmd_get_link_status(hdd_adapter_t *adapter,
 	len = scnprintf(extra, sizeof(extra), "%s %d", command, value);
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to copy data to user buffer",
-			  __func__);
+		hdd_err("failed to copy data to user buffer");
 		ret = -EFAULT;
 	}
 
@@ -6232,7 +5812,7 @@ static int drv_cmd_tdls_secondary_channel_offset(hdd_adapter_t *adapter,
 	if (ret != 1)
 		return -EINVAL;
 
-	hddLog(LOG1, FL("Tdls offchannel offset:%d"), set_value);
+	hdd_info("Tdls offchannel offset:%d", set_value);
 
 	ret = hdd_set_tdls_secoffchanneloffset(hdd_ctx, set_value);
 
@@ -6268,7 +5848,7 @@ static int drv_cmd_tdls_off_channel_mode(hdd_adapter_t *adapter,
 	if (ret != 1)
 		return -EINVAL;
 
-	hddLog(LOG1, FL("Tdls offchannel mode:%d"), set_value);
+	hdd_info("Tdls offchannel mode:%d", set_value);
 
 	ret = hdd_set_tdls_offchannelmode(adapter, set_value);
 
@@ -6310,7 +5890,7 @@ static int drv_cmd_tdls_off_channel(hdd_adapter_t *adapter,
 		return -EINVAL;
 	}
 
-	hddLog(LOG1, FL("Tdls offchannel num: %d"), set_value);
+	hdd_info("Tdls offchannel num: %d", set_value);
 
 	ret = hdd_set_tdls_offchannel(hdd_ctx, set_value);
 
@@ -6346,7 +5926,7 @@ static int drv_cmd_tdls_scan(hdd_adapter_t *adapter,
 	if (ret != 1)
 		return -EINVAL;
 
-	hddLog(LOG1, FL("Tdls scan type val: %d"), set_value);
+	hdd_info("Tdls scan type val: %d", set_value);
 
 	ret = hdd_set_tdls_scan_type(hdd_ctx, set_value);
 
@@ -6372,7 +5952,7 @@ static int drv_cmd_get_rssi(hdd_adapter_t *adapter,
 	len = QDF_MIN(priv_data->total_len, len + 1);
 
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-		hddLog(LOGE, FL("Failed to copy data to user buffer"));
+		hdd_err("Failed to copy data to user buffer");
 		ret = -EFAULT;
 	}
 
@@ -6397,7 +5977,7 @@ static int drv_cmd_get_linkspeed(hdd_adapter_t *adapter,
 	len = scnprintf(extra, sizeof(extra), "%s %d", command, link_speed);
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (copy_to_user(priv_data->buf, &extra, len)) {
-		hddLog(LOGE, FL("Failed to copy data to user buffer"));
+		hdd_err("Failed to copy data to user buffer");
 		ret = -EFAULT;
 	}
 
@@ -6895,13 +6475,13 @@ static int hdd_parse_setantennamode_command(const uint8_t *value)
 
 	/* no argument after the command */
 	if (NULL == in_ptr) {
-		hddLog(LOGE, FL("No argument after the command"));
+		hdd_err("No argument after the command");
 		return -EINVAL;
 	}
 
 	/* no space after the command */
 	if (SPACE_ASCII_VALUE != *in_ptr) {
-		hddLog(LOGE, FL("No space after the command"));
+		hdd_err("No space after the command");
 		return -EINVAL;
 	}
 
@@ -6911,20 +6491,20 @@ static int hdd_parse_setantennamode_command(const uint8_t *value)
 
 	/* no argument followed by spaces */
 	if ('\0' == *in_ptr) {
-		hddLog(LOGE, FL("No argument followed by spaces"));
+		hdd_err("No argument followed by spaces");
 		return -EINVAL;
 	}
 
 	/* get the argument i.e. antenna mode */
 	v = sscanf(in_ptr, "%31s ", arg1);
 	if (1 != v) {
-		hddLog(LOGE, FL("argument retrieval from cmd string failed"));
+		hdd_err("argument retrieval from cmd string failed");
 		return -EINVAL;
 	}
 
 	v = kstrtos32(arg1, 10, &tmp);
 	if (v < 0) {
-		hddLog(LOGE, FL("argument string to int conversion failed"));
+		hdd_err("argument string to int conversion failed");
 		return -EINVAL;
 	}
 
@@ -7465,8 +7045,7 @@ static int hdd_drv_cmd_process(hdd_adapter_t *adapter,
 	int len = 0;
 
 	if (!adapter || !cmd || !priv_data) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       "%s: at least 1 param is NULL", __func__);
+		hdd_err("at least 1 param is NULL");
 		return -EINVAL;
 	}
 
@@ -7479,8 +7058,7 @@ static int hdd_drv_cmd_process(hdd_adapter_t *adapter,
 		len = strlen(cmd_i);
 
 		if (!handler) {
-			hddLog(QDF_TRACE_LEVEL_ERROR,
-			       "%s: no. %d handler is NULL", __func__, i);
+			hdd_err("no. %d handler is NULL", i);
 			return -EINVAL;
 		}
 
@@ -7511,7 +7089,7 @@ static int hdd_driver_command(hdd_adapter_t *adapter,
 	ENTER();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
-		hddLog(LOGE, FL("Command not allowed in FTM mode"));
+		hdd_err("Command not allowed in FTM mode");
 		return -EINVAL;
 	}
 
@@ -7522,9 +7100,8 @@ static int hdd_driver_command(hdd_adapter_t *adapter,
 	/* copy to local struct to avoid numerous changes to legacy code */
 	if (priv_data->total_len <= 0 ||
 	    priv_data->total_len > WLAN_PRIV_DATA_MAX_LEN) {
-		hddLog(QDF_TRACE_LEVEL_WARN,
-		       "%s:invalid priv_data.total_len(%d)!!!", __func__,
-		       priv_data->total_len);
+		hdd_warn("Invalid priv_data.total_len(%d)!!!",
+			  priv_data->total_len);
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -7532,8 +7109,7 @@ static int hdd_driver_command(hdd_adapter_t *adapter,
 	/* Allocate +1 for '\0' */
 	command = kmalloc(priv_data->total_len + 1, GFP_KERNEL);
 	if (!command) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       "%s: failed to allocate memory", __func__);
+		hdd_err("failed to allocate memory");
 		ret = -ENOMEM;
 		goto exit;
 	}
@@ -7635,15 +7211,13 @@ static int __hdd_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 	ENTER_DEV(dev);
 
 	if (dev != adapter->dev) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_FATAL,
-			  "%s: HDD adapter/dev inconsistency", __func__);
+		hdd_alert("HDD adapter/dev inconsistency");
 		ret = -ENODEV;
 		goto exit;
 	}
 
 	if ((!ifr) || (!ifr->ifr_data)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: invalid data", __func__);
+		hdd_err("invalid data");
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -7669,8 +7243,7 @@ static int __hdd_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 			ret = hdd_driver_ioctl(adapter, ifr);
 		break;
 	default:
-		hddLog(QDF_TRACE_LEVEL_ERROR, "%s: unknown ioctl %d",
-		       __func__, cmd);
+		hdd_err("unknown ioctl %d", cmd);
 		ret = -EINVAL;
 		break;
 	}
