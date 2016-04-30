@@ -1590,7 +1590,9 @@ static void ce_fastpath_rx_handle(struct CE_state *ce_state,
 	uint32_t nentries_mask = dest_ring->nentries_mask;
 	uint32_t write_index;
 
+	qdf_spin_unlock(&ce_state->ce_index_lock);
 	(ce_state->fastpath_handler)(ce_state->context, cmpl_msdus, num_cmpls);
+	qdf_spin_lock(&ce_state->ce_index_lock);
 
 	/* Update Destination Ring Write Index */
 	write_index = dest_ring->write_index;
@@ -1628,7 +1630,7 @@ static void ce_per_engine_service_fast(struct hif_softc *scn, int ce_id)
 	uint32_t sw_index = dest_ring->sw_index;
 	uint32_t nbytes;
 	qdf_nbuf_t nbuf;
-	uint32_t paddr_lo;
+	dma_addr_t paddr;
 	struct CE_dest_desc *dest_desc;
 	qdf_nbuf_t cmpl_msdus[MSG_FLUSH_NUM];
 	uint32_t ctrl_addr = ce_state->ctrl_addr;
@@ -1682,9 +1684,9 @@ more_data:
 		 * is really not required, before we remove this line
 		 * completely.
 		 */
-		paddr_lo = QDF_NBUF_CB_PADDR(nbuf);
+		paddr = QDF_NBUF_CB_PADDR(nbuf);
 
-		qdf_mem_dma_sync_single_for_cpu(scn->qdf_dev, paddr_lo,
+		qdf_mem_dma_sync_single_for_cpu(scn->qdf_dev, paddr,
 				(skb_end_pointer(nbuf) - (nbuf)->data),
 				DMA_FROM_DEVICE);
 
@@ -1704,15 +1706,20 @@ more_data:
 						 NULL, NULL, sw_index);
 			dest_ring->sw_index = sw_index;
 
-			qdf_spin_unlock(&ce_state->ce_index_lock);
 			ce_fastpath_rx_handle(ce_state, cmpl_msdus,
 					      MSG_FLUSH_NUM, ctrl_addr);
-			qdf_spin_lock(&ce_state->ce_index_lock);
+
+			ce_state->receive_count += MSG_FLUSH_NUM;
+			if (qdf_unlikely(hif_ce_service_should_yield(
+						scn, ce_state))) {
+				ce_state->force_break = 1;
+				qdf_atomic_set(&ce_state->rx_pending, 1);
+				return;
+			}
+
 			nbuf_cmpl_idx = 0;
-
-
+			more_comp_cnt = 0;
 		}
-
 	}
 
 	hif_record_ce_desc_event(scn, ce_state->id,
@@ -1726,11 +1733,20 @@ more_data:
 	 * just call the message handler here
 	 */
 	if (nbuf_cmpl_idx) {
-		qdf_spin_unlock(&ce_state->ce_index_lock);
 		ce_fastpath_rx_handle(ce_state, cmpl_msdus,
 				      nbuf_cmpl_idx, ctrl_addr);
-		qdf_spin_lock(&ce_state->ce_index_lock);
+
+		ce_state->receive_count += nbuf_cmpl_idx;
+		if (qdf_unlikely(hif_ce_service_should_yield(scn, ce_state))) {
+			ce_state->force_break = 1;
+			qdf_atomic_set(&ce_state->rx_pending, 1);
+			return;
+		}
+
+		/* check for more packets after upper layer processing */
 		nbuf_cmpl_idx = 0;
+		more_comp_cnt = 0;
+		goto more_data;
 	}
 	qdf_atomic_set(&ce_state->rx_pending, 0);
 	CE_ENGINE_INT_STATUS_CLEAR(scn, ctrl_addr,
@@ -1788,8 +1804,14 @@ int ce_per_engine_service(struct hif_softc *scn, unsigned int CE_id)
 		return 0; /* no work done */
 	}
 
-	qdf_spin_lock(&CE_state->ce_index_lock);
+	/* Clear force_break flag and re-initialize receive_count to 0 */
+	CE_state->receive_count = 0;
+	CE_state->force_break = 0;
+	CE_state->ce_service_yield_time = qdf_system_ticks() +
+		CE_PER_ENGINE_SERVICE_MAX_TIME_JIFFIES;
 
+
+	qdf_spin_lock(&CE_state->ce_index_lock);
 	/*
 	 * With below check we make sure CE we are handling is datapath CE and
 	 * fastpath is enabled.
@@ -1801,13 +1823,6 @@ int ce_per_engine_service(struct hif_softc *scn, unsigned int CE_id)
 		return CE_state->receive_count;
 	}
 
-	/* Clear force_break flag and re-initialize receive_count to 0 */
-
-	/* NAPI: scn variables- thread/multi-processing safety? */
-	CE_state->receive_count = 0;
-	CE_state->force_break = 0;
-	CE_state->ce_service_yield_time = qdf_system_ticks() +
-		CE_PER_ENGINE_SERVICE_MAX_TIME_JIFFIES;
 more_completions:
 	if (CE_state->recv_cb) {
 
