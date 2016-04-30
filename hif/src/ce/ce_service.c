@@ -1630,112 +1630,112 @@ static void ce_per_engine_service_fast(struct hif_softc *scn, int ce_id)
 	qdf_nbuf_t nbuf;
 	uint32_t paddr_lo;
 	struct CE_dest_desc *dest_desc;
-	uint32_t ce_int_status = (1 << ce_id);
 	qdf_nbuf_t cmpl_msdus[MSG_FLUSH_NUM];
 	uint32_t ctrl_addr = ce_state->ctrl_addr;
 	uint32_t nbuf_cmpl_idx = 0;
 	unsigned int more_comp_cnt = 0;
 
 more_data:
-	if (ce_int_status == (1 << ce_id)) {
-		for (;;) {
+	for (;;) {
 
-			dest_desc = CE_DEST_RING_TO_DESC(dest_ring_base,
-							 sw_index);
-
-			/*
-			 * The following 2 reads are from non-cached memory
-			 */
-			nbytes = dest_desc->nbytes;
-
-			/* If completion is invalid, break */
-			if (qdf_unlikely(nbytes == 0))
-				break;
-
-
-			/*
-			 * Build the nbuf list from valid completions
-			 */
-			nbuf = dest_ring->per_transfer_context[sw_index];
-
-			/*
-			 * No lock is needed here, since this is the only thread
-			 * that accesses the sw_index
-			 */
-			sw_index = CE_RING_IDX_INCR(nentries_mask, sw_index);
-
-			/*
-			 * CAREFUL : Uncached write, but still less expensive,
-			 * since most modern caches use "write-combining" to
-			 * flush multiple cache-writes all at once.
-			 */
-			dest_desc->nbytes = 0;
-
-			/*
-			 * Per our understanding this is not required on our
-			 * since we are doing the same cache invalidation
-			 * operation on the same buffer twice in succession,
-			 * without any modifiication to this buffer by CPU in
-			 * between.
-			 * However, this code with 2 syncs in succession has
-			 * been undergoing some testing at a customer site,
-			 * and seemed to be showing no problems so far. Would
-			 * like to validate from the customer, that this line
-			 * is really not required, before we remove this line
-			 * completely.
-			 */
-			paddr_lo = QDF_NBUF_CB_PADDR(nbuf);
-
-			qdf_mem_dma_sync_single_for_cpu(scn->qdf_dev,
-					paddr_lo,
-					(skb_end_pointer(nbuf) - (nbuf)->data),
-					DMA_FROM_DEVICE);
-			qdf_nbuf_put_tail(nbuf, nbytes);
-
-			qdf_assert_always(nbuf->data != NULL);
-
-			cmpl_msdus[nbuf_cmpl_idx++] = nbuf;
-
-			/*
-			 * we are not posting the buffers back instead
-			 * reusing the buffers
-			 */
-			if (nbuf_cmpl_idx == MSG_FLUSH_NUM) {
-				hif_record_ce_desc_event(scn, ce_state->id,
-						 FAST_RX_SOFTWARE_INDEX_UPDATE,
-						 NULL, NULL, sw_index);
-				dest_ring->sw_index = sw_index;
-
-				qdf_spin_unlock(&ce_state->ce_index_lock);
-				ce_fastpath_rx_handle(ce_state, cmpl_msdus,
-						      MSG_FLUSH_NUM, ctrl_addr);
-				qdf_spin_lock(&ce_state->ce_index_lock);
-				nbuf_cmpl_idx = 0;
-			}
-
-		}
-
-		hif_record_ce_desc_event(scn, ce_state->id,
-					 FAST_RX_SOFTWARE_INDEX_UPDATE,
-					 NULL, NULL, sw_index);
-
-		dest_ring->sw_index = sw_index;
+		dest_desc = CE_DEST_RING_TO_DESC(dest_ring_base,
+						 sw_index);
 
 		/*
-		 * If there are not enough completions to fill the array,
-		 * just call the message handler here
+		 * The following 2 reads are from non-cached memory
 		 */
-		if (nbuf_cmpl_idx) {
+		nbytes = dest_desc->nbytes;
+
+		/* If completion is invalid, break */
+		if (qdf_unlikely(nbytes == 0))
+			break;
+
+
+		/*
+		 * Build the nbuf list from valid completions
+		 */
+		nbuf = dest_ring->per_transfer_context[sw_index];
+
+		/*
+		 * No lock is needed here, since this is the only thread
+		 * that accesses the sw_index
+		 */
+		sw_index = CE_RING_IDX_INCR(nentries_mask, sw_index);
+
+		/*
+		 * CAREFUL : Uncached write, but still less expensive,
+		 * since most modern caches use "write-combining" to
+		 * flush multiple cache-writes all at once.
+		 */
+		dest_desc->nbytes = 0;
+
+		/*
+		 * Per our understanding this is not required on our
+		 * since we are doing the same cache invalidation
+		 * operation on the same buffer twice in succession,
+		 * without any modifiication to this buffer by CPU in
+		 * between.
+		 * However, this code with 2 syncs in succession has
+		 * been undergoing some testing at a customer site,
+		 * and seemed to be showing no problems so far. Would
+		 * like to validate from the customer, that this line
+		 * is really not required, before we remove this line
+		 * completely.
+		 */
+		paddr_lo = QDF_NBUF_CB_PADDR(nbuf);
+
+		qdf_mem_dma_sync_single_for_cpu(scn->qdf_dev, paddr_lo,
+				(skb_end_pointer(nbuf) - (nbuf)->data),
+				DMA_FROM_DEVICE);
+
+		qdf_nbuf_put_tail(nbuf, nbytes);
+
+		qdf_assert_always(nbuf->data != NULL);
+
+		cmpl_msdus[nbuf_cmpl_idx++] = nbuf;
+
+		/*
+		 * we are not posting the buffers back instead
+		 * reusing the buffers
+		 */
+		if (nbuf_cmpl_idx == MSG_FLUSH_NUM) {
+			hif_record_ce_desc_event(scn, ce_state->id,
+						 FAST_RX_SOFTWARE_INDEX_UPDATE,
+						 NULL, NULL, sw_index);
+			dest_ring->sw_index = sw_index;
+
 			qdf_spin_unlock(&ce_state->ce_index_lock);
 			ce_fastpath_rx_handle(ce_state, cmpl_msdus,
-					      nbuf_cmpl_idx, ctrl_addr);
+					      MSG_FLUSH_NUM, ctrl_addr);
 			qdf_spin_lock(&ce_state->ce_index_lock);
 			nbuf_cmpl_idx = 0;
+
+
 		}
-		qdf_atomic_set(&ce_state->rx_pending, 0);
-		CE_ENGINE_INT_STATUS_CLEAR(scn, ctrl_addr,
-					   HOST_IS_COPY_COMPLETE_MASK);
+
 	}
+
+	hif_record_ce_desc_event(scn, ce_state->id,
+				 FAST_RX_SOFTWARE_INDEX_UPDATE,
+				 NULL, NULL, sw_index);
+
+	dest_ring->sw_index = sw_index;
+
+	/*
+	 * If there are not enough completions to fill the array,
+	 * just call the message handler here
+	 */
+	if (nbuf_cmpl_idx) {
+		qdf_spin_unlock(&ce_state->ce_index_lock);
+		ce_fastpath_rx_handle(ce_state, cmpl_msdus,
+				      nbuf_cmpl_idx, ctrl_addr);
+		qdf_spin_lock(&ce_state->ce_index_lock);
+		nbuf_cmpl_idx = 0;
+	}
+	qdf_atomic_set(&ce_state->rx_pending, 0);
+	CE_ENGINE_INT_STATUS_CLEAR(scn, ctrl_addr,
+				   HOST_IS_COPY_COMPLETE_MASK);
+
 	if (ce_recv_entries_done_nolock(scn, ce_state)) {
 		if (more_comp_cnt++ < CE_TXRX_COMP_CHECK_THRESHOLD) {
 			goto more_data;
