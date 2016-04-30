@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -63,7 +63,7 @@ struct ol_txrx_peer_t *ol_txrx_peer_find_by_id(struct ol_txrx_pdev_t *pdev,
 {
 	struct ol_txrx_peer_t *peer;
 	peer = (peer_id > ol_cfg_max_peer_id(pdev->ctrl_pdev)) ? NULL :
-	       pdev->peer_id_to_obj_map[peer_id];
+	       pdev->peer_id_to_obj_map[peer_id].peer;
 	/*
 	 * Currently, peer IDs are assigned to vdevs as well as peers.
 	 * If the peer ID is for a vdev, the peer_id_to_obj_map entry

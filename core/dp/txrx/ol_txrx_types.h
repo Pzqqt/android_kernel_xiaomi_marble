@@ -386,6 +386,11 @@ struct ol_tx_flow_pool_t {
 
 #endif
 
+struct ol_txrx_peer_id_map {
+	struct ol_txrx_peer_t *peer;
+	qdf_atomic_t peer_id_ref_cnt;
+};
+
 /*
  * As depicted in the diagram below, the pdev contains an array of
  * NUM_EXT_TID ol_tx_active_queues_in_tid_t elements.
@@ -504,7 +509,7 @@ struct ol_txrx_pdev_t {
 	TAILQ_HEAD(, ol_txrx_vdev_t) vdev_list;
 
 	/* peer ID to peer object map (array of pointers to peer objects) */
-	struct ol_txrx_peer_t **peer_id_to_obj_map;
+	struct ol_txrx_peer_id_map *peer_id_to_obj_map;
 
 	struct {
 		unsigned mask;
