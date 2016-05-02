@@ -1020,6 +1020,9 @@ QDF_STATUS (*extract_tx_data_traffic_ctrl_ev)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*extract_vdev_extd_stats)(wmi_unified_t wmi_handle, void *evt_buf,
 		uint32_t index, wmi_host_vdev_extd_stats *vdev_extd_stats);
+
+QDF_STATUS (*send_power_dbg_cmd)(wmi_unified_t wmi_handle,
+				struct wmi_power_dbg_params *param);
 };
 
 struct target_abi_version {
