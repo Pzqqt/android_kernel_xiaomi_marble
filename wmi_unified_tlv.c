@@ -10313,6 +10313,70 @@ QDF_STATUS send_get_buf_extscan_hotlist_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * send_power_dbg_cmd_tlv() - send power debug commands
+ * @wmi_handle: wmi handle
+ * @param: wmi power debug parameter
+ *
+ * Send WMI_POWER_DEBUG_CMDID parameters to fw.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS send_power_dbg_cmd_tlv(wmi_unified_t wmi_handle,
+				struct wmi_power_dbg_params *param)
+{
+	wmi_buf_t buf = NULL;
+	QDF_STATUS status;
+	int len, args_tlv_len;
+	uint8_t *buf_ptr;
+	uint8_t i;
+	wmi_pdev_wal_power_debug_cmd_fixed_param *cmd;
+	uint32_t *cmd_args;
+
+	/* Prepare and send power debug cmd parameters */
+	args_tlv_len = WMI_TLV_HDR_SIZE + param->num_args * sizeof(uint32_t);
+	len = sizeof(*cmd) + args_tlv_len;
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	cmd = (wmi_pdev_wal_power_debug_cmd_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		  WMITLV_TAG_STRUC_wmi_pdev_wal_power_debug_cmd_fixed_param,
+		  WMITLV_GET_STRUCT_TLVLEN
+		  (wmi_pdev_wal_power_debug_cmd_fixed_param));
+
+	cmd->pdev_id = param->pdev_id;
+	cmd->module_id = param->module_id;
+	cmd->num_args = param->num_args;
+	buf_ptr += sizeof(*cmd);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
+		       (param->num_args * sizeof(uint32_t)));
+	cmd_args = (uint32_t *) (buf_ptr + WMI_TLV_HDR_SIZE);
+	WMI_LOGI("%s: %d num of args = ", __func__, param->num_args);
+	for (i = 0; (i < param->num_args && i < WMI_MAX_NUM_ARGS); i++) {
+		cmd_args[i] = param->args[i];
+		WMI_LOGI("%d,", param->args[i]);
+	}
+
+	status = wmi_unified_cmd_send(wmi_handle, buf,
+				      len, WMI_PDEV_WAL_POWER_DEBUG_CMDID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMI_LOGE("wmi_unified_cmd_send WMI_PDEV_WAL_POWER_DEBUG_CMDID returned Error %d",
+			status);
+		goto error;
+	}
+
+	return QDF_STATUS_SUCCESS;
+error:
+	wmi_buf_free(buf);
+
+	return status;
+}
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -10514,6 +10578,7 @@ struct wmi_ops tlv_ops =  {
 		 send_roam_scan_offload_rssi_change_cmd_tlv,
 	.send_get_buf_extscan_hotlist_cmd =
 		 send_get_buf_extscan_hotlist_cmd_tlv,
+	.send_power_dbg_cmd = send_power_dbg_cmd_tlv,
 	/* TODO - Add other tlv apis here */
 };
 
