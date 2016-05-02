@@ -288,6 +288,8 @@ struct vdev_create_params {
 	uint8_t if_id;
 	uint32_t type;
 	uint32_t subtype;
+	uint8_t nss_2g;
+	uint8_t nss_5g;
 };
 
 /**
