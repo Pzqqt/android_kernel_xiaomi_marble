@@ -466,6 +466,28 @@ enum wma_rx_exec_ctx {
 	WMA_RX_TASKLET_CTX,
 	WMA_RX_SERIALIZER_CTX
 };
+
+/**
+ * enum wma_phy_idx
+ * @PHY1: to notify caller that PHY1 specific param needed
+ * @PHY2: to notify caller that PHY2 specific param needed
+ * @PHY1_PHY2: to notify caller that both PHY's param needed
+ * Note: Firmware sends phy map in terms of bitmask, so enum
+ *       also needs to be defined that way.
+ *
+ *       For example, 0x3 = 0011 = BIT0 corresponds to one phy and
+ *       BIT1 coresponds to another phy. There is no direct relation between
+ *       each bit to particular PHY (ex. PHYA or PHYB).
+ *
+ *       In simple terms, 3 means referring both PHYs & 1 or 2 means
+ *       referring to either PHYA or PHYB.
+ */
+enum wma_phy_idx {
+	PHY1 = 0x1,  /* 0x1 */
+	PHY2,        /* 0x2 */
+	PHY1_PHY2,   /* 0x3 */
+};
+
 /**
  * struct wma_mem_chunk - memory chunks
  * @vaddr: virtual address
@@ -1061,6 +1083,34 @@ struct wma_valid_channels {
 	uint8_t channel_list[MAX_NUM_CHAN];
 };
 
+/**
+ * struct hw_mode_idx_to_mac_cap_idx - map between hw_mode to capabilities
+ * @num_of_macs: number of macs/PHYs for given hw_mode through hw_mode_id
+ * @mac_cap_idx: index of the mac/PHY for given hw_mode through hw_mode_id
+ * @hw_mode_id: given hw_mode id
+ */
+struct hw_mode_idx_to_mac_cap_idx {
+	uint8_t num_of_macs;
+	uint8_t mac_cap_idx;
+	uint8_t hw_mode_id;
+};
+
+/**
+ * struct extended_caps - new extended caps given by firmware
+ * @num_hw_modes: number of hardware modes for current SOC
+ * @each_hw_mode_cap: hw mode id to phy id mapping
+ * @each_phy_cap_per_hwmode: PHY's caps for each hw mode
+ * @num_phy_for_hal_reg_cap: number of phy for hal reg cap
+ * @hw_mode_to_mac_cap_map: map between hw_mode to capabilities
+ */
+struct extended_caps {
+	WMI_SOC_MAC_PHY_HW_MODE_CAPS num_hw_modes;
+	WMI_HW_MODE_CAPABILITIES *each_hw_mode_cap;
+	WMI_MAC_PHY_CAPABILITIES *each_phy_cap_per_hwmode;
+	WMI_SOC_HAL_REG_CAPABILITIES num_phy_for_hal_reg_cap;
+	WMI_HAL_REG_CAPABILITIES_EXT *each_phy_hal_reg_cap;
+	struct hw_mode_idx_to_mac_cap_idx *hw_mode_to_mac_cap_map;
+};
 
 /**
  * struct t_wma_handle - wma context
@@ -1162,6 +1212,7 @@ struct wma_valid_channels {
  * @dbs_mode: DBS HW mode list
  * @old_hw_mode_index: Previous configured HW mode index
  * @new_hw_mode_index: Current configured HW mode index
+ * @extended_caps phy_caps: extended caps per hw mode
  * @peer_authorized_cb: peer authorized hdd callback
  * @ocb_callback: callback to OCB commands
  * @ocb_resp: response to OCB commands
@@ -1322,6 +1373,7 @@ typedef struct {
 	struct dbs_hw_mode_info hw_mode;
 	uint32_t old_hw_mode_index;
 	uint32_t new_hw_mode_index;
+	struct extended_caps phy_caps;
 	qdf_atomic_t scan_id_counter;
 	wma_peer_authorized_fp peer_authorized_cb;
 	uint32_t wow_pno_match_wake_up_count;
