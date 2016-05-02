@@ -816,6 +816,29 @@ static void hdd_update_tgt_services(hdd_context_t *hdd_ctx,
 
 }
 
+/**
+ * hdd_update_vdev_nss() - sets the vdev nss
+ * @hdd_ctx: HDD context
+ *
+ * Sets the Nss per vdev type based on INI
+ *
+ * Return: None
+ */
+static void hdd_update_vdev_nss(hdd_context_t *hdd_ctx)
+{
+	struct hdd_config *cfg_ini = hdd_ctx->config;
+	uint8_t max_supp_nss = 1;
+
+	if (cfg_ini->enable2x2)
+		max_supp_nss = 2;
+
+	sme_update_vdev_type_nss(hdd_ctx->hHal, max_supp_nss,
+			cfg_ini->vdev_type_nss_2g, eCSR_BAND_24);
+
+	sme_update_vdev_type_nss(hdd_ctx->hHal, max_supp_nss,
+			cfg_ini->vdev_type_nss_5g, eCSR_BAND_5G);
+}
+
 static void hdd_update_tgt_ht_cap(hdd_context_t *hdd_ctx,
 				  struct wma_tgt_ht_cap *cfg)
 {
@@ -888,7 +911,7 @@ static void hdd_update_tgt_ht_cap(hdd_context_t *hdd_ctx,
 		/* Update Rx Highest Long GI data Rate */
 		if (sme_cfg_set_int(hdd_ctx->hHal,
 				    WNI_CFG_VHT_RX_HIGHEST_SUPPORTED_DATA_RATE,
-				    HDD_VHT_RX_HIGHEST_SUPPORTED_DATA_RATE_1_1)
+				    VHT_RX_HIGHEST_SUPPORTED_DATA_RATE_1_1)
 				== QDF_STATUS_E_FAILURE) {
 			hddLog(LOGE,
 			       FL(
@@ -900,12 +923,11 @@ static void hdd_update_tgt_ht_cap(hdd_context_t *hdd_ctx,
 		if (sme_cfg_set_int
 			    (hdd_ctx->hHal,
 			     WNI_CFG_VHT_TX_HIGHEST_SUPPORTED_DATA_RATE,
-			     HDD_VHT_TX_HIGHEST_SUPPORTED_DATA_RATE_1_1) ==
+			     VHT_TX_HIGHEST_SUPPORTED_DATA_RATE_1_1) ==
 			    QDF_STATUS_E_FAILURE) {
 			hddLog(LOGE,
 			       FL(
-				  "Could not pass on HDD_VHT_RX_HIGHEST_SUPPORTED_DATA_RATE_1_1 to CCM"
-				 ));
+				  "VHT_TX_HIGHEST_SUPP_RATE_1_1 to CCM fail"));
 		}
 	}
 	if (!(cfg->ht_tx_stbc && pconfig->enable2x2))
@@ -950,6 +972,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 	struct wiphy *wiphy = hdd_ctx->wiphy;
 	struct ieee80211_supported_band *band_5g =
 		wiphy->bands[IEEE80211_BAND_5GHZ];
+	uint32_t temp = 0;
 
 	/* Get the current MPDU length */
 	status =
@@ -988,9 +1011,41 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 		value = 0;
 	}
 
+	sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_VHT_BASIC_MCS_SET, &temp);
+	temp = (temp & VHT_MCS_1x1) | pconfig->vhtRxMCS;
+
+	if (pconfig->enable2x2)
+		temp = (temp & VHT_MCS_2x2) | (pconfig->vhtRxMCS2x2 << 2);
+
+	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_VHT_BASIC_MCS_SET, temp) ==
+				QDF_STATUS_E_FAILURE) {
+		hdd_err("Could not pass VHT_BASIC_MCS_SET to CCM");
+	}
+
+	sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_VHT_RX_MCS_MAP, &temp);
+	temp = (temp & VHT_MCS_1x1) | pconfig->vhtRxMCS;
+	if (pconfig->enable2x2)
+		temp = (temp & VHT_MCS_2x2) | (pconfig->vhtRxMCS2x2 << 2);
+
+	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_VHT_RX_MCS_MAP, temp) ==
+			QDF_STATUS_E_FAILURE) {
+		hdd_err("Could not pass WNI_CFG_VHT_RX_MCS_MAP to CCM");
+	}
+
+	sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_VHT_TX_MCS_MAP, &temp);
+	temp = (temp & VHT_MCS_1x1) | pconfig->vhtTxMCS;
+	if (pconfig->enable2x2)
+		temp = (temp & VHT_MCS_2x2) | (pconfig->vhtTxMCS2x2 << 2);
+
+	hdd_info("vhtRxMCS2x2 - %x temp - %u enable2x2 %d",
+			pconfig->vhtRxMCS2x2, temp, pconfig->enable2x2);
+
+	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_VHT_TX_MCS_MAP, temp) ==
+			QDF_STATUS_E_FAILURE) {
+		hdd_err("Could not pass WNI_CFG_VHT_TX_MCS_MAP to CCM");
+	}
 	/* Get the current RX LDPC setting */
-	status =
-		sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_VHT_LDPC_CODING_CAP,
+	status = sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_VHT_LDPC_CODING_CAP,
 				&value);
 
 	if (status != QDF_STATUS_SUCCESS) {
@@ -1318,6 +1373,8 @@ void hdd_update_tgt_cfg(void *context, void *param)
 
 	hdd_ctx->ap_arpns_support = cfg->ap_arpns_support;
 	hdd_update_tgt_services(hdd_ctx, &cfg->services);
+
+	hdd_update_vdev_nss(hdd_ctx);
 
 	hdd_update_tgt_ht_cap(hdd_ctx, &cfg->ht_cap);
 
@@ -2164,6 +2221,7 @@ QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
 
 	INIT_COMPLETION(adapter->session_open_comp_var);
 	sme_set_curr_device_mode(hdd_ctx->hHal, adapter->device_mode);
+	sme_set_pdev_ht_vht_ies(hdd_ctx->hHal, hdd_ctx->config->enable2x2);
 	status = cds_get_vdev_types(adapter->device_mode, &type, &subType);
 	if (QDF_STATUS_SUCCESS != status) {
 		hddLog(LOGE, FL("failed to get vdev type"));

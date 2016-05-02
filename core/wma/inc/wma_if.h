@@ -509,6 +509,8 @@ typedef struct {
 	uint8_t nonRoamReassoc;
 	uint8_t wps_state;
 	uint8_t nss;
+	uint8_t nss_2g;
+	uint8_t nss_5g;
 } tAddBssParams, *tpAddBssParams;
 
 /**
@@ -1144,6 +1146,8 @@ typedef struct sMaxTxPowerPerBandParams {
  * @type: Vdev Type
  * @sub_type: Vdev Sub Type
  * @session_id: SME Session ID
+ * @nss_2g: vdev nss in 2.4G
+ * @nss_5g: vdev nss in 5G
  * @status: response status code
  */
 struct add_sta_self_params {
@@ -1152,8 +1156,31 @@ struct add_sta_self_params {
 	uint32_t type;
 	uint32_t sub_type;
 	uint8_t session_id;
+	uint8_t nss_2g;
+	uint8_t nss_5g;
 	uint32_t status;
 };
+
+/**
+ * struct set_ie_param - set IE params structure
+ * @pdev_id: pdev id
+ * @ie_type: IE type
+ * @nss: Nss value
+ * @ie_len: IE length
+ * @ie_ptr: Pointer to IE data
+ *
+ * Holds the set pdev IE req data.
+ */
+struct set_ie_param {
+	uint8_t pdev_id;
+	uint8_t ie_type;
+	uint8_t nss;
+	uint8_t ie_len;
+	uint8_t *ie_ptr;
+};
+
+#define DOT11_HT_IE     1
+#define DOT11_VHT_IE    2
 
 #ifdef FEATURE_WLAN_TDLS
 

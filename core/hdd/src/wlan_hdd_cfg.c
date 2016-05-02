@@ -2094,6 +2094,20 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_VHT_ENABLE_2x2_CAP_FEATURE_MIN,
 		     CFG_VHT_ENABLE_2x2_CAP_FEATURE_MAX),
 
+	REG_VARIABLE(CFG_VDEV_TYPE_NSS_2G, WLAN_PARAM_Integer,
+		     struct hdd_config, vdev_type_nss_2g,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_VDEV_TYPE_NSS_2G_DEFAULT,
+		     CFG_VDEV_TYPE_NSS_2G_MIN,
+		     CFG_VDEV_TYPE_NSS_2G_MAX),
+
+	REG_VARIABLE(CFG_VDEV_TYPE_NSS_5G, WLAN_PARAM_Integer,
+		     struct hdd_config, vdev_type_nss_5g,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_VDEV_TYPE_NSS_5G_DEFAULT,
+		     CFG_VDEV_TYPE_NSS_5G_MIN,
+		     CFG_VDEV_TYPE_NSS_5G_MAX),
+
 	REG_VARIABLE(CFG_VHT_ENABLE_MU_BFORMEE_CAP_FEATURE, WLAN_PARAM_Integer,
 		     struct hdd_config, enableMuBformee,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -6478,48 +6492,6 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 	if ((pConfig->dot11Mode == eHDD_DOT11_MODE_AUTO) ||
 	    (pConfig->dot11Mode == eHDD_DOT11_MODE_11ac_ONLY) ||
 	    (pConfig->dot11Mode == eHDD_DOT11_MODE_11ac)) {
-		uint32_t temp = 0;
-
-		sme_cfg_get_int(pHddCtx->hHal,
-				WNI_CFG_VHT_BASIC_MCS_SET, &temp);
-		temp = (temp & 0xFFFC) | pConfig->vhtRxMCS;
-		if (pConfig->enable2x2)
-			temp = (temp & 0xFFF3) | (pConfig->vhtRxMCS2x2 << 2);
-			if (sme_cfg_set_int(pHddCtx->hHal,
-					WNI_CFG_VHT_BASIC_MCS_SET, temp) ==
-					QDF_STATUS_E_FAILURE) {
-			fStatus = false;
-			hddLog(LOGE,
-			       "Could not pass on WNI_CFG_VHT_BASIC_MCS_SET to CFG");
-		}
-
-		sme_cfg_get_int(pHddCtx->hHal, WNI_CFG_VHT_RX_MCS_MAP,
-				&temp);
-		temp = (temp & 0xFFFC) | pConfig->vhtRxMCS;
-		if (pConfig->enable2x2)
-			temp = (temp & 0xFFF3) | (pConfig->vhtRxMCS2x2 << 2);
-			if (sme_cfg_set_int(pHddCtx->hHal,
-					WNI_CFG_VHT_RX_MCS_MAP, temp)
-				== QDF_STATUS_E_FAILURE) {
-			fStatus = false;
-			hddLog(LOGE,
-			       "Could not pass on WNI_CFG_VHT_RX_MCS_MAP to CFG");
-		}
-		sme_cfg_get_int(pHddCtx->hHal, WNI_CFG_VHT_TX_MCS_MAP, &temp);
-		temp = (temp & 0xFFFC) | pConfig->vhtTxMCS;
-		if (pConfig->enable2x2)
-			temp = (temp & 0xFFF3) | (pConfig->vhtTxMCS2x2 << 2);
-			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "vhtRxMCS2x2 - %x temp - %u enable2x2 %d",
-			  pConfig->vhtRxMCS2x2, temp,
-			  pConfig->enable2x2);
-
-		if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_VHT_TX_MCS_MAP,
-					temp) == QDF_STATUS_E_FAILURE) {
-			fStatus = false;
-			hddLog(LOGE,
-			       "Could not pass on WNI_CFG_VHT_TX_MCS_MAP to CFG");
-		}
 		/* Currently shortGI40Mhz is used for shortGI80Mhz */
 		if (sme_cfg_set_int
 			    (pHddCtx->hHal, WNI_CFG_VHT_SHORT_GI_80MHZ,
@@ -6542,9 +6514,9 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 		/* Change MU Bformee only when TxBF is enabled */
 		if (pConfig->enableTxBF) {
 			sme_cfg_get_int(pHddCtx->hHal,
-				WNI_CFG_VHT_MU_BEAMFORMEE_CAP, &temp);
+				WNI_CFG_VHT_MU_BEAMFORMEE_CAP, &val);
 
-			if (temp != pConfig->enableMuBformee) {
+			if (val != pConfig->enableMuBformee) {
 				if (sme_cfg_set_int(pHddCtx->hHal,
 					    WNI_CFG_VHT_MU_BEAMFORMEE_CAP,
 					    pConfig->enableMuBformee
@@ -7299,12 +7271,12 @@ QDF_STATUS hdd_update_nss(hdd_context_t *hdd_ctx, uint8_t nss)
 
 	if (!hdd_config->enable2x2) {
 		/* 1x1 */
-		rx_supp_data_rate = HDD_VHT_RX_HIGHEST_SUPPORTED_DATA_RATE_1_1;
-		tx_supp_data_rate = HDD_VHT_TX_HIGHEST_SUPPORTED_DATA_RATE_1_1;
+		rx_supp_data_rate = VHT_RX_HIGHEST_SUPPORTED_DATA_RATE_1_1;
+		tx_supp_data_rate = VHT_TX_HIGHEST_SUPPORTED_DATA_RATE_1_1;
 	} else {
 		/* 2x2 */
-		rx_supp_data_rate = HDD_VHT_RX_HIGHEST_SUPPORTED_DATA_RATE_2_2;
-		tx_supp_data_rate = HDD_VHT_TX_HIGHEST_SUPPORTED_DATA_RATE_2_2;
+		rx_supp_data_rate = VHT_RX_HIGHEST_SUPPORTED_DATA_RATE_2_2;
+		tx_supp_data_rate = VHT_TX_HIGHEST_SUPPORTED_DATA_RATE_2_2;
 	}
 
 	/* Update Rx Highest Long GI data Rate */

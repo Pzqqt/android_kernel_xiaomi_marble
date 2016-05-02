@@ -55,6 +55,9 @@
 #define IS_2X2_CHAIN(__chain) ((__chain & 0x3) == 0x3)
 #define DISABLE_NSS2_MCS 0xC
 
+#define NSS_1x1_MODE 1
+#define NSS_2x2_MODE 2
+
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 #define QCOM_VENDOR_IE_MCC_AVOID_CH 0x01
 

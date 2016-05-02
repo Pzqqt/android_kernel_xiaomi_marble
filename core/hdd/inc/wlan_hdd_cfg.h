@@ -1119,6 +1119,27 @@ typedef enum {
 #define CFG_VHT_ENABLE_2x2_CAP_FEATURE_MAX     (1)
 #define CFG_VHT_ENABLE_2x2_CAP_FEATURE_DEFAULT (0)
 
+/*
+ * NSS cfg bit definition.
+ * STA          BIT[0:1]
+ * SAP          BIT[2:3]
+ * P2P_GO       BIT[4:5]
+ * P2P_CLIENT   BIT[6:7]
+ * IBSS         BIT[8:9]
+ * TDLS         BIT[10:11]
+ * P2P_DEVICE   BIT[12:13]
+ * OCB          BIT[14:15]
+ */
+#define CFG_VDEV_TYPE_NSS_2G         "gVdevTypeNss_2g"
+#define CFG_VDEV_TYPE_NSS_2G_MIN     (0x5555)
+#define CFG_VDEV_TYPE_NSS_2G_MAX     (0xAAAA)
+#define CFG_VDEV_TYPE_NSS_2G_DEFAULT (0xAAAA)
+
+#define CFG_VDEV_TYPE_NSS_5G         "gVdevTypeNss_5g"
+#define CFG_VDEV_TYPE_NSS_5G_MIN     (0x5555)
+#define CFG_VDEV_TYPE_NSS_5G_MAX     (0xAAAA)
+#define CFG_VDEV_TYPE_NSS_5G_DEFAULT (0xAAAA)
+
 #define CFG_VHT_ENABLE_MU_BFORMEE_CAP_FEATURE         "gEnableMuBformee"
 #define CFG_VHT_ENABLE_MU_BFORMEE_CAP_FEATURE_MIN     (0)
 #define CFG_VHT_ENABLE_MU_BFORMEE_CAP_FEATURE_MAX     (1)
@@ -3681,6 +3702,8 @@ struct hdd_config {
 	uint8_t vhtRxMCS2x2;
 	uint8_t vhtTxMCS2x2;
 	bool enable2x2;
+	uint32_t vdev_type_nss_2g;
+	uint32_t vdev_type_nss_5g;
 	bool txchainmask1x1;
 	bool rxchainmask1x1;
 	bool enableMuBformee;

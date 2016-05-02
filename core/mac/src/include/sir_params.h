@@ -611,6 +611,7 @@ typedef struct sSirMbMsgP2p {
 
 #define SIR_HAL_SET_WISA_PARAMS             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 343)
 #define SIR_HAL_SET_ADAPT_DWELLTIME_PARAMS  (SIR_HAL_ITC_MSG_TYPES_BEGIN + 344)
+#define SIR_HAL_SET_PDEV_IE_REQ             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 345)
 #define SIR_HAL_MSG_TYPES_END                (SIR_HAL_MSG_TYPES_BEGIN + 0x1FF)
 
 /* CFG message types */

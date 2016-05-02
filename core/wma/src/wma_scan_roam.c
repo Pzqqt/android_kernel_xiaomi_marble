@@ -649,6 +649,8 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 	tchan_info = scan_ch_param.chan_info;
 	scan_ch_param.num_scan_chans = chan_list->numChan;
 	wma_handle->saved_chan.num_channels = chan_list->numChan;
+	WMA_LOGD("ht %d, vht %d, vht_24 %d", chan_list->ht_en,
+			chan_list->vht_en, chan_list->vht_24_en);
 
 	for (i = 0; i < chan_list->numChan; ++i) {
 		tchan_info->mhz =
@@ -668,10 +670,21 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 				 chan_list->chanParam[i].dfsSet);
 		}
 
-		if (tchan_info->mhz < WMA_2_4_GHZ_MAX_FREQ)
+		if (tchan_info->mhz < WMA_2_4_GHZ_MAX_FREQ) {
 			WMI_SET_CHANNEL_MODE(tchan_info, MODE_11G);
-		else
+			if (chan_list->vht_en && chan_list->vht_24_en)
+				WMI_SET_CHANNEL_FLAG(tchan_info,
+						WMI_CHAN_FLAG_ALLOW_VHT);
+		} else {
 			WMI_SET_CHANNEL_MODE(tchan_info, MODE_11A);
+			if (chan_list->vht_en)
+				WMI_SET_CHANNEL_FLAG(tchan_info,
+					WMI_CHAN_FLAG_ALLOW_VHT);
+		}
+
+		if (chan_list->ht_en)
+			WMI_SET_CHANNEL_FLAG(tchan_info,
+					WMI_CHAN_FLAG_ALLOW_HT);
 
 		if (chan_list->chanParam[i].half_rate)
 			WMI_SET_CHANNEL_FLAG(tchan_info,
@@ -1152,6 +1165,136 @@ void wma_roam_scan_fill_ap_profile(tp_wma_handle wma_handle,
 		if (roam_req->ConnectedNetwork.mfp_enabled)
 			ap_profile_p->flags |= WMI_AP_PROFILE_FLAG_PMF;
 #endif
+	}
+}
+
+/**
+ * wma_process_set_pdev_ie_req() - process the pdev set IE req
+ * @wma: Pointer to wma handle
+ * @ie_params: Pointer to IE data.
+ *
+ * Sends the WMI req to set the IE to FW.
+ *
+ * Return: None
+ */
+void wma_process_set_pdev_ie_req(tp_wma_handle wma,
+		struct set_ie_param *ie_params)
+{
+	if (ie_params->ie_type == DOT11_HT_IE)
+		wma_process_set_pdev_ht_ie_req(wma, ie_params);
+	if (ie_params->ie_type == DOT11_VHT_IE)
+		wma_process_set_pdev_vht_ie_req(wma, ie_params);
+
+	qdf_mem_free(ie_params->ie_ptr);
+}
+
+/**
+ * wma_process_set_pdev_ht_ie_req() - sends HT IE data to FW
+ * @wma: Pointer to wma handle
+ * @ie_params: Pointer to IE data.
+ * @nss: Nss values to prepare the HT IE.
+ *
+ * Sends the WMI req to set the HT IE to FW.
+ *
+ * Return: None
+ */
+void wma_process_set_pdev_ht_ie_req(tp_wma_handle wma,
+		struct set_ie_param *ie_params)
+{
+	int ret;
+	wmi_pdev_set_ht_ie_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint16_t len;
+	uint16_t ie_len_pad;
+	uint8_t *buf_ptr;
+
+	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE;
+	ie_len_pad = roundup(ie_params->ie_len, sizeof(uint32_t));
+	len += ie_len_pad;
+
+	buf = wmi_buf_alloc(wma->wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s:wmi_buf_alloc failed", __func__);
+		return;
+	}
+	cmd = (wmi_pdev_set_ht_ie_cmd_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_pdev_set_ht_ie_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+			       wmi_pdev_set_ht_ie_cmd_fixed_param));
+	cmd->reserved0 = 0;
+	cmd->ie_len = ie_params->ie_len;
+	cmd->tx_streams = ie_params->nss;
+	cmd->rx_streams = ie_params->nss;
+	WMA_LOGD("Setting pdev HT ie with Nss = %u",
+			ie_params->nss);
+	buf_ptr = (uint8_t *)cmd + sizeof(*cmd);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, ie_len_pad);
+	if (ie_params->ie_len) {
+		qdf_mem_copy(buf_ptr + WMI_TLV_HDR_SIZE,
+			     (uint8_t *)ie_params->ie_ptr,
+			     ie_params->ie_len);
+	}
+	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
+					WMI_PDEV_SET_HT_CAP_IE_CMDID);
+	if (ret != EOK) {
+		WMA_LOGE("Failed to send set param command ret = %d", ret);
+		wmi_buf_free(buf);
+	}
+}
+
+/**
+ * wma_process_set_pdev_vht_ie_req() - sends VHT IE data to FW
+ * @wma: Pointer to wma handle
+ * @ie_params: Pointer to IE data.
+ * @nss: Nss values to prepare the VHT IE.
+ *
+ * Sends the WMI req to set the VHT IE to FW.
+ *
+ * Return: None
+ */
+void wma_process_set_pdev_vht_ie_req(tp_wma_handle wma,
+		struct set_ie_param *ie_params)
+{
+	int ret;
+	wmi_pdev_set_vht_ie_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint16_t len;
+	uint16_t ie_len_pad;
+	uint8_t *buf_ptr;
+
+	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE;
+	ie_len_pad = roundup(ie_params->ie_len, sizeof(uint32_t));
+	len += ie_len_pad;
+
+	buf = wmi_buf_alloc(wma->wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s:wmi_buf_alloc failed", __func__);
+		return;
+	}
+	cmd = (wmi_pdev_set_vht_ie_cmd_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+			WMITLV_TAG_STRUC_wmi_pdev_set_vht_ie_cmd_fixed_param,
+			WMITLV_GET_STRUCT_TLVLEN(
+				wmi_pdev_set_vht_ie_cmd_fixed_param));
+	cmd->reserved0 = 0;
+	cmd->ie_len = ie_params->ie_len;
+	cmd->tx_streams = ie_params->nss;
+	cmd->rx_streams = ie_params->nss;
+	WMA_LOGD("Setting pdev VHT ie with Nss = %u",
+			ie_params->nss);
+	buf_ptr = (uint8_t *)cmd + sizeof(*cmd);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, ie_len_pad);
+	if (ie_params->ie_len) {
+		qdf_mem_copy(buf_ptr + WMI_TLV_HDR_SIZE,
+				(uint8_t *)ie_params->ie_ptr,
+				ie_params->ie_len);
+	}
+	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
+			WMI_PDEV_SET_VHT_CAP_IE_CMDID);
+	if (ret != EOK) {
+		WMA_LOGE("Failed to send set param command ret = %d", ret);
+		wmi_buf_free(buf);
 	}
 }
 

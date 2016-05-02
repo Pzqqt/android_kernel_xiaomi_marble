@@ -15112,6 +15112,7 @@ void sme_update_tgt_services(tHalHandle hal, struct wma_tgt_services *cfg)
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 
 	mac_ctx->lteCoexAntShare = cfg->lte_coex_ant_share;
+	mac_ctx->per_band_chainmask_supp = cfg->per_band_chainmask_supp;
 	mac_ctx->beacon_offload = cfg->beacon_offload;
 	mac_ctx->pmf_offload = cfg->pmf_offload;
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
@@ -15576,7 +15577,6 @@ QDF_STATUS sme_create_mon_session(tHalHandle hal_handle, tSirMacAddr bss_id)
 	return status;
 }
 
-
 /**
  * sme_set_adaptive_dwelltime_config() - Update Adaptive dwelltime configuration
  * @hal: The handle returned by macOpen
@@ -15615,4 +15615,111 @@ QDF_STATUS sme_set_adaptive_dwelltime_config(tHalHandle hal,
 		qdf_mem_free(dwelltime_params);
 	}
 	return status;
+}
+/**
+ * sme_set_pdev_ht_vht_ies() - sends the set pdev IE req
+ * @hal: Pointer to HAL
+ * @enable2x2: 1x1 or 2x2 mode.
+ *
+ * Sends the set pdev IE req with Nss value.
+ *
+ * Return: None
+ */
+void sme_set_pdev_ht_vht_ies(tHalHandle hal, bool enable2x2)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct sir_set_ht_vht_cfg *ht_vht_cfg;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	if (!mac_ctx->per_band_chainmask_supp)
+		return;
+
+	if (!((mac_ctx->roam.configParam.uCfgDot11Mode ==
+					eCSR_CFG_DOT11_MODE_AUTO) ||
+				(mac_ctx->roam.configParam.uCfgDot11Mode ==
+				 eCSR_CFG_DOT11_MODE_11N) ||
+				(mac_ctx->roam.configParam.uCfgDot11Mode ==
+				 eCSR_CFG_DOT11_MODE_11N_ONLY) ||
+				(mac_ctx->roam.configParam.uCfgDot11Mode ==
+				 eCSR_CFG_DOT11_MODE_11AC) ||
+				(mac_ctx->roam.configParam.uCfgDot11Mode ==
+				 eCSR_CFG_DOT11_MODE_11AC_ONLY)))
+		return;
+
+	status = sme_acquire_global_lock(&mac_ctx->sme);
+	if (QDF_STATUS_SUCCESS == status) {
+		ht_vht_cfg = qdf_mem_malloc(sizeof(*ht_vht_cfg));
+		if (NULL == ht_vht_cfg) {
+			sms_log(mac_ctx, LOGE,
+					"%s: mem alloc failed for ht_vht_cfg",
+					__func__);
+			sme_release_global_lock(&mac_ctx->sme);
+			return;
+		}
+
+		ht_vht_cfg->pdev_id = 0;
+		if (enable2x2)
+			ht_vht_cfg->nss = 2;
+		else
+			ht_vht_cfg->nss = 1;
+		ht_vht_cfg->dot11mode =
+			(uint8_t)csr_translate_to_wni_cfg_dot11_mode(mac_ctx,
+				mac_ctx->roam.configParam.uCfgDot11Mode);
+
+		ht_vht_cfg->msg_type = eWNI_SME_PDEV_SET_HT_VHT_IE;
+		ht_vht_cfg->len = sizeof(*ht_vht_cfg);
+		sms_log(mac_ctx, LOG1,
+				FL("SET_HT_VHT_IE with nss %d, dot11mode %d"),
+				ht_vht_cfg->nss,
+				ht_vht_cfg->dot11mode);
+		status = cds_send_mb_message_to_mac(ht_vht_cfg);
+		if (QDF_STATUS_SUCCESS != status) {
+			sms_log(mac_ctx, LOGE, FL(
+					"Send SME_PDEV_SET_HT_VHT_IE fail"));
+			qdf_mem_free(ht_vht_cfg);
+		}
+		sme_release_global_lock(&mac_ctx->sme);
+	}
+	return;
+}
+
+/**
+ * sme_update_vdev_type_nss() - sets the nss per vdev type
+ * @hal: Pointer to HAL
+ * @max_supp_nss: max_supported Nss
+ * @band: 5G or 2.4G band
+ *
+ * Sets the per band Nss for each vdev type based on INI and configured
+ * chain mask value.
+ *
+ * Return: None
+ */
+void sme_update_vdev_type_nss(tHalHandle hal, uint8_t max_supp_nss,
+		uint32_t vdev_type_nss, eCsrBand band)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct vdev_type_nss *vdev_nss;
+
+	if (eCSR_BAND_5G == band)
+		vdev_nss = &mac_ctx->vdev_type_nss_5g;
+	else
+		vdev_nss = &mac_ctx->vdev_type_nss_2g;
+
+	vdev_nss->sta = QDF_MIN(max_supp_nss, CFG_STA_NSS(vdev_type_nss));
+	vdev_nss->sap = QDF_MIN(max_supp_nss, CFG_SAP_NSS(vdev_type_nss));
+	vdev_nss->p2p_go = QDF_MIN(max_supp_nss,
+				CFG_P2P_GO_NSS(vdev_type_nss));
+	vdev_nss->p2p_cli = QDF_MIN(max_supp_nss,
+				CFG_P2P_CLI_NSS(vdev_type_nss));
+	vdev_nss->p2p_dev = QDF_MIN(max_supp_nss,
+				CFG_P2P_DEV_NSS(vdev_type_nss));
+	vdev_nss->ibss = QDF_MIN(max_supp_nss, CFG_IBSS_NSS(vdev_type_nss));
+	vdev_nss->tdls = QDF_MIN(max_supp_nss, CFG_TDLS_NSS(vdev_type_nss));
+	vdev_nss->ocb = QDF_MIN(max_supp_nss, CFG_OCB_NSS(vdev_type_nss));
+
+	sms_log(mac_ctx, LOG1,
+	"band %d NSS:sta %d sap %d cli %d go %d dev %d ibss %d tdls %d ocb %d",
+		band, vdev_nss->sta, vdev_nss->sap, vdev_nss->p2p_cli,
+		vdev_nss->p2p_go, vdev_nss->p2p_dev, vdev_nss->ibss,
+		vdev_nss->tdls, vdev_nss->ocb);
 }

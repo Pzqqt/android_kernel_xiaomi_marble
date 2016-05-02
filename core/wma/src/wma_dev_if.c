@@ -1485,6 +1485,8 @@ ol_txrx_vdev_handle wma_vdev_attach(tp_wma_handle wma_handle,
 	params.if_id = self_sta_req->session_id;
 	params.type = self_sta_req->type;
 	params.subtype = self_sta_req->sub_type;
+	params.nss_2g = self_sta_req->nss_2g;
+	params.nss_5g = self_sta_req->nss_5g;
 
 	/* Create a vdev in target */
 	status = wmi_unified_vdev_create_send(wma_handle->wmi_handle,

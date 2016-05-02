@@ -754,6 +754,24 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 			FL("Early Stop Scan Feature not supported"));
 
+	if ((pMac->roam.configParam.uCfgDot11Mode ==
+				eCSR_CFG_DOT11_MODE_AUTO) ||
+			(pMac->roam.configParam.uCfgDot11Mode ==
+			 eCSR_CFG_DOT11_MODE_11AC) ||
+			(pMac->roam.configParam.uCfgDot11Mode ==
+			 eCSR_CFG_DOT11_MODE_11AC_ONLY)) {
+		pChanList->vht_en = true;
+		if (pMac->roam.configParam.enableVhtFor24GHz)
+			pChanList->vht_24_en = true;
+	}
+	if ((pMac->roam.configParam.uCfgDot11Mode ==
+				eCSR_CFG_DOT11_MODE_AUTO) ||
+			(pMac->roam.configParam.uCfgDot11Mode ==
+			 eCSR_CFG_DOT11_MODE_11N) ||
+			(pMac->roam.configParam.uCfgDot11Mode ==
+			 eCSR_CFG_DOT11_MODE_11N_ONLY)) {
+		pChanList->ht_en = true;
+	}
 	msg.type = WMA_UPDATE_CHAN_LIST_REQ;
 	msg.reserved = 0;
 	msg.bodyptr = pChanList;
@@ -14853,6 +14871,59 @@ QDF_STATUS csr_process_add_sta_session_rsp(tpAniSirGlobal pMac, uint8_t *pMsg)
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * csr_get_vdev_type_nss() - gets the nss value based on vdev type
+ * @mac_ctx: Pointer to Global MAC structure
+ * @dev_mode: current device operating mode.
+ * @nss2g: Pointer to the 2G Nss parameter.
+ * @nss5g: Pointer to the 5G Nss parameter.
+ *
+ * Fills the 2G and 5G Nss values based on device mode.
+ *
+ * Return: None
+ */
+void csr_get_vdev_type_nss(tpAniSirGlobal mac_ctx,
+		enum tQDF_ADAPTER_MODE dev_mode,
+		uint8_t *nss_2g, uint8_t *nss_5g)
+{
+	switch (dev_mode) {
+	case QDF_STA_MODE:
+		*nss_2g = mac_ctx->vdev_type_nss_2g.sta;
+		*nss_5g = mac_ctx->vdev_type_nss_5g.sta;
+		break;
+	case QDF_SAP_MODE:
+		*nss_2g = mac_ctx->vdev_type_nss_2g.sap;
+		*nss_5g = mac_ctx->vdev_type_nss_5g.sap;
+		break;
+	case QDF_P2P_CLIENT_MODE:
+		*nss_2g = mac_ctx->vdev_type_nss_2g.p2p_cli;
+		*nss_5g = mac_ctx->vdev_type_nss_5g.p2p_cli;
+		break;
+	case QDF_P2P_GO_MODE:
+		*nss_2g = mac_ctx->vdev_type_nss_2g.p2p_go;
+		*nss_5g = mac_ctx->vdev_type_nss_5g.p2p_go;
+		break;
+	case QDF_P2P_DEVICE_MODE:
+		*nss_2g = mac_ctx->vdev_type_nss_2g.p2p_dev;
+		*nss_5g = mac_ctx->vdev_type_nss_5g.p2p_dev;
+		break;
+	case QDF_IBSS_MODE:
+		*nss_2g = mac_ctx->vdev_type_nss_2g.ibss;
+		*nss_5g = mac_ctx->vdev_type_nss_5g.ibss;
+		break;
+	case QDF_OCB_MODE:
+		*nss_2g = mac_ctx->vdev_type_nss_2g.ocb;
+		*nss_5g = mac_ctx->vdev_type_nss_5g.ocb;
+		break;
+	default:
+		*nss_2g = 1;
+		*nss_5g = 1;
+		sms_log(mac_ctx, LOGE, FL("Unknown device mode"));
+		break;
+	}
+	sms_log(mac_ctx, LOG1, FL("mode - %d: nss_2g - %d, 5g - %d"),
+			dev_mode, *nss_2g, *nss_5g);
+}
 QDF_STATUS csr_issue_add_sta_for_session_req(tpAniSirGlobal pMac, uint32_t sessionId,
 					     tSirMacAddr sessionMacAddr,
 					     uint32_t type, uint32_t subType)
@@ -14888,6 +14959,8 @@ QDF_STATUS csr_process_add_sta_session_command(tpAniSirGlobal pMac,
 		&pCommand->u.addStaSessionCmd;
 	uint8_t sessionId = pCommand->sessionId;
 	struct add_sta_self_params *add_sta_self_req;
+	uint8_t nss_2g;
+	uint8_t nss_5g;
 	QDF_STATUS status = QDF_STATUS_E_NOMEM;
 	tSirMsgQ msg;
 
@@ -14899,12 +14972,16 @@ QDF_STATUS csr_process_add_sta_session_command(tpAniSirGlobal pMac,
 		return status;
 	}
 
+	csr_get_vdev_type_nss(pMac, pAddStaReq->currDeviceMode,
+			&nss_2g, &nss_5g);
 	qdf_mem_copy(add_sta_self_req->self_mac_addr, pAddStaReq->selfMacAddr,
 			sizeof(tSirMacAddr));
 	add_sta_self_req->curr_device_mode = pAddStaReq->currDeviceMode;
 	add_sta_self_req->session_id = sessionId;
 	add_sta_self_req->type = pAddStaReq->type;
 	add_sta_self_req->sub_type = pAddStaReq->subType;
+	add_sta_self_req->nss_2g = nss_2g;
+	add_sta_self_req->nss_5g = nss_5g;
 
 	msg.type = WMA_ADD_STA_SELF_REQ;
 	msg.reserved = 0;

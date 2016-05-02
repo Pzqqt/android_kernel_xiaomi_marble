@@ -935,6 +935,8 @@ struct wma_txrx_node {
 	uint32_t mac_id;
 	bool roaming_in_progress;
 	int32_t roam_synch_delay;
+	uint8_t nss_2g;
+	uint8_t nss_5g;
 };
 
 #if defined(QCA_WIFI_FTM)
@@ -2111,6 +2113,12 @@ uint32_t wma_get_num_of_setbits_from_bitmask(uint32_t mask);
 QDF_STATUS wma_get_bpf_capabilities(tp_wma_handle wma);
 QDF_STATUS wma_set_bpf_instructions(tp_wma_handle wma,
 			struct sir_bpf_set_offload *bpf_set_offload);
+void wma_process_set_pdev_ie_req(tp_wma_handle wma,
+		struct set_ie_param *ie_params);
+void wma_process_set_pdev_ht_ie_req(tp_wma_handle wma,
+		struct set_ie_param *ie_params);
+void wma_process_set_pdev_vht_ie_req(tp_wma_handle wma,
+		struct set_ie_param *ie_params);
 #endif
 struct wma_ini_config *wma_get_ini_handle(tp_wma_handle wma_handle);
 WLAN_PHY_MODE wma_chan_phy_mode(u8 chan, enum phy_ch_width chan_width,

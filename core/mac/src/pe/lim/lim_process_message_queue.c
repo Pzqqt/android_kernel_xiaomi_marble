@@ -1414,6 +1414,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 			msg->bodyptr = NULL;
 		}
 		break;
+	case eWNI_SME_PDEV_SET_HT_VHT_IE:
 	case eWNI_SME_SYS_READY_IND:
 	case eWNI_SME_JOIN_REQ:
 	case eWNI_SME_REASSOC_REQ:

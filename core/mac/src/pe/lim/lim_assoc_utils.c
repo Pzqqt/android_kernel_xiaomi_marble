@@ -1409,8 +1409,8 @@ tSirRetStatus lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
 		QDF_MIN(rates->vhtRxHighestDataRate,
 			peer_vht_caps->rxHighSupDataRate);
 
-	if (mac_ctx->roam.configParam.enable2x2) {
-		if (session_entry && mac_ctx->lteCoexAntShare &&
+	if (session_entry && session_entry->vdev_nss == 2) {
+		if (mac_ctx->lteCoexAntShare &&
 			IS_24G_CH(session_entry->currentOperChannel)) {
 			if (IS_2X2_CHAIN(session_entry->chainMask))
 				mcs_map_mask2x2 = MCSMAPMASK2x2;
@@ -1627,6 +1627,8 @@ lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
 			return eSIR_FAILURE;
 		}
 
+		if (session_entry->vdev_nss == 1)
+			rates->supportedMCSSet[1] = 0;
 		/*
 		 * if supported MCS Set of the peer is passed in,
 		 * then do the intersection
@@ -1766,8 +1768,12 @@ lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 			       )
 			return eSIR_FAILURE;
 		}
-		/* if supported MCS Set of the peer is passed in, then do the intersection */
-		/* else use the MCS set from local CFG. */
+		if (psessionEntry->vdev_nss == 1)
+			pRates->supportedMCSSet[1] = 0;
+
+		/* if supported MCS Set of the peer is passed in, then do the
+		 * intersection, else use the MCS set from local CFG.
+		 */
 		if (pSupportedMCSSet != NULL) {
 			for (i = 0; i < SIR_MAC_MAX_SUPPORTED_MCS_SET; i++)
 				pRates->supportedMCSSet[i] &=
@@ -1990,6 +1996,9 @@ tSirRetStatus lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx,
 				FL("could not retrieve supportedMCSet"));
 			return eSIR_FAILURE;
 		}
+
+		if (session_entry->vdev_nss == 1)
+			mcs_set[1] = 0;
 
 		for (i = 0; i < val; i++)
 			sta_ds->supportedRates.supportedMCSSet[i] =

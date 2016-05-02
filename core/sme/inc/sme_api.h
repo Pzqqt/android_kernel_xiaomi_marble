@@ -82,6 +82,7 @@
 #define SME_CONFIG_TO_ROAM_CONFIG 1
 #define ROAM_CONFIG_TO_SME_CONFIG 2
 
+#define NUM_OF_BANDS 2
 /*--------------------------------------------------------------------------
   Type declarations
   ------------------------------------------------------------------------*/
@@ -1123,4 +1124,8 @@ uint32_t sme_get_wni_dot11_mode(tHalHandle hal);
 QDF_STATUS sme_create_mon_session(tHalHandle hal_handle, uint8_t *bssid);
 QDF_STATUS sme_set_adaptive_dwelltime_config(tHalHandle hal,
 			struct adaptive_dwelltime_params *dwelltime_params);
+void sme_set_pdev_ht_vht_ies(tHalHandle hHal, bool enable2x2);
+
+void sme_update_vdev_type_nss(tHalHandle hal, uint8_t max_supp_nss,
+		uint32_t vdev_type_nss, eCsrBand band);
 #endif /* #if !defined( __SME_API_H ) */

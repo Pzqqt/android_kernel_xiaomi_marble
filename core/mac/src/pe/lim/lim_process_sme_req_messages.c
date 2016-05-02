@@ -116,7 +116,6 @@ static void lim_process_update_add_ies(tpAniSirGlobal pMac, uint32_t *pMsg);
 
 extern void pe_register_wma_handle(tpAniSirGlobal pMac,
 		tSirSmeReadyReq *ready_req);
-
 static void lim_process_ext_change_channel(tpAniSirGlobal mac_ctx,
 						uint32_t *msg);
 
@@ -224,7 +223,7 @@ static QDF_STATUS lim_process_set_dual_mac_cfg_req(tpAniSirGlobal mac,
 
 	req_msg = qdf_mem_malloc(len);
 	if (!req_msg) {
-		lim_log(mac, LOGE, FL("vos_mem_malloc failed"));
+		lim_log(mac, LOGE, FL("qdf_mem_malloc failed"));
 		/* Free the active command list
 		 * Probably the malloc is going to fail there as well?!
 		 */
@@ -631,6 +630,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	uint8_t sme_session_id = 0;
 	uint16_t sme_transaction_id = 0;
 	uint32_t chanwidth;
+	struct vdev_type_nss *vdev_type_nss;
 	tSirRetStatus cfg_get_wmi_dfs_master_param = eSIR_SUCCESS;
 
 /* FEATURE_WLAN_DIAG_SUPPORT */
@@ -779,10 +779,6 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			  session->vhtCapability);
 		session->txLdpcIniFeatureEnabled =
 			sme_start_bss_req->txLdpcIniFeatureEnabled;
-		if (mac_ctx->roam.configParam.enable2x2)
-			session->nss = 2;
-		else
-			session->nss = 1;
 #ifdef WLAN_FEATURE_11W
 		session->limRmfEnabled =
 			sme_start_bss_req->pmfCapable ? 1 : 0;
@@ -797,6 +793,11 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			     (void *)&sme_start_bss_req->extendedRateSet,
 			     sizeof(tSirMacRateSet));
 
+		if (IS_5G_CH(session->currentOperChannel))
+			vdev_type_nss = &mac_ctx->vdev_type_nss_5g;
+		else
+			vdev_type_nss = &mac_ctx->vdev_type_nss_2g;
+
 		switch (sme_start_bss_req->bssType) {
 		case eSIR_INFRA_AP_MODE:
 			lim_configure_ap_start_bss_session(mac_ctx, session,
@@ -806,6 +807,9 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 					sme_start_bss_req->txbf_ini_enabled;
 				session->txbf_csn_value =
 					sme_start_bss_req->txbf_csn_val;
+				session->vdev_nss = vdev_type_nss->sap;
+			} else {
+				session->vdev_nss = vdev_type_nss->p2p_go;
 			}
 			break;
 		case eSIR_IBSS_MODE:
@@ -819,6 +823,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			 * will be updated upon key installation
 			 */
 			session->encryptType = eSIR_ED_NONE;
+			session->vdev_nss = vdev_type_nss->ibss;
 
 			break;
 
@@ -834,6 +839,9 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			break;
 		}
 
+		lim_log(mac_ctx, LOG1, FL("persona - %d, nss - %d"),
+				session->pePersona, session->vdev_nss);
+		session->nss = session->vdev_nss;
 		/*
 		 * Allocate memory for the array of
 		 * parsed (Re)Assoc request structure
@@ -1202,7 +1210,8 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 	uint8_t *ht_cap_ie;
 	tSirMsgQ msg;
 	uint16_t i, len;
-	uint16_t ht_cap_len = 0, addn_ie_len = 0;
+	uint16_t ht_cap_len = 0;
+	uint16_t addn_ie_len = 0;
 	uint8_t *vht_cap_ie;
 	uint16_t vht_cap_len = 0;
 	tSirRetStatus status, rc = eSIR_SUCCESS;
@@ -1236,29 +1245,30 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 	 * so allocate the memory for (numChannels - 1) and uIEFieldLen
 	 */
 	len = sizeof(tSirScanOffloadReq) +
-		(pScanReq->channelList.numChannels - 1) + pScanReq->uIEFieldLen;
+		(pScanReq->channelList.numChannels - 1) +
+		pScanReq->uIEFieldLen;
+	if (!pMac->per_band_chainmask_supp) {
+		if (IS_DOT11_MODE_HT(pScanReq->dot11mode)) {
+			lim_log(pMac, LOG1, FL(
+				"Adding HT Caps IE since dot11mode=%d"),
+					pScanReq->dot11mode);
+			/* 2 bytes for EID and Length */
+			ht_cap_len = 2 + sizeof(tHtCaps);
+			len += ht_cap_len;
+			addn_ie_len += ht_cap_len;
+		}
 
-	if (IS_DOT11_MODE_HT(pScanReq->dot11mode)) {
-		lim_log(pMac, LOG1,
-			FL("Adding HT Caps IE since dot11mode=%d"),
-			pScanReq->dot11mode);
-		/* 2 bytes for EID and Length */
-		ht_cap_len = 2 + sizeof(tHtCaps);
-		len += ht_cap_len;
-		addn_ie_len += ht_cap_len;
+		if (IS_DOT11_MODE_VHT(pScanReq->dot11mode)) {
+			lim_log(pMac, LOG1, FL(
+				"Adding VHT Caps IE since dot11mode=%d"),
+				pScanReq->dot11mode);
+			/* 2 bytes for EID and Length */
+			vht_cap_len = 2 + sizeof(tSirMacVHTCapabilityInfo) +
+				sizeof(tSirVhtMcsInfo);
+			len += vht_cap_len;
+			addn_ie_len += vht_cap_len;
+		}
 	}
-
-	if (IS_DOT11_MODE_VHT(pScanReq->dot11mode)) {
-		lim_log(pMac, LOG1,
-			FL("Adding VHT Caps IE since dot11mode=%d"),
-			pScanReq->dot11mode);
-		/* 2 bytes for EID and Length */
-		vht_cap_len = 2 + sizeof(tSirMacVHTCapabilityInfo) +
-				  sizeof(tSirVhtMcsInfo);
-		len += vht_cap_len;
-		addn_ie_len += vht_cap_len;
-	}
-
 	pScanOffloadReq = qdf_mem_malloc(len);
 	if (NULL == pScanOffloadReq) {
 		lim_log(pMac, LOGE,
@@ -1331,33 +1341,33 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 		     pScanOffloadReq->uIEFieldOffset,
 		     (uint8_t *) pScanReq + pScanReq->uIEFieldOffset,
 		     pScanReq->uIEFieldLen);
+	if (!pMac->per_band_chainmask_supp) {
+		/* Copy HT Capability info if dot11mode is HT */
+		if (IS_DOT11_MODE_HT(pScanReq->dot11mode)) {
+			/* Populate EID and Length field here */
+			ht_cap_ie = (uint8_t *) pScanOffloadReq +
+				pScanOffloadReq->uIEFieldOffset +
+				pScanOffloadReq->uIEFieldLen;
+			qdf_mem_set(ht_cap_ie, ht_cap_len, 0);
+			*ht_cap_ie = SIR_MAC_HT_CAPABILITIES_EID;
+			*(ht_cap_ie + 1) =  ht_cap_len - 2;
+			lim_set_ht_caps(pMac, NULL, ht_cap_ie, ht_cap_len);
+			pScanOffloadReq->uIEFieldLen += ht_cap_len;
+		}
 
-	/* Copy HT Capability info if dot11mode is HT */
-	if (IS_DOT11_MODE_HT(pScanReq->dot11mode)) {
-		/* Populate EID and Length field here */
-		ht_cap_ie = (uint8_t *) pScanOffloadReq +
-					pScanOffloadReq->uIEFieldOffset +
-					pScanOffloadReq->uIEFieldLen;
-		qdf_mem_set(ht_cap_ie, ht_cap_len, 0);
-		*ht_cap_ie = SIR_MAC_HT_CAPABILITIES_EID;
-		*(ht_cap_ie + 1) =  ht_cap_len - 2;
-		lim_set_ht_caps(pMac, NULL, ht_cap_ie, ht_cap_len);
-		pScanOffloadReq->uIEFieldLen += ht_cap_len;
+		/* Copy VHT Capability info if dot11mode is VHT Capable */
+		if (IS_DOT11_MODE_VHT(pScanReq->dot11mode)) {
+			/* Populate EID and Length field here */
+			vht_cap_ie = (uint8_t *) pScanOffloadReq +
+				pScanOffloadReq->uIEFieldOffset +
+				pScanOffloadReq->uIEFieldLen;
+			qdf_mem_set(vht_cap_ie, vht_cap_len, 0);
+			*vht_cap_ie = SIR_MAC_VHT_CAPABILITIES_EID;
+			*(vht_cap_ie + 1) =  vht_cap_len - 2;
+			lim_set_vht_caps(pMac, NULL, vht_cap_ie, vht_cap_len);
+			pScanOffloadReq->uIEFieldLen += vht_cap_len;
+		}
 	}
-
-	/* Copy VHT Capability info if dot11mode is VHT Capable */
-	if (IS_DOT11_MODE_VHT(pScanReq->dot11mode)) {
-		/* Populate EID and Length field here */
-		vht_cap_ie = (uint8_t *) pScanOffloadReq +
-					 pScanOffloadReq->uIEFieldOffset +
-					 pScanOffloadReq->uIEFieldLen;
-		qdf_mem_set(vht_cap_ie, vht_cap_len, 0);
-		*vht_cap_ie = SIR_MAC_VHT_CAPABILITIES_EID;
-		*(vht_cap_ie + 1) =  vht_cap_len - 2;
-		lim_set_vht_caps(pMac, NULL, vht_cap_ie, vht_cap_len);
-		pScanOffloadReq->uIEFieldLen += vht_cap_len;
-	}
-
 	rc = wma_post_ctrl_msg(pMac, &msg);
 	if (rc != eSIR_SUCCESS) {
 		lim_log(pMac, LOGE, FL("wma_post_ctrl_msg() return failure"));
@@ -1570,6 +1580,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	uint16_t ie_len;
 	uint8_t *vendor_ie;
 	tSirBssDescription *bss_desc;
+	struct vdev_type_nss *vdev_type_nss;
 
 /* FEATURE_WLAN_DIAG_SUPPORT */
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM
@@ -1750,10 +1761,23 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			session->supported_nss_1x1,
 			session->pePersona,
 			sme_join_req->cbMode);
-		if (mac_ctx->roam.configParam.enable2x2)
-			session->nss = 2;
+
+		/*Store Persona */
+		session->pePersona = sme_join_req->staPersona;
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
+			  FL("PE PERSONA=%d cbMode %u"),
+			  session->pePersona, sme_join_req->cbMode);
+		/* Copy The channel Id to the session Table */
+		session->currentOperChannel = bss_desc->channelId;
+		if (IS_5G_CH(session->currentOperChannel))
+			vdev_type_nss = &mac_ctx->vdev_type_nss_5g;
 		else
-			session->nss = 1;
+			vdev_type_nss = &mac_ctx->vdev_type_nss_2g;
+		if (session->pePersona == QDF_P2P_CLIENT_MODE)
+			session->vdev_nss = vdev_type_nss->p2p_cli;
+		else
+			session->vdev_nss = vdev_type_nss->sta;
+		session->nss = session->vdev_nss;
 		session->vhtCapability =
 			IS_DOT11_MODE_VHT(session->dot11mode);
 		if (session->vhtCapability) {
@@ -1801,8 +1825,6 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		/*Phy mode */
 		session->gLimPhyMode = bss_desc->nwType;
 		handle_ht_capabilityand_ht_info(mac_ctx, session);
-		/* Copy The channel Id to the session Table */
-		session->currentOperChannel = bss_desc->channelId;
 		/* cbMode is already merged value of peer and self -
 		 * done by csr in csr_get_cb_mode_from_ies */
 		session->htSupportedChannelWidthSet =
@@ -4698,6 +4720,179 @@ static void lim_register_mgmt_frame_ind_cb(tpAniSirGlobal mac_ctx,
 }
 
 /**
+ * lim_set_pdev_ht_ie() - sends the set HT IE req to FW
+ * @mac_ctx: Pointer to Global MAC structure
+ * @pdev_id: pdev id to set the IE.
+ * @nss: Nss values to prepare the HT IE.
+ *
+ * Prepares the HT IE with self capabilities for different
+ * Nss values and sends the set HT IE req to FW.
+ *
+ * Return: None
+ */
+static void lim_set_pdev_ht_ie(tpAniSirGlobal mac_ctx, uint8_t pdev_id,
+		uint8_t nss)
+{
+	struct set_ie_param *ie_params;
+	tSirMsgQ msg;
+	tSirRetStatus rc = eSIR_SUCCESS;
+	uint8_t *p_ie = NULL;
+	tHtCaps *p_ht_cap;
+	int i;
+
+	for (i = nss; i > 0; i--) {
+		ie_params = qdf_mem_malloc(sizeof(*ie_params));
+		if (NULL == ie_params) {
+			lim_log(mac_ctx, LOGE, FL("mem alloc failed"));
+			return;
+		}
+		ie_params->nss = i;
+		ie_params->pdev_id = pdev_id;
+		ie_params->ie_type = DOT11_HT_IE;
+		/* 2 for IE len and EID */
+		ie_params->ie_len = 2 + sizeof(tHtCaps);
+		ie_params->ie_ptr = qdf_mem_malloc(ie_params->ie_len);
+		if (NULL == ie_params->ie_ptr) {
+			qdf_mem_free(ie_params);
+			lim_log(mac_ctx, LOGE, FL("mem alloc failed"));
+			return;
+		}
+		*ie_params->ie_ptr = SIR_MAC_HT_CAPABILITIES_EID;
+		*(ie_params->ie_ptr + 1) = ie_params->ie_len - 2;
+		lim_set_ht_caps(mac_ctx, NULL, ie_params->ie_ptr,
+				ie_params->ie_len);
+
+		if (NSS_1x1_MODE == i) {
+			p_ie = lim_get_ie_ptr_new(mac_ctx, ie_params->ie_ptr,
+					ie_params->ie_len,
+					DOT11F_EID_HTCAPS, ONE_BYTE);
+			p_ht_cap = (tHtCaps *)&p_ie[2];
+			p_ht_cap->supportedMCSSet[1] = 0;
+			p_ht_cap->txSTBC = 0;
+		}
+
+		msg.type = WMA_SET_PDEV_IE_REQ;
+		msg.bodyptr = ie_params;
+		msg.bodyval = 0;
+
+		rc = wma_post_ctrl_msg(mac_ctx, &msg);
+		if (rc != eSIR_SUCCESS) {
+			lim_log(mac_ctx, LOGE,
+				FL("wma_post_ctrl_msg() return failure"));
+			qdf_mem_free(ie_params->ie_ptr);
+			qdf_mem_free(ie_params);
+			return;
+		}
+	}
+}
+
+/**
+ * lim_set_pdev_vht_ie() - sends the set VHT IE to req FW
+ * @mac_ctx: Pointer to Global MAC structure
+ * @pdev_id: pdev id to set the IE.
+ * @nss: Nss values to prepare the VHT IE.
+ *
+ * Prepares the VHT IE with self capabilities for different
+ * Nss values and sends the set VHT IE req to FW.
+ *
+ * Return: None
+ */
+static void lim_set_pdev_vht_ie(tpAniSirGlobal mac_ctx, uint8_t pdev_id,
+		uint8_t nss)
+{
+	struct set_ie_param *ie_params;
+	tSirMsgQ msg;
+	tSirRetStatus rc = eSIR_SUCCESS;
+	uint8_t *p_ie = NULL;
+	tSirMacVHTCapabilityInfo *vht_cap;
+	int i;
+	tSirVhtMcsInfo *vht_mcs;
+
+	for (i = nss; i > 0; i--) {
+		ie_params = qdf_mem_malloc(sizeof(*ie_params));
+		if (NULL == ie_params) {
+			lim_log(mac_ctx, LOGE, FL("mem alloc failed"));
+			return;
+		}
+		ie_params->nss = i;
+		ie_params->pdev_id = pdev_id;
+		ie_params->ie_type = DOT11_VHT_IE;
+		/* 2 for IE len and EID */
+		ie_params->ie_len = 2 + sizeof(tSirMacVHTCapabilityInfo) +
+			sizeof(tSirVhtMcsInfo);
+		ie_params->ie_ptr = qdf_mem_malloc(ie_params->ie_len);
+		if (NULL == ie_params->ie_ptr) {
+			qdf_mem_free(ie_params);
+			lim_log(mac_ctx, LOGE, FL("mem alloc failed"));
+			return;
+		}
+		*ie_params->ie_ptr = SIR_MAC_VHT_CAPABILITIES_EID;
+		*(ie_params->ie_ptr + 1) = ie_params->ie_len - 2;
+		lim_set_vht_caps(mac_ctx, NULL, ie_params->ie_ptr,
+				ie_params->ie_len);
+
+		if (NSS_1x1_MODE == i) {
+			p_ie = lim_get_ie_ptr_new(mac_ctx, ie_params->ie_ptr,
+					ie_params->ie_len,
+					DOT11F_EID_VHTCAPS, ONE_BYTE);
+			vht_cap = (tSirMacVHTCapabilityInfo *)&p_ie[2];
+			vht_cap->txSTBC = 0;
+			vht_mcs =
+				(tSirVhtMcsInfo *)&p_ie[2 +
+				sizeof(tSirMacVHTCapabilityInfo)];
+			vht_mcs->rxMcsMap |= DISABLE_NSS2_MCS;
+			vht_mcs->rxHighest =
+				VHT_RX_HIGHEST_SUPPORTED_DATA_RATE_1_1;
+			vht_mcs->txMcsMap |= DISABLE_NSS2_MCS;
+			vht_mcs->txHighest =
+				VHT_TX_HIGHEST_SUPPORTED_DATA_RATE_1_1;
+		}
+		msg.type = WMA_SET_PDEV_IE_REQ;
+		msg.bodyptr = ie_params;
+		msg.bodyval = 0;
+
+		rc = wma_post_ctrl_msg(mac_ctx, &msg);
+		if (rc != eSIR_SUCCESS) {
+			lim_log(mac_ctx, LOGE,
+					FL("wma_post_ctrl_msg failure"));
+			qdf_mem_free(ie_params->ie_ptr);
+			qdf_mem_free(ie_params);
+			return;
+		}
+	}
+}
+
+/**
+ * lim_process_set_pdev_IEs() - process the set pdev IE req
+ * @mac_ctx: Pointer to Global MAC structure
+ * @msg_buf: Pointer to the SME message buffer
+ *
+ * This function is called by limProcessMessageQueue(). This
+ * function sets the PDEV IEs to the FW.
+ *
+ * Return: None
+ */
+static void lim_process_set_pdev_IEs(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
+{
+	struct sir_set_ht_vht_cfg *ht_vht_cfg;
+
+	ht_vht_cfg = (struct sir_set_ht_vht_cfg *)msg_buf;
+
+	if (NULL == ht_vht_cfg) {
+		lim_log(mac_ctx, LOGE, FL("NULL ht_vht_cfg"));
+		return;
+	}
+
+	lim_log(mac_ctx, LOG1, FL("rcvd set pdev ht vht ie req with nss = %d"),
+			ht_vht_cfg->nss);
+	lim_set_pdev_ht_ie(mac_ctx, ht_vht_cfg->pdev_id, ht_vht_cfg->nss);
+
+	if (IS_DOT11_MODE_VHT(ht_vht_cfg->dot11mode))
+		lim_set_pdev_vht_ie(mac_ctx, ht_vht_cfg->pdev_id,
+				ht_vht_cfg->nss);
+}
+
+/**
  * lim_process_sme_req_messages()
  *
  ***FUNCTION:
@@ -4937,6 +5132,9 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
 		break;
 	case eWNI_SME_SET_ANTENNA_MODE_REQ:
 		lim_process_set_antenna_mode_req(pMac, pMsgBuf);
+		break;
+	case eWNI_SME_PDEV_SET_HT_VHT_IE:
+		lim_process_set_pdev_IEs(pMac, pMsgBuf);
 		break;
 	default:
 		qdf_mem_free((void *)pMsg->bodyptr);
