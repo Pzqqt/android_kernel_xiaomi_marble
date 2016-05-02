@@ -6018,3 +6018,24 @@ QDF_STATUS wmi_extract_vdev_extd_stats(void *wmi_hdl, void *evt_buf,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+/**
+ * wmi_unified_send_power_dbg_cmd() - send power debug commands
+ * @wmi_handle: wmi handle
+ * @param: wmi power debug parameter
+ *
+ * Send WMI_POWER_DEBUG_CMDID parameters to fw.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS wmi_unified_send_power_dbg_cmd(void *wmi_hdl,
+				struct wmi_power_dbg_params *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_power_dbg_cmd)
+		return wmi_handle->ops->send_power_dbg_cmd(wmi_handle,
+				  param);
+
+	return QDF_STATUS_E_FAILURE;
+}

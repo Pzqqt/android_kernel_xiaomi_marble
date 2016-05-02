@@ -6293,5 +6293,22 @@ typedef struct {
 typedef struct {
 	uint32_t channel;
 } wmi_host_ath_dcs_cw_int;
+
+#define WMI_MAX_POWER_DBG_ARGS 8
+
+/**
+ * struct wmi_power_dbg_params - power debug command parameter
+ * @pdev_id: subsystem identifier
+ * @module_id: parameter id
+ * @num_arg: no of arguments
+ * @args: arguments
+ */
+struct wmi_power_dbg_params {
+	uint32_t pdev_id;
+	uint32_t module_id;
+	uint32_t num_args;
+	uint32_t args[WMI_MAX_POWER_DBG_ARGS];
+};
+
 #endif /* _WMI_UNIFIED_PARAM_H_ */
 
