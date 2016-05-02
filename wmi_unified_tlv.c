@@ -48,7 +48,11 @@ QDF_STATUS send_vdev_create_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_buf_t buf;
 	int32_t len = sizeof(*cmd);
 	QDF_STATUS ret;
+	int num_bands = 2;
+	uint8_t *buf_ptr;
+	wmi_vdev_txrx_streams *txrx_streams;
 
+	len += (num_bands * sizeof(*txrx_streams) + WMI_TLV_HDR_SIZE);
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
 		WMI_LOGP("%s:wmi_buf_alloc failed", __func__);
@@ -62,12 +66,36 @@ QDF_STATUS send_vdev_create_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->vdev_id = param->if_id;
 	cmd->vdev_type = param->type;
 	cmd->vdev_subtype = param->subtype;
+	cmd->num_cfg_txrx_streams = num_bands;
 	cmd->pdev_id = WMI_PDEV_ID_SOC;
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(macaddr, &cmd->vdev_macaddr);
 	WMI_LOGD("%s: ID = %d VAP Addr = %02x:%02x:%02x:%02x:%02x:%02x",
 		 __func__, param->if_id,
 		 macaddr[0], macaddr[1], macaddr[2],
 		 macaddr[3], macaddr[4], macaddr[5]);
+	buf_ptr = (uint8_t *)cmd + sizeof(*cmd);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+			(num_bands * sizeof(wmi_vdev_txrx_streams)));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	WMA_LOGD("%s: type %d, subtype %d, nss_2g %d, nss_5g %d", __func__,
+			param->type, param->subtype,
+			param->nss_2g, param->nss_5g);
+	txrx_streams = (wmi_vdev_txrx_streams *)buf_ptr;
+	txrx_streams->band = WMI_TPC_CHAINMASK_CONFIG_BAND_2G;
+	txrx_streams->supported_tx_streams = param->nss_2g;
+	txrx_streams->supported_rx_streams = param->nss_2g;
+	WMITLV_SET_HDR(&txrx_streams->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_vdev_txrx_streams,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_vdev_txrx_streams));
+
+	txrx_streams++;
+	txrx_streams->band = WMI_TPC_CHAINMASK_CONFIG_BAND_5G;
+	txrx_streams->supported_tx_streams = param->nss_5g;
+	txrx_streams->supported_rx_streams = param->nss_5g;
+	WMITLV_SET_HDR(&txrx_streams->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_vdev_txrx_streams,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_vdev_txrx_streams));
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len, WMI_VDEV_CREATE_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
 		WMI_LOGE("Failed to send WMI_VDEV_CREATE_CMDID");
