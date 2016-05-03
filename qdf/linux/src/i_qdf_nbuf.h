@@ -482,12 +482,6 @@ QDF_STATUS __qdf_nbuf_frag_map(
 	qdf_device_t osdev, __qdf_nbuf_t nbuf,
 	int offset, qdf_dma_dir_t dir, int cur_frag);
 
-#ifdef QCA_PKT_PROTO_TRACE
-void __qdf_nbuf_trace_update(struct sk_buff *buf, char *event_string);
-#else
-#define __qdf_nbuf_trace_update(skb, event_string)
-#endif /* QCA_PKT_PROTO_TRACE */
-
 bool __qdf_nbuf_is_ipv4_pkt(struct sk_buff *skb);
 bool __qdf_nbuf_is_ipv4_dhcp_pkt(struct sk_buff *skb);
 bool __qdf_nbuf_is_ipv4_eapol_pkt(struct sk_buff *skb);

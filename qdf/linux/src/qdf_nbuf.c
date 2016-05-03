@@ -553,51 +553,6 @@ bool __qdf_nbuf_is_ipv4_arp_pkt(struct sk_buff *skb)
 		return false;
 }
 
-#ifdef QCA_PKT_PROTO_TRACE
-/**
- * __qdf_nbuf_trace_update() - update trace event
- * @skb: Pointer to network buffer
- * @event_string: Pointer to trace callback function
- *
- * Return: none
- */
-void __qdf_nbuf_trace_update(struct sk_buff *buf, char *event_string)
-{
-	char string_buf[QDF_NBUF_PKT_TRAC_MAX_STRING];
-
-	if ((!qdf_trace_update_cb) || (!event_string))
-		return;
-
-	if (!qdf_nbuf_trace_get_proto_type(buf))
-		return;
-
-	/* Buffer over flow */
-	if (QDF_NBUF_PKT_TRAC_MAX_STRING <=
-	    (qdf_str_len(event_string) + QDF_NBUF_PKT_TRAC_PROTO_STRING)) {
-		return;
-	}
-
-	qdf_mem_zero(string_buf, QDF_NBUF_PKT_TRAC_MAX_STRING);
-	qdf_mem_copy(string_buf, event_string, qdf_str_len(event_string));
-	if (QDF_NBUF_PKT_TRAC_TYPE_EAPOL & qdf_nbuf_trace_get_proto_type(buf)) {
-		qdf_mem_copy(string_buf + qdf_str_len(event_string),
-			     "EPL", QDF_NBUF_PKT_TRAC_PROTO_STRING);
-	} else if (QDF_NBUF_PKT_TRAC_TYPE_DHCP &
-		 qdf_nbuf_trace_get_proto_type(buf)) {
-		qdf_mem_copy(string_buf + qdf_str_len(event_string),
-			     "DHC", QDF_NBUF_PKT_TRAC_PROTO_STRING);
-	} else if (QDF_NBUF_PKT_TRAC_TYPE_MGMT_ACTION &
-		   qdf_nbuf_trace_get_proto_type(buf)) {
-		qdf_mem_copy(string_buf + qdf_str_len(event_string),
-			     "MACT", QDF_NBUF_PKT_TRAC_PROTO_STRING);
-	}
-
-	qdf_trace_update_cb(string_buf);
-	return;
-}
-EXPORT_SYMBOL(__qdf_nbuf_trace_update);
-#endif /* QCA_PKT_PROTO_TRACE */
-
 #ifdef MEMORY_DEBUG
 #define QDF_NET_BUF_TRACK_MAX_SIZE    (1024)
 

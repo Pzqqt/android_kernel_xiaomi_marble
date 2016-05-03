@@ -731,7 +731,8 @@ void qdf_dp_trace_init(void)
 	g_qdf_dp_trace_data.head = INVALID_QDF_DP_TRACE_ADDR;
 	g_qdf_dp_trace_data.tail = INVALID_QDF_DP_TRACE_ADDR;
 	g_qdf_dp_trace_data.num = 0;
-	g_qdf_dp_trace_data.proto_bitmap = 0;
+	g_qdf_dp_trace_data.proto_bitmap = QDF_NBUF_PKT_TRAC_TYPE_EAPOL |
+	    QDF_NBUF_PKT_TRAC_TYPE_DHCP | QDF_NBUF_PKT_TRAC_TYPE_MGMT_ACTION;
 	g_qdf_dp_trace_data.no_of_record = 0;
 	g_qdf_dp_trace_data.verbosity    = QDF_DP_TRACE_VERBOSITY_DEFAULT;
 	g_qdf_dp_trace_data.enable = true;
@@ -747,6 +748,8 @@ void qdf_dp_trace_init(void)
 	qdf_dp_trace_cb_table[QDF_DP_TRACE_DHCP_PACKET_RECORD] =
 	qdf_dp_trace_cb_table[QDF_DP_TRACE_ARP_PACKET_RECORD] =
 						qdf_dp_display_proto_pkt;
+	qdf_dp_trace_cb_table[QDF_DP_TRACE_MGMT_PACKET_RECORD] =
+					qdf_dp_display_mgmt_pkt;
 
 }
 EXPORT_SYMBOL(qdf_dp_trace_init);
@@ -889,6 +892,8 @@ const char *qdf_dp_code_to_string(enum QDF_DP_TRACE_ID code)
 		return "DHCP:";
 	case QDF_DP_TRACE_ARP_PACKET_RECORD:
 		return "ARP:";
+	case QDF_DP_TRACE_MGMT_PACKET_RECORD:
+		return "MGMT:";
 	case QDF_DP_TRACE_HDD_TX_PACKET_PTR_RECORD:
 		return "HDD: TX: PTR:";
 	case QDF_DP_TRACE_HDD_TX_PACKET_RECORD:
@@ -963,6 +968,8 @@ const char *qdf_dp_type_to_str(enum qdf_proto_type type)
 		return "EAPOL";
 	case QDF_PROTO_TYPE_ARP:
 		return "ARP";
+	case QDF_PROTO_TYPE_MGMT:
+		return "MGMT";
 	default:
 		return "invalid";
 	}
@@ -1004,6 +1011,14 @@ const char *qdf_dp_subtype_to_str(enum qdf_proto_subtype subtype)
 		return "DECLINE";
 	case QDF_PROTO_ARP_SUBTYPE:
 		return "NA";
+	case QDF_PROTO_MGMT_ASSOC:
+		return "ASSOC";
+	case QDF_PROTO_MGMT_DISASSOC:
+		return "DISASSOC";
+	case QDF_PROTO_MGMT_AUTH:
+		return "AUTH";
+	case QDF_PROTO_MGMT_DEAUTH:
+		return "DEAUTH";
 	default:
 		return "invalid";
 	}
@@ -1302,6 +1317,56 @@ void qdf_dp_trace_log_pkt(uint8_t session_id, struct sk_buff *skb,
 	}
 }
 EXPORT_SYMBOL(qdf_dp_trace_log_pkt);
+
+/**
+ * qdf_dp_display_mgmt_pkt() - display proto packet
+ * @record: dptrace record
+ * @index: index
+ *
+ * Return: none
+ */
+void qdf_dp_display_mgmt_pkt(struct qdf_dp_trace_record_s *record,
+			      uint16_t index)
+{
+	struct qdf_dp_trace_mgmt_buf *buf =
+		(struct qdf_dp_trace_mgmt_buf *)record->data;
+
+	qdf_print("DPT: %04d: %012llu: %s vdev_id %d", index,
+		record->time, qdf_dp_code_to_string(record->code),
+		buf->vdev_id);
+	qdf_print("DPT: Type %s Subtype %s", qdf_dp_type_to_str(buf->type),
+		qdf_dp_subtype_to_str(buf->subtype));
+}
+EXPORT_SYMBOL(qdf_dp_display_mgmt_pkt);
+
+/**
+ * qdf_dp_trace_mgmt_pkt() - record mgmt packet
+ * @code: dptrace code
+ * @vdev_id: vdev id
+ * @type: proto type
+ * @subtype: proto subtype
+ *
+ * Return: none
+ */
+void qdf_dp_trace_mgmt_pkt(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
+		enum qdf_proto_type type, enum qdf_proto_subtype subtype)
+{
+	struct qdf_dp_trace_mgmt_buf buf;
+	int buf_size = sizeof(struct qdf_dp_trace_mgmt_buf);
+
+	if (qdf_dp_enable_check(NULL, code, QDF_NA) == false)
+		return;
+
+	if (buf_size > QDF_DP_TRACE_RECORD_SIZE)
+		QDF_BUG(0);
+
+	buf.type = type;
+	buf.subtype = subtype;
+	buf.vdev_id = vdev_id;
+	qdf_dp_add_record(code, (uint8_t *)&buf, buf_size);
+}
+EXPORT_SYMBOL(qdf_dp_trace_mgmt_pkt);
+
 
 /**
  * qdf_dp_display_proto_pkt() - display proto packet

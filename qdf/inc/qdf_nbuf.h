@@ -1037,27 +1037,6 @@ static inline uint8_t qdf_nbuf_trace_get_proto_type(qdf_nbuf_t buf)
 	return __qdf_nbuf_trace_get_proto_type(buf);
 }
 
-#ifdef QCA_PKT_PROTO_TRACE
-/**
- * qdf_nbuf_trace_set_proto_type() - this function updates packet proto type
- * @buf: Network buffer
- * @proto_type: Protocol type
- *
- * Return: none
- */
-static inline void
-qdf_nbuf_trace_set_proto_type(qdf_nbuf_t buf, uint8_t proto_type)
-{
-	__qdf_nbuf_trace_set_proto_type(buf, proto_type);
-}
-#else
-static inline void
-qdf_nbuf_trace_set_proto_type(qdf_nbuf_t buf, uint8_t proto_type)
-{
-	return;
-}
-#endif
-
 /**
  * qdf_nbuf_reg_trace_cb() - this function registers protocol trace callback
  * @cb_func_ptr: Callback pointer
@@ -1069,17 +1048,6 @@ static inline void qdf_nbuf_reg_trace_cb(qdf_nbuf_trace_update_t cb_func_ptr)
 	__qdf_nbuf_reg_trace_cb(cb_func_ptr);
 }
 
-/**
- * qdf_nbuf_trace_update() - this function updates protocol event
- * @buf: Network buffer
- * @event_string: Event string pointer
- *
- * Return: none
- */
-static inline void qdf_nbuf_trace_update(qdf_nbuf_t buf, char *event_string)
-{
-	__qdf_nbuf_trace_update(buf, event_string);
-}
 
 /**
  * qdf_nbuf_set_tx_parallel_dnload_frm() - set tx parallel download
