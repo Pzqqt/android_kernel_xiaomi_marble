@@ -693,6 +693,10 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 
 	addbss_param->dot11_mode = session->dot11mode;
 	addbss_param->nss = session->nss;
+	if (QDF_IBSS_MODE == addbss_param->halPersona) {
+		addbss_param->nss_2g = mac_ctx->vdev_type_nss_2g.ibss;
+		addbss_param->nss_5g = mac_ctx->vdev_type_nss_5g.ibss;
+	}
 	lim_log(mac_ctx, LOG2, FL("dot11_mode:%d nss value:%d"),
 			addbss_param->dot11_mode, addbss_param->nss);
 
