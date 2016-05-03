@@ -106,7 +106,8 @@ void lim_log_vht_cap(tpAniSirGlobal pMac, tDot11fIEVHTCaps *pDot11f);
 tSirRetStatus lim_populate_vht_mcs_set(tpAniSirGlobal pMac,
 				       tpSirSupportedRates pRates,
 				       tDot11fIEVHTCaps *pPeerVHTCaps,
-				       tpPESession psessionEntry);
+				       tpPESession psessionEntry,
+				       uint8_t nss);
 ePhyChanBondState lim_get_htcb_state(ePhyChanBondState aniCBMode);
 
 /*
@@ -539,9 +540,22 @@ static void populate_dot11f_tdls_ht_vht_cap(tpAniSirGlobal pMac,
 					    tDot11fIEVHTCaps *vhtCap,
 					    tpPESession psessionEntry)
 {
+	uint8_t nss;
+	uint32_t val;
+
+	if (IS_5G_CH(psessionEntry->currentOperChannel))
+		nss = pMac->vdev_type_nss_5g.tdls;
+	else
+		nss = pMac->vdev_type_nss_2g.tdls;
+
 	if (IS_DOT11_MODE_HT(selfDot11Mode)) {
 		/* Include HT Capability IE */
 		populate_dot11f_ht_caps(pMac, NULL, htCap);
+		val = SIZE_OF_SUPPORTED_MCS_SET;
+		wlan_cfg_get_str(pMac, WNI_CFG_SUPPORTED_MCS_SET,
+				&htCap->supportedMCSSet[0], &val);
+		if (NSS_1x1_MODE == nss)
+			htCap->supportedMCSSet[1] = 0;
 		/*
 		 * Advertise ht capability and max supported channel bandwidth
 		 * when populating HT IE in TDLS Setup Request/Setup Response/
@@ -575,6 +589,27 @@ static void populate_dot11f_tdls_ht_vht_cap(tpAniSirGlobal pMac,
 			vhtCap->suBeamFormerCap = 0;
 			vhtCap->muBeamformeeCap = 0;
 			vhtCap->muBeamformerCap = 0;
+
+			wlan_cfg_get_int(pMac, WNI_CFG_VHT_RX_MCS_MAP, &val);
+			vhtCap->rxMCSMap = val;
+			wlan_cfg_get_int(pMac,
+				WNI_CFG_VHT_RX_HIGHEST_SUPPORTED_DATA_RATE,
+				&val);
+			vhtCap->rxHighSupDataRate = val;
+			wlan_cfg_get_int(pMac, WNI_CFG_VHT_TX_MCS_MAP, &val);
+			vhtCap->txMCSMap = val;
+			wlan_cfg_get_int(pMac,
+				WNI_CFG_VHT_TX_HIGHEST_SUPPORTED_DATA_RATE,
+				&val);
+			vhtCap->txSupDataRate = val;
+			if (nss == NSS_1x1_MODE) {
+				vhtCap->txMCSMap |= DISABLE_NSS2_MCS;
+				vhtCap->rxMCSMap |= DISABLE_NSS2_MCS;
+				vhtCap->txSupDataRate =
+					VHT_TX_HIGHEST_SUPPORTED_DATA_RATE_1_1;
+				vhtCap->rxHighSupDataRate =
+					VHT_RX_HIGHEST_SUPPORTED_DATA_RATE_1_1;
+			}
 		} else {
 			vhtCap->present = 0;
 		}
@@ -2115,6 +2150,7 @@ lim_tdls_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode stads,
 	tpSirSupportedRates rates;
 	uint8_t a_rateindex = 0;
 	uint8_t b_rateindex = 0;
+	uint8_t nss;
 	is_a_rate = 0;
 	temp_rate_set2.numRates = 0;
 
@@ -2226,6 +2262,10 @@ lim_tdls_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode stads,
 		}
 	}
 
+	if (IS_5G_CH(session_entry->currentOperChannel))
+		nss = mac_ctx->vdev_type_nss_5g.tdls;
+	else
+		nss = mac_ctx->vdev_type_nss_2g.tdls;
 	/* compute the matching MCS rate set, if peer is 11n capable and self mode is 11n */
 #ifdef FEATURE_WLAN_TDLS
 	if (stads->mlmStaContext.htCapability)
@@ -2243,6 +2283,8 @@ lim_tdls_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode stads,
 			return eSIR_FAILURE;
 		}
 
+		if (NSS_1x1_MODE == nss)
+			mcsSet[1] = 0;
 		for (i = 0; i < val; i++)
 			stads->supportedRates.supportedMCSSet[i] =
 				mcsSet[i] & supp_mcs_set[i];
@@ -2255,7 +2297,7 @@ lim_tdls_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode stads,
 		}
 	}
 	lim_populate_vht_mcs_set(mac_ctx, &stads->supportedRates, vht_caps,
-				 session_entry);
+				 session_entry, nss);
 	/**
 	 * Set the erpEnabled bit if the phy is in G mode and at least
 	 * one A rate is supported

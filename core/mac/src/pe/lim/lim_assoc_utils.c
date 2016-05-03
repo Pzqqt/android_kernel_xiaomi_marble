@@ -1355,7 +1355,8 @@ lim_decide_short_slot(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 tSirRetStatus lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
 				       tpSirSupportedRates rates,
 				       tDot11fIEVHTCaps *peer_vht_caps,
-				       tpPESession session_entry)
+				       tpPESession session_entry,
+				       uint8_t nss)
 {
 	uint32_t val;
 	uint32_t self_sta_dot11mode = 0;
@@ -1399,6 +1400,15 @@ tSirRetStatus lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
 	}
 	rates->vhtTxHighestDataRate = (uint16_t) val;
 
+	if (NSS_1x1_MODE == nss) {
+		rates->vhtRxMCSMap |= VHT_MCS_1x1;
+		rates->vhtTxMCSMap |= VHT_MCS_1x1;
+		rates->vhtTxHighestDataRate =
+			VHT_TX_HIGHEST_SUPPORTED_DATA_RATE_1_1;
+		rates->vhtRxHighestDataRate =
+			VHT_RX_HIGHEST_SUPPORTED_DATA_RATE_1_1;
+	}
+
 	if ((peer_vht_caps == NULL) || (!peer_vht_caps->present))
 		return eSIR_SUCCESS;
 
@@ -1409,7 +1419,7 @@ tSirRetStatus lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
 		QDF_MIN(rates->vhtRxHighestDataRate,
 			peer_vht_caps->rxHighSupDataRate);
 
-	if (session_entry && session_entry->vdev_nss == 2) {
+	if (session_entry && session_entry->vdev_nss == NSS_2x2_MODE) {
 		if (mac_ctx->lteCoexAntShare &&
 			IS_24G_CH(session_entry->currentOperChannel)) {
 			if (IS_2X2_CHAIN(session_entry->chainMask))
@@ -1465,8 +1475,8 @@ tSirRetStatus lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
 	}
 
 	lim_log(mac_ctx, LOG1,
-		FL("enable2x2 - %d vhtRxMCSMap - %x vhtTxMCSMap - %x\n"),
-		mac_ctx->roam.configParam.enable2x2,
+		FL("enable2x2 - %d nss %d vhtRxMCSMap - %x vhtTxMCSMap - %x"),
+		mac_ctx->roam.configParam.enable2x2, nss,
 		rates->vhtRxMCSMap, rates->vhtTxMCSMap);
 
 	if (NULL != session_entry) {
@@ -1627,7 +1637,7 @@ lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
 			return eSIR_FAILURE;
 		}
 
-		if (session_entry->vdev_nss == 1)
+		if (session_entry->vdev_nss == NSS_1x1_MODE)
 			rates->supportedMCSSet[1] = 0;
 		/*
 		 * if supported MCS Set of the peer is passed in,
@@ -1646,7 +1656,8 @@ lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
 			PELOG2(lim_log(mac_ctx, LOG2, FL("%x "),
 				       rates->supportedMCSSet[i]);)
 	}
-	lim_populate_vht_mcs_set(mac_ctx, rates, vht_caps, session_entry);
+	lim_populate_vht_mcs_set(mac_ctx, rates, vht_caps,
+			session_entry, session_entry->vdev_nss);
 
 	return eSIR_SUCCESS;
 }
@@ -1768,7 +1779,7 @@ lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 			       )
 			return eSIR_FAILURE;
 		}
-		if (psessionEntry->vdev_nss == 1)
+		if (psessionEntry->vdev_nss == NSS_1x1_MODE)
 			pRates->supportedMCSSet[1] = 0;
 
 		/* if supported MCS Set of the peer is passed in, then do the
@@ -1791,7 +1802,8 @@ lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 		lim_log(pMac, LOG1, FL("HT supported nss 1x1: %d"),
 			psessionEntry->supported_nss_1x1);
 	}
-	lim_populate_vht_mcs_set(pMac, pRates, pVHTCaps, psessionEntry);
+	lim_populate_vht_mcs_set(pMac, pRates, pVHTCaps,
+			psessionEntry, psessionEntry->vdev_nss);
 	return eSIR_SUCCESS;
 } /*** lim_populate_peer_rate_set() ***/
 
@@ -1997,7 +2009,7 @@ tSirRetStatus lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx,
 			return eSIR_FAILURE;
 		}
 
-		if (session_entry->vdev_nss == 1)
+		if (session_entry->vdev_nss == NSS_1x1_MODE)
 			mcs_set[1] = 0;
 
 		for (i = 0; i < val; i++)
@@ -2013,7 +2025,7 @@ tSirRetStatus lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx,
 		}
 	}
 	lim_populate_vht_mcs_set(mac_ctx, &sta_ds->supportedRates, vht_caps,
-				 session_entry);
+				 session_entry, session_entry->vdev_nss);
 	/*
 	 * Set the erpEnabled bit if the phy is in G mode and at least
 	 * one A rate is supported

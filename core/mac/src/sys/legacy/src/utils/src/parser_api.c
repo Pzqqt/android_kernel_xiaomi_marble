@@ -771,7 +771,7 @@ populate_dot11f_ht_caps(tpAniSirGlobal pMac,
 				}
 			}
 		}
-		if (psessionEntry->nss == 1)
+		if (psessionEntry->vdev_nss == NSS_1x1_MODE)
 			pDot11f->supportedMCSSet[1] = 0;
 	}
 
@@ -1105,6 +1105,13 @@ populate_dot11f_vht_caps(tpAniSirGlobal pMac,
 	nCfgValue = 0;
 	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_TX_MCS_MAP, nCfgValue);
 	pDot11f->txMCSMap = (nCfgValue & 0x0000FFFF);
+
+	nCfgValue = 0;
+	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_TX_HIGHEST_SUPPORTED_DATA_RATE,
+			nCfgValue);
+	pDot11f->txSupDataRate = (nCfgValue & 0x00001FFF);
+
+	pDot11f->reserved3 = 0;
 	if (psessionEntry) {
 		if (pMac->lteCoexAntShare
 		    && (IS_24G_CH(psessionEntry->currentOperChannel))) {
@@ -1113,23 +1120,17 @@ populate_dot11f_vht_caps(tpAniSirGlobal pMac,
 				pDot11f->rxMCSMap |= DISABLE_NSS2_MCS;
 			}
 		}
-		if (psessionEntry->nss == 1) {
+		if (psessionEntry->vdev_nss == NSS_1x1_MODE) {
 			pDot11f->txMCSMap |= DISABLE_NSS2_MCS;
 			pDot11f->rxMCSMap |= DISABLE_NSS2_MCS;
+			pDot11f->txSupDataRate =
+				VHT_TX_HIGHEST_SUPPORTED_DATA_RATE_1_1;
+			pDot11f->rxHighSupDataRate =
+				VHT_RX_HIGHEST_SUPPORTED_DATA_RATE_1_1;
 		}
 	}
-
-	nCfgValue = 0;
-	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_TX_HIGHEST_SUPPORTED_DATA_RATE,
-		    nCfgValue);
-	pDot11f->txSupDataRate = (nCfgValue & 0x00001FFF);
-
-	pDot11f->reserved3 = 0;
-
 	lim_log_vht_cap(pMac, pDot11f);
-
 	return eSIR_SUCCESS;
-
 }
 
 tSirRetStatus
