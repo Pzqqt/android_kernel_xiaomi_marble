@@ -3114,7 +3114,7 @@ enum dot11p_mode {
 #define CFG_ENABLE_DP_TRACE		"enable_dp_trace"
 #define CFG_ENABLE_DP_TRACE_MIN		(0)
 #define CFG_ENABLE_DP_TRACE_MAX		(1)
-#define CFG_ENABLE_DP_TRACE_DEFAULT	(0)
+#define CFG_ENABLE_DP_TRACE_DEFAULT	(1)
 
 /*---------------------------------------------------------------------------
    Type declarations

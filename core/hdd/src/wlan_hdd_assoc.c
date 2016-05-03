@@ -1058,11 +1058,9 @@ static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 	wlan_hdd_auto_shutdown_enable(pHddCtx, true);
 #endif
 
-#ifdef QCA_PKT_PROTO_TRACE
-	/* STA disconnected, update into trace buffer */
-	if (pHddCtx->config->gEnableDebugLog)
-		cds_pkt_trace_buf_update("ST:DISASC");
-#endif /* QCA_PKT_PROTO_TRACE */
+	DPTRACE(qdf_dp_trace_mgmt_pkt(QDF_DP_TRACE_MGMT_PACKET_RECORD,
+				pAdapter->sessionId,
+				QDF_PROTO_TYPE_MGMT, QDF_PROTO_MGMT_DISASSOC));
 
 	/* HDD has initiated disconnect, do not send disconnect indication
 	 * to kernel. Sending disconnected event to kernel for userspace
@@ -1932,11 +1930,10 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 		wlan_hdd_tdls_connection_callback(pAdapter);
 #endif
 
-#ifdef QCA_PKT_PROTO_TRACE
-		/* STA Associated, update into trace buffer */
-		if (pHddCtx->config->gEnableDebugLog)
-			cds_pkt_trace_buf_update("ST:ASSOC");
-#endif /* QCA_PKT_PROTO_TRACE */
+		DPTRACE(qdf_dp_trace_mgmt_pkt(QDF_DP_TRACE_MGMT_PACKET_RECORD,
+			pAdapter->sessionId,
+			QDF_PROTO_TYPE_MGMT, QDF_PROTO_MGMT_ASSOC));
+
 		/*
 		 * For reassoc, the station is already registered, all we need
 		 * is to change the state of the STA in TL.

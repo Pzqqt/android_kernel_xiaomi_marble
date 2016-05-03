@@ -85,10 +85,6 @@
 #include "wlan_hdd_napi.h"
 #include "cdp_txrx_flow_ctrl_legacy.h"
 
-#ifdef QCA_PKT_PROTO_TRACE
-#include "cds_packet.h"
-#endif /* QCA_PKT_PROTO_TRACE */
-
 #define HDD_FINISH_ULA_TIME_OUT         800
 #define HDD_SET_MCBC_FILTERS_TO_FW      1
 #define HDD_DELETE_MCBC_FILTERS_FROM_FW 0
@@ -6156,13 +6152,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	case WE_SET_DEBUG_LOG:
 	{
 		hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
-#ifdef QCA_PKT_PROTO_TRACE
-		/* Trace buffer dump only */
-		if (CDS_PKT_TRAC_DUMP_CMD == set_value) {
-			cds_pkt_trace_buf_dump();
-			break;
-		}
-#endif /* QCA_PKT_PROTO_TRACE */
+
 		hdd_ctx->config->gEnableDebugLog = set_value;
 		sme_update_connect_debug(hdd_ctx->hHal, set_value);
 		break;

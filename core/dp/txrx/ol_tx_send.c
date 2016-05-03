@@ -487,8 +487,6 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 	uint16_t *desc_ids = (uint16_t *) tx_desc_id_iterator;
 	uint16_t tx_desc_id;
 	struct ol_tx_desc_t *tx_desc;
-	char *trace_str;
-
 	uint32_t byte_cnt = 0;
 	qdf_nbuf_t netbuf;
 
@@ -499,7 +497,6 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 
 	OL_TX_DELAY_COMPUTE(pdev, status, desc_ids, num_msdus);
 
-	trace_str = (status) ? "OT:C:F:" : "OT:C:S:";
 	for (i = 0; i < num_msdus; i++) {
 		tx_desc_id = desc_ids[i];
 		tx_desc = ol_tx_desc_find(pdev, tx_desc_id);
@@ -510,7 +507,6 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 			qdf_nbuf_data_addr(netbuf),
 			sizeof(qdf_nbuf_data(netbuf)), tx_desc->id, status));
 		qdf_runtime_pm_put();
-		qdf_nbuf_trace_update(netbuf, trace_str);
 		/* Per SDU update of byte count */
 		byte_cnt += qdf_nbuf_len(netbuf);
 		if (OL_TX_DESC_NO_REFS(tx_desc)) {

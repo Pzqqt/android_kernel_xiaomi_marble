@@ -466,15 +466,12 @@ void ol_tx_desc_frame_free_nonstd(struct ol_txrx_pdev_t *pdev,
 {
 	int mgmt_type;
 	ol_txrx_mgmt_tx_cb ota_ack_cb;
-	char *trace_str;
 
 	qdf_atomic_init(&tx_desc->ref_cnt);     /* clear the ref cnt */
 #ifdef QCA_SUPPORT_SW_TXRX_ENCAP
 	/* restore original hdr offset */
 	OL_TX_RESTORE_HDR(tx_desc, (tx_desc->netbuf));
 #endif
-	trace_str = (had_error) ? "OT:C:F:" : "OT:C:S:";
-	qdf_nbuf_trace_update(tx_desc->netbuf, trace_str);
 	if (tx_desc->pkt_type == OL_TX_FRM_NO_FREE) {
 		/* free the tx desc but don't unmap or free the frame */
 		if (pdev->tx_data_callback.func) {

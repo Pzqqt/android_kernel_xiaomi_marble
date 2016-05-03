@@ -56,59 +56,6 @@ typedef struct cds_pkt_t cds_pkt_t;
 
 #include "qdf_nbuf.h"
 
-#define CDS_PKT_TRAC_TYPE_EAPOL   QDF_NBUF_PKT_TRAC_TYPE_EAPOL
-#define CDS_PKT_TRAC_TYPE_DHCP    QDF_NBUF_PKT_TRAC_TYPE_DHCP
-#define CDS_PKT_TRAC_TYPE_MGMT_ACTION    QDF_NBUF_PKT_TRAC_TYPE_MGMT_ACTION
-
-#define CDS_PKT_TRAC_DUMP_CMD     9999
-
-/*---------------------------------------------------------------------------
-
-* brief cds_pkt_get_proto_type() -
-      Find protoco type from packet contents
-
-* skb Packet Pointer
-* tracking_map packet type want to track
-* dot11_type, frame type when the frame is in dot11 format
-
-   ---------------------------------------------------------------------------*/
-uint8_t cds_pkt_get_proto_type
-	(struct sk_buff *skb, uint8_t tracking_map, uint8_t dot11_type);
-
-#ifdef QCA_PKT_PROTO_TRACE
-/**
- * cds_pkt_trace_buf_update() - Update storage buffer with interest event string
- * @event_string: string may be a packet type or an outstanding event
- *
- * Return: none
- */
-void cds_pkt_trace_buf_update(char *event_string);
-
-/**
- * cds_pkt_trace_buf_dump() - Dump stored information into kernel log
- *
- * Return: none
- */
-void cds_pkt_trace_buf_dump(void);
-
-/**
- * cds_pkt_proto_trace_init() - Initialize protocol trace functionality
- *
- * Return: none
- */
-void cds_pkt_proto_trace_init(void);
-
-/**
- * cds_pkt_proto_trace_deinit() - Free protocol trace buffer resource
- *
- * Return: none
- */
-void cds_pkt_proto_trace_deinit(void);
-#else
-static inline void cds_pkt_proto_trace_init(void) { }
-static inline void cds_pkt_proto_trace_deinit(void) {}
-#endif /* QCA_PKT_PROTO_TRACE */
-
 /**
  * cds_pkt_return_packet  Free the cds Packet
  * @ cds Packet

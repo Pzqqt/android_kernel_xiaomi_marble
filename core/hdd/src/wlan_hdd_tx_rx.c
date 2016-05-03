@@ -266,10 +266,6 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	bool granted;
 	uint8_t STAId = WLAN_MAX_STA_COUNT;
 	hdd_station_ctx_t *pHddStaCtx = &pAdapter->sessionCtx.station;
-#ifdef QCA_PKT_PROTO_TRACE
-	uint8_t proto_type = 0;
-	hdd_context_t *hddCtxt = WLAN_HDD_GET_CTX(pAdapter);
-#endif /* QCA_PKT_PROTO_TRACE */
 
 #ifdef QCA_WIFI_FTM
 	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
@@ -421,20 +417,6 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		skb->queue_mapping = hdd_linux_up_to_ac_map[up];
 	}
 
-#ifdef QCA_PKT_PROTO_TRACE
-	if ((hddCtxt->config->gEnableDebugLog & CDS_PKT_TRAC_TYPE_EAPOL) ||
-	    (hddCtxt->config->gEnableDebugLog & CDS_PKT_TRAC_TYPE_DHCP)) {
-		proto_type = cds_pkt_get_proto_type(skb,
-						    hddCtxt->config->
-						    gEnableDebugLog, 0);
-		if (CDS_PKT_TRAC_TYPE_EAPOL & proto_type) {
-			cds_pkt_trace_buf_update("ST:T:EPL");
-		} else if (CDS_PKT_TRAC_TYPE_DHCP & proto_type) {
-			cds_pkt_trace_buf_update("ST:T:DHC");
-		}
-	}
-#endif /* QCA_PKT_PROTO_TRACE */
-
 	pAdapter->stats.tx_bytes += skb->len;
 	++pAdapter->stats.tx_packets;
 
@@ -464,10 +446,6 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 				 __func__);
 				goto drop_pkt;
 	}
-
-#ifdef QCA_PKT_PROTO_TRACE
-	qdf_nbuf_trace_set_proto_type(skb, proto_type);
-#endif
 
 	/*
 	* If a transmit function is not registered, drop packet
@@ -730,9 +708,6 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 	hdd_context_t *pHddCtx = NULL;
 	int rxstat;
 	struct sk_buff *skb = NULL;
-#ifdef QCA_PKT_PROTO_TRACE
-	uint8_t proto_type;
-#endif /* QCA_PKT_PROTO_TRACE */
 	hdd_station_ctx_t *pHddStaCtx = NULL;
 	unsigned int cpu_index;
 
@@ -780,20 +755,6 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		QDF_DP_TRACE_RX_HDD_PACKET_PTR_RECORD,
 		qdf_nbuf_data_addr(rxBuf),
 		sizeof(qdf_nbuf_data(rxBuf)), QDF_RX));
-
-#ifdef QCA_PKT_PROTO_TRACE
-	if ((pHddCtx->config->gEnableDebugLog & CDS_PKT_TRAC_TYPE_EAPOL) ||
-	    (pHddCtx->config->gEnableDebugLog & CDS_PKT_TRAC_TYPE_DHCP)) {
-		proto_type = cds_pkt_get_proto_type(skb,
-						    pHddCtx->config->
-						    gEnableDebugLog, 0);
-		if (CDS_PKT_TRAC_TYPE_EAPOL & proto_type) {
-			cds_pkt_trace_buf_update("ST:R:EPL");
-		} else if (CDS_PKT_TRAC_TYPE_DHCP & proto_type) {
-			cds_pkt_trace_buf_update("ST:R:DHC");
-		}
-	}
-#endif /* QCA_PKT_PROTO_TRACE */
 
 	skb->dev = pAdapter->dev;
 	skb->protocol = eth_type_trans(skb, skb->dev);

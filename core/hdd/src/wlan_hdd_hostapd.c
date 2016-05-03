@@ -1305,12 +1305,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			}
 		}
 
-#ifdef QCA_PKT_PROTO_TRACE
-		/* Peer associated, update into trace buffer */
-		if (pHddCtx->config->gEnableDebugLog) {
-			cds_pkt_trace_buf_update("HA:ASSOC");
-		}
-#endif /* QCA_PKT_PROTO_TRACE */
+		DPTRACE(qdf_dp_trace_mgmt_pkt(QDF_DP_TRACE_MGMT_PACKET_RECORD,
+			pHostapdAdapter->sessionId,
+			QDF_PROTO_TYPE_MGMT, QDF_PROTO_MGMT_ASSOC));
 
 #ifdef MSM_PLATFORM
 		/* start timer in sap/p2p_go */
@@ -1442,12 +1439,10 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			}
 		}
 #endif
-#ifdef QCA_PKT_PROTO_TRACE
-		/* Peer dis-associated, update into trace buffer */
-		if (pHddCtx->config->gEnableDebugLog) {
-			cds_pkt_trace_buf_update("HA:DISASC");
-		}
-#endif /* QCA_PKT_PROTO_TRACE */
+		DPTRACE(qdf_dp_trace_mgmt_pkt(QDF_DP_TRACE_MGMT_PACKET_RECORD,
+			pHostapdAdapter->sessionId,
+			QDF_PROTO_TYPE_MGMT, QDF_PROTO_MGMT_DISASSOC));
+
 		hdd_softap_deregister_sta(pHostapdAdapter, staId);
 
 		pHddApCtx->bApActive = false;
@@ -2788,23 +2783,6 @@ static __iw_softap_setparam(struct net_device *dev,
 					  set_value, GTX_CMD);
 		break;
 	}
-
-#ifdef QCA_PKT_PROTO_TRACE
-	case QCASAP_SET_DEBUG_LOG:
-	{
-		hdd_context_t *pHddCtx =
-			WLAN_HDD_GET_CTX(pHostapdAdapter);
-
-		hddLog(LOG1, "QCASAP_SET_DEBUG_LOG val %d", set_value);
-		/* Trace buffer dump only */
-		if (CDS_PKT_TRAC_DUMP_CMD == set_value) {
-			cds_pkt_trace_buf_dump();
-			break;
-		}
-		pHddCtx->config->gEnableDebugLog = set_value;
-		break;
-	}
-#endif /* QCA_PKT_PROTO_TRACE */
 
 	case QCASAP_SET_TM_LEVEL:
 	{
@@ -5731,12 +5709,6 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		QCSAP_PARAM_ACL_MODE,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "setAclMode"
 	},
-#ifdef QCA_PKT_PROTO_TRACE
-	{
-		QCASAP_SET_DEBUG_LOG,
-		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "setDbgLvl"
-	},
-#endif /* QCA_PKT_PROTO_TRACE */
 	{
 		QCASAP_SET_TM_LEVEL,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,

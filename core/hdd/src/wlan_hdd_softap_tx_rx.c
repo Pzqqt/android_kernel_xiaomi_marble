@@ -172,10 +172,6 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	hdd_ap_ctx_t *pHddApCtx = WLAN_HDD_GET_AP_CTX_PTR(pAdapter);
 	struct qdf_mac_addr *pDestMacAddress;
 	uint8_t STAId;
-#ifdef QCA_PKT_PROTO_TRACE
-	uint8_t proto_type = 0;
-	hdd_context_t *hddCtxt = (hdd_context_t *) pAdapter->pHddCtx;
-#endif /* QCA_PKT_PROTO_TRACE */
 
 	++pAdapter->hdd_stats.hddTxRxStats.txXmitCalled;
 	/* Prevent this function from being called during SSR since TL
@@ -289,20 +285,6 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	}
 #endif
 
-#ifdef QCA_PKT_PROTO_TRACE
-	if ((hddCtxt->config->gEnableDebugLog & CDS_PKT_TRAC_TYPE_EAPOL) ||
-	    (hddCtxt->config->gEnableDebugLog & CDS_PKT_TRAC_TYPE_DHCP)) {
-		/* Proto Trace enabled */
-		proto_type = cds_pkt_get_proto_type(skb,
-						    hddCtxt->config->
-						    gEnableDebugLog, 0);
-		if (CDS_PKT_TRAC_TYPE_EAPOL & proto_type) {
-			cds_pkt_trace_buf_update("HA:T:EPL");
-		} else if (CDS_PKT_TRAC_TYPE_DHCP & proto_type) {
-			cds_pkt_trace_buf_update("HA:T:DHC");
-		}
-	}
-#endif /* QCA_PKT_PROTO_TRACE */
 	pAdapter->stats.tx_bytes += skb->len;
 	++pAdapter->stats.tx_packets;
 
@@ -322,9 +304,6 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 			(uint8_t *)&skb->data[QDF_DP_TRACE_RECORD_SIZE],
 			(qdf_nbuf_len(skb)-QDF_DP_TRACE_RECORD_SIZE), QDF_TX));
 
-#ifdef QCA_PKT_PROTO_TRACE
-	qdf_nbuf_trace_set_proto_type(skb, proto_type);
-#endif
 	if (pAdapter->tx_fn(ol_txrx_get_vdev_by_sta_id(STAId),
 		 (qdf_nbuf_t) skb) != NULL) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_WARN,
@@ -537,9 +516,6 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 	unsigned int cpu_index;
 	struct sk_buff *skb = NULL;
 	hdd_context_t *pHddCtx = NULL;
-#ifdef QCA_PKT_PROTO_TRACE
-	uint8_t proto_type;
-#endif /* QCA_PKT_PROTO_TRACE */
 
 	/* Sanity check on inputs */
 	if (unlikely((NULL == context) || (NULL == rxBuf))) {
@@ -580,20 +556,6 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 	++pAdapter->hdd_stats.hddTxRxStats.rxPackets[cpu_index];
 	++pAdapter->stats.rx_packets;
 	pAdapter->stats.rx_bytes += skb->len;
-
-#ifdef QCA_PKT_PROTO_TRACE
-	if ((pHddCtx->config->gEnableDebugLog & CDS_PKT_TRAC_TYPE_EAPOL) ||
-	    (pHddCtx->config->gEnableDebugLog & CDS_PKT_TRAC_TYPE_DHCP)) {
-		proto_type = cds_pkt_get_proto_type(skb,
-						    pHddCtx->config->
-						    gEnableDebugLog, 0);
-		if (CDS_PKT_TRAC_TYPE_EAPOL & proto_type) {
-			cds_pkt_trace_buf_update("HA:R:EPL");
-		} else if (CDS_PKT_TRAC_TYPE_DHCP & proto_type) {
-			cds_pkt_trace_buf_update("HA:R:DHC");
-		}
-	}
-#endif /* QCA_PKT_PROTO_TRACE */
 
 	DPTRACE(qdf_dp_trace(rxBuf,
 		QDF_DP_TRACE_RX_HDD_PACKET_PTR_RECORD,

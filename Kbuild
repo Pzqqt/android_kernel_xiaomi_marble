@@ -58,11 +58,9 @@ ifeq ($(KERNEL_BUILD), 0)
 	# config.
 	ifneq ($(TARGET_BUILD_VARIANT),user)
 		ifeq ($(CONFIG_SLUB_DEBUG_ON),y)
-			CONFIG_PKT_PROTO_TRACE := y
 			CONFIG_FEATURE_DP_TRACE := y
 		else
 			ifeq ($(findstring perf,$(KERNEL_DEFCONFIG)),)
-				CONFIG_PKT_PROTO_TRACE := y
 				CONFIG_FEATURE_DP_TRACE := y
 			endif
 		endif
@@ -1042,10 +1040,6 @@ else
 ifeq ($(CONFIG_ROME_IF),pci)
 CDEFINES +=	-DQCA_LL_LEGACY_TX_FLOW_CONTROL
 endif
-endif
-
-ifeq ($(CONFIG_PKT_PROTO_TRACE), y)
-CDEFINES +=    	-DQCA_PKT_PROTO_TRACE
 endif
 
 ifneq ($(CONFIG_QCA_CLD_WLAN),)
