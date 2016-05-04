@@ -63,7 +63,11 @@
 
 #define TDLS_PEER_LIST_SIZE   256
 
+#define TDLS_CT_MAC_AGE_OUT_TIME (30*60*1000) /* Age out time is 30 mins */
+
 #define EXTTDLS_EVENT_BUF_SIZE (4096)
+
+#define TDLS_CT_MAC_MAX_TABLE_SIZE 8
 
 /**
  * struct tdls_config_params_t - tdls config params
@@ -72,6 +76,7 @@
  * @tx_period_t: tx period
  * @tx_packet_n: tx packets number
  * @discovery_tries_n: discovery tries
+ * @idle_timeout_t: idle traffic time out value
  * @idle_packet_n: idle packet number
  * @rssi_trigger_threshold: rssi trigger threshold
  * @rssi_teardown_threshold: rssi tear down threshold
@@ -82,6 +87,7 @@ typedef struct {
 	uint32_t tx_period_t;
 	uint32_t tx_packet_n;
 	uint32_t discovery_tries_n;
+	uint32_t idle_timeout_t;
 	uint32_t idle_packet_n;
 	int32_t rssi_trigger_threshold;
 	int32_t rssi_teardown_threshold;
@@ -286,10 +292,24 @@ typedef struct {
 struct _hddTdlsPeer_t;
 
 /**
+ * struct tdls_ct_mac_table - connection tracker peer mac address table
+ * @mac_address: peer mac address
+ * @tx_packet_cnt: number of tx pkts
+ * @rx_packet_cnt: number of rx pkts
+ * @peer_timestamp_ms: time stamp of latest peer traffic
+ */
+struct tdls_ct_mac_table {
+	struct qdf_mac_addr mac_address;
+	uint32_t tx_packet_cnt;
+	uint32_t rx_packet_cnt;
+	uint32_t peer_timestamp_ms;
+};
+/**
  * struct tdlsCtx_t - tdls context
  *
  * @peer_list: peer list
  * @pAdapter: pointer to adapter
+ * @peer_update_timer: connection tracker timer
  * @peerDiscoverTimer: peer discovery timer
  * @peerDiscoveryTimeoutTimer: peer discovery timeout timer
  * @threshold_config: threshold config
@@ -298,12 +318,15 @@ struct _hddTdlsPeer_t;
  * @ap_rssi: ap rssi
  * @curr_candidate: current candidate
  * @implicit_setup: implicit setup work queue
+ * @ct_peer_mac_table: linear mac address table for counting the packets
+ * @valid_mac_entries: number of valid mac entry in @ct_peer_mac_table
  * @magic: magic
  *
  */
 typedef struct {
 	struct list_head peer_list[TDLS_PEER_LIST_SIZE];
 	hdd_adapter_t *pAdapter;
+	qdf_mc_timer_t peer_update_timer;
 	qdf_mc_timer_t peerDiscoveryTimeoutTimer;
 	tdls_config_params_t threshold_config;
 	int32_t discovery_peer_cnt;
@@ -311,6 +334,8 @@ typedef struct {
 	int8_t ap_rssi;
 	struct _hddTdlsPeer_t *curr_candidate;
 	struct work_struct implicit_setup;
+	struct tdls_ct_mac_table ct_peer_mac_table[TDLS_CT_MAC_MAX_TABLE_SIZE];
+	uint8_t valid_mac_entries;
 	uint32_t magic;
 } tdlsCtx_t;
 
@@ -342,6 +367,8 @@ typedef struct {
  * @op_class_for_pref_off_chan: op class for preferred off channel
  * @pref_off_chan_num: preferred off channel number
  * @op_class_for_pref_off_chan_is_set: op class for preferred off channel set
+ * @peer_idle_timer: time to check idle traffic in tdls peers
+ * @is_peer_idle_timer_initialised: Flag to check idle timer init
  * @reason: reason
  * @state_change_notification: state change notification
  */
@@ -371,6 +398,8 @@ typedef struct _hddTdlsPeer_t {
 	uint8_t op_class_for_pref_off_chan;
 	uint8_t pref_off_chan_num;
 	uint8_t op_class_for_pref_off_chan_is_set;
+	qdf_mc_timer_t peer_idle_timer;
+	bool is_peer_idle_timer_initialised;
 	tTDLSLinkReason reason;
 	cfg80211_exttdls_callback state_change_notification;
 } hddTdlsPeer_t;
@@ -451,14 +480,16 @@ int wlan_hdd_tdls_get_link_establish_params(hdd_adapter_t *pAdapter,
 					    tCsrTdlsLinkEstablishParams *
 					    tdlsLinkEstablishParams);
 hddTdlsPeer_t *wlan_hdd_tdls_get_peer(hdd_adapter_t *pAdapter,
-				      const uint8_t *mac);
+				      const uint8_t *mac,
+				      bool need_mutex_lock);
 
 int wlan_hdd_tdls_set_cap(hdd_adapter_t *pAdapter, const uint8_t *mac,
 			  tTDLSCapType cap);
 
 void wlan_hdd_tdls_set_peer_link_status(hddTdlsPeer_t *curr_peer,
 					tTDLSLinkStatus status,
-					tTDLSLinkReason reason);
+					tTDLSLinkReason reason,
+					bool lock_needed);
 void wlan_hdd_tdls_set_link_status(hdd_adapter_t *pAdapter,
 				   const uint8_t *mac,
 				   tTDLSLinkStatus linkStatus,
@@ -503,7 +534,8 @@ void wlan_hdd_tdls_tncrement_peer_count(hdd_adapter_t *pAdapter);
 void wlan_hdd_tdls_decrement_peer_count(hdd_adapter_t *pAdapter);
 
 hddTdlsPeer_t *wlan_hdd_tdls_is_progress(hdd_context_t *pHddCtx,
-					 const uint8_t *mac, uint8_t skip_self);
+					 const uint8_t *mac, uint8_t skip_self,
+					 bool need_lock);
 
 int wlan_hdd_tdls_copy_scan_context(hdd_context_t *pHddCtx,
 				    struct wiphy *wiphy,
@@ -630,10 +662,13 @@ hddTdlsPeer_t *wlan_hdd_tdls_find_first_connected_peer(hdd_adapter_t *adapter);
 int hdd_set_tdls_offchannel(hdd_context_t *hdd_ctx, int offchannel);
 int hdd_set_tdls_secoffchanneloffset(hdd_context_t *hdd_ctx, int offchanoffset);
 int hdd_set_tdls_offchannelmode(hdd_adapter_t *adapter, int offchanmode);
+void wlan_hdd_tdls_update_tx_pkt_cnt(hdd_adapter_t *adapter,
+				     struct sk_buff *skb);
+void wlan_hdd_tdls_update_rx_pkt_cnt(hdd_adapter_t *adapter,
+				     struct sk_buff *skb);
 int hdd_set_tdls_scan_type(hdd_context_t *hdd_ctx, int val);
 void hdd_tdls_context_init(hdd_context_t *hdd_ctx);
 void hdd_tdls_context_destroy(hdd_context_t *hdd_ctx);
-
 #else
 static inline void hdd_tdls_notify_mode_change(hdd_adapter_t *adapter,
 				hdd_context_t *hddctx)
@@ -646,7 +681,14 @@ wlan_hdd_tdls_disable_offchan_and_teardown_links(hdd_context_t *hddctx)
 static inline void wlan_hdd_tdls_exit(hdd_adapter_t *adapter)
 {
 }
-
+static inline void wlan_hdd_tdls_update_tx_pkt_cnt(hdd_adapter_t *adapter,
+						   struct sk_buff *skb)
+{
+}
+static inline void wlan_hdd_tdls_update_rx_pkt_cnt(hdd_adapter_t *adapter,
+						   struct sk_buff *skb)
+{
+}
 static inline void hdd_tdls_context_init(hdd_context_t *hdd_ctx) { }
 static inline void hdd_tdls_context_destroy(hdd_context_t *hdd_ctx) { }
 #endif /* End of FEATURE_WLAN_TDLS */

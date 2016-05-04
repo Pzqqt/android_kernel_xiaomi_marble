@@ -1257,10 +1257,13 @@ struct hdd_context_s {
 	uint16_t connected_peer_count;
 	tdls_scan_context_t tdls_scan_ctxt;
 	/* Lock to avoid race condition during TDLS operations */
+	qdf_spinlock_t tdls_ct_spinlock;
 	struct mutex tdls_lock;
 	uint8_t tdls_off_channel;
 	uint16_t tdls_channel_offset;
 	int32_t tdls_fw_off_chan_mode;
+	bool enable_tdls_connection_tracker;
+	uint8_t tdls_external_peer_count;
 #endif
 
 	void *hdd_ipa;

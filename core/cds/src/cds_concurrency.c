@@ -3372,6 +3372,41 @@ void cds_dump_concurrency_info(void)
 }
 
 /**
+ * cds_set_tdls_ct_mode() - Set the tdls connection tracker mode
+ * @hdd_ctx: hdd context
+ *
+ * This routine is called to set the tdls connection tracker operation status
+ *
+ * Return: NONE
+ */
+void cds_set_tdls_ct_mode(hdd_context_t *hdd_ctx)
+{
+	bool state = false;
+
+	/* If any concurrency is detected, skip tdls pkt tracker */
+	if (((1 << QDF_STA_MODE) == hdd_ctx->concurrency_mode) &&
+	    (hdd_ctx->no_of_active_sessions[QDF_STA_MODE] == 1) &&
+	    (hdd_ctx->config->fEnableTDLSImplicitTrigger) &&
+	    (eTDLS_SUPPORT_DISABLED != hdd_ctx->tdls_mode)) {
+		if (hdd_ctx->config->fTDLSExternalControl) {
+			if (hdd_ctx->tdls_external_peer_count)
+				state = true;
+			goto set_state;
+		} else {
+			state = true;
+		}
+	}
+
+set_state:
+	mutex_lock(&hdd_ctx->tdls_lock);
+	hdd_ctx->enable_tdls_connection_tracker = state;
+	mutex_unlock(&hdd_ctx->tdls_lock);
+
+	cds_info("enable_tdls_connection_tracker %d",
+		 hdd_ctx->enable_tdls_connection_tracker);
+}
+
+/**
  * cds_set_concurrency_mode() - To set concurrency mode
  * @mode: adapter mode
  *
@@ -3402,6 +3437,10 @@ void cds_set_concurrency_mode(enum tQDF_ADAPTER_MODE mode)
 	default:
 		break;
 	}
+
+	/* set tdls connection tracker state */
+	cds_set_tdls_ct_mode(hdd_ctx);
+
 	cds_info("concurrency_mode = 0x%x Number of open sessions for mode %d = %d",
 		hdd_ctx->concurrency_mode, mode,
 		hdd_ctx->no_of_open_sessions[mode]);
@@ -3438,6 +3477,10 @@ void cds_clear_concurrency_mode(enum tQDF_ADAPTER_MODE mode)
 	default:
 		break;
 	}
+
+	/* set tdls connection tracker state */
+	cds_set_tdls_ct_mode(hdd_ctx);
+
 	cds_info("concurrency_mode = 0x%x Number of open sessions for mode %d = %d",
 		hdd_ctx->concurrency_mode, mode,
 		hdd_ctx->no_of_open_sessions[mode]);
@@ -3550,8 +3593,13 @@ void cds_incr_active_session(enum tQDF_ADAPTER_MODE mode,
 	default:
 		break;
 	}
+
+	/* set tdls connection tracker state */
+	cds_set_tdls_ct_mode(hdd_ctx);
+
 	cds_info("No.# of active sessions for mode %d = %d",
 		mode, hdd_ctx->no_of_active_sessions[mode]);
+
 	/*
 	 * Get PCL logic makes use of the connection info structure.
 	 * Let us set the PCL to the FW before updating the connection
@@ -3826,8 +3874,13 @@ void cds_decr_active_session(enum tQDF_ADAPTER_MODE mode,
 	default:
 		break;
 	}
+
+	/* set tdls connection tracker state */
+	cds_set_tdls_ct_mode(hdd_ctx);
+
 	cds_info("No.# of active sessions for mode %d = %d",
 		mode, hdd_ctx->no_of_active_sessions[mode]);
+
 	cds_decr_connection_count(session_id);
 	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 }
