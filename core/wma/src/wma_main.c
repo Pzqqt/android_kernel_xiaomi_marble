@@ -1678,6 +1678,13 @@ QDF_STATUS wma_open(void *cds_context,
 	wma_handle->wma_runtime_resume_lock =
 		qdf_runtime_lock_init("wma_runtime_resume");
 
+	/* Initialize max_no_of_peers for wma_get_number_of_peers_supported() */
+	wma_init_max_no_of_peers(wma_handle, mac_params->maxStation);
+	/* Cap maxStation based on the target version */
+	mac_params->maxStation = wma_get_number_of_peers_supported(wma_handle);
+	/* Reinitialize max_no_of_peers based on the capped maxStation value */
+	wma_init_max_no_of_peers(wma_handle, mac_params->maxStation);
+
 	/* initialize default target config */
 	wma_set_default_tgt_config(wma_handle);
 
@@ -1739,8 +1746,6 @@ QDF_STATUS wma_open(void *cds_context,
 	if (cds_get_conparam() == QDF_GLOBAL_FTM_MODE)
 		wma_utf_attach(wma_handle);
 #endif /* QCA_WIFI_FTM */
-	wma_init_max_no_of_peers(wma_handle, mac_params->maxStation);
-	mac_params->maxStation = wma_get_number_of_peers_supported(wma_handle);
 
 	mac_params->maxBssId = WMA_MAX_SUPPORTED_BSS;
 	mac_params->frameTransRequired = 0;
