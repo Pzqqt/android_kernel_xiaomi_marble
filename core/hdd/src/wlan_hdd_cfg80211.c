@@ -86,6 +86,8 @@
 #include "wlan_hdd_tsf.h"
 
 #include "wlan_hdd_subnet_detect.h"
+#include <wlan_hdd_regulatory.h>
+
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -6138,7 +6140,8 @@ int wlan_hdd_cfg80211_init(struct device *dev,
  * @ wiphy: the wiphy to validate against
  *
  * this function deinit cfg80211 and cleanup the
- * memory allocated in wlan_hdd_cfg80211_init
+ * memory allocated in wlan_hdd_cfg80211_init also
+ * reset the global reg params.
  *
  * Return: void
  */
@@ -6153,6 +6156,7 @@ void wlan_hdd_cfg80211_deinit(struct wiphy *wiphy)
 			wiphy->bands[i]->channels = NULL;
 		}
 	}
+	hdd_reset_global_reg_params();
 }
 
 /*

@@ -203,6 +203,20 @@ static void hdd_update_regulatory_info(hdd_context_t *hdd_ctx)
 }
 
 /**
+ * hdd_reset_global_reg_params - Reset global static reg params
+ *
+ * This function is helpful in static driver to reset
+ * the global params.
+ *
+ * Return: void
+ */
+void hdd_reset_global_reg_params(void)
+{
+	init_by_driver = false;
+	init_by_reg_core = false;
+}
+
+/**
  * hdd_regulatory_wiphy_init() - regulatory wiphy init
  * @hdd_ctx: hdd context
  * @reg: regulatory data
