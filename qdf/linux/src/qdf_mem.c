@@ -970,3 +970,4 @@ void qdf_mem_dma_sync_single_for_cpu(qdf_device_t osdev,
 {
 	dma_sync_single_for_cpu(osdev->dev, bus_addr,  size, direction);
 }
+EXPORT_SYMBOL(qdf_mem_dma_sync_single_for_cpu);

@@ -33,9 +33,9 @@
 #ifdef CONFIG_MCL
 #include <i_host_diag_core_event.h>
 #include <ani_global.h>
+#include <hif.h>
 #endif
 #include <i_qdf_lock.h>
-#include <hif.h>
 
 /* Function declarations and documenation */
 typedef __qdf_mutex_t qdf_mutex_t;

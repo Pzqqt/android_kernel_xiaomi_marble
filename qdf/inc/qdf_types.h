@@ -272,7 +272,6 @@ typedef enum {
 	QDF_MODULE_ID_MAX
 } QDF_MODULE_ID;
 
-#ifdef CONFIG_MCL
 /**
  * enum tQDF_ADAPTER_MODE - Concurrency role.
  * @QDF_STA_MODE: STA mode
@@ -328,6 +327,7 @@ enum tQDF_GLOBAL_CON_MODE {
 
 #define  QDF_IS_EPPING_ENABLED(mode) (mode == QDF_GLOBAL_EPPING_MODE)
 
+#ifdef CONFIG_MCL
 #define qdf_print(args...) \
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR, ## args)
 

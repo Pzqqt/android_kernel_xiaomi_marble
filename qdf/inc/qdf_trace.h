@@ -330,6 +330,11 @@ void __printf(3, 4) qdf_snprintf(char *str_buffer, unsigned int size,
 		  char *str_format, ...);
 
 #define QDF_SNPRINTF qdf_snprintf
+#else
+
+#define DPTRACE(x)
+#define qdf_trace_hex_dump(x, y, z, q)
+
 #endif /* CONFIG_MCL */
 
 #endif /* __QDF_TRACE_H */
