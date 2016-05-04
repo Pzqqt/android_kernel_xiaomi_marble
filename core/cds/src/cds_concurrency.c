@@ -5976,7 +5976,11 @@ bool cds_wait_for_nss_update(uint8_t action)
 				[conn_index].tx_spatial_stream == 2) &&
 				(conc_connection_list
 				[conn_index].rx_spatial_stream == 2) &&
-				conc_connection_list[conn_index].in_use) {
+				conc_connection_list[conn_index].in_use &&
+				((conc_connection_list[conn_index].mode ==
+				CDS_P2P_GO_MODE) ||
+				(conc_connection_list[conn_index].mode ==
+				CDS_SAP_MODE))) {
 				wait = true;
 				break;
 			}
@@ -5991,7 +5995,11 @@ bool cds_wait_for_nss_update(uint8_t action)
 				[conn_index].tx_spatial_stream == 1) &&
 				(conc_connection_list
 				[conn_index].rx_spatial_stream == 1) &&
-				conc_connection_list[conn_index].in_use) {
+				conc_connection_list[conn_index].in_use &&
+				((conc_connection_list[conn_index].mode ==
+				CDS_P2P_GO_MODE) ||
+				(conc_connection_list[conn_index].mode ==
+				CDS_SAP_MODE))) {
 				wait = true;
 				break;
 			}
