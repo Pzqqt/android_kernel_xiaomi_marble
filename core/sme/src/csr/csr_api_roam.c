@@ -2356,6 +2356,23 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->early_stop_scan_min_threshold;
 		pMac->roam.configParam.early_stop_scan_max_threshold =
 			pParam->early_stop_scan_max_threshold;
+		pMac->roam.configParam.enable_edca_params =
+			pParam->enable_edca_params;
+		pMac->roam.configParam.edca_vo_cwmin = pParam->edca_vo_cwmin;
+		pMac->roam.configParam.edca_vi_cwmin = pParam->edca_vi_cwmin;
+		pMac->roam.configParam.edca_bk_cwmin = pParam->edca_bk_cwmin;
+		pMac->roam.configParam.edca_be_cwmin = pParam->edca_be_cwmin;
+
+		pMac->roam.configParam.edca_vo_cwmax = pParam->edca_vo_cwmax;
+		pMac->roam.configParam.edca_vi_cwmax = pParam->edca_vi_cwmax;
+		pMac->roam.configParam.edca_bk_cwmax = pParam->edca_bk_cwmax;
+		pMac->roam.configParam.edca_be_cwmax = pParam->edca_be_cwmax;
+
+		pMac->roam.configParam.edca_vo_aifs = pParam->edca_vo_aifs;
+		pMac->roam.configParam.edca_vi_aifs = pParam->edca_vi_aifs;
+		pMac->roam.configParam.edca_bk_aifs = pParam->edca_bk_aifs;
+		pMac->roam.configParam.edca_be_aifs = pParam->edca_be_aifs;
+
 		pMac->roam.configParam.enable_fatal_event =
 			pParam->enable_fatal_event;
 
@@ -2543,6 +2560,23 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->enableHtSmps = pMac->roam.configParam.enableHtSmps;
 	pParam->htSmps = pMac->roam.configParam.htSmps;
 	pParam->send_smps_action = pMac->roam.configParam.send_smps_action;
+
+	pParam->enable_edca_params =
+		pMac->roam.configParam.enable_edca_params;
+	pParam->edca_vo_cwmin = pMac->roam.configParam.edca_vo_cwmin;
+	pParam->edca_vi_cwmin = pMac->roam.configParam.edca_vi_cwmin;
+	pParam->edca_bk_cwmin = pMac->roam.configParam.edca_bk_cwmin;
+	pParam->edca_be_cwmin = pMac->roam.configParam.edca_be_cwmin;
+
+	pParam->edca_vo_cwmax = pMac->roam.configParam.edca_vo_cwmax;
+	pParam->edca_vi_cwmax = pMac->roam.configParam.edca_vi_cwmax;
+	pParam->edca_bk_cwmax = pMac->roam.configParam.edca_bk_cwmax;
+	pParam->edca_be_cwmax = pMac->roam.configParam.edca_be_cwmax;
+
+	pParam->edca_vo_aifs = pMac->roam.configParam.edca_vo_aifs;
+	pParam->edca_vi_aifs = pMac->roam.configParam.edca_vi_aifs;
+	pParam->edca_bk_aifs = pMac->roam.configParam.edca_bk_aifs;
+	pParam->edca_be_aifs = pMac->roam.configParam.edca_be_aifs;
 	pParam->enable_fatal_event =
 		pMac->roam.configParam.enable_fatal_event;
 

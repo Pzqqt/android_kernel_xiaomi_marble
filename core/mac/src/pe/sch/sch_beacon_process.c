@@ -924,15 +924,44 @@ sch_beacon_edca_process(tpAniSirGlobal pMac, tSirMacEdcaParamSetIE *edca,
 	host_log_qos_edca_pkt_type *log_ptr = NULL;
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
-	PELOG1(sch_log(pMac, LOG1,
+	sch_log(pMac, LOG2,
 		FL("Updating parameter set count: Old %d ---> new %d"),
-		session->gLimEdcaParamSetCount, edca->qosInfo.count);)
+		session->gLimEdcaParamSetCount, edca->qosInfo.count);
 
 	session->gLimEdcaParamSetCount = edca->qosInfo.count;
 	session->gLimEdcaParams[EDCA_AC_BE] = edca->acbe;
 	session->gLimEdcaParams[EDCA_AC_BK] = edca->acbk;
 	session->gLimEdcaParams[EDCA_AC_VI] = edca->acvi;
 	session->gLimEdcaParams[EDCA_AC_VO] = edca->acvo;
+
+	if (pMac->roam.configParam.enable_edca_params) {
+		session->gLimEdcaParams[EDCA_AC_VO].aci.aifsn =
+			pMac->roam.configParam.edca_vo_aifs;
+		session->gLimEdcaParams[EDCA_AC_VI].aci.aifsn =
+			pMac->roam.configParam.edca_vi_aifs;
+		session->gLimEdcaParams[EDCA_AC_BK].aci.aifsn =
+			pMac->roam.configParam.edca_bk_aifs;
+		session->gLimEdcaParams[EDCA_AC_BE].aci.aifsn =
+			pMac->roam.configParam.edca_be_aifs;
+
+		session->gLimEdcaParams[EDCA_AC_VO].cw.min =
+			pMac->roam.configParam.edca_vo_cwmin;
+		session->gLimEdcaParams[EDCA_AC_VI].cw.min =
+			pMac->roam.configParam.edca_vi_cwmin;
+		session->gLimEdcaParams[EDCA_AC_BK].cw.min =
+			pMac->roam.configParam.edca_bk_cwmin;
+		session->gLimEdcaParams[EDCA_AC_BE].cw.min =
+			pMac->roam.configParam.edca_be_cwmin;
+
+		session->gLimEdcaParams[EDCA_AC_VO].cw.max =
+			pMac->roam.configParam.edca_vo_cwmax;
+		session->gLimEdcaParams[EDCA_AC_VI].cw.max =
+			pMac->roam.configParam.edca_vi_cwmax;
+		session->gLimEdcaParams[EDCA_AC_BK].cw.max =
+			pMac->roam.configParam.edca_bk_cwmax;
+		session->gLimEdcaParams[EDCA_AC_BE].cw.max =
+			pMac->roam.configParam.edca_be_cwmax;
+	}
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 	WLAN_HOST_DIAG_LOG_ALLOC(log_ptr, host_log_qos_edca_pkt_type,
 				 LOG_WLAN_QOS_EDCA_C);
@@ -967,16 +996,17 @@ sch_beacon_edca_process(tpAniSirGlobal pMac, tSirMacEdcaParamSetIE *edca,
 	}
 	WLAN_HOST_DIAG_LOG_REPORT(log_ptr);
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
-	PELOG1(sch_log(pMac, LOGE,
-	       FL("Updating Local EDCA Params(gLimEdcaParams) to: "));)
+	sch_log(pMac, LOG1,
+		FL("Edsa param enabled in ini %d. Updating Local EDCA Params(gLimEdcaParams) to: "),
+		pMac->roam.configParam.enable_edca_params);
 	for (i = 0; i < MAX_NUM_AC; i++) {
-		PELOG1(sch_log(pMac, LOG1,
+		sch_log(pMac, LOG1,
 		       FL("AC[%d]:  AIFSN: %d, ACM %d, CWmin %d, CWmax %d, TxOp %d"),
 		       i, session->gLimEdcaParams[i].aci.aifsn,
 		       session->gLimEdcaParams[i].aci.acm,
 		       session->gLimEdcaParams[i].cw.min,
 		       session->gLimEdcaParams[i].cw.max,
-		       session->gLimEdcaParams[i].txoplimit);)
+		       session->gLimEdcaParams[i].txoplimit);
 	}
 	return eSIR_SUCCESS;
 }

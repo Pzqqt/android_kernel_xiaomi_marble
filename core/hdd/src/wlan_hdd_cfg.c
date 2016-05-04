@@ -3795,6 +3795,109 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			CFG_ENABLE_FATAL_EVENT_TRIGGER_MIN,
 			CFG_ENABLE_FATAL_EVENT_TRIGGER_MAX),
 
+	REG_VARIABLE(CFG_ENABLE_EDCA_INI_NAME, WLAN_PARAM_Integer,
+			struct hdd_config, enable_edca_params,
+			VAR_FLAGS_OPTIONAL |
+			VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+			CFG_ENABLE_EDCA_INI_DEFAULT,
+			CFG_ENABLE_EDCA_INI_MIN,
+			CFG_ENABLE_EDCA_INI_MAX),
+
+	REG_VARIABLE(CFG_EDCA_VO_CWMIN_VALUE_NAME, WLAN_PARAM_Integer,
+			struct hdd_config, edca_vo_cwmin,
+			VAR_FLAGS_OPTIONAL |
+			VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+			CFG_EDCA_VO_CWMIN_VALUE_DEFAULT,
+			CFG_EDCA_VO_CWMIN_VALUE_MIN,
+			CFG_EDCA_VO_CWMIN_VALUE_MAX),
+
+	REG_VARIABLE(CFG_EDCA_VI_CWMIN_VALUE_NAME, WLAN_PARAM_Integer,
+			struct hdd_config, edca_vi_cwmin,
+			VAR_FLAGS_OPTIONAL |
+			VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+			CFG_EDCA_VI_CWMIN_VALUE_DEFAULT,
+			CFG_EDCA_VI_CWMIN_VALUE_MIN,
+			CFG_EDCA_VI_CWMIN_VALUE_MAX),
+
+	REG_VARIABLE(CFG_EDCA_BK_CWMIN_VALUE_NAME, WLAN_PARAM_Integer,
+			struct hdd_config, edca_bk_cwmin,
+			VAR_FLAGS_OPTIONAL |
+			VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+			CFG_EDCA_BK_CWMIN_VALUE_DEFAULT,
+			CFG_EDCA_BK_CWMIN_VALUE_MIN,
+			CFG_EDCA_BK_CWMIN_VALUE_MAX),
+
+	REG_VARIABLE(CFG_EDCA_BE_CWMIN_VALUE_NAME, WLAN_PARAM_Integer,
+			struct hdd_config, edca_be_cwmin,
+			VAR_FLAGS_OPTIONAL |
+			VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+			CFG_EDCA_BE_CWMIN_VALUE_DEFAULT,
+			CFG_EDCA_BE_CWMIN_VALUE_MIN,
+			CFG_EDCA_BE_CWMIN_VALUE_MAX),
+
+	REG_VARIABLE(CFG_EDCA_VO_CWMAX_VALUE_NAME, WLAN_PARAM_Integer,
+			struct hdd_config, edca_vo_cwmax,
+			VAR_FLAGS_OPTIONAL |
+			VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+			CFG_EDCA_VO_CWMAX_VALUE_DEFAULT,
+			CFG_EDCA_VO_CWMAX_VALUE_MIN,
+			CFG_EDCA_VO_CWMAX_VALUE_MAX),
+
+	REG_VARIABLE(CFG_EDCA_VI_CWMAX_VALUE_NAME, WLAN_PARAM_Integer,
+			struct hdd_config, edca_vi_cwmax,
+			VAR_FLAGS_OPTIONAL |
+			VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+			CFG_EDCA_VI_CWMAX_VALUE_DEFAULT,
+			CFG_EDCA_VI_CWMAX_VALUE_MIN,
+			CFG_EDCA_VI_CWMAX_VALUE_MAX),
+
+	REG_VARIABLE(CFG_EDCA_BK_CWMAX_VALUE_NAME, WLAN_PARAM_Integer,
+			struct hdd_config, edca_bk_cwmax,
+			VAR_FLAGS_OPTIONAL |
+			VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+			CFG_EDCA_BK_CWMAX_VALUE_DEFAULT,
+			CFG_EDCA_BK_CWMAX_VALUE_MIN,
+			CFG_EDCA_BK_CWMAX_VALUE_MAX),
+
+	REG_VARIABLE(CFG_EDCA_BE_CWMAX_VALUE_NAME, WLAN_PARAM_Integer,
+			struct hdd_config, edca_be_cwmax,
+			VAR_FLAGS_OPTIONAL |
+			VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+			CFG_EDCA_BE_CWMAX_VALUE_DEFAULT,
+			CFG_EDCA_BE_CWMAX_VALUE_MIN,
+			CFG_EDCA_BE_CWMAX_VALUE_MAX),
+
+	REG_VARIABLE(CFG_EDCA_VO_AIFS_VALUE_NAME, WLAN_PARAM_Integer,
+			struct hdd_config, edca_vo_aifs,
+			VAR_FLAGS_OPTIONAL |
+			VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+			CFG_EDCA_VO_AIFS_VALUE_DEFAULT,
+			CFG_EDCA_VO_AIFS_VALUE_MIN,
+			CFG_EDCA_VO_AIFS_VALUE_MAX),
+
+	REG_VARIABLE(CFG_EDCA_VI_AIFS_VALUE_NAME, WLAN_PARAM_Integer,
+			struct hdd_config, edca_vi_aifs,
+			VAR_FLAGS_OPTIONAL |
+			VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+			CFG_EDCA_VI_AIFS_VALUE_DEFAULT,
+			CFG_EDCA_VI_AIFS_VALUE_MIN,
+			CFG_EDCA_VI_AIFS_VALUE_MAX),
+
+	REG_VARIABLE(CFG_EDCA_BK_AIFS_VALUE_NAME, WLAN_PARAM_Integer,
+			struct hdd_config, edca_bk_aifs,
+			VAR_FLAGS_OPTIONAL |
+			VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+			CFG_EDCA_BK_AIFS_VALUE_DEFAULT,
+			CFG_EDCA_BK_AIFS_VALUE_MIN,
+			CFG_EDCA_BK_AIFS_VALUE_MAX),
+
+	REG_VARIABLE(CFG_EDCA_BE_AIFS_VALUE_NAME, WLAN_PARAM_Integer,
+			struct hdd_config, edca_be_aifs,
+			VAR_FLAGS_OPTIONAL |
+			VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+			CFG_EDCA_BE_AIFS_VALUE_DEFAULT,
+			CFG_EDCA_BE_AIFS_VALUE_MIN,
+			CFG_EDCA_BE_AIFS_VALUE_MAX),
 
 };
 
@@ -5399,6 +5502,49 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		CFG_IDLE_TIME_NAME,
 		pHddCtx->config->idle_time_conc);
 
+
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_ENABLE_EDCA_INI_NAME,
+		pHddCtx->config->enable_edca_params);
+
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_EDCA_VO_CWMIN_VALUE_NAME,
+		pHddCtx->config->edca_vo_cwmin);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_EDCA_VI_CWMIN_VALUE_NAME,
+		pHddCtx->config->edca_vi_cwmin);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_EDCA_BK_CWMIN_VALUE_NAME,
+		pHddCtx->config->edca_bk_cwmin);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_EDCA_BE_CWMIN_VALUE_NAME,
+		pHddCtx->config->edca_be_cwmin);
+
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_EDCA_VO_CWMAX_VALUE_NAME,
+		pHddCtx->config->edca_vo_cwmax);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_EDCA_VI_CWMAX_VALUE_NAME,
+		pHddCtx->config->edca_vi_cwmax);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_EDCA_BK_CWMAX_VALUE_NAME,
+		pHddCtx->config->edca_bk_cwmax);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_EDCA_BE_CWMAX_VALUE_NAME,
+		pHddCtx->config->edca_be_cwmax);
+
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_EDCA_VO_AIFS_VALUE_NAME,
+		pHddCtx->config->edca_vo_aifs);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_EDCA_VI_AIFS_VALUE_NAME,
+		pHddCtx->config->edca_vi_aifs);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_EDCA_BK_AIFS_VALUE_NAME,
+		pHddCtx->config->edca_bk_aifs);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_EDCA_BE_AIFS_VALUE_NAME,
+		pHddCtx->config->edca_be_aifs);
 }
 
 
@@ -6908,6 +7054,36 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 			pConfig->ignore_peer_ht_opmode;
 	smeConfig->csrConfig.enable_fatal_event =
 			pConfig->enable_fatal_event;
+
+	smeConfig->csrConfig.enable_edca_params =
+			pConfig->enable_edca_params;
+
+	smeConfig->csrConfig.edca_vo_cwmin =
+			pConfig->edca_vo_cwmin;
+	smeConfig->csrConfig.edca_vi_cwmin =
+			pConfig->edca_vi_cwmin;
+	smeConfig->csrConfig.edca_bk_cwmin =
+			pConfig->edca_bk_cwmin;
+	smeConfig->csrConfig.edca_be_cwmin =
+			pConfig->edca_be_cwmin;
+
+	smeConfig->csrConfig.edca_vo_cwmax =
+			pConfig->edca_vo_cwmax;
+	smeConfig->csrConfig.edca_vi_cwmax =
+			pConfig->edca_vi_cwmax;
+	smeConfig->csrConfig.edca_bk_cwmax =
+			pConfig->edca_bk_cwmax;
+	smeConfig->csrConfig.edca_be_cwmax =
+			pConfig->edca_be_cwmax;
+
+	smeConfig->csrConfig.edca_vo_aifs =
+			pConfig->edca_vo_aifs;
+	smeConfig->csrConfig.edca_vi_aifs =
+			pConfig->edca_vi_aifs;
+	smeConfig->csrConfig.edca_bk_aifs =
+			pConfig->edca_bk_aifs;
+	smeConfig->csrConfig.edca_be_aifs =
+			pConfig->edca_be_aifs;
 
 	status = sme_update_config(pHddCtx->hHal, smeConfig);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {

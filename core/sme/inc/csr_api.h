@@ -1230,6 +1230,19 @@ typedef struct tagCsrConfigParam {
 	uint32_t obss_active_dwelltime;
 	uint32_t obss_passive_dwelltime;
 	bool ignore_peer_ht_opmode;
+	bool enable_edca_params;
+	uint32_t edca_vo_cwmin;
+	uint32_t edca_vi_cwmin;
+	uint32_t edca_bk_cwmin;
+	uint32_t edca_be_cwmin;
+	uint32_t edca_vo_cwmax;
+	uint32_t edca_vi_cwmax;
+	uint32_t edca_bk_cwmax;
+	uint32_t edca_be_cwmax;
+	uint32_t edca_vo_aifs;
+	uint32_t edca_vi_aifs;
+	uint32_t edca_bk_aifs;
+	uint32_t edca_be_aifs;
 	bool enable_fatal_event;
 } tCsrConfigParam;
 
