@@ -348,6 +348,54 @@ void hif_save_htc_htt_config_endpoint(struct hif_opaque_softc *hif_ctx,
 	scn->htc_htt_tx_endpoint = htc_htt_tx_endpoint;
 }
 
+static const struct qwlan_hw qwlan_hw_list[] = {
+	{
+		.id = AR6320_REV1_VERSION,
+		.subid = 0,
+		.name = "QCA6174_REV1",
+	},
+	{
+		.id = AR6320_REV1_1_VERSION,
+		.subid = 0x1,
+		.name = "QCA6174_REV1_1",
+	},
+	{
+		.id = AR6320_REV1_3_VERSION,
+		.subid = 0x2,
+		.name = "QCA6174_REV1_3",
+	},
+	{
+		.id = AR6320_REV2_1_VERSION,
+		.subid = 0x4,
+		.name = "QCA6174_REV2_1",
+	},
+	{
+		.id = AR6320_REV2_1_VERSION,
+		.subid = 0x5,
+		.name = "QCA6174_REV2_2",
+	},
+	{
+		.id = AR6320_REV3_VERSION,
+		.subid = 0x6,
+		.name = "QCA6174_REV2.3",
+	},
+	{
+		.id = AR6320_REV3_VERSION,
+		.subid = 0x8,
+		.name = "QCA6174_REV3",
+	},
+	{
+		.id = AR6320_REV3_VERSION,
+		.subid = 0x9,
+		.name = "QCA6174_REV3_1",
+	},
+	{
+		.id = AR6320_REV3_2_VERSION,
+		.subid = 0xA,
+		.name = "AR6320_REV3_2_VERSION",
+	}
+};
+
 /**
  * hif_get_hw_name(): get a human readable name for the hardware
  * @info: Target Info

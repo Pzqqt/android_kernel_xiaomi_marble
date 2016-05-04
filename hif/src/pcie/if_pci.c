@@ -42,7 +42,7 @@
 #include "ce_reg.h"
 #include "ce_bmi.h"
 #include "regtable.h"
-#include "ol_fw.h"
+#include "hif_hw_version.h"
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>
 #include "qdf_status.h"
