@@ -2389,6 +2389,8 @@ int wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 int wlan_hdd_cfg80211_init(struct device *dev,
 			   struct wiphy *wiphy, struct hdd_config *pCfg);
 
+void wlan_hdd_cfg80211_deinit(struct wiphy *wiphy);
+
 void wlan_hdd_update_wiphy(struct wiphy *wiphy, struct hdd_config *pCfg);
 
 int wlan_hdd_cfg80211_register(struct wiphy *wiphy);

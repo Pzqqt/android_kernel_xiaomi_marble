@@ -158,7 +158,7 @@ static const u32 hdd_cipher_suites[] = {
 #endif
 };
 
-static struct ieee80211_channel hdd_channels_2_4_ghz[] = {
+static const struct ieee80211_channel hdd_channels_2_4_ghz[] = {
 	HDD2GHZCHAN(2412, 1, 0),
 	HDD2GHZCHAN(2417, 2, 0),
 	HDD2GHZCHAN(2422, 3, 0),
@@ -175,7 +175,7 @@ static struct ieee80211_channel hdd_channels_2_4_ghz[] = {
 	HDD2GHZCHAN(2484, 14, 0),
 };
 
-static struct ieee80211_channel hdd_channels_5_ghz[] = {
+static const struct ieee80211_channel hdd_channels_5_ghz[] = {
 	HDD5GHZCHAN(5180, 36, 0),
 	HDD5GHZCHAN(5200, 40, 0),
 	HDD5GHZCHAN(5220, 44, 0),
@@ -245,7 +245,7 @@ static struct ieee80211_rate a_mode_rates[] = {
 };
 
 static struct ieee80211_supported_band wlan_hdd_band_2_4_ghz = {
-	.channels = hdd_channels_2_4_ghz,
+	.channels = NULL,
 	.n_channels = ARRAY_SIZE(hdd_channels_2_4_ghz),
 	.band = IEEE80211_BAND_2GHZ,
 	.bitrates = g_mode_rates,
@@ -264,7 +264,7 @@ static struct ieee80211_supported_band wlan_hdd_band_2_4_ghz = {
 };
 
 static struct ieee80211_supported_band wlan_hdd_band_5_ghz = {
-	.channels = hdd_channels_5_ghz,
+	.channels = NULL,
 	.n_channels = ARRAY_SIZE(hdd_channels_5_ghz),
 	.band = IEEE80211_BAND_5GHZ,
 	.bitrates = a_mode_rates,
@@ -6034,9 +6034,38 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 			~IEEE80211_HT_CAP_SUP_WIDTH_20_40;
 	}
 
+	/*
+	 * In case of static linked driver at the time of driver unload,
+	 * module exit doesn't happens. Module cleanup helps in cleaning
+	 * of static memory.
+	 * If driver load happens statically, at the time of driver unload,
+	 * wiphy flags don't get reset because of static memory.
+	 * It's better not to store channel in static memory.
+	 */
 	wiphy->bands[IEEE80211_BAND_2GHZ] = &wlan_hdd_band_2_4_ghz;
+	wiphy->bands[IEEE80211_BAND_2GHZ]->channels =
+		qdf_mem_malloc(sizeof(hdd_channels_2_4_ghz));
+	if (wiphy->bands[IEEE80211_BAND_2GHZ]->channels == NULL) {
+		hdd_err("Not enough memory to allocate channels");
+		return -ENOMEM;
+	}
+	qdf_mem_copy(wiphy->bands[IEEE80211_BAND_2GHZ]->channels,
+			&hdd_channels_2_4_ghz[0],
+			sizeof(hdd_channels_2_4_ghz));
 	if (true == hdd_is_5g_supported(pHddCtx)) {
 		wiphy->bands[IEEE80211_BAND_5GHZ] = &wlan_hdd_band_5_ghz;
+		wiphy->bands[IEEE80211_BAND_5GHZ]->channels =
+			qdf_mem_malloc(sizeof(hdd_channels_5_ghz));
+		if (wiphy->bands[IEEE80211_BAND_5GHZ]->channels == NULL) {
+			hdd_err("Not enough memory to allocate channels");
+			qdf_mem_free(wiphy->
+				bands[IEEE80211_BAND_2GHZ]->channels);
+			wiphy->bands[IEEE80211_BAND_2GHZ]->channels = NULL;
+			return -ENOMEM;
+		}
+		qdf_mem_copy(wiphy->bands[IEEE80211_BAND_5GHZ]->channels,
+			&hdd_channels_5_ghz[0],
+			sizeof(hdd_channels_5_ghz));
 	}
 
 	for (i = 0; i < IEEE80211_NUM_BANDS; i++) {
@@ -6102,6 +6131,28 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 
 	EXIT();
 	return 0;
+}
+
+/**
+ * wlan_hdd_cfg80211_deinit - Deinit cfg80211
+ * @ wiphy: the wiphy to validate against
+ *
+ * this function deinit cfg80211 and cleanup the
+ * memory allocated in wlan_hdd_cfg80211_init
+ *
+ * Return: void
+ */
+void wlan_hdd_cfg80211_deinit(struct wiphy *wiphy)
+{
+	int i;
+
+	for (i = 0; i < IEEE80211_NUM_BANDS; i++) {
+		if (NULL != wiphy->bands[i] &&
+		   (NULL != wiphy->bands[i]->channels)) {
+			qdf_mem_free(wiphy->bands[i]->channels);
+			wiphy->bands[i]->channels = NULL;
+		}
+	}
 }
 
 /*

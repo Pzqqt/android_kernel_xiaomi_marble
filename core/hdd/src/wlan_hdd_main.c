@@ -4191,6 +4191,7 @@ free_hdd_ctx:
 
 	wlan_hdd_deinit_tx_rx_histogram(hdd_ctx);
 	wiphy_unregister(wiphy);
+	wlan_hdd_cfg80211_deinit(wiphy);
 
 	hdd_context_destroy(hdd_ctx);
 }
@@ -6350,6 +6351,7 @@ err_ipa_cleanup:
 
 err_wiphy_unregister:
 	wiphy_unregister(hdd_ctx->wiphy);
+	wlan_hdd_cfg80211_deinit(hdd_ctx->wiphy);
 
 err_cds_close:
 	status = cds_sched_close(hdd_ctx->pcds_context);
