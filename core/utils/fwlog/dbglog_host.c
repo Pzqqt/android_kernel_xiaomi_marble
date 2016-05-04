@@ -4354,14 +4354,14 @@ int dbglog_init(wmi_unified_t wmi_handle)
 	res = wmi_unified_register_event_handler(wmi_handle,
 						 WMI_DIAG_DATA_CONTAINER_EVENTID,
 						 fw_diag_data_event_handler,
-						 WMA_RX_SERIALIZER_CTX);
+						 WMA_RX_WORK_CTX);
 	if (res != 0)
 		return res;
 
 	/* Register handler for new FW diag  Event, LOG, MSG combined */
 	res = wmi_unified_register_event_handler(wmi_handle, WMI_DIAG_EVENTID,
 						 diag_fw_handler,
-						 WMA_RX_SERIALIZER_CTX);
+						 WMA_RX_WORK_CTX);
 	if (res != 0)
 		return res;
 
