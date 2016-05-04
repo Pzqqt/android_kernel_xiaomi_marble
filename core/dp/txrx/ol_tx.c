@@ -142,9 +142,17 @@ static inline uint8_t ol_tx_prepare_tso(ol_txrx_vdev_handle vdev,
 qdf_nbuf_t ol_tx_data(ol_txrx_vdev_handle vdev, qdf_nbuf_t skb)
 {
 	void *qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-	struct ol_txrx_pdev_t *pdev = vdev->pdev;
+	struct ol_txrx_pdev_t *pdev;
 	qdf_nbuf_t ret;
 	QDF_STATUS status;
+
+	if (qdf_unlikely(!vdev)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
+			"%s:vdev is null", __func__);
+		return skb;
+	} else {
+		pdev = vdev->pdev;
+	}
 
 	if (qdf_unlikely(!pdev)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
