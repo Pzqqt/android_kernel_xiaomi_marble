@@ -34,9 +34,6 @@
 #include "a_debug.h"
 #include "ol_if_athvar.h"
 #include "ol_defines.h"
-#ifndef WMI_NON_TLV_SUPPORT
-#include "ol_fw.h"
-#endif
 #include "htc_api.h"
 #include "htc_api.h"
 #include "dbglog_host.h"
