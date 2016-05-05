@@ -263,6 +263,12 @@ bool hif_can_suspend_link(struct hif_opaque_softc *hif_ctx)
 	return scn->linkstate_vote == 0;
 }
 
+#ifndef CONFIG_WIN
+#define QCA9984_HOST_INTEREST_ADDRESS -1
+#define QCA9888_HOST_INTEREST_ADDRESS -1
+#define IPQ4019_HOST_INTEREST_ADDRESS -1
+#endif
+
 /**
  * hif_hia_item_address(): hif_hia_item_address
  * @target_type: target_type
