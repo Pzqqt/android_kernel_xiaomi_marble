@@ -42,8 +42,8 @@
 #include "ce_tasklet.h"
 #ifdef CONFIG_CNSS
 #include <net/cnss.h>
-#include "platform_icnss.h"
 #endif
+#include "platform_icnss.h"
 #include "hif_debug.h"
 #include "hif_napi.h"
 

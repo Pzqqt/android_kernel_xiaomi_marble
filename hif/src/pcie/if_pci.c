@@ -2315,7 +2315,7 @@ void hif_pci_prevent_linkdown(struct hif_softc *scn, bool flag)
 	cnss_wlan_pm_control(flag);
 }
 #else
-void hif_pci_prevent_linkdown(struct hif_opaque_softc *scn, bool flag)
+void hif_pci_prevent_linkdown(struct hif_softc *scn, bool flag)
 {
 	HIF_ERROR("wlan: %s pcie power collapse",
 			(flag ? "disable" : "enable"));

@@ -34,7 +34,9 @@
 #include "hif_debug.h"
 #include "qdf_status.h"
 #include "qwlan_version.h"
+#ifdef CONFIG_CNSS
 #include <net/cnss.h>
+#endif
 
 /**
  * struct icnss_stub_entry
