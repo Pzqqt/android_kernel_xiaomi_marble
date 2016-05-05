@@ -795,11 +795,8 @@ static int oem_msg_callback(struct sk_buff *skb)
 	}
 
 	ret = wlan_hdd_validate_context(p_hdd_ctx);
-	if (0 != ret) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  FL("HDD context is not valid"));
+	if (ret)
 		return ret;
-	}
 
 	msg_hdr = NLMSG_DATA(nlh);
 

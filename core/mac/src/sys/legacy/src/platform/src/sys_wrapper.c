@@ -135,15 +135,10 @@ uint32_t tx_timer_activate(TX_TIMER *timer_ptr)
 	/* Check for an uninitialized timer */
 	QDF_ASSERT(0 != strlen(TIMER_NAME));
 
-	QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO,
-		  "Timer %s being activated\n", TIMER_NAME);
-
 	status = qdf_mc_timer_start(&timer_ptr->qdf_timer,
 				    timer_ptr->initScheduleTimeInMsecs);
 
 	if (QDF_STATUS_SUCCESS == status) {
-		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO,
-			  "Timer %s now activated\n", TIMER_NAME);
 		return TX_SUCCESS;
 	} else if (QDF_STATUS_E_ALREADY == status) {
 		/* starting timer fails because timer is already started; this is okay */
@@ -260,9 +255,6 @@ static void tx_main_timer_func(void *functionContext)
 		QDF_ASSERT(0);
 		return;
 	}
-
-	QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO,
-		  "Timer %s triggered", TIMER_NAME);
 
 	/* Now call the actual timer function, taking the function pointer, */
 	/* from the timer structure. */
@@ -434,8 +426,6 @@ uint32_t tx_timer_create_intern(void *pMacGlobal, TX_TIMER *timer_ptr,
 uint32_t tx_timer_deactivate(TX_TIMER *timer_ptr)
 {
 	QDF_STATUS vStatus;
-	QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO,
-		  "tx_timer_deactivate() called for timer %s\n", TIMER_NAME);
 
 	/* Put a check for the free builds */
 	if (TX_AIRGO_TMR_SIGNATURE != timer_ptr->tmrSignature) {
@@ -455,9 +445,6 @@ uint32_t tx_timer_deactivate(TX_TIMER *timer_ptr)
 
 uint32_t tx_timer_delete(TX_TIMER *timer_ptr)
 {
-	QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO,
-		  "tx_timer_delete() called for timer %s\n", TIMER_NAME);
-
 	/* Put a check for the free builds */
 	if (TX_AIRGO_TMR_SIGNATURE != timer_ptr->tmrSignature) {
 		return TX_TIMER_ERROR;
@@ -485,9 +472,6 @@ uint32_t tx_timer_delete(TX_TIMER *timer_ptr)
  */
 bool tx_timer_running(TX_TIMER *timer_ptr)
 {
-	QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO,
-		  "tx_timer_running() called for timer %s\n", TIMER_NAME);
-
 	/* Put a check for the free builds */
 	if (TX_AIRGO_TMR_SIGNATURE != timer_ptr->tmrSignature)
 		return false;

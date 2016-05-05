@@ -314,20 +314,20 @@ static void hdd_modify_wiphy(struct wiphy  *wiphy,
 			chan->flags &= ~IEEE80211_CHAN_DISABLED;
 
 			if (!(reg_rule->flags & NL80211_RRF_DFS)) {
-				hdd_info("%s: remove dfs restriction for %u",
-					 __func__, chan->center_freq);
+				hdd_info("Remove dfs restriction for %u",
+					chan->center_freq);
 				chan->flags &= ~IEEE80211_CHAN_RADAR;
 			}
 
 			if (!(reg_rule->flags & NL80211_RRF_PASSIVE_SCAN)) {
-				hdd_info("%s: remove passive restriction for %u",
-					 __func__, chan->center_freq);
+				hdd_info("Remove passive restriction for %u",
+					chan->center_freq);
 				chan->flags &= ~IEEE80211_CHAN_PASSIVE_SCAN;
 			}
 
 			if (!(reg_rule->flags & NL80211_RRF_NO_IBSS)) {
-				hdd_info("%s: remove no ibss restriction for %u",
-					 __func__, chan->center_freq);
+				hdd_info("Remove no ibss restriction for %u",
+					chan->center_freq);
 				chan->flags &= ~IEEE80211_CHAN_NO_IBSS;
 			}
 

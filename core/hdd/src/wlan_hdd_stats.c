@@ -990,11 +990,8 @@ static void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
 	int status;
 
 	status = wlan_hdd_validate_context(pHddCtx);
-
-	if (0 != status) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, FL("HDD context is not valid"));
+	if (status)
 		return;
-	}
 
 	pAdapter = hdd_get_adapter_by_vdev(pHddCtx,
 					   linkLayerStatsResults->ifaceId);
@@ -1603,12 +1600,9 @@ static void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
 	hdd_adapter_t *pAdapter = NULL;
 
 	status = wlan_hdd_validate_context(pHddCtx);
-
-	if (0 != status) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: HDD context is not valid", __func__);
+	if (status)
 		return;
-	}
+
 
 	pAdapter = hdd_get_adapter_by_vdev(pHddCtx, data->vdev_id);
 

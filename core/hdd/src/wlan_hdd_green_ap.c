@@ -288,10 +288,8 @@ static void hdd_wlan_green_ap_timer_fn(void *ctx)
 	struct hdd_context_s *hdd_ctx = ctx;
 	struct hdd_green_ap_ctx *green_ap;
 
-	if (0 != wlan_hdd_validate_context(hdd_ctx)) {
-		hdd_err("HDD context is not valid");
+	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
-	}
 
 	green_ap = hdd_ctx->green_ap_ctx;
 	if (green_ap)

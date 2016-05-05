@@ -596,10 +596,8 @@ void __hdd_ipv4_notifier_work_queue(struct work_struct *work)
 	hdd_info("Configuring ARP Offload");
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	status = wlan_hdd_validate_context(pHddCtx);
-	if (0 != status) {
-		hddLog(LOGE, FL("HDD context is invalid"));
+	if (status)
 		return;
-	}
 
 	if (!pHddCtx->config->active_mode_offload) {
 		hdd_err("Active mode offload is disabled");

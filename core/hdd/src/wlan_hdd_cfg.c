@@ -332,7 +332,6 @@ cb_notify_set_roam_scan_hi_rssi_scan_params(hdd_context_t *hdd_ctx,
 	int32_t val;
 
 	if (wlan_hdd_validate_context(hdd_ctx)) {
-		hddLog(LOGE, FL("HDD context is invalid"));
 		return;
 	}
 

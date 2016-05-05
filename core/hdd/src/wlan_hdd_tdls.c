@@ -1066,11 +1066,8 @@ void wlan_hdd_tdls_set_peer_link_status(hddTdlsPeer_t *curr_peer,
 		return;
 	}
 	pHddCtx = WLAN_HDD_GET_CTX(curr_peer->pHddTdlsCtx->pAdapter);
-	if (0 != (wlan_hdd_validate_context(pHddCtx))) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  FL("pHddCtx is not valid"));
+	if ((wlan_hdd_validate_context(pHddCtx)))
 		return;
-	}
 	hddLog(QDF_TRACE_LEVEL_WARN,
 	       "tdls set peer " MAC_ADDRESS_STR " link status to %u",
 	       MAC_ADDR_ARRAY(curr_peer->peerMac), status);
@@ -1123,11 +1120,9 @@ void wlan_hdd_tdls_set_link_status(hdd_adapter_t *pAdapter,
 	hddTdlsPeer_t *curr_peer;
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 
-	if (0 != (wlan_hdd_validate_context(pHddCtx))) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  FL("pHddCtx is not valid"));
+	if (wlan_hdd_validate_context(pHddCtx))
 		return;
-	}
+
 	curr_peer = wlan_hdd_tdls_find_peer(pAdapter, mac, true);
 	if (curr_peer == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
@@ -2163,11 +2158,8 @@ uint16_t wlan_hdd_tdls_connected_peers(hdd_adapter_t *pAdapter)
 {
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 
-	if (0 != (wlan_hdd_validate_context(pHddCtx))) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  FL("pHddCtx is not valid"));
+	if (wlan_hdd_validate_context(pHddCtx))
 		return 0;
-	}
 
 	return pHddCtx->connected_peer_count;
 }
@@ -3527,10 +3519,8 @@ int wlan_hdd_tdls_add_station(struct wiphy *wiphy,
 	ENTER();
 
 	ret = wlan_hdd_validate_context(pHddCtx);
-	if (0 != ret) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, FL("HDD context is not valid"));
+	if (ret)
 		return ret;
-	}
 
 	if ((eTDLS_SUPPORT_NOT_ENABLED == pHddCtx->tdls_mode) ||
 	    (eTDLS_SUPPORT_DISABLED == pHddCtx->tdls_mode)) {
@@ -3781,11 +3771,8 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 			 TRACE_CODE_HDD_CFG80211_TDLS_MGMT,
 			 pAdapter->sessionId, action_code));
 
-	if (0 != wlan_hdd_validate_context(pHddCtx)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: HDD context is not valid", __func__);
+	if (wlan_hdd_validate_context(pHddCtx))
 		return -EINVAL;
-	}
 
 	if (eTDLS_SUPPORT_NOT_ENABLED == pHddCtx->tdls_mode) {
 		hddLog(LOG1,
@@ -4711,10 +4698,9 @@ hddTdlsPeer_t *wlan_hdd_tdls_find_first_connected_peer(hdd_adapter_t *adapter)
 	tdlsCtx_t *hdd_tdls_ctx;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	if (0 != (wlan_hdd_validate_context(hdd_ctx))) {
-		hddLog(LOGE, FL("hdd_ctx is not valid"));
+	if (wlan_hdd_validate_context(hdd_ctx))
 		return NULL;
-	}
+
 	mutex_lock(&hdd_ctx->tdls_lock);
 	hdd_tdls_ctx = WLAN_HDD_GET_TDLS_CTX_PTR(adapter);
 	if (NULL == hdd_tdls_ctx) {

@@ -794,7 +794,6 @@ void wlan_hdd_roc_request_dequeue(struct work_struct *work)
 	qdf_spin_lock(&hdd_ctx->hdd_roc_req_q_lock);
 	if (list_empty(&hdd_ctx->hdd_roc_req_q.anchor)) {
 		qdf_spin_unlock(&hdd_ctx->hdd_roc_req_q_lock);
-		hdd_debug("list is empty");
 		return;
 	}
 	status = qdf_list_remove_front(&hdd_ctx->hdd_roc_req_q,

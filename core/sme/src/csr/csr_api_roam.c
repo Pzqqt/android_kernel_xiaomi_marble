@@ -13494,8 +13494,8 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		qdf_mem_copy(&csr_join_req->selfMacAddr, &pSession->selfMacAddr,
 			     sizeof(tSirMacAddr));
 		sms_log(pMac, LOGE,
-			"Connecting to ssid:%.*s bssid: "
-			MAC_ADDRESS_STR" rssi: %d channel: %d country_code: %c%c",
+			FL("Connecting to ssid:%.*s bssid: "
+			MAC_ADDRESS_STR" rssi: %d channel: %d country_code: %c%c"),
 			pIes->SSID.num_ssid, pIes->SSID.ssid,
 			MAC_ADDR_ARRAY(pBssDescription->bssId),
 			pBssDescription->rssi, pBssDescription->channelId,
@@ -13523,7 +13523,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 #endif
 		csr_join_req->staPersona = (uint8_t) pProfile->csrPersona;
 		csr_join_req->cbMode = (uint8_t) pSession->bssParams.cbMode;
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		sms_log(pMac, LOG2,
 			  FL("CSR PERSONA=%d CSR CbMode %d"),
 			  pProfile->csrPersona, pSession->bssParams.cbMode);
 		csr_join_req->uapsdPerAcBitmask = pProfile->uapsd_mask;

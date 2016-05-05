@@ -3058,9 +3058,6 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 	rx_pkt->pkt_meta.tsf_delta = hdr->tsf_delta;
 	rx_pkt->pkt_buf = wbuf;
 
-	WMA_LOGD(FL("BSSID: "MAC_ADDRESS_STR" tsf_delta: %u"),
-		 MAC_ADDR_ARRAY(wh->i_addr3), hdr->tsf_delta);
-
 #ifdef BIG_ENDIAN_HOST
 	{
 		/*
@@ -3086,10 +3083,11 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 #endif
 
 	WMA_LOGD(
-		FL("BSSID: "MAC_ADDRESS_STR" snr = %d, rssi = %d, rssi_raw = %d"),
+		FL("BSSID: "MAC_ADDRESS_STR" snr = %d, rssi = %d, rssi_raw = %d tsf_delta: %u"),
 			MAC_ADDR_ARRAY(wh->i_addr3),
 			hdr->snr, rx_pkt->pkt_meta.rssi,
-			rx_pkt->pkt_meta.rssi_raw);
+			rx_pkt->pkt_meta.rssi_raw,
+			hdr->tsf_delta);
 	if (!wma_handle->mgmt_rx) {
 		WMA_LOGE("Not registered for Mgmt rx, dropping the frame");
 		cds_pkt_return_packet(rx_pkt);

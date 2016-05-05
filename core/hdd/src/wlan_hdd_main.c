@@ -520,19 +520,19 @@ static void hdd_qdf_trace_enable(QDF_MODULE_ID moduleId, uint32_t bitmask)
 int wlan_hdd_validate_context(hdd_context_t *hdd_ctx)
 {
 	if (NULL == hdd_ctx || NULL == hdd_ctx->config) {
-		hddLog(LOGE, FL("HDD context is Null"));
+		hdd_err("%pS HDD context is Null", (void *)_RET_IP_);
 		return -ENODEV;
 	}
 
 	if (cds_is_driver_recovering()) {
-		hdd_err("Recovery in Progress. State: 0x%x Ignore!!!",
-			 cds_get_driver_state());
+		hdd_err("%pS Recovery in Progress. State: 0x%x Ignore!!!",
+			(void *)_RET_IP_, cds_get_driver_state());
 		return -EAGAIN;
 	}
 
 	if (cds_is_load_or_unload_in_progress()) {
-		hdd_err("Unloading/Loading in Progress. Ignore!!!: 0x%x",
-			cds_get_driver_state());
+		hdd_err("%pS Unloading/Loading in Progress. Ignore!!!: 0x%x",
+			(void *)_RET_IP_, cds_get_driver_state());
 		return -EAGAIN;
 	}
 	return 0;
@@ -1486,10 +1486,9 @@ static int __hdd_open(struct net_device *dev)
 			 adapter->sessionId, adapter->device_mode));
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (ret)
 		return ret;
-	}
+
 
 	set_bit(DEVICE_IFACE_OPENED, &adapter->event_flags);
 	if (hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
@@ -4260,10 +4259,9 @@ int hdd_wlan_set_ht2040_mode(hdd_adapter_t *adapter, uint16_t staId,
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	status = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != status) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (status)
 		return status;
-	}
+
 	if (!hdd_ctx->hHal)
 		return -EINVAL;
 
@@ -4294,10 +4292,9 @@ int hdd_wlan_notify_modem_power_state(int state)
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	status = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != status) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (status)
 		return status;
-	}
+
 	if (!hdd_ctx->hHal)
 		return -EINVAL;
 
@@ -7070,11 +7067,9 @@ void wlan_hdd_stop_sap(hdd_adapter_t *ap_adapter)
 
 	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(ap_adapter);
 	hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
-	if (0 != wlan_hdd_validate_context(hdd_ctx)) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("HDD context is not valid"));
+	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
-	}
+
 	mutex_lock(&hdd_ctx->sap_lock);
 	if (test_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags)) {
 		wlan_hdd_del_station(ap_adapter);
@@ -7140,11 +7135,9 @@ void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter)
 	hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(ap_adapter);
 	sap_config = &ap_adapter->sessionCtx.ap.sapConfig;
 
-	if (0 != wlan_hdd_validate_context(hdd_ctx)) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("HDD context is not valid"));
+	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
-	}
+
 	mutex_lock(&hdd_ctx->sap_lock);
 	if (test_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags))
 		goto end;

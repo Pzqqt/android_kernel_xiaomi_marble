@@ -2038,10 +2038,8 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 
 	pHddCtx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 	ret = wlan_hdd_validate_context(pHddCtx);
-	if (ret) {
-		hddLog(LOGE, FL("invalid HDD context"));
+	if (ret)
 		return ret;
-	}
 
 	ret = hdd_validate_channel_and_bandwidth(pHostapdAdapter,
 						target_channel, target_bw);
@@ -2162,10 +2160,8 @@ static __iw_softap_set_ini_cfg(struct net_device *dev,
 
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(pHddCtx);
-	if (ret != 0) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (ret)
 		return ret;
-	}
 
 	hddLog(LOG1, FL("Received data %s"), extra);
 
@@ -6579,11 +6575,9 @@ static int wlan_hdd_set_channel(struct wiphy *wiphy,
 
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	status = wlan_hdd_validate_context(pHddCtx);
-
-	if (0 != status) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (status)
 		return status;
-	}
+
 
 	/*
 	 * Do freq to chan conversion

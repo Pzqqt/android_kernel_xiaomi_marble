@@ -1576,8 +1576,6 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_JOIN_REQ_EVENT, NULL, 0, 0);
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
-	lim_log(mac_ctx, LOG1, FL("Received SME_JOIN_REQ"));
-
 	/*
 	 * Expect Join request in idle state.
 	 * Reassociate request is expected in link established state.
@@ -1666,7 +1664,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 				ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
 				goto end;
 			} else
-				lim_log(mac_ctx, LOG1,
+				lim_log(mac_ctx, LOG2,
 					FL("SessionId:%d New session created"),
 					session_id);
 		}
@@ -1738,27 +1736,22 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		 * self and peer rates
 		 */
 		session->supported_nss_1x1 = true;
+		/*Store Persona */
+		session->pePersona = sme_join_req->staPersona;
 		lim_log(mac_ctx, LOG1,
-			FL("enable Smps: %d mode: %d send action: %d supported nss 1x1: %d"),
+			FL("enable Smps: %d mode: %d send action: %d supported nss 1x1: %d pePersona %d cbMode %d"),
 			session->enableHtSmps,
 			session->htSmpsvalue,
 			session->send_smps_action,
-			session->supported_nss_1x1);
-
-		/*Store Persona */
-		session->pePersona = sme_join_req->staPersona;
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
-			  FL("PE PERSONA=%d cbMode %u"),
-			  session->pePersona, sme_join_req->cbMode);
+			session->supported_nss_1x1,
+			session->pePersona,
+			sme_join_req->cbMode);
 		if (mac_ctx->roam.configParam.enable2x2)
 			session->nss = 2;
 		else
 			session->nss = 1;
 		session->vhtCapability =
 			IS_DOT11_MODE_VHT(session->dot11mode);
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO_MED,
-			  "***__lim_process_sme_join_req: vhtCapability=%d****",
-			  session->vhtCapability);
 		if (session->vhtCapability) {
 			if (session->pePersona == QDF_STA_MODE) {
 				session->txBFIniFeatureEnabled =
@@ -1772,9 +1765,6 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			session->enableVhtGid =
 				sme_join_req->enableVhtGid;
 
-			QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO_MED,
-				  FL("***txBFIniFeatureEnabled=%d***"),
-				  session->txBFIniFeatureEnabled);
 			if (wlan_cfg_get_int(mac_ctx,
 					WNI_CFG_VHT_SU_BEAMFORMER_CAP, &val) !=
 				eSIR_SUCCESS)
@@ -1782,7 +1772,6 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 					"cfg get vht su bformer failed"));
 
 			session->enable_su_tx_bformer = val;
-			lim_log(mac_ctx, LOGE, FL("vht su tx bformer %d"), val);
 		}
 		if (session->vhtCapability && session->txBFIniFeatureEnabled) {
 			if (cfg_set_int(mac_ctx, WNI_CFG_VHT_SU_BEAMFORMEE_CAP,
@@ -1797,11 +1786,14 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 				ret_code = eSIR_LOGP_EXCEPTION;
 				goto end;
 			}
-			QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO_MED,
-				  "%s: txBFCsnValue=%d", __func__,
-				  sme_join_req->txBFCsnValue);
 			session->txbf_csn_value = sme_join_req->txBFCsnValue;
 		}
+		lim_log(mac_ctx, LOG1,
+				FL("vhtCapability: %d txBFIniFeatureEnabled: %d txbf_csn_value: %d su_tx_bformer %d"),
+				session->vhtCapability,
+				session->txBFIniFeatureEnabled,
+				session->txbf_csn_value,
+				session->enable_su_tx_bformer);
 		/*Phy mode */
 		session->gLimPhyMode = bss_desc->nwType;
 		handle_ht_capabilityand_ht_info(mac_ctx, session);
@@ -2004,12 +1996,6 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 				session->peSessionId,
 				session->limSmeState));
 
-		lim_log(mac_ctx, LOG1,
-			FL("SME JoinReq:Sessionid %d SSID len %d SSID : %s Channel %d, BSSID " MAC_ADDRESS_STR),
-			mlm_join_req->sessionId, session->ssId.length,
-			session->ssId.ssId, session->currentOperChannel,
-			MAC_ADDR_ARRAY(session->bssId));
-
 		/* Indicate whether spectrum management is enabled */
 		session->spectrumMgtEnabled =
 			sme_join_req->spectrumMgtIndicator;
@@ -2022,9 +2008,6 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 
 		session->isOSENConnection = sme_join_req->isOSENConnection;
 
-		lim_log(mac_ctx, LOG1,
-			FL("SessionId:%d MLM_JOIN_REQ is posted to MLM SM"),
-			mlm_join_req->sessionId);
 		/* Issue LIM_MLM_JOIN_REQ to MLM */
 		lim_post_mlm_message(mac_ctx, LIM_MLM_JOIN_REQ,
 				     (uint32_t *) mlm_join_req);

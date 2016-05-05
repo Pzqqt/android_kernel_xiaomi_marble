@@ -5049,7 +5049,7 @@ send_scan_req:
 		pScanReq->requestType, pMsg->channelList.numChannels);
 
 	for (i = 0; i < pMsg->channelList.numChannels; i++) {
-		sms_log(pMac, LOG1, FL("channelNumber[%d]= %d"), i,
+		sms_log(pMac, LOG2, FL("channelNumber[%d]= %d"), i,
 			pMsg->channelList.channelNumber[i]);
 	}
 

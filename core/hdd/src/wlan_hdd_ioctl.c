@@ -1856,10 +1856,8 @@ static void wlan_hdd_ready_to_extwow(void *callbackContext, bool is_success)
 	int rc;
 
 	rc = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != rc) {
-		hdd_err("HDD context is not valid");
+	if (rc)
 		return;
-	}
 	hdd_ctx->ext_wow_should_suspend = is_success;
 	complete(&hdd_ctx->ready_to_extwow);
 }
@@ -1930,10 +1928,8 @@ static int hdd_enable_ext_wow_parser(hdd_adapter_t *adapter, int vdev_id,
 	int rc;
 
 	rc = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != rc) {
-		hdd_err("HDD context is not valid");
-		return -EINVAL;
-	}
+	if (rc)
+		return rc;
 
 	if (value < EXT_WOW_TYPE_APP_TYPE1 ||
 	    value > EXT_WOW_TYPE_APP_TYPE1_2) {
@@ -1993,10 +1989,8 @@ static int hdd_set_app_type1_parser(hdd_adapter_t *adapter,
 	int rc;
 
 	rc = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != rc) {
-		hdd_err("HDD context is not valid");
-		return -EINVAL;
-	}
+	if (rc)
+		return rc;
 
 	if (2 != sscanf(arg, "%8s %16s", id, password)) {
 		hdd_err("Invalid Number of arguments");
@@ -2049,10 +2043,8 @@ static int hdd_set_app_type2_parser(hdd_adapter_t *adapter,
 	int ret;
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret) {
-		hdd_err("HDD context is not valid");
-		return -EINVAL;
-	}
+	if (ret)
+		return ret;
 
 	memset(&params, 0, sizeof(tSirAppType2Params));
 
@@ -4682,10 +4674,8 @@ static int drv_cmd_miracast(hdd_adapter_t *adapter,
 	uint8_t *value;
 
 	pHddCtx = WLAN_HDD_GET_CTX(adapter);
-	if (0 != wlan_hdd_validate_context(pHddCtx)) {
-		hdd_err("pHddCtx is not valid, Unable to set miracast mode");
+	if (wlan_hdd_validate_context(pHddCtx))
 		return -EINVAL;
-	}
 
 	hHal = pHddCtx->hHal;
 	value = command + 9;

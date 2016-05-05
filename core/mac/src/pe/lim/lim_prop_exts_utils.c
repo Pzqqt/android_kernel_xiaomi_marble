@@ -111,13 +111,11 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 		else
 			mac_ctx->lim.htCapabilityPresentInBeacon = 0;
 
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO_MED,
-			  "beacon.VHTCaps.present = %d BSS_VHT_Capable:%d",
-			  beacon_struct->VHTCaps.present,
-			  IS_BSS_VHT_CAPABLE(beacon_struct->VHTCaps));
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO_MED,
-			  "***beacon.SU Beamformer Capable*****=%d",
-			  beacon_struct->VHTCaps.suBeamFormerCap);
+		lim_log(mac_ctx, LOG1,
+			FL("Beacon : VHTCaps.present: %d SU Beamformer: %d, IS_BSS_VHT_CAPABLE: %d"),
+			beacon_struct->VHTCaps.present,
+			beacon_struct->VHTCaps.suBeamFormerCap,
+			IS_BSS_VHT_CAPABLE(beacon_struct->VHTCaps));
 
 		if (IS_BSS_VHT_CAPABLE(beacon_struct->VHTCaps) &&
 			beacon_struct->VHTOperation.present &&

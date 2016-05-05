@@ -139,10 +139,8 @@ static void wlan_hdd_cfg80211_nan_callback(void *ctx, tSirNanEvent *msg)
 	}
 
 	status = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != status) {
-		hdd_err("HDD context is not valid");
+	if (status)
 		return;
-	}
 
 	vendor_event =
 		cfg80211_vendor_event_alloc(hdd_ctx->wiphy,

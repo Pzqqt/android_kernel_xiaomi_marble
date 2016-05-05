@@ -612,10 +612,8 @@ static int __wlan_hdd_bus_resume(void)
 	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	int status = wlan_hdd_validate_context(hdd_ctx);
 
-	if (0 != status) {
-		hdd_err("HDD context is not valid");
+	if (status)
 		return status;
-	}
 
 	status = hif_bus_resume(hif_ctx);
 	QDF_BUG(!status);

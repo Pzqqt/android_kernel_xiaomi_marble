@@ -120,8 +120,6 @@ void cds_linux_timer_callback(unsigned long data)
 		return;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
-		  "TIMER callback: running on MC thread");
 	/* serialize to the MC thread */
 	sys_build_message_header(SYS_MSG_ID_MC_TIMER, &msg);
 	msg.callback = callback;

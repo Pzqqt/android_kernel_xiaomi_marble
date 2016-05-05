@@ -1021,12 +1021,12 @@ QDF_STATUS pe_handle_mgmt_frame(void *p_cds_gctx, void *cds_buff)
 
 	mHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
 	if (mHdr->fc.type == SIR_MAC_MGMT_FRAME) {
-		lim_log(pMac, LOG1, FL
+		lim_log(pMac, LOG2, FL
 		  ("RxBd=%p mHdr=%p Type: %d Subtype: %d  Sizes:FC%zu Mgmt%zu"),
 		  pRxPacketInfo, mHdr, mHdr->fc.type, mHdr->fc.subType,
 		  sizeof(tSirMacFrameCtl), sizeof(tSirMacMgmtHdr));
 
-		lim_log(pMac, LOG1, FL("mpdu_len:%d hdr_len:%d data_len:%d"),
+		lim_log(pMac, LOG2, FL("mpdu_len:%d hdr_len:%d data_len:%d"),
 		       WMA_GET_RX_MPDU_LEN(pRxPacketInfo),
 		       WMA_GET_RX_MPDU_HEADER_LEN(pRxPacketInfo),
 		       WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo));
@@ -1058,9 +1058,6 @@ QDF_STATUS pe_handle_mgmt_frame(void *p_cds_gctx, void *cds_buff)
 							 mHdr->fc.subType)) {
 		cds_pkt_return_packet(pVosPkt);
 		pVosPkt = NULL;
-		lim_log(pMac, LOGW,
-			FL
-				("sys_bbt_process_message_core failed to process SIR_BB_XPORT_MGMT_MSG"));
 		return QDF_STATUS_E_FAILURE;
 	}
 

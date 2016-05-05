@@ -1501,7 +1501,6 @@ static int wma_process_fw_event_mc_thread_ctx(void *ctx, void *ev)
 		qdf_mem_free(params_buf);
 		return -EFAULT;
 	}
-	WMA_LOGD("WMA_PROCESS_FW_EVENT posted");
 	return 0;
 
 }
@@ -4585,7 +4584,6 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 	ol_txrx_vdev_handle txrx_vdev_handle = NULL;
 	extern uint8_t *mac_trace_get_wma_msg_string(uint16_t wmaMsg);
 
-	WMA_LOGI("%s: Enter", __func__);
 	if (NULL == msg) {
 		WMA_LOGE("msg is NULL");
 		QDF_ASSERT(0);
@@ -5346,7 +5344,6 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 		}
 	}
 end:
-	WMA_LOGI("%s: Exit", __func__);
 	return qdf_status;
 }
 

@@ -1226,10 +1226,8 @@ hdd_ipa_uc_rm_notify_handler(void *context, enum ipa_rm_event event)
 	 * When SSR is going on or driver is unloading, just return.
 	 */
 	status = wlan_hdd_validate_context(hdd_ipa->hdd_ctx);
-	if (0 != status) {
-		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "HDD context is not valid");
+	if (status)
 		return;
-	}
 
 	if (!hdd_ipa_is_rm_enabled(hdd_ipa->hdd_ctx))
 		return;
@@ -1359,8 +1357,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 	 * When SSR is going on or driver is unloading, just return.
 	 */
 	status = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != status) {
-		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "HDD context is not valid");
+	if (status) {
 		qdf_mem_free(op_msg);
 		return;
 	}
@@ -1706,10 +1703,8 @@ static void hdd_ipa_uc_op_event_handler(uint8_t *op_msg, void *hdd_ctx)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	status = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != status) {
-		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "HDD context is not valid");
+	if (status)
 		goto end;
-	}
 
 	msg = (struct op_msg_type *)op_msg;
 	hdd_ipa = ((hdd_context_t *)hdd_ctx)->hdd_ipa;
@@ -2824,8 +2819,7 @@ static void hdd_ipa_i2w_cb(void *priv, enum ipa_dp_evt_type evt,
 	 * connect back any way
 	 */
 	status = wlan_hdd_validate_context(hdd_ipa->hdd_ctx);
-	if (0 != status) {
-		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "HDD context is not valid");
+	if (status) {
 		ipa_free_skb(ipa_tx_desc);
 		iface_context->stats.num_tx_drop++;
 		return;

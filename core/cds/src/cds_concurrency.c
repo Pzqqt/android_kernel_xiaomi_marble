@@ -6299,7 +6299,6 @@ static void cds_sap_restart_handle(struct work_struct *work)
 					sap_start_work);
 	cds_ssr_protect(__func__);
 	if (0 != wlan_hdd_validate_context(hdd_ctx)) {
-		cds_err("HDD context is not valid");
 		cds_ssr_unprotect(__func__);
 		return;
 	}

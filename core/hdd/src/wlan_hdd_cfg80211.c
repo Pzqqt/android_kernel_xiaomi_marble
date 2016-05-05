@@ -1429,10 +1429,9 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	}
 
 	status = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != status) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (status)
 		goto out;
-	}
+
 	sap_config = &adapter->sessionCtx.ap.sapConfig;
 	qdf_mem_zero(&sap_config->acs_cfg, sizeof(struct sap_acs_cfg));
 
@@ -1802,8 +1801,8 @@ __wlan_hdd_cfg80211_get_supported_features(struct wiphy *wiphy,
 	}
 
 	ret = wlan_hdd_validate_context(pHddCtx);
-	if (0 != ret)
-		return -EINVAL;
+	if (ret)
+		return ret;
 
 	if (wiphy->interface_modes & BIT(NL80211_IFTYPE_STATION)) {
 		hddLog(LOG1, FL("Infra Station mode is supported by driver"));
@@ -1943,7 +1942,7 @@ __wlan_hdd_cfg80211_set_scanning_mac_oui(struct wiphy *wiphy,
 	}
 
 	ret = wlan_hdd_validate_context(pHddCtx);
-	if (0 != ret)
+	if (ret)
 		return ret;
 
 	if (false == pHddCtx->config->enable_mac_spoofing) {
@@ -2041,10 +2040,8 @@ static int __wlan_hdd_cfg80211_get_concurrency_matrix(struct wiphy *wiphy,
 	}
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret) {
-		hdd_err("HDD context is not valid");
+	if (ret)
 		return ret;
-	}
 
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_GET_CONCURRENCY_MATRIX_MAX,
 			data, data_len, NULL)) {
@@ -2302,10 +2299,8 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 	}
 
 	ret = wlan_hdd_validate_context(pHddCtx);
-	if (0 != ret) {
-		hddLog(LOGE, FL("HDD context is not valid"));
-		return -EINVAL;
-	}
+	if (ret)
+		return ret;
 
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_MAX,
 		data, data_len,
@@ -2742,11 +2737,8 @@ static int __wlan_hdd_cfg80211_disable_dfs_chan_scan(struct wiphy *wiphy,
 	ENTER_DEV(dev);
 
 	ret_val = wlan_hdd_validate_context(hdd_ctx);
-
-	if (ret_val) {
-		hdd_err("HDD context is not valid");
+	if (ret_val)
 		return ret_val;
-	}
 
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_SET_NO_DFS_FLAG_MAX,
 		      data, data_len,
@@ -2936,10 +2928,9 @@ static int __wlan_hdd_cfg80211_keymgmt_set_key(struct wiphy *wiphy,
 	}
 
 	status = wlan_hdd_validate_context(hdd_ctx_ptr);
-	if (0 != status) {
-		hddLog(LOGE, FL("HDD context is invalid"));
+	if (status)
 		return status;
-	}
+
 	sme_update_roam_key_mgmt_offload_enabled(hdd_ctx_ptr->hHal,
 			hdd_adapter_ptr->sessionId,
 			true);
@@ -3016,10 +3007,8 @@ __wlan_hdd_cfg80211_get_wifi_info(struct wiphy *wiphy,
 	}
 
 	status = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != status) {
-		hddLog(LOGE, FL("HDD context is not valid"));
-		return -EINVAL;
-	}
+	if (status)
+		return status;
 
 	if (nla_parse(tb_vendor, QCA_WLAN_VENDOR_ATTR_WIFI_INFO_GET_MAX, data,
 		      data_len, qca_wlan_vendor_get_wifi_info_policy)) {
@@ -3115,10 +3104,8 @@ __wlan_hdd_cfg80211_get_logger_supp_feature(struct wiphy *wiphy,
 	}
 
 	status = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != status) {
-		hddLog(LOGE, FL("HDD context is not valid"));
-		return -EINVAL;
-	}
+	if (status)
+		return status;
 
 	features = 0;
 
@@ -3208,10 +3195,8 @@ int wlan_hdd_send_roam_auth_event(hdd_context_t *hdd_ctx_ptr, uint8_t *bssid,
 	eCsrAuthType auth_type;
 	ENTER();
 
-	if (wlan_hdd_validate_context(hdd_ctx_ptr)) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, FL("HDD context is not valid "));
+	if (wlan_hdd_validate_context(hdd_ctx_ptr))
 		return -EINVAL;
-	}
 
 	if (!roaming_offload_enabled(hdd_ctx_ptr) ||
 			!roam_info_ptr->roamSynchInProgress)
@@ -3357,10 +3342,8 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	}
 
 	ret_val = wlan_hdd_validate_context(hdd_ctx);
-	if (ret_val) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (ret_val)
 		return ret_val;
-	}
 
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_CONFIG_MAX,
 		      data, data_len,
@@ -3490,10 +3473,9 @@ static int __wlan_hdd_cfg80211_wifi_logger_start(struct wiphy *wiphy,
 	}
 
 	status = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != status) {
-		hddLog(LOGE, FL("HDD context is not valid"));
-		return -EINVAL;
-	}
+	if (status)
+		return status;
+
 
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_WIFI_LOGGER_START_MAX,
 				data, data_len,
@@ -3616,10 +3598,8 @@ static int __wlan_hdd_cfg80211_wifi_logger_get_ring_data(struct wiphy *wiphy,
 	}
 
 	status = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != status) {
-		hddLog(LOGE, FL("HDD context is not valid"));
-		return -EINVAL;
-	}
+	if (status)
+		return status;
 
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_WIFI_LOGGER_GET_RING_DATA_MAX,
 			data, data_len,
@@ -4011,7 +3991,7 @@ __wlan_hdd_cfg80211_offloaded_packets(struct wiphy *wiphy,
 	}
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
+	if (ret)
 		return ret;
 
 	if (!sme_is_feature_supported_by_fw(WLAN_PERIODIC_TX_PTRN)) {
@@ -4122,8 +4102,8 @@ __wlan_hdd_cfg80211_monitor_rssi(struct wiphy *wiphy,
 	ENTER_DEV(dev);
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return -EINVAL;
+	if (ret)
+		return ret;
 
 	if (!hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
 		hddLog(LOGE, FL("Not in Connected state!"));
@@ -7908,8 +7888,6 @@ wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 	struct timespec ts;
 	struct hdd_config *cfg_param;
 
-	ENTER();
-
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	status = wlan_hdd_validate_context(pHddCtx);
 	if (0 != status)
@@ -8022,7 +8000,6 @@ wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 		cfg80211_inform_bss_frame(wiphy, chan, mgmt, frame_len, rssi,
 					  GFP_KERNEL);
 	kfree(mgmt);
-	EXIT();
 	return bss_status;
 }
 
@@ -8042,8 +8019,6 @@ struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_db(hdd_adapter_t *pAdapter,
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 	struct cfg80211_bss *bss = NULL;
 
-	ENTER();
-
 	memset(&roamProfile, 0, sizeof(tCsrRoamConnectedProfile));
 	sme_roam_get_connect_profile(hHal, pAdapter->sessionId, &roamProfile);
 
@@ -8059,7 +8034,6 @@ struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_db(hdd_adapter_t *pAdapter,
 	} else {
 		hddLog(LOGE, FL("roamProfile.pBssDesc is NULL"));
 	}
-	EXIT();
 	return bss;
 }
 /**
@@ -8748,11 +8722,9 @@ int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 		 * is an issue.
 		 */
 		if (QDF_STA_MODE == pAdapter->device_mode ||
-			QDF_P2P_CLIENT_MODE == pAdapter->device_mode) {
-			hdd_info("Set HDD connState to eConnectionState_Connecting");
+			QDF_P2P_CLIENT_MODE == pAdapter->device_mode)
 			hdd_conn_set_connection_state(pAdapter,
 			eConnectionState_Connecting);
-		}
 
 		status = sme_roam_connect(WLAN_HDD_GET_HAL_CTX(pAdapter),
 					  pAdapter->sessionId, pRoamProfile,
@@ -8795,8 +8767,6 @@ static int wlan_hdd_cfg80211_set_auth_type(hdd_adapter_t *pAdapter,
 {
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-
-	ENTER();
 
 	/*set authentication type */
 	switch (auth_type) {
@@ -8850,8 +8820,6 @@ static int wlan_hdd_cfg80211_set_auth_type(hdd_adapter_t *pAdapter,
 static int wlan_hdd_set_akm_suite(hdd_adapter_t *pAdapter, u32 key_mgmt)
 {
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
-
-	ENTER();
 
 #define WLAN_AKM_SUITE_8021X_SHA256 0x000FAC05
 #define WLAN_AKM_SUITE_PSK_SHA256   0x000FAC06
@@ -8915,8 +8883,6 @@ static int wlan_hdd_cfg80211_set_cipher(hdd_adapter_t *pAdapter,
 	eCsrEncryptionType encryptionType = eCSR_ENCRYPT_TYPE_NONE;
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-
-	ENTER();
 
 	if (!cipher) {
 		hdd_info("received cipher %d - considering none", cipher);
@@ -9006,7 +8972,6 @@ int wlan_hdd_cfg80211_set_ie(hdd_adapter_t *pAdapter, const uint8_t *ie,
 	uint16_t akmsuiteCount;
 	int *akmlist;
 #endif
-	ENTER();
 
 	/* clear previous assocAddIE */
 	pWextState->assocAddIE.length = 0;
@@ -9275,7 +9240,6 @@ int wlan_hdd_cfg80211_set_ie(hdd_adapter_t *pAdapter, const uint8_t *ie,
 		genie += eLen;
 		remLen -= eLen;
 	}
-	EXIT();
 	return 0;
 }
 
@@ -9510,7 +9474,6 @@ static int wlan_hdd_try_disconnect(hdd_adapter_t *pAdapter)
 		}
 	}
 disconnected:
-	hdd_info("Set HDD connState to eConnectionState_NotConnected");
 	hdd_conn_set_connection_state(pAdapter, eConnectionState_NotConnected);
 	return result;
 }
@@ -9702,8 +9665,6 @@ int wlan_hdd_disconnect(hdd_adapter_t *pAdapter, u16 reason)
 		result = -ETIMEDOUT;
 	}
 disconnected:
-	hddLog(LOG1,
-		FL("Set HDD connState to eConnectionState_NotConnected"));
 	hdd_conn_set_connection_state(pAdapter, eConnectionState_NotConnected);
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
 	/* Sending disconnect event to userspace for kernel version < 3.11
@@ -11778,11 +11739,8 @@ __wlan_hdd_cfg80211_set_ap_channel_width(struct wiphy *wiphy,
 
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	status = wlan_hdd_validate_context(pHddCtx);
-
-	if (0 != status) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (status)
 		return status;
-	}
 
 	qdf_mem_zero(&sme_config, sizeof(tSmeConfigParams));
 	sme_get_config_param(pHddCtx->hHal, &sme_config);

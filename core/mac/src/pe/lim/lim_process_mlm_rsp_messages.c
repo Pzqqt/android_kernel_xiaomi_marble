@@ -3295,9 +3295,6 @@ void lim_process_rx_scan_event(tpAniSirGlobal pMac, void *buf)
 {
 	tSirScanOffloadEvent *pScanEvent = (tSirScanOffloadEvent *) buf;
 
-	QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
-		  "scan_id = %u, scan_requestor_id 0x%x", pScanEvent->scanId,
-		  pScanEvent->requestor);
 	switch (pScanEvent->event) {
 	case SIR_SCAN_EVENT_STARTED:
 		break;

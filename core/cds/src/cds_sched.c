@@ -398,10 +398,6 @@ static int cds_mc_thread(void *Arg)
 			/* Check the SYS queue first */
 			if (!cds_is_mq_empty(&pSchedContext->sysMcMq)) {
 				/* Service the SYS message queue */
-				QDF_TRACE(QDF_MODULE_ID_QDF,
-					  QDF_TRACE_LEVEL_INFO,
-					  "%s: Servicing the CDS SYS MC Message queue",
-					  __func__);
 				pMsgWrapper =
 					cds_mq_get(&pSchedContext->sysMcMq);
 				if (pMsgWrapper == NULL) {
@@ -429,10 +425,6 @@ static int cds_mc_thread(void *Arg)
 			/* Check the WMA queue */
 			if (!cds_is_mq_empty(&pSchedContext->wmaMcMq)) {
 				/* Service the WMA message queue */
-				QDF_TRACE(QDF_MODULE_ID_QDF,
-					  QDF_TRACE_LEVEL_INFO,
-					  "%s: Servicing the CDS WMA MC Message queue",
-					  __func__);
 				pMsgWrapper =
 					cds_mq_get(&pSchedContext->wmaMcMq);
 				if (pMsgWrapper == NULL) {
@@ -460,10 +452,6 @@ static int cds_mc_thread(void *Arg)
 			/* Check the PE queue */
 			if (!cds_is_mq_empty(&pSchedContext->peMcMq)) {
 				/* Service the PE message queue */
-				QDF_TRACE(QDF_MODULE_ID_QDF,
-					  QDF_TRACE_LEVEL_INFO,
-					  "%s: Servicing the CDS PE MC Message queue",
-					  __func__);
 				pMsgWrapper =
 					cds_mq_get(&pSchedContext->peMcMq);
 				if (NULL == pMsgWrapper) {
@@ -506,10 +494,6 @@ static int cds_mc_thread(void *Arg)
 			/** Check the SME queue **/
 			if (!cds_is_mq_empty(&pSchedContext->smeMcMq)) {
 				/* Service the SME message queue */
-				QDF_TRACE(QDF_MODULE_ID_QDF,
-					  QDF_TRACE_LEVEL_INFO,
-					  "%s: Servicing the CDS SME MC Message queue",
-					  __func__);
 				pMsgWrapper =
 					cds_mq_get(&pSchedContext->smeMcMq);
 				if (NULL == pMsgWrapper) {

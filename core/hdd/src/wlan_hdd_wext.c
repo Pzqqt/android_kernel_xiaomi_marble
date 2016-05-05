@@ -1543,11 +1543,8 @@ int wlan_hdd_get_link_speed(hdd_adapter_t *sta_adapter, uint32_t *link_speed)
 	int ret;
 
 	ret = wlan_hdd_validate_context(hddctx);
-
-	if (0 != ret) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (ret)
 		return ret;
-	}
 
 	if (eConnectionState_Associated != hdd_stactx->conn_info.connState) {
 		/* we are not connected so we don't have a classAstats */
@@ -7635,12 +7632,9 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		hdd_station_ctx_t *pHddStaCtx;
 		pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 		status = wlan_hdd_validate_context(pHddCtx);
-		if (0 != status) {
-			hddLog(LOGE,
-			       "%s: getSNR: HDD context is not valid",
-			       __func__);
+		if (status)
 			return status;
-		}
+
 		pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 		if (0 == pHddCtx->config->fEnableSNRMonitoring ||
 		    eConnectionState_Associated !=

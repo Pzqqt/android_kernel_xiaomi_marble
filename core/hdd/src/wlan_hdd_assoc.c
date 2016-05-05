@@ -164,8 +164,9 @@ void hdd_conn_set_connection_state(hdd_adapter_t *pAdapter,
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 
 	/* save the new connection state */
-	hddLog(LOG1, FL("ConnectionState Changed from oldState:%d to State:%d"),
-	       pHddStaCtx->conn_info.connState, connState);
+	hdd_info("%pS Changed connectionState Changed from oldState:%d to State:%d",
+		(void *)_RET_IP_, pHddStaCtx->conn_info.connState,
+		connState);
 	pHddStaCtx->conn_info.connState = connState;
 
 	/* Check is pending ROC request or not when connection state changed */
@@ -1073,8 +1074,6 @@ static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 
 	if (pHddStaCtx->conn_info.connState != eConnectionState_Disconnecting) {
 		INIT_COMPLETION(pAdapter->disconnect_comp_var);
-		hddLog(LOG1,
-			FL("Set HDD connState to eConnectionState_Disconnecting"));
 		hdd_conn_set_connection_state(pAdapter,
 					      eConnectionState_Disconnecting);
 	}
@@ -1197,7 +1196,6 @@ static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 	}
 	/* Clear saved connection information in HDD */
 	hdd_conn_remove_connect_info(pHddStaCtx);
-	hddLog(LOG1, FL("Set HDD connState to eConnectionState_NotConnected"));
 	hdd_conn_set_connection_state(pAdapter, eConnectionState_NotConnected);
 #ifdef WLAN_FEATURE_GTK_OFFLOAD
 	if ((QDF_STA_MODE == pAdapter->device_mode) ||
@@ -1831,7 +1829,6 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 			return QDF_STATUS_E_FAILURE;
 		}
 		if (!hddDisconInProgress) {
-			hddLog(LOG1, FL("Set HDD connState to eConnectionState_Associated"));
 			hdd_conn_set_connection_state(pAdapter,
 						   eConnectionState_Associated);
 		}
@@ -2386,8 +2383,6 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 		 */
 		if (eCSR_ROAM_ASSOCIATION_FAILURE == roamStatus
 		    && !hddDisconInProgress) {
-			hddLog(LOG1,
-				FL("state to eConnectionState_NotConnected"));
 			hdd_conn_set_connection_state(pAdapter,
 					eConnectionState_NotConnected);
 		}
@@ -2458,8 +2453,6 @@ static void hdd_roam_ibss_indication_handler(hdd_adapter_t *pAdapter,
 		 * connection state to IBSS Disconnected (meaning no peers
 		 * are in the IBSS).
 		 */
-		hddLog(LOG1,
-			FL("Set HDD connState to eConnectionState_IbssDisconnected"));
 		hdd_conn_set_connection_state(pAdapter,
 				      eConnectionState_IbssDisconnected);
 		/* notify wmm */
@@ -2673,7 +2666,6 @@ static QDF_STATUS roam_ibss_connect_handler(hdd_adapter_t *pAdapter,
 					    tCsrRoamInfo *pRoamInfo)
 {
 	struct cfg80211_bss *bss;
-	hddLog(LOG1, FL("IBSS Connect Indication from SME. Set HDD connState to eConnectionState_IbssConnected"));
 	/*
 	 * Set the internal connection state to show 'IBSS Connected' (IBSS with
 	 * a partner stations).
@@ -2906,8 +2898,6 @@ roam_roam_connect_status_update_handler(hdd_adapter_t *pAdapter,
 		wlan_hdd_netif_queue_control(pAdapter,
 					   WLAN_NETIF_TX_DISABLE_N_CARRIER,
 					   WLAN_CONTROL_PATH);
-		hddLog(LOG1,
-			FL("Set HDD connState to eConnectionState_NotConnected"));
 		hdd_conn_set_connection_state(pAdapter,
 					      eConnectionState_NotConnected);
 
@@ -4695,7 +4685,6 @@ int hdd_set_csr_auth_type(hdd_adapter_t *pAdapter, eCsrAuthType RSNAuthType)
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	tCsrRoamProfile *pRoamProfile = &(pWextState->roamProfile);
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-	ENTER();
 
 	pRoamProfile->AuthType.numEntries = 1;
 	hddLog(LOG1, FL("pHddStaCtx->conn_info.authType = %d"),
@@ -4819,7 +4808,6 @@ int hdd_set_csr_auth_type(hdd_adapter_t *pAdapter, eCsrAuthType RSNAuthType)
 	hddLog(LOG1, FL("Set roam Authtype to %d"),
 	       pWextState->roamProfile.AuthType.authType[0]);
 
-	EXIT();
 	return 0;
 }
 
@@ -4855,7 +4843,7 @@ static int __iw_set_essid(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
+	if (ret)
 		return ret;
 
 	if (pAdapter->device_mode != QDF_STA_MODE &&
@@ -5019,11 +5007,9 @@ static int __iw_set_essid(struct net_device *dev,
 	 * informed of connect result indication which is an issue.
 	 */
 	if (QDF_STA_MODE == pAdapter->device_mode ||
-			QDF_P2P_CLIENT_MODE == pAdapter->device_mode) {
-		hdd_info("Set HDD connState to eConnectionState_Connecting");
+			QDF_P2P_CLIENT_MODE == pAdapter->device_mode)
 		hdd_conn_set_connection_state(pAdapter,
 				eConnectionState_Connecting);
-	}
 
 	status = sme_roam_connect(hHal, pAdapter->sessionId,
 				  &(pWextState->roamProfile), &roamId);
@@ -5088,7 +5074,7 @@ static int __iw_get_essid(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
+	if (ret)
 		return ret;
 
 	if ((pHddStaCtx->conn_info.connState == eConnectionState_Associated &&
@@ -5158,7 +5144,7 @@ static int __iw_set_auth(struct net_device *dev, struct iw_request_info *info,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
+	if (ret)
 		return ret;
 
 	switch (wrqu->param.flags & IW_AUTH_INDEX) {
@@ -5405,7 +5391,7 @@ static int __iw_get_auth(struct net_device *dev, struct iw_request_info *info,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
+	if (ret)
 		return ret;
 
 	switch (pRoamProfile->negotiatedAuthType) {
@@ -5564,7 +5550,7 @@ static int __iw_set_ap_address(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
+	if (ret)
 		return ret;
 
 	pMacAddress = (uint8_t *) wrqu->ap_addr.sa_data;
@@ -5622,7 +5608,7 @@ static int __iw_get_ap_address(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
+	if (ret)
 		return ret;
 
 	if (pHddStaCtx->conn_info.connState == eConnectionState_Associated ||
