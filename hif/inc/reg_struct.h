@@ -19,6 +19,21 @@
 #ifndef REG_STRUCT_H
 #define REG_STRUCT_H
 
+#define MISSING_REGISTER 0
+#define UNSUPPORTED_REGISTER_OFFSET 0xffffffff
+
+/**
+ * is_register_supported() - return true if the register offset is valid
+ * @reg: register address being checked
+ *
+ * Return: true if the register offset is valid
+ */
+static inline bool is_register_supported(uint32_t reg)
+{
+	return (reg != MISSING_REGISTER) &&
+		(reg != UNSUPPORTED_REGISTER_OFFSET);
+}
+
 struct targetdef_s {
 	uint32_t d_RTC_SOC_BASE_ADDRESS;
 	uint32_t d_RTC_WMAC_BASE_ADDRESS;

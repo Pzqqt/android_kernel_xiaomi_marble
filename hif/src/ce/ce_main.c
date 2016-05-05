@@ -713,7 +713,7 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 				 (uint32_t)(dma_addr & 0xFFFFFFFF));
 
 			/* if SR_BA_ADDRESS_HIGH register exists */
-			if (SR_BA_ADDRESS_HIGH) {
+			if (is_register_supported(SR_BA_ADDRESS_HIGH)) {
 				uint32_t tmp;
 				tmp = CE_SRC_RING_BASE_ADDR_HIGH_GET(
 				   scn, ctrl_addr);
@@ -852,7 +852,7 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 				 (uint32_t)(dma_addr & 0xFFFFFFFF));
 
 			/* if DR_BA_ADDRESS_HIGH exists */
-			if (DR_BA_ADDRESS_HIGH) {
+			if (is_register_supported(DR_BA_ADDRESS_HIGH)) {
 				uint32_t tmp;
 				tmp = CE_DEST_RING_BASE_ADDR_HIGH_GET(scn,
 						ctrl_addr);

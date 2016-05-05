@@ -25,7 +25,7 @@ typedef struct targetdef_s TARGET_REGISTER_TABLE;
 
 
 
-#define ATH_UNSUPPORTED_REG_OFFSET 0xffffffff
+#define ATH_UNSUPPORTED_REG_OFFSET UNSUPPORTED_REGISTER_OFFSET
 #define ATH_SUPPORTED_BY_TARGET(reg_offset) \
 	((reg_offset) != ATH_UNSUPPORTED_REG_OFFSET)
 
