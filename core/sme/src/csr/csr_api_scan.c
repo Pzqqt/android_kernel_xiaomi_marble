@@ -2930,8 +2930,8 @@ static void csr_move_temp_scan_results_to_main_list(tpAniSirGlobal pMac,
 			return;
 		}
 	}
-	csr_elected_country_info(pMac);
-	csr_learn_11dcountry_information(pMac, NULL, NULL, true);
+	if (csr_elected_country_info(pMac))
+		csr_learn_11dcountry_information(pMac, NULL, NULL, true);
 }
 
 static tCsrScanResult *csr_scan_save_bss_description(tpAniSirGlobal pMac,
@@ -3327,6 +3327,8 @@ bool csr_elected_country_info(tpAniSirGlobal pMac)
 	uint8_t i, j = 0;
 
 	if (!pMac->scan.countryCodeCount) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_WARN,
+			"No AP with 11d Country code is present in scan list");
 		return fRet;
 	}
 	maxVotes = pMac->scan.votes11d[0].votes;
