@@ -2493,8 +2493,8 @@ QDF_STATUS wma_switch_channel(tp_wma_handle wma, struct wma_vdev_start_req *req)
 
 	/* Fill channel info */
 	cmd->mhz = cds_chan_to_freq(req->chan);
-	chanmode = wma_chan_to_mode(req->chan, req->chan_width,
-				req->vht_capable, req->dot11_mode);
+	chanmode = wma_chan_phy_mode(req->chan, req->chan_width,
+				    req->dot11_mode);
 
 	intr[req->vdev_id].chanmode = chanmode; /* save channel mode */
 	intr[req->vdev_id].ht_capable = req->ht_capable;

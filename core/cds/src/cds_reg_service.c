@@ -666,6 +666,38 @@ QDF_STATUS cds_put_default_country(uint8_t *def_country)
 }
 
 /**
+ * cds_bw_value() - give bandwidth value
+ * bw: bandwidth enum
+ *
+ * Return: uint16_t
+ */
+uint16_t cds_bw_value(enum phy_ch_width bw)
+{
+	switch (bw) {
+	case CH_WIDTH_20MHZ:
+		return 20;
+	case CH_WIDTH_40MHZ:
+		return 40;
+	case CH_WIDTH_80MHZ:
+		return 80;
+	case CH_WIDTH_160MHZ:
+		return 160;
+	case CH_WIDTH_80P80MHZ:
+		return 160;
+	case CH_WIDTH_INVALID:
+		return 0;
+	case CH_WIDTH_5MHZ:
+		return 10;
+	case CH_WIDTH_10MHZ:
+		return 5;
+	case CH_WIDTH_MAX:
+		return 160;
+	default:
+		return 0;
+	}
+}
+
+/**
  * cds_set_ch_params() - set channel parameters
  * @ch: channel
  * @phy_mode: physical mode

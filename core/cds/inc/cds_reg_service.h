@@ -52,8 +52,14 @@
 
 #define CDS_MIN_24GHZ_CHANNEL_NUMBER chan_mapping[MIN_24GHZ_CHANNEL].chan_num
 #define CDS_MAX_24GHZ_CHANNEL_NUMBER chan_mapping[MAX_24GHZ_CHANNEL].chan_num
+#define CDS_MIN_59GHZ_CHANNEL_NUMBER chan_mapping[MIN_59GHZ_CHANNEL].chan_num
+#define CDS_MAX_59GHZ_CHANNEL_NUMBER chan_mapping[MAX_59GHZ_CHANNEL].chan_num
 #define CDS_MIN_5GHZ_CHANNEL_NUMBER chan_mapping[MIN_5GHZ_CHANNEL].chan_num
 #define CDS_MAX_5GHZ_CHANNEL_NUMBER chan_mapping[MAX_5GHZ_CHANNEL].chan_num
+
+#define CDS_IS_CHANNEL_DSRC(chan_num) \
+	((chan_num >= CDS_MIN_59GHZ_CHANNEL_NUMBER) && \
+	 (chan_num <= CDS_MAX_59GHZ_CHANNEL_NUMBER))
 
 #define CDS_IS_CHANNEL_5GHZ(chan_num) \
 	((chan_num >= CDS_MIN_5GHZ_CHANNEL_NUMBER) && \
@@ -367,5 +373,6 @@ void cds_set_channel_params(uint16_t oper_ch, uint16_t ht_offset_2g,
 
 QDF_STATUS cds_set_reg_domain(void *client_ctxt, v_REGDOMAIN_t reg_domain);
 QDF_STATUS cds_put_default_country(uint8_t *def_country);
+uint16_t cds_bw_value(enum phy_ch_width bw);
 
 #endif /* __CDS_REG_SERVICE_H */

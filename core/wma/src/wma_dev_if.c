@@ -1741,9 +1741,8 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 
 	/* Fill channel info */
 	params.chan_freq = cds_chan_to_freq(req->chan);
-	params.chan_mode = wma_chan_to_mode(req->chan, req->chan_width,
-					   req->vht_capable, req->dot11_mode);
-	/* save channel mode */
+	params.chan_mode = wma_chan_phy_mode(req->chan, req->chan_width,
+					     req->dot11_mode);
 	intr[params.vdev_id].chanmode = params.chan_mode;
 	intr[params.vdev_id].ht_capable = req->ht_capable;
 	intr[params.vdev_id].vht_capable = req->vht_capable;
