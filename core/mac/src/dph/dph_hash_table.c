@@ -450,7 +450,8 @@ tSirRetStatus dph_delete_hash_entry(tpAniSirGlobal pMac, tSirMacAddr staAddr,
 
 void dph_print_mac_addr(tpAniSirGlobal pMac, uint8_t addr[], uint32_t level)
 {
-	lim_log(pMac, (uint16_t) level, FL("MAC ADDR = %d:%d:%d:%d:%d:%d"),
+	lim_log(pMac, (uint16_t) level,
+		FL("MAC ADDR = %02x:%02x:%02x:%02x:%02x:%02x"),
 		addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
 }
 
