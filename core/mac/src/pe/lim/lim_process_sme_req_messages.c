@@ -1298,6 +1298,8 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 	pScanOffloadReq->minChannelTime = pScanReq->minChannelTime;
 	pScanOffloadReq->maxChannelTime = pScanReq->maxChannelTime;
 	pScanOffloadReq->restTime = pScanReq->restTime;
+	pScanOffloadReq->min_rest_time = pScanReq->min_rest_time;
+	pScanOffloadReq->idle_time = pScanReq->idle_time;
 
 	/* for normal scan, the value for p2pScanType should be 0
 	   always */

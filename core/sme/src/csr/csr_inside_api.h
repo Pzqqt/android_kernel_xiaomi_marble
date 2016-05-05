@@ -53,6 +53,8 @@
 #define CSR_ACTIVE_MIN_CHANNEL_TIME_CONC    20
 
 #define CSR_REST_TIME_CONC                  100
+#define CSR_MIN_REST_TIME_CONC              50
+#define CSR_IDLE_TIME_CONC                  25
 
 #define CSR_NUM_STA_CHAN_COMBINED_CONC      3
 #define CSR_NUM_P2P_CHAN_COMBINED_CONC      1

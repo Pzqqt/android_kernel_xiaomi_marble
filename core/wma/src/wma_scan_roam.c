@@ -239,19 +239,21 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 	cmd->repeat_probe_time =
 		cmd->dwell_time_active / WMA_SCAN_NPROBES_DEFAULT;
 
-	/* CSR sends only one value restTime for staying on home channel
-	 * to continue data traffic. Rome fw has facility to monitor the traffic
-	 * and move to next channel. Stay on the channel for at least half
-	 * of the requested time and then leave if there is no traffic.
+	/* CSR sends min_rest_Time, max_rest_time and idle_time
+	 * for staying on home channel to continue data traffic.
+	 * Rome fw has facility to monitor the traffic
+	 * and move to next channel. Stay on the channel for min_rest_time
+	 * and then leave if there is no traffic.
 	 */
-	cmd->min_rest_time = scan_req->restTime / 2;
+	cmd->min_rest_time = scan_req->min_rest_time;
 	cmd->max_rest_time = scan_req->restTime;
 
 	/* Check for traffic at idle_time interval after min_rest_time.
 	 * Default value is 25 ms to allow full use of max_rest_time
 	 * when voice packets are running at 20 ms interval.
 	 */
-	cmd->idle_time = WMA_SCAN_IDLE_TIME_DEFAULT;
+	cmd->idle_time = scan_req->idle_time;
+
 
 	/* Large timeout value for full scan cycle, 30 seconds */
 	cmd->max_scan_time = WMA_HW_DEF_SCAN_MAX_DURATION;

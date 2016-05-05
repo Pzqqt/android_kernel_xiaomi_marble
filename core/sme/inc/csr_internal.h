@@ -283,7 +283,12 @@ typedef struct tagCsrChannel {
 typedef struct tagScanProfile {
 	uint32_t minChnTime;
 	uint32_t maxChnTime;
-	uint32_t restTime;   /* This is ignored if not associated */
+	/* In units of milliseconds, ignored when not connected */
+	uint32_t restTime;
+	/* In units of milliseconds, ignored when not connected */
+	uint32_t min_rest_time;
+	/* In units of milliseconds, ignored when not connected */
+	uint32_t idle_time;
 	uint32_t numOfChannels;
 	uint8_t *pChannelList;
 	tSirScanType scanType;
@@ -545,6 +550,11 @@ typedef struct tagCsrConfig {
 	uint32_t nActiveMinChnTimeConc; /* in units of milliseconds */
 	uint32_t nActiveMaxChnTimeConc; /* in units of milliseconds */
 	uint32_t nRestTimeConc;         /* in units of milliseconds */
+	/* In units of milliseconds */
+	uint32_t  min_rest_time_conc;
+	/* In units of milliseconds */
+	uint32_t  idle_time_conc;
+
 	/* number of channels combined for Sta in each split scan operation */
 	uint8_t nNumStaChanCombinedConc;
 	/* number of channels combined for P2P in each split scan operation */

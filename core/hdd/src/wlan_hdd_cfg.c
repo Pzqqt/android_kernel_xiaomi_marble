@@ -803,6 +803,20 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_REST_TIME_CONC_MIN,
 		     CFG_REST_TIME_CONC_MAX),
 
+	REG_VARIABLE(CFG_MIN_REST_TIME_NAME, WLAN_PARAM_Integer,
+		      struct hdd_config, min_rest_time_conc,
+		      VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		      CFG_MIN_REST_TIME_DEFAULT,
+		      CFG_MIN_REST_TIME_MIN,
+		      CFG_MIN_REST_TIME_MAX),
+
+	REG_VARIABLE(CFG_IDLE_TIME_NAME , WLAN_PARAM_Integer,
+		      struct hdd_config, idle_time_conc,
+		      VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		      CFG_IDLE_TIME_DEFAULT,
+		      CFG_IDLE_TIME_MIN,
+		      CFG_IDLE_TIME_MAX) ,
+
 	REG_VARIABLE(CFG_NUM_STA_CHAN_COMBINED_CONC_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, nNumStaChanCombinedConc,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -5378,6 +5392,13 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_info("Name = [%s] Value = [%u]",
 		CFG_ROAM_DENSE_MIN_APS,
 		pHddCtx->config->roam_dense_min_aps);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_MIN_REST_TIME_NAME,
+		pHddCtx->config->min_rest_time_conc);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_IDLE_TIME_NAME,
+		pHddCtx->config->idle_time_conc);
+
 }
 
 
@@ -6649,6 +6670,8 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	smeConfig->csrConfig.nPassiveMinChnTimeConc =
 		pConfig->nPassiveMinChnTimeConc;
 	smeConfig->csrConfig.nRestTimeConc = pConfig->nRestTimeConc;
+	smeConfig->csrConfig.min_rest_time_conc = pConfig->min_rest_time_conc;
+	smeConfig->csrConfig.idle_time_conc     = pConfig->idle_time_conc;
 	smeConfig->csrConfig.nNumStaChanCombinedConc =
 		pConfig->nNumStaChanCombinedConc;
 	smeConfig->csrConfig.nNumP2PChanCombinedConc =

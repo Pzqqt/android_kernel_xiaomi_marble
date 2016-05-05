@@ -270,7 +270,12 @@ typedef struct tagCsrScanRequest {
 	tCsrChannelInfo ChannelInfo;
 	uint32_t minChnTime;    /* in units of milliseconds */
 	uint32_t maxChnTime;    /* in units of milliseconds */
-	uint32_t restTime;      /* in units of milliseconds */
+	/* In units of milliseconds, ignored when not connected */
+	uint32_t restTime;
+	/* In units of milliseconds, ignored when not connected */
+	uint32_t min_rest_time;
+	/* In units of milliseconds, ignored when not connected */
+	uint32_t idle_time;
 	uint32_t uIEFieldLen;
 	uint8_t *pIEField;
 	eCsrRequestType requestType; /* 11d scan or full scan */
@@ -1094,6 +1099,11 @@ typedef struct tagCsrConfigParam {
 	/* number of channels combined for P2P in each split scan operation */
 	uint8_t nNumP2PChanCombinedConc;
 #endif
+	/*In units of milliseconds*/
+	uint32_t       min_rest_time_conc;
+	/*In units of milliseconds*/
+	uint32_t       idle_time_conc;
+
 	/*
 	 * in dBm, the maximum TX power The actual TX power is the lesser of
 	 * this value and 11d. If 11d is disable, the lesser of this and

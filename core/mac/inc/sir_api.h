@@ -778,6 +778,10 @@ typedef struct sSirSmeScanReq {
 	 */
 	/* in units of milliseconds, ignored when not connected */
 	uint32_t restTime;
+	/*in units of milliseconds, ignored when not connected*/
+	uint32_t min_rest_time;
+	/*in units of milliseconds, ignored when not connected*/
+	uint32_t idle_time;
 	uint8_t returnAfterFirstMatch;
 
 	/**
@@ -3583,6 +3587,10 @@ typedef struct sSirScanOffloadReq {
 	uint32_t scan_requestor_id;
 	/* in units of milliseconds, ignored when not connected */
 	uint32_t restTime;
+	/*in units of milliseconds, ignored when not connected*/
+	uint32_t min_rest_time;
+	/*in units of milliseconds, ignored when not connected*/
+	uint32_t idle_time;
 	tSirP2pScanType p2pScanType;
 	uint16_t uIEFieldLen;
 	uint16_t uIEFieldOffset;
