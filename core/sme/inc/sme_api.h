@@ -1316,4 +1316,11 @@ QDF_STATUS sme_encrypt_decrypt_msg_deregister_callback(tHalHandle h_hal);
 QDF_STATUS sme_encrypt_decrypt_msg(tHalHandle hal,
 	struct encrypt_decrypt_req_params *encrypt_decrypt_params);
 
+/**
+ * sme_set_cts2self_for_p2p_go() - sme function to set ini parms to FW.
+ * @hal:                    reference to the HAL
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_set_cts2self_for_p2p_go(tHalHandle hal);
 #endif /* #if !defined( __SME_API_H ) */

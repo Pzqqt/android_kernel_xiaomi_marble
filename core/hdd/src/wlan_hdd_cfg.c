@@ -3734,6 +3734,14 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			CFG_ENABLE_EDCA_INI_MIN,
 			CFG_ENABLE_EDCA_INI_MAX),
 
+	REG_VARIABLE(CFG_ENABLE_GO_CTS2SELF_FOR_STA, WLAN_PARAM_Integer,
+			struct hdd_config, enable_go_cts2self_for_sta,
+			VAR_FLAGS_OPTIONAL |
+			VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+			CFG_ENABLE_GO_CTS2SELF_FOR_STA_DEFAULT,
+			CFG_ENABLE_GO_CTS2SELF_FOR_STA_MIN,
+			CFG_ENABLE_GO_CTS2SELF_FOR_STA_MAX),
+
 	REG_VARIABLE(CFG_EDCA_VO_CWMIN_VALUE_NAME, WLAN_PARAM_Integer,
 			struct hdd_config, edca_vo_cwmin,
 			VAR_FLAGS_OPTIONAL |
@@ -5646,6 +5654,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_info("Name = [%s] Value = [%d]",
 		CFG_FILTER_MULTICAST_REPLAY_NAME,
 		pHddCtx->config->multicast_replay_filter);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_ENABLE_GO_CTS2SELF_FOR_STA,
+		pHddCtx->config->enable_go_cts2self_for_sta);
 }
 
 

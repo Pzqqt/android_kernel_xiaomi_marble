@@ -2917,6 +2917,16 @@ enum dot11p_mode {
 #define CFG_EXTSCAN_ACTIVE_MIN_CHANNEL_TIME_DEFAULT    (20)
 #endif
 
+/* When gEnable_go_cts2self_for_sta is
+ * enabled  then if a legacy client connects to P2P GO,
+ * Host will send a WMI VDEV command to FW to stop using NOA for P2P GO
+ * and start using CTS2SELF.
+ */
+#define CFG_ENABLE_GO_CTS2SELF_FOR_STA   "gEnable_go_cts2self_for_sta"
+#define CFG_ENABLE_GO_CTS2SELF_FOR_STA_DEFAULT  (0)
+#define CFG_ENABLE_GO_CTS2SELF_FOR_STA_MIN      (0)
+#define CFG_ENABLE_GO_CTS2SELF_FOR_STA_MAX      (1)
+
 #define CFG_CE_CLASSIFY_ENABLE_NAME	"gCEClassifyEnable"
 #define CFG_CE_CLASSIFY_ENABLE_MIN	(0)
 #define CFG_CE_CLASSIFY_ENABLE_MAX	(1)
@@ -4152,6 +4162,7 @@ struct hdd_config {
 	/* parameter for indicating sifs burst duration to fw */
 	uint8_t sifs_burst_duration;
 	bool goptimize_chan_avoid_event;
+	bool enable_go_cts2self_for_sta;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

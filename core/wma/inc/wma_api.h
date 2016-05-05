@@ -303,4 +303,17 @@ void wma_process_pdev_hw_mode_trans_ind(void *wma,
 QDF_STATUS wma_set_powersave_config(uint8_t val);
 QDF_STATUS wma_encrypt_decrypt_msg(WMA_HANDLE wma,
 		struct encrypt_decrypt_req_params *encrypt_decrypt_params);
+
+/**
+ * wma_set_cts2self_for_p2p_go() - set CTS2SELF command for P2P GO.
+ * @wma_handle:                  pointer to wma handle.
+ * @cts2self_for_p2p_go:         value needs to set to firmware.
+ *
+ * At the time of driver startup, inform about ini parma to FW that
+ * if legacy client connects to P2P GO, stop using NOA for P2P GO.
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS wma_set_cts2self_for_p2p_go(void *wma_handle,
+		uint32_t cts2self_for_p2p_go);
 #endif

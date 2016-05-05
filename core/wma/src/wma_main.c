@@ -6280,6 +6280,8 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 	case WDA_BPF_SET_INSTRUCTIONS_REQ:
 		wma_set_bpf_instructions(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
+	case WMA_SET_CTS2SELF_FOR_STA:
+		wma_set_cts2self_for_p2p_go(wma_handle, true);
 		break;
 	case SIR_HAL_NDP_INITIATOR_REQ:
 		wma_handle_ndp_initiator_req(wma_handle, msg->bodyptr);

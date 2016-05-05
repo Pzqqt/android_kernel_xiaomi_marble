@@ -7817,6 +7817,8 @@ int hdd_wlan_startup(struct device *dev)
 	hdd_release_rtnl_lock();
 	rtnl_held = false;
 
+	if (hdd_ctx->config->enable_go_cts2self_for_sta)
+		sme_set_cts2self_for_p2p_go(hdd_ctx->hHal);
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 	status = qdf_mc_timer_init(&hdd_ctx->skip_acs_scan_timer,
 				   QDF_TIMER_TYPE_SW,

@@ -16715,3 +16715,28 @@ QDF_STATUS sme_encrypt_decrypt_msg_deregister_callback(tHalHandle h_hal)
 	}
 	return status;
 }
+
+QDF_STATUS sme_set_cts2self_for_p2p_go(tHalHandle hal_handle)
+{
+	cds_msg_t message;
+	void *wma_handle;
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"wma_handle is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	message.bodyptr = NULL;
+	message.type = WMA_SET_CTS2SELF_FOR_STA;
+
+	if (QDF_STATUS_SUCCESS !=
+		wma_set_cts2self_for_p2p_go(wma_handle, true)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			"%s: Failed to set cts2self for p2p GO to firmware",
+			__func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	return QDF_STATUS_SUCCESS;
+}
