@@ -4176,6 +4176,11 @@ bool csr_scan_complete(tpAniSirGlobal pMac, tSirSmeScanRsp *pScanRsp)
 		pCommand->u.scanCmd.abortScanDueToBandChange = false;
 	}
 	csr_save_scan_results(pMac, pCommand->u.scanCmd.reason, sessionId);
+	/* filter scan result based on valid channel list number */
+	if (pMac->scan.fcc_constraint) {
+		sms_log(pMac, LOG1, FL("Clear BSS from invalid channels"));
+		csr_scan_filter_results(pMac);
+	}
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 	csr_diag_scan_complete(pMac, pCommand, pScanRsp);
 #endif /* #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR */
