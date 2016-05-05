@@ -8583,20 +8583,6 @@ int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 			return -EINVAL;
 		}
 
-		/* change conn_state to connecting before sme_roam_connect(), because sme_roam_connect()
-		 * has a direct path to call hdd_sme_roam_callback(), which will change the conn_state
-		 * If direct path, conn_state will be accordingly changed to NotConnected or Associated
-		 * by either hdd_association_completion_handler() or hdd_dis_connect_handler() in sme_RoamCallback()
-		 * if sme_RomConnect is to be queued, Connecting state will remain until it is completed.
-		 */
-		if (QDF_STA_MODE == pAdapter->device_mode ||
-		    QDF_P2P_CLIENT_MODE == pAdapter->device_mode) {
-			hddLog(LOG1,
-				FL("Set HDD connState to eConnectionState_Connecting"));
-			hdd_conn_set_connection_state(pAdapter,
-						      eConnectionState_Connecting);
-		}
-
 		/* After 8-way handshake supplicant should give the scan command
 		 * in that it update the additional IEs, But because of scan
 		 * enhancements, the supplicant is not issuing the scan command now.
@@ -8652,6 +8638,32 @@ int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 			pHddCtx->config->nChannelBondingMode24GHz;
 		sme_update_config(pHddCtx->hHal, sme_config);
 		qdf_mem_free(sme_config);
+		/*
+		 * Change conn_state to connecting before sme_roam_connect(),
+		 * because sme_roam_connect() has a direct path to call
+		 * hdd_sme_roam_callback(), which will change the conn_state
+		 * If direct path, conn_state will be accordingly changed to
+		 * NotConnected or Associated by either
+		 * hdd_association_completion_handler() or
+		 * hdd_dis_connect_handler() in sme_RoamCallback()if
+		 * sme_RomConnect is to be queued,
+		 * Connecting state will remain until it is completed.
+		 *
+		 * If connection state is not changed, connection state will
+		 * remain in eConnectionState_NotConnected state.
+		 * In hdd_association_completion_handler, "hddDisconInProgress"
+		 * is set to true if conn state is
+		 * eConnectionState_NotConnected.
+		 * If "hddDisconInProgress" is set to true then cfg80211 layer
+		 * is not informed of connect result indication which
+		 * is an issue.
+		 */
+		if (QDF_STA_MODE == pAdapter->device_mode ||
+			QDF_P2P_CLIENT_MODE == pAdapter->device_mode) {
+			hdd_info("Set HDD connState to eConnectionState_Connecting");
+			hdd_conn_set_connection_state(pAdapter,
+			eConnectionState_Connecting);
+		}
 
 		status = sme_roam_connect(WLAN_HDD_GET_HAL_CTX(pAdapter),
 					  pAdapter->sessionId, pRoamProfile,
