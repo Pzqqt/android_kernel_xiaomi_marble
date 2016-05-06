@@ -1758,6 +1758,25 @@ QDF_STATUS htc_tx_completion_handler(void *Context,
 	return QDF_STATUS_SUCCESS;
 }
 
+#if WLAN_FEATURE_FASTPATH
+/**
+ * htc_ctrl_msg_cmpl(): checks for tx completion for the endpoint specified
+ * @HTC_HANDLE : pointer to the htc target context
+ * @htc_ep_id  : end point id
+ *
+ * checks HTC tx completion
+ *
+ * Return: none
+ */
+void htc_ctrl_msg_cmpl(HTC_HANDLE htc_pdev, HTC_ENDPOINT_ID htc_ep_id)
+{
+	HTC_TARGET      *target = GET_HTC_TARGET_FROM_HANDLE(htc_pdev);
+	HTC_ENDPOINT    *pendpoint = &target->endpoint[htc_ep_id];
+
+	htc_send_complete_check(pendpoint, 1);
+}
+#endif
+
 /* callback when TX resources become available */
 void htc_tx_resource_avail_handler(void *context, uint8_t pipeID)
 {

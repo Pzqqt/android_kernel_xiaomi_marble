@@ -45,6 +45,8 @@ extern "C" {
 /* this is the amount of header room required by users of HTC */
 #define HTC_HEADER_LEN         HTC_HDR_LENGTH
 
+#define HTC_HTT_TRANSFER_HDRSIZE 24
+
 typedef void *HTC_HANDLE;
 
 typedef uint16_t HTC_SERVICE_ID;
@@ -686,6 +688,8 @@ struct ol_ath_htc_stats *ieee80211_ioctl_get_htc_stats(HTC_HANDLE
 #endif
 
 #ifdef WLAN_FEATURE_FASTPATH
+void htc_ctrl_msg_cmpl(HTC_HANDLE htc_pdev, HTC_ENDPOINT_ID htc_ep_id);
+
 #define HTC_TX_DESC_FILL(_htc_tx_desc, _download_len, _ep_id, _seq_no)	\
 do {									\
 		HTC_WRITE32((_htc_tx_desc),				\
@@ -723,4 +727,5 @@ void htc_ipa_get_ce_resource(HTC_HANDLE htc_handle,
 			ce_sr_ring_size,                   \
 			ce_reg_paddr)                      /* NO-OP */
 #endif /* IPA_OFFLOAD */
+
 #endif /* _HTC_API_H_ */
