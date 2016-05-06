@@ -999,7 +999,8 @@ QDF_STATUS (*extract_profile_ctx)(wmi_unified_t wmi_handle, void *evt_buf,
 				   wmi_host_wlan_profile_ctx_t *profile_ctx);
 
 QDF_STATUS (*extract_profile_data)(wmi_unified_t wmi_handle, void *evt_buf,
-				  wmi_host_wlan_profile_t *profile_data);
+				uint8_t idx,
+				wmi_host_wlan_profile_t *profile_data);
 
 QDF_STATUS (*extract_chan_info_event)(wmi_unified_t wmi_handle, void *evt_buf,
 				   wmi_host_chan_info_event *chan_info);
