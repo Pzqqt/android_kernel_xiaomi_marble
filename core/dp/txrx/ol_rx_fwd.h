@@ -72,9 +72,10 @@ ol_rx_fwd_check(struct ol_txrx_vdev_t *vdev,
 		struct ol_txrx_peer_t *peer,
 		unsigned tid, qdf_nbuf_t msdu_list);
 
-uint64_t
-ol_rx_get_fwd_to_tx_packet_count(
-	uint8_t vdev_id);
-
+A_STATUS
+ol_get_intra_bss_fwd_pkts_count(
+	uint8_t vdev_id,
+	unsigned long *fwd_tx_packets,
+	unsigned long *fwd_rx_packets);
 
 #endif /* _OL_RX_FWD_H_ */

@@ -4652,10 +4652,13 @@ static void hdd_bus_bw_compute_cbk(void *priv)
 {
 	hdd_context_t *hdd_ctx = (hdd_context_t *) priv;
 	hdd_adapter_t *adapter = NULL;
-	uint64_t tx_packets = 0, rx_packets = 0, fwd_packets = 0;
+	uint64_t tx_packets = 0, rx_packets = 0;
+	unsigned long fwd_tx_packets = 0, fwd_rx_packets = 0;
+	unsigned long fwd_tx_packets_diff = 0, fwd_rx_packets_diff = 0;
 	uint64_t total_tx = 0, total_rx = 0;
 	hdd_adapter_list_node_t *adapterNode = NULL;
 	QDF_STATUS status = 0;
+	A_STATUS ret;
 	bool connected = false;
 	uint32_t ipa_tx_packets = 0, ipa_rx_packets = 0;
 
@@ -4687,10 +4690,23 @@ static void hdd_bus_bw_compute_cbk(void *priv)
 					      adapter->prev_tx_packets);
 		rx_packets += HDD_BW_GET_DIFF(adapter->stats.rx_packets,
 					      adapter->prev_rx_packets);
-		fwd_packets = ol_rx_get_fwd_to_tx_packet_count(
-					adapter->sessionId);
-		tx_packets += HDD_BW_GET_DIFF(fwd_packets,
-					      adapter->prev_fwd_packets);
+
+		if (adapter->device_mode == QDF_SAP_MODE ||
+				adapter->device_mode == QDF_P2P_GO_MODE ||
+				adapter->device_mode == QDF_IBSS_MODE) {
+
+			ret = ol_get_intra_bss_fwd_pkts_count(
+				adapter->sessionId,
+				&fwd_tx_packets, &fwd_rx_packets);
+			if (ret == A_OK) {
+				fwd_tx_packets_diff += HDD_BW_GET_DIFF(
+					fwd_tx_packets,
+					adapter->prev_fwd_tx_packets);
+				fwd_rx_packets_diff += HDD_BW_GET_DIFF(
+					fwd_tx_packets,
+					adapter->prev_fwd_rx_packets);
+			}
+		}
 
 		total_rx += adapter->stats.rx_packets;
 		total_tx += adapter->stats.tx_packets;
@@ -4698,7 +4714,8 @@ static void hdd_bus_bw_compute_cbk(void *priv)
 		spin_lock_bh(&hdd_ctx->bus_bw_lock);
 		adapter->prev_tx_packets = adapter->stats.tx_packets;
 		adapter->prev_rx_packets = adapter->stats.rx_packets;
-		adapter->prev_fwd_packets = fwd_packets;
+		adapter->prev_fwd_tx_packets = fwd_tx_packets;
+		adapter->prev_fwd_rx_packets = fwd_rx_packets;
 		spin_unlock_bh(&hdd_ctx->bus_bw_lock);
 		connected = true;
 	}
@@ -4709,6 +4726,10 @@ static void hdd_bus_bw_compute_cbk(void *priv)
 								rx_packets;
 	hdd_ctx->hdd_txrx_hist[hdd_ctx->hdd_txrx_hist_idx].interval_tx =
 								tx_packets;
+
+	/* add intra bss forwarded tx and rx packets */
+	tx_packets += fwd_tx_packets_diff;
+	rx_packets += fwd_rx_packets_diff;
 
 	hdd_ipa_uc_stat_query(hdd_ctx, &ipa_tx_packets, &ipa_rx_packets);
 	tx_packets += (uint64_t)ipa_tx_packets;

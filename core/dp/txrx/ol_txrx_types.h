@@ -881,8 +881,9 @@ struct ol_txrx_vdev_t {
 	struct ol_tx_flow_pool_t *pool;
 #endif
 
-	/* packet count that only forwarded and not sent to OS layer */
-	uint64_t fwd_to_tx_packets;
+	/* intra bss forwarded tx and rx packets count */
+	uint64_t fwd_tx_packets;
+	uint64_t fwd_rx_packets;
 };
 
 struct ol_rx_reorder_array_elem_t {
