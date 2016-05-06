@@ -1185,7 +1185,7 @@ QDF_STATUS wmi_extract_composite_phyerr(void *wmi_hdl, void *evt_buf,
 QDF_STATUS wmi_extract_profile_ctx(void *wmi_hdl, void *evt_buf,
 			wmi_host_wlan_profile_ctx_t *profile_ctx);
 
-QDF_STATUS wmi_extract_profile_data(void *wmi_hdl, void *evt_buf,
+QDF_STATUS wmi_extract_profile_data(void *wmi_hdl, void *evt_buf, uint8_t idx,
 			wmi_host_wlan_profile_t *profile_data);
 
 QDF_STATUS wmi_extract_chan_info_event(void *wmi_hdl, void *evt_buf,

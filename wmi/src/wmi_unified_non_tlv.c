@@ -2217,6 +2217,29 @@ QDF_STATUS send_smart_ant_enable_cmd_non_tlv(wmi_unified_t wmi_handle,
 	cmd->rx_antenna = param->rx_antenna;
 	cmd->tx_default_antenna = param->rx_antenna;
 
+	if (param->mode == SMART_ANT_MODE_SERIAL) {
+		cmd->gpio_pin[0] = param->gpio_pin[0];
+		cmd->gpio_pin[1] = param->gpio_pin[1];
+		cmd->gpio_pin[2] = 0;
+		cmd->gpio_pin[3] = 0;
+
+		cmd->gpio_func[0] = param->gpio_func[0];
+		cmd->gpio_func[1] = param->gpio_func[1];
+		cmd->gpio_func[2] = 0;
+		cmd->gpio_func[3] = 0;
+
+	} else if (param->mode == SMART_ANT_MODE_PARALLEL) {
+		cmd->gpio_pin[0] = param->gpio_pin[0];
+		cmd->gpio_pin[1] = param->gpio_pin[1];
+		cmd->gpio_pin[2] = param->gpio_pin[2];
+		cmd->gpio_pin[3] = param->gpio_pin[3];
+
+		cmd->gpio_func[0] = param->gpio_func[0];
+		cmd->gpio_func[1] = param->gpio_func[1];
+		cmd->gpio_func[2] = param->gpio_func[2];
+		cmd->gpio_func[3] = param->gpio_func[3];
+	}
+
 	ret = wmi_unified_cmd_send(wmi_handle,
 				   buf,
 				   len,
@@ -6992,19 +7015,17 @@ static QDF_STATUS extract_profile_ctx_non_tlv(wmi_unified_t wmi_handle,
  * Return: 0 for success or error code
  */
 static QDF_STATUS extract_profile_data_non_tlv(wmi_unified_t wmi_handle,
-		void *evt_buf,
+		void *evt_buf, uint8_t idx,
 		wmi_host_wlan_profile_t *profile_data)
 {
 	wmi_profile_stats_event *profile_ev =
 		(wmi_profile_stats_event *)evt_buf;
-	uint32_t i;
 
-	for (i = 0; i < profile_ev->profile_ctx.bin_count; i++) {
+	if (idx > profile_ev->profile_ctx.bin_count)
+		return QDF_STATUS_E_INVAL;
 
-		qdf_mem_copy((profile_data+i), &profile_ev->profile_data[i],
-			sizeof(wmi_host_wlan_profile_t));
-
-	}
+	qdf_mem_copy(profile_data, &profile_ev->profile_data[idx],
+		sizeof(wmi_host_wlan_profile_t));
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -7310,6 +7331,9 @@ struct wmi_ops non_tlv_ops =  {
 	.extract_tx_data_traffic_ctrl_ev =
 				extract_tx_data_traffic_ctrl_ev_non_tlv,
 	.extract_vdev_extd_stats = extract_vdev_extd_stats_non_tlv,
+	.extract_fips_event_data = extract_fips_event_data_non_tlv,
+	.extract_fips_event_error_status =
+				extract_fips_event_error_status_non_tlv,
 };
 
 /**

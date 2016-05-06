@@ -118,6 +118,7 @@
 #define RTT_TIMEOUT_MS 180
 #define MAX_SUPPORTED_RATES 128
 #define WMI_HOST_MAX_BUFFER_SIZE	1712
+#define WMI_HAL_MAX_SANTENNA 4
 
 #define WMI_HOST_F_MS(_v, _f)	\
 	(((_v) & (_f)) >> (_f##_S))
@@ -3244,13 +3245,15 @@ struct thermal_mitigation_params {
  * @enable: Enable/Disable
  * @mode: SA mode
  * @rx_antenna: RX antenna config
- * @is_ar900b: Is target ar900b
+ * @gpio_pin : GPIO pin config
+ * @gpio_func : GPIO function config
  */
 struct smart_ant_enable_params {
 	uint32_t enable;
 	uint32_t mode;
 	uint32_t rx_antenna;
-	bool is_ar900b;
+	uint32_t gpio_pin[WMI_HAL_MAX_SANTENNA];
+	uint32_t gpio_func[WMI_HAL_MAX_SANTENNA];
 };
 
 /**
@@ -6176,16 +6179,6 @@ typedef struct {
 	uint32_t rx_mpdu_cnt;
 	uint32_t bin_count;
 } wmi_host_wlan_profile_ctx_t;
-
-/**
- * struct wmi_host_profile_stats_event - Profile stats event
- * @profile_ctx: wmi_host_wlan_profile_ctx_t
- * @profile_data: wmi_host_wlan_profile_t
- */
-typedef struct {
-	wmi_host_wlan_profile_ctx_t profile_ctx;
-	wmi_host_wlan_profile_t profile_data[WMI_HOST_MAX_PROFILE];
-} wmi_host_profile_stats_event;
 
 /**
  * struct wmi_host_chan_info_event - Channel info WMI event
