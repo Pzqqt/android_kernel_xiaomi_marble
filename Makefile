@@ -1,7 +1,7 @@
 KERNEL_SRC ?= /lib/modules/$(shell uname -r)/build
 
 KBUILD_OPTIONS := WLAN_ROOT=$(PWD)
-KBUILD_OPTIONS += MODNAME=wlan
+KBUILD_OPTIONS += MODNAME?=wlan
 
 #By default build for CLD
 WLAN_SELECT := CONFIG_QCA_CLD_WLAN=m
