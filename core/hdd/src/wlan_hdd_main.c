@@ -6652,9 +6652,8 @@ void wlan_hdd_send_svc_nlink_msg(int type, void *data, int len)
 	switch (type) {
 	case WLAN_SVC_FW_CRASHED_IND:
 	case WLAN_SVC_LTE_COEX_IND:
-#ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 	case WLAN_SVC_WLAN_AUTO_SHUTDOWN_IND:
-#endif
+	case WLAN_SVC_WLAN_AUTO_SHUTDOWN_CANCEL_IND:
 		ani_hdr->length = 0;
 		nlh->nlmsg_len = NLMSG_LENGTH((sizeof(tAniMsgHdr)));
 		skb_put(skb, NLMSG_SPACE(sizeof(tAniMsgHdr)));
@@ -6803,6 +6802,8 @@ void wlan_hdd_auto_shutdown_enable(hdd_context_t *hdd_ctx, bool enable)
 			hddLog(LOGE,
 			       FL("Failed to stop wlan auto shutdown timer"));
 		}
+		wlan_hdd_send_svc_nlink_msg(
+			WLAN_SVC_WLAN_AUTO_SHUTDOWN_CANCEL_IND, NULL, 0);
 		return;
 	}
 
