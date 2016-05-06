@@ -296,6 +296,15 @@ uint32_t hif_hia_item_address(uint32_t target_type, uint32_t item_offset)
 		/* ADRASTEA doesn't have a host interest address */
 		ASSERT(0);
 		return 0;
+	case TARGET_TYPE_AR900B:
+		return AR900B_HOST_INTEREST_ADDRESS + item_offset;
+	case TARGET_TYPE_QCA9984:
+		return QCA9984_HOST_INTEREST_ADDRESS + item_offset;
+	case TARGET_TYPE_QCA9888:
+		return QCA9888_HOST_INTEREST_ADDRESS + item_offset;
+	case TARGET_TYPE_IPQ4019:
+		return IPQ4019_HOST_INTEREST_ADDRESS + item_offset;
+
 	default:
 		ASSERT(0);
 		return 0;
@@ -769,6 +778,30 @@ int hif_get_device_type(uint32_t device_id,
 			ret = -ENODEV;
 			goto end;
 		}
+		break;
+
+	case AR9887_DEVICE_ID:
+		*hif_type = HIF_TYPE_AR9888;
+		*target_type = TARGET_TYPE_AR9888;
+		HIF_INFO(" *********** AR9887 **************\n");
+		break;
+
+	case QCA9984_DEVICE_ID:
+		*hif_type = HIF_TYPE_QCA9984;
+		*target_type = TARGET_TYPE_QCA9984;
+		HIF_INFO(" *********** QCA9984 *************\n");
+		break;
+
+	case QCA9888_DEVICE_ID:
+		*hif_type = HIF_TYPE_QCA9888;
+		*target_type = TARGET_TYPE_QCA9888;
+		HIF_INFO(" *********** QCA9888 *************\n");
+		break;
+
+	case AR900B_DEVICE_ID:
+		*hif_type = HIF_TYPE_AR900B;
+		*target_type = TARGET_TYPE_AR900B;
+		HIF_INFO(" *********** AR900B *************\n");
 		break;
 
 	default:

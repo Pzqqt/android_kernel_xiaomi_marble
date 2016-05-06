@@ -36,6 +36,18 @@ unsigned int htc_credit_flow = 1;
 #define DEBUG_CREDIT 0
 #endif
 
+/* HTC credit flow global disable */
+void htc_global_credit_flow_disable(void)
+{
+	htc_credit_flow = 0;
+}
+
+/* HTC credit flow global enable */
+void htc_global_credit_flow_enable(void)
+{
+	htc_credit_flow = 1;
+}
+
 A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 			     HTC_SERVICE_CONNECT_REQ *pConnectReq,
 			     HTC_SERVICE_CONNECT_RESP *pConnectResp)

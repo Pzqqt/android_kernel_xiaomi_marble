@@ -72,6 +72,22 @@ static int war1_allow_sleep;
 /* io32 write workaround */
 static int hif_ce_war1;
 
+/**
+ * hif_ce_war_disable() - disable ce war gobally
+ */
+void hif_ce_war_disable(void)
+{
+	hif_ce_war1 = 0;
+}
+
+/**
+ * hif_ce_war_enable() - enable ce war gobally
+ */
+void hif_ce_war_enable(void)
+{
+	hif_ce_war1 = 1;
+}
+
 #ifdef CONFIG_SLUB_DEBUG_ON
 
 /**
@@ -257,8 +273,9 @@ void war_ce_src_ring_write_idx_set(struct hif_softc *scn,
 			hif_write32_mb(indicator_addr, 0);
 			local_irq_restore(irq_flags);
 		}
-	} else
+	} else {
 		CE_SRC_RING_WRITE_IDX_SET(scn, ctrl_addr, write_index);
+	}
 }
 
 int

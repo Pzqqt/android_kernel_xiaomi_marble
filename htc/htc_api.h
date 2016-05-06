@@ -711,6 +711,8 @@ void *htc_get_targetdef(HTC_HANDLE htc_handle);
 int htc_runtime_suspend(HTC_HANDLE htc_ctx);
 int htc_runtime_resume(HTC_HANDLE htc_ctx);
 #endif
+void htc_global_credit_flow_disable(void);
+void htc_global_credit_flow_enable(void);
 
 /* Disable ASPM : Disable PCIe low power */
 bool htc_can_suspend_link(HTC_HANDLE HTCHandle);

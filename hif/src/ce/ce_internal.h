@@ -152,6 +152,7 @@ struct CE_state {
 
 /* Descriptor rings must be aligned to this boundary */
 #define CE_DESC_RING_ALIGN 8
+#define CLOCK_OVERRIDE 0x2
 
 #ifdef QCA_WIFI_3_0
 #define HIF_CE_DESC_ADDR_TO_DMA(desc) \

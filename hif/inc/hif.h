@@ -72,6 +72,9 @@ typedef void *hif_handle_t;
 #define TARGET_TYPE_AR9888    7
 #define TARGET_TYPE_AR6320    8
 #define TARGET_TYPE_AR900B    9
+#define TARGET_TYPE_QCA9984   10
+#define TARGET_TYPE_IPQ4019   11
+#define TARGET_TYPE_QCA9888   12
 /* For attach Peregrine 2.0 board target_reg_tbl only */
 #define TARGET_TYPE_AR9888V2  13
 /* For attach Rome1.0 target_reg_tbl only*/
@@ -555,6 +558,9 @@ int hif_send_single(struct hif_opaque_softc *osc, qdf_nbuf_t msdu, uint32_t
 int hif_send_fast(struct hif_opaque_softc *osc, qdf_nbuf_t *nbuf_arr, uint32_t
 		num_msdus, uint32_t transfer_id);
 void hif_pkt_dl_len_set(void *hif_sc, unsigned int pkt_download_len);
+void hif_ce_war_disable(void);
+void hif_ce_war_enable(void);
+
 #ifdef __cplusplus
 }
 #endif

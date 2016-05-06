@@ -72,6 +72,11 @@
  * use TargetCPU warm reset * instead of SOC_GLOBAL_RESET
  */
 #define CPU_WARM_RESET_WAR
+
+#ifdef CONFIG_WIN
+extern int32_t frac, intval, ar900b_20_targ_clk, qca9888_20_targ_clk;
+#endif
+
 /*
  * Top-level interrupt handler for all PCI interrupts from a Target.
  * When a block of MSI interrupts is allocated, this top-level handler
@@ -1458,6 +1463,149 @@ static void hif_sleep_entry(void *arg)
 #define HIF_HIA_MAX_POLL_LOOP    1000000
 #define HIF_HIA_POLLING_DELAY_MS 10
 
+#ifdef CONFIG_WIN
+void hif_set_hia_extnd(struct hif_softc *scn)
+{
+	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
+	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
+	uint32_t target_type = tgt_info->target_type;
+
+	HIF_TRACE("%s: E", __func__);
+
+	if ((target_type == TARGET_TYPE_AR900B) ||
+			target_type == TARGET_TYPE_QCA9984 ||
+			target_type == TARGET_TYPE_QCA9888) {
+		/* CHIP revision is 8-11 bits of the CHIP_ID register 0xec
+		in RTC space */
+		tgt_info->target_revision
+			= CHIP_ID_REVISION_GET(hif_read32_mb(scn->mem
+					+ CHIP_ID_ADDRESS));
+		qdf_print(KERN_INFO"chip_id 0x%x chip_revision 0x%x\n",
+			target_type, tgt_info->target_revision);
+	}
+
+	{
+		uint32_t flag2_value = 0;
+		uint32_t flag2_targ_addr =
+			host_interest_item_address(target_type,
+			offsetof(struct host_interest_s, hi_skip_clock_init));
+
+		if ((ar900b_20_targ_clk != -1) &&
+			(frac != -1) && (intval != -1)) {
+			hif_diag_read_access(hif_hdl, flag2_targ_addr,
+				&flag2_value);
+			qdf_print("\n Setting clk_override\n");
+			flag2_value |= CLOCK_OVERRIDE;
+
+			hif_diag_write_access(hif_hdl, flag2_targ_addr,
+					flag2_value);
+			qdf_print("\n CLOCK PLL val set %d\n", flag2_value);
+		} else {
+			qdf_print(KERN_INFO"\n CLOCK PLL skipped\n");
+		}
+	}
+
+	if (target_type == TARGET_TYPE_AR900B
+			|| target_type == TARGET_TYPE_QCA9984
+			|| target_type == TARGET_TYPE_QCA9888) {
+
+		/* for AR9980_2.0, 300 mhz clock is used, right now we assume
+		 * this would be supplied through module parameters,
+		 * if not supplied assumed default or same behavior as 1.0.
+		 * Assume 1.0 clock can't be tuned, reset to defaults
+		 */
+
+		qdf_print(KERN_INFO"%s: setting the target pll frac %x intval %x\n",
+			  __func__, frac, intval);
+
+		/* do not touch frac, and int val, let them be default -1,
+		 * if desired, host can supply these through module params
+		 */
+		if (frac != -1 || intval != -1) {
+			uint32_t flag2_value = 0;
+			uint32_t flag2_targ_addr;
+
+			flag2_targ_addr =
+				host_interest_item_address(target_type,
+				offsetof(struct host_interest_s,
+					hi_clock_info));
+			hif_diag_read_access(hif_hdl,
+				flag2_targ_addr, &flag2_value);
+			qdf_print("\n ====> FRAC Val %x Address %x\n", frac,
+				flag2_value);
+			hif_diag_write_access(hif_hdl, flag2_value, frac);
+			qdf_print("\n INT Val %x  Address %x\n",
+				intval, flag2_value + 4);
+			hif_diag_write_access(hif_hdl,
+					flag2_value + 4, intval);
+		} else {
+			qdf_print(KERN_INFO"%s: no frac provided, skipping pre-configuring PLL\n",
+				  __func__);
+		}
+
+		/* for 2.0 write 300 mhz into hi_desired_cpu_speed_hz */
+		if ((target_type == TARGET_TYPE_AR900B)
+			&& (tgt_info->target_revision == AR900B_REV_2)
+			&& ar900b_20_targ_clk != -1) {
+			uint32_t flag2_value = 0;
+			uint32_t flag2_targ_addr;
+
+			flag2_targ_addr
+				= host_interest_item_address(target_type,
+					offsetof(struct host_interest_s,
+					hi_desired_cpu_speed_hz));
+			hif_diag_read_access(hif_hdl, flag2_targ_addr,
+							&flag2_value);
+			qdf_print("\n ====> hi_desired_cpu_speed_hz Address %x\n",
+				  flag2_value);
+			hif_diag_write_access(hif_hdl, flag2_value,
+				ar900b_20_targ_clk/*300000000u*/);
+		} else if (target_type == TARGET_TYPE_QCA9888) {
+			uint32_t flag2_targ_addr;
+
+			if (200000000u != qca9888_20_targ_clk) {
+				qca9888_20_targ_clk = 300000000u;
+				/* Setting the target clock speed to 300 mhz */
+			}
+
+			flag2_targ_addr
+				= host_interest_item_address(target_type,
+					offsetof(struct host_interest_s,
+					hi_desired_cpu_speed_hz));
+			hif_diag_write_access(hif_hdl, flag2_targ_addr,
+				qca9888_20_targ_clk);
+		} else {
+			qdf_print(KERN_INFO"%s: targ_clk is not provided, skipping pre-configuring PLL\n",
+				  __func__);
+		}
+	} else {
+		if (frac != -1 || intval != -1) {
+			uint32_t flag2_value = 0;
+			uint32_t flag2_targ_addr =
+				host_interest_item_address(target_type,
+					offsetof(struct host_interest_s,
+							hi_clock_info));
+			hif_diag_read_access(hif_hdl, flag2_targ_addr,
+						&flag2_value);
+			qdf_print("\n ====> FRAC Val %x Address %x\n", frac,
+							flag2_value);
+			hif_diag_write_access(hif_hdl, flag2_value, frac);
+			qdf_print("\n INT Val %x  Address %x\n", intval,
+							flag2_value + 4);
+			hif_diag_write_access(hif_hdl, flag2_value + 4,
+					intval);
+		}
+	}
+}
+
+#else
+
+void hif_set_hia_extnd(struct hif_softc *scn)
+{
+}
+
+#endif
+
 /**
  * hif_set_hia() - fill out the host interest area
  * @scn: hif context
@@ -1704,6 +1852,12 @@ int hif_set_hia(struct hif_softc *scn)
 		goto done;
 	}
 #endif
+	if ((target_type == TARGET_TYPE_AR900B)
+			|| (target_type == TARGET_TYPE_QCA9984)
+			|| (target_type == TARGET_TYPE_QCA9888)
+			|| (target_type == TARGET_TYPE_QCA9888)) {
+		hif_set_hia_extnd(scn);
+	}
 
 	/* Tell Target to proceed with initialization */
 	flag2_targ_addr = hif_hia_item_address(target_type,
@@ -1743,6 +1897,8 @@ int hif_pci_bus_configure(struct hif_softc *hif_sc)
 {
 	int status = 0;
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_sc);
+	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(hif_sc);
+	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
 
 	hif_ce_prepare_config(hif_sc);
 
@@ -1772,10 +1928,12 @@ int hif_pci_bus_configure(struct hif_softc *hif_sc)
 	if (CONFIG_ATH_PCIE_MAX_PERF ||
 	    CONFIG_ATH_PCIE_AWAKE_WHILE_DRIVER_LOAD) {
 		/* Force AWAKE forever/till the driver is loaded */
-		if (hif_pci_target_sleep_state_adjust(hif_sc, false, true)
-				< 0) {
-			status = -EACCES;
-			goto disable_wlan;
+		if (tgt_info->target_type != TARGET_TYPE_IPQ4019) {
+			if (hif_pci_target_sleep_state_adjust(hif_sc,
+					false, true) < 0) {
+				status = -EACCES;
+				goto disable_wlan;
+			}
 		}
 	}
 
@@ -2184,9 +2342,10 @@ static int hif_pci_configure_legacy_irq(struct hif_pci_softc *sc)
 	hif_write32_mb(sc->mem+(SOC_CORE_BASE_ADDRESS |
 		  PCIE_INTR_ENABLE_ADDRESS),
 		  HOST_GROUP0_MASK);
+	hif_read32_mb(sc->mem+(SOC_CORE_BASE_ADDRESS |
+			       PCIE_INTR_ENABLE_ADDRESS));
 	hif_write32_mb(sc->mem + PCIE_LOCAL_BASE_ADDRESS +
-		      PCIE_SOC_WAKE_ADDRESS,
-		  PCIE_SOC_WAKE_RESET);
+		      PCIE_SOC_WAKE_ADDRESS, PCIE_SOC_WAKE_RESET);
 end:
 	QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: X, ret = %d", __func__, ret);

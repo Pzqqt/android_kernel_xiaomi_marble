@@ -86,6 +86,10 @@
 #define AR6320_FW_3_2  (0x32)
 #define ADRASTEA_DEVICE_ID (0xabcd)
 #define ADRASTEA_DEVICE_ID_P2_E12 (0x7021)
+#define AR9887_DEVICE_ID    (0x0050)
+#define AR900B_DEVICE_ID    (0x0040)
+#define QCA9984_DEVICE_ID   (0x0046)
+#define QCA9888_DEVICE_ID   (0x0056)
 
 #define HIF_GET_PCI_SOFTC(scn) ((struct hif_pci_softc *)scn)
 #define HIF_GET_CE_STATE(scn) ((struct HIF_CE_state *)scn)

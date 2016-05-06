@@ -310,6 +310,106 @@ static struct service_to_pipe target_service_to_ce_map_wlan[] = {
 	},
 };
 
+static struct service_to_pipe target_service_to_ce_map_ar900b[] = {
+	{
+		WMI_DATA_VO_SVC,
+		PIPEDIR_OUT,    /* out = UL = host -> target */
+		3,
+	},
+	{
+		WMI_DATA_VO_SVC,
+		PIPEDIR_IN,     /* in = DL = target -> host */
+		2,
+	},
+	{
+		WMI_DATA_BK_SVC,
+		PIPEDIR_OUT,    /* out = UL = host -> target */
+		3,
+	},
+	{
+		WMI_DATA_BK_SVC,
+		PIPEDIR_IN,     /* in = DL = target -> host */
+		2,
+	},
+	{
+		WMI_DATA_BE_SVC,
+		PIPEDIR_OUT,    /* out = UL = host -> target */
+		3,
+	},
+	{
+		WMI_DATA_BE_SVC,
+		PIPEDIR_IN,     /* in = DL = target -> host */
+		2,
+	},
+	{
+		WMI_DATA_VI_SVC,
+		PIPEDIR_OUT,    /* out = UL = host -> target */
+		3,
+	},
+	{
+		WMI_DATA_VI_SVC,
+		PIPEDIR_IN,     /* in = DL = target -> host */
+		2,
+	},
+	{
+		WMI_CONTROL_SVC,
+		PIPEDIR_OUT,    /* out = UL = host -> target */
+		3,
+	},
+	{
+		WMI_CONTROL_SVC,
+		PIPEDIR_IN,     /* in = DL = target -> host */
+		2,
+	},
+	{
+		HTC_CTRL_RSVD_SVC,
+		PIPEDIR_OUT,    /* out = UL = host -> target */
+		0,              /* could be moved to 3 (share with WMI) */
+	},
+	{
+		HTC_CTRL_RSVD_SVC,
+		PIPEDIR_IN,     /* in = DL = target -> host */
+		1,
+	},
+	{
+		HTC_RAW_STREAMS_SVC, /* not currently used */
+		PIPEDIR_OUT,    /* out = UL = host -> target */
+		0,
+	},
+	{
+		HTC_RAW_STREAMS_SVC, /* not currently used */
+		PIPEDIR_IN,     /* in = DL = target -> host */
+		1,
+	},
+	{
+		HTT_DATA_MSG_SVC,
+		PIPEDIR_OUT,    /* out = UL = host -> target */
+		4,
+	},
+#if WLAN_FEATURE_FASTPATH
+	{
+		HTT_DATA_MSG_SVC,
+		PIPEDIR_IN,     /* in = DL = target -> host */
+		5,
+	},
+#else /* WLAN_FEATURE_FASTPATH */
+	{
+		HTT_DATA_MSG_SVC,
+		PIPEDIR_IN,  /* in = DL = target -> host */
+		1,
+	},
+#endif /* WLAN_FEATURE_FASTPATH */
+
+	/* (Additions here) */
+
+	{                       /* Must be last */
+		0,
+		0,
+		0,
+	},
+};
+
+
 static struct service_to_pipe *target_service_to_ce_map =
 	target_service_to_ce_map_wlan;
 static int target_service_to_ce_map_sz = sizeof(target_service_to_ce_map_wlan);
@@ -355,6 +455,8 @@ bool ce_mark_datapath(struct CE_state *ce_state)
 	size_t map_sz;
 	int    i;
 	bool   rc = false;
+	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(ce_state->scn);
+	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
 
 	if (ce_state != NULL) {
 		if (QDF_IS_EPPING_ENABLED(hif_get_conparam(ce_state->scn))) {
@@ -362,9 +464,25 @@ bool ce_mark_datapath(struct CE_state *ce_state)
 			map_sz = sizeof(target_service_to_ce_map_wlan_epping) /
 				sizeof(struct service_to_pipe);
 		} else {
-			svc_map = target_service_to_ce_map_wlan;
-			map_sz = sizeof(target_service_to_ce_map_wlan) /
-				sizeof(struct service_to_pipe);
+			switch (tgt_info->target_type) {
+			default:
+				svc_map = target_service_to_ce_map_wlan;
+				map_sz =
+					sizeof(target_service_to_ce_map_wlan) /
+					sizeof(struct service_to_pipe);
+				break;
+			case TARGET_TYPE_AR900B:
+			case TARGET_TYPE_QCA9984:
+			case TARGET_TYPE_IPQ4019:
+			case TARGET_TYPE_QCA9888:
+			case TARGET_TYPE_AR9888:
+			case TARGET_TYPE_AR9888V2:
+				svc_map = target_service_to_ce_map_ar900b;
+				map_sz =
+					sizeof(target_service_to_ce_map_ar900b)
+					/ sizeof(struct service_to_pipe);
+				break;
+			}
 		}
 		for (i = 0; i < map_sz; i++) {
 			if ((svc_map[i].pipenum == ce_state->id) &&
@@ -1788,6 +1906,9 @@ int hif_wlan_enable(struct hif_softc *scn)
 void hif_ce_prepare_config(struct hif_softc *scn)
 {
 	uint32_t mode = hif_get_conparam(scn);
+	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
+	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
+
 	/* if epping is enabled we need to use the epping configuration. */
 	if (QDF_IS_EPPING_ENABLED(mode)) {
 		if (CE_EPPING_USES_IRQ)
@@ -1802,6 +1923,34 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 			sizeof(target_service_to_ce_map_wlan_epping);
 		target_shadow_reg_cfg = target_shadow_reg_cfg_epping;
 		shadow_cfg_sz = sizeof(target_shadow_reg_cfg_epping);
+	}
+
+	switch (tgt_info->target_type) {
+	default:
+		break;
+	case TARGET_TYPE_AR900B:
+	case TARGET_TYPE_QCA9984:
+	case TARGET_TYPE_IPQ4019:
+	case TARGET_TYPE_QCA9888:
+		host_ce_config = host_ce_config_wlan_ar900b;
+		target_ce_config = target_ce_config_wlan_ar900b;
+		target_ce_config_sz = sizeof(target_ce_config_wlan_ar900b);
+
+		target_service_to_ce_map = target_service_to_ce_map_ar900b;
+		target_service_to_ce_map_sz =
+			sizeof(target_service_to_ce_map_ar900b);
+		break;
+
+	case TARGET_TYPE_AR9888:
+	case TARGET_TYPE_AR9888V2:
+		host_ce_config = host_ce_config_wlan_ar9888;
+		target_ce_config = target_ce_config_wlan_ar9888;
+		target_ce_config_sz = sizeof(target_ce_config_wlan_ar9888);
+
+		target_service_to_ce_map = target_service_to_ce_map_ar900b;
+		target_service_to_ce_map_sz =
+			sizeof(target_service_to_ce_map_ar900b);
+		break;
 	}
 }
 
@@ -2287,6 +2436,7 @@ int hif_map_service_to_pipe(struct hif_opaque_softc *hif_hdl, uint16_t svc_id,
 	size_t sz_tgt_svc_map_to_use;
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
 	uint32_t mode = hif_get_conparam(scn);
+	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
 	bool dl_updated = false;
 	bool ul_updated = false;
 
@@ -2295,8 +2445,23 @@ int hif_map_service_to_pipe(struct hif_opaque_softc *hif_hdl, uint16_t svc_id,
 		sz_tgt_svc_map_to_use =
 			sizeof(target_service_to_ce_map_wlan_epping);
 	} else {
-		tgt_svc_map_to_use = target_service_to_ce_map_wlan;
-		sz_tgt_svc_map_to_use = sizeof(target_service_to_ce_map_wlan);
+		switch (tgt_info->target_type) {
+		default:
+			tgt_svc_map_to_use = target_service_to_ce_map_wlan;
+			sz_tgt_svc_map_to_use =
+				sizeof(target_service_to_ce_map_wlan);
+			break;
+		case TARGET_TYPE_AR900B:
+		case TARGET_TYPE_QCA9984:
+		case TARGET_TYPE_IPQ4019:
+		case TARGET_TYPE_QCA9888:
+		case TARGET_TYPE_AR9888:
+		case TARGET_TYPE_AR9888V2:
+			tgt_svc_map_to_use = target_service_to_ce_map_ar900b;
+			sz_tgt_svc_map_to_use =
+				sizeof(target_service_to_ce_map_ar900b);
+			break;
+		}
 	}
 
 	*dl_is_polled = 0;  /* polling for received messages not supported */
