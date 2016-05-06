@@ -56,6 +56,12 @@ typedef void *hif_handle_t;
 /* For attaching Peregrine 2.0 board host_reg_tbl only */
 #define HIF_TYPE_AR9888V2 8
 #define HIF_TYPE_ADRASTEA 10
+#define HIF_TYPE_AR900B 11
+#define HIF_TYPE_QCA9984 12
+#define HIF_TYPE_IPQ4019 13
+#define HIF_TYPE_QCA9888 14
+
+
 
 #define TARGET_TYPE_UNKNOWN   0
 #define TARGET_TYPE_AR6001    1
@@ -218,6 +224,10 @@ typedef struct _HID_ACCESS_LOG {
 	uint32_t value;
 } HIF_ACCESS_LOG;
 #endif
+
+void hif_reg_write(struct hif_opaque_softc *hif_ctx, uint32_t offset,
+		uint32_t value);
+uint32_t hif_reg_read(struct hif_opaque_softc *hif_ctx, uint32_t offset);
 
 #define HIF_MAX_DEVICES                 1
 
@@ -408,6 +418,7 @@ QDF_STATUS hif_send_head(struct hif_opaque_softc *scn, uint8_t PipeID,
 				  qdf_nbuf_t wbuf, uint32_t data_attr);
 void hif_send_complete_check(struct hif_opaque_softc *scn, uint8_t PipeID,
 			     int force);
+void hif_shut_down_device(struct hif_opaque_softc *scn);
 void hif_get_default_pipe(struct hif_opaque_softc *scn, uint8_t *ULPipe,
 			  uint8_t *DLPipe);
 int hif_map_service_to_pipe(struct hif_opaque_softc *scn, uint16_t svc_id,
@@ -536,7 +547,14 @@ void hif_set_target_status(struct hif_opaque_softc *hif_ctx, enum
 			   hif_target_status);
 void hif_init_ini_config(struct hif_opaque_softc *hif_ctx,
 			 struct hif_config_info *cfg);
-
+void hif_update_tx_ring(struct hif_opaque_softc *osc, u_int32_t num_htt_cmpls);
+qdf_nbuf_t hif_batch_send(struct hif_opaque_softc *osc, qdf_nbuf_t msdu,
+		uint32_t transfer_id, u_int32_t len, uint32_t sendhead);
+int hif_send_single(struct hif_opaque_softc *osc, qdf_nbuf_t msdu, uint32_t
+		transfer_id, u_int32_t len);
+int hif_send_fast(struct hif_opaque_softc *osc, qdf_nbuf_t *nbuf_arr, uint32_t
+		num_msdus, uint32_t transfer_id);
+void hif_pkt_dl_len_set(void *hif_sc, unsigned int pkt_download_len);
 #ifdef __cplusplus
 }
 #endif

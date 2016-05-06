@@ -250,31 +250,39 @@ struct CE_dest_desc {
 struct CE_src_desc {
 	uint32_t buffer_addr;
 #if _BYTE_ORDER == _BIG_ENDIAN
-	uint32_t  meta_data:14,
-		byte_swap:1,
-		gather:1,
-		nbytes:16;
+	uint32_t  meta_data:12,
+		  target_int_disable:1,
+		  host_int_disable:1,
+		  byte_swap:1,
+		  gather:1,
+		  nbytes:16;
 #else
 
-		uint32_t nbytes:16,
-		gather:1,
-		byte_swap:1,
-		meta_data:14;
+	uint32_t nbytes:16,
+		 gather:1,
+		 byte_swap:1,
+		 host_int_disable:1,
+		 target_int_disable:1,
+		 meta_data:12;
 #endif
 };
 
 struct CE_dest_desc {
 	uint32_t buffer_addr;
 #if _BYTE_ORDER == _BIG_ENDIAN
-	uint32_t  meta_data:14,
-		byte_swap:1,
-		gather:1,
-		nbytes:16;
+	uint32_t  meta_data:12,
+		  target_int_disable:1,
+		  host_int_disable:1,
+		  byte_swap:1,
+		  gather:1,
+		  nbytes:16;
 #else
 	uint32_t nbytes:16,
-		gather:1,
-		byte_swap:1,
-		meta_data:14;
+		 gather:1,
+		 byte_swap:1,
+		 host_int_disable:1,
+		 target_int_disable:1,
+		 meta_data:12;
 #endif
 };
 #endif /* QCA_WIFI_3_0 */

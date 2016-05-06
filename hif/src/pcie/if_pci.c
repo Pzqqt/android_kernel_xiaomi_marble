@@ -3026,7 +3026,7 @@ uint32_t hif_target_read_checked(struct hif_softc *scn, uint32_t offset)
 	void *addr;
 
 	addr = scn->mem + offset;
-	value = A_PCI_READ32(addr);
+	value = hif_read32_mb(addr);
 
 	{
 		unsigned long irq_flags;

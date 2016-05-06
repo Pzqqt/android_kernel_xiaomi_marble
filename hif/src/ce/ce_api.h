@@ -114,6 +114,7 @@ typedef void (*CE_watermark_cb)(struct CE_handle *copyeng,
 #define CE_WM_FLAG_SEND_LOW    2
 #define CE_WM_FLAG_RECV_HIGH   4
 #define CE_WM_FLAG_RECV_LOW    8
+#define CE_HTT_TX_CE           4
 
 /* A list of buffers to be gathered and sent */
 struct ce_sendlist;
@@ -155,6 +156,17 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t *msdus,
 #endif
 void ce_pkt_dl_len_set(void *hif_sc, unsigned int pkt_download_len);
 
+void ce_update_tx_ring(struct CE_handle *ce_tx_hdl, uint32_t num_htt_cmpls);
+extern qdf_nbuf_t ce_batch_send(struct CE_handle *ce_tx_hdl,
+		qdf_nbuf_t msdu,
+		uint32_t transfer_id,
+		uint32_t len,
+		uint32_t sendhead);
+
+extern int ce_send_single(struct CE_handle *ce_tx_hdl,
+		qdf_nbuf_t msdu,
+		uint32_t transfer_id,
+		uint32_t len);
 /*
  * Register a Send Callback function.
  * This function is called as soon as the contents of a Send

@@ -983,3 +983,117 @@ bool hif_is_recovery_in_progress(struct hif_softc *scn)
 
 	return false;
 }
+
+/**
+ * hif_batch_send() - API to access hif specific function
+ * ce_batch_send.
+ * @osc: HIF Context
+ * @msdu : list of msdus to be sent
+ * @transfer_id : transfer id
+ * @len : donwloaded length
+ *
+ * Return: list of msds not sent
+ */
+qdf_nbuf_t hif_batch_send(struct hif_opaque_softc *osc, qdf_nbuf_t msdu,
+		uint32_t transfer_id, u_int32_t len, uint32_t sendhead)
+{
+	void *ce_tx_hdl = hif_get_ce_handle(osc, CE_HTT_TX_CE);
+	return ce_batch_send((struct CE_handle *)ce_tx_hdl, msdu, transfer_id,
+			len, sendhead);
+}
+
+/**
+ * hif_update_tx_ring() - API to access hif specific function
+ * ce_update_tx_ring.
+ * @osc: HIF Context
+ * @num_htt_cmpls : number of htt compl received.
+ *
+ * Return: void
+ */
+void hif_update_tx_ring(struct hif_opaque_softc *osc, u_int32_t num_htt_cmpls)
+{
+	void *ce_tx_hdl = hif_get_ce_handle(osc, CE_HTT_TX_CE);
+	ce_update_tx_ring(ce_tx_hdl, num_htt_cmpls);
+}
+
+
+/**
+ * hif_send_single() - API to access hif specific function
+ * ce_send_single.
+ * @osc: HIF Context
+ * @msdu : msdu to be sent
+ * @transfer_id: transfer id
+ * @len : downloaded length
+ *
+ * Return: msdu sent status
+ */
+int hif_send_single(struct hif_opaque_softc *osc, qdf_nbuf_t msdu, uint32_t
+		transfer_id, u_int32_t len)
+{
+	void *ce_tx_hdl = hif_get_ce_handle(osc, CE_HTT_TX_CE);
+	return ce_send_single((struct CE_handle *)ce_tx_hdl, msdu, transfer_id,
+			len);
+}
+
+/**
+ * hif_send_fast() - API to access hif specific function
+ * ce_send_fast.
+ * @osc: HIF Context
+ * @msdu : array of msdus to be sent
+ * @num_msdus : number of msdus in an array
+ * @transfer_id: transfer id
+ *
+ * Return: No. of packets that could be sent
+ */
+int hif_send_fast(struct hif_opaque_softc *osc, qdf_nbuf_t *nbuf_arr,
+		uint32_t num_msdus, uint32_t transfer_id)
+{
+	void *ce_tx_hdl = hif_get_ce_handle(osc, CE_HTT_TX_CE);
+	return ce_send_fast((struct CE_handle *)ce_tx_hdl, nbuf_arr, num_msdus,
+			transfer_id);
+}
+
+/**
+ * hif_pkt_dl_len_set() - API to access hif specific function
+ * ce_pkt_dl_len_set.
+ * @osc: HIF Context
+ * @pkt_download_len: download length
+ *
+ * Return: None
+ */
+void hif_pkt_dl_len_set(void *hif_sc, unsigned int pkt_download_len)
+{
+	ce_pkt_dl_len_set(hif_sc, pkt_download_len);
+}
+
+/**
+ * hif_reg_write() - API to access hif specific function
+ * hif_write32_mb.
+ * @hif_ctx : HIF Context
+ * @offset : offset on which value has to be written
+ * @value : value to be written
+ *
+ * Return: None
+ */
+void hif_reg_write(struct hif_opaque_softc *hif_ctx, uint32_t offset,
+		uint32_t value)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	hif_write32_mb(scn->mem + offset, value);
+
+}
+
+/**
+ * hif_reg_read() - API to access hif specific function
+ * hif_read32_mb.
+ * @hif_ctx : HIF Context
+ * @offset : offset from which value has to be read
+ *
+ * Return: Read value
+ */
+uint32_t hif_reg_read(struct hif_opaque_softc *hif_ctx, uint32_t offset)
+{
+
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	return hif_read32_mb(scn->mem + offset);
+}
