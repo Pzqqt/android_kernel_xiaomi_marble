@@ -1485,7 +1485,7 @@ ol_txrx_peer_attach(ol_txrx_vdev_handle vdev, uint8_t *peer_mac_addr)
 	if (wait_on_deletion) {
 		/* wait for peer deletion */
 		rc = qdf_wait_single_event(&vdev->wait_delete_comp,
-			qdf_system_msecs_to_ticks(PEER_DELETION_TIMEOUT));
+					   PEER_DELETION_TIMEOUT);
 		if (!rc) {
 			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 				"timedout waiting for peer(%d) deletion\n",
