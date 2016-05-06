@@ -82,13 +82,13 @@ typedef void *hif_handle_t;
 struct CE_state;
 #define CE_COUNT_MAX 12
 
-/* These numbers are selected so that the product is close to current
-   higher limit of packets HIF services at one shot (1000) */
+#ifdef CONFIG_SLUB_DEBUG_ON
+#define QCA_NAPI_BUDGET    64
+#define QCA_NAPI_DEF_SCALE  2
+#else  /* PERF build */
 #define QCA_NAPI_BUDGET    64
 #define QCA_NAPI_DEF_SCALE 16
-/* NOTE: This is to adapt non-NAPI solution to use
-   the same "budget" as NAPI. Will be removed
-   `once decision about NAPI is made */
+#endif /* SLUB_DEBUG_ON */
 #define HIF_NAPI_MAX_RECEIVES (QCA_NAPI_BUDGET * QCA_NAPI_DEF_SCALE)
 
 /* NOTE: "napi->scale" can be changed,

@@ -61,15 +61,8 @@
 #ifdef QCA_WIFI_3_0
 #define DISABLE_L1SS_STATES 1
 #endif
-#ifdef CONFIG_SLUB_DEBUG_ON
-#define MAX_NUM_OF_RECEIVES 100 /* Maximum number of Rx buf to process before*
-				 * break out in SLUB debug builds */
-#elif defined(FEATURE_NAPI)
+
 #define MAX_NUM_OF_RECEIVES HIF_NAPI_MAX_RECEIVES
-#else /* no SLUBS, no NAPI */
-/* Maximum number of Rx buf to process before break out */
-#define MAX_NUM_OF_RECEIVES 1000
-#endif /* SLUB_DEBUG_ON / FEATURE_NAPI */
 
 #ifdef QCA_WIFI_3_0_ADRASTEA
 #define ADRASTEA_BU 1
