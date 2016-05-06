@@ -381,6 +381,25 @@ bool ce_mark_datapath(struct CE_state *ce_state)
 	return rc;
 }
 
+/**
+ * ce_ring_test_initial_indexes() - tests the initial ce ring indexes
+ * @ce_id: ce in question
+ * @ring: ring state being examined
+ * @type: "src_ring" or "dest_ring" string for identifying the ring
+ *
+ * Warns on non-zero index values.
+ * Causes a kernel panic if the ring is not empty durring initialization.
+ */
+static void ce_ring_test_initial_indexes(int ce_id, struct CE_ring_state *ring,
+					 char *type)
+{
+	if (ring->write_index != 0 || ring->sw_index != 0)
+		HIF_ERROR("ce %d, %s, initial sw_index = %d, initial write_index =%d",
+			  ce_id, type, ring->sw_index, ring->write_index);
+	if (ring->write_index != ring->sw_index)
+		QDF_BUG(0);
+}
+
 /*
  * Initialize a Copy Engine based on caller-supplied attributes.
  * This may be called once to initialize both source and destination
@@ -487,10 +506,16 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 			if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
 				goto error_target_access;
 			src_ring->hw_index =
-				CE_SRC_RING_READ_IDX_GET(scn, ctrl_addr);
+				CE_SRC_RING_READ_IDX_GET_FROM_REGISTER(scn,
+					ctrl_addr);
 			src_ring->sw_index = src_ring->hw_index;
 			src_ring->write_index =
-				CE_SRC_RING_WRITE_IDX_GET(scn, ctrl_addr);
+				CE_SRC_RING_WRITE_IDX_GET_FROM_REGISTER(scn,
+					ctrl_addr);
+
+			ce_ring_test_initial_indexes(CE_id, src_ring,
+						     "src_ring");
+
 			if (Q_TARGET_ACCESS_END(scn) < 0)
 				goto error_target_access;
 
@@ -629,9 +654,15 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 			if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
 				goto error_target_access;
 			dest_ring->sw_index =
-				CE_DEST_RING_READ_IDX_GET(scn, ctrl_addr);
+				CE_DEST_RING_READ_IDX_GET_FROM_REGISTER(scn,
+					ctrl_addr);
 			dest_ring->write_index =
-				CE_DEST_RING_WRITE_IDX_GET(scn, ctrl_addr);
+				CE_DEST_RING_WRITE_IDX_GET_FROM_REGISTER(scn,
+					ctrl_addr);
+
+			ce_ring_test_initial_indexes(CE_id, dest_ring,
+						     "dest_ring");
+
 			if (Q_TARGET_ACCESS_END(scn) < 0)
 				goto error_target_access;
 

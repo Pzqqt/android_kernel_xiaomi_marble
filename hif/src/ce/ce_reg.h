@@ -264,6 +264,11 @@ uint32_t DEBUG_CE_DEST_RING_READ_IDX_GET(struct hif_softc *scn,
 #define SRRI_FROM_DDR_ADDR(addr) ((*(addr)) & 0xFFFF)
 #define DRRI_FROM_DDR_ADDR(addr) (((*(addr))>>16) & 0xFFFF)
 
+#define CE_SRC_RING_READ_IDX_GET_FROM_REGISTER(scn, CE_ctrl_addr) \
+	A_TARGET_READ(scn, (CE_ctrl_addr) + CURRENT_SRRI_ADDRESS)
+#define CE_DEST_RING_READ_IDX_GET_FROM_REGISTER(scn, CE_ctrl_addr) \
+	A_TARGET_READ(scn, (CE_ctrl_addr) + CURRENT_DRRI_ADDRESS)
+
 #ifdef ADRASTEA_RRI_ON_DDR
 #ifdef SHADOW_REG_DEBUG
 #define CE_SRC_RING_READ_IDX_GET_FROM_DDR(scn, CE_ctrl_addr)\
@@ -288,9 +293,9 @@ unsigned int hif_get_dst_ring_read_index(struct hif_softc *scn,
 	hif_get_dst_ring_read_index(scn, CE_ctrl_addr)
 #else
 #define CE_SRC_RING_READ_IDX_GET(scn, CE_ctrl_addr) \
-	A_TARGET_READ(scn, (CE_ctrl_addr) + CURRENT_SRRI_ADDRESS)
+	CE_SRC_RING_READ_IDX_GET_FROM_REGISTER(scn, CE_ctrl_addr)
 #define CE_DEST_RING_READ_IDX_GET(scn, CE_ctrl_addr)\
-	A_TARGET_READ(scn, (CE_ctrl_addr) + CURRENT_DRRI_ADDRESS)
+	CE_DEST_RING_READ_IDX_GET_FROM_REGISTER(scn, CE_ctrl_addr)
 
 /**
  * if RRI on DDR is not enabled, get idx from ddr defaults to
@@ -299,7 +304,6 @@ unsigned int hif_get_dst_ring_read_index(struct hif_softc *scn,
  */
 #define CE_SRC_RING_READ_IDX_GET_FROM_DDR(scn, CE_ctrl_addr)\
 	A_TARGET_READ(scn, (CE_ctrl_addr) + CURRENT_SRRI_ADDRESS)
-
 #endif
 
 #define CE_SRC_RING_BASE_ADDR_SET(scn, CE_ctrl_addr, addr) \
@@ -507,38 +511,35 @@ unsigned int hif_get_dst_ring_read_index(struct hif_softc *scn,
 #define CE0_BASE_ADDRESS         (scn->target_ce_def->d_CE0_BASE_ADDRESS)
 #define CE1_BASE_ADDRESS         (scn->target_ce_def->d_CE1_BASE_ADDRESS)
 
+
 #ifdef ADRASTEA_SHADOW_REGISTERS
-
 #define NUM_SHADOW_REGISTERS 24
-
 u32 shadow_sr_wr_ind_addr(struct hif_softc *scn, u32 ctrl_addr);
 u32 shadow_dst_wr_ind_addr(struct hif_softc *scn, u32 ctrl_addr);
+#endif
+
+
+#ifdef ADRASTEA_SHADOW_REGISTERS
 #define CE_SRC_RING_WRITE_IDX_SET(scn, CE_ctrl_addr, n) \
 	A_TARGET_WRITE(scn, shadow_sr_wr_ind_addr(scn, CE_ctrl_addr), n)
-
-#define CE_SRC_RING_WRITE_IDX_GET(scn, CE_ctrl_addr)  \
-	A_TARGET_READ(scn, shadow_sr_wr_ind_addr(scn, CE_ctrl_addr))
-
 #define CE_DEST_RING_WRITE_IDX_SET(scn, CE_ctrl_addr, n) \
 	A_TARGET_WRITE(scn, shadow_dst_wr_ind_addr(scn, CE_ctrl_addr), n)
-
-#define CE_DEST_RING_WRITE_IDX_GET(scn, CE_ctrl_addr) \
-	A_TARGET_READ(scn, shadow_dst_wr_ind_addr(scn, CE_ctrl_addr))
 
 #else
 
 #define CE_SRC_RING_WRITE_IDX_SET(scn, CE_ctrl_addr, n) \
 	A_TARGET_WRITE(scn, (CE_ctrl_addr) + SR_WR_INDEX_ADDRESS, (n))
-
-#define CE_SRC_RING_WRITE_IDX_GET(scn, CE_ctrl_addr)	\
-	A_TARGET_READ(scn, (CE_ctrl_addr) + SR_WR_INDEX_ADDRESS)
-
 #define CE_DEST_RING_WRITE_IDX_SET(scn, CE_ctrl_addr, n) \
 	A_TARGET_WRITE(scn, (CE_ctrl_addr) + DST_WR_INDEX_ADDRESS, (n))
-
-#define CE_DEST_RING_WRITE_IDX_GET(scn, CE_ctrl_addr) \
-	A_TARGET_READ(scn, (CE_ctrl_addr) + DST_WR_INDEX_ADDRESS)
-
 #endif
+
+/* The write index read is only needed durring initialization because
+ * we keep track of the index that was last written.  Thus the register
+ * is the only hardware supported location to read the initial value from.
+ */
+#define CE_SRC_RING_WRITE_IDX_GET_FROM_REGISTER(scn, CE_ctrl_addr) \
+	A_TARGET_READ(scn, (CE_ctrl_addr) + SR_WR_INDEX_ADDRESS)
+#define CE_DEST_RING_WRITE_IDX_GET_FROM_REGISTER(scn, CE_ctrl_addr) \
+	A_TARGET_READ(scn, (CE_ctrl_addr) + DST_WR_INDEX_ADDRESS)
 
 #endif /* __CE_REG_H__ */
