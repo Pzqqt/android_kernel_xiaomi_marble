@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -40,8 +40,8 @@
  * so for now we abide by this limit and avoid requesting more
  * than that.
  */
-#define MSI_NUM_REQUEST_LOG2  4
-#define MSI_NUM_REQUEST       1 /* (1<<MSI_NUM_REQUEST_LOG2) */
+#define MSI_NUM_REQUEST_LOG2  3
+#define MSI_NUM_REQUEST       (1<<MSI_NUM_REQUEST_LOG2)
 
 /*
  * Granted MSIs are assigned as follows:
@@ -100,26 +100,6 @@ struct CE_pipe_config {
 	uint32_t nbytes_max;
 	uint32_t flags;
 	uint32_t reserved;
-};
-
-/*
- * HIA Map Definition
- */
-struct host_interest_area_t {
-	uint32_t hi_interconnect_state;
-	uint32_t hi_early_alloc;
-	uint32_t hi_option_flag2;
-	uint32_t hi_board_data;
-	uint32_t hi_board_data_initialized;
-	uint32_t hi_failure_state;
-	uint32_t hi_rddi_msi_num;
-	uint32_t hi_pcie_perst_couple_en;
-	uint32_t hi_sw_protocol_version;
-};
-
-struct shadow_reg_cfg {
-	uint16_t ce_id;
-	uint16_t reg_offset;
 };
 
 #endif /* __CEPCI_H__ */
