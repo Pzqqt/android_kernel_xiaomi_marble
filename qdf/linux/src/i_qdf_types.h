@@ -149,13 +149,15 @@ struct __qdf_mempool_ctxt;
 
 /**
  * enum qdf_bus_type - Supported Bus types
+ * @QDF_BUS_TYPE_NONE: None Bus type for error check
  * @QDF_BUS_TYPE_PCI: PCI Bus
  * @QDF_BUS_TYPE_AHB: AHB Bus
  * @QDF_BUS_TYPE_SNOC: SNOC Bus
  * @QDF_BUS_TYPE_SIM: Simulator
  */
 enum qdf_bus_type {
-	QDF_BUS_TYPE_PCI,
+	QDF_BUS_TYPE_NONE = -1,
+	QDF_BUS_TYPE_PCI = 0,
 	QDF_BUS_TYPE_AHB,
 	QDF_BUS_TYPE_SNOC,
 	QDF_BUS_TYPE_SIM
