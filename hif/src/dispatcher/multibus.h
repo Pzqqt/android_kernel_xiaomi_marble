@@ -100,4 +100,31 @@ static inline int hif_pci_get_context_size(void)
 }
 #endif /* HIF_PCI */
 
+#ifdef HIF_AHB
+QDF_STATUS hif_initialize_ahb_ops(struct hif_bus_ops *bus_ops);
+int hif_ahb_get_context_size(void);
+#else
+/**
+ * hif_initialize_ahb_ops() - dummy for when ahb not supported
+ *
+ * Return: QDF_STATUS_E_NOSUPPORT
+ */
+static inline QDF_STATUS hif_initialize_ahb_ops(struct hif_bus_ops *bus_ops)
+{
+	HIF_ERROR("%s: not supported", __func__);
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+/**
+ * hif_ahb_get_context_size() - dummy for when ahb not supported
+ *
+ * Return: 0 as an invalid size to indicate no support
+ */
+static inline int hif_ahb_get_context_size(void)
+{
+	return 0;
+}
+#endif
+
+
 #endif /* _MULTIBUS_H_ */

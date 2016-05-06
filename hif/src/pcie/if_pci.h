@@ -147,6 +147,8 @@ struct hif_pci_softc {
 bool hif_pci_targ_is_present(struct hif_softc *scn, void *__iomem *mem);
 int hif_configure_irq(struct hif_softc *sc);
 void hif_pci_cancel_deferred_target_sleep(struct hif_softc *scn);
+void wlan_tasklet(unsigned long data);
+irqreturn_t hif_pci_interrupt_handler(int irq, void *arg);
 
 /*
  * A firmware interrupt to the Host is indicated by the

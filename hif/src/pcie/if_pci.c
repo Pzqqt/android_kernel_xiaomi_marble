@@ -176,7 +176,7 @@ static void pci_dispatch_interrupt(struct hif_softc *scn)
 	}
 }
 
-static irqreturn_t hif_pci_interrupt_handler(int irq, void *arg)
+irqreturn_t hif_pci_interrupt_handler(int irq, void *arg)
 {
 	struct hif_pci_softc *sc = (struct hif_pci_softc *)arg;
 	struct hif_softc *scn = HIF_GET_SOFTC(sc);
@@ -891,7 +891,7 @@ static void hif_init_reschedule_tasklet_work(struct hif_pci_softc *sc)
 static void hif_init_reschedule_tasklet_work(struct hif_pci_softc *sc) { }
 #endif /* CONFIG_SLUB_DEBUG_ON */
 
-static void wlan_tasklet(unsigned long data)
+void wlan_tasklet(unsigned long data)
 {
 	struct hif_pci_softc *sc = (struct hif_pci_softc *)data;
 	struct hif_softc *scn = HIF_GET_SOFTC(sc);
@@ -2170,7 +2170,7 @@ end:
 	return ret;
 }
 
-static void wlan_tasklet_msi(unsigned long data)
+void wlan_tasklet_msi(unsigned long data)
 {
 	struct hif_tasklet_entry *entry = (struct hif_tasklet_entry *)data;
 	struct hif_pci_softc *sc = (struct hif_pci_softc *) entry->hif_handler;
@@ -2338,6 +2338,9 @@ static int hif_pci_configure_legacy_irq(struct hif_pci_softc *sc)
 		HIF_ERROR("%s: request_irq failed, ret = %d", __func__, ret);
 		goto end;
 	}
+	/* Use sc->irq instead of sc->pdev-irq
+	platform_device pdev doesn't have an irq field */
+	sc->irq = sc->pdev->irq;
 	/* Use Legacy PCI Interrupts */
 	hif_write32_mb(sc->mem+(SOC_CORE_BASE_ADDRESS |
 		  PCIE_INTR_ENABLE_ADDRESS),
@@ -2372,12 +2375,14 @@ void hif_pci_nointrs(struct hif_softc *scn)
 	if (sc->num_msi_intrs > 0) {
 		/* MSI interrupt(s) */
 		for (i = 0; i < sc->num_msi_intrs; i++) {
-			free_irq(sc->pdev->irq + i, sc);
+			free_irq(sc->irq + i, sc);
 		}
 		sc->num_msi_intrs = 0;
 	} else {
-		/* Legacy PCI line interrupt */
-		free_irq(sc->pdev->irq, sc);
+		/* Legacy PCI line interrupt
+		Use sc->irq instead of sc->pdev-irq
+		platform_device pdev doesn't have an irq field */
+		free_irq(sc->irq, sc);
 	}
 	ce_unregister_irq(hif_state, 0xfff);
 	scn->request_irq_done = false;
@@ -3262,8 +3267,16 @@ void hif_target_dump_access_log(void)
 }
 #endif
 
+#ifndef HIF_AHB
+int hif_ahb_configure_legacy_irq(struct hif_pci_softc *sc)
+{
+	QDF_BUG(0);
+	return -EINVAL;
+}
+#endif
+
 /**
- * hif_configure_irq(): configure interrupt
+ * hif_configure_irq() - configure interrupt
  *
  * This function configures interrupt(s)
  *
@@ -3287,7 +3300,14 @@ int hif_configure_irq(struct hif_softc *scn)
 			goto end;
 	}
 	/* MSI failed. Try legacy irq */
-	ret = hif_pci_configure_legacy_irq(sc);
+	switch (scn->target_info.target_type) {
+	case TARGET_TYPE_IPQ4019:
+		ret = hif_ahb_configure_legacy_irq(sc);
+		break;
+	default:
+		ret = hif_pci_configure_legacy_irq(sc);
+		break;
+	}
 	if (ret < 0) {
 		HIF_ERROR("%s: hif_pci_configure_legacy_irq error = %d",
 			__func__, ret);

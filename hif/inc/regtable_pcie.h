@@ -364,7 +364,7 @@
 /* PLL end */
 
 #define FW_CPU_PLL_CONFIG \
-	(sc->targetdef->d_FW_CPU_PLL_CONFIG)
+	(scn->targetdef->d_FW_CPU_PLL_CONFIG)
 
 #define WIFICMN_PCIE_BAR_REG_ADDRESS \
 	(sc->targetdef->d_WIFICMN_PCIE_BAR_REG_ADDRESS)

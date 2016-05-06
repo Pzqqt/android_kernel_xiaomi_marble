@@ -487,7 +487,7 @@ struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx, uint32_t mode,
 	qdf_atomic_init(&scn->link_suspended);
 	qdf_atomic_init(&scn->tasklet_from_intr);
 	qdf_mem_copy(&scn->callbacks, cbk, sizeof(struct hif_driver_state_callbacks));
-
+	scn->bus_type  = bus_type;
 	status = hif_bus_open(scn, bus_type);
 	if (status != QDF_STATUS_SUCCESS) {
 		HIF_ERROR("%s: hif_bus_open error = %d, bus_type = %d",
@@ -802,6 +802,12 @@ int hif_get_device_type(uint32_t device_id,
 		*hif_type = HIF_TYPE_AR900B;
 		*target_type = TARGET_TYPE_AR900B;
 		HIF_INFO(" *********** AR900B *************\n");
+		break;
+
+	case IPQ4019_DEVICE_ID:
+		*hif_type = HIF_TYPE_IPQ4019;
+		*target_type = TARGET_TYPE_IPQ4019;
+		HIF_INFO(" *********** IPQ4019  *************\n");
 		break;
 
 	default:

@@ -86,6 +86,8 @@ int hif_bus_get_context_size(enum qdf_bus_type bus_type)
 	switch (bus_type) {
 	case QDF_BUS_TYPE_PCI:
 		return hif_pci_get_context_size();
+	case QDF_BUS_TYPE_AHB:
+		return hif_ahb_get_context_size();
 	case QDF_BUS_TYPE_SNOC:
 		return hif_snoc_get_context_size();
 	default:
@@ -113,6 +115,9 @@ QDF_STATUS hif_bus_open(struct hif_softc *hif_sc,
 		break;
 	case QDF_BUS_TYPE_SNOC:
 		status = hif_initialize_snoc_ops(&hif_sc->bus_ops);
+		break;
+	case QDF_BUS_TYPE_AHB:
+		status = hif_initialize_ahb_ops(&hif_sc->bus_ops);
 		break;
 	default:
 		status = QDF_STATUS_E_NOSUPPORT;
