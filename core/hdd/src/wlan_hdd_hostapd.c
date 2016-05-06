@@ -75,6 +75,7 @@
 #include "cds_concurrency.h"
 #include "wlan_hdd_tsf.h"
 #include "wlan_hdd_green_ap.h"
+#include "ol_rx_fwd.h"
 
 #define    IS_UP(_dev) \
 	(((_dev)->flags & (IFF_RUNNING|IFF_UP)) == (IFF_RUNNING|IFF_UP))
@@ -1398,6 +1399,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				pHostapdAdapter->stats.tx_packets;
 			pHostapdAdapter->prev_rx_packets =
 				pHostapdAdapter->stats.rx_packets;
+			pHostapdAdapter->prev_fwd_packets =
+				ol_rx_get_fwd_to_tx_packet_count(
+					pHostapdAdapter->sessionId);
 			spin_unlock_bh(&pHddCtx->bus_bw_lock);
 			hdd_start_bus_bw_compute_timer(pHostapdAdapter);
 		}
@@ -1593,6 +1597,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			spin_lock_bh(&pHddCtx->bus_bw_lock);
 			pHostapdAdapter->prev_tx_packets = 0;
 			pHostapdAdapter->prev_rx_packets = 0;
+			pHostapdAdapter->prev_fwd_packets = 0;
 			spin_unlock_bh(&pHddCtx->bus_bw_lock);
 			hdd_stop_bus_bw_compute_timer(pHostapdAdapter);
 		}

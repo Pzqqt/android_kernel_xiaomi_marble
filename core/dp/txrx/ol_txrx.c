@@ -1145,6 +1145,7 @@ ol_txrx_vdev_attach(ol_txrx_pdev_handle pdev,
 	vdev->safemode = 0;
 	vdev->drop_unenc = 1;
 	vdev->num_filters = 0;
+	vdev->fwd_to_tx_packets = 0;
 
 	qdf_mem_copy(&vdev->mac_addr.raw[0], vdev_mac_addr,
 		     OL_TXRX_MAC_ADDR_LEN);

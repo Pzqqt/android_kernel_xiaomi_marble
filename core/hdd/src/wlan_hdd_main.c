@@ -102,6 +102,7 @@
 #include "wlan_hdd_green_ap.h"
 #include "bmi.h"
 #include <wlan_hdd_regulatory.h>
+#include "ol_rx_fwd.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -4651,7 +4652,7 @@ static void hdd_bus_bw_compute_cbk(void *priv)
 {
 	hdd_context_t *hdd_ctx = (hdd_context_t *) priv;
 	hdd_adapter_t *adapter = NULL;
-	uint64_t tx_packets = 0, rx_packets = 0;
+	uint64_t tx_packets = 0, rx_packets = 0, fwd_packets = 0;
 	uint64_t total_tx = 0, total_rx = 0;
 	hdd_adapter_list_node_t *adapterNode = NULL;
 	QDF_STATUS status = 0;
@@ -4686,6 +4687,10 @@ static void hdd_bus_bw_compute_cbk(void *priv)
 					      adapter->prev_tx_packets);
 		rx_packets += HDD_BW_GET_DIFF(adapter->stats.rx_packets,
 					      adapter->prev_rx_packets);
+		fwd_packets = ol_rx_get_fwd_to_tx_packet_count(
+					adapter->sessionId);
+		tx_packets += HDD_BW_GET_DIFF(fwd_packets,
+					      adapter->prev_fwd_packets);
 
 		total_rx += adapter->stats.rx_packets;
 		total_tx += adapter->stats.tx_packets;
@@ -4693,6 +4698,7 @@ static void hdd_bus_bw_compute_cbk(void *priv)
 		spin_lock_bh(&hdd_ctx->bus_bw_lock);
 		adapter->prev_tx_packets = adapter->stats.tx_packets;
 		adapter->prev_rx_packets = adapter->stats.rx_packets;
+		adapter->prev_fwd_packets = fwd_packets;
 		spin_unlock_bh(&hdd_ctx->bus_bw_lock);
 		connected = true;
 	}
