@@ -5878,18 +5878,19 @@ QDF_STATUS wmi_extract_thermal_level_stats(void *wmi_hdl, void *evt_buf,
  * wmi_extract_profile_data() - extract profile data from event
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
+ * @idx index: index of profile data
  * @param profile_data: Pointer to hold profile data
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_extract_profile_data(void *wmi_hdl, void *evt_buf,
+QDF_STATUS wmi_extract_profile_data(void *wmi_hdl, void *evt_buf, uint8_t idx,
 			       wmi_host_wlan_profile_t *profile_data)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
 	if (wmi_handle->ops->extract_profile_data)
 		return wmi_handle->ops->extract_profile_data(wmi_handle,
-			evt_buf, profile_data);
+			evt_buf, idx, profile_data);
 
 	return QDF_STATUS_E_FAILURE;
 }
