@@ -180,8 +180,11 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 	pBssDescr->nReceivedTime = (uint32_t) qdf_mc_timer_get_system_ticks();
 	pBssDescr->tsf_delta = WMA_GET_RX_TSF_DELTA(pRxPacketInfo);
 
-	lim_log(pMac, LOG2, FL("BSSID: "MAC_ADDRESS_STR " tsf_delta = %u"),
-			    MAC_ADDR_ARRAY(pHdr->bssId), pBssDescr->tsf_delta);
+	lim_log(pMac, LOG1,
+		  FL("BSSID: "MAC_ADDRESS_STR " tsf_delta = %u ReceivedTime = %u ssid = %s"),
+		  MAC_ADDR_ARRAY(pHdr->bssId), pBssDescr->tsf_delta,
+		  pBssDescr->nReceivedTime,
+		  ((pBPR->ssidPresent) ? (char *)pBPR->ssId.ssId : ""));
 
 	if (fScanning) {
 		rrm_get_start_tsf(pMac, pBssDescr->startTSF);

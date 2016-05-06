@@ -1141,7 +1141,7 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 		}
 	}
 
-	WMA_LOGD("vdev id %d beancon snr %d data snr %d",
+	WMA_LOGD("vdev id %d beacon snr %d data snr %d",
 		 vdev_stats->vdev_id,
 		 vdev_stats->vdev_snr.bcn_snr, vdev_stats->vdev_snr.dat_snr);
 

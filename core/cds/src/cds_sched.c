@@ -462,7 +462,6 @@ static int cds_mc_thread(void *Arg)
 					QDF_ASSERT(0);
 					break;
 				}
-
 				/* Need some optimization */
 				pMacContext =
 					cds_get_context(QDF_MODULE_ID_PE);
@@ -504,7 +503,6 @@ static int cds_mc_thread(void *Arg)
 					QDF_ASSERT(0);
 					break;
 				}
-
 				/* Need some optimization */
 				pMacContext =
 					cds_get_context(QDF_MODULE_ID_SME);

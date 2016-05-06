@@ -8207,9 +8207,10 @@ wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 	/* Supplicant takes the signal strength in terms of mBm(100*dBm) */
 	rssi = QDF_MIN(rssi, 0) * 100;
 
-	hddLog(LOG1, FL("BSSID: " MAC_ADDRESS_STR " Channel:%d RSSI:%d"),
+	hddLog(LOG1, FL("BSSID: " MAC_ADDRESS_STR " Channel:%d RSSI:%d TSF %u"),
 	       MAC_ADDR_ARRAY(mgmt->bssid), chan->center_freq,
-	       (int)(rssi / 100));
+	       (int)(rssi / 100),
+	       bss_desc->timeStamp[0]);
 
 	bss_status =
 		cfg80211_inform_bss_frame(wiphy, chan, mgmt, frame_len, rssi,
