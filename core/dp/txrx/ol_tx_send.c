@@ -311,7 +311,7 @@ ol_tx_download_done_hl_free(void *txrx_pdev,
 
 	ol_tx_download_done_base(pdev, status, msdu, msdu_id);
 
-	if ((tx_desc->pkt_type != ol_tx_frm_no_free) &&
+	if ((tx_desc->pkt_type != OL_TX_FRM_NO_FREE) &&
 	    (tx_desc->pkt_type < OL_TXRX_MGMT_TYPE_BASE)) {
 		qdf_atomic_add(1, &pdev->tx_queue.rsrc_cnt);
 		ol_tx_desc_frame_free_nonstd(pdev, tx_desc, status != A_OK);
@@ -406,7 +406,7 @@ ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
 			    _netbuf, _lcl_freelist,			\
 			    _tx_desc_last, _status)			\
 	do {								\
-		if (qdf_likely((_tx_desc)->pkt_type == ol_tx_frm_std)) { \
+		if (qdf_likely((_tx_desc)->pkt_type == OL_TX_FRM_STD)) { \
 			ol_tx_msdu_complete_single((_pdev), (_tx_desc),\
 						   (_netbuf), (_lcl_freelist), \
 						   (_tx_desc_last));	\
@@ -428,7 +428,7 @@ ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
 			    _netbuf, _lcl_freelist,			\
 			    _tx_desc_last, _status)			\
 	do {								\
-		if (qdf_likely((_tx_desc)->pkt_type == ol_tx_frm_std)) { \
+		if (qdf_likely((_tx_desc)->pkt_type == OL_TX_FRM_STD)) { \
 			ol_tx_msdu_complete_batch((_pdev), (_tx_desc),	\
 						  (_tx_descs), (_status)); \
 		} else {						\
