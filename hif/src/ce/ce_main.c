@@ -967,10 +967,12 @@ ce_h2t_tx_ce_cleanup(struct CE_handle *ce_hdl)
 	struct CE_ring_state *src_ring = ce_state->src_ring;
 	struct hif_softc *sc = ce_state->scn;
 	uint32_t sw_index, write_index;
+	if (hif_is_nss_wifi_enabled(sc))
+		return;
 
 	if (sc->fastpath_mode_on && ce_state->htt_tx_data) {
-		HIF_INFO("%s %d Fastpath mode ON, Cleaning up HTT Tx CE\n",
-			  __func__, __LINE__);
+		HIF_INFO("%s %d Fastpath mode ON, Cleaning up HTT Tx CE",
+			 __func__, __LINE__);
 		sw_index = src_ring->sw_index;
 		write_index = src_ring->sw_index;
 
@@ -1621,12 +1623,19 @@ static int hif_post_recv_buffers(struct hif_softc *scn)
 {
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	int pipe_num, rv = 0;
+	struct CE_state *ce_state;
 
 	A_TARGET_ACCESS_LIKELY(scn);
 	for (pipe_num = 0; pipe_num < scn->ce_count; pipe_num++) {
 		struct HIF_CE_pipe_info *pipe_info;
-
+		ce_state = scn->ce_id_to_state[pipe_num];
 		pipe_info = &hif_state->pipe_info[pipe_num];
+
+		if (hif_is_nss_wifi_enabled(scn) &&
+		    ce_state && (ce_state->htt_rx_data)) {
+			continue;
+		}
+
 		if (hif_post_recv_buffers_for_pipe(pipe_info)) {
 			rv = 1;
 			goto done;
@@ -1760,9 +1769,17 @@ void hif_buffer_cleanup(struct HIF_CE_state *hif_state)
 {
 	int pipe_num;
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_state);
+	struct CE_state *ce_state;
 
 	for (pipe_num = 0; pipe_num < scn->ce_count; pipe_num++) {
 		struct HIF_CE_pipe_info *pipe_info;
+
+		ce_state = scn->ce_id_to_state[pipe_num];
+		if (hif_is_nss_wifi_enabled(scn) && ce_state &&
+				((ce_state->htt_tx_data) ||
+				 (ce_state->htt_rx_data))) {
+			continue;
+		}
 
 		pipe_info = &hif_state->pipe_info[pipe_num];
 		hif_recv_buffer_cleanup_on_pipe(pipe_info);
@@ -2053,6 +2070,7 @@ int hif_config_ce(struct hif_softc *scn)
 	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 	struct HIF_CE_pipe_info *pipe_info;
 	int pipe_num;
+	struct CE_state *ce_state;
 #ifdef ADRASTEA_SHADOW_REGISTERS
 	int i;
 #endif
@@ -2070,12 +2088,12 @@ int hif_config_ce(struct hif_softc *scn)
 	scn->ce_count = HOST_CE_COUNT;
 	for (pipe_num = 0; pipe_num < scn->ce_count; pipe_num++) {
 		struct CE_attr *attr;
-
 		pipe_info = &hif_state->pipe_info[pipe_num];
 		pipe_info->pipe_num = pipe_num;
 		pipe_info->HIF_CE_state = hif_state;
 		attr = &host_ce_config[pipe_num];
 		pipe_info->ce_hdl = ce_init(scn, pipe_num, attr);
+		ce_state = scn->ce_id_to_state[pipe_num];
 		QDF_ASSERT(pipe_info->ce_hdl != NULL);
 		if (pipe_info->ce_hdl == NULL) {
 			rv = QDF_STATUS_E_FAILURE;
@@ -2089,6 +2107,10 @@ int hif_config_ce(struct hif_softc *scn)
 			hif_state->ce_diag = pipe_info->ce_hdl;
 			continue;
 		}
+
+		if (hif_is_nss_wifi_enabled(scn) && ce_state &&
+				(ce_state->htt_rx_data))
+			continue;
 
 		pipe_info->buf_sz = (qdf_size_t) (attr->src_sz_max);
 		qdf_spinlock_create(&pipe_info->recv_bufs_needed_lock);
@@ -2674,4 +2696,69 @@ int hif_dump_ce_registers(struct hif_softc *scn)
 				   ce_reg_word_size * sizeof(uint32_t));
 	}
 	return 0;
+}
+
+#ifdef QCA_NSS_WIFI_OFFLOAD_SUPPORT
+struct hif_pipe_addl_info *hif_get_addl_pipe_info(struct hif_opaque_softc *osc,
+		struct hif_pipe_addl_info *hif_info, uint32_t pipe)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(osc);
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(osc);
+	struct HIF_CE_pipe_info *pipe_info = &(hif_state->pipe_info[pipe]);
+	struct CE_handle *ce_hdl = pipe_info->ce_hdl;
+	struct CE_state *ce_state = (struct CE_state *)ce_hdl;
+	struct CE_ring_state *src_ring = ce_state->src_ring;
+	struct CE_ring_state *dest_ring = ce_state->dest_ring;
+
+	if (src_ring) {
+		hif_info->ul_pipe.nentries = src_ring->nentries;
+		hif_info->ul_pipe.nentries_mask = src_ring->nentries_mask;
+		hif_info->ul_pipe.sw_index = src_ring->sw_index;
+		hif_info->ul_pipe.write_index = src_ring->write_index;
+		hif_info->ul_pipe.hw_index = src_ring->hw_index;
+		hif_info->ul_pipe.base_addr_CE_space =
+			src_ring->base_addr_CE_space;
+		hif_info->ul_pipe.base_addr_owner_space =
+			src_ring->base_addr_owner_space;
+	}
+
+
+	if (dest_ring) {
+		hif_info->dl_pipe.nentries = dest_ring->nentries;
+		hif_info->dl_pipe.nentries_mask = dest_ring->nentries_mask;
+		hif_info->dl_pipe.sw_index = dest_ring->sw_index;
+		hif_info->dl_pipe.write_index = dest_ring->write_index;
+		hif_info->dl_pipe.hw_index = dest_ring->hw_index;
+		hif_info->dl_pipe.base_addr_CE_space =
+			dest_ring->base_addr_CE_space;
+		hif_info->dl_pipe.base_addr_owner_space =
+			dest_ring->base_addr_owner_space;
+	}
+
+	hif_info->pci_mem = pci_resource_start(sc->pdev, 0);
+	hif_info->ctrl_addr = ce_state->ctrl_addr;
+
+	return hif_info;
+}
+
+uint32_t hif_set_nss_wifiol_mode(struct hif_opaque_softc *osc, uint32_t mode)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(osc);
+
+	scn->nss_wifi_ol_mode = mode;
+	return 0;
+}
+
+#endif
+
+void hif_disable_interrupt(struct hif_opaque_softc *osc, uint32_t pipe_num)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(osc);
+	struct CE_state *CE_state = scn->ce_id_to_state[pipe_num];
+	uint32_t ctrl_addr = CE_state->ctrl_addr;
+
+	Q_TARGET_ACCESS_BEGIN(scn);
+	CE_COPY_COMPLETE_INTR_DISABLE(scn, ctrl_addr);
+	Q_TARGET_ACCESS_END(scn);
 }

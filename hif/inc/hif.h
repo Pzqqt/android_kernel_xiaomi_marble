@@ -407,6 +407,33 @@ enum hif_target_status {
 #define HIF_DATA_ATTR_SET_ENABLE_11H(attr, v) \
 	(attr |= (v & 0x01) << 30)
 
+struct hif_ul_pipe_info {
+	unsigned int nentries;
+	unsigned int nentries_mask;
+	unsigned int sw_index;
+	unsigned int write_index; /* cached copy */
+	unsigned int hw_index;    /* cached copy */
+	void *base_addr_owner_space; /* Host address space */
+	qdf_dma_addr_t base_addr_CE_space; /* CE address space */
+};
+
+struct hif_dl_pipe_info {
+	unsigned int nentries;
+	unsigned int nentries_mask;
+	unsigned int sw_index;
+	unsigned int write_index; /* cached copy */
+	unsigned int hw_index;    /* cached copy */
+	void *base_addr_owner_space; /* Host address space */
+	qdf_dma_addr_t base_addr_CE_space; /* CE address space */
+};
+
+struct hif_pipe_addl_info {
+	uint32_t pci_mem;
+	uint32_t ctrl_addr;
+	struct hif_ul_pipe_info ul_pipe;
+	struct hif_dl_pipe_info dl_pipe;
+};
+
 struct hif_bus_id;
 typedef struct hif_bus_id hif_bus_id;
 
@@ -560,6 +587,14 @@ int hif_send_fast(struct hif_opaque_softc *osc, qdf_nbuf_t *nbuf_arr, uint32_t
 void hif_pkt_dl_len_set(void *hif_sc, unsigned int pkt_download_len);
 void hif_ce_war_disable(void);
 void hif_ce_war_enable(void);
+void hif_disable_interrupt(struct hif_opaque_softc *osc, uint32_t pipe_num);
+#ifdef QCA_NSS_WIFI_OFFLOAD_SUPPORT
+struct hif_pipe_addl_info *hif_get_addl_pipe_info(struct hif_opaque_softc *osc,
+		struct hif_pipe_addl_info *hif_info, uint32_t pipe_number);
+uint32_t hif_set_nss_wifiol_mode(struct hif_opaque_softc *osc,
+		uint32_t pipe_num);
+int32_t hif_get_nss_wifiol_bypass_nw_process(struct hif_opaque_softc *osc);
+#endif
 
 #ifdef __cplusplus
 }

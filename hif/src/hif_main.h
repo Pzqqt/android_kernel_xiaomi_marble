@@ -140,7 +140,22 @@ struct hif_softc {
 #endif /* FEATURE_NAPI */
 	struct hif_driver_state_callbacks callbacks;
 	uint32_t hif_con_param;
+#ifdef QCA_NSS_WIFI_OFFLOAD_SUPPORT
+	uint32_t nss_wifi_ol_mode;
+#endif
 };
+
+#ifdef QCA_NSS_WIFI_OFFLOAD_SUPPORT
+static inline bool hif_is_nss_wifi_enabled(struct hif_softc *sc)
+{
+	return !!(sc->nss_wifi_ol_mode);
+}
+#else
+static inline bool hif_is_nss_wifi_enabled(struct hif_softc *sc)
+{
+	return false;
+}
+#endif
 
 A_target_id_t hif_get_target_id(struct hif_softc *scn);
 void hif_dump_pipe_debug_count(struct hif_softc *scn);

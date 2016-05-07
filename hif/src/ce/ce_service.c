@@ -1764,6 +1764,9 @@ int ce_per_engine_service(struct hif_softc *scn, unsigned int CE_id)
 	uint32_t toeplitz_hash_result;
 	uint32_t mode = hif_get_conparam(scn);
 
+	if (hif_is_nss_wifi_enabled(scn) && (CE_state->htt_rx_data))
+		return CE_state->receive_count;
+
 	if (Q_TARGET_ACCESS_BEGIN(scn) < 0) {
 		HIF_ERROR("[premature rc=0]\n");
 		return 0; /* no work done */
