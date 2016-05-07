@@ -43,16 +43,16 @@ struct ol_txrx_stats_elem {
 	uint64_t bytes;
 };
 
-#define NUM_MAX_TSO_SEGS 8
+#define NUM_MAX_TSO_SEGS 4
 #define NUM_MAX_TSO_SEGS_MASK (NUM_MAX_TSO_SEGS - 1)
 
-#define NUM_MAX_TSO_MSDUS 128
+#define NUM_MAX_TSO_MSDUS 32
 #define NUM_MAX_TSO_MSDUS_MASK (NUM_MAX_TSO_MSDUS - 1)
 
 struct ol_txrx_stats_tso_msdu {
 	struct qdf_tso_seg_t tso_segs[NUM_MAX_TSO_SEGS];
-	uint32_t num_seg;
-	uint32_t tso_seg_idx;
+	uint8_t num_seg;
+	uint8_t tso_seg_idx;
 };
 
 struct ol_txrx_stats_tso_info {
@@ -62,56 +62,72 @@ struct ol_txrx_stats_tso_info {
 
 /**
  * @brief data stats published by the host txrx layer
+ *
+ * -------------------------
+ *
+ * TX
+ *
  */
-struct ol_txrx_stats {
-	struct {
-		/* MSDUs given to the txrx layer by the management stack */
-		struct ol_txrx_stats_elem mgmt;
-		/* MSDUs successfully sent across the WLAN */
-		struct ol_txrx_stats_elem delivered;
-		struct {
-			/* MSDUs that the host did not accept */
-			struct ol_txrx_stats_elem host_reject;
-			/* MSDUs which could not be downloaded to the target */
-			struct ol_txrx_stats_elem download_fail;
-			/* MSDUs which the target discarded
-			   (lack of memory or old age) */
-			struct ol_txrx_stats_elem target_discard;
-			/* MSDUs which the target sent but
-			   couldn't get an ack for */
-			struct ol_txrx_stats_elem no_ack;
-		} dropped;
-		/* contains information of packets recevied per tx completion*/
-		struct {
-			uint32_t pkts_1;
-			uint32_t pkts_2_10;
-			uint32_t pkts_11_20;
-			uint32_t pkts_21_30;
-			uint32_t pkts_31_40;
-			uint32_t pkts_41_50;
-			uint32_t pkts_51_60;
-			uint32_t pkts_61_plus;
-		} comp_histogram;
-		/* TSO (TCP segmentation offload) information */
-		struct {
-			struct ol_txrx_stats_elem tso_pkts;
+struct ol_txrx_stats_tx_dropped {
+	/* MSDUs that the host did not accept */
+	struct ol_txrx_stats_elem host_reject;
+	/* MSDUs which could not be downloaded to the target */
+	struct ol_txrx_stats_elem download_fail;
+	/* MSDUs which the target discarded
+	   (lack of memory or old age) */
+	struct ol_txrx_stats_elem target_discard;
+	/* MSDUs which the target sent but
+	   couldn't get an ack for */
+	struct ol_txrx_stats_elem no_ack;
+};
+struct ol_txrx_stats_tx_histogram {
+	uint32_t pkts_1;
+	uint32_t pkts_2_10;
+	uint32_t pkts_11_20;
+	uint32_t pkts_21_30;
+	uint32_t pkts_31_40;
+	uint32_t pkts_41_50;
+	uint32_t pkts_51_60;
+	uint32_t pkts_61_plus;
+};
+struct ol_txrx_stats_tx_tso {
+	struct ol_txrx_stats_elem tso_pkts;
 #if defined(FEATURE_TSO)
-			struct ol_txrx_stats_tso_info tso_info;
+	struct ol_txrx_stats_tso_info tso_info;
 #endif
-		} tso;
-	} tx;
-	struct {
-		/* MSDUs given to the OS shim */
-		struct ol_txrx_stats_elem delivered;
-		struct {
-			/* MSDUs forwarded to network stack */
-			u_int32_t packets_stack;
-			/* MSDUs forwarded from the rx path to the tx path */
-			u_int32_t packets_fwd;
-			/* MSDUs forwarded to stack and tx path */
-			u_int32_t packets_stack_n_fwd;
-		} intra_bss_fwd;
-	} rx;
+};
+
+struct ol_txrx_stats_tx {
+	/* MSDUs given to the txrx layer by the management stack */
+	struct ol_txrx_stats_elem mgmt;
+	/* MSDUs successfully sent across the WLAN */
+	struct ol_txrx_stats_elem delivered;
+	struct ol_txrx_stats_tx_dropped dropped;
+	/* contains information of packets recevied per tx completion*/
+	struct ol_txrx_stats_tx_histogram comp_histogram;
+	/* TSO (TCP segmentation offload) information */
+	struct ol_txrx_stats_tx_tso tso;
+};
+
+/*
+ * RX
+ */
+struct ol_txrx_stats_rx_ibss_fwd {
+	/* MSDUs forwarded to network stack */
+	u_int32_t packets_stack;
+	/* MSDUs forwarded from the rx path to the tx path */
+	u_int32_t packets_fwd;
+	/* MSDUs forwarded to stack and tx path */
+	u_int32_t packets_stack_n_fwd;
+};
+struct ol_txrx_stats_rx {
+	/* MSDUs given to the OS shim */
+	struct ol_txrx_stats_elem delivered;
+	struct ol_txrx_stats_rx_ibss_fwd intra_bss_fwd;
+};
+struct ol_txrx_stats {
+	struct ol_txrx_stats_tx tx;
+	struct ol_txrx_stats_rx rx;
 };
 
 /*
