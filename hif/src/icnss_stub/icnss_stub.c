@@ -33,7 +33,9 @@
 #include "regtable.h"
 #include "hif_debug.h"
 #include "qdf_status.h"
+#ifndef CONFIG_WIN
 #include "qwlan_version.h"
+#endif
 #ifdef CONFIG_CNSS
 #include <net/cnss.h>
 #endif

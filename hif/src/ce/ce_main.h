@@ -59,6 +59,15 @@ enum ce_id_type {
 	CE_ID_MAX
 };
 
+#ifdef CONFIG_WIN
+struct shadow_reg_cfg {
+	uint16_t ce_id;
+	uint16_t reg_offset;
+};
+
+#define QWLAN_VERSIONSTR "WIN"
+#endif
+
 enum ol_ath_hif_pkt_ecodes {
 	HIF_PIPE_NO_RESOURCE = 0
 };

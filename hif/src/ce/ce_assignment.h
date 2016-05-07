@@ -78,6 +78,11 @@ static void hif_target_dump_access_log(void);
 #define DIAG_CE_ID           7
 #define EPPING_CE_FLAGS_POLL \
 	(CE_ATTR_DISABLE_INTR|CE_ATTR_ENABLE_POLL|CE_ATTR_FLAGS)
+
+#ifdef CONFIG_WIN
+#define PIPEDIR_INOUT_H2H 4
+#endif
+
 #ifdef QCA_WIFI_3_0
 static struct CE_attr host_ce_config_wlan[] = {
 	/* host->target HTC control and raw streams */
