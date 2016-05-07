@@ -28,19 +28,17 @@
 #include "targaddrs.h"
 #include "cepci.h"
 #include "regtable.h"
-#include "ar9888def.h"
 #include "ar6320def.h"
 #include "ar6320v2def.h"
 #include "hif_main.h"
 #include "adrastea_reg_def.h"
 
+#include "targetdef.h"
+#include "hostdef.h"
+
 void target_register_tbl_attach(struct hif_softc *scn, u32 target_type)
 {
 	switch (target_type) {
-	case TARGET_TYPE_AR9888:
-		scn->targetdef = &ar9888_targetdef;
-		scn->target_ce_def = &ar9888_ce_targetdef;
-		break;
 	case TARGET_TYPE_AR6320:
 		scn->targetdef = &ar6320_targetdef;
 		scn->target_ce_def = &ar6320_ce_targetdef;
@@ -53,6 +51,60 @@ void target_register_tbl_attach(struct hif_softc *scn, u32 target_type)
 		scn->targetdef = &adrastea_targetdef;
 		scn->target_ce_def = &adrastea_ce_targetdef;
 		break;
+#if defined(AR6002_HEADERS_DEF)
+	case TARGET_TYPE_AR6002:
+		scn->targetdef = AR6002_TARGETdef;
+		break;
+#endif
+#if defined(AR6003_HEADERS_DEF)
+	case TARGET_TYPE_AR6003:
+		scn->targetdef = AR6003_TARGETdef;
+		break;
+#endif
+#if defined(AR6004_HEADERS_DEF)
+	case TARGET_TYPE_AR6004:
+		scn->targetdef = AR6004_TARGETdef;
+		break;
+#endif
+#if defined(AR9888_HEADERS_DEF)
+	case TARGET_TYPE_AR9888:
+		scn->targetdef = AR9888_TARGETdef;
+		scn->target_ce_def = AR9888_CE_TARGETdef;
+		break;
+#endif
+#if defined(AR9888V2_HEADERS_DEF)
+	case TARGET_TYPE_AR9888V2:
+		scn->targetdef = AR9888V2_TARGETdef;
+		scn->target_ce_def = AR9888_CE_TARGETdef;
+		break;
+#endif
+#if defined(AR900B_HEADERS_DEF)
+	case TARGET_TYPE_AR900B:
+		scn->targetdef = AR900B_TARGETdef;
+		scn->target_ce_def = AR900B_CE_TARGETdef;
+		break;
+#endif
+#if defined(QCA9984_HEADERS_DEF)
+	case TARGET_TYPE_QCA9984:
+		scn->targetdef = QCA9984_TARGETdef;
+		scn->target_ce_def = QCA9984_CE_TARGETdef;
+		break;
+#endif
+#if defined(QCA9888_HEADERS_DEF)
+	case TARGET_TYPE_QCA9888:
+		scn->targetdef = QCA9888_TARGETdef;
+		scn->target_ce_def = QCA9888_CE_TARGETdef;
+		break;
+#endif
+#ifdef ATH_AHB
+#if defined(IPQ4019_HEADERS_DEF)
+	case TARGET_TYPE_IPQ4019:
+		scn->targetdef = IPQ4019_TARGETdef;
+		scn->target_ce_def = IPQ4019_CE_TARGETdef;
+		break;
+#endif
+#endif
+
 	default:
 		break;
 	}
@@ -61,12 +113,6 @@ void target_register_tbl_attach(struct hif_softc *scn, u32 target_type)
 void hif_register_tbl_attach(struct hif_softc *scn, u32 hif_type)
 {
 	switch (hif_type) {
-	case HIF_TYPE_AR9888:
-		scn->hostdef = &ar9888_hostdef;
-		break;
-	case HIF_TYPE_AR6320:
-		scn->hostdef = &ar6320_hostdef;
-		break;
 	case HIF_TYPE_AR6320V2:
 		scn->hostdef = &ar6320v2_hostdef;
 		break;
@@ -74,6 +120,55 @@ void hif_register_tbl_attach(struct hif_softc *scn, u32 hif_type)
 		scn->hostdef = &adrastea_hostdef;
 		scn->host_shadow_regs = &adrastea_host_shadow_regs;
 		break;
+#if defined(AR6002_HEADERS_DEF)
+	case HIF_TYPE_AR6002:
+		scn->hostdef = AR6002_HOSTdef;
+		break;
+#endif
+#if defined(AR6003_HEADERS_DEF)
+	case HIF_TYPE_AR6003:
+		scn->hostdef = AR6003_HOSTdef;
+		break;
+#endif
+#if defined(AR6004_HEADERS_DEF)
+	case HIF_TYPE_AR6004:
+		scn->hostdef = AR6004_HOSTdef;
+		break;
+#endif
+#if defined(AR9888_HEADERS_DEF)
+	case HIF_TYPE_AR9888:
+		scn->hostdef = AR9888_HOSTdef;
+		break;
+#endif
+#if defined(AR9888V2_HEADERS_DEF)
+	case HIF_TYPE_AR9888V2:
+		scn->hostdef = AR9888V2_HOSTdef;
+		break;
+#endif
+#if defined(AR900B_HEADERS_DEF)
+	case HIF_TYPE_AR900B:
+		scn->hostdef = AR900B_HOSTdef;
+		break;
+#endif
+#if defined(QCA9984_HEADERS_DEF)
+	case HIF_TYPE_QCA9984:
+		scn->hostdef = QCA9984_HOSTdef;
+		break;
+#endif
+#if defined(QCA9888_HEADERS_DEF)
+	case HIF_TYPE_QCA9888:
+		scn->hostdef = QCA9888_HOSTdef;
+		break;
+#endif
+
+#ifdef ATH_AHB
+#if defined(IPQ4019_HEADERS_DEF)
+	case HIF_TYPE_IPQ4019:
+		scn->hostdef = IPQ4019_HOSTdef;
+		break;
+#endif
+#endif
+
 	default:
 		break;
 	}

@@ -54,7 +54,7 @@ typedef void *hif_handle_t;
 #define HIF_TYPE_AR6320   7
 #define HIF_TYPE_AR6320V2 8
 /* For attaching Peregrine 2.0 board host_reg_tbl only */
-#define HIF_TYPE_AR9888V2 8
+#define HIF_TYPE_AR9888V2 9
 #define HIF_TYPE_ADRASTEA 10
 #define HIF_TYPE_AR900B 11
 #define HIF_TYPE_QCA9984 12
@@ -73,17 +73,17 @@ typedef void *hif_handle_t;
 #define TARGET_TYPE_AR6320    8
 #define TARGET_TYPE_AR900B    9
 /* For attach Peregrine 2.0 board target_reg_tbl only */
-#define TARGET_TYPE_AR9888V2  10
+#define TARGET_TYPE_AR9888V2  13
 /* For attach Rome1.0 target_reg_tbl only*/
-#define TARGET_TYPE_AR6320V1    11
+#define TARGET_TYPE_AR6320V1    14
 /* For Rome2.0/2.1 target_reg_tbl ID*/
-#define TARGET_TYPE_AR6320V2    12
+#define TARGET_TYPE_AR6320V2    15
 /* For Rome3.0 target_reg_tbl ID*/
-#define TARGET_TYPE_AR6320V3    13
+#define TARGET_TYPE_AR6320V3    16
 /* For Tufello1.0 target_reg_tbl ID*/
-#define TARGET_TYPE_QCA9377V1   14
+#define TARGET_TYPE_QCA9377V1   17
 /* For Adrastea target */
-#define TARGET_TYPE_ADRASTEA     16
+#define TARGET_TYPE_ADRASTEA     19
 
 struct CE_state;
 #define CE_COUNT_MAX 12

@@ -1,8 +1,5 @@
 /*
- * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
- *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -19,15 +16,25 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*
- * This file was originally distributed by Qualcomm Atheros, Inc.
- * under proprietary terms before Copyright ownership was assigned
- * to the Linux Foundation.
- */
+#ifndef HOSTDEFS_H_
+#define HOSTDEFS_H_
 
-#ifndef _REGTABLE_H_
-#define _REGTABLE_H_
+#include <a_osapi.h>
+#include <athdefs.h>
+#include <a_types.h>
+#include "host_reg_init.h"
 
-#include "reg_struct.h"
-#include "regtable_pcie.h"
+extern struct hostdef_s *AR6002_HOSTdef;
+extern struct hostdef_s *AR6003_HOSTdef;
+extern struct hostdef_s *AR6004_HOSTdef;
+extern struct hostdef_s *AR9888_HOSTdef;
+extern struct hostdef_s *AR9888V2_HOSTdef;
+extern struct hostdef_s *AR6320_HOSTdef;
+extern struct hostdef_s *AR900B_HOSTdef;
+extern struct hostdef_s *QCA9984_HOSTdef;
+extern struct hostdef_s *QCA9888_HOSTdef;
+#ifdef ATH_AHB
+extern struct hostdef_s *IPQ4019_HOSTdef;
+#endif
+
 #endif
