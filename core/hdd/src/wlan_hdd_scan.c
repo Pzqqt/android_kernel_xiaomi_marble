@@ -2502,6 +2502,7 @@ void hdd_cleanup_scan_queue(hdd_context_t *hdd_ctx)
 void hdd_scan_context_destroy(hdd_context_t *hdd_ctx)
 {
 	qdf_list_destroy(&hdd_ctx->hdd_scan_req_q);
+	qdf_spinlock_destroy(&hdd_ctx->sched_scan_lock);
 }
 
 /**

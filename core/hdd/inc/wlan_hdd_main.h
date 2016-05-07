@@ -1320,8 +1320,8 @@ struct hdd_context_s {
 	struct work_struct  sap_start_work;
 	bool is_sap_restart_required;
 	bool is_sta_connection_pending;
-	spinlock_t sap_update_info_lock;
-	spinlock_t sta_update_info_lock;
+	qdf_spinlock_t sap_update_info_lock;
+	qdf_spinlock_t sta_update_info_lock;
 
 	uint8_t dev_dfs_cac_status;
 

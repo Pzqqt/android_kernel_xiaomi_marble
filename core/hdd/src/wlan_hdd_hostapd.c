@@ -116,6 +116,7 @@ int hdd_sap_context_init(hdd_context_t *hdd_ctx)
 
 	mutex_init(&hdd_ctx->sap_lock);
 	qdf_wake_lock_create(&hdd_ctx->sap_wake_lock, "qcom_sap_wakelock");
+	qdf_spinlock_create(&hdd_ctx->sap_update_info_lock);
 
 	mutex_init(&hdd_ctx->dfs_lock);
 
@@ -219,6 +220,8 @@ void hdd_sap_context_destroy(hdd_context_t *hdd_ctx)
 	qdf_wake_lock_destroy(&hdd_ctx->sap_wake_lock);
 
 	mutex_destroy(&hdd_ctx->dfs_lock);
+
+	qdf_spinlock_destroy(&hdd_ctx->sap_update_info_lock);
 
 }
 
@@ -8161,9 +8164,9 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	    (QDF_SAP_MODE == pAdapter->device_mode)) {
 		cds_flush_work(&pHddCtx->sap_start_work);
 		hddLog(LOGW, FL("Canceled the pending restart work"));
-		spin_lock(&pHddCtx->sap_update_info_lock);
+		qdf_spin_lock(&pHddCtx->sap_update_info_lock);
 		pHddCtx->is_sap_restart_required = false;
-		spin_unlock(&pHddCtx->sap_update_info_lock);
+		qdf_spin_unlock(&pHddCtx->sap_update_info_lock);
 	}
 	pAdapter->sessionCtx.ap.sapConfig.acs_cfg.acs_mode = false;
 	if (pAdapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list)

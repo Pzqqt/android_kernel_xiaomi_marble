@@ -1927,9 +1927,9 @@ bool cds_is_sta_connection_pending(void)
 		return false;
 	}
 
-	spin_lock(&hdd_ctx->sta_update_info_lock);
+	qdf_spin_lock(&hdd_ctx->sta_update_info_lock);
 	status = hdd_ctx->is_sta_connection_pending;
-	spin_unlock(&hdd_ctx->sta_update_info_lock);
+	qdf_spin_unlock(&hdd_ctx->sta_update_info_lock);
 	return status;
 }
 
@@ -1952,9 +1952,9 @@ void cds_change_sta_conn_pending_status(bool value)
 		return;
 	}
 
-	spin_lock(&hdd_ctx->sta_update_info_lock);
+	qdf_spin_lock(&hdd_ctx->sta_update_info_lock);
 	hdd_ctx->is_sta_connection_pending = value;
-	spin_unlock(&hdd_ctx->sta_update_info_lock);
+	qdf_spin_unlock(&hdd_ctx->sta_update_info_lock);
 }
 
 /**
@@ -1976,9 +1976,9 @@ static bool cds_is_sap_restart_required(void)
 		return false;
 	}
 
-	spin_lock(&hdd_ctx->sap_update_info_lock);
+	qdf_spin_lock(&hdd_ctx->sap_update_info_lock);
 	status = hdd_ctx->is_sap_restart_required;
-	spin_unlock(&hdd_ctx->sap_update_info_lock);
+	qdf_spin_unlock(&hdd_ctx->sap_update_info_lock);
 	return status;
 }
 
@@ -2001,9 +2001,9 @@ void cds_change_sap_restart_required_status(bool value)
 		return;
 	}
 
-	spin_lock(&hdd_ctx->sap_update_info_lock);
+	qdf_spin_lock(&hdd_ctx->sap_update_info_lock);
 	hdd_ctx->is_sap_restart_required = value;
-	spin_unlock(&hdd_ctx->sap_update_info_lock);
+	qdf_spin_unlock(&hdd_ctx->sap_update_info_lock);
 }
 
 /**
