@@ -356,7 +356,11 @@ enum tQDF_GLOBAL_CON_MODE {
  * typedef tQDF_MCC_TO_SCC_SWITCH_MODE - MCC to SCC switch mode.
  * @QDF_MCC_TO_SCC_SWITCH_DISABLE: Disable switch
  * @QDF_MCC_TO_SCC_SWITCH_ENABLE: Enable switch
- * @QDF_MCC_TO_SCC_SWITCH_FORCE: force switch
+ * @QDF_MCC_TO_SCC_SWITCH_FORCE: Force switch with SAP restart
+ * @QDF_MCC_TO_SCC_SWITCH_FORCE_WITHOUT_DISCONNECTION: Force switch without
+ * restart of SAP
+ * @QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL: Switch using fav channel(s)
+ * without SAP restart
  * @QDF_MCC_TO_SCC_SWITCH_MAX: max switch
  */
 typedef enum {
@@ -364,6 +368,7 @@ typedef enum {
 	QDF_MCC_TO_SCC_SWITCH_ENABLE,
 	QDF_MCC_TO_SCC_SWITCH_FORCE,
 	QDF_MCC_TO_SCC_SWITCH_FORCE_WITHOUT_DISCONNECTION,
+	QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL,
 	QDF_MCC_TO_SCC_SWITCH_MAX
 } tQDF_MCC_TO_SCC_SWITCH_MODE;
 #endif
@@ -404,6 +409,7 @@ struct qdf_mac_addr {
 
 #define QDF_IPV4_ADDR_SIZE (4)
 #define QDF_IPV6_ADDR_SIZE (16)
+#define QDF_MAX_NUM_CHAN   (128)
 
 /**
  * struct qdf_tso_frag_t - fragments of a single TCP segment
