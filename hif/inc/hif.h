@@ -461,7 +461,7 @@ uint32_t hif_hia_item_address(uint32_t target_type, uint32_t item_offset);
 void hif_set_target_sleep(struct hif_opaque_softc *scn, bool sleep_ok,
 		     bool wait_for_it);
 int hif_check_fw_reg(struct hif_opaque_softc *scn);
-#ifdef CONFIG_ICNSS
+#ifndef HIF_PCI
 static inline int hif_check_soc_status(struct hif_opaque_softc *scn)
 {
 	return 0;
@@ -552,14 +552,7 @@ void hif_process_runtime_resume_success(struct hif_opaque_softc *);
 #endif
 
 int hif_dump_registers(struct hif_opaque_softc *scn);
-#ifdef CONFIG_ICNSS
-static inline int ol_copy_ramdump(struct hif_opaque_softc *scn)
-{
-	return 0;
-}
-#else
 int ol_copy_ramdump(struct hif_opaque_softc *scn);
-#endif
 void hif_crash_shutdown(struct hif_opaque_softc *hif_ctx);
 void hif_get_hw_info(struct hif_opaque_softc *scn, u32 *version, u32 *revision,
 		     const char **target_name);
