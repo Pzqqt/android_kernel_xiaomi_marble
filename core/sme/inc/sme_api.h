@@ -1126,7 +1126,7 @@ QDF_STATUS sme_bpf_offload_register_callback(tHalHandle hal,
 QDF_STATUS sme_get_bpf_offload_capabilities(tHalHandle hal);
 QDF_STATUS sme_set_bpf_instructions(tHalHandle hal,
 				struct sir_bpf_set_offload *);
-
+uint32_t sme_get_wni_dot11_mode(tHalHandle hal);
 QDF_STATUS sme_create_mon_session(tHalHandle hal_handle, uint8_t *bssid);
 QDF_STATUS sme_set_adaptive_dwelltime_config(tHalHandle hal,
 			struct adaptive_dwelltime_params *dwelltime_params);

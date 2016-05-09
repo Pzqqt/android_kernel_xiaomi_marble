@@ -415,6 +415,45 @@ static QDF_STATUS oem_process_data_req_msg(int oemDataLen, char *oemData)
 }
 
 /**
+ * update_channel_bw_info() - set bandwidth info for the chan
+ * @hdd_ctx: hdd context
+ * @chan: channel for which info are required
+ * @hdd_chan_info: struct where the bandwidth info is filled
+ *
+ * This function find the maximum bandwidth allowed, secondary
+ * channel offset and center freq for the channel as per regulatory
+ * domain and using these info calculate the phy mode for the
+ * channel.
+ *
+ * Return: void
+ */
+static void hdd_update_channel_bw_info(hdd_context_t *hdd_ctx,
+	uint16_t chan, tHddChannelInfo *hdd_chan_info)
+{
+	struct ch_params_s ch_params = {0};
+	uint16_t sec_ch_2g = 0;
+	WLAN_PHY_MODE phy_mode;
+	uint32_t wni_dot11_mode;
+
+	wni_dot11_mode = sme_get_wni_dot11_mode(hdd_ctx->hHal);
+
+	/* Passing CH_WIDTH_MAX will give the max bandwidth supported */
+	ch_params.ch_width = CH_WIDTH_MAX;
+
+	cds_set_channel_params(chan, sec_ch_2g, &ch_params);
+	if (ch_params.center_freq_seg0)
+		hdd_chan_info->band_center_freq1 =
+			cds_chan_to_freq(ch_params.center_freq_seg0);
+
+	hdd_info("chan %d dot11_mode %d ch_width %d sec offset %d freq_seg0 %d",
+		chan, wni_dot11_mode, ch_params.ch_width,
+		ch_params.sec_ch_offset, hdd_chan_info->band_center_freq1);
+
+	phy_mode = wma_chan_phy_mode(chan, ch_params.ch_width, wni_dot11_mode);
+	WMI_SET_CHANNEL_MODE(hdd_chan_info, phy_mode);
+}
+
+/**
  * oem_process_channel_info_req_msg() - process oem channel_info request
  * @numOfChannels: number of channels
  * @chanList: list of channel information
@@ -494,6 +533,9 @@ static int oem_process_channel_info_req_msg(int numOfChannels, char *chanList)
 			    cds_get_channel_state(chanId))
 				WMI_SET_CHANNEL_FLAG(&hddChanInfo,
 						     WMI_CHAN_FLAG_DFS);
+
+			hdd_update_channel_bw_info(p_hdd_ctx,
+						chanId, &hddChanInfo);
 			hddChanInfo.reg_info_1 = reg_info_1;
 			hddChanInfo.reg_info_2 = reg_info_2;
 		} else {
@@ -655,12 +697,13 @@ static int oem_process_get_cap_req_msg(void)
 
 /**
  * hdd_send_peer_status_ind_to_oem_app() -
- *	Function to send peer status to a registered application
+ * Function to send peer status to a registered application
  * @peerMac: MAC address of peer
  * @peerStatus: ePeerConnected or ePeerDisconnected
  * @peerTimingMeasCap: 0: RTT/RTT2, 1: RTT3. Default is 0
  * @sessionId: SME session id, i.e. vdev_id
  * @chan_info: operating channel information
+ * @dev_mode: dev mode for which indication is sent
  *
  * Return: none
  */
@@ -668,7 +711,8 @@ void hdd_send_peer_status_ind_to_oem_app(struct qdf_mac_addr *peerMac,
 					 uint8_t peerStatus,
 					 uint8_t peerTimingMeasCap,
 					 uint8_t sessionId,
-					 tSirSmeChanInfo *chan_info)
+					 tSirSmeChanInfo *chan_info,
+					 enum tQDF_ADAPTER_MODE dev_mode)
 {
 	struct sk_buff *skb;
 	struct nlmsghdr *nlh;
@@ -719,6 +763,9 @@ void hdd_send_peer_status_ind_to_oem_app(struct qdf_mac_addr *peerMac,
 	pPeerInfo->vdev_id = sessionId;
 	pPeerInfo->peer_capability = peerTimingMeasCap;
 	pPeerInfo->reserved0 = 0;
+	/* Set 0th bit of reserved0 for STA mode */
+	if (QDF_STA_MODE == dev_mode)
+		pPeerInfo->reserved0 |= 0x01;
 
 	if (chan_info) {
 		pPeerInfo->peer_chan_info.chan_id = chan_info->chan_id;

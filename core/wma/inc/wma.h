@@ -2060,3 +2060,5 @@ QDF_STATUS wma_set_bpf_instructions(tp_wma_handle wma,
 			struct sir_bpf_set_offload *bpf_set_offload);
 #endif
 struct wma_ini_config *wma_get_ini_handle(tp_wma_handle wma_handle);
+WLAN_PHY_MODE wma_chan_phy_mode(u8 chan, enum phy_ch_width chan_width,
+	u8 dot11_mode);

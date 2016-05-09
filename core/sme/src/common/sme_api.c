@@ -15748,6 +15748,20 @@ QDF_STATUS sme_bpf_offload_register_callback(tHalHandle hal,
 }
 
 /**
+ * sme_get_wni_dot11_mode() - return configured wni dot11mode
+ * @hal: hal pointer
+ *
+ * Return: wni dot11 mode.
+ */
+uint32_t sme_get_wni_dot11_mode(tHalHandle hal)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+
+	return csr_translate_to_wni_cfg_dot11_mode(mac_ctx,
+		mac_ctx->roam.configParam.uCfgDot11Mode);
+}
+
+/**
  * sme_create_mon_session() - post message to create PE session for monitormode
  * operation
  * @hal_handle: Handle to the HAL

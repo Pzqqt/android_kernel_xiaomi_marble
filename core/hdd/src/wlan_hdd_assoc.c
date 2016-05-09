@@ -781,6 +781,8 @@ static void hdd_send_association_event(struct net_device *dev,
 			hddLog(LOG4, "LFR3:hdd_send_association_event");
 #endif
 	if (eConnectionState_Associated == pHddStaCtx->conn_info.connState) {
+		tSirSmeChanInfo chan_info;
+
 		if (!pCsrRoamInfo) {
 			hddLog(LOGE, FL("STA in associated state but pCsrRoamInfo is null"));
 			return;
@@ -834,30 +836,28 @@ static void hdd_send_association_event(struct net_device *dev,
 		    ) {
 			hdd_send_ft_assoc_response(dev, pAdapter, pCsrRoamInfo);
 		}
-		if (pAdapter->device_mode == QDF_P2P_CLIENT_MODE) {
-			tSirSmeChanInfo chan_info;
-			qdf_copy_macaddr(&peerMacAddr,
-					 &pHddStaCtx->conn_info.bssId);
-			chan_info.chan_id = pCsrRoamInfo->chan_info.chan_id;
-			chan_info.mhz = pCsrRoamInfo->chan_info.mhz;
-			chan_info.info = pCsrRoamInfo->chan_info.info;
-			chan_info.band_center_freq1 =
-				pCsrRoamInfo->chan_info.band_center_freq1;
-			chan_info.band_center_freq2 =
-				pCsrRoamInfo->chan_info.band_center_freq2;
-			chan_info.reg_info_1 =
-				pCsrRoamInfo->chan_info.reg_info_1;
-			chan_info.reg_info_2 =
-				pCsrRoamInfo->chan_info.reg_info_2;
+		qdf_copy_macaddr(&peerMacAddr,
+				 &pHddStaCtx->conn_info.bssId);
+		chan_info.chan_id = pCsrRoamInfo->chan_info.chan_id;
+		chan_info.mhz = pCsrRoamInfo->chan_info.mhz;
+		chan_info.info = pCsrRoamInfo->chan_info.info;
+		chan_info.band_center_freq1 =
+			pCsrRoamInfo->chan_info.band_center_freq1;
+		chan_info.band_center_freq2 =
+			pCsrRoamInfo->chan_info.band_center_freq2;
+		chan_info.reg_info_1 =
+			pCsrRoamInfo->chan_info.reg_info_1;
+		chan_info.reg_info_2 =
+			pCsrRoamInfo->chan_info.reg_info_2;
+		/* send peer status indication to oem app */
+		hdd_send_peer_status_ind_to_oem_app(&peerMacAddr,
+							ePeerConnected,
+							pCsrRoamInfo->
+							timingMeasCap,
+							pAdapter->sessionId,
+							&chan_info,
+							pAdapter->device_mode);
 
-			/* send peer status indication to oem app */
-			hdd_send_peer_status_ind_to_oem_app(&peerMacAddr,
-							    ePeerConnected,
-							    pCsrRoamInfo->
-							    timingMeasCap,
-							    pAdapter->sessionId,
-							    &chan_info);
-		}
 #ifdef MSM_PLATFORM
 #ifdef CONFIG_CNSS
 		/* start timer in sta/p2p_cli */
@@ -890,15 +890,17 @@ static void hdd_send_association_event(struct net_device *dev,
 		wlan_hdd_auto_shutdown_enable(pHddCtx, true);
 #endif
 
-		if (pAdapter->device_mode == QDF_P2P_CLIENT_MODE) {
+		if ((pAdapter->device_mode == QDF_STA_MODE) ||
+			(pAdapter->device_mode == QDF_P2P_CLIENT_MODE)) {
 			qdf_copy_macaddr(&peerMacAddr,
 					 &pHddStaCtx->conn_info.bssId);
 
 			/* send peer status indication to oem app */
 			hdd_send_peer_status_ind_to_oem_app(&peerMacAddr,
-							   ePeerDisconnected, 0,
-							   pAdapter->sessionId,
-							   NULL);
+							ePeerDisconnected, 0,
+							pAdapter->sessionId,
+							NULL,
+							pAdapter->device_mode);
 		}
 #ifdef WLAN_FEATURE_LPSS
 		pAdapter->rssi_send = false;

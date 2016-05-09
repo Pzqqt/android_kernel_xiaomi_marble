@@ -1384,16 +1384,16 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		if (pHostapdAdapter->device_mode == QDF_P2P_GO_MODE) {
 			/* send peer status indication to oem app */
 			hdd_send_peer_status_ind_to_oem_app(&pSapEvent->sapevt.
-							    sapStationAssocReassocCompleteEvent.
-							    staMac, ePeerConnected,
-							    pSapEvent->sapevt.
-							    sapStationAssocReassocCompleteEvent.
-							    timingMeasCap,
-							    pHostapdAdapter->
-							    sessionId,
-							    &pSapEvent->sapevt.
-							    sapStationAssocReassocCompleteEvent.
-							    chan_info);
+					sapStationAssocReassocCompleteEvent.
+					staMac, ePeerConnected,
+					pSapEvent->sapevt.
+					sapStationAssocReassocCompleteEvent.
+					timingMeasCap,
+					pHostapdAdapter->sessionId,
+					&pSapEvent->sapevt.
+					sapStationAssocReassocCompleteEvent.
+					chan_info,
+					pHostapdAdapter->device_mode);
 		}
 		hdd_wlan_green_ap_add_sta(pHddCtx);
 		break;
@@ -1502,11 +1502,12 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		if (pHostapdAdapter->device_mode == QDF_P2P_GO_MODE) {
 			/* send peer status indication to oem app */
 			hdd_send_peer_status_ind_to_oem_app(&pSapEvent->sapevt.
-							    sapStationDisassocCompleteEvent.
-							    staMac, ePeerDisconnected,
-							    0,
-							    pHostapdAdapter->
-							    sessionId, NULL);
+						sapStationDisassocCompleteEvent.
+						staMac, ePeerDisconnected,
+						0,
+						pHostapdAdapter->sessionId,
+						NULL,
+						pHostapdAdapter->device_mode);
 		}
 #ifdef MSM_PLATFORM
 		/*stop timer in sap/p2p_go */
