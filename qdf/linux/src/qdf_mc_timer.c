@@ -535,10 +535,6 @@ EXPORT_SYMBOL(qdf_mc_timer_destroy);
  */
 QDF_STATUS qdf_mc_timer_start(qdf_mc_timer_t *timer, uint32_t expiration_time)
 {
-
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "timer Addr inside qdf_mc_timer_start : 0x%p ", timer);
-
 	/* check for invalid pointer */
 	if (NULL == timer) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
@@ -617,10 +613,6 @@ EXPORT_SYMBOL(qdf_mc_timer_start);
  */
 QDF_STATUS qdf_mc_timer_stop(qdf_mc_timer_t *timer)
 {
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s: timer Addr inside qdf_mc_timer_stop : 0x%p",
-		 __func__, timer);
-
 	/* check for invalid pointer */
 	if (NULL == timer) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
