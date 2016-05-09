@@ -387,6 +387,9 @@ int wma_cli_get_command(int vdev_id, int param_id, int vpdev)
 		case GEN_VDEV_PARAM_AMSDU:
 			ret = intr[vdev_id].config.amsdu;
 			break;
+		case GEN_VDEV_ROAM_SYNCH_DELAY:
+			ret = intr[vdev_id].roam_synch_delay;
+			break;
 		default:
 			WMA_LOGE("Invalid generic vdev command/Not"
 				 " yet implemented 0x%x", param_id);

@@ -276,6 +276,7 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_GET_GTX_BWMASK               54
 #define WE_GET_TEMPERATURE              56
 #define WE_CAP_TSF                      58
+#define WE_GET_ROAM_SYNCH_DELAY         59
 
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_INT_GET_INT     (SIOCIWFIRSTPRIV + 2)
@@ -6804,6 +6805,15 @@ static int __iw_setnone_getint(struct net_device *dev,
 		break;
 	}
 
+	case WE_GET_ROAM_SYNCH_DELAY:
+	{
+		hddLog(LOG1, "GET ROAM SYNCH DELAY");
+		*value = wma_cli_get_command(pAdapter->sessionId,
+					     GEN_VDEV_ROAM_SYNCH_DELAY,
+					     GEN_CMD);
+		break;
+	}
+
 	case WE_GET_BURST_ENABLE:
 	{
 		hddLog(LOG1, "GET Burst enable value");
@@ -11068,6 +11078,12 @@ static const struct iw_priv_args we_private_args[] = {
 	{WE_SET_MON_MODE_CHAN,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
 	 0, "setMonChan"}
+	,
+
+	{WE_GET_ROAM_SYNCH_DELAY,
+	 0,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	 "hostroamdelay"}
 	,
 };
 

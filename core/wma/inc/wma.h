@@ -912,6 +912,7 @@ struct wma_txrx_node {
 	uint32_t chain_mask;
 	uint32_t mac_id;
 	bool roaming_in_progress;
+	int32_t roam_synch_delay;
 };
 
 #if defined(QCA_WIFI_FTM)
