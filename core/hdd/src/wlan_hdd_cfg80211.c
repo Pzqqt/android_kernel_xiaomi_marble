@@ -4837,10 +4837,11 @@ static int __wlan_hdd_cfg80211_txpower_scale(struct wiphy *wiphy,
 {
 	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
 	struct net_device *dev = wdev->netdev;
-	hdd_adapter_t *adapter = NULL;
-	int ret = 0;
+	hdd_adapter_t *adapter;
+	int ret;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_MAX + 1];
 	uint8_t scale_value;
+	QDF_STATUS status;
 
 	ENTER_DEV(dev);
 
@@ -4869,9 +4870,9 @@ static int __wlan_hdd_cfg80211_txpower_scale(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	ret = wma_set_tx_power_scale(adapter->sessionId, scale_value);
+	status = wma_set_tx_power_scale(adapter->sessionId, scale_value);
 
-	if (ret != 0) {
+	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Set tx power scale failed");
 		return -EINVAL;
 	}
@@ -4893,7 +4894,7 @@ static int wlan_hdd_cfg80211_txpower_scale(struct wiphy *wiphy,
 						const void *data,
 						int data_len)
 {
-	int ret = 0;
+	int ret;
 
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_cfg80211_txpower_scale(wiphy, wdev,
@@ -4919,10 +4920,11 @@ static int __wlan_hdd_cfg80211_txpower_scale_decr_db(struct wiphy *wiphy,
 {
 	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
 	struct net_device *dev = wdev->netdev;
-	hdd_adapter_t *adapter = NULL;
-	int ret = 0;
+	hdd_adapter_t *adapter;
+	int ret;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB_MAX + 1];
 	uint8_t scale_value;
+	QDF_STATUS status;
 
 	ENTER_DEV(dev);
 
@@ -4946,9 +4948,10 @@ static int __wlan_hdd_cfg80211_txpower_scale_decr_db(struct wiphy *wiphy,
 	scale_value = nla_get_u8(tb
 		    [QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB]);
 
-	ret = wma_set_tx_power_scale_decr_db(adapter->sessionId, scale_value);
+	status = wma_set_tx_power_scale_decr_db(adapter->sessionId,
+							scale_value);
 
-	if (ret != 0) {
+	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Set tx power decrease db failed");
 		return -EINVAL;
 	}
@@ -4970,7 +4973,7 @@ static int wlan_hdd_cfg80211_txpower_scale_decr_db(struct wiphy *wiphy,
 						const void *data,
 						int data_len)
 {
-	int ret = 0;
+	int ret;
 
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_cfg80211_txpower_scale_decr_db(wiphy, wdev,
