@@ -49,6 +49,7 @@
 #include "wmi_unified_api.h"
 #include "cdp_txrx_cmn.h"
 #include "ol_defines.h"
+#include "dbglog.h"
 
 /* Platform specific configuration for max. no. of fragments */
 #define QCA_OL_11AC_TX_MAX_FRAGS            2

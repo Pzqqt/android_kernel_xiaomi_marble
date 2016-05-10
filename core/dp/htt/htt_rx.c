@@ -2029,7 +2029,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 		msdu_count--;
 
 		if (qdf_unlikely((*((u_int8_t *) &rx_desc->fw_desc.u.val)) &
-				    FW_RX_DESC_MIC_ERR_M)) {
+				    FW_RX_DESC_ANY_ERR_M)) {
 			uint8_t tid =
 				HTT_RX_IN_ORD_PADDR_IND_EXT_TID_GET(
 					*(u_int32_t *)rx_ind_data);
