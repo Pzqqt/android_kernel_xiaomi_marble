@@ -84,6 +84,7 @@
 
 #include "wlan_hdd_ocb.h"
 #include "wlan_hdd_tsf.h"
+#include "ol_txrx.h"
 
 #include "wlan_hdd_subnet_detect.h"
 #include <wlan_hdd_regulatory.h>
@@ -2854,8 +2855,13 @@ static int __wlan_hdd_cfg80211_handle_wisa_cmd(struct wiphy *wiphy,
 	wisa.mode = wisa_mode;
 	wisa.vdev_id = adapter->sessionId;
 	status = sme_set_wisa_params(hdd_ctx->hHal, &wisa);
-	if (!QDF_IS_STATUS_SUCCESS(status))
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("Unable to set WISA mode: %d to FW", wisa_mode);
 		ret_val = -EINVAL;
+	}
+	if (QDF_IS_STATUS_SUCCESS(status) || wisa_mode == false)
+		ol_txrx_set_wisa_mode(ol_txrx_get_vdev_from_vdev_id(
+					adapter->sessionId), wisa_mode);
 err:
 	EXIT();
 	return ret_val;
