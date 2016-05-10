@@ -132,6 +132,7 @@ QDF_STATUS bmi_done(struct ol_context *ol_ctx)
 		BMI_ERR("%s: null context", __func__);
 		return QDF_STATUS_E_NOMEM;
 	}
+	hif_claim_device(ol_ctx->scn);
 
 	if (!hif_needs_bmi(ol_ctx->scn))
 		return QDF_STATUS_SUCCESS;
@@ -143,8 +144,13 @@ QDF_STATUS bmi_done(struct ol_context *ol_ctx)
 	return status;
 }
 
-QDF_STATUS
-bmi_get_target_info(struct bmi_target_info *targ_info,
+void bmi_target_ready(struct hif_opaque_softc *scn, void *cfg_ctx)
+{
+	ol_target_ready(scn, cfg_ctx);
+}
+
+static QDF_STATUS
+bmi_get_target_info_message_based(struct bmi_target_info *targ_info,
 						struct ol_context *ol_ctx)
 {
 	int status = 0;
@@ -156,15 +162,11 @@ bmi_get_target_info(struct bmi_target_info *targ_info,
 	qdf_dma_addr_t cmd = info->bmi_cmd_da;
 	qdf_dma_addr_t rsp = info->bmi_rsp_da;
 
-	if (info->bmi_done) {
-		BMI_ERR("BMI Phase is Already Done");
-		return QDF_STATUS_E_PERM;
-	}
-
 	if (!bmi_cmd_buff || !bmi_rsp_buff) {
 		BMI_ERR("%s:BMI CMD/RSP Buffer is NULL", __func__);
 		return QDF_STATUS_NOT_INITIALIZED;
 	}
+
 	cid = BMI_GET_TARGET_INFO;
 
 	qdf_mem_copy(bmi_cmd_buff, &cid, sizeof(cid));
@@ -180,6 +182,34 @@ bmi_get_target_info(struct bmi_target_info *targ_info,
 
 	qdf_mem_copy(targ_info, bmi_rsp_buff, length);
 	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+bmi_get_target_info(struct bmi_target_info *targ_info,
+						struct ol_context *ol_ctx)
+{
+	struct hif_opaque_softc *scn = ol_ctx->scn;
+	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
+	QDF_STATUS status;
+
+	if (info->bmi_done) {
+		BMI_ERR("BMI Phase is Already Done");
+		return QDF_STATUS_E_PERM;
+	}
+
+	switch (hif_get_bus_type(scn)) {
+	case QDF_BUS_TYPE_PCI:
+	case QDF_BUS_TYPE_SNOC:
+		status = bmi_get_target_info_message_based(targ_info, ol_ctx);
+		break;
+	case QDF_BUS_TYPE_SDIO:
+		status = hif_reg_based_get_target_info(scn, targ_info);
+		break;
+	default:
+		status = QDF_STATUS_E_FAILURE;
+		break;
+	}
+	return status;
 }
 
 QDF_STATUS bmi_download_firmware(struct ol_context *ol_ctx)

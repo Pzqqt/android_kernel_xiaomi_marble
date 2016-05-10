@@ -33,10 +33,15 @@
 #endif
 #include "hif.h"
 #include "hif_hw_version.h"
+#include "bmi.h"
 
 #define AR6320_REV2_VERSION          AR6320_REV1_1_VERSION
 #define AR6320_REV4_VERSION          AR6320_REV2_1_VERSION
 #define SIGN_HEADER_MAGIC            0x454D4F52
 
 void ol_target_failure(void *instance, QDF_STATUS status);
+
+void ol_target_ready(struct hif_opaque_softc *scn, void *cfg_ctx);
+QDF_STATUS ol_get_fw_files(struct ol_context *ol_ctx);
+QDF_STATUS ol_extra_initialization(struct ol_context *ol_ctx);
 #endif /* _OL_FW_H_ */

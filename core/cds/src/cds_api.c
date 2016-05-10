@@ -429,7 +429,7 @@ QDF_STATUS cds_open(void)
 			  "%s: Failed to complete BMI phase", __func__);
 		goto err_wma_close;
 	}
-
+	bmi_target_ready(scn, gp_cds_context->cfg_ctx);
 	/* Now proceed to open the MAC */
 
 	/* UMA is supported in hardware for performing the

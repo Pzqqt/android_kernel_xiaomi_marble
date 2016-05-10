@@ -1,5 +1,5 @@
 /*
- * copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -268,14 +268,12 @@ bmi_firmware_download(struct ol_context *ol_ctx)
 
 	tgt_info->target_type = targ_info.target_type;
 	tgt_info->target_version = targ_info.target_ver;
-
 	/* Configure target */
 	status = ol_configure_target(ol_ctx);
 	if (status != QDF_STATUS_SUCCESS) {
 		BMI_ERR("BMI Configure Target Failed status:%d", status);
 		return status;
 	}
-
 	status = ol_download_firmware(ol_ctx);
 	if (status != QDF_STATUS_SUCCESS)
 		BMI_ERR("BMI Download Firmware Failed Status:%d", status);

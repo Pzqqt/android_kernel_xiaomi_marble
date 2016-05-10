@@ -35,8 +35,15 @@
 #include "bin_sig.h"
 #include "i_ar6320v2_regtable.h"
 #include "epping_main.h"
+#ifdef HIF_PCI
 #include "ce_reg.h"
+#endif
+#if defined(HIF_SDIO)
+#include "if_sdio.h"
+#include "regtable_sdio.h"
+#endif
 #include "pld_common.h"
+
 #include "i_bmi.h"
 #include "qwlan_version.h"
 #include "cds_concurrency.h"
@@ -478,6 +485,9 @@ int ol_copy_ramdump(struct hif_opaque_softc *scn)
 	}
 	qdf_dev = ol_ctx->qdf_dev;
 
+	if (hif_get_bus_type(scn) == QDF_BUS_TYPE_SDIO)
+		return 0;
+
 	info = qdf_mem_malloc(sizeof(struct ramdump_info));
 	if (!info) {
 		BMI_ERR("%s Memory for Ramdump Allocation failed", __func__);
@@ -534,6 +544,7 @@ void ramdump_work_handler(void *data)
 		BMI_ERR("HifDiagReadiMem FW Dump Area Pointer failed!");
 		ol_copy_ramdump(ramdump_scn);
 		pld_device_crashed(qdf_dev->dev);
+
 		return;
 	}
 
@@ -552,6 +563,7 @@ void ramdump_work_handler(void *data)
 		goto out_fail;
 
 	BMI_ERR("%s: RAM dump collecting completed!", __func__);
+
 	/* notify SSR framework the target has crashed. */
 	pld_device_crashed(qdf_dev->dev);
 	return;
@@ -629,6 +641,81 @@ void ol_target_failure(void *instance, QDF_STATUS status)
 	return;
 }
 
+#ifdef CONFIG_DISABLE_CDC_MAX_PERF_WAR
+static QDF_STATUS ol_disable_cdc_max_perf(struct ol_context *ol_ctx)
+{
+	uint32_t param;
+	struct hif_opaque_softc *scn = ol_ctx->scn;
+	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
+	uint32_t target_type = tgt_info->target_type;
+
+	/* set the firmware to disable CDC max perf WAR */
+		if (bmi_read_memory(hif_hia_item_address(target_type,
+			offsetof(struct host_interest_s, hi_option_flag2)),
+			(uint8_t *) &param, 4, ol_ctx) != QDF_STATUS_SUCCESS) {
+			BMI_ERR("BMI READ for setting cdc max perf failed");
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		param |= HI_OPTION_DISABLE_CDC_MAX_PERF_WAR;
+		if (bmi_write_memory(
+			hif_hia_item_address(target_type,
+			offsetof(struct host_interest_s, hi_option_flag2)),
+			(uint8_t *)&param, 4, ol_ctx) != QDF_STATUS_SUCCESS) {
+			BMI_ERR("setting cdc max perf failed");
+			return QDF_STATUS_E_FAILURE;
+		}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+#else
+static QDF_STATUS ol_disable_cdc_max_perf(struct ol_context *ol_ctx)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+#endif
+
+#ifdef WLAN_FEATURE_LPSS
+static QDF_STATUS ol_set_lpass_support(struct ol_context *ol_ctx)
+{
+	uint32_t param;
+	struct hif_opaque_softc *scn = ol_ctx->scn;
+	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
+	struct ol_config_info *ini_cfg = ol_get_ini_handle(ol_ctx);
+	uint32_t target_type = tgt_info->target_type;
+
+	if (ini_cfg->enable_lpass_support) {
+		if (bmi_read_memory(hif_hia_item_address(target_type,
+			offsetof(struct host_interest_s, hi_option_flag2)),
+			(uint8_t *) &param, 4, ol_ctx) != QDF_STATUS_SUCCESS) {
+			BMI_ERR("BMI READ:Setting LPASS Support failed");
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		param |= HI_OPTION_DBUART_SUPPORT;
+		if (bmi_write_memory(
+			hif_hia_item_address(target_type,
+			offsetof(struct host_interest_s, hi_option_flag2)),
+			(uint8_t *)&param, 4, ol_ctx) != QDF_STATUS_SUCCESS) {
+			BMI_ERR("BMI_READ for setting LPASS Support fail");
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+#else
+static QDF_STATUS ol_set_lpass_support(struct ol_context *ol_ctx)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+#endif
+
+
 QDF_STATUS ol_configure_target(struct ol_context *ol_ctx)
 {
 	uint32_t param;
@@ -636,7 +723,6 @@ QDF_STATUS ol_configure_target(struct ol_context *ol_ctx)
 	int ret;
 	struct hif_opaque_softc *scn = ol_ctx->scn;
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
-	struct ol_config_info *ini_cfg = ol_get_ini_handle(ol_ctx);
 	uint32_t target_type = tgt_info->target_type;
 	qdf_device_t qdf_dev = ol_ctx->qdf_dev;
 
@@ -681,70 +767,39 @@ QDF_STATUS ol_configure_target(struct ol_context *ol_ctx)
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
-
-#if (CONFIG_DISABLE_CDC_MAX_PERF_WAR)
-	{
-		/* set the firmware to disable CDC max perf WAR */
-		if (bmi_read_memory(hif_hia_item_address(target_type,
-			offsetof(struct host_interest_s, hi_option_flag2)),
-			(uint8_t *) &param, 4, ol_ctx) != QDF_STATUS_SUCCESS) {
-			BMI_ERR("BMI READ for setting cdc max perf failed");
+	if (hif_get_bus_type(scn) == QDF_BUS_TYPE_PCI) {
+		if (ol_disable_cdc_max_perf(ol_ctx))
 			return QDF_STATUS_E_FAILURE;
+
+		ret = pld_get_platform_cap(qdf_dev->dev, &cap);
+		if (ret)
+			BMI_ERR("platform capability info not available");
+
+		if (!ret && cap.cap_flag & PLD_HAS_EXTERNAL_SWREG) {
+			if (bmi_read_memory(hif_hia_item_address(target_type,
+				offsetof(struct host_interest_s,
+					 hi_option_flag2)),
+				(uint8_t *)&param, 4, ol_ctx) !=
+							QDF_STATUS_SUCCESS) {
+				BMI_ERR("bmi_read_memory for setting external SWREG failed");
+				return QDF_STATUS_E_FAILURE;
+			}
+
+			param |= HI_OPTION_USE_EXT_LDO;
+			if (bmi_write_memory(
+				hif_hia_item_address(target_type,
+					offsetof(struct host_interest_s,
+						 hi_option_flag2)),
+					(uint8_t *)&param, 4, ol_ctx) !=
+							QDF_STATUS_SUCCESS) {
+				BMI_ERR("BMI WRITE for setting external SWREG fail");
+				return QDF_STATUS_E_FAILURE;
+			}
 		}
 
-		param |= HI_OPTION_DISABLE_CDC_MAX_PERF_WAR;
-		if (bmi_write_memory(
-			hif_hia_item_address(target_type,
-			offsetof(struct host_interest_s, hi_option_flag2)),
-			(uint8_t *)&param, 4, ol_ctx) != QDF_STATUS_SUCCESS) {
-			BMI_ERR("setting cdc max perf failed");
+		if (ol_set_lpass_support(ol_ctx))
 			return QDF_STATUS_E_FAILURE;
-		}
 	}
-#endif /* CONFIG_CDC_MAX_PERF_WAR */
-
-	ret = pld_get_platform_cap(qdf_dev->dev, &cap);
-	if (ret)
-		BMI_ERR("platform capability info not available");
-
-	if (!ret && cap.cap_flag & PLD_HAS_EXTERNAL_SWREG) {
-		if (bmi_read_memory(hif_hia_item_address(target_type,
-			offsetof(struct host_interest_s, hi_option_flag2)),
-			(uint8_t *)&param, 4, ol_ctx) != QDF_STATUS_SUCCESS) {
-			BMI_ERR("bmi_read_memory for setting"
-				"external SWREG failed");
-			return QDF_STATUS_E_FAILURE;
-		}
-
-		param |= HI_OPTION_USE_EXT_LDO;
-		if (bmi_write_memory(
-			hif_hia_item_address(target_type,
-			offsetof(struct host_interest_s, hi_option_flag2)),
-			(uint8_t *)&param, 4, ol_ctx) != QDF_STATUS_SUCCESS) {
-			BMI_ERR("BMI WRITE for setting external SWREG fail");
-			return QDF_STATUS_E_FAILURE;
-		}
-	}
-
-#ifdef WLAN_FEATURE_LPSS
-	if (ini_cfg->enable_lpass_support) {
-		if (bmi_read_memory(hif_hia_item_address(target_type,
-			offsetof(struct host_interest_s, hi_option_flag2)),
-			(uint8_t *) &param, 4, ol_ctx) != QDF_STATUS_SUCCESS) {
-			BMI_ERR("BMI READ:Setting LPASS Support failed");
-			return QDF_STATUS_E_FAILURE;
-		}
-
-		param |= HI_OPTION_DBUART_SUPPORT;
-		if (bmi_write_memory(
-			hif_hia_item_address(target_type,
-			offsetof(struct host_interest_s, hi_option_flag2)),
-			(uint8_t *)&param, 4, ol_ctx) != QDF_STATUS_SUCCESS) {
-			BMI_ERR("BMI_READ for setting LPASS Support fail");
-			return QDF_STATUS_E_FAILURE;
-		}
-	}
-#endif
 
 	/* If host is running on a BE CPU, set the host interest area */
 	{
@@ -1168,7 +1223,7 @@ QDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 {
 	struct hif_opaque_softc *scn = ol_ctx->scn;
 	uint32_t param, address = 0;
-	int status = !EOK;
+	QDF_STATUS status = !QDF_STATUS_SUCCESS;
 	QDF_STATUS ret;
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
 	struct ol_config_info *ini_cfg = ol_get_ini_handle(ol_ctx);
@@ -1288,7 +1343,11 @@ QDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 		case AR6320_REV3_2_VERSION:
 		case AR6320_REV4_VERSION:
 		case AR6320_DEV_VERSION:
+		if (hif_get_bus_type(scn) == QDF_BUS_TYPE_SDIO)
+			param = 19;
+		else
 			param = 6;
+
 			break;
 		default:
 			/* Configure GPIO AR9888 UART */
@@ -1336,6 +1395,7 @@ QDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 			offsetof(struct host_interest_s, hi_option_flag)),
 			(uint8_t *) &param, 4, ol_ctx);
 	}
+	status = ol_extra_initialization(ol_ctx);
 
 	return status;
 }
@@ -1485,6 +1545,9 @@ void ol_dump_target_memory(struct hif_opaque_softc *scn, void *memory_block)
 	u_int32_t address = 0;
 	u_int32_t size = 0;
 
+	if (hif_get_bus_type(scn) == QDF_BUS_TYPE_SDIO)
+		return;
+
 	for (; section_count < 2; section_count++) {
 		switch (section_count) {
 		case 0:
@@ -1562,13 +1625,15 @@ static int ol_target_coredump(void *inst, void *memory_block,
 		}
 
 		if ((block_len - amount_read) >= read_len) {
-			if (pos == REGISTER_LOCATION)
-				result = ol_diag_read_reg_loc(scn, buffer_loc,
-							      block_len -
-							      amount_read);
-			else
+			if ((hif_get_bus_type(scn) == QDF_BUS_TYPE_PCI) &&
+				(pos == REGISTER_LOCATION)) {
+				result = ol_diag_read_reg_loc(scn,
+						buffer_loc,
+						block_len - amount_read);
+			} else {
 				result = ol_diag_read(scn, buffer_loc,
 					      pos, read_len);
+			}
 			if (result != -EIO) {
 				amount_read += result;
 				buffer_loc += result;

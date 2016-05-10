@@ -64,5 +64,6 @@ void ol_init_ini_config(struct ol_context *ol_ctx,
 			struct ol_config_info *cfg);
 void bmi_cleanup(struct ol_context *scn);
 QDF_STATUS bmi_done(struct ol_context *ol_ctx);
+void bmi_target_ready(struct hif_opaque_softc *scn, void *cfg_ctx);
 QDF_STATUS bmi_download_firmware(struct ol_context *ol_ctx);
 #endif /* _BMI_H_ */
