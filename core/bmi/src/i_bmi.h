@@ -37,24 +37,6 @@
 #include "ol_fw.h"
 #include "pld_common.h"
 
-#ifdef CONFIG_CNSS
-#define QCA_FIRMWARE_FILE		fw_files->image_file
-#define QCA_UTF_FIRMWARE_FILE		fw_files->utf_file
-#define QCA_BOARD_DATA_FILE		fw_files->board_data
-#define QCA_UTF_BOARD_DATA_FILE		fw_files->utf_board_data
-#define QCA_OTP_FILE			fw_files->otp_data
-#define QCA_SETUP_FILE			NULL
-#define QCA_FIRMWARE_EPPING_FILE	fw_files->epping_file
-#else
-#define QCA_FIRMWARE_FILE            "athwlan.bin"
-#define QCA_UTF_FIRMWARE_FILE        "utf.bin"
-#define QCA_BOARD_DATA_FILE          "fakeboar.bin"
-#define QCA_UTF_BOARD_DATA_FILE      "fakeboar.bin"
-#define QCA_OTP_FILE                 "otp.bin"
-#define QCA_SETUP_FILE               "athsetup.bin"
-#define QCA_FIRMWARE_EPPING_FILE     "epping.bin"
-#endif
-
 /*
  * Note that not all the register locations are accessible.
  * A list of accessible target registers are specified with

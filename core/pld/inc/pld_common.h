@@ -32,6 +32,14 @@
 #include <linux/interrupt.h>
 #include <linux/pm.h>
 
+#define PLD_IMAGE_FILE               "athwlan.bin"
+#define PLD_UTF_FIRMWARE_FILE        "utf.bin"
+#define PLD_BOARD_DATA_FILE          "fakeboar.bin"
+#define PLD_OTP_FILE                 "otp.bin"
+#define PLD_SETUP_FILE               "athsetup.bin"
+#define PLD_EPPING_FILE              "epping.bin"
+#define PLD_EVICTED_FILE             ""
+
 /**
  * enum pld_bus_type - bus type
  * @PLD_BUS_TYPE_NONE: invalid bus type, only return in error cases
@@ -71,6 +79,7 @@ enum pld_bus_width_type {
  * @utf_board_data: WLAN FW UTF board data file
  * @epping_file: WLAN FW EPPING mode file
  * @evicted_data: WLAN FW evicted file
+ * @setup_file: WLAN FW setup file
  *
  * pld_fw_files is used to store WLAN FW file names
  */
@@ -82,6 +91,7 @@ struct pld_fw_files {
 	char utf_board_data[PLD_MAX_FILE_NAME];
 	char epping_file[PLD_MAX_FILE_NAME];
 	char evicted_data[PLD_MAX_FILE_NAME];
+	char setup_file[PLD_MAX_FILE_NAME];
 };
 
 /**
@@ -312,6 +322,7 @@ int pld_wlan_enable(struct device *dev, struct pld_wlan_enable_cfg *config,
 		    enum pld_driver_mode mode, const char *host_version);
 int pld_wlan_disable(struct device *dev, enum pld_driver_mode mode);
 int pld_set_fw_debug_mode(struct device *dev, bool enablefwlog);
+void pld_get_default_fw_files(struct pld_fw_files *pfw_files);
 int pld_get_fw_files_for_target(struct device *dev,
 				struct pld_fw_files *pfw_files,
 				u32 target_type, u32 target_version);

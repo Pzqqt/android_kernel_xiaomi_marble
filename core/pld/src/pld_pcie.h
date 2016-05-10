@@ -96,10 +96,12 @@ static inline int cnss_wlan_pm_control(bool vote)
 #endif
 
 #ifndef CONFIG_CNSS
+
 static inline int
 pld_pcie_get_fw_files_for_target(struct pld_fw_files *pfw_files,
 				 u32 target_type, u32 target_version)
 {
+	pld_get_default_fw_files(pfw_files);
 	return 0;
 }
 static inline int

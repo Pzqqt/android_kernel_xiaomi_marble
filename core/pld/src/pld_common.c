@@ -326,6 +326,34 @@ int pld_set_fw_debug_mode(struct device *dev, bool enablefwlog)
 }
 
 /**
+ * pld_get_default_fw_files() - Get default FW file names
+ * @pfw_files: buffer for FW file names
+ *
+ * Return default FW file names to the buffer.
+ *
+ * Return: void
+ */
+void pld_get_default_fw_files(struct pld_fw_files *pfw_files)
+{
+	memset(pfw_files, 0, sizeof(*pfw_files));
+
+	strlcpy(pfw_files->image_file, PLD_IMAGE_FILE,
+		PLD_MAX_FILE_NAME);
+	strlcpy(pfw_files->board_data, PLD_BOARD_DATA_FILE,
+		PLD_MAX_FILE_NAME);
+	strlcpy(pfw_files->otp_data, PLD_OTP_FILE,
+		PLD_MAX_FILE_NAME);
+	strlcpy(pfw_files->utf_file, PLD_UTF_FIRMWARE_FILE,
+		PLD_MAX_FILE_NAME);
+	strlcpy(pfw_files->utf_board_data, PLD_BOARD_DATA_FILE,
+		PLD_MAX_FILE_NAME);
+	strlcpy(pfw_files->epping_file, PLD_EPPING_FILE,
+		PLD_MAX_FILE_NAME);
+	strlcpy(pfw_files->setup_file, PLD_SETUP_FILE,
+		PLD_MAX_FILE_NAME);
+}
+
+/**
  * pld_get_fw_files_for_target() - Get FW file names
  * @dev: device
  * @pfw_files: buffer for FW file names
