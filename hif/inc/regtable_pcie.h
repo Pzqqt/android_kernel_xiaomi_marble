@@ -737,7 +737,7 @@ typedef struct TGT_REG_TABLE {
 } tgt_reg_table;
 
 struct hif_softc;
-void target_register_tbl_attach(struct hif_softc *scn, u32 target_type);
+void hif_target_register_tbl_attach(struct hif_softc *scn, u32 target_type);
 void hif_register_tbl_attach(struct hif_softc *scn, u32 hif_type);
 
 #endif /* _REGTABLE_PCIE_H_ */

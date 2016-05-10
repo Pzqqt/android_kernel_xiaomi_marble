@@ -61,8 +61,11 @@ typedef void *hif_handle_t;
 #define HIF_TYPE_IPQ4019 13
 #define HIF_TYPE_QCA9888 14
 
-
-
+/* TARGET definition needs to be abstracted in fw common
+ * header files, below is the placeholder till WIN codebase
+ * moved to latest copy of fw common header files.
+ */
+#ifdef CONFIG_WIN
 #define TARGET_TYPE_UNKNOWN   0
 #define TARGET_TYPE_AR6001    1
 #define TARGET_TYPE_AR6002    2
@@ -87,6 +90,7 @@ typedef void *hif_handle_t;
 #define TARGET_TYPE_QCA9377V1   17
 /* For Adrastea target */
 #define TARGET_TYPE_ADRASTEA     19
+#endif
 
 struct CE_state;
 #define CE_COUNT_MAX 12

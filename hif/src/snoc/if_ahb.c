@@ -320,7 +320,7 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 
 	tgt_info->target_type = target_type;
 	hif_register_tbl_attach(ol_sc, hif_type);
-	target_register_tbl_attach(ol_sc, target_type);
+	hif_target_register_tbl_attach(ol_sc, target_type);
 
 	if (hif_ahb_enable_radio(sc, pdev, id) != 0) {
 		HIF_INFO("error in enabling soc\n");

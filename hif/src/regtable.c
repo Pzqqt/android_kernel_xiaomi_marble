@@ -36,7 +36,7 @@
 #include "targetdef.h"
 #include "hostdef.h"
 
-void target_register_tbl_attach(struct hif_softc *scn, u32 target_type)
+void hif_target_register_tbl_attach(struct hif_softc *scn, u32 target_type)
 {
 	switch (target_type) {
 	case TARGET_TYPE_AR6320:
