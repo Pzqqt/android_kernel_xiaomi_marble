@@ -1923,13 +1923,13 @@ int wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 
 	return ret;
 }
+
 /**
  * wlan_hdd_scan_abort() - abort ongoing scan
  * @pAdapter: Pointer to interface adapter
  *
  * Return: 0 for success, non zero for failure
  */
-#ifdef FEATURE_WLAN_SCAN_PNO
 int wlan_hdd_scan_abort(hdd_adapter_t *pAdapter)
 {
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
@@ -1955,6 +1955,7 @@ int wlan_hdd_scan_abort(hdd_adapter_t *pAdapter)
 	return 0;
 }
 
+#ifdef FEATURE_WLAN_SCAN_PNO
 /**
  * hdd_sched_scan_callback - scheduled scan callback
  * @callbackContext: Callback context
@@ -2438,6 +2439,60 @@ int wlan_hdd_cfg80211_sched_scan_stop(struct wiphy *wiphy,
 	return ret;
 }
 #endif /*FEATURE_WLAN_SCAN_PNO */
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)) || \
+    defined(CFG80211_ABORT_SCAN)
+/**
+ * __wlan_hdd_cfg80211_abort_scan() - cfg80211 abort scan api
+ * @wiphy: Pointer to wiphy
+ * @wdev: Pointer to wireless device structure
+ *
+ * This function is used to abort an ongoing scan
+ *
+ * Return: None
+ */
+static void __wlan_hdd_cfg80211_abort_scan(struct wiphy *wiphy,
+					   struct wireless_dev *wdev)
+{
+	struct net_device *dev = wdev->netdev;
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	int ret;
+
+	ENTER_DEV(dev);
+
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("Command not allowed in FTM mode");
+		return;
+	}
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (!ret)
+		return;
+
+	wlan_hdd_scan_abort(adapter);
+
+	EXIT();
+}
+
+/**
+ * wlan_hdd_cfg80211_abort_scan - cfg80211 abort scan api
+ * @wiphy: Pointer to wiphy
+ * @wdev: Pointer to wireless device structure
+ *
+ * Wrapper to __wlan_hdd_cfg80211_abort_scan() -
+ * function is used to abort an ongoing scan
+ *
+ * Return: None
+ */
+void wlan_hdd_cfg80211_abort_scan(struct wiphy *wiphy,
+				  struct wireless_dev *wdev)
+{
+	cds_ssr_protect(__func__);
+	__wlan_hdd_cfg80211_abort_scan(wiphy, wdev);
+	cds_ssr_unprotect(__func__);
+}
+#endif
 
 /**
  * hdd_cleanup_scan_queue() - remove entries in scan queue
