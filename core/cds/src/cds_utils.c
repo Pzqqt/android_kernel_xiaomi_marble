@@ -85,7 +85,6 @@
 /*----------------------------------------------------------------------------
    Function Definitions and Documentation
  * -------------------------------------------------------------------------*/
-#ifdef CONFIG_ICNSS
 #ifdef WLAN_FEATURE_11W
 static inline void xor_128(const u8 *a, const u8 *b, u8 *out)
 {
@@ -190,7 +189,6 @@ static void cds_cmac_calc_mic(struct crypto_cipher *tfm,
 
 	memcpy(mac, x, CMAC_TLEN);
 }
-#endif
 #endif
 
 /*--------------------------------------------------------------------------
