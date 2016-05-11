@@ -284,3 +284,27 @@ void hif_dummy_display_stats(struct hif_softc *hif_ctx)
  */
 void hif_dummy_clear_stats(struct hif_softc *hif_ctx)
 {}
+/**
+ * hif_dummy_set_bundle_mode() - dummy call
+ * @hif_sc: hif context
+ * @enabled: flag to enable/disable bundling
+ * @rx_bundle_cnt: bundle count to be used for RX
+ *
+ * Return: none
+ */
+void hif_dummy_set_bundle_mode(struct hif_softc *hif_ctx,
+					bool enabled, int rx_bundle_cnt)
+{
+	return;
+}
+
+/**
+ * hif_dummy_bus_reset_resume() - dummy call
+ * @hif_sc: hif context
+ *
+ * Return: int 0 for success, non zero for failure
+ */
+int hif_dummy_bus_reset_resume(struct hif_softc *hif_ctx)
+{
+	return 0;
+}

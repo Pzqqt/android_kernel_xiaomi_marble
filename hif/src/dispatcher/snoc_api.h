@@ -25,6 +25,8 @@
  * to the Linux Foundation.
  */
 
+#ifndef _SNOC_API_H_
+#define _SNOC_API_H_
 QDF_STATUS hif_snoc_open(struct hif_softc *hif_ctx,
 			 enum qdf_bus_type bus_type);
 void hif_snoc_close(struct hif_softc *hif_ctx);
@@ -43,3 +45,4 @@ void hif_snoc_irq_enable(struct hif_softc *scn, int ce_id);
 int hif_snoc_dump_registers(struct hif_softc *scn);
 void hif_snoc_display_stats(struct hif_softc *hif_ctx);
 void hif_snoc_clear_stats(struct hif_softc *hif_ctx);
+#endif /* _SNOC_API_H_ */
