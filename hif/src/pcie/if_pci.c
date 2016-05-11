@@ -392,7 +392,7 @@ bool hif_targ_is_awake(struct hif_softc *scn, void *__iomem *mem)
 		return false;
 	val = hif_read32_mb(mem + PCIE_LOCAL_BASE_ADDRESS
 		+ RTC_STATE_ADDRESS);
-	return RTC_STATE_V_GET(val) == RTC_STATE_V_ON;
+	return (RTC_STATE_V_GET(val) & RTC_STATE_V_ON) == RTC_STATE_V_ON;
 }
 #endif
 
@@ -2410,6 +2410,7 @@ void hif_pci_disable_bus(struct hif_softc *scn)
 			       HOST_GROUP0_MASK);
 	}
 
+	hif_pci_device_reset(sc);
 	mem = (void __iomem *)sc->mem;
 	if (mem) {
 		pci_disable_msi(pdev);
