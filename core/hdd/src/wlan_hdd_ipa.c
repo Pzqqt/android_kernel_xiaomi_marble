@@ -510,8 +510,7 @@ uint32_t wlan_hdd_stub_addr_to_priv(void *ptr)
 			} while (0)
 #define HDD_BW_GET_DIFF(_x, _y) (unsigned long)((ULONG_MAX - (_y)) + (_x) + 1)
 
-/* Temporary macro to make a build without IPA V2 */
-#ifdef IPA_V2
+#if defined (QCA_WIFI_3_0) && defined (CONFIG_IPA3)
 #define HDD_IPA_WDI2_SET(pipe_in, ipa_ctxt) \
 do { \
 	pipe_in.u.ul.rdy_ring_rp_va = \
@@ -528,7 +527,7 @@ do { \
 #else
 /* Do nothing */
 #define HDD_IPA_WDI2_SET(pipe_in, ipa_ctxt)
-#endif /* IPA_V2 */
+#endif /* IPA3 */
 
 static struct hdd_ipa_adapter_2_client {
 	enum ipa_client_type cons_client;
@@ -1977,8 +1976,18 @@ struct sk_buff *hdd_ipa_tx_packet_ipa(hdd_context_t *hdd_ctx,
 {
 	struct ipa_header *ipa_header;
 	struct frag_header *frag_header;
+	struct hdd_ipa_priv *hdd_ipa = hdd_ctx->hdd_ipa;
 
 	if (!hdd_ipa_uc_is_enabled(hdd_ctx))
+		return skb;
+
+	if (!hdd_ipa)
+		return skb;
+
+	if (HDD_IPA_UC_NUM_WDI_PIPE != hdd_ipa->activated_fw_pipe)
+		return skb;
+
+	if (skb_headroom(skb) < sizeof(struct ipa_header))
 		return skb;
 
 	ipa_header = (struct ipa_header *) skb_push(skb,
