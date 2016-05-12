@@ -634,7 +634,9 @@ uint32_t qdf_net_buf_debug_hash(qdf_nbuf_t net_buf)
 {
 	uint32_t i;
 
-	i = (uint32_t) ((uintptr_t) net_buf & (QDF_NET_BUF_TRACK_MAX_SIZE - 1));
+	i = (uint32_t) (((uintptr_t) net_buf) >> 4);
+	i += (uint32_t) (((uintptr_t) net_buf) >> 14);
+	i &= (QDF_NET_BUF_TRACK_MAX_SIZE - 1);
 
 	return i;
 }
@@ -675,6 +677,9 @@ void qdf_net_buf_debug_add_node(qdf_nbuf_t net_buf, size_t size,
 	uint32_t i;
 	unsigned long irq_flag;
 	QDF_NBUF_TRACK *p_node;
+	QDF_NBUF_TRACK *new_node;
+
+	new_node = (QDF_NBUF_TRACK *) qdf_mem_malloc(sizeof(*new_node));
 
 	spin_lock_irqsave(&g_qdf_net_buf_track_lock, irq_flag);
 
@@ -687,10 +692,10 @@ void qdf_net_buf_debug_add_node(qdf_nbuf_t net_buf, size_t size,
 			  p_node->net_buf, p_node->file_name, p_node->line_num,
 			  net_buf, file_name, line_num);
 		QDF_ASSERT(0);
+		qdf_mem_free(new_node);
 		goto done;
 	} else {
-		p_node = (QDF_NBUF_TRACK *)
-			 qdf_mem_malloc(sizeof(*p_node));
+		p_node = new_node;
 		if (p_node) {
 			p_node->net_buf = net_buf;
 			p_node->file_name = file_name;
