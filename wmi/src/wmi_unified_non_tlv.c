@@ -7146,6 +7146,19 @@ static QDF_STATUS extract_tx_data_traffic_ctrl_ev_non_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WMI_INTERFACE_EVENT_LOGGING
+static bool is_management_record_non_tlv(uint32_t cmd_id)
+{
+	if ((cmd_id == WMI_BCN_TX_CMDID) ||
+		(cmd_id == WMI_PDEV_SEND_BCN_CMDID) ||
+		(cmd_id == WMI_MGMT_TX_CMDID)) {
+		return true;
+	}
+
+	return false;
+}
+#endif
+
 struct wmi_ops non_tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_non_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_non_tlv,
@@ -7918,6 +7931,14 @@ void wmi_non_tlv_attach(struct wmi_unified *wmi_handle)
 	populate_non_tlv_events_id(wmi_handle->wmi_events);
 	populate_pdev_param_non_tlv(wmi_handle->pdev_param);
 	populate_vdev_param_non_tlv(wmi_handle->vdev_param);
+
+#ifdef WMI_INTERFACE_EVENT_LOGGING
+	wmi_handle->log_info.buf_offset_command = 0;
+	wmi_handle->log_info.buf_offset_event = 0;
+	wmi_handle->log_info.is_management_record =
+		is_management_record_non_tlv;
+	/*(uint8 *)(*wmi_id_to_name)(uint32_t cmd_id);*/
+#endif
 #else
 	qdf_print("%s: Not supported\n", __func__);
 #endif
