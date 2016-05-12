@@ -1495,6 +1495,12 @@ int wma_nan_rsp_event_handler(void *handle, uint8_t *event_buf,
 	WMA_LOGD("%s: NaN response event Posted to SME", __func__);
 	return 0;
 }
+#else
+int wma_nan_rsp_event_handler(void *handle, uint8_t *event_buf,
+			      uint32_t len)
+{
+	return 0;
+}
 #endif /* WLAN_FEATURE_NAN */
 
 /**
@@ -2564,6 +2570,8 @@ static const u8 *wma_wow_wake_reason_str(A_INT32 wake_reason)
 		return "WOW_REASON_RSSI_BREACH_EVENT";
 	case WOW_REASON_NLO_SCAN_COMPLETE:
 		return "WOW_REASON_NLO_SCAN_COMPLETE";
+	case WOW_REASON_NAN_EVENT:
+		return "WOW_REASON_NAN_EVENT";
 	}
 	return "unknown";
 }
@@ -2945,6 +2953,12 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 			} else
 			    WMA_LOGD("No wow_packet_buffer present");
 		}
+		break;
+	case WOW_REASON_NAN_EVENT:
+		WMA_LOGA("Host woken up due to NAN event reason");
+		wma_nan_rsp_event_handler(handle,
+				(uint8_t *)param_buf->wow_packet_buffer,
+				sizeof(WMI_NAN_EVENTID_param_tlvs));
 		break;
 	default:
 		break;
