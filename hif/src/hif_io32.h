@@ -30,6 +30,7 @@
 
 #include <linux/io.h>
 #include "hif.h"
+#include "hif_main.h"
 
 #define hif_read32_mb(addr)         ioread32((void __iomem *)addr)
 #define hif_write32_mb(addr, value) \
@@ -80,7 +81,6 @@
 #ifdef HIF_PCI
 #include "hif_io32_pci.h"
 #endif
-
 #ifdef HIF_SNOC
 #include "hif_io32_snoc.h"
 #endif /* HIF_PCI */

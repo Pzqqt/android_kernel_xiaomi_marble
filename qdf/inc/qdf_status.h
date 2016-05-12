@@ -60,8 +60,10 @@
  * @QDF_STATUS_E_ENXIO: No such device or address
  * @QDF_STATUS_E_NETDOWN: network is down
  * @QDF_STATUS_E_IO: I/O Error
+ * @QDF_STATUS_E_PENDING: pending status
  * @QDF_STATUS_E_NETRESET: Network dropped connection because of reset
  * @QDF_STATUS_E_SIG: Exit due to received SIGINT
+ * @QDF_STATUS_E_PROTO: protocol error
  * @QDF_STATUS_NOT_INITIALIZED: resource not initialized
  * @QDF_STATUS_E_NULL_VALUE: request is null
  * @QDF_STATUS_PMC_PENDING: request pendign in pmc
@@ -103,8 +105,10 @@ typedef enum {
 	QDF_STATUS_E_ENXIO,
 	QDF_STATUS_E_NETDOWN,
 	QDF_STATUS_E_IO,
+	QDF_STATUS_E_PENDING,
 	QDF_STATUS_E_NETRESET,
 	QDF_STATUS_E_SIG,
+	QDF_STATUS_E_PROTO,
 	QDF_STATUS_NOT_INITIALIZED,
 	QDF_STATUS_E_NULL_VALUE,
 	QDF_STATUS_PMC_PENDING,
