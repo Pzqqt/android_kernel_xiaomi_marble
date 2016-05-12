@@ -2148,6 +2148,8 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 					"%s: Override ch %d to %d due to CC Intf",
 					__func__, sap_context->channel, con_ch);
 				sap_context->channel = con_ch;
+				cds_set_channel_params(sap_context->channel, 0,
+						&sap_context->ch_params);
 			}
 		}
 #endif
@@ -2180,6 +2182,8 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 					"%s: Override ch %d to %d due to CC Intf",
 					__func__, sap_context->channel, con_ch);
 				sap_context->channel = con_ch;
+				cds_set_channel_params(sap_context->channel, 0,
+						&sap_context->ch_params);
 			}
 		}
 #endif

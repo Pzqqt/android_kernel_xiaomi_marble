@@ -509,6 +509,13 @@ static void cds_set_2g_channel_params(uint16_t oper_ch,
 	if (CH_WIDTH_MAX <= ch_params->ch_width)
 		ch_params->ch_width = CH_WIDTH_40MHZ;
 
+	if ((cds_bw_value(ch_params->ch_width) > 20) && !sec_ch_2g) {
+		if (oper_ch >= 1 && oper_ch <= 5)
+			sec_ch_2g = oper_ch + 4;
+		else if (oper_ch >= 6 && oper_ch <= 13)
+			sec_ch_2g = oper_ch - 4;
+	}
+
 	while (ch_params->ch_width != CH_WIDTH_INVALID) {
 		chan_state = cds_get_2g_bonded_channel_state(oper_ch,
 							    ch_params->ch_width,
