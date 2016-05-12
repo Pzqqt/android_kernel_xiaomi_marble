@@ -46,17 +46,92 @@ typedef qdf_nbuf_t wmi_buf_t;
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 
 #define WMI_EVENT_DEBUG_MAX_ENTRY (1024)
+#define WMI_EVENT_DEBUG_ENTRY_MAX_LENGTH (16)
+/* wmi_mgmt commands */
+#define WMI_MGMT_EVENT_DEBUG_MAX_ENTRY (256)
 
+/**
+ * struct wmi_command_debug - WMI command log buffer data type
+ * @ command - Store WMI Command id
+ * @ data - Stores WMI command data
+ * @ time - Time of WMI command handling
+ */
 struct wmi_command_debug {
 	uint32_t command;
-	uint32_t data[4]; /*16 bytes of WMI cmd excluding TLV and WMI headers */
+	/*16 bytes of WMI cmd excluding TLV and WMI headers */
+	uint32_t data[WMI_EVENT_DEBUG_ENTRY_MAX_LENGTH/sizeof(uint32_t)];
 	uint64_t time;
 };
 
+/**
+ * struct wmi_event_debug - WMI event log buffer data type
+ * @ command - Store WMI Event id
+ * @ data - Stores WMI Event data
+ * @ time - Time of WMI Event handling
+ */
 struct wmi_event_debug {
 	uint32_t event;
-	uint32_t data[4]; /*16 bytes of WMI event data excluding TLV header */
+	/*16 bytes of WMI event data excluding TLV header */
+	uint32_t data[WMI_EVENT_DEBUG_ENTRY_MAX_LENGTH/sizeof(uint32_t)];
 	uint64_t time;
+};
+
+/**
+ * struct wmi_log_buf_t - WMI log buffer information type
+ * @buf - Refernce to WMI log buffer
+ * @ length - length of buffer
+ * @ buf_tail_idx - Tail index of buffer
+ * @ p_buf_tail_idx - refernce to buffer tail index. It is added to accommodate
+ * unified design since MCL uses global variable for buffer tail index
+ */
+struct wmi_log_buf_t {
+	void *buf;
+	uint32_t length;
+	uint32_t buf_tail_idx;
+	uint32_t *p_buf_tail_idx;
+};
+
+/**
+ * struct wmi_debug_log_info - Meta data to hold information of all buffers
+ * used for WMI logging
+ * @wmi_command_log_buf_info - Buffer info for WMI Command log
+ * @wmi_command_tx_cmp_log_buf_info - Buffer info for WMI Command Tx completion
+ * log
+ * @wmi_event_log_buf_info - Buffer info for WMI Event log
+ * @wmi_rx_event_log_buf_info - Buffer info for WMI event received log
+ * @wmi_mgmt_command_log_buf_info - Buffer info for WMI Management Command log
+ * @wmi_mgmt_command_tx_cmp_log_buf_info - Buffer info for WMI Management
+ * Command Tx completion log
+ * @wmi_mgmt_event_log_buf_info - Buffer info for WMI Management event log
+ * @wmi_record_lock - Lock WMI recording
+ * @wmi_logging_enable - Enable/Disable state for WMI logging
+ * @buf_offset_command - Offset from where WMI command data should be logged
+ * @buf_offset_event - Offset from where WMI event data should be logged
+ * @is_management_record - Function refernce to check if command/event is
+ *  management record
+ * @wmi_id_to_name - Function refernce to API to convert Command id to
+ * string name
+ * @wmi_log_debugfs_dir - refernce to debugfs directory
+ */
+struct wmi_debug_log_info {
+	struct wmi_log_buf_t wmi_command_log_buf_info;
+	struct wmi_log_buf_t wmi_command_tx_cmp_log_buf_info;
+
+	struct wmi_log_buf_t wmi_event_log_buf_info;
+	struct wmi_log_buf_t wmi_rx_event_log_buf_info;
+
+	struct wmi_log_buf_t wmi_mgmt_command_log_buf_info;
+	struct wmi_log_buf_t wmi_mgmt_command_tx_cmp_log_buf_info;
+	struct wmi_log_buf_t wmi_mgmt_event_log_buf_info;
+
+	qdf_spinlock_t wmi_record_lock;
+	bool wmi_logging_enable;
+	uint32_t buf_offset_command;
+	uint32_t buf_offset_event;
+	bool (*is_management_record)(uint32_t cmd_id);
+	uint8_t *(*wmi_id_to_name)(uint32_t cmd_id);
+	struct dentry *wmi_log_debugfs_dir;
+	uint8_t wmi_instance_id;
 };
 
 #endif /*WMI_INTERFACE_EVENT_LOGGING */
@@ -1080,7 +1155,7 @@ struct wmi_unified {
 #endif /* WLAN_OPEN_SOURCE */
 
 #ifdef WMI_INTERFACE_EVENT_LOGGING
-	qdf_spinlock_t wmi_record_lock;
+	struct wmi_debug_log_info log_info;
 #endif /*WMI_INTERFACE_EVENT_LOGGING */
 
 	qdf_atomic_t is_target_suspended;
