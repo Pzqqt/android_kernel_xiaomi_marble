@@ -10377,6 +10377,14 @@ error:
 	return status;
 }
 
+static bool is_management_record_tlv(uint32_t cmd_id)
+{
+	if ((cmd_id == WMI_MGMT_TX_SEND_CMDID) ||
+			(cmd_id == WMI_MGMT_TX_COMPLETION_EVENTID))
+		return true;
+	return false;
+}
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -10590,4 +10598,10 @@ struct wmi_ops tlv_ops =  {
 void wmi_tlv_attach(wmi_unified_t wmi_handle)
 {
 	wmi_handle->ops = &tlv_ops;
+#ifdef WMI_INTERFACE_EVENT_LOGGING
+	wmi_handle->log_info.buf_offset_command = 2;
+	wmi_handle->log_info.buf_offset_event = 4;
+	wmi_handle->log_info.is_management_record =
+		is_management_record_tlv;
+#endif
 }
