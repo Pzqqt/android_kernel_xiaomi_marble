@@ -31,8 +31,14 @@
 #ifdef HIF_SDIO
 #include "regtable_sdio.h"
 #endif
+
 #if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB)
 #include "reg_struct.h"
 #include "regtable_pcie.h"
 #endif
+
+#if defined(HIF_USB)
+#include "regtable_usb.h"
+#endif
+
 #endif

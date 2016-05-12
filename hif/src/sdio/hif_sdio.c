@@ -226,16 +226,3 @@ void hif_send_complete_check(struct hif_opaque_softc *hif_ctx, uint8_t pipe,
 
 }
 
-/**
- * hif_set_bundle_mode() - set bundling mode.
- * @hif_ctx: HIF context
- * @enabled: enable/disable bundling
- * @rx_bundle_cnt: bundling count
- *
- * Return: none
- */
-void hif_set_bundle_mode(struct hif_opaque_softc *hif_ctx, bool enabled,
-			uint64_t rx_bundle_cnt)
-{
-
-}

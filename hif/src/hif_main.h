@@ -95,6 +95,8 @@
 #define HIF_GET_PCI_SOFTC(scn) ((struct hif_pci_softc *)scn)
 #define HIF_GET_CE_STATE(scn) ((struct HIF_CE_state *)scn)
 #define HIF_GET_SDIO_SOFTC(scn) ((struct hif_sdio_softc *)scn)
+#define HIF_GET_USB_SOFTC(scn) ((struct hif_usb_softc *)scn)
+#define HIF_GET_USB_DEVICE(scn) ((HIF_DEVICE_USB *)scn)
 #define HIF_GET_SOFTC(scn) ((struct hif_softc *)scn)
 #define GET_HIF_OPAQUE_HDL(scn) ((struct hif_opaque_softc *)scn)
 
@@ -203,4 +205,12 @@ void hif_wlan_disable(struct hif_softc *scn);
 int hif_target_sleep_state_adjust(struct hif_softc *scn,
 					 bool sleep_ok,
 					 bool wait_for_it);
+#ifdef HIF_USB
+void hif_usb_get_hw_info(struct hif_softc *scn);
+void hif_ramdump_handler(struct hif_opaque_softc *scn);
+
+#else
+static inline void hif_usb_get_hw_info(struct hif_softc *scn) {}
+static inline void hif_ramdump_handler(struct hif_opaque_softc *scn) {}
+#endif
 #endif /* __HIF_MAIN_H__ */
