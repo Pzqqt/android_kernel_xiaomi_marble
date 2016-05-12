@@ -138,6 +138,10 @@ static inline int cnss_wlan_get_dfs_nol(void *info, u16 info_len)
 {
 	return 0;
 }
+static void cnss_schedule_recovery_work(void)
+{
+	return;
+}
 static inline void *cnss_get_virt_ramdump_mem(unsigned long *size)
 {
 	return NULL;

@@ -54,9 +54,7 @@
 #include "parser_api.h"
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
-#ifdef CONFIG_CNSS
-#include <net/cnss.h>
-#endif
+#include "pld_common.h"
 
 /*--------------------------------------------------------------------------
    Function definitions
@@ -367,12 +365,12 @@ void sap_process_avoid_ie(tHalHandle hal,
    RETURN VALUE
     NULL
    ============================================================================*/
-#ifdef CONFIG_CNSS
 void sap_update_unsafe_channel_list(ptSapContext pSapCtx)
 {
 	uint16_t i, j;
 	uint16_t unsafe_channel_list[NUM_CHANNELS];
 	uint16_t unsafe_channel_count = 0;
+	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
 	/* Flush, default set all channel safe */
 	for (i = 0; i < NUM_CHANNELS; i++) {
@@ -395,8 +393,8 @@ void sap_update_unsafe_channel_list(ptSapContext pSapCtx)
 		}
 	}
 #endif
-
-	cnss_get_wlan_unsafe_channel(unsafe_channel_list,
+	pld_get_wlan_unsafe_channel(qdf_ctx->dev,
+				    unsafe_channel_list,
 				     &unsafe_channel_count,
 				     sizeof(unsafe_channel_list));
 
@@ -417,14 +415,6 @@ void sap_update_unsafe_channel_list(ptSapContext pSapCtx)
 
 	return;
 }
-#else
-void sap_update_unsafe_channel_list(ptSapContext pSapCtx)
-{
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Not implemented", __func__);
-	return;
-}
-#endif
 
 #endif /* FEATURE_WLAN_CH_AVOID */
 

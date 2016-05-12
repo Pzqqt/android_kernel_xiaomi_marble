@@ -45,10 +45,8 @@
 #include "wma_types.h"
 #include "wlan_hdd_main.h"
 #include <linux/vmalloc.h>
-#ifdef CONFIG_CNSS
-#include <net/cnss.h>
-#endif
 
+#include "pld_common.h"
 #include "sap_api.h"
 #include "qdf_trace.h"
 #include "bmi.h"
@@ -1651,6 +1649,7 @@ void cds_trigger_recovery(void)
 	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	qdf_runtime_lock_t recovery_lock;
+	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
 	if (!wma_handle) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
@@ -1675,15 +1674,13 @@ void cds_trigger_recovery(void)
 	if (QDF_STATUS_SUCCESS != status) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			"CRASH_INJECT command is timed out!");
- #ifdef CONFIG_CNSS
 		if (cds_is_driver_recovering()) {
 			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 				"Recovery is in progress, ignore!");
 		} else {
 			cds_set_recovery_in_progress(true);
-			cnss_schedule_recovery_work();
+			pld_schedule_recovery_work(qdf_ctx->dev);
 		}
- #endif
 	}
 
 	qdf_runtime_pm_allow_suspend(recovery_lock);

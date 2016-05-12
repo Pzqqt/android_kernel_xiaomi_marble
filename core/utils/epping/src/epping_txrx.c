@@ -44,9 +44,7 @@
 #include <wlan_ptt_sock_svc.h>
 #include <linux/wireless.h>
 #include <net/cfg80211.h>
-#if defined(MSM_PLATFORM) && defined(HIF_PCI)
-#include <net/cnss.h>
-#endif /* MSM_PLATFORM */
+#include <pld_common.h>
 #include <linux/rtnetlink.h>
 #include <linux/semaphore.h>
 #include <linux/ctype.h>
@@ -229,28 +227,30 @@ static int epping_set_mac_address(struct net_device *dev, void *addr)
 
 static void epping_stop_adapter(epping_adapter_t *pAdapter)
 {
+	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+
 	if (pAdapter && pAdapter->started) {
 		EPPING_LOG(LOG1, FL("Disabling queues"));
 		netif_tx_disable(pAdapter->dev);
 		netif_carrier_off(pAdapter->dev);
 		pAdapter->started = false;
-#if defined(MSM_PLATFORM) && defined(HIF_PCI) && defined(CONFIG_CNSS)
-		cnss_request_bus_bandwidth(CNSS_BUS_WIDTH_LOW);
-#endif
+		pld_request_bus_bandwidth(qdf_ctx->dev,
+					  PLD_BUS_WIDTH_LOW);
 	}
 }
 
 static int epping_start_adapter(epping_adapter_t *pAdapter)
 {
+	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+
 	if (!pAdapter) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: pAdapter= NULL\n", __func__);
 		return -1;
 	}
 	if (!pAdapter->started) {
-#if defined(MSM_PLATFORM) && defined(HIF_PCI) && defined(CONFIG_CNSS)
-		cnss_request_bus_bandwidth(CNSS_BUS_WIDTH_HIGH);
-#endif
+		pld_request_bus_bandwidth(qdf_ctx->dev,
+					  PLD_BUS_WIDTH_HIGH);
 		netif_carrier_on(pAdapter->dev);
 		EPPING_LOG(LOG1, FL("Enabling queues"));
 		netif_tx_start_all_queues(pAdapter->dev);

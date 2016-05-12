@@ -587,6 +587,28 @@ int pld_wlan_get_dfs_nol(struct device *dev, void *info, u16 info_len)
 }
 
 /**
+ * pld_schedule_recovery_work() - Schedule recovery work
+ * @dev: device
+ *
+ * Schedule a system self recovery work.
+ *
+ * Return: void
+ */
+void pld_schedule_recovery_work(struct device *dev)
+{
+	switch (pld_get_bus_type(dev)) {
+	case PLD_BUS_TYPE_PCIE:
+		cnss_schedule_recovery_work();
+		break;
+	case PLD_BUS_TYPE_SNOC:
+		break;
+	default:
+		pr_err("Invalid device type\n");
+		break;
+	}
+}
+
+/**
  * pld_wlan_pm_control() - WLAN PM control on PCIE
  * @dev: device
  * @vote: 0 for enable PCIE PC, 1 for disable PCIE PC

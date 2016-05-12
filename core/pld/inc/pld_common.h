@@ -327,6 +327,7 @@ int pld_get_wlan_unsafe_channel(struct device *dev, u16 *unsafe_ch_list,
 				u16 *ch_count, u16 buf_len);
 int pld_wlan_set_dfs_nol(struct device *dev, void *info, u16 info_len);
 int pld_wlan_get_dfs_nol(struct device *dev, void *info, u16 info_len);
+void pld_schedule_recovery_work(struct device *dev);
 int pld_wlan_pm_control(struct device *dev, bool vote);
 void *pld_get_virt_ramdump_mem(struct device *dev, unsigned long *size);
 void pld_device_crashed(struct device *dev);

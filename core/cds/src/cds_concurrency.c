@@ -65,6 +65,7 @@
 #include "cds_reg_service.h"
 #include "wlan_hdd_ipa.h"
 #include "cdp_txrx_flow_ctrl_legacy.h"
+#include "pld_common.h"
 
 static struct cds_conc_connection_info
 	conc_connection_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
@@ -4445,7 +4446,6 @@ QDF_STATUS cds_get_connection_channels(uint8_t *channels,
  *
  * Return: None
  */
-#ifdef CONFIG_CNSS
 void cds_update_with_safe_channel_list(uint8_t *pcl_channels, uint32_t *len,
 				uint8_t *weight_list, uint32_t weight_len)
 {
@@ -4456,6 +4456,7 @@ void cds_update_with_safe_channel_list(uint8_t *pcl_channels, uint32_t *len,
 	uint8_t is_unsafe = 1;
 	uint8_t i, j;
 	uint32_t safe_channel_count = 0, current_channel_count = 0;
+	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
 	if (len) {
 		current_channel_count = QDF_MIN(*len, MAX_NUM_CHAN);
@@ -4464,7 +4465,8 @@ void cds_update_with_safe_channel_list(uint8_t *pcl_channels, uint32_t *len,
 		return;
 	}
 
-	cnss_get_wlan_unsafe_channel(unsafe_channel_list,
+	pld_get_wlan_unsafe_channel(qdf_ctx->dev,
+				    unsafe_channel_list,
 				     &unsafe_channel_count,
 				     sizeof(unsafe_channel_list));
 
@@ -4501,13 +4503,7 @@ void cds_update_with_safe_channel_list(uint8_t *pcl_channels, uint32_t *len,
 	}
 	return;
 }
-#else
-void cds_update_with_safe_channel_list(uint8_t *pcl_channels, uint32_t *len,
-				uint8_t *weight_list, uint32_t weight_len)
-{
-	return;
-}
-#endif
+
 /**
  * cds_get_channel_list() - provides the channel list
  * suggestion for new connection

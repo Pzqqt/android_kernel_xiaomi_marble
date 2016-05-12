@@ -59,11 +59,7 @@
 #include <wma.h>
 #include <cds_concurrency.h>
 
-#ifdef HTT_RX_RESTORE
-#if  defined(CONFIG_CNSS)
-#include <net/cnss.h>
-#endif
-#endif
+#include <pld_common.h>
 
 void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 			qdf_nbuf_t rx_buf_list);
@@ -73,9 +69,11 @@ void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 
 static void ol_rx_restore_handler(struct work_struct *htt_rx)
 {
+	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
 		  "Enter: %s", __func__);
-	cnss_device_self_recovery();
+	pld_device_self_recovery(qdf_ctx->dev);
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
 		  "Exit: %s", __func__);
 }
