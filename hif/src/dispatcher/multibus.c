@@ -31,7 +31,9 @@
 #include "hif.h"
 #include "hif_main.h"
 #include "multibus.h"
+#if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB)
 #include "ce_main.h"
+#endif
 #include "htc_services.h"
 #include "a_types.h"
 /**
@@ -90,6 +92,8 @@ int hif_bus_get_context_size(enum qdf_bus_type bus_type)
 		return hif_ahb_get_context_size();
 	case QDF_BUS_TYPE_SNOC:
 		return hif_snoc_get_context_size();
+	case QDF_BUS_TYPE_SDIO:
+		return hif_sdio_get_context_size();
 	default:
 		return 0;
 	}
@@ -118,6 +122,9 @@ QDF_STATUS hif_bus_open(struct hif_softc *hif_sc,
 		break;
 	case QDF_BUS_TYPE_AHB:
 		status = hif_initialize_ahb_ops(&hif_sc->bus_ops);
+		break;
+	case QDF_BUS_TYPE_SDIO:
+		status = hif_initialize_sdio_ops(hif_sc);
 		break;
 	default:
 		status = QDF_STATUS_E_NOSUPPORT;
@@ -211,6 +218,50 @@ int hif_bus_configure(struct hif_softc *hif_sc)
 	return hif_sc->bus_ops.hif_bus_configure(hif_sc);
 }
 
+QDF_STATUS hif_get_config_item(struct hif_opaque_softc *hif_ctx,
+		     int opcode, void *config, uint32_t config_len)
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+	return hif_sc->bus_ops.hif_get_config_item(hif_sc, opcode, config,
+						 config_len);
+}
+
+void hif_set_mailbox_swap(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+	hif_sc->bus_ops.hif_set_mailbox_swap(hif_sc);
+}
+
+void hif_claim_device(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+	hif_sc->bus_ops.hif_claim_device(hif_sc);
+}
+
+void hif_shutdown_device(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+	hif_sc->bus_ops.hif_shutdown_device(hif_sc);
+}
+
+void hif_stop(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+	hif_sc->bus_ops.hif_stop(hif_sc);
+}
+
+void hif_bus_pkt_dl_len_set(struct hif_opaque_softc *hif_ctx,
+			    u_int32_t pkt_download_len)
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+	hif_sc->bus_ops.hif_bus_pkt_dl_len_set(hif_sc, pkt_download_len);
+}
+
+void hif_cancel_deferred_target_sleep(struct hif_softc *hif_sc)
+{
+	return hif_sc->bus_ops.hif_cancel_deferred_target_sleep(hif_sc);
+}
+
 void hif_irq_enable(struct hif_softc *hif_sc, int irq_id)
 {
 	hif_sc->bus_ops.hif_irq_enable(hif_sc, irq_id);
@@ -225,6 +276,31 @@ int hif_dump_registers(struct hif_opaque_softc *hif_hdl)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_hdl);
 	return hif_sc->bus_ops.hif_dump_registers(hif_sc);
+}
+
+void hif_dump_target_memory(struct hif_opaque_softc *hif_hdl,
+			    void *ramdump_base,
+			    uint32_t address, uint32_t size)
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_hdl);
+	hif_sc->bus_ops.hif_dump_target_memory(hif_sc, ramdump_base,
+					       address, size);
+}
+
+void hif_ipa_get_ce_resource(struct hif_opaque_softc *hif_hdl,
+			     qdf_dma_addr_t *ce_sr_base_paddr,
+			     uint32_t *ce_sr_ring_size,
+			     qdf_dma_addr_t *ce_reg_paddr)
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_hdl);
+	hif_sc->bus_ops.hif_ipa_get_ce_resource(hif_sc, ce_sr_base_paddr,
+						ce_sr_ring_size, ce_reg_paddr);
+}
+
+void hif_mask_interrupt_call(struct hif_opaque_softc *hif_hdl)
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_hdl);
+	hif_sc->bus_ops.hif_mask_interrupt_call(hif_sc);
 }
 
 /**

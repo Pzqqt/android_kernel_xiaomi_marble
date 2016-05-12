@@ -51,10 +51,26 @@ struct hif_bus_ops {
 			enum hif_enable_type type);
 	void (*hif_disable_bus)(struct hif_softc *hif_sc);
 	int (*hif_bus_configure)(struct hif_softc *hif_sc);
+	QDF_STATUS (*hif_get_config_item)(struct hif_softc *hif_sc,
+		     int opcode, void *config, uint32_t config_len);
+	void (*hif_set_mailbox_swap)(struct hif_softc *hif_sc);
+	void (*hif_claim_device)(struct hif_softc *hif_sc);
+	void (*hif_shutdown_device)(struct hif_softc *hif_sc);
+	void (*hif_stop)(struct hif_softc *hif_sc);
+	void (*hif_bus_pkt_dl_len_set)(void *hif_sc,
+				       u_int32_t pkt_download_len);
+	void (*hif_cancel_deferred_target_sleep)(struct hif_softc *hif_sc);
 	void (*hif_irq_disable)(struct hif_softc *hif_sc, int ce_id);
 	void (*hif_irq_enable)(struct hif_softc *hif_sc, int ce_id);
 	int (*hif_dump_registers)(struct hif_softc *hif_sc);
-
+	void (*hif_dump_target_memory)(struct hif_softc *hif_sc,
+				       void *ramdump_base,
+				       uint32_t address, uint32_t size);
+	void (*hif_ipa_get_ce_resource)(struct hif_softc *hif_sc,
+					qdf_dma_addr_t *sr_base_paddr,
+					uint32_t *sr_ring_size,
+					qdf_dma_addr_t *reg_paddr);
+	void (*hif_mask_interrupt_call)(struct hif_softc *hif_sc);
 	void (*hif_enable_power_management)(struct hif_softc *hif_ctx,
 				 bool is_packet_log_enabled);
 	void (*hif_disable_power_management)(struct hif_softc *hif_ctx);
@@ -126,5 +142,31 @@ static inline int hif_ahb_get_context_size(void)
 }
 #endif
 
+#ifdef HIF_SDIO
+QDF_STATUS hif_initialize_sdio_ops(struct hif_softc *hif_sc);
+int hif_sdio_get_context_size(void);
+#else
+/**
+ * hif_initialize_sdio_ops() - dummy for when sdio not supported
+ *
+ * Return: QDF_STATUS_E_NOSUPPORT
+ */
+
+static inline QDF_STATUS hif_initialize_sdio_ops(struct hif_softc *hif_sc)
+{
+	HIF_ERROR("%s: not supported", __func__);
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+/**
+ * hif_sdio_get_context_size() - dummy when sdio isn't supported
+ *
+ * Return: 0 as an invalid size to indicate no support
+ */
+static inline int hif_sdio_get_context_size(void)
+{
+	return 0;
+}
+#endif /* HIF_SDIO */
 
 #endif /* _MULTIBUS_H_ */

@@ -19,49 +19,48 @@
 #include "hif.h"
 #include "hif_main.h"
 #include "multibus.h"
-#include "ce_main.h"
-#include "ahb_api.h"
+#include "sdio_api.h"
+#include "hif_io32.h"
 #include "dummy.h"
+#include "if_sdio.h"
 
 /**
- * hif_initialize_ahb_ops() - initialize the ahb ops
+ * hif_initialize_sdio_ops() - initialize the pci ops
  * @bus_ops: hif_bus_ops table pointer to initialize
- *
- * This function will assign the set of callbacks that needs
- * to be called for ipq4019 platform
  *
  * Return: QDF_STATUS_SUCCESS
  */
-QDF_STATUS hif_initialize_ahb_ops(struct hif_bus_ops *bus_ops)
+QDF_STATUS hif_initialize_sdio_ops(struct hif_softc *hif_sc)
 {
-	bus_ops->hif_bus_open = &hif_ahb_open;
-	bus_ops->hif_bus_close = &hif_ahb_close;
+	struct hif_bus_ops *bus_ops = &hif_sc->bus_ops;
+
+	bus_ops->hif_bus_open = &hif_sdio_open;
+	bus_ops->hif_bus_close = &hif_sdio_close;
 	bus_ops->hif_bus_prevent_linkdown = &hif_dummy_bus_prevent_linkdown;
 	bus_ops->hif_reset_soc = &hif_dummy_reset_soc;
-	bus_ops->hif_bus_suspend = &hif_dummy_bus_suspend;
-	bus_ops->hif_bus_resume = &hif_dummy_bus_resume;
+	bus_ops->hif_bus_suspend = &hif_sdio_bus_suspend;
+	bus_ops->hif_bus_resume = &hif_sdio_bus_resume;
 	bus_ops->hif_target_sleep_state_adjust =
-		&hif_dummy_target_sleep_state_adjust;
-
-	bus_ops->hif_disable_isr = &hif_ahb_disable_isr;
-	bus_ops->hif_nointrs = &hif_ahb_nointrs;
-	bus_ops->hif_enable_bus = &hif_ahb_enable_bus;
-	bus_ops->hif_disable_bus = &hif_ahb_disable_bus;
-	bus_ops->hif_bus_configure = &hif_ahb_bus_configure;
-	bus_ops->hif_get_config_item = &hif_dummy_get_config_item;
-	bus_ops->hif_set_mailbox_swap = &hif_dummy_set_mailbox_swap;
-	bus_ops->hif_claim_device = &hif_dummy_claim_device;
-	bus_ops->hif_shutdown_device = &hif_ce_stop;
-	bus_ops->hif_stop = &hif_ce_stop;
-	bus_ops->hif_bus_pkt_dl_len_set = &ce_pkt_dl_len_set;
+			&hif_dummy_target_sleep_state_adjust;
+	bus_ops->hif_disable_isr = &hif_dummy_disable_isr;
+	bus_ops->hif_nointrs = &hif_dummy_nointrs;
+	bus_ops->hif_enable_bus = &hif_sdio_enable_bus;
+	bus_ops->hif_disable_bus = &hif_sdio_disable_bus;
+	bus_ops->hif_bus_configure = &hif_dummy_bus_configure;
+	bus_ops->hif_get_config_item = &hif_sdio_get_config_item;
+	bus_ops->hif_set_mailbox_swap = &hif_sdio_set_mailbox_swap;
+	bus_ops->hif_claim_device = &hif_sdio_claim_device;
+	bus_ops->hif_shutdown_device = &hif_sdio_shutdown;
+	bus_ops->hif_stop = &hif_sdio_stop;
+	bus_ops->hif_bus_pkt_dl_len_set = &hif_dummy_bus_pkt_dl_len_set;
 	bus_ops->hif_cancel_deferred_target_sleep =
 				&hif_dummy_cancel_deferred_target_sleep;
-	bus_ops->hif_irq_disable = &hif_ahb_irq_disable;
-	bus_ops->hif_irq_enable = &hif_ahb_irq_enable;
-	bus_ops->hif_dump_registers = &hif_ahb_dump_registers;
+	bus_ops->hif_irq_disable = &hif_dummy_irq_disable;
+	bus_ops->hif_irq_enable = &hif_dummy_irq_enable;
+	bus_ops->hif_dump_registers = &hif_dummy_dump_registers;
 	bus_ops->hif_dump_target_memory = &hif_dummy_dump_target_memory;
 	bus_ops->hif_ipa_get_ce_resource = &hif_dummy_ipa_get_ce_resource;
-	bus_ops->hif_mask_interrupt_call = &hif_dummy_mask_interrupt_call;
+	bus_ops->hif_mask_interrupt_call = &hif_sdio_mask_interrupt_call;
 	bus_ops->hif_enable_power_management =
 		&hif_dummy_enable_power_management;
 	bus_ops->hif_disable_power_management =
@@ -71,11 +70,11 @@ QDF_STATUS hif_initialize_ahb_ops(struct hif_bus_ops *bus_ops)
 }
 
 /**
- * hif_ahb_get_context_size() - return the size of the snoc context
+ * hif_sdio_get_context_size() - return the size of the sdio context
  *
  * Return the size of the context.  (0 for invalid bus)
  */
-int hif_ahb_get_context_size(void)
+int hif_sdio_get_context_size(void)
 {
-	return sizeof(struct HIF_CE_state);
+	return sizeof(struct hif_sdio_softc);
 }

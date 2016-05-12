@@ -107,7 +107,176 @@ void hif_dummy_enable_power_management(struct hif_softc *hif_ctx,
 /**
  * hif_dummy_disable_power_management - dummy call
  * hif_ctx: hif context
- * is_packet_log_enabled: true if packet log is enabled
+ *
+ * Return: none
  */
 void hif_dummy_disable_power_management(struct hif_softc *hif_ctx)
 {}
+
+/**
+ * hif_dummy_disable_isr - dummy call
+ * hif_ctx: hif context
+ *
+ * Return: none
+ */
+void hif_dummy_disable_isr(struct hif_softc *scn)
+{}
+
+/**
+ * hif_dummy_nointrs - dummy call
+ * hif_sc: hif context
+ *
+ * Return: none
+ */
+void hif_dummy_nointrs(struct hif_softc *hif_sc)
+{}
+
+/**
+ * hif_dummy_bus_configure - dummy call
+ * hif_ctx: hif context
+ *
+ * Return: 0 for sucess
+ */
+int hif_dummy_bus_configure(struct hif_softc *hif_sc)
+{
+	return 0;
+}
+
+/**
+ * hif_dummy_get_config_item - dummy call
+ * @hif_sc: hif context
+ * @opcode: configuration type
+ * @config: configuration value to set
+ * @config_len: configuration length
+ *
+ * Return: 0 for sucess
+ */
+QDF_STATUS
+hif_dummy_get_config_item(struct hif_softc *hif_sc,
+		     int opcode, void *config, uint32_t config_len)
+{
+	return 0;
+}
+
+/**
+ * hif_dummy_set_mailbox_swap - dummy call
+ * @hif_sc: hif context
+ *
+ * Return: None
+ */
+void
+hif_dummy_set_mailbox_swap(struct hif_softc *hif_sc)
+{
+	return;
+}
+
+/**
+ * hif_dummy_claim_device - dummy call
+ * @hif_sc: hif context
+ *
+ * Return: None
+ */
+void
+hif_dummy_claim_device(struct hif_softc *hif_sc)
+{
+	return;
+}
+
+/**
+ * hif_dummy_bus_pkt_dl_len_set()- dummy call
+ * @sc: context
+ * @pkt_download_len: download length
+ *
+ * Return: None
+ */
+void hif_dummy_bus_pkt_dl_len_set(void *sc,
+				  u_int32_t pkt_download_len)
+{
+	return;
+}
+
+
+/**
+ * hif_dummy_cancel_deferred_target_sleep - dummy call
+ * @hif_sc: hif context
+ *
+ * Return: None
+ */
+void
+hif_dummy_cancel_deferred_target_sleep(struct hif_softc *hif_sc)
+{
+	return;
+}
+
+/**
+ * hif_dummy_irq_enable - dummy call
+ * hif_ctx: hif context
+ * @irq_id: irq id
+ *
+ * Return: none
+ */
+void hif_dummy_irq_enable(struct hif_softc *hif_sc, int irq_id)
+{}
+
+/**
+ * hif_dummy_irq_disable - dummy call
+ * hif_ctx: hif context
+ * @irq_id: irq id
+ *
+ * Return: none
+ */
+void hif_dummy_irq_disable(struct hif_softc *hif_sc, int irq_id)
+{}
+
+/**
+ * hif_dummy_dump_registers - dummy call
+ * hif_sc: hif context
+ *
+ * Return: 0 for sucess
+ */
+int hif_dummy_dump_registers(struct hif_softc *hif_sc)
+{
+	return 0;
+}
+
+/**
+ * hif_dummy_dump_target_memory - dummy call
+ * @hif_sc: hif context
+ * @ramdump_base: base
+ * @address: address
+ * @size: size
+ *
+ * Return: None
+ */
+void hif_dummy_dump_target_memory(struct hif_softc *hif_sc, void *ramdump_base,
+						uint32_t address, uint32_t size)
+{
+}
+
+/**
+ * hif_dummy_ipa_get_ce_resource - dummy call
+ * @scn: HIF context
+ * @sr_base_paddr: source base address
+ * @sr_ring_size: source ring size
+ * @reg_paddr: bus physical address
+ *
+ * Return: None
+ */
+void hif_dummy_ipa_get_ce_resource(struct hif_softc *hif_sc,
+				   qdf_dma_addr_t *sr_base_paddr,
+				   uint32_t *sr_ring_size,
+				   qdf_dma_addr_t *reg_paddr)
+{
+}
+
+/**
+ * hif_dummy_mask_interrupt_call - dummy call
+ * @hif_sc: hif context
+ *
+ * Return: None
+ */
+void
+hif_dummy_mask_interrupt_call(struct hif_softc *hif_sc)
+{
+	return;
+}
