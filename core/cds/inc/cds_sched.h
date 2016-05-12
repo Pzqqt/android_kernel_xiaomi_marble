@@ -200,6 +200,15 @@ typedef struct _cds_sched_context {
 
 	/* cpu hotplug notifier */
 	struct notifier_block *cpu_hot_plug_notifier;
+
+	/* affinity lock */
+	spinlock_t affinity_lock;
+
+	/* rx thread affinity cpu */
+	unsigned long rx_thread_cpu;
+
+	/* high throughput required */
+	bool high_throughput_required;
 #endif
 } cds_sched_context, *p_cds_sched_context;
 
@@ -311,6 +320,9 @@ typedef struct _cds_context_type {
    Function declarations and documenation
    ---------------------------------------------------------------------------*/
 #ifdef QCA_CONFIG_SMP
+int cds_sched_handle_cpu_hot_plug(void);
+int cds_sched_handle_throughput_req(bool high_tput_required);
+
 /*---------------------------------------------------------------------------
    \brief cds_drop_rxpkt_by_staid() - API to drop pending Rx packets for a sta
    The \a cds_drop_rxpkt_by_staid() drops queued packets for a station, to drop
@@ -434,6 +446,13 @@ static inline
 void cds_free_ol_rx_pkt_freeq(p_cds_sched_context pSchedContext)
 {
 }
+
+static inline int cds_sched_handle_throughput_req(
+	bool high_tput_required)
+{
+	return 0;
+}
+
 #endif
 
 /*---------------------------------------------------------------------------

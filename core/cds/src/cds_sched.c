@@ -84,9 +84,240 @@ static QDF_STATUS cds_alloc_ol_rx_pkt_freeq(p_cds_sched_context pSchedContext);
 
 #ifdef QCA_CONFIG_SMP
 #define CDS_CORE_PER_CLUSTER (4)
-static int cds_set_cpus_allowed_ptr(struct task_struct *task, unsigned long cpu)
+/*Maximum 2 clusters supported*/
+#define CDS_MAX_CPU_CLUSTERS 2
+
+#define CDS_CPU_CLUSTER_TYPE_LITTLE 0
+#define CDS_CPU_CLUSTER_TYPE_PERF 1
+
+static inline
+int cds_set_cpus_allowed_ptr(struct task_struct *task, unsigned long cpu)
 {
 	return set_cpus_allowed_ptr(task, cpumask_of(cpu));
+}
+
+
+/**
+ * cds_sched_find_attach_cpu - find available cores and attach to required core
+ * @pSchedContext:	wlan scheduler context
+ * @high_throughput:	high throughput is required or not
+ *
+ * Find current online cores.
+ * high troughput required and PERF core online, then attach to last PERF core
+ * low throughput required or only little cores online, the attach any little
+ * core
+ *
+ * Return: 0 success
+ *         1 fail
+ */
+static int cds_sched_find_attach_cpu(p_cds_sched_context pSchedContext,
+	bool high_throughput)
+{
+	unsigned long *online_perf_cpu = NULL;
+	unsigned long *online_litl_cpu = NULL;
+	unsigned char perf_core_count = 0;
+	unsigned char litl_core_count = 0;
+	int cds_max_cluster_id = 0;
+#ifdef WLAN_OPEN_SOURCE
+	struct cpumask litl_mask;
+	unsigned long cpus;
+	int i;
+#endif
+
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_LOW,
+		"%s: num possible cpu %d",
+		__func__, num_possible_cpus());
+
+	online_perf_cpu = qdf_mem_malloc(
+		num_possible_cpus() * sizeof(unsigned long));
+	if (!online_perf_cpu) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			"%s: perf cpu cache alloc fail", __func__);
+		return 1;
+	}
+
+	online_litl_cpu = qdf_mem_malloc(
+		num_possible_cpus() * sizeof(unsigned long));
+	if (!online_litl_cpu) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			"%s: lttl cpu cache alloc fail", __func__);
+		qdf_mem_free(online_perf_cpu);
+		return 1;
+	}
+
+	/* Get Online perf CPU count */
+#if defined(WLAN_OPEN_SOURCE) && \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0))
+	for_each_online_cpu(cpus) {
+		if (topology_physical_package_id(cpus) > CDS_MAX_CPU_CLUSTERS) {
+			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+				"%s: can handle max %d clusters, returning...",
+				__func__, CDS_MAX_CPU_CLUSTERS);
+			goto err;
+		}
+
+		if (topology_physical_package_id(cpus) ==
+					 CDS_CPU_CLUSTER_TYPE_PERF) {
+			online_perf_cpu[perf_core_count] = cpus;
+			perf_core_count++;
+		} else {
+			online_litl_cpu[litl_core_count] = cpus;
+			litl_core_count++;
+		}
+		cds_max_cluster_id =  topology_physical_package_id(cpus);
+	}
+#else
+	cds_max_cluster_id = 0;
+#endif
+
+	/* Single cluster system, not need to handle this */
+	if (0 == cds_max_cluster_id) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_LOW,
+		"%s: single cluster system. returning", __func__);
+		goto success;
+	}
+
+	if ((!litl_core_count) && (!perf_core_count)) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			"%s: Both Cluster off, do nothing", __func__);
+		goto success;
+	}
+
+	if ((high_throughput && perf_core_count) || (!litl_core_count)) {
+		/* Attach RX thread to PERF CPU */
+		if (pSchedContext->rx_thread_cpu !=
+			online_perf_cpu[perf_core_count - 1]) {
+			if (cds_set_cpus_allowed_ptr(
+				pSchedContext->ol_rx_thread,
+				online_perf_cpu[perf_core_count - 1])) {
+				QDF_TRACE(QDF_MODULE_ID_QDF,
+					QDF_TRACE_LEVEL_ERROR,
+					"%s: rx thread perf core set fail",
+					__func__);
+				goto err;
+			}
+			pSchedContext->rx_thread_cpu =
+				online_perf_cpu[perf_core_count - 1];
+		}
+	} else {
+#if defined(WLAN_OPEN_SOURCE) && \
+	 (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0))
+		/* Attach to any little core
+		 * Final decision should made by scheduler */
+
+		cpumask_clear(&litl_mask);
+		for (i = 0; i < litl_core_count; i++)
+			cpumask_set_cpu(online_litl_cpu[i], &litl_mask);
+
+		set_cpus_allowed_ptr(pSchedContext->ol_rx_thread, &litl_mask);
+		pSchedContext->rx_thread_cpu = 0;
+#else
+
+		/* Attach RX thread to last little core CPU */
+		if (pSchedContext->rx_thread_cpu !=
+			online_perf_cpu[litl_core_count - 1]) {
+			if (cds_set_cpus_allowed_ptr(
+				pSchedContext->ol_rx_thread,
+				online_perf_cpu[litl_core_count - 1])) {
+				QDF_TRACE(QDF_MODULE_ID_QDF,
+					QDF_TRACE_LEVEL_ERROR,
+					"%s: rx thread litl core set fail",
+					__func__);
+				goto err;
+			}
+			pSchedContext->rx_thread_cpu =
+				online_perf_cpu[litl_core_count - 1];
+		}
+#endif /* WLAN_OPEN_SOURCE */
+	}
+
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_LOW,
+		"%s: NUM PERF CORE %d, HIGH TPUTR REQ %d, RX THRE CPU %lu",
+		__func__, perf_core_count,
+		(int)pSchedContext->high_throughput_required,
+		pSchedContext->rx_thread_cpu);
+
+success:
+	qdf_mem_free(online_perf_cpu);
+	qdf_mem_free(online_litl_cpu);
+	return 0;
+
+err:
+	qdf_mem_free(online_perf_cpu);
+	qdf_mem_free(online_litl_cpu);
+	return 1;
+}
+
+/**
+ * cds_sched_handle_cpu_hot_plug - cpu hotplug event handler
+ *
+ * cpu hotplug indication handler
+ * will find online cores and will assign proper core based on perf requirement
+ *
+ * Return: 0 success
+ *         1 fail
+ */
+int cds_sched_handle_cpu_hot_plug(void)
+{
+	p_cds_sched_context pSchedContext = get_cds_sched_ctxt();
+
+	if (!pSchedContext) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			"%s: invalid context", __func__);
+		return 1;
+	}
+
+	if (cds_is_load_or_unload_in_progress())
+		return 0;
+
+	spin_lock_bh(&pSchedContext->affinity_lock);
+	if (cds_sched_find_attach_cpu(pSchedContext,
+		pSchedContext->high_throughput_required)) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			"%s: handle hot plug fail", __func__);
+		spin_unlock_bh(&pSchedContext->affinity_lock);
+		return 1;
+	}
+	spin_unlock_bh(&pSchedContext->affinity_lock);
+	return 0;
+}
+
+/**
+ * cds_sched_handle_throughput_req - cpu throughput requirement handler
+ * @high_tput_required:	high throughput is required or not
+ *
+ * high or low throughput indication ahndler
+ * will find online cores and will assign proper core based on perf requirement
+ *
+ * Return: 0 success
+ *         1 fail
+ */
+int cds_sched_handle_throughput_req(bool high_tput_required)
+{
+	p_cds_sched_context pSchedContext = get_cds_sched_ctxt();
+
+	if (!pSchedContext) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			"%s: invalid context", __func__);
+		return 1;
+	}
+
+	if (cds_is_load_or_unload_in_progress()) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			"%s: load or unload in progress", __func__);
+		return 0;
+	}
+
+	spin_lock_bh(&pSchedContext->affinity_lock);
+	pSchedContext->high_throughput_required = high_tput_required;
+	if (cds_sched_find_attach_cpu(pSchedContext, high_tput_required)) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			"%s: handle throughput req fail", __func__);
+		spin_unlock_bh(&pSchedContext->affinity_lock);
+		return 1;
+	}
+	spin_unlock_bh(&pSchedContext->affinity_lock);
+	return 0;
 }
 
 /**
@@ -98,7 +329,7 @@ static int cds_set_cpus_allowed_ptr(struct task_struct *task, unsigned long cpu)
  * Return: NOTIFY_OK
  */
 static int
-cds_cpu_hotplug_notify(struct notifier_block *block,
+__cds_cpu_hotplug_notify(struct notifier_block *block,
 		       unsigned long state, void *hcpu)
 {
 	unsigned long cpu = (unsigned long)hcpu;
@@ -107,6 +338,11 @@ cds_cpu_hotplug_notify(struct notifier_block *block,
 	int i;
 	unsigned int multi_cluster;
 	unsigned int num_cpus;
+#if defined(WLAN_OPEN_SOURCE) && \
+	 (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0))
+	int cpus;
+#endif
+
 
 	if ((NULL == pSchedContext) || (NULL == pSchedContext->ol_rx_thread))
 		return NOTIFY_OK;
@@ -118,19 +354,32 @@ cds_cpu_hotplug_notify(struct notifier_block *block,
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_LOW,
 		  "%s: RX CORE %d, STATE %d, NUM CPUS %d",
 		  __func__, (int)affine_cpu, (int)state, num_cpus);
-	multi_cluster = (num_cpus > CDS_CORE_PER_CLUSTER) ? 1 : 0;
+	multi_cluster = 0;
+
+#if defined(WLAN_OPEN_SOURCE) && \
+	 (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0))
+
+	for_each_online_cpu(cpus) {
+		multi_cluster =  topology_physical_package_id(cpus);
+	}
+#endif
+
+	if ((multi_cluster) &&
+		((CPU_ONLINE == state) || (CPU_DEAD == state))) {
+		cds_sched_handle_cpu_hot_plug();
+		return NOTIFY_OK;
+	}
 
 	switch (state) {
 	case CPU_ONLINE:
-		if ((!multi_cluster) && (affine_cpu != 0))
+		if (affine_cpu != 0)
 			return NOTIFY_OK;
 
 		for_each_online_cpu(i) {
 			if (i == 0)
 				continue;
 			pref_cpu = i;
-			if (!multi_cluster)
-				break;
+			break;
 		}
 		break;
 	case CPU_DEAD:
@@ -142,8 +391,7 @@ cds_cpu_hotplug_notify(struct notifier_block *block,
 			if (i == 0)
 				continue;
 			pref_cpu = i;
-			if (!multi_cluster)
-				break;
+			break;
 		}
 	}
 
@@ -154,6 +402,32 @@ cds_cpu_hotplug_notify(struct notifier_block *block,
 		affine_cpu = pref_cpu;
 
 	return NOTIFY_OK;
+}
+
+/**
+ * vos_cpu_hotplug_notify - cpu core on-off notification handler wrapper
+ * @block:	notifier block
+ * @state:	state of core
+ * @hcpu:	target cpu core
+ *
+ * pre-registered core status change notify callback function
+ * will handle only ONLINE, OFFLINE notification
+ * based on cpu architecture, rx thread affinity will be different
+ * wrapper function
+ *
+ * Return: 0 success
+ *         1 fail
+ */
+static int cds_cpu_hotplug_notify(struct notifier_block *block,
+				unsigned long state, void *hcpu)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __cds_cpu_hotplug_notify(block, state, hcpu);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
 }
 
 static struct notifier_block cds_cpu_hotplug_notifier = {
@@ -236,6 +510,8 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 	}
 	register_hotcpu_notifier(&cds_cpu_hotplug_notifier);
 	pSchedContext->cpu_hot_plug_notifier = &cds_cpu_hotplug_notifier;
+	spin_lock_init(&pSchedContext->affinity_lock);
+	pSchedContext->high_throughput_required = false;
 #endif
 	gp_cds_sched_context = pSchedContext;
 
@@ -772,24 +1048,24 @@ static int cds_ol_rx_thread(void *arg)
 	unsigned long pref_cpu = 0;
 	bool shutdown = false;
 	int status, i;
-	unsigned int num_cpus;
 
 	set_user_nice(current, -1);
 #ifdef MSM_PLATFORM
 	set_wake_up_idle(true);
 #endif
 
-	num_cpus = num_possible_cpus();
 	/* Find the available cpu core other than cpu 0 and
 	 * bind the thread
 	 */
+	/* Find the available cpu core other than cpu 0 and
+	 * bind the thread */
 	for_each_online_cpu(i) {
 		if (i == 0)
 			continue;
 		pref_cpu = i;
-		if (num_cpus <= CDS_CORE_PER_CLUSTER)
 			break;
 	}
+
 	if (pref_cpu != 0 && (!cds_set_cpus_allowed_ptr(current, pref_cpu)))
 		affine_cpu = pref_cpu;
 

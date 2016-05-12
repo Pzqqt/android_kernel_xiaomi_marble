@@ -4678,6 +4678,15 @@ void hdd_pld_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 			 next_vote_level, tx_packets, rx_packets);
 		hdd_ctx->cur_vote_level = next_vote_level;
 		pld_request_bus_bandwidth(hdd_ctx->parent_dev, next_vote_level);
+		if (next_vote_level == PLD_BUS_WIDTH_LOW) {
+			if (cds_sched_handle_throughput_req(false))
+				hdd_log(LOGE,
+				   FL("low bandwidth set rx affinity fail"));
+		 } else {
+			if (cds_sched_handle_throughput_req(true))
+				hdd_log(LOGE,
+				   FL("high bandwidth set rx affinity fail"));
+		 }
 	}
 
 	/* fine-tuning parameters for RX Flows */
