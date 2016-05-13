@@ -191,6 +191,8 @@ static enum qdf_bus_type to_bus_type(enum pld_bus_type bus_type)
 		return QDF_BUS_TYPE_PCI;
 	case PLD_BUS_TYPE_SNOC:
 		return QDF_BUS_TYPE_SNOC;
+	case PLD_BUS_TYPE_SDIO:
+		return QDF_BUS_TYPE_SDIO;
 	default:
 		return QDF_BUS_TYPE_NONE;
 	}
