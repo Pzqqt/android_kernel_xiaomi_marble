@@ -13453,7 +13453,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 	if ((eWNI_SME_REASSOC_REQ == messageType) ||
 		CDS_IS_CHANNEL_5GHZ(pBssDescription->channelId) ||
 		(abs(pBssDescription->rssi) <
-		 (neigh_roam_info->cfgParams.neighborLookupThreshold +
+		 (neigh_roam_info->cfgParams.neighborLookupThreshold -
 		  neigh_roam_info->cfgParams.hi_rssi_scan_rssi_delta))) {
 		pSession->disable_hi_rssi = true;
 		sms_log(pMac, LOG1,
