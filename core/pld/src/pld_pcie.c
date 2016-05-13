@@ -242,6 +242,7 @@ static int pld_pcie_runtime_resume(struct pci_dev *pdev)
 #endif
 #endif
 
+#ifdef CONFIG_PM
 /**
  * pld_pcie_suspend() - Suspend callback function for power management
  * @pdev: PCIE device
@@ -277,6 +278,7 @@ static int pld_pcie_resume(struct pci_dev *pdev)
 	pld_context = pld_get_global_context();
 	return pld_context->ops->resume(&pdev->dev, PLD_BUS_TYPE_PCIE);
 }
+#endif
 
 static struct pci_device_id pld_pcie_id_table[] = {
 	{ 0x168c, 0x003c, PCI_ANY_ID, PCI_ANY_ID },
