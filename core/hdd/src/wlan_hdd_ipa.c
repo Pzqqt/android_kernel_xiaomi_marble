@@ -35,6 +35,7 @@
 #ifdef IPA_OFFLOAD
 
 /* Include Files */
+#include <linux/ipa.h>
 #include <wlan_hdd_includes.h>
 #include <wlan_hdd_ipa.h>
 
@@ -593,6 +594,7 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 			   unsigned long data);
 
 static void hdd_ipa_cleanup_iface(struct hdd_ipa_iface_context *iface_context);
+static void hdd_ipa_uc_proc_pending_event (struct hdd_ipa_priv *hdd_ipa);
 
 /**
  * hdd_ipa_is_enabled() - Is IPA enabled?
@@ -1287,40 +1289,6 @@ static void hdd_ipa_uc_rm_notify_defer(struct work_struct *work)
 	cds_ssr_unprotect(__func__);
 
 	return;
-}
-
-/**
- * hdd_ipa_uc_proc_pending_event() - Process IPA uC pending events
- * @hdd_ipa: Global HDD IPA context
- *
- * Return: None
- */
-static void hdd_ipa_uc_proc_pending_event(struct hdd_ipa_priv *hdd_ipa)
-{
-	unsigned int pending_event_count;
-	struct ipa_uc_pending_event *pending_event = NULL;
-
-	pending_event_count = qdf_list_size(&hdd_ipa->pending_event);
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
-		"%s, Pending Event Count %d", __func__, pending_event_count);
-	if (!pending_event_count) {
-		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
-			"%s, No Pending Event", __func__);
-		return;
-	}
-
-	qdf_list_remove_front(&hdd_ipa->pending_event,
-			(qdf_list_node_t **)&pending_event);
-	while (pending_event != NULL) {
-		hdd_ipa_wlan_evt(pending_event->adapter,
-			pending_event->type,
-			pending_event->sta_id,
-			pending_event->mac_addr);
-		qdf_mem_free(pending_event);
-		pending_event = NULL;
-		qdf_list_remove_front(&hdd_ipa->pending_event,
-			(qdf_list_node_t **)&pending_event);
-	}
 }
 
 /**
@@ -3582,15 +3550,59 @@ static inline char *hdd_ipa_wlan_event_to_str(enum ipa_wlan_event event)
 }
 
 /**
- * hdd_ipa_wlan_evt() - IPA event handler
+ * hdd_to_ipa_wlan_event() - convert hdd_ipa_wlan_event to ipa_wlan_event
+ * @hdd_ipa_event_type: HDD IPA WLAN event to be converted to an ipa_wlan_event
+ *
+ * Return: ipa_wlan_event representing the hdd_ipa_wlan_event
+ */
+static enum ipa_wlan_event
+hdd_to_ipa_wlan_event(enum hdd_ipa_wlan_event hdd_ipa_event_type)
+{
+	enum ipa_wlan_event ipa_event;
+
+	switch (hdd_ipa_event_type) {
+	case HDD_IPA_CLIENT_CONNECT:
+		ipa_event = WLAN_CLIENT_CONNECT;
+		break;
+	case HDD_IPA_CLIENT_DISCONNECT:
+		ipa_event = WLAN_CLIENT_DISCONNECT;
+		break;
+	case HDD_IPA_AP_CONNECT:
+		ipa_event = WLAN_AP_CONNECT;
+		break;
+	case HDD_IPA_AP_DISCONNECT:
+		ipa_event = WLAN_AP_DISCONNECT;
+		break;
+	case HDD_IPA_STA_CONNECT:
+		ipa_event = WLAN_STA_CONNECT;
+		break;
+	case HDD_IPA_STA_DISCONNECT:
+		ipa_event = WLAN_STA_DISCONNECT;
+		break;
+	case HDD_IPA_CLIENT_CONNECT_EX:
+		ipa_event = WLAN_CLIENT_CONNECT_EX;
+		break;
+	case HDD_IPA_WLAN_EVENT_MAX:
+	default:
+		ipa_event = IPA_WLAN_EVENT_MAX;
+		break;
+	}
+	return ipa_event;
+
+}
+
+/**
+ * __hdd_ipa_wlan_evt() - IPA event handler
  * @adapter: adapter upon which the event was received
  * @sta_id: station id for the event
- * @type: the event type
+ * @type: event enum of type ipa_wlan_event
  * @mac_address: MAC address associated with the event
+ *
+ * This function is meant to be called from within wlan_hdd_ipa.c
  *
  * Return: 0 on success, negative errno value on error
  */
-int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
+static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		     enum ipa_wlan_event type, uint8_t *mac_addr)
 {
 	struct hdd_ipa_priv *hdd_ipa = ghdd_ipa;
@@ -3955,6 +3967,60 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 
 end:
 	return ret;
+}
+
+/**
+ * hdd_ipa_wlan_evt() - IPA event handler
+ * @adapter: adapter upon which the event was received
+ * @sta_id: station id for the event
+ * @hdd_event_type: event enum of type hdd_ipa_wlan_event
+ * @mac_address: MAC address associated with the event
+ *
+ * This function is meant to be called from outside of wlan_hdd_ipa.c.
+ *
+ * Return: 0 on success, negative errno value on error
+ */
+int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
+	enum hdd_ipa_wlan_event hdd_event_type, uint8_t *mac_addr)
+{
+	enum ipa_wlan_event type = hdd_to_ipa_wlan_event(hdd_event_type);
+
+	return __hdd_ipa_wlan_evt(adapter, sta_id, type, mac_addr);
+}
+
+/**
+ * hdd_ipa_uc_proc_pending_event() - Process IPA uC pending events
+ * @hdd_ipa: Global HDD IPA context
+ *
+ * Return: None
+ */
+static void
+hdd_ipa_uc_proc_pending_event(struct hdd_ipa_priv *hdd_ipa)
+{
+	unsigned int pending_event_count;
+	struct ipa_uc_pending_event *pending_event = NULL;
+
+	pending_event_count = qdf_list_size(&hdd_ipa->pending_event);
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
+		"%s, Pending Event Count %d", __func__, pending_event_count);
+	if (!pending_event_count) {
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
+			"%s, No Pending Event", __func__);
+		return;
+	}
+
+	qdf_list_remove_front(&hdd_ipa->pending_event,
+			(qdf_list_node_t **)&pending_event);
+	while (pending_event != NULL) {
+		__hdd_ipa_wlan_evt(pending_event->adapter,
+			pending_event->type,
+			pending_event->sta_id,
+			pending_event->mac_addr);
+		qdf_mem_free(pending_event);
+		pending_event = NULL;
+		qdf_list_remove_front(&hdd_ipa->pending_event,
+			(qdf_list_node_t **)&pending_event);
+	}
 }
 
 /**

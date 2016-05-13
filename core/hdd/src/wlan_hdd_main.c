@@ -8506,7 +8506,8 @@ static int __hdd_module_init(void)
 
 	ret = wlan_hdd_register_driver();
 	if (ret) {
-		pr_err("%s: driver load failure\n", WLAN_MODULE_NAME);
+		pr_err("%s: driver load failure, err %d\n", WLAN_MODULE_NAME,
+			ret);
 		goto out;
 	}
 

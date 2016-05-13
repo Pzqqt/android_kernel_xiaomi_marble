@@ -12329,7 +12329,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 							pAdapter->
 								 aStaInfo[i].
 								 ucSTAId,
-							WLAN_CLIENT_DISCONNECT,
+							HDD_IPA_CLIENT_DISCONNECT,
 							mac);
 					}
 					hdd_notice("Delete STA with MAC::"
@@ -12373,7 +12373,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 
 			if (hdd_ipa_uc_is_enabled(pHddCtx)) {
 				hdd_ipa_wlan_evt(pAdapter, staId,
-						 WLAN_CLIENT_DISCONNECT, mac);
+					HDD_IPA_CLIENT_DISCONNECT, mac);
 			}
 
 			if (pAdapter->aStaInfo[staId].isDeauthInProgress ==

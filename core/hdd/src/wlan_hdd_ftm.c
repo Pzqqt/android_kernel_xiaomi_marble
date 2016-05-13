@@ -76,6 +76,7 @@ typedef struct qcmbr_queue_s {
 } qcmbr_queue_t;
 LIST_HEAD(qcmbr_queue_head);
 DEFINE_SPINLOCK(qcmbr_queue_lock);
+static void wlanqcmbr_mc_process_msg(void *message);
 #endif
 #endif
 

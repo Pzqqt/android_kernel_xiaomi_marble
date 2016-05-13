@@ -193,6 +193,8 @@ static enum qdf_bus_type to_bus_type(enum pld_bus_type bus_type)
 		return QDF_BUS_TYPE_SNOC;
 	case PLD_BUS_TYPE_SDIO:
 		return QDF_BUS_TYPE_SDIO;
+	case PLD_BUS_TYPE_USB:
+		return QDF_BUS_TYPE_USB;
 	default:
 		return QDF_BUS_TYPE_NONE;
 	}
@@ -446,7 +448,7 @@ static void wlan_hdd_remove(struct device *dev)
 
 	hdd_deinit();
 
-	pr_info("%s: Driver Removed\n", WLAN_MODULE_NAME);
+	pr_info("%s: Driver De-initialized\n", WLAN_MODULE_NAME);
 }
 
 /**
@@ -655,6 +657,25 @@ int wlan_hdd_bus_resume(void)
 	ret = __wlan_hdd_bus_resume();
 	cds_ssr_unprotect(__func__);
 
+	return ret;
+}
+
+/**
+ * wlan_hdd_bus_reset_resume() - resume wlan bus after reset
+ *
+ * This function is called to tell the driver that the device has been resumed
+ * and it has also been reset. The driver should redo any necessary
+ * initialization. It is mainly used by the USB bus
+ *
+ * Return: int 0 for success, non zero for failure
+ */
+static int wlan_hdd_bus_reset_resume(void)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = hif_bus_reset_resume(cds_get_context(QDF_MODULE_ID_HIF));
+	cds_ssr_unprotect(__func__);
 	return ret;
 }
 
@@ -902,6 +923,19 @@ static int wlan_hdd_pld_resume(struct device *dev,
 }
 
 /**
+ * wlan_hdd_pld_reset_resume() - reset resume function registered to PLD
+ * @dev: device
+ * @pld_bus_type: PLD bus type
+ *
+ * Return: 0 on success
+ */
+static int wlan_hdd_pld_reset_resume(struct device *dev,
+		    enum pld_bus_type bus_type)
+{
+	return wlan_hdd_bus_reset_resume();
+}
+
+/**
  * wlan_hdd_pld_notify_handler() - notify_handler function registered to PLD
  * @dev: device
  * @pld_bus_type: PLD bus type
@@ -952,6 +986,7 @@ struct pld_driver_ops wlan_drv_ops = {
 	.crash_shutdown = wlan_hdd_pld_crash_shutdown,
 	.suspend    = wlan_hdd_pld_suspend,
 	.resume     = wlan_hdd_pld_resume,
+	.reset_resume = wlan_hdd_pld_reset_resume,
 	.modem_status = wlan_hdd_pld_notify_handler,
 #ifdef FEATURE_RUNTIME_PM
 	.runtime_suspend = wlan_hdd_pld_runtime_suspend,

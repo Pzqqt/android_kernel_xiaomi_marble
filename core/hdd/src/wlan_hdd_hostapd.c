@@ -1078,7 +1078,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		if (hdd_ipa_is_enabled(pHddCtx)) {
 			status = hdd_ipa_wlan_evt(pHostapdAdapter,
 					pHddApCtx->uBCStaId,
-					WLAN_AP_CONNECT,
+					HDD_IPA_AP_CONNECT,
 					pHostapdAdapter->dev->dev_addr);
 			if (status) {
 				hdd_err("WLAN_AP_CONNECT event failed!!");
@@ -1234,7 +1234,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		if (hdd_ipa_is_enabled(pHddCtx)) {
 			status = hdd_ipa_wlan_evt(pHostapdAdapter,
 					pHddApCtx->uBCStaId,
-					WLAN_AP_DISCONNECT,
+					HDD_IPA_AP_DISCONNECT,
 					pHostapdAdapter->dev->dev_addr);
 			if (status) {
 				hdd_err("WLAN_AP_DISCONNECT event failed!!");
@@ -1473,7 +1473,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			status = hdd_ipa_wlan_evt(pHostapdAdapter,
 					pSapEvent->sapevt.
 					sapStationAssocReassocCompleteEvent.
-					staId, WLAN_CLIENT_CONNECT_EX,
+					staId, HDD_IPA_CLIENT_CONNECT_EX,
 					pSapEvent->sapevt.
 					sapStationAssocReassocCompleteEvent.
 					staMac.bytes);
@@ -1608,7 +1608,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 #ifdef IPA_OFFLOAD
 		if (hdd_ipa_is_enabled(pHddCtx)) {
 			status = hdd_ipa_wlan_evt(pHostapdAdapter, staId,
-					WLAN_CLIENT_DISCONNECT,
+					HDD_IPA_CLIENT_DISCONNECT,
 					pSapEvent->sapevt.
 					sapStationDisassocCompleteEvent.
 					staMac.bytes);

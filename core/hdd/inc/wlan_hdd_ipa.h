@@ -35,7 +35,27 @@
  * Originally written by Qualcomm Atheros, Inc
  */
 
-#include <linux/ipa.h>
+/**
+ * enum hdd_ipa_wlan_event - HDD IPA events
+ * @HDD_IPA_CLIENT_CONNECT: Client Connects
+ * @HDD_IPA_CLIENT_DISCONNECT: Client Disconnects
+ * @HDD_IPA_AP_CONNECT: SoftAP is started
+ * @HDD_IPA_AP_DISCONNECT: SoftAP is stopped
+ * @HDD_IPA_STA_CONNECT: STA associates to AP
+ * @HDD_IPA_STA_DISCONNECT: STA dissociates from AP
+ * @HDD_IPA_CLIENT_CONNECT_EX: Peer associates/re-associates to softap
+ * @HDD_IPA_WLAN_EVENT_MAX: Max value for the enum
+ */
+enum hdd_ipa_wlan_event {
+	HDD_IPA_CLIENT_CONNECT,
+	HDD_IPA_CLIENT_DISCONNECT,
+	HDD_IPA_AP_CONNECT,
+	HDD_IPA_AP_DISCONNECT,
+	HDD_IPA_STA_CONNECT,
+	HDD_IPA_STA_DISCONNECT,
+	HDD_IPA_CLIENT_CONNECT_EX,
+	HDD_IPA_WLAN_EVENT_MAX
+};
 
 #ifdef IPA_OFFLOAD
 /* Include files */
@@ -57,7 +77,7 @@ QDF_STATUS hdd_ipa_cleanup(hdd_context_t *hdd_ctx);
 QDF_STATUS hdd_ipa_process_rxt(void *cds_context, qdf_nbuf_t rxBuf,
 	uint8_t sta_id);
 int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
-	enum ipa_wlan_event type, uint8_t *mac_addr);
+	enum hdd_ipa_wlan_event type, uint8_t *mac_addr);
 int hdd_ipa_set_perf_level(hdd_context_t *hdd_ctx, uint64_t tx_packets,
 	uint64_t rx_packets);
 int hdd_ipa_suspend(hdd_context_t *hdd_ctx);
@@ -92,7 +112,7 @@ static inline QDF_STATUS hdd_ipa_process_rxt(void *cds_context,
 }
 
 static inline int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
-	enum ipa_wlan_event type, uint8_t *mac_addr)
+	enum hdd_ipa_wlan_event type, uint8_t *mac_addr)
 {
 	return 0;
 }
