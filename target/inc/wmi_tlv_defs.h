@@ -704,6 +704,8 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_scan_adaptive_dwell_config_fixed_param,
 	WMITLV_TAG_STRUC_wmi_wow_set_action_wake_up_cmd_fixed_param,
 	WMITLV_TAG_STRUC_wmi_ndp_end_rsp_per_ndi,
+	WMITLV_TAG_STRUC_wmi_peer_bwf_request_fixed_param,
+	WMITLV_TAG_STRUC_wmi_bwf_peer_info,
 } WMITLV_TAG_ID;
 
 /*
@@ -988,7 +990,9 @@ typedef enum {
 	OP(WMI_PDEV_WAL_POWER_DEBUG_CMDID) \
 	OP(WMI_VDEV_WISA_CMDID) \
 	OP(WMI_SCAN_ADAPTIVE_DWELL_CONFIG_CMDID) \
-	OP(WMI_WOW_SET_ACTION_WAKE_UP_CMDID)
+	OP(WMI_WOW_SET_ACTION_WAKE_UP_CMDID) \
+	OP(WMI_PEER_BWF_REQUEST_CMDID) \
+	/* add new CMD_LIST elements above this line */
 
 /*
  * IMPORTANT: Please add _ALL_ WMI Events Here.
@@ -1137,7 +1141,8 @@ typedef enum {
 	OP(WMI_PDEV_SET_HW_MODE_RESP_EVENTID) \
 	OP(WMI_PDEV_HW_MODE_TRANSITION_EVENTID) \
 	OP(WMI_PDEV_SET_MAC_CONFIG_RESP_EVENTID) \
-	OP(WMI_RADIO_TX_POWER_LEVEL_STATS_EVENTID)
+	OP(WMI_RADIO_TX_POWER_LEVEL_STATS_EVENTID) \
+	/* add new EVT_LIST elements above this line */
 
 /* TLV definitions of WMI commands */
 
@@ -2831,6 +2836,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_SET_PERIODIC_CHANNEL_STATS_CONFIG_CMDID);
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_pdev_wal_power_debug_cmd_fixed_param, wmi_pdev_wal_power_debug_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, args, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_WAL_POWER_DEBUG_CMDID);
+
+/* Bandwidth Fairness (BWF) peer configure commands */
+#define WMITLV_TABLE_WMI_PEER_BWF_REQUEST_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_peer_bwf_request_fixed_param, wmi_peer_bwf_request_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_STRUC, wmi_bwf_peer_info, peer_info, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PEER_BWF_REQUEST_CMDID);
 
 
 /************************** TLV definitions of WMI events *******************************/

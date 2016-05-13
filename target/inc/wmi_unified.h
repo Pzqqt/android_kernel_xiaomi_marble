@@ -440,6 +440,8 @@ typedef enum {
 	WMI_PEER_SMART_ANT_SET_NODE_CONFIG_OPS_CMDID,
 	/** ATF PEER REQUEST commands */
 	WMI_PEER_ATF_REQUEST_CMDID,
+	/** bandwidth fairness (BWF) peer configuration request command */
+	WMI_PEER_BWF_REQUEST_CMDID,
 
 	/* beacon/management specific commands */
 
@@ -2853,8 +2855,6 @@ typedef struct {
 	 *   A_UINT8 bufp[];
 	 */
 } wmi_mgmt_rx_hdr;
-
-/* WMI PHY Error RX */
 
 typedef struct {
 	/** TSF timestamp */
@@ -15031,9 +15031,43 @@ typedef struct {
 	A_UINT32 num_peers;
 	/*
 	 * Following this structure is the TLV:
-	 * struct wmi_atf_peer_info peer_info[1];
+	 * struct wmi_atf_peer_info peer_info[num_peers];
 	 */
 } wmi_peer_atf_request_fixed_param;
+
+/* Structure for Bandwidth Fairness peer information */
+typedef struct {
+	/*
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_bwf_peer_info
+	 */
+	A_UINT32 tlv_header;
+	wmi_mac_addr peer_macaddr;
+	/* BWF guaranteed_bandwidth for the peers in mbps */
+	A_UINT32 bwf_guaranteed_bandwidth;
+	/*
+	 * BWF Maximum airtime percentage that can be allocated
+	 * to the peer to meet the guaranteed_bandwidth
+	 */
+	A_UINT32 bwf_max_airtime;
+	/* BWF priority of the peer to allocate the tokens dynamically */
+	A_UINT32 bwf_peer_priority;
+} wmi_bwf_peer_info;
+
+/* Structure for Bandwidth Fairness peer request */
+typedef struct {
+	/*
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_peer_bwf_request_fixed_param
+	 */
+	A_UINT32 tlv_header;
+	A_UINT32 num_peers;
+	/*
+	 * Following this structure is the TLV:
+	 * struct wmi_bwf_peer_info peer_info[num_peers];
+	 */
+} wmi_peer_bwf_request_fixed_param;
+
 
 /* Equal distribution of ATF air time within an VDEV. */
 typedef struct {
