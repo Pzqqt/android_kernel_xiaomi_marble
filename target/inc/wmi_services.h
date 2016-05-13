@@ -170,6 +170,11 @@ typedef enum {
 	 * bandwidth
 	 */
 	WMI_SERVICE_HALF_RATE_QUARTER_RATE_SUPPORT,
+	/*
+	 * Support per-vdev specs of which rx frames
+	 * to filter out
+	 */
+	WMI_SERVICE_VDEV_RX_FILTER,
 	WMI_MAX_SERVICE = 128             /* max service */
 } WMI_SERVICE;
 

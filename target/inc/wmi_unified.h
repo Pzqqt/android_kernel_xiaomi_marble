@@ -180,60 +180,60 @@ typedef struct {
 typedef enum {
 	/* 0 to 2 are reserved */
 	WMI_GRP_START = 0x3,
-	WMI_GRP_SCAN = WMI_GRP_START,
-	WMI_GRP_PDEV,
-	WMI_GRP_VDEV,
-	WMI_GRP_PEER,
-	WMI_GRP_MGMT,
-	WMI_GRP_BA_NEG,
-	WMI_GRP_STA_PS,
-	WMI_GRP_DFS,
-	WMI_GRP_ROAM,
-	WMI_GRP_OFL_SCAN,
-	WMI_GRP_P2P,
-	WMI_GRP_AP_PS,
-	WMI_GRP_RATE_CTRL,
-	WMI_GRP_PROFILE,
-	WMI_GRP_SUSPEND,
-	WMI_GRP_BCN_FILTER,
-	WMI_GRP_WOW,
-	WMI_GRP_RTT,
-	WMI_GRP_SPECTRAL,
-	WMI_GRP_STATS,
-	WMI_GRP_ARP_NS_OFL,
-	WMI_GRP_NLO_OFL,
-	WMI_GRP_GTK_OFL,
-	WMI_GRP_CSA_OFL,
-	WMI_GRP_CHATTER,
-	WMI_GRP_TID_ADDBA,
-	WMI_GRP_MISC,
-	WMI_GRP_GPIO,
-	WMI_GRP_FWTEST,
-	WMI_GRP_TDLS,
-	WMI_GRP_RESMGR,
-	WMI_GRP_STA_SMPS,
-	WMI_GRP_WLAN_HB,
-	WMI_GRP_RMC,
-	WMI_GRP_MHF_OFL,
-	WMI_GRP_LOCATION_SCAN,
-	WMI_GRP_OEM,
-	WMI_GRP_NAN,
-	WMI_GRP_COEX,
-	WMI_GRP_OBSS_OFL,
-	WMI_GRP_LPI,
-	WMI_GRP_EXTSCAN,
-	WMI_GRP_DHCP_OFL,
-	WMI_GRP_IPA,
-	WMI_GRP_MDNS_OFL,
-	WMI_GRP_SAP_OFL,
-	WMI_GRP_OCB,
-	WMI_GRP_SOC,
-	WMI_GRP_PKT_FILTER,
-	WMI_GRP_MAWC,
-	WMI_GRP_PMF_OFFLOAD,
-	WMI_GRP_BPF_OFFLOAD, /* Berkeley Packet Filter */
-	WMI_GRP_NAN_DATA,
-	WMI_GRP_PROTOTYPE,
+	WMI_GRP_SCAN = WMI_GRP_START, /* 0x3 */
+	WMI_GRP_PDEV,                 /* 0x4 */
+	WMI_GRP_VDEV,                 /* 0x5 */
+	WMI_GRP_PEER,                 /* 0x6 */
+	WMI_GRP_MGMT,                 /* 0x7 */
+	WMI_GRP_BA_NEG,               /* 0x8 */
+	WMI_GRP_STA_PS,               /* 0x9 */
+	WMI_GRP_DFS,                  /* 0xa */
+	WMI_GRP_ROAM,                 /* 0xb */
+	WMI_GRP_OFL_SCAN,             /* 0xc */
+	WMI_GRP_P2P,                  /* 0xd */
+	WMI_GRP_AP_PS,                /* 0xe */
+	WMI_GRP_RATE_CTRL,            /* 0xf */
+	WMI_GRP_PROFILE,              /* 0x10 */
+	WMI_GRP_SUSPEND,              /* 0x11 */
+	WMI_GRP_BCN_FILTER,           /* 0x12 */
+	WMI_GRP_WOW,                  /* 0x13 */
+	WMI_GRP_RTT,                  /* 0x14 */
+	WMI_GRP_SPECTRAL,             /* 0x15 */
+	WMI_GRP_STATS,                /* 0x16 */
+	WMI_GRP_ARP_NS_OFL,           /* 0x17 */
+	WMI_GRP_NLO_OFL,              /* 0x18 */
+	WMI_GRP_GTK_OFL,              /* 0x19 */
+	WMI_GRP_CSA_OFL,              /* 0x1a */
+	WMI_GRP_CHATTER,              /* 0x1b */
+	WMI_GRP_TID_ADDBA,            /* 0x1c */
+	WMI_GRP_MISC,                 /* 0x1d */
+	WMI_GRP_GPIO,                 /* 0x1e */
+	WMI_GRP_FWTEST,               /* 0x1f */
+	WMI_GRP_TDLS,                 /* 0x20 */
+	WMI_GRP_RESMGR,               /* 0x21 */
+	WMI_GRP_STA_SMPS,             /* 0x22 */
+	WMI_GRP_WLAN_HB,              /* 0x23 */
+	WMI_GRP_RMC,                  /* 0x24 */
+	WMI_GRP_MHF_OFL,              /* 0x25 */
+	WMI_GRP_LOCATION_SCAN,        /* 0x26 */
+	WMI_GRP_OEM,                  /* 0x27 */
+	WMI_GRP_NAN,                  /* 0x28 */
+	WMI_GRP_COEX,                 /* 0x29 */
+	WMI_GRP_OBSS_OFL,             /* 0x2a */
+	WMI_GRP_LPI,                  /* 0x2b */
+	WMI_GRP_EXTSCAN,              /* 0x2c */
+	WMI_GRP_DHCP_OFL,             /* 0x2d */
+	WMI_GRP_IPA,                  /* 0x2e */
+	WMI_GRP_MDNS_OFL,             /* 0x2f */
+	WMI_GRP_SAP_OFL,              /* 0x30 */
+	WMI_GRP_OCB,                  /* 0x31 */
+	WMI_GRP_SOC,                  /* 0x32 */
+	WMI_GRP_PKT_FILTER,           /* 0x33 */
+	WMI_GRP_MAWC,                 /* 0x34 */
+	WMI_GRP_PMF_OFFLOAD,          /* 0x35 */
+	WMI_GRP_BPF_OFFLOAD,          /* 0x36 Berkeley Packet Filter */
+	WMI_GRP_NAN_DATA,             /* 0x37 */
+	WMI_GRP_PROTOTYPE,            /* 0x38 */
 } WMI_GRP_ID;
 
 #define WMI_CMD_GRP_START_ID(grp_id) (((grp_id) << 12) | 0x1)
@@ -5492,6 +5492,14 @@ typedef enum {
 	 */
 	WMI_VDEV_PARAM_TSF_INCREMENT,
 	WMI_VDEV_PARAM_PLACE_HOLDER_1,
+
+	/*
+	 * Vdev level rx filter of from-ds / to-ds / no-ds / ta / ra frames.
+	 * Used mainly for mesh-vap.
+	 * The parameter value delivered with the RX_FILTER vdev param contains
+	 * a bit-or mask of wmi_vdev_param_filter enum values.
+	 */
+	WMI_VDEV_PARAM_RX_FILTER,
 } WMI_VDEV_PARAM;
 
 /* vdev capabilities bit mask */
@@ -5564,6 +5572,22 @@ typedef enum {
 typedef struct {
 	A_UINT32 txbf_cap;
 } wmi_vdev_txbf_cap;
+
+/* vdev rx filters (for mesh) */
+typedef enum {
+	/* Don't drop any frames - Default */
+	WMI_VDEV_RX_ALLOW_ALL_FRAMES  =  0x0,
+	/* Drop FromDS frames */
+	WMI_VDEV_RX_FILTER_OUT_FROMDS =  0x1,
+	/* Drop ToDS frames */
+	WMI_VDEV_RX_FILTER_OUT_TODS   =  0x2,
+	/* Drop NODS frames */
+	WMI_VDEV_RX_FILTER_OUT_NODS   =  0x4,
+	/* Drop RA frames */
+	WMI_VDEV_RX_FILTER_OUT_RA     =  0x8,
+	/* Drop TA frames */
+	WMI_VDEV_RX_FILTER_OUT_TA     = 0x10,
+} wmi_vdev_param_filter;
 
 /* Length of ATIM Window in TU */
 #define WMI_VDEV_PARAM_ATIM_WINDOW_LENGTH WMI_VDEV_PARAM_ATIM_WINDOW
