@@ -50,7 +50,8 @@ enum pld_bus_type {
 	PLD_BUS_TYPE_NONE = -1,
 	PLD_BUS_TYPE_PCIE = 0,
 	PLD_BUS_TYPE_SNOC,
-	PLD_BUS_TYPE_SDIO
+	PLD_BUS_TYPE_SDIO,
+	PLD_BUS_TYPE_USB
 };
 
 #define PLD_MAX_FIRMWARE_SIZE (1 * 1024 * 1024)
@@ -315,6 +316,8 @@ struct pld_driver_ops {
 		       enum pld_bus_type bus_type,
 		       pm_message_t state);
 	int (*resume)(struct device *dev,
+		      enum pld_bus_type bus_type);
+	int (*reset_resume)(struct device *dev,
 		      enum pld_bus_type bus_type);
 	void (*modem_status)(struct device *dev,
 			     enum pld_bus_type bus_type,

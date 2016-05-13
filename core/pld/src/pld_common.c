@@ -44,10 +44,13 @@
 #include "pld_pcie.h"
 #include "pld_snoc.h"
 #include "pld_sdio.h"
+#include "pld_usb.h"
 
 #define PLD_PCIE_REGISTERED BIT(0)
 #define PLD_SNOC_REGISTERED BIT(1)
 #define PLD_SDIO_REGISTERED BIT(2)
+#define PLD_USB_REGISTERED BIT(3)
+#define PLD_BUS_MASK 0xf
 
 static struct pld_context *pld_ctx;
 
@@ -238,6 +241,7 @@ int pld_register_driver(struct pld_driver_ops *ops)
 	}
 
 	pld_context->ops = ops;
+	pld_context->pld_driver_state = 0;
 
 	ret = pld_pcie_register_driver();
 	if (ret) {
@@ -260,8 +264,17 @@ int pld_register_driver(struct pld_driver_ops *ops)
 	}
 	pld_context->pld_driver_state |= PLD_SDIO_REGISTERED;
 
+	ret = pld_usb_register_driver();
+	if (ret) {
+		pr_err("Fail to register usb driver\n");
+		goto fail_usb;
+	}
+	pld_context->pld_driver_state |= PLD_USB_REGISTERED;
+
 	return ret;
 
+fail_usb:
+	pld_sdio_unregister_driver();
 fail_sdio:
 	pld_snoc_unregister_driver();
 fail_snoc:
@@ -301,6 +314,7 @@ void pld_unregister_driver(void)
 	pld_pcie_unregister_driver();
 	pld_snoc_unregister_driver();
 	pld_sdio_unregister_driver();
+	pld_usb_unregister_driver();
 
 	pld_context->pld_driver_state = 0;
 
@@ -460,6 +474,10 @@ int pld_get_fw_files_for_target(struct device *dev,
 		ret = pld_sdio_get_fw_files_for_target(pfw_files,
 				       target_type, target_version);
 		break;
+	case PLD_BUS_TYPE_USB:
+	ret = pld_usb_get_fw_files_for_target(pfw_files,
+				target_type, target_version);
+	break;
 	default:
 		ret = -EINVAL;
 		break;
@@ -573,6 +591,8 @@ int pld_get_codeswap_struct(struct device *dev,
 	case PLD_BUS_TYPE_SNOC:
 		break;
 	case PLD_BUS_TYPE_SDIO:
+		break;
+	case PLD_BUS_TYPE_USB:
 		break;
 	default:
 		ret = -EINVAL;
@@ -879,6 +899,8 @@ void pld_request_pm_qos(struct device *dev, u32 qos_val)
 		break;
 	case PLD_BUS_TYPE_SDIO:
 		/* To do Add call cns API */
+		break;
+	case PLD_BUS_TYPE_USB:
 		break;
 	default:
 		pr_err("Invalid device type\n");
@@ -1311,6 +1333,8 @@ void pld_lock_pm_sem(struct device *dev)
 		break;
 	case PLD_BUS_TYPE_SDIO:
 		break;
+	case PLD_BUS_TYPE_USB:
+		break;
 	default:
 		pr_err("Invalid device type\n");
 		break;
@@ -1332,6 +1356,8 @@ void pld_release_pm_sem(struct device *dev)
 	case PLD_BUS_TYPE_SNOC:
 		break;
 	case PLD_BUS_TYPE_SDIO:
+		break;
+	case PLD_BUS_TYPE_USB:
 		break;
 	default:
 		pr_err("Invalid device type\n");
