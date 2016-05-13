@@ -706,6 +706,7 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_ndp_end_rsp_per_ndi,
 	WMITLV_TAG_STRUC_wmi_peer_bwf_request_fixed_param,
 	WMITLV_TAG_STRUC_wmi_bwf_peer_info,
+	WMITLV_TAG_STRUC_wmi_dbglog_time_stamp_sync_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -992,6 +993,7 @@ typedef enum {
 	OP(WMI_SCAN_ADAPTIVE_DWELL_CONFIG_CMDID) \
 	OP(WMI_WOW_SET_ACTION_WAKE_UP_CMDID) \
 	OP(WMI_PEER_BWF_REQUEST_CMDID) \
+	OP(WMI_DBGLOG_TIME_STAMP_SYNC_CMDID) \
 	/* add new CMD_LIST elements above this line */
 
 /*
@@ -1767,6 +1769,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_FORCE_FW_HANG_CMDID);
 #define WMITLV_TABLE_WMI_SET_MCASTBCAST_FILTER_CMDID(id,op,buf,len) \
 	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_WMI_SET_MCASTBCAST_FILTER_CMD_fixed_param, WMI_SET_MCASTBCAST_FILTER_CMD_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_SET_MCASTBCAST_FILTER_CMDID);
+
+/* Set dbglog time stamp sync cmd */
+#define WMITLV_TABLE_WMI_DBGLOG_TIME_STAMP_SYNC_CMDID(id, op, buf, len) \
+	 WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_dbglog_time_stamp_sync_cmd_fixed_param, WMI_DBGLOG_TIME_STAMP_SYNC_CMD_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_DBGLOG_TIME_STAMP_SYNC_CMDID);
 
 /* GPIO config Cmd */
 #define WMITLV_TABLE_WMI_GPIO_CONFIG_CMDID(id,op,buf,len) \

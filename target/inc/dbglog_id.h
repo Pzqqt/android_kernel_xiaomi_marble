@@ -616,7 +616,8 @@ extern "C" {
 #define SCAN_SM_CANCEL                              46
 #define SCAN_SM_PROBE_REQ_FRAME_SEND_FAILED         47
 #define SCAN_SCH_BANNED_MODULE                      48
-#define SCAN_DBGID_DEFINITION_END                   49
+#define SCAN_SM_STATS_INFO                          49
+#define SCAN_DBGID_DEFINITION_END                   50
 
 #define BEACON_EVENT_SWBA_SEND_FAILED               0
 #define BEACON_EVENT_EARLY_RX_BMISS_STATUS          1
@@ -772,7 +773,9 @@ extern "C" {
 #define WAL_DBGID_TX_MGMT_FRAME_DESC_ALLOC_FAILED   87
 #define WAL_DBGID_TX_MGMT_TID_STRUCT_NOT_FOUND      88
 #define WAL_DBGID_TX_MGMT_ENQUEUE_FAILED            89
-#define WAL_DBGID_DEFINITION_END                    90
+#define WAL_DBGID_TX_ARP                            90
+#define WAL_DBGID_TX_DHCP                           91
+#define WAL_DBGID_DEFINITION_END                    92
 
 #define ANI_DBGID_POLL                               0
 #define ANI_DBGID_CONTROL                            1
@@ -804,7 +807,9 @@ extern "C" {
 #define OFFLOADMGR_DEREG_OFFLOAD_FAILED                6
 #define OFFLOADMGR_ENTER_FAILED                        7
 #define OFFLOADMGR_EXIT_FAILED                         8
-#define OFFLOADMGR_DBGID_DEFINITION_END                9
+#define OFFLOADMGR_GTK_FAILED                          9
+#define OFFLOADMGR_GTK_REKEY_FAILED                   10
+#define OFFLOADMGR_DBGID_DEFINITION_END               11
 
 /*Resource Debug IDs*/
 #define RESOURCE_DBGID_DEFINITION_START             0

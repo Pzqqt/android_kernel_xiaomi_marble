@@ -784,6 +784,8 @@ typedef enum {
 	WMI_CONFIG_ENHANCED_MCAST_FILTER_CMDID,
 	/** Command to control WISA mode */
 	WMI_VDEV_WISA_CMDID,
+	/** set debug log time stamp sync up with host */
+	WMI_DBGLOG_TIME_STAMP_SYNC_CMDID,
 
 	/* GPIO Configuration */
 	WMI_GPIO_CONFIG_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_GPIO),
@@ -9473,6 +9475,25 @@ typedef struct {
 	wmi_mac_addr mcastbdcastaddr;
 } WMI_SET_MCASTBCAST_FILTER_CMD_fixed_param;
 
+/* WMI_DBGLOG_TIME_STAMP_SYNC_CMDID */
+typedef enum {
+	WMI_TIME_STAMP_SYNC_MODE_MS, /* millisecond units */
+	WMI_TIME_STAMP_SYNC_MODE_US, /* microsecond units */
+} WMI_TIME_STAMP_SYNC_MODE;
+
+typedef struct {
+	/*
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_dbglog_time_stamp_sync_cmd_fixed_param
+	 */
+	A_UINT32 tlv_header;
+	/* 0: millisec, 1: microsec (see WMI_TIME_STAMP_SYNC_MODE) */
+	A_UINT32 mode;
+	A_UINT32 time_stamp_low; /* lower 32 bits of remote time stamp */
+	A_UINT32 time_stamp_high; /* higher 32 bits of remote time stamp */
+} WMI_DBGLOG_TIME_STAMP_SYNC_CMD_fixed_param;
+
+
 /* GPIO Command and Event data structures */
 
 /* WMI_GPIO_CONFIG_CMDID */
@@ -11307,30 +11328,6 @@ typedef enum {
 #define wmi_ndp_cmd_rsp_status wmi_ndp_cmd_rsp_status_PROTOTYPE
 
 /**
- * NDP command reason code
- */
-typedef enum {
-	NDP_INVALID_VDEV_ID_PARAM = 0x00,
-	NDP_INVALID_SERVICE_INSTANCE_ID_PARAM = 0x01,
-	NDP_INVALID_PEER_DISC_MAC_ADDR_PARAM = 0x02,
-	NDP_INVALID_NDP_CFG_SECURITY_PARAM = 0x03,
-	NDP_INVALID_NDP_CFG_QOS_PARAM = 0x04,
-	NDP_INVALID_APP_INFO_LEN_PARAM = 0x05,
-	NDP_INVALID_NDP_INSTANCE_ID_PARAM = 0x06,
-	NDP_INVALID_RSP_CODE_PARAM = 0x07,
-	NDP_INVALID_CHANNEL_PARAM = 0x08,
-	NDP_INVALID_APP_INFO = 0x09,
-	NDP_INVALID_NDP_CFG = 0x0A,
-	NDP_INVALID_NDP_CFG_LEN_PARAM = 0x0B,
-	NDP_INVALID_NUM_NDP_INSTANCES_PARAM = 0x0C,
-	NDP_INVALID_NDP_END_REQ_LEN_PARAM = 0x0D,
-	NDP_INVALID_NDP_END_REQ = 0x0E,
-	NDP_REACHED_MAX_NDP_INSTANCES = 0x0F,
-} wmi_ndp_cmd_reason_code_PROTOTYPE;
-
-#define wmi_ndp_cmd_reason_code wmi_ndp_cmd_reason_code_PROTOTYPE
-
-/**
  * Event response for wmi_ndp_initiator_req
  */
 typedef struct {
@@ -11345,7 +11342,6 @@ typedef struct {
 	A_UINT32 transaction_id;
 	/** Response status defined in wmi_ndp_cmd_rsp_status*/
 	A_UINT32 rsp_status;
-	/** Reason code defined in wmi_ndp_cmd_reason_code */
 	A_UINT32 reason_code;
 	/*
 	 * Unique token Id generated on the initiator/responder
@@ -11371,7 +11367,6 @@ typedef struct {
 	A_UINT32 transaction_id;
 	/** Response status defined in wmi_ndp_cmd_rsp_status*/
 	A_UINT32 rsp_status;
-	/** Reason code defined in wmi_ndp_cmd_reason_code */
 	A_UINT32 reason_code;
 	/*
 	 * Unique token Id generated on the initiator/responder
@@ -11430,7 +11425,6 @@ typedef struct {
 	A_UINT32 transaction_id;
 	/** Response status defined in wmi_ndp_cmd_rsp_status*/
 	A_UINT32 rsp_status;
-	/** Reason code defined in wmi_ndp_cmd_reason_code */
 	A_UINT32 reason_code;
 	/**
 	 * TLV (tag length value ) parameters follow the ndp_end_rsp
