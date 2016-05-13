@@ -1819,8 +1819,7 @@ int ce_per_engine_service(struct hif_softc *scn, unsigned int CE_id)
 	if (ce_is_fastpath_handler_registered(CE_state)) {
 		/* For datapath only Rx CEs */
 		ce_per_engine_service_fast(scn, CE_id);
-		qdf_spin_unlock(&CE_state->ce_index_lock);
-		return CE_state->receive_count;
+		goto unlock_end;
 	}
 
 more_completions:
@@ -1857,10 +1856,7 @@ more_completions:
 			 */
 			if (qdf_unlikely(CE_state->force_break)) {
 				qdf_atomic_set(&CE_state->rx_pending, 1);
-				if (Q_TARGET_ACCESS_END(scn) < 0)
-					HIF_ERROR("<--[premature rc=%d]\n",
-						  CE_state->receive_count);
-				return CE_state->receive_count;
+				goto target_access_end;
 			}
 			qdf_spin_lock(&CE_state->ce_index_lock);
 		}
@@ -1993,9 +1989,11 @@ more_watermarks:
 		}
 	}
 
-	qdf_spin_unlock(&CE_state->ce_index_lock);
 	qdf_atomic_set(&CE_state->rx_pending, 0);
 
+unlock_end:
+	qdf_spin_unlock(&CE_state->ce_index_lock);
+target_access_end:
 	if (Q_TARGET_ACCESS_END(scn) < 0)
 		HIF_ERROR("<--[premature rc=%d]\n", CE_state->receive_count);
 	return CE_state->receive_count;
