@@ -477,6 +477,9 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx, struct napi_struct *napi,
 
 		hif_record_ce_desc_event(hif, ce_state->id, NAPI_COMPLETE,
 					 NULL, NULL, 0);
+		if (normalized >= budget)
+			normalized = budget - 1;
+
 		/* enable interrupts */
 		napi_complete(napi);
 		if (NULL != hif) {
@@ -488,6 +491,12 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx, struct napi_struct *napi,
 
 		NAPI_DEBUG("%s:%d: napi_complete + enabling the interrupts",
 			   __func__, __LINE__);
+	} else {
+		/* 4.4 kernel NAPI implementation requires drivers to
+		 * return full work when they ask to be re-scheduled,
+		 * or napi_complete and re-start with a fresh interrupt
+		 */
+		normalized = budget;
 	}
 
 	hif_record_ce_desc_event(hif, NAPI_ID2PIPE(napi_info->id),
