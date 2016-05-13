@@ -5495,10 +5495,13 @@ typedef enum {
 } WMI_VDEV_PARAM;
 
 /* vdev capabilities bit mask */
-#define WMI_VDEV_BEACON_SUPPORT 0x1
+#define WMI_VDEV_BEACON_SUPPORT  0x1
 #define WMI_VDEV_WDS_LRN_ENABLED 0x2
+#define WMI_VDEV_VOW_ENABLED     0x4
+
 #define WMI_VDEV_IS_BEACON_SUPPORTED(param) ((param) & WMI_VDEV_BEACON_SUPPORT)
 #define WMI_VDEV_IS_WDS_LRN_ENABLED(param) ((param) & WMI_VDEV_WDS_LRN_ENABLED)
+#define WMI_VDEV_IS_VOW_ENABLED(param) ((param) & WMI_VDEV_VOW_ENABLED)
 
 /* TXBF capabilities masks */
 #define WMI_TXBF_CONF_SU_TX_BFEE_S 0
@@ -15375,6 +15378,10 @@ typedef enum wmi_coex_config_type {
 	WMI_COEX_CONFIG_PAGE_STA_TDM = 2,
 	/* config interval (arg1 BT, arg2 WLAN) for SAP + PAGE */
 	WMI_COEX_CONFIG_PAGE_SAP_TDM = 3,
+	/* config during WLAN connection */
+	WMI_COEX_CONFIG_DURING_WLAN_CONN = 4,
+	/* config to enable/disable BTC */
+	WMI_COEX_CONFIG_BTC_ENABLE = 5,
 } WMI_COEX_CONFIG_TYPE;
 
 typedef struct {
