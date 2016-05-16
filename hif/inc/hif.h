@@ -130,26 +130,70 @@ struct qca_napi_info {
 	struct napi_struct   napi;    /* one NAPI Instance per CE in phase I */
 	uint8_t              scale;   /* currently same on all instances */
 	uint8_t              id;
+	int                  irq;
 	struct qca_napi_stat stats[NR_CPUS];
 };
 
 /**
- * NAPI data-sructure common to all NAPI instances.
+ * struct qca_napi_cpu - an entry of the napi cpu table
+ * @core_id:     physical core id of the core
+ * @cluster_id:  cluster this core belongs to
+ * @core_mask:   mask to match all core of this cluster
+ * @thread_mask: mask for this core within the cluster
+ * @max_freq:    maximum clock this core can be clocked at
+ *               same for all cpus of the same core.
+ * @efficiency:  a coefficient to mark relative efficiency
+ *               same for all cpus of the same core.
+ * @napis:       bitmap of napi instances on this core
+ * cluster_nxt:  chain to link cores within the same cluster
+ *
+ * This structure represents a single entry in the napi cpu
+ * table. The table is part of struct qca_napi_data.
+ * This table is initialized by the init function, called while
+ * the first napi instance is being created, updated by hotplug
+ * notifier and when cpu affinity decisions are made (by throughput
+ * detection), and deleted when the last napi instance is removed.
+ */
+enum qca_napi_tput_state {
+	QCA_NAPI_TPUT_UNINITIALIZED,
+	QCA_NAPI_TPUT_LO,
+	QCA_NAPI_TPUT_HI
+};
+enum qca_napi_cpu_state {
+	QCA_NAPI_CPU_UNINITIALIZED,
+	QCA_NAPI_CPU_DOWN,
+	QCA_NAPI_CPU_UP };
+struct qca_napi_cpu {
+	enum qca_napi_cpu_state state;
+	int			core_id;
+	int			cluster_id;
+	cpumask_t		core_mask;
+	cpumask_t		thread_mask;
+	unsigned int		max_freq;
+	unsigned long		efficiency;
+	uint32_t		napis;
+	int			cluster_nxt;  /* index, not pointer */
+};
+
+/**
+ * NAPI data-structure common to all NAPI instances.
  *
  * A variable of this type will be stored in hif module context.
  */
 
 struct qca_napi_data {
-	/* NOTE: make sure the mutex is inited only at the very beginning
-	   once for the lifetime of the driver. For now, granularity of one
-	   is OK, but we might want to have a better granularity later */
-	struct mutex         mutex;
+	spinlock_t           lock;
 	uint32_t             state;
 	uint32_t             ce_map; /* bitmap of created/registered NAPI
 					instances, indexed by pipe_id,
 					not used by clients (clients use an
 					id returned by create) */
 	struct qca_napi_info napis[CE_COUNT_MAX];
+#ifdef HELIUMPLUS
+	struct qca_napi_cpu  napi_cpu[NR_CPUS];
+	int                  lilcl_head, bigcl_head;
+	enum qca_napi_tput_state napi_mode;
+#endif
 };
 
 /**

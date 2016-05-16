@@ -46,11 +46,31 @@
  * defined.
  */
 
-/* the following triggers napi_enable/disable as required */
+/**
+ * NAPI manages the following states:
+ * NAPI state: per NAPI instance, ENABLED/DISABLED
+ * CPU  state: per CPU,           DOWN/UP
+ * TPUT state: global,            LOW/HI
+ *
+ * "Dynamic" changes to state of various NAPI structures are
+ * managed by NAPI events. The events may be produced by
+ * various detection points. With each event, some data is
+ * sent. The main event handler in hif_napi handles and makes
+ * the state changes.
+ *
+ * event          : data             : generated
+ * ---------------:------------------:------------------
+ * EVT_INI_FILE   : cfg->napi_enable : after ini file processed
+ * EVT_CMD_STATE  : cmd arg          : by the vendor cmd
+ * EVT_CPU_STATE  : (cpu << 16)|state: CPU hotplug events
+ * EVT_TPUT_STATE : (high/low)       : tput trigger
+ */
 enum qca_napi_event {
 	NAPI_EVT_INVALID,
 	NAPI_EVT_INI_FILE,
-	NAPI_EVT_CMD_STATE /* ioctl enable/disable commands */
+	NAPI_EVT_CMD_STATE,
+	NAPI_EVT_CPU_STATE,
+	NAPI_EVT_TPUT_STATE,
 };
 
 /**
@@ -102,6 +122,81 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx,
 #else
 #define NAPI_DEBUG(fmt, ...) /* NO-OP */
 #endif /* FEATURE NAPI_DEBUG */
+
+/**
+ * Local interface to HIF implemented functions of NAPI CPU affinity management.
+ * Note:
+ * 1- The symbols in this file are NOT supposed to be used by any
+ *    entity other than hif_napi.c
+ * 2- The symbols are valid only if HELIUMPLUS is defined. They are otherwise
+ *    mere wrappers.
+ *
+ */
+#ifndef HELIUMPLUS
+/**
+ * stub functions
+ */
+/* fw-declare to make compiler happy */
+struct qca_napi_data;
+static inline int hif_napi_cpu_init(void *) { return 0; }
+static inline int hif_napi_cpu_deinit(void *) { return 0; }
+static int hif_napi_cpu_migrate(struct qca_napi_data *, int, int) { return 0; }
+static int hif_napi_cpu_(bool) { return 0; }
+
+#else /* HELIUMPLUS - NAPI CPU symbols are valid */
+
+/*
+ * prototype signatures
+ */
+int hif_napi_cpu_init(void *);
+int hif_napi_cpu_deinit(void *);
+
+#define HNC_ANY_CPU (-1)
+#define HNC_ACT_RELOCATE (0)
+#define HNC_ACT_COLLAPSE (1)
+#define HNC_ACT_DISPERSE (-1)
+int hif_napi_cpu_migrate(struct qca_napi_data *napid, int cpu, int action);
+int hif_napi_cpu_blacklist(bool is_on);
+
+#endif /* HELIUMPLUS */
+
+/**
+ * Local interface to HIF implemented functions of NAPI CPU affinity management.
+ * Note:
+ * 1- The symbols in this file are NOT supposed to be used by any
+ *    entity other than hif_napi.c
+ * 2- The symbols are valid only if HELIUMPLUS is defined. They are otherwise
+ *    mere wrappers.
+ *
+ */
+#ifndef HELIUMPLUS
+/**
+ * stub functions
+ */
+/* fw-declare to make compiler happy */
+struct qca_napi_data;
+static inline int hif_napi_cpu_init(void *) { return 0; }
+static inline int hif_napi_cpu_deinit(void *) { return 0; }
+static int hif_napi_cpu_migrate(struct qca_napi_data *, int, int) { return 0; }
+static int hif_napi_cpu_(bool) { return 0; }
+
+#else /* HELIUMPLUS - NAPI CPU symbols are valid */
+
+/*
+ * prototype signatures
+ */
+int hif_napi_cpu_init(void *);
+int hif_napi_cpu_deinit(void *);
+
+#define HNC_ANY_CPU (-1)
+#define HNC_ACT_RELOCATE (0)
+#define HNC_ACT_COLLAPSE (1)
+#define HNC_ACT_DISPERSE (-1)
+int hif_napi_cpu_migrate(struct qca_napi_data *napid, int cpu, int action);
+int hif_napi_cpu_blacklist(bool is_on);
+
+#endif /* HELIUMPLUS */
+
 
 #else /* ! defined(FEATURE_NAPI) */
 
