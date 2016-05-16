@@ -107,7 +107,6 @@ struct CE_state {
 	enum CE_op_state state;
 
 #ifdef WLAN_FEATURE_FASTPATH
-	u_int32_t download_len; /* pkt download length for source ring */
 	fastpath_msg_handler fastpath_handler;
 	void *context;
 #endif /* WLAN_FEATURE_FASTPATH */

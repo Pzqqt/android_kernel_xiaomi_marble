@@ -3996,16 +3996,3 @@ void hif_runtime_lock_deinit(struct hif_opaque_softc *hif_ctx,
 }
 
 #endif /* FEATURE_RUNTIME_PM */
-
-/**
- * hif_pci_bus_pkt_dl_len_set() set the HTT packet download length
- * @sc: context
- * @pkt_download_len: download length
- *
- * Return: void
- */
-void hif_pci_bus_pkt_dl_len_set(struct hif_softc *sc,
-				u_int32_t pkt_download_len)
-{
-	ce_pkt_dl_len_set(sc, pkt_download_len);
-}

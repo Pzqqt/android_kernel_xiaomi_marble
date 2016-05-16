@@ -183,20 +183,6 @@ hif_dummy_claim_device(struct hif_softc *hif_sc)
 }
 
 /**
- * hif_dummy_bus_pkt_dl_len_set()- dummy call
- * @sc: context
- * @pkt_download_len: download length
- *
- * Return: None
- */
-void hif_dummy_bus_pkt_dl_len_set(void *sc,
-				  u_int32_t pkt_download_len)
-{
-	return;
-}
-
-
-/**
  * hif_dummy_cancel_deferred_target_sleep - dummy call
  * @hif_sc: hif context
  *

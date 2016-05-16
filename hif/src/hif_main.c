@@ -942,28 +942,16 @@ int hif_send_single(struct hif_opaque_softc *osc, qdf_nbuf_t msdu, uint32_t
  * @msdu : array of msdus to be sent
  * @num_msdus : number of msdus in an array
  * @transfer_id: transfer id
+ * @download_len: download length
  *
  * Return: No. of packets that could be sent
  */
-int hif_send_fast(struct hif_opaque_softc *osc, qdf_nbuf_t *nbuf_arr,
-		uint32_t num_msdus, uint32_t transfer_id)
+int hif_send_fast(struct hif_opaque_softc *osc, qdf_nbuf_t nbuf,
+		uint32_t transfer_id, uint32_t download_len)
 {
 	void *ce_tx_hdl = hif_get_ce_handle(osc, CE_HTT_TX_CE);
-	return ce_send_fast((struct CE_handle *)ce_tx_hdl, nbuf_arr, num_msdus,
-			transfer_id);
-}
-
-/**
- * hif_pkt_dl_len_set() - API to access hif specific function
- * ce_pkt_dl_len_set.
- * @osc: HIF Context
- * @pkt_download_len: download length
- *
- * Return: None
- */
-void hif_pkt_dl_len_set(void *hif_sc, unsigned int pkt_download_len)
-{
-	ce_pkt_dl_len_set(hif_sc, pkt_download_len);
+	return ce_send_fast((struct CE_handle *)ce_tx_hdl, nbuf,
+			transfer_id, download_len);
 }
 
 /**

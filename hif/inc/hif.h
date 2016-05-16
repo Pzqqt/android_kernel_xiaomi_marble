@@ -575,8 +575,6 @@ void hif_process_runtime_resume_success(struct hif_opaque_softc *);
 int hif_dump_registers(struct hif_opaque_softc *scn);
 int ol_copy_ramdump(struct hif_opaque_softc *scn);
 void hif_crash_shutdown(struct hif_opaque_softc *hif_ctx);
-void hif_bus_pkt_dl_len_set(struct hif_opaque_softc *hif_sc,
-			    unsigned int pkt_download_len);
 void hif_get_hw_info(struct hif_opaque_softc *scn, u32 *version, u32 *revision,
 		     const char **target_name);
 void hif_lro_flush_cb_register(struct hif_opaque_softc *scn,
@@ -598,8 +596,8 @@ qdf_nbuf_t hif_batch_send(struct hif_opaque_softc *osc, qdf_nbuf_t msdu,
 		uint32_t transfer_id, u_int32_t len, uint32_t sendhead);
 int hif_send_single(struct hif_opaque_softc *osc, qdf_nbuf_t msdu, uint32_t
 		transfer_id, u_int32_t len);
-int hif_send_fast(struct hif_opaque_softc *osc, qdf_nbuf_t *nbuf_arr, uint32_t
-		num_msdus, uint32_t transfer_id);
+int hif_send_fast(struct hif_opaque_softc *osc, qdf_nbuf_t nbuf,
+	uint32_t transfer_id, uint32_t download_len);
 void hif_pkt_dl_len_set(void *hif_sc, unsigned int pkt_download_len);
 void hif_ce_war_disable(void);
 void hif_ce_war_enable(void);

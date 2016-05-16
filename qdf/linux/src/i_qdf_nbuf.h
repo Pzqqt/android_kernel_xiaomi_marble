@@ -156,7 +156,8 @@ struct qdf_nbuf_cb {
 							num:1,
 							flag_chfrag_start:1,
 							flag_chfrag_end:1,
-							reserved:3;
+							flag_ext_header:1,
+							reserved:2;
 					} bits;
 					uint8_t u8;
 				} flags;
@@ -252,6 +253,9 @@ struct qdf_nbuf_cb {
 #define QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_CHFRAG_END(skb) \
 		(((struct qdf_nbuf_cb *) \
 		((skb)->cb))->u.tx.extra_frag.flags.bits.flag_chfrag_end)
+#define QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_EXT_HEADER(skb) \
+		(((struct qdf_nbuf_cb *) \
+		((skb)->cb))->u.tx.extra_frag.flags.bits.flag_ext_header)
 #define QDF_NBUF_CB_TX_EXTRA_FRAG_WORDSTR_EFRAG(skb) \
 	(((struct qdf_nbuf_cb *) \
 		((skb)->cb))->u.tx.extra_frag.flags.bits.flag_efrag)

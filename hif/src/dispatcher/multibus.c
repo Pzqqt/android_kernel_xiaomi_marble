@@ -250,13 +250,6 @@ void hif_stop(struct hif_opaque_softc *hif_ctx)
 	hif_sc->bus_ops.hif_stop(hif_sc);
 }
 
-void hif_bus_pkt_dl_len_set(struct hif_opaque_softc *hif_ctx,
-			    u_int32_t pkt_download_len)
-{
-	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
-	hif_sc->bus_ops.hif_bus_pkt_dl_len_set(hif_sc, pkt_download_len);
-}
-
 void hif_cancel_deferred_target_sleep(struct hif_softc *hif_sc)
 {
 	return hif_sc->bus_ops.hif_cancel_deferred_target_sleep(hif_sc);

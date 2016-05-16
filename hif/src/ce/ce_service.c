@@ -539,9 +539,9 @@ ce_buffer_addr_hi_set(struct CE_src_desc *shadow_src_desc,
 /**
  * ce_send_fast() CE layer Tx buffer posting function
  * @copyeng: copy engine handle
- * @msdus: iarray of msdu to be sent
- * @num_msdus: number of msdus in an array
+ * @msdu: msdu to be sent
  * @transfer_id: transfer_id
+ * @download_len: packet download length
  *
  * Assumption : Called with an array of MSDU's
  * Function:
@@ -552,8 +552,8 @@ ce_buffer_addr_hi_set(struct CE_src_desc *shadow_src_desc,
  *
  * Return: No. of packets that could be sent
  */
-int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t *msdus,
-		 unsigned int num_msdus, unsigned int transfer_id)
+int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t msdu,
+		 unsigned int transfer_id, uint32_t download_len)
 {
 	struct CE_state *ce_state = (struct CE_state *)copyeng;
 	struct hif_softc *scn = ce_state->scn;
@@ -564,8 +564,6 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t *msdus,
 	unsigned int write_index;
 	unsigned int sw_index;
 	unsigned int frag_len;
-	qdf_nbuf_t msdu;
-	int i;
 	uint64_t dma_addr;
 	uint32_t user_flags;
 
@@ -581,9 +579,9 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t *msdus,
 				NULL, NULL, write_index);
 
 	if (qdf_unlikely(CE_RING_DELTA(nentries_mask, write_index, sw_index - 1)
-			 < (SLOTS_PER_DATAPATH_TX * num_msdus))) {
+			 < SLOTS_PER_DATAPATH_TX)) {
 		HIF_ERROR("Source ring full, required %d, available %d",
-		      (SLOTS_PER_DATAPATH_TX * num_msdus),
+		      SLOTS_PER_DATAPATH_TX,
 		      CE_RING_DELTA(nentries_mask, write_index, sw_index - 1));
 		OL_ATH_CE_PKT_ERROR_COUNT_INCR(scn, CE_RING_DELTA_FAIL);
 		Q_TARGET_ACCESS_END(scn);
@@ -591,8 +589,7 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t *msdus,
 		return 0;
 	}
 
-	/* 2 msdus per packet */
-	for (i = 0; i < num_msdus; i++) {
+	{
 		struct CE_src_desc *src_ring_base =
 			(struct CE_src_desc *)src_ring->base_addr_owner_space;
 		struct CE_src_desc *shadow_base =
@@ -603,7 +600,6 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t *msdus,
 			CE_SRC_RING_TO_DESC(shadow_base, write_index);
 
 		hif_pm_runtime_get_noresume(hif_hdl);
-		msdu = msdus[i];
 
 		/*
 		 * First fill out the ring descriptor for the HTC HTT frame
@@ -616,10 +612,9 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t *msdus,
 							  0xFFFFFFFF);
 		user_flags = qdf_nbuf_data_attr_get(msdu) & DESC_DATA_FLAG_MASK;
 		ce_buffer_addr_hi_set(shadow_src_desc, dma_addr, user_flags);
-
-		shadow_src_desc->meta_data = transfer_id;
+			shadow_src_desc->meta_data = transfer_id;
 		shadow_src_desc->nbytes = qdf_nbuf_get_frag_len(msdu, 0);
-
+		download_len -= shadow_src_desc->nbytes;
 		/*
 		 * HTC HTT header is a word stream, so byte swap if CE byte
 		 * swap enabled
@@ -629,13 +624,11 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t *msdus,
 		/* For the first one, it still does not need to write */
 		shadow_src_desc->gather = 1;
 		*src_desc = *shadow_src_desc;
-
 		/* By default we could initialize the transfer context to this
 		 * value
 		 */
 		src_ring->per_transfer_context[write_index] =
 			CE_SENDLIST_ITEM_CTXT;
-
 		write_index = CE_RING_IDX_INCR(nentries_mask, write_index);
 
 		src_desc = CE_SRC_RING_TO_DESC(src_ring_base, write_index);
@@ -657,8 +650,8 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t *msdus,
 		/* get actual packet length */
 		frag_len = qdf_nbuf_get_frag_len(msdu, 1);
 
-		/* only read download_len once */
-		shadow_src_desc->nbytes =  ce_state->download_len;
+		/* download remaining bytes of payload */
+		shadow_src_desc->nbytes =  download_len;
 		if (shadow_src_desc->nbytes > frag_len)
 			shadow_src_desc->nbytes = frag_len;
 
@@ -676,34 +669,27 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t *msdus,
 			sizeof(qdf_nbuf_data(msdu)), QDF_TX));
 	}
 
-	/* Write the final index to h/w one-shot */
-	if (i) {
-		src_ring->write_index = write_index;
+	src_ring->write_index = write_index;
 
-		if (hif_pm_runtime_get(hif_hdl) == 0) {
-			hif_record_ce_desc_event(scn, ce_state->id,
-						 FAST_TX_WRITE_INDEX_UPDATE,
-						 NULL, NULL, write_index);
+	if (hif_pm_runtime_get(hif_hdl) == 0) {
+		hif_record_ce_desc_event(scn, ce_state->id,
+					 FAST_TX_WRITE_INDEX_UPDATE,
+					 NULL, NULL, write_index);
 
-			/* Don't call WAR_XXX from here
-			 * Just call XXX instead, that has the reqd. intel
-			 */
-			war_ce_src_ring_write_idx_set(scn, ctrl_addr,
-					write_index);
-			hif_pm_runtime_put(hif_hdl);
-		}
+		/* Don't call WAR_XXX from here
+		 * Just call XXX instead, that has the reqd. intel
+		 */
+		war_ce_src_ring_write_idx_set(scn, ctrl_addr,
+				write_index);
+		hif_pm_runtime_put(hif_hdl);
 	}
+
 
 	Q_TARGET_ACCESS_END(scn);
 	qdf_spin_unlock_bh(&ce_state->ce_index_lock);
 
-	/*
-	 * If all packets in the array are transmitted,
-	 * i = num_msdus
-	 * Temporarily add an ASSERT
-	 */
-	ASSERT(i == num_msdus);
-	return i;
+	/* sent 1 packet */
+	return 1;
 }
 
 /**
@@ -2215,32 +2201,6 @@ ce_watermark_cb_register(struct CE_handle *copyeng,
 		CE_state->misc_cbs = 1;
 	}
 }
-
-#ifdef WLAN_FEATURE_FASTPATH
-/**
- * ce_pkt_dl_len_set() set the HTT packet download length
- * @hif_sc: HIF context
- * @pkt_download_len: download length
- *
- * Return: None
- */
-void ce_pkt_dl_len_set(void *hif_sc, u_int32_t pkt_download_len)
-{
-	struct hif_softc *sc = (struct hif_softc *)(hif_sc);
-	struct CE_state *ce_state = sc->ce_id_to_state[CE_HTT_H2T_MSG];
-
-	qdf_assert_always(ce_state);
-
-	ce_state->download_len = pkt_download_len;
-
-	qdf_print("%s CE %d Pkt download length %d", __func__,
-		  ce_state->id, ce_state->download_len);
-}
-#else
-void ce_pkt_dl_len_set(void *hif_sc, u_int32_t pkt_download_len)
-{
-}
-#endif /* WLAN_FEATURE_FASTPATH */
 
 bool ce_get_rx_pending(struct hif_softc *scn)
 {

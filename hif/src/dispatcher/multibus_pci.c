@@ -69,7 +69,6 @@ QDF_STATUS hif_initialize_pci_ops(struct hif_softc *hif_sc)
 	bus_ops->hif_claim_device = &hif_dummy_claim_device;
 	bus_ops->hif_shutdown_device = &hif_ce_stop;
 	bus_ops->hif_stop = &hif_ce_stop;
-	bus_ops->hif_bus_pkt_dl_len_set = &ce_pkt_dl_len_set;
 	bus_ops->hif_cancel_deferred_target_sleep =
 					&hif_pci_cancel_deferred_target_sleep;
 	bus_ops->hif_irq_disable = &hif_pci_irq_disable;

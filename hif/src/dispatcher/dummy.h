@@ -42,8 +42,6 @@ QDF_STATUS hif_dummy_get_config_item(struct hif_softc *hif_sc,
 		     int opcode, void *config, uint32_t config_len);
 void hif_dummy_set_mailbox_swap(struct hif_softc *hif_sc);
 void hif_dummy_claim_device(struct hif_softc *hif_sc);
-void hif_dummy_bus_pkt_dl_len_set(void *sc,
-				  u_int32_t pkt_download_len);
 void hif_dummy_cancel_deferred_target_sleep(struct hif_softc *hif_sc);
 void hif_dummy_irq_enable(struct hif_softc *hif_sc, int irq_id);
 void hif_dummy_irq_disable(struct hif_softc *hif_sc, int irq_id);

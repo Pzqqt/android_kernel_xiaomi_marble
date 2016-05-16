@@ -150,11 +150,10 @@ int ce_send(struct CE_handle *copyeng,
 		unsigned int user_flags);
 
 #ifdef WLAN_FEATURE_FASTPATH
-int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t *msdus,
-		 unsigned int num_msdus, unsigned int transfer_id);
+int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t msdu,
+	unsigned int transfer_id, uint32_t download_len);
 
 #endif
-void ce_pkt_dl_len_set(void *hif_sc, unsigned int pkt_download_len);
 
 void ce_update_tx_ring(struct CE_handle *ce_tx_hdl, uint32_t num_htt_cmpls);
 extern qdf_nbuf_t ce_batch_send(struct CE_handle *ce_tx_hdl,

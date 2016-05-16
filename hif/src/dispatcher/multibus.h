@@ -57,8 +57,6 @@ struct hif_bus_ops {
 	void (*hif_claim_device)(struct hif_softc *hif_sc);
 	void (*hif_shutdown_device)(struct hif_softc *hif_sc);
 	void (*hif_stop)(struct hif_softc *hif_sc);
-	void (*hif_bus_pkt_dl_len_set)(void *hif_sc,
-				       u_int32_t pkt_download_len);
 	void (*hif_cancel_deferred_target_sleep)(struct hif_softc *hif_sc);
 	void (*hif_irq_disable)(struct hif_softc *hif_sc, int ce_id);
 	void (*hif_irq_enable)(struct hif_softc *hif_sc, int ce_id);
