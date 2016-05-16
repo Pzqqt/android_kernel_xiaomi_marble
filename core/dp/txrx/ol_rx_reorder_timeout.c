@@ -180,7 +180,8 @@ void ol_rx_reorder_timeout_init(struct ol_txrx_pdev_t *pdev)
 		qdf_timer_init(pdev->osdev,
 				       &rx_reorder_timeout_ac->timer,
 				       ol_rx_reorder_timeout,
-				       rx_reorder_timeout_ac);
+				       rx_reorder_timeout_ac,
+				       QDF_TIMER_TYPE_SW);
 		/* init the virtual timer list */
 		TAILQ_INIT(&rx_reorder_timeout_ac->virtual_timer_list);
 		rx_reorder_timeout_ac->pdev = pdev;
