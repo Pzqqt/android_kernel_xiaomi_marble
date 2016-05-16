@@ -2521,6 +2521,184 @@ QDF_STATUS hdd_check_for_existing_macaddr(hdd_context_t *hdd_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef CONFIG_FW_LOGS_BASED_ON_INI
+/**
+ * hdd_set_fw_log_params() - Set log parameters to FW
+ * @hdd_ctx: HDD Context
+ * @adapter: HDD Adapter
+ *
+ * This function set the FW Debug log level based on the INI.
+ *
+ * Return: None
+ */
+static void hdd_set_fw_log_params(hdd_context_t *hdd_ctx,
+				  hdd_adapter_t *adapter)
+{
+	uint8_t count = 0, numentries = 0,
+			moduleloglevel[FW_MODULE_LOG_LEVEL_STRING_LENGTH];
+	uint32_t value = 0;
+	int ret;
+
+	/* Enable FW logs based on INI configuration */
+	if ((QDF_GLOBAL_FTM_MODE == cds_get_conparam() ||
+	     (!hdd_ctx->config->enable_fw_log))) {
+		hdd_info("enable_fw_log not enabled in INI or in FTM mode return");
+		return;
+	}
+
+	hdd_ctx->fw_log_settings.dl_type =
+			hdd_ctx->config->enableFwLogType;
+	ret = wma_cli_set_command(adapter->sessionId,
+				  WMI_DBGLOG_TYPE,
+				  hdd_ctx->config->enableFwLogType,
+				  DBG_CMD);
+	if (ret)
+		hdd_err("Failed to enable FW log type ret %d", ret);
+
+	hdd_ctx->fw_log_settings.dl_loglevel =
+		hdd_ctx->config->enableFwLogLevel;
+	ret = wma_cli_set_command(adapter->sessionId,
+				  WMI_DBGLOG_LOG_LEVEL,
+				  hdd_ctx->config->enableFwLogLevel,
+				  DBG_CMD);
+	if (ret)
+		hdd_err("Failed to enable FW log level ret %d", ret);
+
+	hdd_string_to_u8_array(
+		hdd_ctx->config->enableFwModuleLogLevel,
+		moduleloglevel,
+		&numentries,
+		FW_MODULE_LOG_LEVEL_STRING_LENGTH);
+
+	while (count < numentries) {
+		/*
+		 * FW module log level input string looks like
+		 * below:
+		 * gFwDebugModuleLoglevel=<FW Module ID>,
+		 * <Log Level>,...
+		 * For example:
+		 * gFwDebugModuleLoglevel=
+		 * 1,0,2,1,3,2,4,3,5,4,6,5,7,6
+		 * Above input string means :
+		 * For FW module ID 1 enable log level 0
+		 * For FW module ID 2 enable log level 1
+		 * For FW module ID 3 enable log level 2
+		 * For FW module ID 4 enable log level 3
+		 * For FW module ID 5 enable log level 4
+		 * For FW module ID 6 enable log level 5
+		 * For FW module ID 7 enable log level 6
+		 */
+
+		/*
+		 * FW expects WMI command value =
+		 * Module ID * 10 + Module Log level
+		 */
+		value = ((moduleloglevel[count] * 10) +
+			 moduleloglevel[count + 1]);
+		ret = wma_cli_set_command(adapter->sessionId,
+					  WMI_DBGLOG_MOD_LOG_LEVEL,
+					  value, DBG_CMD);
+		if (ret)
+			hdd_err("Failed to enable FW module log level %d ret %d",
+				value, ret);
+
+		count += 2;
+	}
+}
+#else
+static void hdd_set_fw_log_params(hdd_context_t *hdd_ctx,
+				  hdd_adapter_t *adapter)
+{
+}
+
+#endif
+
+/**
+ * hdd_set_fw_params() - Set parameters to firmware
+ * @adapter: HDD adapter
+ *
+ * This function Sets various parameters to fw once the
+ * adapter is started.
+ *
+ * Return: 0 on success or errno on failure
+ */
+int hdd_set_fw_params(hdd_adapter_t *adapter)
+{
+	int ret;
+	hdd_context_t *hdd_ctx;
+
+	ENTER_DEV(adapter->dev);
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx)
+		return -EINVAL;
+
+	if ((QDF_GLOBAL_FTM_MODE == cds_get_conparam() ||
+	    (!hdd_ctx->config->enable2x2))) {
+		hdd_info("enable2x2 not enabled in INI or in FTM mode return");
+		return 0;
+	}
+
+#define HDD_DTIM_1CHAIN_RX_ID 0x5
+#define HDD_SMPS_PARAM_VALUE_S 29
+
+	/*
+	 * Disable DTIM 1 chain Rx when in 1x1,
+	 * we are passing two value
+	 * as param_id << 29 | param_value.
+	 * Below param_value = 0(disable)
+	 */
+	ret = wma_cli_set_command(adapter->sessionId,
+				  WMI_STA_SMPS_PARAM_CMDID,
+				  HDD_DTIM_1CHAIN_RX_ID <<
+				  HDD_SMPS_PARAM_VALUE_S,
+				  VDEV_CMD);
+	if (ret) {
+		hdd_err("DTIM 1 chain set failed %d", ret);
+		goto error;
+	}
+
+	ret = wma_cli_set_command(adapter->sessionId,
+				  WMI_PDEV_PARAM_TX_CHAIN_MASK,
+				  hdd_ctx->config->txchainmask1x1,
+				  PDEV_CMD);
+	if (ret) {
+		hdd_err("WMI_PDEV_PARAM_TX_CHAIN_MASK set failed %d",
+			ret);
+		goto error;
+	}
+
+	ret = wma_cli_set_command(adapter->sessionId,
+				  WMI_PDEV_PARAM_RX_CHAIN_MASK,
+				  hdd_ctx->config->rxchainmask1x1,
+				  PDEV_CMD);
+	if (ret) {
+		hdd_err("WMI_PDEV_PARAM_RX_CHAIN_MASK set failed %d",
+			ret);
+		goto error;
+	}
+#undef HDD_DTIM_1CHAIN_RX_ID
+#undef HDD_SMPS_PARAM_VALUE_S
+
+	ret = wma_cli_set_command(adapter->sessionId,
+				  WMI_PDEV_PARAM_HYST_EN,
+				  hdd_ctx->config->enableMemDeepSleep,
+				  PDEV_CMD);
+
+	if (ret != 0) {
+		hdd_err("WMI_PDEV_PARAM_HYST_EN set failed %d",
+			ret);
+		goto error;
+	}
+
+	hdd_set_fw_log_params(hdd_ctx, adapter);
+
+	EXIT();
+	return 0;
+error:
+	return -EINVAL;
+}
+
 /**
  * hdd_open_adapter() - open and setup the hdd adatper
  * @hdd_ctx: global hdd context
@@ -2781,137 +2959,11 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 		cds_check_and_restart_sap_with_non_dfs_acs();
 	}
 
-	if ((cds_get_conparam() != QDF_GLOBAL_FTM_MODE)
-	    && (!hdd_ctx->config->enable2x2)) {
-#define HDD_DTIM_1CHAIN_RX_ID 0x5
-#define HDD_SMPS_PARAM_VALUE_S 29
-
-		/*
-		 * Disable DTIM 1 chain Rx when in 1x1, we are passing two value
-		 * as param_id << 29 | param_value.
-		 * Below param_value = 0(disable)
-		 */
-		ret = wma_cli_set_command(adapter->sessionId,
-					  WMI_STA_SMPS_PARAM_CMDID,
-					  HDD_DTIM_1CHAIN_RX_ID <<
-						HDD_SMPS_PARAM_VALUE_S,
-					  VDEV_CMD);
-
-		if (ret != 0) {
-			hddLog(QDF_TRACE_LEVEL_ERROR,
-			       FL("DTIM 1 chain set failed %d"), ret);
-			goto err_lro_cleanup;
-		}
-
-		ret = wma_cli_set_command(adapter->sessionId,
-					  WMI_PDEV_PARAM_TX_CHAIN_MASK,
-					  hdd_ctx->config->txchainmask1x1,
-					  PDEV_CMD);
-		if (ret != 0) {
-			hddLog(QDF_TRACE_LEVEL_ERROR,
-			       FL("WMI_PDEV_PARAM_TX_CHAIN_MASK set failed %d"),
-			       ret);
-			goto err_lro_cleanup;
-		}
-		ret = wma_cli_set_command(adapter->sessionId,
-					  WMI_PDEV_PARAM_RX_CHAIN_MASK,
-					  hdd_ctx->config->rxchainmask1x1,
-					  PDEV_CMD);
-		if (ret != 0) {
-			hddLog(QDF_TRACE_LEVEL_ERROR,
-			       FL("WMI_PDEV_PARAM_RX_CHAIN_MASK set failed %d"),
-			       ret);
-			goto err_lro_cleanup;
-		}
-#undef HDD_DTIM_1CHAIN_RX_ID
-#undef HDD_SMPS_PARAM_VALUE_S
+	if (hdd_set_fw_params(adapter)) {
+		hdd_err("Failed to set the fw parameters");
+		goto err_lro_cleanup;
 	}
 
-	if (QDF_GLOBAL_FTM_MODE != cds_get_conparam()) {
-		ret = wma_cli_set_command(adapter->sessionId,
-					  WMI_PDEV_PARAM_HYST_EN,
-					  hdd_ctx->config->enableMemDeepSleep,
-					  PDEV_CMD);
-
-		if (ret != 0) {
-			hddLog(QDF_TRACE_LEVEL_ERROR,
-			       FL("WMI_PDEV_PARAM_HYST_EN set failed %d"),
-			       ret);
-			goto err_lro_cleanup;
-		}
-	}
-
-#ifdef CONFIG_FW_LOGS_BASED_ON_INI
-
-	/* Enable FW logs based on INI configuration */
-	if ((QDF_GLOBAL_FTM_MODE != cds_get_conparam()) &&
-	    (hdd_ctx->config->enable_fw_log)) {
-		uint8_t count = 0;
-		uint32_t value = 0;
-		uint8_t numEntries = 0;
-		uint8_t moduleLoglevel[FW_MODULE_LOG_LEVEL_STRING_LENGTH];
-
-		hdd_ctx->fw_log_settings.dl_type =
-					hdd_ctx->config->enableFwLogType;
-		ret = wma_cli_set_command(adapter->sessionId,
-					  WMI_DBGLOG_TYPE,
-					  hdd_ctx->config->enableFwLogType,
-					  DBG_CMD);
-		if (ret != 0) {
-			hddLog(LOGE, FL("Failed to enable FW log type ret %d"),
-			       ret);
-		}
-
-		hdd_ctx->fw_log_settings.dl_loglevel =
-					hdd_ctx->config->enableFwLogLevel;
-		ret = wma_cli_set_command(adapter->sessionId,
-					  WMI_DBGLOG_LOG_LEVEL,
-					  hdd_ctx->config->enableFwLogLevel,
-					  DBG_CMD);
-		if (ret != 0) {
-			hddLog(LOGE, FL("Failed to enable FW log level ret %d"),
-			       ret);
-		}
-
-		hdd_string_to_u8_array(hdd_ctx->config->enableFwModuleLogLevel,
-				       moduleLoglevel,
-				       &numEntries,
-				       FW_MODULE_LOG_LEVEL_STRING_LENGTH);
-		while (count < numEntries) {
-			/*
-			 * FW module log level input string looks like below:
-			 * gFwDebugModuleLoglevel=<FW Module ID>,<Log Level>,...
-			 * For example:
-			 * gFwDebugModuleLoglevel=1,0,2,1,3,2,4,3,5,4,6,5,7,6
-			 * Above input string means :
-			 * For FW module ID 1 enable log level 0
-			 * For FW module ID 2 enable log level 1
-			 * For FW module ID 3 enable log level 2
-			 * For FW module ID 4 enable log level 3
-			 * For FW module ID 5 enable log level 4
-			 * For FW module ID 6 enable log level 5
-			 * For FW module ID 7 enable log level 6
-			 */
-
-			/* FW expects WMI command value =
-			 *               Module ID * 10 + Module Log level
-			 */
-			value =	((moduleLoglevel[count] * 10) +
-				 moduleLoglevel[count + 1]);
-			ret = wma_cli_set_command(adapter->sessionId,
-						  WMI_DBGLOG_MOD_LOG_LEVEL,
-						  value, DBG_CMD);
-			if (ret != 0) {
-				hddLog(LOGE,
-				       FL
-					       ("Failed to enable FW module log level %d ret %d"),
-				       value, ret);
-			}
-
-			count += 2;
-		}
-	}
-#endif
 	if (QDF_STATUS_SUCCESS != hdd_debugfs_init(adapter))
 		hdd_err("Interface %s wow debug_fs init failed", iface_name);
 
