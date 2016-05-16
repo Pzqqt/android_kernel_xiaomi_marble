@@ -943,8 +943,8 @@ struct pld_driver_ops wlan_drv_ops = {
 	.resume     = wlan_hdd_pld_resume,
 	.modem_status = wlan_hdd_pld_notify_handler,
 #ifdef FEATURE_RUNTIME_PM
-        .runtime_suspend = wlan_hdd_pld_runtime_suspend,
-        .runtime_resume = wlan_hdd_pld_runtime_resume,
+	.runtime_suspend = wlan_hdd_pld_runtime_suspend,
+	.runtime_resume = wlan_hdd_pld_runtime_resume,
 #endif
 };
 
