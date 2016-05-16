@@ -110,6 +110,7 @@
 #include "ol_rx_fwd.h"
 #include "wlan_hdd_lpass.h"
 #include "nan_api.h"
+#include <wlan_hdd_napi.h>
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -4894,7 +4895,6 @@ void hdd_pld_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 	enum wlan_tp_level next_rx_level = WLAN_SVC_TP_NONE;
 	enum wlan_tp_level next_tx_level = WLAN_SVC_TP_NONE;
 
-
 	if (total > hdd_ctx->config->busBandwidthHighThreshold)
 		next_vote_level = PLD_BUS_WIDTH_HIGH;
 	else if (total > hdd_ctx->config->busBandwidthMediumThreshold)
@@ -4928,6 +4928,7 @@ void hdd_pld_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 			if (cds_sched_handle_throughput_req(true))
 				hdd_err("high bandwidth set rx affinity fail");
 		 }
+		hdd_napi_apply_throughput_policy(hdd_ctx, tx_packets, rx_packets);
 	}
 
 	/* fine-tuning parameters for RX Flows */
