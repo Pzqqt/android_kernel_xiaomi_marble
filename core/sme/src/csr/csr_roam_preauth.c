@@ -88,7 +88,8 @@ void csr_neighbor_roam_tranistion_preauth_done_to_disconnected(
 		return;
 
 	qdf_mc_timer_stop(&session->ftSmeContext.preAuthReassocIntvlTimer);
-	csr_neighbor_middle_of_roaming(mac_ctx, session_id);
+	csr_neighbor_roam_state_transition(mac_ctx,
+		eCSR_NEIGHBOR_ROAM_STATE_INIT, session_id);
 	pNeighborRoamInfo->roamChannelInfo.IAPPNeighborListReceived = false;
 }
 
@@ -297,8 +298,8 @@ QDF_STATUS csr_neighbor_roam_preauth_rsp_handler(tpAniSirGlobal mac_ctx,
 			&neighbor_roam_info->FTRoamInfo.preAuthDoneList,
 			&preauth_rsp_node->List, LL_ACCESS_LOCK);
 
-		/* Pre-auth successful. Transition to PREAUTH Done state */
-		csr_neighbor_middle_of_roaming(mac_ctx, session_id);
+		csr_neighbor_roam_state_transition(mac_ctx,
+			eCSR_NEIGHBOR_ROAM_STATE_PREAUTH_DONE, session_id);
 		neighbor_roam_info->FTRoamInfo.numPreAuthRetries = 0;
 
 		/*
@@ -386,7 +387,8 @@ ABORT_PREAUTH:
 					ROAM_SCAN_OFFLOAD_RESTART,
 					REASON_PREAUTH_FAILED_FOR_ALL);
 			}
-			csr_neighbor_middle_of_roaming(mac_ctx, session_id);
+			csr_neighbor_roam_state_transition(mac_ctx,
+				eCSR_NEIGHBOR_ROAM_STATE_CONNECTED, session_id);
 		}
 	}
 
@@ -742,12 +744,9 @@ QDF_STATUS csr_neighbor_roam_issue_preauth_req(tpAniSirGlobal mac_ctx,
 	}
 
 	neighbor_roam_info->FTRoamInfo.preauthRspPending = true;
-
-	/* Increment the preauth retry count */
 	neighbor_roam_info->FTRoamInfo.numPreAuthRetries++;
-
-	/* Transition the state to preauthenticating */
-	csr_neighbor_middle_of_roaming(mac_ctx, session_id);
+	csr_neighbor_roam_state_transition(mac_ctx,
+		eCSR_NEIGHBOR_ROAM_STATE_PREAUTHENTICATING, session_id);
 
 	return status;
 }
