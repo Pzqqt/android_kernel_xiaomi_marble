@@ -6,6 +6,14 @@ else
 	KERNEL_BUILD := 0
 endif
 
+ifeq ($(CONFIG_CLD_HL_SDIO_CORE), y)
+	CONFIG_QCA_WIFI_SDIO := 1
+endif
+
+ifeq ($(CONFIG_QCA_WIFI_SDIO), 1)
+	CONFIG_ROME_IF = sdio
+endif
+
 ifdef CONFIG_ICNSS
 	CONFIG_ROME_IF = snoc
 endif
@@ -141,6 +149,7 @@ ifeq ($(KERNEL_BUILD), 0)
 	#enable TSF get feature
 	CONFIG_WLAN_SYNC_TSF := y
 
+ifneq ($(CONFIG_ROME_IF),sdio)
 	#Flag to enable memdump feature
 	CONFIG_WLAN_FEATURE_MEMDUMP := n
 
@@ -166,6 +175,7 @@ ifeq ($(KERNEL_BUILD), 0)
 			CONFIG_WLAN_LRO := n
 		endif
 	endif
+endif
 
 ifeq ($(CONFIG_ROME_IF), snoc)
 	CONFIG_WLAN_TX_FLOW_CONTROL_V2 := y
@@ -741,7 +751,9 @@ TXRX_OBJS := $(TXRX_DIR)/ol_txrx.o \
                 $(TXRX_DIR)/ol_txrx_peer_find.o \
                 $(TXRX_DIR)/ol_txrx_event.o \
                 $(TXRX_DIR)/ol_txrx_encap.o \
-                $(TXRX_DIR)/ol_tx_send.o
+                $(TXRX_DIR)/ol_tx_send.o \
+                $(TXRX_DIR)/ol_tx_sched.o \
+                $(TXRX_DIR)/ol_tx_classify.o
 
 ifeq ($(CONFIG_WLAN_TX_FLOW_CONTROL_V2), y)
 TXRX_OBJS +=     $(TXRX_DIR)/ol_txrx_flow_control.o
@@ -794,6 +806,11 @@ HIF_DISPATCHER_DIR := $(HIF_DIR)/src/dispatcher
 
 HIF_PCIE_DIR := $(HIF_DIR)/src/pcie
 HIF_SNOC_DIR := $(HIF_DIR)/src/snoc
+HIF_SDIO_DIR := $(HIF_DIR)/src/sdio
+
+HIF_SDIO_NATIVE_DIR := $(HIF_SDIO_DIR)/native_sdio
+HIF_SDIO_NATIVE_INC_DIR := $(HIF_SDIO_NATIVE_DIR)/include
+HIF_SDIO_NATIVE_SRC_DIR := $(HIF_SDIO_NATIVE_DIR)/src
 
 HIF_INC := -I$(WLAN_COMMON_INC)/$(HIF_DIR)/inc \
 	   -I$(WLAN_COMMON_INC)/$(HIF_DIR)/src \
@@ -811,15 +828,33 @@ HIF_INC += -I$(WLAN_COMMON_INC)/$(HIF_DISPATCHER_DIR)
 HIF_INC += -I$(WLAN_COMMON_INC)/$(HIF_SNOC_DIR)
 endif
 
-HIF_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/ath_procfs.o \
-		$(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_bmi.o \
-		$(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_diag.o \
-		$(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_main.o \
-		$(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_service.o \
-		$(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_tasklet.o \
-		$(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_main.o \
-		$(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/mp_dev.o \
-		$(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/regtable.o
+ifeq ($(CONFIG_HIF_SDIO), 1)
+HIF_INC += -I$(WLAN_COMMON_INC)/$(HIF_DISPATCHER_DIR)
+HIF_INC += -I$(WLAN_COMMON_INC)/$(HIF_SDIO_DIR)
+HIF_INC += -I$(WLAN_COMMON_INC)/$(HIF_SDIO_NATIVE_INC_DIR)
+endif
+
+HIF_COMMON_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/ath_procfs.o \
+                $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_main.o \
+                $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/mp_dev.o
+
+HIF_CE_OBJS :=  $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_bmi.o \
+                $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_diag.o \
+                $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_main.o \
+                $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_service.o \
+                $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_tasklet.o \
+                $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/regtable.o
+
+HIF_SDIO_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/hif_sdio_send.o \
+                 $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/hif_bmi_reg_access.o \
+                 $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/hif_diag_reg_access.o \
+                 $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/hif_sdio_dev.o \
+                 $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/hif_sdio.o \
+                 $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/hif_sdio_recv.o \
+                 $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/regtable_sdio.o
+
+HIF_SDIO_NATIVE_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_SDIO_NATIVE_SRC_DIR)/hif.o \
+                        $(WLAN_COMMON_ROOT)/$(HIF_SDIO_NATIVE_SRC_DIR)/hif_scatter.o
 
 ifneq ($(CONFIG_ICNSS), y)
 HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_CNSS_STUB_DIR)/icnss_stub.o
@@ -831,18 +866,30 @@ endif
 
 HIF_PCIE_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_PCIE_DIR)/if_pci.o
 HIF_SNOC_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_SNOC_DIR)/if_snoc.o
+HIF_SDIO_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/if_sdio.o
 
 HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/multibus.o
 HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/dummy.o
 
 ifeq ($(CONFIG_HIF_PCI), 1)
 HIF_OBJS += $(HIF_PCIE_OBJS)
+HIF_OBJS += $(HIF_COMMON_OBJS)
+HIF_OBJS += $(HIF_CE_OBJS)
 HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/multibus_pci.o
 endif
 
 ifeq ($(CONFIG_HIF_SNOC), 1)
 HIF_OBJS += $(HIF_SNOC_OBJS)
+HIF_OBJS += $(HIF_COMMON_OBJS)
+HIF_OBJS += $(HIF_CE_OBJS)
 HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/multibus_snoc.o
+endif
+
+ifeq ($(CONFIG_HIF_SDIO), 1)
+HIF_OBJS += $(HIF_SDIO_OBJS)
+HIF_OBJS += $(HIF_SDIO_NATIVE_OBJS)
+HIF_OBJS += $(HIF_COMMON_OBJS)
+HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/multibus_sdio.o
 endif
 
 ############ WMA ############
@@ -890,6 +937,9 @@ PLD_OBJS +=	$(PLD_SRC_DIR)/pld_pcie.o
 endif
 ifeq ($(CONFIG_ICNSS),y)
 PLD_OBJS +=	$(PLD_SRC_DIR)/pld_snoc.o
+endif
+ifeq ($(CONFIG_CNSS_SDIO),y)
+PLD_OBJS +=	$(PLD_SRC_DIR)/pld_sdio.o
 endif
 
 TARGET_INC :=	-I$(WLAN_ROOT)/target/inc
@@ -1215,6 +1265,24 @@ endif
 
 ifeq ($(CONFIG_HIF_SNOC), 1)
 CDEFINES += -DHIF_SNOC
+endif
+
+#Enable High Latency related Flags
+ifeq ($(CONFIG_QCA_WIFI_SDIO), 1)
+CDEFINES += -DCONFIG_HL_SUPPORT \
+            -DCONFIG_AR6320_SUPPORT \
+            -DSDIO_3_0 \
+            -DHIF_SDIO \
+            -DCONFIG_DISABLE_CDC_MAX_PERF_WAR=0 \
+            -DCONFIG_ATH_PROCFS_DIAG_SUPPORT \
+            -DFEATURE_HL_GROUP_CREDIT_FLOW_CONTROL \
+            -DHIF_MBOX_SLEEP_WAR \
+            -DDEBUG_HL_LOGGING \
+            -DQCA_BAD_PEER_TX_FLOW_CL \
+            -DCONFIG_TX_DESC_HI_PRIO_RESERVE \
+            -DCONFIG_PER_VDEV_TX_DESC_POOL \
+            -DCONFIG_SDIO \
+            -DFEATURE_WLAN_FORCE_SAP_SCC
 endif
 
 #Enable USB specific APIS
