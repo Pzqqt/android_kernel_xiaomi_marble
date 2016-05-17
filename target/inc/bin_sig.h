@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012,2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012,2014, 2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -28,7 +28,6 @@
 #ifndef BIN_SIGN_H_
 #define BIN_SIGN_H_
 
-#define SIGN_HEADER_MAGIC 0x454D4F52
 
 /* Signed binary MetaData */
 typedef struct {

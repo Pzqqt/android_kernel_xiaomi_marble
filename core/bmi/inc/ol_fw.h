@@ -36,6 +36,7 @@
 
 #define AR6320_REV2_VERSION          AR6320_REV1_1_VERSION
 #define AR6320_REV4_VERSION          AR6320_REV2_1_VERSION
+#define SIGN_HEADER_MAGIC            0x454D4F52
 
 void ol_target_failure(void *instance, QDF_STATUS status);
 #endif /* _OL_FW_H_ */
