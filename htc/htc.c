@@ -611,6 +611,12 @@ static void reset_endpoint_states(HTC_TARGET *target)
 	}
 }
 
+/**
+ * htc_start() - Main HTC function to trigger HTC start
+ * @HTCHandle: pointer to HTC handle
+ *
+ * Return: A_OK for success or an appropriate A_STATUS error
+ */
 A_STATUS htc_start(HTC_HANDLE HTCHandle)
 {
 	qdf_nbuf_t netbuf;
@@ -656,13 +662,14 @@ A_STATUS htc_start(HTC_HANDLE HTCHandle)
 					("HTC using TX credit flow control\n"));
 		}
 
-#ifdef HIF_SDIO
-#if ENABLE_BUNDLE_RX
-		if (HTC_ENABLE_BUNDLE(target))
+		if ((hif_get_bus_type(target->hif_dev) == QDF_BUS_TYPE_SDIO) ||
+			(hif_get_bus_type(target->hif_dev) == QDF_BUS_TYPE_USB)) {
+			if (HTC_RX_BUNDLE_ENABLED(target))
 			pSetupComp->SetupFlags |=
 				HTC_SETUP_COMPLETE_FLAGS_ENABLE_BUNDLE_RECV;
-#endif /* ENABLE_BUNDLE_RX */
-#endif /* HIF_SDIO */
+			hif_set_bundle_mode(target->hif_dev, true,
+				HTC_MAX_MSG_PER_BUNDLE_RX);
+		}
 
 		SET_HTC_PACKET_INFO_TX(pSendPacket,
 				       NULL,
