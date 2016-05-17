@@ -1141,28 +1141,18 @@ bool qdf_nbuf_is_ipv4_arp_pkt(qdf_nbuf_t buf)
 }
 
 /**
- * qdf_invalidate_range() - invalidate the virtual address range specified by
- *			start and end addresses.
- * Note: This does not write back the cache entries.
+ * qdf_invalidate_range() - invalidate virtual address range
+ * @start: start address of the address range
+ * @end: end address of the address range
+ *
+ * Note that this function does not write back the cache entries.
  *
  * Return: none
  */
-#ifdef MSM_PLATFORM
 static inline void qdf_invalidate_range(void *start, void *end)
 {
-	dmac_inv_range(start, end);
+	__qdf_invalidate_range(start, end);
 }
-
-#else
-static inline void qdf_invalidate_range(void *start, void *end)
-{
-	/* TODO figure out how to invalidate cache on x86 and other
-	   non-MSM platform */
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-		  "Cache invalidate not yet implemneted for non-MSM platform");
-	return;
-}
-#endif
 
 /**
  * qdf_nbuf_reset_num_frags() - decrement the number of fragments

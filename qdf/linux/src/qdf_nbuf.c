@@ -311,13 +311,15 @@ EXPORT_SYMBOL(__qdf_nbuf_unmap);
  *
  * Return: QDF_STATUS
  */
-#ifdef A_SIMOS_DEVHOST
+#if defined(A_SIMOS_DEVHOST) || defined (HIF_USB)
 QDF_STATUS
 __qdf_nbuf_map_single(qdf_device_t osdev, qdf_nbuf_t buf, qdf_dma_dir_t dir)
 {
 	qdf_dma_addr_t paddr;
 
-	QDF_NBUF_CB_PADDR(buf) = paddr = buf->data;
+	QDF_NBUF_CB_PADDR(buf) = paddr = (uintptr_t)buf->data;
+	BUILD_BUG_ON(sizeof(paddr) < sizeof(buf->data));
+	BUILD_BUG_ON(sizeof(QDF_NBUF_CB_PADDR(buf)) < sizeof(buf->data));
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(__qdf_nbuf_map_single);
@@ -345,7 +347,7 @@ EXPORT_SYMBOL(__qdf_nbuf_map_single);
  *
  * Return: none
  */
-#if defined(A_SIMOS_DEVHOST)
+#if defined(A_SIMOS_DEVHOST) || defined (HIF_USB)
 void __qdf_nbuf_unmap_single(qdf_device_t osdev, qdf_nbuf_t buf,
 				qdf_dma_dir_t dir)
 {

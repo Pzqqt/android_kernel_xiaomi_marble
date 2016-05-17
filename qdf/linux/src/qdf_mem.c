@@ -945,7 +945,7 @@ void qdf_mem_move(void *dst_addr, const void *src_addr, uint32_t num_bytes)
 }
 EXPORT_SYMBOL(qdf_mem_move);
 
-#if defined(A_SIMOS_DEVHOST) || defined(HIF_SDIO)
+#if defined(A_SIMOS_DEVHOST) || defined(HIF_SDIO) || defined(HIF_USB)
 /**
  * qdf_mem_alloc_consistent() - allocates consistent qdf memory
  * @osdev: OS device handle
@@ -961,7 +961,11 @@ void *qdf_mem_alloc_consistent(qdf_device_t osdev, void *dev, qdf_size_t size,
 	void *vaddr;
 
 	vaddr = qdf_mem_malloc(size);
-	*phy_addr = ((qdf_dma_addr_t) vaddr);
+	*phy_addr = ((uintptr_t) vaddr);
+	/* using this type conversion to suppress "cast from pointer to integer
+	 * of different size" warning on some platforms
+	 */
+	BUILD_BUG_ON(sizeof(*phy_addr) < sizeof(vaddr));
 	return vaddr;
 }
 
@@ -985,7 +989,7 @@ void *qdf_mem_alloc_consistent(qdf_device_t osdev, void *dev, qdf_size_t size,
 #endif
 EXPORT_SYMBOL(qdf_mem_alloc_consistent);
 
-#if defined(A_SIMOS_DEVHOST) ||  defined(HIF_SDIO)
+#if defined(A_SIMOS_DEVHOST) ||  defined(HIF_SDIO) || defined(HIF_USB)
 /**
  * qdf_mem_free_consistent() - free consistent qdf memory
  * @osdev: OS device handle

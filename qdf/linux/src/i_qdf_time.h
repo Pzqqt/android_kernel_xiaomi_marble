@@ -35,7 +35,11 @@
 
 #include <linux/jiffies.h>
 #include <linux/delay.h>
+#ifdef MSM_PLATFORM
 #include <asm/arch_timer.h>
+#else
+#include <linux/ktime.h>
+#endif
 #ifdef CONFIG_CNSS
 #include <net/cnss.h>
 #endif
