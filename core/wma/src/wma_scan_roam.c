@@ -854,12 +854,17 @@ QDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 	WMA_LOGD("WMA --> good_rssi_threshold=%d",
 		 params.good_rssi_threshold);
 
-	params.roam_earlystop_thres_min =
-		roam_req->early_stop_scan_min_threshold -
-		WMA_NOISE_FLOOR_DBM_DEFAULT;
-	params.roam_earlystop_thres_max =
-		roam_req->early_stop_scan_max_threshold -
-		WMA_NOISE_FLOOR_DBM_DEFAULT;
+	if (roam_req->early_stop_scan_enable) {
+		params.roam_earlystop_thres_min =
+			roam_req->early_stop_scan_min_threshold -
+			WMA_NOISE_FLOOR_DBM_DEFAULT;
+		params.roam_earlystop_thres_max =
+			roam_req->early_stop_scan_max_threshold -
+			WMA_NOISE_FLOOR_DBM_DEFAULT;
+	} else {
+		params.roam_earlystop_thres_min = 0;
+		params.roam_earlystop_thres_max = 0;
+	}
 
 	WMA_LOGD("early_stop_thresholds en=%d, min=%d, max=%d",
 		roam_req->early_stop_scan_enable,
