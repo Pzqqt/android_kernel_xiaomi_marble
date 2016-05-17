@@ -188,7 +188,7 @@ struct ol_config_info *ol_get_ini_handle(struct ol_context *ol_ctx);
 QDF_STATUS hif_reg_based_get_target_info(struct hif_opaque_softc *hif_ctx,
 		  struct bmi_target_info *targ_info);
 #endif
-#if defined(HIF_PCI) || defined(SNOC) || defined(HIF_AHB)
+#if defined(HIF_PCI) || defined(SNOC) || defined(HIF_AHB) || defined(HIF_USB)
 static inline QDF_STATUS
 hif_reg_based_get_target_info(struct hif_opaque_softc *hif_ctx,
 		  struct bmi_target_info *targ_info)

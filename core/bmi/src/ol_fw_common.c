@@ -36,6 +36,9 @@
 #if defined(HIF_SDIO)
 #include "regtable_sdio.h"
 #endif
+#if defined(HIF_USB)
+#include "regtable_usb.h"
+#endif
 #if  defined(CONFIG_CNSS)
 #include <net/cnss.h>
 #endif
@@ -65,6 +68,33 @@ static inline void ol_sdio_disable_sleep(struct ol_context *ol_ctx)
 }
 
 #endif
+
+/**
+ * ol_usb_extra_initialization() - USB extra initilization
+ * @ol_ctx: pointer to ol_context
+ *
+ * USB specific initialization after firmware download
+ *
+ * Return: QDF_STATUS_SUCCESS on success and error QDF status on failure
+ */
+static QDF_STATUS
+ol_usb_extra_initialization(struct ol_context *ol_ctx)
+{
+	struct hif_opaque_softc *scn = ol_ctx->scn;
+	struct hif_target_info *tgt_info =
+				hif_get_target_info_handle(scn);
+	QDF_STATUS status = !QDF_STATUS_SUCCESS;
+	u_int32_t param = 0;
+
+	param |= HI_ACS_FLAGS_ALT_DATA_CREDIT_SIZE;
+	status = bmi_write_memory(
+				hif_hia_item_address(tgt_info->target_type,
+					offsetof(struct host_interest_s,
+					hi_acs_flags)),
+				(u_int8_t *)&param, 4, ol_ctx);
+
+	return status;
+}
 
 /*Setting SDIO block size, mbox ISR yield limit for SDIO based HIF*/
 static
@@ -144,12 +174,22 @@ exit:
 	return status;
 }
 
+/**
+* ol_extra_initialization() - OL extra initilization
+* @ol_ctx: pointer to ol_context
+*
+* Bus specific initialization after firmware download
+*
+* Return: QDF_STATUS_SUCCESS on success and error QDF status on failure
+*/
 QDF_STATUS ol_extra_initialization(struct ol_context *ol_ctx)
 {
 	struct hif_opaque_softc *scn = ol_ctx->scn;
 
 	if (hif_get_bus_type(scn) == QDF_BUS_TYPE_SDIO)
 		return ol_sdio_extra_initialization(ol_ctx);
+	else if (hif_get_bus_type(scn) == QDF_BUS_TYPE_USB)
+		return ol_usb_extra_initialization(ol_ctx);
 
 	return QDF_STATUS_SUCCESS;
 }

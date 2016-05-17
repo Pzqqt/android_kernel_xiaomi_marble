@@ -42,11 +42,17 @@
 #include "if_sdio.h"
 #include "regtable_sdio.h"
 #endif
+#if defined(HIF_USB)
+#include "if_usb.h"
+#include "regtable_usb.h"
+#endif
 #include "pld_common.h"
+#include "hif_main.h"
 
 #include "i_bmi.h"
 #include "qwlan_version.h"
 #include "cds_concurrency.h"
+#include "dbglog_host.h"
 
 #ifdef FEATURE_SECURE_FIRMWARE
 static struct hash_fw fw_hash;
@@ -603,6 +609,12 @@ void ol_target_failure(void *instance, QDF_STATUS status)
 	}
 
 	hif_set_target_status(scn, TARGET_STATUS_RESET);
+
+	if (hif_get_bus_type(scn) == QDF_BUS_TYPE_USB) {
+		if (status == QDF_STATUS_E_USB_ERROR)
+			hif_ramdump_handler(scn);
+		return;
+	}
 
 	if (cds_is_driver_recovering()) {
 		BMI_ERR("%s: Recovery in progress, ignore!\n", __func__);
@@ -1248,11 +1260,12 @@ QDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 						__func__, address);
 	}
 
-	ret = ol_patch_pll_switch(ol_ctx);
-
-	if (ret != QDF_STATUS_SUCCESS) {
-		BMI_ERR("pll switch failed. status %d", ret);
-		return ret;
+	if (hif_get_bus_type(scn) != QDF_BUS_TYPE_USB) {
+		ret = ol_patch_pll_switch(ol_ctx);
+		if (ret != QDF_STATUS_SUCCESS) {
+			BMI_ERR("pll switch failed. status %d", ret);
+			return ret;
+		}
 	}
 
 	if (ol_ctx->cal_in_flash) {
@@ -1541,7 +1554,8 @@ void ol_dump_target_memory(struct hif_opaque_softc *scn, void *memory_block)
 	u_int32_t address = 0;
 	u_int32_t size = 0;
 
-	if (hif_get_bus_type(scn) == QDF_BUS_TYPE_SDIO)
+	if (hif_get_bus_type(scn) == QDF_BUS_TYPE_SDIO ||
+	    hif_get_bus_type(scn) == QDF_BUS_TYPE_USB)
 		return;
 
 	for (; section_count < 2; section_count++) {
