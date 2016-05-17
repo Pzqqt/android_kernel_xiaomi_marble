@@ -805,6 +805,7 @@ typedef struct multicast_addr_list {
 struct hdd_netif_queue_stats {
 	uint16_t pause_count;
 	uint16_t unpause_count;
+	qdf_time_t total_pause_time;
 };
 
 /**

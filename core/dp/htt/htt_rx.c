@@ -1940,7 +1940,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 	uint8_t *rx_ind_data;
 	uint32_t *msg_word;
 	unsigned int msdu_count = 0;
-	uint8_t offload_ind;
+	uint8_t offload_ind, frag_ind;
 	struct htt_host_rx_desc_base *rx_desc;
 	uint8_t peer_id;
 
@@ -1952,11 +1952,12 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 					*(u_int32_t *)rx_ind_data);
 
 	offload_ind = HTT_RX_IN_ORD_PADDR_IND_OFFLOAD_GET(*msg_word);
+	frag_ind = HTT_RX_IN_ORD_PADDR_IND_FRAG_GET(*msg_word);
 
 	/* Get the total number of MSDUs */
 	msdu_count = HTT_RX_IN_ORD_PADDR_IND_MSDU_CNT_GET(*(msg_word + 1));
 	HTT_RX_CHECK_MSDU_COUNT(msdu_count);
-	ol_rx_update_histogram_stats(msdu_count);
+	ol_rx_update_histogram_stats(msdu_count, frag_ind, offload_ind);
 
 	msg_word =
 		(uint32_t *) (rx_ind_data + HTT_RX_IN_ORD_PADDR_IND_HDR_BYTES);

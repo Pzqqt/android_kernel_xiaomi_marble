@@ -443,13 +443,11 @@ enum flow_pool_status {
  * @pool_map_count: flow pool map received
  * @pool_unmap_count: flow pool unmap received
  * @pkt_drop_no_pool: packets dropped due to unavailablity of pool
- * @pkt_drop_no_desc: packets dropped due to unavailablity of descriptors
  */
 struct ol_txrx_pool_stats {
 	uint16_t pool_map_count;
 	uint16_t pool_unmap_count;
 	uint16_t pkt_drop_no_pool;
-	uint16_t pkt_drop_no_desc;
 };
 
 /**
@@ -466,6 +464,7 @@ struct ol_txrx_pool_stats {
  * @stop_th: stop threshold
  * @start_th: start threshold
  * @freelist: tx descriptor freelist
+ * @pkt_drop_no_desc: drop due to no descriptors
  */
 struct ol_tx_flow_pool_t {
 	TAILQ_ENTRY(ol_tx_flow_pool_t) flow_pool_list_elem;
@@ -480,6 +479,7 @@ struct ol_tx_flow_pool_t {
 	uint16_t stop_th;
 	uint16_t start_th;
 	union ol_tx_desc_list_elem_t *freelist;
+	uint16_t pkt_drop_no_desc;
 };
 
 #endif

@@ -236,8 +236,8 @@ struct ol_tx_desc_t *ol_tx_desc_alloc(struct ol_txrx_pdev_t *pdev,
 			ol_tx_desc_sanity_checks(pdev, tx_desc);
 			ol_tx_desc_compute_delay(tx_desc);
 		} else {
+			pool->pkt_drop_no_desc++;
 			qdf_spin_unlock_bh(&pool->flow_pool_lock);
-			pdev->pool_stats.pkt_drop_no_desc++;
 		}
 	} else {
 		pdev->pool_stats.pkt_drop_no_pool++;

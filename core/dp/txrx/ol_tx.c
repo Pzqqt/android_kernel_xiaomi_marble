@@ -247,6 +247,14 @@ qdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 		}
 
 		segments = msdu_info.tso_info.num_segs;
+		TXRX_STATS_TSO_HISTOGRAM(vdev->pdev, segments);
+		TXRX_STATS_TSO_GSO_SIZE_UPDATE(vdev->pdev,
+					 qdf_nbuf_tcp_tso_size(msdu));
+		TXRX_STATS_TSO_TOTAL_LEN_UPDATE(vdev->pdev,
+					 qdf_nbuf_len(msdu));
+		TXRX_STATS_TSO_NUM_FRAGS_UPDATE(vdev->pdev,
+					 qdf_nbuf_get_nr_frags(msdu));
+
 
 		/*
 		 * The netbuf may get linked into a different list inside the
@@ -274,6 +282,8 @@ qdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 				qdf_nbuf_inc_users(msdu);
 
 			ol_tx_prepare_ll(tx_desc, vdev, msdu, &msdu_info);
+
+			TXRX_STATS_MSDU_INCR(vdev->pdev, tx.from_stack, msdu);
 
 			/*
 			 * If debug display is enabled, show the meta-data being
@@ -327,6 +337,8 @@ qdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 		msdu_info.htt.info.ext_tid = qdf_nbuf_get_tid(msdu);
 		msdu_info.peer = NULL;
 		ol_tx_prepare_ll(tx_desc, vdev, msdu, &msdu_info);
+
+		TXRX_STATS_MSDU_INCR(vdev->pdev, tx.from_stack, msdu);
 
 		/*
 		 * If debug display is enabled, show the meta-data being
@@ -531,6 +543,13 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 		}
 
 		segments = msdu_info.tso_info.num_segs;
+		TXRX_STATS_TSO_HISTOGRAM(vdev->pdev, segments);
+		TXRX_STATS_TSO_GSO_SIZE_UPDATE(vdev->pdev,
+				 qdf_nbuf_tcp_tso_size(msdu));
+		TXRX_STATS_TSO_TOTAL_LEN_UPDATE(vdev->pdev,
+				 qdf_nbuf_len(msdu));
+		TXRX_STATS_TSO_NUM_FRAGS_UPDATE(vdev->pdev,
+				 qdf_nbuf_get_nr_frags(msdu));
 
 		/*
 		 * The netbuf may get linked into a different list
@@ -579,6 +598,8 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 			tx_desc = ol_tx_prepare_ll_fast(pdev, vdev, msdu,
 						  pkt_download_len, ep_id,
 						  &msdu_info);
+
+			TXRX_STATS_MSDU_INCR(pdev, tx.from_stack, msdu);
 
 			if (qdf_likely(tx_desc)) {
 				DPTRACE(qdf_dp_trace_ptr(msdu,
@@ -683,6 +704,8 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 		tx_desc = ol_tx_prepare_ll_fast(pdev, vdev, msdu,
 					  pkt_download_len, ep_id,
 					  &msdu_info);
+
+		TXRX_STATS_MSDU_INCR(pdev, tx.from_stack, msdu);
 
 		if (qdf_likely(tx_desc)) {
 			DPTRACE(qdf_dp_trace_ptr(msdu,

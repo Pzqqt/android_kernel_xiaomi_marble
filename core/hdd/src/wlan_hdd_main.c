@@ -4782,6 +4782,23 @@ void wlan_hdd_deinit_tx_rx_histogram(hdd_context_t *hdd_ctx)
 	}
 }
 
+static uint8_t *convert_level_to_string(uint32_t level)
+{
+	switch (level) {
+	/* initialize the wlan sub system */
+	case WLAN_SVC_TP_NONE:
+		return "NONE";
+	case WLAN_SVC_TP_LOW:
+		return "LOW";
+	case WLAN_SVC_TP_MEDIUM:
+		return "MED";
+	case WLAN_SVC_TP_HIGH:
+		return "HIGH";
+	default:
+		return "INVAL";
+	}
+}
+
 
 /**
  * wlan_hdd_display_tx_rx_histogram() - display tx rx histogram
@@ -4794,32 +4811,42 @@ void wlan_hdd_display_tx_rx_histogram(hdd_context_t *hdd_ctx)
 	int i;
 
 #ifdef MSM_PLATFORM
-	hddLog(QDF_TRACE_LEVEL_ERROR, "BW Interval: %d curr_index %d",
-		hdd_ctx->config->busBandwidthComputeInterval,
-		hdd_ctx->hdd_txrx_hist_idx);
+	hddLog(QDF_TRACE_LEVEL_ERROR, "BW compute Interval: %dms",
+		hdd_ctx->config->busBandwidthComputeInterval);
 	hddLog(QDF_TRACE_LEVEL_ERROR,
 		"BW High TH: %d BW Med TH: %d BW Low TH: %d",
 		hdd_ctx->config->busBandwidthHighThreshold,
 		hdd_ctx->config->busBandwidthMediumThreshold,
 		hdd_ctx->config->busBandwidthLowThreshold);
+	hddLog(QDF_TRACE_LEVEL_ERROR, "Enable TCP DEL ACK: %d",
+		hdd_ctx->config->enable_tcp_delack);
 	hddLog(QDF_TRACE_LEVEL_ERROR, "TCP DEL High TH: %d TCP DEL Low TH: %d",
 		hdd_ctx->config->tcpDelackThresholdHigh,
 		hdd_ctx->config->tcpDelackThresholdLow);
+	hddLog(QDF_TRACE_LEVEL_ERROR,
+		"TCP TX HIGH TP TH: %d (Use to set tcp_output_bytes_limit)",
+		hdd_ctx->config->tcp_tx_high_tput_thres);
 #endif
 
+	hddLog(QDF_TRACE_LEVEL_ERROR, "Total entries: %d Current index: %d",
+		NUM_TX_RX_HISTOGRAM, hdd_ctx->hdd_txrx_hist_idx);
+
 	hddLog(QDF_TRACE_LEVEL_ERROR,
-		"index, total_rx, interval_rx, total_tx, interval_tx, next_vote_level, next_rx_level, next_tx_level");
+		"index, total_rx, interval_rx, total_tx, interval_tx, bus_bw_level, RX TP Level, TX TP Level");
 
 	for (i = 0; i < NUM_TX_RX_HISTOGRAM; i++) {
 		hddLog(QDF_TRACE_LEVEL_ERROR,
-			"%d: %llu, %llu, %llu, %llu, %d, %d, %d",
+			"%d: %llu, %llu, %llu, %llu, %s, %s, %s",
 			i, hdd_ctx->hdd_txrx_hist[i].total_rx,
 			hdd_ctx->hdd_txrx_hist[i].interval_rx,
 			hdd_ctx->hdd_txrx_hist[i].total_tx,
 			hdd_ctx->hdd_txrx_hist[i].interval_tx,
-			hdd_ctx->hdd_txrx_hist[i].next_vote_level,
-			hdd_ctx->hdd_txrx_hist[i].next_rx_level,
-			hdd_ctx->hdd_txrx_hist[i].next_tx_level);
+			convert_level_to_string(
+				hdd_ctx->hdd_txrx_hist[i].next_vote_level),
+			convert_level_to_string(
+				hdd_ctx->hdd_txrx_hist[i].next_rx_level),
+			convert_level_to_string(
+				hdd_ctx->hdd_txrx_hist[i].next_tx_level));
 	}
 	return;
 }
@@ -4850,29 +4877,27 @@ void wlan_hdd_display_netif_queue_history(hdd_context_t *hdd_ctx)
 	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
 	QDF_STATUS status;
 	int i;
-	qdf_time_t total, pause, unpause, curr_time;
+	qdf_time_t total, pause, unpause, curr_time, delta;
 
 	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
 	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
 		adapter = adapter_node->pAdapter;
 
 		hddLog(QDF_TRACE_LEVEL_ERROR,
+			"\nNetif queue operation statistics:");
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 			"Session_id %d device mode %d",
 			adapter->sessionId, adapter->device_mode);
-
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-			"Netif queue operation statistics:");
 		hddLog(QDF_TRACE_LEVEL_ERROR,
 			"Current pause_map value %x", adapter->pause_map);
 		curr_time = qdf_system_ticks();
 		total = curr_time - adapter->start_time;
+		delta = curr_time - adapter->last_time;
 		if (adapter->pause_map) {
-			pause = adapter->total_pause_time +
-				curr_time - adapter->last_time;
+			pause = adapter->total_pause_time + delta;
 			unpause = adapter->total_unpause_time;
 		} else {
-			unpause = adapter->total_unpause_time +
-				  curr_time - adapter->last_time;
+			unpause = adapter->total_unpause_time + delta;
 			pause = adapter->total_pause_time;
 		}
 		hddLog(QDF_TRACE_LEVEL_ERROR,
@@ -4881,19 +4906,30 @@ void wlan_hdd_display_netif_queue_history(hdd_context_t *hdd_ctx)
 			qdf_system_ticks_to_msecs(pause),
 			qdf_system_ticks_to_msecs(unpause));
 		hddLog(QDF_TRACE_LEVEL_ERROR,
-			"reason_type: pause_cnt: unpause_cnt");
+			"reason_type: pause_cnt: unpause_cnt: pause_time");
 
-		for (i = 1; i < WLAN_REASON_TYPE_MAX; i++) {
+		for (i = WLAN_CONTROL_PATH; i < WLAN_REASON_TYPE_MAX; i++) {
+			qdf_time_t pause_delta = 0;
+
+			if (adapter->pause_map & (1 << i))
+				pause_delta = delta;
+
 			hddLog(QDF_TRACE_LEVEL_ERROR,
-				"%s: %d: %d",
+				"%s: %d: %d: %ums",
 				hdd_reason_type_to_string(i),
 				adapter->queue_oper_stats[i].pause_count,
-				adapter->queue_oper_stats[i].unpause_count);
+				adapter->queue_oper_stats[i].unpause_count,
+				qdf_system_ticks_to_msecs(
+				adapter->queue_oper_stats[i].total_pause_time +
+				pause_delta));
 		}
 
 		hddLog(QDF_TRACE_LEVEL_ERROR,
-			"Netif queue operation history: current index %d",
-			adapter->history_index);
+			"\nNetif queue operation history:");
+		hddLog(QDF_TRACE_LEVEL_ERROR,
+			"Total entries: %d current index %d",
+			WLAN_HDD_MAX_HISTORY_ENTRY, adapter->history_index);
+
 		hddLog(QDF_TRACE_LEVEL_ERROR,
 			"index: time: action_type: reason_type: pause_map");
 

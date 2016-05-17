@@ -53,6 +53,9 @@ struct ol_txrx_stats_tso_msdu {
 	struct qdf_tso_seg_t tso_segs[NUM_MAX_TSO_SEGS];
 	uint8_t num_seg;
 	uint8_t tso_seg_idx;
+	uint32_t total_len;
+	uint32_t gso_size;
+	uint8_t nr_frags;
 };
 
 struct ol_txrx_stats_tso_info {
@@ -81,6 +84,15 @@ struct ol_txrx_stats_tx_dropped {
 	struct ol_txrx_stats_elem no_ack;
 };
 
+struct ol_txrx_tso_histogram {
+	uint32_t pkts_1;
+	uint32_t pkts_2_5;
+	uint32_t pkts_6_10;
+	uint32_t pkts_11_15;
+	uint32_t pkts_16_20;
+	uint32_t pkts_20_plus;
+};
+
 struct ol_txrx_stats_tx_histogram {
 	uint32_t pkts_1;
 	uint32_t pkts_2_10;
@@ -95,12 +107,15 @@ struct ol_txrx_stats_tx_tso {
 	struct ol_txrx_stats_elem tso_pkts;
 #if defined(FEATURE_TSO)
 	struct ol_txrx_stats_tso_info tso_info;
+	struct ol_txrx_tso_histogram tso_hist;
 #endif
 };
 
 struct ol_txrx_stats_tx {
 	/* MSDUs given to the txrx layer by the management stack */
 	struct ol_txrx_stats_elem mgmt;
+	/* MSDUs received from the stack */
+	struct ol_txrx_stats_elem from_stack;
 	/* MSDUs successfully sent across the WLAN */
 	struct ol_txrx_stats_elem delivered;
 	struct ol_txrx_stats_tx_dropped dropped;
@@ -139,6 +154,8 @@ struct ol_txrx_stats_rx {
 	struct ol_txrx_stats_elem dropped_peer_invalid;
 	struct ol_txrx_stats_rx_ibss_fwd intra_bss_fwd;
 	struct ol_txrx_stats_rx_histogram rx_ind_histogram;
+	uint32_t msdus_with_frag_ind;
+	uint32_t msdus_with_offload_ind;
 };
 struct ol_txrx_stats {
 	struct ol_txrx_stats_tx tx;

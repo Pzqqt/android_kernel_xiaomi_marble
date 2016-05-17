@@ -689,6 +689,28 @@ NOT_IP_TCP:
 #endif
 
 #if defined(FEATURE_TSO_DEBUG)
+#define TXRX_STATS_TSO_HISTOGRAM(_pdev, _p_cntrs) \
+	do { \
+		if (_p_cntrs == 1) { \
+			TXRX_STATS_ADD(_pdev, pub.tx.tso.tso_hist.pkts_1, 1); \
+		} else if (_p_cntrs > 2 && _p_cntrs <= 5) {                   \
+			TXRX_STATS_ADD(_pdev,                                 \
+				pub.tx.tso.tso_hist.pkts_2_5, 1);             \
+		} else if (_p_cntrs > 5 && _p_cntrs <= 10) {                  \
+			TXRX_STATS_ADD(_pdev,                                 \
+				pub.tx.tso.tso_hist.pkts_6_10, 1);            \
+		} else if (_p_cntrs > 10 && _p_cntrs <= 15) {                 \
+			TXRX_STATS_ADD(_pdev,                                 \
+				pub.tx.tso.tso_hist.pkts_11_15, 1);           \
+		} else if (_p_cntrs > 15 && _p_cntrs <= 20) {                 \
+			TXRX_STATS_ADD(_pdev,                                 \
+				pub.tx.tso.tso_hist.pkts_16_20, 1);           \
+		} else if (_p_cntrs > 20) {                                   \
+			TXRX_STATS_ADD(_pdev,                                 \
+				pub.tx.tso.tso_hist.pkts_20_plus, 1);         \
+		}                                                             \
+	} while (0)
+
 #define TXRX_STATS_TSO_RESET_MSDU(pdev) \
 	do { \
 		int idx = TXRX_STATS_TSO_MSDU_IDX(pdev);\
@@ -705,6 +727,15 @@ NOT_IP_TCP:
 #define TXRX_STATS_TSO_MSDU_NUM_SEG(pdev, idx) \
 	pdev->stats.pub.tx.tso.tso_info.tso_msdu_info[idx].num_seg
 
+#define TXRX_STATS_TSO_MSDU_GSO_SIZE(pdev, idx) \
+	pdev->stats.pub.tx.tso.tso_info.tso_msdu_info[idx].gso_size
+
+#define TXRX_STATS_TSO_MSDU_TOTAL_LEN(pdev, idx) \
+	pdev->stats.pub.tx.tso.tso_info.tso_msdu_info[idx].total_len
+
+#define TXRX_STATS_TSO_MSDU_NR_FRAGS(pdev, idx) \
+	pdev->stats.pub.tx.tso.tso_info.tso_msdu_info[idx].nr_frags
+
 #define TXRX_STATS_TSO_CURR_MSDU(pdev) \
 	TXRX_STATS_TSO_MSDU(pdev, TXRX_STATS_TSO_MSDU_IDX(pdev))
 
@@ -718,7 +749,11 @@ NOT_IP_TCP:
 	TXRX_STATS_TSO_CURR_MSDU(pdev).tso_seg_idx
 
 #define TXRX_STATS_TSO_INC_SEG(pdev) \
-	TXRX_STATS_TSO_CURR_MSDU(pdev).num_seg++
+	do { \
+		TXRX_STATS_TSO_CURR_MSDU(pdev).num_seg++; \
+		TXRX_STATS_TSO_CURR_MSDU(pdev).num_seg &= \
+					 NUM_MAX_TSO_SEGS_MASK; \
+	} while (0)
 
 #define TXRX_STATS_TSO_RST_SEG(pdev) \
 	TXRX_STATS_TSO_CURR_MSDU(pdev).num_seg = 0
@@ -742,7 +777,17 @@ NOT_IP_TCP:
 #define TXRX_STATS_TSO_SEG_UPDATE(pdev, tso_seg) \
 	(TXRX_STATS_TSO_CURR_SEG(pdev) = tso_seg)
 
+#define TXRX_STATS_TSO_GSO_SIZE_UPDATE(pdev, size) \
+	(TXRX_STATS_TSO_CURR_MSDU(pdev).gso_size = size)
+
+#define TXRX_STATS_TSO_TOTAL_LEN_UPDATE(pdev, len) \
+	(TXRX_STATS_TSO_CURR_MSDU(pdev).total_len = len)
+
+#define TXRX_STATS_TSO_NUM_FRAGS_UPDATE(pdev, frags) \
+	(TXRX_STATS_TSO_CURR_MSDU(pdev).nr_frags = frags)
+
 #else
+#define TXRX_STATS_TSO_HISTOGRAM(_pdev, _p_cntrs)  /* no-op */
 #define TXRX_STATS_TSO_RESET_MSDU(pdev) /* no-op */
 #define TXRX_STATS_TSO_MSDU_IDX(pdev) /* no-op */
 #define TXRX_STATS_TSO_MSDU(pdev, idx) /* no-op */
@@ -757,6 +802,12 @@ NOT_IP_TCP:
 #define TXRX_STATS_TSO_INC_SEG(pdev) /* no-op */
 #define TXRX_STATS_TSO_RST_SEG(pdev) /* no-op */
 #define TXRX_STATS_TSO_RST_SEG_IDX(pdev) /* no-op */
+#define TXRX_STATS_TSO_GSO_SIZE_UPDATE(pdev, size) /* no-op */
+#define TXRX_STATS_TSO_TOTAL_LEN_UPDATE(pdev, len) /* no-op */
+#define TXRX_STATS_TSO_NUM_FRAGS_UPDATE(pdev, frags) /* no-op */
+#define TXRX_STATS_TSO_MSDU_GSO_SIZE(pdev, idx) /* no-op */
+#define TXRX_STATS_TSO_MSDU_TOTAL_LEN(pdev, idx) /* no-op */
+#define TXRX_STATS_TSO_MSDU_NR_FRAGS(pdev, idx) /* no-op */
 
 #endif /* FEATURE_TSO_DEBUG */
 

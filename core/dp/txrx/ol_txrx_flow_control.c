@@ -156,22 +156,18 @@ void ol_tx_dump_flow_pool_info(void)
 	struct ol_tx_flow_pool_t tmp_pool;
 
 
-	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Global Pool\n");
-	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Total %d :: Available %d\n",
+	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Global Pool");
+	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Total %d :: Available %d",
 		pdev->tx_desc.pool_size, pdev->tx_desc.num_free);
-	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Invalid flow_pool %d\n",
+	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Invalid flow_pool %d",
 		pdev->tx_desc.num_invalid_bin);
-
-	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "No of pool map received %d\n",
+	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "No of pool map received %d",
 		pdev->pool_stats.pool_map_count);
-	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "No of pool unmap received %d\n",
+	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "No of pool unmap received %d",
 		pdev->pool_stats.pool_unmap_count);
 	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-		"Pkt dropped due to unavailablity of pool %d\n",
+		"Pkt dropped due to unavailablity of pool %d",
 		pdev->pool_stats.pkt_drop_no_pool);
-	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-		"Pkt dropped due to unavailablity of descriptors %d\n",
-		pdev->pool_stats.pkt_drop_no_desc);
 
 	/*
 	 * Nested spin lock.
@@ -185,19 +181,23 @@ void ol_tx_dump_flow_pool_info(void)
 		qdf_mem_copy(&tmp_pool, pool, sizeof(tmp_pool));
 		qdf_spin_unlock_bh(&pool->flow_pool_lock);
 		qdf_spin_unlock_bh(&pdev->tx_desc.flow_pool_list_lock);
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "\n");
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-			"Flow_pool_id %d :: status %d\n",
+			"Flow_pool_id %d :: status %d",
 			tmp_pool.flow_pool_id, tmp_pool.status);
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-			"Total %d :: Available %d :: Deficient %d\n",
+			"Total %d :: Available %d :: Deficient %d",
 			tmp_pool.flow_pool_size, tmp_pool.avail_desc,
 			tmp_pool.deficient_desc);
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-			"Start_TH %d :: Stop_TH %d\n",
+			"Start threshold %d :: Stop threshold %d",
 			 tmp_pool.start_th, tmp_pool.stop_th);
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-			"Member flow_id  %d :: flow_type %d\n",
+			"Member flow_id  %d :: flow_type %d",
 			tmp_pool.member_flow_id, tmp_pool.flow_type);
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			"Pkt dropped due to unavailablity of descriptors %d",
+			tmp_pool.pkt_drop_no_desc);
 		qdf_spin_lock_bh(&pdev->tx_desc.flow_pool_list_lock);
 	}
 	qdf_spin_unlock_bh(&pdev->tx_desc.flow_pool_list_lock);

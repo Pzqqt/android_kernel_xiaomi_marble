@@ -104,10 +104,13 @@ void ol_rx_trigger_restore(htt_pdev_handle htt_pdev, qdf_nbuf_t head_msdu,
 /**
  * ol_rx_update_histogram_stats() - update rx histogram statistics
  * @msdu_count: msdu count
+ * @frag_ind: fragment indication set
+ * @offload_ind: offload indication set
  *
  * Return: none
  */
-void ol_rx_update_histogram_stats(uint32_t msdu_count)
+void ol_rx_update_histogram_stats(uint32_t msdu_count, uint8_t frag_ind,
+		 uint8_t offload_ind)
 {
 	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
@@ -134,6 +137,13 @@ void ol_rx_update_histogram_stats(uint32_t msdu_count)
 	} else if (msdu_count == 1) {
 		TXRX_STATS_ADD(pdev, pub.rx.rx_ind_histogram.pkts_1, 1);
 	}
+
+	if (frag_ind)
+		TXRX_STATS_ADD(pdev, pub.rx.msdus_with_frag_ind, msdu_count);
+
+	if (offload_ind)
+		TXRX_STATS_ADD(pdev, pub.rx.msdus_with_offload_ind, msdu_count);
+
 }
 
 static void ol_rx_process_inv_peer(ol_txrx_pdev_handle pdev,
