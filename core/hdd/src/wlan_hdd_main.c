@@ -6980,7 +6980,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 			&hdd_ctx->target_hw_name);
 
 	/* Get the wlan hw/fw version */
-	hdd_wlan_get_version(adapter, NULL, NULL);
+	hdd_wlan_get_version(hdd_ctx, NULL, NULL);
 
 	ret = hdd_update_country_code(hdd_ctx, adapter);
 

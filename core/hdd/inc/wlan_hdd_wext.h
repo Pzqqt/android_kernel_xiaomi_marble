@@ -295,7 +295,7 @@ extern int hdd_wlan_get_rts_threshold(hdd_adapter_t *pAdapter,
 				      union iwreq_data *wrqu);
 extern int hdd_wlan_get_frag_threshold(hdd_adapter_t *pAdapter,
 				       union iwreq_data *wrqu);
-extern void hdd_wlan_get_version(hdd_adapter_t *pAdapter,
+extern void hdd_wlan_get_version(hdd_context_t *hdd_ctx,
 				 union iwreq_data *wrqu, char *extra);
 
 extern void hdd_wlan_get_stats(hdd_adapter_t *pAdapter, uint16_t *length,

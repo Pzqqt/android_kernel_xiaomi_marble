@@ -718,7 +718,7 @@ void hdd_wlan_dump_stats(hdd_adapter_t *adapter, int value)
 
 /**
  * hdd_wlan_get_version() - Get driver version information
- * @pAdapter: Pointer to the adapter.
+ * @hdd_ctx: Global HDD context
  * @wrqu: Pointer to IOCTL REQUEST Data.
  * @extra: Pointer to destination buffer
  *
@@ -729,43 +729,40 @@ void hdd_wlan_dump_stats(hdd_adapter_t *adapter, int value)
  *
  * Return: none
  */
-void hdd_wlan_get_version(hdd_adapter_t *pAdapter, union iwreq_data *wrqu,
+void hdd_wlan_get_version(hdd_context_t *hdd_ctx, union iwreq_data *wrqu,
 			  char *extra)
 {
-	tSirVersionString wcnss_SW_version;
-	const char *pSWversion;
-	const char *pHWversion;
-	uint32_t MSPId = 0, mSPId = 0, SIId = 0, CRMId = 0;
+	tSirVersionString wcnss_sw_version;
+	const char *swversion;
+	const char *hwversion;
+	uint32_t msp_id = 0, mspid = 0, siid = 0, crmid = 0;
 
-	hdd_context_t *pHddContext;
-
-	pHddContext = WLAN_HDD_GET_CTX(pAdapter);
-	if (!pHddContext) {
+	if (!hdd_ctx) {
 		hdd_err("Invalid context, HDD context is null");
 		goto error;
 	}
 
-	snprintf(wcnss_SW_version, sizeof(tSirVersionString), "%08x",
-		 pHddContext->target_fw_version);
+	snprintf(wcnss_sw_version, sizeof(wcnss_sw_version), "%08x",
+		 hdd_ctx->target_fw_version);
 
-	pSWversion = wcnss_SW_version;
-	MSPId = (pHddContext->target_fw_version & 0xf0000000) >> 28;
-	mSPId = (pHddContext->target_fw_version & 0xf000000) >> 24;
-	SIId = (pHddContext->target_fw_version & 0xf00000) >> 20;
-	CRMId = pHddContext->target_fw_version & 0x7fff;
+	swversion = wcnss_sw_version;
+	msp_id = (hdd_ctx->target_fw_version & 0xf0000000) >> 28;
+	mspid = (hdd_ctx->target_fw_version & 0xf000000) >> 24;
+	siid = (hdd_ctx->target_fw_version & 0xf00000) >> 20;
+	crmid = hdd_ctx->target_fw_version & 0x7fff;
 
-	pHWversion = pHddContext->target_hw_name;
+	hwversion = hdd_ctx->target_hw_name;
 
 	if (wrqu && extra) {
 		wrqu->data.length =
 			scnprintf(extra, WE_MAX_STR_LEN,
 				  "Host SW:%s, FW:%d.%d.%d.%d, HW:%s",
 				  QWLAN_VERSIONSTR,
-				  MSPId, mSPId, SIId, CRMId, pHWversion);
+				  msp_id, mspid, siid, crmid, hwversion);
 	} else {
 		pr_info("Host SW:%s, FW:%d.%d.%d.%d, HW:%s\n",
 			QWLAN_VERSIONSTR,
-			MSPId, mSPId, SIId, CRMId, pHWversion);
+			msp_id, mspid, siid, crmid, hwversion);
 	}
 error:
 	return;
@@ -7005,7 +7002,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 	switch (sub_cmd) {
 	case WE_WLAN_VERSION:
 	{
-		hdd_wlan_get_version(pAdapter, wrqu, extra);
+		hdd_wlan_get_version(hdd_ctx, wrqu, extra);
 		break;
 	}
 

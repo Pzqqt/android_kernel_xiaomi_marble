@@ -1557,9 +1557,7 @@ QDF_STATUS hdd_wlan_re_init(void *hif_sc)
 	if (hdd_ipa_uc_ssr_reinit())
 		hdd_err("HDD IPA UC reinit failed");
 
-	/* Get WLAN Host/FW/HW version */
-	if (pAdapter)
-		hdd_wlan_get_version(pAdapter, NULL, NULL);
+	hdd_wlan_get_version(pHddCtx, NULL, NULL);
 
 	/* Restart all adapters */
 	hdd_start_all_adapters(pHddCtx);

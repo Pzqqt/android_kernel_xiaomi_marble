@@ -5145,7 +5145,7 @@ __iw_softap_version(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
-	hdd_wlan_get_version(pHostapdAdapter, wrqu, extra);
+	hdd_wlan_get_version(hdd_ctx, wrqu, extra);
 	EXIT();
 	return 0;
 }
