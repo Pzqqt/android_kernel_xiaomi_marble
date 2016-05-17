@@ -116,6 +116,11 @@ dbglog_set_mod_enable_bitmap(wmi_unified_t wmi_handle,
 			     A_UINT32 *mod_enable_bitmap,
 			     A_UINT32 bitmap_len);
 
+int
+dbglog_parse_debug_logs(ol_scn_t scn, u_int8_t *datap,
+					u_int32_t len);
+
+
 /** Register the cnss_diag activate with the wlan driver */
 int cnss_diag_activate_service(void);
 

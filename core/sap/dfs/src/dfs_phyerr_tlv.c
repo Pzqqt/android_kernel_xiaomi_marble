@@ -839,6 +839,7 @@ dfs_process_phyerr_bb_tlv(struct ath_dfs *dfs, void *buf, uint16_t datalen,
 	/*
 	 * Try parsing the TLV set.
 	 */
+	qdf_mem_zero(&rsfr, sizeof(rsfr));
 	if (!tlv_parse_frame(dfs, &rs, &rsfr, buf, datalen, rssi)) {
 		invalid_phyerr_count++;
 		/*
