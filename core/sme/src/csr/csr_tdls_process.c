@@ -815,6 +815,18 @@ QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 				0, eCSR_ROAM_TDLS_STATUS_UPDATE,
 				eCSR_ROAM_RESULT_TDLS_SHOULD_PEER_DISCONNECTED);
 		break;
+	case eWNI_SME_TDLS_CONNECTION_TRACKER_NOTIFICATION:
+		qdf_copy_macaddr(&roamInfo.peerMac, &tevent->peermac);
+		roamInfo.reasonCode = tevent->peer_reason;
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			  "%s: eWNI_SME_TDLS_CONNECTION_TRACKER_NOTIFICATION for peer mac: "
+			  MAC_ADDRESS_STR " peer_reason: %d",
+			  __func__, MAC_ADDR_ARRAY(tevent->peermac.bytes),
+			  tevent->peer_reason);
+		csr_roam_call_callback(pMac, tevent->sessionId, &roamInfo,
+				0, eCSR_ROAM_TDLS_STATUS_UPDATE,
+				eCSR_ROAM_RESULT_TDLS_CONNECTION_TRACKER_NOTIFICATION);
+		break;
 	default:
 		break;
 	}

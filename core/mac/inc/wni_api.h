@@ -160,6 +160,7 @@ enum eWniMsgTypes {
 	eWNI_SME_TDLS_SHOULD_DISCOVER,
 	eWNI_SME_TDLS_SHOULD_TEARDOWN,
 	eWNI_SME_TDLS_PEER_DISCONNECTED,
+	eWNI_SME_TDLS_CONNECTION_TRACKER_NOTIFICATION,
 #endif
 	/* NOTE: If you are planning to add more mesages, please make sure that */
 	/* SIR_LIM_ITC_MSG_TYPES_BEGIN is moved appropriately. It is set as */
@@ -263,6 +264,20 @@ typedef enum {
 	eWNI_TDLS_TEARDOWN_REASON_BAD_PTR,
 	eWNI_TDLS_TEARDOWN_REASON_NO_RESPONSE,
 } eWniTdlsTeardownReason;
+
+/**
+ * enum ewni_tdls_connection_tracker_notification - connection tracker events
+ * @eWNI_TDLS_PEER_ENTER_BUF_STA: TDLS peer enters buff sta
+ * @eWNI_TDLS_PEER_EXIT_BUF_STA: TDLS peer exit buff sta
+ * @eWNI_TDLS_ENTER_BT_BUSY_MODE: Enter BT busy event
+ * @eWNI_TDLS_EXIT_BT_BUSY_MODE: Exit BT busy event
+ */
+enum ewni_tdls_connection_tracker_notification {
+	eWNI_TDLS_PEER_ENTER_BUF_STA,
+	eWNI_TDLS_PEER_EXIT_BUF_STA,
+	eWNI_TDLS_ENTER_BT_BUSY_MODE,
+	eWNI_TDLS_EXIT_BT_BUSY_MODE,
+};
 
 #define WNI_CFG_MSG_TYPES_BEGIN        0x1200
 

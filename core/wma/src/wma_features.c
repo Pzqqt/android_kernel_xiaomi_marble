@@ -6275,6 +6275,10 @@ int wma_tdls_event_handler(void *handle, uint8_t *event, uint32_t len)
 	case WMI_TDLS_PEER_DISCONNECTED:
 		tdls_event->messageType = WMA_TDLS_PEER_DISCONNECTED_CMD;
 		break;
+	case WMI_TDLS_CONNECTION_TRACKER_NOTIFICATION:
+		tdls_event->messageType =
+			WMA_TDLS_CONNECTION_TRACKER_NOTIFICATION_CMD;
+		break;
 	default:
 		WMA_LOGE("%s: Discarding unknown tdls event(%d) from target",
 			 __func__, peer_event->peer_status);
@@ -6303,6 +6307,18 @@ int wma_tdls_event_handler(void *handle, uint8_t *event, uint32_t len)
 		break;
 	case WMI_TDLS_TEARDOWN_REASON_NO_RESPONSE:
 		tdls_event->peer_reason = eWNI_TDLS_TEARDOWN_REASON_NO_RESPONSE;
+		break;
+	case WMI_TDLS_ENTER_BUF_STA:
+		tdls_event->peer_reason = eWNI_TDLS_PEER_ENTER_BUF_STA;
+		break;
+	case WMI_TDLS_EXIT_BUF_STA:
+		tdls_event->peer_reason = eWNI_TDLS_PEER_EXIT_BUF_STA;
+		break;
+	case WMI_TDLS_ENTER_BT_BUSY_MODE:
+		tdls_event->peer_reason = eWNI_TDLS_ENTER_BT_BUSY_MODE;
+		break;
+	case WMI_TDLS_EXIT_BT_BUSY_MODE:
+		tdls_event->peer_reason = eWNI_TDLS_EXIT_BT_BUSY_MODE;
 		break;
 	default:
 		WMA_LOGE("%s: unknown reason(%d) in tdls event(%d) from target",
@@ -6392,9 +6408,9 @@ QDF_STATUS wma_update_fw_tdls_state(WMA_HANDLE handle, void *pwmaTdlsparams)
 	if (WMA_TDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY == tdls_mode) {
 		tdls_state = WMI_TDLS_ENABLE_PASSIVE;
 	} else if (WMA_TDLS_SUPPORT_ENABLED == tdls_mode) {
-		tdls_state = WMI_TDLS_ENABLE_ACTIVE;
+		tdls_state = WMI_TDLS_ENABLE_CONNECTION_TRACKER_IN_HOST;
 	} else if (WMA_TDLS_SUPPORT_ACTIVE_EXTERNAL_CONTROL == tdls_mode) {
-		tdls_state = WMI_TDLS_ENABLE_ACTIVE_EXTERNAL_CONTROL;
+		tdls_state = WMI_TDLS_ENABLE_CONNECTION_TRACKER_IN_HOST;
 	} else {
 		tdls_state = WMI_TDLS_DISABLE;
 	}

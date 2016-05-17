@@ -2983,6 +2983,64 @@ static QDF_STATUS hdd_roam_deregister_tdlssta(hdd_adapter_t *pAdapter,
 }
 
 /**
+ * hdd_tdls_connection_tracker_update() - update connection tracker state
+ * @adapter: pointer to adapter
+ * @roam_info: pointer to roam info
+ * @hdd_tdls_ctx: tdls context
+ *
+ * Return: QDF_STATUS enumeration
+ */
+static QDF_STATUS hdd_tdls_connection_tracker_update(hdd_adapter_t *adapter,
+						     tCsrRoamInfo *roam_info,
+						     tdlsCtx_t *hdd_tdls_ctx)
+{
+	hddTdlsPeer_t *curr_peer;
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	curr_peer = wlan_hdd_tdls_find_peer(adapter,
+					    roam_info->peerMac.bytes, true);
+
+	if (!curr_peer) {
+		hdd_err("curr_peer is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mutex_lock(&hdd_ctx->tdls_lock);
+
+	if (eTDLS_LINK_CONNECTED ==
+	    curr_peer->link_status) {
+		hdd_err("Received CONNECTION_TRACKER_NOTIFICATION "
+			MAC_ADDRESS_STR
+			" staId: %d, reason: %d",
+			MAC_ADDR_ARRAY(roam_info->peerMac.bytes),
+			roam_info->staId,
+			roam_info->reasonCode);
+
+		if (roam_info->reasonCode ==
+		    eWNI_TDLS_PEER_ENTER_BUF_STA ||
+		    roam_info->reasonCode ==
+		    eWNI_TDLS_ENTER_BT_BUSY_MODE)
+			hdd_ctx->enable_tdls_connection_tracker = true;
+		else if (roam_info->reasonCode ==
+			  eWNI_TDLS_PEER_EXIT_BUF_STA ||
+			  roam_info->reasonCode ==
+			  eWNI_TDLS_EXIT_BT_BUSY_MODE)
+			hdd_ctx->enable_tdls_connection_tracker = false;
+
+	} else {
+		hdd_err("TDLS not connected, ignore notification, reason: %d",
+			roam_info->reasonCode);
+	}
+
+	mutex_unlock(&hdd_ctx->tdls_lock);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+
+
+
+/**
  * hdd_roam_tdls_status_update_handler() - TDLS status update handler
  * @pAdapter: pointer to adapter
  * @pRoamInfo: pointer to roam info
@@ -3454,6 +3512,13 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 		}
 		break;
 	}
+
+	case eCSR_ROAM_RESULT_TDLS_CONNECTION_TRACKER_NOTIFICATION:
+		status = hdd_tdls_connection_tracker_update(pAdapter,
+							    pRoamInfo,
+							    pHddTdlsCtx);
+		break;
+
 	default:
 	{
 		break;
