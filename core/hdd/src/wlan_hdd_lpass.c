@@ -40,7 +40,7 @@
 
 static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 					 hdd_adapter_t *adapter,
-					 hdd_station_ctx_t *pHddStaCtx,
+					 hdd_station_ctx_t *sta_ctx,
 					 uint8_t is_on, uint8_t is_connected)
 {
 	hdd_context_t *hdd_ctx = NULL;
@@ -73,21 +73,20 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 	data->is_on = is_on;
 	data->vdev_id = adapter->sessionId;
 	data->vdev_mode = adapter->device_mode;
-	if (pHddStaCtx) {
+	if (sta_ctx) {
 		data->is_connected = is_connected;
 		data->rssi = adapter->rssi;
 		data->freq =
-			cds_chan_to_freq(pHddStaCtx->conn_info.operationChannel);
+			cds_chan_to_freq(sta_ctx->conn_info.operationChannel);
 		if (WLAN_SVC_MAX_SSID_LEN >=
-		    pHddStaCtx->conn_info.SSID.SSID.length) {
-			data->ssid_len = pHddStaCtx->conn_info.SSID.SSID.length;
+		    sta_ctx->conn_info.SSID.SSID.length) {
+			data->ssid_len = sta_ctx->conn_info.SSID.SSID.length;
 			memcpy(data->ssid,
-			       pHddStaCtx->conn_info.SSID.SSID.ssId,
-			       pHddStaCtx->conn_info.SSID.SSID.length);
+			       sta_ctx->conn_info.SSID.SSID.ssId,
+			       sta_ctx->conn_info.SSID.SSID.length);
 		}
-		if (QDF_MAC_ADDR_SIZE >=
-		    sizeof(pHddStaCtx->conn_info.bssId))
-			memcpy(data->bssid, pHddStaCtx->conn_info.bssId.bytes,
+		if (QDF_MAC_ADDR_SIZE >= sizeof(sta_ctx->conn_info.bssId))
+			memcpy(data->bssid, sta_ctx->conn_info.bssId.bytes,
 			       QDF_MAC_ADDR_SIZE);
 	}
 	return 0;
@@ -118,7 +117,7 @@ static int wlan_hdd_gen_wlan_version_pack(struct wlan_version_data *data,
 }
 
 void wlan_hdd_send_status_pkg(hdd_adapter_t *adapter,
-			      hdd_station_ctx_t *pHddStaCtx,
+			      hdd_station_ctx_t *sta_ctx,
 			      uint8_t is_on, uint8_t is_connected)
 {
 	int ret = 0;
@@ -129,12 +128,11 @@ void wlan_hdd_send_status_pkg(hdd_adapter_t *adapter,
 
 	memset(&data, 0, sizeof(struct wlan_status_data));
 	if (is_on)
-		ret = wlan_hdd_gen_wlan_status_pack(&data, adapter, pHddStaCtx,
+		ret = wlan_hdd_gen_wlan_status_pack(&data, adapter, sta_ctx,
 						    is_on, is_connected);
 	if (!ret)
 		wlan_hdd_send_svc_nlink_msg(WLAN_SVC_WLAN_STATUS_IND,
-					    &data,
-					    sizeof(struct wlan_status_data));
+					    &data, sizeof(data));
 }
 
 void wlan_hdd_send_version_pkg(uint32_t fw_version,
@@ -147,19 +145,17 @@ void wlan_hdd_send_version_pkg(uint32_t fw_version,
 		return;
 
 	memset(&data, 0, sizeof(struct wlan_version_data));
-	ret =
-		wlan_hdd_gen_wlan_version_pack(&data, fw_version, chip_id,
-					       chip_name);
+	ret = wlan_hdd_gen_wlan_version_pack(&data, fw_version, chip_id,
+					     chip_name);
 	if (!ret)
 		wlan_hdd_send_svc_nlink_msg(WLAN_SVC_WLAN_VERSION_IND,
-					    &data,
-					    sizeof(struct wlan_version_data));
+					    &data, sizeof(data));
 }
 
 void wlan_hdd_send_all_scan_intf_info(hdd_context_t *hdd_ctx)
 {
-	hdd_adapter_t *pDataAdapter = NULL;
-	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
+	hdd_adapter_t *adapter = NULL;
+	hdd_adapter_list_node_t *node = NULL, *next = NULL;
 	bool scan_intf_found = false;
 	QDF_STATUS status;
 
@@ -169,23 +165,22 @@ void wlan_hdd_send_all_scan_intf_info(hdd_context_t *hdd_ctx)
 		return;
 	}
 
-	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
-	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-		pDataAdapter = adapterNode->pAdapter;
-		if (pDataAdapter) {
-			if (pDataAdapter->device_mode == QDF_STA_MODE
-			    || pDataAdapter->device_mode == QDF_P2P_CLIENT_MODE
-			    || pDataAdapter->device_mode ==
+	status = hdd_get_front_adapter(hdd_ctx, &node);
+	while (NULL != node && QDF_STATUS_SUCCESS == status) {
+		adapter = node->pAdapter;
+		if (adapter) {
+			if (adapter->device_mode == QDF_STA_MODE
+			    || adapter->device_mode == QDF_P2P_CLIENT_MODE
+			    || adapter->device_mode ==
 			    QDF_P2P_DEVICE_MODE) {
 				scan_intf_found = true;
-				wlan_hdd_send_status_pkg(pDataAdapter, NULL, 1,
-							 0);
+				wlan_hdd_send_status_pkg(adapter, NULL, 1, 0);
 			}
 		}
-		status = hdd_get_next_adapter(hdd_ctx, adapterNode, &pNext);
-		adapterNode = pNext;
+		status = hdd_get_next_adapter(hdd_ctx, node, &next);
+		node = next;
 	}
 
 	if (!scan_intf_found)
-		wlan_hdd_send_status_pkg(pDataAdapter, NULL, 1, 0);
+		wlan_hdd_send_status_pkg(adapter, NULL, 1, 0);
 }
