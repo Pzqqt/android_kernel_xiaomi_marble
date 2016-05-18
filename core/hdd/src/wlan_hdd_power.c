@@ -65,6 +65,7 @@
 #include <wlan_hdd_cfg80211.h>
 #include <net/addrconf.h>
 #include <wlan_hdd_ipa.h>
+#include <wlan_hdd_lpass.h>
 
 #include <wma_types.h>
 #include "hif.h"
@@ -1326,9 +1327,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	hddLog(QDF_TRACE_LEVEL_FATAL, "%s: WLAN driver shutting down!",
 	       __func__);
 
-#ifdef WLAN_FEATURE_LPSS
 	wlan_hdd_send_status_pkg(NULL, NULL, 0, 0);
-#endif
 
 	/* If SSR never completes, then do kernel panic. */
 	hdd_ssr_timer_init();
@@ -1660,12 +1659,10 @@ QDF_STATUS hdd_wlan_re_init(void *hif_sc)
 
 	sme_set_rssi_threshold_breached_cb(pHddCtx->hHal, hdd_rssi_threshold_breached);
 
-#ifdef WLAN_FEATURE_LPSS
 	wlan_hdd_send_all_scan_intf_info(pHddCtx);
 	wlan_hdd_send_version_pkg(pHddCtx->target_fw_version,
 				  pHddCtx->target_hw_version,
 				  pHddCtx->target_hw_name);
-#endif
 	qdf_status = wlansap_global_init();
 	if (QDF_IS_STATUS_ERROR(qdf_status))
 		goto err_cds_disable;

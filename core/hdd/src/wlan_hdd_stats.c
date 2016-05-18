@@ -30,6 +30,7 @@
 #include "sme_api.h"
 #include "cds_sched.h"
 #include "wlan_hdd_trace.h"
+#include "wlan_hdd_lpass.h"
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 

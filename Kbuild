@@ -349,6 +349,10 @@ HDD_OBJS := 	$(HDD_SRC_DIR)/wlan_hdd_assoc.o \
 		$(HDD_SRC_DIR)/wlan_hdd_wowl.o
 
 
+ifeq ($(CONFIG_WLAN_FEATURE_LPSS),y)
+HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_lpass.o
+endif
+
 ifeq ($(CONFIG_WLAN_LRO), y)
 HDD_OBJS +=     $(HDD_SRC_DIR)/wlan_hdd_lro.o
 endif

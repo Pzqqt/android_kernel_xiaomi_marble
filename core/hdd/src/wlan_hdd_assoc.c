@@ -50,6 +50,7 @@
 #include "sme_api.h"
 #include "wlan_hdd_hostapd.h"
 #include <wlan_hdd_ipa.h>
+#include "wlan_hdd_lpass.h"
 #include <cds_sched.h>
 #include "cds_concurrency.h"
 #include "sme_power_save_api.h"

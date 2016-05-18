@@ -88,7 +88,7 @@
 
 #include "wlan_hdd_subnet_detect.h"
 #include <wlan_hdd_regulatory.h>
-
+#include "wlan_hdd_lpass.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -7056,9 +7056,7 @@ done:
 	/* Set bitmask based on updated value */
 	cds_set_concurrency_mode(pAdapter->device_mode);
 
-#ifdef WLAN_FEATURE_LPSS
 	wlan_hdd_send_all_scan_intf_info(pHddCtx);
-#endif
 
 	EXIT();
 	return 0;
