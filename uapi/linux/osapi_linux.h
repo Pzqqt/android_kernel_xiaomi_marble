@@ -240,12 +240,18 @@ void a_netbuf_queue_init(A_NETBUF_QUEUE_T *q);
 #ifndef inline
 #define inline                  __inline__
 #endif
+#ifndef INLINE
+#define INLINE                  __inline__
+#endif
 #else                           /* Not GCC */
 #define __ATTRIB_PACK
 #define __ATTRIB_PRINTF
 #define __ATTRIB_NORETURN
 #ifndef inline
 #define inline                  __inline
+#endif
+#ifndef INLINE
+#define INLINE                  __inline
 #endif
 #endif /* End __GNUC__ */
 
