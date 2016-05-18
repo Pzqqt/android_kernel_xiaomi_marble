@@ -34,10 +34,10 @@
 #include <linux/slab.h>
 #include <linux/pm.h>
 
-#ifdef CONFIG_CNSS
+#if defined(CONFIG_PLD_PCIE_CNSS) || defined(CONFIG_PLD_SDIO_CNSS)
 #include <net/cnss.h>
 #endif
-#ifdef CONFIG_ICNSS
+#ifdef CONFIG_PLD_SNOC_ICNSS
 #include <soc/qcom/icnss.h>
 #endif
 

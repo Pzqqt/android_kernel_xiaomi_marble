@@ -51,7 +51,7 @@ void pld_pcie_unregister_driver(void);
 int pld_pcie_get_ce_id(int irq);
 #endif
 
-#if (!defined(CONFIG_CNSS)) || (!defined(QCA_WIFI_3_0_ADRASTEA))
+#if (!defined(CONFIG_PLD_PCIE_CNSS)) || (!defined(QCA_WIFI_3_0_ADRASTEA))
 static inline int pld_pcie_wlan_enable(struct pld_wlan_enable_cfg *config,
 		    enum pld_driver_mode mode, const char *host_version)
 {
@@ -76,7 +76,7 @@ int pld_pcie_wlan_disable(enum pld_driver_mode mode);
 int pld_pcie_set_fw_debug_mode(bool enablefwlog);
 #endif
 
-#if (!defined(CONFIG_CNSS)) || (!defined(CONFIG_CNSS_SECURE_FW))
+#if (!defined(CONFIG_PLD_PCIE_CNSS)) || (!defined(CONFIG_CNSS_SECURE_FW))
 static inline int cnss_get_sha_hash(const u8 *data,
 				    u32 data_len, u8 *hash_idx, u8 *out)
 {
@@ -88,15 +88,14 @@ static inline void *cnss_get_fw_ptr(void)
 }
 #endif
 
-#if (!defined(CONFIG_CNSS)) || (!defined(CONFIG_PCI_MSM))
+#if (!defined(CONFIG_PLD_PCIE_CNSS)) || (!defined(CONFIG_PCI_MSM))
 static inline int cnss_wlan_pm_control(bool vote)
 {
 	return 0;
 }
 #endif
 
-#ifndef CONFIG_CNSS
-
+#ifndef CONFIG_PLD_PCIE_CNSS
 static inline int
 pld_pcie_get_fw_files_for_target(struct pld_fw_files *pfw_files,
 				 u32 target_type, u32 target_version)

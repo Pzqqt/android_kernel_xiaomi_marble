@@ -30,7 +30,7 @@
 
 #include "pld_common.h"
 
-#ifndef CONFIG_ICNSS
+#ifndef CONFIG_PLD_SNOC_ICNSS
 static inline int pld_snoc_register_driver(void)
 {
 	return 0;

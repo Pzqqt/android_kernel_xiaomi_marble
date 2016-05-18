@@ -31,7 +31,7 @@
 #include <linux/list.h>
 #include <linux/slab.h>
 
-#ifdef CONFIG_CNSS
+#ifdef CONFIG_PLD_PCIE_CNSS
 #include <net/cnss.h>
 #endif
 
@@ -121,7 +121,7 @@ static void pld_pcie_remove(struct pci_dev *pdev)
 	spin_unlock_irqrestore(&pld_context->pld_lock, flags);
 }
 
-#ifdef CONFIG_CNSS
+#ifdef CONFIG_PLD_PCIE_CNSS
 /**
  * pld_pcie_reinit() - SSR re-initialize function for PCIE device
  * @pdev: PCIE device
@@ -289,7 +289,7 @@ static struct pci_device_id pld_pcie_id_table[] = {
 	{ 0 }
 };
 
-#ifdef CONFIG_CNSS
+#ifdef CONFIG_PLD_PCIE_CNSS
 #ifdef FEATURE_RUNTIME_PM
 struct cnss_wlan_runtime_ops runtime_pm_ops = {
 	.runtime_suspend = pld_pcie_runtime_suspend,
@@ -372,7 +372,7 @@ int pld_pcie_get_ce_id(int irq)
 	return -EINVAL;
 }
 
-#ifdef CONFIG_CNSS
+#ifdef CONFIG_PLD_PCIE_CNSS
 #ifdef QCA_WIFI_3_0_ADRASTEA
 /**
  * pld_pcie_wlan_enable() - Enable WLAN

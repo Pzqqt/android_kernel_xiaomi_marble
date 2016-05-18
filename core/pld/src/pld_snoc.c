@@ -30,14 +30,14 @@
 #include <linux/list.h>
 #include <linux/slab.h>
 
-#ifdef CONFIG_ICNSS
+#ifdef CONFIG_PLD_SNOC_ICNSS
 #include <soc/qcom/icnss.h>
 #endif
 
 #include "pld_common.h"
 #include "pld_internal.h"
 
-#ifdef CONFIG_ICNSS
+#ifdef CONFIG_PLD_SNOC_ICNSS
 /**
  * pld_snoc_probe() - Probe function for platform driver
  * @dev: device
