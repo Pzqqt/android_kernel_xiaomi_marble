@@ -38,6 +38,19 @@
 #include <cds_utils.h>
 #include "qwlan_version.h"
 
+/**
+ * wlan_hdd_gen_wlan_status_pack() - Create lpass adapter status package
+ * @data: Status data record to be created
+ * @adapter: Adapter whose status is to being packaged
+ * @sta_ctx: Station-specific context of @adapter
+ * @is_on: Is wlan driver loaded?
+ * @is_connected: Is @adapater connected to an AP?
+ *
+ * Generate a wlan vdev status package. The status info includes wlan
+ * on/off status, vdev ID, vdev mode, supported channels, etc.
+ *
+ * Return: 0 if package was created, otherwise a negative errno
+ */
 static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 					 hdd_adapter_t *adapter,
 					 hdd_station_ctx_t *sta_ctx,
@@ -92,6 +105,19 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 	return 0;
 }
 
+/**
+ * wlan_hdd_gen_wlan_version_pack() - Create lpass version package
+ * @data: Version data record to be created
+ * @fw_version: Version code from firmware
+ * @chip_id: WLAN chip ID
+ * @chip_name: WLAN chip name
+ *
+ * Generate a wlan software/hw version info package. The version info
+ * includes wlan host driver version, wlan fw driver version, wlan hw
+ * chip id & wlan hw chip name.
+ *
+ * Return: 0 if package was created, otherwise a negative errno
+ */
 static int wlan_hdd_gen_wlan_version_pack(struct wlan_version_data *data,
 					  uint32_t fw_version,
 					  uint32_t chip_id,
@@ -116,6 +142,18 @@ static int wlan_hdd_gen_wlan_version_pack(struct wlan_version_data *data,
 	return 0;
 }
 
+/**
+ * wlan_hdd_send_status_pkg() - Send adapter status to lpass
+ * @adapter: Adapter whose status is to be sent to lpass
+ * @sta_ctx: Station-specific context of @adapter
+ * @is_on: Is @adapter enabled
+ * @is_connected: Is @adapater connected
+ *
+ * Generate wlan vdev status pacakge and send it to a user space
+ * daemon through netlink.
+ *
+ * Return: none
+ */
 void wlan_hdd_send_status_pkg(hdd_adapter_t *adapter,
 			      hdd_station_ctx_t *sta_ctx,
 			      uint8_t is_on, uint8_t is_connected)
@@ -135,6 +173,17 @@ void wlan_hdd_send_status_pkg(hdd_adapter_t *adapter,
 					    &data, sizeof(data));
 }
 
+/**
+ * wlan_hdd_send_version_pkg() - report version information to lpass
+ * @fw_version: Version code from firmware
+ * @chip_id: WLAN chip ID
+ * @chip_name: WLAN chip name
+ *
+ * Generate a wlan sw/hw version info package and send it to a user
+ * space daemon through netlink.
+ *
+ * Return: none
+ */
 void wlan_hdd_send_version_pkg(uint32_t fw_version,
 			       uint32_t chip_id, const char *chip_name)
 {
@@ -152,6 +201,16 @@ void wlan_hdd_send_version_pkg(uint32_t fw_version,
 					    &data, sizeof(data));
 }
 
+/**
+ * wlan_hdd_send_all_scan_intf_info() - report scan interfaces to lpass
+ * @hdd_ctx: The global HDD context
+ *
+ * This function iterates through all of the interfaces registered
+ * with HDD and indicates to lpass all that support scanning.
+ * If no interfaces support scanning then that fact is also indicated.
+ *
+ * Return: none
+ */
 void wlan_hdd_send_all_scan_intf_info(hdd_context_t *hdd_ctx)
 {
 	hdd_adapter_t *adapter = NULL;
