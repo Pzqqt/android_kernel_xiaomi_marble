@@ -55,6 +55,9 @@
 #include "wma.h"
 #include "cds_concurrency.h"
 
+#define MAX_PWR_FCC_CHAN_12 8
+#define MAX_PWR_FCC_CHAN_13 2
+
 #define CSR_NUM_IBSS_START_CHANNELS_50      4
 #define CSR_NUM_IBSS_START_CHANNELS_24      3
 /* 5 seconds, for WPA, WPA2, CCKM */
@@ -683,12 +686,7 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 		/* Scan is not performed on DSRC channels*/
 		if (pScan->base_channels.channelList[i] >= CDS_MIN_11P_CHANNEL)
 			continue;
-		if (pScan->fcc_constraint) {
-			if (pScan->base_channels.channelList[i] == 12)
-				continue;
-			if (pScan->base_channels.channelList[i] == 13)
-				continue;
-		}
+
 		channel_state =
 			cds_get_channel_state(
 				pScan->base_channels.channelList[i]);
@@ -699,6 +697,25 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 			pChanList->chanParam[num_channel].pwr =
 				csr_find_channel_pwr(pScan->defaultPowerTable,
 						  pChanList->chanParam[num_channel].chanId);
+
+			if (pScan->fcc_constraint) {
+				if (12 == pChanList->chanParam[num_channel].chanId) {
+					pChanList->chanParam[num_channel].pwr =
+						MAX_PWR_FCC_CHAN_12;
+					QDF_TRACE(QDF_MODULE_ID_SME,
+						  QDF_TRACE_LEVEL_INFO,
+					       "txpower for channel 12 is 8db");
+				}
+				if (13 == pChanList->chanParam[num_channel].chanId) {
+					pChanList->chanParam[num_channel].pwr =
+						MAX_PWR_FCC_CHAN_13;
+					QDF_TRACE(QDF_MODULE_ID_SME,
+						  QDF_TRACE_LEVEL_INFO,
+					       "txpower for channel 13 is 2db");
+				}
+			}
+
+
 			if (CHANNEL_STATE_ENABLE == channel_state)
 				pChanList->chanParam[num_channel].dfsSet =
 					false;

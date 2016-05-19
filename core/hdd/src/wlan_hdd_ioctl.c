@@ -6777,7 +6777,7 @@ static int drv_cmd_set_fcc_channel(hdd_adapter_t *adapter,
 		return -EINVAL;
 	}
 
-	status = sme_disable_non_fcc_channel(hdd_ctx->hHal, !fcc_constraint);
+	status = sme_handle_set_fcc_channel(hdd_ctx->hHal, !fcc_constraint);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("sme disable fn. returned err");
 		ret = -EPERM;

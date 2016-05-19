@@ -15172,13 +15172,13 @@ QDF_STATUS sme_set_peer_authorized(uint8_t *peer_addr,
 }
 
 /*
- * sme_disable_non_fcc_channel() - non-fcc channel disable request
+ * sme_handle_set_fcc_channel() - set spec. tx power for non-fcc channel
  * @hal: HAL pointer
  * @fcc_constraint: true: disable, false; enable
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_disable_non_fcc_channel(tHalHandle hal, bool fcc_constraint)
+QDF_STATUS sme_handle_set_fcc_channel(tHalHandle hal, bool fcc_constraint)
 {
 	QDF_STATUS status;
 	tpAniSirGlobal mac_ptr  = PMAC_STRUCT(hal);
