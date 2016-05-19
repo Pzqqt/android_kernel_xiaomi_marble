@@ -4178,11 +4178,7 @@ bool csr_scan_complete(tpAniSirGlobal pMac, tSirSmeScanRsp *pScanRsp)
 		pCommand->u.scanCmd.abortScanDueToBandChange = false;
 	}
 	csr_save_scan_results(pMac, pCommand->u.scanCmd.reason, sessionId);
-	/* filter scan result based on valid channel list number */
-	if (pMac->scan.fcc_constraint) {
-		sms_log(pMac, LOG1, FL("Clear BSS from invalid channels"));
-		csr_scan_filter_results(pMac);
-	}
+
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 	csr_diag_scan_complete(pMac, pCommand, pScanRsp);
 #endif /* #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR */
@@ -4517,6 +4513,7 @@ static bool csr_scan_process_scan_results(tpAniSirGlobal pMac, tSmeCmd *pCommand
 					  bool *pfRemoveCommand)
 {
 	bool fRet = false, fRemoveCommand = false;
+	QDF_STATUS status;
 
 	sms_log(pMac, LOG1, FL("scan reason = %d, response status code = %d"),
 		pCommand->u.scanCmd.reason, pScanRsp->statusCode);
@@ -4525,6 +4522,23 @@ static bool csr_scan_process_scan_results(tpAniSirGlobal pMac, tSmeCmd *pCommand
 	if (pfRemoveCommand) {
 		*pfRemoveCommand = fRemoveCommand;
 	}
+
+	/*
+	 * Currently SET_FCC_CHANNEL issues updated channel list to fw.
+	 * At the time of driver load, if scan is issued followed with
+	 * SET_FCC_CHANNEL, driver will send update channel list to fw.
+	 * Fw will stop ongoing scan because of that GUI will have very less
+	 * scan list.
+	 * Update channel list should be sent to fw once scan is done
+	 */
+	if (pMac->scan.defer_update_channel_list) {
+		status = csr_update_channel_list(pMac);
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			sms_log(pMac, LOGE,
+			    FL("failed to update the supported channel list"));
+		pMac->scan.defer_update_channel_list = false;
+	}
+
 	return fRet;
 }
 

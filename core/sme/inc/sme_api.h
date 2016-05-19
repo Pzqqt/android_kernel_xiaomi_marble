@@ -1011,7 +1011,8 @@ void sme_set_scan_disable(tHalHandle h_hal, int value);
 void sme_setdef_dot11mode(tHalHandle hal);
 
 QDF_STATUS sme_handle_set_fcc_channel(tHalHandle hHal,
-				      bool fcc_constraint);
+				      bool fcc_constraint,
+				      bool scan_pending);
 
 QDF_STATUS sme_update_roam_scan_hi_rssi_scan_params(tHalHandle hal_handle,
 	uint8_t session_id,

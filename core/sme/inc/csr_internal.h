@@ -778,6 +778,7 @@ typedef struct tagCsrScanStruct {
 	csr_scan_completeCallback callback11dScanDone;
 	bool fcc_constraint;
 	uint8_t max_scan_count;
+	bool defer_update_channel_list;
 } tCsrScanStruct;
 
 /*

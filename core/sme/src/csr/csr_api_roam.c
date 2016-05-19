@@ -704,14 +704,16 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 						MAX_PWR_FCC_CHAN_12;
 					QDF_TRACE(QDF_MODULE_ID_SME,
 						  QDF_TRACE_LEVEL_INFO,
-					       "txpower for channel 12 is 8db");
+						  "txpow for channel 12 is %d",
+						  MAX_PWR_FCC_CHAN_12);
 				}
 				if (13 == pChanList->chanParam[num_channel].chanId) {
 					pChanList->chanParam[num_channel].pwr =
 						MAX_PWR_FCC_CHAN_13;
 					QDF_TRACE(QDF_MODULE_ID_SME,
 						  QDF_TRACE_LEVEL_INFO,
-					       "txpower for channel 13 is 2db");
+						  "txpow for channel 13 is %d",
+						  MAX_PWR_FCC_CHAN_13);
 				}
 			}
 

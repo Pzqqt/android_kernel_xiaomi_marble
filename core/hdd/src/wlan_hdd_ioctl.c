@@ -6753,6 +6753,7 @@ static int drv_cmd_set_fcc_channel(hdd_adapter_t *adapter,
 	uint8_t *value;
 	uint8_t fcc_constraint;
 	QDF_STATUS status;
+	bool scan_pending;
 	int ret = 0;
 
 	/*
@@ -6777,7 +6778,9 @@ static int drv_cmd_set_fcc_channel(hdd_adapter_t *adapter,
 		return -EINVAL;
 	}
 
-	status = sme_handle_set_fcc_channel(hdd_ctx->hHal, !fcc_constraint);
+	scan_pending = !qdf_list_empty(&hdd_ctx->hdd_scan_req_q);
+	status = sme_handle_set_fcc_channel(hdd_ctx->hHal, !fcc_constraint,
+					    scan_pending);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("sme disable fn. returned err");
 		ret = -EPERM;

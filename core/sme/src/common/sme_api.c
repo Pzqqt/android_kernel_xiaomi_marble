@@ -15174,11 +15174,13 @@ QDF_STATUS sme_set_peer_authorized(uint8_t *peer_addr,
 /*
  * sme_handle_set_fcc_channel() - set spec. tx power for non-fcc channel
  * @hal: HAL pointer
- * @fcc_constraint: true: disable, false; enable
+ * @fcc_constraint: flag to enable/disable the constraint
+ * @scan_pending: whether there is pending scan
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_handle_set_fcc_channel(tHalHandle hal, bool fcc_constraint)
+QDF_STATUS sme_handle_set_fcc_channel(tHalHandle hal, bool fcc_constraint,
+				      bool scan_pending)
 {
 	QDF_STATUS status;
 	tpAniSirGlobal mac_ptr  = PMAC_STRUCT(hal);
@@ -15189,7 +15191,10 @@ QDF_STATUS sme_handle_set_fcc_channel(tHalHandle hal, bool fcc_constraint)
 
 		if (fcc_constraint != mac_ptr->scan.fcc_constraint) {
 			mac_ptr->scan.fcc_constraint = fcc_constraint;
-
+			if (scan_pending)
+				mac_ptr->scan.defer_update_channel_list = true;
+			else
+				status = csr_update_channel_list(mac_ptr);
 			/* update the channel list in firmware */
 			status = csr_update_channel_list(mac_ptr);
 		}
