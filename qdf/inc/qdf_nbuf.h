@@ -143,6 +143,10 @@ struct mon_rx_status {
 #define QDF_DHCP_RELEASE			(7)
 #define QDF_DHCP_INFORM				(8)
 
+#define ARP_SUB_TYPE_OFFSET  20
+#define ARP_REQUEST			(1)
+#define ARP_RESPONSE		(2)
+
 #define QDF_NBUF_IPA_CHECK_MASK		0x80000000
 
 /**

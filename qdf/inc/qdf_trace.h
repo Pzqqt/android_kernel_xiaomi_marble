@@ -107,6 +107,7 @@ typedef enum {
 
 #define DUMP_DP_TRACE       0
 #define ENABLE_DP_TRACE_LIVE_MODE	1
+#define CLEAR_DP_TRACE_BUFFER	2
 
 #ifdef TRACE_RECORD
 
@@ -261,7 +262,8 @@ enum qdf_proto_type {
  * @QDF_PROTO_DHCP_RELEASE - release
  * @QDF_PROTO_DHCP_INFORM - inform
  * @QDF_PROTO_DHCP_DECLINE - decline
- * @QDF_PROTO_ARP_SUBTYPE - arp
+ * @QDF_PROTO_ARP_REQ - arp request
+ * @QDF_PROTO_ARP_RES - arp response
  * @QDF_PROTO_MGMT_ASSOC -assoc
  * @QDF_PROTO_MGMT_DISASSOC - disassoc
  * @QDF_PROTO_MGMT_AUTH - auth
@@ -281,7 +283,8 @@ enum qdf_proto_subtype {
 	QDF_PROTO_DHCP_RELEASE,
 	QDF_PROTO_DHCP_INFORM,
 	QDF_PROTO_DHCP_DECLINE,
-	QDF_PROTO_ARP_SUBTYPE,
+	QDF_PROTO_ARP_REQ,
+	QDF_PROTO_ARP_RES,
 	QDF_PROTO_MGMT_ASSOC,
 	QDF_PROTO_MGMT_DISASSOC,
 	QDF_PROTO_MGMT_AUTH,
@@ -455,6 +458,7 @@ qdf_dp_trace_proto_pkt(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
 void qdf_dp_display_proto_pkt(struct qdf_dp_trace_record_s *record,
 				uint16_t index);
 void qdf_dp_trace_enable_live_mode(void);
+void qdf_dp_trace_clear_buffer(void);
 void qdf_dp_trace_mgmt_pkt(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
 		enum qdf_proto_type type, enum qdf_proto_subtype subtype);
 void qdf_dp_display_mgmt_pkt(struct qdf_dp_trace_record_s *record,
@@ -485,6 +489,11 @@ void qdf_dp_trace_dump_all(uint32_t count)
 
 static inline
 void qdf_dp_trace_enable_live_mode(void)
+{
+}
+
+static inline
+void qdf_dp_trace_clear_buffer(void)
 {
 }
 

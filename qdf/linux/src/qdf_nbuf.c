@@ -1348,7 +1348,6 @@ EXPORT_SYMBOL(__qdf_nbuf_inc_users);
 
 #endif /* FEATURE_TSO */
 
-
 /**
  * __qdf_nbuf_ref() - Reference the nbuf so it can get held until the last free.
  * @skb: sk_buff handle
