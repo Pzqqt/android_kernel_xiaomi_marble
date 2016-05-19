@@ -32,6 +32,9 @@
  *
  */
 
+/* denote that this file does not allow legacy hddLog */
+#define HDD_DISALLOW_LEGACY_HDDLOG 1
+
 /* Include Files */
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_lpass.h"
@@ -60,7 +63,7 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 	uint8_t buflen = WLAN_SVC_COUNTRY_CODE_LEN;
 
 	if (!data) {
-		hddLog(LOGE, FL("invalid data pointer"));
+		hdd_err("invalid data pointer");
 		return -EINVAL;
 	}
 	if (!adapter) {
@@ -70,7 +73,7 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 			data->is_on = is_on;
 			return 0;
 		}
-		hddLog(LOGE, FL("invalid adapter pointer"));
+		hdd_err("invalid adapter pointer");
 		return -EINVAL;
 	}
 
@@ -124,7 +127,7 @@ static int wlan_hdd_gen_wlan_version_pack(struct wlan_version_data *data,
 					  const char *chip_name)
 {
 	if (!data) {
-		hddLog(LOGE, FL("invalid data pointer"));
+		hdd_err("invalid data pointer");
 		return -EINVAL;
 	}
 
@@ -219,8 +222,7 @@ void wlan_hdd_send_all_scan_intf_info(hdd_context_t *hdd_ctx)
 	QDF_STATUS status;
 
 	if (!hdd_ctx) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("NULL pointer for hdd_ctx"));
+		hdd_err("NULL pointer for hdd_ctx");
 		return;
 	}
 
