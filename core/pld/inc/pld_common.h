@@ -329,7 +329,7 @@ int pld_get_fw_files_for_target(struct device *dev,
 int pld_get_fw_image(struct device *dev,
 		     struct pld_image_desc_info *image_desc_info);
 void pld_is_pci_link_down(struct device *dev);
-int pld_pcie_shadow_control(struct device *dev, bool enable);
+int pld_shadow_control(struct device *dev, bool enable);
 int pld_get_codeswap_struct(struct device *dev,
 			    struct pld_codeswap_codeseg_info *swap_seg);
 int pld_set_wlan_unsafe_channel(struct device *dev, u16 *unsafe_ch_list,
@@ -349,7 +349,6 @@ void pld_remove_pm_qos(struct device *dev);
 int pld_request_bus_bandwidth(struct device *dev, int bandwidth);
 int pld_get_platform_cap(struct device *dev, struct pld_platform_cap *cap);
 void pld_set_driver_status(struct device *dev, enum pld_driver_status status);
-int pld_get_bmi_setup(struct device *dev);
 int pld_get_sha_hash(struct device *dev, const u8 *data,
 		     u32 data_len, u8 *hash_idx, u8 *out);
 void *pld_get_fw_ptr(struct device *dev);

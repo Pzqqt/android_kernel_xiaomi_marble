@@ -428,7 +428,7 @@ void pld_is_pci_link_down(struct device *dev)
 {
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		cnss_wlan_pci_link_down();
+		pld_pcie_link_down();
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -439,7 +439,7 @@ void pld_is_pci_link_down(struct device *dev)
 }
 
 /**
- * pld_pcie_shadow_control() - Control pci shadow registers
+ * pld_shadow_control() - Control pci shadow registers
  * @dev: device
  * @enable: 0 for disable, 1 for enable
  *
@@ -450,14 +450,13 @@ void pld_is_pci_link_down(struct device *dev)
  * Return: 0 for success
  *         Non zero failure code for errors
  */
-int pld_pcie_shadow_control(struct device *dev, bool enable)
+int pld_shadow_control(struct device *dev, bool enable)
 {
 	int ret = 0;
 
-	/* cnss_shadow_control is not supported on BF64.0.3 kernel yet
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		ret = cnss_shadow_control(enable);
+		ret = pld_pcie_shadow_control(enable);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -465,7 +464,7 @@ int pld_pcie_shadow_control(struct device *dev, bool enable)
 		ret = -EINVAL;
 		break;
 	}
-	*/
+
 	return ret;
 }
 
@@ -514,8 +513,8 @@ int pld_set_wlan_unsafe_channel(struct device *dev,
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		ret = cnss_set_wlan_unsafe_channel(unsafe_ch_list,
-						   ch_count);
+		ret = pld_pcie_set_wlan_unsafe_channel(unsafe_ch_list,
+						       ch_count);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -546,8 +545,8 @@ int pld_get_wlan_unsafe_channel(struct device *dev, u16 *unsafe_ch_list,
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		ret = cnss_get_wlan_unsafe_channel(unsafe_ch_list,
-						   ch_count, buf_len);
+		ret = pld_pcie_get_wlan_unsafe_channel(unsafe_ch_list,
+						       ch_count, buf_len);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -574,7 +573,7 @@ int pld_wlan_set_dfs_nol(struct device *dev, void *info, u16 info_len)
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		ret = cnss_wlan_set_dfs_nol(info, info_len);
+		ret = pld_pcie_wlan_set_dfs_nol(info, info_len);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -603,7 +602,7 @@ int pld_wlan_get_dfs_nol(struct device *dev, void *info, u16 info_len)
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		ret = cnss_wlan_get_dfs_nol(info, info_len);
+		ret = pld_pcie_wlan_get_dfs_nol(info, info_len);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -627,7 +626,7 @@ void pld_schedule_recovery_work(struct device *dev)
 {
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		cnss_schedule_recovery_work();
+		pld_pcie_schedule_recovery_work();
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -655,7 +654,7 @@ int pld_wlan_pm_control(struct device *dev, bool vote)
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		ret = cnss_wlan_pm_control(vote);
+		ret = pld_pcie_wlan_pm_control(vote);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -680,7 +679,7 @@ void *pld_get_virt_ramdump_mem(struct device *dev, unsigned long *size)
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		mem = cnss_get_virt_ramdump_mem(size);
+		mem = pld_pcie_get_virt_ramdump_mem(size);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -705,7 +704,7 @@ void pld_device_crashed(struct device *dev)
 {
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		cnss_device_crashed();
+		pld_pcie_device_crashed();
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -725,7 +724,7 @@ void pld_device_self_recovery(struct device *dev)
 {
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		cnss_device_self_recovery();
+		pld_pcie_device_self_recovery();
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -747,7 +746,7 @@ void pld_intr_notify_q6(struct device *dev)
 {
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		cnss_intr_notify_q6();
+		pld_pcie_intr_notify_q6();
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -770,7 +769,7 @@ void pld_request_pm_qos(struct device *dev, u32 qos_val)
 {
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		cnss_request_pm_qos(qos_val);
+		pld_pcie_request_pm_qos(qos_val);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -792,7 +791,7 @@ void pld_remove_pm_qos(struct device *dev)
 {
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		cnss_remove_pm_qos();
+		pld_pcie_remove_pm_qos();
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -818,7 +817,7 @@ int pld_request_bus_bandwidth(struct device *dev, int bandwidth)
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		ret = cnss_request_bus_bandwidth(bandwidth);
+		ret = pld_pcie_request_bus_bandwidth(bandwidth);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -880,32 +879,6 @@ void pld_set_driver_status(struct device *dev, enum pld_driver_status status)
 }
 
 /**
- * pld_get_bmi_setup() - Get BMI setup
- * @dev: device
- *
- * BMI read/write test should be run if BMI test is enabled.
- *
- * Return: BMI test setup
- */
-int pld_get_bmi_setup(struct device *dev)
-{
-	int ret = 0;
-
-	switch (pld_get_bus_type(dev)) {
-	case PLD_BUS_TYPE_PCIE:
-		ret = cnss_get_bmi_setup();
-		break;
-	case PLD_BUS_TYPE_SNOC:
-		break;
-	default:
-		ret = -EINVAL;
-		break;
-	}
-
-	return ret;
-}
-
-/**
  * pld_get_sha_hash() - Get sha hash number
  * @dev: device
  * @data: input data
@@ -925,7 +898,7 @@ int pld_get_sha_hash(struct device *dev, const u8 *data,
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		ret = cnss_get_sha_hash(data, data_len,
+		ret = pld_pcie_get_sha_hash(data, data_len,
 					    hash_idx, out);
 		break;
 	case PLD_BUS_TYPE_SNOC:
@@ -950,7 +923,7 @@ void *pld_get_fw_ptr(struct device *dev)
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		ptr = cnss_get_fw_ptr();
+		ptr = pld_pcie_get_fw_ptr();
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -975,7 +948,7 @@ int pld_auto_suspend(struct device *dev)
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		ret = cnss_auto_suspend();
+		ret = pld_pcie_auto_suspend();
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -1000,7 +973,7 @@ int pld_auto_resume(struct device *dev)
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		ret = cnss_auto_resume();
+		ret = pld_pcie_auto_resume();
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -1032,7 +1005,7 @@ int pld_ce_request_irq(struct device *dev, unsigned int ce_id,
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_SNOC:
-		ret = icnss_ce_request_irq(ce_id, handler, flags, name, ctx);
+		ret = pld_snoc_ce_request_irq(ce_id, handler, flags, name, ctx);
 		break;
 	case PLD_BUS_TYPE_PCIE:
 		break;
@@ -1059,7 +1032,7 @@ int pld_ce_free_irq(struct device *dev, unsigned int ce_id, void *ctx)
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_SNOC:
-		ret = icnss_ce_free_irq(ce_id, ctx);
+		ret = pld_snoc_ce_free_irq(ce_id, ctx);
 		break;
 	case PLD_BUS_TYPE_PCIE:
 		break;
@@ -1082,7 +1055,7 @@ void pld_enable_irq(struct device *dev, unsigned int ce_id)
 {
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_SNOC:
-		icnss_enable_irq(ce_id);
+		pld_snoc_enable_irq(ce_id);
 		break;
 	case PLD_BUS_TYPE_PCIE:
 		break;
@@ -1103,7 +1076,7 @@ void pld_disable_irq(struct device *dev, unsigned int ce_id)
 {
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_SNOC:
-		icnss_disable_irq(ce_id);
+		pld_snoc_disable_irq(ce_id);
 		break;
 	case PLD_BUS_TYPE_PCIE:
 		break;
@@ -1154,7 +1127,7 @@ int pld_get_ce_id(struct device *dev, int irq)
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_SNOC:
-		ret = icnss_get_ce_id(irq);
+		ret = pld_snoc_get_ce_id(irq);
 		break;
 	case PLD_BUS_TYPE_PCIE:
 		ret = pld_pcie_get_ce_id(irq);
@@ -1177,7 +1150,7 @@ void pld_lock_pm_sem(struct device *dev)
 {
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		cnss_lock_pm_sem();
+		pld_pcie_lock_pm_sem();
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -1197,7 +1170,7 @@ void pld_release_pm_sem(struct device *dev)
 {
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		cnss_release_pm_sem();
+		pld_pcie_release_pm_sem();
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;

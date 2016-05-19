@@ -49,33 +49,29 @@ static inline int pld_snoc_wlan_disable(enum pld_driver_mode mode)
 {
 	return 0;
 }
-static inline int icnss_ce_request_irq(unsigned int ce_id,
+static inline int pld_snoc_ce_request_irq(unsigned int ce_id,
 		       irqreturn_t (*handler)(int, void *),
 		       unsigned long flags, const char *name, void *ctx)
 {
 	return 0;
 }
-static inline int icnss_ce_free_irq(unsigned int ce_id, void *ctx)
+static inline int pld_snoc_ce_free_irq(unsigned int ce_id, void *ctx)
 {
 	return 0;
 }
-static inline void icnss_enable_irq(unsigned int ce_id)
+static inline void pld_snoc_enable_irq(unsigned int ce_id)
 {
 	return;
 }
-static inline void icnss_disable_irq(unsigned int ce_id)
+static inline void pld_snoc_disable_irq(unsigned int ce_id)
 {
 	return;
-}
-static inline int icnss_get_soc_info(struct pld_soc_info *info)
-{
-	return 0;
-}
-static inline int icnss_get_ce_id(int irq)
-{
-	return 0;
 }
 static inline int pld_snoc_get_soc_info(struct pld_soc_info *info)
+{
+	return 0;
+}
+static inline int pld_snoc_get_ce_id(int irq)
 {
 	return 0;
 }
@@ -86,6 +82,13 @@ int pld_snoc_wlan_enable(struct pld_wlan_enable_cfg *config,
 			 enum pld_driver_mode mode, const char *host_version);
 int pld_snoc_wlan_disable(enum pld_driver_mode mode);
 int pld_snoc_get_soc_info(struct pld_soc_info *info);
+int pld_snoc_ce_request_irq(unsigned int ce_id,
+			    irqreturn_t (*handler)(int, void *),
+			    unsigned long flags, const char *name, void *ctx);
+int pld_snoc_ce_free_irq(unsigned int ce_id, void *ctx);
+void pld_snoc_enable_irq(unsigned int ce_id);
+void pld_snoc_disable_irq(unsigned int ce_id);
+int pld_snoc_get_ce_id(int irq);
 #endif
 
 #endif

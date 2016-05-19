@@ -314,4 +314,68 @@ int pld_snoc_get_soc_info(struct pld_soc_info *info)
 	return 0;
 }
 
+/**
+ * pld_snoc_ce_request_irq() - Register IRQ for CE
+ * @ce_id: CE number
+ * @handler: IRQ callback function
+ * @flags: IRQ flags
+ * @name: IRQ name
+ * @ctx: IRQ context
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_snoc_ce_request_irq(unsigned int ce_id,
+			    irqreturn_t (*handler)(int, void *),
+			    unsigned long flags, const char *name, void *ctx)
+{
+	return icnss_ce_request_irq(ce_id, handler, flags, name, ctx);
+}
+
+/**
+ * pld_snoc_ce_free_irq() - Free IRQ for CE
+ * @ce_id: CE number
+ * @ctx: IRQ context
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_snoc_ce_free_irq(unsigned int ce_id, void *ctx)
+{
+	return icnss_ce_free_irq(ce_id, ctx);
+}
+
+/**
+ * pld_snoc_enable_irq() - Enable IRQ for CE
+ * @ce_id: CE number
+ *
+ * Return: void
+ */
+void pld_snoc_enable_irq(unsigned int ce_id)
+{
+	icnss_enable_irq(ce_id);
+}
+
+/**
+ * pld_snoc_disable_irq() - Disable IRQ for CE
+ * @ce_id: CE number
+ *
+ * Return: void
+ */
+void pld_snoc_disable_irq(unsigned int ce_id)
+{
+	icnss_disable_irq(ce_id);
+}
+
+/**
+ * pld_snoc_get_ce_id() - Get CE number for the provided IRQ
+ * @irq: IRQ number
+ *
+ * Return: CE number
+ */
+int pld_snoc_get_ce_id(int irq)
+{
+	icnss_get_ce_id(irq);
+}
+
 #endif
