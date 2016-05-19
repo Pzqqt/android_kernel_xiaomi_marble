@@ -1,0 +1,88 @@
+ifeq ($(obj),)
+obj := .
+endif
+
+DEPTH := ../..
+
+include $(obj)/$(DEPTH)/os/linux/Makefile-linux.common
+
+ifeq ($(ATH_SUPPORT_HTC),1)
+INCS = -include $(COMINC)/compat.h -I$(COMINC) -I$(WLAN_TOP)/os/$(OS)/include -I$(WLAN_TOP)/os/$(OS)/src -I$(KERNELPATH)/include
+INCS += -I$(WLAN_TOP)/asf/include
+endif
+
+INCS += -Iinclude/nbuf -Iinclude/net -Iinclude/os
+INCS += -Inbuf/linux -Inet/linux -Ios/linux
+INCS += -I$(WLAN_TOP)/../../include
+INCS += -I$(WLAN_TOP)/cmn_dev/qdf/inc
+INCS += -I$(WLAN_TOP)/cmn_dev/qdf/linux/src
+
+obj-m += qdf.o
+
+EXTRA_CFLAGS+= $(INCS) $(COPTS) -Wno-unused-function
+
+ifeq ($(strip ${QCA_PARTNER_MAKE_F_SUPPORT}),1)
+MOD_CFLAGS = -D"KBUILD_STR(s)=\#s" -D"KBUILD_BASENAME=KBUILD_STR(qdf.mod)"  -D"KBUILD_MODNAME=KBUILD_STR(qdf)"
+endif
+
+qdf-objs :=                     \
+linux/src/qdf_defer.o  \
+linux/src/qdf_event.o   \
+linux/src/qdf_list.o      \
+linux/src/qdf_lock.o       \
+linux/src/qdf_mc_timer.o    \
+linux/src/qdf_mem.o      \
+linux/src/qdf_module.o    \
+linux/src/qdf_nbuf.o       \
+linux/src/qdf_perf.o        \
+linux/src/qdf_threads.o
+#linux/src/qdf_net.o \
+#linux/src/qdf_net_event.o \
+#linux/src/qdf_net_ioctl.o
+#linux/src/qdf_net_wext.o
+
+
+ifeq ($(BUILD_ADF_NET_IOCTL),1)
+EXTRA_CFLAGS+= -DADF_NET_IOCTL_SUPPORT
+#adf-objs += os/linux/adf_os_netlink_pvt.o \
+#    net/linux/adf_net_event.o  \
+#    net/linux/adf_net_wext.o    \
+#    net/linux/adf_net_ioctl.o
+endif
+
+ifeq ($(BUILD_ADF_DEFER_PVT),1)
+#adf-objs += os/linux/adf_os_defer_pvt.o
+endif
+ifeq ($(BUILD_ADF_IRQ_PVT),1)
+#adf-objs += os/linux/adf_os_irq_pvt.o
+endif
+
+ifeq ($(BUILD_ADF_PERF_PROFILING),1)
+#adf-objs += os/linux/adf_os_perf_pvt.o
+ifeq ($(BUILD_ADF_MIPS_PERF_PROFILING),1)
+#adf-objs += os/linux/adf_os_mips_perf_pvt.o
+endif
+endif
+
+#    os/linux/adf_os_pci_pvt.o    \
+#    net/linux/adf_net_ioctl.o    \
+#    net/linux/adf_net_pseudo.o   \
+
+clean-files := modules.order
+
+ifeq ($(strip ${QCA_PARTNER_MAKE_F_SUPPORT}),1)
+all: qdf.ko
+
+qdf.mod.o: qdf.mod.c
+	${CC} -c -o $@ ${EXTRA_CFLAGS} ${MOD_CFLAGS} $<
+
+adf.o: ${adf-objs}
+	$(LD) -m elf32btsmip -r -o adf.o $(adf-objs)
+	$(KERNELPATH)/scripts/mod/modpost qdf.o
+
+qdf.ko: qdf.o qdf.mod.o
+	$(LD) $(LDOPTS) -o qdf.ko qdf.o qdf.mod.o
+
+%.o: %.c
+	${CC} -c -o $@ ${EXTRA_CFLAGS} $<
+endif
