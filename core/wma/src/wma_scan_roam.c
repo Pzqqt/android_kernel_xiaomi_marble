@@ -5085,8 +5085,9 @@ QDF_STATUS wma_extscan_start_change_monitor(tp_wma_handle wma,
 					    tSirExtScanSetSigChangeReqParams *
 					    psigchange)
 {
-	struct extscan_set_sig_changereq_params params = {0};
 	int i = 0;
+	QDF_STATUS status;
+	struct extscan_set_sig_changereq_params *params_ptr;
 
 	if (!wma || !wma->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed,can not issue extscan cmd",
@@ -5094,21 +5095,34 @@ QDF_STATUS wma_extscan_start_change_monitor(tp_wma_handle wma,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	params.request_id = psigchange->requestId;
-	params.session_id = psigchange->sessionId;
-	params.rssi_sample_size = psigchange->rssiSampleSize;
-	params.lostap_sample_size = psigchange->lostApSampleSize;
-	params.min_breaching = psigchange->minBreaching;
-	params.num_ap = psigchange->numAp;
-	for (i = 0; i < WLAN_EXTSCAN_MAX_SIGNIFICANT_CHANGE_APS; i++) {
-		qdf_mem_copy(&params.ap[i].bssid, &psigchange->ap[i].bssid,
-				sizeof(struct qdf_mac_addr));
-		params.ap[i].high = psigchange->ap[i].high;
-		params.ap[i].low = psigchange->ap[i].low;
+	params_ptr = qdf_mem_malloc(sizeof(*params_ptr));
+
+	if (!params_ptr) {
+		WMA_LOGE(
+			"%s: unable to allocate memory for extscan_set_sig_changereq_params",
+			 __func__);
+		return QDF_STATUS_E_NOMEM;
 	}
 
-	return wmi_unified_extscan_start_change_monitor_cmd(wma->wmi_handle,
-					&params);
+	params_ptr->request_id = psigchange->requestId;
+	params_ptr->session_id = psigchange->sessionId;
+	params_ptr->rssi_sample_size = psigchange->rssiSampleSize;
+	params_ptr->lostap_sample_size = psigchange->lostApSampleSize;
+	params_ptr->min_breaching = psigchange->minBreaching;
+	params_ptr->num_ap = psigchange->numAp;
+	for (i = 0; i < WLAN_EXTSCAN_MAX_SIGNIFICANT_CHANGE_APS; i++) {
+		qdf_mem_copy(&params_ptr->ap[i].bssid,
+				&psigchange->ap[i].bssid,
+				sizeof(struct qdf_mac_addr));
+		params_ptr->ap[i].high = psigchange->ap[i].high;
+		params_ptr->ap[i].low = psigchange->ap[i].low;
+	}
+
+	status = wmi_unified_extscan_start_change_monitor_cmd
+							(wma->wmi_handle,
+							params_ptr);
+	qdf_mem_free(params_ptr);
+	return status;
 }
 
 /**

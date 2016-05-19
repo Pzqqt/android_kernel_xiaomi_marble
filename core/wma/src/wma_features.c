@@ -5657,15 +5657,23 @@ QDF_STATUS wma_process_add_periodic_tx_ptrn_ind(WMA_HANDLE handle,
 						pAddPeriodicTxPtrnParams)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	struct periodic_tx_pattern params;
+	struct periodic_tx_pattern *params_ptr;
 	uint8_t vdev_id;
-
-	qdf_mem_set(&params, sizeof(struct periodic_tx_pattern), 0);
+	QDF_STATUS status;
 
 	if (!wma_handle || !wma_handle->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not issue fw add pattern cmd",
 			 __func__);
 		return QDF_STATUS_E_INVAL;
+	}
+
+	params_ptr = qdf_mem_malloc(sizeof(*params_ptr));
+
+	if (!params_ptr) {
+		WMA_LOGE(
+			"%s: unable to allocate memory for periodic_tx_pattern",
+			 __func__);
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	if (!wma_find_vdev_by_addr(wma_handle,
@@ -5676,17 +5684,22 @@ QDF_STATUS wma_process_add_periodic_tx_ptrn_ind(WMA_HANDLE handle,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	params.ucPtrnId = pAddPeriodicTxPtrnParams->ucPtrnId;
-	params.ucPtrnSize = pAddPeriodicTxPtrnParams->ucPtrnSize;
-	params.usPtrnIntervalMs = pAddPeriodicTxPtrnParams->usPtrnIntervalMs;
-	qdf_mem_copy(&params.mac_address,
+	params_ptr->ucPtrnId = pAddPeriodicTxPtrnParams->ucPtrnId;
+	params_ptr->ucPtrnSize = pAddPeriodicTxPtrnParams->ucPtrnSize;
+	params_ptr->usPtrnIntervalMs =
+				pAddPeriodicTxPtrnParams->usPtrnIntervalMs;
+	qdf_mem_copy(&params_ptr->mac_address,
 			&pAddPeriodicTxPtrnParams->mac_address,
 			sizeof(struct qdf_mac_addr));
-	qdf_mem_copy(params.ucPattern, pAddPeriodicTxPtrnParams->ucPattern,
-					params.ucPtrnSize);
+	qdf_mem_copy(params_ptr->ucPattern,
+			pAddPeriodicTxPtrnParams->ucPattern,
+			params_ptr->ucPtrnSize);
 
-	return wmi_unified_process_add_periodic_tx_ptrn_cmd(
-			wma_handle->wmi_handle,	&params, vdev_id);
+	status =  wmi_unified_process_add_periodic_tx_ptrn_cmd(
+			wma_handle->wmi_handle,	params_ptr, vdev_id);
+
+	qdf_mem_free(params_ptr);
+	return status;
 }
 
 /**

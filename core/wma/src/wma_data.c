@@ -1777,13 +1777,6 @@ QDF_STATUS wma_process_init_bad_peer_tx_ctl_info(tp_wma_handle wma,
 
 	return wma_set_peer_rate_report_condition(wma, config);
 }
-#else
-
-QDF_STATUS wma_process_init_bad_peer_tx_ctl_info(tp_wma_handle wma,
-			struct t_bad_peer_txtcl_config *config)
-{
-	return QDF_STATUS_E_FAILURE;
-}
 #endif /* defined(CONFIG_HL_SUPPORT) && defined(QCA_BAD_PEER_TX_FLOW_CL) */
 
 
