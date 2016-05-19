@@ -59,16 +59,14 @@ static inline int find_ptrn_len(const char *ptrn)
 
 static void hdd_wowl_callback(void *pContext, QDF_STATUS qdf_ret_status)
 {
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Return code = (%d)", __func__, qdf_ret_status);
+	hdd_info("Return code = (%d)", qdf_ret_status);
 }
 
 #ifdef WLAN_WAKEUP_EVENTS
 static void hdd_wowl_wake_indication_callback(void *pContext,
 		tpSirWakeReasonInd wake_reason_ind)
 {
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO, "%s: Wake Reason %d",
-		  __func__, wake_reason_ind->ulReason);
+	hdd_info("Wake Reason %d", wake_reason_ind->ulReason);
 	hdd_exit_wowl((hdd_adapter_t *) pContext);
 }
 #endif
@@ -83,26 +81,16 @@ static void dump_hdd_wowl_ptrn(struct wow_add_pattern *ptrn)
 {
 	int i;
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Patetrn Id = 0x%x", __func__, ptrn->pattern_id);
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Pattern Byte Offset = 0x%x", __func__,
-		  ptrn->pattern_byte_offset);
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: pattern_size = 0x%x", __func__, ptrn->pattern_size);
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: pattern_mask_size = 0x%x", __func__,
-		  ptrn->pattern_mask_size);
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO, "%s: Pattern: ",
-		  __func__);
+	hdd_info("Pattern Id = 0x%x", ptrn->pattern_id);
+	hdd_info("Pattern Byte Offset = 0x%x", ptrn->pattern_byte_offset);
+	hdd_info("Pattern_size = 0x%x", ptrn->pattern_size);
+	hdd_info("Pattern_mask_size = 0x%x", ptrn->pattern_mask_size);
+	hdd_info("Pattern: ");
 	for (i = 0; i < ptrn->pattern_size; i++)
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO, " %02X",
-			  ptrn->pattern[i]);
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO, "%s: pattern_mask: ",
-		  __func__);
+		hdd_info(" %02X", ptrn->pattern[i]);
+	hdd_info("pattern_mask: ");
 	for (i = 0; i < ptrn->pattern_mask_size; i++)
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO, "%02X",
-			  ptrn->pattern_mask[i]);
+		hdd_info("%02X", ptrn->pattern_mask[i]);
 }
 
 /**
@@ -139,9 +127,7 @@ bool hdd_add_wowl_ptrn(hdd_adapter_t *pAdapter, const char *ptrn)
 				/* Pattern Already configured, skip to
 				 * next pattern
 				 */
-				QDF_TRACE(QDF_MODULE_ID_HDD,
-					  QDF_TRACE_LEVEL_ERROR,
-					  "Trying to add duplicate WoWL pattern. Skip it!");
+				hdd_err("Trying to add duplicate WoWL pattern. Skip it!");
 				ptrn += len;
 				goto next_ptrn;
 			}
@@ -159,17 +145,13 @@ bool hdd_add_wowl_ptrn(hdd_adapter_t *pAdapter, const char *ptrn)
 
 		/* Maximum number of patterns have been configured already */
 		if (first_empty_slot == -1) {
-			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Cannot add anymore patterns. No free slot!",
-				  __func__);
+			hdd_err("Cannot add anymore patterns. No free slot!");
 			return false;
 		}
 		/* Validate the pattern */
 		if (ptrn[2] != WOWL_INTRA_PTRN_TOKENIZER ||
 		    ptrn[5] != WOWL_INTRA_PTRN_TOKENIZER) {
-			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Malformed pattern string. Skip!",
-				  __func__);
+			hdd_err("Malformed pattern string. Skip!");
 			ptrn += len;
 			goto next_ptrn;
 		}
@@ -186,9 +168,7 @@ bool hdd_add_wowl_ptrn(hdd_adapter_t *pAdapter, const char *ptrn)
 		if (localPattern.pattern_size > SIR_WOWL_BCAST_PATTERN_MAX_SIZE
 		    || localPattern.pattern_mask_size >
 		    WOWL_PTRN_MASK_MAX_SIZE) {
-			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Invalid length specified. Skip!",
-				  __func__);
+			hdd_err("Invalid length specified. Skip!");
 			ptrn += len;
 			goto next_ptrn;
 		}
@@ -196,9 +176,7 @@ bool hdd_add_wowl_ptrn(hdd_adapter_t *pAdapter, const char *ptrn)
 		offset = 5 + 2 * localPattern.pattern_size + 1;
 		if ((offset >= len) ||
 		    (ptrn[offset] != WOWL_INTRA_PTRN_TOKENIZER)) {
-			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Malformed pattern string..skip!",
-				  __func__);
+			hdd_err("Malformed pattern string..skip!");
 			ptrn += len;
 			goto next_ptrn;
 		}
@@ -206,9 +184,7 @@ bool hdd_add_wowl_ptrn(hdd_adapter_t *pAdapter, const char *ptrn)
 		offset = offset + 2 * localPattern.pattern_mask_size;
 		if (offset + 1 != len) {
 			/* offset begins with 0 */
-			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Malformed pattern string...skip!",
-				  __func__);
+			hdd_err("Malformed pattern string...skip!");
 			ptrn += len;
 			goto next_ptrn;
 		}
@@ -241,8 +217,7 @@ bool hdd_add_wowl_ptrn(hdd_adapter_t *pAdapter, const char *ptrn)
 		g_hdd_wowl_ptrns[first_empty_slot] =
 			kmalloc(len + 1, GFP_KERNEL);
 		if (g_hdd_wowl_ptrns[first_empty_slot] == NULL) {
-			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-				  "%s: kmalloc failure", __func__);
+			hdd_err(" kmalloc failure");
 			return false;
 		}
 
@@ -258,8 +233,7 @@ bool hdd_add_wowl_ptrn(hdd_adapter_t *pAdapter, const char *ptrn)
 						   sessionId);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
 			/* Add failed, so invalidate the local storage */
-			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-				  "sme_wowl_add_bcast_pattern failed with error code (%d)",
+			hdd_err("sme_wowl_add_bcast_pattern failed with error code (%d)",
 				  qdf_ret_status);
 			kfree(g_hdd_wowl_ptrns[first_empty_slot]);
 			g_hdd_wowl_ptrns[first_empty_slot] = NULL;
@@ -316,8 +290,7 @@ bool hdd_del_wowl_ptrn(hdd_adapter_t *pAdapter, const char *ptrn)
 						   sessionId);
 		if (QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
 			/* Remove from local storage as well */
-			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-				  "Deleted pattern with id %d [%s]", id,
+			hdd_err("Deleted pattern with id %d [%s]", id,
 				  g_hdd_wowl_ptrns[id]);
 
 			kfree(g_hdd_wowl_ptrns[id]);
@@ -350,9 +323,8 @@ bool hdd_add_wowl_ptrn_debugfs(hdd_adapter_t *pAdapter, uint8_t pattern_idx,
 	uint16_t pattern_len, mask_len, i;
 
 	if (pattern_idx > (WOWL_MAX_PTRNS_ALLOWED - 1)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: WoW pattern index %d is out of range (0 ~ %d).",
-			  __func__, pattern_idx, WOWL_MAX_PTRNS_ALLOWED - 1);
+		hdd_err("WoW pattern index %d is out of range (0 ~ %d)",
+			pattern_idx, WOWL_MAX_PTRNS_ALLOWED - 1);
 
 		return false;
 	}
@@ -361,17 +333,15 @@ bool hdd_add_wowl_ptrn_debugfs(hdd_adapter_t *pAdapter, uint8_t pattern_idx,
 
 	/* Since the pattern is a hex string, 2 characters represent 1 byte. */
 	if (pattern_len % 2) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Malformed WoW pattern!", __func__);
+		hdd_err("Malformed WoW pattern!");
 
 		return false;
 	} else
 		pattern_len >>= 1;
 
 	if (!pattern_len || pattern_len > WOWL_PTRN_MAX_SIZE) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: WoW pattern length %d is out of range (1 ~ %d).",
-			  __func__, pattern_len, WOWL_PTRN_MAX_SIZE);
+		hdd_err("WoW pattern length %d is out of range (1 ~ %d).",
+			pattern_len, WOWL_PTRN_MAX_SIZE);
 
 		return false;
 	}
@@ -382,10 +352,9 @@ bool hdd_add_wowl_ptrn_debugfs(hdd_adapter_t *pAdapter, uint8_t pattern_idx,
 	localPattern.session_id = session_id;
 
 	if (localPattern.pattern_size > SIR_WOWL_BCAST_PATTERN_MAX_SIZE) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: WoW pattern size (%d) greater than max (%d)",
-			  __func__, localPattern.pattern_size,
-			  SIR_WOWL_BCAST_PATTERN_MAX_SIZE);
+		hdd_err("WoW pattern size (%d) greater than max (%d)",
+			localPattern.pattern_size,
+			SIR_WOWL_BCAST_PATTERN_MAX_SIZE);
 		return false;
 	}
 	/* Extract the pattern */
@@ -406,16 +375,14 @@ bool hdd_add_wowl_ptrn_debugfs(hdd_adapter_t *pAdapter, uint8_t pattern_idx,
 	mask_len = strlen(pattern_mask);
 	if ((mask_len % 2)
 	    || (localPattern.pattern_mask_size != (mask_len >> 1))) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Malformed WoW pattern mask!", __func__);
+		hdd_err("Malformed WoW pattern mask!");
 
 		return false;
 	}
 	if (localPattern.pattern_mask_size > WOWL_PTRN_MASK_MAX_SIZE) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: WoW pattern mask size (%d) greater than max (%d)",
-			  __func__, localPattern.pattern_mask_size,
-			  WOWL_PTRN_MASK_MAX_SIZE);
+		hdd_err("WoW pattern mask size (%d) greater than max (%d)",
+			localPattern.pattern_mask_size,
+			WOWL_PTRN_MASK_MAX_SIZE);
 		return false;
 	}
 	/* Extract the pattern mask */
@@ -433,9 +400,8 @@ bool hdd_add_wowl_ptrn_debugfs(hdd_adapter_t *pAdapter, uint8_t pattern_idx,
 		sme_wow_add_pattern(hHal, &localPattern, session_id);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: sme_wowl_add_bcast_pattern failed with error code (%d).",
-			  __func__, qdf_ret_status);
+		hdd_err("sme_wowl_add_bcast_pattern failed with error code (%d).",
+			  qdf_ret_status);
 
 		return false;
 	}
@@ -467,17 +433,15 @@ bool hdd_del_wowl_ptrn_debugfs(hdd_adapter_t *pAdapter, uint8_t pattern_idx)
 	uint8_t sessionId = pAdapter->sessionId;
 
 	if (pattern_idx > (WOWL_MAX_PTRNS_ALLOWED - 1)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: WoW pattern index %d is not in the range (0 ~ %d).",
-			  __func__, pattern_idx, WOWL_MAX_PTRNS_ALLOWED - 1);
+		hdd_err("WoW pattern index %d is not in the range (0 ~ %d).",
+			pattern_idx, WOWL_MAX_PTRNS_ALLOWED - 1);
 
 		return false;
 	}
 
 	if (!g_hdd_wowl_ptrns_debugfs[pattern_idx]) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: WoW pattern %d is not in the table.",
-			  __func__, pattern_idx);
+		hdd_err("WoW pattern %d is not in the table.",
+			pattern_idx);
 
 		return false;
 	}
@@ -488,9 +452,8 @@ bool hdd_del_wowl_ptrn_debugfs(hdd_adapter_t *pAdapter, uint8_t pattern_idx)
 						    sessionId);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: sme_wowl_del_bcast_pattern failed with error code (%d).",
-			  __func__, qdf_ret_status);
+		hdd_err("sme_wowl_del_bcast_pattern failed with error code (%d).",
+			 qdf_ret_status);
 
 		return false;
 	}
@@ -544,9 +507,8 @@ bool hdd_enter_wowl(hdd_adapter_t *pAdapter, bool enable_mp, bool enable_pbm)
 	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
 		if (QDF_STATUS_PMC_PENDING != qdf_ret_status) {
 			/* We failed to enter WoWL */
-			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-				  "sme_enter_wowl failed with error code (%d)",
-				  qdf_ret_status);
+			hdd_err("sme_enter_wowl failed with error code (%d)",
+				qdf_ret_status);
 			return false;
 		}
 	}
@@ -569,9 +531,8 @@ bool hdd_exit_wowl(hdd_adapter_t *pAdapter)
 
 	qdf_ret_status = sme_exit_wowl(hHal, &wowParams);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "sme_exit_wowl failed with error code (%d)",
-			  qdf_ret_status);
+		hdd_err("sme_exit_wowl failed with error code (%d)",
+			qdf_ret_status);
 		return false;
 	}
 
