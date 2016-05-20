@@ -599,6 +599,14 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 	lim_log(mac_ctx, LOG2, FL("dot11_mode:%d nss value:%d"),
 			addbss_param->dot11_mode, addbss_param->nss);
 
+	if (cds_is_5_mhz_enabled()) {
+		addbss_param->ch_width = CH_WIDTH_5MHZ;
+		addbss_param->staContext.ch_width = CH_WIDTH_5MHZ;
+	} else if (cds_is_10_mhz_enabled()) {
+		addbss_param->ch_width = CH_WIDTH_10MHZ;
+		addbss_param->staContext.ch_width = CH_WIDTH_10MHZ;
+	}
+
 	msg_buf.type = WMA_ADD_BSS_REQ;
 	msg_buf.reserved = 0;
 	msg_buf.bodyptr = addbss_param;

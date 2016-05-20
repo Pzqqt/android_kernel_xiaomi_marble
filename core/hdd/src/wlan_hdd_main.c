@@ -1347,6 +1347,19 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	hdd_context_t *hdd_ctx = (hdd_context_t *) context;
 	struct wma_tgt_cfg *cfg = param;
 	uint8_t temp_band_cap;
+	struct cds_config_info *cds_cfg = cds_get_ini_config();
+
+	if (cds_cfg) {
+		if (hdd_ctx->config->enable_sub_20_channel_width !=
+			WLAN_SUB_20_CH_WIDTH_NONE && !cfg->sub_20_support) {
+			hdd_err("User requested sub 20 MHz channel width but unsupported by FW.");
+			cds_cfg->sub_20_channel_width =
+				WLAN_SUB_20_CH_WIDTH_NONE;
+		} else {
+			cds_cfg->sub_20_channel_width =
+				hdd_ctx->config->enable_sub_20_channel_width;
+		}
+	}
 
 	/* first store the INI band capability */
 	temp_band_cap = hdd_ctx->config->nBandCapability;
@@ -6518,6 +6531,7 @@ int hdd_update_cds_config(hdd_context_t *hdd_ctx)
 	cds_cfg->tx_chain_mask_cck = hdd_ctx->config->tx_chain_mask_cck;
 	cds_cfg->self_gen_frm_pwr = hdd_ctx->config->self_gen_frm_pwr;
 	cds_cfg->max_station = hdd_ctx->config->maxNumberOfPeers;
+	cds_cfg->sub_20_channel_width = WLAN_SUB_20_CH_WIDTH_NONE;
 
 	hdd_ra_populate_cds_config(cds_cfg, hdd_ctx);
 	hdd_txrx_populate_cds_config(cds_cfg, hdd_ctx);

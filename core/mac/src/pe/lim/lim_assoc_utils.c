@@ -3987,6 +3987,14 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 	/* we need to defer the message until we get the response back from HAL. */
 	SET_LIM_PROCESS_DEFD_MESGS(pMac, false);
 
+	if (cds_is_5_mhz_enabled()) {
+		pAddBssParams->ch_width = CH_WIDTH_5MHZ;
+		pAddBssParams->staContext.ch_width = CH_WIDTH_5MHZ;
+	} else if (cds_is_10_mhz_enabled()) {
+		pAddBssParams->ch_width = CH_WIDTH_10MHZ;
+		pAddBssParams->staContext.ch_width = CH_WIDTH_10MHZ;
+	}
+
 	msgQ.type = WMA_ADD_BSS_REQ;
 	/** @ToDo : Update the Global counter to keeptrack of the PE <--> HAL messages*/
 	msgQ.reserved = 0;
@@ -4463,6 +4471,14 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 
 	/* we need to defer the message until we get the response back from HAL. */
 	SET_LIM_PROCESS_DEFD_MESGS(pMac, false);
+
+	if (cds_is_5_mhz_enabled()) {
+		pAddBssParams->ch_width = CH_WIDTH_5MHZ;
+		pAddBssParams->staContext.ch_width = CH_WIDTH_5MHZ;
+	} else if (cds_is_10_mhz_enabled()) {
+		pAddBssParams->ch_width = CH_WIDTH_10MHZ;
+		pAddBssParams->staContext.ch_width = CH_WIDTH_10MHZ;
+	}
 
 	msgQ.type = WMA_ADD_BSS_REQ;
 	/** @ToDo : Update the Global counter to keeptrack of the PE <--> HAL messages*/

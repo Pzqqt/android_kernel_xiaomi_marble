@@ -5252,6 +5252,12 @@ bool cds_allow_concurrency(enum cds_con_mode mode,
 	/* find the current connection state from conc_connection_list*/
 	num_connections = cds_get_connection_count();
 
+	if (num_connections && cds_is_sub_20_mhz_enabled()) {
+		/* dont allow concurrency if Sub 20 MHz is enabled */
+		status = false;
+		goto done;
+	}
+
 	if (cds_max_concurrent_connections_reached()) {
 		cds_err("Reached max concurrent connections: %d",
 			hdd_ctx->config->gMaxConcurrentActiveSessions);

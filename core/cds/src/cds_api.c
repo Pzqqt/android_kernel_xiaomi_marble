@@ -2213,3 +2213,69 @@ struct cds_config_info *cds_get_ini_config(void)
 
 	return cds_ctx->cds_cfg;
 }
+
+/**
+ * cds_is_5_mhz_enabled() - API to get 5MHZ enabled
+ *
+ * Return: true if 5 mhz is enabled, false otherwise
+ */
+bool cds_is_5_mhz_enabled(void)
+{
+	p_cds_contextType p_cds_context;
+
+	p_cds_context = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!p_cds_context) {
+		cds_err("%s: cds context is invalid", __func__);
+		return false;
+	}
+
+	if (p_cds_context->cds_cfg)
+		return (p_cds_context->cds_cfg->sub_20_channel_width ==
+						WLAN_SUB_20_CH_WIDTH_5);
+
+	return false;
+}
+
+/**
+ * cds_is_10_mhz_enabled() - API to get 10-MHZ enabled
+ *
+ * Return: true if 10 mhz is enabled, false otherwise
+ */
+bool cds_is_10_mhz_enabled(void)
+{
+	p_cds_contextType p_cds_context;
+
+	p_cds_context = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!p_cds_context) {
+		cds_err("%s: cds context is invalid", __func__);
+		return false;
+	}
+
+	if (p_cds_context->cds_cfg)
+		return (p_cds_context->cds_cfg->sub_20_channel_width ==
+						WLAN_SUB_20_CH_WIDTH_10);
+
+	return false;
+}
+
+/**
+ * cds_is_sub_20_mhz_enabled() - API to get sub 20-MHZ enabled
+ *
+ * Return: true if 5 or 10 mhz is enabled, false otherwise
+ */
+bool cds_is_sub_20_mhz_enabled(void)
+{
+	p_cds_contextType p_cds_context;
+
+	p_cds_context = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!p_cds_context) {
+		cds_err("%s: cds context is invalid", __func__);
+		return false;
+	}
+
+	if (p_cds_context->cds_cfg)
+		return p_cds_context->cds_cfg->sub_20_channel_width;
+
+	return false;
+}
+

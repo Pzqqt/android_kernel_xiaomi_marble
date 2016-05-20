@@ -720,11 +720,16 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 			else
 				pChanList->chanParam[num_channel].dfsSet =
 					true;
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 				"channel:%d, pwr=%d, DFS=%d\n",
 				pChanList->chanParam[num_channel].chanId,
 				pChanList->chanParam[num_channel].pwr,
 				pChanList->chanParam[num_channel].dfsSet);
+			if (cds_is_5_mhz_enabled())
+				pChanList->chanParam[num_channel].quarter_rate
+					= 1;
+			else if (cds_is_10_mhz_enabled())
+				pChanList->chanParam[num_channel].half_rate = 1;
 			num_channel++;
 		}
 	}
@@ -732,15 +737,20 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 	if (CSR_IS_5G_BAND_ONLY(pMac)) {
 		for (j = 0; j < MAX_SOCIAL_CHANNELS; j++) {
 			if (cds_get_channel_state(social_channel[j])
-			    == CHANNEL_STATE_ENABLE) {
-				pChanList->chanParam[num_channel].chanId =
-					social_channel[j];
-				pChanList->chanParam[num_channel].pwr =
-					csr_find_channel_pwr(pScan->defaultPowerTable,
-							  social_channel[j]);
-				pChanList->chanParam[num_channel].dfsSet = false;
-				num_channel++;
-			}
+			    != CHANNEL_STATE_ENABLE)
+				continue;
+			pChanList->chanParam[num_channel].chanId =
+				social_channel[j];
+			pChanList->chanParam[num_channel].pwr =
+				csr_find_channel_pwr(pScan->defaultPowerTable,
+						     social_channel[j]);
+			pChanList->chanParam[num_channel].dfsSet = false;
+			if (cds_is_5_mhz_enabled())
+				pChanList->chanParam[num_channel].quarter_rate
+									= 1;
+			else if (cds_is_10_mhz_enabled())
+				pChanList->chanParam[num_channel].half_rate = 1;
+			num_channel++;
 		}
 	}
 	if (pMac->roam.configParam.early_stop_scan_enable)

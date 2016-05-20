@@ -3399,6 +3399,15 @@ enum dot11p_mode {
 #define CFG_ADAPTIVE_PNOSCAN_DWELL_MODE_MAX      (4)
 #define CFG_ADAPTIVE_PNOSCAN_DWELL_MODE_DEFAULT  (0)
 
+/*
+ * gSub20ChannelWidth=0: indicates do not use Sub 20 MHz bandwidth
+ * gSub20ChannelWidth=1: Bring up SAP/STA in 5 MHz bandwidth
+ * gSub20ChannelWidth=2: Bring up SAP/STA in 10 MHz bandwidth
+ */
+#define CFG_SUB_20_CHANNEL_WIDTH_NAME              "gSub20ChannelWidth"
+#define CFG_SUB_20_CHANNEL_WIDTH_MIN               (WLAN_SUB_20_CH_WIDTH_NONE)
+#define CFG_SUB_20_CHANNEL_WIDTH_MAX               (WLAN_SUB_20_CH_WIDTH_10)
+#define CFG_SUB_20_CHANNEL_WIDTH_DEFAULT           (WLAN_SUB_20_CH_WIDTH_NONE)
 /*---------------------------------------------------------------------------
    Type declarations
    -------------------------------------------------------------------------*/
@@ -4058,6 +4067,7 @@ struct hdd_config {
 	uint8_t nan_datapath_ndi_channel;
 #endif
 	uint32_t iface_change_wait_time;
+	enum cfg_sub_20_channel_width enable_sub_20_channel_width;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

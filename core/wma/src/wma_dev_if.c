@@ -2747,6 +2747,12 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	req.vdev_id = vdev_id;
 	req.chan = add_bss->currentOperChannel;
 	req.chan_width = add_bss->ch_width;
+
+	if (add_bss->ch_width == CH_WIDTH_10MHZ)
+		req.is_half_rate = 1;
+	else if (add_bss->ch_width == CH_WIDTH_5MHZ)
+		req.is_quarter_rate = 1;
+
 	req.ch_center_freq_seg0 = add_bss->ch_center_freq_seg0;
 	req.ch_center_freq_seg1 = add_bss->ch_center_freq_seg1;
 	req.vht_capable = add_bss->vhtCapable;
@@ -3089,6 +3095,12 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 			req.vdev_id = vdev_id;
 			req.chan = add_bss->currentOperChannel;
 			req.chan_width = add_bss->ch_width;
+
+			if (add_bss->ch_width == CH_WIDTH_10MHZ)
+				req.is_half_rate = 1;
+			else if (add_bss->ch_width == CH_WIDTH_5MHZ)
+				req.is_quarter_rate = 1;
+
 			req.ch_center_freq_seg0 = add_bss->ch_center_freq_seg0;
 			req.ch_center_freq_seg1 = add_bss->ch_center_freq_seg1;
 			req.max_txpow = add_bss->maxTxPower;

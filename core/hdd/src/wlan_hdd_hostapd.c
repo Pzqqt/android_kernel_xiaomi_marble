@@ -8371,6 +8371,39 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	channel = ieee80211_frequency_to_channel(
 				params->chandef.chan->center_freq);
 
+	if (cds_is_sub_20_mhz_enabled()) {
+		enum channel_state ch_state;
+		enum phy_ch_width sub_20_ch_width = CH_WIDTH_INVALID;
+		/* Avoid ACS/DFS, and overwrite ch wd to 20 */
+		if (channel == 0) {
+			hdd_err("Can't start SAP-ACS (channel=0) with sub 20 MHz ch width.");
+			return -EINVAL;
+		}
+		if (CHANNEL_STATE_DFS == cds_get_channel_state(channel)) {
+			hdd_err("Can't start SAP-DFS (channel=%d)with sub 20 MHz ch wd",
+				channel);
+			return -EINVAL;
+		}
+		if (channel_width != HW_MODE_20_MHZ) {
+			hdd_err("Hostapd (20+ MHz) conflits with config.ini (sub 20 MHz)");
+			return -EINVAL;
+		}
+		if (cds_is_5_mhz_enabled())
+			sub_20_ch_width = CH_WIDTH_5MHZ;
+		if (cds_is_10_mhz_enabled())
+			sub_20_ch_width = CH_WIDTH_10MHZ;
+		if (CDS_IS_CHANNEL_5GHZ(channel))
+			ch_state = cds_get_5g_bonded_channel_state(channel,
+							  sub_20_ch_width);
+		else
+			ch_state = cds_get_2g_bonded_channel_state(channel,
+							  sub_20_ch_width, 0);
+		if (CHANNEL_STATE_DISABLE == ch_state) {
+			hdd_err("Given ch width not supported by reg domain.");
+			return -EINVAL;
+		}
+	}
+
 	/* check if concurrency is allowed */
 	if (!cds_allow_concurrency(
 				cds_convert_device_mode_to_qdf_type(

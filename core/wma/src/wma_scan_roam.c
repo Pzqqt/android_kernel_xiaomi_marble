@@ -2798,6 +2798,12 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	}
 	req.chan = params->channelNumber;
 	req.chan_width = params->ch_width;
+
+	if (params->ch_width == CH_WIDTH_10MHZ)
+		req.is_half_rate = 1;
+	else if (params->ch_width == CH_WIDTH_5MHZ)
+		req.is_quarter_rate = 1;
+
 	req.vht_capable = params->vhtCapable;
 	req.ch_center_freq_seg0 = params->ch_center_freq_seg0;
 	req.ch_center_freq_seg1 = params->ch_center_freq_seg1;

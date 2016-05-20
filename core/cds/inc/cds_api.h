@@ -283,4 +283,7 @@ void cds_init_ini_config(struct cds_config_info *cds_cfg);
 void cds_deinit_ini_config(void);
 struct cds_config_info *cds_get_ini_config(void);
 
+bool cds_is_5_mhz_enabled(void);
+bool cds_is_10_mhz_enabled(void);
+bool cds_is_sub_20_mhz_enabled(void);
 #endif /* if !defined __CDS_API_H */

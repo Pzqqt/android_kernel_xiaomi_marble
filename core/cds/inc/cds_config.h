@@ -41,6 +41,17 @@ enum driver_type {
 };
 
 /**
+ * enum cfg_sub_20_channel_width: ini values for su 20 mhz channel width
+ * @WLAN_SUB_20_CH_WIDTH_5: Use 5 mhz channel width
+ * @WLAN_SUB_20_CH_WIDTH_10: Use 10 mhz channel width
+ */
+enum cfg_sub_20_channel_width {
+	WLAN_SUB_20_CH_WIDTH_NONE = 0,
+	WLAN_SUB_20_CH_WIDTH_5 = 1,
+	WLAN_SUB_20_CH_WIDTH_10 = 2,
+};
+
+/**
  * struct cds_config_info - Place Holder for cds configuration
  * @max_station: Max station supported
  * @max_bssid: Max Bssid Supported
@@ -82,7 +93,7 @@ enum driver_type {
  * @is_nan_enabled: Indicate whether NAN is enabled or not
  * @tx_chain_mask_cck: Tx chain mask enabled or not
  * @self_gen_frm_pwr: Self gen from power
- *
+ * @sub_20_channel_width: Sub 20 MHz ch width, ini intersected with fw cap
  * Structure for holding cds ini parameters.
  */
 
@@ -131,5 +142,6 @@ struct cds_config_info {
 #endif
 	bool tx_chain_mask_cck;
 	uint16_t self_gen_frm_pwr;
+	enum cfg_sub_20_channel_width sub_20_channel_width;
 };
 #endif /* !defined( __CDS_CONFIG_H ) */

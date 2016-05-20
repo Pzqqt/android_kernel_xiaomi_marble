@@ -172,5 +172,6 @@ struct wma_tgt_cfg {
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 	bool nan_datapath_enabled;
 #endif
+	bool sub_20_support;
 };
 #endif /* WMA_TGT_CFG_H */

@@ -3913,6 +3913,8 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	void *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
 	qdf_mem_zero(&tgt_cfg, sizeof(struct wma_tgt_cfg));
+
+	tgt_cfg.sub_20_support = wma_handle->sub_20_support;
 	tgt_cfg.reg_domain = wma_handle->reg_cap.eeprom_rd;
 	tgt_cfg.eeprom_rd_ext = wma_handle->reg_cap.eeprom_rd_ext;
 
@@ -4771,6 +4773,9 @@ int wma_rx_ready_event(void *handle, uint8_t *cmd_param_info,
 	ev = param_buf->fixed_param;
 	/* Indicate to the waiting thread that the ready
 	 * event was received */
+	wma_handle->sub_20_support =
+		WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
+				WMI_SERVICE_HALF_RATE_QUARTER_RATE_SUPPORT);
 	wma_handle->wmi_ready = true;
 	wma_handle->wlan_init_status = ev->status;
 

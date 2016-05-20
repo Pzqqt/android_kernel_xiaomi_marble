@@ -1437,6 +1437,12 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	if (status)
 		goto out;
 
+	if (cds_is_sub_20_mhz_enabled()) {
+		hdd_err("ACS not supported in sub 20 MHz ch wd.");
+		status = -EINVAL;
+		goto out;
+	}
+
 	sap_config = &adapter->sessionCtx.ap.sapConfig;
 	qdf_mem_zero(&sap_config->acs_cfg, sizeof(struct sap_acs_cfg));
 
@@ -8452,6 +8458,12 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 		   (pAdapter->device_mode == QDF_P2P_CLIENT_MODE)) {
 #ifdef FEATURE_WLAN_TDLS
 		if (params->sta_flags_set & BIT(NL80211_STA_FLAG_TDLS_PEER)) {
+
+			if (cds_is_sub_20_mhz_enabled()) {
+				hdd_err("TDLS not allowed with sub 20 MHz");
+				return -EINVAL;
+			}
+
 			StaParams.capability = params->capability;
 			StaParams.uapsd_queues = params->uapsd_queues;
 			StaParams.max_sp = params->max_sp;

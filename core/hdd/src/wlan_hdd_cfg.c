@@ -3968,6 +3968,13 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		CFG_ADAPT_DWELL_LPF_WEIGHT_MIN,
 		CFG_ADAPT_DWELL_LPF_WEIGHT_MAX),
 
+	REG_VARIABLE(CFG_SUB_20_CHANNEL_WIDTH_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, enable_sub_20_channel_width,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_SUB_20_CHANNEL_WIDTH_DEFAULT,
+		     CFG_SUB_20_CHANNEL_WIDTH_MIN,
+		     CFG_SUB_20_CHANNEL_WIDTH_MAX),
+
 	REG_VARIABLE(CFG_ADAPT_DWELL_PASMON_INTVAL_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, adapt_dwell_passive_mon_intval,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -5662,6 +5669,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_info("Name = [%s] Value = [%u]",
 		CFG_ADAPT_DWELL_WIFI_THRESH_NAME,
 		pHddCtx->config->adapt_dwell_wifi_act_threshold);
+	hdd_info("Name = [%s] value = [%u]",
+		 CFG_SUB_20_CHANNEL_WIDTH_NAME,
+		 pHddCtx->config->enable_sub_20_channel_width);
 	hdd_ndp_print_ini_config(pHddCtx);
 	hdd_info("Name = [%s] Value = [%s]",
 		CFG_RM_CAPABILITY_NAME,

@@ -1438,6 +1438,7 @@ typedef struct {
 	bool nan_datapath_enabled;
 	QDF_STATUS (*pe_ndp_event_handler)(tpAniSirGlobal mac_ctx,
 					   cds_msg_t *msg);
+	bool sub_20_support;
 } t_wma_handle, *tp_wma_handle;
 
 /**
