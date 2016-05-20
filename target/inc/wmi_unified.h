@@ -5500,6 +5500,8 @@ typedef enum {
 	 * a bit-or mask of wmi_vdev_param_filter enum values.
 	 */
 	WMI_VDEV_PARAM_RX_FILTER,
+	/* vdev-specific mgmt tx power in dBm units (signed integer value) */
+	WMI_VDEV_PARAM_MGMT_TX_POWER,
 } WMI_VDEV_PARAM;
 
 /* vdev capabilities bit mask */
@@ -15521,12 +15523,14 @@ typedef struct {
 	A_UINT32 phy_id;
 	/* supported modulations */
 	union {
-		A_UINT32 supports_11b:1,
-			 supports_11g:1,
-			 supports_11a:1,
-			 supports_11n:1,
-			 supports_11ac:1,
-			 supports_11ax:1;
+		struct {
+			A_UINT32 supports_11b:1,
+				 supports_11g:1,
+				 supports_11a:1,
+				 supports_11n:1,
+				 supports_11ac:1,
+				 supports_11ax:1;
+		};
 		A_UINT32 supported_flags;
 	};
 	/* supported bands, enum WLAN_BAND_CAPABILITY */
