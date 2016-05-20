@@ -1,5 +1,5 @@
 /*
- * Copyright (q) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -96,11 +96,13 @@ typedef struct _os_mesg_t {
 /**
  * struct qdf_bus_context - Bus to hal context handoff
  * @bc_tag: bus context tag
+ * @cal_in_flash: calibration data stored in flash
  * @bc_handle: bus context handle
  * @bc_bustype: bus type
  */
 typedef struct qdf_bus_context {
-	int bc_tag;
+	void *bc_tag;
+	int cal_in_flash;
 	char *bc_handle;
 	enum qdf_bus_type bc_bustype;
 } QDF_BUS_CONTEXT;
@@ -127,6 +129,7 @@ typedef void (*os_mesg_handler_t)(void *ctx, uint16_t mesg_type,
  * @handler: message handler
  * @ctx: pointer to context
  * @is_synchronous: bit to save synchronous status
+ * @del_progress: delete in progress
  */
 typedef struct {
 	osdev_t dev_handle;
@@ -145,11 +148,13 @@ typedef struct {
 	os_mesg_handler_t handler;
 	void *ctx;
 	uint8_t is_synchronous:1;
+	uint8_t del_progress;
 } os_mesg_queue_t;
 
 /**
  * struct _NIC_DEV - Definition of OS-dependent device structure.
  * It'll be opaque to the actual ATH layer.
+ * @qdf_dev: qdf device
  * @bdev: bus device handle
  * @netdev: net device handle (wifi%d)
  * @intr_tq: tasklet
@@ -157,9 +162,17 @@ typedef struct {
  * @bc: hal bus context
  * @device: generic device
  * @event_queue: instance to wait queue
- * @is_device_asleep: keep device status, sleep or awake
+ * @wmi_timeout: init timeout
+ * @wmi_timeout_unintr: init timeout (uninterrupted wait)
+ * @is_device_asleep: keep device status, sleep or awakei
+ * @acfg_event_list: event list
+ * @acfg_event_queue_lock: queue lock
+ * @acfg_event_os_work: schedule or create work
+ * @acfg_netlink_wq_init_done: Work queue ready
+ * @osdev_acfg_handle: acfg handle
  */
 struct _NIC_DEV {
+	qdf_device_t qdf_dev;
 	void *bdev;
 	struct net_device *netdev;
 	qdf_bh_t intr_tq;
@@ -168,6 +181,8 @@ struct _NIC_DEV {
 #ifdef ATH_PERF_PWR_OFFLOAD
 	struct device *device;
 	wait_queue_head_t event_queue;
+	unsigned int wmi_timeout;
+	unsigned int wmi_timeout_unintr;
 #endif /* PERF_PWR_OFFLOAD */
 #if OS_SUPPORT_ASYNC_Q
 	os_mesg_queue_t async_q;
@@ -175,6 +190,17 @@ struct _NIC_DEV {
 #ifdef ATH_BUS_PM
 	uint8_t is_device_asleep;
 #endif /* ATH_BUS_PM */
+	qdf_nbuf_queue_t acfg_event_list;
+	qdf_spinlock_t acfg_event_queue_lock;
+	qdf_work_t acfg_event_os_work;
+	uint8_t acfg_netlink_wq_init_done;
+
+#ifdef UMAC_SUPPORT_ACFG
+#ifdef ACFG_NETLINK_TX
+	void *osdev_acfg_handle;
+#endif /* ACFG_NETLINK_TX */
+#endif /* UMAC_SUPPORT_ACFG */
+
 };
 
 #define __QDF_SYSCTL_PROC_DOINTVEC(ctl, write, filp, buffer, lenp, ppos) \
