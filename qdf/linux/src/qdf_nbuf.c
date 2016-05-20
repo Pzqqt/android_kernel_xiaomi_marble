@@ -622,6 +622,223 @@ static spinlock_t g_qdf_net_buf_track_lock[QDF_NET_BUF_TRACK_MAX_SIZE];
 typedef struct qdf_nbuf_track_t QDF_NBUF_TRACK;
 
 static QDF_NBUF_TRACK *gp_qdf_net_buf_track_tbl[QDF_NET_BUF_TRACK_MAX_SIZE];
+static struct kmem_cache *nbuf_tracking_cache;
+static QDF_NBUF_TRACK *qdf_net_buf_track_free_list;
+static spinlock_t qdf_net_buf_track_free_list_lock;
+static uint32_t qdf_net_buf_track_free_list_count;
+static uint32_t qdf_net_buf_track_used_list_count;
+static uint32_t qdf_net_buf_track_max_used;
+static uint32_t qdf_net_buf_track_max_free;
+static uint32_t qdf_net_buf_track_max_allocated;
+
+/**
+ * update_max_used() - update qdf_net_buf_track_max_used tracking variable
+ *
+ * tracks the max number of network buffers that the wlan driver was tracking
+ * at any one time.
+ *
+ * Return: none
+ */
+static inline void update_max_used(void)
+{
+	int sum;
+
+	if (qdf_net_buf_track_max_used <
+	    qdf_net_buf_track_used_list_count)
+		qdf_net_buf_track_max_used = qdf_net_buf_track_used_list_count;
+	sum = qdf_net_buf_track_free_list_count +
+		qdf_net_buf_track_used_list_count;
+	if (qdf_net_buf_track_max_allocated < sum)
+		qdf_net_buf_track_max_allocated = sum;
+}
+
+/**
+ * update_max_free() - update qdf_net_buf_track_free_list_count
+ *
+ * tracks the max number tracking buffers kept in the freelist.
+ *
+ * Return: none
+ */
+static inline void update_max_free(void)
+{
+	if (qdf_net_buf_track_max_free <
+	    qdf_net_buf_track_free_list_count)
+		qdf_net_buf_track_max_free = qdf_net_buf_track_free_list_count;
+}
+
+/**
+ * qdf_nbuf_track_alloc() - allocate a cookie to track nbufs allocated by wlan
+ *
+ * This function pulls from a freelist if possible and uses kmem_cache_alloc.
+ * This function also ads fexibility to adjust the allocation and freelist
+ * scheems.
+ *
+ * Return: a pointer to an unused QDF_NBUF_TRACK structure may not be zeroed.
+ */
+static QDF_NBUF_TRACK *qdf_nbuf_track_alloc(void)
+{
+	int flags = GFP_KERNEL;
+	unsigned long irq_flag;
+	QDF_NBUF_TRACK *new_node = NULL;
+
+	spin_lock_irqsave(&qdf_net_buf_track_free_list_lock, irq_flag);
+	qdf_net_buf_track_used_list_count++;
+	if (qdf_net_buf_track_free_list != NULL) {
+		new_node = qdf_net_buf_track_free_list;
+		qdf_net_buf_track_free_list =
+			qdf_net_buf_track_free_list->p_next;
+		qdf_net_buf_track_free_list_count--;
+	}
+	update_max_used();
+	spin_unlock_irqrestore(&qdf_net_buf_track_free_list_lock, irq_flag);
+
+	if (new_node != NULL)
+		return new_node;
+
+	if (in_interrupt() || irqs_disabled() || in_atomic())
+		flags = GFP_ATOMIC;
+
+	return kmem_cache_alloc(nbuf_tracking_cache, flags);
+}
+
+/* FREEQ_POOLSIZE initial and minimum desired freelist poolsize */
+#define FREEQ_POOLSIZE 2048
+
+/**
+ * qdf_nbuf_track_free() - free the nbuf tracking cookie.
+ *
+ * Matches calls to qdf_nbuf_track_alloc.
+ * Either frees the tracking cookie to kernel or an internal
+ * freelist based on the size of the freelist.
+ *
+ * Return: none
+ */
+static void qdf_nbuf_track_free(QDF_NBUF_TRACK *node)
+{
+	unsigned long irq_flag;
+
+	/* Try to shrink the freelist if free_list_count > than FREEQ_POOLSIZE
+	 * only shrink the freelist if it is bigger than twice the number of
+	 * nbufs in use. If the driver is stalling in a consistent bursty
+	 * fasion, this will keep 3/4 of thee allocations from the free list
+	 * while also allowing the system to recover memory as less frantic
+	 * traffic occurs.
+	 */
+
+	spin_lock_irqsave(&qdf_net_buf_track_free_list_lock, irq_flag);
+
+	qdf_net_buf_track_used_list_count--;
+	if (qdf_net_buf_track_free_list_count > FREEQ_POOLSIZE &&
+	   (qdf_net_buf_track_free_list_count >
+	    qdf_net_buf_track_used_list_count << 1)) {
+		kmem_cache_free(nbuf_tracking_cache, node);
+	} else {
+		node->p_next = qdf_net_buf_track_free_list;
+		qdf_net_buf_track_free_list = node;
+		qdf_net_buf_track_free_list_count++;
+	}
+	update_max_free();
+	spin_unlock_irqrestore(&qdf_net_buf_track_free_list_lock, irq_flag);
+}
+
+/**
+ * qdf_nbuf_track_prefill() - prefill the nbuf tracking cookie freelist
+ *
+ * Removes a 'warmup time' characteristic of the freelist.  Prefilling
+ * the freelist first makes it performant for the first iperf udp burst
+ * as well as steady state.
+ *
+ * Return: None
+ */
+static void qdf_nbuf_track_prefill(void)
+{
+	int i;
+	QDF_NBUF_TRACK *node, *head;
+
+	/* prepopulate the freelist */
+	head = NULL;
+	for (i = 0; i < FREEQ_POOLSIZE; i++) {
+		node = qdf_nbuf_track_alloc();
+		if (node == NULL)
+			continue;
+		node->p_next = head;
+		head = node;
+	}
+	while (head) {
+		node = head->p_next;
+		qdf_nbuf_track_free(head);
+		head = node;
+	}
+}
+
+/**
+ * qdf_nbuf_track_memory_manager_create() - manager for nbuf tracking cookies
+ *
+ * This initializes the memory manager for the nbuf tracking cookies.  Because
+ * these cookies are all the same size and only used in this feature, we can
+ * use a kmem_cache to provide tracking as well as to speed up allocations.
+ * To avoid the overhead of allocating and freeing the buffers (including SLUB
+ * features) a freelist is prepopulated here.
+ *
+ * Return: None
+ */
+static void qdf_nbuf_track_memory_manager_create(void)
+{
+	spin_lock_init(&qdf_net_buf_track_free_list_lock);
+	nbuf_tracking_cache = kmem_cache_create("qdf_nbuf_tracking_cache",
+						sizeof(QDF_NBUF_TRACK),
+						0, 0, NULL);
+
+	qdf_nbuf_track_prefill();
+}
+
+/**
+ * qdf_nbuf_track_memory_manager_destroy() - manager for nbuf tracking cookies
+ *
+ * Empty the freelist and print out usage statistics when it is no longer
+ * needed. Also the kmem_cache should be destroyed here so that it can warn if
+ * any nbuf tracking cookies were leaked.
+ *
+ * Return: None
+ */
+static void qdf_nbuf_track_memory_manager_destroy(void)
+{
+	QDF_NBUF_TRACK *node, *tmp;
+	unsigned long irq_flag;
+
+	spin_lock_irqsave(&qdf_net_buf_track_free_list_lock, irq_flag);
+	node = qdf_net_buf_track_free_list;
+
+	qdf_print("%s: %d residual freelist size\n",
+			  __func__, qdf_net_buf_track_free_list_count);
+
+	qdf_print("%s: %d max freelist size observed\n",
+			  __func__, qdf_net_buf_track_max_free);
+
+	qdf_print("%s: %d max buffers used observed\n",
+			  __func__, qdf_net_buf_track_max_used);
+
+	qdf_print("%s: %d max buffers allocated observed\n",
+			  __func__, qdf_net_buf_track_max_used);
+
+	while (node) {
+		tmp = node;
+		node = node->p_next;
+		kmem_cache_free(nbuf_tracking_cache, tmp);
+		qdf_net_buf_track_free_list_count--;
+	}
+
+	if (qdf_net_buf_track_free_list_count != 0)
+		qdf_print("%s: %d unfreed tracking memory lost in freelist\n",
+			  __func__, qdf_net_buf_track_free_list_count);
+
+	if (qdf_net_buf_track_used_list_count != 0)
+		qdf_print("%s: %d unfreed tracking memory still in use\n",
+			  __func__, qdf_net_buf_track_used_list_count);
+
+	spin_unlock_irqrestore(&qdf_net_buf_track_free_list_lock, irq_flag);
+	kmem_cache_destroy(nbuf_tracking_cache);
+}
 
 /**
  * qdf_net_buf_debug_init() - initialize network buffer debug functionality
@@ -638,6 +855,8 @@ void qdf_net_buf_debug_init(void)
 {
 	uint32_t i;
 
+	qdf_nbuf_track_memory_manager_create();
+
 	for (i = 0; i < QDF_NET_BUF_TRACK_MAX_SIZE; i++) {
 		gp_qdf_net_buf_track_tbl[i] = NULL;
 		spin_lock_init(&g_qdf_net_buf_track_lock[i]);
@@ -651,6 +870,8 @@ EXPORT_SYMBOL(qdf_net_buf_debug_init);
  * qdf_net_buf_debug_init() - exit network buffer debug functionality
  *
  * Exit network buffer tracking debug functionality and log SKB memory leaks
+ * As part of exiting the functionality, free the leaked memory and
+ * cleanup the tracking buffers.
  *
  * Return: none
  */
@@ -667,44 +888,19 @@ void qdf_net_buf_debug_exit(void)
 		while (p_node) {
 			p_prev = p_node;
 			p_node = p_node->p_next;
-			qdf_print(
-				  "SKB buf memory Leak@ File %s, @Line %d, size %zu\n",
+			qdf_print("SKB buf memory Leak@ File %s, @Line %d, size %zu\n",
 				  p_prev->file_name, p_prev->line_num,
 				  p_prev->size);
+			qdf_nbuf_track_free(p_prev);
 		}
 		spin_unlock_irqrestore(&g_qdf_net_buf_track_lock[i], irq_flag);
 	}
+
+	qdf_nbuf_track_memory_manager_destroy();
 
 	return;
 }
 EXPORT_SYMBOL(qdf_net_buf_debug_exit);
-
-/**
- * qdf_net_buf_debug_clean() - clean up network buffer debug functionality
- *
- * Return: none
- */
-void qdf_net_buf_debug_clean(void)
-{
-	uint32_t i;
-	unsigned long irq_flag;
-	QDF_NBUF_TRACK *p_node;
-	QDF_NBUF_TRACK *p_prev;
-
-	for (i = 0; i < QDF_NET_BUF_TRACK_MAX_SIZE; i++) {
-		spin_lock_irqsave(&g_qdf_net_buf_track_lock[i], irq_flag);
-		p_node = gp_qdf_net_buf_track_tbl[i];
-		while (p_node) {
-			p_prev = p_node;
-			p_node = p_node->p_next;
-			qdf_mem_free(p_prev);
-		}
-		spin_unlock_irqrestore(&g_qdf_net_buf_track_lock[i], irq_flag);
-	}
-
-	return;
-}
-EXPORT_SYMBOL(qdf_net_buf_debug_clean);
 
 /**
  * qdf_net_buf_debug_hash() - hash network buffer pointer
@@ -760,7 +956,7 @@ void qdf_net_buf_debug_add_node(qdf_nbuf_t net_buf, size_t size,
 	QDF_NBUF_TRACK *p_node;
 	QDF_NBUF_TRACK *new_node;
 
-	new_node = (QDF_NBUF_TRACK *) qdf_mem_malloc(sizeof(*new_node));
+	new_node = qdf_nbuf_track_alloc();
 
 	i = qdf_net_buf_debug_hash(net_buf);
 	spin_lock_irqsave(&g_qdf_net_buf_track_lock[i], irq_flag);
@@ -768,12 +964,11 @@ void qdf_net_buf_debug_add_node(qdf_nbuf_t net_buf, size_t size,
 	p_node = qdf_net_buf_debug_look_up(net_buf);
 
 	if (p_node) {
-		qdf_print(
-			  "Double allocation of skb ! Already allocated from %p %s %d current alloc from %p %s %d",
+		qdf_print("Double allocation of skb ! Already allocated from %p %s %d current alloc from %p %s %d",
 			  p_node->net_buf, p_node->file_name, p_node->line_num,
 			  net_buf, file_name, line_num);
 		QDF_ASSERT(0);
-		qdf_mem_free(new_node);
+		qdf_nbuf_track_free(new_node);
 		goto done;
 	} else {
 		p_node = new_node;
@@ -826,7 +1021,6 @@ void qdf_net_buf_debug_delete_node(qdf_nbuf_t net_buf)
 	/* Found at head of the table */
 	if (p_head->net_buf == net_buf) {
 		gp_qdf_net_buf_track_tbl[i] = p_node->p_next;
-		qdf_mem_free((void *)p_node);
 		found = true;
 		goto done;
 	}
@@ -837,21 +1031,21 @@ void qdf_net_buf_debug_delete_node(qdf_nbuf_t net_buf)
 		p_node = p_node->p_next;
 		if ((NULL != p_node) && (p_node->net_buf == net_buf)) {
 			p_prev->p_next = p_node->p_next;
-			qdf_mem_free((void *)p_node);
 			found = true;
 			break;
 		}
 	}
 
 done:
+	spin_unlock_irqrestore(&g_qdf_net_buf_track_lock[i], irq_flag);
+
 	if (!found) {
-		qdf_print(
-			  "Unallocated buffer ! Double free of net_buf %p ?",
+		qdf_print("Unallocated buffer ! Double free of net_buf %p ?",
 			  net_buf);
 		QDF_ASSERT(0);
+	} else {
+		qdf_nbuf_track_free(p_node);
 	}
-
-	spin_unlock_irqrestore(&g_qdf_net_buf_track_lock[i], irq_flag);
 
 	return;
 }

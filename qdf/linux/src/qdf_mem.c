@@ -339,7 +339,6 @@ void qdf_mem_clean(void)
 {
 	uint32_t list_size;
 	list_size = qdf_list_size(&qdf_mem_list);
-	qdf_net_buf_debug_clean();
 	if (list_size) {
 		qdf_list_node_t *node;
 		QDF_STATUS qdf_status;
