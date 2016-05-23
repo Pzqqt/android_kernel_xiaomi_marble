@@ -7315,6 +7315,7 @@ struct wmi_ops non_tlv_ops =  {
 			extract_pdev_reserve_ast_ev_param_non_tlv,
 	.extract_swba_vdev_map = extract_swba_vdev_map_non_tlv,
 	.extract_swba_tim_info = extract_swba_tim_info_non_tlv,
+	.extract_swba_noa_info = extract_swba_noa_info_non_tlv,
 	.extract_peer_sta_ps_statechange_ev =
 			extract_peer_sta_ps_statechange_ev_non_tlv,
 	.extract_peer_sta_kickout_ev = extract_peer_sta_kickout_ev_non_tlv,
