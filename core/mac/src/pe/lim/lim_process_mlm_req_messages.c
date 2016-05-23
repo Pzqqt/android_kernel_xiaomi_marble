@@ -2394,11 +2394,6 @@ static void lim_process_join_failure_timeout(tpAniSirGlobal mac_ctx)
 		session->limMlmState = eLIM_MLM_IDLE_STATE;
 		MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE,
 				 session->peSessionId, session->limMlmState));
-		if (lim_set_link_state(mac_ctx, eSIR_LINK_IDLE_STATE,
-				       session->bssId, session->selfMacAddr,
-				       NULL, NULL) != eSIR_SUCCESS)
-			lim_log(mac_ctx, LOGE,
-				("Failed to set the LinkState"));
 		/* Update PE session Id */
 		mlm_join_cnf.sessionId = session->peSessionId;
 		/* Freeup buffer allocated to join request */

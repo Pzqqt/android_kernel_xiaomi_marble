@@ -1436,7 +1436,7 @@ error:
 	/* Delete teh session if JOIN failure occurred. */
 	if (result_code != eSIR_SME_SUCCESS) {
 		if (lim_set_link_state
-			(mac_ctx, eSIR_LINK_IDLE_STATE,
+			(mac_ctx, eSIR_LINK_DOWN_STATE,
 			session_entry->bssId,
 			session_entry->selfMacAddr, NULL,
 			NULL) != eSIR_SUCCESS)

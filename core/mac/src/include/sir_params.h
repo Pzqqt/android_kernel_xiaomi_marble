@@ -109,6 +109,7 @@ typedef enum eSriLinkState {
 	eSIR_LINK_POSTASSOC_STATE = 2,
 	eSIR_LINK_AP_STATE = 3,
 	eSIR_LINK_IBSS_STATE = 4,
+	eSIR_LINK_DOWN_STATE = 5,
 } tSirLinkState;
 
 /* / Message queue structure used across Sirius project. */
