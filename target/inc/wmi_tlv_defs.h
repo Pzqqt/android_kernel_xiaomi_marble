@@ -709,6 +709,8 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_dbglog_time_stamp_sync_cmd_fixed_param,
 	WMITLV_TAG_STRUC_wmi_place_holder_1,
 	WMITLV_TAG_STRUC_wmi_place_holder_2,
+	WMITLV_TAG_STRUC_wmi_per_chain_rssi_stats,
+	WMITLV_TAG_STRUC_wmi_rssi_stats,
 } WMITLV_TAG_ID;
 
 /*
@@ -3192,9 +3194,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_OEM_RESPONSE_EVENTID);
 WMITLV_CREATE_PARAM_STRUC(WMI_HOST_SWBA_EVENTID);
 
 /* Update stats Event */
-#define WMITLV_TABLE_WMI_UPDATE_STATS_EVENTID(id,op,buf,len) \
-	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_stats_event_fixed_param, wmi_stats_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
-	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR)
+#define WMITLV_TABLE_WMI_UPDATE_STATS_EVENTID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_stats_event_fixed_param, wmi_stats_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_per_chain_rssi_stats, wmi_per_chain_rssi_stats, chain_stats, WMITLV_SIZE_FIX) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_STRUC, wmi_rssi_stats, rssi_stats, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_UPDATE_STATS_EVENTID);
 
 /* For vdev based ht/vht info upload*/

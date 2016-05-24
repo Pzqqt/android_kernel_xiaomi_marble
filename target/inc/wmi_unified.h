@@ -77,6 +77,7 @@ extern "C" {
 
 #define MAX_TX_RATE_VALUES      10      /*Max Tx Rates */
 #define MAX_RSSI_VALUES         10      /*Max Rssi values */
+#define MAX_CHAINS 8
 
 /* The WLAN_MAX_AC macro cannot be changed without breaking
  * WMI compatibility.
@@ -3742,6 +3743,32 @@ typedef struct {
 #define WMI_FAST_DIVERSITY_BIT_OFFSET 0
 #define WMI_SLOW_DIVERSITY_BIT_OFFSET 1
 
+#define WMI_SLOW_DIVERSITY_CH0_WEIGHT_SHIFT 2
+#define WMI_SLOW_DIVERSITY_CH0_WEIGHT_MASK \
+		(0xf << WMI_SLOW_DIVERSITY_CH0_WEIGHT_SHIFT)
+#define WMI_SLOW_DIVERSITY_CH0_WEIGHT_GET_BITS(word32) \
+	(((word32) & WMI_SLOW_DIVERSITY_CH0_WEIGHT_MASK) >> \
+		WMI_SLOW_DIVERSITY_CH0_WEIGHT_SHIFT)
+#define WMI_SLOW_DIVERSITY_CH0_WEIGHT_SET_BITS(word32, value) \
+	do { \
+		(word32) &= ~WMI_SLOW_DIVERSITY_CH0_WEIGHT_MASK; \
+		(word32) |= ((value) << WMI_SLOW_DIVERSITY_CH0_WEIGHT_SHIFT) & \
+			WMI_SLOW_DIVERSITY_CH0_WEIGHT_MASK; \
+	} while (0)
+
+#define WMI_SLOW_DIVERSITY_CH1_WEIGHT_SHIFT 6
+#define WMI_SLOW_DIVERSITY_CH1_WEIGHT_MASK \
+		(0xf << WMI_SLOW_DIVERSITY_CH1_WEIGHT_SHIFT)
+#define WMI_SLOW_DIVERSITY_CH1_WEIGHT_GET_BITS(word32) \
+	(((word32) & WMI_SLOW_DIVERSITY_CH1_WEIGHT_MASK) >> \
+		WMI_SLOW_DIVERSITY_CH1_WEIGHT_SHIFT)
+#define WMI_SLOW_DIVERSITY_CH1_WEIGHT_SET_BITS(word32, value) \
+	do { \
+		(word32) &= ~WMI_SLOW_DIVERSITY_CH1_WEIGHT_MASK; \
+		(word32) |= ((value) << WMI_SLOW_DIVERSITY_CH1_WEIGHT_SHIFT) & \
+			WMI_SLOW_DIVERSITY_CH1_WEIGHT_MASK; \
+	} while (0)
+
 typedef struct {
 	/** TLV tag and len; tag equals
 	 * WMITLV_TAG_STRUC_wmi_pdev_set_antenna_diversity_cmd_fixed_param
@@ -3755,10 +3782,16 @@ typedef struct {
 		 */
 		A_UINT32 pdev_id;
 	};
-	/** parameter   */
-	/** bit0 is for enable/disable FAST diversity,
-	 * and bit1 is for enable/disable SLOW diversity,
-	 * 0->disable, 1->enable
+	/*
+	 * The following "value" field is divided into bit fields as follows:
+	 *     bits | purpose
+	 *     -----+---------------------------------------
+	 *        0 | enable/disable FAST diversity
+	 *        1 | enable/disable SLOW diversity
+	 *      5:2 | chain0 slow-diversity weighting factor
+	 *      9:6 | chain1 slow-diversity weighting factor
+	 *     31:10| currenty unused (set to 0x0)
+	 * Refer to the above WMI_[FAST/SLOW]_DIVERSITY constants.
 	 */
 	A_UINT32 value;
 } wmi_pdev_set_antenna_diversity_cmd_fixed_param;
@@ -4193,6 +4226,7 @@ typedef enum {
 	WMI_REQUEST_VDEV_RATE_STAT = 0x20,
 	WMI_REQUEST_INST_STAT  = 0x40,
 	WMI_REQUEST_MIB_STAT       = 0x80,
+	WMI_REQUEST_RSSI_PER_CHAIN_STAT = 0x100,
 } wmi_stats_id;
 
 typedef struct {
@@ -4896,6 +4930,28 @@ typedef struct {
 	A_UINT32 reserved_3;
 	A_UINT32 reserved_4;
 } wmi_mib_stats;
+
+typedef struct {
+	/* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_rssi_stats */
+	A_UINT32 tlv_header;
+	A_UINT32 vdev_id;
+	A_INT32  rssi_avg_beacon[MAX_CHAINS];
+	A_INT32  rssi_avg_data[MAX_CHAINS];
+	wmi_mac_addr peer_macaddr;
+} wmi_rssi_stats;
+
+typedef struct {
+	/*
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_per_chain_rssi_stats
+	 */
+	A_UINT32 tlv_header;
+	A_UINT32 num_per_chain_rssi_stats;
+	/*
+	 * This TLV is followed by another TLV of array of structs:
+	 * wmi_rssi_stats rssi_stats[num_per_chain_rssi_stats];
+	 */
+} wmi_per_chain_rssi_stats;
 
 typedef struct {
 	A_UINT32 tlv_header;
