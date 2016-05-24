@@ -1326,14 +1326,18 @@ int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 						 [WLAN_HDD_PUBLIC_ACTION_FRAME_OFFSET]));
 	}
 
-	if (pAdapter->device_mode == QDF_SAP_MODE) {
+	if ((pAdapter->device_mode == QDF_SAP_MODE) &&
+	    (test_bit(SOFTAP_BSS_STARTED, &pAdapter->event_flags))) {
 		home_ch = pAdapter->sessionCtx.ap.operatingChannel;
-	} else if (pAdapter->device_mode == QDF_STA_MODE) {
+	} else if ((pAdapter->device_mode == QDF_STA_MODE) &&
+		   (pAdapter->sessionCtx.station.conn_info.connState ==
+				eConnectionState_Associated)) {
 		home_ch =
 			pAdapter->sessionCtx.station.conn_info.operationChannel;
 	} else {
 		goAdapter = hdd_get_adapter(pAdapter->pHddCtx, QDF_P2P_GO_MODE);
-		if (goAdapter)
+		if (goAdapter &&
+		    (test_bit(SOFTAP_BSS_STARTED, &goAdapter->event_flags)))
 			home_ch = goAdapter->sessionCtx.ap.operatingChannel;
 	}
 
