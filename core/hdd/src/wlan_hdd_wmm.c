@@ -2270,7 +2270,8 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(hdd_adapter_t *pAdapter, uint32_t handle)
 
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
 	smeStatus =
-		sme_qos_release_req(WLAN_HDD_GET_HAL_CTX(pAdapter), qosFlowId);
+		sme_qos_release_req(WLAN_HDD_GET_HAL_CTX(pAdapter),
+				    pAdapter->sessionId, qosFlowId);
 
 	hdd_info("SME flow %d released, SME status %d", qosFlowId, smeStatus);
 

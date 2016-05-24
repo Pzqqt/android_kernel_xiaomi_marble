@@ -240,7 +240,8 @@ sme_QosStatusType sme_qos_setup_req(tHalHandle hHal, uint32_t sessionId,
 		sme_QosWmmUpType UPType, uint32_t *pQosFlowID);
 sme_QosStatusType sme_qos_modify_req(tHalHandle hHal,
 		sme_QosWmmTspecInfo *pQoSInfo, uint32_t QosFlowID);
-sme_QosStatusType sme_qos_release_req(tHalHandle hHal, uint32_t QosFlowID);
+sme_QosStatusType sme_qos_release_req(tHalHandle hHal, uint8_t session_id,
+				      uint32_t QosFlowID);
 bool sme_qos_is_ts_info_ack_policy_valid(tpAniSirGlobal pMac,
 		sme_QosWmmTspecInfo *pQoSInfo, uint8_t sessionId);
 void sme_qos_update_hand_off(uint8_t sessionId, bool updateHandOff);
