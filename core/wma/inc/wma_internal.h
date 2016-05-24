@@ -429,6 +429,11 @@ static inline bool wma_is_roam_synch_in_progress(tp_wma_handle wma,
 {
 	return false;
 }
+static inline uint32_t wma_roam_scan_get_cckm_mode(
+		struct sSirRoamOffloadScanReq *roam_req, uint32_t auth_mode)
+{
+	return WMI_AUTH_CCKM;
+}
 #endif
 
 /*

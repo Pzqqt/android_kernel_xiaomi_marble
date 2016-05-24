@@ -1017,8 +1017,9 @@ A_UINT32 e_csr_auth_type_to_rsn_authmode(eCsrAuthType authtype,
 #endif /* FEATURE_WLAN_WAPI */
 #ifdef FEATURE_WLAN_ESE
 	case eCSR_AUTH_TYPE_CCKM_WPA:
+		return WMI_AUTH_CCKM_WPA;
 	case eCSR_AUTH_TYPE_CCKM_RSN:
-		return WMI_AUTH_CCKM;
+		return WMI_AUTH_CCKM_RSNA;
 #endif /* FEATURE_WLAN_ESE */
 #ifdef WLAN_FEATURE_11W
 	case eCSR_AUTH_TYPE_RSN_PSK_SHA256:
@@ -1076,6 +1077,27 @@ A_UINT32 e_csr_encryption_type_to_rsn_cipherset(eCsrEncryptionType encr)
 	}
 }
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * wma_roam_scan_get_cckm_mode() - Get the CCKM auth mode
+ * @roam_req: Roaming request buffer
+ * @auth_mode: Auth mode to be converted
+ *
+ * Based on LFR2.0 or LFR3.0, return the proper auth type
+ *
+ * Return: if LFR2.0, then return WMI_AUTH_CCKM for backward compatibility
+ *         if LFR3.0 then return the appropriate auth type
+ */
+static uint32_t wma_roam_scan_get_cckm_mode(tSirRoamOffloadScanReq *roam_req,
+		uint32_t auth_mode)
+{
+	if (roam_req->RoamOffloadEnabled)
+		return auth_mode;
+	else
+		return WMI_AUTH_CCKM;
+
+}
+#endif
 /**
  * wma_roam_scan_fill_ap_profile() - fill ap_profile
  * @wma_handle: wma handle
@@ -1092,6 +1114,7 @@ void wma_roam_scan_fill_ap_profile(tp_wma_handle wma_handle,
 				   tSirRoamOffloadScanReq *roam_req,
 				   wmi_ap_profile *ap_profile_p)
 {
+	uint32_t rsn_authmode;
 	qdf_mem_zero(ap_profile_p, sizeof(wmi_ap_profile));
 	if (roam_req == NULL) {
 		ap_profile_p->ssid.ssid_len = 0;
@@ -1108,8 +1131,16 @@ void wma_roam_scan_fill_ap_profile(tp_wma_handle wma_handle,
 			     roam_req->ConnectedNetwork.ssId.ssId,
 			     ap_profile_p->ssid.ssid_len);
 		ap_profile_p->rsn_authmode =
-			e_csr_auth_type_to_rsn_authmode(roam_req->ConnectedNetwork.authentication,
-							roam_req->ConnectedNetwork.encryption);
+			e_csr_auth_type_to_rsn_authmode(
+				roam_req->ConnectedNetwork.authentication,
+				roam_req->ConnectedNetwork.encryption);
+		rsn_authmode = ap_profile_p->rsn_authmode;
+
+		if ((rsn_authmode == WMI_AUTH_CCKM_WPA) ||
+			(rsn_authmode == WMI_AUTH_CCKM_RSNA))
+			ap_profile_p->rsn_authmode =
+				wma_roam_scan_get_cckm_mode(
+						roam_req, rsn_authmode);
 		ap_profile_p->rsn_ucastcipherset =
 			e_csr_encryption_type_to_rsn_cipherset(roam_req->ConnectedNetwork.encryption);
 		ap_profile_p->rsn_mcastcipherset =
