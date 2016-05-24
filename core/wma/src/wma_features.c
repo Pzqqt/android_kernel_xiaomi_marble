@@ -3116,6 +3116,102 @@ static QDF_STATUS wma_wow_ap(tp_wma_handle wma, uint8_t vdev_id)
 }
 
 /**
+ * wma_configure_wow_ssdp() - API to configure WoW SSDP
+ * @wma: WMA Handle
+ * @vdev_id: Vdev Id
+ *
+ * API to configure SSDP pattern as WoW pattern
+ *
+ * Return: Success/Failure
+ */
+static QDF_STATUS wma_configure_wow_ssdp(tp_wma_handle wma, uint8_t vdev_id)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	uint8_t discvr_offset = 30;
+
+	 status = wma_send_wow_patterns_to_fw(wma, vdev_id, 0,
+				discvr_ptrn, sizeof(discvr_ptrn), discvr_offset,
+				discvr_mask, sizeof(discvr_ptrn), false);
+
+	if (status != QDF_STATUS_SUCCESS)
+		WMA_LOGE("Failed to add WOW mDNS/SSDP/LLMNR pattern");
+
+	return status;
+}
+
+/**
+  * wma_configure_mc_ssdp() - API to configure SSDP address as MC list
+  * @wma: WMA Handle
+  * @vdev_id: Vdev Id
+  *
+  * SSDP address 239.255.255.250 is converted to Multicast Mac address
+  * and configure it to FW. Firmware will apply this pattern on the incoming
+  * packets to filter them out during chatter/wow mode.
+  *
+  * Return: Success/Failure
+  */
+static QDF_STATUS wma_configure_mc_ssdp(tp_wma_handle wma, uint8_t vdev_id)
+{
+	WMI_SET_MCASTBCAST_FILTER_CMD_fixed_param *cmd;
+	wmi_buf_t buf;
+	const tSirMacAddr ssdp_addr = {0x01, 0x00, 0x5e, 0x7f, 0xff, 0xfa};
+	int ret;
+	WMI_SET_MCASTBCAST_FILTER_CMD_fixed_param fixed_param;
+	uint32_t tag =
+		WMITLV_TAG_STRUC_WMI_SET_MCASTBCAST_FILTER_CMD_fixed_param;
+
+	buf = wmi_buf_alloc(wma->wmi_handle, sizeof(*cmd));
+	if (!buf) {
+		WMA_LOGE("%s No Memory for MC address", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (WMI_SET_MCASTBCAST_FILTER_CMD_fixed_param *) wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&cmd->tlv_header, tag,
+		       WMITLV_GET_STRUCT_TLVLEN(fixed_param));
+
+	cmd->action = WMI_MCAST_FILTER_SET;
+	cmd->vdev_id = vdev_id;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(ssdp_addr, &cmd->mcastbdcastaddr);
+	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, sizeof(*cmd),
+				   WMI_SET_MCASTBCAST_FILTER_CMDID);
+	if (ret != QDF_STATUS_SUCCESS) {
+		WMA_LOGE("%s Failed to configure FW with SSDP MC address",
+			 __func__);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wma_configure_ssdp() - API to Configure SSDP pattern to FW
+ * @wma: WMA Handle
+ * @vdev_id: VDEV ID
+ *
+ * Setup multicast pattern for mDNS 224.0.0.251, SSDP 239.255.255.250 and LLMNR
+ * 224.0.0.252
+ *
+ * Return: Success/Failure.
+ */
+static QDF_STATUS wma_configure_ssdp(tp_wma_handle wma, uint8_t vdev_id)
+{
+	if (!wma->ssdp) {
+		WMA_LOGD("mDNS, SSDP, LLMNR patterns are disabled from ini");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	WMA_LOGD("%s, enable_mc_list:%d", __func__, wma->enable_mc_list);
+
+	if (wma->enable_mc_list)
+		return wma_configure_mc_ssdp(wma, vdev_id);
+
+	return wma_configure_wow_ssdp(wma, vdev_id);
+}
+
+/**
  * wma_wow_sta() - set WOW patterns in sta mode
  * @wma: wma handle
  * @vdev_id: vdev id
@@ -3127,7 +3223,6 @@ static QDF_STATUS wma_wow_ap(tp_wma_handle wma, uint8_t vdev_id)
 static QDF_STATUS wma_wow_sta(tp_wma_handle wma, uint8_t vdev_id)
 {
 	uint8_t arp_offset = 12;
-	uint8_t discvr_offset = 30;
 	uint8_t mac_mask[IEEE80211_ADDR_LEN];
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
@@ -3142,20 +3237,9 @@ static QDF_STATUS wma_wow_sta(tp_wma_handle wma, uint8_t vdev_id)
 		return ret;
 	}
 
-	/*
-	 * Setup multicast pattern for mDNS 224.0.0.251,
-	 * SSDP 239.255.255.250 and LLMNR 224.0.0.252
-	 */
-	if (wma->ssdp) {
-		ret = wma_send_wow_patterns_to_fw(wma, vdev_id, 0,
-				discvr_ptrn, sizeof(discvr_ptrn), discvr_offset,
-				discvr_mask, sizeof(discvr_ptrn), false);
-		if (ret != QDF_STATUS_SUCCESS) {
-			WMA_LOGE("Failed to add WOW mDNS/SSDP/LLMNR pattern");
-			return ret;
-		}
-	} else
-		WMA_LOGD("mDNS, SSDP, LLMNR patterns are disabled from ini");
+	ret = wma_configure_ssdp(wma, vdev_id);
+	if (ret != QDF_STATUS_SUCCESS)
+		WMA_LOGE("Failed to configure SSDP patterns to FW");
 
 	/* when arp offload or ns offloaded is disabled
 	 * from ini file, configure broad cast arp pattern

@@ -1127,6 +1127,7 @@ struct wma_valid_channels {
  * @roam_offload_enabled: is roam offload enable/disable
  * @ol_ini_info: store ini status of arp offload, ns offload
  * @ssdp: ssdp flag
+ * @enable_mc_list : To Check if Multicast list filtering is enabled in FW
  * @ibss_started: is IBSS started or not
  * @ibsskey_info: IBSS key info
  * @dfs_ic: DFS umac interface information
@@ -1278,6 +1279,7 @@ typedef struct {
 	 */
 	uint8_t ol_ini_info;
 	bool ssdp;
+	bool enable_mc_list;
 	uint8_t ibss_started;
 	tSetBssKeyParams ibsskey_info;
 	struct ieee80211com *dfs_ic;

@@ -354,6 +354,7 @@ QDF_STATUS cds_open(void)
 		pHddCtx->config->fDfsPhyerrFilterOffload;
 	if (pHddCtx->config->ssdp)
 		mac_openParms.ssdp = pHddCtx->config->ssdp;
+	mac_openParms.enable_mc_list = pHddCtx->config->fEnableMCAddrList;
 #ifdef FEATURE_WLAN_RA_FILTERING
 	mac_openParms.RArateLimitInterval =
 		pHddCtx->config->RArateLimitInterval;

@@ -885,6 +885,7 @@ typedef struct sMacOpenParameters {
  */
 	uint8_t olIniInfo;
 	bool ssdp;
+	bool enable_mc_list;
 	/*
 	 * DFS Phyerror Filtering offload status from ini
 	 * 0 indicates offload disabled

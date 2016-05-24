@@ -1775,6 +1775,7 @@ QDF_STATUS wma_open(void *cds_context,
 	wma_handle->frame_xln_reqd = mac_params->frameTransRequired;
 	wma_handle->driver_type = mac_params->driverType;
 	wma_handle->ssdp = mac_params->ssdp;
+	wma_handle->enable_mc_list = mac_params->enable_mc_list;
 #ifdef FEATURE_WLAN_RA_FILTERING
 	wma_handle->IsRArateLimitEnabled = mac_params->IsRArateLimitEnabled;
 	wma_handle->RArateLimitInterval = mac_params->RArateLimitInterval;
