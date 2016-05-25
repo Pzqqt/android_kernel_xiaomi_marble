@@ -42,5 +42,9 @@ struct pld_context {
 };
 
 struct pld_context *pld_get_global_context(void);
+int pld_add_dev(struct pld_context *pld_context,
+		struct device *dev, enum pld_bus_type type);
+void pld_del_dev(struct pld_context *pld_context,
+		 struct device *dev);
 
 #endif

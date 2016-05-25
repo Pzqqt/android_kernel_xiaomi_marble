@@ -117,6 +117,58 @@ struct pld_context *pld_get_global_context(void)
 }
 
 /**
+ * pld_add_dev() - Add dev node to global context
+ * @pld_context: PLD global context
+ * @dev: device
+ * @type: Bus type
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_add_dev(struct pld_context *pld_context,
+		struct device *dev, enum pld_bus_type type)
+{
+	unsigned long flags;
+	struct dev_node *dev_node;
+
+	dev_node = kzalloc(sizeof(*dev_node), GFP_KERNEL);
+	if (dev_node == NULL)
+		return -ENOMEM;
+
+	dev_node->dev = dev;
+	dev_node->bus_type = type;
+
+	spin_lock_irqsave(&pld_context->pld_lock, flags);
+	list_add_tail(&dev_node->list, &pld_context->dev_list);
+	spin_unlock_irqrestore(&pld_context->pld_lock, flags);
+
+	return 0;
+}
+
+/**
+ * pld_del_dev() - Delete dev node from global context
+ * @pld_context: PLD global context
+ * @dev: device
+ *
+ * Return: void
+ */
+void pld_del_dev(struct pld_context *pld_context,
+		 struct device *dev)
+{
+	unsigned long flags;
+	struct dev_node *dev_node, *tmp;
+
+	spin_lock_irqsave(&pld_context->pld_lock, flags);
+	list_for_each_entry_safe(dev_node, tmp, &pld_context->dev_list, list) {
+		if (dev_node->dev == dev) {
+			list_del(&dev_node->list);
+			kfree(dev_node);
+		}
+	}
+	spin_unlock_irqrestore(&pld_context->pld_lock, flags);
+}
+
+/**
  * pld_get_bus_type() - Bus type of the device
  * @dev: device
  *

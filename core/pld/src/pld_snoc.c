@@ -50,8 +50,6 @@
 static int pld_snoc_probe(struct device *dev)
 {
 	struct pld_context *pld_context;
-	unsigned long flags;
-	struct dev_node *dev_node;
 	int ret = 0;
 
 	pld_context = pld_get_global_context();
@@ -60,17 +58,9 @@ static int pld_snoc_probe(struct device *dev)
 		goto out;
 	}
 
-	dev_node = kzalloc(sizeof(*dev_node), GFP_KERNEL);
-	if (dev_node == NULL) {
-		ret = -ENOMEM;
+	ret = pld_add_dev(pld_context, dev, PLD_BUS_TYPE_SNOC);
+	if (ret)
 		goto out;
-	}
-	dev_node->dev = dev;
-	dev_node->bus_type = PLD_BUS_TYPE_SNOC;
-
-	spin_lock_irqsave(&pld_context->pld_lock, flags);
-	list_add_tail(&dev_node->list, &pld_context->dev_list);
-	spin_unlock_irqrestore(&pld_context->pld_lock, flags);
 
 	return pld_context->ops->probe(dev, PLD_BUS_TYPE_SNOC,
 				       NULL, NULL);
@@ -91,8 +81,6 @@ out:
 static void pld_snoc_remove(struct device *dev)
 {
 	struct pld_context *pld_context;
-	unsigned long flags;
-	struct dev_node *dev_node, *tmp;
 
 	pld_context = pld_get_global_context();
 
@@ -101,14 +89,7 @@ static void pld_snoc_remove(struct device *dev)
 
 	pld_context->ops->remove(dev, PLD_BUS_TYPE_SNOC);
 
-	spin_lock_irqsave(&pld_context->pld_lock, flags);
-	list_for_each_entry_safe(dev_node, tmp, &pld_context->dev_list, list) {
-		if (dev_node->dev == dev) {
-			list_del(&dev_node->list);
-			kfree(dev_node);
-		}
-	}
-	spin_unlock_irqrestore(&pld_context->pld_lock, flags);
+	pld_del_dev(pld_context, dev);
 }
 
 /**

@@ -60,8 +60,6 @@ static int pld_pcie_probe(struct pci_dev *pdev,
 			  const struct pci_device_id *id)
 {
 	struct pld_context *pld_context;
-	unsigned long flags;
-	struct dev_node *dev_node;
 	int ret = 0;
 
 	pld_context = pld_get_global_context();
@@ -70,17 +68,9 @@ static int pld_pcie_probe(struct pci_dev *pdev,
 		goto out;
 	}
 
-	dev_node = kzalloc(sizeof(*dev_node), GFP_KERNEL);
-	if (dev_node == NULL) {
-		ret = -ENOMEM;
+	ret = pld_add_dev(pld_context, &pdev->dev, PLD_BUS_TYPE_PCIE);
+	if (ret)
 		goto out;
-	}
-	dev_node->dev = &pdev->dev;
-	dev_node->bus_type = PLD_BUS_TYPE_PCIE;
-
-	spin_lock_irqsave(&pld_context->pld_lock, flags);
-	list_add_tail(&dev_node->list, &pld_context->dev_list);
-	spin_unlock_irqrestore(&pld_context->pld_lock, flags);
 
 	return pld_context->ops->probe(&pdev->dev,
 		       PLD_BUS_TYPE_PCIE, pdev, (void *)id);
@@ -101,8 +91,6 @@ out:
 static void pld_pcie_remove(struct pci_dev *pdev)
 {
 	struct pld_context *pld_context;
-	unsigned long flags;
-	struct dev_node *dev_node, *tmp;
 
 	pld_context = pld_get_global_context();
 
@@ -111,14 +99,7 @@ static void pld_pcie_remove(struct pci_dev *pdev)
 
 	pld_context->ops->remove(&pdev->dev, PLD_BUS_TYPE_PCIE);
 
-	spin_lock_irqsave(&pld_context->pld_lock, flags);
-	list_for_each_entry_safe(dev_node, tmp, &pld_context->dev_list, list) {
-		if (dev_node->dev == &pdev->dev) {
-			list_del(&dev_node->list);
-			kfree(dev_node);
-		}
-	}
-	spin_unlock_irqrestore(&pld_context->pld_lock, flags);
+	pld_del_dev(pld_context, &pdev->dev);
 }
 
 #ifdef CONFIG_PLD_PCIE_CNSS
