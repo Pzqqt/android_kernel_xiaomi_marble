@@ -1633,6 +1633,7 @@ void hdd_update_config(hdd_context_t *hdd_ctx);
 QDF_STATUS hdd_chan_change_notify(hdd_adapter_t *adapter,
 		struct net_device *dev,
 		struct hdd_chan_change_params chan_change);
+
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 QDF_STATUS hdd_register_for_sap_restart_with_channel_switch(void);
 #else

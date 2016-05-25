@@ -2935,6 +2935,9 @@ static __iw_softap_setparam(struct net_device *dev,
 		case WLAN_HDD_NETIF_OPER_HISTORY:
 			wlan_hdd_clear_netif_queue_history(hdd_ctx);
 			break;
+		case WLAN_HIF_STATS:
+			hdd_clear_hif_stats();
+			break;
 		default:
 			ol_txrx_clear_stats(set_value);
 		}

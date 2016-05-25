@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -203,5 +203,9 @@ struct net_device_stats *hdd_get_stats(struct net_device *dev);
 int wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 				  struct net_device *dev,
 				  int idx, struct survey_info *survey);
+
+void hdd_display_hif_stats(void);
+void hdd_clear_hif_stats(void);
+
 #endif /* end #if !defined(WLAN_HDD_STATS_H) */
 

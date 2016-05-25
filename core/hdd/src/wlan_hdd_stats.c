@@ -31,6 +31,7 @@
 #include "cds_sched.h"
 #include "wlan_hdd_trace.h"
 #include "wlan_hdd_lpass.h"
+#include "hif.h"
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 
@@ -2320,4 +2321,33 @@ inline void hdd_init_ll_stats_ctx(void)
 	ll_stats_context.request_bitmap = 0;
 
 	return;
+}
+
+/**
+ * hdd_display_hif_stats() - display hif stats
+ *
+ * Return: none
+ *
+ */
+void hdd_display_hif_stats(void)
+{
+	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+
+	if (!hif_ctx)
+		return;
+	hif_display_stats(hif_ctx);
+}
+
+/**
+ * hdd_clear_hif_stats() - clear hif stats
+ *
+ * Return: none
+ */
+void hdd_clear_hif_stats(void)
+{
+	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+
+	if (!hif_ctx)
+		return;
+	hif_clear_stats(hif_ctx);
 }

@@ -88,6 +88,7 @@
 #include "wlan_hdd_napi.h"
 #include "cdp_txrx_flow_ctrl_legacy.h"
 #include "wlan_hdd_nan_datapath.h"
+#include "wlan_hdd_stats.h"
 
 #define HDD_FINISH_ULA_TIME_OUT         800
 #define HDD_SET_MCBC_FILTERS_TO_FW      1
@@ -704,6 +705,9 @@ void hdd_wlan_dump_stats(hdd_adapter_t *adapter, int value)
 		break;
 	case WLAN_HDD_NETIF_OPER_HISTORY:
 		wlan_hdd_display_netif_queue_history(hdd_ctx);
+		break;
+	case WLAN_HIF_STATS:
+		hdd_display_hif_stats();
 		break;
 	default:
 		ol_txrx_display_stats(value);
@@ -5811,6 +5815,9 @@ static int __iw_setint_getnone(struct net_device *dev,
 			break;
 		case WLAN_HDD_NETIF_OPER_HISTORY:
 			wlan_hdd_clear_netif_queue_history(hdd_ctx);
+			break;
+		case WLAN_HIF_STATS:
+			hdd_clear_hif_stats();
 			break;
 		default:
 			ol_txrx_clear_stats(set_value);
