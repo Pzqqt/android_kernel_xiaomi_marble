@@ -935,7 +935,6 @@ ol_txrx_pdev_post_attach(ol_txrx_pdev_handle pdev)
 	ol_tso_seg_list_init(pdev, desc_pool_size);
 
 	ol_tx_register_flow_control(pdev);
-	htt_pkt_log_init(pdev, osc);
 
 	return 0;            /* success */
 

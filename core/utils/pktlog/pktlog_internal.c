@@ -261,6 +261,94 @@ static void process_ieee_hdr(void *data)
 	}
 }
 
+/**
+ * fill_ieee80211_hdr_data() - fill ieee802.11 data header
+ * @txrx_pdev: txrx pdev
+ * @pl_msdu_info: msdu info
+ * @data: data received from event
+ *
+ * Return: none
+ */
+void
+fill_ieee80211_hdr_data(struct ol_txrx_pdev_t *txrx_pdev,
+	struct ath_pktlog_msdu_info *pl_msdu_info, void *data)
+{
+	uint32_t i;
+	uint32_t *htt_tx_desc;
+	struct ol_tx_desc_t *tx_desc;
+	uint8_t msdu_id_offset = MSDU_ID_INFO_ID_OFFSET;
+	uint16_t tx_desc_id;
+	uint32_t *msdu_id_info = (uint32_t *)
+				 ((void *)data + sizeof(struct ath_pktlog_hdr));
+	uint32_t *msdu_id = (uint32_t *) ((char *)msdu_id_info +
+					  msdu_id_offset);
+	uint8_t *addr, *vap_addr;
+	uint8_t vdev_id;
+	qdf_nbuf_t netbuf;
+	uint32_t len;
+
+
+	pl_msdu_info->num_msdu = *msdu_id_info;
+	pl_msdu_info->priv_size = sizeof(uint32_t) *
+				 pl_msdu_info->num_msdu + sizeof(uint32_t);
+
+	for (i = 0; i < pl_msdu_info->num_msdu; i++) {
+		/*
+		 * Handle big endianness
+		 * Increment msdu_id once after retrieving
+		 * lower 16 bits and uppper 16 bits
+		 */
+		if (!(i % 2)) {
+			tx_desc_id = ((*msdu_id & TX_DESC_ID_LOW_MASK)
+				      >> TX_DESC_ID_LOW_SHIFT);
+		} else {
+			tx_desc_id = ((*msdu_id & TX_DESC_ID_HIGH_MASK)
+				      >> TX_DESC_ID_HIGH_SHIFT);
+			msdu_id += 1;
+		}
+		tx_desc = ol_tx_desc_find(txrx_pdev, tx_desc_id);
+		qdf_assert(tx_desc);
+		netbuf = tx_desc->netbuf;
+		htt_tx_desc = (uint32_t *) tx_desc->htt_tx_desc;
+		qdf_assert(htt_tx_desc);
+
+		qdf_nbuf_peek_header(netbuf, &addr, &len);
+
+		if (len < (2 * IEEE80211_ADDR_LEN)) {
+			qdf_print("TX frame does not have a valid address\n");
+			return;
+		}
+		/* Adding header information for the TX data frames */
+		vdev_id = (uint8_t) (*(htt_tx_desc +
+				       HTT_TX_VDEV_ID_WORD) >>
+				     HTT_TX_VDEV_ID_SHIFT) &
+			  HTT_TX_VDEV_ID_MASK;
+
+		vap_addr = wma_get_vdev_address_by_vdev_id(vdev_id);
+
+		frm_hdr.da_tail = (addr[IEEE80211_ADDR_LEN - 2] << 8) |
+				  (addr[IEEE80211_ADDR_LEN - 1]);
+		frm_hdr.sa_tail =
+			(addr[2 * IEEE80211_ADDR_LEN - 2] << 8) |
+			(addr[2 * IEEE80211_ADDR_LEN - 1]);
+		if (vap_addr) {
+			frm_hdr.bssid_tail =
+				(vap_addr[IEEE80211_ADDR_LEN - 2] << 8) |
+				(vap_addr[IEEE80211_ADDR_LEN - 1]);
+		} else {
+			frm_hdr.bssid_tail = 0x0000;
+		}
+		pl_msdu_info->priv.msdu_len[i] = *(htt_tx_desc +
+						  HTT_TX_MSDU_LEN_DWORD)
+						& HTT_TX_MSDU_LEN_MASK;
+		/*
+		 * Add more information per MSDU
+		 * e.g., protocol information
+		 */
+	}
+
+}
+
 A_STATUS process_tx_info(struct ol_txrx_pdev_t *txrx_pdev, void *data)
 {
 	/*
@@ -394,83 +482,14 @@ A_STATUS process_tx_info(struct ol_txrx_pdev_t *txrx_pdev, void *data)
 
 	if (pl_hdr.log_type == PKTLOG_TYPE_TX_MSDU_ID) {
 		struct ath_pktlog_msdu_info pl_msdu_info;
-		uint32_t i;
-		uint32_t *htt_tx_desc;
 		size_t log_size;
-		struct ol_tx_desc_t *tx_desc;
-		uint8_t msdu_id_offset = MSDU_ID_INFO_ID_OFFSET;
-		uint16_t tx_desc_id;
-		uint32_t *msdu_id_info = (uint32_t *)
-					 ((void *)data + sizeof(struct ath_pktlog_hdr));
-		uint32_t *msdu_id = (uint32_t *) ((char *)msdu_id_info +
-						  msdu_id_offset);
-		uint8_t *addr, *vap_addr;
-		uint8_t vdev_id;
-		qdf_nbuf_t netbuf;
-		uint32_t len;
 
 		qdf_mem_set(&pl_msdu_info, sizeof(pl_msdu_info), 0);
-
-		pl_msdu_info.num_msdu = *msdu_id_info;
-		pl_msdu_info.priv_size = sizeof(uint32_t) *
-					 pl_msdu_info.num_msdu + sizeof(uint32_t);
 		log_size = sizeof(pl_msdu_info.priv);
 
-		for (i = 0; i < pl_msdu_info.num_msdu; i++) {
-			/*
-			 * Handle big endianess
-			 * Increment msdu_id once after retrieving
-			 * lower 16 bits and uppper 16 bits
-			 */
-			if (!(i % 2)) {
-				tx_desc_id = ((*msdu_id & TX_DESC_ID_LOW_MASK)
-					      >> TX_DESC_ID_LOW_SHIFT);
-			} else {
-				tx_desc_id = ((*msdu_id & TX_DESC_ID_HIGH_MASK)
-					      >> TX_DESC_ID_HIGH_SHIFT);
-				msdu_id += 1;
-			}
-			tx_desc = ol_tx_desc_find(txrx_pdev, tx_desc_id);
-			qdf_assert(tx_desc);
-			netbuf = tx_desc->netbuf;
-			htt_tx_desc = (uint32_t *) tx_desc->htt_tx_desc;
-			qdf_assert(htt_tx_desc);
+		if (pl_dev->mt_pktlog_enabled == false)
+			fill_ieee80211_hdr_data(txrx_pdev, &pl_msdu_info, data);
 
-			qdf_nbuf_peek_header(netbuf, &addr, &len);
-
-			if (len < (2 * IEEE80211_ADDR_LEN)) {
-				qdf_print("TX frame does not have a valid"
-					  " address\n");
-				return -1;
-			}
-			/* Adding header information for the TX data frames */
-			vdev_id = (uint8_t) (*(htt_tx_desc +
-					       HTT_TX_VDEV_ID_WORD) >>
-					     HTT_TX_VDEV_ID_SHIFT) &
-				  HTT_TX_VDEV_ID_MASK;
-
-			vap_addr = wma_get_vdev_address_by_vdev_id(vdev_id);
-
-			frm_hdr.da_tail = (addr[IEEE80211_ADDR_LEN - 2] << 8) |
-					  (addr[IEEE80211_ADDR_LEN - 1]);
-			frm_hdr.sa_tail =
-				(addr[2 * IEEE80211_ADDR_LEN - 2] << 8) |
-				(addr[2 * IEEE80211_ADDR_LEN - 1]);
-			if (vap_addr) {
-				frm_hdr.bssid_tail =
-					(vap_addr[IEEE80211_ADDR_LEN - 2] << 8) |
-					(vap_addr[IEEE80211_ADDR_LEN - 1]);
-			} else {
-				frm_hdr.bssid_tail = 0x0000;
-			}
-			pl_msdu_info.priv.msdu_len[i] = *(htt_tx_desc +
-							  HTT_TX_MSDU_LEN_DWORD)
-							& HTT_TX_MSDU_LEN_MASK;
-			/*
-			 * Add more information per MSDU
-			 * e.g., protocol information
-			 */
-		}
 		pl_msdu_info.ath_msdu_info = pktlog_getbuf(pl_dev, pl_info,
 							   log_size, &pl_hdr);
 		qdf_mem_copy((void *)&pl_msdu_info.priv.msdu_id_info,

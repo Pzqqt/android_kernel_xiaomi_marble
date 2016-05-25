@@ -57,7 +57,8 @@
 #include "cds_utils.h"
 #include "wlan_logging_sock_svc.h"
 #include "wma.h"
-
+#include "ol_txrx.h"
+#include "pktlog_ac.h"
 #include "wlan_hdd_ipa.h"
 /* Preprocessor Definitions and Constants */
 
@@ -549,6 +550,10 @@ QDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context)
 			  "%s: scn is null!", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	/* call Packetlog connect service */
+	htt_pkt_log_init(gp_cds_context->pdev_txrx_ctx, scn);
+	pktlog_htc_attach();
 
 	/* Reset wma wait event */
 	qdf_event_reset(&gp_cds_context->wmaCompleteEvent);

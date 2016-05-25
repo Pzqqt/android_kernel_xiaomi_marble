@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -94,9 +94,14 @@ struct ol_pktlog_dev_t {
 	ol_ath_generic_softc_handle scn;
 	char *name;
 	bool tgt_pktlog_enabled;
+	bool mt_pktlog_enabled;
+	uint32_t htc_err_cnt;
+	uint8_t htc_endpoint;
+	void *htc_pdev;
 };
 
 #define PKTLOG_SYSCTL_SIZE      14
+#define PKTLOG_MAX_SEND_QUEUE_DEPTH 64
 
 /*
  * Linux specific pktlog state information
@@ -124,6 +129,8 @@ int pktlog_setsize(struct hif_opaque_softc *scn, int32_t log_state);
 int pktlog_disable(struct hif_opaque_softc *scn);
 int pktlogmod_init(void *context);
 void pktlogmod_exit(void *context);
+int pktlog_htc_attach(void);
+void pktlog_process_fw_msg(uint32_t *msg_word);
 
 #define ol_pktlog_attach(_scn)			\
 	do {					\
@@ -158,5 +165,11 @@ static int pktlog_disable(struct hif_opaque_softc *scn)
 {
 	return 0;
 }
+static inline int pktlog_htc_attach(void)
+{
+	return 0;
+}
+static inline void pktlog_process_fw_msg(uint32_t *msg_word)
+{ }
 #endif /* REMOVE_PKT_LOG */
 #endif /* _PKTLOG_AC_H_ */

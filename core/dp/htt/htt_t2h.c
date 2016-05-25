@@ -50,6 +50,7 @@
 #include <ol_htt_tx_api.h>
 #include <ol_txrx_peer_find.h>
 #include <cdp_txrx_ipa.h>
+#include "pktlog_ac.h"
 
 /*--- target->host HTT message dispatch function ----------------------------*/
 
@@ -315,29 +316,7 @@ void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 #ifndef REMOVE_PKT_LOG
 	case HTT_T2H_MSG_TYPE_PKTLOG:
 	{
-		uint32_t *pl_hdr;
-		uint32_t log_type;
-		pl_hdr = (msg_word + 1);
-		log_type =
-			(*(pl_hdr + 1) & ATH_PKTLOG_HDR_LOG_TYPE_MASK) >>
-			ATH_PKTLOG_HDR_LOG_TYPE_SHIFT;
-		if ((log_type == PKTLOG_TYPE_TX_CTRL)
-		    || (log_type == PKTLOG_TYPE_TX_STAT)
-		    || (log_type == PKTLOG_TYPE_TX_MSDU_ID)
-		    || (log_type == PKTLOG_TYPE_TX_FRM_HDR)
-		    || (log_type == PKTLOG_TYPE_TX_VIRT_ADDR))
-			wdi_event_handler(WDI_EVENT_TX_STATUS,
-					  pdev->txrx_pdev, pl_hdr);
-		else if (log_type == PKTLOG_TYPE_RC_FIND)
-			wdi_event_handler(WDI_EVENT_RATE_FIND,
-					  pdev->txrx_pdev, pl_hdr);
-		else if (log_type == PKTLOG_TYPE_RC_UPDATE)
-			wdi_event_handler(WDI_EVENT_RATE_UPDATE,
-					  pdev->txrx_pdev, pl_hdr);
-		else if (log_type == PKTLOG_TYPE_RX_STAT)
-			wdi_event_handler(WDI_EVENT_RX_DESC,
-					  pdev->txrx_pdev, pl_hdr);
-
+		pktlog_process_fw_msg(msg_word + 1);
 		break;
 	}
 #endif
