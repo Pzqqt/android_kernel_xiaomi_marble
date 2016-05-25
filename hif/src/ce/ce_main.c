@@ -123,6 +123,7 @@ static struct shadow_reg_cfg target_shadow_reg_cfg_map[] = {
 #ifdef QCA_WIFI_3_0_ADRASTEA
 	{ 9, ADRASTEA_DST_WR_INDEX_OFFSET},
 	{ 10, ADRASTEA_DST_WR_INDEX_OFFSET},
+	{ 11, ADRASTEA_DST_WR_INDEX_OFFSET},
 #endif
 };
 
@@ -305,6 +306,11 @@ static struct service_to_pipe target_service_to_ce_map_wlan[] = {
 		HTT_DATA3_MSG_SVC,
 		PIPEDIR_IN,    /* in = DL = target -> host */
 		10,
+	},
+	{
+		PACKET_LOG_SVC,
+		PIPEDIR_IN,    /* in = DL = target -> host */
+		11,
 	},
 #endif
 	/* (Additions here) */
@@ -2351,6 +2357,9 @@ u32 shadow_dst_wr_ind_addr(struct hif_softc *scn, u32 ctrl_addr)
 		break;
 	case 10:
 		addr = SHADOW_VALUE22;
+		break;
+	case 11:
+		addr = SHADOW_VALUE23;
 		break;
 	default:
 		HIF_ERROR("invalid CE ctrl_addr (CE=%d)", ce);
