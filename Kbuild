@@ -110,24 +110,28 @@ ifeq ($(KERNEL_BUILD), 0)
 		endif
 	endif
 
-
-        #Flag to enable Protected Managment Frames (11w) feature
-        ifeq ($(CONFIG_ROME_IF),usb)
-                CONFIG_WLAN_FEATURE_11W := y
-        endif
-        ifeq ($(CONFIG_ROME_IF),sdio)
-                CONFIG_WLAN_FEATURE_11W := y
-        endif
+	#Flag to enable Protected Managment Frames (11w) feature
+	ifeq ($(CONFIG_ROME_IF),usb)
+		CONFIG_WLAN_FEATURE_11W := y
+	endif
+	ifeq ($(CONFIG_ROME_IF),sdio)
+		CONFIG_WLAN_FEATURE_11W := y
+	endif
 
 	ifneq ($(CONFIG_MOBILE_ROUTER), y)
 		#Flag to enable NAN
 		CONFIG_QCACLD_FEATURE_NAN := y
 	endif
 
-        #Flag to enable Linux QCMBR feature as default feature
-        ifeq ($(CONFIG_ROME_IF),usb)
-                CONFIG_LINUX_QCMBR :=y
-        endif
+	ifneq ($(CONFIG_MOBILE_ROUTER), y)
+		#Flag to enable NAN Data path
+		CONFIG_WLAN_FEATURE_NAN_DATAPATH := y
+	endif
+
+	#Flag to enable Linux QCMBR feature as default feature
+	ifeq ($(CONFIG_ROME_IF),usb)
+		CONFIG_LINUX_QCMBR :=y
+	endif
 
 	CONFIG_MPC_UT_FRAMEWORK := y
 
@@ -392,6 +396,10 @@ ifeq ($(CONFIG_LFR_SUBNET_DETECTION), y)
 HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_subnet_detect.o
 endif
 
+ifeq ($(CONFIG_WLAN_FEATURE_NAN_DATAPATH), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_nan_datapath.o
+endif
+
 ########### HOST DIAG LOG ###########
 HOST_DIAG_LOG_DIR :=	core/utils/host_diag_log
 
@@ -426,7 +434,8 @@ MAC_INC := 	-I$(WLAN_ROOT)/$(MAC_INC_DIR) \
 		-I$(WLAN_ROOT)/$(MAC_SRC_DIR)/dph \
 		-I$(WLAN_ROOT)/$(MAC_SRC_DIR)/include \
 		-I$(WLAN_ROOT)/$(MAC_SRC_DIR)/pe/include \
-		-I$(WLAN_ROOT)/$(MAC_SRC_DIR)/pe/lim
+		-I$(WLAN_ROOT)/$(MAC_SRC_DIR)/pe/lim \
+		-I$(WLAN_ROOT)/$(MAC_SRC_DIR)/pe/nan
 
 MAC_CFG_OBJS := $(MAC_SRC_DIR)/cfg/cfg_api.o \
 		$(MAC_SRC_DIR)/cfg/cfg_debug.o \
@@ -478,6 +487,10 @@ ifeq ($(CONFIG_QCOM_TDLS),y)
 MAC_LIM_OBJS += $(MAC_SRC_DIR)/pe/lim/lim_process_tdls.o
 endif
 
+ifeq ($(CONFIG_WLAN_FEATURE_NAN_DATAPATH), y)
+MAC_NDP_OBJS += $(MAC_SRC_DIR)/pe/nan/nan_datapath.o
+endif
+
 ifeq ($(CONFIG_QCACLD_WLAN_LFR2),y)
 	MAC_LIM_OBJS += $(MAC_SRC_DIR)/pe/lim/lim_process_mlm_host_roam.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_send_frames_host_roam.o \
@@ -498,7 +511,8 @@ MAC_OBJS := 	$(MAC_CFG_OBJS) \
 		$(MAC_DPH_OBJS) \
 		$(MAC_LIM_OBJS) \
 		$(MAC_SCH_OBJS) \
-		$(MAC_RRM_OBJS)
+		$(MAC_RRM_OBJS) \
+		$(MAC_NDP_OBJS)
 
 ############ SAP ############
 SAP_DIR :=	core/sap
@@ -576,13 +590,18 @@ ifeq ($(CONFIG_QCACLD_FEATURE_NAN),y)
 SME_NAN_OBJS = $(SME_SRC_DIR)/nan/nan_api.o
 endif
 
+ifeq ($(CONFIG_WLAN_FEATURE_NAN_DATAPATH), y)
+SME_NDP_OBJS += $(SME_SRC_DIR)/nan/nan_datapath_api.o
+endif
+
 SME_OBJS :=	$(SME_CMN_OBJS) \
 		$(SME_CSR_OBJS) \
 		$(SME_OEM_DATA_OBJS) \
 		$(SME_P2P_OBJS) \
 		$(SME_QOS_OBJS) \
 		$(SME_RRM_OBJS) \
-		$(SME_NAN_OBJS)
+		$(SME_NAN_OBJS) \
+		$(SME_NDP_OBJS)
 
 ############ NLINK ############
 NLINK_DIR     :=	core/utils/nlink
@@ -831,6 +850,10 @@ WMA_SRC_DIR :=  $(WMA_DIR)/src
 WMA_INC :=	-I$(WLAN_ROOT)/$(WMA_INC_DIR) \
 		-I$(WLAN_ROOT)/$(WMA_SRC_DIR)
 
+ifeq ($(CONFIG_WLAN_FEATURE_NAN_DATAPATH), y)
+WMA_NDP_OBJS += $(WMA_SRC_DIR)/wma_nan_datapath.o
+endif
+
 WMA_OBJS :=	$(WMA_SRC_DIR)/wma_main.o \
 		$(WMA_SRC_DIR)/wma_scan_roam.o \
 		$(WMA_SRC_DIR)/wma_dev_if.o \
@@ -841,7 +864,8 @@ WMA_OBJS :=	$(WMA_SRC_DIR)/wma_main.o \
 		$(WMA_SRC_DIR)/wma_features.o \
 		$(WMA_SRC_DIR)/wma_dfs_interface.o \
 		$(WMA_SRC_DIR)/wma_ocb.o \
-		$(WMA_SRC_DIR)/wlan_qct_wma_legacy.o
+		$(WMA_SRC_DIR)/wlan_qct_wma_legacy.o\
+		$(WMA_NDP_OBJS)
 
 ifeq ($(CONFIG_MPC_UT_FRAMEWORK),y)
 WMA_OBJS +=	$(WMA_SRC_DIR)/wma_utils_ut.o
@@ -1449,6 +1473,10 @@ endif
 
 ifeq ($(CONFIG_MCC_TO_SCC_SWITCH), y)
 CDEFINES += -DFEATURE_WLAN_MCC_TO_SCC_SWITCH
+endif
+
+ifeq ($(CONFIG_WLAN_FEATURE_NAN_DATAPATH), y)
+CDEFINES += -DWLAN_FEATURE_NAN_DATAPATH
 endif
 
 KBUILD_CPPFLAGS += $(CDEFINES)
