@@ -614,6 +614,8 @@ QDF_STATUS cds_change_mcc_go_beacon_interval(hdd_adapter_t *pHostapdAdapter);
 int cds_go_set_mcc_p2p_quota(hdd_adapter_t *hostapd_adapter,
 		uint32_t set_value);
 void cds_set_mcc_latency(hdd_adapter_t *adapter, int set_value);
+void cds_change_sap_channel_with_csa(hdd_adapter_t *adapter,
+						hdd_ap_ctx_t *hdd_ap_ctx);
 #if defined(FEATURE_WLAN_MCC_TO_SCC_SWITCH) || \
 		defined(FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE)
 void cds_restart_sap(hdd_adapter_t *ap_adapter);

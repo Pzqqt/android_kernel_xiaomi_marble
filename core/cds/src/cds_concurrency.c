@@ -7494,6 +7494,34 @@ void cds_set_mcc_latency(hdd_adapter_t *adapter, int set_value)
 	}
 }
 
+/**
+ * cds_change_sap_channel_with_csa() - Move SAP channel using (E)CSA
+ * @adapter: AP adapter
+ * @hdd_ap_ctx: AP context
+ *
+ * Invoke the callback function to change SAP channel using (E)CSA
+ *
+ * Return: None
+ */
+void cds_change_sap_channel_with_csa(hdd_adapter_t *adapter,
+					hdd_ap_ctx_t *hdd_ap_ctx)
+{
+	p_cds_contextType cds_ctx;
+
+	cds_ctx = cds_get_global_context();
+	if (!cds_ctx) {
+		cds_err("Invalid CDS context");
+		return;
+	}
+
+	if (cds_ctx->sap_restart_chan_switch_cb) {
+		cds_info("SAP change change without restart");
+		cds_ctx->sap_restart_chan_switch_cb(adapter,
+				hdd_ap_ctx->sapConfig.channel,
+				hdd_ap_ctx->sapConfig.ch_params.ch_width);
+	}
+}
+
 #if defined(FEATURE_WLAN_MCC_TO_SCC_SWITCH) || \
 			defined(FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE)
 /**

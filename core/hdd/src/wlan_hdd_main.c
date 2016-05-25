@@ -5046,72 +5046,148 @@ static void hdd_set_thermal_level_cb(void *context, u_int8_t level)
 }
 
 /**
- * hdd_find_prefd_safe_chnl() - find safe channel within preferred channel
- * @hdd_ctxt:	hdd context pointer
- * @ap_adapter: hdd hostapd adapter pointer
+ * hdd_get_safe_channel_from_pcl_and_acs_range() - Get safe channel for SAP
+ * restart
+ * @adapter: AP adapter
  *
- * Try to find safe channel within preferred channel
- * In case auto channel selection enabled
- *  - Preferred and safe channel should be used
- *  - If no overlapping, preferred channel should be used
+ * Get a safe channel to restart SAP. PCL already takes into account the
+ * unsafe channels. So, the PCL is validated with the ACS range to provide
+ * a safe channel for the SAP to restart.
  *
- * Return: 1: found preferred safe channel
- *         0: could not found preferred safe channel
+ * Return: Channel number to restart SAP in case of success. In case of any
+ * failure, the channel number returned is zero.
  */
-static uint8_t hdd_find_prefd_safe_chnl(hdd_context_t *hdd_ctxt,
-					hdd_adapter_t *ap_adapter)
+static uint8_t hdd_get_safe_channel_from_pcl_and_acs_range(
+				hdd_adapter_t *adapter)
 {
-	uint16_t safe_channels[NUM_CHANNELS];
-	uint16_t safe_channel_count;
-	uint16_t unsafe_channel_count;
-	uint8_t is_unsafe = 1;
-	uint16_t i;
-	uint16_t channel_loop;
+	struct sir_pcl_list pcl;
+	QDF_STATUS status;
+	uint32_t i, j;
+	tHalHandle *hal_handle;
+	hdd_context_t *hdd_ctx;
+	bool found = false;
 
-	if (!hdd_ctxt || !ap_adapter) {
-		hdd_err("invalid context/adapter");
-		return 0;
+	hal_handle = WLAN_HDD_GET_HAL_CTX(adapter);
+	if (!hal_handle) {
+		hdd_err("invalid HAL handle");
+		return INVALID_CHANNEL_ID;
 	}
 
-	safe_channel_count = 0;
-	unsafe_channel_count = QDF_MIN((uint16_t)hdd_ctxt->unsafe_channel_count,
-				       (uint16_t)NUM_CHANNELS);
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (!hdd_ctx) {
+		hdd_err("invalid HDD context");
+		return INVALID_CHANNEL_ID;
+	}
 
-	for (i = 0; i < NUM_CHANNELS; i++) {
-		is_unsafe = 0;
-		for (channel_loop = 0;
-		     channel_loop < unsafe_channel_count; channel_loop++) {
-			if (CDS_CHANNEL_NUM(i) ==
-			    hdd_ctxt->unsafe_channel_list[channel_loop]) {
-				is_unsafe = 1;
+	status = cds_get_pcl_for_existing_conn(CDS_SAP_MODE,
+			pcl.pcl_list, &pcl.pcl_len,
+			pcl.weight_list, QDF_ARRAY_SIZE(pcl.weight_list));
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Get PCL failed");
+		return INVALID_CHANNEL_ID;
+	}
+
+	if (!pcl.pcl_len) {
+		hdd_alert("pcl length is zero. this is not expected");
+		return INVALID_CHANNEL_ID;
+	}
+
+	hdd_info("start:%d end:%d",
+		adapter->sessionCtx.ap.sapConfig.acs_cfg.start_ch,
+		adapter->sessionCtx.ap.sapConfig.acs_cfg.end_ch);
+
+	/* PCL already takes unsafe channel into account */
+	for (i = 0; i < pcl.pcl_len; i++) {
+		hdd_info("chan[%d]:%d", i, pcl.pcl_list[i]);
+		if ((pcl.pcl_list[i] >=
+		   adapter->sessionCtx.ap.sapConfig.acs_cfg.start_ch) &&
+		   (pcl.pcl_list[i] <=
+		   adapter->sessionCtx.ap.sapConfig.acs_cfg.end_ch)) {
+			hdd_info("found PCL safe chan:%d", pcl.pcl_list[i]);
+			return pcl.pcl_list[i];
+		}
+	}
+
+	hdd_info("no safe channel from PCL found in ACS range");
+
+	/* Try for safe channel from all valid channel */
+	pcl.pcl_len = MAX_NUM_CHAN;
+	status = sme_get_cfg_valid_channels(hal_handle, pcl.pcl_list,
+					&pcl.pcl_len);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("error in getting valid channel list");
+		return INVALID_CHANNEL_ID;
+	}
+
+	for (i = 0; i < pcl.pcl_len; i++) {
+		hdd_info("chan[%d]:%d", i, pcl.pcl_list[i]);
+		found = false;
+		for (j = 0; j < hdd_ctx->unsafe_channel_count; j++) {
+			if (cds_chan_to_freq(pcl.pcl_list[i]) ==
+			   hdd_ctx->unsafe_channel_list[j]) {
+				hdd_info("unsafe chan:%d", pcl.pcl_list[i]);
+				found = true;
 				break;
 			}
 		}
-		if (!is_unsafe) {
-			safe_channels[safe_channel_count] =
-			  CDS_CHANNEL_NUM(i);
-			hddLog(QDF_TRACE_LEVEL_INFO_HIGH,
-			       FL("safe channel %d"),
-			       safe_channels[safe_channel_count]);
-			safe_channel_count++;
+
+		if (found)
+			continue;
+
+		if ((pcl.pcl_list[i] >=
+		   adapter->sessionCtx.ap.sapConfig.acs_cfg.start_ch) &&
+		   (pcl.pcl_list[i] <=
+		   adapter->sessionCtx.ap.sapConfig.acs_cfg.end_ch)) {
+			hdd_info("found safe chan:%d", pcl.pcl_list[i]);
+			return pcl.pcl_list[i];
 		}
 	}
-	hddLog(QDF_TRACE_LEVEL_INFO_HIGH,
-	       FL("perferred range %d - %d"),
-		ap_adapter->sessionCtx.ap.sapConfig.acs_cfg.start_ch,
-		ap_adapter->sessionCtx.ap.sapConfig.acs_cfg.end_ch);
-	for (i = 0; i < safe_channel_count; i++) {
-		if (safe_channels[i] >=
-			ap_adapter->sessionCtx.ap.sapConfig.acs_cfg.start_ch
-		    && safe_channels[i] <=
-			ap_adapter->sessionCtx.ap.sapConfig.acs_cfg.end_ch) {
-			hddLog(QDF_TRACE_LEVEL_INFO_HIGH,
-			       FL("safe channel %d is in perferred range"),
-			       safe_channels[i]);
-			return 1;
-		}
+
+	return INVALID_CHANNEL_ID;
+}
+
+/**
+ * hdd_restart_sap() - Restarts SAP on the given channel
+ * @adapter: AP adapter
+ * @channel: Channel
+ *
+ * Restarts the SAP interface by invoking the function which executes the
+ * callback to perform channel switch using (E)CSA.
+ *
+ * Return: None
+ */
+void hdd_restart_sap(hdd_adapter_t *adapter, uint8_t channel)
+{
+	hdd_ap_ctx_t *hdd_ap_ctx;
+	tHalHandle *hal_handle;
+
+	if (!adapter) {
+		hdd_err("invalid adapter");
+		return;
 	}
-	return 0;
+
+	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
+
+	hal_handle = WLAN_HDD_GET_HAL_CTX(adapter);
+	if (!hal_handle) {
+		hdd_err("invalid HAL handle");
+		return;
+	}
+
+	hdd_ap_ctx->sapConfig.channel = channel;
+	hdd_ap_ctx->sapConfig.ch_params.ch_width =
+		hdd_ap_ctx->sapConfig.ch_width_orig;
+
+	hdd_info("chan:%d width:%d",
+		channel, hdd_ap_ctx->sapConfig.ch_width_orig);
+
+	sme_set_ch_params(hal_handle,
+			hdd_ap_ctx->sapConfig.SapHw_mode,
+			hdd_ap_ctx->sapConfig.channel,
+			hdd_ap_ctx->sapConfig.sec_ch,
+			&hdd_ap_ctx->sapConfig.ch_params);
+
+	cds_change_sap_channel_with_csa(adapter, hdd_ap_ctx);
 }
 
 /**
@@ -5127,7 +5203,6 @@ static uint8_t hdd_find_prefd_safe_chnl(hdd_context_t *hdd_ctxt,
  */
 static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 {
-	hdd_adapter_t *hostapd_adapter = NULL;
 	hdd_context_t *hdd_ctxt;
 	tSirChAvoidIndType *ch_avoid_indi;
 	uint8_t range_loop;
@@ -5136,9 +5211,13 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 	uint16_t start_channel;
 	uint16_t end_channel;
 	v_CONTEXT_t cds_context;
-	static int restart_sap_in_progress;
 	tHddAvoidFreqList hdd_avoid_freq_list;
 	uint32_t i;
+	QDF_STATUS status;
+	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
+	hdd_adapter_t *adapter_temp;
+	uint8_t restart_chan;
+	bool found = false;
 
 	/* Basic sanity */
 	if (!hdd_context || !indi_param) {
@@ -5260,56 +5339,61 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 		       hdd_ctxt->unsafe_channel_list[channel_loop]);
 	}
 
-	/*
-	 * If auto channel select is enabled
-	 * preferred channel is in safe channel,
-	 * re-start softap interface with safe channel.
-	 * no overlap with preferred channel and safe channel
-	 * do not re-start softap interface
-	 * stay current operating channel.
-	 */
-	if (hdd_ctxt->unsafe_channel_count) {
-		hostapd_adapter = hdd_get_adapter(hdd_ctxt, QDF_SAP_MODE);
-		if (hostapd_adapter) {
-			if ((hostapd_adapter->sessionCtx.ap.sapConfig.
-				acs_cfg.acs_mode) &&
-				(!hdd_find_prefd_safe_chnl(hdd_ctxt,
-				hostapd_adapter)))
-				return;
+	if (!hdd_ctxt->unsafe_channel_count) {
+		hdd_info("no unsafe channels - not restarting SAP");
+		return;
+	}
 
-			hddLog(QDF_TRACE_LEVEL_INFO,
-			       FL(
-				  "Current operation channel %d, sessionCtx.ap.sapConfig.channel %d"
-				 ),
-			       hostapd_adapter->sessionCtx.ap.
-			       operatingChannel,
-			       hostapd_adapter->sessionCtx.ap.sapConfig.
-			       channel);
-			for (channel_loop = 0;
-			     channel_loop < hdd_ctxt->unsafe_channel_count;
-			     channel_loop++) {
-				if (((hdd_ctxt->
-					unsafe_channel_list[channel_loop] ==
-						hostapd_adapter->sessionCtx.ap.
-						      operatingChannel)) &&
-					(hostapd_adapter->sessionCtx.ap.
-						sapConfig.acs_cfg.acs_mode
-								 == true) &&
-					!restart_sap_in_progress) {
-					hddLog(QDF_TRACE_LEVEL_INFO,
-					       FL("Restarting SAP"));
-					wlan_hdd_send_svc_nlink_msg
-						(WLAN_SVC_LTE_COEX_IND, NULL, 0);
-					restart_sap_in_progress = 1;
-					/*
-					 * current operating channel is un-safe
-					 * channel, restart driver
-					 */
-					hdd_hostapd_stop(hostapd_adapter->dev);
-					break;
-				}
+	/* No channel change is done for fixed channel SAP.
+	 * Loop through all ACS SAP interfaces and change the channels for
+	 * the ones operating on unsafe channels.
+	 */
+	status = hdd_get_front_adapter(hdd_ctxt, &adapter_node);
+	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
+		adapter_temp = adapter_node->pAdapter;
+
+		if (!((adapter_temp->device_mode == QDF_SAP_MODE) &&
+		   (adapter_temp->sessionCtx.ap.sapConfig.acs_cfg.acs_mode))) {
+			hdd_info("skip device mode:%d acs:%d",
+				adapter_temp->device_mode,
+				adapter_temp->sessionCtx.ap.sapConfig.
+				acs_cfg.acs_mode);
+			goto next_adapater;
+		}
+
+		found = false;
+		for (i = 0; i < hdd_ctxt->unsafe_channel_count; i++) {
+			if (cds_chan_to_freq(
+				adapter_temp->sessionCtx.ap.operatingChannel) ==
+				hdd_ctxt->unsafe_channel_list[i]) {
+				found = true;
+				hdd_info("operating ch:%d is unsafe",
+				  adapter_temp->sessionCtx.ap.operatingChannel);
+				break;
 			}
 		}
+
+		if (!found) {
+			hdd_info("ch:%d is safe. no need to change channel",
+				adapter_temp->sessionCtx.ap.operatingChannel);
+			goto next_adapater;
+		}
+
+		restart_chan =
+			hdd_get_safe_channel_from_pcl_and_acs_range(
+					adapter_temp);
+		if (!restart_chan) {
+			hdd_alert("fail to restart SAP");
+		} else {
+			hdd_info("sending coex indication");
+			wlan_hdd_send_svc_nlink_msg
+				(WLAN_SVC_LTE_COEX_IND, NULL, 0);
+			hdd_restart_sap(adapter_temp, restart_chan);
+		}
+
+next_adapater:
+		status = hdd_get_next_adapter(hdd_ctxt, adapter_node, &next);
+		adapter_node = next;
 	}
 	return;
 }
