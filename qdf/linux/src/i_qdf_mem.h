@@ -62,7 +62,15 @@
 #define kfree(buf)
 #define vfree(buf)
 #define pci_alloc_consistent(dev, size, paddr) NULL
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+/*
+ * typedef to dummy type to overcome implicit declaration error in
+ * spectraltool.c
+ */
+#define __qdf_mempool_t int
+#else
 #define __qdf_mempool_t
+#endif /* LINUX_VERSION_CODE */
 #endif /* __KERNEL__ */
 #include <qdf_status.h>
 
