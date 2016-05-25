@@ -49,3 +49,5 @@ int hif_pci_dump_registers(struct hif_softc *scn);
 void hif_pci_enable_power_management(struct hif_softc *hif_ctx,
 				 bool is_packet_log_enabled);
 void hif_pci_disable_power_management(struct hif_softc *hif_ctx);
+void hif_pci_display_stats(struct hif_softc *hif_ctx);
+void hif_pci_clear_stats(struct hif_softc *hif_ctx);

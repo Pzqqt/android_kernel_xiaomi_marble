@@ -72,6 +72,8 @@ struct hif_bus_ops {
 	void (*hif_enable_power_management)(struct hif_softc *hif_ctx,
 				 bool is_packet_log_enabled);
 	void (*hif_disable_power_management)(struct hif_softc *hif_ctx);
+	void (*hif_display_stats)(struct hif_softc *hif_ctx);
+	void (*hif_clear_stats)(struct hif_softc *hif_ctx);
 };
 
 #ifdef HIF_SNOC

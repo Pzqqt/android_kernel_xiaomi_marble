@@ -81,7 +81,10 @@ QDF_STATUS hif_initialize_pci_ops(struct hif_softc *hif_sc)
 		&hif_pci_enable_power_management;
 	bus_ops->hif_disable_power_management =
 		&hif_pci_disable_power_management;
-
+	bus_ops->hif_display_stats =
+		&hif_pci_display_stats;
+	bus_ops->hif_clear_stats =
+		&hif_pci_clear_stats;
 
 	return QDF_STATUS_SUCCESS;
 }

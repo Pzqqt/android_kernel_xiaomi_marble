@@ -489,6 +489,15 @@ void hif_disable(struct hif_opaque_softc *hif_ctx, enum hif_disable_type type)
 	HIF_INFO("%s: X", __func__);
 }
 
+void hif_display_stats(struct hif_opaque_softc *hif_ctx)
+{
+	hif_display_bus_stats(hif_ctx);
+}
+
+void hif_clear_stats(struct hif_opaque_softc *hif_ctx)
+{
+	hif_clear_bus_stats(hif_ctx);
+}
 
 /**
  * hif_crash_shutdown_dump_bus_register() - dump bus registers

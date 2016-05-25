@@ -257,6 +257,63 @@ static irqreturn_t hif_snoc_interrupt_handler(int irq, void *context)
 }
 
 /**
+ * hif_ce_increment_interrupt_count() - update ce stats
+ * @hif_ce_state: ce state
+ * @ce_id: ce id
+ *
+ * Return: none
+ */
+static inline void
+hif_ce_increment_interrupt_count(struct HIF_CE_state *hif_ce_state, int ce_id)
+{
+	int cpu_id = qdf_get_cpu();
+
+	hif_ce_state->stats.ce_per_cpu[ce_id][cpu_id]++;
+}
+
+/**
+ * hif_display_ce_stats() - display ce stats
+ * @hif_ce_state: ce state
+ *
+ * Return: none
+ */
+void hif_display_ce_stats(struct HIF_CE_state *hif_ce_state)
+{
+#define STR_SIZE 128
+	uint8_t i, j, pos;
+	char str_buffer[STR_SIZE];
+	int size, ret;
+
+	qdf_print("CE interrupt statistics:");
+	for (i = 0; i < CE_COUNT_MAX; i++) {
+		size = STR_SIZE;
+		pos = 0;
+		qdf_print("CE id: %d", i);
+		for (j = 0; j < QDF_MAX_AVAILABLE_CPU; j++) {
+			ret = snprintf(str_buffer + pos, size, "[%d]: %d",
+				j, hif_ce_state->stats.ce_per_cpu[i][j]);
+			if (ret <= 0 || ret >= size)
+				break;
+			size -= ret;
+			pos += ret;
+		}
+		qdf_print("%s", str_buffer);
+	}
+#undef STR_SIZE
+}
+
+/**
+ * hif_clear_ce_stats() - clear ce stats
+ * @hif_ce_state: ce state
+ *
+ * Return: none
+ */
+void hif_clear_ce_stats(struct HIF_CE_state *hif_ce_state)
+{
+	qdf_mem_zero(&hif_ce_state->stats, sizeof(struct ce_intr_stats));
+}
+
+/**
  * ce_dispatch_interrupt() - dispatch an interrupt to a processing context
  * @ce_id: ce_id
  * @tasklet_entry: context
@@ -283,6 +340,7 @@ irqreturn_t ce_dispatch_interrupt(int ce_id,
 	hif_irq_disable(scn, ce_id);
 	qdf_atomic_inc(&scn->active_tasklet_cnt);
 	hif_record_ce_desc_event(scn, ce_id, HIF_IRQ_EVENT, NULL, NULL, 0);
+	hif_ce_increment_interrupt_count(hif_ce_state, ce_id);
 	if (hif_napi_enabled(hif_hdl, ce_id))
 		hif_napi_schedule(hif_hdl, ce_id);
 	else

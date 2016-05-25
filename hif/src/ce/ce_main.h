@@ -31,6 +31,7 @@
 #include "qdf_atomic.h"
 #include "qdf_lock.h"
 #include "hif_main.h"
+#include "qdf_util.h"
 
 #define CE_HTT_T2H_MSG 1
 #define CE_HTT_H2T_MSG 4
@@ -111,6 +112,10 @@ struct ce_tasklet_entry {
 	void *hif_ce_state;
 };
 
+struct ce_intr_stats {
+	uint32_t ce_per_cpu[CE_COUNT_MAX][QDF_MAX_AVAILABLE_CPU];
+};
+
 struct HIF_CE_state {
 	struct hif_softc ol_sc;
 	bool started;
@@ -135,6 +140,7 @@ struct HIF_CE_state {
 
 	/* Copy Engine used for Diagnostic Accesses */
 	struct CE_handle *ce_diag;
+	struct ce_intr_stats stats;
 };
 
 /*

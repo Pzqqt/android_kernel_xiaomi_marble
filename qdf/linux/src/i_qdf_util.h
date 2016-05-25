@@ -248,4 +248,27 @@ static inline bool __qdf_is_macaddr_equal(struct qdf_mac_addr *mac_addr1,
 #define __qdf_mb()                 mb()
 
 #define __qdf_roundup(x, y) roundup(x, y)
+
+#ifdef QCA_CONFIG_SMP
+/**
+ * __qdf_get_cpu() - get cpu_index
+ *
+ * Return: cpu_index
+ */
+static inline
+int __qdf_get_cpu(void)
+{
+	int cpu_index = get_cpu();
+
+	put_cpu();
+	return cpu_index;
+}
+#else
+static inline
+int __qdf_get_cpu(void)
+{
+	return 0;
+}
+#endif
+
 #endif /*_I_QDF_UTIL_H*/

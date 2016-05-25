@@ -35,4 +35,6 @@ QDF_STATUS ce_register_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask);
 QDF_STATUS ce_unregister_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask);
 irqreturn_t ce_dispatch_interrupt(int irq,
 				  struct ce_tasklet_entry *tasklet_entry);
+void hif_display_ce_stats(struct HIF_CE_state *hif_ce_state);
+void hif_clear_ce_stats(struct HIF_CE_state *hif_ce_state);
 #endif /* __CE_TASKLET_H__ */

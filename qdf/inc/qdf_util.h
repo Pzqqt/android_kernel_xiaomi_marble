@@ -35,6 +35,12 @@
 
 #include <i_qdf_util.h>
 
+#ifdef QCA_CONFIG_SMP
+#define QDF_MAX_AVAILABLE_CPU	8
+#else
+#define QDF_MAX_AVAILABLE_CPU	1
+#endif
+
 /**
  * qdf_unlikely - Compiler-dependent macro denoting code likely to execute
  * @_expr: expression to be checked
@@ -407,6 +413,12 @@ static inline int qdf_get_pwr2(int value)
 		log2++;
 	}
 	return 1 << log2;
+}
+
+static inline
+int qdf_get_cpu(void)
+{
+	return __qdf_get_cpu();
 }
 
 #endif /*_QDF_UTIL_H*/

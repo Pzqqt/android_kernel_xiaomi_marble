@@ -1325,6 +1325,28 @@ void hif_pci_disable_power_management(struct hif_softc *hif_ctx)
 	hif_pm_runtime_stop(pci_ctx);
 }
 
+void hif_pci_display_stats(struct hif_softc *hif_ctx)
+{
+	struct hif_pci_softc *pci_ctx = HIF_GET_PCI_SOFTC(hif_ctx);
+
+	if (pci_ctx == NULL) {
+		HIF_ERROR("%s, hif_ctx null", __func__);
+		return;
+	}
+	hif_display_ce_stats(&pci_ctx->ce_sc);
+}
+
+void hif_pci_clear_stats(struct hif_softc *hif_ctx)
+{
+	struct hif_pci_softc *pci_ctx = HIF_GET_PCI_SOFTC(hif_ctx);
+
+	if (pci_ctx == NULL) {
+		HIF_ERROR("%s, hif_ctx null", __func__);
+		return;
+	}
+	hif_clear_ce_stats(&pci_ctx->ce_sc);
+}
+
 #define ATH_PCI_PROBE_RETRY_MAX 3
 /**
  * hif_bus_open(): hif_bus_open

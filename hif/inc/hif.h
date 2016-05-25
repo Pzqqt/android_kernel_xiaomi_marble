@@ -505,7 +505,8 @@ QDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 		      enum qdf_bus_type bus_type,
 		      enum hif_enable_type type);
 void hif_disable(struct hif_opaque_softc *hif_ctx, enum hif_disable_type type);
-
+void hif_display_stats(struct hif_opaque_softc *hif_ctx);
+void hif_clear_stats(struct hif_opaque_softc *hif_ctx);
 #ifdef FEATURE_RUNTIME_PM
 struct hif_pm_runtime_lock;
 int hif_pm_runtime_get(struct hif_opaque_softc *hif_ctx);

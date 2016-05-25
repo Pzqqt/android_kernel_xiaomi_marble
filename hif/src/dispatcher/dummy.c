@@ -266,3 +266,21 @@ hif_dummy_mask_interrupt_call(struct hif_softc *hif_sc)
 {
 	return;
 }
+
+/**
+ * hif_dummy_display_stats - dummy call
+ * hif_ctx: hif context
+ *
+ * Return: none
+ */
+void hif_dummy_display_stats(struct hif_softc *hif_ctx)
+{}
+
+/**
+ * hif_dummy_clear_stats - dummy call
+ * hif_ctx: hif context
+ *
+ * Return: none
+ */
+void hif_dummy_clear_stats(struct hif_softc *hif_ctx)
+{}

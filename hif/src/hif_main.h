@@ -161,7 +161,8 @@ static inline bool hif_is_nss_wifi_enabled(struct hif_softc *sc)
 
 A_target_id_t hif_get_target_id(struct hif_softc *scn);
 void hif_dump_pipe_debug_count(struct hif_softc *scn);
-
+void hif_display_bus_stats(struct hif_opaque_softc *scn);
+void hif_clear_bus_stats(struct hif_opaque_softc *scn);
 bool hif_max_num_receives_reached(struct hif_softc *scn, unsigned int count);
 void hif_shutdown_device(struct hif_opaque_softc *hif_ctx);
 int hif_bus_configure(struct hif_softc *scn);

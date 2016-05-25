@@ -36,6 +36,8 @@
 #endif
 #include "htc_services.h"
 #include "a_types.h"
+#include "dummy.h"
+
 /**
  * hif_intialize_default_ops() - intializes default operations values
  *
@@ -49,6 +51,10 @@ static void hif_intialize_default_ops(struct hif_softc *hif_sc)
 	bus_ops->hif_bus_close = NULL;
 
 	/* dummy implementations */
+	bus_ops->hif_display_stats =
+		&hif_dummy_display_stats;
+	bus_ops->hif_clear_stats =
+		&hif_dummy_clear_stats;
 }
 
 #define NUM_OPS (sizeof(struct hif_bus_ops) / sizeof(void *))
@@ -294,6 +300,20 @@ void hif_mask_interrupt_call(struct hif_opaque_softc *hif_hdl)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_hdl);
 	hif_sc->bus_ops.hif_mask_interrupt_call(hif_sc);
+}
+
+void hif_display_bus_stats(struct hif_opaque_softc *scn)
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(scn);
+
+	hif_sc->bus_ops.hif_display_stats(hif_sc);
+}
+
+void hif_clear_bus_stats(struct hif_opaque_softc *scn)
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(scn);
+
+	hif_sc->bus_ops.hif_clear_stats(hif_sc);
 }
 
 /**

@@ -53,3 +53,5 @@ void hif_dummy_ipa_get_ce_resource(struct hif_softc *hif_sc,
 				   uint32_t *sr_ring_size,
 				   qdf_dma_addr_t *reg_paddr);
 void hif_dummy_mask_interrupt_call(struct hif_softc *hif_sc);
+void hif_dummy_display_stats(struct hif_softc *hif_ctx);
+void hif_dummy_clear_stats(struct hif_softc *hif_ctx);

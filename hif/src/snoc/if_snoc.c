@@ -75,6 +75,28 @@ int hif_snoc_dump_registers(struct hif_softc *hif_ctx)
 	return 0;
 }
 
+void hif_snoc_display_stats(struct hif_softc *hif_ctx)
+{
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
+
+	if (hif_state == NULL) {
+		HIF_ERROR("%s, hif_ctx null", __func__);
+		return;
+	}
+	hif_display_ce_stats(hif_state);
+}
+
+void hif_snoc_clear_stats(struct hif_softc *hif_ctx)
+{
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
+
+	if (hif_state == NULL) {
+		HIF_ERROR("%s, hif_ctx null", __func__);
+		return;
+	}
+	hif_clear_ce_stats(hif_state);
+}
+
 /**
  * hif_snoc_close(): hif_bus_close
  *
