@@ -826,7 +826,6 @@ out:
 
 /**
  * wmi_debugfs_remove() - Remove debugfs entry for wmi logging.
- *
  * @wmi_handle: wmi handle
  * @dentry: debugfs directory entry
  * @id: Index to debug info data array
@@ -877,6 +876,17 @@ static QDF_STATUS wmi_debugfs_init(wmi_unified_t wmi_handle)
 
 	return QDF_STATUS_SUCCESS;
 }
+#else
+/**
+ * wmi_debugfs_remove() - Remove debugfs entry for wmi logging.
+ * @wmi_handle: wmi handle
+ * @dentry: debugfs directory entry
+ * @id: Index to debug info data array
+ *
+ * Return: none
+ */
+static void wmi_debugfs_remove(wmi_unified_t wmi_handle, struct dentry *dentry
+		, int id) { }
 #endif /*WMI_INTERFACE_EVENT_LOGGING */
 
 int wmi_get_host_credits(wmi_unified_t wmi_handle);
@@ -2175,6 +2185,10 @@ void wmi_unified_detach(struct wmi_unified *wmi_handle)
 	wmi_buf_t buf;
 
 	cancel_work_sync(&wmi_handle->rx_event_work);
+
+	wmi_debugfs_remove(wmi_handle, wmi_handle->log_info.wmi_log_debugfs_dir,
+				wmi_handle->log_info.wmi_instance_id);
+
 	qdf_spin_lock_bh(&wmi_handle->eventq_lock);
 	buf = qdf_nbuf_queue_remove(&wmi_handle->event_queue);
 	while (buf) {
@@ -2183,8 +2197,6 @@ void wmi_unified_detach(struct wmi_unified *wmi_handle)
 	}
 
 #ifdef WMI_INTERFACE_EVENT_LOGGING
-	wmi_debugfs_remove(wmi_handle, wmi_handle->log_info.wmi_log_debugfs_dir,
-				wmi_handle->log_info.wmi_instance_id);
 	wmi_log_buffer_free(wmi_handle);
 #endif
 
