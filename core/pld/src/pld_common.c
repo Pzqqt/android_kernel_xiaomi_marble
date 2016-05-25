@@ -43,8 +43,6 @@
 
 #include "pld_pcie.h"
 #include "pld_snoc.h"
-#include "pld_common.h"
-#include "pld_internal.h"
 
 #define PLD_PCIE_REGISTERED BIT(0)
 #define PLD_SNOC_REGISTERED BIT(1)

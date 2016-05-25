@@ -28,7 +28,7 @@
 #ifndef __PLD_PCIE_H__
 #define __PLD_PCIE_H__
 
-#include "pld_common.h"
+#include "pld_internal.h"
 
 #ifndef CONFIG_PCI
 static inline int pld_pcie_register_driver(void)

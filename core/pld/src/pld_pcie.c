@@ -35,7 +35,6 @@
 #include <net/cnss.h>
 #endif
 
-#include "pld_common.h"
 #include "pld_internal.h"
 
 #ifdef CONFIG_PCI

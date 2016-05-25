@@ -28,6 +28,8 @@
 #ifndef __PLD_COMMON_I_H__
 #define __PLD_COMMON_I_H__
 
+#include "pld_common.h"
+
 struct dev_node {
 	struct device *dev;
 	struct list_head list;

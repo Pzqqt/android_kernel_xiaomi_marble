@@ -34,7 +34,6 @@
 #include <soc/qcom/icnss.h>
 #endif
 
-#include "pld_common.h"
 #include "pld_internal.h"
 
 #ifdef CONFIG_PLD_SNOC_ICNSS

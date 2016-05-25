@@ -28,7 +28,7 @@
 #ifndef __PLD_SNOC_H__
 #define __PLD_SNOC_H__
 
-#include "pld_common.h"
+#include "pld_internal.h"
 
 #ifndef CONFIG_PLD_SNOC_ICNSS
 static inline int pld_snoc_register_driver(void)
