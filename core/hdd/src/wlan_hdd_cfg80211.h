@@ -258,6 +258,7 @@ typedef enum {
  * @QCA_NL80211_VENDOR_SUBCMD_GW_PARAM_CONFIG: set gateway parameters
  * @QCA_NL80211_VENDOR_SUBCMD_SET_TXPOWER_SCALE: set tx power by percentage
  * @QCA_NL80211_VENDOR_SUBCMD_SET_TXPOWER_SCALE_DECR_DB: reduce tx power by DB
+ * @QCA_NL80211_VENDOR_SUBCMD_SET_SAP_CONFIG: SAP configuration
  * @QCA_NL80211_VENDOR_SUBCMD_TSF: TSF operations command
  * @QCA_NL80211_VENDOR_SUBCMD_WISA: WISA mode configuration
  */
@@ -379,6 +380,7 @@ enum qca_nl80211_vendor_subcmds {
 	QCA_NL80211_VENDOR_SUBCMD_SET_TXPOWER_SCALE = 109,
 	/* Tx power scaling in db subcommands */
 	QCA_NL80211_VENDOR_SUBCMD_SET_TXPOWER_SCALE_DECR_DB = 115,
+	QCA_NL80211_VENDOR_SUBCMD_SET_SAP_CONFIG  = 118,
 	QCA_NL80211_VENDOR_SUBCMD_TSF = 119,
 	QCA_NL80211_VENDOR_SUBCMD_WISA = 120,
 };
@@ -2355,6 +2357,22 @@ enum qca_vendor_attr_txpower_scale_decr_db {
 	QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB_AFTER_LAST,
 	QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB_MAX =
 		QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB_AFTER_LAST - 1
+};
+
+/**
+ * enum qca_wlan_vendor_attr_sap_config - config params for sap configuration
+ * @QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_INVALID: invalid
+ * @QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_CHANNEL: Channel on which SAP should start
+ * @QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_AFTER_LAST: after last
+ * @QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_MAX: max attribute
+ */
+enum qca_wlan_vendor_attr_sap_config {
+	QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_INVALID = 0,
+	QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_CHANNEL,
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_MAX =
+	QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_AFTER_LAST - 1,
 };
 
 struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_db(hdd_adapter_t *pAdapter,

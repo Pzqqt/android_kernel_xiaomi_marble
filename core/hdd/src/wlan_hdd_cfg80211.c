@@ -5359,6 +5359,119 @@ void hdd_init_bpf_completion(void)
 	init_completion(&bpf_context.completion);
 }
 
+static const struct nla_policy
+wlan_hdd_sap_config_policy[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_CHANNEL] = {.type = NLA_U8 },
+};
+
+/**
+ * __wlan_hdd_cfg80211_sap_configuration_set() - ask driver to restart SAP if
+ * SAP is on unsafe channel.
+ * @wiphy:    wiphy structure pointer
+ * @wdev:     Wireless device structure pointer
+ * @data:     Pointer to the data received
+ * @data_len: Length of @data
+ *
+ * __wlan_hdd_cfg80211_sap_configuration_set function set SAP params to
+ * driver.
+ * QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_CHAN will set sap config channel and
+ * will initiate restart of sap.
+ *
+ * Return: 0 on success; errno on failure
+ */
+static int
+__wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
+		struct wireless_dev *wdev,
+		const void *data, int data_len)
+{
+	struct net_device *ndev = wdev->netdev;
+	hdd_adapter_t *hostapd_adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
+	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_MAX + 1];
+	uint8_t config_channel = 0;
+	hdd_ap_ctx_t *ap_ctx;
+	int ret;
+
+	ENTER();
+
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hddLog(LOGE, FL("Command not allowed in FTM mode"));
+		return -EINVAL;
+	}
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return -EINVAL;
+
+	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_MAX,
+				data, data_len,
+				wlan_hdd_sap_config_policy)) {
+		hddLog(LOGE, FL("invalid attr"));
+		return -EINVAL;
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_CHANNEL]) {
+		if (!test_bit(SOFTAP_BSS_STARTED,
+					&hostapd_adapter->event_flags)) {
+			hdd_err("SAP is not started yet. Restart sap will be invalid");
+			return -EINVAL;
+		}
+
+		config_channel =
+			nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_CHANNEL]);
+
+		if (!((IS_24G_CH(config_channel)) ||
+			(IS_5G_CH(config_channel)))) {
+			hdd_err("Channel  %d is not valid to restart SAP",
+					config_channel);
+			return -ENOTSUPP;
+		}
+
+		ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(hostapd_adapter);
+		ap_ctx->sapConfig.channel = config_channel;
+		ap_ctx->sapConfig.ch_params.ch_width =
+					ap_ctx->sapConfig.ch_width_orig;
+
+		sme_set_ch_params(hdd_ctx->hHal,
+				ap_ctx->sapConfig.SapHw_mode,
+				ap_ctx->sapConfig.channel,
+				ap_ctx->sapConfig.sec_ch,
+				&ap_ctx->sapConfig.ch_params);
+
+		cds_restart_sap(hostapd_adapter);
+	}
+
+	return 0;
+}
+
+/**
+ * wlan_hdd_cfg80211_sap_configuration_set() - sap configuration vendor command
+ * @wiphy:    wiphy structure pointer
+ * @wdev:     Wireless device structure pointer
+ * @data:     Pointer to the data received
+ * @data_len: Length of @data
+ *
+ * __wlan_hdd_cfg80211_sap_configuration_set function set SAP params to
+ * driver.
+ * QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_CHAN will set sap config channel and
+ * will initiate restart of sap.
+ *
+ * Return: 0 on success; errno on failure
+ */
+static int wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
+		struct wireless_dev *wdev,
+		const void *data, int data_len)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_sap_configuration_set(wiphy,
+			wdev, data, data_len);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
 #undef BPF_INVALID
 #undef BPF_SET_RESET
 #undef BPF_VERSION
@@ -5845,6 +5958,15 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 			WIPHY_VENDOR_CMD_NEED_RUNNING,
 		.doit = wlan_hdd_cfg80211_bpf_offload
 	},
+	{
+		.info.vendor_id = QCA_NL80211_VENDOR_ID,
+		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_SET_SAP_CONFIG,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+			WIPHY_VENDOR_CMD_NEED_NETDEV |
+			WIPHY_VENDOR_CMD_NEED_RUNNING,
+		.doit = wlan_hdd_cfg80211_sap_configuration_set
+	},
+
 };
 
 /**

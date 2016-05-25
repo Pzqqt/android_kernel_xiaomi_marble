@@ -1670,6 +1670,15 @@ static inline void hdd_set_tso_flags(hdd_context_t *hdd_ctx,
 	 struct net_device *wlan_dev){}
 #endif /* FEATURE_TSO */
 
+#if defined(FEATURE_WLAN_MCC_TO_SCC_SWITCH) || \
+	defined(FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE)
+void wlan_hdd_restart_sap(hdd_adapter_t *ap_adapter);
+#else
+static inline void wlan_hdd_restart_sap(hdd_adapter_t *ap_adapter)
+{
+}
+#endif
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static inline bool roaming_offload_enabled(hdd_context_t *hdd_ctx)
 {
