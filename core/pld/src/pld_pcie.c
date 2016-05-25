@@ -109,6 +109,8 @@ static void pld_pcie_remove(struct pci_dev *pdev)
 	if (!pld_context)
 		return;
 
+	pld_context->ops->remove(&pdev->dev, PLD_BUS_TYPE_PCIE);
+
 	spin_lock_irqsave(&pld_context->pld_lock, flags);
 	list_for_each_entry_safe(dev_node, tmp, &pld_context->dev_list, list) {
 		if (dev_node->dev == &pdev->dev) {
@@ -117,8 +119,6 @@ static void pld_pcie_remove(struct pci_dev *pdev)
 		}
 	}
 	spin_unlock_irqrestore(&pld_context->pld_lock, flags);
-
-	pld_context->ops->remove(&pdev->dev, PLD_BUS_TYPE_PCIE);
 }
 
 #ifdef CONFIG_CNSS

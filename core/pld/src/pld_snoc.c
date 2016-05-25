@@ -99,6 +99,8 @@ static void pld_snoc_remove(struct device *dev)
 	if (!pld_context)
 		return;
 
+	pld_context->ops->remove(dev, PLD_BUS_TYPE_SNOC);
+
 	spin_lock_irqsave(&pld_context->pld_lock, flags);
 	list_for_each_entry_safe(dev_node, tmp, &pld_context->dev_list, list) {
 		if (dev_node->dev == dev) {
@@ -107,8 +109,6 @@ static void pld_snoc_remove(struct device *dev)
 		}
 	}
 	spin_unlock_irqrestore(&pld_context->pld_lock, flags);
-
-	pld_context->ops->remove(dev, PLD_BUS_TYPE_SNOC);
 }
 
 /**
