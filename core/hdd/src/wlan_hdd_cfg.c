@@ -6113,11 +6113,31 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 	struct hdd_config *pConfig = pHddCtx->config;
 	tSirMacHTCapabilityInfo *phtCapInfo;
 
-	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_SHORT_GI_20MHZ,
-			    pConfig->ShortGI20MhzEnable) ==
+	/*
+	 * During the initialization both 2G and 5G capabilities should be same.
+	 * So read 5G HT capablity and update 2G and 5G capablities.
+	 */
+	if (sme_cfg_get_int(pHddCtx->hHal, WNI_CFG_HT_CAP_INFO,
+			    &val) ==
 			QDF_STATUS_E_FAILURE) {
 		fStatus = false;
-		hddLog(LOGE, "Could not pass on WNI_CFG_SHORT_GI_20MHZ to CFG");
+		hdd_err("Could not pass on WNI_CFG_HT_CAP_INFO to CFG");
+	}
+	if (pConfig->ShortGI20MhzEnable)
+		val |= HT_CAPS_SHORT_GI20;
+	else
+		val &= ~(HT_CAPS_SHORT_GI20);
+
+	if (pConfig->ShortGI40MhzEnable)
+		val |= HT_CAPS_SHORT_GI40;
+	else
+		val &= ~(HT_CAPS_SHORT_GI40);
+
+	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_HT_CAP_INFO,
+			  val) ==
+			QDF_STATUS_E_FAILURE) {
+		fStatus = false;
+		hdd_err("Could not pass on WNI_CFG_HT_CAP_INFO to CFG");
 	}
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_FIXED_RATE, pConfig->TxRate)
@@ -6470,13 +6490,6 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 		       "Could not pass on WNI_CFG_TX_PWR_CTRL_ENABLE to CFG");
 	}
 
-	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_SHORT_GI_40MHZ,
-			    pConfig->ShortGI40MhzEnable) ==
-			QDF_STATUS_E_FAILURE) {
-		fStatus = false;
-		hddLog(LOGE, "Could not pass on WNI_CFG_SHORT_GI_40MHZ to CFG");
-	}
-
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_ENABLE_MC_ADDR_LIST,
 		    pConfig->fEnableMCAddrList) == QDF_STATUS_E_FAILURE) {
@@ -6550,12 +6563,6 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 				hdd_err("failed to set NUM_OF_SOUNDING_DIM");
 			}
 		}
-	}
-
-	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_HT_RX_STBC,
-			    pConfig->enableRxSTBC) == QDF_STATUS_E_FAILURE) {
-		fStatus = false;
-		hddLog(LOGE, "Could not pass on WNI_CFG_HT_RX_STBC to CFG");
 	}
 
 	sme_cfg_get_int(pHddCtx->hHal, WNI_CFG_HT_CAP_INFO, &val);

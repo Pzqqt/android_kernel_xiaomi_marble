@@ -75,8 +75,6 @@ static void lim_update_stads_htcap(tpAniSirGlobal mac_ctx,
 {
 	uint16_t highest_rxrate = 0;
 	tDot11fIEHTCaps *ht_caps;
-	uint32_t shortgi_20mhz_support;
-	uint32_t shortgi_40mhz_support;
 
 	ht_caps = &assoc_rsp->HTCaps;
 	sta_ds->mlmStaContext.htCapability = assoc_rsp->HTCaps.present;
@@ -123,35 +121,17 @@ static void lim_update_stads_htcap(tpAniSirGlobal mac_ctx,
 		/* Check if we have support for gShortGI20Mhz and
 		 * gShortGI40Mhz from ini file
 		 */
-		if (eSIR_SUCCESS == wlan_cfg_get_int(mac_ctx,
-						WNI_CFG_SHORT_GI_20MHZ,
-						&shortgi_20mhz_support)) {
-			if (true == shortgi_20mhz_support)
-				sta_ds->htShortGI20Mhz =
-				      (uint8_t)assoc_rsp->HTCaps.shortGI20MHz;
-			else
-				sta_ds->htShortGI20Mhz = false;
-		} else {
-			lim_log(mac_ctx, LOGE,
-				FL("could not retrieve shortGI 20Mhz CFG, setting value to default"));
+		if (session_entry->htConfig.ht_sgi20)
 			sta_ds->htShortGI20Mhz =
-				WNI_CFG_SHORT_GI_20MHZ_STADEF;
-		}
+			      (uint8_t)assoc_rsp->HTCaps.shortGI20MHz;
+		else
+			sta_ds->htShortGI20Mhz = false;
 
-		if (eSIR_SUCCESS == wlan_cfg_get_int(mac_ctx,
-						WNI_CFG_SHORT_GI_40MHZ,
-						&shortgi_40mhz_support)) {
-			if (true == shortgi_40mhz_support)
-				sta_ds->htShortGI40Mhz =
-				      (uint8_t)assoc_rsp->HTCaps.shortGI40MHz;
-			else
-				sta_ds->htShortGI40Mhz = false;
-		} else {
-			lim_log(mac_ctx, LOGE,
-				FL("could not retrieve shortGI 40Mhz CFG,setting value to default"));
+		if (session_entry->htConfig.ht_sgi40)
 			sta_ds->htShortGI40Mhz =
-				WNI_CFG_SHORT_GI_40MHZ_STADEF;
-		}
+				      (uint8_t)assoc_rsp->HTCaps.shortGI40MHz;
+		else
+			sta_ds->htShortGI40Mhz = false;
 	}
 }
 

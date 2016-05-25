@@ -1211,7 +1211,6 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 			      bool *assoc_req_copied, uint16_t peer_idx,
 			      tHalBitVal qos_mode, bool pmf_connection)
 {
-	uint32_t cfg_short_gi_20, cfg_short_gi_40;
 	tHalBitVal wme_mode, wsm_mode;
 	uint8_t *ht_cap_ie = NULL;
 #ifdef WLAN_FEATURE_11W
@@ -1296,14 +1295,7 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 		/* assoc_req will be copied to session->parsedAssocReq later */
 		ht_cap_ie = ((uint8_t *) &assoc_req->HTCaps) + 1;
 
-		/* check whether AP is enabled with shortGI */
-		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_SHORT_GI_20MHZ,
-				&cfg_short_gi_20) != eSIR_SUCCESS) {
-			PELOGE(lim_log(mac_ctx, LOGE,
-				FL("could not retrieve shortGI 20Mhz CFG"));)
-			return false;
-		}
-		if (cfg_short_gi_20) {
+		if (session->htConfig.ht_sgi20) {
 			sta_ds->htShortGI20Mhz =
 				(uint8_t)assoc_req->HTCaps.shortGI20MHz;
 		} else {
@@ -1312,13 +1304,7 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 			sta_ds->htShortGI20Mhz = 0;
 		}
 
-		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_SHORT_GI_40MHZ,
-				&cfg_short_gi_40) != eSIR_SUCCESS) {
-			PELOGE(lim_log(mac_ctx, LOGE,
-				FL("could not retrieve shortGI 40Mhz CFG"));)
-			return false;
-		}
-		if (cfg_short_gi_40) {
+		if (session->htConfig.ht_sgi40) {
 			sta_ds->htShortGI40Mhz =
 				(uint8_t)assoc_req->HTCaps.shortGI40MHz;
 		} else {

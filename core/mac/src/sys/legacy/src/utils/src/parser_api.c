@@ -733,12 +733,8 @@ populate_dot11f_ht_caps(tpAniSirGlobal pMac,
 			psessionEntry->htSupportedChannelWidthSet;
 		pDot11f->txSTBC = psessionEntry->htConfig.ht_tx_stbc;
 		pDot11f->rxSTBC = psessionEntry->htConfig.ht_rx_stbc;
-		if (psessionEntry->htConfig.ht_sgi) {
-			pDot11f->shortGI20MHz =
-				uHTCapabilityInfo.htCapInfo.shortGI20MHz;
-			pDot11f->shortGI40MHz =
-				uHTCapabilityInfo.htCapInfo.shortGI40MHz;
-		}
+		pDot11f->shortGI20MHz = psessionEntry->htConfig.ht_sgi20;
+		pDot11f->shortGI40MHz = psessionEntry->htConfig.ht_sgi40;
 	}
 
 	/* Ensure that shortGI40MHz is Disabled if supportedChannelWidthSet is
@@ -972,7 +968,7 @@ populate_dot11f_vht_caps(tpAniSirGlobal pMac,
 			 pDot11f->shortGI80MHz = 0;
 		} else {
 			nCfgValue = 0;
-			if (psessionEntry->htConfig.ht_sgi)
+			if (psessionEntry->htConfig.ht_sgi20)
 				CFG_GET_INT(nStatus, pMac,
 					    WNI_CFG_VHT_SHORT_GI_80MHZ,
 					    nCfgValue);
@@ -983,7 +979,7 @@ populate_dot11f_vht_caps(tpAniSirGlobal pMac,
 			pDot11f->shortGI160and80plus80MHz = 0;
 		} else {
 			nCfgValue = 0;
-			if (psessionEntry->htConfig.ht_sgi)
+			if (psessionEntry->htConfig.ht_sgi20)
 				CFG_GET_INT(nStatus, pMac,
 				WNI_CFG_VHT_SHORT_GI_160_AND_80_PLUS_80MHZ,
 				nCfgValue);

@@ -11697,8 +11697,9 @@ int16_t sme_get_ht_config(tHalHandle hHal, uint8_t session_id, uint16_t ht_capab
 	case WNI_CFG_HT_CAP_INFO_RX_STBC:
 		return pSession->htConfig.ht_rx_stbc;
 	case WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ:
+		return pSession->htConfig.ht_sgi20;
 	case WNI_CFG_HT_CAP_INFO_SHORT_GI_40MHZ:
-		return pSession->htConfig.ht_sgi;
+		return pSession->htConfig.ht_sgi40;
 	default:
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "invalid ht capability");
@@ -11735,8 +11736,10 @@ int sme_update_ht_config(tHalHandle hHal, uint8_t sessionId, uint16_t htCapab,
 		pSession->htConfig.ht_rx_stbc = value;
 		break;
 	case WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ:
+		pSession->htConfig.ht_sgi20 = value;
+		break;
 	case WNI_CFG_HT_CAP_INFO_SHORT_GI_40MHZ:
-		pSession->htConfig.ht_sgi = value;
+		pSession->htConfig.ht_sgi40 = value;
 		break;
 	}
 

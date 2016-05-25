@@ -408,39 +408,6 @@ static tSirRetStatus __lim_init_config(tpAniSirGlobal pMac)
 		pMac->sys.gSysEnableLinkMonitorMode = 1;
 	}
 
-	/* WNI_CFG_SHORT_GI_20MHZ */
-
-	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_CAP_INFO, &val1) != eSIR_SUCCESS) {
-		PELOGE(lim_log(pMac, LOGE, FL("could not retrieve HT Cap CFG"));)
-		return eSIR_FAILURE;
-	}
-	if (wlan_cfg_get_int(pMac, WNI_CFG_SHORT_GI_20MHZ, &val2) != eSIR_SUCCESS) {
-		PELOGE(lim_log
-			       (pMac, LOGE, FL("could not retrieve shortGI 20Mhz CFG"));
-		       )
-		return eSIR_FAILURE;
-	}
-	if (wlan_cfg_get_int(pMac, WNI_CFG_SHORT_GI_40MHZ, &val3) != eSIR_SUCCESS) {
-		PELOGE(lim_log
-			       (pMac, LOGE, FL("could not retrieve shortGI 40Mhz CFG"));
-		       )
-		return eSIR_FAILURE;
-	}
-
-	val16 = (uint16_t) val1;
-	pHTCapabilityInfo = (tSirMacHTCapabilityInfo *) &val16;
-	pHTCapabilityInfo->shortGI20MHz = (uint16_t) val2;
-	pHTCapabilityInfo->shortGI40MHz = (uint16_t) val3;
-
-	if (cfg_set_int
-		    (pMac, WNI_CFG_HT_CAP_INFO,
-		    *(uint16_t *) pHTCapabilityInfo) != eSIR_SUCCESS) {
-		PELOGE(lim_log
-			       (pMac, LOGE, FL("could not update HT Cap Info CFG"));
-		       )
-		return eSIR_FAILURE;
-	}
-
 	/* WNI_CFG_MAX_RX_AMPDU_FACTOR */
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_AMPDU_PARAMS, &val1) !=

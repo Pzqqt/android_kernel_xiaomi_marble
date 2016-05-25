@@ -15081,7 +15081,10 @@ QDF_STATUS csr_roam_open_session(tpAniSirGlobal pMac,
 				uHTCapabilityInfo.htCapInfo.txSTBC;
 			pSession->htConfig.ht_rx_stbc =
 				uHTCapabilityInfo.htCapInfo.rxSTBC;
-			pSession->htConfig.ht_sgi = true;
+			pSession->htConfig.ht_sgi20 =
+				uHTCapabilityInfo.htCapInfo.shortGI20MHz;
+			pSession->htConfig.ht_sgi40 =
+				uHTCapabilityInfo.htCapInfo.shortGI40MHz;
 			status =
 				csr_issue_add_sta_for_session_req(pMac, i, pSelfMacAddr,
 								  type, subType);

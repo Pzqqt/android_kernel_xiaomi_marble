@@ -2657,8 +2657,6 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 	tSirRetStatus retCode = eSIR_SUCCESS;
 	tSirMacAddr staMac;
 	uint32_t listenInterval = WNI_CFG_LISTEN_INTERVAL_STADEF;
-	uint32_t shortGi20MhzSupport;
-	uint32_t shortGi40MhzSupport;
 	uint32_t ampduLenExponent = 0;
 	/*This self Sta dot 11 mode comes from the cfg and the expectation here is
 	 * that cfg carries the systemwide capability that device under
@@ -2762,51 +2760,10 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 			pAddStaParams->fDsssCckMode40Mhz =
 				lim_get_ht_capability(pMac, eHT_DSSS_CCK_MODE_40MHZ,
 						      psessionEntry);
-			/*
-			 * We will read the gShortGI20Mhz from ini file, and if it is set
-			 * to 1 then we will tell Peer that we support 40Mhz short GI
-			 */
-			if (IS_SIR_STATUS_SUCCESS(wlan_cfg_get_int
-							  (pMac, WNI_CFG_SHORT_GI_20MHZ,
-							  &shortGi20MhzSupport))) {
-				if (true == shortGi20MhzSupport) {
-					pAddStaParams->fShortGI20Mhz =
-						WNI_CFG_SHORT_GI_20MHZ_STAMAX;
-				} else {
-					pAddStaParams->fShortGI20Mhz = false;
-				}
-			} else {
-				PELOGE(lim_log
-					       (pMac, LOGE,
-					       FL("could not retrieve shortGI 20Mhz"
-						  "CFG,setting value to default"));
-				       )
-				pAddStaParams->fShortGI20Mhz =
-					WNI_CFG_SHORT_GI_20MHZ_STADEF;
-			}
-
-			/*
-			 * We will read the gShortGI40Mhz from ini file, and if it is set
-			 * to 1 then we will tell Peer that we support 40Mhz short GI
-			 */
-			if (IS_SIR_STATUS_SUCCESS(wlan_cfg_get_int
-							  (pMac, WNI_CFG_SHORT_GI_40MHZ,
-							  &shortGi40MhzSupport))) {
-				if (true == shortGi40MhzSupport) {
-					pAddStaParams->fShortGI40Mhz =
-						WNI_CFG_SHORT_GI_40MHZ_STAMAX;
-				} else {
-					pAddStaParams->fShortGI40Mhz = false;
-				}
-			} else {
-				PELOGE(lim_log
-					       (pMac, LOGE,
-					       FL("could not retrieve shortGI 40Mhz"
-						  "CFG,setting value to default"));
-				       )
-				pAddStaParams->fShortGI40Mhz =
-					WNI_CFG_SHORT_GI_40MHZ_STADEF;
-			}
+			pAddStaParams->fShortGI20Mhz =
+					psessionEntry->htConfig.ht_sgi20;
+			pAddStaParams->fShortGI40Mhz =
+					psessionEntry->htConfig.ht_sgi40;
 			lim_log(pMac, LOG2,
 				FL(" greenFieldCapable: %d maxAmpduDensity = %d "
 				   "maxAmpduSize = %d"),
@@ -3543,8 +3500,6 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 	uint32_t retCode;
 	tpDphHashNode pStaDs = NULL;
 	uint8_t chanWidthSupp = 0;
-	uint32_t shortGi20MhzSupport;
-	uint32_t shortGi40MhzSupport;
 	uint32_t enableTxBF20MHz;
 	tDot11fIEVHTCaps *vht_caps = NULL;
 	tDot11fIEVHTOperation *vht_oper = NULL;
@@ -3853,47 +3808,23 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 			(uint8_t) pAssocRsp->HTCaps.dsssCckMode40MHz;
 		/*
 		 * We will check gShortGI20Mhz and gShortGI40Mhz from
-		 * ini file. if they are set then we will use what ever
+		 * session entry  if they are set then we will use what ever
 		 * Assoc response coming from AP supports. If these
-		 * values are set as 0 in ini file then we will
+		 * values are set as 0 in session entry then we will
 		 * hardcode this values to 0.
 		 */
-		if (IS_SIR_STATUS_SUCCESS(wlan_cfg_get_int
-					(pMac, WNI_CFG_SHORT_GI_20MHZ,
-					 &shortGi20MhzSupport))) {
-			if (true == shortGi20MhzSupport) {
-				pAddBssParams->staContext.
-					fShortGI20Mhz =
-					(uint8_t) pAssocRsp->HTCaps.
-					shortGI20MHz;
-			} else {
-				pAddBssParams->staContext.
-					fShortGI20Mhz = false;
-			}
-		} else {
-			lim_log(pMac, LOGE, FL(
-				"failed to get shortGI 20Mhz, set default"));
+		if (psessionEntry->htConfig.ht_sgi20) {
 				pAddBssParams->staContext.fShortGI20Mhz =
-				WNI_CFG_SHORT_GI_20MHZ_STADEF;
-		}
-
-		if (IS_SIR_STATUS_SUCCESS(wlan_cfg_get_int
-					(pMac, WNI_CFG_SHORT_GI_40MHZ,
-					 &shortGi40MhzSupport))) {
-			if (true == shortGi40MhzSupport) {
-				pAddBssParams->staContext.
-					fShortGI40Mhz =
-					(uint8_t) pAssocRsp->HTCaps.
-					shortGI40MHz;
+					(uint8_t)pAssocRsp->HTCaps.shortGI20MHz;
 			} else {
-				pAddBssParams->staContext.
-					fShortGI40Mhz = false;
+				pAddBssParams->staContext.fShortGI20Mhz = false;
 			}
+
+		if (psessionEntry->htConfig.ht_sgi40) {
+			pAddBssParams->staContext.fShortGI40Mhz =
+				(uint8_t) pAssocRsp->HTCaps.shortGI40MHz;
 		} else {
-			lim_log(pMac, LOGE, FL(
-				"failed to get shortGI 40Mhz, set default"));
-				pAddBssParams->staContext.fShortGI40Mhz =
-				WNI_CFG_SHORT_GI_40MHZ_STADEF;
+				pAddBssParams->staContext.fShortGI40Mhz = false;
 		}
 
 		if (!pAddBssParams->staContext.vhtCapable)
@@ -4091,8 +4022,6 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 	uint32_t retCode;
 	tSchBeaconStruct *pBeaconStruct;
 	uint8_t chanWidthSupp = 0;
-	uint32_t shortGi20MhzSupport;
-	uint32_t shortGi40MhzSupport;
 	tDot11fIEVHTOperation *vht_oper = NULL;
 	tDot11fIEVHTCaps *vht_caps = NULL;
 
@@ -4374,12 +4303,11 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 					vht_oper->chanWidth)
 				pAddBssParams->staContext.ch_width =
 					vht_oper->chanWidth + 1;
-			lim_log(pMac, LOG2, FL(
-					"StaCtx: vhtCap %d ch_bw %d TxBF %d"),
-					pAddBssParams->staContext.vhtCapable,
-					pAddBssParams->staContext.ch_width,
-					pAddBssParams->staContext.
-					vhtTxBFCapable);
+			lim_log(pMac, LOG2,
+				   FL("StaCtx: vhtCap %d ch_bw %d TxBF %d"),
+				   pAddBssParams->staContext.vhtCapable,
+				   pAddBssParams->staContext.ch_width,
+				   pAddBssParams->staContext.vhtTxBFCapable);
 		} else {
 			pAddBssParams->staContext.ch_width =
 				CH_WIDTH_20MHZ;
@@ -4399,40 +4327,18 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 		 * from AP supports. If these values are set as 0 in ini file
 		 * then we will hardcode this values to 0.
 		 */
-		if (IS_SIR_STATUS_SUCCESS(wlan_cfg_get_int
-					(pMac, WNI_CFG_SHORT_GI_20MHZ,
-					 &shortGi20MhzSupport))) {
-			if (true == shortGi20MhzSupport)
-				pAddBssParams->staContext.fShortGI20Mhz =
+		if (true == psessionEntry->htConfig.ht_sgi20)
+			pAddBssParams->staContext.fShortGI20Mhz =
 				(uint8_t)pBeaconStruct->HTCaps.shortGI20MHz;
-			else
+		else
 				pAddBssParams->staContext.fShortGI20Mhz =
 					false;
-		} else {
-			lim_log(pMac, LOGE, FL(
-				"get shortGI 20Mhz failed, set default"));
-				pAddBssParams->staContext.fShortGI20Mhz =
-				WNI_CFG_SHORT_GI_20MHZ_STADEF;
-		}
 
-		if (IS_SIR_STATUS_SUCCESS(wlan_cfg_get_int
-					(pMac, WNI_CFG_SHORT_GI_40MHZ,
-					 &shortGi40MhzSupport))) {
-			if (true == shortGi40MhzSupport) {
-				pAddBssParams->staContext.
-					fShortGI40Mhz =
-					(uint8_t) pBeaconStruct->HTCaps.
-					shortGI40MHz;
-			} else {
-				pAddBssParams->staContext.
-					fShortGI40Mhz = false;
-			}
-		} else {
-			lim_log(pMac, LOGE, FL(
-				"get shortGI 40Mhz failed, set default"));
-				pAddBssParams->staContext.fShortGI40Mhz =
-				WNI_CFG_SHORT_GI_40MHZ_STADEF;
-		}
+		if (true == psessionEntry->htConfig.ht_sgi40)
+			pAddBssParams->staContext.fShortGI40Mhz =
+				(uint8_t) pBeaconStruct->HTCaps.shortGI40MHz;
+		else
+			pAddBssParams->staContext.fShortGI40Mhz = false;
 
 		pAddBssParams->staContext.maxAmpduSize =
 			pBeaconStruct->HTCaps.maxRxAMPDUFactor;

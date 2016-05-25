@@ -2947,15 +2947,13 @@ uint8_t lim_get_ht_capability(tpAniSirGlobal pMac,
 		break;
 
 	case eHT_SHORT_GI_40MHZ:
-		retVal = (uint8_t)
-			 (psessionEntry->htConfig.ht_sgi) ? macHTCapabilityInfo.
-			 shortGI40MHz : 0;
+		retVal = (uint8_t) (psessionEntry->htConfig.ht_sgi40) ?
+			 macHTCapabilityInfo.shortGI40MHz : 0;
 		break;
 
 	case eHT_SHORT_GI_20MHZ:
-		retVal = (uint8_t)
-			 (psessionEntry->htConfig.ht_sgi) ? macHTCapabilityInfo.
-			 shortGI20MHz : 0;
+		retVal = (uint8_t) (psessionEntry->htConfig.ht_sgi20) ?
+			 macHTCapabilityInfo.shortGI20MHz : 0;
 		break;
 
 	case eHT_GREENFIELD:
