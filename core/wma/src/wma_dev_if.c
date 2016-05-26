@@ -1729,6 +1729,7 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	uint32_t temp_chan_info = 0;
 	uint32_t temp_reg_info_1 = 0;
 	uint32_t temp_reg_info_2 = 0;
+	uint16_t bw_val;
 
 	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (mac_ctx == NULL) {
@@ -1773,10 +1774,11 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 
 	params.band_center_freq1 = params.chan_freq;
 
-	if (CH_WIDTH_20MHZ != req->chan_width)
+	bw_val = cds_bw_value(req->chan_width);
+	if (20 < bw_val)
 		params.band_center_freq1 =
 			cds_chan_to_freq(req->ch_center_freq_seg0);
-	if (CH_WIDTH_80P80MHZ == req->chan_width)
+	if (80 < bw_val)
 		params.band_center_freq2 =
 			cds_chan_to_freq(req->ch_center_freq_seg1);
 	else
