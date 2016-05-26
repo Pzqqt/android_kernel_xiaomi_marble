@@ -346,7 +346,7 @@ enum channel_state cds_get_2g_bonded_channel_state(uint16_t oper_ch,
 		return CHANNEL_STATE_INVALID;
 
 	if (CH_WIDTH_40MHZ == ch_width) {
-		if ((sec_ch + 4 != oper_ch) ||
+		if ((sec_ch + 4 != oper_ch) &&
 		    (oper_ch + 4 != sec_ch))
 			return CHANNEL_STATE_INVALID;
 		chan_state2 = cds_get_channel_state(sec_ch);
@@ -372,8 +372,8 @@ enum channel_state cds_get_2g_bonded_channel_state(uint16_t oper_ch,
 		bw_enabled = !(reg_channels[chan_enum].flags &
 			       IEEE80211_CHAN_NO_20MHZ);
 	else if (CH_WIDTH_40MHZ == ch_width)
-		bw_enabled = !(reg_channels[chan_enum].flags &
-			       IEEE80211_CHAN_NO_HT40);
+		bw_enabled = !((reg_channels[chan_enum].flags &
+				IEEE80211_CHAN_NO_HT40) == IEEE80211_CHAN_NO_HT40);
 
 	if (bw_enabled)
 		return chan_state;
@@ -417,8 +417,8 @@ enum channel_state cds_get_5g_bonded_channel_state(
 		bw_enabled = !(reg_channels[chan_enum].flags &
 			       IEEE80211_CHAN_NO_20MHZ);
 	else if (CH_WIDTH_40MHZ == ch_width)
-		bw_enabled = !(reg_channels[chan_enum].flags &
-			       IEEE80211_CHAN_NO_HT40);
+		bw_enabled = !((reg_channels[chan_enum].flags &
+				IEEE80211_CHAN_NO_HT40) == IEEE80211_CHAN_NO_HT40);
 	else if (CH_WIDTH_80MHZ == ch_width)
 		bw_enabled = !(reg_channels[chan_enum].flags &
 			       IEEE80211_CHAN_NO_80MHZ);
@@ -449,6 +449,7 @@ static void cds_set_5g_channel_params(uint16_t oper_ch,
 	enum channel_state chan_state = CHANNEL_STATE_ENABLE;
 	enum channel_state chan_state2 = CHANNEL_STATE_ENABLE;
 	const struct bonded_chan *bonded_chan_ptr;
+	const struct bonded_chan *bonded_chan_ptr2;
 
 	if (CH_WIDTH_MAX <= ch_params->ch_width)
 		ch_params->ch_width = CH_WIDTH_80P80MHZ;
@@ -470,21 +471,27 @@ static void cds_set_5g_channel_params(uint16_t oper_ch,
 			chan_state = chan_state2;
 		if ((CHANNEL_STATE_ENABLE == chan_state) ||
 		    (CHANNEL_STATE_DFS == chan_state)) {
-			if (CH_WIDTH_20MHZ >= ch_params->ch_width)
+			if (CH_WIDTH_20MHZ >= ch_params->ch_width) {
 				ch_params->sec_ch_offset
 					= PHY_SINGLE_CHANNEL_CENTERED;
-			else if (CH_WIDTH_40MHZ == ch_params->ch_width) {
-				if (oper_ch == bonded_chan_ptr->start_ch)
+				ch_params->center_freq_seg0 = oper_ch;
+			} else if (CH_WIDTH_40MHZ <= ch_params->ch_width) {
+				cds_search_5g_bonded_chan_array(oper_ch,
+							bonded_chan_40mhz_array,
+					QDF_ARRAY_SIZE(bonded_chan_40mhz_array),
+							     &bonded_chan_ptr2);
+				if (oper_ch == bonded_chan_ptr2->start_ch)
 					ch_params->sec_ch_offset =
 						PHY_DOUBLE_CHANNEL_LOW_PRIMARY;
 				else
 					ch_params->sec_ch_offset =
 						PHY_DOUBLE_CHANNEL_HIGH_PRIMARY;
+				ch_params->center_freq_seg0 =
+					(bonded_chan_ptr2->start_ch +
+					 bonded_chan_ptr2->end_ch)/2;
+
 			}
 
-			ch_params->center_freq_seg0 =
-				(bonded_chan_ptr->start_ch +
-				 bonded_chan_ptr->end_ch)/2;
 			break;
 		}
 
@@ -528,6 +535,8 @@ static void cds_set_2g_channel_params(uint16_t oper_ch,
 				else
 					ch_params->sec_ch_offset =
 						PHY_DOUBLE_CHANNEL_HIGH_PRIMARY;
+				ch_params->center_freq_seg0 =
+					(oper_ch + sec_ch_2g)/2;
 			} else
 				ch_params->sec_ch_offset =
 					PHY_SINGLE_CHANNEL_CENTERED;
