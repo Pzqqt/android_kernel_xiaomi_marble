@@ -2871,19 +2871,23 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		 * follows pri AP
 		 */
 		sap_ctx->acs_cfg->pri_ch = sap_ctx->channel;
-		sap_ctx->acs_cfg->ch_width = sap_ctx->ch_params.ch_width;
-		sap_config_acs_result(hal, sap_ctx, sap_ctx->secondary_ch);
+		sap_ctx->acs_cfg->ch_width =
+				sap_ctx->csr_roamProfile.ch_params.ch_width;
+		sap_config_acs_result(hal, sap_ctx,
+			sap_ctx->csr_roamProfile.ch_params.sec_ch_offset);
 
 		sap_ap_event.sapHddEventCode = eSAP_CHANNEL_CHANGE_EVENT;
 
 		acs_selected = &sap_ap_event.sapevt.sap_ch_selected;
 		acs_selected->pri_ch = sap_ctx->acs_cfg->pri_ch;
-		acs_selected->ht_sec_ch = sap_ctx->acs_cfg->ht_sec_ch;
-		acs_selected->ch_width = sap_ctx->acs_cfg->ch_width;
+		acs_selected->ht_sec_ch =
+			sap_ctx->csr_roamProfile.ch_params.sec_ch_offset;
+		acs_selected->ch_width =
+			sap_ctx->csr_roamProfile.ch_params.ch_width;
 		acs_selected->vht_seg0_center_ch =
-			sap_ctx->acs_cfg->vht_seg0_center_ch;
+			sap_ctx->csr_roamProfile.ch_params.center_freq_seg0;
 		acs_selected->vht_seg1_center_ch =
-			sap_ctx->acs_cfg->vht_seg1_center_ch;
+			sap_ctx->csr_roamProfile.ch_params.center_freq_seg1;
 		break;
 
 	case eSAP_DFS_NOL_GET:

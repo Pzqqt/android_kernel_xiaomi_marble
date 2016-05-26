@@ -1170,6 +1170,8 @@ typedef struct sSirSmeChanInfo {
 	uint32_t reg_info_2;
 	uint8_t nss;
 	uint32_t rate_flags;
+	uint8_t sec_ch_offset;
+	enum phy_ch_width ch_width;
 } tSirSmeChanInfo, *tpSirSmeChanInfo;
 
 /* / Definition for Association indication from peer */
@@ -1536,6 +1538,7 @@ typedef struct sSirSmeSwitchChannelInd {
 	uint16_t length;
 	uint8_t sessionId;
 	uint16_t newChannelId;
+	struct ch_params_s chan_params;
 	struct qdf_mac_addr bssid;      /* BSSID */
 } tSirSmeSwitchChannelInd, *tpSirSmeSwitchChannelInd;
 

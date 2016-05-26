@@ -10341,6 +10341,14 @@ csr_roam_chk_lnk_swt_ch_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 
 		qdf_mem_set(&roamInfo, sizeof(tCsrRoamInfo), 0);
 		roamInfo.chan_info.chan_id = pSwitchChnInd->newChannelId;
+		roamInfo.chan_info.ch_width =
+				pSwitchChnInd->chan_params.ch_width;
+		roamInfo.chan_info.sec_ch_offset =
+				pSwitchChnInd->chan_params.sec_ch_offset;
+		roamInfo.chan_info.band_center_freq1 =
+				pSwitchChnInd->chan_params.center_freq_seg0;
+		roamInfo.chan_info.band_center_freq2 =
+				pSwitchChnInd->chan_params.center_freq_seg1;
 		status = csr_roam_call_callback(mac_ctx, sessionId,
 				&roamInfo, 0, eCSR_ROAM_STA_CHANNEL_SWITCH,
 				eCSR_ROAM_RESULT_NONE);

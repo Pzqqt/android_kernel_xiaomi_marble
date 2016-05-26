@@ -2310,8 +2310,21 @@ wlansap_channel_change_request(void *pSapCtx, uint8_t target_channel)
 	 */
 	sapContext->channel = target_channel;
 	sapContext->csr_roamProfile.ch_params.ch_width = ch_params->ch_width;
+	sapContext->csr_roamProfile.ch_params.sec_ch_offset =
+						ch_params->sec_ch_offset;
+	sapContext->csr_roamProfile.ch_params.center_freq_seg0 =
+						ch_params->center_freq_seg0;
+	sapContext->csr_roamProfile.ch_params.center_freq_seg1 =
+						ch_params->center_freq_seg1;
+
 	qdf_ret_status = sme_roam_channel_change_req(hHal, sapContext->bssid,
 				ch_params, &sapContext->csr_roamProfile);
+
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+		"%s: chan:%d width:%d offset:%d seg0:%d seg1:%d",
+		__func__, sapContext->channel, ch_params->ch_width,
+		ch_params->sec_ch_offset, ch_params->center_freq_seg0,
+		ch_params->center_freq_seg1);
 
 	if (qdf_ret_status == QDF_STATUS_SUCCESS) {
 		sap_signal_hdd_event(sapContext, NULL,
@@ -3294,27 +3307,4 @@ void wlan_sap_enable_phy_error_logs(tHalHandle hal, bool enable_log)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	mac_ctx->sap.enable_dfs_phy_error_logs = enable_log;
-}
-/**
-* wlansap_get_phymode() - get SAP phymode.
-* @pctx: Pointer to the global vos context; a handle to SAP's control block
-*	can be extracted from its context. When MBSSID feature is enabled,
-*	SAP context is directly passed to SAP APIs.
-*
-* This function provides current phymode of SAP interface.
-*
-* Return: phymode with eCsrPhyMode type.
-*/
-eCsrPhyMode
-wlansap_get_phymode(void *pctx)
-{
-	ptSapContext sap_context = NULL;
-
-	sap_context = CDS_GET_SAP_CB(pctx);
-	if (NULL == sap_context) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			"%s: Invalid SAP pointer from pctx", __func__);
-		return eCSR_DOT11_MODE_AUTO;
-	}
-	return sap_context->csr_roamProfile.phyMode;
 }

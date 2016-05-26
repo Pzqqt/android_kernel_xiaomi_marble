@@ -2650,6 +2650,24 @@ void lim_switch_channel_cback(tpAniSirGlobal pMac, QDF_STATUS status,
 	pSirSmeSwitchChInd->newChannelId =
 		psessionEntry->gLimChannelSwitch.primaryChannel;
 	pSirSmeSwitchChInd->sessionId = psessionEntry->smeSessionId;
+	pSirSmeSwitchChInd->chan_params.ch_width =
+			psessionEntry->gLimChannelSwitch.ch_width;
+	pSirSmeSwitchChInd->chan_params.sec_ch_offset =
+			psessionEntry->gLimChannelSwitch.sec_ch_offset;
+	pSirSmeSwitchChInd->chan_params.center_freq_seg0 =
+			psessionEntry->gLimChannelSwitch.ch_center_freq_seg0;
+	pSirSmeSwitchChInd->chan_params.center_freq_seg1 =
+			psessionEntry->gLimChannelSwitch.ch_center_freq_seg1;
+
+	lim_log(pMac, LOG1,
+		FL("session:%d chan:%d width:%d sec offset:%d seg0:%d seg1:%d"),
+		pSirSmeSwitchChInd->sessionId,
+		pSirSmeSwitchChInd->newChannelId,
+		pSirSmeSwitchChInd->chan_params.ch_width,
+		pSirSmeSwitchChInd->chan_params.sec_ch_offset,
+		pSirSmeSwitchChInd->chan_params.center_freq_seg0,
+		pSirSmeSwitchChInd->chan_params.center_freq_seg1);
+
 	qdf_mem_copy(pSirSmeSwitchChInd->bssid.bytes, psessionEntry->bssId,
 		     QDF_MAC_ADDR_SIZE);
 	mmhMsg.bodyptr = pSirSmeSwitchChInd;

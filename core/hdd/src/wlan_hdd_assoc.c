@@ -3973,6 +3973,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 	hdd_station_ctx_t *pHddStaCtx = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	hdd_context_t *pHddCtx = NULL;
+	struct hdd_chan_change_params chan_change;
 
 	hddLog(LOG2,
 		  "CSR Callback: status= %d result= %d roamID=%d",
@@ -4313,8 +4314,18 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		hdd_info("channel switch for session:%d to channel:%d",
 			pAdapter->sessionId, pRoamInfo->chan_info.chan_id);
 
+		chan_change.chan = pRoamInfo->chan_info.chan_id;
+		chan_change.chan_params.ch_width =
+					pRoamInfo->chan_info.ch_width;
+		chan_change.chan_params.sec_ch_offset =
+					pRoamInfo->chan_info.sec_ch_offset;
+		chan_change.chan_params.center_freq_seg0 =
+					pRoamInfo->chan_info.band_center_freq1;
+		chan_change.chan_params.center_freq_seg1 =
+					pRoamInfo->chan_info.band_center_freq2;
+
 		status = hdd_chan_change_notify(pAdapter, pAdapter->dev,
-						pRoamInfo->chan_info.chan_id);
+					chan_change);
 		if (QDF_IS_STATUS_ERROR(status))
 			hdd_err("channel change notification failed");
 

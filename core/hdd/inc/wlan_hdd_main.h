@@ -821,6 +821,15 @@ struct hdd_netif_queue_history {
 	uint32_t pause_map;
 };
 
+/**
+ * struct hdd_chan_change_params - channel related information
+ * @chan: operating channel
+ * @chan_params: channel parameters
+ */
+struct hdd_chan_change_params {
+	uint8_t chan;
+	struct ch_params_s chan_params;
+};
 
 #define WLAN_HDD_ADAPTER_MAGIC 0x574c414e       /* ASCII "WLAN" */
 
@@ -1635,8 +1644,8 @@ uint8_t wlan_hdd_find_opclass(tHalHandle hal, uint8_t channel,
 void hdd_update_config(hdd_context_t *hdd_ctx);
 
 QDF_STATUS hdd_chan_change_notify(hdd_adapter_t *adapter,
-				struct net_device *dev, uint8_t oper_chan);
-
+		struct net_device *dev,
+		struct hdd_chan_change_params chan_change);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 QDF_STATUS hdd_register_for_sap_restart_with_channel_switch(void);
 #else
