@@ -2221,7 +2221,6 @@ void wmi_unified_detach(struct wmi_unified *wmi_handle)
 
 	wmi_debugfs_remove(wmi_handle);
 
-	qdf_spin_lock_bh(&wmi_handle->eventq_lock);
 	buf = qdf_nbuf_queue_remove(&wmi_handle->event_queue);
 	while (buf) {
 		qdf_nbuf_free(buf);
@@ -2232,7 +2231,6 @@ void wmi_unified_detach(struct wmi_unified *wmi_handle)
 	wmi_log_buffer_free(wmi_handle);
 #endif
 
-	qdf_spin_unlock_bh(&wmi_handle->eventq_lock);
 	qdf_spinlock_destroy(&wmi_handle->eventq_lock);
 	qdf_spinlock_destroy(&wmi_handle->ctx_lock);
 	OS_FREE(wmi_handle);
