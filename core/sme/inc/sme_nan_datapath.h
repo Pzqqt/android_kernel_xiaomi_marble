@@ -27,6 +27,25 @@
 #ifndef __SME_NAN_DATAPATH_H
 #define __SME_NAN_DATAPATH_H
 
+#include "ani_global.h"
+
+/* NAN initiator request handler */
+QDF_STATUS sme_ndp_initiator_req_handler(uint32_t session_id,
+					struct ndp_initiator_req *req_params);
+
+/* NAN responder request handler */
+QDF_STATUS sme_ndp_responder_req_handler(uint32_t session_id,
+					struct ndp_responder_req *req_params);
+
+/* NAN indication response handler */
+QDF_STATUS sme_ndp_end_req_handler(uint32_t session_id,
+					struct ndp_end_req *req_params);
+
+/* NAN schedule update request handler */
+QDF_STATUS sme_ndp_sched_req_handler(uint32_t session_id,
+				struct ndp_schedule_update_req *req_params);
+
+/* Function to handle NDP messages from lower layers */
+void sme_ndp_message_processor(tpAniSirGlobal mac_ctx, uint16_t msg_type,
+				void *msg);
 #endif /* __SME_NAN_DATAPATH_H */
-
-

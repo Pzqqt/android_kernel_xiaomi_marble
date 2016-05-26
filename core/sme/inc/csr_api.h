@@ -610,6 +610,8 @@ typedef enum {
 	eCSR_ROAM_RESULT_DFS_CHANSW_UPDATE_SUCCESS,
 	eCSR_ROAM_EXT_CHG_CHNL_UPDATE_IND,
 
+	eCSR_ROAM_RESULT_NDP_CREATE_RSP,
+	eCSR_ROAM_RESULT_NDP_DELETE_RSP,
 	eCSR_ROAM_RESULT_NDP_INITIATOR_RSP,
 	eCSR_ROAM_RESULT_NDP_NEW_PEER_IND,
 	eCSR_ROAM_RESULT_NDP_CONFIRM_IND,
@@ -1372,6 +1374,21 @@ typedef struct tagCsrRoamInfo {
 #endif
 	tSirSmeChanInfo chan_info;
 	uint8_t target_channel;
+
+#ifdef WLAN_FEATURE_NAN_DATAPATH
+	union {
+		struct sme_ndp_peer_ind ndp_peer_ind_params;
+		struct ndp_schedule_update_rsp ndp_sched_upd_rsp_params;
+		struct ndp_end_indication_event ndp_end_ind_params;
+		struct ndp_end_rsp_event ndp_end_rsp_params;
+		struct ndp_confirm_event ndp_confirm_params;
+		struct ndp_responder_rsp_event ndp_responder_rsp_params;
+		struct ndp_indication_event ndp_indication_params;
+		struct ndp_initiator_rsp_event ndp_init_rsp_params;
+		struct ndi_create_rsp ndi_create_params;
+		struct ndi_delete_rsp ndi_delete_params;
+	} ndp;
+#endif
 } tCsrRoamInfo;
 
 typedef struct tagCsrFreqScanInfo {

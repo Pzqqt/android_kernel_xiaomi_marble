@@ -26,3 +26,26 @@
 
 #include "nan_datapath.h"
 
+/**
+ * handle_ndp_request_message() - Function to handle NDP requests from SME
+ * @mac_ctx: handle to mac structure
+ * @msg: pointer to message
+ *
+ * Return: QDF_STATUS_SUCCESS on success; error number otherwise
+ */
+QDF_STATUS handle_ndp_request_message(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * handle_ndp_event_message() - Handler for NDP events from WMA
+ * @mac_ctx: handle to mac structure
+ * @msg: pointer to message
+ *
+ * Return: QDF_STATUS_SUCCESS on success; error number otherwise
+ */
+QDF_STATUS handle_ndp_event_message(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
+{
+	return QDF_STATUS_SUCCESS;
+}

@@ -52,6 +52,6 @@ static inline void wma_update_hdd_cfg_ndp(tp_wma_handle wma_handle,
 	return;
 }
 
-#endif
+#endif /* WLAN_FEATURE_NAN_DATAPATH */
 
 #endif /* __WMA_NAN_DATAPATH_H */
