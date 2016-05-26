@@ -285,6 +285,7 @@ typedef enum {
  * @QDF_OCB_MODE: OCB device mode
  * @QDF_EPPING_MODE: EPPING device mode
  * @QDF_QVIT_MODE: QVIT device mode
+ * @QDF_NDI_MODE: NAN datapath mode
  * @QDF_MAX_NO_OF_MODE: Max place holder
  *
  * These are generic IDs that identify the various roles
@@ -302,6 +303,7 @@ enum tQDF_ADAPTER_MODE {
 	QDF_OCB_MODE,
 	QDF_EPPING_MODE,
 	QDF_QVIT_MODE,
+	QDF_NDI_MODE,
 	QDF_MAX_NO_OF_MODE
 };
 
