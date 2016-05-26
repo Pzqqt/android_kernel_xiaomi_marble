@@ -3157,6 +3157,26 @@ enum dot11p_mode {
 #define CFG_IGNORE_PEER_HT_MODE_MAX        (1)
 #define CFG_IGNORE_PEER_HT_MODE_DEFAULT    (0)
 
+#ifdef WLAN_FEATURE_NAN_DATAPATH
+/*
+ * Enable NaN data path feature. NaN data path enables
+ * NaN supported devices to exchange data over traditional
+ * TCP/UDP network stack.
+ */
+#define CFG_ENABLE_NAN_DATAPATH_NAME    "genable_nan_datapath"
+#define CFG_ENABLE_NAN_DATAPATH_MIN     (0)
+#define CFG_ENABLE_NAN_DATAPATH_MAX     (1)
+#define CFG_ENABLE_NAN_DATAPATH_DEFAULT (0)
+
+/*
+ * NAN channel on which NAN data interface to start
+ */
+#define CFG_ENABLE_NAN_NDI_CHANNEL_NAME    "gnan_datapath_ndi_channel"
+#define CFG_ENABLE_NAN_NDI_CHANNEL_MIN     (6)
+#define CFG_ENABLE_NAN_NDI_CHANNEL_MAX     (149)
+#define CFG_ENABLE_NAN_NDI_CHANNEL_DEFAULT (6)
+#endif
+
 /*
  * Dense Roam Min APs
  * minimum number of AP required for dense roam
@@ -4045,6 +4065,10 @@ struct hdd_config {
 	uint8_t adapt_dwell_lpf_weight;
 	uint8_t adapt_dwell_passive_mon_intval;
 	uint8_t adapt_dwell_wifi_act_threshold;
+#ifdef WLAN_FEATURE_NAN_DATAPATH
+	bool enable_nan_datapath;
+	uint8_t nan_datapath_ndi_channel;
+#endif
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

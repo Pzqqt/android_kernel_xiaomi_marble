@@ -23,4 +23,21 @@
  *
  * WLAN Host Device Driver nan datapath API implementation
  */
+#include "wlan_hdd_includes.h"
 #include "wlan_hdd_nan_datapath.h"
+
+/**
+ * hdd_ndp_print_ini_config()- Print nan datapath specific INI configuration
+ * @hdd_ctx: handle to hdd context
+ *
+ * Return: None
+ */
+void hdd_ndp_print_ini_config(hdd_context_t *hdd_ctx)
+{
+	hddLog(LOG2, "Name = [%s] Value = [%u]",
+		CFG_ENABLE_NAN_DATAPATH_NAME,
+		hdd_ctx->config->enable_nan_datapath);
+	hddLog(LOG2, "Name = [%s] Value = [%u]",
+		CFG_ENABLE_NAN_NDI_CHANNEL_NAME,
+		hdd_ctx->config->nan_datapath_ndi_channel);
+}

@@ -45,6 +45,7 @@
 #include <wlan_hdd_misc.h>
 #include <wlan_hdd_napi.h>
 #include <cds_concurrency.h>
+#include "wlan_hdd_nan_datapath.h"
 
 static void
 cb_notify_set_roam_prefer5_g_hz(hdd_context_t *pHddCtx, unsigned long notifyId)
@@ -3919,6 +3920,21 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			CFG_EDCA_BE_AIFS_VALUE_DEFAULT,
 			CFG_EDCA_BE_AIFS_VALUE_MIN,
 			CFG_EDCA_BE_AIFS_VALUE_MAX),
+#ifdef WLAN_FEATURE_NAN_DATAPATH
+	REG_VARIABLE(CFG_ENABLE_NAN_DATAPATH_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, enable_nan_datapath,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_ENABLE_NAN_DATAPATH_DEFAULT,
+		CFG_ENABLE_NAN_DATAPATH_MIN,
+		CFG_ENABLE_NAN_DATAPATH_MAX),
+
+	REG_VARIABLE(CFG_ENABLE_NAN_NDI_CHANNEL_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, nan_datapath_ndi_channel,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_ENABLE_NAN_NDI_CHANNEL_DEFAULT,
+		CFG_ENABLE_NAN_NDI_CHANNEL_MIN,
+		CFG_ENABLE_NAN_NDI_CHANNEL_MAX),
+#endif
 
 	REG_VARIABLE(CFG_ENABLE_DP_TRACE, WLAN_PARAM_Integer,
 		struct hdd_config, enable_dp_trace,
@@ -5657,6 +5673,7 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_info("Name = [%s] Value = [%u]",
 		CFG_ADAPT_DWELL_WIFI_THRESH_NAME,
 		pHddCtx->config->adapt_dwell_wifi_act_threshold);
+	hdd_ndp_print_ini_config(pHddCtx);
 }
 
 

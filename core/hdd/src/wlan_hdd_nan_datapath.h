@@ -27,5 +27,15 @@
 #ifndef __WLAN_HDD_NAN_DATAPATH_H
 #define __WLAN_HDD_NAN_DATAPATH_H
 
+struct hdd_context_s;
+
+#ifdef WLAN_FEATURE_NAN_DATAPATH
+void hdd_ndp_print_ini_config(struct hdd_context_s *hdd_ctx);
+#else
+static inline void hdd_ndp_print_ini_config(struct hdd_context_s *hdd_ctx)
+{
+}
+#endif /* WLAN_FEATURE_NAN_DATAPATH */
+
 #endif /* __WLAN_HDD_NAN_DATAPATH_H */
 
