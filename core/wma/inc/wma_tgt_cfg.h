@@ -148,6 +148,7 @@ struct wma_dfs_radar_ind {
  * @max_intf_count: max interface count
  * @lpss_support: lpass support
  * @egap_support: enhanced green ap support
+ * @nan_datapath_enabled: nan data path support
  */
 struct wma_tgt_cfg {
 	uint32_t target_fw_version;
@@ -168,5 +169,8 @@ struct wma_tgt_cfg {
 #endif
 	uint32_t fine_time_measurement_cap;
 	bool bpf_enabled;
+#ifdef WLAN_FEATURE_NAN_DATAPATH
+	bool nan_datapath_enabled;
+#endif
 };
 #endif /* WMA_TGT_CFG_H */

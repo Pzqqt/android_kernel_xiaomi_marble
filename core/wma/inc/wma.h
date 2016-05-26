@@ -1429,6 +1429,8 @@ typedef struct {
 	uint32_t fine_time_measurement_cap;
 	struct wma_ini_config ini_config;
 	struct wma_valid_channels saved_chan;
+	/* NAN datapath support enabled in firmware */
+	bool nan_datapath_enabled;
 } t_wma_handle, *tp_wma_handle;
 
 /**

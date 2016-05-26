@@ -27,4 +27,31 @@
 #ifndef __WMA_NAN_DATAPATH_H
 #define __WMA_NAN_DATAPATH_H
 
+#include "wma.h"
+#include "sir_api.h"
+
+#ifdef WLAN_FEATURE_NAN_DATAPATH
+
+/**
+ * wma_update_hdd_cfg_ndp() - Update target device NAN datapath capability
+ * @wma_handle: pointer to WMA context
+ * @tgt_cfg: Pointer to target configuration data structure
+ *
+ * Return: none
+ */
+static inline void wma_update_hdd_cfg_ndp(tp_wma_handle wma_handle,
+					struct wma_tgt_cfg *tgt_cfg)
+{
+	tgt_cfg->nan_datapath_enabled = wma_handle->nan_datapath_enabled;
+}
+
+#else
+static inline void wma_update_hdd_cfg_ndp(tp_wma_handle wma_handle,
+					struct wma_tgt_cfg *tgt_cfg)
+{
+	return;
+}
+
+#endif
+
 #endif /* __WMA_NAN_DATAPATH_H */

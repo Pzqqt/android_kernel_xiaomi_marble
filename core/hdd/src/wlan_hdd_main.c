@@ -104,6 +104,7 @@
 #include <wlan_hdd_regulatory.h>
 #include "ol_rx_fwd.h"
 #include "wlan_hdd_lpass.h"
+#include "wlan_hdd_nan_datapath.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -1392,6 +1393,8 @@ void hdd_update_tgt_cfg(void *context, void *param)
 		 hdd_ctx->current_antenna_mode);
 
 	hdd_ctx->bpf_enabled = cfg->bpf_enabled;
+	/* Configure NAN datapath features */
+	hdd_nan_datapath_target_config(hdd_ctx, cfg);
 }
 
 /**

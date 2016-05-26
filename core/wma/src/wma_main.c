@@ -78,6 +78,7 @@
 #include "cdp_txrx_flow_ctrl_legacy.h"
 #include "cdp_txrx_flow_ctrl_v2.h"
 #include "cdp_txrx_ipa.h"
+#include "wma_nan_datapath.h"
 
 #define WMA_LOG_COMPLETION_TIMER 10000 /* 10 seconds */
 
@@ -3912,6 +3913,7 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	wma_setup_egap_support(&tgt_cfg, wma_handle);
 
 	wma_handle->tgt_cfg_update_cb(hdd_ctx, &tgt_cfg);
+	wma_update_hdd_cfg_ndp(wma_handle, &tgt_cfg);
 }
 
 /**
@@ -4324,6 +4326,9 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		return -EINVAL;
 	}
 
+	wma_handle->nan_datapath_enabled =
+		WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
+			WMI_SERVICE_NAN_DATA);
 	qdf_mem_copy(target_cap.wmi_service_bitmap,
 		     param_buf->wmi_service_bitmap,
 		     sizeof(wma_handle->wmi_service_bitmap));

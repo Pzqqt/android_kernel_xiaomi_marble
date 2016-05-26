@@ -28,14 +28,28 @@
 #define __WLAN_HDD_NAN_DATAPATH_H
 
 struct hdd_context_s;
+struct wma_tgt_cfg;
+struct hdd_config;
 
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 void hdd_ndp_print_ini_config(struct hdd_context_s *hdd_ctx);
+void hdd_nan_datapath_enable(struct hdd_config *cfg_ini, bool enable);
+void hdd_nan_datapath_target_config(struct hdd_context_s *hdd_ctx,
+						struct wma_tgt_cfg *cfg);
+
 #else
 static inline void hdd_ndp_print_ini_config(struct hdd_context_s *hdd_ctx)
 {
 }
+static inline void hdd_nan_datapath_enable(struct hdd_config *cfg_ini,
+								bool enable)
+{
+}
+static inline void hdd_nan_datapath_target_config(struct hdd_context_s *hdd_ctx,
+						struct wma_tgt_cfg *cfg)
+{
+}
+
 #endif /* WLAN_FEATURE_NAN_DATAPATH */
 
 #endif /* __WLAN_HDD_NAN_DATAPATH_H */
-
