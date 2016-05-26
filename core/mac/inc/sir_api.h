@@ -489,13 +489,23 @@ struct sir_set_antenna_mode {
 	struct sir_antenna_mode_param set_antenna_mode;
 };
 
-/* / BSS type enum used in while scanning/joining etc */
+/**
+ * enum tSirBssType - Enum for BSS type used in scanning/joining etc.
+ *
+ * @eSIR_INFRASTRUCTURE_MODE: Infrastructure station
+ * @eSIR_INFRA_AP_MODE: softAP mode
+ * @eSIR_IBSS_MODE: IBSS mode
+ * @eSIR_AUTO_MODE: Auto role
+ * @eSIR_MONITOR_MODE: Monitor mode
+ * @eSIR_NDI_MODE: NAN datapath mode
+ */
 typedef enum eSirBssType {
 	eSIR_INFRASTRUCTURE_MODE,
-	eSIR_INFRA_AP_MODE,     /* Added for softAP support */
+	eSIR_INFRA_AP_MODE,
 	eSIR_IBSS_MODE,
 	eSIR_AUTO_MODE,
 	eSIR_MONITOR_MODE,
+	eSIR_NDI_MODE,
 	eSIR_DONOT_USE_BSS_TYPE = SIR_MAX_ENUM_SIZE
 } tSirBssType;
 
@@ -4777,6 +4787,7 @@ typedef enum {
 	WIFI_INTERFACE_P2P_GO = 4,
 	WIFI_INTERFACE_NAN = 5,
 	WIFI_INTERFACE_MESH = 6,
+	WIFI_INTERFACE_NDI = 7,
 } tSirWifiInterfaceMode;
 
 /* set for QOS association */

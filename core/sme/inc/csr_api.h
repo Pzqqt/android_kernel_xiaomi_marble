@@ -141,12 +141,22 @@ typedef enum {
 	eCSR_NUM_PHY_MODE = 16,
 } eCsrPhyMode;
 
+/**
+ * enum eCsrRoamBssType - BSS type in CSR operations
+ * @eCSR_BSS_TYPE_INFRASTRUCTURE: Infrastructure station
+ * @eCSR_BSS_TYPE_INFRA_AP: SoftAP
+ * @eCSR_BSS_TYPE_IBSS: IBSS network we'll not start
+ * @eCSR_BSS_TYPE_START_IBSS: IBSS network we'll start if no partners found
+ * @eCSR_BSS_TYPE_NDI: NAN datapath interface
+ * @eCSR_BSS_TYPE_ANY: any BSS type (IBSS or Infrastructure)
+ */
 typedef enum {
 	eCSR_BSS_TYPE_INFRASTRUCTURE,
-	eCSR_BSS_TYPE_INFRA_AP,   /* SoftAP AP */
-	eCSR_BSS_TYPE_IBSS,       /* IBSS network we'll NOT start */
-	eCSR_BSS_TYPE_START_IBSS, /* IBSS network we'll start if no partners */
-	eCSR_BSS_TYPE_ANY,        /* any BSS type (IBSS or Infrastructure).*/
+	eCSR_BSS_TYPE_INFRA_AP,
+	eCSR_BSS_TYPE_IBSS,
+	eCSR_BSS_TYPE_START_IBSS,
+	eCSR_BSS_TYPE_NDI,
+	eCSR_BSS_TYPE_ANY,
 } eCsrRoamBssType;
 
 typedef enum {
@@ -501,6 +511,7 @@ typedef enum {
 	eCSR_ROAM_DISABLE_QUEUES,
 	eCSR_ROAM_ENABLE_QUEUES,
 	eCSR_ROAM_STA_CHANNEL_SWITCH,
+	eCSR_ROAM_NDP_STATUS_UPDATE,
 } eRoamCmdStatus;
 
 /* comment inside indicates what roaming callback gets */
@@ -598,6 +609,16 @@ typedef enum {
 	eCSR_ROAM_RESULT_CHANNEL_CHANGE_FAILURE,
 	eCSR_ROAM_RESULT_DFS_CHANSW_UPDATE_SUCCESS,
 	eCSR_ROAM_EXT_CHG_CHNL_UPDATE_IND,
+
+	eCSR_ROAM_RESULT_NDP_INITIATOR_RSP,
+	eCSR_ROAM_RESULT_NDP_NEW_PEER_IND,
+	eCSR_ROAM_RESULT_NDP_CONFIRM_IND,
+	eCSR_ROAM_RESULT_NDP_INDICATION,
+	eCSR_ROAM_RESULT_NDP_RESPONDER_REQ,
+	eCSR_ROAM_RESULT_NDP_RESPONDER_RSP,
+	eCSR_ROAM_RESULT_NDP_END_RSP,
+	eCSR_ROAM_RESULT_NDP_PEER_DEPARTED_IND,
+	eCSR_ROAM_RESULT_NDP_END_IND,
 } eCsrRoamResult;
 
 /*----------------------------------------------------------------------------
@@ -1578,6 +1599,7 @@ typedef QDF_STATUS (*csr_roamSessionCloseCallback)(void *pContext);
 				       (pProfile)->BSSType)
 #define CSR_IS_INFRA_AP(pProfile) (eCSR_BSS_TYPE_INFRA_AP ==  \
 				   (pProfile)->BSSType)
+#define CSR_IS_NDI(pProfile) (eCSR_BSS_TYPE_NDI == (pProfile)->BSSType)
 #define CSR_IS_CONN_INFRA_AP(pProfile)  (eCSR_BSS_TYPE_INFRA_AP == \
 					 (pProfile)->BSSType)
 #define CSR_IS_CLOSE_SESSION_COMMAND(pCommand) \

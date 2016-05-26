@@ -83,7 +83,8 @@ typedef enum eLimSystemRole {
 	eLIM_STA_ROLE,
 	eLIM_P2P_DEVICE_ROLE,
 	eLIM_P2P_DEVICE_GO,
-	eLIM_P2P_DEVICE_CLIENT
+	eLIM_P2P_DEVICE_CLIENT,
+	eLIM_NDI_ROLE
 } tLimSystemRole;
 
 /*
