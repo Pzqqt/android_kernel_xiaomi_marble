@@ -77,7 +77,7 @@ extern "C" {
 
 #define MAX_TX_RATE_VALUES      10      /*Max Tx Rates */
 #define MAX_RSSI_VALUES         10      /*Max Rssi values */
-#define MAX_CHAINS 8
+#define WMI_MAX_CHAINS 8
 
 /* The WLAN_MAX_AC macro cannot be changed without breaking
  * WMI compatibility.
@@ -4935,8 +4935,8 @@ typedef struct {
 	/* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_rssi_stats */
 	A_UINT32 tlv_header;
 	A_UINT32 vdev_id;
-	A_INT32  rssi_avg_beacon[MAX_CHAINS];
-	A_INT32  rssi_avg_data[MAX_CHAINS];
+	A_INT32  rssi_avg_beacon[WMI_MAX_CHAINS];
+	A_INT32  rssi_avg_data[WMI_MAX_CHAINS];
 	wmi_mac_addr peer_macaddr;
 } wmi_rssi_stats;
 
