@@ -1530,7 +1530,6 @@ ol_txrx_peer_attach(ol_txrx_vdev_handle vdev, uint8_t *peer_mac_addr)
 	for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++)
 		peer->peer_ids[i] = HTT_INVALID_PEER;
 
-	peer->vdev->rx = NULL;
 	qdf_spinlock_create(&peer->peer_info_lock);
 	qdf_spinlock_create(&peer->bufq_lock);
 
@@ -2261,7 +2260,6 @@ ol_txrx_clear_peer_internal(struct ol_txrx_peer_t *peer)
 	ol_txrx_flush_rx_frames(peer, 1);
 
 	qdf_spin_lock_bh(&peer->peer_info_lock);
-	peer->vdev->rx = NULL;
 	peer->state = OL_TXRX_PEER_STATE_DISC;
 	qdf_spin_unlock_bh(&peer->peer_info_lock);
 
@@ -3656,6 +3654,9 @@ void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 	 */
 	if (!data_rx) {
 		struct ol_rx_cached_buf *cache_buf;
+
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			   "Data on the peer before it is registered!!!");
 		buf = rx_buf_list;
 		while (buf) {
 			next_buf = qdf_nbuf_queue_next(buf);
