@@ -2490,6 +2490,21 @@ tSirRetStatus sir_convert_probe_frame2_struct(tpAniSirGlobal pMac,
 				&pr->vendor2_ie.VHTOperation,
 				sizeof(tDot11fIEVHTOperation));
 	}
+	/* Update HS 2.0 Information Element */
+	if (pr->hs20vendor_ie.present) {
+		lim_log(pMac, LOG1,
+			FL("HS20 Indication Element Present, rel#:%u, id:%u\n"),
+			pr->hs20vendor_ie.release_num,
+			pr->hs20vendor_ie.hs_id_present);
+		qdf_mem_copy(&pProbeResp->hs20vendor_ie,
+			&pr->hs20vendor_ie,
+			sizeof(tDot11fIEhs20vendor_ie) -
+			sizeof(pr->hs20vendor_ie.hs_id));
+		if (pr->hs20vendor_ie.hs_id_present)
+			qdf_mem_copy(&pProbeResp->hs20vendor_ie.hs_id,
+				&pr->hs20vendor_ie.hs_id,
+				sizeof(pr->hs20vendor_ie.hs_id));
+	}
 	qdf_mem_free(pr);
 	return eSIR_SUCCESS;
 
@@ -3652,6 +3667,21 @@ sir_parse_beacon_ie(tpAniSirGlobal pMac,
 		qdf_mem_copy(&pBeaconStruct->ext_cap, &pBies->ExtCap,
 				sizeof(tDot11fIEExtCap));
 	}
+	/* Update HS 2.0 Information Element */
+	if (pBies->hs20vendor_ie.present) {
+		lim_log(pMac, LOG1,
+			FL("HS20 Indication Element Present, rel#:%u, id:%u\n"),
+			pBies->hs20vendor_ie.release_num,
+			pBies->hs20vendor_ie.hs_id_present);
+		qdf_mem_copy(&pBeaconStruct->hs20vendor_ie,
+			&pBies->hs20vendor_ie,
+			sizeof(tDot11fIEhs20vendor_ie) -
+			sizeof(pBies->hs20vendor_ie.hs_id));
+		if (pBies->hs20vendor_ie.hs_id_present)
+			qdf_mem_copy(&pBeaconStruct->hs20vendor_ie.hs_id,
+				&pBies->hs20vendor_ie.hs_id,
+				sizeof(pBies->hs20vendor_ie.hs_id));
+	}
 	qdf_mem_free(pBies);
 	return eSIR_SUCCESS;
 } /* End sir_parse_beacon_ie. */
@@ -3981,6 +4011,21 @@ sir_convert_beacon_frame2_struct(tpAniSirGlobal pMac,
 		qdf_mem_copy(&pBeaconStruct->vendor2_ie.VHTOperation,
 				&pBeacon->VHTOperation,
 				sizeof(tDot11fIEVHTOperation));
+	}
+	/* Update HS 2.0 Information Element */
+	if (pBeacon->hs20vendor_ie.present) {
+		lim_log(pMac, LOG1,
+			FL("HS20 Indication Element Present, rel#:%u, id:%u\n"),
+			pBeacon->hs20vendor_ie.release_num,
+			pBeacon->hs20vendor_ie.hs_id_present);
+		qdf_mem_copy(&pBeaconStruct->hs20vendor_ie,
+			&pBeacon->hs20vendor_ie,
+			sizeof(tDot11fIEhs20vendor_ie) -
+			sizeof(pBeacon->hs20vendor_ie.hs_id));
+		if (pBeacon->hs20vendor_ie.hs_id_present)
+			qdf_mem_copy(&pBeaconStruct->hs20vendor_ie.hs_id,
+				&pBeacon->hs20vendor_ie.hs_id,
+				sizeof(pBeacon->hs20vendor_ie.hs_id));
 	}
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	if (pBeacon->QComVendorIE.present) {

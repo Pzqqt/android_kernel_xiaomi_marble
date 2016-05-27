@@ -3228,6 +3228,22 @@ lim_check_and_announce_join_success(tpAniSirGlobal mac_ctx,
 		lim_log(mac_ctx, LOG1, FL(
 			"VHT caps are present in vendor specific IE"));
 	}
+
+	/* Update HS 2.0 Information Element */
+	if (beacon_probe_rsp->hs20vendor_ie.present) {
+		lim_log(mac_ctx, LOG1,
+			FL("HS20 Indication Element Present, rel#:%u, id:%u\n"),
+			beacon_probe_rsp->hs20vendor_ie.release_num,
+			beacon_probe_rsp->hs20vendor_ie.hs_id_present);
+		qdf_mem_copy(&session_entry->hs20vendor_ie,
+			&beacon_probe_rsp->hs20vendor_ie,
+			sizeof(tDot11fIEhs20vendor_ie) -
+			sizeof(beacon_probe_rsp->hs20vendor_ie.hs_id));
+		if (beacon_probe_rsp->hs20vendor_ie.hs_id_present)
+			qdf_mem_copy(&session_entry->hs20vendor_ie.hs_id,
+				&beacon_probe_rsp->hs20vendor_ie.hs_id,
+				sizeof(beacon_probe_rsp->hs20vendor_ie.hs_id));
+	}
 }
 
 /**

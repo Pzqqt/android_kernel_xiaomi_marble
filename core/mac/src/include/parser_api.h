@@ -155,6 +155,7 @@ typedef struct sSirProbeRespBeacon {
 	uint8_t Vendor1IEPresent;
 	tDot11fIEvendor2_ie vendor2_ie;
 	uint8_t Vendor3IEPresent;
+	tDot11fIEhs20vendor_ie hs20vendor_ie;
 	tDot11fIEIBSSParams IBSSParams;
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	tDot11fIEQComVendorIE   AvoidChannelIE;
@@ -229,6 +230,7 @@ typedef struct sSirAssocReq {
 	tDot11fIEVHTCaps VHTCaps;
 	tDot11fIEOperatingMode operMode;
 	tDot11fIEExtCap ExtCap;
+	tDot11fIEhs20vendor_ie hs20vendor_ie;
 } tSirAssocReq, *tpSirAssocReq;
 
 /* / Association Response structure (one day to be replaced by */

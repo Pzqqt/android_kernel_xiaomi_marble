@@ -467,6 +467,8 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	bool is_vendor_specific_vhtcaps;
 	uint8_t vendor_specific_vht_ie_type;
 	uint8_t vendor_specific_vht_ie_sub_type;
+	/* HS 2.0 Indication */
+	tDot11fIEhs20vendor_ie hs20vendor_ie;
 	/* flag to indicate country code in beacon */
 	uint8_t country_info_present;
 	uint8_t nss;

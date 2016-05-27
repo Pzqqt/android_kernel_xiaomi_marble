@@ -216,6 +216,21 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 	/* Check if Extended caps are present in probe resp or not */
 	if (beacon_struct->ext_cap.present)
 		session->is_ext_caps_present = true;
+	/* Update HS 2.0 Information Element */
+	if (beacon_struct->hs20vendor_ie.present) {
+		lim_log(mac_ctx, LOG1,
+			FL("HS20 Indication Element Present, rel#:%u, id:%u\n"),
+			beacon_struct->hs20vendor_ie.release_num,
+			beacon_struct->hs20vendor_ie.hs_id_present);
+		qdf_mem_copy(&session->hs20vendor_ie,
+			&beacon_struct->hs20vendor_ie,
+			sizeof(tDot11fIEhs20vendor_ie) -
+			sizeof(beacon_struct->hs20vendor_ie.hs_id));
+		if (beacon_struct->hs20vendor_ie.hs_id_present)
+			qdf_mem_copy(&session->hs20vendor_ie.hs_id,
+				&beacon_struct->hs20vendor_ie.hs_id,
+				sizeof(beacon_struct->hs20vendor_ie.hs_id));
+	}
 	qdf_mem_free(beacon_struct);
 	return;
 } /****** end lim_extract_ap_capability() ******/
