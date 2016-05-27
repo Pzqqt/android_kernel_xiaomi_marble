@@ -28,6 +28,10 @@
 #ifndef WMA_INTERNAL_H
 #define WMA_INTERNAL_H
 
+#if !defined(REMOVE_PKT_LOG)
+#include "pktlog_ac.h"
+#endif
+
 /* ################### defines ################### */
 /*
  * TODO: Following constant should be shared by firwmare in

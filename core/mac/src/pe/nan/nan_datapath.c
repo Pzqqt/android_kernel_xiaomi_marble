@@ -24,6 +24,8 @@
  * MAC NAN Data path API implementation
  */
 
+#include "lim_utils.h"
+#include "lim_api.h"
 #include "nan_datapath.h"
 
 /**
@@ -48,4 +50,50 @@ QDF_STATUS handle_ndp_request_message(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 QDF_STATUS handle_ndp_event_message(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 {
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * lim_process_ndi_mlm_add_bss_rsp() - Process ADD_BSS response for NDI
+ * @mac_ctx: Pointer to Global MAC structure
+ * @lim_msgq: The MsgQ header, which contains the response buffer
+ * @session_entry: PE session
+ *
+ * Return: None
+ */
+void lim_process_ndi_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx, tpSirMsgQ lim_msgq,
+		tpPESession session_entry)
+{
+	tLimMlmStartCnf mlm_start_cnf;
+	tpAddBssParams add_bss_params = (tpAddBssParams) lim_msgq->bodyptr;
+
+	lim_log(mac_ctx, LOG1, FL("Status %d"), add_bss_params->status);
+	if (NULL == add_bss_params) {
+		lim_log(mac_ctx, LOGE, FL("Invalid body pointer in message"));
+		goto end;
+	}
+	if (QDF_STATUS_SUCCESS == add_bss_params->status) {
+		lim_log(mac_ctx, LOG1,
+		       FL("WDA_ADD_BSS_RSP returned QDF_STATUS_SUCCESS"));
+		session_entry->limMlmState = eLIM_MLM_BSS_STARTED_STATE;
+		MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE,
+			session_entry->peSessionId,
+			session_entry->limMlmState));
+		session_entry->bssIdx = (uint8_t) add_bss_params->bssIdx;
+		session_entry->limSystemRole = eLIM_NDI_ROLE;
+		session_entry->statypeForBss = STA_ENTRY_SELF;
+		/* Apply previously set configuration at HW */
+		lim_apply_configuration(mac_ctx, session_entry);
+		mlm_start_cnf.resultCode = eSIR_SME_SUCCESS;
+	} else {
+		lim_log(mac_ctx, LOGE,
+			FL("WDA_ADD_BSS_REQ failed with status %d"),
+			add_bss_params->status);
+		mlm_start_cnf.resultCode = eSIR_SME_HAL_SEND_MESSAGE_FAIL;
+	}
+	mlm_start_cnf.sessionId = session_entry->peSessionId;
+	lim_post_sme_message(mac_ctx, LIM_MLM_START_CNF,
+				(uint32_t *) &mlm_start_cnf);
+end:
+	qdf_mem_free(lim_msgq->bodyptr);
+	lim_msgq->bodyptr = NULL;
 }

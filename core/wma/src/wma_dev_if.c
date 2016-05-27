@@ -76,6 +76,7 @@
 
 
 #include "cds_concurrency.h"
+#include "wma_nan_datapath.h"
 
 /**
  * wma_find_vdev_by_addr() - find vdev_id from mac address
@@ -209,6 +210,9 @@ enum wlan_op_mode wma_get_txrx_vdev_type(uint32_t type)
 		break;
 	case WMI_VDEV_TYPE_MONITOR:
 		vdev_type = wlan_op_mode_monitor;
+		break;
+	case WMI_VDEV_TYPE_NDI:
+		vdev_type = wlan_op_mode_ndi;
 		break;
 	default:
 		WMA_LOGE("Invalid vdev type %u", type);
@@ -1584,7 +1588,8 @@ ol_txrx_vdev_handle wma_vdev_attach(tp_wma_handle wma_handle,
 	if (((self_sta_req->type == WMI_VDEV_TYPE_AP) &&
 	    (self_sta_req->sub_type == WMI_UNIFIED_VDEV_SUBTYPE_P2P_DEVICE)) ||
 	    (self_sta_req->type == WMI_VDEV_TYPE_OCB) ||
-	    (self_sta_req->type == WMI_VDEV_TYPE_MONITOR)) {
+	    (self_sta_req->type == WMI_VDEV_TYPE_MONITOR) ||
+	    (self_sta_req->type == WMI_VDEV_TYPE_NDI)) {
 		WMA_LOGA("Creating self peer %pM, vdev_id %hu",
 			 self_sta_req->self_mac_addr, self_sta_req->session_id);
 		status = wma_create_peer(wma_handle, txrx_pdev,
@@ -3285,6 +3290,10 @@ void wma_add_bss(tp_wma_handle wma, tpAddBssParams params)
 		wma_add_bss_ibss_mode(wma, params);
 		break;
 #endif
+
+	case QDF_NDI_MODE:
+		wma_add_bss_ndi_mode(wma, params);
+		break;
 
 	default:
 		wma_add_bss_sta_mode(wma, params);

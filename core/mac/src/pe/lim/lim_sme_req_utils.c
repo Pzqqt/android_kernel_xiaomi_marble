@@ -409,6 +409,8 @@ lim_is_sme_start_bss_req_valid(tpAniSirGlobal mac_ctx,
 		break;
 	case eSIR_INFRA_AP_MODE:
 		break;
+	case eSIR_NDI_MODE:
+		break;
 	default:
 		/**
 		 * Should not have received start BSS req with bssType

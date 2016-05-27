@@ -612,6 +612,7 @@ lim_send_sme_start_bss_rsp(tpAniSirGlobal pMac,
 			pSirSmeRsp->bssDescription.channelId =
 				psessionEntry->currentOperChannel;
 
+		if (!LIM_IS_NDI_ROLE(psessionEntry)) {
 			curLen = psessionEntry->schBeaconOffsetBegin - ieOffset;
 			qdf_mem_copy((uint8_t *) &pSirSmeRsp->bssDescription.
 				     ieFields,
@@ -630,6 +631,7 @@ lim_send_sme_start_bss_rsp(tpAniSirGlobal pMac,
 				sizeof(uint32_t) + ieLen;
 			/* This is the size of the message, subtracting the size of the pointer to ieFields */
 			size += ieLen - sizeof(uint32_t);
+		}
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 			if (psessionEntry->cc_switch_mode
 			    != QDF_MCC_TO_SCC_SWITCH_DISABLE) {

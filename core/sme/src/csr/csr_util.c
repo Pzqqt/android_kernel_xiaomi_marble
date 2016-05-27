@@ -1961,6 +1961,14 @@ csr_isconcurrentsession_valid(tpAniSirGlobal mac_ctx, uint32_t cur_sessionid,
 				QDF_TRACE_LEVEL_INFO,
 				FL("**P2P-Client session**"));
 			return QDF_STATUS_SUCCESS;
+		case QDF_NDI_MODE:
+			if (bss_persona != QDF_STA_MODE) {
+				QDF_TRACE(QDF_MODULE_ID_SME,
+					QDF_TRACE_LEVEL_ERROR,
+					FL("***NDI mode can co-exist only with STA ***"));
+				return QDF_STATUS_E_FAILURE;
+			}
+			break;
 		default:
 			QDF_TRACE(QDF_MODULE_ID_SME,
 				QDF_TRACE_LEVEL_ERROR,
@@ -5338,6 +5346,9 @@ tSirBssType csr_translate_bsstype_to_mac_type(eCsrRoamBssType csrtype)
 		break;
 	case eCSR_BSS_TYPE_INFRA_AP:
 		ret = eSIR_INFRA_AP_MODE;
+		break;
+	case eCSR_BSS_TYPE_NDI:
+		ret = eSIR_NDI_MODE;
 		break;
 	case eCSR_BSS_TYPE_ANY:
 	default:

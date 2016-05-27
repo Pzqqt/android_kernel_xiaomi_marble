@@ -32,6 +32,8 @@
 
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 
+void wma_add_bss_ndi_mode(tp_wma_handle wma, tpAddBssParams add_bss);
+
 /**
  * wma_update_hdd_cfg_ndp() - Update target device NAN datapath capability
  * @wma_handle: pointer to WMA context
@@ -48,6 +50,11 @@ static inline void wma_update_hdd_cfg_ndp(tp_wma_handle wma_handle,
 #else
 static inline void wma_update_hdd_cfg_ndp(tp_wma_handle wma_handle,
 					struct wma_tgt_cfg *tgt_cfg)
+{
+	return;
+}
+static inline void wma_add_bss_ndi_mode(tp_wma_handle wma,
+					tpAddBssParams add_bss)
 {
 	return;
 }

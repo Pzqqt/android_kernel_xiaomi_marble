@@ -603,11 +603,12 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 		     session->selfMacAddr, sizeof(tSirMacAddr));
 
 	addbss_param->bssType = mlm_start_req->bssType;
-	if ((mlm_start_req->bssType == eSIR_IBSS_MODE)) {
+	if (mlm_start_req->bssType == eSIR_IBSS_MODE)
 		addbss_param->operMode = BSS_OPERATIONAL_MODE_STA;
-	} else if (mlm_start_req->bssType == eSIR_INFRA_AP_MODE) {
+	else if (mlm_start_req->bssType == eSIR_INFRA_AP_MODE)
 		addbss_param->operMode = BSS_OPERATIONAL_MODE_AP;
-	}
+	else if (mlm_start_req->bssType == eSIR_NDI_MODE)
+		addbss_param->operMode = BSS_OPERATIONAL_MODE_NDI;
 
 	addbss_param->shortSlotTimeSupported = session->shortSlotTimeSupported;
 	addbss_param->beaconInterval = mlm_start_req->beaconPeriod;

@@ -698,27 +698,34 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			}
 		}
 
-		/* Probe resp add ie */
-		lim_start_bss_update_add_ie_buffer(mac_ctx,
-			&session->addIeParams.probeRespData_buff,
-			&session->addIeParams.probeRespDataLen,
-			sme_start_bss_req->addIeParams.probeRespData_buff,
-			sme_start_bss_req->addIeParams.probeRespDataLen);
+		if (QDF_NDI_MODE != sme_start_bss_req->bssPersona) {
+			/* Probe resp add ie */
+			lim_start_bss_update_add_ie_buffer(mac_ctx,
+				&session->addIeParams.probeRespData_buff,
+				&session->addIeParams.probeRespDataLen,
+				sme_start_bss_req->addIeParams.
+					probeRespData_buff,
+				sme_start_bss_req->addIeParams.
+					probeRespDataLen);
 
-		/* Probe Beacon add ie */
-		lim_start_bss_update_add_ie_buffer(mac_ctx,
-			&session->addIeParams.probeRespBCNData_buff,
-			&session->addIeParams.probeRespBCNDataLen,
-			sme_start_bss_req->addIeParams.probeRespBCNData_buff,
-			sme_start_bss_req->addIeParams.probeRespBCNDataLen);
+			/* Probe Beacon add ie */
+			lim_start_bss_update_add_ie_buffer(mac_ctx,
+				&session->addIeParams.probeRespBCNData_buff,
+				&session->addIeParams.probeRespBCNDataLen,
+				sme_start_bss_req->addIeParams.
+					probeRespBCNData_buff,
+				sme_start_bss_req->addIeParams.
+					probeRespBCNDataLen);
 
-		/* Assoc resp IE */
-		lim_start_bss_update_add_ie_buffer(mac_ctx,
-			&session->addIeParams.assocRespData_buff,
-			&session->addIeParams.assocRespDataLen,
-			sme_start_bss_req->addIeParams.assocRespData_buff,
-			sme_start_bss_req->addIeParams.assocRespDataLen);
-
+			/* Assoc resp IE */
+			lim_start_bss_update_add_ie_buffer(mac_ctx,
+				&session->addIeParams.assocRespData_buff,
+				&session->addIeParams.assocRespDataLen,
+				sme_start_bss_req->addIeParams.
+					assocRespData_buff,
+				sme_start_bss_req->addIeParams.
+					assocRespDataLen);
+		}
 		/* Store the session related params in newly created session */
 		session->pLimStartBssReq = sme_start_bss_req;
 
@@ -826,6 +833,10 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			session->vdev_nss = vdev_type_nss->ibss;
 
 			break;
+		case eSIR_NDI_MODE:
+			session->limSystemRole = eLIM_NDI_ROLE;
+			break;
+
 
 		/*
 		 * There is one more mode called auto mode.
@@ -861,7 +872,8 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 					sizeof(tpSirAssocReq)), 0);
 		}
 
-		if (!sme_start_bss_req->channelId) {
+		if (!sme_start_bss_req->channelId &&
+		    sme_start_bss_req->bssType != eSIR_NDI_MODE) {
 			lim_log(mac_ctx, LOGE,
 				FL("Received invalid eWNI_SME_START_BSS_REQ"));
 			ret_code = eSIR_SME_INVALID_PARAMETERS;
@@ -924,7 +936,9 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(mac_ctx,
 				&sme_start_bss_req->rsnIE, session);
 
-		if (LIM_IS_AP_ROLE(session) || LIM_IS_IBSS_ROLE(session)) {
+		if (LIM_IS_AP_ROLE(session) ||
+		    LIM_IS_IBSS_ROLE(session) ||
+		    LIM_IS_NDI_ROLE(session)) {
 			session->gLimProtectionControl =
 				sme_start_bss_req->protEnabled;
 			/*
@@ -962,7 +976,8 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		/* Fill PE session Id from the session Table */
 		mlm_start_req->sessionId = session->peSessionId;
 
-		if (mlm_start_req->bssType == eSIR_INFRA_AP_MODE) {
+		if (mlm_start_req->bssType == eSIR_INFRA_AP_MODE ||
+		    mlm_start_req->bssType == eSIR_NDI_MODE) {
 			/*
 			 * Copy the BSSId from sessionTable to
 			 * mlmStartReq struct

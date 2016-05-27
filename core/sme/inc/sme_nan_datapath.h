@@ -27,6 +27,9 @@
 #ifndef __SME_NAN_DATAPATH_H
 #define __SME_NAN_DATAPATH_H
 
+#ifdef WLAN_FEATURE_NAN_DATAPATH
+#include "qdf_types.h"
+#include "sir_api.h"
 #include "ani_global.h"
 
 /* NAN initiator request handler */
@@ -48,4 +51,59 @@ QDF_STATUS sme_ndp_sched_req_handler(uint32_t session_id,
 /* Function to handle NDP messages from lower layers */
 void sme_ndp_message_processor(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 				void *msg);
+
+/* Start NDI BSS */
+QDF_STATUS csr_roam_start_ndi(tpAniSirGlobal mac_ctx, uint32_t session_id,
+			      tCsrRoamProfile *profile);
+
+void csr_roam_fill_roaminfo_ndp(tpAniSirGlobal mac_ctx,
+				tCsrRoamInfo *roam_info,
+				eCsrRoamResult roam_result,
+				tSirResultCodes status_code,
+				uint32_t reason_code,
+				uint32_t transaction_id);
+
+void csr_roam_save_ndi_connected_info(tpAniSirGlobal mac_ctx,
+				      uint32_t session_id,
+				      tCsrRoamProfile *roam_profile,
+				      tSirBssDescription *bss_desc);
+
+void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
+					uint32_t result,
+					uint32_t *roam_status,
+					uint32_t *roam_result);
+#else
+
+/* Start NDI BSS */
+static inline QDF_STATUS csr_roam_start_ndi(tpAniSirGlobal mac_ctx,
+					uint32_t session_id,
+					tCsrRoamProfile *profile)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+/* Fill in ndp information in roam_info */
+static inline void csr_roam_fill_roaminfo_ndp(tpAniSirGlobal mac_ctx,
+					      tCsrRoamInfo *roam_info,
+					      eCsrRoamResult roam_result,
+					      tSirResultCodes status_code,
+					      uint32_t reason_code,
+					      uint32_t transaction_id)
+{
+}
+
+static inline void csr_roam_save_ndi_connected_info(tpAniSirGlobal mac_ctx,
+					uint32_t session_id,
+					tCsrRoamProfile *roam_profile,
+					tSirBssDescription *bss_desc)
+{
+}
+
+static inline void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
+						uint32_t result,
+						uint32_t *roam_status,
+						uint32_t *roam_result)
+{
+}
+#endif /* WLAN_FEATURE_NAN_DATAPATH */
 #endif /* __SME_NAN_DATAPATH_H */

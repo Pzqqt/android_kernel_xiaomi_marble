@@ -6749,6 +6749,7 @@ const char *lim_bss_type_to_string(const uint16_t bss_type)
 	CASE_RETURN_STRING(eSIR_INFRA_AP_MODE);
 	CASE_RETURN_STRING(eSIR_IBSS_MODE);
 	CASE_RETURN_STRING(eSIR_AUTO_MODE);
+	CASE_RETURN_STRING(eSIR_NDI_MODE);
 	default:
 		return "Unknown bss_type";
 	}

@@ -24,8 +24,12 @@
  * WMA NAN Data path API implementation
  */
 
+#include "wma.h"
+#include "wma_api.h"
+#include "wmi_unified_api.h"
+#include "wmi_unified.h"
 #include "wma_nan_datapath.h"
-
+#include "wma_internal.h"
 
 /**
  * wma_handle_ndp_initiator_req() - NDP initiator request handler
@@ -162,3 +166,90 @@ QDF_STATUS wma_ndp_sched_update_rsp_event_handler(void *handle,
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * wma_add_bss_ndi_mode() - Process BSS creation request while adding NaN
+ * Data interface
+ * @wma: wma handle
+ * @add_bss: Parameters for ADD_BSS command
+ *
+ * Sends VDEV_START command to firmware
+ * Return: None
+ */
+void wma_add_bss_ndi_mode(tp_wma_handle wma, tpAddBssParams add_bss)
+{
+	ol_txrx_pdev_handle pdev;
+	struct wma_vdev_start_req req;
+	ol_txrx_peer_handle peer = NULL;
+	struct wma_target_req *msg;
+	u_int8_t vdev_id, peer_id;
+	QDF_STATUS status;
+	struct vdev_set_params param = {0};
+
+	WMA_LOGI("%s: enter", __func__);
+	if (NULL == wma_find_vdev_by_addr(wma, add_bss->bssId, &vdev_id)) {
+		WMA_LOGE("%s: Failed to find vdev", __func__);
+		goto send_fail_resp;
+	}
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if (pdev) {
+		WMA_LOGE("%s: Failed to get pdev", __func__);
+		goto send_fail_resp;
+	}
+
+	wma_set_bss_rate_flags(&wma->interfaces[vdev_id], add_bss);
+
+	peer = ol_txrx_find_peer_by_addr(pdev, add_bss->selfMacAddr, &peer_id);
+	if (!peer) {
+		WMA_LOGE("%s Failed to find peer %pM", __func__,
+			add_bss->selfMacAddr);
+		goto send_fail_resp;
+	}
+
+	msg = wma_fill_vdev_req(wma, vdev_id, WMA_ADD_BSS_REQ,
+			WMA_TARGET_REQ_TYPE_VDEV_START, add_bss,
+			WMA_VDEV_START_REQUEST_TIMEOUT);
+	if (!msg) {
+		WMA_LOGE("%s Failed to allocate vdev request vdev_id %d",
+			 __func__, vdev_id);
+		goto send_fail_resp;
+	}
+
+	add_bss->staContext.staIdx = ol_txrx_local_peer_id(peer);
+
+	/*
+	 * beacon_intval, dtim_period, hidden_ssid, is_dfs, ssid
+	 * will be ignored for NDI device.
+	 */
+	qdf_mem_zero(&req, sizeof(req));
+	req.vdev_id = vdev_id;
+	req.chan = add_bss->currentOperChannel;
+	req.ch_center_freq_seg0 = add_bss->ch_center_freq_seg0;
+	req.ch_center_freq_seg1 = add_bss->ch_center_freq_seg1;
+	req.vht_capable = add_bss->vhtCapable;
+	req.max_txpow = add_bss->maxTxPower;
+	req.oper_mode = add_bss->operMode;
+
+	status = wma_vdev_start(wma, &req, false);
+	if (status != QDF_STATUS_SUCCESS) {
+		wma_remove_vdev_req(wma, vdev_id,
+			WMA_TARGET_REQ_TYPE_VDEV_START);
+		goto send_fail_resp;
+	}
+	WMA_LOGI("%s: vdev start request for NDI sent to target", __func__);
+
+	/* Initialize protection mode to no protection */
+	param.if_id = vdev_id;
+	param.param_id = WMI_VDEV_PARAM_PROTECTION_MODE;
+	param.param_value = WMI_VDEV_PARAM_PROTECTION_MODE;
+	if (wmi_unified_vdev_set_param_send(wma->wmi_handle, &param))
+		WMA_LOGE("Failed to initialize protection mode");
+
+
+	return;
+send_fail_resp:
+	add_bss->status = QDF_STATUS_E_FAILURE;
+	wma_send_msg(wma, WMA_ADD_BSS_RSP, (void *)add_bss, 0);
+}
+

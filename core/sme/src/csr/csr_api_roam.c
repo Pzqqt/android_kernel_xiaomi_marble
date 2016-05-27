@@ -54,6 +54,7 @@
 #include "sme_power_save_api.h"
 #include "wma.h"
 #include "cds_concurrency.h"
+#include "sme_nan_datapath.h"
 
 #define MAX_PWR_FCC_CHAN_12 8
 #define MAX_PWR_FCC_CHAN_13 2
@@ -177,11 +178,6 @@ static void csr_roam_update_connected_profile_from_new_bss(tpAniSirGlobal pMac,
 							   uint32_t sessionId,
 							   tSirSmeNewBssInfo *
 							   pNewBss);
-static void csr_roam_prepare_bss_params(tpAniSirGlobal pMac, uint32_t sessionId,
-					tCsrRoamProfile *pProfile,
-					tSirBssDescription *pBssDesc,
-					tBssConfigParam *pBssConfig,
-					tDot11fBeaconIEs *pIes);
 static ePhyChanBondState csr_get_cb_mode_from_ies(tpAniSirGlobal pMac,
 						  uint8_t primaryChn,
 						  tDot11fBeaconIEs *pIes);
@@ -3862,7 +3858,7 @@ QDF_STATUS csr_roam_prepare_bss_config(tpAniSirGlobal pMac,
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS csr_roam_prepare_bss_config_from_profile(tpAniSirGlobal pMac,
+QDF_STATUS csr_roam_prepare_bss_config_from_profile(tpAniSirGlobal pMac,
 							   tCsrRoamProfile *pProfile,
 							   tBssConfigParam *
 							   pBssConfig,
@@ -5162,6 +5158,13 @@ static void csr_roam_join_handle_profile(tpAniSirGlobal mac_ctx,
 			*roam_state = eCsrContinueRoaming;
 		else
 			*roam_state = eCsrStopRoaming;
+	} else if (CSR_IS_NDI(profile)) {
+		csr_roam_assign_default_param(mac_ctx, cmd);
+		status = csr_roam_start_ndi(mac_ctx, session_id, profile);
+		if (QDF_IS_STATUS_SUCCESS(status))
+			*roam_state = eCsrContinueRoaming;
+		else
+			*roam_state = eCsrStopRoaming;
 	} else {
 		/* Nothing we can do */
 		sms_log(mac_ctx, LOGW, FL("cannot continue without BSS list"));
@@ -6284,11 +6287,23 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 	else if (CSR_IS_INFRA_AP(profile))
 		session->connectState =
 			eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTED;
+	else if (CSR_IS_NDI(profile))
+		session->connectState = eCSR_CONNECT_STATE_TYPE_NDI_STARTED;
 	else
 		session->connectState = eCSR_ASSOC_STATE_TYPE_WDS_DISCONNECTED;
+
+	bss_desc = &start_bss_rsp->bssDescription;
+	if (CSR_IS_NDI(profile)) {
+		csr_roam_state_change(mac_ctx, eCSR_ROAMING_STATE_JOINED,
+			session_id);
+		csr_roam_save_ndi_connected_info(mac_ctx, session_id, profile,
+						bss_desc);
+		roam_info.u.pConnectedProfile = &session->connectedProfile;
+		qdf_mem_copy(&roam_info.bssid, &bss_desc->bssId,
+			    sizeof(struct qdf_mac_addr));
+	}
 	csr_roam_state_change(mac_ctx, eCSR_ROAMING_STATE_JOINED,
 			session_id);
-	bss_desc = &start_bss_rsp->bssDescription;
 	if (!QDF_IS_STATUS_SUCCESS
 		(csr_get_parsed_bss_description_ies(mac_ctx, bss_desc,
 						    &ies_ptr))) {
@@ -6308,12 +6323,10 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 	csr_roam_save_connected_bss_desc(mac_ctx, session_id, bss_desc);
 	csr_roam_free_connect_profile(&session->connectedProfile);
 	csr_roam_free_connected_info(mac_ctx, &session->connectedInfo);
-	if (bss_desc) {
-		csr_roam_save_connected_infomation(mac_ctx, session_id,
-				profile, bss_desc, ies_ptr);
-		qdf_mem_copy(&roam_info.bssid, &bss_desc->bssId,
+	csr_roam_save_connected_infomation(mac_ctx, session_id,
+			profile, bss_desc, ies_ptr);
+	qdf_mem_copy(&roam_info.bssid, &bss_desc->bssId,
 			sizeof(struct qdf_mac_addr));
-	}
 	/* We are done with the IEs so free it */
 	qdf_mem_free(ies_ptr);
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
@@ -6383,19 +6396,28 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 			roam_status = eCSR_ROAM_INFRA_IND;
 			roam_result = eCSR_ROAM_RESULT_INFRA_STARTED;
 		}
+		if (CSR_IS_NDI(profile)) {
+			csr_roam_update_ndp_return_params(mac_ctx,
+					eCsrStartBssSuccess,
+					&roam_status, &roam_result);
+			csr_roam_fill_roaminfo_ndp(mac_ctx, &roam_info,
+					roam_result,
+					start_bss_rsp->statusCode,
+					0, 0);
+		}
 		/*
 		 * Only tell upper layer is we start the BSS because Vista
 		 * doesn't like multiple connection indications. If we don't
 		 * start the BSS ourself, handler of eSIR_SME_JOINED_NEW_BSS
 		 * will trigger the connection start indication in Vista
 		 */
-		qdf_mem_set(&roam_info, sizeof(tCsrRoamInfo), 0);
 		roam_info.statusCode = session->joinFailStatusCode.statusCode;
 		roam_info.reasonCode = session->joinFailStatusCode.reasonCode;
 		/* We start the IBSS (didn't find any matched IBSS out there) */
 		roam_info.pBssDesc = bss_desc;
 		roam_info.staId = (uint8_t) start_bss_rsp->staId;
-		qdf_mem_copy(roam_info.bssid.bytes, bss_desc->bssId,
+		if (bss_desc)
+			qdf_mem_copy(roam_info.bssid.bytes, bss_desc->bssId,
 				sizeof(struct qdf_mac_addr));
 		if (!IS_FEATURE_SUPPORTED_BY_FW(SLM_SESSIONIZATION) &&
 				(csr_is_concurrent_session_running(mac_ctx))) {
@@ -6823,6 +6845,7 @@ static bool csr_roam_process_results(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 	eRoamCmdStatus roam_status;
 	eCsrRoamResult roam_result;
 	host_log_ibss_pkt_type *ibss_log;
+	tSirSmeStartBssRsp  *start_bss_rsp = NULL;
 
 	if (!session) {
 		sms_log(mac_ctx, LOGE, FL("session %d not found "), session_id);
@@ -6846,18 +6869,29 @@ static bool csr_roam_process_results(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 			WLAN_HOST_DIAG_LOG_REPORT(ibss_log);
 		}
 #endif
+		start_bss_rsp = (tSirSmeStartBssRsp *)context;
+		qdf_mem_set(&roam_info, sizeof(roam_info), 0);
 		roam_status = eCSR_ROAM_IBSS_IND;
 		roam_result = eCSR_ROAM_RESULT_IBSS_STARTED;
 		if (CSR_IS_INFRA_AP(profile)) {
 			roam_status = eCSR_ROAM_INFRA_IND;
 			roam_result = eCSR_ROAM_RESULT_INFRA_START_FAILED;
 		}
+		if (CSR_IS_NDI(profile)) {
+			csr_roam_update_ndp_return_params(mac_ctx,
+				eCsrStartBssFailure,
+				&roam_status, &roam_result);
+			csr_roam_fill_roaminfo_ndp(mac_ctx, &roam_info,
+				roam_result,
+				(start_bss_rsp) ? start_bss_rsp->statusCode :
+				QDF_STATUS_E_FAILURE, 0, 0);
+		}
+
 		if (context) {
 			bss_desc = (tSirBssDescription *) context;
 		} else {
 			bss_desc = NULL;
 		}
-		qdf_mem_set(&roam_info, sizeof(tCsrRoamInfo), 0);
 		roam_info.pBssDesc = bss_desc;
 		csr_roam_call_callback(mac_ctx, session_id, &roam_info,
 				cmd->u.roamCmd.roamId, roam_status,
@@ -7537,13 +7571,14 @@ QDF_STATUS csr_roam_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 		}
 	} else if (NULL != pProfile) {
 		/* Check whether it is for start ibss */
-		if (CSR_IS_START_IBSS(pProfile)) {
+		if (CSR_IS_START_IBSS(pProfile) ||
+		    CSR_IS_NDI(pProfile)) {
 			status = csr_roam_issue_connect(pMac, sessionId,
 					pProfile, NULL, eCsrHddIssued,
 					roamId, false, false);
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
 				sms_log(pMac, LOGE,
-					FL("CSR failed to issue startIBSS cmd with status = 0x%08X"),
+					FL("Failed with status = 0x%08X"),
 					status);
 				fCallCallback = true;
 			}
@@ -8604,7 +8639,8 @@ csr_roaming_state_config_cnf_processor(tpAniSirGlobal mac_ctx,
 		bss_desc = &scan_result->Result.BssDescriptor;
 	}
 	if (csr_is_bss_type_ibss(cmd->u.roamCmd.roamProfile.BSSType)
-	    || CSR_IS_INFRA_AP(&cmd->u.roamCmd.roamProfile)) {
+	    || CSR_IS_INFRA_AP(&cmd->u.roamCmd.roamProfile)
+	    || CSR_IS_NDI(&cmd->u.roamCmd.roamProfile)) {
 		if (!QDF_IS_STATUS_SUCCESS(csr_roam_issue_start_bss(mac_ctx,
 						session_id, &session->bssParams,
 						&cmd->u.roamCmd.roamProfile,
@@ -12743,7 +12779,7 @@ QDF_STATUS csr_roam_issue_start_bss(tpAniSirGlobal pMac, uint32_t sessionId,
 	return status;
 }
 
-static void csr_roam_prepare_bss_params(tpAniSirGlobal pMac, uint32_t sessionId,
+void csr_roam_prepare_bss_params(tpAniSirGlobal pMac, uint32_t sessionId,
 					tCsrRoamProfile *pProfile,
 					tSirBssDescription *pBssDesc,
 					tBssConfigParam *pBssConfig,
@@ -12760,7 +12796,11 @@ static void csr_roam_prepare_bss_params(tpAniSirGlobal pMac, uint32_t sessionId,
 
 	if (pBssDesc) {
 		csr_roam_get_bss_start_parms_from_bss_desc(pMac, pBssDesc, pIes,
-							   &pSession->bssParams);
+							&pSession->bssParams);
+		if (CSR_IS_NDI(pProfile)) {
+			qdf_copy_macaddr(&pSession->bssParams.bssid,
+				&pSession->selfMacAddr);
+		}
 	} else {
 		csr_roam_get_bss_start_parms(pMac, pProfile, &pSession->bssParams);
 		/* Use the first SSID */

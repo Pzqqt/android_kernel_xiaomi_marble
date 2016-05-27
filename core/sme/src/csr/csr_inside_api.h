@@ -1070,3 +1070,16 @@ bool is_disconnect_pending(tpAniSirGlobal mac_ctx,
 void csr_scan_active_list_timeout_handle(void *userData);
 QDF_STATUS csr_prepare_disconnect_command(tpAniSirGlobal mac,
 			uint32_t session_id, tSmeCmd **sme_cmd);
+QDF_STATUS csr_roam_prepare_bss_config_from_profile(tpAniSirGlobal mac_ctx,
+		tCsrRoamProfile *profile, tBssConfigParam *bss_cfg,
+		tSirBssDescription *bss_desc);
+void csr_roam_prepare_bss_params(tpAniSirGlobal mac_ctx, uint32_t session_id,
+		tCsrRoamProfile *profile, tSirBssDescription *bss_desc,
+		tBssConfigParam *bss_cfg, tDot11fBeaconIEs *ies);
+
+QDF_STATUS csr_roam_set_bss_config_cfg(tpAniSirGlobal mac_ctx,
+		uint32_t session_id,
+		tCsrRoamProfile *profile, tSirBssDescription *bss_desc,
+		tBssConfigParam *bss_cfg, tDot11fBeaconIEs *ies,
+		bool reset_country);
+

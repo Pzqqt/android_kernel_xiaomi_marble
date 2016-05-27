@@ -667,6 +667,10 @@ typedef enum {
 	eCSR_ASSOC_STATE_TYPE_INFRA_CONNECTED,
 	/* Disconnecting with AP or stop connecting process */
 	eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTING,
+	/* NAN Data interface not started */
+	eCSR_CONNECT_STATE_TYPE_NDI_NOT_STARTED,
+	/* NAN Data inteface started */
+	eCSR_CONNECT_STATE_TYPE_NDI_STARTED,
 
 } eCsrConnectState;
 
@@ -1616,9 +1620,19 @@ typedef QDF_STATUS (*csr_roamSessionCloseCallback)(void *pContext);
 				       (pProfile)->BSSType)
 #define CSR_IS_INFRA_AP(pProfile) (eCSR_BSS_TYPE_INFRA_AP ==  \
 				   (pProfile)->BSSType)
-#define CSR_IS_NDI(pProfile) (eCSR_BSS_TYPE_NDI == (pProfile)->BSSType)
+#ifdef WLAN_FEATURE_NAN_DATAPATH
+#define CSR_IS_NDI(profile)  (eCSR_BSS_TYPE_NDI == (profile)->BSSType)
+#else
+#define CSR_IS_NDI(profile)  (false)
+#endif
 #define CSR_IS_CONN_INFRA_AP(pProfile)  (eCSR_BSS_TYPE_INFRA_AP == \
 					 (pProfile)->BSSType)
+#ifdef WLAN_FEATURE_NAN_DATAPATH
+#define CSR_IS_CONN_NDI(profile)  (eCSR_BSS_TYPE_NDI == (profile)->BSSType)
+#else
+#define CSR_IS_CONN_NDI(profile)  (false)
+#endif
+
 #define CSR_IS_CLOSE_SESSION_COMMAND(pCommand) \
 	((pCommand)->command == eSmeCommandDelStaSession)
 

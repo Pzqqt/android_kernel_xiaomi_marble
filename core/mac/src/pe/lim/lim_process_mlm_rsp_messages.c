@@ -49,6 +49,7 @@
 #include "cds_utils.h"
 #include "lim_types.h"
 #include "cds_concurrency.h"
+#include "nan_datapath.h"
 
 #define MAX_SUPPORTED_PEERS_WEP 16
 
@@ -254,12 +255,14 @@ void lim_process_mlm_start_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 		MTRACE(mac_trace
 			       (pMac, TRACE_CODE_SME_STATE, psessionEntry->peSessionId,
 			       psessionEntry->limSmeState));
-		if (psessionEntry->bssType == eSIR_INFRA_AP_MODE) {
+		if (psessionEntry->bssType == eSIR_INFRA_AP_MODE)
 			lim_log(pMac, LOG1,
 				FL("*** Started BSS in INFRA AP SIDE***"));
-		} else {
+		else if (psessionEntry->bssType == eSIR_NDI_MODE)
+			lim_log(pMac, LOG1,
+				FL("*** Started BSS in NDI mode ***"));
+		else
 			lim_log(pMac, LOG1, FL("*** Started BSS ***"));
-		}
 	} else {
 		/* Start BSS is a failure */
 		pe_delete_session(pMac, psessionEntry);
@@ -2672,6 +2675,8 @@ void lim_process_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 	mlm_start_cnf.sessionId = session_entry->peSessionId;
 	if (eSIR_IBSS_MODE == bss_type) {
 		lim_process_ibss_mlm_add_bss_rsp(mac_ctx, msg, session_entry);
+	} else if (eSIR_NDI_MODE == session_entry->bssType) {
+		lim_process_ndi_mlm_add_bss_rsp(mac_ctx, msg, session_entry);
 	} else {
 		if (eLIM_SME_WT_START_BSS_STATE == session_entry->limSmeState) {
 			if (eLIM_MLM_WT_ADD_BSS_RSP_STATE !=
