@@ -175,6 +175,7 @@ typedef enum {
 	 * to filter out
 	 */
 	WMI_SERVICE_VDEV_RX_FILTER,
+	WMI_SERVICE_P2P_LISTEN_OFFLOAD_SUPPORT,
 	WMI_MAX_SERVICE = 128             /* max service */
 } WMI_SERVICE;
 

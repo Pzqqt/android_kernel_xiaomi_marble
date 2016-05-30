@@ -711,6 +711,9 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_place_holder_2,
 	WMITLV_TAG_STRUC_wmi_per_chain_rssi_stats,
 	WMITLV_TAG_STRUC_wmi_rssi_stats,
+	WMITLV_TAG_STRUC_wmi_p2p_lo_start_cmd_fixed_param,
+	WMITLV_TAG_STRUC_wmi_p2p_lo_stop_cmd_fixed_param,
+	WMITLV_TAG_STRUC_wmi_p2p_lo_stopped_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -998,6 +1001,8 @@ typedef enum {
 	OP(WMI_WOW_SET_ACTION_WAKE_UP_CMDID) \
 	OP(WMI_PEER_BWF_REQUEST_CMDID) \
 	OP(WMI_DBGLOG_TIME_STAMP_SYNC_CMDID) \
+	OP(WMI_P2P_LISTEN_OFFLOAD_START_CMDID) \
+	OP(WMI_P2P_LISTEN_OFFLOAD_STOP_CMDID) \
 	/* add new CMD_LIST elements above this line */
 
 /*
@@ -1148,6 +1153,7 @@ typedef enum {
 	OP(WMI_PDEV_HW_MODE_TRANSITION_EVENTID) \
 	OP(WMI_PDEV_SET_MAC_CONFIG_RESP_EVENTID) \
 	OP(WMI_RADIO_TX_POWER_LEVEL_STATS_EVENTID) \
+	OP(WMI_P2P_LISTEN_OFFLOAD_STOPPED_EVENTID) \
 	/* add new EVT_LIST elements above this line */
 
 /* TLV definitions of WMI commands */
@@ -1414,6 +1420,23 @@ WMITLV_CREATE_PARAM_STRUC(WMI_P2P_SET_VENDOR_IE_DATA_CMDID);
 #define WMITLV_TABLE_WMI_P2P_SET_OPPPS_PARAM_CMDID(id,op,buf,len) \
 	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_p2p_set_oppps_cmd_fixed_param, wmi_p2p_set_oppps_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_P2P_SET_OPPPS_PARAM_CMDID);
+
+/* P2P set listen offload start parameters Cmd */
+#define WMITLV_TABLE_WMI_P2P_LISTEN_OFFLOAD_START_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_p2p_lo_start_cmd_fixed_param, wmi_p2p_lo_start_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, device_types_data, WMITLV_SIZE_VAR) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, prob_resp_data, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_P2P_LISTEN_OFFLOAD_START_CMDID);
+
+/* P2P set listen offload stop parameters Cmd */
+#define WMITLV_TABLE_WMI_P2P_LISTEN_OFFLOAD_STOP_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_p2p_lo_stop_cmd_fixed_param, wmi_p2p_lo_stop_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_P2P_LISTEN_OFFLOAD_STOP_CMDID);
+
+/* P2P set listen offload stopped parameters Event */
+#define WMITLV_TABLE_WMI_P2P_LISTEN_OFFLOAD_STOPPED_EVENTID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_p2p_lo_stopped_event_fixed_param, wmi_p2p_lo_stopped_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_P2P_LISTEN_OFFLOAD_STOPPED_EVENTID);
 
 /* Pdev set channel Cmd */
 #define WMITLV_TABLE_WMI_PDEV_SET_CHANNEL_CMDID(id,op,buf,len) \

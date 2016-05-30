@@ -561,6 +561,10 @@ typedef enum {
 	WMI_P2P_DISC_OFFLOAD_PATTERN_CMDID,
 	/** set OppPS related parameters **/
 	WMI_P2P_SET_OPPPS_PARAM_CMDID,
+	/** set listen offload start related parameters */
+	WMI_P2P_LISTEN_OFFLOAD_START_CMDID,
+	/** set listen offload stop related parameters */
+	WMI_P2P_LISTEN_OFFLOAD_STOP_CMDID,
 
 	/** AP power save specific config */
 	/** set AP power save specific param */
@@ -1139,9 +1143,10 @@ typedef enum {
 
 	/** P2P disc found */
 	WMI_P2P_DISC_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_P2P),
-
 	/*send noa info to host when noa is changed for beacon tx offload enable */
 	WMI_P2P_NOA_EVENTID,
+	/** send p2p listen offload stopped event with different reason */
+	WMI_P2P_LISTEN_OFFLOAD_STOPPED_EVENTID,
 
 	/** Send EGAP Info to host */
 	WMI_AP_PS_EGAP_INFO_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_AP_PS),
@@ -8045,6 +8050,72 @@ typedef struct {
 	WMI_F_RMW((hdr)->oppps_attr, (v) & 0x7f,	    \
 		  WMI_UNIFIED_OPPPS_ATTR_CTWIN);
 
+typedef enum p2p_lo_start_ctrl_flags_e {
+	/* flush prob. req when host is awake */
+	P2P_LO_START_CTRL_FLAG_FLUSH_LISTEN_RESULT = 1 << 0,
+} p2p_lo_start_ctrl_flags;
+
+typedef struct {
+	A_UINT32 tlv_header;
+	A_UINT32 vdev_id;
+	A_UINT32 ctl_flags; /* refer to enum_p2p_lo_start_ctrl_flags_e */
+	A_UINT32 channel;   /* MHz */
+	A_UINT32 period;    /* ms */
+	A_UINT32 interval;  /* ms, interval should be larger than period */
+	A_UINT32 count;     /* 0 means forever */
+	/*
+	 * device_types_len specifies the number of bytes in the
+	 * device_types_data[] byte-array TLV that follows this TLV.
+	 * The data in device_types_data[] is in 8-byte elements, so
+	 * device_types_len will be a multiple of 8.
+	 */
+	A_UINT32 device_types_len;
+	/*
+	 * prob_resp_len specifies the number of bytes in the
+	 * prob_resp_data[] byte-array TLV that follows this TLV.
+	 */
+	A_UINT32 prob_resp_len;
+	/*
+	 * Two other TLVs follow this TLV:
+	 * A_UINT8 device_types_data[device_types_len];
+	 * A_UINT8 prob_resp_data[prob_resp_len];
+	 *     The information in device_types_data[] and prob_resp_data[]
+	 *     needs to be provided to the target in over-the-air byte order.
+	 *     On a big-endian host, if device_types_data and prob_resp_data
+	 *     are initially in the correct over-the-air byte order,
+	 *     the automatic byteswap for endianness-correction during WMI
+	 *     message download will mess up the byte order.
+	 *     Thus, a big-endian host needs to explicitly byte-swap the bytes
+	 *     within each quad-byte segment of device_types_data[] and
+	 *     prob_resp_data[], so that the automatic byte-swap applied during
+	 *     WMI download from a big-endian host to the little-endian target
+	 *     will restore device_types_data and prob_resp_data into the
+	 *     correct byte ordering.
+	 */
+} wmi_p2p_lo_start_cmd_fixed_param;
+
+typedef struct {
+	A_UINT32 tlv_header;
+	A_UINT32 vdev_id;
+} wmi_p2p_lo_stop_cmd_fixed_param;
+
+typedef enum p2p_lo_stopped_reason_e {
+	/* finished as scheduled */
+	P2P_LO_STOPPED_REASON_COMPLETE = 0,
+	/* host stops it */
+	P2P_LO_STOPPED_REASON_RECV_STOP_CMD,
+	/* invalid listen offload par */
+	P2P_LO_STOPPED_REASON_INVALID_LO_PAR,
+	/* vdev cannot support it right now */
+	P2P_LO_STOPPED_REASON_FW_NOT_SUPPORT,
+} p2p_lo_stopped_reason;
+
+typedef struct {
+	A_UINT32 tlv_header;
+	A_UINT32 vdev_id;
+	A_UINT32 reason; /* refer to p2p_lo_stopped_reason_e */
+} wmi_p2p_lo_stopped_event_fixed_param;
+
 typedef struct {
 	A_UINT32 time32;                /* upper 32 bits of time stamp */
 	A_UINT32 time0;         /* lower 32 bits of time stamp */
@@ -8250,6 +8321,7 @@ typedef enum wake_reason_e {
 	WOW_REASON_OEM_RESPONSE_EVENT = WOW_REASON_NAN_RTT,
 	WOW_REASON_TDLS_CONN_TRACKER_EVENT,
 	WOW_REASON_CRITICAL_LOG,
+	WOW_REASON_P2P_LISTEN_OFFLOAD,
 	WOW_REASON_DEBUG_TEST = 0xFF,
 } WOW_WAKE_REASON_TYPE;
 
