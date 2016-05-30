@@ -143,11 +143,16 @@ lim_process_beacon_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 				eLIM_MLM_WT_PROBE_RESP_STATE) ||
 		(mac_ctx->lim.gLimMlmState ==
 				eLIM_MLM_PASSIVE_SCAN_STATE)) {
-		lim_check_and_add_bss_description(mac_ctx, bcn_ptr,
-			rx_pkt_info,
-			((mac_ctx->lim.gLimHalScanState ==
-			      eLIM_HAL_SCANNING_STATE) ? true : false),
-			      false);
+		/* If we are scanning for P2P, only accept probe rsp */
+		if ((mac_ctx->lim.gLimHalScanState !=
+		    eLIM_HAL_SCANNING_STATE) ||
+		    (NULL == mac_ctx->lim.gpLimMlmScanReq) ||
+		    !mac_ctx->lim.gpLimMlmScanReq->p2pSearch)
+			lim_check_and_add_bss_description(mac_ctx, bcn_ptr,
+				rx_pkt_info,
+				((mac_ctx->lim.gLimHalScanState ==
+				 eLIM_HAL_SCANNING_STATE) ? true : false),
+				false);
 		/*
 		 * Calling dfsChannelList which will convert DFS channel
 		 * to active channel for x secs if this channel is DFS
@@ -237,9 +242,13 @@ lim_process_beacon_frame_no_session(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo)
 
 		if ((pMac->lim.gLimMlmState == eLIM_MLM_WT_PROBE_RESP_STATE) ||
 		    (pMac->lim.gLimMlmState == eLIM_MLM_PASSIVE_SCAN_STATE)) {
-			lim_check_and_add_bss_description(pMac, pBeacon,
-							  pRxPacketInfo, true,
-							  false);
+			/*If we are scanning for P2P, only accept probe rsp */
+			if ((pMac->lim.gLimHalScanState !=
+			    eLIM_HAL_SCANNING_STATE) ||
+			    (NULL == pMac->lim.gpLimMlmScanReq) ||
+			    !pMac->lim.gpLimMlmScanReq->p2pSearch)
+				lim_check_and_add_bss_description(pMac, pBeacon,
+					pRxPacketInfo, true, false);
 			/* Calling dfsChannelList which will convert DFS channel
 			 * to Active channel for x secs if this channel is DFS channel */
 			lim_set_dfs_channel_list(pMac, pBeacon->channelNumber,

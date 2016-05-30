@@ -70,7 +70,7 @@
  *
  * @return None
  */
-QDF_STATUS
+void
 lim_collect_bss_description(tpAniSirGlobal pMac,
 			    tSirBssDescription *pBssDescr,
 			    tpSirProbeRespBeacon pBPR,
@@ -88,7 +88,7 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 	if (SIR_MAC_B_PR_SSID_OFFSET > WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo)) {
 		QDF_ASSERT(WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo) >=
 			   SIR_MAC_B_PR_SSID_OFFSET);
-		return QDF_STATUS_E_FAILURE;
+		return;
 	}
 	ieLen =
 		WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo) - SIR_MAC_B_PR_SSID_OFFSET;
@@ -229,7 +229,7 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 		FL("Collected BSS Description for Channel(%1d), length(%u), IE Fields(%u)"),
 		pBssDescr->channelId, pBssDescr->length, ieLen);
 
-	return QDF_STATUS_SUCCESS;
+	return;
 } /*** end lim_collect_bss_description() ***/
 
 /**
@@ -389,10 +389,8 @@ lim_check_and_add_bss_description(tpAniSirGlobal mac_ctx,
 		return;
 	}
 	/* In scan state, store scan result. */
-	status = lim_collect_bss_description(mac_ctx, bssdescr,
-					     bpr, rx_packet_info, scanning);
-	if (QDF_STATUS_SUCCESS != status)
-		goto last;
+	lim_collect_bss_description(mac_ctx, bssdescr, bpr, rx_packet_info,
+				    scanning);
 	bssdescr->fProbeRsp = fProbeRsp;
 
 	/*
@@ -406,8 +404,6 @@ lim_check_and_add_bss_description(tpAniSirGlobal mac_ctx,
 			FL("No CSR callback routine to send beacons"));
 		status = QDF_STATUS_E_INVAL;
 	}
-last:
 	qdf_mem_free(bssdescr);
-	return;
 }
 
