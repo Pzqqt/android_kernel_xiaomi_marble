@@ -1428,6 +1428,8 @@ void sap_sort_chl_weight_ht80(tSapChSelSpectInfo *pSpectInfoParams)
 		}
 	}
 
+	sap_sort_chl_weight(pSpectInfoParams);
+
 	pSpectInfo = pSpectInfoParams->pSpectCh;
 	for (j = 0; j < (pSpectInfoParams->numSpectChans); j++) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -1565,6 +1567,8 @@ void sap_sort_chl_weight_vht160(tSapChSelSpectInfo *pSpectInfoParams)
 		}
 	}
 
+	sap_sort_chl_weight(pSpectInfoParams);
+
 	pSpectInfo = pSpectInfoParams->pSpectCh;
 	for (j = 0; j < (pSpectInfoParams->numSpectChans); j++) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -1671,6 +1675,7 @@ void sap_sort_chl_weight_ht40_24_g(tSapChSelSpectInfo *pSpectInfoParams)
 			}
 		}
 	}
+	sap_sort_chl_weight(pSpectInfoParams);
 }
 
 /*==========================================================================
@@ -1797,14 +1802,11 @@ void sap_sort_chl_weight_all(ptSapContext pSapCtx,
 			sap_sort_chl_weight_ht40_24_g(pSpectInfoParams);
 			sap_sort_chl_weight_ht40_5_g(pSpectInfoParams);
 		}
-		sap_sort_chl_weight(pSpectInfoParams);
 		break;
-
 	case CH_WIDTH_80MHZ:
 	case CH_WIDTH_80P80MHZ:
 		sap_sort_chl_weight_ht80(pSpectInfoParams);
 		break;
-
 	case CH_WIDTH_160MHZ:
 		sap_sort_chl_weight_vht160(pSpectInfoParams);
 		break;

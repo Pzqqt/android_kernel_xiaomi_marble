@@ -1539,8 +1539,6 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	if (QDF_STATUS_SUCCESS != status)
 		hddLog(LOGE, FL("Get PCL failed"));
 
-	wlan_hdd_set_acs_ch_range(sap_config, ht_enabled, vht_enabled);
-
 	/* ACS override for android */
 	if (hdd_ctx->config->sap_p2p_11ac_override && ht_enabled) {
 		hddLog(LOG1, FL("ACS Config override for 11AC"));
@@ -1553,6 +1551,8 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 			sap_config->acs_cfg.ch_width == eHT_CHANNEL_WIDTH_80MHZ)
 			sap_config->acs_cfg.ch_width = eHT_CHANNEL_WIDTH_40MHZ;
 	}
+
+	wlan_hdd_set_acs_ch_range(sap_config, ht_enabled, vht_enabled);
 
 	hddLog(LOG1, FL("ACS Config for wlan%d: HW_MODE: %d ACS_BW: %d HT: %d VHT: %d START_CH: %d END_CH: %d"),
 		adapter->dev->ifindex, sap_config->acs_cfg.hw_mode,
