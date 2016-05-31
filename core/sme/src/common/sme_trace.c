@@ -199,18 +199,38 @@ static uint8_t *sme_trace_get_command_string(uint32_t command)
 	}
 }
 
-static void sme_trace_dump(tpAniSirGlobal pMac, tp_qdf_trace_record pRecord,
-			   uint16_t recIndex)
+static void sme_trace_dump(tpAniSirGlobal mac_ctx, tp_qdf_trace_record record,
+			   uint16_t rec_index)
 {
-	if (TRACE_CODE_SME_COMMAND == pRecord->code) {
-		sms_log(pMac, LOG1, "%04d %012llu S%d %-14s %-30s(0x%x)",
-			recIndex, pRecord->time, pRecord->session,
-			"SME COMMAND:", sme_trace_get_command_string(pRecord->data),
-			pRecord->data);
-	} else {
-		sms_log(pMac, LOG1, "%04d %012llu S%d %-14s %-30s(0x%x)",
-			recIndex, pRecord->time, pRecord->session, "RX HDD MSG:",
-			sme_trace_get_rx_msg_string(pRecord->code), pRecord->data);
+	switch (record->code) {
+	case TRACE_CODE_SME_COMMAND:
+		sms_log(mac_ctx, LOG1, "%04d %012llu S%d %-14s %-30s(0x%x)",
+			rec_index, record->time, record->session,
+			"SME COMMAND:",
+			sme_trace_get_command_string(record->data),
+			record->data);
+		break;
+	case TRACE_CODE_SME_TX_WMA_MSG:
+		sms_log(mac_ctx, LOG1, "%04d %012llu S%d %-14s %-30s(0x%x)",
+			rec_index, record->time, record->session,
+			"TX WMA Msg:",
+			mac_trace_get_wma_msg_string((uint16_t)record->data),
+			record->data);
+		break;
+	case TRACE_CODE_SME_RX_WMA_MSG:
+		sms_log(mac_ctx, LOG1, "%04d %012llu S%d %-14s %-30s(0x%x)",
+			rec_index, record->time, record->session,
+			"RX WMA Msg:",
+			mac_trace_get_sme_msg_string((uint16_t)record->data),
+			record->data);
+		break;
+	default:
+		sms_log(mac_ctx, LOG1, "%04d %012llu S%d %-14s %-30s(0x%x)",
+			rec_index, record->time, record->session,
+			"RX HDD MSG:",
+			sme_trace_get_rx_msg_string(record->code),
+			record->data);
+		break;
 	}
 }
 

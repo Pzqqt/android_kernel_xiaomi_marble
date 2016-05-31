@@ -28,6 +28,7 @@
 #include "sme_power_save.h"
 #include "sme_power_save_api.h"
 #include "sms_debug.h"
+#include "sme_trace.h"
 #include "qdf_mem.h"
 #include "qdf_types.h"
 #include "wma_types.h"
@@ -884,6 +885,8 @@ QDF_STATUS sme_set_ps_host_offload(tHalHandle hal_ctx,
 	msg.type = WMA_SET_HOST_OFFLOAD;
 	msg.reserved = 0;
 	msg.bodyptr = request_buf;
+	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+			 session_id, msg.type));
 	if (QDF_STATUS_SUCCESS !=
 			cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -932,6 +935,8 @@ QDF_STATUS sme_set_ps_ns_offload(tHalHandle hal_ctx,
 	msg.type = WMA_SET_NS_OFFLOAD;
 	msg.reserved = 0;
 	msg.bodyptr = request_buf;
+	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+			 session_id, msg.type));
 	if (QDF_STATUS_SUCCESS !=
 			cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,

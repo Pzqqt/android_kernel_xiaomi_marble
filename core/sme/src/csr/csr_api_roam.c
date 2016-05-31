@@ -38,6 +38,7 @@
 #include "cds_mq.h"
 #include "csr_inside_api.h"
 #include "sms_debug.h"
+#include "sme_trace.h"
 #include "sme_qos_internal.h"
 #include "sme_inside.h"
 #include "host_diag_core_event.h"
@@ -782,7 +783,8 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 	msg.reserved = 0;
 	msg.bodyptr = pChanList;
 	pChanList->numChan = num_channel;
-
+	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+			 NO_SESSION, msg.type));
 	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to post msg to WMA", __func__);
@@ -17409,6 +17411,8 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 	msg.type = WMA_ROAM_SCAN_OFFLOAD_REQ;
 	msg.reserved = 0;
 	msg.bodyptr = req_buf;
+	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+			 session_id, msg.type));
 	if (!QDF_IS_STATUS_SUCCESS
 		    (cds_mq_post_message(QDF_MODULE_ID_WMA, &msg))) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,

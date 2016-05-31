@@ -2571,6 +2571,8 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 		break;
 #ifdef FEATURE_WLAN_SCAN_PNO
 	case eWNI_SME_PREF_NETWORK_FOUND_IND:
+		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_RX_WMA_MSG,
+				 NO_SESSION, pMsg->type));
 		if (pMsg->bodyptr) {
 			status = sme_preferred_network_found_ind((void *)pMac,
 								 pMsg->bodyptr);
@@ -2673,6 +2675,8 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 		break;
 #ifdef WLAN_FEATURE_GTK_OFFLOAD
 	case eWNI_PMC_GTK_OFFLOAD_GETINFO_RSP:
+		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_RX_WMA_MSG,
+				 NO_SESSION, pMsg->type));
 		if (pMsg->bodyptr) {
 			sme_process_get_gtk_info_rsp(pMac, pMsg->bodyptr);
 			qdf_mem_free(pMsg->bodyptr);
@@ -2685,6 +2689,8 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 #ifdef FEATURE_WLAN_LPHB
 	/* LPHB timeout indication arrived, send IND to client */
 	case eWNI_SME_LPHB_IND:
+		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_RX_WMA_MSG,
+				 NO_SESSION, pMsg->type));
 		if (pMac->sme.pLphbIndCb)
 			pMac->sme.pLphbIndCb(pMac->hHdd, pMsg->bodyptr);
 		qdf_mem_free(pMsg->bodyptr);
@@ -2724,6 +2730,8 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 #ifdef FEATURE_WLAN_CH_AVOID
 	/* channel avoid message arrived, send IND to client */
 	case eWNI_SME_CH_AVOID_IND:
+		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_RX_WMA_MSG,
+				 NO_SESSION, pMsg->type));
 		if (pMac->sme.pChAvoidNotificationCb) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 				  FL("CH avoid notification"));
@@ -2793,6 +2801,8 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 		break;
 #ifdef WLAN_FEATURE_NAN
 	case eWNI_SME_NAN_EVENT:
+		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_RX_WMA_MSG,
+				 NO_SESSION, pMsg->type));
 		if (pMsg->bodyptr) {
 			sme_nan_event(hHal, pMsg->bodyptr);
 			qdf_mem_free(pMsg->bodyptr);
@@ -5572,7 +5582,8 @@ QDF_STATUS sme_dhcp_start_ind(tHalHandle hHal,
 		cds_message.type = WMA_DHCP_START_IND;
 		cds_message.bodyptr = pMsg;
 		cds_message.reserved = 0;
-
+		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+				 sessionId, cds_message.type));
 		qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -5643,7 +5654,8 @@ QDF_STATUS sme_dhcp_stop_ind(tHalHandle hHal,
 		cds_message.type = WMA_DHCP_STOP_IND;
 		cds_message.bodyptr = pMsg;
 		cds_message.reserved = 0;
-
+		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+				 sessionId, cds_message.type));
 		qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -6254,6 +6266,8 @@ QDF_STATUS sme_set_gtk_offload(tHalHandle hHal,
 	msg.type = WMA_GTK_OFFLOAD_REQ;
 	msg.reserved = 0;
 	msg.bodyptr = request_buf;
+	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+			 sessionId, msg.type));
 	if (!QDF_IS_STATUS_SUCCESS
 		    (cds_mq_post_message(QDF_MODULE_ID_WMA, &msg))) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -6320,7 +6334,8 @@ QDF_STATUS sme_get_gtk_offload(tHalHandle hHal,
 
 	pMac->sme.gtk_offload_get_info_cb = callback_routine;
 	pMac->sme.gtk_offload_get_info_cb_context = callback_context;
-
+	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+			 session_id, msg.type));
 	if (!QDF_IS_STATUS_SUCCESS
 		    (cds_mq_post_message(QDF_MODULE_ID_WMA, &msg))) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -6374,6 +6389,8 @@ QDF_STATUS sme_set_keep_alive(tHalHandle hHal, uint8_t session_id,
 	msg.type = WMA_SET_KEEP_ALIVE;
 	msg.reserved = 0;
 	msg.bodyptr = request_buf;
+	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+			 session_id, msg.type));
 	if (QDF_STATUS_SUCCESS !=
 			cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -6896,6 +6913,8 @@ QDF_STATUS sme_configure_rxp_filter(tHalHandle hHal,
 		/* serialize the req through MC thread */
 		cds_message.bodyptr = wlanRxpFilterParam;
 		cds_message.type = WMA_CFG_RXP_FILTER_REQ;
+		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+				 NO_SESSION, cds_message.type));
 		qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			status = QDF_STATUS_E_FAILURE;
@@ -6948,6 +6967,8 @@ QDF_STATUS sme_configure_suspend_ind(tHalHandle hHal,
 		/* serialize the req through MC thread */
 		cds_message.bodyval = conn_state_mask;
 		cds_message.type = WMA_WLAN_SUSPEND_IND;
+		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+				 NO_SESSION, cds_message.type));
 		qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			pMac->readyToSuspendCallback = NULL;
@@ -6993,6 +7014,8 @@ QDF_STATUS sme_configure_resume_req(tHalHandle hHal,
 		/* serialize the req through MC thread */
 		cds_message.bodyptr = wlanResumeParam;
 		cds_message.type = WMA_WLAN_RESUME_REQ;
+		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+				 NO_SESSION, cds_message.type));
 		qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			status = QDF_STATUS_E_FAILURE;
@@ -7835,6 +7858,8 @@ QDF_STATUS sme_8023_multicast_list(tHalHandle hHal, uint8_t sessionId,
 	msg.type = WMA_8023_MULTICAST_LIST_REQ;
 	msg.reserved = 0;
 	msg.bodyptr = request_buf;
+	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+			 sessionId, msg.type));
 	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Not able to "
@@ -7890,7 +7915,8 @@ QDF_STATUS sme_receive_filter_set_filter(tHalHandle hHal,
 	msg.type = WMA_RECEIVE_FILTER_SET_FILTER_REQ;
 	msg.reserved = 0;
 	msg.bodyptr = request_buf;
-
+	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+			 sessionId, msg.type));
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO, "Pkt Flt Req : "
 		  "FT %d FID %d ",
 		  request_buf->filterType, request_buf->filterId);
@@ -7980,6 +8006,8 @@ QDF_STATUS sme_receive_filter_clear_filter(tHalHandle hHal,
 	msg.type = WMA_RECEIVE_FILTER_CLEAR_FILTER_REQ;
 	msg.reserved = 0;
 	msg.bodyptr = request_buf;
+	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+			 sessionId, msg.type));
 	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Not able to post "
@@ -8095,7 +8123,8 @@ QDF_STATUS sme_set_max_tx_power_per_band(eCsrBand band, int8_t dB)
 	msg.type = WMA_SET_MAX_TX_POWER_PER_BAND_REQ;
 	msg.reserved = 0;
 	msg.bodyptr = pMaxTxPowerPerBandParams;
-
+	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+			 NO_SESSION, msg.type));
 	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s:Not able to post WMA_SET_MAX_TX_POWER_PER_BAND_REQ",
@@ -8340,6 +8369,8 @@ QDF_STATUS sme_set_tm_level(tHalHandle hHal, uint16_t newTMLevel, uint16_t tmMod
 		/* serialize the req through MC thread */
 		cds_message.bodyptr = setTmLevelReq;
 		cds_message.type = WMA_SET_TM_LEVEL_REQ;
+		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+				 NO_SESSION, cds_message.type));
 		qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -10619,6 +10650,8 @@ QDF_STATUS sme_lphb_config_req
 		/* serialize the req through MC thread */
 		cds_message.bodyptr = lphdReq;
 		cds_message.type = WMA_LPHB_CONF_REQ;
+		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+				 NO_SESSION, cds_message.type));
 		qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -10694,6 +10727,8 @@ sme_add_periodic_tx_ptrn(tHalHandle hal,
 	/* Serialize the req through MC thread */
 	msg.bodyptr = req_msg;
 	msg.type    = WMA_ADD_PERIODIC_TX_PTRN_IND;
+	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+			 NO_SESSION, msg.type));
 	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac, LOGE,
@@ -10743,6 +10778,8 @@ sme_del_periodic_tx_ptrn(tHalHandle hal,
 	/* Serialize the req through MC thread */
 	msg.bodyptr = req_msg;
 	msg.type    = WMA_DEL_PERIODIC_TX_PTRN_IND;
+	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+			 NO_SESSION, msg.type));
 	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac, LOGE,
@@ -11956,7 +11993,8 @@ QDF_STATUS sme_send_rate_update_ind(tHalHandle hHal,
 	if (QDF_STATUS_SUCCESS == status) {
 		msg.type = WMA_RATE_UPDATE_IND;
 		msg.bodyptr = rate_upd;
-
+		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+				 NO_SESSION, msg.type));
 		if (!QDF_IS_STATUS_SUCCESS
 			    (cds_mq_post_message(QDF_MODULE_ID_WMA, &msg))) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -13128,6 +13166,8 @@ QDF_STATUS sme_ext_scan_get_capabilities(tHalHandle hHal,
 		/* Serialize the req through MC thread */
 		cds_message.bodyptr = pReq;
 		cds_message.type = WMA_EXTSCAN_GET_CAPABILITIES_REQ;
+		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+				 NO_SESSION, cds_message.type));
 		qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			status = QDF_STATUS_E_FAILURE;
@@ -13157,6 +13197,8 @@ QDF_STATUS sme_ext_scan_start(tHalHandle hHal,
 		/* Serialize the req through MC thread */
 		cds_message.bodyptr = pStartCmd;
 		cds_message.type = WMA_EXTSCAN_START_REQ;
+		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+				 NO_SESSION, cds_message.type));
 		qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			status = QDF_STATUS_E_FAILURE;
@@ -13185,6 +13227,8 @@ QDF_STATUS sme_ext_scan_stop(tHalHandle hHal, tSirExtScanStopReqParams *pStopReq
 		/* Serialize the req through MC thread */
 		cds_message.bodyptr = pStopReq;
 		cds_message.type = WMA_EXTSCAN_STOP_REQ;
+		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+				 NO_SESSION, cds_message.type));
 		qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			status = QDF_STATUS_E_FAILURE;
@@ -13214,6 +13258,8 @@ QDF_STATUS sme_set_bss_hotlist(tHalHandle hHal,
 		/* Serialize the req through MC thread */
 		cds_message.bodyptr = pSetHotListReq;
 		cds_message.type = WMA_EXTSCAN_SET_BSSID_HOTLIST_REQ;
+		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+				 NO_SESSION, cds_message.type));
 		qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			status = QDF_STATUS_E_FAILURE;
@@ -13244,6 +13290,8 @@ QDF_STATUS sme_reset_bss_hotlist(tHalHandle hHal,
 		/* Serialize the req through MC thread */
 		cds_message.bodyptr = pResetReq;
 		cds_message.type = WMA_EXTSCAN_RESET_BSSID_HOTLIST_REQ;
+		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+				 NO_SESSION, cds_message.type));
 		qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			status = QDF_STATUS_E_FAILURE;
@@ -13307,6 +13355,8 @@ QDF_STATUS sme_set_significant_change(tHalHandle hHal,
 		/* Serialize the req through MC thread */
 		cds_message.bodyptr = pSetSignificantChangeReq;
 		cds_message.type = WMA_EXTSCAN_SET_SIGNF_CHANGE_REQ;
+		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+				 NO_SESSION, cds_message.type));
 		qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			status = QDF_STATUS_E_FAILURE;
@@ -13337,6 +13387,8 @@ QDF_STATUS sme_reset_significant_change(tHalHandle hHal,
 		/* Serialize the req through MC thread */
 		cds_message.bodyptr = pResetReq;
 		cds_message.type = WMA_EXTSCAN_RESET_SIGNF_CHANGE_REQ;
+		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+				 NO_SESSION, cds_message.type));
 		qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			status = QDF_STATUS_E_FAILURE;
@@ -13367,6 +13419,8 @@ QDF_STATUS sme_get_cached_results(tHalHandle hHal,
 		/* Serialize the req through MC thread */
 		cds_message.bodyptr = pCachedResultsReq;
 		cds_message.type = WMA_EXTSCAN_GET_CACHED_RESULTS_REQ;
+		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+				 NO_SESSION, cds_message.type));
 		qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			status = QDF_STATUS_E_FAILURE;
@@ -13667,6 +13721,8 @@ QDF_STATUS sme_ll_stats_clear_req(tHalHandle hHal,
 		/* Serialize the req through MC thread */
 		cds_message.bodyptr = clear_stats_req;
 		cds_message.type = WMA_LINK_LAYER_STATS_CLEAR_REQ;
+		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+				 NO_SESSION, cds_message.type));
 		qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -13723,6 +13779,8 @@ QDF_STATUS sme_ll_stats_set_req(tHalHandle hHal, tSirLLStatsSetReq *psetStatsReq
 		/* Serialize the req through MC thread */
 		cds_message.bodyptr = set_stats_req;
 		cds_message.type = WMA_LINK_LAYER_STATS_SET_REQ;
+		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+				 NO_SESSION, cds_message.type));
 		qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -13779,6 +13837,8 @@ QDF_STATUS sme_ll_stats_get_req(tHalHandle hHal, tSirLLStatsGetReq *pgetStatsReq
 		/* Serialize the req through MC thread */
 		cds_message.bodyptr = get_stats_req;
 		cds_message.type = WMA_LINK_LAYER_STATS_GET_REQ;
+		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+				 NO_SESSION, cds_message.type));
 		qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,

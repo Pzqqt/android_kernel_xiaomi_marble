@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -37,9 +37,26 @@
 #include "mac_trace.h"
 
 #define NO_SESSION 0xFF
-#define TRACE_CODE_SME_COMMAND 0xFF
+/**
+ * enum sme_trace_code
+ *
+ * SME commands for MTRACE logs
+ *
+ * @TRACE_CODE_SME_COMMAND: sme commands
+ * @TRACE_CODE_SME_TX_WMA_MSG: commands tx to WDA
+ * @TRACE_CODE_SME_RX_WMA_MSG: commands rx from WDA
+ */
+enum sme_trace_code {
+	TRACE_CODE_SME_COMMAND,
+	TRACE_CODE_SME_TX_WMA_MSG,
+	TRACE_CODE_SME_RX_WMA_MSG,
+};
 enum {
-	TRACE_CODE_SME_RX_HDD_MSG_SCAN_REQ,
+	/*
+	 * Starts enums from 3 onwards, because unknown code captures for first
+	 * three enums in smeTraceDump()
+	 */
+	TRACE_CODE_SME_RX_HDD_MSG_SCAN_REQ = 3,
 	TRACE_CODE_SME_RX_HDD_MSG_SCAN_GET_RESULTS,
 	TRACE_CODE_SME_RX_HDD_MSG_CONNECT,
 	TRACE_CODE_SME_RX_HDD_MSG_SET_11DINFO,
