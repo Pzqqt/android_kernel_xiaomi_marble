@@ -69,6 +69,10 @@
 #include "cdp_txrx_flow_ctrl_legacy.h"
 #include <cdp_txrx_peer_ops.h>
 
+#ifdef WLAN_FEATURE_NAN_DATAPATH
+#include "wlan_hdd_nan_datapath.h"
+#endif
+
 /*---------------------------------------------------------------------------
    Preprocessor definitions and constants
    -------------------------------------------------------------------------*/
@@ -956,6 +960,9 @@ struct hdd_adapter_s {
 	union {
 		hdd_station_ctx_t station;
 		hdd_ap_ctx_t ap;
+#ifdef WLAN_FEATURE_NAN_DATAPATH
+		struct nan_datapath_ctx ndp_ctx;
+#endif
 	} sessionCtx;
 
 #ifdef WLAN_FEATURE_TSF
@@ -1072,6 +1079,15 @@ struct hdd_adapter_s {
 #define WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter) \
 	((WLAN_HDD_IS_TDLS_SUPPORTED_ADAPTER(pAdapter)) ? \
 	 (tdlsCtx_t *)(pAdapter)->sessionCtx.station.pHddTdlsCtx : NULL)
+#endif
+
+#ifdef WLAN_FEATURE_NAN_DATAPATH
+#define WLAN_HDD_GET_NDP_CTX_PTR(adapter) (&(adapter)->sessionCtx.ndp_ctx)
+#define WLAN_HDD_GET_NDP_WEXT_STATE_PTR(adapter) \
+		(&(adapter)->sessionCtx.ndp_ctx.wext_state)
+#else
+#define WLAN_HDD_GET_NDP_CTX_PTR(adapter) (NULL)
+#define WLAN_HDD_GET_NDP_WEXT_STATE_PTR(adapter) (NULL)
 #endif
 
 /* Set mac address locally administered bit */
@@ -1718,4 +1734,6 @@ static inline int wlan_hdd_nl_init(hdd_context_t *hdd_ctx)
 	return nl_srv_init(hdd_ctx->wiphy);
 }
 #endif
+QDF_STATUS hdd_sme_close_session_callback(void *pContext);
+
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

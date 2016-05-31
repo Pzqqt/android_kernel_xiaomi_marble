@@ -149,6 +149,7 @@ struct wireless_dev *wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 #endif
 
 int wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev);
+int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev);
 
 
 void wlan_hdd_cleanup_remain_on_channel_ctx(hdd_adapter_t *pAdapter);

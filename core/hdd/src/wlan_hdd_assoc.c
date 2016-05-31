@@ -60,6 +60,7 @@
 #include "ol_rx_fwd.h"
 #include "cdp_txrx_flow_ctrl_legacy.h"
 #include "cdp_txrx_peer_ops.h"
+#include "wlan_hdd_nan_datapath.h"
 
 /* These are needed to recognize WPA and RSN suite types */
 #define HDD_WPA_OUI_SIZE 4
@@ -4399,6 +4400,10 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		status = cds_set_hw_mode_on_channel_switch(pAdapter->sessionId);
 		if (QDF_IS_STATUS_ERROR(status))
 			hdd_info("set hw mode change not done");
+		break;
+	case eCSR_ROAM_NDP_STATUS_UPDATE:
+		hdd_ndp_event_handler(pAdapter, pRoamInfo, roamId, roamStatus,
+			roamResult);
 		break;
 	default:
 		break;

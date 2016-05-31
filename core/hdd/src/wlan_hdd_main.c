@@ -89,6 +89,7 @@
 #include "pld_common.h"
 #include "wlan_hdd_ocb.h"
 #include "wlan_hdd_nan.h"
+#include "wlan_hdd_nan_datapath.h"
 #include "wlan_hdd_debugfs.h"
 #include "wlan_hdd_driver_ops.h"
 #include "epping_main.h"
@@ -229,6 +230,7 @@ const char *hdd_device_mode_to_string(uint8_t device_mode)
 	CASE_RETURN_STRING(QDF_IBSS_MODE);
 	CASE_RETURN_STRING(QDF_P2P_DEVICE_MODE);
 	CASE_RETURN_STRING(QDF_OCB_MODE);
+	CASE_RETURN_STRING(QDF_NDI_MODE);
 	default:
 		return "Unknown";
 	}
@@ -2154,7 +2156,7 @@ QDF_STATUS hdd_register_interface(hdd_adapter_t *adapter,
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS hdd_sme_close_session_callback(void *pContext)
+QDF_STATUS hdd_sme_close_session_callback(void *pContext)
 {
 	hdd_adapter_t *adapter = pContext;
 
@@ -2549,6 +2551,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 	case QDF_P2P_DEVICE_MODE:
 	case QDF_OCB_MODE:
 	case QDF_MONITOR_MODE:
+	case QDF_NDI_MODE:
 	{
 		adapter = hdd_alloc_station_adapter(hdd_ctx, macAddr,
 						    name_assign_type,
@@ -2572,7 +2575,11 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 
 		adapter->device_mode = session_type;
 
-		status = hdd_init_station_mode(adapter);
+		if (QDF_NDI_MODE == session_type)
+			status = hdd_init_nan_data_mode(adapter);
+		else
+			status = hdd_init_station_mode(adapter);
+
 		if (QDF_STATUS_SUCCESS != status)
 			goto err_free_netdev;
 

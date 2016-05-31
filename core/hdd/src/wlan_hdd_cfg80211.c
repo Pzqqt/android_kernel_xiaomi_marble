@@ -89,6 +89,7 @@
 #include "wlan_hdd_subnet_detect.h"
 #include <wlan_hdd_regulatory.h>
 #include "wlan_hdd_lpass.h"
+#include "wlan_hdd_nan_datapath.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -1081,6 +1082,13 @@ static const struct nl80211_vendor_cmd_info wlan_hdd_cfg80211_vendor_events[] = 
 		.subcmd = QCA_NL80211_VENDOR_SUBCMD_GW_PARAM_CONFIG
 	},
 #endif /*FEATURE_LFR_SUBNET_DETECTION */
+
+#ifdef WLAN_FEATURE_NAN_DATAPATH
+	[QCA_NL80211_VENDOR_SUBCMD_NDP_INDEX] = {
+		.vendor_id = QCA_NL80211_VENDOR_ID,
+		.subcmd = QCA_NL80211_VENDOR_SUBCMD_NDP
+	},
+#endif /* WLAN_FEATURE_NAN_DATAPATH */
 };
 
 /**
@@ -6006,6 +6014,16 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.doit = wlan_hdd_cfg80211_sap_configuration_set
 	},
 
+#ifdef WLAN_FEATURE_NAN_DATAPATH
+	{
+		.info.vendor_id = QCA_NL80211_VENDOR_ID,
+		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_NDP,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+			WIPHY_VENDOR_CMD_NEED_NETDEV |
+			WIPHY_VENDOR_CMD_NEED_RUNNING,
+		.doit = wlan_hdd_cfg80211_process_ndp_cmd
+	},
+#endif
 };
 
 /**
