@@ -3487,7 +3487,6 @@ int wma_nlo_scan_cmp_evt_handler(void *handle, uint8_t *event,
 	if (scan_event) {
 		/* Posting scan completion msg would take scan cache result
 		 * from LIM module and update in scan cache maintained in SME.*/
-		WMA_LOGE("Posting PNO Scan completion to umac");
 		qdf_wake_lock_timeout_acquire(&wma->pno_wake_lock,
 				WMA_PNO_SCAN_COMPLETE_WAKE_LOCK_TIMEOUT,
 				WIFI_POWER_EVENT_WAKELOCK_PNO);

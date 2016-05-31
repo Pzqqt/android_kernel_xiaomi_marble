@@ -4652,7 +4652,7 @@ QDF_STATUS csr_scan_sme_scan_response(tpAniSirGlobal pMac,
 error_handling:
 #ifdef FEATURE_WLAN_SCAN_PNO
 	if (pMac->pnoOffload && pScanRsp->statusCode == eSIR_PNO_SCAN_SUCCESS) {
-		sms_log(pMac, LOGE, FL("PNO Scan completion called."));
+		sms_log(pMac, LOG1, FL("PNO Scan completion called"));
 		csr_save_scan_results(pMac, eCsrScanCandidateFound,
 				      pScanRsp->sessionId);
 		return QDF_STATUS_SUCCESS;
