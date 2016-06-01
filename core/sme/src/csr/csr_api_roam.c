@@ -6398,12 +6398,15 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 		}
 		if (CSR_IS_NDI(profile)) {
 			csr_roam_update_ndp_return_params(mac_ctx,
-					eCsrStartBssSuccess,
-					&roam_status, &roam_result);
-			csr_roam_fill_roaminfo_ndp(mac_ctx, &roam_info,
-					roam_result,
-					start_bss_rsp->statusCode,
-					0, 0);
+							eCsrStartBssSuccess,
+							&roam_status,
+							&roam_result,
+							&roam_info);
+			csr_roam_fill_roaminfo_ndp(mac_ctx,
+						&roam_info,
+						roam_result,
+						start_bss_rsp->statusCode,
+						0, 0);
 		}
 		/*
 		 * Only tell upper layer is we start the BSS because Vista
@@ -6880,7 +6883,7 @@ static bool csr_roam_process_results(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 		if (CSR_IS_NDI(profile)) {
 			csr_roam_update_ndp_return_params(mac_ctx,
 				eCsrStartBssFailure,
-				&roam_status, &roam_result);
+				&roam_status, &roam_result, &roam_info);
 			csr_roam_fill_roaminfo_ndp(mac_ctx, &roam_info,
 				roam_result,
 				(start_bss_rsp) ? start_bss_rsp->statusCode :
@@ -6971,6 +6974,24 @@ static bool csr_roam_process_results(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 		sme_qos_csr_event_ind(mac_ctx, (uint8_t) session_id,
 				SME_QOS_CSR_REASSOC_FAILURE, NULL);
 #endif
+		break;
+	case eCsrStopBssSuccess:
+		if (CSR_IS_NDI(profile)) {
+			csr_roam_update_ndp_return_params(mac_ctx, res,
+				&roam_status, &roam_result, &roam_info);
+			csr_roam_call_callback(mac_ctx, session_id, &roam_info,
+				cmd->u.roamCmd.roamId,
+				roam_status, roam_result);
+		}
+		break;
+	case eCsrStopBssFailure:
+		if (CSR_IS_NDI(profile)) {
+			csr_roam_update_ndp_return_params(mac_ctx, res,
+				&roam_status, &roam_result, &roam_info);
+			csr_roam_call_callback(mac_ctx, session_id, &roam_info,
+				cmd->u.roamCmd.roamId,
+				roam_status, roam_result);
+		}
 		break;
 	case eCsrJoinFailure:
 	case eCsrNothingToJoin:
@@ -7984,9 +8005,12 @@ QDF_STATUS csr_roam_issue_disassociate_cmd(tpAniSirGlobal pMac, uint32_t session
 			pCommand->u.roamCmd.reason =
 				eSIR_MAC_DISASSOC_LEAVING_BSS_REASON;
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-				  FL
-					  ("SME convert to internal reason code eCsrStaHasLeft"));
+				  FL("SME convert to internal reason code eCsrStaHasLeft"));
 			break;
+		case eCSR_DISCONNECT_REASON_NDI_DELETE:
+			pCommand->u.roamCmd.roamReason = eCsrStopBss;
+			pCommand->u.roamCmd.roamProfile.BSSType =
+				eCSR_BSS_TYPE_NDI;
 		default:
 			break;
 		}
@@ -8048,7 +8072,8 @@ QDF_STATUS csr_roam_disconnect_internal(tpAniSirGlobal pMac, uint32_t sessionId,
 	/* Only issue disconnect when necessary */
 	if (csr_is_conn_state_connected(pMac, sessionId)
 	    || csr_is_bss_type_ibss(pSession->connectedProfile.BSSType)
-	    || csr_is_roam_command_waiting_for_session(pMac, sessionId)) {
+	    || csr_is_roam_command_waiting_for_session(pMac, sessionId)
+	    || CSR_IS_CONN_NDI(&pSession->connectedProfile)) {
 		sms_log(pMac, LOG2, FL("called"));
 		status = csr_roam_issue_disassociate_cmd(pMac, sessionId,
 							 reason);
@@ -8845,6 +8870,8 @@ static void csr_roam_roaming_state_reassoc_rsp_processor(tpAniSirGlobal pMac,
 static void csr_roam_roaming_state_stop_bss_rsp_processor(tpAniSirGlobal pMac,
 							  tSirSmeRsp *pSmeRsp)
 {
+	eCsrRoamCompleteResult result_code = eCsrNothingToJoin;
+
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 	{
 		host_log_ibss_pkt_type *pIbssLog;
@@ -8862,7 +8889,13 @@ static void csr_roam_roaming_state_stop_bss_rsp_processor(tpAniSirGlobal pMac,
 	pMac->roam.roamSession[pSmeRsp->sessionId].connectState =
 		eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED;
 	if (CSR_IS_ROAM_SUBSTATE_STOP_BSS_REQ(pMac, pSmeRsp->sessionId)) {
-		csr_roam_complete(pMac, eCsrNothingToJoin, NULL);
+		if (CSR_IS_CONN_NDI(pMac->roam.roamSession[pSmeRsp->sessionId].
+							pCurRoamProfile)) {
+			result_code = eCsrStopBssSuccess;
+			if (pSmeRsp->statusCode != eSIR_SME_SUCCESS)
+				result_code = eCsrStopBssFailure;
+		}
+		csr_roam_complete(pMac, result_code, NULL);
 	} else
 	if (CSR_IS_ROAM_SUBSTATE_DISCONNECT_CONTINUE
 		    (pMac, pSmeRsp->sessionId)) {

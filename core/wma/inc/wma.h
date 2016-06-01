@@ -2122,6 +2122,9 @@ void wma_process_set_pdev_ht_ie_req(tp_wma_handle wma,
 		struct set_ie_param *ie_params);
 void wma_process_set_pdev_vht_ie_req(tp_wma_handle wma,
 		struct set_ie_param *ie_params);
+void wma_remove_peer(tp_wma_handle wma, u_int8_t *bssid,
+			u_int8_t vdev_id, ol_txrx_peer_handle peer,
+			bool roam_synch_in_progress);
 #endif
 struct wma_ini_config *wma_get_ini_handle(tp_wma_handle wma_handle);
 WLAN_PHY_MODE wma_chan_phy_mode(u8 chan, enum phy_ch_width chan_width,

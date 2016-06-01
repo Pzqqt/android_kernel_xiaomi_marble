@@ -89,7 +89,6 @@
 #include "pld_common.h"
 #include "wlan_hdd_ocb.h"
 #include "wlan_hdd_nan.h"
-#include "wlan_hdd_nan_datapath.h"
 #include "wlan_hdd_debugfs.h"
 #include "wlan_hdd_driver_ops.h"
 #include "epping_main.h"
@@ -105,7 +104,6 @@
 #include <wlan_hdd_regulatory.h>
 #include "ol_rx_fwd.h"
 #include "wlan_hdd_lpass.h"
-#include "wlan_hdd_nan_datapath.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -2170,6 +2168,12 @@ QDF_STATUS hdd_sme_close_session_callback(void *pContext)
 		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
+	/*
+	 * For NAN Data interface, the close session results in the final
+	 * indication to the userspace
+	 */
+	hdd_ndp_session_end_handler(adapter);
+
 	clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
 
 	/*
@@ -3056,21 +3060,33 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 	case QDF_P2P_CLIENT_MODE:
 	case QDF_IBSS_MODE:
 	case QDF_P2P_DEVICE_MODE:
-		if (hdd_conn_is_connected(
+	case QDF_NDI_MODE:
+		if ((QDF_NDI_MODE == adapter->device_mode) ||
+			hdd_conn_is_connected(
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter)) ||
 			hdd_is_connecting(
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
-			if (pWextState->roamProfile.BSSType ==
-			    eCSR_BSS_TYPE_START_IBSS)
-				qdf_ret_status =
-					sme_roam_disconnect(hdd_ctx->hHal,
-							    adapter->sessionId,
-							    eCSR_DISCONNECT_REASON_IBSS_LEAVE);
+			INIT_COMPLETION(adapter->disconnect_comp_var);
+			/*
+			 * For NDI do not use pWextState from sta_ctx, if needed
+			 * extract from ndi_ctx.
+			 */
+			if (QDF_NDI_MODE == adapter->device_mode)
+				qdf_ret_status = sme_roam_disconnect(
+					hdd_ctx->hHal,
+					adapter->sessionId,
+					eCSR_DISCONNECT_REASON_NDI_DELETE);
+			else if (pWextState->roamProfile.BSSType ==
+						eCSR_BSS_TYPE_START_IBSS)
+				qdf_ret_status = sme_roam_disconnect(
+					hdd_ctx->hHal,
+					adapter->sessionId,
+					eCSR_DISCONNECT_REASON_IBSS_LEAVE);
 			else
-				qdf_ret_status =
-					sme_roam_disconnect(hdd_ctx->hHal,
-							    adapter->sessionId,
-							    eCSR_DISCONNECT_REASON_UNSPECIFIED);
+				qdf_ret_status = sme_roam_disconnect(
+					hdd_ctx->hHal,
+					adapter->sessionId,
+					eCSR_DISCONNECT_REASON_UNSPECIFIED);
 			/* success implies disconnect command got queued up successfully */
 			if (qdf_ret_status == QDF_STATUS_SUCCESS) {
 				rc = wait_for_completion_timeout(

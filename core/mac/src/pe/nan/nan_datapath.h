@@ -109,6 +109,9 @@ QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx,
 void lim_process_ndi_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 				     tpSirMsgQ lim_msg_q,
 				     tpPESession session_entry);
+/* Handler for DEL BSS resp for NDI interface */
+void lim_ndi_del_bss_rsp(tpAniSirGlobal  mac_ctx,
+			void *msg, tpPESession session_entry);
 #else
 /* Function to process NDP requests */
 static inline QDF_STATUS lim_handle_ndp_request_message(tpAniSirGlobal mac_ctx,
@@ -127,6 +130,10 @@ static inline QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx,
 static inline void lim_process_ndi_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 						   tpSirMsgQ lim_msg_q,
 						   tpPESession session_entry)
+{
+}
+static inline void lim_ndi_del_bss_rsp(tpAniSirGlobal mac_ctx,
+					void *msg, tpPESession session_entry)
 {
 }
 

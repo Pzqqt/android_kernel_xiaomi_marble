@@ -215,6 +215,7 @@ void hdd_ndp_event_handler(struct hdd_adapter_s *adapter,
 int wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 	struct wireless_dev *wdev, const void *data, int data_len);
 int hdd_init_nan_data_mode(struct hdd_adapter_s *adapter);
+void hdd_ndp_session_end_handler(hdd_adapter_t *adapter);
 #else
 static inline void hdd_ndp_print_ini_config(struct hdd_context_s *hdd_ctx)
 {
@@ -236,6 +237,9 @@ static inline int wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 static inline int hdd_init_nan_data_mode(struct hdd_adapter_s *adapter)
 {
 	return 0;
+}
+static inline void hdd_ndp_session_end_handler(hdd_adapter_t *adapter)
+{
 }
 #endif /* WLAN_FEATURE_NAN_DATAPATH */
 

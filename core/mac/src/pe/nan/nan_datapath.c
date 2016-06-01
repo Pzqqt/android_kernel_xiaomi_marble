@@ -27,6 +27,8 @@
 #include "lim_utils.h"
 #include "lim_api.h"
 #include "nan_datapath.h"
+#include "lim_types.h"
+#include "lim_send_messages.h"
 
 /**
  * handle_ndp_request_message() - Function to handle NDP requests from SME
@@ -96,4 +98,65 @@ void lim_process_ndi_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx, tpSirMsgQ lim_msgq,
 end:
 	qdf_mem_free(lim_msgq->bodyptr);
 	lim_msgq->bodyptr = NULL;
+}
+
+/**
+ * lim_ndi_del_bss_rsp() - Handler for DEL BSS resp for NDI interface
+ * @mac_ctx: handle to mac structure
+ * @msg: pointer to message
+ * @session_entry: session entry
+ *
+ * Return: None
+ */
+void lim_ndi_del_bss_rsp(tpAniSirGlobal  mac_ctx,
+			void *msg, tpPESession session_entry)
+{
+	tSirResultCodes rc = eSIR_SME_SUCCESS;
+	tpDeleteBssParams del_bss = (tpDeleteBssParams) msg;
+
+	SET_LIM_PROCESS_DEFD_MESGS(mac_ctx, true);
+	if (del_bss == NULL) {
+		lim_log(mac_ctx, LOGE,
+			FL("NDI: DEL_BSS_RSP with no body!"));
+		rc = eSIR_SME_STOP_BSS_FAILURE;
+		goto end;
+	}
+	session_entry =
+		pe_find_session_by_session_id(mac_ctx, del_bss->sessionId);
+	if (!session_entry) {
+		lim_log(mac_ctx, LOGE,
+			FL("Session Does not exist for given sessionID"));
+		goto end;
+	}
+
+	if (del_bss->status != QDF_STATUS_SUCCESS) {
+		lim_log(mac_ctx, LOGE,
+			FL("NDI: DEL_BSS_RSP error (%x) Bss %d "),
+			del_bss->status, del_bss->bssIdx);
+		rc = eSIR_SME_STOP_BSS_FAILURE;
+		goto end;
+	}
+
+	if (lim_set_link_state(mac_ctx, eSIR_LINK_IDLE_STATE,
+			session_entry->selfMacAddr,
+			session_entry->selfMacAddr, NULL, NULL)
+			!= eSIR_SUCCESS) {
+		lim_log(mac_ctx, LOGE,
+			FL("NDI: DEL_BSS_RSP setLinkState failed"));
+		goto end;
+	}
+
+	session_entry->limMlmState = eLIM_MLM_IDLE_STATE;
+
+end:
+	if (del_bss)
+		qdf_mem_free(del_bss);
+	/* Delete PE session once BSS is deleted */
+	if (NULL != session_entry) {
+		lim_send_sme_rsp(mac_ctx, eWNI_SME_STOP_BSS_RSP,
+			rc, session_entry->smeSessionId,
+			session_entry->transactionId);
+		pe_delete_session(mac_ctx, session_entry);
+		session_entry = NULL;
+	}
 }

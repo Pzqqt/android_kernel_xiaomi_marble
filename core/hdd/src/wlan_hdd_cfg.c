@@ -45,7 +45,6 @@
 #include <wlan_hdd_misc.h>
 #include <wlan_hdd_napi.h>
 #include <cds_concurrency.h>
-#include "wlan_hdd_nan_datapath.h"
 
 static void
 cb_notify_set_roam_prefer5_g_hz(hdd_context_t *pHddCtx, unsigned long notifyId)

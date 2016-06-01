@@ -23,12 +23,12 @@
  *
  * WLAN Host Device Driver nan datapath API implementation
  */
+#include <wlan_hdd_includes.h>
 #include <linux/if.h>
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
 #include <linux/etherdevice.h>
 #include "wlan_hdd_includes.h"
-#include "wlan_hdd_nan_datapath.h"
 #include "wlan_hdd_p2p.h"
 #include "wma_api.h"
 
@@ -78,8 +78,8 @@ void hdd_ndp_print_ini_config(hdd_context_t *hdd_ctx)
  * @hdd_ctx: Pointer to HDD context
  * @cfg: Pointer to target device capability information
  *
- * NAN datapath functinality is enabled if it is enabled in
- * .ini file and also supported in firmware.
+ * NAN datapath functionality is enabled if it is enabled in
+ * .ini file and also supported on target device.
  *
  * Return: None
  */
@@ -110,7 +110,7 @@ static int hdd_ndi_start_bss(hdd_adapter_t *adapter,
 	ENTER();
 
 	if (!roam_profile) {
-		hddLog(LOGE, FL("No valid roam profile"));
+		hdd_err(FL("No valid roam profile"));
 		return -EINVAL;
 	}
 
@@ -153,7 +153,7 @@ static int hdd_ndi_start_bss(hdd_adapter_t *adapter,
 	ret = sme_roam_connect(WLAN_HDD_GET_HAL_CTX(adapter),
 		adapter->sessionId, roam_profile, &roam_id);
 	if (QDF_STATUS_SUCCESS != ret) {
-		hddLog(LOGE,
+		hdd_err(
 			FL("NDI sme_RoamConnect session %d failed with status %d -> NotConnected"),
 			  adapter->sessionId, ret);
 		/* change back to NotConnected */
@@ -193,13 +193,13 @@ static int hdd_ndi_create_req_handler(hdd_context_t *hdd_ctx,
 	ENTER();
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR]) {
-		hddLog(LOGE, FL("Interface name string is unavailable"));
+		hdd_err(FL("Interface name string is unavailable"));
 		return -EINVAL;
 	}
 	iface_name = nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR]);
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID]) {
-		hddLog(LOGE, FL("transaction id is unavailable"));
+		hdd_err(FL("transaction id is unavailable"));
 		return -EINVAL;
 	}
 	transaction_id =
@@ -208,7 +208,7 @@ static int hdd_ndi_create_req_handler(hdd_context_t *hdd_ctx,
 	/* Check for an existing interface of NDI type */
 	adapter = hdd_get_adapter(hdd_ctx, QDF_NDI_MODE);
 	if (adapter) {
-		hddLog(LOGE, FL("Cannot support more than one NDI"));
+		hdd_err(FL("Cannot support more than one NDI"));
 		return -EEXIST;
 	}
 
@@ -216,7 +216,7 @@ static int hdd_ndi_create_req_handler(hdd_context_t *hdd_ctx,
 			wlan_hdd_get_intf_addr(hdd_ctx), NET_NAME_UNKNOWN,
 			true);
 	if (!adapter) {
-		hddLog(LOGE, FL("hdd_open_adapter failed"));
+		hdd_err(FL("hdd_open_adapter failed"));
 		return -ENOMEM;
 	}
 
@@ -226,6 +226,7 @@ static int hdd_ndi_create_req_handler(hdd_context_t *hdd_ctx,
 	 */
 	ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(adapter);
 	ndp_ctx->ndp_create_transaction_id = transaction_id;
+	ndp_ctx->state = NAN_DATA_NDI_CREATING_STATE;
 
 	/*
 	 * The NAN data interface has been created at this point.
@@ -242,7 +243,7 @@ static int hdd_ndi_create_req_handler(hdd_context_t *hdd_ctx,
 	}
 	ret = hdd_ndi_start_bss(adapter, op_channel);
 	if (0 > ret)
-		hddLog(LOGE, FL("NDI start bss failed"));
+		hdd_err(FL("NDI start bss failed"));
 
 	EXIT();
 	return ret;
@@ -258,7 +259,68 @@ static int hdd_ndi_create_req_handler(hdd_context_t *hdd_ctx,
 static int hdd_ndi_delete_req_handler(hdd_context_t *hdd_ctx,
 						struct nlattr **tb)
 {
-	return 0;
+	hdd_adapter_t *adapter;
+	char *iface_name;
+	uint16_t transaction_id;
+	struct nan_datapath_ctx *ndp_ctx;
+	int ret;
+
+	ENTER();
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR]) {
+		hdd_err(FL("Interface name string is unavailable"));
+		return -EINVAL;
+	}
+
+	iface_name = nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR]);
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID]) {
+		hdd_err(FL("Transaction id is unavailable"));
+		return -EINVAL;
+	}
+
+	transaction_id =
+		nla_get_u16(tb[QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID]);
+
+	/* Check if there is already an existing inteface with the same name */
+	adapter = hdd_get_adapter(hdd_ctx, QDF_NDI_MODE);
+	if (!adapter) {
+		hdd_err(FL("NAN data interface %s is not available"),
+			iface_name);
+		return -EINVAL;
+	}
+
+	/* check if adapter is in NDI mode */
+	if (QDF_NDI_MODE != adapter->device_mode) {
+		hdd_err(FL("Interface %s is not in NDI mode"),
+			iface_name);
+		return -EINVAL;
+	}
+
+	ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(adapter);
+	if (!ndp_ctx) {
+		hdd_err(FL("ndp_ctx is NULL"));
+		return -EINVAL;
+	}
+
+	/* check if there are active NDP sessions on the adapter */
+	if (ndp_ctx->active_ndp_sessions > 0) {
+		hdd_err(FL("NDP sessions active %d, cannot delete NDI"),
+			ndp_ctx->active_ndp_sessions);
+		return -EINVAL;
+	}
+
+	ndp_ctx->ndp_delete_transaction_id = transaction_id;
+	ndp_ctx->state = NAN_DATA_NDI_DELETING_STATE;
+
+	/* Delete the interface */
+	ret = __wlan_hdd_del_virtual_intf(hdd_ctx->wiphy, &adapter->wdev);
+	if (ret < 0)
+		hdd_err(FL("NDI delete request failed"));
+	else
+		hdd_err(FL("NDI delete request successfully issued"));
+
+	return ret;
 }
 
 
@@ -348,7 +410,12 @@ static void hdd_ndp_iface_create_rsp_handler(hdd_adapter_t *adapter,
 		return;
 
 	if (!ndi_rsp) {
-		hddLog(LOGE, FL("Invalid ndi create response"));
+		hdd_err(FL("Invalid ndi create response"));
+		return;
+	}
+
+	if (!ndp_ctx) {
+		hdd_err(FL("ndp_ctx is NULL"));
 		return;
 	}
 
@@ -360,35 +427,35 @@ static void hdd_ndp_iface_create_rsp_handler(hdd_adapter_t *adapter,
 				cds_get_gfp_flags());
 
 	if (!vendor_event) {
-		hddLog(LOGE, FL("cfg80211_vendor_event_alloc failed"));
+		hdd_err(FL("cfg80211_vendor_event_alloc failed"));
 		return;
 	}
 
 	/* Sub vendor command */
 	if (nla_put_u32(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD,
 		QCA_WLAN_VENDOR_ATTR_NDP_INTERFACE_CREATE)) {
-		hddLog(LOGE, FL("QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD put fail"));
+		hdd_err(FL("QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD put fail"));
 		goto nla_put_failure;
 	}
 
 	/* Transaction id */
 	if (nla_put_u16(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID,
 		ndp_ctx->ndp_create_transaction_id)) {
-		hddLog(LOGE, FL("VENDOR_ATTR_NDP_TRANSACTION_ID put fail"));
+		hdd_err(FL("VENDOR_ATTR_NDP_TRANSACTION_ID put fail"));
 		goto nla_put_failure;
 	}
 
 	/* Status code */
 	if (nla_put_u32(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_TYPE,
 		ndi_rsp->status)) {
-		hddLog(LOGE, FL("VENDOR_ATTR_NDP_DRV_RETURN_TYPE put fail"));
+		hdd_err(FL("VENDOR_ATTR_NDP_DRV_RETURN_TYPE put fail"));
 		goto nla_put_failure;
 	}
 
 	/* Status return value */
 	if (nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_VALUE, 0xA5)) {
-		hddLog(LOGE, FL("VENDOR_ATTR_NDP_DRV_RETURN_VALUE put fail"));
+		hdd_err(FL("VENDOR_ATTR_NDP_DRV_RETURN_VALUE put fail"));
 		goto nla_put_failure;
 	}
 
@@ -408,10 +475,9 @@ static void hdd_ndp_iface_create_rsp_handler(hdd_adapter_t *adapter,
 	ndp_ctx->ndp_create_transaction_id = 0;
 
 	if (ndi_rsp->status == QDF_STATUS_SUCCESS) {
-		hddLog(LOGE, FL("NDI interface successfully created"));
+		hdd_err(FL("NDI interface successfully created"));
 	} else {
-		hddLog(LOGE,
-			FL("NDI interface creation failed with reason %d"),
+		hdd_err(FL("NDI interface creation failed with reason %d"),
 			ndi_rsp->reason);
 	}
 	EXIT();
@@ -432,8 +498,140 @@ nla_put_failure:
 static void hdd_ndp_iface_delete_rsp_handler(hdd_adapter_t *adapter,
 							void *rsp_params)
 {
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct ndi_delete_rsp *ndi_rsp = rsp_params;
+
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return;
+
+	if (!ndi_rsp) {
+		hdd_err(FL("Invalid ndi delete response"));
+		return;
+	}
+
+	if (ndi_rsp->status == QDF_STATUS_SUCCESS)
+		hdd_err(FL("NDI BSS successfully stopped"));
+	else
+		hdd_err(FL("NDI BSS stop failed with reason %d"),
+			ndi_rsp->reason);
+
+	complete(&adapter->disconnect_comp_var);
 	return;
 }
+
+/**
+ * hdd_ndp_session_end_handler() - NDI session termination handler
+ * @adapter: pointer to adapter context
+ *
+ * Following vendor event is sent to cfg80211:
+ * QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD =
+ *     QCA_WLAN_VENDOR_ATTR_NDP_INTERFACE_DELETE (4 bytes)
+ * QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID (2 bytes)
+ * QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_TYPE (4 bytes)
+ * QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_VALUE (4 bytes)
+ *
+ * Return: none
+ */
+void hdd_ndp_session_end_handler(hdd_adapter_t *adapter)
+{
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct sk_buff *vendor_event;
+	struct nan_datapath_ctx *ndp_ctx;
+	uint32_t data_len = sizeof(uint32_t) * (3 + sizeof(uint16_t)) +
+				(NLA_HDRLEN * 4) + NLMSG_HDRLEN;
+
+	ENTER();
+
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return;
+
+	/* Handle only if adapter is in NDI mode */
+	if (QDF_NDI_MODE != adapter->device_mode) {
+		hdd_err(FL("Adapter is not in NDI mode"));
+		return;
+	}
+
+	ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(adapter);
+	if (!ndp_ctx) {
+		hdd_err(FL("ndp context is NULL"));
+		return;
+	}
+
+	/*
+	 * The virtual adapters are stopped and closed even during
+	 * driver unload or stop, the service layer is not required
+	 * to be informed in that case (response is not expected)
+	 */
+	if (NAN_DATA_NDI_DELETING_STATE != ndp_ctx->state) {
+		hdd_err(FL("NDI interface %s deleted"),
+			adapter->dev->name);
+		return;
+	}
+
+	/* notify response to the upper layer */
+	vendor_event = cfg80211_vendor_event_alloc(hdd_ctx->wiphy,
+			NULL,
+			data_len,
+			QCA_NL80211_VENDOR_SUBCMD_NDP_INDEX,
+			GFP_KERNEL);
+
+	if (!vendor_event) {
+		hdd_err(FL("cfg80211_vendor_event_alloc failed"));
+		return;
+	}
+
+	/* Sub vendor command goes first */
+	if (nla_put_u32(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD,
+			QCA_WLAN_VENDOR_ATTR_NDP_INTERFACE_DELETE)) {
+		hdd_err(FL("VENDOR_ATTR_NDP_SUBCMD put fail"));
+		goto failure;
+	}
+
+	/* Transaction id */
+	if (nla_put_u16(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID,
+			ndp_ctx->ndp_delete_transaction_id)) {
+		hdd_err(FL("VENDOR_ATTR_NDP_TRANSACTION_ID put fail"));
+		goto failure;
+	}
+
+	/* Status code */
+	if (nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_TYPE, 0x0)) {
+		hdd_err(FL("VENDOR_ATTR_NDP_DRV_RETURN_TYPE put fail"));
+		goto failure;
+	}
+
+	/* Status return value */
+	if (nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_VALUE, 0x0)) {
+		hdd_err(FL("VENDOR_ATTR_NDP_DRV_RETURN_VALUE put fail"));
+		goto failure;
+	}
+
+	hddLog(LOG2, FL("sub command: %d, value: %d"),
+		QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD,
+		QCA_WLAN_VENDOR_ATTR_NDP_INTERFACE_DELETE);
+	hddLog(LOG2, FL("delete transaction id: %d, value: %d"),
+		QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID,
+		ndp_ctx->ndp_delete_transaction_id);
+	hddLog(LOG2, FL("status code: %d, value: %d"),
+		QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_TYPE,
+		true);
+	hddLog(LOG2, FL("Return value: %d, value: %d"),
+		QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_VALUE, 0x5A);
+
+	ndp_ctx->ndp_delete_transaction_id = 0;
+	ndp_ctx->state = NAN_DATA_NDI_DELETED_STATE;
+
+	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
+
+	EXIT();
+	return;
+
+failure:
+	kfree_skb(vendor_event);
+}
+
 
 /**
  * hdd_ndp_initiator_rsp_handler() - NDP initiator response handler
@@ -613,8 +811,7 @@ void hdd_ndp_event_handler(hdd_adapter_t *adapter,
 				&roam_info->ndp.ndp_end_ind_params);
 			break;
 		default:
-			hddLog(LOGE,
-				FL("Unknown NDP response event from SME %d"),
+			hdd_err(FL("Unknown NDP response event from SME %d"),
 				roam_result);
 			break;
 		}
@@ -649,36 +846,36 @@ static int __wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 		return ret_val;
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
-		hddLog(LOGE, FL("Command not allowed in FTM mode"));
+		hdd_err(FL("Command not allowed in FTM mode"));
 		return -EPERM;
 	}
 	if (!hdd_ctx->config->enable_nan_datapath) {
-		hddLog(LOGE, FL("NAN datapath is not suported"));
+		hdd_err(FL("NAN datapath is not suported"));
 		return -EPERM;
 	}
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX,
 			data, data_len,
 			qca_wlan_vendor_ndp_policy)) {
-		hddLog(LOGE, FL("Invalid NDP vendor command attributes"));
+		hdd_err(FL("Invalid NDP vendor command attributes"));
 		return -EINVAL;
 	}
 
 	/* Parse and fetch NDP Command Type*/
 	if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD]) {
-		hddLog(LOGE, FL("NAN datapath cmd type failed"));
+		hdd_err(FL("NAN datapath cmd type failed"));
 		return -EINVAL;
 	}
 	ndp_cmd_type = nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD]);
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID]) {
-		hddLog(LOGE, FL("attr transaction id failed"));
+		hdd_err(FL("attr transaction id failed"));
 		return -EINVAL;
 	}
 	transaction_id = nla_get_u16(
 			tb[QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID]);
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR]) {
-		hddLog(LOGE, FL("Interface name string is unavailable"));
+		hdd_err(FL("Interface name string is unavailable"));
 		return -EINVAL;
 	}
 	iface_name = nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR]);
@@ -706,7 +903,7 @@ static int __wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 		ret_val = hdd_ndp_schedule_req_handler(hdd_ctx, tb);
 		break;
 	default:
-		hddLog(LOGE, FL("Unrecognized NDP vendor cmd %d"),
+		hdd_err(FL("Unrecognized NDP vendor cmd %d"),
 			ndp_cmd_type);
 		ret_val = -EINVAL;
 		break;
@@ -760,7 +957,7 @@ int hdd_init_nan_data_mode(struct hdd_adapter_s *adapter)
 	sme_set_curr_device_mode(hdd_ctx->hHal, adapter->device_mode);
 	status = cds_get_vdev_types(adapter->device_mode, &type, &sub_type);
 	if (QDF_STATUS_SUCCESS != status) {
-		hddLog(LOGE, "failed to get vdev type");
+		hdd_err("failed to get vdev type");
 		goto error_sme_open;
 	}
 
@@ -769,7 +966,7 @@ int hdd_init_nan_data_mode(struct hdd_adapter_s *adapter)
 			adapter, (uint8_t *)&adapter->macAddressCurrent,
 			&adapter->sessionId, type, sub_type);
 	if (QDF_STATUS_SUCCESS == status) {
-		hddLog(LOGE, "sme_open_session() failed with status code %d",
+		hdd_err("sme_open_session() failed with status code %d",
 				status);
 		ret_val = -EAGAIN;
 		goto error_sme_open;
@@ -780,7 +977,7 @@ int hdd_init_nan_data_mode(struct hdd_adapter_s *adapter)
 			&adapter->session_open_comp_var,
 			msecs_to_jiffies(timeout));
 	if (!rc) {
-		hddLog(LOGE,
+		hdd_err(
 			FL("Failed to open session, timeout code: %ld"), rc);
 		ret_val = -ETIMEDOUT;
 		goto error_sme_open;
@@ -789,7 +986,7 @@ int hdd_init_nan_data_mode(struct hdd_adapter_s *adapter)
 	/* Register wireless extensions */
 	ret_val = hdd_register_wext(wlan_dev);
 	if (0 > ret_val) {
-		hddLog(LOGE, FL("Wext registration failed with status code %d"),
+		hdd_err(FL("Wext registration failed with status code %d"),
 				ret_val);
 		ret_val = -EAGAIN;
 		goto error_register_wext;
@@ -797,7 +994,7 @@ int hdd_init_nan_data_mode(struct hdd_adapter_s *adapter)
 
 	status = hdd_init_tx_rx(adapter);
 	if (QDF_STATUS_SUCCESS != status) {
-		hddLog(LOGE, FL("hdd_init_tx_rx() init failed, status %d"),
+		hdd_err(FL("hdd_init_tx_rx() init failed, status %d"),
 				status);
 		ret_val = -EAGAIN;
 		goto error_init_txrx;
@@ -807,7 +1004,7 @@ int hdd_init_nan_data_mode(struct hdd_adapter_s *adapter)
 
 	status = hdd_wmm_adapter_init(adapter);
 	if (QDF_STATUS_SUCCESS != status) {
-		hddLog(LOGE, FL("hdd_wmm_adapter_init() failed, status %d"),
+		hdd_err(FL("hdd_wmm_adapter_init() failed, status %d"),
 				status);
 		ret_val = -EAGAIN;
 		goto error_wmm_init;
@@ -820,7 +1017,7 @@ int hdd_init_nan_data_mode(struct hdd_adapter_s *adapter)
 			(int)hdd_ctx->config->enableSifsBurst,
 			PDEV_CMD);
 	if (0 != ret_val) {
-		hddLog(LOGE, FL("WMI_PDEV_PARAM_BURST_ENABLE set failed %d"),
+		hdd_err(FL("WMI_PDEV_PARAM_BURST_ENABLE set failed %d"),
 				ret_val);
 	}
 
@@ -846,8 +1043,7 @@ error_register_wext:
 					&adapter->session_close_comp_var,
 					msecs_to_jiffies(timeout));
 			if (rc <= 0) {
-				hddLog(LOGE,
-					FL("Session close failed status %ld"),
+				hdd_err(FL("Session close failed status %ld"),
 					rc);
 				ret_val = -ETIMEDOUT;
 			}

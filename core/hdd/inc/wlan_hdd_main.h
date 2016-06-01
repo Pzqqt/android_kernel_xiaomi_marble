@@ -68,10 +68,7 @@
 #include <wlan_hdd_lro.h>
 #include "cdp_txrx_flow_ctrl_legacy.h"
 #include <cdp_txrx_peer_ops.h>
-
-#ifdef WLAN_FEATURE_NAN_DATAPATH
 #include "wlan_hdd_nan_datapath.h"
-#endif
 
 /*---------------------------------------------------------------------------
    Preprocessor definitions and constants

@@ -57,6 +57,7 @@
 #include "sir_api.h"
 #include "cds_regdomain.h"
 #include "lim_send_messages.h"
+#include "nan_datapath.h"
 
 static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 	tpPESession session_entry, tSirResultCodes result_code,
@@ -2249,12 +2250,12 @@ void lim_handle_delete_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ MsgQ)
 			pDelBss->sessionId);
 		return;
 	}
-	if (LIM_IS_IBSS_ROLE(psessionEntry)) {
+	if (LIM_IS_IBSS_ROLE(psessionEntry))
 		lim_ibss_del_bss_rsp(pMac, MsgQ->bodyptr, psessionEntry);
-	} else if (LIM_IS_UNKNOWN_ROLE(psessionEntry)) {
+	else if (LIM_IS_UNKNOWN_ROLE(psessionEntry))
 		lim_process_sme_del_bss_rsp(pMac, MsgQ->bodyval, psessionEntry);
-	}
-
+	else if (LIM_IS_NDI_ROLE(psessionEntry))
+		lim_ndi_del_bss_rsp(pMac, MsgQ->bodyptr, psessionEntry);
 	else
 		lim_process_mlm_del_bss_rsp(pMac, MsgQ, psessionEntry);
 

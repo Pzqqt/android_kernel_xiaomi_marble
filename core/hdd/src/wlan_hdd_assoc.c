@@ -60,7 +60,6 @@
 #include "ol_rx_fwd.h"
 #include "cdp_txrx_flow_ctrl_legacy.h"
 #include "cdp_txrx_peer_ops.h"
-#include "wlan_hdd_nan_datapath.h"
 
 /* These are needed to recognize WPA and RSN suite types */
 #define HDD_WPA_OUI_SIZE 4

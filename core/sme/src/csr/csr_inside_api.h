@@ -140,7 +140,8 @@ typedef enum {
 	eCsrSilentlyStopRoaming,
 	eCsrSilentlyStopRoamingSaveState,
 	eCsrJoinFailureDueToConcurrency,
-
+	eCsrStopBssSuccess,
+	eCsrStopBssFailure,
 } eCsrRoamCompleteResult;
 
 typedef struct tagScanReqParam {

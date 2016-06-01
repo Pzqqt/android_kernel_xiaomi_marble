@@ -1378,7 +1378,11 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 		}
 		if (wma_is_vdev_in_ibss_mode(wma, resp_event->vdev_id))
 			wma_delete_all_ibss_peers(wma, resp_event->vdev_id);
-		else {
+		else if (WMA_IS_VDEV_IN_NDI_MODE(wma->interfaces,
+			resp_event->vdev_id)) {
+			wma_delete_all_nan_remote_peers(wma,
+				resp_event->vdev_id);
+		} else {
 			if (wma_is_vdev_in_ap_mode(wma, resp_event->vdev_id)) {
 				wma_delete_all_ap_remote_peers(wma,
 						resp_event->vdev_id);
@@ -4169,6 +4173,12 @@ void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
 		peer = ol_txrx_find_peer_by_addr(pdev,
 			wma->interfaces[params->smesessionId].addr,
 			&peer_id);
+	else if (WMA_IS_VDEV_IN_NDI_MODE(wma->interfaces,
+			params->smesessionId))
+		/* In ndi case, self mac is used to create the self peer */
+		peer = ol_txrx_find_peer_by_addr(pdev,
+				wma->interfaces[params->smesessionId].addr,
+				&peer_id);
 	else
 		peer = ol_txrx_find_peer_by_addr(pdev, params->bssid, &peer_id);
 

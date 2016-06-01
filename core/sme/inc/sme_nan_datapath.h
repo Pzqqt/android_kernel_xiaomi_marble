@@ -71,7 +71,8 @@ void csr_roam_save_ndi_connected_info(tpAniSirGlobal mac_ctx,
 void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
 					uint32_t result,
 					uint32_t *roam_status,
-					uint32_t *roam_result);
+					uint32_t *roam_result,
+					struct tagCsrRoamInfo *roam_info);
 #else
 
 /* Start NDI BSS */
@@ -100,9 +101,10 @@ static inline void csr_roam_save_ndi_connected_info(tpAniSirGlobal mac_ctx,
 }
 
 static inline void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
-						uint32_t result,
-						uint32_t *roam_status,
-						uint32_t *roam_result)
+					uint32_t result,
+					uint32_t *roam_status,
+					uint32_t *roam_result,
+					struct tagCsrRoamInfo *roam_info)
 {
 }
 #endif /* WLAN_FEATURE_NAN_DATAPATH */

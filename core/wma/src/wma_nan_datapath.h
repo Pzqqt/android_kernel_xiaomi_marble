@@ -31,6 +31,8 @@
 #include "sir_api.h"
 
 #ifdef WLAN_FEATURE_NAN_DATAPATH
+#define WMA_IS_VDEV_IN_NDI_MODE(intf, vdev_id) \
+				(WMI_VDEV_TYPE_NDI == intf[vdev_id].type)
 
 void wma_add_bss_ndi_mode(tp_wma_handle wma, tpAddBssParams add_bss);
 
@@ -46,8 +48,10 @@ static inline void wma_update_hdd_cfg_ndp(tp_wma_handle wma_handle,
 {
 	tgt_cfg->nan_datapath_enabled = wma_handle->nan_datapath_enabled;
 }
-
+void wma_delete_all_nan_remote_peers(tp_wma_handle wma,
+					uint32_t vdev_id);
 #else
+#define WMA_IS_VDEV_IN_NDI_MODE(intf, vdev_id) (false)
 static inline void wma_update_hdd_cfg_ndp(tp_wma_handle wma_handle,
 					struct wma_tgt_cfg *tgt_cfg)
 {
@@ -59,6 +63,10 @@ static inline void wma_add_bss_ndi_mode(tp_wma_handle wma,
 	return;
 }
 
-#endif /* WLAN_FEATURE_NAN_DATAPATH */
+static inline void wma_delete_all_nan_remote_peers(tp_wma_handle wma,
+							uint32_t vdev_id)
+{
+}
 
+#endif /* WLAN_FEATURE_NAN_DATAPATH */
 #endif /* __WMA_NAN_DATAPATH_H */
