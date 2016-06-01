@@ -86,9 +86,10 @@ void hdd_ndp_print_ini_config(hdd_context_t *hdd_ctx)
 void hdd_nan_datapath_target_config(hdd_context_t *hdd_ctx,
 					struct wma_tgt_cfg *cfg)
 {
-	hdd_ctx->config->enable_nan_datapath &= cfg->nan_datapath_enabled;
-	hddLog(LOG1, FL("enable_nan_datapath: %d"),
-		hdd_ctx->config->enable_nan_datapath);
+	hdd_ctx->nan_datapath_enabled =
+		hdd_ctx->config->enable_nan_datapath &&
+			cfg->nan_datapath_enabled;
+	hdd_info(FL("enable_nan_datapath: %d"), hdd_ctx->nan_datapath_enabled);
 }
 
 /**
@@ -849,8 +850,8 @@ static int __wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 		hdd_err(FL("Command not allowed in FTM mode"));
 		return -EPERM;
 	}
-	if (!hdd_ctx->config->enable_nan_datapath) {
-		hdd_err(FL("NAN datapath is not suported"));
+	if (!WLAN_HDD_IS_NDP_ENABLED(hdd_ctx)) {
+		hdd_err(FL("NAN datapath is not enabled"));
 		return -EPERM;
 	}
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX,
