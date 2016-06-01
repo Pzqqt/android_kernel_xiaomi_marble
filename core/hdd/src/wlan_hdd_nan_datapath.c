@@ -93,6 +93,62 @@ void hdd_nan_datapath_target_config(hdd_context_t *hdd_ctx,
 }
 
 /**
+ * hdd_close_ndi() - close NAN Data interface
+ * @adapter: adapter context
+ *
+ * Close the adapter if start BSS fails
+ *
+ * Returns: 0 on success, negative error code otherwise
+ */
+static int hdd_close_ndi(hdd_adapter_t *adapter)
+{
+	int rc;
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint32_t timeout = WLAN_WAIT_TIME_SESSIONOPENCLOSE;
+
+	ENTER();
+
+	/* check if the adapter is in NAN Data mode */
+	if (QDF_NDI_MODE != adapter->device_mode) {
+		hdd_err(FL("Interface is not in NDI mode"));
+		return -EINVAL;
+	}
+	netif_tx_disable(adapter->dev);
+	netif_carrier_off(adapter->dev);
+
+#ifdef WLAN_OPEN_SOURCE
+	cancel_work_sync(&adapter->ipv4NotifierWorkQueue);
+#endif
+	hdd_deregister_tx_flow_control(adapter);
+
+#ifdef WLAN_NS_OFFLOAD
+#ifdef WLAN_OPEN_SOURCE
+	cancel_work_sync(&adapter->ipv6NotifierWorkQueue);
+#endif
+#endif
+	/* check if the session is open */
+	if (test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
+		INIT_COMPLETION(adapter->session_close_comp_var);
+		if (QDF_STATUS_SUCCESS == sme_close_session(hdd_ctx->hHal,
+				adapter->sessionId,
+				hdd_sme_close_session_callback, adapter)) {
+			/* Block on a timed completion variable */
+			rc = wait_for_completion_timeout(
+				&adapter->session_close_comp_var,
+				msecs_to_jiffies(timeout));
+			if (!rc)
+				hdd_err(FL("session close timeout"));
+		}
+	}
+
+	/* We are good to close the adapter */
+	hdd_close_adapter(hdd_ctx, adapter, true);
+
+	EXIT();
+	return 0;
+}
+
+/**
  * hdd_ndi_start_bss() - Start BSS on NAN data interface
  * @adapter: adapter context
  * @operating_channel: channel on which the BSS to be started
@@ -243,8 +299,11 @@ static int hdd_ndi_create_req_handler(hdd_context_t *hdd_ctx,
 		op_channel = NAN_SOCIAL_CHANNEL_2_4GHZ;
 	}
 	ret = hdd_ndi_start_bss(adapter, op_channel);
-	if (0 > ret)
+	if (0 > ret) {
 		hdd_err(FL("NDI start bss failed"));
+		/* Start BSS failed, delete the interface */
+		hdd_close_ndi(adapter);
+	}
 
 	EXIT();
 	return ret;
@@ -404,20 +463,28 @@ static void hdd_ndp_iface_create_rsp_handler(hdd_adapter_t *adapter,
 	uint32_t data_len = (3 * sizeof(uint32_t)) + sizeof(uint16_t) +
 				NLMSG_HDRLEN + (4 * NLA_HDRLEN);
 	struct nan_datapath_ctx *ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(adapter);
+	bool create_fail = false;
+	uint8_t create_transaction_id = 0;
+	uint8_t create_status = 0;
 
 	ENTER();
 
 	if (wlan_hdd_validate_context(hdd_ctx))
+		/* No way the driver can send response back to user space */
 		return;
 
-	if (!ndi_rsp) {
+	if (ndi_rsp) {
+		create_status = ndi_rsp->status;
+	} else {
 		hdd_err(FL("Invalid ndi create response"));
-		return;
+		create_fail = true;
 	}
 
-	if (!ndp_ctx) {
+	if (ndp_ctx) {
+		create_transaction_id = ndp_ctx->ndp_create_transaction_id;
+	} else {
 		hdd_err(FL("ndp_ctx is NULL"));
-		return;
+		create_fail = true;
 	}
 
 	/* notify response to the upper layer */
@@ -429,7 +496,8 @@ static void hdd_ndp_iface_create_rsp_handler(hdd_adapter_t *adapter,
 
 	if (!vendor_event) {
 		hdd_err(FL("cfg80211_vendor_event_alloc failed"));
-		return;
+		create_fail = true;
+		goto close_ndi;
 	}
 
 	/* Sub vendor command */
@@ -441,14 +509,14 @@ static void hdd_ndp_iface_create_rsp_handler(hdd_adapter_t *adapter,
 
 	/* Transaction id */
 	if (nla_put_u16(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID,
-		ndp_ctx->ndp_create_transaction_id)) {
+		create_transaction_id)) {
 		hdd_err(FL("VENDOR_ATTR_NDP_TRANSACTION_ID put fail"));
 		goto nla_put_failure;
 	}
 
 	/* Status code */
 	if (nla_put_u32(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_TYPE,
-		ndi_rsp->status)) {
+		create_status)) {
 		hdd_err(FL("VENDOR_ATTR_NDP_DRV_RETURN_TYPE put fail"));
 		goto nla_put_failure;
 	}
@@ -465,27 +533,34 @@ static void hdd_ndp_iface_create_rsp_handler(hdd_adapter_t *adapter,
 		QCA_WLAN_VENDOR_ATTR_NDP_INTERFACE_CREATE);
 	hddLog(LOG2, FL("create transaction id: %d, value: %d"),
 		QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID,
-		ndp_ctx->ndp_create_transaction_id);
+		create_transaction_id);
 	hddLog(LOG2, FL("status code: %d, value: %d"),
-		QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_TYPE, ndi_rsp->status);
+		QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_TYPE, create_status);
 	hddLog(LOG2, FL("Return value: %d, value: %d"),
 		QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_VALUE, 0xA5);
 
 	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
 
-	ndp_ctx->ndp_create_transaction_id = 0;
-
-	if (ndi_rsp->status == QDF_STATUS_SUCCESS) {
+	if (!create_fail && ndi_rsp->status == QDF_STATUS_SUCCESS) {
 		hdd_err(FL("NDI interface successfully created"));
+		ndp_ctx->ndp_create_transaction_id = 0;
+		ndp_ctx->state = NAN_DATA_NDI_CREATED_STATE;
 	} else {
 		hdd_err(FL("NDI interface creation failed with reason %d"),
 			ndi_rsp->reason);
 	}
+
+	/* Something went wrong while starting the BSS */
+	if (create_fail)
+		goto close_ndi;
+
 	EXIT();
 	return;
 
 nla_put_failure:
 	kfree_skb(vendor_event);
+close_ndi:
+	hdd_close_ndi(adapter);
 	return;
 }
 
