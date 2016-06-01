@@ -31,6 +31,7 @@
 #include "if_ahb.h"
 #include "if_pci.h"
 #include "ahb_api.h"
+#include "pci_api.h"
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
 #define IRQF_DISABLED 0x00000020

@@ -64,7 +64,7 @@ static int clk_enable_disable(struct device *dev, const char *str, int enable)
 				__func__, str, PTR_ERR(clk_t));
 		return -EFAULT;
 	}
-	if (TRUE == enable) {
+	if (true == enable) {
 		/* Prepare and Enable clk */
 		ret = clk_prepare_enable(clk_t);
 		if (ret) {
@@ -288,7 +288,7 @@ void hif_ahb_device_reset(struct hif_softc *scn)
 		if (hif_read32_mb(mem_tcsr + haltack_offset) & 0x1)
 			break;
 
-		A_MDELAY(1);
+		qdf_mdelay(1);
 		wait_limit--;
 	}
 
@@ -306,7 +306,7 @@ void hif_ahb_device_reset(struct hif_softc *scn)
 
 	/* TBD: Check if we should also assert other bits (radio_cold, radio_
 	warm, radio_srif, cpu_ini) */
-	A_MDELAY(1); /* TBD: Get reqd delay from HW team */
+	qdf_mdelay(1); /* TBD: Get reqd delay from HW team */
 
 	/* Assert radio cold reset */
 	resetctl = reset_control_get(&pdev->dev, "wifi_radio_cold");
@@ -316,7 +316,7 @@ void hif_ahb_device_reset(struct hif_softc *scn)
 		return;
 	}
 	reset_control_assert(resetctl);
-	A_MDELAY(1); /* TBD: Get reqd delay from HW team */
+	qdf_mdelay(1); /* TBD: Get reqd delay from HW team */
 	reset_control_put(resetctl);
 
 	/* Assert radio warm reset */
@@ -327,7 +327,7 @@ void hif_ahb_device_reset(struct hif_softc *scn)
 		return;
 	}
 	reset_control_assert(resetctl);
-	A_MDELAY(1); /* TBD: Get reqd delay from HW team */
+	qdf_mdelay(1); /* TBD: Get reqd delay from HW team */
 	reset_control_put(resetctl);
 
 	/* Assert radio srif reset */
@@ -338,7 +338,7 @@ void hif_ahb_device_reset(struct hif_softc *scn)
 		return;
 	}
 	reset_control_assert(resetctl);
-	A_MDELAY(1); /* TBD: Get reqd delay from HW team */
+	qdf_mdelay(1); /* TBD: Get reqd delay from HW team */
 	reset_control_put(resetctl);
 
 	/* Assert target CPU reset */
@@ -348,7 +348,7 @@ void hif_ahb_device_reset(struct hif_softc *scn)
 		return;
 	}
 	reset_control_assert(resetctl);
-	A_MDELAY(10); /* TBD: Get reqd delay from HW team */
+	qdf_mdelay(10); /* TBD: Get reqd delay from HW team */
 	reset_control_put(resetctl);
 
 	/* Clear gbl_cfg and haltreq before clearing Wifi core reset */
@@ -360,7 +360,7 @@ void hif_ahb_device_reset(struct hif_softc *scn)
 	/* de-assert wifi core reset */
 	reset_control_deassert(core_resetctl);
 
-	A_MDELAY(1); /* TBD: Get reqd delay from HW team */
+	qdf_mdelay(1); /* TBD: Get reqd delay from HW team */
 
 	/* TBD: Check if we should de-assert other bits here */
 	reset_control_put(core_resetctl);

@@ -20,6 +20,7 @@
 #include "hif_main.h"
 #include "multibus.h"
 #include "ce_main.h"
+#include "if_pci.h"
 #include "ahb_api.h"
 #include "dummy.h"
 

@@ -61,6 +61,7 @@
 #include "targaddrs.h"
 
 #include "pci_api.h"
+#include "ahb_api.h"
 
 /* Maximum ms timeout for host to wake up target */
 #define PCIE_WAKE_TIMEOUT 1000
