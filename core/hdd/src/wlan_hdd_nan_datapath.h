@@ -40,6 +40,17 @@ struct wireless_dev;
 #define NDP_APP_INFO_LEN 255
 #define NDP_QOS_INFO_LEN 255
 
+#ifdef WLAN_FEATURE_NAN_DATAPATH
+#define WLAN_HDD_IS_NDI(adapter) ((adapter)->device_mode == QDF_NDI_MODE)
+
+#define WLAN_HDD_IS_NDI_CONNECTED(adapter) ( \
+	eConnectionState_NdiConnected ==\
+		(adapter)->sessionCtx.station.conn_info.connState)
+#else
+#define WLAN_HDD_IS_NDI(adapter)	(false)
+#define WLAN_HDD_IS_NDI_CONNECTED(adapter) (false)
+#endif /* WLAN_FEATURE_NAN_DATAPATH */
+
 /**
  * enum qca_wlan_vendor_attr_ndp_params - vendor attribute parameters
  * @QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD: NDP Sub command

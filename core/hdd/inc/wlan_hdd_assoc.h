@@ -57,8 +57,8 @@
 
 /* Type Declarations */
 /**
- * typedef eConnectionState - Connection states
- * @eConnectionState_NotConnected: Not associated in Infra or participating
+ * enum eConnectionState - connection state values at HDD
+ * @eConnectionState_NotConnected: Not associated in Infra or participating in
  *			in an IBSS / Ad-hoc network
  * @eConnectionState_Connecting: While connection in progress
  * @eConnectionState_Associated: Associated in an Infrastructure network
@@ -66,7 +66,9 @@
  *			disconnected (no partner stations in the IBSS)
  * @eConnectionState_IbssConnected: Participating in an IBSS network with
  *			partner stations also present
- * eConnectionState_Disconnecting: Disconnecting in an Infrastructure network
+ * @eConnectionState_Disconnecting: Disconnecting in an Infrastructure network.
+ * @eConnectionState_NdiDisconnected: NDI in disconnected state - no peers
+ * @eConnectionState_NdiConnected: NDI in connected state - at least one peer
  */
 typedef enum {
 	eConnectionState_NotConnected,
@@ -74,7 +76,9 @@ typedef enum {
 	eConnectionState_Associated,
 	eConnectionState_IbssDisconnected,
 	eConnectionState_IbssConnected,
-	eConnectionState_Disconnecting
+	eConnectionState_Disconnecting,
+	eConnectionState_NdiDisconnected,
+	eConnectionState_NdiConnected,
 } eConnectionState;
 
 /**

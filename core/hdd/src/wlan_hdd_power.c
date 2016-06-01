@@ -266,7 +266,8 @@ static int __wlan_hdd_ipv6_changed(struct notifier_block *nb,
 
 	if ((pAdapter->dev == ndev) &&
 		(pAdapter->device_mode == QDF_STA_MODE ||
-		pAdapter->device_mode == QDF_P2P_CLIENT_MODE)) {
+		pAdapter->device_mode == QDF_P2P_CLIENT_MODE ||
+		pAdapter->device_mode == QDF_NDI_MODE)) {
 		pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 		status = wlan_hdd_validate_context(pHddCtx);
 		if (0 != status)
@@ -482,6 +483,7 @@ void __hdd_ipv6_notifier_work_queue(struct work_struct *work)
 		container_of(work, hdd_adapter_t, ipv6NotifierWorkQueue);
 	hdd_context_t *pHddCtx;
 	int status;
+	bool ndi_connected = false;
 
 	ENTER();
 
@@ -501,8 +503,13 @@ void __hdd_ipv6_notifier_work_queue(struct work_struct *work)
 		pHddCtx->sus_res_mcastbcast_filter_valid = true;
 	}
 
-	if ((eConnectionState_Associated ==
-	     (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->conn_info.connState))
+	/* check if the device is in NAN data mode */
+	if (WLAN_HDD_IS_NDI(pAdapter))
+		ndi_connected = WLAN_HDD_IS_NDI_CONNECTED(pAdapter);
+
+	if (eConnectionState_Associated ==
+	     (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->conn_info.connState ||
+		ndi_connected)
 		if (pHddCtx->config->fhostNSOffload)
 			hdd_conf_ns_offload(pAdapter, true);
 	EXIT();
@@ -593,6 +600,7 @@ void __hdd_ipv4_notifier_work_queue(struct work_struct *work)
 		container_of(work, hdd_adapter_t, ipv4NotifierWorkQueue);
 	hdd_context_t *pHddCtx;
 	int status;
+	bool ndi_connected = false;
 
 	hdd_info("Configuring ARP Offload");
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
@@ -611,8 +619,18 @@ void __hdd_ipv4_notifier_work_queue(struct work_struct *work)
 		pHddCtx->sus_res_mcastbcast_filter_valid = true;
 	}
 
-	if ((eConnectionState_Associated ==
-	     (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->conn_info.connState))
+	/* check if the device is in NAN data mode */
+	if (WLAN_HDD_IS_NDI(pAdapter))
+		ndi_connected = WLAN_HDD_IS_NDI_CONNECTED(pAdapter);
+
+	if (eConnectionState_Associated ==
+	     (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->conn_info.connState ||
+		ndi_connected)
+		/*
+		 * This invocation being part of the IPv4 registration callback,
+		 * we are passing second parameter as 2 to avoid registration
+		 * of IPv4 notifier again.
+		 */
 		hdd_conf_arp_offload(pAdapter, true);
 }
 
@@ -663,7 +681,8 @@ static int __wlan_hdd_ipv4_changed(struct notifier_block *nb,
 
 	if ((pAdapter && pAdapter->dev == ndev) &&
 		(pAdapter->device_mode == QDF_STA_MODE ||
-		pAdapter->device_mode == QDF_P2P_CLIENT_MODE)) {
+		pAdapter->device_mode == QDF_P2P_CLIENT_MODE ||
+		pAdapter->device_mode == QDF_NDI_MODE)) {
 
 		pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 		status = wlan_hdd_validate_context(pHddCtx);
