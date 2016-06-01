@@ -670,6 +670,9 @@ struct hdd_station_ctx {
 	uint8_t broadcast_ibss_staid;
 
 	struct hdd_mon_set_ch_info ch_info;
+#ifdef WLAN_FEATURE_NAN_DATAPATH
+	struct nan_datapath_ctx ndp_ctx;
+#endif
 };
 
 #define BSS_STOP    0
@@ -957,9 +960,6 @@ struct hdd_adapter_s {
 	union {
 		hdd_station_ctx_t station;
 		hdd_ap_ctx_t ap;
-#ifdef WLAN_FEATURE_NAN_DATAPATH
-		struct nan_datapath_ctx ndp_ctx;
-#endif
 	} sessionCtx;
 
 #ifdef WLAN_FEATURE_TSF
@@ -1079,13 +1079,15 @@ struct hdd_adapter_s {
 #endif
 
 #ifdef WLAN_FEATURE_NAN_DATAPATH
-#define WLAN_HDD_GET_NDP_CTX_PTR(adapter) (&(adapter)->sessionCtx.ndp_ctx)
-#define WLAN_HDD_GET_NDP_WEXT_STATE_PTR(adapter) \
-		(&(adapter)->sessionCtx.ndp_ctx.wext_state)
+#define WLAN_HDD_GET_NDP_CTX_PTR(adapter) \
+		(&(adapter)->sessionCtx.station.ndp_ctx)
 #define WLAN_HDD_IS_NDP_ENABLED(hdd_ctx) ((hdd_ctx)->nan_datapath_enabled)
 #else
-#define WLAN_HDD_GET_NDP_CTX_PTR(adapter) (NULL)
-#define WLAN_HDD_GET_NDP_WEXT_STATE_PTR(adapter) (NULL)
+/* WLAN_HDD_GET_NDP_CTX_PTR and WLAN_HDD_GET_NDP_WEXT_STATE_PTR are not defined
+ * intentionally so that all references to these must be within NDP code.
+ * non-NDP code can call WLAN_HDD_IS_NDP_ENABLED(), and when it is enabled,
+ * invoke NDP code to do all work.
+ */
 #define WLAN_HDD_IS_NDP_ENABLED(hdd_ctx) (false)
 #endif
 

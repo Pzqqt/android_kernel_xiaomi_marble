@@ -1603,12 +1603,9 @@ void hdd_statistics_cb(void *pStats, void *pContext)
 void hdd_clear_roam_profile_ie(hdd_adapter_t *pAdapter)
 {
 	int i = 0;
-	hdd_wext_state_t *pWextState;
+	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 
-	if (QDF_NDI_MODE == pAdapter->device_mode)
-		pWextState = WLAN_HDD_GET_NDP_WEXT_STATE_PTR(pAdapter);
-	else
-		pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
+	ENTER();
 
 	/* clear WPA/RSN/WSC IE information in the profile */
 	pWextState->roamProfile.nWPAReqIELength = 0;
@@ -1659,7 +1656,7 @@ void hdd_clear_roam_profile_ie(hdd_adapter_t *pAdapter)
 #endif
 
 	qdf_zero_macaddr(&pWextState->req_bssId);
-
+	EXIT();
 }
 
 /**
@@ -10875,30 +10872,34 @@ const struct iw_handler_def we_handler_def = {
 	.get_wireless_stats = NULL,
 };
 
+/* hdd_set_wext() - configures bss parameters
+ * @pAdapter: handle to adapter context
+ *
+ * Returns: none
+ */
 int hdd_set_wext(hdd_adapter_t *pAdapter)
 {
-	hdd_wext_state_t *pwextBuf;
-	hdd_station_ctx_t *pHddStaCtx;
-	tCsrSSIDInfo *ssid_list;
-	struct qdf_mac_addr *bssid;
+	hdd_wext_state_t *pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
+	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
-	if (QDF_NDI_MODE == pAdapter->device_mode) {
-		pwextBuf = WLAN_HDD_GET_NDP_WEXT_STATE_PTR(pAdapter);
-		ssid_list = WLAN_HDD_NDP_GET_SSID(pAdapter);
-		bssid = WLAN_HDD_NDP_GET_BSSID(pAdapter);
-	} else {
-		pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
-		pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-		ssid_list = &pHddStaCtx->conn_info.SSID;
-		bssid = &pHddStaCtx->conn_info.bssId;
+	ENTER();
+
+	if (!pwextBuf) {
+		hdd_err("ERROR: pwextBuf is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!pHddStaCtx) {
+		hdd_err("ERROR: pHddStaCtx is NULL");
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* Now configure the roaming profile links. To SSID and bssid. */
 	pwextBuf->roamProfile.SSIDs.numOfSSIDs = 0;
-	pwextBuf->roamProfile.SSIDs.SSIDList = ssid_list;
+	pwextBuf->roamProfile.SSIDs.SSIDList = &pHddStaCtx->conn_info.SSID;
 
 	pwextBuf->roamProfile.BSSIDs.numOfBSSIDs = 0;
-	pwextBuf->roamProfile.BSSIDs.bssid = bssid;
+	pwextBuf->roamProfile.BSSIDs.bssid = &pHddStaCtx->conn_info.bssId;
 
 	/*Set the numOfChannels to zero to scan all the channels */
 	pwextBuf->roamProfile.ChannelInfo.numOfChannels = 0;
@@ -10927,6 +10928,7 @@ int hdd_set_wext(hdd_adapter_t *pAdapter)
 
 	hdd_clear_roam_profile_ie(pAdapter);
 
+	EXIT();
 	return QDF_STATUS_SUCCESS;
 
 }
@@ -10942,15 +10944,15 @@ int hdd_set_wext(hdd_adapter_t *pAdapter)
 int hdd_register_wext(struct net_device *dev)
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_wext_state_t *pwextBuf;
+	hdd_wext_state_t *pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	QDF_STATUS status;
 
 	ENTER();
 
-	if (QDF_NDI_MODE == pAdapter->device_mode)
-		pwextBuf = WLAN_HDD_GET_NDP_WEXT_STATE_PTR(pAdapter);
-	else
-		pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
+	if (!pwextBuf) {
+		hdd_err(FL("ERROR: pwextBuf is NULL"));
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	/* Zero the memory. This zeros the profile structure */
 	memset(pwextBuf, 0, sizeof(hdd_wext_state_t));
