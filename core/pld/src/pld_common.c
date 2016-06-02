@@ -48,6 +48,7 @@
 
 #define PLD_PCIE_REGISTERED BIT(0)
 #define PLD_SNOC_REGISTERED BIT(1)
+#define PLD_BUS_MASK 0x3
 
 static struct pld_context *pld_ctx;
 
@@ -157,7 +158,7 @@ enum pld_bus_type pld_get_bus_type(struct device *dev)
  * device is online.
  *
  * Return: 0 for success
- *         Non zero failure code for errors
+ *         pld_driver_state for errors
  */
 int pld_register_driver(struct pld_driver_ops *ops)
 {
@@ -192,10 +193,10 @@ int pld_register_driver(struct pld_driver_ops *ops)
 	if (0 == pld_snoc_register_driver())
 		pld_context->pld_driver_state |= PLD_SNOC_REGISTERED;
 
-	if (0 == pld_context->pld_driver_state) {
-		pr_err("All driver falied to register\n");
-		ret = -EINVAL;
-		goto out;
+	if ((PLD_BUS_MASK & pld_context->pld_driver_state) != PLD_BUS_MASK) {
+		pr_err("driver falied to register, state %x\n",
+		       pld_context->pld_driver_state);
+		ret = pld_context->pld_driver_state;
 	}
 
 out:
