@@ -66,9 +66,9 @@ QDF_STATUS hdd_rx_mul_packet_cbk(void *cds_context,
 				 qdf_nbuf_t rx_buf_list, uint8_t staId);
 #endif /* IPA_OFFLOAD */
 
-QDF_STATUS hdd_ibss_get_sta_id(hdd_station_ctx_t *pHddStaCtx,
-			       struct qdf_mac_addr *pMacAddress,
-			       uint8_t *staId);
+QDF_STATUS hdd_get_peer_sta_id(hdd_station_ctx_t *sta_ctx,
+				struct qdf_mac_addr *peer_mac_addr,
+				uint8_t *sta_id);
 
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 void hdd_tx_resume_cb(void *adapter_context, bool tx_resume);

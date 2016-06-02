@@ -5150,7 +5150,7 @@ static int drv_cmd_get_ibss_peer_info(hdd_adapter_t *adapter,
 	}
 
 	/* Get station index for the peer mac address and sanitize it */
-	hdd_ibss_get_sta_id(pHddStaCtx, &peerMacAddr, &staIdx);
+	hdd_get_peer_sta_id(pHddStaCtx, &peerMacAddr, &staIdx);
 
 	if (staIdx > MAX_IBSS_PEERS) {
 		hdd_err("Invalid StaIdx %d returned", staIdx);

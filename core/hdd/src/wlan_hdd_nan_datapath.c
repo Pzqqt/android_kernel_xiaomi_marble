@@ -115,8 +115,9 @@ static int hdd_close_ndi(hdd_adapter_t *adapter)
 		hdd_err(FL("Interface is not in NDI mode"));
 		return -EINVAL;
 	}
-	netif_tx_disable(adapter->dev);
-	netif_carrier_off(adapter->dev);
+	wlan_hdd_netif_queue_control(adapter,
+				     WLAN_NETIF_TX_DISABLE_N_CARRIER,
+				     WLAN_CONTROL_PATH);
 
 #ifdef WLAN_OPEN_SOURCE
 	cancel_work_sync(&adapter->ipv4NotifierWorkQueue);
@@ -443,7 +444,7 @@ static int hdd_ndp_initiator_req_handler(hdd_context_t *hdd_ctx,
 {
 	hdd_adapter_t *adapter;
 	char *iface_name;
-	struct ndp_initiator_req req;
+	struct ndp_initiator_req req = {0};
 	QDF_STATUS status;
 	uint32_t ndp_qos_cfg;
 	tHalHandle hal = hdd_ctx->hHal;
@@ -700,6 +701,9 @@ static void hdd_ndp_iface_create_rsp_handler(hdd_adapter_t *adapter,
 		hdd_err(FL("NDI interface successfully created"));
 		ndp_ctx->ndp_create_transaction_id = 0;
 		ndp_ctx->state = NAN_DATA_NDI_CREATED_STATE;
+		wlan_hdd_netif_queue_control(adapter,
+					WLAN_START_ALL_NETIF_QUEUE_N_CARRIER,
+					WLAN_CONTROL_PATH);
 	} else {
 		hdd_err(FL("NDI interface creation failed with reason %d"),
 			ndi_rsp->reason);
@@ -745,7 +749,9 @@ static void hdd_ndp_iface_delete_rsp_handler(hdd_adapter_t *adapter,
 	else
 		hdd_err(FL("NDI BSS stop failed with reason %d"),
 			ndi_rsp->reason);
-
+	wlan_hdd_netif_queue_control(adapter,
+				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
+				     WLAN_CONTROL_PATH);
 	complete(&adapter->disconnect_comp_var);
 	return;
 }
@@ -955,6 +961,7 @@ static void hdd_ndp_new_peer_ind_handler(hdd_adapter_t *adapter,
 	tCsrRoamInfo roam_info = {0};
 	struct nan_datapath_ctx *ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(adapter);
 	hdd_station_ctx_t *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct qdf_mac_addr bc_mac_addr = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
 
 	ENTER();
 
@@ -972,16 +979,21 @@ static void hdd_ndp_new_peer_ind_handler(hdd_adapter_t *adapter,
 
 	/* this function is called for each new peer */
 	ndp_ctx->active_ndp_peers++;
+
 	hdd_roam_register_sta(adapter, &roam_info, new_peer_ind->sta_id,
 			    &new_peer_ind->peer_mac_addr, &tmp_bss_descp);
 	hdd_ctx->sta_to_adapter[new_peer_ind->sta_id] = adapter;
 	/* perform following steps for first new peer ind */
 	if (ndp_ctx->active_ndp_peers == 1) {
+		hdd_ctx->sta_to_adapter[NDP_BROADCAST_STAID] = adapter;
+		hdd_save_peer(sta_ctx, new_peer_ind->sta_id, &bc_mac_addr);
+		hdd_roam_register_sta(adapter, &roam_info, NDP_BROADCAST_STAID,
+				    &bc_mac_addr, &tmp_bss_descp);
 		hddLog(LOG1, FL("Set ctx connection state to connected"));
 		sta_ctx->conn_info.connState = eConnectionState_NdiConnected;
 		hdd_wmm_connect(adapter, &roam_info, eCSR_BSS_TYPE_NDI);
-		netif_carrier_on(adapter->dev);
-		netif_tx_start_all_queues(adapter->dev);
+		wlan_hdd_netif_queue_control(adapter,
+				WLAN_WAKE_ALL_NETIF_QUEUE, WLAN_CONTROL_PATH);
 	}
 	EXIT();
 }

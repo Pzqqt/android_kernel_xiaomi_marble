@@ -1668,7 +1668,7 @@ static QDF_STATUS hdd_roam_set_key_complete_handler(hdd_adapter_t *pAdapter,
 				pHddStaCtx->roam_info.roamingState =
 					HDD_ROAM_STATE_NONE;
 			} else {
-				qdf_status = hdd_ibss_get_sta_id(
+				qdf_status = hdd_get_peer_sta_id(
 							pHddStaCtx,
 							&pRoamInfo->peerMac,
 							&staId);

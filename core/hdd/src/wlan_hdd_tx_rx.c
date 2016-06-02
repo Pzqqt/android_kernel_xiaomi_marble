@@ -57,6 +57,8 @@
 #include "cdp_txrx_peer_ops.h"
 #include "ol_txrx.h"
 
+#include "wlan_hdd_nan_datapath.h"
+
 const uint8_t hdd_wmm_ac_to_highest_up[] = {
 	SME_QOS_WMM_UP_RESV,
 	SME_QOS_WMM_UP_EE,
@@ -339,8 +341,8 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 					(struct qdf_mac_addr *) skb->data;
 
 		if (QDF_STATUS_SUCCESS !=
-				hdd_ibss_get_sta_id(&pAdapter->sessionCtx.station,
-					pDestMacAddress, &STAId))
+			hdd_get_peer_sta_id(&pAdapter->sessionCtx.station,
+				pDestMacAddress, &STAId))
 			STAId = HDD_WLAN_INVALID_STA_ID;
 
 		if ((STAId == HDD_WLAN_INVALID_STA_ID) &&
@@ -355,6 +357,20 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 				  "%s: Received Unicast frame with invalid staID",
 				  __func__);
 			goto drop_pkt;
+		}
+	} else if (QDF_NDI_MODE == pAdapter->device_mode) {
+		struct qdf_mac_addr *dest_mac_addr =
+			(struct qdf_mac_addr *)skb->data;
+		if (hdd_get_peer_sta_id(&pAdapter->sessionCtx.station,
+				dest_mac_addr, &STAId) !=
+				QDF_STATUS_SUCCESS) {
+			QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_WARN,
+				FL("Can't find peer: %pM, dropping packet"),
+				dest_mac_addr);
+			++pAdapter->stats.tx_dropped;
+			++pAdapter->hdd_stats.hddTxRxStats.txXmitDropped;
+			kfree_skb(skb);
+			return NETDEV_TX_OK;
 		}
 	} else {
 		if (QDF_OCB_MODE != pAdapter->device_mode &&
@@ -557,7 +573,7 @@ drop_pkt_accounting:
 }
 
 /**
- * hdd_ibss_get_sta_id() - Get the StationID using the Peer Mac address
+ * hdd_get_peer_sta_id() - Get the StationID using the Peer Mac address
  * @pHddStaCtx: pointer to HDD Station Context
  * @pMacAddress: pointer to Peer Mac address
  * @staID: pointer to returned Station Index
@@ -565,7 +581,7 @@ drop_pkt_accounting:
  * Return: QDF_STATUS_SUCCESS/QDF_STATUS_E_FAILURE
  */
 
-QDF_STATUS hdd_ibss_get_sta_id(hdd_station_ctx_t *pHddStaCtx,
+QDF_STATUS hdd_get_peer_sta_id(hdd_station_ctx_t *pHddStaCtx,
 			       struct qdf_mac_addr *pMacAddress, uint8_t *staId)
 {
 	uint8_t idx;
