@@ -31,9 +31,23 @@
 #include "qdf_types.h"
 #include "sir_api.h"
 #include "ani_global.h"
+#include "sme_inside.h"
+
+/**
+ * struct sir_sme_ndp_initiator_req - sme request struct for ndp initiator req
+ * @mesgType: SME msg type(eWNI_SME_NDP_INITIATOR_REQ)
+ * @mesgLen: lenght of message
+ * @req: actual ndp initiator request
+ *
+ */
+struct sir_sme_ndp_initiator_req {
+	uint16_t msg_type;
+	uint16_t msg_len;
+	struct ndp_initiator_req req;
+};
 
 /* NAN initiator request handler */
-QDF_STATUS sme_ndp_initiator_req_handler(uint32_t session_id,
+QDF_STATUS sme_ndp_initiator_req_handler(tHalHandle hal,
 					struct ndp_initiator_req *req_params);
 
 /* NAN responder request handler */
@@ -73,6 +87,11 @@ void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
 					uint32_t *roam_status,
 					uint32_t *roam_result,
 					struct tagCsrRoamInfo *roam_info);
+QDF_STATUS csr_process_ndp_initiator_request(tpAniSirGlobal mac_ctx,
+					     tSmeCmd *cmd);
+
+void sme_ndp_msg_processor(tpAniSirGlobal mac_ctx, cds_msg_t *msg);
+
 #else
 
 /* Start NDI BSS */
@@ -107,5 +126,24 @@ static inline void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
 					struct tagCsrRoamInfo *roam_info)
 {
 }
+
+/* NaN indication response handler */
+QDF_STATUS sme_ndp_end_req_handler(uint32_t session_id,
+					struct ndp_end_req *req_params);
+
+/* NaN schedule update request handler */
+QDF_STATUS sme_ndp_sched_req_handler(uint32_t session_id,
+				struct ndp_schedule_update_req *req_params);
+
+static inline eHalStatus csr_process_ndp_initiator_request(
+				tpAniSirGlobal mac_ctx, tSmeCmd *cmd)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void sme_ndp_msg_processor(tpAniSirGlobal mac_ctx, cds_msg_t *msg)
+{
+}
+
 #endif /* WLAN_FEATURE_NAN_DATAPATH */
 #endif /* __SME_NAN_DATAPATH_H */

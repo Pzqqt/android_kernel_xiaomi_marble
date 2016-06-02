@@ -59,6 +59,7 @@
 #include "sme_power_save_api.h"
 #include "wma.h"
 #include "sch_api.h"
+#include "sme_nan_datapath.h"
 
 extern tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb);
 
@@ -956,6 +957,15 @@ sme_process_cmd:
 		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
 		csr_process_add_sta_session_command(pMac, pCommand);
 		break;
+	case eSmeCommandNdpInitiatorRequest:
+		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
+		if (csr_process_ndp_initiator_request(pMac, pCommand) !=
+			QDF_STATUS_SUCCESS)
+			if (csr_ll_remove_entry(
+				&pMac->sme.smeCmdActiveList,
+				&pCommand->Link, LL_ACCESS_LOCK))
+				csr_release_command(pMac, pCommand);
+	    break;
 	case eSmeCommandDelStaSession:
 		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
 		csr_process_del_sta_session_command(pMac, pCommand);
@@ -2984,6 +2994,11 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 			sms_log(pMac, LOGE, FL("Empty message for %d"),
 					pMsg->type);
 		}
+		break;
+	case eWNI_SME_NDP_CONFIRM_IND:
+	case eWNI_SME_NDP_NEW_PEER_IND:
+	case eWNI_SME_NDP_INITIATOR_RSP:
+		sme_ndp_msg_processor(pMac, pMsg);
 		break;
 	default:
 
@@ -13178,13 +13193,13 @@ QDF_STATUS sme_get_cached_results(tHalHandle hHal,
 
 /**
  * sme_set_epno_list() - set epno network list
- * @hHal: global hal handle
+ * @hal: global hal handle
  * @input: request message
  *
  * This function constructs the cds message and fill in message type,
  * bodyptr with %input and posts it to WDA queue.
  *
- * Return: eHalStatus enumeration
+ * Return: QDF_STATUS enumeration
  */
 QDF_STATUS sme_set_epno_list(tHalHandle hal,
 				struct wifi_epno_params *input)
@@ -13253,7 +13268,7 @@ QDF_STATUS sme_set_epno_list(tHalHandle hal,
  * This function constructs the cds message and fill in message type,
  * bodyptr with @input and posts it to WDA queue.
  *
- * Return: eHalStatus enumeration
+ * Return: QDF_STATUS enumeration
  */
 QDF_STATUS sme_set_passpoint_list(tHalHandle hal,
 				struct wifi_passpoint_req *input)
@@ -13320,7 +13335,7 @@ QDF_STATUS sme_set_passpoint_list(tHalHandle hal,
  * @hHal: global hal handle
  * @input: request message
  *
- * Return: eHalStatus enumeration
+ * Return: QDF_STATUS enumeration
  */
 QDF_STATUS sme_reset_passpoint_list(tHalHandle hal,
 				    struct wifi_passpoint_req *input)
@@ -13370,7 +13385,7 @@ QDF_STATUS sme_reset_passpoint_list(tHalHandle hal,
  * @hal: SME handle
  * @request: set ssid hotlist request
  *
- * Return: eHalStatus
+ * Return: QDF_STATUS
  */
 QDF_STATUS
 sme_set_ssid_hotlist(tHalHandle hal,
@@ -14262,7 +14277,7 @@ bool sme_neighbor_middle_of_roaming(tHalHandle hHal, uint8_t sessionId)
  * This function is used to send the command that will
  * be used to flush the logs in the firmware
  *
- * Return: eHalStatus
+ * Return: QDF_STATUS
  */
 QDF_STATUS sme_send_flush_logs_cmd_to_fw(tpAniSirGlobal mac)
 {
@@ -14691,8 +14706,8 @@ QDF_STATUS sme_pdev_set_pcl(tHalHandle hal,
 	status = sme_acquire_global_lock(&mac->sme);
 	if (status != QDF_STATUS_SUCCESS) {
 		sms_log(mac, LOGE,
-				FL("sme_AcquireGlobalLock failed!(status=%d)"),
-				status);
+			FL("sme_acquire_global_lock failed!(status=%d)"),
+			status);
 		qdf_mem_free(req_msg);
 		return status;
 	}
@@ -14703,7 +14718,7 @@ QDF_STATUS sme_pdev_set_pcl(tHalHandle hal,
 	status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac, LOGE,
-				FL("vos_mq_post_message failed!(err=%d)"),
+				FL("cds_mq_post_message failed!(err=%d)"),
 				status);
 		qdf_mem_free(req_msg);
 		status = QDF_STATUS_E_FAILURE;

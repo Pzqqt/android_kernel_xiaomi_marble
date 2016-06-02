@@ -57,6 +57,7 @@
 #include "wmm_apsd.h"
 #include "sir_mac_prot_def.h"
 #include "rrm_api.h"
+#include "nan_datapath.h"
 
 #include "sap_api.h"
 
@@ -170,7 +171,7 @@ static QDF_STATUS lim_process_set_hw_mode(tpAniSirGlobal mac, uint32_t *msg)
 	status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		lim_log(mac, LOGE,
-			FL("vos_mq_post_message failed!(err=%d)"),
+			FL("cds_mq_post_message failed!(err=%d)"),
 			status);
 		qdf_mem_free(req_msg);
 		goto fail;
@@ -245,7 +246,7 @@ static QDF_STATUS lim_process_set_dual_mac_cfg_req(tpAniSirGlobal mac,
 	status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		lim_log(mac, LOGE,
-				FL("vos_mq_post_message failed!(err=%d)"),
+				FL("cds_mq_post_message failed!(err=%d)"),
 				status);
 		qdf_mem_free(req_msg);
 		goto fail;
@@ -311,7 +312,7 @@ static QDF_STATUS lim_process_set_antenna_mode_req(tpAniSirGlobal mac,
 	status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		lim_log(mac, LOGE,
-				FL("vos_mq_post_message failed!(err=%d)"),
+				FL("cds_mq_post_message failed!(err=%d)"),
 				status);
 		qdf_mem_free(req_msg);
 		goto fail;
@@ -5169,6 +5170,8 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
 		break;
 	case eWNI_SME_PDEV_SET_HT_VHT_IE:
 		lim_process_set_pdev_IEs(pMac, pMsgBuf);
+	case eWNI_SME_NDP_INITIATOR_REQ:
+		lim_handle_ndp_request_message(pMac, pMsg);
 		break;
 	default:
 		qdf_mem_free((void *)pMsg->bodyptr);

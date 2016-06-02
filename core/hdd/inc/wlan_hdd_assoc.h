@@ -269,4 +269,12 @@ static inline bool hdd_is_roam_sync_in_progress(tCsrRoamInfo *roaminfo)
 }
 #endif
 
+QDF_STATUS hdd_roam_register_sta(struct hdd_adapter_s *adapter,
+					struct tagCsrRoamInfo *roam_info,
+					uint8_t sta_id,
+					struct qdf_mac_addr *peer_mac_addr,
+					struct sSirBssDescription *bss_desc);
+
+bool hdd_save_peer(hdd_station_ctx_t *sta_ctx, uint8_t sta_id,
+		   struct qdf_mac_addr *peer_mac_addr);
 #endif

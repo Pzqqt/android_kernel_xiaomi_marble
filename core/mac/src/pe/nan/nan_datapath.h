@@ -104,23 +104,29 @@ struct ndp_peer_node {
 QDF_STATUS lim_handle_ndp_request_message(tpAniSirGlobal mac_ctx,
 					tpSirMsgQ msg);
 /* Function to process NDP events */
-QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx, tpSirMsgQ msg);
+QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx, cds_msg_t *msg);
 void lim_process_ndi_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 				     tpSirMsgQ lim_msg_q,
 				     tpPESession session_entry);
 /* Handler for DEL BSS resp for NDI interface */
 void lim_ndi_del_bss_rsp(tpAniSirGlobal  mac_ctx,
 			void *msg, tpPESession session_entry);
+
+void lim_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx, tpPESession session_entry,
+			 tAddStaParams *add_sta_rsp);
+
 #else
+
 /* Function to process NDP requests */
 static inline QDF_STATUS lim_handle_ndp_request_message(tpAniSirGlobal mac_ctx,
 					tpSirMsgQ msg)
 {
 	return QDF_STATUS_SUCCESS;
 }
+
 /* Function to process NDP events */
 static inline QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx,
-						      tpSirMsgQ msg)
+						      cds_msg_t *msg)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -133,6 +139,12 @@ static inline void lim_process_ndi_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 }
 static inline void lim_ndi_del_bss_rsp(tpAniSirGlobal mac_ctx,
 					void *msg, tpPESession session_entry)
+{
+}
+
+static inline void lim_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx,
+					tpPESession session_entry,
+					tAddStaParams *add_sta_rsp)
 {
 }
 

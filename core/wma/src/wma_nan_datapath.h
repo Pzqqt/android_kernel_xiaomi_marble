@@ -29,13 +29,11 @@
 
 #include "wma.h"
 #include "sir_api.h"
+#include "sme_nan_datapath.h"
 
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 #define WMA_IS_VDEV_IN_NDI_MODE(intf, vdev_id) \
 				(WMI_VDEV_TYPE_NDI == intf[vdev_id].type)
-
-void wma_add_bss_ndi_mode(tp_wma_handle wma, tpAddBssParams add_bss);
-
 /**
  * wma_update_hdd_cfg_ndp() - Update target device NAN datapath capability
  * @wma_handle: pointer to WMA context
@@ -56,6 +54,9 @@ void wma_ndp_unregister_all_event_handlers(tp_wma_handle wma_handle);
 void wma_ndp_add_wow_wakeup_event(tp_wma_handle wma_handle,
 						uint8_t vdev_id);
 void wma_ndp_wow_event_callback(void *handle, void *event, uint32_t len);
+void wma_add_bss_ndi_mode(tp_wma_handle wma, tpAddBssParams add_bss);
+void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta);
+QDF_STATUS wma_handle_ndp_initiator_req(tp_wma_handle wma_handle, void *req);
 #else
 #define WMA_IS_VDEV_IN_NDI_MODE(intf, vdev_id) (false)
 static inline void wma_update_hdd_cfg_ndp(tp_wma_handle wma_handle,
@@ -80,5 +81,13 @@ static inline void wma_ndp_add_wow_wakeup_event(tp_wma_handle wma_handle,
 						uint8_t vdev_id) {}
 static inline void wma_ndp_wow_event_callback(void *handle, void *event,
 						uint32_t len) {}
+static inline void wma_add_sta_ndi_mode(tp_wma_handle wma,
+					tpAddStaParams add_sta) {}
+static inline QDF_STATUS wma_handle_ndp_initiator_req(tp_wma_handle wma_handle,
+						      void *req)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
 #endif /* WLAN_FEATURE_NAN_DATAPATH */
 #endif /* __WMA_NAN_DATAPATH_H */

@@ -57,7 +57,7 @@ struct wireless_dev;
  * @QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID: Transaction id reference
  * @QCA_WLAN_VENDOR_ATTR_NDP_STATUS_ID: NDP status id
  * @QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_INSTANCE_ID: Service instance id
- * @QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL_SPEC_CHANNEL: Requested channel
+ * @QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL: Requested channel
  * @QCA_WLAN_VENDOR_ATTR_NDP_PEER_DISCOVERY_MAC_ADDR: Peer discovery mac addr
  * @QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR: Iface name
  * @QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_SECURITY: Security configuration
@@ -67,7 +67,7 @@ struct wireless_dev;
  * @QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID: NDP instance id
  * @QCA_WLAN_VENDOR_ATTR_NDP_NUM_INSTANCE_ID: Number of NDP instance ids
  * @QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID_ARRAY: NDP instance id array
- * @QCA_WLAN_VENDOR_ATTR_NDP_SCHEDULE_RESPONSE_CODE: Schedule response
+ * @QCA_WLAN_VENDOR_ATTR_NDP_RESPONSE_CODE: Schedule response
  * @QCA_WLAN_VENDOR_ATTR_NDP_SCHEDULE_STATUS_CODE: schedule status
  * @QCA_WLAN_VENDOR_ATTR_NDP_NDI_MAC_ADDR: NDI mac address
  * @QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_TYPE: Driver return status
@@ -78,7 +78,7 @@ enum qca_wlan_vendor_attr_ndp_params {
 	QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD,
 	QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID,
 	QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_INSTANCE_ID,
-	QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL_SPEC_CHANNEL,
+	QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL,
 	QCA_WLAN_VENDOR_ATTR_NDP_PEER_DISCOVERY_MAC_ADDR,
 	QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR,
 	QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_SECURITY,
@@ -88,7 +88,7 @@ enum qca_wlan_vendor_attr_ndp_params {
 	QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID,
 	QCA_WLAN_VENDOR_ATTR_NDP_NUM_INSTANCE_ID,
 	QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID_ARRAY,
-	QCA_WLAN_VENDOR_ATTR_NDP_SCHEDULE_RESPONSE_CODE,
+	QCA_WLAN_VENDOR_ATTR_NDP_RESPONSE_CODE,
 	QCA_WLAN_VENDOR_ATTR_NDP_SCHEDULE_STATUS_CODE,
 	QCA_WLAN_VENDOR_ATTR_NDP_NDI_MAC_ADDR,
 	QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_TYPE,
@@ -180,6 +180,7 @@ enum nan_datapath_state {
  * struct nan_datapath_ctx - context for nan data path
  * @state: Current state of NDP
  * @active_ndp_sessions: active ndp sessions per adapter
+ * @active_ndp_peers: number of active ndp peers
  * @ndp_create_transaction_id: transaction id for create req
  * @ndp_delete_transaction_id: transaction id for delete req
  * @ndp_key_installed: NDP security key installed
@@ -189,6 +190,7 @@ enum nan_datapath_state {
 struct nan_datapath_ctx {
 	enum nan_datapath_state state;
 	uint32_t active_ndp_sessions;
+	uint32_t active_ndp_peers;
 	uint16_t ndp_create_transaction_id;
 	uint16_t ndp_delete_transaction_id;
 	bool ndp_key_installed;

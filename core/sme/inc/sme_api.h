@@ -914,7 +914,7 @@ QDF_STATUS sme_set_scanning_mac_oui(tHalHandle hHal,
     \param  hHal - The handle returned by macOpen.
     \param  sessionId - Session Identifier
     \param  pRequest -  Pointer to the offload request.
-    \return eHalStatus
+    \return QDF_STATUS
   ---------------------------------------------------------------------------*/
 QDF_STATUS sme_ipa_offload_enable_disable(tHalHandle hal,
 				uint8_t session_id,

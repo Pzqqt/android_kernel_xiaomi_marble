@@ -1434,7 +1434,7 @@ typedef struct {
 	/* NAN datapath support enabled in firmware */
 	bool nan_datapath_enabled;
 	QDF_STATUS (*pe_ndp_event_handler)(tpAniSirGlobal mac_ctx,
-					   tpSirMsgQ msg);
+					   cds_msg_t *msg);
 } t_wma_handle, *tp_wma_handle;
 
 /**
@@ -2133,6 +2133,10 @@ QDF_STATUS wma_add_wow_wakeup_event(tp_wma_handle wma,
 					uint32_t vdev_id,
 					uint32_t bitmap,
 					bool enable);
+QDF_STATUS wma_create_peer(tp_wma_handle wma, ol_txrx_pdev_handle pdev,
+			   ol_txrx_vdev_handle vdev, u8 peer_addr[6],
+			   u_int32_t peer_type, u_int8_t vdev_id,
+			   bool roam_synch_in_progress);
 
 #endif
 struct wma_ini_config *wma_get_ini_handle(tp_wma_handle wma_handle);

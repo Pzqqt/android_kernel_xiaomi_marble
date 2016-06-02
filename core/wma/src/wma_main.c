@@ -5946,6 +5946,10 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 		wma_set_bpf_instructions(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
+	case SIR_HAL_NDP_INITIATOR_REQ:
+		wma_handle_ndp_initiator_req(wma_handle, msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
 
 	default:
 		WMA_LOGD("unknow msg type %x", msg->type);

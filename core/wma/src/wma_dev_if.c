@@ -4067,6 +4067,8 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 	else if (wma_is_vdev_in_ibss_mode(wma, add_sta->smesessionId))
 		oper_mode = BSS_OPERATIONAL_MODE_IBSS;
 
+	if (WMA_IS_VDEV_IN_NDI_MODE(wma->interfaces, add_sta->smesessionId))
+		oper_mode = BSS_OPERATIONAL_MODE_NDI;
 	switch (oper_mode) {
 	case BSS_OPERATIONAL_MODE_STA:
 		wma_add_sta_req_sta_mode(wma, add_sta);
@@ -4077,6 +4079,9 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 	case BSS_OPERATIONAL_MODE_AP:
 		htc_vote_link_down(wma->htc_handle);
 		wma_add_sta_req_ap_mode(wma, add_sta);
+		break;
+	case BSS_OPERATIONAL_MODE_NDI:
+		wma_add_sta_ndi_mode(wma, add_sta);
 		break;
 	}
 

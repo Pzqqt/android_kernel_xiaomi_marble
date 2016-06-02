@@ -1338,7 +1338,7 @@ QDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
  *
  * Return: QDF_STATUS enumeration
  */
-static QDF_STATUS hdd_roam_register_sta(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_roam_register_sta(hdd_adapter_t *pAdapter,
 					tCsrRoamInfo *pRoamInfo,
 					uint8_t staId,
 					struct qdf_mac_addr *pPeerMacAddress,
@@ -2551,37 +2551,31 @@ static void hdd_roam_ibss_indication_handler(hdd_adapter_t *pAdapter,
 }
 
 /**
- * roam_save_ibss_station() - Save the IBSS peer MAC address in the adapter
- * @pHddStaCtx: pointer to global HDD station context
- * @staId: station id
- * @peerMacAddress: pointer to peer MAC address
+ * hdd_save_peer() - Save peer MAC address in adapter peer table.
+ * @sta_ctx: pointer to hdd station context
+ * @sta_id: station ID
+ * @peer_mac_addr: mac address of new peer
  *
  * This information is passed to iwconfig later. The peer that joined
  * last is passed as information to iwconfig.
- *
- * Return:
- *	true if we add MAX_IBSS_PEERS or less STA
- *	false otherwise.
+
+ * Return: true if success, false otherwise
  */
-static bool roam_save_ibss_station(hdd_station_ctx_t *pHddStaCtx, uint8_t staId,
-				  struct qdf_mac_addr *peerMacAddress)
+bool hdd_save_peer(hdd_station_ctx_t *sta_ctx, uint8_t sta_id,
+		   struct qdf_mac_addr *peer_mac_addr)
 {
-	bool fSuccess = false;
-	int idx = 0;
+	int idx;
 
-	for (idx = 0; idx < MAX_IBSS_PEERS; idx++) {
-		if (0 == pHddStaCtx->conn_info.staId[idx]) {
-			pHddStaCtx->conn_info.staId[idx] = staId;
-
-			qdf_copy_macaddr(&pHddStaCtx->conn_info.
-					 peerMacAddress[idx], peerMacAddress);
-
-			fSuccess = true;
-			break;
+	for (idx = 0; idx < SIR_MAX_NUM_STA_IN_IBSS; idx++) {
+		if (0 == sta_ctx->conn_info.staId[idx]) {
+			sta_ctx->conn_info.staId[idx] = sta_id;
+			qdf_copy_macaddr(
+				&sta_ctx->conn_info.peerMacAddress[idx],
+				peer_mac_addr);
+			return true;
 		}
 	}
-
-	return fSuccess;
+	return false;
 }
 
 /**
@@ -2790,7 +2784,7 @@ roam_roam_connect_status_update_handler(hdd_adapter_t *pAdapter,
 			MAC_ADDR_ARRAY(pHddStaCtx->conn_info.bssId.bytes),
 			pRoamInfo->staId);
 
-		if (!roam_save_ibss_station
+		if (!hdd_save_peer
 			    (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter),
 			    pRoamInfo->staId,
 			    &pRoamInfo->peerMac)) {
