@@ -416,10 +416,9 @@ struct qdf_mac_addr {
  * given jumbo TSO network buffer
  */
 struct qdf_tso_frag_t {
-	uint32_t paddr_low_32;
-	uint32_t paddr_upper_16:16,
-		 length:16;
+	uint16_t length;
 	unsigned char *vaddr;
+	qdf_dma_addr_t paddr;
 };
 
 #define FRAG_NUM_MAX 6

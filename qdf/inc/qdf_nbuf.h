@@ -1204,6 +1204,19 @@ static inline void qdf_nbuf_reset_num_frags(qdf_nbuf_t buf)
 }
 
 /**
+ * qdf_dmaaddr_to_32s - return high and low parts of dma_addr
+ *
+ * Returns the high and low 32-bits of the DMA addr in the provided ptrs
+ *
+ * Return: N/A
+ */
+static inline void qdf_dmaaddr_to_32s(qdf_dma_addr_t dmaaddr,
+				      uint32_t *lo, uint32_t *hi)
+{
+	return __qdf_dmaaddr_to_32s(dmaaddr, lo, hi);
+}
+
+/**
  * qdf_nbuf_is_tso() - is the network buffer a jumbo packet?
  * @buf: Network buffer
  *

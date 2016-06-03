@@ -995,6 +995,9 @@ __qdf_nbuf_set_protocol(struct sk_buff *skb, uint16_t protocol)
 #define __qdf_nbuf_get_tx_htt2_frm(skb)	\
 	QDF_NBUF_CB_TX_HL_HTT2_FRM(skb)
 
+void __qdf_dmaaddr_to_32s(qdf_dma_addr_t dmaaddr,
+				      uint32_t *lo, uint32_t *hi);
+
 uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 	struct qdf_tso_info_t *tso_info);
 

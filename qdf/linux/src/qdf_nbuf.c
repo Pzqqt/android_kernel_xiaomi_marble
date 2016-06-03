@@ -1153,7 +1153,7 @@ EXPORT_SYMBOL(__qdf_nbuf_get_tso_cmn_seg_info);
  *
  * Return: N/A
  */
-static inline void qdf_dmaaddr_to_32s(qdf_dma_addr_t dmaaddr,
+void __qdf_dmaaddr_to_32s(qdf_dma_addr_t dmaaddr,
 				      uint32_t *lo, uint32_t *hi)
 {
 	if (sizeof(dmaaddr) > sizeof(uint32_t)) {
@@ -1164,8 +1164,6 @@ static inline void qdf_dmaaddr_to_32s(qdf_dma_addr_t dmaaddr,
 		*hi = 0;
 	}
 }
-EXPORT_SYMBOL(qdf_dmaaddr_to_32s);
-
 
 /**
  * __qdf_nbuf_get_tso_info() - function to divide a TSO nbuf
@@ -1189,7 +1187,6 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 	/* segment specific */
 	char *tso_frag_vaddr;
 	qdf_dma_addr_t tso_frag_paddr = 0;
-	uint32_t       tso_frag_paddr_lo, tso_frag_paddr_hi;
 	uint32_t num_seg = 0;
 	struct qdf_tso_seg_elem_t *curr_seg;
 	const struct skb_frag_struct *frag = NULL;
@@ -1221,8 +1218,6 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 	tso_frag_len = min(skb_frag_len, tso_seg_size);
 	tso_frag_paddr = dma_map_single(osdev->dev,
 		 tso_frag_vaddr, tso_frag_len, DMA_TO_DEVICE);
-	qdf_dmaaddr_to_32s(tso_frag_paddr, &tso_frag_paddr_lo,
-						 &tso_frag_paddr_hi);
 
 	num_seg = tso_info->num_segs;
 	tso_info->num_segs = 0;
@@ -1273,15 +1268,11 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 		tso_info->total_len = curr_seg->seg.tso_frags[0].length;
 		{
 			qdf_dma_addr_t mapped;
-			uint32_t       lo, hi;
 
 			mapped = dma_map_single(osdev->dev,
 				tso_cmn_info.eit_hdr,
 				tso_cmn_info.eit_hdr_len, DMA_TO_DEVICE);
-			qdf_dmaaddr_to_32s(mapped, &lo, &hi);
-			curr_seg->seg.tso_frags[0].paddr_low_32 = lo;
-			curr_seg->seg.tso_frags[0].paddr_upper_16 =
-							 (hi & 0xffff);
+			curr_seg->seg.tso_frags[0].paddr = mapped;
 		}
 		curr_seg->seg.tso_flags.ip_len = tso_cmn_info.ip_tcp_hdr_len;
 		curr_seg->seg.num_frags++;
@@ -1298,10 +1289,7 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 
 			/* increment the TCP sequence number */
 			tso_cmn_info.tcp_seq_num += tso_frag_len;
-			curr_seg->seg.tso_frags[i].paddr_upper_16 =
-				(tso_frag_paddr_hi & 0xffff);
-			curr_seg->seg.tso_frags[i].paddr_low_32 =
-				 tso_frag_paddr_lo;
+			curr_seg->seg.tso_frags[i].paddr = tso_frag_paddr;
 
 			/* if there is no more data left in the skb */
 			if (!skb_proc)
@@ -1330,18 +1318,12 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 							 frag, foffset,
 							 tso_frag_len,
 							 DMA_TO_DEVICE);
-					qdf_dmaaddr_to_32s(tso_frag_paddr,
-							&tso_frag_paddr_lo,
-							&tso_frag_paddr_hi);
 				} else {
 					tso_frag_paddr =
 						 dma_map_single(osdev->dev,
 							 tso_frag_vaddr,
 							 tso_frag_len,
 							 DMA_TO_DEVICE);
-					qdf_dmaaddr_to_32s(tso_frag_paddr,
-							&tso_frag_paddr_lo,
-							&tso_frag_paddr_hi);
 				}
 			} else { /* the next fragment is not contiguous */
 				tso_frag_len = min(skb_frag_len, tso_seg_size);
@@ -1352,9 +1334,6 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 				tso_frag_paddr = skb_frag_dma_map(osdev->dev,
 					 frag, 0, tso_frag_len,
 					 DMA_TO_DEVICE);
-				qdf_dmaaddr_to_32s(tso_frag_paddr,
-						 &tso_frag_paddr_lo,
-						 &tso_frag_paddr_hi);
 				foffset += tso_frag_len;
 				from_frag_table = 1;
 				j++;
