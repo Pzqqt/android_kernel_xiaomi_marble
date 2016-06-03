@@ -707,6 +707,8 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_peer_bwf_request_fixed_param,
 	WMITLV_TAG_STRUC_wmi_bwf_peer_info,
 	WMITLV_TAG_STRUC_wmi_dbglog_time_stamp_sync_cmd_fixed_param,
+	WMITLV_TAG_STRUC_wmi_place_holder_1,
+	WMITLV_TAG_STRUC_wmi_place_holder_2,
 } WMITLV_TAG_ID;
 
 /*

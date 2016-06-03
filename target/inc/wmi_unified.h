@@ -5491,6 +5491,7 @@ typedef enum {
 	 * to all vdevs sharing the TSF
 	 */
 	WMI_VDEV_PARAM_TSF_INCREMENT,
+	WMI_VDEV_PARAM_PLACE_HOLDER_1,
 } WMI_VDEV_PARAM;
 
 /* vdev capabilities bit mask */
