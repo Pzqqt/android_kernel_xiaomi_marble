@@ -1435,6 +1435,7 @@ typedef enum {
 #define WMI_CHAN_FLAG_QUARTER_RATE  15  /* Indicates quarter rate channel */
 /* Enable radar event reporting for sec80 in VHT80p80 */
 #define WMI_CHAN_FLAG_DFS_CFREQ2  16
+#define WMI_CHAN_FLAG_ALLOW_HE    17 /* HE (11ax) is allowed on this channel */
 
 #define WMI_SET_CHANNEL_FLAG(pwmi_channel, flag) do { \
 		(pwmi_channel)->info |=  (1 << flag);	   \
@@ -1614,12 +1615,12 @@ enum {
  * we pack PPET16 and PPT8 for four RU's in one element of array.
  *
  * ppet16_ppet8_ru3_ru0 array element 0 holds:
- *     | PPET16 | PPET8  | PPET16 | PPET8  | PPET16 | PPET8  | PPET16 | PPET8  |
+ *     |  PPET8 | PPET16 | PPET8  | PPET16 | PPET8  | PPET16 | PPET8  | PPET16 |
  *rsvd |NSS1,RU4|NSS1,RU4|NSS1,RU3|NSS1,RU3|NSS1,RU2|NSS1,RU2|NSS1,RU1|NSS1,RU1|
  *31:23|  22:20 |  19:17 |  17:15 |  14:12 |  11:9  |   8:6  |   5:3  |   2:0  |
  *
  * ppet16_ppet8_ru3_ru0 array element 1 holds:
- *     | PPET16 | PPET8  | PPET16 | PPET8  | PPET16 | PPET8  | PPET16 | PPET8  |
+ *     |  PPET8 | PPET16 | PPET8  | PPET16 | PPET8  | PPET16 | PPET8  | PPET16 |
  *rsvd |NSS2,RU4|NSS2,RU4|NSS2,RU3|NSS2,RU3|NSS2,RU2|NSS2,RU2|NSS2,RU1|NSS2,RU1|
  *31:23|  22:20 |  19:17 |  17:15 |  14:12 |  11:9  |   8:6  |   5:3  |   2:0  |
  *
@@ -1630,22 +1631,22 @@ enum {
  * Note that in these macros, "ru" is one-based, not zero-based, while
  * nssm1 is zero-based.
  */
-#define WMI_SET_PPET8(ppet16_ppet8_ru3_ru0, ppet, ru, nssm1) \
+#define WMI_SET_PPET16(ppet16_ppet8_ru3_ru0, ppet, ru, nssm1) \
 	do { \
 		ppet16_ppet8_ru3_ru0[nssm1] &= ~(7 << (((ru-1)%4)*6));       \
 		ppet16_ppet8_ru3_ru0[nssm1] |= ((ppet&7) << (((ru-1)%4)*6)); \
 	} while (0)
 
-#define WMI_GET_PPET8(ppet16_ppet8_ru3_ru0, ru, nssm1) \
+#define WMI_GET_PPET16(ppet16_ppet8_ru3_ru0, ru, nssm1) \
 	((ppet16_ppet8_ru3_ru0[nssm1] >> (((ru-1)%4)*6))&7)
 
-#define WMI_SET_PPET16(ppet16_ppet8_ru3_ru0, ppet, ru, nssm1) \
+#define WMI_SET_PPET8(ppet16_ppet8_ru3_ru0, ppet, ru, nssm1) \
 	do { \
 		ppet16_ppet8_ru3_ru0[nssm1] &= ~(7 << (((ru-1)%4)*6+3));       \
 		ppet16_ppet8_ru3_ru0[nssm1] |= ((ppet&7) << (((ru-1)%4)*6+3)); \
 	} while (0)
 
-#define WMI_GET_PPET16(ppet16_ppet8_ru3_ru0, ru, nssm1) \
+#define WMI_GET_PPET8(ppet16_ppet8_ru3_ru0, ru, nssm1) \
 	((ppet16_ppet8_ru3_ru0[nssm1] >> (((ru-1)%4)*6+3))&7)
 
 typedef struct _wmi_ppe_threshold {
@@ -5563,6 +5564,46 @@ typedef enum {
 	WMI_VDEV_PARAM_RX_FILTER,
 	/* vdev-specific mgmt tx power in dBm units (signed integer value) */
 	WMI_VDEV_PARAM_MGMT_TX_POWER,
+
+	/*
+	 * === ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
+	 * The below vdev param types are used for prototyping, and are
+	 * prone to change.
+	 */
+	WMI_VDEV_PARAM_PROTOTYPE = 0x8000,
+	/* 11AX SPECIFIC defines */
+	WMI_VDEV_PARAM_BSS_COLOR,
+	/* In case of AP this will enable / disable MU-MIMO mode */
+	WMI_VDEV_PARAM_SET_UL_MU_MIMO,
+	/*
+	 * set fragmentation level of the vdev's peers.
+	 * Values can be WMI_HE_FRAG_SUPPORT_LEVEL0..WMI_HE_FRAG_SUPPORT_LEVEL3
+	 */
+	WMI_VDEV_PARAM_SET_FRAG_LEVEL,
+	/*
+	 * control different features of HEControl:
+	 *     Bit 0:- 1/0-> Enable/Disable transmssion of UL scheduling.
+	 *     Bit 1:- 1/0-> Enable / disable honoring of ROMI from a peer.
+	 *                   Applicable in AP mode only.
+	 */
+	WMI_VDEV_PARAM_SET_HECONTROL,
+	/*
+	 * enable / disable trigger access for a AP vdev's peers.
+	 * For a STA mode vdev this will enable/disable triggered access
+	 * and enable/disable Multi User mode of operation.
+	 */
+	WMI_VDEV_PARAM_SET_HEMU_MODE,
+	/*
+	 * For Tx OFDMA this will set values of CP length or guard interval
+	 * to be
+	 *     0: Auto
+	 *     1: 0.8 us
+	 *     2: 1.6 us
+	 *     3: 3.2 us
+	 * Similar to Guard Interval
+	 */
+	WMI_VDEV_PARAM_TX_OFDMA_CPLEN,
+	/*=== END VDEV_PARAM_PROTOTYPE SECTION ===*/
 } WMI_VDEV_PARAM;
 
 /* vdev capabilities bit mask */
@@ -8526,11 +8567,16 @@ typedef struct {
 	A_UINT32 pattern_type;
 } WMI_WOW_DEL_PATTERN_CMD_fixed_param;
 
+#define WMI_WOW_MAX_EVENT_BM_LEN 4
+
 typedef struct {
 	A_UINT32 tlv_header;            /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_WOW_ADD_DEL_EVT_CMD_fixed_param  */
 	A_UINT32 vdev_id;
 	A_UINT32 is_add;
-	A_UINT32 event_bitmap;
+	union {
+		A_UINT32 event_bitmap;
+		A_UINT32 event_bitmaps[WMI_WOW_MAX_EVENT_BM_LEN];
+	};
 } WMI_WOW_ADD_DEL_EVT_CMD_fixed_param;
 
 /*
@@ -9802,6 +9848,11 @@ enum wmm_ac_downgrade_policy {
 	WMM_AC_DOWNGRADE_INVALID,
 };
 
+/* WMM EDCA Params type */
+#define WMM_PARAM_TYPE_LEGACY        0
+/* Relaxed EDCA parameters for 11ax to be used in case of triggered access */
+#define WMM_PARAM_TYPE_11AX_EDCA     1
+
 typedef struct {
 	A_UINT32 tlv_header;
 	A_UINT32 cwmin;
@@ -9816,6 +9867,7 @@ typedef struct {
 	A_UINT32 tlv_header;
 	A_UINT32 vdev_id;
 	wmi_wmm_vparams wmm_params[4];          /* 0 be, 1 bk, 2 vi, 3 vo */
+	A_UINT32 wmm_param_type; /* see WMM_PARAM_TYPE_xxx defs */
 } wmi_vdev_set_wmm_params_cmd_fixed_param;
 
 typedef struct {
@@ -14501,7 +14553,7 @@ typedef struct {
 } wmi_roam_configure_mawc_cmd_fixed_param;
 
 #define WMI_PACKET_FILTER_COMPARE_DATA_LEN_DWORD     2
-#define WMI_PACKET_FILTER_MAX_CMP_PER_PACKET_FILTER  10
+#define WMI_PACKET_FILTER_MAX_CMP_PER_PACKET_FILTER  5
 
 typedef enum {
 	PACKET_FILTER_TYPE_INVALID = 0,
@@ -14573,6 +14625,13 @@ typedef struct {
 	A_UINT32  num_params; /* how many entries in paramsData are valid */
 	A_UINT32  coalesce_time; /* not currently used - fill with 0x0 */
 	WMI_PACKET_FILTER_PARAMS_TYPE  paramsData[WMI_PACKET_FILTER_MAX_CMP_PER_PACKET_FILTER];
+	/*
+	 * deprecated0:
+	 * This field simply provides filler space to retain the
+	 * original message format while reducing
+	 * WMI_PACKET_FILTER_MAX_CMP_PER_PACKET_FILTER from 10 to 5.
+	 */
+	WMI_PACKET_FILTER_PARAMS_TYPE  deprecated0[5];
 } WMI_PACKET_FILTER_CONFIG_CMD_fixed_param;
 
 /* enable / disable all filters within the specified vdev */
