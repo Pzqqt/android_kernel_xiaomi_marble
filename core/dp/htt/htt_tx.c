@@ -1138,12 +1138,16 @@ htt_tx_desc_fill_tso_info(htt_pdev_handle pdev, void *desc,
 	word += 6;
 
 	for (i = 0; i < tso_seg->seg.num_frags; i++) {
+		uint32_t lo = 0;
+		uint32_t hi = 0;
+		qdf_dmaaddr_to_32s(tso_seg->seg.tso_frags[i].paddr,
+						&lo, &hi);
 		/* [31:0] first 32 bits of the buffer pointer  */
-		*word = tso_seg->seg.tso_frags[i].paddr_low_32;
+		*word = lo;
 		word++;
 		/* [15:0] the upper 16 bits of the first buffer pointer */
 		/* [31:16] length of the first buffer */
-		*word = (tso_seg->seg.tso_frags[i].length << 16);
+		*word = (tso_seg->seg.tso_frags[i].length << 16) | hi;
 		word++;
 	}
 

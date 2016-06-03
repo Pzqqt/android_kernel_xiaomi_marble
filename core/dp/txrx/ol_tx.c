@@ -272,7 +272,7 @@ qdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 			if (msdu_info.tso_info.curr_seg)
 				QDF_NBUF_CB_PADDR(msdu) =
 					msdu_info.tso_info.curr_seg->
-					seg.tso_frags[0].paddr_low_32;
+					seg.tso_frags[0].paddr;
 
 			segments--;
 
@@ -541,7 +541,7 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 
 			if (msdu_info.tso_info.curr_seg)
 				QDF_NBUF_CB_PADDR(msdu) = msdu_info.tso_info.
-					curr_seg->seg.tso_frags[0].paddr_low_32;
+					curr_seg->seg.tso_frags[0].paddr;
 
 			segments--;
 
