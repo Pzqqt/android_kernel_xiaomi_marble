@@ -1494,7 +1494,7 @@ QDF_STATUS __qdf_nbuf_map_nbytes_single(
 {
 	qdf_dma_addr_t paddr;
 
-	QDF_NBUF_CB_PADDR(buf) = paddr = (uint32_t) buf->data;
+	QDF_NBUF_CB_PADDR(buf) = paddr = buf->data;
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(__qdf_nbuf_map_nbytes_single);
@@ -1723,7 +1723,7 @@ QDF_STATUS __qdf_nbuf_frag_map(
 {
 	int32_t paddr, frag_len;
 
-	QDF_NBUF_CB_PADDR(nbuf) = paddr = (int32_t) nbuf->data;
+	QDF_NBUF_CB_PADDR(nbuf) = paddr = nbuf->data;
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(__qdf_nbuf_frag_map);
@@ -1732,7 +1732,7 @@ QDF_STATUS __qdf_nbuf_frag_map(
 	qdf_device_t osdev, __qdf_nbuf_t nbuf,
 	int offset, qdf_dma_dir_t dir, int cur_frag)
 {
-	int32_t paddr, frag_len;
+	dma_addr_t paddr, frag_len;
 
 	struct skb_shared_info *sh = skb_shinfo(nbuf);
 	const skb_frag_t *frag = sh->frags + cur_frag;
