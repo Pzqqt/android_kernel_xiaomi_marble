@@ -1932,7 +1932,6 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		/* Unwanted messages */
-		/* Log error */
 		lim_log(mac_ctx, LOGE,
 			FL("Discarding unexpected message received %X"),
 			msg->type);

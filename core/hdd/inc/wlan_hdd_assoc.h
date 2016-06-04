@@ -278,4 +278,8 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter_s *adapter,
 
 bool hdd_save_peer(hdd_station_ctx_t *sta_ctx, uint8_t sta_id,
 		   struct qdf_mac_addr *peer_mac_addr);
+void hdd_delete_peer(hdd_station_ctx_t *sta_ctx, uint8_t sta_id);
+int hdd_get_peer_idx(hdd_station_ctx_t *sta_ctx, struct qdf_mac_addr *addr);
+QDF_STATUS hdd_roam_deregister_sta(hdd_adapter_t *adapter, uint8_t sta_id);
+
 #endif

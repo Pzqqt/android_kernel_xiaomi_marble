@@ -991,8 +991,7 @@ static void hdd_conn_remove_connect_info(hdd_station_ctx_t *pHddStaCtx)
  *
  * Return: QDF_STATUS enumeration
  */
-static QDF_STATUS
-hdd_roam_deregister_sta(hdd_adapter_t *pAdapter, uint8_t staId)
+QDF_STATUS hdd_roam_deregister_sta(hdd_adapter_t *pAdapter, uint8_t staId)
 {
 	QDF_STATUS qdf_status;
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
@@ -2578,6 +2577,27 @@ bool hdd_save_peer(hdd_station_ctx_t *sta_ctx, uint8_t sta_id,
 		}
 	}
 	return false;
+}
+
+/**
+ * hdd_delete_peer() - removes peer from hdd station context peer table
+ * @sta_ctx: pointer to hdd station context
+ * @sta_id: station ID
+ *
+ * Return: None
+ */
+void hdd_delete_peer(hdd_station_ctx_t *sta_ctx, uint8_t sta_id)
+{
+	int i;
+
+	for (i = 0; i < SIR_MAX_NUM_STA_IN_IBSS; i++) {
+		if (sta_id == sta_ctx->conn_info.staId[i]) {
+			sta_ctx->conn_info.staId[i] = 0;
+			return;
+		}
+	}
+
+	hdd_err(FL("sta_id %d is not present in peer table"), sta_id);
 }
 
 /**

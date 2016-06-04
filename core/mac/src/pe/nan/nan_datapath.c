@@ -217,18 +217,195 @@ responder_rsp:
 }
 
 /**
- * lim_ndp_delete_peers() - Delete peers if needed
+ * lim_ndp_delete_peers() - Delete NAN data peers
  * @mac_ctx: handle to mac context
- * @ndp_map: peer map of returning ndp end rsp
- * @num_peers: number of peers remaining after ndp end
+ * @ndp_map: NDP instance/peer map
+ * @num_peers: number of peers entries in peer_map
  * This function deletes a peer if there are no active NDPs left with that peer
  *
  * Return: None
  */
 static void lim_ndp_delete_peers(tpAniSirGlobal mac_ctx,
-				 struct peer_ndp_map *ndp_map,
-				 uint8_t num_peers)
+				struct peer_ndp_map *ndp_map, uint8_t num_peers)
 {
+	tpDphHashNode sta_ds = NULL;
+	uint16_t deleted_num = 0;
+	int i, j;
+	tpPESession session;
+	struct qdf_mac_addr *deleted_peers;
+	uint16_t peer_idx;
+	bool found;
+
+	deleted_peers = qdf_mem_malloc(num_peers * sizeof(*deleted_peers));
+	if (!deleted_peers) {
+		lim_log(mac_ctx, LOGE, FL("Memory allocation failed"));
+		return;
+	}
+
+	qdf_mem_zero(deleted_peers, num_peers * sizeof(*deleted_peers));
+	for (i = 0; i < num_peers; i++) {
+		lim_log(mac_ctx, LOG1,
+			FL("ndp_map[%d]: MAC: " MAC_ADDRESS_STR " num_active %d"),
+			i,
+			MAC_ADDR_ARRAY(ndp_map[i].peer_ndi_mac_addr.bytes),
+			ndp_map[i].num_active_ndp_sessions);
+
+		/* Do not delete a peer with active NDPs */
+		if (ndp_map[i].num_active_ndp_sessions > 0)
+			continue;
+
+		session = pe_find_session_by_sme_session_id(mac_ctx,
+						ndp_map[i].vdev_id);
+		if (!session || (session->bssType != eSIR_NDI_MODE)) {
+			lim_log(mac_ctx, LOGE,
+				FL("PE session is NULL or non-NDI for sme session %d"),
+				ndp_map[i].vdev_id);
+			continue;
+		}
+
+		/* Check if this peer is already in the deleted list */
+		found = false;
+		for (j = 0; j < deleted_num && !found; j++) {
+			if (qdf_mem_cmp(
+				&deleted_peers[j].bytes,
+				&ndp_map[i].peer_ndi_mac_addr.bytes,
+				QDF_MAC_ADDR_SIZE)) {
+				found = true;
+				break;
+			}
+		}
+		if (found)
+			continue;
+
+		sta_ds = dph_lookup_hash_entry(mac_ctx,
+				ndp_map[i].peer_ndi_mac_addr.bytes,
+				&peer_idx, &session->dph.dphHashTable);
+		if (!sta_ds) {
+			lim_log(mac_ctx, LOGE, FL("Unknown NDI Peer"));
+			continue;
+		}
+		if (sta_ds->staType != STA_ENTRY_NDI_PEER) {
+			lim_log(mac_ctx, LOGE,
+				FL("Non-NDI Peer ignored"));
+			continue;
+		}
+		/*
+		 * Call lim_del_sta() with response required set true.
+		 * Hence DphHashEntry will be deleted after receiving
+		 * that response.
+		 */
+		lim_del_sta(mac_ctx, sta_ds, true, session);
+		qdf_copy_macaddr(&deleted_peers[deleted_num++],
+			&ndp_map[i].peer_ndi_mac_addr);
+	}
+	qdf_mem_free(deleted_peers);
+}
+
+/**
+ * lim_ndp_end_indication_handler() - Handler for NDP end indication
+ * @mac_ctx: handle to mac context
+ * @ind_buf: pointer to indication buffer
+ *
+ * It deletes peers from ndp_map. Response of that operation goes
+ * to LIM and HDD. But peer information does not go to service layer.
+ * ndp_id_list is sent to service layer; it is not interpreted by the
+ * driver.
+ *
+ * Return: QDF_STATUS_SUCCESS on success; error number otherwise
+ */
+static QDF_STATUS lim_ndp_end_indication_handler(tpAniSirGlobal mac_ctx,
+					uint32_t *ind_buf)
+{
+
+	struct ndp_end_indication_event *ndp_event_buf =
+		(struct ndp_end_indication_event *)ind_buf;
+	int buf_size;
+
+	if (!ind_buf) {
+		lim_log(mac_ctx, LOGE, FL("NDP end indication buffer is NULL"));
+		return QDF_STATUS_E_INVAL;
+	}
+	lim_ndp_delete_peers(mac_ctx, ndp_event_buf->ndp_map,
+			ndp_event_buf->num_ndp_ids);
+
+	buf_size = sizeof(*ndp_event_buf) + ndp_event_buf->num_ndp_ids *
+			sizeof(ndp_event_buf->ndp_map[0]);
+	lim_send_ndp_event_to_sme(mac_ctx, eWNI_SME_NDP_END_IND,
+		ndp_event_buf, buf_size, false);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * lim_process_ndi_del_sta_rsp() - Handle WDA_DELETE_STA_RSP in eLIM_NDI_ROLE
+ * @mac_ctx: Global MAC context
+ * @lim_msg: LIM message
+ * @pe_session: PE session
+ *
+ * Return: None
+ */
+void lim_process_ndi_del_sta_rsp(tpAniSirGlobal mac_ctx, tpSirMsgQ lim_msg,
+						tpPESession pe_session)
+{
+	tpDeleteStaParams del_sta_params = (tpDeleteStaParams) lim_msg->bodyptr;
+	tpDphHashNode sta_ds;
+	tSirResultCodes status = eSIR_SME_SUCCESS;
+	struct sme_ndp_peer_ind peer_ind;
+
+	if (!del_sta_params) {
+		lim_log(mac_ctx, LOGE,
+			FL("del_sta_params is NULL"));
+		return;
+	}
+	if (!LIM_IS_NDI_ROLE(pe_session)) {
+		lim_log(mac_ctx, LOGE,
+		FL("Session %d is not NDI role"), del_sta_params->assocId);
+		status = eSIR_SME_REFUSED;
+		goto skip_event;
+	}
+
+	sta_ds = dph_get_hash_entry(mac_ctx, del_sta_params->assocId,
+			&pe_session->dph.dphHashTable);
+	if (!sta_ds) {
+		lim_log(mac_ctx, LOGE,
+			FL("DPH Entry for STA %X is missing."),
+			del_sta_params->assocId);
+		status = eSIR_SME_REFUSED;
+		goto skip_event;
+	}
+
+	if (QDF_STATUS_SUCCESS != del_sta_params->status) {
+		lim_log(mac_ctx, LOGE, FL("DEL STA failed!"));
+		status = eSIR_SME_REFUSED;
+		goto skip_event;
+	}
+	lim_log(mac_ctx, LOG1,
+		FL("Deleted STA AssocID %d staId %d MAC " MAC_ADDRESS_STR),
+		sta_ds->assocId, sta_ds->staIndex,
+		MAC_ADDR_ARRAY(sta_ds->staAddr));
+
+	/*
+	 * Copy peer info in del peer indication before
+	 * lim_delete_dph_hash_entry is called as this will be lost.
+	 */
+	peer_ind.msg_len = sizeof(peer_ind);
+	peer_ind.msg_type = eWNI_SME_NDP_PEER_DEPARTED_IND;
+	peer_ind.session_id = pe_session->smeSessionId;
+	peer_ind.sta_id = sta_ds->staIndex;
+	qdf_mem_copy(&peer_ind.peer_mac_addr.bytes,
+		sta_ds->staAddr, sizeof(tSirMacAddr));
+
+	lim_release_peer_idx(mac_ctx, sta_ds->assocId, pe_session);
+	lim_delete_dph_hash_entry(mac_ctx, sta_ds->staAddr, sta_ds->assocId,
+			pe_session);
+	pe_session->limMlmState = eLIM_MLM_IDLE_STATE;
+
+	lim_send_ndp_event_to_sme(mac_ctx, eWNI_SME_NDP_PEER_DEPARTED_IND,
+				&peer_ind, sizeof(peer_ind), false);
+
+skip_event:
+	qdf_mem_free(del_sta_params);
+	lim_msg->bodyptr = NULL;
 }
 
 /**
@@ -278,6 +455,9 @@ QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx, cds_msg_t *msg)
 				msg->bodyptr, rsp_len, msg->bodyval);
 		break;
 	}
+	case SIR_HAL_NDP_END_IND:
+		status = lim_ndp_end_indication_handler(mac_ctx, msg->bodyptr);
+		break;
 	default:
 		lim_log(mac_ctx, LOGE,
 			FL("Unhandled NDP event: %d"), msg->type);

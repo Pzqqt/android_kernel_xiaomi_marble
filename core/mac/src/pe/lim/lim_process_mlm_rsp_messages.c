@@ -1849,6 +1849,10 @@ void lim_process_mlm_del_sta_rsp(tpAniSirGlobal mac_ctx,
 				session_entry);
 		return;
 	}
+	if (LIM_IS_NDI_ROLE(session_entry)) {
+		lim_process_ndi_del_sta_rsp(mac_ctx, msg, session_entry);
+		return;
+	}
 	lim_process_sta_mlm_del_sta_rsp(mac_ctx, msg, session_entry);
 }
 

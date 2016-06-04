@@ -3019,6 +3019,8 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 	case eWNI_SME_NDP_INDICATION:
 	case eWNI_SME_NDP_RESPONDER_RSP:
 	case eWNI_SME_NDP_END_RSP:
+	case eWNI_SME_NDP_END_IND:
+	case eWNI_SME_NDP_PEER_DEPARTED_IND:
 		sme_ndp_msg_processor(pMac, pMsg);
 		break;
 	default:

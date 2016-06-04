@@ -4112,6 +4112,8 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 		oper_mode = BSS_OPERATIONAL_MODE_IBSS;
 		WMA_LOGD("%s: to delete sta for IBSS mode", __func__);
 	}
+	if (del_sta->staType == STA_ENTRY_NDI_PEER)
+		oper_mode = BSS_OPERATIONAL_MODE_NDI;
 
 	switch (oper_mode) {
 	case BSS_OPERATIONAL_MODE_STA:
@@ -4137,6 +4139,9 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 				 del_sta->smesessionId, del_sta->status);
 			qdf_mem_free(del_sta);
 		}
+		break;
+	case BSS_OPERATIONAL_MODE_NDI:
+		wma_delete_sta_req_ndi_mode(wma, del_sta);
 		break;
 	}
 

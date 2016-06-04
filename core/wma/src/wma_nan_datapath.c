@@ -654,7 +654,69 @@ send_ndp_end_rsp:
 static int wma_ndp_end_indication_event_handler(void *handle,
 					uint8_t *event_info, uint32_t len)
 {
-	return 0;
+	tp_wma_handle wma_handle = handle;
+	WMI_NDP_END_INDICATION_EVENTID_param_tlvs *event;
+	wmi_ndp_end_indication *ind;
+	cds_msg_t pe_msg;
+	struct ndp_end_indication_event *ndp_event_buf;
+	int i, ret, buf_size;
+	struct qdf_mac_addr peer_addr;
+
+	event = (WMI_NDP_END_INDICATION_EVENTID_param_tlvs *) event_info;
+
+	if (event->num_ndp_end_indication_list == 0) {
+		WMA_LOGE(
+			FL("Error: Event ignored, 0 ndp instances"));
+		return -EINVAL;
+	}
+
+	WMA_LOGD(FL("number of ndp instances = %d"),
+		event->num_ndp_end_indication_list);
+
+	buf_size = sizeof(*ndp_event_buf) + event->num_ndp_end_indication_list *
+			sizeof(ndp_event_buf->ndp_map[0]);
+	ndp_event_buf = qdf_mem_malloc(buf_size);
+	if (!ndp_event_buf) {
+		WMA_LOGP(FL("Failed to allocate memory"));
+		return -ENOMEM;
+	}
+	qdf_mem_zero(ndp_event_buf, buf_size);
+	ndp_event_buf->num_ndp_ids = event->num_ndp_end_indication_list;
+
+	ind = event->ndp_end_indication_list;
+	for (i = 0; i < ndp_event_buf->num_ndp_ids; i++) {
+		WMI_MAC_ADDR_TO_CHAR_ARRAY(
+			&ind[i].peer_ndi_mac_addr,
+			peer_addr.bytes);
+		WMA_LOGD(
+			FL("ind[%d]: type %d, reason_code %d, instance_id %d num_active %d MAC: " MAC_ADDRESS_STR),
+			i,
+			ind[i].type,
+			ind[i].reason_code,
+			ind[i].ndp_instance_id,
+			ind[i].num_active_ndps_on_peer,
+			MAC_ADDR_ARRAY(peer_addr.bytes));
+
+		/* Add each instance entry to the list */
+		ndp_event_buf->ndp_map[i].ndp_instance_id =
+			ind[i].ndp_instance_id;
+		ndp_event_buf->ndp_map[i].vdev_id = ind[i].vdev_id;
+		WMI_MAC_ADDR_TO_CHAR_ARRAY(&ind[i].peer_ndi_mac_addr,
+			ndp_event_buf->ndp_map[i].peer_ndi_mac_addr.bytes);
+		ndp_event_buf->ndp_map[i].num_active_ndp_sessions =
+			ind[i].num_active_ndps_on_peer;
+		ndp_event_buf->ndp_map[i].type = ind[i].type;
+		ndp_event_buf->ndp_map[i].reason_code =
+			ind[i].reason_code;
+	}
+
+	pe_msg.type = SIR_HAL_NDP_END_IND;
+	pe_msg.bodyptr = ndp_event_buf;
+	pe_msg.bodyval = 0;
+	ret = wma_handle->pe_ndp_event_handler(wma_handle->mac_context,
+						&pe_msg);
+	qdf_mem_free(ndp_event_buf);
+	return ret;
 }
 
 /**
@@ -1173,3 +1235,47 @@ send_rsp:
 		 add_sta->staMac, add_sta->status);
 	wma_send_msg(wma, WMA_ADD_STA_RSP, (void *)add_sta, 0);
 }
+
+/**
+ * wma_delete_sta_req_ndi_mode() - Process DEL_STA request for NDI data peer
+ * @wma: WMA context
+ * @del_sta: DEL_STA parameters from LIM
+ *
+ * Removes wma/txrx peer entry for the NDI STA
+ *
+ * Return: None
+ */
+void wma_delete_sta_req_ndi_mode(tp_wma_handle wma,
+					tpDeleteStaParams del_sta)
+{
+	ol_txrx_pdev_handle pdev;
+	struct ol_txrx_peer_t *peer;
+
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if (!pdev) {
+		WMA_LOGE(FL("Failed to get pdev"));
+		del_sta->status = QDF_STATUS_E_FAILURE;
+		goto send_del_rsp;
+	}
+
+	peer = ol_txrx_peer_find_by_local_id(pdev, del_sta->staIdx);
+	if (!peer) {
+		WMA_LOGE(FL("Failed to get peer handle using peer id %d"),
+			 del_sta->staIdx);
+		del_sta->status = QDF_STATUS_E_FAILURE;
+		goto send_del_rsp;
+	}
+
+	wma_remove_peer(wma, peer->mac_addr.raw, del_sta->smesessionId, peer,
+			false);
+	del_sta->status = QDF_STATUS_SUCCESS;
+
+send_del_rsp:
+	if (del_sta->respReqd) {
+		WMA_LOGD(FL("Sending del rsp to umac (status: %d)"),
+				del_sta->status);
+		wma_send_msg(wma, WMA_DELETE_STA_RSP, del_sta, 0);
+	}
+}
+

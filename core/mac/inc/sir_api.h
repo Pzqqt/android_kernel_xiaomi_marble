@@ -5918,6 +5918,32 @@ enum ndp_response_code {
 };
 
 /**
+ * enum ndp_end_type - NDP end type
+ * @NDP_END_TYPE_UNSPECIFIED: type is unspecified
+ * @NDP_END_TYPE_PEER_UNAVAILABLE: type is peer unavailable
+ * @NDP_END_TYPE_OTA_FRAME: NDP end frame received from peer
+ *
+ */
+enum ndp_end_type {
+	NDP_END_TYPE_UNSPECIFIED = 0x00,
+	NDP_END_TYPE_PEER_UNAVAILABLE = 0x01,
+	NDP_END_TYPE_OTA_FRAME = 0x02,
+};
+
+/**
+ * enum ndp_end_reason_code - NDP end reason code
+ * @NDP_END_REASON_UNSPECIFIED: reason is unspecified
+ * @NDP_END_REASON_INACTIVITY: reason is peer inactivity
+ * @NDP_END_REASON_PEER_DATA_END: data end indication received from peer
+ *
+ */
+enum ndp_end_reason_code {
+	NDP_END_REASON_UNSPECIFIED = 0x00,
+	NDP_END_REASON_INACTIVITY = 0x01,
+	NDP_END_REASON_PEER_DATA_END = 0x02,
+};
+
+/**
  * struct ndp_cfg - ndp configuration
  * @tag: unique identifier
  * @ndp_cfg_len: ndp configuration length
@@ -6142,12 +6168,18 @@ struct ndp_end_req {
  * @vdev_id: session id of the interface over which ndp is being created
  * @peer_ndi_mac_addr: peer NDI mac address
  * @num_active_ndp_sessions: number of active NDP sessions on the peer
+ * @type: NDP end indication type
+ * @reason_code: NDP end indication reason code
+ * @ndp_instance_id: NDP instance ID
  *
  */
 struct peer_ndp_map {
 	uint32_t vdev_id;
 	struct qdf_mac_addr peer_ndi_mac_addr;
 	uint32_t num_active_ndp_sessions;
+	enum ndp_end_type type;
+	enum ndp_end_reason_code reason_code;
+	uint32_t ndp_instance_id;
 };
 
 /**
@@ -6171,16 +6203,12 @@ struct ndp_end_rsp_event {
 
 /**
  * struct ndp_end_indication_event - ndp termination notification from FW
- * @vdev_id: session id of the interface over which ndp is being created
- * @reason: reason code for failure if any
- * @status: status of the request
- * @ndp_map: mapping of NDP instances to peer to VDEV
+ * @num_ndp_ids: number of NDP ids
+ * @ndp_map: mapping of NDP instances to peer and vdev
  *
  */
 struct ndp_end_indication_event {
-	uint32_t vdev_id;
-	uint32_t status;
-	uint32_t reason;
+	uint32_t num_ndp_ids;
 	struct peer_ndp_map ndp_map[];
 };
 

@@ -60,6 +60,8 @@ void wma_add_bss_ndi_mode(tp_wma_handle wma, tpAddBssParams add_bss);
 void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta);
 QDF_STATUS wma_handle_ndp_initiator_req(tp_wma_handle wma_handle, void *req);
 QDF_STATUS wma_handle_ndp_end_req(tp_wma_handle wma_handle, void *req);
+void wma_delete_sta_req_ndi_mode(tp_wma_handle wma,
+					tpDeleteStaParams del_sta);
 #else
 #define WMA_IS_VDEV_IN_NDI_MODE(intf, vdev_id) (false)
 static inline void wma_update_hdd_cfg_ndp(tp_wma_handle wma_handle,
@@ -101,6 +103,10 @@ static inline QDF_STATUS wma_handle_ndp_end_req(tp_wma_handle wma_handle,
 						void *req)
 {
 	return QDF_STATUS_SUCCESS;
+}
+static inline void wma_delete_sta_req_ndi_mode(tp_wma_handle wma,
+					tpDeleteStaParams del_sta)
+{
 }
 
 #endif /* WLAN_FEATURE_NAN_DATAPATH */

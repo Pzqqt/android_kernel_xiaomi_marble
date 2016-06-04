@@ -1151,16 +1151,33 @@ static void hdd_ndp_new_peer_ind_handler(hdd_adapter_t *adapter,
 }
 
 /**
- * hdd_ndp_peer_departed_ind_handler() - NDP peer departed indication handler
+ * hdd_ndp_peer_departed_ind_handler() - Handle NDP peer departed indication
  * @adapter: pointer to adapter context
  * @ind_params: indication parameters
  *
  * Return: none
  */
-static void hdd_ndp_peer_departed_ind_handler(
-				hdd_adapter_t *adapter, void *ind_params)
+static void hdd_ndp_peer_departed_ind_handler(hdd_adapter_t *adapter,
+							void *ind_params)
 {
-	return;
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct sme_ndp_peer_ind *peer_ind = ind_params;
+	struct nan_datapath_ctx *ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(adapter);
+	hdd_station_ctx_t *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+	hdd_roam_deregister_sta(adapter, peer_ind->sta_id);
+	hdd_delete_peer(sta_ctx, peer_ind->sta_id);
+	hdd_ctx->sta_to_adapter[peer_ind->sta_id] = 0;
+
+	if (--ndp_ctx->active_ndp_peers == 0) {
+		hddLog(LOG1, FL("No more ndp peers."));
+		sta_ctx->conn_info.connState = eConnectionState_NdiDisconnected;
+		hdd_conn_set_connection_state(adapter,
+			eConnectionState_NdiDisconnected);
+		hddLog(LOG1, FL("Stop netif tx queues."));
+		wlan_hdd_netif_queue_control(adapter, WLAN_STOP_ALL_NETIF_QUEUE,
+					     WLAN_CONTROL_PATH);
+	}
 }
 
 /**
@@ -1595,12 +1612,96 @@ ndp_end_rsp_nla_failed:
  * @adapter: pointer to adapter context
  * @ind_params: indication parameters
  *
+ * Following vendor event is sent to cfg80211:
+ * QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD =
+ *         QCA_WLAN_VENDOR_ATTR_NDP_END_IND (4 bytes)
+ * QCA_WLAN_VENDOR_ATTR_NDP_NUM_INSTANCE_ID (1 byte)
+ * QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID_ARRAY (4 * num of NDP Instances)
+ *
  * Return: none
  */
 static void hdd_ndp_end_ind_handler(hdd_adapter_t *adapter,
 						void *ind_params)
 {
+	struct sk_buff *vendor_event;
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct ndp_end_indication_event *end_ind = ind_params;
+	uint32_t data_len, i;
+	struct nan_datapath_ctx *ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(adapter);
+	hdd_station_ctx_t *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	uint32_t *ndp_instance_array;
+
+	ENTER();
+
+	if (!end_ind) {
+		hdd_err(FL("Invalid ndp end indication"));
+		return;
+	}
+
+	if (0 != wlan_hdd_validate_context(hdd_ctx))
+		return;
+
+	ndp_instance_array = qdf_mem_malloc(end_ind->num_ndp_ids *
+		sizeof(*ndp_instance_array));
+	if (!ndp_instance_array) {
+		hdd_err("Failed to allocate ndp_instance_array");
+		return;
+	}
+	for (i = 0; i < end_ind->num_ndp_ids; i++) {
+		int idx;
+
+		ndp_instance_array[i] = end_ind->ndp_map[i].ndp_instance_id;
+		ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(
+				hdd_get_adapter_by_vdev(hdd_ctx,
+					end_ind->ndp_map[i].vdev_id));
+		idx = hdd_get_peer_idx(sta_ctx,
+				&end_ind->ndp_map[i].peer_ndi_mac_addr);
+		if (idx == INVALID_PEER_IDX) {
+			hddLog(LOGE,
+				FL("can't find addr: %pM in sta_ctx."),
+				&end_ind->ndp_map[i].peer_ndi_mac_addr);
+			continue;
+		}
+		/* save the value of active sessions on each peer */
+		ndp_ctx->active_ndp_sessions[idx] =
+			end_ind->ndp_map[i].num_active_ndp_sessions;
+	}
+
+	data_len = (sizeof(uint32_t)) +
+			sizeof(uint8_t) + NLMSG_HDRLEN + (2 * NLA_HDRLEN) +
+			end_ind->num_ndp_ids * sizeof(*ndp_instance_array);
+
+	vendor_event = cfg80211_vendor_event_alloc(hdd_ctx->wiphy, NULL,
+				data_len, QCA_NL80211_VENDOR_SUBCMD_NDP_INDEX,
+				GFP_KERNEL);
+	if (!vendor_event) {
+		hdd_err(FL("cfg80211_vendor_event_alloc failed"));
+		return;
+	}
+
+	if (nla_put_u32(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD,
+			QCA_WLAN_VENDOR_ATTR_NDP_END_IND))
+		goto ndp_end_ind_nla_failed;
+
+	if (nla_put_u8(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_NUM_INSTANCE_ID,
+			end_ind->num_ndp_ids))
+		goto ndp_end_ind_nla_failed;
+
+	if (nla_put(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID_ARRAY,
+			end_ind->num_ndp_ids * sizeof(*ndp_instance_array),
+			ndp_instance_array))
+		goto ndp_end_ind_nla_failed;
+
+	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
+	qdf_mem_free(ndp_instance_array);
+	EXIT();
 	return;
+
+ndp_end_ind_nla_failed:
+	hdd_err(FL("nla_put api failed"));
+	kfree_skb(vendor_event);
+	qdf_mem_free(ndp_instance_array);
+	EXIT();
 }
 
 /**
@@ -1674,7 +1775,7 @@ void hdd_ndp_event_handler(hdd_adapter_t *adapter,
 			break;
 		case eCSR_ROAM_RESULT_NDP_END_IND:
 			hdd_ndp_end_ind_handler(adapter,
-				&roam_info->ndp.ndp_end_ind_params);
+				roam_info->ndp.ndp_end_ind_params);
 			break;
 		default:
 			hdd_err(FL("Unknown NDP response event from SME %d"),
