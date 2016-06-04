@@ -135,7 +135,8 @@ struct qdf_nbuf_cb {
 			uint32_t tcp_seq_num;
 			uint32_t tcp_ack_num;
 			uint32_t flow_id_toeplitz;
-		} rx; /* 20 bytes */
+			uint32_t map_index;
+		} rx; /* 24 bytes */
 
 		/* Note: MAX: 40 bytes */
 		struct {
