@@ -125,14 +125,20 @@ struct htt_host_rx_desc_base {
 	(HTT_RX_STD_DESC_RESERVATION >> 2)
 
 #define HTT_RX_DESC_ALIGN_MASK 7        /* 8-byte alignment */
+
 #ifdef DEBUG_RX_RING_BUFFER
+#define NBUF_MAP_ID(skb) \
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.map_index)
+
 #define HTT_RX_RING_BUFF_DBG_LIST          1024
 struct rx_buf_debug {
-	uint32_t paddr;
-	void     *vaddr;
+	qdf_dma_addr_t paddr;
+	qdf_nbuf_t     nbuf;
+	void     *nbuf_data;
 	bool     in_use;
 };
 #endif
+
 static inline struct htt_host_rx_desc_base *htt_rx_desc(qdf_nbuf_t msdu)
 {
 	return (struct htt_host_rx_desc_base *)
@@ -531,6 +537,7 @@ static inline int htt_rx_ipa_uc_detach(struct htt_pdev_t *pdev)
 	return 0;
 }
 #endif /* IPA_OFFLOAD */
+
 #ifdef DEBUG_RX_RING_BUFFER
 /**
  * htt_rx_dbg_rxbuf_init() - init debug rx buff list
@@ -549,6 +556,7 @@ void htt_rx_dbg_rxbuf_init(struct htt_pdev_t *pdev)
 		QDF_ASSERT(0);
 	}
 }
+
 /**
  * htt_rx_dbg_rxbuf_set() - set element of rx buff list
  * @pdev: pdev handle
@@ -558,23 +566,22 @@ void htt_rx_dbg_rxbuf_init(struct htt_pdev_t *pdev)
  * Return: none
  */
 static inline
-void htt_rx_dbg_rxbuf_set(struct htt_pdev_t *pdev,
-				uint32_t paddr,
-				qdf_nbuf_t rx_netbuf)
+void htt_rx_dbg_rxbuf_set(struct htt_pdev_t *pdev, qdf_dma_addr_t paddr,
+			  qdf_nbuf_t rx_netbuf)
 {
 	if (pdev->rx_buff_list) {
-		pdev->rx_buff_list[pdev->rx_buff_index].paddr =
-					paddr;
-		pdev->rx_buff_list[pdev->rx_buff_index].in_use =
-					true;
-		pdev->rx_buff_list[pdev->rx_buff_index].vaddr =
-					rx_netbuf;
+		pdev->rx_buff_list[pdev->rx_buff_index].paddr = paddr;
+		pdev->rx_buff_list[pdev->rx_buff_index].in_use = true;
+		pdev->rx_buff_list[pdev->rx_buff_index].nbuf_data =
+							rx_netbuf->data;
+		pdev->rx_buff_list[pdev->rx_buff_index].nbuf = rx_netbuf;
 		NBUF_MAP_ID(rx_netbuf) = pdev->rx_buff_index;
 		if (++pdev->rx_buff_index ==
 				HTT_RX_RING_BUFF_DBG_LIST)
 			pdev->rx_buff_index = 0;
 	}
 }
+
 /**
  * htt_rx_dbg_rxbuf_set() - reset element of rx buff list
  * @pdev: pdev handle
@@ -590,10 +597,7 @@ void htt_rx_dbg_rxbuf_reset(struct htt_pdev_t *pdev,
 	if (pdev->rx_buff_list) {
 		index = NBUF_MAP_ID(netbuf);
 		if (index < HTT_RX_RING_BUFF_DBG_LIST) {
-			pdev->rx_buff_list[index].in_use =
-						false;
-			pdev->rx_buff_list[index].paddr = 0;
-			pdev->rx_buff_list[index].vaddr = NULL;
+			pdev->rx_buff_list[index].in_use = false;
 		}
 	}
 }
