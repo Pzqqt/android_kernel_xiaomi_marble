@@ -372,6 +372,12 @@ void sap_update_unsafe_channel_list(ptSapContext pSapCtx)
 	uint16_t unsafe_channel_count = 0;
 	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
+	if (!qdf_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_FATAL,
+			  "qdf_ctx is NULL");
+		return;
+	}
+
 	/* Flush, default set all channel safe */
 	for (i = 0; i < NUM_CHANNELS; i++) {
 		safe_channels[i].isSafe = true;

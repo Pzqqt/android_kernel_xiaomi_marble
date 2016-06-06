@@ -4458,6 +4458,11 @@ void cds_update_with_safe_channel_list(uint8_t *pcl_channels, uint32_t *len,
 	uint32_t safe_channel_count = 0, current_channel_count = 0;
 	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
+	if (!qdf_ctx) {
+		cds_err("qdf_ctx is NULL");
+		return;
+	}
+
 	if (len) {
 		current_channel_count = QDF_MIN(*len, MAX_NUM_CHAN);
 	} else {

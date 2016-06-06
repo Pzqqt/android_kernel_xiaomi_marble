@@ -229,6 +229,12 @@ static void epping_stop_adapter(epping_adapter_t *pAdapter)
 {
 	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
+	if (!qdf_ctx) {
+		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
+			   "%s: qdf_ctx is NULL\n", __func__);
+		return;
+	}
+
 	if (pAdapter && pAdapter->started) {
 		EPPING_LOG(LOG1, FL("Disabling queues"));
 		netif_tx_disable(pAdapter->dev);
@@ -243,10 +249,16 @@ static int epping_start_adapter(epping_adapter_t *pAdapter)
 {
 	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
+	if (!qdf_ctx) {
+		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
+			   "%s: qdf_ctx is NULL", __func__);
+		return -EINVAL;
+	}
+
 	if (!pAdapter) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: pAdapter= NULL\n", __func__);
-		return -1;
+		return -EINVAL;
 	}
 	if (!pAdapter->started) {
 		pld_request_bus_bandwidth(qdf_ctx->dev,
