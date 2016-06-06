@@ -135,7 +135,9 @@ static QDF_STATUS lim_handle_ndp_indication_event(tpAniSirGlobal mac_ctx,
 		ndp_ind->role, ndp_ind->vdev_id,
 		MAC_ADDR_ARRAY(ndp_ind->peer_mac_addr.bytes));
 
-	if (ndp_ind->role == NDP_ROLE_INITIATOR) {
+	if ((ndp_ind->role == NDP_ROLE_INITIATOR) ||
+	   ((NDP_ROLE_RESPONDER == ndp_ind->role) &&
+	   (NDP_ACCEPT_POLICY_ALL == ndp_ind->policy))) {
 		/* Free config only for INITIATOR role */
 		qdf_mem_free(ndp_ind->ndp_config.ndp_cfg);
 		qdf_mem_free(ndp_ind->ndp_info.ndp_app_info);
@@ -148,17 +150,10 @@ static QDF_STATUS lim_handle_ndp_indication_event(tpAniSirGlobal mac_ctx,
 				ndp_ind->role);
 			goto ndp_indication_failed;
 		}
-	} else if (NDP_ROLE_RESPONDER == ndp_ind->role) {
-		/*
-		 * For RESPONDER role ndp_cfg and app_info sent till HDD
-		 * will be freed in sme.
-		 */
-		if (NDP_ACCEPT_POLICY_ALL != ndp_ind->policy) {
-			lim_send_ndp_event_to_sme(mac_ctx,
-				eWNI_SME_NDP_INDICATION,
-				ndp_ind, sizeof(*ndp_ind), 0);
-		}
 	}
+	if (NDP_ROLE_RESPONDER == ndp_ind->role)
+		lim_send_ndp_event_to_sme(mac_ctx, eWNI_SME_NDP_INDICATION,
+			ndp_ind, sizeof(*ndp_ind), 0);
 	/*
 	 * With NDP indication if peer does not exists already add_sta is
 	 * executed resulting in new peer else no action is taken. Note that
@@ -167,9 +162,18 @@ static QDF_STATUS lim_handle_ndp_indication_event(tpAniSirGlobal mac_ctx,
 	 * used to indicate success of final operation and abscence of it can be
 	 * used by service layer to identify failure.
 	 */
-	return QDF_STATUS_SUCCESS;
 ndp_indication_failed:
-	return QDF_STATUS_E_FAILURE;
+	/*
+	 * Free config if failure or for NDP_ROLE_INITIATOR role
+	 * As for success responder case this info is sent till HDD
+	 * and will be freed in sme.
+	 */
+	if ((status != QDF_STATUS_SUCCESS) ||
+			(NDP_ROLE_INITIATOR == ndp_ind->role)) {
+		qdf_mem_free(ndp_ind->ndp_config.ndp_cfg);
+		qdf_mem_free(ndp_ind->ndp_info.ndp_app_info);
+	}
+	return status;
 }
 
 /**
