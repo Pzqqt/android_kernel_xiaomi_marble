@@ -124,6 +124,11 @@ void sme_ndp_msg_processor(tpAniSirGlobal mac_ctx, cds_msg_t *msg);
 
 QDF_STATUS csr_process_ndp_responder_request(tpAniSirGlobal mac_ctx,
 							tSmeCmd *cmd);
+
+void csr_release_ndp_initiator_req(tpAniSirGlobal mac_ctx, tSmeCmd *cmd);
+void csr_release_ndp_responder_req(tpAniSirGlobal mac_ctx, tSmeCmd *cmd);
+void csr_release_ndp_data_end_req(tpAniSirGlobal mac_ctx, tSmeCmd *cmd);
+
 #else
 
 /* Start NDI BSS */
@@ -188,6 +193,13 @@ static inline QDF_STATUS csr_process_ndp_data_end_request(
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+static inline void csr_release_ndp_initiator_req(tpAniSirGlobal mac_ctx,
+						 tSmeCmd *cmd) {}
+static inline void csr_release_ndp_responder_req(tpAniSirGlobal mac_ctx,
+						 tSmeCmd *cmd) {}
+static inline void csr_release_ndp_data_end_req(tpAniSirGlobal mac_ctx,
+						tSmeCmd *cmd) {}
 
 #endif /* WLAN_FEATURE_NAN_DATAPATH */
 #endif /* __SME_NAN_DATAPATH_H */

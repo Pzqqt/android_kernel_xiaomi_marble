@@ -72,6 +72,7 @@ QDF_STATUS sme_ndp_initiator_req_handler(tHalHandle hal,
 		cmd->u.initiator_req.ndp_info.ndp_app_info =
 			qdf_mem_malloc(req_params->ndp_info.ndp_app_info_len);
 		if (NULL == cmd->u.initiator_req.ndp_info.ndp_app_info) {
+			csr_release_command_roam(mac_ctx, cmd);
 			sme_release_global_lock(&mac_ctx->sme);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -100,11 +101,7 @@ QDF_STATUS sme_ndp_initiator_req_handler(tHalHandle hal,
 	if (QDF_STATUS_SUCCESS != status) {
 		sms_log(mac_ctx, LOGE, FL("SME enqueue failed, status:%d"),
 			status);
-		qdf_mem_free(cmd->u.initiator_req.ndp_info.ndp_app_info);
-		qdf_mem_free(cmd->u.initiator_req.ndp_config.ndp_cfg);
-		cmd->u.initiator_req.ndp_info.ndp_app_info_len = 0;
-		cmd->u.initiator_req.ndp_config.ndp_cfg_len = 0;
-		csr_release_command_roam(mac_ctx, cmd);
+		csr_release_ndp_initiator_req(mac_ctx, cmd);
 	}
 
 	sme_release_global_lock(&mac_ctx->sme);
@@ -184,10 +181,7 @@ QDF_STATUS sme_ndp_responder_req_handler(tHalHandle hal,
 	if (QDF_STATUS_SUCCESS != status) {
 		sms_log(mac_ctx, LOGE,
 			FL("SME enqueue failed, status:%d"), status);
-		qdf_mem_free(cmd->u.responder_req.ndp_info.ndp_app_info);
-		qdf_mem_free(cmd->u.responder_req.ndp_config.ndp_cfg);
-		cmd->u.responder_req.ndp_info.ndp_app_info_len = 0;
-		cmd->u.responder_req.ndp_config.ndp_cfg_len = 0;
+		csr_release_ndp_responder_req(mac_ctx, cmd);
 	}
 	sme_release_global_lock(&mac_ctx->sme);
 	return status;
@@ -243,10 +237,8 @@ QDF_STATUS sme_ndp_end_req_handler(tHalHandle hal, struct ndp_end_req *req)
 	if (QDF_STATUS_SUCCESS != status) {
 		sms_log(mac_ctx, LOGE, FL("SME enqueue failed, status:%d"),
 			status);
-		qdf_mem_free(cmd->u.data_end_req);
-		cmd->u.data_end_req = NULL;
 		ret = QDF_STATUS_E_FAILURE;
-		csr_release_command_roam(mac_ctx, cmd);
+		csr_release_ndp_data_end_req(mac_ctx, cmd);
 	}
 
 	sme_release_global_lock(&mac_ctx->sme);
@@ -761,4 +753,59 @@ void sme_ndp_msg_processor(tpAniSirGlobal mac_ctx, cds_msg_t *msg)
 			sme_release_command(mac_ctx, cmd);
 		sme_process_pending_queue(mac_ctx);
 	}
+}
+
+/**
+ * csr_release_ndp_initiator_req() - free resouces from sme command for ndp
+ * initiator request
+ * @mac_ctx: Global MAC context
+ * @cmd: sme command msg
+ *
+ * Return: None
+ */
+void csr_release_ndp_initiator_req(tpAniSirGlobal mac_ctx, tSmeCmd *cmd)
+{
+	qdf_mem_free(cmd->u.initiator_req.ndp_config.ndp_cfg);
+	cmd->u.initiator_req.ndp_config.ndp_cfg = NULL;
+	cmd->u.initiator_req.ndp_config.ndp_cfg_len = 0;
+	qdf_mem_free(cmd->u.initiator_req.ndp_info.ndp_app_info);
+	cmd->u.initiator_req.ndp_info.ndp_app_info = NULL;
+	cmd->u.initiator_req.ndp_info.ndp_app_info_len = 0;
+	sme_release_command(mac_ctx, cmd);
+}
+
+
+/**
+ * csr_release_ndp_responder_req() - free resouces from sme command for ndp
+ * responder request
+ * @mac_ctx: Global MAC context
+ * @cmd: sme command msg
+ *
+ * Return: None
+ */
+void csr_release_ndp_responder_req(tpAniSirGlobal mac_ctx, tSmeCmd *cmd)
+{
+	qdf_mem_free(cmd->u.responder_req.ndp_config.ndp_cfg);
+	cmd->u.responder_req.ndp_config.ndp_cfg = NULL;
+	cmd->u.responder_req.ndp_config.ndp_cfg_len = 0;
+	qdf_mem_free(cmd->u.responder_req.ndp_info.ndp_app_info);
+	cmd->u.responder_req.ndp_info.ndp_app_info = NULL;
+	cmd->u.responder_req.ndp_info.ndp_app_info_len = 0;
+	sme_release_command(mac_ctx, cmd);
+}
+
+
+/**
+ * csr_release_ndp_data_end_req() - free resouces from sme command for ndp
+ * data end request
+ * @mac_ctx: Global MAC context
+ * @cmd: sme command msg
+ *
+ * Return: None
+ */
+void csr_release_ndp_data_end_req(tpAniSirGlobal mac_ctx, tSmeCmd *cmd)
+{
+	qdf_mem_free(cmd->u.data_end_req);
+	cmd->u.data_end_req = NULL;
+	sme_release_command(mac_ctx, cmd);
 }

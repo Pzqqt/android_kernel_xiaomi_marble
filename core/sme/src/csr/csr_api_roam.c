@@ -1208,6 +1208,18 @@ void csr_abort_command(tpAniSirGlobal pMac, tSmeCmd *pCommand, bool fStopping)
 			csr_release_command_set_key(pMac, pCommand);
 			break;
 
+		case eSmeCommandNdpInitiatorRequest:
+			csr_release_ndp_initiator_req(pMac, pCommand);
+			break;
+
+		case eSmeCommandNdpResponderRequest:
+			csr_release_ndp_responder_req(pMac, pCommand);
+			break;
+
+		case eSmeCommandNdpDataEndInitiatorRequest:
+			csr_release_ndp_data_end_req(pMac, pCommand);
+			break;
+
 		default:
 			sms_log(pMac, LOGW, " CSR abort standard command %d",
 				pCommand->command);
