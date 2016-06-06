@@ -204,14 +204,83 @@ static inline void qdf_sched_work(qdf_handle_t hdl, qdf_work_t *work)
 }
 
 /**
+ * qdf_sched_delayed_work() - Schedule a delayed task
+ * @hdl: OS handle
+ * @work: pointer to delayed work
+ * @delay: delay interval
+ * Return: none
+ */
+static inline void qdf_sched_delayed_work(qdf_handle_t hdl,
+					  qdf_delayed_work_t *work,
+					  uint32_t delay)
+{
+	__qdf_sched_delayed_work(hdl, work, delay);
+}
+
+/**
+ * qdf_cancel_work() - Cancel a work
+ * @hdl: OS handle
+ * @work: pointer to work
+ *
+ * Cancel work and wait for its execution to finish.
+ * This function can be used even if the work re-queues
+ * itself or migrates to another workqueue. On return
+ * from this function, work is guaranteed to be not
+ * pending or executing on any CPU. The caller must
+ * ensure that the workqueue on which work was last
+ * queued can't be destroyed before this function returns.
+ *
+ * Return: true if work was pending, false otherwise
+ */
+static inline bool qdf_cancel_work(qdf_handle_t hdl,
+				   qdf_work_t *work)
+{
+	return __qdf_cancel_work(hdl, work);
+}
+
+/**
+ * qdf_cancel_delayed_work() - Cancel a delayed work
+ * @hdl: OS handle
+ * @work: pointer to delayed work
+ *
+ * This is qdf_cancel_work for delayed works.
+ *
+ * Return: true if work was pending, false otherwise
+ */
+static inline bool qdf_cancel_delayed_work(qdf_handle_t hdl,
+					   qdf_delayed_work_t *work)
+{
+	return __qdf_cancel_delayed_work(hdl, work);
+}
+
+/**
  * qdf_flush_work - Flush a deferred task on non-interrupt context
  * @hdl: OS handle
  * @work: pointer to work
+ *
+ * Wait until work has finished execution. work is guaranteed to be
+ * idle on return if it hasn't been requeued since flush started.
+ *
  * Return: none
  */
 static inline void qdf_flush_work(qdf_handle_t hdl, qdf_work_t *work)
 {
 	__qdf_flush_work(hdl, work);
+}
+
+/**
+ * qdf_flush_delayed_work() - Flush a delayed work
+ * @hdl: OS handle
+ * @work: pointer to delayed work
+ *
+ * This is qdf_flush_work for delayed works.
+ *
+ * Return: none
+ */
+static inline void qdf_flush_delayed_work(qdf_handle_t hdl,
+					  qdf_delayed_work_t *work)
+{
+	__qdf_flush_delayed_work(hdl, work);
 }
 
 /**
@@ -224,7 +293,6 @@ static inline uint32_t qdf_disable_work(qdf_handle_t hdl, qdf_work_t *work)
 {
 	return __qdf_disable_work(hdl, work);
 }
-
 
 /**
  * qdf_destroy_work - destroy the deferred task (synchronous)
