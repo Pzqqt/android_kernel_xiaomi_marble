@@ -718,20 +718,6 @@ static int hdd_ndp_end_req_handler(hdd_context_t *hdd_ctx, struct nlattr **tb)
 }
 
 /**
- * hdd_ndp_schedule_req_handler() - NDP schedule request handler
- * @hdd_ctx: hdd context
- * @tb: parsed NL attribute list
- *
- * Return: 0 on success or error code on failure
- */
-static int hdd_ndp_schedule_req_handler(hdd_context_t *hdd_ctx,
-						struct nlattr **tb)
-{
-	return 0;
-}
-
-
-/**
  * hdd_ndp_iface_create_rsp_handler() - NDP iface create response handler
  * @adapter: pointer to adapter context
  * @rsp_params: response parameters
@@ -1677,19 +1663,6 @@ ndp_end_ind_nla_failed:
 }
 
 /**
- * hdd_ndp_schedule_update_rsp_handler() - NDP schedule update response handler
- * @adapter: pointer to adapter context
- * @rsp_params: response parameters
- *
- * Return: none
- */
-static void hdd_ndp_schedule_update_rsp_handler(
-				hdd_adapter_t *adapter, void *rsp_params)
-{
-	return;
-}
-
-/**
  * hdd_ndp_event_handler() - ndp response and indication handler
  * @adapter: adapter context
  * @roam_info: pointer to roam_info structure
@@ -1728,10 +1701,6 @@ void hdd_ndp_event_handler(hdd_adapter_t *adapter,
 		case eCSR_ROAM_RESULT_NDP_INDICATION:
 			hdd_ndp_indication_handler(adapter,
 				&roam_info->ndp.ndp_indication_params);
-			break;
-		case eCSR_ROAM_RESULT_NDP_SCHED_UPDATE_RSP:
-			hdd_ndp_schedule_update_rsp_handler(adapter,
-				&roam_info->ndp.ndp_sched_upd_rsp_params);
 			break;
 		case eCSR_ROAM_RESULT_NDP_RESPONDER_RSP:
 			hdd_ndp_responder_rsp_handler(adapter,
@@ -1837,9 +1806,6 @@ static int __wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 		break;
 	case QCA_WLAN_VENDOR_ATTR_NDP_END_REQUEST:
 		ret_val = hdd_ndp_end_req_handler(hdd_ctx, tb);
-		break;
-	case QCA_WLAN_VENDOR_ATTR_NDP_SCHEDULE_UPDATE_REQUEST:
-		ret_val = hdd_ndp_schedule_req_handler(hdd_ctx, tb);
 		break;
 	default:
 		hdd_err(FL("Unrecognized NDP vendor cmd %d"),
