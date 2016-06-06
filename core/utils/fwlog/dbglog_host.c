@@ -1632,6 +1632,10 @@ int send_fw_diag_nl_data(const uint8_t *buffer, A_UINT32 len,
 		}
 		nlh = nlmsg_put(skb_out, 0, 0, WLAN_NL_MSG_CNSS_DIAG, msg_len,
 				0);
+		if (!nlh) {
+			kfree_skb(skb_out);
+			return -EMSGSIZE;
+		}
 		wnl = (tAniNlHdr *)nlh;
 		wnl->radio = radio;
 
@@ -1723,6 +1727,10 @@ send_diag_netlink_data(const uint8_t *buffer, A_UINT32 len, A_UINT32 cmd)
 
 		nlh = nlmsg_put(skb_out, 0, 0, WLAN_NL_MSG_CNSS_DIAG,
 				slot_len, 0);
+		if (!nlh) {
+			kfree_skb(skb_out);
+			return -EMSGSIZE;
+		}
 		wnl = (tAniNlHdr *)nlh;
 		wnl->radio = radio;
 		/* data buffer offset from: nlmsg_hdr + sizeof(int) radio */
@@ -1780,6 +1788,10 @@ dbglog_process_netlink_data(wmi_unified_t wmi_handle, const uint8_t *buffer,
 
 		nlh = nlmsg_put(skb_out, 0, 0, WLAN_NL_MSG_CNSS_DIAG,
 				slot_len, 0);
+		if (!nlh) {
+			kfree_skb(skb_out);
+			return -EMSGSIZE;
+		}
 		wnl = (tAniNlHdr *)nlh;
 		wnl->radio = radio;
 		/* data buffer offset from: nlmsg_hdr + sizeof(int) radio */
