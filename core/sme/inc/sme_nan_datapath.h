@@ -27,6 +27,8 @@
 #ifndef __SME_NAN_DATAPATH_H
 #define __SME_NAN_DATAPATH_H
 
+#include "csr_inside_api.h"
+
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 #include "qdf_types.h"
 #include "sir_api.h"
@@ -46,12 +48,26 @@ struct sir_sme_ndp_initiator_req {
 	struct ndp_initiator_req req;
 };
 
-/* NAN initiator request handler */
+/**
+ * struct sir_sme_ndp_responder_req - Wraper of responder's response
+ * to ndp create request
+ * @msg_type: SME msg type
+ * @msg_len: Length of msg
+ * @req: responder's response to ndp create request
+ *
+ */
+struct sir_sme_ndp_responder_req {
+	uint16_t msg_type;
+	uint16_t msg_len;
+	struct ndp_responder_req req;
+};
+
+/* NaN initiator request handler */
 QDF_STATUS sme_ndp_initiator_req_handler(tHalHandle hal,
 					struct ndp_initiator_req *req_params);
 
-/* NAN responder request handler */
-QDF_STATUS sme_ndp_responder_req_handler(uint32_t session_id,
+/* NaN responder request handler */
+QDF_STATUS sme_ndp_responder_req_handler(tHalHandle hal,
 					struct ndp_responder_req *req_params);
 
 /* NAN indication response handler */
@@ -92,6 +108,8 @@ QDF_STATUS csr_process_ndp_initiator_request(tpAniSirGlobal mac_ctx,
 
 void sme_ndp_msg_processor(tpAniSirGlobal mac_ctx, cds_msg_t *msg);
 
+QDF_STATUS csr_process_ndp_responder_request(tpAniSirGlobal mac_ctx,
+							tSmeCmd *cmd);
 #else
 
 /* Start NDI BSS */
@@ -135,7 +153,7 @@ QDF_STATUS sme_ndp_end_req_handler(uint32_t session_id,
 QDF_STATUS sme_ndp_sched_req_handler(uint32_t session_id,
 				struct ndp_schedule_update_req *req_params);
 
-static inline eHalStatus csr_process_ndp_initiator_request(
+static inline QDF_STATUS csr_process_ndp_initiator_request(
 				tpAniSirGlobal mac_ctx, tSmeCmd *cmd)
 {
 	return QDF_STATUS_SUCCESS;
@@ -145,5 +163,10 @@ static inline void sme_ndp_msg_processor(tpAniSirGlobal mac_ctx, cds_msg_t *msg)
 {
 }
 
+static inline QDF_STATUS csr_process_ndp_responder_request(
+			tpAniSirGlobal mac_ctx, tSmeCmd *cmd)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif /* WLAN_FEATURE_NAN_DATAPATH */
 #endif /* __SME_NAN_DATAPATH_H */

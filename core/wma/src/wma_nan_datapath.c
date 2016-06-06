@@ -74,8 +74,8 @@ QDF_STATUS wma_handle_ndp_initiator_req(tp_wma_handle wma_handle, void *req)
 	 * WMI command expects 4 byte alligned len:
 	 * round up ndp_cfg_len and ndp_app_info_len to 4 bytes
 	 */
-	ndp_cfg_len = roundup(ndp_req->ndp_config.ndp_cfg_len, 4);
-	ndp_app_info_len = roundup(ndp_req->ndp_info.ndp_app_info_len, 4);
+	ndp_cfg_len = qdf_roundup(ndp_req->ndp_config.ndp_cfg_len, 4);
+	ndp_app_info_len = qdf_roundup(ndp_req->ndp_info.ndp_app_info_len, 4);
 	/* allocated memory for fixed params as well as variable size data */
 	len = sizeof(*cmd) + ndp_cfg_len + ndp_app_info_len +
 		(2 * WMI_TLV_HDR_SIZE) + sizeof(*ch_tlv);
@@ -174,7 +174,110 @@ send_ndi_initiator_fail:
 QDF_STATUS wma_handle_ndp_responder_req(tp_wma_handle wma_handle,
 					struct ndp_responder_req *req_params)
 {
+	wmi_buf_t buf;
+	ol_txrx_vdev_handle vdev;
+	uint32_t vdev_id = 0, ndp_cfg_len, ndp_app_info_len;
+	uint8_t *cfg_info, *app_info;
+	int ret;
+	wmi_ndp_responder_req_fixed_param *cmd;
+	uint16_t len;
+	struct ndp_responder_rsp_event rsp = {0};
+	cds_msg_t pe_msg = {0};
+
+	if (NULL == req_params) {
+		WMA_LOGE(FL("Invalid req_params."));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	vdev_id = req_params->vdev_id;
+	WMA_LOGD(FL("vdev_id: %d, transaction_id: %d, ndp_rsp %d, ndp_instance_id: %d, ndp_app_info_len: %d"),
+			req_params->vdev_id, req_params->transaction_id,
+			req_params->ndp_rsp,
+			req_params->ndp_instance_id,
+			req_params->ndp_info.ndp_app_info_len);
+	vdev = wma_find_vdev_by_id(wma_handle, vdev_id);
+	if (!vdev) {
+		WMA_LOGE(FL("vdev not found for vdev id %d."), vdev_id);
+		goto send_ndi_responder_fail;
+	}
+
+	if (!WMA_IS_VDEV_IN_NDI_MODE(wma_handle->interfaces, vdev_id)) {
+		WMA_LOGE(FL("vdev :$%d, not in NDI mode"), vdev_id);
+		goto send_ndi_responder_fail;
+	}
+
+	/*
+	 * WMI command expects 4 byte alligned len:
+	 * round up ndp_cfg_len and ndp_app_info_len to 4 bytes
+	 */
+	ndp_cfg_len = qdf_roundup(req_params->ndp_config.ndp_cfg_len, 4);
+	ndp_app_info_len =
+		qdf_roundup(req_params->ndp_info.ndp_app_info_len, 4);
+	/* allocated memory for fixed params as well as variable size data */
+	len = sizeof(*cmd) + ndp_cfg_len + ndp_app_info_len +
+		(2 * WMI_TLV_HDR_SIZE);
+	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE(FL("wmi_buf_alloc failed"));
+		goto send_ndi_responder_fail;
+	}
+	cmd = (wmi_ndp_responder_req_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+			WMITLV_TAG_STRUC_wmi_ndp_responder_req_fixed_param,
+			WMITLV_GET_STRUCT_TLVLEN(
+				wmi_ndp_responder_req_fixed_param));
+	cmd->vdev_id = req_params->vdev_id;
+	cmd->transaction_id = req_params->transaction_id;
+	cmd->ndp_instance_id = req_params->ndp_instance_id;
+	cmd->rsp_code = req_params->ndp_rsp;
+
+	cmd->ndp_cfg_len = req_params->ndp_config.ndp_cfg_len;
+	cmd->ndp_app_info_len = req_params->ndp_info.ndp_app_info_len;
+
+	cfg_info = (uint8_t *)&cmd[1];
+	/* WMI command expects 4 byte alligned len */
+	WMITLV_SET_HDR(cfg_info, WMITLV_TAG_ARRAY_BYTE, ndp_cfg_len);
+	qdf_mem_copy(&cfg_info[WMI_TLV_HDR_SIZE],
+		     req_params->ndp_config.ndp_cfg, cmd->ndp_cfg_len);
+
+	app_info = &cfg_info[WMI_TLV_HDR_SIZE + ndp_cfg_len];
+	/* WMI command expects 4 byte alligned len */
+	WMITLV_SET_HDR(app_info, WMITLV_TAG_ARRAY_BYTE, ndp_app_info_len);
+	qdf_mem_copy(&app_info[WMI_TLV_HDR_SIZE],
+		     req_params->ndp_info.ndp_app_info,
+		     req_params->ndp_info.ndp_app_info_len);
+
+	WMA_LOGD(FL("ndp_config len: %d"),
+		req_params->ndp_config.ndp_cfg_len);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+			req_params->ndp_config.ndp_cfg,
+			req_params->ndp_config.ndp_cfg_len);
+
+	WMA_LOGD(FL("ndp_app_info len: %d"),
+		req_params->ndp_info.ndp_app_info_len);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+			req_params->ndp_info.ndp_app_info,
+			req_params->ndp_info.ndp_app_info_len);
+
+	ret = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
+				   WMI_NDP_RESPONDER_REQ_CMDID);
+	if (ret < 0) {
+		WMA_LOGE(FL("WMI_NDP_RESPONDER_REQ_CMDID failed, ret: %d"),
+			ret);
+		wmi_buf_free(buf);
+		goto send_ndi_responder_fail;
+	}
 	return QDF_STATUS_SUCCESS;
+send_ndi_responder_fail:
+	qdf_mem_zero(&rsp, sizeof(rsp));
+	rsp.vdev_id = req_params->vdev_id;
+	rsp.transaction_id = req_params->transaction_id;
+	rsp.status = QDF_STATUS_E_FAILURE;
+
+	pe_msg.bodyptr = &rsp;
+	pe_msg.type = SIR_HAL_NDP_RESPONDER_RSP;
+	return wma_handle->pe_ndp_event_handler(wma_handle->mac_context,
+						&pe_msg);
 }
 
 /**
@@ -215,9 +318,9 @@ QDF_STATUS wma_handle_ndp_sched_update_req(tp_wma_handle wma_handle,
 static int wma_ndp_indication_event_handler(void *handle, uint8_t *event_info,
 					    uint32_t len)
 {
+	cds_msg_t pe_msg = {0};
 	WMI_NDP_INDICATION_EVENTID_param_tlvs *event;
 	wmi_ndp_indication_event_fixed_param *fixed_params;
-	cds_msg_t pe_msg = {0};
 	struct ndp_indication_event ind_event = {0};
 	tp_wma_handle wma_handle = handle;
 
@@ -276,13 +379,12 @@ static int wma_ndp_indication_event_handler(void *handle, uint8_t *event_info,
 			     event->ndp_app_info,
 			     ind_event.ndp_info.ndp_app_info_len);
 	}
+
 	pe_msg.type = SIR_HAL_NDP_INDICATION;
 	pe_msg.bodyptr = &ind_event;
-	pe_msg.bodyval = 0;
 	return wma_handle->pe_ndp_event_handler(wma_handle->mac_context,
 						&pe_msg);
 }
-
 
 /**
  * wma_ndp_responder_rsp_event_handler() - NDP responder response event handler
@@ -296,7 +398,25 @@ static int wma_ndp_indication_event_handler(void *handle, uint8_t *event_info,
 static int wma_ndp_responder_rsp_event_handler(void *handle,
 					uint8_t *event_info, uint32_t len)
 {
-	return 0;
+	cds_msg_t pe_msg = {0};
+	tp_wma_handle wma_handle = handle;
+	WMI_NDP_RESPONDER_RSP_EVENTID_param_tlvs *event;
+	wmi_ndp_responder_rsp_event_fixed_param  *fixed_params;
+	struct ndp_responder_rsp_event rsp = {0};
+
+	event = (WMI_NDP_RESPONDER_RSP_EVENTID_param_tlvs *)event_info;
+	fixed_params = event->fixed_param;
+
+	rsp.vdev_id = fixed_params->vdev_id;
+	rsp.transaction_id = fixed_params->transaction_id;
+	rsp.reason = fixed_params->reason_code;
+	rsp.status = fixed_params->rsp_status;
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&fixed_params->peer_ndi_mac_addr,
+				rsp.peer_mac_addr.bytes);
+	pe_msg.bodyptr = &rsp;
+	pe_msg.type = SIR_HAL_NDP_RESPONDER_RSP;
+	return wma_handle->pe_ndp_event_handler(wma_handle->mac_context,
+						&pe_msg);
 }
 
 /**
@@ -370,7 +490,6 @@ static int wma_ndp_confirm_event_handler(void *handle, uint8_t *event_info,
 	}
 	msg.type = SIR_HAL_NDP_CONFIRM;
 	msg.bodyptr = &ndp_confirm;
-	msg.bodyval = 0;
 	return wma_handle->pe_ndp_event_handler(wma_handle->mac_context, &msg);
 }
 

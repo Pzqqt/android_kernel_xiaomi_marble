@@ -46,6 +46,8 @@ static inline void wma_update_hdd_cfg_ndp(tp_wma_handle wma_handle,
 {
 	tgt_cfg->nan_datapath_enabled = wma_handle->nan_datapath_enabled;
 }
+QDF_STATUS wma_handle_ndp_responder_req(tp_wma_handle wma_handle,
+					struct ndp_responder_req *req_params);
 void wma_delete_all_nan_remote_peers(tp_wma_handle wma,
 					uint32_t vdev_id);
 
@@ -85,6 +87,11 @@ static inline void wma_add_sta_ndi_mode(tp_wma_handle wma,
 					tpAddStaParams add_sta) {}
 static inline QDF_STATUS wma_handle_ndp_initiator_req(tp_wma_handle wma_handle,
 						      void *req)
+{
+	return QDF_STATUS_SUCCESS;
+}
+static inline QDF_STATUS wma_handle_ndp_responder_req(tp_wma_handle wma_handle,
+					void *req_params)
 {
 	return QDF_STATUS_SUCCESS;
 }

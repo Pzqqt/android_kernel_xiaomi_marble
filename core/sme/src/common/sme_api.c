@@ -965,7 +965,16 @@ sme_process_cmd:
 				&pMac->sme.smeCmdActiveList,
 				&pCommand->Link, LL_ACCESS_LOCK))
 				csr_release_command(pMac, pCommand);
-	    break;
+		break;
+	case eSmeCommandNdpResponderRequest:
+		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
+		status = csr_process_ndp_responder_request(pMac, pCommand);
+		if (status != QDF_STATUS_SUCCESS) {
+			if (csr_ll_remove_entry(&pMac->sme.smeCmdActiveList,
+					     &pCommand->Link, LL_ACCESS_LOCK))
+				csr_release_command(pMac, pCommand);
+		}
+		break;
 	case eSmeCommandDelStaSession:
 		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
 		csr_process_del_sta_session_command(pMac, pCommand);
@@ -2998,6 +3007,8 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 	case eWNI_SME_NDP_CONFIRM_IND:
 	case eWNI_SME_NDP_NEW_PEER_IND:
 	case eWNI_SME_NDP_INITIATOR_RSP:
+	case eWNI_SME_NDP_INDICATION:
+	case eWNI_SME_NDP_RESPONDER_RSP:
 		sme_ndp_msg_processor(pMac, pMsg);
 		break;
 	default:

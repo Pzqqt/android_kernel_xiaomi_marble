@@ -6094,6 +6094,7 @@ struct ndp_responder_req {
  * @vdev_id: session id of the interface over which ndp is being created
  * @status: command status
  * @reason: reason for failure if any
+ * @peer_mac_addr: Peer's mac address
  *
  */
 struct ndp_responder_rsp_event {
@@ -6101,6 +6102,7 @@ struct ndp_responder_rsp_event {
 	uint32_t vdev_id;
 	uint32_t status;
 	uint32_t reason;
+	struct qdf_mac_addr peer_mac_addr;
 };
 
 /**

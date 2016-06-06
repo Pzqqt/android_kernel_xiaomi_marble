@@ -25,7 +25,6 @@
  */
 #include "sms_debug.h"
 #include "sme_api.h"
-#include "csr_inside_api.h"
 #include "sme_inside.h"
 #include "csr_internal.h"
 #include "sme_nan_datapath.h"
@@ -111,15 +110,85 @@ QDF_STATUS sme_ndp_initiator_req_handler(tHalHandle hal,
 }
 /**
  * sme_ndp_responder_req_handler() - ndp responder request handler
- * @session_id: session id over which the ndp is being created
+ * @hal: hal handle
  * @req_params: request parameters
  *
  * Return: QDF_STATUS_SUCCESS on success; error number otherwise
  */
-QDF_STATUS sme_ndp_responder_req_handler(uint32_t session_id,
+QDF_STATUS sme_ndp_responder_req_handler(tHalHandle hal,
 	struct ndp_responder_req *req_params)
 {
-	return QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
+	tSmeCmd *cmd;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+
+	if (NULL == req_params) {
+		sms_log(mac_ctx, LOGE, FL("Invalid req_params"));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = sme_acquire_global_lock(&mac_ctx->sme);
+	if (QDF_STATUS_SUCCESS != status) {
+		sms_log(mac_ctx, LOGE,
+			FL("SME lock failed, status:%d"), status);
+		return status;
+	}
+	cmd = csr_get_command_buffer(mac_ctx);
+	if (NULL == cmd) {
+		sme_release_global_lock(&mac_ctx->sme);
+		return QDF_STATUS_E_RESOURCES;
+	}
+
+	cmd->command = eSmeCommandNdpResponderRequest;
+	cmd->sessionId = (uint8_t)req_params->vdev_id;
+	qdf_mem_copy(&cmd->u.responder_req, req_params,
+			sizeof(*req_params));
+
+	/*
+	 * Pointers copied as part of above operation are
+	 * to be overwritten
+	 */
+	cmd->u.responder_req.ndp_info.ndp_app_info = NULL;
+	cmd->u.responder_req.ndp_config.ndp_cfg = NULL;
+
+	if (req_params->ndp_info.ndp_app_info_len) {
+		cmd->u.responder_req.ndp_info.ndp_app_info =
+			qdf_mem_malloc(req_params->ndp_info.ndp_app_info_len);
+		if (NULL == cmd->u.responder_req.ndp_info.ndp_app_info) {
+			sme_release_global_lock(&mac_ctx->sme);
+			return QDF_STATUS_E_NOMEM;
+		}
+		qdf_mem_copy(cmd->u.responder_req.ndp_info.ndp_app_info,
+			req_params->ndp_info.ndp_app_info,
+			req_params->ndp_info.ndp_app_info_len);
+	}
+
+	if (req_params->ndp_config.ndp_cfg_len) {
+		cmd->u.responder_req.ndp_config.ndp_cfg =
+			qdf_mem_malloc(req_params->ndp_config.ndp_cfg_len);
+		if (NULL == cmd->u.responder_req.ndp_config.ndp_cfg) {
+			sme_release_global_lock(&mac_ctx->sme);
+			qdf_mem_free(
+				cmd->u.responder_req.ndp_info.ndp_app_info);
+			cmd->u.responder_req.ndp_info.ndp_app_info_len = 0;
+			return QDF_STATUS_E_NOMEM;
+		}
+		qdf_mem_copy(cmd->u.responder_req.ndp_config.ndp_cfg,
+			req_params->ndp_config.ndp_cfg,
+			req_params->ndp_config.ndp_cfg_len);
+	}
+
+	status = csr_queue_sme_command(mac_ctx, cmd, true);
+	if (QDF_STATUS_SUCCESS != status) {
+		sms_log(mac_ctx, LOGE,
+			FL("SME enqueue failed, status:%d"), status);
+		qdf_mem_free(cmd->u.responder_req.ndp_info.ndp_app_info);
+		qdf_mem_free(cmd->u.responder_req.ndp_config.ndp_cfg);
+		cmd->u.responder_req.ndp_info.ndp_app_info_len = 0;
+		cmd->u.responder_req.ndp_config.ndp_cfg_len = 0;
+	}
+	sme_release_global_lock(&mac_ctx->sme);
+	return status;
 }
 
 /**
@@ -358,6 +427,69 @@ QDF_STATUS csr_process_ndp_initiator_request(tpAniSirGlobal mac_ctx,
 }
 
 /**
+ * csr_process_ndp_responder_request() - ndp responder req
+ * @mac_ctx: Global MAC context
+ * @cmd: Cmd sent to SME
+ *
+ * Return: Success or failure code
+ */
+QDF_STATUS csr_process_ndp_responder_request(tpAniSirGlobal mac_ctx,
+							tSmeCmd *cmd)
+{
+	struct sir_sme_ndp_responder_req *lim_msg;
+	uint16_t msg_len;
+	QDF_STATUS status;
+
+	if (!cmd) {
+		sms_log(mac_ctx, LOGE, FL("Invalid req_params"));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	msg_len  = sizeof(*lim_msg);
+	lim_msg = qdf_mem_malloc(msg_len);
+	if (!lim_msg) {
+		sms_log(mac_ctx, LOGE, FL("Mem alloc fail"));
+		status = QDF_STATUS_E_NOMEM;
+		goto free_config;
+	}
+
+	qdf_mem_set(lim_msg, msg_len, 0);
+	lim_msg->msg_type = eWNI_SME_NDP_RESPONDER_REQ;
+	lim_msg->msg_len = msg_len;
+	/*
+	 * following is being copied from p_cmd->u.initiator_req,
+	 * no need to perform deep copy, as we are going to use memory
+	 * allocated at SME in p_cmd->u.initiator_req and pass it all the way
+	 * to WMA.
+	 */
+	qdf_mem_copy(&lim_msg->req, &cmd->u.responder_req,
+			sizeof(struct ndp_responder_req));
+
+	sms_log(mac_ctx, LOG1,
+		FL("vdev_id %d ndp_rsp = %d Instance id %d"),
+		lim_msg->req.vdev_id,
+		lim_msg->req.ndp_rsp,
+		lim_msg->req.ndp_instance_id);
+
+	status = cds_send_mb_message_to_mac(lim_msg);
+
+free_config:
+	if (status != QDF_STATUS_SUCCESS) {
+		/*
+		 * If fail, free up the ndp_cfg and ndp_app_info
+		 * allocated in sme.
+		 */
+		qdf_mem_free(cmd->u.responder_req.ndp_info.ndp_app_info);
+		qdf_mem_free(cmd->u.responder_req.ndp_config.ndp_cfg);
+		cmd->u.responder_req.ndp_info.ndp_app_info_len = 0;
+		cmd->u.responder_req.ndp_config.ndp_cfg_len = 0;
+		cmd->u.responder_req.ndp_config.ndp_cfg = NULL;
+		cmd->u.responder_req.ndp_info.ndp_app_info = NULL;
+	}
+	return status;
+}
+
+/**
  * sme_ndp_msg_processor() - message processor for ndp/ndi north-bound SME msg.
  * @mac_ctx: Global MAC context
  * @msg: ndp/ndi SME message
@@ -401,17 +533,6 @@ void sme_ndp_msg_processor(tpAniSirGlobal mac_ctx, cds_msg_t *msg)
 		}
 		release_active_cmd = true;
 		cmd_to_rel = eSmeCommandNdpInitiatorRequest;
-		entry = csr_ll_peek_head(&mac_ctx->sme.smeCmdActiveList,
-				      LL_ACCESS_LOCK);
-		if (entry != NULL) {
-			cmd = GET_BASE_ADDR(entry, tSmeCmd, Link);
-			if (cmd_to_rel == cmd->command) {
-				qdf_mem_free(
-				    cmd->u.initiator_req.ndp_config.ndp_cfg);
-				qdf_mem_free(
-				    cmd->u.initiator_req.ndp_info.ndp_app_info);
-			}
-		}
 		break;
 	}
 	case eWNI_SME_NDP_NEW_PEER_IND: {
@@ -423,15 +544,87 @@ void sme_ndp_msg_processor(tpAniSirGlobal mac_ctx, cds_msg_t *msg)
 		session_id = roam_info.ndp.ndp_peer_ind_params.session_id;
 		break;
 	}
+	case eWNI_SME_NDP_INDICATION:
+		result = eCSR_ROAM_RESULT_NDP_INDICATION;
+		/* copy msg from msg body to roam info passed to callback */
+		qdf_mem_copy(&roam_info.ndp.ndp_indication_params,
+			msg->bodyptr, sizeof(struct ndp_indication_event));
+		session_id = roam_info.ndp.ndp_indication_params.vdev_id;
+		break;
+	case eWNI_SME_NDP_RESPONDER_RSP:
+		if (true == msg->bodyval) {
+			/* rsp was locally generated, do not send to HDD */
+			send_to_user = false;
+		} else {
+			result = eCSR_ROAM_RESULT_NDP_RESPONDER_RSP;
+			/*
+			 * Copy msg from msg body to roam info passed to
+			 * callback
+			 */
+			qdf_mem_copy(&roam_info.ndp.ndp_responder_rsp_params,
+				msg->bodyptr,
+				sizeof(struct ndp_responder_rsp_event));
+			session_id =
+				roam_info.ndp.ndp_responder_rsp_params.vdev_id;
+		}
+		release_active_cmd = true;
+		cmd_to_rel = eSmeCommandNdpResponderRequest;
+		break;
 	default:
 		sms_log(mac_ctx, LOGE, FL("Unhandled NDP rsp"));
 		qdf_mem_free(msg->bodyptr);
 		return;
 	}
 
-	if (true == send_to_user) {
+	if (true == send_to_user)
 		csr_roam_call_callback(mac_ctx, session_id, &roam_info, 0,
 				    eCSR_ROAM_NDP_STATUS_UPDATE, result);
+
+	/*
+	 * free ndp_cfg and ndp_app_info if required
+	 * For some commands this info may be needed in HDD
+	 * so free them after roam callback.
+	 */
+	switch (msg->type) {
+	case eWNI_SME_NDP_INITIATOR_RSP:
+		entry = csr_ll_peek_head(&mac_ctx->sme.smeCmdActiveList,
+				LL_ACCESS_LOCK);
+		if (entry != NULL) {
+			cmd = GET_BASE_ADDR(entry, tSmeCmd, Link);
+			if (eSmeCommandNdpInitiatorRequest == cmd->command) {
+				qdf_mem_free(
+					cmd->u.initiator_req.
+					ndp_config.ndp_cfg);
+				qdf_mem_free(
+					cmd->u.initiator_req.
+					ndp_info.ndp_app_info);
+			}
+		}
+		break;
+	case eWNI_SME_NDP_RESPONDER_RSP:
+		entry = csr_ll_peek_head(&mac_ctx->sme.smeCmdActiveList,
+					LL_ACCESS_LOCK);
+		if (entry != NULL) {
+			cmd = GET_BASE_ADDR(entry, tSmeCmd, Link);
+			if (eSmeCommandNdpResponderRequest == cmd->command) {
+				qdf_mem_free(
+					cmd->u.responder_req.
+					ndp_config.ndp_cfg);
+				qdf_mem_free(
+					cmd->u.responder_req.
+					ndp_info.ndp_app_info);
+			}
+		}
+		break;
+	case eWNI_SME_NDP_INDICATION:
+		qdf_mem_free(
+			roam_info.ndp.ndp_indication_params.ndp_config.ndp_cfg);
+		qdf_mem_free(
+			roam_info.ndp.ndp_indication_params.
+			ndp_info.ndp_app_info);
+		break;
+	default:
+		break;
 	}
 	qdf_mem_free(msg->bodyptr);
 	if (release_active_cmd == false)

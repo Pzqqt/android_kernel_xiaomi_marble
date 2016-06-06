@@ -194,6 +194,7 @@ typedef struct tagSmeCmd {
 		struct sir_antenna_mode_param set_antenna_mode_cmd;
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 		struct ndp_initiator_req initiator_req;
+		struct ndp_responder_req responder_req;
 #endif
 	} u;
 } tSmeCmd;
