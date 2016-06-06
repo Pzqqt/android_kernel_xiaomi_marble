@@ -2153,6 +2153,56 @@ int wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 	return ret;
 }
 
+#ifdef WLAN_FEATURE_P2P_DEBUG
+/*
+ * wlan_hdd_p2p_action_debug() - Log P2P state and update global status
+ * @actionFrmType: action frame type
+ * @macFrom: peer mac address
+ *
+ * return: void
+ */
+static void wlan_hdd_p2p_action_debug(tActionFrmType actionFrmType,
+						uint8_t *macFrom)
+{
+	if (actionFrmType >= MAX_P2P_ACTION_FRAME_TYPE) {
+		hdd_err("[P2P] unknown[%d] <--- OTA from " MAC_ADDRESS_STR,
+			actionFrmType, MAC_ADDR_ARRAY(macFrom));
+	} else {
+		hdd_err("[P2P] %s <--- OTA from " MAC_ADDRESS_STR,
+			p2p_action_frame_type[actionFrmType],
+			MAC_ADDR_ARRAY(macFrom));
+		if ((actionFrmType == WLAN_HDD_PROV_DIS_REQ)
+		    && (global_p2p_connection_status == P2P_NOT_ACTIVE)) {
+			global_p2p_connection_status = P2P_GO_NEG_PROCESS;
+			hdd_err("[P2P State]Inactive state to GO negotiation progress state");
+		} else
+		if ((actionFrmType == WLAN_HDD_GO_NEG_CNF)
+		    && (global_p2p_connection_status == P2P_GO_NEG_PROCESS)) {
+			global_p2p_connection_status = P2P_GO_NEG_COMPLETED;
+			hdd_err("[P2P State]GO negotiation progress to GO negotiation completed state");
+		} else
+		if ((actionFrmType == WLAN_HDD_INVITATION_REQ)
+		    && (global_p2p_connection_status == P2P_NOT_ACTIVE)) {
+			global_p2p_connection_status = P2P_GO_NEG_COMPLETED;
+			hdd_err("[P2P State]Inactive state to GO negotiation completed state Autonomous GO formation");
+		}
+	}
+}
+#else
+/*
+ * wlan_hdd_p2p_action_debug() - dummy
+ * @actionFrmType: action frame type
+ * @macFrom: peer mac address
+ *
+ * return: void
+ */
+static void wlan_hdd_p2p_action_debug(tActionFrmType actionFrmType,
+						uint8_t *macFrom)
+{
+
+}
+#endif
+
 void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 			     uint32_t nFrameLength,
 			     uint8_t *pbFrames,
@@ -2246,59 +2296,17 @@ void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 					     + 2], SIR_MAC_P2P_OUI,
 					    SIR_MAC_P2P_OUI_SIZE)) {
 			/* P2P action frames */
-				u8 *macFrom = &pbFrames
+				uint8_t *macFrom = &pbFrames
 					[WLAN_HDD_80211_PEER_ADDR_OFFSET];
 				actionFrmType =
 					pbFrames
 					[WLAN_HDD_PUBLIC_ACTION_FRAME_TYPE_OFFSET];
 				hddLog(LOG1, "Rx Action Frame %u",
 				       actionFrmType);
-#ifdef WLAN_FEATURE_P2P_DEBUG
-				if (actionFrmType >= MAX_P2P_ACTION_FRAME_TYPE) {
-					hddLog(QDF_TRACE_LEVEL_ERROR,
-					       "[P2P] unknown[%d] <--- OTA"
-					       " from " MAC_ADDRESS_STR,
-					       actionFrmType,
-					       MAC_ADDR_ARRAY(macFrom));
-				} else {
-					hddLog(QDF_TRACE_LEVEL_ERROR,
-					       "[P2P] %s <--- OTA" " from "
-					       MAC_ADDRESS_STR,
-					       p2p_action_frame_type
-					       [actionFrmType],
-					       MAC_ADDR_ARRAY(macFrom));
-					if ((actionFrmType ==
-					     WLAN_HDD_PROV_DIS_REQ)
-					    && (global_p2p_connection_status ==
-						P2P_NOT_ACTIVE)) {
-						global_p2p_connection_status =
-							P2P_GO_NEG_PROCESS;
-						hddLog(LOGE,
-						       "[P2P State]Inactive state to "
-						       "GO negotiation progress state");
-					} else
-					if ((actionFrmType ==
-					     WLAN_HDD_GO_NEG_CNF)
-					    && (global_p2p_connection_status ==
-						P2P_GO_NEG_PROCESS)) {
-						global_p2p_connection_status =
-							P2P_GO_NEG_COMPLETED;
-						hddLog(LOGE,
-						       "[P2P State]GO negotiation progress to "
-						       "GO negotiation completed state");
-					} else
-					if ((actionFrmType ==
-					     WLAN_HDD_INVITATION_REQ)
-					    && (global_p2p_connection_status ==
-						P2P_NOT_ACTIVE)) {
-						global_p2p_connection_status =
-							P2P_GO_NEG_COMPLETED;
-						hddLog(LOGE,
-						       "[P2P State]Inactive state to GO negotiation"
-						       " completed state Autonomous GO formation");
-					}
-				}
-#endif
+
+				wlan_hdd_p2p_action_debug(actionFrmType,
+								macFrom);
+
 				mutex_lock(&cfgState->remain_on_chan_ctx_lock);
 				pRemainChanCtx = cfgState->remain_on_chan_ctx;
 				if (pRemainChanCtx != NULL) {
