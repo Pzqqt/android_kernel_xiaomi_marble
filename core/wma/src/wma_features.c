@@ -5303,20 +5303,33 @@ QDF_STATUS wma_process_del_periodic_tx_ptrn_ind(WMA_HANDLE handle,
 QDF_STATUS wma_stats_ext_req(void *wma_ptr, tpStatsExtRequest preq)
 {
 	tp_wma_handle wma = (tp_wma_handle) wma_ptr;
-	struct stats_ext_params params = {0};
+	struct stats_ext_params *params;
+	size_t params_len;
+	QDF_STATUS status;
 
 	if (!wma) {
 		WMA_LOGE("%s: wma handle is NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	params.vdev_id = preq->vdev_id;
-	params.request_data_len = preq->request_data_len;
-	qdf_mem_copy(params.request_data, preq->request_data,
-				params.request_data_len);
+	params_len = sizeof(*params) + preq->request_data_len;
+	params = qdf_mem_malloc(params_len);
 
-	return wmi_unified_stats_ext_req_cmd(wma->wmi_handle,
-					&params);
+	if (params == NULL) {
+		WMA_LOGE(FL("memory allocation failed"));
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	params->vdev_id = preq->vdev_id;
+	params->request_data_len = preq->request_data_len;
+	if (preq->request_data_len > 0)
+		qdf_mem_copy(params->request_data, preq->request_data,
+			     params->request_data_len);
+
+	status = wmi_unified_stats_ext_req_cmd(wma->wmi_handle, params);
+	qdf_mem_free(params);
+
+	return status;
 }
 
 #endif /* WLAN_FEATURE_STATS_EXT */
@@ -5525,23 +5538,32 @@ QDF_STATUS wma_set_auto_shutdown_timer_req(tp_wma_handle wma_handle,
 QDF_STATUS wma_nan_req(void *wma_ptr, tpNanRequest nan_req)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) wma_ptr;
-	struct nan_req_params params = {0};
+	struct nan_req_params *params;
+	size_t params_len;
+	QDF_STATUS status;
 
 	if (!wma_handle) {
 		WMA_LOGE("%s: wma handle is NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-	if (!nan_req) {
-		WMA_LOGE("%s:nan req is not valid", __func__);
-		return QDF_STATUS_E_FAILURE;
+
+	params_len = sizeof(*params) + nan_req->request_data_len;
+	params = qdf_mem_malloc(params_len);
+
+	if (params == NULL) {
+		WMA_LOGE(FL("memory allocation failed"));
+		return QDF_STATUS_E_NOMEM;
 	}
 
-	params.request_data_len = nan_req->request_data_len;
-	qdf_mem_copy(params.request_data, nan_req->request_data,
-					params.request_data_len);
+	params->request_data_len = nan_req->request_data_len;
+	if (params->request_data_len > 0)
+		qdf_mem_copy(params->request_data, nan_req->request_data,
+			     params->request_data_len);
 
-	return wmi_unified_nan_req_cmd(wma_handle->wmi_handle,
-							&params);
+	status = wmi_unified_nan_req_cmd(wma_handle->wmi_handle, params);
+	qdf_mem_free(params);
+
+	return status;
 }
 #endif /* WLAN_FEATURE_NAN */
 

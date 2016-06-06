@@ -5121,9 +5121,10 @@ QDF_STATUS  wma_ipa_offload_enable_disable(tp_wma_handle wma,
 QDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
 		struct wifi_epno_params *req)
 {
-	struct wifi_enhanched_pno_params params = {0};
+	struct wifi_enhanched_pno_params *params;
 	uint8_t i = 0;
 	QDF_STATUS status;
+	size_t params_len;
 
 	WMA_LOGD("wma_set_epno_network_list");
 
@@ -5137,23 +5138,32 @@ QDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
 		return QDF_STATUS_E_NOSUPPORT;
 	}
 
-	params.request_id = req->request_id;
-	params.session_id = req->session_id;
-	params.num_networks = req->num_networks;
+	params_len = sizeof(*params) + (req->num_networks *
+			sizeof(struct wifi_epno_network_params));
+	params = qdf_mem_malloc(params_len);
+	if (params == NULL) {
+		WMA_LOGE(FL("memory allocation failed"));
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	params->request_id = req->request_id;
+	params->session_id = req->session_id;
+	params->num_networks = req->num_networks;
 	for (i = 0; i < req->num_networks; i++) {
-		params.networks[i].rssi_threshold =
+		params->networks[i].rssi_threshold =
 				req->networks[i].rssi_threshold;
-		params.networks[i].auth_bit_field =
+		params->networks[i].auth_bit_field =
 				req->networks[i].auth_bit_field;
-		params.networks[i].flags = req->networks[i].flags;
-		params.networks[i].ssid.length = req->networks[i].ssid.length;
-		qdf_mem_copy(params.networks[i].ssid.mac_ssid,
+		params->networks[i].flags = req->networks[i].flags;
+		params->networks[i].ssid.length = req->networks[i].ssid.length;
+		qdf_mem_copy(params->networks[i].ssid.mac_ssid,
 				req->networks[i].ssid.ssId,
 				WMI_MAC_MAX_SSID_LENGTH);
 	}
 
-	status = wmi_unified_set_epno_network_list_cmd(wma->wmi_handle,
-							&params);
+	status = wmi_unified_set_epno_network_list_cmd(wma->wmi_handle, params);
+	qdf_mem_free(params);
+
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
@@ -5176,9 +5186,10 @@ QDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
 QDF_STATUS wma_set_passpoint_network_list(tp_wma_handle wma,
 					struct wifi_passpoint_req *req)
 {
-	struct wifi_passpoint_req_param params = {0};
+	struct wifi_passpoint_req_param *params;
 	int i = 0;
 	QDF_STATUS status;
+	size_t params_len;
 
 	WMA_LOGD("wma_set_passpoint_network_list");
 
@@ -5192,23 +5203,33 @@ QDF_STATUS wma_set_passpoint_network_list(tp_wma_handle wma,
 		return QDF_STATUS_E_NOSUPPORT;
 	}
 
-	params.request_id = req->request_id;
-	params.session_id = req->session_id;
-	params.num_networks = req->num_networks;
+	params_len = sizeof(*params) + (req->num_networks *
+				sizeof(struct wifi_passpoint_network_param));
+	params = qdf_mem_malloc(params_len);
+	if (params == NULL) {
+		WMA_LOGE(FL("memory allocation failed"));
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	params->request_id = req->request_id;
+	params->session_id = req->session_id;
+	params->num_networks = req->num_networks;
 	for (i = 0; i < req->num_networks; i++) {
-		params.networks[i].id = req->networks[i].id;
-		qdf_mem_copy(params.networks[i].realm, req->networks[i].realm,
+		params->networks[i].id = req->networks[i].id;
+		qdf_mem_copy(params->networks[i].realm, req->networks[i].realm,
 				WMI_PASSPOINT_REALM_LEN);
-		qdf_mem_copy(params.networks[i].roaming_consortium_ids,
+		qdf_mem_copy(params->networks[i].roaming_consortium_ids,
 				req->networks[i].roaming_consortium_ids,
 				WMI_PASSPOINT_ROAMING_CONSORTIUM_ID_NUM *
 				sizeof(int64_t));
-		qdf_mem_copy(params.networks[i].plmn, req->networks[i].plmn,
+		qdf_mem_copy(params->networks[i].plmn, req->networks[i].plmn,
 				WMI_PASSPOINT_PLMN_LEN);
 	}
 
 	status = wmi_unified_set_passpoint_network_list_cmd(wma->wmi_handle,
-							&params);
+							params);
+	qdf_mem_free(params);
+
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
@@ -5231,8 +5252,10 @@ QDF_STATUS wma_set_passpoint_network_list(tp_wma_handle wma,
 QDF_STATUS wma_reset_passpoint_network_list(tp_wma_handle wma,
 					struct wifi_passpoint_req *req)
 {
-	struct wifi_passpoint_req_param params = {0};
+	struct wifi_passpoint_req_param *params;
 	int i = 0;
+	QDF_STATUS status;
+	size_t params_len;
 
 	WMA_LOGD("wma_reset_passpoint_network_list");
 
@@ -5246,23 +5269,34 @@ QDF_STATUS wma_reset_passpoint_network_list(tp_wma_handle wma,
 		return QDF_STATUS_E_NOSUPPORT;
 	}
 
-	params.request_id = req->request_id;
-	params.session_id = req->session_id;
-	params.num_networks = req->num_networks;
+	params_len = sizeof(*params) + (req->num_networks *
+				sizeof(struct wifi_passpoint_network_param));
+	params = qdf_mem_malloc(params_len);
+	if (params == NULL) {
+		WMA_LOGE(FL("memory allocation failed"));
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	params->request_id = req->request_id;
+	params->session_id = req->session_id;
+	params->num_networks = req->num_networks;
 	for (i = 0; i < req->num_networks; i++) {
-		params.networks[i].id = req->networks[i].id;
-		qdf_mem_copy(params.networks[i].realm, req->networks[i].realm,
+		params->networks[i].id = req->networks[i].id;
+		qdf_mem_copy(params->networks[i].realm, req->networks[i].realm,
 				WMI_PASSPOINT_REALM_LEN);
-		qdf_mem_copy(params.networks[i].roaming_consortium_ids,
+		qdf_mem_copy(params->networks[i].roaming_consortium_ids,
 				req->networks[i].roaming_consortium_ids,
 				WMI_PASSPOINT_ROAMING_CONSORTIUM_ID_NUM *
 				sizeof(int64_t));
-		qdf_mem_copy(params.networks[i].plmn, req->networks[i].plmn,
+		qdf_mem_copy(params->networks[i].plmn, req->networks[i].plmn,
 				WMI_PASSPOINT_PLMN_LEN);
 	}
 
-	return wmi_unified_reset_passpoint_network_list_cmd(wma->wmi_handle,
-							&params);
+	status = wmi_unified_reset_passpoint_network_list_cmd(wma->wmi_handle,
+							params);
+	qdf_mem_free(params);
+
+	return status;
 }
 
 /**
