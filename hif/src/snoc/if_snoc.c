@@ -217,6 +217,8 @@ QDF_STATUS hif_snoc_enable_bus(struct hif_softc *ol_sc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	ol_sc->target_info.target_type = target_type;
+
 	hif_register_tbl_attach(ol_sc, hif_type);
 	target_register_tbl_attach(ol_sc, target_type);
 
