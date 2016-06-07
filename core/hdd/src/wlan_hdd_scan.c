@@ -1271,6 +1271,11 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
+	status = wlan_hdd_validate_context(pHddCtx);
+
+	if (0 != status)
+		return status;
+
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SCAN,
 			 pAdapter->sessionId, request->n_channels));
@@ -1282,10 +1287,6 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		hdd_device_mode_to_string(pAdapter->device_mode),
 		pAdapter->device_mode);
 
-	status = wlan_hdd_validate_context(pHddCtx);
-
-	if (0 != status)
-		return status;
 
 	cfg_param = pHddCtx->config;
 	pScanInfo = &pAdapter->scan_info;
