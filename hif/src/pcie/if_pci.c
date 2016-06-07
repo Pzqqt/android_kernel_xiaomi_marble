@@ -1960,6 +1960,7 @@ int hif_pci_bus_configure(struct hif_softc *hif_sc)
 	if (status)
 		goto disable_wlan;
 
+#ifndef QCA_WIFI_QCA8074_VP
 	status = hif_set_hia(hif_sc);
 	if (status)
 		goto unconfig_ce;
@@ -1967,6 +1968,7 @@ int hif_pci_bus_configure(struct hif_softc *hif_sc)
 	HIF_INFO_MED("%s: hif_set_hia done", __func__);
 
 	hif_register_bmi_callbacks(hif_sc);
+#endif
 
 	status = hif_configure_irq(hif_sc);
 	if (status < 0)

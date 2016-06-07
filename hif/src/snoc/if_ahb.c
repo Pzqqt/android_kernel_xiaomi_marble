@@ -498,6 +498,7 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 	hif_register_tbl_attach(ol_sc, hif_type);
 	hif_target_register_tbl_attach(ol_sc, target_type);
 
+#ifndef QCA_WIFI_QCA8074_VP
 	if (hif_ahb_enable_radio(sc, pdev, id) != 0) {
 		HIF_INFO("error in enabling soc\n");
 		return -EIO;
@@ -507,13 +508,16 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 		ret = -EIO;
 		goto err_target_sync;
 	}
+#endif
 	HIF_TRACE("%s: X - hif_type = 0x%x, target_type = 0x%x",
 			__func__, hif_type, target_type);
 
 	return QDF_STATUS_SUCCESS;
+#ifndef QCA_WIFI_QCA8074_VP
 err_target_sync:
 	HIF_INFO("Error: Disabling target\n");
 	hif_ahb_disable_bus(ol_sc);
+#endif
 err_cleanup1:
 	return ret;
 }
