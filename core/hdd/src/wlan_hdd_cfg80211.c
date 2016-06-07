@@ -4484,6 +4484,9 @@ static int __wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
+	if (0 != wlan_hdd_check_remain_on_channel(adapter))
+		hdd_warn("Remain On Channel Pending");
+
 	if (hdd_ctx->config->policy_manager_enabled) {
 		ret = qdf_reset_connection_update();
 		if (!QDF_IS_STATUS_SUCCESS(ret))
