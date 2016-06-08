@@ -860,7 +860,7 @@ dfs_process_phyerr(struct ieee80211com *ic, void *buf, uint16_t datalen,
 				event->radar_fft_ext80_inband_power =
 						e.radar_fft_ext80_inband_power;
 				event->rsu_version = e.rsu_version;
-				event->phyerr_serial_num =
+				event->dfs_phyerr_eventq_serial_num =
 						dfs->dfs_phyerr_queued_count;
 				event->peak_mag = e.peak_mag;
 			}

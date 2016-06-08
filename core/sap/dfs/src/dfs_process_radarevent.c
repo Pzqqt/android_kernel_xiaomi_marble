@@ -406,9 +406,10 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 				is_hw_chirp = 1;
 
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-				  "\n %s[%d]:PHYERR# = %d ts = %u  diff_ts = %u ppdu_rssi = %u dur = %u is_hw_chirp = %d segid = %d sidx = %d peak_mag = %d delta_peak = %d delta_diff = %d agc_total_gain = %d agc_mb_gain = %d radar_subchan_mask = 0x%x pulse_height = %d triggering_agc_event = %d rs_pulse_rssi = %d pri80_inband_power = %d ext80_inband_power = %d \n",
+				  "\n %s[%d]:PHYERR# = %d ts = %u  diff_ts = %u ppdu_rssi = %u dur = %u is_hw_chirp = %d segid = %d sidx = %d peak_mag = %d delta_peak = %d delta_diff = %d agc_total_gain = %d agc_mb_gain = %d radar_subchan_mask = 0x%x pulse_height = %d triggering_agc_event = %d rs_pulse_rssi = %d pri80_inband_power = %d ext80_inband_power = %d\n",
 				  __func__, __LINE__,
-				  re.phyerr_serial_num, (uint32_t) this_ts,
+				  re.dfs_phyerr_eventq_serial_num,
+				  (uint32_t) this_ts,
 				  diff_ts, re.re_rssi, re.re_dur, is_hw_chirp,
 				  re.radar_80p80_segid, re.sidx, re.peak_mag,
 				  re.delta_peak, re.delta_diff,

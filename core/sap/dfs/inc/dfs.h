@@ -284,32 +284,62 @@ struct dfs_pulseline {
 	(((e)->re_flags & (DFS_EVENT_CHECKCHIRP)) && \
 	 (!DFS_EVENT_ISCHIRP((e))))
 
+/**
+ * struct dfs_event - to hold dfs events
+ * @re_full_ts: 64-bit full timestamp from interrupt time
+ * @re_ts: Original 15 bit recv timestamp
+ * @re_rssi: rssi of radar event
+ * @re_dur: duration of radar pulse
+ * @re_chanindex: Channel of event
+ * @re_flags: Event flags
+ * @re_freq: Centre frequency of event, KHz
+ * @re_freq_lo: Lower bounds of frequency, KHz
+ * @re_freq_hi: Upper bounds of frequency, KHz
+ * @sidx: Pulse Index as in radar summary report
+ * @radar_80p80_segid: 80p80 segment ID as in radar sum report
+ * @delta_peak: delta peak reported in radar summary
+ * @delta_diff: delta diff reported in radar summary
+ * @agc_total_gain: agc total gain reported in radar summary
+ * @agc_mb_gain: agc mb gain reported in radar summary
+ * @radar_subchan_mask: subchan mask reported in radar summary
+ * @pulse_height: pulse height reported in radar summary
+ * @triggering_agc_event: triggering agc reported in radar summary
+ * @pulse_rssi: rssi of phyerr reported in radar summary
+ * @radar_fft_pri80_inband_power: Pri80MHz pwr reported in summary
+ * @radar_fft_ext80_inband_power: Ext80MHz pwr reported in summary
+ * @rsu_version: Radar summary report version
+ * @dfs_phyerr_eventq_serial_num: phyerr seq num queued for pattern matching
+ * @peak_mag: Peak mag reported in radar search FFT report
+ * @re_list: List of radar events
+ *
+ * To Process radar events
+ */
 struct dfs_event {
-	uint64_t re_full_ts;    /* 64-bit full timestamp from interrupt time */
-	uint32_t re_ts;         /* Original 15 bit recv timestamp */
-	uint8_t re_rssi;        /* rssi of radar event */
-	uint8_t re_dur;         /* duration of radar pulse */
-	uint8_t re_chanindex;   /* Channel of event */
-	uint8_t re_flags;       /* Event flags */
-	uint32_t re_freq;       /* Centre frequency of event, KHz */
-	uint32_t re_freq_lo;    /* Lower bounds of frequency, KHz */
-	uint32_t re_freq_hi;    /* Upper bounds of frequency, KHz */
-	int sidx;               /* Pulse Index as in radar summary report */
-	int radar_80p80_segid;  /* 80p80 segment ID as in radar sum report */
-	int delta_peak;         /* delta peak reported in radar summary */
-	int delta_diff;         /* delta diff reported in radar summary */
-	int agc_total_gain;     /* agc total gain reported in radar summary */
-	int agc_mb_gain;        /* agc mb gain reported in radar summary */
-	int radar_subchan_mask; /* subchan mask reported in radar summary */
-	int pulse_height;       /* pulse height reported in radar summary */
-	int triggering_agc_event; /* triggering agc reported in radar summary */
-	int pulse_rssi;         /* rssi of phyerr reported in radar summary */
-	int radar_fft_pri80_inband_power; /* Pri80MHz pwr reported in summary */
-	int radar_fft_ext80_inband_power; /* Ext80MHz pwr reported in summary */
-	int rsu_version; /* Radar summary report version */
-	int phyerr_serial_num; /* phyerr seq num queued for pattern matching */
-	int peak_mag; /* Peak mag reported in radar search FFT report */
-	STAILQ_ENTRY(dfs_event) re_list;        /* List of radar events */
+	uint64_t re_full_ts;
+	uint32_t re_ts;
+	uint8_t re_rssi;
+	uint8_t re_dur;
+	uint8_t re_chanindex;
+	uint8_t re_flags;
+	uint32_t re_freq;
+	uint32_t re_freq_lo;
+	uint32_t re_freq_hi;
+	int sidx;
+	int radar_80p80_segid;
+	uint8_t delta_peak;
+	uint8_t delta_diff;
+	uint8_t agc_total_gain;
+	uint8_t agc_mb_gain;
+	uint8_t radar_subchan_mask;
+	uint8_t pulse_height;
+	uint8_t triggering_agc_event;
+	uint8_t pulse_rssi;
+	uint8_t radar_fft_pri80_inband_power;
+	uint8_t radar_fft_ext80_inband_power;
+	uint8_t rsu_version;
+	uint8_t dfs_phyerr_eventq_serial_num;
+	uint8_t peak_mag;
+	STAILQ_ENTRY(dfs_event) re_list;
 } qdf_packed;
 #ifdef WIN32
 #pragma pack(pop, dfs_event)
