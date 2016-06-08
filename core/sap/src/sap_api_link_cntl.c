@@ -675,6 +675,7 @@ wlansap_roam_process_dfs_radar_found(tpAniSirGlobal mac_ctx,
 		 */
 		qdf_mc_timer_stop(&mac_ctx->sap.SapDfsInfo.sap_dfs_cac_timer);
 		qdf_mc_timer_destroy(&mac_ctx->sap.SapDfsInfo.sap_dfs_cac_timer);
+		mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running = false;
 
 		/*
 		 * User space is already indicated the CAC start and if
@@ -692,7 +693,6 @@ wlansap_roam_process_dfs_radar_found(tpAniSirGlobal mac_ctx,
 			 */
 		}
 
-		mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running = 0;
 		sap_event.event = eSAP_DFS_CHANNEL_CAC_RADAR_FOUND;
 		sap_event.params = 0;
 		sap_event.u1 = 0;

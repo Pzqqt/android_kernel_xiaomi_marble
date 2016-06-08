@@ -4655,11 +4655,18 @@ void sap_dfs_cac_timer_callback(void *data)
 		return;
 	}
 
-	/* Check to ensure that SAP is in DFS WAIT state */
-	if (sapContext->sapsMachine == eSAP_DFS_CAC_WAIT) {
+	/*
+	 * SAP may not be in CAC wait state, when the timer runs out.
+	 * if following flag is set, then timer is in initialized state,
+	 * destroy timer here.
+	 */
+	if (pMac->sap.SapDfsInfo.is_dfs_cac_timer_running == true) {
 		qdf_mc_timer_destroy(&pMac->sap.SapDfsInfo.sap_dfs_cac_timer);
 		pMac->sap.SapDfsInfo.is_dfs_cac_timer_running = false;
+	}
 
+	/* Check to ensure that SAP is in DFS WAIT state */
+	if (sapContext->sapsMachine == eSAP_DFS_CAC_WAIT) {
 		/*
 		 * CAC Complete, post eSAP_DFS_CHANNEL_CAC_END to sap_fsm
 		 */
@@ -4703,6 +4710,7 @@ static int sap_stop_dfs_cac_timer(ptSapContext sapContext)
 
 	qdf_mc_timer_stop(&pMac->sap.SapDfsInfo.sap_dfs_cac_timer);
 	pMac->sap.SapDfsInfo.is_dfs_cac_timer_running = 0;
+	qdf_mc_timer_destroy(&pMac->sap.SapDfsInfo.sap_dfs_cac_timer);
 
 	return 0;
 }
@@ -4783,6 +4791,8 @@ int sap_start_dfs_cac_timer(ptSapContext sapContext)
 		pMac->sap.SapDfsInfo.is_dfs_cac_timer_running = true;
 		return 1;
 	} else {
+		pMac->sap.SapDfsInfo.is_dfs_cac_timer_running = false;
+		qdf_mc_timer_destroy(&pMac->sap.SapDfsInfo.sap_dfs_cac_timer);
 		return 0;
 	}
 }
