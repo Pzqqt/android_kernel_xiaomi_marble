@@ -70,9 +70,9 @@
 #endif
 #define WMI_NOISE_FLOOR_DBM_DEFAULT      (-96)
 #define WMI_MAC_IPV6_ADDR_LEN                            16
-#ifdef WLAN_NS_OFFLOAD
 #define WMI_OFFLOAD_DISABLE                         0
 #define WMI_OFFLOAD_ENABLE                          1
+#ifdef WLAN_NS_OFFLOAD
 /* support only one IPv6 offload */
 #define WMI_MAC_NS_OFFLOAD_SIZE                          1
 /* Number of target IP V6 addresses for NS offload */
@@ -737,7 +737,7 @@ struct beacon_tmpl_params {
 	uint8_t *frm;
 };
 
-#ifndef WMI_NON_TLV_SUPPORT
+#ifdef CONFIG_MCL
 /**
  * struct beacon_params - beacon cmd parameter
  * @vdev_id: vdev id
@@ -1051,7 +1051,7 @@ struct scan_stop_params {
  * @num_scan_chans: no of scan channels
  * @chan_info: pointer to wmi channel info
  */
-#ifndef WMI_NON_TLV_SUPPORT
+#ifdef CONFIG_MCL
 struct scan_chan_list_params {
 	uint8_t num_scan_chans;
 	wmi_channel *chan_info;
@@ -1871,7 +1871,6 @@ struct extscan_cached_result_params {
 	bool flush;
 };
 
-#ifdef FEATURE_WLAN_SCAN_PNO
 /* Set PNO */
 #define WMI_PNO_MAX_NETW_CHANNELS  26
 #define WMI_PNO_MAX_NETW_CHANNELS_EX  60
@@ -1968,7 +1967,6 @@ struct pno_scan_req_params {
 #endif
 };
 
-#endif /* FEATURE_WLAN_SCAN_PNO */
 
 #define WMI_WLAN_EXTSCAN_MAX_CHANNELS                 36
 #define WMI_WLAN_EXTSCAN_MAX_BUCKETS                  16
