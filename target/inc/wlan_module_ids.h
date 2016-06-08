@@ -98,6 +98,7 @@ typedef enum {
 	WLAN_MODULE_NAN20,                    /* 0x40 */
 	WLAN_MODULE_QBOOST,                   /* 0x41 */
 	WLAN_MODULE_P2P_LISTEN_OFFLOAD,       /* 0x42 */
+	WLAN_MODULE_HALPHY,                   /* 0x43 */
 
 	WLAN_MODULE_ID_MAX,
 	WLAN_MODULE_ID_INVALID = WLAN_MODULE_ID_MAX,

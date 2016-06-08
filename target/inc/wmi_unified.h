@@ -5566,6 +5566,17 @@ typedef enum {
 	WMI_VDEV_PARAM_MGMT_TX_POWER,
 
 	/*
+	 * Vdev level non aggregration/11g sw retry threshold.
+	 *   0-disable, min:0, max:31, default:15
+	 */
+	WMI_VDEV_PARAM_NON_AGG_SW_RETRY_TH,
+	/*
+	 * Vdev level aggregration sw retry threshold.
+	 *   0-disable, min:0, max:31, default:15
+	 */
+	WMI_VDEV_PARAM_AGG_SW_RETRY_TH,
+
+	/*
 	 * === ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
 	 * The below vdev param types are used for prototyping, and are
 	 * prone to change.
