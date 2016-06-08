@@ -6240,7 +6240,7 @@ QDF_STATUS cds_complete_action(uint8_t  new_nss, uint8_t next_action,
 				uint32_t session_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	uint32_t index = 0, count = 0;
+	uint32_t index, count;
 	uint32_t list[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	uint32_t conn_index = 0;
 	hdd_context_t *hdd_ctx;
@@ -6263,7 +6263,7 @@ QDF_STATUS cds_complete_action(uint8_t  new_nss, uint8_t next_action,
 	 */
 	count = cds_mode_specific_connection_count(
 			CDS_P2P_GO_MODE, list);
-	while (index < count) {
+	for (index = 0; index < count; index++) {
 		conn_index = cds_get_connection_for_vdev_id(
 				conc_connection_list[list[index]].vdev_id);
 		if (MAX_NUMBER_OF_CONC_CONNECTIONS == conn_index) {
@@ -6283,13 +6283,18 @@ QDF_STATUS cds_complete_action(uint8_t  new_nss, uint8_t next_action,
 				conc_connection_list[list[index]].vdev_id);
 			}
 		}
-		index++;
 	}
 
-	index = 0;
 	count = cds_mode_specific_connection_count(
 			CDS_SAP_MODE, list);
-	while (index < count) {
+	for (index = 0; index < count; index++) {
+		conn_index = cds_get_connection_for_vdev_id(
+				conc_connection_list[list[index]].vdev_id);
+		if (MAX_NUMBER_OF_CONC_CONNECTIONS == conn_index) {
+			cds_err("connection not found for vdev %d",
+				conc_connection_list[list[index]].vdev_id);
+			continue;
+		}
 		if (1 == conc_connection_list[list[index]].original_nss) {
 			status = sme_nss_update_request(hdd_ctx->hHal,
 					conc_connection_list
@@ -6301,7 +6306,6 @@ QDF_STATUS cds_complete_action(uint8_t  new_nss, uint8_t next_action,
 				conc_connection_list[list[index]].vdev_id);
 			}
 		}
-		index++;
 	}
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		status = cds_next_actions(session_id,
