@@ -47,7 +47,7 @@
 #ifndef NO_DYNAMIC_MEM_ALLOC
 #define wmi_tlv_os_mem_alloc(scn, ptr, numBytes) \
 	{ \
-		(ptr) = os_malloc(NULL, (numBytes), GFP_ATOMIC); \
+		(ptr) = qdf_mem_malloc(numBytes); \
 	}
 #define wmi_tlv_os_mem_free   qdf_mem_free
 #endif
