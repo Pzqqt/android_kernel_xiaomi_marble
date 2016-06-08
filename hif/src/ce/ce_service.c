@@ -155,7 +155,7 @@ void hif_record_ce_desc_event(struct hif_softc *scn, int ce_id,
 	struct hif_ce_desc_event *event =
 		&hif_ce_desc_history[ce_id][record_index];
 	event->type = type;
-	event->time = qdf_get_monotonic_boottime();
+	event->time = qdf_get_log_timestamp();
 
 	if (descriptor != NULL)
 		event->descriptor = *descriptor;
