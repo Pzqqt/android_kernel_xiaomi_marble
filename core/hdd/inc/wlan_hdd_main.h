@@ -1002,8 +1002,8 @@ struct hdd_adapter_s {
 #ifdef MSM_PLATFORM
 	unsigned long prev_rx_packets;
 	unsigned long prev_tx_packets;
-	unsigned long prev_fwd_tx_packets;
-	unsigned long prev_fwd_rx_packets;
+	uint64_t prev_fwd_tx_packets;
+	uint64_t prev_fwd_rx_packets;
 	int connection;
 #endif
 	bool is_roc_inprogress;

@@ -246,7 +246,7 @@ ol_rx_fwd_check(struct ol_txrx_vdev_t *vdev,
  * Return: status -> A_OK - success, A_ERROR - failure
  */
 A_STATUS ol_get_intra_bss_fwd_pkts_count(uint8_t vdev_id,
-		unsigned long *fwd_tx_packets, unsigned long *fwd_rx_packets)
+		uint64_t *fwd_tx_packets, uint64_t *fwd_rx_packets)
 {
 	struct ol_txrx_vdev_t *vdev = NULL;
 

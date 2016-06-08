@@ -4653,8 +4653,8 @@ static void hdd_bus_bw_compute_cbk(void *priv)
 	hdd_context_t *hdd_ctx = (hdd_context_t *) priv;
 	hdd_adapter_t *adapter = NULL;
 	uint64_t tx_packets = 0, rx_packets = 0;
-	unsigned long fwd_tx_packets = 0, fwd_rx_packets = 0;
-	unsigned long fwd_tx_packets_diff = 0, fwd_rx_packets_diff = 0;
+	uint64_t fwd_tx_packets = 0, fwd_rx_packets = 0;
+	uint64_t fwd_tx_packets_diff = 0, fwd_rx_packets_diff = 0;
 	uint64_t total_tx = 0, total_rx = 0;
 	hdd_adapter_list_node_t *adapterNode = NULL;
 	QDF_STATUS status = 0;
