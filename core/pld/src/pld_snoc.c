@@ -355,7 +355,7 @@ void pld_snoc_disable_irq(unsigned int ce_id)
  */
 int pld_snoc_get_ce_id(int irq)
 {
-	icnss_get_ce_id(irq);
+	return icnss_get_ce_id(irq);
 }
 
 #endif

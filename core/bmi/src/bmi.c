@@ -202,9 +202,11 @@ bmi_get_target_info(struct bmi_target_info *targ_info,
 	case QDF_BUS_TYPE_SNOC:
 		status = bmi_get_target_info_message_based(targ_info, ol_ctx);
 		break;
+#ifdef HIF_SDIO
 	case QDF_BUS_TYPE_SDIO:
 		status = hif_reg_based_get_target_info(scn, targ_info);
 		break;
+#endif
 	default:
 		status = QDF_STATUS_E_FAILURE;
 		break;
