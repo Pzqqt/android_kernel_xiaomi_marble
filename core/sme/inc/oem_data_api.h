@@ -46,7 +46,7 @@
 /* Structure for defining req sent to the PE */
 typedef struct tagOemDataReq {
 	uint8_t sessionId;
-	uint8_t data_len;
+	uint32_t data_len;
 	uint8_t *data;
 } tOemDataReq, tOemDataReqConfig;
 
