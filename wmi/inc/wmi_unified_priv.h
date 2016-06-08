@@ -250,7 +250,7 @@ QDF_STATUS (*send_stats_request_cmd)(wmi_unified_t wmi_handle,
 				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct stats_request_params *param);
 
-#ifdef WMI_NON_TLV_SUPPORT
+#ifdef CONFIG_WIN
 QDF_STATUS (*send_packet_log_enable_cmd)(wmi_unified_t wmi_handle,
 				WMI_HOST_PKTLOG_EVENT PKTLOG_EVENT);
 #else
@@ -363,12 +363,6 @@ QDF_STATUS (*send_probe_rsp_tmpl_send_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_setup_install_key_cmd)(wmi_unified_t wmi_handle,
 				struct set_key_params *key_params);
 
-#ifndef WMI_NON_TLV_SUPPORT
-QDF_STATUS (*send_process_update_edca_param_cmd)(wmi_unified_t wmi_handle,
-			     uint8_t vdev_id,
-			     wmi_wmm_vparams gwmm_param[WMI_MAX_NUM_AC]);
-#endif
-
 QDF_STATUS (*send_vdev_set_gtx_cfg_cmd)(wmi_unified_t wmi_handle,
 				  uint32_t if_id,
 				  struct wmi_gtx_config *gtx_info);
@@ -379,10 +373,6 @@ QDF_STATUS (*send_set_sta_keep_alive_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_set_sta_sa_query_param_cmd)(wmi_unified_t wmi_handle,
 				       uint8_t vdev_id, uint32_t max_retries,
 					   uint32_t retry_interval);
-#ifndef WMI_NON_TLV_SUPPORT
-QDF_STATUS (*send_bcn_buf_ll_cmd)(wmi_unified_t wmi_handle,
-			wmi_bcn_send_from_host_cmd_fixed_param *param);
-#endif
 
 QDF_STATUS (*send_set_gateway_params_cmd)(wmi_unified_t wmi_handle,
 					struct gateway_update_req_param *req);
@@ -395,11 +385,6 @@ QDF_STATUS (*send_scan_probe_setoui_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*send_reset_passpoint_network_list_cmd)(wmi_unified_t wmi_handle,
 					struct wifi_passpoint_req_param *req);
-#ifndef WMI_NON_TLV_SUPPORT
-QDF_STATUS (*send_roam_scan_offload_mode_cmd)(wmi_unified_t wmi_handle,
-				wmi_start_scan_cmd_fixed_param *scan_cmd_fp,
-				struct roam_offload_scan_params *roam_req);
-#endif
 
 QDF_STATUS (*send_roam_scan_offload_rssi_thresh_cmd)(wmi_unified_t wmi_handle,
 				struct roam_offload_scan_rssi_params *roam_req);
@@ -482,7 +467,7 @@ QDF_STATUS (*send_snr_cmd)(wmi_unified_t wmi_handle, uint8_t vdev_id);
 
 QDF_STATUS (*send_link_status_req_cmd)(wmi_unified_t wmi_handle,
 				 struct link_status_params *link_status);
-#ifndef WMI_NON_TLV_SUPPORT
+#ifdef CONFIG_MCL
 QDF_STATUS (*send_lphb_config_hbenable_cmd)(wmi_unified_t wmi_handle,
 				wmi_hb_set_enable_cmd_fixed_param *params);
 
@@ -506,6 +491,25 @@ QDF_STATUS (*send_get_link_speed_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*send_egap_conf_params_cmd)(wmi_unified_t wmi_handle,
 				     wmi_ap_ps_egap_param_cmd_fixed_param *egap_params);
+
+QDF_STATUS (*send_process_update_edca_param_cmd)(wmi_unified_t wmi_handle,
+			     uint8_t vdev_id,
+			     wmi_wmm_vparams gwmm_param[WMI_MAX_NUM_AC]);
+
+QDF_STATUS (*send_bcn_buf_ll_cmd)(wmi_unified_t wmi_handle,
+			wmi_bcn_send_from_host_cmd_fixed_param * param);
+
+QDF_STATUS (*send_roam_scan_offload_mode_cmd)(wmi_unified_t wmi_handle,
+				wmi_start_scan_cmd_fixed_param * scan_cmd_fp,
+				struct roam_offload_scan_params *roam_req);
+
+QDF_STATUS (*send_roam_scan_offload_ap_profile_cmd)(wmi_unified_t wmi_handle,
+				    wmi_ap_profile * ap_profile_p,
+				    uint32_t vdev_id);
+
+QDF_STATUS (*send_pktlog_wmi_send_cmd)(wmi_unified_t wmi_handle,
+				   WMI_PKTLOG_EVENT pktlog_event,
+				   WMI_CMD_ID cmd_id);
 #endif
 
 QDF_STATUS (*send_fw_profiling_cmd)(wmi_unified_t wmi_handle,
@@ -524,11 +528,6 @@ QDF_STATUS (*send_start_oem_data_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS
 (*send_dfs_phyerr_filter_offload_en_cmd)(wmi_unified_t wmi_handle,
 			bool dfs_phyerr_filter_offload);
-#ifndef WMI_NON_TLV_SUPPORT
-QDF_STATUS (*send_pktlog_wmi_send_cmd)(wmi_unified_t wmi_handle,
-				   WMI_PKTLOG_EVENT pktlog_event,
-				   WMI_CMD_ID cmd_id);
-#endif
 
 QDF_STATUS (*send_add_wow_wakeup_event_cmd)(wmi_unified_t wmi_handle,
 					uint32_t vdev_id,
@@ -685,11 +684,6 @@ QDF_STATUS (*send_roam_invoke_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*send_roam_scan_offload_cmd)(wmi_unified_t wmi_handle,
 				 uint32_t command, uint32_t vdev_id);
-#ifndef WMI_NON_TLV_SUPPORT
-QDF_STATUS (*send_roam_scan_offload_ap_profile_cmd)(wmi_unified_t wmi_handle,
-				    wmi_ap_profile *ap_profile_p,
-				    uint32_t vdev_id);
-#endif
 
 QDF_STATUS (*send_roam_scan_offload_scan_period_cmd)(wmi_unified_t wmi_handle,
 				     uint32_t scan_period,
@@ -1208,6 +1202,8 @@ struct wmi_unified {
 #endif
 };
 #ifdef WMI_NON_TLV_SUPPORT
+/* ONLY_NON_TLV_TARGET:TLV attach dummy function defintion for case when
+ * driver supports only NON-TLV target (WIN mainline) */
 #define wmi_tlv_attach(x) qdf_print("TLV Unavailable\n")
 #else
 void wmi_tlv_attach(wmi_unified_t wmi_handle);
