@@ -129,19 +129,19 @@ struct mon_rx_status {
 };
 
 /* DHCP Related Mask */
-#define DHCP_OPTION53			(0x35)
-#define DHCP_OPTION53_LENGTH		(1)
-#define DHCP_OPTION53_OFFSET		(0x11A)
-#define DHCP_OPTION53_LENGTH_OFFSET	(0x11B)
-#define DHCP_OPTION53_STATUS_OFFSET	(0x11C)
-#define DHCPDISCOVER			(1)
-#define DHCPOFFER			(2)
-#define DHCPREQUEST			(3)
-#define DHCPDECLINE			(4)
-#define DHCPACK				(5)
-#define DHCPNAK				(6)
-#define DHCPRELEASE			(7)
-#define DHCPINFORM			(8)
+#define QDF_DHCP_OPTION53			(0x35)
+#define QDF_DHCP_OPTION53_LENGTH		(1)
+#define QDF_DHCP_OPTION53_OFFSET		(0x11A)
+#define QDF_DHCP_OPTION53_LENGTH_OFFSET	(0x11B)
+#define QDF_DHCP_OPTION53_STATUS_OFFSET	(0x11C)
+#define QDF_DHCP_DISCOVER			(1)
+#define QDF_DHCP_OFFER				(2)
+#define QDF_DHCP_REQUEST			(3)
+#define QDF_DHCP_DECLINE			(4)
+#define QDF_DHCP_ACK				(5)
+#define QDF_DHCP_NAK				(6)
+#define QDF_DHCP_RELEASE			(7)
+#define QDF_DHCP_INFORM				(8)
 
 #define QDF_NBUF_IPA_CHECK_MASK		0x80000000
 

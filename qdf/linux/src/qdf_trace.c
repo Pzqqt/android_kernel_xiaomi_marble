@@ -1218,33 +1218,33 @@ bool qdf_log_dhcp_pkt(uint8_t session_id, struct sk_buff *skb,
 	if ((qdf_dp_get_proto_bitmap() & QDF_NBUF_PKT_TRAC_TYPE_DHCP) &&
 		qdf_nbuf_is_ipv4_dhcp_pkt(skb) == true) {
 
-		if ((skb->data[DHCP_OPTION53_OFFSET] == DHCP_OPTION53) &&
-		    (skb->data[DHCP_OPTION53_LENGTH_OFFSET] ==
-						 DHCP_OPTION53_LENGTH)) {
+		if ((skb->data[QDF_DHCP_OPTION53_OFFSET] == QDF_DHCP_OPTION53) &&
+		    (skb->data[QDF_DHCP_OPTION53_LENGTH_OFFSET] ==
+						 QDF_DHCP_OPTION53_LENGTH)) {
 
-			switch (skb->data[DHCP_OPTION53_STATUS_OFFSET]) {
-			case DHCPDISCOVER:
+			switch (skb->data[QDF_DHCP_OPTION53_STATUS_OFFSET]) {
+			case QDF_DHCP_DISCOVER:
 				subtype = QDF_PROTO_DHCP_DISCOVER;
 				break;
-			case DHCPREQUEST:
+			case QDF_DHCP_REQUEST:
 				subtype = QDF_PROTO_DHCP_REQUEST;
 				break;
-			case DHCPOFFER:
+			case QDF_DHCP_OFFER:
 				subtype = QDF_PROTO_DHCP_OFFER;
 				break;
-			case DHCPACK:
+			case QDF_DHCP_ACK:
 				subtype = QDF_PROTO_DHCP_ACK;
 				break;
-			case DHCPNAK:
+			case QDF_DHCP_NAK:
 				subtype = QDF_PROTO_DHCP_NACK;
 				break;
-			case DHCPRELEASE:
+			case QDF_DHCP_RELEASE:
 				subtype = QDF_PROTO_DHCP_RELEASE;
 				break;
-			case DHCPINFORM:
+			case QDF_DHCP_INFORM:
 				subtype = QDF_PROTO_DHCP_INFORM;
 				break;
-			case DHCPDECLINE:
+			case QDF_DHCP_DECLINE:
 				subtype = QDF_PROTO_DHCP_DECLINE;
 				break;
 			default:
