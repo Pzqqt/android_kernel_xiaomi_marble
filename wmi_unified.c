@@ -43,6 +43,22 @@
 
 #include <linux/debugfs.h>
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 3, 0))
+/* TODO Cleanup this backported function */
+int qcacld_bp_seq_printf(struct seq_file *m, const char *f, ...)
+{
+	va_list args;
+
+	va_start(args, f);
+	seq_printf(m, f, args);
+	va_end(args);
+
+	return m->count;
+}
+
+#define seq_printf(m, fmt, ...) qcacld_bp_seq_printf((m), fmt, ##__VA_ARGS__)
+#endif
+
 #define WMI_MIN_HEAD_ROOM 64
 
 #ifdef WMI_INTERFACE_EVENT_LOGGING
