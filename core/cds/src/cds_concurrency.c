@@ -1951,6 +1951,27 @@ next_action_three_connection_table[CDS_MAX_TWO_CONNECTION_MODE]
 };
 
 /**
+ * cds_get_connection_count() - provides the count of
+ * current connections
+ *
+ * This function provides the count of current connections
+ *
+ * Return: connection count
+ */
+uint32_t cds_get_connection_count(void)
+{
+	uint32_t conn_index, count = 0;
+
+	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
+		 conn_index++) {
+		if (conc_connection_list[conn_index].in_use)
+			count++;
+	}
+
+	return count;
+}
+
+/**
  * cds_is_sta_connection_pending() - This function will check if sta connection
  *                                   is pending or not.
  *
@@ -2136,7 +2157,7 @@ static void cds_update_conc_list(uint32_t conn_index,
  *
  * Return: connection count of specific type
  */
-static uint32_t cds_mode_specific_connection_count(enum cds_con_mode mode,
+uint32_t cds_mode_specific_connection_count(enum cds_con_mode mode,
 						uint32_t *list)
 {
 	uint32_t conn_index = 0, count = 0;
@@ -3295,6 +3316,34 @@ void cds_dump_concurrency_info(void)
 	hdd_ctx->mcc_mode = !cds_current_concurrency_is_scc();
 }
 
+/*
+ * cds_check_is_tdls_allowed() - check is tdls allowed or not
+ * @adapter: pointer to adapter
+ *
+ * Function determines the whether TDLS allowed in the system
+ *
+ * Return: true or false
+ */
+bool cds_check_is_tdls_allowed(enum tQDF_ADAPTER_MODE device_mode)
+{
+	bool state = false;
+	uint32_t count;
+
+	count = cds_get_connection_count();
+
+	if (count > 1)
+		state = false;
+	else if (device_mode == QDF_STA_MODE ||
+		 device_mode == QDF_P2P_CLIENT_MODE)
+		state = true;
+
+	/* If any concurrency is detected */
+	if (!state)
+		cds_dump_concurrency_info();
+
+	return state;
+}
+
 /**
  * cds_set_tdls_ct_mode() - Set the tdls connection tracker mode
  * @hdd_ctx: hdd context
@@ -3308,17 +3357,34 @@ void cds_set_tdls_ct_mode(hdd_context_t *hdd_ctx)
 	bool state = false;
 
 	/* If any concurrency is detected, skip tdls pkt tracker */
-	if (((1 << QDF_STA_MODE) == hdd_ctx->concurrency_mode) &&
-	    (hdd_ctx->no_of_active_sessions[QDF_STA_MODE] == 1) &&
-	    (hdd_ctx->config->fEnableTDLSImplicitTrigger) &&
-	    (eTDLS_SUPPORT_DISABLED != hdd_ctx->tdls_mode)) {
-		if (hdd_ctx->config->fTDLSExternalControl) {
-			if (hdd_ctx->tdls_external_peer_count)
-				state = true;
-			goto set_state;
-		} else {
+	if (cds_get_connection_count() > 1) {
+		state = false;
+		goto set_state;
+	}
+
+	if (eTDLS_SUPPORT_DISABLED == hdd_ctx->tdls_mode ||
+	    (!hdd_ctx->config->fEnableTDLSImplicitTrigger)) {
+		state = false;
+		goto set_state;
+	} else if (cds_mode_specific_connection_count(QDF_STA_MODE,
+						      NULL) == 1) {
+		state = true;
+	} else if (cds_mode_specific_connection_count(QDF_P2P_CLIENT_MODE,
+						      NULL) == 1){
+		state = true;
+	} else {
+		state = false;
+		goto set_state;
+	}
+
+	/* In case of TDLS external control, peer should be added
+	 * by the user space to start connection tracker.
+	 */
+	if (hdd_ctx->config->fTDLSExternalControl) {
+		if (hdd_ctx->tdls_external_peer_count)
 			state = true;
-		}
+		else
+			state = false;
 	}
 
 set_state:
@@ -3518,8 +3584,6 @@ void cds_incr_active_session(enum tQDF_ADAPTER_MODE mode,
 		break;
 	}
 
-	/* set tdls connection tracker state */
-	cds_set_tdls_ct_mode(hdd_ctx);
 
 	cds_info("No.# of active sessions for mode %d = %d",
 		mode, hdd_ctx->no_of_active_sessions[mode]);
@@ -3535,6 +3599,10 @@ void cds_incr_active_session(enum tQDF_ADAPTER_MODE mode,
 		cds_info("Set PCL of STA to FW");
 	}
 	cds_incr_connection_count(session_id);
+
+	/* set tdls connection tracker state */
+	cds_set_tdls_ct_mode(hdd_ctx);
+
 	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 }
 
@@ -3786,13 +3854,14 @@ void cds_decr_active_session(enum tQDF_ADAPTER_MODE mode,
 		break;
 	}
 
-	/* set tdls connection tracker state */
-	cds_set_tdls_ct_mode(hdd_ctx);
-
 	cds_info("No.# of active sessions for mode %d = %d",
 		mode, hdd_ctx->no_of_active_sessions[mode]);
 
 	cds_decr_connection_count(session_id);
+
+	/* set tdls connection tracker state */
+	cds_set_tdls_ct_mode(hdd_ctx);
+
 	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 }
 
@@ -3967,27 +4036,6 @@ uint32_t cds_get_connection_for_vdev_id(uint32_t vdev_id)
 		}
 	}
 	return conn_index;
-}
-
-
-/**
- * cds_get_connection_count() - provides the count of
- * current connections
- *
- *
- * This function provides the count of current connections
- *
- * Return: connection count
- */
-uint32_t cds_get_connection_count(void)
-{
-	uint32_t conn_index, count = 0;
-	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
-		 conn_index++) {
-		if (conc_connection_list[conn_index].in_use)
-			count++;
-	}
-	return count;
 }
 
 /**

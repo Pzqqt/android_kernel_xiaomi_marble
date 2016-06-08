@@ -550,6 +550,7 @@ struct cds_conc_connection_info {
 
 bool cds_is_connection_in_progress(void);
 void cds_dump_concurrency_info(void);
+bool cds_check_is_tdls_allowed(enum tQDF_ADAPTER_MODE device_mode);
 void cds_set_tdls_ct_mode(hdd_context_t *hdd_ctx);
 void cds_set_concurrency_mode(enum tQDF_ADAPTER_MODE mode);
 void cds_clear_concurrency_mode(enum tQDF_ADAPTER_MODE mode);
@@ -782,4 +783,6 @@ QDF_STATUS cds_set_hw_mode_on_channel_switch(uint8_t session_id);
 void cds_set_do_hw_mode_change_flag(bool flag);
 bool cds_is_hw_mode_change_after_vdev_up(void);
 void cds_dump_connection_status_info(void);
+uint32_t cds_mode_specific_connection_count(enum cds_con_mode mode,
+						uint32_t *list);
 #endif /* __CDS_CONCURRENCY_H */

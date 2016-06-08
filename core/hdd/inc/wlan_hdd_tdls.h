@@ -314,6 +314,17 @@ struct tdls_ct_mac_table {
 	uint32_t rx_packet_cnt;
 	uint32_t peer_timestamp_ms;
 };
+
+/**
+ * struct tdls_set_state_db - set state command data base
+ * @set_state_cnt: tdls set state count
+ * @vdev_id: vdev id of last set state command
+ */
+struct tdls_set_state_info {
+	uint8_t set_state_cnt;
+	uint8_t vdev_id;
+};
+
 /**
  * struct tdlsCtx_t - tdls context
  *
@@ -684,6 +695,8 @@ void hdd_tdls_context_destroy(hdd_context_t *hdd_ctx);
 int wlan_hdd_tdls_antenna_switch(hdd_context_t *hdd_ctx,
 				 hdd_adapter_t *adapter,
 				 uint32_t mode);
+hdd_adapter_t *wlan_hdd_tdls_check_and_enable(hdd_context_t *hdd_ctx);
+
 
 #else
 static inline void hdd_tdls_notify_mode_change(hdd_adapter_t *adapter,
@@ -714,6 +727,19 @@ static inline int wlan_hdd_tdls_antenna_switch(hdd_context_t *hdd_ctx,
 {
 	return 0;
 }
+
+static inline hdd_adapter_t *wlan_hdd_tdls_check_and_enable(
+						hdd_context_t *hdd_ctx)
+{
+	return NULL;
+}
+
+static inline void wlan_hdd_update_tdls_info(hdd_adapter_t *adapter,
+						bool tdls_prohibited,
+						bool tdls_chan_swit_prohibited)
+{
+}
+
 #endif /* End of FEATURE_WLAN_TDLS */
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
