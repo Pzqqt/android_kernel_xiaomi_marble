@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014, 2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -30,6 +30,9 @@
 
 #ifndef ATH_TARGET
 #include "athstartpack.h"
+#endif
+#ifdef ATHR_WIN_NWF
+#pragma warning(disable:4214)
 #endif
 #undef MS
 #define MS(_v, _f) (((_v) & _f ## _MASK) >> _f ## _LSB)
@@ -114,15 +117,26 @@ typedef PREPACK struct _HTC_FRAME_HDR {
 #define HTC_FLAGS_NEED_CREDIT_UPDATE (1 << 0)
 #define HTC_FLAGS_SEND_BUNDLE        (1 << 1)   /* start or part of bundle */
 #define HTC_FLAGS_SEQ_CHECK          (1 << 2) /* seq check on rx side */
-#define HTC_FLAGS_CRC CHECK          (1 << 3) /* CRC check on rx side */
-
+#define HTC_FLAGS_CRC_CHECK          (1 << 3) /* CRC check on rx side */
 /* receive direction */
-#define HTC_FLAGS_RECV_UNUSED_0      (1 << 0)   /* bit 0 unused */
-#define HTC_FLAGS_RECV_TRAILER       (1 << 1)   /* bit 1 trailer data present */
-#define HTC_FLAGS_RECV_UNUSED_2      (1 << 0)   /* bit 2 unused */
-#define HTC_FLAGS_RECV_UNUSED_3      (1 << 0)   /* bit 3 unused */
-#define HTC_FLAGS_RECV_BUNDLE_CNT_MASK (0xF0)   /* bits 7..4  */
-#define HTC_FLAGS_RECV_BUNDLE_CNT_SHIFT 4
+#define HTC_FLAGS_RECV_1MORE_BLOCK   (1 << 0) /* bit 0 bundle trailer present */
+#define HTC_FLAGS_RECV_TRAILER       (1 << 1) /* bit 1 trailer data present */
+#define HTC_FLAGS_RECV_BUNDLE_CNT_MASK   (0xFC)    /* bits 7..2  */
+#define HTC_FLAGS_RECV_BUNDLE_CNT_SHIFT  2
+/*
+ * To be compatible with an older definition of a smaller (4-bit)
+ * bundle count field, the bundle count is stored in a segmented
+ * format - the 4 LSbs of the bundle count value are stored in bits 5:2
+ * of the BUNDLE_CNT field, which is bits 7:4 of the HTC_FLAGS word;
+ * the next 2 bits of the bundle count value are stored in bits 1:0 of
+ * the BUNDLE_CNT field, which is bits 3:2 of the HTC_FLAGS word.
+ */
+#define HTC_FLAGS_RECV_BUNDLE_CNT_SET(x)  \
+	((((x) << 2) | ((x) >> 4)) << HTC_FLAGS_RECV_BUNDLE_CNT_SHIFT)
+#define HTC_FLAGS_RECV_BUNDLE_CNT_GET(x)  \
+	((((x) & HTC_FLAGS_RECV_BUNDLE_CNT_MASK) >> \
+	(HTC_FLAGS_RECV_BUNDLE_CNT_SHIFT + 2)) | \
+	((((x) >> HTC_FLAGS_RECV_BUNDLE_CNT_SHIFT) & 0x3) << 4))
 
 #define HTC_HDR_LENGTH  (sizeof(HTC_FRAME_HDR))
 #define HTC_HDR_ALIGNMENT_PADDING	    \

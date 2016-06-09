@@ -25,12 +25,11 @@
  * to the Linux Foundation.
  */
 
-#ifndef __WLANDEFS_H__
-#define __WLANDEFS_H__
+#ifndef __WLAN_DEFS_H__
+#define __WLAN_DEFS_H__
 
 /* A_COMPILE_TIME_ASSERT */
 #include <a_osapi.h>
-#include <osdep.h>
 
 /*
  * This file contains WLAN definitions that may be used across both
@@ -74,7 +73,7 @@ typedef enum {
 	MODE_11AC_VHT20_2G = 11,
 	MODE_11AC_VHT40_2G = 12,
 	MODE_11AC_VHT80_2G = 13,
-#if CONFIG_160MHZ_SUPPORT != 0
+#if CONFIG_160MHZ_SUPPORT
 	MODE_11AC_VHT80_80 = 14,
 	MODE_11AC_VHT160   = 15,
 #endif
@@ -102,9 +101,15 @@ typedef enum {
 	/* MODE_UNKNOWN_11AX_SUPPORT = 24,*/ /* not needed? */
 	MODE_UNKNOWN_160MHZ_SUPPORT = MODE_UNKNOWN, /* not needed? */
 
+#ifdef ATHR_WIN_NWF
+	PHY_MODE_MAX    = MODE_UNKNOWN,
+	PHY_MODE_MAX_NO_160_MHZ_SUPPORT = MODE_UNKNOWN_NO_160MHZ_SUPPORT,
+	PHY_MODE_MAX_160_MHZ_SUPPORT    = MODE_UNKNOWN_160MHZ_SUPPORT,
+#else
 	MODE_MAX        = MODE_UNKNOWN,
 	MODE_MAX_NO_160_MHZ_SUPPORT = MODE_UNKNOWN_NO_160MHZ_SUPPORT,
 	MODE_MAX_160_MHZ_SUPPORT    = MODE_UNKNOWN_160MHZ_SUPPORT,
+#endif
 } WLAN_PHY_MODE;
 
 #if CONFIG_160MHZ_SUPPORT == 0
@@ -131,7 +136,7 @@ typedef enum {
 	WLAN_11AG_CAPABILITY = 3,
 } WLAN_CAPABILITY;
 
-#if defined(CONFIG_AR900B_SUPPORT) || defined(AR900B)
+#if (NUM_SPATIAL_STREAM > 3)
 #define A_RATEMASK A_UINT64
 #else
 #define A_RATEMASK A_UINT32
@@ -261,15 +266,6 @@ typedef struct {
 	A_UINT32 low_5ghz_chan;
 	A_UINT32 high_5ghz_chan;
 } HAL_REG_CAPABILITIES;
-
-typedef enum {
-	WHAL_REG_EXT_FCC_MIDBAND = 0,
-	WHAL_REG_EXT_JAPAN_MIDBAND = 1,
-	WHAL_REG_EXT_FCC_DFS_HT40 = 2,
-	WHAL_REG_EXT_JAPAN_NONDFS_HT40 = 3,
-	WHAL_REG_EXT_JAPAN_DFS_HT40 = 4,
-	WHAL_REG_EXT_FCC_CH_144 = 5,
-} WHAL_REG_EXT_BITMAP;
 
 /*
  * Used to update rate-control logic with the status of the tx-completion.

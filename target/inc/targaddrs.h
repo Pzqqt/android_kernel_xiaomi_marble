@@ -70,7 +70,7 @@
 #define AR9888_HOST_INTEREST_ADDRESS    0x00400800
 #define AR900B_HOST_INTEREST_ADDRESS    0x00400800
 #define AR6320_HOST_INTEREST_ADDRESS    0x00400800
-#define QCA6180_HOST_INTEREST_ADDRESS   0x005d96a0
+#define QCA9377_HOST_INTEREST_ADDRESS   0x00400800
 #define AR6004_SOC_RESET_ADDRESS        0X00004000
 #define AR6004_SOC_RESET_CPU_INIT_RESET_MASK        0X00000800
 #if defined(AR6006_MEMORY_NEW_ARCH)
@@ -114,11 +114,11 @@ PREPACK64 struct host_interest_s {
 	/* Save SW ROM version */
 	A_UINT32 hi_sw_rom_version;     /* 0x0c */
 
-	/*
-	 * General-purpose flag bits, similar to SOC_OPTION_* flags.
-	 * Can be used by application rather than by OS.
-	 */
-	A_UINT32 hi_option_flag;        /* 0x10 */
+    /*
+     * General-purpose flag bits, similar to SOC_OPTION_* flags.
+     * Can be used by application rather than by OS.
+     */
+    volatile A_UINT32      hi_option_flag;                            /* 0x10 */
 
 	/*
 	 * Boolean that determines whether or not to
@@ -212,7 +212,7 @@ PREPACK64 struct host_interest_s {
 	A_UINT32 hi_acs_flags;  /* 0xc0 */
 	A_UINT32 hi_console_flags;      /* 0xc4 */
 	A_UINT32 hi_nvram_state;        /* 0xc8 */
-	A_UINT32 hi_option_flag2;       /* 0xcc */
+	volatile A_UINT32 hi_option_flag2;       /* 0xcc */
 
 	/* If non-zero, override values sent to Host in WMI_READY event. */
 	A_UINT32 hi_sw_version_override;        /* 0xd0 */
@@ -229,8 +229,8 @@ PREPACK64 struct host_interest_s {
 	/* location of CAL data */
 	A_UINT32 hi_cal_data;   /* 0xe4 */
 
-	/* Number of packet log buffers */
-	A_UINT32 hi_pktlog_num_buffers; /* 0xe8 */
+    /* Number of packet log buffers */
+    volatile A_UINT32      hi_pktlog_num_buffers;                     /* 0xe8 */
 
 	/* wow extension configuration */
 	A_UINT32 hi_wow_ext_config;     /* 0xec */
@@ -351,13 +351,21 @@ PREPACK64 struct host_interest_s {
 #define HI_OPTION_RF_KILL_SHIFT     0x2
 #define HI_OPTION_RF_KILL_MASK      0x1
 
+#define HI_OPTION_HTT_TGT_DEBUG_TX_COMPL_IDX 0x20
+
+#define HTT_TGT_DEBUG_TX_COMPL_IDX_VALUE()    \
+	((HOST_INTEREST->hi_option_flag2 & HI_OPTION_HTT_TGT_DEBUG_TX_COMPL_IDX))
+
 /* AR9888 1.0 only. Enable/disable CDC max perf support from host */
 #define HI_OPTION_DISABLE_CDC_MAX_PERF_WAR  0x20
 #define CDC_MAX_PERF_WAR_ENABLED()    \
 	(!(HOST_INTEREST->hi_option_flag2 & HI_OPTION_DISABLE_CDC_MAX_PERF_WAR))
-
-#define HI_OPTION_USE_EXT_LDO       0x40        /* use LDO27 for 1.1V instead of PMU */
-#define HI_OPTION_DBUART_SUPPORT    0x80        /* Enable uart debug support */
+#define HI_OPTION_USE_EXT_LDO       0x40 /* use LDO27 for 1.1V instead of PMU. */
+#define HI_OPTION_DBUART_SUPPORT    0x80 /* Enable uart debug support */
+/* This bit is to enable BE low latency for some customers.
+ * The side effect is TCP DL will be 8Mbps decreased (673Mbps -> 665Mbps).
+ */
+#define HI_OPTION_BE_LATENCY_OPTIMIZE    0x100
 #define HT_OPTION_GPIO_WAKEUP_SUPPORT    0x200 /* GPIO wake up support */
 #define GPIO_WAKEUP_ENABLED() \
 			 (HOST_INTEREST->hi_option_flag2 & HT_OPTION_GPIO_WAKEUP_SUPPORT)
@@ -406,20 +414,38 @@ PREPACK64 struct host_interest_s {
 #define HOST_ON_BE_CPU() \
 	(HOST_INTEREST->hi_be)
 
-/* AP nart no swap descriptor flag. Decsriptors are created on the target processor. */
+/* AP nart no swap descriptor flag. Decsriptors are created
+ * on the target processor.
+ */
 #define DESC_IN_FW() \
 	(HOST_INTEREST->hi_fw_swap & HI_DESC_IN_FW_BIT)
 
-#define HI_ACS_FLAGS_ENABLED        (1 << 0)    /* ACS is enabled */
-#define HI_ACS_FLAGS_USE_WWAN       (1 << 1)    /* Use physical WWAN device */
-#define HI_ACS_FLAGS_TEST_VAP       (1 << 2)    /* Use test VAP */
 
-#define HI_ACS_FLAGS_SDIO_SWAP_MAILBOX_SET          (1 << 0)
-#define HI_ACS_FLAGS_SDIO_REDUCE_TX_COMPL_SET       (1 << 1)
-#define HI_ACS_FLAGS_ALT_DATA_CREDIT_SIZE           (1 << 2)
-
-#define HI_ACS_FLAGS_SDIO_SWAP_MAILBOX_FW_ACK       (1 << 16)
-#define HI_ACS_FLAGS_SDIO_REDUCE_TX_COMPL_FW_ACK    (1 << 17)
+/* redefine for hi_acs_flags since no product ever use it
+ * NOTE:
+ *     This flag was only used in AR6004 for a customer project that has
+ *     been canceled, we are reusing it to avoid extending the Host interest
+ *     area.
+ * BIT Range  Meaning
+ * --------- ----------------------------------
+ *     0      HOST wants to swap MBOX usage
+ *     1      HOST supports HTT reduced tx completion
+ *     2      HOST supports HTT alternate credit size for data frames
+ *   15..3    reserved for HOST
+ *    16      FW set it before sending HTC_Ready to indicate MBOX swap is done
+ *    17      same as above but to indicate HTT reduced tx completion capability
+ *  31..18    reserved for FW
+ */
+/* HOST require to swap MBOX */
+#define HI_ACS_FLAGS_HOST_SWAP_MBOX     (1 << 0)
+/* HOST supports HTT reduced tx completion */
+#define HI_ACS_FLAGS_HOST_REDUCE_TX_COMPL (1 << 1)
+/* HOST supports alternate credit size for data frames */
+#define HI_ACS_FLAGS_ALT_DATA_CREDIT_SIZE (1 << 2)
+/* FW swapped MBOX */
+#define HI_ACS_FLAGS_FW_SWAPPED_MBOX    (1 << 16)
+/* FW support HTT reduced tx completion */
+#define HI_ACS_FLAGS_FW_REDUCE_TX_COMPL (1 << 17)
 
 /* CONSOLE FLAGS
  *
@@ -554,25 +580,25 @@ PREPACK64 struct host_interest_s {
 	(A_UINT32)((size_t)&((((struct host_interest_s *)(AR900B_HOST_INTEREST_ADDRESS))->item)))
 
 #define HOST_INTEREST_DBGLOG_IS_ENABLED() \
-	(!((volatile A_UINT32)HOST_INTEREST->hi_option_flag & HI_OPTION_DISABLE_DBGLOG))
+	(!(HOST_INTEREST->hi_option_flag & HI_OPTION_DISABLE_DBGLOG))
 
 #define HOST_INTEREST_PKTLOG_IS_ENABLED() \
-	(((volatile A_UINT32)HOST_INTEREST->hi_pktlog_num_buffers))
+	((HOST_INTEREST->hi_pktlog_num_buffers))
 
 #define HOST_INTEREST_PROFILE_IS_ENABLED() \
-	((volatile A_UINT32)HOST_INTEREST->hi_option_flag & HI_OPTION_ENABLE_PROFILE)
+	(HOST_INTEREST->hi_option_flag & HI_OPTION_ENABLE_PROFILE)
 
 #define LF_TIMER_STABILIZATION_IS_ENABLED() \
-	(!((volatile A_UINT32)HOST_INTEREST->hi_option_flag & HI_OPTION_NO_LFT_STBL))
+	(!(HOST_INTEREST->hi_option_flag & HI_OPTION_NO_LFT_STBL))
 
 #define IS_AMSDU_OFFLAOD_ENABLED() \
-	(((volatile A_UINT32)HOST_INTEREST->hi_option_flag2 & HI_OPTION_OFFLOAD_AMSDU))
+	((HOST_INTEREST->hi_option_flag2 & HI_OPTION_OFFLOAD_AMSDU))
 
 #define HOST_INTEREST_DFS_IS_ENABLED() \
-	(((volatile A_UINT32)HOST_INTEREST->hi_option_flag2 & HI_OPTION_DFS_SUPPORT))
+	((HOST_INTEREST->hi_option_flag2 & HI_OPTION_DFS_SUPPORT))
 
 #define HOST_INTEREST_EARLY_CFG_DONE() \
-	(((volatile A_UINT32)HOST_INTEREST->hi_option_flag2 & HI_OPTION_EARLY_CFG_DONE))
+	((HOST_INTEREST->hi_option_flag2 & HI_OPTION_EARLY_CFG_DONE))
 
 /*power save flag bit definitions*/
 #define HI_PWR_SAVE_LPL_ENABLED   0x1
@@ -615,14 +641,13 @@ PREPACK64 struct host_interest_s {
 
 #define HOST_INTEREST_ITEM_ADDRESS(TargetType, item) \
 	(((TargetType) == TARGET_TYPE_AR6002) ? AR6002_HOST_INTEREST_ITEM_ADDRESS(item) : \
-	 (((TargetType) == TARGET_TYPE_AR6003) ? AR6003_HOST_INTEREST_ITEM_ADDRESS(item) : \
-	  (((TargetType) == TARGET_TYPE_AR6004) ? AR6004_HOST_INTEREST_ITEM_ADDRESS(item) : \
-	   (((TargetType) == TARGET_TYPE_AR6006) ? AR6006_HOST_INTEREST_ITEM_ADDRESS(item) : \
-	    (((TargetType) == TARGET_TYPE_AR9888) ? AR9888_HOST_INTEREST_ITEM_ADDRESS(item) : \
-	    (((TargetType) == TARGET_TYPE_AR6320) ? AR6320_HOST_INTEREST_ITEM_ADDRESS(item) : \
-	    (((TargetType) == TARGET_TYPE_AR6320V2) ? AR6320_HOST_INTEREST_ITEM_ADDRESS(item) :	\
-	    (((TargetType) == TARGET_TYPE_AR900B) ? AR900B_HOST_INTEREST_ITEM_ADDRESS(item) : \
-	    0))))))))
+	(((TargetType) == TARGET_TYPE_AR6003) ? AR6003_HOST_INTEREST_ITEM_ADDRESS(item) : \
+	(((TargetType) == TARGET_TYPE_AR6004) ? AR6004_HOST_INTEREST_ITEM_ADDRESS(item) : \
+	(((TargetType) == TARGET_TYPE_AR6006) ? AR6006_HOST_INTEREST_ITEM_ADDRESS(item) : \
+	(((TargetType) == TARGET_TYPE_AR9888) ? AR9888_HOST_INTEREST_ITEM_ADDRESS(item) : \
+	(((TargetType) == TARGET_TYPE_AR6320) ? AR6320_HOST_INTEREST_ITEM_ADDRESS(item) : \
+	(((TargetType) == TARGET_TYPE_AR900B) ? AR900B_HOST_INTEREST_ITEM_ADDRESS(item) : \
+	0)))))))
 
 #define AR6002_BOARD_DATA_SZ 768
 #define AR6002_BOARD_EXT_DATA_SZ 0
@@ -639,6 +664,8 @@ PREPACK64 struct host_interest_s {
 #define AR9888_BOARD_EXT_DATA_SZ 0
 #define AR6320_BOARD_DATA_SZ     8192
 #define AR6320_BOARD_EXT_DATA_SZ 0
+#define QCA9377_BOARD_DATA_SZ     8192
+#define QCA9377_BOARD_EXT_DATA_SZ 0
 #define AR900B_BOARD_DATA_SZ     7168
 #define AR900B_BOARD_EXT_DATA_SZ 0
 
