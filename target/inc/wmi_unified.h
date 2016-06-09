@@ -443,6 +443,11 @@ typedef enum {
 	WMI_PEER_ATF_REQUEST_CMDID,
 	/** bandwidth fairness (BWF) peer configuration request command */
 	WMI_PEER_BWF_REQUEST_CMDID,
+	/** rx reorder queue setup for peer/tid */
+	WMI_PEER_REORDER_QUEUE_SETUP_CMDID,
+	/** rx reorder queue remove for peer/tid */
+	WMI_PEER_REORDER_QUEUE_REMOVE_CMDID,
+
 
 	/* beacon/management specific commands */
 
@@ -6775,6 +6780,14 @@ typedef struct {
 #define WMI_PEER_SET_MAX_TX_RATE                        0x11
 /** Set peer minimal tx rate (MCS) in adaptive rate ctrl */
 #define WMI_PEER_SET_MIN_TX_RATE                        0x12
+/**
+ * default ring routing for peer data packets,
+ * param_value = bit 0 for hash based routing enabled or not
+ * (value 1 is enabled, value 0 is disabled)
+ * bits 1:5 are for ring 32 (i.e. ring id value
+ * selected from 0 to 31 values)
+ */
+#define WMI_PEER_SET_DEFAULT_ROUTING                    0x13
 
 /** mimo ps values for the parameter WMI_PEER_MIMO_PS_STATE  */
 #define WMI_PEER_MIMO_PS_NONE                          0x0
@@ -14375,6 +14388,64 @@ typedef struct {
 	 *      A_UINT32 wmi_soc_set_hw_mode_response_vdev_mac_entry[];
 	 */
 } wmi_pdev_hw_mode_transition_event_fixed_param;
+
+/**
+ * This command is sent from WLAN host driver to firmware for
+ * plugging in reorder queue desc to lithium hw.
+ *
+ * Example: plug-in queue desc for TID 5
+ * host->target: WMI_PEER_REORDER_QUEUE_SETUP_CMDID,
+ *               (vdev_id = PEER vdev id,
+ *                peer_macaddr = PEER mac addr,
+ *                tid = 5,
+ *                queue_ptr_lo = queue desc addr lower 32 bits,
+ *                queue_ptr_hi = queue desc addr higher 32 bits,
+ *                queue_no = 16-bit number assigned by host for queue,
+ *                              stored in bits 15:0 of queue_no field)
+ */
+typedef struct {
+	/* TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_peer_reorder_queue_setup_cmd_fixed_param
+	 */
+	A_UINT32 tlv_header;
+	A_UINT32 vdev_id;
+	/* peer mac address */
+	wmi_mac_addr peer_macaddr;
+	/* 0 to 15 = QoS TIDs, 16 = non-qos TID */
+	A_UINT32 tid;
+	/* lower 32 bits of queue desc adddress */
+	A_UINT32 queue_ptr_lo;
+	/* upper 32 bits of queue desc adddress */
+	A_UINT32 queue_ptr_hi;
+	/* 16-bit number assigned by host for queue,
+	 * stored in bits 15:0 of queue_no field
+	 */
+	A_UINT32 queue_no;
+} wmi_peer_reorder_queue_setup_cmd_fixed_param;
+
+/**
+ * This command is sent from WLAN host driver to firmware for
+ * removing one or more reorder queue desc to lithium hw.
+ *
+ * Example: remove queue desc for all TIDs
+ * host->target: WMI_PEER_REORDER_REMOVE_CMDID,
+ *               (vdev_id = PEER vdev id,
+ *                peer_macaddr = PEER mac addr,
+ *                tid = 0x1FFFF,
+ */
+typedef struct {
+	/* TLV tag and len;
+	 * tag equals
+	 * WMITLV_TAG_STRUC_wmi_peer_reorder_queue_remove_cmd_fixed_param
+	 */
+	A_UINT32 tlv_header;
+	A_UINT32 vdev_id;
+	/* peer mac address */
+	wmi_mac_addr peer_macaddr;
+	/* bits 0 to 15 = QoS TIDs, bit 16 = non-qos TID */
+	A_UINT32 tid_mask;
+} wmi_peer_reorder_queue_remove_cmd_fixed_param;
+
 
 /* DEPRECATED - use wmi_pdev_set_mac_config_response_event_fixed_param
  * instead

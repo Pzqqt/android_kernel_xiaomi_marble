@@ -714,6 +714,8 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_p2p_lo_start_cmd_fixed_param,
 	WMITLV_TAG_STRUC_wmi_p2p_lo_stop_cmd_fixed_param,
 	WMITLV_TAG_STRUC_wmi_p2p_lo_stopped_event_fixed_param,
+	WMITLV_TAG_STRUC_wmi_peer_reorder_queue_setup_cmd_fixed_param,
+	WMITLV_TAG_STRUC_wmi_peer_reorder_queue_remove_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1003,6 +1005,9 @@ typedef enum {
 	OP(WMI_DBGLOG_TIME_STAMP_SYNC_CMDID) \
 	OP(WMI_P2P_LISTEN_OFFLOAD_START_CMDID) \
 	OP(WMI_P2P_LISTEN_OFFLOAD_STOP_CMDID) \
+	OP(WMI_IPA_OFFLOAD_ENABLE_DISABLE_CMDID) \
+	OP(WMI_PEER_REORDER_QUEUE_SETUP_CMDID) \
+	OP(WMI_PEER_REORDER_QUEUE_REMOVE_CMDID) \
 	/* add new CMD_LIST elements above this line */
 
 /*
@@ -2876,6 +2881,16 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_WAL_POWER_DEBUG_CMDID);
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_peer_bwf_request_fixed_param, wmi_peer_bwf_request_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_STRUC, wmi_bwf_peer_info, peer_info, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PEER_BWF_REQUEST_CMDID);
+
+/* peer reorder queue setup cmd */
+#define WMITLV_TABLE_WMI_PEER_REORDER_QUEUE_SETUP_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_peer_reorder_queue_setup_cmd_fixed_param, wmi_peer_reorder_queue_setup_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PEER_REORDER_QUEUE_SETUP_CMDID);
+
+/* peer reorder queue remove cmd */
+#define WMITLV_TABLE_WMI_PEER_REORDER_QUEUE_REMOVE_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_peer_reorder_queue_remove_cmd_fixed_param, wmi_peer_reorder_queue_remove_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PEER_REORDER_QUEUE_REMOVE_CMDID);
 
 
 /************************** TLV definitions of WMI events *******************************/
