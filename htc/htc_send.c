@@ -86,16 +86,6 @@ void htc_credit_record(htc_credit_exchange_type type, uint32_t tx_credit,
 	htc_credit_history_buffer[g_htc_credit_history_idx].htc_tx_queue_depth =
 		htc_tx_queue_depth;
 	g_htc_credit_history_idx++;
-
-#ifdef QCA_WIFI_3_0_EMU
-	if (type == HTC_REQUEST_CREDIT)
-		printk("\nrequest_credits-> current_credit %d, pending commands %d\n",
-			tx_credit, htc_tx_queue_depth);
-
-	else if (type == HTC_PROCESS_CREDIT_REPORT)
-		printk("\ncredit_report<- current_credit %d, pending commands %d\n",
-			tx_credit, htc_tx_queue_depth);
-#endif
 }
 
 void htc_dump_counter_info(HTC_HANDLE HTCHandle)
