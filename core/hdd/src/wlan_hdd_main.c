@@ -4679,10 +4679,19 @@ void hdd_pld_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 		hdd_ctx->cur_vote_level = next_vote_level;
 		pld_request_bus_bandwidth(hdd_ctx->parent_dev, next_vote_level);
 		if (next_vote_level == PLD_BUS_WIDTH_LOW) {
+			if (hdd_ctx->hbw_requested) {
+				pld_remove_pm_qos(hdd_ctx->parent_dev);
+				hdd_ctx->hbw_requested = false;
+			}
 			if (cds_sched_handle_throughput_req(false))
 				hdd_log(LOGE,
 				   FL("low bandwidth set rx affinity fail"));
 		 } else {
+			if (!hdd_ctx->hbw_requested) {
+				pld_request_pm_qos(hdd_ctx->parent_dev, 1);
+				hdd_ctx->hbw_requested = true;
+			}
+
 			if (cds_sched_handle_throughput_req(true))
 				hdd_log(LOGE,
 				   FL("high bandwidth set rx affinity fail"));

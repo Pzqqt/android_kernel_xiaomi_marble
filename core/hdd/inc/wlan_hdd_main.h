@@ -1430,6 +1430,7 @@ struct hdd_context_s {
 
 	/* the radio index assigned by cnss_logger */
 	int radio_index;
+	bool hbw_requested;
 };
 
 /*---------------------------------------------------------------------------
