@@ -40,6 +40,7 @@
  * but for now provide a default value here in case it's not defined
  * in the fwconfig_xxx.h file.
  */
+#define NUM_SPATIAL_STREAM 2
 #ifndef MAX_SPATIAL_STREAM
 #define MAX_SPATIAL_STREAM 3
 #endif
@@ -834,5 +835,14 @@ struct wlan_dbg_tidq_stats {
 	A_UINT32 wlan_dbg_tid_txq_status;
 	struct wlan_dbg_txq_stats txq_st;
 };
+
+typedef enum {
+	WHAL_REG_EXT_FCC_MIDBAND = 0,
+	WHAL_REG_EXT_JAPAN_MIDBAND = 1,
+	WHAL_REG_EXT_FCC_DFS_HT40 = 2,
+	WHAL_REG_EXT_JAPAN_NONDFS_HT40 = 3,
+	WHAL_REG_EXT_JAPAN_DFS_HT40 = 4,
+	WHAL_REG_EXT_FCC_CH_144 = 5,
+} WHAL_REG_EXT_BITMAP;
 
 #endif /* __WLANDEFS_H__ */
