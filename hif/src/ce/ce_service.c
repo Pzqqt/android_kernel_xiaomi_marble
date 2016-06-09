@@ -782,7 +782,7 @@ qdf_nbuf_t ce_batch_send(struct CE_handle *ce_tx_hdl,  qdf_nbuf_t msdu,
 		if (deltacount < 2) {
 			if (sendhead)
 				return msdu;
-			qdf_print("Out of descriptor\n");
+			HIF_ERROR("%s: Out of descriptors", __func__);
 			src_ring->write_index = write_index;
 			war_ce_src_ring_write_idx_set(scn, ctrl_addr,
 					write_index);
@@ -900,8 +900,8 @@ int ce_send_single(struct CE_handle *ce_tx_hdl, qdf_nbuf_t msdu,
 	if (qdf_unlikely(CE_RING_DELTA(nentries_mask, write_index,
 					sw_index-1) < 1)) {
 		/* ol_tx_stats_inc_ring_error(sc->scn->pdev_txrx_handle, 1); */
-		qdf_print("ce send fail %d %d %d\n", nentries_mask,
-				write_index, sw_index);
+		HIF_ERROR("%s: ce send fail %d %d %d", __func__, nentries_mask,
+			  write_index, sw_index);
 		return 1;
 	}
 
@@ -1792,7 +1792,7 @@ int ce_per_engine_service(struct hif_softc *scn, unsigned int CE_id)
 		return CE_state->receive_count;
 
 	if (Q_TARGET_ACCESS_BEGIN(scn) < 0) {
-		HIF_ERROR("[premature rc=0]\n");
+		HIF_ERROR("[premature rc=0]");
 		return 0; /* no work done */
 	}
 
@@ -1987,7 +1987,7 @@ unlock_end:
 	qdf_spin_unlock(&CE_state->ce_index_lock);
 target_access_end:
 	if (Q_TARGET_ACCESS_END(scn) < 0)
-		HIF_ERROR("<--[premature rc=%d]\n", CE_state->receive_count);
+		HIF_ERROR("<--[premature rc=%d]", CE_state->receive_count);
 	return CE_state->receive_count;
 }
 
@@ -2144,7 +2144,7 @@ ce_send_cb_register(struct CE_handle *copyeng,
 	struct CE_state *CE_state = (struct CE_state *)copyeng;
 
 	if (CE_state == NULL) {
-		pr_err("%s: Error CE state = NULL\n", __func__);
+		HIF_ERROR("%s: Error CE state = NULL", __func__);
 		return;
 	}
 	CE_state->send_context = ce_send_context;
@@ -2172,7 +2172,7 @@ ce_recv_cb_register(struct CE_handle *copyeng,
 	struct CE_state *CE_state = (struct CE_state *)copyeng;
 
 	if (CE_state == NULL) {
-		pr_err("%s: ERROR CE state = NULL\n", __func__);
+		HIF_ERROR("%s: ERROR CE state = NULL", __func__);
 		return;
 	}
 	CE_state->recv_context = CE_recv_context;

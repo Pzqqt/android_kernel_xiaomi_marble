@@ -636,11 +636,6 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 		return (struct CE_handle *)CE_state;
 	}
 
-#ifdef ADRASTEA_SHADOW_REGISTERS
-	HIF_ERROR("%s: Using Shadow Registers instead of CE Registers\n",
-		  __func__);
-#endif
-
 	if (CE_state->src_sz_max)
 		QDF_ASSERT(CE_state->src_sz_max == attr->src_sz_max);
 	else
@@ -979,7 +974,7 @@ void hif_enable_fastpath(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
-	HIF_INFO("Enabling fastpath mode\n");
+	HIF_INFO("%s, Enabling fastpath mode", __func__);
 	scn->fastpath_mode_on = true;
 }
 
@@ -1471,7 +1466,7 @@ int hif_completion_thread_startup(struct HIF_CE_state *hif_state)
 	/* daemonize("hif_compl_thread"); */
 
 	if (scn->ce_count == 0) {
-		HIF_ERROR("%s: Invalid ce_count\n", __func__);
+		HIF_ERROR("%s: Invalid ce_count", __func__);
 		return -EINVAL;
 	}
 
@@ -2199,12 +2194,12 @@ int hif_config_ce(struct hif_softc *scn)
 
 	init_tasklet_workers(hif_hdl);
 
-	HIF_TRACE("%s: X, ret = %d\n", __func__, rv);
+	HIF_TRACE("%s: X, ret = %d", __func__, rv);
 
 #ifdef ADRASTEA_SHADOW_REGISTERS
-	HIF_ERROR("Using Shadow Registers instead of CE Registers\n");
+	HIF_INFO("%s, Using Shadow Registers instead of CE Registers", __func__);
 	for (i = 0; i < NUM_SHADOW_REGISTERS; i++) {
-		HIF_ERROR("%s Shadow Register%d is mapped to address %x\n",
+		HIF_INFO("%s Shadow Register%d is mapped to address %x",
 			  __func__, i,
 			  (A_TARGET_READ(scn, (SHADOW_ADDRESS(i))) << 2));
 	}
@@ -2215,7 +2210,7 @@ int hif_config_ce(struct hif_softc *scn)
 err:
 	/* Failure, so clean up */
 	hif_unconfig_ce(scn);
-	HIF_TRACE("%s: X, ret = %d\n", __func__, rv);
+	HIF_TRACE("%s: X, ret = %d", __func__, rv);
 	return QDF_STATUS_SUCCESS != QDF_STATUS_E_FAILURE;
 }
 
@@ -2238,7 +2233,7 @@ int hif_ce_fastpath_cb_register(struct hif_opaque_softc *hif_ctx,
 	QDF_ASSERT(scn != NULL);
 
 	if (!scn->fastpath_mode_on) {
-		HIF_WARN("Fastpath mode disabled\n");
+		HIF_WARN("%s: Fastpath mode disabled", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -2592,8 +2587,8 @@ inline uint32_t DEBUG_CE_SRC_RING_READ_IDX_GET(struct hif_softc *scn,
 	srri_from_ddr = SRRI_FROM_DDR_ADDR(VADDR_FOR_CE(scn, CE_ctrl_addr));
 
 	if (read_from_hw != srri_from_ddr) {
-		HIF_ERROR("error: read from ddr = %d actual read from register = %d, CE_MISC_INT_STATUS_GET = 0x%x\n",
-		       srri_from_ddr, read_from_hw,
+		HIF_ERROR("%s: error: read from ddr = %d actual read from register = %d, CE_MISC_INT_STATUS_GET = 0x%x",
+		       __func__, srri_from_ddr, read_from_hw,
 		       CE_MISC_INT_STATUS_GET(scn, CE_ctrl_addr));
 		QDF_ASSERT(0);
 	}
@@ -2611,7 +2606,7 @@ inline uint32_t DEBUG_CE_DEST_RING_READ_IDX_GET(struct hif_softc *scn,
 	drri_from_ddr = DRRI_FROM_DDR_ADDR(VADDR_FOR_CE(scn, CE_ctrl_addr));
 
 	if (read_from_hw != drri_from_ddr) {
-		HIF_ERROR("error: read from ddr = %d actual read from register = %d, CE_MISC_INT_STATUS_GET = 0x%x\n",
+		HIF_ERROR("error: read from ddr = %d actual read from register = %d, CE_MISC_INT_STATUS_GET = 0x%x",
 		       drri_from_ddr, read_from_hw,
 		       CE_MISC_INT_STATUS_GET(scn, CE_ctrl_addr));
 		QDF_ASSERT(0);
@@ -2695,7 +2690,7 @@ static inline void hif_config_rri_on_ddr(struct hif_softc *scn)
 	low_paddr  = BITS0_TO_31(paddr_rri_on_ddr);
 	high_paddr = BITS32_TO_35(paddr_rri_on_ddr);
 
-	HIF_ERROR("%s using srri and drri from DDR\n", __func__);
+	HIF_INFO("%s using srri and drri from DDR", __func__);
 
 	WRITE_CE_DDR_ADDRESS_FOR_RRI_LOW(scn, low_paddr);
 	WRITE_CE_DDR_ADDRESS_FOR_RRI_HIGH(scn, high_paddr);

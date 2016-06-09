@@ -644,31 +644,31 @@ int hif_get_device_type(uint32_t device_id,
 	case AR9887_DEVICE_ID:
 		*hif_type = HIF_TYPE_AR9888;
 		*target_type = TARGET_TYPE_AR9888;
-		HIF_INFO(" *********** AR9887 **************\n");
+		HIF_INFO(" *********** AR9887 **************");
 		break;
 
 	case QCA9984_DEVICE_ID:
 		*hif_type = HIF_TYPE_QCA9984;
 		*target_type = TARGET_TYPE_QCA9984;
-		HIF_INFO(" *********** QCA9984 *************\n");
+		HIF_INFO(" *********** QCA9984 *************");
 		break;
 
 	case QCA9888_DEVICE_ID:
 		*hif_type = HIF_TYPE_QCA9888;
 		*target_type = TARGET_TYPE_QCA9888;
-		HIF_INFO(" *********** QCA9888 *************\n");
+		HIF_INFO(" *********** QCA9888 *************");
 		break;
 
 	case AR900B_DEVICE_ID:
 		*hif_type = HIF_TYPE_AR900B;
 		*target_type = TARGET_TYPE_AR900B;
-		HIF_INFO(" *********** AR900B *************\n");
+		HIF_INFO(" *********** AR900B *************");
 		break;
 
 	case IPQ4019_DEVICE_ID:
 		*hif_type = HIF_TYPE_IPQ4019;
 		*target_type = TARGET_TYPE_IPQ4019;
-		HIF_INFO(" *********** IPQ4019  *************\n");
+		HIF_INFO(" *********** IPQ4019  *************");
 		break;
 
 	default:

@@ -240,7 +240,7 @@ QDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *hif_ctx,
 			    &completed_nbytes, &id,
 			    &flags) != QDF_STATUS_SUCCESS) {
 			if (i++ > BMI_RSP_TO_MILLISEC) {
-				HIF_ERROR("%s:error, can't get bmi response\n",
+				HIF_ERROR("%s:error, can't get bmi response",
 					__func__);
 				status = QDF_STATUS_E_BUSY;
 				break;

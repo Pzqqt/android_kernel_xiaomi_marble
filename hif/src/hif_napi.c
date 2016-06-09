@@ -167,11 +167,11 @@ int hif_napi_destroy(struct hif_opaque_softc *hif_ctx,
 	NAPI_DEBUG("-->(id=%d, force=%d)", id, force);
 
 	if (0 == (hif->napi_data.state & HIF_NAPI_INITED)) {
-		HIF_ERROR("%s: NAPI not initialized or entry %d not created\n",
+		HIF_ERROR("%s: NAPI not initialized or entry %d not created",
 			  __func__, id);
 		rc = -EINVAL;
 	} else if (0 == (hif->napi_data.ce_map & (0x01 << ce))) {
-		HIF_ERROR("%s: NAPI instance %d (pipe %d) not created\n",
+		HIF_ERROR("%s: NAPI instance %d (pipe %d) not created",
 			  __func__, id, ce);
 		rc = -EINVAL;
 	} else {
@@ -184,11 +184,11 @@ int hif_napi_destroy(struct hif_opaque_softc *hif_ctx,
 		if (hif->napi_data.state == HIF_NAPI_CONF_UP) {
 			if (force) {
 				napi_disable(&(napii->napi));
-				HIF_INFO("%s: NAPI entry %d force disabled\n",
+				HIF_INFO("%s: NAPI entry %d force disabled",
 					 __func__, id);
 				NAPI_DEBUG("NAPI %d force disabled", id);
 			} else {
-				HIF_ERROR("%s: Cannot destroy active NAPI %d\n",
+				HIF_ERROR("%s: Cannot destroy active NAPI %d",
 					  __func__, id);
 				rc = -EPERM;
 			}
@@ -216,7 +216,7 @@ int hif_napi_destroy(struct hif_opaque_softc *hif_ctx,
 				/* hif->napi_data.state = 0; */
 				memset(napid,
 				       0, sizeof(struct qca_napi_data));
-				HIF_INFO("%s: no NAPI instances. Zapped.\n",
+				HIF_INFO("%s: no NAPI instances. Zapped.",
 					 __func__);
 			}
 		}
@@ -280,33 +280,33 @@ int hif_napi_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 	case NAPI_EVT_CMD_STATE: {
 		int on = (data != ((void *)0));
 
-		HIF_INFO("%s: received evnt: CONF %s; v = %d (state=0x%0x)\n",
+		HIF_INFO("%s: received evnt: CONF %s; v = %d (state=0x%0x)",
 			 __func__,
 			 (event == NAPI_EVT_INI_FILE)?".ini file":"cmd",
 			 on, prev_state);
 		if (on)
 			if (prev_state & HIF_NAPI_CONF_UP) {
-				HIF_INFO("%s: duplicate NAPI conf ON msg\n",
+				HIF_INFO("%s: duplicate NAPI conf ON msg",
 					 __func__);
 			} else {
-				HIF_INFO("%s: setting configuration to ON\n",
+				HIF_INFO("%s: setting configuration to ON",
 					 __func__);
 				hif->napi_data.state |= HIF_NAPI_CONF_UP;
 			}
 		else /* off request */
 			if (prev_state & HIF_NAPI_CONF_UP) {
-				HIF_INFO("%s: setting configuration to OFF\n",
+				HIF_INFO("%s: setting configuration to OFF",
 				 __func__);
 				hif->napi_data.state &= ~HIF_NAPI_CONF_UP;
 			} else {
-				HIF_INFO("%s: duplicate NAPI conf OFF msg\n",
+				HIF_INFO("%s: duplicate NAPI conf OFF msg",
 					 __func__);
 			}
 		break;
 	}
 	/* case NAPI_INIT_FILE/CMD_STATE */
 	default: {
-		HIF_ERROR("%s: unknown event: %d (data=0x%0lx)\n",
+		HIF_ERROR("%s: unknown event: %d (data=0x%0lx)",
 			  __func__, event, (unsigned long) data);
 		break;
 	} /* default */
@@ -334,7 +334,7 @@ int hif_napi_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 				}
 		}
 	} else {
-		HIF_INFO("%s: no change in hif napi state (still %d)\n",
+		HIF_INFO("%s: no change in hif napi state (still %d)",
 			 __func__, prev_state);
 		rc = (hif->napi_data.state == ENABLE_NAPI_MASK);
 	}
