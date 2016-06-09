@@ -1560,26 +1560,18 @@ static uint8_t *wmi_id_to_name(WMI_CMD_ID wmi_command)
 	return "Invalid WMI cmd";
 }
 
-#ifdef QCA_WIFI_3_0_EMU
-static inline void wma_log_cmd_id(WMI_CMD_ID cmd_id)
-{
-	WMI_LOGE("Send WMI command:%s command_id:%d",
-		 wmi_id_to_name(cmd_id), cmd_id);
-}
-#else
 static inline void wma_log_cmd_id(WMI_CMD_ID cmd_id)
 {
 	WMI_LOGD("Send WMI command:%s command_id:%d",
 		 wmi_id_to_name(cmd_id), cmd_id);
 }
-#endif
-#else /* WMI_NON_TLV_SUPPORT */
+#else
 static uint8_t *wmi_id_to_name(WMI_CMD_ID wmi_command)
 {
 	return "Invalid WMI cmd";
 }
-
 #endif
+
 
 /**
  * wmi_is_runtime_pm_cmd() - check if a cmd is from suspend resume sequence
@@ -2279,11 +2271,8 @@ void wmi_htc_tx_complete(void *ctx, HTC_PACKET *htc_pkt)
 		cmd_id = WMI_GET_FIELD(qdf_nbuf_data(wmi_cmd_buf),
 				WMI_CMD_HDR, COMMANDID);
 
-#ifdef QCA_WIFI_3_0_EMU
-	qdf_print
-		("\nSent WMI command:%s command_id:0x%x over dma and recieved tx complete interupt\n",
-		wmi_id_to_name(cmd_id), cmd_id);
-#endif
+	WMI_LOGD("Sent WMI command:%s command_id:0x%x over dma and recieved tx complete interupt",
+		 wmi_id_to_name(cmd_id), cmd_id);
 
 	qdf_spin_lock_bh(&wmi_handle->log_info.wmi_record_lock);
 	/* Record 16 bytes of WMI cmd tx complete data
