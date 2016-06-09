@@ -43,6 +43,7 @@
 #include <qdf_types.h>
 #include <csr_api.h>
 #include <sap_api.h>
+#include "osapi_linux.h"
 #include <wmi_unified.h>
 
 #define FW_MODULE_LOG_LEVEL_STRING_LENGTH  (255)

@@ -32,6 +32,7 @@
 #include "cds_mq.h"
 #include "ani_global.h"
 #include "a_types.h"
+#include "osapi_linux.h"
 #include "wmi_unified.h"
 #ifdef NOT_YET
 #include "htc_api.h"

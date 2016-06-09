@@ -35,6 +35,49 @@ extern "C" {
 #include "dbglog_common.h"
 #include "ol_defines.h"
 
+#define DIAG_FWID_OFFSET            24
+#define DIAG_FWID_MASK              0xFF000000  /* Bit 24-31 */
+
+#define DIAG_TIMESTAMP_OFFSET       0
+#define DIAG_TIMESTAMP_MASK         0x00FFFFFF  /* Bit 0-23 */
+
+#define DIAG_ID_OFFSET              16
+#define DIAG_ID_MASK                0xFFFF0000  /* Bit 16-31 */
+
+#define DIAG_VDEVID_OFFSET          11
+#define DIAG_VDEVID_MASK            0x0000F800  /* Bit 11-15 */
+#define DIAG_VDEVID_NUM_MAX         16
+
+#define DIAG_VDEVLEVEL_OFFSET       8
+#define DIAG_VDEVLEVEL_MASK         0x00000700  /* Bit 8-10 */
+
+#define DIAG_PAYLEN_OFFSET          0
+#define DIAG_PAYLEN_MASK            0x000000FF  /* Bit 0-7 */
+
+#define DIAG_PAYLEN_OFFSET16        0
+#define DIAG_PAYLEN_MASK16          0x0000FFFF  /* Bit 0-16 */
+
+#define DIAG_GET_TYPE(arg) \
+	((arg & DIAG_FWID_MASK) >> DIAG_FWID_OFFSET)
+
+#define DIAG_GET_TIME_STAMP(arg) \
+	((arg & DIAG_TIMESTAMP_MASK) >> DIAG_TIMESTAMP_OFFSET)
+
+#define DIAG_GET_ID(arg) \
+	((arg & DIAG_ID_MASK) >> DIAG_ID_OFFSET)
+
+#define DIAG_GET_VDEVID(arg) \
+	((arg & DIAG_VDEVID_MASK) >> DIAG_VDEVID_OFFSET)
+
+#define DIAG_GET_VDEVLEVEL(arg)	\
+	((arg & DIAG_VDEVLEVEL_MASK) >> DIAG_VDEVLEVEL_OFFSET)
+
+#define DIAG_GET_PAYLEN(arg) \
+	((arg & DIAG_PAYLEN_MASK) >> DIAG_PAYLEN_OFFSET)
+
+#define DIAG_GET_PAYLEN16(arg) \
+	((arg & DIAG_PAYLEN_MASK16) >> DIAG_PAYLEN_OFFSET16)
+
 /*
  * set the dbglog parser type
  */int
