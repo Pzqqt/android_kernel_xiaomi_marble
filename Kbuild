@@ -138,7 +138,7 @@ ifeq ($(KERNEL_BUILD), 0)
 	CONFIG_WLAN_SYNC_TSF := y
 
 	#Flag to enable memdump feature
-	CONFIG_WLAN_FEATURE_MEMDUMP := y
+	CONFIG_WLAN_FEATURE_MEMDUMP := n
 
 	#Flag to enable Fast Path feature
 	CONFIG_WLAN_FASTPATH := y
