@@ -977,6 +977,7 @@ typedef struct tagCsrRoamSession {
 #endif
 	uint8_t bRefAssocStartCnt;      /* Tracking assoc start indication */
 	tSirHTConfig htConfig;
+	struct sir_vht_config vht_config;
 #ifdef FEATURE_WLAN_SCAN_PNO
 	bool pnoStarted;
 #endif

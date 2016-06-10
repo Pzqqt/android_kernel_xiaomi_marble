@@ -361,7 +361,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	uint8_t isCoalesingInIBSSAllowed;
 
 	tSirHTConfig htConfig;
-
+	struct sir_vht_config vht_config;
 	/*
 	 * Place holder for StartBssReq message
 	 * received by SME state machine

@@ -7270,7 +7270,7 @@ QDF_STATUS hdd_update_nss(hdd_context_t *hdd_ctx, uint8_t nss)
 	tSirMacHTCapabilityInfo *ht_cap_info;
 	uint8_t mcs_set[SIZE_OF_SUPPORTED_MCS_SET] = {0};
 	uint8_t mcs_set_temp[SIZE_OF_SUPPORTED_MCS_SET];
-	uint32_t val;
+	uint32_t val, val32;
 	uint16_t val16;
 	uint8_t enable2x2;
 
@@ -7324,10 +7324,13 @@ QDF_STATUS hdd_update_nss(hdd_context_t *hdd_ctx, uint8_t nss)
 	sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_HT_CAP_INFO, &temp);
 	val16 = (uint16_t)temp;
 	ht_cap_info = (tSirMacHTCapabilityInfo *)&val16;
-	if (!(hdd_ctx->ht_tx_stbc_supported && hdd_config->enable2x2))
+	if (!(hdd_ctx->ht_tx_stbc_supported && hdd_config->enable2x2)) {
 		ht_cap_info->txSTBC = 0;
-	else
-		ht_cap_info->txSTBC = hdd_config->enableTxSTBC;
+	} else {
+		sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_VHT_TXSTBC, &val32);
+		hddLog(LOG1, FL("STBC %d"), val32);
+		ht_cap_info->txSTBC = val32;
+	}
 	temp = val16;
 	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_HT_CAP_INFO,
 			    temp) == QDF_STATUS_E_FAILURE) {

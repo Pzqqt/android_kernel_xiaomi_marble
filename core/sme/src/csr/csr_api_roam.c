@@ -14082,9 +14082,14 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		}
 		qdf_mem_copy(&csr_join_req->htConfig,
 				&pSession->htConfig, sizeof(tSirHTConfig));
+		qdf_mem_copy(&csr_join_req->vht_config, &pSession->vht_config,
+				sizeof(pSession->vht_config));
+		sms_log(pMac, LOG2,
+			FL("ht capability 0x%x VHT capability 0x%x"),
+			(unsigned int)(*(uint32_t *) &csr_join_req->htConfig),
+			(unsigned int)(*(uint32_t *) &csr_join_req->vht_config));
 		csr_join_req->txBFIniFeatureEnabled =
 				(uint8_t) pMac->roam.configParam.txBFEnable;
-
 		if (pMac->roam.configParam.txBFEnable) {
 			txBFCsnValue =
 				(uint8_t)pMac->roam.configParam.txBFCsnValue;
@@ -14847,9 +14852,15 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t sessionId
 	qdf_mem_copy(&pMsg->extendedRateSet,
 		     &pParam->extendedRateSet,
 		     sizeof(tSirMacRateSet));
+	qdf_mem_copy(&pMsg->vht_config,
+		     &pSession->vht_config,
+		     sizeof(pSession->vht_config));
 	qdf_mem_copy(&pMsg->htConfig,
 		     &pSession->htConfig,
 		     sizeof(tSirHTConfig));
+	sms_log(pMac, LOG2, FL("ht capability 0x%x VHT capability 0x%x"),
+			 (uint32_t)(*(uint32_t *) &pMsg->htConfig),
+			 (uint32_t)(*(uint32_t *) &pMsg->vht_config));
 	qdf_mem_copy(&pMsg->addIeParams,
 		     &pParam->addIeParams,
 		     sizeof(pParam->addIeParams));
@@ -15122,6 +15133,7 @@ QDF_STATUS csr_roam_open_session(tpAniSirGlobal pMac,
 		uint16_t nCfgValue16;
 		tSirMacHTCapabilityInfo htCapInfo;
 	} uHTCapabilityInfo;
+	uint32_t nCfgValue = 0;
 	tCsrRoamSession *pSession;
 	*pbSessionId = CSR_SESSION_ID_INVALID;
 
@@ -15193,9 +15205,103 @@ QDF_STATUS csr_roam_open_session(tpAniSirGlobal pMac,
 				uHTCapabilityInfo.htCapInfo.shortGI20MHz;
 			pSession->htConfig.ht_sgi40 =
 				uHTCapabilityInfo.htCapInfo.shortGI40MHz;
-			status =
-				csr_issue_add_sta_for_session_req(pMac, i, pSelfMacAddr,
-								  type, subType);
+
+			wlan_cfg_get_int(pMac, WNI_CFG_VHT_MAX_MPDU_LENGTH,
+					 &nCfgValue);
+			pSession->vht_config.max_mpdu_len = nCfgValue;
+
+			nCfgValue = 0;
+			wlan_cfg_get_int(pMac,
+					 WNI_CFG_VHT_SUPPORTED_CHAN_WIDTH_SET,
+					 &nCfgValue);
+			pSession->vht_config.supported_channel_widthset =
+								nCfgValue;
+
+			nCfgValue = 0;
+			wlan_cfg_get_int(pMac, WNI_CFG_VHT_LDPC_CODING_CAP,
+					 &nCfgValue);
+			pSession->vht_config.ldpc_coding = nCfgValue;
+
+			nCfgValue = 0;
+			wlan_cfg_get_int(pMac, WNI_CFG_VHT_SHORT_GI_80MHZ,
+					 &nCfgValue);
+			pSession->vht_config.shortgi80 = nCfgValue;
+
+			nCfgValue = 0;
+			wlan_cfg_get_int(pMac,
+				WNI_CFG_VHT_SHORT_GI_160_AND_80_PLUS_80MHZ,
+				&nCfgValue);
+			pSession->vht_config.shortgi160and80plus80 = nCfgValue;
+
+			nCfgValue = 0;
+			wlan_cfg_get_int(pMac, WNI_CFG_VHT_TXSTBC, &nCfgValue);
+			pSession->vht_config.tx_stbc = nCfgValue;
+
+			nCfgValue = 0;
+			wlan_cfg_get_int(pMac, WNI_CFG_VHT_RXSTBC, &nCfgValue);
+			pSession->vht_config.rx_stbc = nCfgValue;
+
+			nCfgValue = 0;
+			wlan_cfg_get_int(pMac, WNI_CFG_VHT_SU_BEAMFORMER_CAP,
+						&nCfgValue);
+			pSession->vht_config.su_beam_former = nCfgValue;
+
+			nCfgValue = 0;
+			wlan_cfg_get_int(pMac, WNI_CFG_VHT_SU_BEAMFORMEE_CAP,
+						&nCfgValue);
+			pSession->vht_config.su_beam_formee = nCfgValue;
+
+			nCfgValue = 0;
+			wlan_cfg_get_int(pMac,
+				WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED,
+				&nCfgValue);
+			pSession->vht_config.csnof_beamformer_antSup =
+								nCfgValue;
+
+			nCfgValue = 0;
+			wlan_cfg_get_int(pMac,
+					WNI_CFG_VHT_NUM_SOUNDING_DIMENSIONS,
+					&nCfgValue);
+			pSession->vht_config.num_soundingdim = nCfgValue;
+
+			nCfgValue = 0;
+			wlan_cfg_get_int(pMac, WNI_CFG_VHT_MU_BEAMFORMER_CAP,
+						&nCfgValue);
+			pSession->vht_config.mu_beam_former = nCfgValue;
+
+			nCfgValue = 0;
+			wlan_cfg_get_int(pMac, WNI_CFG_VHT_MU_BEAMFORMEE_CAP,
+						&nCfgValue);
+			pSession->vht_config.mu_beam_formee = nCfgValue;
+
+			nCfgValue = 0;
+			wlan_cfg_get_int(pMac, WNI_CFG_VHT_TXOP_PS,
+					 &nCfgValue);
+			pSession->vht_config.vht_txops = nCfgValue;
+
+			nCfgValue = 0;
+			wlan_cfg_get_int(pMac, WNI_CFG_VHT_HTC_VHTC_CAP,
+					 &nCfgValue);
+			pSession->vht_config.htc_vhtcap = nCfgValue;
+
+			nCfgValue = 0;
+			wlan_cfg_get_int(pMac, WNI_CFG_VHT_RX_ANT_PATTERN,
+					 &nCfgValue);
+			pSession->vht_config.rx_antpattern = nCfgValue;
+
+			nCfgValue = 0;
+			wlan_cfg_get_int(pMac, WNI_CFG_VHT_TX_ANT_PATTERN,
+					 &nCfgValue);
+			pSession->vht_config.tx_antpattern = nCfgValue;
+
+			nCfgValue = 0;
+			wlan_cfg_get_int(pMac, WNI_CFG_VHT_AMPDU_LEN_EXPONENT,
+					 &nCfgValue);
+			pSession->vht_config.max_ampdu_lenexp = nCfgValue;
+
+			status = csr_issue_add_sta_for_session_req(pMac, i,
+								pSelfMacAddr,
+								type, subType);
 			break;
 		}
 	}

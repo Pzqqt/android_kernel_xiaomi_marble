@@ -960,46 +960,27 @@ populate_dot11f_vht_caps(tpAniSirGlobal pMac,
 	/* With VHT it suffices if we just examine HT */
 	if (psessionEntry) {
 		if (psessionEntry->htConfig.ht_rx_ldpc)
-			CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_LDPC_CODING_CAP,
-				    nCfgValue);
-
-		pDot11f->ldpcCodingCap = (nCfgValue & 0x0001);
+			pDot11f->ldpcCodingCap =
+				psessionEntry->vht_config.ldpc_coding;
 		if (psessionEntry->ch_width < CH_WIDTH_80MHZ) {
 			 pDot11f->shortGI80MHz = 0;
 		} else {
-			nCfgValue = 0;
-			if (psessionEntry->htConfig.ht_sgi20)
-				CFG_GET_INT(nStatus, pMac,
-					    WNI_CFG_VHT_SHORT_GI_80MHZ,
-					    nCfgValue);
-			pDot11f->shortGI80MHz = (nCfgValue & 0x0001);
+			pDot11f->shortGI80MHz =
+				psessionEntry->vht_config.shortgi80;
 		}
 
 		if (psessionEntry->ch_width < CH_WIDTH_160MHZ) {
 			pDot11f->shortGI160and80plus80MHz = 0;
 		} else {
-			nCfgValue = 0;
-			if (psessionEntry->htConfig.ht_sgi20)
-				CFG_GET_INT(nStatus, pMac,
-				WNI_CFG_VHT_SHORT_GI_160_AND_80_PLUS_80MHZ,
-				nCfgValue);
 			pDot11f->shortGI160and80plus80MHz =
-				(nCfgValue & 0x0001);
+				psessionEntry->vht_config.shortgi160and80plus80;
 		}
 
-		nCfgValue = 0;
 		if (psessionEntry->htConfig.ht_tx_stbc)
-			CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_TXSTBC,
-				    nCfgValue);
+			pDot11f->txSTBC = psessionEntry->vht_config.tx_stbc;
 
-		pDot11f->txSTBC = (nCfgValue & 0x0001);
-
-		nCfgValue = 0;
 		if (psessionEntry->htConfig.ht_rx_stbc)
-			CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_RXSTBC,
-				    nCfgValue);
-
-		pDot11f->rxSTBC = (nCfgValue & 0x0007);
+			pDot11f->rxSTBC = psessionEntry->vht_config.rx_stbc;
 
 		pDot11f->suBeamformeeCap = psessionEntry->txBFIniFeatureEnabled;
 		if (psessionEntry->txBFIniFeatureEnabled) {
@@ -1013,6 +994,23 @@ populate_dot11f_vht_caps(tpAniSirGlobal pMac,
 			pDot11f->muBeamformeeCap = 0;
 		}
 		pDot11f->suBeamFormerCap = psessionEntry->enable_su_tx_bformer;
+
+		pDot11f->vhtTXOPPS = psessionEntry->vht_config.vht_txops;
+
+		pDot11f->numSoundingDim =
+				psessionEntry->vht_config.num_soundingdim;
+
+		pDot11f->htcVHTCap = psessionEntry->vht_config.htc_vhtcap;
+
+		pDot11f->rxAntPattern = psessionEntry->vht_config.rx_antpattern;
+
+		pDot11f->txAntPattern = psessionEntry->vht_config.tx_antpattern;
+
+		pDot11f->maxAMPDULenExp =
+				psessionEntry->vht_config.max_ampdu_lenexp;
+
+		pDot11f->vhtLinkAdaptCap =
+				psessionEntry->vht_config.vht_link_adapt;
 	} else {
 		CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_LDPC_CODING_CAP,
 			    nCfgValue);
@@ -1050,40 +1048,54 @@ populate_dot11f_vht_caps(tpAniSirGlobal pMac,
 				WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED,
 				nCfgValue);
 		pDot11f->csnofBeamformerAntSup = (nCfgValue & 0x0007);
-	}
 
-	nCfgValue = 0;
-	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_NUM_SOUNDING_DIMENSIONS,
-		    nCfgValue);
-	pDot11f->numSoundingDim = (nCfgValue & 0x0007);
+		nCfgValue = 0;
+		CFG_GET_INT(nStatus, pMac,
+				WNI_CFG_VHT_TXOP_PS,
+				nCfgValue);
+		pDot11f->vhtTXOPPS = (nCfgValue & 0x0001);
+
+		nCfgValue = 0;
+		CFG_GET_INT(nStatus, pMac,
+				WNI_CFG_VHT_NUM_SOUNDING_DIMENSIONS,
+				nCfgValue);
+		pDot11f->numSoundingDim = (nCfgValue & 0x0007);
+
+		nCfgValue = 0;
+		CFG_GET_INT(nStatus, pMac,
+				WNI_CFG_VHT_HTC_VHTC_CAP,
+				nCfgValue);
+		pDot11f->htcVHTCap = (nCfgValue & 0x0001);
+
+		nCfgValue = 0;
+		CFG_GET_INT(nStatus, pMac,
+				WNI_CFG_VHT_RX_ANT_PATTERN,
+				nCfgValue);
+		pDot11f->rxAntPattern = nCfgValue;
+
+		nCfgValue = 0;
+		CFG_GET_INT(nStatus, pMac,
+				WNI_CFG_VHT_TX_ANT_PATTERN,
+				nCfgValue);
+		pDot11f->txAntPattern = nCfgValue;
+
+		nCfgValue = 0;
+		CFG_GET_INT(nStatus, pMac,
+				WNI_CFG_VHT_AMPDU_LEN_EXPONENT,
+				nCfgValue);
+		pDot11f->maxAMPDULenExp = (nCfgValue & 0x0007);
+
+		nCfgValue = 0;
+		CFG_GET_INT(nStatus, pMac,
+			WNI_CFG_VHT_LINK_ADAPTATION_CAP,
+			nCfgValue);
+		pDot11f->vhtLinkAdaptCap = (nCfgValue & 0x0003);
+
+	}
 
 	nCfgValue = 0;
 	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_MU_BEAMFORMER_CAP, nCfgValue);
 	pDot11f->muBeamformerCap = (nCfgValue & 0x0001);
-
-	nCfgValue = 0;
-	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_TXOP_PS, nCfgValue);
-	pDot11f->vhtTXOPPS = (nCfgValue & 0x0001);
-
-	nCfgValue = 0;
-	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_HTC_VHTC_CAP, nCfgValue);
-	pDot11f->htcVHTCap = (nCfgValue & 0x0001);
-
-	nCfgValue = 0;
-	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_AMPDU_LEN_EXPONENT, nCfgValue);
-	pDot11f->maxAMPDULenExp = (nCfgValue & 0x0007);
-
-	nCfgValue = 0;
-	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_LINK_ADAPTATION_CAP, nCfgValue);
-	pDot11f->vhtLinkAdaptCap = (nCfgValue & 0x0003);
-
-	nCfgValue = 0;
-	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_RX_ANT_PATTERN, nCfgValue);
-	pDot11f->rxAntPattern = nCfgValue;
-
-	nCfgValue = 0;
-	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_TX_ANT_PATTERN, nCfgValue);
-	pDot11f->txAntPattern = nCfgValue;
 
 	pDot11f->reserved1 = 0;
 

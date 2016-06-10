@@ -561,6 +561,52 @@ typedef struct sSirHtConfig {
 	uint32_t unused:27;
 } qdf_packed tSirHTConfig, *tpSirHTConfig;
 
+/**
+ * struct sir_vht_config - VHT capabilites
+ * @max_mpdu_len: MPDU length
+ * @supported_channel_widthset: channel width set
+ * @ldpc_coding: LDPC coding capability
+ * @shortgi80: short GI 80 support
+ * @shortgi160and80plus80: short Gi 160 & 80+80 support
+ * @tx_stbc; Tx STBC cap
+ * @tx_stbc: Rx STBC cap
+ * @su_beam_former: SU beam former cap
+ * @su_beam_formee: SU beam formee cap
+ * @csnof_beamformer_antSup: Antenna support for beamforming
+ * @num_soundingdim: Sound dimensions
+ * @mu_beam_former: MU beam former cap
+ * @mu_beam_formee: MU beam formee cap
+ * @vht_txops: TXOP power save
+ * @htc_vhtcap: HTC VHT capability
+ * @max_ampdu_lenexp: AMPDU length
+ * @vht_link_adapt: VHT link adapatation capable
+ * @rx_antpattern: Rx Antenna pattern
+ * @tx_antpattern: Tx Antenna pattern
+ */
+struct sir_vht_config {
+	uint32_t           max_mpdu_len:2;
+	uint32_t supported_channel_widthset:2;
+	uint32_t        ldpc_coding:1;
+	uint32_t         shortgi80:1;
+	uint32_t shortgi160and80plus80:1;
+	uint32_t               tx_stbc:1;
+	uint32_t               rx_stbc:3;
+	uint32_t      su_beam_former:1;
+	uint32_t      su_beam_formee:1;
+	uint32_t csnof_beamformer_antSup:3;
+	uint32_t       num_soundingdim:3;
+	uint32_t      mu_beam_former:1;
+	uint32_t      mu_beam_formee:1;
+	uint32_t            vht_txops:1;
+	uint32_t            htc_vhtcap:1;
+	uint32_t       max_ampdu_lenexp:3;
+	uint32_t        vht_link_adapt:2;
+	uint32_t         rx_antpattern:1;
+	uint32_t         tx_antpattern:1;
+	uint32_t            unused:2;
+};
+
+
 typedef struct sSirAddIeParams {
 	uint16_t probeRespDataLen;
 	uint8_t *probeRespData_buff;
@@ -632,6 +678,7 @@ typedef struct sSirSmeStartBssReq {
 	tSirMacRateSet operationalRateSet;      /* Has 11a or 11b rates */
 	tSirMacRateSet extendedRateSet; /* Has 11g rates */
 	tSirHTConfig htConfig;
+	struct sir_vht_config vht_config;
 
 #ifdef WLAN_FEATURE_11W
 	bool pmfCapable;
@@ -1092,6 +1139,7 @@ typedef struct sSirSmeJoinReq {
 
 	uint8_t txLdpcIniFeatureEnabled;
 	tSirHTConfig htConfig;
+	struct sir_vht_config vht_config;
 	uint8_t txBFIniFeatureEnabled;
 	uint8_t txBFCsnValue;
 	uint8_t txMuBformee;

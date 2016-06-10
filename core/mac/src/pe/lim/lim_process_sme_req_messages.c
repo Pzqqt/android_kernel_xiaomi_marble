@@ -754,6 +754,10 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			     &(sme_start_bss_req->htConfig),
 			     sizeof(session->htConfig));
 
+		qdf_mem_copy(&(session->vht_config),
+			     &(sme_start_bss_req->vht_config),
+			     sizeof(session->vht_config));
+
 		sir_copy_mac_addr(session->selfMacAddr,
 				  sme_start_bss_req->self_macaddr.bytes);
 
@@ -1701,6 +1705,10 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 
 		qdf_mem_copy(&(session->htConfig), &(sme_join_req->htConfig),
 			sizeof(session->htConfig));
+
+		qdf_mem_copy(&(session->vht_config),
+			&(sme_join_req->vht_config),
+			sizeof(session->vht_config));
 
 		/* Copying of bssId is already done, while creating session */
 		sir_copy_mac_addr(session->selfMacAddr,
