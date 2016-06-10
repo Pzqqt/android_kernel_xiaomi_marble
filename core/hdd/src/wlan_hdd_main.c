@@ -5048,7 +5048,7 @@ static void hdd_set_thermal_level_cb(void *context, u_int8_t level)
 /**
  * hdd_get_safe_channel_from_pcl_and_acs_range() - Get safe channel for SAP
  * restart
- * @adapter: AP adapter
+ * @adapter: AP adapter, which should be checked for NULL
  *
  * Get a safe channel to restart SAP. PCL already takes into account the
  * unsafe channels. So, the PCL is validated with the ACS range to provide
@@ -5351,6 +5351,11 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 	status = hdd_get_front_adapter(hdd_ctxt, &adapter_node);
 	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
 		adapter_temp = adapter_node->pAdapter;
+
+		if (!adapter_temp) {
+			hdd_err("adapter is NULL, moving to next one");
+			goto next_adapater;
+		}
 
 		if (!((adapter_temp->device_mode == QDF_SAP_MODE) &&
 		   (adapter_temp->sessionCtx.ap.sapConfig.acs_cfg.acs_mode))) {
