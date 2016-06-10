@@ -11530,6 +11530,7 @@ static QDF_STATUS extract_channel_hopping_event_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WMI_INTERFACE_EVENT_LOGGING
 static bool is_management_record_tlv(uint32_t cmd_id)
 {
 	if ((cmd_id == WMI_MGMT_TX_SEND_CMDID) ||
@@ -11538,6 +11539,7 @@ static bool is_management_record_tlv(uint32_t cmd_id)
 
 	return false;
 }
+#endif
 
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,

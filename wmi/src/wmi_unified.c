@@ -848,10 +848,11 @@ out:
  *
  * Return: none
  */
-static void wmi_debugfs_remove(wmi_unified_t wmi_handle, struct dentry *dentry
-		, int id)
+static void wmi_debugfs_remove(wmi_unified_t wmi_handle)
 {
 	int i;
+	struct dentry *dentry = wmi_handle->log_info.wmi_log_debugfs_dir;
+	int id = wmi_handle->log_info.wmi_instance_id;
 
 	if (dentry && (!(id < 0) || (id >= MAX_WMI_INSTANCES))) {
 		for (i = 0; i < NUM_DEBUG_INFOS; ++i) {
@@ -901,8 +902,7 @@ static QDF_STATUS wmi_debugfs_init(wmi_unified_t wmi_handle)
  *
  * Return: none
  */
-static void wmi_debugfs_remove(wmi_unified_t wmi_handle, struct dentry *dentry
-		, int id) { }
+static void wmi_debugfs_remove(wmi_unified_t wmi_handle) { }
 #endif /*WMI_INTERFACE_EVENT_LOGGING */
 
 int wmi_get_host_credits(wmi_unified_t wmi_handle);
@@ -2204,8 +2204,7 @@ void wmi_unified_detach(struct wmi_unified *wmi_handle)
 
 	cancel_work_sync(&wmi_handle->rx_event_work);
 
-	wmi_debugfs_remove(wmi_handle, wmi_handle->log_info.wmi_log_debugfs_dir,
-				wmi_handle->log_info.wmi_instance_id);
+	wmi_debugfs_remove(wmi_handle);
 
 	qdf_spin_lock_bh(&wmi_handle->eventq_lock);
 	buf = qdf_nbuf_queue_remove(&wmi_handle->event_queue);
