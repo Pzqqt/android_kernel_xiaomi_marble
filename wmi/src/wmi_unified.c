@@ -2203,10 +2203,8 @@ void wmi_unified_detach(struct wmi_unified *wmi_handle)
 	qdf_spin_unlock_bh(&wmi_handle->eventq_lock);
 	qdf_spinlock_destroy(&wmi_handle->eventq_lock);
 	qdf_spinlock_destroy(&wmi_handle->ctx_lock);
-	if (wmi_handle != NULL) {
-		OS_FREE(wmi_handle);
-		wmi_handle = NULL;
-	}
+	OS_FREE(wmi_handle);
+	wmi_handle = NULL;
 }
 
 /**
