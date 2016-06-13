@@ -77,6 +77,28 @@ struct wmi_event_debug {
 };
 
 /**
+ * struct wmi_command_header - Type for accessing frame data
+ * @ type - 802.11 Frame type
+ * @ subType - 802.11 Frame subtype
+ * @ protVer - 802.11 Version
+ */
+struct wmi_command_header {
+#ifndef ANI_LITTLE_BIT_ENDIAN
+
+	uint32_t sub_type:4;
+	uint32_t type:2;
+	uint32_t prot_ver:2;
+
+#else
+
+	uint32_t prot_ver:2;
+	uint32_t type:2;
+	uint32_t sub_type:4;
+
+#endif
+};
+
+/**
  * struct wmi_log_buf_t - WMI log buffer information type
  * @buf - Refernce to WMI log buffer
  * @ length - length of buffer
