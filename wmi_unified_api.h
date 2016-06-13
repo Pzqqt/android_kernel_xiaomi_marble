@@ -111,6 +111,11 @@ void *wmi_unified_attach(void *scn_handle,
 			 osdev_t osdev, enum wmi_target_type target_type,
 			 bool use_cookie, struct wmi_rx_ops *ops);
 
+
+void wmi_mgmt_cmd_record(wmi_unified_t wmi_handle, WMI_CMD_ID cmd,
+			uint32_t type, uint32_t subtype,
+			uint32_t vdev_id, uint32_t chanfreq);
+
 /**
  * detach for unified WMI
  *
