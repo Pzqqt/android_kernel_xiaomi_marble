@@ -717,6 +717,9 @@ static void qdf_nbuf_track_free(QDF_NBUF_TRACK *node)
 {
 	unsigned long irq_flag;
 
+	if (!node)
+		return;
+
 	/* Try to shrink the freelist if free_list_count > than FREEQ_POOLSIZE
 	 * only shrink the freelist if it is bigger than twice the number of
 	 * nbufs in use. If the driver is stalling in a consistent bursty
