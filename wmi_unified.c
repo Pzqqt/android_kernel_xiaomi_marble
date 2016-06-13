@@ -178,25 +178,18 @@ uint32_t g_wmi_mgmt_event_buf_idx = 0;
 struct wmi_event_debug
 wmi_mgmt_event_log_buffer[WMI_MGMT_EVENT_DEBUG_MAX_ENTRY];
 
-#define WMI_MGMT_COMMAND_RECORD(h, a, b) {				\
-	if (wmi_mgmt_log_max_entry <=					\
-		*(h->log_info.wmi_mgmt_command_log_buf_info.p_buf_tail_idx)) \
-		*(h->log_info.wmi_mgmt_command_log_buf_info.p_buf_tail_idx) = 0;\
-	((struct wmi_command_debug *)h->log_info.			\
-		wmi_mgmt_command_log_buf_info.buf)			\
-		[*(h->log_info.wmi_mgmt_command_log_buf_info.p_buf_tail_idx)].\
-			command = a;					\
-	qdf_mem_copy(((struct wmi_command_debug *)h->log_info.		\
-				wmi_mgmt_command_log_buf_info.buf)	\
-		[*(h->log_info.wmi_mgmt_command_log_buf_info.p_buf_tail_idx)].\
-		data, b,						\
-		wmi_record_max_length);				\
-	((struct wmi_command_debug *)h->log_info.			\
-		wmi_mgmt_command_log_buf_info.buf)			\
-		[*(h->log_info.wmi_mgmt_command_log_buf_info.p_buf_tail_idx)].\
-			time =	qdf_get_log_timestamp();		\
-	(*(h->log_info.wmi_mgmt_command_log_buf_info.p_buf_tail_idx))++;\
-	h->log_info.wmi_mgmt_command_log_buf_info.length++;		\
+#define WMI_MGMT_COMMAND_RECORD(a, b, c, d, e) {			     \
+	if (WMI_MGMT_EVENT_DEBUG_MAX_ENTRY <=				     \
+		g_wmi_mgmt_command_buf_idx)				     \
+		g_wmi_mgmt_command_buf_idx = 0;				     \
+	wmi_mgmt_command_log_buffer[g_wmi_mgmt_command_buf_idx].command = a; \
+	wmi_mgmt_command_log_buffer[g_wmi_mgmt_command_buf_idx].data[0] = b; \
+	wmi_mgmt_command_log_buffer[g_wmi_mgmt_command_buf_idx].data[1] = c; \
+	wmi_mgmt_command_log_buffer[g_wmi_mgmt_command_buf_idx].data[2] = d; \
+	wmi_mgmt_command_log_buffer[g_wmi_mgmt_command_buf_idx].data[3] = e; \
+	wmi_mgmt_command_log_buffer[g_wmi_mgmt_command_buf_idx].time =	     \
+		qdf_get_log_timestamp();				     \
+	g_wmi_mgmt_command_buf_idx++;					     \
 }
 
 #define WMI_MGMT_COMMAND_TX_CMP_RECORD(h, a, b) {			\
@@ -893,6 +886,29 @@ static QDF_STATUS wmi_debugfs_init(wmi_unified_t wmi_handle)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * wmi_mgmt_cmd_record() - Wrapper function for mgmt command logging macro
+ *
+ * @wmi_handle: wmi handle
+ * @cmd: mgmt command
+ * @type: 802.11 frame type
+ * @subtype: 802.11 fram subtype
+ * @vdev_id: vdev id
+ * @chanfreq: channel frequency
+ *
+ * Return: none
+ */
+void wmi_mgmt_cmd_record(wmi_unified_t wmi_handle, WMI_CMD_ID cmd,
+				uint32_t type, uint32_t subtype,
+				uint32_t vdev_id, uint32_t chanfreq)
+{
+	qdf_spin_lock_bh(&wmi_handle->log_info.wmi_record_lock);
+
+	WMI_MGMT_COMMAND_RECORD(cmd, type, subtype, vdev_id, chanfreq);
+
+	qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);
+}
 #else
 /**
  * wmi_debugfs_remove() - Remove debugfs entry for wmi logging.
@@ -903,6 +919,9 @@ static QDF_STATUS wmi_debugfs_init(wmi_unified_t wmi_handle)
  * Return: none
  */
 static void wmi_debugfs_remove(wmi_unified_t wmi_handle) { }
+void wmi_mgmt_cmd_record(wmi_unified_t wmi_handle, WMI_CMD_ID cmd,
+				uint32_t type, uint32_t subtype,
+				uint32_t vdev_id, uint32_t chanfreq) { }
 #endif /*WMI_INTERFACE_EVENT_LOGGING */
 
 int wmi_get_host_credits(wmi_unified_t wmi_handle);
@@ -1717,18 +1736,11 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t len,
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 	if (wmi_handle->log_info.wmi_logging_enable) {
 		qdf_spin_lock_bh(&wmi_handle->log_info.wmi_record_lock);
-		/*Record 16 bytes of WMI cmd data -
-		 * exclude TLV and WMI headers */
-		if (wmi_handle->log_info.is_management_record(cmd_id)) {
-			WMI_MGMT_COMMAND_RECORD(wmi_handle, cmd_id,
-			((uint32_t *) qdf_nbuf_data(buf) +
-			 wmi_handle->log_info.buf_offset_command));
-		} else {
+		if (!wmi_handle->log_info.is_management_record(cmd_id)) {
 			WMI_COMMAND_RECORD(wmi_handle, cmd_id,
 			((uint32_t *) qdf_nbuf_data(buf) +
 			 wmi_handle->log_info.buf_offset_command));
 		}
-
 		qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);
 	}
 #endif
