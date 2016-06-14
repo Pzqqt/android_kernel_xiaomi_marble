@@ -34,6 +34,7 @@
 #include <osdep.h>
 #include "htc_api.h"
 #include "wmi.h"
+#include "wma.h"
 
 
 /* Following macro definitions use OS or platform specific functions */
