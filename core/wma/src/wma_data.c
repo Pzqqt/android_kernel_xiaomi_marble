@@ -2382,7 +2382,6 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	tpAniSirGlobal pMac;
 	tpSirMacMgmtHdr mHdr;
 	struct wmi_mgmt_params mgmt_param = {0};
-	struct wmi_desc_t *wmi_desc = NULL;
 	ol_pdev_handle ctrl_pdev;
 
 	if (NULL == wma_handle) {
@@ -2699,25 +2698,21 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		mgmt_param.tx_frame = tx_frame;
 		mgmt_param.frm_len = frmLen;
 		mgmt_param.vdev_id = vdev_id;
-		mgmt_param.pdata = pData;
+		mgmt_param.tx_complete_cb = tx_frm_download_comp_cb;
+		mgmt_param.tx_ota_post_proc_cb = tx_frm_ota_comp_cb;
 		mgmt_param.chanfreq = chanfreq;
+		mgmt_param.pdata = pData;
 		mgmt_param.qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-		wmi_desc = wmi_desc_get(wma_handle);
-		if (!wmi_desc) {
-			WMA_LOGE("%s: Failed to get wmi_desc", __func__);
+		mgmt_param.wmi_desc = wmi_desc_get(wma_handle);
+		if (NULL == mgmt_param.wmi_desc) {
+			WMA_LOGE(FL("Failed to get wmi descriptor"));
 			status = QDF_STATUS_E_FAILURE;
 		} else {
-			mgmt_param.desc_id = wmi_desc->desc_id;
 			status = wmi_mgmt_unified_cmd_send(
-					wma_handle->wmi_handle,
-					&mgmt_param);
-			if (status) {
-				wmi_desc_put(wma_handle, wmi_desc);
-			} else {
-				wmi_desc->nbuf = tx_frame;
-				wmi_desc->tx_cmpl_cb = tx_frm_download_comp_cb;
-				wmi_desc->ota_post_proc_cb = tx_frm_ota_comp_cb;
-			}
+						wma_handle->wmi_handle,
+						&mgmt_param);
+			if (status)
+				wmi_desc_put(wma_handle, mgmt_param.wmi_desc);
 		}
 	} else {
 		/* Hand over the Tx Mgmt frame to TxRx */
