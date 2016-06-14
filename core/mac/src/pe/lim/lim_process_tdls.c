@@ -587,6 +587,17 @@ static void populate_dot11f_tdls_ht_vht_cap(tpAniSirGlobal pMac,
 		    IS_FEATURE_SUPPORTED_BY_FW(DOT11AC)) {
 			/* Include VHT Capability IE */
 			populate_dot11f_vht_caps(pMac, psessionEntry, vhtCap);
+
+			/*
+			 * Set to 0 if the TDLS STA does not support either 160
+			 * or 80+80 MHz.
+			 * Set to 1 if the TDLS STA supports 160 MHz.
+			 * Set to 2 if the TDLS STA supports 160 MHz and
+			 * 80+80 MHz.
+			 * The value 3 is reserved
+			 */
+			vhtCap->supportedChannelWidthSet = 0;
+
 			vhtCap->suBeamformeeCap = 0;
 			vhtCap->suBeamFormerCap = 0;
 			vhtCap->muBeamformeeCap = 0;
