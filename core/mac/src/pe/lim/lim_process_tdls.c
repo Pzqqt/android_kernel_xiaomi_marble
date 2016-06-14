@@ -2371,29 +2371,16 @@ static void lim_tdls_update_hash_node_info(tpAniSirGlobal pMac,
 	if (pVhtCaps->present) {
 		pStaDs->mlmStaContext.vhtCapability = 1;
 
-		if (psessionEntry->currentOperChannel <= SIR_11B_CHANNEL_END) {
-			/*
-			 * if the channel is 2G then update the min channel
-			 * widthset in pStaDs. These values are used when
-			 * sending a AddSta request to firmware
-			 * 11.21.1 General: The channel width of the TDLS direct
-			 * link on the base channel shall not exceed the channel
-			 * width of the BSS to which the TDLS peer STAs are
-			 * associated.
-			 */
-			pStaDs->vhtSupportedChannelWidthSet =
-				WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
-			pStaDs->htSupportedChannelWidthSet =
-				eHT_CHANNEL_WIDTH_20MHZ;
-			lim_log(pMac, LOG1, FL("vhtSupportedChannelWidthSet = %hu, htSupportedChannelWidthSet %hu"),
-				pStaDs->htSupportedChannelWidthSet,
-				pStaDs->htSupportedChannelWidthSet);
-		} else {
-			pStaDs->vhtSupportedChannelWidthSet =
-				WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ;
-			pStaDs->htSupportedChannelWidthSet =
-				eHT_CHANNEL_WIDTH_40MHZ;
-		}
+		/*
+		 * 11.21.1 General: The channel width of the TDLS direct
+		 * link on the base channel shall not exceed the channel
+		 * width of the BSS to which the TDLS peer STAs are
+		 * associated.
+		 */
+		pStaDs->vhtSupportedChannelWidthSet = psessionEntry->ch_width;
+		lim_log(pMac, LOG1, FL("vhtSupportedChannelWidthSet = %hu, htSupportedChannelWidthSet %hu"),
+			pStaDs->htSupportedChannelWidthSet,
+			pStaDs->htSupportedChannelWidthSet);
 
 		pStaDs->vhtLdpcCapable = pVhtCaps->ldpcCodingCap;
 		pStaDs->vhtBeamFormerCapable = 0;
