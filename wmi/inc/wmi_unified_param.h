@@ -71,8 +71,6 @@
 #define WMI_NOISE_FLOOR_DBM_DEFAULT      (-96)
 #define WMI_MAC_IPV6_ADDR_LEN                            16
 #ifdef WLAN_NS_OFFLOAD
-#define WMI_OFFLOAD_DISABLE                         0
-#define WMI_OFFLOAD_ENABLE                          1
 /* support only one IPv6 offload */
 #define WMI_MAC_NS_OFFLOAD_SIZE                          1
 /* Number of target IP V6 addresses for NS offload */
@@ -262,17 +260,6 @@ typedef enum {
 
 
 #define MAX_NUM_CHAN 128
-
-/* WME stream classes */
-#define WMI_AC_BE                          0    /* best effort */
-#define WMI_AC_BK                          1    /* background */
-#define WMI_AC_VI                          2    /* video */
-#define WMI_AC_VO                          3    /* voice */
-#define WMI_TID_TO_AC(_tid) (\
-		(((_tid) == 0) || ((_tid) == 3)) ? WMI_AC_BE : \
-		(((_tid) == 1) || ((_tid) == 2)) ? WMI_AC_BK : \
-		(((_tid) == 4) || ((_tid) == 5)) ? WMI_AC_VI : \
-		WMI_AC_VO)
 
 /**
  * struct vdev_create_params - vdev create cmd parameter
@@ -1150,7 +1137,14 @@ struct wmi_mgmt_params {
 	void *pdata;
 	uint16_t desc_id;
 	uint8_t *macaddr;
+#ifndef WMI_NON_TLV_SUPPORT
+	/* Following elements should be moved to WMA
+	*/
+	void *tx_complete_cb;
+	void  *tx_ota_post_proc_cb;
+	struct wmi_desc_t *wmi_desc;
 	void *qdf_ctx;
+#endif
 };
 
 /**
@@ -1669,14 +1663,6 @@ enum {
 };
 
 /**
- * enum extscan_configuration_flags - extscan config flags
- * @WMI_EXTSCAN_LP_EXTENDED_BATCHING: extended batching
- */
-enum wmi_extscan_configuration_flags {
-	WMI_EXTSCAN_LP_EXTENDED_BATCHING = 0x00000001,
-};
-
-/**
  * enum extscan_report_events_type - extscan report events type
  * @EXTSCAN_REPORT_EVENTS_BUFFER_FULL: report only when scan history is % full
  * @EXTSCAN_REPORT_EVENTS_EACH_SCAN: report a scan completion event after scan
@@ -2012,14 +1998,6 @@ struct wifi_scan_cmd_req_params {
 };
 
 #define WMI_CFG_VALID_CHANNEL_LIST_LEN    100
-/* Occupied channel list remains static */
-#define WMI_CHANNEL_LIST_STATIC                   1
-/* Occupied channel list can be learnt after init */
-#define WMI_CHANNEL_LIST_DYNAMIC_INIT             2
-/* Occupied channel list can be learnt after flush */
-#define WMI_CHANNEL_LIST_DYNAMIC_FLUSH            3
-/* Occupied channel list can be learnt after update */
-#define WMI_CHANNEL_LIST_DYNAMIC_UPDATE           4
 
 /**
  * struct plm_req_params - plm req parameter
@@ -6323,48 +6301,6 @@ struct wmi_power_dbg_params {
 	uint32_t module_id;
 	uint32_t num_args;
 	uint32_t args[WMI_MAX_POWER_DBG_ARGS];
-};
-
-/**
- * struct wmi_fw_dump_seg_req - individual segment details
- * @seg_id - segment id.
- * @seg_start_addr_lo - lower address of the segment.
- * @seg_start_addr_hi - higher address of the segment.
- * @seg_length - length of the segment.
- * @dst_addr_lo - lower address of the destination buffer.
- * @dst_addr_hi - higher address of the destination buffer.
- *
- * This structure carries the information to firmware about the
- * individual segments. This structure is part of firmware memory
- * dump request.
- */
-struct wmi_fw_dump_seg_req {
-	uint8_t seg_id;
-	uint32_t seg_start_addr_lo;
-	uint32_t seg_start_addr_hi;
-	uint32_t seg_length;
-	uint32_t dst_addr_lo;
-	uint32_t dst_addr_hi;
-};
-
-/**
- * enum wmi_userspace_log_level - Log level at userspace
- * @WMI_LOG_LEVEL_NO_COLLECTION: verbose_level 0 corresponds to no collection
- * @WMI_LOG_LEVEL_NORMAL_COLLECT: verbose_level 1 correspond to normal log
- * level with minimal user impact. This is the default value.
- * @WMI_LOG_LEVEL_ISSUE_REPRO: verbose_level 2 are enabled when user is lazily
- * trying to reproduce a problem, wifi performances and power can be impacted
- * but device should not otherwise be significantly impacted
- * @WMI_LOG_LEVEL_ACTIVE: verbose_level 3+ are used when trying to
- * actively debug a problem
- *
- * Various log levels defined in the userspace for logging applications
- */
-enum wmi_userspace_log_level {
-	WMI_LOG_LEVEL_NO_COLLECTION,
-	WMI_LOG_LEVEL_NORMAL_COLLECT,
-	WMI_LOG_LEVEL_ISSUE_REPRO,
-	WMI_LOG_LEVEL_ACTIVE,
 };
 
 #endif /* _WMI_UNIFIED_PARAM_H_ */
