@@ -110,6 +110,8 @@ int epping_open(void)
 void epping_disable(void)
 {
 	epping_context_t *pEpping_ctx;
+	struct hif_opaque_softc *hif_ctx;
+	HTC_HANDLE htc_handle;
 
 	pEpping_ctx = g_epping_ctx;
 	if (pEpping_ctx == NULL) {
@@ -117,15 +119,30 @@ void epping_disable(void)
 			   "%s: error: pEpping_ctx  = NULL", __func__);
 		return;
 	}
+
 	if (pEpping_ctx->epping_adapter) {
 		epping_destroy_adapter(pEpping_ctx->epping_adapter);
 		pEpping_ctx->epping_adapter = NULL;
 	}
-	hif_disable_isr(cds_get_context(QDF_MODULE_ID_HIF));
-	hif_reset_soc(cds_get_context(QDF_MODULE_ID_HIF));
-	htc_stop(cds_get_context(QDF_MODULE_ID_HTC));
+
+	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	if (hif_ctx == NULL) {
+		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
+			   "%s: error: hif_ctx = NULL", __func__);
+		return;
+	}
+	hif_disable_isr(hif_ctx);
+	hif_reset_soc(hif_ctx);
+
+	htc_handle = cds_get_context(QDF_MODULE_ID_HTC);
+	if (htc_handle == NULL) {
+		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
+			   "%s: error: htc_handle = NULL", __func__);
+		return;
+	}
+	htc_stop(htc_handle);
 	epping_cookie_cleanup(pEpping_ctx);
-	htc_destroy(cds_get_context(QDF_MODULE_ID_HTC));
+	htc_destroy(htc_handle);
 }
 
 /**
