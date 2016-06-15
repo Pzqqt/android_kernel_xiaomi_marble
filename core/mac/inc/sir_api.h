@@ -2716,6 +2716,7 @@ typedef struct sAniIbssRouteTable {
 
 
 /* Set PNO */
+#define SIR_PNO_MAX_PLAN_REQUEST   1
 #define SIR_PNO_MAX_NETW_CHANNELS  26
 #define SIR_PNO_MAX_NETW_CHANNELS_EX  60
 #define SIR_PNO_MAX_SUPP_NETWORKS  16

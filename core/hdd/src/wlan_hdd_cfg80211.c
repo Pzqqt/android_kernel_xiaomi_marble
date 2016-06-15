@@ -6123,6 +6123,9 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 		wiphy->max_sched_scan_ssids = SIR_PNO_MAX_SUPP_NETWORKS;
 		wiphy->max_match_sets = SIR_PNO_MAX_SUPP_NETWORKS;
 		wiphy->max_sched_scan_ie_len = SIR_MAC_MAX_IE_LENGTH;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)) || defined(WITH_BACKPORTS)
+		wiphy->max_sched_scan_plans = SIR_PNO_MAX_PLAN_REQUEST;
+#endif
 	}
 #endif /*FEATURE_WLAN_SCAN_PNO */
 

@@ -2250,9 +2250,10 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 	 *
 	 * After Kernel 4.4
 	 *   User can configure multiple scan_plans, each scan would have
-	 *   separate scan cycle and interval. For our use case, we would
-	 *   only have supplicant set one scan_plan, and firmware also support
-	 *   only one as well, so pick up the first index.
+	 *   separate scan cycle and interval. (interval is in unit of second.)
+	 *   For our use case, we would only have supplicant set one scan_plan,
+	 *   and firmware also support only one as well, so pick up the first
+	 *   index.
 	 *
 	 *   Taking power consumption into account
 	 *   firmware after gPNOScanTimerRepeatValue times fast_scan_period
@@ -2260,7 +2261,18 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 	 *   shall be in slow_scan_period mode until next PNO Start.
 	 */
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)) || defined(WITH_BACKPORTS)
-	pPnoRequest->fast_scan_period = request->scan_plans[0].interval;
+	if (WARN_ON(request->n_scan_plans > SIR_PNO_MAX_PLAN_REQUEST)) {
+		ret = -EINVAL;
+		goto error;
+	}
+
+	/* TBD: only one sched_scan plan we can support now, so we only
+	 * retrieve the first plan and ignore the rest of them.
+	 * If there are more than 1 sched_pan request we can support, the
+	 * PnoRequet structure will also need to be revised.
+	 */
+	pPnoRequest->fast_scan_period = request->scan_plans[0].interval *
+						MSEC_PER_SEC;
 #else
 	pPnoRequest->fast_scan_period = request->interval;
 #endif
