@@ -2355,10 +2355,20 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 				       WIFI_POWER_EVENT_WAKELOCK_SAP);
 		qdf_wake_lock_timeout_acquire(&hdd_ctx->sap_wake_lock,
 			 HDD_SAP_CLIENT_DISCONNECT_WAKE_LOCK_DURATION);
-		cfg80211_del_sta(dev,
-				 (const u8 *)&sap_event->sapevt.
-				 sapStationDisassocCompleteEvent.staMac.
-				 bytes[0], GFP_KERNEL);
+
+		/*
+		 * Don't indicate delete station event if P2P GO and
+		 * SSR in progress. Since supplicant will change mode
+		 * fail and down during this time.
+		 */
+		if ((adapter->device_mode != QDF_P2P_GO_MODE) ||
+		     (!cds_is_driver_recovering())) {
+			cfg80211_del_sta(dev,
+					 (const u8 *)&sap_event->sapevt.
+					 sapStationDisassocCompleteEvent.staMac.
+					 bytes[0], GFP_KERNEL);
+			hdd_debug("indicate sta deletion event");
+		}
 
 		/* Update the beacon Interval if it is P2P GO */
 		qdf_status = policy_mgr_change_mcc_go_beacon_interval(
