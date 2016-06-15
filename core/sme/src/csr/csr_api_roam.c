@@ -5266,8 +5266,15 @@ static eCsrJoinState csr_roam_join_next_bss(tpAniSirGlobal mac_ctx,
 	if (!roam_info_ptr)
 		roam_info_ptr = &roam_info;
 	roam_info_ptr->u.pConnectedProfile = &session->connectedProfile;
-	csr_roam_join_handle_profile(mac_ctx, session_id, cmd, roam_info_ptr,
-		&roam_state, result, scan_result);
+
+	/*
+	 * result will be null if passed pRoamBssEntry is NULL, which
+	 * indicates we are done with all BSSs in list.
+	 */
+	if (result != NULL)
+		csr_roam_join_handle_profile(mac_ctx, session_id, cmd,
+					     roam_info_ptr, &roam_state,
+					     result, scan_result);
 end:
 	if ((eCsrStopRoaming == roam_state) && CSR_IS_INFRASTRUCTURE(profile) &&
 		(session->bRefAssocStartCnt > 0)) {
