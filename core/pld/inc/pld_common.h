@@ -390,4 +390,9 @@ void pld_lock_pm_sem(struct device *dev);
 void pld_release_pm_sem(struct device *dev);
 int pld_power_on(struct device *dev);
 int pld_power_off(struct device *dev);
+int pld_athdiag_read(struct device *dev, uint32_t offset, uint32_t memtype,
+		     uint32_t datalen, uint8_t *output);
+int pld_athdiag_write(struct device *dev, uint32_t offset, uint32_t memtype,
+		      uint32_t datalen, uint8_t *input);
+
 #endif

@@ -28,6 +28,9 @@
 #ifndef __PLD_SNOC_H__
 #define __PLD_SNOC_H__
 
+#ifdef CONFIG_PLD_SNOC_ICNSS
+#include <soc/qcom/icnss.h>
+#endif
 #include "pld_internal.h"
 
 #ifndef CONFIG_PLD_SNOC_ICNSS
@@ -106,6 +109,18 @@ static inline int pld_snoc_wlan_get_dfs_nol(void *info, u16 info_len)
 {
 	return 0;
 }
+static inline int pld_snoc_athdiag_read(struct device *dev, uint32_t offset,
+					uint32_t memtype, uint32_t datalen,
+					uint8_t *output)
+{
+	return 0;
+}
+static inline int pld_snoc_athdiag_write(struct device *dev, uint32_t offset,
+					 uint32_t memtype, uint32_t datalen,
+					 uint8_t *input)
+{
+	return 0;
+}
 #else
 int pld_snoc_register_driver(void);
 void pld_snoc_unregister_driver(void);
@@ -128,5 +143,17 @@ int pld_snoc_get_wlan_unsafe_channel(u16 *unsafe_ch_list, u16 *ch_count,
 				     u16 buf_len);
 int pld_snoc_wlan_set_dfs_nol(const void *info, u16 info_len);
 int pld_snoc_wlan_get_dfs_nol(void *info, u16 info_len);
+static inline int pld_snoc_athdiag_read(struct device *dev, uint32_t offset,
+					uint32_t memtype, uint32_t datalen,
+					uint8_t *output)
+{
+	return icnss_athdiag_read(dev, offset, memtype, datalen, output);
+}
+static inline int pld_snoc_athdiag_write(struct device *dev, uint32_t offset,
+					 uint32_t memtype, uint32_t datalen,
+					 uint8_t *input)
+{
+	return icnss_athdiag_write(dev, offset, memtype, datalen, input);
+}
 #endif
 #endif

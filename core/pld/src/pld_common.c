@@ -1422,3 +1422,71 @@ int pld_power_off(struct device *dev)
 
 	return ret;
 }
+
+/**
+ * pld_athdiag_read() - Read data from WLAN FW
+ * @dev: device
+ * @offset: address offset
+ * @memtype: memory type
+ * @datalen: data length
+ * @output: output buffer
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_athdiag_read(struct device *dev, uint32_t offset,
+		     uint32_t memtype, uint32_t datalen,
+		     uint8_t *output)
+{
+	int ret = 0;
+
+	switch (pld_get_bus_type(dev)) {
+	case PLD_BUS_TYPE_SNOC:
+		ret = pld_snoc_athdiag_read(dev, offset, memtype,
+					    datalen, output);
+		break;
+	case PLD_BUS_TYPE_PCIE:
+	case PLD_BUS_TYPE_SDIO:
+	case PLD_BUS_TYPE_USB:
+		break;
+	default:
+		ret = -EINVAL;
+		break;
+	}
+
+	return ret;
+}
+
+/**
+ * pld_athdiag_write() - Write data to WLAN FW
+ * @dev: device
+ * @offset: address offset
+ * @memtype: memory type
+ * @datalen: data length
+ * @input: input buffer
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_athdiag_write(struct device *dev, uint32_t offset,
+		      uint32_t memtype, uint32_t datalen,
+		      uint8_t *input)
+{
+	int ret = 0;
+
+	switch (pld_get_bus_type(dev)) {
+	case PLD_BUS_TYPE_SNOC:
+		ret = pld_snoc_athdiag_write(dev, offset, memtype,
+					     datalen, input);
+		break;
+	case PLD_BUS_TYPE_PCIE:
+	case PLD_BUS_TYPE_SDIO:
+	case PLD_BUS_TYPE_USB:
+		break;
+	default:
+		ret = -EINVAL;
+		break;
+	}
+
+	return ret;
+}
