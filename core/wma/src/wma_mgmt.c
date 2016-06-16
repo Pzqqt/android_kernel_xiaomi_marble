@@ -2452,6 +2452,51 @@ void wma_beacon_miss_handler(tp_wma_handle wma, uint32_t vdev_id)
 }
 
 /**
+ * wma_process_mgmt_tx_completion() - process mgmt completion
+ * @wma_handle: wma handle
+ * @desc_id: descriptor id
+ * @status: status
+ *
+ * Return: 0 for success or error code
+ */
+int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
+		uint32_t desc_id, uint32_t status)
+{
+	struct wmi_desc_t *wmi_desc;
+	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if (pdev == NULL) {
+		WMA_LOGE("%s: NULL pdev pointer", __func__);
+		return -EINVAL;
+	}
+
+	WMA_LOGI("%s: status:%d wmi_desc_id:%d", __func__, status, desc_id);
+
+	wmi_desc = (struct wmi_desc_t *)
+			(&wma_handle->wmi_desc_pool.array[desc_id]);
+
+	if (!wmi_desc) {
+		WMA_LOGE("%s: Invalid wmi desc", __func__);
+		return -EINVAL;
+	}
+
+	if (wmi_desc->nbuf)
+		qdf_nbuf_unmap_single(pdev->osdev, wmi_desc->nbuf,
+					  QDF_DMA_TO_DEVICE);
+	if (wmi_desc->tx_cmpl_cb)
+		wmi_desc->tx_cmpl_cb(wma_handle->mac_context,
+					   wmi_desc->nbuf, 1);
+
+	if (wmi_desc->ota_post_proc_cb)
+		wmi_desc->ota_post_proc_cb((tpAniSirGlobal)
+						 wma_handle->mac_context,
+						 status);
+
+	wmi_desc_put(wma_handle, wmi_desc);
+	return 0;
+}
+
+/**
  * wma_mgmt_tx_completion_handler() - wma mgmt Tx completion event handler
  * @handle: wma handle
  * @cmpl_event_params: completion event handler data
@@ -2466,18 +2511,6 @@ int wma_mgmt_tx_completion_handler(void *handle, uint8_t *cmpl_event_params,
 	tp_wma_handle wma_handle = (tp_wma_handle)handle;
 	WMI_MGMT_TX_COMPLETION_EVENTID_param_tlvs *param_buf;
 	wmi_mgmt_tx_compl_event_fixed_param	*cmpl_params;
-	struct wmi_desc_t *wmi_desc;
-
-	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!pdev) {
-		WMA_LOGE("%s: txrx pdev is NULL", __func__);
-		return -EINVAL;
-	}
-
-	if (pdev == NULL) {
-		WMA_LOGE("%s: NULL pdev pointer", __func__);
-		return -EINVAL;
-	}
 
 	param_buf = (WMI_MGMT_TX_COMPLETION_EVENTID_param_tlvs *)
 		cmpl_event_params;
@@ -2487,31 +2520,44 @@ int wma_mgmt_tx_completion_handler(void *handle, uint8_t *cmpl_event_params,
 	}
 	cmpl_params = param_buf->fixed_param;
 
-	WMA_LOGI("%s: status:%d wmi_desc_id:%d", __func__, cmpl_params->status,
-		 cmpl_params->desc_id);
+	wma_process_mgmt_tx_completion(wma_handle,
+		cmpl_params->desc_id, cmpl_params->status);
 
-	wmi_desc = (struct wmi_desc_t *)
-		(&wma_handle->wmi_desc_pool.array[cmpl_params->desc_id]);
+	return 0;
+}
 
-	if (!wmi_desc) {
-		WMA_LOGE("%s: Invalid wmi desc", __func__);
+/**
+ * wma_mgmt_tx_bundle_completion_handler() - mgmt bundle comp handler
+ * @handle: wma handle
+ * @buf: buffer
+ * @len: length
+ *
+ * Return: 0 for success or error code
+ */
+int wma_mgmt_tx_bundle_completion_handler(void *handle, uint8_t *buf,
+				   uint32_t len)
+{
+	tp_wma_handle wma_handle = (tp_wma_handle)handle;
+	WMI_MGMT_TX_BUNDLE_COMPLETION_EVENTID_param_tlvs *param_buf;
+	wmi_mgmt_tx_compl_bundle_event_fixed_param	*cmpl_params;
+	uint32_t num_reports;
+	uint32_t *desc_ids;
+	uint32_t *status;
+	int i;
+
+	param_buf = (WMI_MGMT_TX_BUNDLE_COMPLETION_EVENTID_param_tlvs *)buf;
+	if (!param_buf && !wma_handle) {
+		WMA_LOGE("%s: Invalid mgmt Tx completion event", __func__);
 		return -EINVAL;
 	}
+	cmpl_params = param_buf->fixed_param;
+	num_reports = cmpl_params->num_reports;
+	desc_ids = (uint32_t *)(param_buf->desc_ids);
+	status = (uint32_t *)(param_buf->status);
 
-	if (wmi_desc->nbuf)
-		qdf_nbuf_unmap_single(pdev->osdev, wmi_desc->nbuf,
-				      QDF_DMA_TO_DEVICE);
-	if (wmi_desc->tx_cmpl_cb)
-		wmi_desc->tx_cmpl_cb(wma_handle->mac_context,
-				       wmi_desc->nbuf, 1);
-
-	if (wmi_desc->ota_post_proc_cb)
-		wmi_desc->ota_post_proc_cb((tpAniSirGlobal)
-					     wma_handle->mac_context,
-					     cmpl_params->status);
-
-	wmi_desc_put(wma_handle, wmi_desc);
-
+	for (i = 0; i < num_reports; i++)
+		wma_process_mgmt_tx_completion(wma_handle,
+			desc_ids[i], status[i]);
 	return 0;
 }
 

@@ -2077,6 +2077,8 @@ struct wmi_desc_t *wmi_desc_get(tp_wma_handle wma_handle);
 void wmi_desc_put(tp_wma_handle wma_handle, struct wmi_desc_t *wmi_desc);
 int wma_mgmt_tx_completion_handler(void *handle, uint8_t *cmpl_event_params,
 				   uint32_t len);
+int wma_mgmt_tx_bundle_completion_handler(void *handle,
+	uint8_t *cmpl_event_params, uint32_t len);
 void wma_set_dfs_region(tp_wma_handle wma, uint8_t dfs_region);
 uint32_t wma_get_vht_ch_width(void);
 QDF_STATUS
