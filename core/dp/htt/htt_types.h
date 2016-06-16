@@ -130,7 +130,8 @@ struct htt_ipa_uc_tx_resource_t {
 	struct uc_shared_mem_t tx_comp_base;
 
 	uint32_t tx_comp_idx_paddr;
-	qdf_nbuf_t *tx_buf_pool_vaddr_strg;
+	void **tx_buf_pool_vaddr_strg;
+	qdf_dma_addr_t *paddr_strg;
 	uint32_t alloc_tx_buf_cnt;
 };
 

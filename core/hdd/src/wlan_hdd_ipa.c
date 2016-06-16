@@ -62,7 +62,6 @@
 #define HDD_IPA_IPV6_NAME_EXT              "_ipv6"
 
 #define HDD_IPA_RX_INACTIVITY_MSEC_DELAY   1000
-#define HDD_IPA_UC_WLAN_HDR_DES_MAC_OFFSET 12
 #define HDD_IPA_UC_WLAN_8023_HDR_SIZE      14
 /* WDI TX and RX PIPE */
 #define HDD_IPA_UC_NUM_WDI_PIPE            2
@@ -178,9 +177,6 @@ struct hdd_ipa_uc_tx_hdr {
 	struct ipa_header ipa_hd;
 	struct ethhdr eth;
 } __packed;
-
-#define HDD_IPA_WLAN_FRAG_HEADER       sizeof(struct frag_header)
-#define HDD_IPA_WLAN_IPA_HEADER        sizeof(struct frag_header)
 
 /**
  * struct hdd_ipa_cld_hdr - IPA CLD Header
@@ -474,12 +470,17 @@ uint32_t wlan_hdd_stub_addr_to_priv(void *ptr)
 	BUG_ON(ptr == NULL);
 	return ipa_priv;
 }
+
+#define HDD_IPA_WLAN_FRAG_HEADER        sizeof(struct frag_header)
+#define HDD_IPA_WLAN_IPA_HEADER         sizeof(struct ipa_header)
 #define HDD_IPA_WLAN_CLD_HDR_LEN        sizeof(struct hdd_ipa_cld_hdr)
 #define HDD_IPA_UC_WLAN_CLD_HDR_LEN     0
 #define HDD_IPA_WLAN_TX_HDR_LEN         sizeof(struct hdd_ipa_tx_hdr)
 #define HDD_IPA_UC_WLAN_TX_HDR_LEN      sizeof(struct hdd_ipa_uc_tx_hdr)
 #define HDD_IPA_WLAN_RX_HDR_LEN         sizeof(struct hdd_ipa_rx_hdr)
 #define HDD_IPA_UC_WLAN_RX_HDR_LEN      sizeof(struct hdd_ipa_uc_rx_hdr)
+#define HDD_IPA_UC_WLAN_HDR_DES_MAC_OFFSET \
+	(HDD_IPA_WLAN_FRAG_HEADER + HDD_IPA_WLAN_IPA_HEADER)
 
 #define HDD_IPA_FW_RX_DESC_DISCARD_M 0x1
 #define HDD_IPA_FW_RX_DESC_FORWARD_M 0x2
@@ -1987,7 +1988,8 @@ struct sk_buff *hdd_ipa_tx_packet_ipa(hdd_context_t *hdd_ctx,
 	if (HDD_IPA_UC_NUM_WDI_PIPE != hdd_ipa->activated_fw_pipe)
 		return skb;
 
-	if (skb_headroom(skb) < sizeof(struct ipa_header))
+	if (skb_headroom(skb) <
+		(sizeof(struct ipa_header) + sizeof(struct frag_header)))
 		return skb;
 
 	ipa_header = (struct ipa_header *) skb_push(skb,

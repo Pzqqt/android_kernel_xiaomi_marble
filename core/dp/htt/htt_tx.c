@@ -66,6 +66,17 @@
  */
 #define HTT_IPA_UC_OFFLOAD_TX_HEADER_DEFAULT 0x07C04001
 
+#ifdef QCA_WIFI_3_0
+#define IPA_UC_TX_BUF_FRAG_DESC_OFFSET 20
+#define IPA_UC_TX_BUF_FRAG_HDR_OFFSET  64
+#define IPA_UC_TX_BUF_TSO_HDR_SIZE     6
+#define IPA_UC_TX_BUF_PADDR_HI_MASK    0x0000001F
+#define IPA_UC_TX_BUF_PADDR_HI_OFFSET  32
+#else
+#define IPA_UC_TX_BUF_FRAG_DESC_OFFSET 16
+#define IPA_UC_TX_BUF_FRAG_HDR_OFFSET  32
+#endif /* QCA_WIFI_3_0 */
+
 #if HTT_PADDR64
 #define HTT_TX_DESC_FRAG_FIELD_HI_UPDATE(frag_filed_ptr)                       \
 do {                                                                           \
@@ -1057,29 +1068,25 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 			 unsigned int uc_tx_partition_base)
 {
 	unsigned int tx_buffer_count;
-	qdf_nbuf_t buffer_vaddr;
+	void *buffer_vaddr;
 	qdf_dma_addr_t buffer_paddr;
 	uint32_t *header_ptr;
-	uint32_t *ring_vaddr;
-#define IPA_UC_TX_BUF_FRAG_DESC_OFFSET 20
-#define IPA_UC_TX_BUF_FRAG_HDR_OFFSET 64
-#define IPA_UC_TX_BUF_TSO_HDR_SIZE 6
+	qdf_dma_addr_t *ring_vaddr;
 
-	ring_vaddr = pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr;
+	ring_vaddr = (qdf_dma_addr_t *)pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr;
 	/* Allocate TX buffers as many as possible */
 	for (tx_buffer_count = 0;
 	     tx_buffer_count < (uc_tx_buf_cnt - 1); tx_buffer_count++) {
-		buffer_vaddr = qdf_nbuf_alloc(pdev->osdev,
-					      uc_tx_buf_sz, 0, 4, false);
+
+		buffer_vaddr = qdf_mem_alloc_consistent(pdev->osdev,
+			pdev->osdev->dev, uc_tx_buf_sz, &buffer_paddr);
 		if (!buffer_vaddr) {
-			qdf_print("%s: TX BUF alloc fail, loop index: %d",
-				  __func__, tx_buffer_count);
+			qdf_print("IPA WDI TX buffer alloc fail %d allocated\n",
+				tx_buffer_count);
 			return tx_buffer_count;
 		}
 
-		/* Init buffer */
-		qdf_mem_zero(qdf_nbuf_data(buffer_vaddr), uc_tx_buf_sz);
-		header_ptr = (uint32_t *) qdf_nbuf_data(buffer_vaddr);
+		header_ptr = buffer_vaddr;
 
 		/* HTT control header */
 		*header_ptr = HTT_IPA_UC_OFFLOAD_TX_HEADER_DEFAULT;
@@ -1089,8 +1096,6 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 		*header_ptr |= ((uint16_t) uc_tx_partition_base +
 				tx_buffer_count) << 16;
 
-		qdf_nbuf_map(pdev->osdev, buffer_vaddr, QDF_DMA_BIDIRECTIONAL);
-		buffer_paddr = qdf_nbuf_get_frag_paddr(buffer_vaddr, 0);
 		header_ptr++;
 
 		/* Frag Desc Pointer */
@@ -1100,7 +1105,8 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 		header_ptr++;
 
 		/* 64bits descriptor, high 32bits */
-		*header_ptr = 0;
+		*header_ptr = (buffer_paddr >> IPA_UC_TX_BUF_PADDR_HI_OFFSET) &
+			IPA_UC_TX_BUF_PADDR_HI_MASK;
 		header_ptr++;
 
 		/* chanreq, peerid */
@@ -1115,9 +1121,11 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 		*ring_vaddr = buffer_paddr;
 		pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[tx_buffer_count] =
 			buffer_vaddr;
+		pdev->ipa_uc_tx_rsc.paddr_strg[tx_buffer_count] =
+			buffer_paddr;
 		/* Memory barrier to ensure actual value updated */
 
-		ring_vaddr += 2;
+		ring_vaddr++;
 	}
 	return tx_buffer_count;
 }
@@ -1132,8 +1140,6 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 	qdf_dma_addr_t buffer_paddr;
 	uint32_t *header_ptr;
 	uint32_t *ring_vaddr;
-#define IPA_UC_TX_BUF_FRAG_DESC_OFFSET 16
-#define IPA_UC_TX_BUF_FRAG_HDR_OFFSET 32
 
 	ring_vaddr = pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr;
 	/* Allocate TX buffers as many as possible */
@@ -1211,7 +1217,7 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 	}
 
 	/* Allocate TX COMP Ring */
-	tx_comp_ring_size = uc_tx_buf_cnt * sizeof(qdf_nbuf_t);
+	tx_comp_ring_size = uc_tx_buf_cnt * sizeof(qdf_dma_addr_t);
 	pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr =
 		qdf_mem_alloc_consistent(
 			pdev->osdev, pdev->osdev->dev,
@@ -1227,15 +1233,28 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 
 	/* Allocate TX BUF vAddress Storage */
 	pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg =
-		(qdf_nbuf_t *) qdf_mem_malloc(uc_tx_buf_cnt *
-					      sizeof(qdf_nbuf_t));
+		qdf_mem_malloc(uc_tx_buf_cnt *
+			sizeof(*pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg));
 	if (!pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg) {
 		qdf_print("%s: TX BUF POOL vaddr storage alloc fail", __func__);
 		return_code = -ENOBUFS;
 		goto free_tx_comp_base;
 	}
 	qdf_mem_zero(pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg,
-		     uc_tx_buf_cnt * sizeof(qdf_nbuf_t));
+		     uc_tx_buf_cnt *
+			sizeof(*pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg));
+
+	pdev->ipa_uc_tx_rsc.paddr_strg =
+		qdf_mem_malloc(uc_tx_buf_cnt *
+			sizeof(pdev->ipa_uc_tx_rsc.paddr_strg));
+	if (!pdev->ipa_uc_tx_rsc.paddr_strg) {
+		qdf_print("%s: TX BUF POOL paddr storage alloc fail", __func__);
+		return_code = -ENOBUFS;
+		goto free_tx_comp_base;
+	}
+	qdf_mem_zero(pdev->ipa_uc_tx_rsc.paddr_strg,
+		     uc_tx_buf_cnt *
+			sizeof(*pdev->ipa_uc_tx_rsc.paddr_strg));
 
 	pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt = htt_tx_ipa_uc_wdi_tx_buf_alloc(
 		pdev, uc_tx_buf_sz, uc_tx_buf_cnt, uc_tx_partition_base);
@@ -1264,6 +1283,15 @@ free_tx_ce_idx:
 	return return_code;
 }
 
+/**
+ * htt_tx_ipa_uc_detach() - Free WDI TX resources
+ * @pdev: htt context
+ *
+ * Remove IPA WDI TX resources during device detach
+ * Free all of allocated resources
+ *
+ * Return: 0 success
+ */
 int htt_tx_ipa_uc_detach(struct htt_pdev_t *pdev)
 {
 	uint16_t idx;
@@ -1294,17 +1322,17 @@ int htt_tx_ipa_uc_detach(struct htt_pdev_t *pdev)
 	/* Free each single buffer */
 	for (idx = 0; idx < pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt; idx++) {
 		if (pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[idx]) {
-			qdf_nbuf_unmap(pdev->osdev,
-				       pdev->ipa_uc_tx_rsc.
-				       tx_buf_pool_vaddr_strg[idx],
-				       QDF_DMA_FROM_DEVICE);
-			qdf_nbuf_free(pdev->ipa_uc_tx_rsc.
-				      tx_buf_pool_vaddr_strg[idx]);
+			qdf_mem_free_consistent(
+				pdev->osdev, pdev->osdev->dev,
+				ol_cfg_ipa_uc_tx_buf_size(pdev->ctrl_pdev),
+				pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[idx],
+				pdev->ipa_uc_tx_rsc.paddr_strg[idx], 0);
 		}
 	}
 
 	/* Free storage */
 	qdf_mem_free(pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg);
+	qdf_mem_free(pdev->ipa_uc_tx_rsc.paddr_strg);
 
 	return 0;
 }
