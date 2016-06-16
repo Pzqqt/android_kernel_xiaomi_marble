@@ -3383,6 +3383,25 @@ uint32_t wma_get_vht_ch_width(void)
 }
 
 /**
+ * wma_get_num_of_setbits_from_bitmask() - to get num of setbits from bitmask
+ * @mask: given bitmask
+ *
+ * This helper function should return number of setbits from bitmask
+ *
+ * Return: number of setbits from bitmask
+ */
+uint32_t wma_get_num_of_setbits_from_bitmask(uint32_t mask)
+{
+	uint32_t num_of_setbits = 0;
+
+	while (mask) {
+		mask &= (mask - 1);
+		num_of_setbits++;
+	}
+	return num_of_setbits;
+}
+
+/**
  * wma_config_debug_module_cmd - set debug log config
  * @wmi_handle: wmi layer handle
  * @param: debug log parameter

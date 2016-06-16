@@ -2055,6 +2055,7 @@ QDF_STATUS wma_send_ht40_obss_scanind(tp_wma_handle wma,
 int wma_get_bpf_caps_event_handler(void *handle,
 				u_int8_t *cmd_param_info,
 				u_int32_t len);
+uint32_t wma_get_num_of_setbits_from_bitmask(uint32_t mask);
 QDF_STATUS wma_get_bpf_capabilities(tp_wma_handle wma);
 QDF_STATUS wma_set_bpf_instructions(tp_wma_handle wma,
 			struct sir_bpf_set_offload *bpf_set_offload);
