@@ -63,9 +63,6 @@ bmi_read_memory(uint32_t address,
 	qdf_mem_set(bmi_rsp_buff, 0, BMI_DATASZ_MAX + sizeof(cid) +
 			sizeof(address) + sizeof(length));
 
-	BMI_DBG("BMI Read: device: 0x%p, address: 0x%x, length: %d",
-						scn, address, length);
-
 	cid = BMI_READ_MEMORY;
 	align = 0;
 	remaining = length;
@@ -102,7 +99,6 @@ bmi_read_memory(uint32_t address,
 		address += rxlen;
 	}
 
-	BMI_DBG("BMI Read Memory: Exit");
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -134,9 +130,6 @@ QDF_STATUS bmi_write_memory(uint32_t address, uint8_t *buffer, uint32_t length,
 
 	bmi_assert(BMI_COMMAND_FITS(BMI_DATASZ_MAX + header));
 	qdf_mem_set(bmi_cmd_buff, 0, BMI_DATASZ_MAX + header);
-
-	BMI_DBG("BMI Write Memory:device: 0x%p, address: 0x%x, length: %d",
-						scn, address, length);
 
 	cid = BMI_WRITE_MEMORY;
 
@@ -175,8 +168,6 @@ QDF_STATUS bmi_write_memory(uint32_t address, uint8_t *buffer, uint32_t length,
 		remaining -= txlen;
 		address += txlen;
 	}
-
-	BMI_DBG("BMI Write Memory: Exit");
 
 	return QDF_STATUS_SUCCESS;
 }
