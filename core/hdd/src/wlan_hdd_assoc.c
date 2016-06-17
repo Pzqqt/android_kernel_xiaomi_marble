@@ -1066,7 +1066,7 @@ static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 
 	/* HDD has initiated disconnect, do not send disconnect indication
 	 * to kernel. Sending disconnected event to kernel for userspace
-	 * initiated disconnect will be handled by hdd_DisConnectHandler call
+	 * initiated disconnect will be handled by disconnect handler call
 	 * to cfg80211_disconnected.
 	 */
 	if ((eConnectionState_Disconnecting ==
@@ -1104,19 +1104,14 @@ static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 				if (pRoamInfo->reasonCode ==
 				    eSIR_MAC_PEER_STA_REQ_LEAVING_BSS_REASON)
 					pr_info("wlan: disconnected due to poor signal, rssi is %d dB\n", pRoamInfo->rxRssi);
-				cfg80211_disconnected(dev, pRoamInfo->
-						      reasonCode, NULL, 0,
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0)) || defined(WITH_BACKPORTS)
-						      true,
-#endif
-						      GFP_KERNEL);
+				wlan_hdd_cfg80211_indicate_disconnect(
+							dev, false,
+							pRoamInfo->reasonCode);
 			} else {
-				cfg80211_disconnected(dev,
-					      WLAN_REASON_UNSPECIFIED, NULL, 0,
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0)) || defined(WITH_BACKPORTS)
-						      true,
-#endif
-					      GFP_KERNEL);
+				wlan_hdd_cfg80211_indicate_disconnect(
+							dev, false,
+							WLAN_REASON_UNSPECIFIED
+							);
 			}
 
 			hdd_info("sent disconnected event to nl80211, rssi: %d",
