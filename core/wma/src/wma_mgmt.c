@@ -3057,7 +3057,7 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 	}
 
 	if (cds_is_load_or_unload_in_progress()) {
-		WMA_LOGE("Load/Unload in progress");
+		WMA_LOGW(FL("Load/Unload in progress"));
 		return -EINVAL;
 	}
 
