@@ -717,6 +717,7 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_peer_reorder_queue_setup_cmd_fixed_param,
 	WMITLV_TAG_STRUC_wmi_peer_reorder_queue_remove_cmd_fixed_param,
 	WMITLV_TAG_STRUC_wmi_set_multiple_mcast_filter_cmd_fixed_param,
+	WMITLV_TAG_STRUC_wmi_mgmt_tx_compl_bundle_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1160,6 +1161,7 @@ typedef enum {
 	OP(WMI_PDEV_SET_MAC_CONFIG_RESP_EVENTID) \
 	OP(WMI_RADIO_TX_POWER_LEVEL_STATS_EVENTID) \
 	OP(WMI_P2P_LISTEN_OFFLOAD_STOPPED_EVENTID) \
+	OP(WMI_MGMT_TX_BUNDLE_COMPLETION_EVENTID) \
 	/* add new EVT_LIST elements above this line */
 
 /* TLV definitions of WMI commands */
@@ -1657,13 +1659,13 @@ WMITLV_CREATE_PARAM_STRUC(WMI_RTT_MEASREQ_CMDID);
 	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_RTT_TSF_CMDID);
 
-/*RTT OEM req Cmd - DEPRECATED */
+/* RTT OEM req Cmd */
 #define WMITLV_TABLE_WMI_OEM_REQ_CMDID(id,op,buf,len) \
 	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR)
 
 WMITLV_CREATE_PARAM_STRUC(WMI_OEM_REQ_CMDID);
 
-/* RTT OEM request Cmd */
+/* RTT OEM request Cmd - DEPRECATED */
 #define WMITLV_TABLE_WMI_OEM_REQUEST_CMDID(id, op, buf, len) \
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_OEM_REQUEST_CMDID);
@@ -3020,6 +3022,13 @@ WMITLV_CREATE_PARAM_STRUC(WMI_TX_PAUSE_EVENTID);
 #define WMITLV_TABLE_WMI_MGMT_TX_COMPLETION_EVENTID(id, op, buf, len)	\
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_mgmt_tx_compl_event_fixed_param, wmi_mgmt_tx_compl_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_MGMT_TX_COMPLETION_EVENTID);
+
+/* Bundled Mgmt TX completion event */
+#define WMITLV_TABLE_WMI_MGMT_TX_BUNDLE_COMPLETION_EVENTID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_mgmt_tx_compl_bundle_event_fixed_param, wmi_mgmt_tx_compl_bundle_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, desc_ids, WMITLV_SIZE_VAR) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, status, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_MGMT_TX_BUNDLE_COMPLETION_EVENTID);
 
 /* VDEV Start response Event */
 #define WMITLV_TABLE_WMI_VDEV_START_RESP_EVENTID(id,op,buf,len)								\

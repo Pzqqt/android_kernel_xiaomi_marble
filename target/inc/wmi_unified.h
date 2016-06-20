@@ -1124,6 +1124,9 @@ typedef enum {
 	WMI_OFFLOAD_PROB_RESP_TX_STATUS_EVENTID,
 	/** Event for Mgmt TX completion event */
 	WMI_MGMT_TX_COMPLETION_EVENTID,
+	/** Event for Mgmt TX bundle completion event */
+	WMI_MGMT_TX_BUNDLE_COMPLETION_EVENTID,
+
 
 	/*ADDBA Related WMI Events */
 	/** Indication the completion of the prior
@@ -2300,6 +2303,9 @@ typedef struct {
 	#define WMI_RSRC_CFG_FLAG_QWRAP_MODE_ENABLE_S 8
 	#define WMI_RSRC_CFG_FLAG_QWRAP_MODE_ENABLE_M 0x100
 
+	#define WMI_RSRC_CFG_FLAG_MGMT_COMP_EVT_BUNDLE_SUPPORT_S 9
+	#define WMI_RSRC_CFG_FLAG_MGMT_COMP_EVT_BUNDLE_SUPPORT_M 0x200
+
 	A_UINT32 flag1;
 
 	/** @brief smart_ant_cap - Smart Antenna capabilities information
@@ -2405,6 +2411,11 @@ typedef struct {
 		WMI_RSRC_CFG_FLAG_SET((word32), QWRAP_MODE_ENABLE, (value))
 #define WMI_RSRC_CFG_FLAG_QWRAP_MODE_ENABLE_GET(word32) \
 		WMI_RSRC_CFG_FLAG_GET((word32), QWRAP_MODE_ENABLE)
+
+#define WMI_RSRC_CFG_FLAG_MGMT_COMP_EVT_BUNDLE_SUPPORT_SET(word32, value) \
+		WMI_RSRC_CFG_FLAG_SET((word32), MGMT_COMP_EVT_BUNDLE_SUPPORT, (value))
+#define WMI_RSRC_CFG_FLAG_MGMT_COMP_EVT_BUNDLE_SUPPORT_GET(word32) \
+		WMI_RSRC_CFG_FLAG_GET((word32), MGMT_COMP_EVT_BUNDLE_SUPPORT)
 
 typedef struct {
 	A_UINT32 tlv_header;            /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_init_cmd_fixed_param */
@@ -3911,6 +3922,15 @@ typedef struct {
 	A_UINT32    desc_id; /* from tx_send_cmd */
 	A_UINT32    status;  /* WMI_MGMT_TX_COMP_STATUS_TYPE */
 } wmi_mgmt_tx_compl_event_fixed_param;
+
+typedef struct {
+	A_UINT32    tlv_header;
+	A_UINT32    num_reports;
+	/* tlv for completion
+	 * A_UINT32 desc_ids[num_reports]; <- from tx_send_cmd
+	 * A_UINT32 status[num_reports];   <- WMI_MGMT_TX_COMP_STATUS_TYPE
+	 */
+} wmi_mgmt_tx_compl_bundle_event_fixed_param;
 
 #define WMI_TPC_RATE_MAX            160
 /* WMI_TPC_TX_NUM_CHAIN macro can't be changed without breaking the WMI compatibility */
