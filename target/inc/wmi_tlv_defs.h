@@ -718,6 +718,8 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_peer_reorder_queue_remove_cmd_fixed_param,
 	WMITLV_TAG_STRUC_wmi_set_multiple_mcast_filter_cmd_fixed_param,
 	WMITLV_TAG_STRUC_wmi_mgmt_tx_compl_bundle_event_fixed_param,
+	WMITLV_TAG_STRUC_wmi_read_data_from_flash_cmd_fixed_param,
+	WMITLV_TAG_STRUC_wmi_read_data_from_flash_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1010,6 +1012,7 @@ typedef enum {
 	OP(WMI_PEER_REORDER_QUEUE_SETUP_CMDID) \
 	OP(WMI_PEER_REORDER_QUEUE_REMOVE_CMDID) \
 	OP(WMI_SET_MULTIPLE_MCAST_FILTER_CMDID) \
+	OP(WMI_READ_DATA_FROM_FLASH_CMDID) \
 	/* add new CMD_LIST elements above this line */
 
 /*
@@ -1162,6 +1165,7 @@ typedef enum {
 	OP(WMI_RADIO_TX_POWER_LEVEL_STATS_EVENTID) \
 	OP(WMI_P2P_LISTEN_OFFLOAD_STOPPED_EVENTID) \
 	OP(WMI_MGMT_TX_BUNDLE_COMPLETION_EVENTID) \
+	OP(WMI_READ_DATA_FROM_FLASH_EVENTID) \
 	/* add new EVT_LIST elements above this line */
 
 /* TLV definitions of WMI commands */
@@ -2529,6 +2533,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_LRO_CONFIG_CMDID);
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_TRANSFER_DATA_TO_FLASH_CMDID);
 
+#define WMITLV_TABLE_WMI_READ_DATA_FROM_FLASH_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_read_data_from_flash_cmd_fixed_param, wmi_read_data_from_flash_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_READ_DATA_FROM_FLASH_CMDID);
+
 #define WMITLV_TABLE_WMI_CONFIG_ENHANCED_MCAST_FILTER_CMDID(id, op, buf, len) \
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_config_enhanced_mcast_filter_fixed_param, wmi_config_enhanced_mcast_filter_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_CONFIG_ENHANCED_MCAST_FILTER_CMDID);
@@ -3175,6 +3183,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_RSSI_BREACH_EVENTID);
 #define WMITLV_TABLE_WMI_TRANSFER_DATA_TO_FLASH_COMPLETE_EVENTID(id, op, buf, len)\
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_transfer_data_to_flash_complete_event_fixed_param, wmi_transfer_data_to_flash_complete_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_TRANSFER_DATA_TO_FLASH_COMPLETE_EVENTID);
+
+#define WMITLV_TABLE_WMI_READ_DATA_FROM_FLASH_EVENTID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_read_data_from_flash_event_fixed_param, wmi_read_data_from_flash_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_READ_DATA_FROM_FLASH_EVENTID);
 
 /* Diagnostics Event */
 #define WMITLV_TABLE_WMI_DIAG_EVENTID(id,op,buf,len) \

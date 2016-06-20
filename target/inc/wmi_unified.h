@@ -798,6 +798,8 @@ typedef enum {
 	WMI_DBGLOG_TIME_STAMP_SYNC_CMDID,
 	/** Command for host to set/delete multiple mcast filters */
 	WMI_SET_MULTIPLE_MCAST_FILTER_CMDID,
+	/** upload a requested section of data from firmware flash to host */
+	WMI_READ_DATA_FROM_FLASH_CMDID,
 
 	/* GPIO Configuration */
 	WMI_GPIO_CONFIG_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_GPIO),
@@ -1288,6 +1290,9 @@ typedef enum {
 
 	/** event to report SCPC calibrated data to host */
 	WMI_PDEV_UTF_SCPC_EVENTID,
+
+	/** event to provide requested data from the target's flash memory */
+	WMI_READ_DATA_FROM_FLASH_EVENTID,
 
 	/* GPIO Event */
 	WMI_GPIO_INPUT_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_GPIO),
@@ -14945,10 +14950,6 @@ typedef struct {
 	A_UINT32 toeplitz_hash_ipv6_40;
 } wmi_lro_info_cmd_fixed_param;
 
-/*
- * This structure is used to set the pattern for WOW host wakeup pin pulse
- * pattern confirguration.
- */
 typedef struct {
 	/*
 	 * TLV tag and len; tag equals
@@ -14970,6 +14971,27 @@ typedef struct {
 	/* Return status. 0 for success, non-zero otherwise */
 	A_UINT32 status;
 } wmi_transfer_data_to_flash_complete_event_fixed_param;
+
+typedef struct {
+	/*
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_read_data_from_flash_cmd_fixed_param
+	 */
+	A_UINT32 tlv_header;
+	A_UINT32 offset; /* flash offset to read, starting from 0 */
+	A_UINT32 length; /* data length to read, unit: byte */
+} wmi_read_data_from_flash_cmd_fixed_param;
+
+typedef struct {
+	/*
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_read_data_from_flash_event_fixed_param
+	 */
+	A_UINT32 tlv_header;
+	A_UINT32 status; /* Return status. 0 for success, non-zero otherwise */
+	A_UINT32 offset; /* flash offset reading from, starting from 0 */
+	A_UINT32 length; /* length of data being reported, unit: byte */
+} wmi_read_data_from_flash_event_fixed_param;
 
 typedef enum {
 	ENHANCED_MCAST_FILTER_DISABLED,
