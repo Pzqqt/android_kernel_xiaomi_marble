@@ -486,17 +486,27 @@ static void cds_set_5g_channel_params(uint16_t oper_ch,
 				else
 					ch_params->sec_ch_offset =
 						PHY_DOUBLE_CHANNEL_HIGH_PRIMARY;
+
 				ch_params->center_freq_seg0 =
-					(bonded_chan_ptr2->start_ch +
-					 bonded_chan_ptr2->end_ch)/2;
-
+					(bonded_chan_ptr->start_ch +
+					 bonded_chan_ptr->end_ch)/2;
 			}
-
 			break;
 		}
-
 		ch_params->ch_width = next_lower_bw[ch_params->ch_width];
 	}
+	if (CH_WIDTH_160MHZ == ch_params->ch_width) {
+		ch_params->center_freq_seg1 = ch_params->center_freq_seg0;
+		chan_state = cds_search_5g_bonded_channel(oper_ch,
+							  CH_WIDTH_80MHZ,
+							  &bonded_chan_ptr);
+		ch_params->center_freq_seg0 = (bonded_chan_ptr->start_ch +
+				bonded_chan_ptr->end_ch)/2;
+	}
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
+			"ch %d ch_wd %d freq0 %d freq1 %d", oper_ch,
+			ch_params->ch_width, ch_params->center_freq_seg0,
+			ch_params->center_freq_seg1);
 }
 
 /**

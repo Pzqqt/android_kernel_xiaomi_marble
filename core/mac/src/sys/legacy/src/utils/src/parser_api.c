@@ -1144,10 +1144,11 @@ populate_dot11f_vht_operation(tpAniSirGlobal pMac,
 	pDot11f->present = 1;
 
 	if (psessionEntry->ch_width > CH_WIDTH_40MHZ) {
-		pDot11f->chanWidth = psessionEntry->ch_width - 1;
+		pDot11f->chanWidth = 1;
 		pDot11f->chanCenterFreqSeg1 =
 			psessionEntry->ch_center_freq_seg0;
-		if (psessionEntry->ch_width == CH_WIDTH_80P80MHZ)
+		if (psessionEntry->ch_width == CH_WIDTH_80P80MHZ ||
+				psessionEntry->ch_width == CH_WIDTH_160MHZ)
 			pDot11f->chanCenterFreqSeg2 =
 				psessionEntry->ch_center_freq_seg1;
 		else

@@ -2260,6 +2260,11 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 				sta_ds->vhtSupportedChannelWidthSet + 1;
 
 		add_sta_params->vhtSupportedRxNss = sta_ds->vhtSupportedRxNss;
+		if (LIM_IS_AP_ROLE(session_entry) ||
+				LIM_IS_P2P_DEVICE_GO(session_entry))
+			add_sta_params->vhtSupportedRxNss = QDF_MIN(
+					add_sta_params->vhtSupportedRxNss,
+					session_entry->nss);
 		add_sta_params->vhtTxBFCapable =
 #ifdef FEATURE_WLAN_TDLS
 			((STA_ENTRY_PEER == sta_ds->staType)
