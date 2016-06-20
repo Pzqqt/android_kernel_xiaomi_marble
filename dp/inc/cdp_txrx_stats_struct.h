@@ -207,6 +207,7 @@ struct ol_ath_radiostats {
 	A_UINT32    tgt_asserts;
 	A_INT16     chan_nf;
 	A_UINT32    rx_last_msdu_unset_cnt;
+	A_INT16     chan_nf_sec80;
 };
 
 /*
@@ -441,6 +442,10 @@ typedef enum _ol_ath_param_t {
 	OL_ATH_PARAM_PASSIVE_SCAN_ENABLE = 320,
 	OL_ATH_MIN_RSSI_ENABLE = 321,
 	OL_ATH_MIN_RSSI = 322,
+	OL_ATH_PARAM_ACS_2G_ALLCHAN = 323,
+#if DBDC_REPEATER_SUPPORT
+	OL_ATH_PARAM_DELAY_STAVAP_UP = 324,
+#endif
 } ol_ath_param_t;
 
 /*
