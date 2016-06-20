@@ -233,15 +233,6 @@ static int wlan_queue_logmsg_for_app(void)
 		gwlan_logging.pcur_node =
 			(struct log_msg *)(gwlan_logging.filled_list.next);
 		++gwlan_logging.drop_count;
-		/* print every 64th drop count */
-		if (cds_is_multicast_logging() &&
-				(!(gwlan_logging.drop_count % 0x40))) {
-			pr_info
-				("%s: drop_count = %u index = %d filled_length = %d\n",
-				__func__, gwlan_logging.drop_count,
-				gwlan_logging.pcur_node->index,
-				gwlan_logging.pcur_node->filled_length);
-		}
 		list_del_init(gwlan_logging.filled_list.next);
 		ret = 1;
 	}
@@ -315,6 +306,7 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 	unsigned long flags;
 	uint64_t ts;
 	int radio;
+	bool log_overflow = false;
 
 	radio = cds_get_radio_index();
 
@@ -369,13 +361,11 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 	/* Assumption here is that we receive logs which is always less than
 	 * MAX_LOGMSG_LENGTH, where we can accomodate the
 	 *   tAniNlHdr + [context][timestamp] + log
-	 * QDF_ASSERT if we cannot accomodate the the complete log into
-	 * the available buffer.
 	 *
 	 * Continue and copy logs to the available length and discard the rest.
 	 */
 	if (MAX_LOGMSG_LENGTH < (sizeof(tAniNlHdr) + total_log_len)) {
-		QDF_ASSERT(0);
+		log_overflow = true;
 		total_log_len = MAX_LOGMSG_LENGTH - sizeof(tAniNlHdr) - 2;
 	}
 
@@ -387,6 +377,11 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 	*pfilled_length += 1;
 
 	spin_unlock_irqrestore(&gwlan_logging.spin_lock, flags);
+	/*
+	 * QDF_ASSERT if complete log was not accomodated into
+	 * the available buffer.
+	 */
+	QDF_ASSERT(!log_overflow);
 
 	/* Wakeup logger thread */
 	if ((true == wake_up_thread)) {
