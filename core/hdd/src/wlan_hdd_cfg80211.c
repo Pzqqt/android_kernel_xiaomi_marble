@@ -10413,6 +10413,20 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 			}
 			hdd_select_cbmode(pAdapter, operatingChannel);
 		}
+		/*
+		 * if MFPEnabled is set but the peer AP is non-PMF i.e 80211w=2
+		 * or pmf=2 is an explicit configuration in the supplicant
+		 * configuration, drop the connection request.
+		 */
+		if (pWextState->roamProfile.MFPEnabled &&
+		    !(pWextState->roamProfile.MFPRequired ||
+		    pWextState->roamProfile.MFPCapable)) {
+			hdd_err("Drop connect req as supplicant has indicated PMF req for a non-PMF peer. MFPEnabled %d MFPRequired %d MFPCapable %d",
+					pWextState->roamProfile.MFPEnabled,
+					pWextState->roamProfile.MFPRequired,
+					pWextState->roamProfile.MFPCapable);
+			return -EINVAL;
+		}
 
 		if (true == cds_is_connection_in_progress()) {
 			hdd_err("Connection refused: conn in progress");
