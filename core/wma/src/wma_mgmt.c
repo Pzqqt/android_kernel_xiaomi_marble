@@ -662,6 +662,12 @@ void wma_set_sta_keep_alive(tp_wma_handle wma, uint8_t vdev_id,
 		return;
 	}
 
+	if (timeperiod > WNI_CFG_INFRA_STA_KEEP_ALIVE_PERIOD_STAMAX) {
+		WMI_LOGE("Invalid period %d Max limit %d", timeperiod,
+			 WNI_CFG_INFRA_STA_KEEP_ALIVE_PERIOD_STAMAX);
+		return;
+	}
+
 	params.vdev_id = vdev_id;
 	params.method = method;
 	params.timeperiod = timeperiod;
