@@ -360,32 +360,44 @@ __lim_fresh_scan_reqd(tpAniSirGlobal mac_ctx, uint8_t return_fresh_results)
 	}
 
 	for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
+
+		if (mac_ctx->lim.gpSession[i].valid == false)
+			continue;
+
 		lim_log(mac_ctx, LOG1,
 			FL("session %d, bsstype %d, limSystemRole %d, limSmeState %d"),
 			i, mac_ctx->lim.gpSession[i].bssType,
 			mac_ctx->lim.gpSession[i].limSystemRole,
 			mac_ctx->lim.gpSession[i].limSmeState);
-		if (mac_ctx->lim.gpSession[i].valid == true) {
-			if (!((((mac_ctx->lim.gpSession[i].bssType ==
-					eSIR_INFRASTRUCTURE_MODE)) &&
-				(mac_ctx->lim.gpSession[i].limSmeState ==
-					eLIM_SME_LINK_EST_STATE)) ||
-			      (((mac_ctx->lim.gpSession[i].bssType ==
-					eSIR_IBSS_MODE)) &&
-			       (mac_ctx->lim.gpSession[i].limSmeState ==
-					eLIM_SME_NORMAL_STATE)) ||
-			      ((((mac_ctx->lim.gpSession[i].bssType ==
-					eSIR_INFRA_AP_MODE) &&
-				(mac_ctx->lim.gpSession[i].pePersona ==
-					QDF_P2P_GO_MODE)) ||
-			      (mac_ctx->lim.gpSession[i].limSystemRole ==
-					eLIM_AP_ROLE)) &&
-			      (mac_ctx->lim.gpSession[i].limSmeState ==
-					eLIM_SME_NORMAL_STATE)))) {
-				valid_state = false;
-				break;
-			}
-		}
+
+		if (mac_ctx->lim.gpSession[i].bssType == eSIR_NDI_MODE)
+			continue;
+
+		if (mac_ctx->lim.gpSession[i].bssType ==
+				eSIR_INFRASTRUCTURE_MODE &&
+				mac_ctx->lim.gpSession[i].limSmeState ==
+				eLIM_SME_LINK_EST_STATE)
+			continue;
+
+		if (mac_ctx->lim.gpSession[i].bssType == eSIR_IBSS_MODE &&
+				mac_ctx->lim.gpSession[i].limSmeState ==
+				eLIM_SME_NORMAL_STATE)
+			continue;
+
+		if (mac_ctx->lim.gpSession[i].bssType == eSIR_INFRA_AP_MODE &&
+				mac_ctx->lim.gpSession[i].pePersona ==
+				QDF_P2P_GO_MODE &&
+				mac_ctx->lim.gpSession[i].limSmeState ==
+				eLIM_SME_NORMAL_STATE)
+			continue;
+
+		if (mac_ctx->lim.gpSession[i].limSystemRole == eLIM_AP_ROLE &&
+				mac_ctx->lim.gpSession[i].limSmeState ==
+				eLIM_SME_NORMAL_STATE)
+			continue;
+
+		valid_state = false;
+		break;
 	}
 
 	lim_log(mac_ctx, LOG1, FL("valid_state: %d"), valid_state);
