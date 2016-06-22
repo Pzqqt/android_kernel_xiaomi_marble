@@ -346,6 +346,8 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 			return -ENOMEM;
 		}
 
+		del_sta_ctx->is_tdls = true;
+		del_sta_ctx->vdev_id = vdev_id;
 		del_sta_ctx->staId = peer_id;
 		qdf_mem_copy(del_sta_ctx->addr2, macaddr, IEEE80211_ADDR_LEN);
 		qdf_mem_copy(del_sta_ctx->bssId, wma->interfaces[vdev_id].bssid,
@@ -407,7 +409,10 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 		break;
 
 	case WMI_PEER_STA_KICKOUT_REASON_INACTIVITY:
-	/* Handle SA query kickout is same as inactivity kickout */
+	/*
+	 * Handle SA query kickout is same as inactivity kickout.
+	 * This could be for STA or SAP role
+	 */
 	case WMI_PEER_STA_KICKOUT_REASON_SA_QUERY_TIMEOUT:
 	default:
 		break;
@@ -423,6 +428,8 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 		return -ENOMEM;
 	}
 
+	del_sta_ctx->is_tdls = false;
+	del_sta_ctx->vdev_id = vdev_id;
 	del_sta_ctx->staId = peer_id;
 	qdf_mem_copy(del_sta_ctx->addr2, macaddr, IEEE80211_ADDR_LEN);
 	qdf_mem_copy(del_sta_ctx->bssId, wma->interfaces[vdev_id].addr,

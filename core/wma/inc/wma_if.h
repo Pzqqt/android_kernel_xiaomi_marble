@@ -595,6 +595,8 @@ typedef enum eSmpsModeValue {
  * @rssi: rssi value during disconnection
  */
 typedef struct {
+	bool is_tdls;
+	uint8_t vdev_id;
 	uint16_t assocId;
 	uint16_t staId;
 	tSirMacAddr bssId;

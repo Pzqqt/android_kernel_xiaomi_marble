@@ -216,23 +216,41 @@ void lim_delete_sta_context(tpAniSirGlobal mac_ctx, tpSirMsgQ lim_msg)
 {
 	tpDeleteStaContext msg = (tpDeleteStaContext) lim_msg->bodyptr;
 	tpPESession session_entry;
-	uint8_t session_id;
+	tpDphHashNode sta_ds;
 
 	if (NULL == msg) {
 		lim_log(mac_ctx, LOGE, FL("Invalid body pointer in message"));
 		return;
 	}
-	session_entry = pe_find_session_by_bssid(mac_ctx, msg->bssId,
-						 &session_id);
+	session_entry = pe_find_session_by_sme_session_id(mac_ctx, msg->vdev_id);
 	if (NULL == session_entry) {
-		lim_log(mac_ctx, LOGE, FL("session does not exist"));
+		lim_log(mac_ctx, LOGE,
+			FL("session not found for given sme session"));
 		qdf_mem_free(msg);
 		return;
 	}
 
 	switch (msg->reasonCode) {
 	case HAL_DEL_STA_REASON_CODE_KEEP_ALIVE:
-	case HAL_DEL_STA_REASON_CODE_TIM_BASED:
+		if (LIM_IS_STA_ROLE(session_entry) && !msg->is_tdls) {
+			sta_ds = dph_get_hash_entry(mac_ctx,
+					DPH_STA_HASH_INDEX_PEER,
+					&session_entry->dph.dphHashTable);
+			if (NULL == sta_ds) {
+				lim_log(mac_ctx, LOGE,
+					FL("Dph entry not found."));
+				qdf_mem_free(msg);
+				return;
+			}
+			lim_send_deauth_mgmt_frame(mac_ctx,
+				eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON,
+				msg->addr2, session_entry, false);
+			lim_tear_down_link_with_ap(mac_ctx,
+						session_entry->peSessionId,
+						eSIR_MAC_UNSPEC_FAILURE_REASON);
+			/* only break for STA role (non TDLS) */
+			break;
+		}
 		lim_delete_sta_util(mac_ctx, msg, session_entry);
 		break;
 
