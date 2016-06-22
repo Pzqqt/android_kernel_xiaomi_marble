@@ -531,7 +531,7 @@ void lim_process_mlm_auth_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg)
 		return;
 	}
 
-	if (((tLimMlmAuthCnf *) msg)->resultCode == eSIR_SME_SUCCESS) {
+	if (auth_cnf->resultCode == eSIR_SME_SUCCESS) {
 		if (session_entry->limSmeState == eLIM_SME_WT_AUTH_STATE) {
 			lim_send_mlm_assoc_req(mac_ctx, session_entry);
 		} else {
@@ -568,9 +568,10 @@ void lim_process_mlm_auth_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg)
 	}
 
 	if ((auth_type == eSIR_AUTO_SWITCH) &&
-		(((tLimMlmAuthCnf *) msg)->authType ==  eSIR_SHARED_KEY)
-		&& (eSIR_MAC_AUTH_ALGO_NOT_SUPPORTED_STATUS ==
-		((tLimMlmAuthCnf *) msg)->protStatusCode)) {
+		(auth_cnf->authType == eSIR_SHARED_KEY) &&
+		((eSIR_MAC_AUTH_ALGO_NOT_SUPPORTED_STATUS ==
+			auth_cnf->protStatusCode) ||
+		(auth_cnf->resultCode == eSIR_SME_AUTH_TIMEOUT_RESULT_CODE))) {
 		/*
 		 * When shared authentication fails with reason
 		 * code "13" and authType set to 'auto switch',
@@ -634,8 +635,8 @@ void lim_process_mlm_auth_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg)
 			 * auth failure to Host.
 			 */
 			lim_handle_sme_join_result(mac_ctx,
-				((tLimMlmAuthCnf *)msg)->resultCode,
-				((tLimMlmAuthCnf *)msg)->protStatusCode,
+				auth_cnf->resultCode,
+				auth_cnf->protStatusCode,
 				session_entry);
 		} else {
 			/*
