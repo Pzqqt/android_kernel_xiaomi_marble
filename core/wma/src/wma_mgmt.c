@@ -2710,6 +2710,7 @@ void wma_hidden_ssid_vdev_restart(tp_wma_handle wma_handle,
 				  tHalHiddenSsidVdevRestart *pReq)
 {
 	struct wma_txrx_node *intr = wma_handle->interfaces;
+	struct wma_target_req *msg;
 
 	if ((pReq->sessionId !=
 	     intr[pReq->sessionId].vdev_restart_params.vdev_id)
@@ -2723,6 +2724,16 @@ void wma_hidden_ssid_vdev_restart(tp_wma_handle wma_handle,
 	qdf_atomic_set(&intr[pReq->sessionId].vdev_restart_params.
 		       hidden_ssid_restart_in_progress, 1);
 
+	msg = wma_fill_vdev_req(wma_handle, pReq->sessionId,
+			WMA_HIDDEN_SSID_VDEV_RESTART,
+			WMA_TARGET_REQ_TYPE_VDEV_STOP, pReq,
+			WMA_VDEV_STOP_REQUEST_TIMEOUT);
+	if (!msg) {
+		WMA_LOGE("%s: Failed to fill vdev restart request for vdev_id %d",
+				__func__, pReq->sessionId);
+		return;
+	}
+
 	/* vdev stop -> vdev restart -> vdev up */
 	WMA_LOGD("%s, vdev_id: %d, pausing tx_ll_queue for VDEV_STOP",
 		 __func__, pReq->sessionId);
@@ -2734,6 +2745,8 @@ void wma_hidden_ssid_vdev_restart(tp_wma_handle wma_handle,
 		WMA_LOGE("%s: %d Failed to send vdev stop", __func__, __LINE__);
 		qdf_atomic_set(&intr[pReq->sessionId].vdev_restart_params.
 			       hidden_ssid_restart_in_progress, 0);
+		wma_remove_vdev_req(wma_handle, pReq->sessionId,
+					WMA_TARGET_REQ_TYPE_VDEV_STOP);
 		return;
 	}
 }

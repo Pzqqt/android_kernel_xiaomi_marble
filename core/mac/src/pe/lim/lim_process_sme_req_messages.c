@@ -4194,8 +4194,13 @@ static void __lim_process_sme_hide_ssid(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 		return;
 	}
 
-	/* Update the session entry */
-	psessionEntry->ssidHidden = pUpdateParams->ssidHidden;
+	if (psessionEntry->ssidHidden != pUpdateParams->ssidHidden) {
+		/* Update the session entry */
+		psessionEntry->ssidHidden = pUpdateParams->ssidHidden;
+	} else {
+		lim_log(pMac, LOG1, FL("Same config already present!"));
+		return;
+	}
 
 	/* Send vdev restart */
 	lim_send_vdev_restart(pMac, psessionEntry, pUpdateParams->sessionId);
