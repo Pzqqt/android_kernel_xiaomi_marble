@@ -2858,6 +2858,17 @@ QDF_STATUS wma_start(void *cds_ctx)
 		goto end;
 	}
 
+	/* Initialize the P2P Listen Offload event handler */
+	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
+			WMI_P2P_LISTEN_OFFLOAD_STOPPED_EVENTID,
+			wma_p2p_lo_event_handler,
+			WMA_RX_SERIALIZER_CTX);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		WMA_LOGE("Failed to register p2p lo event cb");
+		qdf_status = QDF_STATUS_E_FAILURE;
+		goto end;
+	}
+
 end:
 	WMA_LOGD("%s: Exit", __func__);
 	return qdf_status;

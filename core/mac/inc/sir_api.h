@@ -6227,4 +6227,39 @@ struct sme_ndp_peer_ind {
 
 #endif /* WLAN_FEATURE_NAN_DATAPATH */
 
+/**
+ * struct sir_p2p_lo_start - p2p listen offload start
+ * @vdev_id: vdev identifier
+ * @ctl_flags: control flag
+ * @freq: p2p listen frequency
+ * @period: listen offload period
+ * @interval: listen offload interval
+ * @count: number listen offload intervals
+ * @device_types: device types
+ * @dev_types_len: device types length
+ * @probe_resp_tmplt: probe response template
+ * @probe_resp_len: probe response template length
+ */
+struct sir_p2p_lo_start {
+	uint32_t vdev_id;
+	uint32_t ctl_flags;
+	uint32_t freq;
+	uint32_t period;
+	uint32_t interval;
+	uint32_t count;
+	uint8_t  *device_types;
+	uint32_t dev_types_len;
+	uint8_t  *probe_resp_tmplt;
+	uint32_t probe_resp_len;
+};
+
+/**
+ * struct sir_p2p_lo_event - P2P listen offload stop event
+ * @vdev_id: vdev identifier
+ * @reason_code: P2P listen offload stop reason
+ */
+struct sir_p2p_lo_event {
+	uint32_t vdev_id;
+	uint32_t reason_code;
+};
 #endif /* __SIR_API_H */

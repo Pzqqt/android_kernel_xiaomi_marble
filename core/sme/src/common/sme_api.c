@@ -15739,3 +15739,26 @@ void sme_update_vdev_type_nss(tHalHandle hal, uint8_t max_supp_nss,
 		vdev_nss->p2p_go, vdev_nss->p2p_dev, vdev_nss->ibss,
 		vdev_nss->tdls, vdev_nss->ocb);
 }
+
+/**
+ * sme_register_p2p_lo_event() - Register for the p2p lo event
+ * @hHal: reference to the HAL
+ * @context: the context of the call
+ * @callback: the callback to hdd
+ *
+ * This function registers the callback function for P2P listen
+ * offload stop event.
+ *
+ * Return: none
+ */
+void sme_register_p2p_lo_event(tHalHandle hHal, void *context,
+					p2p_lo_callback callback)
+{
+	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	status = sme_acquire_global_lock(&pMac->sme);
+	pMac->sme.p2p_lo_event_callback = callback;
+	pMac->sme.p2p_lo_event_context = context;
+	sme_release_global_lock(&pMac->sme);
+}

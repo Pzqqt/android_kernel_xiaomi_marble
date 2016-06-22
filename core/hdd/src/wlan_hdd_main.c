@@ -6443,6 +6443,52 @@ out:
 }
 
 /**
+ * wlan_hdd_p2p_lo_event_callback - P2P listen offload stop event handler
+ * @context_ptr - hdd context pointer
+ * @event_ptr - event structure pointer
+ *
+ * This is the p2p listen offload stop event handler, it sends vendor
+ * event back to supplicant to notify the stop reason.
+ *
+ * Return: None
+ */
+static void wlan_hdd_p2p_lo_event_callback(void *context_ptr,
+				void *event_ptr)
+{
+	hdd_context_t *hdd_ctx = (hdd_context_t *)context_ptr;
+	struct sir_p2p_lo_event *evt = event_ptr;
+	struct sk_buff *vendor_event;
+
+	ENTER();
+
+	if (hdd_ctx == NULL) {
+		hdd_err("Invalid HDD context pointer");
+		return;
+	}
+
+	vendor_event =
+		cfg80211_vendor_event_alloc(hdd_ctx->wiphy,
+			NULL, sizeof(uint32_t) + NLMSG_HDRLEN,
+			QCA_NL80211_VENDOR_SUBCMD_P2P_LO_EVENT_INDEX,
+			GFP_KERNEL);
+
+	if (!vendor_event) {
+		hdd_err("cfg80211_vendor_event_alloc failed");
+		return;
+	}
+
+	if (nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_STOP_REASON,
+			evt->reason_code)) {
+		hdd_err("nla put failed");
+		kfree_skb(vendor_event);
+		return;
+	}
+
+	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
+}
+
+/**
  * hdd_adaptive_dwelltime_init() - initialization for adaptive dwell time config
  * @hdd_ctx: HDD context
  *
@@ -6712,6 +6758,11 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 			goto err_debugfs_exit;
 		}
 	}
+
+	/* register P2P Listen Offload event callback */
+	if (wma_is_p2p_lo_capable())
+		sme_register_p2p_lo_event(hdd_ctx->hHal, hdd_ctx,
+				wlan_hdd_p2p_lo_event_callback);
 
 	ret = hdd_register_notifiers(hdd_ctx);
 	if (ret)

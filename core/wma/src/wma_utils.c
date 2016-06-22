@@ -3424,3 +3424,29 @@ wma_config_debug_module_cmd(wmi_unified_t wmi_handle, A_UINT32 param,
 
 	return wmi_unified_dbglog_cmd_send(wmi_handle, &dbg_param);
 }
+
+/**
+ * wma_is_p2p_lo_capable() - if driver is capable of p2p listen offload
+ *
+ * This function checks if driver is capable of p2p listen offload
+ *    true: capable of p2p offload
+ *    false: not capable
+ *
+ * Return: true - capable, false - not capable
+ */
+bool wma_is_p2p_lo_capable(void)
+{
+	tp_wma_handle wma;
+
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma) {
+		WMA_LOGE("%s: Invalid WMA handle", __func__);
+		return false;
+	}
+
+	if (WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
+			WMI_SERVICE_P2P_LISTEN_OFFLOAD_SUPPORT))
+		return true;
+
+	return false;
+}

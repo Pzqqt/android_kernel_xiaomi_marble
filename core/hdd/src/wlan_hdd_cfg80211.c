@@ -1076,6 +1076,11 @@ static const struct nl80211_vendor_cmd_info wlan_hdd_cfg80211_vendor_events[] = 
 		.subcmd = QCA_NL80211_VENDOR_SUBCMD_NDP
 	},
 #endif /* WLAN_FEATURE_NAN_DATAPATH */
+
+	[QCA_NL80211_VENDOR_SUBCMD_P2P_LO_EVENT_INDEX] = {
+		.vendor_id = QCA_NL80211_VENDOR_ID,
+		.subcmd = QCA_NL80211_VENDOR_SUBCMD_P2P_LISTEN_OFFLOAD_STOP
+	},
 };
 
 /**
@@ -2173,6 +2178,11 @@ __wlan_hdd_cfg80211_get_features(struct wiphy *wiphy,
 	if (wma_is_scan_simultaneous_capable())
 		wlan_hdd_cfg80211_set_feature(feature_flags,
 			QCA_WLAN_VENDOR_FEATURE_OFFCHANNEL_SIMULTANEOUS);
+
+	if (wma_is_p2p_lo_capable())
+		wlan_hdd_cfg80211_set_feature(feature_flags,
+			QCA_WLAN_VENDOR_FEATURE_P2P_LISTEN_OFFLOAD);
+
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, sizeof(feature_flags) +
 			NLMSG_HDRLEN);
 
@@ -4982,6 +4992,247 @@ static int wlan_hdd_cfg80211_txpower_scale_decr_db(struct wiphy *wiphy,
 
 	return ret;
 }
+
+/**
+ * __wlan_hdd_cfg80211_p2p_lo_start () - start P2P Listen Offload
+ * @wiphy: Pointer to wireless phy
+ * @wdev: Pointer to wireless device
+ * @data: Pointer to data
+ * @data_len: Data length
+ *
+ * This function is to process the p2p listen offload start vendor
+ * command. It parses the input parameters and invoke WMA API to
+ * send the command to firmware.
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int __wlan_hdd_cfg80211_p2p_lo_start(struct wiphy *wiphy,
+						struct wireless_dev *wdev,
+						const void *data,
+						int data_len)
+{
+	int ret;
+	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct net_device *dev = wdev->netdev;
+	hdd_adapter_t *adapter;
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_MAX + 1];
+	struct sir_p2p_lo_start params;
+	QDF_STATUS status;
+
+	ENTER_DEV(dev);
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret)
+		return ret;
+
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("Command not allowed in FTM mode");
+		return -EPERM;
+	}
+
+	adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	if ((adapter->device_mode != QDF_P2P_DEVICE_MODE) &&
+	    (adapter->device_mode != QDF_P2P_CLIENT_MODE) &&
+	    (adapter->device_mode != QDF_P2P_GO_MODE)) {
+		hdd_err("Invalid device mode %d", adapter->device_mode);
+		return -EINVAL;
+	}
+
+	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_MAX,
+		      data, data_len, NULL)) {
+		hdd_err("Invalid ATTR");
+		return -EINVAL;
+	}
+
+	memset(&params, 0, sizeof(params));
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_CTRL_FLAG])
+		params.ctl_flags = 1;  /* set to default value */
+	else
+		params.ctl_flags = nla_get_u32(tb
+			[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_CTRL_FLAG]);
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_CHANNEL] ||
+	    !tb[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_PERIOD] ||
+	    !tb[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_INTERVAL] ||
+	    !tb[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_COUNT] ||
+	    !tb[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_DEVICE_TYPES] ||
+	    !tb[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_VENDOR_IE]) {
+		hdd_err("Attribute parsing failed");
+		return -EINVAL;
+	}
+
+	params.vdev_id = adapter->sessionId;
+	params.freq = nla_get_u32(tb
+		[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_CHANNEL]);
+	if ((params.freq != 2412) && (params.freq != 2437) &&
+		(params.freq != 2462)) {
+		hdd_err("Invalid listening channel: %d", params.freq);
+		return -EINVAL;
+	}
+
+	params.period = nla_get_u32(tb
+		[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_PERIOD]);
+	if (!((params.period > 0) && (params.period < UINT_MAX))) {
+		hdd_err("Invalid period: %d", params.period);
+		return -EINVAL;
+	}
+
+	params.interval = nla_get_u32(tb
+		[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_INTERVAL]);
+	if (!((params.interval > 0) && (params.interval < UINT_MAX))) {
+		hdd_err("Invalid interval: %d", params.interval);
+		return -EINVAL;
+	}
+
+	params.count = nla_get_u32(tb
+		[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_COUNT]);
+	if (!((params.count > 0) && (params.count < UINT_MAX))) {
+		hdd_err("Invalid count: %d", params.count);
+		return -EINVAL;
+	}
+
+	params.device_types = nla_data(tb
+		[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_DEVICE_TYPES]);
+	if (params.device_types == NULL) {
+		hdd_err("Invalid device types");
+		return -EINVAL;
+	}
+
+	params.dev_types_len = nla_len(tb
+		[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_DEVICE_TYPES]);
+	if (params.dev_types_len < 8) {
+		hdd_err("Invalid device type length: %d", params.dev_types_len);
+		return -EINVAL;
+	}
+
+	params.probe_resp_tmplt = nla_data(tb
+		[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_VENDOR_IE]);
+	if (params.probe_resp_tmplt == NULL) {
+		hdd_err("Invalid probe response template");
+		return -EINVAL;
+	}
+
+	params.probe_resp_len = nla_len(tb
+		[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_VENDOR_IE]);
+	if (params.probe_resp_len == 0) {
+		hdd_err("Invalid probe resp template length: %d",
+				params.probe_resp_len);
+		return -EINVAL;
+	}
+
+	hdd_debug("P2P LO params: freq=%d, period=%d, interval=%d, count=%d",
+		  params.freq, params.period, params.interval, params.count);
+
+	status = wma_p2p_lo_start(&params);
+
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("P2P LO start failed");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+
+/**
+ * wlan_hdd_cfg80211_p2p_lo_start () - start P2P Listen Offload
+ * @wiphy: Pointer to wireless phy
+ * @wdev: Pointer to wireless device
+ * @data: Pointer to data
+ * @data_len: Data length
+ *
+ * This function inovkes internal __wlan_hdd_cfg80211_p2p_lo_start()
+ * to process p2p listen offload start vendor command.
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int wlan_hdd_cfg80211_p2p_lo_start(struct wiphy *wiphy,
+						struct wireless_dev *wdev,
+						const void *data,
+						int data_len)
+{
+	int ret = 0;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_p2p_lo_start(wiphy, wdev,
+					data, data_len);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
+/**
+ * __wlan_hdd_cfg80211_p2p_lo_stop () - stop P2P Listen Offload
+ * @wiphy: Pointer to wireless phy
+ * @wdev: Pointer to wireless device
+ * @data: Pointer to data
+ * @data_len: Data length
+ *
+ * This function is to process the p2p listen offload stop vendor
+ * command. It invokes WMA API to send command to firmware.
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int __wlan_hdd_cfg80211_p2p_lo_stop(struct wiphy *wiphy,
+						struct wireless_dev *wdev,
+						const void *data,
+						int data_len)
+{
+	QDF_STATUS status;
+	hdd_adapter_t *adapter;
+	struct net_device *dev = wdev->netdev;
+
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("Command not allowed in FTM mode");
+		return -EPERM;
+	}
+
+	adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	if ((adapter->device_mode != QDF_P2P_DEVICE_MODE) &&
+	    (adapter->device_mode != QDF_P2P_CLIENT_MODE) &&
+	    (adapter->device_mode != QDF_P2P_GO_MODE)) {
+		hdd_err("Invalid device mode");
+		return -EINVAL;
+	}
+
+	status = wma_p2p_lo_stop(adapter->sessionId);
+
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("P2P LO stop failed");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+/**
+ * wlan_hdd_cfg80211_p2p_lo_stop () - stop P2P Listen Offload
+ * @wiphy: Pointer to wireless phy
+ * @wdev: Pointer to wireless device
+ * @data: Pointer to data
+ * @data_len: Data length
+ *
+ * This function inovkes internal __wlan_hdd_cfg80211_p2p_lo_stop()
+ * to process p2p listen offload stop vendor command.
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int wlan_hdd_cfg80211_p2p_lo_stop(struct wiphy *wiphy,
+						struct wireless_dev *wdev,
+						const void *data,
+						int data_len)
+{
+	int ret = 0;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_p2p_lo_stop(wiphy, wdev,
+						data, data_len);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
 /*
  * define short names for the global vendor params
  * used by __wlan_hdd_cfg80211_bpf_offload()
@@ -5966,6 +6217,23 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 			WIPHY_VENDOR_CMD_NEED_NETDEV |
 			WIPHY_VENDOR_CMD_NEED_RUNNING,
 		.doit = wlan_hdd_cfg80211_sap_configuration_set
+	},
+	{
+		.info.subcmd =
+			QCA_NL80211_VENDOR_SUBCMD_P2P_LISTEN_OFFLOAD_START,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+				WIPHY_VENDOR_CMD_NEED_NETDEV |
+				WIPHY_VENDOR_CMD_NEED_RUNNING,
+		.doit = wlan_hdd_cfg80211_p2p_lo_start
+	},
+	{
+		.info.vendor_id = QCA_NL80211_VENDOR_ID,
+		.info.subcmd =
+			QCA_NL80211_VENDOR_SUBCMD_P2P_LISTEN_OFFLOAD_STOP,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+				WIPHY_VENDOR_CMD_NEED_NETDEV |
+				WIPHY_VENDOR_CMD_NEED_RUNNING,
+		.doit = wlan_hdd_cfg80211_p2p_lo_stop
 	},
 
 #ifdef WLAN_FEATURE_NAN_DATAPATH

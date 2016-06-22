@@ -261,6 +261,14 @@ typedef enum {
  * @QCA_NL80211_VENDOR_SUBCMD_SET_SAP_CONFIG: SAP configuration
  * @QCA_NL80211_VENDOR_SUBCMD_TSF: TSF operations command
  * @QCA_NL80211_VENDOR_SUBCMD_WISA: WISA mode configuration
+ * @QCA_NL80211_VENDOR_SUBCMD_P2P_LISTEN_OFFLOAD_START: Command used to
+ *	start the P2P Listen Offload function in device and pass the listen
+ *	channel, period, interval, count, number of device types, device
+ *	types and vendor information elements to device driver and firmware.
+ * @QCA_NL80211_VENDOR_SUBCMD_P2P_LISTEN_OFFLOAD_STOP: Command/event used to
+ *	indicate stop request/response of the P2P Listen Offload function in
+ *	device. As an event, it indicates either the feature stopped after it
+ *	was already running or feature has actually failed to start.
  */
 
 enum qca_nl80211_vendor_subcmds {
@@ -384,6 +392,8 @@ enum qca_nl80211_vendor_subcmds {
 	QCA_NL80211_VENDOR_SUBCMD_SET_SAP_CONFIG  = 118,
 	QCA_NL80211_VENDOR_SUBCMD_TSF = 119,
 	QCA_NL80211_VENDOR_SUBCMD_WISA = 120,
+	QCA_NL80211_VENDOR_SUBCMD_P2P_LISTEN_OFFLOAD_START = 121,
+	QCA_NL80211_VENDOR_SUBCMD_P2P_LISTEN_OFFLOAD_STOP = 122,
 };
 
 /**
@@ -445,6 +455,8 @@ enum qca_nl80211_vendor_subcmds {
  * @QCA_NL80211_VENDOR_SUBCMD_GW_PARAM_CONFIG_INDEX:
  *	update gateway parameters index
  * @QCA_NL80211_VENDOR_SUBCMD_TSF_INDEX: TSF response events index
+ * @QCA_NL80211_VENDOR_SUBCMD_P2P_LO_EVENT_INDEX:
+ *      P2P listen offload index
  */
 
 enum qca_nl80211_vendor_subcmds_index {
@@ -520,6 +532,7 @@ enum qca_nl80211_vendor_subcmds_index {
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 	QCA_NL80211_VENDOR_SUBCMD_NDP_INDEX,
 #endif /* WLAN_FEATURE_NAN_DATAPATH */
+	QCA_NL80211_VENDOR_SUBCMD_P2P_LO_EVENT_INDEX,
 };
 
 /**
@@ -1900,11 +1913,19 @@ enum qca_wlan_vendor_attr_link_properties {
  * after roaming, rather than having the supplicant do it.
  * @QCA_WLAN_VENDOR_FEATURE_OFFCHANNEL_SIMULTANEOUS: Device supports
  *        simultaneous off-channel operations.
+ * @QQCA_WLAN_VENDOR_FEATURE_P2P_LISTEN_OFFLOAD: Device supports P2P
+ *	Listen offload; a mechanism where the station's firmware
+ *	takes care of responding to incoming Probe Request frames received
+ *	from other P2P devices whilst in Listen state, rather than having the
+ *	user space wpa_supplicant do it. Information from received P2P
+ *	Requests are forwarded from firmware to host whenever the APPS
+ *	processor exits power collapse state.
  */
 enum qca_wlan_vendor_features {
 	QCA_WLAN_VENDOR_FEATURE_KEY_MGMT_OFFLOAD = 0,
 	QCA_WLAN_VENDOR_FEATURE_SUPPORT_HW_MODE_ANY = 1,
 	QCA_WLAN_VENDOR_FEATURE_OFFCHANNEL_SIMULTANEOUS = 2,
+	QCA_WLAN_VENDOR_FEATURE_P2P_LISTEN_OFFLOAD	= 3,
 	/* Additional features need to be added above this */
 	NUM_QCA_WLAN_VENDOR_FEATURES
 };
@@ -2383,6 +2404,47 @@ enum qca_wlan_vendor_attr_sap_config {
 	QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_AFTER_LAST,
 	QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_MAX =
 	QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_AFTER_LAST - 1,
+};
+
+/**
+ * enum qca_wlan_vendor_attr_p2p_listen_offload - vendor sub commands index
+ * @QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_INVALID: invalid value
+ * @QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_CHANNEL:
+ *     A 32-bit unsigned value; the P2P listen frequency (MHz); must be one
+ *     of the social channels.
+ * @QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_PERIOD: listen offload period
+ *     A 32-bit unsigned value; the P2P listen offload period (ms).
+ * @QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_INTERVAL:
+ *     A 32-bit unsigned value; the P2P listen interval duration (ms).
+ * @QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_COUNT:
+ *     A 32-bit unsigned value; number of interval times the Firmware needs
+ *     to run the offloaded P2P listen operation before it stops.
+ * @QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_DEVICE_TYPES: device types
+ *     An array of unsigned 8-bit characters; vendor information elements.
+ * @QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_VENDOR_IE: vendor IEs
+ * @QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_CTRL_FLAG: control flag for FW
+ *     A 32-bit unsigned value; a control flag to indicate whether listen
+ *     results need to be flushed to wpa_supplicant.
+ * @QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_STOP_REASON: offload stop reason
+ *     A 8-bit unsigned value; reason code for P2P listen offload stop
+ *     event.
+ * @QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_AFTER_LAST: last value
+ * @QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_MAX: max value
+ */
+enum qca_wlan_vendor_attr_p2p_listen_offload {
+	QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_INVALID = 0,
+	QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_CHANNEL,
+	QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_PERIOD,
+	QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_INTERVAL,
+	QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_COUNT,
+	QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_DEVICE_TYPES,
+	QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_VENDOR_IE,
+	QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_CTRL_FLAG,
+	QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_STOP_REASON,
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_MAX =
+	QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_AFTER_LAST - 1
 };
 
 struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_db(hdd_adapter_t *pAdapter,

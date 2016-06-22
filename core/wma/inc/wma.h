@@ -938,6 +938,7 @@ struct wma_txrx_node {
 	int32_t roam_synch_delay;
 	uint8_t nss_2g;
 	uint8_t nss_5g;
+	bool p2p_lo_in_progress;
 };
 
 #if defined(QCA_WIFI_FTM)
