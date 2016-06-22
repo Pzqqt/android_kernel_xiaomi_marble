@@ -53,6 +53,9 @@ void wma_delete_all_nan_remote_peers(tp_wma_handle wma,
 
 void wma_ndp_register_all_event_handlers(tp_wma_handle wma_handle);
 void wma_ndp_unregister_all_event_handlers(tp_wma_handle wma_handle);
+void wma_ndp_add_wow_wakeup_event(tp_wma_handle wma_handle,
+						uint8_t vdev_id);
+void wma_ndp_wow_event_callback(void *handle, void *event, uint32_t len);
 #else
 #define WMA_IS_VDEV_IN_NDI_MODE(intf, vdev_id) (false)
 static inline void wma_update_hdd_cfg_ndp(tp_wma_handle wma_handle,
@@ -73,5 +76,9 @@ static inline void wma_ndp_register_all_event_handlers(
 					tp_wma_handle wma_handle) {}
 static inline void wma_ndp_unregister_all_event_handlers(
 					tp_wma_handle wma_handle) {}
+static inline void wma_ndp_add_wow_wakeup_event(tp_wma_handle wma_handle,
+						uint8_t vdev_id) {}
+static inline void wma_ndp_wow_event_callback(void *handle, void *event,
+						uint32_t len) {}
 #endif /* WLAN_FEATURE_NAN_DATAPATH */
 #endif /* __WMA_NAN_DATAPATH_H */

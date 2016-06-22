@@ -70,6 +70,7 @@
 #include "radar_filters.h"
 #include "wma_internal.h"
 #include "ol_txrx.h"
+#include "wma_nan_datapath.h"
 
 #ifndef ARRAY_LENGTH
 #define ARRAY_LENGTH(a)         (sizeof(a) / sizeof((a)[0]))
@@ -2987,6 +2988,23 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 				(uint8_t *)param_buf->wow_packet_buffer,
 				sizeof(WMI_NAN_EVENTID_param_tlvs));
 		break;
+	case WOW_REASON_NAN_DATA:
+		WMA_LOGD(FL("Host woken up for NAN data path event from FW"));
+		if (param_buf->wow_packet_buffer) {
+			wow_buf_pkt_len =
+				*(uint32_t *)param_buf->wow_packet_buffer;
+			WMA_LOGD(FL("wow_packet_buffer dump"));
+			qdf_trace_hex_dump(QDF_MODULE_ID_WMA,
+				QDF_TRACE_LEVEL_DEBUG,
+				param_buf->wow_packet_buffer,
+				wow_buf_pkt_len);
+			wma_ndp_wow_event_callback(handle,
+				(param_buf->wow_packet_buffer + 4),
+				wow_buf_pkt_len);
+		} else {
+			WMA_LOGE(FL("wow_packet_buffer is empty"));
+		}
+		break;
 	default:
 		break;
 	}
@@ -3043,7 +3061,7 @@ static inline void wma_set_wow_bus_suspend(tp_wma_handle wma, int val)
  *
  * Return: QDF status
  */
-static QDF_STATUS wma_add_wow_wakeup_event(tp_wma_handle wma,
+QDF_STATUS wma_add_wow_wakeup_event(tp_wma_handle wma,
 					uint32_t vdev_id,
 					uint32_t bitmap,
 					bool enable)
@@ -3385,6 +3403,13 @@ void wma_register_wow_wakeup_events(WMA_HANDLE handle,
 		event_bitmap = WMA_WOW_SAP_WAKE_UP_EVENTS;
 		WMA_LOGI("SAP specific default wake up event 0x%x vdev id %d",
 			event_bitmap, vdev_id);
+	} else if (WMI_VDEV_TYPE_NDI == vdev_type) {
+		/*
+		 * Configure NAN data path specific default wake up events.
+		 * Following routine sends the command to firmware.
+		 */
+		wma_ndp_add_wow_wakeup_event(wma, vdev_id);
+		return;
 	} else {
 		WMA_LOGE("unknown type %d subtype %d", vdev_type, vdev_subtype);
 		return;
@@ -3963,6 +3988,9 @@ bool wma_is_p2plo_in_progress(tp_wma_handle wma, int vdev_id)
  *  3) Is PNO in progress in any one of vdev ?
  *  4) Is Extscan in progress in any one of vdev ?
  *  5) Is P2P listen offload in any one of vdev?
+ *  6) Is any vdev in NAN data mode? BSS is already started at the
+ *     the time of device creation. It is ready to accept data
+ *     requests.
  *  If none of above conditions is true then return false
  *
  * Return: true if wma needs to configure wow false otherwise.
@@ -3987,6 +4015,11 @@ bool wma_is_wow_applicable(tp_wma_handle wma)
 			return true;
 		} else if (wma_is_p2plo_in_progress(wma, vdev_id)) {
 			WMA_LOGD("P2P LO is in progress, enabling wow");
+			return true;
+		}
+		if (WMA_IS_VDEV_IN_NDI_MODE(wma->interfaces, vdev_id)) {
+			WMA_LOGD("vdev %d is in NAN data mode, enabling wow",
+				vdev_id);
 			return true;
 		}
 	}

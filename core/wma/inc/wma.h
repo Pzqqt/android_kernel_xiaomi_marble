@@ -2128,6 +2128,12 @@ void wma_process_set_pdev_vht_ie_req(tp_wma_handle wma,
 void wma_remove_peer(tp_wma_handle wma, u_int8_t *bssid,
 			u_int8_t vdev_id, ol_txrx_peer_handle peer,
 			bool roam_synch_in_progress);
+
+QDF_STATUS wma_add_wow_wakeup_event(tp_wma_handle wma,
+					uint32_t vdev_id,
+					uint32_t bitmap,
+					bool enable);
+
 #endif
 struct wma_ini_config *wma_get_ini_handle(tp_wma_handle wma_handle);
 WLAN_PHY_MODE wma_chan_phy_mode(u8 chan, enum phy_ch_width chan_width,
