@@ -3051,7 +3051,7 @@ static QDF_STATUS wma_add_wow_wakeup_event(tp_wma_handle wma,
 	int ret;
 
 	ret = wmi_unified_add_wow_wakeup_event_cmd(wma->wmi_handle, vdev_id,
-				   enable, bitmap);
+			bitmap, enable);
 	if (ret) {
 		WMA_LOGE("Failed to config wow wakeup event");
 		return QDF_STATUS_E_FAILURE;
