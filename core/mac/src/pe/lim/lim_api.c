@@ -69,6 +69,7 @@
 #include "cds_utils.h"
 #include "sys_startup.h"
 #include "cds_concurrency.h"
+#include "nan_datapath.h"
 
 static void __lim_init_scan_vars(tpAniSirGlobal pMac)
 {
@@ -1032,13 +1033,15 @@ QDF_STATUS pe_handle_mgmt_frame(void *p_cds_gctx, void *cds_buff)
 }
 
 /**
- * pe_register_wma_handle() - register management frame handler to WMA
+ * pe_register_callbacks_with_wma() - register SME and PE callback functions to
+ * WMA.
  * @pMac: mac global ctx
- * @ready_req: Ready request parameters
+ * @ready_req: Ready request parameters, containing callback pointers
  *
  * Return: None
  */
-void pe_register_wma_handle(tpAniSirGlobal pMac, tSirSmeReadyReq *ready_req)
+void pe_register_callbacks_with_wma(tpAniSirGlobal pMac,
+				    tSirSmeReadyReq *ready_req)
 {
 	void *p_cds_gctx;
 	QDF_STATUS retStatus;
@@ -1057,6 +1060,11 @@ void pe_register_wma_handle(tpAniSirGlobal pMac, tSirSmeReadyReq *ready_req)
 	if (retStatus != QDF_STATUS_SUCCESS)
 		lim_log(pMac, LOGP,
 			FL("Registering roaming callbacks with WMA failed"));
+
+	retStatus = wma_register_ndp_cb(lim_handle_ndp_event_message);
+	if (retStatus != QDF_STATUS_SUCCESS)
+		lim_log(pMac, LOGE,
+			FL("Registering NDP callbacks with WMA failed"));
 }
 
 /**

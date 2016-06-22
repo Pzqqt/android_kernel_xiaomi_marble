@@ -1432,6 +1432,8 @@ typedef struct {
 	struct wma_valid_channels saved_chan;
 	/* NAN datapath support enabled in firmware */
 	bool nan_datapath_enabled;
+	QDF_STATUS (*pe_ndp_event_handler)(tpAniSirGlobal mac_ctx,
+					   tpSirMsgQ msg);
 } t_wma_handle, *tp_wma_handle;
 
 /**

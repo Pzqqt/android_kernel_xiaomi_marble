@@ -393,3 +393,28 @@ void wma_delete_all_nan_remote_peers(tp_wma_handle wma, uint32_t vdev_id)
 	wma_remove_peer(wma, peer->mac_addr.raw, vdev_id, peer,
 			false);
 }
+
+/**
+ * wma_register_ndp_cb() - Register NDP callbacks
+ * @pe_ndp_event_handler: PE NDP callback routine pointer
+ *
+ * Register the PE callback NDP routines with WMA for
+ * handling NDP events
+ *
+ * Return: Success or Failure Status
+ */
+QDF_STATUS wma_register_ndp_cb(QDF_STATUS (*pe_ndp_event_handler)
+				(tpAniSirGlobal mac_ctx, tpSirMsgQ msg))
+{
+
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!wma) {
+		WMA_LOGE("%s: Failed to get WMA context", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	wma->pe_ndp_event_handler = pe_ndp_event_handler;
+	WMA_LOGD("Registered NDP callbacks with WMA successfully");
+	return QDF_STATUS_SUCCESS;
+}
+

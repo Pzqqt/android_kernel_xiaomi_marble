@@ -250,4 +250,18 @@ static inline QDF_STATUS wma_send_egap_conf_params(WMA_HANDLE handle,
 #endif
 QDF_STATUS wma_set_tx_power_scale(uint8_t vdev_id, int value);
 QDF_STATUS wma_set_tx_power_scale_decr_db(uint8_t vdev_id, int value);
+
+#ifdef WLAN_FEATURE_NAN_DATAPATH
+QDF_STATUS wma_register_ndp_cb(QDF_STATUS (*pe_ndp_event_handler)
+					  (tpAniSirGlobal mac_ctx,
+					  tpSirMsgQ msg));
+#else
+static inline QDF_STATUS wma_register_ndp_cb(QDF_STATUS (*pe_ndp_event_handler)
+							(tpAniSirGlobal mac_ctx,
+							tpSirMsgQ msg))
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 #endif

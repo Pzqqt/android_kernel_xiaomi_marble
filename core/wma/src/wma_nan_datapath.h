@@ -73,6 +73,5 @@ static inline void wma_ndp_register_all_event_handlers(
 					tp_wma_handle wma_handle) {}
 static inline void wma_ndp_unregister_all_event_handlers(
 					tp_wma_handle wma_handle) {}
-
 #endif /* WLAN_FEATURE_NAN_DATAPATH */
 #endif /* __WMA_NAN_DATAPATH_H */

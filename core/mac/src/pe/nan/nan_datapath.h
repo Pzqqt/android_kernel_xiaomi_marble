@@ -104,8 +104,7 @@ struct ndp_peer_node {
 QDF_STATUS lim_handle_ndp_request_message(tpAniSirGlobal mac_ctx,
 					tpSirMsgQ msg);
 /* Function to process NDP events */
-QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx,
-					tpSirMsgQ msg);
+QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx, tpSirMsgQ msg);
 void lim_process_ndi_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 				     tpSirMsgQ lim_msg_q,
 				     tpPESession session_entry);
@@ -121,7 +120,7 @@ static inline QDF_STATUS lim_handle_ndp_request_message(tpAniSirGlobal mac_ctx,
 }
 /* Function to process NDP events */
 static inline QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx,
-					tpSirMsgQ msg)
+						      tpSirMsgQ msg)
 {
 	return QDF_STATUS_SUCCESS;
 }
