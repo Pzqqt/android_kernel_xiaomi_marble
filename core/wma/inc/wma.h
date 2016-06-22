@@ -930,6 +930,7 @@ struct wma_txrx_node {
 	uint8_t ht_capable;
 	A_UINT32 mhz;
 	enum phy_ch_width chan_width;
+	bool vdev_active;
 	bool vdev_up;
 	uint64_t tsfadjust;
 	void *addBssStaContext;

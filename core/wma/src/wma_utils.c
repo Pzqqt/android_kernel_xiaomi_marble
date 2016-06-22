@@ -880,6 +880,11 @@ QDF_STATUS wma_process_ll_stats_get_req
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (!wma->interfaces[getReq->staId].vdev_active) {
+		WMA_LOGE("%s: vdev not created yet", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	cmd.req_id = getReq->reqId;
 	cmd.param_id_mask = getReq->paramIdMask;
 	cmd.sta_id = getReq->staId;

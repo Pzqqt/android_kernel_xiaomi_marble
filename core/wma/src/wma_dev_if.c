@@ -632,6 +632,7 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 		return status;
 	}
 
+	iface->vdev_active = false;
 	/* P2P Device */
 	if ((iface->type == WMI_VDEV_TYPE_AP) &&
 	    (iface->sub_type == WMI_UNIFIED_VDEV_SUBTYPE_P2P_DEVICE)) {
@@ -1537,6 +1538,8 @@ ol_txrx_vdev_handle wma_vdev_attach(tp_wma_handle wma_handle,
 					     self_sta_req->session_id);
 		goto end;
 	}
+	wma_handle->interfaces[self_sta_req->session_id].vdev_active = true;
+
 	wma_handle->interfaces[self_sta_req->session_id].handle =
 		txrx_vdev_handle;
 
