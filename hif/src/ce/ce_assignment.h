@@ -74,6 +74,7 @@ static void hif_target_dump_access_log(void);
 
 /* Maximum number of Copy Engine's supported */
 #define CE_HTT_H2T_MSG_SRC_NENTRIES 2048
+#define CE_HTT_H2T_MSG_SRC_NENTRIES_AR900B 4096
 
 #define DIAG_CE_ID           7
 #define EPPING_CE_FLAGS_POLL \
@@ -331,7 +332,7 @@ static struct CE_attr host_ce_config_wlan_ar9888[] = {
 	{ /* CE2 */ CE_ATTR_FLAGS, 0, 0, 2048, 128, NULL, },/* target->host WMI */
 	{ /* CE3 */ CE_ATTR_FLAGS, 0, 32, 2048, 0, NULL, },/* host->target WMI */
 	{ /* CE4 */ CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR, 0,
-		CE_HTT_H2T_MSG_SRC_NENTRIES, 256, 0, NULL, }, /* host->target HTT */
+		CE_HTT_H2T_MSG_SRC_NENTRIES_AR900B, 256, 0, NULL, }, /* host->target HTT */
 #if WLAN_FEATURE_FASTPATH
 	{ /* CE5 */ CE_ATTR_FLAGS, 0, 0, 512, 512, NULL, },    /* target->host HTT messages */
 #else   /* WLAN_FEATURE_FASTPATH */
@@ -349,7 +350,7 @@ static struct CE_attr host_ce_config_wlan_ar900b[] = {
 	{ /* CE2 */ CE_ATTR_FLAGS, 0, 0, 2048, 128, NULL, },/* target->host WMI */
 	{ /* CE3 */ CE_ATTR_FLAGS, 0, 32, 2048, 0, NULL, },/* host->target WMI */
 	{ /* CE4 */ CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR, 0,
-		CE_HTT_H2T_MSG_SRC_NENTRIES, 256, 0, NULL, }, /* host->target HTT */
+		CE_HTT_H2T_MSG_SRC_NENTRIES_AR900B, 256, 0, NULL, }, /* host->target HTT */
 #if WLAN_FEATURE_FASTPATH
 	{ /* CE5 */ CE_ATTR_FLAGS, 0, 0, 512, 512, NULL, },    /* target->host HTT messages */
 #else   /* WLAN_FEATURE_FASTPATH */
