@@ -400,7 +400,8 @@ bool sap_dfs_is_channel_in_preferred_location(tHalHandle hHal,
 QDF_STATUS sap_goto_channel_sel(
 	ptSapContext sapContext,
 	ptWLAN_SAPEvent sapEvent,
-	bool sap_do_acs_pre_start_bss);
+	bool sap_do_acs_pre_start_bss,
+	bool check_for_connection_update);
 
 void sap_config_acs_result(tHalHandle hal, ptSapContext sap_ctx,
 							uint32_t sec_ch);

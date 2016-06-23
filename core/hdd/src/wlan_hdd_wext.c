@@ -7997,8 +7997,8 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 
 	case WE_POLICY_MANAGER_PCL_CMD:
 	{
-		uint8_t pcl[MAX_NUM_CHAN] = {0};
-		uint8_t weight_list[MAX_NUM_CHAN] = {0};
+		uint8_t pcl[QDF_MAX_NUM_CHAN] = {0};
+		uint8_t weight_list[QDF_MAX_NUM_CHAN] = {0};
 		uint32_t pcl_len = 0, i = 0;
 
 		hddLog(LOGE,

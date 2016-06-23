@@ -3758,11 +3758,14 @@ QDF_STATUS cds_get_pcl_for_existing_conn(enum cds_con_mode mode,
 		cds_err("Invalid CDS Context");
 		return QDF_STATUS_E_INVAL;
 	}
+
+	cds_info("get pcl for existing conn:%d", mode);
+
 	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
 	if (cds_mode_specific_connection_count(mode, NULL) > 0) {
 		/* Check, store and temp delete the mode's parameter */
 		cds_store_and_del_conn_info(mode, &info);
-		/* Set the PCL to the FW since connection got updated */
+		/* Get the PCL */
 		status = cds_get_pcl(mode, pcl_ch, len, pcl_weight, weight_len);
 		cds_info("Get PCL to FW for mode:%d", mode);
 		/* Restore the connection info */
@@ -3956,6 +3959,13 @@ QDF_STATUS cds_deinit_policy_mgr(void)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	cds_ctx->sme_get_valid_chans = NULL;
+
+	if (QDF_IS_STATUS_ERROR(cds_reset_sap_mandatory_channels())) {
+		cds_err("failed to reset sap mandatory channels");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -3967,7 +3977,8 @@ QDF_STATUS cds_deinit_policy_mgr(void)
  *
  * Return: Success if the policy manager is initialized completely
  */
-QDF_STATUS cds_init_policy_mgr(void)
+QDF_STATUS cds_init_policy_mgr(
+	QDF_STATUS (*sme_get_valid_chans)(void*, uint8_t *, uint32_t *))
 {
 	QDF_STATUS status;
 	hdd_context_t *hdd_ctx;
@@ -4015,6 +4026,13 @@ QDF_STATUS cds_init_policy_mgr(void)
 	}
 
 	cds_ctx->do_hw_mode_change = false;
+	cds_ctx->sme_get_valid_chans = sme_get_valid_chans;
+
+	status = cds_reset_sap_mandatory_channels();
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cds_err("failed to reset mandatory channels");
+		return status;
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -4502,9 +4520,9 @@ QDF_STATUS cds_get_connection_channels(uint8_t *channels,
 void cds_update_with_safe_channel_list(uint8_t *pcl_channels, uint32_t *len,
 				uint8_t *weight_list, uint32_t weight_len)
 {
-	uint16_t unsafe_channel_list[MAX_NUM_CHAN];
-	uint8_t current_channel_list[MAX_NUM_CHAN];
-	uint8_t org_weight_list[MAX_NUM_CHAN];
+	uint16_t unsafe_channel_list[QDF_MAX_NUM_CHAN];
+	uint8_t current_channel_list[QDF_MAX_NUM_CHAN];
+	uint8_t org_weight_list[QDF_MAX_NUM_CHAN];
 	uint16_t unsafe_channel_count = 0;
 	uint8_t is_unsafe = 1;
 	uint8_t i, j;
@@ -4517,7 +4535,7 @@ void cds_update_with_safe_channel_list(uint8_t *pcl_channels, uint32_t *len,
 	}
 
 	if (len) {
-		current_channel_count = QDF_MIN(*len, MAX_NUM_CHAN);
+		current_channel_count = QDF_MIN(*len, QDF_MAX_NUM_CHAN);
 	} else {
 		cds_err("invalid number of channel length");
 		return;
@@ -4534,7 +4552,7 @@ void cds_update_with_safe_channel_list(uint8_t *pcl_channels, uint32_t *len,
 		qdf_mem_zero(pcl_channels,
 			sizeof(*pcl_channels)*current_channel_count);
 
-		qdf_mem_copy(org_weight_list, weight_list, MAX_NUM_CHAN);
+		qdf_mem_copy(org_weight_list, weight_list, QDF_MAX_NUM_CHAN);
 		qdf_mem_zero(weight_list, weight_len);
 
 		for (i = 0; i < current_channel_count; i++) {
@@ -4586,9 +4604,9 @@ QDF_STATUS cds_get_channel_list(enum cds_pcl_type pcl,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint32_t num_channels = WNI_CFG_VALID_CHANNEL_LIST_LEN;
 	uint32_t chan_index = 0, chan_index_24 = 0, chan_index_5 = 0;
-	uint8_t channel_list[MAX_NUM_CHAN] = {0};
-	uint8_t channel_list_24[MAX_NUM_CHAN] = {0};
-	uint8_t channel_list_5[MAX_NUM_CHAN] = {0};
+	uint8_t channel_list[QDF_MAX_NUM_CHAN] = {0};
+	uint8_t channel_list_24[QDF_MAX_NUM_CHAN] = {0};
+	uint8_t channel_list_5[QDF_MAX_NUM_CHAN] = {0};
 	bool skip_dfs_channel = false;
 	hdd_context_t *hdd_ctx;
 	uint32_t i = 0, j = 0;
@@ -4616,11 +4634,9 @@ QDF_STATUS cds_get_channel_list(enum cds_pcl_type pcl,
 		return QDF_STATUS_SUCCESS;
 	}
 	/* get the channel list for current domain */
-	status = sme_get_cfg_valid_channels(hdd_ctx->hHal, channel_list,
-			&num_channels);
-	if (QDF_STATUS_SUCCESS != status) {
-		/* err msg*/
-		cds_err("No valid channel");
+	status = cds_get_valid_chans(channel_list, &num_channels);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cds_err("Error in getting valid channels");
 		return status;
 	}
 
@@ -4636,7 +4652,7 @@ QDF_STATUS cds_get_channel_list(enum cds_pcl_type pcl,
 
 	/* Let's divide the list in 2.4 & 5 Ghz lists */
 	while ((channel_list[chan_index] <= 11) &&
-		(chan_index_24 < MAX_NUM_CHAN))
+		(chan_index_24 < QDF_MAX_NUM_CHAN))
 		channel_list_24[chan_index_24++] = channel_list[chan_index++];
 	if (channel_list[chan_index] == 12) {
 		channel_list_24[chan_index_24++] = channel_list[chan_index++];
@@ -4649,7 +4665,8 @@ QDF_STATUS cds_get_channel_list(enum cds_pcl_type pcl,
 		}
 	}
 
-	while ((chan_index < num_channels) && (chan_index_5 < MAX_NUM_CHAN)) {
+	while ((chan_index < num_channels) &&
+		(chan_index_5 < QDF_MAX_NUM_CHAN)) {
 		if ((true == skip_dfs_channel) &&
 		    CDS_IS_DFS_CH(channel_list[chan_index])) {
 			chan_index++;
@@ -4933,7 +4950,7 @@ QDF_STATUS cds_get_pcl(enum cds_con_mode mode,
 			uint8_t *pcl_weight, uint32_t weight_len)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	uint32_t num_connections = 0;
+	uint32_t num_connections = 0, i;
 	enum cds_conc_priority_mode first_index = 0;
 	enum cds_one_connection_mode second_index = 0;
 	enum cds_two_connection_mode third_index = 0;
@@ -5020,15 +5037,32 @@ QDF_STATUS cds_get_pcl(enum cds_con_mode mode,
 	 */
 	status = cds_get_channel_list(pcl, pcl_channels, len, mode,
 					pcl_weight, weight_len);
-	if (status == QDF_STATUS_SUCCESS) {
-		uint32_t i;
-		cds_debug("pcl len:%d", *len);
-		for (i = 0; i < *len; i++)
-			cds_debug("chan:%d weight:%d",
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cds_err("failed to get channel list:%d", status);
+		return status;
+	}
+
+	cds_debug("pcl len:%d", *len);
+	for (i = 0; i < *len; i++) {
+		cds_debug("chan:%d weight:%d",
 				pcl_channels[i], pcl_weight[i]);
 	}
 
-	return status;
+	if ((mode == CDS_SAP_MODE) && cds_is_sap_mandatory_channel_set()) {
+		status = cds_modify_sap_pcl_based_on_mandatory_channel(
+				pcl_channels, pcl_weight, len);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			cds_err("failed to get modified pcl for SAP");
+			return status;
+		}
+		cds_debug("modified pcl len:%d", *len);
+		for (i = 0; i < *len; i++)
+			cds_debug("chan:%d weight:%d",
+					pcl_channels[i], pcl_weight[i]);
+
+	}
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -5896,6 +5930,49 @@ enum cds_two_connection_mode cds_get_third_connection_pcl_table_index(void)
 		conc_connection_list[0].chain_mask, index);
 
 	return index;
+}
+
+/**
+ * cds_update_and_wait_for_connection_update() - Update and wait for
+ * connection update
+ * @session_id: Session id
+ * @channel: Channel number
+ * @reason: Reason for connection update
+ *
+ * Update the connection to either single MAC or dual MAC and wait for the
+ * update to complete
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cds_update_and_wait_for_connection_update(uint8_t session_id,
+					uint8_t channel,
+					enum sir_conn_update_reason reason)
+{
+	QDF_STATUS status;
+
+	cds_debug("session:%d channel:%d reason:%d",
+		session_id, channel, reason);
+
+	status = qdf_reset_connection_update();
+	if (QDF_IS_STATUS_ERROR(status))
+		cds_err("clearing event failed");
+
+	status = cds_current_connections_update(session_id, channel, reason);
+	if (QDF_STATUS_E_FAILURE == status) {
+		cds_err("connections update failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Wait only when status is success */
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		status = qdf_wait_for_connection_update();
+		if (QDF_IS_STATUS_ERROR(status)) {
+			cds_err("qdf wait for event failed");
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -7003,8 +7080,10 @@ static void cds_check_sta_ap_concurrent_ch_intf(void *data)
 			hdd_ap_ctx->sapConfig.sec_ch,
 			&hdd_ap_ctx->sapConfig.ch_params);
 
-	if ((hdd_ctx->config->WlanMccToSccSwitchMode ==
-		QDF_MCC_TO_SCC_SWITCH_FORCE_WITHOUT_DISCONNECTION) &&
+	if (((hdd_ctx->config->WlanMccToSccSwitchMode ==
+		QDF_MCC_TO_SCC_SWITCH_FORCE_WITHOUT_DISCONNECTION) ||
+		(hdd_ctx->config->WlanMccToSccSwitchMode ==
+		QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL)) &&
 		(cds_ctx->sap_restart_chan_switch_cb)) {
 		cds_info("SAP chan change without restart");
 		cds_ctx->sap_restart_chan_switch_cb(ap_adapter,
@@ -7797,7 +7876,7 @@ QDF_STATUS cds_decr_connection_count_utfw(uint32_t del_all,
 	}
 
 	if (del_all) {
-		status = cds_init_policy_mgr();
+		status = cds_init_policy_mgr(sme_get_cfg_valid_channels);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			cds_err("Policy manager initialization failed");
 			return QDF_STATUS_E_FAILURE;
@@ -8404,6 +8483,279 @@ bool cds_is_any_nondfs_chnl_present(uint8_t *channel)
 	}
 	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 	return status;
+}
+
+/**
+ * cds_get_valid_chans() - Get the valid channel list
+ * @chan_list: Pointer to the valid channel list
+ * @list_len: Pointer to the length of the valid channel list
+ *
+ * Gets the valid channel list filtered by band
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cds_get_valid_chans(uint8_t *chan_list, uint32_t *list_len)
+{
+	QDF_STATUS status;
+	hdd_context_t *hdd_ctx;
+	cds_context_type *cds_ctx;
+
+	*list_len = 0;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!cds_ctx->sme_get_valid_chans) {
+		cds_err("sme_get_valid_chans callback is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*list_len = QDF_MAX_NUM_CHAN;
+	status = cds_ctx->sme_get_valid_chans(hdd_ctx->hHal,
+					chan_list, list_len);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cds_err("Error in getting valid channels");
+		*list_len = 0;
+		return status;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * cds_list_has_24GHz_channel() - Check if list contains 2.4GHz channels
+ * @channel_list: Channel list
+ * @list_len: Length of the channel list
+ *
+ * Checks if the channel list contains atleast one 2.4GHz channel
+ *
+ * Return: True if 2.4GHz channel is present, false otherwise
+ */
+bool cds_list_has_24GHz_channel(uint8_t *channel_list,
+					uint32_t list_len)
+{
+	uint32_t i;
+
+	for (i = 0; i < list_len; i++) {
+		if (CDS_IS_CHANNEL_24GHZ(channel_list[i]))
+			return true;
+	}
+
+	return false;
+}
+
+/**
+ * cds_set_sap_mandatory_channels() - Set the mandatory channel for SAP
+ * @channels: Channel list to be set
+ * @len: Length of the channel list
+ *
+ * Sets the channels for the mandatory channel list along with the length of
+ * of the channel list.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cds_set_sap_mandatory_channels(uint8_t *channels, uint32_t len)
+{
+	cds_context_type *cds_ctx;
+	uint32_t i;
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!len) {
+		cds_err("No mandatory freq/chan configured");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!cds_list_has_24GHz_channel(channels, len)) {
+		cds_err("2.4GHz channels missing, this is not expected");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cds_debug("mandatory chan length:%d",
+			cds_ctx->sap_mandatory_channels_len);
+
+	for (i = 0; i < len; i++) {
+		cds_ctx->sap_mandatory_channels[i] = channels[i];
+		cds_debug("chan:%d", cds_ctx->sap_mandatory_channels[i]);
+	}
+
+	cds_ctx->sap_mandatory_channels_len = len;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * cds_reset_sap_mandatory_channels() - Reset the SAP mandatory channels
+ *
+ * Resets the SAP mandatory channel list and the length of the list
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cds_reset_sap_mandatory_channels(void)
+{
+	cds_context_type *cds_ctx;
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cds_ctx->sap_mandatory_channels_len = 0;
+	qdf_mem_zero(cds_ctx->sap_mandatory_channels,
+		QDF_ARRAY_SIZE(cds_ctx->sap_mandatory_channels));
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * cds_is_sap_mandatory_channel_set() - Checks if SAP mandatory channel is set
+ *
+ * Checks if any mandatory channel is set for SAP operation
+ *
+ * Return: True if mandatory channel is set, false otherwise
+ */
+bool cds_is_sap_mandatory_channel_set(void)
+{
+	cds_context_type *cds_ctx;
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return false;
+	}
+
+	if (cds_ctx->sap_mandatory_channels_len)
+		return true;
+	else
+		return false;
+}
+
+/**
+ * cds_modify_sap_pcl_based_on_mandatory_channel() - Modify SAPs PCL based on
+ * mandatory channel list
+ * @pcl_list_org: Pointer to the preferred channel list to be trimmed
+ * @weight_list_org: Pointer to the weights of the preferred channel list
+ * @pcl_len_org: Pointer to the length of the preferred chanel list
+ *
+ * Modifies the preferred channel list of SAP based on the mandatory channel
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cds_modify_sap_pcl_based_on_mandatory_channel(uint8_t *pcl_list_org,
+						uint8_t *weight_list_org,
+						uint32_t *pcl_len_org)
+{
+	cds_context_type *cds_ctx;
+	uint32_t i, j, pcl_len = 0;
+	uint8_t pcl_list[QDF_MAX_NUM_CHAN];
+	uint8_t weight_list[QDF_MAX_NUM_CHAN];
+	bool found;
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!cds_ctx->sap_mandatory_channels_len)
+		return QDF_STATUS_SUCCESS;
+
+	if (!cds_list_has_24GHz_channel(cds_ctx->sap_mandatory_channels,
+			cds_ctx->sap_mandatory_channels_len)) {
+		cds_err("fav channel list is missing 2.4GHz channels");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	for (i = 0; i < cds_ctx->sap_mandatory_channels_len; i++)
+		cds_debug("fav chan:%d", cds_ctx->sap_mandatory_channels[i]);
+
+	for (i = 0; i < *pcl_len_org; i++) {
+		found = false;
+		for (j = 0; j < cds_ctx->sap_mandatory_channels_len; j++) {
+			if (pcl_list_org[i] ==
+			    cds_ctx->sap_mandatory_channels[j]) {
+				found = true;
+				break;
+			}
+		}
+		if (found) {
+			pcl_list[pcl_len] = pcl_list_org[i];
+			weight_list[pcl_len++] = weight_list_org[i];
+		}
+	}
+
+	qdf_mem_zero(pcl_list_org, QDF_ARRAY_SIZE(pcl_list_org));
+	qdf_mem_zero(weight_list_org, QDF_ARRAY_SIZE(weight_list_org));
+	qdf_mem_copy(pcl_list_org, pcl_list, pcl_len);
+	qdf_mem_copy(weight_list_org, weight_list, pcl_len);
+	*pcl_len_org = pcl_len;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * cds_get_sap_mandatory_channel() - Get the mandatory channel for SAP
+ * @chan: Pointer to the SAP mandatory channel
+ *
+ * Gets the mandatory channel for SAP operation
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cds_get_sap_mandatory_channel(uint32_t *chan)
+{
+	QDF_STATUS status;
+	struct sir_pcl_list pcl;
+
+	qdf_mem_zero(&pcl, sizeof(pcl));
+
+	status = cds_get_pcl_for_existing_conn(CDS_SAP_MODE,
+			pcl.pcl_list, &pcl.pcl_len,
+			pcl.weight_list, QDF_ARRAY_SIZE(pcl.weight_list));
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cds_err("Unable to get PCL for SAP");
+		return status;
+	}
+
+	/* No existing SAP connection and hence a new SAP connection might be
+	 * coming up.
+	 */
+	if (!pcl.pcl_len) {
+		cds_info("cds_get_pcl_for_existing_conn returned no pcl");
+		status = cds_get_pcl(CDS_SAP_MODE,
+				pcl.pcl_list, &pcl.pcl_len,
+				pcl.weight_list,
+				QDF_ARRAY_SIZE(pcl.weight_list));
+		if (QDF_IS_STATUS_ERROR(status)) {
+			cds_err("Unable to get PCL for SAP: cds_get_pcl");
+			return status;
+		}
+	}
+
+	status = cds_modify_sap_pcl_based_on_mandatory_channel(pcl.pcl_list,
+							pcl.weight_list,
+							&pcl.pcl_len);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cds_err("Unable to modify SAP PCL");
+		return status;
+	}
+
+	*chan = pcl.pcl_list[0];
+	cds_info("mandatory channel:%d", *chan);
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

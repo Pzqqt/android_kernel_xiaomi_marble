@@ -694,6 +694,7 @@ uint16_t csr_check_concurrent_channel_overlap(tpAniSirGlobal mac_ctx,
 	uint16_t intf_ch = 0, sap_hbw = 0, intf_hbw = 0, intf_cfreq = 0;
 	uint16_t sap_cfreq = 0;
 	uint16_t sap_lfreq, sap_hfreq, intf_lfreq, intf_hfreq, sap_cch = 0;
+	QDF_STATUS status;
 
 	sms_log(mac_ctx, LOG1, FL("sap_ch:%d sap_phymode:%d"),
 		sap_ch, sap_phymode);
@@ -761,13 +762,15 @@ uint16_t csr_check_concurrent_channel_overlap(tpAniSirGlobal mac_ctx,
 	}
 
 	sms_log(mac_ctx, LOG1,
-		FL("intf_ch:%d sap_ch:%d intf_ch:%d"),
-		intf_ch, sap_ch, intf_ch);
+		FL("intf_ch:%d sap_ch:%d cc_switch_mode:%d"),
+		intf_ch, sap_ch, cc_switch_mode);
 
 	if (intf_ch && sap_ch != intf_ch &&
 	    cc_switch_mode != QDF_MCC_TO_SCC_SWITCH_FORCE &&
 	    cc_switch_mode !=
-	    QDF_MCC_TO_SCC_SWITCH_FORCE_WITHOUT_DISCONNECTION) {
+	    QDF_MCC_TO_SCC_SWITCH_FORCE_WITHOUT_DISCONNECTION &&
+	    cc_switch_mode !=
+	    QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL) {
 		sap_lfreq = sap_cfreq - sap_hbw;
 		sap_hfreq = sap_cfreq + sap_hbw;
 		intf_lfreq = intf_cfreq - intf_hbw;
@@ -790,13 +793,38 @@ uint16_t csr_check_concurrent_channel_overlap(tpAniSirGlobal mac_ctx,
 	} else if (intf_ch && sap_ch != intf_ch &&
 		((cc_switch_mode == QDF_MCC_TO_SCC_SWITCH_FORCE) ||
 		(cc_switch_mode ==
-			QDF_MCC_TO_SCC_SWITCH_FORCE_WITHOUT_DISCONNECTION))) {
+			QDF_MCC_TO_SCC_SWITCH_FORCE_WITHOUT_DISCONNECTION) ||
+		(cc_switch_mode ==
+			QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL))) {
 		if (!((intf_ch < 14 && sap_ch < 14) ||
 			(intf_ch > 14 && sap_ch > 14)))
 			intf_ch = 0;
-	} else if (intf_ch == sap_ch) {
-		intf_ch = 0;
+		else if (cc_switch_mode ==
+			QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL) {
+			status =
+			    cds_get_sap_mandatory_channel((uint32_t *)&intf_ch);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				sms_log(mac_ctx, LOGE,
+						FL("no mandatory channel"));
+				intf_ch = sap_ch;
+			}
+		}
+	} else if ((intf_ch == sap_ch) && (cc_switch_mode ==
+				QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL)) {
+		if (cds_chan_to_band(intf_ch) == CDS_BAND_2GHZ) {
+			status =
+				cds_get_sap_mandatory_channel(
+						(uint32_t *)&intf_ch);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				sms_log(mac_ctx, LOGE,
+						FL("no mandatory channel"));
+				intf_ch = sap_ch;
+			}
+		}
 	}
+
+	if (intf_ch == sap_ch)
+		intf_ch = 0;
 
 	sms_log(mac_ctx, LOGE, FL("##Concurrent Channels %s Interfering"),
 		intf_ch == 0 ? "Not" : "Are");

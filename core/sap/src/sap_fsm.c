@@ -2091,6 +2091,8 @@ sap_dfs_is_channel_in_nol_list(ptSapContext sap_context,
  * @sap_event: State machine event
  * @sap_do_acs_pre_start_bss: true, if ACS scan is issued pre start BSS
  *                            false, if ACS scan is issued post start BSS.
+ * @check_for_connection_update: true, check and wait for connection update
+ *                               false, do not perform connection update
  *
  * Initiates sme scan for ACS to pick a channel.
  *
@@ -2098,7 +2100,8 @@ sap_dfs_is_channel_in_nol_list(ptSapContext sap_context,
  */
 QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 	ptWLAN_SAPEvent sap_event,
-	bool sap_do_acs_pre_start_bss)
+	bool sap_do_acs_pre_start_bss,
+	bool check_for_connection_update)
 {
 
 	/* Initiate a SCAN request */
@@ -2106,6 +2109,7 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 	/* To be initialised if scan is required */
 	tCsrScanRequest scan_request;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal mac_ctx;
 
 #ifdef SOFTAP_CHANNEL_RANGE
 	uint8_t *channel_list = NULL;
@@ -2120,6 +2124,13 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_FATAL,
 			  FL("invalid h_hal"));
 		return QDF_STATUS_E_FAULT;
+	}
+
+	mac_ctx = PMAC_STRUCT(h_hal);
+	if (NULL == mac_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				FL("Invalid MAC context"));
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (cds_concurrent_beaconing_sessions_running()) {
@@ -2329,6 +2340,20 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("for configured channel, Ch= %d"),
 			  sap_context->channel);
+
+		if (mac_ctx->policy_manager_enabled &&
+			check_for_connection_update) {
+			/* This wait happens in the hostapd context. The event
+			 * is set in the MC thread context.
+			 */
+			qdf_status = cds_update_and_wait_for_connection_update(
+					sap_context->sessionId,
+					sap_context->channel,
+					SIR_UPDATE_REASON_START_AP);
+			if (QDF_IS_STATUS_ERROR(qdf_status))
+				return qdf_status;
+		}
+
 		if (sap_do_acs_pre_start_bss == true) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 				FL("ACS end due to Ch override. Sel Ch = %d"),
@@ -3276,7 +3301,8 @@ static QDF_STATUS sap_fsm_state_disconnected(ptSapContext sap_ctx,
 		 * Perform sme_ScanRequest. This scan request is post start bss
 		 * request so, set the third to false.
 		 */
-		qdf_status = sap_goto_channel_sel(sap_ctx, sap_event, false);
+		qdf_status = sap_goto_channel_sel(sap_ctx, sap_event, false,
+						true);
 
 		/*
 		 * Transition from eSAP_DISCONNECTED to eSAP_CH_SELECT
@@ -3310,7 +3336,8 @@ static QDF_STATUS sap_fsm_state_disconnected(ptSapContext sap_ctx,
 		 * Perform sme_ScanRequest. This scan request is post start bss
 		 * request so, set the third to false.
 		 */
-		qdf_status = sap_goto_channel_sel(sap_ctx, sap_event, false);
+		qdf_status = sap_goto_channel_sel(sap_ctx, sap_event, false,
+					false);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("in state %s, event msg %d"),

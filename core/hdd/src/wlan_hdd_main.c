@@ -6619,7 +6619,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 #endif
 
 	wlan_hdd_nan_init(hdd_ctx);
-	status = cds_init_policy_mgr();
+	status = cds_init_policy_mgr(sme_get_cfg_valid_channels);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("Policy manager initialization failed");
 		goto err_debugfs_exit;

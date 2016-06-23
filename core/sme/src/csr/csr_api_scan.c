@@ -2006,7 +2006,7 @@ csr_parse_scan_results(tpAniSirGlobal pMac,
 	eCsrAuthType auth = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 	uint32_t len = 0;
 	enum cds_con_mode new_mode;
-	uint8_t weight_list[MAX_NUM_CHAN];
+	uint8_t weight_list[QDF_MAX_NUM_CHAN];
 
 
 	csr_ll_lock(&pMac->scan.scanResultList);

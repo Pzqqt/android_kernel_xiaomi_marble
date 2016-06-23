@@ -2363,12 +2363,18 @@ enum qca_vendor_attr_txpower_scale_decr_db {
  * enum qca_wlan_vendor_attr_sap_config - config params for sap configuration
  * @QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_INVALID: invalid
  * @QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_CHANNEL: Channel on which SAP should start
+ * @QCA_WLAN_VENDOR_ATTR_SAP_MANDATORY_FREQUENCY_LIST: List of frequencies on
+ *  which AP is expected to operate. This is irrespective of ACS configuration.
+ *  This list is a priority based one and is looked for before the AP is created
+ *  to ensure the best concurrency sessions (avoid MCC and use DBS/SCC) co-exist
+ *  in the system.
  * @QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_AFTER_LAST: after last
  * @QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_MAX: max attribute
  */
 enum qca_wlan_vendor_attr_sap_config {
 	QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_INVALID = 0,
 	QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_CHANNEL,
+	QCA_WLAN_VENDOR_ATTR_SAP_MANDATORY_FREQUENCY_LIST = 2,
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_AFTER_LAST,
 	QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_MAX =

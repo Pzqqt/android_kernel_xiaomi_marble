@@ -296,6 +296,13 @@ typedef struct _cds_context_type {
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	void (*sap_restart_chan_switch_cb)(void *, uint32_t, uint32_t);
 #endif
+	QDF_STATUS (*sme_get_valid_chans)(void*, uint8_t *, uint32_t *);
+	/* This list is not sessionized. This mandatory channel list would be
+	 * as per OEMs preference as per the regulatory/other considerations.
+	 * So, this would remain same for all the interfaces.
+	 */
+	uint8_t sap_mandatory_channels[QDF_MAX_NUM_CHAN];
+	uint32_t sap_mandatory_channels_len;
 	bool do_hw_mode_change;
 	bool enable_fatal_event;
 } cds_context_type, *p_cds_contextType;

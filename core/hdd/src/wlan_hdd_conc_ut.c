@@ -73,7 +73,7 @@ struct report_t {
 	bool status;
 	char result_code[MAX_ALLOWED_CHAR_IN_REPORT];
 	char reason[MAX_ALLOWED_CHAR_IN_REPORT];
-	char pcl[2 * MAX_NUM_CHAN];
+	char pcl[2 * QDF_MAX_NUM_CHAN];
 };
 
 static struct report_t report[NUMBER_OF_SCENARIO];
@@ -231,7 +231,7 @@ void fill_report(hdd_context_t *hdd_ctx, char *title,
 	if (pcl) {
 		qdf_mem_zero(report[report_idx].pcl,
 				sizeof(report[report_idx].pcl));
-		for (i = 0; i < MAX_NUM_CHAN; i++) {
+		for (i = 0; i < QDF_MAX_NUM_CHAN; i++) {
 			if (pcl[i] == 0)
 				break;
 			qdf_mem_zero(buf, sizeof(buf));
@@ -625,7 +625,8 @@ void wlan_hdd_one_connection_scenario(hdd_context_t *hdd_ctx)
 	enum cds_con_mode sub_type;
 	enum cds_conc_priority_mode system_pref =
 			hdd_ctx->config->conc_system_pref;
-	uint8_t pcl[MAX_NUM_CHAN] = {0}, weight_list[MAX_NUM_CHAN] = {0};
+	uint8_t pcl[QDF_MAX_NUM_CHAN] = {0},
+		weight_list[QDF_MAX_NUM_CHAN] = {0};
 	uint32_t pcl_len = 0;
 	bool status = false;
 	enum cds_pcl_type pcl_type;
@@ -633,7 +634,7 @@ void wlan_hdd_one_connection_scenario(hdd_context_t *hdd_ctx)
 	QDF_STATUS ret;
 
 	/* flush the entire table first */
-	ret = cds_init_policy_mgr();
+	ret = cds_init_policy_mgr(sme_get_cfg_valid_channels);
 	if (!QDF_IS_STATUS_SUCCESS(ret)) {
 		hdd_err("Policy manager initialization failed");
 		return;
@@ -672,7 +673,8 @@ void wlan_hdd_two_connections_scenario(hdd_context_t *hdd_ctx,
 {
 	uint8_t vdevid = 0, tx_stream = 2, rx_stream = 2;
 	uint8_t type = WMI_VDEV_TYPE_STA, channel_id = first_chnl, mac_id = 1;
-	uint8_t pcl[MAX_NUM_CHAN] = {0}, weight_list[MAX_NUM_CHAN] = {0};
+	uint8_t pcl[QDF_MAX_NUM_CHAN] = {0},
+			weight_list[QDF_MAX_NUM_CHAN] = {0};
 	uint32_t pcl_len = 0;
 	enum cds_chain_mode chain_mask = first_chain_mask;
 	enum cds_con_mode sub_type, next_sub_type, dummy_type;
@@ -689,7 +691,7 @@ void wlan_hdd_two_connections_scenario(hdd_context_t *hdd_ctx,
 		type = wlan_hdd_valid_type_of_persona(sub_type);
 
 		/* flush the entire table first */
-		ret = cds_init_policy_mgr();
+		ret = cds_init_policy_mgr(sme_get_cfg_valid_channels);
 		if (!QDF_IS_STATUS_SUCCESS(ret)) {
 			hdd_err("Policy manager initialization failed");
 			return;
@@ -788,7 +790,7 @@ void wlan_hdd_three_connections_scenario(hdd_context_t *hdd_ctx,
 
 		type_1 = wlan_hdd_valid_type_of_persona(sub_type_1);
 		/* flush the entire table first */
-		ret = cds_init_policy_mgr();
+		ret = cds_init_policy_mgr(sme_get_cfg_valid_channels);
 		if (!QDF_IS_STATUS_SUCCESS(ret)) {
 			hdd_err("Policy manager initialization failed");
 			return;

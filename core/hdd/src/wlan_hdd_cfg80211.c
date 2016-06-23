@@ -1398,7 +1398,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_ACS_MAX + 1];
 	bool ht_enabled, ht40_enabled, vht_enabled;
 	uint8_t ch_width;
-	uint8_t weight_list[MAX_NUM_CHAN];
+	uint8_t weight_list[QDF_MAX_NUM_CHAN];
 
 	/* ***Note*** Donot set SME config related to ACS operation here because
 	 * ACS operation is not synchronouse and ACS for Second AP may come when
@@ -4317,9 +4317,9 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
 	int i, ret = 0;
 	QDF_STATUS status;
-	uint8_t pcl[MAX_NUM_CHAN], weight_list[MAX_NUM_CHAN];
+	uint8_t pcl[QDF_MAX_NUM_CHAN], weight_list[QDF_MAX_NUM_CHAN];
 	uint32_t pcl_len = 0;
-	uint32_t freq_list[MAX_NUM_CHAN];
+	uint32_t freq_list[QDF_MAX_NUM_CHAN];
 	enum cds_con_mode intf_mode;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_MAX + 1];
 	struct sk_buff *reply_skb;
@@ -5400,6 +5400,7 @@ __wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
 	uint8_t config_channel = 0;
 	hdd_ap_ctx_t *ap_ctx;
 	int ret;
+	QDF_STATUS status;
 
 	ENTER();
 
@@ -5446,6 +5447,37 @@ __wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
 				&ap_ctx->sapConfig.ch_params);
 
 		cds_restart_sap(hostapd_adapter);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_SAP_MANDATORY_FREQUENCY_LIST]) {
+		uint32_t freq_len, i;
+		uint32_t *freq;
+		uint8_t chans[QDF_MAX_NUM_CHAN];
+
+		hdd_debug("setting mandatory freq/chan list");
+
+		freq_len = nla_len(
+		    tb[QCA_WLAN_VENDOR_ATTR_SAP_MANDATORY_FREQUENCY_LIST])/
+		    sizeof(uint32_t);
+
+		if (freq_len > QDF_MAX_NUM_CHAN) {
+			hdd_err("insufficient space to hold channels");
+			return -ENOMEM;
+		}
+
+		freq = nla_data(
+		    tb[QCA_WLAN_VENDOR_ATTR_SAP_MANDATORY_FREQUENCY_LIST]);
+
+		hdd_debug("freq_len=%d", freq_len);
+
+		for (i = 0; i < freq_len; i++) {
+			chans[i] = ieee80211_frequency_to_channel(freq[i]);
+			hdd_debug("freq[%d]=%d", i, freq[i]);
+		}
+
+		status = cds_set_sap_mandatory_channels(chans, freq_len);
+		if (QDF_IS_STATUS_ERROR(status))
+			return -EINVAL;
 	}
 
 	return 0;

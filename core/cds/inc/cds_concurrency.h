@@ -39,7 +39,6 @@
 #include "wlan_hdd_main.h"
 
 #define MAX_NUMBER_OF_CONC_CONNECTIONS 3
-#define MAX_NUM_CHAN    128
 #define DBS_OPPORTUNISTIC_TIME    10
 #ifdef QCA_WIFI_3_0_EMU
 #define CONNECTION_UPDATE_TIMEOUT 3000
@@ -643,7 +642,8 @@ void cds_decr_active_session(enum tQDF_ADAPTER_MODE mode,
 				uint8_t sessionId);
 void cds_decr_session_set_pcl(enum tQDF_ADAPTER_MODE mode,
 		uint8_t session_id);
-QDF_STATUS cds_init_policy_mgr(void);
+QDF_STATUS cds_init_policy_mgr(
+	QDF_STATUS (*sme_get_valid_chans)(void*, uint8_t *, uint32_t *));
 QDF_STATUS cds_deinit_policy_mgr(void);
 QDF_STATUS cds_get_pcl(enum cds_con_mode mode,
 			uint8_t *pcl_channels, uint32_t *len,
@@ -751,6 +751,17 @@ QDF_STATUS cds_stop_start_opportunistic_timer(void);
 QDF_STATUS cds_handle_hw_mode_change_on_csa(uint16_t session_id,
 		uint8_t channel, uint8_t *bssid, void *dst, void *src,
 		uint32_t numbytes);
+QDF_STATUS cds_modify_sap_pcl_based_on_mandatory_channel(uint8_t *pcl_list_org,
+		uint8_t *weight_list_org,
+		uint32_t *pcl_len_org);
+QDF_STATUS cds_update_and_wait_for_connection_update(uint8_t session_id,
+		uint8_t channel, enum sir_conn_update_reason reason);
+bool cds_is_sap_mandatory_channel_set(void);
+bool cds_list_has_24GHz_channel(uint8_t *channel_list, uint32_t list_len);
+QDF_STATUS cds_get_valid_chans(uint8_t *chan_list, uint32_t *list_len);
+QDF_STATUS cds_get_sap_mandatory_channel(uint32_t *chan);
+QDF_STATUS cds_set_sap_mandatory_channels(uint8_t *channels, uint32_t len);
+QDF_STATUS cds_reset_sap_mandatory_channels(void);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 QDF_STATUS cds_register_sap_restart_channel_switch_cb(
 		void (*sap_restart_chan_switch_cb)(void *, uint32_t, uint32_t));
