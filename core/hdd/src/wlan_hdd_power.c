@@ -1666,7 +1666,9 @@ QDF_STATUS hdd_wlan_re_init(void *hif_sc)
 				  pHddCtx->target_hw_version,
 				  pHddCtx->target_hw_name);
 #endif
-	wlansap_global_init();
+	qdf_status = wlansap_global_init();
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		goto err_cds_disable;
 
 	hddLog(LOGE,
 		"%s: WLAN host driver reinitiation completed!", __func__);
