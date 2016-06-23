@@ -5159,15 +5159,15 @@ static uint8_t hdd_get_safe_channel_from_pcl_and_acs_range(
 	hdd_context_t *hdd_ctx;
 	bool found = false;
 
-	hal_handle = WLAN_HDD_GET_HAL_CTX(adapter);
-	if (!hal_handle) {
-		hdd_err("invalid HAL handle");
-		return INVALID_CHANNEL_ID;
-	}
-
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	if (!hdd_ctx) {
 		hdd_err("invalid HDD context");
+		return INVALID_CHANNEL_ID;
+	}
+
+	hal_handle = WLAN_HDD_GET_HAL_CTX(adapter);
+	if (!hal_handle) {
+		hdd_err("invalid HAL handle");
 		return INVALID_CHANNEL_ID;
 	}
 
