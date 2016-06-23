@@ -348,7 +348,6 @@ static const struct ieee80211_iface_limit
 	},
 };
 
-#ifndef QCA_WIFI_3_0_EMU
 /* ADHOC (IBSS) limit */
 static const struct ieee80211_iface_limit
 	wlan_hdd_adhoc_iface_limit[] = {
@@ -361,20 +360,6 @@ static const struct ieee80211_iface_limit
 		.types = BIT(NL80211_IFTYPE_ADHOC),
 	},
 };
-#else
-/* ADHOC (IBSS) limit */
-static const struct ieee80211_iface_limit
-	wlan_hdd_adhoc_iface_limit[] = {
-	{
-		.max = 1,
-		.types = BIT(NL80211_IFTYPE_STATION) | BIT(NL80211_IFTYPE_AP),
-	},
-	{
-		.max = 1,
-		.types = BIT(NL80211_IFTYPE_ADHOC),
-	},
-};
-#endif
 
 /* AP ( + AP ) combination */
 static const struct ieee80211_iface_limit

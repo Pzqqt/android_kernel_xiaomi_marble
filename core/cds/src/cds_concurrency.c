@@ -547,7 +547,7 @@ third_connection_pcl_dbs_table[CDS_MAX_TWO_CONNECTION_MODE]
 	[CDS_P2P_GO_MODE] = {CDS_MCC_CH_24G, CDS_24G, CDS_24G},
 	[CDS_IBSS_MODE] = {
 		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE} },
-#ifndef QCA_WIFI_3_0_EMU
+
 	[CDS_STA_SAP_DBS_1x1] = {
 	[CDS_STA_MODE] = {
 		CDS_SCC_ON_5_SCC_ON_24_5G, CDS_NONE, CDS_SCC_ON_5_SCC_ON_24},
@@ -559,19 +559,7 @@ third_connection_pcl_dbs_table[CDS_MAX_TWO_CONNECTION_MODE]
 		CDS_SCC_ON_5_SCC_ON_24_5G, CDS_NONE, CDS_SCC_ON_5_SCC_ON_24},
 	[CDS_IBSS_MODE] = {
 		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE} },
-#else
-	[CDS_STA_SAP_DBS_1x1] = {
-	[CDS_STA_MODE] = {
-		CDS_SCC_ON_5_SCC_ON_24, CDS_NONE, CDS_SCC_ON_5_SCC_ON_24},
-	[CDS_SAP_MODE] = {
-		CDS_SCC_ON_5_SCC_ON_24, CDS_NONE, CDS_SCC_ON_5_SCC_ON_24},
-	[CDS_P2P_CLIENT_MODE] = {
-		CDS_SCC_ON_5_SCC_ON_24, CDS_NONE, CDS_SCC_ON_5_SCC_ON_24},
-	[CDS_P2P_GO_MODE] = {
-		CDS_SCC_ON_5_SCC_ON_24, CDS_NONE, CDS_SCC_ON_5_SCC_ON_24},
-	[CDS_IBSS_MODE] = {
-		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE} },
-#endif
+
 	[CDS_STA_P2P_GO_SCC_24_1x1] = {
 	[CDS_STA_MODE] = {CDS_5G_SCC_CH, CDS_5G_SCC_CH, CDS_5G_SCC_CH},
 	[CDS_SAP_MODE] = {CDS_5G_SCC_CH, CDS_5G_SCC_CH, CDS_5G_SCC_CH},
@@ -653,7 +641,7 @@ third_connection_pcl_dbs_table[CDS_MAX_TWO_CONNECTION_MODE]
 	[CDS_P2P_GO_MODE] = {CDS_MCC_CH_24G, CDS_24G, CDS_24G},
 	[CDS_IBSS_MODE] = {
 		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE} },
-#ifndef QCA_WIFI_3_0_EMU
+
 	[CDS_STA_P2P_GO_DBS_1x1] = {
 	[CDS_STA_MODE] = {
 		CDS_SCC_ON_5_SCC_ON_24_5G, CDS_NONE, CDS_SCC_ON_5_SCC_ON_24},
@@ -665,19 +653,7 @@ third_connection_pcl_dbs_table[CDS_MAX_TWO_CONNECTION_MODE]
 		CDS_SCC_ON_5_SCC_ON_24_5G, CDS_NONE, CDS_SCC_ON_5_SCC_ON_24},
 	[CDS_IBSS_MODE] = {
 		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE} },
-#else
-	[CDS_STA_P2P_GO_DBS_1x1] = {
-	[CDS_STA_MODE] = {
-		CDS_SCC_ON_5_SCC_ON_24, CDS_NONE, CDS_SCC_ON_5_SCC_ON_24},
-	[CDS_SAP_MODE] = {
-		CDS_SCC_ON_5_SCC_ON_24, CDS_NONE, CDS_SCC_ON_5_SCC_ON_24},
-	[CDS_P2P_CLIENT_MODE] = {
-		CDS_SCC_ON_5_SCC_ON_24, CDS_NONE, CDS_SCC_ON_5_SCC_ON_24},
-	[CDS_P2P_GO_MODE] = {
-		CDS_SCC_ON_5_SCC_ON_24, CDS_NONE, CDS_SCC_ON_5_SCC_ON_24},
-	[CDS_IBSS_MODE] = {
-		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE} },
-#endif
+
 	[CDS_STA_P2P_CLI_SCC_24_1x1] = {
 	[CDS_STA_MODE] = {
 			CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE},
@@ -768,7 +744,7 @@ third_connection_pcl_dbs_table[CDS_MAX_TWO_CONNECTION_MODE]
 	[CDS_P2P_GO_MODE] = {CDS_MCC_CH_24G, CDS_24G, CDS_MCC_CH_24G},
 	[CDS_IBSS_MODE] = {
 		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE} },
-#ifndef QCA_WIFI_3_0_EMU
+
 	[CDS_STA_P2P_CLI_DBS_1x1] = {
 	[CDS_STA_MODE] = {
 			CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE},
@@ -780,19 +756,7 @@ third_connection_pcl_dbs_table[CDS_MAX_TWO_CONNECTION_MODE]
 		CDS_SCC_ON_5_SCC_ON_24_5G, CDS_NONE, CDS_SCC_ON_5_SCC_ON_24},
 	[CDS_IBSS_MODE] = {
 		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE} },
-#else
-	[CDS_STA_P2P_CLI_DBS_1x1] = {
-	[CDS_STA_MODE] = {
-			CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE},
-	[CDS_SAP_MODE] = {
-		CDS_SCC_ON_5_SCC_ON_24, CDS_NONE, CDS_SCC_ON_5_SCC_ON_24},
-	[CDS_P2P_CLIENT_MODE] = {
-		CDS_SCC_ON_5_SCC_ON_24, CDS_NONE, CDS_SCC_ON_5_SCC_ON_24},
-	[CDS_P2P_GO_MODE] = {
-		CDS_SCC_ON_5_SCC_ON_24, CDS_NONE, CDS_SCC_ON_5_SCC_ON_24},
-	[CDS_IBSS_MODE] = {
-		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE} },
-#endif
+
 	[CDS_P2P_GO_P2P_CLI_SCC_24_1x1] = {
 	[CDS_STA_MODE] = {CDS_5G_SCC_CH, CDS_5G_SCC_CH, CDS_5G_SCC_CH},
 	[CDS_SAP_MODE] = {CDS_5G_SCC_CH, CDS_5G_SCC_CH, CDS_5G_SCC_CH},
@@ -874,7 +838,7 @@ third_connection_pcl_dbs_table[CDS_MAX_TWO_CONNECTION_MODE]
 	[CDS_P2P_GO_MODE] = {CDS_MCC_CH_24G, CDS_24G, CDS_24G},
 	[CDS_IBSS_MODE] = {
 		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE} },
-#ifndef QCA_WIFI_3_0_EMU
+
 	[CDS_P2P_GO_P2P_CLI_DBS_1x1] = {
 	[CDS_STA_MODE] = {
 		CDS_SCC_ON_5_SCC_ON_24_5G, CDS_NONE, CDS_SCC_ON_5_SCC_ON_24},
@@ -886,19 +850,7 @@ third_connection_pcl_dbs_table[CDS_MAX_TWO_CONNECTION_MODE]
 		CDS_SCC_ON_5_SCC_ON_24_5G, CDS_NONE, CDS_SCC_ON_5_SCC_ON_24},
 	[CDS_IBSS_MODE] = {
 		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE} },
-#else
-	[CDS_P2P_GO_P2P_CLI_DBS_1x1] = {
-	[CDS_STA_MODE] = {
-		CDS_SCC_ON_5_SCC_ON_24, CDS_NONE, CDS_SCC_ON_5_SCC_ON_24},
-	[CDS_SAP_MODE] = {
-		CDS_SCC_ON_5_SCC_ON_24, CDS_NONE, CDS_SCC_ON_5_SCC_ON_24},
-	[CDS_P2P_CLIENT_MODE] = {
-		CDS_SCC_ON_5_SCC_ON_24, CDS_NONE, CDS_SCC_ON_5_SCC_ON_24},
-	[CDS_P2P_GO_MODE] = {
-		CDS_SCC_ON_5_SCC_ON_24, CDS_NONE, CDS_SCC_ON_5_SCC_ON_24},
-	[CDS_IBSS_MODE] = {
-		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE} },
-#endif
+
 	[CDS_P2P_GO_SAP_SCC_24_1x1] = {
 	[CDS_STA_MODE] = {CDS_5G, CDS_5G, CDS_5G},
 	[CDS_SAP_MODE] = {
@@ -1008,7 +960,7 @@ third_connection_pcl_dbs_table[CDS_MAX_TWO_CONNECTION_MODE]
 			CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE},
 	[CDS_IBSS_MODE] = {
 		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE} },
-#ifndef QCA_WIFI_3_0_EMU
+
 	[CDS_P2P_GO_SAP_DBS_1x1] = {
 	[CDS_STA_MODE] = {CDS_SCC_ON_5_SCC_ON_24_5G,
 	CDS_SCC_ON_5_SCC_ON_24_5G, CDS_SCC_ON_5_SCC_ON_24_5G},
@@ -1020,19 +972,7 @@ third_connection_pcl_dbs_table[CDS_MAX_TWO_CONNECTION_MODE]
 			CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE},
 	[CDS_IBSS_MODE] = {
 		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE} },
-#else
-	[CDS_P2P_GO_SAP_DBS_1x1] = {
-	[CDS_STA_MODE] = {CDS_SCC_ON_5_SCC_ON_24,
-	CDS_SCC_ON_5_SCC_ON_24, CDS_SCC_ON_5_SCC_ON_24},
-	[CDS_SAP_MODE] = {
-			CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE},
-	[CDS_P2P_CLIENT_MODE] = {
-			CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE},
-	[CDS_P2P_GO_MODE] = {
-			CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE},
-	[CDS_IBSS_MODE] = {
-		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE} },
-#endif
+
 	[CDS_P2P_CLI_SAP_SCC_24_1x1] = {
 	[CDS_STA_MODE] = {CDS_5G_SCC_CH, CDS_5G_SCC_CH, CDS_5G_SCC_CH},
 	[CDS_SAP_MODE] = {CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE},
@@ -1132,7 +1072,7 @@ third_connection_pcl_dbs_table[CDS_MAX_TWO_CONNECTION_MODE]
 		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE},
 	[CDS_IBSS_MODE] = {
 		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE} },
-#ifndef QCA_WIFI_3_0_EMU
+
 	[CDS_P2P_CLI_SAP_DBS_1x1] = {
 	[CDS_STA_MODE] = {
 		CDS_SCC_ON_5_SCC_ON_24_5G, CDS_NONE, CDS_SCC_ON_5_SCC_ON_24},
@@ -1144,19 +1084,7 @@ third_connection_pcl_dbs_table[CDS_MAX_TWO_CONNECTION_MODE]
 		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE},
 	[CDS_IBSS_MODE] = {
 		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE} },
-#else
-	[CDS_P2P_CLI_SAP_DBS_1x1] = {
-	[CDS_STA_MODE] = {
-		CDS_SCC_ON_5_SCC_ON_24, CDS_NONE, CDS_SCC_ON_5_SCC_ON_24},
-	[CDS_SAP_MODE] = {
-		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE},
-	[CDS_P2P_CLIENT_MODE] = {
-		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE},
-	[CDS_P2P_GO_MODE] = {
-		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE},
-	[CDS_IBSS_MODE] = {
-		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE} },
-#endif
+
 
 };
 
@@ -3628,15 +3556,7 @@ enum cds_conc_next_action cds_need_opportunistic_upgrade(void)
 	uint32_t conn_index;
 	enum cds_conc_next_action upgrade = CDS_NOP;
 	uint8_t mac = 0;
-#ifdef QCA_WIFI_3_0_EMU
-	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		cds_err("HDD context is NULL");
-		return upgrade;
-	}
-#endif
 	if (wma_is_hw_dbs_capable() == false) {
 		cds_err("driver isn't dbs capable, no further action needed");
 		return upgrade;
@@ -3663,14 +3583,6 @@ enum cds_conc_next_action cds_need_opportunistic_upgrade(void)
 				goto done;
 		}
 	}
-#ifdef QCA_WIFI_3_0_EMU
-	/* For M2M emulation only: if we have a connection on 2.4, stay in DBS */
-	if (hdd_ctx->config->enable_m2m_limitation &&
-	    CDS_IS_CHANNEL_24GHZ(conc_connection_list[0].chan)) {
-		cds_debug("emulation only: conn on 2.4, stay in DBS");
-		goto done;
-	}
-#endif
 	/* Let's request for single MAC mode */
 	upgrade = CDS_SINGLE_MAC;
 	/* Is there any connection had an initial connection with 2x2 */
@@ -5121,15 +5033,6 @@ bool cds_disallow_mcc(uint8_t channel)
 bool cds_allow_new_home_channel(uint8_t channel, uint32_t num_connections)
 {
 	bool status = true;
-#ifdef QCA_WIFI_3_0_EMU
-	hdd_context_t *hdd_ctx;
-
-	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		cds_err("HDD context is NULL");
-		return false;
-	}
-#endif
 
 	if ((num_connections == 2) &&
 		(conc_connection_list[0].chan != conc_connection_list[1].chan)
@@ -5154,23 +5057,7 @@ bool cds_allow_new_home_channel(uint8_t channel, uint32_t num_connections)
 			cds_err("don't allow 3rd home channel on same MAC");
 			status = false;
 		}
-#ifndef QCA_WIFI_3_0_EMU
 	}
-#else
-	} else if (hdd_ctx->config->enable_m2m_limitation &&
-		(num_connections == 1) &&
-		(conc_connection_list[0].chan != channel)) {
-		if (((CDS_IS_CHANNEL_24GHZ(channel)) &&
-			(CDS_IS_CHANNEL_24GHZ
-			(conc_connection_list[0].chan))) ||
-			   ((CDS_IS_CHANNEL_5GHZ(channel)) &&
-			(CDS_IS_CHANNEL_5GHZ
-			(conc_connection_list[0].chan)))) {
-			cds_err("don't allow 2nd home channel on same MAC");
-			status = false;
-		}
-	}
-#endif
 	return status;
 }
 
@@ -5300,22 +5187,7 @@ bool cds_allow_concurrency(enum cds_con_mode mode,
 								list);
 		if ((count > 0) && CDS_IS_DFS_CH(channel)) {
 			cds_err("STA active, don't allow DFS channel for 2nd connection");
-#ifndef QCA_WIFI_3_0_EMU
-			/*
-			 * REMOVE THIS COMMENT ONCE QCA_WIFI_3_0_EMU
-			 * FLAG GETS REMOVED
-			 * ==================================================
-			 * As on emulation we can support only 2 nodes max, if
-			 * we don't allow STA DFS (ch.100) + SAP DFS (ch.100)
-			 * then we can't test the mechanism on other device
-			 * where corresponding SAP DFS(ch.100) + STA DFS(
-			 * STA is trying to come up and as a result it will push
-			 * SAP on this device to non-dfs through CSA IE)
-			 * will trigger CSA.
-			 * =================================================
-			 */
 			goto done;
-#endif
 		}
 
 		/*
@@ -5383,18 +5255,10 @@ bool cds_allow_concurrency(enum cds_con_mode mode,
 				cds_err("No IBSS, we have concurrent connections already");
 				goto done;
 			}
-#ifndef QCA_WIFI_3_0_EMU
 			if (CDS_STA_MODE != conc_connection_list[0].mode) {
 				cds_err("No IBSS, we've a non-STA connection");
 				goto done;
 			}
-#else
-			if (CDS_STA_MODE != conc_connection_list[0].mode &&
-				CDS_SAP_MODE != conc_connection_list[0].mode) {
-				cds_err("No IBSS, we've a non-STA/SAP conn");
-				goto done;
-			}
-#endif
 			/*
 			 * This logic protects STA and IBSS to come up on same
 			 * band. If requirement changes then this condition
@@ -6039,14 +5903,6 @@ QDF_STATUS cds_current_connections_update(uint32_t session_id,
 	switch (num_connections) {
 	case 0:
 		next_action = CDS_NOP;
-#ifdef QCA_WIFI_3_0_EMU
-		/* For M2M emulation only: if it is a connection on 2.4,
-		 * request DBS
-		 */
-		if (hdd_ctx->config->enable_m2m_limitation &&
-			CDS_IS_CHANNEL_24GHZ(channel))
-			next_action = CDS_DBS;
-#endif
 		break;
 	case 1:
 		second_index =
@@ -8289,14 +8145,6 @@ enum cds_conc_next_action cds_get_current_pref_hw_mode(void)
 	 */
 	switch (num_connections) {
 	case 1:
-#ifdef QCA_WIFI_3_0_EMU
-		/* For M2M emulation only: if it is a connection on 2.4,
-		 * request DBS
-		 */
-		if (hdd_ctx->config->enable_m2m_limitation &&
-		    CDS_IS_CHANNEL_24GHZ(conc_connection_list[0].chan))
-			return CDS_DBS_DOWNGRADE;
-#endif
 		/* The driver would already be in the required hw mode */
 		return CDS_NOP;
 	case 2:
@@ -8442,16 +8290,6 @@ cds_get_nondfs_preferred_channel(enum cds_con_mode mode,
 	}
 
 	for (i = 0; i < pcl_len; i++) {
-#ifdef QCA_WIFI_3_0_EMU
-		/*
-		 * for Emulation platform MCC is not allowed.
-		 * so better don't return 5G channel as this API mostly
-		 * called when one more persona wants to come up on 5G band
-		 */
-		if (CDS_IS_CHANNEL_5GHZ(pcl_channels[i])) {
-			continue;
-		}
-#endif
 		if (CDS_IS_DFS_CH(pcl_channels[i])) {
 			continue;
 		} else {

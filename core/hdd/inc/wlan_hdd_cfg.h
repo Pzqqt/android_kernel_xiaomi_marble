@@ -3113,20 +3113,6 @@ enum dot11p_mode {
 #define CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_MAX  (900)
 #define CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_DEFAULT (200)
 
-#ifdef QCA_WIFI_3_0_EMU
-/*
- * On M2M emulation platform we have a fixed mapping between macs, hence
- * vdev transition & MCC support is not possible on this platform. But MPR
- * platform doesn't have these limitations. This config allows at runtime
- * enable/disable vdev transition & MCC support depending on the platform
- * it is running on
- */
-#define CFG_ENABLE_M2M_LIMITATION              "gEnableM2MLimitation"
-#define CFG_ENABLE_M2M_LIMITATION_MIN          (0)
-#define CFG_ENABLE_M2M_LIMITATION_MAX          (1)
-#define CFG_ENABLE_M2M_LIMITATION_DEFAULT      (0)
-#endif /* QCA_WIFI_3_0_EMU */
-
 /*
  * Dense traffic threshold
  * traffic threshold required for dense roam scan
@@ -4032,9 +4018,6 @@ struct hdd_config {
 	uint8_t inform_bss_rssi_raw;
 #ifdef WLAN_FEATURE_TSF
 	uint32_t tsf_gpio_pin;
-#endif
-#ifdef QCA_WIFI_3_0_EMU
-	bool enable_m2m_limitation;
 #endif
 	uint32_t roam_dense_traffic_thresh;
 	uint32_t roam_dense_rssi_thresh_offset;
