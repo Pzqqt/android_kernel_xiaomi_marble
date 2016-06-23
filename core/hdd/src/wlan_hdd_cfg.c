@@ -3518,13 +3518,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		   CFG_CONC_SYSTEM_PREF_MIN,
 		   CFG_CONC_SYSTEM_PREF_MAX),
 
-	REG_VARIABLE(CFG_POLICY_MNGR_ENABLE, WLAN_PARAM_Integer,
-		     struct hdd_config, policy_manager_enabled,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_POLICY_MNGR_ENABLE_DEFAULT,
-		     CFG_POLICY_MNGR_ENABLE_MIN,
-		     CFG_POLICY_MNGR_ENABLE_MAX),
-
 	REG_VARIABLE(CFG_TSO_ENABLED_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, tso_enable,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -5495,9 +5488,6 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		  "Name = [is_ps_enabled] value = [%d]",
 		  pHddCtx->config->is_ps_enabled);
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-		  "Name = [policy_manager_enabled] value = [%d]",
-		  pHddCtx->config->policy_manager_enabled);
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 		  "Name = [tso_enable] value = [%d]",
 		  pHddCtx->config->tso_enable);
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
@@ -7105,8 +7095,6 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 
 	smeConfig->csrConfig.sendDeauthBeforeCon = pConfig->sendDeauthBeforeCon;
 
-	smeConfig->csrConfig.policy_manager_enabled =
-			pHddCtx->config->policy_manager_enabled;
 	smeConfig->csrConfig.max_scan_count =
 			pHddCtx->config->max_scan_count;
 

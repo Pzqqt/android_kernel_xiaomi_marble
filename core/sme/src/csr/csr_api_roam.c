@@ -2382,7 +2382,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->is_ps_enabled;
 		pMac->roam.configParam.ignore_peer_ht_opmode =
 			pParam->ignore_peer_ht_opmode;
-		pMac->policy_manager_enabled = pParam->policy_manager_enabled;
 		pMac->fine_time_meas_cap = pParam->fine_time_meas_cap;
 		pMac->dual_mac_feature_disable =
 			pParam->dual_mac_feature_disable;
@@ -2574,7 +2573,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->pnoOffload = pMac->pnoOffload;
 	pParam->f_prefer_non_dfs_on_radar =
 		pMac->f_prefer_non_dfs_on_radar;
-	pParam->policy_manager_enabled = pMac->policy_manager_enabled;
 	pParam->fine_time_meas_cap = pMac->fine_time_meas_cap;
 	pParam->dual_mac_feature_disable =
 		pMac->dual_mac_feature_disable;
@@ -7584,9 +7582,8 @@ QDF_STATUS csr_roam_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 		FL("******* csr_scan_get_result Status ****** %d"), status);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* check if set hw mode needs to be done */
-		if ((pMac->policy_manager_enabled) &&
-			((pScanFilter->csrPersona == QDF_STA_MODE) ||
-			 (pScanFilter->csrPersona == QDF_P2P_CLIENT_MODE))) {
+		if ((pScanFilter->csrPersona == QDF_STA_MODE) ||
+			 (pScanFilter->csrPersona == QDF_P2P_CLIENT_MODE)) {
 			csr_get_bssdescr_from_scan_handle(hBSSList,
 					&first_ap_profile);
 			status = cds_handle_conc_multiport(sessionId,

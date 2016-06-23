@@ -4458,34 +4458,32 @@ static int __wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 	if (0 != wlan_hdd_check_remain_on_channel(adapter))
 		hdd_warn("Remain On Channel Pending");
 
-	if (hdd_ctx->config->policy_manager_enabled) {
-		ret = qdf_reset_connection_update();
-		if (!QDF_IS_STATUS_SUCCESS(ret))
-			hdd_err("clearing event failed");
+	ret = qdf_reset_connection_update();
+	if (!QDF_IS_STATUS_SUCCESS(ret))
+		hdd_err("clearing event failed");
 
-		ret = cds_current_connections_update(adapter->sessionId,
-					channel_hint,
-					SIR_UPDATE_REASON_SET_OPER_CHAN);
-		if (QDF_STATUS_E_FAILURE == ret) {
-			/* return in the failure case */
-			hdd_err("ERROR: connections update failed!!");
+	ret = cds_current_connections_update(adapter->sessionId,
+				channel_hint,
+				SIR_UPDATE_REASON_SET_OPER_CHAN);
+	if (QDF_STATUS_E_FAILURE == ret) {
+		/* return in the failure case */
+		hdd_err("ERROR: connections update failed!!");
+		return -EINVAL;
+	}
+
+	if (QDF_STATUS_SUCCESS == ret) {
+		/*
+		 * Success is the only case for which we expect hw mode
+		 * change to take place, hence we need to wait.
+		 * For any other return value it should be a pass
+		 * through
+		 */
+		ret = qdf_wait_for_connection_update();
+		if (!QDF_IS_STATUS_SUCCESS(ret)) {
+			hdd_err("ERROR: qdf wait for event failed!!");
 			return -EINVAL;
 		}
 
-		if (QDF_STATUS_SUCCESS == ret) {
-			/*
-			 * Success is the only case for which we expect hw mode
-			 * change to take place, hence we need to wait.
-			 * For any other return value it should be a pass
-			 * through
-			 */
-			ret = qdf_wait_for_connection_update();
-			if (!QDF_IS_STATUS_SUCCESS(ret)) {
-				hdd_err("ERROR: qdf wait for event failed!!");
-				return -EINVAL;
-			}
-
-		}
 	}
 
 	return 0;
@@ -8794,8 +8792,7 @@ int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 			hdd_select_cbmode(pAdapter, operatingChannel);
 		}
 
-		if (pHddCtx->config->policy_manager_enabled &&
-			(true == cds_is_connection_in_progress())) {
+		if (true == cds_is_connection_in_progress()) {
 			hdd_err("Connection refused: conn in progress");
 			return -EINVAL;
 		}
@@ -8819,14 +8816,14 @@ int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 		 * When policy manager is enabled from ini file, we shouldn't
 		 * check for other concurrency rules.
 		 */
-		if (!pHddCtx->config->policy_manager_enabled) {
+		if (wma_is_hw_dbs_capable() == false) {
 			cds_handle_conc_rule1(pAdapter, pRoamProfile);
 			if (true != cds_handle_conc_rule2(
 					pAdapter, pRoamProfile, &roamId))
 				return 0;
 		}
 
-		if (pHddCtx->config->policy_manager_enabled &&
+		if ((wma_is_hw_dbs_capable() == true) &&
 			(false == wlan_hdd_handle_sap_sta_dfs_conc(pAdapter,
 				pRoamProfile))) {
 			hdd_err("sap-sta conc will fail, can't allow sta");
@@ -10163,25 +10160,24 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 		hdd_err("This concurrency combination is not allowed");
 		return -ECONNREFUSED;
 	}
-	if (pHddCtx->config->policy_manager_enabled) {
-		status = qdf_reset_connection_update();
-		if (!QDF_IS_STATUS_SUCCESS(status))
-			hdd_err("ERR: clear event failed");
 
-		status = cds_current_connections_update(pAdapter->sessionId,
-						channelNum,
-						SIR_UPDATE_REASON_JOIN_IBSS);
-		if (QDF_STATUS_E_FAILURE == status) {
-			hdd_err("ERROR: connections update failed!!");
+	status = qdf_reset_connection_update();
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("ERR: clear event failed");
+
+	status = cds_current_connections_update(pAdapter->sessionId,
+					channelNum,
+					SIR_UPDATE_REASON_JOIN_IBSS);
+	if (QDF_STATUS_E_FAILURE == status) {
+		hdd_err("ERROR: connections update failed!!");
+		return -EINVAL;
+	}
+
+	if (QDF_STATUS_SUCCESS == status) {
+		status = qdf_wait_for_connection_update();
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("ERROR: qdf wait for event failed!!");
 			return -EINVAL;
-		}
-
-		if (QDF_STATUS_SUCCESS == status) {
-			status = qdf_wait_for_connection_update();
-			if (!QDF_IS_STATUS_SUCCESS(status)) {
-				hdd_err("ERROR: qdf wait for event failed!!");
-				return -EINVAL;
-			}
 		}
 	}
 

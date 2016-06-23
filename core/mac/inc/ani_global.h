@@ -1069,7 +1069,6 @@ typedef struct sAniSirGlobal {
 	uint32_t f_sta_miracast_mcc_rest_time_val;
 	uint8_t f_prefer_non_dfs_on_radar;
 	hdd_ftm_msg_processor ftm_msg_processor_callback;
-	bool policy_manager_enabled;
 	uint32_t fine_time_meas_cap;
 	/* per band chain mask support */
 	bool per_band_chainmask_supp;

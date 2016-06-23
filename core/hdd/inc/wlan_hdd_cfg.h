@@ -2775,11 +2775,6 @@ typedef enum {
 #define CFG_CONC_SYSTEM_PREF_MAX           (2)
 #define CFG_CONC_SYSTEM_PREF_DEFAULT       (0)
 
-#define CFG_POLICY_MNGR_ENABLE              "gPolicyManagerEnable"
-#define CFG_POLICY_MNGR_ENABLE_MIN          (0)
-#define CFG_POLICY_MNGR_ENABLE_MAX          (1)
-#define CFG_POLICY_MNGR_ENABLE_DEFAULT      (1)
-
 #define CFG_TSO_ENABLED_NAME           "TSOEnable"
 #define CFG_TSO_ENABLED_MIN            (0)
 #define CFG_TSO_ENABLED_MAX            (1)
@@ -3974,7 +3969,6 @@ struct hdd_config {
 	uint8_t multicast_host_fw_msgs;
 	uint8_t conc_system_pref;
 	bool sendDeauthBeforeCon;
-	bool policy_manager_enabled;
 	bool tso_enable;
 	bool lro_enable;
 	bool active_mode_offload;

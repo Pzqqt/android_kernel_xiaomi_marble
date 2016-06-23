@@ -1251,7 +1251,6 @@ typedef struct tagCsrConfigParam {
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 	uint8_t f_prefer_non_dfs_on_radar;
 	bool is_ps_enabled;
-	bool policy_manager_enabled;
 	uint32_t fine_time_meas_cap;
 	uint32_t dual_mac_feature_disable;
 	uint32_t roam_dense_traffic_thresh;

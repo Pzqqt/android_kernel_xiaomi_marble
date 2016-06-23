@@ -8268,25 +8268,24 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		hdd_err("Connection failed due to concurrency check failure");
 		return -EINVAL;
 	}
-	if (pHddCtx->config->policy_manager_enabled) {
-		status = qdf_reset_connection_update();
-		if (!QDF_IS_STATUS_SUCCESS(status))
-			hdd_err("ERR: clear event failed");
 
-		status = cds_current_connections_update(pAdapter->sessionId,
-				channel,
-				SIR_UPDATE_REASON_START_AP);
-		if (QDF_STATUS_E_FAILURE == status) {
-			hdd_err("ERROR: connections update failed!!");
+	status = qdf_reset_connection_update();
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("ERR: clear event failed");
+
+	status = cds_current_connections_update(pAdapter->sessionId,
+			channel,
+			SIR_UPDATE_REASON_START_AP);
+	if (QDF_STATUS_E_FAILURE == status) {
+		hdd_err("ERROR: connections update failed!!");
+		return -EINVAL;
+	}
+
+	if (QDF_STATUS_SUCCESS == status) {
+		status = qdf_wait_for_connection_update();
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("ERROR: qdf wait for event failed!!");
 			return -EINVAL;
-		}
-
-		if (QDF_STATUS_SUCCESS == status) {
-			status = qdf_wait_for_connection_update();
-			if (!QDF_IS_STATUS_SUCCESS(status)) {
-				hdd_err("ERROR: qdf wait for event failed!!");
-				return -EINVAL;
-			}
 		}
 	}
 

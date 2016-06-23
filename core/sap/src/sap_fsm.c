@@ -2341,8 +2341,7 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 			  FL("for configured channel, Ch= %d"),
 			  sap_context->channel);
 
-		if (mac_ctx->policy_manager_enabled &&
-			check_for_connection_update) {
+		if (check_for_connection_update) {
 			/* This wait happens in the hostapd context. The event
 			 * is set in the MC thread context.
 			 */

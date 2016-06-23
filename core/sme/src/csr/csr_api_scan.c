@@ -1963,8 +1963,7 @@ static QDF_STATUS csr_calc_pref_val_by_pcl(tpAniSirGlobal mac_ctx,
 	if (NULL == mac_ctx || NULL == bss_descr)
 		return QDF_STATUS_E_FAILURE;
 
-	if (mac_ctx->policy_manager_enabled &&
-		is_channel_found_in_pcl(mac_ctx,
+	if (is_channel_found_in_pcl(mac_ctx,
 			bss_descr->Result.BssDescriptor.channelId, filter) &&
 		(bss_descr->Result.BssDescriptor.rssi > PCL_RSSI_THRESHOLD)) {
 		orig_pref_val = csr_derive_prefer_value_from_rssi(mac_ctx,
@@ -3718,34 +3717,24 @@ eCsrScanCompleteNextCommand csr_scan_get_next_command_state(tpAniSirGlobal pMac,
 			eCsrNextLostLinkScan3Failed;
 		break;
 	case eCsrScanForSsid:
-		/* When policy manager is disabled:
-		 * success: csr_scan_handle_search_for_ssid
-		 * failure: csr_scan_handle_search_for_ssid_failure
-		 *
-		 * When policy manager is enabled:
-		 * success:
+		/* success:
 		 *   set hw_mode success -> csr_scan_handle_search_for_ssid
 		 *   set hw_mode fail -> csr_scan_handle_search_for_ssid_failure
 		 * failure: csr_scan_handle_search_for_ssid_failure
 		 */
-		if (pMac->policy_manager_enabled) {
-			sms_log(pMac, LOG1, FL("Resp for eCsrScanForSsid"));
-			channel = cds_search_and_check_for_session_conc(
-					pCommand->sessionId,
-					pCommand->u.scanCmd.pToRoamProfile);
-			if ((!channel) || !fSuccess) {
-				NextCommand = eCsrNexteScanForSsidFailure;
-				sms_log(pMac, LOG1,
-					FL("next ScanForSsidFailure %d %d"),
-					channel, fSuccess);
-			} else {
-				NextCommand = eCsrNextCheckAllowConc;
-				*chan = channel;
-				sms_log(pMac, LOG1, FL("next CheckAllowConc"));
-			}
-		} else  {
-			NextCommand = (fSuccess) ? eCsrNexteScanForSsidSuccess :
-				eCsrNexteScanForSsidFailure;
+		sms_log(pMac, LOG1, FL("Resp for eCsrScanForSsid"));
+		channel = cds_search_and_check_for_session_conc(
+				pCommand->sessionId,
+				pCommand->u.scanCmd.pToRoamProfile);
+		if ((!channel) || !fSuccess) {
+			NextCommand = eCsrNexteScanForSsidFailure;
+			sms_log(pMac, LOG1,
+				FL("next ScanForSsidFailure %d %d"),
+				channel, fSuccess);
+		} else {
+			NextCommand = eCsrNextCheckAllowConc;
+			*chan = channel;
+			sms_log(pMac, LOG1, FL("next CheckAllowConc"));
 		}
 		break;
 	default:

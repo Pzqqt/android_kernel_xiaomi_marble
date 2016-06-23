@@ -2916,95 +2916,6 @@ static bool cds_current_concurrency_is_scc(void)
 }
 
 /**
- * cds_dump_legacy_concurrency() - To dump the current
- * concurrency combination
- * @sta_channel: Channel STA connection has come up
- * @ap_channel: Channel SAP connection has come up
- * @p2p_channel: Channel P2P connection has come up
- * @sta_bssid: BSSID to which STA is connected to
- * @p2p_bssid: BSSID to which P2P is connected to
- * @ap_bssid: BSSID of the AP
- * @p2p_mode: P2P Client or GO
- *
- * This routine is called to dump the concurrency info
- *
- * Return: None
- */
-static void cds_dump_legacy_concurrency(
-		uint8_t sta_channel, uint8_t ap_channel, uint8_t p2p_channel,
-		struct qdf_mac_addr sta_bssid, struct qdf_mac_addr p2p_bssid,
-		struct qdf_mac_addr ap_bssid, const char *p2p_mode)
-{
-	const char *cc_mode = "Standalone";
-	hdd_context_t *hdd_ctx;
-
-	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		cds_err("HDD context is NULL");
-		return;
-	}
-
-	if ((sta_channel == 0) && (ap_channel == 0) && (p2p_channel == 0)) {
-		cds_err("IBSS standalone");
-		hdd_ctx->mcc_mode = 0;
-		return;
-	}
-	if (sta_channel > 0) {
-		if (ap_channel > 0) {
-			if (p2p_channel > 0) {
-				/* STA + AP + P2P */
-				if (p2p_channel == sta_channel
-					&& ap_channel == sta_channel) {
-					cc_mode = "STA+AP+P2P SCC";
-				} else {
-					if (p2p_channel == sta_channel)
-						cc_mode =
-							"STA+P2P SCC, SAP MCC";
-					else if (ap_channel == sta_channel)
-						cc_mode =
-							"STA+SAP SCC, P2P MCC";
-					else if (ap_channel == p2p_channel)
-						cc_mode =
-							"P2P+SAP SCC, STA MCC";
-				}
-			} else {
-				/* STA + AP */
-				cc_mode = (ap_channel == sta_channel) ?
-						"SCC" : "MCC";
-			}
-		} else {
-			if (p2p_channel > 0) {
-				/* STA + P2P */
-				cc_mode = (p2p_channel == sta_channel) ?
-						"SCC" : "MCC";
-			}
-		}
-	} else {
-		if (ap_channel > 0) {
-			if (p2p_channel > 0) {
-				/* AP + P2P */
-				cc_mode = (p2p_channel == ap_channel) ?
-						"SCC" : "MCC";
-			}
-		}
-	}
-	if (sta_channel > 0)
-		cds_err("wlan(%d) " MAC_ADDRESS_STR " %s",
-			sta_channel, MAC_ADDR_ARRAY(sta_bssid.bytes), cc_mode);
-
-	if (p2p_channel > 0)
-		cds_err("p2p-%s(%d) " MAC_ADDRESS_STR " %s",
-			p2p_mode, p2p_channel, MAC_ADDR_ARRAY(p2p_bssid.bytes),
-			cc_mode);
-
-	if (ap_channel > 0)
-		cds_err("AP(%d) " MAC_ADDRESS_STR " %s",
-			ap_channel, MAC_ADDR_ARRAY(ap_bssid.bytes), cc_mode);
-
-	hdd_ctx->mcc_mode = strcmp(cc_mode, "SCC");
-}
-
-/**
  * cds_dump_concurrency_info() - To dump concurrency info
  *
  * This routine is called to dump the concurrency info
@@ -3286,17 +3197,8 @@ void cds_dump_concurrency_info(void)
 		status = hdd_get_next_adapter(hdd_ctx, adapterNode, &pNext);
 		adapterNode = pNext;
 	}
-	if (hdd_ctx->config->policy_manager_enabled) {
-		cds_dump_current_concurrency();
-		hdd_ctx->mcc_mode = !cds_current_concurrency_is_scc();
-	} else {
-		/* hdd_ctx->mcc_mode gets updated inside below function, which
-		 *  gets used by IPA
-		 */
-		cds_dump_legacy_concurrency(
-			staChannel, apChannel, p2pChannel,
-			staBssid, p2pBssid, apBssid, p2pMode);
-	}
+	cds_dump_current_concurrency();
+	hdd_ctx->mcc_mode = !cds_current_concurrency_is_scc();
 }
 
 /**
@@ -8673,8 +8575,7 @@ QDF_STATUS cds_set_hw_mode_on_channel_switch(uint8_t session_id)
 		return status;
 	}
 
-	if (!(hdd_ctx->config->policy_manager_enabled &&
-				wma_is_hw_dbs_capable())) {
+	if (!wma_is_hw_dbs_capable()) {
 		cds_err("PM/DBS is disabled");
 		return status;
 	}
