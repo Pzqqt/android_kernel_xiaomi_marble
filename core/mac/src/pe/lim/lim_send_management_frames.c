@@ -532,7 +532,7 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 	uint8_t sme_sessionid = 0;
 	bool is_vht_enabled = false;
 	tDot11fIEExtCap extracted_ext_cap;
-	bool extracted_ext_cap_flag = true;
+	bool extracted_ext_cap_flag = false;
 
 	/* We don't answer requests in this case*/
 	if (ANI_DRIVER_TYPE(mac_ctx) == eDRIVER_TYPE_MFG)
@@ -734,9 +734,10 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 					add_ie, &addn_ie_len,
 					&extracted_ext_cap);
 		if (eSIR_SUCCESS != sir_status) {
-			extracted_ext_cap_flag = false;
 			lim_log(mac_ctx, LOG1,
 				FL("Unable to strip off ExtCap IE"));
+		} else {
+			extracted_ext_cap_flag = true;
 		}
 
 		bytes = bytes + addn_ie_len;
