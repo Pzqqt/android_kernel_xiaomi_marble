@@ -1442,6 +1442,8 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	   so setting it to NULL in hdd context */
 	pHddCtx->hHal = (tHalHandle) NULL;
 
+	wlansap_global_deinit();
+
 	hddLog(QDF_TRACE_LEVEL_FATAL, "%s: WLAN driver shutdown complete",
 	       __func__);
 	return QDF_STATUS_SUCCESS;
@@ -1664,6 +1666,7 @@ QDF_STATUS hdd_wlan_re_init(void *hif_sc)
 				  pHddCtx->target_hw_version,
 				  pHddCtx->target_hw_name);
 #endif
+	wlansap_global_init();
 
 	hddLog(LOGE,
 		"%s: WLAN host driver reinitiation completed!", __func__);

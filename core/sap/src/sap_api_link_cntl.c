@@ -824,6 +824,9 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 		return qdf_ret_status;
 	}
 
+	if (QDF_IS_STATUS_ERROR(wlansap_context_get(sap_ctx)))
+		return QDF_STATUS_E_FAILURE;
+
 	mac_ctx = PMAC_STRUCT(hal);
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  FL("Before switch on roam_status = %d\n"), roam_status);
@@ -1214,5 +1217,6 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 			  roam_result);
 		break;
 	}
+	wlansap_context_put(sap_ctx);
 	return qdf_ret_status;
 }

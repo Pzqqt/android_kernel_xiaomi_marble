@@ -44,6 +44,7 @@
  * -------------------------------------------------------------------------*/
 #include "qdf_trace.h"
 #include "qdf_util.h"
+#include "qdf_atomic.h"
 /* Pick up the sme callback registration API */
 #include "sme_api.h"
 
@@ -73,11 +74,13 @@
  * -------------------------------------------------------------------------*/
 /*  No!  Get this from CDS. */
 /*  The main per-Physical Link (per WLAN association) context. */
-ptSapContext gp_sap_ctx;
+static ptSapContext gp_sap_ctx[SAP_MAX_NUM_SESSION];
+static qdf_atomic_t sap_ctx_ref_count[SAP_MAX_NUM_SESSION];
 
 /*----------------------------------------------------------------------------
  * Static Variable Definitions
  * -------------------------------------------------------------------------*/
+static qdf_mutex_t sap_context_lock;
 
 /*----------------------------------------------------------------------------
  * Static Function Declarations and Definitions
@@ -92,6 +95,159 @@ ptSapContext gp_sap_ctx;
  * -------------------------------------------------------------------------*/
 
 /**
+ * wlansap_global_init() - Initialize SAP globals
+ *
+ * Initializes the SAP global data structures
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlansap_global_init(void)
+{
+	uint32_t i;
+
+	if (QDF_IS_STATUS_ERROR(qdf_mutex_create(&sap_context_lock))) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  "failed to init sap_context_lock");
+		return QDF_STATUS_E_FAULT;
+	}
+
+	for (i = 0; i < SAP_MAX_NUM_SESSION; i++) {
+		gp_sap_ctx[i] = NULL;
+		qdf_atomic_init(&sap_ctx_ref_count[i]);
+	}
+
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+			"%s: sap global context initialized", __func__);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wlansap_global_deinit() - De-initialize SAP globals
+ *
+ * De-initializes the SAP global data structures
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlansap_global_deinit(void)
+{
+	uint32_t i;
+
+	for (i = 0; i < SAP_MAX_NUM_SESSION; i++) {
+		if (gp_sap_ctx[i]) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				"we could be leaking context:%d", i);
+		}
+		gp_sap_ctx[i] = NULL;
+		qdf_atomic_init(&sap_ctx_ref_count[i]);
+	}
+
+	if (QDF_IS_STATUS_ERROR(qdf_mutex_destroy(&sap_context_lock))) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				"failed to destroy sap_context_lock");
+		return QDF_STATUS_E_FAULT;
+	}
+
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+			"%s: sap global context deinitialized", __func__);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wlansap_save_context() - Save the context in global SAP context
+ * @ctx: SAP context to be stored
+ *
+ * Stores the given SAP context in the global SAP context array
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS wlansap_save_context(ptSapContext ctx)
+{
+	uint32_t i;
+
+	qdf_mutex_acquire(&sap_context_lock);
+	for (i = 0; i < SAP_MAX_NUM_SESSION; i++) {
+		if (gp_sap_ctx[i] == NULL) {
+			gp_sap_ctx[i] = ctx;
+			qdf_atomic_inc(&sap_ctx_ref_count[i]);
+			qdf_mutex_release(&sap_context_lock);
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+				"%s: sap context saved at index:%d",
+				__func__, i);
+			return QDF_STATUS_SUCCESS;
+		}
+	}
+	qdf_mutex_release(&sap_context_lock);
+
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+		"%s: failed to save sap context", __func__);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wlansap_context_get() - Verify SAP context and increment ref count
+ * @ctx: Context to be checked
+ *
+ * Verifies the SAP context and increments the reference count maintained for
+ * the corresponding SAP context.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlansap_context_get(ptSapContext ctx)
+{
+	uint32_t i;
+
+	qdf_mutex_acquire(&sap_context_lock);
+	for (i = 0; i < SAP_MAX_NUM_SESSION; i++) {
+		if (ctx && (gp_sap_ctx[i] == ctx)) {
+			qdf_atomic_inc(&sap_ctx_ref_count[i]);
+			qdf_mutex_release(&sap_context_lock);
+			return QDF_STATUS_SUCCESS;
+		}
+	}
+	qdf_mutex_release(&sap_context_lock);
+
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			"%s: sap session is not valid", __func__);
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wlansap_context_put() - Check the reference count and free SAP context
+ * @ctx: SAP context to be checked and freed
+ *
+ * Checks the reference count and frees the SAP context
+ *
+ * Return: None
+ */
+void wlansap_context_put(ptSapContext ctx)
+{
+	uint32_t i;
+
+	if (!ctx)
+		return;
+
+	qdf_mutex_acquire(&sap_context_lock);
+	for (i = 0; i < SAP_MAX_NUM_SESSION; i++) {
+		if (gp_sap_ctx[i] == ctx) {
+			if (qdf_atomic_dec_and_test(&sap_ctx_ref_count[i])) {
+				qdf_mem_free(ctx);
+				gp_sap_ctx[i] = NULL;
+				QDF_TRACE(QDF_MODULE_ID_SAP,
+					QDF_TRACE_LEVEL_INFO,
+					"%s: sap session freed: %d",
+					__func__, i);
+			}
+			qdf_mutex_release(&sap_context_lock);
+			return;
+		}
+	}
+	qdf_mutex_release(&sap_context_lock);
+}
+
+/**
  * wlansap_open() - WLAN SAP open function call
  * @p_cds_gctx: Pointer to the global cds context; a handle to SAP's
  *
@@ -104,6 +260,7 @@ ptSapContext gp_sap_ctx;
 void *wlansap_open(void *p_cds_gctx)
 {
 	ptSapContext pSapCtx = NULL;
+	QDF_STATUS status;
 
 	/* dynamically allocate the sapContext */
 	pSapCtx = (ptSapContext) qdf_mem_malloc(sizeof(tSapContext));
@@ -122,8 +279,14 @@ void *wlansap_open(void *p_cds_gctx)
 	/* Setup the "link back" to the CDS context */
 	pSapCtx->p_cds_gctx = p_cds_gctx;
 
-	/* Store a pointer to the SAP context provided by CDS */
-	gp_sap_ctx = pSapCtx;
+	/* Save the SAP context pointer */
+	status = wlansap_save_context(pSapCtx);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			"%s: failed to save SAP context", __func__);
+		qdf_mem_free(pSapCtx);
+		return NULL;
+	}
 
 	return pSapCtx;
 } /* wlansap_open */
@@ -296,7 +459,7 @@ QDF_STATUS wlansap_close(void *pCtx)
 	/* empty queues/lists/pkts if any */
 	wlansap_clean_cb(pSapCtx, true);
 
-	qdf_mem_free(pSapCtx);
+	wlansap_context_put(pSapCtx);
 
 	return QDF_STATUS_SUCCESS;
 } /* wlansap_close */

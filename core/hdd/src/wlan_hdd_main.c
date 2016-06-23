@@ -4180,6 +4180,8 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 		/* Proceed and complete the clean up */
 	}
 
+	wlansap_global_deinit();
+
 free_hdd_ctx:
 
 	wlan_hdd_deinit_tx_rx_histogram(hdd_ctx);
@@ -6622,13 +6624,17 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 		status = wlan_hdd_disable_all_dual_mac_features(hdd_ctx);
 		if (status != QDF_STATUS_SUCCESS) {
 			hdd_err("Failed to disable dual mac features");
-			goto err_exit_nl_srv;
+			goto err_debugfs_exit;
 		}
 	}
 
 	ret = hdd_register_notifiers(hdd_ctx);
 	if (ret)
-		goto err_exit_nl_srv;
+		goto err_debugfs_exit;
+
+	status = wlansap_global_init();
+	if (QDF_IS_STATUS_ERROR(status))
+		goto err_debugfs_exit;
 
 	memdump_init();
 

@@ -2375,7 +2375,7 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
  * Return: QDF_STATUS
  */
 
-#define SAP_OPEN_SESSION_TIMEOUT 500
+#define SAP_OPEN_SESSION_TIMEOUT 2000
 QDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext,
 			    uint32_t *session_id)
 {

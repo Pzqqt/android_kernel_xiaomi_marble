@@ -269,8 +269,6 @@ typedef struct sSapContext {
 /*----------------------------------------------------------------------------
  *  External declarations for global context
  * -------------------------------------------------------------------------*/
-/*  The main per-Physical Link (per WLAN association) context. */
-extern ptSapContext gp_sap_ctx;
 
 /*----------------------------------------------------------------------------
  *  SAP state machine event definition
@@ -290,6 +288,8 @@ typedef struct sWLAN_SAPEvent {
 /*----------------------------------------------------------------------------
  * Function Declarations and Documentation
  * -------------------------------------------------------------------------*/
+QDF_STATUS wlansap_context_get(ptSapContext ctx);
+void wlansap_context_put(ptSapContext ctx);
 
 QDF_STATUS
 wlansap_scan_callback

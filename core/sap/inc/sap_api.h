@@ -804,8 +804,9 @@ QDF_STATUS wlansap_set_wps_ie(void *p_cds_gctx, tSap_WPSIE *pWPSIe);
 QDF_STATUS wlansap_update_wps_ie(void *p_cds_gctx);
 QDF_STATUS wlansap_stop_Wps(void *p_cds_gctx);
 QDF_STATUS wlansap_get_wps_state(void *p_cds_gctx, bool *pbWPSState);
-
 void *wlansap_open(void *p_cds_gctx);
+QDF_STATUS wlansap_global_init(void);
+QDF_STATUS wlansap_global_deinit(void);
 QDF_STATUS wlansap_start(void *p_cds_gctx, enum tQDF_ADAPTER_MODE mode,
 			 uint8_t *addr, uint32_t *session_id);
 QDF_STATUS wlansap_stop(void *p_cds_gctx);
