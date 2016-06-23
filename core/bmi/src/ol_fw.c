@@ -473,17 +473,13 @@ static inline void ol_get_ramdump_mem(struct device *dev,
 int ol_copy_ramdump(struct hif_opaque_softc *scn)
 {
 	int ret = -1;
-	struct hif_opaque_softc **ol_ctx_ptr = &scn;
-	struct ol_context *ol_ctx;
-	qdf_device_t qdf_dev;
 	struct ramdump_info *info;
+	qdf_device_t qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
-	ol_ctx = container_of(ol_ctx_ptr, struct ol_context , scn);
-	if (!ol_ctx) {
-		BMI_ERR("%s: Invalid ol_ctx\n", __func__);
+	if (!qdf_dev) {
+		BMI_ERR("%s qdf_dev is NULL", __func__);
 		return -EINVAL;
 	}
-	qdf_dev = ol_ctx->qdf_dev;
 
 	if (hif_get_bus_type(scn) == QDF_BUS_TYPE_SDIO)
 		return 0;
