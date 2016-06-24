@@ -7567,22 +7567,24 @@ static int __iw_setnone_getnone(struct net_device *dev,
 	{
 		hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 		tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
+		tSirMacAddr bssid;
 		uint32_t roamId = 0;
+		uint8_t operating_ch =
+			adapter->sessionCtx.station.conn_info.operationChannel;
 		tCsrRoamModifyProfileFields modProfileFields;
-		hdd_station_ctx_t *hdd_sta_ctx =
-				   WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-
-		/* Reassoc to same AP, only supported for Open Security*/
-		if ((hdd_sta_ctx->conn_info.ucEncryptionType ||
-			  hdd_sta_ctx->conn_info.mcEncryptionType)) {
-			hdd_err("Reassoc to same AP, only supported for Open Security");
-			return -ENOTSUPP;
-		}
 
 		sme_get_modify_profile_fields(hHal, adapter->sessionId,
 					      &modProfileFields);
-		sme_roam_reassoc(hHal, adapter->sessionId,
-				 NULL, modProfileFields, &roamId, 1);
+		if (roaming_offload_enabled(hdd_ctx)) {
+			qdf_mem_copy(bssid,
+				&adapter->sessionCtx.station.conn_info.bssId,
+				sizeof(bssid));
+			hdd_wma_send_fastreassoc_cmd((int)adapter->sessionId,
+						     bssid, operating_ch);
+		} else {
+			sme_roam_reassoc(hdd_ctx->hHal, adapter->sessionId,
+				NULL, modProfileFields, &roamId, 1);
+		}
 		return 0;
 	}
 

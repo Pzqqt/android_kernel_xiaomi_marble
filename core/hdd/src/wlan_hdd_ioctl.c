@@ -4428,6 +4428,13 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 		goto exit;
 	}
 
+	/* Check channel number is a valid channel number */
+	if (QDF_STATUS_SUCCESS !=
+		wlan_hdd_validate_operation_channel(adapter, channel)) {
+		hdd_err("Invalid Channel [%d]", channel);
+		return -EINVAL;
+	}
+
 	/*
 	 * if the target bssid is same as currently associated AP,
 	 * issue reassoc to same AP
@@ -4435,26 +4442,20 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 	if (true != qdf_mem_cmp(targetApBssid,
 				    pHddStaCtx->conn_info.bssId.bytes,
 				    QDF_MAC_ADDR_SIZE)) {
-		/* Reassoc to same AP, only supported for Open Security*/
-		if ((pHddStaCtx->conn_info.ucEncryptionType ||
-			  pHddStaCtx->conn_info.mcEncryptionType)) {
-			hdd_err("Reassoc to same AP, only supported for Open Security");
-			return -ENOTSUPP;
-		}
 		hdd_info("Reassoc BSSID is same as currently associated AP bssid");
-		sme_get_modify_profile_fields(hdd_ctx->hHal, adapter->sessionId,
+		if (roaming_offload_enabled(hdd_ctx)) {
+			hdd_wma_send_fastreassoc_cmd((int)adapter->sessionId,
+				targetApBssid, (int)channel);
+		} else {
+			sme_get_modify_profile_fields(hdd_ctx->hHal,
+				adapter->sessionId,
 				&modProfileFields);
-		sme_roam_reassoc(hdd_ctx->hHal, adapter->sessionId,
-			NULL, modProfileFields, &roamId, 1);
+			sme_roam_reassoc(hdd_ctx->hHal, adapter->sessionId,
+				NULL, modProfileFields, &roamId, 1);
+		}
 		return 0;
 	}
 
-	/* Check channel number is a valid channel number */
-	if (QDF_STATUS_SUCCESS !=
-		wlan_hdd_validate_operation_channel(adapter, channel)) {
-		hdd_err("Invalid Channel [%d]", channel);
-		return -EINVAL;
-	}
 	if (roaming_offload_enabled(hdd_ctx)) {
 		hdd_wma_send_fastreassoc_cmd((int)adapter->sessionId,
 					targetApBssid, (int)channel);
