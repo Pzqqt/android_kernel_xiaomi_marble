@@ -9340,9 +9340,18 @@ void csr_roaming_state_msg_processor(tpAniSirGlobal pMac, void *pMsgBuf)
 		break;
 	case eWNI_SME_DEAUTH_RSP:
 		/* or the Deauthentication response message... */
-		if (CSR_IS_ROAM_SUBSTATE_DEAUTH_REQ(pMac, pSmeRsp->sessionId))
+		if (CSR_IS_ROAM_SUBSTATE_DEAUTH_REQ(pMac, pSmeRsp->sessionId)) {
+			csr_remove_cmd_with_session_id_from_pending_list(pMac,
+					pSmeRsp->sessionId,
+					&pMac->sme.smeCmdPendingList,
+					eSmeCommandWmStatusChange);
+			csr_remove_cmd_with_session_id_from_pending_list(pMac,
+					pSmeRsp->sessionId,
+					&pMac->roam.roamCmdPendingList,
+					eSmeCommandWmStatusChange);
 			csr_roam_roaming_state_deauth_rsp_processor(pMac,
 						(tSirSmeDeauthRsp *) pSmeRsp);
+		}
 		break;
 	case eWNI_SME_START_BSS_RSP:
 		/* or the Start BSS response message... */
