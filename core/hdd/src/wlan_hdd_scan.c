@@ -1237,6 +1237,29 @@ static void wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work)
 }
 
 /**
+ * wlan_hdd_copy_bssid_scan_request() - API to copy the bssid to Scan request
+ * @scan_req: Pointer to CSR Scan Request
+ * @request: scan request from Supplicant
+ *
+ * This API copies the BSSID in scan request from Supplicant and copies it to
+ * the CSR Scan request
+ *
+ * Return: None
+ */
+#ifdef CFG80211_SCAN_BSSID
+static inline void wlan_hdd_copy_bssid_scan_request(tCsrScanRequest *scan_req,
+					struct cfg80211_scan_request *request)
+{
+	qdf_mem_copy(scan_req->bssid, request->bssid, VOS_MAC_ADDR_SIZE);
+}
+#else
+static inline void wlan_hdd_copy_bssid_scan_request(tCsrScanRequest *scan_req,
+					struct cfg80211_scan_request *request)
+{
+}
+#endif
+
+/**
  * __wlan_hdd_cfg80211_scan() - API to process cfg80211 scan request
  * @wiphy: Pointer to wiphy
  * @dev: Pointer to net device
@@ -1422,6 +1445,8 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	}
 	scan_req.minChnTime = cfg_param->nActiveMinChnTime;
 	scan_req.maxChnTime = cfg_param->nActiveMaxChnTime;
+
+	wlan_hdd_copy_bssid_scan_request(&scan_req, request);
 
 	/* set BSSType to default type */
 	scan_req.BSSType = eCSR_BSS_TYPE_ANY;
