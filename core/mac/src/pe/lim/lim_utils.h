@@ -619,4 +619,6 @@ bool lim_is_robust_mgmt_action_frame(uint8_t action_category);
 bool lim_is_ext_cap_ie_present (struct s_ext_cap *ext_cap);
 QDF_STATUS lim_p2p_action_cnf(tpAniSirGlobal mac_ctx,
 			uint32_t tx_complete_success);
+void lim_update_caps_info_for_bss(tpAniSirGlobal mac_ctx,
+			uint16_t *caps, uint16_t bss_caps);
 #endif /* __LIM_UTILS_H */

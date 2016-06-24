@@ -668,6 +668,11 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 		qdf_mem_free(pMlmReassocReq);
 		return;
 	}
+
+	lim_update_caps_info_for_bss(pMac, &caps,
+		psessionEntry->pLimReAssocReq->bssDescription.capabilityInfo);
+	lim_log(pMac, LOG1, FL("Capabilities info FT Reassoc: 0x%X"), caps);
+
 	pMlmReassocReq->capabilityInfo = caps;
 
 	/* Update PE sessionId */

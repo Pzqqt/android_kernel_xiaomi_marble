@@ -2339,6 +2339,11 @@ static void __lim_process_sme_reassoc_req(tpAniSirGlobal mac_ctx,
 		lim_log(mac_ctx, LOGP, FL(
 				"could not retrieve Capabilities value"));
 	}
+
+	lim_update_caps_info_for_bss(mac_ctx, &caps,
+				reassoc_req->bssDescription.capabilityInfo);
+	lim_log(mac_ctx, LOG1, FL("Capabilities info Reassoc: 0x%X"), caps);
+
 	mlm_reassoc_req->capabilityInfo = caps;
 
 	/* Update PE session_id */
