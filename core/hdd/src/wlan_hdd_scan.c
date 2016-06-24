@@ -606,7 +606,7 @@ QDF_STATUS wlan_hdd_scan_request_dequeue(hdd_context_t *hdd_ctx,
 
 	hdd_info("Dequeue Scan id: %d", scan_id);
 
-	if ((source == NULL) && (timestamp == NULL) && (req == NULL))
+	if ((source == NULL) || (timestamp == NULL) || (req == NULL))
 		return QDF_STATUS_E_NULL_VALUE;
 
 	qdf_spin_lock(&hdd_ctx->hdd_scan_req_q_lock);
