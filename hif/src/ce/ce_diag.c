@@ -185,7 +185,7 @@ QDF_STATUS hif_diag_read_mem(struct hif_opaque_softc *hif_ctx,
 	if ((target_type == TARGET_TYPE_IPQ4019) ||
 	    (target_type == TARGET_TYPE_AR900B)  ||
 	    (target_type == TARGET_TYPE_QCA9984) ||
-	    (target_type == TARGET_TYPE_IPQ4019) ||
+	    (target_type == TARGET_TYPE_AR9888) ||
 	    (target_type == TARGET_TYPE_QCA9888))
 		boundary_addr = FW_SRAM_ADDRESS;
 	else

@@ -1856,7 +1856,7 @@ int hif_set_hia(struct hif_softc *scn)
 	if ((target_type == TARGET_TYPE_AR900B)
 			|| (target_type == TARGET_TYPE_QCA9984)
 			|| (target_type == TARGET_TYPE_QCA9888)
-			|| (target_type == TARGET_TYPE_QCA9888)) {
+			|| (target_type == TARGET_TYPE_AR9888)) {
 		hif_set_hia_extnd(scn);
 	}
 
@@ -2327,6 +2327,7 @@ static int hif_pci_configure_legacy_irq(struct hif_pci_softc *sc)
 {
 	int ret = 0;
 	struct hif_softc *scn = HIF_GET_SOFTC(sc);
+	uint32_t target_type = scn->target_info.target_type;
 
 	HIF_TRACE("%s: E", __func__);
 
@@ -2350,6 +2351,15 @@ static int hif_pci_configure_legacy_irq(struct hif_pci_softc *sc)
 			       PCIE_INTR_ENABLE_ADDRESS));
 	hif_write32_mb(sc->mem + PCIE_LOCAL_BASE_ADDRESS +
 		      PCIE_SOC_WAKE_ADDRESS, PCIE_SOC_WAKE_RESET);
+
+	if ((target_type == TARGET_TYPE_IPQ4019) ||
+			(target_type == TARGET_TYPE_AR900B)  ||
+			(target_type == TARGET_TYPE_QCA9984) ||
+			(target_type == TARGET_TYPE_AR9888) ||
+			(target_type == TARGET_TYPE_QCA9888)) {
+		hif_write32_mb(scn->mem + PCIE_LOCAL_BASE_ADDRESS +
+				PCIE_SOC_WAKE_ADDRESS, PCIE_SOC_WAKE_V_MASK);
+	}
 end:
 	QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: X, ret = %d", __func__, ret);
