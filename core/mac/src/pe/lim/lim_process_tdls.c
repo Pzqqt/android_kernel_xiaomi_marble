@@ -2357,8 +2357,18 @@ static void lim_tdls_update_hash_node_info(tpAniSirGlobal pMac,
 		 * channel width of STA-AP link. So take this setting from the
 		 * psessionEntry.
 		 */
+		lim_log(pMac, LOG1,
+			FL("supportedChannelWidthSet 0x%x htSupportedChannelWidthSet 0x%x"),
+				htCaps->supportedChannelWidthSet,
+				psessionEntry->htSupportedChannelWidthSet);
 		pStaDs->htSupportedChannelWidthSet =
-			psessionEntry->htSupportedChannelWidthSet;
+				(htCaps->supportedChannelWidthSet <
+				 psessionEntry->htSupportedChannelWidthSet) ?
+				htCaps->supportedChannelWidthSet :
+				psessionEntry->htSupportedChannelWidthSet;
+		lim_log(pMac, LOG1, FL("pStaDs->htSupportedChannelWidthSet 0x%x"),
+				pStaDs->htSupportedChannelWidthSet);
+
 		pStaDs->htMIMOPSState = htCaps->mimoPowerSave;
 		pStaDs->htMaxAmsduLength = htCaps->maximalAMSDUsize;
 		pStaDs->htAMpduDensity = htCaps->mpduDensity;
