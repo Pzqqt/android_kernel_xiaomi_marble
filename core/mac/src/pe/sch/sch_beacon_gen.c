@@ -395,8 +395,9 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 			populate_dot11f_operating_mode(mac_ctx,
 						&bcn_2->OperatingMode, session);
 	}
-	populate_dot11f_ext_cap(mac_ctx, is_vht_enabled, &bcn_2->ExtCap,
-				session);
+	if (session->limSystemRole != eLIM_STA_IN_IBSS_ROLE)
+		populate_dot11f_ext_cap(mac_ctx, is_vht_enabled, &bcn_2->ExtCap,
+					session);
 	populate_dot11f_ext_supp_rates(mac_ctx,
 				POPULATE_DOT11F_RATES_OPERATIONAL,
 				&bcn_2->ExtSuppRates, session);
@@ -498,7 +499,8 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 			sch_log(mac_ctx, LOG1, FL("extcap not extracted"));
 		}
 		/* merge extcap IE */
-		if (extcap_present)
+		if (extcap_present &&
+			session->limSystemRole != eLIM_STA_IN_IBSS_ROLE)
 			lim_merge_extcap_struct(&bcn_2->ExtCap,
 						&extracted_extcap);
 
