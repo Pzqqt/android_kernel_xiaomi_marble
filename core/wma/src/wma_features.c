@@ -2619,6 +2619,9 @@ static int wow_get_wmi_eventid(int32_t reason, uint32_t tag)
 	case WOW_REASON_NAN_DATA:
 		event_id = wma_ndp_get_eventid_from_tlvtag(tag);
 		break;
+	case WOW_REASON_TDLS_CONN_TRACKER_EVENT:
+		event_id = WOW_TDLS_CONN_TRACKER_EVENT;
+		break;
 	default:
 		WMA_LOGD(FL("Unexpected WOW reason : %s(%d)"),
 			 wma_wow_wake_reason_str(reason), reason);
@@ -3355,6 +3358,16 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 		 */
 		WMA_LOGD(FL("Host woken up for OEM Response event"));
 		break;
+#ifdef FEATURE_WLAN_TDLS
+	case WOW_REASON_TDLS_CONN_TRACKER_EVENT:
+		WMA_LOGD("Host woken up because of TDLS event");
+		if (param_buf->wow_packet_buffer)
+			wma_tdls_event_handler(handle,
+				wmi_cmd_struct_ptr, wow_buf_pkt_len);
+		else
+			WMA_LOGD("No wow_packet_buffer present");
+		break;
+#endif
 	default:
 		break;
 	}
