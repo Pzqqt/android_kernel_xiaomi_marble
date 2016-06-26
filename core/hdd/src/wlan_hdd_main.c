@@ -2378,30 +2378,73 @@ void hdd_cleanup_actionframe(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 	return;
 }
 
+/**
+ * hdd_station_adapter_deinit() - De-initialize the station adapter
+ * @hdd_ctx: global hdd context
+ * @adapter: HDD adapter
+ *
+ * This function De-initializes the STA/P2P/OCB adapter.
+ *
+ * Return: None.
+ */
+void hdd_station_adapter_deinit(hdd_context_t *hdd_ctx,
+				hdd_adapter_t *adapter)
+{
+	ENTER_DEV(adapter->dev);
+
+	if (test_bit(INIT_TX_RX_SUCCESS, &adapter->event_flags)) {
+		hdd_deinit_tx_rx(adapter);
+		clear_bit(INIT_TX_RX_SUCCESS, &adapter->event_flags);
+	}
+
+	if (test_bit(WMM_INIT_DONE, &adapter->event_flags)) {
+		hdd_wmm_adapter_close(adapter);
+		clear_bit(WMM_INIT_DONE, &adapter->event_flags);
+	}
+
+	hdd_cleanup_actionframe(hdd_ctx, adapter);
+	wlan_hdd_tdls_exit(adapter);
+
+	EXIT();
+}
+
+/**
+ * hdd_ap_adapter_deinit() - De-initialize the ap adapter
+ * @hdd_ctx: global hdd context
+ * @adapter: HDD adapter
+ * @rtnl_held: the rtnl lock hold flag
+ * This function De-initializes the AP/P2PGo adapter.
+ *
+ * Return: None.
+ */
+void hdd_ap_adapter_deinit(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
+			   bool rtnl_held)
+{
+	ENTER_DEV(adapter->dev);
+
+	if (test_bit(WMM_INIT_DONE, &adapter->event_flags)) {
+		hdd_wmm_adapter_close(adapter);
+		clear_bit(WMM_INIT_DONE, &adapter->event_flags);
+	}
+
+	hdd_cleanup_actionframe(hdd_ctx, adapter);
+
+	hdd_unregister_hostapd(adapter, rtnl_held);
+
+	EXIT();
+}
+
 void hdd_deinit_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			bool rtnl_held)
 {
 	ENTER();
+
 	switch (adapter->device_mode) {
 	case QDF_STA_MODE:
 	case QDF_P2P_CLIENT_MODE:
 	case QDF_P2P_DEVICE_MODE:
 	{
-		if (test_bit
-			    (INIT_TX_RX_SUCCESS, &adapter->event_flags)) {
-			hdd_deinit_tx_rx(adapter);
-			clear_bit(INIT_TX_RX_SUCCESS,
-				  &adapter->event_flags);
-		}
-
-		if (test_bit(WMM_INIT_DONE, &adapter->event_flags)) {
-			hdd_wmm_adapter_close(adapter);
-			clear_bit(WMM_INIT_DONE,
-				  &adapter->event_flags);
-		}
-
-		hdd_cleanup_actionframe(hdd_ctx, adapter);
-		wlan_hdd_tdls_exit(adapter);
+		hdd_station_adapter_deinit(hdd_ctx, adapter);
 		break;
 	}
 
@@ -2409,16 +2452,7 @@ void hdd_deinit_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 	case QDF_P2P_GO_MODE:
 	{
 
-		if (test_bit(WMM_INIT_DONE, &adapter->event_flags)) {
-			hdd_wmm_adapter_close(adapter);
-			clear_bit(WMM_INIT_DONE,
-				  &adapter->event_flags);
-		}
-
-		hdd_cleanup_actionframe(hdd_ctx, adapter);
-
-		hdd_unregister_hostapd(adapter, rtnl_held);
-
+		hdd_ap_adapter_deinit(hdd_ctx, adapter, rtnl_held);
 		break;
 	}
 
@@ -2578,13 +2612,15 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 
 		adapter->device_mode = session_type;
 
-		if (QDF_NDI_MODE == session_type)
+		if (QDF_NDI_MODE == session_type) {
 			status = hdd_init_nan_data_mode(adapter);
-		else
-			status = hdd_init_station_mode(adapter);
-
-		if (QDF_STATUS_SUCCESS != status)
-			goto err_free_netdev;
+			if (QDF_STATUS_SUCCESS != status)
+				goto err_free_netdev;
+		} else {
+			ret = hdd_start_station_adapter(adapter);
+			if (ret)
+				goto err_free_netdev;
+		}
 
 		hdd_lro_enable(hdd_ctx, adapter);
 
@@ -2641,8 +2677,8 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 			NL80211_IFTYPE_P2P_GO;
 		adapter->device_mode = session_type;
 
-		status = hdd_init_ap_mode(adapter);
-		if (QDF_STATUS_SUCCESS != status)
+		ret = hdd_start_ap_adapter(adapter);
+		if (ret)
 			goto err_free_netdev;
 
 		status = hdd_register_hostapd(adapter, rtnl_held);
@@ -2679,7 +2715,9 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 		adapter->device_mode = session_type;
 		status = hdd_register_interface(adapter, rtnl_held);
 
-		hdd_init_tx_rx(adapter);
+		ret = hdd_start_ftm_adapter(adapter);
+		if (ret)
+			goto err_free_netdev;
 
 		/* Stop the Interface TX queue. */
 		hddLog(LOG1, FL("Disabling queues"));
@@ -6014,6 +6052,81 @@ static hdd_adapter_t *hdd_open_monitor_interface(hdd_context_t *hdd_ctx,
 		return ERR_PTR(-ENOSPC);
 
 	return adapter;
+}
+
+/**
+ * hdd_start_station_adapter()- Start the Station Adapter
+ * @adapter: HDD adapter
+ *
+ * This function initializes the adapter for the station mode.
+ *
+ * Return: 0 on success or errno on failure.
+ */
+int hdd_start_station_adapter(hdd_adapter_t *adapter)
+{
+	QDF_STATUS status;
+
+	ENTER_DEV(adapter->dev);
+
+	status = hdd_init_station_mode(adapter);
+
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_err("Error Initializing station mode: %d", status);
+		return qdf_status_to_os_return(status);
+	}
+
+	EXIT();
+	return 0;
+}
+
+/**
+ * hdd_start_ap_adapter()- Start AP Adapter
+ * @adapter: HDD adapter
+ *
+ * This function initializes the adapter for the AP mode.
+ *
+ * Return: 0 on success errno on failure.
+ */
+int hdd_start_ap_adapter(hdd_adapter_t *adapter)
+{
+	QDF_STATUS status;
+
+	ENTER();
+
+	status = hdd_init_ap_mode(adapter);
+
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_err("Error Initializing the AP mode: %d", status);
+		return qdf_status_to_os_return(status);
+	}
+
+	EXIT();
+	return 0;
+}
+
+/**
+ * hdd_start_ftm_adapter()- Start FTM adapter
+ * @adapter: HDD adapter
+ *
+ * This function initializes the adapter for the FTM mode.
+ *
+ * Return: 0 on success or errno on failure.
+ */
+int hdd_start_ftm_adapter(hdd_adapter_t *adapter)
+{
+	QDF_STATUS qdf_status;
+
+	ENTER_DEV(adapter->dev);
+
+	qdf_status = hdd_init_tx_rx(adapter);
+
+	if (QDF_STATUS_SUCCESS != qdf_status) {
+		hdd_err("Failed to start FTM adapter: %d", qdf_status);
+		return qdf_status_to_os_return(qdf_status);
+	}
+
+	return 0;
+	EXIT();
 }
 
 /**

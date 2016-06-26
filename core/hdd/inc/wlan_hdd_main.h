@@ -1742,4 +1742,7 @@ int hdd_reassoc(hdd_adapter_t *adapter, const uint8_t *bssid,
 
 int hdd_register_cb(hdd_context_t *hdd_ctx);
 void hdd_deregister_cb(hdd_context_t *hdd_ctx);
+int hdd_start_station_adapter(hdd_adapter_t *adapter);
+int hdd_start_ap_adapter(hdd_adapter_t *adapter);
+int hdd_start_ftm_adapter(hdd_adapter_t *adapter);
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */
