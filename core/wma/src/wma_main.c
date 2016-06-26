@@ -1575,23 +1575,23 @@ int wma_process_fw_event_handler(void *ctx, void *ev, uint8_t rx_ctx)
 /**
  * ol_cfg_set_flow_control_parameters() - set flow control parameters
  * @olCfg: cfg parameters
- * @mac_params: mac parameters
+ * @cds_cfg: CDS Configuration
  *
  * Return: none
  */
 static
 void ol_cfg_set_flow_control_parameters(struct txrx_pdev_cfg_param_t *olCfg,
-		tMacOpenParameters *mac_params)
+					struct cds_config_info *cds_cfg)
 {
 	olCfg->tx_flow_start_queue_offset =
-				mac_params->tx_flow_start_queue_offset;
+				cds_cfg->tx_flow_start_queue_offset;
 	olCfg->tx_flow_stop_queue_th =
-				mac_params->tx_flow_stop_queue_th;
+				cds_cfg->tx_flow_stop_queue_th;
 }
 #else
 static
 void ol_cfg_set_flow_control_parameters(struct txrx_pdev_cfg_param_t *olCfg,
-		tMacOpenParameters *mac_params)
+					struct cds_config_info *cds_cfg)
 {
 	return;
 }
@@ -1601,18 +1601,18 @@ void ol_cfg_set_flow_control_parameters(struct txrx_pdev_cfg_param_t *olCfg,
 /**
  * wma_set_nan_enable() - set nan enable flag in WMA handle
  * @wma_handle: Pointer to wma handle
- * @mac_param: Pointer to mac_param
+ * @cds_cfg: Pointer to CDS Configuration
  *
  * Return: none
  */
 static void wma_set_nan_enable(tp_wma_handle wma_handle,
-				tMacOpenParameters *mac_param)
+				struct cds_config_info *cds_cfg)
 {
-	wma_handle->is_nan_enabled = mac_param->is_nan_enabled;
+	wma_handle->is_nan_enabled = cds_cfg->is_nan_enabled;
 }
 #else
 static void wma_set_nan_enable(tp_wma_handle wma_handle,
-				tMacOpenParameters *mac_param)
+				struct cds_config_info *cds_cfg)
 {
 }
 #endif
@@ -1642,14 +1642,14 @@ static void wma_init_max_no_of_peers(tp_wma_handle wma_handle,
  * @cds_context:  cds context
  * @wma_tgt_cfg_cb: tgt config callback fun
  * @radar_ind_cb: dfs radar indication callback
- * @mac_params:  mac parameters
+ * @cds_cfg:  mac parameters
  *
  * Return: 0 on success, errno on failure
  */
 QDF_STATUS wma_open(void *cds_context,
 		    wma_tgt_cfg_cb tgt_cfg_cb,
 		    wma_dfs_radar_indication_cb radar_ind_cb,
-		    tMacOpenParameters *mac_params)
+		    struct cds_config_info *cds_cfg)
 {
 	tp_wma_handle wma_handle;
 	HTC_HANDLE htc_handle;
@@ -1724,30 +1724,30 @@ QDF_STATUS wma_open(void *cds_context,
 	wma_handle->htc_handle = htc_handle;
 	wma_handle->cds_context = cds_context;
 	wma_handle->qdf_dev = qdf_dev;
-	wma_handle->max_scan = mac_params->max_scan;
+	wma_handle->max_scan = cds_cfg->max_scan;
 
 	wma_handle->wma_runtime_resume_lock =
 		qdf_runtime_lock_init("wma_runtime_resume");
 
 	/* Initialize max_no_of_peers for wma_get_number_of_peers_supported() */
-	wma_init_max_no_of_peers(wma_handle, mac_params->maxStation);
+	wma_init_max_no_of_peers(wma_handle, cds_cfg->max_station);
 	/* Cap maxStation based on the target version */
-	mac_params->maxStation = wma_get_number_of_peers_supported(wma_handle);
+	cds_cfg->max_station = wma_get_number_of_peers_supported(wma_handle);
 	/* Reinitialize max_no_of_peers based on the capped maxStation value */
-	wma_init_max_no_of_peers(wma_handle, mac_params->maxStation);
+	wma_init_max_no_of_peers(wma_handle, cds_cfg->max_station);
 
 	/* initialize default target config */
 	wma_set_default_tgt_config(wma_handle);
 
-	olCfg.is_uc_offload_enabled = mac_params->ucOffloadEnabled;
-	olCfg.uc_tx_buffer_count = mac_params->ucTxBufCount;
-	olCfg.uc_tx_buffer_size = mac_params->ucTxBufSize;
-	olCfg.uc_rx_indication_ring_count = mac_params->ucRxIndRingCount;
-	olCfg.uc_tx_partition_base = mac_params->ucTxPartitionBase;
+	olCfg.is_uc_offload_enabled = cds_cfg->uc_offload_enabled;
+	olCfg.uc_tx_buffer_count = cds_cfg->uc_txbuf_count;
+	olCfg.uc_tx_buffer_size = cds_cfg->uc_txbuf_size;
+	olCfg.uc_rx_indication_ring_count = cds_cfg->uc_rxind_ringcount;
+	olCfg.uc_tx_partition_base = cds_cfg->uc_tx_partition_base;
 
 
-	wma_handle->tx_chain_mask_cck = mac_params->tx_chain_mask_cck;
-	wma_handle->self_gen_frm_pwr = mac_params->self_gen_frm_pwr;
+	wma_handle->tx_chain_mask_cck = cds_cfg->tx_chain_mask_cck;
+	wma_handle->self_gen_frm_pwr = cds_cfg->self_gen_frm_pwr;
 
 	/* Allocate cfg handle */
 
@@ -1756,16 +1756,16 @@ QDF_STATUS wma_open(void *cds_context,
 	 * HL also sdould be enabled, schedule TBD
 	 */
 #ifdef WLAN_FEATURE_RX_FULL_REORDER_OL
-	olCfg.is_full_reorder_offload = mac_params->reorderOffload;
+	olCfg.is_full_reorder_offload = cds_cfg->reorder_offload;
 #else
 	olCfg.is_full_reorder_offload = 0;
 #endif /* WLAN_FEATURE_RX_FULL_REORDER_OL */
-	olCfg.enable_rxthread = mac_params->enable_rxthread;
+	olCfg.enable_rxthread = cds_cfg->enable_rxthread;
 	olCfg.ip_tcp_udp_checksum_offload =
-			mac_params->ip_tcp_udp_checksum_offload;
-	olCfg.ce_classify_enabled = mac_params->ce_classify_enabled;
+			cds_cfg->ip_tcp_udp_checksum_offload;
+	olCfg.ce_classify_enabled = cds_cfg->ce_classify_enabled;
 
-	ol_cfg_set_flow_control_parameters(&olCfg, mac_params);
+	ol_cfg_set_flow_control_parameters(&olCfg, cds_cfg);
 
 	((p_cds_contextType) cds_context)->cfg_ctx =
 		ol_pdev_cfg_attach(((p_cds_contextType) cds_context)->qdf_ctx,
@@ -1779,7 +1779,7 @@ QDF_STATUS wma_open(void *cds_context,
 	/* adjust the cfg_ctx default value based on setting */
 	ol_set_cfg_rx_fwd_disabled((ol_pdev_handle)
 				   ((p_cds_contextType) cds_context)->cfg_ctx,
-				   (uint8_t) mac_params->apDisableIntraBssFwd);
+				   (uint8_t) cds_cfg->ap_disable_intrabss_fwd);
 
 	/* adjust the packet log enable default value based on CFG INI setting */
 	ol_set_cfg_packet_log_enabled((ol_pdev_handle)
@@ -1797,12 +1797,14 @@ QDF_STATUS wma_open(void *cds_context,
 	if (cds_get_conparam() == QDF_GLOBAL_FTM_MODE)
 		wma_utf_attach(wma_handle);
 #endif /* QCA_WIFI_FTM */
+	wma_init_max_no_of_peers(wma_handle, cds_cfg->max_station);
+	cds_cfg->max_station = wma_get_number_of_peers_supported(wma_handle);
 
-	mac_params->maxBssId = WMA_MAX_SUPPORTED_BSS;
-	mac_params->frameTransRequired = 0;
+	cds_cfg->max_bssid = WMA_MAX_SUPPORTED_BSS;
+	cds_cfg->frame_xln_reqd = 0;
 
 	wma_handle->wlan_resource_config.num_wow_filters =
-		mac_params->maxWoWFilters;
+		cds_cfg->max_wow_filters;
 	wma_handle->wlan_resource_config.num_keep_alive_pattern =
 		WMA_MAXNUM_PERIODIC_TX_PTRNS;
 
@@ -1810,33 +1812,33 @@ QDF_STATUS wma_open(void *cds_context,
 	 * offload peers should be (number of vdevs + 1).
 	 */
 	wma_handle->wlan_resource_config.num_offload_peers =
-		mac_params->apMaxOffloadPeers + 1;
+		cds_cfg->ap_maxoffload_peers + 1;
 
 	wma_handle->wlan_resource_config.num_offload_reorder_buffs =
-		mac_params->apMaxOffloadReorderBuffs + 1;
+		cds_cfg->ap_maxoffload_reorderbuffs + 1;
 
-	wma_handle->ol_ini_info = mac_params->olIniInfo;
-	wma_handle->max_station = mac_params->maxStation;
-	wma_handle->max_bssid = mac_params->maxBssId;
-	wma_handle->frame_xln_reqd = mac_params->frameTransRequired;
-	wma_handle->driver_type = mac_params->driverType;
-	wma_handle->ssdp = mac_params->ssdp;
-	wma_handle->enable_mc_list = mac_params->enable_mc_list;
+	wma_handle->ol_ini_info = cds_cfg->ol_ini_info;
+	wma_handle->max_station = cds_cfg->max_station;
+	wma_handle->max_bssid = cds_cfg->max_bssid;
+	wma_handle->frame_xln_reqd = cds_cfg->frame_xln_reqd;
+	wma_handle->driver_type = cds_cfg->driver_type;
+	wma_handle->ssdp = cds_cfg->ssdp;
+	wma_handle->enable_mc_list = cds_cfg->enable_mc_list;
 #ifdef FEATURE_WLAN_RA_FILTERING
-	wma_handle->IsRArateLimitEnabled = mac_params->IsRArateLimitEnabled;
-	wma_handle->RArateLimitInterval = mac_params->RArateLimitInterval;
+	wma_handle->IsRArateLimitEnabled = cds_cfg->is_ra_ratelimit_enabled;
+	wma_handle->RArateLimitInterval = cds_cfg->ra_ratelimit_interval;
 #endif /* FEATURE_WLAN_RA_FILTERING */
 #ifdef WLAN_FEATURE_LPSS
-	wma_handle->is_lpass_enabled = mac_params->is_lpass_enabled;
+	wma_handle->is_lpass_enabled = cds_cfg->is_lpass_enabled;
 #endif
-	wma_set_nan_enable(wma_handle, mac_params);
+	wma_set_nan_enable(wma_handle, cds_cfg);
 	/*
 	 * Indicates if DFS Phyerr filtering offload
 	 * is Enabled/Disabed from ini
 	 */
 	wma_handle->dfs_phyerr_filter_offload =
-		mac_params->dfsPhyerrFilterOffload;
-	wma_handle->dfs_pri_multiplier = mac_params->dfsRadarPriMultiplier;
+		cds_cfg->dfs_phyerr_filter_offload;
+	wma_handle->dfs_pri_multiplier = cds_cfg->dfs_pri_multiplier;
 	wma_handle->interfaces = qdf_mem_malloc(sizeof(struct wma_txrx_node) *
 						wma_handle->max_bssid);
 	if (!wma_handle->interfaces) {
@@ -2035,13 +2037,13 @@ QDF_STATUS wma_open(void *cds_context,
 	 * 3 - Legacy Powersave + Deepsleep Enabled
 	 * 4 - QPower + Deepsleep Enabled
 	 */
-	wma_handle->powersave_mode = mac_params->powersaveOffloadEnabled;
-	wma_handle->staMaxLIModDtim = mac_params->staMaxLIModDtim;
-	wma_handle->staModDtim = mac_params->staModDtim;
-	wma_handle->staDynamicDtim = mac_params->staDynamicDtim;
+	wma_handle->powersave_mode = cds_cfg->powersave_offload_enabled;
+	wma_handle->staMaxLIModDtim = cds_cfg->sta_maxlimod_dtim;
+	wma_handle->staModDtim = cds_cfg->sta_mod_dtim;
+	wma_handle->staDynamicDtim = cds_cfg->sta_dynamic_dtim;
 
 	/*
-	 * Value of mac_params->wowEnable can be,
+	 * Value of cds_cfg->wow_enable can be,
 	 * 0 - Disable both magic pattern match and pattern byte match.
 	 * 1 - Enable magic pattern match on all interfaces.
 	 * 2 - Enable pattern byte match on all interfaces.
@@ -2049,9 +2051,9 @@ QDF_STATUS wma_open(void *cds_context,
 	 *     all interfaces.
 	 */
 	wma_handle->wow.magic_ptrn_enable =
-		(mac_params->wowEnable & 0x01) ? true : false;
+		(cds_cfg->wow_enable & 0x01) ? true : false;
 	wma_handle->ptrn_match_enable_all_vdev =
-		(mac_params->wowEnable & 0x02) ? true : false;
+		(cds_cfg->wow_enable & 0x02) ? true : false;
 
 #ifdef FEATURE_WLAN_TDLS
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,

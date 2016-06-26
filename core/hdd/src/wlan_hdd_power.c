@@ -1432,7 +1432,7 @@ QDF_STATUS hdd_wlan_re_init(void *hif_sc)
 	hdd_context_t *pHddCtx = NULL;
 	QDF_STATUS qdf_ret_status;
 	hdd_adapter_t *pAdapter;
-	int i;
+	int i, ret;
 
 	hdd_prevent_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_REINIT);
 
@@ -1459,6 +1459,10 @@ QDF_STATUS hdd_wlan_re_init(void *hif_sc)
 
 	/* The driver should always be initialized in STA mode after SSR */
 	hdd_set_conparam(0);
+
+	ret = hdd_update_config(pHddCtx);
+	if (ret)
+		goto err_re_init;
 
 	/* Re-open CDS, it is a re-open b'se control transport was never closed. */
 	qdf_status = cds_open();

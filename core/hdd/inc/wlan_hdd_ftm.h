@@ -57,6 +57,7 @@ struct wlan_hdd_ftm_status {
 
 int wlan_hdd_ftm_open(hdd_context_t *hdd_ctx);
 int wlan_hdd_ftm_close(hdd_context_t *hdd_ctx);
+int hdd_update_cds_config_ftm(hdd_context_t *hdd_ctx);
 
 #if  defined(QCA_WIFI_FTM)
 QDF_STATUS wlan_hdd_ftm_testmode_cmd(void *data, int len);

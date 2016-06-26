@@ -104,7 +104,7 @@ tSirRetStatus mac_stop(tHalHandle hHal, tHalStopType stopType)
    -------------------------------------------------------------*/
 
 tSirRetStatus mac_open(tHalHandle *pHalHandle, tHddHandle hHdd,
-		       tMacOpenParameters *pMacOpenParms)
+		       struct cds_config_info *cds_cfg)
 {
 	tpAniSirGlobal p_mac = NULL;
 	tSirRetStatus status = eSIR_SUCCESS;
@@ -155,7 +155,7 @@ tSirRetStatus mac_open(tHalHandle *pHalHandle, tHddHandle hHdd,
 	p_mac->mgmtSeqNum = WLAN_HOST_SEQ_NUM_MIN - 1;
 	p_mac->first_scan_done = false;
 
-	status =  pe_open(p_mac, pMacOpenParms);
+	status =  pe_open(p_mac, cds_cfg);
 	if (eSIR_SUCCESS != status) {
 		sys_log(p_mac, LOGE, FL("mac_open failure\n"));
 		qdf_mem_free(p_mac);

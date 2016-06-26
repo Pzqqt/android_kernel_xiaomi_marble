@@ -701,7 +701,7 @@ QDF_STATUS wma_tx_packet(void *pWMA,
 QDF_STATUS wma_open(void *p_cds_context,
 		    wma_tgt_cfg_cb pTgtUpdCB,
 		    wma_dfs_radar_indication_cb radar_ind_cb,
-		    tMacOpenParameters *pMacParams);
+		    struct cds_config_info *cds_cfg);
 
 typedef QDF_STATUS (*wma_mgmt_frame_rx_callback)(void *p_cds_gctx,
 					     void *cds_buff);

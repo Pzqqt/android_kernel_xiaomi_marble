@@ -98,7 +98,7 @@ typedef enum eMgmtFrmDropReason {
  * This called upon LIM thread creation.
  */
 extern tSirRetStatus lim_initialize(tpAniSirGlobal);
-tSirRetStatus pe_open(tpAniSirGlobal pMac, tMacOpenParameters *pMacOpenParam);
+tSirRetStatus pe_open(tpAniSirGlobal pMac, struct cds_config_info *cds_cfg);
 tSirRetStatus pe_close(tpAniSirGlobal pMac);
 void pe_register_tl_handle(tpAniSirGlobal pMac);
 tSirRetStatus lim_start(tpAniSirGlobal pMac);

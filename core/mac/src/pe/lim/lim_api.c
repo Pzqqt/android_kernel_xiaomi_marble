@@ -691,15 +691,15 @@ void lim_cleanup(tpAniSirGlobal pMac)
    \return  tSirRetStatus
    -------------------------------------------------------------*/
 
-tSirRetStatus pe_open(tpAniSirGlobal pMac, tMacOpenParameters *pMacOpenParam)
+tSirRetStatus pe_open(tpAniSirGlobal pMac, struct cds_config_info *cds_cfg)
 {
 	tSirRetStatus status = eSIR_SUCCESS;
 
-	if (eDRIVER_TYPE_MFG == pMacOpenParam->driverType)
+	if (DRIVER_TYPE_MFG == cds_cfg->driver_type)
 		return eSIR_SUCCESS;
 
-	pMac->lim.maxBssId = pMacOpenParam->maxBssId;
-	pMac->lim.maxStation = pMacOpenParam->maxStation;
+	pMac->lim.maxBssId = cds_cfg->max_bssid;
+	pMac->lim.maxStation = cds_cfg->max_station;
 
 	if ((pMac->lim.maxBssId == 0) || (pMac->lim.maxStation == 0)) {
 		PELOGE(lim_log(pMac, LOGE,

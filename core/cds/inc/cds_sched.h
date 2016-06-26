@@ -49,6 +49,7 @@
 #include <qdf_types.h>
 #include "qdf_lock.h"
 #include "qdf_mc_timer.h"
+#include "cds_config.h"
 
 #define TX_POST_EVENT_MASK               0x001
 #define TX_SUSPEND_EVENT_MASK            0x002
@@ -317,6 +318,7 @@ typedef struct _cds_context_type {
 	uint32_t sap_mandatory_channels_len;
 	bool do_hw_mode_change;
 	bool enable_fatal_event;
+	struct cds_config_info *cds_cfg;
 } cds_context_type, *p_cds_contextType;
 
 /*---------------------------------------------------------------------------

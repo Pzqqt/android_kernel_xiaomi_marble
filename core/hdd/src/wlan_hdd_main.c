@@ -6115,6 +6115,145 @@ static int hdd_update_country_code(hdd_context_t *hdd_ctx,
 	return ret;
 }
 
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+/**
+ * hdd_txrx_populate_cds_config() - Populate txrx cds configuration
+ * @cds_cfg: CDS Configuration
+ * @hdd_ctx: Pointer to hdd context
+ *
+ * Return: none
+ */
+static inline void hdd_txrx_populate_cds_config(struct cds_config_info
+						*cds_cfg,
+						hdd_context_t *hdd_ctx)
+{
+	cds_cfg->tx_flow_stop_queue_th =
+		hdd_ctx->config->TxFlowStopQueueThreshold;
+	cds_cfg->tx_flow_start_queue_offset =
+		hdd_ctx->config->TxFlowStartQueueOffset;
+}
+#else
+static inline void hdd_txrx_populate_cds_config(struct cds_config_info
+						*cds_cfg,
+						hdd_context_t *hdd_ctx)
+{
+}
+#endif
+
+#ifdef FEATURE_WLAN_RA_FILTERING
+/**
+ * hdd_ra_populate_cds_config() - Populate RA filtering cds configuration
+ * @cds_cfg: CDS Configuration
+ * @hdd_ctx: Pointer to hdd context
+ *
+ * Return: none
+ */
+inline void hdd_ra_populate_cds_config(struct cds_config_info *cds_cfg,
+			      hdd_context_t *hdd_ctx)
+{
+	cds_cfg->ra_ratelimit_interval =
+		hdd_ctx->config->RArateLimitInterval;
+	cds_cfg->is_ra_ratelimit_enabled =
+		hdd_ctx->config->IsRArateLimitEnabled;
+}
+#else
+inline void hdd_ra_populate_cds_config(struct cds_config_info *cds_cfg,
+			     hdd_context_t *hdd_ctx)
+{
+}
+#endif
+
+/**
+ * hdd_update_cds_config() - API to update cds configuration parameters
+ * @hdd_ctx: HDD Context
+ *
+ * Return: 0 for Success, errno on failure
+ */
+int hdd_update_cds_config(hdd_context_t *hdd_ctx)
+{
+	struct cds_config_info *cds_cfg;
+
+	cds_cfg = (struct cds_config_info *)qdf_mem_malloc(sizeof(*cds_cfg));
+	if (!cds_cfg) {
+		hdd_err("failed to allocate cds config");
+		return -ENOMEM;
+	}
+
+	qdf_mem_zero(cds_cfg, sizeof(*cds_cfg));
+
+	/* UMA is supported in hardware for performing the
+	 * frame translation 802.11 <-> 802.3
+	 */
+	cds_cfg->frame_xln_reqd = 1;
+	cds_cfg->driver_type = DRIVER_TYPE_PRODUCTION;
+	cds_cfg->powersave_offload_enabled =
+		hdd_ctx->config->enablePowersaveOffload;
+	cds_cfg->sta_dynamic_dtim = hdd_ctx->config->enableDynamicDTIM;
+	cds_cfg->sta_mod_dtim = hdd_ctx->config->enableModulatedDTIM;
+	cds_cfg->sta_maxlimod_dtim = hdd_ctx->config->fMaxLIModulatedDTIM;
+	cds_cfg->wow_enable = hdd_ctx->config->wowEnable;
+	cds_cfg->max_wow_filters = hdd_ctx->config->maxWoWFilters;
+
+	/* Here ol_ini_info is used to store ini status of arp offload
+	 * ns offload and others. Currently 1st bit is used for arp
+	 * off load and 2nd bit for ns offload currently, rest bits are unused
+	 */
+	if (hdd_ctx->config->fhostArpOffload)
+		cds_cfg->ol_ini_info = cds_cfg->ol_ini_info | 0x1;
+	if (hdd_ctx->config->fhostNSOffload)
+		cds_cfg->ol_ini_info = cds_cfg->ol_ini_info | 0x2;
+
+	/*
+	 * Copy the DFS Phyerr Filtering Offload status.
+	 * This parameter reflects the value of the
+	 * dfs_phyerr_filter_offload flag as set in the ini.
+	 */
+	cds_cfg->dfs_phyerr_filter_offload =
+		hdd_ctx->config->fDfsPhyerrFilterOffload;
+	if (hdd_ctx->config->ssdp)
+		cds_cfg->ssdp = hdd_ctx->config->ssdp;
+
+	cds_cfg->enable_mc_list = hdd_ctx->config->fEnableMCAddrList;
+	cds_cfg->ap_maxoffload_peers = hdd_ctx->config->apMaxOffloadPeers;
+
+	cds_cfg->ap_maxoffload_reorderbuffs =
+		hdd_ctx->config->apMaxOffloadReorderBuffs;
+
+	cds_cfg->ap_disable_intrabss_fwd =
+		hdd_ctx->config->apDisableIntraBssFwd;
+
+	cds_cfg->dfs_pri_multiplier =
+		hdd_ctx->config->dfsRadarPriMultiplier;
+	cds_cfg->reorder_offload =
+			hdd_ctx->config->reorderOffloadSupport;
+
+	/* IPA micro controller data path offload resource config item */
+	cds_cfg->uc_offload_enabled = hdd_ipa_uc_is_enabled(hdd_ctx);
+	cds_cfg->uc_txbuf_count = hdd_ctx->config->IpaUcTxBufCount;
+	cds_cfg->uc_txbuf_size = hdd_ctx->config->IpaUcTxBufSize;
+	cds_cfg->uc_rxind_ringcount =
+			hdd_ctx->config->IpaUcRxIndRingCount;
+	cds_cfg->uc_tx_partition_base =
+				hdd_ctx->config->IpaUcTxPartitionBase;
+	cds_cfg->max_scan = hdd_ctx->config->max_scan_count;
+
+	cds_cfg->ip_tcp_udp_checksum_offload =
+		hdd_ctx->config->enable_ip_tcp_udp_checksum_offload;
+	cds_cfg->enable_rxthread = hdd_ctx->config->enableRxThread;
+	cds_cfg->ce_classify_enabled =
+		hdd_ctx->config->ce_classify_enabled;
+	cds_cfg->tx_chain_mask_cck = hdd_ctx->config->tx_chain_mask_cck;
+	cds_cfg->self_gen_frm_pwr = hdd_ctx->config->self_gen_frm_pwr;
+	cds_cfg->max_station = hdd_ctx->config->maxNumberOfPeers;
+
+	hdd_ra_populate_cds_config(cds_cfg, hdd_ctx);
+	hdd_txrx_populate_cds_config(cds_cfg, hdd_ctx);
+	hdd_nan_populate_cds_config(cds_cfg, hdd_ctx);
+
+	cds_init_ini_config(cds_cfg);
+	return 0;
+}
+
 /**
  * hdd_init_thermal_info - Initialize thermal level
  * @hdd_ctx:	HDD context
@@ -6582,6 +6721,10 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	if (ret)
 		goto err_hdd_free_context;
 
+	ret = hdd_update_config(hdd_ctx);
+	if (ret)
+		goto err_hdd_free_context;
+
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		ret = hdd_enable_ftm(hdd_ctx);
 		if (ret)
@@ -6591,7 +6734,6 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	}
 
 	hdd_wlan_green_ap_init(hdd_ctx);
-
 	status = cds_open();
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(QDF_TRACE_LEVEL_FATAL, FL("cds_open failed"));
@@ -6838,7 +6980,7 @@ err_exit_nl_srv:
 		hdd_err("Failed to deinit policy manager");
 		/* Proceed and complete the clean up */
 	}
-
+	cds_deinit_ini_config();
 err_hdd_free_context:
 	hdd_context_destroy(hdd_ctx);
 	QDF_BUG(1);
@@ -7887,12 +8029,20 @@ static void hdd_update_hif_config(hdd_context_t *hdd_ctx)
  * @hdd_ctx: HDD Context
  *
  * API is used to initialize all driver per module configuration parameters
- * Return: void
+ * Return: 0 for success, errno for failure
  */
-void hdd_update_config(hdd_context_t *hdd_ctx)
+int hdd_update_config(hdd_context_t *hdd_ctx)
 {
+	int ret;
+
 	hdd_update_ol_config(hdd_ctx);
 	hdd_update_hif_config(hdd_ctx);
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam())
+		ret = hdd_update_cds_config_ftm(hdd_ctx);
+	else
+		ret = hdd_update_cds_config(hdd_ctx);
+
+	return ret;
 }
 
 /* Register the module init/exit functions */

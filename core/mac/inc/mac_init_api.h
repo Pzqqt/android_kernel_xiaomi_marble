@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -44,7 +44,7 @@
 tSirRetStatus mac_start(tHalHandle hHal, void *pHalMacStartParams);
 tSirRetStatus mac_stop(tHalHandle hHal, tHalStopType stopType);
 tSirRetStatus mac_open(tHalHandle *pHalHandle, tHddHandle hHdd,
-		       tMacOpenParameters *pMacOpenParms);
+		       struct cds_config_info *cds_cfg);
 tSirRetStatus mac_close(tHalHandle hHal);
 
 #endif /* __MAC_INIT_API_H */

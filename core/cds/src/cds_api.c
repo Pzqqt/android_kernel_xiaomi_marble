@@ -158,25 +158,6 @@ void cds_tdls_tx_rx_mgmt_event(uint8_t event_id, uint8_t tx_rx,
 }
 #endif
 
-#ifdef WLAN_FEATURE_NAN
-/**
- * cds_set_nan_enable() - set nan enable flag in mac open param
- * @wma_handle: Pointer to mac open param
- * @hdd_ctx: Pointer to hdd context
- *
- * Return: none
- */
-static void cds_set_nan_enable(tMacOpenParameters *param,
-					hdd_context_t *hdd_ctx)
-{
-	param->is_nan_enabled = hdd_ctx->config->enable_nan_support;
-}
-#else
-static void cds_set_nan_enable(tMacOpenParameters *param,
-					hdd_context_t *pHddCtx)
-{
-}
-#endif
 
 /**
  * cds_open() - open the CDS Module
@@ -197,20 +178,29 @@ QDF_STATUS cds_open(void)
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	int iter = 0;
 	tSirRetStatus sirStatus = eSIR_SUCCESS;
-	tMacOpenParameters mac_openParms;
+	struct cds_config_info *cds_cfg;
 	qdf_device_t qdf_ctx;
 	HTC_INIT_INFO htcInfo;
 	struct ol_context *ol_ctx;
 	struct hif_opaque_softc *scn;
 	void *HTCHandle;
 	hdd_context_t *pHddCtx;
+	cds_context_type *cds_ctx;
 
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: Opening CDS", __func__);
 
-	if (NULL == gp_cds_context) {
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Trying to open CDS without a PreOpen", __func__);
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cds_cfg = cds_get_ini_config();
+	if (!cds_cfg) {
+		cds_err("Cds config is NULL");
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -282,9 +272,6 @@ QDF_STATUS cds_open(void)
 			  "%s: scn is null!", __func__);
 		goto err_sched_close;
 	}
-
-	hdd_update_config(pHddCtx);
-
 	ol_ctx = cds_get_context(QDF_MODULE_ID_BMI);
 	/* Initialize BMI and Download firmware */
 	qdf_status = bmi_download_firmware(ol_ctx);
@@ -314,91 +301,11 @@ QDF_STATUS cds_open(void)
 		goto err_htc_close;
 	}
 
-	/*
-	** Need to open WMA first because it calls WDI_Init, which calls wpalOpen
-	** The reason that is needed becasue cds_packet_open need to use PAL APIs
-	*/
-
 	/*Open the WMA module */
-	qdf_mem_set(&mac_openParms, sizeof(mac_openParms), 0);
-	/* UMA is supported in hardware for performing the
-	** frame translation 802.11 <-> 802.3
-	*/
-	mac_openParms.frameTransRequired = 1;
-	mac_openParms.driverType = eDRIVER_TYPE_PRODUCTION;
-	mac_openParms.powersaveOffloadEnabled =
-		pHddCtx->config->enablePowersaveOffload;
-	mac_openParms.staDynamicDtim = pHddCtx->config->enableDynamicDTIM;
-	mac_openParms.staModDtim = pHddCtx->config->enableModulatedDTIM;
-	mac_openParms.staMaxLIModDtim = pHddCtx->config->fMaxLIModulatedDTIM;
-	mac_openParms.wowEnable = pHddCtx->config->wowEnable;
-	mac_openParms.maxWoWFilters = pHddCtx->config->maxWoWFilters;
-	/* Here olIniInfo is used to store ini status of arp offload
-	 * ns offload and others. Currently 1st bit is used for arp
-	 * off load and 2nd bit for ns offload currently, rest bits are unused
-	 */
-	if (pHddCtx->config->fhostArpOffload)
-		mac_openParms.olIniInfo = mac_openParms.olIniInfo | 0x1;
-	if (pHddCtx->config->fhostNSOffload)
-		mac_openParms.olIniInfo = mac_openParms.olIniInfo | 0x2;
-	/*
-	 * Copy the DFS Phyerr Filtering Offload status.
-	 * This parameter reflects the value of the
-	 * dfsPhyerrFilterOffload flag  as set in the ini.
-	 */
-	mac_openParms.dfsPhyerrFilterOffload =
-		pHddCtx->config->fDfsPhyerrFilterOffload;
-	if (pHddCtx->config->ssdp)
-		mac_openParms.ssdp = pHddCtx->config->ssdp;
-	mac_openParms.enable_mc_list = pHddCtx->config->fEnableMCAddrList;
-#ifdef FEATURE_WLAN_RA_FILTERING
-	mac_openParms.RArateLimitInterval =
-		pHddCtx->config->RArateLimitInterval;
-	mac_openParms.IsRArateLimitEnabled =
-		pHddCtx->config->IsRArateLimitEnabled;
-#endif
-
-	mac_openParms.apMaxOffloadPeers = pHddCtx->config->apMaxOffloadPeers;
-
-	mac_openParms.apMaxOffloadReorderBuffs =
-		pHddCtx->config->apMaxOffloadReorderBuffs;
-
-	mac_openParms.apDisableIntraBssFwd =
-		pHddCtx->config->apDisableIntraBssFwd;
-
-	mac_openParms.dfsRadarPriMultiplier =
-		pHddCtx->config->dfsRadarPriMultiplier;
-	mac_openParms.reorderOffload = pHddCtx->config->reorderOffloadSupport;
-
-	/* IPA micro controller data path offload resource config item */
-	mac_openParms.ucOffloadEnabled = hdd_ipa_uc_is_enabled(pHddCtx);
-	mac_openParms.ucTxBufCount = pHddCtx->config->IpaUcTxBufCount;
-	mac_openParms.ucTxBufSize = pHddCtx->config->IpaUcTxBufSize;
-	mac_openParms.ucRxIndRingCount = pHddCtx->config->IpaUcRxIndRingCount;
-	mac_openParms.ucTxPartitionBase = pHddCtx->config->IpaUcTxPartitionBase;
-	mac_openParms.max_scan = pHddCtx->config->max_scan_count;
-
-	mac_openParms.ip_tcp_udp_checksum_offload =
-			pHddCtx->config->enable_ip_tcp_udp_checksum_offload;
-	mac_openParms.enable_rxthread = pHddCtx->config->enableRxThread;
-	mac_openParms.ce_classify_enabled =
-				pHddCtx->config->ce_classify_enabled;
-
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
-	mac_openParms.tx_flow_stop_queue_th =
-				pHddCtx->config->TxFlowStopQueueThreshold;
-	mac_openParms.tx_flow_start_queue_offset =
-				pHddCtx->config->TxFlowStartQueueOffset;
-#endif
-	cds_set_nan_enable(&mac_openParms, pHddCtx);
-
-	mac_openParms.tx_chain_mask_cck = pHddCtx->config->tx_chain_mask_cck;
-	mac_openParms.self_gen_frm_pwr = pHddCtx->config->self_gen_frm_pwr;
-	mac_openParms.maxStation = pHddCtx->config->maxNumberOfPeers;
 
 	qdf_status = wma_open(gp_cds_context,
 			      hdd_update_tgt_cfg,
-			      hdd_dfs_indicate_radar, &mac_openParms);
+			      hdd_dfs_indicate_radar, cds_cfg);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		/* Critical Error ...  Cannot proceed further */
@@ -410,10 +317,10 @@ QDF_STATUS cds_open(void)
 
 	/* Number of peers limit differs in each chip version. If peer max
 	 * limit configured in ini exceeds more than supported, WMA adjusts
-	 * and keeps correct limit in mac_openParms.maxStation. So, make sure
+	 * and keeps correct limit in cds_cfg.max_station. So, make sure
 	 * config entry pHddCtx->config->maxNumberOfPeers has adjusted value
 	 */
-	pHddCtx->config->maxNumberOfPeers = mac_openParms.maxStation;
+	pHddCtx->config->maxNumberOfPeers = cds_cfg->max_station;
 	HTCHandle = cds_get_context(QDF_MODULE_ID_HTC);
 	if (!HTCHandle) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
@@ -431,11 +338,9 @@ QDF_STATUS cds_open(void)
 	/* UMA is supported in hardware for performing the
 	 * frame translation 802.11 <-> 802.3
 	 */
-	mac_openParms.frameTransRequired = 1;
-
 	sirStatus =
-		mac_open(&(gp_cds_context->pMACContext), gp_cds_context->pHDDContext,
-			 &mac_openParms);
+		mac_open(&(gp_cds_context->pMACContext),
+			gp_cds_context->pHDDContext, cds_cfg);
 
 	if (eSIR_SUCCESS != sirStatus) {
 		/* Critical Error ...  Cannot proceed further */
@@ -860,6 +765,7 @@ QDF_STATUS cds_close(v_CONTEXT_t cds_context)
 
 	gp_cds_context->pHDDContext = NULL;
 
+	cds_deinit_ini_config();
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -2236,4 +2142,63 @@ QDF_STATUS cds_set_radio_index(int radio_index)
 	p_cds_context->radio_index = radio_index;
 
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * cds_init_ini_config() - API to initialize CDS configuration parameters
+ * @cfg: CDS Configuration
+ *
+ * Return: void
+ */
+
+void cds_init_ini_config(struct cds_config_info *cfg)
+{
+	cds_context_type *cds_ctx;
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return;
+	}
+
+	cds_ctx->cds_cfg = cfg;
+}
+
+/**
+ * cds_deinit_ini_config() - API to free CDS configuration parameters
+ *
+ * Return: void
+ */
+void cds_deinit_ini_config(void)
+{
+	cds_context_type *cds_ctx;
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return;
+	}
+
+	if (!cds_ctx->cds_cfg)
+		qdf_mem_free(cds_ctx->cds_cfg);
+
+	cds_ctx->cds_cfg = NULL;
+}
+
+/**
+ * cds_get_ini_config() - API to get CDS configuration parameters
+ *
+ * Return: cds config structure
+ */
+struct cds_config_info *cds_get_ini_config(void)
+{
+	cds_context_type *cds_ctx;
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return NULL;
+	}
+
+	return cds_ctx->cds_cfg;
 }

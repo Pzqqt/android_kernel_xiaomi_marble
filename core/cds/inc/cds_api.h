@@ -279,4 +279,8 @@ void cds_tdls_tx_rx_mgmt_event(uint8_t event_id, uint8_t tx_rx,
 
 int cds_get_radio_index(void);
 QDF_STATUS cds_set_radio_index(int radio_index);
+void cds_init_ini_config(struct cds_config_info *cds_cfg);
+void cds_deinit_ini_config(void);
+struct cds_config_info *cds_get_ini_config(void);
+
 #endif /* if !defined __CDS_API_H */

@@ -138,17 +138,48 @@ static void wlan_hdd_ftm_update_tgt_cfg(void *context, void *param)
 }
 
 #ifdef WLAN_FEATURE_LPSS
-static inline void hdd_is_lpass_supported(tMacOpenParameters *mac_openParms,
+static inline void hdd_is_lpass_supported(struct cds_config_info *cds_cfg,
 						hdd_context_t *hdd_ctx)
 {
-	mac_openParms->is_lpass_enabled = hdd_ctx->config->enable_lpass_support;
+	cds_cfg->is_lpass_enabled = hdd_ctx->config->enable_lpass_support;
 }
 #else
-static inline void hdd_is_lpass_supported(tMacOpenParameters *mac_openParms,
+static inline void hdd_is_lpass_supported(struct cds_config_info *cds_cfg,
 						hdd_context_t *hdd_ctx)
 { }
 #endif
 
+/**
+ * hdd_update_cds_config_ftm() - API to update cds configuration parameters
+ * for FTM mode.
+ * @hdd_ctx: HDD Context
+ *
+ * Return: 0 on success; errno on failure
+ */
+
+int hdd_update_cds_config_ftm(hdd_context_t *hdd_ctx)
+{
+	struct cds_config_info *cds_cfg;
+
+	cds_cfg = qdf_mem_malloc(sizeof(struct cds_config_info));
+	if (!cds_cfg) {
+		hdd_err("failed to allocate cds config");
+		return -ENOMEM;
+	}
+	qdf_mem_zero(cds_cfg, sizeof(struct cds_config_info));
+
+	cds_cfg->driver_type = eDRIVER_TYPE_MFG;
+	cds_cfg->powersave_offload_enabled =
+			hdd_ctx->config->enablePowersaveOffload;
+	hdd_is_lpass_supported(cds_cfg, hdd_ctx);
+	/* UMA is supported in hardware for performing the
+	 * frame translation 802.11 <-> 802.3
+	 */
+	cds_cfg->frame_xln_reqd = 1;
+	cds_init_ini_config(cds_cfg);
+
+	return 0;
+}
 /**
  * wlan_ftm_cds_open() - Open the CDS Module in FTM mode
  * @p_cds_context: pointer to the global CDS context
@@ -173,8 +204,8 @@ static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 	QDF_STATUS vStatus = QDF_STATUS_SUCCESS;
 	int iter = 0;
 	tSirRetStatus sirStatus = eSIR_SUCCESS;
-	tMacOpenParameters mac_openParms;
 	p_cds_contextType gp_cds_context = (p_cds_contextType) p_cds_context;
+	struct cds_config_info *cds_cfg;
 #if  defined(QCA_WIFI_FTM)
 	qdf_device_t qdf_ctx;
 	HTC_INIT_INFO htcInfo;
@@ -182,17 +213,21 @@ static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 	void *pHtcContext = NULL;
 	struct ol_context *ol_ctx;
 #endif
+	cds_context_type *cds_ctx;
 	hdd_context_t *hdd_ctx;
 
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: Opening CDS", __func__);
 
-	if (NULL == gp_cds_context) {
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Trying to open CDS without a PreOpen", __func__);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	cds_cfg = cds_ctx->cds_cfg;
 
 	/* Initialize the probe event */
 	if (qdf_event_create(&gp_cds_context->ProbeEvent) != QDF_STATUS_SUCCESS) {
@@ -280,10 +315,6 @@ static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 	}
 #endif /* QCA_WIFI_FTM */
 
-	/*Open the WMA module */
-	qdf_mem_set(&mac_openParms, sizeof(mac_openParms), 0);
-	mac_openParms.driverType = eDRIVER_TYPE_MFG;
-
 	hdd_ctx = (hdd_context_t *) (gp_cds_context->pHDDContext);
 	if ((NULL == hdd_ctx) || (NULL == hdd_ctx->config)) {
 		/* Critical Error ...  Cannot proceed further */
@@ -292,14 +323,8 @@ static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 		QDF_ASSERT(0);
 		goto err_htc_close;
 	}
-
-	mac_openParms.powersaveOffloadEnabled =
-		hdd_ctx->config->enablePowersaveOffload;
-
-	hdd_is_lpass_supported(&mac_openParms, hdd_ctx);
-
 	vStatus = wma_open(gp_cds_context,
-			   wlan_hdd_ftm_update_tgt_cfg, NULL, &mac_openParms);
+			   wlan_hdd_ftm_update_tgt_cfg, NULL, cds_cfg);
 	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
 		/* Critical Error ...  Cannot proceed further */
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
@@ -310,7 +335,6 @@ static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 	}
 #if  defined(QCA_WIFI_FTM)
 	hdd_update_config(hdd_ctx);
-
 	pHtcContext = cds_get_context(QDF_MODULE_ID_HTC);
 	if (!pHtcContext) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
@@ -325,16 +349,9 @@ static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 #endif
 
 	/* Now proceed to open the MAC */
-
-	/* UMA is supported in hardware for performing the
-	 * frame translation 802.11 <-> 802.3
-	 */
-	mac_openParms.frameTransRequired = 1;
-
 	sirStatus =
 		mac_open(&(gp_cds_context->pMACContext),
-			 gp_cds_context->pHDDContext,
-			 &mac_openParms);
+			 gp_cds_context->pHDDContext, cds_cfg);
 
 	if (eSIR_SUCCESS != sirStatus) {
 		/* Critical Error ...  Cannot proceed further */
