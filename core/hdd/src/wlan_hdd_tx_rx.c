@@ -331,10 +331,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	if (cds_is_driver_recovering()) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_WARN,
 			"Recovery in progress, dropping the packet");
-		++pAdapter->stats.tx_dropped;
-		++pAdapter->hdd_stats.hddTxRxStats.txXmitDropped;
-		kfree_skb(skb);
-		return NETDEV_TX_OK;
+		goto drop_pkt;
 	}
 
 	if (QDF_IBSS_MODE == pAdapter->device_mode) {
@@ -357,10 +354,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 			QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_WARN,
 				  "%s: Received Unicast frame with invalid staID",
 				  __func__);
-			++pAdapter->stats.tx_dropped;
-			++pAdapter->hdd_stats.hddTxRxStats.txXmitDropped;
-			kfree_skb(skb);
-			return NETDEV_TX_OK;
+			goto drop_pkt;
 		}
 	} else {
 		if (QDF_OCB_MODE != pAdapter->device_mode &&
@@ -369,10 +363,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 			QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO,
 				FL("Tx frame in not associated state in %d context"),
 				pAdapter->device_mode);
-			++pAdapter->stats.tx_dropped;
-			++pAdapter->hdd_stats.hddTxRxStats.txXmitDropped;
-			kfree_skb(skb);
-			return NETDEV_TX_OK;
+			goto drop_pkt;
 		}
 		STAId = pHddStaCtx->conn_info.staId[0];
 	}
@@ -388,7 +379,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		/* Check if the buffer has enough header room */
 		skb = skb_unshare(skb, GFP_ATOMIC);
 		if (!skb)
-			goto drop_pkt;
+			goto drop_pkt_accounting;
 
 		if (skb_headroom(skb) < dev->hard_header_len) {
 			struct sk_buff *tmp;
@@ -396,7 +387,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 			skb = skb_realloc_headroom(tmp, dev->hard_header_len);
 			dev_kfree_skb(tmp);
 			if (!skb)
-				goto drop_pkt;
+				goto drop_pkt_accounting;
 		}
 	}
 
@@ -515,7 +506,8 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 				 QDF_TRACE_LEVEL_WARN,
 				 "%s: station is not connected..dropping pkt",
 				 __func__);
-				goto drop_pkt;
+		++pAdapter->hdd_stats.hddTxRxStats.txXmitDroppedAC[ac];
+		goto drop_pkt;
 	}
 
 	/*
@@ -525,6 +517,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
 			 "%s: TX function not registered by the data path",
 			 __func__);
+		++pAdapter->hdd_stats.hddTxRxStats.txXmitDroppedAC[ac];
 		goto drop_pkt;
 	}
 
@@ -533,6 +526,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_WARN,
 			  "%s: Failed to send packet to txrx for staid:%d",
 			  __func__, STAId);
+		++pAdapter->hdd_stats.hddTxRxStats.txXmitDroppedAC[ac];
 		goto drop_pkt;
 	}
 	dev->trans_start = jiffies;
@@ -541,17 +535,24 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 drop_pkt:
 
-	DPTRACE(qdf_dp_trace(skb, QDF_DP_TRACE_DROP_PACKET_RECORD,
-			(uint8_t *)skb->data, qdf_nbuf_len(skb), QDF_TX));
-	if (qdf_nbuf_len(skb) > QDF_DP_TRACE_RECORD_SIZE)
+	if (skb) {
 		DPTRACE(qdf_dp_trace(skb, QDF_DP_TRACE_DROP_PACKET_RECORD,
-			(uint8_t *)&skb->data[QDF_DP_TRACE_RECORD_SIZE],
-			(qdf_nbuf_len(skb)-QDF_DP_TRACE_RECORD_SIZE), QDF_TX));
+			(uint8_t *)skb->data, qdf_nbuf_len(skb), QDF_TX));
+		if (qdf_nbuf_len(skb) > QDF_DP_TRACE_RECORD_SIZE)
+			DPTRACE(qdf_dp_trace(skb,
+				 QDF_DP_TRACE_DROP_PACKET_RECORD,
+				(uint8_t *)&skb->data[QDF_DP_TRACE_RECORD_SIZE],
+				(qdf_nbuf_len(skb)-QDF_DP_TRACE_RECORD_SIZE),
+				 QDF_TX));
+
+		kfree_skb(skb);
+	}
+
+drop_pkt_accounting:
 
 	++pAdapter->stats.tx_dropped;
 	++pAdapter->hdd_stats.hddTxRxStats.txXmitDropped;
-	++pAdapter->hdd_stats.hddTxRxStats.txXmitDroppedAC[ac];
-	kfree_skb(skb);
+
 	return NETDEV_TX_OK;
 }
 
