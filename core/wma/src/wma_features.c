@@ -4810,7 +4810,7 @@ QDF_STATUS wma_process_gtk_offload_req(tp_wma_handle wma,
 	}
 
 	/* Validate vdev id */
-	if (vdev_id >= wma->max_bssid) {
+	if (vdev_id >= WMA_MAX_SUPPORTED_BSS) {
 		WMA_LOGE("invalid vdev_id %d for %pM", vdev_id,
 			 params->bssid.bytes);
 		status = QDF_STATUS_E_INVAL;
