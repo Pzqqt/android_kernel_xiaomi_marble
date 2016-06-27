@@ -5019,15 +5019,22 @@ static void csr_roam_join_handle_profile(tpAniSirGlobal mac_ctx,
 	uint8_t acm_mask = 0;
 #endif
 	QDF_STATUS status;
-	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
+	tCsrRoamSession *session;
 	tCsrRoamProfile *profile = &cmd->u.roamCmd.roamProfile;
 	tDot11fBeaconIEs *ies_local = NULL;
+
+	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
+		sms_log(mac_ctx, LOGE, FL("Invalid session id %d"), session_id);
+		return;
+	}
+	session = CSR_GET_SESSION(mac_ctx, session_id);
+
 	/*
 	 * We have something to roam, tell HDD when it is infra.
 	 * For IBSS, the indication goes back to HDD via eCSR_ROAM_IBSS_IND
 	 */
-	if (CSR_IS_INFRASTRUCTURE(profile)) {
-		if (roam_info_ptr && session->bRefAssocStartCnt) {
+	if (CSR_IS_INFRASTRUCTURE(profile) && roam_info_ptr) {
+		if (session->bRefAssocStartCnt) {
 			session->bRefAssocStartCnt--;
 			roam_info_ptr->pProfile = profile;
 			/*
@@ -6052,9 +6059,15 @@ static void csr_roam_process_results_default(tpAniSirGlobal mac_ctx,
 		     tSmeCmd *cmd, void *context, eCsrRoamCompleteResult res)
 {
 	uint32_t session_id = cmd->sessionId;
-	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
+	tCsrRoamSession *session;
 	tCsrRoamInfo roam_info;
 	QDF_STATUS status;
+
+	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
+		sms_log(mac_ctx, LOGE, FL("Invalid session id %d"), session_id);
+		return;
+	}
+	session = CSR_GET_SESSION(mac_ctx, session_id);
 
 	sms_log(mac_ctx, LOGW, FL("receives no association indication"));
 	sms_log(mac_ctx, LOG1, FL("Assoc ref count %d"),
@@ -6252,7 +6265,7 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 {
 	uint32_t session_id = cmd->sessionId;
 	tCsrRoamProfile *profile = &cmd->u.roamCmd.roamProfile;
-	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
+	tCsrRoamSession *session;
 	tSirBssDescription *bss_desc = NULL;
 	tCsrRoamInfo roam_info;
 	tSirSmeStartBssRsp *start_bss_rsp = NULL;
@@ -6268,6 +6281,12 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 	tSirSmeHTProfile *src_profile = NULL;
 	tCsrRoamHTProfile *dst_profile = NULL;
 #endif
+
+	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
+		sms_log(mac_ctx, LOGE, FL("Invalid session id %d"), session_id);
+		return;
+	}
+	session = CSR_GET_SESSION(mac_ctx, session_id);
 
 	/*
 	 * on the StartBss Response, LIM is returning the Bss Description that
@@ -6460,7 +6479,7 @@ static void csr_roam_process_join_res(tpAniSirGlobal mac_ctx,
 	uint8_t acm_mask = 0;   /* HDD needs ACM mask in assoc rsp callback */
 	uint32_t session_id = cmd->sessionId;
 	tCsrRoamProfile *profile = &cmd->u.roamCmd.roamProfile;
-	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
+	tCsrRoamSession *session;
 	tSirBssDescription *bss_desc = NULL;
 	tCsrScanResult *scan_res = NULL;
 	sme_qos_csr_event_indType ind_qos;
@@ -6474,6 +6493,12 @@ static void csr_roam_process_join_res(tpAniSirGlobal mac_ctx,
 	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
 	tSirSmeJoinRsp *join_rsp = (tSirSmeJoinRsp *) context;
 	uint32_t len;
+
+	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
+		sms_log(mac_ctx, LOGE, FL("Invalid session id %d"), session_id);
+		return;
+	}
+	session = CSR_GET_SESSION(mac_ctx, session_id);
 
 	conn_profile = &session->connectedProfile;
 	if (eCsrReassocSuccess == res)
@@ -18747,19 +18772,19 @@ void csr_process_nss_update_req(tpAniSirGlobal mac, tSmeCmd *command)
 	QDF_STATUS status;
 	tSirMsgQ msg_return;
 	struct sir_beacon_tx_complete_rsp *param;
-
-	tCsrRoamSession *session =
-		CSR_GET_SESSION(mac, command->sessionId);
-
-	if (!session) {
-		sms_log(mac, LOGE, FL("Session not found"));
-		goto fail;
-	}
+	tCsrRoamSession *session;
 
 	if (!command) {
 		sms_log(mac, LOGE, FL("nss update param is NULL"));
-		goto fail;
+		return;
 	}
+
+	if (!CSR_IS_SESSION_VALID(mac, command->sessionId)) {
+		sms_log(mac, LOGE, FL("Invalid session id %d"),
+			command->sessionId);
+		return;
+	}
+	session = CSR_GET_SESSION(mac, command->sessionId);
 
 	len = sizeof(*msg);
 	msg = qdf_mem_malloc(len);
