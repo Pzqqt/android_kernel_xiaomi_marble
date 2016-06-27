@@ -2066,8 +2066,8 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	}
 
 end:
-	sme_session_id = sme_join_req->sessionId;
-	sme_transaction_id = sme_join_req->transactionId;
+	sme_session_id = ((tpSirSmeJoinReq)msg_buf)->sessionId;
+	sme_transaction_id = ((tpSirSmeJoinReq)msg_buf)->transactionId;
 
 	if (sme_join_req) {
 		qdf_mem_free(sme_join_req);
