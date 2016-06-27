@@ -893,16 +893,20 @@ bool csr_is_p2p_session_connected(tpAniSirGlobal pMac)
 	enum tQDF_ADAPTER_MODE persona;
 
 	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
-		if (CSR_IS_SESSION_VALID(pMac, i)
-		    && !csr_is_conn_state_disconnected(pMac, i)) {
-			pSession = CSR_GET_SESSION(pMac, i);
-			persona = pSession->pCurRoamProfile->csrPersona;
-			if ((NULL != pSession->pCurRoamProfile) &&
-				((QDF_P2P_CLIENT_MODE == persona) ||
-				(QDF_P2P_GO_MODE == persona))) {
-				return true;
-			}
-		}
+		if (!CSR_IS_SESSION_VALID(pMac, i))
+			continue;
+
+		if (csr_is_conn_state_disconnected(pMac, i))
+			continue;
+
+		pSession = CSR_GET_SESSION(pMac, i);
+		if (pSession->pCurRoamProfile == NULL)
+			continue;
+
+		persona = pSession->pCurRoamProfile->csrPersona;
+		if (QDF_P2P_CLIENT_MODE == persona ||
+				QDF_P2P_GO_MODE == persona)
+			return true;
 	}
 
 	return false;
