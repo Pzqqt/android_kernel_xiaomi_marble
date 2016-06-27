@@ -4651,15 +4651,22 @@ QDF_STATUS cds_get_channel_list(enum cds_pcl_type pcl,
 	}
 
 	/* Let's divide the list in 2.4 & 5 Ghz lists */
-	while ((channel_list[chan_index] <= 11) &&
+	while ((chan_index < QDF_MAX_NUM_CHAN) &&
+		(channel_list[chan_index] <= 11) &&
 		(chan_index_24 < QDF_MAX_NUM_CHAN))
 		channel_list_24[chan_index_24++] = channel_list[chan_index++];
-	if (channel_list[chan_index] == 12) {
+	if ((chan_index < QDF_MAX_NUM_CHAN) &&
+		(channel_list[chan_index] == 12) &&
+		(chan_index_24 < QDF_MAX_NUM_CHAN)) {
 		channel_list_24[chan_index_24++] = channel_list[chan_index++];
-		if (channel_list[chan_index] == 13) {
+		if ((chan_index < QDF_MAX_NUM_CHAN) &&
+			(channel_list[chan_index] == 13) &&
+			(chan_index_24 < QDF_MAX_NUM_CHAN)) {
 			channel_list_24[chan_index_24++] =
 				channel_list[chan_index++];
-			if (channel_list[chan_index] == 14)
+			if ((chan_index < QDF_MAX_NUM_CHAN) &&
+				(channel_list[chan_index] == 14) &&
+				(chan_index_24 < QDF_MAX_NUM_CHAN))
 				channel_list_24[chan_index_24++] =
 					channel_list[chan_index++];
 		}
