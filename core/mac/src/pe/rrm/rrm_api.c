@@ -800,7 +800,7 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 	tpRRMReq curr_req = mac_ctx->rrm.rrmPEContext.pCurrentReq;
 	tpPESession session_entry;
 	uint8_t session_id;
-	bool flag_bss_present = false, bss_desc_count = 0;
+	bool flag_bss_present, bss_desc_count = 0;
 
 	lim_log(mac_ctx, LOG1, FL("Received beacon report xmit indication"));
 
@@ -845,6 +845,7 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 				report[bss_desc_count].report.beaconReport;
 			bss_desc = beacon_xmit_ind->
 				   pBssDescription[bss_desc_count];
+			flag_bss_present = false;
 			/* Prepare the beacon report and send it to the peer.*/
 			report[bss_desc_count].token =
 				beacon_xmit_ind->uDialogToken;
