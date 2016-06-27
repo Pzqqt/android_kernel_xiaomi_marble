@@ -4785,9 +4785,11 @@ void sme_register_ftm_msg_processor(tHalHandle hal,
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 
 	if (mac_ctx == NULL) {
-		sms_log(mac_ctx, LOGE, FL("mac_ctx is NULL"));
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			FL("mac ctx is NULL"));
 		return;
 	}
+
 	mac_ctx->ftm_msg_processor_callback = callback;
 	return;
 }
