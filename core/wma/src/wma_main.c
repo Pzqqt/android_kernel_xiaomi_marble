@@ -1592,6 +1592,11 @@ static void wma_init_max_no_of_peers(tp_wma_handle wma_handle,
 {
 	struct wma_ini_config *cfg = wma_get_ini_handle(wma_handle);
 
+	if (cfg == NULL) {
+		WMA_LOGE("%s: NULL WMA ini handle", __func__);
+		return;
+	}
+
 	cfg->max_no_of_peers = max_peers;
 }
 

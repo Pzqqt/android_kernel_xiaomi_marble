@@ -252,6 +252,10 @@ int wma_ocb_set_config(tp_wma_handle wma_handle, struct sir_ocb_config *config)
 	tconfig.dcc_ndl_active_state_list_len = config->dcc_ndl_active_state_list_len;
 	tconfig.dcc_ndl_active_state_list = config->dcc_ndl_active_state_list;
 	ch_mhz = qdf_mem_malloc(sizeof(uint32_t)*config->channel_count);
+	if (ch_mhz == NULL) {
+		WMA_LOGE(FL("Memory allocation failed"));
+		return -ENOMEM;
+	}
 
 	for (i = 0; i < config->channel_count; i++)
 		ch_mhz[i] = wma_ocb_freq_to_mode(config->channels[i].chan_freq);

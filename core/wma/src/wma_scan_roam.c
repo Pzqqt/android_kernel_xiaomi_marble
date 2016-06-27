@@ -981,6 +981,11 @@ QDF_STATUS wma_roam_scan_offload_chan_list(tp_wma_handle wma_handle,
 		return QDF_STATUS_E_EMPTY;
 	}
 	chan_list_hz = qdf_mem_malloc(chan_count * sizeof(uint8_t));
+	if (chan_list_hz == NULL) {
+		WMA_LOGE("%s : Memory allocation failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
 	for (i = 0; ((i < chan_count) &&
 		     (i < SIR_ROAM_MAX_CHANNELS)); i++) {
 		chan_list_hz[i] = cds_chan_to_freq(chan_list[i]);
@@ -1530,6 +1535,11 @@ QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
 	struct roam_scan_filter_params *params;
 
 	params = qdf_mem_malloc(sizeof(struct roam_scan_filter_params));
+	if (params == NULL) {
+		WMA_LOGE("%s : Memory allocation failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
 	roam_params = &roam_req->roam_params;
 	if (roam_req->Command != ROAM_SCAN_OFFLOAD_STOP) {
 		switch (roam_req->reason) {
@@ -1558,7 +1568,6 @@ QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
 		default:
 			WMA_LOGD("%s : Roam Filter need not be sent", __func__);
 			return QDF_STATUS_SUCCESS;
-			break;
 		}
 	} else {
 		/* In case of STOP command, reset all the variables
@@ -2921,6 +2930,10 @@ QDF_STATUS wma_pno_start(tp_wma_handle wma, tpSirPNOScanReq pno)
 	}
 
 	params = qdf_mem_malloc(sizeof(struct pno_scan_req_params));
+	if (params == NULL) {
+		WMA_LOGE("%s : Memory allocation failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
 
 	params->enable = pno->enable;
 	params->modePNO = (enum pno_mode) pno->modePNO;
@@ -4790,6 +4803,10 @@ QDF_STATUS wma_start_extscan(tp_wma_handle wma,
 	}
 
 	params = qdf_mem_malloc(sizeof(struct wifi_scan_cmd_req_params));
+	if (params == NULL) {
+		WMA_LOGE("%s : Memory allocation failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
 
 	params->basePeriod = pstart->basePeriod;
 	params->maxAPperScan = pstart->maxAPperScan;

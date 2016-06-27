@@ -2463,9 +2463,14 @@ int wma_mgmt_tx_completion_handler(void *handle, uint8_t *cmpl_event_params,
 
 	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
+	if (pdev == NULL) {
+		WMA_LOGE("%s: NULL pdev pointer", __func__);
+		return -EINVAL;
+	}
+
 	param_buf = (WMI_MGMT_TX_COMPLETION_EVENTID_param_tlvs *)
 		cmpl_event_params;
-	if (!param_buf && !wma_handle) {
+	if (!param_buf || !wma_handle) {
 		WMA_LOGE("%s: Invalid mgmt Tx completion event", __func__);
 		return -EINVAL;
 	}

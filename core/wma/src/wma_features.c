@@ -6481,6 +6481,12 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 
 	ch_mhz = qdf_mem_malloc(sizeof(uint32_t) *
 			 peerStateParams->peerCap.peerChanLen);
+	if (ch_mhz == NULL) {
+		WMA_LOGE("%s: memory allocation failed", __func__);
+		ret = -ENOMEM;
+		goto end_tdls_peer_state;
+	}
+
 	for (i = 0; i < peerStateParams->peerCap.peerChanLen; ++i) {
 		ch_mhz[i] =
 			cds_chan_to_freq(peerStateParams->peerCap.peerChan[i].
