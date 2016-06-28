@@ -1823,8 +1823,13 @@ void ol_txrx_vdev_register(ol_txrx_vdev_handle vdev,
 				void *osif_vdev,
 				struct ol_txrx_ops *txrx_ops)
 {
-	vdev->osif_dev = osif_vdev;
+	if (qdf_unlikely(!vdev) || qdf_unlikely(!txrx_ops)) {
+		qdf_print("%s: vdev/txrx_ops is NULL!\n", __func__);
+		qdf_assert(0);
+		return;
+	}
 
+	vdev->osif_dev = osif_vdev;
 	vdev->rx = txrx_ops->rx.rx;
 	txrx_ops->tx.tx = ol_tx_data;
 }
