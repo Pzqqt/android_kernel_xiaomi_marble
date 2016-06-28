@@ -10319,6 +10319,16 @@ enum wmi_tdls_peer_reason {
 	WMI_TDLS_ENTER_BT_BUSY_MODE,
 	/** BT exited busy mode, TDLS connection tracker needs to handle this */
 	WMI_TDLS_EXIT_BT_BUSY_MODE,
+	/*
+	 * TDLS module received a scan start event, TDLS connection tracker
+	 * needs to handle this
+	 */
+	WMI_TDLS_SCAN_STARTED_EVENT,
+	/*
+	 * TDLS module received a scan complete event, TDLS connection tracker
+	 * needs to handle this
+	 */
+	WMI_TDLS_SCAN_COMPLETED_EVENT,
 };
 
 /* WMI_TDLS_PEER_EVENTID */
