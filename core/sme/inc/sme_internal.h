@@ -244,6 +244,8 @@ typedef struct tagSmeStruct {
 	p2p_lo_callback p2p_lo_event_callback;
 	void *p2p_lo_event_context;
 	sme_send_oem_data_rsp_msg oem_data_rsp_callback;
+	void (*encrypt_decrypt_cb)(void *,
+			struct sir_encrypt_decrypt_rsp_params *);
 } tSmeStruct, *tpSmeStruct;
 
 #endif /* #if !defined( __SMEINTERNAL_H ) */

@@ -132,4 +132,8 @@ config FEATURE_DP_TRACE
 	bool "Enable data path trace feature"
 	default n
 
+config WLAN_FEATURE_DISA
+	bool "Enable DISA certification feature"
+	default n
+
 endif # QCA_CLD_WLAN

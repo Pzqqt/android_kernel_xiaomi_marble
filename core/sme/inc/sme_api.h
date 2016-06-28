@@ -1276,4 +1276,44 @@ QDF_STATUS sme_set_default_scan_ie(tHalHandle hal, uint16_t session_id,
  */
 QDF_STATUS sme_update_session_param(tHalHandle hal, uint8_t session_id,
 		uint32_t param_type, uint32_t param_val);
+
+/**
+ * sme_encrypt_decrypt_msg_register_callback() - Registers
+ * encrypt/decrypt message callback
+ *
+ * @hal - MAC global handle
+ * @callback_routine - callback routine from HDD
+ *
+ * This API is invoked by HDD to register its callback in SME
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_encrypt_decrypt_msg_register_callback(tHalHandle hal,
+		void (*encrypt_decrypt_cb)(void *hdd_context,
+			struct sir_encrypt_decrypt_rsp_params
+					*encrypt_decrypt_rsp_params));
+
+/**
+ * sme_encrypt_decrypt_msg_deregister_callback() - Registers
+ * encrypt/decrypt message callback
+ *
+ * @h_hal - MAC global handle
+ * @callback_routine - callback routine from HDD
+ *
+ * This API is invoked by HDD to de-register its callback in SME
+ *
+ * Return: QDF_STATUS Enumeration
+ */
+QDF_STATUS sme_encrypt_decrypt_msg_deregister_callback(tHalHandle h_hal);
+
+/**
+ * sme_encrypt_decrypt_msg() - handles encrypt/decrypt mesaage
+ * @hal: HAL handle
+ * @encrypt_decrypt_params: struct to set encryption/decryption params.
+ *
+ * Return: QDF_STATUS enumeration.
+ */
+QDF_STATUS sme_encrypt_decrypt_msg(tHalHandle hal,
+	struct encrypt_decrypt_req_params *encrypt_decrypt_params);
+
 #endif /* #if !defined( __SME_API_H ) */

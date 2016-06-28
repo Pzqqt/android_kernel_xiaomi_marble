@@ -107,6 +107,7 @@
 #include "wlan_hdd_lpass.h"
 #include "nan_api.h"
 #include <wlan_hdd_napi.h>
+#include "wlan_hdd_disa.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -4695,8 +4696,7 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 	/* Free up RoC request queue and flush workqueue */
 	cds_flush_work(&hdd_ctx->roc_req_work);
 
-
-
+	hdd_encrypt_decrypt_deinit(hdd_ctx);
 	wlansap_global_deinit();
 	wlan_hdd_deinit_tx_rx_histogram(hdd_ctx);
 	wiphy_unregister(wiphy);
@@ -7781,6 +7781,7 @@ int hdd_wlan_startup(struct device *dev)
 		goto err_debugfs_exit;
 
 	memdump_init();
+	hdd_encrypt_decrypt_init(hdd_ctx);
 
 	if (hdd_ctx->config->fIsImpsEnabled)
 		hdd_set_idle_ps_config(hdd_ctx, true);

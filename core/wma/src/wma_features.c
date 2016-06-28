@@ -8225,3 +8225,108 @@ QDF_STATUS wma_enable_disable_caevent_ind(tp_wma_handle wma, uint8_t val)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * wma_encrypt_decrypt_msg() -
+ * @encrypt_decrypt_params: encryption/decryption params
+ * @data_len: data length
+ * @encrypt_decrypt_cb: encrypt/decrypt callback
+ *
+ *  This function sends WMI command to check encryption/decryption engine.
+ *
+ *  Return: QDF_STATUS enumeration
+ */
+QDF_STATUS wma_encrypt_decrypt_msg(WMA_HANDLE handle,
+		struct encrypt_decrypt_req_params *encrypt_decrypt_params)
+{
+	int ret;
+	tp_wma_handle wma = (tp_wma_handle) handle;
+
+	if (!wma || !wma->wmi_handle) {
+		WMA_LOGE("%s: WMA is closed, can not issue encrypt/decrypt msg",
+			__func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (encrypt_decrypt_params == NULL) {
+		WMA_LOGE("%s: encrypt/decrypt ptr NULL",
+			__func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	ret = wmi_unified_encrypt_decrypt_send_cmd(wma->wmi_handle,
+				encrypt_decrypt_params);
+
+	return ret;
+}
+
+/**
+ * wma_encrypt_decrypt_msg_handler() - handle encrypt/decrypt data
+ * indicated by FW
+ * @handle: wma context
+ * @data: event buffer
+ * @data len: length of event buffer
+ *
+ * Return: 0 on success
+ */
+int wma_encrypt_decrypt_msg_handler(void *handle, uint8_t *data,
+			uint32_t data_len)
+{
+	WMI_VDEV_ENCRYPT_DECRYPT_DATA_RESP_EVENTID_param_tlvs *param_buf;
+	wmi_vdev_encrypt_decrypt_data_resp_event_fixed_param *data_event;
+	struct sir_encrypt_decrypt_rsp_params encrypt_decrypt_rsp_params;
+	tp_wma_handle wma = handle;
+	u_int8_t *buf_ptr;
+	tpAniSirGlobal pmac;
+
+	if (data == NULL) {
+		WMA_LOGE("%s: invalid pointer", __func__);
+		return -EINVAL;
+	}
+
+	if (wma == NULL) {
+		WMA_LOGE("%s: wma context is NULL", __func__);
+		return -EINVAL;
+	}
+
+	WMA_LOGE("%s: received WMI_VDEV_ENCRYPT_DECRYPT_DATA_RESP_EVENTID ",
+			__func__);
+
+	pmac = (tpAniSirGlobal)cds_get_context(QDF_MODULE_ID_PE);
+
+	if (!pmac) {
+		WMA_LOGE("%s: Invalid pmac", __func__);
+		return -EINVAL;
+	}
+	if (!pmac->sme.encrypt_decrypt_cb) {
+		WMA_LOGE("%s: Callback not registered", __func__);
+		return -EINVAL;
+	}
+
+	param_buf =
+		(WMI_VDEV_ENCRYPT_DECRYPT_DATA_RESP_EVENTID_param_tlvs *)data;
+	if (!param_buf) {
+		WMA_LOGE("%s: Invalid response data buf", __func__);
+		return -EINVAL;
+	}
+
+	data_event = param_buf->fixed_param;
+
+	encrypt_decrypt_rsp_params.vdev_id = data_event->vdev_id;
+	encrypt_decrypt_rsp_params.status = data_event->status;
+	encrypt_decrypt_rsp_params.data_length = data_event->data_length;
+
+	if (encrypt_decrypt_rsp_params.data_length) {
+		buf_ptr =
+			(uint8_t *)data_event +
+			sizeof(
+			wmi_vdev_encrypt_decrypt_data_resp_event_fixed_param) +
+			WMI_TLV_HDR_SIZE;
+
+		encrypt_decrypt_rsp_params.data = buf_ptr;
+	}
+
+	pmac->sme.encrypt_decrypt_cb(pmac->hHdd, &encrypt_decrypt_rsp_params);
+
+	return 0;
+}

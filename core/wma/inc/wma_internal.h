@@ -1214,4 +1214,7 @@ QDF_STATUS wma_process_hal_pwr_dbg_cmd(WMA_HANDLE handle,
 				       struct sir_mac_pwr_dbg_cmd *
 				       sir_pwr_dbg_params);
 
+int wma_encrypt_decrypt_msg_handler(void *handle, uint8_t *data,
+			uint32_t data_len);
+
 #endif

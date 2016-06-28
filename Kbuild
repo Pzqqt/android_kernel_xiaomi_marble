@@ -159,6 +159,9 @@ ifneq ($(CONFIG_ROME_IF),sdio)
 	#Flag to enable memdump feature
 	CONFIG_WLAN_FEATURE_MEMDUMP := n
 
+	#Flag to enable DISA
+	CONFIG_WLAN_FEATURE_DISA := y
+
 	#Flag to enable Fast Path feature
 	CONFIG_WLAN_FASTPATH := y
 
@@ -418,6 +421,10 @@ endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_MEMDUMP),y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_memdump.o
+endif
+
+ifeq ($(CONFIG_WLAN_FEATURE_DISA),y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_disa.o
 endif
 
 ifeq ($(CONFIG_LFR_SUBNET_DETECTION), y)
@@ -1543,6 +1550,10 @@ endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_MEMDUMP),y)
 CDEFINES += -DWLAN_FEATURE_MEMDUMP
+endif
+
+ifeq ($(CONFIG_WLAN_FEATURE_DISA),y)
+CDEFINES += -DWLAN_FEATURE_DISA
 endif
 
 ifeq ($(CONFIG_LFR_SUBNET_DETECTION), y)

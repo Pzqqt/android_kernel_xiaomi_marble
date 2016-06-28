@@ -415,6 +415,9 @@ static const t_probeTime_dwellTime
 };
 
 typedef void (*txFailIndCallback)(uint8_t *peer_mac, uint8_t seqNo);
+typedef void (*encrypt_decrypt_cb)(struct sir_encrypt_decrypt_rsp_params
+		*encrypt_decrypt_rsp_params);
+
 
 /**
  * enum t_wma_drv_type - wma driver type

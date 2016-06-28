@@ -429,6 +429,9 @@ enum qca_nl80211_vendor_subcmds {
 	QCA_NL80211_VENDOR_SUBCMD_P2P_LISTEN_OFFLOAD_START = 122,
 	QCA_NL80211_VENDOR_SUBCMD_P2P_LISTEN_OFFLOAD_STOP = 123,
 	QCA_NL80211_VENDOR_SUBCMD_SAP_CONDITIONAL_CHAN_SWITCH = 124,
+
+	/* Encrypt/Decrypt command */
+	QCA_NL80211_VENDOR_SUBCMD_ENCRYPTION_TEST = 137,
 };
 
 /**
@@ -2894,6 +2897,44 @@ enum qca_wlan_vendor_drv_info {
 	QCA_WLAN_VENDOR_ATTR_DRV_INFO_AFTER_LAST,
 	QCA_WLAN_VENDOR_ATTR_DRV_INFO_MAX =
 		QCA_WLAN_VENDOR_ATTR_DRV_INFO_AFTER_LAST - 1,
+};
+
+/**
+ * enum qca_wlan_vendor_attr_encryption_test - Attributes to
+ * validate encryption engine
+ *
+ * @QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_NEEDS_DECRYPTION: Flag attribute.
+ *    This will be included if the request is for decryption; if not included,
+ *    the request is treated as a request for encryption by default.
+ * @QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_CIPHER: Unsigned 32-bit value
+ *    indicating the key cipher suite. Takes same values as
+ *    NL80211_ATTR_KEY_CIPHER.
+ * @QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_KEYID: Unsigned 8-bit value
+ *    Key Id to be used for encryption
+ * @QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_TK: Array of 8-bit values.
+ *    Key (TK) to be used for encryption/decryption
+ * @QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_PN: Array of 8-bit values.
+ *    Packet number to be specified for encryption/decryption
+ *    6 bytes for TKIP/CCMP/GCMP.
+ * @QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_DATA: Array of 8-bit values
+ *    representing the 802.11 packet (header + payload + FCS) that
+ *    needs to be encrypted/decrypted.
+ *    Encrypted/decrypted response from the driver will also be sent
+ *    to userspace with the same attribute.
+ */
+enum qca_wlan_vendor_attr_encryption_test {
+	QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_INVALID = 0,
+	QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_NEEDS_DECRYPTION,
+	QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_CIPHER,
+	QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_KEYID,
+	QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_TK,
+	QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_PN,
+	QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_DATA,
+
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_MAX =
+		QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_AFTER_LAST - 1
 };
 
 struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_db(hdd_adapter_t *pAdapter,

@@ -301,4 +301,6 @@ void wma_process_pdev_hw_mode_trans_ind(void *wma,
 	wmi_pdev_set_hw_mode_response_vdev_mac_entry *vdev_mac_entry,
 	struct sir_hw_mode_trans_ind *hw_mode_trans_ind);
 QDF_STATUS wma_set_powersave_config(uint8_t val);
+QDF_STATUS wma_encrypt_decrypt_msg(WMA_HANDLE wma,
+		struct encrypt_decrypt_req_params *encrypt_decrypt_params);
 #endif

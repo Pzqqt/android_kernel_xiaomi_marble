@@ -6536,4 +6536,18 @@ struct sme_update_access_policy_vendor_ie {
 	uint8_t access_policy;
 };
 
+/**
+ * struct sir_encrypt_decrypt_rsp_params - encrypt/decrypt rsp params
+ * @vdev_id: vdev id
+ * @status: status
+ * @data_length: data length
+ * @data: data pointer
+ */
+struct sir_encrypt_decrypt_rsp_params {
+	uint32_t vdev_id;
+	int32_t status;
+	uint32_t data_length;
+	uint8_t *data;
+};
+
 #endif /* __SIR_API_H */

@@ -2147,6 +2147,10 @@ QDF_STATUS wma_open(void *cds_context,
 					   WMI_BPF_CAPABILIY_INFO_EVENTID,
 					   wma_get_bpf_caps_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+				WMI_VDEV_ENCRYPT_DECRYPT_DATA_RESP_EVENTID,
+				wma_encrypt_decrypt_msg_handler,
+				WMA_RX_SERIALIZER_CTX);
 	wma_ndp_register_all_event_handlers(wma_handle);
 	return QDF_STATUS_SUCCESS;
 
@@ -6302,6 +6306,10 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 		break;
 	case WMA_SEND_FREQ_RANGE_CONTROL_IND:
 		wma_enable_disable_caevent_ind(wma_handle, msg->bodyval);
+		break;
+	case WMA_ENCRYPT_DECRYPT_MSG:
+		wma_encrypt_decrypt_msg(wma_handle, msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
 		break;
 	default:
 		WMA_LOGD("unknow msg type %x", msg->type);
