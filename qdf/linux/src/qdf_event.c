@@ -249,12 +249,11 @@ QDF_STATUS qdf_wait_single_event(qdf_event_t *event, uint32_t timeout)
 		if (0 >= ret)
 			return QDF_STATUS_E_TIMEOUT;
 	} else {
-		QDF_ASSERT(0);
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "Zero timeout value passed into %s", __func__);
-		return QDF_STATUS_E_FAULT;
+		wait_for_completion(&event->complete);
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
+			  "Signaled for completion %s", __func__);
+		return QDF_STATUS_SUCCESS;
 	}
-
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(qdf_wait_single_event);
