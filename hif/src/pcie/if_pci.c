@@ -1154,7 +1154,7 @@ static void hif_pm_runtime_stop(struct hif_pci_softc *sc)
 		return;
 
 	cnss_runtime_exit(sc->dev);
-	cnss_pm_runtime_request(sc->dev, CNSS_PM_RUNTIME_RESUME);
+	hif_pm_runtime_resume(sc->dev);
 
 	qdf_atomic_set(&sc->pm_state, HIF_PM_RUNTIME_STATE_NONE);
 
