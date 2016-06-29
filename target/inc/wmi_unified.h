@@ -3725,6 +3725,17 @@ typedef enum {
 	WMI_PDEV_PARAM_CUST_TXPOWER_SCALE,
 	/** ATF enabe/disabe dynamically */
 	WMI_PDEV_PARAM_ATF_DYNAMIC_ENABLE,
+	/** Set tx retry limit for control frames. 0 = disable, 31 = max */
+	WMI_PDEV_PARAM_CTRL_RETRY_LIMIT,
+	/** Set propagation delay for 2G / 5G band.
+	 * The propagation delay is fundamentally a per-peer property, but
+	 * the target may not support per-peer settings for ack timeouts.
+	 * This pdev parameter allows the MAC-level ack timeout to be set to
+	 * a value suitable for the worst-case propagation delay of any peer
+	 * within that pdev.
+	 * Units are microseconds.
+	 */
+	WMI_PDEV_PARAM_PROPAGATION_DELAY,
 
 } WMI_PDEV_PARAM;
 
