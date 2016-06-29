@@ -3371,7 +3371,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_CONFIG_MAX,
 		      data, data_len,
 		      wlan_hdd_wifi_config_policy)) {
-		hddLog(LOGE, FL("invalid attr"));
+		hdd_err("invalid attr");
 		return -EINVAL;
 	}
 
@@ -3503,13 +3503,13 @@ static int __wlan_hdd_cfg80211_wifi_logger_start(struct wiphy *wiphy,
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_WIFI_LOGGER_START_MAX,
 				data, data_len,
 				qca_wlan_vendor_wifi_logger_start_policy)) {
-		hddLog(LOGE, FL("Invalid attribute"));
+		hdd_err("Invalid attribute");
 		return -EINVAL;
 	}
 
 	/* Parse and fetch ring id */
 	if (!tb[QCA_WLAN_VENDOR_ATTR_WIFI_LOGGER_RING_ID]) {
-		hddLog(LOGE, FL("attr ATTR failed"));
+		hdd_err("attr ATTR failed");
 		return -EINVAL;
 	}
 	start_log.ring_id = nla_get_u32(
@@ -3518,7 +3518,7 @@ static int __wlan_hdd_cfg80211_wifi_logger_start(struct wiphy *wiphy,
 
 	/* Parse and fetch verbose level */
 	if (!tb[QCA_WLAN_VENDOR_ATTR_WIFI_LOGGER_VERBOSE_LEVEL]) {
-		hddLog(LOGE, FL("attr verbose_level failed"));
+		hdd_err("attr verbose_level failed");
 		return -EINVAL;
 	}
 	start_log.verbose_level = nla_get_u32(
@@ -3527,7 +3527,7 @@ static int __wlan_hdd_cfg80211_wifi_logger_start(struct wiphy *wiphy,
 
 	/* Parse and fetch flag */
 	if (!tb[QCA_WLAN_VENDOR_ATTR_WIFI_LOGGER_FLAGS]) {
-		hddLog(LOGE, FL("attr flag failed"));
+		hdd_err("attr flag failed");
 		return -EINVAL;
 	}
 	start_log.flag = nla_get_u32(
@@ -3547,7 +3547,7 @@ static int __wlan_hdd_cfg80211_wifi_logger_start(struct wiphy *wiphy,
 
 	status = sme_wifi_start_logger(hdd_ctx->hHal, start_log);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hddLog(LOGE, FL("sme_wifi_start_logger failed(err=%d)"),
+		hdd_err("sme_wifi_start_logger failed(err=%d)",
 				status);
 		return -EINVAL;
 	}
@@ -3627,13 +3627,13 @@ static int __wlan_hdd_cfg80211_wifi_logger_get_ring_data(struct wiphy *wiphy,
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_WIFI_LOGGER_GET_RING_DATA_MAX,
 			data, data_len,
 			qca_wlan_vendor_wifi_logger_get_ring_data_policy)) {
-		hddLog(LOGE, FL("Invalid attribute"));
+		hdd_err("Invalid attribute");
 		return -EINVAL;
 	}
 
 	/* Parse and fetch ring id */
 	if (!tb[QCA_WLAN_VENDOR_ATTR_WIFI_LOGGER_GET_RING_DATA_ID]) {
-		hddLog(LOGE, FL("attr ATTR failed"));
+		hdd_err("attr ATTR failed");
 		return -EINVAL;
 	}
 
@@ -3642,17 +3642,17 @@ static int __wlan_hdd_cfg80211_wifi_logger_get_ring_data(struct wiphy *wiphy,
 
 	if (ring_id == RING_ID_PER_PACKET_STATS) {
 		wlan_logging_set_per_pkt_stats();
-		hddLog(LOG1, FL("Flushing/Retrieving packet stats"));
+		hdd_notice("Flushing/Retrieving packet stats");
 	}
 
-	hddLog(LOG1, FL("Bug report triggered by framework"));
+	hdd_notice("Bug report triggered by framework");
 
 	status = cds_flush_logs(WLAN_LOG_TYPE_NON_FATAL,
 			WLAN_LOG_INDICATOR_FRAMEWORK,
 			WLAN_LOG_REASON_CODE_UNUSED,
 			true, false);
 	if (QDF_STATUS_SUCCESS != status) {
-		hddLog(LOGE, FL("Failed to trigger bug report"));
+		hdd_err("Failed to trigger bug report");
 		return -EINVAL;
 	}
 
@@ -3794,47 +3794,47 @@ wlan_hdd_add_tx_ptrn(hdd_adapter_t *adapter, hdd_context_t *hdd_ctx,
 	uint16_t eth_type = htons(ETH_P_IP);
 
 	if (!hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
-		hddLog(LOGE, FL("Not in Connected state!"));
+		hdd_err("Not in Connected state!");
 		return -ENOTSUPP;
 	}
 
 	add_req = qdf_mem_malloc(sizeof(*add_req));
 	if (!add_req) {
-		hddLog(LOGE, FL("memory allocation failed"));
+		hdd_err("memory allocation failed");
 		return -ENOMEM;
 	}
 
 	/* Parse and fetch request Id */
 	if (!tb[PARAM_REQUEST_ID]) {
-		hddLog(LOGE, FL("attr request id failed"));
+		hdd_err("attr request id failed");
 		goto fail;
 	}
 
 	request_id = nla_get_u32(tb[PARAM_REQUEST_ID]);
 	if (request_id == MAX_REQUEST_ID) {
-		hddLog(LOGE, FL("request_id cannot be MAX"));
+		hdd_err("request_id cannot be MAX");
 		return -EINVAL;
 	}
-	hddLog(LOG1, FL("Request Id: %u"), request_id);
+	hdd_notice("Request Id: %u", request_id);
 
 	if (!tb[PARAM_PERIOD]) {
-		hddLog(LOGE, FL("attr period failed"));
+		hdd_err("attr period failed");
 		goto fail;
 	}
 	add_req->usPtrnIntervalMs = nla_get_u32(tb[PARAM_PERIOD]);
-	hddLog(LOG1, FL("Period: %u ms"), add_req->usPtrnIntervalMs);
+	hdd_notice("Period: %u ms", add_req->usPtrnIntervalMs);
 	if (add_req->usPtrnIntervalMs == 0) {
-		hddLog(LOGE, FL("Invalid interval zero, return failure"));
+		hdd_err("Invalid interval zero, return failure");
 		goto fail;
 	}
 
 	if (!tb[PARAM_SRC_MAC_ADDR]) {
-		hddLog(LOGE, FL("attr source mac address failed"));
+		hdd_err("attr source mac address failed");
 		goto fail;
 	}
 	nla_memcpy(add_req->mac_address.bytes, tb[PARAM_SRC_MAC_ADDR],
 			QDF_MAC_ADDR_SIZE);
-	hddLog(LOG1, "input src mac address: "MAC_ADDRESS_STR,
+	hdd_notice("input src mac address: "MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(add_req->mac_address.bytes));
 
 	if (!qdf_is_macaddr_equal(&add_req->mac_address,
@@ -3844,24 +3844,24 @@ wlan_hdd_add_tx_ptrn(hdd_adapter_t *adapter, hdd_context_t *hdd_ctx,
 	}
 
 	if (!tb[PARAM_DST_MAC_ADDR]) {
-		hddLog(LOGE, FL("attr dst mac address failed"));
+		hdd_err("attr dst mac address failed");
 		goto fail;
 	}
 	nla_memcpy(dst_addr.bytes, tb[PARAM_DST_MAC_ADDR], QDF_MAC_ADDR_SIZE);
-	hddLog(LOG1, "input dst mac address: "MAC_ADDRESS_STR,
+	hdd_notice("input dst mac address: "MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(dst_addr.bytes));
 
 	if (!tb[PARAM_IP_PACKET]) {
-		hddLog(LOGE, FL("attr ip packet failed"));
+		hdd_err("attr ip packet failed");
 		goto fail;
 	}
 	add_req->ucPtrnSize = nla_len(tb[PARAM_IP_PACKET]);
-	hddLog(LOG1, FL("IP packet len: %u"), add_req->ucPtrnSize);
+	hdd_notice("IP packet len: %u", add_req->ucPtrnSize);
 
 	if (add_req->ucPtrnSize < 0 ||
 		add_req->ucPtrnSize > (PERIODIC_TX_PTRN_MAX_SIZE -
 					ETH_HLEN)) {
-		hddLog(LOGE, FL("Invalid IP packet len: %d"),
+		hdd_err("Invalid IP packet len: %d",
 				add_req->ucPtrnSize);
 		goto fail;
 	}
@@ -3888,16 +3888,15 @@ wlan_hdd_add_tx_ptrn(hdd_adapter_t *adapter, hdd_context_t *hdd_ctx,
 
 	ret = hdd_map_req_id_to_pattern_id(hdd_ctx, request_id, &pattern_id);
 	if (ret) {
-		hddLog(LOGW, FL("req id to pattern id failed (ret=%d)"), ret);
+		hdd_warn("req id to pattern id failed (ret=%d)", ret);
 		goto fail;
 	}
 	add_req->ucPtrnId = pattern_id;
-	hddLog(LOG1, FL("pattern id: %d"), add_req->ucPtrnId);
+	hdd_notice("pattern id: %d", add_req->ucPtrnId);
 
 	status = sme_add_periodic_tx_ptrn(hdd_ctx->hHal, add_req);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hddLog(LOGE,
-			FL("sme_add_periodic_tx_ptrn failed (err=%d)"), status);
+		hdd_err("sme_add_periodic_tx_ptrn failed (err=%d)", status);
 		goto fail;
 	}
 
@@ -3931,37 +3930,36 @@ wlan_hdd_del_tx_ptrn(hdd_adapter_t *adapter, hdd_context_t *hdd_ctx,
 
 	/* Parse and fetch request Id */
 	if (!tb[PARAM_REQUEST_ID]) {
-		hddLog(LOGE, FL("attr request id failed"));
+		hdd_err("attr request id failed");
 		return -EINVAL;
 	}
 	request_id = nla_get_u32(tb[PARAM_REQUEST_ID]);
 	if (request_id == MAX_REQUEST_ID) {
-		hddLog(LOGE, FL("request_id cannot be MAX"));
+		hdd_err("request_id cannot be MAX");
 		return -EINVAL;
 	}
 
 	ret = hdd_unmap_req_id_to_pattern_id(hdd_ctx, request_id, &pattern_id);
 	if (ret) {
-		hddLog(LOGW, FL("req id to pattern id failed (ret=%d)"), ret);
+		hdd_warn("req id to pattern id failed (ret=%d)", ret);
 		return -EINVAL;
 	}
 
 	del_req = qdf_mem_malloc(sizeof(*del_req));
 	if (!del_req) {
-		hddLog(LOGE, FL("memory allocation failed"));
+		hdd_err("memory allocation failed");
 		return -ENOMEM;
 	}
 
 	qdf_copy_macaddr(&del_req->mac_address, &adapter->macAddressCurrent);
 	hdd_info(MAC_ADDRESS_STR, MAC_ADDR_ARRAY(del_req->mac_address.bytes));
 	del_req->ucPtrnId = pattern_id;
-	hddLog(LOG1, FL("Request Id: %u Pattern id: %d"),
+	hdd_notice("Request Id: %u Pattern id: %d",
 			 request_id, del_req->ucPtrnId);
 
 	status = sme_del_periodic_tx_ptrn(hdd_ctx->hHal, del_req);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hddLog(LOGE,
-			FL("sme_del_periodic_tx_ptrn failed (err=%d)"), status);
+		hdd_err("sme_del_periodic_tx_ptrn failed (err=%d)", status);
 		goto fail;
 	}
 
@@ -4018,29 +4016,28 @@ __wlan_hdd_cfg80211_offloaded_packets(struct wiphy *wiphy,
 		return ret;
 
 	if (!sme_is_feature_supported_by_fw(WLAN_PERIODIC_TX_PTRN)) {
-		hddLog(LOGE,
-			FL("Periodic Tx Pattern Offload feature is not supported in FW!"));
+		hdd_err("Periodic Tx Pattern Offload feature is not supported in FW!");
 		return -ENOTSUPP;
 	}
 
 	if (nla_parse(tb, PARAM_MAX, data, data_len, policy)) {
-		hddLog(LOGE, FL("Invalid ATTR"));
+		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}
 
 	if (!tb[PARAM_CONTROL]) {
-		hddLog(LOGE, FL("attr control failed"));
+		hdd_err("attr control failed");
 		return -EINVAL;
 	}
 	control = nla_get_u32(tb[PARAM_CONTROL]);
-	hddLog(LOG1, FL("Control: %d"), control);
+	hdd_notice("Control: %d", control);
 
 	if (control == WLAN_START_OFFLOADED_PACKETS)
 		return wlan_hdd_add_tx_ptrn(adapter, hdd_ctx, tb);
 	else if (control == WLAN_STOP_OFFLOADED_PACKETS)
 		return wlan_hdd_del_tx_ptrn(adapter, hdd_ctx, tb);
 	else {
-		hddLog(LOGE, FL("Invalid control: %d"), control);
+		hdd_err("Invalid control: %d", control);
 		return -EINVAL;
 	}
 }
@@ -4129,22 +4126,22 @@ __wlan_hdd_cfg80211_monitor_rssi(struct wiphy *wiphy,
 		return ret;
 
 	if (!hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
-		hddLog(LOGE, FL("Not in Connected state!"));
+		hdd_err("Not in Connected state!");
 		return -ENOTSUPP;
 	}
 
 	if (nla_parse(tb, PARAM_MAX, data, data_len, policy)) {
-		hddLog(LOGE, FL("Invalid ATTR"));
+		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}
 
 	if (!tb[PARAM_REQUEST_ID]) {
-		hddLog(LOGE, FL("attr request id failed"));
+		hdd_err("attr request id failed");
 		return -EINVAL;
 	}
 
 	if (!tb[PARAM_CONTROL]) {
-		hddLog(LOGE, FL("attr control failed"));
+		hdd_err("attr control failed");
 		return -EINVAL;
 	}
 
@@ -4155,12 +4152,12 @@ __wlan_hdd_cfg80211_monitor_rssi(struct wiphy *wiphy,
 	if (control == QCA_WLAN_RSSI_MONITORING_START) {
 		req.control = true;
 		if (!tb[PARAM_MIN_RSSI]) {
-			hddLog(LOGE, FL("attr min rssi failed"));
+			hdd_err("attr min rssi failed");
 			return -EINVAL;
 		}
 
 		if (!tb[PARAM_MAX_RSSI]) {
-			hddLog(LOGE, FL("attr max rssi failed"));
+			hdd_err("attr max rssi failed");
 			return -EINVAL;
 		}
 
@@ -4168,26 +4165,25 @@ __wlan_hdd_cfg80211_monitor_rssi(struct wiphy *wiphy,
 		req.max_rssi = nla_get_s8(tb[PARAM_MAX_RSSI]);
 
 		if (!(req.min_rssi < req.max_rssi)) {
-			hddLog(LOGW, FL("min_rssi: %d must be less than max_rssi: %d"),
+			hdd_warn("min_rssi: %d must be less than max_rssi: %d",
 					req.min_rssi, req.max_rssi);
 			return -EINVAL;
 		}
-		hddLog(LOG1, FL("Min_rssi: %d Max_rssi: %d"),
+		hdd_notice("Min_rssi: %d Max_rssi: %d",
 			req.min_rssi, req.max_rssi);
 
 	} else if (control == QCA_WLAN_RSSI_MONITORING_STOP)
 		req.control = false;
 	else {
-		hddLog(LOGE, FL("Invalid control cmd: %d"), control);
+		hdd_err("Invalid control cmd: %d", control);
 		return -EINVAL;
 	}
-	hddLog(LOG1, FL("Request Id: %u Session_id: %d Control: %d"),
+	hdd_notice("Request Id: %u Session_id: %d Control: %d",
 			req.request_id, req.session_id, req.control);
 
 	status = sme_set_rssi_monitoring(hdd_ctx->hHal, &req);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hddLog(LOGE,
-			FL("sme_set_rssi_monitoring failed(err=%d)"), status);
+		hdd_err("sme_set_rssi_monitoring failed(err=%d)", status);
 		return -EINVAL;
 	}
 
@@ -4247,7 +4243,7 @@ void hdd_rssi_threshold_breached(void *hddctx,
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
 	if (!data) {
-		hddLog(LOGE, FL("data is null"));
+		hdd_err("data is null");
 		return;
 	}
 
@@ -4258,13 +4254,13 @@ void hdd_rssi_threshold_breached(void *hddctx,
 				  GFP_KERNEL);
 
 	if (!skb) {
-		hddLog(LOGE, FL("cfg80211_vendor_event_alloc failed"));
+		hdd_err("cfg80211_vendor_event_alloc failed");
 		return;
 	}
 
-	hddLog(LOG1, "Req Id: %u Current rssi: %d",
+	hdd_notice("Req Id: %u Current rssi: %d",
 			data->request_id, data->curr_rssi);
-	hddLog(LOG1, "Current BSSID: "MAC_ADDRESS_STR,
+	hdd_notice("Current BSSID: "MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(data->curr_bssid.bytes));
 
 	if (nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_RSSI_MONITORING_REQUEST_ID,
@@ -4273,7 +4269,7 @@ void hdd_rssi_threshold_breached(void *hddctx,
 		sizeof(data->curr_bssid), data->curr_bssid.bytes) ||
 	    nla_put_s8(skb, QCA_WLAN_VENDOR_ATTR_RSSI_MONITORING_CUR_RSSI,
 		data->curr_rssi)) {
-		hddLog(LOGE, FL("nla put fail"));
+		hdd_err("nla put fail");
 		goto fail;
 	}
 
@@ -4579,21 +4575,19 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_MAX, data, data_len,
 		      qca_wlan_vendor_attr_policy)) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, FL("Invalid attribute"));
+		hdd_err("Invalid attribute");
 		return -EINVAL;
 	}
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_MAC_ADDR]) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("Attribute peerMac not provided for mode=%d"),
+		hdd_err("Attribute peerMac not provided for mode=%d",
 		       adapter->device_mode);
 		return -EINVAL;
 	}
 
 	qdf_mem_copy(peer_mac, nla_data(tb[QCA_WLAN_VENDOR_ATTR_MAC_ADDR]),
 		     QDF_MAC_ADDR_SIZE);
-	hddLog(QDF_TRACE_LEVEL_INFO,
-	       FL("peerMac="MAC_ADDRESS_STR" for device_mode:%d"),
+	hdd_notice("peerMac="MAC_ADDRESS_STR" for device_mode:%d",
 	       MAC_ADDR_ARRAY(peer_mac), adapter->device_mode);
 
 	if (adapter->device_mode == QDF_STA_MODE ||
@@ -4603,8 +4597,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 			eConnectionState_Associated) ||
 		    qdf_mem_cmp(hdd_sta_ctx->conn_info.bssId.bytes,
 			peer_mac, QDF_MAC_ADDR_SIZE)) {
-			hddLog(QDF_TRACE_LEVEL_ERROR,
-			       FL("Not Associated to mac "MAC_ADDRESS_STR),
+			hdd_err("Not Associated to mac "MAC_ADDRESS_STR,
 			       MAC_ADDR_ARRAY(peer_mac));
 			return -EINVAL;
 		}
@@ -4627,8 +4620,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 		}
 
 		if (WLAN_MAX_STA_COUNT == sta_id) {
-			hddLog(QDF_TRACE_LEVEL_ERROR,
-			       FL("No active peer with mac="MAC_ADDRESS_STR),
+			hdd_err("No active peer with mac="MAC_ADDRESS_STR,
 			       MAC_ADDR_ARRAY(peer_mac));
 			return -EINVAL;
 		}
@@ -4638,8 +4630,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 			(WLAN_HDD_GET_AP_CTX_PTR(adapter))->operatingChannel);
 		rate_flags = adapter->aStaInfo[sta_id].rate_flags;
 	} else {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("Not Associated! with mac "MAC_ADDRESS_STR),
+		hdd_err("Not Associated! with mac "MAC_ADDRESS_STR,
 		       MAC_ADDR_ARRAY(peer_mac));
 		return -EINVAL;
 	}
@@ -4678,8 +4669,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 			sizeof(u8) + sizeof(u8) + sizeof(u32) + NLMSG_HDRLEN);
 
 	if (NULL == reply_skb) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("getLinkProperties: skb alloc failed"));
+		hdd_err("getLinkProperties: skb alloc failed");
 		return -EINVAL;
 	}
 
@@ -4692,7 +4682,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 	    nla_put_u32(reply_skb,
 		QCA_WLAN_VENDOR_ATTR_LINK_PROPERTIES_FREQ,
 		freq)) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, FL("nla_put failed"));
+		hdd_err("nla_put failed");
 		kfree_skb(reply_skb);
 		return -EINVAL;
 	}
@@ -5057,7 +5047,7 @@ void hdd_get_bpf_offload_cb(void *hdd_context,
 	ENTER();
 
 	if (wlan_hdd_validate_context(hdd_ctx) || !data) {
-		hddLog(LOGE, FL("HDD context is invalid or data(%p) is null"),
+		hdd_err("HDD context is invalid or data(%p) is null",
 			data);
 		return;
 	}
@@ -5105,18 +5095,18 @@ static int hdd_post_get_bpf_capabilities_rsp(hdd_context_t *hdd_ctx,
 
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy, nl_buf_len);
 	if (!skb) {
-		hddLog(LOGE, FL("cfg80211_vendor_cmd_alloc_reply_skb failed"));
+		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
 		return -ENOMEM;
 	}
 
-	hddLog(LOG1, "BPF Version: %u BPF max bytes: %u",
+	hdd_notice("BPF Version: %u BPF max bytes: %u",
 			bpf_get_offload->bpf_version,
 			bpf_get_offload->max_bytes_for_bpf_inst);
 
 	if (nla_put_u32(skb, BPF_PACKET_SIZE,
 			bpf_get_offload->max_bytes_for_bpf_inst) ||
 	    nla_put_u32(skb, BPF_VERSION, bpf_get_offload->bpf_version)) {
-		hddLog(LOGE, FL("nla put failure"));
+		hdd_err("nla put failure");
 		goto nla_put_failure;
 	}
 
@@ -5152,14 +5142,14 @@ static int hdd_get_bpf_offload(hdd_context_t *hdd_ctx)
 
 	status = sme_get_bpf_offload_capabilities(hdd_ctx->hHal);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hddLog(LOGE, FL("Unable to retrieve BPF caps"));
+		hdd_err("Unable to retrieve BPF caps");
 		return -EINVAL;
 	}
 	/* request was sent -- wait for the response */
 	rc = wait_for_completion_timeout(&context->completion,
 			msecs_to_jiffies(WLAN_WAIT_TIME_BPF));
 	if (!rc) {
-		hddLog(LOGE, FL("Target response timed out"));
+		hdd_err("Target response timed out");
 		spin_lock(&hdd_context_lock);
 		context->magic = 0;
 		spin_unlock(&hdd_context_lock);
@@ -5169,7 +5159,7 @@ static int hdd_get_bpf_offload(hdd_context_t *hdd_ctx)
 	ret = hdd_post_get_bpf_capabilities_rsp(hdd_ctx,
 					&bpf_context.capability_response);
 	if (ret)
-		hddLog(LOGE, FL("Failed to post get bpf capabilities"));
+		hdd_err("Failed to post get bpf capabilities");
 
 	EXIT();
 	return ret;
@@ -5195,26 +5185,26 @@ static int hdd_set_reset_bpf_offload(hdd_context_t *hdd_ctx,
 
 	bpf_set_offload = qdf_mem_malloc(sizeof(*bpf_set_offload));
 	if (bpf_set_offload == NULL) {
-		hddLog(LOGE, FL("qdf_mem_malloc failed for bpf_set_offload"));
+		hdd_err("qdf_mem_malloc failed for bpf_set_offload");
 		return -ENOMEM;
 	}
 	qdf_mem_zero(bpf_set_offload, sizeof(*bpf_set_offload));
 
 	/* Parse and fetch bpf packet size */
 	if (!tb[BPF_PACKET_SIZE]) {
-		hddLog(LOGE, FL("attr bpf packet size failed"));
+		hdd_err("attr bpf packet size failed");
 		goto fail;
 	}
 	bpf_set_offload->total_length = nla_get_u32(tb[BPF_PACKET_SIZE]);
 
 	if (!bpf_set_offload->total_length) {
-		hddLog(LOG1, FL("BPF reset packet filter received"));
+		hdd_notice("BPF reset packet filter received");
 		goto post_sme;
 	}
 
 	/* Parse and fetch bpf program */
 	if (!tb[BPF_PROGRAM]) {
-		hddLog(LOGE, FL("attr bpf program failed"));
+		hdd_err("attr bpf program failed");
 		goto fail;
 	}
 
@@ -5226,20 +5216,20 @@ static int hdd_set_reset_bpf_offload(hdd_context_t *hdd_ctx,
 
 	/* Parse and fetch filter Id */
 	if (!tb[BPF_FILTER_ID]) {
-		hddLog(LOGE, FL("attr filter id failed"));
+		hdd_err("attr filter id failed");
 		goto fail;
 	}
 	bpf_set_offload->filter_id = nla_get_u32(tb[BPF_FILTER_ID]);
 
 	/* Parse and fetch current offset */
 	if (!tb[BPF_CURRENT_OFFSET]) {
-		hddLog(LOGE, FL("attr current offset failed"));
+		hdd_err("attr current offset failed");
 		goto fail;
 	}
 	bpf_set_offload->current_offset = nla_get_u32(tb[BPF_CURRENT_OFFSET]);
 
 post_sme:
-	hddLog(LOG1, FL("Posting BPF SET/RESET to SME, session_id: %d Bpf Version: %d filter ID: %d total_length: %d current_length: %d current offset: %d"),
+	hdd_notice("Posting BPF SET/RESET to SME, session_id: %d Bpf Version: %d filter ID: %d total_length: %d current_length: %d current offset: %d",
 			bpf_set_offload->session_id,
 			bpf_set_offload->version,
 			bpf_set_offload->filter_id,
@@ -5249,8 +5239,7 @@ post_sme:
 
 	status = sme_set_bpf_instructions(hdd_ctx->hHal, bpf_set_offload);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hddLog(LOGE,
-			FL("sme_set_bpf_instructions failed(err=%d)"), status);
+		hdd_err("sme_set_bpf_instructions failed(err=%d)", status);
 		goto fail;
 	}
 	EXIT();
@@ -5293,23 +5282,23 @@ __wlan_hdd_cfg80211_bpf_offload(struct wiphy *wiphy,
 		return ret_val;
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
-		hddLog(LOGE, FL("Command not allowed in FTM mode"));
+		hdd_err("Command not allowed in FTM mode");
 		return -EINVAL;
 	}
 
 	if (!hdd_ctx->bpf_enabled) {
-		hddLog(LOGE, FL("BPF offload is not supported by firmware"));
+		hdd_err("BPF offload is not supported by firmware");
 		return -ENOTSUPP;
 	}
 
 	if (nla_parse(tb, BPF_MAX, data, data_len,
 				wlan_hdd_bpf_offload_policy)) {
-		hddLog(LOGE, FL("Invalid ATTR"));
+		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}
 
 	if (!tb[BPF_SET_RESET]) {
-		hddLog(LOGE, FL("attr bpf set reset failed"));
+		hdd_err("attr bpf set reset failed");
 		return -EINVAL;
 	}
 
@@ -5392,7 +5381,7 @@ __wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
 	ENTER();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
-		hddLog(LOGE, FL("Command not allowed in FTM mode"));
+		hdd_err("Command not allowed in FTM mode");
 		return -EINVAL;
 	}
 
@@ -5403,7 +5392,7 @@ __wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_MAX,
 				data, data_len,
 				wlan_hdd_sap_config_policy)) {
-		hddLog(LOGE, FL("invalid attr"));
+		hdd_err("invalid attr");
 		return -EINVAL;
 	}
 
@@ -6369,8 +6358,7 @@ int wlan_hdd_cfg80211_register(struct wiphy *wiphy)
 	/* Register our wiphy dev with cfg80211 */
 	if (0 > wiphy_register(wiphy)) {
 		/* print error */
-		hddLog(QDF_TRACE_LEVEL_ERROR, "%s: wiphy register failed",
-		       __func__);
+		hdd_err("wiphy register failed");
 		return -EIO;
 	}
 
@@ -6571,8 +6559,7 @@ uint8_t *wlan_hdd_cfg80211_get_ie_ptr(const uint8_t *ies_ptr, int length,
 		elem_len = ptr[1];
 		left -= 2;
 		if (elem_len > left) {
-			hddLog(QDF_TRACE_LEVEL_FATAL,
-			       FL("Invalid IEs eid = %d elem_len=%d left=%d"),
+			hdd_alert("Invalid IEs eid = %d elem_len=%d left=%d",
 			       eid, elem_len, left);
 			return NULL;
 		}
@@ -6615,16 +6602,13 @@ QDF_STATUS wlan_hdd_validate_operation_channel(hdd_adapter_t *pAdapter,
 			}
 		}
 		if (fValidChannel != true) {
-			hddLog(QDF_TRACE_LEVEL_ERROR,
-			       "%s: Invalid Channel [%d]", __func__, channel);
+			hdd_err("Invalid Channel [%d]", channel);
 			return QDF_STATUS_E_FAILURE;
 		}
 	} else {
 		if (0 != sme_cfg_get_str(hHal, WNI_CFG_VALID_CHANNEL_LIST,
 					 valid_ch, &num_ch)) {
-			hddLog(QDF_TRACE_LEVEL_ERROR,
-			       "%s: failed to get valid channel list",
-			       __func__);
+			hdd_err("failed to get valid channel list");
 			return QDF_STATUS_E_FAILURE;
 		}
 		for (indx = 0; indx < num_ch; indx++) {
@@ -6634,8 +6618,7 @@ QDF_STATUS wlan_hdd_validate_operation_channel(hdd_adapter_t *pAdapter,
 		}
 
 		if (indx >= num_ch) {
-			hddLog(QDF_TRACE_LEVEL_ERROR,
-			       "%s: Invalid Channel [%d]", __func__, channel);
+			hdd_err("Invalid Channel [%d]", channel);
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
@@ -6654,8 +6637,7 @@ static void wlan_hdd_set_dhcp_server_offload(hdd_adapter_t *pHostapdAdapter)
 	uint32_t temp;
 	pDhcpSrvInfo = qdf_mem_malloc(sizeof(*pDhcpSrvInfo));
 	if (NULL == pDhcpSrvInfo) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       "%s: could not allocate tDhcpSrvOffloadInfo!", __func__);
+		hdd_err("could not allocate tDhcpSrvOffloadInfo!");
 		return;
 	}
 	qdf_mem_zero(pDhcpSrvInfo, sizeof(*pDhcpSrvInfo));
@@ -6665,21 +6647,15 @@ static void wlan_hdd_set_dhcp_server_offload(hdd_adapter_t *pHostapdAdapter)
 	hdd_string_to_u8_array(pHddCtx->config->dhcpServerIP,
 			       srv_ip, &numEntries, IPADDR_NUM_ENTRIES);
 	if (numEntries != IPADDR_NUM_ENTRIES) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       "%s: incorrect IP address (%s) assigned for DHCP server!",
-		       __func__, pHddCtx->config->dhcpServerIP);
+		hdd_err("incorrect IP address (%s) assigned for DHCP server!", pHddCtx->config->dhcpServerIP);
 		goto end;
 	}
 	if ((srv_ip[0] >= 224) && (srv_ip[0] <= 239)) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       "%s: invalid IP address (%s)! It could NOT be multicast IP address!",
-		       __func__, pHddCtx->config->dhcpServerIP);
+		hdd_err("invalid IP address (%s)! It could NOT be multicast IP address!", pHddCtx->config->dhcpServerIP);
 		goto end;
 	}
 	if (srv_ip[IPADDR_NUM_ENTRIES - 1] >= 100) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       "%s: invalid IP address (%s)! The last field must be less than 100!",
-		       __func__, pHddCtx->config->dhcpServerIP);
+		hdd_err("invalid IP address (%s)! The last field must be less than 100!", pHddCtx->config->dhcpServerIP);
 		goto end;
 	}
 	for (num = 0; num < numEntries; num++) {
@@ -6688,12 +6664,10 @@ static void wlan_hdd_set_dhcp_server_offload(hdd_adapter_t *pHostapdAdapter)
 	}
 	if (QDF_STATUS_SUCCESS !=
 	    sme_set_dhcp_srv_offload(pHddCtx->hHal, pDhcpSrvInfo)) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       "%s: sme_setDHCPSrvOffload fail!", __func__);
+		hdd_err("sme_setDHCPSrvOffload fail!");
 		goto end;
 	}
-	hddLog(QDF_TRACE_LEVEL_INFO_HIGH,
-	       "%s: enable DHCP Server offload successfully!", __func__);
+	hdd_info("enable DHCP Server offload successfully!");
 end:
 	qdf_mem_free(pDhcpSrvInfo);
 	return;
@@ -6712,14 +6686,14 @@ static int __wlan_hdd_cfg80211_change_bss(struct wiphy *wiphy,
 	ENTER();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
-		hddLog(LOGE, FL("Command not allowed in FTM mode"));
+		hdd_err("Command not allowed in FTM mode");
 		return -EINVAL;
 	}
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_CHANGE_BSS,
 			 pAdapter->sessionId, params->ap_isolate));
-	hddLog(LOG1, FL("Device_mode %s(%d), ap_isolate = %d"),
+	hdd_notice("Device_mode %s(%d), ap_isolate = %d",
 		hdd_device_mode_to_string(pAdapter->device_mode),
 		pAdapter->device_mode, params->ap_isolate);
 
@@ -6776,7 +6750,7 @@ static int wlan_hdd_change_client_iface_to_new_mode(struct net_device *ndev,
 	ENTER();
 
 	if (test_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags)) {
-		hddLog(LOG1, FL("ACS is in progress, don't change iface!"));
+		hdd_notice("ACS is in progress, don't change iface!");
 		return 0;
 	}
 
@@ -6863,7 +6837,7 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	ENTER();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
-		hddLog(LOGE, FL("Command not allowed in FTM mode"));
+		hdd_err("Command not allowed in FTM mode");
 		return -EINVAL;
 	}
 
@@ -6876,14 +6850,13 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 			 TRACE_CODE_HDD_CFG80211_CHANGE_IFACE,
 			 pAdapter->sessionId, type));
 
-	hddLog(QDF_TRACE_LEVEL_INFO, FL("Device_mode = %d, IFTYPE = 0x%x"),
+	hdd_notice("Device_mode = %d, IFTYPE = 0x%x",
 	       pAdapter->device_mode, type);
 
 	if (!cds_allow_concurrency(
 				wlan_hdd_convert_nl_iftype_to_hdd_type(type),
 				0, HW_MODE_20_MHZ)) {
-		hddLog(QDF_TRACE_LEVEL_DEBUG,
-			FL("This concurrency combination is not allowed"));
+		hdd_debug("This concurrency combination is not allowed");
 		return -EINVAL;
 	}
 
@@ -6912,8 +6885,7 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 			if (type == NL80211_IFTYPE_ADHOC) {
 				wlan_hdd_tdls_exit(pAdapter);
 				hdd_deregister_tx_flow_control(pAdapter);
-				hddLog(LOG1,
-					FL("Setting interface Type to ADHOC"));
+				hdd_notice("Setting interface Type to ADHOC");
 			}
 			vstatus = wlan_hdd_change_client_iface_to_new_mode(ndev,
 					type);
@@ -6933,8 +6905,7 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 		case NL80211_IFTYPE_AP:
 		case NL80211_IFTYPE_P2P_GO:
 		{
-			hddLog(QDF_TRACE_LEVEL_INFO_HIGH,
-			       FL("Setting interface Type to %s"),
+			hdd_info("Setting interface Type to %s",
 			       (type ==
 				NL80211_IFTYPE_AP) ? "SoftAP" :
 			       "P2pGo");
@@ -6980,9 +6951,7 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 
 			vstatus = hdd_init_ap_mode(pAdapter);
 			if (vstatus != QDF_STATUS_SUCCESS) {
-				hddLog(LOGP,
-				       FL
-					       ("Error initializing the ap mode"));
+				hdd_alert("Error initializing the ap mode");
 				return -EINVAL;
 			}
 
@@ -6994,15 +6963,14 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 			if (wdev) {
 				wdev->iftype = type;
 			} else {
-				hddLog(LOGE,
-				       FL("Wireless dev is NULL"));
+				hdd_err("Wireless dev is NULL");
 				return -EINVAL;
 			}
 			goto done;
 		}
 
 		default:
-			hddLog(LOGE, FL("Unsupported interface type (%d)"),
+			hdd_err("Unsupported interface type (%d)",
 			       type);
 			return -EOPNOTSUPP;
 		}
@@ -7038,12 +7006,12 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 			goto done;
 
 		default:
-			hddLog(LOGE, FL("Unsupported interface type(%d)"),
+			hdd_err("Unsupported interface type(%d)",
 			       type);
 			return -EOPNOTSUPP;
 		}
 	} else {
-		hddLog(LOGE, FL("Unsupported device mode(%d)"),
+		hdd_err("Unsupported device mode(%d)",
 		       pAdapter->device_mode);
 		return -EOPNOTSUPP;
 	}
