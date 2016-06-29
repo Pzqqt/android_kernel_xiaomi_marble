@@ -10095,6 +10095,7 @@ QDF_STATUS sme_update_tdls_peer_state(tHalHandle hHal,
 	tTdlsPeerCapParams *peer_cap = NULL;
 	cds_msg_t cds_message;
 	uint8_t num;
+	uint8_t peer_chan_len;
 	uint8_t chanId;
 	uint8_t i;
 
@@ -10143,9 +10144,7 @@ QDF_STATUS sme_update_tdls_peer_state(tHalHandle hHal,
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("invalid peer state param (%d)"),
 			peerStateParams->peerState);
-		qdf_mem_free(pTdlsPeerStateParams);
-		sme_release_global_lock(&pMac->sme);
-		return QDF_STATUS_E_FAILURE;
+		goto error_return;
 	}
 	peer_cap = &(pTdlsPeerStateParams->peerCap);
 	peer_cap->isPeerResponder =
@@ -10164,19 +10163,30 @@ QDF_STATUS sme_update_tdls_peer_state(tHalHandle hHal,
 		peerStateParams->peerCap.selfCurrOperClass;
 
 	num = 0;
-	for (i = 0; i < peerStateParams->peerCap.peerChanLen; i++) {
-		chanId = peerStateParams->peerCap.peerChan[i];
-		if (csr_roam_is_channel_valid(pMac, chanId) &&
-		    !(cds_get_channel_state(chanId) ==
-		      CHANNEL_STATE_DFS) &&
-		    !cds_is_dsrc_channel(cds_chan_to_freq(chanId))) {
-			peer_cap->peerChan[num].chanId = chanId;
-			peer_cap->peerChan[num].pwr =
-				csr_get_cfg_max_tx_power(pMac, chanId);
-			peer_cap->peerChan[num].dfsSet = false;
+	peer_chan_len = peerStateParams->peerCap.peerChanLen;
+
+	if (peer_chan_len >= 0 &&
+	    peer_chan_len <= SME_TDLS_MAX_SUPP_CHANNELS) {
+		for (i = 0; i < peerStateParams->peerCap.peerChanLen; i++) {
+			chanId = peerStateParams->peerCap.peerChan[i];
+			if (csr_roam_is_channel_valid(pMac, chanId) &&
+			    !(cds_get_channel_state(chanId) ==
+			      CHANNEL_STATE_DFS) &&
+			    !cds_is_dsrc_channel(cds_chan_to_freq(chanId))) {
+				peer_cap->peerChan[num].chanId = chanId;
+				peer_cap->peerChan[num].pwr =
+					csr_get_cfg_max_tx_power(pMac, chanId);
+				peer_cap->peerChan[num].dfsSet = false;
 			num++;
+			}
 		}
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			FL("invalid peer channel len (%d)"),
+			peer_chan_len);
+		goto error_return;
 	}
+
 	peer_cap->peerChanLen = num;
 	peer_cap->peerOperClassLen =
 		peerStateParams->peerCap.peerOperClassLen;
@@ -10198,9 +10208,17 @@ QDF_STATUS sme_update_tdls_peer_state(tHalHandle hHal,
 
 	qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		qdf_mem_free(pTdlsPeerStateParams);
-		status = QDF_STATUS_E_FAILURE;
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			FL("cds_mq_post_message failed "));
+		goto error_return;
+	} else {
+		goto success_return;
 	}
+
+error_return:
+	status = QDF_STATUS_E_FAILURE;
+	qdf_mem_free(pTdlsPeerStateParams);
+success_return:
 	sme_release_global_lock(&pMac->sme);
 	return status;
 }
