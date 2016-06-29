@@ -1112,6 +1112,7 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 	QDF_STATUS qdf_status;
 	tAniGetRssiReq *pGetRssiReq = (tAniGetRssiReq *) wma->pGetRssiReq;
 	cds_msg_t sme_msg = { 0 };
+	int8_t bcn_snr, dat_snr;
 
 	node = &wma->interfaces[vdev_stats->vdev_id];
 	stats_rsp_params = node->stats_rsp;
@@ -1140,14 +1141,15 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 			summary_stats->rts_fail_cnt = vdev_stats->rts_fail_cnt;
 		}
 	}
+	bcn_snr = vdev_stats->vdev_snr.bcn_snr;
+	dat_snr = vdev_stats->vdev_snr.dat_snr;
 
-	WMA_LOGD("vdev id %d beacon snr %d data snr %d",
-		 vdev_stats->vdev_id,
-		 vdev_stats->vdev_snr.bcn_snr, vdev_stats->vdev_snr.dat_snr);
+	WMA_LOGD("vdev id %d beancon snr %d data snr %d",
+		 vdev_stats->vdev_id, bcn_snr, dat_snr);
 
 	if (pGetRssiReq && pGetRssiReq->sessionId == vdev_stats->vdev_id) {
-		if ((vdev_stats->vdev_snr.bcn_snr == WMA_TGT_INVALID_SNR) &&
-		    (vdev_stats->vdev_snr.dat_snr == WMA_TGT_INVALID_SNR)) {
+		if ((bcn_snr == WMA_TGT_INVALID_SNR) &&
+			(dat_snr == WMA_TGT_INVALID_SNR)) {
 			/*
 			 * Firmware sends invalid snr till it sees
 			 * Beacon/Data after connection since after
@@ -1158,11 +1160,10 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 			WMA_LOGE("Invalid SNR from firmware");
 
 		} else {
-			if (vdev_stats->vdev_snr.bcn_snr != WMA_TGT_INVALID_SNR) {
-				rssi = vdev_stats->vdev_snr.bcn_snr;
-			} else if (vdev_stats->vdev_snr.dat_snr !=
-				   WMA_TGT_INVALID_SNR) {
-				rssi = vdev_stats->vdev_snr.dat_snr;
+			if (bcn_snr != WMA_TGT_INVALID_SNR) {
+				rssi = bcn_snr;
+			} else if (dat_snr != WMA_TGT_INVALID_SNR) {
+				rssi = dat_snr;
 			}
 
 			/*
@@ -1189,12 +1190,12 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 	if (node->psnr_req) {
 		tAniGetSnrReq *p_snr_req = node->psnr_req;
 
-		if (vdev_stats->vdev_snr.bcn_snr != WMA_TGT_INVALID_SNR)
-			p_snr_req->snr = vdev_stats->vdev_snr.bcn_snr;
-		else if (vdev_stats->vdev_snr.dat_snr != WMA_TGT_INVALID_SNR)
-			p_snr_req->snr = vdev_stats->vdev_snr.dat_snr;
+		if (bcn_snr != WMA_TGT_INVALID_SNR)
+			p_snr_req->snr = bcn_snr;
+		else if (dat_snr != WMA_TGT_INVALID_SNR)
+			p_snr_req->snr = dat_snr;
 		else
-			p_snr_req->snr = WMA_TGT_INVALID_SNR;
+			p_snr_req->snr = (int8_t)WMA_TGT_INVALID_SNR;
 
 		sme_msg.type = eWNI_SME_SNR_IND;
 		sme_msg.bodyptr = p_snr_req;
