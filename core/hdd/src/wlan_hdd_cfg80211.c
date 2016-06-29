@@ -1675,7 +1675,7 @@ void wlan_hdd_cfg80211_acs_ch_select_evt(hdd_adapter_t *adapter)
 			GFP_KERNEL);
 
 	if (!vendor_event) {
-		hddLog(LOGE, FL("cfg80211_vendor_event_alloc failed"));
+		hdd_err("cfg80211_vendor_event_alloc failed");
 		return;
 	}
 
@@ -1683,8 +1683,7 @@ void wlan_hdd_cfg80211_acs_ch_select_evt(hdd_adapter_t *adapter)
 				QCA_WLAN_VENDOR_ATTR_ACS_PRIMARY_CHANNEL,
 				sap_cfg->acs_cfg.pri_ch);
 	if (ret_val) {
-		hddLog(LOGE,
-			FL("QCA_WLAN_VENDOR_ATTR_ACS_PRIMARY_CHANNEL put fail"));
+		hdd_err("QCA_WLAN_VENDOR_ATTR_ACS_PRIMARY_CHANNEL put fail");
 		kfree_skb(vendor_event);
 		return;
 	}
@@ -1693,9 +1692,7 @@ void wlan_hdd_cfg80211_acs_ch_select_evt(hdd_adapter_t *adapter)
 				QCA_WLAN_VENDOR_ATTR_ACS_SECONDARY_CHANNEL,
 				sap_cfg->acs_cfg.ht_sec_ch);
 	if (ret_val) {
-		hddLog(LOGE,
-			FL(
-			"QCA_WLAN_VENDOR_ATTR_ACS_SECONDARY_CHANNEL put fail"));
+		hdd_err("QCA_WLAN_VENDOR_ATTR_ACS_SECONDARY_CHANNEL put fail");
 		kfree_skb(vendor_event);
 		return;
 	}
@@ -1704,9 +1701,7 @@ void wlan_hdd_cfg80211_acs_ch_select_evt(hdd_adapter_t *adapter)
 			QCA_WLAN_VENDOR_ATTR_ACS_VHT_SEG0_CENTER_CHANNEL,
 			sap_cfg->acs_cfg.vht_seg0_center_ch);
 	if (ret_val) {
-		hddLog(LOGE,
-			FL(
-			"QCA_WLAN_VENDOR_ATTR_ACS_VHT_SEG0_CENTER_CHANNEL put fail"));
+		hdd_err("QCA_WLAN_VENDOR_ATTR_ACS_VHT_SEG0_CENTER_CHANNEL put fail");
 		kfree_skb(vendor_event);
 		return;
 	}
@@ -1715,9 +1710,7 @@ void wlan_hdd_cfg80211_acs_ch_select_evt(hdd_adapter_t *adapter)
 			QCA_WLAN_VENDOR_ATTR_ACS_VHT_SEG1_CENTER_CHANNEL,
 			sap_cfg->acs_cfg.vht_seg1_center_ch);
 	if (ret_val) {
-		hddLog(LOGE,
-			FL(
-			"QCA_WLAN_VENDOR_ATTR_ACS_VHT_SEG1_CENTER_CHANNEL put fail"));
+		hdd_err("QCA_WLAN_VENDOR_ATTR_ACS_VHT_SEG1_CENTER_CHANNEL put fail");
 		kfree_skb(vendor_event);
 		return;
 	}
@@ -1733,9 +1726,7 @@ void wlan_hdd_cfg80211_acs_ch_select_evt(hdd_adapter_t *adapter)
 				QCA_WLAN_VENDOR_ATTR_ACS_CHWIDTH,
 				ch_width);
 	if (ret_val) {
-		hddLog(LOGE,
-			FL(
-			"QCA_WLAN_VENDOR_ATTR_ACS_CHWIDTH put fail"));
+		hdd_err("QCA_WLAN_VENDOR_ATTR_ACS_CHWIDTH put fail");
 		kfree_skb(vendor_event);
 		return;
 	}
@@ -1749,15 +1740,12 @@ void wlan_hdd_cfg80211_acs_ch_select_evt(hdd_adapter_t *adapter)
 					QCA_ACS_MODE_IEEE80211G);
 
 	if (ret_val) {
-		hddLog(LOGE,
-			FL(
-			"QCA_WLAN_VENDOR_ATTR_ACS_HW_MODE put fail"));
+		hdd_err("QCA_WLAN_VENDOR_ATTR_ACS_HW_MODE put fail");
 		kfree_skb(vendor_event);
 		return;
 	}
 
-	hddLog(LOG1,
-		FL("ACS result for wlan%d: PRI_CH: %d SEC_CH: %d VHT_SEG0: %d VHT_SEG1: %d ACS_BW: %d"),
+	hdd_notice("ACS result for wlan%d: PRI_CH: %d SEC_CH: %d VHT_SEG0: %d VHT_SEG1: %d ACS_BW: %d",
 		adapter->dev->ifindex, sap_cfg->acs_cfg.pri_ch,
 		sap_cfg->acs_cfg.ht_sec_ch, sap_cfg->acs_cfg.vht_seg0_center_ch,
 		sap_cfg->acs_cfg.vht_seg1_center_ch, ch_width);
@@ -6544,7 +6532,7 @@ void wlan_hdd_cfg80211_set_key_wapi(hdd_adapter_t *pAdapter, uint8_t key_index,
 	uint8_t *pKeyPtr = NULL;
 	int n = 0;
 
-	hddLog(LOG1, "Device_mode %s(%d)",
+	hdd_notice("Device_mode %s(%d)",
 		hdd_device_mode_to_string(pAdapter->device_mode),
 		pAdapter->device_mode);
 
@@ -6562,11 +6550,10 @@ void wlan_hdd_cfg80211_set_key_wapi(hdd_adapter_t *pAdapter, uint8_t key_index,
 	pKeyPtr = setKey.Key;
 	memcpy(pKeyPtr, key, key_Len);
 
-	hddLog(QDF_TRACE_LEVEL_INFO, "%s: WAPI KEY LENGTH:0x%04x",
-	       __func__, key_Len);
+	hdd_notice("WAPI KEY LENGTH:0x%04x", key_Len);
 	for (n = 0; n < key_Len; n++)
-		hddLog(QDF_TRACE_LEVEL_INFO, "%s WAPI KEY Data[%d]:%02x ",
-		       __func__, n, setKey.Key[n]);
+		hdd_notice("WAPI KEY Data[%d]:%02x ",
+			   n, setKey.Key[n]);
 
 	pHddStaCtx->roam_info.roamingState = HDD_ROAM_STATE_SETTING_KEY;
 	if (isConnected) {
@@ -6574,9 +6561,8 @@ void wlan_hdd_cfg80211_set_key_wapi(hdd_adapter_t *pAdapter, uint8_t key_index,
 					  pAdapter->sessionId, &setKey, &roamId);
 	}
 	if (status != 0) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "[%4d] sme_roam_set_key returned ERROR status= %d",
-			  __LINE__, status);
+		hdd_err("sme_roam_set_key returned ERROR status= %d",
+			status);
 		pHddStaCtx->roam_info.roamingState = HDD_ROAM_STATE_NONE;
 	}
 }
