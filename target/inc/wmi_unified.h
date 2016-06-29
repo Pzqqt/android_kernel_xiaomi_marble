@@ -7872,7 +7872,9 @@ typedef struct {
 #define WMI_ROAM_INVOKE_FLAG_ADD_CH_TO_CACHE       0
 /* indicate to host of failure if WMI_ROAM_INVOKE_CMDID. */
 #define WMI_ROAM_INVOKE_FLAG_REPORT_FAILURE        1
-/* from bit 2 to bit 31 are reserved */
+/* during host-invoked roaming, don't send null data frame to AP */
+#define WMI_ROAM_INVOKE_FLAG_NO_NULL_FRAME_TO_AP   2
+/* from bit 3 to bit 31 are reserved */
 
 #define WMI_SET_ROAM_INVOKE_ADD_CH_TO_CACHE(flag) do { \
 	(flag) |=  (1 << WMI_SET_ROAM_INVOKE_ADD_CH_TO_CACHE);      \
