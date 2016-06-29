@@ -1128,9 +1128,9 @@ static void hif_pm_runtime_start(struct hif_pci_softc *sc)
 			(unsigned long)sc);
 
 	HIF_INFO("%s: Enabling RUNTIME PM, Delay: %d ms", __func__,
-			ol_sc->runtime_pm_delay);
+			ol_sc->hif_config.runtime_pm_delay);
 
-	cnss_runtime_init(sc->dev, ol_sc->runtime_pm_delay);
+	cnss_runtime_init(sc->dev, ol_sc->hif_config.runtime_pm_delay);
 	qdf_atomic_set(&sc->pm_state, HIF_PM_RUNTIME_STATE_ON);
 	hif_runtime_pm_debugfs_create(sc);
 }
