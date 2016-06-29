@@ -683,16 +683,15 @@ static int __wlan_hdd_cfg80211_get_tdls_capabilities(struct wiphy *wiphy,
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, (2 * sizeof(u32)) +
 						   NLMSG_HDRLEN);
 	if (!skb) {
-		hddLog(LOGE, FL("cfg80211_vendor_cmd_alloc_reply_skb failed"));
+		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
 		goto fail;
 	}
 
 	if (false == hdd_ctx->config->fEnableTDLSSupport) {
-		hddLog(LOGE,
-			FL("TDLS feature not Enabled or Not supported in FW"));
+		hdd_err("TDLS feature not Enabled or Not supported in FW");
 		if (nla_put_u32(skb, PARAM_MAX_TDLS_SESSION, 0) ||
 			nla_put_u32(skb, PARAM_TDLS_FEATURE_SUPPORT, 0)) {
-			hddLog(LOGE, FL("nla put fail"));
+			hdd_err("nla put fail");
 			goto fail;
 		}
 	} else {
@@ -701,12 +700,12 @@ static int __wlan_hdd_cfg80211_get_tdls_capabilities(struct wiphy *wiphy,
 					WIFI_TDLS_EXTERNAL_CONTROL_SUPPORT : 0);
 		set = set | (hdd_ctx->config->fEnableTDLSOffChannel ?
 					WIIF_TDLS_OFFCHANNEL_SUPPORT : 0);
-		hddLog(LOG1, FL("TDLS Feature supported value %x"), set);
+		hdd_notice("TDLS Feature supported value %x", set);
 		if (nla_put_u32(skb, PARAM_MAX_TDLS_SESSION,
 				 hdd_ctx->max_num_tdls_sta) ||
 			nla_put_u32(skb, PARAM_TDLS_FEATURE_SUPPORT,
 				 set)) {
-			hddLog(LOGE, FL("nla put fail"));
+			hdd_err("nla put fail");
 			goto fail;
 		}
 	}
@@ -763,12 +762,12 @@ int wlan_hdd_send_avoid_freq_event(hdd_context_t *pHddCtx,
 	ENTER();
 
 	if (!pHddCtx) {
-		hddLog(LOGE, FL("HDD context is null"));
+		hdd_err("HDD context is null");
 		return -EINVAL;
 	}
 
 	if (!pAvoidFreqList) {
-		hddLog(LOGE, FL("pAvoidFreqList is null"));
+		hdd_err("pAvoidFreqList is null");
 		return -EINVAL;
 	}
 
@@ -778,7 +777,7 @@ int wlan_hdd_send_avoid_freq_event(hdd_context_t *pHddCtx,
 						   QCA_NL80211_VENDOR_SUBCMD_AVOID_FREQUENCY_INDEX,
 						   GFP_KERNEL);
 	if (!vendor_event) {
-		hddLog(LOGE, FL("cfg80211_vendor_event_alloc failed"));
+		hdd_err("cfg80211_vendor_event_alloc failed");
 		return -EINVAL;
 	}
 
@@ -1133,7 +1132,7 @@ static int __is_driver_dfs_capable(struct wiphy *wiphy,
 		ret_val = nla_put_u32(temp_skbuff, QCA_WLAN_VENDOR_ATTR_DFS,
 				      dfs_capability);
 		if (ret_val) {
-			hddLog(LOGE, FL("QCA_WLAN_VENDOR_ATTR_DFS put fail"));
+			hdd_err("QCA_WLAN_VENDOR_ATTR_DFS put fail");
 			kfree_skb(temp_skbuff);
 
 			return ret_val;
@@ -1142,7 +1141,7 @@ static int __is_driver_dfs_capable(struct wiphy *wiphy,
 		return cfg80211_vendor_cmd_reply(temp_skbuff);
 	}
 
-	hddLog(LOGE, FL("dfs capability: buffer alloc fail"));
+	hdd_err("dfs capability: buffer alloc fail");
 	return -ENOMEM;
 }
 
@@ -1210,16 +1209,16 @@ int wlan_hdd_sap_cfg_dfs_override(hdd_adapter_t *adapter)
 	if (!CDS_IS_DFS_CH(con_ch))
 		return 0;
 
-	hddLog(LOGE, FL("Only SCC AP-AP DFS Permitted (ch=%d, con_ch=%d)"),
+	hdd_err("Only SCC AP-AP DFS Permitted (ch=%d, con_ch=%d)",
 						sap_config->channel, con_ch);
-	hddLog(LOG1, FL("Overriding guest AP's channel"));
+	hdd_notice("Overriding guest AP's channel");
 	sap_config->channel = con_ch;
 
 	if (con_sap_config->acs_cfg.acs_mode == true) {
 		if (con_ch != con_sap_config->acs_cfg.pri_ch &&
 				con_ch != con_sap_config->acs_cfg.ht_sec_ch) {
-			hddLog(LOGE, FL("Primary AP channel config error"));
-			hddLog(LOGE, FL("Operating ch: %d ACS ch: %d %d"),
+			hdd_err("Primary AP channel config error");
+			hdd_err("Operating ch: %d ACS ch: %d %d",
 				con_ch, con_sap_config->acs_cfg.pri_ch,
 				con_sap_config->acs_cfg.ht_sec_ch);
 			return -EINVAL;
@@ -1238,7 +1237,7 @@ int wlan_hdd_sap_cfg_dfs_override(hdd_adapter_t *adapter)
 					sizeof(uint8_t) *
 					con_sap_config->acs_cfg.ch_list_count);
 		if (!sap_config->acs_cfg.ch_list) {
-			hddLog(LOGE, FL("ACS config alloc fail"));
+			hdd_err("ACS config alloc fail");
 			return -ENOMEM;
 		}
 
@@ -1352,7 +1351,7 @@ static int wlan_hdd_cfg80211_start_acs(hdd_adapter_t *adapter)
 	}
 	status = wlan_hdd_config_acs(hdd_ctx, adapter);
 	if (status) {
-		hddLog(LOGE, FL("ACS config failed"));
+		hdd_err("ACS config failed");
 		return -EINVAL;
 	}
 
@@ -1360,7 +1359,7 @@ static int wlan_hdd_cfg80211_start_acs(hdd_adapter_t *adapter)
 
 	qdf_mem_copy(sap_config->self_macaddr.bytes,
 		adapter->macAddressCurrent.bytes, sizeof(struct qdf_mac_addr));
-	hddLog(LOG1, FL("ACS Started for wlan%d"), adapter->dev->ifindex);
+	hdd_notice("ACS Started for wlan%d", adapter->dev->ifindex);
 	status = wlansap_acs_chselect(
 #ifdef WLAN_FEATURE_MBSSID
 		WLAN_HDD_GET_SAP_CTX_PTR(adapter),
@@ -1371,7 +1370,7 @@ static int wlan_hdd_cfg80211_start_acs(hdd_adapter_t *adapter)
 
 
 	if (status) {
-		hddLog(LOGE, FL("ACS channel select failed"));
+		hdd_err("ACS channel select failed");
 		return -EINVAL;
 	}
 	sap_config->acs_cfg.acs_mode = true;
@@ -1435,7 +1434,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	}
 
 	if (hdd_ctx->config->force_sap_acs) {
-		hddLog(LOGE, FL("Hostapd ACS rejected as Driver ACS enabled"));
+		hdd_err("Hostapd ACS rejected as Driver ACS enabled");
 		return -EPERM;
 	}
 
@@ -1449,12 +1448,12 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	status = nla_parse(tb, QCA_WLAN_VENDOR_ATTR_ACS_MAX, data, data_len,
 						NULL);
 	if (status) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, FL("Invalid ATTR"));
+		hdd_err("Invalid ATTR");
 		goto out;
 	}
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_ACS_HW_MODE]) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, FL("Attr hw_mode failed"));
+		hdd_err("Attr hw_mode failed");
 		goto out;
 	}
 	sap_config->acs_cfg.hw_mode = nla_get_u8(
@@ -1526,7 +1525,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 			sap_config->acs_cfg.ch_list = qdf_mem_malloc(
 				sap_config->acs_cfg.ch_list_count);
 			if (sap_config->acs_cfg.ch_list == NULL) {
-				hddLog(LOGE, FL("ACS config alloc fail"));
+				hdd_err("ACS config alloc fail");
 				status = -ENOMEM;
 				goto out;
 			}
@@ -1546,11 +1545,11 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 				&sap_config->acs_cfg.pcl_ch_count,
 				weight_list, QDF_ARRAY_SIZE(weight_list));
 	if (QDF_STATUS_SUCCESS != status)
-		hddLog(LOGE, FL("Get PCL failed"));
+		hdd_err("Get PCL failed");
 
 	/* ACS override for android */
 	if (hdd_ctx->config->sap_p2p_11ac_override && ht_enabled) {
-		hddLog(LOG1, FL("ACS Config override for 11AC"));
+		hdd_notice("ACS Config override for 11AC");
 		vht_enabled = 1;
 		sap_config->acs_cfg.hw_mode = eCSR_DOT11_MODE_11ac;
 		sap_config->acs_cfg.ch_width =
@@ -1563,29 +1562,29 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 
 	wlan_hdd_set_acs_ch_range(sap_config, ht_enabled, vht_enabled);
 
-	hddLog(LOG1, FL("ACS Config for wlan%d: HW_MODE: %d ACS_BW: %d HT: %d VHT: %d START_CH: %d END_CH: %d"),
+	hdd_notice("ACS Config for wlan%d: HW_MODE: %d ACS_BW: %d HT: %d VHT: %d START_CH: %d END_CH: %d",
 		adapter->dev->ifindex, sap_config->acs_cfg.hw_mode,
 		ch_width, ht_enabled, vht_enabled,
 		sap_config->acs_cfg.start_ch, sap_config->acs_cfg.end_ch);
 
 	if (sap_config->acs_cfg.ch_list_count) {
-		hddLog(LOG1, FL("ACS channel list: len: %d"),
+		hdd_notice("ACS channel list: len: %d",
 					sap_config->acs_cfg.ch_list_count);
 		for (i = 0; i < sap_config->acs_cfg.ch_list_count; i++)
-			hddLog(LOG1, "%d ", sap_config->acs_cfg.ch_list[i]);
+			hdd_notice("%d ", sap_config->acs_cfg.ch_list[i]);
 	}
 	sap_config->acs_cfg.acs_mode = true;
 	if (test_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags)) {
-		/* ***Note*** Completion variable usage is not allowed here since
-		 * ACS scan operation may take max 2.2 sec for 5G band.
-		 * 9 Active channel X 40 ms active scan time +
-		 * 16 Passive channel X 110ms passive scan time
+		/* ***Note*** Completion variable usage is not allowed
+		 * here since ACS scan operation may take max 2.2 sec
+		 * for 5G band:
+		 *   9 Active channel X 40 ms active scan time +
+		 *   16 Passive channel X 110ms passive scan time
 		 * Since this CFG80211 call lock rtnl mutex, we cannot hold on
 		 * for this long. So we split up the scanning part.
 		 */
 		set_bit(ACS_PENDING, &adapter->event_flags);
-		hddLog(LOG1, FL("ACS Pending for wlan%d"),
-							adapter->dev->ifindex);
+		hdd_notice("ACS Pending for wlan%d", adapter->dev->ifindex);
 		status = 0;
 	} else {
 		status = wlan_hdd_cfg80211_start_acs(adapter);
@@ -1804,17 +1803,17 @@ __wlan_hdd_cfg80211_get_supported_features(struct wiphy *wiphy,
 		return ret;
 
 	if (wiphy->interface_modes & BIT(NL80211_IFTYPE_STATION)) {
-		hddLog(LOG1, FL("Infra Station mode is supported by driver"));
+		hdd_notice("Infra Station mode is supported by driver");
 		fset |= WIFI_FEATURE_INFRA;
 	}
 	if (true == hdd_is_5g_supported(pHddCtx)) {
-		hddLog(LOG1, FL("INFRA_5G is supported by firmware"));
+		hdd_notice("INFRA_5G is supported by firmware");
 		fset |= WIFI_FEATURE_INFRA_5G;
 	}
 #ifdef WLAN_FEATURE_P2P
 	if ((wiphy->interface_modes & BIT(NL80211_IFTYPE_P2P_CLIENT)) &&
 	    (wiphy->interface_modes & BIT(NL80211_IFTYPE_P2P_GO))) {
-		hddLog(LOG1, FL("WiFi-Direct is supported by driver"));
+		hdd_notice("WiFi-Direct is supported by driver");
 		fset |= WIFI_FEATURE_P2P;
 	}
 #endif
@@ -1825,23 +1824,23 @@ __wlan_hdd_cfg80211_get_supported_features(struct wiphy *wiphy,
 
 #ifdef FEATURE_WLAN_EXTSCAN
 	if (sme_is_feature_supported_by_fw(EXTENDED_SCAN)) {
-		hddLog(LOG1, FL("EXTScan is supported by firmware"));
+		hdd_notice("EXTScan is supported by firmware");
 		fset |= WIFI_FEATURE_EXTSCAN | WIFI_FEATURE_HAL_EPNO;
 	}
 #endif
 	if (wlan_hdd_nan_is_supported()) {
-		hddLog(LOG1, FL("NAN is supported by firmware"));
+		hdd_notice("NAN is supported by firmware");
 		fset |= WIFI_FEATURE_NAN;
 	}
 	if (sme_is_feature_supported_by_fw(RTT)) {
-		hddLog(LOG1, FL("RTT is supported by firmware"));
+		hdd_notice("RTT is supported by firmware");
 		fset |= WIFI_FEATURE_D2D_RTT;
 		fset |= WIFI_FEATURE_D2AP_RTT;
 	}
 #ifdef FEATURE_WLAN_SCAN_PNO
 	if (pHddCtx->config->configPNOScanSupport &&
 	    sme_is_feature_supported_by_fw(PNO)) {
-		hddLog(LOG1, FL("PNO is supported by firmware"));
+		hdd_notice("PNO is supported by firmware");
 		fset |= WIFI_FEATURE_PNO;
 	}
 #endif
@@ -1849,13 +1848,13 @@ __wlan_hdd_cfg80211_get_supported_features(struct wiphy *wiphy,
 #ifdef FEATURE_WLAN_TDLS
 	if ((true == pHddCtx->config->fEnableTDLSSupport) &&
 	    sme_is_feature_supported_by_fw(TDLS)) {
-		hddLog(LOG1, FL("TDLS is supported by firmware"));
+		hdd_notice("TDLS is supported by firmware");
 		fset |= WIFI_FEATURE_TDLS;
 	}
 	if (sme_is_feature_supported_by_fw(TDLS) &&
 	    (true == pHddCtx->config->fEnableTDLSOffChannel) &&
 	    sme_is_feature_supported_by_fw(TDLS_OFF_CHANNEL)) {
-		hddLog(LOG1, FL("TDLS off-channel is supported by firmware"));
+		hdd_notice("TDLS off-channel is supported by firmware");
 		fset |= WIFI_FEATURE_TDLS_OFFCHANNEL;
 	}
 #endif
@@ -1870,12 +1869,12 @@ __wlan_hdd_cfg80211_get_supported_features(struct wiphy *wiphy,
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, sizeof(fset) +
 						  NLMSG_HDRLEN);
 	if (!skb) {
-		hddLog(LOGE, FL("cfg80211_vendor_cmd_alloc_reply_skb failed"));
+		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
 		return -EINVAL;
 	}
-	hddLog(LOG1, FL("Supported Features : 0x%x"), fset);
+	hdd_notice("Supported Features : 0x%x", fset);
 	if (nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_FEATURE_SET, fset)) {
-		hddLog(LOGE, FL("nla put fail"));
+		hdd_err("nla put fail");
 		goto nla_put_failure;
 	}
 	ret = cfg80211_vendor_cmd_reply(skb);
@@ -1945,33 +1944,32 @@ __wlan_hdd_cfg80211_set_scanning_mac_oui(struct wiphy *wiphy,
 		return ret;
 
 	if (false == pHddCtx->config->enable_mac_spoofing) {
-		hddLog(LOGW, FL("MAC address spoofing is not enabled"));
+		hdd_warn("MAC address spoofing is not enabled");
 		return -ENOTSUPP;
 	}
 
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_SET_SCANNING_MAC_OUI_MAX,
 		      data, data_len, NULL)) {
-		hddLog(LOGE, FL("Invalid ATTR"));
+		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}
 	pReqMsg = qdf_mem_malloc(sizeof(*pReqMsg));
 	if (!pReqMsg) {
-		hddLog(LOGE, FL("qdf_mem_malloc failed"));
+		hdd_err("qdf_mem_malloc failed");
 		return -ENOMEM;
 	}
 	if (!tb[QCA_WLAN_VENDOR_ATTR_SET_SCANNING_MAC_OUI]) {
-		hddLog(LOGE, FL("attr mac oui failed"));
+		hdd_err("attr mac oui failed");
 		goto fail;
 	}
 	nla_memcpy(&pReqMsg->oui[0],
 		   tb[QCA_WLAN_VENDOR_ATTR_SET_SCANNING_MAC_OUI],
 		   sizeof(pReqMsg->oui));
-	hddLog(LOG1, FL("Oui (%02x:%02x:%02x)"), pReqMsg->oui[0],
+	hdd_notice("Oui (%02x:%02x:%02x)", pReqMsg->oui[0],
 	       pReqMsg->oui[1], pReqMsg->oui[2]);
 	status = sme_set_scanning_mac_oui(pHddCtx->hHal, pReqMsg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("sme_set_scanning_mac_oui failed(err=%d)"), status);
+		hdd_err("sme_set_scanning_mac_oui failed(err=%d)", status);
 		goto fail;
 	}
 	return 0;
@@ -2177,7 +2175,7 @@ __wlan_hdd_cfg80211_get_features(struct wiphy *wiphy,
 	}
 
 	if (roaming_offload_enabled(hdd_ctx_ptr)) {
-		hddLog(LOG1, FL("Key Mgmt Offload is supported"));
+		hdd_notice("Key Mgmt Offload is supported");
 		wlan_hdd_cfg80211_set_feature(feature_flags,
 				QCA_WLAN_VENDOR_FEATURE_KEY_MGMT_OFFLOAD);
 	}
@@ -2191,7 +2189,7 @@ __wlan_hdd_cfg80211_get_features(struct wiphy *wiphy,
 			NLMSG_HDRLEN);
 
 	if (!skb) {
-		hddLog(LOGE, FL("cfg80211_vendor_cmd_alloc_reply_skb failed"));
+		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
 		return -ENOMEM;
 	}
 
@@ -2304,25 +2302,25 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_MAX,
 		data, data_len,
 		NULL)) {
-		hddLog(LOGE, FL("Invalid ATTR"));
+		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}
 	/* Parse and fetch Command Type*/
 	if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_SUBCMD]) {
-		hddLog(LOGE, FL("roam cmd type failed"));
+		hdd_err("roam cmd type failed");
 		goto fail;
 	}
 	session_id = pAdapter->sessionId;
 	qdf_mem_set(&roam_params, sizeof(roam_params), 0);
 	cmd_type = nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_ROAMING_SUBCMD]);
 	if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_REQ_ID]) {
-		hddLog(LOGE, FL("attr request id failed"));
+		hdd_err("attr request id failed");
 		goto fail;
 	}
 	req_id = nla_get_u32(
 		tb[QCA_WLAN_VENDOR_ATTR_ROAMING_REQ_ID]);
-	hddLog(QDF_TRACE_LEVEL_DEBUG, FL("Req Id (%d)"), req_id);
-	hddLog(QDF_TRACE_LEVEL_DEBUG, FL("Cmd Type (%d)"), cmd_type);
+	hdd_debug("Req Id (%d)", req_id);
+	hdd_debug("Cmd Type (%d)", cmd_type);
 	switch (cmd_type) {
 	case QCA_WLAN_VENDOR_ATTR_ROAM_SUBCMD_SSID_WHITE_LIST:
 		i = 0;
@@ -2333,13 +2331,12 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 				QCA_WLAN_VENDOR_ATTR_ROAM_SUBCMD_MAX,
 				nla_data(curr_attr), nla_len(curr_attr),
 				NULL)) {
-				hddLog(LOGE,
-					FL("nla_parse failed"));
+				hdd_err("nla_parse failed");
 				goto fail;
 			}
 			/* Parse and Fetch allowed SSID list*/
 			if (!tb2[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_WHITE_LIST_SSID]) {
-				hddLog(LOGE, FL("attr allowed ssid failed"));
+				hdd_err("attr allowed ssid failed");
 				goto fail;
 			}
 			buf_len = nla_len(tb2[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_WHITE_LIST_SSID]);
@@ -2357,18 +2354,17 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 					buf_len - 1);
 				roam_params.ssid_allowed_list[i].length =
 					buf_len - 1;
-				hddLog(QDF_TRACE_LEVEL_DEBUG,
-					FL("SSID[%d]: %.*s,length = %d"), i,
+				hdd_debug("SSID[%d]: %.*s,length = %d", i,
 					roam_params.ssid_allowed_list[i].length,
 					roam_params.ssid_allowed_list[i].ssId,
 					roam_params.ssid_allowed_list[i].length);
 				i++;
 			} else {
-				hddLog(LOGE, FL("Invalid buffer length"));
+				hdd_err("Invalid buffer length");
 			}
 		}
 		roam_params.num_ssid_allowed_list = i;
-		hddLog(QDF_TRACE_LEVEL_DEBUG, FL("Num of Allowed SSID %d"),
+		hdd_debug("Num of Allowed SSID %d",
 			roam_params.num_ssid_allowed_list);
 		sme_update_roam_params(pHddCtx->hHal, session_id,
 				roam_params, REASON_ROAM_SET_SSID_ALLOWED);
@@ -2376,66 +2372,66 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 	case QCA_WLAN_VENDOR_ATTR_ROAM_SUBCMD_SET_EXTSCAN_ROAM_PARAMS:
 		/* Parse and fetch 5G Boost Threshold */
 		if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_BOOST_THRESHOLD]) {
-			hddLog(LOGE, FL("5G boost threshold failed"));
+			hdd_err("5G boost threshold failed");
 			goto fail;
 		}
 		roam_params.raise_rssi_thresh_5g = nla_get_s32(
 			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_BOOST_THRESHOLD]);
-		hddLog(QDF_TRACE_LEVEL_DEBUG, FL("5G Boost Threshold (%d)"),
+		hdd_debug("5G Boost Threshold (%d)",
 			roam_params.raise_rssi_thresh_5g);
 		/* Parse and fetch 5G Penalty Threshold */
 		if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_PENALTY_THRESHOLD]) {
-			hddLog(LOGE, FL("5G penalty threshold failed"));
+			hdd_err("5G penalty threshold failed");
 			goto fail;
 		}
 		roam_params.drop_rssi_thresh_5g = nla_get_s32(
 			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_PENALTY_THRESHOLD]);
-		hddLog(QDF_TRACE_LEVEL_DEBUG, FL("5G Penalty Threshold (%d)"),
+		hdd_debug("5G Penalty Threshold (%d)",
 			roam_params.drop_rssi_thresh_5g);
 		/* Parse and fetch 5G Boost Factor */
 		if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_BOOST_FACTOR]) {
-			hddLog(LOGE, FL("5G boost Factor failed"));
+			hdd_err("5G boost Factor failed");
 			goto fail;
 		}
 		roam_params.raise_factor_5g = nla_get_u32(
 			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_BOOST_FACTOR]);
-		hddLog(QDF_TRACE_LEVEL_DEBUG, FL("5G Boost Factor (%d)"),
+		hdd_debug("5G Boost Factor (%d)",
 			roam_params.raise_factor_5g);
 		/* Parse and fetch 5G Penalty factor */
 		if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_PENALTY_FACTOR]) {
-			hddLog(LOGE, FL("5G Penalty Factor failed"));
+			hdd_err("5G Penalty Factor failed");
 			goto fail;
 		}
 		roam_params.drop_factor_5g = nla_get_u32(
 			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_PENALTY_FACTOR]);
-		hddLog(QDF_TRACE_LEVEL_DEBUG, FL("5G Penalty factor (%d)"),
+		hdd_debug("5G Penalty factor (%d)",
 			roam_params.drop_factor_5g);
 		/* Parse and fetch 5G Max Boost */
 		if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_MAX_BOOST]) {
-			hddLog(LOGE, FL("5G Max Boost failed"));
+			hdd_err("5G Max Boost failed");
 			goto fail;
 		}
 		roam_params.max_raise_rssi_5g = nla_get_u32(
 			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_MAX_BOOST]);
-		hddLog(QDF_TRACE_LEVEL_DEBUG, FL("5G Max Boost (%d)"),
+		hdd_debug("5G Max Boost (%d)",
 			roam_params.max_raise_rssi_5g);
 		/* Parse and fetch Rssi Diff */
 		if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_LAZY_ROAM_HISTERESYS]) {
-			hddLog(LOGE, FL("Rssi Diff failed"));
+			hdd_err("Rssi Diff failed");
 			goto fail;
 		}
 		roam_params.rssi_diff = nla_get_s32(
 			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_LAZY_ROAM_HISTERESYS]);
-		hddLog(QDF_TRACE_LEVEL_DEBUG, FL("RSSI Diff (%d)"),
+		hdd_debug("RSSI Diff (%d)",
 			roam_params.rssi_diff);
 		/* Parse and fetch Alert Rssi Threshold */
 		if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_ALERT_ROAM_RSSI_TRIGGER]) {
-			hddLog(LOGE, FL("Alert Rssi Threshold failed"));
+			hdd_err("Alert Rssi Threshold failed");
 			goto fail;
 		}
 		roam_params.alert_rssi_threshold = nla_get_u32(
 			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_ALERT_ROAM_RSSI_TRIGGER]);
-		hddLog(QDF_TRACE_LEVEL_DEBUG, FL("Alert RSSI Threshold (%d)"),
+		hdd_debug("Alert RSSI Threshold (%d)",
 			roam_params.alert_rssi_threshold);
 		sme_update_roam_params(pHddCtx->hHal, session_id,
 			roam_params,
@@ -2444,12 +2440,12 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 	case QCA_WLAN_VENDOR_ATTR_ROAM_SUBCMD_SET_LAZY_ROAM:
 		/* Parse and fetch Activate Good Rssi Roam */
 		if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_ENABLE]) {
-			hddLog(LOGE, FL("Activate Good Rssi Roam failed"));
+			hdd_err("Activate Good Rssi Roam failed");
 			goto fail;
 		}
 		roam_params.good_rssi_roam = nla_get_s32(
 			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_ENABLE]);
-		hddLog(QDF_TRACE_LEVEL_DEBUG, FL("Activate Good Rssi Roam (%d)"),
+		hdd_debug("Activate Good Rssi Roam (%d)",
 			roam_params.good_rssi_roam);
 		sme_update_roam_params(pHddCtx->hHal, session_id,
 			roam_params, REASON_ROAM_GOOD_RSSI_CHANGED);
@@ -2457,12 +2453,12 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 	case QCA_WLAN_VENDOR_ATTR_ROAM_SUBCMD_SET_BSSID_PREFS:
 		/* Parse and fetch number of preferred BSSID */
 		if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_NUM_BSSID]) {
-			hddLog(LOGE, FL("attr num of preferred bssid failed"));
+			hdd_err("attr num of preferred bssid failed");
 			goto fail;
 		}
 		roam_params.num_bssid_favored = nla_get_u32(
 			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_NUM_BSSID]);
-		hddLog(QDF_TRACE_LEVEL_DEBUG, FL("Num of Preferred BSSID (%d)"),
+		hdd_debug("Num of Preferred BSSID (%d)",
 			roam_params.num_bssid_favored);
 		i = 0;
 		nla_for_each_nested(curr_attr,
@@ -2472,12 +2468,12 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 				QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_MAX,
 				nla_data(curr_attr), nla_len(curr_attr),
 				NULL)) {
-				hddLog(LOGE, FL("nla_parse failed"));
+				hdd_err("nla_parse failed");
 				goto fail;
 			}
 			/* Parse and fetch MAC address */
 			if (!tb2[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_BSSID]) {
-				hddLog(LOGE, FL("attr mac address failed"));
+				hdd_err("attr mac address failed");
 				goto fail;
 			}
 			nla_memcpy(roam_params.bssid_favored[i].bytes,
@@ -2487,12 +2483,12 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 			    MAC_ADDR_ARRAY(roam_params.bssid_favored[i].bytes));
 			/* Parse and fetch preference factor*/
 			if (!tb2[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_RSSI_MODIFIER]) {
-				hddLog(LOGE, FL("BSSID Preference score failed"));
+				hdd_err("BSSID Preference score failed");
 				goto fail;
 			}
 			roam_params.bssid_favored_factor[i] = nla_get_u32(
 				tb2[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_RSSI_MODIFIER]);
-			hddLog(QDF_TRACE_LEVEL_DEBUG, FL("BSSID Preference score (%d)"),
+			hdd_debug("BSSID Preference score (%d)",
 				roam_params.bssid_favored_factor[i]);
 			i++;
 		}
@@ -2502,12 +2498,12 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 	case QCA_WLAN_VENDOR_ATTR_ROAM_SUBCMD_SET_BLACKLIST_BSSID:
 		/* Parse and fetch number of blacklist BSSID */
 		if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_BSSID_PARAMS_NUM_BSSID]) {
-			hddLog(LOGE, FL("attr num of blacklist bssid failed"));
+			hdd_err("attr num of blacklist bssid failed");
 			goto fail;
 		}
 		roam_params.num_bssid_avoid_list = nla_get_u32(
 			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_BSSID_PARAMS_NUM_BSSID]);
-		hddLog(QDF_TRACE_LEVEL_DEBUG, FL("Num of blacklist BSSID (%d)"),
+		hdd_debug("Num of blacklist BSSID (%d)",
 			roam_params.num_bssid_avoid_list);
 		i = 0;
 		nla_for_each_nested(curr_attr,
@@ -2517,12 +2513,12 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 				QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_MAX,
 				nla_data(curr_attr), nla_len(curr_attr),
 				NULL)) {
-				hddLog(LOGE, FL("nla_parse failed"));
+				hdd_err("nla_parse failed");
 				goto fail;
 			}
 			/* Parse and fetch MAC address */
 			if (!tb2[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_BSSID_PARAMS_BSSID]) {
-				hddLog(LOGE, FL("attr blacklist addr failed"));
+				hdd_err("attr blacklist addr failed");
 				goto fail;
 			}
 			nla_memcpy(roam_params.bssid_avoid_list[i].bytes,
@@ -2610,8 +2606,7 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(hdd_context_t *hdd_ctx,
 			if (CHANNEL_STATE_DFS ==
 			    cds_get_channel_state(
 				    ap_ctx->operatingChannel)) {
-				hddLog(QDF_TRACE_LEVEL_ERROR,
-				       FL("SAP running on DFS channel"));
+				hdd_err("SAP running on DFS channel");
 				return true;
 			}
 		}
@@ -2629,8 +2624,7 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(hdd_context_t *hdd_ctx,
 			    (CHANNEL_STATE_DFS ==
 			     cds_get_channel_state(
 				     sta_ctx->conn_info.operationChannel))) {
-				hddLog(LOGE,
-				       FL("client connected on DFS channel"));
+				hdd_err("client connected on DFS channel");
 				return true;
 			}
 		}
@@ -2706,8 +2700,7 @@ int wlan_hdd_disable_dfs_chan_scan(hdd_context_t *hdd_ctx,
 		}
 
 	} else {
-		hddLog(QDF_TRACE_LEVEL_INFO,
-		       FL(" the DFS flag has not changed"));
+		hdd_notice(" the DFS flag has not changed");
 		ret_val = 0;
 	}
 	return ret_val;
@@ -2754,10 +2747,10 @@ static int __wlan_hdd_cfg80211_disable_dfs_chan_scan(struct wiphy *wiphy,
 	no_dfs_flag = nla_get_u32(
 		tb[QCA_WLAN_VENDOR_ATTR_SET_NO_DFS_FLAG]);
 
-	hddLog(LOG1, FL(" DFS flag = %d"), no_dfs_flag);
+	hdd_notice(" DFS flag = %d", no_dfs_flag);
 
 	if (no_dfs_flag > 1) {
-		hddLog(LOGE, FL("invalid value of dfs flag"));
+		hdd_err("invalid value of dfs flag");
 		return -EINVAL;
 	}
 
@@ -2921,13 +2914,13 @@ static int __wlan_hdd_cfg80211_keymgmt_set_key(struct wiphy *wiphy,
 
 	if ((data == NULL) || (data_len == 0) ||
 			(data_len > SIR_ROAM_SCAN_PSK_SIZE)) {
-		hddLog(LOGE, FL("Invalid data"));
+		hdd_err("Invalid data");
 		return -EINVAL;
 	}
 
 	hdd_ctx_ptr = WLAN_HDD_GET_CTX(hdd_adapter_ptr);
 	if (!hdd_ctx_ptr) {
-		hddLog(LOGE, FL("HDD context is null"));
+		hdd_err("HDD context is null");
 		return -EINVAL;
 	}
 
@@ -3150,14 +3143,14 @@ __wlan_hdd_cfg80211_get_logger_supp_feature(struct wiphy *wiphy,
 	reply_skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy,
 			sizeof(uint32_t) + NLA_HDRLEN + NLMSG_HDRLEN);
 	if (!reply_skb) {
-		hddLog(LOGE, FL("cfg80211_vendor_cmd_alloc_reply_skb failed"));
+		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
 		return -ENOMEM;
 	}
 
-	hddLog(LOG1, FL("Supported logger features: 0x%0x"), features);
+	hdd_notice("Supported logger features: 0x%0x", features);
 	if (nla_put_u32(reply_skb, QCA_WLAN_VENDOR_ATTR_LOGGER_SUPPORTED,
 				   features)) {
-		hddLog(LOGE, FL("nla put fail"));
+		hdd_err("nla put fail");
 		kfree_skb(reply_skb);
 		return -EINVAL;
 	}
@@ -3244,8 +3237,7 @@ int wlan_hdd_send_roam_auth_event(hdd_context_t *hdd_ctx_ptr, uint8_t *bssid,
 			GFP_KERNEL);
 
 	if (!skb) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-				FL("cfg80211_vendor_event_alloc failed"));
+		hdd_err("cfg80211_vendor_event_alloc failed");
 		return -EINVAL;
 	}
 
@@ -3255,14 +3247,13 @@ int wlan_hdd_send_roam_auth_event(hdd_context_t *hdd_ctx_ptr, uint8_t *bssid,
 				req_rsn_len, req_rsn_ie) ||
 			nla_put(skb, QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_RESP_IE,
 				rsp_rsn_len, rsp_rsn_ie)) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, FL("nla put fail"));
+		hdd_err("nla put fail");
 		goto nla_put_failure;
 	}
-	hddLog(QDF_TRACE_LEVEL_DEBUG, FL("Auth Status = %d"),
-			roam_info_ptr->synchAuthStatus);
+	hdd_debug("Auth Status = %d", roam_info_ptr->synchAuthStatus);
 	if (roam_info_ptr->synchAuthStatus ==
 			CSR_ROAM_AUTH_STATUS_AUTHENTICATED) {
-		hddLog(QDF_TRACE_LEVEL_DEBUG, FL("Include Auth Params TLV's"));
+		hdd_debug("Include Auth Params TLV's");
 		if (nla_put_u8(skb,
 			QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_AUTHORIZED, true)) {
 			hdd_err("nla put fail");
@@ -3292,15 +3283,15 @@ int wlan_hdd_send_roam_auth_event(hdd_context_t *hdd_ctx_ptr, uint8_t *bssid,
 			goto nla_put_failure;
 		}
 	} else {
-		hddLog(QDF_TRACE_LEVEL_DEBUG, FL("No Auth Params TLV's"));
+		hdd_debug("No Auth Params TLV's");
 		if (nla_put_u8(skb, QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_AUTHORIZED,
 					false)) {
-			hddLog(QDF_TRACE_LEVEL_ERROR, FL("nla put fail"));
+			hdd_err("nla put fail");
 			goto nla_put_failure;
 		}
 	}
 
-	hddLog(QDF_TRACE_LEVEL_DEBUG, FL("Subnet Change Status = %d"),
+	hdd_debug("Subnet Change Status = %d",
 		roam_info_ptr->subnet_change_status);
 
 	/*
@@ -3313,7 +3304,7 @@ int wlan_hdd_send_roam_auth_event(hdd_context_t *hdd_ctx_ptr, uint8_t *bssid,
 		if (nla_put_u8(skb,
 				QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_SUBNET_STATUS,
 				roam_info_ptr->subnet_change_status)) {
-			hddLog(QDF_TRACE_LEVEL_ERROR, FL("nla put fail"));
+			hdd_err("nla put fail");
 			goto nla_put_failure;
 		}
 	}
