@@ -278,8 +278,6 @@ char *lim_msg_str(uint32_t msgType)
 	case eWNI_SME_SCAN_REQ:
 		return "eWNI_SME_SCAN_REQ";
 #ifdef FEATURE_OEM_DATA_SUPPORT
-	case eWNI_SME_OEM_DATA_REQ:
-		return "eWNI_SME_OEM_DATA_REQ";
 	case eWNI_SME_OEM_DATA_RSP:
 		return "eWNI_SME_OEM_DATA_RSP";
 #endif

@@ -1002,11 +1002,6 @@ int wma_process_receive_filter_clear_filter_req(tp_wma_handle wma_handle,
 						       tSirRcvFltPktClearParam *
 						       rcv_clear_param);
 
-#ifdef FEATURE_OEM_DATA_SUPPORT
-void wma_start_oem_data_req(tp_wma_handle wma_handle,
-				   tStartOemDataReq * startOemDataReq);
-#endif
-
 #ifdef FEATURE_WLAN_ESE
 QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 				     void *pTsmStatsMsg);

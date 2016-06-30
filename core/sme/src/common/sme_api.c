@@ -988,12 +988,6 @@ sme_process_cmd:
 		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
 		csr_process_del_sta_session_command(pMac, pCommand);
 		break;
-#ifdef FEATURE_OEM_DATA_SUPPORT
-	case eSmeCommandOemDataReq:
-		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
-		oem_data_process_oem_data_req_command(pMac, pCommand);
-		break;
-#endif
 	case eSmeCommandRemainOnChannel:
 		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
 		p2p_process_remain_on_channel_cmd(pMac, pCommand);
@@ -5930,54 +5924,60 @@ QDF_STATUS sme_scan_get_bkid_candidate_list(tHalHandle hHal, uint32_t sessionId,
 #endif /* FEATURE_WLAN_WAPI */
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
-
-/*****************************************************************************
-   OEM DATA related modifications and function additions
-*****************************************************************************/
-
-/* ---------------------------------------------------------------------------
-    \fn sme_oem_data_req
-    \brief a wrapper function for OEM DATA REQ
-    \param sessionId - session id to be used.
-    \param pOemDataReqId - pointer to an object to get back the request ID
-    \return QDF_STATUS
-   ---------------------------------------------------------------------------*/
-QDF_STATUS sme_oem_data_req(tHalHandle hHal,
-			    uint8_t sessionId,
-			    tOemDataReqConfig *pOemDataReqConfig,
-			    uint32_t *pOemDataReqID)
+/**
+ * sme_oem_data_req() - send oem data request to WMA
+ * @hal: HAL handle
+ * @hdd_oem_req: OEM data request from HDD
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_oem_data_req(tHalHandle hal, tSirOemDataReq *hdd_oem_req)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	tSirOemDataReq *oem_data_req;
+	void *wma_handle;
 
-	do {
-		/* acquire the lock for the sme object */
-		status = sme_acquire_global_lock(&pMac->sme);
-		if (QDF_IS_STATUS_SUCCESS(status)) {
-			uint32_t lOemDataReqId = pMac->oemData.oemDataReqID++;  /* let it wrap around */
+	sms_log(mac_ctx, LOG1, FL("enter"));
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		sms_log(mac_ctx, LOGE, FL("wma_handle is NULL"));
+		return QDF_STATUS_E_FAILURE;
+	}
 
-			if (pOemDataReqID) {
-				*pOemDataReqID = lOemDataReqId;
-			} else {
-				sme_release_global_lock(&pMac->sme);
-				return QDF_STATUS_E_FAILURE;
-			}
+	oem_data_req = qdf_mem_malloc(sizeof(*oem_data_req));
+	if (!oem_data_req) {
+		sms_log(mac_ctx, LOGE, FL("mem alloc failed"));
+		return QDF_STATUS_E_NOMEM;
+	}
 
-			status =
-				oem_data_oem_data_req(hHal, sessionId,
-						      pOemDataReqConfig,
-						      pOemDataReqID);
+	oem_data_req->data_len = hdd_oem_req->data_len;
+	oem_data_req->data = qdf_mem_malloc(oem_data_req->data_len);
+	if (!oem_data_req->data) {
+		sms_log(mac_ctx, LOGE, FL("mem alloc failed"));
+		return QDF_STATUS_E_NOMEM;
+	}
 
-			/* release the lock for the sme object */
-			sme_release_global_lock(&pMac->sme);
-		}
-	} while (0);
+	qdf_mem_copy(oem_data_req->data, hdd_oem_req->data,
+		     oem_data_req->data_len);
 
-	sms_log(pMac, LOGW, "exiting function %s", __func__);
+	status = wma_start_oem_data_req(wma_handle, oem_data_req);
 
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		sms_log(mac_ctx, LOGE, FL("Post oem data request msg fail"));
+	} else {
+		sms_log(mac_ctx, LOG1,
+			FL("OEM request(length: %d) sent to WMA"),
+			oem_data_req->data_len);
+	}
+
+	if (oem_data_req->data_len)
+		qdf_mem_free(oem_data_req->data);
+	qdf_mem_free(oem_data_req);
+
+	sms_log(mac_ctx, LOG1, FL("exit"));
 	return status;
 }
-
 #endif /*FEATURE_OEM_DATA_SUPPORT */
 
 /*--------------------------------------------------------------------------

@@ -192,9 +192,6 @@ static uint8_t *sme_trace_get_command_string(uint32_t command)
 		CASE_RETURN_STRING(eSmeQosCommandMask);
 		CASE_RETURN_STRING(eSmeCommandAddTs);
 		CASE_RETURN_STRING(eSmeCommandDelTs);
-#ifdef FEATURE_OEM_DATA_SUPPORT
-		CASE_RETURN_STRING(eSmeCommandOemDataReq);
-#endif
 		CASE_RETURN_STRING(eSmeCommandRemainOnChannel);
 	default:
 		return "UNKNOWN";

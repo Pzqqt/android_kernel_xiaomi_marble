@@ -70,10 +70,7 @@ QDF_STATUS oem_data_oem_data_req_close(tHalHandle hHal);
 typedef QDF_STATUS (*oem_data_oem_data_reqCompleteCallback)(tHalHandle,
 		void *p2, uint32_t oemDataReqID, eOemDataReqStatus status);
 
-QDF_STATUS oem_data_oem_data_req(tHalHandle, uint8_t, tOemDataReqConfig *,
-				 uint32_t *pOemDataReqID);
 QDF_STATUS sme_handle_oem_data_rsp(tHalHandle hHal, uint8_t *);
-QDF_STATUS oem_data_is_oem_data_req_allowed(tHalHandle hHal);
 typedef void (*sme_send_oem_data_rsp_msg)(int length, uint8_t *oem_data_rsp);
 #endif /* _OEM_DATA_API_H__ */
 

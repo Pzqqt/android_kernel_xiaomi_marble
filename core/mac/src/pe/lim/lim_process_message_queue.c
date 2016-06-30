@@ -1387,9 +1387,6 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	case eWNI_SME_REMAIN_ON_CHANNEL_REQ:
 	case eWNI_SME_DISASSOC_REQ:
 	case eWNI_SME_DEAUTH_REQ:
-#ifdef FEATURE_OEM_DATA_SUPPORT
-	case eWNI_SME_OEM_DATA_REQ:
-#endif
 #ifdef FEATURE_WLAN_TDLS
 	case eWNI_SME_TDLS_SEND_MGMT_REQ:
 	case eWNI_SME_TDLS_ADD_STA_REQ:

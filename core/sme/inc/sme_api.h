@@ -459,10 +459,7 @@ QDF_STATUS sme_scan_get_bkid_candidate_list(tHalHandle hHal, uint32_t sessionId,
 		uint32_t *pNumItems);
 #endif /* FEATURE_WLAN_WAPI */
 #ifdef FEATURE_OEM_DATA_SUPPORT
-QDF_STATUS sme_oem_data_req(tHalHandle hHal,
-		uint8_t sessionId,
-		tOemDataReqConfig *,
-		uint32_t *pOemDataReqID);
+QDF_STATUS sme_oem_data_req(tHalHandle hHal, tSirOemDataReq *);
 QDF_STATUS sme_oem_update_capability(tHalHandle hHal,
 				     struct sme_oem_capability *cap);
 QDF_STATUS sme_oem_get_capability(tHalHandle hHal,

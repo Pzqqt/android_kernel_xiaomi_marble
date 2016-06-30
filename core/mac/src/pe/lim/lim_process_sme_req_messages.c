@@ -1520,46 +1520,6 @@ static void __lim_process_sme_scan_req(tpAniSirGlobal mac_ctx,
 	}
 }
 
-#ifdef FEATURE_OEM_DATA_SUPPORT
-
-static void __lim_process_sme_oem_data_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
-{
-	tpSirOemDataReq pOemDataReq;
-	tLimMlmOemDataReq *pMlmOemDataReq;
-
-	pOemDataReq = (tpSirOemDataReq) pMsgBuf;
-
-	/* post the lim mlm message now */
-	pMlmOemDataReq = qdf_mem_malloc(sizeof(*pMlmOemDataReq));
-	if (NULL == pMlmOemDataReq) {
-		lim_log(pMac, LOGP,
-			FL("AllocateMemory failed for mlmOemDataReq"));
-		return;
-	}
-	pMlmOemDataReq->data = qdf_mem_malloc(pOemDataReq->data_len);
-	if (!pMlmOemDataReq->data) {
-		lim_log(pMac, LOGP, FL("memory allocation failed"));
-		qdf_mem_free(pMlmOemDataReq);
-		return;
-	}
-
-	qdf_copy_macaddr(&pMlmOemDataReq->selfMacAddr,
-			 &pOemDataReq->selfMacAddr);
-	pMlmOemDataReq->data_len = pOemDataReq->data_len;
-	qdf_mem_copy(pMlmOemDataReq->data, pOemDataReq->data,
-		     pOemDataReq->data_len);
-	/* buffer from SME copied, free it now */
-	qdf_mem_free(pOemDataReq->data);
-	/* Issue LIM_MLM_OEM_DATA_REQ to MLM */
-	lim_post_mlm_message(pMac, LIM_MLM_OEM_DATA_REQ,
-			     (uint32_t *) pMlmOemDataReq);
-
-	return;
-
-} /*** end __lim_process_sme_oem_data_req() ***/
-
-#endif /* FEATURE_OEM_DATA_SUPPORT */
-
 /**
  * __lim_process_clear_dfs_channel_list()
  *
@@ -4677,12 +4637,6 @@ void lim_process_regd_defd_sme_req_after_noa_start(tpAniSirGlobal mac_ctx)
 		__lim_process_sme_scan_req(mac_ctx,
 				mac_ctx->lim.gpDefdSmeMsgForNOA);
 		break;
-#ifdef FEATURE_OEM_DATA_SUPPORT
-	case eWNI_SME_OEM_DATA_REQ:
-		__lim_process_sme_oem_data_req(mac_ctx,
-				mac_ctx->lim.gpDefdSmeMsgForNOA);
-		break;
-#endif
 	case eWNI_SME_REMAIN_ON_CHANNEL_REQ:
 		buf_consumed = lim_process_remain_on_chnl_req(mac_ctx,
 				mac_ctx->lim.gpDefdSmeMsgForNOA);
@@ -4997,11 +4951,6 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
 		__lim_process_sme_scan_req(pMac, pMsgBuf);
 		break;
 
-#ifdef FEATURE_OEM_DATA_SUPPORT
-	case eWNI_SME_OEM_DATA_REQ:
-		__lim_process_sme_oem_data_req(pMac, pMsgBuf);
-		break;
-#endif
 	case eWNI_SME_REMAIN_ON_CHANNEL_REQ:
 		bufConsumed = lim_process_remain_on_chnl_req(pMac, pMsgBuf);
 		break;

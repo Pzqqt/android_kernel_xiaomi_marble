@@ -353,52 +353,48 @@ void hdd_send_oem_data_rsp_msg(int length, uint8_t *oemDataRsp)
 
 /**
  * oem_process_data_req_msg() - process oem data request
- * @oemDataLen: Length to OEM Data buffer
- * @oemData: Pointer to OEM Data buffer
+ * @oem_data_len: Length to OEM Data buffer
+ * @oem_data: Pointer to OEM Data buffer
  *
  * This function sends oem message to SME
  *
  * Return: QDF_STATUS enumeration
  */
-static QDF_STATUS oem_process_data_req_msg(int oemDataLen, char *oemData)
+static QDF_STATUS oem_process_data_req_msg(int oem_data_len, char *oem_data)
 {
-	hdd_adapter_t *pAdapter = NULL;
-	tOemDataReqConfig oemDataReqConfig;
-	uint32_t oemDataReqID = 0;
+	hdd_adapter_t *adapter = NULL;
+	tSirOemDataReq oem_data_req;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	/* for now, STA interface only */
-	pAdapter = hdd_get_adapter(p_hdd_ctx, QDF_STA_MODE);
-	if (!pAdapter) {
+	adapter = hdd_get_adapter(p_hdd_ctx, QDF_STA_MODE);
+	if (!adapter) {
 		hdd_err("No adapter for STA mode");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!oemData) {
-		hdd_err("oemData is null");
+	if (!oem_data) {
+		hdd_err("oem_data is null");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	qdf_mem_zero(&oemDataReqConfig, sizeof(tOemDataReqConfig));
+	qdf_mem_zero(&oem_data_req, sizeof(tSirOemDataReq));
 
-	oemDataReqConfig.data = qdf_mem_malloc(oemDataLen);
-	if (!oemDataReqConfig.data) {
+	oem_data_req.data = qdf_mem_malloc(oem_data_len);
+	if (!oem_data_req.data) {
 		hdd_err("malloc failed for data req buffer");
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	oemDataReqConfig.data_len = oemDataLen;
-	qdf_mem_copy(oemDataReqConfig.data, oemData, oemDataLen);
+	oem_data_req.data_len = oem_data_len;
+	qdf_mem_copy(oem_data_req.data, oem_data, oem_data_len);
 
 	hdd_notice("calling sme_oem_data_req");
 
-	status = sme_oem_data_req(p_hdd_ctx->hHal,
-				  pAdapter->sessionId,
-				  &oemDataReqConfig,
-				  &oemDataReqID);
+	status = sme_oem_data_req(p_hdd_ctx->hHal, &oem_data_req);
 
-	qdf_mem_free(oemDataReqConfig.data);
-	oemDataReqConfig.data = NULL;
+	qdf_mem_free(oem_data_req.data);
+	oem_data_req.data = NULL;
 
 	return status;
 }

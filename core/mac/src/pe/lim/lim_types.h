@@ -93,8 +93,8 @@
  * Values (LIM_MLM_MSG_START + 32) through
  * (LIM_MLM_MSG_START + 40) are unused.
  */
+
 #ifdef FEATURE_OEM_DATA_SUPPORT
-#define LIM_MLM_OEM_DATA_REQ            (LIM_MLM_MSG_START + 41)
 #define LIM_MLM_OEM_DATA_CNF            (LIM_MLM_MSG_START + 42)
 #endif
 

@@ -884,9 +884,6 @@ typedef struct sSirSmeScanChanReq {
 #ifdef FEATURE_OEM_DATA_SUPPORT
 
 typedef struct sSirOemDataReq {
-	uint16_t messageType;   /* eWNI_SME_OEM_DATA_REQ */
-	uint16_t messageLen;
-	struct qdf_mac_addr selfMacAddr;
 	uint32_t data_len;
 	uint8_t *data;
 } tSirOemDataReq, *tpSirOemDataReq;

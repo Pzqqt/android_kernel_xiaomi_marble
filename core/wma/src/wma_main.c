@@ -5513,12 +5513,6 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 				(tpSirGtkOffloadGetInfoRspParams)msg->bodyptr);
 		break;
 #endif /* WLAN_FEATURE_GTK_OFFLOAD */
-#ifdef FEATURE_OEM_DATA_SUPPORT
-	case WMA_START_OEM_DATA_REQ:
-		wma_start_oem_data_req(wma_handle,
-				       (tStartOemDataReq *) msg->bodyptr);
-		break;
-#endif /* FEATURE_OEM_DATA_SUPPORT */
 	case WMA_SET_HOST_OFFLOAD:
 		wma_enable_arp_ns_offload(wma_handle,
 					  (tpSirHostOffloadReq) msg->bodyptr,

@@ -1696,66 +1696,36 @@ int wma_oem_data_response_handler(void *handle,
 /**
  * wma_start_oem_data_req() - start OEM data request to target
  * @wma_handle: wma handle
- * @startOemDataReq: start request params
+ * @oem_data_req: start request params
  *
- * Return: none
+ * Return: QDF_STATUS
  */
-void wma_start_oem_data_req(tp_wma_handle wma_handle,
-			    tStartOemDataReq *startOemDataReq)
+QDF_STATUS wma_start_oem_data_req(tp_wma_handle wma_handle,
+			    tSirOemDataReq *oem_data_req)
 {
 	int ret = 0;
-	tStartOemDataRsp *pStartOemDataRsp;
 
 	WMA_LOGD(FL("Send OEM Data Request to target"));
 
-	if (!startOemDataReq || !startOemDataReq->data) {
-		WMA_LOGE(FL("startOemDataReq is null"));
-		goto out;
+	if (!oem_data_req || !oem_data_req->data) {
+		WMA_LOGE(FL("oem_data_req is null"));
+		return QDF_STATUS_E_INVAL;
 	}
 
 	if (!wma_handle || !wma_handle->wmi_handle) {
 		WMA_LOGE(FL("WMA - closed, can not send Oem data request cmd"));
-		return;
+		qdf_mem_free(oem_data_req->data);
+		return QDF_STATUS_E_INVAL;
 	}
 
 	ret = wmi_unified_start_oem_data_cmd(wma_handle->wmi_handle,
-				   startOemDataReq->data_len,
-				   startOemDataReq->data);
+				   oem_data_req->data_len,
+				   oem_data_req->data);
 
-	if (ret != EOK) {
-		WMA_LOGE(FL(":wmi cmd send failed"));
-	}
+	if (!QDF_IS_STATUS_SUCCESS(ret))
+		WMA_LOGE(FL("wmi cmd send failed"));
 
-out:
-	/* free oem data req buffer received from UMAC */
-	if (startOemDataReq) {
-		if (startOemDataReq->data)
-			qdf_mem_free(startOemDataReq->data);
-		qdf_mem_free(startOemDataReq);
-	}
-
-	/* Now send data resp back to PE/SME with message sub-type of
-	 * WMI_OEM_INTERNAL_RSP. This is required so that PE/SME clears
-	 * up pending active command. Later when desired oem response(s)
-	 * comes as wmi event from target then those shall be passed
-	 * to oem application
-	 */
-	pStartOemDataRsp = qdf_mem_malloc(sizeof(*pStartOemDataRsp));
-	if (!pStartOemDataRsp) {
-		WMA_LOGE("%s:failed to allocate memory for OEM Data Resp to PE",
-			 __func__);
-		return;
-	}
-	qdf_mem_zero(pStartOemDataRsp, sizeof(tStartOemDataRsp));
-	pStartOemDataRsp->target_rsp = false;
-
-	WMA_LOGI("%s: Sending WMA_START_OEM_DATA_RSP to clear up PE/SME pending cmd",
-		__func__);
-
-	wma_send_msg(wma_handle, WMA_START_OEM_DATA_RSP,
-		     (void *)pStartOemDataRsp, 0);
-
-	return;
+	return ret;
 }
 #endif /* FEATURE_OEM_DATA_SUPPORT */
 

@@ -670,19 +670,6 @@ typedef struct {
 #endif
 
 /**
- * struct tStartOemDataReq - start OEM Data request
- * @selfMacAddr: self mac address
- * @status: return status
- * @oemDataReq: OEM Data request
- */
-typedef struct {
-	struct qdf_mac_addr selfMacAddr;
-	QDF_STATUS status;
-	uint32_t data_len;
-	uint8_t *data;
-} tStartOemDataReq, *tpStartOemDataReq;
-
-/**
  * struct tStartOemDataRsp - start OEM Data response
  * @target_rsp: Indicates if the rsp is from Target or WMA generated.
  * @rsp_len: oem data response length
