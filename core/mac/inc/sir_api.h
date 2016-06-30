@@ -6137,7 +6137,6 @@ struct ndp_responder_rsp_event {
  * @ndp_instance_id: ndp instance id for which confirm is being generated
  * @peer_ndi_mac_addr: peer NDI mac address
  * @rsp_code: ndp response code
- * @ndp_config: ndp configuration
  * @ndp_info: ndp application info
  *
  */
@@ -6146,7 +6145,6 @@ struct ndp_confirm_event {
 	uint32_t ndp_instance_id;
 	struct qdf_mac_addr peer_ndi_mac_addr;
 	enum ndp_response_code rsp_code;
-	struct ndp_cfg ndp_config;
 	struct ndp_app_info ndp_info;
 };
 

@@ -49,12 +49,10 @@ qca_wlan_vendor_ndp_policy[QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_SECURITY] = { .type = NLA_U16 },
 	[QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS] = { .type = NLA_BINARY,
 					.len = NDP_QOS_INFO_LEN },
-	[QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO_LEN] = { .type = NLA_U16 },
 	[QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO] = { .type = NLA_BINARY,
 					.len = NDP_APP_INFO_LEN },
 	[QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID] = { .type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_NDP_RESPONSE_CODE] = { .type = NLA_U16 },
-	[QCA_WLAN_VENDOR_ATTR_NDP_SCHEDULE_STATUS_CODE] = { .type = NLA_U16 },
 	[QCA_WLAN_VENDOR_ATTR_NDP_NDI_MAC_ADDR] = { .type = NLA_BINARY,
 					.len = QDF_MAC_ADDR_SIZE },
 	[QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID_ARRAY] = { .type = NLA_BINARY,
@@ -518,19 +516,12 @@ static int hdd_ndp_initiator_req_handler(hdd_context_t *hdd_ctx,
 		nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_PEER_DISCOVERY_MAC_ADDR]),
 		QDF_MAC_ADDR_SIZE);
 
-	if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO_LEN]) {
-		hdd_err(FL("NDP app info len is unavailable"));
-		return -EINVAL;
+	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO]) {
+		req.ndp_info.ndp_app_info_len =
+			nla_len(tb[QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO]);
+		req.ndp_info.ndp_app_info =
+			nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO]);
 	}
-	req.ndp_info.ndp_app_info_len =
-		nla_get_u16(tb[QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO_LEN]);
-
-	if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO]) {
-		hdd_err(FL("NDP app info is unavailable"));
-		return -EINVAL;
-	}
-	req.ndp_info.ndp_app_info =
-		nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO]);
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS]) {
 		/* at present ndp config stores 4 bytes QOS info only */
@@ -1228,7 +1219,7 @@ static void hdd_ndp_confirm_ind_handler(hdd_adapter_t *adapter,
 		ndp_ctx->active_ndp_sessions[idx]++;
 
 	data_len = (4 * sizeof(uint32_t)) + QDF_MAC_ADDR_SIZE + IFNAMSIZ +
-			sizeof(uint16_t) + NLMSG_HDRLEN + (8 * NLA_HDRLEN) +
+			+ NLMSG_HDRLEN + (7 * NLA_HDRLEN) +
 			ndp_confirm->ndp_info.ndp_app_info_len;
 
 	vendor_event = cfg80211_vendor_event_alloc(hdd_ctx->wiphy, NULL,
@@ -1255,24 +1246,11 @@ static void hdd_ndp_confirm_ind_handler(hdd_adapter_t *adapter,
 		    IFNAMSIZ, adapter->dev->name))
 		goto ndp_confirm_nla_failed;
 
-	if (nla_put_u16(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO_LEN,
-		    ndp_confirm->ndp_info.ndp_app_info_len))
-		goto ndp_confirm_nla_failed;
-
 	if (ndp_confirm->ndp_info.ndp_app_info_len && nla_put(vendor_event,
 				QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO,
 				ndp_confirm->ndp_info.ndp_app_info_len,
 				ndp_confirm->ndp_info.ndp_app_info))
 		goto ndp_confirm_nla_failed;
-
-	if (ndp_confirm->ndp_config.ndp_cfg_len) {
-		ndp_qos_config = *((uint32_t *)ndp_confirm->ndp_config.ndp_cfg);
-		/* at present ndp config stores 4 bytes QOS info only */
-		if (nla_put_u32(vendor_event,
-				QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS,
-				ndp_qos_config))
-			goto ndp_confirm_nla_failed;
-	}
 
 	if (nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_NDP_RESPONSE_CODE,
@@ -1615,7 +1593,6 @@ ndp_end_rsp_nla_failed:
  * Following vendor event is sent to cfg80211:
  * QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD =
  *         QCA_WLAN_VENDOR_ATTR_NDP_END_IND (4 bytes)
- * QCA_WLAN_VENDOR_ATTR_NDP_NUM_INSTANCE_ID (1 byte)
  * QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID_ARRAY (4 * num of NDP Instances)
  *
  * Return: none
@@ -1667,8 +1644,7 @@ static void hdd_ndp_end_ind_handler(hdd_adapter_t *adapter,
 			end_ind->ndp_map[i].num_active_ndp_sessions;
 	}
 
-	data_len = (sizeof(uint32_t)) +
-			sizeof(uint8_t) + NLMSG_HDRLEN + (2 * NLA_HDRLEN) +
+	data_len = (sizeof(uint32_t)) + NLMSG_HDRLEN + (2 * NLA_HDRLEN) +
 			end_ind->num_ndp_ids * sizeof(*ndp_instance_array);
 
 	vendor_event = cfg80211_vendor_event_alloc(hdd_ctx->wiphy, NULL,
@@ -1681,10 +1657,6 @@ static void hdd_ndp_end_ind_handler(hdd_adapter_t *adapter,
 
 	if (nla_put_u32(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD,
 			QCA_WLAN_VENDOR_ATTR_NDP_END_IND))
-		goto ndp_end_ind_nla_failed;
-
-	if (nla_put_u8(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_NUM_INSTANCE_ID,
-			end_ind->num_ndp_ids))
 		goto ndp_end_ind_nla_failed;
 
 	if (nla_put(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID_ARRAY,

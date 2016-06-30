@@ -526,30 +526,13 @@ static int wma_ndp_confirm_event_handler(void *handle, uint8_t *event_info,
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&fixed_params->peer_ndi_mac_addr,
 				   ndp_confirm.peer_ndi_mac_addr.bytes);
 
-	qdf_mem_copy(&ndp_confirm.ndp_config, event->ndp_cfg,
-		     fixed_params->ndp_cfg_len);
-
-	ndp_confirm.ndp_config.ndp_cfg_len = fixed_params->ndp_cfg_len;
 	ndp_confirm.ndp_info.ndp_app_info_len = fixed_params->ndp_app_info_len;
-
-	if (ndp_confirm.ndp_config.ndp_cfg_len) {
-		ndp_confirm.ndp_config.ndp_cfg =
-			qdf_mem_malloc(ndp_confirm.ndp_config.ndp_cfg_len);
-		if (NULL == ndp_confirm.ndp_config.ndp_cfg) {
-			WMA_LOGE(FL("malloc failed"));
-			return QDF_STATUS_E_NOMEM;
-		}
-		qdf_mem_copy(ndp_confirm.ndp_config.ndp_cfg,
-			     event->ndp_cfg,
-			     ndp_confirm.ndp_config.ndp_cfg_len);
-	}
 
 	if (ndp_confirm.ndp_info.ndp_app_info_len) {
 		ndp_confirm.ndp_info.ndp_app_info =
 				qdf_mem_malloc(fixed_params->ndp_app_info_len);
 		if (NULL == ndp_confirm.ndp_info.ndp_app_info) {
 			WMA_LOGE(FL("malloc failed"));
-			qdf_mem_free(ndp_confirm.ndp_config.ndp_cfg);
 			return QDF_STATUS_E_NOMEM;
 		}
 		qdf_mem_copy(&ndp_confirm.ndp_info.ndp_app_info,
