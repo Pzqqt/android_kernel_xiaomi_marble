@@ -3023,8 +3023,7 @@ static __iw_softap_getparam(struct net_device *dev,
 			sme_cfg_get_int(hHal, WNI_CFG_ASSOC_STA_LIMIT,
 					(uint32_t *) value);
 		if (QDF_STATUS_SUCCESS != status) {
-			hddLog(LOGE,
-			       FL("failed to get WNI_CFG_ASSOC_STA_LIMIT from cfg %d"),
+			hdd_err("failed to get WNI_CFG_ASSOC_STA_LIMIT from cfg %d",
 			       status);
 			ret = -EIO;
 		}
@@ -3061,7 +3060,7 @@ static __iw_softap_getparam(struct net_device *dev,
 
 	case QCSAP_GTX_HT_MCS:
 	{
-		hddLog(LOG1, "GET WMI_VDEV_PARAM_GTX_HT_MCS");
+		hdd_notice("GET WMI_VDEV_PARAM_GTX_HT_MCS");
 		*value = wma_cli_get_command(pHostapdAdapter->sessionId,
 					     WMI_VDEV_PARAM_GTX_HT_MCS,
 					     GTX_CMD);
@@ -3070,7 +3069,7 @@ static __iw_softap_getparam(struct net_device *dev,
 
 	case QCSAP_GTX_VHT_MCS:
 	{
-		hddLog(LOG1, "GET WMI_VDEV_PARAM_GTX_VHT_MCS");
+		hdd_notice("GET WMI_VDEV_PARAM_GTX_VHT_MCS");
 		*value = wma_cli_get_command(pHostapdAdapter->sessionId,
 					     WMI_VDEV_PARAM_GTX_VHT_MCS,
 					     GTX_CMD);
@@ -3079,7 +3078,7 @@ static __iw_softap_getparam(struct net_device *dev,
 
 	case QCSAP_GTX_USRCFG:
 	{
-		hddLog(LOG1, "GET WMI_VDEV_PARAM_GTX_USR_CFG");
+		hdd_notice("GET WMI_VDEV_PARAM_GTX_USR_CFG");
 		*value = wma_cli_get_command(pHostapdAdapter->sessionId,
 					     WMI_VDEV_PARAM_GTX_USR_CFG,
 					     GTX_CMD);
@@ -3088,7 +3087,7 @@ static __iw_softap_getparam(struct net_device *dev,
 
 	case QCSAP_GTX_THRE:
 	{
-		hddLog(LOG1, "GET WMI_VDEV_PARAM_GTX_THRE");
+		hdd_notice("GET WMI_VDEV_PARAM_GTX_THRE");
 		*value = wma_cli_get_command(pHostapdAdapter->sessionId,
 					     WMI_VDEV_PARAM_GTX_THRE,
 					     GTX_CMD);
@@ -3097,7 +3096,7 @@ static __iw_softap_getparam(struct net_device *dev,
 
 	case QCSAP_GTX_MARGIN:
 	{
-		hddLog(LOG1, "GET WMI_VDEV_PARAM_GTX_MARGIN");
+		hdd_notice("GET WMI_VDEV_PARAM_GTX_MARGIN");
 		*value = wma_cli_get_command(pHostapdAdapter->sessionId,
 					     WMI_VDEV_PARAM_GTX_MARGIN,
 					     GTX_CMD);
@@ -3106,7 +3105,7 @@ static __iw_softap_getparam(struct net_device *dev,
 
 	case QCSAP_GTX_STEP:
 	{
-		hddLog(LOG1, "GET WMI_VDEV_PARAM_GTX_STEP");
+		hdd_notice("GET WMI_VDEV_PARAM_GTX_STEP");
 		*value = wma_cli_get_command(pHostapdAdapter->sessionId,
 					     WMI_VDEV_PARAM_GTX_STEP,
 					     GTX_CMD);
@@ -3115,7 +3114,7 @@ static __iw_softap_getparam(struct net_device *dev,
 
 	case QCSAP_GTX_MINTPC:
 	{
-		hddLog(LOG1, "GET WMI_VDEV_PARAM_GTX_MINTPC");
+		hdd_notice("GET WMI_VDEV_PARAM_GTX_MINTPC");
 		*value = wma_cli_get_command(pHostapdAdapter->sessionId,
 					     WMI_VDEV_PARAM_GTX_MINTPC,
 					     GTX_CMD);
@@ -3124,7 +3123,7 @@ static __iw_softap_getparam(struct net_device *dev,
 
 	case QCSAP_GTX_BWMASK:
 	{
-		hddLog(LOG1, "GET WMI_VDEV_PARAM_GTX_BW_MASK");
+		hdd_notice("GET WMI_VDEV_PARAM_GTX_BW_MASK");
 		*value = wma_cli_get_command(pHostapdAdapter->sessionId,
 					     WMI_VDEV_PARAM_GTX_BW_MASK,
 					     GTX_CMD);
@@ -3146,12 +3145,10 @@ static __iw_softap_getparam(struct net_device *dev,
 
 	case QCSAP_GET_ACL:
 	{
-		hddLog(LOG1, FL("QCSAP_GET_ACL"));
+		hdd_notice("QCSAP_GET_ACL");
 		if (hdd_print_acl(pHostapdAdapter) !=
 		    QDF_STATUS_SUCCESS) {
-			hddLog(LOGE,
-			       FL
-			       ("QCSAP_GET_ACL returned Error: not completed"));
+			hdd_err("QCSAP_GET_ACL returned Error: not completed");
 		}
 		*value = 0;
 		break;
@@ -3159,7 +3156,7 @@ static __iw_softap_getparam(struct net_device *dev,
 
 	case QCASAP_TX_CHAINMASK_CMD:
 	{
-		hddLog(LOG1, "QCASAP_TX_CHAINMASK_CMD");
+		hdd_notice("QCASAP_TX_CHAINMASK_CMD");
 		*value = wma_cli_get_command(pHostapdAdapter->sessionId,
 					     WMI_PDEV_PARAM_TX_CHAIN_MASK,
 					     PDEV_CMD);
@@ -3168,7 +3165,7 @@ static __iw_softap_getparam(struct net_device *dev,
 
 	case QCASAP_RX_CHAINMASK_CMD:
 	{
-		hddLog(LOG1, "QCASAP_RX_CHAINMASK_CMD");
+		hdd_notice("QCASAP_RX_CHAINMASK_CMD");
 		*value = wma_cli_get_command(pHostapdAdapter->sessionId,
 					     WMI_PDEV_PARAM_RX_CHAIN_MASK,
 					     PDEV_CMD);
@@ -3177,7 +3174,7 @@ static __iw_softap_getparam(struct net_device *dev,
 
 	case QCASAP_NSS_CMD:
 	{
-		hddLog(LOG1, "QCASAP_NSS_CMD");
+		hdd_notice("QCASAP_NSS_CMD");
 		*value = wma_cli_get_command(pHostapdAdapter->sessionId,
 					     WMI_VDEV_PARAM_NSS,
 					     VDEV_CMD);
@@ -3188,18 +3185,18 @@ static __iw_softap_getparam(struct net_device *dev,
 		break;
 	case QCASAP_GET_TEMP_CMD:
 	{
-		hddLog(LOG1, "QCASAP_GET_TEMP_CMD");
+		hdd_notice("QCASAP_GET_TEMP_CMD");
 		ret = wlan_hdd_get_temperature(pHostapdAdapter, value);
 		break;
 	}
 	case QCSAP_GET_FW_PROFILE_DATA:
-		hddLog(LOG1, "QCSAP_GET_FW_PROFILE_DATA");
+		hdd_notice("QCSAP_GET_FW_PROFILE_DATA");
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 				WMI_WLAN_PROFILE_GET_PROFILE_DATA_CMDID,
 				0, DBG_CMD);
 		break;
 	default:
-		hddLog(LOGE, FL("Invalid getparam command %d"), sub_cmd);
+		hdd_err("Invalid getparam command %d", sub_cmd);
 		ret = -EINVAL;
 		break;
 
@@ -3268,8 +3265,7 @@ int __iw_softap_modify_acl(struct net_device *dev,
 #ifndef WLAN_FEATURE_MBSSID
 	cds_ctx =  hdd_ctx->pcds_context;
 	if (NULL == cds_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Vos Context is NULL", __func__);
+		hdd_err("Vos Context is NULL");
 		return -EINVAL;
 	}
 #endif
@@ -3281,7 +3277,7 @@ int __iw_softap_modify_acl(struct net_device *dev,
 	i++;
 	cmd = (int)(*(value + i));
 
-	hddLog(LOG1, FL("Modify ACL mac:" MAC_ADDRESS_STR " type: %d cmd: %d"),
+	hdd_notice("Modify ACL mac:" MAC_ADDRESS_STR " type: %d cmd: %d",
 	       MAC_ADDR_ARRAY(pPeerStaMac), listType, cmd);
 
 #ifdef WLAN_FEATURE_MBSSID
@@ -3295,7 +3291,7 @@ int __iw_softap_modify_acl(struct net_device *dev,
 				   (eSapACLType) listType, (eSapACLCmdType) cmd);
 #endif
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hddLog(LOGE, FL("Modify ACL failed"));
+		hdd_err("Modify ACL failed");
 		ret = -EIO;
 	}
 	EXIT();
@@ -3386,7 +3382,7 @@ static __iw_softap_set_max_tx_power(struct net_device *dev,
 	set_value = value[0];
 	if (QDF_STATUS_SUCCESS !=
 	    sme_set_max_tx_power(hHal, bssid, selfMac, set_value)) {
-		hddLog(LOGE, FL("Setting maximum tx power failed"));
+		hdd_err("Setting maximum tx power failed");
 		return -EIO;
 	}
 	EXIT();
@@ -3436,7 +3432,7 @@ static __iw_softap_set_tx_power(struct net_device *dev,
 	if (QDF_STATUS_SUCCESS !=
 	    sme_set_tx_power(hHal, pHostapdAdapter->sessionId, bssid,
 			     pHostapdAdapter->device_mode, set_value)) {
-		hddLog(LOGE, FL("Setting tx power failed"));
+		hdd_err("Setting tx power failed");
 		return -EIO;
 	}
 	EXIT();
@@ -3498,14 +3494,14 @@ static __iw_softap_getassoc_stamacaddr(struct net_device *dev,
 
 	/* make sure userspace allocated a reasonable buffer size */
 	if (wrqu->data.length < sizeof(maclist_index)) {
-		hddLog(LOG1, FL("invalid userspace buffer"));
+		hdd_notice("invalid userspace buffer");
 		return -EINVAL;
 	}
 
 	/* allocate local buffer to build the response */
 	buf = kmalloc(wrqu->data.length, GFP_KERNEL);
 	if (!buf) {
-		hddLog(LOG1, FL("failed to allocate response buffer"));
+		hdd_notice("failed to allocate response buffer");
 		return -ENOMEM;
 	}
 
@@ -3529,7 +3525,7 @@ static __iw_softap_getassoc_stamacaddr(struct net_device *dev,
 	*((u32 *) buf) = maclist_index;
 	wrqu->data.length = maclist_index;
 	if (copy_to_user(wrqu->data.pointer, buf, maclist_index)) {
-		hddLog(LOG1, FL("failed to copy response to user buffer"));
+		hdd_notice("failed to copy response to user buffer");
 		ret = -EFAULT;
 	}
 	kfree(buf);
@@ -3577,8 +3573,7 @@ static __iw_softap_disassoc_sta(struct net_device *dev,
 	ENTER_DEV(dev);
 
 	if (!capable(CAP_NET_ADMIN)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			FL("permission check failed"));
+		hdd_err("permission check failed");
 		return -EPERM;
 	}
 
@@ -3592,7 +3587,7 @@ static __iw_softap_disassoc_sta(struct net_device *dev,
 	 */
 	peerMacAddr = (uint8_t *) (extra);
 
-	hddLog(LOG1, FL("data " MAC_ADDRESS_STR),
+	hdd_notice("data " MAC_ADDRESS_STR,
 	       MAC_ADDR_ARRAY(peerMacAddr));
 	hdd_softap_sta_disassoc(pHostapdAdapter, peerMacAddr);
 	EXIT();
@@ -3677,7 +3672,7 @@ static int wlan_hdd_set_force_acs_ch_range(struct net_device *dev,
 	ENTER_DEV(dev);
 
 	if (!capable(CAP_NET_ADMIN)) {
-		hddLog(LOGE, FL("permission check failed"));
+		hdd_err("permission check failed");
 		return -EPERM;
 	}
 
@@ -3728,7 +3723,7 @@ static int __iw_softap_get_channel_list(struct net_device *dev,
 		return ret;
 
 	if (QDF_STATUS_SUCCESS != sme_get_freq_band(hHal, &curBand)) {
-		hddLog(LOGE, FL("not able get the current frequency band"));
+		hdd_err("not able get the current frequency band");
 		return -EIO;
 	}
 	wrqu->data.length = sizeof(tChannelListInfo);
@@ -3741,7 +3736,7 @@ static int __iw_softap_get_channel_list(struct net_device *dev,
 		bandEndChannel = CHAN_ENUM_184;
 	}
 
-	hddLog(LOG1, FL("curBand = %d, StartChannel = %hu, EndChannel = %hu "),
+	hdd_notice("curBand = %d, StartChannel = %hu, EndChannel = %hu ",
 	       curBand, bandStartChannel, bandEndChannel);
 
 	for (i = bandStartChannel; i <= bandEndChannel; i++) {
@@ -3753,7 +3748,7 @@ static int __iw_softap_get_channel_list(struct net_device *dev,
 		}
 	}
 
-	hddLog(LOG1, FL(" number of channels %d"), num_channels);
+	hdd_notice(" number of channels %d", num_channels);
 
 	if (num_channels > IW_MAX_FREQUENCIES) {
 		num_channels = IW_MAX_FREQUENCIES;
@@ -3803,8 +3798,7 @@ int __iw_get_genie(struct net_device *dev,
 #ifndef WLAN_FEATURE_MBSSID
 	cds_ctx = hdd_ctx->pcds_context;
 	if (NULL == cds_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: vos context is not valid ", __func__);
+		hdd_err("vos context is not valid ");
 		return -EINVAL;
 	}
 #endif
@@ -3825,15 +3819,15 @@ int __iw_get_genie(struct net_device *dev,
 		length = QDF_MIN(length, DOT11F_IE_RSN_MAX_LEN);
 		if (wrqu->data.length < length ||
 		copy_to_user(wrqu->data.pointer, (void *)genIeBytes, length)) {
-			hddLog(LOG1, FL("failed to copy data to user buffer"));
+			hdd_notice("failed to copy data to user buffer");
 			return -EFAULT;
 		}
 		wrqu->data.length = length;
-		hddLog(LOG1, FL(" RSN IE of %d bytes returned"),
+		hdd_notice(" RSN IE of %d bytes returned",
 				wrqu->data.length);
 	} else {
 		wrqu->data.length = 0;
-		hddLog(LOG1, FL(" RSN IE failed to populate"));
+		hdd_notice(" RSN IE failed to populate");
 	}
 
 	EXIT();
@@ -3872,7 +3866,7 @@ int __iw_get_wpspbc_probe_req_ies(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
-	hddLog(LOG1, FL("get_WPSPBCProbeReqIEs ioctl"));
+	hdd_notice("get_WPSPBCProbeReqIEs ioctl");
 	memset((void *)&WPSPBCProbeReqIEs, 0, sizeof(WPSPBCProbeReqIEs));
 
 	WPSPBCProbeReqIEs.probeReqIELen =
@@ -3885,7 +3879,7 @@ int __iw_get_wpspbc_probe_req_ies(struct net_device *dev,
 	if (copy_to_user(wrqu->data.pointer,
 			 (void *)&WPSPBCProbeReqIEs,
 			 sizeof(WPSPBCProbeReqIEs))) {
-		hddLog(LOG1, FL("failed to copy data to user buffer"));
+		hdd_notice("failed to copy data to user buffer");
 		return -EFAULT;
 	}
 	wrqu->data.length = 12 + WPSPBCProbeReqIEs.probeReqIELen;
@@ -3941,13 +3935,13 @@ int __iw_set_auth_hostap(struct net_device *dev, struct iw_request_info *info,
 	case IW_AUTH_TKIP_COUNTERMEASURES:
 	{
 		if (wrqu->param.value) {
-			hddLog(LOG2,
-			       "Counter Measure started %d", wrqu->param.value);
+			hdd_info("Counter Measure started %d",
+				 wrqu->param.value);
 			pWextState->mTKIPCounterMeasures =
 				TKIP_COUNTER_MEASURE_STARTED;
 		} else {
-			hddLog(LOG2,
-			       "Counter Measure stopped=%d", wrqu->param.value);
+			hdd_info("Counter Measure stopped=%d",
+				 wrqu->param.value);
 			pWextState->mTKIPCounterMeasures =
 				TKIP_COUNTER_MEASURE_STOPED;
 		}
@@ -3960,7 +3954,7 @@ int __iw_set_auth_hostap(struct net_device *dev, struct iw_request_info *info,
 
 	default:
 
-		hddLog(LOGW, FL("called with unsupported auth type %d"),
+		hdd_warn("called with unsupported auth type %d",
 		       wrqu->param.flags & IW_AUTH_INDEX);
 		break;
 	}
@@ -4032,8 +4026,7 @@ static int __iw_set_ap_encodeext(struct net_device *dev,
 #ifndef WLAN_FEATURE_MBSSID
 	cds_ctx = hdd_ctx->pcds_context;
 	if (NULL == cds_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: pVosContext is NULL", __func__);
+		hdd_err("pVosContext is NULL");
 		return -EINVAL;
 	}
 #endif
@@ -4085,7 +4078,7 @@ static int __iw_set_ap_encodeext(struct net_device *dev,
 			(ext->key_len ==
 			 5) ? eCSR_ENCRYPT_TYPE_WEP40 : eCSR_ENCRYPT_TYPE_WEP104;
 		pHddApCtx->uPrivacy = 1;
-		hddLog(LOG1, FL("uPrivacy=%d"), pHddApCtx->uPrivacy);
+		hdd_notice("uPrivacy=%d", pHddApCtx->uPrivacy);
 		break;
 
 	case IW_ENCODE_ALG_TKIP:
@@ -4132,10 +4125,10 @@ static int __iw_set_ap_encodeext(struct net_device *dev,
 		break;
 	}
 
-	hddLog(LOG1, FL(":EncryptionType:%d key_len:%d, KeyId:%d"),
+	hdd_notice(":EncryptionType:%d key_len:%d, KeyId:%d",
 	       setKey.encType, setKey.keyLength, setKey.keyId);
 	for (i = 0; i < ext->key_len; i++)
-		hddLog(LOG1, "%02x", setKey.Key[i]);
+		hdd_notice("%02x", setKey.Key[i]);
 
 #ifdef WLAN_FEATURE_MBSSID
 	vstatus =
@@ -4146,7 +4139,7 @@ static int __iw_set_ap_encodeext(struct net_device *dev,
 #endif
 
 	if (vstatus != QDF_STATUS_SUCCESS) {
-		hddLog(LOGE, FL("wlansap_set_key_sta failed, status= %d"),
+		hdd_err("wlansap_set_key_sta failed, status= %d",
 		       vstatus);
 		ret = -EINVAL;
 	}
@@ -4481,8 +4474,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 	ENTER_DEV(dev);
 
 	if (!capable(CAP_NET_ADMIN)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			FL("permission check failed"));
+		hdd_err("permission check failed");
 		return -EPERM;
 	}
 
@@ -4494,8 +4486,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 #ifndef WLAN_FEATURE_MBSSID
 	cds_ctx = hdd_ctx->pcds_context;
 	if (NULL == cds_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: HDD context is not valid ", __func__);
+		hdd_err("HDD context is not valid ");
 		return -EINVAL;
 	}
 #endif
@@ -4514,7 +4505,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						    s_priv_data.length);
 
 	if (NULL == wps_genie) {
-		hddLog(LOG1, FL("failed to alloc mem and copy data"));
+		hdd_notice("failed to alloc mem and copy data");
 		return -EFAULT;
 	}
 
@@ -4522,13 +4513,13 @@ __iw_softap_setwpsie(struct net_device *dev,
 
 	pSap_WPSIe = qdf_mem_malloc(sizeof(tSap_WPSIE));
 	if (NULL == pSap_WPSIe) {
-		hddLog(LOGE, "QDF unable to allocate memory");
+		hdd_err("QDF unable to allocate memory");
 		kfree(fwps_genie);
 		return -ENOMEM;
 	}
 	qdf_mem_zero(pSap_WPSIe, sizeof(tSap_WPSIE));
 
-	hddLog(LOG1, FL("WPS IE type[0x%X] IE[0x%X], LEN[%d]"),
+	hdd_notice("WPS IE type[0x%X] IE[0x%X], LEN[%d]",
 		wps_genie[0], wps_genie[1], wps_genie[2]);
 	WPSIeType = wps_genie[0];
 	if (wps_genie[0] == eQC_WPS_BEACON_IE) {
@@ -4541,7 +4532,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 				goto exit;
 			} else if (memcmp(&wps_genie[2],
 				   "\x00\x50\xf2\x04", 4) == 0) {
-				hddLog(LOG1, FL("Set WPS BEACON IE(len %d)"),
+				hdd_notice("Set WPS BEACON IE(len %d)",
 				       wps_genie[1] + 2);
 				pos = &wps_genie[6];
 				while (((size_t) pos -
@@ -4554,7 +4545,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						pSap_WPSIe->sapwpsie.
 						sapWPSBeaconIE.Version =
 							*pos;
-						hddLog(LOG1, "WPS version %d",
+						hdd_notice("WPS version %d",
 						       pSap_WPSIe->sapwpsie.
 						       sapWPSBeaconIE.Version);
 						pSap_WPSIe->sapwpsie.
@@ -4569,7 +4560,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						pSap_WPSIe->sapwpsie.
 						sapWPSBeaconIE.wpsState =
 							*pos;
-						hddLog(LOG1, "WPS State %d",
+						hdd_notice("WPS State %d",
 						       pSap_WPSIe->sapwpsie.
 						       sapWPSBeaconIE.wpsState);
 						pSap_WPSIe->sapwpsie.
@@ -4583,7 +4574,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						pSap_WPSIe->sapwpsie.
 						sapWPSBeaconIE.
 						APSetupLocked = *pos;
-						hddLog(LOG1, "AP setup lock %d",
+						hdd_notice("AP setup lock %d",
 						       pSap_WPSIe->sapwpsie.
 						       sapWPSBeaconIE.
 						       APSetupLocked);
@@ -4598,8 +4589,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						pSap_WPSIe->sapwpsie.
 						sapWPSBeaconIE.
 						SelectedRegistra = *pos;
-						hddLog(LOG1,
-						       "Selected Registra %d",
+						hdd_notice("Selected Registra %d",
 						       pSap_WPSIe->sapwpsie.
 						       sapWPSBeaconIE.
 						       SelectedRegistra);
@@ -4615,7 +4605,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						sapWPSBeaconIE.
 						DevicePasswordID =
 							(*pos << 8) | *(pos + 1);
-						hddLog(LOG1, "Password ID: %x",
+						hdd_notice("Password ID: %x",
 						       pSap_WPSIe->sapwpsie.
 						       sapWPSBeaconIE.
 						       DevicePasswordID);
@@ -4632,8 +4622,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						sapWPSBeaconIE.
 						SelectedRegistraCfgMethod =
 							(*pos << 8) | *(pos + 1);
-						hddLog(LOG1,
-						       "Select Registra Config Methods: %x",
+						hdd_notice("Select Registra Config Methods: %x",
 						       pSap_WPSIe->sapwpsie.
 						       sapWPSBeaconIE.
 						       SelectedRegistraCfgMethod);
@@ -4670,7 +4659,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						pSap_WPSIe->sapwpsie.
 						sapWPSBeaconIE.RFBand =
 							*pos;
-						hddLog(LOG1, "RF band: %d",
+						hdd_notice("RF band: %d",
 						       pSap_WPSIe->sapwpsie.
 						       sapWPSBeaconIE.RFBand);
 						pSap_WPSIe->sapwpsie.
@@ -4681,8 +4670,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						break;
 
 					default:
-						hddLog(LOGW,
-						       "UNKNOWN TLV in WPS IE(%x)",
+						hdd_warn("UNKNOWN TLV in WPS IE(%x)",
 						       (*pos << 8 |
 							*(pos + 1)));
 						ret = -EINVAL;
@@ -4690,13 +4678,13 @@ __iw_softap_setwpsie(struct net_device *dev,
 					}
 				}
 			} else {
-				hddLog(LOGE, FL("WPS IE Mismatch %X"),
+				hdd_err("WPS IE Mismatch %X",
 				       wps_genie[0]);
 			}
 			break;
 
 		default:
-			hddLog(LOGE, FL("Set UNKNOWN IE %X"), wps_genie[0]);
+			hdd_err("Set UNKNOWN IE %X", wps_genie[0]);
 			ret = -EINVAL;
 			goto exit;
 		}
@@ -4710,7 +4698,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 				goto exit;
 			} else if (memcmp(&wps_genie[2], "\x00\x50\xf2\x04", 4)
 				   == 0) {
-				hddLog(LOG1, FL("Set WPS PROBE RSP IE(len %d)"),
+				hdd_notice("Set WPS PROBE RSP IE(len %d)",
 				       wps_genie[1] + 2);
 				pos = &wps_genie[6];
 				while (((size_t) pos -
@@ -4723,7 +4711,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						pSap_WPSIe->sapwpsie.
 						sapWPSProbeRspIE.Version =
 							*pos;
-						hddLog(LOG1, "WPS version %d",
+						hdd_notice("WPS version %d",
 						       pSap_WPSIe->sapwpsie.
 						       sapWPSProbeRspIE.
 						       Version);
@@ -4739,7 +4727,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						pSap_WPSIe->sapwpsie.
 						sapWPSProbeRspIE.wpsState =
 							*pos;
-						hddLog(LOG1, "WPS State %d",
+						hdd_notice("WPS State %d",
 						       pSap_WPSIe->sapwpsie.
 						       sapWPSProbeRspIE.
 						       wpsState);
@@ -4754,7 +4742,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						pSap_WPSIe->sapwpsie.
 						sapWPSProbeRspIE.
 						APSetupLocked = *pos;
-						hddLog(LOG1, "AP setup lock %d",
+						hdd_notice("AP setup lock %d",
 						       pSap_WPSIe->sapwpsie.
 						       sapWPSProbeRspIE.
 						       APSetupLocked);
@@ -4769,8 +4757,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						pSap_WPSIe->sapwpsie.
 						sapWPSProbeRspIE.
 						SelectedRegistra = *pos;
-						hddLog(LOG1,
-						       "Selected Registra %d",
+						hdd_notice("Selected Registra %d",
 						       pSap_WPSIe->sapwpsie.
 						       sapWPSProbeRspIE.
 						       SelectedRegistra);
@@ -4786,7 +4773,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						sapWPSProbeRspIE.
 						DevicePasswordID =
 							(*pos << 8) | *(pos + 1);
-						hddLog(LOG1, "Password ID: %d",
+						hdd_notice("Password ID: %d",
 						       pSap_WPSIe->sapwpsie.
 						       sapWPSProbeRspIE.
 						       DevicePasswordID);
@@ -4803,8 +4790,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						sapWPSProbeRspIE.
 						SelectedRegistraCfgMethod =
 							(*pos << 8) | *(pos + 1);
-						hddLog(LOG1,
-						       "Select Registra Config Methods: %x",
+						hdd_notice("Select Registra Config Methods: %x",
 						       pSap_WPSIe->sapwpsie.
 						       sapWPSProbeRspIE.
 						       SelectedRegistraCfgMethod);
@@ -4819,8 +4805,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						pSap_WPSIe->sapwpsie.
 						sapWPSProbeRspIE.
 						ResponseType = *pos;
-						hddLog(LOG1,
-						       "Config Methods: %d",
+						hdd_notice("Config Methods: %d",
 						       pSap_WPSIe->sapwpsie.
 						       sapWPSProbeRspIE.
 						       ResponseType);
@@ -4958,8 +4943,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						sapWPSProbeRspIE.
 						PrimaryDeviceCategory =
 							(*pos << 8 | *(pos + 1));
-						hddLog(LOG1,
-						       "primary dev category: %d",
+						hdd_notice("primary dev category: %d",
 						       pSap_WPSIe->sapwpsie.
 						       sapWPSProbeRspIE.
 						       PrimaryDeviceCategory);
@@ -4971,8 +4955,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 							     PrimaryDeviceOUI,
 							     pos,
 							     HDD_WPS_DEVICE_OUI_LEN);
-						hddLog(LOG1,
-						       "primary dev oui: %02x, %02x, %02x, %02x",
+						hdd_notice("primary dev oui: %02x, %02x, %02x, %02x",
 						       pos[0], pos[1], pos[2],
 						       pos[3]);
 						pos += 4;
@@ -4980,8 +4963,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						sapWPSProbeRspIE.
 						DeviceSubCategory =
 							(*pos << 8 | *(pos + 1));
-						hddLog(LOG1,
-						       "primary dev sub category: %d",
+						hdd_notice("primary dev sub category: %d",
 						       pSap_WPSIe->sapwpsie.
 						       sapWPSProbeRspIE.
 						       DeviceSubCategory);
@@ -5021,8 +5003,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						sapWPSProbeRspIE.
 						ConfigMethod =
 							(*pos << 8) | *(pos + 1);
-						hddLog(LOG1,
-						       "Config Methods: %d",
+						hdd_notice("Config Methods: %d",
 						       pSap_WPSIe->sapwpsie.
 						       sapWPSProbeRspIE.
 						       SelectedRegistraCfgMethod);
@@ -5038,7 +5019,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						pSap_WPSIe->sapwpsie.
 						sapWPSProbeRspIE.RFBand =
 							*pos;
-						hddLog(LOG1, "RF band: %d",
+						hdd_notice("RF band: %d",
 						       pSap_WPSIe->sapwpsie.
 						       sapWPSProbeRspIE.RFBand);
 						pos += 1;
@@ -5050,8 +5031,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 					} /* switch */
 				}
 			} else {
-				hddLog(LOGE,
-				       FL("WPS IE Mismatch %X"), wps_genie[0]);
+				hdd_err("WPS IE Mismatch %X", wps_genie[0]);
 			}
 
 		} /* switch */
