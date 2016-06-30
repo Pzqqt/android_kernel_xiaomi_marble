@@ -940,15 +940,6 @@ int wma_gtk_offload_status_event(void *handle, uint8_t *event, uint32_t len);
 #endif
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
-int wma_oem_capability_event_callback(void *handle,
-				      uint8_t *datap, uint32_t len);
-
-int wma_oem_measurement_report_event_callback(void *handle, uint8_t *datap,
-					      uint32_t len);
-
-int wma_oem_error_report_event_callback(void *handle, uint8_t *datap,
-					uint32_t len);
-
 int wma_oem_data_response_handler(void *handle, uint8_t *datap,
 				  uint32_t len);
 #endif

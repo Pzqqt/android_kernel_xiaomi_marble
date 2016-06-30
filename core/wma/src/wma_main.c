@@ -1962,21 +1962,6 @@ QDF_STATUS wma_open(void *cds_context,
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_OEM_CAPABILITY_EVENTID,
-					   wma_oem_capability_event_callback,
-					   WMA_RX_SERIALIZER_CTX);
-
-	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-				WMI_OEM_MEASUREMENT_REPORT_EVENTID,
-				wma_oem_measurement_report_event_callback,
-				WMA_RX_SERIALIZER_CTX);
-
-	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_OEM_ERROR_REPORT_EVENTID,
-					   wma_oem_error_report_event_callback,
-					   WMA_RX_SERIALIZER_CTX);
-
-	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_OEM_RESPONSE_EVENTID,
 					   wma_oem_data_response_handler,
 					   WMA_RX_SERIALIZER_CTX);
