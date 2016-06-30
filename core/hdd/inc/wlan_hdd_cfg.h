@@ -3020,7 +3020,7 @@ enum dot11p_mode {
 #define CFG_EARLY_STOP_SCAN_ENABLE           "gEnableEarlyStopScan"
 #define CFG_EARLY_STOP_SCAN_ENABLE_MIN       (0)
 #define CFG_EARLY_STOP_SCAN_ENABLE_MAX       (1)
-#define CFG_EARLY_STOP_SCAN_ENABLE_DEFAULT   (0)
+#define CFG_EARLY_STOP_SCAN_ENABLE_DEFAULT   (1)
 /*
  * Early stop scan minimum threshold is the minimum threshold
  * to be considered for stopping the scan. The algorithm starts
@@ -3032,7 +3032,7 @@ enum dot11p_mode {
 #define CFG_EARLY_STOP_SCAN_MIN_THRESHOLD           "gEarlyStopScanMinThreshold"
 #define CFG_EARLY_STOP_SCAN_MIN_THRESHOLD_MIN       (-80)
 #define CFG_EARLY_STOP_SCAN_MIN_THRESHOLD_MAX       (-70)
-#define CFG_EARLY_STOP_SCAN_MIN_THRESHOLD_DEFAULT   (-78)
+#define CFG_EARLY_STOP_SCAN_MIN_THRESHOLD_DEFAULT   (-73)
 /*
  * Early stop scan maximum threshold is the maximum threshold
  * at which the candidate AP should be to be qualified as a
@@ -3041,7 +3041,7 @@ enum dot11p_mode {
 #define CFG_EARLY_STOP_SCAN_MAX_THRESHOLD           "gEarlyStopScanMaxThreshold"
 #define CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_MIN       (-60)
 #define CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_MAX       (-40)
-#define CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_DEFAULT   (-45)
+#define CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_DEFAULT   (-43)
 
 /*
  * This parameter will configure the first scan bucket
