@@ -1479,6 +1479,12 @@ void htt_fill_wisa_ext_header(qdf_nbuf_t msdu,
 	void *qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	QDF_STATUS status;
 
+	if (!qdf_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s: qdf_ctx is NULL", __func__);
+		return;
+	}
+
 	local_desc_ext->valid_mcs_mask = 1;
 	if (WISA_MODE_EXT_HEADER_6MBPS == type)
 		local_desc_ext->mcs_mask = htt_ofdm_datarate_6_mbps;
@@ -1592,6 +1598,12 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 	uint16_t channel_freq;
 	void *qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	QDF_STATUS status;
+
+	if (!qdf_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s: qdf_ctx is NULL", __func__);
+		return;
+	}
 
 	word0 = (uint32_t *) htt_tx_desc;
 	word1 = word0 + 1;

@@ -262,6 +262,12 @@ int epping_enable(struct device *parent_dev)
 	pEpping_ctx->target_type = tgt_info->target_type;
 
 	ol_ctx = cds_get_context(QDF_MODULE_ID_BMI);
+	if (!ol_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
+			  "%s: ol_ctx is NULL", __func__);
+		return A_ERROR;
+	}
+
 	epping_update_ol_config();
 #ifndef FEATURE_BMI_2
 	/* Initialize BMI and Download firmware */

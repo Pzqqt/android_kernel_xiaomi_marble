@@ -218,14 +218,14 @@ QDF_STATUS bmi_download_firmware(struct ol_context *ol_ctx)
 {
 	struct hif_opaque_softc *scn = ol_ctx->scn;
 
-	if (NO_BMI || !hif_needs_bmi(scn))
-		return QDF_STATUS_SUCCESS;
-
 	if (!scn) {
 		BMI_ERR("Invalid scn context");
 		bmi_assert(0);
 		return QDF_STATUS_NOT_INITIALIZED;
 	}
+
+	if (NO_BMI || !hif_needs_bmi(scn))
+		return QDF_STATUS_SUCCESS;
 
 	return bmi_firmware_download(ol_ctx);
 }
