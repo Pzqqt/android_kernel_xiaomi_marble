@@ -2311,19 +2311,19 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	hHal = WLAN_HDD_GET_HAL_CTX(pHostapdAdapter);
 	if (!hHal) {
-		hddLog(LOGE, FL("Hal ctx is null"));
+		hdd_err("Hal ctx is null");
 		return -EINVAL;
 	}
 
 	p_cds_context = hdd_ctx->pcds_context;
 	if (!p_cds_context) {
-		hddLog(LOGE, FL("cds ctx is null"));
+		hdd_err("cds ctx is null");
 		return -ENOENT;
 	}
 
 	switch (sub_cmd) {
 	case QCASAP_SET_RADAR_DBG:
-		hddLog(LOG1, FL("QCASAP_SET_RADAR_DBG called with: value: %d"),
+		hdd_notice("QCASAP_SET_RADAR_DBG called with: value: %d",
 		       set_value);
 		wlan_sap_enable_phy_error_logs(hHal, (bool) set_value);
 		break;
@@ -2344,7 +2344,7 @@ static __iw_softap_setparam(struct net_device *dev,
 	case QCSAP_PARAM_ACL_MODE:
 		if ((eSAP_ALLOW_ALL < (eSapMacAddrACL) set_value) ||
 		    (eSAP_ACCEPT_UNLESS_DENIED > (eSapMacAddrACL) set_value)) {
-			hddLog(LOGE, FL("Invalid ACL Mode value %d"),
+			hdd_err("Invalid ACL Mode value %d",
 			       set_value);
 			ret = -EINVAL;
 		} else {
@@ -2361,14 +2361,12 @@ static __iw_softap_setparam(struct net_device *dev,
 	case QCSAP_PARAM_SET_CHANNEL_CHANGE:
 		if ((QDF_SAP_MODE == pHostapdAdapter->device_mode) ||
 		   (QDF_P2P_GO_MODE == pHostapdAdapter->device_mode)) {
-			hddLog(LOG1,
-			       "SET Channel Change to new channel= %d",
+			hdd_notice("SET Channel Change to new channel= %d",
 			       set_value);
 			ret = hdd_softap_set_channel_change(dev, set_value,
 								CH_WIDTH_MAX);
 		} else {
-			hddLog(LOGE,
-			       FL("Channel Change Failed, Device in test mode"));
+			hdd_err("Channel Change Failed, Device in test mode");
 			ret = -EINVAL;
 		}
 		break;
@@ -2392,24 +2390,21 @@ static __iw_softap_setparam(struct net_device *dev,
 		break;
 	case QCSAP_PARAM_MAX_ASSOC:
 		if (WNI_CFG_ASSOC_STA_LIMIT_STAMIN > set_value) {
-			hddLog(LOGE, FL("Invalid setMaxAssoc value %d"),
+			hdd_err("Invalid setMaxAssoc value %d",
 			       set_value);
 			ret = -EINVAL;
 		} else {
 			if (WNI_CFG_ASSOC_STA_LIMIT_STAMAX < set_value) {
-				hddLog(LOGW,
-				       FL("setMaxAssoc %d > max allowed %d."),
+				hdd_warn("setMaxAssoc %d > max allowed %d.",
 				       set_value,
 				       WNI_CFG_ASSOC_STA_LIMIT_STAMAX);
-				hddLog(LOGW,
-				       FL("Setting it to max allowed and continuing"));
+				hdd_warn("Setting it to max allowed and continuing");
 				set_value = WNI_CFG_ASSOC_STA_LIMIT_STAMAX;
 			}
 			status = sme_cfg_set_int(hHal, WNI_CFG_ASSOC_STA_LIMIT,
 					set_value);
 			if (status != QDF_STATUS_SUCCESS) {
-				hddLog(LOGE,
-				       FL("setMaxAssoc failure, status %d"),
+				hdd_err("setMaxAssoc failure, status %d",
 				       status);
 				ret = -EIO;
 			}
@@ -2423,7 +2418,7 @@ static __iw_softap_setparam(struct net_device *dev,
 			sme_hide_ssid(hHal, pHostapdAdapter->sessionId,
 				      set_value);
 		if (QDF_STATUS_SUCCESS != status) {
-			hddLog(LOGE, FL("QCSAP_PARAM_HIDE_SSID failed"));
+			hdd_err("QCSAP_PARAM_HIDE_SSID failed");
 			return status;
 		}
 		break;
@@ -2433,7 +2428,7 @@ static __iw_softap_setparam(struct net_device *dev,
 		tSirRateUpdateInd rateUpdate = {0};
 		struct hdd_config *pConfig = hdd_ctx->config;
 
-		hddLog(LOG1, "MC Target rate %d", set_value);
+		hdd_notice("MC Target rate %d", set_value);
 		qdf_copy_macaddr(&rateUpdate.bssid,
 				 &pHostapdAdapter->macAddressCurrent);
 		rateUpdate.nss = (pConfig->enable2x2 == 0) ? 0 : 1;
@@ -2444,7 +2439,7 @@ static __iw_softap_setparam(struct net_device *dev,
 		rateUpdate.bcastDataRate = -1;
 		status = sme_send_rate_update_ind(hHal, &rateUpdate);
 		if (QDF_STATUS_SUCCESS != status) {
-			hddLog(LOGE, FL("SET_MC_RATE failed"));
+			hdd_err("SET_MC_RATE failed");
 			ret = -1;
 		}
 		break;
@@ -2452,7 +2447,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCSAP_PARAM_SET_TXRX_FW_STATS:
 	{
-		hddLog(LOG1, "QCSAP_PARAM_SET_TXRX_FW_STATS val %d", set_value);
+		hdd_notice("QCSAP_PARAM_SET_TXRX_FW_STATS val %d", set_value);
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 					  WMA_VDEV_TXRX_FWSTATS_ENABLE_CMDID,
 					  set_value, VDEV_CMD);
@@ -2461,7 +2456,7 @@ static __iw_softap_setparam(struct net_device *dev,
 	/* Firmware debug log */
 	case QCSAP_DBGLOG_LOG_LEVEL:
 	{
-		hddLog(LOG1, "QCSAP_DBGLOG_LOG_LEVEL val %d", set_value);
+		hdd_notice("QCSAP_DBGLOG_LOG_LEVEL val %d", set_value);
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 					  WMI_DBGLOG_LOG_LEVEL,
 					  set_value, DBG_CMD);
@@ -2470,7 +2465,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCSAP_DBGLOG_VAP_ENABLE:
 	{
-		hddLog(LOG1, "QCSAP_DBGLOG_VAP_ENABLE val %d", set_value);
+		hdd_notice("QCSAP_DBGLOG_VAP_ENABLE val %d", set_value);
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 					  WMI_DBGLOG_VAP_ENABLE,
 					  set_value, DBG_CMD);
@@ -2479,7 +2474,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCSAP_DBGLOG_VAP_DISABLE:
 	{
-		hddLog(LOG1, "QCSAP_DBGLOG_VAP_DISABLE val %d", set_value);
+		hdd_notice("QCSAP_DBGLOG_VAP_DISABLE val %d", set_value);
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 					  WMI_DBGLOG_VAP_DISABLE,
 					  set_value, DBG_CMD);
@@ -2488,7 +2483,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCSAP_DBGLOG_MODULE_ENABLE:
 	{
-		hddLog(LOG1, "QCSAP_DBGLOG_MODULE_ENABLE val %d", set_value);
+		hdd_notice("QCSAP_DBGLOG_MODULE_ENABLE val %d", set_value);
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 					  WMI_DBGLOG_MODULE_ENABLE,
 					  set_value, DBG_CMD);
@@ -2497,7 +2492,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCSAP_DBGLOG_MODULE_DISABLE:
 	{
-		hddLog(LOG1, "QCSAP_DBGLOG_MODULE_DISABLE val %d", set_value);
+		hdd_notice("QCSAP_DBGLOG_MODULE_DISABLE val %d", set_value);
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 					  WMI_DBGLOG_MODULE_DISABLE,
 					  set_value, DBG_CMD);
@@ -2506,7 +2501,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCSAP_DBGLOG_MOD_LOG_LEVEL:
 	{
-		hddLog(LOG1, "QCSAP_DBGLOG_MOD_LOG_LEVEL val %d", set_value);
+		hdd_notice("QCSAP_DBGLOG_MOD_LOG_LEVEL val %d", set_value);
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 					  WMI_DBGLOG_MOD_LOG_LEVEL,
 					  set_value, DBG_CMD);
@@ -2515,7 +2510,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCSAP_DBGLOG_TYPE:
 	{
-		hddLog(LOG1, "QCSAP_DBGLOG_TYPE val %d", set_value);
+		hdd_notice("QCSAP_DBGLOG_TYPE val %d", set_value);
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 					  WMI_DBGLOG_TYPE,
 					  set_value, DBG_CMD);
@@ -2523,7 +2518,7 @@ static __iw_softap_setparam(struct net_device *dev,
 	}
 	case QCSAP_DBGLOG_REPORT_ENABLE:
 	{
-		hddLog(LOG1, "QCSAP_DBGLOG_REPORT_ENABLE val %d", set_value);
+		hdd_notice("QCSAP_DBGLOG_REPORT_ENABLE val %d", set_value);
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 					  WMI_DBGLOG_REPORT_ENABLE,
 					  set_value, DBG_CMD);
@@ -2537,8 +2532,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCSAP_PARAM_SET_MCC_CHANNEL_QUOTA:
 	{
-		hddLog(LOG1,
-		       FL("iwpriv cmd to set MCC quota value %dms"),
+		hdd_notice("iwpriv cmd to set MCC quota value %dms",
 		       set_value);
 		ret = cds_go_set_mcc_p2p_quota(pHostapdAdapter,
 						    set_value);
@@ -2547,7 +2541,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCASAP_TXRX_FWSTATS_RESET:
 	{
-		hddLog(LOG1, "WE_TXRX_FWSTATS_RESET val %d", set_value);
+		hdd_notice("WE_TXRX_FWSTATS_RESET val %d", set_value);
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 					  WMA_VDEV_TXRX_FWSTATS_RESET_CMDID,
 					  set_value, VDEV_CMD);
@@ -2560,7 +2554,7 @@ static __iw_softap_setparam(struct net_device *dev,
 					  WMI_VDEV_PARAM_ENABLE_RTSCTS,
 					  set_value, VDEV_CMD);
 		if (ret) {
-			hddLog(LOGE, "FAILED TO SET RTSCTS at SAP");
+			hdd_err("FAILED TO SET RTSCTS at SAP");
 			ret = -EIO;
 		}
 		break;
@@ -2571,7 +2565,7 @@ static __iw_softap_setparam(struct net_device *dev,
 		tsap_Config_t *pConfig =
 			&pHostapdAdapter->sessionCtx.ap.sapConfig;
 
-		hddLog(LOG1, "SET_HT_RATE val %d", set_value);
+		hdd_notice("SET_HT_RATE val %d", set_value);
 
 		if (set_value != 0xff) {
 			rix = RC_2_RATE_IDX(set_value);
@@ -2588,8 +2582,7 @@ static __iw_softap_setparam(struct net_device *dev,
 				    eCSR_DOT11_MODE_abg
 				    || pConfig->SapHw_mode ==
 				    eCSR_DOT11_MODE_11a) {
-					hddLog(LOGE,
-					       "Not valid mode for HT");
+					hdd_err("Not valid mode for HT");
 					ret = -EIO;
 					break;
 				}
@@ -2598,7 +2591,7 @@ static __iw_softap_setparam(struct net_device *dev,
 			} else if (set_value & 0x10) {
 				if (pConfig->SapHw_mode ==
 				    eCSR_DOT11_MODE_11a) {
-					hddLog(LOGE, "Not valid for cck");
+					hdd_err("Not valid for cck");
 					ret = -EIO;
 					break;
 				}
@@ -2613,7 +2606,7 @@ static __iw_softap_setparam(struct net_device *dev,
 				    eCSR_DOT11_MODE_11b
 				    || pConfig->SapHw_mode ==
 				    eCSR_DOT11_MODE_11b_ONLY) {
-					hddLog(LOGE, "Not valid for OFDM");
+					hdd_err("Not valid for OFDM");
 					ret = -EIO;
 					break;
 				}
@@ -2621,7 +2614,7 @@ static __iw_softap_setparam(struct net_device *dev,
 			}
 			set_value = (preamble << 6) | (nss << 4) | rix;
 		}
-		hddLog(LOG1, "SET_HT_RATE val %d rix %d preamble %x nss %d",
+		hdd_notice("SET_HT_RATE val %d rix %d preamble %x nss %d",
 		       set_value, rix, preamble, nss);
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 					  WMI_VDEV_PARAM_FIXED_RATE,
@@ -2637,8 +2630,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 		if (pConfig->SapHw_mode != eCSR_DOT11_MODE_11ac &&
 		    pConfig->SapHw_mode != eCSR_DOT11_MODE_11ac_ONLY) {
-			hddLog(LOGE,
-			       FL("SET_VHT_RATE error: SapHw_mode= 0x%x, ch = %d"),
+			hdd_err("SET_VHT_RATE error: SapHw_mode= 0x%x, ch = %d",
 			       pConfig->SapHw_mode, pConfig->channel);
 			ret = -EIO;
 			break;
@@ -2651,7 +2643,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 			set_value = (preamble << 6) | (nss << 4) | rix;
 		}
-		hddLog(LOG1, "SET_VHT_RATE val %d rix %d preamble %x nss %d",
+		hdd_notice("SET_VHT_RATE val %d rix %d preamble %x nss %d",
 		       set_value, rix, preamble, nss);
 
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
@@ -2662,21 +2654,20 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCASAP_SHORT_GI:
 	{
-		hddLog(LOG1, "QCASAP_SET_SHORT_GI val %d", set_value);
+		hdd_notice("QCASAP_SET_SHORT_GI val %d", set_value);
 
 		/* same as 40MHZ */
 		ret = sme_update_ht_config(hHal, pHostapdAdapter->sessionId,
 					   WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ,
 					   set_value);
 		if (ret)
-			hddLog(LOGE,
-			       "Failed to set ShortGI value ret(%d)", ret);
+			hdd_err("Failed to set ShortGI value ret(%d)", ret);
 		break;
 	}
 
 	case QCSAP_SET_AMPDU:
 	{
-		hddLog(LOG1, "QCSAP_SET_AMPDU %d", set_value);
+		hdd_notice("QCSAP_SET_AMPDU %d", set_value);
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 					  GEN_VDEV_PARAM_AMPDU,
 					  set_value, GEN_CMD);
@@ -2685,7 +2676,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCSAP_SET_AMSDU:
 	{
-		hddLog(LOG1, "QCSAP_SET_AMSDU %d", set_value);
+		hdd_notice("QCSAP_SET_AMSDU %d", set_value);
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 					  GEN_VDEV_PARAM_AMSDU,
 					  set_value, GEN_CMD);
@@ -2693,7 +2684,7 @@ static __iw_softap_setparam(struct net_device *dev,
 	}
 	case QCSAP_GTX_HT_MCS:
 	{
-		hddLog(LOG1, "WMI_VDEV_PARAM_GTX_HT_MCS %d", set_value);
+		hdd_notice("WMI_VDEV_PARAM_GTX_HT_MCS %d", set_value);
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 					  WMI_VDEV_PARAM_GTX_HT_MCS,
 					  set_value, GTX_CMD);
@@ -2702,7 +2693,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCSAP_GTX_VHT_MCS:
 	{
-		hddLog(LOG1, "WMI_VDEV_PARAM_GTX_VHT_MCS %d", set_value);
+		hdd_notice("WMI_VDEV_PARAM_GTX_VHT_MCS %d", set_value);
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 					  WMI_VDEV_PARAM_GTX_VHT_MCS,
 						set_value, GTX_CMD);
@@ -2711,7 +2702,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCSAP_GTX_USRCFG:
 	{
-		hddLog(LOG1, "WMI_VDEV_PARAM_GTX_USR_CFG %d", set_value);
+		hdd_notice("WMI_VDEV_PARAM_GTX_USR_CFG %d", set_value);
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 					  WMI_VDEV_PARAM_GTX_USR_CFG,
 					  set_value, GTX_CMD);
@@ -2720,7 +2711,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCSAP_GTX_THRE:
 	{
-		hddLog(LOG1, "WMI_VDEV_PARAM_GTX_THRE %d", set_value);
+		hdd_notice("WMI_VDEV_PARAM_GTX_THRE %d", set_value);
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 					  WMI_VDEV_PARAM_GTX_THRE,
 					  set_value, GTX_CMD);
@@ -2729,7 +2720,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCSAP_GTX_MARGIN:
 	{
-		hddLog(LOG1, "WMI_VDEV_PARAM_GTX_MARGIN %d", set_value);
+		hdd_notice("WMI_VDEV_PARAM_GTX_MARGIN %d", set_value);
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 					  WMI_VDEV_PARAM_GTX_MARGIN,
 					  set_value, GTX_CMD);
@@ -2738,7 +2729,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCSAP_GTX_STEP:
 	{
-		hddLog(LOG1, "WMI_VDEV_PARAM_GTX_STEP %d", set_value);
+		hdd_notice("WMI_VDEV_PARAM_GTX_STEP %d", set_value);
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 					  WMI_VDEV_PARAM_GTX_STEP,
 					  set_value, GTX_CMD);
@@ -2747,7 +2738,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCSAP_GTX_MINTPC:
 	{
-		hddLog(LOG1, "WMI_VDEV_PARAM_GTX_MINTPC %d", set_value);
+		hdd_notice("WMI_VDEV_PARAM_GTX_MINTPC %d", set_value);
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 					  WMI_VDEV_PARAM_GTX_MINTPC,
 					  set_value, GTX_CMD);
@@ -2756,7 +2747,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCSAP_GTX_BWMASK:
 	{
-		hddLog(LOG1, "WMI_VDEV_PARAM_GTX_BWMASK %d", set_value);
+		hdd_notice("WMI_VDEV_PARAM_GTX_BWMASK %d", set_value);
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 					  WMI_VDEV_PARAM_GTX_BW_MASK,
 					  set_value, GTX_CMD);
@@ -2765,14 +2756,14 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCASAP_SET_TM_LEVEL:
 	{
-		hddLog(LOG1, "Set Thermal Mitigation Level %d", set_value);
+		hdd_notice("Set Thermal Mitigation Level %d", set_value);
 		(void)sme_set_thermal_level(hHal, set_value);
 		break;
 	}
 
 	case QCASAP_SET_DFS_IGNORE_CAC:
 	{
-		hddLog(LOG1, "Set Dfs ignore CAC  %d", set_value);
+		hdd_notice("Set Dfs ignore CAC  %d", set_value);
 
 		if (pHostapdAdapter->device_mode != QDF_SAP_MODE)
 			return -EINVAL;
@@ -2783,7 +2774,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCASAP_SET_DFS_TARGET_CHNL:
 	{
-		hddLog(LOG1, "Set Dfs target channel  %d", set_value);
+		hdd_notice("Set Dfs target channel  %d", set_value);
 
 		if (pHostapdAdapter->device_mode != QDF_SAP_MODE)
 			return -EINVAL;
@@ -2815,22 +2806,21 @@ static __iw_softap_setparam(struct net_device *dev,
 		isDfsch = (CHANNEL_STATE_DFS ==
 			   cds_get_channel_state(ch));
 
-		hddLog(LOG1, FL("Set QCASAP_SET_RADAR_CMD val %d"), set_value);
+		hdd_notice("Set QCASAP_SET_RADAR_CMD val %d", set_value);
 
 		if (!pHddCtx->dfs_radar_found && isDfsch) {
 			ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 						  WMA_VDEV_DFS_CONTROL_CMDID,
 						  set_value, VDEV_CMD);
 		} else {
-			hddLog(LOGE,
-			       FL("Ignore, radar_found: %d,  dfs_channel: %d"),
+			hdd_err("Ignore, radar_found: %d,  dfs_channel: %d",
 			       pHddCtx->dfs_radar_found, isDfsch);
 		}
 		break;
 	}
 	case QCASAP_TX_CHAINMASK_CMD:
 	{
-		hddLog(LOG1, "QCASAP_TX_CHAINMASK_CMD val %d", set_value);
+		hdd_notice("QCASAP_TX_CHAINMASK_CMD val %d", set_value);
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 					  WMI_PDEV_PARAM_TX_CHAIN_MASK,
 					  set_value, PDEV_CMD);
@@ -2839,7 +2829,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCASAP_RX_CHAINMASK_CMD:
 	{
-		hddLog(LOG1, "QCASAP_RX_CHAINMASK_CMD val %d", set_value);
+		hdd_notice("QCASAP_RX_CHAINMASK_CMD val %d", set_value);
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 					  WMI_PDEV_PARAM_RX_CHAIN_MASK,
 					  set_value, PDEV_CMD);
@@ -2848,7 +2838,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCASAP_NSS_CMD:
 	{
-		hddLog(LOG1, "QCASAP_NSS_CMD val %d", set_value);
+		hdd_notice("QCASAP_NSS_CMD val %d", set_value);
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 					  WMI_VDEV_PARAM_NSS,
 					  set_value, VDEV_CMD);
@@ -2887,7 +2877,7 @@ static __iw_softap_setparam(struct net_device *dev,
 	}
 	case QCASAP_DUMP_STATS:
 	{
-		hddLog(LOG1, "QCASAP_DUMP_STATS val %d", set_value);
+		hdd_notice("QCASAP_DUMP_STATS val %d", set_value);
 		hdd_wlan_dump_stats(pHostapdAdapter, set_value);
 		break;
 	}
@@ -2895,7 +2885,7 @@ static __iw_softap_setparam(struct net_device *dev,
 	{
 		hdd_context_t *hdd_ctx =
 			WLAN_HDD_GET_CTX(pHostapdAdapter);
-		hddLog(LOG1, "QCASAP_CLEAR_STATS val %d", set_value);
+		hdd_notice("QCASAP_CLEAR_STATS val %d", set_value);
 		switch (set_value) {
 		case WLAN_HDD_STATS:
 			memset(&pHostapdAdapter->stats, 0,
@@ -2918,13 +2908,13 @@ static __iw_softap_setparam(struct net_device *dev,
 		break;
 	}
 	case QCSAP_START_FW_PROFILING:
-		hddLog(LOG1, "QCSAP_START_FW_PROFILING %d", set_value);
+		hdd_notice("QCSAP_START_FW_PROFILING %d", set_value);
 		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 					WMI_WLAN_PROFILE_TRIGGER_CMDID,
 					set_value, DBG_CMD);
 		break;
 	default:
-		hddLog(LOGE, FL("Invalid setparam command %d value %d"),
+		hdd_err("Invalid setparam command %d value %d",
 		       sub_cmd, set_value);
 		ret = -EINVAL;
 		break;
@@ -2962,7 +2952,7 @@ static int __iw_softap_get_three(struct net_device *dev,
 		ret = hdd_indicate_tsf(adapter, value, 3);
 		break;
 	default:
-		hdd_err(FL("Invalid getparam command %d"), sub_cmd);
+		hdd_err("Invalid getparam command %d", sub_cmd);
 		ret = -EINVAL;
 		break;
 	}
