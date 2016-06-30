@@ -5887,6 +5887,11 @@ QDF_STATUS send_process_ll_stats_get_cmd_tlv(wmi_unified_t wmi_handle,
 	len = sizeof(*cmd);
 	buf = wmi_buf_alloc(wmi_handle, len);
 
+	if (!buf) {
+		WMI_LOGE("%s: buf allocation failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
 	buf_ptr = (uint8_t *) wmi_buf_data(buf);
 	qdf_mem_zero(buf_ptr, len);
 	cmd = (wmi_request_link_stats_cmd_fixed_param *) buf_ptr;
