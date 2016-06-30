@@ -7161,6 +7161,9 @@ int wlan_hdd_cfg80211_update_apies(hdd_adapter_t *adapter)
 	if (genie == NULL)
 		return -ENOMEM;
 
+	wlan_hdd_add_extra_ie(adapter, genie, &total_ielen,
+			      WLAN_EID_VHT_TX_POWER_ENVELOPE);
+
 	if (0 != wlan_hdd_add_ie(adapter, genie,
 		&total_ielen, WPS_OUI_TYPE, WPS_OUI_TYPE_SIZE)) {
 		hdd_err("Adding WPS IE failed");
