@@ -59,6 +59,7 @@ void wma_ndp_wow_event_callback(void *handle, void *event, uint32_t len);
 void wma_add_bss_ndi_mode(tp_wma_handle wma, tpAddBssParams add_bss);
 void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta);
 QDF_STATUS wma_handle_ndp_initiator_req(tp_wma_handle wma_handle, void *req);
+QDF_STATUS wma_handle_ndp_end_req(tp_wma_handle wma_handle, void *req);
 #else
 #define WMA_IS_VDEV_IN_NDI_MODE(intf, vdev_id) (false)
 static inline void wma_update_hdd_cfg_ndp(tp_wma_handle wma_handle,
@@ -92,6 +93,12 @@ static inline QDF_STATUS wma_handle_ndp_initiator_req(tp_wma_handle wma_handle,
 }
 static inline QDF_STATUS wma_handle_ndp_responder_req(tp_wma_handle wma_handle,
 					void *req_params)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS wma_handle_ndp_end_req(tp_wma_handle wma_handle,
+						void *req)
 {
 	return QDF_STATUS_SUCCESS;
 }

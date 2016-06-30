@@ -95,6 +95,7 @@ typedef enum eSmeCommandType {
 	e_sme_command_set_antenna_mode,
 	eSmeCommandNdpInitiatorRequest,
 	eSmeCommandNdpResponderRequest,
+	eSmeCommandNdpDataEndInitiatorRequest,
 } eSmeCommandType;
 
 typedef enum eSmeState {

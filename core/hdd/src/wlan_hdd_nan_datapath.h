@@ -39,6 +39,7 @@ struct wireless_dev;
 
 #define NDP_APP_INFO_LEN 255
 #define NDP_QOS_INFO_LEN 255
+#define NDP_NUM_INSTANCE_ID 255
 
 #define HDD_MAX_NUM_NDP_STA           (MAX_IBSS_PEERS)
 #define NDP_BROADCAST_STAID           (0)
@@ -192,7 +193,8 @@ enum nan_datapath_state {
  */
 struct nan_datapath_ctx {
 	enum nan_datapath_state state;
-	uint32_t active_ndp_sessions;
+	/* idx in following array should follow conn_info.peerMacAddress */
+	uint32_t active_ndp_sessions[HDD_MAX_NUM_NDP_STA];
 	uint32_t active_ndp_peers;
 	uint16_t ndp_create_transaction_id;
 	uint16_t ndp_delete_transaction_id;

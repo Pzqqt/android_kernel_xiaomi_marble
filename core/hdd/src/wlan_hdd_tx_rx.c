@@ -779,6 +779,29 @@ static QDF_STATUS hdd_mon_rx_packet_cbk(void *context, qdf_nbuf_t rxbuf)
 }
 
 /**
+ * hdd_get_peer_idx() - Get the idx for given address in peer table
+ * @sta_ctx: pointer to HDD Station Context
+ * @addr: pointer to Peer Mac address
+ *
+ * Return: index when success else INVALID_PEER_IDX
+ */
+int hdd_get_peer_idx(hdd_station_ctx_t *sta_ctx, struct qdf_mac_addr *addr)
+{
+	uint8_t idx;
+
+	for (idx = 0; idx < MAX_IBSS_PEERS; idx++) {
+		if (sta_ctx->conn_info.staId[idx] == 0)
+			continue;
+		if (qdf_mem_cmp(&sta_ctx->conn_info.peerMacAddress[idx],
+				addr, sizeof(struct qdf_mac_addr)))
+			continue;
+		return idx;
+	}
+
+	return INVALID_PEER_IDX;
+}
+
+/**
  * hdd_rx_packet_cbk() - Receive packet handler
  * @context: pointer to HDD context
  * @rxBuf: pointer to rx qdf_nbuf

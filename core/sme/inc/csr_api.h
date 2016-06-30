@@ -1384,7 +1384,7 @@ typedef struct tagCsrRoamInfo {
 		struct sme_ndp_peer_ind ndp_peer_ind_params;
 		struct ndp_schedule_update_rsp ndp_sched_upd_rsp_params;
 		struct ndp_end_indication_event ndp_end_ind_params;
-		struct ndp_end_rsp_event ndp_end_rsp_params;
+		struct ndp_end_rsp_event *ndp_end_rsp_params;
 		struct ndp_confirm_event ndp_confirm_params;
 		struct ndp_responder_rsp_event ndp_responder_rsp_params;
 		struct ndp_indication_event ndp_indication_params;

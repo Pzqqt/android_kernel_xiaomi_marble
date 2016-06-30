@@ -217,6 +217,21 @@ responder_rsp:
 }
 
 /**
+ * lim_ndp_delete_peers() - Delete peers if needed
+ * @mac_ctx: handle to mac context
+ * @ndp_map: peer map of returning ndp end rsp
+ * @num_peers: number of peers remaining after ndp end
+ * This function deletes a peer if there are no active NDPs left with that peer
+ *
+ * Return: None
+ */
+static void lim_ndp_delete_peers(tpAniSirGlobal mac_ctx,
+				 struct peer_ndp_map *ndp_map,
+				 uint8_t num_peers)
+{
+}
+
+/**
  * lim_handle_ndp_event_message() - Handler for NDP events/RSP from WMA
  * @mac_ctx: handle to mac structure
  * @msg: pointer to message
@@ -249,6 +264,20 @@ QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx, cds_msg_t *msg)
 		status = lim_ndp_responder_rsp_handler(mac_ctx, msg->bodyptr,
 					msg->bodyval);
 		break;
+	case SIR_HAL_NDP_END_RSP: {
+		struct ndp_end_rsp_event *ndp_end_rsp = msg->bodyptr;
+		uint32_t rsp_len = sizeof(*ndp_end_rsp);
+
+		if (ndp_end_rsp && ndp_end_rsp->ndp_map) {
+			lim_ndp_delete_peers(mac_ctx, ndp_end_rsp->ndp_map,
+					     ndp_end_rsp->num_peers);
+			rsp_len += (ndp_end_rsp->num_peers *
+					sizeof(struct peer_ndp_map));
+		}
+		lim_send_ndp_event_to_sme(mac_ctx, eWNI_SME_NDP_END_RSP,
+				msg->bodyptr, rsp_len, msg->bodyval);
+		break;
+	}
 	default:
 		lim_log(mac_ctx, LOGE,
 			FL("Unhandled NDP event: %d"), msg->type);
@@ -362,6 +391,54 @@ send_failure_rsp:
 }
 
 /**
+ * lim_process_sme_ndp_data_end_req() - Handler for eWNI_SME_NDP_END_REQ
+ * from SME.
+ * @mac_ctx: handle to mac context
+ * @sme_msg: ndp data end request msg
+ *
+ * Return: Status of operation
+ */
+QDF_STATUS lim_process_sme_ndp_data_end_req(tpAniSirGlobal mac_ctx,
+					    struct sir_sme_ndp_end_req *sme_msg)
+{
+	tSirMsgQ msg;
+	uint32_t len;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (NULL == sme_msg) {
+		lim_log(mac_ctx, LOGE, FL("invalid ndp_req"));
+		/* msg to unblock SME, but not send rsp to HDD */
+		lim_send_ndp_event_to_sme(mac_ctx, eWNI_SME_NDP_END_RSP, NULL,
+					  0, true);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	msg.type = SIR_HAL_NDP_END_REQ;
+	msg.reserved = 0;
+	len = sizeof(*sme_msg->req) + (sme_msg->req->num_ndp_instances *
+						 sizeof(uint32_t));
+	msg.bodyptr = qdf_mem_malloc(len);
+	if (NULL == msg.bodyptr) {
+		/* msg to unblock SME, but not send rsp to HDD */
+		lim_send_ndp_event_to_sme(mac_ctx, eWNI_SME_NDP_END_RSP, NULL,
+					  0, true);
+		return QDF_STATUS_E_NOMEM;
+	}
+	qdf_mem_copy(msg.bodyptr, sme_msg->req, len);
+	msg.bodyval = 0;
+
+	lim_log(mac_ctx, LOG1, FL("sending SIR_HAL_NDP_END_REQ to WMA"));
+	MTRACE(mac_trace_msg_tx(mac_ctx, NO_SESSION, msg.type));
+
+	if (eSIR_SUCCESS != wma_post_ctrl_msg(mac_ctx, &msg)) {
+		lim_log(mac_ctx, LOGP, FL("wma_post_ctrl_msg failed"));
+		status = QDF_STATUS_E_FAILURE;
+	}
+
+	return status;
+}
+
+/**
  * lim_handle_ndp_request_message() - Handler for NDP req from SME
  * @mac_ctx: handle to mac structure
  * @msg: pointer to message
@@ -374,6 +451,10 @@ QDF_STATUS lim_handle_ndp_request_message(tpAniSirGlobal mac_ctx,
 	QDF_STATUS status;
 
 	switch (msg->type) {
+	case eWNI_SME_NDP_END_REQ:
+		status = lim_process_sme_ndp_data_end_req(mac_ctx,
+							  msg->bodyptr);
+		break;
 	case eWNI_SME_NDP_INITIATOR_REQ:
 		status = lim_process_sme_ndp_initiator_req(mac_ctx,
 							   msg->bodyptr);
@@ -497,7 +578,6 @@ end:
 		session_entry = NULL;
 	}
 }
-
 
 /**
  * lim_send_sme_ndp_add_sta_rsp() - prepares and send new peer ind to SME

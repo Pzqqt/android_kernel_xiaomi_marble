@@ -6127,16 +6127,14 @@ struct ndp_confirm_event {
 /**
  * struct ndp_end_req - ndp end request
  * @transaction_id: unique transaction identifier
- * @vdev_id: session id of the interface over which ndp is being created
  * @num_ndp_instances: number of ndp instances to be terminated
- * @ndp_instances: list of ndp instances to be terminated
+ * @ndp_ids: pointer to array of ndp_instance_id to be terminated
  *
  */
 struct ndp_end_req {
 	uint32_t transaction_id;
-	uint32_t vdev_id;
 	uint32_t num_ndp_instances;
-	uint32_t ndp_instances[];
+	uint32_t *ndp_ids;
 };
 
 /**
@@ -6155,13 +6153,19 @@ struct peer_ndp_map {
 /**
  * struct ndp_end_rsp_event  - firmware response to ndp end request
  * @transaction_id: unique identifier for the request
- * @vdev_id: session id of the interface over which ndp is being created
+ * @status: status of operation
+ * @reason: reason(opaque to host driver)
+ * @num_ndp_terminated: if successful, number of ndp instances terminated
+ * @num_peers: number of peers in ndp_map
  * @ndp_map: mapping of NDP instances to peer to VDEV
  *
  */
 struct ndp_end_rsp_event {
 	uint32_t transaction_id;
-	uint32_t vdev_id;
+	uint32_t status;
+	uint32_t reason;
+	uint32_t num_ndp_terminated;
+	uint32_t num_peers;
 	struct peer_ndp_map ndp_map[];
 };
 

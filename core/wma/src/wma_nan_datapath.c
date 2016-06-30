@@ -283,14 +283,80 @@ send_ndi_responder_fail:
 /**
  * wma_handle_ndp_end_req() - NDP end request handler
  * @wma_handle: wma handle
- * @req_params: request parameters
+ * @ptr: request parameters
  *
  * Return: QDF_STATUS_SUCCESS on success; error number otherwise
  */
-QDF_STATUS wma_handle_ndp_end_req(tp_wma_handle wma_handle,
-				struct ndp_end_req *req_params)
+QDF_STATUS wma_handle_ndp_end_req(tp_wma_handle wma_handle, void *ptr)
 {
+	int ret;
+	uint16_t len;
+	uint32_t ndp_end_req_len, i;
+	wmi_ndp_end_req *ndp_end_req_lst;
+	wmi_buf_t buf;
+	cds_msg_t pe_msg = {0};
+	wmi_ndp_end_req_fixed_param *cmd;
+	struct ndp_end_rsp_event end_rsp = {0};
+	struct ndp_end_req *req = ptr;
+
+	if (NULL == req) {
+		WMA_LOGE(FL("Invalid ndp_end_req"));
+		goto send_ndp_end_fail;
+	}
+
+	/* len of tlv following fixed param  */
+	ndp_end_req_len = sizeof(wmi_ndp_end_req) * req->num_ndp_instances;
+	/* above comes out to 4 byte alligned already, no need of padding */
+	len = sizeof(*cmd) + ndp_end_req_len + WMI_TLV_HDR_SIZE;
+	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE(FL("Malloc failed"));
+		return QDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_ndp_end_req_fixed_param *) wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_ndp_end_req_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_ndp_end_req_fixed_param));
+
+	cmd->transaction_id = req->transaction_id;
+
+	/* set tlv pointer to end of fixed param */
+	WMITLV_SET_HDR((uint8_t *)&cmd[1], WMITLV_TAG_ARRAY_STRUC,
+			ndp_end_req_len);
+
+	ndp_end_req_lst = (wmi_ndp_end_req *)((uint8_t *)&cmd[1] +
+						WMI_TLV_HDR_SIZE);
+	for (i = 0; i < req->num_ndp_instances; i++) {
+		WMITLV_SET_HDR(&ndp_end_req_lst[i],
+				WMITLV_TAG_ARRAY_FIXED_STRUC,
+				(sizeof(*ndp_end_req_lst) - WMI_TLV_HDR_SIZE));
+
+		ndp_end_req_lst[i].ndp_instance_id = req->ndp_ids[i];
+	}
+
+	WMA_LOGD(FL("Sending WMI_NDP_END_REQ_CMDID to FW"));
+	ret = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
+				   WMI_NDP_END_REQ_CMDID);
+	if (ret < 0) {
+		WMA_LOGE(FL("WMI_NDP_END_REQ_CMDID failed, ret: %d"), ret);
+		wmi_buf_free(buf);
+		goto send_ndp_end_fail;
+	}
 	return QDF_STATUS_SUCCESS;
+
+send_ndp_end_fail:
+	pe_msg.type = SIR_HAL_NDP_END_RSP;
+	if (req) {
+		end_rsp.status = NDP_CMD_RSP_STATUS_ERROR;
+		end_rsp.transaction_id = req->transaction_id;
+		pe_msg.bodyptr = &end_rsp;
+	} else {
+		pe_msg.bodyval = true;
+	}
+
+	wma_handle->pe_ndp_event_handler(wma_handle->mac_context, &pe_msg);
+	return QDF_STATUS_E_FAILURE;
 }
 
 /**
@@ -328,20 +394,6 @@ static int wma_ndp_indication_event_handler(void *handle, uint8_t *event_info,
 	fixed_params =
 		(wmi_ndp_indication_event_fixed_param *)event->fixed_param;
 
-	WMA_LOGD(FL("WMI_NDP_INDICATION_EVENTID(0x%X) received. vdev %d, service_instance %d, ndp_instance %d, role %d, policy %d"),
-		 WMI_NDP_INDICATION_EVENTID, fixed_params->vdev_id,
-		 fixed_params->service_instance_id,
-		 fixed_params->ndp_instance_id, fixed_params->self_ndp_role,
-		 fixed_params->accept_policy);
-
-	WMA_LOGD(FL("ndp_cfg - %d bytes"), fixed_params->ndp_cfg_len);
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
-			   &event->ndp_cfg, fixed_params->ndp_cfg_len);
-
-	WMA_LOGD(FL("ndp_app_info - %d bytes"), fixed_params->ndp_app_info_len);
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
-			&event->ndp_app_info, fixed_params->ndp_app_info_len);
-
 	ind_event.vdev_id = fixed_params->vdev_id;
 	ind_event.service_instance_id = fixed_params->service_instance_id;
 	ind_event.ndp_instance_id = fixed_params->ndp_instance_id;
@@ -352,6 +404,22 @@ static int wma_ndp_indication_event_handler(void *handle, uint8_t *event_info,
 				ind_event.peer_mac_addr.bytes);
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&fixed_params->peer_discovery_mac_addr,
 				ind_event.peer_discovery_mac_addr.bytes);
+
+	WMA_LOGD(FL("WMI_NDP_INDICATION_EVENTID(0x%X) received. vdev %d, service_instance %d, ndp_instance %d, role %d, policy %d, peer_mac_addr: %pM, peer_disc_mac_addr: %pM"),
+		 WMI_NDP_INDICATION_EVENTID, fixed_params->vdev_id,
+		 fixed_params->service_instance_id,
+		 fixed_params->ndp_instance_id, fixed_params->self_ndp_role,
+		 fixed_params->accept_policy,
+		 ind_event.peer_mac_addr.bytes,
+		 ind_event.peer_discovery_mac_addr.bytes);
+
+	WMA_LOGD(FL("ndp_cfg - %d bytes"), fixed_params->ndp_cfg_len);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+			   &event->ndp_cfg, fixed_params->ndp_cfg_len);
+
+	WMA_LOGD(FL("ndp_app_info - %d bytes"), fixed_params->ndp_app_info_len);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+			&event->ndp_app_info, fixed_params->ndp_app_info_len);
 
 	ind_event.ndp_config.ndp_cfg_len = fixed_params->ndp_cfg_len;
 	ind_event.ndp_info.ndp_app_info_len = fixed_params->ndp_app_info_len;
@@ -505,7 +573,73 @@ static int wma_ndp_confirm_event_handler(void *handle, uint8_t *event_info,
 static int wma_ndp_end_response_event_handler(void *handle,
 					uint8_t *event_info, uint32_t len)
 {
-	return 0;
+	int ret = 0;
+	QDF_STATUS status;
+	cds_msg_t pe_msg = {0};
+	struct ndp_end_rsp_event *end_rsp;
+	WMI_NDP_END_RSP_EVENTID_param_tlvs *event;
+	wmi_ndp_end_rsp_event_fixed_param *fixed_params = NULL;
+	wmi_ndp_end_rsp_per_ndi *end_rsp_tlv;
+	uint32_t i;
+	uint32_t len_end_rsp;
+	tp_wma_handle wma_handle = handle;
+
+	event = (WMI_NDP_END_RSP_EVENTID_param_tlvs *) event_info;
+	fixed_params = (wmi_ndp_end_rsp_event_fixed_param *)event->fixed_param;
+	WMA_LOGD(FL("WMI_NDP_END_RSP_EVENTID(0x%X) recieved. transaction_id: %d, rsp_status: %d, reason_code: %d"),
+		 WMI_NDP_END_RSP_EVENTID, fixed_params->transaction_id,
+		 fixed_params->rsp_status, fixed_params->reason_code);
+
+	len_end_rsp = sizeof(*end_rsp) + (event->num_ndp_end_rsp_per_ndi_list *
+						sizeof(struct peer_ndp_map));
+	end_rsp = qdf_mem_malloc(len_end_rsp);
+	if (NULL == end_rsp) {
+		WMA_LOGE("malloc failed");
+		pe_msg.bodyval = true;
+		ret = -ENOMEM;
+		goto send_ndp_end_rsp;
+	}
+	pe_msg.bodyptr = end_rsp;
+	qdf_mem_zero(end_rsp, len_end_rsp);
+
+	end_rsp->transaction_id = fixed_params->transaction_id;
+	end_rsp->reason = fixed_params->reason_code;
+	end_rsp->status = fixed_params->rsp_status;
+
+	if (end_rsp->status == NDP_CMD_RSP_STATUS_SUCCESS) {
+		WMA_LOGD(FL("NDP end rsp, num_peers: %d"),
+			event->num_ndp_end_rsp_per_ndi_list);
+		end_rsp->num_peers = event->num_ndp_end_rsp_per_ndi_list;
+		if (end_rsp->num_peers == 0) {
+			WMA_LOGE(FL("num_peers in NDP rsp should not be 0."));
+			end_rsp->status = NDP_CMD_RSP_STATUS_ERROR;
+			goto send_ndp_end_rsp;
+		}
+		/* copy per peer response to return path buffer */
+		end_rsp_tlv = event->ndp_end_rsp_per_ndi_list;
+		for (i = 0; i < end_rsp->num_peers; i++) {
+			end_rsp->ndp_map[i].vdev_id = end_rsp_tlv[i].vdev_id;
+			WMI_MAC_ADDR_TO_CHAR_ARRAY(
+				&end_rsp_tlv[i].peer_mac_addr,
+				end_rsp->ndp_map[i].peer_ndi_mac_addr.bytes);
+			end_rsp->ndp_map[i].num_active_ndp_sessions =
+					end_rsp_tlv[i].num_active_ndps_on_ndi;
+			WMA_LOGD(FL("vdev_id: %d, peer_addr: %pM, active_ndp_left: %d"),
+				end_rsp->ndp_map[i].vdev_id,
+				&end_rsp->ndp_map[i].peer_ndi_mac_addr,
+				end_rsp->ndp_map[i].num_active_ndp_sessions);
+		}
+	}
+
+send_ndp_end_rsp:
+	pe_msg.type = SIR_HAL_NDP_END_RSP;
+	status = wma_handle->pe_ndp_event_handler(wma_handle->mac_context,
+						  &pe_msg);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		ret = -EINVAL;
+
+	qdf_mem_free(end_rsp);
+	return ret;
 }
 
 /**

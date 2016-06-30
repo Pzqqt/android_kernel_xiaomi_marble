@@ -748,8 +748,6 @@ typedef struct sSirMbMsgP2p {
 
 #define SIR_TST_XMIT_MSG_QS_EMPTY_EVT     0x00000080
 
-/* added for OBSS */
-
 /* Param Change Bitmap sent to HAL */
 #define PARAM_BCN_INTERVAL_CHANGED                      (1 << 0)
 #define PARAM_SHORT_PREAMBLE_CHANGED                 (1 << 1)
