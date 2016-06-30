@@ -299,36 +299,6 @@ QDF_STATUS csr_roam_start_ndi(tpAniSirGlobal mac_ctx, uint32_t session,
 }
 
 /**
- * csr_roam_fill_roaminfo_ndp() - fill the ndi create struct inside roam info
- * @mac_ctx: Global MAC context
- * @roam_info: roam info to be updated with ndi create params
- * @roam_result: roam result to update
- * @status_code: status code to update
- * @reason_code: reason code to update
- * @transaction_id: transcation id to update
- *
- * Return: None
- */
-void csr_roam_fill_roaminfo_ndp(tpAniSirGlobal mac_ctx,
-		tCsrRoamInfo *roam_info,
-		eCsrRoamResult roam_result,
-		tSirResultCodes status_code,
-		uint32_t reason_code,
-		uint32_t transaction_id)
-{
-	struct ndi_create_rsp *rsp_params;
-
-	sms_log(mac_ctx, LOG1,
-		FL("reason 0x%x, status 0x%x, transaction_id %d"),
-		reason_code, status_code, transaction_id);
-	rsp_params = (struct ndi_create_rsp *)
-			&roam_info->ndp.ndi_create_params;
-	rsp_params->reason = reason_code;
-	rsp_params->status = status_code;
-	rsp_params->transaction_id = transaction_id;
-}
-
-/**
  * csr_roam_save_ndi_connected_info() - Save connected profile parameters
  * @mac_ctx: Global MAC context
  * @session_id: Session ID
@@ -400,19 +370,32 @@ void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
 
 	switch (result) {
 	case eCsrStartBssSuccess:
-	case eCsrStartBssFailure:
+		roam_info->ndp.ndi_create_params.reason = 0;
+		roam_info->ndp.ndi_create_params.status =
+					NDP_RSP_STATUS_SUCCESS;
 		*roam_status = eCSR_ROAM_NDP_STATUS_UPDATE;
-		*roam_result = eCSR_ROAM_RESULT_NDP_CREATE_RSP;
+		*roam_result = eCSR_ROAM_RESULT_NDI_CREATE_RSP;
+		break;
+	case eCsrStartBssFailure:
+		roam_info->ndp.ndi_create_params.status = NDP_RSP_STATUS_ERROR;
+		roam_info->ndp.ndi_create_params.reason =
+					NDP_NAN_DATA_IFACE_CREATE_FAILED;
+		*roam_status = eCSR_ROAM_NDP_STATUS_UPDATE;
+		*roam_result = eCSR_ROAM_RESULT_NDI_CREATE_RSP;
 		break;
 	case eCsrStopBssSuccess:
+		roam_info->ndp.ndi_delete_params.reason = 0;
+		roam_info->ndp.ndi_delete_params.status =
+						NDP_RSP_STATUS_SUCCESS;
 		*roam_status = eCSR_ROAM_NDP_STATUS_UPDATE;
-		*roam_result = eCSR_ROAM_RESULT_NDP_DELETE_RSP;
-		roam_info->ndp.ndi_delete_params.status = QDF_STATUS_SUCCESS;
+		*roam_result = eCSR_ROAM_RESULT_NDI_DELETE_RSP;
 		break;
 	case eCsrStopBssFailure:
+		roam_info->ndp.ndi_delete_params.status = NDP_RSP_STATUS_ERROR;
+		roam_info->ndp.ndi_delete_params.reason =
+					NDP_NAN_DATA_IFACE_DELETE_FAILED;
 		*roam_status = eCSR_ROAM_NDP_STATUS_UPDATE;
-		*roam_result = eCSR_ROAM_RESULT_NDP_DELETE_RSP;
-		roam_info->ndp.ndi_delete_params.status = QDF_STATUS_E_FAILURE;
+		*roam_result = eCSR_ROAM_RESULT_NDI_DELETE_RSP;
 		break;
 	default:
 		sms_log(mac_ctx, LOGE,
@@ -431,6 +414,7 @@ void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
 QDF_STATUS csr_process_ndp_initiator_request(tpAniSirGlobal mac_ctx,
 					     tSmeCmd *cmd)
 {
+	QDF_STATUS status;
 	struct sir_sme_ndp_initiator_req *lim_msg;
 	uint16_t msg_len;
 	uint8_t *self_mac_addr = NULL;
@@ -462,7 +446,20 @@ QDF_STATUS csr_process_ndp_initiator_request(tpAniSirGlobal mac_ctx,
 	sms_log(mac_ctx, LOG1, FL("selfMac = "MAC_ADDRESS_STR),
 		MAC_ADDR_ARRAY(self_mac_addr));
 
-	return cds_send_mb_message_to_mac(lim_msg);
+	status = cds_send_mb_message_to_mac(lim_msg);
+	if (status != QDF_STATUS_SUCCESS) {
+		/*
+		 * If fail, free up the ndp_cfg and ndp_app_info
+		 * allocated in sme.
+		 */
+		qdf_mem_free(cmd->u.initiator_req.ndp_info.ndp_app_info);
+		qdf_mem_free(cmd->u.initiator_req.ndp_config.ndp_cfg);
+		cmd->u.initiator_req.ndp_info.ndp_app_info_len = 0;
+		cmd->u.initiator_req.ndp_config.ndp_cfg_len = 0;
+		cmd->u.initiator_req.ndp_config.ndp_cfg = NULL;
+		cmd->u.initiator_req.ndp_info.ndp_app_info = NULL;
+	}
+	return status;
 }
 
 /**

@@ -178,6 +178,8 @@ enum nan_datapath_state {
  * @ndp_key_installed: NDP security key installed
  * @ndp_enc_key: NDP encryption key info
  * @ndp_debug_state: debug state info
+ * @ndi_delete_rsp_reason: reason code for ndi_delete rsp
+ * @ndi_delete_rsp_status: status for ndi_delete rsp
  */
 struct nan_datapath_ctx {
 	enum nan_datapath_state state;
@@ -189,6 +191,8 @@ struct nan_datapath_ctx {
 	bool ndp_key_installed;
 	tCsrRoamSetKey ndp_enc_key;
 	uint32_t ndp_debug_state;
+	uint32_t ndi_delete_rsp_reason;
+	uint32_t ndi_delete_rsp_status;
 };
 
 #ifdef WLAN_FEATURE_NAN_DATAPATH

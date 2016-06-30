@@ -6431,11 +6431,6 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 							&roam_status,
 							&roam_result,
 							&roam_info);
-			csr_roam_fill_roaminfo_ndp(mac_ctx,
-						&roam_info,
-						roam_result,
-						start_bss_rsp->statusCode,
-						0, 0);
 		}
 		/*
 		 * Only tell upper layer is we start the BSS because Vista
@@ -6919,10 +6914,6 @@ static bool csr_roam_process_results(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 			csr_roam_update_ndp_return_params(mac_ctx,
 				eCsrStartBssFailure,
 				&roam_status, &roam_result, &roam_info);
-			csr_roam_fill_roaminfo_ndp(mac_ctx, &roam_info,
-				roam_result,
-				(start_bss_rsp) ? start_bss_rsp->statusCode :
-				QDF_STATUS_E_FAILURE, 0, 0);
 		}
 
 		if (context) {

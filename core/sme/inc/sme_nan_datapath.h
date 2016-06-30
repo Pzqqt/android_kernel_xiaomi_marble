@@ -98,13 +98,6 @@ void sme_ndp_message_processor(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 QDF_STATUS csr_roam_start_ndi(tpAniSirGlobal mac_ctx, uint32_t session_id,
 			      tCsrRoamProfile *profile);
 
-void csr_roam_fill_roaminfo_ndp(tpAniSirGlobal mac_ctx,
-				tCsrRoamInfo *roam_info,
-				eCsrRoamResult roam_result,
-				tSirResultCodes status_code,
-				uint32_t reason_code,
-				uint32_t transaction_id);
-
 void csr_roam_save_ndi_connected_info(tpAniSirGlobal mac_ctx,
 				      uint32_t session_id,
 				      tCsrRoamProfile *roam_profile,
@@ -137,16 +130,6 @@ static inline QDF_STATUS csr_roam_start_ndi(tpAniSirGlobal mac_ctx,
 					tCsrRoamProfile *profile)
 {
 	return QDF_STATUS_SUCCESS;
-}
-
-/* Fill in ndp information in roam_info */
-static inline void csr_roam_fill_roaminfo_ndp(tpAniSirGlobal mac_ctx,
-					      tCsrRoamInfo *roam_info,
-					      eCsrRoamResult roam_result,
-					      tSirResultCodes status_code,
-					      uint32_t reason_code,
-					      uint32_t transaction_id)
-{
 }
 
 static inline void csr_roam_save_ndi_connected_info(tpAniSirGlobal mac_ctx,
