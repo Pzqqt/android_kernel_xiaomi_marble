@@ -6828,7 +6828,7 @@ send_dfs_phyerr_filter_offload_en_cmd_tlv(wmi_unified_t wmi_handle,
 	QDF_STATUS ret;
 
 
-	if (dfs_phyerr_filter_offload) {
+	if (false == dfs_phyerr_filter_offload) {
 		WMI_LOGD("%s:Phyerror Filtering offload is Disabled in ini",
 			 __func__);
 		len = sizeof(*disable_phyerr_offload_cmd);
