@@ -116,7 +116,7 @@ int hdd_sap_context_init(hdd_context_t *hdd_ctx)
 	qdf_wake_lock_create(&hdd_ctx->sap_wake_lock, "qcom_sap_wakelock");
 	qdf_spinlock_create(&hdd_ctx->sap_update_info_lock);
 
-	mutex_init(&hdd_ctx->dfs_lock);
+	qdf_spinlock_create(&hdd_ctx->dfs_lock);
 
 	return 0;
 }
@@ -217,7 +217,7 @@ void hdd_sap_context_destroy(hdd_context_t *hdd_ctx)
 	mutex_destroy(&hdd_ctx->sap_lock);
 	qdf_wake_lock_destroy(&hdd_ctx->sap_wake_lock);
 
-	mutex_destroy(&hdd_ctx->dfs_lock);
+	qdf_spinlock_destroy(&hdd_ctx->dfs_lock);
 
 	qdf_spinlock_destroy(&hdd_ctx->sap_update_info_lock);
 
@@ -991,9 +991,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			}
 		}
 
-		mutex_lock(&pHddCtx->dfs_lock);
+		qdf_spin_lock_bh(&pHddCtx->dfs_lock);
 		pHddCtx->dfs_radar_found = false;
-		mutex_unlock(&pHddCtx->dfs_lock);
+		qdf_spin_unlock_bh(&pHddCtx->dfs_lock);
 
 		wlansap_get_dfs_ignore_cac(pHddCtx->hHal, &ignoreCAC);
 
@@ -1111,9 +1111,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			hdd_info("Sent CAC start to user space");
 		}
 
-		mutex_lock(&pHddCtx->dfs_lock);
+		qdf_spin_lock_bh(&pHddCtx->dfs_lock);
 		pHddCtx->dfs_radar_found = false;
-		mutex_unlock(&pHddCtx->dfs_lock);
+		qdf_spin_unlock_bh(&pHddCtx->dfs_lock);
 		break;
 	case eSAP_DFS_CAC_INTERRUPTED:
 		/*
@@ -1999,9 +1999,9 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 		}
 	}
 
-	mutex_lock(&pHddCtx->dfs_lock);
+	qdf_spin_lock_bh(&pHddCtx->dfs_lock);
 	if (pHddCtx->dfs_radar_found == true) {
-		mutex_unlock(&pHddCtx->dfs_lock);
+		qdf_spin_unlock_bh(&pHddCtx->dfs_lock);
 		hddLog(LOGE, FL("Channel switch in progress!!"));
 		return -EBUSY;
 	}
@@ -2015,7 +2015,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 	 * post eSAP_START_BSS_EVENT success event to HDD.
 	 */
 	pHddCtx->dfs_radar_found = true;
-	mutex_unlock(&pHddCtx->dfs_lock);
+	qdf_spin_unlock_bh(&pHddCtx->dfs_lock);
 	/*
 	 * Post the Channel Change request to SAP.
 	 */
@@ -2039,9 +2039,9 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 		 * radar found flag and also restart the netif
 		 * queues.
 		 */
-		mutex_lock(&pHddCtx->dfs_lock);
+		qdf_spin_lock_bh(&pHddCtx->dfs_lock);
 		pHddCtx->dfs_radar_found = false;
-		mutex_unlock(&pHddCtx->dfs_lock);
+		qdf_spin_unlock_bh(&pHddCtx->dfs_lock);
 
 		ret = -EINVAL;
 	}

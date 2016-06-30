@@ -1420,7 +1420,7 @@ struct hdd_context_s {
 	 * radar found indication and application triggered channel
 	 * switch.
 	 */
-	struct mutex dfs_lock;
+	qdf_spinlock_t dfs_lock;
 	/*
 	 * place to store FTM capab of target. This allows changing of FTM capab
 	 * at runtime and intersecting it with target capab before updating.

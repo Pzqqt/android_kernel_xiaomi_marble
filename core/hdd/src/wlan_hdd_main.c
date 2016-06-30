@@ -1402,9 +1402,9 @@ void hdd_update_tgt_cfg(void *context, void *param)
  * @context:	HDD context pointer
  * @param:	HDD radar indication pointer
  *
- * This function is invoked when a radar in found on the
- * SAP current operating channel and Data Tx from netif
- * has to be stopped to honor the DFS regulations.
+ * This function is invoked in atomic context when a radar
+ * is found on the SAP current operating channel and Data Tx
+ * from netif has to be stopped to honor the DFS regulations.
  * Actions: Stop the netif Tx queues,Indicate Radar present
  * in HDD context for future usage.
  *
@@ -1424,18 +1424,18 @@ bool hdd_dfs_indicate_radar(void *context, void *param)
 		return true;
 
 	if (true == hdd_radar_event->dfs_radar_status) {
-		mutex_lock(&hdd_ctx->dfs_lock);
+		qdf_spin_lock_bh(&hdd_ctx->dfs_lock);
 		if (hdd_ctx->dfs_radar_found) {
 			/*
 			 * Application already triggered channel switch
 			 * on current channel, so return here.
 			 */
-			mutex_unlock(&hdd_ctx->dfs_lock);
+			qdf_spin_unlock_bh(&hdd_ctx->dfs_lock);
 			return false;
 		}
 
 		hdd_ctx->dfs_radar_found = true;
-		mutex_unlock(&hdd_ctx->dfs_lock);
+		qdf_spin_unlock_bh(&hdd_ctx->dfs_lock);
 
 		status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
 		while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
