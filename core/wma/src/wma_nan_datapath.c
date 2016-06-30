@@ -507,9 +507,11 @@ static int wma_ndp_confirm_event_handler(void *handle, uint8_t *event_info,
 
 	event = (WMI_NDP_CONFIRM_EVENTID_param_tlvs *) event_info;
 	fixed_params = (wmi_ndp_confirm_event_fixed_param *)event->fixed_param;
-	WMA_LOGE(FL("WMI_NDP_CONFIRM_EVENTID(0x%X) recieved. vdev %d, ndp_instance %d, rsp_code %d"),
+	WMA_LOGE(FL("WMI_NDP_CONFIRM_EVENTID(0x%X) recieved. vdev %d, ndp_instance %d, rsp_code %d, reason_code: %d, num_active_ndps_on_peer: %d"),
 		 WMI_NDP_CONFIRM_EVENTID, fixed_params->vdev_id,
-		 fixed_params->ndp_instance_id, fixed_params->rsp_code);
+		 fixed_params->ndp_instance_id, fixed_params->rsp_code,
+		 fixed_params->reason_code,
+		 fixed_params->num_active_ndps_on_peer);
 
 	WMA_LOGE(FL("ndp_cfg - %d bytes"), fixed_params->ndp_cfg_len);
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
@@ -522,6 +524,9 @@ static int wma_ndp_confirm_event_handler(void *handle, uint8_t *event_info,
 	ndp_confirm.vdev_id = fixed_params->vdev_id;
 	ndp_confirm.ndp_instance_id = fixed_params->ndp_instance_id;
 	ndp_confirm.rsp_code = fixed_params->rsp_code;
+	ndp_confirm.reason_code = fixed_params->reason_code;
+	ndp_confirm.num_active_ndps_on_peer =
+				fixed_params->num_active_ndps_on_peer;
 
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&fixed_params->peer_ndi_mac_addr,
 				   ndp_confirm.peer_ndi_mac_addr.bytes);

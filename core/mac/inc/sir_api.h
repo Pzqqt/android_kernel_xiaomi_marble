@@ -6135,6 +6135,8 @@ struct ndp_responder_rsp_event {
  * struct ndp_confirm_event - ndp confirmation event from FW
  * @vdev_id: session id of the interface over which ndp is being created
  * @ndp_instance_id: ndp instance id for which confirm is being generated
+ * @reason_code : reason code(opaque to driver)
+ * @num_active_ndps_on_peer: number of ndp instances on peer
  * @peer_ndi_mac_addr: peer NDI mac address
  * @rsp_code: ndp response code
  * @ndp_info: ndp application info
@@ -6143,6 +6145,8 @@ struct ndp_responder_rsp_event {
 struct ndp_confirm_event {
 	uint32_t vdev_id;
 	uint32_t ndp_instance_id;
+	uint32_t reason_code;
+	uint32_t num_active_ndps_on_peer;
 	struct qdf_mac_addr peer_ndi_mac_addr;
 	enum ndp_response_code rsp_code;
 	struct ndp_app_info ndp_info;
