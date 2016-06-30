@@ -2433,7 +2433,7 @@ void hif_pci_nointrs(struct hif_softc *scn)
 void hif_pci_disable_bus(struct hif_softc *scn)
 {
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
-	struct pci_dev *pdev = sc->pdev;
+	struct pci_dev *pdev;
 	void __iomem *mem;
 
 	/* Attach did not succeed, all resources have been
@@ -2442,6 +2442,7 @@ void hif_pci_disable_bus(struct hif_softc *scn)
 	if (!sc)
 		return;
 
+	pdev = sc->pdev;
 	if (ADRASTEA_BU) {
 		hif_write32_mb(sc->mem + PCIE_INTR_ENABLE_ADDRESS, 0);
 		hif_write32_mb(sc->mem + PCIE_INTR_CLR_ADDRESS,

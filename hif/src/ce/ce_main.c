@@ -2230,7 +2230,11 @@ int hif_ce_fastpath_cb_register(struct hif_opaque_softc *hif_ctx,
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	int i;
 
-	QDF_ASSERT(scn != NULL);
+	if (!scn) {
+		HIF_ERROR("%s: scn is NULL", __func__);
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	if (!scn->fastpath_mode_on) {
 		HIF_WARN("%s: Fastpath mode disabled", __func__);

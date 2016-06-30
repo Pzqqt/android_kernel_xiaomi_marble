@@ -454,9 +454,8 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx, struct napi_struct *napi,
 
 	if (NULL != hif) {
 		ce_state = hif->ce_id_to_state[NAPI_ID2PIPE(napi_info->id)];
-		if (ce_state->lro_flush_cb != NULL) {
+		if (ce_state && ce_state->lro_flush_cb)
 			ce_state->lro_flush_cb(ce_state->lro_data);
-		}
 	}
 
 	/* do not return 0, if there was some work done,
@@ -472,7 +471,7 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx, struct napi_struct *napi,
 		NAPI_DEBUG("%s:%d: nothing processed by CE. Completing NAPI",
 			   __func__, __LINE__);
 
-	if ((ce_state != NULL && !ce_check_rx_pending(ce_state)) || 0 == rc) {
+	if (ce_state && (!ce_check_rx_pending(ce_state) || 0 == rc)) {
 		napi_info->stats[cpu].napi_completes++;
 
 		hif_record_ce_desc_event(hif, ce_state->id, NAPI_COMPLETE,
