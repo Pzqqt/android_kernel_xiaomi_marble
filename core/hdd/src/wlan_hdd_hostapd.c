@@ -31,6 +31,9 @@
  * WLAN Host Device Driver implementation
  */
 
+/* denote that this file does not allow legacy hddLog */
+#define HDD_DISALLOW_LEGACY_HDDLOG 1
+
 /* Include Files */
 
 #include <linux/version.h>
