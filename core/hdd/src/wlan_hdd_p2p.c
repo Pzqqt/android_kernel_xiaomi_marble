@@ -53,8 +53,8 @@
 #include "cds_sched.h"
 #include "cds_concurrency.h"
 
-/* Ms to Micro Sec */
-#define MS_TO_MUS(x)   ((x) * 1000)
+/* Ms to Time Unit Micro Sec */
+#define MS_TO_TU_MUS(x)   ((x) * 1024)
 
 static uint8_t *hdd_get_action_string(uint16_t MsgType)
 {
@@ -1734,7 +1734,7 @@ int hdd_set_p2p_noa(struct net_device *dev, uint8_t *command)
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 	tP2pPsConfig NoA;
-	int count, duration, start_time;
+	int count, duration, interval;
 	char *param;
 	int ret;
 
@@ -1745,7 +1745,7 @@ int hdd_set_p2p_noa(struct net_device *dev, uint8_t *command)
 		return -EINVAL;
 	}
 	param++;
-	ret = sscanf(param, "%d %d %d", &count, &start_time, &duration);
+	ret = sscanf(param, "%d %d %d", &count, &interval, &duration);
 	if (ret != 3) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s: P2P_SET GO NoA: fail to read params, ret=%d",
@@ -1753,9 +1753,9 @@ int hdd_set_p2p_noa(struct net_device *dev, uint8_t *command)
 		return -EINVAL;
 	}
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: P2P_SET GO NoA: count=%d start_time=%d duration=%d",
-		  __func__, count, start_time, duration);
-	duration = MS_TO_MUS(duration);
+		  "%s: P2P_SET GO NoA: count=%d interval=%d duration=%d",
+		  __func__, count, interval, duration);
+	duration = MS_TO_TU_MUS(duration);
 	/* PS Selection
 	 * Periodic NoA (2)
 	 * Single NOA   (4)
@@ -1771,7 +1771,7 @@ int hdd_set_p2p_noa(struct net_device *dev, uint8_t *command)
 		NoA.single_noa_duration = 0;
 		NoA.psSelection = P2P_POWER_SAVE_TYPE_PERIODIC_NOA;
 	}
-	NoA.interval = MS_TO_MUS(100);
+	NoA.interval = MS_TO_TU_MUS(interval);
 	NoA.count = count;
 	NoA.sessionid = pAdapter->sessionId;
 
