@@ -317,15 +317,6 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		skb = skb_unshare(skb, GFP_ATOMIC);
 		if (!skb)
 			goto drop_pkt_accounting;
-
-		if (skb_headroom(skb) < dev->hard_header_len) {
-			struct sk_buff *tmp;
-			tmp = skb;
-			skb = skb_realloc_headroom(tmp, dev->hard_header_len);
-			dev_kfree_skb(tmp);
-			if (!skb)
-				goto drop_pkt_accounting;
-		}
 #if defined (IPA_OFFLOAD)
 	}
 #endif
