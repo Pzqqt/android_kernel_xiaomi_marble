@@ -2358,9 +2358,12 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 	/* HDD has initiated disconnect, do not send connect result indication
 	 * to kernel as it will be handled by __cfg80211_disconnect.
 	 */
-	if ((eConnectionState_Disconnecting == pHddStaCtx->conn_info.connState)
-	    && ((eCSR_ROAM_RESULT_ASSOCIATED == roamResult)
-		|| (eCSR_ROAM_ASSOCIATION_FAILURE == roamStatus))) {
+	if (((eConnectionState_Disconnecting ==
+	    pHddStaCtx->conn_info.connState) ||
+	    (eConnectionState_NotConnected ==
+	    pHddStaCtx->conn_info.connState)) &&
+	    ((eCSR_ROAM_RESULT_ASSOCIATED == roamResult) ||
+	    (eCSR_ROAM_ASSOCIATION_FAILURE == roamStatus))) {
 		hddLog(LOG1, FL("Disconnect from HDD in progress"));
 		hddDisconInProgress = true;
 	}
