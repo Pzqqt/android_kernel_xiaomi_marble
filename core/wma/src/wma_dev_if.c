@@ -1058,6 +1058,9 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 			wma->interfaces[vdev_id].peer_count);
 		return;
 	}
+	if (roam_synch_in_progress)
+		qdf_atomic_set(&peer->exists_in_fw, 0);
+
 	if (peer)
 		ol_txrx_peer_detach(peer);
 
@@ -1126,7 +1129,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, ol_txrx_pdev_handle pdev,
 		goto err;
 	}
 	if (roam_synch_in_progress) {
-
+		qdf_atomic_set(&peer->exists_in_fw, 1);
 		WMA_LOGE("%s: LFR3: Created peer %p with peer_addr %pM vdev_id %d,"
 			 "peer_count - %d",
 			 __func__, peer, peer_addr, vdev_id,
@@ -1147,6 +1150,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, ol_txrx_pdev_handle pdev,
 		  peer_addr, vdev_id,
 		  wma->interfaces[vdev_id].peer_count);
 
+	qdf_atomic_set(&peer->exists_in_fw, 1);
 	mac_addr_raw = ol_txrx_get_vdev_mac_addr(vdev);
 	if (mac_addr_raw == NULL) {
 		WMA_LOGE("%s: peer mac addr is NULL", __func__);

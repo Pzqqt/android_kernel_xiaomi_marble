@@ -107,6 +107,9 @@ void ol_txrx_peer_find_hash_erase(struct ol_txrx_pdev_t *pdev);
 
 struct ol_txrx_peer_t *ol_txrx_assoc_peer_find(struct ol_txrx_vdev_t *vdev);
 
+void ol_txrx_peer_remove_obj_map_entries(ol_txrx_pdev_handle pdev,
+				     struct ol_txrx_peer_t *peer);
+
 #if defined(TXRX_DEBUG_LEVEL) && TXRX_DEBUG_LEVEL > 5
 void ol_txrx_peer_find_display(ol_txrx_pdev_handle pdev, int indent);
 #else
