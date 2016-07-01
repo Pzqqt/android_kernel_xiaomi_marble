@@ -55,9 +55,6 @@
 
 static void lim_handle_sme_join_result(tpAniSirGlobal, tSirResultCodes, uint16_t,
 				       tpPESession);
-#ifdef FEATURE_OEM_DATA_SUPPORT
-void lim_process_mlm_oem_data_req_cnf(tpAniSirGlobal, uint32_t *);
-#endif
 void lim_process_mlm_join_cnf(tpAniSirGlobal, uint32_t *);
 void lim_process_mlm_auth_cnf(tpAniSirGlobal, uint32_t *);
 void lim_process_mlm_start_cnf(tpAniSirGlobal, uint32_t *);
@@ -102,14 +99,6 @@ lim_process_mlm_rsp_messages(tpAniSirGlobal pMac, uint32_t msgType,
 	}
 	MTRACE(mac_trace(pMac, TRACE_CODE_TX_LIM_MSG, 0, msgType));
 	switch (msgType) {
-
-#ifdef FEATURE_OEM_DATA_SUPPORT
-	case LIM_MLM_OEM_DATA_CNF:
-		lim_process_mlm_oem_data_req_cnf(pMac, pMsgBuf);
-		pMsgBuf = NULL;
-		break;
-#endif
-
 	case LIM_MLM_AUTH_CNF:
 		lim_process_mlm_auth_cnf(pMac, pMsgBuf);
 		break;
@@ -153,44 +142,6 @@ lim_process_mlm_rsp_messages(tpAniSirGlobal pMac, uint32_t msgType,
 	} /* switch (msgType) */
 	return;
 } /*** end lim_process_mlm_rsp_messages() ***/
-
-#ifdef FEATURE_OEM_DATA_SUPPORT
-
-/**
- * lim_process_mlm_oem_data_req_cnf()
- *
- ***FUNCTION:
- * This function is called to processes LIM_MLM_OEM_DATA_REQ_CNF
- * message from MLM State machine.
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- *
- ***NOTE:
- *
- * @param pMac       Pointer to Global MAC structure
- * @param pMsgBuf    A pointer to the MLM message buffer
- *
- * @return None
- */
-
-void lim_process_mlm_oem_data_req_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
-{
-	tLimMlmOemDataRsp *measRsp;
-
-	tSirResultCodes resultCode = eSIR_SME_SUCCESS;
-
-	measRsp = (tLimMlmOemDataRsp *) (pMsgBuf);
-
-	/* Now send the meas confirm message to the sme */
-	lim_send_sme_oem_data_rsp(pMac, (uint32_t *) measRsp, resultCode);
-
-	/* Dont free the memory here. It will be freed up by the callee */
-
-	return;
-}
-#endif
 
 /**
  * lim_process_mlm_start_cnf()

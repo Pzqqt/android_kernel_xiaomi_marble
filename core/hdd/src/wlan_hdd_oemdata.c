@@ -295,28 +295,29 @@ static void send_oem_err_rsp_nlink_msg(int32_t app_pid, uint8_t error_code)
 
 /**
  * hdd_send_oem_data_rsp_msg() - send oem data response
- * @length: length of the OEM Data Response message
- * @oemDataRsp: the actual OEM Data Response message
+ * @oem_data_rsp: the actual OEM Data Response message
  *
  * This function sends an OEM Data Response message to a registered
  * application process over the netlink socket.
  *
  * Return: 0 for success, non zero for failure
  */
-void hdd_send_oem_data_rsp_msg(int length, uint8_t *oemDataRsp)
+void hdd_send_oem_data_rsp_msg(tSirOemDataRsp *oem_data_rsp)
 {
 	struct sk_buff *skb;
 	struct nlmsghdr *nlh;
-	tAniMsgHdr *aniHdr;
-	uint8_t *oemData;
+	tAniMsgHdr *ani_hdr;
+	uint8_t *oem_data;
 
-	/* OEM message is always to a specific process and cannot be a broadcast */
+	/*
+	 * OEM message is always to a specific process and cannot be a broadcast
+	 */
 	if (p_hdd_ctx->oem_pid == 0) {
 		hdd_err("invalid dest pid");
 		return;
 	}
 
-	if (length > OEM_DATA_RSP_SIZE) {
+	if (oem_data_rsp->rsp_len > OEM_DATA_RSP_SIZE) {
 		hdd_err("invalid length of Oem Data response");
 		return;
 	}
@@ -333,18 +334,18 @@ void hdd_send_oem_data_rsp_msg(int length, uint8_t *oemDataRsp)
 	nlh->nlmsg_flags = 0;
 	nlh->nlmsg_seq = 0;
 	nlh->nlmsg_type = WLAN_NL_MSG_OEM;
-	aniHdr = NLMSG_DATA(nlh);
-	aniHdr->type = ANI_MSG_OEM_DATA_RSP;
+	ani_hdr = NLMSG_DATA(nlh);
+	ani_hdr->type = ANI_MSG_OEM_DATA_RSP;
 
-	aniHdr->length = length;
-	nlh->nlmsg_len = NLMSG_LENGTH((sizeof(tAniMsgHdr) + aniHdr->length));
-	oemData = (uint8_t *) ((char *)aniHdr + sizeof(tAniMsgHdr));
-	qdf_mem_copy(oemData, oemDataRsp, length);
+	ani_hdr->length = oem_data_rsp->rsp_len;
+	nlh->nlmsg_len = NLMSG_LENGTH((sizeof(tAniMsgHdr) + ani_hdr->length));
+	oem_data = (uint8_t *) ((char *)ani_hdr + sizeof(tAniMsgHdr));
+	qdf_mem_copy(oem_data, oem_data_rsp->data, oem_data_rsp->rsp_len);
 
-	skb_put(skb, NLMSG_SPACE((sizeof(tAniMsgHdr) + aniHdr->length)));
+	skb_put(skb, NLMSG_SPACE((sizeof(tAniMsgHdr) + ani_hdr->length)));
 
 	hdd_notice("sending Oem Data Response of len (%d) to process pid (%d)",
-		   length, p_hdd_ctx->oem_pid);
+		   oem_data_rsp->rsp_len, p_hdd_ctx->oem_pid);
 
 	(void)nl_srv_ucast(skb, p_hdd_ctx->oem_pid, MSG_DONTWAIT);
 

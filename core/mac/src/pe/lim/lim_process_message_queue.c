@@ -332,9 +332,6 @@ uint8_t static def_msg_decision(tpAniSirGlobal pMac, tpSirMsgQ limMsg)
 		    && (limMsg->type != WMA_SWITCH_CHANNEL_RSP)
 		    && (limMsg->type != WMA_P2P_NOA_ATTR_IND)
 		    && (limMsg->type != WMA_P2P_NOA_START_IND) &&
-#ifdef FEATURE_OEM_DATA_SUPPORT
-		    (limMsg->type != WMA_START_OEM_DATA_RSP) &&
-#endif
 		    (limMsg->type != WMA_ADD_TS_RSP) &&
 		    /*
 		     * LIM won't process any defer queue commands if gLimAddtsSent is
@@ -1163,52 +1160,6 @@ void lim_message_processor(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	}
 }
 
-#ifdef FEATURE_OEM_DATA_SUPPORT
-
-void lim_oem_data_rsp_handle_resume_link_rsp(tpAniSirGlobal pMac, QDF_STATUS status,
-					     uint32_t *mlmOemDataRsp)
-{
-	if (status != QDF_STATUS_SUCCESS) {
-		lim_log(pMac, LOGE,
-			FL
-				("OEM Data Rsp failed to get the response for resume link"));
-	}
-
-	if (NULL != pMac->lim.gpLimMlmOemDataReq) {
-		qdf_mem_free(pMac->lim.gpLimMlmOemDataReq);
-		pMac->lim.gpLimMlmOemDataReq = NULL;
-	}
-	/* "Failure" status doesn't mean that Oem Data Rsp did not happen */
-	/* and hence we need to respond to upper layers. Only Resume link is failed, but */
-	/* we got the oem data response already. */
-	/* Post the meessage to MLM */
-	lim_post_sme_message(pMac, LIM_MLM_OEM_DATA_CNF,
-			     (uint32_t *) (mlmOemDataRsp));
-
-	return;
-}
-
-void lim_process_oem_data_rsp(tpAniSirGlobal pMac, uint32_t *body)
-{
-	tpLimMlmOemDataRsp mlmOemDataRsp = NULL;
-
-	/* Process all the messages for the lim queue */
-	SET_LIM_PROCESS_DEFD_MESGS(pMac, true);
-
-	mlmOemDataRsp = (tpLimMlmOemDataRsp) body;
-
-	PELOG1(lim_log
-		       (pMac, LOG1, FL("%s: sending oem data response msg to sme"),
-		       __func__);
-	       )
-	lim_post_sme_message(pMac, LIM_MLM_OEM_DATA_CNF,
-			     (uint32_t *) (mlmOemDataRsp));
-
-	return;
-}
-
-#endif
-
 static void lim_process_sme_obss_scan_ind(tpAniSirGlobal mac_ctx,
 							struct sSirMsgQ *msg)
 {
@@ -1311,12 +1262,6 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 			lim_print_msg_name(mac_ctx, LOGE, msg->type);
 		}
 		break;
-#ifdef FEATURE_OEM_DATA_SUPPORT
-	case WMA_START_OEM_DATA_RSP:
-		lim_process_oem_data_rsp(mac_ctx, msg->bodyptr);
-		msg->bodyptr = NULL;
-		break;
-#endif
 	case WMA_SWITCH_CHANNEL_RSP:
 		lim_process_switch_channel_rsp(mac_ctx, msg->bodyptr);
 		msg->bodyptr = NULL;

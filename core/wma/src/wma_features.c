@@ -1638,11 +1638,21 @@ int wma_csa_offload_handler(void *handle, uint8_t *event, uint32_t len)
 int wma_oem_data_response_handler(void *handle,
 				  uint8_t *datap, uint32_t len)
 {
-	tp_wma_handle wma = (tp_wma_handle) handle;
 	WMI_OEM_RESPONSE_EVENTID_param_tlvs *param_buf;
 	uint8_t *data;
 	uint32_t datalen;
-	tStartOemDataRsp *oem_rsp;
+	tSirOemDataRsp *oem_rsp;
+	tpAniSirGlobal pmac = cds_get_context(QDF_MODULE_ID_PE);
+
+	if (!pmac) {
+		WMA_LOGE(FL("Invalid pmac"));
+		return -EINVAL;
+	}
+
+	if (!pmac->oemData.oem_data_rsp_callback) {
+		WMA_LOGE(FL("Callback not registered"));
+		return -EINVAL;
+	}
 
 	param_buf = (WMI_OEM_RESPONSE_EVENTID_param_tlvs *) datap;
 	if (!param_buf) {
@@ -1671,9 +1681,9 @@ int wma_oem_data_response_handler(void *handle,
 	}
 	oem_rsp->rsp_len = datalen;
 	if (oem_rsp->rsp_len) {
-		oem_rsp->oem_data_rsp = qdf_mem_malloc(oem_rsp->rsp_len);
-		if (!oem_rsp->oem_data_rsp) {
-			WMA_LOGE(FL("malloc failed for oem_data_rsp"));
+		oem_rsp->data = qdf_mem_malloc(oem_rsp->rsp_len);
+		if (!oem_rsp->data) {
+			WMA_LOGE(FL("malloc failed for data"));
 			qdf_mem_free(oem_rsp);
 			return -ENOMEM;
 		}
@@ -1684,12 +1694,16 @@ int wma_oem_data_response_handler(void *handle,
 		return -EINVAL;
 	}
 
-	oem_rsp->target_rsp = true;
-	qdf_mem_copy(oem_rsp->oem_data_rsp, data, datalen);
+	qdf_mem_copy(oem_rsp->data, data, datalen);
 
-	WMA_LOGI(FL("Sending WMA_START_OEM_DATA_RSP, data len %d"), datalen);
+	WMA_LOGI(FL("Sending OEM_DATA_RSP(len: %d) to upper layer"), datalen);
 
-	wma_send_msg(wma, WMA_START_OEM_DATA_RSP, (void *)oem_rsp, 0);
+	pmac->oemData.oem_data_rsp_callback(oem_rsp);
+
+	if (oem_rsp->data)
+		qdf_mem_free(oem_rsp->data);
+	qdf_mem_free(oem_rsp);
+
 	return 0;
 }
 

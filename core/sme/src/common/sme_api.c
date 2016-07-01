@@ -2531,19 +2531,6 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 				pMsg->type);
 		}
 		break;
-#ifdef FEATURE_OEM_DATA_SUPPORT
-	/* Handle the eWNI_SME_OEM_DATA_RSP: */
-	case eWNI_SME_OEM_DATA_RSP:
-		if (pMsg->bodyptr) {
-			status = sme_handle_oem_data_rsp(pMac, pMsg->bodyptr);
-			qdf_mem_free(pMsg->bodyptr);
-		} else {
-			sms_log(pMac, LOGE, FL("Empty message for %d"),
-				pMsg->type);
-		}
-		sme_process_pending_queue(pMac);
-		break;
-#endif
 	case eWNI_SME_ADD_STA_SELF_RSP:
 		if (pMsg->bodyptr) {
 			status = csr_process_add_sta_session_rsp(pMac,

@@ -277,10 +277,6 @@ char *lim_msg_str(uint32_t msgType)
 		return "eWNI_SME_SYS_READY_IND";
 	case eWNI_SME_SCAN_REQ:
 		return "eWNI_SME_SCAN_REQ";
-#ifdef FEATURE_OEM_DATA_SUPPORT
-	case eWNI_SME_OEM_DATA_RSP:
-		return "eWNI_SME_OEM_DATA_RSP";
-#endif
 	case eWNI_SME_SCAN_RSP:
 		return "eWNI_SME_SCAN_RSP";
 	case eWNI_SME_JOIN_REQ:

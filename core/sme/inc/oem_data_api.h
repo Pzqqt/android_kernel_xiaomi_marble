@@ -60,6 +60,7 @@ typedef enum {
 	eOEM_DATA_REQ_FAILURE,
 	eOEM_DATA_REQ_INVALID_MODE,
 } eOemDataReqStatus;
+
 QDF_STATUS oem_data_oem_data_req_open(tHalHandle hHal);
 QDF_STATUS oem_data_oem_data_req_close(tHalHandle hHal);
 
@@ -70,8 +71,7 @@ QDF_STATUS oem_data_oem_data_req_close(tHalHandle hHal);
 typedef QDF_STATUS (*oem_data_oem_data_reqCompleteCallback)(tHalHandle,
 		void *p2, uint32_t oemDataReqID, eOemDataReqStatus status);
 
-QDF_STATUS sme_handle_oem_data_rsp(tHalHandle hHal, uint8_t *);
-typedef void (*sme_send_oem_data_rsp_msg)(int length, uint8_t *oem_data_rsp);
+typedef void (*sme_send_oem_data_rsp_msg)(tSirOemDataRsp *);
 #endif /* _OEM_DATA_API_H__ */
 
 #endif /* FEATURE_OEM_DATA_SUPPORT */

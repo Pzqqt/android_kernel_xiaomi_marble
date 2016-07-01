@@ -94,10 +94,6 @@
  * (LIM_MLM_MSG_START + 40) are unused.
  */
 
-#ifdef FEATURE_OEM_DATA_SUPPORT
-#define LIM_MLM_OEM_DATA_CNF            (LIM_MLM_MSG_START + 42)
-#endif
-
 #define LIM_HASH_ADD            0
 #define LIM_HASH_UPDATE         1
 
