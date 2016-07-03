@@ -2732,6 +2732,138 @@ static void wma_wow_wake_up_stats(tp_wma_handle wma, uint8_t *data,
 	return;
 }
 
+#ifdef FEATURE_WLAN_EXTSCAN
+/**
+ * wma_extscan_get_eventid_from_tlvtag() - map tlv tag to corresponding event id
+ * @tag: WMI TLV tag
+ *
+ * Return:
+ *	0 if TLV tag is invalid
+ *	else return corresponding WMI event id
+ */
+static int wma_extscan_get_eventid_from_tlvtag(uint32_t tag)
+{
+	uint32_t event_id;
+
+	switch (tag) {
+	case WMITLV_TAG_STRUC_wmi_extscan_start_stop_event_fixed_param:
+		event_id = WMI_EXTSCAN_START_STOP_EVENTID;
+		break;
+
+	case WMITLV_TAG_STRUC_wmi_extscan_operation_event_fixed_param:
+		event_id = WMI_EXTSCAN_OPERATION_EVENTID;
+		break;
+
+	case WMITLV_TAG_STRUC_wmi_extscan_table_usage_event_fixed_param:
+		event_id = WMI_EXTSCAN_TABLE_USAGE_EVENTID;
+		break;
+
+	case WMITLV_TAG_STRUC_wmi_extscan_cached_results_event_fixed_param:
+		event_id = WMI_EXTSCAN_CACHED_RESULTS_EVENTID;
+		break;
+
+	case WMITLV_TAG_STRUC_wmi_extscan_wlan_change_results_event_fixed_param:
+		event_id = WMI_EXTSCAN_WLAN_CHANGE_RESULTS_EVENTID;
+		break;
+
+	case WMITLV_TAG_STRUC_wmi_extscan_hotlist_match_event_fixed_param:
+		event_id = WMI_EXTSCAN_HOTLIST_MATCH_EVENTID;
+		break;
+
+	case WMITLV_TAG_STRUC_wmi_extscan_capabilities_event_fixed_param:
+		event_id = WMI_EXTSCAN_CAPABILITIES_EVENTID;
+		break;
+
+	case WMITLV_TAG_STRUC_wmi_extscan_hotlist_ssid_match_event_fixed_param:
+		event_id = WMI_EXTSCAN_HOTLIST_SSID_MATCH_EVENTID;
+		break;
+
+	default:
+		event_id = 0;
+		WMA_LOGE("%s: Unknown tag: %d", __func__, tag);
+		break;
+	}
+
+	WMA_LOGI("%s: For tag %d WMI event 0x%x", __func__, tag, event_id);
+	return event_id;
+}
+#else
+static int wma_extscan_get_eventid_from_tlvtag(uint32_t tag)
+{
+	return 0;
+}
+#endif
+
+/**
+ * wow_get_wmi_eventid() - map reason or tlv tag to corresponding event id
+ * @tag: WMI TLV tag
+ * @reason: WOW reason
+ *
+ * WOW reason type is primarily used to find the ID. If there could be
+ * multiple events that can be sent as a WOW event with same reason
+ * then tlv tag is used to identify the corresponding event.
+ *
+ * Return:
+ *      0 if TLV tag/reason is invalid
+ *      else return corresponding WMI event id
+ */
+static int wow_get_wmi_eventid(int32_t reason, uint32_t tag)
+{
+	uint32_t event_id;
+
+	switch (reason) {
+	case WOW_REASON_NLO_SCAN_COMPLETE:
+		event_id = WMI_NLO_SCAN_COMPLETE_EVENTID;
+		break;
+	case WOW_REASON_CSA_EVENT:
+		event_id = WMI_CSA_HANDLING_EVENTID;
+		break;
+	case WOW_REASON_LOW_RSSI:
+		event_id = WMI_ROAM_EVENTID;
+		break;
+	case WOW_REASON_CLIENT_KICKOUT_EVENT:
+		event_id = WMI_PEER_STA_KICKOUT_EVENTID;
+		break;
+	case WOW_REASON_EXTSCAN:
+		event_id = wma_extscan_get_eventid_from_tlvtag(tag);
+		break;
+	case WOW_REASON_RSSI_BREACH_EVENT:
+		event_id = WMI_RSSI_BREACH_EVENTID;
+		break;
+	case WOW_REASON_NAN_EVENT:
+		event_id = WMI_NAN_EVENTID;
+		break;
+	default:
+		WMA_LOGD(FL("Unexpected WOW reason : %s(%d)"),
+			 wma_wow_wake_reason_str(reason), reason);
+		event_id = 0;
+		break;
+	}
+
+	return event_id;
+}
+
+/**
+ * tlv_check_required() - tells whether to check the wow packet buffer
+ *                        for proper TLV structure.
+ * @reason: WOW reason
+ *
+ * In most cases, wow wake up event carries the actual event buffer in
+ * wow_packet_buffer with some exceptions. This function is used to
+ * determine when to check for the TLVs in wow_packet_buffer.
+ *
+ * Return: true if check is required and false otherwise.
+ */
+static bool tlv_check_required(int32_t reason)
+{
+	switch (reason) {
+	case WOW_REASON_PATTERN_MATCH_FOUND:
+		return false;
+	default:
+		return true;
+	}
+}
+
 /**
  * wma_wow_wakeup_host_event() - wakeup host event handler
  * @handle: wma handle
@@ -2753,7 +2885,9 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 	struct wma_txrx_node *node;
 #endif /* FEATURE_WLAN_SCAN_PNO */
 	uint32_t wake_lock_duration = 0;
-	uint32_t wow_buf_pkt_len = 0;
+	void *wmi_cmd_struct_ptr = NULL;
+	uint32_t tlv_hdr, tag, wow_buf_pkt_len = 0, event_id = 0;
+	int tlv_ok_status;
 
 	param_buf = (WMI_WOW_WAKEUP_HOST_EVENTID_param_tlvs *) event;
 	if (!param_buf) {
@@ -2768,6 +2902,35 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 		 wake_info->wake_reason, wake_info->vdev_id);
 
 	qdf_event_set(&wma->wma_resume_event);
+
+	if (param_buf->wow_packet_buffer &&
+	    tlv_check_required(wake_info->wake_reason)) {
+		/*
+		 * In case of wow_packet_buffer, first 4 bytes is the length.
+		 * Following the length is the actual buffer.
+		 */
+		wow_buf_pkt_len = *(uint32_t *)param_buf->wow_packet_buffer;
+		tlv_hdr = WMITLV_GET_HDR(
+				(uint8_t *)param_buf->wow_packet_buffer + 4);
+
+		tag = WMITLV_GET_TLVTAG(tlv_hdr);
+		event_id = wow_get_wmi_eventid(wake_info->wake_reason, tag);
+		if (!event_id) {
+			WMA_LOGE(FL("Unable to find matching ID"));
+			return -EINVAL;
+		}
+
+		tlv_ok_status = wmitlv_check_and_pad_event_tlvs(
+				    handle, param_buf->wow_packet_buffer + 4,
+				    wow_buf_pkt_len, event_id,
+				    &wmi_cmd_struct_ptr);
+
+		if (tlv_ok_status != 0) {
+			WMA_LOGE(FL("Invalid TLVs, Length:%d event_id:%d status: %d"),
+				 wow_buf_pkt_len, event_id, tlv_ok_status);
+			return -EINVAL;
+		}
+	}
 
 	switch (wake_info->wake_reason) {
 	case WOW_REASON_AUTH_REQ_RECV:
@@ -2819,34 +2982,19 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 		break;
 
 	case WOW_REASON_NLO_SCAN_COMPLETE:
-		{
-			WMI_NLO_SCAN_COMPLETE_EVENTID_param_tlvs param;
-
-			WMA_LOGD("Host woken up due to pno scan complete reason");
-
-			/* First 4-bytes of wow_packet_buffer is the length */
-			if (param_buf->wow_packet_buffer) {
-				param.fixed_param = (wmi_nlo_event *)
-					(param_buf->wow_packet_buffer + 4);
-				wma_nlo_scan_cmp_evt_handler(handle,
-					(u_int8_t *)&param, sizeof(param));
-			} else
-				WMA_LOGD("No wow_packet_buffer present");
-		}
+		WMA_LOGD("Host woken up due to pno scan complete reason");
+		if (param_buf->wow_packet_buffer)
+			wma_nlo_scan_cmp_evt_handler(handle,
+					wmi_cmd_struct_ptr, wow_buf_pkt_len);
+		else
+			WMA_LOGD("No wow_packet_buffer present");
 		break;
 #endif /* FEATURE_WLAN_SCAN_PNO */
 
 	case WOW_REASON_CSA_EVENT:
-	{
-		WMI_CSA_HANDLING_EVENTID_param_tlvs param;
 		WMA_LOGD("Host woken up because of CSA IE");
-		param.fixed_param = (wmi_csa_event_fixed_param *)
-				    (((uint8_t *) wake_info)
-				     + sizeof(WOW_EVENT_INFO_fixed_param)
-				     + WOW_CSA_EVENT_OFFSET);
-		wma_csa_offload_handler(handle, (uint8_t *) &param,
-					sizeof(param));
-	}
+		wma_csa_offload_handler(handle, wmi_cmd_struct_ptr,
+					wow_buf_pkt_len);
 	break;
 
 #ifdef FEATURE_WLAN_LPHB
@@ -2878,115 +3026,69 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 		break;
 
 	case WOW_REASON_LOW_RSSI:
-	{
 		/* WOW_REASON_LOW_RSSI is used for all roaming events.
 		 * WMI_ROAM_REASON_BETTER_AP, WMI_ROAM_REASON_BMISS,
 		 * WMI_ROAM_REASON_SUITABLE_AP will be handled by
 		 * wma_roam_event_callback().
 		 */
-		WMI_ROAM_EVENTID_param_tlvs param;
 		wma_wow_wake_up_stats(wma, NULL, 0, WOW_REASON_LOW_RSSI);
+		WMA_LOGD("Host woken up because of roam event");
 		if (param_buf->wow_packet_buffer) {
 			/* Roam event is embedded in wow_packet_buffer */
-			WMA_LOGD("Host woken up because of roam event");
-			qdf_mem_copy((uint8_t *) &wow_buf_pkt_len,
-				     param_buf->wow_packet_buffer, 4);
 			WMA_LOGD("wow_packet_buffer dump");
 			qdf_trace_hex_dump(QDF_MODULE_ID_WMA,
 					   QDF_TRACE_LEVEL_DEBUG,
 					   param_buf->wow_packet_buffer,
 					   wow_buf_pkt_len);
-			if (wow_buf_pkt_len >= sizeof(param)) {
-				param.fixed_param =
-					(wmi_roam_event_fixed_param *)
-					(param_buf->wow_packet_buffer + 4);
-				wma_roam_event_callback(handle,
-							(uint8_t *) &
-							param,
-							sizeof(param));
-			} else {
-				WMA_LOGE("Wrong length for roam event = %d bytes",
-					wow_buf_pkt_len);
-			}
+			wma_roam_event_callback(handle, wmi_cmd_struct_ptr,
+						wow_buf_pkt_len);
 		} else {
-			/* No wow_packet_buffer means a better AP beacon
+			/*
+			 * No wow_packet_buffer means a better AP beacon
 			 * will follow in a later event.
 			 */
 			WMA_LOGD("Host woken up because of better AP beacon");
 		}
 		break;
-	}
 	case WOW_REASON_CLIENT_KICKOUT_EVENT:
-		{
-		WMI_PEER_STA_KICKOUT_EVENTID_param_tlvs param;
+		WMA_LOGD("Host woken up because of sta_kickout event");
 		if (param_buf->wow_packet_buffer) {
-		    /* station kickout event embedded in wow_packet_buffer */
-		    WMA_LOGD("Host woken up because of sta_kickout event");
-		    qdf_mem_copy((u_int8_t *) &wow_buf_pkt_len,
-				param_buf->wow_packet_buffer, 4);
-		    WMA_LOGD("wow_packet_buffer dump");
-				qdf_trace_hex_dump(QDF_MODULE_ID_WMA,
+			WMA_LOGD("wow_packet_buffer dump");
+			qdf_trace_hex_dump(QDF_MODULE_ID_WMA,
 				QDF_TRACE_LEVEL_DEBUG,
 				param_buf->wow_packet_buffer, wow_buf_pkt_len);
-		    if (wow_buf_pkt_len >= sizeof(param)) {
-			param.fixed_param = (wmi_peer_sta_kickout_event_fixed_param *)
-					(param_buf->wow_packet_buffer + 4);
 			wma_peer_sta_kickout_event_handler(handle,
-					(u_int8_t *)&param, sizeof(param));
-		    } else {
-			WMA_LOGE("Wrong length for sta_kickout event = %d bytes",
-					wow_buf_pkt_len);
-		    }
+				wmi_cmd_struct_ptr, wow_buf_pkt_len);
 		} else {
 		    WMA_LOGD("No wow_packet_buffer present");
 		}
 		break;
-	}
 #ifdef FEATURE_WLAN_EXTSCAN
 	case WOW_REASON_EXTSCAN:
 		WMA_LOGD("Host woken up because of extscan reason");
 		wma_wow_wake_up_stats(wma, NULL, 0, WOW_REASON_EXTSCAN);
-		if (param_buf->wow_packet_buffer) {
-			wow_buf_pkt_len =
-				*(uint32_t *)param_buf->wow_packet_buffer;
+		if (param_buf->wow_packet_buffer)
 			wma_extscan_wow_event_callback(handle,
-				(u_int8_t *)(param_buf->wow_packet_buffer + 4),
-				wow_buf_pkt_len);
-		} else
+				wmi_cmd_struct_ptr, wow_buf_pkt_len);
+		else
 			WMA_LOGE("wow_packet_buffer is empty");
 		break;
 #endif
 	case WOW_REASON_RSSI_BREACH_EVENT:
-		{
-			WMI_RSSI_BREACH_EVENTID_param_tlvs param;
-
-			wma_wow_wake_up_stats(wma, NULL, 0,
+		wma_wow_wake_up_stats(wma, NULL, 0,
 				WOW_REASON_RSSI_BREACH_EVENT);
-			WMA_LOGD("Host woken up because of rssi breach reason");
-			/* rssi breach event is embedded in wow_packet_buffer */
-			if (param_buf->wow_packet_buffer) {
-				qdf_mem_copy((u_int8_t *) &wow_buf_pkt_len,
-					param_buf->wow_packet_buffer, 4);
-				if (wow_buf_pkt_len >= sizeof(param)) {
-					param.fixed_param =
-					(wmi_rssi_breach_event_fixed_param *)
-					(param_buf->wow_packet_buffer + 4);
-					wma_rssi_breached_event_handler(handle,
-							(u_int8_t *)&param,
-							sizeof(param));
-				} else {
-					WMA_LOGE("%s: Wrong length: %d bytes",
-						__func__, wow_buf_pkt_len);
-				}
-			} else
-			    WMA_LOGD("No wow_packet_buffer present");
-		}
+		WMA_LOGD("Host woken up because of rssi breach reason");
+		/* rssi breach event is embedded in wow_packet_buffer */
+		if (param_buf->wow_packet_buffer)
+			wma_rssi_breached_event_handler(handle,
+				wmi_cmd_struct_ptr, wow_buf_pkt_len);
+		else
+		    WMA_LOGD("No wow_packet_buffer present");
 		break;
 	case WOW_REASON_NAN_EVENT:
 		WMA_LOGA("Host woken up due to NAN event reason");
 		wma_nan_rsp_event_handler(handle,
-				(uint8_t *)param_buf->wow_packet_buffer,
-				sizeof(WMI_NAN_EVENTID_param_tlvs));
+				wmi_cmd_struct_ptr, wow_buf_pkt_len);
 		break;
 	case WOW_REASON_NAN_DATA:
 		WMA_LOGD(FL("Host woken up for NAN data path event from FW"));
@@ -3006,6 +3108,9 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 		}
 		break;
 	default:
+		WMA_LOGE(FL("WOW reason %s(%d)- not handled"),
+			wma_wow_wake_reason_str(wake_info->wake_reason),
+			wake_info->wake_reason);
 		break;
 	}
 
@@ -3016,6 +3121,7 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 		WMA_LOGA("Holding %d msec wake_lock", wake_lock_duration);
 	}
 
+	wmitlv_free_allocated_event_tlvs(event_id, &wmi_cmd_struct_ptr);
 	return 0;
 }
 
