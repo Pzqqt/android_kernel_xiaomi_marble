@@ -2469,6 +2469,10 @@ int wma_mgmt_tx_completion_handler(void *handle, uint8_t *cmpl_event_params,
 	struct wmi_desc_t *wmi_desc;
 
 	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	if (!pdev) {
+		WMA_LOGE("%s: txrx pdev is NULL", __func__);
+		return -EINVAL;
+	}
 
 	if (pdev == NULL) {
 		WMA_LOGE("%s: NULL pdev pointer", __func__);
