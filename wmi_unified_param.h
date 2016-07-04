@@ -237,6 +237,8 @@
 #define TARGET_INIT_STATUS_GEN_FAILED   0x1
 #define TARGET_GET_INIT_STATUS_REASON(status)	((status) & 0xffff)
 #define TARGET_GET_INIT_STATUS_MODULE_ID(status) (((status) >> 16) & 0xffff)
+
+#define MAX_ASSOC_IE_LENGTH 1024
 typedef uint32_t TARGET_INIT_STATUS;
 
 typedef enum {
@@ -1714,6 +1716,8 @@ struct roam_offload_scan_params {
 	* structure */
 	roam_offload_param roam_offload_params;
 #endif
+	uint32_t assoc_ie_length;
+	uint8_t  assoc_ie[MAX_ASSOC_IE_LENGTH];
 };
 
 /* struct roam_offload_scan_rssi_params - structure containing
