@@ -7516,6 +7516,7 @@ void cds_set_mcc_latency(hdd_adapter_t *adapter, int set_value)
 	}
 }
 
+#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 /**
  * cds_change_sap_channel_with_csa() - Move SAP channel using (E)CSA
  * @adapter: AP adapter
@@ -7543,6 +7544,7 @@ void cds_change_sap_channel_with_csa(hdd_adapter_t *adapter,
 				hdd_ap_ctx->sapConfig.ch_params.ch_width);
 	}
 }
+#endif
 
 #if defined(FEATURE_WLAN_MCC_TO_SCC_SWITCH) || \
 			defined(FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE)
