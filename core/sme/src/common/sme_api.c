@@ -15866,3 +15866,20 @@ QDF_STATUS sme_process_mac_pwr_dbg_cmd(tHalHandle hal, uint32_t session_id,
 	}
 	return QDF_STATUS_SUCCESS;
 }
+/**
+ * sme_get_vdev_type_nss() - gets the nss per vdev type
+ * @hal: Pointer to HAL
+ * @dev_mode: connection type.
+ * @nss2g: Pointer to the 2G Nss parameter.
+ * @nss5g: Pointer to the 5G Nss parameter.
+ *
+ * Fills the 2G and 5G Nss values based on connection type.
+ *
+ * Return: None
+ */
+void sme_get_vdev_type_nss(tHalHandle hal, enum tQDF_ADAPTER_MODE dev_mode,
+		uint8_t *nss_2g, uint8_t *nss_5g)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	csr_get_vdev_type_nss(mac_ctx, dev_mode, nss_2g, nss_5g);
+}

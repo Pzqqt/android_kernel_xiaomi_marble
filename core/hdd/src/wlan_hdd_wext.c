@@ -7853,12 +7853,6 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		for (i = 0; i < len; i++) {
 			pr_info("|table_index[%d]\t\t|\n", i);
 			pr_info("|\t|vdev_id - %d\t\t|\n", conn_info->vdev_id);
-			pr_info("|\t|tx_spatial_stream - %d\t|\n",
-						conn_info->tx_spatial_stream);
-			pr_info("|\t|rx_spatial_stream - %d\t|\n",
-						conn_info->rx_spatial_stream);
-			pr_info("|\t|chain_mask - %d\t\t|\n",
-						conn_info->chain_mask);
 			pr_info("|\t|chan - %d\t\t|\n", conn_info->chan);
 			pr_info("|\t|bw - %d\t\t|\n", conn_info->bw);
 			pr_info("|\t|mode - %d\t\t|\n", conn_info->mode);

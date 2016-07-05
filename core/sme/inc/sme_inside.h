@@ -235,9 +235,6 @@ QDF_STATUS oem_data_process_oem_data_req_command(tpAniSirGlobal pMac,
 		tSmeCmd *pCommand);
 #endif
 
-void csr_get_vdev_type_nss(tpAniSirGlobal mac_ctx,
-		enum tQDF_ADAPTER_MODE dev_mode,
-		uint8_t *nss_2g, uint8_t *nss_5g);
 QDF_STATUS csr_process_add_sta_session_command(tpAniSirGlobal pMac,
 		tSmeCmd *pCommand);
 QDF_STATUS csr_process_add_sta_session_rsp(tpAniSirGlobal pMac, uint8_t *pMsg);

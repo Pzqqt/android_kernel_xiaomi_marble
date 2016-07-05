@@ -632,9 +632,12 @@ void wlan_hdd_one_connection_scenario(hdd_context_t *hdd_ctx)
 	enum cds_pcl_type pcl_type;
 	char reason[20] = {0};
 	QDF_STATUS ret;
+	struct cds_sme_cbacks sme_cbacks;
 
+	sme_cbacks.sme_get_valid_channels = sme_get_cfg_valid_channels;
+	sme_cbacks.sme_get_nss_for_vdev = sme_get_vdev_type_nss;
 	/* flush the entire table first */
-	ret = cds_init_policy_mgr(sme_get_cfg_valid_channels);
+	ret = cds_init_policy_mgr(&sme_cbacks);
 	if (!QDF_IS_STATUS_SUCCESS(ret)) {
 		hdd_err("Policy manager initialization failed");
 		return;
@@ -685,13 +688,16 @@ void wlan_hdd_two_connections_scenario(hdd_context_t *hdd_ctx,
 	char reason[20] = {0};
 	bool status = false;
 	QDF_STATUS ret;
+	struct cds_sme_cbacks sme_cbacks;
 
 	for (sub_type = CDS_STA_MODE;
 		sub_type < CDS_MAX_NUM_OF_MODE; sub_type++) {
 		type = wlan_hdd_valid_type_of_persona(sub_type);
 
+		sme_cbacks.sme_get_valid_channels = sme_get_cfg_valid_channels;
+		sme_cbacks.sme_get_nss_for_vdev = sme_get_vdev_type_nss;
 		/* flush the entire table first */
-		ret = cds_init_policy_mgr(sme_get_cfg_valid_channels);
+		ret = cds_init_policy_mgr(&sme_cbacks);
 		if (!QDF_IS_STATUS_SUCCESS(ret)) {
 			hdd_err("Policy manager initialization failed");
 			return;
@@ -766,6 +772,7 @@ void wlan_hdd_three_connections_scenario(hdd_context_t *hdd_ctx,
 	char reason[20] = {0};
 	bool status = false;
 	QDF_STATUS ret;
+	struct cds_sme_cbacks sme_cbacks;
 
 	/* let's set the chain_mask, mac_ids*/
 	if (chain_mask == CDS_TWO_TWO) {
@@ -789,8 +796,11 @@ void wlan_hdd_three_connections_scenario(hdd_context_t *hdd_ctx,
 		sub_type_1 < CDS_MAX_NUM_OF_MODE; sub_type_1++) {
 
 		type_1 = wlan_hdd_valid_type_of_persona(sub_type_1);
+
+		sme_cbacks.sme_get_valid_channels = sme_get_cfg_valid_channels;
+		sme_cbacks.sme_get_nss_for_vdev = sme_get_vdev_type_nss;
 		/* flush the entire table first */
-		ret = cds_init_policy_mgr(sme_get_cfg_valid_channels);
+		ret = cds_init_policy_mgr(&sme_cbacks);
 		if (!QDF_IS_STATUS_SUCCESS(ret)) {
 			hdd_err("Policy manager initialization failed");
 			return;
