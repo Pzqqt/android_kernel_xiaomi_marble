@@ -88,7 +88,8 @@
 				(1 << WOW_HTT_EVENT) |\
 				(1 << WOW_RA_MATCH_EVENT) |\
 				(1 << WOW_NLO_DETECTED_EVENT) |\
-				(1 << WOW_EXTSCAN_EVENT))\
+				(1 << WOW_EXTSCAN_EVENT)) |\
+				(1 << WOW_OEM_RESPONSE_EVENT)\
 
 #define WMA_WOW_SAP_WAKE_UP_EVENTS ((1 << WOW_PROBE_REQ_WPS_IE_EVENT) |\
 				(1 << WOW_PATTERN_MATCH_EVENT) |\
@@ -2345,6 +2346,8 @@ static const u8 *wma_wow_wake_reason_str(A_INT32 wake_reason)
 		return "WOW_REASON_NLO_SCAN_COMPLETE";
 	case WOW_REASON_NAN_EVENT:
 		return "WOW_REASON_NAN_EVENT";
+	case WOW_REASON_OEM_RESPONSE_EVENT:
+		return "WOW_OEM_RESPONSE_EVENT";
 	}
 	return "unknown";
 }
@@ -2357,7 +2360,7 @@ static const u8 *wma_wow_wake_reason_str(A_INT32 wake_reason)
  */
 static void wma_wow_wake_up_stats_display(tp_wma_handle wma)
 {
-	WMA_LOGA("uc %d bc %d v4_mc %d v6_mc %d ra %d ns %d na %d pno_match %d pno_complete %d gscan %d low_rssi %d rssi_breach %d",
+	WMA_LOGA("uc %d bc %d v4_mc %d v6_mc %d ra %d ns %d na %d pno_match %d pno_complete %d gscan %d low_rssi %d rssi_breach %d oem %d",
 		wma->wow_ucast_wake_up_count,
 		wma->wow_bcast_wake_up_count,
 		wma->wow_ipv4_mcast_wake_up_count,
@@ -2369,7 +2372,8 @@ static void wma_wow_wake_up_stats_display(tp_wma_handle wma)
 		wma->wow_pno_complete_wake_up_count,
 		wma->wow_gscan_wake_up_count,
 		wma->wow_low_rssi_wake_up_count,
-		wma->wow_rssi_breach_wake_up_count);
+		wma->wow_rssi_breach_wake_up_count,
+		wma->wow_oem_response_wake_up_count);
 
 	return;
 }
@@ -2466,6 +2470,9 @@ static void wma_wow_wake_up_stats(tp_wma_handle wma, uint8_t *data,
 
 	case WOW_REASON_RSSI_BREACH_EVENT:
 		wma->wow_rssi_breach_wake_up_count++;
+		break;
+	case WOW_REASON_OEM_RESPONSE_EVENT:
+		wma->wow_oem_response_wake_up_count++;
 		break;
 
 	default:
@@ -2851,6 +2858,15 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 		} else {
 			WMA_LOGE(FL("wow_packet_buffer is empty"));
 		}
+		break;
+	case WOW_REASON_OEM_RESPONSE_EVENT:
+		wma_wow_wake_up_stats(wma, NULL, 0,
+				WOW_REASON_OEM_RESPONSE_EVENT);
+		/*
+		 * Actual OEM Response event will follow after this
+		 * WOW Wakeup event
+		 */
+		WMA_LOGD(FL("Host woken up for OEM Response event"));
 		break;
 	default:
 		WMA_LOGE(FL("WOW reason %s(%d)- not handled"),
