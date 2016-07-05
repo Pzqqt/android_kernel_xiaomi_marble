@@ -2369,7 +2369,7 @@ ol_txrx_update_ibss_add_peer_num_of_vdev(ol_txrx_vdev_handle vdev,
 	int16_t new_peer_num;
 
 	new_peer_num = vdev->ibss_peer_num + peer_num_delta;
-	if (new_peer_num > MAX_IBSS_PEERS || new_peer_num < 0)
+	if (new_peer_num > MAX_PEERS || new_peer_num < 0)
 		return OL_TXRX_INVALID_NUM_PEERS;
 
 	vdev->ibss_peer_num = new_peer_num;

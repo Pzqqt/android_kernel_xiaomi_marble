@@ -1160,7 +1160,7 @@ static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 		}
 		pHddCtx->sta_to_adapter[sta_id] = NULL;
 		/* Clear all the peer sta register with TL. */
-		for (i = 0; i < MAX_IBSS_PEERS; i++) {
+		for (i = 0; i < MAX_PEERS; i++) {
 			if (0 == pHddStaCtx->conn_info.staId[i])
 				continue;
 			sta_id = pHddStaCtx->conn_info.staId[i];
@@ -2606,7 +2606,7 @@ void hdd_delete_peer(hdd_station_ctx_t *sta_ctx, uint8_t sta_id)
  * @staId: station id
  *
  * Return:
- *	true if we remove MAX_IBSS_PEERS or less STA
+ *	true if we remove MAX_PEERS or less STA
  *	false otherwise.
  */
 static bool roam_remove_ibss_station(hdd_adapter_t *pAdapter, uint8_t staId)
@@ -2618,7 +2618,7 @@ static bool roam_remove_ibss_station(hdd_adapter_t *pAdapter, uint8_t staId)
 	uint8_t empty_slots = 0;
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
-	for (idx = 0; idx < MAX_IBSS_PEERS; idx++) {
+	for (idx = 0; idx < MAX_PEERS; idx++) {
 		if (staId == pHddStaCtx->conn_info.staId[idx]) {
 			pHddStaCtx->conn_info.staId[idx] = 0;
 
@@ -2644,7 +2644,7 @@ static bool roam_remove_ibss_station(hdd_adapter_t *pAdapter, uint8_t staId)
 		}
 	}
 
-	if (MAX_IBSS_PEERS == empty_slots) {
+	if (MAX_PEERS == empty_slots) {
 		/* Last peer departed, set the IBSS state appropriately */
 		pHddStaCtx->conn_info.connState =
 			eConnectionState_IbssDisconnected;
