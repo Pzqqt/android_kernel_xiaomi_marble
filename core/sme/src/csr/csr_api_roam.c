@@ -1580,7 +1580,7 @@ QDF_STATUS csr_create_roam_scan_channel_list(tpAniSirGlobal pMac,
  *
  * Return: true if ese association; false otherwise
  */
-bool csr_roam_is_ese_assoc(tpAniSirGlobal mac_ctx, uint8_t session_id)
+bool csr_roam_is_ese_assoc(tpAniSirGlobal mac_ctx, uint32_t session_id)
 {
 	return mac_ctx->roam.neighborRoamInfo[session_id].isESEAssoc;
 }

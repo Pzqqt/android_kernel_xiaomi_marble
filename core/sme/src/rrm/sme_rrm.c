@@ -1111,13 +1111,13 @@ QDF_STATUS sme_rrm_process_neighbor_report(tpAniSirGlobal pMac, void *pMsgBuf)
 	tpRrmNeighborReportDesc pNeighborReportDesc;
 	uint8_t i = 0;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	uint8_t sessionId;
+	uint32_t sessionId;
 
 	/* Get the session id */
 	status =
 		csr_roam_get_session_id_from_bssid(pMac,
 			   (struct qdf_mac_addr *) pNeighborRpt->bssId,
-			   (uint32_t *) &sessionId);
+			   &sessionId);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 #ifdef FEATURE_WLAN_ESE
 		/* Clear the cache for ESE. */

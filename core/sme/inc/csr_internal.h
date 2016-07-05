@@ -1309,7 +1309,7 @@ bool csr_roam_is11r_assoc(tpAniSirGlobal pMac, uint8_t sessionId);
 
 #ifdef FEATURE_WLAN_ESE
 /* Returns whether the current association is a ESE assoc or not */
-bool csr_roam_is_ese_assoc(tpAniSirGlobal pMac, uint8_t sessionId);
+bool csr_roam_is_ese_assoc(tpAniSirGlobal pMac, uint32_t sessionId);
 bool csr_roam_is_ese_ini_feature_enabled(tpAniSirGlobal pMac);
 QDF_STATUS csr_get_tsm_stats(tpAniSirGlobal pMac,
 		tCsrTsmStatsCallback callback,
