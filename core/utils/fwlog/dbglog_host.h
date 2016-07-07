@@ -122,7 +122,7 @@ dbglog_report_enable(wmi_unified_t wmi_handle, A_BOOL isenable);
  * @brief DBGLOG_ERROR - default log level
  */
 int
-dbglog_set_log_lvl(wmi_unified_t wmi_handle, DBGLOG_LOG_LVL log_lvl);
+dbglog_set_log_lvl(wmi_unified_t wmi_handle, enum DBGLOG_LOG_LVL log_lvl);
 
 /*
  * set the debug log level for a given module

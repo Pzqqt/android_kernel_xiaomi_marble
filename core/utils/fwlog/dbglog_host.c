@@ -1300,7 +1300,7 @@ int dbglog_vap_log_enable(wmi_unified_t wmi_handle, A_UINT16 vap_id,
 	return 0;
 }
 
-int dbglog_set_log_lvl(wmi_unified_t wmi_handle, DBGLOG_LOG_LVL log_lvl)
+int dbglog_set_log_lvl(wmi_unified_t wmi_handle, enum DBGLOG_LOG_LVL log_lvl)
 {
 	A_UINT32 val = 0;
 

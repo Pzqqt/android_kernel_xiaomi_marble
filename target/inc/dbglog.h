@@ -38,22 +38,27 @@
 extern "C" {
 #endif
 #define DBGLOG_TIMESTAMP_OFFSET          0
-#define DBGLOG_TIMESTAMP_MASK            0xFFFFFFFF     /* Bit 0-15. Contains bit
-	                                                   8-23 of the LF0 timer */
+
+/* Bit 0-15. Contains bit 8-23 of the LF0 timer */
+#define DBGLOG_TIMESTAMP_MASK            0xFFFFFFFF
 #define DBGLOG_DBGID_OFFSET              0
+
 #define DBGLOG_DBGID_MASK                0x000003FF     /* Bit 0-9 */
-#define DBGLOG_DBGID_NUM_MAX             256    /* Upper limit is width of mask */
+/* Upper limit is width of mask */
+#define DBGLOG_DBGID_NUM_MAX             256
 
 #define DBGLOG_MODULEID_OFFSET           10
 #define DBGLOG_MODULEID_MASK             0x0003FC00     /* Bit 10-17 */
-#define DBGLOG_MODULEID_NUM_MAX          32     /* Upper limit is width of mask */
+/* Upper limit is width of mask */
+#define DBGLOG_MODULEID_NUM_MAX          32
 
-#define DBGLOG_VDEVID_OFFSET              18
-#define DBGLOG_VDEVID_MASK                0x03FC0000    /* Bit 20-25 */
-#define DBGLOG_VDEVID_NUM_MAX             16
+#define DBGLOG_VDEVID_OFFSET             18
+#define DBGLOG_VDEVID_MASK               0x03FC0000    /* Bit 20-25 */
+#define DBGLOG_VDEVID_NUM_MAX            16
 
-#define DBGLOG_NUM_ARGS_OFFSET            26
-#define DBGLOG_NUM_ARGS_MASK              0xFC000000    /* Bit 26-31 */
+#define DBGLOG_NUM_ARGS_OFFSET           26
+#define DBGLOG_NUM_ARGS_MASK             0xFC000000    /* Bit 26-31 */
+
 /* it is limited bcoz of limitations of corebsp MSG*() to accept max 9 arg */
 #define DBGLOG_NUM_ARGS_MAX               9
 
@@ -80,7 +85,7 @@ extern "C" {
 
 /* Debug Log levels*/
 
-typedef enum {
+enum DBGLOG_LOG_LVL {
 	DBGLOG_VERBOSE = 0,
 	DBGLOG_INFO,
 	DBGLOG_INFO_LVL_1,
@@ -88,7 +93,7 @@ typedef enum {
 	DBGLOG_WARN,
 	DBGLOG_ERR,
 	DBGLOG_LVL_MAX
-} DBGLOG_LOG_LVL;
+};
 
 PREPACK struct dbglog_buf_s {
 	struct dbglog_buf_s *next;
