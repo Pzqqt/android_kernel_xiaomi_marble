@@ -216,7 +216,20 @@ bmi_get_target_info(struct bmi_target_info *targ_info,
 
 QDF_STATUS bmi_download_firmware(struct ol_context *ol_ctx)
 {
-	struct hif_opaque_softc *scn = ol_ctx->scn;
+	struct hif_opaque_softc *scn;
+
+	if (!ol_ctx) {
+		if (NO_BMI) {
+			/* ol_ctx is not allocated in NO_BMI case */
+			return QDF_STATUS_SUCCESS;
+		} else {
+			BMI_ERR("ol_ctx is NULL");
+			bmi_assert(0);
+			return QDF_STATUS_NOT_INITIALIZED;
+		}
+	}
+
+	scn = ol_ctx->scn;
 
 	if (!scn) {
 		BMI_ERR("Invalid scn context");
@@ -224,7 +237,7 @@ QDF_STATUS bmi_download_firmware(struct ol_context *ol_ctx)
 		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
-	if (NO_BMI || !hif_needs_bmi(scn))
+	if (!hif_needs_bmi(scn))
 		return QDF_STATUS_SUCCESS;
 
 	return bmi_firmware_download(ol_ctx);
