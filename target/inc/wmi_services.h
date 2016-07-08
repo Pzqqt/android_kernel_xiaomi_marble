@@ -181,6 +181,9 @@ typedef enum {
 	 * the host from suspend
 	 */
 	WMI_SERVICE_MARK_FIRST_WAKEUP_PACKET,
+	/* FW supports command that can add/delete multiple mcast filters */
+	WMI_SERVICE_MULTIPLE_MCAST_FILTER_SET,
+
 	WMI_MAX_SERVICE = 128             /* max service */
 } WMI_SERVICE;
 
