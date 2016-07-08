@@ -1216,4 +1216,9 @@ void wma_remove_req(tp_wma_handle wma, uint8_t vdev_id,
 			    uint8_t type);
 int wma_p2p_lo_event_handler(void *handle, uint8_t *event_buf,
 				uint32_t len);
+
+QDF_STATUS wma_process_hal_pwr_dbg_cmd(WMA_HANDLE handle,
+				       struct sir_mac_pwr_dbg_cmd *
+				       sir_pwr_dbg_params);
+
 #endif

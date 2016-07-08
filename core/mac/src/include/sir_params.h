@@ -629,6 +629,8 @@ typedef struct sSirMbMsgP2p {
 #define SIR_HAL_NDP_CONFIRM                 (SIR_HAL_ITC_MSG_TYPES_BEGIN + 356)
 #define SIR_HAL_NDP_END_IND                 (SIR_HAL_ITC_MSG_TYPES_BEGIN + 357)
 
+#define SIR_HAL_POWER_DBG_CMD               (SIR_HAL_ITC_MSG_TYPES_BEGIN + 347)
+
 #define SIR_HAL_MSG_TYPES_END                (SIR_HAL_MSG_TYPES_BEGIN + 0x1FF)
 
 /* CFG message types */

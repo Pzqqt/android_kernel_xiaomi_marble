@@ -15800,3 +15800,51 @@ void sme_register_p2p_lo_event(tHalHandle hHal, void *context,
 	pMac->sme.p2p_lo_event_context = context;
 	sme_release_global_lock(&pMac->sme);
 }
+
+/**
+ * sme_process_mac_pwr_dbg_cmd() - enable mac pwr debugging
+ * @hal: The handle returned by macOpen
+ * @session_id: session id
+ * @dbg_args: args for mac pwr debug command
+ * Return: Return QDF_STATUS, otherwise appropriate failure code
+ */
+QDF_STATUS sme_process_mac_pwr_dbg_cmd(tHalHandle hal, uint32_t session_id,
+				       struct sir_mac_pwr_dbg_cmd*
+				       dbg_args)
+{
+	cds_msg_t message;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct sir_mac_pwr_dbg_cmd *req;
+	int i;
+
+	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
+		sms_log(mac_ctx, LOGE,
+			"CSR session not valid: %d",
+			session_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	req = qdf_mem_malloc(sizeof(*req));
+	if (NULL == req) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  "%s: fail to alloc mac_pwr_dbg_args", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	req->module_id = dbg_args->module_id;
+	req->pdev_id = dbg_args->pdev_id;
+	req->num_args = dbg_args->num_args;
+	for (i = 0; i < req->num_args; i++)
+		req->args[i] = dbg_args->args[i];
+
+	message.type = SIR_HAL_POWER_DBG_CMD;
+	message.bodyptr = req;
+
+	if (!QDF_IS_STATUS_SUCCESS(cds_mq_post_message
+				(QDF_MODULE_ID_WMA, &message))) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Not able to post msg to WDA!",
+			  __func__);
+		qdf_mem_free(req);
+	}
+	return QDF_STATUS_SUCCESS;
+}

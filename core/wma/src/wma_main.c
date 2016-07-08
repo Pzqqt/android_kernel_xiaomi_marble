@@ -1470,6 +1470,41 @@ static int wma_process_fw_event_tasklet_ctx(void *ctx, void *ev)
 }
 
 /**
+ * wma_process_hal_pwr_dbg_cmd() - send hal pwr dbg cmd to fw.
+ * @handle: wma handle
+ * @sir_pwr_dbg_params: unit test command
+ *
+ * This function send unit test command to fw.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS wma_process_hal_pwr_dbg_cmd(WMA_HANDLE handle,
+				       struct sir_mac_pwr_dbg_cmd *
+				       sir_pwr_dbg_params)
+{
+	tp_wma_handle wma_handle = (tp_wma_handle)handle;
+	int i;
+	struct wmi_power_dbg_params wmi_pwr_dbg_params;
+	QDF_STATUS status;
+
+	if (!sir_pwr_dbg_params) {
+		WMA_LOGE("%s: sir_pwr_dbg_params is null", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+	wmi_pwr_dbg_params.module_id = sir_pwr_dbg_params->module_id;
+	wmi_pwr_dbg_params.pdev_id = sir_pwr_dbg_params->pdev_id;
+	wmi_pwr_dbg_params.num_args = sir_pwr_dbg_params->num_args;
+
+	for (i = 0; i < wmi_pwr_dbg_params.num_args; i++)
+		wmi_pwr_dbg_params.args[i] = sir_pwr_dbg_params->args[i];
+
+	status = wmi_unified_send_power_dbg_cmd(wma_handle->wmi_handle,
+						&wmi_pwr_dbg_params);
+
+	return status;
+}
+
+/**
  * wma_process_fw_event_handler() - common event handler to serialize
  *                                  event processing through mc_thread
  * @ctx: wmi context
@@ -5957,6 +5992,11 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 
 	case SIR_HAL_NDP_END_REQ:
 		wma_handle_ndp_end_req(wma_handle, msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case SIR_HAL_POWER_DBG_CMD:
+		wma_process_hal_pwr_dbg_cmd(wma_handle,
+					    msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	default:

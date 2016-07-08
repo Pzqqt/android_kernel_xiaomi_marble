@@ -1131,4 +1131,9 @@ void sme_update_vdev_type_nss(tHalHandle hal, uint8_t max_supp_nss,
 		uint32_t vdev_type_nss, eCsrBand band);
 void sme_register_p2p_lo_event(tHalHandle hHal, void *context,
 					p2p_lo_callback callback);
+
+QDF_STATUS sme_process_mac_pwr_dbg_cmd(tHalHandle hal, uint32_t session_id,
+				       struct sir_mac_pwr_dbg_cmd*
+				       dbg_args);
+
 #endif /* #if !defined( __SME_API_H ) */
