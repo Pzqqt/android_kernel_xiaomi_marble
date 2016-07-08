@@ -733,7 +733,8 @@ static void hdd_ndp_iface_create_rsp_handler(hdd_adapter_t *adapter,
 	struct nan_datapath_ctx *ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(adapter);
 	bool create_fail = false;
 	uint8_t create_transaction_id = 0;
-	uint32_t create_status = 0;
+	uint32_t create_status = NDP_RSP_STATUS_ERROR;
+	uint32_t create_reason = NDP_NAN_DATA_IFACE_CREATE_FAILED;
 
 	ENTER();
 
@@ -743,6 +744,7 @@ static void hdd_ndp_iface_create_rsp_handler(hdd_adapter_t *adapter,
 
 	if (ndi_rsp) {
 		create_status = ndi_rsp->status;
+		create_reason = ndi_rsp->reason;
 	} else {
 		hdd_err("Invalid ndi create response");
 		create_fail = true;
@@ -792,7 +794,7 @@ static void hdd_ndp_iface_create_rsp_handler(hdd_adapter_t *adapter,
 	/* Status return value */
 	if (nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_VALUE,
-			ndi_rsp->reason)) {
+			create_reason)) {
 		hdd_err("VENDOR_ATTR_NDP_DRV_RETURN_VALUE put fail");
 		goto nla_put_failure;
 	}
@@ -805,7 +807,7 @@ static void hdd_ndp_iface_create_rsp_handler(hdd_adapter_t *adapter,
 	hdd_info("status code: %d, value: %d",
 		QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_TYPE, create_status);
 	hdd_info("Return value: %d, value: %d",
-		QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_VALUE, ndi_rsp->reason);
+		QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_VALUE, create_reason);
 
 	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
 
@@ -818,7 +820,7 @@ static void hdd_ndp_iface_create_rsp_handler(hdd_adapter_t *adapter,
 					WLAN_CONTROL_PATH);
 	} else {
 		hdd_err("NDI interface creation failed with reason %d",
-			ndi_rsp->reason);
+			create_reason);
 	}
 
 	/* Something went wrong while starting the BSS */
@@ -1589,6 +1591,7 @@ static void hdd_ndp_end_ind_handler(hdd_adapter_t *adapter,
 	struct nan_datapath_ctx *ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(adapter);
 	hdd_station_ctx_t *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	uint32_t *ndp_instance_array;
+	hdd_adapter_t *ndi_adapter;
 
 	ENTER();
 
@@ -1610,9 +1613,14 @@ static void hdd_ndp_end_ind_handler(hdd_adapter_t *adapter,
 		int idx;
 
 		ndp_instance_array[i] = end_ind->ndp_map[i].ndp_instance_id;
-		ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(
-				hdd_get_adapter_by_vdev(hdd_ctx,
-					end_ind->ndp_map[i].vdev_id));
+		ndi_adapter = hdd_get_adapter_by_vdev(hdd_ctx,
+					end_ind->ndp_map[i].vdev_id);
+		if (ndi_adapter == NULL) {
+			hdd_err("Adapter not found for vdev_id: %d",
+				end_ind->ndp_map[i].vdev_id);
+			continue;
+		}
+		ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(ndi_adapter);
 		idx = hdd_get_peer_idx(sta_ctx,
 				&end_ind->ndp_map[i].peer_ndi_mac_addr);
 		if (idx == INVALID_PEER_IDX) {
