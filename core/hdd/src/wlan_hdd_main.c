@@ -1425,18 +1425,15 @@ bool hdd_dfs_indicate_radar(void *context, void *param)
 		return true;
 
 	if (true == hdd_radar_event->dfs_radar_status) {
-		qdf_spin_lock_bh(&hdd_ctx->dfs_lock);
-		if (hdd_ctx->dfs_radar_found) {
+		if (qdf_atomic_read(&hdd_ctx->dfs_radar_found)) {
 			/*
 			 * Application already triggered channel switch
 			 * on current channel, so return here.
 			 */
-			qdf_spin_unlock_bh(&hdd_ctx->dfs_lock);
 			return false;
 		}
 
-		hdd_ctx->dfs_radar_found = true;
-		qdf_spin_unlock_bh(&hdd_ctx->dfs_lock);
+		qdf_atomic_set(&hdd_ctx->dfs_radar_found, 1);
 
 		status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
 		while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {

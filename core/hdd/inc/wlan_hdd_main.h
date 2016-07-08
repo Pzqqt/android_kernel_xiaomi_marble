@@ -1323,7 +1323,7 @@ struct hdd_context_s {
 
 	/* defining the firmware version */
 	uint32_t target_fw_version;
-	uint32_t dfs_radar_found;
+	qdf_atomic_t dfs_radar_found;
 
 	/* defining the chip/rom version */
 	uint32_t target_hw_version;
@@ -1415,12 +1415,7 @@ struct hdd_context_s {
 
 	uint16_t hdd_txrx_hist_idx;
 	struct hdd_tx_rx_histogram *hdd_txrx_hist;
-	/*
-	 * Dfs lock used to syncronize on sap channel switch during
-	 * radar found indication and application triggered channel
-	 * switch.
-	 */
-	qdf_spinlock_t dfs_lock;
+
 	/*
 	 * place to store FTM capab of target. This allows changing of FTM capab
 	 * at runtime and intersecting it with target capab before updating.
