@@ -6001,9 +6001,15 @@ static inline int hdd_open_p2p_interface(struct hdd_context_t *hdd_ctx,
 static hdd_adapter_t *hdd_open_monitor_interface(hdd_context_t *hdd_ctx,
 						 bool rtnl_held)
 {
-	return hdd_open_adapter(hdd_ctx, QDF_MONITOR_MODE, "wlan%d",
+	hdd_adapter_t *adapter;
+
+	adapter = hdd_open_adapter(hdd_ctx, QDF_MONITOR_MODE, "wlan%d",
 				wlan_hdd_get_intf_addr(hdd_ctx),
 				NET_NAME_UNKNOWN, rtnl_held);
+	if (adapter == NULL)
+		return ERR_PTR(-ENOSPC);
+
+	return adapter;
 }
 
 /**
@@ -6648,6 +6654,8 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 		adapter = hdd_open_interfaces(hdd_ctx, rtnl_held);
 
 	if (IS_ERR(adapter)) {
+		hddLog(QDF_TRACE_LEVEL_FATAL,
+		       FL("Failed to open interface, adapter is NULL"));
 		ret = PTR_ERR(adapter);
 		goto err_cds_disable;
 	}
