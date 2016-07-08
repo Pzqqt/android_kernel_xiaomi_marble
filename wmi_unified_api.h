@@ -819,7 +819,7 @@ QDF_STATUS wmi_unified_roam_scan_offload_scan_period(void *wmi_hdl,
 
 QDF_STATUS wmi_unified_roam_scan_offload_chan_list_cmd(void *wmi_hdl,
 				   uint8_t chan_count,
-				   uint8_t *chan_list,
+				   uint32_t *chan_list,
 				   uint8_t list_type, uint32_t vdev_id);
 
 QDF_STATUS wmi_unified_roam_scan_offload_rssi_change_cmd(void *wmi_hdl,
