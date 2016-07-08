@@ -973,29 +973,29 @@ QDF_STATUS wma_roam_scan_offload_chan_list(tp_wma_handle wma_handle,
 {
 	QDF_STATUS status;
 	int i;
-	uint8_t *chan_list_hz;
+	uint32_t *chan_list_mhz;
 
 	if (chan_count == 0) {
 		WMA_LOGD("%s : invalid number of channels %d", __func__,
 			 chan_count);
 		return QDF_STATUS_E_EMPTY;
 	}
-	chan_list_hz = qdf_mem_malloc(chan_count * sizeof(uint8_t));
-	if (chan_list_hz == NULL) {
+	chan_list_mhz = qdf_mem_malloc(chan_count * sizeof(*chan_list_mhz));
+	if (chan_list_mhz == NULL) {
 		WMA_LOGE("%s : Memory allocation failed", __func__);
 		return QDF_STATUS_E_NOMEM;
 	}
 
 	for (i = 0; ((i < chan_count) &&
 		     (i < SIR_ROAM_MAX_CHANNELS)); i++) {
-		chan_list_hz[i] = cds_chan_to_freq(chan_list[i]);
-		WMA_LOGI("%d,", chan_list_hz[i]);
+		chan_list_mhz[i] = cds_chan_to_freq(chan_list[i]);
+		WMA_LOGI("%d,", chan_list_mhz[i]);
 	}
 
 	status = wmi_unified_roam_scan_offload_chan_list_cmd(wma_handle->wmi_handle,
-				      chan_count, chan_list_hz,
+				      chan_count, chan_list_mhz,
 					  list_type, vdev_id);
-	qdf_mem_free(chan_list_hz);
+	qdf_mem_free(chan_list_mhz);
 
 	return status;
 }
