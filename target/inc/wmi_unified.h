@@ -539,7 +539,7 @@ typedef enum {
 	/** configure thresholds for MAWC */
 	WMI_ROAM_CONFIGURE_MAWC_CMDID,
 	/** configure MultiBand Operation(refer WFA MBO spec) parameter */
-	WMI_ROAM_SET_MBO_PARAM_CMDID,
+	WMI_ROAM_SET_MBO_PARAM_CMDID, /* DEPRECATED */
 
 	/** offload scan specific commands */
 	/** set offload scan AP profile   */
@@ -2488,6 +2488,24 @@ typedef struct {
 	/** ie data array  (ie_len adjusted to  number of words  (ie_len + 4)/4 )  */
 	A_UINT32 ie_data[1];
 } wmi_ie_data;
+
+/**
+ * TLV used for length/buffer
+ */
+typedef struct {
+	/**
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_tlv_buf_len_param
+	 */
+	A_UINT32 tlv_header;
+	A_UINT32 buf_len;       /** Length of buf */
+	/**
+	 * Following this structure is the TLV byte stream of buf
+	 * of length buf_len:
+	 * A_UINT8 buf[];
+	 *
+	 */
+} wmi_tlv_buf_len_param;
 
 typedef struct {
 	/** Len of the SSID */
@@ -14234,6 +14252,15 @@ typedef struct {
 	A_UINT32 qtimer_high;
 } wmi_vdev_tsf_report_event_fixed_param;
 
+/**
+ * ie_id values:
+ * 0 to 255 are used for individual IEEE802.11 Information Element types
+ */
+#define WMI_SET_VDEV_IE_ID_SCAN_SET_DEFAULT_IE 256
+
+/* source values: */
+#define WMI_SET_VDEV_IE_SOURCE_HOST     0x0
+
 typedef struct {
 	/** TLV tag and len; tag equals
 	 * WMITLV_TAG_STRUC_wmi_vdev_set_ie_cmd_fixed_param */
@@ -14244,6 +14271,8 @@ typedef struct {
 	A_UINT32 ie_id;
 	/* ie_len corresponds to num of bytes in ie_data[] */
 	A_UINT32 ie_len;
+	/** source of this command */
+	A_UINT32 ie_source; /* see WMI_SET_VDEV_IE_SOURCE_ defs */
 	/*
 	 * Following this structure is the TLV byte stream of ie data of length
 	 * buf_len:
@@ -14681,7 +14710,7 @@ typedef struct {
  *        1 - Allow to connect to MBO AP only
  * Bit 1-31 : reserved.
  */
-#define WMI_ROAM_MBO_FLAG_MBO_ONLY_MODE  (1<<0)
+#define WMI_ROAM_MBO_FLAG_MBO_ONLY_MODE  (1<<0) /* DEPRECATED */
 
 typedef struct {
 	/*
@@ -14695,7 +14724,7 @@ typedef struct {
 	A_UINT32 enable;
 	/** MBO flags, refer to definition of MBO flags*/
 	A_UINT32 flags;
-} wmi_roam_set_mbo_fixed_param;
+} wmi_roam_set_mbo_fixed_param; /* DEPRECATED */
 
 typedef struct {
 	/*
