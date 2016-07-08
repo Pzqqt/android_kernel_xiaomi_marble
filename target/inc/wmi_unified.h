@@ -347,6 +347,8 @@ typedef enum {
 	WMI_PDEV_WAL_POWER_DEBUG_CMDID,
 	/** set per-AC rx reorder timeouts */
 	WMI_PDEV_SET_REORDER_TIMEOUT_VAL_CMDID,
+	/** WMI command for WOW gpio and type */
+	WMI_PDEV_SET_WAKEUP_CONFIG_CMDID,
 
 	/* VDEV (virtual device) specific commands */
 	/** vdev create */
@@ -4195,6 +4197,32 @@ typedef struct {
 	A_UINT32 enable_override;
 } wmi_vdev_set_dscp_tid_map_cmd_fixed_param;
 
+enum WMI_WAKE_GPIO_TYPE {
+	WMI_WAKE_GPIO_LOW = 1,
+	WMI_WAKE_GPIO_HIGH = 2,
+	WMI_WAKE_GPIO_RISING_EDGE = 3,
+	WMI_WAKE_GPIO_FALLING_EDGE = 4,
+};
+
+/**
+ * Set GPIO numbers used to wakeup host and wakeup target.
+ */
+typedef struct {
+	/**
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_WMI_PDEV_SET_WAKEUP_CONFIG_CMDID_fixed_param
+	 */
+	A_UINT32 tlv_header;
+	/* gpio num used to wakeup host, 0xff disable wakeup gpio */
+	A_UINT32 host_wakeup_gpio;
+	/* refer to WMI_WAKE_GPIO_TYPE */
+	A_UINT32 host_wakeup_type;
+	/* gpio num used to wakeup target, 0xff disable wakeup gpio */
+	A_UINT32 target_wakeup_gpio;
+	/* refer to WMI_WAKE_GPIO_TYPE */
+	A_UINT32 target_wakeup_type;
+} WMI_PDEV_SET_WAKEUP_CONFIG_CMDID_fixed_param;
+
 /** Fixed rate (rate-code) for broadcast/ multicast data frames */
 /* @brief bcast_mcast_data_rate - set the rates for the bcast/ mcast frames
  * @details
@@ -5635,6 +5663,9 @@ typedef enum {
 	 */
 	WMI_VDEV_PARAM_AGG_SW_RETRY_TH,
 
+	/** disable dynamic bw RTS **/
+	WMI_VDEV_PARAM_DISABLE_DYN_BW_RTS,
+
 	/*
 	 * === ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
 	 * The below vdev param types are used for prototyping, and are
@@ -6906,27 +6937,43 @@ typedef union {
 
 /*
  *   CCK max/min tx Rate description
- *   tx_rate = 0:    1Mbps,
- *   tx_rate = 1:    2Mbps
- *   tx_rate = 2:    5.5Mbps
- *   tx_rate = 3:    11Mbps
- *   tx_rate = else : invalid.
+ *   tx_rate = 0:  1   Mbps
+ *   tx_rate = 1:  2   Mbps
+ *   tx_rate = 2:  5.5 Mbps
+ *   tx_rate = 3: 11   Mbps
+ *   tx_rate = else: invalid
  */
-#define WMI_MAX_CCK_TX_RATE 0x03
+enum {
+	WMI_MAX_CCK_TX_RATE_1M,       /* up to 1M CCK Rate avaliable */
+	WMI_MAX_CCK_TX_RATE_2M,       /* up to 2M CCK Rate avaliable */
+	WMI_MAX_CCK_TX_RATE_5_5M,     /* up to 5.5M CCK Rate avaliable */
+	WMI_MAX_CCK_TX_RATE_11M,      /* up to 11M CCK Rate avaliable */
+	WMI_MAX_CCK_TX_RATE = WMI_MAX_CCK_TX_RATE_11M,
+};
 
 /*
  *   OFDM max/min tx Rate description
- *   tx_rate = 0:   6Mbps,
- *   tx_rate = 1:    9Mbps
- *   tx_rate = 2:    12Mbps
- *   tx_rate = 3:     18Mbps
- *   tx_rate = 4:     24Mbps
- *   tx_rate = 5:     32Mbps
- *   tx_rate = 6:     48Mbps
- *   tx_rate = 7:     54Mbps
- *   tx_rate = else : invalid.
+ *   tx_rate = 0:  6 Mbps
+ *   tx_rate = 1:  9 Mbps
+ *   tx_rate = 2: 12 Mbps
+ *   tx_rate = 3: 18 Mbps
+ *   tx_rate = 4: 24 Mbps
+ *   tx_rate = 5: 32 Mbps
+ *   tx_rate = 6: 48 Mbps
+ *   tx_rate = 7: 54 Mbps
+ *   tx_rate = else: invalid
  */
-#define WMI_MAX_OFDM_TX_RATE 0x07
+enum {
+	WMI_MAX_OFDM_TX_RATE_6M,      /* up to 6M OFDM Rate avaliable */
+	WMI_MAX_OFDM_TX_RATE_9M,      /* up to 9M OFDM Rate avaliable */
+	WMI_MAX_OFDM_TX_RATE_12M,     /* up to 12M OFDM Rate avaliable */
+	WMI_MAX_OFDM_TX_RATE_18M,     /* up to 18M OFDM Rate avaliable */
+	WMI_MAX_OFDM_TX_RATE_24M,     /* up to 24M OFDM Rate avaliable */
+	WMI_MAX_OFDM_TX_RATE_36M,     /* up to 36M OFDM Rate avaliable */
+	WMI_MAX_OFDM_TX_RATE_48M,     /* up to 48M OFDM Rate avaliable */
+	WMI_MAX_OFDM_TX_RATE_54M,     /* up to 54M OFDM Rate avaliable */
+	WMI_MAX_OFDM_TX_RATE = WMI_MAX_OFDM_TX_RATE_54M,
+};
 
 /*
  *    HT max/min tx rate description
@@ -8878,6 +8925,7 @@ typedef struct {
 	A_UINT32 swol_indoor_pattern;     /* wakeup pattern */
 	A_UINT32 swol_indoor_exception;   /* wakeup when exception happens */
 	A_UINT32 swol_indoor_exception_app;
+	A_UINT32 swol_assist_enable;      /* whether to enable IoT mode */
 } wmi_extwow_set_app_type1_params_cmd_fixed_param;
 
 typedef struct {
