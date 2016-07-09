@@ -826,15 +826,10 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		case eSIR_INFRA_AP_MODE:
 			lim_configure_ap_start_bss_session(mac_ctx, session,
 				sme_start_bss_req);
-			if (session->pePersona == QDF_SAP_MODE) {
-				session->txBFIniFeatureEnabled =
-					sme_start_bss_req->txbf_ini_enabled;
-				session->txbf_csn_value =
-					sme_start_bss_req->txbf_csn_val;
+			if (session->pePersona == QDF_SAP_MODE)
 				session->vdev_nss = vdev_type_nss->sap;
-			} else {
+			else
 				session->vdev_nss = vdev_type_nss->p2p_go;
-			}
 			break;
 		case eSIR_IBSS_MODE:
 			session->limSystemRole = eLIM_STA_IN_IBSS_ROLE;
@@ -930,22 +925,23 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		}
 
 		if (session->vhtCapability &&
-				(CH_WIDTH_160MHZ > session->ch_width)) {
-			if (wlan_cfg_get_int(mac_ctx,
-					WNI_CFG_VHT_SU_BEAMFORMER_CAP, &val) !=
-				eSIR_SUCCESS)
-				lim_log(mac_ctx, LOGE, FL(
-					"cfg get vht su bformer failed"));
-
-			session->enable_su_tx_bformer = val;
-		} else {
+				(session->ch_width > CH_WIDTH_80MHZ)) {
 			session->nss = 1;
+			lim_log(mac_ctx, LOG1, FL("nss set to [%d]"),
+							session->nss);
 		}
-		lim_log(mac_ctx, LOG1, FL("vht su tx bformer %d"), val);
+		lim_log(mac_ctx, LOG1, FL("vht su tx bformer %d"),
+			session->vht_config.su_beam_former);
 
 		/* Delete pre-auth list if any */
 		lim_delete_pre_auth_list(mac_ctx);
 
+		if (session->nss == 1) {
+			session->vht_config.su_beam_former = 0;
+			session->vht_config.tx_stbc = 0;
+			session->vht_config.num_soundingdim = 0;
+			session->ht_caps.txSTBC = 0;
+		}
 		/*
 		 * keep the RSN/WPA IE information in PE Session Entry
 		 * later will be using this to check when received (Re)Assoc req
@@ -1784,46 +1780,25 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			IS_DOT11_MODE_VHT(session->dot11mode);
 		if (session->vhtCapability) {
 			if (session->pePersona == QDF_STA_MODE) {
-				session->txBFIniFeatureEnabled =
-					sme_join_req->txBFIniFeatureEnabled;
+				session->vht_config.su_beam_formee =
+					sme_join_req->vht_config.su_beam_formee;
 			} else {
-				session->txBFIniFeatureEnabled = 0;
+				session->vht_config.su_beam_formee = 0;
 			}
-			session->txMuBformee = sme_join_req->txMuBformee;
 			session->enableVhtpAid =
 				sme_join_req->enableVhtpAid;
 			session->enableVhtGid =
 				sme_join_req->enableVhtGid;
-
-			if (wlan_cfg_get_int(mac_ctx,
-					WNI_CFG_VHT_SU_BEAMFORMER_CAP, &val) !=
-				eSIR_SUCCESS)
-				lim_log(mac_ctx, LOGE, FL(
-					"cfg get vht su bformer failed"));
-
-			session->enable_su_tx_bformer = val;
+			lim_log(mac_ctx, LOG1, FL("vht su bformer [%d]"),
+					session->vht_config.su_beam_former);
 		}
-		if (session->vhtCapability && session->txBFIniFeatureEnabled) {
-			if (cfg_set_int(mac_ctx, WNI_CFG_VHT_SU_BEAMFORMEE_CAP,
-				session->txBFIniFeatureEnabled) !=
-				eSIR_SUCCESS) {
-				/*
-				 * Set failed for
-				 * CFG_VHT_SU_BEAMFORMEE_CAP
-				 */
-				lim_log(mac_ctx, LOGP,
-					FL("Failed CFG_VHT_SU_BEAMFORMEE_CAP"));
-				ret_code = eSIR_LOGP_EXCEPTION;
-				goto end;
-			}
-			session->txbf_csn_value = sme_join_req->txBFCsnValue;
-		}
+
 		lim_log(mac_ctx, LOG1,
-				FL("vhtCapability: %d txBFIniFeatureEnabled: %d txbf_csn_value: %d su_tx_bformer %d"),
+				FL("vhtCapability: %d su_beam_formee: %d txbf_csn_value: %d su_tx_bformer %d"),
 				session->vhtCapability,
-				session->txBFIniFeatureEnabled,
-				session->txbf_csn_value,
-				session->enable_su_tx_bformer);
+				session->vht_config.su_beam_formee,
+				session->vht_config.csnof_beamformer_antSup,
+				session->vht_config.su_beam_former);
 		/*Phy mode */
 		session->gLimPhyMode = bss_desc->nwType;
 		handle_ht_capabilityand_ht_info(mac_ctx, session);
@@ -1970,6 +1945,17 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			&session->limCurrentBssPropCap,
 			&session->gLimCurrentBssUapsd,
 			&local_power_constraint, session);
+
+		/*
+		 * Once the AP capabilities are available then set the
+		 * beam forming capabilities accordingly.
+		 */
+		if (session->nss == 1) {
+			session->vht_config.su_beam_former = 0;
+			session->vht_config.tx_stbc = 0;
+			session->vht_config.num_soundingdim = 0;
+			session->ht_caps.txSTBC = 0;
+		}
 
 #ifdef FEATURE_WLAN_ESE
 		session->maxTxPower = lim_get_max_tx_power(reg_max,

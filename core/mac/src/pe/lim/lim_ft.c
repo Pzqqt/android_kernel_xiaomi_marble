@@ -371,11 +371,11 @@ void lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 				pAddBssParams->staContext.vhtCapable = 1;
 				if ((pBeaconStruct->VHTCaps.suBeamFormerCap ||
 				     pBeaconStruct->VHTCaps.muBeamformerCap) &&
-				    pftSessionEntry->txBFIniFeatureEnabled)
+				    pftSessionEntry->vht_config.su_beam_formee)
 					sta_ctx->vhtTxBFCapable
 						= 1;
 				if (pBeaconStruct->VHTCaps.suBeamformeeCap &&
-				    pftSessionEntry->enable_su_tx_bformer)
+				    pftSessionEntry->vht_config.su_beam_former)
 					sta_ctx->enable_su_tx_bformer = 1;
 			}
 			if ((pBeaconStruct->HTCaps.supportedChannelWidthSet) &&

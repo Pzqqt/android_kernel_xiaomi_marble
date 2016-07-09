@@ -140,13 +140,13 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 			VHT_MCS_3x3_MASK) &&
 		      ((beacon_struct->VHTCaps.txMCSMap & VHT_MCS_2x2_MASK) !=
 		       VHT_MCS_2x2_MASK)))
-			session->txBFIniFeatureEnabled = 0;
+			session->vht_config.su_beam_formee = 0;
 	} else {
 		session->vhtCapabilityPresentInBeacon = 0;
 	}
 
 	if (session->vhtCapabilityPresentInBeacon == 1 &&
-			session->txBFIniFeatureEnabled == 0) {
+			session->vht_config.su_beam_formee == 0) {
 		cfg_set_status = cfg_set_int(mac_ctx,
 				WNI_CFG_VHT_SU_BEAMFORMEE_CAP,
 				0);
@@ -161,7 +161,7 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 				&enable_txbf_20mhz);
 		if ((IS_SIR_STATUS_SUCCESS(cfg_get_status)) &&
 				(false == enable_txbf_20mhz))
-			session->txBFIniFeatureEnabled = 0;
+			session->vht_config.su_beam_formee = 0;
 	} else if (session->vhtCapabilityPresentInBeacon &&
 			vht_op->chanWidth) {
 		/* If VHT is supported min 80 MHz support is must */
@@ -242,13 +242,13 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 				session->ch_center_freq_seg1,
 				session->ch_width);
 		if (CH_WIDTH_80MHZ < session->ch_width) {
-			session->enable_su_tx_bformer = 0;
+			session->vht_config.su_beam_former = 0;
 			session->nss = 1;
 		}
 	}
 	if (session->vhtCapabilityPresentInBeacon == 1 &&
 			!session->htSupportedChannelWidthSet &&
-			session->txBFIniFeatureEnabled == 0) {
+			session->vht_config.su_beam_formee == 0) {
 		cfg_set_status = cfg_set_int(mac_ctx,
 				WNI_CFG_VHT_SU_BEAMFORMEE_CAP,
 				0);

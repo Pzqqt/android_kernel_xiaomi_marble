@@ -1186,7 +1186,6 @@ typedef struct tagCsrConfigParam {
 	uint32_t nVhtChannelWidth;
 	uint8_t enableTxBF;
 	uint8_t enable_txbf_sap_mode;
-	uint8_t txBFCsnValue;
 	uint8_t enable2x2;
 	bool enableVhtFor24GHz;
 	uint8_t enableMuBformee;

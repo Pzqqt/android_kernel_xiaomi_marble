@@ -2269,12 +2269,12 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 #ifdef FEATURE_WLAN_TDLS
 			((STA_ENTRY_PEER == sta_ds->staType)
 			 || (STA_ENTRY_TDLS_PEER == sta_ds->staType)) ?
-					 sta_ds->vhtBeamFormerCapable :
-					 session_entry->txBFIniFeatureEnabled;
+				 sta_ds->vhtBeamFormerCapable :
+				 session_entry->vht_config.su_beam_formee;
 #else
 			(STA_ENTRY_PEER == sta_ds->staType) ?
-					 sta_ds->vhtBeamFormerCapable :
-					 session_entry->txBFIniFeatureEnabled;
+				 sta_ds->vhtBeamFormerCapable :
+				 session_entry->vht_config.su_beam_formee;
 #endif
 		add_sta_params->enable_su_tx_bformer =
 			sta_ds->vht_su_bfee_capable;
@@ -2793,9 +2793,10 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 		lim_log(pMac, LOG1, FL("VHT WIDTH SET %d"),
 			pAddStaParams->ch_width);
 	}
-	pAddStaParams->vhtTxBFCapable = psessionEntry->txBFIniFeatureEnabled;
+	pAddStaParams->vhtTxBFCapable =
+		psessionEntry->vht_config.su_beam_formee;
 	pAddStaParams->enable_su_tx_bformer =
-		psessionEntry->enable_su_tx_bformer;
+		psessionEntry->vht_config.su_beam_former;
 	lim_log(pMac, LOG2, FL("vhtCapable: %d vhtTxBFCapable %d, su_bfer %d"),
 		pAddStaParams->vhtCapable, pAddStaParams->vhtTxBFCapable,
 		pAddStaParams->enable_su_tx_bformer);
@@ -2811,7 +2812,8 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 		}
 		pAddStaParams->maxAmpduSize = (uint8_t) ampduLenExponent;
 	}
-	pAddStaParams->vhtTxMUBformeeCapable = psessionEntry->txMuBformee;
+	pAddStaParams->vhtTxMUBformeeCapable =
+				psessionEntry->vht_config.mu_beam_formee;
 	pAddStaParams->enableVhtpAid = psessionEntry->enableVhtpAid;
 	pAddStaParams->enableAmpduPs = psessionEntry->enableAmpduPs;
 	pAddStaParams->enableHtSmps = (psessionEntry->enableHtSmps &&
@@ -3749,15 +3751,16 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 			}
 
 			if ((vht_caps != NULL) && (vht_caps->suBeamFormerCap ||
-						vht_caps->muBeamformerCap) &&
-					psessionEntry->txBFIniFeatureEnabled)
+				vht_caps->muBeamformerCap) &&
+				psessionEntry->vht_config.su_beam_formee)
 				sta_context->vhtTxBFCapable = 1;
 
 			if ((vht_caps != NULL) && vht_caps->muBeamformerCap &&
-					psessionEntry->txMuBformee)
+				psessionEntry->vht_config.mu_beam_formee)
 				sta_context->vhtTxMUBformeeCapable = 1;
+
 			if ((vht_caps != NULL) && vht_caps->suBeamformeeCap &&
-					psessionEntry->enable_su_tx_bformer)
+				psessionEntry->vht_config.su_beam_former)
 				sta_context->enable_su_tx_bformer = 1;
 		}
 
@@ -4286,18 +4289,20 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 				vht_caps = &pBeaconStruct->vendor2_ie.VHTCaps;
 
 			if ((vht_caps != NULL) && (vht_caps->suBeamFormerCap ||
-						vht_caps->muBeamformerCap) &&
-					psessionEntry->txBFIniFeatureEnabled)
+				vht_caps->muBeamformerCap) &&
+				psessionEntry->vht_config.su_beam_formee)
 				pAddBssParams->staContext.vhtTxBFCapable = 1;
 
 			if ((vht_caps != NULL) && vht_caps->muBeamformerCap &&
-					psessionEntry->txMuBformee)
+				psessionEntry->vht_config.mu_beam_formee)
 				pAddBssParams->staContext.vhtTxMUBformeeCapable
 						= 1;
+
 			if ((vht_caps != NULL) && vht_caps->suBeamformeeCap &&
-					psessionEntry->enable_su_tx_bformer)
+				psessionEntry->vht_config.su_beam_former)
 				pAddBssParams->staContext.enable_su_tx_bformer
 						= 1;
+
 			lim_log(pMac, LOG2, FL("StaContext: su_tx_bfer %d"),
 				pAddBssParams->staContext.enable_su_tx_bformer);
 		}

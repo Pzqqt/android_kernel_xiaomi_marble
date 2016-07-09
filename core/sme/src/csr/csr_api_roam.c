@@ -2314,14 +2314,11 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 
 		pMac->roam.configParam.nVhtChannelWidth =
 			pParam->nVhtChannelWidth;
-		pMac->roam.configParam.txBFEnable = pParam->enableTxBF;
 		pMac->roam.configParam.enable_txbf_sap_mode =
 			pParam->enable_txbf_sap_mode;
-		pMac->roam.configParam.txBFCsnValue = pParam->txBFCsnValue;
 		pMac->roam.configParam.enable2x2 = pParam->enable2x2;
 		pMac->roam.configParam.enableVhtFor24GHz =
 			pParam->enableVhtFor24GHz;
-		pMac->roam.configParam.txMuBformee = pParam->enableMuBformee;
 		pMac->roam.configParam.enableVhtpAid = pParam->enableVhtpAid;
 		pMac->roam.configParam.enableVhtGid = pParam->enableVhtGid;
 		pMac->roam.configParam.enableAmpduPs = pParam->enableAmpduPs;
@@ -2512,11 +2509,8 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 		     &cfg_params->neighborRoamConfig,
 		     sizeof(tCsrNeighborRoamConfigParams));
 	pParam->nVhtChannelWidth = cfg_params->nVhtChannelWidth;
-	pParam->enableTxBF = cfg_params->txBFEnable;
 	pParam->enable_txbf_sap_mode =
 		cfg_params->enable_txbf_sap_mode;
-	pParam->txBFCsnValue = cfg_params->txBFCsnValue;
-	pParam->enableMuBformee = cfg_params->txMuBformee;
 	pParam->enableVhtFor24GHz = cfg_params->enableVhtFor24GHz;
 	pParam->ignore_peer_erp_info = cfg_params->ignore_peer_erp_info;
 	pParam->enable2x2 = cfg_params->enable2x2;
@@ -13615,7 +13609,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 	struct ps_params *ps_param = &ps_global_info->ps_params[sessionId];
 	uint8_t ese_config = 0;
 	tpCsrNeighborRoamControlInfo neigh_roam_info;
-
+	uint32_t value = 0, value1 = 0;
 
 	if (!pSession) {
 		sms_log(pMac, LOGE, FL("  session %d not found "), sessionId);
@@ -14088,11 +14082,19 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			FL("ht capability 0x%x VHT capability 0x%x"),
 			(unsigned int)(*(uint32_t *) &csr_join_req->htConfig),
 			(unsigned int)(*(uint32_t *) &csr_join_req->vht_config));
-		csr_join_req->txBFIniFeatureEnabled =
-				(uint8_t) pMac->roam.configParam.txBFEnable;
-		if (pMac->roam.configParam.txBFEnable) {
-			txBFCsnValue =
-				(uint8_t)pMac->roam.configParam.txBFCsnValue;
+		if (wlan_cfg_get_int(pMac, WNI_CFG_VHT_SU_BEAMFORMEE_CAP,
+				     &value) != eSIR_SUCCESS)
+			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+				FL("Failed to get SU beamformee capability"));
+		if (wlan_cfg_get_int(pMac,
+				WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED,
+				&value1) != eSIR_SUCCESS)
+			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+				FL("Failed to get CSN beamformee capability"));
+
+		csr_join_req->vht_config.su_beam_formee = value;
+		if (value) {
+			txBFCsnValue = (uint8_t)value1;
 			if (IS_BSS_VHT_CAPABLE(pIes->VHTCaps) &&
 					pIes->VHTCaps.numSoundingDim)
 				txBFCsnValue = QDF_MIN(txBFCsnValue,
@@ -14102,10 +14104,14 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 				txBFCsnValue = QDF_MIN(txBFCsnValue,
 					pIes->vendor2_ie.VHTCaps.numSoundingDim);
 		}
-		csr_join_req->txBFCsnValue = txBFCsnValue;
+		csr_join_req->vht_config.csnof_beamformer_antSup = txBFCsnValue;
 
-		csr_join_req->txMuBformee =
-			(uint8_t) pMac->roam.configParam.txMuBformee;
+		if (wlan_cfg_get_int(pMac,
+				WNI_CFG_VHT_MU_BEAMFORMEE_CAP, &value)
+				!= eSIR_SUCCESS)
+			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+				FL("Failed to get CSN beamformee capability"));
+		csr_join_req->vht_config.mu_beam_formee = (uint8_t) value;
 
 		csr_join_req->enableVhtpAid =
 			(uint8_t) pMac->roam.configParam.enableVhtpAid;
@@ -14765,6 +14771,7 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t sessionId
 {
 	tSirSmeStartBssReq *pMsg;
 	uint16_t wTmp;
+	uint32_t value = 0;
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
 
 	if (!pSession) {
@@ -14828,10 +14835,21 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t sessionId
 	pMsg->isCoalesingInIBSSAllowed = pMac->isCoalesingInIBSSAllowed;
 	pMsg->bssPersona = pParam->bssPersona;
 	pMsg->txLdpcIniFeatureEnabled = pMac->roam.configParam.txLdpcEnable;
-	pMsg->txbf_ini_enabled =
-		(uint8_t)pMac->roam.configParam.txBFEnable &&
+
+	if (wlan_cfg_get_int(pMac, WNI_CFG_VHT_SU_BEAMFORMEE_CAP, &value)
+					!= eSIR_SUCCESS)
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  FL("could not get SU beam formee capability"));
+	pMsg->vht_config.su_beam_formee =
+		(uint8_t)value &&
 		(uint8_t)pMac->roam.configParam.enable_txbf_sap_mode;
-	pMsg->txbf_csn_val = (uint8_t)pMac->roam.configParam.txBFCsnValue;
+	if (wlan_cfg_get_int(pMac,
+			WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED,
+			&value) != eSIR_SUCCESS)
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+				FL("Failed to get CSN beamformee capability"));
+	pMsg->vht_config.csnof_beamformer_antSup = (uint8_t)value;
+
 #ifdef WLAN_FEATURE_11W
 	pMsg->pmfCapable = pParam->mfpCapable;
 	pMsg->pmfRequired = pParam->mfpRequired;

@@ -426,10 +426,11 @@ static void mlm_add_sta(tpAniSirGlobal mac_ctx, tpAddStaParams sta_param,
 	if (session_entry->vhtCapability) {
 		sta_param->vhtCapable = true;
 		sta_param->vhtTxBFCapable =
-				session_entry->txBFIniFeatureEnabled;
-		sta_param->vhtTxMUBformeeCapable = session_entry->txMuBformee;
+				session_entry->vht_config.su_beam_formee;
+		sta_param->vhtTxMUBformeeCapable =
+				session_entry->vht_config.mu_beam_formee;
 		sta_param->enable_su_tx_bformer =
-				session_entry->enable_su_tx_bformer;
+				session_entry->vht_config.su_beam_former;
 	}
 	/*
 	 * Since this is Self-STA, need to populate Self MAX_AMPDU_SIZE

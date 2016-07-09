@@ -971,6 +971,7 @@ populate_dot11f_vht_caps(tpAniSirGlobal pMac,
 
 		if (psessionEntry->ch_width < CH_WIDTH_160MHZ) {
 			pDot11f->shortGI160and80plus80MHz = 0;
+			pDot11f->supportedChannelWidthSet = 0;
 		} else {
 			pDot11f->shortGI160and80plus80MHz =
 				psessionEntry->vht_config.shortgi160and80plus80;
@@ -982,18 +983,20 @@ populate_dot11f_vht_caps(tpAniSirGlobal pMac,
 		if (psessionEntry->htConfig.ht_rx_stbc)
 			pDot11f->rxSTBC = psessionEntry->vht_config.rx_stbc;
 
-		pDot11f->suBeamformeeCap = psessionEntry->txBFIniFeatureEnabled;
-		if (psessionEntry->txBFIniFeatureEnabled) {
+		pDot11f->suBeamformeeCap =
+			psessionEntry->vht_config.su_beam_formee;
+		if (psessionEntry->vht_config.su_beam_formee) {
 			nCfgValue = 0;
 			CFG_GET_INT(nStatus, pMac,
 				    WNI_CFG_VHT_MU_BEAMFORMEE_CAP, nCfgValue);
 			pDot11f->muBeamformeeCap = (nCfgValue & 0x0001);
 			pDot11f->csnofBeamformerAntSup =
-				psessionEntry->txbf_csn_value;
+			      psessionEntry->vht_config.csnof_beamformer_antSup;
 		} else {
 			pDot11f->muBeamformeeCap = 0;
 		}
-		pDot11f->suBeamFormerCap = psessionEntry->enable_su_tx_bformer;
+		pDot11f->suBeamFormerCap =
+			psessionEntry->vht_config.su_beam_former;
 
 		pDot11f->vhtTXOPPS = psessionEntry->vht_config.vht_txops;
 

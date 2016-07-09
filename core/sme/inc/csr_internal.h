@@ -602,12 +602,9 @@ typedef struct tagCsrConfig {
 	/* To enable scanning 2g channels twice on single scan req from HDD */
 	bool fScanTwice;
 	uint32_t nVhtChannelWidth;
-	uint8_t txBFEnable;
 	uint8_t enable_txbf_sap_mode;
-	uint8_t txBFCsnValue;
 	uint8_t enable2x2;
 	bool enableVhtFor24GHz;
-	uint8_t txMuBformee;
 	uint8_t enableVhtpAid;
 	uint8_t enableVhtGid;
 	uint8_t enableAmpduPs;

@@ -1373,12 +1373,12 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 		sta_ds->mlmStaContext.vhtCapability = 0;
 	}
 	if (sta_ds->mlmStaContext.vhtCapability) {
-		if (session->txBFIniFeatureEnabled &&
+		if (session->vht_config.su_beam_formee &&
 				assoc_req->VHTCaps.suBeamFormerCap)
 			sta_ds->vhtBeamFormerCapable = 1;
 		else
 			sta_ds->vhtBeamFormerCapable = 0;
-		if (session->enable_su_tx_bformer &&
+		if (session->vht_config.su_beam_former &&
 				assoc_req->VHTCaps.suBeamformeeCap)
 			sta_ds->vht_su_bfee_capable = 1;
 		else

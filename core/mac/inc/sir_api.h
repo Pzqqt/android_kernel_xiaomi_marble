@@ -653,8 +653,6 @@ typedef struct sSirSmeStartBssReq {
 	uint8_t center_freq_seg0;
 	uint8_t center_freq_seg1;
 	uint8_t sec_ch_offset;
-	bool txbf_ini_enabled;
-	uint8_t txbf_csn_val;
 
 	uint8_t privacy;
 	uint8_t apUapsdEnable;
@@ -1140,9 +1138,6 @@ typedef struct sSirSmeJoinReq {
 	uint8_t txLdpcIniFeatureEnabled;
 	tSirHTConfig htConfig;
 	struct sir_vht_config vht_config;
-	uint8_t txBFIniFeatureEnabled;
-	uint8_t txBFCsnValue;
-	uint8_t txMuBformee;
 	uint8_t enableVhtpAid;
 	uint8_t enableVhtGid;
 	uint8_t enableAmpduPs;

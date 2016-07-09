@@ -6797,6 +6797,15 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_IBSS_ATIM_WIN_SIZE to CFG");
 	}
+
+	if (sme_cfg_set_int(pHddCtx->hHal,
+		WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED,
+		pConfig->txBFCsnValue) ==
+			QDF_STATUS_E_FAILURE) {
+		fStatus = false;
+		hddLog(LOGE,
+		       "Could not pass on WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED to CFG");
+	}
 	return fStatus;
 }
 #ifdef FEATURE_WLAN_SCAN_PNO
@@ -6937,7 +6946,6 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	smeConfig->csrConfig.enableTxBF = pConfig->enableTxBF;
 	smeConfig->csrConfig.enable_txbf_sap_mode =
 		pConfig->enable_txbf_sap_mode;
-	smeConfig->csrConfig.txBFCsnValue = pConfig->txBFCsnValue;
 	smeConfig->csrConfig.enable2x2 = pConfig->enable2x2;
 	smeConfig->csrConfig.enableVhtFor24GHz = pConfig->enableVhtFor24GHzBand;
 	smeConfig->csrConfig.enableMuBformee = pConfig->enableMuBformee;
