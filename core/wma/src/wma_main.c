@@ -3965,8 +3965,8 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 		wma_handle->fine_time_measurement_cap;
 	wma_setup_egap_support(&tgt_cfg, wma_handle);
 
-	wma_handle->tgt_cfg_update_cb(hdd_ctx, &tgt_cfg);
 	wma_update_hdd_cfg_ndp(wma_handle, &tgt_cfg);
+	wma_handle->tgt_cfg_update_cb(hdd_ctx, &tgt_cfg);
 }
 
 /**

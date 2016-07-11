@@ -128,7 +128,7 @@ static QDF_STATUS lim_add_ndi_peer(tpAniSirGlobal mac_ctx,
 static QDF_STATUS lim_handle_ndp_indication_event(tpAniSirGlobal mac_ctx,
 					struct ndp_indication_event *ndp_ind)
 {
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	lim_log(mac_ctx, LOG1,
 		FL("role: %d, vdev: %d, peer_mac_addr "MAC_ADDRESS_STR),
@@ -138,10 +138,6 @@ static QDF_STATUS lim_handle_ndp_indication_event(tpAniSirGlobal mac_ctx,
 	if ((ndp_ind->role == NDP_ROLE_INITIATOR) ||
 	   ((NDP_ROLE_RESPONDER == ndp_ind->role) &&
 	   (NDP_ACCEPT_POLICY_ALL == ndp_ind->policy))) {
-		/* Free config only for INITIATOR role */
-		qdf_mem_free(ndp_ind->ndp_config.ndp_cfg);
-		qdf_mem_free(ndp_ind->ndp_info.ndp_app_info);
-
 		status = lim_add_ndi_peer(mac_ctx, ndp_ind->vdev_id,
 				ndp_ind->peer_mac_addr);
 		if (QDF_STATUS_SUCCESS != status) {
@@ -168,10 +164,12 @@ ndp_indication_failed:
 	 * As for success responder case this info is sent till HDD
 	 * and will be freed in sme.
 	 */
-	if ((status != QDF_STATUS_SUCCESS) ||
-			(NDP_ROLE_INITIATOR == ndp_ind->role)) {
+	if (status != QDF_STATUS_SUCCESS ||
+			NDP_ROLE_INITIATOR == ndp_ind->role) {
 		qdf_mem_free(ndp_ind->ndp_config.ndp_cfg);
 		qdf_mem_free(ndp_ind->ndp_info.ndp_app_info);
+		ndp_ind->ndp_config.ndp_cfg = NULL;
+		ndp_ind->ndp_info.ndp_app_info = NULL;
 	}
 	return status;
 }
@@ -496,8 +494,6 @@ QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx, cds_msg_t *msg)
 	case SIR_HAL_NDP_INDICATION: {
 		struct ndp_indication_event *ndp_ind = msg->bodyptr;
 		status = lim_handle_ndp_indication_event(mac_ctx, ndp_ind);
-		qdf_mem_free(ndp_ind->ndp_config.ndp_cfg);
-		qdf_mem_free(ndp_ind->ndp_info.ndp_app_info);
 		break;
 	}
 	case SIR_HAL_NDP_RESPONDER_RSP:

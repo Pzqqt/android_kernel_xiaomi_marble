@@ -6342,18 +6342,19 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 		roam_info.u.pConnectedProfile = &session->connectedProfile;
 		qdf_mem_copy(&roam_info.bssid, &bss_desc->bssId,
 			    sizeof(struct qdf_mac_addr));
-	}
-	csr_roam_state_change(mac_ctx, eCSR_ROAMING_STATE_JOINED,
-			session_id);
-	if (!QDF_IS_STATUS_SUCCESS
-		(csr_get_parsed_bss_description_ies(mac_ctx, bss_desc,
-						    &ies_ptr))) {
-		sms_log(mac_ctx, LOGW, FL("cannot parse IBSS IEs"));
-		roam_info.pBssDesc = bss_desc;
-		csr_roam_call_callback(mac_ctx, session_id, &roam_info,
-			cmd->u.roamCmd.roamId, eCSR_ROAM_IBSS_IND,
-			eCSR_ROAM_RESULT_IBSS_START_FAILED);
-		return;
+	} else {
+		csr_roam_state_change(mac_ctx, eCSR_ROAMING_STATE_JOINED,
+				session_id);
+		if (!QDF_IS_STATUS_SUCCESS
+			(csr_get_parsed_bss_description_ies(mac_ctx, bss_desc,
+							    &ies_ptr))) {
+			sms_log(mac_ctx, LOGW, FL("cannot parse IBSS IEs"));
+			roam_info.pBssDesc = bss_desc;
+			csr_roam_call_callback(mac_ctx, session_id, &roam_info,
+				cmd->u.roamCmd.roamId, eCSR_ROAM_IBSS_IND,
+				eCSR_ROAM_RESULT_IBSS_START_FAILED);
+			return;
+		}
 	}
 	if (!CSR_IS_INFRA_AP(profile)) {
 		scan_res =

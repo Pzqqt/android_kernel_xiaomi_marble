@@ -1869,7 +1869,7 @@ int hdd_init_nan_data_mode(struct hdd_adapter_s *adapter)
 	status = sme_open_session(hdd_ctx->hHal, hdd_sme_roam_callback,
 			adapter, (uint8_t *)&adapter->macAddressCurrent,
 			&adapter->sessionId, type, sub_type);
-	if (QDF_STATUS_SUCCESS == status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("sme_open_session() failed with status code %d",
 			status);
 		ret_val = -EAGAIN;

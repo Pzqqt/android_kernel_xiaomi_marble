@@ -2131,7 +2131,8 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 	}
 	qdf_mem_set((uint8_t *) add_sta_params, sizeof(tAddStaParams), 0);
 
-	if (LIM_IS_AP_ROLE(session_entry) || LIM_IS_IBSS_ROLE(session_entry))
+	if (LIM_IS_AP_ROLE(session_entry) || LIM_IS_IBSS_ROLE(session_entry) ||
+		LIM_IS_NDI_ROLE(session_entry))
 		sta_Addr = &sta_ds->staAddr;
 #ifdef FEATURE_WLAN_TDLS
 	/* SystemRole shouldn't be matter if staType is TDLS peer */

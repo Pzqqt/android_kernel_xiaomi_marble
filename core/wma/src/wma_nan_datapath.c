@@ -967,7 +967,7 @@ void wma_add_bss_ndi_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	}
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	if (pdev) {
+	if (!pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
 		goto send_fail_resp;
 	}
