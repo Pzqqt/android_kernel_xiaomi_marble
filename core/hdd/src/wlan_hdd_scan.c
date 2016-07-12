@@ -2136,13 +2136,16 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 						num_ignore_dfs_ch++;
 						break;
 					}
-
-					valid_ch[num_ch++] =
-						request->channels[i]->hw_value;
-					len +=
-						snprintf(chList + len, 5, "%d ",
-							 request->channels[i]->
-							 hw_value);
+					if (!cds_is_dsrc_channel(
+					    cds_chan_to_freq(
+					    request->channels[i]->hw_value))) {
+						valid_ch[num_ch++] = request->
+							channels[i]->hw_value;
+						len += snprintf(chList + len,
+							5, "%d ",
+							request->channels[i]->
+							hw_value);
+					}
 					break;
 				}
 			}
@@ -2152,8 +2155,8 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 		/* If all channels are DFS and dropped,
 		 * then ignore the PNO request
 		 */
-		if (num_ignore_dfs_ch == request->n_channels) {
-			hdd_notice("All requested channels are DFS channels");
+		if (!num_ch) {
+			hdd_notice("Channel list empty due to filtering of DSRC,DFS channels");
 			ret = -EINVAL;
 			goto error;
 		}
