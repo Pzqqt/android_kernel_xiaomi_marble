@@ -1115,8 +1115,8 @@ void __qdf_dmaaddr_to_32s(qdf_dma_addr_t dmaaddr,
 				      uint32_t *lo, uint32_t *hi)
 {
 	if (sizeof(dmaaddr) > sizeof(uint32_t)) {
-		*lo = (uint32_t) (dmaaddr & 0x0ffffffff);
-		*hi = (uint32_t) (dmaaddr >> 32);
+		*lo = lower_32_bits(dmaaddr);
+		*hi = upper_32_bits(dmaaddr);
 	} else {
 		*lo = dmaaddr;
 		*hi = 0;

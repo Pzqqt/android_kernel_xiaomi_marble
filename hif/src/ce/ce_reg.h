@@ -258,8 +258,7 @@ uint32_t DEBUG_CE_DEST_RING_READ_IDX_GET(struct hif_softc *scn,
 				     & (uint64_t)(0xF00000000))>>32))
 
 #define VADDR_FOR_CE(scn, CE_ctrl_addr)\
-	((uint32_t *)((uint64_t)(scn->vaddr_rri_on_ddr) + \
-	COPY_ENGINE_ID(CE_ctrl_addr)*sizeof(uint32_t)))
+	((scn->vaddr_rri_on_ddr) + COPY_ENGINE_ID(CE_ctrl_addr))
 
 #define SRRI_FROM_DDR_ADDR(addr) ((*(addr)) & 0xFFFF)
 #define DRRI_FROM_DDR_ADDR(addr) (((*(addr))>>16) & 0xFFFF)
