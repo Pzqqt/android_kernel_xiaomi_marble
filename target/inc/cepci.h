@@ -84,10 +84,10 @@ struct pcie_state_s {
  * PCIE_CONFIG_FLAG definitions
  */
 #if defined(AR900B)
-#define PCIE_CONFIG_FLAG_ENABLE_L1  0x0000001
 #define CE_PKTLOG_PIPE   8      /* used by both host and target side */
 #endif
 
+#define PCIE_CONFIG_FLAG_ENABLE_L1          0x0000001
 #define PCIE_CONFIG_FLAG_CLK_GATING_L1      0x0000001
 #define PCIE_CONFIG_FLAG_CLK_SWITCH_WAIT    0x0000002
 #define PCIE_CONFIG_FLAG_AXI_CLK_GATE       0x0000004
