@@ -2880,6 +2880,536 @@ static int wlan_hdd_cfg80211_handle_wisa_cmd(struct wiphy *wiphy,
 	return ret;
 }
 
+/*
+ * define short names for the global vendor params
+ * used by __wlan_hdd_cfg80211_get_station_cmd()
+ */
+#define STATION_INVALID \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INVALID
+#define STATION_INFO \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO
+#define STATION_ASSOC_FAIL_REASON \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_ASSOC_FAIL_REASON
+#define STATION_MAX \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_MAX
+
+static const struct nla_policy
+hdd_get_station_policy[STATION_MAX + 1] = {
+	[STATION_INFO] = {.type = NLA_FLAG},
+	[STATION_ASSOC_FAIL_REASON] = {.type = NLA_FLAG},
+};
+
+/**
+ * hdd_get_station_assoc_fail() - Handle get station assoc fail
+ * @hdd_ctx: HDD context within host driver
+ * @wdev: wireless device
+ *
+ * Handles QCA_NL80211_VENDOR_SUBCMD_GET_STATION_ASSOC_FAIL.
+ * Validate cmd attributes and send the station info to upper layers.
+ *
+ * Return: Success(0) or reason code for failure
+ */
+static int hdd_get_station_assoc_fail(hdd_context_t *hdd_ctx,
+						 hdd_adapter_t *adapter)
+{
+	struct sk_buff *skb = NULL;
+	uint32_t nl_buf_len;
+	hdd_station_ctx_t *hdd_sta_ctx;
+
+	nl_buf_len = NLMSG_HDRLEN;
+	nl_buf_len += sizeof(uint32_t);
+	skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy, nl_buf_len);
+
+	if (!skb) {
+		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
+		return -ENOMEM;
+	}
+
+	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+	if (nla_put_u32(skb, INFO_ASSOC_FAIL_REASON,
+			hdd_sta_ctx->conn_info.assoc_status_code)) {
+		hdd_err("put fail");
+		goto fail;
+	}
+	return cfg80211_vendor_cmd_reply(skb);
+fail:
+	if (skb)
+		kfree_skb(skb);
+	return -EINVAL;
+}
+
+/**
+ * hdd_map_auth_type() - transform auth type specific to
+ * vendor command
+ * @auth_type: csr auth type
+ *
+ * Return: Success(0) or reason code for failure
+ */
+static int hdd_convert_auth_type(uint32_t auth_type)
+{
+	uint32_t ret_val;
+
+	switch (auth_type) {
+	case eCSR_AUTH_TYPE_OPEN_SYSTEM:
+		ret_val = QCA_WLAN_AUTH_TYPE_OPEN;
+		break;
+	case eCSR_AUTH_TYPE_SHARED_KEY:
+		ret_val = QCA_WLAN_AUTH_TYPE_SHARED;
+		break;
+	case eCSR_AUTH_TYPE_WPA:
+		ret_val = QCA_WLAN_AUTH_TYPE_WPA;
+		break;
+	case eCSR_AUTH_TYPE_WPA_PSK:
+		ret_val = QCA_WLAN_AUTH_TYPE_WPA_PSK;
+		break;
+	case eCSR_AUTH_TYPE_AUTOSWITCH:
+		ret_val = QCA_WLAN_AUTH_TYPE_AUTOSWITCH;
+		break;
+	case eCSR_AUTH_TYPE_WPA_NONE:
+		ret_val = QCA_WLAN_AUTH_TYPE_WPA_NONE;
+		break;
+	case eCSR_AUTH_TYPE_RSN:
+		ret_val = QCA_WLAN_AUTH_TYPE_RSN;
+		break;
+	case eCSR_AUTH_TYPE_RSN_PSK:
+		ret_val = QCA_WLAN_AUTH_TYPE_RSN_PSK;
+		break;
+	case eCSR_AUTH_TYPE_FT_RSN:
+		ret_val = QCA_WLAN_AUTH_TYPE_FT;
+		break;
+	case eCSR_AUTH_TYPE_FT_RSN_PSK:
+		ret_val = QCA_WLAN_AUTH_TYPE_FT_PSK;
+		break;
+	case eCSR_AUTH_TYPE_WAPI_WAI_CERTIFICATE:
+		ret_val = QCA_WLAN_AUTH_TYPE_WAI;
+		break;
+	case eCSR_AUTH_TYPE_WAPI_WAI_PSK:
+		ret_val = QCA_WLAN_AUTH_TYPE_WAI_PSK;
+		break;
+	case eCSR_AUTH_TYPE_CCKM_WPA:
+		ret_val = QCA_WLAN_AUTH_TYPE_CCKM_WPA;
+		break;
+	case eCSR_AUTH_TYPE_CCKM_RSN:
+		ret_val = QCA_WLAN_AUTH_TYPE_CCKM_RSN;
+		break;
+	case eCSR_AUTH_TYPE_RSN_PSK_SHA256:
+		ret_val = QCA_WLAN_AUTH_TYPE_SHA256_PSK;
+		break;
+	case eCSR_AUTH_TYPE_RSN_8021X_SHA256:
+		ret_val = QCA_WLAN_AUTH_TYPE_SHA256;
+		break;
+	case eCSR_NUM_OF_SUPPORT_AUTH_TYPE:
+	case eCSR_AUTH_TYPE_FAILED:
+	case eCSR_AUTH_TYPE_NONE:
+	default:
+		ret_val = QCA_WLAN_AUTH_TYPE_INVALID;
+		break;
+	}
+	return ret_val;
+}
+
+/**
+ * hdd_map_dot_11_mode() - transform dot11mode type specific to
+ * vendor command
+ * @dot11mode: dot11mode
+ *
+ * Return: Success(0) or reason code for failure
+ */
+static int hdd_convert_dot11mode(uint32_t dot11mode)
+{
+	uint32_t ret_val;
+
+	switch (dot11mode) {
+	case eCSR_CFG_DOT11_MODE_11A:
+		ret_val = QCA_WLAN_802_11_MODE_11A;
+		break;
+	case eCSR_CFG_DOT11_MODE_11B:
+		ret_val = QCA_WLAN_802_11_MODE_11B;
+		break;
+	case eCSR_CFG_DOT11_MODE_11G:
+		ret_val = QCA_WLAN_802_11_MODE_11G;
+		break;
+	case eCSR_CFG_DOT11_MODE_11N:
+		ret_val = QCA_WLAN_802_11_MODE_11N;
+		break;
+	case eCSR_CFG_DOT11_MODE_11AC:
+		ret_val = QCA_WLAN_802_11_MODE_11AC;
+		break;
+	case eCSR_CFG_DOT11_MODE_AUTO:
+	case eCSR_CFG_DOT11_MODE_ABG:
+	default:
+		ret_val = QCA_WLAN_802_11_MODE_INVALID;
+	}
+	return ret_val;
+}
+
+/**
+ * hdd_add_tx_bitrate() - add tx bitrate attribute
+ * @skb: pointer to sk buff
+ * @hdd_sta_ctx: pointer to hdd station context
+ * @idx: attribute index
+ *
+ * Return: Success(0) or reason code for failure
+ */
+static int32_t hdd_add_tx_bitrate(struct sk_buff *skb,
+					  hdd_station_ctx_t *hdd_sta_ctx,
+					  int idx)
+{
+	struct nlattr *nla_attr;
+	uint32_t bitrate, bitrate_compat;
+
+	nla_attr = nla_nest_start(skb, idx);
+	if (!nla_attr)
+		goto fail;
+	/* cfg80211_calculate_bitrate will return 0 for mcs >= 32 */
+	bitrate = cfg80211_calculate_bitrate(&hdd_sta_ctx->conn_info.txrate);
+
+	/* report 16-bit bitrate only if we can */
+	bitrate_compat = bitrate < (1UL << 16) ? bitrate : 0;
+	if (bitrate > 0 &&
+	    nla_put_u32(skb, NL80211_RATE_INFO_BITRATE32, bitrate)) {
+		hdd_err("put fail");
+		goto fail;
+	}
+	if (bitrate_compat > 0 &&
+	    nla_put_u16(skb, NL80211_RATE_INFO_BITRATE, bitrate_compat)) {
+		hdd_err("put fail");
+		goto fail;
+	}
+	if (nla_put_u8(skb, NL80211_RATE_INFO_VHT_NSS,
+		       hdd_sta_ctx->conn_info.txrate.nss)) {
+		hdd_err("put fail");
+		goto fail;
+	}
+	nla_nest_end(skb, nla_attr);
+	return 0;
+fail:
+	return -EINVAL;
+}
+
+/**
+ * hdd_add_sta_info() - add station info attribute
+ * @skb: pointer to sk buff
+ * @hdd_sta_ctx: pointer to hdd station context
+ * @idx: attribute index
+ *
+ * Return: Success(0) or reason code for failure
+ */
+static int32_t hdd_add_sta_info(struct sk_buff *skb,
+				       hdd_station_ctx_t *hdd_sta_ctx, int idx)
+{
+	struct nlattr *nla_attr;
+
+	nla_attr = nla_nest_start(skb, idx);
+	if (!nla_attr)
+		goto fail;
+	if (nla_put_u8(skb, NL80211_STA_INFO_SIGNAL,
+		       (hdd_sta_ctx->conn_info.signal + 100))) {
+		hdd_err("put fail");
+		goto fail;
+	}
+	if (hdd_add_tx_bitrate(skb, hdd_sta_ctx, NL80211_STA_INFO_TX_BITRATE))
+		goto fail;
+	nla_nest_end(skb, nla_attr);
+	return 0;
+fail:
+	return -EINVAL;
+}
+
+/**
+ * hdd_add_survey_info() - add survey info attribute
+ * @skb: pointer to sk buff
+ * @hdd_sta_ctx: pointer to hdd station context
+ * @idx: attribute index
+ *
+ * Return: Success(0) or reason code for failure
+ */
+static int32_t hdd_add_survey_info(struct sk_buff *skb,
+					   hdd_station_ctx_t *hdd_sta_ctx,
+					   int idx)
+{
+	struct nlattr *nla_attr;
+
+	nla_attr = nla_nest_start(skb, idx);
+	if (!nla_attr)
+		goto fail;
+	if (nla_put_u32(skb, NL80211_SURVEY_INFO_FREQUENCY,
+			hdd_sta_ctx->conn_info.freq) ||
+	    nla_put_u8(skb, NL80211_SURVEY_INFO_NOISE,
+		       (hdd_sta_ctx->conn_info.noise + 100))) {
+		hdd_err("put fail");
+		goto fail;
+	}
+	nla_nest_end(skb, nla_attr);
+	return 0;
+fail:
+	return -EINVAL;
+}
+
+/**
+ * hdd_add_link_standard_info() - add link info attribute
+ * @skb: pointer to sk buff
+ * @hdd_sta_ctx: pointer to hdd station context
+ * @idx: attribute index
+ *
+ * Return: Success(0) or reason code for failure
+ */
+static int32_t
+hdd_add_link_standard_info(struct sk_buff *skb,
+			   hdd_station_ctx_t *hdd_sta_ctx, int idx)
+{
+	struct nlattr *nla_attr;
+
+	nla_attr = nla_nest_start(skb, idx);
+	if (!nla_attr)
+		goto fail;
+	if (nla_put(skb,
+		    NL80211_ATTR_SSID,
+		    hdd_sta_ctx->conn_info.SSID.SSID.length,
+		    hdd_sta_ctx->conn_info.SSID.SSID.ssId)) {
+		hdd_err("put fail");
+		goto fail;
+	}
+	if (hdd_add_survey_info(skb, hdd_sta_ctx, NL80211_ATTR_SURVEY_INFO))
+		goto fail;
+	if (hdd_add_sta_info(skb, hdd_sta_ctx, NL80211_ATTR_STA_INFO))
+		goto fail;
+	nla_nest_end(skb, nla_attr);
+	return 0;
+fail:
+	return -EINVAL;
+}
+
+/**
+ * hdd_add_ap_standard_info() - add ap info attribute
+ * @skb: pointer to sk buff
+ * @hdd_sta_ctx: pointer to hdd station context
+ * @idx: attribute index
+ *
+ * Return: Success(0) or reason code for failure
+ */
+static int32_t
+hdd_add_ap_standard_info(struct sk_buff *skb,
+			 hdd_station_ctx_t *hdd_sta_ctx, int idx)
+{
+	struct nlattr *nla_attr;
+
+	nla_attr = nla_nest_start(skb, idx);
+	if (!nla_attr)
+		goto fail;
+	if (hdd_sta_ctx->conn_info.conn_flag.vht_present)
+		if (nla_put(skb, NL80211_ATTR_VHT_CAPABILITY,
+			    sizeof(hdd_sta_ctx->conn_info.vht_caps),
+			    &hdd_sta_ctx->conn_info.vht_caps)) {
+			hdd_err("put fail");
+			goto fail;
+		}
+	if (hdd_sta_ctx->conn_info.conn_flag.ht_present)
+		if (nla_put(skb, NL80211_ATTR_HT_CAPABILITY,
+			    sizeof(hdd_sta_ctx->conn_info.ht_caps),
+			    &hdd_sta_ctx->conn_info.ht_caps)) {
+			hdd_err("put fail");
+			goto fail;
+		}
+	nla_nest_end(skb, nla_attr);
+	return 0;
+fail:
+	return -EINVAL;
+}
+
+/**
+ * hdd_get_station_info() - send BSS information to supplicant
+ * @hdd_ctx: pointer to hdd context
+ * @adapter: pointer to adapter
+ *
+ * Return: 0 if success else error status
+ */
+static int hdd_get_station_info(hdd_context_t *hdd_ctx,
+					 hdd_adapter_t *adapter)
+{
+	struct sk_buff *skb = NULL;
+	uint8_t *tmp_hs20 = NULL;
+	uint32_t nl_buf_len;
+	hdd_station_ctx_t *hdd_sta_ctx;
+
+	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+	nl_buf_len = NLMSG_HDRLEN;
+	nl_buf_len += sizeof(hdd_sta_ctx->conn_info.SSID.SSID.length) +
+		      sizeof(hdd_sta_ctx->conn_info.freq) +
+		      sizeof(hdd_sta_ctx->conn_info.noise) +
+		      sizeof(hdd_sta_ctx->conn_info.signal) +
+		      (sizeof(uint32_t) * 2) +
+		      sizeof(hdd_sta_ctx->conn_info.txrate.nss) +
+		      sizeof(hdd_sta_ctx->conn_info.roam_count) +
+		      sizeof(hdd_sta_ctx->conn_info.authType) +
+		      sizeof(hdd_sta_ctx->conn_info.dot11Mode);
+	if (hdd_sta_ctx->conn_info.conn_flag.vht_present)
+		nl_buf_len += sizeof(hdd_sta_ctx->conn_info.vht_caps);
+	if (hdd_sta_ctx->conn_info.conn_flag.ht_present)
+		nl_buf_len += sizeof(hdd_sta_ctx->conn_info.ht_caps);
+	if (hdd_sta_ctx->conn_info.conn_flag.hs20_present) {
+		tmp_hs20 = (uint8_t *)&(hdd_sta_ctx->conn_info.hs20vendor_ie);
+		nl_buf_len += (sizeof(hdd_sta_ctx->conn_info.hs20vendor_ie) -
+			       1);
+	}
+	if (hdd_sta_ctx->conn_info.conn_flag.ht_op_present)
+		nl_buf_len += sizeof(hdd_sta_ctx->conn_info.ht_operation);
+	if (hdd_sta_ctx->conn_info.conn_flag.vht_op_present)
+		nl_buf_len += sizeof(hdd_sta_ctx->conn_info.vht_operation);
+
+
+	skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy, nl_buf_len);
+	if (!skb) {
+		hdd_err(FL("cfg80211_vendor_cmd_alloc_reply_skb failed"));
+		return -ENOMEM;
+	}
+
+	if (hdd_add_link_standard_info(skb, hdd_sta_ctx,
+				       LINK_INFO_STANDARD_NL80211_ATTR)) {
+		hdd_err("put fail");
+		goto fail;
+	}
+	if (hdd_add_ap_standard_info(skb, hdd_sta_ctx,
+				     AP_INFO_STANDARD_NL80211_ATTR)) {
+		hdd_err("put fail");
+		goto fail;
+	}
+	if (nla_put_u32(skb, INFO_ROAM_COUNT,
+			hdd_sta_ctx->conn_info.roam_count) ||
+	    nla_put_u32(skb, INFO_AKM,
+			hdd_convert_auth_type(
+			hdd_sta_ctx->conn_info.authType)) ||
+	    nla_put_u32(skb, WLAN802_11_MODE,
+			hdd_convert_dot11mode(
+			hdd_sta_ctx->conn_info.dot11Mode))) {
+		hdd_err("put fail");
+		goto fail;
+	}
+	if (hdd_sta_ctx->conn_info.conn_flag.ht_op_present)
+		if (nla_put(skb, HT_OPERATION,
+			    (sizeof(hdd_sta_ctx->conn_info.ht_operation)),
+			    &hdd_sta_ctx->conn_info.ht_operation)) {
+			hdd_err("put fail");
+			goto fail;
+		}
+	if (hdd_sta_ctx->conn_info.conn_flag.vht_op_present)
+		if (nla_put(skb, VHT_OPERATION,
+			    (sizeof(hdd_sta_ctx->conn_info.vht_operation)),
+			    &hdd_sta_ctx->conn_info.vht_operation)) {
+			hdd_err("put fail");
+			goto fail;
+		}
+	if (hdd_sta_ctx->conn_info.conn_flag.hs20_present)
+		if (nla_put(skb, AP_INFO_HS20_INDICATION,
+			    (sizeof(hdd_sta_ctx->conn_info.hs20vendor_ie) - 1),
+			    tmp_hs20 + 1)) {
+			hdd_err("put fail");
+			goto fail;
+		}
+
+	return cfg80211_vendor_cmd_reply(skb);
+fail:
+	if (skb)
+		kfree_skb(skb);
+	return -EINVAL;
+}
+
+/**
+ * __hdd_cfg80211_get_station_cmd() - Handle get station vendor cmd
+ * @wiphy: corestack handler
+ * @wdev: wireless device
+ * @data: data
+ * @data_len: data length
+ *
+ * Handles QCA_NL80211_VENDOR_SUBCMD_GET_STATION.
+ * Validate cmd attributes and send the station info to upper layers.
+ *
+ * Return: Success(0) or reason code for failure
+ */
+static int32_t
+__hdd_cfg80211_get_station_cmd(struct wiphy *wiphy,
+			       struct wireless_dev *wdev,
+			       const void *data,
+			       int data_len)
+{
+	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct net_device *dev = wdev->netdev;
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_GET_STATION_MAX + 1];
+	int32_t status;
+
+	ENTER_DEV(dev);
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("Command not allowed in FTM mode");
+		status = -EPERM;
+		goto out;
+	}
+
+	status = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != status)
+		goto out;
+
+
+	status = nla_parse(tb, QCA_WLAN_VENDOR_ATTR_GET_STATION_MAX,
+			data, data_len, NULL);
+	if (status) {
+		hdd_err("Invalid ATTR");
+		goto out;
+	}
+
+	/* Parse and fetch Command Type*/
+	if (tb[STATION_INFO]) {
+		status = hdd_get_station_info(hdd_ctx, adapter);
+	} else if (tb[STATION_ASSOC_FAIL_REASON]) {
+		status = hdd_get_station_assoc_fail(hdd_ctx, adapter);
+	} else {
+		hdd_err("get station info cmd type failed");
+		status = -EINVAL;
+		goto out;
+	}
+	EXIT();
+out:
+	return status;
+}
+
+/**
+ * wlan_hdd_cfg80211_get_station_cmd() - Handle get station vendor cmd
+ * @wiphy: corestack handler
+ * @wdev: wireless device
+ * @data: data
+ * @data_len: data length
+ *
+ * Handles QCA_NL80211_VENDOR_SUBCMD_GET_STATION.
+ * Validate cmd attributes and send the station info to upper layers.
+ *
+ * Return: Success(0) or reason code for failure
+ */
+static int32_t
+hdd_cfg80211_get_station_cmd(struct wiphy *wiphy,
+			     struct wireless_dev *wdev,
+			     const void *data,
+			     int data_len)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __hdd_cfg80211_get_station_cmd(wiphy, wdev, data, data_len);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
+/*
+ * undef short names defined for get station command
+ * used by __wlan_hdd_cfg80211_get_station_cmd()
+ */
+#undef STATION_INVALID
+#undef STATION_INFO
+#undef STATION_ASSOC_FAIL_REASON
+#undef STATION_MAX
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * __wlan_hdd_cfg80211_keymgmt_set_key() - Store the Keys in the driver session
@@ -5915,6 +6445,14 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
 			WIPHY_VENDOR_CMD_NEED_NETDEV,
 		.doit = wlan_hdd_cfg80211_handle_wisa_cmd
+	},
+	{
+		.info.vendor_id = QCA_NL80211_VENDOR_ID,
+		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_GET_STATION,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+			WIPHY_VENDOR_CMD_NEED_NETDEV |
+			WIPHY_VENDOR_CMD_NEED_RUNNING,
+		.doit = hdd_cfg80211_get_station_cmd
 	},
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
