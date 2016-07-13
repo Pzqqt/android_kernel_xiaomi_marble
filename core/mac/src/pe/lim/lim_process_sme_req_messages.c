@@ -1602,8 +1602,8 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	uint16_t n_size;
 	uint8_t session_id;
 	tpPESession session = NULL;
-	uint8_t sme_session_id;
-	uint16_t sme_transaction_id;
+	uint8_t sme_session_id = 0;
+	uint16_t sme_transaction_id = 0;
 	int8_t local_power_constraint = 0, reg_max = 0;
 	uint16_t ie_len;
 	uint8_t *vendor_ie;
@@ -1634,7 +1634,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			lim_log(mac_ctx, LOGP,
 				FL("AllocateMemory failed for sme_join_req"));
 			ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
-			return;
+			goto end;
 		}
 		(void)qdf_mem_set((void *)sme_join_req, n_size, 0);
 		(void)qdf_mem_copy((void *)sme_join_req, (void *)msg_buf,
@@ -1937,7 +1937,8 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		if (NULL == mlm_join_req) {
 			lim_log(mac_ctx, LOGP,
 				FL("AllocateMemory failed for mlmJoinReq"));
-			return;
+			ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
+			goto end;
 		}
 		(void)qdf_mem_set((void *)mlm_join_req, val, 0);
 
@@ -2079,8 +2080,8 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	}
 
 end:
-	sme_session_id = ((tpSirSmeJoinReq)msg_buf)->sessionId;
-	sme_transaction_id = ((tpSirSmeJoinReq)msg_buf)->transactionId;
+	lim_get_session_info(mac_ctx, (uint8_t *) msg_buf,
+		&sme_session_id, &sme_transaction_id);
 
 	if (sme_join_req) {
 		qdf_mem_free(sme_join_req);
