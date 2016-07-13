@@ -80,6 +80,7 @@
 #endif
 #include <cds_concurrency.h>
 #include "epping_main.h"
+#include <a_types.h>
 
 #ifdef CONFIG_HL_SUPPORT
 

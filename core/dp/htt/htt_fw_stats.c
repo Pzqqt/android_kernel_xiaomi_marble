@@ -855,11 +855,11 @@ htt_t2h_tx_ppdu_log_print(struct ol_fw_tx_dbg_ppdu_msg_hdr *hdr,
 
 		/* fields used for both concise and complete printouts */
 		start_seq_num =
-			((*(msg_word + OL_FW_TX_DBG_PPDU_START_SEQ_NUM_16)) &
+			((*(msg_word + OL_FW_TX_DBG_PPDU_START_SEQ_NUM_WORD)) &
 			 OL_FW_TX_DBG_PPDU_START_SEQ_NUM_M) >>
 			OL_FW_TX_DBG_PPDU_START_SEQ_NUM_S;
 		complete =
-			((*(msg_word + OL_FW_TX_DBG_PPDU_COMPLETE_16)) &
+			((*(msg_word + OL_FW_TX_DBG_PPDU_COMPLETE_WORD)) &
 			 OL_FW_TX_DBG_PPDU_COMPLETE_M) >>
 			OL_FW_TX_DBG_PPDU_COMPLETE_S;
 
@@ -878,31 +878,31 @@ htt_t2h_tx_ppdu_log_print(struct ol_fw_tx_dbg_ppdu_msg_hdr *hdr,
 			start_pn_lsbs =
 				((*
 				  (msg_word +
-				   OL_FW_TX_DBG_PPDU_START_PN_LSBS_16)) &
+				   OL_FW_TX_DBG_PPDU_START_PN_LSBS_WORD)) &
 				 OL_FW_TX_DBG_PPDU_START_PN_LSBS_M) >>
 				OL_FW_TX_DBG_PPDU_START_PN_LSBS_S;
 			num_mpdus =
-				((*(msg_word + OL_FW_TX_DBG_PPDU_NUM_MPDUS_16))&
+				((*(msg_word + OL_FW_TX_DBG_PPDU_NUM_MPDUS_WORD))&
 				 OL_FW_TX_DBG_PPDU_NUM_MPDUS_M) >>
 				OL_FW_TX_DBG_PPDU_NUM_MPDUS_S;
 			peer_id =
-				((*(msg_word + OL_FW_TX_DBG_PPDU_PEER_ID_16)) &
+				((*(msg_word + OL_FW_TX_DBG_PPDU_PEER_ID_WORD)) &
 				 OL_FW_TX_DBG_PPDU_PEER_ID_M) >>
 				OL_FW_TX_DBG_PPDU_PEER_ID_S;
 			ext_tid =
-				((*(msg_word + OL_FW_TX_DBG_PPDU_EXT_TID_16)) &
+				((*(msg_word + OL_FW_TX_DBG_PPDU_EXT_TID_WORD)) &
 				 OL_FW_TX_DBG_PPDU_EXT_TID_M) >>
 				OL_FW_TX_DBG_PPDU_EXT_TID_S;
 			rate_code =
-				((*(msg_word + OL_FW_TX_DBG_PPDU_RATE_CODE_16))&
+				((*(msg_word + OL_FW_TX_DBG_PPDU_RATE_CODE_WORD))&
 				 OL_FW_TX_DBG_PPDU_RATE_CODE_M) >>
 				OL_FW_TX_DBG_PPDU_RATE_CODE_S;
 			rate_flags =
-				((*(msg_word + OL_FW_TX_DBG_PPDU_RATEFLAGS_16))&
+				((*(msg_word + OL_FW_TX_DBG_PPDU_RATE_FLAGS_WORD))&
 				 OL_FW_TX_DBG_PPDU_RATE_FLAGS_M) >>
 				OL_FW_TX_DBG_PPDU_RATE_FLAGS_S;
 			tries =
-				((*(msg_word + OL_FW_TX_DBG_PPDU_TRIES_16)) &
+				((*(msg_word + OL_FW_TX_DBG_PPDU_TRIES_WORD)) &
 				 OL_FW_TX_DBG_PPDU_TRIES_M) >>
 				OL_FW_TX_DBG_PPDU_TRIES_S;
 
@@ -929,9 +929,9 @@ htt_t2h_tx_ppdu_log_print(struct ol_fw_tx_dbg_ppdu_msg_hdr *hdr,
 				qdf_print
 				      ("  enqueued and acked MPDU bitmaps:");
 				htt_t2h_tx_ppdu_bitmaps_pr(msg_word +
-					   OL_FW_TX_DBG_PPDU_ENQUEUED_LSBS_16,
+					   OL_FW_TX_DBG_PPDU_ENQUEUED_LSBS_WORD,
 							   msg_word +
-					   OL_FW_TX_DBG_PPDU_BLOCK_ACK_LSBS_16);
+					   OL_FW_TX_DBG_PPDU_BLOCK_ACK_LSBS_WORD);
 			} else {
 				qdf_print
 				      ("  enqueued: %d us, not yet completed",
@@ -968,9 +968,9 @@ htt_t2h_tx_ppdu_log_print(struct ol_fw_tx_dbg_ppdu_msg_hdr *hdr,
 			qdf_print("enqueued and acked MPDU bitmaps:");
 			if (complete) {
 				htt_t2h_tx_ppdu_bitmaps_pr(msg_word +
-					OL_FW_TX_DBG_PPDU_ENQUEUED_LSBS_16,
+					OL_FW_TX_DBG_PPDU_ENQUEUED_LSBS_WORD,
 							   msg_word +
-					OL_FW_TX_DBG_PPDU_BLOCK_ACK_LSBS_16);
+					OL_FW_TX_DBG_PPDU_BLOCK_ACK_LSBS_WORD);
 			} else {
 				qdf_print("(not completed)");
 			}
