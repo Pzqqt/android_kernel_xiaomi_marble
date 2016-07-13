@@ -2091,8 +2091,6 @@ bool cds_set_connection_in_progress(bool value)
  * @bw: Bandwidth
  * @mac: Mac id
  * @chain_mask: Chain mask
- * @tx_spatial_stream: Tx spatial stream
- * @rx_spatial_stream: Rx spatial stream
  * @vdev_id: vdev id
  * @in_use: Flag to indicate if the index is in use or not
  *
@@ -2106,8 +2104,6 @@ static void cds_update_conc_list(uint32_t conn_index,
 		enum hw_mode_bandwidth bw,
 		uint8_t mac,
 		enum cds_chain_mode chain_mask,
-		uint8_t tx_spatial_stream,
-		uint8_t rx_spatial_stream,
 		uint32_t original_nss,
 		uint32_t vdev_id,
 		bool in_use)
@@ -2122,8 +2118,6 @@ static void cds_update_conc_list(uint32_t conn_index,
 	conc_connection_list[conn_index].bw = bw;
 	conc_connection_list[conn_index].mac = mac;
 	conc_connection_list[conn_index].chain_mask = chain_mask;
-	conc_connection_list[conn_index].tx_spatial_stream = tx_spatial_stream;
-	conc_connection_list[conn_index].rx_spatial_stream = rx_spatial_stream;
 	conc_connection_list[conn_index].original_nss = original_nss;
 	conc_connection_list[conn_index].vdev_id = vdev_id;
 	conc_connection_list[conn_index].in_use = in_use;
@@ -2265,22 +2259,9 @@ static void cds_update_hw_mode_conn_info(uint32_t num_vdev_mac_entries,
 		if (found) {
 			conc_connection_list[conn_index].mac =
 				vdev_mac_map[i].mac_id;
-			if (vdev_mac_map[i].mac_id == 0) {
-				conc_connection_list[conn_index].
-					tx_spatial_stream = hw_mode.mac0_tx_ss;
-				conc_connection_list[conn_index].
-					rx_spatial_stream = hw_mode.mac0_rx_ss;
-			} else {
-				conc_connection_list[conn_index].
-					tx_spatial_stream = hw_mode.mac1_tx_ss;
-				conc_connection_list[conn_index].
-					rx_spatial_stream = hw_mode.mac1_rx_ss;
-			}
-			cds_info("vdev:%d, mac:%d, tx ss:%d, rx ss;%d",
+			cds_info("vdev:%d, mac:%d",
 			  conc_connection_list[conn_index].vdev_id,
-			  conc_connection_list[conn_index].mac,
-			  conc_connection_list[conn_index].tx_spatial_stream,
-			  conc_connection_list[conn_index].rx_spatial_stream);
+			  conc_connection_list[conn_index].mac);
 		}
 	}
 	cds_dump_connection_status_info();
@@ -3886,7 +3867,8 @@ QDF_STATUS cds_deinit_policy_mgr(void)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	cds_ctx->sme_get_valid_chans = NULL;
+	cds_ctx->sme_get_valid_channels = NULL;
+	cds_ctx->sme_get_nss_for_vdev = NULL;
 
 	if (QDF_IS_STATUS_ERROR(cds_reset_sap_mandatory_channels())) {
 		cds_err("failed to reset sap mandatory channels");
@@ -3904,8 +3886,7 @@ QDF_STATUS cds_deinit_policy_mgr(void)
  *
  * Return: Success if the policy manager is initialized completely
  */
-QDF_STATUS cds_init_policy_mgr(
-	QDF_STATUS (*sme_get_valid_chans)(void*, uint8_t *, uint32_t *))
+QDF_STATUS cds_init_policy_mgr(struct cds_sme_cbacks *sme_cbacks)
 {
 	QDF_STATUS status;
 	hdd_context_t *hdd_ctx;
@@ -3953,7 +3934,8 @@ QDF_STATUS cds_init_policy_mgr(
 	}
 
 	cds_ctx->do_hw_mode_change = false;
-	cds_ctx->sme_get_valid_chans = sme_get_valid_chans;
+	cds_ctx->sme_get_valid_channels = sme_cbacks->sme_get_valid_channels;
+	cds_ctx->sme_get_nss_for_vdev = sme_cbacks->sme_get_nss_for_vdev;
 
 	status = cds_reset_sap_mandatory_channels();
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -4117,6 +4099,11 @@ QDF_STATUS cds_incr_connection_count(uint32_t vdev_id)
 	struct wma_txrx_node *wma_conn_table_entry;
 	hdd_context_t *hdd_ctx;
 	cds_context_type *cds_ctx;
+	enum cds_chain_mode chain_mask = CDS_ONE_ONE;
+	uint8_t nss_2g, nss_5g;
+	enum cds_con_mode mode;
+	uint8_t chan;
+	uint32_t nss = 0;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -4143,23 +4130,32 @@ QDF_STATUS cds_incr_connection_count(uint32_t vdev_id)
 		cds_err("can't find vdev_id %d in WMA table", vdev_id);
 		return status;
 	}
+	mode = cds_get_mode(wma_conn_table_entry->type,
+					wma_conn_table_entry->sub_type);
+	chan = cds_freq_to_chan(wma_conn_table_entry->mhz);
+	status = cds_get_nss_for_vdev(mode, &nss_2g, &nss_5g);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		if ((CDS_IS_CHANNEL_24GHZ(chan) && (nss_2g > 1)) ||
+			(CDS_IS_CHANNEL_5GHZ(chan) && (nss_5g > 1)))
+			chain_mask = CDS_TWO_TWO;
+		else
+			chain_mask = CDS_ONE_ONE;
+		nss = (CDS_IS_CHANNEL_24GHZ(chan)) ? nss_2g : nss_5g;
+	} else {
+		cds_err("Error in getting nss");
+	}
+
 
 	/* add the entry */
 	cds_update_conc_list(conn_index,
-			cds_get_mode(wma_conn_table_entry->type,
-					wma_conn_table_entry->sub_type),
-			cds_freq_to_chan(wma_conn_table_entry->mhz),
+			mode,
+			chan,
 			cds_get_bw(wma_conn_table_entry->chan_width),
 			wma_conn_table_entry->mac_id,
-			wma_conn_table_entry->chain_mask,
-			wma_conn_table_entry->tx_streams,
-			wma_conn_table_entry->rx_streams,
-			wma_conn_table_entry->nss, vdev_id, true);
-	cds_info("Add at idx:%d vdev %d tx ss=%d rx ss=%d chainmask=%d mac=%d",
+			chain_mask,
+			nss, vdev_id, true);
+	cds_info("Add at idx:%d vdev %d mac=%d",
 		conn_index, vdev_id,
-		wma_conn_table_entry->tx_streams,
-		wma_conn_table_entry->rx_streams,
-		wma_conn_table_entry->chain_mask,
 		wma_conn_table_entry->mac_id);
 
 	return QDF_STATUS_SUCCESS;
@@ -4183,6 +4179,11 @@ QDF_STATUS cds_update_connection_info(uint32_t vdev_id)
 	bool found = false;
 	struct wma_txrx_node *wma_conn_table_entry;
 	cds_context_type *cds_ctx;
+	enum cds_chain_mode chain_mask = CDS_ONE_ONE;
+	uint8_t nss_2g, nss_5g;
+	enum cds_con_mode mode;
+	uint8_t chan;
+	uint32_t nss = 0;
 
 	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
@@ -4215,20 +4216,31 @@ QDF_STATUS cds_update_connection_info(uint32_t vdev_id)
 		cds_err("can't find vdev_id %d in WMA table", vdev_id);
 		return status;
 	}
+	mode = cds_get_mode(wma_conn_table_entry->type,
+					wma_conn_table_entry->sub_type);
+	chan = cds_freq_to_chan(wma_conn_table_entry->mhz);
+	status = cds_get_nss_for_vdev(mode, &nss_2g, &nss_5g);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		if ((CDS_IS_CHANNEL_24GHZ(chan) && (nss_2g > 1)) ||
+			(CDS_IS_CHANNEL_5GHZ(chan) && (nss_5g > 1)))
+			chain_mask = CDS_TWO_TWO;
+		else
+			chain_mask = CDS_ONE_ONE;
+		nss = (CDS_IS_CHANNEL_24GHZ(chan)) ? nss_2g : nss_5g;
+	} else {
+		cds_err("Error in getting nss");
+	}
 
 	cds_debug("update PM connection table for vdev:%d", vdev_id);
 
 	/* add the entry */
 	cds_update_conc_list(conn_index,
-			cds_get_mode(wma_conn_table_entry->type,
-					wma_conn_table_entry->sub_type),
-			cds_freq_to_chan(wma_conn_table_entry->mhz),
+			mode,
+			chan,
 			cds_get_bw(wma_conn_table_entry->chan_width),
 			wma_conn_table_entry->mac_id,
-			wma_conn_table_entry->chain_mask,
-			wma_conn_table_entry->tx_streams,
-			wma_conn_table_entry->rx_streams,
-			wma_conn_table_entry->nss, vdev_id, true);
+			chain_mask,
+			nss, vdev_id, true);
 	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 	return QDF_STATUS_SUCCESS;
 }
@@ -4267,10 +4279,6 @@ QDF_STATUS cds_decr_connection_count(uint32_t vdev_id)
 	while (CONC_CONNECTION_LIST_VALID_INDEX(next_conn_index)) {
 		conc_connection_list[conn_index].vdev_id =
 			conc_connection_list[next_conn_index].vdev_id;
-		conc_connection_list[conn_index].tx_spatial_stream =
-			conc_connection_list[next_conn_index].tx_spatial_stream;
-		conc_connection_list[conn_index].rx_spatial_stream =
-			conc_connection_list[next_conn_index].rx_spatial_stream;
 		conc_connection_list[conn_index].mode =
 			conc_connection_list[next_conn_index].mode;
 		conc_connection_list[conn_index].mac =
@@ -5993,11 +6001,9 @@ bool cds_wait_for_nss_update(uint8_t action)
 			conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
 			conn_index++) {
 			if ((conc_connection_list
-				[conn_index].original_nss == 1) &&
+				[conn_index].original_nss == 2) &&
 				(conc_connection_list
-				[conn_index].tx_spatial_stream == 2) &&
-				(conc_connection_list
-				[conn_index].rx_spatial_stream == 2) &&
+				[conn_index].chain_mask == CDS_TWO_TWO) &&
 				conc_connection_list[conn_index].in_use &&
 				((conc_connection_list[conn_index].mode ==
 				CDS_P2P_GO_MODE) ||
@@ -6012,11 +6018,9 @@ bool cds_wait_for_nss_update(uint8_t action)
 			conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
 			conn_index++) {
 			if ((conc_connection_list
-				[conn_index].original_nss == 1) &&
+				[conn_index].original_nss == 2) &&
 				(conc_connection_list
-				[conn_index].tx_spatial_stream == 1) &&
-				(conc_connection_list
-				[conn_index].rx_spatial_stream == 1) &&
+				[conn_index].chain_mask == CDS_TWO_TWO) &&
 				conc_connection_list[conn_index].in_use &&
 				((conc_connection_list[conn_index].mode ==
 				CDS_P2P_GO_MODE) ||
@@ -6077,13 +6081,9 @@ void cds_nss_update_cb(void *context, uint8_t tx_status, uint8_t vdev_id,
 	}
 	switch (next_action) {
 	case CDS_DBS:
-		conc_connection_list[conn_index].tx_spatial_stream = 1;
-		conc_connection_list[conn_index].rx_spatial_stream = 1;
 		wait = cds_wait_for_nss_update(next_action);
 		break;
 	case CDS_SINGLE_MAC:
-		conc_connection_list[conn_index].tx_spatial_stream = 2;
-		conc_connection_list[conn_index].rx_spatial_stream = 2;
 		wait = cds_wait_for_nss_update(next_action);
 		break;
 	default:
@@ -7708,8 +7708,7 @@ QDF_STATUS cds_update_connection_info_utfw(
 	cds_update_conc_list(conn_index,
 			cds_get_mode(type, sub_type),
 			channelid, HW_MODE_20_MHZ,
-			mac_id, chain_mask, tx_streams,
-			rx_streams, 0, vdev_id, true);
+			mac_id, chain_mask, 0, vdev_id, true);
 	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 
 	return QDF_STATUS_SUCCESS;
@@ -7751,8 +7750,7 @@ QDF_STATUS cds_incr_connection_count_utfw(
 	cds_update_conc_list(conn_index,
 				cds_get_mode(type, sub_type),
 				channelid, HW_MODE_20_MHZ,
-				mac_id, chain_mask, tx_streams,
-				rx_streams, 0, vdev_id, true);
+				mac_id, chain_mask, 0, vdev_id, true);
 	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 
 	return QDF_STATUS_SUCCESS;
@@ -7763,6 +7761,7 @@ QDF_STATUS cds_decr_connection_count_utfw(uint32_t del_all,
 {
 	QDF_STATUS status;
 	cds_context_type *cds_ctx;
+	struct cds_sme_cbacks sme_cbacks;
 
 	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
@@ -7770,8 +7769,10 @@ QDF_STATUS cds_decr_connection_count_utfw(uint32_t del_all,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	sme_cbacks.sme_get_valid_channels = sme_get_cfg_valid_channels;
+	sme_cbacks.sme_get_nss_for_vdev = sme_get_vdev_type_nss;
 	if (del_all) {
-		status = cds_init_policy_mgr(sme_get_cfg_valid_channels);
+		status = cds_init_policy_mgr(&sme_cbacks);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			cds_err("Policy manager initialization failed");
 			return QDF_STATUS_E_FAILURE;
@@ -8391,19 +8392,81 @@ QDF_STATUS cds_get_valid_chans(uint8_t *chan_list, uint32_t *list_len)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!cds_ctx->sme_get_valid_chans) {
+	if (!cds_ctx->sme_get_valid_channels) {
 		cds_err("sme_get_valid_chans callback is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	*list_len = QDF_MAX_NUM_CHAN;
-	status = cds_ctx->sme_get_valid_chans(hdd_ctx->hHal,
+	status = cds_ctx->sme_get_valid_channels(hdd_ctx->hHal,
 					chan_list, list_len);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		cds_err("Error in getting valid channels");
 		*list_len = 0;
 		return status;
 	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * cds_get_nss_for_vdev() - Get the allowed nss value for the
+ * vdev
+ * @dev_mode: connection type.
+ * @nss2g: Pointer to the 2G Nss parameter.
+ * @nss5g: Pointer to the 5G Nss parameter.
+ *
+ * Fills the 2G and 5G Nss values based on connection type.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cds_get_nss_for_vdev(enum cds_con_mode mode,
+		uint8_t *nss_2g, uint8_t *nss_5g)
+{
+	hdd_context_t *hdd_ctx;
+	cds_context_type *cds_ctx;
+	enum tQDF_ADAPTER_MODE dev_mode;
+
+	switch (mode) {
+	case CDS_STA_MODE:
+		dev_mode = QDF_STA_MODE;
+		break;
+	case CDS_SAP_MODE:
+		dev_mode = QDF_SAP_MODE;
+		break;
+	case CDS_P2P_CLIENT_MODE:
+		dev_mode = QDF_P2P_CLIENT_MODE;
+		break;
+	case CDS_P2P_GO_MODE:
+		dev_mode = QDF_P2P_GO_MODE;
+		break;
+	case CDS_IBSS_MODE:
+		dev_mode = QDF_IBSS_MODE;
+		break;
+	default:
+		cds_err("Invalid mode to get allowed NSS value");
+		return QDF_STATUS_E_FAILURE;
+	};
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!cds_ctx->sme_get_nss_for_vdev) {
+		cds_err("sme_get_nss_for_vdev callback is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cds_ctx->sme_get_nss_for_vdev(hdd_ctx->hHal,
+					dev_mode, nss_2g, nss_5g);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -8774,11 +8837,9 @@ void cds_dump_connection_status_info(void)
 	}
 
 	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
-		cds_debug("%d: use:%d vdev:%d tx:%d rx:%d mode:%d mac:%d chan:%d chainmask:%d orig nss:%d bw:%d",
+		cds_debug("%d: use:%d vdev:%d mode:%d mac:%d chan:%d orig chainmask:%d orig nss:%d bw:%d",
 				i, conc_connection_list[i].in_use,
 				conc_connection_list[i].vdev_id,
-				conc_connection_list[i].tx_spatial_stream,
-				conc_connection_list[i].rx_spatial_stream,
 				conc_connection_list[i].mode,
 				conc_connection_list[i].mac,
 				conc_connection_list[i].chan,

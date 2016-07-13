@@ -1376,11 +1376,12 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	hdd_ctx->ap_arpns_support = cfg->ap_arpns_support;
 	hdd_update_tgt_services(hdd_ctx, &cfg->services);
 
-	hdd_update_vdev_nss(hdd_ctx);
-
 	hdd_update_tgt_ht_cap(hdd_ctx, &cfg->ht_cap);
 
 	hdd_update_tgt_vht_cap(hdd_ctx, &cfg->vht_cap);
+
+	hdd_update_vdev_nss(hdd_ctx);
+
 	hdd_ctx->config->fine_time_meas_cap &= cfg->fine_time_measurement_cap;
 	hdd_ctx->fine_time_meas_cap_target = cfg->fine_time_measurement_cap;
 	hdd_info(FL("fine_time_meas_cap: 0x%x"),
@@ -6558,6 +6559,8 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	int ret;
 	tSirTxPowerLimit hddtxlimit;
 	bool rtnl_held;
+	/* structure of function pointers to be used by CDS */
+	struct cds_sme_cbacks sme_cbacks;
 
 	ENTER();
 
@@ -6710,7 +6713,9 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 #endif
 
 	wlan_hdd_nan_init(hdd_ctx);
-	status = cds_init_policy_mgr(sme_get_cfg_valid_channels);
+	sme_cbacks.sme_get_valid_channels = sme_get_cfg_valid_channels;
+	sme_cbacks.sme_get_nss_for_vdev = sme_get_vdev_type_nss;
+	status = cds_init_policy_mgr(&sme_cbacks);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("Policy manager initialization failed");
 		goto err_debugfs_exit;
