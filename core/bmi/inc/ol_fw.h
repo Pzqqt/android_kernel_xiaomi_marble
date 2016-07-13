@@ -38,6 +38,12 @@
 #define AR6320_REV2_VERSION          AR6320_REV1_1_VERSION
 #define AR6320_REV4_VERSION          AR6320_REV2_1_VERSION
 #define SIGN_HEADER_MAGIC            0x454D4F52
+#define HI_ACS_FLAGS_SDIO_SWAP_MAILBOX_SET          (1 << 0)
+#define HI_ACS_FLAGS_SDIO_REDUCE_TX_COMPL_SET       (1 << 1)
+#define HI_ACS_FLAGS_ALT_DATA_CREDIT_SIZE           (1 << 2)
+
+#define HI_ACS_FLAGS_SDIO_SWAP_MAILBOX_FW_ACK       (1 << 16)
+#define HI_ACS_FLAGS_SDIO_REDUCE_TX_COMPL_FW_ACK    (1 << 17)
 
 void ol_target_failure(void *instance, QDF_STATUS status);
 

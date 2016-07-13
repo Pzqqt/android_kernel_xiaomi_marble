@@ -57,10 +57,16 @@
 #define __ATTRIB_PACK           __attribute__ ((packed))
 #define __ATTRIB_PRINTF         __attribute__ ((format (printf, 1, 2)))
 #define __ATTRIB_NORETURN       __attribute__ ((noreturn))
+#ifndef INLINE
+#define INLINE                  __inline__
+#endif
 #else                           /* Not GCC */
 #define __ATTRIB_PACK
 #define __ATTRIB_PRINTF
 #define __ATTRIB_NORETURN
+#ifndef INLINE
+#define INLINE                  __inline
+#endif
 #endif /* End __GNUC__ */
 
 #define PREPACK
