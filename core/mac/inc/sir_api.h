@@ -99,6 +99,8 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
 /* This should not be greater than MAX_NUMBER_OF_CONC_CONNECTIONS */
 #define MAX_VDEV_SUPPORTED                        4
 
+#define MAX_POWER_DBG_ARGS_SUPPORTED 8
+
 /**
  * enum sir_conn_update_reason: Reason for conc connection update
  * @SIR_UPDATE_REASON_SET_OPER_CHAN: Set probable operating channel
@@ -6331,4 +6333,19 @@ struct sir_p2p_lo_event {
 	uint32_t vdev_id;
 	uint32_t reason_code;
 };
+
+/**
+ * struct sir_hal_pwr_dbg_cmd - unit test command parameters
+ * @pdev_id: pdev id
+ * @module_id: module id
+ * @num_args: number of arguments
+ * @args: arguments
+ */
+struct sir_mac_pwr_dbg_cmd {
+	uint32_t pdev_id;
+	uint32_t module_id;
+	uint32_t num_args;
+	uint32_t args[MAX_POWER_DBG_ARGS_SUPPORTED];
+};
+
 #endif /* __SIR_API_H */

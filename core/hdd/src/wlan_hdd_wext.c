@@ -339,8 +339,9 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WLAN_PRIV_SET_VAR_INT_GET_NONE   (SIOCIWFIRSTPRIV + 7)
 
 #define WE_P2P_NOA_CMD       2
+/* subcommands 3 is unused */
 
-/* subcommands 3 and 4 are unused */
+#define WE_MAC_PWR_DEBUG_CMD 4
 
 #ifdef FEATURE_WLAN_TDLS
 #define WE_TDLS_CONFIG_PARAMS   5
@@ -8039,6 +8040,46 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	}
 	break;
 #endif
+	case WE_MAC_PWR_DEBUG_CMD:
+	{
+		struct sir_mac_pwr_dbg_cmd mac_pwr_dbg_args;
+		tHalHandle hal = WLAN_HDD_GET_HAL_CTX(pAdapter);
+		int i, j;
+
+		if (num_args < 3) {
+			hdd_err("number of arguments can't be null %d",
+				num_args);
+			return -EINVAL;
+		}
+		if (num_args - 3 != apps_args[2]) {
+			hdd_err("arg list of size %d doesn't match num_args %d",
+				num_args-3, apps_args[2]);
+			return -EINVAL;
+		}
+		if ((apps_args[1] < WLAN_MODULE_ID_MIN) ||
+		    (apps_args[1] >= WLAN_MODULE_ID_MAX)) {
+			hdd_err("Invalid MODULE ID %d", apps_args[1]);
+			return -EINVAL;
+		}
+		if (apps_args[2] > (MAX_POWER_DBG_ARGS_SUPPORTED)) {
+			hdd_err("Too Many args %d", apps_args[2]);
+			return -EINVAL;
+		}
+		mac_pwr_dbg_args.pdev_id = apps_args[0];
+		mac_pwr_dbg_args.module_id = apps_args[1];
+		mac_pwr_dbg_args.num_args = apps_args[2];
+
+		for (i = 0, j = 3; i < mac_pwr_dbg_args.num_args; i++, j++)
+			mac_pwr_dbg_args.args[i] = apps_args[j];
+
+		if (QDF_STATUS_SUCCESS !=
+			sme_process_mac_pwr_dbg_cmd(hal, pAdapter->sessionId,
+						    &mac_pwr_dbg_args)) {
+			return -EINVAL;
+		}
+	}
+	break;
+
 	default:
 	{
 		hdd_err("Invalid IOCTL command %d", sub_cmd);
@@ -10729,6 +10770,12 @@ static const struct iw_priv_args we_private_args[] = {
 		IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
 		0,
 		"setUnitTestCmd"
+	},
+	{
+		WE_MAC_PWR_DEBUG_CMD,
+		IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
+		0,
+		"halPwrDebug"
 	},
 
 #ifdef WLAN_FEATURE_GPIO_LED_FLASHING
