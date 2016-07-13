@@ -574,11 +574,11 @@ extern "C" {
 #define SCAN_ENGINE_CANCEL_COMMAND                  4
 #define SCAN_ENGINE_STOP_DUE_TO_TIMEOUT             5
 #define SCAN_EVENT_SEND_TO_HOST                     6
-#define SCAN_FWLOG_EVENT_ADD                        7
-#define SCAN_FWLOG_EVENT_REM                        8
-#define SCAN_FWLOG_EVENT_PREEMPTED                  9
-#define SCAN_FWLOG_EVENT_RESTARTED                  10
-#define SCAN_FWLOG_EVENT_COMPLETED                  11
+#define SCAN_EVENT_ADD                              7
+#define SCAN_EVENT_REM                              8
+#define SCAN_EVENT_PREEMPTED                        9
+#define SCAN_EVENT_RESTARTED                        10
+#define SCAN_EVENT_COMPLETED                        11
 #define SCAN_SM_REQ_NEXT_CH                         12
 #define SCAN_ENG_START                              13
 #define SCAN_ENG_CANCEL                             14
@@ -1031,7 +1031,8 @@ extern "C" {
 #define ROAM_SCAN_HIRSSI_CHECK          83
 #define ROAM_SCAN_HIRSSI_TIMER_EXPIRED  84
 #define ROAM_SCAN_EXTSCAN_CHECK         85
-#define ROAM_DBGID_DEFINITION_END   86
+#define ROAM_STA_KICKOUT_RECV           86
+#define ROAM_DBGID_DEFINITION_END       87
 
 /* DATA_TXRX module DBGIDs*/
 #define DATA_TXRX_DBGID_DEFINITION_START         0
@@ -1197,22 +1198,23 @@ extern "C" {
 
 /* RMC DBGIDs */
 #define RMC_DBGID_DEFINITION_START             0
-#define RMC_SM_INIT_ERR                        1
-#define RMC_VDEV_ALLOC_ERR                     2
-#define RMC_CREATE_INSTANCE                    3
-#define RMC_DELETE_INSTANCE                    4
-#define RMC_NEW_PRI_LEADER                     5
-#define RMC_NEW_SEC_LEADER                     6
-#define RMC_NO_LDR_CHANGE                      7
-#define RMC_LDR_INFORM_SENT                    8
-#define RMC_PEER_ADD                           9
-#define RMC_PEER_DELETE                        10
-#define RMC_PEER_UNKNOWN                       11
-#define RMC_PRI_LDR_RSSI_UPDATE                12
-#define RMC_SEC_LDR_RSSI_UPDATE                13
-#define RMC_SET_MODE                           14
-#define RMC_SET_ACTION_PERIOD                  15
-#define RMC_DBGID_DEFINITION_END               16
+#define RMC_CREATE_INSTANCE                    1
+#define RMC_DELETE_INSTANCE                    2
+#define RMC_LDR_SEL                            3
+#define RMC_NO_LDR                             4
+#define RMC_LDR_NOT_SEL                        5
+#define RMC_LDR_INF_SENT                       6
+#define RMC_PEER_ADD                           7
+#define RMC_PEER_DELETE                        8
+#define RMC_PEER_UNKNOWN                       9
+#define RMC_SET_MODE                           10
+#define RMC_SET_ACTION_PERIOD                  11
+#define RMC_ACTION_FRAME_RX                    12
+#define RMC_WAL_EVENT_HANDLER                  13
+#define RMC_BLACKLIST_PEER                     14
+#define RMC_WHITELIST_PEER                     15
+#define RMC_PEER_BCN_INFO                      16
+#define RMC_DBGID_DEFINITION_END               17
 
 /* UNIT_TEST module DBGIDs */
 #define UNIT_TEST_GEN                 0

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014, 2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -232,23 +232,37 @@ struct bmi_segmented_metadata {
  * Response format3 (newest firmware)
  *    struct bmi_target_info;
  */
-#ifdef FEATURE_BMI_2
-PREPACK struct bmi_target_info {
-	/* size of this structure */
-	A_UINT32 target_info_byte_count;
-	A_UINT32 target_ver;
-	A_UINT32 target_type;
-	A_UINT32 flags;
-} POSTPACK;
-#else
 PREPACK struct bmi_target_info {
 	/* size of this structure */
 	A_UINT32 target_info_byte_count;
 	A_UINT32 target_ver;
 	A_UINT32 target_type;
 } POSTPACK;
-#endif
+
 #define TARGET_VERSION_SENTINAL 0xffffffff
+#define TARGET_TYPE_UNKNOWN   0
+#define TARGET_TYPE_AR6001    1
+#define TARGET_TYPE_AR6002    2
+#define TARGET_TYPE_AR6003    3
+#define TARGET_TYPE_AR6004    5
+#define TARGET_TYPE_AR6006    6
+#define TARGET_TYPE_AR9888    7
+#define TARGET_TYPE_AR6320    8
+#define TARGET_TYPE_AR900B    9
+/* For attach Peregrine 2.0 board target_reg_tbl only */
+#define TARGET_TYPE_AR9888V2  10
+/* For attach Rome1.0 target_reg_tbl only*/
+#define TARGET_TYPE_AR6320V1    11
+/* For Rome2.0/2.1 target_reg_tbl ID*/
+#define TARGET_TYPE_AR6320V2    12
+/* For Rome3.0 target_reg_tbl ID*/
+#define TARGET_TYPE_AR6320V3    13
+/* For Tufello1.0 target_reg_tbl ID*/
+#define TARGET_TYPE_QCA9377V1   14
+
+
+extern void target_register_tbl_attach(A_UINT32 target_type);
+
 #define BMI_ROMPATCH_INSTALL               9
 /*
  * Semantics: Install a ROM Patch.

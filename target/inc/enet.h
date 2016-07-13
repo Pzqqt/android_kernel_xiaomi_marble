@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014, 2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -48,7 +48,8 @@ struct ethernet_hdr_t {
 #define ETHERNET_CRC_LEN  4     /* bytes - length of the Ethernet CRC */
 #define ETHERNET_MAX_LEN  1518  /* bytes */
 
-#define ETHERNET_MTU          (ETHERNET_MAX_LEN - (ETHERNET_HDR_LEN + ETHER_CRC_LEN))
+#define ETHERNET_MTU (ETHERNET_MAX_LEN - (ETHERNET_HDR_LEN + ETHERNET_CRC_LEN))
+
 
 struct llc_snap_hdr_t {
 	A_UINT8 dsap;

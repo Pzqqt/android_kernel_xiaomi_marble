@@ -122,7 +122,7 @@ extern "C" {
 	(((num_entries) / (32 / (bits_per_entry))) +            \
 	(((num_entries) % (32 / (bits_per_entry))) ? 1 : 0))
 
-static inline A_UINT32 wmi_packed_arr_get_bits(A_UINT32 *arr,
+static INLINE A_UINT32 wmi_packed_arr_get_bits(A_UINT32 *arr,
 			A_UINT32 entry_index, A_UINT32 bits_per_entry)
 {
 	A_UINT32 entries_per_uint = (32 / bits_per_entry);
@@ -134,7 +134,7 @@ static inline A_UINT32 wmi_packed_arr_get_bits(A_UINT32 *arr,
 		((1 << bits_per_entry) - 1);
 }
 
-static inline void wmi_packed_arr_set_bits(A_UINT32 *arr, A_UINT32 entry_index,
+static INLINE void wmi_packed_arr_set_bits(A_UINT32 *arr, A_UINT32 entry_index,
 			A_UINT32 bits_per_entry, A_UINT32 val)
 {
 	A_UINT32 entries_per_uint = (32 / bits_per_entry);

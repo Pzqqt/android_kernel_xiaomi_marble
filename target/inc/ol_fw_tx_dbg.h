@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -49,8 +49,8 @@
 #if defined(ATH_TARGET)
 #include <osapi.h>              /* A_UINT32 */
 #else
-#include <a_types.h>            /* A_UINT32 */
-#include <osdep.h>              /* PREPACK, POSTPACK */
+#include <a_types.h>    /* A_UINT32 */
+#include <a_osapi.h>    /* PREPACK, POSTPACK */
 #endif
 
 enum ol_fw_tx_dbg_log_mode {
@@ -92,90 +92,90 @@ struct ol_fw_tx_dbg_ppdu_msg_hdr {
  */
 struct ol_fw_tx_dbg_ppdu_base {
 	/* word 0 - filled in during tx enqueue */
-#define OL_FW_TX_DBG_PPDU_START_SEQ_NUM_16    0
+#define OL_FW_TX_DBG_PPDU_START_SEQ_NUM_WORD    0
 #define OL_FW_TX_DBG_PPDU_START_SEQ_NUM_S     0
 #define OL_FW_TX_DBG_PPDU_START_SEQ_NUM_M     0x0000ffff
 	A_UINT16 start_seq_num;
-#define OL_FW_TX_DBG_PPDU_START_PN_LSBS_16    0
+#define OL_FW_TX_DBG_PPDU_START_PN_LSBS_WORD    0
 #define OL_FW_TX_DBG_PPDU_START_PN_LSBS_S     16
 #define OL_FW_TX_DBG_PPDU_START_PN_LSBS_M     0xffff0000
 	A_UINT16 start_pn_lsbs;
 
 	/* word 1 - filled in during tx enqueue */
-#define OL_FW_TX_DBG_PPDU_NUM_BYTES_16        1
+#define OL_FW_TX_DBG_PPDU_NUM_BYTES_WORD        1
 #define OL_FW_TX_DBG_PPDU_NUM_BYTES_S         0
 #define OL_FW_TX_DBG_PPDU_NUM_BYTES_M         0xffffffff
 	A_UINT32 num_bytes;
 
 	/* word 2 - filled in during tx enqueue */
-#define OL_FW_TX_DBG_PPDU_NUM_MSDUS_16        2
+#define OL_FW_TX_DBG_PPDU_NUM_MSDUS_WORD        2
 #define OL_FW_TX_DBG_PPDU_NUM_MSDUS_S         0
 #define OL_FW_TX_DBG_PPDU_NUM_MSDUS_M         0x000000ff
 	A_UINT8 num_msdus;
-#define OL_FW_TX_DBG_PPDU_NUM_MPDUS_16        2
+#define OL_FW_TX_DBG_PPDU_NUM_MPDUS_WORD        2
 #define OL_FW_TX_DBG_PPDU_NUM_MPDUS_S         8
 #define OL_FW_TX_DBG_PPDU_NUM_MPDUS_M         0x0000ff00
 	A_UINT8 num_mpdus;
 	A_UINT16
-#define OL_FW_TX_DBG_PPDU_EXT_TID_16          2
+#define OL_FW_TX_DBG_PPDU_EXT_TID_WORD          2
 #define OL_FW_TX_DBG_PPDU_EXT_TID_S           16
 #define OL_FW_TX_DBG_PPDU_EXT_TID_M           0x001f0000
 	ext_tid : 5,
-#define OL_FW_TX_DBG_PPDU_PEER_ID_16          2
+#define OL_FW_TX_DBG_PPDU_PEER_ID_WORD          2
 #define OL_FW_TX_DBG_PPDU_PEER_ID_S           21
 #define OL_FW_TX_DBG_PPDU_PEER_ID_M           0xffe00000
 	peer_id : 11;
 
 	/* word 3 - filled in during tx enqueue */
-#define OL_FW_TX_DBG_PPDU_TIME_ENQUEUE_16     3
+#define OL_FW_TX_DBG_PPDU_TIME_ENQUEUE_WORD     3
 #define OL_FW_TX_DBG_PPDU_TIME_ENQUEUE_S      0
 #define OL_FW_TX_DBG_PPDU_TIME_ENQUEUE_M      0xffffffff
 	A_UINT32 timestamp_enqueue;
 
 	/* word 4 - filled in during tx completion */
-#define OL_FW_TX_DBG_PPDU_TIME_COMPL_16       4
+#define OL_FW_TX_DBG_PPDU_TIME_COMPL_WORD       4
 #define OL_FW_TX_DBG_PPDU_TIME_COMPL_S        0
 #define OL_FW_TX_DBG_PPDU_TIME_COMPL_M        0xffffffff
 	A_UINT32 timestamp_completion;
 
 	/* word 5 - filled in during tx completion */
-#define OL_FW_TX_DBG_PPDU_BLOCK_ACK_LSBS_16   5
+#define OL_FW_TX_DBG_PPDU_BLOCK_ACK_LSBS_WORD   5
 #define OL_FW_TX_DBG_PPDU_BLOCK_ACK_LSBS_S    0
 #define OL_FW_TX_DBG_PPDU_BLOCK_ACK_LSBS_M    0xffffffff
 	A_UINT32 block_ack_bitmap_lsbs;
 
 	/* word 6 - filled in during tx completion */
-#define OL_FW_TX_DBG_PPDU_BLOCK_ACK_MSBS_16   6
+#define OL_FW_TX_DBG_PPDU_BLOCK_ACK_MSBS_WORD   6
 #define OL_FW_TX_DBG_PPDU_BLOCK_ACK_MSBS_S    0
 #define OL_FW_TX_DBG_PPDU_BLOCK_ACK_MSBS_M    0xffffffff
 	A_UINT32 block_ack_bitmap_msbs;
 
 	/* word 7 - filled in during tx completion (enqueue would work too) */
-#define OL_FW_TX_DBG_PPDU_ENQUEUED_LSBS_16    7
+#define OL_FW_TX_DBG_PPDU_ENQUEUED_LSBS_WORD    7
 #define OL_FW_TX_DBG_PPDU_ENQUEUED_LSBS_S     0
 #define OL_FW_TX_DBG_PPDU_ENQUEUED_LSBS_M     0xffffffff
 	A_UINT32 enqueued_bitmap_lsbs;
 
 	/* word 8 - filled in during tx completion (enqueue would work too) */
-#define OL_FW_TX_DBG_PPDU_ENQUEUED_MSBS_16    8
+#define OL_FW_TX_DBG_PPDU_ENQUEUED_MSBS_WORD    8
 #define OL_FW_TX_DBG_PPDU_ENQUEUED_MSBS_S     0
 #define OL_FW_TX_DBG_PPDU_ENQUEUED_MSBS_M     0xffffffff
 	A_UINT32 enqueued_bitmap_msbs;
 
 	/* word 9 - filled in during tx completion */
-#define OL_FW_TX_DBG_PPDU_RATE_CODE_16        9
+#define OL_FW_TX_DBG_PPDU_RATE_CODE_WORD        9
 #define OL_FW_TX_DBG_PPDU_RATE_CODE_S         0
 #define OL_FW_TX_DBG_PPDU_RATE_CODE_M         0x000000ff
 	A_UINT8 rate_code;
-#define OL_FW_TX_DBG_PPDU_RATEFLAGS_16        9
+#define OL_FW_TX_DBG_PPDU_RATE_FLAGS_WORD        9
 #define OL_FW_TX_DBG_PPDU_RATE_FLAGS_S        8
 #define OL_FW_TX_DBG_PPDU_RATE_FLAGS_M        0x0000ff00
 	A_UINT8 rate_flags;     /* includes dynamic bandwidth info */
-#define OL_FW_TX_DBG_PPDU_TRIES_16            9
+#define OL_FW_TX_DBG_PPDU_TRIES_WORD            9
 #define OL_FW_TX_DBG_PPDU_TRIES_S             16
 #define OL_FW_TX_DBG_PPDU_TRIES_M             0x00ff0000
 	A_UINT8 tries;
-#define OL_FW_TX_DBG_PPDU_COMPLETE_16         9
+#define OL_FW_TX_DBG_PPDU_COMPLETE_WORD         9
 #define OL_FW_TX_DBG_PPDU_COMPLETE_S          24
 #define OL_FW_TX_DBG_PPDU_COMPLETE_M          0xff000000
 	A_UINT8 complete;

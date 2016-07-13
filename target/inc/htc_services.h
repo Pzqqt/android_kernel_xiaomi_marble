@@ -59,15 +59,14 @@ typedef enum {
 
 #define HTT_DATA_MSG_SVC  MAKE_SERVICE_ID(HTT_SERVICE_GROUP,0)
 #define HTT_DATA2_MSG_SVC MAKE_SERVICE_ID(HTT_SERVICE_GROUP,1)
-#define HTT_DATA3_MSG_SVC MAKE_SERVICE_ID(HTT_SERVICE_GROUP, 2)
-
-#define PACKET_LOG_SVC    MAKE_SERVICE_ID(PACKET_LOG_SERVICE_GROUP, 0)
 
 /* raw stream service (i.e. flash, tcmd, calibration apps) */
 #define HTC_RAW_STREAMS_SVC MAKE_SERVICE_ID(HTC_TEST_GROUP,0)
 
 #define CFG_NV_SVC  MAKE_SERVICE_ID(CFG_NV_SERVICE_GROUP,0)
 #define WDI_IPA_TX_SVC MAKE_SERVICE_ID(WDI_IPA_SERVICE_GROUP,0)
+
+#define PACKET_LOG_SVC MAKE_SERVICE_ID(PACKET_LOG_SERVICE_GROUP, 0)
 
 /*
  * Directions for interconnect pipe configuration.
@@ -82,11 +81,12 @@ typedef enum {
  * over the interconnect.
  */
 typedef A_UINT32 PIPEDIR;
-#define PIPEDIR_NONE		0
-#define PIPEDIR_IN		1   /* Target-->Host, WiFi Rx direction */
-#define PIPEDIR_OUT		2   /* Host->Target, WiFi Tx direction */
-#define PIPEDIR_INOUT 		3   /* bidirectional - target to target */
-#define PIPEDIR_INOUT_H2H	4   /* bidirectional - host to host */
+#define PIPEDIR_NONE      0
+#define PIPEDIR_IN        1  /* Target-->Host, WiFi Rx direction */
+#define PIPEDIR_OUT       2  /* Host->Target, WiFi Tx direction */
+#define PIPEDIR_INOUT     3  /* bidirectional, target to target */
+#define PIPEDIR_INOUT_T2T PIPEDIR_INOUT
+#define PIPEDIR_INOUT_H2H 4  /* bidirectional, host to host */
 #define PIPEDIR_MATCH(d1, d2) (((PIPEDIR)(d1) & (PIPEDIR)(d2)) != 0)
 
 /* Establish a mapping between a service/direction and a pipe. */
