@@ -1432,8 +1432,6 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		request->n_channels = MAX_CHANNEL;
 	}
 
-	hdd_notice("No of Scan Channels: %d", request->n_channels);
-
 	if (request->n_channels) {
 		char chList[(request->n_channels * 5) + 1];
 		int len;
@@ -1452,6 +1450,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			num_chan++;
 		}
 		hdd_notice("Channel-List: %s", chList);
+		hdd_notice("No. of Scan Channels: %d", num_chan);
 	}
 	if (!num_chan) {
 		hdd_err("Received zero non-dsrc channels");
