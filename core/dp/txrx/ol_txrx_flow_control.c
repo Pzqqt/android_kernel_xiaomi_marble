@@ -336,17 +336,17 @@ struct ol_tx_flow_pool_t *ol_tx_create_flow_pool(uint8_t flow_pool_id,
 	uint16_t size = 0, i;
 	struct ol_tx_desc_t *tx_desc;
 	union ol_tx_desc_list_elem_t *temp_list = NULL;
-	uint32_t stop_threshold =
-			ol_cfg_get_tx_flow_stop_queue_th(pdev->ctrl_pdev);
-	uint32_t start_threshold = stop_threshold +
-			ol_cfg_get_tx_flow_start_queue_offset(pdev->ctrl_pdev);
+	uint32_t stop_threshold;
+	uint32_t start_threshold;
 
 	if (!pdev) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 		   "%s: pdev is NULL\n", __func__);
 		return NULL;
 	}
-
+	stop_threshold = ol_cfg_get_tx_flow_stop_queue_th(pdev->ctrl_pdev);
+	start_threshold = stop_threshold +
+		ol_cfg_get_tx_flow_start_queue_offset(pdev->ctrl_pdev);
 	pool = qdf_mem_malloc(sizeof(*pool));
 	if (!pool) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
