@@ -6509,10 +6509,13 @@ static void csr_roam_process_join_res(tpAniSirGlobal mac_ctx,
 	session = CSR_GET_SESSION(mac_ctx, session_id);
 
 	conn_profile = &session->connectedProfile;
-	if (eCsrReassocSuccess == res)
+	if (eCsrReassocSuccess == res) {
+		roam_info.reassoc = true;
 		ind_qos = SME_QOS_CSR_REASSOC_COMPLETE;
-	else
+	} else {
+		roam_info.reassoc = false;
 		ind_qos = SME_QOS_CSR_ASSOC_COMPLETE;
+	}
 	sms_log(mac_ctx, LOGW, FL("receives association indication"));
 	qdf_mem_set(&roam_info, sizeof(roam_info), 0);
 	/* always free the memory here */
@@ -6760,6 +6763,11 @@ static void csr_roam_process_join_res(tpAniSirGlobal mac_ctx,
 				csr_roam_copy_ht_profile(dst_profile,
 						src_profile);
 #endif
+			roam_info.vht_caps = join_rsp->vht_caps;
+			roam_info.ht_caps = join_rsp->ht_caps;
+			roam_info.hs20vendor_ie = join_rsp->hs20vendor_ie;
+			roam_info.ht_operation = join_rsp->ht_operation;
+			roam_info.vht_operation = join_rsp->vht_operation;
 		} else {
 			if (cmd->u.roamCmd.fReassoc) {
 				roam_info.fReassocReq =
@@ -6774,7 +6782,6 @@ static void csr_roam_process_join_res(tpAniSirGlobal mac_ctx,
 					session->connectedInfo.pbFrames;
 			}
 		}
-
 		/*
 		 * Update the staId from the previous connected profile info
 		 * as the reassociation is triggred at SME/HDD

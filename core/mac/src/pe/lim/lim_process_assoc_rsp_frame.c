@@ -973,6 +973,12 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		ie_len,
 		beacon);
 
+	session_entry->vht_caps = beacon->VHTCaps;
+	session_entry->ht_caps = beacon->HTCaps;
+	session_entry->hs20vendor_ie = beacon->hs20vendor_ie;
+	session_entry->ht_operation = beacon->HTInfo;
+	session_entry->vht_operation = beacon->VHTOperation;
+
 	if (mac_ctx->lim.gLimProtectionControl !=
 		WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE)
 		lim_decide_sta_protection_on_assoc(mac_ctx, beacon,

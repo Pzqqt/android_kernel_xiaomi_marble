@@ -38,6 +38,13 @@
 #ifndef __SIR_API_H
 #define __SIR_API_H
 
+
+/* Take care to avoid redefinition of this type, if it is */
+/* already defined in "halWmmApi.h" */
+#if !defined(_HALMAC_WMM_API_H)
+typedef struct sAniSirGlobal *tpAniSirGlobal;
+#endif
+
 #include "qdf_types.h"
 #include "cds_reg_service.h"
 #include "cds_regdomain.h"
@@ -47,6 +54,7 @@
 #include "sir_params.h"
 #include "cds_regdomain.h"
 #include "wmi_unified_param.h"
+#include <dot11f.h>
 
 #define OFFSET_OF(structType, fldName)   (&((structType *)0)->fldName)
 
@@ -1163,6 +1171,11 @@ typedef struct sSirSmeJoinRsp {
 	tSirSmeHTProfile HTProfile;
 #endif
 	bool supported_nss_1x1;
+	tDot11fIEHTCaps ht_caps;
+	tDot11fIEVHTCaps vht_caps;
+	tDot11fIEHTInfo ht_operation;
+	tDot11fIEVHTOperation vht_operation;
+	tDot11fIEhs20vendor_ie hs20vendor_ie;
 	uint8_t frames[1];
 } tSirSmeJoinRsp, *tpSirSmeJoinRsp;
 

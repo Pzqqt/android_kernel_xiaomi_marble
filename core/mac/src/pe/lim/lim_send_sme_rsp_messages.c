@@ -388,6 +388,24 @@ static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 #endif
 	}
 }
+
+/**
+ * lim_add_bss_info() - copy data from session entry to join rsp
+ * @session_entry: PE Session Info
+ * @sme_join_rsp: Join response buffer to be filled up
+ *
+ * Return: None
+ */
+void lim_add_bss_info(tpPESession session_entry,
+					tpSirSmeJoinRsp sme_join_rsp)
+{
+	sme_join_rsp->hs20vendor_ie = session_entry->hs20vendor_ie;
+	sme_join_rsp->vht_caps = session_entry->vht_caps;
+	sme_join_rsp->ht_caps = session_entry->ht_caps;
+	sme_join_rsp->ht_operation = session_entry->ht_operation;
+	sme_join_rsp->vht_operation = session_entry->vht_operation;
+}
+
 /**
  * lim_send_sme_join_reassoc_rsp() - Send Response to Upper Layers
  * @mac_ctx:            Pointer to Global MAC structure
@@ -489,7 +507,7 @@ lim_send_sme_join_reassoc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 #ifdef FEATURE_WLAN_ESE
 		sme_join_rsp->tspecIeLen = 0;
 #endif
-
+		lim_add_bss_info(session_entry, sme_join_rsp);
 		lim_handle_join_rsp_status(mac_ctx, session_entry, result_code,
 			sme_join_rsp);
 
