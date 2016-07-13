@@ -577,7 +577,7 @@ QDF_STATUS hdd_get_peer_sta_id(hdd_station_ctx_t *pHddStaCtx,
 {
 	uint8_t idx;
 
-	for (idx = 0; idx < MAX_IBSS_PEERS; idx++) {
+	for (idx = 0; idx < MAX_PEERS; idx++) {
 		if (!qdf_mem_cmp(&pHddStaCtx->conn_info.peerMacAddress[idx],
 				    pMacAddress, QDF_MAC_ADDR_SIZE)) {
 			*staId = pHddStaCtx->conn_info.staId[idx];
@@ -780,7 +780,7 @@ int hdd_get_peer_idx(hdd_station_ctx_t *sta_ctx, struct qdf_mac_addr *addr)
 {
 	uint8_t idx;
 
-	for (idx = 0; idx < MAX_IBSS_PEERS; idx++) {
+	for (idx = 0; idx < MAX_PEERS; idx++) {
 		if (sta_ctx->conn_info.staId[idx] == 0)
 			continue;
 		if (qdf_mem_cmp(&sta_ctx->conn_info.peerMacAddress[idx],

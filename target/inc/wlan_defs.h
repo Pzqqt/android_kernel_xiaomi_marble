@@ -339,7 +339,7 @@ typedef A_UINT8 A_RATE;
 #error "Extend rate table module first"
 #endif
 
-#define MAX_IBSS_PEERS 32
+#define MAX_PEERS 32
 
 #if defined(CONFIG_AR900B_SUPPORT) || defined(AR900B)
 typedef struct {

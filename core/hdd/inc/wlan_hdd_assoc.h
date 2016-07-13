@@ -121,8 +121,8 @@ typedef struct connection_info_s {
 	eMib_dot11DesiredBssType connDot11DesiredBssType;
 	struct qdf_mac_addr bssId;
 	tCsrSSIDInfo SSID;
-	uint8_t staId[MAX_IBSS_PEERS];
-	struct qdf_mac_addr peerMacAddress[MAX_IBSS_PEERS];
+	uint8_t staId[MAX_PEERS];
+	struct qdf_mac_addr peerMacAddress[MAX_PEERS];
 	eCsrAuthType authType;
 	eCsrEncryptionType ucEncryptionType;
 	eCsrEncryptionType mcEncryptionType;
