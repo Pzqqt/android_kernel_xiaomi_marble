@@ -716,6 +716,7 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_p2p_lo_stopped_event_fixed_param,
 	WMITLV_TAG_STRUC_wmi_peer_reorder_queue_setup_cmd_fixed_param,
 	WMITLV_TAG_STRUC_wmi_peer_reorder_queue_remove_cmd_fixed_param,
+	WMITLV_TAG_STRUC_wmi_set_multiple_mcast_filter_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1007,6 +1008,7 @@ typedef enum {
 	OP(WMI_P2P_LISTEN_OFFLOAD_STOP_CMDID) \
 	OP(WMI_PEER_REORDER_QUEUE_SETUP_CMDID) \
 	OP(WMI_PEER_REORDER_QUEUE_REMOVE_CMDID) \
+	OP(WMI_SET_MULTIPLE_MCAST_FILTER_CMDID) \
 	/* add new CMD_LIST elements above this line */
 
 /*
@@ -1800,6 +1802,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_FORCE_FW_HANG_CMDID);
 #define WMITLV_TABLE_WMI_SET_MCASTBCAST_FILTER_CMDID(id,op,buf,len) \
 	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_WMI_SET_MCASTBCAST_FILTER_CMD_fixed_param, WMI_SET_MCASTBCAST_FILTER_CMD_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_SET_MCASTBCAST_FILTER_CMDID);
+
+/* Enhanced Mcast add/delete filter list cmd */
+#define WMITLV_TABLE_WMI_SET_MULTIPLE_MCAST_FILTER_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_set_multiple_mcast_filter_cmd_fixed_param, WMI_SET_MULTIPLE_MCAST_FILTER_CMD_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_FIXED_STRUC, wmi_mac_addr, mcast_list, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_SET_MULTIPLE_MCAST_FILTER_CMDID);
 
 /* Set dbglog time stamp sync cmd */
 #define WMITLV_TABLE_WMI_DBGLOG_TIME_STAMP_SYNC_CMDID(id, op, buf, len) \

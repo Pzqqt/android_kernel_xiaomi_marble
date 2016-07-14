@@ -796,6 +796,8 @@ typedef enum {
 	WMI_VDEV_WISA_CMDID,
 	/** set debug log time stamp sync up with host */
 	WMI_DBGLOG_TIME_STAMP_SYNC_CMDID,
+	/** Command for host to set/delete multiple mcast filters */
+	WMI_SET_MULTIPLE_MCAST_FILTER_CMDID,
 
 	/* GPIO Configuration */
 	WMI_GPIO_CONFIG_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_GPIO),
@@ -9699,8 +9701,12 @@ typedef struct {
 	A_UINT32 type;          /*0:unused 1: ASSERT, 2: not respond detect command,3:  simulate ep-full(),4:... */
 	A_UINT32 delay_time_ms;         /*0xffffffff means the simulate will delay for random time (0 ~0xffffffff ms) */
 } WMI_FORCE_FW_HANG_CMD_fixed_param;
-#define WMI_MCAST_FILTER_SET 1
-#define WMI_MCAST_FILTER_DELETE 2
+
+typedef enum {
+	WMI_MCAST_FILTER_SET = 1,
+	WMI_MCAST_FILTER_DELETE
+} WMI_SET_SINGLE_MCAST_FILTER_OP;
+
 typedef struct {
 	A_UINT32 tlv_header;
 	A_UINT32 vdev_id;
@@ -9708,6 +9714,28 @@ typedef struct {
 	A_UINT32 action;
 	wmi_mac_addr mcastbdcastaddr;
 } WMI_SET_MCASTBCAST_FILTER_CMD_fixed_param;
+
+typedef enum {
+	WMI_MULTIPLE_MCAST_FILTER_CLEAR = 1, /* clear all previous mc list */
+	/* clear all previous mc list, and set new list */
+	WMI_MULTIPLE_MCAST_FILTER_SET,
+	WMI_MULTIPLE_MCAST_FILTER_DELETE,    /* delete one/multiple mc list */
+	WMI_MULTIPLE_MCAST_FILTER_ADD        /* add one/multiple mc list */
+} WMI_MULTIPLE_MCAST_FILTER_OP;
+
+typedef struct {
+	A_UINT32 tlv_header;
+	A_UINT32 vdev_id;
+	A_UINT32 operation;  /* refer WMI_MULTIPLE_MCAST_FILTER_OP */
+	/* number of elements in the subsequent mcast addr list */
+	A_UINT32 num_mcastaddrs;
+	/**
+	 * TLV (tag length value) parameters follow the
+	 * structure. The TLV's are:
+	 * wmi_mac_addr mcastaddr_list[num_mcastaddrs];
+	 */
+} WMI_SET_MULTIPLE_MCAST_FILTER_CMD_fixed_param;
+
 
 /* WMI_DBGLOG_TIME_STAMP_SYNC_CMDID */
 typedef enum {
