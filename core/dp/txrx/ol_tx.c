@@ -1705,10 +1705,11 @@ void dump_frag_desc(char *msg, struct ol_tx_desc_t *tx_desc)
 
 	qdf_print("OL TX Descriptor 0x%p msdu_id %d\n",
 		 tx_desc, tx_desc->id);
-	qdf_print("HTT TX Descriptor vaddr: 0x%p paddr: 0x%llx",
-		 tx_desc->htt_tx_desc, tx_desc->htt_tx_desc_paddr);
-	qdf_print("%s %d: Fragment Descriptor 0x%p (paddr=0x%llx)",
-		 __func__, __LINE__, tx_desc->htt_frag_desc, tx_desc->htt_frag_desc_paddr);
+	qdf_print("HTT TX Descriptor vaddr: 0x%p paddr: %pad",
+		 tx_desc->htt_tx_desc, &tx_desc->htt_tx_desc_paddr);
+	qdf_print("%s %d: Fragment Descriptor 0x%p (paddr=%pad)",
+		 __func__, __LINE__, tx_desc->htt_frag_desc,
+		 &tx_desc->htt_frag_desc_paddr);
 
 	/* it looks from htt_tx_desc_frag() that tx_desc->htt_frag_desc
 	   is already de-referrable (=> in virtual address space) */
