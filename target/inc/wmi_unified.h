@@ -2428,9 +2428,16 @@ typedef struct {
 
 	A_UINT32 num_host_mem_chunks;
 	/** size of array host_mem_chunks[] */
-	/* The TLVs for resource_config and host_mem_chunks[] will follow.
+	/* The TLVs for resource_config, host_mem_chunks[], and
+	 * hw_mode_config will follow.
 	 *     wmi_resource_config   resource_config;
 	 *     wlan_host_memory_chunk host_mem_chunks[];
+	 *     wmi_pdev_set_hw_mode_cmd_fixed_param hw_mode_config;
+	 *         Note that the hw_mode_config, in spite of its "pdev" name,
+	 *         applies to the entire target rather than for a single pdev
+	 *         within the target.
+	 *         To avoid specifying a HW mode for the target, the host should
+	 *         fill hw_mode_config's fields with 0x0.
 	 */
 
 } wmi_init_cmd_fixed_param;
