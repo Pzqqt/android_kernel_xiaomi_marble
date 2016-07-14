@@ -720,6 +720,8 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_mgmt_tx_compl_bundle_event_fixed_param,
 	WMITLV_TAG_STRUC_wmi_read_data_from_flash_cmd_fixed_param,
 	WMITLV_TAG_STRUC_wmi_read_data_from_flash_event_fixed_param,
+	WMITLV_TAG_STRUC_wmi_pdev_set_reorder_timeout_val_cmd_fixed_param,
+	WMITLV_TAG_STRUC_wmi_peer_set_rx_blocksize_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1013,6 +1015,8 @@ typedef enum {
 	OP(WMI_PEER_REORDER_QUEUE_REMOVE_CMDID) \
 	OP(WMI_SET_MULTIPLE_MCAST_FILTER_CMDID) \
 	OP(WMI_READ_DATA_FROM_FLASH_CMDID) \
+	OP(WMI_PDEV_SET_REORDER_TIMEOUT_VAL_CMDID) \
+	OP(WMI_PEER_SET_RX_BLOCKSIZE_CMDID) \
 	/* add new CMD_LIST elements above this line */
 
 /*
@@ -2893,6 +2897,16 @@ WMITLV_CREATE_PARAM_STRUC(WMI_SET_PERIODIC_CHANNEL_STATS_CONFIG_CMDID);
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_pdev_wal_power_debug_cmd_fixed_param, wmi_pdev_wal_power_debug_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, args, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_WAL_POWER_DEBUG_CMDID);
+
+/* pdev set reorder timeout val */
+#define WMITLV_TABLE_WMI_PDEV_SET_REORDER_TIMEOUT_VAL_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_pdev_set_reorder_timeout_val_cmd_fixed_param, wmi_pdev_set_reorder_timeout_val_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_REORDER_TIMEOUT_VAL_CMDID);
+
+/* peer set rx blocksize cmd */
+#define WMITLV_TABLE_WMI_PEER_SET_RX_BLOCKSIZE_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_peer_set_rx_blocksize_cmd_fixed_param, wmi_peer_set_rx_blocksize_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PEER_SET_RX_BLOCKSIZE_CMDID);
 
 /* Bandwidth Fairness (BWF) peer configure commands */
 #define WMITLV_TABLE_WMI_PEER_BWF_REQUEST_CMDID(id, op, buf, len) \
