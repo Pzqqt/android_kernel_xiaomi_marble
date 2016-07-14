@@ -659,7 +659,7 @@ static int __wlan_hdd_bus_resume(void)
  *
  * Return: void
  */
-static int wlan_hdd_bus_resume(void)
+int wlan_hdd_bus_resume(void)
 {
 	int ret;
 

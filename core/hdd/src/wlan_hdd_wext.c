@@ -89,6 +89,10 @@
 #include "cdp_txrx_flow_ctrl_legacy.h"
 #include "wlan_hdd_nan_datapath.h"
 #include "wlan_hdd_stats.h"
+#ifdef WLAN_SUSPEND_RESUME_TEST
+#include "wlan_hdd_driver_ops.h"
+#include "hif.h"
+#endif
 
 #define HDD_FINISH_ULA_TIME_OUT         800
 #define HDD_SET_MCBC_FILTERS_TO_FW      1
@@ -433,6 +437,11 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 /* Private sub ioctl for enabling and setting histogram interval of profiling */
 #define WE_ENABLE_FW_PROFILE    4
 #define WE_SET_FW_PROFILE_HIST_INTVL    5
+
+#ifdef WLAN_SUSPEND_RESUME_TEST
+#define WE_SET_WLAN_SUSPEND    6
+#define WE_SET_WLAN_RESUME    7
+#endif
 
 /* (SIOCIWFIRSTPRIV + 29) is currently unused */
 
@@ -9589,6 +9598,25 @@ static int wlan_hdd_set_mon_chan(hdd_adapter_t *adapter, uint32_t chan,
 	return qdf_status_to_os_return(status);
 }
 
+#ifdef WLAN_SUSPEND_RESUME_TEST
+static void *g_wiphy;
+
+/**
+ * hdd_wlan_trigger_resume() - resume wlan
+ * @val: interrupt val
+ *
+ * Resume wlan after getting very 1st CE interrupt from target
+ *
+ * Return: none
+ */
+static void hdd_wlan_trigger_resume(uint32_t val)
+{
+	hdd_err("Resume WLAN val 0x%x", val);
+	wlan_hdd_bus_resume();
+	wlan_hdd_cfg80211_resume_wlan(g_wiphy);
+}
+#endif
+
 static int __iw_set_two_ints_getnone(struct net_device *dev,
 				     struct iw_request_info *info,
 				     union iwreq_data *wrqu, char *extra)
@@ -9598,6 +9626,10 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 	int sub_cmd = value[0];
 	int ret;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+#ifdef WLAN_SUSPEND_RESUME_TEST
+	pm_message_t state;
+#endif
+
 
 	ENTER_DEV(dev);
 
@@ -9661,6 +9693,21 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 	case WE_SET_MON_MODE_CHAN:
 		ret = wlan_hdd_set_mon_chan(pAdapter, value[1], value[2]);
 		break;
+#ifdef WLAN_SUSPEND_RESUME_TEST
+	case WE_SET_WLAN_SUSPEND:
+		hdd_err("Suspend WLAN");
+		g_wiphy = hdd_ctx->wiphy;
+		state.event = PM_EVENT_SUSPEND;
+		ret = wlan_hdd_cfg80211_suspend_wlan(hdd_ctx->wiphy, NULL);
+		wlan_hdd_bus_suspend(state);
+		hif_fake_apps_suspend(hdd_wlan_trigger_resume);
+		break;
+	case WE_SET_WLAN_RESUME:
+		hdd_err("Resume WLAN");
+		wlan_hdd_bus_resume();
+		ret = wlan_hdd_cfg80211_resume_wlan(hdd_ctx->wiphy);
+		break;
+#endif
 	default:
 		hdd_err("Invalid IOCTL command %d", sub_cmd);
 		break;
@@ -10871,6 +10918,16 @@ static const struct iw_priv_args we_private_args[] = {
 	{WE_SET_FW_CRASH_INJECT,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
 	 0, "crash_inject"}
+	,
+#endif
+#ifdef WLAN_SUSPEND_RESUME_TEST
+	{WE_SET_WLAN_SUSPEND,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
+	 0, "wlan_suspend"}
+	,
+	{WE_SET_WLAN_RESUME,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
+	 0, "wlan_resume"}
 	,
 #endif
 	{WE_ENABLE_FW_PROFILE,
