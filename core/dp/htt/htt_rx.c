@@ -3420,10 +3420,10 @@ void htt_rx_ipa_uc_free_wdi2_rsc(struct htt_pdev_t *pdev)
 			pdev->osdev, pdev->osdev->dev,
 			4,
 			pdev->ipa_uc_rx_rsc.
-			rx_ipa_prc_done_idx.vaddr,
+			rx2_ipa_prc_done_idx.vaddr,
 			pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx.paddr,
 			qdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
-						 rx_ipa_prc_done_idx),
+						 rx2_ipa_prc_done_idx),
 						memctx));
 	}
 }

@@ -61,6 +61,17 @@
 	((type *)((char *)(ptr) - (char *)(&((type *)0)->member)))
 #endif
 
+#ifdef ATH_11AC_TXCOMPACT
+#define HTT_SEND_HTC_PKT(pdev, pkt)                              \
+do {                                                             \
+	if (htc_send_pkt(pdev->htc_pdev, &pkt->htc_pkt) == A_OK) \
+		htt_htc_misc_pkt_list_add(pdev, pkt);            \
+} while (0)
+#else
+#define HTT_SEND_HTC_PKT(pdev, ppkt) htc_send_pkt(pdev->htc_pdev, &pkt->htc_pkt);
+#endif
+
+
 static void
 htt_h2t_send_complete_free_netbuf(void *pdev, A_STATUS status,
 				  qdf_nbuf_t netbuf, uint16_t msdu_id)
@@ -272,13 +283,7 @@ A_STATUS htt_h2t_ver_req_msg(struct htt_pdev_t *pdev)
 			       1); /* tag - not relevant here */
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
-
-#ifdef ATH_11AC_TXCOMPACT
-	if (htc_send_pkt(pdev->htc_pdev, &pkt->htc_pkt) == A_OK)
-		htt_htc_misc_pkt_list_add(pdev, pkt);
-#else
-	htc_send_pkt(pdev->htc_pdev, &pkt->htc_pkt);
-#endif
+	HTT_SEND_HTC_PKT(pdev, pkt);
 
 	if ((pdev->cfg.is_high_latency) &&
 	    (!pdev->cfg.default_tx_comp_req))
@@ -473,13 +478,7 @@ QDF_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev)
 			       HTC_TX_PACKET_TAG_RUNTIME_PUT);
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
-
-#ifdef ATH_11AC_TXCOMPACT
-	if (htc_send_pkt(pdev->htc_pdev, &pkt->htc_pkt) == A_OK)
-		htt_htc_misc_pkt_list_add(pdev, pkt);
-#else
-	htc_send_pkt(pdev->htc_pdev, &pkt->htc_pkt);
-#endif
+	HTT_SEND_HTC_PKT(pdev, pkt);
 	return A_OK;
 }
 
@@ -765,13 +764,7 @@ A_STATUS htt_h2t_sync_msg(struct htt_pdev_t *pdev, uint8_t sync_cnt)
 			       HTC_TX_PACKET_TAG_RUNTIME_PUT);
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
-
-#ifdef ATH_11AC_TXCOMPACT
-	if (htc_send_pkt(pdev->htc_pdev, &pkt->htc_pkt) == A_OK)
-		htt_htc_misc_pkt_list_add(pdev, pkt);
-#else
-	htc_send_pkt(pdev->htc_pdev, &pkt->htc_pkt);
-#endif
+	HTT_SEND_HTC_PKT(pdev, pkt);
 
 	if ((pdev->cfg.is_high_latency) &&
 	    (!pdev->cfg.default_tx_comp_req))
@@ -938,7 +931,7 @@ int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 	msg_word++;
 	*msg_word = 0;
 	HTT_WDI_IPA_CFG_RX_IND_RING_SIZE_SET(*msg_word,
-		(unsigned int)ol_cfg_ipa_uc_rx_ind_ring_size(pdev->ctrl_pdev));
+		(unsigned int)qdf_get_pwr2(pdev->rx_ring.fill_level));
 
 	msg_word++;
 	*msg_word = 0;
@@ -970,7 +963,7 @@ int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 	msg_word++;
 	*msg_word = 0;
 	HTT_WDI_IPA_CFG_RX_RING2_SIZE_SET(*msg_word,
-		(unsigned int)ol_cfg_ipa_uc_rx_ind_ring_size(pdev->ctrl_pdev));
+		(unsigned int)qdf_get_pwr2(pdev->rx_ring.fill_level));
 
 	msg_word++;
 	*msg_word = 0;
@@ -998,9 +991,7 @@ int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 			       HTC_TX_PACKET_TAG_RUNTIME_PUT);
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
-
-	htc_send_pkt(pdev->htc_pdev, &pkt->htc_pkt);
-
+	HTT_SEND_HTC_PKT(pdev, pkt);
 	return A_OK;
 }
 #else
@@ -1072,7 +1063,7 @@ int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 	msg_word++;
 	*msg_word = 0;
 	HTT_WDI_IPA_CFG_RX_IND_RING_SIZE_SET(*msg_word,
-		(unsigned int)ol_cfg_ipa_uc_rx_ind_ring_size(pdev->ctrl_pdev));
+		(unsigned int)qdf_get_pwr2(pdev->rx_ring.fill_level));
 
 	msg_word++;
 	*msg_word = 0;
@@ -1092,9 +1083,7 @@ int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 			       HTC_TX_PACKET_TAG_RUNTIME_PUT);
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
-
-	htc_send_pkt(pdev->htc_pdev, &pkt->htc_pkt);
-
+	HTT_SEND_HTC_PKT(pdev, pkt);
 	return A_OK;
 }
 #endif
@@ -1165,9 +1154,7 @@ int htt_h2t_ipa_uc_set_active(struct htt_pdev_t *pdev,
 			       1); /* tag - not relevant here */
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
-
-	htc_send_pkt(pdev->htc_pdev, &pkt->htc_pkt);
-
+	HTT_SEND_HTC_PKT(pdev, pkt);
 	return A_OK;
 }
 
@@ -1225,9 +1212,7 @@ int htt_h2t_ipa_uc_get_stats(struct htt_pdev_t *pdev)
 			       1); /* tag - not relevant here */
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
-
-	htc_send_pkt(pdev->htc_pdev, &pkt->htc_pkt);
-
+	HTT_SEND_HTC_PKT(pdev, pkt);
 	return A_OK;
 }
 #endif /* IPA_OFFLOAD */

@@ -703,8 +703,7 @@ int htt_ipa_uc_attach(struct htt_pdev_t *pdev)
 
 	/* RX resource attach */
 	error = htt_rx_ipa_uc_attach(
-		pdev,
-		ol_cfg_ipa_uc_rx_ind_ring_size(pdev->ctrl_pdev));
+		pdev, qdf_get_pwr2(pdev->rx_ring.fill_level));
 	if (error) {
 		qdf_print("HTT IPA UC RX attach fail code %d\n", error);
 		htt_tx_ipa_uc_detach(pdev);
