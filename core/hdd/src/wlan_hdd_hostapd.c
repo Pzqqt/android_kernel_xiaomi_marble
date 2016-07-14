@@ -6075,37 +6075,12 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 			case NL80211_CHAN_HT20:
 			case NL80211_CHAN_NO_HT:
 				smeConfig.csrConfig.obssEnabled = false;
-				if (channel <= 14)
-					smeConfig.csrConfig.
-						channelBondingMode24GHz =
-					eCSR_INI_SINGLE_CHANNEL_CENTERED;
-				else
-					smeConfig.csrConfig.
-						channelBondingMode5GHz =
-					eCSR_INI_SINGLE_CHANNEL_CENTERED;
 				sap_config->sec_ch = 0;
 				break;
-
 			case NL80211_CHAN_HT40MINUS:
-				if (channel <= 14)
-					smeConfig.csrConfig.
-					channelBondingMode24GHz =
-					eCSR_INI_DOUBLE_CHANNEL_HIGH_PRIMARY;
-				else
-					smeConfig.csrConfig.
-					channelBondingMode5GHz =
-					eCSR_INI_DOUBLE_CHANNEL_HIGH_PRIMARY;
 				sap_config->sec_ch = sap_config->channel - 4;
 				break;
 			case NL80211_CHAN_HT40PLUS:
-				if (channel <= 14)
-					smeConfig.csrConfig.
-					channelBondingMode24GHz =
-					eCSR_INI_DOUBLE_CHANNEL_LOW_PRIMARY;
-				else
-					smeConfig.csrConfig.
-					channelBondingMode5GHz =
-					eCSR_INI_DOUBLE_CHANNEL_LOW_PRIMARY;
 				sap_config->sec_ch = sap_config->channel + 4;
 				break;
 			default:

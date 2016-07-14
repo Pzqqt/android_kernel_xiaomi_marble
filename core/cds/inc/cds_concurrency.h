@@ -635,13 +635,10 @@ static inline void cds_force_sap_on_scc(eCsrRoamResult roam_result,
 #endif /* FEATURE_WLAN_FORCE_SAP_SCC */
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-void cds_check_concurrent_intf_and_restart_sap(
-		hdd_station_ctx_t *hdd_sta_ctx,
-		hdd_adapter_t *adapter);
+void cds_check_concurrent_intf_and_restart_sap(hdd_adapter_t *adapter);
 #else
 static inline void cds_check_concurrent_intf_and_restart_sap(
-		hdd_station_ctx_t *hdd_sta_ctx,
-		hdd_adapter_t *adapter)
+						hdd_adapter_t *adapter)
 {
 
 }
@@ -798,7 +795,7 @@ QDF_STATUS qdf_wait_for_connection_update(void);
 QDF_STATUS qdf_reset_connection_update(void);
 QDF_STATUS qdf_set_connection_update(void);
 QDF_STATUS qdf_init_connection_update(void);
-QDF_STATUS cds_stop_start_opportunistic_timer(void);
+QDF_STATUS cds_restart_opportunistic_timer(bool check_state);
 QDF_STATUS cds_modify_sap_pcl_based_on_mandatory_channel(uint8_t *pcl_list_org,
 		uint8_t *weight_list_org,
 		uint32_t *pcl_len_org);
@@ -833,4 +830,8 @@ bool cds_is_hw_mode_change_after_vdev_up(void);
 void cds_dump_connection_status_info(void);
 uint32_t cds_mode_specific_connection_count(enum cds_con_mode mode,
 						uint32_t *list);
+void cds_hw_mode_transition_cb(uint32_t old_hw_mode_index,
+			uint32_t new_hw_mode_index,
+			uint32_t num_vdev_mac_entries,
+			 struct sir_vdev_mac_map *vdev_mac_map);
 #endif /* __CDS_CONCURRENCY_H */

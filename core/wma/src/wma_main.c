@@ -2489,6 +2489,66 @@ fail:
 }
 
 /**
+ * wma_process_pdev_hw_mode_trans_ind() - Process HW mode transition info
+ *
+ * @handle: WMA handle
+ * @fixed_param: Event fixed parameters
+ * @vdev_mac_entry - vdev mac entry
+ * @hw_mode_trans_ind - Buffer to store parsed information
+ *
+ * Parses fixed_param, vdev_mac_entry and fills in the information into
+ * hw_mode_trans_ind and wma
+ *
+ * Return: None
+ */
+void wma_process_pdev_hw_mode_trans_ind(void *handle,
+	wmi_pdev_hw_mode_transition_event_fixed_param *fixed_param,
+	wmi_pdev_set_hw_mode_response_vdev_mac_entry *vdev_mac_entry,
+	struct sir_hw_mode_trans_ind *hw_mode_trans_ind)
+{
+	uint32_t i;
+	tp_wma_handle wma = (tp_wma_handle) handle;
+
+	hw_mode_trans_ind->old_hw_mode_index = fixed_param->old_hw_mode_index;
+	hw_mode_trans_ind->new_hw_mode_index = fixed_param->new_hw_mode_index;
+	hw_mode_trans_ind->num_vdev_mac_entries =
+					fixed_param->num_vdev_mac_entries;
+	WMA_LOGI("%s: old_hw_mode_index:%d new_hw_mode_index:%d entries=%d",
+		__func__, fixed_param->old_hw_mode_index,
+		fixed_param->new_hw_mode_index,
+		fixed_param->num_vdev_mac_entries);
+
+	/* Store the vdev-mac map in WMA and send to policy manager */
+	for (i = 0; i < fixed_param->num_vdev_mac_entries; i++) {
+		uint32_t vdev_id, mac_id, pdev_id;
+		vdev_id = vdev_mac_entry[i].vdev_id;
+		pdev_id = vdev_mac_entry[i].pdev_id;
+
+		if (pdev_id == WMI_PDEV_ID_SOC) {
+			WMA_LOGE("%s: soc level id received for mac id)",
+					__func__);
+			QDF_BUG(0);
+			return;
+		}
+
+		mac_id = WMA_PDEV_TO_MAC_MAP(vdev_mac_entry[i].pdev_id);
+
+		WMA_LOGI("%s: vdev_id:%d mac_id:%d",
+				__func__, vdev_id, mac_id);
+
+		hw_mode_trans_ind->vdev_mac_map[i].vdev_id = vdev_id;
+		hw_mode_trans_ind->vdev_mac_map[i].mac_id = mac_id;
+		wma_update_intf_hw_mode_params(vdev_id, mac_id,
+				fixed_param->new_hw_mode_index);
+	}
+	wma->old_hw_mode_index = fixed_param->old_hw_mode_index;
+	wma->new_hw_mode_index = fixed_param->new_hw_mode_index;
+
+	WMA_LOGI("%s: Updated: old_hw_mode_index:%d new_hw_mode_index:%d",
+		__func__, wma->old_hw_mode_index, wma->new_hw_mode_index);
+}
+
+/**
  * wma_pdev_hw_mode_transition_evt_handler() - HW mode transition evt handler
  * @handle: WMI handle
  * @event:  Event recevied from FW
@@ -2505,7 +2565,6 @@ static int wma_pdev_hw_mode_transition_evt_handler(void *handle,
 		uint8_t *event,
 		uint32_t len)
 {
-	uint32_t i;
 	WMI_PDEV_HW_MODE_TRANSITION_EVENTID_param_tlvs *param_buf;
 	wmi_pdev_hw_mode_transition_event_fixed_param *wmi_event;
 	wmi_pdev_set_hw_mode_response_vdev_mac_entry *vdev_mac_entry;
@@ -2532,46 +2591,10 @@ static int wma_pdev_hw_mode_transition_evt_handler(void *handle,
 	}
 
 	wmi_event = param_buf->fixed_param;
-	hw_mode_trans_ind->old_hw_mode_index = wmi_event->old_hw_mode_index;
-	hw_mode_trans_ind->new_hw_mode_index = wmi_event->new_hw_mode_index;
-	hw_mode_trans_ind->num_vdev_mac_entries =
-						wmi_event->num_vdev_mac_entries;
-	WMA_LOGI("%s: old_hw_mode_index:%d new_hw_mode_index:%d entries=%d",
-		__func__, wmi_event->old_hw_mode_index,
-		wmi_event->new_hw_mode_index, wmi_event->num_vdev_mac_entries);
-
 	vdev_mac_entry =
 		param_buf->wmi_pdev_set_hw_mode_response_vdev_mac_mapping;
-
-	/* Store the vdev-mac map in WMA and prepare to send to HDD  */
-	for (i = 0; i < wmi_event->num_vdev_mac_entries; i++) {
-		uint32_t vdev_id, mac_id, pdev_id;
-		vdev_id = vdev_mac_entry[i].vdev_id;
-		pdev_id = vdev_mac_entry[i].pdev_id;
-
-		if (pdev_id == WMI_PDEV_ID_SOC) {
-			WMA_LOGE("%s: soc level id received for mac id)",
-					__func__);
-			QDF_BUG(0);
-			return QDF_STATUS_E_FAILURE;
-		}
-
-		mac_id = WMA_PDEV_TO_MAC_MAP(vdev_mac_entry[i].pdev_id);
-
-		WMA_LOGI("%s: vdev_id:%d mac_id:%d",
-				__func__, vdev_id, mac_id);
-
-		hw_mode_trans_ind->vdev_mac_map[i].vdev_id = vdev_id;
-		hw_mode_trans_ind->vdev_mac_map[i].mac_id = mac_id;
-		wma_update_intf_hw_mode_params(vdev_id, mac_id,
-				wmi_event->new_hw_mode_index);
-	}
-	wma->old_hw_mode_index = wmi_event->old_hw_mode_index;
-	wma->new_hw_mode_index = wmi_event->new_hw_mode_index;
-
-	WMA_LOGI("%s: Updated: old_hw_mode_index:%d new_hw_mode_index:%d",
-		__func__, wma->old_hw_mode_index, wma->new_hw_mode_index);
-
+	wma_process_pdev_hw_mode_trans_ind(wma, wmi_event, vdev_mac_entry,
+		hw_mode_trans_ind);
 	/* Pass the message to PE */
 	wma_send_msg(wma, SIR_HAL_PDEV_HW_MODE_TRANS_IND,
 		     (void *) hw_mode_trans_ind, 0);

@@ -18778,6 +18778,7 @@ void csr_process_ho_fail_ind(tpAniSirGlobal pMac, void *pMsgBuf)
 			  sessionId);
 		return;
 	}
+	cds_set_connection_in_progress(false);
 	csr_roam_synch_clean_up(pMac, sessionId);
 	csr_roaming_report_diag_event(pMac, NULL,
 			eCSR_REASON_ROAM_HO_FAIL);
@@ -19501,18 +19502,41 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 				eCSR_ROAM_FT_START, eSIR_SME_SUCCESS);
 		sme_release_global_lock(&mac_ctx->sme);
 		return;
-	case SIR_ROAMING_TX_QUEUE_DISABLE:
+	case SIR_ROAMING_START:
 		csr_roam_call_callback(mac_ctx, session_id, NULL, 0,
-				eCSR_ROAM_DISABLE_QUEUES, eSIR_SME_SUCCESS);
+				eCSR_ROAM_START, eSIR_SME_SUCCESS);
 		sme_release_global_lock(&mac_ctx->sme);
 		return;
-	case SIR_ROAMING_TX_QUEUE_ENABLE:
+	case SIR_ROAMING_ABORT:
 		csr_roam_call_callback(mac_ctx, session_id, NULL, 0,
-				eCSR_ROAM_ENABLE_QUEUES, eSIR_SME_SUCCESS);
+				eCSR_ROAM_ABORT, eSIR_SME_SUCCESS);
 		sme_release_global_lock(&mac_ctx->sme);
 		return;
 	case SIR_ROAM_SYNCH_PROPAGATION:
 		break;
+	case SIR_ROAM_SYNCH_COMPLETE:
+		/*
+		 * Following operations need to be done once roam sync
+		 * completion is sent to FW, hence called here:
+		 * 1) Firmware has already updated DBS policy. Update connection
+		 *    table in the host driver.
+		 * 2) Force SCC switch if needed
+		 * 3) Set connection in progress = false
+		 */
+		/* first update connection info from wma interface */
+		cds_update_connection_info(session_id);
+		/* then update remaining parameters from roam sync ctx */
+		sms_log(mac_ctx, LOGE, FL("Update DBS hw mode"));
+		cds_hw_mode_transition_cb(
+			roam_synch_data->hw_mode_trans_ind.old_hw_mode_index,
+			roam_synch_data->hw_mode_trans_ind.new_hw_mode_index,
+			roam_synch_data->hw_mode_trans_ind.num_vdev_mac_entries,
+			roam_synch_data->hw_mode_trans_ind.vdev_mac_map);
+		cds_set_connection_in_progress(false);
+		session->roam_synch_in_progress = false;
+		cds_check_concurrent_intf_and_restart_sap(session->pContext);
+		sme_release_global_lock(&mac_ctx->sme);
+		return;
 	default:
 		sms_log(mac_ctx, LOGE, FL("LFR3: callback reason %d"), reason);
 		sme_release_global_lock(&mac_ctx->sme);
@@ -19737,6 +19761,7 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 				("NO CSR_IS_WAIT_FOR_KEY -> csr_roam_link_up"));
 		csr_roam_link_up(mac_ctx, conn_profile->bssid);
 	}
+
 	session->fRoaming = false;
 	session->roam_synch_in_progress = false;
 	qdf_mem_free(roam_info->pbFrames);

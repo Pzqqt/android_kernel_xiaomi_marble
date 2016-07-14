@@ -193,14 +193,16 @@ typedef enum {
  * enum sir_roam_op_code - Operation to be done by the callback.
  * @SIR_ROAM_SYNCH_PROPAGATION: Propagate the new BSS info after roaming.
  * @SIR_ROAMING_DEREGISTER_STA: Deregister the old STA after roaming.
- * @SIR_ROAMING_TX_QUEUE_DISABLE: Disable the network queues while roaming.
- * @SIR_ROAMING_TX_QUEUE_ENABLE: Enable back the n/w queues in case roam fails.
+ * @SIR_ROAMING_START: Firmware started roaming operation
+ * @SIR_ROAMING_ABORT: Firmware aborted roaming operation, still connected.
+ * @SIR_ROAM_SYNCH_COMPLETE: Roam sync propagation is complete.
  */
 enum sir_roam_op_code {
 	SIR_ROAM_SYNCH_PROPAGATION = 1,
 	SIR_ROAMING_DEREGISTER_STA,
-	SIR_ROAMING_TX_QUEUE_DISABLE,
-	SIR_ROAMING_TX_QUEUE_ENABLE,
+	SIR_ROAMING_START,
+	SIR_ROAMING_ABORT,
+	SIR_ROAM_SYNCH_COMPLETE,
 };
 /**
  * Module ID definitions.
@@ -4153,6 +4155,7 @@ typedef struct sSirSmeRoamOffloadSynchInd {
 	void *add_bss_params;
 	tpSirSmeJoinRsp join_rsp;
 	uint16_t aid;
+	struct sir_hw_mode_trans_ind hw_mode_trans_ind;
 } roam_offload_synch_ind;
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
