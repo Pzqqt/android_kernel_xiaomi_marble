@@ -98,15 +98,61 @@ struct hdd_lro_desc_info {
 };
 
 /**
+ * enum hdd_lro_pkt_aggr_bucket - idenitifies the bucket holding
+ * the count of the aggregated packets
+ * @HDD_LRO_BUCKET_0_7: identifies the packet count when the
+ * aggregate size is between 0 to 7 packets
+ * @HDD_LRO_BUCKET_8_15: identifies the packet count when the
+ * aggregate size is between 8 to 15 packets
+ * @HDD_LRO_BUCKET_16_23: identifies the packet count when the
+ * aggregate size is between 16 to 23 packets
+ * @HDD_LRO_BUCKET_24_31: identifies the packet count when the
+ * aggregate size is between 24 to 31 packets
+ * @HDD_LRO_BUCKET_32_39: identifies the packet count when the
+ * aggregate size is between 32 to 39 packets
+ * @HDD_LRO_BUCKET_40_47: identifies the packet count when the
+ * aggregate size is between 40 to 47 packets
+ * @HDD_LRO_BUCKET_48_OR_MORE: identifies the packet count when
+ * the aggregate size is 48 or more packets
+ * @HDD_LRO_BUCKET_MAX: identifies the packet count when the
+ * aggregate size is 48 or more packets
+ */
+enum hdd_lro_pkt_aggr_bucket {
+	HDD_LRO_BUCKET_0_7 = 0,
+	HDD_LRO_BUCKET_8_15 = 1,
+	HDD_LRO_BUCKET_16_23 = 2,
+	HDD_LRO_BUCKET_24_31 = 3,
+	HDD_LRO_BUCKET_32_39 = 4,
+	HDD_LRO_BUCKET_40_47 = 5,
+	HDD_LRO_BUCKET_48_OR_MORE = 6,
+	HDD_LRO_BUCKET_MAX = HDD_LRO_BUCKET_48_OR_MORE,
+};
+
+/**
+ * hdd_lro_stats - structure containing the LRO statistics
+ * information
+ * @pkt_aggr_hist: histogram of the number of aggregated packets
+ * @lro_eligible_tcp: number of LRO elgible TCP packets
+ * @lro_ineligible_tcp: number of LRO inelgible TCP packets
+ */
+struct hdd_lro_stats {
+	uint16_t pkt_aggr_hist[HDD_LRO_BUCKET_MAX + 1];
+	uint32_t lro_eligible_tcp;
+	uint32_t lro_ineligible_tcp;
+};
+
+/**
  * hdd_lro_s - LRO information per HDD adapter
  * @lro_mgr: LRO manager
  * @lro_desc_info: LRO descriptor information
  * @lro_mgr_arr_access_lock: Lock to access LRO manager array.
+ * @lro_stats: LRO statistics
  */
 struct hdd_lro_s {
 	struct net_lro_mgr *lro_mgr;
 	struct hdd_lro_desc_info lro_desc_info;
 	qdf_spinlock_t lro_mgr_arr_access_lock;
+	struct hdd_lro_stats lro_stats;
 };
 
 int hdd_lro_init(hdd_context_t *hdd_ctx);
@@ -121,6 +167,8 @@ enum hdd_lro_rx_status hdd_lro_rx(hdd_context_t *hdd_ctx,
 
 void hdd_lro_flush_all(hdd_context_t *hdd_ctx,
 	 hdd_adapter_t *adapter);
+
+void hdd_lro_display_stats(hdd_context_t *hdd_ctx);
 #else
 struct hdd_lro_s {};
 
@@ -142,6 +190,14 @@ static inline int hdd_lro_init(hdd_context_t *hdd_ctx)
 }
 
 static inline void hdd_lro_disable(hdd_context_t *hdd_ctx,
-	 hdd_adapter_t *adapter){}
+	 hdd_adapter_t *adapter)
+{
+	return;
+}
+
+static inline void hdd_lro_display_stats(hdd_context_t *hdd_ctx)
+{
+	return;
+}
 #endif /* FEATURE_LRO */
 #endif /* __WLAN_HDD_LRO_H__ */

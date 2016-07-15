@@ -53,6 +53,14 @@
 	(LRO_DESC | LRO_ELIGIBILITY_CHECKED | LRO_TCP_ACK_NUM | \
 	 LRO_TCP_DATA_CSUM | LRO_TCP_SEQ_NUM | LRO_TCP_WIN)
 
+#define LRO_HIST_UPDATE(lro_desc, adapter) \
+	 do { \
+		uint8_t bucket = lro_desc->pkt_aggr_cnt >> 3; \
+		if (unlikely(bucket > HDD_LRO_BUCKET_MAX)) \
+			bucket = HDD_LRO_BUCKET_MAX; \
+		adapter->lro_info.lro_stats.pkt_aggr_hist[bucket]++; \
+	 } while (0);
+
 /**
  * hdd_lro_get_skb_header() - LRO callback function
  * @skb: network buffer
@@ -260,7 +268,7 @@ static int hdd_lro_desc_find(hdd_adapter_t *adapter,
 	qdf_spin_unlock_bh(&free_pool->lro_pool_lock);
 
 	if (NULL == entry->lro_desc) {
-		hdd_err("entry->lro_desc is NULL!\n");
+		hdd_err("entry->lro_desc is NULL!");
 		return -EINVAL;
 	}
 
@@ -421,6 +429,9 @@ static void hdd_lro_flush_pkt(struct net_lro_mgr *lro_mgr,
 	lro_desc = hdd_lro_get_desc(lro_mgr, lro_mgr->lro_arr, iph, tcph);
 
 	if (lro_desc) {
+		/* statistics */
+		LRO_HIST_UPDATE(lro_desc, adapter);
+
 		hdd_lro_desc_free(lro_desc, adapter);
 		lro_flush_desc(lro_mgr, lro_desc);
 	}
@@ -474,6 +485,8 @@ static void hdd_lro_flush(void *data)
 					lro_flush_desc(
 						hdd_lro->lro_mgr,
 						&hdd_lro->lro_mgr->lro_arr[i]);
+					LRO_HIST_UPDATE((&hdd_lro->lro_mgr->lro_arr[i]),
+						 adapter);
 				}
 			}
 			qdf_spin_unlock_bh(&hdd_lro->lro_mgr_arr_access_lock);
@@ -556,6 +569,7 @@ int hdd_lro_enable(hdd_context_t *hdd_ctx,
 
 	hdd_lro = &adapter->lro_info;
 	qdf_mem_zero((void *)hdd_lro, sizeof(struct hdd_lro_s));
+
 	/*
 	* Allocate all the LRO data structures at once and then carve
 	* them up as needed
@@ -693,12 +707,107 @@ enum hdd_lro_rx_status hdd_lro_rx(hdd_context_t *hdd_ctx,
 			}
 
 			status = HDD_LRO_RX;
+			adapter->lro_info.lro_stats.lro_eligible_tcp++;
 		} else {
 			hdd_lro_flush_pkt(adapter->lro_info.lro_mgr,
 				 iph, tcph, adapter);
+			adapter->lro_info.lro_stats.lro_ineligible_tcp++;
 		}
 		qdf_spin_unlock_bh(
 			&hdd_lro->lro_mgr_arr_access_lock);
 	}
 	return status;
+}
+
+/**
+ * hdd_lro_bucket_to_string() - return string conversion of
+ * bucket
+ * @bucket: bucket
+ *
+ * This utility function helps log string conversion of bucket
+ * enum
+ *
+ * Return: string conversion of the LRO bucket, if match found;
+ *        "Invalid" otherwise.
+ */
+static const char *hdd_lro_bucket_to_string(enum hdd_lro_pkt_aggr_bucket bucket)
+{
+	switch (bucket) {
+	CASE_RETURN_STRING(HDD_LRO_BUCKET_0_7);
+	CASE_RETURN_STRING(HDD_LRO_BUCKET_8_15);
+	CASE_RETURN_STRING(HDD_LRO_BUCKET_16_23);
+	CASE_RETURN_STRING(HDD_LRO_BUCKET_24_31);
+	CASE_RETURN_STRING(HDD_LRO_BUCKET_32_39);
+	CASE_RETURN_STRING(HDD_LRO_BUCKET_40_47);
+	CASE_RETURN_STRING(HDD_LRO_BUCKET_48_OR_MORE);
+	default:
+		return "Invalid";
+	}
+}
+
+/**
+ * wlan_hdd_display_lro_stats() - display LRO statistics
+ * @hdd_ctx: hdd context
+ *
+ * Return: none
+ */
+void hdd_lro_display_stats(hdd_context_t *hdd_ctx)
+{
+
+	hdd_adapter_t *adapter = NULL;
+	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
+	QDF_STATUS status;
+	int i;
+
+	if (!hdd_ctx->config->lro_enable) {
+		hdd_err("LRO Disabled");
+		return;
+	}
+
+	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
+	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
+		struct hdd_lro_stats *stats;
+		hdd_err("\nLRO statistics:");
+
+		adapter = adapter_node->pAdapter;
+		if (!adapter) {
+			status = hdd_get_next_adapter(hdd_ctx,
+				 adapter_node, &next);
+			adapter_node = next;
+			continue;
+		}
+
+		stats = &adapter->lro_info.lro_stats;
+		hdd_err("Session_id %d device mode %d",
+			adapter->sessionId, adapter->device_mode);
+
+		if (NL80211_IFTYPE_STATION != adapter->wdev.iftype) {
+			hdd_err("No LRO on interface type %d",
+				 adapter->wdev.iftype);
+			status = hdd_get_next_adapter(hdd_ctx,
+				 adapter_node, &next);
+			adapter_node = next;
+			continue;
+		}
+
+		for (i = 0; i <= HDD_LRO_BUCKET_MAX; i++) {
+			if (stats && stats->pkt_aggr_hist)
+				hdd_err("bucket %s: %d packets",
+					 hdd_lro_bucket_to_string(i),
+					 stats->pkt_aggr_hist[i]);
+		}
+
+		hdd_err("LRO eligible TCP packets %d\n"
+			 "LRO ineligible TCP packets %d",
+			 stats->lro_eligible_tcp, stats->lro_ineligible_tcp);
+
+		if (adapter->lro_info.lro_mgr)
+			hdd_err("LRO manager aggr %lu flushed %lu no desc %lu",
+				 adapter->lro_info.lro_mgr->stats.aggregated,
+				 adapter->lro_info.lro_mgr->stats.flushed,
+				 adapter->lro_info.lro_mgr->stats.no_desc);
+
+		status = hdd_get_next_adapter(hdd_ctx, adapter_node, &next);
+		adapter_node = next;
+	}
 }

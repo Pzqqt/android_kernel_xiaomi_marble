@@ -94,6 +94,7 @@
 #include "hif.h"
 #include "pld_common.h"
 #endif
+#include "wlan_hdd_lro.h"
 
 #define HDD_FINISH_ULA_TIME_OUT         800
 #define HDD_SET_MCBC_FILTERS_TO_FW      1
@@ -719,6 +720,9 @@ void hdd_wlan_dump_stats(hdd_adapter_t *adapter, int value)
 		break;
 	case WLAN_HIF_STATS:
 		hdd_display_hif_stats();
+		break;
+	case WLAN_LRO_STATS:
+		hdd_lro_display_stats(hdd_ctx);
 		break;
 	default:
 		ol_txrx_display_stats(value);
