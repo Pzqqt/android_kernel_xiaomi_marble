@@ -9502,6 +9502,7 @@ int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 			 */
 			qdf_mem_copy((void *)(pWextState->req_bssId.bytes),
 					bssid, QDF_MAC_ADDR_SIZE);
+			hdd_info("bssid is given by upper layer %pM", bssid);
 		} else if (bssid_hint) {
 			pRoamProfile->BSSIDs.numOfBSSIDs = 1;
 			qdf_mem_copy((void *)(pRoamProfile->BSSIDs.bssid),
@@ -9513,11 +9514,12 @@ int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 			 */
 			qdf_mem_copy((void *)(pWextState->req_bssId.bytes),
 					bssid_hint, QDF_MAC_ADDR_SIZE);
-			hdd_warn(" bssid_hint "MAC_ADDRESS_STR,
-					MAC_ADDR_ARRAY(bssid_hint));
+			hdd_info("bssid_hint is given by upper layer %pM",
+					bssid_hint);
 		} else {
 			qdf_mem_zero((void *)(pRoamProfile->BSSIDs.bssid),
 				     QDF_MAC_ADDR_SIZE);
+			hdd_info("no bssid given by upper layer");
 		}
 
 		hdd_notice("Connect to SSID: %.*s operating Channel: %u",

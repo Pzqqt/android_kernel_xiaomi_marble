@@ -1962,6 +1962,11 @@ static QDF_STATUS csr_calc_pref_val_by_pcl(tpAniSirGlobal mac_ctx,
 
 	if (NULL == mac_ctx || NULL == bss_descr)
 		return QDF_STATUS_E_FAILURE;
+	if (filter && (0 != filter->BSSIDs.numOfBSSIDs)) {
+		sms_log(mac_ctx, LOGW,
+			FL("filter has specific bssid, no point of boosting"));
+		return QDF_STATUS_SUCCESS;
+	}
 
 	if (is_channel_found_in_pcl(mac_ctx,
 			bss_descr->Result.BssDescriptor.channelId, filter) &&
@@ -2010,7 +2015,7 @@ csr_parse_scan_results(tpAniSirGlobal pMac,
 
 	csr_ll_lock(&pMac->scan.scanResultList);
 
-	if (pFilter) {
+	if (pFilter && (0 == pFilter->BSSIDs.numOfBSSIDs)) {
 		if (cds_map_concurrency_mode(
 					&pFilter->csrPersona, &new_mode)) {
 			status = cds_get_pcl(new_mode,
