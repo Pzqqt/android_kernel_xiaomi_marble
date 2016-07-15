@@ -243,6 +243,61 @@ void ce_tasklet_kill(struct hif_softc *scn)
 	qdf_atomic_set(&scn->active_tasklet_cnt, 0);
 }
 
+#ifdef WLAN_SUSPEND_RESUME_TEST
+static bool g_hif_apps_fake_suspended;
+static hdd_fake_resume_callback hdd_fake_aps_resume;
+
+static void hif_wlan_resume_work_handler(struct work_struct *work)
+{
+	hdd_fake_aps_resume(0);
+}
+
+static DECLARE_WORK(hif_resume_work, hif_wlan_resume_work_handler);
+
+/**
+ * hif_fake_apps_suspend(): Suspend WLAN
+ *
+ * Set the fake suspend flag such that hif knows that it will need
+ * to fake the aps resume process using the hdd_fake_aps_resume
+ *
+ * Return: none
+ */
+void hif_fake_apps_suspend(hdd_fake_resume_callback callback)
+{
+	hdd_fake_aps_resume = callback;
+	g_hif_apps_fake_suspended = true;
+}
+
+/**
+ * hif_fake_aps_resume(): check if WLAN resume is needed
+ *
+ * Return: true if a fake apps resume has been been triggered
+ *         returns false if regular interrupt processing is needed
+ */
+static bool hif_fake_aps_resume(void)
+{
+	if (g_hif_apps_fake_suspended) {
+		g_hif_apps_fake_suspended = false;
+		schedule_work(&hif_resume_work);
+		return true;
+	} else {
+		return false;
+	}
+}
+
+#else
+
+/**
+ * hif_fake_aps_resume(): check if WLAN resume is needed
+ *
+ * Return: always false if WLAN_SUSPEND_RESUME_TEST is not defined
+ */
+static bool hif_fake_aps_resume(void)
+{
+	return false;
+}
+#endif /* End of WLAN_SUSPEND_RESUME_TEST */
+
 /**
  * hif_snoc_interrupt_handler() - hif_snoc_interrupt_handler
  * @irq: irq coming from kernel
@@ -341,6 +396,13 @@ irqreturn_t ce_dispatch_interrupt(int ce_id,
 	qdf_atomic_inc(&scn->active_tasklet_cnt);
 	hif_record_ce_desc_event(scn, ce_id, HIF_IRQ_EVENT, NULL, NULL, 0);
 	hif_ce_increment_interrupt_count(hif_ce_state, ce_id);
+
+	if (unlikely(hif_fake_aps_resume())) {
+		HIF_ERROR("received resume interrupt");
+		hif_irq_enable(scn, ce_id);
+		return IRQ_HANDLED;
+	}
+
 	if (hif_napi_enabled(hif_hdl, ce_id))
 		hif_napi_schedule(hif_hdl, ce_id);
 	else
