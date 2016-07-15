@@ -14779,21 +14779,10 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t sessionId
 	else
 		wTmp = WNI_CFG_BEACON_INTERVAL_STADEF;
 
-	if (csr_isconcurrentsession_valid(pMac, sessionId, pParam->bssPersona)
-		== QDF_STATUS_SUCCESS) {
-		csr_validate_mcc_beacon_interval(pMac,
-						 pParam->operationChn,
-						 &wTmp,
-						 sessionId,
-						 pParam->bssPersona);
-		/* Update the beacon Interval */
-		pParam->beaconInterval = wTmp;
-	} else {
-		sms_log(pMac, LOGE,
-			FL("****Start BSS failed persona already exists***"));
-		qdf_mem_free(pMsg);
-		return QDF_STATUS_E_FAILURE;
-	}
+	csr_validate_mcc_beacon_interval(pMac, pParam->operationChn,
+					 &wTmp, sessionId, pParam->bssPersona);
+	/* Update the beacon Interval */
+	pParam->beaconInterval = wTmp;
 	pMsg->beaconInterval = wTmp;
 	pMsg->dot11mode =
 		csr_translate_to_wni_cfg_dot11_mode(pMac,

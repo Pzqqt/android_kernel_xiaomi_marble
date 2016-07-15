@@ -1056,16 +1056,11 @@ bool csr_is_valid_mc_concurrent_session(tpAniSirGlobal mac_ctx,
 	pSession = CSR_GET_SESSION(mac_ctx, session_id);
 	if (NULL == pSession->pCurRoamProfile)
 		return false;
-	if (QDF_STATUS_SUCCESS ==
-		csr_isconcurrentsession_valid(mac_ctx, session_id,
-			pSession->pCurRoamProfile->csrPersona)) {
-		if (QDF_STATUS_SUCCESS ==
-			csr_validate_mcc_beacon_interval(mac_ctx,
-				bss_descr->channelId,
-				&bss_descr->beaconInterval, session_id,
-				pSession->pCurRoamProfile->csrPersona))
-			return true;
-	}
+	if (QDF_STATUS_SUCCESS == csr_validate_mcc_beacon_interval(mac_ctx,
+					bss_descr->channelId,
+					&bss_descr->beaconInterval, session_id,
+					pSession->pCurRoamProfile->csrPersona))
+		return true;
 	return false;
 }
 
@@ -1878,111 +1873,6 @@ bool csr_is_profile_rsn(tCsrRoamProfile *pProfile)
 		}
 	}
 	return fRSNProfile;
-}
-
-/**
- * csr_isconcurrentsession_valid() - check if concurrent session is valid
- * @mac_ctx: pointer to mac context
- * @cur_sessionid: current session id
- * @cur_bss_persona: current BSS persona
- *
- * This function will check if concurrent session is valid
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-csr_isconcurrentsession_valid(tpAniSirGlobal mac_ctx, uint32_t cur_sessionid,
-			      enum tQDF_ADAPTER_MODE cur_bss_persona)
-{
-	uint32_t sessionid = 0;
-	enum tQDF_ADAPTER_MODE bss_persona;
-	eCsrConnectState connect_state, temp;
-	tCsrRoamSession *roam_session;
-
-	for (sessionid = 0; sessionid < CSR_ROAM_SESSION_MAX; sessionid++) {
-		if (cur_sessionid == sessionid)
-			continue;
-		if (!CSR_IS_SESSION_VALID(mac_ctx, sessionid))
-			continue;
-		roam_session = &mac_ctx->roam.roamSession[sessionid];
-		bss_persona = roam_session->bssParams.bssPersona;
-		connect_state = roam_session->connectState;
-
-		switch (cur_bss_persona) {
-		case QDF_STA_MODE:
-			QDF_TRACE(QDF_MODULE_ID_SME,
-					QDF_TRACE_LEVEL_INFO,
-					FL("** STA session **"));
-			return QDF_STATUS_SUCCESS;
-
-		case QDF_SAP_MODE:
-			temp = eCSR_ASSOC_STATE_TYPE_IBSS_DISCONNECTED;
-			if ((bss_persona == QDF_IBSS_MODE)
-				&& (connect_state != temp)) {
-				/* allow IBSS+SAP for Emulation only */
-#ifndef QCA_WIFI_3_0_EMU
-				QDF_TRACE(QDF_MODULE_ID_SME,
-						QDF_TRACE_LEVEL_ERROR,
-						FL("Can't start SAP"));
-				return QDF_STATUS_E_FAILURE;
-#endif
-			}
-			break;
-
-		case QDF_P2P_GO_MODE:
-			temp = eCSR_ASSOC_STATE_TYPE_IBSS_DISCONNECTED;
-			if ((bss_persona == QDF_IBSS_MODE)
-					&& (connect_state != temp)) {
-				QDF_TRACE(QDF_MODULE_ID_SME,
-						QDF_TRACE_LEVEL_ERROR,
-						FL("Can't start SAP"));
-				return QDF_STATUS_E_FAILURE;
-			}
-			break;
-		case QDF_IBSS_MODE:
-			if ((bss_persona == QDF_IBSS_MODE) &&
-				(connect_state ==
-					eCSR_ASSOC_STATE_TYPE_IBSS_CONNECTED)) {
-				QDF_TRACE(QDF_MODULE_ID_SME,
-						QDF_TRACE_LEVEL_ERROR,
-						FL("IBSS mode already exist"));
-				return QDF_STATUS_E_FAILURE;
-			} else if (((bss_persona == QDF_P2P_GO_MODE) ||
-					(bss_persona == QDF_SAP_MODE)) &&
-					(connect_state !=
-					 eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED)) {
-				/* allow IBSS+SAP for Emulation only */
-#ifndef QCA_WIFI_3_0_EMU
-				QDF_TRACE(QDF_MODULE_ID_SME,
-						QDF_TRACE_LEVEL_ERROR,
-						FL("Can't start GO/SAP"));
-				return QDF_STATUS_E_FAILURE;
-#endif
-			}
-			break;
-		case QDF_P2P_CLIENT_MODE:
-			QDF_TRACE(QDF_MODULE_ID_SME,
-				QDF_TRACE_LEVEL_INFO,
-				FL("**P2P-Client session**"));
-			return QDF_STATUS_SUCCESS;
-		case QDF_NDI_MODE:
-			if (bss_persona != QDF_STA_MODE) {
-				QDF_TRACE(QDF_MODULE_ID_SME,
-					QDF_TRACE_LEVEL_ERROR,
-					FL("***NDI mode can co-exist only with STA ***"));
-				return QDF_STATUS_E_FAILURE;
-			}
-			break;
-		default:
-			QDF_TRACE(QDF_MODULE_ID_SME,
-				QDF_TRACE_LEVEL_ERROR,
-				FL("Persona not handled = %d"),
-				cur_bss_persona);
-			break;
-		}
-	}
-	return QDF_STATUS_SUCCESS;
-
 }
 
 /**

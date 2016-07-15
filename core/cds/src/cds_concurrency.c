@@ -5323,10 +5323,13 @@ bool cds_allow_concurrency(enum cds_con_mode mode,
 		}
 	}
 
-	/* don't allow IBSS + STA MCC */
-	/* don't allow IBSS + STA SCC if IBSS is on DFS channel */
-	count = cds_mode_specific_connection_count(
-			CDS_STA_MODE, list);
+	/*
+	 * Check all IBSS+STA concurrencies
+	 *
+	 * don't allow IBSS + STA MCC
+	 * don't allow IBSS + STA SCC if IBSS is on DFS channel
+	 */
+	count = cds_mode_specific_connection_count(CDS_STA_MODE, list);
 	if ((CDS_IBSS_MODE == mode) &&
 		(cds_mode_specific_connection_count(
 		CDS_IBSS_MODE, list)) && count) {
@@ -5365,7 +5368,7 @@ bool cds_allow_concurrency(enum cds_con_mode mode,
 			goto done;
 		}
 	}
-	count = cds_mode_specific_connection_count(CDS_STA_MODE, list);
+
 	if ((CDS_STA_MODE == mode) &&
 		(cds_mode_specific_connection_count(
 		CDS_IBSS_MODE, list)) && count) {
@@ -5403,18 +5406,6 @@ bool cds_allow_concurrency(enum cds_con_mode mode,
 		}
 	}
 
-	/* don't allow concurrency on vht160 or vht 80+80 */
-	if (num_connections &&
-		((bw == HW_MODE_80_PLUS_80_MHZ) || (bw == HW_MODE_160_MHZ))) {
-		cds_err("No VHT160, we have one connection already");
-		goto done;
-	}
-
-	if (cds_vht160_conn_exist()) {
-		cds_err("VHT160/80+80 connection exists, no concurrency");
-		goto done;
-	}
-
 	/* don't allow two P2P GO on same band */
 	if (channel && (mode == CDS_P2P_GO_MODE) && num_connections) {
 		index = 0;
@@ -5429,6 +5420,20 @@ bool cds_allow_concurrency(enum cds_con_mode mode,
 			index++;
 		}
 	}
+
+	/* don't allow concurrency on vht160 or vht 80+80 */
+	if (num_connections &&
+			((bw == HW_MODE_80_PLUS_80_MHZ) ||
+				(bw == HW_MODE_160_MHZ))) {
+		cds_err("No VHT160, we have one connection already");
+		goto done;
+	}
+
+	if (cds_vht160_conn_exist()) {
+		cds_err("VHT160/80+80 connection exists, no concurrency");
+		goto done;
+	}
+
 
 	status = true;
 
