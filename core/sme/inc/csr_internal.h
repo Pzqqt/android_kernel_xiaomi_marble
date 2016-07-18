@@ -1422,4 +1422,9 @@ enum tQDF_ADAPTER_MODE csr_get_session_persona(tpAniSirGlobal pmac,
 void csr_roam_substate_change(tpAniSirGlobal pMac, eCsrRoamSubState NewSubstate,
 			      uint32_t sessionId);
 
+void csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
+		uint8_t sessionid, tScanResultHandle *scan_results_list);
+
+void csr_neighbor_roam_trigger_handoff(tpAniSirGlobal mac_ctx,
+					uint8_t session_id);
 #endif

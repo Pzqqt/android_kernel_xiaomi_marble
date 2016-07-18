@@ -1737,4 +1737,7 @@ static inline int wlan_hdd_nl_init(hdd_context_t *hdd_ctx)
 #endif
 QDF_STATUS hdd_sme_close_session_callback(void *pContext);
 
+int hdd_reassoc(hdd_adapter_t *adapter, const uint8_t *bssid,
+		const uint8_t channel, const handoff_src src);
+
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

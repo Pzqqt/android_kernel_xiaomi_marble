@@ -142,10 +142,8 @@ QDF_STATUS csr_roam_issue_reassociate_cmd(tpAniSirGlobal pMac,
  * Return: void
  */
 
-static void
-csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
-		uint8_t sessionid,
-		tScanResultHandle *scan_results_list)
+void csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
+		uint8_t sessionid, tScanResultHandle *scan_results_list)
 {
 	tCsrScanResultInfo *scan_result;
 	tpCsrNeighborRoamControlInfo n_roam_info =
@@ -356,8 +354,8 @@ csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-static void csr_neighbor_roam_trigger_handoff(tpAniSirGlobal mac_ctx,
-					      uint8_t session_id)
+void csr_neighbor_roam_trigger_handoff(tpAniSirGlobal mac_ctx,
+				      uint8_t session_id)
 {
 	if (csr_roam_is_fast_roam_enabled(mac_ctx, session_id))
 		csr_neighbor_roam_issue_preauth_req(mac_ctx, session_id);

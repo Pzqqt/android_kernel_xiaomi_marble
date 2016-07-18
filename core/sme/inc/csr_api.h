@@ -1570,7 +1570,8 @@ typedef void *tScanResultHandle;
 
 typedef enum {
 	REASSOC = 0,
-	FASTREASSOC = 1
+	FASTREASSOC = 1,
+	CONNECT_CMD_USERSPACE = 2,
 } handoff_src;
 
 typedef struct tagCsrHandoffRequest {
