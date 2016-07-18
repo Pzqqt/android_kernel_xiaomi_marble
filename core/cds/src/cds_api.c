@@ -307,7 +307,6 @@ QDF_STATUS cds_open(void)
 	}
 
 	/*Open the WMA module */
-
 	qdf_status = wma_open(gp_cds_context,
 			      hdd_update_tgt_cfg,
 			      hdd_dfs_indicate_radar, cds_cfg);

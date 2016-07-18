@@ -1462,6 +1462,9 @@ struct hdd_context_s {
 	qdf_mc_timer_t iface_change_timer;
 	/* Interface change lock */
 	struct mutex iface_change_lock;
+	bool rps;
+	bool enableRxThread;
+	bool napi_enable;
 };
 
 /*---------------------------------------------------------------------------

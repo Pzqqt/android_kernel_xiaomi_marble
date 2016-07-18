@@ -48,6 +48,10 @@
 
 #define FW_MODULE_LOG_LEVEL_STRING_LENGTH  (255)
 
+#define CFG_ENABLE_RX_THREAD		(1 << 0)
+#define CFG_ENABLE_RPS			(1 << 1)
+#define CFG_ENABLE_NAPI			(1 << 2)
+
 #ifdef DHCP_SERVER_OFFLOAD
 #define IPADDR_NUM_ENTRIES     (4)
 #define IPADDR_STRING_LENGTH   (16)
@@ -2318,12 +2322,6 @@ typedef enum {
 #define CFG_ENABLE_DEBUG_CONNECT_ISSUE_MAX         (0xFF)
 #define CFG_ENABLE_DEBUG_CONNECT_ISSUE_DEFAULT     (0x0F)
 
-/* This will be used only for debugging purpose, will be removed after sometime */
-#define CFG_ENABLE_RX_THREAD                       "gEnableRxThread"
-#define CFG_ENABLE_RX_THREAD_MIN                   (0)
-#define CFG_ENABLE_RX_THREAD_MAX                   (1)
-#define CFG_ENABLE_RX_THREAD_DEFAULT               (1)
-
 /* SAR Thermal limit values for 2g and 5g */
 
 #define CFG_SET_TXPOWER_LIMIT2G_NAME               "TxPower2g"
@@ -2915,11 +2913,6 @@ enum dot11p_mode {
 #define CFG_DOT11P_MODE_MIN              (WLAN_HDD_11P_DISABLED)
 #define CFG_DOT11P_MODE_MAX              (WLAN_HDD_11P_CONCURRENT)
 
-#define CFG_NAPI_NAME       "gEnableNAPI"
-#define CFG_NAPI_MIN        (0)
-#define CFG_NAPI_MAX        (1)
-#define CFG_NAPI_DEFAULT    (0)
-
 #ifdef FEATURE_WLAN_EXTSCAN
 #define CFG_EXTSCAN_PASSIVE_MAX_CHANNEL_TIME_NAME      "gExtScanPassiveMaxChannelTime"
 #define CFG_EXTSCAN_PASSIVE_MAX_CHANNEL_TIME_MIN       (0)
@@ -3408,6 +3401,66 @@ enum dot11p_mode {
 #define CFG_SUB_20_CHANNEL_WIDTH_MIN               (WLAN_SUB_20_CH_WIDTH_NONE)
 #define CFG_SUB_20_CHANNEL_WIDTH_MAX               (WLAN_SUB_20_CH_WIDTH_10)
 #define CFG_SUB_20_CHANNEL_WIDTH_DEFAULT           (WLAN_SUB_20_CH_WIDTH_NONE)
+
+/*
+ * This parameter determines that which defered method will be use in rx path
+ * If no bits are set then rx path processing will happen in tasklet context.
+ * Bit 0: rx_thread enable
+ * Bit 1: RPS enable
+ * Bit 2: NAPI enable
+ */
+#define CFG_RX_MODE_NAME     "rx_mode"
+#define CFG_RX_MODE_MIN      (0)
+#define CFG_RX_MODE_MAX      (CFG_ENABLE_RX_THREAD | CFG_ENABLE_RPS | \
+				 CFG_ENABLE_NAPI)
+#ifdef MDM_PLATFORM
+#define CFG_RX_MODE_DEFAULT  (0)
+#else
+#define CFG_RX_MODE_DEFAULT  (CFG_ENABLE_RX_THREAD | CFG_ENABLE_NAPI)
+#endif
+
+/* List of RPS CPU maps for different rx queues registered by WLAN driver
+ * Ref - Kernel/Documentation/networking/scaling.txt
+ * RPS CPU map for a particular RX queue, selects CPU(s) for bottom half
+ * processing of RX packets. For example, for a system with 4 CPUs,
+ * 0xe: Use CPU1 - CPU3 and donot use CPU0.
+ * 0x0: RPS is disabled, packets are processed on the interrupting CPU.
+.*
+ * WLAN driver registers NUM_TX_QUEUES queues for tx and rx each during
+ * alloc_netdev_mq. Hence, we need to have a cpu mask for each of the rx queues.
+ *
+ * For example, if the NUM_TX_QUEUES is 4, a sample WLAN ini entry may look like
+ * rpsRxQueueCpuMapList=a b c d
+ * For a 4 CPU system (CPU0 - CPU3), this implies:
+ * 0xa - (1010) use CPU1, CPU3 for rx queue 0
+ * 0xb - (1011) use CPU0, CPU1 and CPU3 for rx queue 1
+ * 0xc - (1100) use CPU2, CPU3 for rx queue 2
+ * 0xd - (1101) use CPU0, CPU2 and CPU3 for rx queue 3
+
+ * In practice, we may want to avoid the cores which are heavily loaded.
+ */
+
+/* Name of the ini file entry to specify RPS map for different RX queus */
+#define CFG_RPS_RX_QUEUE_CPU_MAP_LIST_NAME         "rpsRxQueueCpuMapList"
+
+/* Default value of rpsRxQueueCpuMapList. Different platforms may have
+ * different configurations for NUM_TX_QUEUES and # of cpus, and will need to
+ * configure an appropriate value via ini file. Setting default value to 'e' to
+ * avoid use of CPU0 (since its heavily used by other system processes) by rx
+ * queue 0, which is currently being used for rx packet processing.
+ */
+#define CFG_RPS_RX_QUEUE_CPU_MAP_LIST_DEFAULT      "e"
+
+/* Maximum length of string used to hold a list of cpu maps for various rx
+ * queues. Considering a 16 core system with 5 rx queues, a RPS CPU map
+ * list may look like -
+ * rpsRxQueueCpuMapList = ffff ffff ffff ffff ffff
+ * (all 5 rx queues can be processed on all 16 cores)
+ * max string len = 24 + 1(for '\0'). Considering 30 to be on safe side.
+ */
+#define CFG_RPS_RX_QUEUE_CPU_MAP_LIST_LEN 30
+
+
 /*---------------------------------------------------------------------------
    Type declarations
    -------------------------------------------------------------------------*/
@@ -3847,7 +3900,6 @@ struct hdd_config {
 	uint32_t TxPower2g;
 	uint32_t TxPower5g;
 	uint32_t gEnableDebugLog;
-	uint8_t enableRxThread;
 	bool fDfsPhyerrFilterOffload;
 	uint8_t gSapPreferredChanLocation;
 	uint8_t gDisableDfsJapanW53;
@@ -3998,9 +4050,8 @@ struct hdd_config {
 	bool fastpath_enable;
 #endif
 	uint8_t dot11p_mode;
-#ifdef FEATURE_NAPI
-	bool napi_enable;
-#endif
+	uint8_t rx_mode;
+	uint8_t cpu_map_list[CFG_RPS_RX_QUEUE_CPU_MAP_LIST_LEN];
 #ifdef FEATURE_WLAN_EXTSCAN
 	uint32_t extscan_passive_max_chn_time;
 	uint32_t extscan_passive_min_chn_time;

@@ -562,7 +562,7 @@ int hdd_lro_enable(hdd_context_t *hdd_ctx,
 	 hdd_lro_desc_info_init(hdd_lro);
 
 	hdd_lro->lro_mgr->dev = adapter->dev;
-	if (hdd_ctx->config->enableRxThread)
+	if (hdd_ctx->enableRxThread)
 		hdd_lro->lro_mgr->features = LRO_F_NI;
 
 	if (hdd_napi_enabled(HDD_NAPI_ANY))

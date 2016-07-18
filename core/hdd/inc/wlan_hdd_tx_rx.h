@@ -113,4 +113,5 @@ const char *hdd_action_type_to_string(enum netif_action_type action);
 void wlan_hdd_netif_queue_control(hdd_adapter_t *adapter,
 		enum netif_action_type action, enum netif_reason_type reason);
 int hdd_set_mon_rx_cb(struct net_device *dev);
+void hdd_send_rps_ind(hdd_adapter_t *adapter);
 #endif /* end #if !defined(WLAN_HDD_TX_RX_H) */

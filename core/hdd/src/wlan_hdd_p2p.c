@@ -2047,6 +2047,10 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 		       __func__);
 		return ERR_PTR(-ENOSPC);
 	}
+
+	if (pHddCtx->rps)
+		hdd_send_rps_ind(pAdapter);
+
 	EXIT();
 	return pAdapter->dev->ieee80211_ptr;
 }

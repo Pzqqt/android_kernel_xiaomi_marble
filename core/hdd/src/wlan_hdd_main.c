@@ -200,6 +200,28 @@ void wlan_hdd_auto_shutdown_cb(void);
 #endif
 
 /**
+ * hdd_set_rps_cpu_mask - set RPS CPU mask for interfaces
+ * @hdd_ctx: pointer to hdd_context_t
+ *
+ * Return: none
+ */
+void hdd_set_rps_cpu_mask(hdd_context_t *hdd_ctx)
+{
+	hdd_adapter_t *adapter;
+	hdd_adapter_list_node_t *adapter_node, *next;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
+	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
+		adapter = adapter_node->pAdapter;
+		if (NULL != adapter)
+			hdd_send_rps_ind(adapter);
+		status = hdd_get_next_adapter(hdd_ctx, adapter_node, &next);
+		adapter_node = next;
+	}
+}
+
+/**
  * wlan_hdd_txrx_pause_cb() - pause callback from txrx layer
  * @vdev_id: vdev_id
  * @action: action type
@@ -6569,7 +6591,7 @@ int hdd_update_cds_config(hdd_context_t *hdd_ctx)
 
 	cds_cfg->ip_tcp_udp_checksum_offload =
 		hdd_ctx->config->enable_ip_tcp_udp_checksum_offload;
-	cds_cfg->enable_rxthread = hdd_ctx->config->enableRxThread;
+	cds_cfg->enable_rxthread = hdd_ctx->enableRxThread;
 	cds_cfg->ce_classify_enabled =
 		hdd_ctx->config->ce_classify_enabled;
 	cds_cfg->tx_chain_mask_cck = hdd_ctx->config->tx_chain_mask_cck;
@@ -7472,6 +7494,8 @@ int hdd_wlan_startup(struct device *dev)
 				  hdd_ctx->target_hw_version,
 				  hdd_ctx->target_hw_name);
 
+	if (hdd_ctx->rps)
+		hdd_set_rps_cpu_mask(hdd_ctx);
 
 	ret = hdd_register_notifiers(hdd_ctx);
 	if (ret)
@@ -7927,6 +7951,7 @@ void wlan_hdd_send_svc_nlink_msg(int type, void *data, int len)
 	case WLAN_SVC_DFS_ALL_CHANNEL_UNAVAIL_IND:
 	case WLAN_SVC_WLAN_TP_IND:
 	case WLAN_SVC_WLAN_TP_TX_IND:
+	case WLAN_SVC_RPS_ENABLE_IND:
 		ani_hdr->length = len;
 		nlh->nlmsg_len = NLMSG_LENGTH((sizeof(tAniMsgHdr) + len));
 		nl_data = (char *)ani_hdr + sizeof(tAniMsgHdr);

@@ -891,7 +891,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 	if (HDD_LRO_NO_RX ==
 		 hdd_lro_rx(pHddCtx, pAdapter, skb)) {
 		if (hdd_napi_enabled(HDD_NAPI_ANY) &&
-		    !pHddCtx->config->enableRxThread)
+		    !pHddCtx->enableRxThread)
 			rxstat = netif_receive_skb(skb);
 		else
 			rxstat = netif_rx_ni(skb);
@@ -1234,3 +1234,67 @@ exit:
 	ret = qdf_status_to_os_return(qdf_status);
 	return ret;
 }
+
+/**
+ * hdd_send_rps_ind() - send rps indication to daemon
+ * @adapter: adapter context
+ *
+ * If RPS feature enabled by INI, send RPS enable indication to daemon
+ * Indication contents is the name of interface to find correct sysfs node
+ * Should send all available interfaces
+ *
+ * Return: none
+ */
+void hdd_send_rps_ind(hdd_adapter_t *adapter)
+{
+	int i;
+	uint8_t cpu_map_list_len = 0;
+	hdd_context_t *hdd_ctxt = NULL;
+	struct wlan_rps_data rps_data;
+
+	if (!adapter) {
+		hdd_err("adapter is NULL");
+		return;
+	}
+
+	hdd_ctxt = WLAN_HDD_GET_CTX(adapter);
+	rps_data.num_queues = NUM_TX_QUEUES;
+
+	hdd_info("cpu_map_list '%s'", hdd_ctxt->config->cpu_map_list);
+
+	/* in case no cpu map list is provided, simply return */
+	if (!strlen(hdd_ctxt->config->cpu_map_list)) {
+		hdd_err("no cpu map list found");
+		goto err;
+	}
+
+	if (QDF_STATUS_SUCCESS !=
+		hdd_hex_string_to_u16_array(hdd_ctxt->config->cpu_map_list,
+				rps_data.cpu_map_list,
+				&cpu_map_list_len,
+				WLAN_SVC_IFACE_NUM_QUEUES)) {
+		hdd_err("invalid cpu map list");
+		goto err;
+	}
+
+	rps_data.num_queues =
+		(cpu_map_list_len < rps_data.num_queues) ?
+				cpu_map_list_len : rps_data.num_queues;
+
+	for (i = 0; i < rps_data.num_queues; i++) {
+		hdd_info("cpu_map_list[%d] = 0x%x",
+			i, rps_data.cpu_map_list[i]);
+	}
+
+	strlcpy(rps_data.ifname, adapter->dev->name,
+			sizeof(rps_data.ifname));
+	wlan_hdd_send_svc_nlink_msg(WLAN_SVC_RPS_ENABLE_IND,
+				&rps_data, sizeof(rps_data));
+
+err:
+	hdd_err("Wrong RPS configuration. enabling rx_thread");
+	hdd_ctxt->rps = false;
+	hdd_ctxt->enableRxThread = true;
+}
+
+

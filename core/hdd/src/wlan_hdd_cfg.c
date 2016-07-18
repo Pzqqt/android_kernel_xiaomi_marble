@@ -2870,13 +2870,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_ENABLE_DEBUG_CONNECT_ISSUE_MIN,
 		     CFG_ENABLE_DEBUG_CONNECT_ISSUE_MAX),
 
-	REG_VARIABLE(CFG_ENABLE_RX_THREAD, WLAN_PARAM_Integer,
-		     struct hdd_config, enableRxThread,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_RX_THREAD_DEFAULT,
-		     CFG_ENABLE_RX_THREAD_MIN,
-		     CFG_ENABLE_RX_THREAD_MAX),
-
 	REG_VARIABLE(CFG_ENABLE_DFS_PHYERR_FILTEROFFLOAD_NAME,
 		     WLAN_PARAM_Integer,
 		     struct hdd_config, fDfsPhyerrFilterOffload,
@@ -3568,15 +3561,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_DOT11P_MODE_MIN,
 		     CFG_DOT11P_MODE_MAX),
 
-#ifdef FEATURE_NAPI
-	REG_VARIABLE(CFG_NAPI_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, napi_enable,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_NAPI_DEFAULT,
-		     CFG_NAPI_MIN,
-		     CFG_NAPI_MAX),
-#endif /* FEATURE_NAPI */
-
 #ifdef FEATURE_WLAN_EXTSCAN
 	REG_VARIABLE(CFG_EXTSCAN_PASSIVE_MAX_CHANNEL_TIME_NAME,
 		     WLAN_PARAM_Integer,
@@ -3988,6 +3972,19 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		CFG_ADAPT_DWELL_WIFI_THRESH_DEFAULT,
 		CFG_ADAPT_DWELL_WIFI_THRESH_MIN,
 		CFG_ADAPT_DWELL_WIFI_THRESH_MAX),
+
+	REG_VARIABLE(CFG_RX_MODE_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, rx_mode,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_RX_MODE_DEFAULT,
+		CFG_RX_MODE_MIN,
+		CFG_RX_MODE_MAX),
+
+	REG_VARIABLE_STRING(CFG_RPS_RX_QUEUE_CPU_MAP_LIST_NAME,
+				 WLAN_PARAM_String,
+				 struct hdd_config, cpu_map_list,
+				 VAR_FLAGS_OPTIONAL,
+				 (void *)CFG_RPS_RX_QUEUE_CPU_MAP_LIST_DEFAULT),
 
 	REG_VARIABLE(CFG_INTERFACE_CHANGE_WAIT_NAME, WLAN_PARAM_Integer,
 			struct hdd_config, iface_change_wait_time,
@@ -5520,14 +5517,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 		  "Name = [max_scan_count] value = [%d]",
 		  pHddCtx->config->max_scan_count);
-#ifdef FEATURE_NAPI_DEBUG
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 		  "Name = [%s] value = [%d]",
-		  CFG_ENABLE_RX_THREAD, pHddCtx->config->enableRxThread);
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-		  "Name = [%s] value = [%d]",
-		  CFG_NAPI_NAME, pHddCtx->config->napi_enable);
-#endif
+		  CFG_RX_MODE_NAME, pHddCtx->config->rx_mode);
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [%s] Value = [%u]",
 		  CFG_CE_CLASSIFY_ENABLE_NAME,
@@ -5846,6 +5838,30 @@ static void hdd_override_all_ps(hdd_context_t *hdd_ctx)
 }
 
 /**
+ * hdd_set_rx_mode_value() - set rx_mode values
+ * @hdd_ctx: hdd context
+ *
+ * Return: none
+ */
+void hdd_set_rx_mode_value(hdd_context_t *hdd_ctx)
+{
+	if (hdd_ctx->config->rx_mode & CFG_ENABLE_RX_THREAD &&
+		 hdd_ctx->config->rx_mode & CFG_ENABLE_RPS) {
+		hdd_err("rx_mode wrong configuration. Make it default");
+		hdd_ctx->config->rx_mode = CFG_RX_MODE_DEFAULT;
+	}
+
+	if (hdd_ctx->config->rx_mode & CFG_ENABLE_RX_THREAD)
+		hdd_ctx->enableRxThread = true;
+
+	if (hdd_ctx->config->rx_mode & CFG_ENABLE_RPS)
+		hdd_ctx->rps = true;
+
+	if (hdd_ctx->config->rx_mode & CFG_ENABLE_NAPI)
+		hdd_ctx->napi_enable = true;
+}
+
+/**
  * hdd_parse_config_ini() - parse the ini configuration file
  * @pHddCtx: the pointer to hdd context
  *
@@ -5943,10 +5959,11 @@ QDF_STATUS hdd_parse_config_ini(hdd_context_t *pHddCtx)
 
 	/* Loop through the registry table and apply all these configs */
 	qdf_status = hdd_apply_cfg_ini(pHddCtx, cfgIniTable, i);
+	hdd_set_rx_mode_value(pHddCtx);
 #ifdef FEATURE_NAPI
 	if (QDF_STATUS_SUCCESS == qdf_status)
 		hdd_napi_event(NAPI_EVT_INI_FILE,
-			       (void *)pHddCtx->config->napi_enable);
+			       (void *)pHddCtx->napi_enable);
 #endif /* FEATURE_NAPI */
 	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam())
 		hdd_override_all_ps(pHddCtx);
@@ -6125,6 +6142,54 @@ QDF_STATUS hdd_string_to_u8_array(char *str, uint8_t *array,
 	return hdd_convert_string_to_array(str, array, len,
 					   array_max_len, false);
 }
+
+/**
+ * hdd_hex_string_to_u16_array() - convert a hex string to a uint16 array
+ * @str: input string
+ * @int_array: pointer to input array of type uint16
+ * @len: pointer to number of elements which the function adds to the array
+ * @int_array_max_len: maximum number of elements in input uint16 array
+ *
+ * This function is used to convert a space separated hex string to an array of
+ * uint16_t. For example, an input string str = "a b c d" would be converted to
+ * a unint16 array, int_array = {0xa, 0xb, 0xc, 0xd}, *len = 4.
+ * This assumes that input value int_array_max_len >= 4.
+ *
+ * Return: QDF_STATUS_SUCCESS - if the conversion is successful
+ *         non zero value     - if the conversion is a failure
+ */
+QDF_STATUS hdd_hex_string_to_u16_array(char *str,
+		uint16_t *int_array, uint8_t *len, uint8_t int_array_max_len)
+{
+	char *s = str;
+	uint32_t val = 0;
+
+	if (str == NULL || int_array == NULL || len == NULL)
+		return QDF_STATUS_E_INVAL;
+
+	hdd_err("str %p intArray %p intArrayMaxLen %d",
+		s, int_array, int_array_max_len);
+
+	*len = 0;
+
+	while ((s != NULL) && (*len < int_array_max_len)) {
+		/*
+		 * Increment length only if sscanf successfully extracted one
+		 * element. Any other return value means error. Ignore it.
+		 */
+		if (sscanf(s, "%x", &val) == 1) {
+			int_array[*len] = (uint16_t) val;
+			hdd_debug("s %p val %x intArray[%d]=0x%x",
+				s, val, *len, int_array[*len]);
+			*len += 1;
+		}
+		s = strpbrk(s, " ");
+		if (s)
+			s++;
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
 
 /**
  * hdd_update_config_dat() - scan the string and convery to u8 array
