@@ -6196,7 +6196,7 @@ static int hdd_open_p2p_interface(hdd_context_t *hdd_ctx, bool rtnl_held)
 	return 0;
 }
 #else
-static inline int hdd_open_p2p_interface(struct hdd_context_t *hdd_ctx,
+static inline int hdd_open_p2p_interface(hdd_context_t *hdd_ctx,
 					 bool rtnl_held)
 {
 	return 0;
