@@ -1610,6 +1610,12 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	tSirBssDescription *bss_desc;
 	struct vdev_type_nss *vdev_type_nss;
 
+	if (!mac_ctx || !msg_buf) {
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+			  FL("JOIN REQ with invalid data"));
+		return;
+	}
+
 /* FEATURE_WLAN_DIAG_SUPPORT */
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM
 	/*
