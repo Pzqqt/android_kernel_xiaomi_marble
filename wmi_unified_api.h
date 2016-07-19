@@ -112,9 +112,19 @@ void *wmi_unified_attach(void *scn_handle,
 			 bool use_cookie, struct wmi_rx_ops *ops);
 
 
+/**
+ * wmi_mgmt_cmd_record() - Wrapper function for mgmt command logging macro
+ *
+ * @wmi_handle: wmi handle
+ * @cmd: mgmt command
+ * @header: pointer to 802.11 header
+ * @vdev_id: vdev id
+ * @chanfreq: channel frequency
+ *
+ * Return: none
+ */
 void wmi_mgmt_cmd_record(wmi_unified_t wmi_handle, WMI_CMD_ID cmd,
-			uint32_t type, uint32_t subtype,
-			uint32_t vdev_id, uint32_t chanfreq);
+			void *header, uint32_t vdev_id, uint32_t chanfreq);
 
 /**
  * detach for unified WMI
