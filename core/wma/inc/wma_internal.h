@@ -204,7 +204,7 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
-					wmi_roam_offload_tlv_param *
+					roam_offload_param *
 					roam_offload_params,
 					tSirRoamOffloadScanReq *roam_req);
 #endif

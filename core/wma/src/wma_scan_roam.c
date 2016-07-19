@@ -637,7 +637,7 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	int i;
 	struct scan_chan_list_params scan_ch_param = {0};
-	wmi_channel *tchan_info;
+	wmi_channel_param *tchan_info;
 
 	scan_ch_param.chan_info = qdf_mem_malloc(sizeof(wmi_channel) *
 				 chan_list->numChan);
@@ -2319,7 +2319,7 @@ cleanup_label:
  * Return: QDF status
  */
 QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
-					wmi_roam_offload_tlv_param *
+					roam_offload_param *
 					roam_offload_params,
 					tSirRoamOffloadScanReq *roam_req)
 {
