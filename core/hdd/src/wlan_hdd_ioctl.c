@@ -2620,7 +2620,8 @@ static int hdd_parse_ese_beacon_req(uint8_t *pValue,
 					tCsrEseBeaconReq *pEseBcnReq)
 {
 	uint8_t *inPtr = pValue;
-	int tempInt = 0;
+	uint8_t input = 0;
+	uint32_t tempInt = 0;
 	int j = 0, i = 0, v = 0;
 	char buf[32];
 
@@ -2647,12 +2648,12 @@ static int hdd_parse_ese_beacon_req(uint8_t *pValue,
 	if (1 != v)
 		return -EINVAL;
 
-	v = kstrtos32(buf, 10, &tempInt);
+	v = kstrtou8(buf, 10, &input);
 	if (v < 0)
 		return -EINVAL;
 
-	tempInt = QDF_MIN(tempInt, SIR_ESE_MAX_MEAS_IE_REQS);
-	pEseBcnReq->numBcnReqIe = tempInt;
+	input = QDF_MIN(input, SIR_ESE_MAX_MEAS_IE_REQS);
+	pEseBcnReq->numBcnReqIe = input;
 
 	hdd_info("Number of Bcn Req Ie fields: %d", pEseBcnReq->numBcnReqIe);
 
@@ -2683,14 +2684,14 @@ static int hdd_parse_ese_beacon_req(uint8_t *pValue,
 			if (1 != v)
 				return -EINVAL;
 
-			v = kstrtos32(buf, 10, &tempInt);
+			v = kstrtou32(buf, 10, &tempInt);
 			if (v < 0)
 				return -EINVAL;
 
 			switch (i) {
 			case 0: /* Measurement token */
-				if (tempInt <= 0) {
-					hdd_err("Invalid Measurement Token(%d)",
+				if (!tempInt) {
+					hdd_err("Invalid Measurement Token: %u",
 						  tempInt);
 					return -EINVAL;
 				}
@@ -2699,10 +2700,10 @@ static int hdd_parse_ese_beacon_req(uint8_t *pValue,
 				break;
 
 			case 1: /* Channel number */
-				if ((tempInt <= 0) ||
+				if (!tempInt ||
 				    (tempInt >
 				     WNI_CFG_CURRENT_CHANNEL_STAMAX)) {
-					hdd_err("Invalid Channel Number(%d)",
+					hdd_err("Invalid Channel Number: %u",
 						  tempInt);
 					return -EINVAL;
 				}
@@ -2712,7 +2713,7 @@ static int hdd_parse_ese_beacon_req(uint8_t *pValue,
 			case 2: /* Scan mode */
 				if ((tempInt < eSIR_PASSIVE_SCAN)
 				    || (tempInt > eSIR_BEACON_TABLE)) {
-					hdd_err("Invalid Scan Mode(%d) Expected{0|1|2}",
+					hdd_err("Invalid Scan Mode: %u Expected{0|1|2}",
 						  tempInt);
 					return -EINVAL;
 				}
@@ -2720,13 +2721,12 @@ static int hdd_parse_ese_beacon_req(uint8_t *pValue,
 				break;
 
 			case 3: /* Measurement duration */
-				if (((tempInt <= 0)
+				if ((!tempInt
 				     && (pEseBcnReq->bcnReq[j].scanMode !=
 					 eSIR_BEACON_TABLE)) ||
-				    ((tempInt < 0) &&
-				     (pEseBcnReq->bcnReq[j].scanMode ==
-						eSIR_BEACON_TABLE))) {
-					hdd_err("Invalid Measurement Duration(%d)",
+				    (pEseBcnReq->bcnReq[j].scanMode ==
+						eSIR_BEACON_TABLE)) {
+					hdd_err("Invalid Measurement Duration: %u",
 						  tempInt);
 					return -EINVAL;
 				}
@@ -2738,7 +2738,7 @@ static int hdd_parse_ese_beacon_req(uint8_t *pValue,
 	}
 
 	for (j = 0; j < pEseBcnReq->numBcnReqIe; j++) {
-		hdd_info("Index(%d) Measurement Token(%u) Channel(%u) Scan Mode(%u) Measurement Duration(%u)",
+		hdd_info("Index: %d Measurement Token: %u Channel: %u Scan Mode: %u Measurement Duration: %u",
 			  j,
 			  pEseBcnReq->bcnReq[j].measurementToken,
 			  pEseBcnReq->bcnReq[j].channel,
