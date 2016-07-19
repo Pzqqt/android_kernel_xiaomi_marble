@@ -1641,9 +1641,7 @@ QDF_STATUS send_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->buf_len = bufp_len;
 
 	wmi_mgmt_cmd_record(wmi_handle, WMI_MGMT_TX_SEND_CMDID,
-			((struct wmi_command_header *)bufp)->type,
-			((struct wmi_command_header *)bufp)->sub_type,
-			cmd->vdev_id, cmd->chanfreq);
+			bufp, cmd->vdev_id, cmd->chanfreq);
 
 	if (wmi_unified_cmd_send(wmi_handle, buf, cmd_len,
 				      WMI_MGMT_TX_SEND_CMDID)) {
