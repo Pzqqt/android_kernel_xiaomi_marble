@@ -32,7 +32,6 @@
 
 #ifndef _WMI_UNIFIED_PARAM_H_
 #define _WMI_UNIFIED_PARAM_H_
-#include "wmi_unified.h"
 #define IEEE80211_ADDR_LEN  6  /* size of 802.11 address */
 #define WMI_MAC_MAX_SSID_LENGTH              32
 #define WMI_SCAN_MAX_NUM_SSID                0x0A
@@ -281,15 +280,15 @@ enum wmi_dwelltime_adaptive_mode {
 #define MAX_NUM_CHAN 128
 
 /* WME stream classes */
-#define WMI_AC_BE                          0    /* best effort */
-#define WMI_AC_BK                          1    /* background */
-#define WMI_AC_VI                          2    /* video */
-#define WMI_AC_VO                          3    /* voice */
+#define WMI_HOST_AC_BE                          0    /* best effort */
+#define WMI_HOST_AC_BK                          1    /* background */
+#define WMI_HOST_AC_VI                          2    /* video */
+#define WMI_HOST_AC_VO                          3    /* voice */
 #define WMI_TID_TO_AC(_tid) (\
-		(((_tid) == 0) || ((_tid) == 3)) ? WMI_AC_BE : \
-		(((_tid) == 1) || ((_tid) == 2)) ? WMI_AC_BK : \
-		(((_tid) == 4) || ((_tid) == 5)) ? WMI_AC_VI : \
-		WMI_AC_VO)
+		(((_tid) == 0) || ((_tid) == 3)) ? WMI_HOST_AC_BE : \
+		(((_tid) == 1) || ((_tid) == 2)) ? WMI_HOST_AC_BK : \
+		(((_tid) == 4) || ((_tid) == 5)) ? WMI_HOST_AC_VI : \
+		WMI_HOST_AC_VO)
 
 /**
  * struct vdev_create_params - vdev create cmd parameter
@@ -805,6 +804,16 @@ typedef struct {
 } target_rate_set;
 
 /**
+ * struct wmi_host_mac_addr - host mac addr 2 word representation of MAC addr
+ * @mac_addr31to0: upper 4 bytes of  MAC address
+ * @mac_addr47to32: lower 2 bytes of  MAC address
+ */
+typedef struct {
+	uint32_t mac_addr31to0;
+	uint32_t mac_addr47to32;
+} wmi_host_mac_addr;
+
+/**
  * struct peer_assoc_params - peer assoc cmd parameter
  * @peer_macaddr: peer mac address
  * @vdev_id: vdev id
@@ -852,7 +861,7 @@ typedef struct {
  * @peer_mac: Peer mac address
  */
 struct peer_assoc_params {
-	wmi_mac_addr peer_macaddr;
+	wmi_host_mac_addr peer_macaddr;
 	uint32_t vdev_id;
 	uint32_t peer_new_assoc;
 	uint32_t peer_associd;
@@ -867,13 +876,8 @@ struct peer_assoc_params {
 	uint32_t peer_vht_caps;
 	uint32_t peer_phymode;
 	uint32_t peer_ht_info[2];
-#ifndef WMI_NON_TLV_SUPPORT
-	wmi_rate_set peer_legacy_rates;
-	wmi_rate_set peer_ht_rates;
-#else
 	target_rate_set peer_legacy_rates;
 	target_rate_set peer_ht_rates;
-#endif
 	uint32_t rx_max_rate;
 	uint32_t rx_mcs_set;
 	uint32_t tx_max_rate;
@@ -1052,9 +1056,27 @@ struct scan_stop_params {
  * @chan_info: pointer to wmi channel info
  */
 #ifdef CONFIG_MCL
+/* TODO: This needs clean-up based on how its processed. */
+typedef struct {
+	/* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_channel */
+	uint32_t tlv_header;
+	/** primary 20 MHz channel frequency in mhz */
+	uint32_t mhz;
+	/** Center frequency 1 in MHz*/
+	uint32_t band_center_freq1;
+	/** Center frequency 2 in MHz - valid only for 11acvht 80plus80 mode*/
+	uint32_t band_center_freq2;
+	/** channel info described below */
+	uint32_t info;
+	/** contains min power, max power, reg power and reg class id.  */
+	uint32_t reg_info_1;
+	/** contains antennamax */
+	uint32_t reg_info_2;
+} wmi_channel_param;
+
 struct scan_chan_list_params {
 	uint8_t num_scan_chans;
-	wmi_channel *chan_info;
+	wmi_channel_param *chan_info;
 };
 #else
 /**
@@ -1362,8 +1384,8 @@ enum wmi_peer_rate_report_cond_phy_type {
  * @delta_min: rate min delta
  */
 struct report_rate_delta {
-	A_UINT32 percent; /* in unit of 12.5% */
-	A_UINT32 delta_min;  /* in unit of Mbps */
+	uint32_t percent; /* in unit of 12.5% */
+	uint32_t delta_min;  /* in unit of Mbps */
 };
 
 /**
@@ -1379,14 +1401,14 @@ struct report_rate_per_phy {
 	 * Any of these two conditions or both of
 	 * them can be set.
 	 */
-	A_UINT32 cond_flags;
+	uint32_t cond_flags;
 	struct report_rate_delta delta;
 	/*
 	 * In unit of Mbps. There are at most 4 thresholds
 	 * If the threshold count is less than 4, set zero to
 	 * the one following the last threshold
 	 */
-	A_UINT32 report_rate_threshold[WMI_MAX_NUM_OF_RATE_THRESH];
+	uint32_t report_rate_threshold[WMI_MAX_NUM_OF_RATE_THRESH];
 };
 
 /**
@@ -1397,9 +1419,9 @@ struct report_rate_per_phy {
  * @report_per_phy: report per phy type
  */
 struct wmi_peer_rate_report_params {
-	A_UINT32 rate_report_enable;
-	A_UINT32 backoff_time;            /* in unit of msecond */
-	A_UINT32 timer_period;            /* in unit of msecond */
+	uint32_t rate_report_enable;
+	uint32_t backoff_time;            /* in unit of msecond */
+	uint32_t timer_period;            /* in unit of msecond */
 	/*
 	 *In the following field, the array index means the phy type,
 	 * please see enum wmi_peer_rate_report_cond_phy_type for detail
@@ -1615,6 +1637,33 @@ struct mobility_domain_info {
 	uint16_t mobility_domain;
 };
 
+#define WMI_HOST_ROAM_OFFLOAD_NUM_MCS_SET     (16)
+
+/* This TLV will be filled only in case roam offload
+ * for wpa2-psk/okc/ese/11r is enabled */
+typedef struct {
+	/*
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_roam_offload_fixed_param
+	 */
+	uint32_t tlv_header;
+	uint32_t rssi_cat_gap;          /* gap for every category bucket */
+	uint32_t prefer_5g;             /* prefer select 5G candidate */
+	uint32_t select_5g_margin;
+	uint32_t reassoc_failure_timeout;       /* reassoc failure timeout */
+	uint32_t capability;
+	uint32_t ht_caps_info;
+	uint32_t ampdu_param;
+	uint32_t ht_ext_cap;
+	uint32_t ht_txbf;
+	uint32_t asel_cap;
+	uint32_t qos_enabled;
+	uint32_t qos_caps;
+	uint32_t wmm_caps;
+	/* since this is 4 byte aligned, we don't declare it as tlv array */
+	uint32_t mcsset[WMI_HOST_ROAM_OFFLOAD_NUM_MCS_SET >> 2];
+} roam_offload_param;
+
 /* struct roam_offload_scan_params - structure
  *     containing roaming offload scan parameters
  * @is_roam_req_valid: flag to tell whether roam req
@@ -1663,7 +1712,7 @@ struct roam_offload_scan_params {
 	/* THis is not available in non tlv target.
 	* please remove this and replace with a host based
 	* structure */
-	wmi_roam_offload_tlv_param roam_offload_params;
+	roam_offload_param roam_offload_params;
 #endif
 };
 
@@ -4133,16 +4182,6 @@ typedef struct {
 } wmi_host_stats_event;
 
 /**
- * struct wmi_host_mac_addr - host mac addr 2 word representation of MAC addr
- * @mac_addr31to0: upper 4 bytes of  MAC address
- * @mac_addr47to32: lower 2 bytes of  MAC address
- */
-typedef struct {
-	uint32_t mac_addr31to0;
-	uint32_t mac_addr47to32;
-} wmi_host_mac_addr;
-
-/**
  * struct wmi_host_peer_extd_stats - peer extd stats event structure
  * @peer_macaddr: Peer mac address
  * @inactive_time: inactive time in secs
@@ -4907,6 +4946,7 @@ typedef enum {
 	wmi_vdev_param_rtscts_rate,
 	wmi_vdev_param_mcc_rtscts_protection_enable,
 	wmi_vdev_param_mcc_broadcast_probe_enable,
+	wmi_vdev_param_capabilities,
 
 	wmi_vdev_param_max,
 } wmi_conv_vdev_param_id;
