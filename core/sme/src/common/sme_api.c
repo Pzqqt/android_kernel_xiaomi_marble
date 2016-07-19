@@ -7780,11 +7780,10 @@ QDF_STATUS sme_8023_multicast_list(tHalHandle hHal, uint8_t sessionId,
 		  pMulticastAddrs->ulMulticastAddrCnt,
 		  pMulticastAddrs->multicastAddr[0].bytes);
 
-	/*
-	   *Find the connected Infra / P2P_client connected session
-	 */
+	/* Find the connected Infra / P2P_client connected session */
 	if (CSR_IS_SESSION_VALID(pMac, sessionId) &&
-	    csr_is_conn_state_infra(pMac, sessionId)) {
+			(csr_is_conn_state_infra(pMac, sessionId) ||
+			csr_is_ndi_started(pMac, sessionId))) {
 		pSession = CSR_GET_SESSION(pMac, sessionId);
 	}
 
@@ -7804,10 +7803,11 @@ QDF_STATUS sme_8023_multicast_list(tHalHandle hHal, uint8_t sessionId,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	if (!csr_is_conn_state_connected_infra(pMac, sessionId)) {
+	if (!csr_is_conn_state_connected_infra(pMac, sessionId) &&
+			!csr_is_ndi_started(pMac, sessionId)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Ignoring the "
-			  "indication as we are not connected", __func__);
+			"%s: Request ignored, session %d is not connected or started",
+			__func__, sessionId);
 		qdf_mem_free(request_buf);
 		return QDF_STATUS_E_FAILURE;
 	}

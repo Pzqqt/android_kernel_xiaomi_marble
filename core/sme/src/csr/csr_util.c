@@ -5784,3 +5784,19 @@ enum tQDF_ADAPTER_MODE csr_get_session_persona(tpAniSirGlobal pmac,
 
 	return session->pCurRoamProfile->csrPersona;
 }
+
+/**
+ * csr_is_ndi_started() - function to check if NDI is started
+ * @mac_ctx: handle to mac context
+ * @session_id: session identifier
+ *
+ * returns: true if NDI is started, false otherwise
+ */
+bool csr_is_ndi_started(tpAniSirGlobal mac_ctx, uint32_t session_id)
+{
+	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
+	if (!session)
+		return false;
+
+	return eCSR_CONNECT_STATE_TYPE_NDI_STARTED == session->connectState;
+}

@@ -1427,4 +1427,5 @@ void csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 
 void csr_neighbor_roam_trigger_handoff(tpAniSirGlobal mac_ctx,
 					uint8_t session_id);
+bool csr_is_ndi_started(tpAniSirGlobal mac_ctx, uint32_t session_id);
 #endif
