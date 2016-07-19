@@ -2642,7 +2642,7 @@ static int hdd_parse_ese_beacon_req(uint8_t *pValue,
 	if ('\0' == *inPtr)
 		return -EINVAL;
 
-	/* get the first argument ie measurement token */
+	/* Getting the first argument ie Number of IE fields */
 	v = sscanf(inPtr, "%31s ", buf);
 	if (1 != v)
 		return -EINVAL;
@@ -2651,10 +2651,10 @@ static int hdd_parse_ese_beacon_req(uint8_t *pValue,
 	if (v < 0)
 		return -EINVAL;
 
+	tempInt = QDF_MIN(tempInt, SIR_ESE_MAX_MEAS_IE_REQS);
 	pEseBcnReq->numBcnReqIe = tempInt;
 
-	hdd_info("Number of Bcn Req Ie fields(%d)",
-		  pEseBcnReq->numBcnReqIe);
+	hdd_info("Number of Bcn Req Ie fields: %d", pEseBcnReq->numBcnReqIe);
 
 	for (j = 0; j < (pEseBcnReq->numBcnReqIe); j++) {
 		for (i = 0; i < 4; i++) {
