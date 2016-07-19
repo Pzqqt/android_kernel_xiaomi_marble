@@ -1112,8 +1112,8 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	status = wmi_unified_peer_assoc_send(wma->wmi_handle,
 					 cmd);
 	if (QDF_IS_STATUS_ERROR(status))
-		WMA_LOGP("%s: Failed to send peer assoc command ret = %d",
-			 __func__, ret);
+		WMA_LOGP(FL("Failed to send peer assoc command status = %d"),
+			status);
 	qdf_mem_free(cmd);
 
 	return status;
