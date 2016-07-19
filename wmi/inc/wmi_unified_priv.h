@@ -33,8 +33,6 @@
 #define _WMI_UNIFIED_PRIV_H_
 #include <osdep.h>
 #include "a_types.h"
-#include "wmi.h"
-#include "wmi_unified.h"
 #include "wmi_unified_param.h"
 #include "qdf_atomic.h"
 
@@ -627,10 +625,12 @@ QDF_STATUS (*send_process_fw_mem_dump_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_process_set_ie_info_cmd)(wmi_unified_t wmi_handle,
 				   struct vdev_ie_info_param *ie_info);
 
+#ifdef CONFIG_MCL
 QDF_STATUS (*send_init_cmd)(wmi_unified_t wmi_handle,
 		wmi_resource_config *res_cfg,
 		uint8_t num_mem_chunks, struct wmi_host_mem_chunk *mem_chunk,
 		bool action);
+#endif
 
 QDF_STATUS (*save_fw_version_cmd)(wmi_unified_t wmi_handle, void *evt_buf);
 
@@ -1154,7 +1154,7 @@ struct wmi_unified {
 	qdf_atomic_t pending_cmds;
 	HTC_ENDPOINT_ID wmi_endpoint_id;
 	uint16_t max_msg_len;
-	WMI_EVT_ID event_id[WMI_UNIFIED_MAX_EVENT];
+	uint32_t event_id[WMI_UNIFIED_MAX_EVENT];
 	wmi_unified_event_handler event_handler[WMI_UNIFIED_MAX_EVENT];
 	enum wmi_rx_exec_ctx ctx[WMI_UNIFIED_MAX_EVENT];
 	uint32_t max_event_idx;
