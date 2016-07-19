@@ -2977,7 +2977,7 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	struct wma_vdev_start_req req;
 	struct wma_target_req *msg;
 	uint8_t vdev_id, peer_id;
-	ol_txrx_peer_handle peer;
+	ol_txrx_peer_handle peer = NULL;
 	QDF_STATUS status;
 	struct wma_txrx_node *iface;
 	int pps_val = 0;
