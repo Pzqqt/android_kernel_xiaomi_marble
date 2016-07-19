@@ -1608,7 +1608,7 @@ QDF_STATUS send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_scan_chan_list_cmd_fixed_param *cmd;
 	int i;
 	uint8_t *buf_ptr;
-	wmi_channel *chan_info, *tchan_info;
+	wmi_channel_param *chan_info, *tchan_info;
 	uint16_t len = sizeof(*cmd) + WMI_TLV_HDR_SIZE;
 
 	len += sizeof(wmi_channel) * chan_list->num_scan_chans;
@@ -1632,7 +1632,8 @@ QDF_STATUS send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
 	WMITLV_SET_HDR((buf_ptr + sizeof(wmi_scan_chan_list_cmd_fixed_param)),
 		       WMITLV_TAG_ARRAY_STRUC,
 		       sizeof(wmi_channel) * chan_list->num_scan_chans);
-	chan_info = (wmi_channel *) (buf_ptr + sizeof(*cmd) + WMI_TLV_HDR_SIZE);
+	chan_info = (wmi_channel_param *)
+			(buf_ptr + sizeof(*cmd) + WMI_TLV_HDR_SIZE);
 	tchan_info = chan_list->chan_info;
 
 	for (i = 0; i < chan_list->num_scan_chans; ++i) {
@@ -9024,7 +9025,7 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 			tgt_res_cfg->num_ocb_schedules;
 
 }
-
+#ifdef CONFIG_MCL
 /**
  * send_init_cmd_tlv() - wmi init command
  * @wmi_handle:      pointer to wmi handle
@@ -9144,7 +9145,7 @@ QDF_STATUS send_init_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 
 }
-
+#endif
 /**
  * send_saved_init_cmd_tlv() - wmi init command
  * @wmi_handle:      pointer to wmi handle
@@ -11970,7 +11971,9 @@ struct wmi_ops tlv_ops =  {
 	.send_update_tdls_peer_state_cmd = send_update_tdls_peer_state_cmd_tlv,
 	.send_process_fw_mem_dump_cmd = send_process_fw_mem_dump_cmd_tlv,
 	.send_process_set_ie_info_cmd = send_process_set_ie_info_cmd_tlv,
+#ifdef CONFIG_MCL
 	.send_init_cmd = send_init_cmd_tlv,
+#endif
 	.save_fw_version_cmd = save_fw_version_cmd_tlv,
 	.check_and_update_fw_version =
 		 check_and_update_fw_version_cmd_tlv,
