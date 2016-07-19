@@ -800,7 +800,7 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 	tpRRMReq curr_req = mac_ctx->rrm.rrmPEContext.pCurrentReq;
 	tpPESession session_entry;
 	uint8_t session_id;
-	bool flag_bss_present, bss_desc_count = 0;
+	uint8_t bss_desc_count = 0;
 
 	lim_log(mac_ctx, LOG1, FL("Received beacon report xmit indication"));
 
@@ -843,21 +843,19 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 		     beacon_xmit_ind->numBssDesc; bss_desc_count++) {
 			beacon_report =
 				report[bss_desc_count].report.beaconReport;
+			/*
+			 * If the scan result is NULL then send report request
+			 * with option subelement as NULL.
+			 */
 			bss_desc = beacon_xmit_ind->
 				   pBssDescription[bss_desc_count];
-			flag_bss_present = false;
 			/* Prepare the beacon report and send it to the peer.*/
 			report[bss_desc_count].token =
 				beacon_xmit_ind->uDialogToken;
 			report[bss_desc_count].refused = 0;
 			report[bss_desc_count].incapable = 0;
 			report[bss_desc_count].type = SIR_MAC_RRM_BEACON_TYPE;
-			/*
-			 * If the scan result is NULL then send report request
-			 * with option subelement as NULL.
-			 */
-			if (NULL != bss_desc)
-				flag_bss_present = true;
+
 			/*
 			 * Valid response is included if the size of
 			 * becon xmit is == size of beacon xmit ind + ies
@@ -865,7 +863,7 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 			if (beacon_xmit_ind->length < sizeof(*beacon_xmit_ind))
 				continue;
 			beacon_report.regClass = beacon_xmit_ind->regClass;
-			if (flag_bss_present) {
+			if (bss_desc) {
 				beacon_report.channel = bss_desc->channelId;
 				qdf_mem_copy(beacon_report.measStartTime,
 					bss_desc->startTSF,
@@ -893,7 +891,7 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 				lim_log(mac_ctx, LOG3,
 					FL("Only requested IEs in reporting detail requested"));
 
-				if (flag_bss_present) {
+				if (bss_desc) {
 					rrm_fill_beacon_ies(mac_ctx,
 					    (uint8_t *) &beacon_report.Ies[0],
 					    (uint8_t *) &beacon_report.numIes,
@@ -908,7 +906,7 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 				/* 2: default - Include all FFs and all Ies. */
 			default:
 				lim_log(mac_ctx, LOG3, FL("Default all IEs and FFs"));
-				if (flag_bss_present) {
+				if (bss_desc) {
 					rrm_fill_beacon_ies(mac_ctx,
 					    (uint8_t *) &beacon_report.Ies[0],
 					    (uint8_t *) &beacon_report.numIes,
