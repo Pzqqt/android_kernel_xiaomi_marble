@@ -551,6 +551,7 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 		tx_desc = ol_tx_desc_find(pdev, tx_desc_id);
 		tx_desc->status = status;
 		netbuf = tx_desc->netbuf;
+		QDF_NBUF_UPDATE_TX_PKT_COUNT(netbuf, QDF_NBUF_TX_PKT_FREE);
 		DPTRACE(qdf_dp_trace_ptr(netbuf,
 			QDF_DP_TRACE_FREE_PACKET_PTR_RECORD,
 			qdf_nbuf_data_addr(netbuf),
@@ -569,7 +570,6 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 			ol_tx_msdu_complete(pdev, tx_desc, tx_descs, netbuf,
 					    lcl_freelist, tx_desc_last, status);
 		}
-		QDF_NBUF_UPDATE_TX_PKT_COUNT(netbuf, QDF_NBUF_TX_PKT_FREE);
 #ifdef QCA_SUPPORT_TXDESC_SANITY_CHECKS
 		tx_desc->pkt_type = 0xff;
 #ifdef QCA_COMPUTE_TX_DELAY
