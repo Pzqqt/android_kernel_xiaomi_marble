@@ -104,6 +104,7 @@
 #include <wlan_hdd_regulatory.h>
 #include "ol_rx_fwd.h"
 #include "wlan_hdd_lpass.h"
+#include "nan_api.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -4218,6 +4219,9 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 	 */
 	hdd_stop_all_adapters(hdd_ctx);
 
+	/* De-register the SME callbacks */
+	hdd_deregister_cb(hdd_ctx);
+
 	/* Stop all the modules */
 	qdf_status = cds_disable(p_cds_context);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -6818,11 +6822,6 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	if (ret)
 		goto err_close_adapter;
 
-	sme_register11d_scan_done_callback(hdd_ctx->hHal, hdd_11d_scan_done);
-
-	sme_register_oem_data_rsp_callback(hdd_ctx->hHal,
-					hdd_send_oem_data_rsp_msg);
-
 	/* FW capabilities received, Set the Dot11 mode */
 	sme_setdef_dot11mode(hdd_ctx->hHal);
 
@@ -6859,7 +6858,6 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 		hddLog(LOGE, FL("Failed to init ACS Skip timer"));
 #endif
 
-	wlan_hdd_nan_init(hdd_ctx);
 	sme_cbacks.sme_get_valid_channels = sme_get_cfg_valid_channels;
 	sme_cbacks.sme_get_nss_for_vdev = sme_get_vdev_type_nss;
 	status = cds_init_policy_mgr(&sme_cbacks);
@@ -6895,31 +6893,10 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 			  hdd_bus_bw_compute_cbk, (void *)hdd_ctx);
 #endif
 
-	wlan_hdd_cfg80211_stats_ext_init(hdd_ctx);
-
-	sme_ext_scan_register_callback(hdd_ctx->hHal,
-				       wlan_hdd_cfg80211_extscan_callback);
-
-	status = hdd_register_for_sap_restart_with_channel_switch();
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		goto err_exit_nl_srv;
-
-	sme_set_rssi_threshold_breached_cb(hdd_ctx->hHal,
-				hdd_rssi_threshold_breached);
-
-	status = sme_bpf_offload_register_callback(hdd_ctx->hHal,
-							hdd_get_bpf_offload_cb);
-	if (QDF_IS_STATUS_SUCCESS(status))
-		hdd_err("set bpf offload callback failed");
-
-	hdd_cfg80211_link_layer_stats_init(hdd_ctx);
-	wlan_hdd_tsf_init(hdd_ctx);
 	wlan_hdd_send_all_scan_intf_info(hdd_ctx);
 	wlan_hdd_send_version_pkg(hdd_ctx->target_fw_version,
 				  hdd_ctx->target_hw_version,
 				  hdd_ctx->target_hw_name);
-
-	wlan_hdd_dcc_register_for_dcc_stats_event(hdd_ctx);
 
 	if (hdd_ctx->config->dual_mac_feature_disable) {
 		status = wlan_hdd_disable_all_dual_mac_features(hdd_ctx);
@@ -6943,6 +6920,12 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 		goto err_debugfs_exit;
 
 	memdump_init();
+
+	ret = hdd_register_cb(hdd_ctx);
+	if (ret) {
+		hdd_err("Failed to register HDD callbacks!");
+		goto err_exit_nl_srv;
+	}
 
 	goto success;
 
@@ -6990,6 +6973,122 @@ err_hdd_free_context:
 success:
 	EXIT();
 	return 0;
+}
+
+/**
+ * hdd_register_cb() - Register HDD callbacks.
+ * @hdd_ctx: HDD context
+ *
+ * Register the HDD callbacks to CDS/SME.
+ *
+ * Return: 0 for success or Error code for failure
+ */
+int hdd_register_cb(hdd_context_t *hdd_ctx)
+{
+	QDF_STATUS status;
+	int ret = 0;
+
+	ENTER();
+
+	sme_register11d_scan_done_callback(hdd_ctx->hHal, hdd_11d_scan_done);
+
+	sme_register_oem_data_rsp_callback(hdd_ctx->hHal,
+					hdd_send_oem_data_rsp_msg);
+
+	status = sme_fw_mem_dump_register_cb(hdd_ctx->hHal,
+					     wlan_hdd_cfg80211_fw_mem_dump_cb);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("Failed to register memdump callback");
+		ret = -EINVAL;
+		return ret;
+	}
+
+	sme_set_tsfcb(hdd_ctx->hHal, hdd_get_tsf_cb, hdd_ctx);
+	sme_nan_register_callback(hdd_ctx->hHal,
+				  wlan_hdd_cfg80211_nan_callback);
+	sme_stats_ext_register_callback(hdd_ctx->hHal,
+					wlan_hdd_cfg80211_stats_ext_callback);
+
+	sme_ext_scan_register_callback(hdd_ctx->hHal,
+				       wlan_hdd_cfg80211_extscan_callback);
+
+	status = cds_register_sap_restart_channel_switch_cb(
+			(void *)hdd_sap_restart_with_channel_switch);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("restart cb registration failed");
+		ret = -EINVAL;
+		return ret;
+	}
+
+	sme_set_rssi_threshold_breached_cb(hdd_ctx->hHal,
+				hdd_rssi_threshold_breached);
+
+	status = sme_bpf_offload_register_callback(hdd_ctx->hHal,
+						   hdd_get_bpf_offload_cb);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("set bpf offload callback failed");
+		ret = -EINVAL;
+		return ret;
+	}
+
+	sme_set_link_layer_stats_ind_cb(hdd_ctx->hHal,
+				wlan_hdd_cfg80211_link_layer_stats_callback);
+
+	wlan_hdd_dcc_register_for_dcc_stats_event(hdd_ctx);
+
+	EXIT();
+
+	return ret;
+}
+
+/**
+ * hdd_deregister_cb() - De-Register HDD callbacks.
+ * @hdd_ctx: HDD context
+ *
+ * De-Register the HDD callbacks to CDS/SME.
+ *
+ * Return: void
+ */
+void hdd_deregister_cb(hdd_context_t *hdd_ctx)
+{
+	QDF_STATUS status;
+
+	ENTER();
+
+	status = sme_deregister_for_dcc_stats_event(hdd_ctx->hHal);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("De-register of dcc stats callback failed: %d",
+			status);
+
+	sme_reset_link_layer_stats_ind_cb(hdd_ctx->hHal);
+	status = sme_bpf_offload_deregister_callback(hdd_ctx->hHal);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("De-register bpf offload callback failed: %d",
+			status);
+	sme_reset_rssi_threshold_breached_cb(hdd_ctx->hHal);
+
+	status = cds_deregister_sap_restart_channel_switch_cb();
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("De-register restart cb registration failed: %d",
+			status);
+
+	sme_stats_ext_register_callback(hdd_ctx->hHal,
+					wlan_hdd_cfg80211_stats_ext_callback);
+
+	sme_nan_deregister_callback(hdd_ctx->hHal);
+	status = sme_reset_tsfcb(hdd_ctx->hHal);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("Failed to de-register tsfcb the callback:%d",
+			status);
+	status = sme_fw_mem_dump_unregister_cb(hdd_ctx->hHal);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("Failed to de-register the fw mem dump callback: %d",
+			status);
+
+	sme_deregister_oem_data_rsp_callback(hdd_ctx->hHal);
+	sme_deregister11d_scan_done_callback(hdd_ctx->hHal);
+
+	EXIT();
 }
 
 /**

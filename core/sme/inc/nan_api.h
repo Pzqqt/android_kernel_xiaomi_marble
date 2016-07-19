@@ -45,6 +45,7 @@ typedef struct sNanRequestReq {
 
 typedef void (*NanCallback)(void *, tSirNanEvent *);
 void sme_nan_register_callback(tHalHandle hHal, NanCallback callback);
+void sme_nan_deregister_callback(tHalHandle hHal);
 QDF_STATUS sme_nan_request(tpNanRequestReq input);
 
 #endif /* __NAN_API_H__ */

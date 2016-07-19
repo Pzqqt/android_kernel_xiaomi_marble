@@ -100,14 +100,14 @@ static void memdump_cleanup_timer_cb(void *data)
 /**
  * wlan_hdd_cfg80211_fw_mem_dump_cb() -  Callback to receive FW memory dump
  * @ctx: pointer to HDD context.
- * @rsp: pointer to fw dump copy complete response
+ * @dump_rsp: pointer to fw dump copy complete response
  *
  * This is a callback function used to indicate user space about the
  * availability for firmware memory dump via vendor event.
  *
  * Return: None
  */
-static void wlan_hdd_cfg80211_fw_mem_dump_cb(void *ctx,
+void wlan_hdd_cfg80211_fw_mem_dump_cb(void *ctx,
 					     struct fw_dump_rsp *dump_rsp)
 {
 	hdd_context_t *hdd_ctx = ctx;
@@ -611,7 +611,6 @@ void memdump_deinit(void)
 	}
 
 	memdump_procfs_remove();
-	sme_fw_mem_dump_unregister_cb(hdd_ctx->hHal);
 
 	mutex_lock(&hdd_ctx->memdump_lock);
 	if (hdd_ctx->fw_dump_loc) {

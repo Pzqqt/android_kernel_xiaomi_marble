@@ -88,8 +88,6 @@ struct index_data_rate_type {
  */
 #define LL_STATS_EVENT_BUF_SIZE 4096
 
-void hdd_cfg80211_link_layer_stats_init(hdd_context_t *pHddCtx);
-
 /**
  * wlan_hdd_cfg80211_ll_stats_set() - set link layer stats
  * @wiphy: Pointer to wiphy
@@ -142,11 +140,6 @@ static inline bool hdd_link_layer_stats_supported(void)
 
 #else
 
-static inline void hdd_cfg80211_link_layer_stats_init(hdd_context_t *pHddCtx)
-{
-	return;
-}
-
 static inline void hdd_init_ll_stats_ctx(void)
 {
 	return;
@@ -174,7 +167,6 @@ int wlan_hdd_cfg80211_stats_ext_request(struct wiphy *wiphy,
 					const void *data,
 					int data_len);
 
-void wlan_hdd_cfg80211_stats_ext_init(hdd_context_t *pHddCtx);
 #else
 static inline void wlan_hdd_cfg80211_stats_ext_init(hdd_context_t *pHddCtx) {}
 #endif /* End of WLAN_FEATURE_STATS_EXT */
@@ -207,5 +199,10 @@ int wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 void hdd_display_hif_stats(void);
 void hdd_clear_hif_stats(void);
 
+void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
+					  tStatsExtEvent *msg);
+
+void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
+						 int indType, void *pRsp);
 #endif /* end #if !defined(WLAN_HDD_STATS_H) */
 

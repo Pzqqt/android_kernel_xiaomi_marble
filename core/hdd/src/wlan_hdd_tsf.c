@@ -201,7 +201,7 @@ int hdd_indicate_tsf(struct hdd_adapter_s *adapter, uint32_t *buf, int len)
  *
  * Return: 0 for success or non-zero negative failure code
  */
-static int hdd_get_tsf_cb(void *pcb_cxt, struct stsf *ptsf)
+int hdd_get_tsf_cb(void *pcb_cxt, struct stsf *ptsf)
 {
 	struct hdd_context_s *hddctx;
 	struct hdd_adapter_s *adapter;

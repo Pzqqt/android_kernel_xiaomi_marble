@@ -365,15 +365,23 @@ extern QDF_STATUS sme_set_host_power_save(tHalHandle hHal, bool psMode);
 void sme_set_dhcp_till_power_active_flag(tHalHandle hHal, uint8_t flag);
 extern QDF_STATUS sme_register11d_scan_done_callback(tHalHandle hHal,
 		csr_scan_completeCallback);
+void sme_deregister11d_scan_done_callback(tHalHandle hHal);
+
 #ifdef FEATURE_OEM_DATA_SUPPORT
 extern QDF_STATUS sme_register_oem_data_rsp_callback(tHalHandle h_hal,
 		sme_send_oem_data_rsp_msg callback);
+void sme_deregister_oem_data_rsp_callback(tHalHandle h_hal);
+
 #else
 static inline QDF_STATUS sme_register_oem_data_rsp_callback(tHalHandle h_hal,
 		sme_send_oem_data_rsp_msg callback)
 {
 	return QDF_STATUS_SUCCESS;
 }
+static inline void sme_deregister_oem_data_rsp_callback(tHalHandle h_hal)
+{
+}
+
 #endif
 
 extern QDF_STATUS sme_wow_add_pattern(tHalHandle hHal,
@@ -812,6 +820,7 @@ typedef struct sStatsExtRequestReq {
 typedef void (*StatsExtCallback)(void *, tStatsExtEvent *);
 void sme_stats_ext_register_callback(tHalHandle hHal,
 		StatsExtCallback callback);
+void sme_stats_ext_deregister_callback(tHalHandle hhal);
 QDF_STATUS sme_stats_ext_request(uint8_t session_id,
 		tpStatsExtRequestReq input);
 QDF_STATUS sme_stats_ext_event(tHalHandle hHal, void *pMsg);
@@ -878,6 +887,7 @@ QDF_STATUS sme_ll_stats_get_req(tHalHandle hHal,
 QDF_STATUS sme_set_link_layer_stats_ind_cb(tHalHandle hHal,
 		void (*callbackRoutine)(void *callbackCtx,
 				int indType, void *pRsp));
+QDF_STATUS sme_reset_link_layer_stats_ind_cb(tHalHandle hhal);
 #endif /* WLAN_FEATURE_LINK_LAYER_STATS */
 
 QDF_STATUS sme_fw_mem_dump(tHalHandle hHal, void *recvd_req);
@@ -973,6 +983,7 @@ QDF_STATUS sme_set_rssi_monitoring(tHalHandle hal,
 					struct rssi_monitor_req *input);
 QDF_STATUS sme_set_rssi_threshold_breached_cb(tHalHandle hal,
 			void (*cb)(void *, struct rssi_breach_event *));
+QDF_STATUS sme_reset_rssi_threshold_breached_cb(tHalHandle hal);
 
 QDF_STATUS sme_register_mgmt_frame_ind_callback(tHalHandle hal,
 			sir_mgmt_frame_ind_callback callback);
@@ -1050,6 +1061,8 @@ QDF_STATUS sme_dcc_update_ndl(tHalHandle hHal, void *context,
 
 QDF_STATUS sme_register_for_dcc_stats_event(tHalHandle hHal, void *context,
 					    ocb_callback callback);
+QDF_STATUS sme_deregister_for_dcc_stats_event(tHalHandle hHal);
+
 void sme_add_set_thermal_level_callback(tHalHandle hal,
 		sme_set_thermal_level_callback callback);
 
@@ -1096,13 +1109,22 @@ QDF_STATUS sme_ht40_stop_obss_scan(tHalHandle hHal, uint32_t vdev_id);
 QDF_STATUS sme_set_tsfcb(tHalHandle hHal,
 	int (*cb_fn)(void *cb_ctx, struct stsf *ptsf), void *cb_ctx);
 
+QDF_STATUS sme_reset_tsfcb(tHalHandle h_hal);
+
 #ifdef WLAN_FEATURE_TSF
 QDF_STATUS sme_set_tsf_gpio(tHalHandle h_hal, uint32_t pinvalue);
+QDF_STATUS sme_reset_tsf_gpio(tHalHandle h_hal);
+
 #else
 static inline QDF_STATUS sme_set_tsf_gpio(tHalHandle h_hal, uint32_t pinvalue)
 {
 	return QDF_STATUS_E_FAILURE;
 }
+static inline QDF_STATUS sme_reset_tsf_gpio(tHalHandle h_hal)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
 #endif
 
 QDF_STATUS sme_update_mimo_power_save(tHalHandle hHal,
@@ -1117,6 +1139,7 @@ QDF_STATUS sme_remove_beacon_filter(tHalHandle hal, uint32_t session_id);
 QDF_STATUS sme_bpf_offload_register_callback(tHalHandle hal,
 					void (*pbpf_get_offload_cb)(void *,
 					struct sir_bpf_get_offload *));
+QDF_STATUS sme_bpf_offload_deregister_callback(tHalHandle hal);
 
 QDF_STATUS sme_get_bpf_offload_capabilities(tHalHandle hal);
 QDF_STATUS sme_set_bpf_instructions(tHalHandle hal,

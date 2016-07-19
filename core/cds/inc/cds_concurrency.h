@@ -772,6 +772,7 @@ QDF_STATUS cds_reset_sap_mandatory_channels(void);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 QDF_STATUS cds_register_sap_restart_channel_switch_cb(
 		void (*sap_restart_chan_switch_cb)(void *, uint32_t, uint32_t));
+QDF_STATUS cds_deregister_sap_restart_channel_switch_cb(void);
 #endif
 QDF_STATUS cds_get_pcl_for_existing_conn(enum cds_con_mode mode,
 			uint8_t *pcl_ch, uint32_t *len,

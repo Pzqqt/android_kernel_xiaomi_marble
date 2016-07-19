@@ -1740,4 +1740,6 @@ QDF_STATUS hdd_sme_close_session_callback(void *pContext);
 int hdd_reassoc(hdd_adapter_t *adapter, const uint8_t *bssid,
 		const uint8_t channel, const handoff_src src);
 
+int hdd_register_cb(hdd_context_t *hdd_ctx);
+void hdd_deregister_cb(hdd_context_t *hdd_ctx);
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

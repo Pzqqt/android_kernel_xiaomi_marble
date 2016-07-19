@@ -962,7 +962,7 @@ static void hdd_link_layer_process_radio_stats(hdd_adapter_t *pAdapter,
  *
  * Return: None
  */
-static void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
+void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
 							int indType, void *pRsp)
 {
 	hdd_context_t *pHddCtx = (hdd_context_t *) ctx;
@@ -1069,18 +1069,6 @@ static void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
 	}
 
 	return;
-}
-
-/**
- * hdd_cfg80211_link_layer_stats_init() - Initialize link layer stats
- * @pHddCtx: Pointer to hdd context
- *
- * Return: None
- */
-void hdd_cfg80211_link_layer_stats_init(hdd_context_t *pHddCtx)
-{
-	sme_set_link_layer_stats_ind_cb(pHddCtx->hHal,
-					wlan_hdd_cfg80211_link_layer_stats_callback);
 }
 
 const struct
@@ -1557,7 +1545,7 @@ int wlan_hdd_cfg80211_stats_ext_request(struct wiphy *wiphy,
  *
  * Return: nothing
  */
-static void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
+void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
 						 tStatsExtEvent *msg)
 {
 
@@ -1613,18 +1601,6 @@ static void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
 
 	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
 
-}
-
-/**
- * wlan_hdd_cfg80211_stats_ext_init() - ext stats init
- * @ctx: Pointer to HDD context
- *
- * Return: nothing
- */
-void wlan_hdd_cfg80211_stats_ext_init(hdd_context_t *pHddCtx)
-{
-	sme_stats_ext_register_callback(pHddCtx->hHal,
-					wlan_hdd_cfg80211_stats_ext_callback);
 }
 #endif /* End of WLAN_FEATURE_STATS_EXT */
 

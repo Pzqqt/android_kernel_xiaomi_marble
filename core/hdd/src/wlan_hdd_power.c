@@ -1326,6 +1326,8 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	hdd_cleanup_scan_queue(pHddCtx);
 	hdd_reset_all_adapters(pHddCtx);
 
+	/* De-register the HDD callbacks */
+	hdd_deregister_cb(pHddCtx);
 	hdd_ipa_uc_ssr_deinit();
 
 	cds_sched_context = get_cds_sched_ctxt();
@@ -1615,15 +1617,11 @@ QDF_STATUS hdd_wlan_re_init(void *hif_sc)
 	/* Allow the phone to go to sleep */
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_REINIT);
 
-	sme_ext_scan_register_callback(pHddCtx->hHal,
-				wlan_hdd_cfg80211_extscan_callback);
-
-	qdf_status = hdd_register_for_sap_restart_with_channel_switch();
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-		/* Error already logged */
+	ret = hdd_register_cb(pHddCtx);
+	if (ret) {
+		hdd_err("Failed to register HDD callbacks!");
 		goto err_cds_disable;
-
-	sme_set_rssi_threshold_breached_cb(pHddCtx->hHal, hdd_rssi_threshold_breached);
+	}
 
 	wlan_hdd_send_all_scan_intf_info(pHddCtx);
 	wlan_hdd_send_version_pkg(pHddCtx->target_fw_version,

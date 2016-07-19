@@ -8262,6 +8262,29 @@ QDF_STATUS cds_register_sap_restart_channel_switch_cb(
 	cds_ctx->sap_restart_chan_switch_cb = sap_restart_chan_switch_cb;
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * cds_deregister_sap_restart_channel_switch_cb() - De-Register callback for SAP
+ * channel switch without restart
+ *
+ * De Registers callback to perform channel switch
+ *
+ * Return: QDF_STATUS Enumeration
+ */
+QDF_STATUS cds_deregister_sap_restart_channel_switch_cb(void)
+{
+	p_cds_contextType cds_ctx;
+
+	cds_ctx = cds_get_global_context();
+	if (!cds_ctx) {
+		cds_err("Invalid CDS context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cds_ctx->sap_restart_chan_switch_cb = NULL;
+	return QDF_STATUS_SUCCESS;
+}
+
 #endif
 
 

@@ -4728,6 +4728,29 @@ QDF_STATUS sme_register11d_scan_done_callback(tHalHandle hHal,
 	return status;
 }
 
+/**
+ * sme_deregister11d_scan_done_callback() - De-register scandone callback
+ * @h_hal: Handler return by mac_open
+ *
+ * This function De-registers the scandone callback  to SME
+ *
+ * Return: None
+ */
+void sme_deregister11d_scan_done_callback(tHalHandle h_hal)
+{
+	tpAniSirGlobal pmac;
+
+	if (!h_hal) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  FL("hHal is not valid"));
+		return;
+	}
+
+	pmac = PMAC_STRUCT(h_hal);
+	pmac->scan.callback11dScanDone = NULL;
+}
+
+
 #ifdef FEATURE_OEM_DATA_SUPPORT
 /**
  * sme_register_oem_data_rsp_callback() - Register a routine of
@@ -4751,6 +4774,27 @@ QDF_STATUS sme_register_oem_data_rsp_callback(tHalHandle h_hal,
 
 	return status;
 
+}
+
+/**
+ * sme_deregister_oem_data_rsp_callback() - De-register OEM datarsp callback
+ * @h_hal: Handler return by mac_open
+ * This function De-registers the OEM data response callback  to SME
+ *
+ * Return: None
+ */
+void  sme_deregister_oem_data_rsp_callback(tHalHandle h_hal)
+{
+	tpAniSirGlobal pmac;
+
+	if (!h_hal) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				  FL("hHal is not valid"));
+		return;
+	}
+	pmac = PMAC_STRUCT(h_hal);
+
+	pmac->oemData.oem_data_rsp_callback = NULL;
 }
 #endif
 
@@ -7330,7 +7374,7 @@ QDF_STATUS sme_preferred_network_found_ind(tHalHandle hHal, void *pMsg)
 
 #endif /* FEATURE_WLAN_SCAN_PNO */
 
-/*
+/**
  * sme_set_tsfcb() - Set callback for TSF capture
  * @h_hal: Handler return by mac_open
  * @cb_fn: Callback function pointer
@@ -7348,6 +7392,35 @@ QDF_STATUS sme_set_tsfcb(tHalHandle h_hal,
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		mac->sme.get_tsf_cb = cb_fn;
 		mac->sme.get_tsf_cxt = cb_ctx;
+		sme_release_global_lock(&mac->sme);
+	}
+	return status;
+}
+
+/**
+ * sme_reset_tsfcb() - Reset callback for TSF capture
+ * @h_hal: Handler return by mac_open
+ *
+ * This function reset the tsf capture callback to SME
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_reset_tsfcb(tHalHandle h_hal)
+{
+	tpAniSirGlobal mac;
+	QDF_STATUS status;
+
+	if (!h_hal) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				  FL("h_hal is not valid"));
+		return QDF_STATUS_E_INVAL;
+	}
+	mac = PMAC_STRUCT(h_hal);
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		mac->sme.get_tsf_cb = NULL;
+		mac->sme.get_tsf_cxt = NULL;
 		sme_release_global_lock(&mac->sme);
 	}
 	return status;
@@ -11420,6 +11493,40 @@ QDF_STATUS sme_register_for_dcc_stats_event(tHalHandle hHal, void *context,
 	return 0;
 }
 
+/**
+ * sme_deregister_for_dcc_stats_event() - De-Register for the periodic DCC stats
+ *					  event
+ * @h_hal: Hal Handle
+ *
+ * This function de-registers the DCC perioc stats callback
+ *
+ * Return: QDF_STATUS Enumeration
+ */
+QDF_STATUS sme_deregister_for_dcc_stats_event(tHalHandle h_hal)
+{
+	tpAniSirGlobal mac;
+	QDF_STATUS status;
+
+	if (!h_hal) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				  FL("h_hal is not valid"));
+		return QDF_STATUS_E_INVAL;
+	}
+	mac = PMAC_STRUCT(h_hal);
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  FL("Failed to acquire global lock"));
+		return status;
+	}
+	mac->sme.dcc_stats_event_callback = NULL;
+	mac->sme.dcc_stats_event_context = NULL;
+	sme_release_global_lock(&mac->sme);
+
+	return status;
+}
+
 void sme_get_recovery_stats(tHalHandle hHal)
 {
 	uint8_t i;
@@ -12512,6 +12619,30 @@ void sme_stats_ext_register_callback(tHalHandle hHal, StatsExtCallback callback)
 
 	pMac->sme.StatsExtCallback = callback;
 }
+
+/**
+ * sme_stats_ext_deregister_callback() - De-register ext stats callback
+ * @h_hal: Hal Handle
+ *
+ * This function is called to  de initialize the HDD NAN feature.  Currently
+ * the only operation required is to de-register a callback with SME.
+ *
+ * Return: None
+ */
+void sme_stats_ext_deregister_callback(tHalHandle h_hal)
+{
+	tpAniSirGlobal pmac;
+
+	if (!h_hal) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  FL("hHal is not valid"));
+		return;
+	}
+
+	pmac = PMAC_STRUCT(h_hal);
+	pmac->sme.StatsExtCallback = NULL;
+}
+
 
 /******************************************************************************
    \fn sme_stats_ext_request
@@ -13683,6 +13814,41 @@ QDF_STATUS sme_set_link_layer_stats_ind_cb
 	return status;
 }
 
+/**
+ * sme_reset_link_layer_stats_ind_cb() - SME API to reset link layer stats
+ *					 indication
+ * @h_hal: Hal Handle
+ *
+ * This function reset's the link layer stats indication
+ *
+ * Return: QDF_STATUS Enumeration
+ */
+
+QDF_STATUS sme_reset_link_layer_stats_ind_cb(tHalHandle h_hal)
+{
+	QDF_STATUS status;
+	tpAniSirGlobal pmac;
+
+	if (!h_hal) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				  FL("hHal is not valid"));
+		return QDF_STATUS_E_INVAL;
+	}
+	pmac = PMAC_STRUCT(h_hal);
+
+	status = sme_acquire_global_lock(&pmac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		pmac->sme.pLinkLayerStatsIndCallback = NULL;
+		sme_release_global_lock(&pmac->sme);
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR, "%s: sme_acquire_global_lock error",
+			  __func__);
+	}
+
+	return status;
+}
+
+
 #endif /* WLAN_FEATURE_LINK_LAYER_STATS */
 
 /**
@@ -14530,17 +14696,50 @@ void sme_update_user_configured_nss(tHalHandle hal, uint8_t nss)
 
 /**
  * sme_set_rssi_threshold_breached_cb() - set rssi threshold breached callback
- * @hal: global hal handle
+ * @h_hal: global hal handle
  * @cb: callback function pointer
  *
  * This function stores the rssi threshold breached callback function.
  *
  * Return: QDF_STATUS enumeration.
  */
-QDF_STATUS sme_set_rssi_threshold_breached_cb(tHalHandle hal,
+QDF_STATUS sme_set_rssi_threshold_breached_cb(tHalHandle h_hal,
 				void (*cb)(void *, struct rssi_breach_event *))
 {
 	QDF_STATUS status  = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal mac;
+
+	if (!h_hal) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				  FL("hHal is not valid"));
+		return QDF_STATUS_E_INVAL;
+	}
+	mac = PMAC_STRUCT(h_hal);
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			FL("sme_acquire_global_lock failed!(status=%d)"),
+			status);
+		return status;
+	}
+
+	mac->sme.rssi_threshold_breached_cb = cb;
+	sme_release_global_lock(&mac->sme);
+	return status;
+}
+
+/**
+ * sme_set_rssi_threshold_breached_cb() - Reset rssi threshold breached callback
+ * @hal: global hal handle
+ *
+ * This function de-registers the rssi threshold breached callback function.
+ *
+ * Return: QDF_STATUS enumeration.
+ */
+QDF_STATUS sme_reset_rssi_threshold_breached_cb(tHalHandle hal)
+{
+	QDF_STATUS status;
 	tpAniSirGlobal mac = PMAC_STRUCT(hal);
 
 	status = sme_acquire_global_lock(&mac->sme);
@@ -14551,7 +14750,7 @@ QDF_STATUS sme_set_rssi_threshold_breached_cb(tHalHandle hal,
 		return status;
 	}
 
-	mac->sme.rssi_threshold_breached_cb = cb;
+	mac->sme.rssi_threshold_breached_cb = NULL;
 	sme_release_global_lock(&mac->sme);
 	return status;
 }
@@ -15625,6 +15824,41 @@ uint32_t sme_get_wni_dot11_mode(tHalHandle hal)
 	return csr_translate_to_wni_cfg_dot11_mode(mac_ctx,
 		mac_ctx->roam.configParam.uCfgDot11Mode);
 }
+
+/**
+ * sme_bpf_offload_deregister_callback() - Register get bpf offload callbacK
+ *
+ * @h_hal - MAC global handle
+ * @callback_routine - callback routine from HDD
+ *
+ * This API is invoked by HDD to de-register its callback in SME
+ *
+ * Return: QDF_STATUS Enumeration
+ */
+QDF_STATUS sme_bpf_offload_deregister_callback(tHalHandle h_hal)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal mac;
+
+	if (!h_hal) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				  FL("hHal is not valid"));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mac = PMAC_STRUCT(h_hal);
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		mac->sme.pbpf_get_offload_cb = NULL;
+		sme_release_global_lock(&mac->sme);
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			FL("sme_acquire_global_lock failed"));
+	}
+	return status;
+}
+
 
 /**
  * sme_create_mon_session() - post message to create PE session for monitormode

@@ -1988,7 +1988,7 @@ void wlan_hdd_dcc_register_for_dcc_stats_event(hdd_context_t *hdd_ctx)
 	int rc;
 
 	rc = sme_register_for_dcc_stats_event(hdd_ctx->hHal, hdd_ctx,
-		wlan_hdd_dcc_stats_event_callback);
+				      wlan_hdd_dcc_stats_event_callback);
 	if (rc)
 		hdd_err("Register callback failed: %d", rc);
 }

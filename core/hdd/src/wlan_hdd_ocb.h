@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -288,5 +288,8 @@ int wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 				     int data_len);
 
 void wlan_hdd_dcc_register_for_dcc_stats_event(hdd_context_t *hdd_ctx);
+
+void wlan_hdd_dcc_stats_event(void *context_ptr, void *response_ptr);
+
 
 #endif /* __WLAN_HDD_OCB_H */
