@@ -205,7 +205,7 @@ static uint8_t wma_get_mcs_idx(uint16_t maxRate, uint8_t rate_flags,
 			       uint8_t nss, uint8_t *mcsRateFlag)
 {
 	uint8_t  index = 0;
-	uint16_t match_rate;
+	uint16_t match_rate = 0;
 	bool is_sgi = false;
 
 	WMA_LOGD("%s rate:%d rate_flgs: 0x%x, nss: %d",
