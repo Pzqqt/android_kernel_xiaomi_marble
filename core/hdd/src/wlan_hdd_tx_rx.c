@@ -298,6 +298,55 @@ static bool wlan_hdd_is_eapol_or_wai(struct sk_buff *skb)
 }
 
 /**
+ * hdd_get_transmit_sta_id() - function to retrieve station id to be used for
+ * sending traffic towards a particular destination address. The destination
+ * address can be unicast, multicast or broadcast
+ *
+ * @adapter: Handle to adapter context
+ * @dst_addr: Destination address
+ * @station_id: station id
+ *
+ * Returns: None
+ */
+static void hdd_get_transmit_sta_id(hdd_adapter_t *adapter,
+			struct qdf_mac_addr *dst_addr, uint8_t *station_id)
+{
+	bool mcbc_addr = false;
+	hdd_station_ctx_t *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+	hdd_get_peer_sta_id(sta_ctx, dst_addr, station_id);
+	if (*station_id == HDD_WLAN_INVALID_STA_ID) {
+		if (qdf_is_macaddr_broadcast(dst_addr) ||
+				qdf_is_macaddr_group(dst_addr)) {
+			hdd_info("Received MC/BC packet for transmission");
+			mcbc_addr = true;
+		} else {
+			hdd_err("UC frame with invalid destination address");
+		}
+	}
+
+	if (adapter->device_mode == QDF_IBSS_MODE) {
+		/*
+		 * This check is necessary to make sure station id is not
+		 * overwritten for UC traffic in IBSS mode
+		 */
+		if (mcbc_addr)
+			*station_id = sta_ctx->broadcast_ibss_staid;
+	} else if (adapter->device_mode == QDF_NDI_MODE) {
+		/*
+		 * This check is necessary to make sure station id is not
+		 * overwritten for UC traffic in NAN data mode
+		 */
+		if (mcbc_addr)
+			*station_id = NDP_BROADCAST_STAID;
+	} else {
+		/* For the rest, traffic is directed to AP/P2P GO */
+		if (eConnectionState_Associated == sta_ctx->conn_info.connState)
+			*station_id = sta_ctx->conn_info.staId[0];
+	}
+}
+
+/**
  * hdd_hard_start_xmit() - Transmit a frame
  * @skb: pointer to OS packet (sk_buff)
  * @dev: pointer to network device
@@ -317,6 +366,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	bool granted;
 	uint8_t STAId = WLAN_MAX_STA_COUNT;
 	hdd_station_ctx_t *pHddStaCtx = &pAdapter->sessionCtx.station;
+	struct qdf_mac_addr *pDestMacAddress = NULL;
 #ifdef QCA_PKT_PROTO_TRACE
 	uint8_t proto_type = 0;
 #endif /* QCA_PKT_PROTO_TRACE */
@@ -336,54 +386,14 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		goto drop_pkt;
 	}
 
-	if (QDF_IBSS_MODE == pAdapter->device_mode) {
-		struct qdf_mac_addr *pDestMacAddress =
-					(struct qdf_mac_addr *) skb->data;
+	pDestMacAddress = (struct qdf_mac_addr *)skb->data;
+	STAId = HDD_WLAN_INVALID_STA_ID;
 
-		if (QDF_STATUS_SUCCESS !=
-			hdd_get_peer_sta_id(&pAdapter->sessionCtx.station,
-				pDestMacAddress, &STAId))
-			STAId = HDD_WLAN_INVALID_STA_ID;
-
-		if ((STAId == HDD_WLAN_INVALID_STA_ID) &&
-		    (qdf_is_macaddr_broadcast(pDestMacAddress) ||
-		     qdf_is_macaddr_group(pDestMacAddress))) {
-			STAId = pHddStaCtx->broadcast_ibss_staid;
-			QDF_TRACE(QDF_MODULE_ID_HDD_DATA,
-				  QDF_TRACE_LEVEL_INFO_LOW, "%s: BC/MC packet",
-				  __func__);
-		} else if (STAId == HDD_WLAN_INVALID_STA_ID) {
-			QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_WARN,
-				  "%s: Received Unicast frame with invalid staID",
-				  __func__);
-			goto drop_pkt;
-		}
-	} else if (QDF_NDI_MODE == pAdapter->device_mode) {
-		struct qdf_mac_addr *dest_mac_addr =
-			(struct qdf_mac_addr *)skb->data;
-		if (hdd_get_peer_sta_id(&pAdapter->sessionCtx.station,
-				dest_mac_addr, &STAId) !=
-				QDF_STATUS_SUCCESS) {
-			QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_WARN,
-				FL("Can't find peer: %pM, dropping packet"),
-				dest_mac_addr);
-			++pAdapter->stats.tx_dropped;
-			++pAdapter->hdd_stats.hddTxRxStats.txXmitDropped;
-			kfree_skb(skb);
-			return NETDEV_TX_OK;
-		}
-	} else {
-		if (QDF_OCB_MODE != pAdapter->device_mode &&
-			eConnectionState_Associated !=
-				pHddStaCtx->conn_info.connState) {
-			QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO,
-				FL("Tx frame in not associated state in %d context"),
-				pAdapter->device_mode);
-			goto drop_pkt;
-		}
-		STAId = pHddStaCtx->conn_info.staId[0];
+	hdd_get_transmit_sta_id(pAdapter, pDestMacAddress, &STAId);
+	if (STAId == HDD_WLAN_INVALID_STA_ID) {
+		hddLog(LOGE, "Invalid station id, transmit operation suspended");
+		goto drop_pkt;
 	}
-
 
 	hdd_get_tx_resource(pAdapter, STAId,
 				WLAN_HDD_TX_FLOW_CONTROL_OS_Q_BLOCK_TIME);
@@ -398,7 +408,8 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 			goto drop_pkt_accounting;
 	}
 
-	/* user priority from IP header, which is already extracted and set from
+	/*
+	 * user priority from IP header, which is already extracted and set from
 	 * select_queue call back function
 	 */
 	up = skb->priority;
@@ -410,7 +421,8 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 #endif /* HDD_WMM_DEBUG */
 
 	if (HDD_PSB_CHANGED == pAdapter->psbChanged) {
-		/* Function which will determine acquire admittance for a
+		/*
+		 * Function which will determine acquire admittance for a
 		 * WMM AC is required or not based on psb configuration done
 		 * in the framework
 		 */
@@ -435,7 +447,8 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	if (!granted) {
 		bool isDefaultAc = false;
-		/* ADDTS request for this AC is sent, for now
+		/*
+		 * ADDTS request for this AC is sent, for now
 		 * send this packet through next avaiable lower
 		 * Access category until ADDTS negotiation completes.
 		 */
@@ -518,8 +531,8 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	}
 
 	/*
-	* If a transmit function is not registered, drop packet
-	*/
+	 * If a transmit function is not registered, drop packet
+	 */
 	if (!pAdapter->tx_fn) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
 			 "%s: TX function not registered by the data path",

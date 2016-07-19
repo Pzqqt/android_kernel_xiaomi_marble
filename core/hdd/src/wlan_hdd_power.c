@@ -924,11 +924,12 @@ void wlan_hdd_set_mc_addr_list(hdd_adapter_t *pAdapter, uint8_t set)
 	tpSirRcvFltMcAddrList pMulticastAddrs = NULL;
 	tHalHandle hHal = NULL;
 	hdd_context_t *pHddCtx = (hdd_context_t *) pAdapter->pHddCtx;
+	hdd_station_ctx_t *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
-	if (NULL == pHddCtx) {
-		hdd_err("HDD CTX is NULL");
+	ENTER();
+
+	if (wlan_hdd_validate_context(pHddCtx))
 		return;
-	}
 
 	hHal = pHddCtx->hHal;
 
@@ -937,8 +938,12 @@ void wlan_hdd_set_mc_addr_list(hdd_adapter_t *pAdapter, uint8_t set)
 		return;
 	}
 
-	/* Check if INI is enabled or not, other wise just return
-	 */
+	if (!sta_ctx) {
+		hdd_err("sta_ctx is NULL");
+		return;
+	}
+
+	/* Check if INI is enabled or not, other wise just return */
 	if (!pHddCtx->config->fEnableMCAddrList) {
 		hdd_notice("gMCAddrListEnable is not enabled in INI");
 		return;
@@ -952,23 +957,24 @@ void wlan_hdd_set_mc_addr_list(hdd_adapter_t *pAdapter, uint8_t set)
 	pMulticastAddrs->action = set;
 
 	if (set) {
-		/* Following pre-conditions should be satisfied before we
+		/*
+		 * Following pre-conditions should be satisfied before we
 		 * configure the MC address list.
 		 */
-		if (((pAdapter->device_mode == QDF_STA_MODE)
-		     || (pAdapter->device_mode == QDF_P2P_CLIENT_MODE))
-		    && pAdapter->mc_addr_list.mc_cnt
-		    && (eConnectionState_Associated ==
-			(WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->
-			conn_info.connState)) {
+		if (pAdapter->mc_addr_list.mc_cnt &&
+				(((pAdapter->device_mode == QDF_STA_MODE ||
+				pAdapter->device_mode == QDF_P2P_CLIENT_MODE) &&
+				hdd_conn_is_connected(sta_ctx)) ||
+				(WLAN_HDD_IS_NDI(pAdapter) &&
+				WLAN_HDD_IS_NDI_CONNECTED(pAdapter)))) {
+
 			pMulticastAddrs->ulMulticastAddrCnt =
 				pAdapter->mc_addr_list.mc_cnt;
-			for (i = 0; i < pAdapter->mc_addr_list.mc_cnt;
-			     i++) {
+
+			for (i = 0; i < pAdapter->mc_addr_list.mc_cnt; i++) {
 				memcpy(pMulticastAddrs->multicastAddr[i].bytes,
 				       pAdapter->mc_addr_list.addr[i],
-				       sizeof(pAdapter->mc_addr_list.
-					      addr[i]));
+				       sizeof(pAdapter->mc_addr_list.addr[i]));
 				hdd_info("%s multicast filter: addr ="
 				       MAC_ADDRESS_STR,
 				       set ? "setting" : "clearing",
@@ -984,12 +990,10 @@ void wlan_hdd_set_mc_addr_list(hdd_adapter_t *pAdapter, uint8_t set)
 		if (pAdapter->mc_addr_list.isFilterApplied) {
 			pMulticastAddrs->ulMulticastAddrCnt =
 				pAdapter->mc_addr_list.mc_cnt;
-			for (i = 0; i < pAdapter->mc_addr_list.mc_cnt;
-			     i++) {
+			for (i = 0; i < pAdapter->mc_addr_list.mc_cnt; i++) {
 				memcpy(pMulticastAddrs->multicastAddr[i].bytes,
 				       pAdapter->mc_addr_list.addr[i],
-				       sizeof(pAdapter->mc_addr_list.
-					      addr[i]));
+				       sizeof(pAdapter->mc_addr_list.addr[i]));
 			}
 			sme_8023_multicast_list(hHal, pAdapter->sessionId,
 						pMulticastAddrs);
@@ -1003,6 +1007,8 @@ void wlan_hdd_set_mc_addr_list(hdd_adapter_t *pAdapter, uint8_t set)
 
 	pAdapter->mc_addr_list.isFilterApplied = set ? true : false;
 	qdf_mem_free(pMulticastAddrs);
+
+	EXIT();
 	return;
 }
 #endif
