@@ -3117,7 +3117,7 @@ enum dot11p_mode {
 #define CFG_ROAM_DENSE_TRAFFIC_THRESHOLD         "gtraffic_threshold"
 #define CFG_ROAM_DENSE_TRAFFIC_THRESHOLD_MIN     (0)
 #define CFG_ROAM_DENSE_TRAFFIC_THRESHOLD_MAX     (100)
-#define CFG_ROAM_DENSE_TRAFFIC_THRESHOLD_DEFAULT (0)
+#define CFG_ROAM_DENSE_TRAFFIC_THRESHOLD_DEFAULT (55)
 
 /*
  * Dense Roam RSSI Threshold diff
@@ -3128,7 +3128,7 @@ enum dot11p_mode {
 #define CFG_ROAM_DENSE_RSSI_THRE_OFFSET         "groam_dense_rssi_thresh_offset"
 #define CFG_ROAM_DENSE_RSSI_THRE_OFFSET_MIN     (0)
 #define CFG_ROAM_DENSE_RSSI_THRE_OFFSET_MAX     (20)
-#define CFG_ROAM_DENSE_RSSI_THRE_OFFSET_DEFAULT (0)
+#define CFG_ROAM_DENSE_RSSI_THRE_OFFSET_DEFAULT (10)
 
 /*
  * Enabling gignore_peer_ht_opmode will enable 11g
@@ -3168,7 +3168,7 @@ enum dot11p_mode {
 #define CFG_ROAM_DENSE_MIN_APS         "groam_dense_min_aps"
 #define CFG_ROAM_DENSE_MIN_APS_MIN     (1)
 #define CFG_ROAM_DENSE_MIN_APS_MAX     (5)
-#define CFG_ROAM_DENSE_MIN_APS_DEFAULT (1)
+#define CFG_ROAM_DENSE_MIN_APS_DEFAULT (3)
 
 /*
  * Enable/Disable to initiate BUG report in case of fatal event
