@@ -678,7 +678,7 @@ typedef struct {
 typedef struct {
 	struct qdf_mac_addr selfMacAddr;
 	QDF_STATUS status;
-	uint8_t data_len;
+	uint32_t data_len;
 	uint8_t *data;
 } tStartOemDataReq, *tpStartOemDataReq;
 
