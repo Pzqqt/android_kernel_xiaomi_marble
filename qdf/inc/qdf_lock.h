@@ -260,8 +260,9 @@ QDF_STATUS qdf_wake_lock_create(qdf_wake_lock_t *lock, const char *name);
 
 QDF_STATUS qdf_wake_lock_acquire(qdf_wake_lock_t *lock, uint32_t reason);
 
+const char *qdf_wake_lock_name(qdf_wake_lock_t *lock);
 QDF_STATUS qdf_wake_lock_timeout_acquire(qdf_wake_lock_t *lock,
-					 uint32_t msec, uint32_t reason);
+					 uint32_t msec);
 
 QDF_STATUS qdf_wake_lock_release(qdf_wake_lock_t *lock, uint32_t reason);
 

@@ -33,7 +33,6 @@
 
 /* Include Files */
 #include <qdf_trace.h>
-#include <ani_global.h>
 #include <wlan_logging_sock_svc.h>
 #include "qdf_time.h"
 /* Preprocessor definitions and constants */
@@ -1306,10 +1305,11 @@ void qdf_dp_display_proto_pkt(struct qdf_dp_trace_record_s *record,
 	qdf_print("DPT: %04d: %012llu: %s vdev_id %d", index,
 		record->time, qdf_dp_code_to_string(record->code),
 		buf->vdev_id);
-	qdf_print("DPT: SA: " MAC_ADDRESS_STR " %s DA: "
-		  MAC_ADDRESS_STR " Type %s Subtype %s",
-		MAC_ADDR_ARRAY(buf->sa.bytes), qdf_dp_dir_to_str(buf->dir),
-		MAC_ADDR_ARRAY(buf->da.bytes), qdf_dp_type_to_str(buf->type),
+	qdf_print("DPT: SA: " QDF_MAC_ADDRESS_STR " %s DA: "
+		  QDF_MAC_ADDRESS_STR " Type %s Subtype %s",
+		QDF_MAC_ADDR_ARRAY(buf->sa.bytes), qdf_dp_dir_to_str(buf->dir),
+		QDF_MAC_ADDR_ARRAY(buf->da.bytes),
+		qdf_dp_type_to_str(buf->type),
 		qdf_dp_subtype_to_str(buf->subtype));
 }
 EXPORT_SYMBOL(qdf_dp_display_proto_pkt);

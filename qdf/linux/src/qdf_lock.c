@@ -32,8 +32,8 @@
 #include <qdf_types.h>
 #ifdef CONFIG_MCL
 #include <i_host_diag_core_event.h>
-#include <ani_global.h>
 #include <hif.h>
+#include <cds_api.h>
 #endif
 #include <i_qdf_lock.h>
 
@@ -244,7 +244,7 @@ EXPORT_SYMBOL(qdf_mutex_release);
  *
  * Return: Pointer to the name if it is valid or a default string
  */
-static const char *qdf_wake_lock_name(qdf_wake_lock_t *lock)
+const char *qdf_wake_lock_name(qdf_wake_lock_t *lock)
 {
 	if (lock->name)
 		return lock->name;
@@ -298,20 +298,11 @@ EXPORT_SYMBOL(qdf_wake_lock_acquire);
  * QDF status success: if wake lock is acquired
  * QDF status failure: if wake lock was not acquired
  */
-QDF_STATUS qdf_wake_lock_timeout_acquire(qdf_wake_lock_t *lock, uint32_t msec,
-					 uint32_t reason)
+QDF_STATUS qdf_wake_lock_timeout_acquire(qdf_wake_lock_t *lock, uint32_t msec)
 {
 	/* Wakelock for Rx is frequent.
 	 * It is reported only during active debug
 	 */
-#ifdef CONFIG_MCL
-	if (((cds_get_ring_log_level(RING_ID_WAKELOCK) >= WLAN_LOG_LEVEL_ACTIVE)
-			&& (WIFI_POWER_EVENT_WAKELOCK_HOLD_RX == reason)) ||
-			(WIFI_POWER_EVENT_WAKELOCK_HOLD_RX != reason)) {
-		host_diag_log_wlock(reason, qdf_wake_lock_name(lock), msec,
-				WIFI_POWER_EVENT_WAKELOCK_TAKEN);
-	}
-#endif
 	__pm_wakeup_event(lock, msec);
 	return QDF_STATUS_SUCCESS;
 }

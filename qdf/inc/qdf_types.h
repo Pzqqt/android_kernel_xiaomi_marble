@@ -387,6 +387,9 @@ typedef enum {
 typedef void *v_CONTEXT_t;
 
 #define QDF_MAC_ADDR_SIZE (6)
+#define QDF_MAC_ADDRESS_STR "%02x:%02x:%02x:%02x:%02x:%02x"
+#define QDF_MAC_ADDR_ARRAY(a) \
+	(a)[0], (a)[1], (a)[2], (a)[3], (a)[4], (a)[5]
 
 /**
  * struct qdf_mac_addr - mac address array
