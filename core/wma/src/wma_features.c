@@ -2778,7 +2778,7 @@ static void wma_wow_parse_data_pkt_buffer(uint8_t *data,
 	uint16_t pkt_len, key_len, seq_num;
 	uint32_t transaction_id, tcp_seq_num;
 
-	WMA_LOGD("wow_buf_pkt_len: %d", buf_len);
+	WMA_LOGD("wow_buf_pkt_len: %u", buf_len);
 	if (buf_len >= QDF_NBUF_TRAC_ETH_TYPE_OFFSET)
 		WMA_LOGE("Src_mac: " MAC_ADDRESS_STR " Dst_mac: " MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(data),
@@ -2799,7 +2799,7 @@ static void wma_wow_parse_data_pkt_buffer(uint8_t *data,
 				EAPOL_PKT_LEN_OFFSET));
 			key_len = (uint16_t)(*(uint16_t *)(data +
 				EAPOL_KEY_LEN_OFFSET));
-			WMA_LOGE("Pkt_len: %d, Key_len: %d",
+			WMA_LOGE("Pkt_len: %u, Key_len: %u",
 				ani_cpu_to_be16(pkt_len),
 				ani_cpu_to_be16(key_len));
 		}
@@ -2820,7 +2820,7 @@ static void wma_wow_parse_data_pkt_buffer(uint8_t *data,
 				DHCP_PKT_LEN_OFFSET));
 			transaction_id = (uint32_t)(*(uint32_t *)(data +
 				DHCP_TRANSACTION_ID_OFFSET));
-			WMA_LOGE("Pkt_len: %d, Transaction_id: %d",
+			WMA_LOGE("Pkt_len: %u, Transaction_id: %u",
 				ani_cpu_to_be16(pkt_len),
 				ani_cpu_to_be16(transaction_id));
 		}
@@ -2841,7 +2841,7 @@ static void wma_wow_parse_data_pkt_buffer(uint8_t *data,
 				IPV4_PKT_LEN_OFFSET));
 			seq_num = (uint16_t)(*(uint16_t *)(data +
 				ICMP_SEQ_NUM_OFFSET));
-			WMA_LOGE("Pkt_len: %d, Seq_num: %d",
+			WMA_LOGE("Pkt_len: %u, Seq_num: %u",
 				ani_cpu_to_be16(pkt_len),
 				ani_cpu_to_be16(seq_num));
 		}
@@ -2856,7 +2856,7 @@ static void wma_wow_parse_data_pkt_buffer(uint8_t *data,
 				IPV6_PKT_LEN_OFFSET));
 			seq_num = (uint16_t)(*(uint16_t *)(data +
 				ICMPV6_SEQ_NUM_OFFSET));
-			WMA_LOGE("Pkt_len: %d, Seq_num: %d",
+			WMA_LOGE("Pkt_len: %u, Seq_num: %u",
 				ani_cpu_to_be16(pkt_len),
 				ani_cpu_to_be16(seq_num));
 		}
@@ -2869,12 +2869,12 @@ static void wma_wow_parse_data_pkt_buffer(uint8_t *data,
 		if (buf_len >= WMA_IPV4_PKT_INFO_GET_MIN_LEN) {
 			pkt_len = (uint16_t)(*(uint16_t *)(data +
 				IPV4_PKT_LEN_OFFSET));
-			WMA_LOGE("Pkt_len: %d",
+			WMA_LOGE("Pkt_len: %u",
 				ani_cpu_to_be16(pkt_len));
 			if (proto_subtype == QDF_PROTO_IPV4_TCP) {
 				tcp_seq_num = (uint32_t)(*(uint32_t *)(data +
 					IPV4_TCP_SEQ_NUM_OFFSET));
-				WMA_LOGE("TCP_seq_num: %d",
+				WMA_LOGE("TCP_seq_num: %u",
 					ani_cpu_to_be16(tcp_seq_num));
 			}
 		}
@@ -2887,12 +2887,12 @@ static void wma_wow_parse_data_pkt_buffer(uint8_t *data,
 		if (buf_len >= WMA_IPV6_PKT_INFO_GET_MIN_LEN) {
 			pkt_len = (uint16_t)(*(uint16_t *)(data +
 				IPV6_PKT_LEN_OFFSET));
-			WMA_LOGE("Pkt_len: %d",
+			WMA_LOGE("Pkt_len: %u",
 				ani_cpu_to_be16(pkt_len));
 			if (proto_subtype == QDF_PROTO_IPV6_TCP) {
 				tcp_seq_num = (uint32_t)(*(uint32_t *)(data +
 					IPV6_TCP_SEQ_NUM_OFFSET));
-				WMA_LOGE("TCP_seq_num: %d",
+				WMA_LOGE("TCP_seq_num: %u",
 					ani_cpu_to_be16(tcp_seq_num));
 			}
 		}
@@ -2900,7 +2900,7 @@ static void wma_wow_parse_data_pkt_buffer(uint8_t *data,
 
 	default:
 end:
-		WMA_LOGE("wow_buf_pkt_len: %d", buf_len);
+		WMA_LOGE("wow_buf_pkt_len: %u", buf_len);
 		WMA_LOGE("Invalid Packet Type or Smaller WOW packet buffer than expected");
 		break;
 	}
@@ -2923,7 +2923,7 @@ static void wma_wow_dump_mgmt_buffer(uint8_t *wow_packet_buffer,
 {
 	struct ieee80211_frame_addr4 *wh;
 
-	WMA_LOGD("wow_buf_pkt_len: %d", buf_len);
+	WMA_LOGD("wow_buf_pkt_len: %u", buf_len);
 	wh = (struct ieee80211_frame_addr4 *)
 		(wow_packet_buffer + 4);
 	if (buf_len >= sizeof(struct ieee80211_frame)) {
@@ -2934,7 +2934,7 @@ static void wma_wow_dump_mgmt_buffer(uint8_t *wow_packet_buffer,
 			MAC_ADDR_ARRAY(wh->i_addr1),
 			MAC_ADDR_ARRAY(wh->i_addr2));
 
-		WMA_LOGE("TO_DS: %d, FROM_DS: %d",
+		WMA_LOGE("TO_DS: %u, FROM_DS: %u",
 			wh->i_fc[1] & IEEE80211_FC1_DIR_TODS,
 			wh->i_fc[1] & IEEE80211_FC1_DIR_FROMDS);
 
@@ -2969,7 +2969,7 @@ static void wma_wow_dump_mgmt_buffer(uint8_t *wow_packet_buffer,
 				IEEE80211_SEQ_FRAG_MASK) >>
 				IEEE80211_SEQ_FRAG_SHIFT);
 
-		WMA_LOGE("SEQ_NUM: %d, FRAG_NUM: %d",
+		WMA_LOGE("SEQ_NUM: %u, FRAG_NUM: %u",
 				seq_num, frag_num);
 	} else {
 		WMA_LOGE("Insufficient buffer length for mgmt. packet");
