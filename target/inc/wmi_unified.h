@@ -3756,6 +3756,27 @@ typedef enum {
 	 * Units are microseconds.
 	 */
 	WMI_PDEV_PARAM_PROPAGATION_DELAY,
+	/**
+	 * Host can enable/disable ANT DIV feature
+	 * if it's been enabled in BDF
+	 */
+	WMI_PDEV_PARAM_ENA_ANT_DIV,
+	/** Host can force one chain to select a specific ANT */
+	WMI_PDEV_PARAM_FORCE_CHAIN_ANT,
+	/**
+	 * Start a cycle ANT self test periodically.
+	 * In the test, the FW would select each ANT pair
+	 * one by one, the cycle time could be configured
+	 * via WMI_PDEV_PARAM_ANT_DIV_SELFTEST_INTVL
+	 */
+	WMI_PDEV_PARAM_ANT_DIV_SELFTEST,
+	/**
+	 * Configure the cycle time of ANT self test,
+	 * the unit is micro second. Per the timer
+	 * limitation, too small value could be not so
+	 * accurate.
+	 */
+	WMI_PDEV_PARAM_ANT_DIV_SELFTEST_INTVL,
 
 } WMI_PDEV_PARAM;
 
