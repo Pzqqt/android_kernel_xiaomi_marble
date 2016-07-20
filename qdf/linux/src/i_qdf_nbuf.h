@@ -66,6 +66,9 @@ typedef struct sk_buff *__qdf_nbuf_t;
 #define QDF_NBUF_CB_PACKET_TYPE_WAPI   3
 #define QDF_NBUF_CB_PACKET_TYPE_DHCP   4
 
+/* mark the first packet after wow wakeup */
+#define QDF_MARK_FIRST_WAKEUP_PACKET   0x80000000
+
 /*
  * Make sure that qdf_dma_addr_t in the cb block is always 64 bit aligned
  */
@@ -1655,5 +1658,16 @@ static inline void __qdf_invalidate_range(void *start, void *end)
 }
 #endif
 
+/**
+ * __qdf_nbuf_mark_wakeup_frame() - mark wakeup frame.
+ * @buf: Pointer to nbuf
+ *
+ * Return: None
+ */
+static inline void
+__qdf_nbuf_mark_wakeup_frame(__qdf_nbuf_t buf)
+{
+	buf->mark |= QDF_MARK_FIRST_WAKEUP_PACKET;
+}
 
 #endif /*_I_QDF_NET_BUF_H */

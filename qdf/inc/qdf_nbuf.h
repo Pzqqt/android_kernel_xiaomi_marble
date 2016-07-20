@@ -2057,4 +2057,17 @@ qdf_nbuf_get_priv_ptr(qdf_nbuf_t buf)
  */
 unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 				      qdf_nbuf_t nbuf, uint32_t headroom_sz);
+
+/**
+ * qdf_nbuf_mark_wakeup_frame() - mark wakeup frame.
+ * @buf: Pointer to nbuf
+ *
+ * Return: None
+ */
+static inline void
+qdf_nbuf_mark_wakeup_frame(qdf_nbuf_t buf)
+{
+	 __qdf_nbuf_mark_wakeup_frame(buf);
+}
+
 #endif /* _QDF_NBUF_H */
