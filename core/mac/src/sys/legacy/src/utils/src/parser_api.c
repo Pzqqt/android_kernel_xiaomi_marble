@@ -767,7 +767,7 @@ populate_dot11f_ht_caps(tpAniSirGlobal pMac,
 				}
 			}
 		}
-		if (psessionEntry->vdev_nss == NSS_1x1_MODE)
+		if (psessionEntry->nss == NSS_1x1_MODE)
 			pDot11f->supportedMCSSet[1] = 0;
 	}
 
@@ -1116,7 +1116,7 @@ populate_dot11f_vht_caps(tpAniSirGlobal pMac,
 				pDot11f->rxMCSMap |= DISABLE_NSS2_MCS;
 			}
 		}
-		if (psessionEntry->vdev_nss == NSS_1x1_MODE) {
+		if (psessionEntry->nss == NSS_1x1_MODE) {
 			pDot11f->txMCSMap |= DISABLE_NSS2_MCS;
 			pDot11f->rxMCSMap |= DISABLE_NSS2_MCS;
 			pDot11f->txSupDataRate =

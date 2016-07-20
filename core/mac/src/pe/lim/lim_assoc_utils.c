@@ -1419,7 +1419,7 @@ tSirRetStatus lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
 		QDF_MIN(rates->vhtRxHighestDataRate,
 			peer_vht_caps->rxHighSupDataRate);
 
-	if (session_entry && session_entry->vdev_nss == NSS_2x2_MODE) {
+	if (session_entry && session_entry->nss == NSS_2x2_MODE) {
 		if (mac_ctx->lteCoexAntShare &&
 			IS_24G_CH(session_entry->currentOperChannel)) {
 			if (IS_2X2_CHAIN(session_entry->chainMask))
@@ -1637,7 +1637,7 @@ lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
 			return eSIR_FAILURE;
 		}
 
-		if (session_entry->vdev_nss == NSS_1x1_MODE)
+		if (session_entry->nss == NSS_1x1_MODE)
 			rates->supportedMCSSet[1] = 0;
 		/*
 		 * if supported MCS Set of the peer is passed in,
@@ -1657,7 +1657,7 @@ lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
 				       rates->supportedMCSSet[i]);)
 	}
 	lim_populate_vht_mcs_set(mac_ctx, rates, vht_caps,
-			session_entry, session_entry->vdev_nss);
+			session_entry, session_entry->nss);
 
 	return eSIR_SUCCESS;
 }
@@ -1779,7 +1779,7 @@ lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 			       )
 			return eSIR_FAILURE;
 		}
-		if (psessionEntry->vdev_nss == NSS_1x1_MODE)
+		if (psessionEntry->nss == NSS_1x1_MODE)
 			pRates->supportedMCSSet[1] = 0;
 
 		/* if supported MCS Set of the peer is passed in, then do the
@@ -1803,7 +1803,7 @@ lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 			psessionEntry->supported_nss_1x1);
 	}
 	lim_populate_vht_mcs_set(pMac, pRates, pVHTCaps,
-			psessionEntry, psessionEntry->vdev_nss);
+			psessionEntry, psessionEntry->nss);
 	return eSIR_SUCCESS;
 } /*** lim_populate_peer_rate_set() ***/
 
@@ -2009,7 +2009,7 @@ tSirRetStatus lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx,
 			return eSIR_FAILURE;
 		}
 
-		if (session_entry->vdev_nss == NSS_1x1_MODE)
+		if (session_entry->nss == NSS_1x1_MODE)
 			mcs_set[1] = 0;
 
 		for (i = 0; i < val; i++)
@@ -2025,7 +2025,7 @@ tSirRetStatus lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx,
 		}
 	}
 	lim_populate_vht_mcs_set(mac_ctx, &sta_ds->supportedRates, vht_caps,
-				 session_entry, session_entry->vdev_nss);
+				 session_entry, session_entry->nss);
 	/*
 	 * Set the erpEnabled bit if the phy is in G mode and at least
 	 * one A rate is supported
