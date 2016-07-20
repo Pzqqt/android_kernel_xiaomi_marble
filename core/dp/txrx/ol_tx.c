@@ -1215,8 +1215,10 @@ struct ol_tx_desc_t *ol_tx_hl_desc_alloc(struct ol_txrx_pdev_t *pdev,
 			TXRX_HL_TX_DESC_HI_PRIO_RESERVED) {
 		tx_desc = ol_tx_desc_hl(pdev, vdev, msdu, msdu_info);
 	} else if (qdf_nbuf_is_ipv4_pkt(msdu) == true) {
-		if ((qdf_nbuf_is_ipv4_dhcp_pkt(msdu) == true) ||
-		    (qdf_nbuf_is_ipv4_eapol_pkt(msdu) == true)) {
+		if ((QDF_NBUF_CB_GET_PACKET_TYPE(msdu) ==
+				QDF_NBUF_CB_PACKET_TYPE_DHCP) ||
+		    (QDF_NBUF_CB_GET_PACKET_TYPE(msdu) ==
+			QDF_NBUF_CB_PACKET_TYPE_EAPOL)) {
 			tx_desc = ol_tx_desc_hl(pdev, vdev, msdu, msdu_info);
 			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 				   "Provided tx descriptor from reserve pool for DHCP/EAPOL\n");

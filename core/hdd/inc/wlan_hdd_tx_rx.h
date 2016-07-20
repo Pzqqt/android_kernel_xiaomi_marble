@@ -114,4 +114,14 @@ void wlan_hdd_netif_queue_control(hdd_adapter_t *adapter,
 		enum netif_action_type action, enum netif_reason_type reason);
 int hdd_set_mon_rx_cb(struct net_device *dev);
 void hdd_send_rps_ind(hdd_adapter_t *adapter);
+void wlan_hdd_classify_pkt(struct sk_buff *skb);
+
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+void hdd_event_eapol_log(struct sk_buff *skb, enum qdf_proto_dir dir);
+#else
+static inline
+void hdd_event_eapol_log(struct sk_buff *skb, enum qdf_proto_dir dir)
+{}
+#endif
+
 #endif /* end #if !defined(WLAN_HDD_TX_RX_H) */

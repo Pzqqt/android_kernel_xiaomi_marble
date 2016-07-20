@@ -251,10 +251,12 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		goto drop_pkt;
 	}
 
+	wlan_hdd_classify_pkt(skb);
+
 	pDestMacAddress = (struct qdf_mac_addr *) skb->data;
 
-	if (qdf_is_macaddr_broadcast(pDestMacAddress) ||
-	    qdf_is_macaddr_group(pDestMacAddress)) {
+	if (QDF_NBUF_CB_GET_IS_BCAST(skb) ||
+	    QDF_NBUF_CB_GET_IS_MCAST(skb)) {
 		/* The BC/MC station ID is assigned during BSS
 		 * starting phase.  SAP will return the station ID
 		 * used for BC/MC traffic.
@@ -324,8 +326,7 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	pAdapter->stats.tx_bytes += skb->len;
 	++pAdapter->stats.tx_packets;
 
-	/* Zero out skb's context buffer for the driver to use */
-	qdf_mem_set(skb->cb, sizeof(skb->cb), 0);
+	hdd_event_eapol_log(skb, QDF_TX);
 	qdf_dp_trace_log_pkt(pAdapter->sessionId, skb, QDF_TX);
 	QDF_NBUF_CB_TX_PACKET_TRACK(skb) = QDF_NBUF_TX_PKT_DATA_TRACK;
 	QDF_NBUF_UPDATE_TX_PKT_COUNT(skb, QDF_NBUF_TX_PKT_HDD);
@@ -593,6 +594,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 	++pAdapter->stats.rx_packets;
 	pAdapter->stats.rx_bytes += skb->len;
 
+	hdd_event_eapol_log(skb, QDF_RX);
 	DPTRACE(qdf_dp_trace(rxBuf,
 		QDF_DP_TRACE_RX_HDD_PACKET_PTR_RECORD,
 		qdf_nbuf_data_addr(rxBuf),
