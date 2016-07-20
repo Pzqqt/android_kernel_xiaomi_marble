@@ -668,4 +668,6 @@ static inline int ol_tx_delete_flow_pool(struct ol_tx_flow_pool_t *pool,
 }
 #endif
 
+void ol_tx_mark_first_wakeup_packet(uint8_t value);
+
 #endif /* _OL_TXRX_CTRL_API__H_ */

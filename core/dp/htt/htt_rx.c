@@ -1448,6 +1448,16 @@ htt_rx_offload_paddr_msdu_pop_ll(htt_pdev_handle pdev,
 #else
 	qdf_nbuf_unmap(pdev->osdev, buf, QDF_DMA_FROM_DEVICE);
 #endif
+
+	if (pdev->cfg.is_first_wakeup_packet) {
+		if (HTT_RX_IN_ORD_PADDR_IND_MSDU_INFO_GET(*(curr_msdu + 1)) &
+			   FW_MSDU_INFO_FIRST_WAKEUP_M) {
+			qdf_nbuf_mark_wakeup_frame(buf);
+			qdf_print("%s: First packet after WOW Wakeup rcvd\n",
+				__func__);
+		}
+	}
+
 	msdu_hdr = (uint32_t *) qdf_nbuf_data(buf);
 
 	/* First dword */
@@ -2040,13 +2050,6 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 		*((uint8_t *) &rx_desc->fw_desc.u.val) =
 			HTT_RX_IN_ORD_PADDR_IND_FW_DESC_GET(*(msg_word + NEXT_FIELD_OFFSET_IN32));
 #undef NEXT_FIELD_OFFSET_IN32
-
-		if (HTT_RX_IN_ORD_PADDR_IND_MSDU_INFO_GET(*(msg_word + 1)) &
-			   FW_MSDU_INFO_FIRST_WAKEUP_M) {
-			qdf_print("%s: first packet after WOW wakeup\n",
-				__func__);
-			qdf_nbuf_mark_wakeup_frame(msdu);
-		}
 
 		msdu_count--;
 

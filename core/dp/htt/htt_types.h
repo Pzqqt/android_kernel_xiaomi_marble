@@ -252,6 +252,7 @@ struct htt_pdev_t {
 		int is_full_reorder_offload;
 		int default_tx_comp_req;
 		int ce_classify_enabled;
+		uint8_t is_first_wakeup_packet;
 	} cfg;
 	struct {
 		uint8_t major;
