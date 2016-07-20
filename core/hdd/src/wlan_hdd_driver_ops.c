@@ -363,6 +363,10 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 		goto err_epping_close;
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+
+	if (NULL == hif_ctx)
+		goto err_epping_close;
+
 	qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
 	status = ol_cds_init(qdf_dev, hif_ctx);
@@ -445,6 +449,9 @@ static void wlan_hdd_remove(struct device *dev)
 	hdd_pld_driver_unloading(dev);
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+
+	if (NULL == hif_ctx)
+		return;
 
 	hif_disable_power_management(hif_ctx);
 
@@ -543,7 +550,7 @@ void wlan_hdd_notify_handler(int state)
 static int __wlan_hdd_bus_suspend(pm_message_t state)
 {
 	void *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	void *hif_ctx;
 	int err = wlan_hdd_validate_context(hdd_ctx);
 	int status;
 
@@ -552,6 +559,11 @@ static int __wlan_hdd_bus_suspend(pm_message_t state)
 	if (err)
 		goto done;
 
+	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	if (NULL == hif_ctx) {
+		err = -EINVAL;
+		goto done;
+	}
 	err = qdf_status_to_os_return(
 			ol_txrx_bus_suspend());
 	if (err)
@@ -616,11 +628,15 @@ int wlan_hdd_bus_suspend(pm_message_t state)
 static int __wlan_hdd_bus_resume(void)
 {
 	void *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	void *hif_ctx;
 	int status = wlan_hdd_validate_context(hdd_ctx);
 
 	if (status)
 		return status;
+
+	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	if (NULL == hif_ctx)
+		return -EINVAL;
 
 	status = hif_bus_resume(hif_ctx);
 	QDF_BUG(!status);
