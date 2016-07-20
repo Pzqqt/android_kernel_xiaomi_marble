@@ -33,6 +33,7 @@
 
 /* Header files */
 
+#include "cds_ieee80211_common.h"	/* ieee80211_frame */
 #include "wma.h"
 #include "wma_api.h"
 #include "cds_api.h"
@@ -2348,6 +2349,14 @@ static const u8 *wma_wow_wake_reason_str(A_INT32 wake_reason)
 		return "WOW_REASON_NAN_EVENT";
 	case WOW_REASON_OEM_RESPONSE_EVENT:
 		return "WOW_OEM_RESPONSE_EVENT";
+	case WOW_REASON_ASSOC_RES_RECV:
+		return "ASSOC_RES_RECV";
+	case WOW_REASON_REASSOC_REQ_RECV:
+		return "REASSOC_REQ_RECV";
+	case WOW_REASON_REASSOC_RES_RECV:
+		return "REASSOC_RES_RECV";
+	case WOW_REASON_ACTION_FRAME_RECV:
+		return "ACTION_FRAME_RECV";
 	}
 	return "unknown";
 }
@@ -2898,6 +2907,110 @@ end:
 }
 
 /**
+ * wma_wow_dump_mgmt_buffer() - API to parse data buffer for mgmt.
+ *    packet that resulted in WOW wakeup.
+ * @wow_packet_buffer: Pointer to data buffer
+ * @buf_len: length of data buffer
+ *
+ * This function parses the data buffer received (802.11 header)
+ * to get informaton like src mac addr, dst mac addr, seq_num,
+ * frag_num, etc.
+ *
+ * Return: void
+ */
+static void wma_wow_dump_mgmt_buffer(uint8_t *wow_packet_buffer,
+			uint32_t buf_len)
+{
+	struct ieee80211_frame_addr4 *wh;
+
+	WMA_LOGD("wow_buf_pkt_len: %d", buf_len);
+	wh = (struct ieee80211_frame_addr4 *)
+		(wow_packet_buffer + 4);
+	if (buf_len >= sizeof(struct ieee80211_frame)) {
+		uint8_t to_from_ds, frag_num;
+		uint32_t seq_num;
+
+		WMA_LOGE("RA: " MAC_ADDRESS_STR " TA: " MAC_ADDRESS_STR,
+			MAC_ADDR_ARRAY(wh->i_addr1),
+			MAC_ADDR_ARRAY(wh->i_addr2));
+
+		WMA_LOGE("TO_DS: %d, FROM_DS: %d",
+			wh->i_fc[1] & IEEE80211_FC1_DIR_TODS,
+			wh->i_fc[1] & IEEE80211_FC1_DIR_FROMDS);
+
+		to_from_ds = wh->i_fc[1] & IEEE80211_FC1_DIR_DSTODS;
+
+		switch (to_from_ds) {
+		case IEEE80211_NO_DS:
+			WMA_LOGE("BSSID: " MAC_ADDRESS_STR,
+				MAC_ADDR_ARRAY(wh->i_addr3));
+			break;
+		case IEEE80211_TO_DS:
+			WMA_LOGE("DA: " MAC_ADDRESS_STR,
+				MAC_ADDR_ARRAY(wh->i_addr3));
+			break;
+		case IEEE80211_FROM_DS:
+			WMA_LOGE("SA: " MAC_ADDRESS_STR,
+				MAC_ADDR_ARRAY(wh->i_addr3));
+			break;
+		case IEEE80211_DS_TO_DS:
+			if (buf_len >= sizeof(struct ieee80211_frame_addr4))
+				WMA_LOGE("DA: " MAC_ADDRESS_STR " SA: "
+					MAC_ADDRESS_STR,
+					MAC_ADDR_ARRAY(wh->i_addr3),
+					MAC_ADDR_ARRAY(wh->i_addr4));
+			break;
+		}
+
+		seq_num = (((*(uint16_t *)wh->i_seq) &
+				IEEE80211_SEQ_SEQ_MASK) >>
+				IEEE80211_SEQ_SEQ_SHIFT);
+		frag_num = (((*(uint16_t *)wh->i_seq) &
+				IEEE80211_SEQ_FRAG_MASK) >>
+				IEEE80211_SEQ_FRAG_SHIFT);
+
+		WMA_LOGE("SEQ_NUM: %d, FRAG_NUM: %d",
+				seq_num, frag_num);
+	} else {
+		WMA_LOGE("Insufficient buffer length for mgmt. packet");
+	}
+}
+
+/**
+ * wma_wow_get_wakelock_duration() - return the wakelock duration
+ *        for some mgmt packets received.
+ * @wake_reason: wow wakeup reason
+ *
+ * This function returns the wakelock duration for some mgmt packets
+ * received while in wow suspend.
+ *
+ * Return: wakelock duration
+ */
+static uint32_t wma_wow_get_wakelock_duration(int wake_reason)
+{
+	uint32_t wake_lock_duration = 0;
+
+	switch (wake_reason) {
+	case WOW_REASON_AUTH_REQ_RECV:
+		wake_lock_duration = WMA_AUTH_REQ_RECV_WAKE_LOCK_TIMEOUT;
+		break;
+	case WOW_REASON_ASSOC_REQ_RECV:
+		wake_lock_duration = WMA_ASSOC_REQ_RECV_WAKE_LOCK_DURATION;
+		break;
+	case WOW_REASON_DEAUTH_RECVD:
+		wake_lock_duration = WMA_DEAUTH_RECV_WAKE_LOCK_DURATION;
+		break;
+	case WOW_REASON_DISASSOC_RECVD:
+		wake_lock_duration = WMA_DISASSOC_RECV_WAKE_LOCK_DURATION;
+		break;
+	default:
+		break;
+	}
+
+	return wake_lock_duration;
+}
+
+/**
  * wma_wow_wakeup_host_event() - wakeup host event handler
  * @handle: wma handle
  * @event: event data
@@ -2967,19 +3080,29 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 
 	switch (wake_info->wake_reason) {
 	case WOW_REASON_AUTH_REQ_RECV:
-		wake_lock_duration = WMA_AUTH_REQ_RECV_WAKE_LOCK_TIMEOUT;
-		break;
-
 	case WOW_REASON_ASSOC_REQ_RECV:
-		wake_lock_duration = WMA_ASSOC_REQ_RECV_WAKE_LOCK_DURATION;
-		break;
-
 	case WOW_REASON_DEAUTH_RECVD:
-		wake_lock_duration = WMA_DEAUTH_RECV_WAKE_LOCK_DURATION;
-		break;
-
 	case WOW_REASON_DISASSOC_RECVD:
-		wake_lock_duration = WMA_DISASSOC_RECV_WAKE_LOCK_DURATION;
+	case WOW_REASON_ASSOC_RES_RECV:
+	case WOW_REASON_REASSOC_REQ_RECV:
+	case WOW_REASON_REASSOC_RES_RECV:
+	case WOW_REASON_BEACON_RECV:
+	case WOW_REASON_ACTION_FRAME_RECV:
+		wake_lock_duration =
+			wma_wow_get_wakelock_duration(wake_info->wake_reason);
+		if (param_buf->wow_packet_buffer) {
+			/* First 4-bytes of wow_packet_buffer is the length */
+			qdf_mem_copy((uint8_t *) &wow_buf_pkt_len,
+				param_buf->wow_packet_buffer, 4);
+			if (wow_buf_pkt_len)
+				wma_wow_dump_mgmt_buffer(
+					param_buf->wow_packet_buffer,
+					wow_buf_pkt_len);
+			else
+				WMA_LOGE("wow packet buffer is empty");
+		} else {
+			WMA_LOGE("No wow packet buffer present");
+		}
 		break;
 
 	case WOW_REASON_AP_ASSOC_LOST:
