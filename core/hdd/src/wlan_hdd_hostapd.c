@@ -1836,7 +1836,7 @@ int hdd_softap_unpack_ie(tHalHandle halHandle,
 	uint16_t RSNIeLen;
 
 	if (NULL == halHandle) {
-		hddLog(LOGE, FL("Error haHandle returned NULL"));
+		hdd_err("Error haHandle returned NULL");
 		return -EINVAL;
 	}
 	/* Validity checks */
@@ -1859,9 +1859,9 @@ int hdd_softap_unpack_ie(tHalHandle halHandle,
 		dot11f_unpack_ie_rsn((tpAniSirGlobal) halHandle,
 				     pRsnIe, RSNIeLen, &dot11RSNIE);
 		/* Copy out the encryption and authentication types */
-		hddLog(LOG1, FL("pairwise cipher suite count: %d"),
+		hdd_notice("pairwise cipher suite count: %d",
 		       dot11RSNIE.pwise_cipher_suite_count);
-		hddLog(LOG1, FL("authentication suite count: %d"),
+		hdd_notice("authentication suite count: %d",
 		       dot11RSNIE.akm_suite_count);
 		/*Here we have followed the apple base code,
 		   but probably I suspect we can do something different */
@@ -1895,9 +1895,9 @@ int hdd_softap_unpack_ie(tHalHandle halHandle,
 		dot11f_unpack_ie_wpa((tpAniSirGlobal) halHandle,
 				     pRsnIe, RSNIeLen, &dot11WPAIE);
 		/* Copy out the encryption and authentication types */
-		hddLog(LOG1, FL("WPA unicast cipher suite count: %d"),
+		hdd_notice("WPA unicast cipher suite count: %d",
 		       dot11WPAIE.unicast_cipher_count);
-		hddLog(LOG1, FL("WPA authentication suite count: %d"),
+		hdd_notice("WPA authentication suite count: %d",
 		       dot11WPAIE.auth_suite_count);
 		/* dot11WPAIE.auth_suite_count */
 		/* Just translate the FIRST one */
@@ -1914,7 +1914,7 @@ int hdd_softap_unpack_ie(tHalHandle halHandle,
 		*pMFPCapable = false;
 		*pMFPRequired = false;
 	} else {
-		hddLog(LOGW, FL("gen_ie[0]: %d"), gen_ie[0]);
+		hdd_warn("gen_ie[0]: %d", gen_ie[0]);
 		return QDF_STATUS_E_FAILURE;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -1977,7 +1977,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 	qdf_spin_lock_bh(&pHddCtx->dfs_lock);
 	if (pHddCtx->dfs_radar_found == true) {
 		qdf_spin_unlock_bh(&pHddCtx->dfs_lock);
-		hddLog(LOGE, FL("Channel switch in progress!!"));
+		hdd_err("Channel switch in progress!!");
 		return -EBUSY;
 	}
 	/*
@@ -2006,8 +2006,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 		target_bw);
 
 	if (QDF_STATUS_SUCCESS != status) {
-		hddLog(LOGE,
-		       FL("SAP set channel failed for channel = %d, bw:%d"),
+		hdd_err("SAP set channel failed for channel = %d, bw:%d",
 		       target_channel, target_bw);
 		/*
 		 * If channel change command fails then clear the
@@ -2074,7 +2073,7 @@ static __iw_softap_set_ini_cfg(struct net_device *dev,
 	if (ret)
 		return ret;
 
-	hddLog(LOG1, FL("Received data %s"), extra);
+	hdd_notice("Received data %s", extra);
 
 	vstatus = hdd_execute_global_config_command(pHddCtx, extra);
 	if (QDF_STATUS_SUCCESS != vstatus) {
@@ -2114,7 +2113,7 @@ static __iw_softap_get_ini_cfg(struct net_device *dev,
 	if (ret != 0)
 		return ret;
 
-	hddLog(LOG1, FL("Printing CLD global INI Config"));
+	hdd_notice("Printing CLD global INI Config");
 	hdd_cfg_get_global_config(pHddCtx, extra, QCSAP_IOCTL_MAX_STR_LEN);
 	wrqu->data.length = strlen(extra) + 1;
 
@@ -2164,7 +2163,7 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 	switch (sub_cmd) {
 #ifdef DEBUG
 	case QCSAP_IOCTL_SET_FW_CRASH_INJECT:
-		hddLog(LOGE, "WE_SET_FW_CRASH_INJECT: %d %d",
+		hdd_err("WE_SET_FW_CRASH_INJECT: %d %d",
 		       value[1], value[2]);
 		ret = wma_cli_set2_command(adapter->sessionId,
 					   GEN_PARAM_CRASH_INJECT,
@@ -2183,20 +2182,20 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 			qdf_dp_trace_clear_buffer();
 		break;
 	case QCSAP_ENABLE_FW_PROFILE:
-		hddLog(LOG1, "QCSAP_ENABLE_FW_PROFILE: %d %d",
+		hdd_notice("QCSAP_ENABLE_FW_PROFILE: %d %d",
 		       value[1], value[2]);
 		ret = wma_cli_set2_command(adapter->sessionId,
 				 WMI_WLAN_PROFILE_ENABLE_PROFILE_ID_CMDID,
 					value[1], value[2], DBG_CMD);
 		break;
 	case QCSAP_SET_FW_PROFILE_HIST_INTVL:
-		hddLog(LOG1, "QCSAP_SET_FW_PROFILE_HIST_INTVL: %d %d",
+		hdd_notice("QCSAP_SET_FW_PROFILE_HIST_INTVL: %d %d",
 		       value[1], value[2]);
 		ret = wma_cli_set2_command(adapter->sessionId,
 					WMI_WLAN_PROFILE_SET_HIST_INTVL_CMDID,
 					value[1], value[2], DBG_CMD);
 	default:
-		hddLog(LOGE, FL("Invalid IOCTL command %d"), sub_cmd);
+		hdd_err("Invalid IOCTL command %d", sub_cmd);
 		break;
 	}
 
