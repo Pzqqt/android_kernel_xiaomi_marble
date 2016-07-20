@@ -560,7 +560,7 @@ static int __wlan_hdd_bus_suspend(pm_message_t state)
 	if (err)
 		goto resume_wma;
 
-	hdd_info("suspend done, status = %d", err);
+	hdd_err("suspend done, status = %d", err);
 	return err;
 
 resume_wma:
@@ -626,7 +626,7 @@ static int __wlan_hdd_bus_resume(void)
 	status = ol_txrx_bus_resume();
 	QDF_BUG(!status);
 
-	hdd_info("resume done");
+	hdd_err("resume done");
 	return status;
 }
 
