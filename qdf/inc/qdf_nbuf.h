@@ -55,6 +55,7 @@
 #define QDF_NBUF_TRAC_DHCP_CLI_PORT		68
 #define QDF_NBUF_TRAC_ETH_TYPE_OFFSET		12
 #define QDF_NBUF_TRAC_EAPOL_ETH_TYPE		0x888E
+#define QDF_NBUF_TRAC_WAPI_ETH_TYPE		0x88b4
 #define QDF_NBUF_TRAC_ARP_ETH_TYPE		0x0806
 #define QDF_NBUF_DEST_MAC_OFFSET		0
 #define QDF_NBUF_SRC_MAC_OFFSET			6
@@ -1124,6 +1125,20 @@ static inline
 bool qdf_nbuf_is_ipv4_eapol_pkt(qdf_nbuf_t buf)
 {
 	return __qdf_nbuf_is_ipv4_eapol_pkt(buf);
+}
+
+/**
+ * qdf_nbuf_is_ipv4_wapi_pkt() - check if packet is a wapi packet or not
+ * @buf:  buffer
+ *
+ * This api is for ipv4 packet.
+ *
+ * Return: true if packet is WAPI packet
+ */
+static inline
+bool qdf_nbuf_is_ipv4_wapi_pkt(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_is_ipv4_wapi_pkt(buf);
 }
 
 /**

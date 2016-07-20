@@ -534,6 +534,28 @@ bool __qdf_nbuf_is_ipv4_eapol_pkt(struct sk_buff *skb)
 }
 
 /**
+ * __qdf_nbuf_is_ipv4_wapi_pkt() - check if skb data is a wapi packet
+ * @skb: Pointer to network buffer
+ *
+ * This api is for ipv4 packet.
+ *
+ * Return: true if packet is WAPI packet
+ *	   false otherwise.
+ */
+bool __qdf_nbuf_is_ipv4_wapi_pkt(struct sk_buff *skb)
+{
+	uint16_t ether_type;
+
+	ether_type = (uint16_t)(*(uint16_t *)(skb->data +
+				QDF_NBUF_TRAC_ETH_TYPE_OFFSET));
+
+	if (ether_type == QDF_SWAP_U16(QDF_NBUF_TRAC_WAPI_ETH_TYPE))
+		return true;
+	else
+		return false;
+}
+
+/**
  * __qdf_nbuf_is_ipv4_arp_pkt() - check if skb data is a eapol packet
  * @skb: Pointer to network buffer
  *
