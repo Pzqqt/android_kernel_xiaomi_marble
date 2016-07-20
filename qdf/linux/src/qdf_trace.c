@@ -1126,8 +1126,6 @@ EXPORT_SYMBOL(qdf_dp_add_record);
 bool qdf_log_eapol_pkt(uint8_t session_id, struct sk_buff *skb,
 		       enum qdf_proto_dir dir)
 {
-	uint16_t mask;
-	uint16_t eapol_key_info;
 	enum qdf_proto_subtype subtype;
 
 	if ((qdf_dp_get_proto_bitmap() & QDF_NBUF_PKT_TRAC_TYPE_EAPOL) &&
@@ -1135,26 +1133,7 @@ bool qdf_log_eapol_pkt(uint8_t session_id, struct sk_buff *skb,
 			QDF_NBUF_CB_GET_PACKET_TYPE(skb)) ||
 		 (dir == QDF_RX && qdf_nbuf_is_ipv4_eapol_pkt(skb) == true))) {
 
-		eapol_key_info = (uint16_t)(*(uint16_t *)
-					(skb->data + EAPOL_KEY_INFO_OFFSET));
-
-		mask = eapol_key_info & EAPOL_MASK;
-		switch (mask) {
-		case EAPOL_M1_BIT_MASK:
-			subtype = QDF_PROTO_EAPOL_M1;
-			break;
-		case EAPOL_M2_BIT_MASK:
-			subtype = QDF_PROTO_EAPOL_M2;
-			break;
-		case EAPOL_M3_BIT_MASK:
-			subtype = QDF_PROTO_EAPOL_M3;
-			break;
-		case EAPOL_M4_BIT_MASK:
-			subtype = QDF_PROTO_EAPOL_M4;
-			break;
-		default:
-			subtype = QDF_PROTO_INVALID;
-		}
+		subtype = qdf_nbuf_get_eapol_subtype(skb);
 		DPTRACE(qdf_dp_trace_proto_pkt(QDF_DP_TRACE_EAPOL_PACKET_RECORD,
 			session_id, (skb->data + QDF_NBUF_SRC_MAC_OFFSET),
 			(skb->data + QDF_NBUF_DEST_MAC_OFFSET),
@@ -1187,39 +1166,7 @@ bool qdf_log_dhcp_pkt(uint8_t session_id, struct sk_buff *skb,
 				QDF_NBUF_CB_GET_PACKET_TYPE(skb)) ||
 		 (dir == QDF_RX && qdf_nbuf_is_ipv4_dhcp_pkt(skb) == true))) {
 
-		if ((skb->data[QDF_DHCP_OPTION53_OFFSET] == QDF_DHCP_OPTION53) &&
-		    (skb->data[QDF_DHCP_OPTION53_LENGTH_OFFSET] ==
-						 QDF_DHCP_OPTION53_LENGTH)) {
-
-			switch (skb->data[QDF_DHCP_OPTION53_STATUS_OFFSET]) {
-			case QDF_DHCP_DISCOVER:
-				subtype = QDF_PROTO_DHCP_DISCOVER;
-				break;
-			case QDF_DHCP_REQUEST:
-				subtype = QDF_PROTO_DHCP_REQUEST;
-				break;
-			case QDF_DHCP_OFFER:
-				subtype = QDF_PROTO_DHCP_OFFER;
-				break;
-			case QDF_DHCP_ACK:
-				subtype = QDF_PROTO_DHCP_ACK;
-				break;
-			case QDF_DHCP_NAK:
-				subtype = QDF_PROTO_DHCP_NACK;
-				break;
-			case QDF_DHCP_RELEASE:
-				subtype = QDF_PROTO_DHCP_RELEASE;
-				break;
-			case QDF_DHCP_INFORM:
-				subtype = QDF_PROTO_DHCP_INFORM;
-				break;
-			case QDF_DHCP_DECLINE:
-				subtype = QDF_PROTO_DHCP_DECLINE;
-				break;
-			default:
-				subtype = QDF_PROTO_INVALID;
-			}
-		}
+		subtype = qdf_nbuf_get_dhcp_subtype(skb);
 		DPTRACE(qdf_dp_trace_proto_pkt(QDF_DP_TRACE_DHCP_PACKET_RECORD,
 			session_id, (skb->data + QDF_NBUF_SRC_MAC_OFFSET),
 			(skb->data + QDF_NBUF_DEST_MAC_OFFSET),
@@ -1245,7 +1192,6 @@ EXPORT_SYMBOL(qdf_log_dhcp_pkt);
 bool qdf_log_arp_pkt(uint8_t session_id, struct sk_buff *skb,
 		     enum qdf_proto_dir dir)
 {
-	uint16_t subtype;
 	enum qdf_proto_subtype proto_subtype;
 
 	if ((qdf_dp_get_proto_bitmap() & QDF_NBUF_PKT_TRAC_TYPE_ARP) &&
@@ -1253,19 +1199,7 @@ bool qdf_log_arp_pkt(uint8_t session_id, struct sk_buff *skb,
 			QDF_NBUF_CB_GET_PACKET_TYPE(skb)) ||
 		 (dir == QDF_RX && qdf_nbuf_is_ipv4_arp_pkt(skb) == true))) {
 
-		subtype = (uint16_t)(*(uint16_t *)
-			(skb->data + ARP_SUB_TYPE_OFFSET));
-		switch (QDF_SWAP_U16(subtype)) {
-		case ARP_REQUEST:
-			proto_subtype = QDF_PROTO_ARP_REQ;
-			break;
-		case ARP_RESPONSE:
-			proto_subtype = QDF_PROTO_ARP_RES;
-			break;
-		default:
-			proto_subtype = QDF_PROTO_INVALID;
-		}
-
+		proto_subtype = qdf_nbuf_get_arp_subtype(skb);
 		DPTRACE(qdf_dp_trace_proto_pkt(QDF_DP_TRACE_ARP_PACKET_RECORD,
 			session_id, (skb->data + QDF_NBUF_SRC_MAC_OFFSET),
 			(skb->data + QDF_NBUF_DEST_MAC_OFFSET),

@@ -45,6 +45,7 @@
 #include <qdf_mem.h>
 #include <linux/tcp.h>
 #include <qdf_util.h>
+#include <qdf_nbuf.h>
 
 /*
  * Use socket buffer as the underlying implentation as skbuf .
@@ -490,11 +491,24 @@ QDF_STATUS __qdf_nbuf_frag_map(
 	qdf_device_t osdev, __qdf_nbuf_t nbuf,
 	int offset, qdf_dma_dir_t dir, int cur_frag);
 
-bool __qdf_nbuf_is_ipv4_pkt(struct sk_buff *skb);
-bool __qdf_nbuf_is_ipv4_dhcp_pkt(struct sk_buff *skb);
-bool __qdf_nbuf_is_ipv4_eapol_pkt(struct sk_buff *skb);
-bool __qdf_nbuf_is_ipv4_arp_pkt(struct sk_buff *skb);
 bool __qdf_nbuf_is_ipv4_wapi_pkt(struct sk_buff *skb);
+bool __qdf_nbuf_data_is_ipv4_pkt(uint8_t *data);
+bool __qdf_nbuf_data_is_ipv6_pkt(uint8_t *data);
+bool __qdf_nbuf_data_is_icmp_pkt(uint8_t *data);
+bool __qdf_nbuf_data_is_icmpv6_pkt(uint8_t *data);
+bool __qdf_nbuf_data_is_ipv4_udp_pkt(uint8_t *data);
+bool __qdf_nbuf_data_is_ipv4_tcp_pkt(uint8_t *data);
+bool __qdf_nbuf_data_is_ipv6_udp_pkt(uint8_t *data);
+bool __qdf_nbuf_data_is_ipv6_tcp_pkt(uint8_t *data);
+bool __qdf_nbuf_data_is_ipv4_dhcp_pkt(uint8_t *data);
+bool __qdf_nbuf_data_is_ipv4_eapol_pkt(uint8_t *data);
+bool __qdf_nbuf_data_is_ipv4_arp_pkt(uint8_t *data);
+enum qdf_proto_subtype  __qdf_nbuf_data_get_dhcp_subtype(uint8_t *data);
+enum qdf_proto_subtype  __qdf_nbuf_data_get_eapol_subtype(uint8_t *data);
+enum qdf_proto_subtype  __qdf_nbuf_data_get_arp_subtype(uint8_t *data);
+enum qdf_proto_subtype  __qdf_nbuf_data_get_icmp_subtype(uint8_t *data);
+enum qdf_proto_subtype  __qdf_nbuf_data_get_icmpv6_subtype(uint8_t *data);
+
 
 /**
  * __qdf_to_status() - OS to QDF status conversion
