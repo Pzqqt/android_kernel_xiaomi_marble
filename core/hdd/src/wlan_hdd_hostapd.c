@@ -7911,7 +7911,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	ENTER();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
-		hddLog(LOGE, FL("Command not allowed in FTM mode"));
+		hdd_err("Command not allowed in FTM mode");
 		return -EINVAL;
 	}
 
@@ -7929,7 +7929,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		return -EOPNOTSUPP;
 	}
 
-	hddLog(LOG1, FL("Device_mode %s(%d)"),
+	hdd_notice("Device_mode %s(%d)",
 		hdd_device_mode_to_string(pAdapter->device_mode),
 		pAdapter->device_mode);
 
@@ -7943,7 +7943,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 			pScanInfo = &staAdapter->scan_info;
 
 			if (pScanInfo && pScanInfo->mScanPending) {
-				hddLog(LOG1, FL("Aborting pending scan for device mode:%d"),
+				hdd_notice("Aborting pending scan for device mode:%d",
 				       staAdapter->device_mode);
 				INIT_COMPLETION(pScanInfo->abortscan_event_var);
 				hdd_abort_mac_scan(staAdapter->pHddCtx,
@@ -7954,8 +7954,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 					msecs_to_jiffies(
 						WLAN_WAIT_TIME_ABORTSCAN));
 				if (!rc) {
-					hddLog(LOGE,
-					       FL("Timeout occurred while waiting for abortscan"));
+					hdd_err("Timeout occurred while waiting for abortscan");
 					QDF_ASSERT(pScanInfo->mScanPending);
 				}
 			}
@@ -7972,7 +7971,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	if (pHddCtx->config->conc_custom_rule1 &&
 	    (QDF_SAP_MODE == pAdapter->device_mode)) {
 		cds_flush_work(&pHddCtx->sap_start_work);
-		hddLog(LOGW, FL("Canceled the pending restart work"));
+		hdd_warn("Canceled the pending restart work");
 		qdf_spin_lock(&pHddCtx->sap_update_info_lock);
 		pHddCtx->is_sap_restart_required = false;
 		qdf_spin_unlock(&pHddCtx->sap_update_info_lock);
@@ -7986,8 +7985,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 
 	old = pAdapter->sessionCtx.ap.beacon;
 	if (!old) {
-		hddLog(LOGE,
-		       FL("Session(%d) beacon data points to NULL"),
+		hdd_err("Session(%d) beacon data points to NULL",
 		       pAdapter->sessionId);
 		return -EINVAL;
 	}
@@ -8012,8 +8010,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 						      10000);
 
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-				hddLog(LOGE,
-				       FL("HDD qdf wait for single_event failed!!"));
+				hdd_err("HDD qdf wait for single_event failed!!");
 				QDF_ASSERT(0);
 			}
 		}
@@ -8027,7 +8024,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	mutex_unlock(&pHddCtx->sap_lock);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(LOGE, FL("Stopping the BSS"));
+		hdd_err("Stopping the BSS");
 		return -EINVAL;
 	}
 
@@ -8040,13 +8037,13 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	if (sme_update_add_ie(WLAN_HDD_GET_HAL_CTX(pAdapter),
 			      &updateIE,
 			      eUPDATE_IE_PROBE_BCN) == QDF_STATUS_E_FAILURE) {
-		hddLog(LOGE, FL("Could not pass on PROBE_RSP_BCN data to PE"));
+		hdd_err("Could not pass on PROBE_RSP_BCN data to PE");
 	}
 
 	if (sme_update_add_ie(WLAN_HDD_GET_HAL_CTX(pAdapter),
 			      &updateIE,
 			      eUPDATE_IE_ASSOC_RESP) == QDF_STATUS_E_FAILURE) {
-		hddLog(LOGE, FL("Could not pass on ASSOC_RSP data to PE"));
+		hdd_err("Could not pass on ASSOC_RSP data to PE");
 	}
 	/* Reset WNI_CFG_PROBE_RSP Flags */
 	wlan_hdd_reset_prob_rspies(pAdapter);
@@ -8054,8 +8051,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 #ifdef WLAN_FEATURE_P2P_DEBUG
 	if ((pAdapter->device_mode == QDF_P2P_GO_MODE) &&
 	    (global_p2p_connection_status == P2P_GO_COMPLETED_STATE)) {
-		hddLog(LOGE,
-			"[P2P State] From GO completed to Inactive state GO got removed");
+		hdd_err("[P2P State] From GO completed to Inactive state GO got removed");
 		global_p2p_connection_status = P2P_NOT_ACTIVE;
 	}
 #endif
@@ -8139,7 +8135,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	ENTER();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
-		hddLog(LOGE, FL("Command not allowed in FTM mode"));
+		hdd_err("Command not allowed in FTM mode");
 		return -EINVAL;
 	}
 
@@ -8147,7 +8143,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 			 TRACE_CODE_HDD_CFG80211_START_AP, pAdapter->sessionId,
 			 params->beacon_interval));
 	if (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic) {
-		hddLog(LOGE, FL("HDD adapter magic is invalid"));
+		hdd_err("HDD adapter magic is invalid");
 		return -ENODEV;
 	}
 
@@ -8157,7 +8153,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	if (0 != status)
 		return status;
 
-	hddLog(LOG2, FL("pAdapter = %p, Device mode %s(%d)"), pAdapter,
+	hdd_info("pAdapter = %p, Device mode %s(%d)", pAdapter,
 	       hdd_device_mode_to_string(pAdapter->device_mode),
 	       pAdapter->device_mode);
 
@@ -8212,7 +8208,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 							   params->dtim_period);
 
 		if (status != 0) {
-			hddLog(LOGE, FL("Error!!! Allocating the new beacon"));
+			hdd_err("Error!!! Allocating the new beacon");
 			return -EINVAL;
 		}
 		pAdapter->sessionCtx.ap.beacon = new;
@@ -8296,14 +8292,14 @@ static int __wlan_hdd_cfg80211_change_beacon(struct wiphy *wiphy,
 	ENTER();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
-		hddLog(LOGE, FL("Command not allowed in FTM mode"));
+		hdd_err("Command not allowed in FTM mode");
 		return -EINVAL;
 	}
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_CHANGE_BEACON,
 			 pAdapter->sessionId, pAdapter->device_mode));
-	hddLog(LOG1, FL("Device_mode %s(%d)"),
+	hdd_notice("Device_mode %s(%d)",
 	       hdd_device_mode_to_string(pAdapter->device_mode),
 	       pAdapter->device_mode);
 
@@ -8321,7 +8317,7 @@ static int __wlan_hdd_cfg80211_change_beacon(struct wiphy *wiphy,
 	old = pAdapter->sessionCtx.ap.beacon;
 
 	if (!old) {
-		hddLog(LOGE, FL("session(%d) beacon data points to NULL"),
+		hdd_err("session(%d) beacon data points to NULL",
 		       pAdapter->sessionId);
 		return -EINVAL;
 	}
@@ -8329,7 +8325,7 @@ static int __wlan_hdd_cfg80211_change_beacon(struct wiphy *wiphy,
 	status = wlan_hdd_cfg80211_alloc_new_beacon(pAdapter, &new, params, 0);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(LOGE, FL("new beacon alloc failed"));
+		hdd_err("new beacon alloc failed");
 		return -EINVAL;
 	}
 
