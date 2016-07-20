@@ -5551,6 +5551,127 @@ static int drv_cmd_ccx_beacon_req(hdd_adapter_t *adapter,
 exit:
 	return ret;
 }
+
+/**
+ * drv_cmd_ccx_plm_req() - Set ESE PLM request
+ * @adapter:     Pointer to the HDD adapter
+ * @hdd_ctx:     Pointer to the HDD context
+ * @command:     Driver command string
+ * @command_len: Driver command string length
+ * @priv_data:   Private data coming with the driver command. Unused here
+ *
+ * This function handles driver command that sets the ESE PLM request
+ *
+ * Return: 0 on success; negative errno otherwise
+ */
+static int drv_cmd_ccx_plm_req(hdd_adapter_t *adapter,
+			       hdd_context_t *hdd_ctx,
+			       uint8_t *command,
+			       uint8_t command_len,
+			       hdd_priv_data_t *priv_data)
+{
+	int ret = 0;
+	uint8_t *value = command;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tpSirPlmReq pPlmRequest = NULL;
+
+	pPlmRequest = qdf_mem_malloc(sizeof(tSirPlmReq));
+	if (NULL == pPlmRequest) {
+		ret = -ENOMEM;
+		goto exit;
+	}
+
+	status = hdd_parse_plm_cmd(value, pPlmRequest);
+	if (QDF_STATUS_SUCCESS != status) {
+		qdf_mem_free(pPlmRequest);
+		pPlmRequest = NULL;
+		ret = -EINVAL;
+		goto exit;
+	}
+	pPlmRequest->sessionId = adapter->sessionId;
+
+	status = sme_set_plm_request(hdd_ctx->hHal, pPlmRequest);
+	if (QDF_STATUS_SUCCESS != status) {
+		qdf_mem_free(pPlmRequest);
+		pPlmRequest = NULL;
+		ret = -EINVAL;
+		goto exit;
+	}
+
+exit:
+	return ret;
+}
+
+/**
+ * drv_cmd_set_ccx_mode() - Set ESE mode
+ * @adapter:     Pointer to the HDD adapter
+ * @hdd_ctx:     Pointer to the HDD context
+ * @command:     Driver command string
+ * @command_len: Driver command string length
+ * @priv_data:   Private data coming with the driver command. Unused here
+ *
+ * This function handles driver command that sets ESE mode
+ *
+ * Return: 0 on success; negative errno otherwise
+ */
+static int drv_cmd_set_ccx_mode(hdd_adapter_t *adapter,
+				hdd_context_t *hdd_ctx,
+				uint8_t *command,
+				uint8_t command_len,
+				hdd_priv_data_t *priv_data)
+{
+	int ret = 0;
+	uint8_t *value = command;
+	uint8_t eseMode = CFG_ESE_FEATURE_ENABLED_DEFAULT;
+
+	/*
+	 * Check if the features OKC/ESE/11R are supported simultaneously,
+	 * then this operation is not permitted (return FAILURE)
+	 */
+	if (sme_get_is_ese_feature_enabled(hdd_ctx->hHal) &&
+	    hdd_is_okc_mode_enabled(hdd_ctx) &&
+	    sme_get_is_ft_feature_enabled(hdd_ctx->hHal)) {
+		hdd_warn("OKC/ESE/11R are supported simultaneously hence this operation is not permitted!");
+		ret = -EPERM;
+		goto exit;
+	}
+
+	/* Move pointer to ahead of SETCCXMODE<delimiter> */
+	value = value + command_len + 1;
+
+	/* Convert the value from ascii to integer */
+	ret = kstrtou8(value, 10, &eseMode);
+	if (ret < 0) {
+		/*
+		 * If the input value is greater than max value of datatype,
+		 * then also kstrtou8 fails
+		 */
+		hdd_err("kstrtou8 failed range [%d - %d]",
+			  CFG_ESE_FEATURE_ENABLED_MIN,
+			  CFG_ESE_FEATURE_ENABLED_MAX);
+		ret = -EINVAL;
+		goto exit;
+	}
+
+	if ((eseMode < CFG_ESE_FEATURE_ENABLED_MIN) ||
+	    (eseMode > CFG_ESE_FEATURE_ENABLED_MAX)) {
+		hdd_err("Ese mode value %d is out of range (Min: %d Max: %d)",
+			  eseMode,
+			  CFG_ESE_FEATURE_ENABLED_MIN,
+			  CFG_ESE_FEATURE_ENABLED_MAX);
+		ret = -EINVAL;
+		goto exit;
+	}
+	hdd_info("Received Command to change ese mode = %d", eseMode);
+
+	hdd_ctx->config->isEseIniFeatureEnabled = eseMode;
+	sme_update_is_ese_feature_enabled(hdd_ctx->hHal,
+					  adapter->sessionId,
+					  eseMode);
+
+exit:
+	return ret;
+}
 #endif /* FEATURE_WLAN_ESE */
 
 static int drv_cmd_set_mc_rate(hdd_adapter_t *adapter,
@@ -7036,7 +7157,9 @@ static const hdd_drv_cmd_t hdd_drv_cmds[] = {
 	{"SETCCXROAMSCANCHANNELS",    drv_cmd_set_ccx_roam_scan_channels},
 	{"GETTSMSTATS",               drv_cmd_get_tsm_stats},
 	{"SETCCKMIE",                 drv_cmd_set_cckm_ie},
-	{"CCXBEACONREQ",  drv_cmd_ccx_beacon_req},
+	{"CCXBEACONREQ",	      drv_cmd_ccx_beacon_req},
+	{"CCXPLMREQ",                 drv_cmd_ccx_plm_req},
+	{"SETCCXMODE",                drv_cmd_set_ccx_mode},
 #endif /* FEATURE_WLAN_ESE */
 	{"SETMCRATE",                 drv_cmd_set_mc_rate},
 	{"MAXTXPOWER",                drv_cmd_max_tx_power},
