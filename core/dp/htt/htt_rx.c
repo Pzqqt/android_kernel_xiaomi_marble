@@ -2041,6 +2041,13 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 			HTT_RX_IN_ORD_PADDR_IND_FW_DESC_GET(*(msg_word + NEXT_FIELD_OFFSET_IN32));
 #undef NEXT_FIELD_OFFSET_IN32
 
+		if (HTT_RX_IN_ORD_PADDR_IND_MSDU_INFO_GET(*(msg_word + 1)) &
+			   FW_MSDU_INFO_FIRST_WAKEUP_M) {
+			qdf_print("%s: first packet after WOW wakeup\n",
+				__func__);
+			qdf_nbuf_mark_wakeup_frame(msdu);
+		}
+
 		msdu_count--;
 
 		if (qdf_unlikely((*((u_int8_t *) &rx_desc->fw_desc.u.val)) &
