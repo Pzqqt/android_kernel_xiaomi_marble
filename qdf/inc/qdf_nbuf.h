@@ -1348,6 +1348,36 @@ qdf_nbuf_data_get_icmpv6_subtype(uint8_t *data)
 }
 
 /**
+ * qdf_nbuf_data_get_ipv4_proto() - get the proto type
+ *            of IPV4 packet.
+ * @data: Pointer to IPV4 packet data buffer
+ *
+ * This func. returns the proto type of IPV4 packet.
+ *
+ * Return: proto type of IPV4 packet.
+ */
+static inline uint8_t
+qdf_nbuf_data_get_ipv4_proto(uint8_t *data)
+{
+	return __qdf_nbuf_data_get_ipv4_proto(data);
+}
+
+/**
+ * qdf_nbuf_data_get_ipv6_proto() - get the proto type
+ *            of IPV6 packet.
+ * @data: Pointer to IPV6 packet data buffer
+ *
+ * This func. returns the proto type of IPV6 packet.
+ *
+ * Return: proto type of IPV6 packet.
+ */
+static inline uint8_t
+qdf_nbuf_data_get_ipv6_proto(uint8_t *data)
+{
+	return __qdf_nbuf_data_get_ipv6_proto(data);
+}
+
+/**
  * qdf_nbuf_is_ipv4_pkt() - check if packet is a ipv4 packet or not
  * @buf:  buffer
  *

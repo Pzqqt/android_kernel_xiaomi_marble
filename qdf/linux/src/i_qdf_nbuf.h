@@ -508,7 +508,8 @@ enum qdf_proto_subtype  __qdf_nbuf_data_get_eapol_subtype(uint8_t *data);
 enum qdf_proto_subtype  __qdf_nbuf_data_get_arp_subtype(uint8_t *data);
 enum qdf_proto_subtype  __qdf_nbuf_data_get_icmp_subtype(uint8_t *data);
 enum qdf_proto_subtype  __qdf_nbuf_data_get_icmpv6_subtype(uint8_t *data);
-
+uint8_t __qdf_nbuf_data_get_ipv4_proto(uint8_t *data);
+uint8_t __qdf_nbuf_data_get_ipv6_proto(uint8_t *data);
 
 /**
  * __qdf_to_status() - OS to QDF status conversion
