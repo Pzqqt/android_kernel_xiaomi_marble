@@ -5685,6 +5685,13 @@ typedef enum {
 	WMI_VDEV_PARAM_DISABLE_DYN_BW_RTS,
 
 	/*
+	 * Per ssid (vdev) based ATF strict/fair scheduling policy
+	 * Param values are WMI_ATF_SSID_FAIR_SCHED or
+	 * WMI_ATF_SSID_STRICT_SCHED
+	 */
+	WMI_VDEV_PARAM_ATF_SSID_SCHED_POLICY,
+
+	/*
 	 * === ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
 	 * The below vdev param types are used for prototyping, and are
 	 * prone to change.
@@ -15511,6 +15518,9 @@ typedef struct {
 
 /* Expressed in 1 part in 1000 (permille) */
 #define WMI_ATF_DENOMINATION   1000
+
+#define WMI_ATF_SSID_FAIR_SCHED     0   /** Fair ATF scheduling for vdev */
+#define WMI_ATF_SSID_STRICT_SCHED   1   /** Strict ATF scheduling for vdev */
 
 typedef struct {
 	/*
