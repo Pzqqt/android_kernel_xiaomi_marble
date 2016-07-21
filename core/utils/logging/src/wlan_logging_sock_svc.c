@@ -311,7 +311,8 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 
 	radio = cds_get_radio_index();
 
-	if (!cds_is_multicast_logging() || radio == -EINVAL) {
+	if (!cds_is_multicast_logging() || (radio == -EINVAL) ||
+		(!gwlan_logging.is_active)) {
 		/*
 		 * This is to make sure that we print the logs to kmsg console
 		 * when no logger app is running. This is also needed to
