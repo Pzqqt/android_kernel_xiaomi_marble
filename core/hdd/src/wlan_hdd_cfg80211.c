@@ -3328,7 +3328,7 @@ fail:
  *
  * Return: Success(0) or reason code for failure
  */
-static int32_t
+static int
 __hdd_cfg80211_get_station_cmd(struct wiphy *wiphy,
 			       struct wireless_dev *wdev,
 			       const void *data,
@@ -9465,8 +9465,8 @@ int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 	}
 
 	pRoamProfile = &pWextState->roamProfile;
-	qdf_mem_zero(&hdd_sta_ctx->conn_info,
-		     sizeof(hdd_sta_ctx->conn_info));
+	qdf_mem_zero(&hdd_sta_ctx->conn_info.conn_flag,
+		     sizeof(hdd_sta_ctx->conn_info.conn_flag));
 
 	if (pRoamProfile) {
 		hdd_station_ctx_t *pHddStaCtx;

@@ -168,12 +168,10 @@ ifneq ($(CONFIG_ROME_IF),sdio)
 	endif
 
 	# Flag to enable LRO (Large Receive Offload)
-	ifeq ($(CONFIG_CNSS_EOS), y)
-		ifeq ($(CONFIG_INET_LRO), y)
-			CONFIG_WLAN_LRO := y
-		else
-			CONFIG_WLAN_LRO := n
-		endif
+	ifeq ($(CONFIG_INET_LRO), y)
+		CONFIG_WLAN_LRO := y
+	else
+		CONFIG_WLAN_LRO := n
 	endif
 endif
 

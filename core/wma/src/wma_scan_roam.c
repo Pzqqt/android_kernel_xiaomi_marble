@@ -3260,61 +3260,6 @@ void wma_scan_cache_updated_ind(tp_wma_handle wma, uint8_t sessionId)
 
 #ifdef FEATURE_WLAN_EXTSCAN
 /**
- * wma_extscan_get_eventid_from_tlvtag() - map tlv tag to corresponding event id
- * @tag: WMI TLV tag
- *
- * Return:
- *	0 if TLV tag is invalid
- *	else return corresponding WMI event id
- */
-static int wma_extscan_get_eventid_from_tlvtag(uint32_t tag)
-{
-	uint32_t event_id;
-
-	switch (tag) {
-	case WMITLV_TAG_STRUC_wmi_extscan_start_stop_event_fixed_param:
-		event_id = WMI_EXTSCAN_START_STOP_EVENTID;
-		break;
-
-	case WMITLV_TAG_STRUC_wmi_extscan_operation_event_fixed_param:
-		event_id = WMI_EXTSCAN_OPERATION_EVENTID;
-		break;
-
-	case WMITLV_TAG_STRUC_wmi_extscan_table_usage_event_fixed_param:
-		event_id = WMI_EXTSCAN_TABLE_USAGE_EVENTID;
-		break;
-
-	case WMITLV_TAG_STRUC_wmi_extscan_cached_results_event_fixed_param:
-		event_id = WMI_EXTSCAN_CACHED_RESULTS_EVENTID;
-		break;
-
-	case WMITLV_TAG_STRUC_wmi_extscan_wlan_change_results_event_fixed_param:
-		event_id = WMI_EXTSCAN_WLAN_CHANGE_RESULTS_EVENTID;
-		break;
-
-	case WMITLV_TAG_STRUC_wmi_extscan_hotlist_match_event_fixed_param:
-		event_id = WMI_EXTSCAN_HOTLIST_MATCH_EVENTID;
-		break;
-
-	case WMITLV_TAG_STRUC_wmi_extscan_capabilities_event_fixed_param:
-		event_id = WMI_EXTSCAN_CAPABILITIES_EVENTID;
-		break;
-
-	case WMITLV_TAG_STRUC_wmi_extscan_hotlist_ssid_match_event_fixed_param:
-		event_id = WMI_EXTSCAN_HOTLIST_SSID_MATCH_EVENTID;
-		break;
-
-	default:
-		event_id = 0;
-		WMA_LOGE("%s: Unknown tag: %d", __func__, tag);
-		break;
-	}
-
-	WMA_LOGI("%s: For tag %d WMI event 0x%x", __func__, tag, event_id);
-	return event_id;
-}
-
-/**
  * wma_extscan_wow_event_callback() - extscan wow event callback
  * @handle: WMA handle
  * @event: event buffer
@@ -3326,77 +3271,53 @@ static int wma_extscan_get_eventid_from_tlvtag(uint32_t tag)
  * of event buffer is common tlv header, which is a combination
  * of tag (higher 2 bytes) and length (lower 2 bytes). The tag is used to
  * identify the event which triggered wow event.
+ * Payload is extracted and converted into generic tlv structure before
+ * being passed to this function.
  *
  * @Return: none
  */
 void wma_extscan_wow_event_callback(void *handle, void *event, uint32_t len)
 {
-	uint32_t id;
-	int tlv_ok_status = 0;
-	void *wmi_cmd_struct_ptr = NULL;
 	uint32_t tag = WMITLV_GET_TLVTAG(WMITLV_GET_HDR(event));
-
-	id = wma_extscan_get_eventid_from_tlvtag(tag);
-	if (!id) {
-		WMA_LOGE("%s: Invalid  Tag: %d", __func__, tag);
-		return;
-	}
-
-	tlv_ok_status = wmitlv_check_and_pad_event_tlvs(
-				handle, event, len, id,
-				&wmi_cmd_struct_ptr);
-	if (tlv_ok_status != 0) {
-		WMA_LOGE("%s: Invalid Tag: %d could not check and pad tlvs",
-			 __func__, tag);
-		return;
-	}
 
 	switch (tag) {
 	case WMITLV_TAG_STRUC_wmi_extscan_start_stop_event_fixed_param:
-		wma_extscan_start_stop_event_handler(handle,
-				wmi_cmd_struct_ptr, len);
+		wma_extscan_start_stop_event_handler(handle, event, len);
 		break;
 
 	case WMITLV_TAG_STRUC_wmi_extscan_operation_event_fixed_param:
-		wma_extscan_operations_event_handler(handle,
-				wmi_cmd_struct_ptr, len);
+		wma_extscan_operations_event_handler(handle, event, len);
 		break;
 
 	case WMITLV_TAG_STRUC_wmi_extscan_table_usage_event_fixed_param:
-		wma_extscan_table_usage_event_handler(handle,
-				wmi_cmd_struct_ptr, len);
+		wma_extscan_table_usage_event_handler(handle, event, len);
 		break;
 
 	case WMITLV_TAG_STRUC_wmi_extscan_cached_results_event_fixed_param:
-		wma_extscan_cached_results_event_handler(handle,
-				wmi_cmd_struct_ptr, len);
+		wma_extscan_cached_results_event_handler(handle, event, len);
 		break;
 
 	case WMITLV_TAG_STRUC_wmi_extscan_wlan_change_results_event_fixed_param:
-		wma_extscan_change_results_event_handler(handle,
-				wmi_cmd_struct_ptr, len);
+		wma_extscan_change_results_event_handler(handle, event, len);
 		break;
 
 	case WMITLV_TAG_STRUC_wmi_extscan_hotlist_match_event_fixed_param:
-		wma_extscan_hotlist_match_event_handler(handle,
-				wmi_cmd_struct_ptr, len);
+		wma_extscan_hotlist_match_event_handler(handle,	event, len);
 		break;
 
 	case WMITLV_TAG_STRUC_wmi_extscan_capabilities_event_fixed_param:
-		wma_extscan_capabilities_event_handler(handle,
-				wmi_cmd_struct_ptr, len);
+		wma_extscan_capabilities_event_handler(handle, event, len);
 		break;
 
 	case WMITLV_TAG_STRUC_wmi_extscan_hotlist_ssid_match_event_fixed_param:
 		wma_extscan_hotlist_ssid_match_event_handler(handle,
-				wmi_cmd_struct_ptr, len);
+							     event, len);
 		break;
 
 	default:
-		WMA_LOGE("%s: Unknown tag: %d", __func__, tag);
+		WMA_LOGE(FL("Unknown tag: %d"), tag);
 		break;
 	}
-	wmitlv_free_allocated_event_tlvs(id, &wmi_cmd_struct_ptr);
 
 	return;
 }

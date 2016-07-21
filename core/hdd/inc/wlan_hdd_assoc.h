@@ -99,6 +99,8 @@ typedef enum {
  * @ht_present: ht element present or not
  * @vht_present: vht element present or not
  * @hs20_present: hs20 element present or not
+ * @ht_op_present: ht operation present or not
+ * @vht_op_present: vht operation present or not
  */
 struct hdd_conn_flag {
 	uint8_t ht_present:1;
@@ -173,7 +175,7 @@ struct hdd_conn_flag {
  * @ht_caps: holds ht capabilities info
  * @vht_caps: holds vht capabilities info
  * @hs20vendor_ie: holds passpoint/hs20 info
- * @hdd_conn_flag: flag conn info params is present or not
+ * @conn_flag: flag conn info params is present or not
  * @roam_count: roaming counter
  * @signal: holds rssi info
  * @assoc_status_code: holds assoc fail reason

@@ -91,32 +91,6 @@ void cds_clear_driver_state(enum cds_driver_state);
 enum cds_driver_state cds_get_driver_state(void);
 
 /**
- * cds_get_u16()- get 16 bit data in little endian
- * @ptr: buffer that holds data
- *
- * Return: uint16_t data in little endian format
- */
-static inline uint16_t cds_get_u16(uint8_t *ptr)
-{
-	return ((uint16_t) (*(ptr+1) << 8)) |
-		((uint16_t) (*ptr));
-}
-
-/**
- * cds_get_u32()- get 32 bit data in little endian
- * @ptr: buffer that holds data
- *
- * Return: uint32_t data in little endian format
- */
-static inline uint32_t cds_get_u32(uint8_t *ptr)
-{
-	return (*(ptr+3) << 24) |
-		(*(ptr+2) << 16) |
-		(*(ptr+1) << 8) |
-		(*(ptr));
-}
-
-/**
  * cds_is_driver_loading() - Is driver load in progress
  *
  * Return: true if driver is loading and false otherwise.

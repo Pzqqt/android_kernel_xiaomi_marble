@@ -238,6 +238,8 @@ static void wma_set_default_tgt_config(tp_wma_handle wma_handle)
 	tgt_cfg.num_tids = (2 * (no_of_peers_supported + CFG_TGT_NUM_VDEV + 2));
 	tgt_cfg.scan_max_pending_req = wma_handle->max_scan;
 
+	WMI_RSRC_CFG_FLAG_MGMT_COMP_EVT_BUNDLE_SUPPORT_SET(tgt_cfg.flag1, 1);
+
 	WMITLV_SET_HDR(&tgt_cfg.tlv_header,
 		       WMITLV_TAG_STRUC_wmi_resource_config,
 		       WMITLV_GET_STRUCT_TLVLEN(wmi_resource_config));
@@ -4313,6 +4315,16 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 					WMI_MGMT_TX_COMPLETION_EVENTID,
 					wma_mgmt_tx_completion_handler,
 					WMA_RX_SERIALIZER_CTX);
+		if (status) {
+			WMA_LOGE("Failed to register MGMT over WMI completion handler");
+			return -EINVAL;
+		}
+
+		status = wmi_unified_register_event_handler(
+				wma_handle->wmi_handle,
+				WMI_MGMT_TX_BUNDLE_COMPLETION_EVENTID,
+				wma_mgmt_tx_bundle_completion_handler,
+				WMA_RX_SERIALIZER_CTX);
 		if (status) {
 			WMA_LOGE("Failed to register MGMT over WMI completion handler");
 			return -EINVAL;
