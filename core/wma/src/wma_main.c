@@ -5177,6 +5177,10 @@ void wma_set_wifi_start_packet_stats(void *wma_handle,
 	}
 
 	scn = cds_get_context(QDF_MODULE_ID_HIF);
+	if (scn == NULL) {
+		WMA_LOGE("%s: Invalid HIF handle", __func__);
+		return;
+	}
 
 	log_state = ATH_PKTLOG_ANI | ATH_PKTLOG_RCUPDATE | ATH_PKTLOG_RCFIND |
 		ATH_PKTLOG_RX | ATH_PKTLOG_TX | ATH_PKTLOG_TEXT;
