@@ -629,7 +629,7 @@ QDF_STATUS wmi_unified_nat_keepalive_en_cmd(void *wmi_hdl, uint8_t vdev_id);
 QDF_STATUS wmi_unified_csa_offload_enable(void *wmi_hdl, uint8_t vdev_id);
 
 QDF_STATUS wmi_unified_start_oem_data_cmd(void *wmi_hdl,
-			  uint8_t data_len,
+			  uint32_t data_len,
 			  uint8_t *data);
 
 QDF_STATUS wmi_unified_dfs_phyerr_filter_offload_en_cmd(void *wmi_hdl,

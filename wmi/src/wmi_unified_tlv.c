@@ -6774,7 +6774,7 @@ QDF_STATUS send_csa_offload_enable_cmd_tlv(wmi_unified_t wmi_handle,
  * Return: CDF status
  */
 QDF_STATUS send_start_oem_data_cmd_tlv(wmi_unified_t wmi_handle,
-			  uint8_t data_len,
+			  uint32_t data_len,
 			  uint8_t *data)
 {
 	wmi_buf_t buf;
