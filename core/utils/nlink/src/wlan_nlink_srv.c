@@ -377,7 +377,7 @@ int nl_srv_bcast(struct sk_buff *skb)
 		err = netlink_broadcast(nl_srv_sock, skb, 0,
 					WLAN_NLINK_MCAST_GRP_ID, flags);
 
-	if (err < 0) {
+	if ((err < 0) && (err != -ESRCH)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_WARN,
 			  "NLINK: netlink_broadcast failed err = %d", err);
 	}
