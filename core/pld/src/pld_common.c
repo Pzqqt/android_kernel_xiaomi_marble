@@ -48,7 +48,6 @@
 #define PLD_PCIE_REGISTERED BIT(0)
 #define PLD_SNOC_REGISTERED BIT(1)
 #define PLD_SDIO_REGISTERED BIT(2)
-#define PLD_BUS_MASK 0x7
 
 static struct pld_context *pld_ctx;
 
@@ -210,7 +209,7 @@ enum pld_bus_type pld_get_bus_type(struct device *dev)
  * device is online.
  *
  * Return: 0 for success
- *         pld_driver_state for errors
+ *         Non zero failure code for errors
  */
 int pld_register_driver(struct pld_driver_ops *ops)
 {
@@ -240,19 +239,36 @@ int pld_register_driver(struct pld_driver_ops *ops)
 
 	pld_context->ops = ops;
 
-	if (0 == pld_pcie_register_driver())
-		pld_context->pld_driver_state |= PLD_PCIE_REGISTERED;
-	if (0 == pld_snoc_register_driver())
-		pld_context->pld_driver_state |= PLD_SNOC_REGISTERED;
-	if (0 == pld_sdio_register_driver())
-		pld_context->pld_driver_state |= PLD_SDIO_REGISTERED;
-
-	if ((PLD_BUS_MASK & pld_context->pld_driver_state) != PLD_BUS_MASK) {
-		pr_err("driver falied to register, state %x\n",
-		       pld_context->pld_driver_state);
-		ret = pld_context->pld_driver_state;
+	ret = pld_pcie_register_driver();
+	if (ret) {
+		pr_err("Fail to register pcie driver\n");
+		goto fail_pcie;
 	}
+	pld_context->pld_driver_state |= PLD_PCIE_REGISTERED;
 
+	ret = pld_snoc_register_driver();
+	if (ret) {
+		pr_err("Fail to register snoc driver\n");
+		goto fail_snoc;
+	}
+	pld_context->pld_driver_state |= PLD_SNOC_REGISTERED;
+
+	ret = pld_sdio_register_driver();
+	if (ret) {
+		pr_err("Fail to register sdio driver\n");
+		goto fail_sdio;
+	}
+	pld_context->pld_driver_state |= PLD_SDIO_REGISTERED;
+
+	return ret;
+
+fail_sdio:
+	pld_snoc_unregister_driver();
+fail_snoc:
+	pld_pcie_unregister_driver();
+fail_pcie:
+	pld_context->pld_driver_state = 0;
+	pld_context->ops = NULL;
 out:
 	return ret;
 }
