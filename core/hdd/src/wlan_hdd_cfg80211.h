@@ -269,6 +269,7 @@ typedef enum {
  *	indicate stop request/response of the P2P Listen Offload function in
  *	device. As an event, it indicates either the feature stopped after it
  *	was already running or feature has actually failed to start.
+ * @QCA_NL80211_VENDOR_SUBCMD_GET_STATION: send BSS Information
  */
 
 enum qca_nl80211_vendor_subcmds {
@@ -392,9 +393,154 @@ enum qca_nl80211_vendor_subcmds {
 	QCA_NL80211_VENDOR_SUBCMD_SET_SAP_CONFIG  = 118,
 	QCA_NL80211_VENDOR_SUBCMD_TSF = 119,
 	QCA_NL80211_VENDOR_SUBCMD_WISA = 120,
+	QCA_NL80211_VENDOR_SUBCMD_GET_STATION = 121,
 	QCA_NL80211_VENDOR_SUBCMD_P2P_LISTEN_OFFLOAD_START = 122,
 	QCA_NL80211_VENDOR_SUBCMD_P2P_LISTEN_OFFLOAD_STOP = 123,
 };
+
+/**
+ * enum qca_wlan_vendor_attr_get_station - Sub commands used by
+ * QCA_NL80211_VENDOR_SUBCMD_GET_STATION to get the corresponding
+ * station information. The information obtained through these
+ * commands signify the current info in connected state and
+ * latest cached information during the connected state , if queried
+ * when in disconnected state.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO: bss info
+ * @QCA_WLAN_VENDOR_ATTR_GET_STATION_ASSOC_FAIL_REASON: assoc fail reason
+ */
+enum qca_wlan_vendor_attr_get_station {
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INVALID = 0,
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO,
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_ASSOC_FAIL_REASON,
+
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_MAX =
+		QCA_WLAN_VENDOR_ATTR_GET_STATION_AFTER_LAST - 1,
+};
+
+/**
+ * enum qca_wlan_802_11_mode - dot11 mode
+ * @QCA_WLAN_802_11_MODE_INVALID: Invalid dot11 mode
+ * @QCA_WLAN_802_11_MODE_11A: mode A
+ * @QCA_WLAN_802_11_MODE_11B: mode B
+ * @QCA_WLAN_802_11_MODE_11G: mode G
+ * @QCA_WLAN_802_11_MODE_11N: mode N
+ * @QCA_WLAN_802_11_MODE_11AC: mode AC
+ */
+enum qca_wlan_802_11_mode {
+	QCA_WLAN_802_11_MODE_INVALID,
+	QCA_WLAN_802_11_MODE_11A,
+	QCA_WLAN_802_11_MODE_11B,
+	QCA_WLAN_802_11_MODE_11G,
+	QCA_WLAN_802_11_MODE_11N,
+	QCA_WLAN_802_11_MODE_11AC,
+};
+
+/**
+ * enum qca_wlan_auth_type - Authentication key management type
+ * @QCA_WLAN_AUTH_TYPE_INVALID: Invalid key management type
+ * @QCA_WLAN_AUTH_TYPE_OPEN: Open key
+ * @QCA_WLAN_AUTH_TYPE_SHARED: shared key
+ * @QCA_WLAN_AUTH_TYPE_WPA: wpa key
+ * @QCA_WLAN_AUTH_TYPE_WPA_PSK: wpa psk key
+ * @QCA_WLAN_AUTH_TYPE_WPA_NONE: wpa none key
+ * @QCA_WLAN_AUTH_TYPE_RSN: rsn key
+ * @QCA_WLAN_AUTH_TYPE_RSN_PSK: rsn psk key
+ * @QCA_WLAN_AUTH_TYPE_FT: ft key
+ * @QCA_WLAN_AUTH_TYPE_FT_PSK: ft psk key
+ * @QCA_WLAN_AUTH_TYPE_SHA256: shared 256 key
+ * @QCA_WLAN_AUTH_TYPE_SHA256_PSK: shared 256 psk
+ * @QCA_WLAN_AUTH_TYPE_WAI: wai key
+ * @QCA_WLAN_AUTH_TYPE_WAI_PSK wai psk key
+ * @QCA_WLAN_AUTH_TYPE_CCKM_WPA: cckm wpa key
+ * @QCA_WLAN_AUTH_TYPE_CCKM_RSN: cckm rsn key
+ */
+enum qca_wlan_auth_type {
+	QCA_WLAN_AUTH_TYPE_INVALID,
+	QCA_WLAN_AUTH_TYPE_OPEN,
+	QCA_WLAN_AUTH_TYPE_SHARED,
+	QCA_WLAN_AUTH_TYPE_WPA,
+	QCA_WLAN_AUTH_TYPE_WPA_PSK,
+	QCA_WLAN_AUTH_TYPE_WPA_NONE,
+	QCA_WLAN_AUTH_TYPE_RSN,
+	QCA_WLAN_AUTH_TYPE_RSN_PSK,
+	QCA_WLAN_AUTH_TYPE_FT,
+	QCA_WLAN_AUTH_TYPE_FT_PSK,
+	QCA_WLAN_AUTH_TYPE_SHA256,
+	QCA_WLAN_AUTH_TYPE_SHA256_PSK,
+	QCA_WLAN_AUTH_TYPE_WAI,
+	QCA_WLAN_AUTH_TYPE_WAI_PSK,
+	QCA_WLAN_AUTH_TYPE_CCKM_WPA,
+	QCA_WLAN_AUTH_TYPE_CCKM_RSN,
+	QCA_WLAN_AUTH_TYPE_AUTOSWITCH,
+};
+
+/**
+ * enum qca_wlan_vendor_attr_get_station_info - Station Info queried
+ * through QCA_NL80211_VENDOR_SUBCMD_GET_STATION.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_INVALID: Invalid Attribute
+ * @QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_LINK_STANDARD_NL80211_ATTR:
+ *  Get the standard NL attributes Nested with this attribute.
+ *  Ex : Query BW , BITRATE32 , NSS , Signal , Noise of the Link -
+ *  NL80211_ATTR_SSID / NL80211_ATTR_SURVEY_INFO (Connected Channel) /
+ *  NL80211_ATTR_STA_INFO
+ * @QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AP_STANDARD_NL80211_ATTR:
+ *  Get the standard NL attributes Nested with this attribute.
+ *  Ex : Query HT/VHT Capability advertized by the AP.
+ *  NL80211_ATTR_VHT_CAPABILITY / NL80211_ATTR_HT_CAPABILITY
+ * @QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_ROAM_COUNT:
+ *  Number of successful Roam attempts before a
+ *  disconnect, Unsigned 32 bit value
+ * @QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AKM:
+ *  Authentication Key Management Type used for the connected session.
+ *  Signified by enum qca_wlan_auth_type
+ * @QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_802_11_MODE: 802.11 Mode of the
+ *  connected Session, signified by enum qca_wlan_802_11_mode
+ * @QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AP_HS20_INDICATION:
+ *  HS20 Indication Element
+ * @QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_ASSOC_FAIL_REASON:
+ *  Status Code Corresponding to the Association Failure.
+ *  Unsigned 32 bit value.
+ */
+enum qca_wlan_vendor_attr_get_station_info {
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_INVALID = 0,
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_LINK_STANDARD_NL80211_ATTR,
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AP_STANDARD_NL80211_ATTR,
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_ROAM_COUNT,
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AKM,
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_802_11_MODE,
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AP_HS20_INDICATION,
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_HT_OPERATION,
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_VHT_OPERATION,
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_ASSOC_FAIL_REASON,
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_MAX =
+		QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AFTER_LAST - 1,
+};
+
+/* define short names for get station info attributes */
+#define LINK_INFO_STANDARD_NL80211_ATTR \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_LINK_STANDARD_NL80211_ATTR
+#define AP_INFO_STANDARD_NL80211_ATTR \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AP_STANDARD_NL80211_ATTR
+#define INFO_ROAM_COUNT \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_ROAM_COUNT
+#define INFO_AKM \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AKM
+#define WLAN802_11_MODE \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_802_11_MODE
+#define AP_INFO_HS20_INDICATION \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AP_HS20_INDICATION
+#define HT_OPERATION \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_HT_OPERATION
+#define VHT_OPERATION \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_VHT_OPERATION
+#define INFO_ASSOC_FAIL_REASON \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_ASSOC_FAIL_REASON
 
 /**
  * enum qca_nl80211_vendor_subcmds_index - vendor sub commands index
