@@ -516,7 +516,7 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 	uint32_t cfg, payload, bytes, status;
 	tpSirMacMgmtHdr mac_hdr;
 	uint8_t *frame;
-	void *packet;
+	void *packet = NULL;
 	QDF_STATUS qdf_status;
 	uint32_t addn_ie_present = false;
 
