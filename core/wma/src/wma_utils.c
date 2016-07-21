@@ -1550,8 +1550,10 @@ int wma_stats_event_handler(void *handle, uint8_t *cmd_param_info,
 
 	rssi_event = (wmi_per_chain_rssi_stats *) param_buf->chain_stats;
 	if (rssi_event) {
-		if ((rssi_event->tlv_header & 0xFFFF0000) >> 16 ==
-				WMITLV_TAG_STRUC_wmi_per_chain_rssi_stats) {
+		if (((rssi_event->tlv_header & 0xFFFF0000) >> 16 ==
+			  WMITLV_TAG_STRUC_wmi_per_chain_rssi_stats) &&
+			  ((rssi_event->tlv_header & 0x0000FFFF) ==
+			  WMITLV_GET_STRUCT_TLVLEN(wmi_per_chain_rssi_stats))) {
 			WMA_LOGD("%s: num_rssi_stats %u", __func__,
 				rssi_event->num_per_chain_rssi_stats);
 			if (rssi_event->num_per_chain_rssi_stats > 0) {
