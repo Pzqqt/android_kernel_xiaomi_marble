@@ -3471,8 +3471,7 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			wireless_send_event(adapter->dev, SIOCGIWAP, &wrqu,
 					    NULL);
 		} else {
-			hdd_abort_mac_scan(hdd_ctx, adapter->sessionId,
-					   eCSR_SCAN_ABORT_DEFAULT);
+			wlan_hdd_scan_abort(adapter);
 		}
 		hdd_lro_disable(hdd_ctx, adapter);
 		wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
