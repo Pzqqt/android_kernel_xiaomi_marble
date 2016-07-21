@@ -1657,6 +1657,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	uint8_t MCSRates[SIZE_OF_BASIC_MCS_SET];
 	uint32_t MCSLeng = SIZE_OF_BASIC_MCS_SET;
 	uint16_t maxRate = 0;
+	int8_t snr = 0;
 	uint16_t myRate;
 	uint16_t currentRate = 0;
 	uint8_t maxSpeedMCS = 0;
@@ -1697,6 +1698,11 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 		return status;
 
 	wlan_hdd_get_rssi(pAdapter, &sinfo->signal);
+	wlan_hdd_get_snr(pAdapter, &snr);
+	pHddStaCtx->conn_info.signal = sinfo->signal;
+	pHddStaCtx->conn_info.noise =
+		pHddStaCtx->conn_info.signal - snr;
+
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
 	sinfo->filled |= STATION_INFO_SIGNAL;
 #else
@@ -2109,6 +2115,9 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 
 	sinfo->rx_bytes = pAdapter->stats.rx_bytes;
 	sinfo->rx_packets = pAdapter->stats.rx_packets;
+
+	qdf_mem_copy(&pHddStaCtx->conn_info.txrate,
+		     &sinfo->txrate, sizeof(sinfo->txrate));
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
 	sinfo->filled |= STATION_INFO_TX_BITRATE |

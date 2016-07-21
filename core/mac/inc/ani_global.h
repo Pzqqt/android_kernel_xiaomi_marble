@@ -28,12 +28,6 @@
 #ifndef _ANIGLOBAL_H
 #define _ANIGLOBAL_H
 
-/* Take care to avoid redefinition of this type, if it is */
-/* already defined in "halWmmApi.h" */
-#if !defined(_HALMAC_WMM_API_H)
-typedef struct sAniSirGlobal *tpAniSirGlobal;
-#endif
-
 #include "qdf_types.h"
 #include "sir_common.h"
 #include "ani_system_defs.h"

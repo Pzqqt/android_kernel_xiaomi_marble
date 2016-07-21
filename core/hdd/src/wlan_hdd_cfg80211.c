@@ -8905,6 +8905,7 @@ int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 	int status = 0;
 	hdd_wext_state_t *pWextState;
 	hdd_context_t *pHddCtx;
+	hdd_station_ctx_t *hdd_sta_ctx;
 	uint32_t roamId;
 	tCsrRoamProfile *pRoamProfile;
 	eCsrAuthType RSNAuthType;
@@ -8914,6 +8915,7 @@ int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 
 	pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
 	status = wlan_hdd_validate_context(pHddCtx);
 	if (status)
@@ -8925,6 +8927,8 @@ int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 	}
 
 	pRoamProfile = &pWextState->roamProfile;
+	qdf_mem_zero(&hdd_sta_ctx->conn_info,
+		     sizeof(hdd_sta_ctx->conn_info));
 
 	if (pRoamProfile) {
 		hdd_station_ctx_t *pHddStaCtx;

@@ -1393,6 +1393,12 @@ typedef struct tagCsrRoamInfo {
 		struct ndi_delete_rsp ndi_delete_params;
 	} ndp;
 #endif
+	tDot11fIEHTCaps ht_caps;
+	tDot11fIEVHTCaps vht_caps;
+	tDot11fIEhs20vendor_ie hs20vendor_ie;
+	tDot11fIEVHTOperation vht_operation;
+	tDot11fIEHTInfo ht_operation;
+	bool reassoc;
 } tCsrRoamInfo;
 
 typedef struct tagCsrFreqScanInfo {
