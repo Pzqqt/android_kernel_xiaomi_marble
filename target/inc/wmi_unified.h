@@ -349,6 +349,8 @@ typedef enum {
 	WMI_PDEV_SET_REORDER_TIMEOUT_VAL_CMDID,
 	/** WMI command for WOW gpio and type */
 	WMI_PDEV_SET_WAKEUP_CONFIG_CMDID,
+	/* Get current ANT's per chain's RSSI info */
+	WMI_PDEV_GET_ANTDIV_STATUS_CMDID,
 
 	/* VDEV (virtual device) specific commands */
 	/** vdev create */
@@ -453,6 +455,11 @@ typedef enum {
 	WMI_PEER_REORDER_QUEUE_REMOVE_CMDID,
 	/** specify a limit for rx A-MPDU block size */
 	WMI_PEER_SET_RX_BLOCKSIZE_CMDID,
+	/**
+	 * request peer antdiv info from FW. FW shall respond with
+	 * PEER_ANTDIV_INFO_EVENTID
+	 */
+	WMI_PEER_ANTDIV_INFO_REQ_CMDID,
 
 
 	/* beacon/management specific commands */
@@ -1064,6 +1071,8 @@ typedef enum {
 	WMI_PDEV_SET_HW_MODE_RESP_EVENTID,
 	WMI_PDEV_HW_MODE_TRANSITION_EVENTID,
 	WMI_PDEV_SET_MAC_CONFIG_RESP_EVENTID,
+	/** Report ANT DIV feature's status */
+	WMI_PDEV_ANTDIV_STATUS_EVENTID,
 
 	/* VDEV specific events */
 	/** VDEV started event in response to VDEV_START request */
@@ -1119,6 +1128,8 @@ typedef enum {
 	WMI_PEER_RATECODE_LIST_EVENTID,
 	WMI_WDS_PEER_EVENTID,
 	WMI_PEER_STA_PS_STATECHG_EVENTID,
+	/** Peer Ant Div Info Event with rssi per chain, etc */
+	WMI_PEER_ANTDIV_INFO_EVENTID,
 
 	/* beacon/mgmt specific events */
 	/** RX management frame. the entire frame is carried along with the event.  */
@@ -11112,6 +11123,69 @@ typedef struct {
 	 */
 } wmi_peer_info_event_fixed_param;
 
+/**
+ * WMI_PEER_ANTDIV_INFO_REQ_CMDID
+ * Request FW to provide peer info
+ */
+typedef struct {
+	/**
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_peer_antdiv_info_req_cmd_fixed_param
+	 */
+	A_UINT32 tlv_header;
+	/**
+	 * In order to get the peer antdiv info for a single peer, host shall
+	 * issue the peer_mac_address of that peer. For getting the
+	 * info all peers, the host shall issue 0xFFFFFFFF as the mac
+	 * address. The firmware will return the peer info for all the
+	 * peers on the specified vdev_id
+	 */
+	wmi_mac_addr peer_mac_address;
+	/** vdev id */
+	A_UINT32 vdev_id;
+} wmi_peer_antdiv_info_req_cmd_fixed_param;
+
+/** FW response with the peer antdiv info */
+typedef struct {
+	/** TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_peer_antdiv_info_event_fixed_param
+	 */
+	A_UINT32 tlv_header;
+	/** number of peers in peer_info */
+	A_UINT32 num_peers;
+	/** VDEV to which the peer belongs to */
+	A_UINT32 vdev_id;
+	/**
+	 * This TLV is followed by another TLV of array of structs
+	 * wmi_peer_antdiv_info peer_antdiv_info[];
+	 */
+} wmi_peer_antdiv_info_event_fixed_param;
+
+typedef struct {
+	/**
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_peer_antdiv_info
+	 */
+	A_UINT32 tlv_header;
+	/** mac addr of the peer */
+	wmi_mac_addr peer_mac_address;
+	/**
+	 * per chain rssi of the peer, for up to 8 chains.
+	 * Each chain's entry reports the RSSI for different bandwidths:
+	 * bits 7:0   -> primary 20 MHz
+	 * bits 15:8  -> secondary 20 MHz of  40 MHz channel (if applicable)
+	 * bits 23:16 -> secondary 40 MHz of  80 MHz channel (if applicable)
+	 * bits 31:24 -> secondary 80 MHz of 160 MHz channel (if applicable)
+	 * Each of these 8-bit RSSI reports is in dB units, with respect to
+	 * the noise floor.
+	 * 0x80 means invalid.
+	 * All unused bytes within used chain_rssi indices shall be
+	 * set to 0x80.
+	 * All unused chain_rssi indices shall be set to 0x80808080.
+	 */
+	A_INT32 chain_rssi[8];
+} wmi_peer_antdiv_info;
+
 /** FW response when tx failure count has reached threshold
  *  for a peer */
 typedef struct {
@@ -13230,6 +13304,50 @@ typedef struct {
 	 */
 	A_UINT32 pdev_id;
 } wmi_pdev_temperature_event_fixed_param;
+
+typedef enum {
+	ANTDIV_HW_CFG_STATUS,
+	ANTDIV_SW_CFG_STATUS,
+	ANTDIV_MAX_STATUS_TYPE_NUM
+} ANTDIV_STATUS_TYPE;
+
+typedef struct {
+	/**
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_pdev_get_antdiv_status_cmd_fixed_param
+	 */
+	A_UINT32 tlv_header;
+	/* Status event ID - see ANTDIV_STATUS_TYPE */
+	A_UINT32 status_event_id;
+	/**
+	 * pdev_id for identifying the MAC
+	 * See macros starting with WMI_PDEV_ID_ for values.
+	 */
+	A_UINT32 pdev_id;
+} wmi_pdev_get_antdiv_status_cmd_fixed_param;
+
+typedef struct {
+	/**
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_pdev_antdiv_status_event_fixed_param
+	 */
+	A_UINT32 tlv_header;
+	/* ANT DIV feature enabled or not */
+	A_UINT32 support;
+	A_UINT32 chain_num; /* how many chain supported */
+	/* how many ANT supported, 32 max */
+	A_UINT32 ant_num;
+	/**
+	 * Each entry is for a tx/rx chain, and contains a bitmap
+	 * identifying the antennas attached to that tx/rx chain.
+	 */
+	A_UINT32 selectable_ant_mask[8];
+	/**
+	 * pdev_id for identifying the MAC
+	 * See macros starting with WMI_PDEV_ID_ for values.
+	 */
+	A_UINT32 pdev_id;
+} wmi_pdev_antdiv_status_event_fixed_param;
 
 typedef struct {
 	A_UINT32 tlv_header;            /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_set_dhcp_server_offload_cmd_fixed_param */

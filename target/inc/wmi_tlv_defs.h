@@ -725,6 +725,11 @@ typedef enum {
 	WMITLV_TAG_STRUC_WMI_PDEV_SET_WAKEUP_CONFIG_CMDID_fixed_param,
 	WMITLV_TAG_STRUC_wmi_tlv_buf_len_param,
 	WMITLV_TAG_STRUC_wmi_service_available_event_fixed_param,
+	WMITLV_TAG_STRUC_wmi_peer_antdiv_info_req_cmd_fixed_param,
+	WMITLV_TAG_STRUC_wmi_peer_antdiv_info_event_fixed_param,
+	WMITLV_TAG_STRUC_wmi_peer_antdiv_info,
+	WMITLV_TAG_STRUC_wmi_pdev_get_antdiv_status_cmd_fixed_param,
+	WMITLV_TAG_STRUC_wmi_pdev_antdiv_status_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1021,6 +1026,8 @@ typedef enum {
 	OP(WMI_PDEV_SET_REORDER_TIMEOUT_VAL_CMDID) \
 	OP(WMI_PEER_SET_RX_BLOCKSIZE_CMDID) \
 	OP(WMI_PDEV_SET_WAKEUP_CONFIG_CMDID) \
+	OP(WMI_PEER_ANTDIV_INFO_REQ_CMDID) \
+	OP(WMI_PDEV_GET_ANTDIV_STATUS_CMDID) \
 	/* add new CMD_LIST elements above this line */
 
 /*
@@ -1175,6 +1182,8 @@ typedef enum {
 	OP(WMI_MGMT_TX_BUNDLE_COMPLETION_EVENTID) \
 	OP(WMI_READ_DATA_FROM_FLASH_EVENTID) \
 	OP(WMI_SERVICE_AVAILABLE_EVENTID) \
+	OP(WMI_PEER_ANTDIV_INFO_EVENTID) \
+	OP(WMI_PDEV_ANTDIV_STATUS_EVENTID) \
 	/* add new EVT_LIST elements above this line */
 
 /* TLV definitions of WMI commands */
@@ -2326,6 +2335,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_BATCH_SCAN_ENABLE_CMDID);
 
 WMITLV_CREATE_PARAM_STRUC(WMI_PEER_INFO_REQ_CMDID);
 
+#define WMITLV_TABLE_WMI_PEER_ANTDIV_INFO_REQ_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_peer_antdiv_info_req_cmd_fixed_param, \
+	wmi_peer_antdiv_info_req_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+
+WMITLV_CREATE_PARAM_STRUC(WMI_PEER_ANTDIV_INFO_REQ_CMDID);
+
 #define WMITLV_TABLE_WMI_RMC_SET_MODE_CMDID(id,op,buf,len)   \
 	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_rmc_set_mode_cmd_fixed_param, \
 		    wmi_rmc_set_mode_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
@@ -2533,6 +2548,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_D0_WOW_ENABLE_DISABLE_CMDID);
 #define WMITLV_TABLE_WMI_PDEV_GET_TEMPERATURE_CMDID(id,op,buf,len) \
 	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_get_temperature_cmd_fixed_param, wmi_pdev_get_temperature_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_GET_TEMPERATURE_CMDID);
+
+/* Pdev get ANT DIV feature status Cmd */
+#define WMITLV_TABLE_WMI_PDEV_GET_ANTDIV_STATUS_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_pdev_get_antdiv_status_cmd_fixed_param, wmi_pdev_get_antdiv_status_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_GET_ANTDIV_STATUS_CMDID);
 
 /* Set antenna diversity Cmd */
 #define WMITLV_TABLE_WMI_SET_ANTENNA_DIVERSITY_CMDID(id,op,buf,len) \
@@ -3443,6 +3463,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_AP_PS_EGAP_INFO_EVENTID);
 	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_info, peer_info, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PEER_INFO_EVENTID);
 
+#define WMITLV_TABLE_WMI_PEER_ANTDIV_INFO_EVENTID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_peer_antdiv_info_event_fixed_param, wmi_peer_antdiv_info_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_antdiv_info, peer_info, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PEER_ANTDIV_INFO_EVENTID);
+
 #define WMITLV_TABLE_WMI_PEER_TX_FAIL_CNT_THR_EVENTID(id,op,buf,len)											  \
 	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_tx_fail_cnt_thr_event_fixed_param, wmi_peer_tx_fail_cnt_thr_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PEER_TX_FAIL_CNT_THR_EVENTID);
@@ -3603,6 +3628,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_D0_WOW_DISABLE_ACK_EVENTID);
 #define WMITLV_TABLE_WMI_PDEV_TEMPERATURE_EVENTID(id,op,buf,len) \
 	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_temperature_event_fixed_param, wmi_pdev_temperature_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_TEMPERATURE_EVENTID);
+
+/* Pdev get ANT DIV feature status event */
+#define WMITLV_TABLE_WMI_PDEV_ANTDIV_STATUS_EVENTID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_pdev_antdiv_status_event_fixed_param, wmi_pdev_antdiv_status_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_ANTDIV_STATUS_EVENTID);
 
 /* mDNS offload stats event */
 #define WMITLV_TABLE_WMI_MDNS_STATS_EVENTID(id,op,buf,len) \
