@@ -5073,7 +5073,7 @@ static void csr_roam_join_handle_profile(tpAniSirGlobal mac_ctx,
 		else
 			ies_local = scan_result->Result.pvIes;
 
-		if (scan_result && !ies_local &&
+		if (scan_result && !ies_local && result &&
 			(!QDF_IS_STATUS_SUCCESS(
 					csr_get_parsed_bss_description_ies(
 						mac_ctx,
@@ -5083,20 +5083,22 @@ static void csr_roam_join_handle_profile(tpAniSirGlobal mac_ctx,
 			*roam_state = eCsrStopRoaming;
 			return;
 		}
-		roam_info_ptr->pBssDesc = &result->BssDescriptor;
+		if (result)
+			roam_info_ptr->pBssDesc = &result->BssDescriptor;
 		cmd->u.roamCmd.pLastRoamBss = roam_info_ptr->pBssDesc;
 		/* dont put uapsd_mask if BSS doesn't support uAPSD */
 		if (scan_result && cmd->u.roamCmd.roamProfile.uapsd_mask
 				&& CSR_IS_QOS_BSS(ies_local)
 				&& CSR_IS_UAPSD_BSS(ies_local)) {
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
-			acm_mask = sme_qos_get_acm_mask(mac_ctx,
+			if (result)
+				acm_mask = sme_qos_get_acm_mask(mac_ctx,
 					&result->BssDescriptor, ies_local);
 #endif /* WLAN_MDM_CODE_REDUCTION_OPT */
 		} else {
 			cmd->u.roamCmd.roamProfile.uapsd_mask = 0;
 		}
-		if (ies_local && !result->pvIes)
+		if (ies_local && result && !result->pvIes)
 			qdf_mem_free(ies_local);
 		roam_info_ptr->pProfile = profile;
 		session->bRefAssocStartCnt++;
@@ -5267,14 +5269,8 @@ static eCsrJoinState csr_roam_join_next_bss(tpAniSirGlobal mac_ctx,
 		roam_info_ptr = &roam_info;
 	roam_info_ptr->u.pConnectedProfile = &session->connectedProfile;
 
-	/*
-	 * result will be null if passed pRoamBssEntry is NULL, which
-	 * indicates we are done with all BSSs in list.
-	 */
-	if (result != NULL)
-		csr_roam_join_handle_profile(mac_ctx, session_id, cmd,
-					     roam_info_ptr, &roam_state,
-					     result, scan_result);
+	csr_roam_join_handle_profile(mac_ctx, session_id, cmd, roam_info_ptr,
+		&roam_state, result, scan_result);
 end:
 	if ((eCsrStopRoaming == roam_state) && CSR_IS_INFRASTRUCTURE(profile) &&
 		(session->bRefAssocStartCnt > 0)) {
