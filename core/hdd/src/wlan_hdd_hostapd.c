@@ -119,7 +119,7 @@ int hdd_sap_context_init(hdd_context_t *hdd_ctx)
 	qdf_wake_lock_create(&hdd_ctx->sap_wake_lock, "qcom_sap_wakelock");
 	qdf_spinlock_create(&hdd_ctx->sap_update_info_lock);
 
-	qdf_spinlock_create(&hdd_ctx->dfs_lock);
+	qdf_atomic_init(&hdd_ctx->dfs_radar_found);
 
 	return 0;
 }
@@ -219,8 +219,6 @@ void hdd_sap_context_destroy(hdd_context_t *hdd_ctx)
 
 	mutex_destroy(&hdd_ctx->sap_lock);
 	qdf_wake_lock_destroy(&hdd_ctx->sap_wake_lock);
-
-	qdf_spinlock_destroy(&hdd_ctx->dfs_lock);
 
 	qdf_spinlock_destroy(&hdd_ctx->sap_update_info_lock);
 
@@ -986,9 +984,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			}
 		}
 
-		qdf_spin_lock_bh(&pHddCtx->dfs_lock);
-		pHddCtx->dfs_radar_found = false;
-		qdf_spin_unlock_bh(&pHddCtx->dfs_lock);
+		qdf_atomic_set(&pHddCtx->dfs_radar_found, 0);
 
 		wlansap_get_dfs_ignore_cac(pHddCtx->hHal, &ignoreCAC);
 
@@ -1102,9 +1098,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			hdd_info("Sent CAC start to user space");
 		}
 
-		qdf_spin_lock_bh(&pHddCtx->dfs_lock);
-		pHddCtx->dfs_radar_found = false;
-		qdf_spin_unlock_bh(&pHddCtx->dfs_lock);
+		qdf_atomic_set(&pHddCtx->dfs_radar_found, 0);
 		break;
 	case eSAP_DFS_CAC_INTERRUPTED:
 		/*
@@ -1977,9 +1971,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 		}
 	}
 
-	qdf_spin_lock_bh(&pHddCtx->dfs_lock);
-	if (pHddCtx->dfs_radar_found == true) {
-		qdf_spin_unlock_bh(&pHddCtx->dfs_lock);
+	if (qdf_atomic_read(&pHddCtx->dfs_radar_found)) {
 		hdd_err("Channel switch in progress!!");
 		return -EBUSY;
 	}
@@ -1992,8 +1984,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 	 * once the channel change is completed and SAP will
 	 * post eSAP_START_BSS_EVENT success event to HDD.
 	 */
-	pHddCtx->dfs_radar_found = true;
-	qdf_spin_unlock_bh(&pHddCtx->dfs_lock);
+	qdf_atomic_set(&pHddCtx->dfs_radar_found, 1);
 	/*
 	 * Post the Channel Change request to SAP.
 	 */
@@ -2016,9 +2007,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 		 * radar found flag and also restart the netif
 		 * queues.
 		 */
-		qdf_spin_lock_bh(&pHddCtx->dfs_lock);
-		pHddCtx->dfs_radar_found = false;
-		qdf_spin_unlock_bh(&pHddCtx->dfs_lock);
+		qdf_atomic_set(&pHddCtx->dfs_radar_found, 0);
 
 		ret = -EINVAL;
 	}
@@ -2811,13 +2800,13 @@ static __iw_softap_setparam(struct net_device *dev,
 
 		hdd_notice("Set QCASAP_SET_RADAR_CMD val %d", set_value);
 
-		if (!pHddCtx->dfs_radar_found && isDfsch) {
+		if (!qdf_atomic_read(&pHddCtx->dfs_radar_found) && isDfsch) {
 			ret = wma_cli_set_command(pHostapdAdapter->sessionId,
 						  WMA_VDEV_DFS_CONTROL_CMDID,
 						  set_value, VDEV_CMD);
 		} else {
 			hdd_err("Ignore, radar_found: %d,  dfs_channel: %d",
-			       pHddCtx->dfs_radar_found, isDfsch);
+			       qdf_atomic_read(&pHddCtx->dfs_radar_found), isDfsch);
 		}
 		break;
 	}
