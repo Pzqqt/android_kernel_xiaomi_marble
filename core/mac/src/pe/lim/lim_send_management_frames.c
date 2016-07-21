@@ -2520,12 +2520,16 @@ end:
 QDF_STATUS lim_disassoc_tx_complete_cnf(tpAniSirGlobal pMac,
 					uint32_t txCompleteSuccess)
 {
+	lim_log(pMac, LOG1,
+		FL("txCompleteSuccess: %d"), txCompleteSuccess);
 	return lim_send_disassoc_cnf(pMac);
 }
 
 QDF_STATUS lim_deauth_tx_complete_cnf(tpAniSirGlobal pMac,
 				      uint32_t txCompleteSuccess)
 {
+	lim_log(pMac, LOG1,
+		FL("txCompleteSuccess: %d"), txCompleteSuccess);
 	return lim_send_deauth_cnf(pMac);
 }
 
