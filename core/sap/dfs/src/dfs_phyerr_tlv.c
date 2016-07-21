@@ -889,6 +889,19 @@ dfs_process_phyerr_bb_tlv(struct ath_dfs *dfs, void *buf, uint16_t datalen,
 				rs.radar_fft_ext80_inband_power;
 		e->rsu_version = rs.rsu_version;
 		e->peak_mag = rsfr.peak_mag;
+
+		/*
+		 * RSSI_COMB is not reliable indicator of RSSI
+		 * for extension80 when operating in 80p80
+		 * non-contiguous mode due to existing hardware
+		 * bug. Added workaround in software to use
+		 * pulse_rssi instead of RSSI_COMB.
+		 */
+
+		if ((dfs->ic->ic_curchan->ic_flags &
+			IEEE80211_CHAN_VHT80P80) &&
+			(rs.radar_80p80_segid == DFS_80P80_SEG1))
+			e->rssi =  rs.pulse_rssi;
 	}
 	/*
 	 * XXX TODO: add a "chirp detection enabled" capability or config

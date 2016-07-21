@@ -812,13 +812,20 @@ dfs_process_phyerr(struct ieee80211com *ic, void *buf, uint16_t datalen,
 						    rn_minrssithresh);
 					return;
 				}
-			} else {
-				if (e.rssi < dfs->dfs_rinfo.rn_minrssithresh ||
-				    e.dur > dfs->dfs_rinfo.rn_maxpulsedur) {
-					/* XXX TODO add a debug statement? */
-					dfs->ath_dfs_stats.rssi_discards++;
-					return;
-				}
+			} else if (e.rssi < dfs->dfs_rinfo.rn_minrssithresh ||
+					e.dur > dfs->dfs_rinfo.rn_maxpulsedur) {
+
+				QDF_TRACE(QDF_MODULE_ID_SAP,
+					QDF_TRACE_LEVEL_INFO,
+					"%s [%d] : Rejecting: dur = %d \
+					maxpulsedur = %d, rssi = %d \
+					minrssithresh = %d", __func__, __LINE__,
+					e.dur, dfs->dfs_rinfo.rn_maxpulsedur,
+					e.rssi,
+					dfs->dfs_rinfo.rn_minrssithresh);
+
+				dfs->ath_dfs_stats.rssi_discards++;
+				return;
 			}
 
 			/*
