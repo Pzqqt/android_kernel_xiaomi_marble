@@ -6624,7 +6624,7 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 	ol_txrx_peer_handle peer;
 	uint8_t *peer_mac_addr;
 	int ret = 0;
-	uint32_t *ch_mhz;
+	uint32_t *ch_mhz = NULL;
 	bool restore_last_peer = false;
 
 	if (!wma_handle || !wma_handle->wmi_handle) {
@@ -6639,12 +6639,14 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 			     sizeof(tTdlsPeerCapParams));
 	}
 
-	ch_mhz = qdf_mem_malloc(sizeof(uint32_t) *
-			 peerStateParams->peerCap.peerChanLen);
-	if (ch_mhz == NULL) {
-		WMA_LOGE("%s: memory allocation failed", __func__);
-		ret = -ENOMEM;
-		goto end_tdls_peer_state;
+	if (peerStateParams->peerCap.peerChanLen) {
+		ch_mhz = qdf_mem_malloc(sizeof(uint32_t) *
+				peerStateParams->peerCap.peerChanLen);
+		if (ch_mhz == NULL) {
+			WMA_LOGE("%s: memory allocation failed", __func__);
+			ret = -ENOMEM;
+			goto end_tdls_peer_state;
+		}
 	}
 
 	for (i = 0; i < peerStateParams->peerCap.peerChanLen; ++i) {
@@ -6658,12 +6660,10 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 				 ch_mhz)) {
 		WMA_LOGE("%s: failed to send tdls peer update state command",
 			 __func__);
-		qdf_mem_free(ch_mhz);
 		ret = -EIO;
 		goto end_tdls_peer_state;
 	}
 
-	qdf_mem_free(ch_mhz);
 	/* in case of teardown, remove peer from fw */
 	if (WMA_TDLS_PEER_STATE_TEARDOWN == peerStateParams->peerState) {
 		pdev = cds_get_context(QDF_MODULE_ID_TXRX);
@@ -6696,6 +6696,8 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 	}
 
 end_tdls_peer_state:
+	if (ch_mhz)
+		qdf_mem_free(ch_mhz);
 	if (peerStateParams)
 		qdf_mem_free(peerStateParams);
 	return ret;
