@@ -15986,6 +15986,14 @@ csr_update_stats(tpAniSirGlobal mac, uint8_t stats_type,
 		*stats += sizeof(tCsrPerStaStatsInfo);
 		*length -= sizeof(tCsrPerStaStatsInfo);
 		break;
+	case csr_per_chain_rssi_stats:
+		sms_log(mac, LOG2,
+			FL("csrRoamStatsRspProcessor:Per Chain RSSI stats"));
+		qdf_mem_copy((uint8_t *)&mac->roam.per_chain_rssi_stats,
+			*stats, sizeof(struct csr_per_chain_rssi_stats_info));
+		*stats += sizeof(struct csr_per_chain_rssi_stats_info);
+		*length -= sizeof(struct csr_per_chain_rssi_stats_info);
+		break;
 	default:
 		sms_log(mac, LOGW, FL("unknown stats type"));
 		break;
@@ -17753,6 +17761,14 @@ void csr_roam_report_statistics(tpAniSirGlobal pMac, uint32_t statsMask,
 					     perStaStatsInfo[staId],
 					     sizeof(tCsrPerStaStatsInfo));
 				pStats += sizeof(tCsrPerStaStatsInfo);
+				break;
+			case csr_per_chain_rssi_stats:
+				sms_log(pMac, LOG2, FL("Per Chain RSSI stats"));
+				qdf_mem_copy(pStats,
+				  (uint8_t *)&pMac->roam.per_chain_rssi_stats,
+				  sizeof(struct csr_per_chain_rssi_stats_info));
+				pStats += sizeof(
+					struct csr_per_chain_rssi_stats_info);
 				break;
 			default:
 				sms_log(pMac, LOGE,

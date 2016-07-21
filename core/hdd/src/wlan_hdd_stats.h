@@ -40,6 +40,8 @@
 /* LL stats get request time out value */
 #define WLAN_WAIT_TIME_LL_STATS 800
 
+#define WLAN_HDD_TGT_NOISE_FLOOR_DBM     (-96)
+
 /**
  * struct index_vht_data_rate_type - vht data rate type
  * @beacon_rate_index: Beacon rate index
@@ -189,6 +191,21 @@ int wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 				  struct net_device *dev, uint8_t *mac,
 				  struct station_info *sinfo);
 #endif
+
+/**
+ * wlan_hdd_cfg80211_dump_station() - dump station statistics
+ * @wiphy: Pointer to wiphy
+ * @dev: Pointer to network device
+ * @idx: variable to determine whether to get stats or not
+ * @mac: Pointer to mac
+ * @sinfo: Pointer to station info
+ *
+ * Return: 0 for success, non-zero for failure
+ */
+int wlan_hdd_cfg80211_dump_station(struct wiphy *wiphy,
+				struct net_device *dev,
+				int idx, u8 *mac,
+				struct station_info *sinfo);
 
 struct net_device_stats *hdd_get_stats(struct net_device *dev);
 

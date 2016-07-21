@@ -1650,6 +1650,9 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	int status, mode = 0, maxHtIdx;
 	struct index_vht_data_rate_type *supported_vht_mcs_rate;
 	struct index_data_rate_type *supported_mcs_rate;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
+	bool rssi_stats_valid = false;
+#endif
 
 	uint32_t vht_mcs_map;
 	enum eDataRate11ACMaxMcs vhtMaxMcs;
@@ -2128,6 +2131,35 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 			sinfo->txrate.mcs, sinfo->txrate.flags,
 			sinfo->tx_packets, sinfo->rx_packets);
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
+	sinfo->signal_avg = WLAN_HDD_TGT_NOISE_FLOOR_DBM;
+	for (i = 0; i < NUM_CHAINS_MAX; i++) {
+		sinfo->chain_signal_avg[i] =
+			   pAdapter->hdd_stats.per_chain_rssi_stats.rssi[i];
+		sinfo->chains |= 1 << i;
+		if (sinfo->chain_signal_avg[i] > sinfo->signal_avg &&
+				   sinfo->chain_signal_avg[i] != 0)
+			sinfo->signal_avg = sinfo->chain_signal_avg[i];
+
+		hdd_info("RSSI for chain %d, vdev_id %d is %d",
+			i, pAdapter->sessionId, sinfo->chain_signal_avg[i]);
+
+		if (!rssi_stats_valid && sinfo->chain_signal_avg[i])
+			rssi_stats_valid = true;
+	}
+
+	if (rssi_stats_valid) {
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
+		sinfo->filled |= STATION_INFO_CHAIN_SIGNAL_AVG;
+		sinfo->filled |= STATION_INFO_SIGNAL_AVG;
+#else
+		sinfo->filled |= BIT(NL80211_STA_INFO_CHAIN_SIGNAL_AVG);
+		sinfo->filled |= BIT(NL80211_STA_INFO_SIGNAL_AVG);
+#endif
+	}
+#endif
+
+
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_GET_STA,
 			 pAdapter->sessionId, maxRate));
@@ -2160,6 +2192,54 @@ int wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	ret = __wlan_hdd_cfg80211_get_station(wiphy, dev, mac, sinfo);
 	cds_ssr_unprotect(__func__);
 
+	return ret;
+}
+
+/**
+ * __wlan_hdd_cfg80211_dump_station() - dump station statistics
+ * @wiphy: Pointer to wiphy
+ * @dev: Pointer to network device
+ * @idx: variable to determine whether to get stats or not
+ * @mac: Pointer to mac
+ * @sinfo: Pointer to station info
+ *
+ * Return: 0 for success, non-zero for failure
+ */
+static int __wlan_hdd_cfg80211_dump_station(struct wiphy *wiphy,
+				struct net_device *dev,
+				int idx, u8 *mac,
+				struct station_info *sinfo)
+{
+	hdd_context_t *hdd_ctx = (hdd_context_t *) wiphy_priv(wiphy);
+
+	hdd_debug("%s: idx %d", __func__, idx);
+	if (idx != 0)
+		return -ENOENT;
+	qdf_mem_copy(mac, hdd_ctx->config->intfMacAddr[0].bytes,
+				QDF_MAC_ADDR_SIZE);
+	return __wlan_hdd_cfg80211_get_station(wiphy, dev, mac, sinfo);
+}
+
+/**
+ * wlan_hdd_cfg80211_dump_station() - dump station statistics
+ * @wiphy: Pointer to wiphy
+ * @dev: Pointer to network device
+ * @idx: variable to determine whether to get stats or not
+ * @mac: Pointer to mac
+ * @sinfo: Pointer to station info
+ *
+ * Return: 0 for success, non-zero for failure
+ */
+int wlan_hdd_cfg80211_dump_station(struct wiphy *wiphy,
+				struct net_device *dev,
+				int idx, u8 *mac,
+				struct station_info *sinfo)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_dump_station(wiphy, dev, idx, mac, sinfo);
+	cds_ssr_unprotect(__func__);
 	return ret;
 }
 

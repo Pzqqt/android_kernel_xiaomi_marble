@@ -1522,6 +1522,16 @@ typedef struct tagCsrPerStaStatsInfo {
 	uint32_t tx_mpdu_in_ampdu_cnt;
 } tCsrPerStaStatsInfo;
 
+/**
+ * struct csr_per_chain_rssi_stats_info - stores chain rssi
+ * @rssi: array containing rssi for all chains
+ * @peer_mac_addr: peer mac address
+ */
+struct csr_per_chain_rssi_stats_info {
+	int8_t rssi[NUM_CHAINS_MAX];
+	tSirMacAddr peer_mac_addr;
+};
+
 typedef struct tagCsrRoamSetKey {
 	eCsrEncryptionType encType;
 	tAniKeyDirection keyDirection;  /* Tx, Rx or Tx-and-Rx */

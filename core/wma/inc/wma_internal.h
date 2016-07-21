@@ -55,12 +55,14 @@
 #define FW_PDEV_STATS_SET 0x1
 #define FW_VDEV_STATS_SET 0x2
 #define FW_PEER_STATS_SET 0x4
-#define FW_STATS_SET 0x7
+#define FW_RSSI_PER_CHAIN_STATS_SET 0x8
+#define FW_STATS_SET 0xf
 
 /*AR9888/AR6320  noise floor approx value
  * similar to the mentioned the WMA
  */
 #define WMA_TGT_NOISE_FLOOR_DBM (-96)
+#define WMA_TGT_RSSI_INVALID      96
 
 /*
  * Make sure that link monitor and keep alive
