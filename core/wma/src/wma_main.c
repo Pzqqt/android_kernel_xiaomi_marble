@@ -4570,16 +4570,20 @@ static void wma_populate_soc_caps(t_wma_handle *wma_handle,
 	 * first thing to do is to get how many number of hw modes are
 	 * supported and populate in wma_handle global structure
 	 */
+	if (NULL == param_buf->soc_hw_mode_caps) {
+		WMA_LOGE("%s: Invalid number of hw modes", __func__);
+		return;
+	}
+
 	qdf_mem_copy(&phy_caps->num_hw_modes,
 			param_buf->soc_hw_mode_caps,
 			sizeof(WMI_SOC_MAC_PHY_HW_MODE_CAPS));
 	if (0 == phy_caps->num_hw_modes.num_hw_modes) {
-		WMA_LOGE("%s: Invalid number of hw modes", __func__);
+		WMA_LOGE("%s: Number of hw modes is zero", __func__);
 		return;
-	} else {
-		WMA_LOGI("%s: Given number of hw modes[%d]",
-			 __func__, phy_caps->num_hw_modes.num_hw_modes);
 	}
+	WMA_LOGI("%s: Given number of hw modes[%d]",
+		 __func__, phy_caps->num_hw_modes.num_hw_modes);
 
 	/*
 	 * next thing is to allocate the memory to map hw mode to phy/mac caps
