@@ -518,7 +518,7 @@ QDF_STATUS (*send_wow_sta_ra_filter_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_nat_keepalive_en_cmd)(wmi_unified_t wmi_handle, uint8_t vdev_id);
 
 QDF_STATUS (*send_start_oem_data_cmd)(wmi_unified_t wmi_handle,
-			  uint8_t data_len,
+			  uint32_t data_len,
 			  uint8_t *data);
 
 QDF_STATUS
