@@ -290,9 +290,6 @@ typedef struct sLimTimers {
 	/* CNF_WAIT timer */
 	TX_TIMER *gpLimCnfWaitTimer;
 
-	/* Send Disassociate frame threshold parameters */
-	TX_TIMER gLimSendDisassocFrameThresholdTimer;
-
 	TX_TIMER gLimAddtsRspTimer;     /* max wait for a response */
 
 	/* Update OLBC Cache Timer */
@@ -673,10 +670,6 @@ typedef struct sAniSirLim {
 
 	/* Place holder for Pre-authentication node list */
 	struct tLimPreAuthNode *pLimPreAuthList;
-
-	/* Send Disassociate frame threshold parameters */
-	uint16_t gLimDisassocFrameThreshold;
-	uint16_t gLimDisassocFrameCredit;
 
 	/* Assoc or ReAssoc Response Data/Frame */
 	void *gLimAssocResponseData;

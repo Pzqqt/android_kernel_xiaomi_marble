@@ -83,7 +83,6 @@ void limReassocFailureTimerHandler(void *, uint32_t);
 
 void lim_deactivate_and_change_timer(tpAniSirGlobal, uint32_t);
 void limDummyPktExpTimerHandler(void *, uint32_t);
-void lim_send_disassoc_frame_threshold_handler(void *, uint32_t);
 void lim_cnf_wait_tmer_handler(void *, uint32_t);
 void lim_deactivate_and_change_per_sta_id_timer(tpAniSirGlobal, uint32_t, uint16_t);
 void lim_activate_cnf_timer(tpAniSirGlobal, uint16_t, tpPESession);

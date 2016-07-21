@@ -1656,8 +1656,6 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	case SIR_LIM_PROBE_HB_FAILURE_TIMEOUT:
 		lim_handle_heart_beat_failure_timeout(mac_ctx);
 		break;
-	case SIR_LIM_HASH_MISS_THRES_TIMEOUT:
-		mac_ctx->lim.gLimDisassocFrameCredit = 0;
 		break;
 	case SIR_LIM_CNF_WAIT_TIMEOUT:
 		/* Does not receive CNF or dummy packet */

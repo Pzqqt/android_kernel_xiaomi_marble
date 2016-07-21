@@ -285,11 +285,6 @@ static void __lim_init_assoc_vars(tpAniSirGlobal pMac)
 	/* Place holder for Pre-authentication node list */
 	pMac->lim.pLimPreAuthList = NULL;
 
-	/* Send Disassociate frame threshold parameters */
-	pMac->lim.gLimDisassocFrameThreshold =
-		LIM_SEND_DISASSOC_FRAME_THRESHOLD;
-	pMac->lim.gLimDisassocFrameCredit = 0;
-
 	/* One cache for each overlap and associated case. */
 	qdf_mem_set(pMac->lim.protStaOverlapCache,
 		    sizeof(tCacheParams) * LIM_PROT_STA_OVERLAP_CACHE_SIZE, 0);

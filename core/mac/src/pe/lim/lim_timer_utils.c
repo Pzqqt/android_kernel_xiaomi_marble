@@ -265,20 +265,6 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 		if (false == lim_create_non_ap_timers(pMac))
 			goto err_timer;
 
-	cfgValue = SYS_MS_TO_TICKS(LIM_HASH_MISS_TIMER_MS);
-
-	if (tx_timer_create(pMac,
-		&pMac->lim.limTimers.gLimSendDisassocFrameThresholdTimer,
-		"Disassoc throttle TIMEOUT",
-		lim_send_disassoc_frame_threshold_handler,
-		SIR_LIM_HASH_MISS_THRES_TIMEOUT, cfgValue, cfgValue,
-		TX_AUTO_ACTIVATE) != TX_SUCCESS) {
-		lim_log(pMac, LOGP,
-			FL("create Disassociate throttle timer failed"));
-		goto err_timer;
-	}
-	PELOG1(lim_log(pMac, LOG1, FL("Created Disassociate throttle timer "));)
-
 	/* Create all CNF_WAIT Timers upfront */
 	if (wlan_cfg_get_int(pMac, WNI_CFG_WT_CNF_TIMEOUT, &cfgValue)
 		!= eSIR_SUCCESS) {
@@ -409,8 +395,6 @@ err_timer:
 	while (((int32_t)-- i) >= 0) {
 		tx_timer_delete(&pMac->lim.limTimers.gpLimCnfWaitTimer[i]);
 	}
-	tx_timer_delete(&pMac->lim.limTimers.
-			gLimSendDisassocFrameThresholdTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimProbeAfterHBTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimAuthFailureTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimAddtsRspTimer);
@@ -1218,41 +1202,6 @@ void lim_activate_auth_rsp_timer(tpAniSirGlobal pMac, tLimPreAuthNode *pAuthNode
 		/* Log error */
 		lim_log(pMac, LOGP, FL("could not activate auth rsp timer"));
 	}
-}
-
-/**
- * lim_send_disassoc_frame_threshold_handler()
- *
- ***FUNCTION:
- *        This function reloads the credit to the send disassociate frame bucket
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- *
- ***NOTE:
- * NA
- *
- * @param
- *
- * @return None
- */
-
-void lim_send_disassoc_frame_threshold_handler(void *pMacGlobal, uint32_t param)
-{
-	tSirMsgQ msg;
-	uint32_t statusCode;
-	tpAniSirGlobal pMac = (tpAniSirGlobal) pMacGlobal;
-
-	msg.type = SIR_LIM_HASH_MISS_THRES_TIMEOUT;
-	msg.bodyval = 0;
-	msg.bodyptr = NULL;
-
-	statusCode = lim_post_msg_api(pMac, &msg);
-	if (statusCode != eSIR_SUCCESS)
-		lim_log(pMac, LOGE,
-			FL("posting to LIM failed, reason=%d"), statusCode);
-
 }
 
 /**
