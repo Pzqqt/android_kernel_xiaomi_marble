@@ -189,7 +189,7 @@ void fill_report(hdd_context_t *hdd_ctx, char *title,
 		title, pcl_type_to_string(pcl_type));
 	if (chnl_1st_conn == 0)
 		snprintf(report[report_idx].first_persona,
-			MAX_ALLOWED_CHAR_IN_REPORT,
+			MAX_ALLOWED_CHAR_IN_REPORT, "%s",
 			device_mode_to_string(first_persona));
 	else
 		snprintf(report[report_idx].first_persona,
@@ -198,7 +198,7 @@ void fill_report(hdd_context_t *hdd_ctx, char *title,
 			device_mode_to_string(first_persona), chnl_1st_conn);
 	if (chnl_2nd_conn == 0)
 		snprintf(report[report_idx].second_persona,
-			MAX_ALLOWED_CHAR_IN_REPORT,
+			MAX_ALLOWED_CHAR_IN_REPORT, "%s",
 			device_mode_to_string(second_persona));
 	else
 		snprintf(report[report_idx].second_persona,
@@ -207,7 +207,7 @@ void fill_report(hdd_context_t *hdd_ctx, char *title,
 			device_mode_to_string(second_persona), chnl_2nd_conn);
 	if (chnl_3rd_conn == 0)
 		snprintf(report[report_idx].third_persona,
-			MAX_ALLOWED_CHAR_IN_REPORT,
+			MAX_ALLOWED_CHAR_IN_REPORT, "%s",
 			device_mode_to_string(third_persona));
 	else
 		snprintf(report[report_idx].third_persona,
@@ -217,13 +217,13 @@ void fill_report(hdd_context_t *hdd_ctx, char *title,
 
 	report[report_idx].status = status;
 	snprintf(report[report_idx].dbs_value,
-		MAX_ALLOWED_CHAR_IN_REPORT,
+		MAX_ALLOWED_CHAR_IN_REPORT, "%s",
 		wma_is_hw_dbs_capable() ? "enable" : "disable");
 	snprintf(report[report_idx].system_conf,
-		MAX_ALLOWED_CHAR_IN_REPORT,
+		MAX_ALLOWED_CHAR_IN_REPORT, "%s",
 		system_config_to_string(hdd_ctx->config->conc_system_pref));
 	snprintf(report[report_idx].result_code,
-		MAX_ALLOWED_CHAR_IN_REPORT,
+		MAX_ALLOWED_CHAR_IN_REPORT, "%s",
 		status ? "PASS" : "FAIL");
 	snprintf(report[report_idx].reason,
 		MAX_ALLOWED_CHAR_IN_REPORT,
