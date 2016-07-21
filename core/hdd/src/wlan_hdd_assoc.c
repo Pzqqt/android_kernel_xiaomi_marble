@@ -2906,6 +2906,13 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 						GFP_KERNEL);
 			}
 			hdd_clear_roam_profile_ie(pAdapter);
+		} else  if ((eCSR_ROAM_CANCELLED == roamStatus
+		    && !hddDisconInProgress)) {
+				cfg80211_connect_result(dev,
+						pWextState->req_bssId.bytes,
+						NULL, 0, NULL, 0,
+						WLAN_STATUS_UNSPECIFIED_FAILURE,
+						GFP_KERNEL);
 		}
 
 		if (pRoamInfo) {
@@ -2923,9 +2930,10 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 		/*
 		 * Set connection state to eConnectionState_NotConnected only
 		 * when CSR has completed operation - with a
-		 * ASSOCIATION_FAILURE status.
+		 * ASSOCIATION_FAILURE or eCSR_ROAM_CANCELLED status.
 		 */
-		if (eCSR_ROAM_ASSOCIATION_FAILURE == roamStatus
+		if (((eCSR_ROAM_ASSOCIATION_FAILURE == roamStatus) ||
+			(eCSR_ROAM_CANCELLED == roamStatus))
 		    && !hddDisconInProgress) {
 			hdd_conn_set_connection_state(pAdapter,
 					eConnectionState_NotConnected);
@@ -4771,6 +4779,8 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 			pRoamInfo->roamSynchInProgress = false;
 #endif
 		break;
+	case eCSR_ROAM_CANCELLED:
+		hdd_info("****eCSR_ROAM_CANCELLED****");
 	case eCSR_ROAM_ASSOCIATION_FAILURE:
 		qdf_ret_status = hdd_association_completion_handler(pAdapter,
 								    pRoamInfo,
