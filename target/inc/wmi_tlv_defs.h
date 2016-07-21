@@ -724,6 +724,7 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_peer_set_rx_blocksize_cmd_fixed_param,
 	WMITLV_TAG_STRUC_WMI_PDEV_SET_WAKEUP_CONFIG_CMDID_fixed_param,
 	WMITLV_TAG_STRUC_wmi_tlv_buf_len_param,
+	WMITLV_TAG_STRUC_wmi_service_available_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1173,6 +1174,7 @@ typedef enum {
 	OP(WMI_P2P_LISTEN_OFFLOAD_STOPPED_EVENTID) \
 	OP(WMI_MGMT_TX_BUNDLE_COMPLETION_EVENTID) \
 	OP(WMI_READ_DATA_FROM_FLASH_EVENTID) \
+	OP(WMI_SERVICE_AVAILABLE_EVENTID) \
 	/* add new EVT_LIST elements above this line */
 
 /* TLV definitions of WMI commands */
@@ -2944,6 +2946,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_REORDER_QUEUE_REMOVE_CMDID);
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_STRUC, wlan_host_mem_req, mem_reqs, WMITLV_SIZE_VAR) \
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, wlan_dbs_hw_mode_list, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_SERVICE_READY_EVENTID);
+
+/* service available event */
+#define WMITLV_TABLE_WMI_SERVICE_AVAILABLE_EVENTID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_service_available_event_fixed_param, wmi_service_available_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_SERVICE_AVAILABLE_EVENTID);
 
 /* Service Ready Extension event */
 #define WMITLV_TABLE_WMI_SERVICE_READY_EXT_EVENTID(id, op, buf, len) \

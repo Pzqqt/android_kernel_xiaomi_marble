@@ -1002,6 +1002,13 @@ typedef enum {
 	/** WMI is ready; after this event the wlan subsystem is initialized and can process commands. */
 	WMI_READY_EVENTID,
 
+	/**
+	 * Specify what WMI services the target supports
+	 * (for services beyond what fits in the WMI_SERVICE_READY_EVENT
+	 * message's wmi_service_bitmap)
+	 */
+	WMI_SERVICE_AVAILABLE_EVENTID,
+
 	/** Scan specific events */
 	WMI_SCAN_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_SCAN),
 
@@ -1897,6 +1904,26 @@ typedef struct {
 	 *     wlan_dbs_hw_mode_list[];
 	 */
 } wmi_service_ready_event_fixed_param;
+
+#define WMI_SERVICE_SEGMENT_BM_SIZE32 4 /* 4x A_UINT32 = 128 bits */
+typedef struct {
+	/**
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_service_available_event_fixed_param
+	 */
+	A_UINT32 tlv_header;
+	/**
+	 * The wmi_service_segment offset field specifies the position
+	 * within the logical bitmap of WMI service flags at which the
+	 * WMI service flags specified within this message begin.
+	 * Since the first 128 WMI service flags are specified within
+	 * the wmi_service_bitmap field of the WMI_SERVICE_READY_EVENT
+	 * message, the wmi_service_segment_offset value is expected to
+	 * be 128 or more.
+	 */
+	A_UINT32 wmi_service_segment_offset;
+	A_UINT32 wmi_service_segment_bitmap[WMI_SERVICE_SEGMENT_BM_SIZE32];
+} wmi_service_available_event_fixed_param;
 
 typedef struct {
 	/* TLV tag and len; tag equals
