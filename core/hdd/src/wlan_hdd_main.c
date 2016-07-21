@@ -77,6 +77,7 @@
 #ifdef MSM_PLATFORM
 #include <soc/qcom/subsystem_restart.h>
 #endif
+#include <soc/qcom/socinfo.h>
 #include <wlan_hdd_hostapd.h>
 #include <wlan_hdd_softap_tx_rx.h>
 #include "cfg_api.h"
@@ -1342,6 +1343,38 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 
 }
 
+/**
+ * hdd_generate_macaddr_auto() - Auto-generate mac address
+ * @hdd_ctx: Pointer to the HDD context
+ *
+ * Auto-generate mac address using device serial number.
+ * Keep the first 3 bytes of OUI as before and replace
+ * the last 3 bytes with the lower 3 bytes of serial number.
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+static int hdd_generate_macaddr_auto(hdd_context_t *hdd_ctx)
+{
+	unsigned int serialno = 0;
+	struct qdf_mac_addr mac_addr = {
+		{0x00, 0x0A, 0xF5, 0x00, 0x00, 0x00}
+	};
+
+	serialno = socinfo_get_serial_number();
+	if (serialno == 0)
+		return -EINVAL;
+
+	serialno &= 0x00ffffff;
+
+	mac_addr.bytes[3] = (serialno >> 16) & 0xff;
+	mac_addr.bytes[4] = (serialno >> 8) & 0xff;
+	mac_addr.bytes[5] = serialno & 0xff;
+
+	hdd_update_macaddr(hdd_ctx->config, mac_addr);
+	return 0;
+}
+
 void hdd_update_tgt_cfg(void *context, void *param)
 {
 	hdd_context_t *hdd_ctx = (hdd_context_t *) context;
@@ -1389,11 +1422,22 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	if (!qdf_is_macaddr_zero(&cfg->hw_macaddr)) {
 		hdd_update_macaddr(hdd_ctx->config, cfg->hw_macaddr);
 	} else {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL(
-			  "Invalid MAC passed from target, using MAC from ini file"
-			  MAC_ADDRESS_STR),
-		       MAC_ADDR_ARRAY(hdd_ctx->config->intfMacAddr[0].bytes));
+		static struct qdf_mac_addr default_mac_addr = {
+			{0x00, 0x0A, 0xF5, 0x89, 0x89, 0xFF}
+		};
+		if (qdf_is_macaddr_equal(&hdd_ctx->config->intfMacAddr[0],
+					 &default_mac_addr)) {
+			if (hdd_generate_macaddr_auto(hdd_ctx) != 0)
+				hdd_err("Fail to auto-generate MAC, using MAC from ini file "
+					MAC_ADDRESS_STR,
+					MAC_ADDR_ARRAY(hdd_ctx->config->
+						       intfMacAddr[0].bytes));
+		} else {
+			hdd_err("Invalid MAC passed from target, using MAC from ini file "
+				MAC_ADDRESS_STR,
+				MAC_ADDR_ARRAY(hdd_ctx->config->
+					       intfMacAddr[0].bytes));
+		}
 	}
 
 	hdd_ctx->target_fw_version = cfg->target_fw_version;
