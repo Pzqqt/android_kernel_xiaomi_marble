@@ -57,6 +57,7 @@
 
 #define NSS_1x1_MODE 1
 #define NSS_2x2_MODE 2
+#define MBO_IE_ASSOC_DISALLOWED_SUBATTR_ID 0x04
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 #define QCOM_VENDOR_IE_MCC_AVOID_CH 0x01
@@ -167,6 +168,10 @@ typedef struct sSirProbeRespBeacon {
 	uint8_t    is_ese_ver_ie_present;
 #endif
 	tDot11fIEOBSSScanParameters obss_scanparams;
+	bool MBO_IE_present;
+	uint8_t MBO_capability;
+	bool assoc_disallowed;
+	uint8_t assoc_disallowed_reason;
 } tSirProbeRespBeacon, *tpSirProbeRespBeacon;
 
 /* probe Request structure */

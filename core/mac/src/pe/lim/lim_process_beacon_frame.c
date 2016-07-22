@@ -105,6 +105,16 @@ lim_process_beacon_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		qdf_mem_free(bcn_ptr);
 		return;
 	}
+
+	if (bcn_ptr->assoc_disallowed) {
+		lim_log(mac_ctx, LOG1,
+				FL("Association disallowed in AP "MAC_ADDRESS_STR " Reason code %d"),
+				MAC_ADDR_ARRAY(mac_hdr->sa),
+				bcn_ptr->assoc_disallowed_reason);
+		qdf_mem_free(bcn_ptr);
+		return;
+	}
+
 	/*
 	 * during scanning, when any session is active, and
 	 * beacon/Pr belongs to one of the session, fill up the

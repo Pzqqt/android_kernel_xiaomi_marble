@@ -2413,6 +2413,12 @@ IE TimeAdvertisement (EID_TIME_ADVERTISEMENT)   // 8.4.2.63
     time_error[5];
 }
 
+IE MBO_IE (EID_VENDOR_SPECIFIC) OUI ( 0x50, 0x6F, 0x9A, 0x16 )
+{
+    mbo_cap[3];
+    assoc_disallowed[0..3];
+}
+
 const EID_RRM_BEACON_REPORTING     = 1;
 const EID_RRM_BCN_REPORTING_DETAIL = 2;
 
@@ -2951,6 +2957,7 @@ FRAME Beacon                              // C.f. Sec. 7.2.3.1
     OPTIE  ChannelSwitchWrapper;
     OPTIE  QComVendorIE;
     OPTIE  ESEVersion;
+    OPTIE  MBO_IE;
 } // End frame Beacon.
 
 // Ok, here's  the story on  Beacon1 & Beacon2.   We presumably beacon  a lot
@@ -3103,6 +3110,7 @@ FRAME BeaconIEs
     OPTIE  hs20vendor_ie;
     OPTIE  ChannelSwitchWrapper;
     OPTIE  QComVendorIE;
+    OPTIE  MBO_IE;
 } // End frame BeaconIEs.
 
 FRAME Disassociation                      // 7.3.3.3
@@ -3320,6 +3328,7 @@ FRAME ProbeResponse                       // 7.2.3.9
     OPTIE  ChannelSwitchWrapper;
     OPTIE  QComVendorIE;
     OPTIE  ESEVersion;
+    OPTIE  MBO_IE;
 } // End frame ProbeResponse.
 
 FRAME Authentication                      // 7.2.3.10

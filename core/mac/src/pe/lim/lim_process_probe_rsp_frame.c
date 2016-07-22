@@ -141,6 +141,16 @@ lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
 		qdf_mem_free(probe_rsp);
 		return;
 	}
+
+	if (probe_rsp->assoc_disallowed) {
+		lim_log(mac_ctx, LOG1,
+			FL("Association disallowed by AP "MAC_ADDRESS_STR " Reason code %d"),
+				MAC_ADDR_ARRAY(header->bssId),
+				probe_rsp->assoc_disallowed_reason);
+		qdf_mem_free(probe_rsp);
+		return;
+	}
+
 	lim_check_and_add_bss_description(mac_ctx, probe_rsp,
 			  rx_Packet_info, false, true);
 	/* To Support BT-AMP */
@@ -363,6 +373,16 @@ lim_process_probe_rsp_frame_no_session(tpAniSirGlobal mac_ctx,
 		qdf_mem_free(probe_rsp);
 		return;
 	}
+
+	if (probe_rsp->assoc_disallowed) {
+		lim_log(mac_ctx, LOG1,
+			FL("Association disallowed by AP "MAC_ADDRESS_STR " Reason code %d"),
+				MAC_ADDR_ARRAY(header->bssId),
+				probe_rsp->assoc_disallowed_reason);
+		qdf_mem_free(probe_rsp);
+		return;
+	}
+
 	lim_log(mac_ctx, LOG2, FL("Save this probe rsp in LFR cache"));
 	lim_check_and_add_bss_description(mac_ctx, probe_rsp,
 		  rx_packet_info, false, true);

@@ -2518,6 +2518,19 @@ tSirRetStatus sir_convert_probe_frame2_struct(tpAniSirGlobal pMac,
 				&pr->hs20vendor_ie.hs_id,
 				sizeof(pr->hs20vendor_ie.hs_id));
 	}
+	if (pr->MBO_IE.present) {
+		pProbeResp->MBO_IE_present = true;
+		pProbeResp->MBO_capability = pr->MBO_IE.mbo_cap[2];
+
+		if (pr->MBO_IE.num_assoc_disallowed &&
+			(pr->MBO_IE.assoc_disallowed[0] ==
+				 MBO_IE_ASSOC_DISALLOWED_SUBATTR_ID)) {
+			pProbeResp->assoc_disallowed = true;
+			pProbeResp->assoc_disallowed_reason =
+				pr->MBO_IE.assoc_disallowed[2];
+		}
+	}
+
 	qdf_mem_free(pr);
 	return eSIR_SUCCESS;
 
@@ -3695,6 +3708,20 @@ sir_parse_beacon_ie(tpAniSirGlobal pMac,
 				&pBies->hs20vendor_ie.hs_id,
 				sizeof(pBies->hs20vendor_ie.hs_id));
 	}
+
+	if (pBies->MBO_IE.present) {
+		pBeaconStruct->MBO_IE_present = true;
+		pBeaconStruct->MBO_capability = pBies->MBO_IE.mbo_cap[2];
+
+		if (pBies->MBO_IE.num_assoc_disallowed &&
+			(pBies->MBO_IE.assoc_disallowed[0] ==
+				 MBO_IE_ASSOC_DISALLOWED_SUBATTR_ID)) {
+			pBeaconStruct->assoc_disallowed = true;
+			pBeaconStruct->assoc_disallowed_reason =
+				pBies->MBO_IE.assoc_disallowed[2];
+		}
+	}
+
 	qdf_mem_free(pBies);
 	return eSIR_SUCCESS;
 } /* End sir_parse_beacon_ie. */
@@ -4054,6 +4081,18 @@ sir_convert_beacon_frame2_struct(tpAniSirGlobal pMac,
 		qdf_mem_copy(&pBeaconStruct->obss_scanparams,
 			&pBeacon->OBSSScanParameters,
 			sizeof(struct sDot11fIEOBSSScanParameters));
+	}
+	if (pBeacon->MBO_IE.present) {
+		pBeaconStruct->MBO_IE_present = true;
+		pBeaconStruct->MBO_capability = pBeacon->MBO_IE.mbo_cap[2];
+
+		if (pBeacon->MBO_IE.num_assoc_disallowed &&
+			(pBeacon->MBO_IE.assoc_disallowed[0] ==
+				 MBO_IE_ASSOC_DISALLOWED_SUBATTR_ID)) {
+			pBeaconStruct->assoc_disallowed = true;
+			pBeaconStruct->assoc_disallowed_reason =
+				pBeacon->MBO_IE.assoc_disallowed[2];
+		}
 	}
 
 	qdf_mem_free(pBeacon);
