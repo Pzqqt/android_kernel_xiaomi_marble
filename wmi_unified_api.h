@@ -1258,4 +1258,7 @@ QDF_STATUS wmi_unified_send_power_dbg_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_send_adapt_dwelltime_params_cmd(void *wmi_hdl,
 				   struct wmi_adaptive_dwelltime_params *
 				   wmi_param);
+QDF_STATUS wmi_unified_fw_test_cmd(void *wmi_hdl,
+				   struct set_fwtest_params *wmi_fwtest);
+
 #endif /* _WMI_UNIFIED_API_H_ */
