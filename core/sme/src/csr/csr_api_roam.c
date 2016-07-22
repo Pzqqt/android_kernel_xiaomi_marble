@@ -5073,32 +5073,33 @@ static void csr_roam_join_handle_profile(tpAniSirGlobal mac_ctx,
 		else
 			ies_local = scan_result->Result.pvIes;
 
-		if (scan_result && !ies_local && result &&
-			(!QDF_IS_STATUS_SUCCESS(
+		if (!result) {
+			sms_log(mac_ctx, LOGE, FL(" cannot parse IEs"));
+			*roam_state = eCsrStopRoaming;
+			return;
+		} else if (scan_result && !ies_local &&
+				(!QDF_IS_STATUS_SUCCESS(
 					csr_get_parsed_bss_description_ies(
-						mac_ctx,
-						&result->BssDescriptor,
+						mac_ctx, &result->BssDescriptor,
 						&ies_local)))) {
 			sms_log(mac_ctx, LOGE, FL(" cannot parse IEs"));
 			*roam_state = eCsrStopRoaming;
 			return;
 		}
-		if (result)
-			roam_info_ptr->pBssDesc = &result->BssDescriptor;
+		roam_info_ptr->pBssDesc = &result->BssDescriptor;
 		cmd->u.roamCmd.pLastRoamBss = roam_info_ptr->pBssDesc;
 		/* dont put uapsd_mask if BSS doesn't support uAPSD */
 		if (scan_result && cmd->u.roamCmd.roamProfile.uapsd_mask
 				&& CSR_IS_QOS_BSS(ies_local)
 				&& CSR_IS_UAPSD_BSS(ies_local)) {
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
-			if (result)
-				acm_mask = sme_qos_get_acm_mask(mac_ctx,
+			acm_mask = sme_qos_get_acm_mask(mac_ctx,
 					&result->BssDescriptor, ies_local);
 #endif /* WLAN_MDM_CODE_REDUCTION_OPT */
 		} else {
 			cmd->u.roamCmd.roamProfile.uapsd_mask = 0;
 		}
-		if (ies_local && result && !result->pvIes)
+		if (ies_local && !result->pvIes)
 			qdf_mem_free(ies_local);
 		roam_info_ptr->pProfile = profile;
 		session->bRefAssocStartCnt++;
