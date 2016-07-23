@@ -59,4 +59,5 @@ static inline void __qdf_list_create(__qdf_list_t *list, uint32_t max_size)
 	list->max_size = max_size;
 }
 
+bool qdf_list_has_node(__qdf_list_t *list, __qdf_list_node_t *node);
 #endif
