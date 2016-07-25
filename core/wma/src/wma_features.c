@@ -3590,7 +3590,7 @@ QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 	}
 
 	param.enable = true;
-	param.can_suspend_link = hif_can_suspend_link(wma->htc_handle);
+	param.can_suspend_link = htc_can_suspend_link(wma->htc_handle);
 	ret = wmi_unified_wow_enable_send(wma->wmi_handle, &param,
 				   WMA_WILDCARD_PDEV_ID);
 	if (ret) {
