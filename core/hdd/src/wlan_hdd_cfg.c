@@ -5693,6 +5693,7 @@ QDF_STATUS hdd_update_mac_config(hdd_context_t *pHddCtx)
 	int status, i = 0;
 	const struct firmware *fw = NULL;
 	char *line, *buffer = NULL;
+	char *temp = NULL;
 	char *name, *value;
 	tCfgIniEntry macTable[QDF_MAX_CONCURRENCY_PERSONA];
 	tSirMacAddr customMacAddr;
@@ -5714,7 +5715,17 @@ QDF_STATUS hdd_update_mac_config(hdd_context_t *pHddCtx)
 		goto config_exit;
 	}
 
-	buffer = (char *)fw->data;
+	hdd_debug("wlan_mac.bin size %zu", fw->size);
+
+	temp = qdf_mem_malloc(fw->size);
+
+	if (temp == NULL) {
+		hdd_err("fail to alloc memory");
+		qdf_status = QDF_STATUS_E_NOMEM;
+		goto config_exit;
+	}
+	buffer = temp;
+	qdf_mem_copy(buffer, fw->data, fw->size);
 
 	/* data format:
 	 * Intf0MacAddress=00AA00BB00CC
@@ -5769,6 +5780,7 @@ QDF_STATUS hdd_update_mac_config(hdd_context_t *pHddCtx)
 	sme_set_custom_mac_addr(customMacAddr);
 
 config_exit:
+	qdf_mem_free(temp);
 	release_firmware(fw);
 	return qdf_status;
 }
