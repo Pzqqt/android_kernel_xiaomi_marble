@@ -366,5 +366,6 @@ int pld_get_soc_info(struct device *dev, struct pld_soc_info *info);
 int pld_get_ce_id(struct device *dev, int irq);
 void pld_lock_pm_sem(struct device *dev);
 void pld_release_pm_sem(struct device *dev);
-
+int pld_power_on(struct device *dev);
+int pld_power_off(struct device *dev);
 #endif

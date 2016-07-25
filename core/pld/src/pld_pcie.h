@@ -199,6 +199,14 @@ static void pld_pcie_release_pm_sem(void)
 {
 	return;
 }
+static inline int pld_pcie_power_on(struct device *dev)
+{
+	return 0;
+}
+static inline int pld_pcie_power_off(struct device *dev)
+{
+	return 0;
+}
 #else
 int pld_pcie_get_fw_files_for_target(struct pld_fw_files *pfw_files,
 				     u32 target_type, u32 target_version);
@@ -224,6 +232,8 @@ int pld_pcie_auto_suspend(void);
 int pld_pcie_auto_resume(void);
 void pld_pcie_lock_pm_sem(void);
 void pld_pcie_release_pm_sem(void);
+int pld_pcie_power_on(struct device *dev);
+int pld_pcie_power_off(struct device *dev);
 #endif
 
 #endif

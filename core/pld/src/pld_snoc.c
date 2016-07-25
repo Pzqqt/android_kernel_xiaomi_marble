@@ -358,4 +358,27 @@ int pld_snoc_get_ce_id(int irq)
 	return icnss_get_ce_id(irq);
 }
 
+/**
+ * pld_snoc_power_on() - Power on WLAN hardware
+ * @dev: device
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_snoc_power_on(struct device *dev)
+{
+	return icnss_power_on(dev);
+}
+
+/**
+ * pld_snoc_power_off() - Power off WLAN hardware
+ * @dev: device
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_snoc_power_off(struct device *dev)
+{
+	return icnss_power_off(dev);
+}
 #endif

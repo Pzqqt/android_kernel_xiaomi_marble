@@ -1314,3 +1314,55 @@ void pld_release_pm_sem(struct device *dev)
 		break;
 	}
 }
+
+/**
+ * pld_power_on() - Power on WLAN hardware
+ * @dev: device
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_power_on(struct device *dev)
+{
+	int ret = 0;
+
+	switch (pld_get_bus_type(dev)) {
+	case PLD_BUS_TYPE_PCIE:
+		ret = pld_pcie_power_on(dev);
+		break;
+	case PLD_BUS_TYPE_SNOC:
+		ret = pld_snoc_power_on(dev);
+		break;
+	default:
+		pr_err("Invalid device type\n");
+		break;
+	}
+
+	return ret;
+}
+
+/**
+ * pld_power_off() - Power off WLAN hardware
+ * @dev: device
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_power_off(struct device *dev)
+{
+	int ret = 0;
+
+	switch (pld_get_bus_type(dev)) {
+	case PLD_BUS_TYPE_PCIE:
+		ret = pld_pcie_power_on(dev);
+		break;
+	case PLD_BUS_TYPE_SNOC:
+		ret = pld_snoc_power_off(dev);
+		break;
+	default:
+		pr_err("Invalid device type\n");
+		break;
+	}
+
+	return ret;
+}

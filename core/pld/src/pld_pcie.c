@@ -846,6 +846,30 @@ void pld_pcie_release_pm_sem(void)
 {
 	cnss_release_pm_sem();
 }
+
+/**
+ * pld_pcie_power_on() - Power on WLAN hardware
+ * @dev: device
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_pcie_power_on(struct device *dev)
+{
+	return cnss_power_up(dev);
+}
+
+/**
+ * pld_pcie_power_off() - Power off WLAN hardware
+ * @dev: device
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_pcie_power_off(struct device *dev)
+{
+	return cnss_power_down(dev);
+}
 #endif
 
 #endif
