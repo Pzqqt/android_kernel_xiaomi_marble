@@ -445,9 +445,6 @@ QDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 		return status;
 	}
 
-	if (ADRASTEA_BU)
-		hif_vote_link_up(hif_ctx);
-
 	if (hif_bus_configure(scn)) {
 		HIF_ERROR("%s: Target probe failed.", __func__);
 		hif_disable_bus(scn);
@@ -482,9 +479,6 @@ void hif_disable(struct hif_opaque_softc *hif_ctx, enum hif_disable_type type)
 		hif_shutdown_device(hif_ctx);
 	else
 		hif_stop(hif_ctx);
-
-	if (ADRASTEA_BU)
-		hif_vote_link_down(hif_ctx);
 
 	hif_disable_bus(scn);
 

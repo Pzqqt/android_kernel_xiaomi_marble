@@ -265,6 +265,9 @@ QDF_STATUS hif_snoc_enable_bus(struct hif_softc *ol_sc,
 	hif_register_tbl_attach(ol_sc, hif_type);
 	hif_target_register_tbl_attach(ol_sc, target_type);
 
+	/* the bus should remain on durring suspend for snoc */
+	hif_vote_link_up(GET_HIF_OPAQUE_HDL(ol_sc));
+
 	HIF_TRACE("%s: X - hif_type = 0x%x, target_type = 0x%x",
 		  __func__, hif_type, target_type);
 
@@ -282,8 +285,11 @@ QDF_STATUS hif_snoc_enable_bus(struct hif_softc *ol_sc,
  */
 void hif_snoc_disable_bus(struct hif_softc *scn)
 {
-	int ret = qdf_device_init_wakeup(scn->qdf_dev, false);
+	int ret;
 
+	hif_vote_link_down(GET_HIF_OPAQUE_HDL(scn));
+
+	ret = qdf_device_init_wakeup(scn->qdf_dev, false);
 	if (ret)
 		HIF_ERROR("%s: device_init_wakeup: err %d", __func__, ret);
 }

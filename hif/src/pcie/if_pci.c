@@ -2427,6 +2427,8 @@ void hif_pci_disable_bus(struct hif_softc *scn)
 
 	pdev = sc->pdev;
 	if (ADRASTEA_BU) {
+		hif_vote_link_down(GET_HIF_OPAQUE_HDL(scn));
+
 		hif_write32_mb(sc->mem + PCIE_INTR_ENABLE_ADDRESS, 0);
 		hif_write32_mb(sc->mem + PCIE_INTR_CLR_ADDRESS,
 			       HOST_GROUP0_MASK);
@@ -3465,6 +3467,10 @@ again:
 	pci_set_drvdata(sc->pdev, sc);
 
 	hif_target_sync(ol_sc);
+
+	if (ADRASTEA_BU)
+		hif_vote_link_up(hif_hdl);
+
 	return 0;
 
 err_tgtstate:
