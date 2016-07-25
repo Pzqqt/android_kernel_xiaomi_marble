@@ -5744,10 +5744,12 @@ static QDF_STATUS wlan_hdd_disable_all_dual_mac_features(hdd_context_t *hdd_ctx)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (hdd_ctx->config->dual_mac_feature_disable)
+		return QDF_STATUS_SUCCESS;
+
 	cfg.scan_config = 0;
 	cfg.fw_mode_config = 0;
-	cfg.set_dual_mac_cb =
-		(void *)cds_soc_set_dual_mac_cfg_cb;
+	cfg.set_dual_mac_cb = cds_soc_set_dual_mac_cfg_cb;
 
 	hdd_debug("Disabling all dual mac features...");
 
@@ -6852,6 +6854,140 @@ static int hdd_adaptive_dwelltime_init(hdd_context_t *hdd_ctx)
 	return 0;
 }
 
+#ifdef FEATURE_WLAN_AUTO_SHUTDOWN
+/**
+ * hdd_set_auto_shutdown_cb() - Set auto shutdown callback
+ * @hdd_ctx:	HDD context
+ *
+ * Set auto shutdown callback to get indications from firmware to indicate
+ * userspace to shutdown WLAN after a configured amount of inactivity.
+ *
+ * Return: 0 on success and errno on failure.
+ */
+static int hdd_set_auto_shutdown_cb(hdd_context_t *hdd_ctx)
+{
+	QDF_STATUS status;
+
+	if (!hdd_ctx->config->WlanAutoShutdown)
+		return 0;
+
+	status = sme_set_auto_shutdown_cb(hdd_ctx->hHal,
+					  wlan_hdd_auto_shutdown_cb);
+	if (status != QDF_STATUS_SUCCESS)
+		hdd_err("Auto shutdown feature could not be enabled: %d",
+			status);
+
+	return qdf_status_to_os_return(status);
+}
+#else
+static int hdd_set_auto_shutdown_cb(hdd_context_t *hdd_ctx)
+{
+	return 0;
+}
+#endif
+
+/**
+ * hdd_features_init() - Init features
+ * @hdd_ctx:	HDD context
+ * @adapter:	Primary adapter context
+ *
+ * Initialize features and their feature context after WLAN firmware is up.
+ *
+ * Return: 0 on success and errno on failure.
+ */
+static int hdd_features_init(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
+{
+	tSirTxPowerLimit hddtxlimit;
+	QDF_STATUS status;
+	int ret;
+
+	ENTER();
+
+	ret = hdd_update_country_code(hdd_ctx, adapter);
+	if (ret) {
+		hdd_err("Failed to update country code: %d", ret);
+		goto out;
+	}
+
+	/* FW capabilities received, Set the Dot11 mode */
+	sme_setdef_dot11mode(hdd_ctx->hHal);
+
+	/*
+	 * Action frame registered in one adapter which will
+	 * applicable to all interfaces
+	 */
+	wlan_hdd_cfg80211_register_frames(adapter);
+
+	if (hdd_ctx->config->fIsImpsEnabled)
+		hdd_set_idle_ps_config(hdd_ctx, true);
+	else
+		hdd_set_idle_ps_config(hdd_ctx, false);
+
+	if (hdd_lro_init(hdd_ctx))
+		hdd_err("Unable to initialize LRO in fw");
+
+	if (hdd_adaptive_dwelltime_init(hdd_ctx))
+		hdd_err("Unable to send adaptive dwelltime setting to FW");
+
+	ret = hdd_init_thermal_info(hdd_ctx);
+	if (ret) {
+		hdd_err("Error while initializing thermal information");
+		goto deregister_frames;
+	}
+
+	hddtxlimit.txPower2g = hdd_ctx->config->TxPower2g;
+	hddtxlimit.txPower5g = hdd_ctx->config->TxPower5g;
+	status = sme_txpower_limit(hdd_ctx->hHal, &hddtxlimit);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("Error setting txlimit in sme: %d", status);
+
+	hdd_tsf_init(hdd_ctx);
+
+	if (hdd_ctx->config->dual_mac_feature_disable) {
+		status = wlan_hdd_disable_all_dual_mac_features(hdd_ctx);
+		if (status != QDF_STATUS_SUCCESS) {
+			hdd_err("Failed to disable dual mac features");
+			goto deregister_frames;
+		}
+	}
+
+	ret = hdd_register_cb(hdd_ctx);
+	if (ret) {
+		hdd_err("Failed to register HDD callbacks!");
+		goto deregister_frames;
+	}
+
+	if (hdd_ctx->config->dual_mac_feature_disable) {
+		status = wlan_hdd_disable_all_dual_mac_features(hdd_ctx);
+		if (status != QDF_STATUS_SUCCESS) {
+			hdd_err("Failed to disable dual mac features");
+			goto deregister_cb;
+		}
+	}
+
+	/* register P2P Listen Offload event callback */
+	if (wma_is_p2p_lo_capable())
+		sme_register_p2p_lo_event(hdd_ctx->hHal, hdd_ctx,
+				wlan_hdd_p2p_lo_event_callback);
+
+	ret = hdd_set_auto_shutdown_cb(hdd_ctx);
+
+	if (ret)
+		goto deregister_cb;
+
+	EXIT();
+	return 0;
+
+deregister_cb:
+	hdd_deregister_cb(hdd_ctx);
+deregister_frames:
+	wlan_hdd_cfg80211_deregister_frames(adapter);
+out:
+	return -EINVAL;
+
+}
+
+
 /**
  * hdd_wlan_startup() - HDD init function
  * @dev:	Pointer to the underlying device
@@ -6866,7 +7002,6 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	hdd_adapter_t *adapter = NULL;
 	hdd_context_t *hdd_ctx = NULL;
 	int ret;
-	tSirTxPowerLimit hddtxlimit;
 	bool rtnl_held;
 	/* structure of function pointers to be used by CDS */
 	struct cds_sme_cbacks sme_cbacks;
@@ -6980,37 +7115,8 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	/* Get the wlan hw/fw version */
 	hdd_wlan_get_version(hdd_ctx, NULL, NULL);
 
-	ret = hdd_update_country_code(hdd_ctx, adapter);
-
-	if (ret)
-		goto err_close_adapter;
-
-	/* FW capabilities received, Set the Dot11 mode */
-	sme_setdef_dot11mode(hdd_ctx->hHal);
-
-	/*
-	 * Action frame registered in one adapter which will
-	 * applicable to all interfaces
-	 */
-	wlan_hdd_cfg80211_register_frames(adapter);
-
 	hdd_release_rtnl_lock();
 	rtnl_held = false;
-
-	if (hdd_ctx->config->fIsImpsEnabled)
-		hdd_set_idle_ps_config(hdd_ctx, true);
-	else
-		hdd_set_idle_ps_config(hdd_ctx, false);
-#ifdef FEATURE_WLAN_AUTO_SHUTDOWN
-	if (hdd_ctx->config->WlanAutoShutdown != 0)
-		if (sme_set_auto_shutdown_cb
-			    (hdd_ctx->hHal, wlan_hdd_auto_shutdown_cb)
-		    != QDF_STATUS_SUCCESS)
-			hddLog(LOGE,
-			       FL(
-				  "Auto shutdown feature could not be enabled"
-				 ));
-#endif
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 	status = qdf_mc_timer_init(&hdd_ctx->skip_acs_scan_timer,
@@ -7029,26 +7135,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 		goto err_debugfs_exit;
 	}
 
-	ret = hdd_init_thermal_info(hdd_ctx);
 
-	if (ret) {
-		hdd_err("Error while initializing thermal information");
-		goto err_debugfs_exit;
-	}
-
-	if (0 != hdd_lro_init(hdd_ctx))
-		hdd_err("Unable to initialize LRO in fw");
-
-	if (0 != hdd_adaptive_dwelltime_init(hdd_ctx))
-		hdd_err("Unable to send adaptive dwelltime setting to FW");
-
-	hddtxlimit.txPower2g = hdd_ctx->config->TxPower2g;
-	hddtxlimit.txPower5g = hdd_ctx->config->TxPower5g;
-	status = sme_txpower_limit(hdd_ctx->hHal, &hddtxlimit);
-	if (QDF_IS_STATUS_SUCCESS(status))
-		hdd_err("Error setting txlimit in sme: %d", status);
-
-	hdd_tsf_init(hdd_ctx);
 #ifdef MSM_PLATFORM
 	spin_lock_init(&hdd_ctx->bus_bw_lock);
 	qdf_mc_timer_init(&hdd_ctx->bus_bw_timer,
@@ -7061,18 +7148,6 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 				  hdd_ctx->target_hw_version,
 				  hdd_ctx->target_hw_name);
 
-	if (hdd_ctx->config->dual_mac_feature_disable) {
-		status = wlan_hdd_disable_all_dual_mac_features(hdd_ctx);
-		if (status != QDF_STATUS_SUCCESS) {
-			hdd_err("Failed to disable dual mac features");
-			goto err_debugfs_exit;
-		}
-	}
-
-	/* register P2P Listen Offload event callback */
-	if (wma_is_p2p_lo_capable())
-		sme_register_p2p_lo_event(hdd_ctx->hHal, hdd_ctx,
-				wlan_hdd_p2p_lo_event_callback);
 
 	ret = hdd_register_notifiers(hdd_ctx);
 	if (ret)
@@ -7084,9 +7159,8 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 	memdump_init();
 
-	ret = hdd_register_cb(hdd_ctx);
-	if (ret) {
-		hdd_err("Failed to register HDD callbacks!");
+	if (hdd_features_init(hdd_ctx, adapter)) {
+		hdd_err("Error Configuring the CDS!");
 		goto err_exit_nl_srv;
 	}
 
@@ -7094,13 +7168,11 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 err_debugfs_exit:
 	hdd_debugfs_exit(adapter);
-
-err_close_adapter:
-	hdd_release_rtnl_lock();
-
 	hdd_close_all_adapters(hdd_ctx, false);
 
 err_cds_disable:
+	if (rtnl_held)
+		hdd_release_rtnl_lock();
 	cds_disable(hdd_ctx->pcds_context);
 
 err_ipa_cleanup:
