@@ -7493,15 +7493,20 @@ QDF_STATUS wma_p2p_lo_start(struct sir_p2p_lo_start *params)
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	uint8_t *buf_ptr;
 	int ret;
+	int device_types_len_aligned, probe_resp_len_aligned;
 
 	if (NULL == wma) {
 		WMA_LOGE("%s: wma context is NULL", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
 
-	len += 2 * WMI_TLV_HDR_SIZE +
-	       qdf_roundup(params->dev_types_len, sizeof(A_UINT32)) +
-	       qdf_roundup(params->probe_resp_len, sizeof(A_UINT32));
+	device_types_len_aligned = qdf_roundup(params->dev_types_len,
+						sizeof(A_UINT32));
+	probe_resp_len_aligned = qdf_roundup(params->probe_resp_len,
+						sizeof(A_UINT32));
+
+	len += 2 * WMI_TLV_HDR_SIZE + device_types_len_aligned +
+			probe_resp_len_aligned;
 
 	buf = wmi_buf_alloc(wma->wmi_handle, len);
 	if (!buf) {
@@ -7524,16 +7529,17 @@ QDF_STATUS wma_p2p_lo_start(struct sir_p2p_lo_start *params)
 	cmd->period = params->period;
 	cmd->interval = params->interval;
 	cmd->count = params->count;
+	cmd->device_types_len = params->dev_types_len;
+	cmd->prob_resp_len = params->probe_resp_len;
 
 	buf_ptr += sizeof(wmi_p2p_lo_start_cmd_fixed_param);
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
-		qdf_roundup(params->dev_types_len, sizeof(A_UINT32)));
+				device_types_len_aligned);
 	buf_ptr += WMI_TLV_HDR_SIZE;
 	qdf_mem_copy(buf_ptr, params->device_types, params->dev_types_len);
 
-	buf_ptr += qdf_roundup(params->dev_types_len, sizeof(A_UINT32));
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
-		qdf_roundup(params->probe_resp_len, sizeof(A_UINT32)));
+	buf_ptr += device_types_len_aligned;
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, probe_resp_len_aligned);
 	buf_ptr += WMI_TLV_HDR_SIZE;
 	qdf_mem_copy(buf_ptr, params->probe_resp_tmplt, params->probe_resp_len);
 
