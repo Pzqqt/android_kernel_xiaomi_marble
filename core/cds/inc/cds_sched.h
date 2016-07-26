@@ -203,7 +203,7 @@ typedef struct _cds_sched_context {
 	struct notifier_block *cpu_hot_plug_notifier;
 
 	/* affinity lock */
-	spinlock_t affinity_lock;
+	struct mutex affinity_lock;
 
 	/* rx thread affinity cpu */
 	unsigned long rx_thread_cpu;
