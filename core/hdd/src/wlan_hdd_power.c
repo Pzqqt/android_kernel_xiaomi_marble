@@ -492,7 +492,8 @@ void __hdd_ipv6_notifier_work_queue(struct work_struct *work)
 	if (eConnectionState_Associated ==
 	     (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->conn_info.connState ||
 		ndi_connected)
-		if (pHddCtx->config->fhostNSOffload)
+		if (pHddCtx->config->fhostNSOffload &&
+		    pHddCtx->ns_offload_enable)
 			hdd_conf_ns_offload(pAdapter, true);
 	EXIT();
 }
@@ -557,7 +558,8 @@ void hdd_conf_hostoffload(hdd_adapter_t *pAdapter, bool fenable)
 		hdd_conf_arp_offload(pAdapter, fenable);
 		wlan_hdd_set_mc_addr_list(pAdapter, fenable);
 
-		if (pHddCtx->config->fhostNSOffload)
+		if (pHddCtx->config->fhostNSOffload &&
+		    pHddCtx->ns_offload_enable)
 			hdd_conf_ns_offload(pAdapter, fenable);
 	}
 	EXIT();

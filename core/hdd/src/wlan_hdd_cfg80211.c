@@ -4817,6 +4817,79 @@ fail:
 	return;
 }
 
+static const struct nla_policy
+ns_offload_set_policy[QCA_WLAN_VENDOR_ATTR_ND_OFFLOAD_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_ND_OFFLOAD_FLAG] = {.type = NLA_U8},
+};
+
+/**
+ * __wlan_hdd_cfg80211_set_ns_offload() - enable/disable NS offload
+ * @wiphy: Pointer to wireless phy
+ * @wdev: Pointer to wireless device
+ * @data: Pointer to data
+ * @data_len: Length of @data
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int
+__wlan_hdd_cfg80211_set_ns_offload(struct wiphy *wiphy,
+			struct wireless_dev *wdev,
+			const void *data, int data_len)
+{
+	int status;
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_ND_OFFLOAD_MAX + 1];
+	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
+
+	ENTER_DEV(wdev->netdev);
+
+	status = wlan_hdd_validate_context(pHddCtx);
+	if (0 != status)
+		return status;
+	if (!pHddCtx->config->fhostNSOffload) {
+		hdd_err("ND Offload not supported");
+		return -EINVAL;
+	}
+
+	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_ND_OFFLOAD_MAX,
+			(struct nlattr *)data,
+			data_len, ns_offload_set_policy)) {
+		hdd_err("nla_parse failed");
+		return -EINVAL;
+	}
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_ND_OFFLOAD_FLAG]) {
+		hdd_err("ND Offload flag attribute not present");
+		return -EINVAL;
+	}
+
+	pHddCtx->ns_offload_enable =
+		nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_ND_OFFLOAD_FLAG]);
+
+	return 0;
+}
+
+/**
+ * wlan_hdd_cfg80211_set_ns_offload() - enable/disable NS offload
+ * @wiphy:   pointer to wireless wiphy structure.
+ * @wdev:    pointer to wireless_dev structure.
+ * @data:    Pointer to the data to be passed via vendor interface
+ * @data_len:Length of the data to be passed
+ *
+ * Return:   Return the Success or Failure code.
+ */
+static int wlan_hdd_cfg80211_set_ns_offload(struct wiphy *wiphy,
+					struct wireless_dev *wdev,
+					const void *data, int data_len)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_set_ns_offload(wiphy, wdev, data, data_len);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
 /** __wlan_hdd_cfg80211_get_preferred_freq_list() - get preferred frequency list
  * @wiphy: Pointer to wireless phy
  * @wdev: Pointer to wireless device
@@ -7401,6 +7474,14 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 			WIPHY_VENDOR_CMD_NEED_NETDEV |
 			WIPHY_VENDOR_CMD_NEED_RUNNING,
 		.doit = wlan_hdd_cfg80211_monitor_rssi
+	},
+	{
+		.info.vendor_id = QCA_NL80211_VENDOR_ID,
+		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_ND_OFFLOAD,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+			 WIPHY_VENDOR_CMD_NEED_NETDEV |
+			 WIPHY_VENDOR_CMD_NEED_RUNNING,
+		.doit = wlan_hdd_cfg80211_set_ns_offload
 	},
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,

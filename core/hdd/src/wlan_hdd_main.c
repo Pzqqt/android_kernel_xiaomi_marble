@@ -6055,6 +6055,9 @@ hdd_context_t *hdd_context_create(struct device *dev)
 	hdd_notice("Setting configuredMcastBcastFilter: %d",
 		   hdd_ctx->config->mcastBcastFilterSetting);
 
+	if (hdd_ctx->config->fhostNSOffload)
+		hdd_ctx->ns_offload_enable = true;
+
 	cds_set_fatal_event(hdd_ctx->config->enable_fatal_event);
 
 	hdd_override_ini_config(hdd_ctx);
