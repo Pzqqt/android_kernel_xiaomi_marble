@@ -292,4 +292,5 @@ bool cds_is_5_mhz_enabled(void);
 bool cds_is_10_mhz_enabled(void);
 bool cds_is_sub_20_mhz_enabled(void);
 bool cds_is_self_recovery_enabled(void);
+void cds_pkt_stats_to_logger_thread(void *pl_hdr, void *pkt_dump, void *data);
 #endif /* if !defined __CDS_API_H */

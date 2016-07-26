@@ -77,4 +77,7 @@ static inline void wlan_report_log_completion(uint32_t is_fatal,
 }
 
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
+
+void wlan_pkt_stats_to_logger_thread(void *pl_hdr, void *pkt_dump, void *data);
+
 #endif /* WLAN_LOGGING_SOCK_SVC_H */
