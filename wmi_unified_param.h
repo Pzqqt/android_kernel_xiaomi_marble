@@ -3033,6 +3033,7 @@ struct wmi_dual_mac_config {
  * @self_macaddr: self mac address
  * @srcIPv6AddrValid: src ipv6 address valid flag
  * @targetIPv6AddrValid: target ipv6 address valid flag
+ * @target_ipv6_addr_ac_type: target ipv6 address type
  * @slotIdx: slot index
  */
 struct ns_offload_req_params {
@@ -3042,6 +3043,7 @@ struct ns_offload_req_params {
 	struct qdf_mac_addr self_macaddr;
 	uint8_t srcIPv6AddrValid;
 	uint8_t targetIPv6AddrValid[WMI_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA];
+	uint8_t target_ipv6_addr_ac_type[WMI_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA];
 	uint8_t slotIdx;
 };
 #endif /* WLAN_NS_OFFLOAD */
