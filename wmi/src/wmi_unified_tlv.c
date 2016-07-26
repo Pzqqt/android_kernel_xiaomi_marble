@@ -9659,6 +9659,10 @@ QDF_STATUS send_enable_arp_ns_offload_cmd_tlv(wmi_unified_t wmi_handle,
 			A_MEMCPY(&ns_tuple->solicitation_ipaddr,
 				 &param->nsOffloadInfo.
 				 selfIPv6Addr[i], sizeof(WMI_IPV6_ADDR));
+			if (param->nsOffloadInfo.
+				target_ipv6_addr_ac_type[i])
+				ns_tuple->flags |=
+					WMI_NSOFF_FLAGS_IS_IPV6_ANYCAST;
 			WMI_LOGD("NS solicitedIp: %pI6, targetIp: %pI6",
 				 &param->nsOffloadInfo.selfIPv6Addr[i],
 				 &param->nsOffloadInfo.
@@ -9729,6 +9733,10 @@ QDF_STATUS send_enable_arp_ns_offload_cmd_tlv(wmi_unified_t wmi_handle,
 				A_MEMCPY(&ns_tuple->solicitation_ipaddr,
 					&param->nsOffloadInfo.selfIPv6Addr[i],
 					sizeof(WMI_IPV6_ADDR));
+				if (param->nsOffloadInfo.
+						target_ipv6_addr_ac_type[i])
+					ns_tuple->flags |=
+						WMI_NSOFF_FLAGS_IS_IPV6_ANYCAST;
 				WMI_LOGD("Index %d NS solicitedIp: %pI6, targetIp: %pI6", i,
 					&param->nsOffloadInfo.selfIPv6Addr[i],
 					&param->nsOffloadInfo.targetIPv6Addr[i]);
