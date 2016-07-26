@@ -310,6 +310,8 @@ typedef struct _cds_context_type {
 	void (*sme_get_nss_for_vdev)(void*, enum tQDF_ADAPTER_MODE,
 		uint8_t *, uint8_t *);
 
+	void (*ol_txrx_update_mac_id)(uint8_t , uint8_t);
+
 	/* This list is not sessionized. This mandatory channel list would be
 	 * as per OEMs preference as per the regulatory/other considerations.
 	 * So, this would remain same for all the interfaces.

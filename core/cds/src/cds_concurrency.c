@@ -2129,6 +2129,14 @@ static void cds_update_conc_list(uint32_t conn_index,
 		uint32_t vdev_id,
 		bool in_use)
 {
+	cds_context_type *cds_ctx;
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return;
+	}
+
 	if (conn_index >= MAX_NUMBER_OF_CONC_CONNECTIONS) {
 		cds_err("Number of connections exceeded conn_index: %d",
 			conn_index);
@@ -2144,6 +2152,9 @@ static void cds_update_conc_list(uint32_t conn_index,
 	conc_connection_list[conn_index].in_use = in_use;
 
 	cds_dump_connection_status_info();
+	if (cds_ctx->ol_txrx_update_mac_id)
+		cds_ctx->ol_txrx_update_mac_id(vdev_id, mac);
+
 }
 
 /**

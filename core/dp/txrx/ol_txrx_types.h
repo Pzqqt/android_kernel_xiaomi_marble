@@ -1060,6 +1060,7 @@ struct ol_txrx_vdev_t {
 	uint64_t fwd_tx_packets;
 	uint64_t fwd_rx_packets;
 	bool is_wisa_mode_enable;
+	uint8_t mac_id;
 };
 
 struct ol_rx_reorder_array_elem_t {
@@ -1253,4 +1254,10 @@ struct ol_error_info {
 		struct ol_mic_error_info mic_err;
 	} u;
 };
+
+struct ol_rx_remote_data {
+	qdf_nbuf_t msdu;
+	uint8_t mac_id;
+};
+
 #endif /* _OL_TXRX_TYPES__H_ */

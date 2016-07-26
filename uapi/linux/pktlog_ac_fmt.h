@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -57,7 +57,12 @@
 struct ath_pktlog_hdr {
 	uint16_t flags;
 	uint16_t missed_cnt;
+#ifdef HELIUMPLUS
+	uint8_t log_type;
+	uint8_t macId;
+#else
 	uint16_t log_type;
+#endif
 	uint16_t size;
 	uint32_t timestamp;
 #ifdef HELIUMPLUS
@@ -71,9 +76,19 @@ struct ath_pktlog_hdr {
 #define ATH_PKTLOG_HDR_MISSED_CNT_MASK 0xffff0000
 #define ATH_PKTLOG_HDR_MISSED_CNT_SHIFT 16
 #define ATH_PKTLOG_HDR_MISSED_CNT_OFFSET 0
+#ifdef HELIUMPLUS
+#define ATH_PKTLOG_HDR_LOG_TYPE_MASK 0x00ff
+#define ATH_PKTLOG_HDR_LOG_TYPE_SHIFT 0
+#define ATH_PKTLOG_HDR_LOG_TYPE_OFFSET 1
+#define ATH_PKTLOG_HDR_MAC_ID_MASK 0xff00
+#define ATH_PKTLOG_HDR_MAC_ID_SHIFT 8
+#define ATH_PKTLOG_HDR_MAC_ID_OFFSET 1
+#else
 #define ATH_PKTLOG_HDR_LOG_TYPE_MASK 0xffff
 #define ATH_PKTLOG_HDR_LOG_TYPE_SHIFT 0
 #define ATH_PKTLOG_HDR_LOG_TYPE_OFFSET 1
+#endif
+
 #define ATH_PKTLOG_HDR_SIZE_MASK 0xffff0000
 #define ATH_PKTLOG_HDR_SIZE_SHIFT 16
 #define ATH_PKTLOG_HDR_SIZE_OFFSET 1

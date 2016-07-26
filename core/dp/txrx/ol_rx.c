@@ -64,6 +64,27 @@
 void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 			qdf_nbuf_t rx_buf_list);
 
+/**
+ * ol_rx_send_pktlog_event() - send rx packetlog event
+ * @pdev: pdev handle
+ * @peer: peer handle
+ * @msdu: skb list
+ *
+ * Return: none
+ */
+void ol_rx_send_pktlog_event(struct ol_txrx_pdev_t *pdev,
+		struct ol_txrx_peer_t *peer, qdf_nbuf_t msdu)
+{
+	struct ol_rx_remote_data data;
+
+	data.msdu = msdu;
+	if (peer)
+		data.mac_id = peer->vdev->mac_id;
+	else
+		data.mac_id = 0;
+
+	wdi_event_handler(WDI_EVENT_RX_DESC_REMOTE, pdev, &data);
+}
 
 #ifdef HTT_RX_RESTORE
 
@@ -508,8 +529,7 @@ ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
 
 				/* Pktlog */
 #ifdef WDI_EVENT_ENABLE
-				wdi_event_handler(WDI_EVENT_RX_DESC_REMOTE,
-						  pdev, head_msdu);
+		ol_rx_send_pktlog_event(pdev, peer, head_msdu);
 #endif
 
 				if (msdu_chaining) {
@@ -586,9 +606,8 @@ ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
 #ifdef WDI_EVENT_ENABLE
 				if (status != htt_rx_status_ctrl_mgmt_null) {
 					/* Pktlog */
-					wdi_event_handler(
-						WDI_EVENT_RX_DESC_REMOTE, pdev,
-						msdu);
+					ol_rx_send_pktlog_event(pdev,
+						 peer, head_msdu);
 				}
 #endif
 				if (status == htt_rx_status_err_inv_peer) {
@@ -1332,7 +1351,7 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 
 	/* Pktlog */
 #ifdef WDI_EVENT_ENABLE
-	wdi_event_handler(WDI_EVENT_RX_DESC_REMOTE, pdev, head_msdu);
+	ol_rx_send_pktlog_event(pdev, peer, head_msdu);
 #endif
 
 	/* if this is an offload indication, peer id is carried in the

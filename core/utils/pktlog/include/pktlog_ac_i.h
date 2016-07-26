@@ -43,7 +43,12 @@ struct ath_pktlog_arg {
 	struct ath_pktlog_info *pl_info;
 	uint32_t flags;
 	uint16_t missed_cnt;
+#ifdef HELIUMPLUS
+	uint8_t log_type;
+	uint8_t macId;
+#else
 	uint16_t log_type;
+#endif
 	size_t log_size;
 	uint16_t timestamp;
 #ifdef HELIUMPLUS
@@ -59,7 +64,7 @@ char *pktlog_getbuf(struct ol_pktlog_dev_t *pl_dev,
 
 A_STATUS process_tx_info(struct ol_txrx_pdev_t *pdev, void *data);
 A_STATUS process_rx_info(void *pdev, void *data);
-A_STATUS process_rx_info_remote(void *pdev, qdf_nbuf_t amsdu);
+A_STATUS process_rx_info_remote(void *pdev, void *data);
 A_STATUS process_rate_find(void *pdev, void *data);
 A_STATUS process_rate_update(void *pdev, void *data);
 

@@ -3783,6 +3783,25 @@ void ol_vdev_rx_set_intrabss_fwd(ol_txrx_vdev_handle vdev, bool val)
 	vdev->disable_intrabss_fwd = val;
 }
 
+/**
+ * ol_txrx_update_mac_id() - update mac_id for vdev
+ * @vdev_id: vdev id
+ * @mac_id: mac id
+ *
+ * Return: none
+ */
+void ol_txrx_update_mac_id(uint8_t vdev_id, uint8_t mac_id)
+{
+	ol_txrx_vdev_handle vdev = ol_txrx_get_vdev_from_vdev_id(vdev_id);
+
+	if (NULL == vdev) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid vdev_id %d", __func__, vdev_id);
+		return;
+	}
+	vdev->mac_id = mac_id;
+}
+
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 
 /**

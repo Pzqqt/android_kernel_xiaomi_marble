@@ -69,6 +69,9 @@ void pktlog_getbuf_intsafe(struct ath_pktlog_arg *plarg)
 	uint16_t log_type;
 	size_t log_size;
 	uint32_t flags;
+#ifdef HELIUMPLUS
+	uint8_t mac_id;
+#endif
 
 	if (!plarg) {
 		printk("Invalid parg in %s\n", __func__);
@@ -76,7 +79,12 @@ void pktlog_getbuf_intsafe(struct ath_pktlog_arg *plarg)
 	}
 
 	pl_info = plarg->pl_info;
+#ifdef HELIUMPLUS
+	mac_id = plarg->macId;
 	log_type = plarg->log_type;
+#else
+	log_type = plarg->log_type;
+#endif
 	log_size = plarg->log_size;
 	log_buf = pl_info->buf;
 	flags = plarg->flags;
@@ -100,8 +108,14 @@ void pktlog_getbuf_intsafe(struct ath_pktlog_arg *plarg)
 	}
 
 	log_hdr = (struct ath_pktlog_hdr *)(log_buf->log_data + cur_wr_offset);
-	log_hdr->log_type = log_type;
+
 	log_hdr->flags = flags;
+#ifdef HELIUMPLUS
+	log_hdr->macId = mac_id;
+	log_hdr->log_type = log_type;
+#else
+	log_hdr->log_type = log_type;
+#endif
 	log_hdr->size = (uint16_t) log_size;
 	log_hdr->missed_cnt = plarg->missed_cnt;
 	log_hdr->timestamp = plarg->timestamp;
@@ -167,7 +181,12 @@ char *pktlog_getbuf(struct ol_pktlog_dev_t *pl_dev,
 	uint8_t flags = 0;
 
 	plarg.pl_info = pl_info;
+#ifdef HELIUMPLUS
+	plarg.macId = pl_hdr->macId;
 	plarg.log_type = pl_hdr->log_type;
+#else
+	plarg.log_type = pl_hdr->log_type;
+#endif
 	plarg.log_size = log_size;
 	plarg.flags = pl_hdr->flags;
 	plarg.missed_cnt = pl_hdr->missed_cnt;
@@ -379,9 +398,18 @@ A_STATUS process_tx_info(struct ol_txrx_pdev_t *txrx_pdev, void *data)
 	pl_hdr.missed_cnt = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_MISSED_CNT_OFFSET) &
 			     ATH_PKTLOG_HDR_MISSED_CNT_MASK) >>
 			    ATH_PKTLOG_HDR_MISSED_CNT_SHIFT;
+#ifdef HELIUMPLUS
+	pl_hdr.log_type = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_LOG_TYPE_OFFSET) &
+		   ATH_PKTLOG_HDR_LOG_TYPE_MASK) >>
+		  ATH_PKTLOG_HDR_LOG_TYPE_SHIFT;
+	pl_hdr.macId = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_MAC_ID_OFFSET) &
+		   ATH_PKTLOG_HDR_MAC_ID_MASK) >>
+		  ATH_PKTLOG_HDR_MAC_ID_SHIFT;
+#else
 	pl_hdr.log_type = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_LOG_TYPE_OFFSET) &
 			   ATH_PKTLOG_HDR_LOG_TYPE_MASK) >>
 			  ATH_PKTLOG_HDR_LOG_TYPE_SHIFT;
+#endif
 	pl_hdr.size = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_SIZE_OFFSET) &
 		       ATH_PKTLOG_HDR_SIZE_MASK) >> ATH_PKTLOG_HDR_SIZE_SHIFT;
 	pl_hdr.timestamp = *(pl_tgt_hdr + ATH_PKTLOG_HDR_TIMESTAMP_OFFSET);
@@ -501,7 +529,7 @@ A_STATUS process_tx_info(struct ol_txrx_pdev_t *txrx_pdev, void *data)
 	return A_OK;
 }
 
-A_STATUS process_rx_info_remote(void *pdev, qdf_nbuf_t amsdu)
+A_STATUS process_rx_info_remote(void *pdev, void *data)
 {
 	struct ol_pktlog_dev_t *pl_dev;
 	struct ath_pktlog_info *pl_info;
@@ -509,19 +537,20 @@ A_STATUS process_rx_info_remote(void *pdev, qdf_nbuf_t amsdu)
 	struct ath_pktlog_hdr pl_hdr;
 	struct ath_pktlog_rx_info rxstat_log;
 	size_t log_size;
+	struct ol_rx_remote_data *r_data = (struct ol_rx_remote_data *)data;
 	qdf_nbuf_t msdu;
 
 	if (!pdev) {
 		printk("Invalid pdev in %s\n", __func__);
 		return A_ERROR;
 	}
-	if (!amsdu) {
+	if (!r_data) {
 		printk("Invalid data in %s\n", __func__);
 		return A_ERROR;
 	}
 	pl_dev = ((struct ol_txrx_pdev_t *)pdev)->pl_dev;
 	pl_info = pl_dev->pl_info;
-	msdu = amsdu;
+	msdu = r_data->msdu;
 
 	while (msdu) {
 		rx_desc =
@@ -535,7 +564,12 @@ A_STATUS process_rx_info_remote(void *pdev, qdf_nbuf_t amsdu)
 		 */
 		pl_hdr.flags = (1 << PKTLOG_FLG_FRM_TYPE_REMOTE_S);
 		pl_hdr.missed_cnt = 0;
+#if defined(HELIUMPLUS)
+		pl_hdr.macId = r_data->mac_id;
 		pl_hdr.log_type = PKTLOG_TYPE_RX_STAT;
+#else
+		pl_hdr.log_type = PKTLOG_TYPE_RX_STAT;
+#endif
 		pl_hdr.size = sizeof(*rx_desc) -
 			      sizeof(struct htt_host_fw_desc_base);
 #if defined(HELIUMPLUS)
@@ -576,9 +610,19 @@ A_STATUS process_rx_info(void *pdev, void *data)
 	pl_hdr.missed_cnt = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_MISSED_CNT_OFFSET) &
 			     ATH_PKTLOG_HDR_MISSED_CNT_MASK) >>
 			    ATH_PKTLOG_HDR_MISSED_CNT_SHIFT;
+#ifdef HELIUMPLUS
 	pl_hdr.log_type = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_LOG_TYPE_OFFSET) &
 			   ATH_PKTLOG_HDR_LOG_TYPE_MASK) >>
 			  ATH_PKTLOG_HDR_LOG_TYPE_SHIFT;
+	pl_hdr.macId = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_MAC_ID_OFFSET) &
+			   ATH_PKTLOG_HDR_MAC_ID_MASK) >>
+			  ATH_PKTLOG_HDR_MAC_ID_SHIFT;
+#else
+	pl_hdr.log_type = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_LOG_TYPE_OFFSET) &
+				   ATH_PKTLOG_HDR_LOG_TYPE_MASK) >>
+				  ATH_PKTLOG_HDR_LOG_TYPE_SHIFT;
+#endif
+
 	pl_hdr.size = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_SIZE_OFFSET) &
 		       ATH_PKTLOG_HDR_SIZE_MASK) >> ATH_PKTLOG_HDR_SIZE_SHIFT;
 	pl_hdr.timestamp = *(pl_tgt_hdr + ATH_PKTLOG_HDR_TIMESTAMP_OFFSET);
@@ -627,9 +671,19 @@ A_STATUS process_rate_find(void *pdev, void *data)
 	pl_hdr.missed_cnt = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_MISSED_CNT_OFFSET) &
 			     ATH_PKTLOG_HDR_MISSED_CNT_MASK) >>
 			    ATH_PKTLOG_HDR_MISSED_CNT_SHIFT;
+#ifdef HELIUMPLUS
 	pl_hdr.log_type = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_LOG_TYPE_OFFSET) &
 			   ATH_PKTLOG_HDR_LOG_TYPE_MASK) >>
 			  ATH_PKTLOG_HDR_LOG_TYPE_SHIFT;
+	pl_hdr.macId = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_MAC_ID_OFFSET) &
+			   ATH_PKTLOG_HDR_MAC_ID_MASK) >>
+			  ATH_PKTLOG_HDR_MAC_ID_SHIFT;
+#else
+	pl_hdr.log_type = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_LOG_TYPE_OFFSET) &
+			   ATH_PKTLOG_HDR_LOG_TYPE_MASK) >>
+			  ATH_PKTLOG_HDR_LOG_TYPE_SHIFT;
+#endif
+
 	pl_hdr.size = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_SIZE_OFFSET) &
 		       ATH_PKTLOG_HDR_SIZE_MASK) >> ATH_PKTLOG_HDR_SIZE_SHIFT;
 	pl_hdr.timestamp = *(pl_tgt_hdr + ATH_PKTLOG_HDR_TIMESTAMP_OFFSET);
@@ -674,9 +728,19 @@ A_STATUS process_rate_update(void *pdev, void *data)
 	pl_hdr.missed_cnt = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_MISSED_CNT_OFFSET) &
 			     ATH_PKTLOG_HDR_MISSED_CNT_MASK) >>
 			    ATH_PKTLOG_HDR_MISSED_CNT_SHIFT;
+#ifdef HELIUMPLUS
 	pl_hdr.log_type = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_LOG_TYPE_OFFSET) &
 			   ATH_PKTLOG_HDR_LOG_TYPE_MASK) >>
 			  ATH_PKTLOG_HDR_LOG_TYPE_SHIFT;
+	pl_hdr.macId = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_MAC_ID_OFFSET) &
+			   ATH_PKTLOG_HDR_MAC_ID_MASK) >>
+			  ATH_PKTLOG_HDR_MAC_ID_SHIFT;
+#else
+	pl_hdr.log_type = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_LOG_TYPE_OFFSET) &
+				   ATH_PKTLOG_HDR_LOG_TYPE_MASK) >>
+				  ATH_PKTLOG_HDR_LOG_TYPE_SHIFT;
+#endif
+
 	pl_hdr.size = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_SIZE_OFFSET) &
 		       ATH_PKTLOG_HDR_SIZE_MASK) >> ATH_PKTLOG_HDR_SIZE_SHIFT;
 	pl_hdr.timestamp = *(pl_tgt_hdr + ATH_PKTLOG_HDR_TIMESTAMP_OFFSET);
