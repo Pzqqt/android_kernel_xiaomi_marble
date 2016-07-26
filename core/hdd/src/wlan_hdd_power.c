@@ -287,6 +287,91 @@ int wlan_hdd_ipv6_changed(struct notifier_block *nb,
 }
 
 /**
+ * hdd_fill_ipv6_uc_addr() - fill IPv6 unicast addresses
+ * @idev: pointer to net device
+ * @ipv6addr: destination array to fill IPv6 addresses
+ * @ipv6addr_type: IPv6 Address type
+ * @count: number of IPv6 addresses
+ *
+ * This is the IPv6 utility function to populate unicast addresses.
+ *
+ * Return: 0 on success, error number otherwise.
+ */
+static int hdd_fill_ipv6_uc_addr(struct inet6_dev *idev,
+				uint8_t ipv6_uc_addr[][SIR_MAC_IPV6_ADDR_LEN],
+				uint8_t *ipv6addr_type, uint32_t *count)
+{
+	struct inet6_ifaddr *ifa;
+	struct list_head *p;
+	uint32_t scope;
+
+	list_for_each(p, &idev->addr_list) {
+		if (*count >= SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA)
+			return -EINVAL;
+		ifa = list_entry(p, struct inet6_ifaddr, if_list);
+		if (ifa->flags & IFA_F_DADFAILED)
+			continue;
+		scope = ipv6_addr_src_scope(&ifa->addr);
+		switch (scope) {
+		case IPV6_ADDR_SCOPE_GLOBAL:
+		case IPV6_ADDR_SCOPE_LINKLOCAL:
+			qdf_mem_copy(ipv6_uc_addr[*count], &ifa->addr.s6_addr,
+				sizeof(ifa->addr.s6_addr));
+			ipv6addr_type[*count] = SIR_IPV6_ADDR_UC_TYPE;
+			hdd_info("Index %d scope = %s UC-Address: %pI6",
+				*count, (scope == IPV6_ADDR_SCOPE_LINKLOCAL) ?
+				"LINK LOCAL" : "GLOBAL", ipv6_uc_addr[*count]);
+			*count += 1;
+			break;
+		default:
+			hdd_err("The Scope %d is not supported", scope);
+		}
+	}
+	return 0;
+}
+
+/**
+ * hdd_fill_ipv6_ac_addr() - fill IPv6 anycast addresses
+ * @idev: pointer to net device
+ * @ipv6addr: destination array to fill IPv6 addresses
+ * @ipv6addr_type: IPv6 Address type
+ * @count: number of IPv6 addresses
+ *
+ * This is the IPv6 utility function to populate anycast addresses.
+ *
+ * Return: 0 on success, error number otherwise.
+ */
+static int hdd_fill_ipv6_ac_addr(struct inet6_dev *idev,
+				uint8_t ipv6_ac_addr[][SIR_MAC_IPV6_ADDR_LEN],
+				uint8_t *ipv6addr_type, uint32_t *count)
+{
+	struct ifacaddr6 *ifaca;
+	uint32_t scope;
+
+	for (ifaca = idev->ac_list; ifaca; ifaca = ifaca->aca_next) {
+		if (*count >= SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA)
+			return -EINVAL;
+		/* For anycast addr no DAD */
+		scope = ipv6_addr_src_scope(&ifaca->aca_addr);
+		switch (scope) {
+		case IPV6_ADDR_SCOPE_GLOBAL:
+		case IPV6_ADDR_SCOPE_LINKLOCAL:
+			qdf_mem_copy(ipv6_ac_addr[*count], &ifaca->aca_addr,
+				sizeof(ifaca->aca_addr));
+			ipv6addr_type[*count] = SIR_IPV6_ADDR_AC_TYPE;
+			hdd_info("Index %d scope = %s AC-Address: %pI6",
+				*count, (scope == IPV6_ADDR_SCOPE_LINKLOCAL) ?
+				"LINK LOCAL" : "GLOBAL", ipv6_ac_addr[*count]);
+			*count += 1;
+			break;
+		default:
+			hdd_err("The Scope %d is not supported", scope);
+		}
+	}
+	return 0;
+}
+
+/**
  * hdd_conf_ns_offload() - Configure NS offload
  * @pAdapter:   pointer to the adapter
  * @fenable:    flag to enable or disable
@@ -298,18 +383,15 @@ int wlan_hdd_ipv6_changed(struct notifier_block *nb,
 static void hdd_conf_ns_offload(hdd_adapter_t *pAdapter, bool fenable)
 {
 	struct inet6_dev *in6_dev;
-	struct inet6_ifaddr *ifp;
-	struct list_head *p;
-	uint8_t
-		selfIPv6Addr[SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA]
-	[SIR_MAC_IPV6_ADDR_LEN] = { {0,} };
-	bool selfIPv6AddrValid[SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA] = { 0 };
+	uint8_t ipv6_addr[SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA]
+					[SIR_MAC_IPV6_ADDR_LEN] = { {0,} };
+	uint8_t ipv6_addr_type[SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA] = { 0 };
 	tSirHostOffloadReq offLoadRequest;
 	hdd_context_t *pHddCtx;
 
-	int i = 0;
+	int i = 0, ret;
 	QDF_STATUS returnStatus;
-	uint32_t count = 0, scope;
+	uint32_t count = 0;
 
 	ENTER();
 	hdd_notice(" fenable = %d", fenable);
@@ -330,38 +412,26 @@ static void hdd_conf_ns_offload(hdd_adapter_t *pAdapter, bool fenable)
 	if (fenable) {
 		in6_dev = __in6_dev_get(pAdapter->dev);
 		if (NULL != in6_dev) {
-			/* read_lock_bh(&in6_dev->lock); */
-			list_for_each(p, &in6_dev->addr_list) {
-				if (count >=
-					SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA) {
-					hdd_err("Reached max supported NS Offload addresses");
-					break;
-				}
-				ifp =
-					list_entry(p, struct inet6_ifaddr, if_list);
-				scope = ipv6_addr_src_scope(&ifp->addr);
+			/* Unicast Addresses */
+			ret = hdd_fill_ipv6_uc_addr(in6_dev, ipv6_addr,
+						ipv6_addr_type, &count);
 
-				switch (scope) {
-				case IPV6_ADDR_SCOPE_GLOBAL:
-				case IPV6_ADDR_SCOPE_LINKLOCAL:
-					qdf_mem_copy(&selfIPv6Addr[count],
-						&ifp->addr.s6_addr,
-						sizeof(ifp->addr.s6_addr));
-					selfIPv6AddrValid[count] =
-						SIR_IPV6_ADDR_VALID;
-					hdd_info("Index %d scope = %s Address : %pI6",
-					  count,
-					  (scope == IPV6_ADDR_SCOPE_LINKLOCAL) ?
-					  "LINK LOCAL" : "GLOBAL",
-					  selfIPv6Addr[count]);
-					count += 1;
-					break;
-				default:
-					hdd_err("The Scope %d is not supported",
-						scope);
-				}
+			if (0 > ret) {
+				hdd_notice(
+				"Reached max supported addresses and not enabling NS offload");
+				return;
 			}
-			/* read_unlock_bh(&in6_dev->lock); */
+
+			/* Anycast Addresses */
+			ret = hdd_fill_ipv6_ac_addr(in6_dev, ipv6_addr,
+						ipv6_addr_type, &count);
+
+			if (0 > ret) {
+				hdd_notice(
+				"Reached max supported addresses and not enabling NS offload");
+				return;
+			}
+
 			qdf_mem_zero(&offLoadRequest, sizeof(offLoadRequest));
 			for (i = 0; i < count; i++) {
 				/* Filling up the request structure
@@ -379,30 +449,21 @@ static void hdd_conf_ns_offload(hdd_adapter_t *pAdapter, bool fenable)
 				offLoadRequest.nsOffloadInfo.selfIPv6Addr[i][11] = 0x01;
 				offLoadRequest.nsOffloadInfo.selfIPv6Addr[i][12] = 0xFF;
 				offLoadRequest.nsOffloadInfo.selfIPv6Addr[i][13] =
-					selfIPv6Addr[i][13];
+							ipv6_addr[i][13];
 				offLoadRequest.nsOffloadInfo.selfIPv6Addr[i][14] =
-					selfIPv6Addr[i][14];
+							ipv6_addr[i][14];
 				offLoadRequest.nsOffloadInfo.selfIPv6Addr[i][15] =
-					selfIPv6Addr[i][15];
+							ipv6_addr[i][15];
 				offLoadRequest.nsOffloadInfo.slotIdx = i;
-				qdf_mem_copy(&offLoadRequest.nsOffloadInfo.targetIPv6Addr[i],
-					&selfIPv6Addr[i][0], SIR_MAC_IPV6_ADDR_LEN);
+				qdf_mem_copy(&offLoadRequest.nsOffloadInfo.
+					targetIPv6Addr[i], &ipv6_addr[i][0],
+					SIR_MAC_IPV6_ADDR_LEN);
 
 				offLoadRequest.nsOffloadInfo.targetIPv6AddrValid[i] =
-					SIR_IPV6_ADDR_VALID;
-
-				hdd_info("configuredMcastBcastFilter: %d",
-					pHddCtx->configuredMcastBcastFilter);
-
-				if ((true == pHddCtx->sus_res_mcastbcast_filter_valid)
-					&& ((HDD_MCASTBCASTFILTER_FILTER_ALL_MULTICAST ==
-					pHddCtx->sus_res_mcastbcast_filter) ||
-					(HDD_MCASTBCASTFILTER_FILTER_ALL_MULTICAST_BROADCAST ==
-					pHddCtx->sus_res_mcastbcast_filter))) {
-					hdd_info("Set offLoadRequest with SIR_OFFLOAD_NS_AND_MCAST_FILTER_ENABLE");
-					offLoadRequest.enableOrDisable =
-						SIR_OFFLOAD_NS_AND_MCAST_FILTER_ENABLE;
-				}
+							SIR_IPV6_ADDR_VALID;
+				offLoadRequest.nsOffloadInfo.
+						target_ipv6_addr_ac_type[i] =
+							ipv6_addr_type[i];
 
 				qdf_mem_copy(&offLoadRequest.params.hostIpv6Addr,
 					&offLoadRequest.nsOffloadInfo.targetIPv6Addr[i],
@@ -412,6 +473,9 @@ static void hdd_conf_ns_offload(hdd_adapter_t *pAdapter, bool fenable)
 					&offLoadRequest.nsOffloadInfo.selfIPv6Addr[i],
 					&offLoadRequest.nsOffloadInfo.targetIPv6Addr[i], i);
 			}
+
+			hdd_info("configuredMcastBcastFilter: %d",
+				pHddCtx->configuredMcastBcastFilter);
 			hdd_wlan_offload_event(SIR_IPV6_NS_OFFLOAD,
 				SIR_OFFLOAD_ENABLE);
 			offLoadRequest.offloadType =  SIR_IPV6_NS_OFFLOAD;

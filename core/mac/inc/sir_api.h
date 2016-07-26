@@ -2612,6 +2612,7 @@ typedef struct sSirNsOffloadReq {
 	struct qdf_mac_addr self_macaddr;
 	uint8_t srcIPv6AddrValid;
 	uint8_t targetIPv6AddrValid[SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA];
+	uint8_t target_ipv6_addr_ac_type[SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA];
 	uint8_t slotIdx;
 } tSirNsOffloadReq, *tpSirNsOffloadReq;
 #endif /* WLAN_NS_OFFLOAD */
