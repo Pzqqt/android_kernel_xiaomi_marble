@@ -294,6 +294,11 @@ void hdd_init_qdf_ctx(struct device *dev, void *bdev,
 {
 	qdf_device_t qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
+	if (!qdf_dev) {
+		hdd_err("Invalid QDF device");
+		return;
+	}
+
 	qdf_dev->dev = dev;
 	qdf_dev->drv_hdl = bdev;
 	qdf_dev->bus_type = bus_type;
