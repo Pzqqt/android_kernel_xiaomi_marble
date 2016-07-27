@@ -4471,7 +4471,7 @@ send_rtt_meas_req_test_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 
 	p = (u_int8_t *) wmi_buf_data(buf);
-	qdf_mem_set(p, 0, len);
+	qdf_mem_set(p, len, 0);
 
 	head = (wmi_rtt_measreq_head *) p;
 	WMI_RTT_REQ_ID_SET(head->req_id, param->req_id);
@@ -4609,7 +4609,7 @@ send_rtt_meas_req_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 
 	p = (uint8_t *) wmi_buf_data(buf);
-	qdf_mem_set(p, 0, len);
+	qdf_mem_set(p, len, 0);
 
 	/* encode header */
 	head = (wmi_rtt_measreq_head *) p;
@@ -4679,7 +4679,7 @@ send_rtt_meas_req_cmd_non_tlv(wmi_unified_t wmi_handle,
 		WMI_SET_CHANNEL_FLAG(w_chan, WMI_CHAN_FLAG_DFS);
 
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(((uint8_t *)peer), &body->dest_mac);
-	qdf_mem_set(spoof, 0 , 6);
+	qdf_mem_set(spoof, IEEE80211_ADDR_LEN, 0);
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(((uint8_t *)param->spoof_mac_addr),
 		&body->spoof_bssid);
 
@@ -4777,7 +4777,7 @@ send_lci_set_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 
 	p = (uint8_t *) wmi_buf_data(buf);
-	qdf_mem_set(p, 0, len);
+	qdf_mem_set(p, len, 0);
 
 	head = (wmi_oem_measreq_head *)p;
 	head->sub_type = TARGET_OEM_CONFIGURE_LCI;
@@ -4847,7 +4847,7 @@ send_lcr_set_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 
 	p = (uint8_t *) wmi_buf_data(buf);
-	qdf_mem_set(p, 0, len);
+	qdf_mem_set(p, len, 0);
 
 	head = (wmi_oem_measreq_head *)p;
 	head->sub_type = TARGET_OEM_CONFIGURE_LCR;
