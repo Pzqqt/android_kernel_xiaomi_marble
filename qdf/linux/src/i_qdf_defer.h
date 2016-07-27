@@ -157,6 +157,45 @@ static inline QDF_STATUS __qdf_sched_work(qdf_handle_t hdl, __qdf_work_t *work)
 }
 
 /**
+ * __qdf_sched_delayed_work() - Schedule a delayed work
+ * @hdl: OS handle
+ * @work: pointer to delayed work
+ * @delay: delay interval
+ * Return: none
+ */
+static inline QDF_STATUS __qdf_sched_delayed_work(qdf_handle_t hdl,
+						  __qdf_delayed_work_t *work,
+						  uint32_t delay)
+{
+	schedule_delayed_work(work, delay);
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * __qdf_cancel_work() - Cancel a work
+ * @hdl: OS handle
+ * @work: pointer to work
+ * Return: true if work was pending, false otherwise
+ */
+static inline bool __qdf_cancel_work(qdf_handle_t hdl,
+					   __qdf_work_t *work)
+{
+	return cancel_work_sync(work);
+}
+
+/**
+ * __qdf_cancel_delayed_work() - Cancel a delayed work
+ * @hdl: OS handle
+ * @work: pointer to delayed work
+ * Return: true if work was pending, false otherwise
+ */
+static inline bool __qdf_cancel_delayed_work(qdf_handle_t hdl,
+					     __qdf_delayed_work_t *work)
+{
+	return cancel_delayed_work_sync(work);
+}
+
+/**
  * __qdf_flush_work - Flush a deferred task on non-interrupt context
  * @hdl: OS handle
  * @work: pointer to work
@@ -167,6 +206,20 @@ static inline uint32_t __qdf_flush_work(qdf_handle_t hdl, __qdf_work_t *work)
 	flush_work(work);
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * __qdf_flush_delayed_work() - Flush a delayed work
+ * @hdl: OS handle
+ * @work: pointer to delayed work
+ * Return: none
+ */
+static inline uint32_t __qdf_flush_delayed_work(qdf_handle_t hdl,
+						__qdf_delayed_work_t *work)
+{
+	flush_delayed_work(work);
+	return QDF_STATUS_SUCCESS;
+}
+
 #else
 static inline QDF_STATUS __qdf_init_work(qdf_handle_t hdl,
 					 __qdf_work_t *work,
@@ -210,11 +263,38 @@ static inline QDF_STATUS __qdf_sched_work(qdf_handle_t hdl, __qdf_work_t *work)
 	return QDF_STATUS_SUCCESS;
 }
 
+static inline QDF_STATUS __qdf_sched_delayed_work(qdf_handle_t hdl,
+						  __qdf_delayed_work_t *work,
+						  uint32_t delay)
+{
+	schedule_delayed_work(&work->dwork, delay);
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline bool __qdf_cancel_work(qdf_handle_t hdl,
+					   __qdf_work_t *work)
+{
+	return cancel_work_sync(&work->work);
+}
+
+static inline bool __qdf_cancel_delayed_work(qdf_handle_t hdl,
+					     __qdf_delayed_work_t *work)
+{
+	return cancel_delayed_work_sync(&work->dwork);
+}
+
 static inline uint32_t __qdf_flush_work(qdf_handle_t hdl, __qdf_work_t *work)
 {
 	flush_work(&work->work);
 	return QDF_STATUS_SUCCESS;
 }
+static inline uint32_t __qdf_flush_delayed_work(qdf_handle_t hdl,
+						__qdf_delayed_work_t *work)
+{
+	flush_delayed_work(&work->dwork);
+	return QDF_STATUS_SUCCESS;
+}
+
 #endif
 
 /**
