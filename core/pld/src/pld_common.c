@@ -1272,6 +1272,30 @@ int pld_get_ce_id(struct device *dev, int irq)
 }
 
 /**
+ * pld_get_irq() - Get IRQ number for given CE ID
+ * @dev: device
+ * @ce_id: CE ID
+ *
+ * Return: IRQ number
+ */
+int pld_get_irq(struct device *dev, int ce_id)
+{
+	int ret = 0;
+
+	switch (pld_get_bus_type(dev)) {
+	case PLD_BUS_TYPE_SNOC:
+		ret = pld_snoc_get_irq(ce_id);
+		break;
+	case PLD_BUS_TYPE_PCIE:
+	default:
+		ret = -EINVAL;
+		break;
+	}
+
+	return ret;
+}
+
+/**
  * pld_lock_pm_sem() - Lock PM semaphore
  * @dev: device
  *

@@ -381,4 +381,16 @@ int pld_snoc_power_off(struct device *dev)
 {
 	return icnss_power_off(dev);
 }
+
+/**
+ * pld_snoc_get_irq() - Get IRQ number for given CE ID
+ * @ce_id: CE ID
+ *
+ * Return: IRQ number
+ */
+int pld_snoc_get_irq(int ce_id)
+{
+	return icnss_get_irq(ce_id);
+}
+
 #endif

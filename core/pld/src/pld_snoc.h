@@ -83,6 +83,10 @@ static inline int pld_snoc_power_off(struct device *dev)
 {
 	return 0;
 }
+static inline int pld_snoc_get_irq(int ce_id)
+{
+	return 0;
+}
 #else
 int pld_snoc_register_driver(void);
 void pld_snoc_unregister_driver(void);
@@ -99,6 +103,7 @@ void pld_snoc_disable_irq(unsigned int ce_id);
 int pld_snoc_get_ce_id(int irq);
 int pld_snoc_power_on(struct device *dev);
 int pld_snoc_power_off(struct device *dev);
+int pld_snoc_get_irq(int ce_id);
 #endif
 
 #endif
