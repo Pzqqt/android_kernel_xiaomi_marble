@@ -10413,34 +10413,37 @@ disconnected:
  * wlan_hdd_reassoc_bssid_hint() - Start reassociation if bssid is present
  * @adapter: Pointer to the HDD adapter
  * @req: Pointer to the structure cfg_connect_params receieved from user space
+ * @status: out variable for status of reassoc request
  *
  * This function will start reassociation if bssid hint, channel hint and
  * previous bssid parameters are present in the connect request
  *
- * Return: success if reassociation is happening
- *         Error code if reassociation is not permitted or not happening
+ * Return: true if connect was for ReAssociation, false otherwise
  */
 #ifdef CFG80211_CONNECT_PREV_BSSID
-static int wlan_hdd_reassoc_bssid_hint(hdd_adapter_t *adapter,
-				struct cfg80211_connect_params *req)
+static bool wlan_hdd_reassoc_bssid_hint(hdd_adapter_t *adapter,
+					struct cfg80211_connect_params *req,
+					int *status)
 {
-	int status = -EPERM;
+	bool reassoc = false;
 	if (req->bssid_hint && req->channel_hint && req->prev_bssid) {
-		hddLog(VOS_TRACE_LEVEL_INFO,
-			FL("REASSOC Attempt on channel %d to "MAC_ADDRESS_STR),
-			req->channel_hint->hw_value,
-			MAC_ADDR_ARRAY(req->bssid_hint));
-		status  = hdd_reassoc(adapter, req->bssid_hint,
+		reassoc = true;
+		hdd_info(FL("REASSOC Attempt on channel %d to "MAC_ADDRESS_STR),
+			 req->channel_hint->hw_value,
+			 MAC_ADDR_ARRAY(req->bssid_hint));
+		*status = hdd_reassoc(adapter, req->bssid_hint,
 				      req->channel_hint->hw_value,
 				      CONNECT_CMD_USERSPACE);
+		hdd_debug("hdd_reassoc: status: %d", *status);
 	}
-	return status;
+	return reassoc;
 }
 #else
-static int wlan_hdd_reassoc_bssid_hint(hdd_adapter_t *adapter,
-				       struct cfg80211_connect_params *req)
+static bool wlan_hdd_reassoc_bssid_hint(hdd_adapter_t *adapter,
+					struct cfg80211_connect_params *req,
+					int *status)
 {
-	return -EPERM;
+	return false;
 }
 #endif
 
@@ -10500,8 +10503,7 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 	if (0 != status)
 		return status;
 
-	status = wlan_hdd_reassoc_bssid_hint(pAdapter, req);
-	if (0 == status)
+	if (true == wlan_hdd_reassoc_bssid_hint(pAdapter, req, &status))
 		return status;
 
 	if (req->channel) {
