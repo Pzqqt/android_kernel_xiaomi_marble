@@ -2312,13 +2312,14 @@ wmi_unified_dfs_phyerr_filter_offload_en_cmd(void *wmi_hdl,
 #ifndef WMI_NON_TLV_SUPPORT
 QDF_STATUS wmi_unified_pktlog_wmi_send_cmd(void *wmi_hdl,
 				   WMI_PKTLOG_EVENT pktlog_event,
-				   uint32_t cmd_id)
+				   uint32_t cmd_id,
+				   uint8_t user_triggered)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
 	if (wmi_handle->ops->send_pktlog_wmi_send_cmd)
 		return wmi_handle->ops->send_pktlog_wmi_send_cmd(wmi_handle,
-			    pktlog_event, cmd_id);
+			    pktlog_event, cmd_id, user_triggered);
 
 	return QDF_STATUS_E_FAILURE;
 }

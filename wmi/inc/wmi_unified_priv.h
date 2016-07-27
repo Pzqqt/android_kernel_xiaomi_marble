@@ -507,7 +507,7 @@ QDF_STATUS (*send_roam_scan_offload_ap_profile_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*send_pktlog_wmi_send_cmd)(wmi_unified_t wmi_handle,
 				   WMI_PKTLOG_EVENT pktlog_event,
-				   WMI_CMD_ID cmd_id);
+				   WMI_CMD_ID cmd_id, uint8_t user_triggered);
 #endif
 
 QDF_STATUS (*send_fw_profiling_cmd)(wmi_unified_t wmi_handle,

@@ -650,7 +650,8 @@ QDF_STATUS wmi_unified_dfs_phyerr_filter_offload_en_cmd(void *wmi_hdl,
 #ifndef WMI_NON_TLV_SUPPORT
 QDF_STATUS wmi_unified_pktlog_wmi_send_cmd(void *wmi_hdl,
 				   WMI_PKTLOG_EVENT pktlog_event,
-				   uint32_t cmd_id);
+				   uint32_t cmd_id,
+				   uint8_t user_triggered);
 #endif
 
 QDF_STATUS wmi_unified_add_wow_wakeup_event_cmd(void *wmi_hdl,
