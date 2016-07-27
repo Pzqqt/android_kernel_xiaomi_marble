@@ -15750,8 +15750,8 @@ QDF_STATUS sme_set_bpf_instructions(tHalHandle hal,
 	set_offload->filter_id = req->filter_id;
 	set_offload->current_offset = req->current_offset;
 	set_offload->total_length = req->total_length;
+	set_offload->current_length = req->current_length;
 	if (set_offload->total_length) {
-		set_offload->current_length = req->current_length;
 		set_offload->program = qdf_mem_malloc(sizeof(uint8_t) *
 						req->current_length);
 		qdf_mem_copy(set_offload->program, req->program,

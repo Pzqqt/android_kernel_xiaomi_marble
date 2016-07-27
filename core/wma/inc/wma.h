@@ -1430,6 +1430,7 @@ typedef struct {
 	qdf_runtime_lock_t wmi_cmd_rsp_runtime_lock;
 	qdf_runtime_lock_t wma_runtime_resume_lock;
 	uint32_t fine_time_measurement_cap;
+	bool bpf_enabled;
 	struct wma_ini_config ini_config;
 	struct wma_valid_channels saved_chan;
 	/* NAN datapath support enabled in firmware */

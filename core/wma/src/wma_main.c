@@ -3967,6 +3967,7 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	tgt_cfg.lpss_support = wma_handle->lpss_support;
 #endif /* WLAN_FEATURE_LPSS */
 	tgt_cfg.ap_arpns_support = wma_handle->ap_arpns_support;
+	tgt_cfg.bpf_enabled = wma_handle->bpf_enabled;
 	tgt_cfg.fine_time_measurement_cap =
 		wma_handle->fine_time_measurement_cap;
 	wma_setup_egap_support(&tgt_cfg, wma_handle);
@@ -4285,6 +4286,10 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	wma_handle->ap_arpns_support =
 		WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
 				WMI_SERVICE_AP_ARPNS_OFFLOAD);
+
+	wma_handle->bpf_enabled =
+		WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
+				WMI_SERVICE_BPF_OFFLOAD);
 
 	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
 				   WMI_SERVICE_CSA_OFFLOAD)) {
