@@ -251,18 +251,30 @@ enum pld_driver_mode {
 	PLD_OFF
 };
 
+#define PLD_MAX_TIMESTAMP_LEN 32
+
 /**
  * struct pld_soc_info - SOC information
  * @v_addr: virtual address of preallocated memory
  * @p_addr: physical address of preallcoated memory
- * @version: version number
+ * @chip_id: chip ID
+ * @chip_family: chip family
+ * @board_id: board ID
+ * @soc_id: SOC ID
+ * @fw_version: FW version
+ * @fw_build_timestamp: FW build timestamp
  *
  * pld_soc_info is used to store WLAN SOC information.
  */
 struct pld_soc_info {
 	void __iomem *v_addr;
 	phys_addr_t p_addr;
-	u32 version;
+	u32 chip_id;
+	u32 chip_family;
+	u32 board_id;
+	u32 soc_id;
+	u32 fw_version;
+	char fw_build_timestamp[PLD_MAX_TIMESTAMP_LEN + 1];
 };
 
 /**
