@@ -15754,6 +15754,12 @@ QDF_STATUS sme_set_bpf_instructions(tHalHandle hal,
 	if (set_offload->total_length) {
 		set_offload->program = qdf_mem_malloc(sizeof(uint8_t) *
 						req->current_length);
+		if (NULL == set_offload->program) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				FL("Failed to alloc instruction memory"));
+			qdf_mem_free(set_offload);
+			return QDF_STATUS_E_NOMEM;
+		}
 		qdf_mem_copy(set_offload->program, req->program,
 				set_offload->current_length);
 	}
