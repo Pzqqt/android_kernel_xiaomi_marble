@@ -7072,7 +7072,7 @@ send_dfs_phyerr_filter_offload_en_cmd_tlv(wmi_unified_t wmi_handle,
  */
 QDF_STATUS send_pktlog_wmi_send_cmd_tlv(wmi_unified_t wmi_handle,
 				   WMI_PKTLOG_EVENT pktlog_event,
-				   WMI_CMD_ID cmd_id)
+				   WMI_CMD_ID cmd_id, uint8_t user_triggered)
 {
 	WMI_PKTLOG_EVENT PKTLOG_EVENT;
 	WMI_CMD_ID CMD_ID;
@@ -7099,6 +7099,8 @@ QDF_STATUS send_pktlog_wmi_send_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_GET_STRUCT_TLVLEN
 		       (wmi_pdev_pktlog_enable_cmd_fixed_param));
 		cmd->evlist = PKTLOG_EVENT;
+		cmd->enable = user_triggered ? WMI_PKTLOG_ENABLE_FORCE
+					: WMI_PKTLOG_ENABLE_AUTO;
 		cmd->pdev_id = WMI_PDEV_ID_SOC;
 		if (wmi_unified_cmd_send(wmi_handle, buf, len,
 					 WMI_PDEV_PKTLOG_ENABLE_CMDID)) {
