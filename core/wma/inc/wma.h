@@ -2112,7 +2112,7 @@ int wma_mgmt_tx_completion_handler(void *handle, uint8_t *cmpl_event_params,
 				   uint32_t len);
 int wma_mgmt_tx_bundle_completion_handler(void *handle,
 	uint8_t *cmpl_event_params, uint32_t len);
-void wma_set_dfs_region(tp_wma_handle wma, uint8_t dfs_region);
+void wma_set_dfs_region(tp_wma_handle wma, enum dfs_region dfs_region);
 uint32_t wma_get_vht_ch_width(void);
 QDF_STATUS
 wma_config_debug_module_cmd(wmi_unified_t wmi_handle, A_UINT32 param,

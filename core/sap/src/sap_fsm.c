@@ -1246,13 +1246,14 @@ bool sap_check_in_avoid_ch_list(ptSapContext sap_ctx, uint8_t channel)
  */
 static uint8_t sap_apply_rules(ptSapContext sap_ctx)
 {
-	uint8_t num_valid_ch, dfs_region, i = 0, ch_id;
+	uint8_t num_valid_ch, i = 0, ch_id;
 	tAll5GChannelList *sap_all_ch = &sap_ctx->SapAllChnlList;
 	bool is_ch_nol = false;
 	bool is_out_of_range = false;
 	tpAniSirGlobal mac_ctx;
 	tHalHandle hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
 	uint8_t preferred_location;
+	enum dfs_region dfs_region;
 
 	if (NULL == hal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -4853,7 +4854,7 @@ int sap_start_dfs_cac_timer(ptSapContext sapContext)
 	uint32_t cacTimeOut;
 	tHalHandle hHal = NULL;
 	tpAniSirGlobal pMac = NULL;
-	uint8_t dfs_region;
+	enum dfs_region dfs_region;
 
 	if (sapContext == NULL) {
 		return 0;

@@ -33,10 +33,10 @@
 
 #include "qdf_types.h"
 #include "cds_reg_service.h"
+#include "cds_regdomain.h"
 #include "qdf_trace.h"
 #include "sme_api.h"
 #include "wlan_hdd_main.h"
-#include "cds_regdomain.h"
 #include "wlan_hdd_regulatory.h"
 
 #define WORLD_SKU_MASK      0x00F0
@@ -427,6 +427,43 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 	wlan_hdd_cfg80211_update_band(wiphy, band_capability);
 }
 
+/**
+ * hdd_set_dfs_region() - set the dfs_region
+ * @dfs_region: the dfs_region to set
+ *
+ * Return: void
+ */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)) || defined(WITH_BACKPORTS)
+static void hdd_set_dfs_region(hdd_context_t *hdd_ctx,
+			       enum dfs_region dfs_reg)
+{
+	cds_put_dfs_region(dfs_reg);
+}
+#else
+static void hdd_set_dfs_region(hdd_context_t *hdd_ctx,
+				     enum dfs_region dfs_reg)
+{
+
+	/* remap the ctl code to dfs region code */
+	switch (hdd_ctx->reg.ctl_5g) {
+	case FCC:
+		cds_put_dfs_region(DFS_FCC_REGION);
+		break;
+	case ETSI:
+		cds_put_dfs_region(DFS_ETSI_REGION);
+		break;
+	case MKK:
+		cds_put_dfs_region(DFS_MKK_REGION);
+		break;
+	default:
+		/* set default dfs_region to FCC */
+		cds_put_dfs_region(DFS_FCC_REGION);
+		break;
+	}
+
+}
+#endif
+
 
 /**
  * hdd_regulatory_init() - regulatory_init
@@ -439,6 +476,7 @@ int hdd_regulatory_init(hdd_context_t *hdd_ctx, struct wiphy *wiphy)
 {
 	int ret_val;
 	struct regulatory *reg_info;
+	enum dfs_region dfs_reg;
 
 	reg_info = &hdd_ctx->reg;
 
@@ -459,6 +497,10 @@ int hdd_regulatory_init(hdd_context_t *hdd_ctx, struct wiphy *wiphy)
 	init_completion(&hdd_ctx->reg_init);
 
 	cds_fill_and_send_ctl_to_fw(reg_info);
+
+	hdd_set_dfs_region(hdd_ctx, DFS_FCC_REGION);
+	cds_get_dfs_region(&dfs_reg);
+	cds_set_wma_dfs_region(dfs_reg);
 
 	return 0;
 }
@@ -486,43 +528,6 @@ void hdd_program_country_code(hdd_context_t *hdd_ctx)
 	}
 }
 
-
-/**
- * hdd_set_dfs_region() - set the dfs_region
- * @dfs_region: the dfs_region to set
- *
- * Return: void
- */
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)) || defined(WITH_BACKPORTS)
-static void hdd_set_dfs_region(hdd_context_t *hdd_ctx,
-			       uint8_t dfs_reg)
-{
-	cds_put_dfs_region(dfs_reg);
-}
-#else
-static void hdd_set_dfs_region(hdd_context_t *hdd_ctx,
-				     uint8_t dfs_reg)
-{
-
-	/* remap the ctl code to dfs region code */
-	switch (hdd_ctx->reg.ctl_5g) {
-	case FCC:
-		cds_put_dfs_region(DFS_FCC_REGION);
-		break;
-	case ETSI:
-		cds_put_dfs_region(DFS_ETSI_REGION);
-		break;
-	case MKK:
-		cds_put_dfs_region(DFS_MKK_REGION);
-		break;
-	default:
-		/* set default dfs_region to FCC */
-		cds_put_dfs_region(DFS_FCC_REGION);
-		break;
-	}
-
-}
-#endif
 
 /**
  * hdd_restore_custom_reg_settings() - restore custom reg settings
@@ -601,7 +606,7 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
 	bool vht80_allowed;
 	bool reset = false;
-	uint8_t dfs_reg;
+	enum dfs_region dfs_reg;
 
 	hdd_info("country: %c%c, initiator %d, dfs_region: %d",
 		  request->alpha2[0],
@@ -619,6 +624,14 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 			__func__);
 		return;
 	}
+
+	if (('K' == request->alpha2[0]) &&
+	    ('R' == request->alpha2[1]))
+		request->dfs_region = DFS_KR_REGION;
+
+	if (('C' == request->alpha2[0]) &&
+	    ('N' == request->alpha2[1]))
+		request->dfs_region = DFS_CN_REGION;
 
 	/* first check if this callback is in response to the driver callback */
 

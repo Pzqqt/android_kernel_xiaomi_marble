@@ -473,20 +473,6 @@ enum ctl_val {
 };
 
 /**
- * enum dfs_region - DFS region
- * @DFS_UNINIT_REGION: un-initialized region
- * @DFS_FCC_REGION: FCC region
- * @DFS_ETSI_REGION: ETSI region
- * @DFS_MKK_REGION: MKK region
- */
-enum dfs_region {
-	DFS_UNINIT_REGION = 0,
-	DFS_FCC_REGION = 1,
-	DFS_ETSI_REGION = 2,
-	DFS_MKK_REGION = 3
-};
-
-/**
  * enum offset_t: channel offset
  * @BW20: 20 mhz channel
  * @BW40_LOW_PRIMARY: lower channel in 40 mhz

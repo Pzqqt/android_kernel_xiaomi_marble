@@ -7199,10 +7199,11 @@ struct dfs_ieee80211_channel *wma_dfs_configure_channel(
  *
  * Return: none
  */
-void wma_set_dfs_region(tp_wma_handle wma, uint8_t dfs_region)
+void wma_set_dfs_region(tp_wma_handle wma, enum dfs_region dfs_region)
 {
-	/* dfs information is passed */
-	if (dfs_region > DFS_MKK_REGION || dfs_region == DFS_UNINIT_REGION)
+	if (dfs_region >= DFS_UNDEF_REGION ||
+	    dfs_region == DFS_UNINIT_REGION)
+
 		/* assign DFS_FCC_REGION as default region*/
 		wma->dfs_ic->current_dfs_regdomain = DFS_FCC_REGION;
 	else
