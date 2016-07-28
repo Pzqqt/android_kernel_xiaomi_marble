@@ -569,9 +569,6 @@ static int wma_ndp_end_response_event_handler(void *handle,
 	struct ndp_end_rsp_event *end_rsp;
 	WMI_NDP_END_RSP_EVENTID_param_tlvs *event;
 	wmi_ndp_end_rsp_event_fixed_param *fixed_params = NULL;
-	wmi_ndp_end_rsp_per_ndi *end_rsp_tlv;
-	uint32_t i;
-	uint32_t len_end_rsp;
 	tp_wma_handle wma_handle = handle;
 
 	event = (WMI_NDP_END_RSP_EVENTID_param_tlvs *) event_info;
@@ -580,9 +577,7 @@ static int wma_ndp_end_response_event_handler(void *handle,
 		 WMI_NDP_END_RSP_EVENTID, fixed_params->transaction_id,
 		 fixed_params->rsp_status, fixed_params->reason_code);
 
-	len_end_rsp = sizeof(*end_rsp) + (event->num_ndp_end_rsp_per_ndi_list *
-						sizeof(struct peer_ndp_map));
-	end_rsp = qdf_mem_malloc(len_end_rsp);
+	end_rsp = qdf_mem_malloc(sizeof(*end_rsp));
 	if (NULL == end_rsp) {
 		WMA_LOGE("malloc failed");
 		pe_msg.bodyval = true;
@@ -590,37 +585,11 @@ static int wma_ndp_end_response_event_handler(void *handle,
 		goto send_ndp_end_rsp;
 	}
 	pe_msg.bodyptr = end_rsp;
-	qdf_mem_zero(end_rsp, len_end_rsp);
+	qdf_mem_zero(end_rsp, sizeof(*end_rsp));
 
 	end_rsp->transaction_id = fixed_params->transaction_id;
 	end_rsp->reason = fixed_params->reason_code;
 	end_rsp->status = fixed_params->rsp_status;
-
-	if (end_rsp->status == NDP_CMD_RSP_STATUS_SUCCESS) {
-		WMA_LOGD(FL("NDP end rsp, num_peers: %d"),
-			event->num_ndp_end_rsp_per_ndi_list);
-		end_rsp->num_peers = event->num_ndp_end_rsp_per_ndi_list;
-		if (end_rsp->num_peers == 0) {
-			WMA_LOGE(FL("num_peers in NDP rsp should not be 0."));
-			end_rsp->status = NDP_CMD_RSP_STATUS_ERROR;
-			end_rsp->reason = NDP_END_FAILED;
-			goto send_ndp_end_rsp;
-		}
-		/* copy per peer response to return path buffer */
-		end_rsp_tlv = event->ndp_end_rsp_per_ndi_list;
-		for (i = 0; i < end_rsp->num_peers; i++) {
-			end_rsp->ndp_map[i].vdev_id = end_rsp_tlv[i].vdev_id;
-			WMI_MAC_ADDR_TO_CHAR_ARRAY(
-				&end_rsp_tlv[i].peer_mac_addr,
-				end_rsp->ndp_map[i].peer_ndi_mac_addr.bytes);
-			end_rsp->ndp_map[i].num_active_ndp_sessions =
-					end_rsp_tlv[i].num_active_ndps_on_ndi;
-			WMA_LOGD(FL("vdev_id: %d, peer_addr: %pM, active_ndp_left: %d"),
-				end_rsp->ndp_map[i].vdev_id,
-				&end_rsp->ndp_map[i].peer_ndi_mac_addr,
-				end_rsp->ndp_map[i].num_active_ndp_sessions);
-		}
-	}
 
 send_ndp_end_rsp:
 	pe_msg.type = SIR_HAL_NDP_END_RSP;

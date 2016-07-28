@@ -6230,18 +6230,12 @@ struct peer_ndp_map {
  * @transaction_id: unique identifier for the request
  * @status: status of operation
  * @reason: reason(opaque to host driver)
- * @num_ndp_terminated: if successful, number of ndp instances terminated
- * @num_peers: number of peers in ndp_map
- * @ndp_map: mapping of NDP instances to peer to VDEV
  *
  */
 struct ndp_end_rsp_event {
 	uint32_t transaction_id;
 	uint32_t status;
 	uint32_t reason;
-	uint32_t num_ndp_terminated;
-	uint32_t num_peers;
-	struct peer_ndp_map ndp_map[];
 };
 
 /**

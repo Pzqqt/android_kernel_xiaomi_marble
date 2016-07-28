@@ -668,13 +668,6 @@ void sme_ndp_msg_processor(tpAniSirGlobal mac_ctx, cds_msg_t *msg)
 		}
 		release_active_cmd = true;
 		cmd_to_rel = eSmeCommandNdpDataEndInitiatorRequest;
-		/*
-		 * get num of ndp requested to terminated from sme command
-		 * being released
-		 */
-		if (cmd != NULL && cmd_to_rel == cmd->command)
-			roam_info.ndp.ndp_end_rsp_params->num_ndp_terminated =
-				cmd->u.data_end_req->num_ndp_instances;
 		break;
 	}
 	case eWNI_SME_NDP_END_IND:

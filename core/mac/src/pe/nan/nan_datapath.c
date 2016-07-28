@@ -505,17 +505,10 @@ QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx, cds_msg_t *msg)
 					msg->bodyval);
 		break;
 	case SIR_HAL_NDP_END_RSP: {
-		struct ndp_end_rsp_event *ndp_end_rsp = msg->bodyptr;
-		uint32_t rsp_len = sizeof(*ndp_end_rsp);
-
-		if (ndp_end_rsp && ndp_end_rsp->ndp_map) {
-			lim_ndp_delete_peers(mac_ctx, ndp_end_rsp->ndp_map,
-					     ndp_end_rsp->num_peers);
-			rsp_len += (ndp_end_rsp->num_peers *
-					sizeof(struct peer_ndp_map));
-		}
 		lim_send_ndp_event_to_sme(mac_ctx, eWNI_SME_NDP_END_RSP,
-				msg->bodyptr, rsp_len, msg->bodyval);
+					  msg->bodyptr,
+					  sizeof(struct ndp_end_rsp_event),
+					  msg->bodyval);
 		break;
 	}
 	case SIR_HAL_NDP_END_IND:

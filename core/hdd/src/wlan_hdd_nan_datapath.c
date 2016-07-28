@@ -1491,10 +1491,7 @@ static void hdd_ndp_end_rsp_handler(hdd_adapter_t *adapter, void *rsp_params)
 	struct sk_buff *vendor_event;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct ndp_end_rsp_event *rsp = rsp_params;
-	struct nan_datapath_ctx *ndp_ctx;
-	uint32_t data_len, i;
-	int idx;
-	hdd_station_ctx_t *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	uint32_t data_len;
 
 	ENTER();
 
@@ -1505,30 +1502,6 @@ static void hdd_ndp_end_rsp_handler(hdd_adapter_t *adapter, void *rsp_params)
 
 	if (0 != wlan_hdd_validate_context(hdd_ctx))
 		return;
-
-	/* adjust active ndp instances per peer */
-	if (rsp->status == NDP_CMD_RSP_STATUS_SUCCESS) {
-		for (i = 0; i < rsp->num_peers; i++) {
-			adapter = hdd_get_adapter_by_vdev(hdd_ctx,
-						rsp->ndp_map[i].vdev_id);
-			if (NULL == adapter) {
-				hdd_err("adapter for vdev_id: %d not found",
-					rsp->ndp_map[i].vdev_id);
-				continue;
-			}
-			sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-			ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(adapter);
-			idx = hdd_get_peer_idx(sta_ctx,
-					&rsp->ndp_map[i].peer_ndi_mac_addr);
-			if (idx == INVALID_PEER_IDX)
-				hdd_err("can't find addr: %pM in vdev_id: %d, peer table.",
-					&rsp->ndp_map[i].peer_ndi_mac_addr,
-					rsp->ndp_map[i].vdev_id);
-			else
-				ndp_ctx->active_ndp_sessions[idx] =
-					rsp->ndp_map[i].num_active_ndp_sessions;
-		}
-	}
 
 	data_len = NLMSG_HDRLEN + (4 * NLA_HDRLEN) + (3 * sizeof(uint32_t)) +
 		   sizeof(uint16_t);
