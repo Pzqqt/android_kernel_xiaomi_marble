@@ -730,6 +730,7 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_peer_antdiv_info,
 	WMITLV_TAG_STRUC_wmi_pdev_get_antdiv_status_cmd_fixed_param,
 	WMITLV_TAG_STRUC_wmi_pdev_antdiv_status_event_fixed_param,
+	WMITLV_TAG_STRUC_wmi_mnt_filter_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1028,6 +1029,7 @@ typedef enum {
 	OP(WMI_PDEV_SET_WAKEUP_CONFIG_CMDID) \
 	OP(WMI_PEER_ANTDIV_INFO_REQ_CMDID) \
 	OP(WMI_PDEV_GET_ANTDIV_STATUS_CMDID) \
+	OP(WMI_MNT_FILTER_CMDID) \
 	/* add new CMD_LIST elements above this line */
 
 /*
@@ -2955,6 +2957,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_REORDER_QUEUE_SETUP_CMDID);
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_peer_reorder_queue_remove_cmd_fixed_param, wmi_peer_reorder_queue_remove_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PEER_REORDER_QUEUE_REMOVE_CMDID);
 
+/* Filter in monitor mode paramters Cmd */
+#define WMITLV_TABLE_WMI_MNT_FILTER_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_mnt_filter_cmd_fixed_param, wmi_mnt_filter_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_MNT_FILTER_CMDID);
 
 /************************** TLV definitions of WMI events *******************************/
 

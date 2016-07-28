@@ -235,6 +235,7 @@ typedef enum {
 	WMI_GRP_BPF_OFFLOAD,          /* 0x36 Berkeley Packet Filter */
 	WMI_GRP_NAN_DATA,             /* 0x37 */
 	WMI_GRP_PROTOTYPE,            /* 0x38 */
+	WMI_GRP_MONITOR,              /* 0x39 */
 } WMI_GRP_ID;
 
 #define WMI_CMD_GRP_START_ID(grp_id) (((grp_id) << 12) | 0x1)
@@ -991,6 +992,10 @@ typedef enum {
 	WMI_BPF_GET_VDEV_STATS_CMDID,
 	WMI_BPF_SET_VDEV_INSTRUCTIONS_CMDID,
 	WMI_BPF_DEL_VDEV_INSTRUCTIONS_CMDID,
+
+	/** WMI commands related to monitor mode. */
+	WMI_MNT_FILTER_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_MONITOR),
+
 	/**
 	 * Nan Data commands
 	 * NDI - NAN Data Interface
@@ -8386,6 +8391,21 @@ typedef struct {
 	A_UINT32 reason; /* refer to p2p_lo_stopped_reason_e */
 } wmi_p2p_lo_stopped_event_fixed_param;
 
+typedef enum {
+	WMI_MNT_FILTER_CONFIG_MANAGER,
+	WMI_MNT_FILTER_CONFIG_CONTROL,
+	WMI_MNT_FILTER_CONFIG_DATA,
+	WMI_MNT_FILTER_CONFIG_ALL,
+	WMI_MNT_FILTER_CONFIG_UNKNOWN,
+} WMI_MNT_FILTER_CONFIG_TYPE;
+
+typedef struct {
+	A_UINT32 tlv_header;
+	A_UINT32 vdev_id;
+	A_UINT32 clear_or_set;
+	A_UINT32 configure_type; /* see WMI_MNT_FILTER_CONFIG_TYPE */
+} wmi_mnt_filter_cmd_fixed_param;
+
 typedef struct {
 	A_UINT32 time32;                /* upper 32 bits of time stamp */
 	A_UINT32 time0;         /* lower 32 bits of time stamp */
@@ -14471,6 +14491,15 @@ typedef struct {
 	 *     A_UINT32 channel_list[];
 	 */
 } wmi_soc_set_pcl_cmd_fixed_param;
+
+/* Values for channel_weight */
+typedef enum {
+	WMI_PCL_WEIGHT_DISALLOW  = 0,
+	WMI_PCL_WEIGHT_LOW       = 1,
+	WMI_PCL_WEIGHT_MEDIUM    = 2,
+	WMI_PCL_WEIGHT_HIGH      = 3,
+	WMI_PCL_WEIGHT_VERY_HIGH = 4,
+} wmi_pcl_chan_weight;
 
 typedef struct {
 	/* TLV tag and len; tag equals
