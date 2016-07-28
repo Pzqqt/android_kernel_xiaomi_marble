@@ -165,14 +165,18 @@ void lim_check_sta_in_pe_entries(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr)
 #endif
 			    ) {
 				lim_log(mac_ctx, LOGE,
-					FL("Sending Deauth and Deleting existing STA entry: "
+					FL("Sending Disassoc and Deleting existing STA entry: "
 					   MAC_ADDRESS_STR),
 					MAC_ADDR_ARRAY(session->selfMacAddr));
-				lim_send_deauth_mgmt_frame(mac_ctx,
+				lim_send_disassoc_mgmt_frame(mac_ctx,
 					eSIR_MAC_UNSPEC_FAILURE_REASON,
 					(uint8_t *) hdr->sa, session, false);
-				lim_trigger_sta_deletion(mac_ctx, sta_ds,
-							 session);
+				/*
+				 * Cleanup Rx path posts eWNI_SME_DISASSOC_RSP
+				 * msg to SME after delete sta which will update
+				 * the userspace with disconnect
+				 */
+				lim_cleanup_rx_path(mac_ctx, sta_ds, session);
 				break;
 			}
 		}
