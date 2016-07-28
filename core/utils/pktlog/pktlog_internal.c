@@ -700,6 +700,70 @@ A_STATUS process_rate_find(void *pdev, void *data)
 	return A_OK;
 }
 
+A_STATUS process_sw_event(void *pdev, void *data)
+{
+	struct ol_pktlog_dev_t *pl_dev;
+	struct ath_pktlog_hdr pl_hdr;
+	struct ath_pktlog_info *pl_info;
+	size_t log_size;
+
+	/*
+	 * Will be uncommented when the rate control find
+	 * for pktlog is implemented in the firmware.
+	 * Currently derived from the TX PPDU status
+	 */
+	struct ath_pktlog_sw_event sw_event;
+	uint32_t *pl_tgt_hdr;
+
+	if (!pdev) {
+		qdf_print("Invalid pdev in %s\n", __func__);
+		return A_ERROR;
+	}
+	if (!data) {
+		qdf_print("Invalid data in %s\n", __func__);
+		return A_ERROR;
+	}
+
+	pl_tgt_hdr = (uint32_t *) data;
+	/*
+	 * Makes the short words (16 bits) portable b/w little endian
+	 * and big endian
+	 */
+	pl_hdr.flags = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_FLAGS_OFFSET) &
+			ATH_PKTLOG_HDR_FLAGS_MASK) >>
+		       ATH_PKTLOG_HDR_FLAGS_SHIFT;
+	pl_hdr.missed_cnt = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_MISSED_CNT_OFFSET) &
+			     ATH_PKTLOG_HDR_MISSED_CNT_MASK) >>
+			    ATH_PKTLOG_HDR_MISSED_CNT_SHIFT;
+#ifdef HELIUMPLUS
+	pl_hdr.log_type = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_LOG_TYPE_OFFSET) &
+			   ATH_PKTLOG_HDR_LOG_TYPE_MASK) >>
+			  ATH_PKTLOG_HDR_LOG_TYPE_SHIFT;
+	pl_hdr.macId = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_MAC_ID_OFFSET) &
+			   ATH_PKTLOG_HDR_MAC_ID_MASK) >>
+			  ATH_PKTLOG_HDR_MAC_ID_SHIFT;
+#else
+	pl_hdr.log_type = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_LOG_TYPE_OFFSET) &
+				   ATH_PKTLOG_HDR_LOG_TYPE_MASK) >>
+				  ATH_PKTLOG_HDR_LOG_TYPE_SHIFT;
+#endif
+
+	pl_hdr.size = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_SIZE_OFFSET) &
+		       ATH_PKTLOG_HDR_SIZE_MASK) >> ATH_PKTLOG_HDR_SIZE_SHIFT;
+	pl_hdr.timestamp = *(pl_tgt_hdr + ATH_PKTLOG_HDR_TIMESTAMP_OFFSET);
+	pl_dev = ((struct ol_txrx_pdev_t *)pdev)->pl_dev;
+	pl_info = pl_dev->pl_info;
+	log_size = pl_hdr.size;
+	sw_event.sw_event = (void *)pktlog_getbuf(pl_dev, pl_info,
+					       log_size, &pl_hdr);
+
+	qdf_mem_copy(sw_event.sw_event,
+				 ((char *)data + sizeof(struct ath_pktlog_hdr)),
+				 pl_hdr.size);
+
+	return A_OK;
+}
+
 A_STATUS process_rate_update(void *pdev, void *data)
 {
 	struct ol_pktlog_dev_t *pl_dev;

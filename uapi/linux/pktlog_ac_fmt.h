@@ -123,6 +123,8 @@ enum {
 #define ATH_PKTLOG_TEXT     0x000000020
 #define ATH_PKTLOG_PHYERR   0x000000040
 #define ATH_PKTLOG_PROMISC  0x000000080
+#define ATH_PKTLOG_SW_EVENT 0x000000100
+
 
 /* Types of packet log events */
 #define PKTLOG_TYPE_TX_CTRL     1
@@ -133,7 +135,9 @@ enum {
 #define PKTLOG_TYPE_RC_FIND     6
 #define PKTLOG_TYPE_RC_UPDATE   7
 #define PKTLOG_TYPE_TX_VIRT_ADDR 8
-#define PKTLOG_TYPE_MAX          9
+#define PKTLOG_TYPE_SMART_ANTENNA 9
+#define PKTLOG_TYPE_SW_EVENT     10
+#define PKTLOG_TYPE_MAX          11
 
 #define PKTLOG_MAX_TXCTL_WORDS 57       /* +2 words for bitmap */
 #define PKTLOG_MAX_TXSTATUS_WORDS 32
@@ -223,6 +227,11 @@ struct ath_pktlog_rx_info {
 struct ath_pktlog_rc_find {
 	struct ath_pktlog_hdr pl_hdr;
 	void *rcFind;
+} __ATTRIB_PACK;
+
+struct ath_pktlog_sw_event {
+	struct ath_pktlog_hdr pl_hdr;
+	void *sw_event;
 } __ATTRIB_PACK;
 
 struct ath_pktlog_rc_update {

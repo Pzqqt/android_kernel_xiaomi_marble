@@ -53,6 +53,7 @@ wdi_event_subscribe PKTLOG_RX_SUBSCRIBER;
 wdi_event_subscribe PKTLOG_RX_REMOTE_SUBSCRIBER;
 wdi_event_subscribe PKTLOG_RCFIND_SUBSCRIBER;
 wdi_event_subscribe PKTLOG_RCUPDATE_SUBSCRIBER;
+wdi_event_subscribe PKTLOG_SW_EVENT_SUBSCRIBER;
 
 struct ol_pl_arch_dep_funcs ol_pl_funcs = {
 	.pktlog_init = pktlog_init,
@@ -118,6 +119,9 @@ static inline A_STATUS pktlog_enable_tgt(struct hif_opaque_softc *_scn,
 	if (log_state & ATH_PKTLOG_RCUPDATE)
 		types |= WMI_PKTLOG_EVENT_RCU;
 
+	if (log_state & ATH_PKTLOG_SW_EVENT)
+		types |= WMI_PKTLOG_EVENT_SW;
+
 	return pktlog_wma_post_msg(types, WMI_PDEV_PKTLOG_ENABLE_CMDID);
 }
 
@@ -159,6 +163,14 @@ wdi_pktlog_subscribe(struct ol_txrx_pdev_t *txrx_pdev, int32_t log_state)
 			return A_ERROR;
 		}
 	}
+	if (log_state & ATH_PKTLOG_SW_EVENT) {
+		if (wdi_event_sub(txrx_pdev,
+				  &PKTLOG_SW_EVENT_SUBSCRIBER,
+				  WDI_EVENT_SW_EVENT)) {
+			return A_ERROR;
+		}
+	}
+
 	return A_OK;
 }
 
@@ -220,6 +232,17 @@ void pktlog_callback(void *pdev, enum WDI_EVENT event, void *log_data)
 		}
 		break;
 	}
+	case WDI_EVENT_SW_EVENT:
+	{
+		/*
+		 * process SW EVENT message
+		 */
+		if (process_sw_event(pdev, log_data)) {
+			printk("Unable to process SW_EVENT\n");
+			return;
+		}
+		break;
+	}
 	default:
 		break;
 	}
@@ -257,6 +280,13 @@ wdi_pktlog_unsubscribe(struct ol_txrx_pdev_t *txrx_pdev, uint32_t log_state)
 		if (wdi_event_unsub(txrx_pdev,
 				    &PKTLOG_RCUPDATE_SUBSCRIBER,
 				    WDI_EVENT_RATE_UPDATE)) {
+			return A_ERROR;
+		}
+	}
+	if (log_state & ATH_PKTLOG_RCUPDATE) {
+		if (wdi_event_unsub(txrx_pdev,
+				    &PKTLOG_SW_EVENT_SUBSCRIBER,
+				    WDI_EVENT_SW_EVENT)) {
 			return A_ERROR;
 		}
 	}
@@ -325,6 +355,7 @@ void pktlog_init(struct hif_opaque_softc *scn)
 	PKTLOG_RX_REMOTE_SUBSCRIBER.callback = pktlog_callback;
 	PKTLOG_RCFIND_SUBSCRIBER.callback = pktlog_callback;
 	PKTLOG_RCUPDATE_SUBSCRIBER.callback = pktlog_callback;
+	PKTLOG_SW_EVENT_SUBSCRIBER.callback = pktlog_callback;
 }
 
 int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state)
@@ -484,6 +515,9 @@ void pktlog_process_fw_msg(uint32_t *buff)
 				  txrx_pdev, pl_hdr);
 	else if (log_type == PKTLOG_TYPE_RX_STAT)
 		wdi_event_handler(WDI_EVENT_RX_DESC,
+				  txrx_pdev, pl_hdr);
+	else if (log_type == PKTLOG_TYPE_SW_EVENT)
+		wdi_event_handler(WDI_EVENT_SW_EVENT,
 				  txrx_pdev, pl_hdr);
 
 }
