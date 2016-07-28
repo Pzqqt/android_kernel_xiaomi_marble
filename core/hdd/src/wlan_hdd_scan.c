@@ -531,6 +531,7 @@ static bool wlan_hdd_is_scan_pending(hdd_adapter_t *adapter)
 		/* Any scan pending on the adapter */
 		if (adapter == hdd_scan_req->adapter) {
 			qdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
+			hdd_info("pending scan id %d", hdd_scan_req->scan_id);
 			return true;
 		}
 	} while (QDF_STATUS_SUCCESS ==
@@ -635,13 +636,15 @@ QDF_STATUS wlan_hdd_scan_request_dequeue(hdd_context_t *hdd_ctx,
 				*timestamp = hdd_scan_req->timestamp;
 				qdf_mem_free(hdd_scan_req);
 				qdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
-				hdd_info("removed Scan id: %d, req = %p",
-					scan_id, req);
+				hdd_info("removed Scan id: %d, req = %p, pending scans %d",
+				      scan_id, req,
+				      qdf_list_size(&hdd_ctx->hdd_scan_req_q));
 				return QDF_STATUS_SUCCESS;
 			} else {
 				qdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
-				hdd_err("Failed to remove node scan id %d",
-					scan_id);
+				hdd_err("Failed to remove node scan id %d, pending scans %d",
+				      scan_id,
+				      qdf_list_size(&hdd_ctx->hdd_scan_req_q));
 				return status;
 			}
 		}
