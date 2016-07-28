@@ -2388,9 +2388,15 @@ static void lim_tdls_update_hash_node_info(tpAniSirGlobal pMac,
 		 * width of the BSS to which the TDLS peer STAs are
 		 * associated.
 		 */
-		pStaDs->vhtSupportedChannelWidthSet = psessionEntry->ch_width;
+		if (psessionEntry->ch_width)
+			pStaDs->vhtSupportedChannelWidthSet =
+					psessionEntry->ch_width - 1;
+		else
+			pStaDs->vhtSupportedChannelWidthSet =
+					psessionEntry->ch_width;
+
 		lim_log(pMac, LOG1, FL("vhtSupportedChannelWidthSet = %hu, htSupportedChannelWidthSet %hu"),
-			pStaDs->htSupportedChannelWidthSet,
+			pStaDs->vhtSupportedChannelWidthSet,
 			pStaDs->htSupportedChannelWidthSet);
 
 		pStaDs->vhtLdpcCapable = pVhtCaps->ldpcCodingCap;
