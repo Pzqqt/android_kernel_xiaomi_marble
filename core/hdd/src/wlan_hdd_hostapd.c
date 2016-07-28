@@ -6436,12 +6436,15 @@ static int wlan_hdd_set_channel(struct wiphy *wiphy,
 	 */
 
 	channel = ieee80211_frequency_to_channel(chandef->chan->center_freq);
+
 	if (NL80211_CHAN_WIDTH_80P80 == chandef->width ||
-	    NL80211_CHAN_WIDTH_160 == chandef->width)
-		channel_seg2 =
-			ieee80211_frequency_to_channel(chandef->center_freq2);
-	else
-		channel_seg2 = 0;
+	    NL80211_CHAN_WIDTH_160 == chandef->width) {
+		if (chandef->center_freq2)
+			channel_seg2 = ieee80211_frequency_to_channel(
+					chandef->center_freq2);
+		else
+			hdd_err("Invalid center_freq2");
+	}
 
 	/* Check freq range */
 	if ((WNI_CFG_CURRENT_CHANNEL_STAMIN > channel) ||
