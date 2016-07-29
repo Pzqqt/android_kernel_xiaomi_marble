@@ -533,14 +533,14 @@ void hdd_conf_hostoffload(hdd_adapter_t *pAdapter, bool fenable)
 
 	if (((QDF_STA_MODE != pAdapter->device_mode) &&
 	     (QDF_P2P_CLIENT_MODE != pAdapter->device_mode))) {
-		hdd_err("Offloads not supported in mode %d",
+		hdd_info("Offloads not supported in mode %d",
 			pAdapter->device_mode);
 		return;
 	}
 
 	if (eConnectionState_Associated !=
 	       (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->conn_info.connState) {
-		hdd_err("Offloads not supported in state %d",
+		hdd_info("Offloads not supported in state %d",
 			(WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->
 							conn_info.connState);
 		return;
