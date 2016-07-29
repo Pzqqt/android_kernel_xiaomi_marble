@@ -1567,6 +1567,7 @@ QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
 			break;
 		default:
 			WMA_LOGD("%s : Roam Filter need not be sent", __func__);
+			qdf_mem_free(params);
 			return QDF_STATUS_SUCCESS;
 		}
 	} else {
