@@ -3991,9 +3991,15 @@ QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
 	struct hdd_ipa_priv *hdd_ipa = NULL;
 	int ret, i;
 	struct hdd_ipa_iface_context *iface_context = NULL;
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (!hdd_ipa_is_enabled(hdd_ctx))
 		return QDF_STATUS_SUCCESS;
+
+	if (!pdev) {
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_FATAL, "pdev is NULL");
+		goto fail_return;
+	}
 
 	hdd_ipa = qdf_mem_malloc(sizeof(*hdd_ipa));
 	if (!hdd_ipa) {
@@ -4005,8 +4011,7 @@ QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
 	ghdd_ipa = hdd_ipa;
 	hdd_ipa->hdd_ctx = hdd_ctx;
 	hdd_ipa->num_iface = 0;
-	ol_txrx_ipa_uc_get_resource(cds_get_context(QDF_MODULE_ID_TXRX),
-				&hdd_ipa->ipa_resource);
+	ol_txrx_ipa_uc_get_resource(pdev, &hdd_ipa->ipa_resource);
 	if ((0 == hdd_ipa->ipa_resource.ce_sr_base_paddr) ||
 	    (0 == hdd_ipa->ipa_resource.tx_comp_ring_base_paddr) ||
 	    (0 == hdd_ipa->ipa_resource.rx_rdy_ring_base_paddr) ||
