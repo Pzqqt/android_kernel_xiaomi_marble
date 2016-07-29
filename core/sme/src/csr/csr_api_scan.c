@@ -869,6 +869,8 @@ csr_update_lost_link1_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 				pSession->connectedProfile.operationChannel;
 			ch_info->numOfChannels = 1;
 		}
+		csr_free_scan_filter(mac_ctx, scan_filter);
+		qdf_mem_free(scan_filter);
 		return status;
 	}
 
