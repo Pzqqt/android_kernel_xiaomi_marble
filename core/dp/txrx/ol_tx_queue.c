@@ -92,6 +92,10 @@ ol_tx_queue_vdev_flush(struct ol_txrx_pdev_t *pdev, struct ol_txrx_vdev_t *vdev)
 				txq = &peer->txqs[i];
 				if (txq->frms) {
 					qdf_atomic_inc(&peer->ref_cnt);
+					qdf_print("%s: peer %p peer->ref_cnt %d",
+						  __func__, peer,
+						  qdf_atomic_read
+							(&peer->ref_cnt));
 					peers[peer_count++] = peer;
 					break;
 				}

@@ -195,6 +195,9 @@ struct ol_txrx_peer_t *ol_txrx_peer_vdev_find_hash(struct ol_txrx_pdev_t *pdev,
 			/* found it - increment the ref count before releasing
 			   the lock */
 			qdf_atomic_inc(&peer->ref_cnt);
+			qdf_print("%s: peer %p peer->ref_cnt %d",
+				__func__, peer,
+				qdf_atomic_read(&peer->ref_cnt));
 			qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 			return peer;
 		}
@@ -228,6 +231,9 @@ struct ol_txrx_peer_t *ol_txrx_peer_find_hash_find(struct ol_txrx_pdev_t *pdev,
 			   releasing the lock */
 			qdf_atomic_inc(&peer->ref_cnt);
 			qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
+			qdf_print("%s: peer %p peer->ref_cnt %d",
+				__func__, peer,
+				  qdf_atomic_read(&peer->ref_cnt));
 			return peer;
 		}
 	}
@@ -293,8 +299,9 @@ void ol_txrx_peer_find_hash_erase(struct ol_txrx_pdev_t *pdev)
 				qdf_atomic_init(&peer->ref_cnt); /* set to 0 */
 				qdf_atomic_inc(&peer->ref_cnt); /* incr to 1 */
 				TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-					   "%s: Delete Peer %p\n", __func__,
-					   peer);
+					   "%s: Delete Peer %p ref_cnt %d\n", __func__,
+					   peer,
+					   qdf_atomic_read(&peer->ref_cnt));
 				ol_txrx_peer_unref_delete(peer);
 			}
 		}
@@ -353,6 +360,16 @@ ol_txrx_peer_find_add_id(struct ol_txrx_pdev_t *pdev,
 		}
 		qdf_atomic_inc
 			(&pdev->peer_id_to_obj_map[peer_id].peer_id_ref_cnt);
+
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			   "%s: peer %p ID %d peer_id_ref_cnt %d peer->ref_cnt %d\n",
+			   __func__,
+			   peer, peer_id,
+			   qdf_atomic_read(&pdev->
+						peer_id_to_obj_map[peer_id].
+						peer_id_ref_cnt),
+			   qdf_atomic_read(&peer->ref_cnt));
+
 		/*
 		 * remove the reference added in ol_txrx_peer_find_hash_find.
 		 * the reference for the first peer id is already added in
@@ -503,8 +520,10 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 	 * If there are no more references, delete the peer object.
 	 */
 	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-		   "%s: Remove the ID %d reference to peer %p\n",
-		   __func__, peer_id, peer);
+		   "%s: Remove the ID %d reference to peer %p peer_id_ref_cnt %d\n",
+		   __func__, peer_id, peer,
+		   qdf_atomic_read
+			(&pdev->peer_id_to_obj_map[peer_id].peer_id_ref_cnt));
 	ol_txrx_peer_unref_delete(peer);
 }
 
@@ -521,6 +540,10 @@ struct ol_txrx_peer_t *ol_txrx_assoc_peer_find(struct ol_txrx_vdev_t *vdev)
 	    && vdev->last_real_peer->peer_ids[0] != HTT_INVALID_PEER_ID) {
 		qdf_atomic_inc(&vdev->last_real_peer->ref_cnt);
 		peer = vdev->last_real_peer;
+		qdf_print("%s: peer %p peer->ref_cnt %d",
+			  __func__, peer,
+			  qdf_atomic_read
+				(&peer->ref_cnt));
 	} else {
 		peer = NULL;
 	}

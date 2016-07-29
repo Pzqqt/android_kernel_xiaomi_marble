@@ -258,6 +258,8 @@ ol_txrx_find_peer_by_addr_and_vdev(ol_txrx_pdev_handle pdev,
 		return NULL;
 	*peer_id = peer->local_id;
 	qdf_atomic_dec(&peer->ref_cnt);
+	qdf_print("%s: peer %p peer->ref_cnt %d", __func__, peer,
+		  qdf_atomic_read(&peer->ref_cnt));
 	return peer;
 }
 
@@ -312,6 +314,8 @@ ol_txrx_peer_handle ol_txrx_find_peer_by_addr(ol_txrx_pdev_handle pdev,
 		return NULL;
 	*peer_id = peer->local_id;
 	qdf_atomic_dec(&peer->ref_cnt);
+	qdf_print("%s: peer %p peer->ref_cnt %d", __func__, peer,
+		  qdf_atomic_read(&peer->ref_cnt));
 	return peer;
 }
 
@@ -2149,6 +2153,8 @@ ol_txrx_peer_attach(ol_txrx_vdev_handle vdev, uint8_t *peer_mac_addr)
 
 	/* keep one reference for ol_rx_peer_map_handler */
 	qdf_atomic_inc(&peer->ref_cnt);
+	qdf_print("%s: peer %p peer->ref_cnt %d", __func__, peer,
+		  qdf_atomic_read(&peer->ref_cnt));
 
 	peer->valid = 1;
 
@@ -2546,6 +2552,8 @@ QDF_STATUS ol_txrx_peer_state_update(struct ol_txrx_pdev_t *pdev,
 			   __func__);
 #endif
 		qdf_atomic_dec(&peer->ref_cnt);
+		qdf_print("%s: peer %p peer->ref_cnt %d", __func__, peer,
+			  qdf_atomic_read(&peer->ref_cnt));
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -2576,7 +2584,8 @@ QDF_STATUS ol_txrx_peer_state_update(struct ol_txrx_pdev_t *pdev,
 		}
 	}
 	qdf_atomic_dec(&peer->ref_cnt);
-
+	qdf_print("%s: peer %p peer->ref_cnt %d", __func__, peer,
+		  qdf_atomic_read(&peer->ref_cnt));
 	/* Set the state after the Pause to avoid the race condiction
 	   with ADDBA check in tx path */
 	peer->state = state;
@@ -2679,6 +2688,8 @@ ol_txrx_peer_update(ol_txrx_vdev_handle vdev,
 	}
 	}
 	qdf_atomic_dec(&peer->ref_cnt);
+	qdf_print("%s: peer %p peer->ref_cnt %d", __func__, peer,
+		  qdf_atomic_read(&peer->ref_cnt));
 }
 
 uint8_t
@@ -2801,7 +2812,7 @@ void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 				 */
 				qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 
-				TXRX_PRINT(TXRX_PRINT_LEVEL_INFO1,
+				TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 					   "%s: deleting vdev object %p "
 					   "(%02x:%02x:%02x:%02x:%02x:%02x)"
 					   " - its last peer is done\n",
@@ -2847,6 +2858,9 @@ void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 
 		qdf_mem_free(peer);
 	} else {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			   "%s: peer %p peer->ref_cnt = %d\n", __func__, peer,
+			    qdf_atomic_read(&peer->ref_cnt));
 		qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 	}
 }

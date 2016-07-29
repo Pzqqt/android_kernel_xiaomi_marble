@@ -1070,8 +1070,9 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 	}
 
 	wma->interfaces[vdev_id].peer_count--;
-	WMA_LOGE("%s: Removed peer with peer_addr %pM vdevid %d peer_count %d",
-		 __func__, bssid, vdev_id, wma->interfaces[vdev_id].peer_count);
+	WMA_LOGE("%s: Removed peer %p with peer_addr %pM vdevid %d peer_count %d",
+		 __func__, peer, bssid, vdev_id,
+		 wma->interfaces[vdev_id].peer_count);
 	if (roam_synch_in_progress)
 		return;
 	/* Flush all TIDs except MGMT TID for this peer in Target */
@@ -1126,8 +1127,9 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, ol_txrx_pdev_handle pdev,
 	}
 	if (roam_synch_in_progress) {
 
-		WMA_LOGE("%s: LFR3: Created peer with peer_addr %pM vdev_id %d,"
-			 "peer_count - %d", __func__, peer_addr, vdev_id,
+		WMA_LOGE("%s: LFR3: Created peer %p with peer_addr %pM vdev_id %d,"
+			 "peer_count - %d",
+			 __func__, peer, peer_addr, vdev_id,
 			 wma->interfaces[vdev_id].peer_count);
 		return QDF_STATUS_SUCCESS;
 	}
@@ -1140,8 +1142,10 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, ol_txrx_pdev_handle pdev,
 		ol_txrx_peer_detach(peer);
 		goto err;
 	}
-	WMA_LOGE("%s: Created peer with peer_addr %pM vdev_id %d, peer_count - %d",
-		__func__, peer_addr, vdev_id, wma->interfaces[vdev_id].peer_count);
+	WMA_LOGE("%s: Created peer %p ref_cnt %d with peer_addr %pM vdev_id %d, peer_count - %d",
+		  __func__, peer, qdf_atomic_read(&peer->ref_cnt),
+		  peer_addr, vdev_id,
+		  wma->interfaces[vdev_id].peer_count);
 
 	mac_addr_raw = ol_txrx_get_vdev_mac_addr(vdev);
 	if (mac_addr_raw == NULL) {
