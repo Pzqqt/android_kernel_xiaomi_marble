@@ -7041,6 +7041,22 @@ void wma_dfs_configure(struct ieee80211com *ic)
 		rinfo.b5pulses = dfs_jpn_bin5pulses;
 		rinfo.numb5radars = QDF_ARRAY_SIZE(dfs_jpn_bin5pulses);
 		break;
+	case DFS_CN_REGION:
+		WMA_LOGI("%s: DFS-CN domain", __func__);
+		rinfo.dfsdomain = DFS_CN_REGION;
+		rinfo.dfs_radars = dfs_china_radars;
+		rinfo.numradars = QDF_ARRAY_SIZE(dfs_china_radars);
+		rinfo.b5pulses = NULL;
+		rinfo.numb5radars = 0;
+		break;
+	case DFS_KR_REGION:
+		WMA_LOGI("%s: DFS-KR domain", __func__);
+		rinfo.dfsdomain = DFS_KR_REGION;
+		rinfo.dfs_radars = dfs_korea_radars;
+		rinfo.numradars = QDF_ARRAY_SIZE(dfs_korea_radars);
+		rinfo.b5pulses = NULL;
+		rinfo.numb5radars = 0;
+		break;
 	default:
 		WMA_LOGI("%s: DFS-UNINT domain", __func__);
 		rinfo.dfsdomain = DFS_UNINIT_REGION;

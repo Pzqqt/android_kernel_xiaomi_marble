@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -139,4 +139,57 @@ struct dfs_pulse dfs_etsi_radars[] = {
 
 	/* 20-30us, 2000-4000 PRF, 20 pulses */
 	{20, 30, 2000, 4000, 0, 24, 6, 19, 33, 24, 0, 0, 0, 36},        /* Type 4 */
+};
+
+struct dfs_pulse dfs_korea_radars[] = {
+	/* Korea Type 1 */
+	{18,  1,  700, 700,  0, 6,  5,  0,  1, 18,  0, 3,  1, 40},
+
+	/* Korea Type 2 */
+	{10,  1, 1800, 1800, 0, 6,  4,  0,  1, 18,  0, 3,  1, 41},
+
+	/* Korea Type 3 */
+	{70,  1,  330, 330,  0, 6, 20,  0,  2, 18,  0, 3,  1, 42},
+
+	/* Korea Type 4 */
+	{3,   1, 3003, 3003, 1, 7,  2,  0,  1, 18,  0, 0,  1, 43},
+};
+
+struct dfs_pulse dfs_china_radars[] = {
+	/* FCC NEW TYPE 0 */
+	{18,  1,   700,  700, 0,  6,  5,  0,  1, 18, 0, 3, 1,  0},
+	{18,  1,   350,  350, 0,  6,  5,  0,  1, 18, 0, 3, 0,  0},
+
+	/* FCC TYPE 6 */
+	{ 9,  1,  3003, 3003, 1,  7,  5,  0,  1, 18, 0, 0, 1,  1},
+
+	/* FCC TYPE 2 */
+	{23,  5,  4347, 6666, 0, 18,  8,  0,  7, 22, 0, 3, 0,  2},
+
+	/* FCC TYPE 3 */
+	{18, 10,  2000, 5000, 0, 23,  6,  6, 13, 22, 0, 3, 0,  5},
+
+	/* FCC TYPE 4 */
+	{16, 15,  2000, 5000, 0, 25,  5, 11, 23, 22, 0, 3, 0, 11},
+
+	/*
+	 * FCC NEW TYPE 1
+	 * 518us to 938us pulses (min 56 pulses)
+	 */
+	{57,  1,  1066, 1930, 0,  6, 20,  0,  1, 22, 0, 3, 0, 21},
+
+	/*
+	 * FCC NEW TYPE 1
+	 * 938us to 2000 pulses (min 26 pulses)
+	 */
+	{27,  1,   500, 1066, 0,  6, 13,  0,  1, 22, 0, 3, 0, 22},
+
+	/*
+	 *  FCC NEW TYPE 1
+	 *  2000 to 3067us pulses (min 17 pulses)
+	 */
+	{18,  1,   325,  500, 0,  6,  9,  0,  1, 22, 0, 3, 0, 23},
+
+	/* CN TYPE 1 */
+	{20,  1,  1000, 1000, 0,  6,  5,  0,  1, 18, 0, 3, 1, 24},
 };
