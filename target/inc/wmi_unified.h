@@ -4160,6 +4160,7 @@ typedef enum {
 	WMI_PKTLOG_EVENT_RCU = 0x8,             /* Rate Control Update */
 	/* 0x10 used by deprecated DBG_PRINT */
 	WMI_PKTLOG_EVENT_SMART_ANTENNA = 0x20, /* To support Smart Antenna */
+	WMI_PKTLOG_EVENT_SW = 0x40, /* To support SW defined events */
 } WMI_PKTLOG_EVENT;
 
 typedef enum {
