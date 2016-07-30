@@ -9948,22 +9948,22 @@ static bool wlan_hdd_handle_sap_sta_dfs_conc(hdd_adapter_t *adapter,
 	return true;
 }
 
-/*
- * FUNCTION: wlan_hdd_cfg80211_connect_start
- * wlan_hdd_cfg80211_connect_start() - start connection
+/**
+ * wlan_hdd_cfg80211_connect_start() - to start the association process
  * @pAdapter: Pointer to adapter
- * @ssid: Pointer ot ssid
+ * @ssid: Pointer to ssid
  * @ssid_len: Length of ssid
  * @bssid: Pointer to bssid
+ * @bssid_hint: Pointer to bssid hint
  * @operatingChannel: Operating channel
  *
  * This function is used to start the association process
  *
  * Return: 0 for success, non-zero for failure
  */
-int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
+static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 				    const u8 *ssid, size_t ssid_len,
-				    const u8 *bssid_hint, const u8 *bssid,
+				    const u8 *bssid, const u8 *bssid_hint,
 				    u8 operatingChannel)
 {
 	int status = 0;
@@ -10019,9 +10019,11 @@ int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 			pRoamProfile->BSSIDs.numOfBSSIDs = 1;
 			qdf_mem_copy((void *)(pRoamProfile->BSSIDs.bssid),
 				     bssid, QDF_MAC_ADDR_SIZE);
-			/* Save BSSID in seperate variable as well, as RoamProfile
-			   BSSID is getting zeroed out in the association process. And in
-			   case of join failure we should send valid BSSID to supplicant
+			/*
+			 * Save BSSID in seperate variable as
+			 * pRoamProfile's BSSID is getting zeroed out in the
+			 * association process. In case of join failure
+			 * we should send valid BSSID to supplicant
 			 */
 			qdf_mem_copy((void *)(pWextState->req_bssId.bytes),
 					bssid, QDF_MAC_ADDR_SIZE);
@@ -10030,10 +10032,11 @@ int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 			pRoamProfile->BSSIDs.numOfBSSIDs = 1;
 			qdf_mem_copy((void *)(pRoamProfile->BSSIDs.bssid),
 						bssid_hint, QDF_MAC_ADDR_SIZE);
-			/* Save BSSID in separate variable as well, as
-			   RoamProfile BSSID is getting zeroed out in the
-			   association process. And in case of join failure
-			   we should send valid BSSID to supplicant
+			/*
+			 * Save BSSID in a separate variable as
+			 * pRoamProfile's BSSID is getting zeroed out in the
+			 * association process. In case of join failure
+			 * we should send valid BSSID to supplicant
 			 */
 			qdf_mem_copy((void *)(pWextState->req_bssId.bytes),
 					bssid_hint, QDF_MAC_ADDR_SIZE);
@@ -10052,9 +10055,7 @@ int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 
 		if ((IW_AUTH_WPA_VERSION_WPA == pWextState->wpaVersion) ||
 		    (IW_AUTH_WPA_VERSION_WPA2 == pWextState->wpaVersion)) {
-			/*set gen ie */
 			hdd_set_genie_to_csr(pAdapter, &RSNAuthType);
-			/*set auth */
 			hdd_set_csr_auth_type(pAdapter, RSNAuthType);
 		}
 #ifdef FEATURE_WLAN_WAPI
@@ -10092,7 +10093,7 @@ int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 				encryptionType[0] = eCSR_ENCRYPT_TYPE_WPI;
 			}
 		}
-#endif /* FEATURE_WLAN_WAPI */
+#endif
 #ifdef WLAN_FEATURE_GTK_OFFLOAD
 		/* Initializing gtkOffloadReqParams */
 		if ((QDF_STA_MODE == pAdapter->device_mode) ||
@@ -10135,12 +10136,14 @@ int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 			return -EINVAL;
 		}
 
-		/* After 8-way handshake supplicant should give the scan command
+		/*
+		 * After 8-way handshake supplicant should give the scan command
 		 * in that it update the additional IEs, But because of scan
-		 * enhancements, the supplicant is not issuing the scan command now.
-		 * So the unicast frames which are sent from the host are not having
-		 * the additional IEs. If it is P2P CLIENT and there is no additional
-		 * IE present in roamProfile, then use the addtional IE form scan_info
+		 * enhancements, the supplicant is not issuing the scan command
+		 * now. So the unicast frames which are sent from the host are
+		 * not having the additional IEs. If it is P2P CLIENT and there
+		 * is no additional IE present in roamProfile, then use the
+		 * addtional IE form scan_info
 		 */
 
 		if ((pAdapter->device_mode == QDF_P2P_CLIENT_MODE) &&
