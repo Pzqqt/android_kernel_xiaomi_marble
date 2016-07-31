@@ -2456,19 +2456,17 @@ void wlan_hdd_tdls_connection_callback(hdd_adapter_t *pAdapter)
  */
 void wlan_hdd_tdls_disconnection_callback(hdd_adapter_t *pAdapter)
 {
-	tdlsCtx_t *pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
-	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-
-	if ((NULL == pHddCtx) || (NULL == pHddTdlsCtx)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  FL("pHddCtx or pHddTdlsCtx points to NULL"));
-		return;
-	}
+	tdlsCtx_t *pHddTdlsCtx;
+	hdd_context_t *pHddCtx;
 
 	hddLog(LOG1, "%s", __func__);
 
+	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	if (0 != wlan_hdd_validate_context(pHddCtx))
+		return;
 	mutex_lock(&pHddCtx->tdls_lock);
 
+	pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
 	if (NULL == pHddTdlsCtx) {
 		mutex_unlock(&pHddCtx->tdls_lock);
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
