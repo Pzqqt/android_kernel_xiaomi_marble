@@ -2604,6 +2604,19 @@ QDF_STATUS cds_pdev_set_hw_mode(uint32_t session_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	/*
+	 * if HW is not capable of doing 2x2 or ini config disabled 2x2, don't
+	 * allow to request FW for 2x2
+	 */
+	if ((HW_MODE_SS_2x2 == mac0_ss) && (!hdd_ctx->config->enable2x2)) {
+		cds_info("2x2 is not allowed downgrading to 1x1 for mac0");
+		mac0_ss = HW_MODE_SS_1x1;
+	}
+	if ((HW_MODE_SS_2x2 == mac1_ss) && (!hdd_ctx->config->enable2x2)) {
+		cds_info("2x2 is not allowed downgrading to 1x1 for mac1");
+		mac1_ss = HW_MODE_SS_1x1;
+	}
+
 	hw_mode_index = wma_get_hw_mode_idx_from_dbs_hw_list(mac0_ss,
 			mac0_bw, mac1_ss, mac1_bw, dbs, dfs);
 	if (hw_mode_index < 0) {
@@ -3663,7 +3676,7 @@ enum cds_conc_next_action cds_need_opportunistic_upgrade(void)
 	/* Is there any connection had an initial connection with 2x2 */
 	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
 		conn_index++) {
-		if ((conc_connection_list[conn_index].original_nss == 1) &&
+		if ((conc_connection_list[conn_index].original_nss == 2) &&
 			conc_connection_list[conn_index].in_use) {
 			upgrade = CDS_SINGLE_MAC_UPGRADE;
 			goto done;
@@ -6056,62 +6069,6 @@ done:
 }
 
 /**
- * cds_wait_for_nss_update() - finds out if we need to wait
- * for all nss update to finish before requesting for HW mode
- * update
- * @action: next action to happen at policy mgr after
- *		beacon update
- *
- * This function finds out if we need to wait
- * for all nss update to finish before requesting for HW mode
- * update
- *
- * Return: boolean. True = wait for nss update, False = go ahead
- * with HW mode update
- */
-bool cds_wait_for_nss_update(uint8_t action)
-{
-	uint32_t conn_index = 0;
-	bool wait = false;
-	if (CDS_DBS == action) {
-		for (conn_index = 0;
-			conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
-			conn_index++) {
-			if ((conc_connection_list
-				[conn_index].original_nss == 2) &&
-				(conc_connection_list
-				[conn_index].chain_mask == CDS_TWO_TWO) &&
-				conc_connection_list[conn_index].in_use &&
-				((conc_connection_list[conn_index].mode ==
-				CDS_P2P_GO_MODE) ||
-				(conc_connection_list[conn_index].mode ==
-				CDS_SAP_MODE))) {
-				wait = true;
-				break;
-			}
-		}
-	} else if (CDS_SINGLE_MAC == action) {
-		for (conn_index = 0;
-			conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
-			conn_index++) {
-			if ((conc_connection_list
-				[conn_index].original_nss == 2) &&
-				(conc_connection_list
-				[conn_index].chain_mask == CDS_TWO_TWO) &&
-				conc_connection_list[conn_index].in_use &&
-				((conc_connection_list[conn_index].mode ==
-				CDS_P2P_GO_MODE) ||
-				(conc_connection_list[conn_index].mode ==
-				CDS_SAP_MODE))) {
-				wait = true;
-				break;
-			}
-		}
-	}
-	return wait;
-}
-
-/**
  * cds_nss_update_cb() - callback from SME confirming nss
  * update
  * @hdd_ctx:	HDD Context
@@ -6133,12 +6090,9 @@ void cds_nss_update_cb(void *context, uint8_t tx_status, uint8_t vdev_id,
 {
 	cds_context_type *cds_ctx;
 	uint32_t conn_index = 0;
-	bool wait = true;
 
-	if (QDF_STATUS_E_FAILURE == tx_status) {
-		cds_err("nss update failed for vdev %d", vdev_id);
-		return;
-	}
+	if (QDF_STATUS_SUCCESS != tx_status)
+		cds_err("nss update failed(%d) for vdev %d", tx_status, vdev_id);
 
 	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
@@ -6156,24 +6110,9 @@ void cds_nss_update_cb(void *context, uint8_t tx_status, uint8_t vdev_id,
 		cds_err("connection not found for vdev %d", vdev_id);
 		return;
 	}
-	switch (next_action) {
-	case CDS_DBS:
-		wait = cds_wait_for_nss_update(next_action);
-		break;
-	case CDS_SINGLE_MAC:
-		wait = cds_wait_for_nss_update(next_action);
-		break;
-	default:
-		cds_err("unexpected action %d", next_action);
-		break;
-	}
 
-	cds_debug("vdev:%d wait:%d", vdev_id, wait);
-
-	if (!wait)
-		cds_next_actions(vdev_id,
-				next_action,
-				reason);
+	cds_debug("nss update successful for vdev:%d", vdev_id);
+	cds_next_actions(vdev_id, next_action, reason);
 	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 	return;
 }
@@ -6231,7 +6170,7 @@ QDF_STATUS cds_complete_action(uint8_t  new_nss, uint8_t next_action,
 			continue;
 		}
 
-		if (1 == conc_connection_list[list[index]].original_nss) {
+		if (2 == conc_connection_list[list[index]].original_nss) {
 			status = sme_nss_update_request(hdd_ctx->hHal,
 					conc_connection_list
 					[list[index]].vdev_id, new_nss,
@@ -6254,7 +6193,7 @@ QDF_STATUS cds_complete_action(uint8_t  new_nss, uint8_t next_action,
 				conc_connection_list[list[index]].vdev_id);
 			continue;
 		}
-		if (1 == conc_connection_list[list[index]].original_nss) {
+		if (2 == conc_connection_list[list[index]].original_nss) {
 			status = sme_nss_update_request(hdd_ctx->hHal,
 					conc_connection_list
 					[list[index]].vdev_id, new_nss,
@@ -6339,6 +6278,16 @@ QDF_STATUS cds_next_actions(uint32_t session_id,
 						reason);
 		break;
 	case CDS_SINGLE_MAC_UPGRADE:
+		/*
+		 * change the HW mode first before the NSS upgrade
+		 */
+		status = cds_pdev_set_hw_mode(session_id,
+						HW_MODE_SS_2x2,
+						HW_MODE_80_MHZ,
+						HW_MODE_SS_0x0, HW_MODE_BW_NONE,
+						HW_MODE_DBS_NONE,
+						HW_MODE_AGILE_DFS_NONE,
+						reason);
 		/*
 		* check if we have a beaconing entity that advertised 2x2
 		* intially. If yes, update the beacon template & notify FW.
