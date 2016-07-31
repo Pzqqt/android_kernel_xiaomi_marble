@@ -1822,7 +1822,7 @@ QDF_STATUS csr_roam_read_tsf(tpAniSirGlobal pMac, uint8_t *pTimestamp,
 			     uint8_t sessionId)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tCsrNeighborRoamBSSInfo handoffNode;
+	tCsrNeighborRoamBSSInfo handoffNode = {{0} };
 	uint32_t timer_diff = 0;
 	uint32_t timeStamp[2];
 	tpSirBssDescription pBssDescription = NULL;
