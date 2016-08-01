@@ -5329,6 +5329,7 @@ struct fw_dump_rsp {
  * @vdev_id - vdev for which the IE is being sent
  * @ie_id - ID of the IE
  * @length - length of the IE data
+ * @band - indicates IE is intended for which band
  * @data - IE data
  *
  * This structure is used to store the IE information.
@@ -5337,6 +5338,7 @@ struct vdev_ie_info {
 	uint32_t vdev_id;
 	uint32_t ie_id;
 	uint32_t length;
+	uint32_t band;
 	uint8_t *data;
 };
 

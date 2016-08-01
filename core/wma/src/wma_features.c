@@ -7625,7 +7625,14 @@ QDF_STATUS wma_process_set_ie_info(tp_wma_handle wma,
 	cmd.vdev_id = ie_info->vdev_id;
 	cmd.ie_id = ie_info->ie_id;
 	cmd.length = ie_info->length;
+	cmd.band = ie_info->band;
 	cmd.data = ie_info->data;
+
+	WMA_LOGD(FL("ie_id: %d, band: %d, len: %d"),
+		ie_info->ie_id, ie_info->band, ie_info->length);
+
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+		ie_info->data, ie_info->length);
 
 	ret = wmi_unified_process_set_ie_info_cmd(wma->wmi_handle,
 				   &cmd);

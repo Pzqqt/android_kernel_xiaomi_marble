@@ -82,7 +82,14 @@
 #define cds_debug(format, args...) \
 		cds_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
 
+/**
+ * enum cds_band_type - Band type - 2g, 5g or all
+ * CDS_BAND_ALL: Both 2G and 5G are valid.
+ * CDS_BAND_2GHZ: only 2G is valid.
+ * CDS_BAND_5GHZ: only 5G is valid.
+ */
 enum cds_band_type {
+	CDS_BAND_ALL = 0,
 	CDS_BAND_2GHZ = 1,
 	CDS_BAND_5GHZ = 2
 };

@@ -57,6 +57,7 @@
 #include "lim_session.h"
 #include "cds_reg_service.h"
 #include "nan_datapath.h"
+#include "wma.h"
 
 #ifdef WLAN_FEATURE_11W
 #include "wni_cfg.h"
@@ -6446,6 +6447,192 @@ void lim_set_stads_rtt_cap(tpDphHashNode sta_ds, struct s_ext_cap *ext_cap,
 }
 
 /**
+ * lim_send_ie() - sends IE to wma
+ * @mac_ctx: global MAC context
+ * @sme_session_id: sme session id
+ * @eid: IE id
+ * @band: band for which IE is intended
+ * @buf: buffer containing IE
+ * @len: length of buffer
+ *
+ * This funciton sends the IE data to WMA.
+ *
+ * Return: status of operation
+ */
+QDF_STATUS lim_send_ie(tpAniSirGlobal mac_ctx, uint32_t sme_session_id,
+			uint8_t eid, enum cds_band_type band, uint8_t *buf,
+			uint32_t len)
+{
+	struct vdev_ie_info *ie_msg;
+	cds_msg_t msg = {0};
+	QDF_STATUS status;
+
+	/* Allocate memory for the WMI request */
+	ie_msg = qdf_mem_malloc(sizeof(*ie_msg) + len);
+	if (!ie_msg) {
+		lim_log(mac_ctx, LOGE, FL("Failed to allocate memory"));
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	ie_msg->vdev_id = sme_session_id;
+	ie_msg->ie_id = eid;
+	ie_msg->length = len;
+	ie_msg->band = band;
+	/* IE data buffer starts at end of the struct */
+	ie_msg->data = (uint8_t *)&ie_msg[1];
+
+	qdf_mem_copy(ie_msg->data, buf, len);
+	msg.type = WMA_SET_IE_INFO;
+	msg.bodyptr = ie_msg;
+	msg.reserved = 0;
+
+	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
+	if (QDF_STATUS_SUCCESS != status) {
+		lim_log(mac_ctx, LOGE,
+		       FL("Not able to post WMA_SET_IE_INFO to WMA"));
+		qdf_mem_free(ie_msg);
+		return status;
+	}
+
+	return status;
+}
+
+/**
+ * lim_populate_ht_caps_from_hw_caps() - gets HTCAPs IE from session, then
+ * updates, HTCAPs 16 bit from hw caps
+ * @mac_ctx: global MAC context
+ * @session: pe session
+ * @ht_caps: HTCAPs struct to populate
+ * @hw_caps: hw caps
+ *
+ * This funciton sends the IE data to WMA.
+ *
+ * Return: status of operation
+ */
+QDF_STATUS lim_populate_ht_caps_from_hw_caps(tpAniSirGlobal mac_ctx,
+					     tpPESession session,
+					     tDot11fIEHTCaps *ht_caps,
+					     uint32_t hw_caps)
+{
+	tSirRetStatus status;
+
+	if (!mac_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+			FL("mac_ctx is NULL"));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	/* following functions that use session can take NULL */
+	status = populate_dot11f_ht_caps(mac_ctx, session, ht_caps);
+	if (eSIR_SUCCESS != status) {
+		lim_log(mac_ctx, LOGE, FL("Failed to populate ht cap IE"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ht_caps->rxSTBC = !!(hw_caps & WMI_HT_CAP_RX_STBC);
+	ht_caps->txSTBC = !!(hw_caps & WMI_HT_CAP_TX_STBC);
+	ht_caps->advCodingCap = !!(hw_caps & WMI_HT_CAP_RX_LDPC);
+	ht_caps->shortGI20MHz = !!(hw_caps & WMI_HT_CAP_HT20_SGI);
+	ht_caps->shortGI40MHz = !!(hw_caps & WMI_HT_CAP_HT40_SGI);
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * lim_populate_vht_caps_from_hw_caps() - gets VHTCAPs IE from session, then
+ * updates, HTCAPs 16 bit from hw caps
+ * @mac_ctx: global MAC context
+ * @session: pe session
+ * @vht_caps: VHTCAPs struct to populate
+ * @hw_caps: hw caps
+ *
+ * This funciton sends the IE data to WMA.
+ *
+ * Return: status of operation
+ */
+QDF_STATUS lim_populate_vht_caps_from_hw_caps(tpAniSirGlobal mac_ctx,
+					      tpPESession session,
+					      tDot11fIEVHTCaps *vht_caps,
+					      uint32_t hw_caps)
+{
+	uint8_t *ie_buff = (uint8_t *)vht_caps;
+	tSirRetStatus status;
+
+	if (!mac_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+			FL("mac_ctx is NULL"));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	/* following functions that use session can take NULL */
+	status = populate_dot11f_vht_caps(mac_ctx, session, vht_caps);
+	if (eSIR_SUCCESS != status) {
+		lim_log(mac_ctx, LOGE, FL("Failed to populate vht cap IE"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*((uint32_t *)(ie_buff + 1)) = hw_caps;
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * lim_send_ht_vht_ie() - gets ht and vht capability and send to firmware via
+ * wma
+ * updates, HTCAPs 16 bit from hw caps
+ * @session: pe session
+ *
+ * This funciton gets ht and vht capability and send to firmware via wma
+ *
+ * Return: status of operation
+ */
+QDF_STATUS lim_send_ht_vht_ie(tpAniSirGlobal mac_ctx, tpPESession session)
+{
+	uint8_t *ie_buff;
+	tDot11fIEHTCaps ht_caps;
+	tDot11fIEVHTCaps vht_caps;
+	struct wma_caps_per_phy caps_2g;
+	struct wma_caps_per_phy caps_5g;
+
+	if (wma_is_dbs_enable()) {
+		wma_get_caps_for_phyidx_hwmode(&caps_2g, HW_MODE_DBS,
+						CDS_BAND_2GHZ);
+		wma_get_caps_for_phyidx_hwmode(&caps_5g, HW_MODE_DBS,
+						CDS_BAND_5GHZ);
+	} else {
+		wma_get_caps_for_phyidx_hwmode(&caps_2g, HW_MODE_DBS_NONE,
+						CDS_BAND_2GHZ);
+		wma_get_caps_for_phyidx_hwmode(&caps_5g, HW_MODE_DBS_NONE,
+						CDS_BAND_5GHZ);
+	}
+	lim_log(mac_ctx, LOG1,
+		FL("HT Caps: 2G: 0x%X, 5G: 0x%X, VHT Caps: 2G: 0x%X, 5G: 0x%X"),
+		caps_2g.ht_2g, caps_5g.ht_5g, caps_2g.vht_2g, caps_5g.vht_5g);
+
+	ie_buff = (uint8_t *)&ht_caps;
+	lim_populate_ht_caps_from_hw_caps(mac_ctx, session,
+					  &ht_caps, caps_2g.ht_2g);
+	lim_send_ie(mac_ctx, session->smeSessionId, DOT11F_EID_HTCAPS,
+			CDS_BAND_2GHZ, ie_buff + 1, DOT11F_IE_HTCAPS_MIN_LEN);
+
+	lim_populate_ht_caps_from_hw_caps(mac_ctx, session,
+					  &ht_caps, caps_5g.ht_5g);
+	lim_send_ie(mac_ctx, session->smeSessionId, DOT11F_EID_HTCAPS,
+			CDS_BAND_5GHZ, ie_buff + 1, DOT11F_IE_HTCAPS_MIN_LEN);
+
+	ie_buff = (uint8_t *)&vht_caps;
+	lim_populate_vht_caps_from_hw_caps(mac_ctx, session,
+					   &vht_caps, caps_2g.vht_2g);
+	lim_send_ie(mac_ctx, session->smeSessionId, DOT11F_EID_VHTCAPS,
+			CDS_BAND_2GHZ, ie_buff + 1, DOT11F_IE_VHTCAPS_MAX_LEN);
+
+	lim_populate_vht_caps_from_hw_caps(mac_ctx, session,
+					   &vht_caps, caps_5g.vht_5g);
+	lim_send_ie(mac_ctx, session->smeSessionId, DOT11F_EID_VHTCAPS,
+			CDS_BAND_5GHZ, ie_buff + 1, DOT11F_IE_VHTCAPS_MAX_LEN);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * lim_send_ext_cap_ie() - send ext cap IE to FW
  * @mac_ctx: global MAC context
  * @session_entry: PE session
@@ -6500,6 +6687,7 @@ QDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx,
 	vdev_ie->vdev_id = session_id;
 	vdev_ie->ie_id = DOT11F_EID_EXTCAP;
 	vdev_ie->length = num_bytes;
+	vdev_ie->band = 0;
 
 	lim_log(mac_ctx, LOG1, FL("vdev %d ieid %d len %d"), session_id,
 			DOT11F_EID_EXTCAP, num_bytes);
