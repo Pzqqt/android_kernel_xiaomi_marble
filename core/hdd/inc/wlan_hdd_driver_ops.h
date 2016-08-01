@@ -28,6 +28,8 @@
 #ifndef __WLAN_HDD_DRIVER_OPS_H__
 #define __WLAN_HDD_DRIVER_OPS_H__
 
+#include "hif.h"
+
 /**
  * DOC: wlan_hdd_driver_ops.h
  *
@@ -37,4 +39,7 @@ int wlan_hdd_register_driver(void);
 void wlan_hdd_unregister_driver(void);
 int wlan_hdd_bus_suspend(pm_message_t state);
 int wlan_hdd_bus_resume(void);
+void hdd_hif_close(void *hif_ctx);
+int hdd_hif_open(struct device *dev, void *bdev, const hif_bus_id *bid,
+		 enum qdf_bus_type bus_type, bool reinit);
 #endif /* __WLAN_HDD_DRIVER_OPS_H__ */

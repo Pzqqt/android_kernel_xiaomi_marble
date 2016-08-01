@@ -1176,6 +1176,7 @@ QDF_STATUS cds_sched_close(void *p_cds_context)
 	cds_drop_rxpkt_by_staid(gp_cds_sched_context, WLAN_MAX_STA_COUNT);
 	cds_free_ol_rx_pkt_freeq(gp_cds_sched_context);
 	unregister_hotcpu_notifier(&cds_cpu_hotplug_notifier);
+	gp_cds_sched_context->cpu_hot_plug_notifier = NULL;
 #endif
 	return QDF_STATUS_SUCCESS;
 } /* cds_sched_close() */

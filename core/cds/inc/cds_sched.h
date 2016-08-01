@@ -539,6 +539,7 @@ void cds_sched_deinit_mqs(p_cds_sched_context pSchedContext);
 void cds_sched_flush_mc_mqs(p_cds_sched_context pSchedContext);
 
 void qdf_timer_module_init(void);
+void qdf_timer_module_deinit(void);
 void cds_ssr_protect_init(void);
 void cds_ssr_protect(const char *caller_func);
 void cds_ssr_unprotect(const char *caller_func);

@@ -3918,6 +3918,13 @@ QDF_STATUS cds_deinit_policy_mgr(void)
 		cds_err("Invalid CDS Context");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	if (!QDF_IS_STATUS_SUCCESS(qdf_event_destroy
+				  (&cds_ctx->connection_update_done_evt))) {
+		cds_err("Failed to destroy connection_update_done_evt");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_destroy(
 					&cds_ctx->qdf_conc_list_lock))) {
 		cds_err("Failed to destroy qdf_conc_list_lock");

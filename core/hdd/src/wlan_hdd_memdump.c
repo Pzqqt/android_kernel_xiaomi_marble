@@ -536,7 +536,6 @@ int memdump_init(void)
 {
 	hdd_context_t *hdd_ctx;
 	int status = 0;
-	QDF_STATUS cb_status;
 	QDF_STATUS qdf_status;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
@@ -547,13 +546,6 @@ int memdump_init(void)
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Not initializing memdump in FTM mode"));
-		return -EINVAL;
-	}
-
-	cb_status = sme_fw_mem_dump_register_cb(hdd_ctx->hHal,
-				wlan_hdd_cfg80211_fw_mem_dump_cb);
-	if (QDF_STATUS_SUCCESS != cb_status) {
-		hddLog(LOGE , FL("Failed to register the callback"));
 		return -EINVAL;
 	}
 

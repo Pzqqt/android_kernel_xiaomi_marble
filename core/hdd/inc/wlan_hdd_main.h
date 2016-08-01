@@ -1184,6 +1184,20 @@ struct hdd_bpf_context {
 	struct sir_bpf_get_offload capability_response;
 };
 
+/**
+ * enum driver_status: Driver Modules status
+ * @DRIVER_MODULES_UNINITIALIZED: Driver CDS modules uninitialized
+ * @DRIVER_MODULES_OPENED: Driver CDS modules opened
+ * @DRIVER_MODULES_ENABLED: Driver CDS modules opened
+ * @DRIVER_MODULES_CLOSED: Driver CDS modules closed
+ */
+enum driver_modules_status {
+	DRIVER_MODULES_UNINITIALIZED,
+	DRIVER_MODULES_OPENED,
+	DRIVER_MODULES_ENABLED,
+	DRIVER_MODULES_CLOSED
+};
+
 /** Adapter structure definition */
 
 struct hdd_context_s {
@@ -1435,6 +1449,12 @@ struct hdd_context_s {
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 	bool nan_datapath_enabled;
 #endif
+	/* Present state of driver cds modules */
+	enum driver_modules_status driver_status;
+	/* MC timer interface change */
+	qdf_mc_timer_t iface_change_timer;
+	/* Interface change lock */
+	struct mutex iface_change_lock;
 };
 
 /*---------------------------------------------------------------------------
@@ -1539,7 +1559,7 @@ static inline void hdd_stop_bus_bw_computer_timer(hdd_adapter_t *pAdapter)
 int hdd_init(void);
 void hdd_deinit(void);
 
-int hdd_wlan_startup(struct device *dev, void *hif_sc);
+int hdd_wlan_startup(struct device *dev);
 void __hdd_wlan_exit(void);
 int hdd_wlan_notify_modem_power_state(int state);
 #ifdef QCA_HT_2040_COEX
@@ -1746,6 +1766,21 @@ int hdd_register_cb(hdd_context_t *hdd_ctx);
 void hdd_deregister_cb(hdd_context_t *hdd_ctx);
 int hdd_start_station_adapter(hdd_adapter_t *adapter);
 int hdd_start_ap_adapter(hdd_adapter_t *adapter);
+int hdd_configure_cds(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter);
 int hdd_start_ftm_adapter(hdd_adapter_t *adapter);
 int hdd_set_fw_params(hdd_adapter_t *adapter);
+int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
+			   bool reinit);
+int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx, bool shutdown);
+int hdd_start_adapter(hdd_adapter_t *adapter);
+#ifdef WLAN_FEATURE_FASTPATH
+void hdd_enable_fastpath(struct hdd_config *hdd_cfg,
+			 void *context);
+#else
+static inline void hdd_enable_fastpath(struct hdd_config *hdd_cfg,
+				       void *context)
+{
+}
+#endif
+void hdd_wlan_update_target_info(hdd_context_t *hdd_ctx, void *context);
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

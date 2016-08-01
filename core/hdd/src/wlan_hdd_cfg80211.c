@@ -481,16 +481,6 @@ static const struct ieee80211_iface_limit
 };
 
 static struct ieee80211_iface_combination
-	wlan_hdd_mon_iface[] = {
-	{
-		.limits = wlan_hdd_mon_iface_limit,
-		.max_interfaces = 3,
-		.num_different_channels = 2,
-		.n_limits = ARRAY_SIZE(wlan_hdd_mon_iface_limit),
-	},
-};
-
-static struct ieee80211_iface_combination
 	wlan_hdd_iface_combination[] = {
 	/* STA */
 	{
@@ -566,6 +556,13 @@ static struct ieee80211_iface_combination
 		.max_interfaces = 3,
 		.n_limits = ARRAY_SIZE(wlan_hdd_p2p_p2p_iface_limit),
 		.beacon_int_infra_match = true,
+	},
+	/* Monitor */
+	{
+		.limits = wlan_hdd_mon_iface_limit,
+		.max_interfaces = 3,
+		.num_different_channels = 2,
+		.n_limits = ARRAY_SIZE(wlan_hdd_mon_iface_limit),
 	},
 };
 
@@ -6965,35 +6962,28 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 
 	wiphy->max_acl_mac_addrs = MAX_ACL_MAC_ADDRESS;
 
-	if (cds_get_conparam() != QDF_GLOBAL_MONITOR_MODE) {
-		/* Supports STATION & AD-HOC modes right now */
-		wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION)
-					 | BIT(NL80211_IFTYPE_ADHOC)
-					 | BIT(NL80211_IFTYPE_P2P_CLIENT)
-					 | BIT(NL80211_IFTYPE_P2P_GO)
-					 | BIT(NL80211_IFTYPE_AP);
+	wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION)
+				 | BIT(NL80211_IFTYPE_ADHOC)
+				 | BIT(NL80211_IFTYPE_P2P_CLIENT)
+				 | BIT(NL80211_IFTYPE_P2P_GO)
+				 | BIT(NL80211_IFTYPE_AP)
+				 | BIT(NL80211_IFTYPE_MONITOR);
 
-		if (pCfg->advertiseConcurrentOperation) {
-			if (pCfg->enableMCC) {
-				int i;
+	if (pCfg->advertiseConcurrentOperation) {
+		if (pCfg->enableMCC) {
+			int i;
 
-				for (i = 0;
-				     i < ARRAY_SIZE(wlan_hdd_iface_combination);
-				     i++) {
-					if (!pCfg->allowMCCGODiffBI)
-						wlan_hdd_iface_combination[i].
-						beacon_int_infra_match = true;
-				}
+			for (i = 0;
+			     i < ARRAY_SIZE(wlan_hdd_iface_combination);
+			     i++) {
+				if (!pCfg->allowMCCGODiffBI)
+					wlan_hdd_iface_combination[i].
+					beacon_int_infra_match = true;
 			}
-			wiphy->n_iface_combinations =
-				ARRAY_SIZE(wlan_hdd_iface_combination);
-			wiphy->iface_combinations = wlan_hdd_iface_combination;
 		}
-	} else {
-		wiphy->interface_modes = BIT(NL80211_IFTYPE_MONITOR);
 		wiphy->n_iface_combinations =
-			ARRAY_SIZE(wlan_hdd_mon_iface);
-		wiphy->iface_combinations = wlan_hdd_mon_iface;
+			ARRAY_SIZE(wlan_hdd_iface_combination);
+		wiphy->iface_combinations = wlan_hdd_iface_combination;
 	}
 
 	/* Before registering we need to update the ht capabilitied based
@@ -7648,6 +7638,12 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	hdd_notice("Device_mode = %d, IFTYPE = 0x%x",
 	       pAdapter->device_mode, type);
 
+	status = hdd_wlan_start_modules(pHddCtx, pAdapter, false);
+	if (status) {
+		hdd_err("Failed to start modules");
+		return -EINVAL;
+	}
+
 	if (!cds_allow_concurrency(
 				wlan_hdd_convert_nl_iftype_to_hdd_type(type),
 				0, HW_MODE_20_MHZ)) {
@@ -7687,15 +7683,6 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 			if (vstatus != QDF_STATUS_SUCCESS)
 				return -EINVAL;
 
-			/*
-			 * for ibss interface type flow control is not required
-			 * so don't register tx flow control
-			 */
-			if (type != NL80211_IFTYPE_ADHOC)
-				hdd_register_tx_flow_control(pAdapter,
-					hdd_tx_resume_timer_expired_handler,
-					hdd_tx_resume_cb);
-
 			goto done;
 		case NL80211_IFTYPE_AP:
 		case NL80211_IFTYPE_P2P_GO:
@@ -7710,8 +7697,8 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 				wlan_hdd_cancel_existing_remain_on_channel
 					(pAdapter);
 			}
-			hdd_stop_adapter(pHddCtx, pAdapter, true);
 
+			hdd_stop_adapter(pHddCtx, pAdapter, true);
 			/* De-init the adapter */
 			hdd_deinit_adapter(pHddCtx, pAdapter, true);
 			memset(&pAdapter->sessionCtx, 0,
@@ -7744,16 +7731,10 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 
 			hdd_set_ap_ops(pAdapter->dev);
 
-			vstatus = hdd_init_ap_mode(pAdapter);
-			if (vstatus != QDF_STATUS_SUCCESS) {
-				hdd_alert("Error initializing the ap mode");
+			if (hdd_start_adapter(pAdapter)) {
+				hdd_err("Error initializing the ap mode");
 				return -EINVAL;
 			}
-
-			hdd_register_tx_flow_control(pAdapter,
-				hdd_softap_tx_resume_timer_expired_handler,
-				hdd_softap_tx_resume_cb);
-
 			/* Interface type changed update in wiphy structure */
 			if (wdev) {
 				wdev->iftype = type;
@@ -7780,13 +7761,6 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 			if (status != QDF_STATUS_SUCCESS)
 				return status;
 
-			if ((NL80211_IFTYPE_P2P_CLIENT == type) ||
-			    (NL80211_IFTYPE_STATION == type)) {
-
-				hdd_register_tx_flow_control(pAdapter,
-					hdd_tx_resume_timer_expired_handler,
-					hdd_tx_resume_cb);
-			}
 			goto done;
 
 		case NL80211_IFTYPE_AP:
@@ -7794,10 +7768,6 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 			wdev->iftype = type;
 			pAdapter->device_mode = (type == NL80211_IFTYPE_AP) ?
 						QDF_SAP_MODE : QDF_P2P_GO_MODE;
-
-			hdd_register_tx_flow_control(pAdapter,
-				hdd_softap_tx_resume_timer_expired_handler,
-				hdd_softap_tx_resume_cb);
 			goto done;
 
 		default:

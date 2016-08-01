@@ -3981,8 +3981,14 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		CFG_ADAPT_DWELL_WIFI_THRESH_DEFAULT,
 		CFG_ADAPT_DWELL_WIFI_THRESH_MIN,
 		CFG_ADAPT_DWELL_WIFI_THRESH_MAX),
-};
 
+	REG_VARIABLE(CFG_INTERFACE_CHANGE_WAIT_NAME, WLAN_PARAM_Integer,
+			struct hdd_config, iface_change_wait_time,
+			VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
+			CFG_INTERFACE_CHANGE_WAIT_DEFAULT,
+			CFG_INTERFACE_CHANGE_WAIT_MIN,
+			CFG_INTERFACE_CHANGE_WAIT_MAX),
+};
 
 /**
  * get_next_line() - find and locate the new line pointer
@@ -5583,6 +5589,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_info("Name = [%s] Value = [%u]",
 		CFG_IDLE_TIME_NAME,
 		pHddCtx->config->idle_time_conc);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_INTERFACE_CHANGE_WAIT_NAME,
+		pHddCtx->config->iface_change_wait_time);
 
 	hdd_info("Name = [%s] Value = [%u]",
 		CFG_ENABLE_EDCA_INI_NAME,

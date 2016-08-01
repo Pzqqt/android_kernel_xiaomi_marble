@@ -88,8 +88,11 @@ static inline int wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 {
 	return -ENOTSUPP;
 }
+
+
 static inline void wlan_hdd_cfg80211_fw_mem_dump_cb(void *ctx,
-					     struct fw_dump_rsp *dump_rsp)
+						    struct fw_dump_rsp
+						    *dump_rsp)
 {
 }
 #endif

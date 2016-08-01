@@ -210,7 +210,7 @@ static enum qdf_bus_type to_bus_type(enum pld_bus_type bus_type)
  *
  * Return: 0 on success and errno on failure.
  */
-static int hdd_hif_open(struct device *dev, void *bdev, const hif_bus_id *bid,
+int hdd_hif_open(struct device *dev, void *bdev, const hif_bus_id *bid,
 			enum qdf_bus_type bus_type, bool reinit)
 {
 	QDF_STATUS status;
@@ -255,6 +255,8 @@ static int hdd_hif_open(struct device *dev, void *bdev, const hif_bus_id *bid,
 		}
 	}
 
+	hif_enable_power_management(hif_ctx, cds_is_packet_log_enabled());
+
 	return 0;
 
 err_hif_close:
@@ -269,10 +271,12 @@ err_hif_close:
  *
  * Helper function to close HIF
  */
-static void hdd_hif_close(void *hif_ctx)
+void hdd_hif_close(void *hif_ctx)
 {
 	if (hif_ctx == NULL)
 		return;
+
+	hif_disable_power_management(hif_ctx);
 
 	hif_disable(hif_ctx, HIF_DISABLE_TYPE_REMOVE);
 
@@ -286,11 +290,13 @@ static void hdd_hif_close(void *hif_ctx)
  * hdd_init_qdf_ctx() - API to initialize global QDF Device structure
  * @dev: Device Pointer
  * @bdev: Bus Device pointer
+ * @bus_type: Underlying bus type
+ * @bid: Bus id passed by platform driver
  *
  * Return: void
  */
 void hdd_init_qdf_ctx(struct device *dev, void *bdev,
-		 enum qdf_bus_type bus_type)
+		      enum qdf_bus_type bus_type, const struct hif_bus_id *bid)
 {
 	qdf_device_t qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
@@ -302,6 +308,7 @@ void hdd_init_qdf_ctx(struct device *dev, void *bdev,
 	qdf_dev->dev = dev;
 	qdf_dev->drv_hdl = bdev;
 	qdf_dev->bus_type = bus_type;
+	qdf_dev->bid = bid;
 }
 
 /**
@@ -320,11 +327,7 @@ void hdd_init_qdf_ctx(struct device *dev, void *bdev,
 static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 	enum qdf_bus_type bus_type, bool reinit)
 {
-	void *hif_ctx;
-	QDF_STATUS status;
 	int ret = 0;
-	qdf_device_t qdf_dev;
-	uint32_t mode = cds_get_conparam();
 
 	pr_info("%s: %sprobing driver v%s\n", WLAN_MODULE_NAME,
 		reinit ? "re-" : "", QWLAN_VERSIONSTR);
@@ -349,42 +352,16 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 		cds_set_load_in_progress(true);
 	}
 
-	if (QDF_IS_EPPING_ENABLED(mode)) {
-		status = epping_open();
-		if (status != QDF_STATUS_SUCCESS)
-			goto err_hdd_deinit;
-	}
-
-	hdd_init_qdf_ctx(dev, bdev, bus_type);
-
-	ret = hdd_hif_open(dev, bdev, bid, bus_type, reinit);
-
-	if (ret)
-		goto err_epping_close;
-
-	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-
-	if (NULL == hif_ctx)
-		goto err_epping_close;
-
-	qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-
-	status = ol_cds_init(qdf_dev, hif_ctx);
-
-	if (status != QDF_STATUS_SUCCESS) {
-		pr_err("%s No Memory to Create BMI Context\n", __func__);
-		goto err_hif_close;
-	}
+	hdd_init_qdf_ctx(dev, bdev, bus_type, (const struct hif_bus_id *)bid);
 
 	if (reinit)
-		ret = hdd_wlan_re_init(hif_ctx);
+		ret = hdd_wlan_re_init();
 	else
-		ret = hdd_wlan_startup(dev, hif_ctx);
+		ret = hdd_wlan_startup(dev);
 
 	if (ret)
-		goto err_bmi_close;
+		goto err_hdd_deinit;
 
-	hif_enable_power_management(hif_ctx, cds_is_packet_log_enabled());
 
 	if (reinit) {
 		cds_set_recovery_in_progress(false);
@@ -398,15 +375,12 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 
 	return 0;
 
-err_bmi_close:
-	ol_cds_free();
-err_hif_close:
-	hdd_hif_close(hif_ctx);
-err_epping_close:
-	if (QDF_IS_EPPING_ENABLED(mode))
-		epping_close();
+
 err_hdd_deinit:
-	cds_set_load_in_progress(false);
+	if (reinit)
+		cds_set_recovery_in_progress(false);
+	else
+		cds_set_load_in_progress(false);
 	hdd_deinit();
 out:
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
@@ -431,6 +405,7 @@ static void wlan_hdd_remove(struct device *dev)
 {
 	void *hif_ctx;
 
+
 	pr_info("%s: Removing driver v%s\n", WLAN_MODULE_NAME,
 		QWLAN_VERSIONSTR);
 
@@ -453,8 +428,6 @@ static void wlan_hdd_remove(struct device *dev)
 	if (NULL == hif_ctx)
 		return;
 
-	hif_disable_power_management(hif_ctx);
-
 	if (QDF_IS_EPPING_ENABLED(cds_get_conparam())) {
 		epping_disable();
 		epping_close();
@@ -462,8 +435,6 @@ static void wlan_hdd_remove(struct device *dev)
 		__hdd_wlan_exit();
 	}
 
-	ol_cds_free();
-	hdd_hif_close(hif_ctx);
 	hdd_deinit();
 
 	pr_info("%s: Driver Removed\n", WLAN_MODULE_NAME);
@@ -495,9 +466,6 @@ static void wlan_hdd_shutdown(void)
 		hif_disable_isr(hif_ctx);
 		hdd_wlan_shutdown();
 	}
-
-	ol_cds_free();
-	hdd_hif_close(hif_ctx);
 }
 
 /**
@@ -549,7 +517,7 @@ void wlan_hdd_notify_handler(int state)
  */
 static int __wlan_hdd_bus_suspend(pm_message_t state)
 {
-	void *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	void *hif_ctx;
 	int err = wlan_hdd_validate_context(hdd_ctx);
 	int status;
@@ -564,6 +532,12 @@ static int __wlan_hdd_bus_suspend(pm_message_t state)
 		err = -EINVAL;
 		goto done;
 	}
+
+	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
+		hdd_info("Driver Module closed return success");
+		return 0;
+	}
+
 	err = qdf_status_to_os_return(
 			ol_txrx_bus_suspend());
 	if (err)
@@ -627,12 +601,17 @@ int wlan_hdd_bus_suspend(pm_message_t state)
  */
 static int __wlan_hdd_bus_resume(void)
 {
-	void *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	void *hif_ctx;
 	int status = wlan_hdd_validate_context(hdd_ctx);
 
 	if (status)
 		return status;
+
+	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
+		hdd_info("Driver Module closed return success");
+		return 0;
+	}
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	if (NULL == hif_ctx)
@@ -682,7 +661,7 @@ int wlan_hdd_bus_resume(void)
  */
 static int __wlan_hdd_runtime_suspend(struct device *dev)
 {
-	void *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	void *txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	void *htc_ctx = cds_get_context(QDF_MODULE_ID_HTC);

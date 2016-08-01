@@ -1299,7 +1299,6 @@ static void hdd_ssr_timer_start(int msec)
  */
 QDF_STATUS hdd_wlan_shutdown(void)
 {
-	QDF_STATUS qdf_status;
 	v_CONTEXT_t p_cds_context = NULL;
 	hdd_context_t *pHddCtx;
 	p_cds_sched_context cds_sched_context = NULL;
@@ -1350,76 +1349,8 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	}
 #endif
 
-	/* Stop all the threads; we do not want any messages to be a processed,
-	 * any more and the best way to ensure that is to terminate the threads
-	 * gracefully.
-	 */
-	/* Wait for MC to exit */
-	hdd_alert("Shutting down MC thread");
-	set_bit(MC_SHUTDOWN_EVENT_MASK, &cds_sched_context->mcEventFlag);
-	set_bit(MC_POST_EVENT_MASK, &cds_sched_context->mcEventFlag);
-	wake_up_interruptible(&cds_sched_context->mcWaitQueue);
-	wait_for_completion(&cds_sched_context->McShutdown);
-
-#ifdef QCA_CONFIG_SMP
-	/* Wait for OL RX to exit */
-	hdd_alert("Shutting down OL RX thread");
-	unregister_hotcpu_notifier(cds_sched_context->cpu_hot_plug_notifier);
-	set_bit(RX_SHUTDOWN_EVENT_MASK, &cds_sched_context->ol_rx_event_flag);
-	set_bit(RX_POST_EVENT_MASK, &cds_sched_context->ol_rx_event_flag);
-	wake_up_interruptible(&cds_sched_context->ol_rx_wait_queue);
-	wait_for_completion(&cds_sched_context->ol_rx_shutdown);
-	cds_sched_context->ol_rx_thread = NULL;
-	cds_drop_rxpkt_by_staid(cds_sched_context, WLAN_MAX_STA_COUNT);
-	cds_free_ol_rx_pkt_freeq(cds_sched_context);
-#endif
-
-	hdd_alert("Doing WMA STOP");
-	qdf_status = wma_stop(p_cds_context, HAL_STOP_TYPE_RF_KILL);
-
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, LOGE,
-			  "%s: Failed to stop WMA", __func__);
-		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-		wma_setneedshutdown(p_cds_context);
-	}
-
-	hdd_alert("Doing SME STOP");
-	/* Stop SME - Cannot invoke cds_disable as cds_disable relies
-	 * on threads being running to process the SYS Stop
-	 */
-	qdf_status = sme_stop(pHddCtx->hHal, HAL_STOP_TYPE_SYS_RESET);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, LOGE,
-			  "%s: Failed to stop sme %d", __func__, qdf_status);
-		QDF_ASSERT(0);
-	}
-
-	hdd_alert("Doing MAC STOP");
-	/* Stop MAC (PE and HAL) */
-	qdf_status = mac_stop(pHddCtx->hHal, HAL_STOP_TYPE_SYS_RESET);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, LOGE,
-			  "%s: Failed to stop mac %d", __func__, qdf_status);
-		QDF_ASSERT(0);
-	}
-
-	hdd_notice("Flush Queues");
-	/* Clean up message queues of TX, RX and MC thread */
-	cds_sched_flush_mc_mqs(cds_sched_context);
-
-	/* Deinit all the TX, RX and MC queues */
-	cds_sched_deinit_mqs(cds_sched_context);
-
-	hdd_notice("Doing CDS Shutdown");
-	/* shutdown CDS */
-	cds_shutdown(p_cds_context);
-
-	/*mac context has already been released in mac_close call
-	   so setting it to NULL in hdd context */
-	pHddCtx->hHal = (tHalHandle) NULL;
-
 	wlansap_global_deinit();
+	hdd_wlan_stop_modules(pHddCtx, true);
 
 	hdd_alert("WLAN driver shutdown complete");
 	return QDF_STATUS_SUCCESS;
@@ -1433,14 +1364,14 @@ QDF_STATUS hdd_wlan_shutdown(void)
  * Return: QDF_STATUS_SUCCESS if the driver was re-initialized,
  *	or an error status otherwise
  */
-QDF_STATUS hdd_wlan_re_init(void *hif_sc)
+QDF_STATUS hdd_wlan_re_init(void)
 {
-	QDF_STATUS qdf_status;
+
 	v_CONTEXT_t p_cds_context = NULL;
 	hdd_context_t *pHddCtx = NULL;
-	QDF_STATUS qdf_ret_status;
 	hdd_adapter_t *pAdapter;
-	int i, ret;
+	QDF_STATUS qdf_status;
+	int ret;
 
 	hdd_prevent_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_REINIT);
 
@@ -1458,93 +1389,8 @@ QDF_STATUS hdd_wlan_re_init(void *hif_sc)
 		goto err_re_init;
 	}
 
-	if (!hif_sc) {
-		hdd_alert("hif_sc is NULL");
-		goto err_re_init;
-	}
-
-	((cds_context_type *) p_cds_context)->pHIFContext = hif_sc;
-
 	/* The driver should always be initialized in STA mode after SSR */
 	hdd_set_conparam(0);
-
-	ret = hdd_update_config(pHddCtx);
-	if (ret)
-		goto err_re_init;
-
-	/* Re-open CDS, it is a re-open b'se control transport was never closed. */
-	qdf_status = cds_open();
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hdd_alert("cds_open failed");
-		goto err_re_init;
-	}
-
-	/* Save the hal context in Adapter */
-	pHddCtx->hHal = cds_get_context(QDF_MODULE_ID_SME);
-	if (NULL == pHddCtx->hHal) {
-		hdd_alert("HAL context is null");
-		goto err_cds_close;
-	}
-
-	qdf_status = cds_pre_enable(pHddCtx->pcds_context);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hdd_alert("cds_pre_enable failed");
-		goto err_cds_close;
-	}
-
-	/*
-	 * Note that the cds_pre_enable() sequence triggers the cfg download.
-	 * The cfg download must occur before we update the SME config
-	 * since the SME config operation must access the cfg database.
-	 * Set the SME configuration parameters.
-	 */
-	qdf_status = hdd_set_sme_config(pHddCtx);
-	if (QDF_STATUS_SUCCESS != qdf_status) {
-		hdd_alert("Failed hdd_set_sme_config");
-		goto err_cds_close;
-	}
-
-	ol_txrx_register_pause_cb(wlan_hdd_txrx_pause_cb);
-
-	qdf_status = hdd_set_sme_chan_list(pHddCtx);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hdd_alert("Failed to init channel list");
-		goto err_cds_close;
-	}
-
-	/* Apply the cfg.ini to cfg.dat */
-	if (false == hdd_update_config_dat(pHddCtx)) {
-		hdd_alert("config update failed");
-		goto err_cds_close;
-	}
-
-	/* Set the MAC Address, currently this is used by HAL to add self sta.
-	 * Remove this once self sta is added as part of session open. */
-	qdf_ret_status = cfg_set_str(pHddCtx->hHal, WNI_CFG_STA_ID,
-				     (uint8_t *) &pHddCtx->config->
-				     intfMacAddr[0],
-				     sizeof(pHddCtx->config->intfMacAddr[0]));
-	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
-		hdd_err("Failed to set MAC Address. "
-		       "HALStatus is %08d [x%08x]", qdf_ret_status,
-		       qdf_ret_status);
-		goto err_cds_close;
-	}
-
-	/* Start CDS which starts up the SME/MAC/HAL modules and everything else
-	   Note: Firmware image will be read and downloaded inside cds_enable API */
-	qdf_status = cds_enable(p_cds_context);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hdd_alert("cds_enable failed");
-		goto err_cds_close;
-	}
-
-	qdf_status = hdd_post_cds_enable_config(pHddCtx);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hdd_alert("hdd_post_cds_enable_config failed");
-		goto err_cds_disable;
-	}
-
 	/* Try to get an adapter from mode ID */
 	pAdapter = hdd_get_adapter(pHddCtx, QDF_STA_MODE);
 	if (!pAdapter) {
@@ -1560,6 +1406,12 @@ QDF_STATUS hdd_wlan_re_init(void *hif_sc)
 	if (pHddCtx->config->enable_dp_trace)
 		qdf_dp_trace_init();
 
+	ret = hdd_wlan_start_modules(pHddCtx, pAdapter, true);
+	if (ret) {
+		hdd_err("Failed to start wlan after error");
+		goto err_wiphy_unregister;
+	}
+
 	if (hdd_ipa_uc_ssr_reinit())
 		hdd_err("HDD IPA UC reinit failed");
 
@@ -1567,50 +1419,6 @@ QDF_STATUS hdd_wlan_re_init(void *hif_sc)
 
 	/* Restart all adapters */
 	hdd_start_all_adapters(pHddCtx);
-
-	/* Reconfigure FW logs after SSR */
-	if (pAdapter) {
-		if (pHddCtx->fw_log_settings.enable != 0) {
-			wma_cli_set_command(pAdapter->sessionId,
-					    WMI_DBGLOG_MODULE_ENABLE,
-					    pHddCtx->fw_log_settings.enable,
-					    DBG_CMD);
-		} else {
-			wma_cli_set_command(pAdapter->sessionId,
-					    WMI_DBGLOG_MODULE_DISABLE,
-					    pHddCtx->fw_log_settings.enable,
-					    DBG_CMD);
-		}
-
-		if (pHddCtx->fw_log_settings.dl_report != 0) {
-			wma_cli_set_command(pAdapter->sessionId,
-					    WMI_DBGLOG_REPORT_ENABLE,
-					    pHddCtx->fw_log_settings.
-					    dl_report, DBG_CMD);
-
-			wma_cli_set_command(pAdapter->sessionId,
-					    WMI_DBGLOG_TYPE,
-					    pHddCtx->fw_log_settings.
-					    dl_type, DBG_CMD);
-
-			wma_cli_set_command(pAdapter->sessionId,
-					    WMI_DBGLOG_LOG_LEVEL,
-					    pHddCtx->fw_log_settings.
-					    dl_loglevel, DBG_CMD);
-
-			for (i = 0; i < MAX_MOD_LOGLEVEL; i++) {
-				if (pHddCtx->fw_log_settings.
-						dl_mod_loglevel[i] != 0) {
-					wma_cli_set_command(
-						pAdapter->sessionId,
-						WMI_DBGLOG_MOD_LOG_LEVEL,
-						pHddCtx->fw_log_settings.
-							dl_mod_loglevel[i],
-						DBG_CMD);
-				}
-			}
-		}
-	}
 
 	pHddCtx->hdd_mcastbcast_filter_set = false;
 	pHddCtx->btCoexModeSet = false;
@@ -1639,16 +1447,13 @@ QDF_STATUS hdd_wlan_re_init(void *hif_sc)
 	goto success;
 
 err_cds_disable:
-	cds_disable(p_cds_context);
+	hdd_wlan_stop_modules(pHddCtx, true);
 
-err_cds_close:
-	cds_close(p_cds_context);
-	cds_sched_close(p_cds_context);
+err_wiphy_unregister:
 	if (pHddCtx) {
 		/* Unregister the Net Device Notifier */
 		unregister_netdevice_notifier(&hdd_netdev_notifier);
 		ptt_sock_deactivate_svc();
-
 		nl_srv_exit();
 
 		/* Free up dynamically allocated members inside HDD Adapter */
@@ -1656,13 +1461,7 @@ err_cds_close:
 		pHddCtx->config = NULL;
 		wlan_hdd_deinit_tx_rx_histogram(pHddCtx);
 		wiphy_unregister(pHddCtx->wiphy);
-		wlan_hdd_cfg80211_deinit(pHddCtx->wiphy);
 		wiphy_free(pHddCtx->wiphy);
-
-		if (!QDF_IS_STATUS_SUCCESS(cds_deinit_policy_mgr())) {
-			hdd_err("Failed to deinit policy manager");
-			/* Proceed and complete the clean up */
-		}
 	}
 
 err_re_init:
@@ -1763,6 +1562,14 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 	result = wlan_hdd_validate_context(pHddCtx);
 	if (0 != result)
 		return result;
+
+	mutex_lock(&pHddCtx->iface_change_lock);
+	if (pHddCtx->driver_status != DRIVER_MODULES_ENABLED) {
+		mutex_unlock(&pHddCtx->iface_change_lock);
+		hdd_info("Driver Module not enabled return success");
+		return 0;
+	}
+	mutex_unlock(&pHddCtx->iface_change_lock);
 	pld_request_bus_bandwidth(pHddCtx->parent_dev, PLD_BUS_WIDTH_MEDIUM);
 
 	/* Resume MC thread */
@@ -1896,6 +1703,14 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	rc = wlan_hdd_validate_context(pHddCtx);
 	if (0 != rc)
 		return rc;
+
+	mutex_lock(&pHddCtx->iface_change_lock);
+	if (pHddCtx->driver_status != DRIVER_MODULES_ENABLED) {
+		mutex_unlock(&pHddCtx->iface_change_lock);
+		hdd_info("Driver Modules not Enabled ");
+		return 0;
+	}
+	mutex_unlock(&pHddCtx->iface_change_lock);
 
 	/* If RADAR detection is in progress (HDD), prevent suspend. The flag
 	 * "dfs_cac_block_tx" is set to true when RADAR is found and stay true

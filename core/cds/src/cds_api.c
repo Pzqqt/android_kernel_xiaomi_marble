@@ -198,13 +198,6 @@ QDF_STATUS cds_open(void)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	cds_cfg = cds_get_ini_config();
-	if (!cds_cfg) {
-		cds_err("Cds config is NULL");
-		QDF_ASSERT(0);
-		return QDF_STATUS_E_FAILURE;
-	}
-
 	/* Initialize the timer module */
 	qdf_timer_module_init();
 
@@ -245,25 +238,27 @@ QDF_STATUS cds_open(void)
 			   &(gp_cds_context->aMsgWrappers[iter]));
 	}
 
-	/* Now Open the CDS Scheduler */
-	qdf_status = cds_sched_open(gp_cds_context, &gp_cds_context->qdf_sched,
-				    sizeof(cds_sched_context));
-
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		/* Critical Error ...  Cannot proceed further */
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			  "%s: Failed to open CDS Scheduler", __func__);
-		QDF_ASSERT(0);
-		goto err_msg_queue;
-	}
-
 	pHddCtx = (hdd_context_t *) (gp_cds_context->pHDDContext);
 	if ((NULL == pHddCtx) || (NULL == pHddCtx->config)) {
 		/* Critical Error ...  Cannot proceed further */
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			  "%s: Hdd Context is Null", __func__);
+		cds_err("Hdd Context is Null");
 		QDF_ASSERT(0);
-		goto err_sched_close;
+		goto err_msg_queue;
+	}
+	/* Now Open the CDS Scheduler */
+
+	if (pHddCtx->driver_status == DRIVER_MODULES_UNINITIALIZED) {
+		qdf_status = cds_sched_open(gp_cds_context,
+					    &gp_cds_context->qdf_sched,
+					    sizeof(cds_sched_context));
+
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			/* Critical Error ...  Cannot proceed further */
+			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
+				  "%s: Failed to open CDS Scheduler", __func__);
+			QDF_ASSERT(0);
+			goto err_msg_queue;
+		}
 	}
 
 	scn = cds_get_context(QDF_MODULE_ID_HIF);
@@ -272,6 +267,17 @@ QDF_STATUS cds_open(void)
 			  "%s: scn is null!", __func__);
 		goto err_sched_close;
 	}
+
+	hdd_update_config(pHddCtx);
+	cds_cfg = cds_get_ini_config();
+	if (!cds_cfg) {
+		cds_err("Cds config is NULL");
+		QDF_ASSERT(0);
+		goto err_sched_close;
+	}
+	hdd_enable_fastpath(pHddCtx->config, scn);
+	hdd_wlan_update_target_info(pHddCtx, scn);
+
 	ol_ctx = cds_get_context(QDF_MODULE_ID_BMI);
 	/* Initialize BMI and Download firmware */
 	qdf_status = bmi_download_firmware(ol_ctx);
@@ -280,7 +286,6 @@ QDF_STATUS cds_open(void)
 			  "BMI FIALED status:%d", qdf_status);
 		goto err_bmi_close;
 	}
-
 	htcInfo.pContext = ol_ctx;
 	htcInfo.TargetFailure = ol_target_failure;
 	htcInfo.TargetSendSuspendComplete = wma_target_suspend_acknowledge;
@@ -338,6 +343,8 @@ QDF_STATUS cds_open(void)
 	/* UMA is supported in hardware for performing the
 	 * frame translation 802.11 <-> 802.3
 	 */
+	cds_cfg->frame_xln_reqd = 1;
+
 	sirStatus =
 		mac_open(&(gp_cds_context->pMACContext),
 			gp_cds_context->pHDDContext, cds_cfg);
@@ -454,8 +461,11 @@ QDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context)
 	}
 
 	/* call Packetlog connect service */
-	htt_pkt_log_init(gp_cds_context->pdev_txrx_ctx, scn);
-	pktlog_htc_attach();
+	if (QDF_GLOBAL_FTM_MODE != cds_get_conparam() &&
+	    QDF_GLOBAL_EPPING_MODE != cds_get_conparam()) {
+		htt_pkt_log_init(gp_cds_context->pdev_txrx_ctx, scn);
+		pktlog_htc_attach();
+	}
 
 	/* Reset wma wait event */
 	qdf_event_reset(&gp_cds_context->wmaCompleteEvent);
@@ -653,18 +663,12 @@ err_wma_stop:
 QDF_STATUS cds_disable(v_CONTEXT_t cds_context)
 {
 	QDF_STATUS qdf_status;
-
-	/* wma_stop is called before the SYS so that the processing of target
-	 * pending responses will not be handled during uninitialization of
-	 * WLAN driver
-	 */
-	qdf_event_reset(&(gp_cds_context->wmaCompleteEvent));
+	void *handle;
 
 	qdf_status = wma_stop(cds_context, HAL_STOP_TYPE_RF_KILL);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to stop wma", __func__);
+		cds_err("Failed to stop wma");
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 		wma_setneedshutdown(cds_context);
 	}
@@ -672,15 +676,23 @@ QDF_STATUS cds_disable(v_CONTEXT_t cds_context)
 	hif_disable_isr(((cds_context_type *) cds_context)->pHIFContext);
 	hif_reset_soc(((cds_context_type *) cds_context)->pHIFContext);
 
-	/* SYS STOP will stop SME and MAC */
-	qdf_status = sys_stop(cds_context);
+	handle = cds_get_context(QDF_MODULE_ID_PE);
+	if (!handle) {
+		cds_err("Invalid PE context return!");
+		return QDF_STATUS_E_INVAL;
+	}
+	qdf_status = sme_stop(handle, HAL_STOP_TYPE_SYS_DEEP_SLEEP);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to stop SYS", __func__);
+		cds_err("Failed to stop SME: %d", qdf_status);
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
+	qdf_status = mac_stop(handle, HAL_STOP_TYPE_SYS_DEEP_SLEEP);
 
-	return QDF_STATUS_SUCCESS;
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		cds_err("Failed to stop MAC");
+		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
+	}
+	return qdf_status;
 }
 
 /**
@@ -762,10 +774,9 @@ QDF_STATUS cds_close(v_CONTEXT_t cds_context)
 	}
 
 	cds_deinit_log_completion();
-
-	gp_cds_context->pHDDContext = NULL;
-
 	cds_deinit_ini_config();
+	qdf_timer_module_deinit();
+
 	return QDF_STATUS_SUCCESS;
 }
 
