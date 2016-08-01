@@ -6775,6 +6775,15 @@ int wma_get_channels(struct dfs_ieee80211_channel *ichan,
 	chan_list->nchannels = 0;
 
 	if (IEEE80211_IS_CHAN_11AC_VHT160(ichan)) {
+
+		/*
+		 * as per the latest draft for BSS bandwidth 160MHz,
+		 * channel frequency segment 2 represents the center
+		 * channel frequency.
+		 */
+		if (ichan->ic_vhtop_ch_freq_seg2)
+			center_chan =
+				cds_freq_to_chan(ichan->ic_vhtop_ch_freq_seg2);
 		/*
 		 * In 160MHz channel width, need to
 		 * check if each of the 8 20MHz channel
