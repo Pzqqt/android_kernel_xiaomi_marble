@@ -1937,6 +1937,14 @@ void htt_rx_mon_note_capture_channel(htt_pdev_handle pdev, int mon_ch)
 extern void
 dump_pkt(qdf_nbuf_t nbuf, uint32_t nbuf_paddr, int len);
 
+uint32_t htt_rx_amsdu_rx_in_order_get_pktlog(qdf_nbuf_t rx_ind_msg)
+{
+	uint32_t *msg_word;
+
+	msg_word = (uint32_t *) qdf_nbuf_data(rx_ind_msg);
+	return HTT_RX_IN_ORD_PADDR_IND_PKTLOG_GET(*msg_word);
+}
+
 /* Return values: 1 - success, 0 - failure */
 int
 htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,

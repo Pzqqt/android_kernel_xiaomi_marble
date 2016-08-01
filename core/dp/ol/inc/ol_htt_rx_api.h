@@ -862,4 +862,7 @@ htt_rx_offload_paddr_msdu_pop_ll(htt_pdev_handle pdev,
 				 int *tid,
 				 uint8_t *fw_desc,
 				 qdf_nbuf_t *head_buf, qdf_nbuf_t *tail_buf);
+
+uint32_t htt_rx_amsdu_rx_in_order_get_pktlog(qdf_nbuf_t rx_ind_msg);
+
 #endif /* _OL_HTT_RX_API__H_ */
