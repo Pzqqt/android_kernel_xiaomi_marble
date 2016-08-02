@@ -2934,8 +2934,13 @@ int wma_process_rmf_frame(tp_wma_handle wma_handle,
 			sizeof(*wh));
 		qdf_nbuf_pull_head(wbuf,
 			IEEE80211_CCMP_HEADERLEN);
-			qdf_nbuf_trim_tail(wbuf, IEEE80211_CCMP_MICLEN);
-
+		qdf_nbuf_trim_tail(wbuf, IEEE80211_CCMP_MICLEN);
+		/*
+		 * CCMP header has been pulled off
+		 * reinitialize the start pointer of mac header
+		 * to avoid accessing incorrect address
+		 */
+		wh = (struct ieee80211_frame *) qdf_nbuf_data(wbuf);
 		rx_pkt->pkt_meta.mpdu_hdr_ptr =
 				qdf_nbuf_data(wbuf);
 		rx_pkt->pkt_meta.mpdu_len = qdf_nbuf_len(wbuf);
@@ -3216,6 +3221,12 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 			if (iface->rmfEnabled) {
 				status = wma_process_rmf_frame(wma_handle,
 					iface, wh, rx_pkt, wbuf);
+				/*
+				 * CCMP header might have been pulled off
+				 * reinitialize the start pointer of mac header
+				 */
+				wh = (struct ieee80211_frame *)
+						qdf_nbuf_data(wbuf);
 				if (status != 0)
 					return status;
 			}
