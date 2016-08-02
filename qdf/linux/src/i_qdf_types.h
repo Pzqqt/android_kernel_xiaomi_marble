@@ -185,6 +185,9 @@ struct __qdf_device {
 	__qdf_os_intr func;
 	struct __qdf_mempool_ctxt *mem_pool[MAX_MEM_POOLS];
 	enum qdf_bus_type bus_type;
+#ifdef CONFIG_MCL
+	const struct hif_bus_id *bid;
+#endif
 };
 typedef struct __qdf_device *__qdf_device_t;
 
