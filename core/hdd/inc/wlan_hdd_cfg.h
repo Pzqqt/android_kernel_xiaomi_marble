@@ -848,7 +848,7 @@ typedef enum {
  * Comma is used as a separator for each byte.
  */
 #define CFG_RM_CAPABILITY_NAME            "rm_capability"
-#define CFG_RM_CAPABILITY_DEFAULT         "73,00,6D,00,04"
+#define CFG_RM_CAPABILITY_DEFAULT         "73,10,6D,00,04"
 
 #define CFG_QOS_IMPLICIT_SETUP_ENABLED_NAME                 "ImplicitQosIsEnabled"
 #define CFG_QOS_IMPLICIT_SETUP_ENABLED_MIN                  (0)

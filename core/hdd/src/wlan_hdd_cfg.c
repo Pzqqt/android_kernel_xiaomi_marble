@@ -5654,6 +5654,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		CFG_ADAPT_DWELL_WIFI_THRESH_NAME,
 		pHddCtx->config->adapt_dwell_wifi_act_threshold);
 	hdd_ndp_print_ini_config(pHddCtx);
+	hdd_info("Name = [%s] Value = [%s]",
+		CFG_RM_CAPABILITY_NAME,
+		pHddCtx->config->rm_capability);
 }
 
 
