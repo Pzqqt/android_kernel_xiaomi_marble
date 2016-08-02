@@ -81,4 +81,12 @@ void dp_local_peer_id_pool_init(struct dp_pdev *pdev);
 void dp_local_peer_id_alloc(struct dp_pdev *pdev, struct dp_peer *peer);
 void dp_local_peer_id_free(struct dp_pdev *pdev, struct dp_peer *peer);
 #endif
+extern int dp_addba_requestprocess_wifi3(void *peer_handle,
+	uint8_t dialogtoken, uint16_t tid, uint16_t batimeout,
+	uint16_t buffersize, uint16_t startseqnum);
+extern void dp_addba_responsesetup_wifi3(void *peer_handle, uint8_t tid,
+	uint8_t *dialogtoken, uint16_t *statuscode,
+	uint16_t *buffersize, uint16_t *batimeout);
+extern int dp_delba_process_wifi3(void *peer_handle,
+	int tid, uint16_t reasoncode);
 #endif /* #ifndef _DP_INTERNAL_H_ */

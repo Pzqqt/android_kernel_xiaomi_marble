@@ -1643,6 +1643,9 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_get_vdev_mac_addr = dp_get_vdev_mac_addr_wifi3,
 	.txrx_get_vdev_from_vdev_id = dp_get_vdev_from_vdev_id_wifi3,
 	.txrx_get_ctrl_pdev_from_vdev = dp_get_ctrl_pdev_from_vdev_wifi3,
+	.addba_requestprocess = dp_addba_requestprocess_wifi3,
+	.addba_responsesetup = dp_addba_responsesetup_wifi3,
+	.delba_process = dp_delba_process_wifi3,
 	/* TODO: Add other functions */
 };
 

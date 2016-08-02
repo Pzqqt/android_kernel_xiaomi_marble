@@ -352,4 +352,32 @@ cdp_soc_detach(ol_txrx_soc_handle soc)
 	return;
 }
 
+static inline int cdp_addba_requestprocess(ol_txrx_soc_handle soc,
+	void *peer_handle, uint8_t dialogtoken, uint16_t tid,
+	uint16_t batimeout, uint16_t buffersize, uint16_t startseqnum)
+{
+	if (soc->ops->cmn_drv_ops->addba_requestprocess)
+		return soc->ops->cmn_drv_ops->addba_requestprocess(peer_handle,
+			dialogtoken, tid, batimeout, buffersize, startseqnum);
+	return 0;
+}
+
+static inline void cdp_addba_responsesetup(ol_txrx_soc_handle soc,
+	void *peer_handle, uint8_t tid, uint8_t *dialogtoken,
+	uint16_t *statuscode, uint16_t *buffersize, uint16_t *batimeout)
+{
+	if (soc->ops->cmn_drv_ops->addba_responsesetup)
+		soc->ops->cmn_drv_ops->addba_responsesetup(peer_handle, tid,
+			dialogtoken, statuscode, buffersize, batimeout);
+}
+
+static inline int cdp_delba_process(ol_txrx_soc_handle soc,
+	void *peer_handle, int tid, uint16_t reasoncode)
+{
+	if (soc->ops->cmn_drv_ops->delba_process)
+		return soc->ops->cmn_drv_ops->delba_process(peer_handle,
+			tid, reasoncode);
+	return 0;
+}
+
 #endif /* _CDP_TXRX_CMN_H_ */

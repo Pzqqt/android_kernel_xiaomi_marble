@@ -670,6 +670,7 @@ void dp_peer_rx_init(struct dp_pdev *pdev, struct dp_peer *peer)
 
 	/* Setup default (non-qos) rx tid queue */
 	dp_rx_tid_setup_wifi3(peer, DP_NON_QOS_TID, 1, 0);
+
 	/*
 	 * Set security defaults: no PN check, no security. The target may
 	 * send a HTT SEC_IND message to overwrite these defaults.
@@ -709,30 +710,30 @@ void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
 *
 * @peer: Datapath peer handle
 * @dialogtoken: dialogtoken from ADDBA frame
-* @baparamset: BlockAck parameters received in ADDBA frame
-* @basequencectrl: BA sequence control received in ADDBA frame
+* @tid: TID number
+* @startseqnum: Start seq. number received in BA sequence control
+* in ADDBA frame
 *
 * Return: 0 on success, error code on failure
 */
-int dp_addba_requestprocess_wifi3(void *peer_handle, uint8_t dialogtoken,
-	struct ieee80211_ba_parameterset *baparamset, uint16_t batimeout,
-	struct ieee80211_ba_seqctrl basequencectrl)
+int dp_addba_requestprocess_wifi3(void *peer_handle,
+	uint8_t dialogtoken, uint16_t tid, uint16_t batimeout,
+	uint16_t buffersize, uint16_t startseqnum)
 {
 	struct dp_peer *peer = (struct dp_peer *)peer_handle;
-	uint16_t tid = baparamset->tid;
 	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
 
 	if ((rx_tid->ba_status == DP_RX_BA_ACTIVE) &&
 			(rx_tid->hw_qdesc_vaddr_unaligned != NULL))
 		rx_tid->ba_status = DP_RX_BA_INACTIVE;
 
-	if (dp_rx_tid_setup_wifi3(peer, tid, baparamset->buffersize,
-		basequencectrl.startseqnum)) {
+	if (dp_rx_tid_setup_wifi3(peer, tid, buffersize,
+		startseqnum)) {
 		/* TODO: Should we send addba reject in this case */
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	rx_tid->ba_win_size = baparamset->buffersize;
+	rx_tid->ba_win_size = buffersize;
 	rx_tid->dialogtoken = dialogtoken;
 	rx_tid->statuscode = QDF_STATUS_SUCCESS;
 	rx_tid->ba_status = DP_RX_BA_ACTIVE;
@@ -747,12 +748,12 @@ int dp_addba_requestprocess_wifi3(void *peer_handle, uint8_t dialogtoken,
 * @tid: TID number
 * @dialogtoken: output dialogtoken
 * @statuscode: output dialogtoken
-* @baparamset: Ouput structure to populate BA response parameters
+* @buffersize: Ouput BA window sizze
 * @batimeout: Ouput BA timeout
 */
 void dp_addba_responsesetup_wifi3(void *peer_handle, uint8_t tid,
 	uint8_t *dialogtoken, uint16_t *statuscode,
-	struct ieee80211_ba_parameterset *baparamset, uint16_t *batimeout)
+	uint16_t *buffersize, uint16_t *batimeout)
 {
 	struct dp_peer *peer = (struct dp_peer *)peer_handle;
 	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
@@ -760,26 +761,22 @@ void dp_addba_responsesetup_wifi3(void *peer_handle, uint8_t tid,
 	/* setup ADDBA response paramters */
 	*dialogtoken = rx_tid->dialogtoken;
 	*statuscode = rx_tid->statuscode;
-	baparamset->amsdusupported = IEEE80211_BA_AMSDU_SUPPORTED;
-	baparamset->bapolicy = IEEE80211_BA_POLICY_IMMEDIATE;
-	baparamset->tid = rx_tid->ba_win_size;
-	baparamset->buffersize = rx_tid->ba_win_size;
+	*buffersize = rx_tid->ba_win_size;
 	*batimeout  = 0;
 }
 
 /*
 * dp_rx_delba_process_wifi3() – Process DELBA from peer
 * @peer: Datapath peer handle
-* @delbaparamset: DELBA parameters received in DELBA frame
+* @tid: TID number
 * @reasoncode: Reason code received in DELBA frame
 *
 * Return: 0 on success, error code on failure
 */
 int dp_delba_process_wifi3(void *peer_handle,
-	struct ieee80211_delba_parameterset *delbaparamset, uint16_t reasoncode)
+	int tid, uint16_t reasoncode)
 {
 	struct dp_peer *peer = (struct dp_peer *)peer_handle;
-	uint16_t tid = (uint16_t)delbaparamset->tid;
 	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
 
 	if (rx_tid->ba_status != DP_RX_BA_ACTIVE)

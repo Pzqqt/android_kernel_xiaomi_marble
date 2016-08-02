@@ -170,6 +170,16 @@ struct cdp_cmn_ops {
 
 	void (*txrx_soc_detach)(void *soc);
 
+	int (*addba_requestprocess)(void *peer_handle, uint8_t dialogtoken,
+		uint16_t tid, uint16_t batimeout, uint16_t buffersize,
+		uint16_t startseqnum);
+
+	void (*addba_responsesetup)(void *peer_handle, uint8_t tid,
+		uint8_t *dialogtoken, uint16_t *statuscode,
+		uint16_t *buffersize, uint16_t *batimeout);
+
+	int (*delba_process)(void *peer_handle,
+		int tid, uint16_t reasoncode);
 };
 
 struct cdp_ctrl_ops {
