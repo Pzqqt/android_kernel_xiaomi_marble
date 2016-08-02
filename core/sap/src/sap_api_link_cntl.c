@@ -160,7 +160,16 @@ QDF_STATUS wlansap_scan_callback(tHalHandle hal_handle,
 				  __func__, scan_id);
 #endif
 		operChannel = sap_select_channel(hal_handle, sap_ctx, result);
+		if (!operChannel) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+				"No channel was selected from preferred channel for Operating channel");
 
+			operChannel = sap_ctx->acs_cfg->start_ch;
+
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+				"Selecting operating channel as starting channel from preferred channel list: %d",
+				operChannel);
+		}
 		sme_scan_result_purge(hal_handle, result);
 		break;
 
@@ -364,6 +373,16 @@ wlansap_pre_start_bss_acs_scan_callback(tHalHandle hal_handle, void *pcontext,
 		}
 #endif
 		oper_channel = sap_select_channel(hal_handle, sap_ctx, presult);
+		if (!oper_channel) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+				"No channel was selected from preferred channel for Operating channel");
+
+			oper_channel = sap_ctx->acs_cfg->start_ch;
+
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+				"Selecting operating channel as starting channel from preferred channel list: %d",
+				oper_channel);
+		}
 		sme_scan_result_purge(hal_handle, presult);
 	}
 
