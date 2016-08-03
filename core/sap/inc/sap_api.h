@@ -171,7 +171,9 @@ typedef enum {
 	eSAP_DFS_CAC_START,
 	eSAP_DFS_CAC_INTERRUPTED,
 	eSAP_DFS_CAC_END,
+	eSAP_DFS_PRE_CAC_END,
 	eSAP_DFS_RADAR_DETECT,
+	eSAP_DFS_RADAR_DETECT_DURING_PRE_CAC,
 	/* Event sent when user need to get the DFS NOL from CNSS */
 	eSAP_DFS_NOL_GET,
 	/* Event sent when user need to set the DFS NOL to CNSS */
@@ -818,7 +820,13 @@ uint8_t wlansap_get_state(void *p_cds_gctx);
 QDF_STATUS wlansap_start_bss(void *p_cds_gctx,
 	 tpWLAN_SAPEventCB pSapEventCallback,
 	 tsap_Config_t *pConfig, void *pUsrContext);
-
+QDF_STATUS wlan_sap_set_pre_cac_status(void *ctx, bool status,
+		tHalHandle handle);
+QDF_STATUS wlan_sap_set_chan_before_pre_cac(void *ctx,
+		uint8_t chan_before_pre_cac);
+QDF_STATUS wlan_sap_set_pre_cac_complete_status(void *ctx, bool status);
+bool wlan_sap_is_pre_cac_active(tHalHandle handle);
+QDF_STATUS wlan_sap_get_pre_cac_vdev_id(tHalHandle handle, uint8_t *vdev_id);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 uint16_t wlansap_check_cc_intf(void *Ctx);
 #endif
@@ -898,7 +906,7 @@ void wlansap_extend_to_acs_range(uint8_t *startChannelNum,
 		uint8_t *endChannelNum,
 		uint8_t *bandStartChannel,
 		uint8_t *bandEndChannel);
-QDF_STATUS wlansap_get_dfs_nol(void *pSapCtx);
+QDF_STATUS wlansap_get_dfs_nol(void *pSapCtx, uint8_t *nol, uint32_t *nol_len);
 QDF_STATUS wlansap_set_dfs_nol(void *pSapCtx, eSapDfsNolType conf);
 void wlansap_populate_del_sta_params(const uint8_t *mac,
 		uint16_t reason_code,

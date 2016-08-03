@@ -455,7 +455,18 @@ wlansap_roam_process_ch_change_success(tpAniSirGlobal mac_ctx,
 	}
 
 	/* check if currently selected channel is a DFS channel */
-	if (is_ch_dfs) {
+	if (is_ch_dfs && sap_ctx->pre_cac_complete) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED, FL(
+		    "sapdfs: eSAP_DISCONNECTING => eSAP_STARTING, on pre cac"));
+		/* Start beaconing on the new pre cac channel */
+		wlansap_start_beacon_req(sap_ctx);
+		sap_ctx->sapsMachine = eSAP_STARTING;
+		mac_ctx->sap.SapDfsInfo.sap_radar_found_status = false;
+		sap_event.event = eSAP_MAC_START_BSS_SUCCESS;
+		sap_event.params = csr_roam_info;
+		sap_event.u1 = eCSR_ROAM_INFRA_IND;
+		sap_event.u2 = eCSR_ROAM_RESULT_INFRA_STARTED;
+	} else if (is_ch_dfs) {
 		if ((false == mac_ctx->sap.SapDfsInfo.ignore_cac)
 		    && (eSAP_DFS_DO_NOT_SKIP_CAC ==
 			mac_ctx->sap.SapDfsInfo.cac_state)) {
@@ -533,6 +544,7 @@ wlansap_roam_process_dfs_chansw_update(tHalHandle hHal,
 		 * with no CSA IE will be sent to firmware.
 		 */
 		dfs_beacon_start_req = eSAP_TRUE;
+		sap_ctx->pre_cac_complete = false;
 		*ret_status = sme_roam_start_beacon_req(hHal, sap_ctx->bssid,
 							dfs_beacon_start_req);
 		return;
@@ -663,8 +675,12 @@ wlansap_roam_process_dfs_radar_found(tpAniSirGlobal mac_ctx,
 				"sapdfs: DFS channel switch disabled");
 			return;
 		}
-		if (false == mac_ctx->sap.SapDfsInfo.sap_radar_found_status)
+		if (false == mac_ctx->sap.SapDfsInfo.sap_radar_found_status) {
+			QDF_TRACE(QDF_MODULE_ID_SAP,
+				QDF_TRACE_LEVEL_ERROR,
+				"sapdfs: sap_radar_found_status is false");
 			return;
+		}
 		QDF_TRACE(QDF_MODULE_ID_SAP,
 			  QDF_TRACE_LEVEL_INFO_MED,
 			  FL("sapdfs:Posting event eSAP_DFS_CHANNEL_CAC_RADAR_FOUND"));
@@ -926,6 +942,23 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 	case eCSR_ROAM_DFS_RADAR_IND:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("Received Radar Indication"));
+
+		if (sap_ctx->is_pre_cac_on) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
+				FL("sapdfs: Radar detect on pre cac:%d"),
+				sap_ctx->sessionId);
+			qdf_mc_timer_stop(
+				&mac_ctx->sap.SapDfsInfo.sap_dfs_cac_timer);
+			qdf_mc_timer_destroy(
+				&mac_ctx->sap.SapDfsInfo.sap_dfs_cac_timer);
+			mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running =
+				false;
+			sap_signal_hdd_event(sap_ctx, NULL,
+					eSAP_DFS_RADAR_DETECT_DURING_PRE_CAC,
+					(void *) eSAP_STATUS_SUCCESS);
+			break;
+		}
+
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
 			  FL("sapdfs: Indicate eSAP_DFS_RADAR_DETECT to HDD"));
 		sap_signal_hdd_event(sap_ctx, NULL, eSAP_DFS_RADAR_DETECT,

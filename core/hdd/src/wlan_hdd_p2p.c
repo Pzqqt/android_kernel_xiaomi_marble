@@ -2136,6 +2136,11 @@ int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 	wlan_hdd_release_intf_addr(pHddCtx,
 				   pVirtAdapter->macAddressCurrent.bytes);
 
+	if ((pVirtAdapter->device_mode == QDF_SAP_MODE) &&
+		wlan_sap_is_pre_cac_active(pHddCtx->hHal)) {
+		hdd_clean_up_pre_cac_interface(pHddCtx);
+	}
+
 	hdd_stop_adapter(pHddCtx, pVirtAdapter, true);
 	hdd_close_adapter(pHddCtx, pVirtAdapter, true);
 	EXIT();

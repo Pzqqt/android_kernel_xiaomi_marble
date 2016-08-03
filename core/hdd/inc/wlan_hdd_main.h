@@ -259,6 +259,7 @@
 
 #define BSS_WAIT_TIMEOUT 10000
 
+#define PRE_CAC_SSID "pre_cac_ssid"
 /*
  * Generic asynchronous request/response support
  *
@@ -1057,6 +1058,11 @@ struct hdd_adapter_s {
 	ol_txrx_tx_fp tx_fn;
 	/* debugfs entry */
 	struct dentry *debugfs_phy;
+	/*
+	 * The pre cac channel is saved here and will be used when the SAP's
+	 * channel needs to be moved from the existing 2.4GHz channel.
+	 */
+	uint8_t pre_cac_chan;
 };
 
 #define WLAN_HDD_GET_STATION_CTX_PTR(pAdapter) (&(pAdapter)->sessionCtx.station)
@@ -1445,6 +1451,7 @@ struct hdd_context_s {
 
 	/* the radio index assigned by cnss_logger */
 	int radio_index;
+	qdf_work_t sap_pre_cac_work;
 	bool hbw_requested;
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 	bool nan_datapath_enabled;
@@ -1540,7 +1547,6 @@ struct qdf_mac_addr *
 hdd_wlan_get_ibss_mac_addr_from_staid(hdd_adapter_t *pAdapter,
 				      uint8_t staIdx);
 void hdd_checkandupdate_phymode(hdd_context_t *pHddCtx);
-
 #ifdef MSM_PLATFORM
 void hdd_start_bus_bw_compute_timer(hdd_adapter_t *pAdapter);
 void hdd_stop_bus_bw_compute_timer(hdd_adapter_t *pAdapter);
@@ -1636,6 +1642,9 @@ static inline int wlan_hdd_get_cpu(void)
 }
 #endif
 
+void wlan_hdd_sap_pre_cac_failure(void *data);
+void hdd_clean_up_pre_cac_interface(hdd_context_t *hdd_ctx);
+
 void wlan_hdd_txrx_pause_cb(uint8_t vdev_id,
 	enum netif_action_type action, enum netif_reason_type reason);
 
@@ -1658,7 +1667,15 @@ int hdd_update_config(hdd_context_t *hdd_ctx);
 QDF_STATUS hdd_chan_change_notify(hdd_adapter_t *adapter,
 		struct net_device *dev,
 		struct hdd_chan_change_params chan_change);
-
+int wlan_hdd_set_channel(struct wiphy *wiphy,
+		struct net_device *dev,
+		struct cfg80211_chan_def *chandef,
+		enum nl80211_channel_type channel_type);
+int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
+		struct cfg80211_beacon_data *params,
+		const u8 *ssid, size_t ssid_len,
+		enum nl80211_hidden_ssid hidden_ssid,
+		bool check_for_concurrency);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 QDF_STATUS hdd_register_for_sap_restart_with_channel_switch(void);
 #else

@@ -264,6 +264,9 @@ typedef struct sSapContext {
 	uint32_t roc_ind_scan_id;
 
 	qdf_event_t sap_session_opened_evt;
+	bool is_pre_cac_on;
+	bool pre_cac_complete;
+	uint8_t chan_before_pre_cac;
 } *ptSapContext;
 
 /*----------------------------------------------------------------------------

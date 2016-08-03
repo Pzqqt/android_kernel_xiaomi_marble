@@ -1659,6 +1659,11 @@ wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel,
 	}
 	pMac = PMAC_STRUCT(hHal);
 
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+		"%s: sap chan:%d target:%d conc:%d",
+		__func__, sapContext->channel, targetChannel,
+		cds_concurrent_open_sessions_running());
+
 	/*
 	 * Now, validate if the passed channel is valid in the
 	 * current regulatory domain.
@@ -2301,6 +2306,155 @@ QDF_STATUS wlansap_cancel_remain_on_channel(void *pCtx,
 
 	return QDF_STATUS_E_FAULT;
 }
+
+/**
+ * wlan_sap_set_pre_cac_status() - Set the pre cac status
+ * @ctx: SAP context
+ * @status: Status of pre cac
+ * @handle: Global MAC handle
+ *
+ * Sets the pre cac status in the MAC context and updates the state
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_sap_set_pre_cac_status(void *ctx, bool status,
+					tHalHandle handle)
+{
+	ptSapContext sap_ctx = CDS_GET_SAP_CB(ctx);
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(handle);
+
+	if (!mac_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid mac pointer", __func__);
+		return QDF_STATUS_E_FAULT;
+	}
+
+	if (!sap_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid SAP pointer", __func__);
+		return QDF_STATUS_E_FAULT;
+	}
+
+	sap_ctx->is_pre_cac_on = status;
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
+		"%s: is_pre_cac_on:%d", __func__, sap_ctx->is_pre_cac_on);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wlan_sap_set_chan_before_pre_cac() - Save the channel before pre cac
+ * @ctx: SAP context
+ * @chan_before_pre_cac: Channel before pre cac
+ *
+ * Saves the channel that was in use before pre cac operation
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_sap_set_chan_before_pre_cac(void *ctx,
+					uint8_t chan_before_pre_cac)
+{
+	ptSapContext sap_ctx = CDS_GET_SAP_CB(ctx);
+
+	if (!sap_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid SAP pointer", __func__);
+		return QDF_STATUS_E_FAULT;
+	}
+
+	sap_ctx->chan_before_pre_cac = chan_before_pre_cac;
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wlan_sap_set_pre_cac_complete_status() - Sets pre cac complete status
+ * @ctx: SAP context
+ * @status: Status of pre cac complete
+ *
+ * Sets the status of pre cac i.e., whether pre cac is complete or not
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_sap_set_pre_cac_complete_status(void *ctx, bool status)
+{
+	ptSapContext sap_ctx = CDS_GET_SAP_CB(ctx);
+
+	if (!sap_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid SAP pointer", __func__);
+		return QDF_STATUS_E_FAULT;
+	}
+
+	sap_ctx->pre_cac_complete = status;
+
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
+			"%s: pre cac complete status:%d session:%d",
+			__func__, status, sap_ctx->sessionId);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wlan_sap_is_pre_cac_active() - Checks if pre cac in in progress
+ * @handle: Global MAC handle
+ *
+ * Checks if pre cac is in progress in any of the SAP contexts
+ *
+ * Return: True is pre cac is active, false otherwise
+ */
+bool wlan_sap_is_pre_cac_active(tHalHandle handle)
+{
+	tpAniSirGlobal mac = NULL;
+	int i;
+
+	mac = PMAC_STRUCT(handle);
+	if (!mac) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+			"%s: Invalid mac context", __func__);
+		return false;
+	}
+
+	for (i = 0; i < SAP_MAX_NUM_SESSION; i++) {
+		ptSapContext context =
+			(ptSapContext) mac->sap.sapCtxList[i].pSapContext;
+		if (context && context->is_pre_cac_on)
+			return true;
+	}
+	return false;
+}
+
+/**
+ * wlan_sap_get_pre_cac_vdev_id() - Get vdev id of the pre cac interface
+ * @handle: Global handle
+ * @vdev_id: vdev id
+ *
+ * Fetches the vdev id of the pre cac interface
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_sap_get_pre_cac_vdev_id(tHalHandle handle, uint8_t *vdev_id)
+{
+	tpAniSirGlobal mac = NULL;
+	uint8_t i;
+
+	mac = PMAC_STRUCT(handle);
+	if (!mac) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+			"%s: Invalid mac context", __func__);
+		return QDF_STATUS_E_FAULT;
+	}
+
+	for (i = 0; i < SAP_MAX_NUM_SESSION; i++) {
+		ptSapContext context =
+			(ptSapContext) mac->sap.sapCtxList[i].pSapContext;
+		if (context && context->is_pre_cac_on) {
+			*vdev_id = i;
+			return QDF_STATUS_SUCCESS;
+		}
+	}
+	return QDF_STATUS_E_FAILURE;
+}
+
 /**
  * wlansap_register_mgmt_frame() - register management frame
  * @pCtx: Pointer to the global cds context; a handle to SAP's control block
@@ -2548,6 +2702,7 @@ QDF_STATUS wlansap_start_beacon_req(void *pSapCtx)
 	if (pMac->sap.SapDfsInfo.sap_radar_found_status == false) {
 		/* CAC Wait done without any Radar Detection */
 		dfsCacWaitStatus = true;
+		sapContext->pre_cac_complete = false;
 		qdf_ret_status = sme_roam_start_beacon_req(hHal,
 							   sapContext->bssid,
 							   dfsCacWaitStatus);
@@ -3077,28 +3232,19 @@ void wlansap_extend_to_acs_range(uint8_t *startChannelNum,
 	}
 }
 
-/*==========================================================================
-   FUNCTION    wlansap_get_dfs_nol
-
-   DESCRIPTION
-   This API is used to dump the dfs nol
-   DEPENDENCIES
-   NA.
-
-   PARAMETERS
-   IN
-   sapContext: Pointer to cds global context structure
-
-   RETURN VALUE
-   The QDF_STATUS code associated with performing the operation
-
-   QDF_STATUS_SUCCESS:  Success
-
-   SIDE EFFECTS
-   ============================================================================*/
-QDF_STATUS wlansap_get_dfs_nol(void *pSapCtx)
+/**
+ * wlansap_get_dfs_nol() - Get the DFS NOL
+ * @pSapCtx: SAP context
+ * @nol: Pointer to the NOL
+ * @nol_len: Length of the NOL
+ *
+ * Provides the DFS NOL
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlansap_get_dfs_nol(void *pSapCtx, uint8_t *nol, uint32_t *nol_len)
 {
-	int i = 0;
+	int i = 0, j = 0;
 	ptSapContext sapContext = (ptSapContext) pSapCtx;
 	void *hHal = NULL;
 	tpAniSirGlobal pMac = NULL;
@@ -3106,6 +3252,7 @@ QDF_STATUS wlansap_get_dfs_nol(void *pSapCtx)
 	unsigned long left_time;
 	tSapDfsNolInfo *dfs_nol = NULL;
 	bool bAvailable = false;
+	*nol_len = 0;
 
 	if (NULL == sapContext) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -3167,6 +3314,9 @@ QDF_STATUS wlansap_get_dfs_nol(void *pSapCtx)
 			/* the time left in min */
 			left_time = SAP_DFS_NON_OCCUPANCY_PERIOD - elapsed_time;
 			left_time = left_time / (60 * 1000 * 1000);
+
+			nol[j++] = dfs_nol[i].dfs_channel_number;
+			(*nol_len)++;
 
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Channel[%d] is UNAVAILABLE [%lu min left]",

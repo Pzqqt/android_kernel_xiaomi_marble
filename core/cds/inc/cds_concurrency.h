@@ -654,6 +654,8 @@ QDF_STATUS cds_deinit_policy_mgr(void);
 QDF_STATUS cds_get_pcl(enum cds_con_mode mode,
 			uint8_t *pcl_channels, uint32_t *len,
 			uint8_t *pcl_weight, uint32_t weight_len);
+void cds_update_with_safe_channel_list(uint8_t *pcl_channels, uint32_t *len,
+		uint8_t *weight_list, uint32_t weight_len);
 uint8_t cds_get_nondfs_preferred_channel(enum cds_con_mode mode,
 					bool for_existing_conn);
 bool cds_is_any_nondfs_chnl_present(uint8_t *channel);
@@ -754,9 +756,6 @@ QDF_STATUS qdf_reset_connection_update(void);
 QDF_STATUS qdf_set_connection_update(void);
 QDF_STATUS qdf_init_connection_update(void);
 QDF_STATUS cds_stop_start_opportunistic_timer(void);
-QDF_STATUS cds_handle_hw_mode_change_on_csa(uint16_t session_id,
-		uint8_t channel, uint8_t *bssid, void *dst, void *src,
-		uint32_t numbytes);
 QDF_STATUS cds_modify_sap_pcl_based_on_mandatory_channel(uint8_t *pcl_list_org,
 		uint8_t *weight_list_org,
 		uint32_t *pcl_len_org);

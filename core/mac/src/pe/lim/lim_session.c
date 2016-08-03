@@ -118,6 +118,20 @@ void pe_reset_protection_callback(void *ptr)
 		return;
 	}
 
+	/*
+	 * During CAC period, if the callback is triggered, the beacon
+	 * template may get updated. Subsequently if the vdev is not up, the
+	 * vdev would be made up -- which should not happen during the CAC
+	 * period. To avoid this, ignore the protection callback if the session
+	 * is not yet up.
+	 */
+	if (!wma_is_vdev_up(pe_session_entry->smeSessionId)) {
+		QDF_TRACE(QDF_MODULE_ID_PE,
+			  QDF_TRACE_LEVEL_ERROR,
+			  FL("session is not up yet. exiting timer callback"));
+		return;
+	}
+
 	current_protection_state |=
 	       pe_session_entry->gLimOverlap11gParams.protectionEnabled        |
 	       pe_session_entry->gLimOverlap11aParams.protectionEnabled   << 1 |

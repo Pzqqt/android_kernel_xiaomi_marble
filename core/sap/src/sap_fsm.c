@@ -827,7 +827,9 @@ static uint8_t *sap_hdd_event_to_string(eSapHddEvent event)
 	CASE_RETURN_STRING(eSAP_CHANNEL_CHANGE_EVENT);
 	CASE_RETURN_STRING(eSAP_DFS_CAC_START);
 	CASE_RETURN_STRING(eSAP_DFS_CAC_END);
+	CASE_RETURN_STRING(eSAP_DFS_PRE_CAC_END);
 	CASE_RETURN_STRING(eSAP_DFS_RADAR_DETECT);
+	CASE_RETURN_STRING(eSAP_DFS_RADAR_DETECT_DURING_PRE_CAC);
 	CASE_RETURN_STRING(eSAP_DFS_NOL_GET);
 	CASE_RETURN_STRING(eSAP_DFS_NOL_SET);
 	CASE_RETURN_STRING(eSAP_DFS_NO_AVAILABLE_CHANNEL);
@@ -2450,6 +2452,9 @@ QDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext,
 		sapContext->csr_roamProfile.csrPersona;
 	*session_id = sapContext->sessionId;
 	sapContext->isSapSessionOpen = eSAP_TRUE;
+	sapContext->is_pre_cac_on = false;
+	sapContext->pre_cac_complete = false;
+	sapContext->chan_before_pre_cac = 0;
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -2704,7 +2709,9 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 	case eSAP_DFS_CAC_START:
 	case eSAP_DFS_CAC_INTERRUPTED:
 	case eSAP_DFS_CAC_END:
+	case eSAP_DFS_PRE_CAC_END:
 	case eSAP_DFS_RADAR_DETECT:
+	case eSAP_DFS_RADAR_DETECT_DURING_PRE_CAC:
 	case eSAP_DFS_NO_AVAILABLE_CHANNEL:
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 	case eSAP_ACS_SCAN_SUCCESS_EVENT:
@@ -2985,6 +2992,45 @@ ptSapContext sap_find_valid_concurrent_session(tHalHandle hHal)
 	return NULL;
 }
 
+/**
+ * sap_find_cac_wait_session() - Get context of a SAP session in CAC wait state
+ * @handle: Global MAC handle
+ *
+ * Finds and gets the context of a SAP session in CAC wait state.
+ *
+ * Return: Valid SAP context on success, else NULL
+ */
+ptSapContext sap_find_cac_wait_session(tHalHandle handle)
+{
+	tpAniSirGlobal mac = PMAC_STRUCT(handle);
+	uint8_t i = 0;
+	ptSapContext sapContext;
+
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
+			"%s", __func__);
+
+	for (i = 0; i < SAP_MAX_NUM_SESSION; i++) {
+		sapContext = (ptSapContext) mac->sap.sapCtxList[i].pSapContext;
+		if (((QDF_SAP_MODE == mac->sap.sapCtxList[i].sapPersona)
+		    ||
+		    (QDF_P2P_GO_MODE == mac->sap.sapCtxList[i].sapPersona)) &&
+		    (sapContext) &&
+		    (sapContext->sapsMachine == eSAP_DFS_CAC_WAIT)) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
+				"%s: found SAP in cac wait state", __func__);
+			return sapContext;
+		}
+		if (sapContext) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
+					"sapdfs: mode:%d intf:%d state:%d",
+					mac->sap.sapCtxList[i].sapPersona, i,
+					sapContext->sapsMachine);
+		}
+	}
+
+	return NULL;
+}
+
 /*==========================================================================
    FUNCTION   sap_close_session
 
@@ -3028,6 +3074,9 @@ QDF_STATUS sap_close_session(tHalHandle hHal,
 	sapContext->isCacEndNotified = false;
 	pMac->sap.sapCtxList[sapContext->sessionId].pSapContext = NULL;
 	sapContext->isSapSessionOpen = false;
+	sapContext->pre_cac_complete = false;
+	sapContext->is_pre_cac_on = false;
+	sapContext->chan_before_pre_cac = 0;
 
 	if (NULL == sap_find_valid_concurrent_session(hHal)) {
 		/* If timer is running then stop the timer and destory it */
@@ -3133,6 +3182,44 @@ QDF_STATUS sap_cac_start_notify(tHalHandle hHal)
 	return qdf_status;
 }
 
+/**
+ * wlansap_update_pre_cac_end() - Update pre cac end to upper layer
+ * @sap_context: SAP context
+ * @mac: Global MAC structure
+ * @intf: Interface number
+ *
+ * Notifies pre cac end to upper layer
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS wlansap_update_pre_cac_end(ptSapContext sap_context,
+		tpAniSirGlobal mac, uint8_t intf)
+{
+	QDF_STATUS qdf_status;
+
+	sap_context->isCacEndNotified = true;
+	mac->sap.SapDfsInfo.sap_radar_found_status = false;
+	sap_context->sapsMachine = eSAP_STARTED;
+
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			"In %s, pre cac end notify on %d: from state %s => %s",
+			__func__, intf, "eSAP_DFS_CAC_WAIT",
+			"eSAP_STARTED");
+
+	qdf_status = sap_signal_hdd_event(sap_context,
+			NULL, eSAP_DFS_PRE_CAC_END,
+			(void *)eSAP_STATUS_SUCCESS);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		QDF_TRACE(QDF_MODULE_ID_SAP,
+				QDF_TRACE_LEVEL_ERROR,
+				"In %s, pre cac notify failed on intf %d",
+				__func__, intf);
+		return qdf_status;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /*==========================================================================
    FUNCTION  sap_cac_end_notify
 
@@ -3165,8 +3252,26 @@ QDF_STATUS sap_cac_end_notify(tHalHandle hHal, tCsrRoamInfo *roamInfo)
 		    ||
 		    (QDF_P2P_GO_MODE == pMac->sap.sapCtxList[intf].sapPersona))
 		    && pMac->sap.sapCtxList[intf].pSapContext != NULL &&
-		    (false == pSapContext->isCacEndNotified)) {
+		    (false == pSapContext->isCacEndNotified) &&
+		    (pSapContext->sapsMachine == eSAP_DFS_CAC_WAIT)) {
 			pSapContext = pMac->sap.sapCtxList[intf].pSapContext;
+
+			/* If this is an end notification of a pre cac, the
+			 * SAP must not start beaconing and must delete the
+			 * temporary interface created for pre cac and switch
+			 * the original SAP to the pre CAC channel.
+			 */
+			if (pSapContext->is_pre_cac_on) {
+				qdf_status = wlansap_update_pre_cac_end(
+						pSapContext, pMac, intf);
+				if (QDF_IS_STATUS_ERROR(qdf_status))
+					return qdf_status;
+				/* pre CAC is not allowed with any concurrency.
+				 * So, we can break from here.
+				 */
+				break;
+			}
+
 			qdf_status = sap_signal_hdd_event(pSapContext, NULL,
 							  eSAP_DFS_CAC_END,
 							  (void *)
@@ -3649,11 +3754,13 @@ static QDF_STATUS sap_fsm_state_starting(ptSapContext sap_ctx,
 							CHANNEL_STATE_DFS)
 				is_dfs = true;
 		}
+
 		if (is_dfs) {
 			sap_dfs_info = &mac_ctx->sap.SapDfsInfo;
 			if ((false == sap_dfs_info->ignore_cac) &&
 			    (eSAP_DFS_DO_NOT_SKIP_CAC ==
-					sap_dfs_info->cac_state)) {
+					sap_dfs_info->cac_state) &&
+			    !sap_ctx->pre_cac_complete) {
 				/* Move the device in CAC_WAIT_STATE */
 				sap_ctx->sapsMachine = eSAP_DFS_CAC_WAIT;
 
@@ -4608,6 +4715,13 @@ uint8_t sap_indicate_radar(ptSapContext sapContext,
 			      dfs_event->chan_list.nchannels,
 			      cds_get_monotonic_boottime());
 
+	if (sapContext->chan_before_pre_cac) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+			FL("sapdfs: set chan before pre cac %d as target chan"),
+			sapContext->chan_before_pre_cac);
+		return sapContext->chan_before_pre_cac;
+	}
+
 	/*
 	 * (1) skip static turbo channel as it will require STA to be in
 	 * static turbo to work.
@@ -4646,11 +4760,10 @@ void sap_dfs_cac_timer_callback(void *data)
 		return;
 	}
 	pMac = PMAC_STRUCT(hHal);
-	sapContext = sap_find_valid_concurrent_session(hHal);
-
+	sapContext = sap_find_cac_wait_session(hHal);
 	if (NULL == sapContext) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "In %s no SAP contexts are found", __func__);
+			"%s: no SAP contexts in wait state", __func__);
 		return;
 	}
 
@@ -4664,23 +4777,19 @@ void sap_dfs_cac_timer_callback(void *data)
 		pMac->sap.SapDfsInfo.is_dfs_cac_timer_running = false;
 	}
 
-	/* Check to ensure that SAP is in DFS WAIT state */
-	if (sapContext->sapsMachine == eSAP_DFS_CAC_WAIT) {
-		/*
-		 * CAC Complete, post eSAP_DFS_CHANNEL_CAC_END to sap_fsm
-		 */
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-			  "sapdfs: Sending eSAP_DFS_CHANNEL_CAC_END for target_channel = %d on sapctx[%p]",
-			  sapContext->channel, sapContext);
+	/*
+	 * CAC Complete, post eSAP_DFS_CHANNEL_CAC_END to sap_fsm
+	 */
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
+			"sapdfs: Sending eSAP_DFS_CHANNEL_CAC_END for target_channel = %d on sapctx[%p]",
+			sapContext->channel, sapContext);
 
-		sapEvent.event = eSAP_DFS_CHANNEL_CAC_END;
-		sapEvent.params = 0;
-		sapEvent.u1 = 0;
-		sapEvent.u2 = 0;
+	sapEvent.event = eSAP_DFS_CHANNEL_CAC_END;
+	sapEvent.params = 0;
+	sapEvent.u1 = 0;
+	sapEvent.u2 = 0;
 
-		sap_fsm(sapContext, &sapEvent);
-	}
-
+	sap_fsm(sapContext, &sapEvent);
 }
 
 /*

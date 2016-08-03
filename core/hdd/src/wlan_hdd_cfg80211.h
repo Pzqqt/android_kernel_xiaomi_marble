@@ -270,6 +270,18 @@ typedef enum {
  *	device. As an event, it indicates either the feature stopped after it
  *	was already running or feature has actually failed to start.
  * @QCA_NL80211_VENDOR_SUBCMD_GET_STATION: send BSS Information
+ * @QCA_NL80211_VENDOR_SUBCMD_SAP_CONDITIONAL_CHAN_SWITCH: After SAP starts
+ *     beaconing, this sub command provides the driver, the frequencies on the
+ *     5 GHz to check for any radar activity. Driver selects one channel from
+ *     this priority list provided through
+ *     @QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_FREQ_LIST and starts
+ *     to check for radar activity on it. If no radar activity is detected
+ *     during the channel availability check period, driver internally switches
+ *     to the selected frequency of operation. If the frequency is zero, driver
+ *     internally selects a channel. The status of this conditional switch is
+ *     indicated through an event using the same sub command through
+ *     @QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_STATUS. Attributes are
+ *     listed in qca_wlan_vendor_attr_sap_conditional_chan_switch
  */
 
 enum qca_nl80211_vendor_subcmds {
@@ -396,6 +408,7 @@ enum qca_nl80211_vendor_subcmds {
 	QCA_NL80211_VENDOR_SUBCMD_GET_STATION = 121,
 	QCA_NL80211_VENDOR_SUBCMD_P2P_LISTEN_OFFLOAD_START = 122,
 	QCA_NL80211_VENDOR_SUBCMD_P2P_LISTEN_OFFLOAD_STOP = 123,
+	QCA_NL80211_VENDOR_SUBCMD_SAP_CONDITIONAL_CHAN_SWITCH = 124,
 };
 
 /**
@@ -606,6 +619,8 @@ enum qca_wlan_vendor_attr_get_station_info {
  * @QCA_NL80211_VENDOR_SUBCMD_TSF_INDEX: TSF response events index
  * @QCA_NL80211_VENDOR_SUBCMD_P2P_LO_EVENT_INDEX:
  *      P2P listen offload index
+ * @QCA_NL80211_VENDOR_SUBCMD_SAP_CONDITIONAL_CHAN_SWITCH_INDEX: SAP
+ *      conditional channel switch index
  */
 
 enum qca_nl80211_vendor_subcmds_index {
@@ -682,6 +697,7 @@ enum qca_nl80211_vendor_subcmds_index {
 	QCA_NL80211_VENDOR_SUBCMD_NDP_INDEX,
 #endif /* WLAN_FEATURE_NAN_DATAPATH */
 	QCA_NL80211_VENDOR_SUBCMD_P2P_LO_EVENT_INDEX,
+	QCA_NL80211_VENDOR_SUBCMD_SAP_CONDITIONAL_CHAN_SWITCH_INDEX,
 };
 
 /**
@@ -2079,6 +2095,29 @@ enum qca_wlan_vendor_features {
 	NUM_QCA_WLAN_VENDOR_FEATURES
 };
 
+/**
+ * enum qca_wlan_vendor_attr_sap_conditional_chan_switch - Parameters for SAP
+ *     conditional channel switch
+ * @QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_INVALID: Invalid initial
+ *     value
+ * @QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_FREQ_LIST: Priority based
+ * frequency list (an array of u32 values in host byte order)
+ * @QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_STATUS: Status of the
+ *     conditional switch (u32)- 0: Success, Non-zero: Failure
+ * @QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_AFTER_LAST: After last
+ * @QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_MAX: Subcommand max
+ */
+enum qca_wlan_vendor_attr_sap_conditional_chan_switch {
+	QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_INVALID = 0,
+	QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_FREQ_LIST = 1,
+	QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_STATUS = 2,
+
+	/* Keep Last */
+	QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_MAX =
+	QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_AFTER_LAST - 1,
+};
+
 /* Feature defines */
 #define WIFI_FEATURE_INFRA              0x0001  /* Basic infrastructure mode */
 #define WIFI_FEATURE_INFRA_5G           0x0002  /* Support for 5 GHz Band */
@@ -2758,6 +2797,7 @@ nla_fail:
 }
 #define cfg80211_vendor_event_alloc backported_cfg80211_vendor_event_alloc
 #endif
+int wlan_hdd_request_pre_cac(uint8_t channel);
 int wlan_hdd_sap_cfg_dfs_override(hdd_adapter_t *adapter);
 
 enum cds_con_mode wlan_hdd_convert_nl_iftype_to_hdd_type(

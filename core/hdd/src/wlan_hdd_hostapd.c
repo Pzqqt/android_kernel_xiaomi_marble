@@ -786,6 +786,179 @@ QDF_STATUS hdd_send_radar_event(hdd_context_t *hdd_context,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * hdd_send_conditional_chan_switch_status() - Send conditional channel switch
+ * status
+ * @hdd_ctx: HDD context
+ * @wdev: Wireless device structure
+ * @status: Status of conditional channel switch
+ * (0: Success, Non-zero: Failure)
+ *
+ * Sends the status of conditional channel switch to user space. This is named
+ * conditional channel switch because the SAP will move to the provided channel
+ * after some condition (pre-cac) is met.
+ *
+ * Return: None
+ */
+static void hdd_send_conditional_chan_switch_status(hdd_context_t *hdd_ctx,
+						struct wireless_dev *wdev,
+						bool status)
+{
+	struct sk_buff *event;
+
+	ENTER_DEV(wdev->netdev);
+
+	if (!hdd_ctx) {
+		hdd_err("Invalid HDD context pointer");
+		return;
+	}
+
+	event = cfg80211_vendor_event_alloc(hdd_ctx->wiphy,
+		  wdev, sizeof(uint32_t) + NLMSG_HDRLEN,
+		  QCA_NL80211_VENDOR_SUBCMD_SAP_CONDITIONAL_CHAN_SWITCH_INDEX,
+		  GFP_KERNEL);
+	if (!event) {
+		hdd_err("cfg80211_vendor_event_alloc failed");
+		return;
+	}
+
+	if (nla_put_u32(event,
+			QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_STATUS,
+			status)) {
+		hdd_err("nla put failed");
+		kfree_skb(event);
+		return;
+	}
+
+	cfg80211_vendor_event(event, GFP_KERNEL);
+}
+
+#ifdef WLAN_FEATURE_MBSSID
+/**
+ * wlan_hdd_set_pre_cac_complete_status() - Set pre cac complete status
+ * @ap_adapter: AP adapter
+ * @status: Status which can be true or false
+ *
+ * Sets the status of pre cac i.e., whether it is complete or not
+ *
+ * Return: Zero on success, non-zero on failure
+ */
+static int wlan_hdd_set_pre_cac_complete_status(hdd_adapter_t *ap_adapter,
+		bool status)
+{
+	QDF_STATUS ret;
+
+	ret = wlan_sap_set_pre_cac_complete_status(
+			WLAN_HDD_GET_SAP_CTX_PTR(ap_adapter), status);
+	if (QDF_IS_STATUS_ERROR(ret))
+		return -EINVAL;
+
+	return 0;
+}
+#else
+static int wlan_hdd_set_pre_cac_complete_status(hdd_adapter_t *ap_adapter,
+		bool status)
+{
+	QDF_STATUS ret;
+
+	ret = wlan_sap_set_pre_cac_complete_status(
+			(WLAN_HDD_GET_CTX(ap_adapter))->pcds_context, status);
+	if (QDF_IS_STATUS_ERROR(ret))
+		return -EINVAL;
+
+	return 0;
+}
+#endif
+
+/**
+ * wlan_hdd_sap_pre_cac_failure() - Process the pre cac failure
+ * @data: AP adapter
+ *
+ * Deletes the pre cac adapter
+ *
+ * Return: None
+ */
+void wlan_hdd_sap_pre_cac_failure(void *data)
+{
+	hdd_adapter_t *pHostapdAdapter;
+	hdd_context_t *hdd_ctx;
+
+	ENTER();
+
+	pHostapdAdapter = (hdd_adapter_t *) data;
+	if (!pHostapdAdapter) {
+		hdd_err("AP adapter is NULL");
+		return;
+	}
+
+	hdd_ctx = (hdd_context_t *) (pHostapdAdapter->pHddCtx);
+	if (!hdd_ctx) {
+		hdd_err("HDD context is null");
+		return;
+	}
+
+	cds_ssr_protect(__func__);
+	hdd_stop_adapter(hdd_ctx, pHostapdAdapter, false);
+	hdd_close_adapter(hdd_ctx, pHostapdAdapter, false);
+	cds_ssr_unprotect(__func__);
+}
+
+
+/**
+ * wlan_hdd_sap_pre_cac_success() - Process the pre cac result
+ * @data: AP adapter
+ *
+ * Deletes the pre cac adapter and moves the existing SAP to the pre cac
+ * channel
+ *
+ * Return: None
+ */
+static void wlan_hdd_sap_pre_cac_success(void *data)
+{
+	hdd_adapter_t *pHostapdAdapter, *ap_adapter;
+	int i;
+	hdd_context_t *hdd_ctx;
+
+	ENTER();
+
+	pHostapdAdapter = (hdd_adapter_t *) data;
+	if (!pHostapdAdapter) {
+		hdd_err("AP adapter is NULL");
+		return;
+	}
+
+	hdd_ctx = (hdd_context_t *) (pHostapdAdapter->pHddCtx);
+	if (!hdd_ctx) {
+		hdd_err("HDD context is null");
+		return;
+	}
+
+	cds_ssr_protect(__func__);
+	hdd_stop_adapter(hdd_ctx, pHostapdAdapter, false);
+	hdd_close_adapter(hdd_ctx, pHostapdAdapter, false);
+	cds_ssr_unprotect(__func__);
+
+	/* Prepare to switch AP from 2.4GHz channel to the pre CAC channel */
+	ap_adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
+	if (!ap_adapter) {
+		hdd_err("failed to get SAP adapter, no restart on pre CAC channel");
+		return;
+	}
+
+	/*
+	 * Setting of the pre cac complete status will ensure that on channel
+	 * switch to the pre CAC DFS channel, there is no CAC again.
+	 */
+	wlan_hdd_set_pre_cac_complete_status(ap_adapter, true);
+	i = hdd_softap_set_channel_change(ap_adapter->dev,
+			ap_adapter->pre_cac_chan,
+			CH_WIDTH_MAX);
+	if (0 != i) {
+		hdd_err("failed to change channel");
+		wlan_hdd_set_pre_cac_complete_status(ap_adapter, false);
+	}
+}
+
 QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				    void *usrDataForCallback)
 {
@@ -997,8 +1170,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		else
 			pHddApCtx->dfs_cac_block_tx = true;
 
-		hdd_info("The value of dfs_cac_block_tx[%d] for ApCtx[%p]",
-		       pHddApCtx->dfs_cac_block_tx, pHddApCtx);
+		hdd_info("The value of dfs_cac_block_tx[%d] for ApCtx[%p]:%d",
+				pHddApCtx->dfs_cac_block_tx, pHddApCtx,
+				pHostapdAdapter->sessionId);
 
 		if ((CHANNEL_STATE_DFS ==
 		     cds_get_channel_state(pHddApCtx->operatingChannel))
@@ -1131,7 +1305,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			hdd_info("Sent CAC end to user space");
 		}
 		break;
-
 	case eSAP_DFS_RADAR_DETECT:
 		wlan_hdd_send_svc_nlink_msg(WLAN_SVC_DFS_RADAR_DETECT_IND,
 					    &dfs_info,
@@ -1145,7 +1318,30 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			hdd_info("Sent radar detected to user space");
 		}
 		break;
+	case eSAP_DFS_RADAR_DETECT_DURING_PRE_CAC:
+		hdd_debug("notification for radar detect during pre cac:%d",
+			pHostapdAdapter->sessionId);
+		hdd_send_conditional_chan_switch_status(pHddCtx,
+			&pHostapdAdapter->wdev, false);
+		pHddCtx->dev_dfs_cac_status = DFS_CAC_NEVER_DONE;
+		qdf_create_work(0, &pHddCtx->sap_pre_cac_work,
+				wlan_hdd_sap_pre_cac_failure,
+				(void *)pHostapdAdapter);
+		qdf_sched_work(0, &pHddCtx->sap_pre_cac_work);
+		break;
+	case eSAP_DFS_PRE_CAC_END:
+		hdd_debug("pre cac end notification received:%d",
+			pHostapdAdapter->sessionId);
+		hdd_send_conditional_chan_switch_status(pHddCtx,
+			&pHostapdAdapter->wdev, true);
+		pHddApCtx->dfs_cac_block_tx = false;
+		pHddCtx->dev_dfs_cac_status = DFS_CAC_ALREADY_DONE;
 
+		qdf_create_work(0, &pHddCtx->sap_pre_cac_work,
+				wlan_hdd_sap_pre_cac_success,
+				(void *)pHostapdAdapter);
+		qdf_sched_work(0, &pHddCtx->sap_pre_cac_work);
+		break;
 	case eSAP_DFS_NO_AVAILABLE_CHANNEL:
 		wlan_hdd_send_svc_nlink_msg
 			(WLAN_SVC_DFS_ALL_CHANNEL_UNAVAIL_IND, &dfs_info,
@@ -3009,6 +3205,8 @@ static __iw_softap_getparam(struct net_device *dev,
 	QDF_STATUS status;
 	int ret;
 	hdd_context_t *hdd_ctx;
+	uint8_t nol[QDF_MAX_NUM_CHAN];
+	uint32_t nol_len = 0;
 
 	ENTER_DEV(dev);
 
@@ -3135,10 +3333,11 @@ static __iw_softap_getparam(struct net_device *dev,
 		wlansap_get_dfs_nol(
 #ifdef WLAN_FEATURE_MBSSID
 			WLAN_HDD_GET_SAP_CTX_PTR
-				(pHostapdAdapter)
+				(pHostapdAdapter),
 #else
-			pHddCtx->pcds_context
+			pHddCtx->pcds_context,
 #endif
+			nol, &nol_len
 			);
 	}
 	break;
@@ -6398,7 +6597,7 @@ static bool wlan_hdd_get_sap_obss(hdd_adapter_t *pHostapdAdapter)
  *
  * Return: 0 for success non-zero for failure
  */
-static int wlan_hdd_set_channel(struct wiphy *wiphy,
+int wlan_hdd_set_channel(struct wiphy *wiphy,
 				struct net_device *dev,
 				struct cfg80211_chan_def *chandef,
 				enum nl80211_channel_type channel_type)
@@ -6856,7 +7055,7 @@ int wlan_hdd_cfg80211_alloc_new_beacon(hdd_adapter_t *pAdapter,
 	size = sizeof(beacon_data_t) + head_len + tail_len +
 		proberesp_ies_len + assocresp_ies_len;
 
-	beacon = kzalloc(size, GFP_KERNEL);
+	beacon = qdf_mem_malloc(size);
 
 	if (beacon == NULL) {
 		hdd_err("Mem allocation for beacon failed");
@@ -6891,7 +7090,8 @@ int wlan_hdd_cfg80211_alloc_new_beacon(hdd_adapter_t *pAdapter,
 
 	*ppBeacon = beacon;
 
-	kfree(old);
+	pAdapter->sessionCtx.ap.beacon = NULL;
+	qdf_mem_free(old);
 
 	return 0;
 
@@ -7354,13 +7554,15 @@ setup_acs_overrides:
  * @ssid: Pointer ssid
  * @ssid_len: Length of ssid
  * @hidden_ssid: Hidden SSID parameter
+ * @check_for_concurrency: Flag to indicate if check for concurrency is needed
  *
  * Return: 0 for success non-zero for failure
  */
-static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
+int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 				       struct cfg80211_beacon_data *params,
 				       const u8 *ssid, size_t ssid_len,
-				       enum nl80211_hidden_ssid hidden_ssid)
+				       enum nl80211_hidden_ssid hidden_ssid,
+				       bool check_for_concurrency)
 {
 	tsap_Config_t *pConfig;
 	beacon_data_t *pBeacon = NULL;
@@ -7804,12 +8006,14 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		return 0;
 	}
 
-	if (!cds_allow_concurrency(
-				cds_convert_device_mode_to_qdf_type(
-				pHostapdAdapter->device_mode),
-				pConfig->channel, HW_MODE_20_MHZ)) {
-		hdd_warn("This concurrency combination is not allowed");
-		return -EINVAL;
+	if (check_for_concurrency) {
+		if (!cds_allow_concurrency(
+					cds_convert_device_mode_to_qdf_type(
+					pHostapdAdapter->device_mode),
+					pConfig->channel, HW_MODE_20_MHZ)) {
+			hdd_warn("This concurrency combination is not allowed");
+			return -EINVAL;
+		}
 	}
 
 	if (!cds_set_connection_in_progress(true)) {
@@ -8022,9 +8226,12 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		cds_decr_session_set_pcl(pAdapter->device_mode,
 						pAdapter->sessionId);
 		pAdapter->sessionCtx.ap.beacon = NULL;
-		kfree(old);
+		qdf_mem_free(old);
 	}
 	mutex_unlock(&pHddCtx->sap_lock);
+
+	if (wlan_sap_is_pre_cac_active(pHddCtx->hHal))
+		hdd_clean_up_pre_cac_interface(pHddCtx);
 
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Stopping the BSS");
@@ -8247,7 +8454,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 			wlan_hdd_cfg80211_start_bss(pAdapter,
 				&params->beacon,
 				params->ssid, params->ssid_len,
-				params->hidden_ssid);
+				params->hidden_ssid, true);
 	}
 
 	EXIT();
@@ -8333,7 +8540,8 @@ static int __wlan_hdd_cfg80211_change_beacon(struct wiphy *wiphy,
 	}
 
 	pAdapter->sessionCtx.ap.beacon = new;
-	status = wlan_hdd_cfg80211_start_bss(pAdapter, params, NULL, 0, 0);
+	status = wlan_hdd_cfg80211_start_bss(pAdapter, params, NULL,
+						0, 0, true);
 
 	EXIT();
 	return status;

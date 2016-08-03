@@ -3506,7 +3506,7 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			}
 			/* Reset WNI_CFG_PROBE_RSP Flags */
 			wlan_hdd_reset_prob_rspies(adapter);
-			kfree(adapter->sessionCtx.ap.beacon);
+			qdf_mem_free(adapter->sessionCtx.ap.beacon);
 			adapter->sessionCtx.ap.beacon = NULL;
 		}
 		mutex_unlock(&hdd_ctx->sap_lock);
@@ -3533,6 +3533,8 @@ QDF_STATUS hdd_stop_all_adapters(hdd_context_t *hdd_ctx)
 
 	ENTER();
 
+	cds_flush_work(&hdd_ctx->sap_pre_cac_work);
+
 	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
 
 	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
@@ -3554,6 +3556,8 @@ QDF_STATUS hdd_reset_all_adapters(hdd_context_t *hdd_ctx)
 	hdd_adapter_t *adapter;
 
 	ENTER();
+
+	cds_flush_work(&hdd_ctx->sap_pre_cac_work);
 
 	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
 
@@ -8744,6 +8748,39 @@ static inline bool hdd_is_lpass_supported(hdd_context_t *hdd_ctx)
 	return false;
 }
 #endif
+
+/**
+ * hdd_clean_up_pre_cac_interface() - Clean up the pre cac interface
+ * @hdd_ctx: HDD context
+ *
+ * Cleans up the pre cac interface, if it exists
+ *
+ * Return: None
+ */
+void hdd_clean_up_pre_cac_interface(hdd_context_t *hdd_ctx)
+{
+	uint8_t session_id;
+	QDF_STATUS status;
+	struct hdd_adapter_s *precac_adapter;
+
+	status = wlan_sap_get_pre_cac_vdev_id(hdd_ctx->hHal, &session_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("failed to get pre cac vdev id");
+		return;
+	}
+
+	precac_adapter = hdd_get_adapter_by_vdev(hdd_ctx, session_id);
+	if (!precac_adapter) {
+		hdd_err("invalid pre cac adapater");
+		return;
+	}
+
+	qdf_create_work(0, &hdd_ctx->sap_pre_cac_work,
+			wlan_hdd_sap_pre_cac_failure,
+			(void *)precac_adapter);
+	qdf_sched_work(0, &hdd_ctx->sap_pre_cac_work);
+
+}
 
 /**
  * hdd_update_ol_config - API to update ol configuration parameters
