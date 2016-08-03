@@ -512,6 +512,7 @@ typedef enum {
 	eCSR_ROAM_ENABLE_QUEUES,
 	eCSR_ROAM_STA_CHANNEL_SWITCH,
 	eCSR_ROAM_NDP_STATUS_UPDATE,
+	eCSR_ROAM_UPDATE_SCAN_RESULT,
 } eRoamCmdStatus;
 
 /* comment inside indicates what roaming callback gets */

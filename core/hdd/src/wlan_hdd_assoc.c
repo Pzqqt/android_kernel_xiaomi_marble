@@ -4605,6 +4605,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	hdd_context_t *pHddCtx = NULL;
 	struct hdd_chan_change_params chan_change;
+	struct cfg80211_bss *bss_status;
 
 	hddLog(LOG2,
 		  "CSR Callback: status= %d result= %d roamID=%d",
@@ -4965,6 +4966,20 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		status = cds_set_hw_mode_on_channel_switch(pAdapter->sessionId);
 		if (QDF_IS_STATUS_ERROR(status))
 			hdd_info("set hw mode change not done");
+		break;
+	case eCSR_ROAM_UPDATE_SCAN_RESULT:
+		if ((NULL != pRoamInfo) && (NULL != pRoamInfo->pBssDesc)) {
+			bss_status = wlan_hdd_cfg80211_inform_bss_frame(
+					pAdapter, pRoamInfo->pBssDesc);
+			if (NULL == bss_status)
+				hdd_info("UPDATE_SCAN_RESULT returned NULL");
+			else
+				cfg80211_put_bss(
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0)) || defined(WITH_BACKPORTS)
+					(WLAN_HDD_GET_CTX(pAdapter))->wiphy,
+#endif
+					bss_status);
+		}
 		break;
 	case eCSR_ROAM_NDP_STATUS_UPDATE:
 		hdd_ndp_event_handler(pAdapter, pRoamInfo, roamId, roamStatus,

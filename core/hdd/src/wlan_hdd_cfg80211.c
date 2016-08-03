@@ -9612,9 +9612,8 @@ struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_list(hdd_adapter_t *pAdapter,
  *
  * Return: struct cfg80211_bss pointer
  */
-static struct cfg80211_bss *
-wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
-				   tSirBssDescription *bss_desc)
+struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
+						tSirBssDescription *bss_desc)
 {
 	/*
 	 * cfg80211_inform_bss() is not updating ie field of bss entry, if entry

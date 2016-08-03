@@ -429,6 +429,7 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 	uint8_t counter = 0;
 	tpRrmSMEContext rrm_ctx = &mac_ctx->rrm.rrmSmeContext;
 	uint32_t session_id;
+	tCsrRoamInfo *roam_info;
 
 	qdf_mem_zero(&filter, sizeof(filter));
 	qdf_mem_zero(scanresults_arr,
@@ -519,16 +520,31 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 						NULL, measurementdone, 0);
 	}
 	counter = 0;
+
+	roam_info = qdf_mem_malloc(sizeof(*roam_info));
+	if (NULL == roam_info) {
+		sms_log(mac_ctx, LOGP, FL("vos_mem_malloc failed"));
+		status = QDF_STATUS_E_NOMEM;
+		goto rrm_send_scan_results_done;
+	}
+
 	while (scan_results) {
 		next_result = sme_scan_result_get_next(mac_ctx, result_handle);
 		sms_log(mac_ctx, LOG1, "Scan res timer:%lu, rrm scan timer:%lu",
 				scan_results->timer, rrm_scan_timer);
-		if (scan_results->timer >= rrm_scan_timer)
+		if (scan_results->timer >= rrm_scan_timer) {
+			qdf_mem_zero(roam_info, sizeof(*roam_info));
+			roam_info->pBssDesc = &scan_results->BssDescriptor;
+			csr_roam_call_callback(mac_ctx, session_id, roam_info,
+						0, eCSR_ROAM_UPDATE_SCAN_RESULT,
+						eCSR_ROAM_RESULT_NONE);
 			scanresults_arr[counter++] = scan_results;
+		}
 		scan_results = next_result;
 		if (counter >= SIR_BCN_REPORT_MAX_BSS_DESC)
 			break;
 	}
+	qdf_mem_free(roam_info);
 	/*
 	 * The beacon report should be sent whether the counter is zero or
 	 * non-zero. There might be a few scan results in the cache but not
@@ -554,6 +570,8 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 					scanresults_arr, measurementdone,
 					counter);
 	}
+
+rrm_send_scan_results_done:
 	sme_scan_result_purge(mac_ctx, result_handle);
 	return status;
 }
