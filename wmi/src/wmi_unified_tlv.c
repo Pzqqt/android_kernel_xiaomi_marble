@@ -8993,6 +8993,7 @@ QDF_STATUS send_process_set_ie_info_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->vdev_id = ie_info->vdev_id;
 	cmd->ie_id = ie_info->ie_id;
 	cmd->ie_len = ie_info->length;
+	cmd->band = ie_info->band;
 
 	WMI_LOGD(FL("IE:%d of size:%d sent for vdev:%d"), ie_info->ie_id,
 		 ie_info->length, ie_info->vdev_id);

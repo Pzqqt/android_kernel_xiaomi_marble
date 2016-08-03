@@ -2598,6 +2598,7 @@ struct vdev_ie_info_param {
 	uint32_t ie_id;
 	uint32_t length;
 	uint32_t ie_source;
+	uint32_t band;
 	uint8_t *data;
 };
 
