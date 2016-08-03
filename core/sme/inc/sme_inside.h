@@ -47,10 +47,6 @@
 #include "sme_qos_api.h"
 #include "sme_qos_internal.h"
 
-#ifdef FEATURE_OEM_DATA_SUPPORT
-#include "oem_data_internal.h"
-#endif
-
 #include "sme_rrm_api.h"
 ePhyChanBondState csr_convert_cb_ini_value_to_phy_cb_state(uint32_t cbIniValue);
 

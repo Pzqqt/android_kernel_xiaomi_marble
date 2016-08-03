@@ -1123,15 +1123,6 @@ QDF_STATUS sme_open(tHalHandle hHal)
 		return status;
 	}
 #endif
-#ifdef FEATURE_OEM_DATA_SUPPORT
-	status = oem_data_oem_data_req_open(pMac);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sms_log(pMac, LOGE,
-			FL("oem_data_oem_data_req_open, status=%d"),
-			status);
-		return status;
-	}
-#endif
 	status = init_sme_cmd_list(pMac);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		return status;
@@ -3199,15 +3190,6 @@ QDF_STATUS sme_close(tHalHandle hHal)
 		fail_status = status;
 	}
 #endif
-#ifdef FEATURE_OEM_DATA_SUPPORT
-	status = oem_data_oem_data_req_close(hHal);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sms_log(pMac, LOGE,
-			"OEM DATA REQ close failed during sme close with status=%d",
-			status);
-		fail_status = status;
-	}
-#endif
 	status = sme_ps_close(hHal);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(pMac, LOGE,
@@ -4751,7 +4733,7 @@ QDF_STATUS sme_register_oem_data_rsp_callback(tHalHandle h_hal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pmac = PMAC_STRUCT(h_hal);
 
-	pmac->oemData.oem_data_rsp_callback = callback;
+	pmac->sme.oem_data_rsp_callback = callback;
 
 	return status;
 
@@ -4775,7 +4757,7 @@ void  sme_deregister_oem_data_rsp_callback(tHalHandle h_hal)
 	}
 	pmac = PMAC_STRUCT(h_hal);
 
-	pmac->oemData.oem_data_rsp_callback = NULL;
+	pmac->sme.oem_data_rsp_callback = NULL;
 }
 #endif
 

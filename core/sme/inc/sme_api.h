@@ -48,10 +48,6 @@
 #include "sme_internal.h"
 #include "wma_tgt_cfg.h"
 
-#ifdef FEATURE_OEM_DATA_SUPPORT
-#include "oem_data_api.h"
-#endif
-
 #include "sme_rrm_internal.h"
 #include "sir_types.h"
 /*--------------------------------------------------------------------------

@@ -1649,7 +1649,7 @@ int wma_oem_data_response_handler(void *handle,
 		return -EINVAL;
 	}
 
-	if (!pmac->oemData.oem_data_rsp_callback) {
+	if (!pmac->sme.oem_data_rsp_callback) {
 		WMA_LOGE(FL("Callback not registered"));
 		return -EINVAL;
 	}
@@ -1698,7 +1698,7 @@ int wma_oem_data_response_handler(void *handle,
 
 	WMA_LOGI(FL("Sending OEM_DATA_RSP(len: %d) to upper layer"), datalen);
 
-	pmac->oemData.oem_data_rsp_callback(oem_rsp);
+	pmac->sme.oem_data_rsp_callback(oem_rsp);
 
 	if (oem_rsp->data)
 		qdf_mem_free(oem_rsp->data);

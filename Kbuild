@@ -592,8 +592,6 @@ SME_CMN_OBJS := $(SME_SRC_DIR)/common/sme_api.o \
 		$(SME_SRC_DIR)/common/sme_power_save.o \
 		$(SME_SRC_DIR)/common/sme_trace.o
 
-SME_OEM_DATA_OBJS := $(SME_SRC_DIR)/oem_data/oem_data_api.o
-
 SME_P2P_OBJS = $(SME_SRC_DIR)/p2p/p2p_api.o
 
 SME_RRM_OBJS := $(SME_SRC_DIR)/rrm/sme_rrm.o
@@ -608,7 +606,6 @@ endif
 
 SME_OBJS :=	$(SME_CMN_OBJS) \
 		$(SME_CSR_OBJS) \
-		$(SME_OEM_DATA_OBJS) \
 		$(SME_P2P_OBJS) \
 		$(SME_QOS_OBJS) \
 		$(SME_RRM_OBJS) \

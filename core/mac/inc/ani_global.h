@@ -47,10 +47,6 @@
 #include "sap_api.h"
 #include "csr_internal.h"
 
-#ifdef FEATURE_OEM_DATA_SUPPORT
-#include "oem_data_internal.h"
-#endif
-
 #include "sme_rrm_internal.h"
 #include "rrm_global.h"
 #include "p2p_api.h"
@@ -930,9 +926,6 @@ typedef struct sAniSirGlobal {
 	tCsrScanStruct scan;
 	tCsrRoamStruct roam;
 
-#ifdef FEATURE_OEM_DATA_SUPPORT
-	tOemDataStruct oemData;
-#endif
 	tRrmContext rrm;
 #ifdef WLAN_FEATURE_CONCURRENT_P2P
 	tp2pContext p2pContext[MAX_NO_OF_P2P_SESSIONS];
