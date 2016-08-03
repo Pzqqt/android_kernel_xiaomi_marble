@@ -635,6 +635,7 @@ QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 	tpRrmSMEContext sme_rrm_ctx = &mac_ctx->rrm.rrmSmeContext;
 	uint32_t session_id;
 	tSirScanType scan_type;
+	unsigned long current_time;
 
 	status = csr_roam_get_session_id_from_bssid(mac_ctx,
 			&sme_rrm_ctx->sessionBssId, &session_id);
@@ -694,6 +695,27 @@ QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 
 		sms_log(mac_ctx, LOG1, FL("Scan Type(%d) Max Dwell Time(%d)"),
 				scan_req.scanType, scan_req.maxChnTime);
+
+		/*
+		 * For RRM scans timing is very important especially when the
+		 * request is for limited channels. There is no need for
+		 * firmware to rest for about 100-200 ms on the home channel.
+		 * Instead, it can start the scan right away which will make the
+		 * host to respond with the beacon report as quickly as
+		 * possible. Ensure that the scan requests are not back to back
+		 * and hence there is a check to see if the requests are atleast
+		 * 1 second apart.
+		 */
+		current_time = qdf_mc_timer_get_system_time();
+		sms_log(mac_ctx, LOG1, "prev scan triggered before %ld ms, totalchannels %d",
+				current_time - rrm_scan_timer,
+				sme_rrm_ctx->channelList.numOfChannels);
+		if ((abs(current_time - rrm_scan_timer) > 1000) &&
+				(sme_rrm_ctx->channelList.numOfChannels == 1)) {
+			scan_req.restTime = 1;
+			scan_req.min_rest_time = 1;
+			scan_req.idle_time = 1;
+		}
 
 		rrm_scan_timer = qdf_mc_timer_get_system_time();
 
