@@ -178,9 +178,6 @@ typedef struct tagSmeCmd {
 		tSetKeyCmd setKeyCmd;
 		tGenericPmcCmd pmcCmd;
 		tGenericQosCmd qosCmd;
-#ifdef FEATURE_OEM_DATA_SUPPORT
-		tOemDataCmd oemDataCmd;
-#endif
 		tRemainChlCmd remainChlCmd;
 		tNoACmd NoACmd;
 		tAddStaForSessionCmd addStaSessionCmd;

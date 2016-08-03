@@ -815,11 +815,6 @@ typedef struct sAniSirLim {
 	uint8_t gSmeSessionId;
 	uint16_t gTransactionId;
 
-#ifdef FEATURE_OEM_DATA_SUPPORT
-	tLimMlmOemDataReq *gpLimMlmOemDataReq;
-	tLimMlmOemDataRsp *gpLimMlmOemDataRsp;
-#endif
-
 	tSirRemainOnChnReq *gpLimRemainOnChanReq;       /* hold remain on chan request in this buf */
 	qdf_mutex_t lim_frame_register_lock;
 	qdf_list_t gLimMgmtFrameRegistratinQueue;

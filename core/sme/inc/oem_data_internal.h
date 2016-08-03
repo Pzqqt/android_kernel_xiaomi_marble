@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -42,24 +42,10 @@
 #include "oem_data_api.h"
 
 typedef struct tagOemDataStruct {
-	/* a global req id */
-	uint32_t nextOemReqId;
-	/* indicates that currently a request has been posted and */
-	bool oemDataReqActive;
-	/* callback function pointer for returning the response */
-	oem_data_oem_data_reqCompleteCallback callback;
-	/* context of the original caller */
-	void *pContext;
-	uint32_t oemDataReqID;              /* original request ID */
-	uint8_t sessionId;  /* Session on which oem data req is active */
 	/* callback for sending data response to oem application */
 	sme_send_oem_data_rsp_msg oem_data_rsp_callback;
 } tOemDataStruct;
 
-typedef struct tagOemDataCmd {
-	uint32_t oemDataReqID;
-	tOemDataReq oemDataReq;
-} tOemDataCmd;
 #endif /* __OEM_DATA_INTERNAL_H__ */
 
 #endif /* FEATURE_OEM_DATA_SUPPORT */

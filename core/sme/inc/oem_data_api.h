@@ -39,22 +39,6 @@
 #include "sir_mac_prot_def.h"
 #include "csr_link_list.h"
 
-/* message subtype for internal purpose */
-#define OEM_MESSAGE_SUBTYPE_INTERNAL   0xdeadbeef
-#define OEM_MESSAGE_SUBTYPE_LEN 4
-
-/* Structure for defining req sent to the PE */
-typedef struct tagOemDataReq {
-	uint8_t sessionId;
-	uint32_t data_len;
-	uint8_t *data;
-} tOemDataReq, tOemDataReqConfig;
-
-typedef struct tagOemDataRsp {
-	uint32_t rsp_len;
-	uint8_t *oem_data_rsp;
-} tOemDataRsp;
-
 typedef enum {
 	eOEM_DATA_REQ_SUCCESS = 1,
 	eOEM_DATA_REQ_FAILURE,
@@ -68,10 +52,8 @@ QDF_STATUS oem_data_oem_data_req_close(tHalHandle hHal);
  * HDD Callback function for the sme to callback when
  * the oem data rsp is available
  */
-typedef QDF_STATUS (*oem_data_oem_data_reqCompleteCallback)(tHalHandle,
-		void *p2, uint32_t oemDataReqID, eOemDataReqStatus status);
-
 typedef void (*sme_send_oem_data_rsp_msg)(tSirOemDataRsp *);
+
 #endif /* _OEM_DATA_API_H__ */
 
 #endif /* FEATURE_OEM_DATA_SUPPORT */
