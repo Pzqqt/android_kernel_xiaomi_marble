@@ -246,19 +246,6 @@ QDF_STATUS sme_ndp_end_req_handler(tHalHandle hal, struct ndp_end_req *req)
 }
 
 /**
- * sme_ndp_sched_req_handler() - ndp schedule request handler
- * @session_id: session id over which the ndp is being created
- * @req_params: request parameters
- *
- * Return: QDF_STATUS_SUCCESS on success; error number otherwise
- */
-QDF_STATUS sme_ndp_sched_req_handler(uint32_t session_id,
-	struct ndp_schedule_update_req *req_params)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * csr_roam_start_ndi() - Start connection for NAN datapath
  * @mac_ctx: Global MAC context
  * @session: SME session ID
