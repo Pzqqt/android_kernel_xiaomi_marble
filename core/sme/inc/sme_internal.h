@@ -153,7 +153,7 @@ typedef void (*preferred_network_found_ind_cb)(void *callback_context,
 typedef void (*ocb_callback)(void *context, void *response);
 typedef void (*sme_set_thermal_level_callback)(void *context, u_int8_t level);
 typedef void (*p2p_lo_callback)(void *context, void *event);
-typedef void (*sme_send_oem_data_rsp_msg)(tSirOemDataRsp *);
+typedef void (*sme_send_oem_data_rsp_msg)(struct oem_data_rsp *);
 
 typedef struct tagSmeStruct {
 	eSmeState state;

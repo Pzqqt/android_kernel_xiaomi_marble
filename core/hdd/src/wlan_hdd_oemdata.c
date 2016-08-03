@@ -302,7 +302,7 @@ static void send_oem_err_rsp_nlink_msg(int32_t app_pid, uint8_t error_code)
  *
  * Return: 0 for success, non zero for failure
  */
-void hdd_send_oem_data_rsp_msg(tSirOemDataRsp *oem_data_rsp)
+void hdd_send_oem_data_rsp_msg(struct oem_data_rsp *oem_data_rsp)
 {
 	struct sk_buff *skb;
 	struct nlmsghdr *nlh;
@@ -364,7 +364,7 @@ void hdd_send_oem_data_rsp_msg(tSirOemDataRsp *oem_data_rsp)
 static QDF_STATUS oem_process_data_req_msg(int oem_data_len, char *oem_data)
 {
 	hdd_adapter_t *adapter = NULL;
-	tSirOemDataReq oem_data_req;
+	struct oem_data_req oem_data_req;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	/* for now, STA interface only */
@@ -379,7 +379,7 @@ static QDF_STATUS oem_process_data_req_msg(int oem_data_len, char *oem_data)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	qdf_mem_zero(&oem_data_req, sizeof(tSirOemDataReq));
+	qdf_mem_zero(&oem_data_req, sizeof(oem_data_req));
 
 	oem_data_req.data = qdf_mem_malloc(oem_data_len);
 	if (!oem_data_req.data) {

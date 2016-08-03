@@ -5900,11 +5900,11 @@ QDF_STATUS sme_scan_get_bkid_candidate_list(tHalHandle hHal, uint32_t sessionId,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_oem_data_req(tHalHandle hal, tSirOemDataReq *hdd_oem_req)
+QDF_STATUS sme_oem_data_req(tHalHandle hal, struct oem_data_req *hdd_oem_req)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
-	tSirOemDataReq *oem_data_req;
+	struct oem_data_req *oem_data_req;
 	void *wma_handle;
 
 	sms_log(mac_ctx, LOG1, FL("enter"));

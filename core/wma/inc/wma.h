@@ -2149,5 +2149,5 @@ WLAN_PHY_MODE wma_chan_phy_mode(u8 chan, enum phy_ch_width chan_width,
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
 QDF_STATUS wma_start_oem_data_req(tp_wma_handle wma_handle,
-				  tSirOemDataReq *startOemDataReq);
+				  struct oem_data_req *oem_req);
 #endif

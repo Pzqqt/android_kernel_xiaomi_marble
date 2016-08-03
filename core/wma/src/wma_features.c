@@ -1641,7 +1641,7 @@ int wma_oem_data_response_handler(void *handle,
 	WMI_OEM_RESPONSE_EVENTID_param_tlvs *param_buf;
 	uint8_t *data;
 	uint32_t datalen;
-	tSirOemDataRsp *oem_rsp;
+	struct oem_data_rsp *oem_rsp;
 	tpAniSirGlobal pmac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!pmac) {
@@ -1715,7 +1715,7 @@ int wma_oem_data_response_handler(void *handle,
  * Return: QDF_STATUS
  */
 QDF_STATUS wma_start_oem_data_req(tp_wma_handle wma_handle,
-			    tSirOemDataReq *oem_data_req)
+			    struct oem_data_req *oem_data_req)
 {
 	int ret = 0;
 

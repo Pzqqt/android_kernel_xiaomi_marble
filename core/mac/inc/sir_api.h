@@ -882,17 +882,15 @@ typedef struct sSirSmeScanChanReq {
 } tSirSmeGetScanChanReq, *tpSirSmeGetScanChanReq;
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
-
-typedef struct sSirOemDataReq {
+struct oem_data_req {
 	uint32_t data_len;
 	uint8_t *data;
-} tSirOemDataReq, *tpSirOemDataReq;
+};
 
-typedef struct sSirOemDataRsp {
+struct oem_data_rsp {
 	uint32_t rsp_len;
 	uint8_t *data;
-} tSirOemDataRsp, *tpSirOemDataRsp;
-
+};
 #endif /* FEATURE_OEM_DATA_SUPPORT */
 
 #ifdef FEATURE_WLAN_ESE
