@@ -11884,6 +11884,8 @@ typedef struct {
 	A_UINT32 max_ndp_sessions;
 	/** Max number of peer's per ndi */
 	A_UINT32 max_peers_per_ndi;
+	/** which combination of bands is supported - see NAN_DATA_SUPPORTED_BAND enums */
+	A_UINT32 nan_data_supported_bands;
 } wmi_ndi_cap_rsp_event_fixed_param_PROTOTYPE;
 
 #define wmi_ndi_cap_rsp_event_fixed_param wmi_ndi_cap_rsp_event_fixed_param_PROTOTYPE
