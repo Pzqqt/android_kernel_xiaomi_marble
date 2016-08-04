@@ -5217,6 +5217,25 @@ void wma_send_flush_logs_to_fw(tp_wma_handle wma_handle)
 }
 
 /**
+ * wma_update_wep_default_key - To update default key id
+ * @wma: pointer to wma handler
+ * @update_def_key: pointer to wep_update_default_key_idx
+ *
+ * This function makes a copy of default key index to txrx node
+ *
+ * Return: Success
+ */
+static QDF_STATUS wma_update_wep_default_key(tp_wma_handle wma,
+			struct wep_update_default_key_idx *update_def_key)
+{
+	struct wma_txrx_node *iface =
+		&wma->interfaces[update_def_key->session_id];
+	iface->wep_default_key_idx = update_def_key->default_idx;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * wma_mc_process_msg() - process wma messages and call appropriate function.
  * @cds_context: cds context
  * @msg: message
@@ -6008,6 +6027,11 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 	case SIR_HAL_POWER_DBG_CMD:
 		wma_process_hal_pwr_dbg_cmd(wma_handle,
 					    msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case WMA_UPDATE_WEP_DEFAULT_KEY:
+		wma_update_wep_default_key(wma_handle,
+			(struct wep_update_default_key_idx *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	default:

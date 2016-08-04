@@ -864,6 +864,7 @@ typedef struct {
  * @rx_streams: number of rx streams can be used by the vdev
  * @chain_mask: chain mask can be used by the vdev
  * @mac_id: the mac on which vdev is on
+ * @wep_default_key_idx: wep default index for group key
  *
  * It stores parameters per vdev in wma.
  */
@@ -940,6 +941,7 @@ struct wma_txrx_node {
 	uint8_t nss_2g;
 	uint8_t nss_5g;
 	bool p2p_lo_in_progress;
+	uint8_t wep_default_key_idx;
 };
 
 #if defined(QCA_WIFI_FTM)

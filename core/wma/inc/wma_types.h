@@ -471,6 +471,7 @@
 #define WDA_BPF_SET_INSTRUCTIONS_REQ         SIR_HAL_BPF_SET_INSTRUCTIONS_REQ
 
 #define WMA_SET_PDEV_IE_REQ                  SIR_HAL_SET_PDEV_IE_REQ
+#define WMA_UPDATE_WEP_DEFAULT_KEY           SIR_HAL_UPDATE_WEP_DEFAULT_KEY
 /* Bit 6 will be used to control BD rate for Management frames */
 #define HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME 0x40
 

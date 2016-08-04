@@ -1766,6 +1766,11 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 	     key_info->encType == eSIR_ED_WEP104)) {
 		wma_read_cfg_wepkey(wma_handle, key_info->key,
 				    &def_key_idx, &key_info->numKeys);
+	} else if ((key_info->encType == eSIR_ED_WEP40) ||
+		(key_info->encType == eSIR_ED_WEP104)) {
+		struct wma_txrx_node *intf =
+			&wma_handle->interfaces[key_info->smesessionId];
+		key_params.def_key_idx = intf->wep_default_key_idx;
 	}
 
 	for (i = 0; i < key_info->numKeys; i++) {

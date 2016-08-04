@@ -5096,6 +5096,50 @@ QDF_STATUS sme_roam_set_key(tHalHandle hal,  uint8_t session_id,
 	return status;
 }
 
+/**
+ * sme_roam_set_default_key_index - To set default wep key idx
+ * @hal: pointer to hal handler
+ * @session_id: session id
+ * @default_idx: default wep key index
+ *
+ * This function prepares a message and post to WMA to set wep default
+ * key index
+ *
+ * Return: Success:QDF_STATUS_SUCCESS Failure: Error value
+ */
+QDF_STATUS sme_roam_set_default_key_index(tHalHandle hal, uint8_t session_id,
+					  uint8_t default_idx)
+{
+	cds_msg_t msg;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct wep_update_default_key_idx *update_key;
+
+	update_key = qdf_mem_malloc(sizeof(*update_key));
+	if (!update_key) {
+		sms_log(mac_ctx, LOGE,
+			FL("Failed to allocate memory for update key"));
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	update_key->session_id = session_id;
+	update_key->default_idx = default_idx;
+
+	msg.type = WMA_UPDATE_WEP_DEFAULT_KEY;
+	msg.reserved = 0;
+	msg.bodyptr = (void *)update_key;
+
+	if (QDF_STATUS_SUCCESS !=
+	    cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
+		sms_log(mac_ctx, LOGE,
+			FL("Failed to post WMA_UPDATE_WEP_DEFAULT_KEY to WMA"));
+		qdf_mem_free(update_key);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+
 /* ---------------------------------------------------------------------------
     \fn sme_get_rssi
     \brief a wrapper function that client calls to register a callback to get

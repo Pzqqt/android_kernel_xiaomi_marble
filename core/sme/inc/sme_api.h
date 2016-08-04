@@ -1154,4 +1154,6 @@ QDF_STATUS sme_process_mac_pwr_dbg_cmd(tHalHandle hal, uint32_t session_id,
 
 void sme_get_vdev_type_nss(tHalHandle hal, enum tQDF_ADAPTER_MODE dev_mode,
 		uint8_t *nss_2g, uint8_t *nss_5g);
+QDF_STATUS sme_roam_set_default_key_index(tHalHandle hal, uint8_t session_id,
+					  uint8_t default_idx);
 #endif /* #if !defined( __SME_API_H ) */
