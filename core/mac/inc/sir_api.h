@@ -733,8 +733,7 @@ typedef struct sSirBssDescription {
 	uint8_t fProbeRsp;
 	/* Actual channel the beacon/probe response was received on */
 	uint8_t rx_channel;
-	uint8_t reservedPadding2;
-	uint8_t reservedPadding3;
+	tSirMacSeqCtl seq_ctrl;
 	uint32_t WscIeLen;
 	uint8_t WscIeProbeRsp[WSCIE_PROBE_RSP_LEN];
 	uint8_t reservedPadding4;

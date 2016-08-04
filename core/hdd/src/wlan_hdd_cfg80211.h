@@ -122,6 +122,7 @@
  * @age: Age
  * @tsf_delta: tsf delta from FW
  * @beacon_tsf: original beacon TSF
+ * @seq_ctrl: sequence control field
  */
 typedef struct {
 	u8 element_id;
@@ -133,6 +134,7 @@ typedef struct {
 	u32 age;
 	u32 tsf_delta;
 	u64 beacon_tsf;
+	u16 seq_ctrl;
 } __attribute__ ((packed)) qcom_ie_age;
 #endif
 

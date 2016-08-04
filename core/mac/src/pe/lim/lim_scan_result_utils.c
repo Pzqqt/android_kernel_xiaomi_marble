@@ -179,12 +179,17 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 
 	pBssDescr->nReceivedTime = (uint32_t) qdf_mc_timer_get_system_ticks();
 	pBssDescr->tsf_delta = WMA_GET_RX_TSF_DELTA(pRxPacketInfo);
+	pBssDescr->seq_ctrl = pHdr->seqControl;
 
 	lim_log(pMac, LOG1,
 		  FL("BSSID: "MAC_ADDRESS_STR " tsf_delta = %u ReceivedTime = %u ssid = %s"),
 		  MAC_ADDR_ARRAY(pHdr->bssId), pBssDescr->tsf_delta,
 		  pBssDescr->nReceivedTime,
 		  ((pBPR->ssidPresent) ? (char *)pBPR->ssId.ssId : ""));
+
+	lim_log(pMac, LOG1, FL("Seq Ctrl: Frag Num: %d, Seq Num: LO:%02x HI:%02x"),
+		pBssDescr->seq_ctrl.fragNum, pBssDescr->seq_ctrl.seqNumLo,
+		pBssDescr->seq_ctrl.seqNumHi);
 
 	if (fScanning) {
 		rrm_get_start_tsf(pMac, pBssDescr->startTSF);
