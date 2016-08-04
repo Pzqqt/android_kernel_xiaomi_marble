@@ -1201,7 +1201,8 @@ static void qdf_dp_add_record(enum QDF_DP_TRACE_ID code,
 	rec->pid = (in_interrupt() ? 0 : current->pid);
 	spin_unlock_bh(&l_dp_trace_lock);
 
-	if (g_qdf_dp_trace_data.live_mode || (print == true))
+	if ((g_qdf_dp_trace_data.live_mode || (print == true)) &&
+	    (rec->code < QDF_DP_TRACE_MAX))
 		qdf_dp_trace_cb_table[rec->code] (rec, index);
 }
 
