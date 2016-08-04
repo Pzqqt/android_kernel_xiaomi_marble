@@ -1350,7 +1350,7 @@ static void hdd_send_association_event(struct net_device *dev,
 				pCsrRoamInfo->tdls_chan_swit_prohibited);
 
 #ifdef MSM_PLATFORM
-#ifdef CONFIG_CNSS
+#if defined(CONFIG_ICNSS) || defined(CONFIG_CNSS)
 		/* start timer in sta/p2p_cli */
 		spin_lock_bh(&pHddCtx->bus_bw_lock);
 		pAdapter->prev_tx_packets = pAdapter->stats.tx_packets;
