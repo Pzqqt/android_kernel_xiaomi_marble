@@ -2142,12 +2142,12 @@ static void lim_process_ap_mlm_add_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsg
 			if ((psessionEntry->gStartBssRSNIe.present)
 			    || (psessionEntry->gStartBssWPAIe.present))
 				lim_log(pMac, LOG1,
-					FL("WPA/WPA2 SAP configuration\n"));
+					FL("WPA/WPA2 SAP configuration"));
 			else {
 				if (pMac->lim.gLimAssocStaLimit >
 				    MAX_SUPPORTED_PEERS_WEP) {
 					lim_log(pMac, LOG1,
-						FL("WEP SAP Configuration\n"));
+						FL("WEP SAP Configuration"));
 					pMac->lim.gLimAssocStaLimit =
 						MAX_SUPPORTED_PEERS_WEP;
 					isWepEnabled = true;

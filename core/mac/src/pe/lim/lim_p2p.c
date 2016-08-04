@@ -539,7 +539,7 @@ void lim_send_p2p_action_frame(tpAniSirGlobal mac_ctx,
 
 	if ((!mac_ctx->lim.gpLimRemainOnChanReq) && (0 != mb_msg->wait)) {
 		lim_log(mac_ctx, LOGE,
-			FL("RemainOnChannel is not running\n"));
+			FL("RemainOnChannel is not running"));
 		lim_send_sme_rsp(mac_ctx, eWNI_SME_ACTION_FRAME_SEND_CNF,
 			QDF_STATUS_E_FAILURE, mb_msg->sessionId, 0);
 		return;

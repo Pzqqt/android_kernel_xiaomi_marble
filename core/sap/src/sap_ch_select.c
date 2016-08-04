@@ -1127,7 +1127,7 @@ void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 	pBeaconStruct = qdf_mem_malloc(sizeof(tSirProbeRespBeacon));
 	if (NULL == pBeaconStruct) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "Unable to allocate memory in sap_compute_spect_weight\n");
+			  "Unable to allocate memory in sap_compute_spect_weight");
 		return;
 	}
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -1220,7 +1220,7 @@ void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_INFO_HIGH,
-					  "In %s, bssdes.ch_self=%d, bssdes.ch_ID=%d, bssdes.rssi=%d, SpectCh.bssCount=%d, pScanResult=%p, ChannelWidth %d, secondaryChanOffset %d, center frequency %d \n",
+					  "In %s, bssdes.ch_self=%d, bssdes.ch_ID=%d, bssdes.rssi=%d, SpectCh.bssCount=%d, pScanResult=%p, ChannelWidth %d, secondaryChanOffset %d, center frequency %d",
 					  __func__,
 					  pScanResult->BssDescriptor.
 					  channelIdSelf,
