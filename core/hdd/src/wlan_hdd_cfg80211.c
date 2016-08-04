@@ -11046,6 +11046,16 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 	if (true == wlan_hdd_reassoc_bssid_hint(pAdapter, req, &status))
 		return status;
 
+	wlan_hdd_disable_roaming(pAdapter);
+
+	/* Try disconnecting if already in connected state */
+	status = wlan_hdd_try_disconnect(pAdapter);
+	if (0 > status) {
+		hdd_err("Failed to disconnect the existing connection");
+		return -EALREADY;
+	}
+
+	/* Check for max concurrent connections after doing disconnect if any */
 	if (req->channel) {
 		if (!cds_allow_concurrency(
 				cds_convert_device_mode_to_qdf_type(
@@ -11061,15 +11071,6 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 			hdd_err("This concurrency combination is not allowed");
 			return -ECONNREFUSED;
 		}
-	}
-
-	wlan_hdd_disable_roaming(pAdapter);
-
-	/*Try disconnecting if already in connected state */
-	status = wlan_hdd_try_disconnect(pAdapter);
-	if (0 > status) {
-		hdd_err("Failed to disconnect the existing connection");
-		return -EALREADY;
 	}
 
 	/*initialise security parameters */
