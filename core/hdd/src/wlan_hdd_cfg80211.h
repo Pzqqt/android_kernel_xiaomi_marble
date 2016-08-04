@@ -89,27 +89,6 @@
 #define QCOM_VENDOR_IE_AGE_TYPE  0x100
 #define QCOM_VENDOR_IE_AGE_LEN   (sizeof(qcom_ie_age) - 2)
 
-#ifdef FEATURE_WLAN_TDLS
-#define WLAN_IS_TDLS_SETUP_ACTION(action) \
-	((SIR_MAC_TDLS_SETUP_REQ <= action) && \
-	(SIR_MAC_TDLS_SETUP_CNF >= action))
-#if !defined (TDLS_MGMT_VERSION2)
-#define TDLS_MGMT_VERSION2 0
-#endif
-#endif
-
-#define MAX_CHANNEL (NUM_24GHZ_CHANNELS + NUM_5GHZ_CHANNELS)
-#define MAX_SCAN_SSID 10
-
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 12, 0)) \
-	|| defined(BACKPORTED_CHANNEL_SWITCH_PRESENT)
-#define CHANNEL_SWITCH_SUPPORTED
-#endif
-
-#if defined(CFG80211_DEL_STA_V2) || (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)) || defined(WITH_BACKPORTS)
-#define USE_CFG80211_DEL_STA_V2
-#endif
-
 /**
  * typedef struct qcom_ie_age - age ie
  *
@@ -136,6 +115,27 @@ typedef struct {
 	u64 beacon_tsf;
 	u16 seq_ctrl;
 } __attribute__ ((packed)) qcom_ie_age;
+#endif
+
+#ifdef FEATURE_WLAN_TDLS
+#define WLAN_IS_TDLS_SETUP_ACTION(action) \
+	((SIR_MAC_TDLS_SETUP_REQ <= action) && \
+	(SIR_MAC_TDLS_SETUP_CNF >= action))
+#if !defined (TDLS_MGMT_VERSION2)
+#define TDLS_MGMT_VERSION2 0
+#endif
+#endif
+
+#define MAX_CHANNEL (NUM_24GHZ_CHANNELS + NUM_5GHZ_CHANNELS)
+#define MAX_SCAN_SSID 10
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 12, 0)) \
+	|| defined(BACKPORTED_CHANNEL_SWITCH_PRESENT)
+#define CHANNEL_SWITCH_SUPPORTED
+#endif
+
+#if defined(CFG80211_DEL_STA_V2) || (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)) || defined(WITH_BACKPORTS)
+#define USE_CFG80211_DEL_STA_V2
 #endif
 
 /**
