@@ -6223,6 +6223,30 @@ void wma_log_completion_timeout(void *data)
 }
 
 /**
+ * wma_map_pcl_weights() - Map PCL weights
+ * @pcl_weight: Internal PCL weights
+ *
+ * Maps the internal weights of PCL to the weights needed by FW
+ *
+ * Return: Mapped channel weight of type wmi_pcl_chan_weight
+ */
+static wmi_pcl_chan_weight wma_map_pcl_weights(uint32_t pcl_weight)
+{
+	switch (pcl_weight) {
+	case WEIGHT_OF_GROUP1_PCL_CHANNELS:
+		return WMI_PCL_WEIGHT_VERY_HIGH;
+	case WEIGHT_OF_GROUP2_PCL_CHANNELS:
+		return WMI_PCL_WEIGHT_HIGH;
+	case WEIGHT_OF_GROUP3_PCL_CHANNELS:
+		return WMI_PCL_WEIGHT_MEDIUM;
+	case WEIGHT_OF_NON_PCL_CHANNELS:
+		return WMI_PCL_WEIGHT_LOW;
+	default:
+		return WMI_PCL_WEIGHT_DISALLOW;
+	}
+}
+
+/**
  * wma_send_pdev_set_pcl_cmd() - Send WMI_SOC_SET_PCL_CMDID to FW
  * @wma_handle: WMA handle
  * @msg: PCL structure containing the PCL and the number of channels
@@ -6260,6 +6284,15 @@ QDF_STATUS wma_send_pdev_set_pcl_cmd(tp_wma_handle wma_handle,
 
 	msg->saved_num_chan = wma_handle->saved_chan.num_channels;
 	status = cds_get_valid_chan_weights((struct sir_pcl_chan_weights *)msg);
+
+	for (i = 0; i < msg->saved_num_chan; i++) {
+		msg->weighed_valid_list[i] =
+			wma_map_pcl_weights(msg->weighed_valid_list[i]);
+		WMA_LOGD("%s: chan:%d weight[%d]=%d", __func__,
+			 msg->saved_chan_list[i], i,
+			 msg->weighed_valid_list[i]);
+	}
+
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		WMA_LOGE("%s: Error in creating weighed pcl", __func__);
 		return status;

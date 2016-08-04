@@ -64,6 +64,7 @@
 		(WEIGHT_OF_GROUP2_PCL_CHANNELS - PCL_GROUPS_WEIGHT_DIFFERENCE)
 
 #define WEIGHT_OF_NON_PCL_CHANNELS 1
+#define WEIGHT_OF_DISALLOWED_CHANNELS 0
 
 /**
  * enum hw_mode_ss_config - Possible spatial stream configuration

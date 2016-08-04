@@ -8699,6 +8699,14 @@ QDF_STATUS cds_get_sap_mandatory_channel(uint32_t *chan)
 QDF_STATUS cds_get_valid_chan_weights(struct sir_pcl_chan_weights *weight)
 {
 	uint32_t i, j;
+	cds_context_type *cds_ctx;
+	struct cds_conc_connection_info info;
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	if (!weight->pcl_list) {
 		cds_err("Invalid pcl");
@@ -8715,8 +8723,39 @@ QDF_STATUS cds_get_valid_chan_weights(struct sir_pcl_chan_weights *weight)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	qdf_mem_set(weight->weighed_valid_list, QDF_MAX_NUM_CHAN,
+		    WEIGHT_OF_DISALLOWED_CHANNELS);
+
+	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
+	if (cds_mode_specific_connection_count(CDS_STA_MODE, NULL) > 0) {
+		/*
+		 * Store the STA mode's parameter and temporarily delete it
+		 * from the concurrency table. This way the allow concurrency
+		 * check can be used as though a new connection is coming up,
+		 * allowing to detect the disallowed channels.
+		 */
+		cds_store_and_del_conn_info(CDS_STA_MODE, &info);
+		qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
+		/*
+		 * There is a small window between releasing the above lock
+		 * and acquiring the same in cds_allow_concurrency, below!
+		 */
+		for (i = 0; i < weight->saved_num_chan; i++) {
+			if (cds_allow_concurrency(CDS_STA_MODE,
+						  weight->saved_chan_list[i],
+						  HW_MODE_20_MHZ)) {
+				weight->weighed_valid_list[i] =
+					WEIGHT_OF_NON_PCL_CHANNELS;
+			}
+		}
+
+		qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
+		/* Restore the connection info */
+		cds_restore_deleted_conn_info(&info);
+	}
+	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
+
 	for (i = 0; i < weight->saved_num_chan; i++) {
-		weight->weighed_valid_list[i] = WEIGHT_OF_NON_PCL_CHANNELS;
 		for (j = 0; j < weight->pcl_len; j++) {
 			if (weight->saved_chan_list[i] == weight->pcl_list[j]) {
 				weight->weighed_valid_list[i] =
