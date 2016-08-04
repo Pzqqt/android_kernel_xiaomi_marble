@@ -352,6 +352,8 @@ typedef enum {
 	WMI_PDEV_SET_WAKEUP_CONFIG_CMDID,
 	/* Get current ANT's per chain's RSSI info */
 	WMI_PDEV_GET_ANTDIV_STATUS_CMDID,
+	/** WMI command for getting Chip Power Stats */
+	WMI_PDEV_GET_CHIP_POWER_STATS_CMDID,
 
 	/* VDEV (virtual device) specific commands */
 	/** vdev create */
@@ -1078,6 +1080,8 @@ typedef enum {
 	WMI_PDEV_SET_MAC_CONFIG_RESP_EVENTID,
 	/** Report ANT DIV feature's status */
 	WMI_PDEV_ANTDIV_STATUS_EVENTID,
+	/** Chip level Power stats */
+	WMI_PDEV_CHIP_POWER_STATS_EVENTID,
 
 	/* VDEV specific events */
 	/** VDEV started event in response to VDEV_START request */
@@ -16008,6 +16012,17 @@ typedef struct {
 } wmi_pdev_get_tpc_cmd_fixed_param;
 
 typedef struct {
+	A_UINT32 tlv_header; /* TLV tag and len; tag equals
+	WMITLV_TAG_STRUC_wmi_pdev_get_chip_power_stats_cmd_fixed_param */
+	/**
+	 * pdev_id for identifying the MAC See macros
+	 * starting with WMI_PDEV_ID_ for values.
+	 */
+	A_UINT32 pdev_id;
+} wmi_pdev_get_chip_power_stats_cmd_fixed_param;
+
+
+typedef struct {
 	/*
 	 * TLV tag and len; tag equals
 	 * WMITLV_TAG_STRUC_wmi_pdev_tpc_event_fixed_param
@@ -16073,6 +16088,56 @@ typedef struct {
 	A_UINT32 tlv_header;
 	A_UINT32 cck_level;
 } wmi_ani_cck_event_fixed_param;
+
+typedef enum wmi_power_debug_reg_fmt_type {
+	/* WMI_POWER_DEBUG_REG_FMT_TYPE_ROME -> Dumps following 12 Registers
+	 *     SOC_SYSTEM_SLEEP
+	 *     WLAN_SYSTEM_SLEEP
+	 *     RTC_SYNC_FORCE_WAKE
+	 *     MAC_DMA_ISR
+	 *     MAC_DMA_TXRX_ISR
+	 *     MAC_DMA_ISR_S1
+	 *     MAC_DMA_ISR_S2
+	 *     MAC_DMA_ISR_S3
+	 *     MAC_DMA_ISR_S4
+	 *     MAC_DMA_ISR_S5
+	 *     MAC_DMA_ISR_S6
+	 *     MAC_DMA_ISR_S7
+	 */
+	WMI_POWER_DEBUG_REG_FMT_TYPE_ROME,
+	WMI_POWER_DEBUG_REG_FMT_TYPE_MAX = 0xf,
+} WMI_POWER_DEBUG_REG_FMT_TYPE;
+
+typedef struct {
+	A_UINT32 tlv_header; /* TLV tag and len; tag equals
+	WMITLV_TAG_STRUC_wmi_chip_power_stats_event_fixed_param */
+	/*
+	 * maximum range is 35 hours, due to conversion from internal
+	 * 0.03215 ms units to ms
+	 */
+	A_UINT32 cumulative_sleep_time_ms;
+	/*
+	 * maximum range is 35 hours, due to conversion from internal
+	 * 0.03215 ms units to ms
+	 */
+	A_UINT32 cumulative_total_on_time_ms;
+	/* count of number of times chip enterred deep sleep */
+	A_UINT32 deep_sleep_enter_counter;
+	/* Last Timestamp when Chip went to deep sleep */
+	A_UINT32 last_deep_sleep_enter_tstamp_ms;
+	/*
+	 * WMI_POWER_DEBUG_REG_FMT_TYPE enum, describes debug registers
+	 * being dumped as part of the event
+	 */
+	A_UINT32 debug_register_fmt;
+	/* number of debug registers being sent to host */
+	A_UINT32 num_debug_register;
+	/*
+	 * Following this structure is the TLV:
+	 * A_UINT32 debug_registers[num_debug_registers];
+	 */
+} wmi_pdev_chip_power_stats_event_fixed_param;
+
 
 typedef struct {
 	/*

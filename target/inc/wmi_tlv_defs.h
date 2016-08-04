@@ -731,6 +731,8 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_pdev_get_antdiv_status_cmd_fixed_param,
 	WMITLV_TAG_STRUC_wmi_pdev_antdiv_status_event_fixed_param,
 	WMITLV_TAG_STRUC_wmi_mnt_filter_cmd_fixed_param,
+	WMITLV_TAG_STRUC_wmi_get_chip_power_stats_cmd_fixed_param,
+	WMITLV_TAG_STRUC_wmi_pdev_chip_power_stats_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1030,6 +1032,7 @@ typedef enum {
 	OP(WMI_PEER_ANTDIV_INFO_REQ_CMDID) \
 	OP(WMI_PDEV_GET_ANTDIV_STATUS_CMDID) \
 	OP(WMI_MNT_FILTER_CMDID) \
+	OP(WMI_PDEV_GET_CHIP_POWER_STATS_CMDID) \
 	/* add new CMD_LIST elements above this line */
 
 /*
@@ -1186,6 +1189,7 @@ typedef enum {
 	OP(WMI_SERVICE_AVAILABLE_EVENTID) \
 	OP(WMI_PEER_ANTDIV_INFO_EVENTID) \
 	OP(WMI_PDEV_ANTDIV_STATUS_EVENTID) \
+	OP(WMI_PDEV_CHIP_POWER_STATS_EVENTID) \
 	/* add new EVT_LIST elements above this line */
 
 /* TLV definitions of WMI commands */
@@ -2962,6 +2966,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_REORDER_QUEUE_REMOVE_CMDID);
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_mnt_filter_cmd_fixed_param, wmi_mnt_filter_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_MNT_FILTER_CMDID);
 
+/* WLAN GET Chip power Stats*/
+#define WMITLV_TABLE_WMI_PDEV_GET_CHIP_POWER_STATS_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_get_chip_power_stats_cmd_fixed_param, wmi_pdev_get_chip_power_stats_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_GET_CHIP_POWER_STATS_CMDID);
+
 /************************** TLV definitions of WMI events *******************************/
 
 /* Service Ready event */
@@ -3780,6 +3789,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_CHANNEL_HOPPING_EVENTID);
 #define WMITLV_TABLE_WMI_PDEV_ANI_CCK_LEVEL_EVENTID(id, op, buf, len) \
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_ani_cck_event_fixed_param, wmi_ani_cck_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_ANI_CCK_LEVEL_EVENTID);
+
+#define WMITLV_TABLE_WMI_PDEV_CHIP_POWER_STATS_EVENTID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_pdev_chip_power_stats_event_fixed_param, wmi_pdev_chip_power_stats_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, debug_registers, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_CHIP_POWER_STATS_EVENTID);
+
 
 #define WMITLV_TABLE_WMI_PDEV_ANI_OFDM_LEVEL_EVENTID(id, op, buf, len) \
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_ani_ofdm_event_fixed_param, wmi_ani_ofdm_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
