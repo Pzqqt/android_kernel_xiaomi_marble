@@ -5642,7 +5642,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	case WE_SET_BURST_DUR:
 	{
 		hdd_notice("SET Burst duration val %d", set_value);
-		if ((set_value > 0) && (set_value <= 8192))
+		if ((set_value > 0) && (set_value <= 102400))
 			ret = wma_cli_set_command(pAdapter->sessionId,
 						  WMI_PDEV_PARAM_BURST_DUR,
 						  set_value,  PDEV_CMD);
