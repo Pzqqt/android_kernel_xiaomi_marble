@@ -233,15 +233,29 @@ void hif_ahb_disable_bus(struct hif_softc *scn)
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 	void __iomem *mem;
 	struct platform_device *pdev = (struct platform_device *)sc->pdev;
+	struct resource *memres = NULL;
+	int mem_pa_size = 0;
 
 	/*Disable WIFI clock input*/
-	hif_ahb_clk_enable_disable(&pdev->dev, 0);
+	if (sc->mem) {
+		memres = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+		if (!memres) {
+			HIF_INFO("%s: Failed to get IORESOURCE_MEM\n",
+								__func__);
+			return;
+		}
+		mem_pa_size = memres->end - memres->start + 1;
 
-	hif_ahb_device_reset(scn);
-	mem = (void __iomem *)sc->mem;
-	if (mem) {
-		devm_iounmap(&pdev->dev, mem);
-		sc->mem = NULL;
+		hif_ahb_clk_enable_disable(&pdev->dev, 0);
+
+		hif_ahb_device_reset(scn);
+		mem = (void __iomem *)sc->mem;
+		if (mem) {
+			devm_iounmap(&pdev->dev, mem);
+			devm_release_mem_region(&pdev->dev, scn->mem_pa,
+								mem_pa_size);
+			sc->mem = NULL;
+		}
 	}
 	scn->mem = NULL;
 }
@@ -324,6 +338,7 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 	sc->mem = mem;
 	ol_sc->mem = mem;
 	ol_sc->mem_pa = memres->start;
+
 	tgt_info = hif_get_target_info_handle((struct hif_opaque_softc *)ol_sc);
 
 	tgt_info->target_type = target_type;
@@ -362,10 +377,9 @@ err_cleanup1:
  * Return: void
  */
 /* Function to reset SoC */
-void hif_ahb_reset_soc(struct hif_opaque_softc *hif_ctx)
+void hif_ahb_reset_soc(struct hif_softc *hif_ctx)
 {
-	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
-	hif_ahb_device_reset((struct hif_softc *)sc);
+	hif_ahb_device_reset(hif_ctx);
 }
 
 
