@@ -570,7 +570,8 @@ static void wlan_hdd_tdls_peer_idle_timers_stop(tdlsCtx_t *hdd_tdls_ctx)
 		head = &hdd_tdls_ctx->peer_list[i];
 		list_for_each(pos, head) {
 			curr_peer = list_entry(pos, hddTdlsPeer_t, node);
-			qdf_mc_timer_stop(&curr_peer->peer_idle_timer);
+			if (curr_peer->is_peer_idle_timer_initialised)
+				qdf_mc_timer_stop(&curr_peer->peer_idle_timer);
 		}
 	}
 }
