@@ -2841,6 +2841,12 @@ void hdd_cleanup_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 	}
 
 	hdd_debugfs_exit(adapter);
+
+	if (adapter->scan_info.default_scan_ies) {
+		qdf_mem_free(adapter->scan_info.default_scan_ies);
+		adapter->scan_info.default_scan_ies = NULL;
+	}
+
 	/*
 	 * The adapter is marked as closed. When hdd_wlan_exit() call returns,
 	 * the driver is almost closed and cannot handle either control

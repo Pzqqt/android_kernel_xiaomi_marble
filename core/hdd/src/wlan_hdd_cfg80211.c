@@ -3872,6 +3872,35 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 };
 
 /**
+ * wlan_hdd_save_default_scan_ies() - API to store the default scan IEs
+ *
+ * @adapter: Pointer to HDD adapter
+ * @ie_data: Pointer to Scan IEs buffer
+ * @ie_len: Length of Scan IEs
+ *
+ * Return: 0 on success; error number otherwise
+ */
+static int wlan_hdd_save_default_scan_ies(hdd_adapter_t *adapter,
+		uint8_t *ie_data, uint8_t ie_len)
+{
+	hdd_scaninfo_t *scan_info = NULL;
+	scan_info = &adapter->scan_info;
+
+	if (scan_info->default_scan_ies) {
+		qdf_mem_free(scan_info->default_scan_ies);
+		scan_info->default_scan_ies = NULL;
+	}
+
+	scan_info->default_scan_ies = qdf_mem_malloc(ie_len);
+	if (!scan_info->default_scan_ies)
+		return -ENOMEM;
+
+	memcpy(scan_info->default_scan_ies, ie_data, ie_len);
+	scan_info->default_scan_ies_len = ie_len;
+	return 0;
+}
+
+/**
  * __wlan_hdd_cfg80211_wifi_configuration_set() - Wifi configuration
  * vendor command
  *
@@ -4051,6 +4080,11 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		if (scan_ie_len && (scan_ie_len <= MAX_DEFAULT_SCAN_IE_LEN)) {
 			scan_ie = (uint8_t *) nla_data(tb
 				[QCA_WLAN_VENDOR_ATTR_CONFIG_SCAN_DEFAULT_IES]);
+
+			if (wlan_hdd_save_default_scan_ies(adapter, scan_ie,
+								scan_ie_len))
+				hdd_err("Failed to save default scan IEs");
+
 			if (adapter->device_mode == QDF_STA_MODE) {
 				status = sme_set_default_scan_ie(hdd_ctx->hHal,
 						adapter->sessionId, scan_ie,

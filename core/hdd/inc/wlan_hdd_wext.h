@@ -291,6 +291,8 @@ typedef struct ccp_freq_chan_map_s {
 	wlan_hdd_get_vendor_oui_ie_ptr(WFD_OUI_TYPE, WFD_OUI_TYPE_SIZE, ie, ie_len)
 #endif
 
+#define wlan_hdd_get_mbo_ie_ptr(ie, ie_len) \
+	wlan_hdd_get_vendor_oui_ie_ptr(MBO_OUI_TYPE, MBO_OUI_TYPE_SIZE, ie, ie_len)
 /*
  * Defines for fw_test command
  */

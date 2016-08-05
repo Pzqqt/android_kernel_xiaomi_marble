@@ -1284,6 +1284,59 @@ static inline void wlan_hdd_copy_bssid_scan_request(tCsrScanRequest *scan_req,
 }
 #endif
 
+/*
+ * wlan_hdd_update_scan_ies() - API to update the scan IEs of scan request
+ * with already stored default scan IEs
+ *
+ * @adapter: Pointer to HDD adapter
+ * @scan_info: Pointer to scan info in HDD adapter
+ * @scan_ie: Pointer to scan IE in scan request
+ * @scan_ie_len: Pointer to scan IE length in scan request
+ *
+ * Return: 0 on success; error number otherwise
+ */
+static int wlan_hdd_update_scan_ies(hdd_adapter_t *adapter,
+			hdd_scaninfo_t *scan_info, uint8_t *scan_ie,
+			uint8_t *scan_ie_len)
+{
+	uint8_t rem_len = scan_info->default_scan_ies_len;
+	uint8_t *temp_ie = scan_info->default_scan_ies;
+	uint8_t *current_ie;
+	uint8_t elem_id;
+	uint16_t elem_len;
+
+	if (!scan_info->default_scan_ies_len || !scan_info->default_scan_ies)
+		return -EINVAL;
+
+	while (rem_len >= 2) {
+		current_ie = temp_ie;
+		elem_id = *temp_ie++;
+		elem_len = *temp_ie++;
+		rem_len -= 2;
+
+		switch (elem_id) {
+		case DOT11F_EID_EXTCAP:
+			if (!wlan_hdd_cfg80211_get_ie_ptr(scan_ie, *scan_ie_len,
+						DOT11F_EID_EXTCAP)) {
+				qdf_mem_copy(scan_ie + (*scan_ie_len),
+						current_ie, elem_len + 2);
+				(*scan_ie_len) += (elem_len + 2);
+			}
+			break;
+		case DOT11F_EID_WPA:
+			if (!wlan_hdd_get_mbo_ie_ptr(scan_ie, *scan_ie_len)) {
+				qdf_mem_copy(scan_ie + (*scan_ie_len),
+						current_ie, elem_len + 2);
+				(*scan_ie_len) += (elem_len + 2);
+			}
+			break;
+		}
+		temp_ie += elem_len;
+		rem_len -= elem_len;
+	}
+	return 0;
+}
+
 /**
  * __wlan_hdd_cfg80211_scan() - API to process cfg80211 scan request
  * @wiphy: Pointer to wiphy
@@ -1545,6 +1598,11 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		       request->ie_len);
 		pScanInfo->scanAddIE.length = request->ie_len;
 
+		if (wlan_hdd_update_scan_ies(pAdapter, pScanInfo,
+				pScanInfo->scanAddIE.addIEdata,
+				(uint8_t *)&pScanInfo->scanAddIE.length))
+			hdd_err("Update scan IEs with default Scan IEs failed");
+
 		if ((QDF_STA_MODE == pAdapter->device_mode) ||
 		    (QDF_P2P_CLIENT_MODE == pAdapter->device_mode) ||
 		    (QDF_P2P_DEVICE_MODE == pAdapter->device_mode)
@@ -1605,6 +1663,15 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 				}
 
 			}
+		}
+	} else {
+		if (pScanInfo->default_scan_ies &&
+				pScanInfo->default_scan_ies_len) {
+			qdf_mem_copy(pScanInfo->scanAddIE.addIEdata,
+					pScanInfo->default_scan_ies,
+					pScanInfo->default_scan_ies_len);
+			pScanInfo->scanAddIE.length =
+					pScanInfo->default_scan_ies_len;
 		}
 	}
 

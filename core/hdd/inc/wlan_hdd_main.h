@@ -799,6 +799,8 @@ typedef struct hdd_scaninfo_s {
 	/* Additional IE for scan */
 	tSirAddie scanAddIE;
 
+	uint8_t *default_scan_ies;
+	uint8_t default_scan_ies_len;
 	/* Scan mode */
 	tSirScanType scan_mode;
 
