@@ -8126,11 +8126,6 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 			 TRACE_CODE_HDD_CFG80211_STOP_AP,
 			 pAdapter->sessionId, pAdapter->device_mode));
 
-	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-	ret = wlan_hdd_validate_context(pHddCtx);
-	if (0 != ret)
-		return ret;
-
 	if (!(pAdapter->device_mode == QDF_SAP_MODE ||
 	      pAdapter->device_mode == QDF_P2P_GO_MODE)) {
 		return -EOPNOTSUPP;
@@ -8139,6 +8134,24 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	hdd_notice("Device_mode %s(%d)",
 		hdd_device_mode_to_string(pAdapter->device_mode),
 		pAdapter->device_mode);
+
+	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	ret = wlan_hdd_validate_context(pHddCtx);
+	if (0 != ret) {
+		if (cds_is_driver_unloading()) {
+			/*
+			 * Unloading the driver so free the memory for ch_list,
+			 * otherwise it will result in memory leak
+			 */
+			if (pAdapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list) {
+				qdf_mem_free(pAdapter->sessionCtx.ap.sapConfig.
+					acs_cfg.ch_list);
+				pAdapter->sessionCtx.ap.sapConfig.acs_cfg.
+					ch_list = NULL;
+			}
+		}
+		return ret;
+	}
 
 	status = hdd_get_front_adapter(pHddCtx, &pAdapterNode);
 	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
