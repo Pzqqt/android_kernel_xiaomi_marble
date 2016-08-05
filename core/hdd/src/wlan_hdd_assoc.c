@@ -5657,10 +5657,12 @@ static int __iw_set_essid(struct net_device *dev,
 	pWextState->roamProfile.csrPersona = pAdapter->device_mode;
 
 	if (eCSR_BSS_TYPE_START_IBSS == pRoamProfile->BSSType) {
+		pRoamProfile->ch_params.ch_width = 0;
 		hdd_select_cbmode(pAdapter,
-				  (WLAN_HDD_GET_CTX(pAdapter))->config->
-				  AdHocChannel5G);
+			(WLAN_HDD_GET_CTX(pAdapter))->config->AdHocChannel5G,
+			&pRoamProfile->ch_params);
 	}
+
 	/*
 	 * Change conn_state to connecting before sme_roam_connect(),
 	 * because sme_roam_connect() has a direct path to call

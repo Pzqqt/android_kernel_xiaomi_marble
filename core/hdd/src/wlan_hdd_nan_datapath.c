@@ -237,7 +237,6 @@ static int hdd_ndi_start_bss(hdd_adapter_t *adapter,
 		roam_profile->ChannelInfo.ChannelList[0] =
 			NAN_SOCIAL_CHANNEL_2_4GHZ;
 	}
-	hdd_select_cbmode(adapter, operating_channel);
 
 	roam_profile->SSIDs.numOfSSIDs = 1;
 	roam_profile->SSIDs.SSIDList->SSID.length = 0;

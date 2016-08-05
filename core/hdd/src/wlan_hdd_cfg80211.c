@@ -7833,6 +7833,10 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 
 	wiphy->features |= NL80211_FEATURE_HT_IBSS;
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0))
+	wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_VHT_IBSS);
+#endif
+
 #ifdef FEATURE_WLAN_SCAN_PNO
 	if (pCfg->configPNOScanSupport) {
 		wiphy->flags |= WIPHY_FLAG_SUPPORTS_SCHED_SCAN;
@@ -10163,44 +10167,22 @@ QDF_STATUS wlan_hdd_cfg80211_roam_metrics_handover(hdd_adapter_t *pAdapter,
  * hdd_select_cbmode() - select channel bonding mode
  * @pAdapter: Pointer to adapter
  * @operatingChannel: Operating channel
+ * @ch_params: channel info struct to populate
  *
  * Return: none
  */
-void hdd_select_cbmode(hdd_adapter_t *pAdapter, uint8_t operationChannel)
+void hdd_select_cbmode(hdd_adapter_t *pAdapter, uint8_t operationChannel,
+			struct ch_params_s *ch_params)
 {
-	uint8_t iniDot11Mode = (WLAN_HDD_GET_CTX(pAdapter))->config->dot11Mode;
-	eHddDot11Mode hddDot11Mode = iniDot11Mode;
-	struct ch_params_s ch_params;
 	hdd_station_ctx_t *station_ctx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	struct hdd_mon_set_ch_info *ch_info = &station_ctx->ch_info;
 	uint8_t sec_ch = 0;
 
-	ch_params.ch_width =
-			(WLAN_HDD_GET_CTX(pAdapter))->config->vhtChannelWidth;
-
-	hdd_notice("Channel Bonding Mode Selected is %u", iniDot11Mode);
-	switch (iniDot11Mode) {
-	case eHDD_DOT11_MODE_AUTO:
-	case eHDD_DOT11_MODE_11ac:
-	case eHDD_DOT11_MODE_11ac_ONLY:
-		if (sme_is_feature_supported_by_fw(DOT11AC))
-			hddDot11Mode = eHDD_DOT11_MODE_11ac;
-		else
-			hddDot11Mode = eHDD_DOT11_MODE_11n;
-		break;
-	case eHDD_DOT11_MODE_11n:
-	case eHDD_DOT11_MODE_11n_ONLY:
-		hddDot11Mode = eHDD_DOT11_MODE_11n;
-		break;
-	default:
-		hddDot11Mode = iniDot11Mode;
-		break;
-	}
 	/*
 	 * CDS api expects secondary channel for calculating
 	 * the channel params
 	 */
-	if ((ch_params.ch_width == CH_WIDTH_40MHZ) &&
+	if ((ch_params->ch_width == CH_WIDTH_40MHZ) &&
 	    (CDS_IS_CHANNEL_24GHZ(operationChannel))) {
 		if (operationChannel >= 1 && operationChannel <= 5)
 			sec_ch = operationChannel + 4;
@@ -10209,13 +10191,36 @@ void hdd_select_cbmode(hdd_adapter_t *pAdapter, uint8_t operationChannel)
 	}
 
 	/* This call decides required channel bonding mode */
-	cds_set_channel_params(operationChannel, sec_ch, &ch_params);
+	cds_set_channel_params(operationChannel, sec_ch, ch_params);
 
 	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam()) {
-		ch_info->channel_width = ch_params.ch_width;
-		ch_info->phy_mode = hdd_cfg_xlate_to_csr_phy_mode(hddDot11Mode);
+		eHddDot11Mode hdd_dot11_mode;
+		uint8_t iniDot11Mode =
+			(WLAN_HDD_GET_CTX(pAdapter))->config->dot11Mode;
+
+		hdd_notice("Dot11Mode is %u", iniDot11Mode);
+		switch (iniDot11Mode) {
+		case eHDD_DOT11_MODE_AUTO:
+		case eHDD_DOT11_MODE_11ac:
+		case eHDD_DOT11_MODE_11ac_ONLY:
+			if (sme_is_feature_supported_by_fw(DOT11AC))
+				hdd_dot11_mode = eHDD_DOT11_MODE_11ac;
+			else
+				hdd_dot11_mode = eHDD_DOT11_MODE_11n;
+			break;
+		case eHDD_DOT11_MODE_11n:
+		case eHDD_DOT11_MODE_11n_ONLY:
+			hdd_dot11_mode = eHDD_DOT11_MODE_11n;
+			break;
+		default:
+			hdd_dot11_mode = iniDot11Mode;
+			break;
+		}
+		ch_info->channel_width = ch_params->ch_width;
+		ch_info->phy_mode =
+			hdd_cfg_xlate_to_csr_phy_mode(hdd_dot11_mode);
 		ch_info->channel = operationChannel;
-		ch_info->cb_mode = ch_params.ch_width;
+		ch_info->cb_mode = ch_params->ch_width;
 		hdd_info("ch_info width %d, phymode %d channel %d",
 			 ch_info->channel_width, ch_info->phy_mode,
 			 ch_info->channel);
@@ -10332,6 +10337,7 @@ static bool wlan_hdd_handle_sap_sta_dfs_conc(hdd_adapter_t *adapter,
  * @bssid: Pointer to bssid
  * @bssid_hint: Pointer to bssid hint
  * @operatingChannel: Operating channel
+ * @ch_width: channel width. this is needed only for IBSS
  *
  * This function is used to start the association process
  *
@@ -10340,7 +10346,8 @@ static bool wlan_hdd_handle_sap_sta_dfs_conc(hdd_adapter_t *adapter,
 static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 				    const u8 *ssid, size_t ssid_len,
 				    const u8 *bssid, const u8 *bssid_hint,
-				    u8 operatingChannel)
+				    u8 operatingChannel,
+				    enum nl80211_chan_width ch_width)
 {
 	int status = 0;
 	hdd_wext_state_t *pWextState;
@@ -10504,7 +10511,10 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 				hdd_err("Set IBSS Power Save Params Failed");
 				return -EINVAL;
 			}
-			hdd_select_cbmode(pAdapter, operatingChannel);
+			pRoamProfile->ch_params.ch_width =
+				hdd_map_nl_chan_width(ch_width);
+			hdd_select_cbmode(pAdapter, operatingChannel,
+					  &pRoamProfile->ch_params);
 		}
 		/*
 		 * if MFPEnabled is set but the peer AP is non-PMF i.e 80211w=2
@@ -11465,7 +11475,7 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 		channel = 0;
 	status = wlan_hdd_cfg80211_connect_start(pAdapter, req->ssid,
 						 req->ssid_len, req->bssid,
-						 bssid_hint, channel);
+						 bssid_hint, channel, 0);
 	if (0 > status) {
 		hdd_err("connect failed");
 		return status;
@@ -12026,10 +12036,10 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 	/* Issue connect start */
 	status = wlan_hdd_cfg80211_connect_start(pAdapter, params->ssid,
 						 params->ssid_len,
-						 bssid.bytes,
-						 NULL,
+						 bssid.bytes, NULL,
 						 pHddStaCtx->conn_info.
-						 operationChannel);
+						 operationChannel,
+						 params->chandef.width);
 
 	if (0 > status) {
 		hdd_err("connect failed");
@@ -13808,11 +13818,11 @@ static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	ch_info = &sta_ctx->ch_info;
-	hdd_select_cbmode(adapter, chan_num);
 	roam_profile.ChannelInfo.ChannelList = &ch_info->channel;
 	roam_profile.ChannelInfo.numOfChannels = 1;
 	roam_profile.phyMode = ch_info->phy_mode;
 	roam_profile.ch_params.ch_width = chandef->width;
+	hdd_select_cbmode(adapter, chan_num, &roam_profile.ch_params);
 
 	qdf_mem_copy(bssid.bytes, adapter->macAddressCurrent.bytes,
 		     QDF_MAC_ADDR_SIZE);

@@ -731,7 +731,8 @@ static void __sch_beacon_process_for_session(tpAniSirGlobal mac_ctx,
 			return;
 	}
 
-	if (session->htCapability && bcn->HTInfo.present)
+	if (session->htCapability && bcn->HTInfo.present &&
+			!LIM_IS_IBSS_ROLE(session))
 		lim_update_sta_run_time_ht_switch_chnl_params(mac_ctx,
 						&bcn->HTInfo, bssIdx, session);
 
