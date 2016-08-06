@@ -459,6 +459,8 @@ void hdd_lro_flush(void *data)
  *
  * This function sends the LRO configuration to the firmware
  * via WMA
+ * Make sure that this function gets called after NAPI
+ * instances have been created.
  *
  * Return: 0 - success, < 0 - failure
  */
@@ -466,8 +468,10 @@ int hdd_lro_init(hdd_context_t *hdd_ctx)
 {
 	struct wma_lro_config_cmd_t lro_config;
 
-	if (!hdd_ctx->config->lro_enable) {
-		hdd_err("LRO Disabled");
+	if ((!hdd_ctx->config->lro_enable) &&
+	    (hdd_napi_enabled(HDD_NAPI_ANY) == 0))
+	{
+		hdd_err("LRO and NAPI are both disabled.");
 		return 0;
 	}
 
