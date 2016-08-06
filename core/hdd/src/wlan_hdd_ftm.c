@@ -31,6 +31,9 @@
  * This file contains the WLAN factory test mode implementation
  */
 
+/* denote that this file does not allow legacy hddLog */
+#define HDD_DISALLOW_LEGACY_HDDLOG 1
+
 #include <cds_mq.h>
 #include "cds_sched.h"
 #include <cds_api.h>
@@ -102,8 +105,7 @@ static uint32_t wlan_ftm_postmsg(uint8_t *cmd_ptr, uint16_t cmd_len)
 
 	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA,
 						      &ftmMsg)) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, "%s: : Failed to post Msg to HAL",
-		       __func__);
+		hdd_err("Failed to post Msg to HAL");
 
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -377,16 +379,14 @@ QDF_STATUS wlan_hdd_ftm_testmode_cmd(void *data, int len)
 		   qdf_mem_malloc(sizeof(*cmd_data));
 
 	if (!cmd_data) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  ("Failed to allocate FTM command data"));
+		hdd_err("Failed to allocate FTM command data");
 		return QDF_STATUS_E_NOMEM;
 	}
 
 	cmd_data->data = qdf_mem_malloc(len);
 
 	if (!cmd_data->data) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  ("Failed to allocate FTM command data buffer"));
+		hdd_err("Failed to allocate FTM command data buffer");
 		qdf_mem_free(cmd_data);
 		return QDF_STATUS_E_NOMEM;
 	}
