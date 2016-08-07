@@ -291,9 +291,9 @@ struct htt_pdev_t {
 		 * Base address of ring, as a "physical" device address rather
 		 * than a CPU address.
 		 */
-		uint32_t base_paddr;
-		int size;       /* how many elems in the ring (power of 2) */
-		unsigned size_mask;     /* size - 1 */
+		qdf_dma_addr_t base_paddr;
+		int32_t  size;       /* how many elems in the ring (power of 2) */
+		uint32_t size_mask;  /* size - 1, at least 16 bits long */
 
 		int fill_level; /* how many rx buffers to keep in the ring */
 		int fill_cnt;   /* # of rx buffers (full+empty) in the ring */
@@ -308,7 +308,7 @@ struct htt_pdev_t {
 		 */
 		struct {
 			uint32_t *vaddr;
-			uint32_t paddr;
+			qdf_dma_addr_t paddr;
 			qdf_dma_mem_context(memctx);
 		} target_idx;
 
@@ -324,7 +324,7 @@ struct htt_pdev_t {
 		 */
 		struct {
 			uint32_t *vaddr;
-			uint32_t paddr;
+			qdf_dma_addr_t paddr;
 			qdf_dma_mem_context(memctx);
 		} alloc_idx;
 

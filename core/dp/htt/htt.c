@@ -663,13 +663,15 @@ void htt_display(htt_pdev_handle pdev, int indent)
 	qdf_print("%*srx ring: space for %d elems, filled with %d buffers\n",
 		  indent + 4, " ",
 		  pdev->rx_ring.size, pdev->rx_ring.fill_level);
-	qdf_print("%*sat %p (%#x paddr)\n", indent + 8, " ",
-		  pdev->rx_ring.buf.paddrs_ring, pdev->rx_ring.base_paddr);
+	qdf_print("%*sat %p (%llx paddr)\n", indent + 8, " ",
+		  pdev->rx_ring.buf.paddrs_ring,
+		  (unsigned long long)pdev->rx_ring.base_paddr);
 	qdf_print("%*snetbuf ring @ %p\n", indent + 8, " ",
 		  pdev->rx_ring.buf.netbufs_ring);
-	qdf_print("%*sFW_IDX shadow register: vaddr = %p, paddr = %#x\n",
+	qdf_print("%*sFW_IDX shadow register: vaddr = %p, paddr = %llx\n",
 		  indent + 8, " ",
-		  pdev->rx_ring.alloc_idx.vaddr, pdev->rx_ring.alloc_idx.paddr);
+		  pdev->rx_ring.alloc_idx.vaddr,
+		  (unsigned long long)pdev->rx_ring.alloc_idx.paddr);
 	qdf_print("%*sSW enqueue idx= %d, SW dequeue idx: desc= %d, buf= %d\n",
 		  indent + 8, " ", *pdev->rx_ring.alloc_idx.vaddr,
 		  pdev->rx_ring.sw_rd_idx.msdu_desc,

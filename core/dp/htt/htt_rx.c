@@ -976,8 +976,8 @@ void htt_rx_print_rx_indication(qdf_nbuf_t rx_ind_msg, htt_pdev_handle pdev)
 
 	qdf_print
 		("------------------HTT RX IND-----------------------------\n");
-	qdf_print("alloc idx paddr %x (*vaddr) %d\n",
-		  pdev->rx_ring.alloc_idx.paddr,
+	qdf_print("alloc idx paddr %llx (*vaddr) %d\n",
+		  (unsigned long long)pdev->rx_ring.alloc_idx.paddr,
 		  *pdev->rx_ring.alloc_idx.vaddr);
 
 	qdf_print("sw_rd_idx msdu_payld %d msdu_desc %d\n",
