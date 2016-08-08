@@ -206,6 +206,9 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 	cmd->scan_priority = WMI_SCAN_PRIORITY_LOW;
 	cmd->scan_req_id = scan_req->scan_requestor_id;
 
+	if (PREAUTH_REQUESTOR_ID == cmd->scan_req_id)
+		cmd->scan_priority = WMI_SCAN_PRIORITY_VERY_HIGH;
+
 	/* Set the scan events which the driver is intereseted to receive */
 	/* TODO: handle all the other flags also */
 	cmd->notify_scan_events = WMI_SCAN_EVENT_STARTED |

@@ -113,9 +113,9 @@
 
 /** Maximum time(ms)to wait for disconnect to complete **/
 #ifdef QCA_WIFI_3_0_EMU
-#define WLAN_WAIT_TIME_DISCONNECT  3000
+#define WLAN_WAIT_TIME_DISCONNECT  5000
 #else
-#define WLAN_WAIT_TIME_DISCONNECT  2000
+#define WLAN_WAIT_TIME_DISCONNECT  5000
 #endif
 #define WLAN_WAIT_TIME_STATS       800
 #define WLAN_WAIT_TIME_POWER       800
