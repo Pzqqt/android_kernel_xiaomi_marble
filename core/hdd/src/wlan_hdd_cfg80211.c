@@ -6819,6 +6819,228 @@ static int wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
 #undef BPF_CURRENT_OFFSET
 #undef BPF_PROGRAM
 #undef BPF_MAX
+
+/**
+ * define short names for the global vendor params
+ * used by wlan_hdd_cfg80211_wakelock_stats_rsp_callback()
+ */
+#define PARAM_TOTAL_CMD_EVENT_WAKE \
+		QCA_WLAN_VENDOR_ATTR_TOTAL_CMD_EVENT_WAKE
+#define PARAM_CMD_EVENT_WAKE_CNT_PTR \
+		QCA_WLAN_VENDOR_ATTR_CMD_EVENT_WAKE_CNT_PTR
+#define PARAM_CMD_EVENT_WAKE_CNT_SZ \
+		QCA_WLAN_VENDOR_ATTR_CMD_EVENT_WAKE_CNT_SZ
+#define PARAM_TOTAL_DRIVER_FW_LOCAL_WAKE \
+		QCA_WLAN_VENDOR_ATTR_TOTAL_DRIVER_FW_LOCAL_WAKE
+#define PARAM_DRIVER_FW_LOCAL_WAKE_CNT_PTR \
+		QCA_WLAN_VENDOR_ATTR_DRIVER_FW_LOCAL_WAKE_CNT_PTR
+#define PARAM_DRIVER_FW_LOCAL_WAKE_CNT_SZ \
+		QCA_WLAN_VENDOR_ATTR_DRIVER_FW_LOCAL_WAKE_CNT_SZ
+#define PARAM_TOTAL_RX_DATA_WAKE \
+		QCA_WLAN_VENDOR_ATTR_TOTAL_RX_DATA_WAKE
+#define PARAM_RX_UNICAST_CNT \
+		QCA_WLAN_VENDOR_ATTR_RX_UNICAST_CNT
+#define PARAM_RX_MULTICAST_CNT \
+		QCA_WLAN_VENDOR_ATTR_RX_MULTICAST_CNT
+#define PARAM_RX_BROADCAST_CNT \
+		QCA_WLAN_VENDOR_ATTR_RX_BROADCAST_CNT
+#define PARAM_ICMP_PKT \
+		QCA_WLAN_VENDOR_ATTR_ICMP_PKT
+#define PARAM_ICMP6_PKT \
+		QCA_WLAN_VENDOR_ATTR_ICMP6_PKT
+#define PARAM_ICMP6_RA \
+		QCA_WLAN_VENDOR_ATTR_ICMP6_RA
+#define PARAM_ICMP6_NA \
+		QCA_WLAN_VENDOR_ATTR_ICMP6_NA
+#define PARAM_ICMP6_NS \
+		QCA_WLAN_VENDOR_ATTR_ICMP6_NS
+#define PARAM_ICMP4_RX_MULTICAST_CNT \
+		QCA_WLAN_VENDOR_ATTR_ICMP4_RX_MULTICAST_CNT
+#define PARAM_ICMP6_RX_MULTICAST_CNT \
+		QCA_WLAN_VENDOR_ATTR_ICMP6_RX_MULTICAST_CNT
+#define PARAM_OTHER_RX_MULTICAST_CNT \
+		QCA_WLAN_VENDOR_ATTR_OTHER_RX_MULTICAST_CNT
+
+
+/**
+ * hdd_send_wakelock_stats() - API to send wakelock stats
+ * @ctx: context to be passed to callback
+ * @data: data passed to callback
+ *
+ * This function is used to send wake lock stats to HAL layer
+ *
+ * Return: 0 on success, error number otherwise.
+ */
+static uint32_t hdd_send_wakelock_stats(hdd_context_t *hdd_ctx,
+					const struct sir_wake_lock_stats *data)
+{
+	struct sk_buff *skb;
+	uint32_t nl_buf_len;
+	uint32_t total_rx_data_wake, rx_multicast_cnt;
+	uint32_t ipv6_rx_multicast_addr_cnt;
+
+	ENTER();
+
+	nl_buf_len = NLMSG_HDRLEN;
+	nl_buf_len +=
+		QCA_WLAN_VENDOR_GET_WAKE_STATS_MAX *
+				(NLMSG_HDRLEN + sizeof(uint32_t));
+
+	skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy, nl_buf_len);
+
+	if (!skb) {
+		hdd_log(LOGE, FL("cfg80211_vendor_cmd_alloc_reply_skb failed"));
+		return -ENOMEM;
+	}
+
+	hdd_log(LOG1, "wow_ucast_wake_up_count %d",
+			data->wow_ucast_wake_up_count);
+	hdd_log(LOG1, "wow_bcast_wake_up_count %d",
+			data->wow_bcast_wake_up_count);
+	hdd_log(LOG1, "wow_ipv4_mcast_wake_up_count %d",
+			data->wow_ipv4_mcast_wake_up_count);
+	hdd_log(LOG1, "wow_ipv6_mcast_wake_up_count %d",
+			data->wow_ipv6_mcast_wake_up_count);
+	hdd_log(LOG1, "wow_ipv6_mcast_ra_stats %d",
+			data->wow_ipv6_mcast_ra_stats);
+	hdd_log(LOG1, "wow_ipv6_mcast_ns_stats %d",
+			data->wow_ipv6_mcast_ns_stats);
+	hdd_log(LOG1, "wow_ipv6_mcast_na_stats %d",
+			data->wow_ipv6_mcast_na_stats);
+
+	ipv6_rx_multicast_addr_cnt =
+		data->wow_ipv6_mcast_wake_up_count +
+		data->wow_ipv6_mcast_ra_stats +
+		data->wow_ipv6_mcast_ns_stats +
+		data->wow_ipv6_mcast_na_stats;
+
+	rx_multicast_cnt =
+		data->wow_ipv4_mcast_wake_up_count +
+		ipv6_rx_multicast_addr_cnt;
+
+	total_rx_data_wake =
+		data->wow_ucast_wake_up_count +
+		data->wow_bcast_wake_up_count +
+		rx_multicast_cnt;
+
+	if (nla_put_u32(skb, PARAM_TOTAL_CMD_EVENT_WAKE, 0) ||
+	    nla_put_u32(skb, PARAM_CMD_EVENT_WAKE_CNT_PTR, 0) ||
+	    nla_put_u32(skb, PARAM_CMD_EVENT_WAKE_CNT_SZ, 0) ||
+	    nla_put_u32(skb, PARAM_TOTAL_DRIVER_FW_LOCAL_WAKE, 0) ||
+	    nla_put_u32(skb, PARAM_DRIVER_FW_LOCAL_WAKE_CNT_PTR, 0) ||
+	    nla_put_u32(skb, PARAM_DRIVER_FW_LOCAL_WAKE_CNT_SZ, 0) ||
+	    nla_put_u32(skb, PARAM_TOTAL_RX_DATA_WAKE,
+				total_rx_data_wake) ||
+	    nla_put_u32(skb, PARAM_RX_UNICAST_CNT,
+				data->wow_ucast_wake_up_count) ||
+	    nla_put_u32(skb, PARAM_RX_MULTICAST_CNT,
+				rx_multicast_cnt) ||
+	    nla_put_u32(skb, PARAM_RX_BROADCAST_CNT,
+				data->wow_bcast_wake_up_count) ||
+	    nla_put_u32(skb, PARAM_ICMP6_RA,
+				data->wow_ipv6_mcast_ra_stats) ||
+	    nla_put_u32(skb, PARAM_ICMP6_NA,
+				data->wow_ipv6_mcast_na_stats) ||
+	    nla_put_u32(skb, PARAM_ICMP6_NS,
+				data->wow_ipv6_mcast_ns_stats) ||
+	    nla_put_u32(skb, PARAM_ICMP4_RX_MULTICAST_CNT,
+				data->wow_ipv4_mcast_wake_up_count) ||
+	    nla_put_u32(skb, PARAM_ICMP6_RX_MULTICAST_CNT,
+				ipv6_rx_multicast_addr_cnt) ||
+	    nla_put_u32(skb, PARAM_OTHER_RX_MULTICAST_CNT, 0)) {
+		hdd_log(LOGE, FL("nla put fail"));
+		goto nla_put_failure;
+	}
+
+	cfg80211_vendor_cmd_reply(skb);
+
+	EXIT();
+	return 0;
+
+nla_put_failure:
+	kfree_skb(skb);
+	return -EINVAL;
+}
+
+/**
+ * __wlan_hdd_cfg80211_get_wakelock_stats() - gets wake lock stats
+ * @wiphy: wiphy pointer
+ * @wdev: pointer to struct wireless_dev
+ * @data: pointer to incoming NL vendor data
+ * @data_len: length of @data
+ *
+ * This function parses the incoming NL vendor command data attributes and
+ * invokes the SME Api and blocks on a completion variable.
+ * WMA copies required data and invokes callback
+ * wlan_hdd_cfg80211_wakelock_stats_rsp_callback to send wake lock stats.
+ *
+ * Return: 0 on success; error number otherwise.
+ */
+static int __wlan_hdd_cfg80211_get_wakelock_stats(struct wiphy *wiphy,
+					struct wireless_dev *wdev,
+					const void *data,
+					int data_len)
+{
+	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	int status, ret;
+	struct sir_wake_lock_stats wake_lock_stats;
+	QDF_STATUS qdf_status;
+
+	ENTER();
+
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_log(LOGE, FL("Command not allowed in FTM mode"));
+		return -EINVAL;
+	}
+
+	status = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != status)
+		return -EINVAL;
+
+	qdf_status = wma_get_wakelock_stats(&wake_lock_stats);
+	if (qdf_status != QDF_STATUS_SUCCESS) {
+		hdd_log(LOGE,
+			FL("failed to get wakelock stats(err=%d)"), qdf_status);
+		return -EINVAL;
+	}
+
+	ret = hdd_send_wakelock_stats(hdd_ctx,
+					&wake_lock_stats);
+	if (ret)
+		hdd_log(LOGE, FL("Failed to post wake lock stats"));
+
+	EXIT();
+	return ret;
+}
+
+/**
+ * wlan_hdd_cfg80211_get_wakelock_stats() - gets wake lock stats
+ * @wiphy: wiphy pointer
+ * @wdev: pointer to struct wireless_dev
+ * @data: pointer to incoming NL vendor data
+ * @data_len: length of @data
+ *
+ * This function parses the incoming NL vendor command data attributes and
+ * invokes the SME Api and blocks on a completion variable.
+ * WMA copies required data and invokes callback
+ * wlan_hdd_cfg80211_wakelock_stats_rsp_callback to send wake lock stats.
+ *
+ * Return: 0 on success; error number otherwise.
+ */
+static int wlan_hdd_cfg80211_get_wakelock_stats(struct wiphy *wiphy,
+						struct wireless_dev *wdev,
+						const void *data, int data_len)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_get_wakelock_stats(wiphy, wdev, data,
+								data_len);
+	cds_ssr_protect(__func__);
+
+	return ret;
+}
+
 const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
@@ -7352,6 +7574,14 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.doit = wlan_hdd_cfg80211_process_ndp_cmd
 	},
 #endif
+	{
+		.info.vendor_id = QCA_NL80211_VENDOR_ID,
+		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_GET_WAKE_REASON_STATS,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+			 WIPHY_VENDOR_CMD_NEED_NETDEV |
+			 WIPHY_VENDOR_CMD_NEED_RUNNING,
+		.doit = wlan_hdd_cfg80211_get_wakelock_stats
+	},
 };
 
 /**
