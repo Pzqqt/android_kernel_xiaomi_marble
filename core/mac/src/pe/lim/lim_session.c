@@ -157,8 +157,18 @@ void pe_reset_protection_callback(void *ptr)
 	qdf_mem_zero(&pe_session_entry->gLimOlbcParams,
 		     sizeof(pe_session_entry->gLimOlbcParams));
 
-	qdf_mem_zero(&pe_session_entry->beaconParams,
-		     sizeof(pe_session_entry->beaconParams));
+	/*
+	 * Do not reset fShortPreamble and beaconInterval, as they
+	 * are not updated.
+	 */
+	pe_session_entry->beaconParams.llaCoexist = 0;
+	pe_session_entry->beaconParams.llbCoexist = 0;
+	pe_session_entry->beaconParams.llgCoexist = 0;
+	pe_session_entry->beaconParams.ht20Coexist = 0;
+	pe_session_entry->beaconParams.llnNonGFCoexist = 0;
+	pe_session_entry->beaconParams.fRIFSMode = 0;
+	pe_session_entry->beaconParams.fLsigTXOPProtectionFullSupport = 0;
+	pe_session_entry->beaconParams.gHTObssMode = 0;
 
 	qdf_mem_zero(&mac_ctx->lim.gLimOverlap11gParams,
 		     sizeof(mac_ctx->lim.gLimOverlap11gParams));
