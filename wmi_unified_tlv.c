@@ -6372,6 +6372,7 @@ QDF_STATUS send_lphb_config_tcp_params_cmd_tlv(wmi_unified_t wmi_handle,
 	if (QDF_IS_STATUS_ERROR(status)) {
 		WMI_LOGE("wmi_unified_cmd_send WMI_HB_SET_TCP_PARAMS returned Error %d",
 			status);
+		wmi_buf_free(buf);
 	}
 
 	return status;
@@ -6421,6 +6422,7 @@ QDF_STATUS send_lphb_config_tcp_pkt_filter_cmd_tlv(wmi_unified_t wmi_handle,
 	if (QDF_IS_STATUS_ERROR(status)) {
 		WMI_LOGE("wmi_unified_cmd_send WMI_HB_SET_TCP_PKT_FILTER returned Error %d",
 			status);
+		wmi_buf_free(buf);
 	}
 
 	return status;
@@ -6470,9 +6472,11 @@ QDF_STATUS send_lphb_config_udp_params_cmd_tlv(wmi_unified_t wmi_handle,
 
 	status = wmi_unified_cmd_send(wmi_handle, buf,
 				      len, WMI_HB_SET_UDP_PARAMS_CMDID);
-	if (QDF_IS_STATUS_ERROR(status))
+	if (QDF_IS_STATUS_ERROR(status)) {
 		WMI_LOGE("wmi_unified_cmd_send WMI_HB_SET_UDP_PARAMS returned Error %d",
 			status);
+		wmi_buf_free(buf);
+	}
 
 	return status;
 }
@@ -6518,9 +6522,11 @@ QDF_STATUS send_lphb_config_udp_pkt_filter_cmd_tlv(wmi_unified_t wmi_handle,
 
 	status = wmi_unified_cmd_send(wmi_handle, buf,
 				      len, WMI_HB_SET_UDP_PKT_FILTER_CMDID);
-	if (QDF_IS_STATUS_ERROR(status))
+	if (QDF_IS_STATUS_ERROR(status)) {
 		WMI_LOGE("wmi_unified_cmd_send WMI_HB_SET_UDP_PKT_FILTER returned Error %d",
 			status);
+		wmi_buf_free(buf);
+	}
 
 	return status;
 }
@@ -6566,9 +6572,11 @@ QDF_STATUS send_process_dhcp_ind_cmd_tlv(wmi_unified_t wmi_handle,
 
 	status = wmi_unified_cmd_send(wmi_handle, buf,
 				      len, WMI_PEER_SET_PARAM_CMDID);
-	if (QDF_IS_STATUS_ERROR(status))
+	if (QDF_IS_STATUS_ERROR(status)) {
 		WMI_LOGE("%s: wmi_unified_cmd_send WMI_PEER_SET_PARAM_CMD"
 			 " returned Error %d", __func__, status);
+		wmi_buf_free(buf);
+	}
 
 	return status;
 }
