@@ -85,6 +85,8 @@ QDF_STATUS hif_initialize_pci_ops(struct hif_softc *hif_sc)
 		&hif_pci_display_stats;
 	bus_ops->hif_clear_stats =
 		&hif_pci_clear_stats;
+	bus_ops->hif_grp_irq_disable = &hif_dummy_grp_irq_disable;
+	bus_ops->hif_grp_irq_enable = &hif_dummy_grp_irq_enable;
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -55,7 +55,9 @@ void hif_snoc_disable_isr(struct hif_softc *scn)
 {
 	hif_nointrs(scn);
 	ce_tasklet_kill(scn);
+	hif_grp_tasklet_kill(scn);
 	qdf_atomic_set(&scn->active_tasklet_cnt, 0);
+	qdf_atomic_set(&scn->active_grp_tasklet_cnt, 0);
 }
 
 /**

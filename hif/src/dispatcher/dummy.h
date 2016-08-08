@@ -47,6 +47,8 @@ void hif_dummy_claim_device(struct hif_softc *hif_sc);
 void hif_dummy_cancel_deferred_target_sleep(struct hif_softc *hif_sc);
 void hif_dummy_irq_enable(struct hif_softc *hif_sc, int irq_id);
 void hif_dummy_irq_disable(struct hif_softc *hif_sc, int irq_id);
+void hif_dummy_grp_irq_enable(struct hif_softc *hif_sc, uint32_t grp_id);
+void hif_dummy_grp_irq_disable(struct hif_softc *hif_sc, uint32_t grp_id);
 int hif_dummy_dump_registers(struct hif_softc *hif_sc);
 void hif_dummy_dump_target_memory(struct hif_softc *hif_sc, void *ramdump_base,
 				  uint32_t address, uint32_t size);

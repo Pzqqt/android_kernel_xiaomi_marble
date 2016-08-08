@@ -35,6 +35,8 @@ void hif_ahb_disable_bus(struct hif_softc *scn);
 int hif_ahb_bus_configure(struct hif_softc *scn);
 void hif_ahb_irq_disable(struct hif_softc *scn, int ce_id);
 void hif_ahb_irq_enable(struct hif_softc *scn, int ce_id);
+void hif_ahb_grp_irq_disable(struct hif_softc *scn, uint32_t grp_id);
+void hif_ahb_grp_irq_enable(struct hif_softc *scn, uint32_t grp_id);
 int hif_ahb_dump_registers(struct hif_softc *scn);
 
 int hif_ahb_configure_legacy_irq(struct hif_pci_softc *sc);

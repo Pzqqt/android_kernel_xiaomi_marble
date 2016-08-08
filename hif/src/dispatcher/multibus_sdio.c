@@ -64,6 +64,8 @@ QDF_STATUS hif_initialize_sdio_ops(struct hif_softc *hif_sc)
 		&hif_dummy_enable_power_management;
 	bus_ops->hif_disable_power_management =
 		&hif_dummy_disable_power_management;
+	bus_ops->hif_grp_irq_disable = &hif_dummy_grp_irq_disable;
+	bus_ops->hif_grp_irq_enable = &hif_dummy_grp_irq_enable;
 
 	return QDF_STATUS_SUCCESS;
 }

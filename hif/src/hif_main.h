@@ -51,6 +51,8 @@
 #define HIF_MIN_SLEEP_INACTIVITY_TIME_MS     50
 #define HIF_SLEEP_INACTIVITY_TIMER_PERIOD_MS 60
 
+#define HIF_MAX_BUDGET 0xFFFF
+
 /*
  * This macro implementation is exposed for efficiency only.
  * The implementation may change and callers should
@@ -136,6 +138,7 @@ struct hif_softc {
 	/* No of copy engines supported */
 	unsigned int ce_count;
 	atomic_t active_tasklet_cnt;
+	atomic_t active_grp_tasklet_cnt;
 	atomic_t link_suspended;
 	uint32_t *vaddr_rri_on_ddr;
 	int linkstate_vote;
@@ -218,4 +221,6 @@ void hif_ramdump_handler(struct hif_opaque_softc *scn);
 static inline void hif_usb_get_hw_info(struct hif_softc *scn) {}
 static inline void hif_ramdump_handler(struct hif_opaque_softc *scn) {}
 #endif
+void hif_ext_grp_tasklet(unsigned long data);
+void hif_grp_tasklet_kill(struct hif_softc *scn);
 #endif /* __HIF_MAIN_H__ */

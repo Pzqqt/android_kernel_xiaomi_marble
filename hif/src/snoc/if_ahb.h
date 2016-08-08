@@ -45,5 +45,9 @@
 #define TCSR_WCSS0_HALTACK 0x52010
 #define TCSR_WCSS1_HALTACK 0x52014
 #define ATH_AHB_RESET_WAIT_MAX 10 /* Ms */
+
+irqreturn_t hif_ahb_interrupt_handler(int irq, void *context);
+irqreturn_t hif_ext_group_ahb_interrupt_handler(int irq, void *context);
+
 #endif
 

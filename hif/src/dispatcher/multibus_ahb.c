@@ -66,6 +66,8 @@ QDF_STATUS hif_initialize_ahb_ops(struct hif_bus_ops *bus_ops)
 		&hif_dummy_enable_power_management;
 	bus_ops->hif_disable_power_management =
 		&hif_dummy_disable_power_management;
+	bus_ops->hif_grp_irq_disable = &hif_ahb_grp_irq_disable;
+	bus_ops->hif_grp_irq_enable = &hif_ahb_grp_irq_enable;
 
 	return QDF_STATUS_SUCCESS;
 }

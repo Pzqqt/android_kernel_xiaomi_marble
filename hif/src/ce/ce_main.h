@@ -113,6 +113,18 @@ struct ce_tasklet_entry {
 	void *hif_ce_state;
 };
 
+struct hif_ext_group_entry {
+	uint32_t numirq;
+	uint32_t irq[HIF_MAX_GRP_IRQ];
+	uint32_t grp_id;
+	void *context;
+	ext_intr_handler handler;
+	struct tasklet_struct intr_tq;
+	bool configured;
+	bool inited;
+	void *hif_state;
+};
+
 struct ce_intr_stats {
 	uint32_t ce_per_cpu[CE_COUNT_MAX][QDF_MAX_AVAILABLE_CPU];
 };
@@ -121,6 +133,8 @@ struct HIF_CE_state {
 	struct hif_softc ol_sc;
 	bool started;
 	struct ce_tasklet_entry tasklets[CE_COUNT_MAX];
+	struct hif_ext_group_entry hif_ext_group[HIF_MAX_GROUP];
+	uint32_t hif_num_extgroup;
 	qdf_spinlock_t keep_awake_lock;
 	qdf_spinlock_t irq_reg_lock;
 	unsigned int keep_awake_count;

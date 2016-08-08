@@ -61,7 +61,9 @@ struct hif_bus_ops {
 	void (*hif_stop)(struct hif_softc *hif_sc);
 	void (*hif_cancel_deferred_target_sleep)(struct hif_softc *hif_sc);
 	void (*hif_irq_disable)(struct hif_softc *hif_sc, int ce_id);
+	void (*hif_grp_irq_disable)(struct hif_softc *hif_sc, uint32_t grp_id);
 	void (*hif_irq_enable)(struct hif_softc *hif_sc, int ce_id);
+	void (*hif_grp_irq_enable)(struct hif_softc *hif_sc, uint32_t grp_id);
 	int (*hif_dump_registers)(struct hif_softc *hif_sc);
 	void (*hif_dump_target_memory)(struct hif_softc *hif_sc,
 				       void *ramdump_base,

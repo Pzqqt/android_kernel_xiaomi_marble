@@ -233,6 +233,16 @@ void hif_dummy_irq_enable(struct hif_softc *hif_sc, int irq_id)
 {}
 
 /**
+ * hif_dummy_grp_irq_enable - dummy call
+ * hif_ctx: hif context
+ * @irq_id: grp id
+ *
+ * Return: none
+ */
+void hif_dummy_grp_irq_enable(struct hif_softc *hif_sc, uint32_t grp_id)
+{}
+
+/**
  * hif_dummy_irq_disable - dummy call
  * hif_ctx: hif context
  * @irq_id: irq id
@@ -242,6 +252,15 @@ void hif_dummy_irq_enable(struct hif_softc *hif_sc, int irq_id)
 void hif_dummy_irq_disable(struct hif_softc *hif_sc, int irq_id)
 {}
 
+/**
+ * hif_dummy_grp_irq_disable- dummy call
+ * hif_ctx: hif context
+ * @grp_id: grp id
+ *
+ * Return: none
+ */
+void hif_dummy_grp_irq_disable(struct hif_softc *hif_sc, uint32_t grp_id)
+{}
 /**
  * hif_dummy_dump_registers - dummy call
  * hif_sc: hif context

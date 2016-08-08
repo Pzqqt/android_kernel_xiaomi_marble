@@ -100,8 +100,52 @@ typedef void *hif_handle_t;
 #define TARGET_TYPE_QCA8074   20
 #endif
 
+/* enum hif_ic_irq - enum defining integrated chip irq numbers
+ * defining irq nubers that can be used by external modules like datapath
+ */
+enum hif_ic_irq {
+	host2wbm_desc_feed = 18,
+	host2reo_re_injection,
+	host2reo_command,
+	host2rxdma_monitor_ring3,
+	host2rxdma_monitor_ring2,
+	host2rxdma_monitor_ring1,
+	reo2ost_exception,
+	wbm2host_rx_release,
+	reo2host_status,
+	reo2host_destination_ring4,
+	reo2host_destination_ring3,
+	reo2host_destination_ring2,
+	reo2host_destination_ring1,
+	rxdma2host_monitor_destination_mac3,
+	rxdma2host_monitor_destination_mac2,
+	rxdma2host_monitor_destination_mac1,
+	ppdu_end_interrupts_mac3,
+	ppdu_end_interrupts_mac2,
+	ppdu_end_interrupts_mac1,
+	rxdma2host_monitor_status_ring_mac3,
+	rxdma2host_monitor_status_ring_mac2,
+	rxdma2host_monitor_status_ring_mac1,
+	host2rxdma_host_buf_ring_mac3,
+	host2rxdma_host_buf_ring_mac2,
+	host2rxdma_host_buf_ring_mac1,
+	rxdma2host_destination_ring_mac3,
+	rxdma2host_destination_ring_mac2,
+	rxdma2host_destination_ring_mac1,
+	host2tcl_input_ring4,
+	host2tcl_input_ring3,
+	host2tcl_input_ring2,
+	host2tcl_input_ring1,
+	wbm2host_tx_completions_ring3,
+	wbm2host_tx_completions_ring2,
+	wbm2host_tx_completions_ring1,
+	tcl2host_status_ring,
+};
+
 struct CE_state;
 #define CE_COUNT_MAX 12
+#define HIF_MAX_GRP_IRQ 16
+#define HIF_MAX_GROUP 8
 
 #ifdef CONFIG_SLUB_DEBUG_ON
 #define QCA_NAPI_BUDGET    64
@@ -407,6 +451,7 @@ QDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *scn, uint32_t address,
 		       uint8_t *data, int nbytes);
 
 typedef void (*fastpath_msg_handler)(void *, qdf_nbuf_t *, uint32_t);
+typedef uint32_t (*ext_intr_handler)(void *, uint32_t);
 
 /*
  * Set the FASTPATH_mode_on flag in sc, for use by data path
@@ -681,6 +726,10 @@ int hif_bus_reset_resume(struct hif_opaque_softc *scn);
 typedef void (*hdd_fake_resume_callback)(uint32_t val);
 void hif_fake_apps_suspend(hdd_fake_resume_callback callback);
 #endif
+
+uint32_t hif_register_ext_group_int_handler(struct hif_opaque_softc *hif_ctx,
+		uint32_t numirq, uint32_t irq[], ext_intr_handler handler,
+		void *context);
 
 #ifdef __cplusplus
 }

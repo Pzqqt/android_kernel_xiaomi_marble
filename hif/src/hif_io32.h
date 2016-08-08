@@ -104,6 +104,7 @@ void hif_target_write_checked(struct hif_softc *scn, uint32_t offset,
 
 void hif_irq_enable(struct hif_softc *scn, int irq_id);
 void hif_irq_disable(struct hif_softc *scn, int irq_id);
-
+void hif_grp_irq_enable(struct hif_softc *scn, uint32_t grp_id);
+void hif_grp_irq_disable(struct hif_softc *scn, uint32_t grp_id);
 
 #endif /* __HIF_IO32_H__ */

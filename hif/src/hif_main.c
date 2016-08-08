@@ -375,6 +375,7 @@ struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx, uint32_t mode,
 	scn->qdf_dev = qdf_ctx;
 	scn->hif_con_param = mode;
 	qdf_atomic_init(&scn->active_tasklet_cnt);
+	qdf_atomic_init(&scn->active_grp_tasklet_cnt);
 	qdf_atomic_init(&scn->link_suspended);
 	qdf_atomic_init(&scn->tasklet_from_intr);
 	qdf_mem_copy(&scn->callbacks, cbk, sizeof(struct hif_driver_state_callbacks));
@@ -1017,3 +1018,93 @@ void hif_ramdump_handler(struct hif_opaque_softc *scn)
 		hif_usb_ramdump_handler();
 }
 #endif
+
+/**
+ * hif_register_ext_group_int_handler() - API to register external group
+ * interrupt handler.
+ * @hif_ctx : HIF Context
+ * @numirq: number of irq's in the group
+ * @irq: array of irq values
+ * @ext_intr_handler: callback interrupt handler function
+ * @context: context to passed in callback
+ *
+ * Return: status
+ */
+uint32_t hif_register_ext_group_int_handler(struct hif_opaque_softc *hif_ctx,
+		uint32_t numirq, uint32_t irq[], ext_intr_handler handler,
+		void *context)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+	struct hif_ext_group_entry *hif_ext_group;
+
+	if (scn->hif_init_done) {
+		HIF_ERROR("%s Called after HIF initialization \n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (hif_state->hif_num_extgroup >= HIF_MAX_GROUP) {
+		HIF_ERROR("%s Max groups reached\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (numirq >= HIF_MAX_GRP_IRQ) {
+		HIF_ERROR("%s invalid numirq\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	hif_ext_group = &hif_state->hif_ext_group[hif_state->hif_num_extgroup];
+
+	hif_ext_group->numirq = numirq;
+	qdf_mem_copy(&hif_ext_group->irq[0], irq, numirq * sizeof(irq[0]));
+	hif_ext_group->context = context;
+	hif_ext_group->handler = handler;
+	hif_ext_group->configured = true;
+	hif_ext_group->grp_id = hif_state->hif_num_extgroup;
+
+	hif_state->hif_num_extgroup++;
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * hif_ext_grp_tasklet() - grp tasklet
+ * data: context
+ *
+ * return: void
+ */
+void hif_ext_grp_tasklet(unsigned long data)
+{
+	struct hif_ext_group_entry *hif_ext_group =
+			(struct hif_ext_group_entry *)data;
+	struct HIF_CE_state *hif_state = hif_ext_group->hif_state;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_state);
+
+	if (hif_ext_group->grp_id < HIF_MAX_GROUP) {
+		hif_ext_group->handler(hif_ext_group->context, HIF_MAX_BUDGET);
+		hif_grp_irq_enable(scn, hif_ext_group->grp_id);
+	} else {
+		HIF_ERROR("%s: ERROR - invalid grp_id = %d",
+		       __func__, hif_ext_group->grp_id);
+	}
+
+	qdf_atomic_dec(&scn->active_grp_tasklet_cnt);
+}
+
+/**
+ * hif_grp_tasklet_kill() - grp tasklet kill
+ * scn: hif_softc
+ *
+ * return: void
+ */
+void hif_grp_tasklet_kill(struct hif_softc *scn)
+{
+	int i;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+
+	for (i = 0; i < HIF_MAX_GROUP; i++)
+		if (hif_state->hif_ext_group[i].inited) {
+			tasklet_kill(&hif_state->hif_ext_group[i].intr_tq);
+			hif_state->hif_ext_group[i].inited = false;
+		}
+	qdf_atomic_set(&scn->active_grp_tasklet_cnt, 0);
+}
