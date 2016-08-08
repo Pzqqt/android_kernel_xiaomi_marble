@@ -89,6 +89,7 @@ typedef enum {
 	HTC_PROCESS_CREDIT_REPORT,
 	HTC_SUSPEND_ACK,
 	HTC_SUSPEND_NACK,
+	HTC_INITIAL_WAKE_UP,
 } htc_credit_exchange_type;
 
 typedef struct {
