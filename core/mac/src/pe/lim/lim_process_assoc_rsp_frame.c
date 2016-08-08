@@ -810,11 +810,34 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 					timeout_value)) {
 				lim_log(mac_ctx, LOGE,
 					FL("Failed to start comeback timer."));
+
+				assoc_cnf.resultCode = eSIR_SME_ASSOC_REFUSED;
+				assoc_cnf.protStatusCode =
+					eSIR_MAC_UNSPEC_FAILURE_STATUS;
+
+				/*
+				 * Delete Pre-auth context for the
+				 * associated BSS
+				 */
+				if (lim_search_pre_auth_list(mac_ctx, hdr->sa))
+					lim_delete_pre_auth_node(mac_ctx,
+						hdr->sa);
+
+				goto assocReject;
 			}
 		} else {
 			lim_log(mac_ctx, LOGW,
-				FL("ASSOC resp with try again event recvd. "
-				"But try again time interval IE is wrong."));
+				FL("ASSOC resp with try again event recvd, but try again time interval IE is wrong"));
+
+			assoc_cnf.resultCode = eSIR_SME_ASSOC_REFUSED;
+			assoc_cnf.protStatusCode =
+				eSIR_MAC_UNSPEC_FAILURE_STATUS;
+
+			/* Delete Pre-auth context for the associated BSS */
+			if (lim_search_pre_auth_list(mac_ctx, hdr->sa))
+				lim_delete_pre_auth_node(mac_ctx, hdr->sa);
+
+			goto assocReject;
 		}
 		qdf_mem_free(beacon);
 		qdf_mem_free(assoc_rsp);
