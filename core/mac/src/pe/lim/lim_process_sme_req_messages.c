@@ -2187,6 +2187,27 @@ static void __lim_process_sme_reassoc_req(tpAniSirGlobal mac_ctx,
 	session_entry->vhtCapability =
 		IS_DOT11_MODE_VHT(reassoc_req->dot11mode);
 
+	if (session_entry->vhtCapability) {
+		if (session_entry->pePersona == QDF_STA_MODE) {
+			session_entry->vht_config.su_beam_formee =
+				reassoc_req->vht_config.su_beam_formee;
+		} else {
+			reassoc_req->vht_config.su_beam_formee = 0;
+		}
+		session_entry->enableVhtpAid =
+			reassoc_req->enableVhtpAid;
+		session_entry->enableVhtGid =
+			reassoc_req->enableVhtGid;
+		lim_log(mac_ctx, LOG1, FL("vht su bformer [%d]"),
+				session_entry->vht_config.su_beam_former);
+	}
+
+	lim_log(mac_ctx, LOG1,
+		FL("vhtCapability: %d su_beam_formee: %d su_tx_bformer %d"),
+		session_entry->vhtCapability,
+		session_entry->vht_config.su_beam_formee,
+		session_entry->vht_config.su_beam_former);
+
 	session_entry->enableHtSmps = reassoc_req->enableHtSmps;
 	session_entry->htSmpsvalue = reassoc_req->htSmps;
 	session_entry->send_smps_action =
