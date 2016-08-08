@@ -712,6 +712,8 @@ struct ol_txrx_pdev_t {
 	 */
 	OL_RX_MUTEX_TYPE last_real_peer_mutex;
 
+	qdf_spinlock_t peer_map_unmap_lock;
+
 	struct {
 		struct {
 			struct {

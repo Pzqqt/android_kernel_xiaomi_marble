@@ -1384,6 +1384,7 @@ ol_txrx_pdev_post_attach(ol_txrx_pdev_handle pdev)
 	qdf_spinlock_create(&pdev->peer_ref_mutex);
 	qdf_spinlock_create(&pdev->rx.mutex);
 	qdf_spinlock_create(&pdev->last_real_peer_mutex);
+	qdf_spinlock_create(&pdev->peer_map_unmap_lock);
 	OL_TXRX_PEER_STATS_MUTEX_INIT(pdev);
 
 	if (OL_RX_REORDER_TRACE_ATTACH(pdev) != A_OK)
@@ -1660,6 +1661,7 @@ void ol_txrx_pdev_detach(ol_txrx_pdev_handle pdev, int force)
 	qdf_spinlock_destroy(&pdev->peer_ref_mutex);
 	qdf_spinlock_destroy(&pdev->last_real_peer_mutex);
 	qdf_spinlock_destroy(&pdev->rx.mutex);
+	qdf_spinlock_destroy(&pdev->peer_map_unmap_lock);
 #ifdef QCA_SUPPORT_TX_THROTTLE
 	/* Thermal Mitigation */
 	qdf_spinlock_destroy(&pdev->tx_throttle.mutex);
