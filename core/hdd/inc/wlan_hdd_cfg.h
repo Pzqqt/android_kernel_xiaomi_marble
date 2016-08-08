@@ -3469,6 +3469,15 @@ enum dot11p_mode {
  */
 #define CFG_RPS_RX_QUEUE_CPU_MAP_LIST_LEN 30
 
+/*
+ * Support to start sap in indoor channel
+ * Customer can config this item to enable/disable sap in indoor channel
+ * Default: Disable
+ */
+#define CFG_INDOOR_CHANNEL_SUPPORT_NAME     "gindoor_channel_support"
+#define CFG_INDOOR_CHANNEL_SUPPORT_MIN      (0)
+#define CFG_INDOOR_CHANNEL_SUPPORT_MAX      (1)
+#define CFG_INDOOR_CHANNEL_SUPPORT_DEFAULT  (0)
 
 /*---------------------------------------------------------------------------
    Type declarations
@@ -4129,6 +4138,7 @@ struct hdd_config {
 #endif
 	uint32_t iface_change_wait_time;
 	enum cfg_sub_20_channel_width enable_sub_20_channel_width;
+	bool indoor_channel_support;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

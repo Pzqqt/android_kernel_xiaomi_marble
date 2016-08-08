@@ -393,13 +393,17 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 
 			if (wiphy_chan->flags & IEEE80211_CHAN_DISABLED) {
 				cds_chan->state = CHANNEL_STATE_DISABLE;
-			} else if (wiphy_chan->flags &
-				   (IEEE80211_CHAN_RADAR |
-				    IEEE80211_CHAN_PASSIVE_SCAN |
-				    IEEE80211_CHAN_INDOOR_ONLY)) {
-
-				if (wiphy_chan->flags &
-				    IEEE80211_CHAN_INDOOR_ONLY)
+			} else if ((wiphy_chan->flags &
+				    (IEEE80211_CHAN_RADAR |
+				     IEEE80211_CHAN_PASSIVE_SCAN)) ||
+				   ((hdd_ctx->config->indoor_channel_support
+				     == false) &&
+				    (wiphy_chan->flags &
+				     IEEE80211_CHAN_INDOOR_ONLY))) {
+				if ((wiphy_chan->flags &
+				     IEEE80211_CHAN_INDOOR_ONLY) &&
+				    (false ==
+				     hdd_ctx->config->indoor_channel_support))
 					wiphy_chan->flags |=
 						IEEE80211_CHAN_PASSIVE_SCAN;
 				cds_chan->state = CHANNEL_STATE_DFS;
