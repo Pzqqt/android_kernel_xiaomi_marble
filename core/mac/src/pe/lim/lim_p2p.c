@@ -412,16 +412,31 @@ void lim_send_sme_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameType,
 
 QDF_STATUS lim_p2p_action_cnf(tpAniSirGlobal pMac, uint32_t txCompleteSuccess)
 {
-	if (pMac->lim.mgmtFrameSessionId != 0xff) {
-		/* The session entry might be invalid(0xff) action confirmation received after
-		 * remain on channel timer expired */
-		if (pMac->p2p_ack_ind_cb)
-			pMac->p2p_ack_ind_cb(pMac->lim.mgmtFrameSessionId,
-							txCompleteSuccess);
+	QDF_STATUS status;
+	uint32_t mgmt_frame_sessionId;
+
+	status = pe_acquire_global_lock(&pMac->lim);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		mgmt_frame_sessionId = pMac->lim.mgmtFrameSessionId;
 		pMac->lim.mgmtFrameSessionId = 0xff;
+		pe_release_global_lock(&pMac->lim);
+
+		if (mgmt_frame_sessionId != 0xff) {
+			/*
+			 * The session entry might be invalid(0xff)
+			 * action confirmation received after
+			 * remain on channel timer expired.
+			 */
+			lim_log(pMac, LOG1,
+				FL("mgmt_frame_sessionId %d"),
+					 mgmt_frame_sessionId);
+			if (pMac->p2p_ack_ind_cb)
+				pMac->p2p_ack_ind_cb(mgmt_frame_sessionId,
+							txCompleteSuccess);
+		}
 	}
 
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 
 /**
