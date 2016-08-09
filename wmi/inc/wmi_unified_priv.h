@@ -708,6 +708,9 @@ QDF_STATUS (*send_get_buf_extscan_hotlist_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_pdev_get_tpc_config_cmd)(wmi_unified_t wmi_handle,
 		uint32_t param);
 
+QDF_STATUS (*send_set_bwf_cmd)(wmi_unified_t wmi_handle,
+		struct set_bwf_params *param);
+
 QDF_STATUS (*send_set_atf_cmd)(wmi_unified_t wmi_handle,
 		struct set_atf_params *param);
 

@@ -3726,6 +3726,32 @@ typedef struct {
 } atf_peer_info;
 
 /**
+ * struct bwf_peer_info_t - BWF peer info params
+ * @peer_macaddr: peer mac addr
+ * @throughput: Throughput
+ * @max_airtime: Max airtime
+ * @priority: Priority level
+ * @reserved: Reserved array
+ */
+typedef struct {
+	struct wmi_macaddr_t peer_macaddr;
+	uint32_t     throughput;
+	uint32_t     max_airtime;
+	uint32_t     priority;
+	uint32_t     reserved[4];
+} bwf_peer_info;
+
+/**
+ * struct set_bwf_params - BWF params
+ * @num_peers: number of peers
+ * @atf_peer_info: BWF peer info
+ */
+struct set_bwf_params {
+	uint32_t num_peers;
+	bwf_peer_info peer_info[1];
+};
+
+/**
  * struct set_atf_params - ATF params
  * @num_peers: number of peers
  * @atf_peer_info: ATF peer info
