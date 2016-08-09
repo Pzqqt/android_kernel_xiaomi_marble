@@ -2505,32 +2505,6 @@ void hif_pci_prevent_linkdown(struct hif_softc *scn, bool flag)
 #endif
 
 /**
- * hif_drain_tasklets(): wait untill no tasklet is pending
- * @scn: hif context
- *
- * Let running tasklets clear pending trafic.
- *
- * Return: 0 if no bottom half is in progress when it returns.
- *   -EFAULT if it times out.
- */
-static inline int hif_drain_tasklets(struct hif_softc *scn)
-{
-	uint32_t ce_drain_wait_cnt = 0;
-
-	while (qdf_atomic_read(&scn->active_tasklet_cnt)) {
-		if (++ce_drain_wait_cnt > HIF_CE_DRAIN_WAIT_CNT) {
-			HIF_ERROR("%s: CE still not done with access",
-			       __func__);
-
-			return -EFAULT;
-		}
-		HIF_INFO("%s: Waiting for CE to finish access", __func__);
-		msleep(10);
-	}
-	return 0;
-}
-
-/**
  * hif_bus_suspend_link_up() - suspend the bus
  *
  * Configures the pci irq line as a wakeup source.

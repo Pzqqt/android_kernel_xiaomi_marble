@@ -240,6 +240,35 @@ void ce_tasklet_kill(struct hif_softc *scn)
 	qdf_atomic_set(&scn->active_tasklet_cnt, 0);
 }
 
+#define HIF_CE_DRAIN_WAIT_CNT          20
+/**
+ * hif_drain_tasklets(): wait untill no tasklet is pending
+ * @scn: hif context
+ *
+ * Let running tasklets clear pending trafic.
+ *
+ * Return: 0 if no bottom half is in progress when it returns.
+ *   -EFAULT if it times out.
+ */
+int hif_drain_tasklets(struct hif_softc *scn)
+{
+	uint32_t ce_drain_wait_cnt = 0;
+
+	while (qdf_atomic_read(&scn->active_tasklet_cnt)) {
+		if (++ce_drain_wait_cnt > HIF_CE_DRAIN_WAIT_CNT) {
+			HIF_ERROR("%s: CE still not done with access",
+			       __func__);
+
+			return -EFAULT;
+		}
+		HIF_INFO("%s: Waiting for CE to finish access", __func__);
+		msleep(10);
+	}
+	return 0;
+}
+
+
+
 #ifdef WLAN_SUSPEND_RESUME_TEST
 static bool g_hif_apps_fake_suspended;
 static hdd_fake_resume_callback hdd_fake_aps_resume;

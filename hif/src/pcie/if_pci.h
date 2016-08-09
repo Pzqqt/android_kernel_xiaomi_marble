@@ -185,9 +185,6 @@ irqreturn_t hif_pci_interrupt_handler(int irq, void *arg);
 #define OL_ATH_TX_DRAIN_WAIT_CNT       60
 #endif
 
-#define HIF_CE_DRAIN_WAIT_CNT          20
-
-
 #ifdef FEATURE_RUNTIME_PM
 #include <linux/pm_runtime.h>
 
