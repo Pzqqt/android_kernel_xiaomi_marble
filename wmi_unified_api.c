@@ -3444,6 +3444,24 @@ QDF_STATUS wmi_unified_pdev_get_tpc_config_cmd_send(void *wmi_hdl,
 }
 
 /**
+ *  wmi_unified_set_bwf_cmd_send() - WMI set bwf function
+ *  @param wmi_handle      : handle to WMI.
+ *  @param param    : pointer to set bwf param
+ *
+ *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_set_bwf_cmd_send(void *wmi_hdl,
+				struct set_bwf_params *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_set_bwf_cmd)
+		return wmi_handle->ops->send_set_bwf_cmd(wmi_handle, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  *  wmi_unified_set_atf_cmd_send() - WMI set atf function
  *  @param wmi_handle      : handle to WMI.
  *  @param param    : pointer to set atf param
