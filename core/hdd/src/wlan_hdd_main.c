@@ -1720,6 +1720,11 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 		}
 
 		hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+		if (!hif_ctx) {
+			hdd_err("hif context is null!!");
+			goto power_down;
+		}
+
 		status = ol_cds_init(qdf_dev, hif_ctx);
 		if (status != QDF_STATUS_SUCCESS) {
 			hdd_err("No Memory to Create BMI Context :%d", status);
