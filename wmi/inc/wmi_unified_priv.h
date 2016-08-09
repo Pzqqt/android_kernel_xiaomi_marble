@@ -1169,7 +1169,7 @@ struct wmi_unified {
 	qdf_nbuf_queue_t event_queue;
 	struct work_struct rx_event_work;
 	int wmi_stop_in_progress;
-#ifndef WMI_NON_TLV_SUPPORT
+#ifdef CONFIG_MCL
 	struct _wmi_abi_version fw_abi_version;
 	struct _wmi_abi_version final_abi_vers;
 #endif
@@ -1198,7 +1198,7 @@ struct wmi_unified {
 	bool use_cookie;
 	bool wmi_stopinprogress;
 	qdf_spinlock_t ctx_lock;
-#ifdef WMI_TLV_AND_NON_TLV_SUPPORT
+#ifndef CONFIG_MCL
 	/* WMI service bitmap recieved from target */
 	uint32_t wmi_service_bitmap[wmi_services_max];
 	uint32_t wmi_events[wmi_events_max];

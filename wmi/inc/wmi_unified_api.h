@@ -349,7 +349,7 @@ QDF_STATUS wmi_unified_wow_enable_send(void *wmi_hdl,
 				struct wow_cmd_params *param,
 				uint8_t mac_id);
 
-#ifdef WMI_NON_TLV_SUPPORT
+#ifndef CONFIG_MCL
 QDF_STATUS wmi_unified_packet_log_enable_send(void *wmi_hdl,
 				WMI_HOST_PKTLOG_EVENT PKTLOG_EVENT);
 #else
@@ -471,7 +471,7 @@ QDF_STATUS wmi_unified_set_enable_disable_mcc_adaptive_scheduler_cmd(
 		   void *wmi_hdl, uint32_t mcc_adaptive_scheduler,
 		   uint32_t pdev_id);
 
-#ifndef WMI_NON_TLV_SUPPORT
+#ifdef CONFIG_MCL
 QDF_STATUS wmi_unified_bcn_buf_ll_cmd(void *wmi_hdl,
 			wmi_bcn_send_from_host_cmd_fixed_param *param);
 #endif
@@ -487,7 +487,7 @@ QDF_STATUS wmi_unified_set_sta_keep_alive_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_vdev_set_gtx_cfg_cmd(void *wmi_hdl, uint32_t if_id,
 				  struct wmi_gtx_config *gtx_info);
 
-#ifndef WMI_NON_TLV_SUPPORT
+#ifdef CONFIG_MCL
 QDF_STATUS wmi_unified_process_update_edca_param(void *wmi_hdl,
 		     uint8_t vdev_id,
 		     wmi_wmm_vparams gwmm_param[WMI_MAX_NUM_AC]);
@@ -521,7 +521,7 @@ QDF_STATUS wmi_unified_reset_passpoint_network_list_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_set_passpoint_network_list_cmd(void *wmi_hdl,
 					struct wifi_passpoint_req_param *req);
 
-#ifndef WMI_NON_TLV_SUPPORT
+#ifdef CONFIG_MCL
 QDF_STATUS wmi_unified_roam_scan_offload_mode_cmd(void *wmi_hdl,
 				wmi_start_scan_cmd_fixed_param *scan_cmd_fp,
 				struct roam_offload_scan_params *roam_req);
@@ -603,7 +603,7 @@ QDF_STATUS wmi_unified_snr_cmd(void *wmi_hdl, uint8_t vdev_id);
 QDF_STATUS wmi_unified_link_status_req_cmd(void *wmi_hdl,
 				 struct link_status_params *link_status);
 
-#ifndef WMI_NON_TLV_SUPPORT
+#ifdef CONFIG_MCL
 QDF_STATUS wmi_unified_lphb_config_hbenable_cmd(void *wmi_hdl,
 				wmi_hb_set_enable_cmd_fixed_param *params);
 
@@ -647,7 +647,7 @@ QDF_STATUS wmi_unified_start_oem_data_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_dfs_phyerr_filter_offload_en_cmd(void *wmi_hdl,
 			bool dfs_phyerr_filter_offload);
 
-#ifndef WMI_NON_TLV_SUPPORT
+#ifdef CONFIG_MCL
 QDF_STATUS wmi_unified_pktlog_wmi_send_cmd(void *wmi_hdl,
 				   WMI_PKTLOG_EVENT pktlog_event,
 				   uint32_t cmd_id,
@@ -821,7 +821,7 @@ QDF_STATUS wmi_unified_roam_invoke_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_roam_scan_offload_cmd(void *wmi_hdl,
 					 uint32_t command, uint32_t vdev_id);
 
-#ifndef WMI_NON_TLV_SUPPORT
+#ifdef CONFIG_MCL
 QDF_STATUS wmi_unified_send_roam_scan_offload_ap_cmd(void *wmi_hdl,
 					    wmi_ap_profile *ap_profile_p,
 					    uint32_t vdev_id);

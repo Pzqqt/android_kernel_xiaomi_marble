@@ -209,6 +209,62 @@ QDF_STATUS send_vdev_down_cmd_tlv(wmi_unified_t wmi, uint8_t vdev_id)
 	return 0;
 }
 
+#ifdef CONFIG_MCL
+static inline void copy_channel_info(
+		wmi_vdev_start_request_cmd_fixed_param * cmd,
+		wmi_channel *chan,
+		struct vdev_start_params *req)
+{
+	chan->mhz = req->chan_freq;
+
+	WMI_SET_CHANNEL_MODE(chan, req->chan_mode);
+
+	chan->band_center_freq1 = req->band_center_freq1;
+	chan->band_center_freq2 = req->band_center_freq2;
+
+	if (req->is_half_rate)
+		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_HALF_RATE);
+	else if (req->is_quarter_rate)
+		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_QUARTER_RATE);
+
+	if (req->is_dfs) {
+		WMI_SET_CHANNEL_FLAG(chan, req->flag_dfs);
+		cmd->disable_hw_ack = req->dis_hw_ack;
+	}
+
+	WMI_SET_CHANNEL_REG_POWER(chan, req->max_txpow);
+	WMI_SET_CHANNEL_MAX_TX_POWER(chan, req->max_txpow);
+
+}
+#else
+static inline void copy_channel_info(
+		wmi_vdev_start_request_cmd_fixed_param * cmd,
+		wmi_channel *chan,
+		struct vdev_start_params *req)
+{
+	chan->mhz = req->channel.mhz;
+
+	WMI_SET_CHANNEL_MODE(chan, req->channel.phy_mode);
+
+	chan->band_center_freq1 = req->channel.cfreq1;
+	chan->band_center_freq2 = req->channel.cfreq2;
+
+	if (req->channel.half_rate)
+		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_HALF_RATE);
+	else if (req->channel.quarter_rate)
+		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_QUARTER_RATE);
+
+	if (req->channel.dfs_set) {
+		WMI_SET_CHANNEL_FLAG(chan, req->flag_dfs);
+		cmd->disable_hw_ack = req->disable_hw_ack;
+	}
+
+	/* FIXME: Find out min, max and regulatory power levels */
+	WMI_SET_CHANNEL_REG_POWER(chan, req->channel.maxregpower);
+	WMI_SET_CHANNEL_MAX_TX_POWER(chan, req->channel.maxpower);
+
+}
+#endif
 /**
  * send_vdev_start_cmd_tlv() - send vdev start request to fw
  * @wmi_handle: wmi handle
@@ -243,28 +299,10 @@ QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->vdev_id = req->vdev_id;
 
 	/* Fill channel info */
-	chan->mhz = req->chan_freq;
-
-	WMI_SET_CHANNEL_MODE(chan, req->chan_mode);
-
-	chan->band_center_freq1 = req->band_center_freq1;
-	chan->band_center_freq2 = req->band_center_freq2;
-
-	if (req->is_half_rate)
-		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_HALF_RATE);
-	else if (req->is_quarter_rate)
-		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_QUARTER_RATE);
-
-	if (req->is_dfs) {
-		WMI_SET_CHANNEL_FLAG(chan, req->flag_dfs);
-		cmd->disable_hw_ack = req->dis_hw_ack;
-	}
+	copy_channel_info(cmd, chan, req);
 
 	cmd->beacon_interval = req->beacon_intval;
 	cmd->dtim_period = req->dtim_period;
-	/* FIXME: Find out min, max and regulatory power levels */
-	WMI_SET_CHANNEL_REG_POWER(chan, req->max_txpow);
-	WMI_SET_CHANNEL_MAX_TX_POWER(chan, req->max_txpow);
 
 	if (!req->is_restart) {
 		cmd->beacon_interval = req->beacon_intval;
@@ -472,6 +510,90 @@ QDF_STATUS send_peer_delete_cmd_tlv(wmi_unified_t wmi,
 }
 
 /**
+ * convert_host_peer_id_to_target_id_tlv - convert host peer param_id
+ * to target id.
+ * @targ_paramid: Target parameter id to hold the result.
+ * @peer_param_id: host param id.
+ *
+ * Return: QDF_STATUS_SUCCESS for success
+ *         QDF_STATUS_E_NOSUPPORT when the param_id in not supported in tareget
+ */
+#ifdef CONFIG_MCL
+static QDF_STATUS convert_host_peer_id_to_target_id_tlv(
+		uint32_t *targ_paramid,
+		uint32_t peer_param_id)
+{
+	*targ_paramid = peer_param_id;
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS convert_host_peer_id_to_target_id_tlv(
+		uint32_t *targ_paramid,
+		uint32_t peer_param_id)
+{
+	switch (peer_param_id) {
+	case WMI_HOST_PEER_MIMO_PS_STATE:
+		*targ_paramid = WMI_PEER_MIMO_PS_STATE;
+		break;
+	case WMI_HOST_PEER_AMPDU:
+		*targ_paramid = WMI_PEER_AMPDU;
+		break;
+	case WMI_HOST_PEER_AUTHORIZE:
+		*targ_paramid = WMI_PEER_AUTHORIZE;
+		break;
+	case WMI_HOST_PEER_CHWIDTH:
+		*targ_paramid = WMI_PEER_CHWIDTH;
+		break;
+	case WMI_HOST_PEER_NSS:
+		*targ_paramid = WMI_PEER_NSS;
+		break;
+	case WMI_HOST_PEER_USE_4ADDR:
+		*targ_paramid = WMI_PEER_USE_4ADDR;
+		break;
+	case WMI_HOST_PEER_MEMBERSHIP:
+		*targ_paramid = WMI_PEER_MEMBERSHIP;
+		break;
+	case WMI_HOST_PEER_USERPOS:
+		*targ_paramid = WMI_PEER_USERPOS;
+		break;
+	case WMI_HOST_PEER_CRIT_PROTO_HINT_ENABLED:
+		*targ_paramid = WMI_PEER_CRIT_PROTO_HINT_ENABLED;
+		break;
+	case WMI_HOST_PEER_TX_FAIL_CNT_THR:
+		*targ_paramid = WMI_PEER_TX_FAIL_CNT_THR;
+		break;
+	case WMI_HOST_PEER_SET_HW_RETRY_CTS2S:
+		*targ_paramid = WMI_PEER_SET_HW_RETRY_CTS2S;
+		break;
+	case WMI_HOST_PEER_IBSS_ATIM_WINDOW_LENGTH:
+		*targ_paramid = WMI_PEER_IBSS_ATIM_WINDOW_LENGTH;
+		break;
+	case WMI_HOST_PEER_PHYMODE:
+		*targ_paramid = WMI_PEER_PHYMODE;
+		break;
+	case WMI_HOST_PEER_USE_FIXED_PWR:
+		*targ_paramid = WMI_PEER_USE_FIXED_PWR;
+		break;
+	case WMI_HOST_PEER_PARAM_FIXED_RATE:
+		*targ_paramid = WMI_PEER_PARAM_FIXED_RATE;
+		break;
+	case WMI_HOST_PEER_SET_MU_WHITELIST:
+		*targ_paramid = WMI_PEER_SET_MU_WHITELIST;
+		break;
+	case WMI_HOST_PEER_SET_MAC_TX_RATE:
+		*targ_paramid = WMI_PEER_SET_MAX_TX_RATE;
+		break;
+	case WMI_HOST_PEER_SET_MIN_TX_RATE:
+		*targ_paramid = WMI_PEER_SET_MIN_TX_RATE;
+		break;
+	default:
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+/**
  * send_peer_param_cmd_tlv() - set peer parameter in fw
  * @wmi: wmi handle
  * @peer_addr: peer mac address
@@ -486,6 +608,11 @@ QDF_STATUS send_peer_param_cmd_tlv(wmi_unified_t wmi,
 	wmi_peer_set_param_cmd_fixed_param *cmd;
 	wmi_buf_t buf;
 	int32_t err;
+	uint32_t param_id;
+
+	if (convert_host_peer_id_to_target_id_tlv(&param_id,
+				param->param_id) != QDF_STATUS_SUCCESS)
+		return QDF_STATUS_E_NOSUPPORT;
 
 	buf = wmi_buf_alloc(wmi, sizeof(*cmd));
 	if (!buf) {
@@ -499,7 +626,7 @@ QDF_STATUS send_peer_param_cmd_tlv(wmi_unified_t wmi,
 				(wmi_peer_set_param_cmd_fixed_param));
 	cmd->vdev_id = param->vdev_id;
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(peer_addr, &cmd->peer_macaddr);
-	cmd->param_id = param->param_id;
+	cmd->param_id = param_id;
 	cmd->param_value = param->param_value;
 	err = wmi_unified_cmd_send(wmi, buf,
 				   sizeof(wmi_peer_set_param_cmd_fixed_param),
@@ -724,7 +851,22 @@ send_pdev_utf_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return ret;
 }
+#ifdef CONFIG_MCL
+static inline uint32_t convert_host_pdev_param_tlv(wmi_unified_t wmi_handle,
+				uint32_t host_param)
+{
+	return host_param;
+}
+#else
+static inline uint32_t convert_host_pdev_param_tlv(wmi_unified_t wmi_handle,
+				uint32_t host_param)
+{
+	if (host_param < wmi_pdev_param_max)
+		return wmi_handle->pdev_param[host_param];
 
+	return WMI_UNAVAILABLE_PARAM;
+}
+#endif
 /**
  * send_pdev_param_cmd_tlv() - set pdev parameters
  * @wmi_handle: wmi handle
@@ -742,6 +884,14 @@ send_pdev_param_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_pdev_set_param_cmd_fixed_param *cmd;
 	wmi_buf_t buf;
 	uint16_t len = sizeof(*cmd);
+	uint32_t pdev_param;
+
+	pdev_param = convert_host_pdev_param_tlv(wmi_handle, param->param_id);
+	if (pdev_param == WMI_UNAVAILABLE_PARAM) {
+		WMI_LOGW("%s: Unavailable param %d\n",
+				__func__, param->param_id);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
@@ -754,7 +904,7 @@ send_pdev_param_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_pdev_set_param_cmd_fixed_param));
 	cmd->pdev_id = 0;
-	cmd->param_id = param->param_id;
+	cmd->param_id = pdev_param;
 	cmd->param_value = param->param_value;
 	WMI_LOGD("Setting pdev param = %x, value = %u", param->param_id,
 				param->param_value);
@@ -1076,6 +1226,22 @@ send_dbglog_cmd_tlv(wmi_unified_t wmi_handle,
 	return status;
 }
 
+#ifdef CONFIG_MCL
+static inline uint32_t convert_host_vdev_param_tlv(wmi_unified_t wmi_handle,
+				uint32_t host_param)
+{
+	return host_param;
+}
+#else
+static inline uint32_t convert_host_vdev_param_tlv(wmi_unified_t wmi_handle,
+				uint32_t host_param)
+{
+	if (host_param < wmi_vdev_param_max)
+		return wmi_handle->vdev_param[host_param];
+
+	return WMI_UNAVAILABLE_PARAM;
+}
+#endif
 /**
  *  send_vdev_set_param_cmd_tlv() - WMI vdev set parameter function
  *  @param wmi_handle      : handle to WMI.
@@ -1091,6 +1257,15 @@ QDF_STATUS send_vdev_set_param_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_vdev_set_param_cmd_fixed_param *cmd;
 	wmi_buf_t buf;
 	uint16_t len = sizeof(*cmd);
+	uint32_t vdev_param;
+
+	vdev_param = convert_host_vdev_param_tlv(wmi_handle, param->param_id);
+	if (vdev_param == WMI_UNAVAILABLE_PARAM) {
+		WMI_LOGW("%s:Vdev param %d not available", __func__,
+				param->param_id);
+		return QDF_STATUS_E_INVAL;
+
+	}
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
@@ -1103,7 +1278,7 @@ QDF_STATUS send_vdev_set_param_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_vdev_set_param_cmd_fixed_param));
 	cmd->vdev_id = param->if_id;
-	cmd->param_id = param->param_id;
+	cmd->param_id = vdev_param;
 	cmd->param_value = param->param_value;
 	WMI_LOGD("Setting vdev %d param = %x, value = %u",
 		 param->if_id, param->param_id, param->param_value);
@@ -1308,6 +1483,94 @@ QDF_STATUS send_beacon_tmpl_send_cmd_tlv(wmi_unified_t wmi_handle,
 }
 #endif
 
+#ifdef CONFIG_MCL
+static inline void copy_peer_flags_tlv(
+			wmi_peer_assoc_complete_cmd_fixed_param * cmd,
+			struct peer_assoc_params *param)
+{
+	cmd->peer_flags = param->peer_flags;
+}
+#else
+static inline void copy_peer_flags_tlv(
+			wmi_peer_assoc_complete_cmd_fixed_param * cmd,
+			struct peer_assoc_params *param)
+{
+	/*
+	 * The target only needs a subset of the flags maintained in the host.
+	 * Just populate those flags and send it down
+	 */
+	cmd->peer_flags = 0;
+
+	/*
+	 * Do not enable HT/VHT if WMM/wme is disabled for vap.
+	 */
+	if (param->is_wme_set) {
+
+		if (param->qos_flag)
+			cmd->peer_flags |= WMI_PEER_QOS;
+		if (param->apsd_flag)
+			cmd->peer_flags |= WMI_PEER_APSD;
+		if (param->ht_flag)
+			cmd->peer_flags |= WMI_PEER_HT;
+		if (param->bw_40)
+			cmd->peer_flags |= WMI_PEER_40MHZ;
+		if (param->bw_80)
+			cmd->peer_flags |= WMI_PEER_80MHZ;
+		if (param->bw_160)
+			cmd->peer_flags |= WMI_PEER_160MHZ;
+
+		/* Typically if STBC is enabled for VHT it should be enabled
+		 * for HT as well
+		 **/
+		if (param->stbc_flag)
+			cmd->peer_flags |= WMI_PEER_STBC;
+
+		/* Typically if LDPC is enabled for VHT it should be enabled
+		 * for HT as well
+		 **/
+		if (param->ldpc_flag)
+			cmd->peer_flags |= WMI_PEER_LDPC;
+
+		if (param->static_mimops_flag)
+			cmd->peer_flags |= WMI_PEER_STATIC_MIMOPS;
+		if (param->dynamic_mimops_flag)
+			cmd->peer_flags |= WMI_PEER_DYN_MIMOPS;
+		if (param->spatial_mux_flag)
+			cmd->peer_flags |= WMI_PEER_SPATIAL_MUX;
+		if (param->vht_flag)
+			cmd->peer_flags |= WMI_PEER_VHT;
+	}
+	/*
+	 * Suppress authorization for all AUTH modes that need 4-way handshake
+	 * (during re-association).
+	 * Authorization will be done for these modes on key installation.
+	 */
+	if (param->auth_flag)
+		cmd->peer_flags |= WMI_PEER_AUTH;
+	if (param->need_ptk_4_way)
+		cmd->peer_flags |= WMI_PEER_NEED_PTK_4_WAY;
+	else
+		cmd->peer_flags &= ~WMI_PEER_NEED_PTK_4_WAY;
+	if (param->need_gtk_2_way)
+		cmd->peer_flags |= WMI_PEER_NEED_GTK_2_WAY;
+	/* safe mode bypass the 4-way handshake */
+	if (param->safe_mode_enabled)
+		cmd->peer_flags &=
+		    ~(WMI_PEER_NEED_PTK_4_WAY | WMI_PEER_NEED_GTK_2_WAY);
+	/* Disable AMSDU for station transmit, if user configures it */
+	/* Disable AMSDU for AP transmit to 11n Stations, if user configures
+	 * it
+	 * if (param->amsdu_disable) Add after FW support
+	 **/
+
+	/* Target asserts if node is marked HT and all MCS is set to 0.
+	 * Mark the node as non-HT if all the mcs rates are disabled through
+	 * iwpriv
+	 **/
+	if (param->peer_ht_rates.num_rates == 0)
+		cmd->peer_flags &= ~WMI_PEER_HT;
+}
+#endif
 /**
  *  send_peer_assoc_cmd_tlv() - WMI peer assoc function
  *  @param wmi_handle      : handle to WMI.
@@ -1355,7 +1618,7 @@ QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 				 sizeof(param->peer_macaddr));
 	cmd->peer_new_assoc = param->peer_new_assoc;
 	cmd->peer_associd = param->peer_associd;
-	cmd->peer_flags = param->peer_flags;
+	copy_peer_flags_tlv(cmd, param);
 	cmd->peer_rate_caps = param->peer_rate_caps;
 	cmd->peer_caps = param->peer_caps;
 	cmd->peer_listen_intval = param->peer_listen_intval;
@@ -1419,6 +1682,34 @@ QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 	return ret;
 }
 
+/* copy_scan_notify_events() - Helper routine to copy scan notify events
+ */
+#ifdef CONFIG_MCL
+static inline void copy_scan_notify_ev_flags(
+		wmi_start_scan_cmd_fixed_param * cmd,
+		struct scan_start_params *params)
+{
+	cmd->notify_scan_events = params->notify_scan_events;
+	cmd->scan_ctrl_flags = params->scan_ctrl_flags;
+}
+#else
+static inline void copy_scan_notify_ev_flags(
+		wmi_start_scan_cmd_fixed_param * cmd,
+		struct scan_start_params *params)
+{
+	cmd->notify_scan_events = WMI_SCAN_EVENT_STARTED |
+		WMI_SCAN_EVENT_COMPLETED |
+		WMI_SCAN_EVENT_BSS_CHANNEL |
+		WMI_SCAN_EVENT_FOREIGN_CHANNEL |
+		WMI_SCAN_EVENT_DEQUEUED
+		;
+	cmd->scan_ctrl_flags = params->scan_ctrl_flags;
+	cmd->scan_ctrl_flags |= WMI_SCAN_ADD_BCAST_PROBE_REQ;
+
+	if (params->is_phy_error)
+		cmd->scan_ctrl_flags |= WMI_SCAN_CAPTURE_PHY_ERROR;
+}
+#endif
 /**
  *  send_scan_start_cmd_tlv() - WMI scan start function
  *  @param wmi_handle      : handle to WMI.
@@ -1477,7 +1768,7 @@ QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->scan_req_id = params->scan_req_id;
 	cmd->vdev_id = params->vdev_id;
 	cmd->scan_priority = params->scan_priority;
-	cmd->notify_scan_events = params->notify_scan_events;
+	copy_scan_notify_ev_flags(cmd, params);
 	cmd->dwell_time_active = params->dwell_time_active;
 	cmd->dwell_time_passive = params->dwell_time_passive;
 	cmd->min_rest_time = params->min_rest_time;
@@ -1487,7 +1778,6 @@ QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->idle_time = params->idle_time;
 	cmd->max_scan_time = params->max_scan_time;
 	cmd->probe_delay = params->probe_delay;
-	cmd->scan_ctrl_flags = params->scan_ctrl_flags;
 	cmd->burst_duration = params->burst_duration;
 	cmd->num_chan = params->num_chan;
 	cmd->num_bssid = params->num_bssid;
@@ -1681,7 +1971,7 @@ QDF_STATUS send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
 	struct channel_param *tchan_info;
 	uint16_t len = sizeof(*cmd) + WMI_TLV_HDR_SIZE;
 
-	len += sizeof(wmi_channel) * chan_list->num_chan;
+	len += sizeof(wmi_channel) * chan_list->nallchans;
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
 		WMI_LOGE("Failed to allocate memory");
@@ -1696,16 +1986,16 @@ QDF_STATUS send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_scan_chan_list_cmd_fixed_param));
 
-	WMI_LOGD("no of channels = %d, len = %d", chan_list->num_chan, len);
+	WMI_LOGD("no of channels = %d, len = %d", chan_list->nallchans, len);
 
-	cmd->num_scan_chans = chan_list->num_chan;
+	cmd->num_scan_chans = chan_list->nallchans;
 	WMITLV_SET_HDR((buf_ptr + sizeof(wmi_scan_chan_list_cmd_fixed_param)),
 		       WMITLV_TAG_ARRAY_STRUC,
-		       sizeof(wmi_channel) * chan_list->num_chan);
+		       sizeof(wmi_channel) * chan_list->nallchans);
 	chan_info = (wmi_channel *) (buf_ptr + sizeof(*cmd) + WMI_TLV_HDR_SIZE);
 	tchan_info = &(chan_list->ch_param[0]);
 
-	for (i = 0; i < chan_list->num_chan; ++i) {
+	for (i = 0; i < chan_list->nallchans; ++i) {
 		WMITLV_SET_HDR(&chan_info->tlv_header,
 			       WMITLV_TAG_STRUC_wmi_channel,
 			       WMITLV_GET_STRUCT_TLVLEN(wmi_channel));
@@ -1715,11 +2005,37 @@ QDF_STATUS send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
 		chan_info->band_center_freq2 =
 				tchan_info->cfreq2;
 
+		if (tchan_info->is_chan_passive)
+			WMI_SET_CHANNEL_FLAG(chan_info,
+					WMI_CHAN_FLAG_PASSIVE);
+
+		if (tchan_info->allow_vht)
+			WMI_SET_CHANNEL_FLAG(chan_info,
+					WMI_CHAN_FLAG_ALLOW_VHT);
+		else  if (tchan_info->allow_ht)
+			WMI_SET_CHANNEL_FLAG(chan_info,
+					WMI_CHAN_FLAG_ALLOW_HT);
+		WMI_SET_CHANNEL_MODE(chan_info,
+				tchan_info->phy_mode);
+
+		/* Add tchan_info->half_rate and tchan_info->quarter_rate later
+		 * after FW support
+		 */
+
+		/* also fill in power information */
+		WMI_SET_CHANNEL_MIN_POWER(chan_info,
+				tchan_info->minpower);
+		WMI_SET_CHANNEL_MAX_POWER(chan_info,
+				tchan_info->maxpower);
+		WMI_SET_CHANNEL_REG_POWER(chan_info,
+				tchan_info->maxregpower);
+		WMI_SET_CHANNEL_ANTENNA_MAX(chan_info,
+				tchan_info->antennamax);
+		WMI_SET_CHANNEL_REG_CLASSID(chan_info,
+				tchan_info->reg_class_id);
+
 		WMI_LOGD("chan[%d] = %u", i, chan_info->mhz);
 
-		/*TODO: Set WMI_SET_CHANNEL_MIN_POWER */
-		/*TODO: Set WMI_SET_CHANNEL_ANTENNA_MAX */
-		/*TODO: WMI_SET_CHANNEL_REG_CLASSID */
 		tchan_info++;
 		chan_info++;
 	}
@@ -9249,8 +9565,6 @@ QDF_STATUS save_fw_version_cmd_tlv(wmi_unified_t wmi_handle, void *evt_buf)
 		return QDF_STATUS_E_FAILURE;
 
 #ifdef CONFIG_MCL
-	/* TODO:This needs to be enabled for WIN Lithium after removing dependen
-	 * on wmi_unified.h from priv.h for using wmi_abi_version type */
 	/*Save fw version from service ready message */
 	/*This will be used while sending INIT message */
 	qdf_mem_copy(&wmi_handle->fw_abi_version, &ev->fw_abi_vers,
@@ -9280,8 +9594,6 @@ QDF_STATUS check_and_update_fw_version_cmd_tlv(wmi_unified_t wmi_handle,
 	param_buf = (WMI_READY_EVENTID_param_tlvs *) evt_buf;
 	ev = param_buf->fixed_param;
 #ifdef CONFIG_MCL
-	/* TODO:This needs to be enabled for WIN Lithium after removing dependen
-	 * on wmi_unified.h from priv.h for using wmi_abi_version type */
 	if (!wmi_versions_are_compatible(&wmi_handle->final_abi_vers,
 				&ev->fw_abi_vers)) {
 		/*
@@ -10918,7 +11230,7 @@ static QDF_STATUS init_cmd_send_tlv(wmi_unified_t wmi_handle,
  *
  * Return: None
  */
-#ifdef WMI_TLV_AND_NON_TLV_SUPPORT
+#ifndef CONFIG_MCL
 void save_service_bitmap_tlv(wmi_unified_t wmi_handle, void *evt_buf)
 {
 	WMI_SERVICE_READY_EVENTID_param_tlvs *param_buf;
@@ -10943,7 +11255,7 @@ void save_service_bitmap_tlv(wmi_unified_t wmi_handle, void *evt_buf)
  *
  * Return: 1 enabled, 0 disabled
  */
-#ifdef WMI_TLV_AND_NON_TLV_SUPPORT
+#ifndef CONFIG_MCL
 static bool is_service_enabled_tlv(wmi_unified_t wmi_handle,
 		uint32_t service_id)
 {
@@ -12160,7 +12472,7 @@ struct wmi_ops tlv_ops =  {
 	.send_fw_test_cmd = send_fw_test_cmd_tlv,
 };
 
-#ifdef WMI_TLV_AND_NON_TLV_SUPPORT
+#ifndef CONFIG_MCL
 /**
  * populate_tlv_service() - populates wmi services
  *
@@ -12835,7 +13147,7 @@ static void populate_vdev_param_tlv(uint32_t *vdev_param)
  *
  * Return: None
  */
-#ifdef WMI_TLV_AND_NON_TLV_SUPPORT
+#ifndef CONFIG_MCL
 void wmi_tlv_attach(wmi_unified_t wmi_handle)
 {
 	wmi_handle->ops = &tlv_ops;

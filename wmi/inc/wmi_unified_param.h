@@ -457,7 +457,7 @@ struct vdev_start_params {
 	uint32_t num_noa_descriptors;
 	uint32_t preferred_rx_streams;
 	uint32_t preferred_tx_streams;
-#ifdef WMI_NON_TLV_SUPPORT
+#ifndef CONFIG_MCL
 	uint8_t oper_mode;
 	int32_t dfs_pri_multiplier;
 	uint8_t dot11_mode;
@@ -634,7 +634,7 @@ typedef struct {
 struct stats_request_params {
 	uint32_t stats_id;
 	uint32_t vdev_id;
-#ifdef WMI_NON_TLV_SUPPORT
+#ifndef CONFIG_MCL
 	wmi_host_inst_rssi_args rssi_args;
 #endif
 };
@@ -893,7 +893,7 @@ struct peer_assoc_params {
 	uint32_t tx_max_rate;
 	uint32_t tx_mcs_set;
 	uint8_t vht_capable;
-#ifdef WMI_NON_TLV_SUPPORT
+#ifndef CONFIG_MCL
 	uint32_t tx_max_mcs_nss;
 	uint32_t peer_bw_rxnss_override;
 	bool is_pmf_enabled;
@@ -1019,7 +1019,7 @@ struct scan_start_params {
 	uint8_t  *ie_base;
 	uint16_t uie_fieldOffset;
 	uint8_t  mac_add_bytes[IEEE80211_ADDR_LEN];
-#ifdef WMI_NON_TLV_SUPPORT
+#ifndef CONFIG_MCL
 	bool is_strict_pscan_en;
 	bool is_promiscous_mode;
 	bool is_phy_error;
@@ -1051,7 +1051,7 @@ struct scan_stop_params {
 	uint32_t scan_id;
 	uint32_t req_type;
 	uint32_t vdev_id;
-#ifdef WMI_NON_TLV_SUPPORT
+#ifndef CONFIG_MCL
 	bool all_scans;
 	bool vap_scans;
 	bool specific_scan;
@@ -1096,7 +1096,6 @@ struct scan_chan_list_params {
  * @ch_param: pointer to channel_paramw
  */
 struct scan_chan_list_params {
-	uint8_t num_chan;
 	uint16_t nallchans;
 	struct channel_param ch_param[1];
 };
@@ -1121,7 +1120,7 @@ struct fw_hang_params {
 struct pdev_utf_params {
 	uint8_t *utf_payload;
 	uint32_t len;
-#ifdef WMI_NON_TLV_SUPPORT
+#ifndef CONFIG_MCL
 	bool is_ar900b;
 #endif
 };
@@ -1161,7 +1160,7 @@ struct dbglog_params {
 	uint32_t val;
 	uint32_t *module_id_bitmap;
 	uint32_t bitmap_len;
-#ifdef WMI_NON_TLV_SUPPORT
+#ifndef CONFIG_MCL
 	uint32_t cfgvalid[2];
 #endif
 };
@@ -1720,7 +1719,7 @@ struct roam_offload_scan_params {
 #endif
 	bool is_ese_assoc;
 	struct mobility_domain_info mdid;
-#ifndef WMI_NON_TLV_SUPPORT
+#ifdef CONFIG_MCL
 	/* THis is not available in non tlv target.
 	* please remove this and replace with a host based
 	* structure */
@@ -5770,6 +5769,15 @@ typedef enum {
 	/* set group membership status */
 	WMI_HOST_PEER_MEMBERSHIP = 0xb,
 	WMI_HOST_PEER_USERPOS = 0xc,
+	WMI_HOST_PEER_CRIT_PROTO_HINT_ENABLED = 0xd,
+	WMI_HOST_PEER_TX_FAIL_CNT_THR = 0xe,
+	WMI_HOST_PEER_SET_HW_RETRY_CTS2S = 0xf,
+	WMI_HOST_PEER_IBSS_ATIM_WINDOW_LENGTH = 0x10,
+	WMI_HOST_PEER_PHYMODE = 0x11,
+	WMI_HOST_PEER_SET_MAC_TX_RATE = 0x12,
+	/* Set default Rx routing */
+	WMI_HOST_PEER_SET_DEFAULT_ROUTING = 0x13,
+	WMI_HOST_PEER_SET_MIN_TX_RATE = 0x14,
 } PEER_PARAM_ENUM;
 #define WMI_HOST_PEER_MIMO_PS_NONE	0x0
 #define WMI_HOST_PEER_MIMO_PS_STATIC	0x1
