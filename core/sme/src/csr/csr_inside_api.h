@@ -1074,6 +1074,9 @@ void csr_roam_prepare_bss_params(tpAniSirGlobal mac_ctx, uint32_t session_id,
 		tCsrRoamProfile *profile, tSirBssDescription *bss_desc,
 		tBssConfigParam *bss_cfg, tDot11fBeaconIEs *ies);
 
+void csr_remove_bssid_from_scan_list(tpAniSirGlobal mac_ctx,
+	tSirMacAddr bssid);
+
 QDF_STATUS csr_roam_set_bss_config_cfg(tpAniSirGlobal mac_ctx,
 		uint32_t session_id,
 		tCsrRoamProfile *profile, tSirBssDescription *bss_desc,

@@ -1722,6 +1722,15 @@ static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 		}
 	} else {
 		sta_id = pHddStaCtx->conn_info.staId[0];
+
+		/* clear scan cache for Link Lost */
+		if (pRoamInfo && !pRoamInfo->reasonCode &&
+		   (eCSR_ROAM_RESULT_DEAUTH_IND == roamResult)) {
+			wlan_hdd_cfg80211_update_bss_list(pAdapter,
+				pHddStaCtx->conn_info.bssId.bytes);
+			sme_remove_bssid_from_scan_list(pHddCtx->hHal,
+			pHddStaCtx->conn_info.bssId.bytes);
+		}
 		/* We should clear all sta register with TL,
 		 * for now, only one.
 		 */
@@ -2835,6 +2844,25 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 				 " result:%d and Status:%d",
 				 MAC_ADDR_ARRAY(pWextState->req_bssId.bytes),
 				 roamResult, roamStatus);
+
+		if ((eCSR_ROAM_RESULT_SCAN_FOR_SSID_FAILURE == roamResult) ||
+		   (pRoamInfo &&
+		   ((eSIR_SME_JOIN_TIMEOUT_RESULT_CODE ==
+					pRoamInfo->statusCode) ||
+		   (eSIR_SME_AUTH_TIMEOUT_RESULT_CODE ==
+					pRoamInfo->statusCode) ||
+		   (eSIR_SME_ASSOC_TIMEOUT_RESULT_CODE ==
+					pRoamInfo->statusCode)))) {
+			wlan_hdd_cfg80211_update_bss_list(pAdapter,
+				pRoamInfo ?
+				pRoamInfo->bssid.bytes :
+				pWextState->req_bssId.bytes);
+			sme_remove_bssid_from_scan_list(pHddCtx->hHal,
+				pRoamInfo ?
+				pRoamInfo->bssid.bytes :
+				pWextState->req_bssId.bytes);
+		}
+
 		/*
 		 * CR465478: Only send up a connection failure result when CSR
 		 * has completed operation - with a ASSOCIATION_FAILURE status.
@@ -2926,18 +2954,6 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 						NULL, 0, NULL, 0,
 						WLAN_STATUS_UNSPECIFIED_FAILURE,
 						GFP_KERNEL);
-		}
-
-		if (pRoamInfo) {
-			if ((eSIR_SME_JOIN_TIMEOUT_RESULT_CODE ==
-			     pRoamInfo->statusCode)
-			    || (eSIR_SME_AUTH_TIMEOUT_RESULT_CODE ==
-				pRoamInfo->statusCode)
-			    || (eSIR_SME_ASSOC_TIMEOUT_RESULT_CODE ==
-				pRoamInfo->statusCode)) {
-				wlan_hdd_cfg80211_update_bss_list(pAdapter,
-								  pRoamInfo);
-			}
 		}
 
 		/*

@@ -9720,75 +9720,69 @@ static int wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 	return ret;
 }
 
-/**
- * wlan_hdd_cfg80211_update_bss_list() - update bss list to NL80211
- * @pAdapter: Pointer to adapter
- * @pRoamInfo: Pointer to roam info
+/*
+ * wlan_hdd_cfg80211_get_bss :to get the bss from kernel cache.
+ * @wiphy: wiphy pointer
+ * @channel: channel of the BSS
+ * @bssid: Bssid of BSS
+ * @ssid: Ssid of the BSS
+ * @ssid_len: ssid length
  *
- * Return: struct cfg80211_bss pointer
+ * Return: bss found in kernel cache
  */
-struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_list(hdd_adapter_t *pAdapter,
-						       tCsrRoamInfo *pRoamInfo)
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)) && !defined(WITH_BACKPORTS)
+struct cfg80211_bss *wlan_hdd_cfg80211_get_bss(struct wiphy *wiphy,
+	struct ieee80211_channel *channel, const u8 *bssid,
+	const u8 *ssid, size_t ssid_len)
+{
+	return cfg80211_get_bss(wiphy, channel, bssid,
+			ssid,
+			ssid_len,
+			WLAN_CAPABILITY_ESS,
+			WLAN_CAPABILITY_ESS);
+}
+#else
+struct cfg80211_bss *wlan_hdd_cfg80211_get_bss(struct wiphy *wiphy,
+	struct ieee80211_channel *channel, const u8 *bssid,
+	const u8 *ssid, size_t ssid_len)
+{
+	return cfg80211_get_bss(wiphy, channel, bssid,
+				ssid,
+				ssid_len,
+				IEEE80211_BSS_TYPE_ESS,
+				IEEE80211_PRIVACY_ANY);
+}
+#endif
+
+
+/*
+ * wlan_hdd_cfg80211_update_bss_list :to inform nl80211
+ * interface that BSS might have been lost.
+ * @pAdapter: adaptor
+ * @bssid: bssid which might have been lost
+ *
+ * Return: bss which is unlinked from kernel cache
+ */
+struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_list(
+	hdd_adapter_t *pAdapter, tSirMacAddr bssid)
 {
 	struct net_device *dev = pAdapter->dev;
 	struct wireless_dev *wdev = dev->ieee80211_ptr;
 	struct wiphy *wiphy = wdev->wiphy;
-	tSirBssDescription *pBssDesc = pRoamInfo->pBssDesc;
-	int chan_no;
-	unsigned int freq;
-	struct ieee80211_channel *chan;
 	struct cfg80211_bss *bss = NULL;
 
-	ENTER();
-
-	if (NULL == pBssDesc) {
-		hdd_err("pBssDesc is NULL");
-		return bss;
-	}
-
-	if (NULL == pRoamInfo->pProfile) {
-		hdd_err("Roam profile is NULL");
-		return bss;
-	}
-
-	chan_no = pBssDesc->channelId;
-
-	if (chan_no <= ARRAY_SIZE(hdd_channels_2_4_ghz)) {
-		freq =
-			ieee80211_channel_to_frequency(chan_no,
-						       IEEE80211_BAND_2GHZ);
-	} else {
-		freq =
-			ieee80211_channel_to_frequency(chan_no,
-						       IEEE80211_BAND_5GHZ);
-	}
-
-	chan = __ieee80211_get_channel(wiphy, freq);
-
-	if (!chan) {
-		hdd_err("chan pointer is NULL");
-		return NULL;
-	}
-
-	bss = cfg80211_get_bss(wiphy, chan, pBssDesc->bssId,
-			       &pRoamInfo->pProfile->SSIDs.SSIDList->SSID.
-			       ssId[0],
-			       pRoamInfo->pProfile->SSIDs.SSIDList->SSID.length,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)) && !defined(WITH_BACKPORTS)
-			       WLAN_CAPABILITY_ESS, WLAN_CAPABILITY_ESS);
-#else
-			       IEEE80211_BSS_TYPE_ESS, IEEE80211_PRIVACY_ANY);
-#endif
+	bss = wlan_hdd_cfg80211_get_bss(wiphy, NULL, bssid,
+			NULL, 0);
 	if (bss == NULL) {
 		hdd_err("BSS not present");
 	} else {
-		hdd_notice("cfg80211_unlink_bss called for BSSID "
-				MAC_ADDRESS_STR,
-		       MAC_ADDR_ARRAY(pBssDesc->bssId));
+		hdd_info("cfg80211_unlink_bss called for BSSID "
+			MAC_ADDRESS_STR, MAC_ADDR_ARRAY(bssid));
 		cfg80211_unlink_bss(wiphy, bss);
 	}
 	return bss;
 }
+
 
 /**
  * wlan_hdd_cfg80211_inform_bss_frame() - inform bss details to NL80211

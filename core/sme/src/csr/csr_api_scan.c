@@ -1218,7 +1218,7 @@ QDF_STATUS csr_scan_handle_search_for_ssid(tpAniSirGlobal pMac,
 		csr_roam_call_callback(pMac, sessionId, NULL,
 				       pCommand->u.scanCmd.roamId,
 				       eCSR_ROAM_ASSOCIATION_FAILURE,
-				       eCSR_ROAM_RESULT_FAILURE);
+				       eCSR_ROAM_RESULT_SCAN_FOR_SSID_FAILURE);
 	}
 	if (pScanFilter) {
 		csr_free_scan_filter(pMac, pScanFilter);
@@ -1300,12 +1300,12 @@ QDF_STATUS csr_scan_handle_search_for_ssid_failure(tpAniSirGlobal pMac,
 		csr_roam_call_callback(pMac, sessionId, pRoamInfo,
 				       pCommand->u.scanCmd.roamId,
 				       eCSR_ROAM_ASSOCIATION_COMPLETION,
-				       eCSR_ROAM_RESULT_FAILURE);
+				       eCSR_ROAM_RESULT_SCAN_FOR_SSID_FAILURE);
 	} else {
 		csr_roam_call_callback(pMac, sessionId, NULL,
 				       pCommand->u.scanCmd.roamId,
 				       eCSR_ROAM_ASSOCIATION_FAILURE,
-				       eCSR_ROAM_RESULT_FAILURE);
+				       eCSR_ROAM_RESULT_SCAN_FOR_SSID_FAILURE);
 	}
 roam_completion:
 	csr_roam_completion(pMac, sessionId, NULL, pCommand, roam_result,
@@ -1325,6 +1325,44 @@ QDF_STATUS csr_scan_result_purge(tpAniSirGlobal pMac,
 		qdf_mem_free(pScanList);
 	}
 	return status;
+}
+
+/**
+ * csr_remove_bssid_from_scan_list() - remove the bssid from
+ * scan list
+ * @mac_tx: mac context.
+ * @bssid: bssid to be removed
+ *
+ * This function remove the given bssid from scan list.
+ *
+ * Return: void.
+ */
+void csr_remove_bssid_from_scan_list(tpAniSirGlobal mac_ctx,
+			tSirMacAddr bssid)
+{
+	tListElem *entry, *free_elem;
+	tCsrScanResult *bss_desc;
+	tDblLinkList *list = &mac_ctx->scan.scanResultList;
+
+	csr_ll_lock(list);
+	entry = csr_ll_peek_head(list, LL_ACCESS_NOLOCK);
+	while (entry != NULL) {
+		bss_desc = GET_BASE_ADDR(entry, tCsrScanResult, Link);
+		if (!qdf_mem_cmp(bss_desc->Result.BssDescriptor.bssId,
+		   bssid, sizeof(tSirMacAddr))) {
+			free_elem = entry;
+			entry = csr_ll_next(list, entry, LL_ACCESS_NOLOCK);
+			csr_ll_remove_entry(list, free_elem, LL_ACCESS_NOLOCK);
+			csr_free_scan_result_entry(mac_ctx, bss_desc);
+			sms_log(mac_ctx, LOGW, FL("Removed BSS entry:%pM"),
+				bssid);
+			continue;
+		}
+
+		entry = csr_ll_next(list, entry, LL_ACCESS_NOLOCK);
+	}
+
+	csr_ll_unlock(list);
 }
 
 /**

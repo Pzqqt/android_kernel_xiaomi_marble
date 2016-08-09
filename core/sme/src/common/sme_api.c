@@ -3227,6 +3227,31 @@ QDF_STATUS sme_close(tHalHandle hHal)
 }
 
 /**
+ * sme_remove_bssid_from_scan_list() - wrapper to remove the bssid from
+ * scan list
+ * @hal: hal context.
+ * @bssid: bssid to be removed
+ *
+ * This function remove the given bssid from scan list.
+ *
+ * Return: QDF status.
+ */
+QDF_STATUS sme_remove_bssid_from_scan_list(tHalHandle hal,
+	tSirMacAddr bssid)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+
+	status = sme_acquire_global_lock(&mac_ctx->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		csr_remove_bssid_from_scan_list(mac_ctx, bssid);
+		sme_release_global_lock(&mac_ctx->sme);
+	}
+
+	return status;
+}
+
+/**
  * sme_scan_request() - wrapper function to Request a 11d or full scan from CSR.
  * @hal:          hal global context
  * @session_id:   session id
