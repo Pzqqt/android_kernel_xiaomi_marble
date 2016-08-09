@@ -11648,6 +11648,8 @@ void active_list_cmd_timeout_handle(void *userData)
 {
 	tHalHandle hal = (tHalHandle)userData;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	tListElem *entry;
+	tSmeCmd *temp_cmd = NULL;
 
 	if (NULL == mac_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -11672,6 +11674,14 @@ void active_list_cmd_timeout_handle(void *userData)
 			mac_ctx->sme.enableSelfRecovery ? true : false);
 	else
 		qdf_trace_dump_all(mac_ctx, 0, 0, 500, 0);
+
+	entry = csr_ll_peek_head(&mac_ctx->sme.smeCmdActiveList,
+				 LL_ACCESS_LOCK);
+	if (entry)
+		temp_cmd = GET_BASE_ADDR(entry, tSmeCmd, Link);
+	/* Ignore if ROC took more than 120 sec */
+	if (temp_cmd && (eSmeCommandRemainOnChannel == temp_cmd->command))
+		return;
 
 	if (mac_ctx->sme.enableSelfRecovery) {
 		sme_save_active_cmd_stats(hal);
