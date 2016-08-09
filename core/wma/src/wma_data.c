@@ -1013,14 +1013,17 @@ QDF_STATUS wma_set_enable_disable_mcc_adaptive_scheduler(uint32_t
 		return QDF_STATUS_E_FAULT;
 	}
 
-	/* In WMI_RESMGR_ADAPTIVE_OCS_ENABLE_DISABLE_CMDID fw cannot
-	 * determine the PDEV on its own, Host needs to specify the PDEV
-	 * ID in the command.
+	/*
+	 * Since there could be up to two instances of OCS in FW (one per MAC),
+	 * FW provides the option of enabling and disabling MAS on a per MAC
+	 * basis. But, Host does not have enable/disable option for individual
+	 * MACs. So, FW agreed for the Host to send down a 'pdev id' of 0.
+	 * When 'pdev id' of 0 is used, FW treats this as a SOC level command
+	 * and applies the same value to both MACs. Irrespective of the value
+	 * of 'WMI_SERVICE_DEPRECATED_REPLACE', the pdev id needs to be '0'
+	 * (SOC level) for WMI_RESMGR_ADAPTIVE_OCS_ENABLE_DISABLE_CMDID
 	 */
-	if (wma->wlan_resource_config.use_pdev_id)
-		pdev_id = WMA_MAC_TO_PDEV_MAP(0);
-	else
-		pdev_id = WMI_PDEV_ID_SOC;
+	pdev_id = WMI_PDEV_ID_SOC;
 
 	return wmi_unified_set_enable_disable_mcc_adaptive_scheduler_cmd(
 			wma->wmi_handle, mcc_adaptive_scheduler, pdev_id);

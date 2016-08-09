@@ -774,6 +774,10 @@ QDF_STATUS cds_register_sap_restart_channel_switch_cb(
 		void (*sap_restart_chan_switch_cb)(void *, uint32_t, uint32_t));
 QDF_STATUS cds_deregister_sap_restart_channel_switch_cb(void);
 #endif
+QDF_STATUS cds_get_mac_id_by_session_id(uint8_t session_id, uint8_t *mac_id);
+QDF_STATUS cds_get_mcc_session_id_on_mac(uint8_t mac_id, uint8_t session_id,
+						uint8_t *mcc_session_id);
+uint8_t cds_get_mcc_operating_channel(uint8_t session_id);
 QDF_STATUS cds_get_pcl_for_existing_conn(enum cds_con_mode mode,
 			uint8_t *pcl_ch, uint32_t *len,
 			uint8_t *weight_list, uint32_t weight_len);

@@ -7284,8 +7284,7 @@ int32_t cds_set_mcc_p2p_quota(hdd_adapter_t *hostapd_adapater,
 		uint32_t set_value)
 {
 	uint8_t first_adapter_operating_channel = 0;
-	uint8_t second_adapter_opertaing_channel = 0;
-	hdd_adapter_t *sta_adapter = NULL;
+	uint8_t second_adapter_operating_channel = 0;
 	int32_t ret = 0; /* success */
 
 	uint32_t concurrent_state = cds_get_concurrency_mode();
@@ -7324,63 +7323,32 @@ int32_t cds_set_mcc_p2p_quota(hdd_adapter_t *hostapd_adapater,
 		 */
 		set_value = set_value | first_adapter_operating_channel;
 		/* Find out the 2nd MCC adapter and its operating channel */
-		if (hostapd_adapater->device_mode == QDF_STA_MODE) {
-			/*
-			 * iwpriv cmd was issued on wlan0;
-			 * get p2p0 vdev channel
-			 */
-			if ((concurrent_state & QDF_P2P_CLIENT_MASK) != 0) {
-				/* The 2nd MCC vdev is P2P client */
-				sta_adapter = hdd_get_adapter(
-						hostapd_adapater->pHddCtx,
-						QDF_P2P_CLIENT_MODE);
-			} else {
-				/* The 2nd MCC vdev is P2P GO */
-				sta_adapter = hdd_get_adapter(
-						hostapd_adapater->pHddCtx,
-						QDF_P2P_GO_MODE);
-			}
-		} else {
-			/*
-			 * iwpriv cmd was issued on p2p0;
-			 * get wlan0 vdev channel
-			 */
-			sta_adapter = hdd_get_adapter(hostapd_adapater->pHddCtx,
-					QDF_STA_MODE);
-		}
-		if (sta_adapter != NULL) {
-			second_adapter_opertaing_channel =
-				hdd_get_operating_channel
-				(
-				 sta_adapter->pHddCtx,
-				 sta_adapter->device_mode
-				);
-			cds_info("2nd vdev channel No. is:%d",
-				second_adapter_opertaing_channel);
+		second_adapter_operating_channel =
+			cds_get_mcc_operating_channel(
+					hostapd_adapater->sessionId);
 
-			if (second_adapter_opertaing_channel == 0 ||
-					first_adapter_operating_channel == 0) {
-				cds_err("Invalid channel");
-				return -EINVAL;
-			}
-			/*
-			 * Now move the time quota and channel number of the
-			 * 1st adapter to bits 23-16 and bits 15-8 of the bit
-			 * vector, respectively.
-			 */
-			set_value = set_value << 8;
-			/*
-			 * Store the channel number for 2nd MCC vdev at bits
-			 * 7-0 of set_value
-			 */
-			set_value = set_value |
-				second_adapter_opertaing_channel;
-			ret = wma_cli_set_command(hostapd_adapater->sessionId,
-					WMA_VDEV_MCC_SET_TIME_QUOTA,
-					set_value, VDEV_CMD);
-		} else {
-			cds_err("NULL adapter handle. Exit");
+		cds_info("2nd vdev channel No. is:%d",
+			 second_adapter_operating_channel);
+
+		if (second_adapter_operating_channel == 0 ||
+		    first_adapter_operating_channel == 0) {
+			cds_err("Invalid channel");
+			return -EINVAL;
 		}
+		/*
+		 * Now move the time quota and channel number of the
+		 * 1st adapter to bits 23-16 and bits 15-8 of the bit
+		 * vector, respectively.
+		 */
+		set_value = set_value << 8;
+		/*
+		 * Store the channel number for 2nd MCC vdev at bits
+		 * 7-0 of set_value
+		 */
+		set_value = set_value | second_adapter_operating_channel;
+		ret = wma_cli_set_command(hostapd_adapater->sessionId,
+				WMA_VDEV_MCC_SET_TIME_QUOTA,
+				set_value, VDEV_CMD);
 	} else {
 		cds_info("MCC is not active. Exit w/o setting latency");
 	}
@@ -7434,9 +7402,8 @@ int32_t cds_go_set_mcc_p2p_quota(hdd_adapter_t *hostapd_adapter,
 		uint32_t set_value)
 {
 	uint8_t first_adapter_operating_channel = 0;
-	uint8_t second_adapter_opertaing_channel = 0;
+	uint8_t second_adapter_operating_channel = 0;
 	uint32_t concurrent_state = 0;
-	hdd_adapter_t *sta_adapter = NULL;
 	int32_t ret = 0; /* success */
 
 	/*
@@ -7475,66 +7442,36 @@ int32_t cds_go_set_mcc_p2p_quota(hdd_adapter_t *hostapd_adapter,
 		 * the lower 8-bits of bit vector.
 		 */
 		set_value = set_value | first_adapter_operating_channel;
-		if (hostapd_adapter->device_mode ==
-				QDF_STA_MODE) {
-			/* iwpriv cmd issued on wlan0; get p2p0 vdev chan */
-			if ((concurrent_state & QDF_P2P_CLIENT_MASK) != 0) {
-				/* The 2nd MCC vdev is P2P client */
-				sta_adapter = hdd_get_adapter
-					(
-					 hostapd_adapter->pHddCtx,
-					 QDF_P2P_CLIENT_MODE
-					);
-			} else {
-				/* The 2nd MCC vdev is P2P GO */
-				sta_adapter = hdd_get_adapter
-					(
-					 hostapd_adapter->pHddCtx,
-					 QDF_P2P_GO_MODE
-					);
-			}
-		} else {
-			/* iwpriv cmd issued on p2p0; get channel for wlan0 */
-			sta_adapter = hdd_get_adapter
-				(
-				 hostapd_adapter->pHddCtx,
-				 QDF_STA_MODE
-				);
-		}
-		if (sta_adapter != NULL) {
-			second_adapter_opertaing_channel =
-				hdd_get_operating_channel
-				(
-				 sta_adapter->pHddCtx,
-				 sta_adapter->device_mode
-				);
-			cds_info("2nd vdev channel No. is:%d",
-				second_adapter_opertaing_channel);
 
-			if (second_adapter_opertaing_channel == 0 ||
-					first_adapter_operating_channel == 0) {
-				cds_err("Invalid channel");
-				return -EINVAL;
-			}
+		/* Find out the 2nd MCC adapter and its operating channel */
+		second_adapter_operating_channel =
+			cds_get_mcc_operating_channel(
+					hostapd_adapter->sessionId);
 
-			/*
-			 * Move the time quota and operating channel number
-			 * for the first adapter to bits 23-16 & bits 15-8
-			 * of set_value vector, respectively.
-			 */
-			set_value = set_value << 8;
-			/*
-			 * Store the channel number for 2nd MCC vdev at bits
-			 * 7-0 of set_value vector as per the bit format above.
-			 */
-			set_value = set_value |
-				second_adapter_opertaing_channel;
-			ret = wma_cli_set_command(hostapd_adapter->sessionId,
-					WMA_VDEV_MCC_SET_TIME_QUOTA,
-					set_value, VDEV_CMD);
-		} else {
-			cds_err("NULL adapter handle. Exit");
+		cds_info("2nd vdev channel No. is:%d",
+			 second_adapter_operating_channel);
+
+		if (second_adapter_operating_channel == 0 ||
+		    first_adapter_operating_channel == 0) {
+			cds_err("Invalid channel");
+			return -EINVAL;
 		}
+
+		/*
+		 * Move the time quota and operating channel number
+		 * for the first adapter to bits 23-16 & bits 15-8
+		 * of set_value vector, respectively.
+		 */
+		set_value = set_value << 8;
+		/*
+		 * Store the channel number for 2nd MCC vdev at bits
+		 * 7-0 of set_value vector as per the bit format above.
+		 */
+		set_value = set_value |
+			second_adapter_operating_channel;
+		ret = wma_cli_set_command(hostapd_adapter->sessionId,
+				WMA_VDEV_MCC_SET_TIME_QUOTA,
+				set_value, VDEV_CMD);
 	} else {
 		cds_info("MCC is not active. Exit w/o setting latency");
 	}
@@ -8947,6 +8884,121 @@ void cds_dump_connection_status_info(void)
 				conc_connection_list[i].original_nss,
 				conc_connection_list[i].bw);
 	}
+}
+
+/**
+ * cds_get_mac_id_by_session_id() - Get MAC ID for a given session ID
+ * @session_id: Session ID
+ * @mac_id: Pointer to the MAC ID
+ *
+ * Gets the MAC ID for a given session ID
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cds_get_mac_id_by_session_id(uint8_t session_id, uint8_t *mac_id)
+{
+	cds_context_type *cds_ctx;
+	uint32_t i;
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
+	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
+		if ((conc_connection_list[i].vdev_id == session_id) &&
+		    (conc_connection_list[i].in_use)) {
+			*mac_id = conc_connection_list[i].mac;
+			qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
+			return QDF_STATUS_SUCCESS;
+		}
+	}
+	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * cds_get_mcc_session_id_on_mac() - Get MCC session's ID
+ * @mac_id: MAC ID on which MCC session needs to be found
+ * @session_id: Session with which MCC combination needs to be found
+ * @mcc_session_id: Pointer to the MCC session ID
+ *
+ * Get the session ID of the MCC interface
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cds_get_mcc_session_id_on_mac(uint8_t mac_id, uint8_t session_id,
+					uint8_t *mcc_session_id)
+{
+	cds_context_type *cds_ctx;
+	uint32_t i;
+	uint8_t chan = conc_connection_list[session_id].chan;
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
+	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
+		if (conc_connection_list[i].mac != mac_id)
+			continue;
+		if (conc_connection_list[i].vdev_id == session_id)
+			continue;
+		/* Inter band or intra band MCC */
+		if ((conc_connection_list[i].chan != chan) &&
+		    (conc_connection_list[i].in_use)) {
+			*mcc_session_id = conc_connection_list[i].vdev_id;
+			qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
+			return QDF_STATUS_SUCCESS;
+		}
+	}
+	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * cds_get_mcc_operating_channel() - Get the MCC channel
+ * @session_id: Session ID with which MCC is being done
+ *
+ * Gets the MCC channel for a given session ID.
+ *
+ * Return: '0' (INVALID_CHANNEL_ID) or valid channel number
+ */
+uint8_t cds_get_mcc_operating_channel(uint8_t session_id)
+{
+	uint8_t mac_id, mcc_session_id;
+	QDF_STATUS status;
+	uint8_t chan;
+	cds_context_type *cds_ctx;
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return INVALID_CHANNEL_ID;
+	}
+
+	status = cds_get_mac_id_by_session_id(session_id, &mac_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("failed to get MAC ID");
+		return INVALID_CHANNEL_ID;
+	}
+
+	status = cds_get_mcc_session_id_on_mac(mac_id, session_id,
+			&mcc_session_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("failed to get MCC session ID");
+		return INVALID_CHANNEL_ID;
+	}
+
+	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
+	chan = conc_connection_list[mcc_session_id].chan;
+	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
+
+	return chan;
 }
 
 /**
