@@ -388,6 +388,9 @@ lim_check_and_add_bss_description(tpAniSirGlobal mac_ctx,
 			FL("qdf_mem_malloc(length=%d) failed"), frame_len);
 		return;
 	}
+
+	qdf_mem_zero(bssdescr, frame_len);
+
 	/* In scan state, store scan result. */
 	lim_collect_bss_description(mac_ctx, bssdescr, bpr, rx_packet_info,
 				    scanning);

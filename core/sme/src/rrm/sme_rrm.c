@@ -172,7 +172,7 @@ sme_rrm_send_beacon_report_xmit_ind(tpAniSirGlobal mac_ctx,
 {
 	tpSirBssDescription bss_desc = NULL;
 	tpSirBeaconReportXmitInd beacon_rep;
-	uint16_t length, ie_len;
+	uint16_t length, ie_len, tot_len;
 	uint8_t  i = 0, j = 0;
 	tCsrScanResultInfo *cur_result = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -209,12 +209,13 @@ sme_rrm_send_beacon_report_xmit_ind(tpAniSirGlobal mac_ctx,
 			if (bss_desc == NULL)
 				break;
 			ie_len = GET_IE_LEN_IN_BSS(bss_desc->length);
+			tot_len = ie_len + sizeof(*bss_desc);
 			beacon_rep->pBssDescription[i] =
-				qdf_mem_malloc(ie_len +
-					sizeof(tSirBssDescription));
+				qdf_mem_malloc(tot_len);
 			if (NULL ==
 				beacon_rep->pBssDescription[i])
 				break;
+			qdf_mem_zero(beacon_rep->pBssDescription[i], tot_len);
 			qdf_mem_copy(beacon_rep->pBssDescription[i],
 				bss_desc, sizeof(tSirBssDescription));
 			qdf_mem_copy(
