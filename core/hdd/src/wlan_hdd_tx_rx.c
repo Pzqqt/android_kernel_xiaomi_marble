@@ -320,8 +320,6 @@ static void hdd_get_transmit_sta_id(hdd_adapter_t *adapter,
 				qdf_is_macaddr_group(dst_addr)) {
 			hdd_info("Received MC/BC packet for transmission");
 			mcbc_addr = true;
-		} else {
-			hdd_err("UC frame with invalid destination address");
 		}
 	}
 
