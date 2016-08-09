@@ -2466,10 +2466,6 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 		cds_check_concurrent_intf_and_restart_sap(pHddStaCtx,
 							  pAdapter);
 
-#ifdef FEATURE_WLAN_TDLS
-		wlan_hdd_tdls_connection_callback(pAdapter);
-#endif
-
 		DPTRACE(qdf_dp_trace_mgmt_pkt(QDF_DP_TRACE_MGMT_PACKET_RECORD,
 			pAdapter->sessionId,
 			QDF_PROTO_TYPE_MGMT, QDF_PROTO_MGMT_ASSOC));
@@ -2802,6 +2798,10 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 						   WLAN_WAKE_ALL_NETIF_QUEUE,
 						   WLAN_CONTROL_PATH);
 		}
+
+#ifdef FEATURE_WLAN_TDLS
+		wlan_hdd_tdls_connection_callback(pAdapter);
+#endif
 
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			hddLog(LOGE,
