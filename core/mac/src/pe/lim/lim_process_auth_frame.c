@@ -357,7 +357,7 @@ static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
 			 * received but ACK lost at STA side, in this case 2nd
 			 * auth frame is already in transmission queue
 			 */
-			lim_log(mac_ctx, LOGE,
+			lim_log(mac_ctx, LOGW,
 				FL("STA is initiating Auth after ACK lost"));
 			return;
 		}

@@ -137,6 +137,7 @@ static void lim_convert_supported_channels(tpAniSirGlobal mac_ctx,
  * lim_check_sta_in_pe_entries() - checks if sta exists in any dph tables.
  * @mac_ctx: Pointer to Global MAC structure
  * @hdr: A pointer to the MAC header
+ * @sessionid - session id for which session is initiated
  *
  * This function is called by lim_process_assoc_req_frame() to check if STA
  * entry already exists in any of the PE entries of the AP. If it exists, deauth
@@ -145,7 +146,8 @@ static void lim_convert_supported_channels(tpAniSirGlobal mac_ctx,
  *
  * Return: void
  */
-void lim_check_sta_in_pe_entries(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr)
+void lim_check_sta_in_pe_entries(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
+				 uint16_t sessionid)
 {
 	uint8_t i;
 	uint16_t assoc_id = 0;
@@ -161,7 +163,8 @@ void lim_check_sta_in_pe_entries(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr)
 					&assoc_id, &session->dph.dphHashTable);
 			if (sta_ds
 #ifdef WLAN_FEATURE_11W
-			    && !sta_ds->rmfEnabled
+				&& (!sta_ds->rmfEnabled ||
+				    (sessionid != session->peSessionId))
 #endif
 			    ) {
 				lim_log(mac_ctx, LOGE,
@@ -1778,7 +1781,7 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		return;
 	}
 
-	lim_check_sta_in_pe_entries(mac_ctx, hdr);
+	lim_check_sta_in_pe_entries(mac_ctx, hdr, session->peSessionId);
 
 	/* Get pointer to Re/Association Request frame body */
 	frm_body = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
