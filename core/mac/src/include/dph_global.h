@@ -241,6 +241,7 @@ typedef struct sDphHashNode {
 
 	uint8_t nss;
 	int8_t del_sta_ctx_rssi;
+	bool sta_deletion_in_progress;
 
 	/*
 	 * When a station with already an existing dph entry tries to

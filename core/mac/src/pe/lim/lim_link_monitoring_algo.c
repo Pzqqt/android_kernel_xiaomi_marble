@@ -290,13 +290,16 @@ lim_trigger_sta_deletion(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 
 	if ((sta_ds->mlmStaContext.mlmState == eLIM_MLM_WT_DEL_STA_RSP_STATE) ||
 		(sta_ds->mlmStaContext.mlmState ==
-			eLIM_MLM_WT_DEL_BSS_RSP_STATE)) {
+			eLIM_MLM_WT_DEL_BSS_RSP_STATE) ||
+		sta_ds->sta_deletion_in_progress) {
 		/* Already in the process of deleting context for the peer */
-		lim_log(mac_ctx, LOGE,
-			FL("Deletion is in progress for peer:%pM"),
-			sta_ds->staAddr);
+		lim_log(mac_ctx, LOG1,
+			FL("Deletion is in progress (%d) for peer:%p in mlmState %d"),
+			sta_ds->sta_deletion_in_progress, sta_ds->staAddr,
+			sta_ds->mlmStaContext.mlmState);
 		return;
 	}
+	sta_ds->sta_deletion_in_progress = true;
 
 	sta_ds->mlmStaContext.disassocReason =
 		eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON;
