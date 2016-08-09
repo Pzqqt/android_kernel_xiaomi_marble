@@ -578,7 +578,7 @@ QDF_STATUS wmi_unified_stats_request_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-#ifndef WMI_NON_TLV_SUPPORT
+#ifdef CONFIG_MCL
 /**
  *  wmi_unified_packet_log_enable_send() - WMI request stats function
  *  @param wmi_handle      : handle to WMI.
@@ -1205,7 +1205,7 @@ QDF_STATUS wmi_unified_lro_config_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-#ifndef WMI_NON_TLV_SUPPORT
+#ifdef CONFIG_MCL
 /**
  * wmi_unified_peer_rate_report_cmd() - process the peer rate report command
  * @wmi_hdl: Pointer to wmi handle
@@ -1323,7 +1323,7 @@ QDF_STATUS wmi_unified_vdev_set_gtx_cfg_cmd(void *wmi_hdl, uint32_t if_id,
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-#ifndef WMI_NON_TLV_SUPPORT
+#ifdef CONFIG_MCL
 QDF_STATUS wmi_unified_process_update_edca_param(void *wmi_hdl,
 				uint8_t vdev_id,
 				wmi_wmm_vparams gwmm_param[WMI_MAX_NUM_AC])
@@ -1533,7 +1533,7 @@ QDF_STATUS wmi_unified_set_epno_network_list_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-#ifndef WMI_NON_TLV_SUPPORT
+#ifdef CONFIG_MCL
 /**
  * wmi_unified_roam_scan_offload_mode_cmd() - set roam scan parameters
  * @wmi_hdl: wmi handle
@@ -2123,7 +2123,7 @@ QDF_STATUS wmi_unified_lphb_config_udp_pkt_filter_cmd(void *wmi_hdl,
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-#ifndef WMI_NON_TLV_SUPPORT
+#ifdef CONFIG_MCL
 QDF_STATUS wmi_unified_process_dhcp_ind(void *wmi_hdl,
 				wmi_peer_set_param_cmd_fixed_param *ta_dhcp_ind)
 {
@@ -2309,7 +2309,7 @@ wmi_unified_dfs_phyerr_filter_offload_en_cmd(void *wmi_hdl,
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-#ifndef WMI_NON_TLV_SUPPORT
+#ifdef CONFIG_MCL
 QDF_STATUS wmi_unified_pktlog_wmi_send_cmd(void *wmi_hdl,
 				   WMI_PKTLOG_EVENT pktlog_event,
 				   uint32_t cmd_id,
@@ -3319,7 +3319,7 @@ QDF_STATUS wmi_unified_roam_scan_offload_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
-#ifndef WMI_NON_TLV_SUPPORT
+#ifdef CONFIG_MCL
 /**
  * wmi_unified_send_roam_scan_offload_ap_cmd() - set roam ap profile in fw
  * @wmi_hdl: wmi handle
@@ -4606,7 +4606,7 @@ QDF_STATUS wmi_check_and_update_fw_version(void *wmi_hdl, void *evt_buf)
  *
  * Return: 1 enabled, 0 disabled
  */
-#ifdef WMI_NON_TLV_SUPPORT
+#ifndef CONFIG_MCL
 bool wmi_service_enabled(void *wmi_hdl, uint32_t service_id)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;

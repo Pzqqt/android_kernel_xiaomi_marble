@@ -1056,7 +1056,7 @@ uint16_t wmi_get_max_msg_len(wmi_unified_t wmi_handle)
 	return wmi_handle->max_msg_len - WMI_MIN_HEAD_ROOM;
 }
 
-#ifndef WMI_NON_TLV_SUPPORT
+#ifdef CONFIG_MCL
 static uint8_t *wmi_id_to_name(uint32_t wmi_command)
 {
 	switch (wmi_command) {
@@ -1663,7 +1663,7 @@ static uint8_t *wmi_id_to_name(uint32_t wmi_command)
  *
  * Return: true if the command is part of the suspend resume sequence.
  */
-#ifndef WMI_NON_TLV_SUPPORT
+#ifdef CONFIG_MCL
 static bool wmi_is_runtime_pm_cmd(uint32_t cmd_id)
 {
 	switch (cmd_id) {
@@ -1742,8 +1742,8 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t len,
 		return -EINVAL;
 	}
 
-	/* Do sanity check on the TLV parameter structure */
 #ifndef WMI_NON_TLV_SUPPORT
+	/* Do sanity check on the TLV parameter structure */
 	if (wmi_handle->target_type == WMI_TLV_TARGET) {
 		void *buf_ptr = (void *)qdf_nbuf_data(buf);
 
@@ -1794,7 +1794,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t len,
 			       wmi_handle->wmi_endpoint_id, htc_tag);
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(pkt, buf);
-#ifndef WMI_NON_TLV_SUPPORT
+#ifdef CONFIG_MCL
 	wma_log_cmd_id(cmd_id);
 #endif
 
@@ -1864,7 +1864,7 @@ int wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
 	uint32_t idx = 0;
 	uint32_t evt_id;
 
-#ifdef WMI_TLV_AND_NON_TLV_SUPPORT
+#ifndef CONFIG_MCL
 	if (event_id >= wmi_events_max ||
 		wmi_handle->wmi_events[event_id] == WMI_EVENT_ID_INVALID) {
 		qdf_print("%s: Event id %d is unavailable\n",
@@ -1909,7 +1909,7 @@ int wmi_unified_unregister_event_handler(wmi_unified_t wmi_handle,
 	uint32_t idx = 0;
 	uint32_t evt_id;
 
-#ifdef WMI_TLV_AND_NON_TLV_SUPPORT
+#ifndef CONFIG_MCL
 	if (event_id >= wmi_events_max ||
 		wmi_handle->wmi_events[event_id] == WMI_EVENT_ID_INVALID) {
 		qdf_print("%s: Event id %d is unavailable\n",
@@ -1955,7 +1955,7 @@ static void wmi_process_fw_event_default_ctx(struct wmi_unified *wmi_handle,
 	wmi_buf_t evt_buf;
 	evt_buf = (wmi_buf_t) htc_packet->pPktContext;
 
-#ifdef WMI_NON_TLV_SUPPORT
+#ifndef CONFIG_MCL
 	wmi_handle->rx_ops.wma_process_fw_event_handler_cbk
 		(wmi_handle->scn_handle, evt_buf, exec_ctx);
 #else
@@ -2137,6 +2137,7 @@ end:
 	if (wmi_handle->target_type == WMI_TLV_TARGET)
 		wmitlv_free_allocated_event_tlvs(id, &wmi_cmd_struct_ptr);
 #endif
+
 	qdf_nbuf_free(evt_buf);
 
 }
@@ -2216,7 +2217,7 @@ void *wmi_unified_attach(void *scn_handle,
 {
 	struct wmi_unified *wmi_handle;
 
-#ifndef WMI_NON_TLV_SUPPORT
+#ifdef CONFIG_MCL
 	wmi_handle =
 		(struct wmi_unified *)os_malloc(NULL,
 				sizeof(struct wmi_unified),
@@ -2462,7 +2463,7 @@ void wmi_set_target_suspend(wmi_unified_t wmi_handle, A_BOOL val)
 	qdf_atomic_set(&wmi_handle->is_target_suspended, val);
 }
 
-#ifdef WMI_NON_TLV_SUPPORT
+#ifndef CONFIG_MCL
 /**
  * API to flush all the previous packets  associated with the wmi endpoint
  *
