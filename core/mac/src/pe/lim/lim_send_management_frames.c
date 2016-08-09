@@ -213,7 +213,7 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	uint32_t status, bytes, payload;
 	uint8_t *frame;
 	void *packet;
-	QDF_STATUS qdf_status, extcap_status;
+	QDF_STATUS qdf_status;
 	tpPESession pesession;
 	uint8_t sessionid;
 	uint8_t *p2pie = NULL;
@@ -222,6 +222,9 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	bool is_vht_enabled = false;
 	uint8_t txPower;
 	uint16_t addn_ielen = additional_ielen;
+	bool extracted_ext_cap_flag = false;
+	tDot11fIEExtCap extracted_ext_cap;
+	tSirRetStatus sir_status;
 
 	/* The probe req should not send 11ac capabilieties if band is 2.4GHz,
 	 * unless enableVhtFor24GHz is enabled in INI. So if enableVhtFor24GHz
@@ -353,13 +356,25 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 			FL("There were warnings while calculating the packed size for a Probe Request (0x%08x)."), status);
 	}
 
-	/* Strip extended capability IE (if present). FW will add that IE */
 	if (addn_ielen) {
-		extcap_status = lim_strip_extcap_ie(mac_ctx, additional_ie,
-					&addn_ielen, NULL);
-		if (QDF_STATUS_SUCCESS != extcap_status)
-			lim_log(mac_ctx, LOGE,
-			    FL("Error:%d stripping extcap IE"), extcap_status);
+		qdf_mem_zero((uint8_t *)&extracted_ext_cap,
+			sizeof(tDot11fIEExtCap));
+		sir_status = lim_strip_extcap_update_struct(mac_ctx,
+					additional_ie,
+					&addn_ielen,
+					&extracted_ext_cap);
+		if (eSIR_SUCCESS != sir_status) {
+			lim_log(mac_ctx, LOG1,
+			FL("Unable to Stripoff ExtCap IE from Probe Req"));
+		} else {
+			struct s_ext_cap *p_ext_cap =
+				(struct s_ext_cap *)
+					extracted_ext_cap.bytes;
+			if (p_ext_cap->interworking_service)
+				p_ext_cap->qos_map = 1;
+			extracted_ext_cap_flag =
+				lim_is_ext_cap_ie_present(p_ext_cap);
+		}
 	}
 
 	bytes = payload + sizeof(tSirMacMgmtHdr) + addn_ielen;
@@ -377,6 +392,10 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(mac_ctx, frame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_PROBE_REQ, bssid, self_macaddr);
+
+	/* merge the ExtCap struct*/
+	if (extracted_ext_cap_flag)
+		lim_merge_extcap_struct(&pr.ExtCap, &extracted_ext_cap);
 
 	/* That done, pack the Probe Request: */
 	status = dot11f_pack_probe_request(mac_ctx, &pr, frame +
@@ -1640,17 +1659,7 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 
 			if (p_ext_cap->interworking_service)
 				p_ext_cap->qos_map = 1;
-			else {
-			/*
-			 * No need to merge the EXT Cap from Supplicant
-			 * if interworkingService is not set, as currently
-			 * driver is only interested in interworkingService
-			 * capability from supplicant. if in future any other
-			 * EXT Cap info is required from supplicant
-			 * it needs to be handled here.
-			 */
-				extr_ext_flag = false;
-			}
+			extr_ext_flag = lim_is_ext_cap_ie_present(p_ext_cap);
 		}
 	} else {
 		lim_log(mac_ctx, LOG1,
