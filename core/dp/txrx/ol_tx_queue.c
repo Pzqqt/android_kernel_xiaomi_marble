@@ -80,7 +80,7 @@ ol_tx_queue_vdev_flush(struct ol_txrx_pdev_t *pdev, struct ol_txrx_vdev_t *vdev)
 	/* flush VDEV TX queues */
 	for (i = 0; i < OL_TX_VDEV_NUM_QUEUES; i++) {
 		txq = &vdev->txqs[i];
-		ol_tx_queue_free(pdev, txq, (i + OL_TX_NUM_TIDS));
+		ol_tx_queue_free(pdev, txq, (i + OL_TX_NUM_TIDS), false);
 	}
 	/* flush PEER TX queues */
 	do {
@@ -109,7 +109,7 @@ ol_tx_queue_vdev_flush(struct ol_txrx_pdev_t *pdev, struct ol_txrx_vdev_t *vdev)
 			for (j = 0; j < OL_TX_NUM_TIDS; j++) {
 				txq = &peers[i]->txqs[j];
 				if (txq->frms)
-					ol_tx_queue_free(pdev, txq, j);
+					ol_tx_queue_free(pdev, txq, j, true);
 			}
 			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 				   "%s: Delete Peer %p\n", __func__, peer);
@@ -316,7 +316,7 @@ void
 ol_tx_queue_free(
 	struct ol_txrx_pdev_t *pdev,
 	struct ol_tx_frms_queue_t *txq,
-	int tid)
+	int tid, bool is_peer_txq)
 {
 	int frms = 0, bytes = 0;
 	struct ol_tx_desc_t *tx_desc;
@@ -339,9 +339,9 @@ ol_tx_queue_free(
 		txq->frms--;
 		tx_desc = TAILQ_NEXT(tx_desc, tx_desc_list_elem);
 	}
-	ol_tx_queue_log_free(pdev, txq, tid, frms, bytes);
+	ol_tx_queue_log_free(pdev, txq, tid, frms, bytes, is_peer_txq);
 	txq->bytes -= bytes;
-	ol_tx_queue_log_free(pdev, txq, tid, frms, bytes);
+	ol_tx_queue_log_free(pdev, txq, tid, frms, bytes, is_peer_txq);
 	txq->flag = ol_tx_queue_empty;
 	/* txq->head gets reset during the TAILQ_CONCAT call */
 	TAILQ_CONCAT(&tx_tmp_list, &txq->head, tx_desc_list_elem);
@@ -1503,7 +1503,7 @@ void
 ol_tx_queue_log_free(
 	struct ol_txrx_pdev_t *pdev,
 	struct ol_tx_frms_queue_t *txq,
-	int tid, int frms, int bytes)
+	int tid, int frms, int bytes, bool is_peer_txq)
 {
 	u_int16_t peer_id;
 	struct ol_tx_log_queue_add_t *log_elem;
@@ -1516,7 +1516,7 @@ ol_tx_queue_log_free(
 		return;
 	}
 
-	if (tid < OL_TX_NUM_TIDS) {
+	if ((tid < OL_TX_NUM_TIDS) && is_peer_txq) {
 		struct ol_txrx_peer_t *peer;
 		struct ol_tx_frms_queue_t *txq_base;
 

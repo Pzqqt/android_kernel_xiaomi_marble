@@ -848,7 +848,7 @@ ol_txrx_vdev_tx_queue_free(struct ol_txrx_vdev_t *vdev)
 
 	for (i = 0; i < OL_TX_VDEV_NUM_QUEUES; i++) {
 		txq = &vdev->txqs[i];
-		ol_tx_queue_free(pdev, txq, (i + OL_TX_NUM_TIDS));
+		ol_tx_queue_free(pdev, txq, (i + OL_TX_NUM_TIDS), false);
 	}
 }
 
@@ -902,7 +902,7 @@ ol_txrx_peer_tx_queue_free(struct ol_txrx_pdev_t *pdev,
 
 	for (i = 0; i < OL_TX_NUM_TIDS; i++) {
 		txq = &peer->txqs[i];
-		ol_tx_queue_free(pdev, txq, i);
+		ol_tx_queue_free(pdev, txq, i, true);
 	}
 }
 #else
