@@ -28,8 +28,8 @@
 QDF_STATUS hif_snoc_open(struct hif_softc *hif_ctx,
 			 enum qdf_bus_type bus_type);
 void hif_snoc_close(struct hif_softc *hif_ctx);
-
-
+int hif_snoc_bus_suspend(struct hif_softc *hif_ctx);
+int hif_snoc_bus_resume(struct hif_softc *hif_ctx);
 void hif_snoc_disable_isr(struct hif_softc *hif_ctx);
 void hif_snoc_nointrs(struct hif_softc *scn);
 QDF_STATUS hif_snoc_enable_bus(struct hif_softc *ol_sc,
