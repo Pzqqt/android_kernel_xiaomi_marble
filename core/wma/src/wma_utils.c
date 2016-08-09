@@ -497,7 +497,7 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 	wmi_rate_stats *rate_stats;
 	tSirLLStatsResults *link_stats_results;
 	uint8_t *results, *t_peer_stats, *t_rate_stats;
-	uint32_t count, num_rates = 0;
+	uint32_t count, num_rates = 0, rate_cnt;
 	uint32_t next_res_offset, next_peer_offset, next_rate_offset;
 	size_t peer_info_size, peer_stats_size, rate_stats_size;
 	size_t link_stats_results_size;
@@ -585,7 +585,7 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 	next_res_offset = peer_stats_size;
 	next_peer_offset = WMI_TLV_HDR_SIZE;
 	next_rate_offset = WMI_TLV_HDR_SIZE;
-	for (count = 0; count < fixed_param->num_peers; count++) {
+	for (rate_cnt = 0; rate_cnt < fixed_param->num_peers; rate_cnt++) {
 		WMA_LOGD("Peer Info:");
 		WMA_LOGD("peer_type %u capabilities %u num_rates %u",
 			 peer_stats->peer_type, peer_stats->capabilities,
