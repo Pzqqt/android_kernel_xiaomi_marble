@@ -1897,6 +1897,7 @@ static int wma_unified_dfs_radar_rx_event_handler(void *handle,
 	 * Index of peak magnitude
 	 */
 	event->sidx = radar_event->peak_sidx;
+	event->re_flags = 0;
 
 	/*
 	 * Handle chirp flags.
