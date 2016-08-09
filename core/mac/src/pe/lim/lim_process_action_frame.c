@@ -504,6 +504,12 @@ static void __lim_process_operating_mode_action_frame(tpAniSirGlobal mac_ctx,
 	}
 	sta_ptr = dph_lookup_hash_entry(mac_ctx, mac_hdr->sa, &aid,
 			&session->dph.dphHashTable);
+
+	if (sta_ptr == NULL) {
+		lim_log(mac_ctx, LOGE, FL("Station context not found"));
+		goto end;
+	}
+
 	if (sta_ptr->htSupportedChannelWidthSet) {
 		if (WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ <
 				sta_ptr->vhtSupportedChannelWidthSet)
@@ -574,6 +580,8 @@ static void __lim_process_operating_mode_action_frame(tpAniSirGlobal mac_ctx,
 		lim_set_nss_change(mac_ctx, session, sta_ptr->vhtSupportedRxNss,
 			sta_ptr->staIndex, mac_hdr->sa);
 	}
+
+end:
 	qdf_mem_free(operating_mode_frm);
 	return;
 }

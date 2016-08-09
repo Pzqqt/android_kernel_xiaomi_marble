@@ -133,6 +133,11 @@ tpDphHashNode dph_lookup_hash_entry(tpAniSirGlobal pMac, uint8_t staAddr[],
 	tpDphHashNode ptr = NULL;
 	uint16_t index = hash_function(pMac, staAddr, pDphHashTable->size);
 
+	if (!pDphHashTable->pHashTable) {
+		lim_log(pMac, LOGE, FL("pHashTable is NULL"));
+		return ptr;
+	}
+
 	for (ptr = pDphHashTable->pHashTable[index]; ptr; ptr = ptr->next) {
 		if (dph_compare_mac_addr(staAddr, ptr->staAddr)) {
 			*pAssocId = ptr->assocId;
