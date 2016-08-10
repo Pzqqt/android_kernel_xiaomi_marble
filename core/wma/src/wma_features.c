@@ -2448,9 +2448,11 @@ static void wma_wow_wake_up_stats(tp_wma_handle wma, uint8_t *data,
 	case WOW_REASON_PATTERN_MATCH_FOUND:
 		if (WMA_BCAST_MAC_ADDR == *data) {
 			wma->wow_bcast_wake_up_count++;
-			if (WMA_ICMP_PROTOCOL == *(data + WMA_IPV4_PROTOCOL))
+			if (qdf_nbuf_data_is_ipv4_pkt(data) &&
+			    (WMA_ICMP_PROTOCOL == *(data + WMA_IPV4_PROTOCOL)))
 				wma->wow_icmpv4_count++;
-			if ((len > WMA_ICMP_V6_TYPE_OFFSET) &&
+			else if (qdf_nbuf_data_is_ipv6_pkt(data) &&
+			    (len > WMA_ICMP_V6_TYPE_OFFSET) &&
 			    (WMA_ICMP_V6_HEADER_TYPE ==
 			     *(data + WMA_ICMP_V6_HEADER_OFFSET)))
 				wma->wow_icmpv6_uc_bc_count++;
@@ -2466,9 +2468,11 @@ static void wma_wow_wake_up_stats(tp_wma_handle wma, uint8_t *data,
 				WMA_LOGA("ICMP_V6 data len %d", len);
 		} else {
 			wma->wow_ucast_wake_up_count++;
-			if (WMA_ICMP_PROTOCOL == *(data + WMA_IPV4_PROTOCOL))
+			if (qdf_nbuf_data_is_ipv4_pkt(data) &&
+			    (WMA_ICMP_PROTOCOL == *(data + WMA_IPV4_PROTOCOL)))
 				wma->wow_icmpv4_count++;
-			if ((len > WMA_ICMP_V6_TYPE_OFFSET) &&
+			else if (qdf_nbuf_data_is_ipv6_pkt(data) &&
+			    (len > WMA_ICMP_V6_TYPE_OFFSET) &&
 			    (WMA_ICMP_V6_HEADER_TYPE ==
 			     *(data + WMA_ICMP_V6_HEADER_OFFSET)))
 				wma->wow_icmpv6_uc_bc_count++;
