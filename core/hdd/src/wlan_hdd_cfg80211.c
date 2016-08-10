@@ -6918,20 +6918,14 @@ static uint32_t hdd_send_wakelock_stats(hdd_context_t *hdd_ctx,
 	hdd_log(LOG1, "wow_ipv6_mcast_na_stats %d",
 			data->wow_ipv6_mcast_na_stats);
 	hdd_log(LOG1, "wow_icmpv4_count %d", data->wow_icmpv4_count);
-	hdd_log(LOG1, "wow_icmpv6_uc_bc_count %d",
-			data->wow_icmpv6_uc_bc_count);
+	hdd_log(LOG1, "wow_icmpv6_count %d",
+			data->wow_icmpv6_count);
 
 	ipv6_rx_multicast_addr_cnt =
-		data->wow_ipv6_mcast_wake_up_count +
-		data->wow_ipv6_mcast_ra_stats +
-		data->wow_ipv6_mcast_ns_stats +
-		data->wow_ipv6_mcast_na_stats;
+		data->wow_ipv6_mcast_wake_up_count;
 
 	icmpv6_cnt =
-		data->wow_icmpv6_uc_bc_count +
-		data->wow_ipv6_mcast_ra_stats +
-		data->wow_ipv6_mcast_ns_stats +
-		data->wow_ipv6_mcast_na_stats;
+		data->wow_icmpv6_count;
 
 	rx_multicast_cnt =
 		data->wow_ipv4_mcast_wake_up_count +

@@ -5945,7 +5945,7 @@ struct sir_bpf_get_offload {
  * @wow_ipv6_mcast_ns_stats: ipv6 multicast ns stats
  * @wow_ipv6_mcast_na_stats: ipv6 multicast na stats
  * @wow_icmpv4_count: ipv4 icmp packet count
- * @wow_icmpv6_uc_bc_count: ipv6 icmp packet count for unicast and broadcast
+ * @wow_icmpv6_count: ipv6 icmp packet count
  */
 struct sir_wake_lock_stats {
 	uint32_t wow_ucast_wake_up_count;
@@ -5956,7 +5956,7 @@ struct sir_wake_lock_stats {
 	uint32_t wow_ipv6_mcast_ns_stats;
 	uint32_t wow_ipv6_mcast_na_stats;
 	uint32_t wow_icmpv4_count;
-	uint32_t wow_icmpv6_uc_bc_count;
+	uint32_t wow_icmpv6_count;
 };
 
 /**

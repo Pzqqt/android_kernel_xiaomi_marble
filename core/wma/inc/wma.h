@@ -1267,7 +1267,7 @@ struct extended_caps {
  * @wow_ipv6_mcast_ns_stats: WoW IPV6 mcast NS packet wake up count
  * @wow_ipv6_mcast_na_stats: WoW IPV6 mcast NA packet wake up count
  * @wow_icmpv4_count: WoW ipv4 icmp packet wake up count
- * @wow_icmpv6_uc_bc_count: WoW ipv6 icmp packet count for unicast and broadcast
+ * @wow_icmpv6_count: WoW ipv6 icmp packet wake up count
  * @dual_mac_cfg: Dual mac configuration params for scan and fw mode
  *
  * @max_scan:  maximum scan requests than can be queued
@@ -1429,7 +1429,7 @@ typedef struct {
 	uint32_t wow_ipv6_mcast_ns_stats;
 	uint32_t wow_ipv6_mcast_na_stats;
 	uint32_t wow_icmpv4_count;
-	uint32_t wow_icmpv6_uc_bc_count;
+	uint32_t wow_icmpv6_count;
 	uint32_t wow_oem_response_wake_up_count;
 
 	/* OCB request contexts */
