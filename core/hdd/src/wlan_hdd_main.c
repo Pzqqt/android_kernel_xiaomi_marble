@@ -5582,8 +5582,6 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 	hdd_avoid_freq_list.avoidFreqRangeCount =
 		ch_avoid_indi->avoid_range_count;
 
-	wlan_hdd_send_avoid_freq_event(hdd_ctxt, &hdd_avoid_freq_list);
-
 	/* clear existing unsafe channel cache */
 	hdd_ctxt->unsafe_channel_count = 0;
 	qdf_mem_zero(hdd_ctxt->unsafe_channel_list,
@@ -5673,6 +5671,12 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 		hdd_notice("channel %d is not safe ",
 		       hdd_ctxt->unsafe_channel_list[channel_loop]);
 	}
+
+	/*
+	 * first update the unsafe channel list to the platform driver and
+	 * send the avoid freq event to the application
+	 */
+	wlan_hdd_send_avoid_freq_event(hdd_ctxt, &hdd_avoid_freq_list);
 
 	if (!hdd_ctxt->unsafe_channel_count) {
 		hdd_info("no unsafe channels - not restarting SAP");
