@@ -1882,18 +1882,19 @@ void ol_tso_seg_list_deinit(struct ol_txrx_pdev_t *pdev)
 
 	qdf_spin_lock_bh(&pdev->tso_seg_pool.tso_mutex);
 	c_element = pdev->tso_seg_pool.freelist;
-	for (i = 0; i < pdev->tso_seg_pool.pool_size; i++) {
-		temp = c_element->next;
-		qdf_mem_free(c_element);
-		c_element = temp;
-		if (!c_element)
-			break;
-	}
+	i = pdev->tso_seg_pool.pool_size;
 
 	pdev->tso_seg_pool.freelist = NULL;
 	pdev->tso_seg_pool.num_free = 0;
 	pdev->tso_seg_pool.pool_size = 0;
+
 	qdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
 	qdf_spinlock_destroy(&pdev->tso_seg_pool.tso_mutex);
+
+	while (i-- > 0 && c_element) {
+		temp = c_element->next;
+		qdf_mem_free(c_element);
+		c_element = temp;
+	}
 }
 #endif /* FEATURE_TSO */
