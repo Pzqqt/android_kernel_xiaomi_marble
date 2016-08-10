@@ -1949,11 +1949,13 @@ static void wma_set_vdev_resume_dtim(tp_wma_handle wma, uint8_t vdev_id)
 		uint32_t cfg_data_val = 0;
 		/* get mac to acess CFG data base */
 		struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
+		if (!mac) {
+			WMA_LOGE(FL("Failed to get mac context"));
+			return;
+		}
 		/* Set Listen Interval */
-		if ((NULL == mac) || (wlan_cfg_get_int(mac,
-						       WNI_CFG_LISTEN_INTERVAL,
-						       &cfg_data_val) !=
-				      eSIR_SUCCESS)) {
+		if ((wlan_cfg_get_int(mac, WNI_CFG_LISTEN_INTERVAL,
+				      &cfg_data_val) != eSIR_SUCCESS)) {
 			QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 				  "Failed to get value for listen interval");
 			cfg_data_val = POWERSAVE_DEFAULT_LISTEN_INTERVAL;

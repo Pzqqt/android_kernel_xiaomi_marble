@@ -722,11 +722,11 @@ void lim_process_ndi_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx, tpSirMsgQ lim_msgq,
 	tLimMlmStartCnf mlm_start_cnf;
 	tpAddBssParams add_bss_params = (tpAddBssParams) lim_msgq->bodyptr;
 
-	lim_log(mac_ctx, LOG1, FL("Status %d"), add_bss_params->status);
 	if (NULL == add_bss_params) {
 		lim_log(mac_ctx, LOGE, FL("Invalid body pointer in message"));
 		goto end;
 	}
+	lim_log(mac_ctx, LOG1, FL("Status %d"), add_bss_params->status);
 	if (QDF_STATUS_SUCCESS == add_bss_params->status) {
 		lim_log(mac_ctx, LOG1,
 		       FL("WDA_ADD_BSS_RSP returned QDF_STATUS_SUCCESS"));
