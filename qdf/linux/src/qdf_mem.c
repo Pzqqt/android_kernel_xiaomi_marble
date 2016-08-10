@@ -37,6 +37,12 @@
 #include "qdf_module.h"
 #include <qdf_trace.h>
 
+#ifdef CONFIG_MCL
+#include <host_diag_core_event.h>
+#else
+#define host_log_low_resource_failure(code) do {} while (0)
+#endif
+
 #if defined(CONFIG_CNSS)
 #include <net/cnss.h>
 #endif
@@ -442,6 +448,7 @@ void *qdf_mem_malloc_debug(size_t size,
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: called with invalid arg; passed in %zu !!!",
 			  __func__, size);
+		host_log_low_resource_failure(WIFI_EVENT_MEMORY_FAILURE);
 		return NULL;
 	}
 
@@ -499,6 +506,10 @@ void *qdf_mem_malloc_debug(size_t size,
 
 		mem_ptr = (void *)(mem_struct + 1);
 	}
+
+	if (!mem_ptr)
+		host_log_low_resource_failure(WIFI_EVENT_MEMORY_FAILURE);
+
 	return mem_ptr;
 }
 EXPORT_SYMBOL(qdf_mem_malloc_debug);
