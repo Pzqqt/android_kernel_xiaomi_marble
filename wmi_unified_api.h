@@ -1270,4 +1270,19 @@ QDF_STATUS wmi_unified_peer_rx_reorder_queue_setup_send(void *wmi_hdl,
 					struct rx_reorder_queue_setup_params *param);
 QDF_STATUS wmi_unified_peer_rx_reorder_queue_remove_send(void *wmi_hdl,
 					struct rx_reorder_queue_remove_params *param);
+
+QDF_STATUS wmi_extract_service_ready_ext(void *wmi_hdl, uint8_t *evt_buf,
+		struct wmi_host_service_ext_param *param);
+QDF_STATUS wmi_extract_hw_mode_cap_service_ready_ext(
+			void *wmi_hdl,
+			uint8_t *evt_buf, uint8_t hw_mode_idx,
+			struct wmi_host_hw_mode_caps *param);
+QDF_STATUS wmi_extract_mac_phy_cap_service_ready_ext(
+			void *wmi_hdl,
+			uint8_t *evt_buf, uint8_t hw_mode_idx,
+			struct wmi_host_mac_phy_caps *param);
+QDF_STATUS wmi_extract_reg_cap_service_ready_ext(
+			void *wmi_hdl,
+			uint8_t *evt_buf, uint8_t phy_idx,
+			struct WMI_HOST_HAL_REG_CAPABILITIES_EXT *param);
 #endif /* _WMI_UNIFIED_API_H_ */
