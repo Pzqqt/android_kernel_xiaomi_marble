@@ -16570,6 +16570,40 @@ QDF_STATUS sme_enable_disable_chanavoidind_event(tHalHandle hal,
 		sme_release_global_lock(&mac_ctx->sme);
 		return status;
 	}
+	return status;
+}
 
+/*
+ * sme_set_default_scan_ie() - API to send default scan IE to LIM
+ * @hal: reference to the HAL
+ * @session_id: current session ID
+ * @ie_data: Pointer to Scan IE data
+ * @ie_len: Length of @ie_data
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_set_default_scan_ie(tHalHandle hal, uint16_t session_id,
+					uint8_t *ie_data, uint16_t ie_len)
+{
+	QDF_STATUS status;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct hdd_default_scan_ie *set_ie_params;
+
+	status = sme_acquire_global_lock(&mac_ctx->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		set_ie_params = qdf_mem_malloc(sizeof(*set_ie_params));
+		if (!set_ie_params)
+			status = QDF_STATUS_E_NOMEM;
+		else {
+			set_ie_params->message_type = eWNI_SME_DEFAULT_SCAN_IE;
+			set_ie_params->length = sizeof(*set_ie_params);
+			set_ie_params->session_id = session_id;
+			set_ie_params->ie_len = ie_len;
+			qdf_mem_copy(set_ie_params->ie_data, ie_data, ie_len);
+			status = cds_send_mb_message_to_mac(set_ie_params);
+		}
+		sme_release_global_lock(&mac_ctx->sme);
+	}
+	sms_log(mac_ctx, LOG1, FL("Set default scan IE status %d"), status);
 	return status;
 }

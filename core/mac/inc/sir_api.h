@@ -5362,6 +5362,34 @@ struct fw_dump_rsp {
 };
 
 /**
+ * DEFAULT_SCAN_IE_ID - Identifier for the collection of IE's added
+ * by default to the probe request
+ */
+#define DEFAULT_SCAN_IE_ID 256
+
+ /* MAX_DEFAULT_SCAN_IE_LEN - Maxmimum length of Default Scan IE's */
+#define MAX_DEFAULT_SCAN_IE_LEN 1024
+
+ /* Extended Capabilities IE header(IE Id + IE Length) length */
+#define EXT_CAP_IE_HDR_LEN 2
+
+/**
+ * struct hdd_default_scan_ie - HDD default scan IE structure
+ * @message_type: message type to be set with eWNI_SME_DEFAULT_SCAN_IE
+ * @length: length of the struct hdd_default_scan_ie
+ * @session_id: Session Id
+ * @ie_len: Default scan IE length
+ * @ie_data: Pointer to default scan IE data
+ */
+struct hdd_default_scan_ie {
+	uint16_t message_type;
+	uint16_t length;
+	uint16_t session_id;
+	uint16_t ie_len;
+	uint8_t ie_data[MAX_DEFAULT_SCAN_IE_LEN];
+};
+
+/**
  * struct vdev_ie_info - IE info
  * @vdev_id - vdev for which the IE is being sent
  * @ie_id - ID of the IE

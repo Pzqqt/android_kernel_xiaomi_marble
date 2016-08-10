@@ -1261,4 +1261,6 @@ QDF_STATUS sme_update_sta_roam_policy(tHalHandle hal,
 		uint8_t session_id);
 QDF_STATUS sme_enable_disable_chanavoidind_event(tHalHandle hal,
 					uint8_t set_value);
+QDF_STATUS sme_set_default_scan_ie(tHalHandle hal, uint16_t session_id,
+				uint8_t *ie_data, uint16_t ie_len);
 #endif /* #if !defined( __SME_API_H ) */

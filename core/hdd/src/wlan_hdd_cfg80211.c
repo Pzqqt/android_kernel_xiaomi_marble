@@ -3906,6 +3906,9 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	int access_policy = 0;
 	char vendor_ie[SIR_MAC_MAX_IE_LENGTH + 2];
 	bool vendor_ie_present = false, access_policy_present = false;
+	uint16_t scan_ie_len = 0;
+	uint8_t *scan_ie;
+
 	ENTER_DEV(dev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
@@ -4039,6 +4042,25 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		ret_val = hdd_enable_disable_ca_event(hdd_ctx, set_value);
 	}
 
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_SCAN_DEFAULT_IES]) {
+		scan_ie_len = nla_len(
+			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_SCAN_DEFAULT_IES]);
+		hdd_info("Received default scan IE of len %d session %d device mode %d",
+						scan_ie_len, adapter->sessionId,
+						adapter->device_mode);
+		if (scan_ie_len && (scan_ie_len <= MAX_DEFAULT_SCAN_IE_LEN)) {
+			scan_ie = (uint8_t *) nla_data(tb
+				[QCA_WLAN_VENDOR_ATTR_CONFIG_SCAN_DEFAULT_IES]);
+			if (adapter->device_mode == QDF_STA_MODE) {
+				status = sme_set_default_scan_ie(hdd_ctx->hHal,
+						adapter->sessionId, scan_ie,
+						scan_ie_len);
+				if (QDF_STATUS_SUCCESS != status)
+					ret_val = -EPERM;
+			}
+		} else
+			ret_val = -EPERM;
+	}
 	return ret_val;
 }
 

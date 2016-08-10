@@ -242,6 +242,130 @@ static void lim_process_set_antenna_resp(tpAniSirGlobal mac, void *body)
 }
 
 /**
+ * lim_update_default_scan_ies() - Update Extended capabilities IE(if present)
+ * with capabilities of Fine Time measurements(FTM) if set in driver
+ *
+ * @mac_ctx: Pointer to Global MAC structure
+ * @ie_data: Default Scan IE data
+ * @local_ie_buf: Local Scan IE data
+ * @local_ie_len: Pointer to length of @ie_data
+ *
+ * Return: eSIR_SUCCESS on success, eSIR_FAILURE otherwise
+ */
+tSirRetStatus lim_update_default_scan_ies(tpAniSirGlobal mac_ctx,
+		uint8_t *ie_data, uint8_t *local_ie_buf, uint16_t *local_ie_len)
+{
+	uint32_t dot11mode;
+	bool vht_enabled = false;
+	tDot11fIEExtCap default_scan_ext_cap = {0}, driver_ext_cap = {0};
+	uint8_t ext_cap_ie_hdr[EXT_CAP_IE_HDR_LEN] = {
+			DOT11F_EID_EXTCAP, DOT11F_IE_EXTCAP_MAX_LEN};
+	tSirRetStatus status;
+
+	status = lim_strip_extcap_update_struct(mac_ctx, ie_data,
+				   local_ie_len, &default_scan_ext_cap);
+	if (eSIR_SUCCESS != status ||
+		(((*local_ie_len) + EXT_CAP_IE_HDR_LEN
+		 + DOT11F_IE_EXTCAP_MAX_LEN) > MAX_DEFAULT_SCAN_IE_LEN)) {
+		lim_log(mac_ctx, LOGE, FL("Strip ext cap fails(%d)"), status);
+		return eSIR_FAILURE;
+	}
+
+	qdf_mem_copy(local_ie_buf, ie_data, (*local_ie_len));
+	qdf_mem_copy(local_ie_buf + (*local_ie_len),
+			ext_cap_ie_hdr, EXT_CAP_IE_HDR_LEN);
+	(*local_ie_len) += EXT_CAP_IE_HDR_LEN;
+
+	wlan_cfg_get_int(mac_ctx, WNI_CFG_DOT11_MODE, &dot11mode);
+	if (IS_DOT11_MODE_VHT(dot11mode))
+		vht_enabled = true;
+
+	status = populate_dot11f_ext_cap(mac_ctx, vht_enabled,
+					&driver_ext_cap, NULL);
+	if (eSIR_SUCCESS != status) {
+		lim_log(mac_ctx, LOGE, FL("Update ext cap fails"));
+		qdf_mem_copy(local_ie_buf + (*local_ie_len),
+				default_scan_ext_cap.bytes,
+				DOT11F_IE_EXTCAP_MAX_LEN);
+		(*local_ie_len) += DOT11F_IE_EXTCAP_MAX_LEN;
+		return eSIR_SUCCESS;
+	}
+	lim_merge_extcap_struct(&driver_ext_cap, &default_scan_ext_cap);
+
+	qdf_mem_copy(local_ie_buf + (*local_ie_len),
+			driver_ext_cap.bytes, DOT11F_IE_EXTCAP_MAX_LEN);
+	(*local_ie_len) += DOT11F_IE_EXTCAP_MAX_LEN;
+	return eSIR_SUCCESS;
+}
+
+/**
+ * lim_process_set_default_scan_ie_request() - Process the Set default
+ * Scan IE request from HDD.
+ * @mac_ctx: Pointer to Global MAC structure
+ * @msg_buf: Pointer to incoming data
+ *
+ * This function receives the default scan IEs and updates the ext cap IE
+ * (if present) with FTM capabilities and pass the Scan IEs to WMA.
+ *
+ * Return: None
+ */
+static void lim_process_set_default_scan_ie_request(tpAniSirGlobal mac_ctx,
+							uint32_t *msg_buf)
+{
+	struct hdd_default_scan_ie *set_ie_params;
+	struct vdev_ie_info *wma_ie_params;
+	uint8_t *local_ie_buf;
+	uint16_t local_ie_len;
+	tSirMsgQ msg_q;
+	tSirRetStatus ret_code;
+
+	if (!msg_buf) {
+		lim_log(mac_ctx, LOGE, FL("msg_buf is NULL"));
+		return;
+	}
+
+	set_ie_params = (struct hdd_default_scan_ie *) msg_buf;
+	local_ie_len = set_ie_params->ie_len;
+
+	local_ie_buf = qdf_mem_malloc(MAX_DEFAULT_SCAN_IE_LEN);
+	if (!local_ie_buf) {
+		lim_log(mac_ctx, LOGE,
+			FL("Scan IE Update fails due to malloc failure"));
+		return;
+	}
+
+	if (lim_update_default_scan_ies(mac_ctx,
+			(uint8_t *)set_ie_params->ie_data,
+			local_ie_buf, &local_ie_len)) {
+		lim_log(mac_ctx, LOGE, FL("Update default scan IEs fails"));
+		goto scan_ie_send_fail;
+	}
+
+	wma_ie_params = qdf_mem_malloc(sizeof(*wma_ie_params) + local_ie_len);
+	if (!wma_ie_params) {
+		lim_log(mac_ctx, LOGE, FL("fail to alloc wma_ie_params"));
+		goto scan_ie_send_fail;
+	}
+	wma_ie_params->vdev_id = set_ie_params->session_id;
+	wma_ie_params->ie_id = DEFAULT_SCAN_IE_ID;
+	wma_ie_params->length = local_ie_len;
+	wma_ie_params->data = (uint8_t *)(wma_ie_params)
+					+ sizeof(*wma_ie_params);
+	qdf_mem_copy(wma_ie_params->data, local_ie_buf, local_ie_len);
+
+	msg_q.type = WMA_SET_IE_INFO;
+	msg_q.bodyptr = wma_ie_params;
+	msg_q.bodyval = 0;
+	ret_code = wma_post_ctrl_msg(mac_ctx, &msg_q);
+	if (eSIR_SUCCESS != ret_code) {
+		lim_log(mac_ctx, LOGE, FL("fail to send WMA_SET_IE_INFO"));
+		qdf_mem_free(wma_ie_params);
+	}
+scan_ie_send_fail:
+	qdf_mem_free(local_ie_buf);
+}
+
+/**
  * lim_process_hw_mode_trans_ind() - Process set HW mode transition indication
  * @mac: Global MAC pointer
  * @body: Set HW mode response in sir_hw_mode_trans_ind format
@@ -1892,6 +2016,11 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		break;
 	case SIR_HAL_SOC_ANTENNA_MODE_RESP:
 		lim_process_set_antenna_resp(mac_ctx, msg->bodyptr);
+		qdf_mem_free((void *)msg->bodyptr);
+		msg->bodyptr = NULL;
+		break;
+	case eWNI_SME_DEFAULT_SCAN_IE:
+		lim_process_set_default_scan_ie_request(mac_ctx, msg->bodyptr);
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;

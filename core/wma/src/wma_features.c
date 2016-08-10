@@ -100,6 +100,13 @@
 				(1 << WOW_DISASSOC_RECVD_EVENT) |\
 				(1 << WOW_HTT_EVENT))\
 
+/**
+ * WMA_SET_VDEV_IE_SOURCE_HOST - Flag to identify the source of VDEV SET IE
+ * command. The value is 0x0 for the VDEV SET IE WMI commands from mobile
+ * MCL platform.
+ */
+#define WMA_SET_VDEV_IE_SOURCE_HOST 0x0
+
 static const uint8_t arp_ptrn[] = {0x08, 0x06};
 static const uint8_t arp_mask[] = {0xff, 0xff};
 static const uint8_t ns_ptrn[] = {0x86, 0xDD};
@@ -7730,6 +7737,7 @@ QDF_STATUS wma_process_set_ie_info(tp_wma_handle wma,
 	cmd.length = ie_info->length;
 	cmd.band = ie_info->band;
 	cmd.data = ie_info->data;
+	cmd.ie_source = WMA_SET_VDEV_IE_SOURCE_HOST;
 
 	WMA_LOGD(FL("ie_id: %d, band: %d, len: %d"),
 		ie_info->ie_id, ie_info->band, ie_info->length);
@@ -7739,7 +7747,6 @@ QDF_STATUS wma_process_set_ie_info(tp_wma_handle wma,
 
 	ret = wmi_unified_process_set_ie_info_cmd(wma->wmi_handle,
 				   &cmd);
-
 	return ret;
 }
 
