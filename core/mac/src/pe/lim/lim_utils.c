@@ -702,16 +702,12 @@ void lim_cleanup_mlm(tpAniSirGlobal mac_ctx)
 	 * each STA associated per BSSId and deactivate/delete
 	 * the pmfSaQueryTimer for it
 	 */
-	if (cds_is_driver_recovering()) {
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
-				FL("SSR is detected, proceed to clean up pmfSaQueryTimer"));
-		for (bss_entry = 0; bss_entry < mac_ctx->lim.maxBssId;
-						bss_entry++) {
-			if (!mac_ctx->lim.gpSession[bss_entry].valid)
-				continue;
-			lim_deactivate_del_sta(mac_ctx, bss_entry,
-					psession_entry, sta_ds);
-		}
+	for (bss_entry = 0; bss_entry < mac_ctx->lim.maxBssId;
+					bss_entry++) {
+		if (!mac_ctx->lim.gpSession[bss_entry].valid)
+			continue;
+		lim_deactivate_del_sta(mac_ctx, bss_entry,
+				psession_entry, sta_ds);
 	}
 #endif
 
