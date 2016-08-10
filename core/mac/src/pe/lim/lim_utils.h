@@ -521,6 +521,8 @@ typedef enum {
 	WLAN_PE_DIAG_ROAM_ASSOC_COMP_EVENT,
 	RESERVED1, /* = 64 for SCAN_COMPLETE */
 	RESERVED2, /* = 65 for SCAN_RES_FOUND */
+	WLAN_PE_DIAG_ASSOC_TIMEOUT,
+	WLAN_PE_DIAG_AUTH_TIMEOUT,
 } WLAN_PE_DIAG_EVENT_TYPE;
 
 void lim_diag_event_report(tpAniSirGlobal pMac, uint16_t eventType,

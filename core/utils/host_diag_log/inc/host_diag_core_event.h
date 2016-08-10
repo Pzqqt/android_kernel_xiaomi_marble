@@ -260,6 +260,31 @@ struct host_event_wlan_eapol {
 };
 
 /*-------------------------------------------------------------------------
+  Event ID: EVENT_WLAN_LOW_RESOURCE_FAILURE
+  ------------------------------------------------------------------------*/
+/**
+ * struct host_event_wlan_low_resource_failure - Structure holding the
+ * low resource failure information
+ * @event_sub_type: Gives further information about reason for
+ * low resource condition
+ *
+ * This structure will hold the low resource failure information
+ */
+struct host_event_wlan_low_resource_failure {
+	uint8_t event_sub_type;
+};
+
+/**
+ * enum resource_failure_type - Reason for low resource failure condition
+ * @WIFI_EVENT_MEMORY_FAILURE: Memory failure
+ *
+ * This enum has the reason codes why the low resource situation is observed
+ */
+enum resource_failure_type {
+	WIFI_EVENT_MEMORY_FAILURE,
+};
+
+/*-------------------------------------------------------------------------
   Event ID: EVENT_WLAN_WAKE_LOCK
   ------------------------------------------------------------------------*/
 /**
