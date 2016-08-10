@@ -351,14 +351,14 @@ unsigned int hif_get_dst_ring_read_index(struct hif_softc *scn,
 
 #define CE_SRC_RING_BYTE_SWAP_SET(scn, CE_ctrl_addr, n) \
 	A_TARGET_WRITE(scn, (CE_ctrl_addr) + CE_CTRL1_ADDRESS, \
-		       (A_TARGET_READ((targid), \
+		       (A_TARGET_READ(scn, \
 		       (CE_ctrl_addr) + CE_CTRL1_ADDRESS) \
 		       & ~CE_CTRL1_SRC_RING_BYTE_SWAP_EN_MASK) | \
 		       CE_CTRL1_SRC_RING_BYTE_SWAP_EN_SET(n))
 
 #define CE_DEST_RING_BYTE_SWAP_SET(scn, CE_ctrl_addr, n) \
 	A_TARGET_WRITE(scn, (CE_ctrl_addr)+CE_CTRL1_ADDRESS, \
-		       (A_TARGET_READ((targid), \
+		       (A_TARGET_READ(scn, \
 		       (CE_ctrl_addr) + CE_CTRL1_ADDRESS) \
 		       & ~CE_CTRL1_DST_RING_BYTE_SWAP_EN_MASK) | \
 		       CE_CTRL1_DST_RING_BYTE_SWAP_EN_SET(n))

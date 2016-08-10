@@ -892,20 +892,21 @@ static QDF_STATUS wmi_debugfs_init(wmi_unified_t wmi_handle)
  *
  * @wmi_handle: wmi handle
  * @cmd: mgmt command
- * @type: 802.11 frame type
- * @subtype: 802.11 fram subtype
+ * @header: pointer to 802.11 header
  * @vdev_id: vdev id
  * @chanfreq: channel frequency
  *
  * Return: none
  */
 void wmi_mgmt_cmd_record(wmi_unified_t wmi_handle, WMI_CMD_ID cmd,
-				uint32_t type, uint32_t subtype,
-				uint32_t vdev_id, uint32_t chanfreq)
+			void *header, uint32_t vdev_id, uint32_t chanfreq)
 {
 	qdf_spin_lock_bh(&wmi_handle->log_info.wmi_record_lock);
 
-	WMI_MGMT_COMMAND_RECORD(cmd, type, subtype, vdev_id, chanfreq);
+	WMI_MGMT_COMMAND_RECORD(cmd,
+				((struct wmi_command_header *)header)->type,
+				((struct wmi_command_header *)header)->sub_type,
+				vdev_id, chanfreq);
 
 	qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);
 }
@@ -920,8 +921,7 @@ void wmi_mgmt_cmd_record(wmi_unified_t wmi_handle, WMI_CMD_ID cmd,
  */
 static void wmi_debugfs_remove(wmi_unified_t wmi_handle) { }
 void wmi_mgmt_cmd_record(wmi_unified_t wmi_handle, WMI_CMD_ID cmd,
-				uint32_t type, uint32_t subtype,
-				uint32_t vdev_id, uint32_t chanfreq) { }
+			void *header, uint32_t vdev_id, uint32_t chanfreq) { }
 #endif /*WMI_INTERFACE_EVENT_LOGGING */
 
 int wmi_get_host_credits(wmi_unified_t wmi_handle);
@@ -1581,6 +1581,8 @@ static uint8_t *wmi_id_to_name(WMI_CMD_ID wmi_command)
 		CASE_RETURN_STRING(WMI_PDEV_SET_REORDER_TIMEOUT_VAL_CMDID);
 		CASE_RETURN_STRING(WMI_PEER_SET_RX_BLOCKSIZE_CMDID);
 		CASE_RETURN_STRING(WMI_PDEV_SET_WAKEUP_CONFIG_CMDID);
+		CASE_RETURN_STRING(WMI_PDEV_GET_ANTDIV_STATUS_CMDID);
+		CASE_RETURN_STRING(WMI_PEER_ANTDIV_INFO_REQ_CMDID);
 	}
 
 	return "Invalid WMI cmd";
@@ -2219,7 +2221,6 @@ void wmi_unified_detach(struct wmi_unified *wmi_handle)
 
 	wmi_debugfs_remove(wmi_handle);
 
-	qdf_spin_lock_bh(&wmi_handle->eventq_lock);
 	buf = qdf_nbuf_queue_remove(&wmi_handle->event_queue);
 	while (buf) {
 		qdf_nbuf_free(buf);
@@ -2230,7 +2231,6 @@ void wmi_unified_detach(struct wmi_unified *wmi_handle)
 	wmi_log_buffer_free(wmi_handle);
 #endif
 
-	qdf_spin_unlock_bh(&wmi_handle->eventq_lock);
 	qdf_spinlock_destroy(&wmi_handle->eventq_lock);
 	qdf_spinlock_destroy(&wmi_handle->ctx_lock);
 	OS_FREE(wmi_handle);

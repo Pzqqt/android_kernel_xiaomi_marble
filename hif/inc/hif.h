@@ -615,6 +615,11 @@ uint32_t hif_set_nss_wifiol_mode(struct hif_opaque_softc *osc,
 int32_t hif_get_nss_wifiol_bypass_nw_process(struct hif_opaque_softc *osc);
 #endif
 
+#ifdef WLAN_SUSPEND_RESUME_TEST
+typedef void (*hdd_fake_resume_callback)(uint32_t val);
+void hif_fake_apps_suspend(hdd_fake_resume_callback callback);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

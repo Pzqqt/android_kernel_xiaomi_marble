@@ -220,7 +220,11 @@ QDF_STATUS hif_snoc_enable_bus(struct hif_softc *ol_sc,
 	int ret;
 	int hif_type;
 	int target_type;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0)
 	ret = dma_set_mask_and_coherent(dev, DMA_BIT_MASK(37));
+#else
+	ret = dma_set_coherent_mask(dev, DMA_BIT_MASK(37));
+#endif
 	if (ret) {
 		HIF_ERROR("%s: failed to set dma mask error = %d",
 				__func__, ret);

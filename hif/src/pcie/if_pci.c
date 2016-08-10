@@ -2910,16 +2910,17 @@ static void hif_fastpath_resume(struct hif_opaque_softc *hif_ctx)
 		return;
 
 	if (scn->fastpath_mode_on) {
-		if (Q_TARGET_ACCESS_BEGIN(scn)) {
-			ce_state = scn->ce_id_to_state[CE_HTT_H2T_MSG];
-			qdf_spin_lock_bh(&ce_state->ce_index_lock);
+		if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+			return;
 
-			/*war_ce_src_ring_write_idx_set */
-			CE_SRC_RING_WRITE_IDX_SET(scn, ce_state->ctrl_addr,
-					ce_state->src_ring->write_index);
-			qdf_spin_unlock_bh(&ce_state->ce_index_lock);
-			Q_TARGET_ACCESS_END(scn);
-		}
+		ce_state = scn->ce_id_to_state[CE_HTT_H2T_MSG];
+		qdf_spin_lock_bh(&ce_state->ce_index_lock);
+
+		/*war_ce_src_ring_write_idx_set */
+		CE_SRC_RING_WRITE_IDX_SET(scn, ce_state->ctrl_addr,
+				ce_state->src_ring->write_index);
+		qdf_spin_unlock_bh(&ce_state->ce_index_lock);
+		Q_TARGET_ACCESS_END(scn);
 	}
 }
 #else

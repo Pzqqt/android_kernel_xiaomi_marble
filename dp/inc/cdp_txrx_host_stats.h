@@ -38,7 +38,7 @@
 /* Need to rename the function to reflect the functionality "show" / "display"
  * WIN -- to figure out whether to change OSIF to converge (not an immediate AI)
  * */
-#if QCA_OL_11AC_FAST_PATH
+#if WLAN_FEATURE_FASTPATH
 int ol_txrx_host_stats_get(
 	ol_txrx_vdev_handle vdev,
 	struct ol_txrx_stats_req *req);
@@ -82,7 +82,7 @@ ol_txrx_disable_enhanced_stats(ol_txrx_pdev_handle pdev);
 uint32_t *ol_txrx_get_stats_base(ol_txrx_pdev_handle pdev,
 	uint32_t *stats_base, uint32_t msg_len, uint8_t type);
 #endif
-#endif /* QCA_OL_11AC_FAST_PATH*/
+#endif /* WLAN_FEATURE_FASTPATH*/
 #if (HOST_SW_TSO_ENABLE || HOST_SW_TSO_SG_ENABLE)
 void
 ol_tx_print_tso_stats(
@@ -110,15 +110,15 @@ void
 ol_rst_rx_cksum_stats(ol_txrx_vdev_handle vdev);
 #endif /* RX_CHECKSUM_OFFLOAD */
 
-#if (ATH_SUPPORT_IQUE && QCA_OL_11AC_FAST_PATH)
+#if (ATH_SUPPORT_IQUE && WLAN_FEATURE_FASTPATH)
 A_STATUS
 ol_txrx_host_me_stats(ol_txrx_vdev_handle vdev);
-#endif /* QCA_OL_11AC_FAST_PATH */
+#endif /* WLAN_FEATURE_FASTPATH */
 #if PEER_FLOW_CONTROL
 extern void
 ol_txrx_per_peer_stats(struct ol_txrx_pdev_t *pdev, char *addr);
 #endif
-#if QCA_OL_11AC_FAST_PATH && PEER_FLOW_CONTROL
+#if WLAN_FEATURE_FASTPATH && PEER_FLOW_CONTROL
 int ol_txrx_host_msdu_ttl_stats(
 	ol_txrx_vdev_handle vdev,
 	struct ol_txrx_stats_req *req);

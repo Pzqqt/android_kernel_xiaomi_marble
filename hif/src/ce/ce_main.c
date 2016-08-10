@@ -2736,7 +2736,7 @@ int hif_dump_ce_registers(struct hif_softc *scn)
 {
 	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 	uint32_t ce_reg_address = CE0_BASE_ADDRESS;
-	uint32_t ce_reg_values[CE_COUNT_MAX][CE_USEFUL_SIZE >> 2];
+	uint32_t ce_reg_values[CE_USEFUL_SIZE >> 2];
 	uint32_t ce_reg_word_size = CE_USEFUL_SIZE >> 2;
 	uint16_t i;
 	QDF_STATUS status;
@@ -2748,7 +2748,7 @@ int hif_dump_ce_registers(struct hif_softc *scn)
 		}
 
 		status = hif_diag_read_mem(hif_hdl, ce_reg_address,
-					   (uint8_t *) &ce_reg_values[i][0],
+					   (uint8_t *) &ce_reg_values[0],
 					   ce_reg_word_size * sizeof(uint32_t));
 
 		if (status != QDF_STATUS_SUCCESS) {
@@ -2757,7 +2757,7 @@ int hif_dump_ce_registers(struct hif_softc *scn)
 		}
 		HIF_ERROR("CE%d Registers:", i);
 		qdf_trace_hex_dump(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_DEBUG,
-				   (uint8_t *) &ce_reg_values[i][0],
+				   (uint8_t *) &ce_reg_values[0],
 				   ce_reg_word_size * sizeof(uint32_t));
 	}
 	return 0;

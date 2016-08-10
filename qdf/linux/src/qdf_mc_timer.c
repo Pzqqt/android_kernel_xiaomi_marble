@@ -687,3 +687,17 @@ unsigned long qdf_mc_timer_get_system_time(void)
 	return tv.tv_sec * 1000 + tv.tv_usec / 1000;
 }
 EXPORT_SYMBOL(qdf_mc_timer_get_system_time);
+
+/**
+ * qdf_timer_module_deinit() - Deinitializes a QDF timer module.
+ *
+ * This API deinitializes the QDF timer module.
+ * Return: none
+ */
+void qdf_timer_module_deinit(void)
+{
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
+		  "De-Initializing the QDF MC timer module");
+	qdf_mutex_destroy(&persistent_timer_count_lock);
+}
+EXPORT_SYMBOL(qdf_timer_module_deinit);

@@ -2264,7 +2264,7 @@ QDF_STATUS wmi_unified_csa_offload_enable(void *wmi_hdl, uint8_t vdev_id)
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_unified_start_oem_data_cmd(void *wmi_hdl,
-			  uint8_t data_len,
+			  uint32_t data_len,
 			  uint8_t *data)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
