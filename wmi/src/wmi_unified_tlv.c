@@ -12502,6 +12502,185 @@ static QDF_STATUS extract_channel_hopping_event_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * extract_service_ready_ext_tlv() - extract basic extended service ready params
+ * from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold evt buf
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_service_ready_ext_tlv(wmi_unified_t wmi_handle,
+		uint8_t *event, struct wmi_host_service_ext_param *param)
+{
+	WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *param_buf;
+	wmi_service_ready_ext_event_fixed_param *ev;
+	WMI_SOC_MAC_PHY_HW_MODE_CAPS *hw_caps;
+	WMI_SOC_HAL_REG_CAPABILITIES *reg_caps;
+
+	param_buf = (WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *) event;
+	if (!param_buf)
+		return -EINVAL;
+
+	ev = param_buf->fixed_param;
+	if (!ev)
+		return -EINVAL;
+
+	/* Move this to host based bitmap */
+	param->default_conc_scan_config_bits =
+				ev->default_conc_scan_config_bits;
+	param->default_fw_config_bits = ev->default_fw_config_bits;
+	param->he_cap_info = ev->he_cap_info;
+	param->mpdu_density = ev->mpdu_density;
+	param->max_bssid_rx_filters = ev->max_bssid_rx_filters;
+	qdf_mem_copy(&param->ppet, &ev->ppet, sizeof(param->ppet));
+
+	hw_caps = param_buf->soc_hw_mode_caps;
+	param->num_hw_modes = hw_caps->num_hw_modes;
+
+	reg_caps = param_buf->soc_hal_reg_caps;
+	param->num_phy = reg_caps->num_phy;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_hw_mode_cap_service_ready_ext_tlv() -
+ *       extract HW mode cap from service ready event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold evt buf
+ * @param hw_mode_idx: hw mode idx should be less than num_mode
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_hw_mode_cap_service_ready_ext_tlv(
+			wmi_unified_t wmi_handle,
+			uint8_t *event, uint8_t hw_mode_idx,
+			struct wmi_host_hw_mode_caps *param)
+{
+	WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *param_buf;
+	WMI_SOC_MAC_PHY_HW_MODE_CAPS *hw_caps;
+
+	param_buf = (WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *) event;
+	if (!param_buf)
+		return -EINVAL;
+
+	hw_caps = param_buf->soc_hw_mode_caps;
+	if (hw_mode_idx >= hw_caps->num_hw_modes)
+		return -EINVAL;
+
+	param->hw_mode_id = param_buf->hw_mode_caps[hw_mode_idx].hw_mode_id;
+	param->phy_id_map = param_buf->hw_mode_caps[hw_mode_idx].phy_id_map;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_mac_phy_cap_service_ready_ext_tlv() -
+ *       extract MAC phy cap from service ready event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold evt buf
+ * @param hw_mode_idx: hw mode idx should be less than num_mode
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_mac_phy_cap_service_ready_ext_tlv(
+			wmi_unified_t wmi_handle,
+			uint8_t *event, uint8_t hw_mode_idx,
+			struct wmi_host_mac_phy_caps *param)
+{
+	WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *param_buf;
+	WMI_SOC_MAC_PHY_HW_MODE_CAPS *hw_caps;
+	WMI_MAC_PHY_CAPABILITIES *mac_phy_caps;
+
+	param_buf = (WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *) event;
+	if (!param_buf)
+		return -EINVAL;
+
+	hw_caps = param_buf->soc_hw_mode_caps;
+	if (hw_mode_idx >= hw_caps->num_hw_modes)
+		return -EINVAL;
+
+	mac_phy_caps = &param_buf->mac_phy_caps[hw_mode_idx];
+
+	param->hw_mode_id = mac_phy_caps->hw_mode_id;
+	param->pdev_id = mac_phy_caps->pdev_id;
+	param->phy_id = mac_phy_caps->phy_id;
+	param->supports_11b = mac_phy_caps->supports_11b;
+	param->supports_11g = mac_phy_caps->supports_11g;
+	param->supports_11a = mac_phy_caps->supports_11a;
+	param->supports_11n = mac_phy_caps->supports_11n;
+	param->supports_11ac = mac_phy_caps->supports_11ac;
+	param->supports_11ax = mac_phy_caps->supports_11ax;
+
+	param->supported_bands = mac_phy_caps->supported_bands;
+	param->ampdu_density = mac_phy_caps->ampdu_density;
+	param->max_bw_supported_2G = mac_phy_caps->max_bw_supported_2G;
+	param->ht_cap_info_2G = mac_phy_caps->ht_cap_info_2G;
+	param->vht_cap_info_2G = mac_phy_caps->vht_cap_info_2G;
+	param->vht_supp_mcs_2G = mac_phy_caps->vht_supp_mcs_2G;
+	param->he_cap_info_2G = mac_phy_caps->he_cap_info_2G;
+	param->he_supp_mcs_2G = mac_phy_caps->he_supp_mcs_2G;
+	param->tx_chain_mask_2G = mac_phy_caps->tx_chain_mask_2G;
+	param->rx_chain_mask_2G = mac_phy_caps->rx_chain_mask_2G;
+	param->max_bw_supported_5G = mac_phy_caps->max_bw_supported_5G;
+	param->ht_cap_info_5G = mac_phy_caps->ht_cap_info_5G;
+	param->vht_cap_info_5G = mac_phy_caps->vht_cap_info_5G;
+	param->vht_supp_mcs_5G = mac_phy_caps->vht_supp_mcs_5G;
+	param->he_cap_info_5G = mac_phy_caps->he_cap_info_5G;
+	param->he_supp_mcs_5G = mac_phy_caps->he_supp_mcs_5G;
+	param->tx_chain_mask_5G = mac_phy_caps->tx_chain_mask_5G;
+	param->rx_chain_mask_5G = mac_phy_caps->rx_chain_mask_5G;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_reg_cap_service_ready_ext_tlv() -
+ *       extract REG cap from service ready event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold evt buf
+ * @param phy_idx: phy idx should be less than num_mode
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_reg_cap_service_ready_ext_tlv(
+			wmi_unified_t wmi_handle,
+			uint8_t *event, uint8_t phy_idx,
+			struct WMI_HOST_HAL_REG_CAPABILITIES_EXT *param)
+{
+	WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *param_buf;
+	WMI_SOC_HAL_REG_CAPABILITIES *reg_caps;
+	WMI_HAL_REG_CAPABILITIES_EXT *ext_reg_cap;
+
+	param_buf = (WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *) event;
+	if (!param_buf)
+		return -EINVAL;
+
+	reg_caps = param_buf->soc_hal_reg_caps;
+	if (phy_idx >= reg_caps->num_phy)
+		return -EINVAL;
+
+	ext_reg_cap = &param_buf->hal_reg_caps[phy_idx];
+
+	param->phy_id = ext_reg_cap->phy_id;
+	param->eeprom_reg_domain = ext_reg_cap->eeprom_reg_domain;
+	param->eeprom_reg_domain_ext = ext_reg_cap->eeprom_reg_domain_ext;
+	param->regcap1 = ext_reg_cap->regcap1;
+	param->regcap2 = ext_reg_cap->regcap2;
+	param->wireless_modes = ext_reg_cap->wireless_modes;
+	param->low_2ghz_chan = ext_reg_cap->low_2ghz_chan;
+	param->high_2ghz_chan = ext_reg_cap->high_2ghz_chan;
+	param->low_5ghz_chan = ext_reg_cap->low_5ghz_chan;
+	param->high_5ghz_chan = ext_reg_cap->high_5ghz_chan;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 static bool is_management_record_tlv(uint32_t cmd_id)
 {
@@ -12769,6 +12948,13 @@ struct wmi_ops tlv_ops =  {
 	.send_encrypt_decrypt_send_cmd =
 				send_encrypt_decrypt_send_cmd_tlv,
 	.send_power_dbg_cmd = send_power_dbg_cmd_tlv,
+	.extract_service_ready_ext = extract_service_ready_ext_tlv,
+	.extract_hw_mode_cap_service_ready_ext =
+				extract_hw_mode_cap_service_ready_ext_tlv,
+	.extract_mac_phy_cap_service_ready_ext =
+				extract_mac_phy_cap_service_ready_ext_tlv,
+	.extract_reg_cap_service_ready_ext =
+				extract_reg_cap_service_ready_ext_tlv,
 };
 
 #ifndef CONFIG_MCL

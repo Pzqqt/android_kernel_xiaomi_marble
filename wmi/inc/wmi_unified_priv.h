@@ -1142,6 +1142,25 @@ QDF_STATUS (*send_peer_rx_reorder_queue_setup_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*send_peer_rx_reorder_queue_remove_cmd)(wmi_unified_t wmi_handle,
 		struct rx_reorder_queue_remove_params *param);
+
+QDF_STATUS (*extract_service_ready_ext)(wmi_unified_t wmi_handle,
+			uint8_t *evt_buf,
+			struct wmi_host_service_ext_param *param);
+
+QDF_STATUS (*extract_hw_mode_cap_service_ready_ext)(
+			wmi_unified_t wmi_handle,
+			uint8_t *evt_buf, uint8_t hw_mode_idx,
+			struct wmi_host_hw_mode_caps *param);
+
+QDF_STATUS (*extract_mac_phy_cap_service_ready_ext)(
+			wmi_unified_t wmi_handle,
+			uint8_t *evt_buf, uint8_t hw_mode_idx,
+			struct wmi_host_mac_phy_caps *param);
+
+QDF_STATUS (*extract_reg_cap_service_ready_ext)(
+			wmi_unified_t wmi_handle,
+			uint8_t *evt_buf, uint8_t phy_idx,
+			struct WMI_HOST_HAL_REG_CAPABILITIES_EXT *param);
 };
 
 struct target_abi_version {
