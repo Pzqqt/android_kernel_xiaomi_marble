@@ -6182,3 +6182,96 @@ QDF_STATUS wmi_unified_encrypt_decrypt_send_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+/*
+ * wmi_extract_service_ready_ext() - extract extended service ready
+ * @wmi_handle: wmi handle
+ * @param: wmi power debug parameter
+ *
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS wmi_extract_service_ready_ext(void *wmi_hdl, uint8_t *evt_buf,
+		struct wmi_host_service_ext_param *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->extract_service_ready_ext)
+		return wmi_handle->ops->extract_service_ready_ext(wmi_handle,
+				evt_buf, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_extract_hw_mode_cap_service_ready_ext() -
+ *       extract HW mode cap from service ready event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold evt buf
+ * @param hw_mode_idx: hw mode idx should be less than num_mode
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS wmi_extract_hw_mode_cap_service_ready_ext(
+			void *wmi_hdl,
+			uint8_t *evt_buf, uint8_t hw_mode_idx,
+			struct wmi_host_hw_mode_caps *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->extract_hw_mode_cap_service_ready_ext)
+		return wmi_handle->ops->extract_hw_mode_cap_service_ready_ext(
+				wmi_handle,
+				evt_buf, hw_mode_idx, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+/**
+ * wmi_extract_mac_phy_cap_service_ready_ext() -
+ *       extract MAC phy cap from service ready event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold evt buf
+ * @param hw_mode_idx: hw mode idx should be less than num_mode
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS wmi_extract_mac_phy_cap_service_ready_ext(
+			void *wmi_hdl,
+			uint8_t *evt_buf, uint8_t hw_mode_idx,
+			struct wmi_host_mac_phy_caps *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->extract_mac_phy_cap_service_ready_ext)
+		return wmi_handle->ops->extract_mac_phy_cap_service_ready_ext(
+				wmi_handle,
+				evt_buf, hw_mode_idx, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+/**
+ * wmi_extract_reg_cap_service_ready_ext() -
+ *       extract REG cap from service ready event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold evt buf
+ * @param phy_idx: phy idx should be less than num_mode
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS wmi_extract_reg_cap_service_ready_ext(
+			void *wmi_hdl,
+			uint8_t *evt_buf, uint8_t phy_idx,
+			struct WMI_HOST_HAL_REG_CAPABILITIES_EXT *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->extract_reg_cap_service_ready_ext)
+		return wmi_handle->ops->extract_reg_cap_service_ready_ext(
+				wmi_handle,
+				evt_buf, phy_idx, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
