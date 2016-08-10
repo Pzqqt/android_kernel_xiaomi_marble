@@ -830,6 +830,31 @@ bool __qdf_nbuf_data_is_ipv6_pkt(uint8_t *data)
 }
 
 /**
+ * __qdf_nbuf_data_is_ipv4_mcast_pkt() - check if it is IPV4 multicast packet.
+ * @data: Pointer to IPV4 packet data buffer
+ *
+ * This func. checks whether it is a IPV4 multicast packet or not.
+ *
+ * Return: TRUE if it is a IPV4 multicast packet
+ *         FALSE if not
+ */
+bool __qdf_nbuf_data_is_ipv4_mcast_pkt(uint8_t *data)
+{
+	uint32_t *dst_addr =
+		(uint32_t *)(data + QDF_NBUF_TRAC_IPV4_DEST_ADDR_OFFSET);
+
+	/*
+	 * Check first word of the IPV4 address and if it
+	 * equal to 0xE then it represents multicast IP.
+	 */
+	if ((*dst_addr & QDF_NBUF_TRAC_IPV4_ADDR_BCAST_MASK) ==
+			QDF_NBUF_TRAC_IPV4_ADDR_MCAST_MASK)
+		return true;
+	else
+		return false;
+}
+
+/**
  * __qdf_nbuf_data_is_icmp_pkt() - check if it is IPV4 ICMP packet.
  * @data: Pointer to IPV4 ICMP packet data buffer
  *

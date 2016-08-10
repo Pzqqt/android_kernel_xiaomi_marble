@@ -62,7 +62,10 @@
 #define QDF_NBUF_DEST_MAC_OFFSET		0
 #define QDF_NBUF_SRC_MAC_OFFSET			6
 #define QDF_NBUF_TRAC_IPV4_PROTO_TYPE_OFFSET  23
+#define QDF_NBUF_TRAC_IPV4_DEST_ADDR_OFFSET   30
 #define QDF_NBUF_TRAC_IPV6_PROTO_TYPE_OFFSET  20
+#define QDF_NBUF_TRAC_IPV4_ADDR_MCAST_MASK    0xE0000000
+#define QDF_NBUF_TRAC_IPV4_ADDR_BCAST_MASK    0xF0000000
 #define QDF_NBUF_TRAC_ICMP_TYPE         1
 #define QDF_NBUF_TRAC_TCP_TYPE          6
 #define QDF_NBUF_TRAC_UDP_TYPE          17
@@ -1534,6 +1537,21 @@ static inline
 bool qdf_nbuf_data_is_ipv6_pkt(uint8_t *data)
 {
 	return __qdf_nbuf_data_is_ipv6_pkt(data);
+}
+
+/**
+ * qdf_nbuf_data_is_ipv4_mcast_pkt() - check if it is IPV4 multicast packet.
+ * @data: Pointer to IPV4 packet data buffer
+ *
+ * This func. checks whether it is a IPV4 multicast packet or not.
+ *
+ * Return: TRUE if it is a IPV4 multicast packet
+ *         FALSE if not
+ */
+static inline
+bool qdf_nbuf_data_is_ipv4_mcast_pkt(uint8_t *data)
+{
+	return __qdf_nbuf_data_is_ipv4_mcast_pkt(data);
 }
 
 /**

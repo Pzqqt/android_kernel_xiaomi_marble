@@ -494,6 +494,7 @@ QDF_STATUS __qdf_nbuf_frag_map(
 bool __qdf_nbuf_is_ipv4_wapi_pkt(struct sk_buff *skb);
 bool __qdf_nbuf_data_is_ipv4_pkt(uint8_t *data);
 bool __qdf_nbuf_data_is_ipv6_pkt(uint8_t *data);
+bool __qdf_nbuf_data_is_ipv4_mcast_pkt(uint8_t *data);
 bool __qdf_nbuf_data_is_icmp_pkt(uint8_t *data);
 bool __qdf_nbuf_data_is_icmpv6_pkt(uint8_t *data);
 bool __qdf_nbuf_data_is_ipv4_udp_pkt(uint8_t *data);
