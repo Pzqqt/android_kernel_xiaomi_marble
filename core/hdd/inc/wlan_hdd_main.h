@@ -1469,6 +1469,8 @@ struct hdd_context_s {
 	bool memdump_in_progress;
 	bool memdump_init_done;
 #endif /* WLAN_FEATURE_MEMDUMP */
+	uint16_t driver_dump_size;
+	uint8_t *driver_dump_mem;
 
 	bool connection_in_progress;
 	qdf_spinlock_t connection_status_lock;

@@ -4795,6 +4795,7 @@ void __hdd_wlan_exit(void)
 	hdd_ipa_uc_force_pipe_shutdown(hdd_ctx);
 
 	memdump_deinit();
+	hdd_driver_memdump_deinit();
 
 	/* Do all the cleanup before deregistering the driver */
 	hdd_wlan_exit(hdd_ctx);
@@ -7724,6 +7725,79 @@ static void hdd_iface_change_callback(void *priv)
 }
 
 /**
+ * hdd_state_info_dump() - prints state information of hdd layer
+ * @buf: buffer pointer
+ * @size: size of buffer to be filled
+ *
+ * This function is used to dump state information of hdd layer
+ *
+ * Return: None
+ */
+static void hdd_state_info_dump(char **buf_ptr, uint16_t *size)
+{
+	hdd_context_t *hdd_ctx;
+	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
+	QDF_STATUS status;
+	hdd_station_ctx_t *hdd_sta_ctx;
+	hdd_adapter_t *adapter;
+	uint16_t len = 0;
+	char *buf = *buf_ptr;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("Failed to get hdd context ");
+		return;
+	}
+
+	hdd_notice("size of buffer: %d", *size);
+
+	len += scnprintf(buf + len, *size - len,
+		"\n isWiphySuspended %d", hdd_ctx->isWiphySuspended);
+	len += scnprintf(buf + len, *size - len,
+		"\n isMcThreadSuspended %d",
+		hdd_ctx->isMcThreadSuspended);
+
+	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
+
+	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
+		adapter = adapter_node->pAdapter;
+		if (adapter->dev)
+			len += scnprintf(buf + len, *size - len,
+				"\n device name: %s", adapter->dev->name);
+			len += scnprintf(buf + len, *size - len,
+				"\n device_mode: %d", adapter->device_mode);
+		switch (adapter->device_mode) {
+		case QDF_STA_MODE:
+		case QDF_P2P_CLIENT_MODE:
+			hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+			len += scnprintf(buf + len, *size - len,
+				"\n connState: %d",
+				hdd_sta_ctx->conn_info.connState);
+			break;
+
+		default:
+			break;
+		}
+		status = hdd_get_next_adapter(hdd_ctx, adapter_node, &next);
+		adapter_node = next;
+	}
+
+	*size -= len;
+	*buf_ptr += len;
+}
+
+/**
+ * hdd_register_debug_callback() - registration function for hdd layer
+ * to print hdd state information
+ *
+ * Return: None
+ */
+static void hdd_register_debug_callback(void)
+{
+	qdf_register_debug_callback(QDF_MODULE_ID_HDD, &hdd_state_info_dump);
+}
+
+/**
  * hdd_wlan_startup() - HDD init function
  * @dev:	Pointer to the underlying device
  *
@@ -7854,6 +7928,7 @@ int hdd_wlan_startup(struct device *dev)
 
 	memdump_init();
 	hdd_encrypt_decrypt_init(hdd_ctx);
+	hdd_driver_memdump_init();
 
 	if (hdd_ctx->config->fIsImpsEnabled)
 		hdd_set_idle_ps_config(hdd_ctx, true);
@@ -8804,6 +8879,7 @@ int hdd_init(void)
 	}
 
 	hdd_trace_init();
+	hdd_register_debug_callback();
 
 err_out:
 	return ret;

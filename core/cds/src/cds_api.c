@@ -101,6 +101,7 @@ v_CONTEXT_t cds_init(void)
 #if defined(TRACE_RECORD)
 	qdf_trace_init();
 #endif
+	qdf_register_debugcb_init();
 
 	cds_ssr_protect_init();
 

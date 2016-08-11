@@ -1073,6 +1073,104 @@ bool sme_command_pending(tpAniSirGlobal pMac)
 					 LL_ACCESS_NOLOCK);
 }
 
+/**
+ * sme_get_sessionid_from_activelist() - gets session id
+ * @mac: mac context
+ *
+ * This function is used to get session id from sme command
+ * active list
+ *
+ * Return: returns session id
+ */
+uint32_t sme_get_sessionid_from_activelist(tpAniSirGlobal mac)
+{
+	tListElem *entry;
+	tSmeCmd *command;
+	uint32_t session_id = CSR_SESSION_ID_INVALID;
+
+	entry = csr_ll_peek_head(&mac->sme.smeCmdActiveList, LL_ACCESS_LOCK);
+	if (entry) {
+		command = GET_BASE_ADDR(entry, tSmeCmd, Link);
+		session_id = command->sessionId;
+	}
+
+	return session_id;
+}
+
+/**
+ * sme_state_info_dump() - prints state information of sme layer
+ * @buf: buffer pointer
+ * @size: size of buffer to be filled
+ *
+ * This function is used to dump state information of sme layer
+ *
+ * Return: None
+ */
+static void sme_state_info_dump(char **buf_ptr, uint16_t *size)
+{
+	uint32_t session_id, active_session_id;
+	tHalHandle hal;
+	tpAniSirGlobal mac;
+	uint16_t len = 0;
+	char *buf = *buf_ptr;
+	eCsrConnectState connect_state;
+
+	hal = cds_get_context(QDF_MODULE_ID_SME);
+	if (hal == NULL) {
+		QDF_ASSERT(0);
+		return;
+	}
+
+	mac = PMAC_STRUCT(hal);
+	sms_log(mac, LOG1, FL("size of buffer: %d"), *size);
+
+	active_session_id = sme_get_sessionid_from_activelist(mac);
+	if (active_session_id != CSR_SESSION_ID_INVALID) {
+		len += qdf_scnprintf(buf + len, *size - len,
+			"\n active command sessionid %d", active_session_id);
+	}
+
+	for (session_id = 0; session_id < CSR_ROAM_SESSION_MAX; session_id++) {
+		if (CSR_IS_SESSION_VALID(mac, session_id)) {
+			connect_state =
+				mac->roam.roamSession[session_id].connectState;
+			if ((eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED ==
+			     connect_state)
+			    || (eCSR_ASSOC_STATE_TYPE_INFRA_CONNECTED ==
+				connect_state)) {
+				len += qdf_scnprintf(buf + len, *size - len,
+					"\n NeighborRoamState: %d",
+					mac->roam.neighborRoamInfo[session_id].
+						neighborRoamState);
+				len += qdf_scnprintf(buf + len, *size - len,
+					"\n RoamState: %d", mac->roam.
+						curState[session_id]);
+				len += qdf_scnprintf(buf + len, *size - len,
+					"\n RoamSubState: %d", mac->roam.
+						curSubState[session_id]);
+				len += qdf_scnprintf(buf + len, *size - len,
+					"\n ConnectState: %d",
+					connect_state);
+			}
+		}
+	}
+
+	*size -= len;
+	*buf_ptr += len;
+}
+
+/**
+ * sme_register_debug_callback() - registration function sme layer
+ * to print sme state information
+ *
+ * Return: None
+ */
+static void sme_register_debug_callback(void)
+{
+	qdf_register_debug_callback(QDF_MODULE_ID_SME, &sme_state_info_dump);
+}
+
+
 /* Global APIs */
 
 /**
@@ -1134,6 +1232,7 @@ QDF_STATUS sme_open(tHalHandle hHal)
 	}
 	sme_p2p_open(pMac);
 	sme_trace_init(pMac);
+	sme_register_debug_callback();
 	return status;
 }
 

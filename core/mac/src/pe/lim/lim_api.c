@@ -681,6 +681,63 @@ void lim_cleanup(tpAniSirGlobal pMac)
 
 } /*** end lim_cleanup() ***/
 
+/**
+ * lim_state_info_dump() - print state information of lim layer
+ * @buf: buffer pointer
+ * @size: size of buffer to be filled
+ *
+ * This function is used to print state information of lim layer
+ *
+ * Return: None
+ */
+static void lim_state_info_dump(char **buf_ptr, uint16_t *size)
+{
+	tHalHandle hal;
+	tpAniSirGlobal mac;
+	uint16_t len = 0;
+	char *buf = *buf_ptr;
+
+	hal = cds_get_context(QDF_MODULE_ID_PE);
+	if (hal == NULL) {
+		QDF_ASSERT(0);
+		return;
+	}
+
+	mac = PMAC_STRUCT(hal);
+
+	lim_log(mac, LOG1, FL("size of buffer: %d"), *size);
+
+	len += qdf_scnprintf(buf + len, *size - len,
+		"\n SmeState: %d", mac->lim.gLimSmeState);
+	len += qdf_scnprintf(buf + len, *size - len,
+		"\n PrevSmeState: %d", mac->lim.gLimPrevSmeState);
+	len += qdf_scnprintf(buf + len, *size - len,
+		"\n MlmState: %d", mac->lim.gLimMlmState);
+	len += qdf_scnprintf(buf + len, *size - len,
+		"\n PrevMlmState: %d", mac->lim.gLimPrevMlmState);
+	len += qdf_scnprintf(buf + len, *size - len,
+		"\n SystemInScanLearnMode: %d",
+		mac->lim.gLimSystemInScanLearnMode);
+	len += qdf_scnprintf(buf + len, *size - len,
+		"\n ProcessDefdMsgs: %d", mac->lim.gLimProcessDefdMsgs);
+	len += qdf_scnprintf(buf + len, *size - len,
+		"\n gLimHalScanState: %d", mac->lim.gLimHalScanState);
+
+	*size -= len;
+	*buf_ptr += len;
+}
+
+/**
+ * lim_register_debug_callback() - registration function for lim layer
+ * to print lim state information
+ *
+ * Return: None
+ */
+static void lim_register_debug_callback(void)
+{
+	qdf_register_debug_callback(QDF_MODULE_ID_PE, &lim_state_info_dump);
+}
+
 /** -------------------------------------------------------------
    \fn pe_open
    \brief will be called in Open sequence from mac_open
@@ -746,6 +803,8 @@ tSirRetStatus pe_open(tpAniSirGlobal pMac, struct cds_config_info *cds_cfg)
 #ifdef LIM_TRACE_RECORD
 	MTRACE(lim_trace_init(pMac));
 #endif
+	lim_register_debug_callback();
+
 	return status; /* status here will be eSIR_SUCCESS */
 
 pe_open_lock_fail:
