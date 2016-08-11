@@ -37,10 +37,39 @@
 #include <kthread.h>
 #include <qdf_time.h>
 #include <wlan_ptt_sock_svc.h>
-#include "pktlog_ac.h"
 #include <host_diag_core_event.h>
 #include "cds_utils.h"
 #include "host_diag_core_log.h"
+#include "wma.h"
+#include "ol_txrx_api.h"
+#include "csr_api.h"
+#include "wlan_hdd_main.h"
+#include "pktlog_ac.h"
+
+#define MAX_NUM_PKT_LOG 32
+
+/**
+ * struct tx_status - tx status
+ * @tx_status_ok: successfully sent + acked
+ * @tx_status_discard: discard - not sent (congestion control)
+ * @tx_status_no_ack: no_ack - sent, but no ack
+ * @tx_status_download_fail: download_fail -
+ * the host could not deliver the tx frame to the target
+ * @tx_status_peer_del: peer_del - tx completion for
+ * alreay deleted peer used for HL case
+ *
+ * This enum has tx status types
+ */
+enum tx_status {
+	tx_status_ok,
+	tx_status_discard,
+	tx_status_no_ack,
+	tx_status_download_fail,
+	tx_status_peer_del,
+};
+
+static uint8_t gtx_count;
+static uint8_t grx_count;
 
 #define LOGGING_TRACE(level, args ...) \
 	QDF_TRACE(QDF_MODULE_ID_HDD, level, ## args)
@@ -1187,12 +1216,7 @@ void wlan_pkt_stats_to_logger_thread(void *pl_hdr, void *pkt_dump, void *data)
 	}
 
 	pkt_stats_dump = (struct packet_dump *)pkt_dump;
-	if (pkt_stats_dump)
-		total_stats_len = sizeof(struct ath_pktlog_hdr) +
-					pktlog_hdr->size +
-					sizeof(struct packet_dump);
-	else
-		total_stats_len = sizeof(struct ath_pktlog_hdr) +
+	total_stats_len = sizeof(struct ath_pktlog_hdr) +
 					pktlog_hdr->size;
 
 	spin_lock_irqsave(&gwlan_logging.pkt_stats_lock, flags);
@@ -1217,15 +1241,23 @@ void wlan_pkt_stats_to_logger_thread(void *pl_hdr, void *pkt_dump, void *data)
 			pktlog_hdr,
 			sizeof(struct ath_pktlog_hdr));
 
-	if (pkt_stats_dump)
+	if (pkt_stats_dump) {
 		qdf_mem_copy(skb_put(ptr,
 				sizeof(struct packet_dump)),
 				pkt_stats_dump,
 				sizeof(struct packet_dump));
+		pktlog_hdr->size -= sizeof(struct packet_dump);
+	}
 
-	qdf_mem_copy(skb_put(ptr,
+	if (data)
+		qdf_mem_copy(skb_put(ptr,
 				pktlog_hdr->size),
 				data, pktlog_hdr->size);
+
+	if (pkt_stats_dump->type == STOP_MONITOR) {
+		wake_up_thread = true;
+		wlan_get_pkt_stats_free_node();
+	}
 
 	spin_unlock_irqrestore(&gwlan_logging.pkt_stats_lock, flags);
 
@@ -1236,5 +1268,238 @@ void wlan_pkt_stats_to_logger_thread(void *pl_hdr, void *pkt_dump, void *data)
 	}
 }
 
+/**
+ * driver_hal_status_map() - maps driver to hal
+ * status
+ * @status: status to be mapped
+ *
+ * This function is used to map driver to hal status
+ *
+ * Return: None
+ *
+ */
+static void driver_hal_status_map(uint8_t *status)
+{
+	switch (*status) {
+	case tx_status_ok:
+		*status = TX_PKT_FATE_ACKED;
+		break;
+	case tx_status_discard:
+		*status = TX_PKT_FATE_DRV_DROP_OTHER;
+		break;
+	case tx_status_no_ack:
+		*status = TX_PKT_FATE_SENT;
+		break;
+	case tx_status_download_fail:
+		*status = TX_PKT_FATE_FW_QUEUED;
+		break;
+	default:
+		*status = TX_PKT_FATE_DRV_DROP_OTHER;
+		break;
+	}
+}
+
+
+/*
+ * send_packetdump() - send packet dump
+ * @netbuf: netbuf
+ * @status: status of tx packet
+ * @vdev_id: virtual device id
+ * @type: type of packet
+ *
+ * This function is used to send packet dump to HAL layer
+ * using wlan_pkt_stats_to_logger_thread
+ *
+ * Return: None
+ *
+ */
+static void send_packetdump(qdf_nbuf_t netbuf, uint8_t status,
+				uint8_t vdev_id, uint8_t type)
+{
+	struct ath_pktlog_hdr pktlog_hdr = {0};
+	struct packet_dump pd_hdr = {0};
+	hdd_context_t *hdd_ctx;
+	hdd_adapter_t *adapter;
+	v_CONTEXT_t vos_ctx;
+
+	vos_ctx = cds_get_global_context();
+	if (!vos_ctx)
+		return;
+
+	hdd_ctx = (hdd_context_t *)cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx)
+		return;
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+
+	/* Send packet dump only for STA interface */
+	if (adapter->device_mode != QDF_STA_MODE)
+		return;
+
+	pktlog_hdr.log_type = PKTLOG_TYPE_PKT_DUMP;
+	pktlog_hdr.size = sizeof(pd_hdr) + netbuf->len;
+
+	pd_hdr.status = status;
+	pd_hdr.type = type;
+	pd_hdr.driver_ts = qdf_get_monotonic_boottime();
+
+	if ((type == TX_MGMT_PKT) || (type == TX_DATA_PKT))
+		gtx_count++;
+	else if ((type == RX_MGMT_PKT) || (type == RX_DATA_PKT))
+		grx_count++;
+
+	wlan_pkt_stats_to_logger_thread(&pktlog_hdr, &pd_hdr, netbuf->data);
+}
+
+
+/*
+ * send_packetdump_monitor() - sends start/stop packet dump indication
+ * @type: type of packet
+ *
+ * This function is used to indicate HAL layer to start/stop monitoring
+ * of packets
+ *
+ * Return: None
+ *
+ */
+static void send_packetdump_monitor(uint8_t type)
+{
+	struct ath_pktlog_hdr pktlog_hdr = {0};
+	struct packet_dump pd_hdr = {0};
+
+	pktlog_hdr.log_type = PKTLOG_TYPE_PKT_DUMP;
+	pktlog_hdr.size = sizeof(pd_hdr);
+
+	pd_hdr.type = type;
+
+	LOGGING_TRACE(QDF_TRACE_LEVEL_INFO,
+			"fate Tx-Rx %s: type: %d", __func__, type);
+
+	wlan_pkt_stats_to_logger_thread(&pktlog_hdr, &pd_hdr, NULL);
+}
+
+/**
+ * wlan_deregister_txrx_packetdump() - tx/rx packet dump
+ *  deregistration
+ *
+ * This function is used to deregister tx/rx packet dump callbacks
+ * with ol, pe and htt layers
+ *
+ * Return: None
+ *
+ */
+void wlan_deregister_txrx_packetdump(void)
+{
+	if (gtx_count || grx_count) {
+		ol_deregister_packetdump_callback();
+		wma_deregister_packetdump_callback();
+		send_packetdump_monitor(STOP_MONITOR);
+		csr_packetdump_timer_stop();
+
+		gtx_count = 0;
+		grx_count = 0;
+	} else
+		LOGGING_TRACE(QDF_TRACE_LEVEL_INFO,
+			"%s: deregistered packetdump already", __func__);
+}
+
+/*
+ * check_txrx_packetdump_count() - function to check
+ * tx/rx packet dump global counts
+ *
+ * This function is used to check global counts of tx/rx
+ * packet dump functionality.
+ *
+ * Return: 1 if either gtx_count or grx_count reached 32
+ *             0 otherwise
+ *
+ */
+static bool check_txrx_packetdump_count(void)
+{
+	if (gtx_count == MAX_NUM_PKT_LOG ||
+		grx_count == MAX_NUM_PKT_LOG) {
+		LOGGING_TRACE(QDF_TRACE_LEVEL_INFO,
+			"%s gtx_count: %d grx_count: %d deregister packetdump",
+			__func__, gtx_count, grx_count);
+		wlan_deregister_txrx_packetdump();
+		return 1;
+	}
+	return 0;
+}
+
+/*
+ * tx_packetdump_cb() - tx packet dump callback
+ * @netbuf: netbuf
+ * @status: status of tx packet
+ * @vdev_id: virtual device id
+ * @type: packet type
+ *
+ * This function is used to send tx packet dump to HAL layer
+ * and deregister packet dump callbacks
+ *
+ * Return: None
+ *
+ */
+static void tx_packetdump_cb(qdf_nbuf_t netbuf, uint8_t status,
+				uint8_t vdev_id, uint8_t type)
+{
+	bool temp;
+
+	temp = check_txrx_packetdump_count();
+	if (temp)
+		return;
+
+	driver_hal_status_map(&status);
+	send_packetdump(netbuf, status, vdev_id, type);
+}
+
+
+/*
+ * rx_packetdump_cb() - rx packet dump callback
+ * @netbuf: netbuf
+ * @status: status of rx packet
+ * @vdev_id: virtual device id
+ * @type: packet type
+ *
+ * This function is used to send rx packet dump to HAL layer
+ * and deregister packet dump callbacks
+ *
+ * Return: None
+ *
+ */
+static void rx_packetdump_cb(qdf_nbuf_t netbuf, uint8_t status,
+				uint8_t vdev_id, uint8_t type)
+{
+	bool temp;
+
+	temp = check_txrx_packetdump_count();
+	if (temp)
+		return;
+
+	send_packetdump(netbuf, status, vdev_id, type);
+}
+
+
+/**
+ * wlan_register_txrx_packetdump() - tx/rx packet dump
+ * registration
+ *
+ * This function is used to register tx/rx packet dump callbacks
+ * with ol, pe and htt layers
+ *
+ * Return: None
+ *
+ */
+void wlan_register_txrx_packetdump(void)
+{
+	ol_register_packetdump_callback(tx_packetdump_cb,
+			rx_packetdump_cb);
+	wma_register_packetdump_callback(tx_packetdump_cb,
+			rx_packetdump_cb);
+	send_packetdump_monitor(START_MONITOR);
+
+	gtx_count = 0;
+	grx_count = 0;
+}
 
 #endif /* WLAN_LOGGING_SOCK_SVC_ENABLE */

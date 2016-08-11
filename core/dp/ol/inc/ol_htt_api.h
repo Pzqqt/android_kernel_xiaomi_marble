@@ -384,5 +384,11 @@ static inline void htt_clear_bundle_stats(struct htt_pdev_t *pdev)
 #endif
 
 void htt_mark_first_wakeup_packet(htt_pdev_handle pdev, uint8_t value);
+typedef void (*tp_rx_pkt_dump_cb)(qdf_nbuf_t msdu, uint8_t peer_id,
+			uint8_t status);
+void htt_register_rx_pkt_dump_callback(struct htt_pdev_t *pdev,
+		tp_rx_pkt_dump_cb ol_rx_pkt_dump_call);
+void htt_deregister_rx_pkt_dump_callback(struct htt_pdev_t *pdev);
+void ol_rx_pkt_dump_call(qdf_nbuf_t msdu, uint8_t peer_id, uint8_t status);
 
 #endif /* _OL_HTT_API__H_ */

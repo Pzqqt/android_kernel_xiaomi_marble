@@ -1013,6 +1013,8 @@ ol_txrx_pdev_attach(ol_pdev_handle ctrl_pdev,
 	if (!pdev->htt_pdev)
 		goto fail3;
 
+	htt_register_rx_pkt_dump_callback(pdev->htt_pdev,
+			ol_rx_pkt_dump_call);
 	return pdev;
 
 fail3:
@@ -1631,6 +1633,7 @@ void ol_txrx_pdev_detach(ol_txrx_pdev_handle pdev, int force)
 		ol_txrx_peer_find_hash_erase(pdev);
 	}
 
+	htt_deregister_rx_pkt_dump_callback(pdev->htt_pdev);
 	ol_tx_deregister_flow_control(pdev);
 	/* Stop the communication between HTT and target at first */
 	htt_detach_target(pdev->htt_pdev);

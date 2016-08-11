@@ -57,6 +57,7 @@
 #include "cds_concurrency.h"
 #include "sme_nan_datapath.h"
 #include "pld_common.h"
+#include <wlan_logging_sock_svc.h>
 
 #define MAX_PWR_FCC_CHAN_12 8
 #define MAX_PWR_FCC_CHAN_13 2
@@ -85,6 +86,10 @@
 #define MAX_CB_VALUE_IN_INI (2)
 
 #define MAX_SOCIAL_CHANNELS  3
+
+/* packet dump timer duration of 60 secs */
+#define PKT_DUMP_TIMER_DURATION 60
+
 /* Choose the largest possible value that can be accomodates in 8 bit signed */
 /* variable. */
 #define SNR_HACK_BMPS                         (127)
@@ -960,6 +965,58 @@ void csr_set_global_cfgs(tpAniSirGlobal pMac)
 	csr_set_default_dot11_mode(pMac);
 }
 
+/**
+ * csr_packetdump_timer_handler() - packet dump timer
+ * handler
+ * @pv: user data
+ *
+ * This function is used to handle packet dump timer
+ *
+ * Return: None
+ *
+ */
+static void csr_packetdump_timer_handler(void *pv)
+{
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			"%s Invoking packetdump deregistration API", __func__);
+	wlan_deregister_txrx_packetdump();
+}
+
+/**
+ * csr_packetdump_timer_stop() - stops packet dump timer
+ *
+ * This function is used to stop packet dump timer
+ *
+ * Return: None
+ *
+ */
+void csr_packetdump_timer_stop(void)
+{
+	QDF_STATUS status;
+	tHalHandle hal;
+	tpAniSirGlobal mac;
+	v_CONTEXT_t vos_ctx_ptr;
+
+	/* get the global voss context */
+	vos_ctx_ptr = cds_get_global_context();
+	if (vos_ctx_ptr == NULL) {
+		QDF_ASSERT(0);
+		return;
+	}
+
+	hal = cds_get_context(QDF_MODULE_ID_SME);
+	if (hal == NULL) {
+		QDF_ASSERT(0);
+		return;
+	}
+
+	mac = PMAC_STRUCT(hal);
+	status = qdf_mc_timer_stop(&mac->roam.packetdump_timer);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		sms_log(mac, LOGE, FL("cannot stop packetdump timer"));
+	}
+}
+
 QDF_STATUS csr_roam_open(tpAniSirGlobal pMac)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -986,6 +1043,14 @@ QDF_STATUS csr_roam_open(tpAniSirGlobal pMac)
 					("cannot allocate memory for WaitForKey time out timer"));
 			break;
 		}
+		status = qdf_mc_timer_init(&pMac->roam.packetdump_timer,
+				QDF_TIMER_TYPE_SW, csr_packetdump_timer_handler,
+				pMac);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			sms_log(pMac, LOGE,
+			   FL("cannot allocate memory for packetdump timer"));
+			break;
+		}
 		status =
 			qdf_mc_timer_init(&pMac->roam.tlStatsReqInfo.hTlStatsTimer,
 					  QDF_TIMER_TYPE_SW,
@@ -1010,6 +1075,8 @@ QDF_STATUS csr_roam_close(tpAniSirGlobal pMac)
 	qdf_mc_timer_destroy(&pMac->roam.hTimerWaitForKey);
 	qdf_mc_timer_stop(&pMac->roam.tlStatsReqInfo.hTlStatsTimer);
 	qdf_mc_timer_destroy(&pMac->roam.tlStatsReqInfo.hTlStatsTimer);
+	qdf_mc_timer_stop(&pMac->roam.packetdump_timer);
+	qdf_mc_timer_destroy(&pMac->roam.packetdump_timer);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -13762,6 +13829,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 	uint8_t ese_config = 0;
 	tpCsrNeighborRoamControlInfo neigh_roam_info;
 	uint32_t value = 0, value1 = 0;
+	QDF_STATUS packetdump_timer_status;
 
 	if (!pSession) {
 		sms_log(pMac, LOGE, FL("  session %d not found "), sessionId);
@@ -14413,6 +14481,25 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			csr_join_req = NULL;
 			break;
 		} else {
+			if (pProfile->csrPersona == QDF_STA_MODE) {
+				sms_log(pMac, LOG1,
+				    FL(" Invoking packetdump register API"));
+				wlan_register_txrx_packetdump();
+				packetdump_timer_status =
+					qdf_mc_timer_start(
+					&pMac->roam.packetdump_timer,
+					(PKT_DUMP_TIMER_DURATION *
+					QDF_MC_TIMER_TO_SEC_UNIT)/
+					QDF_MC_TIMER_TO_MS_UNIT);
+				if (!QDF_IS_STATUS_SUCCESS(
+						packetdump_timer_status)) {
+					sms_log(pMac, LOGE,
+					   FL("cannot start packetdump timer"));
+					sms_log(pMac, LOGE,
+					   FL("packetdump_timer_status: %d"),
+					   packetdump_timer_status);
+				}
+			}
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
 			if (eWNI_SME_JOIN_REQ == messageType) {
 				/* Notify QoS module that join happening */

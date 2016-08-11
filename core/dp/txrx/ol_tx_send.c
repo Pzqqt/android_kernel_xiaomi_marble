@@ -60,7 +60,7 @@
 #endif
 #include <ol_tx_queue.h>
 #include <ol_txrx.h>
-
+#include <pktlog_ac_fmt.h>
 
 #ifdef TX_CREDIT_RECLAIM_SUPPORT
 
@@ -552,6 +552,11 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 		tx_desc->status = status;
 		netbuf = tx_desc->netbuf;
 		QDF_NBUF_UPDATE_TX_PKT_COUNT(netbuf, QDF_NBUF_TX_PKT_FREE);
+
+		if (pdev->ol_tx_packetdump_cb)
+			pdev->ol_tx_packetdump_cb(netbuf, status,
+				tx_desc->vdev->vdev_id, TX_DATA_PKT);
+
 		DPTRACE(qdf_dp_trace_ptr(netbuf,
 			QDF_DP_TRACE_FREE_PACKET_PTR_RECORD,
 			qdf_nbuf_data_addr(netbuf),
@@ -765,6 +770,10 @@ ol_tx_single_completion_handler(ol_txrx_pdev_handle pdev,
 	QDF_NBUF_UPDATE_TX_PKT_COUNT(netbuf, QDF_NBUF_TX_PKT_FREE);
 	/* Do one shot statistics */
 	TXRX_STATS_UPDATE_TX_STATS(pdev, status, 1, qdf_nbuf_len(netbuf));
+
+	if (pdev->ol_tx_packetdump_cb)
+		pdev->ol_tx_packetdump_cb(netbuf, status,
+			tx_desc->vdev->vdev_id, TX_MGMT_PKT);
 
 	if (OL_TX_DESC_NO_REFS(tx_desc)) {
 		ol_tx_desc_frame_free_nonstd(pdev, tx_desc,
@@ -1168,3 +1177,57 @@ ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
 }
 
 #endif /* QCA_COMPUTE_TX_DELAY */
+
+/**
+ * ol_register_packetdump_callback() - registers
+ *  tx data packet, tx mgmt. packet and rx data packet
+ *  dump callback handler.
+ *
+ * @ol_tx_packetdump_cb: tx packetdump cb
+ * @ol_rx_packetdump_cb: rx packetdump cb
+ *
+ * This function is used to register tx data pkt, tx mgmt.
+ * pkt and rx data pkt dump callback
+ *
+ * Return: None
+ *
+ */
+void ol_register_packetdump_callback(tp_ol_packetdump_cb ol_tx_packetdump_cb,
+					tp_ol_packetdump_cb ol_rx_packetdump_cb)
+{
+	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if (!pdev) {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+				"%s: pdev is NULL", __func__);
+		return;
+	}
+
+	pdev->ol_tx_packetdump_cb = ol_tx_packetdump_cb;
+	pdev->ol_rx_packetdump_cb = ol_rx_packetdump_cb;
+}
+
+/**
+ * ol_deregister_packetdump_callback() - deregidters
+ *  tx data packet, tx mgmt. packet and rx data packet
+ *  dump callback handler
+ *
+ * This function is used to deregidter tx data pkt.,
+ * tx mgmt. pkt and rx data pkt. dump callback
+ *
+ * Return: None
+ *
+ */
+void ol_deregister_packetdump_callback(void)
+{
+	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if (!pdev) {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+				"%s: pdev is NULL", __func__);
+		return;
+	}
+
+	pdev->ol_tx_packetdump_cb = NULL;
+	pdev->ol_rx_packetdump_cb = NULL;
+}

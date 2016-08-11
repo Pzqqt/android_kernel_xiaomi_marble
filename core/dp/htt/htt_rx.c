@@ -60,6 +60,7 @@
 #include <asm/barrier.h>
 #include <wma_api.h>
 #endif
+#include <pktlog_ac_fmt.h>
 
 #ifdef HTT_DEBUG_DATA
 #define HTT_PKT_DUMP(x) x
@@ -1998,6 +1999,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 	uint8_t offload_ind, frag_ind;
 	struct htt_host_rx_desc_base *rx_desc;
 	uint8_t peer_id;
+	enum rx_pkt_fate status = RX_PKT_FATE_SUCCESS;
 
 	HTT_ASSERT1(htt_rx_in_order_ring_elems(pdev) != 0);
 
@@ -2082,6 +2084,15 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 #undef NEXT_FIELD_OFFSET_IN32
 
 		msdu_count--;
+
+		/* calling callback function for packet logging */
+		if (pdev->rx_pkt_dump_cb) {
+			if (qdf_unlikely((*((u_int8_t *)
+				   &rx_desc->fw_desc.u.val)) &
+				   FW_RX_DESC_ANY_ERR_M))
+				status = RX_PKT_FATE_FW_DROP_INVALID;
+			pdev->rx_pkt_dump_cb(msdu, peer_id, status);
+		}
 
 		if (qdf_unlikely((*((u_int8_t *) &rx_desc->fw_desc.u.val)) &
 				    FW_RX_DESC_ANY_ERR_M)) {
@@ -3536,3 +3547,51 @@ int htt_rx_ipa_uc_detach(struct htt_pdev_t *pdev)
 	return 0;
 }
 #endif /* IPA_OFFLOAD */
+
+/**
+ * htt_register_rx_pkt_dump_callback() - registers callback to
+ *   get rx pkt status and call callback to do rx packet dump
+ *
+ * @pdev: htt pdev handle
+ * @callback: callback to get rx pkt status and
+ *     call callback to do rx packet dump
+ *
+ * This function is used to register the callback to get
+ * rx pkt status and call callback to do rx packet dump
+ *
+ * Return: None
+ *
+ */
+void htt_register_rx_pkt_dump_callback(struct htt_pdev_t *pdev,
+				tp_rx_pkt_dump_cb callback)
+{
+	if (!pdev) {
+		qdf_print("%s: htt pdev is NULL, rx packet status callback register unsuccessful\n",
+						__func__);
+		return;
+	}
+	pdev->rx_pkt_dump_cb = callback;
+}
+
+/**
+ * htt_deregister_rx_pkt_dump_callback() - deregisters callback to
+ *   get rx pkt status and call callback to do rx packet dump
+ *
+ * @pdev: htt pdev handle
+ *
+ * This function is used to deregister the callback to get
+ * rx pkt status and call callback to do rx packet dump
+ *
+ * Return: None
+ *
+ */
+void htt_deregister_rx_pkt_dump_callback(struct htt_pdev_t *pdev)
+{
+	if (!pdev) {
+		qdf_print("%s: htt pdev is NULL, rx packet status callback deregister unsuccessful\n",
+						__func__);
+		return;
+	}
+	pdev->rx_pkt_dump_cb = NULL;
+}
+

@@ -58,6 +58,7 @@
 #include <ol_vowext_dbg_defs.h>
 #include <wma.h>
 #include <cds_concurrency.h>
+#include "pktlog_ac_fmt.h"
 
 #include <pld_common.h>
 
@@ -1398,6 +1399,51 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 	}
 
 	peer->rx_opt_proc(vdev, peer, tid, head_msdu);
+}
+
+/**
+ * ol_rx_pkt_dump_call() - updates status and
+ * calls packetdump callback to log rx packet
+ *
+ * @msdu: rx packet
+ * @peer_id: peer id
+ * @status: status of rx packet
+ *
+ * This function is used to update the status of rx packet
+ * and then calls packetdump callback to log that packet.
+ *
+ * Return: None
+ *
+ */
+void ol_rx_pkt_dump_call(
+	qdf_nbuf_t msdu,
+	uint8_t peer_id,
+	uint8_t status)
+{
+	v_CONTEXT_t vos_context;
+	ol_txrx_pdev_handle pdev;
+	struct ol_txrx_peer_t *peer = NULL;
+
+	vos_context = cds_get_global_context();
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if (!pdev) {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			"%s: pdev is NULL", __func__);
+		return;
+	}
+
+	if (pdev->ol_rx_packetdump_cb) {
+		peer = ol_txrx_peer_find_by_id(pdev, peer_id);
+		if (!peer) {
+			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+				"%s: peer with peer id %d is NULL", __func__,
+				peer_id);
+			return;
+		}
+		pdev->ol_rx_packetdump_cb(msdu, status, peer->vdev->vdev_id,
+						RX_DATA_PKT);
+	}
 }
 
 /* the msdu_list passed here must be NULL terminated */

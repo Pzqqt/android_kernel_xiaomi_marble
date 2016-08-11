@@ -63,6 +63,7 @@
 #include "cdp_txrx_flow_ctrl_legacy.h"
 #include "cdp_txrx_peer_ops.h"
 #include "wlan_hdd_napi.h"
+#include <wlan_logging_sock_svc.h>
 
 /* These are needed to recognize WPA and RSN suite types */
 #define HDD_WPA_OUI_SIZE 4
@@ -1537,6 +1538,8 @@ static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 
 	hdd_clear_roam_profile_ie(pAdapter);
 	hdd_wmm_init(pAdapter);
+	hdd_info("Invoking packetdump deregistration API");
+	wlan_deregister_txrx_packetdump();
 
 	/* indicate 'disconnect' status to wpa_supplicant... */
 	hdd_send_association_event(dev, pRoamInfo);
@@ -2799,6 +2802,9 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 				       " result:%d and Status:%d ",
 				       MAC_ADDR_ARRAY(pWextState->req_bssId.bytes),
 				       roamResult, roamStatus);
+
+			hdd_err("Invoking packetdump deregistration API");
+			wlan_deregister_txrx_packetdump();
 
 			/* inform association failure event to nl80211 */
 			if (eCSR_ROAM_RESULT_ASSOC_FAIL_CON_CHANNEL ==
