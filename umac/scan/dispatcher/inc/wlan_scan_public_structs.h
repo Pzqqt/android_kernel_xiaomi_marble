@@ -965,6 +965,7 @@ struct nlo_mawc_params {
 /**
  * struct pno_scan_req_params - PNO Scan request structure
  * @networks_cnt: Number of networks
+ * @do_passive_scan: Flag to request passive scan to fw
  * @vdev_id: vdev id
  * @fast_scan_period: Fast Scan period
  * @slow_scan_period: Slow scan period
@@ -996,6 +997,7 @@ struct nlo_mawc_params {
  */
 struct pno_scan_req_params {
 	uint32_t networks_cnt;
+	bool     do_passive_scan;
 	uint32_t vdev_id;
 	uint32_t fast_scan_period;
 	uint32_t slow_scan_period;

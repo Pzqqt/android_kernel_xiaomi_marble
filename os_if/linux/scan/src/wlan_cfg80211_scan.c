@@ -507,6 +507,12 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 			request->match_sets[i].rssi_thold;
 	}
 
+	/* set scan to passive if no SSIDs are specified in the request */
+	if (0 == request->n_ssids)
+		req->do_passive_scan = true;
+	else
+		req->do_passive_scan = false;
+
 	for (i = 0; i < request->n_ssids; i++) {
 		j = 0;
 		while (j < req->networks_cnt) {
