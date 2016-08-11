@@ -365,8 +365,8 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 {
 	int band_num;
 	int chan_num;
-	int chan_enum = 0;
-	struct ieee80211_channel *wiphy_chan;
+	enum channel_enum chan_enum = CHAN_ENUM_1;
+	struct ieee80211_channel *wiphy_chan, *wiphy_chan_144 = NULL;
 	struct regulatory_channel *cds_chan;
 	uint8_t band_capability;
 
@@ -385,6 +385,8 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 			wiphy_chan =
 				&(wiphy->bands[band_num]->channels[chan_num]);
 			cds_chan = &(reg_channels[chan_enum]);
+			if (CHAN_ENUM_144 == chan_enum)
+				wiphy_chan_144 = wiphy_chan;
 
 			chan_enum++;
 
@@ -426,6 +428,8 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 		  (1 << WHAL_REG_EXT_FCC_CH_144))) {
 		cds_chan = &(reg_channels[CHAN_ENUM_144]);
 		cds_chan->state = CHANNEL_STATE_DISABLE;
+		if (NULL != wiphy_chan_144)
+			wiphy_chan_144->flags |= IEEE80211_CHAN_DISABLED;
 	}
 
 	wlan_hdd_cfg80211_update_band(wiphy, band_capability);
