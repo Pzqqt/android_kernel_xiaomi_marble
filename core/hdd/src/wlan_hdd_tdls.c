@@ -5118,10 +5118,10 @@ static void wlan_hdd_tdls_ct_sampling_tx_rx(hdd_adapter_t *adapter,
 	uint8_t valid_mac_entries;
 	struct tdls_ct_mac_table ct_peer_mac_table[TDLS_CT_MAC_MAX_TABLE_SIZE];
 
-	qdf_spin_lock(&hdd_ctx->tdls_ct_spinlock);
+	qdf_spin_lock_bh(&hdd_ctx->tdls_ct_spinlock);
 
 	if (0 == tdls_ctx->valid_mac_entries) {
-		qdf_spin_unlock(&hdd_ctx->tdls_ct_spinlock);
+		qdf_spin_unlock_bh(&hdd_ctx->tdls_ct_spinlock);
 		return;
 	}
 
@@ -5135,7 +5135,7 @@ static void wlan_hdd_tdls_ct_sampling_tx_rx(hdd_adapter_t *adapter,
 
 	tdls_ctx->valid_mac_entries = 0;
 
-	qdf_spin_unlock(&hdd_ctx->tdls_ct_spinlock);
+	qdf_spin_unlock_bh(&hdd_ctx->tdls_ct_spinlock);
 
 	for (mac_cnt = 0; mac_cnt < valid_mac_entries; mac_cnt++) {
 		memcpy(mac, ct_peer_mac_table[mac_cnt].mac_address.bytes,
@@ -5187,7 +5187,7 @@ void wlan_hdd_tdls_update_rx_pkt_cnt(hdd_adapter_t *adapter,
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	tdls_ctx = adapter->sessionCtx.station.pHddTdlsCtx;
 
-	qdf_spin_lock(&hdd_ctx->tdls_ct_spinlock);
+	qdf_spin_lock_bh(&hdd_ctx->tdls_ct_spinlock);
 	valid_mac_entries = tdls_ctx->valid_mac_entries;
 
 	for (mac_cnt = 0; mac_cnt < valid_mac_entries; mac_cnt++) {
@@ -5209,7 +5209,7 @@ void wlan_hdd_tdls_update_rx_pkt_cnt(hdd_adapter_t *adapter,
 	}
 
 rx_cnt_return:
-	qdf_spin_unlock(&hdd_ctx->tdls_ct_spinlock);
+	qdf_spin_unlock_bh(&hdd_ctx->tdls_ct_spinlock);
 	return;
 }
 
@@ -5250,7 +5250,7 @@ void wlan_hdd_tdls_update_tx_pkt_cnt(hdd_adapter_t *adapter,
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	tdls_ctx = adapter->sessionCtx.station.pHddTdlsCtx;
 
-	qdf_spin_lock(&hdd_ctx->tdls_ct_spinlock);
+	qdf_spin_lock_bh(&hdd_ctx->tdls_ct_spinlock);
 	valid_mac_entries = tdls_ctx->valid_mac_entries;
 
 	for (mac_cnt = 0; mac_cnt < valid_mac_entries; mac_cnt++) {
@@ -5272,7 +5272,7 @@ void wlan_hdd_tdls_update_tx_pkt_cnt(hdd_adapter_t *adapter,
 	}
 
 tx_cnt_return:
-	qdf_spin_unlock(&hdd_ctx->tdls_ct_spinlock);
+	qdf_spin_unlock_bh(&hdd_ctx->tdls_ct_spinlock);
 	return;
 }
 
