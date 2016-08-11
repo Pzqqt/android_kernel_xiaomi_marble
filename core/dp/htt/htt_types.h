@@ -358,6 +358,7 @@ struct htt_pdev_t {
 		int rx_reset;
 		uint8_t htt_rx_restore;
 #endif
+		qdf_spinlock_t rx_hash_lock;
 		struct htt_rx_hash_bucket **hash_table;
 		uint32_t listnode_offset;
 	} rx_ring;
