@@ -75,6 +75,7 @@
 #endif /* CONFIG_MCL */
 
 #define QDF_ENABLE_TRACING
+#define qdf_scnprintf scnprintf
 
 #ifdef QDF_ENABLE_TRACING
 

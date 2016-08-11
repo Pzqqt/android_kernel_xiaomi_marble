@@ -101,6 +101,7 @@ static t_qdf_trace_data g_qdf_trace_data;
  */
 static tp_qdf_trace_cb qdf_trace_cb_table[QDF_MODULE_ID_MAX];
 static tp_qdf_trace_cb qdf_trace_restore_cb_table[QDF_MODULE_ID_MAX];
+static tp_qdf_state_info_cb qdf_state_info_table[QDF_MODULE_ID_MAX];
 
 #ifdef FEATURE_DP_TRACE
 /* Static and Global variables */
@@ -714,6 +715,70 @@ void qdf_trace_dump_all(void *p_mac, uint8_t code, uint8_t session,
 	}
 }
 EXPORT_SYMBOL(qdf_trace_dump_all);
+
+/**
+ * qdf_register_debugcb_init() - initializes debug callbacks
+ * to NULL
+ *
+ * Return: None
+ */
+void qdf_register_debugcb_init(void)
+{
+	uint8_t i;
+
+	for (i = 0; i < QDF_MODULE_ID_MAX; i++)
+		qdf_state_info_table[i] = NULL;
+}
+EXPORT_SYMBOL(qdf_register_debugcb_init);
+
+/**
+ * qdf_register_debug_callback() - stores callback handlers to print
+ * state information
+ * @module_id: module id of layer
+ * @qdf_state_infocb: callback to be registered
+ *
+ * This function is used to store callback handlers to print
+ * state information
+ *
+ * Return: None
+ */
+void qdf_register_debug_callback(QDF_MODULE_ID module_id,
+					tp_qdf_state_info_cb qdf_state_infocb)
+{
+	qdf_state_info_table[module_id] = qdf_state_infocb;
+}
+EXPORT_SYMBOL(qdf_register_debug_callback);
+
+/**
+ * qdf_state_info_dump_all() - it invokes callback of layer which registered
+ * its callback to print its state information.
+ * @buf:  buffer pointer to be passed
+ * @size:  size of buffer to be filled
+ * @driver_dump_size: actual size of buffer used
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS qdf_state_info_dump_all(char *buf, uint16_t size,
+			uint16_t *driver_dump_size)
+{
+	uint8_t module, ret = QDF_STATUS_SUCCESS;
+	uint16_t buf_len = size;
+	char *buf_ptr = buf;
+
+	for (module = 0; module < QDF_MODULE_ID_MAX; module++) {
+		if (NULL != qdf_state_info_table[module]) {
+			qdf_state_info_table[module](&buf_ptr, &buf_len);
+			if (!buf_len) {
+				ret = QDF_STATUS_E_NOMEM;
+				break;
+			}
+		}
+	}
+
+	*driver_dump_size = size - buf_len;
+	return ret;
+}
+EXPORT_SYMBOL(qdf_state_info_dump_all);
 
 #ifdef FEATURE_DP_TRACE
 /**
