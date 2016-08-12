@@ -75,6 +75,8 @@ struct ol_txrx_stats {
 			/* MSDUs which the target sent but couldn't get
 			 an ack for */
 			ol_txrx_stats_elem no_ack;
+			/* MSDUs dropped in NSS-FW */
+			ol_txrx_stats_elem nss_ol_dropped;
 		} dropped;
 		u_int32_t desc_in_use;
 		u_int32_t desc_alloc_fails;
@@ -446,6 +448,14 @@ typedef enum _ol_ath_param_t {
 #if DBDC_REPEATER_SUPPORT
 	OL_ATH_PARAM_DELAY_STAVAP_UP = 324,
 #endif
+	OL_ATH_PARAM_TXPOW_MGMT = 326,  /* Can be used to configure transmit power for management frames */
+	OL_ATH_PARAM_CHANSWITCH_OPTIONS = 327,  /* It is used to set the channel switch options */
+	OL_ATH_BTCOEX_ENABLE        = 328,
+	OL_ATH_BTCOEX_WL_PRIORITY   = 329,
+	OL_ATH_PARAM_TID_OVERRIDE_QUEUE_MAPPING = 330,
+	OL_ATH_PARAM_CAL_VER_CHECK = 331,
+	OL_ATH_PARAM_NO_VLAN = 332,
+	OL_ATH_PARAM_CCA_THRESHOLD = 333,
 } ol_ath_param_t;
 
 /*

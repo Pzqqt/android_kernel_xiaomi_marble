@@ -364,6 +364,7 @@ int
 ol_txrx_fw_stats_get(
 	 ol_txrx_vdev_handle vdev,
 	 struct ol_txrx_stats_req *req,
+	 bool per_vdev,
 	 bool response_expected);
 
 int
@@ -400,6 +401,8 @@ void ol_txrx_print_level_set(unsigned level);
 #define TXRX_FW_MAC_FETCH_MGR_STATS              22
 #define TXRX_FW_MAC_PREFETCH_MGR_STATS           23
 
+#define PER_RADIO_FW_STATS_REQUEST 0
+#define PER_VDEV_FW_STATS_REQUEST 1
 /**
  * ol_txrx_get_vdev_mac_addr() - Return mac addr of vdev
  * @vdev: vdev handle
