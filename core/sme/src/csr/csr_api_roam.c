@@ -11063,31 +11063,32 @@ csr_roam_chk_lnk_set_ctx_rsp(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 			pMsg->length = sizeof(uint8_t);
 			pMsg->seesionId = sessionId;
 			status = cds_send_mb_message_to_mac(pMsg);
+			/*
+			 * OBSS SCAN Indication will be sent to Firmware
+			 * to start OBSS Scan
+			 */
+			if (CSR_IS_CHANNEL_24GHZ(
+				session->connectedProfile.operationChannel)
+				&& (session->connectState ==
+					eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED)
+				&& session->pCurRoamProfile
+				&& ((QDF_P2P_CLIENT_MODE ==
+				     session->pCurRoamProfile->csrPersona)
+				|| (QDF_STA_MODE ==
+				     session->pCurRoamProfile->csrPersona))) {
+				struct sme_obss_ht40_scanind_msg *msg;
+				msg = qdf_mem_malloc(sizeof(
+					struct sme_obss_ht40_scanind_msg));
+				msg->msg_type = eWNI_SME_HT40_OBSS_SCAN_IND;
+				msg->length =
+				      sizeof(struct sme_obss_ht40_scanind_msg);
+				qdf_copy_macaddr(&msg->mac_addr,
+					&session->connectedProfile.bssid);
+				status = cds_send_mb_message_to_mac(msg);
+			}
 			result = eCSR_ROAM_RESULT_AUTHENTICATED;
 		} else {
 			result = eCSR_ROAM_RESULT_NONE;
-		}
-		/*
-		 * OBSS SCAN Indication will be sent to Firmware
-		 * to start OBSS Scan
-		 */
-		if (CSR_IS_CHANNEL_24GHZ(
-			session->connectedProfile.operationChannel)
-			&& (session->connectState ==
-				eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED)
-			&& session->pCurRoamProfile
-			&& ((QDF_P2P_CLIENT_MODE ==
-				session->pCurRoamProfile->csrPersona)
-			|| (QDF_STA_MODE ==
-				session->pCurRoamProfile->csrPersona))) {
-			struct sme_obss_ht40_scanind_msg *msg;
-			msg = qdf_mem_malloc(sizeof(
-				struct sme_obss_ht40_scanind_msg));
-			msg->msg_type = eWNI_SME_HT40_OBSS_SCAN_IND;
-			msg->length = sizeof(struct sme_obss_ht40_scanind_msg);
-			qdf_copy_macaddr(&msg->mac_addr,
-				&session->connectedProfile.bssid);
-			status = cds_send_mb_message_to_mac(msg);
 		}
 		roam_info_ptr = &roam_info;
 	} else {
