@@ -3889,6 +3889,11 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_CHANNEL_AVOIDANCE_IND] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_MPDU_AGGREGATION] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MPDU_AGGREGATION] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_NON_AGG_RETRY] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_AGG_RETRY] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_MGMT_RETRY] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_CTRL_RETRY] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_DELAY] = {.type = NLA_U8 },
 };
 
 /**
@@ -3959,6 +3964,8 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	uint8_t *scan_ie;
 	struct sir_set_tx_rx_aggregation_size request;
 	QDF_STATUS qdf_status;
+	uint8_t retry, delay;
+	int param_id;
 
 	ENTER_DEV(dev);
 
@@ -4066,6 +4073,57 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		access_policy_present = true;
 		hdd_info("Access policy present. access_policy %d",
 			access_policy);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_NON_AGG_RETRY]) {
+		retry = nla_get_u8(tb[
+				QCA_WLAN_VENDOR_ATTR_CONFIG_NON_AGG_RETRY]);
+		retry = retry > CFG_NON_AGG_RETRY_MAX ?
+				CFG_NON_AGG_RETRY_MAX : retry;
+		param_id = WMI_PDEV_PARAM_NON_AGG_SW_RETRY_TH;
+		ret_val = wma_cli_set_command(adapter->sessionId, param_id,
+					      retry, PDEV_CMD);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_AGG_RETRY]) {
+		retry = nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_CONFIG_AGG_RETRY]);
+		retry = retry > CFG_AGG_RETRY_MAX ?
+			CFG_AGG_RETRY_MAX : retry;
+
+		/* Value less than CFG_AGG_RETRY_MIN has side effect to t-put */
+		retry = ((retry > 0) && (retry < CFG_AGG_RETRY_MIN)) ?
+				CFG_AGG_RETRY_MIN : retry;
+		param_id = WMI_PDEV_PARAM_AGG_SW_RETRY_TH;
+		ret_val = wma_cli_set_command(adapter->sessionId, param_id,
+					      retry, PDEV_CMD);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_MGMT_RETRY]) {
+		retry = nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_CONFIG_MGMT_RETRY]);
+		retry = retry > CFG_MGMT_RETRY_MAX ?
+				CFG_MGMT_RETRY_MAX : retry;
+		param_id = WMI_PDEV_PARAM_MGMT_RETRY_LIMIT;
+		ret_val = wma_cli_set_command(adapter->sessionId, param_id,
+					      retry, PDEV_CMD);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_CTRL_RETRY]) {
+		retry = nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_CONFIG_CTRL_RETRY]);
+		retry = retry > CFG_CTRL_RETRY_MAX ?
+				CFG_CTRL_RETRY_MAX : retry;
+		param_id = WMI_PDEV_PARAM_CTRL_RETRY_LIMIT;
+		ret_val = wma_cli_set_command(adapter->sessionId, param_id,
+					      retry, PDEV_CMD);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_DELAY]) {
+		delay = nla_get_u8(tb[
+				QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_DELAY]);
+		delay = delay > CFG_PROPAGATION_DELAY_MAX ?
+				CFG_PROPAGATION_DELAY_MAX : delay;
+		param_id = WMI_PDEV_PARAM_PROPAGATION_DELAY;
+		ret_val = wma_cli_set_command(adapter->sessionId, param_id,
+					      delay, PDEV_CMD);
 	}
 
 	if (vendor_ie_present && access_policy_present) {
