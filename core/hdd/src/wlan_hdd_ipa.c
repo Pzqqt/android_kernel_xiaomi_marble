@@ -493,6 +493,10 @@ uint32_t wlan_hdd_stub_addr_to_priv(void *ptr)
 	QDF_TRACE(QDF_MODULE_ID_HDD, LVL, \
 		  "%s:%d: "fmt, __func__, __LINE__, ## args)
 
+#define HDD_IPA_DP_LOG(LVL, fmt, args...) \
+	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, LVL, \
+		  "%s:%d: "fmt, __func__, __LINE__, ## args)
+
 #define HDD_IPA_DBG_DUMP(_lvl, _prefix, _buf, _len) \
 	do { \
 		QDF_TRACE(QDF_MODULE_ID_HDD, _lvl, "%s:", _prefix); \
@@ -1332,7 +1336,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 
 	hdd_ipa = (struct hdd_ipa_priv *)hdd_ctx->hdd_ipa;
 
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG,
+	HDD_IPA_DP_LOG(QDF_TRACE_LEVEL_DEBUG,
 		    "%s, OPCODE %s", __func__, op_string[msg->op_code]);
 
 	if ((HDD_IPA_UC_OPCODE_TX_RESUME == msg->op_code) ||
@@ -2527,7 +2531,7 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 		if (hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx)) {
 			session_id = (uint8_t)skb->cb[0];
 			iface_id = vdev_to_iface[session_id];
-			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO_HIGH,
+			HDD_IPA_DP_LOG(QDF_TRACE_LEVEL_INFO_HIGH,
 				"IPA_RECEIVE: session_id=%u, iface_id=%u",
 				session_id, iface_id);
 		} else {
@@ -2576,7 +2580,7 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 			fw_desc = (uint8_t)skb->cb[1];
 
 			if (fw_desc & HDD_IPA_FW_RX_DESC_FORWARD_M) {
-				HDD_IPA_LOG(
+				HDD_IPA_DP_LOG(
 					QDF_TRACE_LEVEL_DEBUG,
 					"Forward packet to Tx (fw_desc=%d)",
 					fw_desc);
@@ -2630,7 +2634,7 @@ void hdd_ipa_nbuf_cb(qdf_nbuf_t skb)
 {
 	struct hdd_ipa_priv *hdd_ipa = ghdd_ipa;
 
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "%p",
+	HDD_IPA_DP_LOG(QDF_TRACE_LEVEL_DEBUG, "%p",
 		wlan_hdd_stub_priv_to_addr(QDF_NBUF_CB_TX_IPA_PRIV(skb)));
 	/* FIXME: This is broken; PRIV_DATA is now 31 bits */
 	ipa_free_skb((struct ipa_rx_data *)
