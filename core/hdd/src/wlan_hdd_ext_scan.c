@@ -46,6 +46,7 @@
  * @ignore_cached_results: Flag to ignore cached results or not
  * @context_lock: Spinlock to serialize all context accesses
  * @capability_response: Ext scan capability response data from target
+ * @buckets_scanned: bitmask of buckets scanned in extscan cycle
  */
 struct hdd_ext_scan_context {
 	uint32_t request_id;
@@ -54,6 +55,7 @@ struct hdd_ext_scan_context {
 	struct completion response_event;
 	spinlock_t context_lock;
 	struct ext_scan_capabilities_response capability_response;
+	uint32_t buckets_scanned;
 };
 static struct hdd_ext_scan_context ext_scan_context;
 
@@ -314,6 +316,7 @@ wlan_hdd_cfg80211_extscan_cached_results_ind(void *ctx,
 #define EXTSCAN_CACHED_NL_FIXED_TLV \
 		((sizeof(data->request_id) + NLA_HDRLEN) + \
 		(sizeof(data->num_scan_ids) + NLA_HDRLEN) + \
+		(sizeof(data->buckets_scanned) + NLA_HDRLEN)+ \
 		(sizeof(data->more_data) + NLA_HDRLEN))
 #define EXTSCAN_CACHED_NL_SCAN_ID_TLV \
 		((sizeof(result->scan_id) + NLA_HDRLEN) + \
@@ -365,8 +368,9 @@ wlan_hdd_cfg80211_extscan_cached_results_ind(void *ctx,
 		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
 		goto fail;
 	}
-	hdd_notice("Req Id %u Num_scan_ids %u More Data %u",
-		data->request_id, data->num_scan_ids, data->more_data);
+	hdd_notice("Req Id %u Num_scan_ids %u More Data %u buckets_scanned %u",
+		data->request_id, data->num_scan_ids, data->more_data,
+		data->buckets_scanned);
 
 	result = &data->result[0];
 	for (i = 0; i < data->num_scan_ids; i++) {
@@ -449,6 +453,9 @@ wlan_hdd_cfg80211_extscan_cached_results_ind(void *ctx,
 			    nla_put_u32(skb,
 				QCA_WLAN_VENDOR_ATTR_EXTSCAN_CACHED_RESULTS_FLAGS,
 				result->flags) ||
+			    nla_put_u32(skb,
+				QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_BUCKETS_SCANNED,
+				data->buckets_scanned) ||
 			    nla_put_u32(skb,
 				QCA_WLAN_VENDOR_ATTR_EXTSCAN_NUM_RESULTS_AVAILABLE,
 				result->num_results)) {
@@ -774,6 +781,7 @@ wlan_hdd_cfg80211_extscan_full_scan_result_event(void *ctx,
 	hdd_context_t *pHddCtx = (hdd_context_t *) ctx;
 	struct sk_buff *skb = NULL;
 	struct timespec ts;
+	struct hdd_ext_scan_context *context;
 
 	int flags = cds_get_gfp_flags();
 
@@ -878,6 +886,17 @@ wlan_hdd_cfg80211_extscan_full_scan_result_event(void *ctx,
 			goto nla_put_failure;
 	}
 
+	context = &ext_scan_context;
+	spin_lock(&context->context_lock);
+	if (nla_put_u32(skb,
+		QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_BUCKETS_SCANNED,
+		context->buckets_scanned)) {
+		spin_unlock(&context->context_lock);
+		hdd_notice("Failed to include buckets_scanned");
+		goto nla_put_failure;
+	}
+	spin_unlock(&context->context_lock);
+
 	cfg80211_vendor_event(skb, flags);
 	EXIT();
 	return;
@@ -966,6 +985,7 @@ wlan_hdd_cfg80211_extscan_scan_progress_event(void *ctx,
 	hdd_context_t *pHddCtx = (hdd_context_t *) ctx;
 	struct sk_buff *skb = NULL;
 	int flags = cds_get_gfp_flags();
+	struct hdd_ext_scan_context *context;
 
 	ENTER();
 
@@ -987,17 +1007,32 @@ wlan_hdd_cfg80211_extscan_scan_progress_event(void *ctx,
 		hdd_err("cfg80211_vendor_event_alloc failed");
 		return;
 	}
-	hdd_notice("Req Id %u Scan event type %u Scan event status %u",
-		pData->requestId, pData->scanEventType, pData->status);
+
+	hdd_notice("Request Id %u Scan event type %u Scan event status %u buckets scanned %u",
+		pData->requestId, pData->scanEventType, pData->status,
+		pData->buckets_scanned);
+
+
+	context = &ext_scan_context;
+	spin_lock(&context->context_lock);
+	if (pData->scanEventType == WIFI_EXTSCAN_CYCLE_COMPLETED_EVENT) {
+		context->buckets_scanned = 0;
+		pData->scanEventType = WIFI_EXTSCAN_RESULTS_AVAILABLE;
+		spin_unlock(&context->context_lock);
+	} else if (pData->scanEventType == WIFI_EXTSCAN_CYCLE_STARTED_EVENT) {
+		context->buckets_scanned = pData->buckets_scanned;
+		/* No need to report to user space */
+		spin_unlock(&context->context_lock);
+		return;
+	} else {
+		spin_unlock(&context->context_lock);
+	}
 
 	if (nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_REQUEST_ID,
 			pData->requestId) ||
 	    nla_put_u8(skb,
 		       QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_SCAN_EVENT_TYPE,
-		       pData->scanEventType) ||
-	    nla_put_u32(skb,
-			QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_SCAN_EVENT_STATUS,
-			pData->status)) {
+		       pData->scanEventType)) {
 		hdd_err("nla put fail");
 		goto nla_put_failure;
 	}
@@ -2771,14 +2806,14 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 		hdd_notice("max period %u",
 			req_msg->buckets[bkt_index].max_period);
 
-		/* Parse and fetch exponent */
-		if (!bucket[QCA_WLAN_VENDOR_ATTR_EXTSCAN_BUCKET_SPEC_EXPONENT]) {
-			hdd_err("attr exponent failed");
+		/* Parse and fetch base */
+		if (!bucket[QCA_WLAN_VENDOR_ATTR_EXTSCAN_BUCKET_SPEC_BASE]) {
+			hdd_err("attr base failed");
 			return -EINVAL;
 		}
 		req_msg->buckets[bkt_index].exponent = nla_get_u32(
-			bucket[QCA_WLAN_VENDOR_ATTR_EXTSCAN_BUCKET_SPEC_EXPONENT]);
-		hdd_notice("exponent %u",
+			bucket[QCA_WLAN_VENDOR_ATTR_EXTSCAN_BUCKET_SPEC_BASE]);
+		hdd_notice("base %u",
 			req_msg->buckets[bkt_index].exponent);
 
 		/* Parse and fetch step count */
@@ -3241,6 +3276,7 @@ __wlan_hdd_cfg80211_extscan_start(struct wiphy *wiphy,
 	spin_lock(&context->context_lock);
 	INIT_COMPLETION(context->response_event);
 	context->request_id = request_id = pReqMsg->requestId;
+	context->buckets_scanned = 0;
 	spin_unlock(&context->context_lock);
 
 	status = sme_ext_scan_start(pHddCtx->hHal, pReqMsg);

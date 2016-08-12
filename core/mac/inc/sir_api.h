@@ -4210,8 +4210,35 @@ typedef enum {
 
 /* wifi scan related events */
 typedef enum {
-	WIFI_SCAN_BUFFER_FULL,
-	WIFI_SCAN_COMPLETE,
+	/*
+	 * reported when REPORT_EVENTS_EACH_SCAN is set and a scan
+	 * completes. WIFI_SCAN_THRESHOLD_NUM_SCANS or
+	 * WIFI_SCAN_THRESHOLD_PERCENT can be reported instead if the
+	 * reason for the event is available; however, at most one of
+	 * these events should be reported per scan.
+	 */
+	WIFI_EXTSCAN_RESULTS_AVAILABLE,
+	/*
+	 * can be reported when REPORT_EVENTS_EACH_SCAN is not set and
+	 * report_threshold_num_scans is reached.
+	 */
+	WIFI_EXTSCAN_THRESHOLD_NUM_SCANS,
+	/*
+	 * can be reported when REPORT_EVENTS_EACH_SCAN is not set and
+	 * report_threshold_percent is reached
+	 */
+	WIFI_EXTSCAN_THRESHOLD_PERCENT,
+	/*
+	 * reported when currently executing gscans are disabled
+	 * start_gscan will need to be called again in order to continue
+	 * scanning
+	 */
+	WIFI_SCAN_DISABLED,
+
+	/* Below events are consumed in driver only */
+	WIFI_EXTSCAN_BUCKET_STARTED_EVENT = 0x10,
+	WIFI_EXTSCAN_CYCLE_STARTED_EVENT,
+	WIFI_EXTSCAN_CYCLE_COMPLETED_EVENT,
 } tWifiScanEventType;
 
 /**
@@ -4381,12 +4408,14 @@ typedef struct {
  * @more_data: 0 - for last fragment
  *	       1 - still more fragment(s) coming
  * @num_scan_ids: number of scan ids
+ * @buckets_scanned: bitmask of buckets scanned in current extscan cycle
  * @result: wifi scan result
  */
 struct extscan_cached_scan_results {
 	uint32_t    request_id;
 	bool        more_data;
 	uint32_t    num_scan_ids;
+	uint32_t	buckets_scanned;
 	struct extscan_cached_scan_result  *result;
 };
 
@@ -4655,6 +4684,7 @@ typedef struct {
 	uint32_t requestId;
 	uint32_t status;
 	uint8_t scanEventType;
+	uint32_t   buckets_scanned;
 } tSirExtScanOnScanEventIndParams, *tpSirExtScanOnScanEventIndParams;
 
 /**

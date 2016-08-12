@@ -86,12 +86,14 @@
  *		fire completion events regardless of REPORT_EVENTS_EACH_SCAN.
  * @EXTSCAN_REPORT_EVENTS_NO_BATCH: controls batching,
  *		0 => batching, 1 => no batching
- */
+ * @EXTSCAN_REPORT_EVENTS_CONTEXT_HUB: forward results to context hub
+  */
 enum extscan_report_events_type {
 	EXTSCAN_REPORT_EVENTS_BUFFER_FULL   = 0x00,
 	EXTSCAN_REPORT_EVENTS_EACH_SCAN     = 0x01,
 	EXTSCAN_REPORT_EVENTS_FULL_RESULTS  = 0x02,
 	EXTSCAN_REPORT_EVENTS_NO_BATCH      = 0x04,
+	EXTSCAN_REPORT_EVENTS_CONTEXT_HUB   = 0x08,
 };
 
 #define WMA_EXTSCAN_CYCLE_WAKE_LOCK_DURATION (5 * 1000) /* in msec */
@@ -3617,6 +3619,8 @@ int wma_extscan_operations_event_handler(void *handle,
 	WMI_EXTSCAN_OPERATION_EVENTID_param_tlvs *param_buf;
 	wmi_extscan_operation_event_fixed_param *oprn_event;
 	tSirExtScanOnScanEventIndParams *oprn_ind;
+	uint32_t cnt;
+
 	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 	if (!pMac) {
 		WMA_LOGE("%s: Invalid pMac", __func__);
@@ -3644,22 +3648,56 @@ int wma_extscan_operations_event_handler(void *handle,
 
 	switch (oprn_event->event) {
 	case WMI_EXTSCAN_BUCKET_COMPLETED_EVENT:
-		oprn_ind->scanEventType = WIFI_SCAN_COMPLETE;
+		WMA_LOGD("%s: received WMI_EXTSCAN_BUCKET_COMPLETED_EVENT",
+			__func__);
+		oprn_ind->scanEventType =  WIFI_EXTSCAN_RESULTS_AVAILABLE;
 		oprn_ind->status = 0;
 		break;
+
 	case WMI_EXTSCAN_CYCLE_STARTED_EVENT:
 		WMA_LOGD("%s: received WMI_EXTSCAN_CYCLE_STARTED_EVENT",
 			 __func__);
 		qdf_wake_lock_timeout_acquire(&wma->extscan_wake_lock,
 				      WMA_EXTSCAN_CYCLE_WAKE_LOCK_DURATION,
 				      WIFI_POWER_EVENT_WAKELOCK_EXT_SCAN);
-		goto exit_handler;
+		oprn_ind->scanEventType = WIFI_EXTSCAN_CYCLE_STARTED_EVENT;
+		oprn_ind->status = 0;
+		oprn_ind->buckets_scanned = 0;
+		for (cnt = 0; cnt < oprn_event->num_buckets; cnt++)
+			oprn_ind->buckets_scanned |=
+				(1 << param_buf->bucket_id[cnt]);
+		WMA_LOGD(FL("num_buckets %u request_id %u buckets_scanned %u"),
+			oprn_event->num_buckets, oprn_ind->requestId,
+			oprn_ind->buckets_scanned);
+		break;
 	case WMI_EXTSCAN_CYCLE_COMPLETED_EVENT:
 		WMA_LOGD("%s: received WMI_EXTSCAN_CYCLE_COMPLETED_EVENT",
 			 __func__);
 		qdf_wake_lock_release(&wma->extscan_wake_lock,
 				      WIFI_POWER_EVENT_WAKELOCK_EXT_SCAN);
+		oprn_ind->scanEventType = WIFI_EXTSCAN_CYCLE_COMPLETED_EVENT;
+		oprn_ind->status = 0;
+		/* Set bucket scanned mask to zero on cycle complete */
+		oprn_ind->buckets_scanned = 0;
+		break;
+	case WMI_EXTSCAN_BUCKET_STARTED_EVENT:
+		WMA_LOGD("%s: received WIFI_EXTSCAN_BUCKET_STARTED_EVENT",
+			__func__);
+		oprn_ind->scanEventType = WIFI_EXTSCAN_BUCKET_STARTED_EVENT;
+		oprn_ind->status = 0;
 		goto exit_handler;
+	case WMI_EXTSCAN_THRESHOLD_NUM_SCANS:
+		WMA_LOGD("%s: received WIFI_EXTSCAN_THRESHOLD_NUM_SCANS",
+			__func__);
+		oprn_ind->scanEventType = WIFI_EXTSCAN_THRESHOLD_NUM_SCANS;
+		oprn_ind->status = 0;
+		break;
+	case WMI_EXTSCAN_THRESHOLD_PERCENT:
+		WMA_LOGD("%s: received WIFI_EXTSCAN_THRESHOLD_PERCENT",
+			__func__);
+		oprn_ind->scanEventType = WIFI_EXTSCAN_THRESHOLD_PERCENT;
+		oprn_ind->status = 0;
+		break;
 	default:
 		WMA_LOGE("%s: Unknown event(%d) from target",
 			 __func__, oprn_event->event);
@@ -4159,6 +4197,7 @@ int wma_extscan_cached_results_event_handler(void *handle,
 	qdf_mem_zero(dest_cachelist, sizeof(*dest_cachelist));
 	dest_cachelist->request_id = event->request_id;
 	dest_cachelist->more_data = moredata;
+	dest_cachelist->buckets_scanned = event->buckets_scanned;
 
 	scan_ids_cnt = wma_extscan_find_unique_scan_ids(cmd_param_info);
 	WMA_LOGI("%s: scan_ids_cnt %d", __func__, scan_ids_cnt);
@@ -4655,6 +4694,11 @@ QDF_STATUS wma_get_buf_extscan_start_cmd(tp_wma_handle wma_handle,
 		else
 			dest_blist->configuration_flags =
 				WMI_EXTSCAN_BUCKET_CACHE_RESULTS;
+
+		if (src_bucket->reportEvents &
+			EXTSCAN_REPORT_EVENTS_CONTEXT_HUB)
+			dest_blist->configuration_flags |=
+				WMI_EXTSCAN_REPORT_EVENT_CONTEXT_HUB;
 
 		WMA_LOGI("%s: ntfy_extscan_events:%u cfg_flags:%u fwd_flags:%u",
 			__func__, dest_blist->notify_extscan_events,
