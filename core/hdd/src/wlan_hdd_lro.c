@@ -130,6 +130,7 @@ static void hdd_lro_desc_info_init(struct hdd_lro_s *hdd_info)
 	}
 
 	qdf_spinlock_create(&hdd_info->lro_desc_info.lro_hash_lock);
+	qdf_spinlock_create(&hdd_info->lro_mgr_arr_access_lock);
 }
 
 /**
@@ -162,6 +163,7 @@ static void hdd_lro_desc_info_deinit(struct hdd_lro_s *hdd_info)
 
 	hdd_lro_desc_pool_deinit(&desc_info->lro_desc_pool);
 	qdf_spinlock_destroy(&desc_info->lro_hash_lock);
+	qdf_spinlock_destroy(&hdd_info->lro_mgr_arr_access_lock);
 }
 
 /**
@@ -436,8 +438,10 @@ void hdd_lro_flush_pkt(struct net_lro_mgr *lro_mgr,
 void hdd_lro_flush(void *data)
 {
 	hdd_adapter_t *adapter = (hdd_adapter_t *)data;
+	struct hdd_lro_s *hdd_info = &adapter->lro_info;
 	int i;
 
+	qdf_spin_lock_bh(&hdd_info->lro_mgr_arr_access_lock);
 	for (i = 0; i < adapter->lro_info.lro_mgr->max_desc; i++) {
 		if (adapter->lro_info.lro_mgr->lro_arr[i].active) {
 			hdd_lro_desc_free(
@@ -447,6 +451,7 @@ void hdd_lro_flush(void *data)
 				 &adapter->lro_info.lro_mgr->lro_arr[i]);
 		}
 	}
+	qdf_spin_unlock_bh(&hdd_info->lro_mgr_arr_access_lock);
 }
 
 /**
