@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -155,7 +155,7 @@ static QDF_STATUS send_cfr_rcc_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_TAG_STRUC_wmi_cfr_capture_filter_cmd_fixed_param,
 		       WMITLV_GET_STRUCT_TLVLEN
 		       (wmi_cfr_capture_filter_cmd_fixed_param));
-	cmd->pdev_id = ops->convert_pdev_id_host_to_target(wmi_handle,
+	cmd->pdev_id = ops->convert_host_pdev_id_to_target(wmi_handle,
 							   rcc->pdev_id);
 	WMI_CFR_CAPTURE_INTERVAL_SET(cmd->capture_interval,
 				     rcc->capture_interval);
