@@ -1500,8 +1500,14 @@ struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	hal_rx_msdu_get_flow_params_6490,
 	hal_rx_tlv_get_tcp_chksum_6490,
 	hal_rx_get_rx_sequence_6490,
+#if defined(QCA_WIFI_QCA6490) && defined(WLAN_CFR_ENABLE) && \
+	defined(WLAN_ENH_CFR_ENABLE)
+	hal_rx_get_bb_info_6490,
+	hal_rx_get_rtt_info_6490,
+#else
 	NULL,
 	NULL,
+#endif
 	/* rx - msdu end fast path info fields */
 	hal_rx_msdu_packet_metadata_get_generic,
 	hal_rx_get_fisa_cumulative_l4_checksum_6490,
