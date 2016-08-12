@@ -993,6 +993,7 @@ wlan_hdd_cfg80211_extscan_scan_progress_event(void *ctx,
 		return;
 	if (!pData) {
 		hdd_err("pData is null");
+		EXIT();
 		return;
 	}
 
@@ -1005,13 +1006,13 @@ wlan_hdd_cfg80211_extscan_scan_progress_event(void *ctx,
 
 	if (!skb) {
 		hdd_err("cfg80211_vendor_event_alloc failed");
+		EXIT();
 		return;
 	}
 
 	hdd_notice("Request Id %u Scan event type %u Scan event status %u buckets scanned %u",
 		pData->requestId, pData->scanEventType, pData->status,
 		pData->buckets_scanned);
-
 
 	context = &ext_scan_context;
 	spin_lock(&context->context_lock);
@@ -1023,7 +1024,7 @@ wlan_hdd_cfg80211_extscan_scan_progress_event(void *ctx,
 		context->buckets_scanned = pData->buckets_scanned;
 		/* No need to report to user space */
 		spin_unlock(&context->context_lock);
-		return;
+		goto nla_put_failure;
 	} else {
 		spin_unlock(&context->context_lock);
 	}
@@ -1043,6 +1044,7 @@ wlan_hdd_cfg80211_extscan_scan_progress_event(void *ctx,
 
 nla_put_failure:
 	kfree_skb(skb);
+	EXIT();
 	return;
 }
 

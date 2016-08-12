@@ -4208,38 +4208,38 @@ typedef enum {
 	WIFI_BAND_MAX
 } tWifiBand;
 
-/* wifi scan related events */
-typedef enum {
-	/*
-	 * reported when REPORT_EVENTS_EACH_SCAN is set and a scan
-	 * completes. WIFI_SCAN_THRESHOLD_NUM_SCANS or
-	 * WIFI_SCAN_THRESHOLD_PERCENT can be reported instead if the
-	 * reason for the event is available; however, at most one of
-	 * these events should be reported per scan.
-	 */
+/**
+ * enum wifi_extscan_event_type - extscan event type
+ * @WIFI_EXTSCAN_RESULTS_AVAILABLE: reported when REPORT_EVENTS_EACH_SCAN is set
+ *		and a scan cycle completes. WIFI_SCAN_THRESHOLD_NUM_SCANS or
+ *		WIFI_SCAN_THRESHOLD_PERCENT can be reported instead if the
+ *		reason for the event is available; however, at most one of
+ *		these events should be reported per scan.
+ * @WIFI_EXTSCAN_THRESHOLD_NUM_SCANS: can be reported when
+ *		REPORT_EVENTS_EACH_SCAN is not set and
+ *		report_threshold_num_scans is reached.
+ * @WIFI_EXTSCAN_THRESHOLD_PERCENT: can be reported when REPORT_EVENTS_EACH_SCAN
+ *		is not set and report_threshold_percent is reached.
+ * @WIFI_SCAN_DISABLED: reported when currently executing gscans are disabled
+ *		start_gscan will need to be called again in order to continue
+ *		scanning.
+ * @WIFI_EXTSCAN_BUCKET_STARTED_EVENT: Bucket started event
+ *		This event is consumed in driver only.
+ * @WIFI_EXTSCAN_CYCLE_STARTED_EVENT: Cycle started event.
+ *		This event is consumed in driver only.
+ * @WIFI_EXTSCAN_CYCLE_COMPLETED_EVENT: Cycle complete event. This event
+ *		triggers @WIFI_EXTSCAN_RESULTS_AVAILABLE to the user space.
+ */
+enum wifi_extscan_event_type {
 	WIFI_EXTSCAN_RESULTS_AVAILABLE,
-	/*
-	 * can be reported when REPORT_EVENTS_EACH_SCAN is not set and
-	 * report_threshold_num_scans is reached.
-	 */
 	WIFI_EXTSCAN_THRESHOLD_NUM_SCANS,
-	/*
-	 * can be reported when REPORT_EVENTS_EACH_SCAN is not set and
-	 * report_threshold_percent is reached
-	 */
 	WIFI_EXTSCAN_THRESHOLD_PERCENT,
-	/*
-	 * reported when currently executing gscans are disabled
-	 * start_gscan will need to be called again in order to continue
-	 * scanning
-	 */
 	WIFI_SCAN_DISABLED,
 
-	/* Below events are consumed in driver only */
 	WIFI_EXTSCAN_BUCKET_STARTED_EVENT = 0x10,
 	WIFI_EXTSCAN_CYCLE_STARTED_EVENT,
 	WIFI_EXTSCAN_CYCLE_COMPLETED_EVENT,
-} tWifiScanEventType;
+};
 
 /**
  * enum extscan_configuration_flags - extscan config flags
