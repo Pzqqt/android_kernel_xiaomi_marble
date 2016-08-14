@@ -5031,6 +5031,27 @@ void wma_set_vdev_intrabss_fwd(tp_wma_handle wma_handle,
 					 pdis_intra_fwd->disableintrabssfwd);
 }
 
+/**
+ * wma_get_pdev_from_scn_handle() - API to get pdev from scn handle
+ * @scn_handle: opaque wma handle
+ *
+ * API to get pdev from scn handle
+ *
+ * Return: None
+ */
+static struct wlan_objmgr_pdev *wma_get_pdev_from_scn_handle(void *scn_handle)
+{
+	tp_wma_handle wma_handle;
+
+	if (!scn_handle) {
+		WMA_LOGE("invalid scn handle");
+		return NULL;
+	}
+	wma_handle = (tp_wma_handle)scn_handle;
+
+	return wma_handle->pdev;
+}
+
 void wma_store_pdev(void *wma_ctx, struct wlan_objmgr_pdev *pdev)
 {
 	tp_wma_handle wma = (tp_wma_handle)wma_ctx;
@@ -5043,6 +5064,10 @@ void wma_store_pdev(void *wma_ctx, struct wlan_objmgr_pdev *pdev)
 	}
 
 	wma->pdev = pdev;
+
+	target_if_store_pdev_target_if_ctx(wma_get_pdev_from_scn_handle);
+	target_pdev_set_wmi_handle(wma->pdev->tgt_if_handle,
+				   wma->wmi_handle);
 }
 
 /**

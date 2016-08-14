@@ -1956,27 +1956,6 @@ static void wma_target_if_close(tp_wma_handle wma_handle)
 }
 
 /**
- * wma_get_pdev_from_scn_handle() - API to get pdev from scn handle
- * @scn_handle: opaque wma handle
- *
- * API to get pdev from scn handle
- *
- * Return: None
- */
-static struct wlan_objmgr_pdev *wma_get_pdev_from_scn_handle(void *scn_handle)
-{
-	tp_wma_handle wma_handle;
-
-	if (!scn_handle) {
-		WMA_LOGE("invalid scn handle");
-		return NULL;
-	}
-	wma_handle = (tp_wma_handle)scn_handle;
-
-	return wma_handle->pdev;
-}
-
-/**
  * wma_legacy_service_ready_event_handler() - legacy (ext)service ready handler
  * @event_id: event_id
  * @handle: wma handle
@@ -5529,9 +5508,6 @@ static int wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	if (ret)
 		return -EINVAL;
 
-	target_if_store_pdev_target_if_ctx(wma_get_pdev_from_scn_handle);
-	target_pdev_set_wmi_handle(wma_handle->pdev->tgt_if_handle,
-				   wma_handle->wmi_handle);
 	wma_green_ap_register_handlers(wma_handle);
 
 	return ret;
