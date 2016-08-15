@@ -66,6 +66,47 @@
 #define WEIGHT_OF_NON_PCL_CHANNELS 1
 
 /**
+ * enum hw_mode_ss_config - Possible spatial stream configuration
+ * @SS_0x0: Unused Tx and Rx of MAC
+ * @SS_1x1: 1 Tx SS and 1 Rx SS
+ * @SS_2x2: 2 Tx SS and 2 Rx SS
+ * @SS_3x3: 3 Tx SS and 3 Rx SS
+ * @SS_4x4: 4 Tx SS and 4 Rx SS
+ *
+ * Note: Right now only 1x1 and 2x2 are being supported. Other modes should
+ * be added when supported. Asymmetric configuration like 1x2, 2x1 are also
+ * not supported now. But, they are still valid. Right now, Tx/Rx SS support is
+ * 4 bits long. So, we can go upto 15x15
+ */
+enum hw_mode_ss_config {
+	HW_MODE_SS_0x0,
+	HW_MODE_SS_1x1,
+	HW_MODE_SS_2x2,
+	HW_MODE_SS_3x3,
+	HW_MODE_SS_4x4,
+};
+
+/**
+ * enum hw_mode_dbs_capab - DBS HW mode capability
+ * @HW_MODE_DBS_NONE: Non DBS capable
+ * @HW_MODE_DBS: DFS capable
+ */
+enum hw_mode_dbs_capab {
+	HW_MODE_DBS_NONE,
+	HW_MODE_DBS,
+};
+
+/**
+ * enum hw_mode_agile_dfs_capab - Agile DFS HW mode capability
+ * @HW_MODE_AGILE_DFS_NONE: Non Agile DFS capable
+ * @HW_MODE_AGILE_DFS: Agile DFS capable
+ */
+enum hw_mode_agile_dfs_capab {
+	HW_MODE_AGILE_DFS_NONE,
+	HW_MODE_AGILE_DFS,
+};
+
+/**
  * enum cds_pcl_group_id - Identifies the pcl groups to be used
  * @CDS_PCL_GROUP_ID1_ID2: Use weights of group1 and group2
  * @CDS_PCL_GROUP_ID2_ID2: Use weights of group2 and group3

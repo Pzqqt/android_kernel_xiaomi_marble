@@ -2327,6 +2327,7 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.send_smps_action =
 			pParam->send_smps_action;
 		pMac->roam.configParam.txLdpcEnable = pParam->enableTxLdpc;
+		pMac->roam.configParam.rxLdpcEnable = pParam->enableRxLDPC;
 		pMac->roam.configParam.ignore_peer_erp_info =
 			pParam->ignore_peer_erp_info;
 		pMac->roam.configParam.isAmsduSupportInAMPDU =
@@ -2549,6 +2550,7 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->cc_switch_mode = cfg_params->cc_switch_mode;
 #endif
 	pParam->enableTxLdpc = cfg_params->txLdpcEnable;
+	pParam->enableRxLDPC = cfg_params->rxLdpcEnable;
 	pParam->isAmsduSupportInAMPDU = cfg_params->isAmsduSupportInAMPDU;
 	pParam->nSelect5GHzMargin = cfg_params->nSelect5GHzMargin;
 	pParam->isCoalesingInIBSSAllowed = cfg_params->isCoalesingInIBSSAllowed;
@@ -13577,6 +13579,46 @@ static void csr_add_supported_5Ghz_channels(tpAniSirGlobal mac_ctx,
 }
 
 /**
+ * csr_set_ldpc_exception() - to set allow any LDPC exception permitted
+ * @mac_ctx: Pointer to mac context
+ * @session: Pointer to SME/CSR session
+ * @channel: Given channel number where connection will go
+ * @usr_cfg_rx_ldpc: User provided RX LDPC setting
+ *
+ * This API will check if hardware allows LDPC to be enabled for provided
+ * channel and user has enabled the RX LDPC selection
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS csr_set_ldpc_exception(tpAniSirGlobal mac_ctx,
+			tCsrRoamSession *session, uint8_t channel,
+			bool usr_cfg_rx_ldpc)
+{
+	if (!mac_ctx) {
+		sms_log(mac_ctx, LOGE,
+			FL("mac_ctx is NULL"));
+		return QDF_STATUS_E_FAILURE;
+	}
+	if (!session) {
+		sms_log(mac_ctx, LOGE,
+			FL("session is NULL"));
+		return QDF_STATUS_E_FAILURE;
+	}
+	if (usr_cfg_rx_ldpc && wma_is_rx_ldpc_supported_for_channel(channel)) {
+		session->htConfig.ht_rx_ldpc = 1;
+		session->vht_config.ldpc_coding = 1;
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH,
+			"LDPC enable for chnl[%d]", channel);
+	} else {
+		session->htConfig.ht_rx_ldpc = 0;
+		session->vht_config.ldpc_coding = 0;
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH,
+			"LDPC disable for chnl[%d]", channel);
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * The communication between HDD and LIM is thru mailbox (MB).
  * Both sides will access the data structure "tSirSmeJoinReq".
  * The rule is, while the components of "tSirSmeJoinReq" can be accessed in the
@@ -14075,6 +14117,15 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 				(&pIes->Country.triplets[0]));
 			csr_apply_power2_current(pMac);
 		}
+		/*
+		 * If RX LDPC has been disabled for 2.4GHz channels and enabled
+		 * for 5Ghz for STA like persona here is how to handle those
+		 * cases here (by now channel has been decided).
+		 */
+		if (eSIR_INFRASTRUCTURE_MODE == csr_join_req->bsstype)
+			csr_set_ldpc_exception(pMac, pSession,
+					pBssDescription->channelId,
+					pMac->roam.configParam.rxLdpcEnable);
 		qdf_mem_copy(&csr_join_req->htConfig,
 				&pSession->htConfig, sizeof(tSirHTConfig));
 		qdf_mem_copy(&csr_join_req->vht_config, &pSession->vht_config,
@@ -14871,6 +14922,10 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t sessionId
 	qdf_mem_copy(&pMsg->extendedRateSet,
 		     &pParam->extendedRateSet,
 		     sizeof(tSirMacRateSet));
+	if (eSIR_IBSS_MODE == pMsg->bssType)
+		csr_set_ldpc_exception(pMac, pSession,
+				pMsg->channelId,
+				pMac->roam.configParam.rxLdpcEnable);
 	qdf_mem_copy(&pMsg->vht_config,
 		     &pSession->vht_config,
 		     sizeof(pSession->vht_config));

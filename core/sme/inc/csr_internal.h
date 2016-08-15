@@ -612,6 +612,7 @@ typedef struct tagCsrConfig {
 	uint8_t htSmps;
 	bool send_smps_action;
 	uint8_t txLdpcEnable;
+	uint8_t rxLdpcEnable;
 	/*
 	 * Enable/Disable heartbeat offload
 	 */

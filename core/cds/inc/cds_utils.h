@@ -51,8 +51,6 @@
    ------------------------------------------------------------------------*/
 #define CDS_DIGEST_SHA1_SIZE    (20)
 #define CDS_DIGEST_MD5_SIZE     (16)
-#define CDS_BAND_2GHZ          (1)
-#define CDS_BAND_5GHZ          (2)
 
 #define CDS_24_GHZ_BASE_FREQ   (2407)
 #define CDS_5_GHZ_BASE_FREQ    (5000)
@@ -82,9 +80,11 @@
 		cds_logfl(QDF_TRACE_LEVEL_INFO_HIGH, format, ## args)
 #define cds_debug(format, args...) \
 		cds_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
-/*--------------------------------------------------------------------------
-   Type declarations
-   ------------------------------------------------------------------------*/
+
+enum cds_band_type {
+	CDS_BAND_2GHZ = 1,
+	CDS_BAND_5GHZ = 2
+};
 
 /*-------------------------------------------------------------------------
    Function declarations and documenation
@@ -178,7 +178,7 @@ QDF_STATUS cds_decrypt_aes(uint32_t cryptHandle,        /* Handle */
 
 uint32_t cds_chan_to_freq(uint8_t chan);
 uint8_t cds_freq_to_chan(uint32_t freq);
-uint8_t cds_chan_to_band(uint32_t chan);
+enum cds_band_type cds_chan_to_band(uint32_t chan);
 #ifdef WLAN_FEATURE_11W
 bool cds_is_mmie_valid(uint8_t *key, uint8_t *ipn,
 		       uint8_t *frm, uint8_t *efrm);

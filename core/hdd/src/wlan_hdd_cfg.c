@@ -7148,6 +7148,7 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	smeConfig->csrConfig.scanCfgAgingTime = pConfig->scanAgingTimeout;
 
 	smeConfig->csrConfig.enableTxLdpc = pConfig->enableTxLdpc;
+	smeConfig->csrConfig.enableRxLDPC = pConfig->enableRxLDPC;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	smeConfig->csrConfig.cc_switch_mode = pConfig->WlanMccToSccSwitchMode;
 #endif

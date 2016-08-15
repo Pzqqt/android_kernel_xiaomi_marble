@@ -4463,6 +4463,149 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 }
 
 /**
+ * wma_get_phyid_for_given_band() - to get phyid for band
+ *
+ * @wma_handle: Pointer to wma handle
+ * @map: Pointer to map which is derived from hw mode & has mapping between
+ *       hw mode and available PHYs for that hw mode.
+ * @band: enum value of for 2G or 5G band
+ * @phyid: Pointer to phyid which needs to be filled
+ *
+ * This API looks in to the map to find out which particular phy supports
+ * provided band and return the idx (also called phyid) of that phy. Caller
+ * use this phyid to fetch various caps of that phy
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS wma_get_phyid_for_given_band(
+			t_wma_handle * wma_handle,
+			struct hw_mode_idx_to_mac_cap_idx *map,
+			enum cds_band_type band, uint8_t *phyid)
+{
+	uint8_t idx, i;
+	WMI_MAC_PHY_CAPABILITIES *cap;
+
+	if (!wma_handle) {
+		WMA_LOGE("Invalid wma handle");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!map) {
+		WMA_LOGE("Invalid given map");
+		return QDF_STATUS_E_FAILURE;
+	}
+	idx = map->mac_cap_idx;
+	*phyid = idx;
+
+	for (i = 0; i < map->num_of_macs; i++) {
+		cap = &wma_handle->phy_caps.each_phy_cap_per_hwmode[idx + i];
+		if ((band == CDS_BAND_2GHZ) &&
+				(WLAN_2G_CAPABILITY == cap->supported_bands)) {
+			*phyid = idx + i;
+			WMA_LOGI("Select 2G capable phyid[%d]", *phyid);
+			return QDF_STATUS_SUCCESS;
+		} else if ((band == CDS_BAND_5GHZ) &&
+				(WLAN_5G_CAPABILITY == cap->supported_bands)) {
+			*phyid = idx + i;
+			WMA_LOGI("Select 5G capable phyid[%d]", *phyid);
+			return QDF_STATUS_SUCCESS;
+		}
+	}
+	WMA_LOGI("Using default single hw mode phyid[%d]", *phyid);
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wma_get_caps_for_phyidx_hwmode() - to fetch caps for given hw mode and band
+ * @caps_per_phy: Pointer to capabilities structure which needs to be filled
+ * @hw_mode: Provided hardware mode
+ * @band: Provide band i.e. 2G or 5G
+ *
+ * This API finds cap which suitable for provided hw mode and band. If user
+ * is provides some invalid hw mode then it will automatically falls back to
+ * default hw mode
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
+		enum hw_mode_dbs_capab hw_mode, enum cds_band_type band)
+{
+	t_wma_handle *wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	struct hw_mode_idx_to_mac_cap_idx *map;
+	WMI_MAC_PHY_CAPABILITIES *phy_cap;
+	uint8_t phyid, our_hw_mode = hw_mode;
+
+	if (!wma_handle) {
+		WMA_LOGE("Invalid wma handle");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (0 == wma_handle->phy_caps.num_hw_modes.num_hw_modes) {
+		WMA_LOGE("Invalid number of hw modes");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!wma_is_dbs_enable())
+		our_hw_mode = HW_MODE_DBS_NONE;
+
+	if (!caps_per_phy) {
+		WMA_LOGE("Invalid caps pointer");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	map = &wma_handle->phy_caps.hw_mode_to_mac_cap_map[our_hw_mode];
+
+	if (QDF_STATUS_SUCCESS !=
+		wma_get_phyid_for_given_band(wma_handle, map, band, &phyid)) {
+		WMA_LOGE("Invalid phyid");
+		return QDF_STATUS_E_FAILURE;
+	}
+	phy_cap = &wma_handle->phy_caps.each_phy_cap_per_hwmode[phyid];
+
+	caps_per_phy->ht_2g = phy_cap->ht_cap_info_2G;
+	caps_per_phy->ht_5g = phy_cap->ht_cap_info_5G;
+	caps_per_phy->vht_2g = phy_cap->vht_cap_info_2G;
+	caps_per_phy->vht_5g = phy_cap->vht_cap_info_5G;
+	caps_per_phy->he_2g = phy_cap->he_cap_info_2G;
+	caps_per_phy->he_5g = phy_cap->he_cap_info_5G;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wma_is_rx_ldpc_supported_for_channel() - to find out if ldpc is supported
+ *
+ * @channel: Channel number for which it needs to check if rx ldpc is enabled
+ *
+ * This API takes channel number as argument and takes default hw mode as DBS
+ * to check if rx LDPC support is enabled for that channel or no
+ */
+bool wma_is_rx_ldpc_supported_for_channel(uint32_t channel)
+{
+	struct wma_caps_per_phy caps_per_phy = {0};
+	enum cds_band_type band;
+	bool status;
+
+	if (!CDS_IS_CHANNEL_24GHZ(channel))
+		band = CDS_BAND_5GHZ;
+	else
+		band = CDS_BAND_2GHZ;
+
+	if (QDF_STATUS_SUCCESS != wma_get_caps_for_phyidx_hwmode(
+						&caps_per_phy,
+						HW_MODE_DBS, band)) {
+		return false;
+	}
+	if (CDS_IS_CHANNEL_24GHZ(channel))
+		status = (!!(caps_per_phy.ht_2g & WMI_HT_CAP_RX_LDPC));
+	else
+		status = (!!(caps_per_phy.ht_5g & WMI_HT_CAP_RX_LDPC));
+
+	return status;
+}
+
+
+/**
  * wma_print_populate_soc_caps() - Prints all the caps populated per hw mode
  * @wma_handle: pointer to wma_handle
  *

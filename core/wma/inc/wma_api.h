@@ -38,6 +38,8 @@
 #include "htc_api.h"
 #endif
 #include "lim_global.h"
+#include "cds_concurrency.h"
+#include "cds_utils.h"
 
 typedef void *WMA_HANDLE;
 
@@ -70,6 +72,25 @@ typedef enum {
 	GEN_PARAM_RESET_TSF_GPIO,
 	GEN_VDEV_ROAM_SYNCH_DELAY,
 } GEN_PARAM;
+
+/**
+ * struct wma_caps_per_phy - various caps per phy
+ * @ht_2g: entire HT cap for 2G band in terms of 32 bit flag
+ * @ht_5g: entire HT cap for 5G band in terms of 32 bit flag
+ * @vht_2g: entire VHT cap for 2G band in terms of 32 bit flag
+ * @vht_5g: entire VHT cap for 5G band in terms of 32 bit flag
+ * @he_2g: entire HE cap for 2G band in terms of 32 bit flag
+ * @he_5g: entire HE cap for 5G band in terms of 32 bit flag
+ */
+struct wma_caps_per_phy {
+	uint32_t ht_2g;
+	uint32_t ht_5g;
+	uint32_t vht_2g;
+	uint32_t vht_5g;
+	uint32_t he_2g;
+	uint32_t he_5g;
+};
+
 
 #define VDEV_CMD 1
 #define PDEV_CMD 2
@@ -197,6 +218,9 @@ bool wma_get_prev_agile_dfs_config(void);
 bool wma_get_prev_dbs_scan_config(void);
 bool wma_get_prev_dbs_plus_agile_scan_config(void);
 bool wma_get_prev_single_mac_scan_with_dfs_config(void);
+QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
+		enum hw_mode_dbs_capab hw_mode, enum cds_band_type band);
+bool wma_is_rx_ldpc_supported_for_channel(uint32_t channel);
 
 #define LRO_IPV4_SEED_ARR_SZ 5
 #define LRO_IPV6_SEED_ARR_SZ 11
