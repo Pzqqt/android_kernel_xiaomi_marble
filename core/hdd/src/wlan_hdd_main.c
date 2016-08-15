@@ -2648,8 +2648,7 @@ void hdd_cleanup_actionframe(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 			&adapter->tx_action_cnf_event,
 			msecs_to_jiffies(ACTION_FRAME_TX_TIMEOUT));
 		if (!rc) {
-			hddLog(QDF_TRACE_LEVEL_ERROR,
-			       FL("HDD Wait for Action Confirmation Failed!!"));
+			hdd_err("HDD Wait for Action Confirmation Failed!!");
 			/*
 			 * Inform tx status as FAILURE to upper layer and free
 			 * cfgState->buf
@@ -2753,7 +2752,7 @@ void hdd_cleanup_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 	if (adapter)
 		pWlanDev = adapter->dev;
 	else {
-		hddLog(LOGE, FL("adapter is Null"));
+		hdd_err("adapter is Null");
 		return;
 	}
 
@@ -3163,15 +3162,14 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 
 		/* Initialize the WoWL service */
 		if (!hdd_init_wowl(adapter)) {
-			hddLog(QDF_TRACE_LEVEL_FATAL,
-			       FL("hdd_init_wowl failed"));
+			hdd_alert("hdd_init_wowl failed");
 			goto err_lro_cleanup;
 		}
 
 		/* Adapter successfully added. Increment the vdev count */
 		hdd_ctx->current_intf_count++;
 
-		hddLog(QDF_TRACE_LEVEL_DEBUG, FL("current_intf_count=%d"),
+		hdd_debug("current_intf_count=%d",
 		       hdd_ctx->current_intf_count);
 
 		cds_check_and_restart_sap_with_non_dfs_acs();
@@ -3199,7 +3197,7 @@ QDF_STATUS hdd_close_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 
 	status = hdd_get_front_adapter(hdd_ctx, &pCurrent);
 	if (QDF_STATUS_SUCCESS != status) {
-		hddLog(QDF_TRACE_LEVEL_WARN, FL("adapter list empty %d"),
+		hdd_warn("adapter list empty %d",
 		       status);
 		return status;
 	}
@@ -3287,8 +3285,7 @@ void wlan_hdd_reset_prob_rspies(hdd_adapter_t *pHostapdAdapter)
 		 * wlan_hdd_reset_prob_rspies should not have been called
 		 * for these kind of devices
 		 */
-		hddLog(LOGE,
-		       FL("Unexpected request for the current device type %d"),
+		hdd_err("Unexpected request for the current device type %d",
 		       pHostapdAdapter->device_mode);
 		return;
 	}
@@ -3302,7 +3299,7 @@ void wlan_hdd_reset_prob_rspies(hdd_adapter_t *pHostapdAdapter)
 	if (sme_update_add_ie(WLAN_HDD_GET_HAL_CTX(pHostapdAdapter),
 			      &updateIE,
 			      eUPDATE_IE_PROBE_RESP) == QDF_STATUS_E_FAILURE) {
-		hddLog(LOGE, FL("Could not pass on PROBE_RSP_BCN data to PE"));
+		hdd_err("Could not pass on PROBE_RSP_BCN data to PE");
 	}
 }
 
@@ -3354,7 +3351,7 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 
 	ENTER();
 
-	hddLog(LOG1, FL("Disabling queues"));
+	hdd_notice("Disabling queues");
 	wlan_hdd_netif_queue_control(adapter, WLAN_NETIF_TX_DISABLE_N_CARRIER,
 				   WLAN_CONTROL_PATH);
 	switch (adapter->device_mode) {
@@ -3396,16 +3393,10 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 					msecs_to_jiffies
 						(WLAN_WAIT_TIME_DISCONNECT));
 				if (!rc) {
-					hddLog(QDF_TRACE_LEVEL_ERROR,
-					       FL(
-						  "wait on disconnect_comp_var failed"
-						 ));
+					hdd_err("wait on disconnect_comp_var failed");
 				}
 			} else {
-				hddLog(LOGE,
-				       FL(
-					  "failed to post disconnect event to SME"
-					 ));
+				hdd_err("failed to post disconnect event to SME");
 			}
 			memset(&wrqu, '\0', sizeof(wrqu));
 			wrqu.ap_addr.sa_family = ARPHRD_ETHER;
@@ -3447,8 +3438,7 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			 * is no sap restart work pending.
 			 */
 			cds_flush_work(&hdd_ctx->sap_start_work);
-			hddLog(QDF_TRACE_LEVEL_INFO_HIGH,
-			       FL("Canceled the pending SAP restart work"));
+			hdd_info("Canceled the pending SAP restart work");
 			cds_change_sap_restart_required_status(false);
 		}
 		/* Any softap specific cleanup here... */
@@ -3482,14 +3472,11 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 							BSS_WAIT_TIMEOUT);
 
 				if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-					hddLog(LOGE,
-					       FL(
-						  "failure waiting for wlansap_stop_bss %d"
-						 ),
-					       qdf_status);
+					hdd_err("failure waiting for wlansap_stop_bss %d",
+						qdf_status);
 				}
 			} else {
-				hddLog(LOGE, FL("failure in wlansap_stop_bss"));
+				hdd_err("failure in wlansap_stop_bss");
 			}
 			clear_bit(SOFTAP_BSS_STARTED, &adapter->event_flags);
 			cds_decr_session_set_pcl(
@@ -3507,20 +3494,14 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			if (sme_update_add_ie(WLAN_HDD_GET_HAL_CTX(adapter),
 					      &updateIE, eUPDATE_IE_PROBE_BCN)
 			    == QDF_STATUS_E_FAILURE) {
-				hddLog(LOGE,
-				       FL(
-					  "Could not pass on PROBE_RSP_BCN data to PE"
-					 ));
+				hdd_err("Could not pass on PROBE_RSP_BCN data to PE");
 			}
 			/* Assoc resp reset */
 			if (sme_update_add_ie(WLAN_HDD_GET_HAL_CTX(adapter),
 					      &updateIE,
 					      eUPDATE_IE_ASSOC_RESP) ==
 			    QDF_STATUS_E_FAILURE) {
-				hddLog(LOGE,
-				       FL(
-					  "Could not pass on ASSOC_RSP data to PE"
-					 ));
+				hdd_err("Could not pass on ASSOC_RSP data to PE");
 			}
 			/* Reset WNI_CFG_PROBE_RSP Flags */
 			wlan_hdd_reset_prob_rspies(adapter);
@@ -3581,7 +3562,7 @@ QDF_STATUS hdd_reset_all_adapters(hdd_context_t *hdd_ctx)
 
 	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
 		adapter = adapterNode->pAdapter;
-		hddLog(LOG1, FL("Disabling queues"));
+		hdd_notice("Disabling queues");
 		wlan_hdd_netif_queue_control(adapter,
 					   WLAN_NETIF_TX_DISABLE_N_CARRIER,
 					   WLAN_CONTROL_PATH);
@@ -3698,12 +3679,10 @@ QDF_STATUS hdd_start_all_adapters(hdd_context_t *hdd_ctx)
 
 		case QDF_P2P_GO_MODE:
 #ifdef MSM_PLATFORM
-			hddLog(QDF_TRACE_LEVEL_ERROR,
-			       FL("[SSR] send stop ap to supplicant"));
+			hdd_err("[SSR] send stop ap to supplicant");
 			cfg80211_ap_stopped(adapter->dev, GFP_KERNEL);
 #else
-			hddLog(QDF_TRACE_LEVEL_ERROR,
-			       FL("[SSR] send restart supplicant"));
+			hdd_err("[SSR] send restart supplicant");
 			/* event supplicant to restart */
 			cfg80211_del_sta(adapter->dev,
 					 (const u8 *)&bcastMac.bytes[0],
@@ -3838,8 +3817,7 @@ hdd_adapter_t *hdd_get_adapter_by_vdev(hdd_context_t *hdd_ctx,
 		adapterNode = pNext;
 	}
 
-	hddLog(QDF_TRACE_LEVEL_ERROR,
-	       FL("vdev_id %d does not exist with host"), vdev_id);
+	hdd_err("vdev_id %d does not exist with host", vdev_id);
 
 	return NULL;
 }
@@ -4416,8 +4394,7 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 
 	if (!QDF_IS_STATUS_SUCCESS
 		    (qdf_mc_timer_destroy(&hdd_ctx->bus_bw_timer))) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("Cannot deallocate Bus bandwidth timer"));
+		hdd_err("Cannot deallocate Bus bandwidth timer");
 	}
 #endif
 
@@ -4429,8 +4406,7 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 
 	if (!QDF_IS_STATUS_SUCCESS
 		    (qdf_mc_timer_destroy(&hdd_ctx->skip_acs_scan_timer))) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("Cannot deallocate ACS Skip timer"));
+		hdd_err("Cannot deallocate ACS Skip timer");
 	}
 #endif
 
@@ -4475,8 +4451,7 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 	 */
 	qdf_status = cds_sched_close(p_cds_context);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hddLog(QDF_TRACE_LEVEL_FATAL,
-		       FL("Failed to close CDS Scheduler"));
+		hdd_alert("Failed to close CDS Scheduler");
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
 
@@ -4521,7 +4496,7 @@ void __hdd_wlan_exit(void)
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
-		hddLog(QDF_TRACE_LEVEL_FATAL, FL("Invalid HDD Context"));
+		hdd_alert("Invalid HDD Context");
 		EXIT();
 		return;
 	}
