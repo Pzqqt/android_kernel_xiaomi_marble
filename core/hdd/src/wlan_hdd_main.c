@@ -5530,7 +5530,7 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 
 	/* Basic sanity */
 	if (!hdd_context || !indi_param) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, FL("Invalid arguments"));
+		hdd_err("Invalid arguments");
 		return;
 	}
 
@@ -5539,8 +5539,7 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 	cds_context = hdd_ctxt->pcds_context;
 
 	/* Make unsafe channel list */
-	hddLog(QDF_TRACE_LEVEL_INFO,
-	       FL("band count %d"),
+	hdd_notice("band count %d",
 	       ch_avoid_indi->avoid_range_count);
 
 	/* generate vendor specific event */
@@ -5564,7 +5563,7 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 	for (range_loop = 0; range_loop < ch_avoid_indi->avoid_range_count;
 								range_loop++) {
 		if (hdd_ctxt->unsafe_channel_count >= NUM_CHANNELS) {
-			hddLog(LOGW, FL("LTE Coex unsafe channel list full"));
+			hdd_warn("LTE Coex unsafe channel list full");
 			break;
 		}
 
@@ -5572,7 +5571,7 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 			ch_avoid_indi->avoid_freq_range[range_loop].start_freq);
 		end_channel   = ieee80211_frequency_to_channel(
 			ch_avoid_indi->avoid_freq_range[range_loop].end_freq);
-		hddLog(LOG1, "%s : start %d : %d, end %d : %d", __func__,
+		hdd_notice("start %d : %d, end %d : %d",
 			ch_avoid_indi->avoid_freq_range[range_loop].start_freq,
 			start_channel,
 			ch_avoid_indi->avoid_freq_range[range_loop].end_freq,
@@ -5618,14 +5617,13 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 				CDS_CHANNEL_FREQ(channel_loop);
 			if (hdd_ctxt->unsafe_channel_count >=
 							NUM_CHANNELS) {
-				hddLog(LOGW, FL("LTECoex unsafe ch list full"));
+				hdd_warn("LTECoex unsafe ch list full");
 				break;
 			}
 		}
 	}
 
-	hddLog(QDF_TRACE_LEVEL_INFO,
-	       FL("number of unsafe channels is %d "),
+	hdd_notice("number of unsafe channels is %d ",
 	       hdd_ctxt->unsafe_channel_count);
 
 	if (pld_set_wlan_unsafe_channel(hdd_ctxt->parent_dev,
@@ -5643,8 +5641,7 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 
 	for (channel_loop = 0;
 	     channel_loop < hdd_ctxt->unsafe_channel_count; channel_loop++) {
-		hddLog(QDF_TRACE_LEVEL_INFO,
-		       FL("channel %d is not safe "),
+		hdd_notice("channel %d is not safe ",
 		       hdd_ctxt->unsafe_channel_list[channel_loop]);
 	}
 
@@ -5733,14 +5730,14 @@ static void hdd_init_channel_avoidance(hdd_context_t *hdd_ctx)
 				     &(hdd_ctx->unsafe_channel_count),
 				     sizeof(uint16_t) * NUM_CHANNELS);
 
-	hddLog(QDF_TRACE_LEVEL_INFO, FL("num of unsafe channels is %d"),
+	hdd_notice("num of unsafe channels is %d",
 	       hdd_ctx->unsafe_channel_count);
 
 	unsafe_channel_count = QDF_MIN((uint16_t)hdd_ctx->unsafe_channel_count,
 				       (uint16_t)NUM_CHANNELS);
 
 	for (index = 0; index < unsafe_channel_count; index++) {
-		hddLog(QDF_TRACE_LEVEL_INFO, FL("channel %d is not safe"),
+		hdd_notice("channel %d is not safe",
 		       hdd_ctx->unsafe_channel_list[index]);
 
 	}
@@ -6720,7 +6717,7 @@ static void hdd_populate_random_mac_addr(hdd_context_t *hdd_ctx, uint32_t num)
 		macaddr_b3 ^= (1 << INTF_MACADDR_MASK);
 		buf[0] |= 0x02;
 		buf[3] = macaddr_b3;
-		hdd_info(FL(MAC_ADDRESS_STR), MAC_ADDR_ARRAY(buf));
+		hdd_info(MAC_ADDRESS_STR, MAC_ADDR_ARRAY(buf));
 	}
 }
 
@@ -6758,7 +6755,7 @@ static int hdd_cnss_wlan_mac(hdd_context_t *hdd_ctx)
 	for (iter = 0; iter < no_of_mac_addr; ++iter, addr += mac_addr_size) {
 		buf = ini->intfMacAddr[iter].bytes;
 		qdf_mem_copy(buf, addr, QDF_MAC_ADDR_SIZE);
-		hdd_info(FL(MAC_ADDRESS_STR), MAC_ADDR_ARRAY(buf));
+		hdd_info(MAC_ADDRESS_STR, MAC_ADDR_ARRAY(buf));
 	}
 
 	status = sme_set_custom_mac_addr(mac_addr);
@@ -7385,7 +7382,7 @@ int hdd_wlan_startup(struct device *dev)
 	hdd_ctx->hHal = cds_get_context(QDF_MODULE_ID_SME);
 
 	if (NULL == hdd_ctx->hHal) {
-		hddLog(QDF_TRACE_LEVEL_FATAL, FL("HAL context is null"));
+		hdd_alert("HAL context is null");
 		goto err_stop_modules;
 	}
 
@@ -7408,8 +7405,7 @@ int hdd_wlan_startup(struct device *dev)
 	adapter = hdd_open_interfaces(hdd_ctx, rtnl_held);
 
 	if (IS_ERR(adapter)) {
-		hddLog(QDF_TRACE_LEVEL_FATAL,
-		       FL("Failed to open interface, adapter is NULL"));
+		hdd_alert("Failed to open interface, adapter is NULL");
 		ret = PTR_ERR(adapter);
 		goto err_ipa_cleanup;
 	}
@@ -7435,7 +7431,7 @@ int hdd_wlan_startup(struct device *dev)
 				   hdd_skip_acs_scan_timer_handler,
 				   (void *)hdd_ctx);
 	if (!QDF_IS_STATUS_SUCCESS(status))
-		hddLog(LOGE, FL("Failed to init ACS Skip timer"));
+		hdd_err("Failed to init ACS Skip timer");
 #endif
 
 #ifdef MSM_PLATFORM
@@ -7495,8 +7491,7 @@ err_stop_modules:
 
 	status = cds_sched_close(hdd_ctx->pcds_context);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hddLog(QDF_TRACE_LEVEL_FATAL,
-		       FL("Failed to close CDS Scheduler"));
+		hdd_alert("Failed to close CDS Scheduler");
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
 	}
 
@@ -7677,7 +7672,7 @@ QDF_STATUS hdd_softap_sta_deauth(hdd_adapter_t *adapter,
 
 	ENTER();
 
-	hddLog(LOG1, FL("hdd_softap_sta_deauth:(%p, false)"),
+	hdd_notice("hdd_softap_sta_deauth:(%p, false)",
 	       (WLAN_HDD_GET_CTX(adapter))->pcds_context);
 
 	/* Ignore request to deauth bcmc station */
@@ -7713,7 +7708,7 @@ void hdd_softap_sta_disassoc(hdd_adapter_t *adapter,
 
 	ENTER();
 
-	hddLog(LOGE, FL("hdd_softap_sta_disassoc:(%p, false)"),
+	hdd_err("hdd_softap_sta_disassoc:(%p, false)",
 	       (WLAN_HDD_GET_CTX(adapter))->pcds_context);
 
 	/* Ignore request to disassoc bcmc station */
@@ -7737,7 +7732,7 @@ void hdd_softap_tkip_mic_fail_counter_measure(hdd_adapter_t *adapter,
 
 	ENTER();
 
-	hddLog(LOGE, FL("hdd_softap_tkip_mic_fail_counter_measure:(%p, false)"),
+	hdd_err("hdd_softap_tkip_mic_fail_counter_measure:(%p, false)",
 	       (WLAN_HDD_GET_CTX(adapter))->pcds_context);
 
 #ifdef WLAN_FEATURE_MBSSID
@@ -7785,7 +7780,7 @@ void wlan_hdd_disable_roaming(hdd_adapter_t *adapter)
 	    hdd_ctx->config->isRoamOffloadScanEnabled &&
 	    QDF_STA_MODE == adapter->device_mode &&
 	    cds_is_sta_active_connection_exists()) {
-		hddLog(LOG1, FL("Connect received on STA sessionId(%d)"),
+		hdd_notice("Connect received on STA sessionId(%d)",
 		       adapter->sessionId);
 		/*
 		 * Loop through adapter and disable roaming for each STA device
@@ -7798,8 +7793,7 @@ void wlan_hdd_disable_roaming(hdd_adapter_t *adapter)
 
 			if (QDF_STA_MODE == adapterIdx->device_mode
 			    && adapter->sessionId != adapterIdx->sessionId) {
-				hddLog(LOG1,
-				       FL("Disable Roaming on sessionId(%d)"),
+				hdd_notice("Disable Roaming on sessionId(%d)",
 				       adapterIdx->sessionId);
 				sme_stop_roaming(WLAN_HDD_GET_HAL_CTX
 							 (adapterIdx),
@@ -7837,7 +7831,7 @@ void wlan_hdd_enable_roaming(hdd_adapter_t *adapter)
 	    hdd_ctx->config->isRoamOffloadScanEnabled &&
 	    QDF_STA_MODE == adapter->device_mode &&
 	    cds_is_sta_active_connection_exists()) {
-		hddLog(LOG1, FL("Disconnect received on STA sessionId(%d)"),
+		hdd_notice("Disconnect received on STA sessionId(%d)",
 		       adapter->sessionId);
 		/*
 		 * Loop through adapter and enable roaming for each STA device
@@ -7850,8 +7844,7 @@ void wlan_hdd_enable_roaming(hdd_adapter_t *adapter)
 
 			if (QDF_STA_MODE == adapterIdx->device_mode
 			    && adapter->sessionId != adapterIdx->sessionId) {
-				hddLog(LOG1,
-				       FL("Enabling Roaming on sessionId(%d)"),
+				hdd_notice("Enabling Roaming on sessionId(%d)",
 				       adapterIdx->sessionId);
 				sme_start_roaming(WLAN_HDD_GET_HAL_CTX
 							  (adapterIdx),
@@ -7881,7 +7874,7 @@ void wlan_hdd_send_svc_nlink_msg(int type, void *data, int len)
 	skb = alloc_skb(NLMSG_SPACE(WLAN_NL_MAX_PAYLOAD), flags);
 
 	if (skb == NULL) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, FL("alloc_skb failed"));
+		hdd_err("alloc_skb failed");
 		return;
 	}
 
@@ -7920,8 +7913,7 @@ void wlan_hdd_send_svc_nlink_msg(int type, void *data, int len)
 		break;
 
 	default:
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("WLAN SVC: Attempt to send unknown nlink message %d"),
+		hdd_err("WLAN SVC: Attempt to send unknown nlink message %d",
 		       type);
 		kfree_skb(skb);
 		return;
