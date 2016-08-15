@@ -258,8 +258,9 @@ ol_txrx_find_peer_by_addr_and_vdev(ol_txrx_pdev_handle pdev,
 		return NULL;
 	*peer_id = peer->local_id;
 	qdf_atomic_dec(&peer->ref_cnt);
-	qdf_print("%s: peer %p peer->ref_cnt %d", __func__, peer,
-		  qdf_atomic_read(&peer->ref_cnt));
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
+		 "%s: peer %p peer->ref_cnt %d", __func__, peer,
+		 qdf_atomic_read(&peer->ref_cnt));
 	return peer;
 }
 
@@ -314,8 +315,9 @@ ol_txrx_peer_handle ol_txrx_find_peer_by_addr(ol_txrx_pdev_handle pdev,
 		return NULL;
 	*peer_id = peer->local_id;
 	qdf_atomic_dec(&peer->ref_cnt);
-	qdf_print("%s: peer %p peer->ref_cnt %d", __func__, peer,
-		  qdf_atomic_read(&peer->ref_cnt));
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
+		 "%s: peer %p peer->ref_cnt %d", __func__, peer,
+		 qdf_atomic_read(&peer->ref_cnt));
 	return peer;
 }
 
@@ -2155,16 +2157,14 @@ ol_txrx_peer_attach(ol_txrx_vdev_handle vdev, uint8_t *peer_mac_addr)
 
 	/* keep one reference for ol_rx_peer_map_handler */
 	qdf_atomic_inc(&peer->ref_cnt);
-	qdf_print("%s: peer %p peer->ref_cnt %d", __func__, peer,
-		  qdf_atomic_read(&peer->ref_cnt));
 
 	peer->valid = 1;
 
 	ol_txrx_peer_find_hash_add(pdev, peer);
 
-	TXRX_PRINT(TXRX_PRINT_LEVEL_INFO2,
-		   "vdev %p created peer %p (%02x:%02x:%02x:%02x:%02x:%02x)\n",
-		   vdev, peer,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
+		   "vdev %p created peer %p ref_cnt %d (%02x:%02x:%02x:%02x:%02x:%02x)\n",
+		   vdev, peer, qdf_atomic_read(&peer->ref_cnt),
 		   peer->mac_addr.raw[0], peer->mac_addr.raw[1],
 		   peer->mac_addr.raw[2], peer->mac_addr.raw[3],
 		   peer->mac_addr.raw[4], peer->mac_addr.raw[5]);
@@ -2554,8 +2554,9 @@ QDF_STATUS ol_txrx_peer_state_update(struct ol_txrx_pdev_t *pdev,
 			   __func__);
 #endif
 		qdf_atomic_dec(&peer->ref_cnt);
-		qdf_print("%s: peer %p peer->ref_cnt %d", __func__, peer,
-			  qdf_atomic_read(&peer->ref_cnt));
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
+			 "%s: peer %p peer->ref_cnt %d", __func__, peer,
+			 qdf_atomic_read(&peer->ref_cnt));
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -2586,8 +2587,9 @@ QDF_STATUS ol_txrx_peer_state_update(struct ol_txrx_pdev_t *pdev,
 		}
 	}
 	qdf_atomic_dec(&peer->ref_cnt);
-	qdf_print("%s: peer %p peer->ref_cnt %d", __func__, peer,
-		  qdf_atomic_read(&peer->ref_cnt));
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
+		 "%s: peer %p peer->ref_cnt %d", __func__, peer,
+		 qdf_atomic_read(&peer->ref_cnt));
 	/* Set the state after the Pause to avoid the race condiction
 	   with ADDBA check in tx path */
 	peer->state = state;
@@ -2690,8 +2692,9 @@ ol_txrx_peer_update(ol_txrx_vdev_handle vdev,
 	}
 	}
 	qdf_atomic_dec(&peer->ref_cnt);
-	qdf_print("%s: peer %p peer->ref_cnt %d", __func__, peer,
-		  qdf_atomic_read(&peer->ref_cnt));
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
+		 "%s: peer %p peer->ref_cnt %d", __func__, peer,
+		 qdf_atomic_read(&peer->ref_cnt));
 }
 
 uint8_t
@@ -2768,7 +2771,7 @@ void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 		u_int16_t peer_id;
 
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-			   "Deleting peer %p (%02x:%02x:%02x:%02x:%02x:%02x)\n",
+			   "Deleting peer %p (%02x:%02x:%02x:%02x:%02x:%02x)",
 			   peer,
 			   peer->mac_addr.raw[0], peer->mac_addr.raw[1],
 			   peer->mac_addr.raw[2], peer->mac_addr.raw[3],
@@ -2817,7 +2820,7 @@ void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 				TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 					   "%s: deleting vdev object %p "
 					   "(%02x:%02x:%02x:%02x:%02x:%02x)"
-					   " - its last peer is done\n",
+					   " - its last peer is done",
 					   __func__, vdev,
 					   vdev->mac_addr.raw[0],
 					   vdev->mac_addr.raw[1],
@@ -2860,9 +2863,9 @@ void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 
 		qdf_mem_free(peer);
 	} else {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-			   "%s: peer %p peer->ref_cnt = %d\n", __func__, peer,
-			    qdf_atomic_read(&peer->ref_cnt));
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
+			 "%s: peer %p peer->ref_cnt = %d", __func__, peer,
+			 qdf_atomic_read(&peer->ref_cnt));
 		qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 	}
 }

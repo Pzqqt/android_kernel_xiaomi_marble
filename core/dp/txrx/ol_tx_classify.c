@@ -694,9 +694,11 @@ ol_tx_classify_mgmt(
 							mac_addr,
 							&peer->mac_addr) != 0) {
 					qdf_atomic_dec(&peer->ref_cnt);
-					qdf_print("%s: peer %p peer->ref_cnt %d",
-						  __func__, peer,
-						  qdf_atomic_read
+					QDF_TRACE(QDF_MODULE_ID_TXRX,
+						 QDF_TRACE_LEVEL_INFO_HIGH,
+						 "%s: peer %p peer->ref_cnt %d",
+						 __func__, peer,
+						 qdf_atomic_read
 							(&peer->ref_cnt));
 					peer = NULL;
 				}
