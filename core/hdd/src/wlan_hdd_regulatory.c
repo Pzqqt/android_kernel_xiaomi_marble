@@ -384,7 +384,6 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 	uint8_t band_capability;
 
 	band_capability = hdd_ctx->config->nBandCapability;
-	hdd_ctx->isVHT80Allowed = 0;
 
 	for (band_num = 0; band_num < NUM_NL80211_BANDS; band_num++) {
 
@@ -422,14 +421,8 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 					wiphy_chan->flags |=
 						IEEE80211_CHAN_PASSIVE_SCAN;
 				cds_chan->state = CHANNEL_STATE_DFS;
-				if ((wiphy_chan->flags &
-				     IEEE80211_CHAN_NO_80MHZ) == 0)
-					hdd_ctx->isVHT80Allowed = 1;
 			} else {
 				cds_chan->state = CHANNEL_STATE_ENABLE;
-				if ((wiphy_chan->flags &
-				     IEEE80211_CHAN_NO_80MHZ) == 0)
-					hdd_ctx->isVHT80Allowed = 1;
 			}
 			cds_chan->pwr_limit = wiphy_chan->max_power;
 			cds_chan->flags = wiphy_chan->flags;
@@ -625,7 +618,6 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 		      struct regulatory_request *request)
 {
 	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
-	bool vht80_allowed;
 	bool reset = false;
 	enum dfs_region dfs_reg;
 
@@ -698,12 +690,7 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 
 		hdd_update_regulatory_info(hdd_ctx);
 
-		vht80_allowed = hdd_ctx->isVHT80Allowed;
-
 		hdd_process_regulatory_data(hdd_ctx, wiphy, reset);
-
-		if (hdd_ctx->isVHT80Allowed != vht80_allowed)
-			hdd_checkandupdate_phymode(hdd_ctx);
 
 		if (NL80211_REGDOM_SET_BY_DRIVER == request->initiator)
 			complete(&hdd_ctx->reg_init);

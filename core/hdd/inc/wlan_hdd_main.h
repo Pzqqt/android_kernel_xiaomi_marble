@@ -1408,8 +1408,6 @@ struct hdd_context_s {
 	int cur_tx_level;
 	uint64_t prev_tx;
 #endif
-	/* VHT80 allowed */
-	bool isVHT80Allowed;
 
 	struct completion ready_to_suspend;
 	/* defining the solution type */

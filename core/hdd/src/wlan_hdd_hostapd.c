@@ -7500,26 +7500,8 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	sme_update_config(pHddCtx->hHal, &sme_config);
 
 	if (!pHddCtx->config->sap_force_11n_for_11ac) {
-		if (pConfig->ch_width_orig == NL80211_CHAN_WIDTH_80P80) {
-			if (pHddCtx->isVHT80Allowed == false)
-				pConfig->ch_width_orig = CH_WIDTH_40MHZ;
-			else
-				pConfig->ch_width_orig = CH_WIDTH_80P80MHZ;
-		} else if (pConfig->ch_width_orig == NL80211_CHAN_WIDTH_160) {
-			if (pHddCtx->isVHT80Allowed == false)
-				pConfig->ch_width_orig = CH_WIDTH_40MHZ;
-			else
-				pConfig->ch_width_orig = CH_WIDTH_160MHZ;
-		} else if (pConfig->ch_width_orig == NL80211_CHAN_WIDTH_80) {
-			if (pHddCtx->isVHT80Allowed == false)
-				pConfig->ch_width_orig = CH_WIDTH_40MHZ;
-			else
-				pConfig->ch_width_orig = CH_WIDTH_80MHZ;
-		} else if (pConfig->ch_width_orig == NL80211_CHAN_WIDTH_40) {
-			pConfig->ch_width_orig = CH_WIDTH_40MHZ;
-		} else {
-			pConfig->ch_width_orig = CH_WIDTH_20MHZ;
-		}
+		pConfig->ch_width_orig =
+			hdd_map_nl_chan_width(pConfig->ch_width_orig);
 	} else {
 		if (pConfig->ch_width_orig >= NL80211_CHAN_WIDTH_40)
 			pConfig->ch_width_orig = CH_WIDTH_40MHZ;
