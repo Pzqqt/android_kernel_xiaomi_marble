@@ -368,25 +368,25 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 
 	if ((adapter->magic != WLAN_HDD_ADAPTER_MAGIC) &&
 	    (adapter->dev != dev)) {
-		hddLog(LOGE, FL("device adapter is not matching!!!"));
+		hdd_err("device adapter is not matching!!!");
 		return NOTIFY_DONE;
 	}
 
 	if (!dev->ieee80211_ptr) {
-		hddLog(LOGE, FL("ieee80211_ptr is NULL!!!"));
+		hdd_err("ieee80211_ptr is NULL!!!");
 		return NOTIFY_DONE;
 	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	if (NULL == hdd_ctx) {
-		hddLog(QDF_TRACE_LEVEL_FATAL, FL("HDD Context Null Pointer"));
+		hdd_alert("HDD Context Null Pointer");
 		QDF_ASSERT(0);
 		return NOTIFY_DONE;
 	}
 	if (cds_is_driver_recovering())
 		return NOTIFY_DONE;
 
-	hddLog(QDF_TRACE_LEVEL_INFO, FL("%s New Net Device State = %lu"),
+	hdd_notice("%s New Net Device State = %lu",
 	       dev->name, state);
 
 	switch (state) {
@@ -420,12 +420,10 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 				&adapter->scan_info.abortscan_event_var,
 				msecs_to_jiffies(WLAN_WAIT_TIME_ABORTSCAN));
 			if (!rc) {
-				hddLog(LOGE,
-				       FL("Timeout occurred while waiting for abortscan"));
+				hdd_err("Timeout occurred while waiting for abortscan");
 			}
 		} else {
-			hddLog(QDF_TRACE_LEVEL_INFO,
-			       FL("Scan is not Pending from user"));
+			hdd_notice("Scan is not Pending from user");
 		}
 		break;
 
@@ -592,13 +590,13 @@ void hdd_checkandupdate_phymode(hdd_context_t *hdd_ctx)
 	struct hdd_config *cfg_param = NULL;
 
 	if (NULL == hdd_ctx) {
-		hddLog(QDF_TRACE_LEVEL_FATAL, FL("HDD Context is null !!"));
+		hdd_alert("HDD Context is null !!");
 		return;
 	}
 
 	adapter = hdd_get_adapter(hdd_ctx, QDF_STA_MODE);
 	if (NULL == adapter) {
-		hddLog(QDF_TRACE_LEVEL_FATAL, FL("adapter is null !!"));
+		hdd_alert("adapter is null !!");
 		return;
 	}
 
@@ -606,8 +604,7 @@ void hdd_checkandupdate_phymode(hdd_context_t *hdd_ctx)
 
 	cfg_param = hdd_ctx->config;
 	if (NULL == cfg_param) {
-		hddLog(QDF_TRACE_LEVEL_FATAL,
-		       FL("cfg_params not available !!"));
+		hdd_alert("cfg_params not available !!");
 		return;
 	}
 
@@ -617,8 +614,7 @@ void hdd_checkandupdate_phymode(hdd_context_t *hdd_ctx)
 		if ((eCSR_DOT11_MODE_AUTO == phyMode) ||
 		    (eCSR_DOT11_MODE_11ac == phyMode) ||
 		    (eCSR_DOT11_MODE_11ac_ONLY == phyMode)) {
-			hddLog(QDF_TRACE_LEVEL_INFO,
-			       FL("Setting phymode to 11n!!"));
+			hdd_notice("Setting phymode to 11n!!");
 			sme_set_phy_mode(WLAN_HDD_GET_HAL_CTX(adapter),
 					 eCSR_DOT11_MODE_11n);
 		}
@@ -652,8 +648,7 @@ void hdd_checkandupdate_phymode(hdd_context_t *hdd_ctx)
 				&adapter->disconnect_comp_var,
 				msecs_to_jiffies(WLAN_WAIT_TIME_DISCONNECT));
 			if (!rc)
-				hddLog(LOGE,
-				       FL("failure waiting for disconnect_comp_var"));
+				hdd_err("failure waiting for disconnect_comp_var");
 		}
 	}
 }
@@ -675,8 +670,7 @@ QDF_STATUS hdd_set_ibss_power_save_params(hdd_adapter_t *adapter)
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	if (hdd_ctx == NULL) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("HDD context is null"));
+		hdd_err("HDD context is null");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -685,8 +679,7 @@ QDF_STATUS hdd_set_ibss_power_save_params(hdd_adapter_t *adapter)
 				  hdd_ctx->config->ibssATIMWinSize,
 				  VDEV_CMD);
 	if (0 != ret) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("WMA_VDEV_IBSS_SET_ATIM_WINDOW_SIZE failed %d"), ret);
+		hdd_err("WMA_VDEV_IBSS_SET_ATIM_WINDOW_SIZE failed %d", ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -695,9 +688,8 @@ QDF_STATUS hdd_set_ibss_power_save_params(hdd_adapter_t *adapter)
 				  hdd_ctx->config->isIbssPowerSaveAllowed,
 				  VDEV_CMD);
 	if (0 != ret) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("WMA_VDEV_IBSS_SET_POWER_SAVE_ALLOWED failed %d"),
-		       ret);
+		hdd_err("WMA_VDEV_IBSS_SET_POWER_SAVE_ALLOWED failed %d",
+			ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -706,9 +698,8 @@ QDF_STATUS hdd_set_ibss_power_save_params(hdd_adapter_t *adapter)
 				  hdd_ctx->config->
 				  isIbssPowerCollapseAllowed, VDEV_CMD);
 	if (0 != ret) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("WMA_VDEV_IBSS_SET_POWER_COLLAPSE_ALLOWED failed %d"),
-		       ret);
+		hdd_err("WMA_VDEV_IBSS_SET_POWER_COLLAPSE_ALLOWED failed %d",
+			ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -717,8 +708,7 @@ QDF_STATUS hdd_set_ibss_power_save_params(hdd_adapter_t *adapter)
 				  hdd_ctx->config->isIbssAwakeOnTxRx,
 				  VDEV_CMD);
 	if (0 != ret) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("WMA_VDEV_IBSS_SET_AWAKE_ON_TX_RX failed %d"), ret);
+		hdd_err("WMA_VDEV_IBSS_SET_AWAKE_ON_TX_RX failed %d", ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -727,8 +717,7 @@ QDF_STATUS hdd_set_ibss_power_save_params(hdd_adapter_t *adapter)
 				  hdd_ctx->config->ibssInactivityCount,
 				  VDEV_CMD);
 	if (0 != ret) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("WMA_VDEV_IBSS_SET_INACTIVITY_TIME failed %d"), ret);
+		hdd_err("WMA_VDEV_IBSS_SET_INACTIVITY_TIME failed %d", ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -737,11 +726,8 @@ QDF_STATUS hdd_set_ibss_power_save_params(hdd_adapter_t *adapter)
 				  hdd_ctx->config->ibssTxSpEndInactivityTime,
 				  VDEV_CMD);
 	if (0 != ret) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL(
-			  "WMA_VDEV_IBSS_SET_TXSP_END_INACTIVITY_TIME failed %d"
-			 ),
-		       ret);
+		hdd_err("WMA_VDEV_IBSS_SET_TXSP_END_INACTIVITY_TIME failed %d",
+			ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -750,9 +736,8 @@ QDF_STATUS hdd_set_ibss_power_save_params(hdd_adapter_t *adapter)
 				  hdd_ctx->config->ibssPsWarmupTime,
 				  VDEV_CMD);
 	if (0 != ret) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("WMA_VDEV_IBSS_PS_SET_WARMUP_TIME_SECS failed %d"),
-		       ret);
+		hdd_err("WMA_VDEV_IBSS_PS_SET_WARMUP_TIME_SECS failed %d",
+			ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -761,11 +746,8 @@ QDF_STATUS hdd_set_ibss_power_save_params(hdd_adapter_t *adapter)
 				  hdd_ctx->config->ibssPs1RxChainInAtimEnable,
 				  VDEV_CMD);
 	if (0 != ret) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL(
-			  "WMA_VDEV_IBSS_PS_SET_1RX_CHAIN_IN_ATIM_WINDOW failed %d"
-			 ),
-		       ret);
+		hdd_err("WMA_VDEV_IBSS_PS_SET_1RX_CHAIN_IN_ATIM_WINDOW failed %d",
+			ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -815,7 +797,7 @@ void hdd_update_macaddr(struct hdd_config *config,
 		/* Set locally administered bit */
 		config->intfMacAddr[i].bytes[0] |= 0x02;
 		config->intfMacAddr[i].bytes[3] = macaddr_b3;
-		hddLog(QDF_TRACE_LEVEL_INFO, "config->intfMacAddr[%d]: "
+		hdd_notice("config->intfMacAddr[%d]: "
 		       MAC_ADDRESS_STR, i,
 		       MAC_ADDR_ARRAY(config->intfMacAddr[i].bytes));
 	}
@@ -839,8 +821,7 @@ static void hdd_update_tgt_services(hdd_context_t *hdd_ctx,
 
 #ifdef FEATURE_WLAN_SCAN_PNO
 	/* PNO offload */
-	hddLog(QDF_TRACE_LEVEL_INFO_HIGH,
-	       FL("PNO Capability in f/w = %d"), cfg->pno_offload);
+	hdd_info("PNO Capability in f/w = %d", cfg->pno_offload);
 	if (cfg->pno_offload)
 		config->PnoOffload = true;
 #endif
@@ -903,8 +884,7 @@ static void hdd_update_tgt_ht_cap(hdd_context_t *hdd_ctx,
 	status = sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_MPDU_DENSITY, &value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("could not get MPDU DENSITY"));
+		hdd_err("could not get MPDU DENSITY");
 		value = 0;
 	}
 
@@ -918,15 +898,13 @@ static void hdd_update_tgt_ht_cap(hdd_context_t *hdd_ctx,
 					 cfg->mpdu_density);
 
 		if (status == QDF_STATUS_E_FAILURE)
-			hddLog(QDF_TRACE_LEVEL_FATAL,
-			       FL("could not set MPDU DENSITY to CCM"));
+			hdd_alert("could not set MPDU DENSITY to CCM");
 	}
 
 	/* get the HT capability info */
 	status = sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_HT_CAP_INFO, &val32);
 	if (QDF_STATUS_SUCCESS != status) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("could not get HT capability info"));
+		hdd_err("could not get HT capability info");
 		return;
 	}
 	val16 = (uint16_t) val32;
@@ -958,10 +936,7 @@ static void hdd_update_tgt_ht_cap(hdd_context_t *hdd_ctx,
 				    WNI_CFG_VHT_RX_HIGHEST_SUPPORTED_DATA_RATE,
 				    VHT_RX_HIGHEST_SUPPORTED_DATA_RATE_1_1)
 				== QDF_STATUS_E_FAILURE) {
-			hddLog(LOGE,
-			       FL(
-				  "Could not pass on WNI_CFG_VHT_RX_HIGHEST_SUPPORTED_DATA_RATE to CCM"
-				 ));
+			hdd_err("Could not pass on WNI_CFG_VHT_RX_HIGHEST_SUPPORTED_DATA_RATE to CCM");
 		}
 
 		/* Update Tx Highest Long GI data Rate */
@@ -970,9 +945,7 @@ static void hdd_update_tgt_ht_cap(hdd_context_t *hdd_ctx,
 			     WNI_CFG_VHT_TX_HIGHEST_SUPPORTED_DATA_RATE,
 			     VHT_TX_HIGHEST_SUPPORTED_DATA_RATE_1_1) ==
 			    QDF_STATUS_E_FAILURE) {
-			hddLog(LOGE,
-			       FL(
-				  "VHT_TX_HIGHEST_SUPP_RATE_1_1 to CCM fail"));
+			hdd_err("VHT_TX_HIGHEST_SUPP_RATE_1_1 to CCM fail");
 		}
 	}
 	if (!(cfg->ht_tx_stbc && pconfig->enable2x2))
@@ -982,13 +955,12 @@ static void hdd_update_tgt_ht_cap(hdd_context_t *hdd_ctx,
 	val32 = val16;
 	status = sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_HT_CAP_INFO, val32);
 	if (status != QDF_STATUS_SUCCESS)
-		hddLog(QDF_TRACE_LEVEL_FATAL,
-		       FL("could not set HT capability to CCM"));
+		hdd_alert("could not set HT capability to CCM");
 #define WLAN_HDD_RX_MCS_ALL_NSTREAM_RATES 0xff
 	value = SIZE_OF_SUPPORTED_MCS_SET;
 	if (sme_cfg_get_str(hdd_ctx->hHal, WNI_CFG_SUPPORTED_MCS_SET, mcs_set,
 			    &value) == QDF_STATUS_SUCCESS) {
-		hddLog(QDF_TRACE_LEVEL_INFO, FL("Read MCS rate set"));
+		hdd_notice("Read MCS rate set");
 
 		if (pconfig->enable2x2) {
 			for (value = 0; value < cfg->num_rf_chains; value++)
@@ -1001,8 +973,7 @@ static void hdd_update_tgt_ht_cap(hdd_context_t *hdd_ctx,
 						mcs_set,
 						SIZE_OF_SUPPORTED_MCS_SET);
 			if (status == QDF_STATUS_E_FAILURE)
-				hddLog(QDF_TRACE_LEVEL_FATAL,
-				       FL("could not set MCS SET to CCM"));
+				hdd_alert("could not set MCS SET to CCM");
 		}
 	}
 #undef WLAN_HDD_RX_MCS_ALL_NSTREAM_RATES
@@ -1025,7 +996,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 				&value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, FL("could not get MPDU LENGTH"));
+		hdd_err("could not get MPDU LENGTH");
 		value = 0;
 	}
 
@@ -1040,8 +1011,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 					 cfg->vht_max_mpdu);
 
 		if (status == QDF_STATUS_E_FAILURE) {
-			hddLog(QDF_TRACE_LEVEL_FATAL,
-			       FL("could not set VHT MAX MPDU LENGTH"));
+			hdd_alert("could not set VHT MAX MPDU LENGTH");
 		}
 	}
 
@@ -1051,8 +1021,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 				&value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("could not get MPDU LENGTH"));
+		hdd_err("could not get MPDU LENGTH");
 		value = 0;
 	}
 
@@ -1094,8 +1063,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 				&value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("could not get VHT LDPC CODING CAP"));
+		hdd_err("could not get VHT LDPC CODING CAP");
 		value = 0;
 	}
 
@@ -1106,8 +1074,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 					 cfg->vht_rx_ldpc);
 
 		if (status == QDF_STATUS_E_FAILURE) {
-			hddLog(QDF_TRACE_LEVEL_FATAL,
-			       FL("could not set VHT LDPC CODING CAP to CCM"));
+			hdd_alert("could not set VHT LDPC CODING CAP to CCM");
 		}
 	}
 
@@ -1116,8 +1083,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 				&value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("could not get SHORT GI 80MHZ"));
+		hdd_err("could not get SHORT GI 80MHZ");
 		value = 0;
 	}
 
@@ -1128,8 +1094,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 					 cfg->vht_short_gi_80);
 
 		if (status == QDF_STATUS_E_FAILURE) {
-			hddLog(QDF_TRACE_LEVEL_FATAL,
-			       FL("could not set SHORT GI 80MHZ to CCM"));
+			hdd_alert("could not set SHORT GI 80MHZ to CCM");
 		}
 	}
 
@@ -1139,8 +1104,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 				 &value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("could not get SHORT GI 80 & 160"));
+		hdd_err("could not get SHORT GI 80 & 160");
 		value = 0;
 	}
 
@@ -1148,8 +1112,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 	status = sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_VHT_TXSTBC, &value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("could not get VHT TX STBC"));
+		hdd_err("could not get VHT TX STBC");
 		value = 0;
 	}
 
@@ -1159,8 +1122,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 					 cfg->vht_tx_stbc);
 
 		if (status == QDF_STATUS_E_FAILURE) {
-			hddLog(QDF_TRACE_LEVEL_FATAL,
-			       FL("could not set the VHT TX STBC to CCM"));
+			hdd_alert("could not set the VHT TX STBC to CCM");
 		}
 	}
 
@@ -1168,8 +1130,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 	status = sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_VHT_RXSTBC, &value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("could not get VHT RX STBC"));
+		hdd_err("could not get VHT RX STBC");
 		value = 0;
 	}
 
@@ -1179,8 +1140,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 					 cfg->vht_rx_stbc);
 
 		if (status == QDF_STATUS_E_FAILURE) {
-			hddLog(QDF_TRACE_LEVEL_FATAL,
-			       FL("could not set the VHT RX STBC to CCM"));
+			hdd_alert("could not set the VHT RX STBC to CCM");
 		}
 	}
 
@@ -1189,8 +1149,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 				 &value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("could not get VHT SU BEAMFORMER CAP"));
+		hdd_err("could not get VHT SU BEAMFORMER CAP");
 		value = 0;
 	}
 
@@ -1201,8 +1160,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 					 cfg->vht_su_bformer);
 
 		if (status == QDF_STATUS_E_FAILURE) {
-			hddLog(QDF_TRACE_LEVEL_FATAL,
-			       FL("could not set VHT SU BEAMFORMER CAP"));
+			hdd_alert("could not set VHT SU BEAMFORMER CAP");
 		}
 	}
 
@@ -1215,8 +1173,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 				 pconfig->enableTxBF);
 
 	if (status == QDF_STATUS_E_FAILURE) {
-		hddLog(QDF_TRACE_LEVEL_FATAL,
-		       FL("could not set VHT SU BEAMFORMEE CAP"));
+		hdd_alert("could not set VHT SU BEAMFORMEE CAP");
 	}
 
 	/* Get VHT MU Beamformer cap */
@@ -1224,8 +1181,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 				 &value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("could not get VHT MU BEAMFORMER CAP"));
+		hdd_err("could not get VHT MU BEAMFORMER CAP");
 		value = 0;
 	}
 
@@ -1236,10 +1192,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 					 cfg->vht_mu_bformer);
 
 		if (status == QDF_STATUS_E_FAILURE) {
-			hddLog(QDF_TRACE_LEVEL_FATAL,
-			       FL(
-				  "could not set the VHT MU BEAMFORMER CAP to CCM"
-				 ));
+			hdd_alert("could not set the VHT MU BEAMFORMER CAP to CCM");
 		}
 	}
 
@@ -1248,8 +1201,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 				 &value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("could not get VHT MU BEAMFORMEE CAP"));
+		hdd_err("could not get VHT MU BEAMFORMEE CAP");
 		value = 0;
 	}
 
@@ -1260,8 +1212,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 					 cfg->vht_mu_bformee);
 
 		if (status == QDF_STATUS_E_FAILURE) {
-			hddLog(QDF_TRACE_LEVEL_FATAL,
-			       FL("could not set VHT MU BEAMFORMER CAP"));
+			hdd_alert("could not set VHT MU BEAMFORMER CAP");
 		}
 	}
 
@@ -1270,8 +1221,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 				 &value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("could not get VHT AMPDU LEN"));
+		hdd_err("could not get VHT AMPDU LEN");
 		value = 0;
 	}
 
@@ -1289,8 +1239,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 					 cfg->vht_max_ampdu_len_exp);
 
 		if (status == QDF_STATUS_E_FAILURE) {
-			hddLog(QDF_TRACE_LEVEL_FATAL,
-			       FL("could not set the VHT AMPDU LEN EXP"));
+			hdd_alert("could not set the VHT AMPDU LEN EXP");
 		}
 	}
 
@@ -1298,8 +1247,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 	status = sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_VHT_TXOP_PS, &value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("could not get VHT TXOP PS"));
+		hdd_err("could not get VHT TXOP PS");
 		value = 0;
 	}
 
@@ -1309,8 +1257,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 					 cfg->vht_txop_ps);
 
 		if (status == QDF_STATUS_E_FAILURE) {
-			hddLog(QDF_TRACE_LEVEL_FATAL,
-			       FL("could not set the VHT TXOP PS"));
+			hdd_alert("could not set the VHT TXOP PS");
 		}
 	}
 
@@ -1430,8 +1377,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	else if ((hdd_ctx->config->nBandCapability != eCSR_BAND_ALL) &&
 		 (temp_band_cap != eCSR_BAND_ALL) &&
 		 (hdd_ctx->config->nBandCapability != temp_band_cap)) {
-		hddLog(QDF_TRACE_LEVEL_WARN,
-		       FL("ini BandCapability not supported by the target"));
+		hdd_warn("ini BandCapability not supported by the target");
 	}
 
 	if (!cds_is_driver_recovering()) {
@@ -1483,7 +1429,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 
 	hdd_ctx->config->fine_time_meas_cap &= cfg->fine_time_measurement_cap;
 	hdd_ctx->fine_time_meas_cap_target = cfg->fine_time_measurement_cap;
-	hdd_info(FL("fine_time_meas_cap: 0x%x"),
+	hdd_info("fine_time_meas_cap: 0x%x",
 		hdd_ctx->config->fine_time_meas_cap);
 
 	hdd_ctx->current_antenna_mode =
