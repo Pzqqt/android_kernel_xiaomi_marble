@@ -7927,7 +7927,7 @@ void wlan_hdd_send_svc_nlink_msg(int type, void *data, int len)
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 void wlan_hdd_auto_shutdown_cb(void)
 {
-	hddLog(LOGE, FL("Wlan Idle. Sending Shutdown event.."));
+	hdd_err("Wlan Idle. Sending Shutdown event..");
 	wlan_hdd_send_svc_nlink_msg(WLAN_SVC_WLAN_AUTO_SHUTDOWN_IND, NULL, 0);
 }
 
@@ -7949,8 +7949,7 @@ void wlan_hdd_auto_shutdown_enable(hdd_context_t *hdd_ctx, bool enable)
 	if (enable == false) {
 		if (sme_set_auto_shutdown_timer(hal_handle, 0) !=
 							QDF_STATUS_SUCCESS) {
-			hddLog(LOGE,
-			       FL("Failed to stop wlan auto shutdown timer"));
+			hdd_err("Failed to stop wlan auto shutdown timer");
 		}
 		wlan_hdd_send_svc_nlink_msg(
 			WLAN_SVC_WLAN_AUTO_SHUTDOWN_CANCEL_IND, NULL, 0);
@@ -7989,19 +7988,16 @@ void wlan_hdd_auto_shutdown_enable(hdd_context_t *hdd_ctx, bool enable)
 	}
 
 	if (ap_connected == true || sta_connected == true) {
-		hddLog(LOG1,
-		       FL("CC Session active. Shutdown timer not enabled"));
+		hdd_notice("CC Session active. Shutdown timer not enabled");
 		return;
 	} else {
 		if (sme_set_auto_shutdown_timer(hal_handle,
 						hdd_ctx->config->
 						WlanAutoShutdown)
 		    != QDF_STATUS_SUCCESS)
-			hddLog(LOGE,
-			       FL("Failed to start wlan auto shutdown timer"));
+			hdd_err("Failed to start wlan auto shutdown timer");
 		else
-			hddLog(LOG1,
-			       FL("Auto Shutdown timer for %d seconds enabled"),
+			hdd_notice("Auto Shutdown timer for %d seconds enabled",
 			       hdd_ctx->config->WlanAutoShutdown);
 
 	}
@@ -8065,8 +8061,7 @@ void hdd_stop_bus_bw_compute_timer(hdd_adapter_t *adapter)
 	if (QDF_TIMER_STATE_RUNNING !=
 	    qdf_mc_timer_get_current_state(&hdd_ctx->bus_bw_timer)) {
 		/* trying to stop timer, when not running is not good */
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("bus band width compute timer is not running"));
+		hdd_err("bus band width compute timer is not running");
 		return;
 	}
 
@@ -8142,15 +8137,13 @@ QDF_STATUS wlan_hdd_check_custom_con_channel_rules(hdd_adapter_t *sta_adapter,
 			(channel_id < SIR_11A_CHANNEL_BEGIN)) {
 			if (hdd_ap_ctx->operatingChannel != channel_id) {
 				*concurrent_chnl_same = false;
-				hddLog(QDF_TRACE_LEVEL_INFO_MED,
-					FL("channels are different"));
+				hdd_info("channels are different");
 			}
 		} else if ((QDF_P2P_GO_MODE == device_mode) &&
 				(channel_id >= SIR_11A_CHANNEL_BEGIN)) {
 			if (hdd_ap_ctx->operatingChannel != channel_id) {
 				*concurrent_chnl_same = false;
-				hddLog(QDF_TRACE_LEVEL_INFO_MED,
-					FL("channels are different"));
+				hdd_info("channels are different");
 			}
 		}
 	} else {
@@ -8161,8 +8154,7 @@ QDF_STATUS wlan_hdd_check_custom_con_channel_rules(hdd_adapter_t *sta_adapter,
 		 * Return the status as failure so caller function could know
 		 * that scan look up is failed.
 		 */
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("Finding AP from scan cache failed"));
+		hdd_err("Finding AP from scan cache failed");
 		return QDF_STATUS_E_FAILURE;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -8185,8 +8177,7 @@ void wlan_hdd_stop_sap(hdd_adapter_t *ap_adapter)
 	hdd_context_t *hdd_ctx;
 
 	if (NULL == ap_adapter) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("ap_adapter is NULL here"));
+		hdd_err("ap_adapter is NULL here");
 		return;
 	}
 
@@ -8200,8 +8191,7 @@ void wlan_hdd_stop_sap(hdd_adapter_t *ap_adapter)
 		wlan_hdd_del_station(ap_adapter);
 		hdd_cleanup_actionframe(hdd_ctx, ap_adapter);
 		hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(ap_adapter);
-		hddLog(QDF_TRACE_LEVEL_INFO_HIGH,
-		       FL("Now doing SAP STOPBSS"));
+		hdd_info("Now doing SAP STOPBSS");
 		qdf_event_reset(&hostapd_state->qdf_stop_bss_event);
 		if (QDF_STATUS_SUCCESS == wlansap_stop_bss(hdd_ap_ctx->
 							sapContext)) {
@@ -8210,19 +8200,16 @@ void wlan_hdd_stop_sap(hdd_adapter_t *ap_adapter)
 							   BSS_WAIT_TIMEOUT);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				mutex_unlock(&hdd_ctx->sap_lock);
-				hddLog(QDF_TRACE_LEVEL_ERROR,
-				       FL("SAP Stop Failed"));
+				hdd_err("SAP Stop Failed");
 				return;
 			}
 		}
 		clear_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags);
 		cds_decr_session_set_pcl(ap_adapter->device_mode,
 						ap_adapter->sessionId);
-		hddLog(QDF_TRACE_LEVEL_INFO_HIGH,
-		       FL("SAP Stop Success"));
+		hdd_info("SAP Stop Success");
 	} else {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("Can't stop ap because its not started"));
+		hdd_err("Can't stop ap because its not started");
 	}
 	mutex_unlock(&hdd_ctx->sap_lock);
 	return;
@@ -8245,8 +8232,7 @@ void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter)
 	tsap_Config_t *sap_config;
 
 	if (NULL == ap_adapter) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("ap_adapter is NULL here"));
+		hdd_err("ap_adapter is NULL here");
 		return;
 	}
 
@@ -8268,7 +8254,7 @@ void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter)
 		goto end;
 
 	if (0 != wlan_hdd_cfg80211_update_apies(ap_adapter)) {
-		hddLog(LOGE, FL("SAP Not able to set AP IEs"));
+		hdd_err("SAP Not able to set AP IEs");
 		wlansap_reset_sap_config_add_ie(sap_config, eUPDATE_IE_ALL);
 		goto end;
 	}
@@ -8279,15 +8265,14 @@ void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter)
 			      != QDF_STATUS_SUCCESS)
 		goto end;
 
-	hddLog(QDF_TRACE_LEVEL_INFO_HIGH,
-	       FL("Waiting for SAP to start"));
+	hdd_info("Waiting for SAP to start");
 	qdf_status = qdf_wait_single_event(&hostapd_state->qdf_event,
 					BSS_WAIT_TIMEOUT);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, FL("SAP Start failed"));
+		hdd_err("SAP Start failed");
 		goto end;
 	}
-	hddLog(QDF_TRACE_LEVEL_INFO_HIGH, FL("SAP Start Success"));
+	hdd_info("SAP Start Success");
 	set_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags);
 	cds_incr_active_session(ap_adapter->device_mode,
 					ap_adapter->sessionId);
