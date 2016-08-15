@@ -1883,20 +1883,19 @@ static int __hdd_stop(struct net_device *dev)
 
 	/* Nothing to be done if the interface is not opened */
 	if (false == test_bit(DEVICE_IFACE_OPENED, &adapter->event_flags)) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("NETDEV Interface is not OPENED"));
+		hdd_err("NETDEV Interface is not OPENED");
 		return -ENODEV;
 	}
 
 	/* Make sure the interface is marked as closed */
 	clear_bit(DEVICE_IFACE_OPENED, &adapter->event_flags);
-	hddLog(QDF_TRACE_LEVEL_INFO, FL("Disabling OS Tx queues"));
+	hdd_notice("Disabling OS Tx queues");
 
 	/*
 	 * Disable TX on the interface, after this hard_start_xmit() will not
 	 * be called on that interface
 	 */
-	hddLog(LOG1, FL("Disabling queues"));
+	hdd_notice("Disabling queues");
 	wlan_hdd_netif_queue_control(adapter, WLAN_NETIF_TX_DISABLE_N_CARRIER,
 				   WLAN_CONTROL_PATH);
 
@@ -1980,17 +1979,17 @@ static void __hdd_uninit(struct net_device *dev)
 
 	do {
 		if (WLAN_HDD_ADAPTER_MAGIC != adapter->magic) {
-			hddLog(LOGP, FL("Invalid magic"));
+			hdd_alert("Invalid magic");
 			break;
 		}
 
 		if (NULL == adapter->pHddCtx) {
-			hddLog(LOGP, FL("NULL hdd_ctx"));
+			hdd_alert("NULL hdd_ctx");
 			break;
 		}
 
 		if (dev != adapter->dev) {
-			hddLog(LOGP, FL("Invalid device reference"));
+			hdd_alert("Invalid device reference");
 			/*
 			 * we haven't validated all cases so let this go for
 			 * now
@@ -2046,8 +2045,7 @@ static int hdd_open_cesium_nl_sock(void)
 #endif
 
 	if (cesium_nl_srv_sock == NULL) {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("NLINK:  cesium netlink_kernel_create failed"));
+		hdd_err("NLINK:  cesium netlink_kernel_create failed");
 		ret = -ECONNREFUSED;
 	}
 
@@ -2175,18 +2173,13 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 		return;
 
 	if (dev->flags & IFF_ALLMULTI) {
-		hddLog(QDF_TRACE_LEVEL_INFO,
-		       FL("allow all multicast frames"));
+		hdd_notice("allow all multicast frames");
 		adapter->mc_addr_list.mc_cnt = 0;
 	} else {
 		mc_count = netdev_mc_count(dev);
-		hddLog(QDF_TRACE_LEVEL_INFO,
-		       FL("mc_count = %u"), mc_count);
+		hdd_notice("mc_count = %u", mc_count);
 		if (mc_count > WLAN_HDD_MAX_MC_ADDR_LIST) {
-			hddLog(QDF_TRACE_LEVEL_INFO,
-			       FL(
-				  "No free filter available; allow all multicast frames"
-				 ));
+			hdd_notice("No free filter available; allow all multicast frames");
 			adapter->mc_addr_list.mc_cnt = 0;
 			return;
 		}
@@ -2217,8 +2210,7 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 			       ETH_ALEN);
 			memcpy(&(adapter->mc_addr_list.addr[i][0]), ha->addr,
 			       ETH_ALEN);
-			hddLog(QDF_TRACE_LEVEL_INFO,
-			       FL("mlist[%d] = " MAC_ADDRESS_STR), i,
+			hdd_notice("mlist[%d] = " MAC_ADDRESS_STR, i,
 			       MAC_ADDR_ARRAY(adapter->mc_addr_list.addr[i]));
 			i++;
 		}
@@ -2432,20 +2424,17 @@ QDF_STATUS hdd_register_interface(hdd_adapter_t *adapter,
 	if (rtnl_held) {
 		if (strnchr(pWlanDev->name, strlen(pWlanDev->name), '%')) {
 			if (dev_alloc_name(pWlanDev, pWlanDev->name) < 0) {
-				hddLog(QDF_TRACE_LEVEL_ERROR,
-				       FL("Failed:dev_alloc_name"));
+				hdd_err("Failed:dev_alloc_name");
 				return QDF_STATUS_E_FAILURE;
 			}
 		}
 		if (register_netdevice(pWlanDev)) {
-			hddLog(QDF_TRACE_LEVEL_ERROR,
-			       FL("Failed:register_netdev"));
+			hdd_err("Failed:register_netdev");
 			return QDF_STATUS_E_FAILURE;
 		}
 	} else {
 		if (register_netdev(pWlanDev)) {
-			hddLog(QDF_TRACE_LEVEL_ERROR,
-			       FL("Failed:register_netdev"));
+			hdd_err("Failed:register_netdev");
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
@@ -2459,12 +2448,12 @@ QDF_STATUS hdd_sme_close_session_callback(void *pContext)
 	hdd_adapter_t *adapter = pContext;
 
 	if (NULL == adapter) {
-		hddLog(QDF_TRACE_LEVEL_FATAL, FL("NULL adapter"));
+		hdd_alert("NULL adapter");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (WLAN_HDD_ADAPTER_MAGIC != adapter->magic) {
-		hddLog(QDF_TRACE_LEVEL_FATAL, FL("Invalid magic"));
+		hdd_alert("Invalid magic");
 		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
@@ -2504,7 +2493,7 @@ static QDF_STATUS hdd_check_and_init_tdls(hdd_adapter_t *adapter, uint32_t type)
 {
 	if (QDF_IBSS_MODE != type) {
 		if (0 != wlan_hdd_tdls_init(adapter)) {
-			hddLog(LOGE, FL("wlan_hdd_tdls_init failed"));
+			hdd_err("wlan_hdd_tdls_init failed");
 			return QDF_STATUS_E_FAILURE;
 		}
 		set_bit(TDLS_INIT_DONE, &adapter->event_flags);
@@ -2534,7 +2523,7 @@ QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
 	sme_set_pdev_ht_vht_ies(hdd_ctx->hHal, hdd_ctx->config->enable2x2);
 	status = cds_get_vdev_types(adapter->device_mode, &type, &subType);
 	if (QDF_STATUS_SUCCESS != status) {
-		hddLog(LOGE, FL("failed to get vdev type"));
+		hdd_err("failed to get vdev type");
 		goto error_sme_open;
 	}
 	/* Open a SME session for future operation */
@@ -2543,8 +2532,7 @@ QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
 				 (uint8_t *) &adapter->macAddressCurrent,
 				 &adapter->sessionId, type, subType);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
-		hddLog(LOGP,
-		       FL("sme_open_session() failed, status code %08d [x%08x]"),
+		hdd_alert("sme_open_session() failed, status code %08d [x%08x]",
 		       qdf_ret_status, qdf_ret_status);
 		status = QDF_STATUS_E_FAILURE;
 		goto error_sme_open;
@@ -2554,8 +2542,7 @@ QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
 		&adapter->session_open_comp_var,
 		msecs_to_jiffies(WLAN_WAIT_TIME_SESSIONOPENCLOSE));
 	if (!rc) {
-		hddLog(LOGP,
-			FL("Session is not opened within timeout period code %ld"),
+		hdd_alert("Session is not opened within timeout period code %ld",
 			rc);
 		status = QDF_STATUS_E_FAILURE;
 		goto error_sme_open;
@@ -2564,15 +2551,13 @@ QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
 	/* Register wireless extensions */
 	qdf_ret_status = hdd_register_wext(pWlanDev);
 	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
-		hddLog(LOGP,
-		       FL("hdd_register_wext() failed, status code %08d [x%08x]"),
+		hdd_alert("hdd_register_wext() failed, status code %08d [x%08x]",
 		       qdf_ret_status, qdf_ret_status);
 		status = QDF_STATUS_E_FAILURE;
 		goto error_register_wext;
 	}
 	/* Set the Connection State to Not Connected */
-	hddLog(LOG1,
-	       FL("Set HDD connState to eConnectionState_NotConnected"));
+	hdd_notice("Set HDD connState to eConnectionState_NotConnected");
 	pHddStaCtx->conn_info.connState = eConnectionState_NotConnected;
 
 	/* Set the default operation channel */
@@ -2584,8 +2569,7 @@ QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
 
 	status = hdd_init_tx_rx(adapter);
 	if (QDF_STATUS_SUCCESS != status) {
-		hddLog(LOGP,
-		       FL("hdd_init_tx_rx() failed, status code %08d [x%08x]"),
+		hdd_alert("hdd_init_tx_rx() failed, status code %08d [x%08x]",
 		       status, status);
 		goto error_init_txrx;
 	}
@@ -2594,8 +2578,7 @@ QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
 
 	status = hdd_wmm_adapter_init(adapter);
 	if (QDF_STATUS_SUCCESS != status) {
-		hddLog(LOGP,
-		       FL("hdd_wmm_adapter_init() failed, status code %08d [x%08x]"),
+		hdd_alert("hdd_wmm_adapter_init() failed, status code %08d [x%08x]",
 		       status, status);
 		goto error_wmm_init;
 	}
@@ -2608,8 +2591,7 @@ QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
 				      PDEV_CMD);
 
 	if (0 != ret_val) {
-		hddLog(LOGE,
-		       FL("WMI_PDEV_PARAM_BURST_ENABLE set failed %d"),
+		hdd_err("WMI_PDEV_PARAM_BURST_ENABLE set failed %d",
 		       ret_val);
 	}
 	status = hdd_check_and_init_tdls(adapter, type);
@@ -2646,8 +2628,7 @@ error_register_wext:
 				msecs_to_jiffies
 					(WLAN_WAIT_TIME_SESSIONOPENCLOSE));
 			if (rc <= 0)
-				hddLog(LOGE,
-				       FL("Session is not opened within timeout period code %ld"),
+				hdd_err("Session is not opened within timeout period code %ld",
 				       rc);
 		}
 	}
