@@ -1249,7 +1249,6 @@ endif
 
 ifeq ($(CONFIG_HIF_SNOC), 1)
 CDEFINES += -DHIF_SNOC
-CDEFINES += -DWLAN_SUSPEND_RESUME_TEST
 endif
 
 #Enable High Latency related Flags
