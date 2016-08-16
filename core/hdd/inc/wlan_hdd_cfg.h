@@ -2829,6 +2829,15 @@ typedef enum {
 #endif
 
 /*
+ * 0: Disable BPF packet filter
+ * 1: Enable BPF packet filter
+ */
+#define CFG_BPF_PACKET_FILTER_OFFLOAD           "gBpfFilterEnable"
+#define CFG_BPF_PACKET_FILTER_OFFLOAD_MIN       (0)
+#define CFG_BPF_PACKET_FILTER_OFFLOAD_MAX       (1)
+#define CFG_BPF_PACKET_FILTER_OFFLOAD_DEFAULT   (1)
+
+/*
  * 0: disable the cck tx chain mask (default)
  * 1: enable the cck tx chain mask
  */
@@ -4044,6 +4053,7 @@ struct hdd_config {
 	bool tso_enable;
 	bool lro_enable;
 	bool active_mode_offload;
+	bool bpf_packet_filter_enable;
 	uint32_t fine_time_meas_cap;
 	uint8_t max_scan_count;
 #ifdef WLAN_FEATURE_FASTPATH

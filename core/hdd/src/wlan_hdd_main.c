@@ -1492,7 +1492,10 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	hdd_info("Init current antenna mode: %d",
 		 hdd_ctx->current_antenna_mode);
 
-	hdd_ctx->bpf_enabled = cfg->bpf_enabled;
+	hdd_info("Target BPF %d Host BPF %d",
+		cfg->bpf_enabled, hdd_ctx->config->bpf_packet_filter_enable);
+	hdd_ctx->bpf_enabled = (cfg->bpf_enabled &&
+				hdd_ctx->config->bpf_packet_filter_enable);
 	/* Configure NAN datapath features */
 	hdd_nan_datapath_target_config(hdd_ctx, cfg);
 }

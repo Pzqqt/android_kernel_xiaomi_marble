@@ -3525,6 +3525,13 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_LRO_ENABLED_MIN,
 		     CFG_LRO_ENABLED_MAX),
 
+	REG_VARIABLE(CFG_BPF_PACKET_FILTER_OFFLOAD, WLAN_PARAM_Integer,
+		     struct hdd_config, bpf_packet_filter_enable,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_BPF_PACKET_FILTER_OFFLOAD_DEFAULT,
+		     CFG_BPF_PACKET_FILTER_OFFLOAD_MIN,
+		     CFG_BPF_PACKET_FILTER_OFFLOAD_MAX),
+
 	REG_VARIABLE(CFG_ACTIVE_MODE_OFFLOAD, WLAN_PARAM_Integer,
 		     struct hdd_config, active_mode_offload,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -5668,6 +5675,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_info("Name = [%s] Value = [%s]",
 		CFG_RM_CAPABILITY_NAME,
 		pHddCtx->config->rm_capability);
+	hdd_info("Name = [%s] Value = [%d]",
+		CFG_BPF_PACKET_FILTER_OFFLOAD,
+		pHddCtx->config->bpf_packet_filter_enable);
 }
 
 
