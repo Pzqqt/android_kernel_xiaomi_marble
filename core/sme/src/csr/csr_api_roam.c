@@ -1398,6 +1398,7 @@ static void init_config_param(tpAniSirGlobal pMac)
 		CSR_NUM_P2P_CHAN_COMBINED_CONC;
 #endif
 	pMac->roam.configParam.nTxPowerCap = CSR_MAX_TX_POWER;
+	pMac->roam.configParam.allow_tpc_from_ap = true;
 	pMac->roam.configParam.statsReqPeriodicity =
 		CSR_MIN_GLOBAL_STAT_QUERY_PERIOD;
 	pMac->roam.configParam.statsReqPeriodicityInPS =
@@ -2277,6 +2278,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->statsReqPeriodicityInPS;
 		/* Assign this before calling csr_init11d_info */
 		pMac->roam.configParam.nTxPowerCap = pParam->nTxPowerCap;
+		pMac->roam.configParam.allow_tpc_from_ap =
+				pParam->allow_tpc_from_ap;
 		if (csr_is11d_supported(pMac)) {
 			status = csr_init11d_info(pMac, &pParam->Csr11dinfo);
 		} else {
@@ -2579,6 +2582,7 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->vccRssiThreshold = cfg_params->vccRssiThreshold;
 	pParam->vccUlMacLossThreshold = cfg_params->vccUlMacLossThreshold;
 	pParam->nTxPowerCap = cfg_params->nTxPowerCap;
+	pParam->allow_tpc_from_ap = cfg_params->allow_tpc_from_ap;
 	pParam->statsReqPeriodicity = cfg_params->statsReqPeriodicity;
 	pParam->statsReqPeriodicityInPS = cfg_params->statsReqPeriodicityInPS;
 	pParam->addTSWhenACMIsOff = cfg_params->addTSWhenACMIsOff;

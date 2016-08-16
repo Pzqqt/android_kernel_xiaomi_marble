@@ -1934,16 +1934,12 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			session->htConfig.ht_tx_stbc = 0;
 		}
 
-#ifdef FEATURE_WLAN_ESE
 		session->maxTxPower = lim_get_max_tx_power(reg_max,
 					local_power_constraint,
 					mac_ctx->roam.configParam.nTxPowerCap);
-#else
-		session->maxTxPower =
-			QDF_MIN(reg_max, (local_power_constraint));
-#endif
+
 		lim_log(mac_ctx, LOG1,
-			FL("Reg max = %d, local power con = %d, max tx = %d"),
+			FL("Reg max %d local power con %d max tx pwr %d"),
 			reg_max, local_power_constraint, session->maxTxPower);
 
 		if (session->gLimCurrentBssUapsd) {

@@ -56,6 +56,38 @@
 #include "wma.h"
 
 #define LIM_GET_NOISE_MAX_TRY 5
+
+/**
+ * get_local_power_constraint_probe_response() - extracts local constraint
+ * from probe response
+ * @beacon_struct: beacon structure
+ * @local_constraint: local constraint pointer
+ * @session: A pointer to session entry.
+ *
+ * Return: None
+ */
+#ifdef FEATURE_WLAN_ESE
+static void get_local_power_constraint_probe_response(
+		tpSirProbeRespBeacon beacon_struct,
+		int8_t *local_constraint,
+		tpPESession session)
+{
+	if (beacon_struct->eseTxPwr.present)
+		*local_constraint =
+			beacon_struct->eseTxPwr.power_limit;
+		session->is_ese_version_ie_present =
+			beacon_struct->is_ese_ver_ie_present;
+}
+#else
+static void get_local_power_constraint_probe_response(
+		tpSirProbeRespBeacon beacon_struct,
+		int8_t *local_constraint,
+		tpPESession session)
+{
+
+}
+#endif
+
 /**
  * lim_extract_ap_capability() - extract AP's HCF/WME/WSM capability
  * @mac_ctx: Pointer to Global MAC structure
@@ -289,20 +321,16 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 	/* Extract the UAPSD flag from WMM Parameter element */
 	if (beacon_struct->wmeEdcaPresent)
 		*uapsd = beacon_struct->edcaParams.qosInfo.uapsd;
-#if defined FEATURE_WLAN_ESE
-	/* If there is Power Constraint Element specifically,
-	 * adapt to it. Hence there is else condition check
-	 * for this if statement.
-	 */
-	if (beacon_struct->eseTxPwr.present)
-		*local_constraint = beacon_struct->eseTxPwr.power_limit;
-	session->is_ese_version_ie_present =
-		beacon_struct->is_ese_ver_ie_present;
-#endif
-	if (beacon_struct->powerConstraintPresent) {
-		*local_constraint -=
-			beacon_struct->localPowerConstraint.
-			localPowerConstraints;
+
+	if (mac_ctx->roam.configParam.allow_tpc_from_ap) {
+		if (beacon_struct->powerConstraintPresent) {
+			*local_constraint -=
+				beacon_struct->localPowerConstraint.
+					localPowerConstraints;
+		} else {
+			get_local_power_constraint_probe_response(
+				beacon_struct, local_constraint, session);
+		}
 	}
 	session->country_info_present = false;
 	/* Initializing before first use */

@@ -567,6 +567,7 @@ typedef struct tagCsrConfig {
 	 * value & 11d. If 11d is disable, the lesser of this & default setting.
 	 */
 	uint8_t nTxPowerCap;
+	bool allow_tpc_from_ap;
 	uint32_t statsReqPeriodicity;    /* stats req freq while in fullpower */
 	uint32_t statsReqPeriodicityInPS;/* stats req freq while in powersave */
 	uint32_t dtimPeriod;

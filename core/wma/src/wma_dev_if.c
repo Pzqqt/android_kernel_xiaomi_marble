@@ -2704,6 +2704,9 @@ wma_vdev_set_bss_params(tp_wma_handle wma, int vdev_id,
 		WMA_LOGW("Setting Tx power limit to 0");
 	}
 
+	WMA_LOGI("Set maxTx pwr [WMI_VDEV_PARAM_TX_PWRLIMIT] to %d",
+						maxTxPower);
+
 	ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
 					      WMI_VDEV_PARAM_TX_PWRLIMIT,
 					      maxTxPower);

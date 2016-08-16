@@ -515,6 +515,12 @@ typedef enum {
 /* Not to use CFG default because if no registry setting, this is ignored by SME. */
 #define CFG_MAX_TX_POWER_DEFAULT                WNI_CFG_CURRENT_TX_POWER_LEVEL_STAMAX
 
+/* This ini controls driver to honor/dishonor power constraint from AP */
+#define CFG_TX_POWER_CTRL_NAME                 "gAllowTPCfromAP"
+#define CFG_TX_POWER_CTRL_DEFAULT              (1)
+#define CFG_TX_POWER_CTRL_MIN                  (0)
+#define CFG_TX_POWER_CTRL_MAX                  (1)
+
 #define CFG_LOW_GAIN_OVERRIDE_NAME             "gLowGainOverride"
 #define CFG_LOW_GAIN_OVERRIDE_MIN              WNI_CFG_LOW_GAIN_OVERRIDE_STAMIN
 #define CFG_LOW_GAIN_OVERRIDE_MAX              WNI_CFG_LOW_GAIN_OVERRIDE_STAMAX
@@ -3550,6 +3556,7 @@ struct hdd_config {
 	uint32_t goLinkMonitorPeriod;
 	uint32_t nBeaconInterval;
 	uint8_t nTxPowerCap;    /* In dBm */
+	bool allow_tpc_from_ap;
 	bool fIsLowGainOverride;
 	uint8_t disablePacketFilter;
 	bool fRrmEnable;

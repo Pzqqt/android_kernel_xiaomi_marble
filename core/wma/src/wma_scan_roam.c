@@ -740,7 +740,7 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 
 		WMI_SET_CHANNEL_REG_POWER(tchan_info,
 					  chan_list->chanParam[i].pwr);
-		WMA_LOGD("Channel TX power[%d] = %u: %d", i, tchan_info->mhz,
+		WMA_LOGI("Channel TX power[%d] = %u: %d", i, tchan_info->mhz,
 			 chan_list->chanParam[i].pwr);
 		/*TODO: Set WMI_SET_CHANNEL_MIN_POWER */
 		/*TODO: Set WMI_SET_CHANNEL_ANTENNA_MAX */

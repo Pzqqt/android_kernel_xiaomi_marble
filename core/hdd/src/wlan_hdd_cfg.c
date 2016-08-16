@@ -836,6 +836,13 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_MAX_TX_POWER_MIN,
 		     CFG_MAX_TX_POWER_MAX),
 
+	REG_VARIABLE(CFG_TX_POWER_CTRL_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, allow_tpc_from_ap,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_TX_POWER_CTRL_DEFAULT,
+		     CFG_TX_POWER_CTRL_MIN,
+		     CFG_TX_POWER_CTRL_MAX),
+
 	REG_VARIABLE(CFG_LOW_GAIN_OVERRIDE_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, fIsLowGainOverride,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -4952,6 +4959,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		  pHddCtx->config->nTxPowerCap);
 #endif
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
+		  "Name = [gAllowTPCfromAP] Value = [%u] ",
+		  pHddCtx->config->allow_tpc_from_ap);
+	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [FastRoamEnabled] Value = [%u] ",
 		  pHddCtx->config->isFastRoamIniFeatureEnabled);
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -6921,6 +6931,7 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	smeConfig->csrConfig.cbChoice = 0;
 	smeConfig->csrConfig.eBand = pConfig->nBandCapability;
 	smeConfig->csrConfig.nTxPowerCap = pConfig->nTxPowerCap;
+	smeConfig->csrConfig.allow_tpc_from_ap = pConfig->allow_tpc_from_ap;
 	smeConfig->csrConfig.fEnableBypass11d = pConfig->enableBypass11d;
 	smeConfig->csrConfig.fEnableDFSChnlScan = pConfig->enableDFSChnlScan;
 	smeConfig->csrConfig.nRoamPrefer5GHz = pConfig->nRoamPrefer5GHz;

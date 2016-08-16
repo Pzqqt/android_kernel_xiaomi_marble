@@ -397,7 +397,7 @@ void wma_set_tx_power(WMA_HANDLE handle,
 	if (wma_handle->interfaces[vdev_id].tx_power != tx_pwr_params->power) {
 
 		/* tx_power changed, Push the tx_power to FW */
-		WMA_LOGW("%s: Set TX power limit [WMI_VDEV_PARAM_TX_PWRLIMIT] to %d",
+		WMA_LOGI("%s: Set TX pwr limit [WMI_VDEV_PARAM_TX_PWRLIMIT] to %d",
 			__func__, tx_pwr_params->power);
 		ret = wma_vdev_set_param(wma_handle->wmi_handle,
 						      vdev_id,
@@ -464,7 +464,7 @@ void wma_set_max_tx_power(WMA_HANDLE handle,
 		ret = QDF_STATUS_SUCCESS;
 		goto end;
 	}
-	WMA_LOGW("Set MAX TX power limit [WMI_VDEV_PARAM_TX_PWRLIMIT] to %d",
+	WMA_LOGI("Set MAX TX pwr limit [WMI_VDEV_PARAM_TX_PWRLIMIT] to %d",
 		 wma_handle->interfaces[vdev_id].max_tx_power);
 	ret = wma_vdev_set_param(wma_handle->wmi_handle, vdev_id,
 				WMI_VDEV_PARAM_TX_PWRLIMIT,

@@ -1168,6 +1168,7 @@ typedef struct tagCsrConfigParam {
 	 * default setting.
 	 */
 	uint8_t nTxPowerCap;
+	bool allow_tpc_from_ap;
 	/* stats request frequency from PE while in full power */
 	uint32_t statsReqPeriodicity;
 	/* stats request frequency from PE while in power save */
