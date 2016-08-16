@@ -39,6 +39,7 @@
 #include "lim_utils.h"
 #include "lim_assoc_utils.h"
 #include "lim_security_utils.h"
+#include <lim_api.h>
 
 /* channel Switch Timer in ticks */
 #define LIM_CHANNEL_SWITCH_TIMER_TICKS           1
@@ -474,7 +475,7 @@ void lim_timer_handler(void *pMacGlobal, uint32_t param)
 	msg.bodyptr = NULL;
 	msg.bodyval = 0;
 
-	statusCode = lim_post_msg_api(pMac, &msg);
+	statusCode = lim_post_msg_high_priority(pMac, &msg);
 	if (statusCode != eSIR_SUCCESS)
 		lim_log(pMac, LOGE,
 			FL("posting message %X to LIM failed, reason=%d"),

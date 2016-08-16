@@ -1231,18 +1231,21 @@ QDF_STATUS cds_free_context(void *p_cds_context, QDF_MODULE_ID moduleID,
 } /* cds_free_context() */
 
 /**
- * cds_mq_post_message() - post a message to a message queue
- * @msgQueueId: identifies the message queue upon which the message
- *	will be posted.
- * @message: a pointer to a message buffer. Memory for this message
- *	buffer is allocated by the caller and free'd by the QDF after the
- *	message is posted to the message queue.  If the consumer of the
- *	message needs anything in this message, it needs to copy the contents
- *	before returning from the message queue handler.
+ * cds_mq_post_message_by_priority() - posts message using priority
+ * to message queue
+ * @msgQueueId: message queue id
+ * @pMsg: message to be posted
+ * @is_high_priority: wheather message is high priority
  *
- * Return: QDF status
+ * This function is used to post high priority message to message queue
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ *         QDF_STATUS_E_FAILURE on failure
+ *         QDF_STATUS_E_RESOURCES on resource allocation failure
  */
-QDF_STATUS cds_mq_post_message(CDS_MQ_ID msgQueueId, cds_msg_t *pMsg)
+QDF_STATUS cds_mq_post_message_by_priority(CDS_MQ_ID msgQueueId,
+					   cds_msg_t *pMsg,
+					   int is_high_priority)
 {
 	p_cds_mq_type pTargetMq = NULL;
 	p_cds_msg_wrapper pMsgWrapper = NULL;
@@ -1326,7 +1329,10 @@ QDF_STATUS cds_mq_post_message(CDS_MQ_ID msgQueueId, cds_msg_t *pMsg)
 	qdf_mem_copy((void *)pMsgWrapper->pVosMsg,
 		     (void *)pMsg, sizeof(cds_msg_t));
 
-	cds_mq_put(pTargetMq, pMsgWrapper);
+	if (is_high_priority)
+		cds_mq_put_front(pTargetMq, pMsgWrapper);
+	else
+		cds_mq_put(pTargetMq, pMsgWrapper);
 
 	set_bit(MC_POST_EVENT_MASK, &gp_cds_context->qdf_sched.mcEventFlag);
 	wake_up_interruptible(&gp_cds_context->qdf_sched.mcWaitQueue);

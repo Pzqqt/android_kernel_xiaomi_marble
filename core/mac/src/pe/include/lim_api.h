@@ -129,6 +129,8 @@ tSirRetStatus peProcessMsg(tpAniSirGlobal pMac, tSirMsgQ *limMsg);
 extern void lim_cleanup(tpAniSirGlobal);
 /* / Function to post messages to LIM thread */
 extern uint32_t lim_post_msg_api(tpAniSirGlobal, tSirMsgQ *);
+uint32_t lim_post_msg_high_priority(tpAniSirGlobal mac, tSirMsgQ *msg);
+
 /**
  * Function to process messages posted to LIM thread
  * and dispatch to various sub modules within LIM module.

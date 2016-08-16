@@ -118,6 +118,30 @@ inline void cds_mq_put(p_cds_mq_type pMq, p_cds_msg_wrapper pMsgWrapper)
 } /* cds_mq_put() */
 
 /**
+ * cds_mq_put_front() - adds a message to the head of message queue
+ * @mq: message queue
+ * @msg_wrapper: message wrapper
+ *
+ * This function is used to add a message to the head of message queue
+ *
+ * Return: None
+ */
+void cds_mq_put_front(p_cds_mq_type mq, p_cds_msg_wrapper msg_wrapper)
+{
+	unsigned long flags;
+
+	if ((mq == NULL) || (msg_wrapper == NULL)) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			"%s: NULL pointer passed", __func__);
+		return;
+	}
+
+	spin_lock_irqsave(&mq->mqLock, flags);
+	list_add(&msg_wrapper->msgNode, &mq->mqList);
+	spin_unlock_irqrestore(&mq->mqLock, flags);
+}
+
+/**
  * cds_mq_get() - get a message with its wrapper from a message queue
  * @pMq: Pointer to the message queue
  *
