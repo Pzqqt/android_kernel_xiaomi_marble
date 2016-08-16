@@ -394,5 +394,7 @@ int pld_athdiag_read(struct device *dev, uint32_t offset, uint32_t memtype,
 		     uint32_t datalen, uint8_t *output);
 int pld_athdiag_write(struct device *dev, uint32_t offset, uint32_t memtype,
 		      uint32_t datalen, uint8_t *input);
-
+void *pld_smmu_get_mapping(struct device *dev);
+int pld_smmu_map(struct device *dev, phys_addr_t paddr,
+		 uint32_t *iova_addr, size_t size);
 #endif

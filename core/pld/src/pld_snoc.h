@@ -121,6 +121,15 @@ static inline int pld_snoc_athdiag_write(struct device *dev, uint32_t offset,
 {
 	return 0;
 }
+static inline void *pld_snoc_smmu_get_mapping(struct device *dev)
+{
+	return NULL;
+}
+static inline int pld_snoc_smmu_map(struct device *dev, phys_addr_t paddr,
+				    uint32_t *iova_addr, size_t size)
+{
+	return 0;
+}
 #else
 int pld_snoc_register_driver(void);
 void pld_snoc_unregister_driver(void);
@@ -154,6 +163,15 @@ static inline int pld_snoc_athdiag_write(struct device *dev, uint32_t offset,
 					 uint8_t *input)
 {
 	return icnss_athdiag_write(dev, offset, memtype, datalen, input);
+}
+static inline void *pld_snoc_smmu_get_mapping(struct device *dev)
+{
+	return icnss_smmu_get_mapping(dev);
+}
+static inline int pld_snoc_smmu_map(struct device *dev, phys_addr_t paddr,
+				    uint32_t *iova_addr, size_t size)
+{
+	return icnss_smmu_map(dev, paddr, iova_addr, size);
 }
 #endif
 #endif
