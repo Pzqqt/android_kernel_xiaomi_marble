@@ -1298,6 +1298,8 @@ struct hdd_context_s {
 	bool enable_tdls_connection_tracker;
 	uint8_t tdls_external_peer_count;
 	bool tdls_nss_switch_in_progress;
+	bool tdls_nss_teardown_complete;
+	enum tdls_nss_transition_type tdls_nss_transition_mode;
 	int32_t tdls_teardown_peers_cnt;
 	struct tdls_set_state_info set_state_info;
 #endif

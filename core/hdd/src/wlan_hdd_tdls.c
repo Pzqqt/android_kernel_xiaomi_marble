@@ -654,6 +654,8 @@ void hdd_tdls_context_init(hdd_context_t *hdd_ctx)
 	hdd_ctx->tdls_external_peer_count = 0;
 	hdd_ctx->set_state_info.set_state_cnt = 0;
 	hdd_ctx->set_state_info.vdev_id = 0;
+	hdd_ctx->tdls_nss_teardown_complete = false;
+	hdd_ctx->tdls_nss_transition_mode = TDLS_NSS_TRANSITION_UNKNOWN;
 
 	/* This flag will set  be true, only when device operates in
 	 * standalone STA mode
@@ -4082,8 +4084,24 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 		mutex_lock(&pHddCtx->tdls_lock);
 		if (pHddCtx->tdls_teardown_peers_cnt != 0)
 			pHddCtx->tdls_teardown_peers_cnt--;
-		if (pHddCtx->tdls_teardown_peers_cnt == 0)
-			pHddCtx->tdls_nss_switch_in_progress = false;
+		if (pHddCtx->tdls_teardown_peers_cnt == 0) {
+			if (pHddCtx->tdls_nss_transition_mode ==
+			    TDLS_NSS_TRANSITION_1x1_to_2x2) {
+				/* TDLS NSS switch is fully completed, so
+				 * reset the flags.
+				 */
+				hdd_info("TDLS NSS switch is fully completed");
+				pHddCtx->tdls_nss_switch_in_progress = false;
+				pHddCtx->tdls_nss_teardown_complete = false;
+			} else {
+				/* TDLS NSS switch is not yet completed, but
+				 * tdls teardown is completed for all the
+				 * peers.
+				 */
+				hdd_info("TDLS teardown is completed and NSS switch still in progress");
+				pHddCtx->tdls_nss_teardown_complete = true;
+			}
+		}
 		mutex_unlock(&pHddCtx->tdls_lock);
 	}
 
@@ -5829,11 +5847,16 @@ static int wlan_hdd_tdls_teardown_links(hdd_context_t *hddctx,
 		hdd_info("TDLS peers to be torn down = %d",
 			 hddctx->tdls_teardown_peers_cnt);
 		/*  Antenna switch 2x2 to 1x1 */
-		if (mode == HDD_ANTENNA_MODE_1X1)
+		if (mode == HDD_ANTENNA_MODE_1X1) {
+			hddctx->tdls_nss_transition_mode =
+				TDLS_NSS_TRANSITION_2x2_to_1x1;
 			ret = -EAGAIN;
-		else
+		} else {
 		/*  Antenna switch 1x1 to 2x2 */
+			hddctx->tdls_nss_transition_mode =
+				TDLS_NSS_TRANSITION_1x1_to_2x2;
 			ret = 0;
+		}
 		hdd_info("TDLS teardown for antenna switch operation starts");
 	}
 	mutex_unlock(&hddctx->tdls_lock);
@@ -5858,8 +5881,12 @@ int wlan_hdd_tdls_antenna_switch(hdd_context_t *hdd_ctx,
 
 	/* Check whether TDLS antenna switch is in progress */
 	if (hdd_ctx->tdls_nss_switch_in_progress) {
-		hdd_err("TDLS antenna switch is in progress");
-		return -EAGAIN;
+		if (hdd_ctx->tdls_nss_teardown_complete == false) {
+			hdd_err("TDLS antenna switch is in progress");
+			return -EAGAIN;
+		} else {
+			goto tdls_ant_sw_done;
+		}
 	}
 
 	/* Check whether TDLS is connected or not */
