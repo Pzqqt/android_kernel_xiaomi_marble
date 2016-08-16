@@ -3985,6 +3985,20 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			CFG_OPTIMIZE_CA_EVENT_DEFAULT,
 			CFG_OPTIMIZE_CA_EVENT_DISABLE,
 			CFG_OPTIMIZE_CA_EVENT_ENABLE),
+
+	REG_VARIABLE(CFG_TX_AGGREGATION_SIZE, WLAN_PARAM_Integer,
+		struct hdd_config, tx_aggregation_size,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_TX_AGGREGATION_SIZE_DEFAULT,
+		CFG_TX_AGGREGATION_SIZE_MIN,
+		CFG_TX_AGGREGATION_SIZE_MAX),
+
+	REG_VARIABLE(CFG_RX_AGGREGATION_SIZE, WLAN_PARAM_Integer,
+		struct hdd_config, rx_aggregation_size,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_RX_AGGREGATION_SIZE_DEFAULT,
+		CFG_RX_AGGREGATION_SIZE_MIN,
+		CFG_RX_AGGREGATION_SIZE_MAX),
 };
 
 /**
@@ -7153,6 +7167,11 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	smeConfig->csrConfig.sta_roam_policy_params.dfs_mode =
 		CSR_STA_ROAM_POLICY_DFS_ENABLED;
 	smeConfig->csrConfig.sta_roam_policy_params.skip_unsafe_channels = 0;
+
+	smeConfig->csrConfig.tx_aggregation_size =
+			pHddCtx->config->tx_aggregation_size;
+	smeConfig->csrConfig.rx_aggregation_size =
+			pHddCtx->config->rx_aggregation_size;
 
 	status = sme_update_config(pHddCtx->hHal, smeConfig);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {

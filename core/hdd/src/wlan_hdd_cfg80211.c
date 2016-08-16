@@ -3870,6 +3870,8 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_STATS_AVG_FACTOR] = {.type = NLA_U16 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_GUARD_TIME] = {.type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_CHANNEL_AVOIDANCE_IND] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_MPDU_AGGREGATION] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MPDU_AGGREGATION] = {.type = NLA_U8 },
 };
 
 /**
@@ -3938,6 +3940,8 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	bool vendor_ie_present = false, access_policy_present = false;
 	uint16_t scan_ie_len = 0;
 	uint8_t *scan_ie;
+	struct sir_set_tx_rx_aggregation_size request;
+	QDF_STATUS qdf_status;
 
 	ENTER_DEV(dev);
 
@@ -4096,6 +4100,44 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		} else
 			ret_val = -EPERM;
 	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_MPDU_AGGREGATION] ||
+	    tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MPDU_AGGREGATION]) {
+		/* if one is specified, both must be specified */
+		if (!tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_MPDU_AGGREGATION] ||
+		    !tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MPDU_AGGREGATION]) {
+			hdd_err("Both TX and RX MPDU Aggregation required");
+			return -EINVAL;
+		}
+
+		request.tx_aggregation_size = nla_get_u8(
+			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_MPDU_AGGREGATION]);
+		request.rx_aggregation_size = nla_get_u8(
+			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MPDU_AGGREGATION]);
+		request.vdev_id = adapter->sessionId;
+
+		if (request.tx_aggregation_size >=
+					CFG_TX_AGGREGATION_SIZE_MIN &&
+			request.tx_aggregation_size <=
+					CFG_TX_AGGREGATION_SIZE_MAX &&
+			request.rx_aggregation_size >=
+					CFG_RX_AGGREGATION_SIZE_MIN &&
+			request.rx_aggregation_size <=
+					CFG_RX_AGGREGATION_SIZE_MAX) {
+			qdf_status = wma_set_tx_rx_aggregation_size(&request);
+			if (qdf_status != QDF_STATUS_SUCCESS) {
+				hdd_err("failed to set aggr sizes err %d",
+					qdf_status);
+				ret_val = -EPERM;
+			}
+		} else {
+			hdd_err("TX %d RX %d MPDU aggr size not in range",
+				request.tx_aggregation_size,
+				request.rx_aggregation_size);
+			ret_val = -EINVAL;
+		}
+	}
+
 	return ret_val;
 }
 

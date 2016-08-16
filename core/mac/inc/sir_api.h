@@ -6451,6 +6451,18 @@ struct sme_ndp_peer_ind {
 #endif /* WLAN_FEATURE_NAN_DATAPATH */
 
 /**
+ * struct sir_set_tx_rx_aggregation_size - sets tx rx aggregation size
+ * @vdev_id: vdev id of the session
+ * @tx_aggregation_size: Tx aggregation size
+ * @rx_aggregation_size: Rx aggregation size
+ */
+struct sir_set_tx_rx_aggregation_size {
+	uint8_t vdev_id;
+	uint32_t tx_aggregation_size;
+	uint32_t rx_aggregation_size;
+};
+
+/**
  * struct sir_p2p_lo_start - p2p listen offload start
  * @vdev_id: vdev identifier
  * @ctl_flags: control flag

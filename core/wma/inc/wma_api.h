@@ -314,4 +314,6 @@ QDF_STATUS wma_encrypt_decrypt_msg(WMA_HANDLE wma,
  */
 QDF_STATUS wma_set_cts2self_for_p2p_go(void *wma_handle,
 		uint32_t cts2self_for_p2p_go);
+QDF_STATUS wma_set_tx_rx_aggregation_size
+	(struct sir_set_tx_rx_aggregation_size *tx_rx_aggregation_size);
 #endif

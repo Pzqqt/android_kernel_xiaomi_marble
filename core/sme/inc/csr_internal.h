@@ -666,6 +666,8 @@ typedef struct tagCsrConfig {
 	enum wmi_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
 	enum wmi_dwelltime_adaptive_mode roamscan_adaptive_dwell_mode;
 	struct csr_sta_roam_policy_params sta_roam_policy;
+	uint32_t tx_aggregation_size;
+	uint32_t rx_aggregation_size;
 } tCsrConfig;
 
 typedef struct tagCsrChannelPowerInfo {

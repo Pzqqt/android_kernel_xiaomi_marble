@@ -2518,6 +2518,11 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.sta_roam_policy.skip_unsafe_channels =
 			pParam->sta_roam_policy_params.skip_unsafe_channels;
 
+		pMac->roam.configParam.tx_aggregation_size =
+			pParam->tx_aggregation_size;
+		pMac->roam.configParam.rx_aggregation_size =
+			pParam->rx_aggregation_size;
+
 	}
 	return status;
 }
@@ -2726,6 +2731,10 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 		pMac->roam.configParam.sta_roam_policy.dfs_mode;
 	pParam->sta_roam_policy_params.skip_unsafe_channels =
 		pMac->roam.configParam.sta_roam_policy.skip_unsafe_channels;
+	pParam->tx_aggregation_size =
+		pMac->roam.configParam.tx_aggregation_size;
+	pParam->rx_aggregation_size =
+		pMac->roam.configParam.rx_aggregation_size;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -15300,6 +15309,10 @@ QDF_STATUS csr_process_add_sta_session_command(tpAniSirGlobal pMac,
 	add_sta_self_req->sub_type = pAddStaReq->subType;
 	add_sta_self_req->nss_2g = nss_2g;
 	add_sta_self_req->nss_5g = nss_5g;
+	add_sta_self_req->tx_aggregation_size =
+			pMac->roam.configParam.tx_aggregation_size;
+	add_sta_self_req->rx_aggregation_size =
+			pMac->roam.configParam.rx_aggregation_size;
 
 	msg.type = WMA_ADD_STA_SELF_REQ;
 	msg.reserved = 0;
