@@ -6073,13 +6073,13 @@ static int hdd_get_bpf_offload(hdd_context_t *hdd_ctx)
  * hdd_set_reset_bpf_offload - Post set/reset bpf to SME
  * @hdd_ctx: Hdd context
  * @tb: Length of @data
- * @session_id: Session identifier
+ * @adapter: pointer to adapter struct
  *
  * Return: 0 on success; errno on failure
  */
 static int hdd_set_reset_bpf_offload(hdd_context_t *hdd_ctx,
 				     struct nlattr **tb,
-				     uint8_t session_id)
+				     hdd_adapter_t *adapter)
 {
 	struct sir_bpf_set_offload *bpf_set_offload;
 	QDF_STATUS status;
@@ -6087,6 +6087,15 @@ static int hdd_set_reset_bpf_offload(hdd_context_t *hdd_ctx,
 	int ret = 0;
 
 	ENTER();
+
+	if (adapter->device_mode == QDF_STA_MODE ||
+	    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
+		if (!hdd_conn_is_connected(
+		    WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
+			hdd_err("Not in Connected state!");
+			return -ENOTSUPP;
+		}
+	}
 
 	bpf_set_offload = qdf_mem_malloc(sizeof(*bpf_set_offload));
 	if (bpf_set_offload == NULL) {
@@ -6126,7 +6135,7 @@ static int hdd_set_reset_bpf_offload(hdd_context_t *hdd_ctx,
 
 	bpf_set_offload->current_length = prog_len;
 	nla_memcpy(bpf_set_offload->program, tb[BPF_PROGRAM], prog_len);
-	bpf_set_offload->session_id = session_id;
+	bpf_set_offload->session_id = adapter->sessionId;
 
 	/* Parse and fetch filter Id */
 	if (!tb[BPF_FILTER_ID]) {
@@ -6221,7 +6230,7 @@ __wlan_hdd_cfg80211_bpf_offload(struct wiphy *wiphy,
 		return hdd_get_bpf_offload(hdd_ctx);
 	else
 		return hdd_set_reset_bpf_offload(hdd_ctx, tb,
-						 pAdapter->sessionId);
+						 pAdapter);
 }
 
 /**

@@ -2357,6 +2357,8 @@ static const u8 *wma_wow_wake_reason_str(A_INT32 wake_reason)
 		return "REASSOC_RES_RECV";
 	case WOW_REASON_ACTION_FRAME_RECV:
 		return "ACTION_FRAME_RECV";
+	case WOW_REASON_BPF_ALLOW:
+		return "WOW_REASON_BPF_ALLOW";
 	}
 	return "unknown";
 }

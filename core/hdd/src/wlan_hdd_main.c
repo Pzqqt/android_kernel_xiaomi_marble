@@ -1496,6 +1496,10 @@ void hdd_update_tgt_cfg(void *context, void *param)
 		cfg->bpf_enabled, hdd_ctx->config->bpf_packet_filter_enable);
 	hdd_ctx->bpf_enabled = (cfg->bpf_enabled &&
 				hdd_ctx->config->bpf_packet_filter_enable);
+
+	if (hdd_ctx->bpf_enabled)
+		hdd_ctx->config->maxWoWFilters = MAX_WOW_FILTERS;
+
 	/* Configure NAN datapath features */
 	hdd_nan_datapath_target_config(hdd_ctx, cfg);
 }

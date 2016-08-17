@@ -3319,6 +3319,12 @@ static void wma_update_fw_config(tp_wma_handle wma_handle,
 						wma_handle->max_frag_entry);
 	wma_handle->max_frag_entry =
 		tgt_cap->wlan_resource_config.max_frag_entries;
+
+	/* Update no. of maxWoWFilters depending on BPF service */
+	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
+				   WMI_SERVICE_BPF_OFFLOAD))
+		tgt_cap->wlan_resource_config.num_wow_filters =
+					MAX_WOW_FILTERS;
 }
 
 /**
