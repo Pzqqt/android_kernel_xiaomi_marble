@@ -3891,45 +3891,49 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 	 * During IPA UC resource loading/unloading new events can be issued.
 	 * Store the events separately and handle them later.
 	 */
-	if (hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx) &&
-		((hdd_ipa->resource_loading) ||
-		(hdd_ipa->resource_unloading))) {
-		unsigned int pending_event_count;
-		struct ipa_uc_pending_event *pending_event = NULL;
+	if (hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx)) {
+		if (hdd_ipa->resource_loading) {
+			unsigned int pending_event_count;
 
-		hdd_err("IPA resource %s inprogress",
-			hdd_ipa->resource_loading ? "load":"unload");
+			struct ipa_uc_pending_event *pending_event = NULL;
 
-		qdf_mutex_acquire(&hdd_ipa->event_lock);
+			hdd_err("IPA resource %s inprogress",
+					hdd_ipa->resource_loading ? "load":"unload");
 
-		pending_event_count = qdf_list_size(&hdd_ipa->pending_event);
-		if (pending_event_count >= HDD_IPA_MAX_PENDING_EVENT_COUNT) {
-			hdd_notice("Reached max pending event count");
-			qdf_list_remove_front(&hdd_ipa->pending_event,
-				(qdf_list_node_t **)&pending_event);
-		} else {
-			pending_event =
-				(struct ipa_uc_pending_event *)qdf_mem_malloc(
-					sizeof(struct ipa_uc_pending_event));
-		}
+			qdf_mutex_acquire(&hdd_ipa->event_lock);
 
-		if (!pending_event) {
-			hdd_err("Pending event memory alloc fail");
+			pending_event_count = qdf_list_size(&hdd_ipa->pending_event);
+			if (pending_event_count >= HDD_IPA_MAX_PENDING_EVENT_COUNT) {
+				hdd_notice("Reached max pending event count");
+				qdf_list_remove_front(&hdd_ipa->pending_event,
+						(qdf_list_node_t **)&pending_event);
+			} else {
+				pending_event =
+					(struct ipa_uc_pending_event *)qdf_mem_malloc(
+							sizeof(struct ipa_uc_pending_event));
+			}
+
+			if (!pending_event) {
+				hdd_err("Pending event memory alloc fail");
+				qdf_mutex_release(&hdd_ipa->event_lock);
+				return -ENOMEM;
+			}
+
+			pending_event->adapter = adapter;
+			pending_event->sta_id = sta_id;
+			pending_event->type = type;
+			qdf_mem_copy(pending_event->mac_addr,
+					mac_addr,
+					QDF_MAC_ADDR_SIZE);
+			qdf_list_insert_back(&hdd_ipa->pending_event,
+					&pending_event->node);
+
 			qdf_mutex_release(&hdd_ipa->event_lock);
-			return -ENOMEM;
+			return 0;
+		} else if (hdd_ipa->resource_unloading) {
+			hdd_err("%s: IPA resource unload inprogress", __func__);
+			return 0;
 		}
-
-		pending_event->adapter = adapter;
-		pending_event->sta_id = sta_id;
-		pending_event->type = type;
-		qdf_mem_copy(pending_event->mac_addr,
-			mac_addr,
-			QDF_MAC_ADDR_SIZE);
-		qdf_list_insert_back(&hdd_ipa->pending_event,
-				&pending_event->node);
-
-		qdf_mutex_release(&hdd_ipa->event_lock);
-		return 0;
 	}
 
 	hdd_ipa->stats.event[type]++;
