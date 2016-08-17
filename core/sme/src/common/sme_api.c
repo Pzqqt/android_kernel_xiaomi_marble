@@ -3686,9 +3686,6 @@ tCsrScanResultInfo *sme_scan_result_get_next(tHalHandle hHal,
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tCsrScanResultInfo *pRet = NULL;
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_MSG_SCAN_RESULT_GETNEXT,
-			 NO_SESSION, 0));
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		pRet = csr_scan_result_get_next(pMac, hScanResult);

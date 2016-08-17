@@ -46,6 +46,7 @@
 
 #include "lim_api.h"
 #include "lim_debug.h"
+#include "lim_trace.h"
 #include "lim_send_sme_rsp_messages.h"
 #include "sys_global.h"
 #include "dph_global.h"
@@ -655,10 +656,13 @@ lim_post_sme_message(tpAniSirGlobal pMac, uint32_t msgType, uint32_t *pMsgBuf)
 	msg.type = (uint16_t) msgType;
 	msg.bodyptr = pMsgBuf;
 	msg.bodyval = 0;
-	if (msgType > eWNI_SME_MSG_TYPES_BEGIN)
+	if (msgType > eWNI_SME_MSG_TYPES_BEGIN) {
+		MTRACE(mac_trace(pMac, TRACE_CODE_TX_SME_MSG, NO_SESSION,
+				 msg.type));
 		lim_process_sme_req_messages(pMac, &msg);
-	else
+	} else {
 		lim_process_mlm_rsp_messages(pMac, msgType, pMsgBuf);
+	}
 } /*** end lim_post_sme_message() ***/
 
 /**
@@ -698,6 +702,7 @@ lim_post_mlm_message(tpAniSirGlobal pMac, uint32_t msgType, uint32_t *pMsgBuf)
 	msg.type = (uint16_t) msgType;
 	msg.bodyptr = pMsgBuf;
 	msg.bodyval = 0;
+	MTRACE(mac_trace_msg_rx(pMac, NO_SESSION, msg.type));
 	lim_process_mlm_req_messages(pMac, &msg);
 } /*** end lim_post_mlm_message() ***/
 

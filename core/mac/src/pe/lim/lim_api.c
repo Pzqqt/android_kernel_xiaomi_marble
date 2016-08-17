@@ -987,13 +987,6 @@ QDF_STATUS pe_handle_mgmt_frame(void *p_cds_gctx, void *cds_buff)
 		       WMA_GET_RX_MPDU_HEADER_LEN(pRxPacketInfo),
 		       WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo));
 
-		MTRACE(mac_trace(pMac, TRACE_CODE_RX_MGMT,
-				 WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo),
-				 LIM_TRACE_MAKE_RXMGMT(mHdr->fc.subType,
-				 (uint16_t) (((uint16_t)
-				      (mHdr->seqControl.seqNumHi << 4)) |
-				      mHdr->seqControl.seqNumLo)));)
-
 		if (WMA_GET_ROAMCANDIDATEIND(pRxPacketInfo))
 			lim_log(pMac, LOG1, FL("roamCandidateInd %d"),
 				WMA_GET_ROAMCANDIDATEIND(pRxPacketInfo));

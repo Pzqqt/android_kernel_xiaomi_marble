@@ -84,7 +84,6 @@ static void lim_process_auth_retry_timer(tpAniSirGlobal);
  */
 void lim_process_mlm_req_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 {
-	MTRACE(mac_trace_msg_rx(mac_ctx, NO_SESSION, msg->type));
 	switch (msg->type) {
 	case LIM_MLM_START_REQ:
 		lim_process_mlm_start_req(mac_ctx, msg->bodyptr);
@@ -2173,9 +2172,6 @@ static void lim_process_periodic_probe_req_timer(tpAniSirGlobal mac_ctx)
 		i++;
 	} while (i < mlm_scan_req->numSsid);
 	/* Activate timer again */
-	MTRACE(mac_trace(mac_ctx, TRACE_CODE_TIMER_ACTIVATE,
-			 probe_req_timer->sessionId,
-			 eLIM_PERIODIC_PROBE_REQ_TIMER));
 	if (tx_timer_activate(probe_req_timer) != TX_SUCCESS) {
 		lim_log(mac_ctx, LOGP,
 			FL("could not start periodic probe req timer"));
