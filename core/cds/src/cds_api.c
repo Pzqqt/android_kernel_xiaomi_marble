@@ -268,7 +268,6 @@ QDF_STATUS cds_open(void)
 		goto err_sched_close;
 	}
 
-	hdd_update_config(pHddCtx);
 	cds_cfg = cds_get_ini_config();
 	if (!cds_cfg) {
 		cds_err("Cds config is NULL");
@@ -2191,7 +2190,7 @@ void cds_deinit_ini_config(void)
 		return;
 	}
 
-	if (!cds_ctx->cds_cfg)
+	if (cds_ctx->cds_cfg)
 		qdf_mem_free(cds_ctx->cds_cfg);
 
 	cds_ctx->cds_cfg = NULL;

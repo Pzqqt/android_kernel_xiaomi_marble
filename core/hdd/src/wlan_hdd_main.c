@@ -1731,6 +1731,12 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			goto hif_close;
 		}
 
+		ret = hdd_update_config(hdd_ctx);
+		if (ret) {
+			hdd_err("Failed to update configuration :%d", ret);
+			goto ol_cds_free;
+		}
+
 		status = cds_open();
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("Failed to Open CDS: %d", status);
@@ -7383,10 +7389,6 @@ int hdd_wlan_startup(struct device *dev)
 		goto err_hdd_free_context;
 
 	hdd_wlan_green_ap_init(hdd_ctx);
-
-	ret = hdd_update_config(hdd_ctx);
-	if (ret)
-		goto err_exit_nl_srv;
 
 	ret = hdd_wlan_start_modules(hdd_ctx, adapter, false);
 	if (ret) {
