@@ -5970,11 +5970,6 @@ QDF_STATUS hdd_parse_config_ini(hdd_context_t *pHddCtx)
 	/* Loop through the registry table and apply all these configs */
 	qdf_status = hdd_apply_cfg_ini(pHddCtx, cfgIniTable, i);
 	hdd_set_rx_mode_value(pHddCtx);
-#ifdef FEATURE_NAPI
-	if (QDF_STATUS_SUCCESS == qdf_status)
-		hdd_napi_event(NAPI_EVT_INI_FILE,
-			       (void *)pHddCtx->napi_enable);
-#endif /* FEATURE_NAPI */
 	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam())
 		hdd_override_all_ps(pHddCtx);
 

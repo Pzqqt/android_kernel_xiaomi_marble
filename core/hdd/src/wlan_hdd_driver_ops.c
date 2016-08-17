@@ -219,6 +219,12 @@ int hdd_hif_open(struct device *dev, void *bdev, const hif_bus_id *bid,
 	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	struct hif_driver_state_callbacks cbk;
 	uint32_t mode = cds_get_conparam();
+	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx error");
+		return -EFAULT;
+	}
 
 	hdd_hif_init_driver_state_callbacks(dev, &cbk);
 
@@ -252,6 +258,9 @@ int hdd_hif_open(struct device *dev, void *bdev, const hif_bus_id *bid,
 				ret, reinit);
 			ret = -EFAULT;
 			goto err_hif_close;
+		} else {
+			hdd_napi_event(NAPI_EVT_INI_FILE,
+				(void *)hdd_ctx->napi_enable);
 		}
 	}
 
