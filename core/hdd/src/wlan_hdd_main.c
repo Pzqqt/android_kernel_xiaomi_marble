@@ -6983,10 +6983,38 @@ static int hdd_update_cds_config(hdd_context_t *hdd_ctx)
 
 	/* IPA micro controller data path offload resource config item */
 	cds_cfg->uc_offload_enabled = hdd_ipa_uc_is_enabled(hdd_ctx);
+	if (!is_power_of_2(hdd_ctx->config->IpaUcTxBufCount)) {
+		/* IpaUcTxBufCount should be power of 2 */
+		hdd_err("Round down IpaUcTxBufCount %d to nearest power of 2",
+			hdd_ctx->config->IpaUcTxBufCount);
+		hdd_ctx->config->IpaUcTxBufCount =
+			rounddown_pow_of_two(
+				hdd_ctx->config->IpaUcTxBufCount);
+		if (!hdd_ctx->config->IpaUcTxBufCount) {
+			hdd_err("Failed to round down IpaUcTxBufCount");
+			return -EINVAL;
+		}
+		hdd_err("IpaUcTxBufCount rounded down to %d",
+			hdd_ctx->config->IpaUcTxBufCount);
+	}
 	cds_cfg->uc_txbuf_count = hdd_ctx->config->IpaUcTxBufCount;
 	cds_cfg->uc_txbuf_size = hdd_ctx->config->IpaUcTxBufSize;
+	if (!is_power_of_2(hdd_ctx->config->IpaUcRxIndRingCount)) {
+		/* IpaUcRxIndRingCount should be power of 2 */
+		hdd_err("Round down IpaUcRxIndRingCount %d to nearest power of 2",
+			hdd_ctx->config->IpaUcRxIndRingCount);
+		hdd_ctx->config->IpaUcRxIndRingCount =
+			rounddown_pow_of_two(
+				hdd_ctx->config->IpaUcRxIndRingCount);
+		if (!hdd_ctx->config->IpaUcRxIndRingCount) {
+			hdd_err("Failed to round down IpaUcRxIndRingCount");
+			return -EINVAL;
+		}
+		hdd_err("IpaUcRxIndRingCount rounded down to %d",
+			hdd_ctx->config->IpaUcRxIndRingCount);
+	}
 	cds_cfg->uc_rxind_ringcount =
-			hdd_ctx->config->IpaUcRxIndRingCount;
+		hdd_ctx->config->IpaUcRxIndRingCount;
 	cds_cfg->uc_tx_partition_base =
 				hdd_ctx->config->IpaUcTxPartitionBase;
 	cds_cfg->max_scan = hdd_ctx->config->max_scan_count;

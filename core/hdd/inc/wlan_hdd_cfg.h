@@ -3609,6 +3609,7 @@ typedef enum {
 #define CFG_ROAMING_OFFLOAD_DEFAULT             (1)
 #endif
 
+/* IpaUcTxBufCount should be power of 2 */
 #define CFG_IPA_UC_TX_BUF_COUNT_NAME               "IpaUcTxBufCount"
 #define CFG_IPA_UC_TX_BUF_COUNT_MIN                (0)
 #define CFG_IPA_UC_TX_BUF_COUNT_MAX                (2048)
@@ -3619,6 +3620,7 @@ typedef enum {
 #define CFG_IPA_UC_TX_BUF_SIZE_MAX                (4096)
 #define CFG_IPA_UC_TX_BUF_SIZE_DEFAULT            (2048)
 
+/* IpaUcRxIndRingCount should be power of 2 */
 #define CFG_IPA_UC_RX_IND_RING_COUNT_NAME          "IpaUcRxIndRingCount"
 #define CFG_IPA_UC_RX_IND_RING_COUNT_MIN           (0)
 #define CFG_IPA_UC_RX_IND_RING_COUNT_MAX           (2048)

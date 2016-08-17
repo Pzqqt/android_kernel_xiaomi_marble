@@ -51,6 +51,8 @@
 #include <ol_txrx_internal.h>
 #include <htt_internal.h>
 
+#include <cds_utils.h>
+
 /* IPA Micro controler TX data packet HTT Header Preset */
 /* 31 | 30  29 | 28 | 27 | 26  22  | 21   16 | 15  13   | 12  8      | 7 0
    *----------------------------------------------------------------------------
@@ -1065,10 +1067,12 @@ static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 					  unsigned int uc_tx_partition_base)
 {
 	unsigned int tx_buffer_count;
+	unsigned int  tx_buffer_count_pwr2;
 	void *buffer_vaddr;
 	qdf_dma_addr_t buffer_paddr;
 	uint32_t *header_ptr;
 	qdf_dma_addr_t *ring_vaddr;
+	uint16_t idx;
 
 	ring_vaddr = (qdf_dma_addr_t *)pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr;
 	/* Allocate TX buffers as many as possible */
@@ -1124,7 +1128,38 @@ static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 
 		ring_vaddr++;
 	}
-	return tx_buffer_count;
+
+	/*
+	 * Tx complete ring buffer count should be power of 2.
+	 * So, allocated Tx buffer count should be one less than ring buffer
+	 * size.
+	 */
+	tx_buffer_count_pwr2 = qdf_rounddown_pow_of_two(tx_buffer_count + 1)
+			       - 1;
+	if (tx_buffer_count > tx_buffer_count_pwr2) {
+		qdf_print(
+		    "%s: Allocated Tx buffer count %d is rounded down to %d",
+		    __func__, tx_buffer_count, tx_buffer_count_pwr2);
+
+		/* Free over allocated buffers below power of 2 */
+		for (idx = tx_buffer_count_pwr2; idx < tx_buffer_count; idx++) {
+			if (pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[idx]) {
+			    qdf_mem_free_consistent(
+				pdev->osdev, pdev->osdev->dev,
+				ol_cfg_ipa_uc_tx_buf_size(pdev->ctrl_pdev),
+				pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[idx],
+				pdev->ipa_uc_tx_rsc.paddr_strg[idx], 0);
+			}
+		}
+	}
+
+	if (tx_buffer_count_pwr2 < 0) {
+		qdf_print("%s: Failed to round down Tx buffer count %d",
+				__func__, tx_buffer_count_pwr2);
+		tx_buffer_count_pwr2 = 0;
+	}
+
+	return tx_buffer_count_pwr2;
 }
 #else
 static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
@@ -1133,10 +1168,12 @@ static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 					  unsigned int uc_tx_partition_base)
 {
 	unsigned int tx_buffer_count;
+	unsigned int  tx_buffer_count_pwr2;
 	qdf_nbuf_t buffer_vaddr;
 	qdf_dma_addr_t buffer_paddr;
 	uint32_t *header_ptr;
 	uint32_t *ring_vaddr;
+	uint16_t idx;
 
 	ring_vaddr = pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr;
 	/* Allocate TX buffers as many as possible */
@@ -1181,7 +1218,38 @@ static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 
 		ring_vaddr++;
 	}
-	return tx_buffer_count;
+
+	/*
+	 * Tx complete ring buffer count should be power of 2.
+	 * So, allocated Tx buffer count should be one less than ring buffer
+	 * size.
+	 */
+	tx_buffer_count_pwr2 = qdf_rounddown_pow_of_two(tx_buffer_count + 1)
+			       - 1;
+	if (tx_buffer_count > tx_buffer_count_pwr2) {
+		qdf_print(
+		    "%s: Allocated Tx buffer count %d is rounded down to %d",
+		    __func__, tx_buffer_count, tx_buffer_count_pwr2);
+
+		/* Free over allocated buffers below power of 2 */
+		for (idx = tx_buffer_count_pwr2; idx < tx_buffer_count; idx++) {
+			if (pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[idx]) {
+			    qdf_mem_free_consistent(
+				pdev->osdev, pdev->osdev->dev,
+				ol_cfg_ipa_uc_tx_buf_size(pdev->ctrl_pdev),
+				pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[idx],
+				pdev->ipa_uc_tx_rsc.paddr_strg[idx], 0);
+			}
+		}
+	}
+
+	if (tx_buffer_count_pwr2 < 0) {
+		qdf_print("%s: Failed to round down Tx buffer count %d",
+				__func__, tx_buffer_count_pwr2);
+		tx_buffer_count_pwr2 = 0;
+	}
+
+	return tx_buffer_count_pwr2;
 }
 #endif
 
