@@ -647,6 +647,39 @@ scan_list_sort_error:
 	qdf_mem_free(chan_list_non_greedy);
 }
 
+/**
+ * csr_emu_chan_req() - update the required channel list for emulation
+ * @channel: channel number to check
+ *
+ * To reduce scan time during emulation platforms, this function
+ * restricts the scanning to be done on selected channels
+ *
+ * Return: QDF_STATUS enumeration
+ */
+#ifdef QCA_WIFI_NAPIER_EMULATION
+static QDF_STATUS csr_emu_chan_req(uint32_t channel)
+{
+	int i;
+	if (CDS_IS_CHANNEL_24GHZ(channel)) {
+		for (i = 0; i < QDF_ARRAY_SIZE(csr_start_ibss_channels24); i++) {
+			if (csr_start_ibss_channels24[i] == channel)
+				return QDF_STATUS_SUCCESS;
+		}
+	} else if (CDS_IS_CHANNEL_5GHZ(channel)) {
+		for (i = 0; i < QDF_ARRAY_SIZE(csr_start_ibss_channels50); i++) {
+			if (csr_start_ibss_channels50[i] == channel)
+				return QDF_STATUS_SUCCESS;
+		}
+	}
+	return QDF_STATUS_E_FAILURE;
+}
+#else
+static QDF_STATUS csr_emu_chan_req(uint32_t channel_num)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 {
 	tSirUpdateChanList *pChanList;
@@ -693,6 +726,10 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 	}
 
 	for (i = 0; i < pScan->base_channels.numChannels; i++) {
+		if (QDF_STATUS_SUCCESS !=
+			csr_emu_chan_req(pScan->base_channels.channelList[i]))
+			continue;
+
 		/* Scan is not performed on DSRC channels*/
 		if (pScan->base_channels.channelList[i] >= CDS_MIN_11P_CHANNEL)
 			continue;
