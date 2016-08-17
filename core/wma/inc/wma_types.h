@@ -475,8 +475,6 @@
 /* Bit 6 will be used to control BD rate for Management frames */
 #define HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME 0x40
 
-#define MAX_WOW_FILTERS 2
-
 #define wma_tx_frame(hHal, pFrmBuf, frmLen, frmType, txDir, tid, pCompFunc, \
 		   pData, txFlag, sessionid, channel_freq) \
 	(QDF_STATUS)( wma_tx_packet( \

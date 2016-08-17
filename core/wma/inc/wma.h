@@ -243,7 +243,7 @@ enum ds_mode {
 #define WMA_NUM_BITS_IN_BYTE           8
 
 #define WMA_AP_WOW_DEFAULT_PTRN_MAX    4
-#define WMA_STA_WOW_DEFAULT_PTRN_MAX   4
+#define WMA_STA_WOW_DEFAULT_PTRN_MAX   5
 
 #define WMA_BSS_STATUS_STARTED 0x1
 #define WMA_BSS_STATUS_STOPPED 0x2

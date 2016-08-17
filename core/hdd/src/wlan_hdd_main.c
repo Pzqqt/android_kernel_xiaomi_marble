@@ -1497,8 +1497,13 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	hdd_ctx->bpf_enabled = (cfg->bpf_enabled &&
 				hdd_ctx->config->bpf_packet_filter_enable);
 
+	/*
+	 * If BPF is enabled, maxWowFilters set to WMA_STA_WOW_DEFAULT_PTRN_MAX
+	 * because we need atleast WMA_STA_WOW_DEFAULT_PTRN_MAX free slots to
+	 * configure the STA mode wow pattern.
+	 */
 	if (hdd_ctx->bpf_enabled)
-		hdd_ctx->config->maxWoWFilters = MAX_WOW_FILTERS;
+		hdd_ctx->config->maxWoWFilters = WMA_STA_WOW_DEFAULT_PTRN_MAX;
 
 	/* Configure NAN datapath features */
 	hdd_nan_datapath_target_config(hdd_ctx, cfg);
