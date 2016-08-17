@@ -1305,8 +1305,6 @@ QDF_STATUS hdd_wlan_shutdown(void)
 
 	hdd_alert("WLAN driver shutting down!");
 
-	wlan_hdd_send_status_pkg(NULL, NULL, 0, 0);
-
 	/* If SSR never completes, then do kernel panic. */
 	hdd_ssr_timer_init();
 	hdd_ssr_timer_start(HDD_SSR_BRING_UP_TIME);
@@ -1351,6 +1349,8 @@ QDF_STATUS hdd_wlan_shutdown(void)
 
 	wlansap_global_deinit();
 	hdd_wlan_stop_modules(pHddCtx, true);
+
+	wlan_hdd_send_status_pkg(NULL, NULL, 0, 0);
 
 	hdd_alert("WLAN driver shutdown complete");
 	return QDF_STATUS_SUCCESS;

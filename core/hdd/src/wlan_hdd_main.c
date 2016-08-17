@@ -4570,6 +4570,8 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 	wiphy_unregister(wiphy);
 	wlan_hdd_cfg80211_deinit(wiphy);
 
+	wlan_hdd_send_status_pkg(NULL, NULL, 0, 0);
+
 	hdd_exit_netlink_services(hdd_ctx);
 	mutex_destroy(&hdd_ctx->iface_change_lock);
 	hdd_context_destroy(hdd_ctx);
@@ -4590,10 +4592,6 @@ void __hdd_wlan_exit(void)
 
 	/* Check IPA HW Pipe shutdown */
 	hdd_ipa_uc_force_pipe_shutdown(hdd_ctx);
-
-#ifdef WLAN_FEATURE_LPSS
-	wlan_hdd_send_status_pkg(NULL, NULL, 0, 0);
-#endif
 
 	memdump_deinit();
 
