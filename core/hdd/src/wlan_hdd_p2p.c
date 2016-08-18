@@ -1956,7 +1956,7 @@ static uint8_t wlan_hdd_get_session_type(enum nl80211_iftype type)
  * @flags: moniter configuraiton flags (not used)
  * @vif_params: virtual interface parameters (not used)
  *
- * Return: the pointer of wireless dev, otherwise NULL.
+ * Return: the pointer of wireless dev, otherwise ERR_PTR.
  */
 struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 						 const char *name,
@@ -2048,6 +2048,14 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 		return ERR_PTR(-ENOSPC);
 	}
 
+	if (NL80211_IFTYPE_AP == type) {
+		ret = hdd_start_adapter(pAdapter);
+		if (ret) {
+			hdd_err("Failed to start %s", name);
+			return ERR_PTR(-EINVAL);
+		}
+	}
+
 	if (pHddCtx->rps)
 		hdd_send_rps_ind(pAdapter);
 
@@ -2065,7 +2073,7 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
  * @flags: monitor mode configuration flags (not used)
  * @vif_params: virtual interface parameters (not used)
  *
- * Return: the pointer of wireless dev, otherwise NULL.
+ * Return: the pointer of wireless dev, otherwise ERR_PTR.
  */
 struct wireless_dev *wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 					       const char *name,
@@ -2092,7 +2100,7 @@ struct wireless_dev *wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
  * @flags: monitor mode configuration flags (not used)
  * @vif_params: virtual interface parameters (not used)
  *
- * Return: the pointer of wireless dev, otherwise NULL.
+ * Return: the pointer of wireless dev, otherwise ERR_PTR.
  */
 struct wireless_dev *wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 					       const char *name,
