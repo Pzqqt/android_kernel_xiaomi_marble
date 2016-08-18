@@ -2323,3 +2323,14 @@ bool cds_is_sub_20_mhz_enabled(void)
 	return false;
 }
 
+/**
+ * cds_svc_fw_shutdown_ind() - API to send userspace about FW crash
+ *
+ * @dev: Device Pointer
+ *
+ * Return: None
+ */
+void cds_svc_fw_shutdown_ind(struct device *dev)
+{
+	hdd_svc_fw_shutdown_ind(dev);
+}

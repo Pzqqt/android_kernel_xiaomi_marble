@@ -264,7 +264,7 @@ QDF_STATUS cds_flush_logs(uint32_t is_fatal,
 		bool dump_mac_trace,
 		bool recovery_needed);
 void cds_logging_set_fw_flush_complete(void);
-
+void cds_svc_fw_shutdown_ind(struct device *dev);
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 void cds_tdls_tx_rx_mgmt_event(uint8_t event_id, uint8_t tx_rx,
 			uint8_t type, uint8_t sub_type, uint8_t *peer_mac);

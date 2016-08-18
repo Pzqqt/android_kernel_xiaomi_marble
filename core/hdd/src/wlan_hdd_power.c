@@ -1385,6 +1385,30 @@ static void hdd_ssr_timer_start(int msec)
 }
 
 /**
+ * hdd_svc_fw_shutdown_ind() - API to send FW SHUTDOWN IND to Userspace
+ *
+ * @dev: Device Pointer
+ *
+ * Return: None
+ */
+void hdd_svc_fw_shutdown_ind(struct device *dev)
+{
+	hdd_context_t *hdd_ctx;
+	v_CONTEXT_t g_context;
+
+	g_context = cds_get_global_context();
+
+	if (!g_context)
+		return;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	hdd_ctx ? wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
+					      WLAN_SVC_FW_SHUTDOWN_IND,
+					      NULL, 0) : 0;
+}
+
+/**
  * hdd_wlan_shutdown() - HDD SSR shutdown function
  *
  * This function is called by the HIF to shutdown the driver during SSR.

@@ -8168,6 +8168,7 @@ void wlan_hdd_send_svc_nlink_msg(int radio, int type, void *data, int len)
 
 	switch (type) {
 	case WLAN_SVC_FW_CRASHED_IND:
+	case WLAN_SVC_FW_SHUTDOWN_IND:
 	case WLAN_SVC_LTE_COEX_IND:
 	case WLAN_SVC_WLAN_AUTO_SHUTDOWN_IND:
 	case WLAN_SVC_WLAN_AUTO_SHUTDOWN_CANCEL_IND:

@@ -593,6 +593,7 @@ void ol_target_failure(void *instance, QDF_STATUS status)
 	struct hif_opaque_softc *scn = ol_ctx->scn;
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	struct ol_config_info *ini_cfg = ol_get_ini_handle(ol_ctx);
+	qdf_device_t qdf_dev = ol_ctx->qdf_dev;
 	int ret;
 	enum hif_target_status target_status = hif_get_target_status(scn);
 
@@ -640,6 +641,7 @@ void ol_target_failure(void *instance, QDF_STATUS status)
 
 	BMI_ERR("XXX TARGET ASSERTED XXX");
 
+	cds_svc_fw_shutdown_ind(qdf_dev->dev);
 	/* Collect the RAM dump through a workqueue */
 	if (ini_cfg->enable_ramdump_collection)
 		qdf_sched_work(0, &ol_ctx->ramdump_work);
