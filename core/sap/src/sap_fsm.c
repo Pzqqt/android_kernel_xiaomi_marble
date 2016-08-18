@@ -3780,23 +3780,8 @@ static QDF_STATUS sap_fsm_state_starting(ptSapContext sap_ctx,
 				wlansap_start_beacon_req(sap_ctx);
 			}
 		}
-	} else if (msg == eSAP_MAC_START_FAILS) {
-		/*
-		 * Transition from STARTING to DISCONNECTED
-		 * (both without substates)
-		 */
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  FL("from state %s => %s"),
-			  "eSAP_STARTING", "eSAP_DISCONNECTED");
-
-		/*Action code for transition */
-		qdf_status = sap_signal_hdd_event(sap_ctx, NULL,
-				eSAP_START_BSS_EVENT,
-				(void *) eSAP_STATUS_FAILURE);
-		qdf_status = sap_goto_disconnected(sap_ctx);
-		/* Advance outer statevar */
-		sap_ctx->sapsMachine = eSAP_DISCONNECTED;
-	} else if (msg == eSAP_HDD_STOP_INFRA_BSS) {
+	} else if (msg == eSAP_MAC_START_FAILS ||
+			msg == eSAP_HDD_STOP_INFRA_BSS) {
 		/*
 		 * Transition from eSAP_STARTING to eSAP_DISCONNECTED
 		 * (both without substates)
