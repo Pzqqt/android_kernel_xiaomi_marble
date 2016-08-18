@@ -8603,7 +8603,7 @@ void hdd_stop_bus_bw_compute_timer(hdd_adapter_t *adapter)
 	if (QDF_TIMER_STATE_RUNNING !=
 	    qdf_mc_timer_get_current_state(&hdd_ctx->bus_bw_timer)) {
 		/* trying to stop timer, when not running is not good */
-		hdd_err("bus band width compute timer is not running");
+		hdd_info("bus band width compute timer is not running");
 		return;
 	}
 

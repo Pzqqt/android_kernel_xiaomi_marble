@@ -10453,14 +10453,11 @@ csr_roam_chk_lnk_disassoc_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	}
 
 	sms_log(mac_ctx, LOGE,
-		FL("DISASSOCIATION Indication from MAC for session %d "),
-		sessionId);
-	sms_log(mac_ctx, LOGE,
 		FL("DISASSOCIATION from peer =" MAC_ADDRESS_STR
-		   " " " reason = %d status = %d "),
+		   " " " reason: %d status: %d session: %d"),
 		MAC_ADDR_ARRAY(pDisassocInd->peer_macaddr.bytes),
 		pDisassocInd->reasonCode,
-		pDisassocInd->statusCode);
+		pDisassocInd->statusCode, sessionId);
 	/*
 	 * If we are in neighbor preauth done state then on receiving
 	 * disassoc or deauth we dont roam instead we just disassoc
