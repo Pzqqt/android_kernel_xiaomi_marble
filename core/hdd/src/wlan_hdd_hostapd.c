@@ -503,6 +503,10 @@ void hdd_hostapd_inactivity_timer_cb(void *usrDataForCallback)
 		   was down only then we bring down AP
 		 */
 		pHostapdAdapter = netdev_priv(dev);
+		if (WLAN_HDD_ADAPTER_MAGIC != pHostapdAdapter->magic) {
+			hdd_err("invalid adapter: %p", pHostapdAdapter);
+			return;
+		}
 		pHddApCtx = WLAN_HDD_GET_AP_CTX_PTR(pHostapdAdapter);
 		qdf_status =
 			qdf_mc_timer_start(&pHddApCtx->hdd_ap_inactivity_timer,

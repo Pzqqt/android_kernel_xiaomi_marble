@@ -345,8 +345,17 @@ static uint32_t wlan_hdd_tdls_discovery_sent_cnt(hdd_context_t *pHddCtx)
  */
 static void wlan_hdd_tdls_check_power_save_prohibited(hdd_adapter_t *pAdapter)
 {
-	tdlsCtx_t *pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
-	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	tdlsCtx_t *pHddTdlsCtx;
+	hdd_context_t *pHddCtx;
+
+	if ((NULL == pAdapter) ||
+	    (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
+		hdd_err("invalid pAdapter: %p", pAdapter);
+		return;
+	}
+
+	pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
+	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 
 	if ((NULL == pHddTdlsCtx) || (NULL == pHddCtx)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
@@ -2221,7 +2230,14 @@ static int32_t wlan_hdd_tdls_peer_reset_discovery_processed(tdlsCtx_t *
  */
 uint16_t wlan_hdd_tdls_connected_peers(hdd_adapter_t *pAdapter)
 {
-	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	hdd_context_t *pHddCtx;
+
+	if ((NULL == pAdapter) ||
+	    (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
+		hdd_err("invalid pAdapter: %p", pAdapter);
+		return 0;
+	}
+	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 
 	if (wlan_hdd_validate_context(pHddCtx))
 		return 0;
@@ -3022,9 +3038,11 @@ void wlan_hdd_tdls_timer_restart(hdd_adapter_t *pAdapter,
 void wlan_hdd_tdls_indicate_teardown(hdd_adapter_t *pAdapter,
 				     hddTdlsPeer_t *curr_peer, uint16_t reason)
 {
-	if (NULL == pAdapter || NULL == curr_peer) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  FL("parameters passed are invalid"));
+	if ((NULL == pAdapter || WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic) ||
+	    (NULL == curr_peer)) {
+		hdd_err("parameters passed are invalid");
+		if (!curr_peer)
+			hdd_err("curr_peer is NULL");
 		return;
 	}
 

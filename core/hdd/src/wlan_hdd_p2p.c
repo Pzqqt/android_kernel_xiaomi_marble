@@ -496,8 +496,9 @@ void wlan_hdd_remain_on_chan_timeout(void *data)
 	hdd_remain_on_chan_ctx_t *pRemainChanCtx;
 	hdd_cfg80211_state_t *cfgState;
 
-	if (NULL == pAdapter) {
-		hddLog(LOGE, "%s: pAdapter is NULL !!!", __func__);
+	if ((NULL == pAdapter) ||
+	    (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
+		hdd_err("pAdapter is invalid %p !!!", pAdapter);
 		return;
 	}
 

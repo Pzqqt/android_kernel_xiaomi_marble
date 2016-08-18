@@ -348,6 +348,12 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
 	sme_ac_enum_type acType = pQosContext->acType;
 
 	pAdapter = pQosContext->pAdapter;
+	if ((NULL == pAdapter) ||
+	    (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
+		hdd_err("invalid pAdapter: %p", pAdapter);
+		return;
+	}
+
 	pAc = &pAdapter->hddWmmStatus.wmmAcStatus[acType];
 
 	/* Get the Tx stats for this AC. */
