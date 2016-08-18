@@ -2481,7 +2481,8 @@ void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 		}
 	}
 	/* Indicate Frame Over Normal Interface */
-	hddLog(LOG1, FL("Indicate Frame over NL80211 Interface"));
+	hddLog(LOG1, FL("Indicate Frame over NL80211 sessionid : %d, idx :%d"),
+			pAdapter->sessionId, pAdapter->dev->ifindex);
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 18, 0))
 	cfg80211_rx_mgmt(pAdapter->dev->ieee80211_ptr, freq, 0, pbFrames,
