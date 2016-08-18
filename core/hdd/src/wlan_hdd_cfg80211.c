@@ -2068,11 +2068,13 @@ static int __wlan_hdd_cfg80211_get_concurrency_matrix(struct wiphy *wiphy,
 	/* Fill feature combination matrix */
 	feature_sets = 0;
 	feature_set_matrix[feature_sets++] = WIFI_FEATURE_INFRA |
-		WIFI_FEATURE_P2P;
+						WIFI_FEATURE_P2P;
+	feature_set_matrix[feature_sets++] = WIFI_FEATURE_INFRA |
+						WIFI_FEATURE_NAN;
 	/* Add more feature combinations here */
 
 	feature_sets = QDF_MIN(feature_sets, max_feature_sets);
-	hdd_info("Number of feature sets:%d", feature_sets);
+	hdd_info("Number of feature sets: %d", feature_sets);
 	hdd_info("Feature set matrix");
 	for (i = 0; i < feature_sets; i++)
 		hdd_info("[%d] 0x%02X", i, feature_set_matrix[i]);
