@@ -4179,19 +4179,26 @@ static int __wlan_hdd_cfg80211_wifi_logger_get_ring_data(struct wiphy *wiphy,
 	if (ring_id == RING_ID_PER_PACKET_STATS) {
 		wlan_logging_set_per_pkt_stats();
 		hdd_notice("Flushing/Retrieving packet stats");
+	} else if (ring_id == RING_ID_DRIVER_DEBUG) {
+		/*
+		 * As part of DRIVER ring ID, flush both driver and fw logs.
+		 * For other Ring ID's driver doesn't have any rings to flush
+		 */
+		hdd_notice("Bug report triggered by framework");
+
+		status = cds_flush_logs(WLAN_LOG_TYPE_NON_FATAL,
+				WLAN_LOG_INDICATOR_FRAMEWORK,
+				WLAN_LOG_REASON_CODE_UNUSED,
+				true, false);
+		if (QDF_STATUS_SUCCESS != status) {
+			hdd_err("Failed to trigger bug report");
+			return -EINVAL;
+		}
+	} else {
+		wlan_report_log_completion(WLAN_LOG_TYPE_NON_FATAL,
+					   WLAN_LOG_INDICATOR_FRAMEWORK,
+					   WLAN_LOG_REASON_CODE_UNUSED);
 	}
-
-	hdd_notice("Bug report triggered by framework");
-
-	status = cds_flush_logs(WLAN_LOG_TYPE_NON_FATAL,
-			WLAN_LOG_INDICATOR_FRAMEWORK,
-			WLAN_LOG_REASON_CODE_UNUSED,
-			true, false);
-	if (QDF_STATUS_SUCCESS != status) {
-		hdd_err("Failed to trigger bug report");
-		return -EINVAL;
-	}
-
 	return 0;
 }
 
