@@ -630,7 +630,7 @@ typedef struct sSirMbMsgP2p {
 #define SIR_HAL_NDP_END_IND                 (SIR_HAL_ITC_MSG_TYPES_BEGIN + 357)
 #define SIR_HAL_UPDATE_WEP_DEFAULT_KEY      (SIR_HAL_ITC_MSG_TYPES_BEGIN + 358)
 
-#define SIR_HAL_POWER_DBG_CMD               (SIR_HAL_ITC_MSG_TYPES_BEGIN + 347)
+#define SIR_HAL_POWER_DBG_CMD               (SIR_HAL_ITC_MSG_TYPES_BEGIN + 362)
 
 #define SIR_HAL_MSG_TYPES_END                (SIR_HAL_MSG_TYPES_BEGIN + 0x1FF)
 
