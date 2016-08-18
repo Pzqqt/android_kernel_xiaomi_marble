@@ -3378,8 +3378,8 @@ static QDF_STATUS sap_fsm_state_disconnected(ptSapContext sap_ctx,
 						"failed to get vdev type");
 				return QDF_STATUS_E_FAILURE;
 			}
-			/* Open SME Session for scan */
-			qdf_status = sme_open_session(hal, NULL,
+			qdf_status = sme_open_session(hal,
+					&wlansap_roam_callback,
 					sap_ctx, sap_ctx->self_mac_addr,
 					&sap_ctx->sessionId, type, subtype);
 			if (QDF_STATUS_SUCCESS != qdf_status) {
@@ -3404,14 +3404,6 @@ static QDF_STATUS sap_fsm_state_disconnected(ptSapContext sap_ctx,
 		 */
 		qdf_status = sap_goto_channel_sel(sap_ctx, sap_event, false,
 						true);
-
-		/*
-		 * Transition from eSAP_DISCONNECTED to eSAP_CH_SELECT
-		 * (both without substates)
-		 */
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  FL("from state %s => %s"),
-			  "eSAP_DISCONNECTED", "eSAP_CH_SELECT");
 	} else if (msg == eSAP_DFS_CHANNEL_CAC_START) {
 		/*
 		 * No need of state check here, caller is expected to perform
