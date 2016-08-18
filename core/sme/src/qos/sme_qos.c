@@ -2072,6 +2072,14 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 	flow_info = GET_BASE_ADDR(pEntry, sme_QosFlowInfoEntry, link);
 	ac = flow_info->ac_type;
 	sessionId = flow_info->sessionId;
+
+	if (!CSR_IS_SESSION_VALID(pMac, sessionId)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			"%s: %d: Session Id: %d is invalid",
+			__func__, __LINE__, sessionId);
+		return status;
+	}
+
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
 	pACInfo = &pSession->ac_info[ac];
 	/* need to vote off powersave for the duration of this request */
