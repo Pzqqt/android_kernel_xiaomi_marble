@@ -225,6 +225,8 @@ typedef struct sRrmPEContext {
 #define RCPI_MAX_VALUE        (220)
 #define CALCULATE_RCPI(rssi)  (((rssi) + 110) * 2)
 
+#define CAP_OPER_CHAN_MAX_DURATION_OFFSET 2
+#define CAP_NONOPER_CHAN_MAX_DURATION_OFFSET 5
 /* Bit mask are defined as per Draft P802.11REVmc_D4.2 */
 
 /**

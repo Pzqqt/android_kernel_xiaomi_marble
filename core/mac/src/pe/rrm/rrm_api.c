@@ -1299,8 +1299,8 @@ tSirRetStatus rrm_initialize(tpAniSirGlobal pMac)
 	pRRMCaps->fine_time_meas_rpt = 1;
 	pRRMCaps->lci_capability = 1;
 
-	pRRMCaps->operatingChanMax = 3;
-	pRRMCaps->nonOperatingChanMax = 3;
+	pRRMCaps->operatingChanMax = 4;
+	pRRMCaps->nonOperatingChanMax = 4;
 
 	return eSIR_SUCCESS;
 }
