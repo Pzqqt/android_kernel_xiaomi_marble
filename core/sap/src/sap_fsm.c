@@ -1746,7 +1746,7 @@ bool sap_acs_channel_check(ptSapContext sapContext, uint8_t channelNumber)
 	if (!sapContext->acs_cfg->acs_mode)
 		return false;
 
-	if ((channelNumber >= sapContext->acs_cfg->start_ch) ||
+	if ((channelNumber >= sapContext->acs_cfg->start_ch) &&
 		(channelNumber <= sapContext->acs_cfg->end_ch)) {
 		if (!sapContext->acs_cfg->ch_list) {
 			return false;
