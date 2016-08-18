@@ -9194,6 +9194,31 @@ int hdd_update_config(hdd_context_t *hdd_ctx)
 	return ret;
 }
 
+/**
+ * wlan_hdd_get_dfs_mode() - get ACS DFS mode
+ * @mode : cfg80211 DFS mode
+ *
+ * Return: return SAP ACS DFS mode else return ACS_DFS_MODE_NONE
+ */
+enum  sap_acs_dfs_mode wlan_hdd_get_dfs_mode(enum dfs_mode mode)
+{
+	switch (mode) {
+	case DFS_MODE_ENABLE:
+		return ACS_DFS_MODE_ENABLE;
+		break;
+	case DFS_MODE_DISABLE:
+		return ACS_DFS_MODE_DISABLE;
+		break;
+	case DFS_MODE_DEPRIORITIZE:
+		return ACS_DFS_MODE_DEPRIORITIZE;
+		break;
+	default:
+		hdd_err("ACS dfs mode is NONE");
+		return  ACS_DFS_MODE_NONE;
+	}
+}
+
+
 /* Register the module init/exit functions */
 module_init(hdd_module_init);
 module_exit(hdd_module_exit);

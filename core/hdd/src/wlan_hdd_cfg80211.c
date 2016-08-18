@@ -74,6 +74,8 @@
 #include "wlan_hdd_nan.h"
 #include <wlan_hdd_ipa.h>
 #include "wlan_logging_sock_svc.h"
+#include "sap_api.h"
+
 
 #ifdef FEATURE_WLAN_EXTSCAN
 #include "wlan_hdd_ext_scan.h"
@@ -141,6 +143,11 @@
 #define WLAN_AKM_SUITE_FT_PSK           0x000FAC04
 
 #define HDD_CHANNEL_14 14
+
+#define IS_DFS_MODE_VALID(mode) ((mode >= DFS_MODE_NONE && \
+			mode <= DFS_MODE_DEPRIORITIZE))
+#define IS_CHANNEL_VALID(channel) ((channel >= 0 && channel < 15) \
+		|| (channel >= 36 && channel <= 184))
 
 #define MAX_TXPOWER_SCALE 4
 #define CDS_MAX_FEATURE_SET   8
@@ -1330,7 +1337,10 @@ static int wlan_hdd_cfg80211_start_acs(hdd_adapter_t *adapter)
 	int status;
 
 	sap_config = &adapter->sessionCtx.ap.sapConfig;
-	sap_config->channel = AUTO_CHANNEL_SELECT;
+	if (hdd_ctx->acs_policy.acs_channel)
+		sap_config->channel = hdd_ctx->acs_policy.acs_channel;
+	else
+		sap_config->channel = AUTO_CHANNEL_SELECT;
 
 	status = wlan_hdd_sap_cfg_dfs_override(adapter);
 	if (status < 0) {
@@ -6790,6 +6800,115 @@ wlan_hdd_sap_config_policy[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_CHANNEL] = {.type = NLA_U8 },
 };
 
+static const struct nla_policy
+wlan_hdd_set_acs_dfs_config_policy[QCA_WLAN_VENDOR_ATTR_ACS_DFS_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_ACS_DFS_MODE] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_ACS_CHANNEL_HINT] = {.type = NLA_U8 },
+};
+
+/**
+ * __wlan_hdd_cfg80211_acs_dfs_mode() - set ACS DFS mode and channel
+ * @wiphy: Pointer to wireless phy
+ * @wdev: Pointer to wireless device
+ * @data: Pointer to data
+ * @data_len: Length of @data
+ *
+ * This function parses the incoming NL vendor command data attributes and
+ * updates the SAP context about channel_hint and DFS mode.
+ * If channel_hint is set, SAP will choose that channel
+ * as operating channel.
+ *
+ * If DFS mode is enabled, driver will include DFS channels
+ * in ACS else driver will skip DFS channels.
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int
+__wlan_hdd_cfg80211_acs_dfs_mode(struct wiphy *wiphy,
+		struct wireless_dev *wdev,
+		const void *data, int data_len)
+{
+	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_ACS_DFS_MAX + 1];
+	int ret;
+	struct acs_dfs_policy *acs_policy;
+	int mode = DFS_MODE_NONE;
+	int channel_hint = 0;
+
+	ENTER_DEV(wdev->netdev);
+
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("Command not allowed in FTM mode");
+		return -EINVAL;
+	}
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_ACS_DFS_MAX,
+				data, data_len,
+				wlan_hdd_set_acs_dfs_config_policy)) {
+		hdd_err("invalid attr");
+		return -EINVAL;
+	}
+
+	acs_policy = &hdd_ctx->acs_policy;
+	/*
+	 * SCM sends this attribute to restrict SAP from choosing
+	 * DFS channels from ACS.
+	 */
+	if (tb[QCA_WLAN_VENDOR_ATTR_ACS_DFS_MODE])
+		mode = nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_ACS_DFS_MODE]);
+
+	if (!IS_DFS_MODE_VALID(mode)) {
+		hdd_err("attr acs dfs mode is not valid");
+		return -EINVAL;
+	}
+	acs_policy->acs_dfs_mode = mode;
+
+	/*
+	 * SCM sends this attribute to provide an active channel,
+	 * to skip redundant ACS between drivers, and save driver start up time
+	 */
+	if (tb[QCA_WLAN_VENDOR_ATTR_ACS_CHANNEL_HINT])
+		channel_hint = nla_get_u8(
+				tb[QCA_WLAN_VENDOR_ATTR_ACS_CHANNEL_HINT]);
+
+	if (!IS_CHANNEL_VALID(channel_hint)) {
+		hdd_err("acs channel is not valid");
+		return -EINVAL;
+	}
+	acs_policy->acs_channel = channel_hint;
+
+	return 0;
+}
+
+/**
+ * wlan_hdd_cfg80211_acs_dfs_mode() - Wrapper to set ACS DFS mode
+ * @wiphy:    wiphy structure pointer
+ * @wdev:     Wireless device structure pointer
+ * @data:     Pointer to the data received
+ * @data_len: Length of @data
+ *
+ * This function parses the incoming NL vendor command data attributes and
+ * updates the SAP context about channel_hint and DFS mode.
+ *
+ * Return: 0 on success; errno on failure
+ */
+static int wlan_hdd_cfg80211_acs_dfs_mode(struct wiphy *wiphy,
+		struct wireless_dev *wdev,
+		const void *data, int data_len)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_acs_dfs_mode(wiphy, wdev, data, data_len);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
 /**
  * __wlan_hdd_cfg80211_sap_configuration_set() - ask driver to restart SAP if
  * SAP is on unsafe channel.
@@ -7815,6 +7934,14 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 			WIPHY_VENDOR_CMD_NEED_NETDEV |
 			WIPHY_VENDOR_CMD_NEED_RUNNING,
 		.doit = wlan_hdd_cfg80211_bpf_offload
+	},
+	{
+		.info.vendor_id = QCA_NL80211_VENDOR_ID,
+		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_ACS_POLICY,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+			WIPHY_VENDOR_CMD_NEED_NETDEV |
+			WIPHY_VENDOR_CMD_NEED_RUNNING,
+		.doit = wlan_hdd_cfg80211_acs_dfs_mode
 	},
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,

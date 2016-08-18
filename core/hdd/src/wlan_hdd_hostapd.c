@@ -5595,6 +5595,7 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 	int ret;
 	enum tQDF_ADAPTER_MODE mode;
 	uint32_t session_id = CSR_SESSION_ID_INVALID;
+	enum dfs_mode acs_dfs_mode;
 
 	ENTER();
 
@@ -5605,6 +5606,11 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 	}
 
 	pAdapter->sessionCtx.ap.sapContext = sapContext;
+	pAdapter->sessionCtx.ap.sapConfig.channel =
+		pHddCtx->acs_policy.acs_channel;
+	acs_dfs_mode = pHddCtx->acs_policy.acs_dfs_mode;
+	pAdapter->sessionCtx.ap.sapConfig.acs_dfs_mode =
+		wlan_hdd_get_dfs_mode(acs_dfs_mode);
 
 	if (pAdapter->device_mode == QDF_P2P_GO_MODE) {
 		mode = QDF_P2P_GO_MODE;
@@ -6921,6 +6927,8 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	bool MFPCapable = false;
 	bool MFPRequired = false;
 	uint16_t prev_rsn_length = 0;
+	enum dfs_mode mode;
+
 	ENTER();
 
 	if (cds_is_connection_in_progress()) {
@@ -6952,6 +6960,10 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 
 	pConfig->enOverLapCh = iniConfig->gEnableOverLapCh;
 	pConfig->dtim_period = pBeacon->dtim_period;
+	if (pHddCtx->acs_policy.acs_channel)
+		pConfig->channel = pHddCtx->acs_policy.acs_channel;
+	mode = pHddCtx->acs_policy.acs_dfs_mode;
+	pConfig->acs_dfs_mode = wlan_hdd_get_dfs_mode(mode);
 
 	hdd_info("****pConfig->dtim_period=%d***",
 		pConfig->dtim_period);

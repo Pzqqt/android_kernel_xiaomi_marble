@@ -508,6 +508,20 @@ enum vendor_ie_access_policy {
 	ACCESS_POLICY_DONOT_RESPOND_IF_IE_IS_PRESENT,
 };
 
+/*
+ * enum sap_acs_dfs_mode- state of DFS mode
+ * @ACS_DFS_MODE_NONE: DFS mode attribute is not valid
+ * @ACS_DFS_MODE_ENABLE:  DFS mode is enabled
+ * @ACS_DFS_MODE_DISABLE: DFS mode is disabled
+ * @ACS_DFS_MODE_DEPRIORITIZE: Deprioritize DFS channels in scanning
+ */
+enum  sap_acs_dfs_mode {
+	ACS_DFS_MODE_NONE,
+	ACS_DFS_MODE_ENABLE,
+	ACS_DFS_MODE_DISABLE,
+	ACS_DFS_MODE_DEPRIORITIZE
+};
+
 typedef struct sap_Config {
 	tSap_SSIDInfo_t SSIDinfo;
 	eCsrPhyMode SapHw_mode;         /* Wireless Mode */
@@ -577,6 +591,7 @@ typedef struct sap_Config {
 	uint8_t ampdu_size;
 	tSirMacRateSet supp_rate_set;
 	tSirMacRateSet extended_rate_set;
+	enum sap_acs_dfs_mode acs_dfs_mode;
 } tsap_Config_t;
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE

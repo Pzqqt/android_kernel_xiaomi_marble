@@ -1224,6 +1224,16 @@ enum driver_modules_status {
 	DRIVER_MODULES_CLOSED
 };
 
+/**
+ * struct acs_dfs_policy - Define ACS policies
+ * @acs_dfs_mode: Dfs mode enabled/disabled.
+ * @acs_channel: pre defined channel to avoid ACS.
+ */
+struct acs_dfs_policy {
+	enum dfs_mode acs_dfs_mode;
+	uint8_t acs_channel;
+};
+
 /** Adapter structure definition */
 
 struct hdd_context_s {
@@ -1495,6 +1505,7 @@ struct hdd_context_s {
 	bool stop_modules_in_progress;
 	bool start_modules_in_progress;
 	bool update_mac_addr_to_fw;
+	struct acs_dfs_policy acs_policy;
 };
 
 /*---------------------------------------------------------------------------
@@ -1848,4 +1859,5 @@ static inline void hdd_enable_fastpath(struct hdd_config *hdd_cfg,
 #endif
 void hdd_wlan_update_target_info(hdd_context_t *hdd_ctx, void *context);
 
+enum  sap_acs_dfs_mode wlan_hdd_get_dfs_mode(enum dfs_mode mode);
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

@@ -586,7 +586,8 @@ bool sap_chan_sel_init(tHalHandle halHandle,
 #endif
 	sme_cfg_get_int(halHandle, WNI_CFG_DFS_MASTER_ENABLED,
 			&dfs_master_cap_enabled);
-	if (dfs_master_cap_enabled == 0)
+	if (dfs_master_cap_enabled == 0 ||
+	    ACS_DFS_MODE_DISABLE == pSapCtx->dfs_mode)
 		include_dfs_ch = false;
 
 	/* Fill the channel number in the spectrum in the operating freq band */
@@ -1949,7 +1950,6 @@ static uint8_t sap_select_channel_no_scan_result(tHalHandle hal,
 		if ((ch_type == CHANNEL_STATE_DISABLE) ||
 			(ch_type == CHANNEL_STATE_INVALID))
 			continue;
-
 		if ((!dfs_master_cap_enabled) &&
 			(CHANNEL_STATE_DFS == ch_type)) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -1957,6 +1957,9 @@ static uint8_t sap_select_channel_no_scan_result(tHalHandle hal,
 				__func__, safe_channels[i].channelNumber);
 			continue;
 		}
+		if ((sap_ctx->dfs_mode == ACS_DFS_MODE_DISABLE) &&
+		    (CHANNEL_STATE_DFS == ch_type))
+			continue;
 
 		if (safe_channels[i].isSafe == true) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,

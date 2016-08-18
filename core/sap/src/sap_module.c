@@ -647,6 +647,7 @@ wlansap_set_scan_acs_channel_params(tsap_Config_t *pconfig,
 
 	/* Channel selection is auto or configured */
 	psap_ctx->channel = pconfig->channel;
+	psap_ctx->dfs_mode = pconfig->acs_dfs_mode;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	psap_ctx->cc_switch_mode = pconfig->cc_switch_mode;
 #endif
@@ -810,6 +811,7 @@ QDF_STATUS wlansap_start_bss(void *pCtx,     /* pwextCtx */
 
 	/* Channel selection is auto or configured */
 	pSapCtx->channel = pConfig->channel;
+	pSapCtx->dfs_mode = pConfig->acs_dfs_mode;
 	pSapCtx->ch_params.ch_width = pConfig->ch_params.ch_width;
 	pSapCtx->ch_params.center_freq_seg0 =
 		pConfig->ch_params.center_freq_seg0;
