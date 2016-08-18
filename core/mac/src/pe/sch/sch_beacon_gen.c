@@ -228,7 +228,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 
 	/* Skip over the timestamp (it'll be updated later). */
 	bcn_1->BeaconInterval.interval =
-		mac_ctx->sch.schObject.gSchBeaconInterval;
+		session->beaconParams.beaconInterval;
 	populate_dot11f_capabilities(mac_ctx, &bcn_1->Capabilities, session);
 	if (session->ssidHidden) {
 		bcn_1->SSID.present = 1;
