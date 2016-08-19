@@ -54,6 +54,7 @@
 #include <wlan_hdd_power.h>
 #include <dbglog_host.h>
 #include <wlan_hdd_trace.h>
+#include <wlan_hdd_p2p.h>
 
 #include <linux/semaphore.h>
 #include <wlan_hdd_hostapd.h>
@@ -1812,6 +1813,8 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 				return -EOPNOTSUPP;
 			}
 		}
+		if (pAdapter->is_roc_inprogress)
+			wlan_hdd_cleanup_remain_on_channel_ctx(pAdapter);
 		status = hdd_get_next_adapter(pHddCtx, pAdapterNode, &pNext);
 		pAdapterNode = pNext;
 	}
