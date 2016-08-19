@@ -419,11 +419,10 @@ void hdd_lro_flush_pkt(struct net_lro_mgr *lro_mgr,
 
 	lro_desc = hdd_lro_get_desc(lro_mgr, lro_mgr->lro_arr, iph, tcph);
 
-	if (!lro_desc)
-		return;
-
-	hdd_lro_desc_free(lro_desc, adapter);
-	lro_flush_desc(lro_mgr, lro_desc);
+	if (lro_desc) {
+		hdd_lro_desc_free(lro_desc, adapter);
+		lro_flush_desc(lro_mgr, lro_desc);
+	}
 }
 
 /**
@@ -438,10 +437,10 @@ void hdd_lro_flush_pkt(struct net_lro_mgr *lro_mgr,
 void hdd_lro_flush(void *data)
 {
 	hdd_adapter_t *adapter = (hdd_adapter_t *)data;
-	struct hdd_lro_s *hdd_info = &adapter->lro_info;
+	struct hdd_lro_s *hdd_lro = &adapter->lro_info;
 	int i;
 
-	qdf_spin_lock_bh(&hdd_info->lro_mgr_arr_access_lock);
+	qdf_spin_lock_bh(&hdd_lro->lro_mgr_arr_access_lock);
 	for (i = 0; i < adapter->lro_info.lro_mgr->max_desc; i++) {
 		if (adapter->lro_info.lro_mgr->lro_arr[i].active) {
 			hdd_lro_desc_free(
@@ -451,7 +450,7 @@ void hdd_lro_flush(void *data)
 				 &adapter->lro_info.lro_mgr->lro_arr[i]);
 		}
 	}
-	qdf_spin_unlock_bh(&hdd_info->lro_mgr_arr_access_lock);
+	qdf_spin_unlock_bh(&hdd_lro->lro_mgr_arr_access_lock);
 }
 
 /**
@@ -634,8 +633,11 @@ enum hdd_lro_rx_status hdd_lro_rx(hdd_context_t *hdd_ctx,
 		struct iphdr *iph;
 		struct tcphdr *tcph;
 		struct net_lro_desc *lro_desc = NULL;
+		struct hdd_lro_s *hdd_lro = &adapter->lro_info;
 		iph = (struct iphdr *)skb->data;
 		tcph = (struct tcphdr *)(skb->data + QDF_NBUF_CB_RX_TCP_OFFSET(skb));
+		qdf_spin_lock_bh(
+			&hdd_lro->lro_mgr_arr_access_lock);
 		if (hdd_lro_eligible(adapter, skb, iph, tcph, &lro_desc)) {
 			struct net_lro_info hdd_lro_info;
 
@@ -652,14 +654,17 @@ enum hdd_lro_rx_status hdd_lro_rx(hdd_context_t *hdd_ctx,
 			lro_receive_skb_ext(adapter->lro_info.lro_mgr, skb,
 				 (void *)adapter, &hdd_lro_info);
 
-			if (!hdd_lro_info.lro_desc->active)
+			if (!hdd_lro_info.lro_desc->active) {
 				hdd_lro_desc_free(lro_desc, adapter);
+			}
 
 			status = HDD_LRO_RX;
 		} else {
 			hdd_lro_flush_pkt(adapter->lro_info.lro_mgr,
 				 iph, tcph, adapter);
 		}
+		qdf_spin_unlock_bh(
+			&hdd_lro->lro_mgr_arr_access_lock);
 	}
 	return status;
 }

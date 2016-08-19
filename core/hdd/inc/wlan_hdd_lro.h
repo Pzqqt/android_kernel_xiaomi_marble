@@ -101,7 +101,7 @@ struct hdd_lro_desc_info {
  * hdd_lro_s - LRO information per HDD adapter
  * @lro_mgr: LRO manager
  * @lro_desc_info: LRO descriptor information
- * @lroi_mgr_arr_access_lock: Lock to access LRO manager array.
+ * @lro_mgr_arr_access_lock: Lock to access LRO manager array.
  */
 struct hdd_lro_s {
 	struct net_lro_mgr *lro_mgr;
