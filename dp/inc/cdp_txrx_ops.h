@@ -1606,6 +1606,7 @@ struct cdp_rx_offld_ops {
  * @txrx_set_cfr_rcc: Handler to enable/disable CFR mode
  * @txrx_get_cfr_dbg_stats: Handler to get debug statistics for CFR mode
  * @txrx_clear_cfr_dbg_stats: Handler to clear debug statistics for CFR mode
+ * @txrx_enable_mon_reap_timer: Enable/Disable reap timer of monitor status ring
  */
 struct cdp_cfr_ops {
 	void (*txrx_cfr_filter)(struct cdp_soc_t *soc_hdl,
@@ -1622,6 +1623,9 @@ struct cdp_cfr_ops {
 				       struct cdp_cfr_rcc_stats *buf);
 	void (*txrx_clear_cfr_dbg_stats)(struct cdp_soc_t *soc_hdl,
 					 uint8_t pdev_id);
+	void (*txrx_enable_mon_reap_timer)(struct cdp_soc_t *soc_hdl,
+					   uint8_t pdev_id,
+					   bool enable);
 };
 #endif
 

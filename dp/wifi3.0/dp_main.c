@@ -185,7 +185,12 @@ dp_get_cfr_dbg_stats(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 		     struct cdp_cfr_rcc_stats *cfr_rcc_stats);
 static inline void
 dp_clear_cfr_dbg_stats(struct cdp_soc_t *soc_hdl, uint8_t pdev_id);
+static inline void
+dp_enable_mon_reap_timer(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+			 bool enable);
 #endif
+static inline bool
+dp_is_enable_reap_timer_non_pkt(struct dp_pdev *pdev);
 static uint8_t dp_soc_ring_if_nss_offloaded(struct dp_soc *soc,
 					    enum hal_ring_type ring_type,
 					    int ring_num);
@@ -494,7 +499,7 @@ static void dp_pktlogmod_exit(struct dp_pdev *pdev)
 
 	/* stop mon_reap_timer if it has been started */
 	if (pdev->rx_pktlog_mode != DP_RX_PKTLOG_DISABLED &&
-	    soc->reap_timer_init)
+	    soc->reap_timer_init && (!dp_is_enable_reap_timer_non_pkt(pdev)))
 		qdf_timer_sync_cancel(&soc->mon_reap_timer);
 
 	pktlogmod_exit(scn);
@@ -3683,6 +3688,7 @@ static inline QDF_STATUS dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	TAILQ_INIT(&pdev->neighbour_peers_list);
 	pdev->neighbour_peers_added = false;
 	pdev->monitor_configured = false;
+	pdev->enable_reap_timer_non_pkt = false;
 
 	if (dp_soc_cmn_setup(soc)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -10310,6 +10316,7 @@ static struct cdp_cfr_ops dp_ops_cfr = {
 	.txrx_set_cfr_rcc = dp_set_cfr_rcc,
 	.txrx_get_cfr_dbg_stats = dp_get_cfr_dbg_stats,
 	.txrx_clear_cfr_dbg_stats = dp_clear_cfr_dbg_stats,
+	.txrx_enable_mon_reap_timer = dp_enable_mon_reap_timer,
 };
 #endif
 
@@ -10808,7 +10815,8 @@ static QDF_STATUS dp_bus_suspend(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 		qdf_timer_stop(&soc->int_timer);
 
 	/* Stop monitor reap timer and reap any pending frames in ring */
-	if (pdev->rx_pktlog_mode != DP_RX_PKTLOG_DISABLED &&
+	if (((pdev->rx_pktlog_mode != DP_RX_PKTLOG_DISABLED) ||
+	     dp_is_enable_reap_timer_non_pkt(pdev)) &&
 	    soc->reap_timer_init) {
 		qdf_timer_sync_cancel(&soc->mon_reap_timer);
 		dp_service_mon_rings(soc, DP_MON_REAP_BUDGET);
@@ -10831,7 +10839,8 @@ static QDF_STATUS dp_bus_resume(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 		qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
 
 	/* Start monitor reap timer */
-	if (pdev->rx_pktlog_mode != DP_RX_PKTLOG_DISABLED &&
+	if (((pdev->rx_pktlog_mode != DP_RX_PKTLOG_DISABLED) ||
+	     dp_is_enable_reap_timer_non_pkt(pdev)) &&
 	    soc->reap_timer_init)
 		qdf_timer_mod(&soc->mon_reap_timer,
 			      DP_INTR_POLL_TIMER_MS);
@@ -10861,7 +10870,8 @@ static void dp_process_wow_ack_rsp(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 	 * response from FW reap mon status ring to make sure no packets pending
 	 * in the ring.
 	 */
-	if (pdev->rx_pktlog_mode != DP_RX_PKTLOG_DISABLED &&
+	if (((pdev->rx_pktlog_mode != DP_RX_PKTLOG_DISABLED) ||
+	     dp_is_enable_reap_timer_non_pkt(pdev)) &&
 	    soc->reap_timer_init) {
 		dp_service_mon_rings(soc, DP_MON_REAP_BUDGET);
 	}
@@ -11468,7 +11478,63 @@ static void dp_clear_cfr_dbg_stats(struct cdp_soc_t *soc_hdl,
 
 	qdf_mem_zero(&pdev->stats.rcc, sizeof(pdev->stats.rcc));
 }
+
+/*
+ * dp_enable_mon_reap_timer() - enable/disable reap timer
+ * @soc_hdl: Datapath soc handle
+ * @pdev_id: id of objmgr pdev
+ * @enable: Enable/Disable reap timer of monitor status ring
+ *
+ * Return: none
+ */
+static void
+dp_enable_mon_reap_timer(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+			 bool enable)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev = NULL;
+
+	pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+	if (!pdev) {
+		dp_err("pdev is NULL");
+		return;
+	}
+
+	pdev->enable_reap_timer_non_pkt = enable;
+	if (pdev->rx_pktlog_mode != DP_RX_PKTLOG_DISABLED) {
+		dp_debug("pktlog enabled %d", pdev->rx_pktlog_mode);
+		return;
+	}
+
+	if (!soc->reap_timer_init) {
+		dp_err("reap timer not init");
+		return;
+	}
+
+	if (enable)
+		qdf_timer_mod(&soc->mon_reap_timer,
+			      DP_INTR_POLL_TIMER_MS);
+	else
+		qdf_timer_sync_cancel(&soc->mon_reap_timer);
+}
 #endif
+
+/*
+ * dp_is_enable_reap_timer_non_pkt() - check if mon reap timer is
+ * enabled by non-pkt log or not
+ * @pdev: point to dp pdev
+ *
+ * Return: true if mon reap timer is enabled by non-pkt log
+ */
+static bool dp_is_enable_reap_timer_non_pkt(struct dp_pdev *pdev)
+{
+	if (!pdev) {
+		dp_err("null pdev");
+		return false;
+	}
+
+	return pdev->enable_reap_timer_non_pkt;
+}
 
 /*
 * dp_is_soc_reinit() - Check if soc reinit is true
@@ -11528,7 +11594,8 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 					return 0;
 				}
 
-				if (soc->reap_timer_init)
+				if (soc->reap_timer_init &&
+				    (!dp_is_enable_reap_timer_non_pkt(pdev)))
 					qdf_timer_mod(&soc->mon_reap_timer,
 					DP_INTR_POLL_TIMER_MS);
 			}
@@ -11558,7 +11625,8 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 					return 0;
 				}
 
-				if (soc->reap_timer_init)
+				if (soc->reap_timer_init &&
+				    (!dp_is_enable_reap_timer_non_pkt(pdev)))
 					qdf_timer_mod(&soc->mon_reap_timer,
 					DP_INTR_POLL_TIMER_MS);
 			}
@@ -11617,7 +11685,8 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 					return 0;
 				}
 
-				if (soc->reap_timer_init)
+				if (soc->reap_timer_init &&
+				    (!dp_is_enable_reap_timer_non_pkt(pdev)))
 					qdf_timer_stop(&soc->mon_reap_timer);
 			}
 			break;

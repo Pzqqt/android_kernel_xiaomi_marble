@@ -1671,6 +1671,7 @@ struct dp_pdev {
 	/* mirror copy mode */
 	bool mcopy_mode;
 	bool cfr_rcc_mode;
+	bool enable_reap_timer_non_pkt;
 	bool bpr_enable;
 
 	/* enable time latency check for tx completion */

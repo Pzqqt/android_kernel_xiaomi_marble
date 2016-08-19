@@ -937,6 +937,33 @@ cdp_cfr_clr_dbg_stats(ol_txrx_soc_handle soc, uint8_t pdev_id)
 
 	soc->ops->cfr_ops->txrx_clear_cfr_dbg_stats(soc, pdev_id);
 }
+
+/**
+ * cdp_enable_mon_reap_timer() - enable/disable reap timer
+ * @soc: Datapath soc handle
+ * @pdev_id: id of objmgr pdev
+ * @enable: enable/disable reap timer of monitor status ring
+ *
+ * Return: none
+ */
+static inline void
+cdp_enable_mon_reap_timer(ol_txrx_soc_handle soc, uint8_t pdev_id,
+			  bool enable)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cfr_ops ||
+	    !soc->ops->cfr_ops->txrx_enable_mon_reap_timer)
+		return;
+
+	return soc->ops->cfr_ops->txrx_enable_mon_reap_timer(soc, pdev_id,
+							     enable);
+}
 #endif
 
 #if defined(WLAN_TX_PKT_CAPTURE_ENH) || defined(WLAN_RX_PKT_CAPTURE_ENH)
