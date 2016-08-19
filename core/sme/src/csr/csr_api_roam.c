@@ -16636,16 +16636,29 @@ QDF_STATUS csr_get_statistics(tpAniSirGlobal pMac,
 }
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-QDF_STATUS csr_roam_set_key_mgmt_offload(tpAniSirGlobal pMac,
-					 uint32_t sessionId,
-					 bool nRoamKeyMgmtOffloadEnabled)
+/**
+ * csr_roam_set_key_mgmt_offload() - enable/disable key mgmt offload
+ * @mac_ctx: mac context.
+ * @session_id: Session Identifier
+ * @roam_key_mgmt_offload_enabled: key mgmt enable/disable flag
+ * @okc_enabled: Opportunistic key caching enable/disable flag
+ *
+ * Return: QDF_STATUS_SUCCESS - CSR updated config successfully.
+ * Other status means CSR is failed to update.
+ */
+
+QDF_STATUS csr_roam_set_key_mgmt_offload(tpAniSirGlobal mac_ctx,
+					 uint32_t session_id,
+					 bool roam_key_mgmt_offload_enabled,
+					 bool okc_enabled)
 {
-	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
-	if (!pSession) {
-		sms_log(pMac, LOGE, FL("session %d not found"), sessionId);
+	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
+	if (!session) {
+		sms_log(mac_ctx, LOGE, FL("session %d not found"), session_id);
 		return QDF_STATUS_E_FAILURE;
 	}
-	pSession->RoamKeyMgmtOffloadEnabled = nRoamKeyMgmtOffloadEnabled;
+	session->RoamKeyMgmtOffloadEnabled = roam_key_mgmt_offload_enabled;
+	session->okc_enabled = okc_enabled;
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -17100,6 +17113,7 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	req_buf->RoamOffloadEnabled = csr_roamIsRoamOffloadEnabled(mac_ctx);
 	req_buf->RoamKeyMgmtOffloadEnabled = session->RoamKeyMgmtOffloadEnabled;
+	req_buf->okc_enabled = session->okc_enabled;
 	/* Roam Offload piggybacks upon the Roam Scan offload command. */
 	if (req_buf->RoamOffloadEnabled)
 		csr_update_roam_scan_offload_request(mac_ctx, req_buf, session);

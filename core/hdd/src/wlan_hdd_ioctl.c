@@ -7004,9 +7004,7 @@ static const hdd_drv_cmd_t hdd_drv_cmds[] = {
 	{"SETFASTTRANSITION",         drv_cmd_set_fast_transition},
 	{"FASTREASSOC",               drv_cmd_fast_reassoc},
 	{"SETROAMSCANCONTROL",        drv_cmd_set_roam_scan_control},
-#ifdef FEATURE_WLAN_OKC
 	{"SETOKCMODE",                drv_cmd_set_okc_mode},
-#endif /* FEATURE_WLAN_OKC */
 	{"GETROAMSCANCONTROL",        drv_cmd_get_roam_scan_control},
 	{"BTCOEXMODE",                drv_cmd_bt_coex_mode},
 	{"SCAN-ACTIVE",               drv_cmd_scan_active},

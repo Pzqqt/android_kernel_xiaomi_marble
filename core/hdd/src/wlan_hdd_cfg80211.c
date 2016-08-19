@@ -3463,10 +3463,10 @@ static int __wlan_hdd_cfg80211_keymgmt_set_key(struct wiphy *wiphy,
 	status = wlan_hdd_validate_context(hdd_ctx_ptr);
 	if (status)
 		return status;
-
 	sme_update_roam_key_mgmt_offload_enabled(hdd_ctx_ptr->hHal,
 			hdd_adapter_ptr->sessionId,
-			true);
+			true,
+			hdd_is_okc_mode_enabled(hdd_ctx_ptr));
 	qdf_mem_zero(&local_pmk, SIR_ROAM_SCAN_PSK_SIZE);
 	qdf_mem_copy(local_pmk, data, data_len);
 	sme_roam_set_psk_pmk(WLAN_HDD_GET_HAL_CTX(hdd_adapter_ptr),
@@ -10005,7 +10005,6 @@ int wlan_hdd_cfg80211_pmksa_candidate_notify(hdd_adapter_t *pAdapter,
 					     tCsrRoamInfo *pRoamInfo,
 					     int index, bool preauth)
 {
-#ifdef FEATURE_WLAN_OKC
 	struct net_device *dev = pAdapter->dev;
 	hdd_context_t *pHddCtx = (hdd_context_t *) pAdapter->pHddCtx;
 
@@ -10024,7 +10023,6 @@ int wlan_hdd_cfg80211_pmksa_candidate_notify(hdd_adapter_t *pAdapter,
 						pRoamInfo->bssid.bytes,
 						preauth, GFP_KERNEL);
 	}
-#endif /* FEATURE_WLAN_OKC */
 	return 0;
 }
 

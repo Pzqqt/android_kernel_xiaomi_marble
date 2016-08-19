@@ -14033,38 +14033,39 @@ QDF_STATUS sme_update_roam_offload_enabled(tHalHandle hHal,
 	return status;
 }
 
-/*--------------------------------------------------------------------------
-   \brief sme_update_roam_key_mgmt_offload_enabled() - enable/disable key mgmt
-	offload
-	This is a synchronous call
-   \param hHal - The handle returned by mac_open.
-   \param  sessionId - Session Identifier
-   \param nRoamKeyMgmtOffloadEnabled - The bool to update with
-   \return QDF_STATUS_SUCCESS - SME update config successfully.
-	   Other status means SME is failed to update.
-   \sa
-   --------------------------------------------------------------------------*/
+/**
+ * sme_update_roam_key_mgmt_offload_enabled() - enable/disable key mgmt offload
+ * This is a synchronous call
+ * @hal_ctx: The handle returned by mac_open.
+ * @session_id: Session Identifier
+ * @key_mgmt_offload_enabled: key mgmt enable/disable flag
+ * @okc_enabled: Opportunistic key caching enable/disable flag
+ * Return: QDF_STATUS_SUCCESS - SME updated config successfully.
+ * Other status means SME is failed to update.
+ */
 
-QDF_STATUS sme_update_roam_key_mgmt_offload_enabled(tHalHandle hHal,
-						    uint8_t sessionId,
-						    bool nRoamKeyMgmtOffloadEnabled)
+QDF_STATUS sme_update_roam_key_mgmt_offload_enabled(tHalHandle hal_ctx,
+						uint8_t session_id,
+						bool key_mgmt_offload_enabled,
+						bool okc_enabled)
 {
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	status = sme_acquire_global_lock(&pMac->sme);
+	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		if (CSR_IS_SESSION_VALID(pMac, sessionId)) {
+		if (CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-				  "%s: LFR3: KeyMgmtOffloadEnabled changed to %d",
-				  __func__, nRoamKeyMgmtOffloadEnabled);
-			status = csr_roam_set_key_mgmt_offload(pMac,
-							       sessionId,
-							       nRoamKeyMgmtOffloadEnabled);
+				"%s: LFR3: key_mgmt_offload_enabled changed to %d",
+				  __func__, key_mgmt_offload_enabled);
+			status = csr_roam_set_key_mgmt_offload(mac_ctx,
+						session_id,
+						key_mgmt_offload_enabled,
+						okc_enabled);
 		} else {
 			status = QDF_STATUS_E_INVAL;
 		}
-		sme_release_global_lock(&pMac->sme);
+		sme_release_global_lock(&mac_ctx->sme);
 	}
 
 	return status;

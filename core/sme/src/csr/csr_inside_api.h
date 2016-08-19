@@ -771,18 +771,10 @@ QDF_STATUS csr_roam_set_pmkid_cache(tpAniSirGlobal pMac, uint32_t sessionId,
 QDF_STATUS csr_roam_set_psk_pmk(tpAniSirGlobal pMac, uint32_t sessionId,
 				uint8_t *pPSK_PMK, size_t pmk_len);
 
-/* ---------------------------------------------------------------------------
-   *\fn csr_roam_set_key_mgmt_offload
-   *\brief sets nRoamKeyMgmtOffloadEnabled
-   *\param pMac  - pointer to global structure for MAC
-   *\param sessionId - Sme session id
-   *\param nRoamKeyMgmtOffloadEnabled - value of key mgmt offload enable
-   *\return QDF_STATUS - usually it succeed unless sessionId is not found
-   *\Note:
- *-------------------------------------------------------------------------------*/
-QDF_STATUS csr_roam_set_key_mgmt_offload(tpAniSirGlobal pMac,
-					 uint32_t sessionId,
-					 bool nRoamKeyMgmtOffloadEnabled);
+QDF_STATUS csr_roam_set_key_mgmt_offload(tpAniSirGlobal mac_ctx,
+					 uint32_t session_id,
+					 bool roam_key_mgmt_offload_enabled,
+					 bool okc_enabled);
 #endif
 /* ---------------------------------------------------------------------------
     \fn csr_roam_get_wpa_rsn_req_ie

@@ -780,6 +780,7 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 				roam_req->RoamKeyMgmtOffloadEnabled;
 		wma_roam_scan_fill_self_caps(wma_handle,
 			&params.roam_offload_params, roam_req);
+		params.okc_enabled = roam_req->okc_enabled;
 #endif
 		params.is_ese_assoc = roam_req->IsESEAssoc;
 		params.mdid.mdie_present = roam_req->MDID.mdiePresent;

@@ -79,9 +79,6 @@ ifeq ($(KERNEL_BUILD), 0)
 	#Flag to enable Legacy Fast Roaming3(LFR3)
 	CONFIG_QCACLD_WLAN_LFR3 := y
 
-	#JB kernel has PMKSA patches, hence enabling this flag
-	CONFIG_PRIMA_WLAN_OKC := y
-
 	# JB kernel has CPU enablement patches, so enable
 	ifeq ($(CONFIG_ROME_IF),pci)
 		CONFIG_PRIMA_WLAN_11AC_HIGH_TP := y
@@ -1174,10 +1171,6 @@ endif
 
 ifeq ($(CONFIG_QCACLD_WLAN_LFR2),y)
 CDEFINES += -DWLAN_FEATURE_HOST_ROAM
-endif
-
-ifeq ($(CONFIG_PRIMA_WLAN_OKC),y)
-CDEFINES += -DFEATURE_WLAN_OKC
 endif
 
 ifeq ($(BUILD_DIAG_VERSION),1)

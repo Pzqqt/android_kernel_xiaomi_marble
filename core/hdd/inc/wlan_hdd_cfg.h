@@ -711,12 +711,10 @@ typedef enum {
 #define CFG_ROAM_SCAN_HOME_AWAY_TIME_DEFAULT                (CFG_ROAM_SCAN_HOME_AWAY_TIME_MIN)
 /* disabled by default */
 
-#ifdef FEATURE_WLAN_OKC
 #define CFG_OKC_FEATURE_ENABLED_NAME                       "OkcEnabled"
 #define CFG_OKC_FEATURE_ENABLED_MIN                        (0)
 #define CFG_OKC_FEATURE_ENABLED_MAX                        (1)
 #define CFG_OKC_FEATURE_ENABLED_DEFAULT                    (1)
-#endif
 
 #define CFG_ROAM_SCAN_OFFLOAD_ENABLED                       "gRoamScanOffloadEnabled"
 #define CFG_ROAM_SCAN_OFFLOAD_ENABLED_MIN                   (0)
@@ -3646,9 +3644,7 @@ struct hdd_config {
 	bool isFastTransitionEnabled;
 	uint8_t RoamRssiDiff;
 	bool isWESModeEnabled;
-#ifdef FEATURE_WLAN_OKC
 	bool isOkcIniFeatureEnabled;
-#endif
 	bool isRoamOffloadScanEnabled;
 	bool bImplicitQosEnabled;
 

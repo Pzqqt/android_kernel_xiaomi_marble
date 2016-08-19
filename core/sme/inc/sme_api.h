@@ -893,9 +893,10 @@ QDF_STATUS sme_set_wisa_params(tHalHandle hal,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS sme_update_roam_offload_enabled(tHalHandle hHal,
 		bool nRoamOffloadEnabled);
-QDF_STATUS sme_update_roam_key_mgmt_offload_enabled(tHalHandle hHal,
-		uint8_t sessionId,
-		bool nRoamKeyMgmtOffloadEnabled);
+QDF_STATUS sme_update_roam_key_mgmt_offload_enabled(tHalHandle hal_ctx,
+		uint8_t session_id,
+		bool key_mgmt_offload_enabled,
+		bool okc_enabled);
 #endif
 #ifdef WLAN_FEATURE_NAN
 QDF_STATUS sme_nan_event(tHalHandle hHal, void *pMsg);

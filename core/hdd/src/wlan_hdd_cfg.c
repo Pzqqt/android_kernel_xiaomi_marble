@@ -96,15 +96,6 @@ cb_notify_set_roam_scan_home_away_time(hdd_context_t *pHddCtx, unsigned long not
 					    true);
 }
 
-#ifdef FEATURE_WLAN_OKC
-static void
-cb_notify_set_okc_feature_enabled(hdd_context_t *pHddCtx, unsigned long notifyId)
-{
-	/* At the point this routine is called, the value in the hdd config
-	   table has already been updated */
-}
-#endif
-
 static void
 notify_is_fast_roam_ini_feature_enabled(hdd_context_t *pHddCtx,
 					unsigned long notifyId)
@@ -1079,16 +1070,13 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			     CFG_ENABLE_WES_MODE_NAME_MIN,
 			     CFG_ENABLE_WES_MODE_NAME_MAX,
 			     cb_notify_set_wes_mode, 0),
-#ifdef FEATURE_WLAN_OKC
-	REG_DYNAMIC_VARIABLE(CFG_OKC_FEATURE_ENABLED_NAME, WLAN_PARAM_Integer,
-			     struct hdd_config, isOkcIniFeatureEnabled,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_OKC_FEATURE_ENABLED_DEFAULT,
-			     CFG_OKC_FEATURE_ENABLED_MIN,
-			     CFG_OKC_FEATURE_ENABLED_MAX,
-			     cb_notify_set_okc_feature_enabled, 0),
-#endif
+	REG_VARIABLE(CFG_OKC_FEATURE_ENABLED_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, isOkcIniFeatureEnabled,
+		     VAR_FLAGS_OPTIONAL |
+		     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_OKC_FEATURE_ENABLED_DEFAULT,
+		     CFG_OKC_FEATURE_ENABLED_MIN,
+		     CFG_OKC_FEATURE_ENABLED_MAX),
 	REG_DYNAMIC_VARIABLE(CFG_ROAM_SCAN_OFFLOAD_ENABLED, WLAN_PARAM_Integer,
 			     struct hdd_config, isRoamOffloadScanEnabled,
 			     VAR_FLAGS_OPTIONAL |
@@ -5004,11 +4992,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [isWESModeEnabled] Value = [%u] ",
 		  pHddCtx->config->isWESModeEnabled);
-#ifdef FEATURE_WLAN_OKC
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [OkcEnabled] Value = [%u] ",
 		  pHddCtx->config->isOkcIniFeatureEnabled);
-#endif
 #ifdef FEATURE_WLAN_SCAN_PNO
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [configPNOScanSupport] Value = [%u] ",
@@ -7363,11 +7349,7 @@ bool hdd_is_okc_mode_enabled(hdd_context_t *pHddCtx)
 		hddLog(QDF_TRACE_LEVEL_FATAL, "%s: pHddCtx is NULL", __func__);
 		return -EINVAL;
 	}
-#ifdef FEATURE_WLAN_OKC
 	return pHddCtx->config->isOkcIniFeatureEnabled;
-#else
-	return false;
-#endif
 }
 
 /**

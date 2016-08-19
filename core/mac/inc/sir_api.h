@@ -3009,6 +3009,7 @@ typedef struct sSirRoamOffloadScanReq {
 	uint8_t R0KH_ID[SIR_ROAM_R0KH_ID_MAX_LEN];
 	uint32_t R0KH_ID_Length;
 	uint8_t RoamKeyMgmtOffloadEnabled;
+	bool okc_enabled;
 #endif
 	struct roam_ext_params roam_params;
 	uint8_t  middle_of_roaming;
