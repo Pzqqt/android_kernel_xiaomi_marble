@@ -6878,6 +6878,7 @@ static uint32_t hdd_send_wakelock_stats(hdd_context_t *hdd_ctx,
 	uint32_t nl_buf_len;
 	uint32_t total_rx_data_wake, rx_multicast_cnt;
 	uint32_t ipv6_rx_multicast_addr_cnt;
+	uint32_t icmpv6_cnt;
 
 	ENTER();
 
@@ -6907,9 +6908,18 @@ static uint32_t hdd_send_wakelock_stats(hdd_context_t *hdd_ctx,
 			data->wow_ipv6_mcast_ns_stats);
 	hdd_log(LOG1, "wow_ipv6_mcast_na_stats %d",
 			data->wow_ipv6_mcast_na_stats);
+	hdd_log(LOG1, "wow_icmpv4_count %d", data->wow_icmpv4_count);
+	hdd_log(LOG1, "wow_icmpv6_uc_bc_count %d",
+			data->wow_icmpv6_uc_bc_count);
 
 	ipv6_rx_multicast_addr_cnt =
 		data->wow_ipv6_mcast_wake_up_count +
+		data->wow_ipv6_mcast_ra_stats +
+		data->wow_ipv6_mcast_ns_stats +
+		data->wow_ipv6_mcast_na_stats;
+
+	icmpv6_cnt =
+		data->wow_icmpv6_uc_bc_count +
 		data->wow_ipv6_mcast_ra_stats +
 		data->wow_ipv6_mcast_ns_stats +
 		data->wow_ipv6_mcast_na_stats;
@@ -6937,6 +6947,10 @@ static uint32_t hdd_send_wakelock_stats(hdd_context_t *hdd_ctx,
 				rx_multicast_cnt) ||
 	    nla_put_u32(skb, PARAM_RX_BROADCAST_CNT,
 				data->wow_bcast_wake_up_count) ||
+	    nla_put_u32(skb, PARAM_ICMP_PKT,
+				data->wow_icmpv4_count) ||
+	    nla_put_u32(skb, PARAM_ICMP6_PKT,
+				icmpv6_cnt) ||
 	    nla_put_u32(skb, PARAM_ICMP6_RA,
 				data->wow_ipv6_mcast_ra_stats) ||
 	    nla_put_u32(skb, PARAM_ICMP6_NA,

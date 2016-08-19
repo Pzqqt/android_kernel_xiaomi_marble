@@ -158,6 +158,8 @@
 #define WMA_ICMP_V6_HEADER_OFFSET (6 + 6 + 2 + 6)
 /* WMA_ICMP_V6_TYPE_OFFSET = sa(6) + da(6) + eth_type(2) + 40 */
 #define WMA_ICMP_V6_TYPE_OFFSET (6 + 6 + 2 + 40)
+/* WMA_IPV4_PROTOCOL = sa(6) + da(6) + eth_type(2) + 9 */
+#define WMA_IPV4_PROTOCOL (6 + 6 + 2 + 9)
 #define WMA_ICMP_V6_HEADER_TYPE (0x3A)
 #define WMA_ICMP_V6_RA_TYPE (0x86)
 #define WMA_ICMP_V6_NS_TYPE (0x87)
@@ -165,6 +167,7 @@
 #define WMA_BCAST_MAC_ADDR (0xFF)
 #define WMA_MCAST_IPV4_MAC_ADDR (0x01)
 #define WMA_MCAST_IPV6_MAC_ADDR (0x33)
+#define WMA_ICMP_PROTOCOL (0x01)
 
 #define WMA_IS_EAPOL_GET_MIN_LEN          14
 #define WMA_EAPOL_SUBTYPE_GET_MIN_LEN     21
@@ -1263,6 +1266,8 @@ struct extended_caps {
  * @wow_ipv6_mcast_ra_stats: WoW IPV6 mcast RA packet wake up count
  * @wow_ipv6_mcast_ns_stats: WoW IPV6 mcast NS packet wake up count
  * @wow_ipv6_mcast_na_stats: WoW IPV6 mcast NA packet wake up count
+ * @wow_icmpv4_count: WoW ipv4 icmp packet wake up count
+ * @wow_icmpv6_uc_bc_count: WoW ipv6 icmp packet count for unicast and broadcast
  * @dual_mac_cfg: Dual mac configuration params for scan and fw mode
  *
  * @max_scan:  maximum scan requests than can be queued
@@ -1423,6 +1428,8 @@ typedef struct {
 	uint32_t wow_ipv6_mcast_ra_stats;
 	uint32_t wow_ipv6_mcast_ns_stats;
 	uint32_t wow_ipv6_mcast_na_stats;
+	uint32_t wow_icmpv4_count;
+	uint32_t wow_icmpv6_uc_bc_count;
 	uint32_t wow_oem_response_wake_up_count;
 
 	/* OCB request contexts */
