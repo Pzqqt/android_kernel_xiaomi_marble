@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -3146,7 +3146,7 @@ struct htt_rx_in_ord_paddr_ind_hdr_t {
 		ext_tid:5,
 		offload:1,
 		frag:1,
-		reserved_0:1,
+		pktlog:1,
 		peer_id:16;
 
 	A_UINT32		/* word 1 */
@@ -3204,6 +3204,8 @@ struct htt_rx_in_ord_paddr_ind_msdu64_t {
 #define HTT_RX_IN_ORD_PADDR_IND_OFFLOAD_S      13
 #define HTT_RX_IN_ORD_PADDR_IND_FRAG_M         0x00004000
 #define HTT_RX_IN_ORD_PADDR_IND_FRAG_S         14
+#define HTT_RX_IN_ORD_PADDR_IND_PKTLOG_M       0x00008000
+#define HTT_RX_IN_ORD_PADDR_IND_PKTLOG_S       15
 #define HTT_RX_IN_ORD_PADDR_IND_PEER_ID_M      0xffff0000
 #define HTT_RX_IN_ORD_PADDR_IND_PEER_ID_S      16
 #define HTT_RX_IN_ORD_PADDR_IND_VAP_ID_M       0x000000ff
@@ -3334,6 +3336,10 @@ do {								\
 #define HTT_RX_IN_ORD_PADDR_IND_FRAG_GET(word)			\
 	(((word) & HTT_RX_IN_ORD_PADDR_IND_FRAG_M) >>		\
 	HTT_RX_IN_ORD_PADDR_IND_FRAG_S)
+#define HTT_RX_IN_ORD_PADDR_IND_PKTLOG_GET(word)			\
+		(((word) & HTT_RX_IN_ORD_PADDR_IND_PKTLOG_M) >>		\
+		HTT_RX_IN_ORD_PADDR_IND_PKTLOG_S)
+
 
 /* definitions used within target -> host rx indication message */
 
