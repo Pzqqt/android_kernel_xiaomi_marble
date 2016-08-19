@@ -3124,12 +3124,12 @@ enum dot11p_mode {
 /*
  * Dense traffic threshold
  * traffic threshold required for dense roam scan
- * not used currently
+ * Measured in kbps
  */
 #define CFG_ROAM_DENSE_TRAFFIC_THRESHOLD         "gtraffic_threshold"
 #define CFG_ROAM_DENSE_TRAFFIC_THRESHOLD_MIN     (0)
-#define CFG_ROAM_DENSE_TRAFFIC_THRESHOLD_MAX     (100)
-#define CFG_ROAM_DENSE_TRAFFIC_THRESHOLD_DEFAULT (55)
+#define CFG_ROAM_DENSE_TRAFFIC_THRESHOLD_MAX     (0xffffffff)
+#define CFG_ROAM_DENSE_TRAFFIC_THRESHOLD_DEFAULT (400)
 
 /*
  * Dense Roam RSSI Threshold diff
