@@ -1404,21 +1404,17 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 					peer, false);
 		}
 
-		if (wma->interfaces[resp_event->vdev_id].vdev_up) {
-			if (wmi_unified_vdev_down_send(wma->wmi_handle,
+		if (wmi_unified_vdev_down_send(wma->wmi_handle,
 						resp_event->vdev_id) !=
-					QDF_STATUS_SUCCESS) {
-				WMA_LOGE("Failed to send vdev down: vdev %d",
-						resp_event->vdev_id);
-			} else {
-				wma->interfaces[resp_event->vdev_id].vdev_up =
-					false;
+						QDF_STATUS_SUCCESS) {
+			WMA_LOGE("Failed to send vdev down cmd: vdev %d",
+				 resp_event->vdev_id);
+		} else {
+			wma->interfaces[resp_event->vdev_id].vdev_up = false;
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-				if (mac_ctx->sap.sap_channel_avoidance)
-					wma_find_mcc_ap(wma,
-						resp_event->vdev_id, false);
+		if (mac_ctx->sap.sap_channel_avoidance)
+			wma_find_mcc_ap(wma, resp_event->vdev_id, false);
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
-			}
 		}
 		ol_txrx_vdev_flush(iface->handle);
 		WMA_LOGD("%s, vdev_id: %d, un-pausing tx_ll_queue for VDEV_STOP rsp",
@@ -2408,21 +2404,16 @@ void wma_vdev_resp_timer(void *data)
 					peer, false);
 		}
 
-		if (wma->interfaces[tgt_req->vdev_id].vdev_up) {
-			if (wmi_unified_vdev_down_send(wma->wmi_handle,
-						tgt_req->vdev_id) !=
-					QDF_STATUS_SUCCESS) {
-				WMA_LOGE("Failed to send vdev down: vdev %d",
-						tgt_req->vdev_id);
-			} else {
-				wma->interfaces[tgt_req->vdev_id].vdev_up =
-					false;
+		if (wmi_unified_vdev_down_send(wma->wmi_handle,
+				tgt_req->vdev_id) != QDF_STATUS_SUCCESS) {
+			WMA_LOGE("Failed to send vdev down cmd: vdev %d",
+				 tgt_req->vdev_id);
+		} else {
+			wma->interfaces[tgt_req->vdev_id].vdev_up = false;
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-				if (mac_ctx->sap.sap_channel_avoidance)
-					wma_find_mcc_ap(wma, tgt_req->vdev_id,
-							false);
+		if (mac_ctx->sap.sap_channel_avoidance)
+			wma_find_mcc_ap(wma, tgt_req->vdev_id, false);
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
-			}
 		}
 		ol_txrx_vdev_flush(iface->handle);
 		WMA_LOGD("%s, vdev_id: %d, un-pausing tx_ll_queue for WDA_DELETE_BSS_REQ timeout",
