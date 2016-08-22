@@ -41,7 +41,6 @@
 
 #define WORLD_SKU_MASK      0x00F0
 #define WORLD_SKU_PREFIX    0x0060
-#define REG_WAIT_TIME       50
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)) || defined(WITH_BACKPORTS)
 #define IEEE80211_CHAN_PASSIVE_SCAN IEEE80211_CHAN_NO_IR
@@ -508,8 +507,6 @@ int hdd_regulatory_init(hdd_context_t *hdd_ctx, struct wiphy *wiphy)
 
 	cds_put_default_country(reg_info->alpha2);
 
-	init_completion(&hdd_ctx->reg_init);
-
 	cds_fill_and_send_ctl_to_fw(reg_info);
 
 	hdd_set_dfs_region(hdd_ctx, DFS_FCC_REGION);
@@ -533,12 +530,8 @@ void hdd_program_country_code(hdd_context_t *hdd_ctx)
 	if (false == init_by_reg_core) {
 		init_by_driver = true;
 		if (('0' != country_alpha2[0]) ||
-		    ('0' != country_alpha2[1])) {
-			INIT_COMPLETION(hdd_ctx->reg_init);
+		    ('0' != country_alpha2[1]))
 			regulatory_hint(wiphy, country_alpha2);
-			wait_for_completion_timeout(&hdd_ctx->reg_init,
-					      msecs_to_jiffies(REG_WAIT_TIME));
-		}
 	}
 }
 
@@ -691,9 +684,6 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 		hdd_update_regulatory_info(hdd_ctx);
 
 		hdd_process_regulatory_data(hdd_ctx, wiphy, reset);
-
-		if (NL80211_REGDOM_SET_BY_DRIVER == request->initiator)
-			complete(&hdd_ctx->reg_init);
 
 		sme_generic_change_country_code(hdd_ctx->hHal,
 						hdd_ctx->reg.alpha2);

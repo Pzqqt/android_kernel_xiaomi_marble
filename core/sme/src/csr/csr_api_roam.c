@@ -870,10 +870,6 @@ QDF_STATUS csr_start(tpAniSirGlobal pMac)
 				" csr_start: Couldn't Init HO control blk ");
 			break;
 		}
-
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-			  "Scan offload is enabled, update default chan list");
-		status = csr_update_channel_list(pMac);
 	} while (0);
 	return status;
 }
