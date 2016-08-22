@@ -3048,22 +3048,11 @@ QDF_STATUS csr_apply_channel_and_power_list(tpAniSirGlobal pMac)
 	csr_prune_channel_list_for_mode(pMac, &pMac->scan.base_channels);
 	csr_save_channel_power_for_band(pMac, false);
 	csr_save_channel_power_for_band(pMac, true);
-	/* Apply the base channel list, power info, and set the Country code... */
 	csr_apply_channel_power_info_to_fw(pMac,
 					   &pMac->scan.base_channels,
 					   pMac->scan.countryCodeCurrent);
 
 	csr_init_operating_classes((tHalHandle) pMac);
-	return status;
-}
-
-QDF_STATUS csr_change_config_params(tpAniSirGlobal pMac,
-				    tCsrUpdateConfigParam *pUpdateConfigParam)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tCsr11dinfo *ps11dinfo = NULL;
-	ps11dinfo = &pUpdateConfigParam->Csr11dinfo;
-	status = csr_init11d_info(pMac, ps11dinfo);
 	return status;
 }
 

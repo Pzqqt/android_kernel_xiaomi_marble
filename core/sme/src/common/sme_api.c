@@ -1642,51 +1642,6 @@ static void sme_process_ready_to_ext_wow(tHalHandle hHal,
 }
 #endif
 
-/* ---------------------------------------------------------------------------
-    \fn sme_change_config_params
-    \brief The SME API exposed for HDD to provide config params to SME during
-    SMEs stop -> start sequence.
-
-    If HDD changed the domain that will cause a reset. This function will
-    provide the new set of 11d information for the new domain. Currrently this
-    API provides info regarding 11d only at reset but we can extend this for
-    other params (PMC, QoS) which needs to be initialized again at reset.
-
-    This is a synchronous call
-
-    \param hHal - The handle returned by mac_open.
-
-    \Param
-    pUpdateConfigParam - a pointer to a structure (tCsrUpdateConfigParam) that
-		currently provides 11d related information like Country code,
-		Regulatory domain, valid channel list, Tx power per channel, a
-		list with active/passive scan allowed per valid channel.
-
-    \return QDF_STATUS
-   ---------------------------------------------------------------------------*/
-QDF_STATUS sme_change_config_params(tHalHandle hHal,
-				    tCsrUpdateConfigParam *pUpdateConfigParam)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	if (NULL == pUpdateConfigParam) {
-		sms_log(pMac, LOGE,
-			"Empty config param structure for SME, nothing to reset");
-		return status;
-	}
-
-	status = csr_change_config_params(pMac, pUpdateConfigParam);
-
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sms_log(pMac, LOGE, "csrUpdateConfigParam failed with status=%d",
-			status);
-	}
-
-	return status;
-
-}
-
 /*--------------------------------------------------------------------------
 
    \brief sme_hdd_ready_ind() - SME sends eWNI_SME_SYS_READY_IND to PE to inform

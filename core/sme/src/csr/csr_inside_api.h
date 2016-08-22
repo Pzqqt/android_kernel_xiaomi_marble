@@ -848,26 +848,6 @@ void csr_roam_free_connect_profile(tCsrRoamConnectedProfile *profile);
    -------------------------------------------------------------------------------*/
 QDF_STATUS csr_apply_channel_and_power_list(tpAniSirGlobal pMac);
 
-/**
- * csr_change_config_params() - The CSR API exposed for HDD to provide config
- * params to CSR during SMEs stop -> start sequence.
- *
- * @pMac:                 pointer to global adapter context
- * @pUpdateConfigParam:   a pointer to a structure (tCsrUpdateConfigParam) that
- * currently provides 11d related information like country code, Regulatory
- * domain, valid channel list, Tx power per channel, a list with active/passive
- * scan allowed per valid channel.
- *
- * If HDD changed the domain that will cause a reset. This function will
- * provide the new set of 11d information for the new domain. Currrently this
- * API provides info regarding 11d only at reset but we can extend this for
- * other params (PMC, QoS) which needs to be initialized again at reset.
- *
- * Return: QDF_STATUS. status of operation
- */
-QDF_STATUS csr_change_config_params(tpAniSirGlobal pMac,
-				    tCsrUpdateConfigParam *pUpdateConfigParam);
-
 /* ---------------------------------------------------------------------------
     \fn csr_roam_connect_to_last_profile
     \brief To disconnect and reconnect with the same profile

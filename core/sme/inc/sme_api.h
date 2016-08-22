@@ -236,8 +236,6 @@ QDF_STATUS sme_set11dinfo(tHalHandle hHal, tpSmeConfigParams pSmeConfigParams);
 QDF_STATUS sme_get_soft_ap_domain(tHalHandle hHal,
 		v_REGDOMAIN_t *domainIdSoftAp);
 QDF_STATUS sme_set_reg_info(tHalHandle hHal, uint8_t *apCntryCode);
-QDF_STATUS sme_change_config_params(tHalHandle hHal,
-		tCsrUpdateConfigParam *pUpdateConfigParam);
 QDF_STATUS sme_hdd_ready_ind(tHalHandle hHal);
 QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg);
 void sme_free_msg(tHalHandle hHal, cds_msg_t *pMsg);
