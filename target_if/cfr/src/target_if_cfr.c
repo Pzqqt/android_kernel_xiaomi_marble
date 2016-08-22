@@ -29,6 +29,7 @@
 #include <target_if_cfr_6018.h>
 #ifdef CFR_USE_FIXED_FOLDER
 #include "target_if_cfr_6490.h"
+#include "wlan_reg_services_api.h"
 #else
 #include <target_if_cfr_8074v2.h>
 #endif
@@ -269,6 +270,67 @@ int target_if_cfr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 #endif
 
 #ifdef WLAN_ENH_CFR_ENABLE
+#ifdef QCA_WIFI_QCA6490
+static uint8_t target_if_cfr_get_mac_id(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_channel *bss_chan;
+	struct pdev_cfr *pcfr;
+	uint8_t mac_id = 0;
+
+	if (!pdev) {
+		cfr_err("null pdev");
+		return mac_id;
+	}
+
+	mac_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	pcfr = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_CFR);
+	if (!pcfr)  {
+		cfr_err("null pcfr");
+		return mac_id;
+	}
+
+	if (pcfr->rcc_param.vdev_id == CFR_INVALID_VDEV_ID)
+		return mac_id;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev,
+						    pcfr->rcc_param.vdev_id,
+						    WLAN_CFR_ID);
+	if (!vdev) {
+		cfr_err("null vdev");
+		return mac_id;
+	}
+
+	bss_chan = wlan_vdev_mlme_get_bss_chan(vdev);
+	if (!bss_chan) {
+		cfr_info("null bss chan");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
+		return mac_id;
+	}
+
+	cfr_debug("bss freq %d", bss_chan->ch_freq);
+	if (wlan_reg_is_24ghz_ch_freq(bss_chan->ch_freq))
+		mac_id = CFR_MAC_ID_24G;
+	else
+		mac_id = CFR_MAC_ID_5G;
+
+	pcfr->rcc_param.srng_id = mac_id;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
+
+	return mac_id;
+}
+
+static uint8_t target_if_cfr_get_pdev_id(struct wlan_objmgr_pdev *pdev)
+{
+	return target_if_cfr_get_mac_id(pdev);
+}
+#else
+static uint8_t target_if_cfr_get_pdev_id(struct wlan_objmgr_pdev *pdev)
+{
+	return wlan_objmgr_pdev_get_pdev_id(pdev);
+}
+#endif /* QCA_WIFI_QCA6490 */
+
 QDF_STATUS target_if_cfr_config_rcc(struct wlan_objmgr_pdev *pdev,
 				    struct cfr_rcc_param *rcc_info)
 {
@@ -281,7 +343,7 @@ QDF_STATUS target_if_cfr_config_rcc(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	rcc_info->pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	rcc_info->pdev_id = target_if_cfr_get_pdev_id(pdev);
 	rcc_info->num_grp_tlvs =
 		count_set_bits(rcc_info->modified_in_curr_session);
 

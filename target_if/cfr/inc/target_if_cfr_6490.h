@@ -26,6 +26,11 @@
 #ifndef _TARGET_IF_CFR_6490_H
 #define _TARGET_IF_CFR_6490_H
 
+#ifdef QCA_WIFI_QCA6490
+#define CFR_MAC_ID_24G 1
+#define CFR_MAC_ID_5G  0
+#endif /* QCA_WIFI_QCA6490 */
+
 /**
  * target_if_cfr_subscribe_ppdu_desc() - subscribe ppdu description
  * for CFR component
