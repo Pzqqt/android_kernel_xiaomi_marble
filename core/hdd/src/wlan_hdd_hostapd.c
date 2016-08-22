@@ -7690,7 +7690,7 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 
 		ret = wlan_hdd_sap_cfg_dfs_override(pHostapdAdapter);
 		if (ret < 0) {
-			return ret;
+			goto error;
 		} else {
 			if (ret == 0) {
 				if (CDS_IS_DFS_CH(pConfig->channel))
@@ -7704,7 +7704,8 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 							pConfig->channel)) {
 			hdd_err("Invalid Channel [%d]",
 							pConfig->channel);
-				return -EINVAL;
+				ret = -EINVAL;
+				goto error;
 		}
 
 		/* reject SAP if DFS channel scan is not allowed */
@@ -7712,7 +7713,8 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		    (CHANNEL_STATE_DFS == cds_get_channel_state(
 					     pConfig->channel))) {
 			hdd_err("not allowed to start SAP on DFS channel");
-				return -EOPNOTSUPP;
+				ret = -EOPNOTSUPP;
+				goto error;
 		}
 		wlansap_set_dfs_ignore_cac(hHal, iniConfig->ignoreCAC);
 		wlansap_set_dfs_restrict_japan_w53(hHal,
@@ -7744,7 +7746,8 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	if (pIe) {
 		if (pIe[1] < (2 + WPS_OUI_TYPE_SIZE)) {
 			hdd_err("**Wps Ie Length is too small***");
-			return -EINVAL;
+			ret = -EINVAL;
+			goto error;
 		} else if (memcmp(&pIe[2], WPS_OUI_TYPE, WPS_OUI_TYPE_SIZE) ==
 			   0) {
 			hdd_notice("** WPS IE(len %d) ***", (pIe[1] + 2));
@@ -7858,7 +7861,8 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 
 	if (pConfig->RSNWPAReqIELength > sizeof(pConfig->RSNWPAReqIE)) {
 		hdd_err("**RSNWPAReqIELength is too large***");
-		return -EINVAL;
+		ret = -EINVAL;
+		goto error;
 	}
 
 	pConfig->SSIDinfo.ssidHidden = false;
@@ -8001,8 +8005,10 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		pConfig->ch_width_orig = CH_WIDTH_20MHZ;
 	}
 
-	if (wlan_hdd_setup_driver_overrides(pHostapdAdapter))
-		return -EINVAL;
+	if (wlan_hdd_setup_driver_overrides(pHostapdAdapter)) {
+		ret = -EINVAL;
+		goto error;
+	}
 
 	/* ht_capab is not what the name conveys,this is used for protection
 	 * bitmap */
@@ -8011,7 +8017,8 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	if (0 != wlan_hdd_cfg80211_update_apies(pHostapdAdapter)) {
 		hdd_err("SAP Not able to set AP IEs");
 		wlansap_reset_sap_config_add_ie(pConfig, eUPDATE_IE_ALL);
-		return -EINVAL;
+		ret = -EINVAL;
+		goto error;
 	}
 	/* Uapsd Enabled Bit */
 	pConfig->UapsdEnable = iniConfig->apUapsdEnabled;
@@ -8061,13 +8068,15 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 					pHostapdAdapter->device_mode),
 					pConfig->channel, HW_MODE_20_MHZ)) {
 			hdd_warn("This concurrency combination is not allowed");
-			return -EINVAL;
+			ret = -EINVAL;
+			goto error;
 		}
 	}
 
 	if (!cds_set_connection_in_progress(true)) {
 		hdd_err("Can't start BSS: set connnection in progress failed");
-		return -EINVAL;
+		ret = -EINVAL;
+		goto error;
 	}
 
 	pConfig->persona = pHostapdAdapter->device_mode;
@@ -8090,7 +8099,8 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		wlansap_reset_sap_config_add_ie(pConfig, eUPDATE_IE_ALL);
 		cds_set_connection_in_progress(false);
 		hdd_err("SAP Start Bss fail");
-		return -EINVAL;
+		ret = -EINVAL;
+		goto error;
 	}
 
 	hdd_notice("Waiting for Scan to complete(auto mode) and BSS to start");
@@ -8109,7 +8119,8 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		wlansap_stop_bss(p_cds_context);
 #endif
 		QDF_ASSERT(0);
-		return -EINVAL;
+		ret = -EINVAL;
+		goto error;
 	}
 	/* Succesfully started Bss update the state bit. */
 	set_bit(SOFTAP_BSS_STARTED, &pHostapdAdapter->event_flags);
@@ -8139,6 +8150,14 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	EXIT();
 
 	return 0;
+
+error:
+	if (pHostapdAdapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list) {
+		qdf_mem_free(pHostapdAdapter->sessionCtx.ap.sapConfig.
+			acs_cfg.ch_list);
+		pHostapdAdapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list = NULL;
+	}
+	return ret;
 }
 
 /**
