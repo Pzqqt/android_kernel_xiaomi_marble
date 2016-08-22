@@ -181,6 +181,7 @@ void pe_reset_protection_callback(void *ptr)
 
 	old_op_mode = pe_session_entry->htOperMode;
 	pe_session_entry->htOperMode = eSIR_HT_OP_MODE_PURE;
+	mac_ctx->lim.gHTOperMode = eSIR_HT_OP_MODE_PURE;
 
 	qdf_mem_zero(&beacon_params, sizeof(tUpdateBeaconParams));
 	/* index 0, is self node, peers start from 1 */
