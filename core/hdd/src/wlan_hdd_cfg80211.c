@@ -6220,6 +6220,10 @@ static int hdd_set_reset_bpf_offload(hdd_context_t *hdd_ctx,
 	nla_memcpy(bpf_set_offload->program, tb[BPF_PROGRAM], prog_len);
 	bpf_set_offload->session_id = adapter->sessionId;
 
+	hdd_info("BPF set instructions");
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
+			   bpf_set_offload->program, prog_len);
+
 	/* Parse and fetch filter Id */
 	if (!tb[BPF_FILTER_ID]) {
 		hdd_err("attr filter id failed");
