@@ -2048,6 +2048,15 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 		return ERR_PTR(-ENOSPC);
 	}
 
+	/*
+	 * Add interface can be requested from the upper layer at any time
+	 * check the statemachine for modules state and if they are closed
+	 * open the modules.
+	 */
+	ret = hdd_wlan_start_modules(pHddCtx, pAdapter, false);
+	if (ret)
+		return ERR_PTR(ret);
+
 	if (NL80211_IFTYPE_AP == type) {
 		ret = hdd_start_adapter(pAdapter);
 		if (ret) {
@@ -2143,6 +2152,13 @@ int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 	status = wlan_hdd_validate_context(pHddCtx);
 
 	if (0 != status)
+		return status;
+
+	/*
+	 * check state machine state and kickstart modules if they are closed.
+	 */
+	status = hdd_wlan_start_modules(pHddCtx, pVirtAdapter, false);
+	if (status)
 		return status;
 
 	wlan_hdd_release_intf_addr(pHddCtx,
