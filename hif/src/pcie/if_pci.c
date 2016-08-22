@@ -2675,6 +2675,45 @@ int hif_pci_bus_suspend(struct hif_softc *scn)
 }
 
 /**
+ * __hif_check_link_status() - API to check if PCIe link is active/not
+ * @scn: HIF Context
+ *
+ * API reads the PCIe config space to verify if PCIe link training is
+ * successful or not.
+ *
+ * Return: Success/Failure
+ */
+static int __hif_check_link_status(struct hif_softc *scn)
+{
+	uint16_t dev_id;
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
+	struct hif_driver_state_callbacks *cbk = hif_get_callbacks_handle(scn);
+
+	if (!sc) {
+		HIF_ERROR("%s: HIF Bus Context is Invalid", __func__);
+		return -EINVAL;
+	}
+
+	pci_read_config_word(sc->pdev, PCI_DEVICE_ID, &dev_id);
+
+	if (dev_id == sc->devid)
+		return 0;
+
+	HIF_ERROR("%s: Invalid PCIe Config Space; PCIe link down dev_id:0x%04x",
+	       __func__, dev_id);
+
+	scn->recovery = true;
+
+	if (cbk && cbk->set_recovery_in_progress)
+		cbk->set_recovery_in_progress(cbk->context, true);
+	else
+		HIF_ERROR("%s: Driver Global Recovery is not set", __func__);
+
+	pld_is_pci_link_down(sc->dev);
+	return -EACCES;
+}
+
+/**
  * hif_bus_resume(): prepare hif for resume
  *
  * chose suspend type based on link suspend voting.
@@ -2683,6 +2722,12 @@ int hif_pci_bus_suspend(struct hif_softc *scn)
  */
 int hif_pci_bus_resume(struct hif_softc *scn)
 {
+	int ret;
+
+	ret = __hif_check_link_status(scn);
+	if (ret)
+		return ret;
+
 	if (hif_can_suspend_link(GET_HIF_OPAQUE_HDL(scn)))
 		return hif_bus_resume_link_down(scn);
 	else
