@@ -3256,7 +3256,7 @@ ol_txrx_fw_stats_cfg(ol_txrx_vdev_handle vdev,
 
 A_STATUS
 ol_txrx_fw_stats_get(ol_txrx_vdev_handle vdev, struct ol_txrx_stats_req *req,
-			bool response_expected)
+			bool per_vdev, bool response_expected)
 {
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 	uint64_t cookie;
