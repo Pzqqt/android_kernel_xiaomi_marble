@@ -1206,7 +1206,6 @@ struct ol_txrx_peer_t {
 	qdf_time_t last_assoc_rcvd;
 	qdf_time_t last_disassoc_rcvd;
 	qdf_time_t last_deauth_rcvd;
-	qdf_atomic_t exists_in_fw;
 };
 
 enum ol_rx_err_type {

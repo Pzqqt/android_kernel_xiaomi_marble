@@ -1730,7 +1730,6 @@ ol_txrx_vdev_attach(ol_txrx_pdev_handle pdev,
 		    uint8_t vdev_id, enum wlan_op_mode op_mode)
 {
 	struct ol_txrx_vdev_t *vdev;
-	QDF_STATUS qdf_status;
 
 	/* preconditions */
 	TXRX_ASSERT2(pdev);
@@ -1790,9 +1789,6 @@ ol_txrx_vdev_attach(ol_txrx_pdev_handle pdev,
 	/* Default MAX Q depth for every VDEV */
 	vdev->ll_pause.max_q_depth =
 		ol_tx_cfg_max_tx_queue_depth_ll(vdev->pdev->ctrl_pdev);
-
-	qdf_status = qdf_event_create(&vdev->wait_delete_comp);
-
 	/* add this vdev into the pdev's list */
 	TAILQ_INSERT_TAIL(&pdev->vdev_list, vdev, vdev_list_elem);
 
@@ -2096,7 +2092,7 @@ ol_txrx_peer_attach(ol_txrx_vdev_handle vdev, uint8_t *peer_mac_addr)
 				peer_mac_addr[4], peer_mac_addr[5]);
 			if (qdf_atomic_read(&temp_peer->delete_in_progress)) {
 				vdev->wait_on_peer_id = temp_peer->local_id;
-				qdf_event_reset(&vdev->wait_delete_comp);
+				qdf_event_create(&vdev->wait_delete_comp);
 				wait_on_deletion = true;
 			} else {
 				qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
@@ -2110,7 +2106,7 @@ ol_txrx_peer_attach(ol_txrx_vdev_handle vdev, uint8_t *peer_mac_addr)
 		/* wait for peer deletion */
 		rc = qdf_wait_single_event(&vdev->wait_delete_comp,
 					   PEER_DELETION_TIMEOUT);
-		if (QDF_STATUS_E_TIMEOUT == rc) {
+		if (!rc) {
 			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 				"timedout waiting for peer(%d) deletion\n",
 				vdev->wait_on_peer_id);
@@ -2153,7 +2149,6 @@ ol_txrx_peer_attach(ol_txrx_vdev_handle vdev, uint8_t *peer_mac_addr)
 
 	qdf_atomic_init(&peer->delete_in_progress);
 	qdf_atomic_init(&peer->flush_in_progress);
-	qdf_atomic_init(&peer->exists_in_fw);
 
 	qdf_atomic_init(&peer->ref_cnt);
 
@@ -2772,18 +2767,15 @@ void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 	 * concurrently with the empty check.
 	 */
 	qdf_spin_lock_bh(&pdev->peer_ref_mutex);
-	if (qdf_atomic_dec_and_test(&peer->ref_cnt) ||
-		!qdf_atomic_read(&peer->exists_in_fw)) {
+	if (qdf_atomic_dec_and_test(&peer->ref_cnt)) {
 		u_int16_t peer_id;
 
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-			   "Deleting peer %p (%02x:%02x:%02x:%02x:%02x:%02x) ref_cnt %d, exists_in_fw %d\n",
+			   "Deleting peer %p (%02x:%02x:%02x:%02x:%02x:%02x)",
 			   peer,
 			   peer->mac_addr.raw[0], peer->mac_addr.raw[1],
 			   peer->mac_addr.raw[2], peer->mac_addr.raw[3],
-			   peer->mac_addr.raw[4], peer->mac_addr.raw[5],
-			   qdf_atomic_read(&peer->ref_cnt),
-			   qdf_atomic_read(&peer->exists_in_fw));
+			   peer->mac_addr.raw[4], peer->mac_addr.raw[5]);
 
 		peer_id = peer->local_id;
 		/* remove the reference to the peer from the hash table */
@@ -2868,9 +2860,6 @@ void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 						   (uint8_t) i);
 			}
 		}
-
-		/* remove references to this peer in peer_id_to_obj_map */
-		ol_txrx_peer_remove_obj_map_entries(pdev, peer);
 
 		qdf_mem_free(peer);
 	} else {

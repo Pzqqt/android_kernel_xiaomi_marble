@@ -584,33 +584,6 @@ struct ol_txrx_peer_t *ol_txrx_assoc_peer_find(struct ol_txrx_vdev_t *vdev)
 	return peer;
 }
 
-/**
- * ol_txrx_peer_remove_obj_map_entries() - Remove matching pdev peer map entries
- *
- * @pdev: pdev handle
- * @peer: peer to be removed
- *
- * @Return: None
- */
-void ol_txrx_peer_remove_obj_map_entries(ol_txrx_pdev_handle pdev,
-				     struct ol_txrx_peer_t *peer)
-{
-	int i;
-	uint16_t peer_id;
-
-	for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++) {
-		peer_id = peer->peer_ids[i];
-		if (peer_id != HTT_INVALID_PEER) {
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
-				  FL("remove map entry for peer_id = %d"),
-				  peer_id);
-			pdev->peer_id_to_obj_map[peer_id].peer = NULL;
-			qdf_atomic_init
-			  (&pdev->peer_id_to_obj_map[peer_id].peer_id_ref_cnt);
-		}
-	}
-}
-
 /*=== function definitions for debug ========================================*/
 
 #if defined(TXRX_DEBUG_LEVEL) && TXRX_DEBUG_LEVEL > 5
