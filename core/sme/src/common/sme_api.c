@@ -15678,8 +15678,6 @@ QDF_STATUS sme_handle_set_fcc_channel(tHalHandle hal, bool fcc_constraint,
 				mac_ptr->scan.defer_update_channel_list = true;
 			else
 				status = csr_update_channel_list(mac_ptr);
-			/* update the channel list in firmware */
-			status = csr_update_channel_list(mac_ptr);
 		}
 
 		sme_release_global_lock(&mac_ptr->sme);
