@@ -4007,6 +4007,14 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			CFG_INTERFACE_CHANGE_WAIT_DEFAULT,
 			CFG_INTERFACE_CHANGE_WAIT_MIN,
 			CFG_INTERFACE_CHANGE_WAIT_MAX),
+
+	REG_VARIABLE(CFG_FILTER_MULTICAST_REPLAY_NAME,
+		WLAN_PARAM_Integer,
+		struct hdd_config, multicast_replay_filter,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_FILTER_MULTICAST_REPLAY_DEFAULT,
+		CFG_FILTER_MULTICAST_REPLAY_MIN,
+		CFG_FILTER_MULTICAST_REPLAY_MAX),
 };
 
 /**
@@ -5686,6 +5694,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_info("Name = [%s] Value = [%d]",
 		CFG_BPF_PACKET_FILTER_OFFLOAD,
 		pHddCtx->config->bpf_packet_filter_enable);
+	hdd_info("Name = [%s] Value = [%d]",
+		CFG_FILTER_MULTICAST_REPLAY_NAME,
+		pHddCtx->config->multicast_replay_filter);
 }
 
 

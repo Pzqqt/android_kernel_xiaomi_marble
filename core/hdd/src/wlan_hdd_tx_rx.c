@@ -37,6 +37,7 @@
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
 #include <linux/etherdevice.h>
+#include <linux/if_ether.h>
 #include <cds_sched.h>
 
 #include <wlan_hdd_p2p.h>
@@ -851,6 +852,25 @@ int hdd_get_peer_idx(hdd_station_ctx_t *sta_ctx, struct qdf_mac_addr *addr)
 	return INVALID_PEER_IDX;
 }
 
+/*
+ * hdd_is_mcast_replay() - checks if pkt is multicast replay
+ * @skb: packet skb
+ *
+ * Return: true if replayed multicast pkt, false otherwise
+ */
+static bool hdd_is_mcast_replay(struct sk_buff *skb)
+{
+	struct ethhdr *eth;
+
+	eth = eth_hdr(skb);
+	if (unlikely(skb->pkt_type == PACKET_MULTICAST)) {
+		if (unlikely(ether_addr_equal(eth->h_source,
+				skb->dev->dev_addr)))
+			return true;
+	}
+	return false;
+}
+
 /**
  * hdd_rx_packet_cbk() - Receive packet handler
  * @context: pointer to HDD context
@@ -926,6 +946,17 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 	++pAdapter->hdd_stats.hddTxRxStats.rxPackets[cpu_index];
 	++pAdapter->stats.rx_packets;
 	pAdapter->stats.rx_bytes += skb->len;
+
+	/* Check & drop replayed mcast packets (for IPV6) */
+	if (pHddCtx->config->multicast_replay_filter &&
+			hdd_is_mcast_replay(skb)) {
+		++pAdapter->hdd_stats.hddTxRxStats.rxDropped[cpu_index];
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO,
+			"%s: Dropping multicast replay pkt", __func__);
+		kfree_skb(skb);
+		return QDF_STATUS_SUCCESS;
+	}
+
 #ifdef WLAN_FEATURE_HOLD_RX_WAKELOCK
 	qdf_wake_lock_timeout_acquire(&pHddCtx->rx_wake_lock,
 				      HDD_WAKE_LOCK_DURATION,
