@@ -190,7 +190,8 @@ static void lim_delete_sta_util(tpAniSirGlobal mac_ctx, tpDeleteStaContext msg,
 		/* Delete all TDLS peers connected before leaving BSS */
 		lim_delete_tdls_peers(mac_ctx, session_entry);
 #endif
-		lim_post_sme_message(mac_ctx, LIM_MLM_DEAUTH_IND,
+		if (LIM_IS_STA_ROLE(session_entry))
+			lim_post_sme_message(mac_ctx, LIM_MLM_DEAUTH_IND,
 				     (uint32_t *) &mlm_deauth_ind);
 
 		lim_send_sme_deauth_ind(mac_ctx, stads,	session_entry);
@@ -410,7 +411,8 @@ lim_tear_down_link_with_ap(tpAniSirGlobal pMac, uint8_t sessionId,
 		mlmDeauthInd.deauthTrigger =
 			pStaDs->mlmStaContext.cleanupTrigger;
 
-		lim_post_sme_message(pMac, LIM_MLM_DEAUTH_IND,
+		if (LIM_IS_STA_ROLE(psessionEntry))
+			lim_post_sme_message(pMac, LIM_MLM_DEAUTH_IND,
 				     (uint32_t *) &mlmDeauthInd);
 
 		lim_send_sme_deauth_ind(pMac, pStaDs, psessionEntry);

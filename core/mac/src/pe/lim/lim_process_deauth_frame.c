@@ -595,7 +595,8 @@ lim_process_deauth_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		wma_tx_abort(psessionEntry->smeSessionId);
 
 	/* / Deauthentication from peer MAC entity */
-	lim_post_sme_message(pMac, LIM_MLM_DEAUTH_IND,
+	if (LIM_IS_STA_ROLE(psessionEntry))
+		lim_post_sme_message(pMac, LIM_MLM_DEAUTH_IND,
 			     (uint32_t *) &mlmDeauthInd);
 
 	/* send eWNI_SME_DEAUTH_IND to SME */
