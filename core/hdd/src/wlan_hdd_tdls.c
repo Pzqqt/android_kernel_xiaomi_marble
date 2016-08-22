@@ -4032,17 +4032,6 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 		}
 		mutex_unlock(&pHddCtx->tdls_lock);
 	}
-
-
-	if ((SIR_MAC_TDLS_DIS_REQ == action_code) ||
-	    (SIR_MAC_TDLS_DIS_RSP == action_code)) {
-		/* for DIS_REQ/DIS_RSP, supplicant does not consider the return
-		 * status. So no need to wait for tdls_mgmt_comp to
-		 * send ack status.
-		 */
-		hdd_info("tx done for frm %u", action_code);
-		return 0;
-	}
 	hdd_info("Wait for tdls_mgmt_comp. Timeout %u ms",
 		WAIT_TIME_TDLS_MGMT);
 
