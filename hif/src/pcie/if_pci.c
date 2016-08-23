@@ -3368,6 +3368,12 @@ int hif_ahb_configure_legacy_irq(struct hif_pci_softc *sc)
 	QDF_BUG(0);
 	return -EINVAL;
 }
+
+int hif_ahb_configure_irq(struct hif_pci_softc *sc)
+{
+	QDF_BUG(0);
+	return -EINVAL;
+}
 #endif
 
 /**
