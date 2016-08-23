@@ -5471,78 +5471,70 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [gP2PListenDeferInterval] Value = [%u]",
 		  pHddCtx->config->p2p_listen_defer_interval);
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-		  "Name = [is_ps_enabled] value = [%d]",
-		  pHddCtx->config->is_ps_enabled);
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-		  "Name = [tso_enable] value = [%d]",
+	hdd_notice("Name = [is_ps_enabled] value = [%d]",
+		   pHddCtx->config->is_ps_enabled);
+	hdd_notice("Name = [tso_enable] value = [%d]",
 		  pHddCtx->config->tso_enable);
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-		  "Name = [LROEnable] value = [%d]",
+	hdd_notice("Name = [LROEnable] value = [%d]",
 		  pHddCtx->config->lro_enable);
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-		  "Name = [active_mode_offload] value = [%d]",
+	hdd_notice("Name = [active_mode_offload] value = [%d]",
 		  pHddCtx->config->active_mode_offload);
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-		  "Name = [gfine_time_meas_cap] value = [%u]",
+	hdd_notice("Name = [gfine_time_meas_cap] value = [%u]",
 		  pHddCtx->config->fine_time_meas_cap);
 #ifdef WLAN_FEATURE_FASTPATH
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [fastpath_enable] Value = [%u]",
 		  pHddCtx->config->fastpath_enable);
 #endif
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-		  "Name = [max_scan_count] value = [%d]",
+	hdd_notice("Name = [max_scan_count] value = [%d]",
 		  pHddCtx->config->max_scan_count);
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-		  "Name = [%s] value = [%d]",
+	hdd_notice("Name = [%s] value = [%d]",
 		  CFG_RX_MODE_NAME, pHddCtx->config->rx_mode);
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [%s] Value = [%u]",
 		  CFG_CE_CLASSIFY_ENABLE_NAME,
 		  pHddCtx->config->ce_classify_enabled);
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-		  "Name = [%s] value = [%u]",
+	hdd_notice("Name = [%s] value = [%u]",
 		  CFG_DUAL_MAC_FEATURE_DISABLE,
 		  pHddCtx->config->dual_mac_feature_disable);
 #ifdef FEATURE_WLAN_SCAN_PNO
-	hddLog(LOGE, "Name = [%s] Value = [%u]",
-			CFG_PNO_CHANNEL_PREDICTION_NAME,
-			pHddCtx->config->pno_channel_prediction);
-	hddLog(LOGE, "Name = [%s] Value = [%u]",
-			CFG_TOP_K_NUM_OF_CHANNELS_NAME,
-			pHddCtx->config->top_k_num_of_channels);
-	hddLog(LOGE, "Name = [%s] Value = [%u]",
-			CFG_STATIONARY_THRESHOLD_NAME,
-			pHddCtx->config->stationary_thresh);
-	hddLog(LOGE, "Name = [%s] Value = [%u]",
-			CFG_CHANNEL_PREDICTION_FULL_SCAN_MS_NAME,
-			pHddCtx->config->channel_prediction_full_scan);
-	hddLog(LOGE, "Name = [%s] Value = [%u]",
-			CFG_ADAPTIVE_PNOSCAN_DWELL_MODE_NAME,
-			pHddCtx->config->pnoscan_adaptive_dwell_mode);
+	hdd_notice("Name = [%s] Value = [%u]",
+		   CFG_PNO_CHANNEL_PREDICTION_NAME,
+		   pHddCtx->config->pno_channel_prediction);
+	hdd_notice("Name = [%s] Value = [%u]",
+		   CFG_TOP_K_NUM_OF_CHANNELS_NAME,
+		   pHddCtx->config->top_k_num_of_channels);
+	hdd_notice("Name = [%s] Value = [%u]",
+		   CFG_STATIONARY_THRESHOLD_NAME,
+		   pHddCtx->config->stationary_thresh);
+	hdd_notice("Name = [%s] Value = [%u]",
+		   CFG_CHANNEL_PREDICTION_FULL_SCAN_MS_NAME,
+		   pHddCtx->config->channel_prediction_full_scan);
+	hdd_notice("Name = [%s] Value = [%u]",
+		   CFG_ADAPTIVE_PNOSCAN_DWELL_MODE_NAME,
+		   pHddCtx->config->pnoscan_adaptive_dwell_mode);
 #endif
-	hddLog(LOGE, "Name = [%s] Value = [%d]",
-		  CFG_EARLY_STOP_SCAN_ENABLE,
-		  pHddCtx->config->early_stop_scan_enable);
-	hddLog(LOGE, "Name = [%s] Value = [%d]",
-		CFG_EARLY_STOP_SCAN_MIN_THRESHOLD,
-		pHddCtx->config->early_stop_scan_min_threshold);
-	hddLog(LOGE, "Name = [%s] Value = [%d]",
-		CFG_EARLY_STOP_SCAN_MAX_THRESHOLD,
-		pHddCtx->config->early_stop_scan_max_threshold);
-	hddLog(LOGE, "Name = [%s] Value = [%d]",
-		CFG_FIRST_SCAN_BUCKET_THRESHOLD_NAME,
-		pHddCtx->config->first_scan_bucket_threshold);
-	hddLog(LOGE, "Name = [%s] Value = [%u]",
-		CFG_HT_MPDU_DENSITY_NAME,
-		pHddCtx->config->ht_mpdu_density);
+	hdd_notice("Name = [%s] Value = [%d]",
+		   CFG_EARLY_STOP_SCAN_ENABLE,
+		   pHddCtx->config->early_stop_scan_enable);
+	hdd_notice("Name = [%s] Value = [%d]",
+		   CFG_EARLY_STOP_SCAN_MIN_THRESHOLD,
+		   pHddCtx->config->early_stop_scan_min_threshold);
+	hdd_notice("Name = [%s] Value = [%d]",
+		   CFG_EARLY_STOP_SCAN_MAX_THRESHOLD,
+		   pHddCtx->config->early_stop_scan_max_threshold);
+	hdd_notice("Name = [%s] Value = [%d]",
+		   CFG_FIRST_SCAN_BUCKET_THRESHOLD_NAME,
+		   pHddCtx->config->first_scan_bucket_threshold);
+	hdd_notice("Name = [%s] Value = [%u]",
+		   CFG_HT_MPDU_DENSITY_NAME,
+		   pHddCtx->config->ht_mpdu_density);
 
 
 #ifdef FEATURE_LFR_SUBNET_DETECTION
-	hddLog(LOGE, "Name = [%s] Value = [%d]",
-		CFG_ENABLE_LFR_SUBNET_DETECTION,
-		pHddCtx->config->enable_lfr_subnet_detection);
+	hdd_notice("Name = [%s] Value = [%d]",
+		   CFG_ENABLE_LFR_SUBNET_DETECTION,
+		   pHddCtx->config->enable_lfr_subnet_detection);
 #endif
 	hdd_info("Name = [%s] Value = [%u]",
 		CFG_ROAM_DENSE_TRAFFIC_THRESHOLD,
