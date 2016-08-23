@@ -1602,10 +1602,11 @@ static bool csr_is_better_bss(tpAniSirGlobal mac_ctx,
 
 /* Add the channel to the occupiedChannels array */
 static void csr_scan_add_to_occupied_channels(tpAniSirGlobal pMac,
-					      tCsrScanResult *pResult,
-					      uint8_t sessionId,
-					      tCsrChannel *occupied_ch,
-					      tDot11fBeaconIEs *pIes)
+					tCsrScanResult *pResult,
+					uint8_t sessionId,
+					tCsrChannel *occupied_ch,
+					tDot11fBeaconIEs *pIes,
+					bool is_init_list)
 {
 	QDF_STATUS status;
 	uint8_t ch;
@@ -1613,9 +1614,15 @@ static void csr_scan_add_to_occupied_channels(tpAniSirGlobal pMac,
 	uint8_t *occupied_ch_lst = occupied_ch->channelList;
 
 	ch = pResult->Result.BssDescriptor.channelId;
-	if (csr_is_channel_present_in_list(occupied_ch_lst, num_occupied_ch, ch)
-	    || !csr_neighbor_roam_connected_profile_match(pMac, sessionId,
-							  pResult, pIes))
+	if (!csr_neighbor_roam_connected_profile_match(pMac,
+						sessionId, pResult, pIes))
+		return;
+
+	if (is_init_list)
+		pMac->scan.roam_candidate_count[sessionId]++;
+
+	if (csr_is_channel_present_in_list(occupied_ch_lst,
+					   num_occupied_ch, ch))
 		return;
 
 	status = csr_add_to_channel_list_front(occupied_ch_lst,
@@ -1658,7 +1665,8 @@ static void csr_scan_add_result(tpAniSirGlobal pMac, tCsrScanResult *pResult,
 		 * "gNeighborScanChannelList" is NOT set in the cfg.ini file
 		 */
 		csr_scan_add_to_occupied_channels(pMac, pResult, sessionId,
-				&pMac->scan.occupiedChannels[sessionId], pIes);
+				&pMac->scan.occupiedChannels[sessionId], pIes,
+				false);
 	}
 }
 
@@ -7021,6 +7029,7 @@ void csr_init_occupied_channels_list(tpAniSirGlobal pMac, uint8_t sessionId)
 
 	/* Empty occupied channels here */
 	pMac->scan.occupiedChannels[sessionId].numChannels = 0;
+	pMac->scan.roam_candidate_count[sessionId] = 0;
 
 	csr_ll_lock(&pMac->scan.scanResultList);
 	pEntry = csr_ll_peek_head(&pMac->scan.scanResultList, LL_ACCESS_NOLOCK);
@@ -7033,7 +7042,8 @@ void csr_init_occupied_channels_list(tpAniSirGlobal pMac, uint8_t sessionId)
 				&pBssDesc->Result.BssDescriptor, &pIes)))
 			continue;
 		csr_scan_add_to_occupied_channels(pMac, pBssDesc, sessionId,
-				&pMac->scan.occupiedChannels[sessionId], pIes);
+				&pMac->scan.occupiedChannels[sessionId], pIes,
+				true);
 		/*
 		 * Free the memory allocated for pIes in
 		 * csr_get_parsed_bss_description_ies

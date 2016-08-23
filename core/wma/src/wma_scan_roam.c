@@ -837,7 +837,7 @@ QDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 	params.dense_min_aps_cnt = roam_params->dense_min_aps_cnt;
 	params.traffic_threshold =
 			roam_params->traffic_threshold;
-	params.initial_dense_status = 0; /* reserved */
+	params.initial_dense_status = roam_params->initial_dense_status;
 
 
 	/*
@@ -903,10 +903,11 @@ QDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 		FL("hirssi_scan max_count=%d, delta=%d, hirssi_upper_bound=%d"),
 		hirssi_scan_max_count, hirssi_scan_delta, hirssi_upper_bound);
 	WMA_LOGI(
-		FL("dense_rssi_thresh_offset=%d, dense_min_aps_cnt=%d, traffic_threshold=%d"),
+		FL("dense_rssi_thresh_offset=%d, dense_min_aps_cnt=%d, traffic_threshold=%d initial_dense_status=%d"),
 			roam_params->dense_rssi_thresh_offset,
 			roam_params->dense_min_aps_cnt,
-			roam_params->traffic_threshold);
+			roam_params->traffic_threshold,
+			roam_params->initial_dense_status);
 	return status;
 }
 

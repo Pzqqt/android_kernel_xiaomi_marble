@@ -17343,9 +17343,14 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 		roam_params_dst->traffic_threshold);
 
 	/* Set initial dense roam status */
-	if (req_buf->ConnectedNetwork.ChannelCount >
+	if (mac_ctx->scan.roam_candidate_count[session_id] >
 	    roam_params_dst->dense_min_aps_cnt)
 		roam_params_dst->initial_dense_status = true;
+
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+		 "initial_dense_status:%d, candidate count:%d",
+		 roam_params_dst->initial_dense_status,
+		 mac_ctx->scan.roam_candidate_count[session_id]);
 
 	for (i = 0; i < roam_params_dst->num_bssid_avoid_list; i++) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
