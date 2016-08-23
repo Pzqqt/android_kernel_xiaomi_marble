@@ -6982,26 +6982,26 @@ static uint32_t hdd_send_wakelock_stats(hdd_context_t *hdd_ctx,
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy, nl_buf_len);
 
 	if (!skb) {
-		hdd_log(LOGE, FL("cfg80211_vendor_cmd_alloc_reply_skb failed"));
+		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
 		return -ENOMEM;
 	}
 
-	hdd_log(LOG1, "wow_ucast_wake_up_count %d",
+	hdd_info("wow_ucast_wake_up_count %d",
 			data->wow_ucast_wake_up_count);
-	hdd_log(LOG1, "wow_bcast_wake_up_count %d",
+	hdd_info("wow_bcast_wake_up_count %d",
 			data->wow_bcast_wake_up_count);
-	hdd_log(LOG1, "wow_ipv4_mcast_wake_up_count %d",
+	hdd_info("wow_ipv4_mcast_wake_up_count %d",
 			data->wow_ipv4_mcast_wake_up_count);
-	hdd_log(LOG1, "wow_ipv6_mcast_wake_up_count %d",
+	hdd_info("wow_ipv6_mcast_wake_up_count %d",
 			data->wow_ipv6_mcast_wake_up_count);
-	hdd_log(LOG1, "wow_ipv6_mcast_ra_stats %d",
+	hdd_info("wow_ipv6_mcast_ra_stats %d",
 			data->wow_ipv6_mcast_ra_stats);
-	hdd_log(LOG1, "wow_ipv6_mcast_ns_stats %d",
+	hdd_info("wow_ipv6_mcast_ns_stats %d",
 			data->wow_ipv6_mcast_ns_stats);
-	hdd_log(LOG1, "wow_ipv6_mcast_na_stats %d",
+	hdd_info("wow_ipv6_mcast_na_stats %d",
 			data->wow_ipv6_mcast_na_stats);
-	hdd_log(LOG1, "wow_icmpv4_count %d", data->wow_icmpv4_count);
-	hdd_log(LOG1, "wow_icmpv6_count %d",
+	hdd_info("wow_icmpv4_count %d", data->wow_icmpv4_count);
+	hdd_info("wow_icmpv6_count %d",
 			data->wow_icmpv6_count);
 
 	ipv6_rx_multicast_addr_cnt =
@@ -7048,7 +7048,7 @@ static uint32_t hdd_send_wakelock_stats(hdd_context_t *hdd_ctx,
 	    nla_put_u32(skb, PARAM_ICMP6_RX_MULTICAST_CNT,
 				ipv6_rx_multicast_addr_cnt) ||
 	    nla_put_u32(skb, PARAM_OTHER_RX_MULTICAST_CNT, 0)) {
-		hdd_log(LOGE, FL("nla put fail"));
+		hdd_err("nla put fail");
 		goto nla_put_failure;
 	}
 
@@ -7089,7 +7089,7 @@ static int __wlan_hdd_cfg80211_get_wakelock_stats(struct wiphy *wiphy,
 	ENTER();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
-		hdd_log(LOGE, FL("Command not allowed in FTM mode"));
+		hdd_err("Command not allowed in FTM mode");
 		return -EINVAL;
 	}
 
@@ -7099,15 +7099,14 @@ static int __wlan_hdd_cfg80211_get_wakelock_stats(struct wiphy *wiphy,
 
 	qdf_status = wma_get_wakelock_stats(&wake_lock_stats);
 	if (qdf_status != QDF_STATUS_SUCCESS) {
-		hdd_log(LOGE,
-			FL("failed to get wakelock stats(err=%d)"), qdf_status);
+		hdd_err("failed to get wakelock stats(err=%d)", qdf_status);
 		return -EINVAL;
 	}
 
 	ret = hdd_send_wakelock_stats(hdd_ctx,
 					&wake_lock_stats);
 	if (ret)
-		hdd_log(LOGE, FL("Failed to post wake lock stats"));
+		hdd_err("Failed to post wake lock stats");
 
 	EXIT();
 	return ret;
