@@ -449,12 +449,28 @@ void __qdf_nbuf_num_frags_init(struct sk_buff *skb)
 	QDF_NBUF_CB_TX_NUM_EXTRA_FRAGS(skb) = 0;
 }
 
+#ifdef CONFIG_MCL
 typedef enum {
+	CB_FTYPE_INVALID = 0,
 	CB_FTYPE_MCAST2UCAST = 1,
 	CB_FTYPE_TSO = 2,
 	CB_FTYPE_TSO_SG = 3,
 	CB_FTYPE_SG = 4,
 } CB_FTYPE;
+#else
+typedef enum {
+	CB_FTYPE_INVALID = 0,
+	CB_FTYPE_MCAST2UCAST = 1,
+	CB_FTYPE_TSO = 2,
+	CB_FTYPE_TSO_SG = 3,
+	CB_FTYPE_SG = 4,
+#if ATH_DATA_RX_INFO_EN
+	CB_FTYPE_RX_INFO = 5,
+#else
+	CB_FTYPE_MESH_RX_INFO = 5,
+#endif
+} CB_FTYPE;
+#endif
 
 /*
  * prototypes. Implemented in qdf_nbuf.c
