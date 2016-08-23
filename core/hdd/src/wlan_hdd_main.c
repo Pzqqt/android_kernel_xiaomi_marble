@@ -4743,9 +4743,7 @@ void hdd_exchange_version_and_caps(hdd_context_t *hdd_ctx)
 							 versionString,
 							 sizeof(versionString));
 		if (!QDF_IS_STATUS_SUCCESS(vstatus)) {
-			hdd_alert(FL(
-				  "unable to retrieve WCNSS hardware version string"
-				 ));
+			hdd_alert("unable to retrieve WCNSS hardware version string");
 			break;
 		}
 
@@ -4899,8 +4897,7 @@ void hdd_pld_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 				hdd_ctx->hbw_requested = false;
 			}
 			if (cds_sched_handle_throughput_req(false))
-				hdd_log(LOGE,
-				   FL("low bandwidth set rx affinity fail"));
+				hdd_err("low bandwidth set rx affinity fail");
 		 } else {
 			if (!hdd_ctx->hbw_requested) {
 				pld_request_pm_qos(hdd_ctx->parent_dev, 1);
@@ -4908,8 +4905,7 @@ void hdd_pld_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 			}
 
 			if (cds_sched_handle_throughput_req(true))
-				hdd_log(LOGE,
-				   FL("high bandwidth set rx affinity fail"));
+				hdd_err("high bandwidth set rx affinity fail");
 		 }
 	}
 
