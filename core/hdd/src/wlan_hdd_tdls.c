@@ -5084,22 +5084,20 @@ int hdd_set_tdls_offchannelmode(hdd_adapter_t *adapter, int offchanmode)
 	qdf_mem_copy(&chan_switch_params.peer_mac_addr,
 		     &conn_peer->peerMac,
 		     sizeof(tSirMacAddr));
-	hdd_log(LOG1,
-		FL("Peer " MAC_ADDRESS_STR
-		   " vdevId: %d, off channel: %d, offset: %d, mode: %d, is_responder: %d"),
-		MAC_ADDR_ARRAY(chan_switch_params.peer_mac_addr),
-		chan_switch_params.vdev_id,
-		chan_switch_params.tdls_off_channel,
-		chan_switch_params.tdls_off_ch_bw_offset,
-		chan_switch_params.tdls_off_ch_mode,
-		chan_switch_params.is_responder);
+	hdd_info("Peer " MAC_ADDRESS_STR
+		 " vdevId: %d, off channel: %d, offset: %d, mode: %d, is_responder: %d",
+		 MAC_ADDR_ARRAY(chan_switch_params.peer_mac_addr),
+		 chan_switch_params.vdev_id,
+		 chan_switch_params.tdls_off_channel,
+		 chan_switch_params.tdls_off_ch_bw_offset,
+		 chan_switch_params.tdls_off_ch_mode,
+		 chan_switch_params.is_responder);
 
 	status = sme_send_tdls_chan_switch_req(WLAN_HDD_GET_HAL_CTX(adapter),
 			&chan_switch_params);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hdd_log(LOG1,
-			FL("Failed to send channel switch request to sme"));
+		hdd_err("Failed to send channel switch request to sme");
 		return -EINVAL;
 	}
 
