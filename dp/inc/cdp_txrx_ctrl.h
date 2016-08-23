@@ -148,13 +148,13 @@ ol_txrx_set_drop_unenc(
  *  This will be used to populate the HTT desc packet type field during Tx
  *
  * @param vdev - the data virtual device object
- * @param val - the Tx encap type
+ * @param val - the Tx encap type (htt_pkt_type)
  * @return - void
  */
 void
 ol_txrx_set_tx_encap_type(
 	ol_txrx_vdev_handle vdev,
-	enum htt_pkt_type val);
+	uint32_t val);
 
 /**
  * @brief set the Rx decapsulation type of the VDEV
@@ -163,21 +163,21 @@ ol_txrx_set_tx_encap_type(
  *  decap all Rx packets into, for all peers under the VDEV.
  *
  * @param vdev - the data virtual device object
- * @param val - the Rx decap mode
+ * @param val - the Rx decap mode (htt_pkt_type)
  * @return - void
  */
 void
 ol_txrx_set_vdev_rx_decap_type(
 	ol_txrx_vdev_handle vdev,
-	enum htt_pkt_type val);
+	uint32_t val);
 
 /**
  * @brief get the Rx decapsulation type of the VDEV
  *
  * @param vdev - the data virtual device object
- * @return - the Rx decap type
+ * @return - the Rx decap type (htt_pkt_type)
  */
-enum htt_pkt_type
+uint32_t
 ol_txrx_get_vdev_rx_decap_type(ol_txrx_vdev_handle vdev);
 
 /* Is this similar to ol_txrx_peer_state_update() in MCL */

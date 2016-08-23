@@ -68,6 +68,7 @@ typedef void *hif_handle_t;
  * moved to latest copy of fw common header files.
  */
 #ifdef CONFIG_WIN
+#if ENABLE_10_4_FW_HDR
 #define TARGET_TYPE_UNKNOWN   0
 #define TARGET_TYPE_AR6001    1
 #define TARGET_TYPE_AR6002    2
@@ -90,9 +91,10 @@ typedef void *hif_handle_t;
 #define TARGET_TYPE_AR6320V3    16
 /* For Tufello1.0 target_reg_tbl ID*/
 #define TARGET_TYPE_QCA9377V1   17
+#endif /* ENABLE_10_4_FW_HDR */
 /* For Adrastea target */
 #define TARGET_TYPE_ADRASTEA     19
-#endif
+#endif /* CONFIG_WIN */
 
 struct CE_state;
 #define CE_COUNT_MAX 12

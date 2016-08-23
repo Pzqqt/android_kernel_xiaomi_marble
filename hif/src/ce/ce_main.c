@@ -75,10 +75,12 @@ static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info);
 #endif
 
 #ifdef CONFIG_WIN
+#if ENABLE_10_4_FW_HDR
 #define WDI_IPA_SERVICE_GROUP 5
 #define WDI_IPA_TX_SVC MAKE_SERVICE_ID(WDI_IPA_SERVICE_GROUP, 0)
 #define HTT_DATA2_MSG_SVC MAKE_SERVICE_ID(HTT_SERVICE_GROUP, 1)
 #define HTT_DATA3_MSG_SVC MAKE_SERVICE_ID(HTT_SERVICE_GROUP, 2)
+#endif /* ENABLE_10_4_FW_HDR */
 #endif
 
 static int hif_post_recv_buffers(struct hif_softc *scn);

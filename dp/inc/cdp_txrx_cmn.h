@@ -33,7 +33,6 @@
 #define _CDP_TXRX_CMN_H_
 
 #include "htc_api.h"
-#include "htt.h"
 #include "qdf_types.h"
 #include "qdf_nbuf.h"
 
@@ -157,7 +156,7 @@ typedef int (*ol_txrx_proxy_arp_fp)(ol_osif_vdev_handle vdev,
  * ol_txrx_stats_callback - statistics notify callback
  */
 typedef void (*ol_txrx_stats_callback)(void *ctxt,
-				       enum htt_dbg_stats_type type,
+				       uint32_t type,
 				       uint8_t *buf, int bytes);
 
 /**
