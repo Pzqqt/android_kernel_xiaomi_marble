@@ -34,10 +34,13 @@
  * HDD Regulatory prototype implementation
  */
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)) || defined(WITH_BACKPORTS)
+#define IEEE80211_CHAN_PASSIVE_SCAN IEEE80211_CHAN_NO_IR
+#define IEEE80211_CHAN_NO_IBSS IEEE80211_CHAN_NO_IR
+#endif
+
 void hdd_reset_global_reg_params(void);
-
 int hdd_regulatory_init(hdd_context_t *hdd_ctx, struct wiphy *wiphy);
-
 void hdd_program_country_code(hdd_context_t *hdd_ctx);
 
 #endif

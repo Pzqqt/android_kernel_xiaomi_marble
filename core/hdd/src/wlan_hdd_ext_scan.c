@@ -32,6 +32,7 @@
 #define HDD_DISALLOW_LEGACY_HDDLOG 1
 
 #include "wlan_hdd_ext_scan.h"
+#include "wlan_hdd_regulatory.h"
 #include "cds_utils.h"
 #include "cds_sched.h"
 
@@ -2440,16 +2441,15 @@ static void hdd_remove_dsrc_channels(struct wiphy *wiphy, uint32_t *chan_list,
 }
 
 /**
- * hdd_remove_indoor_channels () - remove indoor channels
+ * hdd_remove_passive_channels () - remove passive channels
  * @wiphy: Pointer to wireless phy
  * @chan_list: channel list
  * @num_channels: number of channels
  *
  * Return: none
  */
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 16, 0))
-static void hdd_remove_indoor_channels(struct wiphy *wiphy, uint32_t *chan_list,
-				       uint8_t *num_channels)
+void hdd_remove_passive_channels(struct wiphy *wiphy, uint32_t *chan_list,
+				 uint8_t *num_channels)
 {
 	uint8_t num_chan_temp = 0;
 	int i, j, k;
@@ -2462,7 +2462,7 @@ static void hdd_remove_indoor_channels(struct wiphy *wiphy, uint32_t *chan_list,
 				if ((chan_list[i] ==
 				     wiphy->bands[j]->channels[k].center_freq)
 				    && (!(wiphy->bands[j]->channels[k].flags &
-				       IEEE80211_CHAN_INDOOR_ONLY))
+				       IEEE80211_CHAN_PASSIVE_SCAN))
 				) {
 					chan_list[num_chan_temp] = chan_list[i];
 					num_chan_temp++;
@@ -2472,13 +2472,6 @@ static void hdd_remove_indoor_channels(struct wiphy *wiphy, uint32_t *chan_list,
 
 	*num_channels = num_chan_temp;
 }
-#else
-static void hdd_remove_indoor_channels(struct wiphy *wiphy, uint32_t *chan_list,
-				       uint8_t *num_channels)
-{
-	*num_channels = 0;
-}
-#endif
 
 /**
  * __wlan_hdd_cfg80211_extscan_get_valid_channels () - get valid channels
@@ -2573,7 +2566,8 @@ __wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 
 	if ((QDF_SAP_MODE == pAdapter->device_mode) ||
 	    !strncmp(hdd_get_fwpath(), "ap", 2))
-		hdd_remove_indoor_channels(wiphy, chan_list, &num_channels);
+		hdd_remove_passive_channels(wiphy, chan_list,
+					    &num_channels);
 
 	hdd_notice("Number of channels: %d", num_channels);
 	for (i = 0; i < num_channels; i++)
