@@ -32,6 +32,7 @@
 #include <linux/proc_fs.h>      /* Necessary because we use the proc fs */
 #include <asm/uaccess.h>        /* for copy_from_user */
 #include "hif.h"
+#include "hif_main.h"
 #if defined(HIF_USB)
 #include "if_usb.h"
 #endif
@@ -39,6 +40,7 @@
 #include "if_sdio.h"
 #endif
 #include "hif_debug.h"
+#include "pld_common.h"
 
 #define PROCFS_NAME             "athdiagpfs"
 #define PROCFS_DIR              "cld"
@@ -63,6 +65,8 @@ static ssize_t ath_procfs_diag_read(struct file *file, char __user *buf,
 	hif_handle_t hif_hdl;
 	int rv;
 	uint8_t *read_buffer = NULL;
+	struct hif_softc *scn;
+	uint32_t offset = 0, memtype = 0;
 
 	read_buffer = qdf_mem_malloc(count);
 	if (NULL == read_buffer) {
@@ -74,6 +78,18 @@ static ssize_t ath_procfs_diag_read(struct file *file, char __user *buf,
 	HIF_DBG("rd buff 0x%p cnt %zu offset 0x%x buf 0x%p",
 		 read_buffer, count, (int)*pos, buf);
 
+	scn = HIF_GET_SOFTC(hif_hdl);
+	if (scn->bus_type == QDF_BUS_TYPE_SNOC) {
+		memtype = ((uint32_t)(*pos) & 0xff000000) >> 24;
+		offset = (uint32_t)(*pos) & 0xffffff;
+		HIF_TRACE("%s: offset 0x%x memtype 0x%x, datalen %zu\n",
+			  __func__, offset, memtype, count);
+		rv = pld_athdiag_read(scn->qdf_dev->dev,
+				      offset, memtype, count,
+				      (uint8_t *)read_buffer);
+		goto out;
+	}
+
 	if ((count == 4) && ((((uint32_t) (*pos)) & 3) == 0)) {
 		/* reading a word? */
 		rv = hif_diag_read_access(hif_hdl, (uint32_t)(*pos),
@@ -82,6 +98,8 @@ static ssize_t ath_procfs_diag_read(struct file *file, char __user *buf,
 		rv = hif_diag_read_mem(hif_hdl, (uint32_t)(*pos),
 				       (uint8_t *)read_buffer, count);
 	}
+
+out:
 
 	if (copy_to_user(buf, read_buffer, count)) {
 		qdf_mem_free(read_buffer);
@@ -105,6 +123,8 @@ static ssize_t ath_procfs_diag_write(struct file *file,
 	hif_handle_t hif_hdl;
 	int rv;
 	uint8_t *write_buffer = NULL;
+	struct hif_softc *scn;
+	uint32_t offset = 0, memtype = 0;
 
 	write_buffer = qdf_mem_malloc(count);
 	if (NULL == write_buffer) {
@@ -123,6 +143,18 @@ static ssize_t ath_procfs_diag_write(struct file *file,
 		 write_buffer, buf, count,
 		 (int)*pos, *((uint32_t *) write_buffer));
 
+	scn = HIF_GET_SOFTC(hif_hdl);
+	if (scn->bus_type == QDF_BUS_TYPE_SNOC) {
+		memtype = ((uint32_t)(*pos) & 0xff000000) >> 24;
+		offset = (uint32_t)(*pos) & 0xffffff;
+		HIF_TRACE("%s: offset 0x%x memtype 0x%x, datalen %zu\n",
+			  __func__, offset, memtype, count);
+		rv = pld_athdiag_write(scn->qdf_dev->dev,
+				      offset, memtype, count,
+				      (uint8_t *)write_buffer);
+		goto out;
+	}
+
 	if ((count == 4) && ((((uint32_t) (*pos)) & 3) == 0)) {
 		/* reading a word? */
 		uint32_t value = *((uint32_t *)write_buffer);
@@ -131,6 +163,8 @@ static ssize_t ath_procfs_diag_write(struct file *file,
 		rv = hif_diag_write_mem(hif_hdl, (uint32_t)(*pos),
 					(uint8_t *)write_buffer, count);
 	}
+
+out:
 
 	qdf_mem_free(write_buffer);
 	if (rv == 0) {
