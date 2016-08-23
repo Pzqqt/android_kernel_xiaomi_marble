@@ -1693,6 +1693,7 @@ typedef struct {
  * @rokh_id: r0kh id
  * @roam_key_mgmt_offload_enabled: roam offload flag
  * @auth_mode: authentication mode
+ * @okc_enabled: enable opportunistic key caching
  * @is_ese_assoc: flag to determine ese assoc
  * @mdid: mobility domain info
  * @roam_offload_params: roam offload tlv params
@@ -1715,6 +1716,7 @@ struct roam_offload_scan_params {
 	uint8_t rokh_id[WMI_ROAM_R0KH_ID_MAX_LEN];
 	uint8_t roam_key_mgmt_offload_enabled;
 	int auth_mode;
+	bool okc_enabled;
 #endif
 	bool is_ese_assoc;
 	struct mobility_domain_info mdid;
