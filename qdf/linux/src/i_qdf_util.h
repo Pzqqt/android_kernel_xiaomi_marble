@@ -271,4 +271,9 @@ int __qdf_get_cpu(void)
 }
 #endif
 
+static inline int __qdf_device_init_wakeup(__qdf_device_t qdf_dev, bool enable)
+{
+	return device_init_wakeup(qdf_dev->dev, enable);
+}
+
 #endif /*_I_QDF_UTIL_H*/

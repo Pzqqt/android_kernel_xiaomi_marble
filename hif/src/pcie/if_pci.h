@@ -185,13 +185,9 @@ irqreturn_t hif_pci_interrupt_handler(int irq, void *arg);
 #define OL_ATH_TX_DRAIN_WAIT_CNT       60
 #endif
 
-#define HIF_CE_DRAIN_WAIT_CNT          20
-
-
 #ifdef FEATURE_RUNTIME_PM
 #include <linux/pm_runtime.h>
 
-#ifdef WLAN_OPEN_SOURCE
 static inline int hif_pm_request_resume(struct device *dev)
 {
 	return pm_request_resume(dev);
@@ -215,7 +211,6 @@ static inline int hif_pm_runtime_resume(struct device *dev)
 {
 	return pm_runtime_resume(dev);
 }
-#endif
 #else
 static inline void hif_pm_runtime_mark_last_busy(struct device *dev) { }
 #endif /* FEATURE_RUNTIME_PM */

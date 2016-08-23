@@ -29,6 +29,8 @@
 #include <osdep.h>
 #include "a_types.h"
 #include "wmi_unified_param.h"
+#include "wmi.h"
+#include "wmi_unified.h"
 #include "ol_defines.h" /* Fix Me: wmi_unified_t structure definition */
 
 QDF_STATUS send_vdev_create_cmd_tlv(wmi_unified_t wmi_handle,
@@ -115,10 +117,14 @@ QDF_STATUS send_stats_request_cmd_tlv(wmi_unified_t wmi_handle,
 				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct stats_request_params *param);
 
+#ifdef CONFIG_WIN
+QDF_STATUS send_packet_log_enable_cmd_tlv(wmi_unified_t wmi_handle,
+				WMI_HOST_PKTLOG_EVENT PKTLOG_EVENT);
+#else
 QDF_STATUS send_packet_log_enable_cmd_tlv(wmi_unified_t wmi_handle,
 				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct packet_enable_params *param);
-
+#endif
 QDF_STATUS send_beacon_send_cmd_tlv(wmi_unified_t wmi_handle,
 				struct beacon_params *param);
 
@@ -373,7 +379,7 @@ send_dfs_phyerr_filter_offload_en_cmd_tlv(wmi_unified_t wmi_handle,
 
 QDF_STATUS send_pktlog_wmi_send_cmd_tlv(wmi_unified_t wmi_handle,
 				   WMI_PKTLOG_EVENT pktlog_event,
-				   WMI_CMD_ID cmd_id);
+				   WMI_CMD_ID cmd_id, uint8_t user_triggered);
 
 QDF_STATUS send_add_wow_wakeup_event_cmd_tlv(wmi_unified_t wmi_handle,
 					uint32_t vdev_id,

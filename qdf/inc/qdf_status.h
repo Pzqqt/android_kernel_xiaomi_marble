@@ -78,6 +78,7 @@
  * @QDF_STATUS_FT_PREAUTH_KEY_FAILED: ft preauth key failed
  * @QDF_STATUS_CMD_NOT_QUEUED: command not queued
  * @QDF_STATUS_FW_MSG_TIMEDOUT: target message timeout
+ * @QDF_STATUS_E_USB_ERROR: USB transaction error
  * @QDF_STATUS_MAX: not a realy value just a place holder for max
  */
 typedef enum {
@@ -123,6 +124,7 @@ typedef enum {
 	QDF_STATUS_FT_PREAUTH_KEY_FAILED,
 	QDF_STATUS_CMD_NOT_QUEUED,
 	QDF_STATUS_FW_MSG_TIMEDOUT,
+	QDF_STATUS_E_USB_ERROR,
 	QDF_STATUS_MAX
 } QDF_STATUS;
 

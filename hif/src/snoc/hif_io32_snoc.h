@@ -38,7 +38,6 @@
 #include "regtable.h"
 #include "ce_reg.h"
 #include "qdf_atomic.h"
-#include <soc/qcom/icnss.h>
 #include "hif_main.h"
 #include "hif_debug.h"
 

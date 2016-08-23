@@ -55,13 +55,29 @@
 #define QDF_NBUF_TRAC_DHCP_CLI_PORT		68
 #define QDF_NBUF_TRAC_ETH_TYPE_OFFSET		12
 #define QDF_NBUF_TRAC_EAPOL_ETH_TYPE		0x888E
+#define QDF_NBUF_TRAC_WAPI_ETH_TYPE		0x88b4
 #define QDF_NBUF_TRAC_ARP_ETH_TYPE		0x0806
+#define QDF_NBUF_TRAC_IPV4_ETH_TYPE     0x0800
+#define QDF_NBUF_TRAC_IPV6_ETH_TYPE     0x86dd
 #define QDF_NBUF_DEST_MAC_OFFSET		0
 #define QDF_NBUF_SRC_MAC_OFFSET			6
+#define QDF_NBUF_TRAC_IPV4_PROTO_TYPE_OFFSET  23
+#define QDF_NBUF_TRAC_IPV4_DEST_ADDR_OFFSET   30
+#define QDF_NBUF_TRAC_IPV6_PROTO_TYPE_OFFSET  20
+#define QDF_NBUF_TRAC_IPV4_ADDR_MCAST_MASK    0xE0000000
+#define QDF_NBUF_TRAC_IPV4_ADDR_BCAST_MASK    0xF0000000
+#define QDF_NBUF_TRAC_IPV6_DEST_ADDR_OFFSET   38
+#define QDF_NBUF_TRAC_IPV6_DEST_ADDR          0xFF00
+#define QDF_NBUF_TRAC_ICMP_TYPE         1
+#define QDF_NBUF_TRAC_TCP_TYPE          6
+#define QDF_NBUF_TRAC_UDP_TYPE          17
+#define QDF_NBUF_TRAC_ICMPV6_TYPE       0x3a
 
 /* EAPOL Related MASK */
 #define EAPOL_PACKET_TYPE_OFFSET		15
 #define EAPOL_KEY_INFO_OFFSET			19
+#define EAPOL_PKT_LEN_OFFSET            16
+#define EAPOL_KEY_LEN_OFFSET            21
 #define EAPOL_MASK				0x8013
 #define EAPOL_M1_BIT_MASK			0x8000
 #define EAPOL_M2_BIT_MASK			0x0001
@@ -134,6 +150,8 @@ struct mon_rx_status {
 #define QDF_DHCP_OPTION53_OFFSET		(0x11A)
 #define QDF_DHCP_OPTION53_LENGTH_OFFSET	(0x11B)
 #define QDF_DHCP_OPTION53_STATUS_OFFSET	(0x11C)
+#define DHCP_PKT_LEN_OFFSET           16
+#define DHCP_TRANSACTION_ID_OFFSET    46
 #define QDF_DHCP_DISCOVER			(1)
 #define QDF_DHCP_OFFER				(2)
 #define QDF_DHCP_REQUEST			(3)
@@ -143,11 +161,111 @@ struct mon_rx_status {
 #define QDF_DHCP_RELEASE			(7)
 #define QDF_DHCP_INFORM				(8)
 
+/* ARP Related Mask */
 #define ARP_SUB_TYPE_OFFSET  20
 #define ARP_REQUEST			(1)
 #define ARP_RESPONSE		(2)
 
+/* IPV4 Related Mask */
+#define IPV4_PKT_LEN_OFFSET           16
+#define IPV4_TCP_SEQ_NUM_OFFSET       38
+#define IPV4_SRC_PORT_OFFSET          34
+#define IPV4_DST_PORT_OFFSET          36
+
+/* IPV4 ICMP Related Mask */
+#define ICMP_SEQ_NUM_OFFSET           40
+#define ICMP_SUBTYPE_OFFSET           34
+#define ICMP_REQUEST                  0x08
+#define ICMP_RESPONSE                 0x00
+
+/* IPV6 Related Mask */
+#define IPV6_PKT_LEN_OFFSET           18
+#define IPV6_TCP_SEQ_NUM_OFFSET       58
+#define IPV6_SRC_PORT_OFFSET          54
+#define IPV6_DST_PORT_OFFSET          56
+
+/* IPV6 ICMPV6 Related Mask */
+#define ICMPV6_SEQ_NUM_OFFSET         60
+#define ICMPV6_SUBTYPE_OFFSET         54
+#define ICMPV6_REQUEST                0x80
+#define ICMPV6_RESPONSE               0x81
+
 #define QDF_NBUF_IPA_CHECK_MASK		0x80000000
+
+/**
+ * qdf_proto_type - protocol type
+ * @QDF_PROTO_TYPE_DHCP - DHCP
+ * @QDF_PROTO_TYPE_EAPOL - EAPOL
+ * @QDF_PROTO_TYPE_ARP - ARP
+ * @QDF_PROTO_TYPE_MGMT - MGMT
+ */
+enum qdf_proto_type {
+	QDF_PROTO_TYPE_DHCP,
+	QDF_PROTO_TYPE_EAPOL,
+	QDF_PROTO_TYPE_ARP,
+	QDF_PROTO_TYPE_MGMT,
+	QDF_PROTO_TYPE_MAX
+};
+
+/**
+ * qdf_proto_subtype - subtype of packet
+ * @QDF_PROTO_EAPOL_M1 - EAPOL 1/4
+ * @QDF_PROTO_EAPOL_M2 - EAPOL 2/4
+ * @QDF_PROTO_EAPOL_M3 - EAPOL 3/4
+ * @QDF_PROTO_EAPOL_M4 - EAPOL 4/4
+ * @QDF_PROTO_DHCP_DISCOVER - discover
+ * @QDF_PROTO_DHCP_REQUEST - request
+ * @QDF_PROTO_DHCP_OFFER - offer
+ * @QDF_PROTO_DHCP_ACK - ACK
+ * @QDF_PROTO_DHCP_NACK - NACK
+ * @QDF_PROTO_DHCP_RELEASE - release
+ * @QDF_PROTO_DHCP_INFORM - inform
+ * @QDF_PROTO_DHCP_DECLINE - decline
+ * @QDF_PROTO_ARP_REQ - arp request
+ * @QDF_PROTO_ARP_RES - arp response
+ * @QDF_PROTO_ICMP_REQ - icmp request
+ * @QDF_PROTO_ICMP_RES - icmp response
+ * @QDF_PROTO_ICMPV6_REQ - icmpv6 request
+ * @QDF_PROTO_ICMPV6_RES - icmpv6 response
+ * @QDF_PROTO_IPV4_UDP - ipv4 udp
+ * @QDF_PROTO_IPV4_TCP - ipv4 tcp
+ * @QDF_PROTO_IPV6_UDP - ipv6 udp
+ * @QDF_PROTO_IPV6_TCP - ipv6 tcp
+ * @QDF_PROTO_MGMT_ASSOC -assoc
+ * @QDF_PROTO_MGMT_DISASSOC - disassoc
+ * @QDF_PROTO_MGMT_AUTH - auth
+ * @QDF_PROTO_MGMT_DEAUTH - deauth
+ */
+enum qdf_proto_subtype {
+	QDF_PROTO_INVALID,
+	QDF_PROTO_EAPOL_M1,
+	QDF_PROTO_EAPOL_M2,
+	QDF_PROTO_EAPOL_M3,
+	QDF_PROTO_EAPOL_M4,
+	QDF_PROTO_DHCP_DISCOVER,
+	QDF_PROTO_DHCP_REQUEST,
+	QDF_PROTO_DHCP_OFFER,
+	QDF_PROTO_DHCP_ACK,
+	QDF_PROTO_DHCP_NACK,
+	QDF_PROTO_DHCP_RELEASE,
+	QDF_PROTO_DHCP_INFORM,
+	QDF_PROTO_DHCP_DECLINE,
+	QDF_PROTO_ARP_REQ,
+	QDF_PROTO_ARP_RES,
+	QDF_PROTO_ICMP_REQ,
+	QDF_PROTO_ICMP_RES,
+	QDF_PROTO_ICMPV6_REQ,
+	QDF_PROTO_ICMPV6_RES,
+	QDF_PROTO_IPV4_UDP,
+	QDF_PROTO_IPV4_TCP,
+	QDF_PROTO_IPV6_UDP,
+	QDF_PROTO_IPV6_TCP,
+	QDF_PROTO_MGMT_ASSOC,
+	QDF_PROTO_MGMT_DISASSOC,
+	QDF_PROTO_MGMT_AUTH,
+	QDF_PROTO_MGMT_DEAUTH,
+	QDF_PROTO_SUBTYPE_MAX
+};
 
 /**
  * @qdf_nbuf_t - Platform indepedent packet abstraction
@@ -1085,6 +1203,186 @@ static inline uint8_t qdf_nbuf_get_tx_parallel_dnload_frm(qdf_nbuf_t buf)
 }
 
 /**
+ * qdf_nbuf_get_dhcp_subtype() - get the subtype
+ *              of DHCP packet.
+ * @buf: Pointer to DHCP packet buffer
+ *
+ * This func. returns the subtype of DHCP packet.
+ *
+ * Return: subtype of the DHCP packet.
+ */
+static inline enum qdf_proto_subtype
+qdf_nbuf_get_dhcp_subtype(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_data_get_dhcp_subtype(qdf_nbuf_data(buf));
+}
+
+/**
+ * qdf_nbuf_data_get_dhcp_subtype() - get the subtype
+ *              of DHCP packet.
+ * @buf: Pointer to DHCP packet data buffer
+ *
+ * This func. returns the subtype of DHCP packet.
+ *
+ * Return: subtype of the DHCP packet.
+ */
+static inline enum qdf_proto_subtype
+qdf_nbuf_data_get_dhcp_subtype(uint8_t *data)
+{
+	return __qdf_nbuf_data_get_dhcp_subtype(data);
+}
+
+/**
+ * qdf_nbuf_get_eapol_subtype() - get the subtype
+ *            of EAPOL packet.
+ * @buf: Pointer to EAPOL packet buffer
+ *
+ * This func. returns the subtype of EAPOL packet.
+ *
+ * Return: subtype of the EAPOL packet.
+ */
+static inline enum qdf_proto_subtype
+qdf_nbuf_get_eapol_subtype(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_data_get_eapol_subtype(qdf_nbuf_data(buf));
+}
+
+/**
+ * qdf_nbuf_data_get_eapol_subtype() - get the subtype
+ *            of EAPOL packet.
+ * @data: Pointer to EAPOL packet data buffer
+ *
+ * This func. returns the subtype of EAPOL packet.
+ *
+ * Return: subtype of the EAPOL packet.
+ */
+static inline enum qdf_proto_subtype
+qdf_nbuf_data_get_eapol_subtype(uint8_t *data)
+{
+	return __qdf_nbuf_data_get_eapol_subtype(data);
+}
+
+/**
+ * qdf_nbuf_get_arp_subtype() - get the subtype
+ *            of ARP packet.
+ * @buf: Pointer to ARP packet buffer
+ *
+ * This func. returns the subtype of ARP packet.
+ *
+ * Return: subtype of the ARP packet.
+ */
+static inline enum qdf_proto_subtype
+qdf_nbuf_get_arp_subtype(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_data_get_arp_subtype(qdf_nbuf_data(buf));
+}
+
+/**
+ * qdf_nbuf_data_get_arp_subtype() - get the subtype
+ *            of ARP packet.
+ * @data: Pointer to ARP packet data buffer
+ *
+ * This func. returns the subtype of ARP packet.
+ *
+ * Return: subtype of the ARP packet.
+ */
+static inline enum qdf_proto_subtype
+qdf_nbuf_data_get_arp_subtype(uint8_t *data)
+{
+	return __qdf_nbuf_data_get_arp_subtype(data);
+}
+
+/**
+ * qdf_nbuf_get_icmp_subtype() - get the subtype
+ *            of IPV4 ICMP packet.
+ * @buf: Pointer to IPV4 ICMP packet buffer
+ *
+ * This func. returns the subtype of ICMP packet.
+ *
+ * Return: subtype of the ICMP packet.
+ */
+static inline enum qdf_proto_subtype
+qdf_nbuf_get_icmp_subtype(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_data_get_icmp_subtype(qdf_nbuf_data(buf));
+}
+
+/**
+ * qdf_nbuf_data_get_icmp_subtype() - get the subtype
+ *            of IPV4 ICMP packet.
+ * @data: Pointer to IPV4 ICMP packet data buffer
+ *
+ * This func. returns the subtype of ICMP packet.
+ *
+ * Return: subtype of the ICMP packet.
+ */
+static inline enum qdf_proto_subtype
+qdf_nbuf_data_get_icmp_subtype(uint8_t *data)
+{
+	return __qdf_nbuf_data_get_icmp_subtype(data);
+}
+
+/**
+ * qdf_nbuf_get_icmpv6_subtype() - get the subtype
+ *            of IPV6 ICMPV6 packet.
+ * @buf: Pointer to IPV6 ICMPV6 packet buffer
+ *
+ * This func. returns the subtype of ICMPV6 packet.
+ *
+ * Return: subtype of the ICMPV6 packet.
+ */
+static inline enum qdf_proto_subtype
+qdf_nbuf_get_icmpv6_subtype(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_data_get_icmpv6_subtype(qdf_nbuf_data(buf));
+}
+
+/**
+ * qdf_nbuf_data_get_icmpv6_subtype() - get the subtype
+ *            of IPV6 ICMPV6 packet.
+ * @data: Pointer to IPV6 ICMPV6 packet data buffer
+ *
+ * This func. returns the subtype of ICMPV6 packet.
+ *
+ * Return: subtype of the ICMPV6 packet.
+ */
+static inline enum qdf_proto_subtype
+qdf_nbuf_data_get_icmpv6_subtype(uint8_t *data)
+{
+	return __qdf_nbuf_data_get_icmpv6_subtype(data);
+}
+
+/**
+ * qdf_nbuf_data_get_ipv4_proto() - get the proto type
+ *            of IPV4 packet.
+ * @data: Pointer to IPV4 packet data buffer
+ *
+ * This func. returns the proto type of IPV4 packet.
+ *
+ * Return: proto type of IPV4 packet.
+ */
+static inline uint8_t
+qdf_nbuf_data_get_ipv4_proto(uint8_t *data)
+{
+	return __qdf_nbuf_data_get_ipv4_proto(data);
+}
+
+/**
+ * qdf_nbuf_data_get_ipv6_proto() - get the proto type
+ *            of IPV6 packet.
+ * @data: Pointer to IPV6 packet data buffer
+ *
+ * This func. returns the proto type of IPV6 packet.
+ *
+ * Return: proto type of IPV6 packet.
+ */
+static inline uint8_t
+qdf_nbuf_data_get_ipv6_proto(uint8_t *data)
+{
+	return __qdf_nbuf_data_get_ipv6_proto(data);
+}
+
+/**
  * qdf_nbuf_is_ipv4_pkt() - check if packet is a ipv4 packet or not
  * @buf:  buffer
  *
@@ -1095,7 +1393,21 @@ static inline uint8_t qdf_nbuf_get_tx_parallel_dnload_frm(qdf_nbuf_t buf)
 static inline
 bool qdf_nbuf_is_ipv4_pkt(qdf_nbuf_t buf)
 {
-	return __qdf_nbuf_is_ipv4_pkt(buf);
+	return __qdf_nbuf_data_is_ipv4_pkt(qdf_nbuf_data(buf));
+}
+
+/**
+ * qdf_nbuf_data_is_ipv4_pkt() - check if packet is a ipv4 packet or not
+ * @data:  data
+ *
+ * This api is for Tx packets.
+ *
+ * Return: true if packet is ipv4 packet
+ */
+static inline
+bool qdf_nbuf_data_is_ipv4_pkt(uint8_t *data)
+{
+	return __qdf_nbuf_data_is_ipv4_pkt(data);
 }
 
 /**
@@ -1109,7 +1421,22 @@ bool qdf_nbuf_is_ipv4_pkt(qdf_nbuf_t buf)
 static inline
 bool qdf_nbuf_is_ipv4_dhcp_pkt(qdf_nbuf_t buf)
 {
-	return __qdf_nbuf_is_ipv4_dhcp_pkt(buf);
+	return __qdf_nbuf_data_is_ipv4_dhcp_pkt(qdf_nbuf_data(buf));
+}
+
+/**
+ * qdf_nbuf_data_is_ipv4_dhcp_pkt() - check if it is DHCP packet.
+ * @data: Pointer to DHCP packet data buffer
+ *
+ * This func. checks whether it is a DHCP packet or not.
+ *
+ * Return: true if it is a DHCP packet
+ *         false if not
+ */
+static inline
+bool qdf_nbuf_data_is_ipv4_dhcp_pkt(uint8_t *data)
+{
+	return __qdf_nbuf_data_is_ipv4_dhcp_pkt(data);
 }
 
 /**
@@ -1123,7 +1450,36 @@ bool qdf_nbuf_is_ipv4_dhcp_pkt(qdf_nbuf_t buf)
 static inline
 bool qdf_nbuf_is_ipv4_eapol_pkt(qdf_nbuf_t buf)
 {
-	return __qdf_nbuf_is_ipv4_eapol_pkt(buf);
+	return __qdf_nbuf_data_is_ipv4_eapol_pkt(qdf_nbuf_data(buf));
+}
+
+/**
+ * qdf_nbuf_data_is_ipv4_eapol_pkt() - check if it is EAPOL packet.
+ * @data: Pointer to EAPOL packet data buffer
+ *
+ * This func. checks whether it is a EAPOL packet or not.
+ *
+ * Return: true if it is a EAPOL packet
+ *         false if not
+ */
+static inline
+bool qdf_nbuf_data_is_ipv4_eapol_pkt(uint8_t *data)
+{
+	return __qdf_nbuf_data_is_ipv4_eapol_pkt(data);
+}
+
+/**
+ * qdf_nbuf_is_ipv4_wapi_pkt() - check if packet is a wapi packet or not
+ * @buf:  buffer
+ *
+ * This api is for ipv4 packet.
+ *
+ * Return: true if packet is WAPI packet
+ */
+static inline
+bool qdf_nbuf_is_ipv4_wapi_pkt(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_is_ipv4_wapi_pkt(buf);
 }
 
 /**
@@ -1137,32 +1493,277 @@ bool qdf_nbuf_is_ipv4_eapol_pkt(qdf_nbuf_t buf)
 static inline
 bool qdf_nbuf_is_ipv4_arp_pkt(qdf_nbuf_t buf)
 {
-	return __qdf_nbuf_is_ipv4_arp_pkt(buf);
+	return __qdf_nbuf_data_is_ipv4_arp_pkt(qdf_nbuf_data(buf));
 }
 
 /**
- * qdf_invalidate_range() - invalidate the virtual address range specified by
- *			start and end addresses.
- * Note: This does not write back the cache entries.
+ * qdf_nbuf_data_is_ipv4_arp_pkt() - check if it is ARP packet.
+ * @data: Pointer to ARP packet data buffer
+ *
+ * This func. checks whether it is a ARP packet or not.
+ *
+ * Return: TRUE if it is a ARP packet
+ *         FALSE if not
+ */
+static inline
+bool qdf_nbuf_data_is_ipv4_arp_pkt(uint8_t *data)
+{
+	return __qdf_nbuf_data_is_ipv4_arp_pkt(data);
+}
+
+/**
+ * qdf_nbuf_is_ipv6_pkt() - check if it is IPV6 packet.
+ * @buf: Pointer to IPV6 packet buffer
+ *
+ * This func. checks whether it is a IPV6 packet or not.
+ *
+ * Return: TRUE if it is a IPV6 packet
+ *         FALSE if not
+ */
+static inline
+bool qdf_nbuf_is_ipv6_pkt(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_data_is_ipv6_pkt(qdf_nbuf_data(buf));
+}
+
+/**
+ * qdf_nbuf_data_is_ipv6_pkt() - check if it is IPV6 packet.
+ * @data: Pointer to IPV6 packet data buffer
+ *
+ * This func. checks whether it is a IPV6 packet or not.
+ *
+ * Return: TRUE if it is a IPV6 packet
+ *         FALSE if not
+ */
+static inline
+bool qdf_nbuf_data_is_ipv6_pkt(uint8_t *data)
+{
+	return __qdf_nbuf_data_is_ipv6_pkt(data);
+}
+
+/**
+ * qdf_nbuf_data_is_ipv4_mcast_pkt() - check if it is IPV4 multicast packet.
+ * @data: Pointer to IPV4 packet data buffer
+ *
+ * This func. checks whether it is a IPV4 multicast packet or not.
+ *
+ * Return: TRUE if it is a IPV4 multicast packet
+ *         FALSE if not
+ */
+static inline
+bool qdf_nbuf_data_is_ipv4_mcast_pkt(uint8_t *data)
+{
+	return __qdf_nbuf_data_is_ipv4_mcast_pkt(data);
+}
+
+/**
+ * qdf_nbuf_data_is_ipv6_mcast_pkt() - check if it is IPV6 multicast packet.
+ * @data: Pointer to IPV6 packet data buffer
+ *
+ * This func. checks whether it is a IPV6 multicast packet or not.
+ *
+ * Return: TRUE if it is a IPV6 multicast packet
+ *         FALSE if not
+ */
+static inline
+bool qdf_nbuf_data_is_ipv6_mcast_pkt(uint8_t *data)
+{
+	return __qdf_nbuf_data_is_ipv6_mcast_pkt(data);
+}
+
+/**
+ * qdf_nbuf_is_icmp_pkt() - check if it is IPV4 ICMP packet.
+ * @buf: Pointer to IPV4 ICMP packet buffer
+ *
+ * This func. checks whether it is a ICMP packet or not.
+ *
+ * Return: TRUE if it is a ICMP packet
+ *         FALSE if not
+ */
+static inline
+bool qdf_nbuf_is_icmp_pkt(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_data_is_icmp_pkt(qdf_nbuf_data(buf));
+}
+
+/**
+ * qdf_nbuf_data_is_icmp_pkt() - check if it is IPV4 ICMP packet.
+ * @data: Pointer to IPV4 ICMP packet data buffer
+ *
+ * This func. checks whether it is a ICMP packet or not.
+ *
+ * Return: TRUE if it is a ICMP packet
+ *         FALSE if not
+ */
+static inline
+bool qdf_nbuf_data_is_icmp_pkt(uint8_t *data)
+{
+	return __qdf_nbuf_data_is_icmp_pkt(data);
+}
+
+/**
+ * qdf_nbuf_is_icmpv6_pkt() - check if it is IPV6 ICMPV6 packet.
+ * @buf: Pointer to IPV6 ICMPV6 packet buffer
+ *
+ * This func. checks whether it is a ICMPV6 packet or not.
+ *
+ * Return: TRUE if it is a ICMPV6 packet
+ *         FALSE if not
+ */
+static inline
+bool qdf_nbuf_is_icmpv6_pkt(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_data_is_icmpv6_pkt(qdf_nbuf_data(buf));
+}
+
+/**
+ * qdf_nbuf_data_is_icmpv6_pkt() - check if it is IPV6 ICMPV6 packet.
+ * @data: Pointer to IPV6 ICMPV6 packet data buffer
+ *
+ * This func. checks whether it is a ICMPV6 packet or not.
+ *
+ * Return: TRUE if it is a ICMPV6 packet
+ *         FALSE if not
+ */
+static inline
+bool qdf_nbuf_data_is_icmpv6_pkt(uint8_t *data)
+{
+	return __qdf_nbuf_data_is_icmpv6_pkt(data);
+}
+
+/**
+ * qdf_nbuf_is_ipv4_udp_pkt() - check if it is IPV4 UDP packet.
+ * @buf: Pointer to IPV4 UDP packet buffer
+ *
+ * This func. checks whether it is a IPV4 UDP packet or not.
+ *
+ * Return: TRUE if it is a IPV4 UDP packet
+ *         FALSE if not
+ */
+static inline
+bool qdf_nbuf_is_ipv4_udp_pkt(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_data_is_ipv4_udp_pkt(qdf_nbuf_data(buf));
+}
+
+/**
+ * qdf_nbuf_data_is_ipv4_udp_pkt() - check if it is IPV4 UDP packet.
+ * @data: Pointer to IPV4 UDP packet data buffer
+ *
+ * This func. checks whether it is a IPV4 UDP packet or not.
+ *
+ * Return: TRUE if it is a IPV4 UDP packet
+ *         FALSE if not
+ */
+static inline
+bool qdf_nbuf_data_is_ipv4_udp_pkt(uint8_t *data)
+{
+	return __qdf_nbuf_data_is_ipv4_udp_pkt(data);
+}
+
+/**
+ * qdf_nbuf_is_ipv4_tcp_pkt() - check if it is IPV4 TCP packet.
+ * @buf: Pointer to IPV4 TCP packet buffer
+ *
+ * This func. checks whether it is a IPV4 TCP packet or not.
+ *
+ * Return: TRUE if it is a IPV4 TCP packet
+ *         FALSE if not
+ */
+static inline
+bool qdf_nbuf_is_ipv4_tcp_pkt(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_data_is_ipv4_tcp_pkt(qdf_nbuf_data(buf));
+}
+
+/**
+ * qdf_nbuf_data_is_ipv4_tcp_pkt() - check if it is IPV4 TCP packet.
+ * @data: Pointer to IPV4 TCP packet data buffer
+ *
+ * This func. checks whether it is a IPV4 TCP packet or not.
+ *
+ * Return: TRUE if it is a IPV4 TCP packet
+ *         FALSE if not
+ */
+static inline
+bool qdf_nbuf_data_is_ipv4_tcp_pkt(uint8_t *data)
+{
+	return __qdf_nbuf_data_is_ipv4_tcp_pkt(data);
+}
+
+/**
+ * qdf_nbuf_is_ipv6_udp_pkt() - check if it is IPV6 UDP packet.
+ * @buf: Pointer to IPV6 UDP packet buffer
+ *
+ * This func. checks whether it is a IPV6 UDP packet or not.
+ *
+ * Return: TRUE if it is a IPV6 UDP packet
+ *         FALSE if not
+ */
+static inline
+bool qdf_nbuf_is_ipv6_udp_pkt(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_data_is_ipv6_udp_pkt(qdf_nbuf_data(buf));
+}
+
+/**
+ * qdf_nbuf_data_is_ipv6_udp_pkt() - check if it is IPV6 UDP packet.
+ * @data: Pointer to IPV6 UDP packet data buffer
+ *
+ * This func. checks whether it is a IPV6 UDP packet or not.
+ *
+ * Return: TRUE if it is a IPV6 UDP packet
+ *         FALSE if not
+ */
+static inline
+bool qdf_nbuf_data_is_ipv6_udp_pkt(uint8_t *data)
+{
+	return __qdf_nbuf_data_is_ipv6_udp_pkt(data);
+}
+
+/**
+ * qdf_nbuf_is_ipv6_tcp_pkt() - check if it is IPV6 TCP packet.
+ * @buf: Pointer to IPV6 TCP packet buffer
+ *
+ * This func. checks whether it is a IPV6 TCP packet or not.
+ *
+ * Return: TRUE if it is a IPV6 TCP packet
+ *         FALSE if not
+ */
+static inline
+bool qdf_nbuf_is_ipv6_tcp_pkt(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_data_is_ipv6_tcp_pkt(qdf_nbuf_data(buf));
+}
+
+/**
+ * qdf_nbuf_data_is_ipv6_tcp_pkt() - check if it is IPV6 TCP packet.
+ * @data: Pointer to IPV6 TCP packet data buffer
+ *
+ * This func. checks whether it is a IPV6 TCP packet or not.
+ *
+ * Return: TRUE if it is a IPV6 TCP packet
+ *         FALSE if not
+ */
+static inline
+bool qdf_nbuf_data_is_ipv6_tcp_pkt(uint8_t *data)
+{
+	return __qdf_nbuf_data_is_ipv6_tcp_pkt(data);
+}
+
+/**
+ * qdf_invalidate_range() - invalidate virtual address range
+ * @start: start address of the address range
+ * @end: end address of the address range
+ *
+ * Note that this function does not write back the cache entries.
  *
  * Return: none
  */
-#ifdef MSM_PLATFORM
 static inline void qdf_invalidate_range(void *start, void *end)
 {
-	dmac_inv_range(start, end);
+	__qdf_invalidate_range(start, end);
 }
-
-#else
-static inline void qdf_invalidate_range(void *start, void *end)
-{
-	/* TODO figure out how to invalidate cache on x86 and other
-	   non-MSM platform */
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-		  "Cache invalidate not yet implemneted for non-MSM platform");
-	return;
-}
-#endif
 
 /**
  * qdf_nbuf_reset_num_frags() - decrement the number of fragments

@@ -440,6 +440,18 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 
 				qdf_event_set(&target->ctrl_response_valid);
 				break;
+#ifdef CONFIG_MCL
+			case HTC_MSG_WAKEUP_FROM_SUSPEND_ID:
+				AR_DEBUG_PRINTF(ATH_DEBUG_ANY,
+					("Received initial wake up\n"));
+				LOCK_HTC_CREDIT(target);
+				htc_credit_record(HTC_INITIAL_WAKE_UP,
+					pEndpoint->TxCredits,
+					HTC_PACKET_QUEUE_DEPTH(
+						&pEndpoint->TxQueue));
+				UNLOCK_HTC_CREDIT(target);
+				break;
+#endif
 			case HTC_MSG_SEND_SUSPEND_COMPLETE:
 				wow_nack = false;
 				LOCK_HTC_CREDIT(target);

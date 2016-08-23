@@ -31,6 +31,7 @@
 #include "hif.h"
 #include "hif_main.h"
 #include "multibus.h"
+#include "dummy.h"
 #if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB)
 #include "ce_main.h"
 #endif
@@ -49,12 +50,13 @@ static void hif_intialize_default_ops(struct hif_softc *hif_sc)
 
 	/* must be filled in by hif_bus_open */
 	bus_ops->hif_bus_close = NULL;
-
 	/* dummy implementations */
 	bus_ops->hif_display_stats =
 		&hif_dummy_display_stats;
 	bus_ops->hif_clear_stats =
 		&hif_dummy_clear_stats;
+	bus_ops->hif_set_bundle_mode = hif_dummy_set_bundle_mode;
+	bus_ops->hif_bus_reset_resume = hif_dummy_bus_reset_resume;
 }
 
 #define NUM_OPS (sizeof(struct hif_bus_ops) / sizeof(void *))
@@ -100,6 +102,8 @@ int hif_bus_get_context_size(enum qdf_bus_type bus_type)
 		return hif_snoc_get_context_size();
 	case QDF_BUS_TYPE_SDIO:
 		return hif_sdio_get_context_size();
+	case QDF_BUS_TYPE_USB:
+		return hif_usb_get_context_size();
 	default:
 		return 0;
 	}
@@ -131,6 +135,8 @@ QDF_STATUS hif_bus_open(struct hif_softc *hif_sc,
 		break;
 	case QDF_BUS_TYPE_SDIO:
 		status = hif_initialize_sdio_ops(hif_sc);
+	case QDF_BUS_TYPE_USB:
+		status = hif_initialize_usb_ops(&hif_sc->bus_ops);
 		break;
 	default:
 		status = QDF_STATUS_E_NOSUPPORT;
@@ -347,3 +353,34 @@ void hif_disable_power_management(struct hif_opaque_softc *hif_hdl)
 	hif_sc->bus_ops.hif_disable_power_management(hif_sc);
 }
 
+/**
+ * hif_set_bundle_mode() - enable bundling and set default rx bundle cnt
+ * @scn: pointer to hif_opaque_softc structure
+ * @enabled: flag to enable/disable bundling
+ * @rx_bundle_cnt: bundle count to be used for RX
+ *
+ * Return: none
+ */
+void hif_set_bundle_mode(struct hif_opaque_softc *scn, bool enabled,
+				int rx_bundle_cnt)
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(scn);
+	hif_sc->bus_ops.hif_set_bundle_mode(hif_sc, enabled, rx_bundle_cnt);
+}
+
+/**
+ * hif_bus_reset_resume() - resume the bus after reset
+ * @scn: struct hif_opaque_softc
+ *
+ * This function is called to tell the driver that USB device has been resumed
+ * and it has also been reset. The driver should redo any necessary
+ * initialization. This function resets WLAN SOC.
+ *
+ * Return: int 0 for success, non zero for failure
+ */
+int hif_bus_reset_resume(struct hif_opaque_softc *scn)
+
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(scn);
+	return hif_sc->bus_ops.hif_bus_reset_resume(hif_sc);
+}

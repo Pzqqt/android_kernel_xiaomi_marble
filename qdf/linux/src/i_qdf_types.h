@@ -154,6 +154,7 @@ struct __qdf_mempool_ctxt;
  * @QDF_BUS_TYPE_AHB: AHB Bus
  * @QDF_BUS_TYPE_SNOC: SNOC Bus
  * @QDF_BUS_TYPE_SIM: Simulator
+ * @QDF_BUS_TYPE_USB: USB Bus
  */
 enum qdf_bus_type {
 	QDF_BUS_TYPE_NONE = -1,
@@ -161,7 +162,8 @@ enum qdf_bus_type {
 	QDF_BUS_TYPE_AHB,
 	QDF_BUS_TYPE_SNOC,
 	QDF_BUS_TYPE_SIM,
-	QDF_BUS_TYPE_SDIO
+	QDF_BUS_TYPE_SDIO,
+	QDF_BUS_TYPE_USB
 };
 
 /**

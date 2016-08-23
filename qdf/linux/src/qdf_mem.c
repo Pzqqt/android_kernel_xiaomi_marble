@@ -504,6 +504,42 @@ void *qdf_mem_malloc_debug(size_t size,
 EXPORT_SYMBOL(qdf_mem_malloc_debug);
 
 /**
+ * qdf_mem_validate_node_for_free() - validate that the node is in a list
+ * @qdf_node: node to check for being in a list
+ *
+ * qdf_node should be a non null value.
+ *
+ * Return: true if the node validly linked in an anchored doubly linked list
+ */
+static bool qdf_mem_validate_node_for_free(qdf_list_node_t *qdf_node)
+{
+	struct list_head *node = qdf_node;
+
+	/*
+	 * if the node is an empty list, it is not tied to an anchor node
+	 * and must have been removed with list_del_init
+	 */
+	if (list_empty(node))
+		return false;
+
+	if (node->prev == NULL)
+		return false;
+
+	if (node->next == NULL)
+		return false;
+
+	if (node->prev->next != node)
+		return false;
+
+	if (node->next->prev != node)
+		return false;
+
+	return true;
+}
+
+
+
+/**
  * qdf_mem_free() - QDF memory free API
  * @ptr: Pointer to the starting address of the memory to be free'd.
  *
@@ -514,50 +550,99 @@ EXPORT_SYMBOL(qdf_mem_malloc_debug);
  */
 void qdf_mem_free(void *ptr)
 {
-	if (ptr != NULL) {
-		QDF_STATUS qdf_status;
-		struct s_qdf_mem_struct *mem_struct =
-			((struct s_qdf_mem_struct *)ptr) - 1;
+	struct s_qdf_mem_struct *mem_struct;
+
+	/* freeing a null pointer is valid */
+	if (qdf_unlikely(ptr == NULL))
+		return;
+
+	mem_struct = ((struct s_qdf_mem_struct *)ptr) - 1;
+
+	if (qdf_unlikely(mem_struct == NULL)) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
+			  "%s: null mem_struct", __func__);
+		QDF_BUG(0);
+	}
 
 #if defined(CONFIG_CNSS) && defined(CONFIG_WCNSS_MEM_PRE_ALLOC)
-		if (wcnss_prealloc_put(ptr))
-			return;
+	if (wcnss_prealloc_put(ptr))
+		return;
 #endif
 
-		qdf_spin_lock_irqsave(&qdf_mem_list_lock);
-		qdf_status =
-			qdf_list_remove_node(&qdf_mem_list, &mem_struct->node);
-		qdf_spin_unlock_irqrestore(&qdf_mem_list_lock);
+	qdf_spin_lock_irqsave(&qdf_mem_list_lock);
 
-		if (QDF_STATUS_SUCCESS == qdf_status) {
-			if (qdf_mem_cmp(mem_struct->header,
-						 &WLAN_MEM_HEADER[0],
-						 sizeof(WLAN_MEM_HEADER))) {
-				QDF_TRACE(QDF_MODULE_ID_QDF,
-					  QDF_TRACE_LEVEL_FATAL,
-					  "Memory Header is corrupted. mem_info: Filename %s, line_num %d",
-					  mem_struct->file_name,
-					  (int)mem_struct->line_num);
-				QDF_BUG(0);
-			}
-			if (qdf_mem_cmp((uint8_t *) ptr + mem_struct->size,
-					    &WLAN_MEM_TAIL[0],
-					    sizeof(WLAN_MEM_TAIL))) {
-				QDF_TRACE(QDF_MODULE_ID_QDF,
-					  QDF_TRACE_LEVEL_FATAL,
-					  "Memory Trailer is corrupted. mem_info: Filename %s, line_num %d",
-					  mem_struct->file_name,
-					  (int)mem_struct->line_num);
-				QDF_BUG(0);
-			}
-			kfree((void *)mem_struct);
-		} else {
-			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-				  "%s: Unallocated memory (double free?)",
-				  __func__);
-			QDF_BUG(0);
-		}
+	/*
+	 * invalid memory access when checking the header/tailer
+	 * would be a use after free and would indicate a double free
+	 * or invalid pointer passed.
+	 */
+	if (qdf_mem_cmp(mem_struct->header, &WLAN_MEM_HEADER[0],
+			sizeof(WLAN_MEM_HEADER)))
+		goto error;
+
+	/*
+	 * invalid memory access while checking validate node
+	 * would indicate corruption in the nodes pointed to
+	 */
+	if (!qdf_mem_validate_node_for_free(&mem_struct->node))
+		goto error;
+
+	/*
+	 * invalid memory access here is unlikely and would imply
+	 * that the size value was corrupted/incorrect.
+	 * It is unlikely that the above checks would pass in a
+	 * double free case.
+	 */
+	if (qdf_mem_cmp((uint8_t *) ptr + mem_struct->size,
+			&WLAN_MEM_TAIL[0], sizeof(WLAN_MEM_TAIL)))
+		goto error;
+
+	/*
+	 * make the node an empty list before doing the spin unlock
+	 * The empty list check will guarantee that we avoid a race condition.
+	 */
+	list_del_init(&mem_struct->node);
+	qdf_spin_unlock_irqrestore(&qdf_mem_list_lock);
+	kfree(mem_struct);
+	return;
+
+error:
+	if (!qdf_list_has_node(&qdf_mem_list, &mem_struct->node)) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
+			  "%s: Unallocated memory (double free?)",
+			  __func__);
+		qdf_spin_unlock_irqrestore(&qdf_mem_list_lock);
+		QDF_BUG(0);
 	}
+
+	if (qdf_mem_cmp(mem_struct->header, &WLAN_MEM_HEADER[0],
+				sizeof(WLAN_MEM_HEADER))) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
+			  "Memory Header is corrupted.");
+		qdf_spin_unlock_irqrestore(&qdf_mem_list_lock);
+		QDF_BUG(0);
+	}
+
+	if (!qdf_mem_validate_node_for_free(&mem_struct->node)) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
+			  "Memory_struct is corrupted.");
+		qdf_spin_unlock_irqrestore(&qdf_mem_list_lock);
+		QDF_BUG(0);
+	}
+
+	if (qdf_mem_cmp((uint8_t *) ptr + mem_struct->size,
+			&WLAN_MEM_TAIL[0], sizeof(WLAN_MEM_TAIL))) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
+			  "Memory Trailer is corrupted. mem_info: Filename %s, line_num %d",
+			  mem_struct->file_name, (int)mem_struct->line_num);
+		qdf_spin_unlock_irqrestore(&qdf_mem_list_lock);
+		QDF_BUG(0);
+	}
+
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
+		  "%s unexpected error", __func__);
+	qdf_spin_unlock_irqrestore(&qdf_mem_list_lock);
+	QDF_BUG(0);
 }
 EXPORT_SYMBOL(qdf_mem_free);
 #else
@@ -860,7 +945,7 @@ void qdf_mem_move(void *dst_addr, const void *src_addr, uint32_t num_bytes)
 }
 EXPORT_SYMBOL(qdf_mem_move);
 
-#if defined(A_SIMOS_DEVHOST) || defined(HIF_SDIO)
+#if defined(A_SIMOS_DEVHOST) || defined(HIF_SDIO) || defined(HIF_USB)
 /**
  * qdf_mem_alloc_consistent() - allocates consistent qdf memory
  * @osdev: OS device handle
@@ -876,7 +961,11 @@ void *qdf_mem_alloc_consistent(qdf_device_t osdev, void *dev, qdf_size_t size,
 	void *vaddr;
 
 	vaddr = qdf_mem_malloc(size);
-	*phy_addr = ((qdf_dma_addr_t) vaddr);
+	*phy_addr = ((uintptr_t) vaddr);
+	/* using this type conversion to suppress "cast from pointer to integer
+	 * of different size" warning on some platforms
+	 */
+	BUILD_BUG_ON(sizeof(*phy_addr) < sizeof(vaddr));
 	return vaddr;
 }
 
@@ -900,7 +989,7 @@ void *qdf_mem_alloc_consistent(qdf_device_t osdev, void *dev, qdf_size_t size,
 #endif
 EXPORT_SYMBOL(qdf_mem_alloc_consistent);
 
-#if defined(A_SIMOS_DEVHOST) ||  defined(HIF_SDIO)
+#if defined(A_SIMOS_DEVHOST) ||  defined(HIF_SDIO) || defined(HIF_USB)
 /**
  * qdf_mem_free_consistent() - free consistent qdf memory
  * @osdev: OS device handle

@@ -39,17 +39,13 @@
 #include "hif_main.h"
 #include "hif_hw_version.h"
 #if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB)
-#include "ce_api.h"
 #include "ce_tasklet.h"
-#include "platform_icnss.h"
 #endif
 #include "qdf_trace.h"
 #include "qdf_status.h"
-#ifdef CONFIG_CNSS
-#include <net/cnss.h>
-#endif
 #include "hif_debug.h"
 #include "mp_dev.h"
+#include "ce_api.h"
 
 void hif_dump(struct hif_opaque_softc *hif_ctx, uint8_t cmd_id, bool start)
 {
@@ -328,6 +324,11 @@ void hif_get_hw_info(struct hif_opaque_softc *scn, u32 *version, u32 *revision,
 			const char **target_name)
 {
 	struct hif_target_info *info = hif_get_target_info_handle(scn);
+	struct hif_softc *sc = HIF_GET_SOFTC(scn);
+
+	if (sc->bus_type == QDF_BUS_TYPE_USB)
+		hif_usb_get_hw_info(sc);
+
 	*version = info->target_version;
 	*revision = info->target_revision;
 	*target_name = hif_get_hw_name(info);
@@ -459,7 +460,7 @@ QDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 
 	scn->hif_init_done = true;
 
-	HIF_TRACE("%s: X OK", __func__);
+	HIF_TRACE("%s: OK", __func__);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -892,7 +893,7 @@ bool hif_is_recovery_in_progress(struct hif_softc *scn)
 
 	return false;
 }
-
+#if defined(HIF_PCI) || defined(SNOC) || defined(HIF_AHB)
 /**
  * hif_batch_send() - API to access hif specific function
  * ce_batch_send.
@@ -962,6 +963,7 @@ int hif_send_fast(struct hif_opaque_softc *osc, qdf_nbuf_t nbuf,
 	return ce_send_fast((struct CE_handle *)ce_tx_hdl, nbuf,
 			transfer_id, download_len);
 }
+#endif
 
 /**
  * hif_reg_write() - API to access hif specific function
@@ -994,3 +996,19 @@ uint32_t hif_reg_read(struct hif_opaque_softc *hif_ctx, uint32_t offset)
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	return hif_read32_mb(scn->mem + offset);
 }
+
+#if defined(HIF_USB)
+/**
+ * hif_ramdump_handler(): generic ramdump handler
+ * @scn: struct hif_opaque_softc
+ *
+ * Return: None
+ */
+
+void hif_ramdump_handler(struct hif_opaque_softc *scn)
+
+{
+	if (hif_get_bus_type == QDF_BUS_TYPE_USB)
+		hif_usb_ramdump_handler();
+}
+#endif

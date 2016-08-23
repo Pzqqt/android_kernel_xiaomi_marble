@@ -38,15 +38,12 @@
 #include "hif_main.h"
 #include "ce_api.h"
 #include "qdf_trace.h"
-#ifdef CONFIG_CNSS
-#include <net/cnss.h>
-#endif
+#include "pld_common.h"
 #include "hif_debug.h"
 #include "ce_internal.h"
 #include "ce_reg.h"
 #include "ce_assignment.h"
 #include "ce_tasklet.h"
-#include "platform_icnss.h"
 #ifndef CONFIG_WIN
 #include "qwlan_version.h"
 #endif
@@ -1942,8 +1939,8 @@ void hif_get_target_ce_config(struct CE_pipe_config **target_ce_config_ret,
  */
 int hif_wlan_enable(struct hif_softc *scn)
 {
-	struct icnss_wlan_enable_cfg cfg;
-	enum icnss_driver_mode mode;
+	struct pld_wlan_enable_cfg cfg;
+	enum pld_driver_mode mode;
 	uint32_t con_mode = hif_get_conparam(scn);
 
 	hif_get_target_ce_config((struct CE_pipe_config **)&cfg.ce_tgt_cfg,
@@ -1959,16 +1956,17 @@ int hif_wlan_enable(struct hif_softc *scn)
 	cfg.num_shadow_reg_cfg /= sizeof(struct shadow_reg_cfg);
 
 	if (QDF_GLOBAL_FTM_MODE == con_mode)
-		mode = ICNSS_FTM;
+		mode = PLD_FTM;
 	else if (QDF_IS_EPPING_ENABLED(con_mode))
-		mode = ICNSS_EPPING;
+		mode = PLD_EPPING;
 	else
-		mode = ICNSS_MISSION;
+		mode = PLD_MISSION;
 
 	if (BYPASS_QMI)
 		return 0;
 	else
-		return icnss_wlan_enable(&cfg, mode, QWLAN_VERSIONSTR);
+		return pld_wlan_enable(scn->qdf_dev->dev, &cfg,
+				       mode, QWLAN_VERSIONSTR);
 }
 
 #define CE_EPPING_USES_IRQ true
@@ -2916,15 +2914,15 @@ irqreturn_t hif_fw_interrupt_handler(int irq, void *arg)
  */
 void hif_wlan_disable(struct hif_softc *scn)
 {
-	enum icnss_driver_mode mode;
+	enum pld_driver_mode mode;
 	uint32_t con_mode = hif_get_conparam(scn);
 
 	if (QDF_GLOBAL_FTM_MODE == con_mode)
-		mode = ICNSS_FTM;
+		mode = PLD_FTM;
 	else if (QDF_IS_EPPING_ENABLED(con_mode))
-		mode = ICNSS_EPPING;
+		mode = PLD_EPPING;
 	else
-		mode = ICNSS_MISSION;
+		mode = PLD_MISSION;
 
-	icnss_wlan_disable(mode);
+	pld_wlan_disable(scn->qdf_dev->dev, mode);
 }

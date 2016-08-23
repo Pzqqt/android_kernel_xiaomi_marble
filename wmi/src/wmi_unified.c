@@ -37,11 +37,61 @@
 #include "htc_api.h"
 #include "htc_api.h"
 #include "dbglog_host.h"
-#include "wmi.h"
 #include "wmi_unified_priv.h"
 #include "wmi_unified_param.h"
 
 #include <linux/debugfs.h>
+
+/* This check for CONFIG_WIN temporary added due to redeclaration compilation
+error in MCL. Error is caused due to inclusion of wmi.h in wmi_unified_api.h
+which gets included here through ol_if_athvar.h. Eventually it is expected that
+wmi.h will be removed from wmi_unified_api.h after cleanup, which will need
+WMI_CMD_HDR to be defined here. */
+#ifdef CONFIG_WIN
+/* Copied from wmi.h */
+#undef MS
+#define MS(_v, _f) (((_v) & _f##_MASK) >> _f##_LSB)
+#undef SM
+#define SM(_v, _f) (((_v) << _f##_LSB) & _f##_MASK)
+#undef WO
+#define WO(_f)      ((_f##_OFFSET) >> 2)
+
+#undef GET_FIELD
+#define GET_FIELD(_addr, _f) MS(*((A_UINT32 *)(_addr) + WO(_f)), _f)
+#undef SET_FIELD
+#define SET_FIELD(_addr, _f, _val)  \
+	    (*((A_UINT32 *)(_addr) + WO(_f)) = \
+		(*((A_UINT32 *)(_addr) + WO(_f)) & ~_f##_MASK) | SM(_val, _f))
+
+#define WMI_GET_FIELD(_msg_buf, _msg_type, _f) \
+	    GET_FIELD(_msg_buf, _msg_type ## _ ## _f)
+
+#define WMI_SET_FIELD(_msg_buf, _msg_type, _f, _val) \
+	    SET_FIELD(_msg_buf, _msg_type ## _ ## _f, _val)
+
+#define WMI_EP_APASS           0x0
+#define WMI_EP_LPASS           0x1
+#define WMI_EP_SENSOR          0x2
+
+/*
+ *  * Control Path
+ *   */
+typedef PREPACK struct {
+	A_UINT32	commandId:24,
+			reserved:2, /* used for WMI endpoint ID */
+			plt_priv:6; /* platform private */
+} POSTPACK WMI_CMD_HDR;        /* used for commands and events */
+
+#define WMI_CMD_HDR_COMMANDID_LSB           0
+#define WMI_CMD_HDR_COMMANDID_MASK          0x00ffffff
+#define WMI_CMD_HDR_COMMANDID_OFFSET        0x00000000
+#define WMI_CMD_HDR_WMI_ENDPOINTID_MASK        0x03000000
+#define WMI_CMD_HDR_WMI_ENDPOINTID_OFFSET      24
+#define WMI_CMD_HDR_PLT_PRIV_LSB               24
+#define WMI_CMD_HDR_PLT_PRIV_MASK              0xff000000
+#define WMI_CMD_HDR_PLT_PRIV_OFFSET            0x00000000
+/* end of copy wmi.h */
+#endif /* CONFIG_WIN */
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 3, 0))
 /* TODO Cleanup this backported function */
@@ -241,7 +291,7 @@ uint32_t wmi_mgmt_log_max_entry = WMI_MGMT_EVENT_DEBUG_MAX_ENTRY;
 uint32_t wmi_record_max_length = WMI_EVENT_DEBUG_ENTRY_MAX_LENGTH;
 uint32_t wmi_display_size = 100;
 
-static uint8_t *wmi_id_to_name(WMI_CMD_ID wmi_command);
+static uint8_t *wmi_id_to_name(uint32_t wmi_command);
 
 /**
  * wmi_log_init() - Initialize WMI event logging
@@ -898,7 +948,7 @@ static QDF_STATUS wmi_debugfs_init(wmi_unified_t wmi_handle)
  *
  * Return: none
  */
-void wmi_mgmt_cmd_record(wmi_unified_t wmi_handle, WMI_CMD_ID cmd,
+void wmi_mgmt_cmd_record(wmi_unified_t wmi_handle, uint32_t cmd,
 			void *header, uint32_t vdev_id, uint32_t chanfreq)
 {
 	qdf_spin_lock_bh(&wmi_handle->log_info.wmi_record_lock);
@@ -920,7 +970,7 @@ void wmi_mgmt_cmd_record(wmi_unified_t wmi_handle, WMI_CMD_ID cmd,
  * Return: none
  */
 static void wmi_debugfs_remove(wmi_unified_t wmi_handle) { }
-void wmi_mgmt_cmd_record(wmi_unified_t wmi_handle, WMI_CMD_ID cmd,
+void wmi_mgmt_cmd_record(wmi_unified_t wmi_handle, uint32_t cmd,
 			void *header, uint32_t vdev_id, uint32_t chanfreq) { }
 #endif /*WMI_INTERFACE_EVENT_LOGGING */
 
@@ -1007,7 +1057,7 @@ uint16_t wmi_get_max_msg_len(wmi_unified_t wmi_handle)
 }
 
 #ifndef WMI_NON_TLV_SUPPORT
-static uint8_t *wmi_id_to_name(WMI_CMD_ID wmi_command)
+static uint8_t *wmi_id_to_name(uint32_t wmi_command)
 {
 	switch (wmi_command) {
 		/* initialize the wlan sub system */
@@ -1583,18 +1633,20 @@ static uint8_t *wmi_id_to_name(WMI_CMD_ID wmi_command)
 		CASE_RETURN_STRING(WMI_PDEV_SET_WAKEUP_CONFIG_CMDID);
 		CASE_RETURN_STRING(WMI_PDEV_GET_ANTDIV_STATUS_CMDID);
 		CASE_RETURN_STRING(WMI_PEER_ANTDIV_INFO_REQ_CMDID);
+		CASE_RETURN_STRING(WMI_MNT_FILTER_CMDID);
+		CASE_RETURN_STRING(WMI_PDEV_GET_CHIP_POWER_STATS_CMDID);
 	}
 
 	return "Invalid WMI cmd";
 }
 
-static inline void wma_log_cmd_id(WMI_CMD_ID cmd_id)
+static inline void wma_log_cmd_id(uint32_t cmd_id)
 {
 	WMI_LOGD("Send WMI command:%s command_id:%d",
 		 wmi_id_to_name(cmd_id), cmd_id);
 }
 #else
-static uint8_t *wmi_id_to_name(WMI_CMD_ID wmi_command)
+static uint8_t *wmi_id_to_name(uint32_t wmi_command)
 {
 	return "Invalid WMI cmd";
 }
@@ -1608,7 +1660,7 @@ static uint8_t *wmi_id_to_name(WMI_CMD_ID wmi_command)
  * Return: true if the command is part of the suspend resume sequence.
  */
 #ifndef WMI_NON_TLV_SUPPORT
-static bool wmi_is_runtime_pm_cmd(WMI_CMD_ID cmd_id)
+static bool wmi_is_runtime_pm_cmd(uint32_t cmd_id)
 {
 	switch (cmd_id) {
 	case WMI_WOW_ENABLE_CMDID:
@@ -1632,7 +1684,7 @@ static bool wmi_is_runtime_pm_cmd(WMI_CMD_ID cmd_id)
  *
  * Return: true if the command is part of the resume sequence.
  */
-static bool wmi_is_pm_resume_cmd(WMI_CMD_ID cmd_id)
+static bool wmi_is_pm_resume_cmd(uint32_t cmd_id)
 {
 	switch (cmd_id) {
 	case WMI_WOW_HOSTWAKEUP_FROM_SLEEP_CMDID:
@@ -1644,11 +1696,11 @@ static bool wmi_is_pm_resume_cmd(WMI_CMD_ID cmd_id)
 	}
 }
 #else
-static bool wmi_is_runtime_pm_cmd(WMI_CMD_ID cmd_id)
+static bool wmi_is_runtime_pm_cmd(uint32_t cmd_id)
 {
 	return false;
 }
-static bool wmi_is_pm_resume_cmd(WMI_CMD_ID cmd_id)
+static bool wmi_is_pm_resume_cmd(uint32_t cmd_id)
 {
 	return false;
 }
@@ -1664,7 +1716,7 @@ static bool wmi_is_pm_resume_cmd(WMI_CMD_ID cmd_id)
  * Return: 0 on success
  */
 int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t len,
-			 WMI_CMD_ID cmd_id)
+			 uint32_t cmd_id)
 {
 	HTC_PACKET *pkt;
 	A_STATUS status;

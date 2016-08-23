@@ -45,8 +45,8 @@ QDF_STATUS hif_initialize_snoc_ops(struct hif_bus_ops *bus_ops)
 	bus_ops->hif_bus_close = &hif_snoc_close;
 	bus_ops->hif_bus_prevent_linkdown = &hif_dummy_bus_prevent_linkdown;
 	bus_ops->hif_reset_soc = &hif_dummy_reset_soc;
-	bus_ops->hif_bus_suspend = &hif_dummy_bus_suspend;
-	bus_ops->hif_bus_resume = &hif_dummy_bus_resume;
+	bus_ops->hif_bus_suspend = &hif_snoc_bus_suspend;
+	bus_ops->hif_bus_resume = &hif_snoc_bus_resume;
 	bus_ops->hif_target_sleep_state_adjust =
 		&hif_dummy_target_sleep_state_adjust;
 

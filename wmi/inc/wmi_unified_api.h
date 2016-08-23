@@ -36,7 +36,9 @@
 #include <osdep.h>
 #include "a_types.h"
 #include "ol_defines.h"
+#ifdef CONFIG_MCL
 #include "wmi.h"
+#endif
 #include "htc_api.h"
 #include "wmi_unified_param.h"
 
@@ -123,7 +125,7 @@ void *wmi_unified_attach(void *scn_handle,
  *
  * Return: none
  */
-void wmi_mgmt_cmd_record(wmi_unified_t wmi_handle, WMI_CMD_ID cmd,
+void wmi_mgmt_cmd_record(wmi_unified_t wmi_handle, uint32_t cmd,
 			void *header, uint32_t vdev_id, uint32_t chanfreq);
 
 /**
@@ -171,7 +173,7 @@ void wmi_buf_free(wmi_buf_t net_buf);
  */
 int
 wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t buflen,
-			 WMI_CMD_ID cmd_id);
+			uint32_t cmd_id);
 
 /**
  * wmi_unified_register_event_handler() - WMI event handler
@@ -648,7 +650,8 @@ QDF_STATUS wmi_unified_dfs_phyerr_filter_offload_en_cmd(void *wmi_hdl,
 #ifndef WMI_NON_TLV_SUPPORT
 QDF_STATUS wmi_unified_pktlog_wmi_send_cmd(void *wmi_hdl,
 				   WMI_PKTLOG_EVENT pktlog_event,
-				   WMI_CMD_ID cmd_id);
+				   uint32_t cmd_id,
+				   uint8_t user_triggered);
 #endif
 
 QDF_STATUS wmi_unified_add_wow_wakeup_event_cmd(void *wmi_hdl,
@@ -762,10 +765,12 @@ QDF_STATUS wmi_unified_dcc_update_ndl(void *wmi_hdl,
 QDF_STATUS wmi_unified_save_fw_version_cmd(void *wmi_hdl,
 		void *evt_buf);
 
+#ifdef CONFIG_MCL
 QDF_STATUS wmi_unified_send_init_cmd(void *wmi_hdl,
 		wmi_resource_config *res_cfg,
 		uint8_t num_mem_chunks, struct wmi_host_mem_chunk *mem_chunk,
 		bool action);
+#endif
 
 QDF_STATUS wmi_unified_send_saved_init_cmd(void *wmi_hdl);
 

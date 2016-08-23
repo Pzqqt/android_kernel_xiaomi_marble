@@ -31,11 +31,12 @@
 #include "a_debug.h"
 #include "ol_if_athvar.h"
 #include "ol_defines.h"
-#include "wmi.h"
 #include "wmi_unified_api.h"
 #include "wmi_unified_priv.h"
 
 #ifdef WMI_NON_TLV_SUPPORT
+#include "legacy/wmi.h"
+#include "legacy/wmi_unified.h"
 /**
  * send_vdev_create_cmd_non_tlv() - send VDEV create command to fw
  * @wmi_handle: wmi handle

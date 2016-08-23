@@ -30,7 +30,6 @@
 #include "a_debug.h"
 #include "ol_if_athvar.h"
 #include "ol_defines.h"
-#include "wmi.h"
 #include "wmi_unified_priv.h"
 #include "wmi_unified_param.h"
 
@@ -2313,13 +2312,14 @@ wmi_unified_dfs_phyerr_filter_offload_en_cmd(void *wmi_hdl,
 #ifndef WMI_NON_TLV_SUPPORT
 QDF_STATUS wmi_unified_pktlog_wmi_send_cmd(void *wmi_hdl,
 				   WMI_PKTLOG_EVENT pktlog_event,
-				   WMI_CMD_ID cmd_id)
+				   uint32_t cmd_id,
+				   uint8_t user_triggered)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
 	if (wmi_handle->ops->send_pktlog_wmi_send_cmd)
 		return wmi_handle->ops->send_pktlog_wmi_send_cmd(wmi_handle,
-			    pktlog_event, cmd_id);
+			    pktlog_event, cmd_id, user_triggered);
 
 	return QDF_STATUS_E_FAILURE;
 }
@@ -2902,7 +2902,7 @@ QDF_STATUS wmi_unified_process_set_ie_info_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
-
+#ifdef CONFIG_MCL
 /**
  * wmi_unified_send_init_cmd() - wmi init command
  * @wmi_handle:      pointer to wmi handle
@@ -2928,7 +2928,7 @@ QDF_STATUS wmi_unified_send_init_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
-
+#endif
 /**
  * wmi_unified_send_saved_init_cmd() - wmi init command
  * @wmi_handle:      pointer to wmi handle

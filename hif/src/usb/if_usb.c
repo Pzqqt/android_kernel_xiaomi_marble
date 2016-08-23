@@ -361,7 +361,7 @@ int hif_usb_bus_resume(struct hif_softc *hif_ctx)
 }
 
 /**
- * hif_bus_reset_resume() - resume the bus after reset
+ * hif_usb_bus_reset_resume() - resume the bus after reset
  * @scn: struct hif_opaque_softc
  *
  * This function is called to tell the driver that USB device has been resumed
@@ -370,10 +370,9 @@ int hif_usb_bus_resume(struct hif_softc *hif_ctx)
  *
  * Return: int 0 for success, non zero for failure
  */
-int hif_bus_reset_resume(struct hif_opaque_softc *scn)
+int hif_usb_bus_reset_resume(struct hif_softc *hif_ctx)
 {
 	int ret = 0;
-	struct hif_softc *hif_ctx = HIF_GET_SOFTC(scn);
 	HIF_ENTER();
 	if (hif_usb_diag_write_cold_reset(hif_ctx) != QDF_STATUS_SUCCESS)
 		ret = 1;
@@ -621,7 +620,7 @@ void hif_fw_assert_ramdump_pattern(struct hif_usb_softc *sc)
 }
 
 /**
- * hif_ramdump_handler(): dump bus debug registers
+ * hif_usb_ramdump_handler(): dump bus debug registers
  * @scn: struct hif_opaque_softc
  *
  * This function is to receive information of firmware crash dump, and
@@ -641,7 +640,7 @@ void hif_fw_assert_ramdump_pattern(struct hif_usb_softc *sc)
  * Return: 0 for success or error code
  */
 
-void hif_ramdump_handler(struct hif_opaque_softc *scn)
+void hif_usb_ramdump_handler(struct hif_opaque_softc *scn)
 {
 	uint32_t *reg, pattern, i, start_addr = 0;
 	uint32_t len;

@@ -421,4 +421,17 @@ int qdf_get_cpu(void)
 	return __qdf_get_cpu();
 }
 
+/**
+ * qdf_device_init_wakeup() - allow a device to wake up the aps system
+ * @qdf_dev: the qdf device context
+ * @enable: enable/disable the device as a wakup source
+ *
+ * Return: 0 or errno
+ */
+static inline int qdf_device_init_wakeup(qdf_device_t qdf_dev, bool enable)
+{
+	return __qdf_device_init_wakeup(qdf_dev, enable);
+}
+
+
 #endif /*_QDF_UTIL_H*/

@@ -89,6 +89,7 @@ typedef enum {
 	HTC_PROCESS_CREDIT_REPORT,
 	HTC_SUSPEND_ACK,
 	HTC_SUSPEND_NACK,
+	HTC_INITIAL_WAKE_UP,
 } htc_credit_exchange_type;
 
 typedef struct {
@@ -193,7 +194,7 @@ typedef struct _HTC_TARGET {
 #ifdef HIF_SDIO
 	A_UINT16 AltDataCreditSize;
 #endif
-
+	A_UINT32 avail_tx_credits;
 #if defined(DEBUG_HL_LOGGING) && defined(CONFIG_HL_SUPPORT)
 	A_UINT32 rx_bundle_stats[HTC_MAX_MSG_PER_BUNDLE_RX];
 	A_UINT32 tx_bundle_stats[HTC_MAX_MSG_PER_BUNDLE_TX];
@@ -202,7 +203,20 @@ typedef struct _HTC_TARGET {
 	uint32_t con_mode;
 } HTC_TARGET;
 
+#if defined ENABLE_BUNDLE_TX
+#define HTC_TX_BUNDLE_ENABLED(target) (target->MaxMsgsPerHTCBundle > 1)
+#else
+#define HTC_TX_BUNDLE_ENABLED(target) 0
+#endif
+
+#if defined ENABLE_BUNDLE_RX
+#define HTC_RX_BUNDLE_ENABLED(target) (target->MaxMsgsPerHTCBundle > 1)
+#else
+#define HTC_RX_BUNDLE_ENABLED(target) 0
+#endif
+
 #define HTC_ENABLE_BUNDLE(target) (target->MaxMsgsPerHTCBundle > 1)
+
 #ifdef RX_SG_SUPPORT
 #define RESET_RX_SG_CONFIG(_target) \
 	_target->ExpRxSgTotalLen = 0; \
@@ -327,7 +341,7 @@ htc_send_complete_check(HTC_ENDPOINT *pEndpoint, int force) {
 #define DEBUG_BUNDLE 0
 #endif
 
-#ifdef HIF_SDIO
+#if defined(HIF_SDIO) || defined(HIF_USB)
 #ifndef ENABLE_BUNDLE_TX
 #define ENABLE_BUNDLE_TX 1
 #endif
@@ -335,5 +349,5 @@ htc_send_complete_check(HTC_ENDPOINT *pEndpoint, int force) {
 #ifndef ENABLE_BUNDLE_RX
 #define ENABLE_BUNDLE_RX 1
 #endif
-#endif /* HIF_SDIO */
+#endif /*defined(HIF_SDIO) || defined(HIF_USB)*/
 #endif /* !_HTC_HOST_INTERNAL_H_ */

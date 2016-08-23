@@ -45,6 +45,7 @@
 #include <qdf_mem.h>
 #include <linux/tcp.h>
 #include <qdf_util.h>
+#include <qdf_nbuf.h>
 
 /*
  * Use socket buffer as the underlying implentation as skbuf .
@@ -60,6 +61,10 @@ typedef struct sk_buff *__qdf_nbuf_t;
  * The driver will always add one tx fragment (the tx descriptor)
  */
 #define QDF_NBUF_CB_TX_MAX_EXTRA_FRAGS 2
+#define QDF_NBUF_CB_PACKET_TYPE_EAPOL  1
+#define QDF_NBUF_CB_PACKET_TYPE_ARP    2
+#define QDF_NBUF_CB_PACKET_TYPE_WAPI   3
+#define QDF_NBUF_CB_PACKET_TYPE_DHCP   4
 
 /*
  * Make sure that qdf_dma_addr_t in the cb block is always 64 bit aligned
@@ -171,24 +176,18 @@ struct qdf_nbuf_cb {
 				} win; /* 21 bytes*/
 				struct {
 					uint32_t data_attr; /* 4 bytes */
-					union {
-						struct {
-							uint8_t packet_state;
-							uint8_t packet_track:4,
-								proto_type:4;
-							uint8_t dp_trace:1,
-								htt2_frm:1,
-								rsrvd:6;
-							uint8_t vdev_id;
-						} hl;
-						struct {
-							uint8_t packet_state;
-							uint8_t packet_track:4,
-								proto_type:4;
-							uint8_t dp_trace:1,
-								rsrvd:7;
-							uint8_t vdev_id;
-						} ll; /* low latency */
+					struct{
+						uint8_t packet_state;
+						uint8_t packet_track:4,
+							proto_type:4;
+						uint8_t dp_trace:1,
+							is_bcast:1,
+							is_mcast:1,
+							packet_type:3,
+							/* used only for hl*/
+							htt2_frm:1,
+							reserved:1;
+						uint8_t vdev_id;
 					} trace; /* 4 bytes */
 					struct {
 						uint32_t owned:1,
@@ -266,23 +265,29 @@ struct qdf_nbuf_cb {
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.mcl.data_attr)
 #define QDF_NBUF_CB_TX_PACKET_STATE(skb) \
 	(((struct qdf_nbuf_cb *) \
-		((skb)->cb))->u.tx.dev.mcl.trace.ll.packet_state)
+		((skb)->cb))->u.tx.dev.mcl.trace.packet_state)
 #define QDF_NBUF_CB_TX_PACKET_TRACK(skb) \
 	(((struct qdf_nbuf_cb *) \
-		((skb)->cb))->u.tx.dev.mcl.trace.ll.packet_track)
+		((skb)->cb))->u.tx.dev.mcl.trace.packet_track)
 #define QDF_NBUF_CB_TX_PROTO_TYPE(skb) \
 	(((struct qdf_nbuf_cb *) \
-		((skb)->cb))->u.tx.dev.mcl.trace.ll.proto_type)
+		((skb)->cb))->u.tx.dev.mcl.trace.proto_type)
 #define QDF_NBUF_UPDATE_TX_PKT_COUNT(skb, PACKET_STATE) \
 	qdf_nbuf_set_state(skb, PACKET_STATE)
 #define QDF_NBUF_GET_PACKET_TRACK(skb) \
-	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.mcl.trace.ll.packet_track)
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.mcl.trace.packet_track)
 #define QDF_NBUF_CB_TX_DP_TRACE(skb) \
-	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.mcl.trace.ll.dp_trace)
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.mcl.trace.dp_trace)
 #define QDF_NBUF_CB_TX_HL_HTT2_FRM(skb) \
-	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.mcl.trace.hl.htt2_frm)
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.mcl.trace.htt2_frm)
 #define QDF_NBUF_CB_TX_VDEV_ID(skb) \
-	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.mcl.trace.ll.vdev_id)
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.mcl.trace.vdev_id)
+#define QDF_NBUF_CB_GET_IS_BCAST(skb) \
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.mcl.trace.is_bcast)
+#define QDF_NBUF_CB_GET_IS_MCAST(skb) \
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.mcl.trace.is_mcast)
+#define QDF_NBUF_CB_GET_PACKET_TYPE(skb) \
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.mcl.trace.packet_type)
 #define QDF_NBUF_CB_TX_IPA_OWNED(skb) \
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.mcl.ipa.owned)
 #define QDF_NBUF_CB_TX_IPA_PRIV(skb) \
@@ -486,10 +491,27 @@ QDF_STATUS __qdf_nbuf_frag_map(
 	qdf_device_t osdev, __qdf_nbuf_t nbuf,
 	int offset, qdf_dma_dir_t dir, int cur_frag);
 
-bool __qdf_nbuf_is_ipv4_pkt(struct sk_buff *skb);
-bool __qdf_nbuf_is_ipv4_dhcp_pkt(struct sk_buff *skb);
-bool __qdf_nbuf_is_ipv4_eapol_pkt(struct sk_buff *skb);
-bool __qdf_nbuf_is_ipv4_arp_pkt(struct sk_buff *skb);
+bool __qdf_nbuf_is_ipv4_wapi_pkt(struct sk_buff *skb);
+bool __qdf_nbuf_data_is_ipv4_pkt(uint8_t *data);
+bool __qdf_nbuf_data_is_ipv6_pkt(uint8_t *data);
+bool __qdf_nbuf_data_is_ipv4_mcast_pkt(uint8_t *data);
+bool __qdf_nbuf_data_is_ipv6_mcast_pkt(uint8_t *data);
+bool __qdf_nbuf_data_is_icmp_pkt(uint8_t *data);
+bool __qdf_nbuf_data_is_icmpv6_pkt(uint8_t *data);
+bool __qdf_nbuf_data_is_ipv4_udp_pkt(uint8_t *data);
+bool __qdf_nbuf_data_is_ipv4_tcp_pkt(uint8_t *data);
+bool __qdf_nbuf_data_is_ipv6_udp_pkt(uint8_t *data);
+bool __qdf_nbuf_data_is_ipv6_tcp_pkt(uint8_t *data);
+bool __qdf_nbuf_data_is_ipv4_dhcp_pkt(uint8_t *data);
+bool __qdf_nbuf_data_is_ipv4_eapol_pkt(uint8_t *data);
+bool __qdf_nbuf_data_is_ipv4_arp_pkt(uint8_t *data);
+enum qdf_proto_subtype  __qdf_nbuf_data_get_dhcp_subtype(uint8_t *data);
+enum qdf_proto_subtype  __qdf_nbuf_data_get_eapol_subtype(uint8_t *data);
+enum qdf_proto_subtype  __qdf_nbuf_data_get_arp_subtype(uint8_t *data);
+enum qdf_proto_subtype  __qdf_nbuf_data_get_icmp_subtype(uint8_t *data);
+enum qdf_proto_subtype  __qdf_nbuf_data_get_icmpv6_subtype(uint8_t *data);
+uint8_t __qdf_nbuf_data_get_ipv4_proto(uint8_t *data);
+uint8_t __qdf_nbuf_data_get_ipv6_proto(uint8_t *data);
 
 /**
  * __qdf_to_status() - OS to QDF status conversion
@@ -1607,5 +1629,31 @@ __qdf_nbuf_get_priv_ptr(struct sk_buff *skb)
 {
 	return &skb->cb[8];
 }
+
+/**
+ * __qdf_invalidate_range() - invalidate virtual address range
+ * @start: start address of the address range
+ * @end: end address of the address range
+ *
+ * Note that this function does not write back the cache entries.
+ *
+ * Return: none
+ */
+#ifdef MSM_PLATFORM
+static inline void __qdf_invalidate_range(void *start, void *end)
+{
+	dmac_inv_range(start, end);
+}
+
+#else
+static inline void __qdf_invalidate_range(void *start, void *end)
+{
+	/* TODO figure out how to invalidate cache on x86 and other
+	   non-MSM platform */
+	pr_err("Cache invalidate not yet implemneted for non-MSM platforms\n");
+	return;
+}
+#endif
+
 
 #endif /*_I_QDF_NET_BUF_H */

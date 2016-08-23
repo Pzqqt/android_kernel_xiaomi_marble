@@ -74,6 +74,9 @@ struct hif_bus_ops {
 	void (*hif_disable_power_management)(struct hif_softc *hif_ctx);
 	void (*hif_display_stats)(struct hif_softc *hif_ctx);
 	void (*hif_clear_stats)(struct hif_softc *hif_ctx);
+	void (*hif_set_bundle_mode) (struct hif_softc *hif_ctx, bool enabled,
+					int rx_bundle_cnt);
+	int (*hif_bus_reset_resume)(struct hif_softc *hif_ctx);
 };
 
 #ifdef HIF_SNOC
@@ -169,4 +172,23 @@ static inline int hif_sdio_get_context_size(void)
 }
 #endif /* HIF_SDIO */
 
+#ifdef HIF_USB
+QDF_STATUS hif_initialize_usb_ops(struct hif_bus_ops *bus_ops);
+int hif_usb_get_context_size(void);
+#else
+static inline QDF_STATUS hif_initialize_usb_ops(struct hif_bus_ops *bus_ops)
+{
+	HIF_ERROR("%s: not supported", __func__);
+	return QDF_STATUS_E_NOSUPPORT;
+}
+/**
+ * hif_usb_get_context_size() - dummy when usb isn't supported
+ *
+ * Return: 0 as an invalid size to indicate no support
+ */
+static inline int hif_usb_get_context_size(void)
+{
+	return 0;
+}
+#endif /* HIF_USB */
 #endif /* _MULTIBUS_H_ */

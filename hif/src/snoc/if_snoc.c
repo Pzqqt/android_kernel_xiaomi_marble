@@ -38,6 +38,9 @@
 #include "ce_main.h"
 #include "ce_tasklet.h"
 #include "snoc_api.h"
+#include <soc/qcom/icnss.h>
+#include "pld_common.h"
+#include "qdf_util.h"
 
 /**
  * hif_disable_isr(): disable isr
@@ -130,13 +133,13 @@ QDF_STATUS hif_snoc_open(struct hif_softc *hif_ctx, enum qdf_bus_type bus_type)
 static QDF_STATUS hif_snoc_get_soc_info(struct hif_softc *scn)
 {
 	int ret;
-	struct icnss_soc_info soc_info;
+	struct pld_soc_info soc_info;
 
 	qdf_mem_zero(&soc_info, sizeof(soc_info));
 
-	ret = icnss_get_soc_info(&soc_info);
+	ret = pld_get_soc_info(scn->qdf_dev->dev, &soc_info);
 	if (ret < 0) {
-		HIF_ERROR("%s: icnss_get_soc_info error = %d", __func__, ret);
+		HIF_ERROR("%s: pld_get_soc_info error = %d", __func__, ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -192,7 +195,7 @@ static inline int hif_snoc_get_target_type(struct hif_softc *ol_sc,
 	struct device *dev, void *bdev, const hif_bus_id *bid,
 	uint32_t *hif_type, uint32_t *target_type)
 {
-	/* TODO: need to use CNSS's HW version. Hard code for now */
+	/* TODO: need to use HW version. Hard code for now */
 #ifdef QCA_WIFI_3_0_ADRASTEA
 	*hif_type = HIF_TYPE_ADRASTEA;
 	*target_type = TARGET_TYPE_ADRASTEA;
@@ -231,6 +234,16 @@ QDF_STATUS hif_snoc_enable_bus(struct hif_softc *ol_sc,
 		return ret;
 	}
 
+	ret = qdf_device_init_wakeup(ol_sc->qdf_dev, true);
+	if (ret == -EEXIST)
+		HIF_WARN("%s: device_init_wakeup already done",
+				__func__);
+	else if (ret) {
+		HIF_ERROR("%s: device_init_wakeup: err= %d",
+				__func__, ret);
+		return ret;
+	}
+
 	if (!ol_sc) {
 		HIF_ERROR("%s: hif_ctx is NULL", __func__);
 		return QDF_STATUS_E_NOMEM;
@@ -265,6 +278,10 @@ QDF_STATUS hif_snoc_enable_bus(struct hif_softc *ol_sc,
  */
 void hif_snoc_disable_bus(struct hif_softc *scn)
 {
+	int ret = qdf_device_init_wakeup(scn->qdf_dev, false);
+
+	if (ret)
+		HIF_ERROR("%s: device_init_wakeup: err %d", __func__, ret);
 }
 
 /**
@@ -308,4 +325,176 @@ void hif_snoc_irq_enable(struct hif_softc *scn,
 void hif_snoc_irq_disable(struct hif_softc *scn, int ce_id)
 {
 	ce_disable_irq_in_individual_register(scn, ce_id);
+}
+
+/*
+ * hif_snoc_setup_wakeup_sources() - enable/disable irq wake on correct irqs
+ * @hif_softc: hif context
+ *
+ * Firmware will send a wakeup request to the HTC_CTRL_RSVD_SVC when waking up
+ * the host driver. Ensure that the copy complete interrupt from this copy
+ * engine can wake up the apps processor.
+ *
+ * Return: 0 for success
+ */
+QDF_STATUS hif_snoc_setup_wakeup_sources(struct hif_softc *scn, bool enable)
+{
+	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
+	uint8_t ul_pipe, dl_pipe;
+	int ul_is_polled, dl_is_polled;
+	int irq_to_wake_on;
+
+	QDF_STATUS status;
+	int ret;
+
+	status = hif_map_service_to_pipe(hif_hdl, HTC_CTRL_RSVD_SVC,
+					 &ul_pipe, &dl_pipe,
+					 &ul_is_polled, &dl_is_polled);
+	if (status) {
+		HIF_ERROR("%s: pipe_mapping failure", __func__);
+		return status;
+	}
+
+	irq_to_wake_on = icnss_get_irq(dl_pipe);
+	if (irq_to_wake_on < 0) {
+		HIF_ERROR("%s: failed to map ce to irq", __func__);
+		return QDF_STATUS_E_RESOURCES;
+	}
+
+	if (enable)
+		ret = enable_irq_wake(irq_to_wake_on);
+	else
+		ret = disable_irq_wake(irq_to_wake_on);
+
+	if (ret) {
+		HIF_ERROR("%s: Fail to setup wake IRQ!", __func__);
+		return QDF_STATUS_E_RESOURCES;
+	}
+
+	HIF_ERROR("%s: expecting wake from ce %d, irq %d",
+		  __func__, dl_pipe, irq_to_wake_on);
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * __hif_snoc_irq_state_vote() - enable/disable all the ce interrupts
+ * @scn: hif context pointer
+ * @enble: true to enable the interrupts false to disable
+ *
+ * takes care of unwinding partial successes.
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+
+static QDF_STATUS __hif_snoc_irq_state_vote(struct hif_softc *scn, bool enable)
+{
+	int num_ce = scn->ce_count;
+	int ce_id = 0;
+	int irq;
+
+	while (ce_id < num_ce) {
+		irq = icnss_get_irq(ce_id);
+		if (irq < 0)
+			goto error;
+
+		if (enable)
+			enable_irq(irq);
+		else
+			disable_irq(irq);
+
+		ce_id++;
+	}
+
+	return QDF_STATUS_SUCCESS;
+
+error:
+	HIF_ERROR("%s: failed to map ce to irq", __func__);
+
+	while (--ce_id >= 0) {
+		irq = icnss_get_irq(ce_id);
+		if (irq < 0)
+			continue;
+
+		if (enable)
+			disable_irq(irq);
+		else
+			enable_irq(irq);
+	}
+	return QDF_STATUS_E_FAULT;
+}
+
+/**
+ * hif_snoc_enable_irqs() - enable the ce irqs
+ * @scn: hif context
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+static QDF_STATUS hif_snoc_enable_irqs(struct hif_softc *scn)
+{
+	return __hif_snoc_irq_state_vote(scn, true);
+}
+
+/**
+ * hif_snoc_enable_irqs() - enable the ce irqs
+ * @scn: hif context
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+static QDF_STATUS hif_snoc_disable_irqs(struct hif_softc *scn)
+{
+	return __hif_snoc_irq_state_vote(scn, false);
+}
+
+/**
+ * hif_snoc_bus_suspend() - prepare to suspend the bus
+ * @scn: hif context
+ *
+ * Setup wakeup interrupt configuration.
+ * Disable CE interrupts (wakeup interrupt will still wake apps)
+ * Drain tasklets. - make sure that we don't suspend while processing
+ * the wakeup message.
+ *
+ * Return: 0 on success.
+ */
+int hif_snoc_bus_suspend(struct hif_softc *scn)
+{
+	if (hif_snoc_setup_wakeup_sources(scn, true) != QDF_STATUS_SUCCESS)
+		goto error;
+
+	if (hif_snoc_disable_irqs(scn) != QDF_STATUS_SUCCESS)
+		goto wakeup_sources;
+
+	if (hif_drain_tasklets(scn) != 0)
+		goto enable_irqs;
+	return 0;
+
+enable_irqs:
+	if (hif_snoc_enable_irqs(scn) != QDF_STATUS_SUCCESS)
+		QDF_BUG(0);
+wakeup_sources:
+	if (hif_snoc_setup_wakeup_sources(scn, false) != QDF_STATUS_SUCCESS)
+		QDF_BUG(0);
+error:
+	return -EFAULT;
+
+}
+
+/**
+ * hif_snoc_bus_resume() - snoc bus resume function
+ * @scn: hif context
+ *
+ * Clear wakeup interrupt configuration.
+ * Reenable ce interrupts
+ *
+ * Return: 0 on success
+ */
+int hif_snoc_bus_resume(struct hif_softc *scn)
+{
+	if (hif_snoc_setup_wakeup_sources(scn, false) != QDF_STATUS_SUCCESS)
+		QDF_BUG(0);
+
+	if (hif_snoc_enable_irqs(scn) != QDF_STATUS_SUCCESS)
+		QDF_BUG(0);
+
+	return 0;
 }

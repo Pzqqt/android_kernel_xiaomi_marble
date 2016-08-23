@@ -24,7 +24,8 @@
  * under proprietary terms before Copyright ownership was assigned
  * to the Linux Foundation.
  */
-
+#ifndef _PCI_API_H_
+#define _PCI_API_H_
 QDF_STATUS hif_pci_open(struct hif_softc *hif_ctx,
 			enum qdf_bus_type bus_type);
 void hif_pci_close(struct hif_softc *hif_ctx);
@@ -51,3 +52,4 @@ void hif_pci_enable_power_management(struct hif_softc *hif_ctx,
 void hif_pci_disable_power_management(struct hif_softc *hif_ctx);
 void hif_pci_display_stats(struct hif_softc *hif_ctx);
 void hif_pci_clear_stats(struct hif_softc *hif_ctx);
+#endif /* _PCI_API_H_ */

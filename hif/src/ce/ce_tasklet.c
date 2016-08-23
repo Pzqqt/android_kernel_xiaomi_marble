@@ -40,10 +40,7 @@
 #include "ce_reg.h"
 #include "ce_internal.h"
 #include "ce_tasklet.h"
-#ifdef CONFIG_CNSS
-#include <net/cnss.h>
-#endif
-#include "platform_icnss.h"
+#include "pld_common.h"
 #include "hif_debug.h"
 #include "hif_napi.h"
 
@@ -243,6 +240,35 @@ void ce_tasklet_kill(struct hif_softc *scn)
 	qdf_atomic_set(&scn->active_tasklet_cnt, 0);
 }
 
+#define HIF_CE_DRAIN_WAIT_CNT          20
+/**
+ * hif_drain_tasklets(): wait untill no tasklet is pending
+ * @scn: hif context
+ *
+ * Let running tasklets clear pending trafic.
+ *
+ * Return: 0 if no bottom half is in progress when it returns.
+ *   -EFAULT if it times out.
+ */
+int hif_drain_tasklets(struct hif_softc *scn)
+{
+	uint32_t ce_drain_wait_cnt = 0;
+
+	while (qdf_atomic_read(&scn->active_tasklet_cnt)) {
+		if (++ce_drain_wait_cnt > HIF_CE_DRAIN_WAIT_CNT) {
+			HIF_ERROR("%s: CE still not done with access",
+			       __func__);
+
+			return -EFAULT;
+		}
+		HIF_INFO("%s: Waiting for CE to finish access", __func__);
+		msleep(10);
+	}
+	return 0;
+}
+
+
+
 #ifdef WLAN_SUSPEND_RESUME_TEST
 static bool g_hif_apps_fake_suspended;
 static hdd_fake_resume_callback hdd_fake_aps_resume;
@@ -308,7 +334,10 @@ static bool hif_fake_aps_resume(void)
 static irqreturn_t hif_snoc_interrupt_handler(int irq, void *context)
 {
 	struct ce_tasklet_entry *tasklet_entry = context;
-	return ce_dispatch_interrupt(icnss_get_ce_id(irq), tasklet_entry);
+	struct hif_softc *scn = HIF_GET_SOFTC(tasklet_entry->hif_ce_state);
+
+	return ce_dispatch_interrupt(pld_get_ce_id(scn->qdf_dev->dev, irq),
+				     tasklet_entry);
 }
 
 /**
@@ -416,7 +445,7 @@ irqreturn_t ce_dispatch_interrupt(int ce_id,
  *
  * @ce_name: ce_name
  */
-const char *ce_name[ICNSS_MAX_IRQ_REGISTRATIONS] = {
+const char *ce_name[] = {
 	"WLAN_CE_0",
 	"WLAN_CE_1",
 	"WLAN_CE_2",
@@ -445,20 +474,23 @@ QDF_STATUS ce_unregister_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 	int id;
 	int ce_count;
 	int ret;
+	struct hif_softc *scn;
 
 	if (hif_ce_state == NULL) {
 		HIF_WARN("%s: hif_ce_state = NULL", __func__);
 		return QDF_STATUS_SUCCESS;
 	}
 
-	ce_count = HIF_GET_SOFTC(hif_ce_state)->ce_count;
+	scn = HIF_GET_SOFTC(hif_ce_state);
+	ce_count = scn->ce_count;
+
 	for (id = 0; id < ce_count; id++) {
 		if ((mask & (1 << id)) && hif_ce_state->tasklets[id].inited) {
-			ret = icnss_ce_free_irq(id,
+			ret = pld_ce_free_irq(scn->qdf_dev->dev, id,
 					&hif_ce_state->tasklets[id]);
 			if (ret < 0)
 				HIF_ERROR(
-					"%s: icnss_unregister_irq error - ce_id = %d, ret = %d",
+					"%s: pld_unregister_irq error - ce_id = %d, ret = %d",
 					__func__, id, ret);
 		}
 	}
@@ -477,14 +509,17 @@ QDF_STATUS ce_unregister_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 QDF_STATUS ce_register_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 {
 	int id;
-	int ce_count = HIF_GET_SOFTC(hif_ce_state)->ce_count;
+	int ce_count;
 	int ret;
 	unsigned long irqflags = IRQF_TRIGGER_RISING;
 	uint32_t done_mask = 0;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ce_state);
+
+	ce_count = scn->ce_count;
 
 	for (id = 0; id < ce_count; id++) {
 		if ((mask & (1 << id)) && hif_ce_state->tasklets[id].inited) {
-			ret = icnss_ce_request_irq(id,
+			ret = pld_ce_request_irq(scn->qdf_dev->dev, id,
 				hif_snoc_interrupt_handler,
 				irqflags, ce_name[id],
 				&hif_ce_state->tasklets[id]);

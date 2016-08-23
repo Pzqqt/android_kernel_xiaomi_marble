@@ -40,7 +40,9 @@ extern "C" {
 #ifdef HIF_PCI
 #include <linux/pci.h>
 #endif /* HIF_PCI */
-
+#ifdef HIF_USB
+#include <linux/usb.h>
+#endif /* HIF_USB */
 #define ENABLE_MBOX_DUMMY_SPACE_FEATURE 1
 
 typedef struct htc_callbacks HTC_CALLBACKS;
@@ -363,7 +365,7 @@ typedef void (*fastpath_msg_handler)(void *, qdf_nbuf_t *, uint32_t);
 #ifdef WLAN_FEATURE_FASTPATH
 void hif_enable_fastpath(struct hif_opaque_softc *hif_ctx);
 bool hif_is_fastpath_mode_enabled(struct hif_opaque_softc *hif_ctx);
-void *hif_get_ce_handle(struct hif_opaque_softc *hif_ctx, int);
+void *hif_get_ce_handle(struct hif_opaque_softc *hif_ctx, int ret);
 int hif_ce_fastpath_cb_register(struct hif_opaque_softc *hif_ctx,
 				fastpath_msg_handler handler, void *context);
 #else
@@ -373,6 +375,11 @@ static inline int hif_ce_fastpath_cb_register(struct hif_opaque_softc *hif_ctx,
 {
 	return QDF_STATUS_E_FAILURE;
 }
+static inline void *hif_get_ce_handle(struct hif_opaque_softc *hif_ctx, int ret)
+{
+	return NULL;
+}
+
 #endif
 
 /*
@@ -613,7 +620,11 @@ struct hif_pipe_addl_info *hif_get_addl_pipe_info(struct hif_opaque_softc *osc,
 uint32_t hif_set_nss_wifiol_mode(struct hif_opaque_softc *osc,
 		uint32_t pipe_num);
 int32_t hif_get_nss_wifiol_bypass_nw_process(struct hif_opaque_softc *osc);
-#endif
+#endif /* QCA_NSS_WIFI_OFFLOAD_SUPPORT */
+
+void hif_set_bundle_mode(struct hif_opaque_softc *scn, bool enabled,
+				int rx_bundle_cnt);
+int hif_bus_reset_resume(struct hif_opaque_softc *scn);
 
 #ifdef WLAN_SUSPEND_RESUME_TEST
 typedef void (*hdd_fake_resume_callback)(uint32_t val);
@@ -623,4 +634,5 @@ void hif_fake_apps_suspend(hdd_fake_resume_callback callback);
 #ifdef __cplusplus
 }
 #endif
+
 #endif /* _HIF_H_ */
