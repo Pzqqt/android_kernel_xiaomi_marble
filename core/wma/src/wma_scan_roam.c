@@ -682,14 +682,15 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 		wma_handle->saved_chan.channel_list[i] =
 				chan_list->chanParam[i].chanId;
 
-		WMA_LOGD("chan[%d] = freq:%u chan:%d", i, tchan_info->mhz,
-			chan_list->chanParam[i].chanId);
-		if (chan_list->chanParam[i].dfsSet) {
-			WMI_SET_CHANNEL_FLAG(tchan_info, WMI_CHAN_FLAG_PASSIVE);
-			WMA_LOGI("chan[%d] DFS[%d]\n",
-				 chan_list->chanParam[i].chanId,
-				 chan_list->chanParam[i].dfsSet);
-		}
+		WMA_LOGD("chan[%d] = freq:%u chan:%d DFS:%d tx power:%d",
+			 i, tchan_info->mhz,
+			 chan_list->chanParam[i].chanId,
+			 chan_list->chanParam[i].dfsSet,
+			 chan_list->chanParam[i].pwr);
+
+		if (chan_list->chanParam[i].dfsSet)
+			WMI_SET_CHANNEL_FLAG(tchan_info,
+					     WMI_CHAN_FLAG_PASSIVE);
 
 		if (tchan_info->mhz < WMA_2_4_GHZ_MAX_FREQ) {
 			WMI_SET_CHANNEL_MODE(tchan_info, MODE_11G);
@@ -719,11 +720,6 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 
 		WMI_SET_CHANNEL_REG_POWER(tchan_info,
 					  chan_list->chanParam[i].pwr);
-		WMA_LOGI("Channel TX power[%d] = %u: %d", i, tchan_info->mhz,
-			 chan_list->chanParam[i].pwr);
-		/*TODO: Set WMI_SET_CHANNEL_MIN_POWER */
-		/*TODO: Set WMI_SET_CHANNEL_ANTENNA_MAX */
-		/*TODO: WMI_SET_CHANNEL_REG_CLASSID */
 		tchan_info++;
 	}
 
