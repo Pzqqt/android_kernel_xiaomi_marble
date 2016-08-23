@@ -115,6 +115,14 @@ static inline void host_log_low_resource_failure(uint8_t event_sub_type)
 }
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+void qdf_wow_wakeup_host_event(uint8_t wow_wakeup_cause);
+#else
+static inline void qdf_wow_wakeup_host_event(uint8_t wow_wakeup_cause)
+{
+	return;
+}
+#endif /* FEATURE_WLAN_DIAG_SUPPORT */
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

@@ -3116,10 +3116,12 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 
 	if ((wake_info->wake_reason != WOW_REASON_UNSPECIFIED) ||
 	    (wake_info->wake_reason == WOW_REASON_UNSPECIFIED &&
-	     !wmi_get_runtime_pm_inprogress(wma->wmi_handle)))
+	     !wmi_get_runtime_pm_inprogress(wma->wmi_handle))) {
 		WMA_LOGA("WOW wakeup host event received (reason: %s(%d)) for vdev %d",
 			 wma_wow_wake_reason_str(wake_info->wake_reason),
 			 wake_info->wake_reason, wake_info->vdev_id);
+		qdf_wow_wakeup_host_event(wake_info->wake_reason);
+	}
 
 	qdf_event_set(&wma->wma_resume_event);
 
