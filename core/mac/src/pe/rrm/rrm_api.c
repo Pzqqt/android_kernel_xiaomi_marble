@@ -795,7 +795,7 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 {
 	tSirRetStatus status = eSIR_SUCCESS;
 	tSirMacRadioMeasureReport *report = NULL;
-	tSirMacBeaconReport beacon_report;
+	tSirMacBeaconReport *beacon_report;
 	tpSirBssDescription bss_desc;
 	tpRRMReq curr_req = mac_ctx->rrm.rrmPEContext.pCurrentReq;
 	tpPESession session_entry;
@@ -842,7 +842,7 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 		for (bss_desc_count = 0; bss_desc_count <
 		     beacon_xmit_ind->numBssDesc; bss_desc_count++) {
 			beacon_report =
-				report[bss_desc_count].report.beaconReport;
+				&report[bss_desc_count].report.beaconReport;
 			/*
 			 * If the scan result is NULL then send report request
 			 * with option subelement as NULL.
@@ -862,21 +862,21 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 			 */
 			if (beacon_xmit_ind->length < sizeof(*beacon_xmit_ind))
 				continue;
-			beacon_report.regClass = beacon_xmit_ind->regClass;
+			beacon_report->regClass = beacon_xmit_ind->regClass;
 			if (bss_desc) {
-				beacon_report.channel = bss_desc->channelId;
-				qdf_mem_copy(beacon_report.measStartTime,
+				beacon_report->channel = bss_desc->channelId;
+				qdf_mem_copy(beacon_report->measStartTime,
 					bss_desc->startTSF,
 					sizeof(bss_desc->startTSF));
-				beacon_report.measDuration =
+				beacon_report->measDuration =
 					SYS_MS_TO_TU(beacon_xmit_ind->duration);
-				beacon_report.phyType = bss_desc->nwType;
-				beacon_report.bcnProbeRsp = 1;
-				beacon_report.rsni = bss_desc->sinr;
-				beacon_report.rcpi = bss_desc->rssi;
-				beacon_report.antennaId = 0;
-				beacon_report.parentTSF = bss_desc->parentTSF;
-				qdf_mem_copy(beacon_report.bssid,
+				beacon_report->phyType = bss_desc->nwType;
+				beacon_report->bcnProbeRsp = 1;
+				beacon_report->rsni = bss_desc->sinr;
+				beacon_report->rcpi = bss_desc->rssi;
+				beacon_report->antennaId = 0;
+				beacon_report->parentTSF = bss_desc->parentTSF;
+				qdf_mem_copy(beacon_report->bssid,
 					bss_desc->bssId, sizeof(tSirMacAddr));
 			}
 
@@ -893,8 +893,8 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 
 				if (bss_desc) {
 					rrm_fill_beacon_ies(mac_ctx,
-					    (uint8_t *) &beacon_report.Ies[0],
-					    (uint8_t *) &beacon_report.numIes,
+					    (uint8_t *) &beacon_report->Ies[0],
+					    (uint8_t *) &beacon_report->numIes,
 					    BEACON_REPORT_MAX_IES,
 					    curr_req->request.Beacon.reqIes.
 					    pElementIds,
@@ -908,8 +908,8 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 				lim_log(mac_ctx, LOG3, FL("Default all IEs and FFs"));
 				if (bss_desc) {
 					rrm_fill_beacon_ies(mac_ctx,
-					    (uint8_t *) &beacon_report.Ies[0],
-					    (uint8_t *) &beacon_report.numIes,
+					    (uint8_t *) &beacon_report->Ies[0],
+					    (uint8_t *) &beacon_report->numIes,
 					    BEACON_REPORT_MAX_IES,
 					    NULL,
 					    0,
