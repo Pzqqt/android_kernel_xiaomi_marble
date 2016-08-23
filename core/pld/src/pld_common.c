@@ -622,6 +622,8 @@ int pld_set_wlan_unsafe_channel(struct device *dev,
 						       ch_count);
 		break;
 	case PLD_BUS_TYPE_SNOC:
+		ret = pld_snoc_set_wlan_unsafe_channel(unsafe_ch_list,
+						       ch_count);
 		break;
 	case PLD_BUS_TYPE_SDIO:
 		/* To do get unsafe channel via cnss sdio API */
@@ -657,6 +659,8 @@ int pld_get_wlan_unsafe_channel(struct device *dev, u16 *unsafe_ch_list,
 						       ch_count, buf_len);
 		break;
 	case PLD_BUS_TYPE_SNOC:
+		ret = pld_snoc_get_wlan_unsafe_channel(unsafe_ch_list,
+						       ch_count, buf_len);
 		break;
 	case PLD_BUS_TYPE_SDIO:
 		/* To do get unsafe channel via cnss sdio API */
@@ -687,6 +691,7 @@ int pld_wlan_set_dfs_nol(struct device *dev, void *info, u16 info_len)
 		ret = pld_pcie_wlan_set_dfs_nol(info, info_len);
 		break;
 	case PLD_BUS_TYPE_SNOC:
+		ret = pld_snoc_wlan_set_dfs_nol(info, info_len);
 		break;
 	case PLD_BUS_TYPE_SDIO:
 		/* To do get nol via cnss sdio API */
@@ -719,6 +724,7 @@ int pld_wlan_get_dfs_nol(struct device *dev, void *info, u16 info_len)
 		ret = pld_pcie_wlan_get_dfs_nol(info, info_len);
 		break;
 	case PLD_BUS_TYPE_SNOC:
+		ret = pld_snoc_wlan_get_dfs_nol(info, info_len);
 		break;
 	case PLD_BUS_TYPE_SDIO:
 		break;
