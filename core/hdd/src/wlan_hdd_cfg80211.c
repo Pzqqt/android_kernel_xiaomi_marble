@@ -6635,8 +6635,18 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 			wlan_hdd_get_intf_addr(hdd_ctx),
 			NET_NAME_UNKNOWN, true);
 	if (!pre_cac_adapter) {
-		hdd_err("error starting pre cac adapter");
+		hdd_err("error opening the pre cac adapter");
 		return -EINVAL;
+	}
+
+	/*
+	 * This interface is internally created by the driver. So, no interface
+	 * up comes for this interface from user space and hence starting
+	 * the adapter internally.
+	 */
+	if (hdd_start_adapter(pre_cac_adapter)) {
+		hdd_err("error starting the pre cac adapter");
+		goto close_pre_cac_adapter;
 	}
 
 	hdd_debug("preparing for start ap/bss on the pre cac adapter");
@@ -6652,7 +6662,7 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 			sizeof(*ap_adapter->sessionCtx.ap.beacon));
 	if (!pre_cac_adapter->sessionCtx.ap.beacon) {
 		hdd_err("failed to alloc mem for beacon");
-		goto close_pre_cac_adapter;
+		goto stop_close_pre_cac_adapter;
 	}
 	qdf_mem_copy(pre_cac_adapter->sessionCtx.ap.beacon,
 			ap_adapter->sessionCtx.ap.beacon,
@@ -6686,7 +6696,7 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 	chan = __ieee80211_get_channel(wiphy, freq);
 	if (!chan) {
 		hdd_err("channel converion failed");
-		goto close_pre_cac_adapter;
+		goto stop_close_pre_cac_adapter;
 	}
 
 	cfg80211_chandef_create(&chandef, chan, channel_type);
@@ -6698,7 +6708,7 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 	ret = wlan_hdd_set_channel(wiphy, dev, &chandef, channel_type);
 	if (0 != ret) {
 		hdd_err("failed to set channel");
-		goto close_pre_cac_adapter;
+		goto stop_close_pre_cac_adapter;
 	}
 
 	status = wlan_hdd_cfg80211_start_bss(pre_cac_adapter, NULL,
@@ -6706,7 +6716,7 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 			eHIDDEN_SSID_NOT_IN_USE, false);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("start bss failed");
-		goto close_pre_cac_adapter;
+		goto stop_close_pre_cac_adapter;
 	}
 
 	/*
@@ -6717,25 +6727,25 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 	ret = wlan_hdd_set_pre_cac_status(pre_cac_adapter, true, handle);
 	if (0 != ret) {
 		hdd_err("failed to set pre cac status");
-		goto stop_pre_cac_adapter;
+		goto stop_close_pre_cac_adapter;
 	}
 
 	ret = wlan_hdd_set_chan_before_pre_cac(ap_adapter,
 				hdd_ap_ctx->operatingChannel);
 	if (0 != ret) {
 		hdd_err("failed to set channel before pre cac");
-		goto stop_pre_cac_adapter;
+		goto stop_close_pre_cac_adapter;
 	}
 
 	ap_adapter->pre_cac_chan = pre_cac_chan;
 
 	return 0;
 
-stop_pre_cac_adapter:
-	hdd_stop_adapter(hdd_ctx, pre_cac_adapter, false);
-close_pre_cac_adapter:
+stop_close_pre_cac_adapter:
+	hdd_stop_adapter(hdd_ctx, pre_cac_adapter, true);
 	qdf_mem_free(pre_cac_adapter->sessionCtx.ap.beacon);
 	pre_cac_adapter->sessionCtx.ap.beacon = NULL;
+close_pre_cac_adapter:
 	hdd_close_adapter(hdd_ctx, pre_cac_adapter, false);
 	return -EINVAL;
 }
