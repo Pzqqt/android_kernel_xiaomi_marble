@@ -2629,13 +2629,17 @@ QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
 	if (status != QDF_STATUS_SUCCESS)
 		goto error_tdls_init;
 
+	status = hdd_lro_enable(hdd_ctx, adapter);
+	if (status != QDF_STATUS_SUCCESS)
+		goto error_lro_enable;
+
 	return QDF_STATUS_SUCCESS;
 
-#ifdef FEATURE_WLAN_TDLS
+error_lro_enable:
+	wlan_hdd_tdls_exit(adapter);
 error_tdls_init:
 	clear_bit(WMM_INIT_DONE, &adapter->event_flags);
 	hdd_wmm_adapter_close(adapter);
-#endif
 error_wmm_init:
 	clear_bit(INIT_TX_RX_SUCCESS, &adapter->event_flags);
 	hdd_deinit_tx_rx(adapter);
@@ -2787,7 +2791,6 @@ void hdd_cleanup_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 		return;
 	}
 
-	hdd_lro_disable(hdd_ctx, adapter);
 	hdd_debugfs_exit(adapter);
 	/*
 	 * The adapter is marked as closed. When hdd_wlan_exit() call returns,
@@ -3097,8 +3100,6 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 			if (QDF_STATUS_SUCCESS != status)
 				goto err_free_netdev;
 		}
-
-		hdd_lro_enable(hdd_ctx, adapter);
 
 		/*
 		 * Workqueue which gets scheduled in IPv4 notification
@@ -3440,6 +3441,7 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			hdd_abort_mac_scan(hdd_ctx, adapter->sessionId,
 					   eCSR_SCAN_ABORT_DEFAULT);
 		}
+		hdd_lro_disable(hdd_ctx, adapter);
 		wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
 
 #ifdef WLAN_OPEN_SOURCE
