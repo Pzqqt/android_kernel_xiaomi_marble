@@ -466,7 +466,7 @@ struct reg_dmn_tables g_reg_dmn_tbl = {
  */
 static uint16_t get_bdf_reg_dmn(uint16_t reg_dmn)
 {
-	return reg_dmn & ~WORLDWIDE_ROAMING_FLAG;
+	return reg_dmn & ~WORLD_ROAMING_FLAG;
 }
 
 /**
@@ -479,8 +479,8 @@ static bool is_reg_dmn_valid(uint16_t reg_dmn)
 {
 	int32_t i;
 
-	if (reg_dmn & COUNTRY_ERD_FLAG) {
-		uint16_t cc = reg_dmn & ~COUNTRY_ERD_FLAG;
+	if (reg_dmn & CTRY_FLAG) {
+		uint16_t cc = reg_dmn & ~CTRY_FLAG;
 		for (i = 0; i < g_reg_dmn_tbl.all_countries_cnt; i++)
 			if (g_reg_dmn_tbl.all_countries[i].country_code == cc)
 				return true;
@@ -544,9 +544,9 @@ static uint16_t reg_dmn_get_default_country(uint16_t reg_dmn)
 {
 	int32_t i;
 	const struct country_code_to_reg_dmn *country = NULL;
-	uint16_t cc = reg_dmn & ~COUNTRY_ERD_FLAG;
+	uint16_t cc = reg_dmn & ~CTRY_FLAG;
 
-	if (reg_dmn & COUNTRY_ERD_FLAG) {
+	if (reg_dmn & CTRY_FLAG) {
 		country = find_country(cc);
 		if (country)
 			return cc;
@@ -627,7 +627,7 @@ static const struct country_code_to_reg_dmn *get_country_from_rd(
  */
 static void reg_dmn_sanitize(struct regulatory *reg)
 {
-	if (reg->reg_domain != COUNTRY_ERD_FLAG)
+	if (reg->reg_domain != CTRY_FLAG)
 		return;
 
 	reg->reg_domain = WOR0_WORLD;

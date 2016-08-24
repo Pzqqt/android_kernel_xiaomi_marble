@@ -73,11 +73,14 @@
 
 #define MAX_CHANNELS_PER_OPERATING_CLASS  25
 #define CDS_MAX_SUPP_OPER_CLASSES 32
-#define	CTRY_DEFAULT            0
-#define COUNTRY_ERD_FLAG        0x8000
-#define WORLDWIDE_ROAMING_FLAG  0x4000
 #define MIN_TX_PWR_CAP    8
 #define MAX_TX_PWR_CAP    30
+
+#define CTRY_DEFAULT          0
+#define CTRY_FLAG             0x8000
+#define WORLD_ROAMING_FLAG    0x4000
+#define WORLD_ROAMING_MASK    0x00F0
+#define WORLD_ROAMING_PREFIX  0x0060
 
 enum country_code {
 	CTRY_AFGHANISTAN = 4,

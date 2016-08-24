@@ -32,15 +32,12 @@
  */
 
 #include "qdf_types.h"
+#include "qdf_trace.h"
 #include "cds_reg_service.h"
 #include "cds_regdomain.h"
-#include "qdf_trace.h"
 #include "sme_api.h"
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_regulatory.h"
-
-#define WORLD_SKU_MASK      0x00F0
-#define WORLD_SKU_PREFIX    0x0060
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)) || defined(WITH_BACKPORTS)
 #define IEEE80211_CHAN_PASSIVE_SCAN IEEE80211_CHAN_NO_IR
@@ -174,11 +171,11 @@ struct regulatory *reg)
  */
 static bool hdd_is_world_regdomain(uint32_t reg_domain)
 {
-	uint32_t temp_regd = reg_domain & ~WORLDWIDE_ROAMING_FLAG;
+	uint32_t temp_regd = reg_domain & ~WORLD_ROAMING_FLAG;
 
-	return ((temp_regd & COUNTRY_ERD_FLAG) != COUNTRY_ERD_FLAG) &&
-		(((temp_regd & WORLD_SKU_MASK) == WORLD_SKU_PREFIX) ||
-		 (temp_regd == WORLD));
+	return ((temp_regd & CTRY_FLAG) != CTRY_FLAG) &&
+		((temp_regd & WORLD_ROAMING_MASK) ==
+		 WORLD_ROAMING_PREFIX);
 }
 
 
@@ -194,7 +191,7 @@ static void hdd_update_regulatory_info(hdd_context_t *hdd_ctx)
 
 	country_code = cds_get_country_from_alpha2(hdd_ctx->reg.alpha2);
 
-	hdd_ctx->reg.reg_domain = COUNTRY_ERD_FLAG;
+	hdd_ctx->reg.reg_domain = CTRY_FLAG;
 	hdd_ctx->reg.reg_domain |= country_code;
 
 	cds_fill_some_regulatory_info(&hdd_ctx->reg);

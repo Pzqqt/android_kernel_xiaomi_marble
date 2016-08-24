@@ -33,13 +33,11 @@
 
 #include <net/cfg80211.h>
 #include "qdf_types.h"
-#include "cds_reg_service.h"
 #include "qdf_trace.h"
-#include "sme_api.h"
 #include "cds_api.h"
 #include "cds_reg_service.h"
 #include "cds_regdomain.h"
-
+#include "sme_api.h"
 
 const struct chan_map chan_mapping[NUM_CHANNELS] = {
 	[CHAN_ENUM_1] = {2412, 1},
