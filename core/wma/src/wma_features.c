@@ -2616,6 +2616,9 @@ static int wow_get_wmi_eventid(int32_t reason, uint32_t tag)
 	case WOW_REASON_NAN_EVENT:
 		event_id = WMI_NAN_EVENTID;
 		break;
+	case WOW_REASON_NAN_DATA:
+		event_id = wma_ndp_get_eventid_from_tlvtag(tag);
+		break;
 	default:
 		WMA_LOGD(FL("Unexpected WOW reason : %s(%d)"),
 			 wma_wow_wake_reason_str(reason), reason);
@@ -3333,16 +3336,8 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 	case WOW_REASON_NAN_DATA:
 		WMA_LOGD(FL("Host woken up for NAN data path event from FW"));
 		if (param_buf->wow_packet_buffer) {
-			wow_buf_pkt_len =
-				*(uint32_t *)param_buf->wow_packet_buffer;
-			WMA_LOGD(FL("wow_packet_buffer dump"));
-			qdf_trace_hex_dump(QDF_MODULE_ID_WMA,
-				QDF_TRACE_LEVEL_DEBUG,
-				param_buf->wow_packet_buffer,
-				wow_buf_pkt_len);
-			wma_ndp_wow_event_callback(handle,
-				(param_buf->wow_packet_buffer + 4),
-				wow_buf_pkt_len);
+			wma_ndp_wow_event_callback(handle, wmi_cmd_struct_ptr,
+						   wow_buf_pkt_len, event_id);
 		} else {
 			WMA_LOGE(FL("wow_packet_buffer is empty"));
 		}
