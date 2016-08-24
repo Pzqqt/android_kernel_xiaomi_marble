@@ -10287,8 +10287,16 @@ csr_roam_chk_lnk_disassoc_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	QDF_STATUS status;
 	tCsrRoamInfo *roam_info_ptr = NULL;
 	tSirSmeDisassocInd *pDisassocInd;
-	tSmeCmd cmd;
+	tSmeCmd *cmd;
 	tCsrRoamInfo roam_info;
+
+	cmd = qdf_mem_malloc(sizeof(*cmd));
+	if (NULL == cmd) {
+		sms_log(mac_ctx, LOGE,
+			FL("memory allocation failed for size = %ld"),
+			sizeof(*cmd));
+		return;
+	}
 
 	/*
 	 * Check if AP dis-associated us because of MIC failure. If so,
@@ -10303,6 +10311,7 @@ csr_roam_chk_lnk_disassoc_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 		sms_log(mac_ctx, LOGE, FL("Session Id not found for BSSID "
 			MAC_ADDRESS_STR),
 			MAC_ADDR_ARRAY(pDisassocInd->bssid.bytes));
+		qdf_mem_free(cmd);
 		return;
 	}
 
@@ -10338,6 +10347,7 @@ csr_roam_chk_lnk_disassoc_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	session = CSR_GET_SESSION(mac_ctx, sessionId);
 	if (!session) {
 		sms_log(mac_ctx, LOGE, FL("session %d not found"), sessionId);
+		qdf_mem_free(cmd);
 		return;
 	}
 	if (csr_is_conn_state_infra(mac_ctx, sessionId))
@@ -10367,15 +10377,16 @@ csr_roam_chk_lnk_disassoc_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 		 * STA/P2P client got  disassociated so remove any pending
 		 * deauth commands in sme pending list
 		 */
-		cmd.command = eSmeCommandRoam;
-		cmd.sessionId = (uint8_t) sessionId;
-		cmd.u.roamCmd.roamReason = eCsrForcedDeauthSta;
-		qdf_mem_copy(cmd.u.roamCmd.peerMac,
+		cmd->command = eSmeCommandRoam;
+		cmd->sessionId = (uint8_t) sessionId;
+		cmd->u.roamCmd.roamReason = eCsrForcedDeauthSta;
+		qdf_mem_copy(cmd->u.roamCmd.peerMac,
 			     pDisassocInd->peer_macaddr.bytes,
 			     QDF_MAC_ADDR_SIZE);
-		csr_roam_remove_duplicate_command(mac_ctx, sessionId, &cmd,
+		csr_roam_remove_duplicate_command(mac_ctx, sessionId, cmd,
 						  eCsrForcedDeauthSta);
 	}
+	qdf_mem_free(cmd);
 }
 
 static void
