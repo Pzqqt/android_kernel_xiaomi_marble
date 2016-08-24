@@ -3354,9 +3354,6 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 		WMA_LOGD(FL("Host woken up for OEM Response event"));
 		break;
 	default:
-		WMA_LOGE(FL("WOW reason %s(%d)- not handled"),
-			wma_wow_wake_reason_str(wake_info->wake_reason),
-			wake_info->wake_reason);
 		break;
 	}
 
