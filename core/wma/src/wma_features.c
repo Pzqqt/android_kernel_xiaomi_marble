@@ -3367,7 +3367,9 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 		WMA_LOGA("Holding %d msec wake_lock", wake_lock_duration);
 	}
 
-	wmitlv_free_allocated_event_tlvs(event_id, &wmi_cmd_struct_ptr);
+	if (wmi_cmd_struct_ptr)
+		wmitlv_free_allocated_event_tlvs(event_id, &wmi_cmd_struct_ptr);
+
 	return 0;
 }
 
