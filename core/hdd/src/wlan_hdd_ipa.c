@@ -1769,6 +1769,10 @@ static QDF_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx)
 	/* Connect WDI IPA PIPE */
 	ipa_connect_wdi_pipe(&pipe_in, &pipe_out);
 	/* Micro Controller Doorbell register */
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO_HIGH,
+		"%s CONS DB pipe out 0x%x TX PIPE Handle 0x%x",
+		__func__, (unsigned int)pipe_out.uc_door_bell_pa,
+		ipa_ctxt->tx_pipe_handle);
 	ipa_ctxt->tx_comp_doorbell_paddr = pipe_out.uc_door_bell_pa;
 	/* WLAN TX PIPE Handle */
 	ipa_ctxt->tx_pipe_handle = pipe_out.clnt_hdl;
@@ -4239,10 +4243,12 @@ QDF_STATUS hdd_ipa_cleanup(hdd_context_t *hdd_ctx)
 	if (hdd_ipa_uc_is_enabled(hdd_ctx)) {
 		hdd_ipa_uc_rt_debug_deinit(hdd_ctx);
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
-			    "%s: Disconnect TX PIPE", __func__);
+			    "%s: Disconnect TX PIPE tx_pipe_handle=0x%x",
+			    __func__, hdd_ipa->tx_pipe_handle);
 		ipa_disconnect_wdi_pipe(hdd_ipa->tx_pipe_handle);
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
-			    "%s: Disconnect RX PIPE", __func__);
+			    "%s: Disconnect RX PIPE rx_pipe_handle=0x%x",
+			    __func__, hdd_ipa->rx_pipe_handle);
 		ipa_disconnect_wdi_pipe(hdd_ipa->rx_pipe_handle);
 		qdf_mutex_destroy(&hdd_ipa->event_lock);
 		qdf_mutex_destroy(&hdd_ipa->ipa_lock);
