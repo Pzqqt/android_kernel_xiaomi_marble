@@ -64,6 +64,8 @@ typedef enum {
 #define VHT_MCS_3x3_MASK    0x30
 #define VHT_MCS_2x2_MASK    0x0C
 
+#define IS_VHT_NSS_1x1(__mcs_map)	((__mcs_map & 0xFFFC) == 0xFFFC)
+
 #ifdef WLAN_FEATURE_11W
 typedef union uPmfSaQueryTimerId {
 	struct {

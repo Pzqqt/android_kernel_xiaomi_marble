@@ -187,6 +187,17 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 		fw_vht_ch_wd = wma_get_vht_ch_width();
 		vht_ch_wd = QDF_MIN(fw_vht_ch_wd, ap_bcon_ch_width);
 		/*
+		 * If the supported channel width is greater than 80MHz and
+		 * AP supports Nss > 1 in 160MHz mode then connect the STA
+		 * in 2x2 80MHz mode instead of connecting in 160MHz mode.
+		 */
+		if (vht_ch_wd > WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ) {
+			if (!(IS_VHT_NSS_1x1(beacon_struct->VHTCaps.txMCSMap))
+					&&
+			   (!IS_VHT_NSS_1x1(beacon_struct->VHTCaps.rxMCSMap)))
+				vht_ch_wd = WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ;
+		}
+		/*
 		 * VHT OP IE old definition:
 		 * vht_op->chanCenterFreqSeg1: center freq of 80MHz/160MHz/
 		 * primary 80 in 80+80MHz.
