@@ -1919,6 +1919,14 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 	if (0 != status)
 		return status;
 
+	mutex_lock(&pHddCtx->iface_change_lock);
+	if (pHddCtx->driver_status != DRIVER_MODULES_ENABLED) {
+		mutex_unlock(&pHddCtx->iface_change_lock);
+		hdd_info("Driver Module not enabled return success");
+		return 0;
+	}
+	mutex_unlock(&pHddCtx->iface_change_lock);
+
 	if ((DRIVER_POWER_MODE_AUTO == !mode) &&
 	    (true == pHddCtx->hdd_wlan_suspended) &&
 	    (pHddCtx->config->fhostArpOffload) &&
@@ -2081,8 +2089,9 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 				  int *dbm)
 {
 
-	hdd_adapter_t *pAdapter;
 	hdd_context_t *pHddCtx = (hdd_context_t *) wiphy_priv(wiphy);
+	struct net_device *ndev = wdev->netdev;
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	int status;
 
 	ENTER();
@@ -2098,17 +2107,32 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 		return status;
 	}
 
-	pAdapter = hdd_get_adapter(pHddCtx, QDF_STA_MODE);
-	if (NULL == pAdapter) {
-		hdd_err("pAdapter is NULL");
+	if (!adapter) {
+		hdd_err("adapter is NULL");
 		return -ENOENT;
 	}
 
+	/* Validate adapter sessionId */
+	if (adapter->sessionId == HDD_SESSION_ID_INVALID) {
+		hdd_err("Adapter Session Invalid!");
+		return -ENOTSUPP;
+	}
+
+	mutex_lock(&pHddCtx->iface_change_lock);
+	if (pHddCtx->driver_status != DRIVER_MODULES_ENABLED) {
+		mutex_unlock(&pHddCtx->iface_change_lock);
+		hdd_info("Driver Module not enabled return success");
+		/* Send cached data to upperlayer*/
+		*dbm = adapter->hdd_stats.ClassA_stat.max_pwr;
+		return 0;
+	}
+	mutex_unlock(&pHddCtx->iface_change_lock);
+
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_GET_TXPOWER,
-			 pAdapter->sessionId, pAdapter->device_mode));
-	wlan_hdd_get_class_astats(pAdapter);
-	*dbm = pAdapter->hdd_stats.ClassA_stat.max_pwr;
+			 adapter->sessionId, adapter->device_mode));
+	wlan_hdd_get_class_astats(adapter);
+	*dbm = adapter->hdd_stats.ClassA_stat.max_pwr;
 
 	EXIT();
 	return 0;
