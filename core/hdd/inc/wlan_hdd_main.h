@@ -260,6 +260,10 @@
 #define BSS_WAIT_TIMEOUT 10000
 
 #define PRE_CAC_SSID "pre_cac_ssid"
+
+/* session ID invalid */
+#define HDD_SESSION_ID_INVALID    0xFF
+
 /*
  * Generic asynchronous request/response support
  *

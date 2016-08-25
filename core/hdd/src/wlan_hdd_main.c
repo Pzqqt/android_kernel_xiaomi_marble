@@ -1618,6 +1618,12 @@ int hdd_start_adapter(hdd_adapter_t *adapter)
 		if (ret)
 			goto err_start_adapter;
 		break;
+	case QDF_IBSS_MODE:
+		/*
+		 * For IBSS interface is initialized as part of
+		 * hdd_init_station_mode()
+		 */
+		return 0;
 	case QDF_FTM_MODE:
 		ret = hdd_start_ftm_adapter(adapter);
 		if (ret)
@@ -1801,7 +1807,6 @@ static int __hdd_open(struct net_device *dev)
 	int ret;
 
 	ENTER_DEV(dev);
-
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD, TRACE_CODE_HDD_OPEN_REQUEST,
 		adapter->sessionId, adapter->device_mode));
 
@@ -3180,6 +3185,8 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 
 	if (QDF_STATUS_SUCCESS != hdd_debugfs_init(adapter))
 		hdd_err("Interface %s wow debug_fs init failed", iface_name);
+
+	adapter->sessionId = HDD_SESSION_ID_INVALID;
 
 	return adapter;
 
@@ -6281,7 +6288,6 @@ static hdd_adapter_t *hdd_open_interfaces(hdd_context_t *hdd_ctx,
 
 	if (adapter == NULL)
 		return ERR_PTR(-ENOSPC);
-
 	ret = hdd_open_p2p_interface(hdd_ctx, rtnl_held);
 	if (ret)
 		goto err_close_adapter;

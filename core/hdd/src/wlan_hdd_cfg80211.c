@@ -8345,7 +8345,7 @@ static int wlan_hdd_change_client_iface_to_new_mode(struct net_device *ndev,
 	struct hdd_config *config = hdd_ctx->config;
 	hdd_wext_state_t *wext;
 	struct wireless_dev *wdev;
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	ENTER();
 
@@ -8372,12 +8372,12 @@ static int wlan_hdd_change_client_iface_to_new_mode(struct net_device *ndev,
 	}
 	memset(&adapter->sessionCtx, 0, sizeof(adapter->sessionCtx));
 	hdd_set_station_ops(adapter->dev);
-	status = hdd_init_station_mode(adapter);
 	wext = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	wext->roamProfile.pAddIEScan = adapter->scan_info.scanAddIE.addIEdata;
 	wext->roamProfile.nAddIEScanLength =
 		adapter->scan_info.scanAddIE.length;
 	if (type == NL80211_IFTYPE_ADHOC) {
+		status = hdd_init_station_mode(adapter);
 		wext->roamProfile.BSSType = eCSR_BSS_TYPE_START_IBSS;
 		wext->roamProfile.phyMode =
 			hdd_cfg_xlate_to_csr_phy_mode(config->dot11Mode);
@@ -8497,7 +8497,11 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 					type);
 			if (vstatus != QDF_STATUS_SUCCESS)
 				return -EINVAL;
-
+			if (hdd_start_adapter(pAdapter)) {
+				hdd_err("Failed to start adapter :%d",
+						pAdapter->device_mode);
+				return -EINVAL;
+			}
 			goto done;
 		case NL80211_IFTYPE_AP:
 		case NL80211_IFTYPE_P2P_GO:
@@ -8575,7 +8579,11 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 					type);
 			if (status != QDF_STATUS_SUCCESS)
 				return status;
-
+			if (hdd_start_adapter(pAdapter)) {
+				hdd_err("Failed to start adapter :%d",
+						pAdapter->device_mode);
+				return -EINVAL;
+			}
 			goto done;
 
 		case NL80211_IFTYPE_AP:
