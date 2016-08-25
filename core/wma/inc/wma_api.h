@@ -145,8 +145,10 @@ QDF_STATUS wma_get_wcnss_software_version(void *p_cds_gctx,
 int wma_runtime_suspend(void);
 int wma_runtime_resume(void);
 int wma_bus_suspend(void);
+int wma_is_target_wake_up_received(void);
 QDF_STATUS wma_suspend_target(WMA_HANDLE handle, int disable_target_intr);
 void wma_target_suspend_acknowledge(void *context, bool wow_nack);
+void wma_handle_initial_wake_up(void);
 int wma_bus_resume(void);
 QDF_STATUS wma_resume_target(WMA_HANDLE handle);
 QDF_STATUS wma_disable_wow_in_fw(WMA_HANDLE handle);

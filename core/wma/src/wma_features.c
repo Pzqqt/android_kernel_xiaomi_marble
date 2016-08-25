@@ -6414,9 +6414,12 @@ int wma_bus_suspend(void)
 int __wma_bus_resume(WMA_HANDLE handle)
 {
 	bool wow_mode = wma_is_wow_mode_selected(handle);
+	tp_wma_handle wma = handle;
 	QDF_STATUS status;
 
 	WMA_LOGE("%s: wow mode %d", __func__, wow_mode);
+
+	wma->wow_initial_wake_up = false;
 
 	if (!wow_mode)
 		return qdf_status_to_os_return(wma_resume_target(handle));
@@ -6580,6 +6583,47 @@ void wma_target_suspend_acknowledge(void *context, bool wow_nack)
 		qdf_wake_lock_timeout_acquire(&wma->wow_wake_lock,
 					      WMA_WAKE_LOCK_TIMEOUT,
 					      WIFI_POWER_EVENT_WAKELOCK_WOW);
+}
+
+/**
+ * wma_handle_initial_wake_up() - handle inital wake up
+ *
+ * Return: none
+ */
+void wma_handle_initial_wake_up(void)
+{
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (NULL == wma) {
+		WMA_LOGE("%s: wma is NULL", __func__);
+		return;
+	}
+
+	wma->wow_initial_wake_up = true;
+}
+
+/**
+ * wma_is_target_wake_up_received() - check for initial wake up
+ *
+ * Check if target initial wake up is received and fail PM suspend gracefully
+ *
+ * Return: -EAGAIN if initial wake up is received else 0
+ */
+int wma_is_target_wake_up_received(void)
+{
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (NULL == wma) {
+		WMA_LOGE("%s: wma is NULL", __func__);
+		return -EAGAIN;
+	}
+
+	if (wma->wow_initial_wake_up) {
+		WMA_LOGE("Target initial wake up received try again");
+		return -EAGAIN;
+	} else {
+		return 0;
+	}
 }
 
 /**

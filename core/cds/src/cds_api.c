@@ -288,6 +288,7 @@ QDF_STATUS cds_open(void)
 	htcInfo.pContext = ol_ctx;
 	htcInfo.TargetFailure = ol_target_failure;
 	htcInfo.TargetSendSuspendComplete = wma_target_suspend_acknowledge;
+	htcInfo.target_initial_wakeup_cb = wma_handle_initial_wake_up;
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
 	/* Create HTC */

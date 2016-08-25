@@ -562,9 +562,16 @@ static int __wlan_hdd_bus_suspend(pm_message_t state)
 	if (err)
 		goto resume_wma;
 
+	err = wma_is_target_wake_up_received();
+	if (err)
+		goto resume_hif;
+
 	hdd_err("suspend done, status = %d", err);
 	return err;
 
+resume_hif:
+	status = hif_bus_resume(hif_ctx);
+	QDF_BUG(!status);
 resume_wma:
 	status = wma_bus_resume();
 	QDF_BUG(!status);

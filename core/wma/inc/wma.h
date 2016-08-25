@@ -1383,6 +1383,7 @@ typedef struct {
 #endif
 	qdf_wake_lock_t wow_wake_lock;
 	int wow_nack;
+	bool wow_initial_wake_up;
 	qdf_atomic_t is_wow_bus_suspended;
 	qdf_mc_timer_t wma_scan_comp_timer;
 	uint8_t dfs_phyerr_filter_offload;
