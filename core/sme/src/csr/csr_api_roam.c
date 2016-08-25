@@ -6437,6 +6437,7 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 			roam_status = eCSR_ROAM_INFRA_IND;
 			roam_result = eCSR_ROAM_RESULT_INFRA_STARTED;
 		}
+		roam_info.staId = (uint8_t) start_bss_rsp->staId;
 		if (CSR_IS_NDI(profile)) {
 			csr_roam_update_ndp_return_params(mac_ctx,
 							eCsrStartBssSuccess,
@@ -6454,7 +6455,6 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 		roam_info.reasonCode = session->joinFailStatusCode.reasonCode;
 		/* We start the IBSS (didn't find any matched IBSS out there) */
 		roam_info.pBssDesc = bss_desc;
-		roam_info.staId = (uint8_t) start_bss_rsp->staId;
 		if (bss_desc)
 			qdf_mem_copy(roam_info.bssid.bytes, bss_desc->bssId,
 				sizeof(struct qdf_mac_addr));

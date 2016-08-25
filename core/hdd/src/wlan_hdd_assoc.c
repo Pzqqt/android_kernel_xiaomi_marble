@@ -1691,7 +1691,7 @@ static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 
 	if (eCSR_ROAM_IBSS_LEAVE == roamStatus) {
 		uint8_t i;
-		sta_id = pHddStaCtx->broadcast_ibss_staid;
+		sta_id = pHddStaCtx->broadcast_staid;
 		vstatus = hdd_roam_deregister_sta(pAdapter, sta_id);
 		if (!QDF_IS_STATUS_SUCCESS(vstatus)) {
 			hdd_err("hdd_roam_deregister_sta() failed for staID %d Status=%d [0x%x]",
@@ -3014,7 +3014,7 @@ static void hdd_roam_ibss_indication_handler(hdd_adapter_t *pAdapter,
 		hdd_wmm_connect(pAdapter, pRoamInfo,
 				eCSR_BSS_TYPE_IBSS);
 
-		hdd_sta_ctx->broadcast_ibss_staid = pRoamInfo->staId;
+		hdd_sta_ctx->broadcast_staid = pRoamInfo->staId;
 
 		pHddCtx->sta_to_adapter[pRoamInfo->staId] =
 			pAdapter;

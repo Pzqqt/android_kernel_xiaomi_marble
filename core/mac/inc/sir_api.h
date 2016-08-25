@@ -6120,6 +6120,7 @@ struct ndi_create_req {
 struct ndi_create_rsp {
 	uint32_t status;
 	uint32_t reason;
+	uint8_t sta_id;
 };
 
 /**

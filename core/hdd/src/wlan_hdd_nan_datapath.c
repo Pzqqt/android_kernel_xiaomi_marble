@@ -369,6 +369,7 @@ static int hdd_ndi_delete_req_handler(hdd_context_t *hdd_ctx,
 	uint16_t transaction_id;
 	struct nan_datapath_ctx *ndp_ctx;
 	int ret;
+	hdd_station_ctx_t *sta_ctx;
 
 	ENTER();
 
@@ -406,12 +407,25 @@ static int hdd_ndi_delete_req_handler(hdd_context_t *hdd_ctx,
 		return -EINVAL;
 	}
 
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (!sta_ctx) {
+		hdd_err("sta_ctx is NULL");
+		return -EINVAL;
+	}
+
 	/* check if there are active peers on the adapter */
 	if (ndp_ctx->active_ndp_peers > 0) {
 		hdd_err("NDP peers active: %d, cannot delete NDI",
 			ndp_ctx->active_ndp_peers);
 		return -EINVAL;
 	}
+
+	/*
+	 * Since, the interface is being deleted, remove the
+	 * broadcast id.
+	 */
+	hdd_ctx->sta_to_adapter[sta_ctx->broadcast_staid] = 0;
+	sta_ctx->broadcast_staid = HDD_WLAN_INVALID_STA_ID;
 
 	ndp_ctx->ndp_delete_transaction_id = transaction_id;
 	ndp_ctx->state = NAN_DATA_NDI_DELETING_STATE;
@@ -734,6 +748,10 @@ static void hdd_ndp_iface_create_rsp_handler(hdd_adapter_t *adapter,
 	uint8_t create_transaction_id = 0;
 	uint32_t create_status = NDP_RSP_STATUS_ERROR;
 	uint32_t create_reason = NDP_NAN_DATA_IFACE_CREATE_FAILED;
+	hdd_station_ctx_t *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct qdf_mac_addr bc_mac_addr = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
+	tCsrRoamInfo roam_info = {0};
+	tSirBssDescription tmp_bss_descp = {0};
 
 	ENTER();
 
@@ -753,6 +771,11 @@ static void hdd_ndp_iface_create_rsp_handler(hdd_adapter_t *adapter,
 		create_transaction_id = ndp_ctx->ndp_create_transaction_id;
 	} else {
 		hdd_err("ndp_ctx is NULL");
+		create_fail = true;
+	}
+
+	if (!sta_ctx) {
+		hdd_err("sta_ctx is NULL");
 		create_fail = true;
 	}
 
@@ -825,6 +848,14 @@ static void hdd_ndp_iface_create_rsp_handler(hdd_adapter_t *adapter,
 	/* Something went wrong while starting the BSS */
 	if (create_fail)
 		goto close_ndi;
+
+	sta_ctx->broadcast_staid = ndi_rsp->sta_id;
+	hdd_save_peer(sta_ctx, sta_ctx->broadcast_staid, &bc_mac_addr);
+	hdd_roam_register_sta(adapter, &roam_info,
+				sta_ctx->broadcast_staid,
+				&bc_mac_addr, &tmp_bss_descp);
+	hdd_ctx->sta_to_adapter[sta_ctx->broadcast_staid] = adapter;
+
 
 	EXIT();
 	return;
@@ -1074,7 +1105,6 @@ static void hdd_ndp_new_peer_ind_handler(hdd_adapter_t *adapter,
 	tCsrRoamInfo roam_info = {0};
 	struct nan_datapath_ctx *ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(adapter);
 	hdd_station_ctx_t *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	struct qdf_mac_addr bc_mac_addr = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
 
 	ENTER();
 
@@ -1103,10 +1133,6 @@ static void hdd_ndp_new_peer_ind_handler(hdd_adapter_t *adapter,
 	hdd_ctx->sta_to_adapter[new_peer_ind->sta_id] = adapter;
 	/* perform following steps for first new peer ind */
 	if (ndp_ctx->active_ndp_peers == 1) {
-		hdd_ctx->sta_to_adapter[NDP_BROADCAST_STAID] = adapter;
-		hdd_save_peer(sta_ctx, NDP_BROADCAST_STAID, &bc_mac_addr);
-		hdd_roam_register_sta(adapter, &roam_info, NDP_BROADCAST_STAID,
-				    &bc_mac_addr, &tmp_bss_descp);
 		hdd_info("Set ctx connection state to connected");
 		sta_ctx->conn_info.connState = eConnectionState_NdiConnected;
 		hdd_wmm_connect(adapter, &roam_info, eCSR_BSS_TYPE_NDI);

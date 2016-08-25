@@ -737,6 +737,7 @@ void lim_process_ndi_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx, tpSirMsgQ lim_msgq,
 		session_entry->bssIdx = (uint8_t) add_bss_params->bssIdx;
 		session_entry->limSystemRole = eLIM_NDI_ROLE;
 		session_entry->statypeForBss = STA_ENTRY_SELF;
+		session_entry->staId = add_bss_params->staContext.staIdx;
 		/* Apply previously set configuration at HW */
 		lim_apply_configuration(mac_ctx, session_entry);
 		mlm_start_cnf.resultCode = eSIR_SME_SUCCESS;

@@ -360,6 +360,7 @@ void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
 		roam_info->ndp.ndi_create_params.reason = 0;
 		roam_info->ndp.ndi_create_params.status =
 					NDP_RSP_STATUS_SUCCESS;
+		roam_info->ndp.ndi_create_params.sta_id = roam_info->staId;
 		*roam_status = eCSR_ROAM_NDP_STATUS_UPDATE;
 		*roam_result = eCSR_ROAM_RESULT_NDI_CREATE_RSP;
 		break;

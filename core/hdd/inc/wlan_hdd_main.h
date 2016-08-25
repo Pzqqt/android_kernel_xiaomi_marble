@@ -672,7 +672,7 @@ struct hdd_station_ctx {
 	/* STA ctx debug variables */
 	int staDebugState;
 
-	uint8_t broadcast_ibss_staid;
+	uint8_t broadcast_staid;
 
 	struct hdd_mon_set_ch_info ch_info;
 #ifdef WLAN_FEATURE_NAN_DATAPATH

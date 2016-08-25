@@ -370,20 +370,14 @@ static void hdd_get_transmit_sta_id(hdd_adapter_t *adapter,
 		}
 	}
 
-	if (adapter->device_mode == QDF_IBSS_MODE) {
+	if (adapter->device_mode == QDF_IBSS_MODE ||
+		adapter->device_mode == QDF_NDI_MODE) {
 		/*
 		 * This check is necessary to make sure station id is not
-		 * overwritten for UC traffic in IBSS mode
+		 * overwritten for UC traffic in IBSS or NDI mode
 		 */
 		if (mcbc_addr)
-			*station_id = sta_ctx->broadcast_ibss_staid;
-	} else if (adapter->device_mode == QDF_NDI_MODE) {
-		/*
-		 * This check is necessary to make sure station id is not
-		 * overwritten for UC traffic in NAN data mode
-		 */
-		if (mcbc_addr)
-			*station_id = NDP_BROADCAST_STAID;
+			*station_id = sta_ctx->broadcast_staid;
 	} else {
 		/* For the rest, traffic is directed to AP/P2P GO */
 		if (eConnectionState_Associated == sta_ctx->conn_info.connState)
