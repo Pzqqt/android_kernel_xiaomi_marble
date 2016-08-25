@@ -2839,8 +2839,8 @@ static void wma_wow_parse_data_pkt_buffer(uint8_t *data,
 	WMA_LOGD("wow_buf_pkt_len: %u", buf_len);
 	if (buf_len >= QDF_NBUF_TRAC_IPV4_OFFSET)
 		WMA_LOGE("Src_mac: " MAC_ADDRESS_STR " Dst_mac: " MAC_ADDRESS_STR,
-			MAC_ADDR_ARRAY(data),
-			MAC_ADDR_ARRAY(data + QDF_NBUF_SRC_MAC_OFFSET));
+			MAC_ADDR_ARRAY(data + QDF_NBUF_SRC_MAC_OFFSET),
+			MAC_ADDR_ARRAY(data + QDF_NBUF_DEST_MAC_OFFSET));
 	else
 		goto end;
 
