@@ -3424,6 +3424,8 @@ enum dot11p_mode {
 				 CFG_ENABLE_NAPI)
 #ifdef MDM_PLATFORM
 #define CFG_RX_MODE_DEFAULT  (0)
+#elif defined(HELIUMPLUS)
+#define CFG_RX_MODE_DEFAULT  CFG_ENABLE_NAPI
 #else
 #define CFG_RX_MODE_DEFAULT  (CFG_ENABLE_RX_THREAD | CFG_ENABLE_NAPI)
 #endif
