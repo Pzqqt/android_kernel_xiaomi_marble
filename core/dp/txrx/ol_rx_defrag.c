@@ -70,7 +70,7 @@
 #include <qdf_time.h>           /* qdf_system_time */
 
 #define DEFRAG_IEEE80211_ADDR_EQ(a1, a2) \
-	(qdf_mem_cmp(a1, a2, IEEE80211_ADDR_LEN) != 0)
+	(!qdf_mem_cmp(a1, a2, IEEE80211_ADDR_LEN))
 
 #define DEFRAG_IEEE80211_ADDR_COPY(dst, src) \
 	qdf_mem_copy(dst, src, IEEE80211_ADDR_LEN)
@@ -1152,6 +1152,7 @@ ol_rx_defrag_decap_recombine(htt_pdev_handle htt_pdev,
 	qdf_nbuf_set_next(rx_nbuf, NULL);
 	while (msdu) {
 		htt_rx_msdu_desc_free(htt_pdev, msdu);
+		qdf_net_buf_debug_release_skb(msdu);
 		tmp = qdf_nbuf_next(msdu);
 		qdf_nbuf_set_next(msdu, NULL);
 		ol_rx_frag_pull_hdr(htt_pdev, msdu, hdrsize);
