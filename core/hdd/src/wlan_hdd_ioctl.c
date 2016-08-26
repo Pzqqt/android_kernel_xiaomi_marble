@@ -1863,8 +1863,9 @@ QDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 		if (content < 0)
 			return QDF_STATUS_E_FAILURE;
 
+		content = QDF_MIN(content, WNI_CFG_VALID_CHANNEL_LIST_LEN);
 		pPlmRequest->plmNumCh = content;
-		hdd_debug("numch %d", pPlmRequest->plmNumCh);
+		hdd_debug("numch: %d", pPlmRequest->plmNumCh);
 
 		/* Channel numbers */
 		for (count = 0; count < pPlmRequest->plmNumCh; count++) {
@@ -1883,10 +1884,8 @@ QDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 				return QDF_STATUS_E_FAILURE;
 
 			ret = kstrtos32(buf, 10, &content);
-			if (ret < 0)
-				return QDF_STATUS_E_FAILURE;
-
-			if (content <= 0)
+			if (ret < 0 || content <= 0 ||
+			    content > WNI_CFG_CURRENT_CHANNEL_STAMAX)
 				return QDF_STATUS_E_FAILURE;
 
 			pPlmRequest->plmChList[count] = content;
