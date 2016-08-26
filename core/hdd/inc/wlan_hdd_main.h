@@ -1473,6 +1473,8 @@ struct hdd_context_s {
 	bool rps;
 	bool enableRxThread;
 	bool napi_enable;
+	bool stop_modules_in_progress;
+	bool start_modules_in_progress;
 };
 
 /*---------------------------------------------------------------------------

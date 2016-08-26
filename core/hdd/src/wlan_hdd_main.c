@@ -582,6 +582,14 @@ int wlan_hdd_validate_context(hdd_context_t *hdd_ctx)
 			(void *)_RET_IP_, cds_get_driver_state());
 		return -EAGAIN;
 	}
+
+	if (hdd_ctx->start_modules_in_progress ||
+	    hdd_ctx->stop_modules_in_progress) {
+			hdd_err("%pS Start/Stop Modules in progress. Ignore!!!",
+				(void *)_RET_IP_);
+		return -EAGAIN;
+	}
+
 	return 0;
 }
 
@@ -1689,6 +1697,7 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 	}
 
 	mutex_lock(&hdd_ctx->iface_change_lock);
+	hdd_ctx->start_modules_in_progress = true;
 
 	if (QDF_TIMER_STATE_RUNNING ==
 	    qdf_mc_timer_get_current_state(&hdd_ctx->iface_change_timer)) {
@@ -1783,6 +1792,7 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 				hdd_ctx->driver_status);
 		goto release_lock;
 	}
+	hdd_ctx->start_modules_in_progress = false;
 	mutex_unlock(&hdd_ctx->iface_change_lock);
 	EXIT();
 	return 0;
@@ -1799,7 +1809,9 @@ power_down:
 	if (!reinit && !unint)
 		pld_power_off(qdf_dev->dev);
 release_lock:
+	hdd_ctx->start_modules_in_progress = false;
 	mutex_unlock(&hdd_ctx->iface_change_lock);
+	EXIT();
 	return -EINVAL;
 }
 
@@ -7246,10 +7258,11 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx, bool shutdown)
 	void *hif_ctx;
 	qdf_device_t qdf_ctx;
 	QDF_STATUS qdf_status;
-	int ret;
+	int ret = 0;
 	p_cds_sched_context cds_sched_context = NULL;
 
 	ENTER();
+
 
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	if (!qdf_ctx) {
@@ -7262,21 +7275,24 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx, bool shutdown)
 		hdd_err("cds scheduler context NULL");
 		return -EINVAL;
 	}
+	mutex_lock(&hdd_ctx->iface_change_lock);
+	hdd_ctx->stop_modules_in_progress = true;
 
 	hdd_info("Present Driver Status: %d", hdd_ctx->driver_status);
 
 	switch (hdd_ctx->driver_status) {
 	case DRIVER_MODULES_UNINITIALIZED:
 		hdd_info("Modules not initialized just return");
-		return 0;
+		goto done;
 	case DRIVER_MODULES_CLOSED:
 		hdd_info("Modules already closed");
-		return 0;
+		goto done;
 	case DRIVER_MODULES_ENABLED:
 		if (hdd_deconfigure_cds(hdd_ctx)) {
 			hdd_alert("Failed to de-configure CDS");
 			QDF_ASSERT(0);
-			return -EINVAL;
+			ret = -EINVAL;
+			goto done;
 		}
 		hdd_info("successfully Disabled the CDS modules!");
 		hdd_ctx->driver_status = DRIVER_MODULES_OPENED;
@@ -7288,7 +7304,8 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx, bool shutdown)
 		hdd_err("Trying to stop wlan in a wrong state: %d",
 				hdd_ctx->driver_status);
 		QDF_ASSERT(0);
-		return -EINVAL;
+		ret = -EINVAL;
+		goto done;
 	}
 
 	qdf_status = cds_close(hdd_ctx->pcds_context);
@@ -7302,7 +7319,8 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx, bool shutdown)
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!hif_ctx) {
 		hdd_err("Hif context is Null");
-		return -EINVAL;
+		ret = -EINVAL;
+		goto done;
 	}
 
 	hdd_hif_close(hif_ctx);
@@ -7317,9 +7335,12 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx, bool shutdown)
 	}
 	hdd_ctx->driver_status = DRIVER_MODULES_CLOSED;
 
+done:
+	hdd_ctx->stop_modules_in_progress = false;
+	mutex_unlock(&hdd_ctx->iface_change_lock);
 	EXIT();
 
-	return 0;
+	return ret;
 
 }
 
@@ -7343,11 +7364,9 @@ static void hdd_iface_change_callback(void *priv)
 
 	ENTER();
 	hdd_info("Interface change timer expired close the modules!");
-	mutex_lock(&hdd_ctx->iface_change_lock);
 	ret = hdd_wlan_stop_modules(hdd_ctx, false);
 	if (ret)
 		hdd_alert("Failed to stop modules");
-	mutex_unlock(&hdd_ctx->iface_change_lock);
 	EXIT();
 }
 
@@ -8697,9 +8716,8 @@ static int con_mode_handler(const char *kmessage, struct kernel_param *kp)
 		hdd_err("Hdd context Null return!");
 		return -EINVAL;
 	}
-	mutex_lock(&hdd_ctx->iface_change_lock);
+
 	ret = hdd_wlan_stop_modules(hdd_ctx, false);
-	mutex_unlock(&hdd_ctx->iface_change_lock);
 	if (ret) {
 		hdd_err("Stop wlan modules failed");
 		return -EINVAL;
