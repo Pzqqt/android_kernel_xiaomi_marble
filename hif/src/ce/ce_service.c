@@ -294,6 +294,27 @@ void war_ce_src_ring_write_idx_set(struct hif_softc *scn,
 	}
 }
 
+#ifdef CONFIG_SLUB_DEBUG_ON
+/**
+ * ce_validate_nbytes() - validate nbytes for slub builds on tx descriptors
+ * @nbytes: nbytes value being written into a send descriptor
+ * @ce_state: context of the copy engine
+
+ * nbytes should be non-zero and less than max configured for the copy engine
+ *
+ * Return: none
+ */
+static void ce_validate_nbytes(uint32_t nbytes, struct CE_state *ce_state)
+{
+	if (nbytes <= 0 || nbytes > ce_state->src_sz_max)
+		QDF_BUG(0);
+}
+#else
+static void ce_validate_nbytes(uint32_t nbytes, struct CE_state *ce_state)
+{
+}
+#endif
+
 int
 ce_send_nolock(struct CE_handle *copyeng,
 			   void *per_transfer_context,
@@ -358,6 +379,7 @@ ce_send_nolock(struct CE_handle *copyeng,
 			 != 0) & ((flags & CE_SEND_FLAG_SWAP_DISABLE) == 0));
 		shadow_src_desc->gather = ((flags & CE_SEND_FLAG_GATHER) != 0);
 		shadow_src_desc->nbytes = nbytes;
+		ce_validate_nbytes(nbytes, CE_state);
 
 		*src_desc = *shadow_src_desc;
 
@@ -614,6 +636,7 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t msdu,
 		ce_buffer_addr_hi_set(shadow_src_desc, dma_addr, user_flags);
 			shadow_src_desc->meta_data = transfer_id;
 		shadow_src_desc->nbytes = qdf_nbuf_get_frag_len(msdu, 0);
+		ce_validate_nbytes(shadow_src_desc->nbytes, ce_state);
 		download_len -= shadow_src_desc->nbytes;
 		/*
 		 * HTC HTT header is a word stream, so byte swap if CE byte
@@ -652,6 +675,7 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t msdu,
 
 		/* download remaining bytes of payload */
 		shadow_src_desc->nbytes =  download_len;
+		ce_validate_nbytes(shadow_src_desc->nbytes, ce_state);
 		if (shadow_src_desc->nbytes > frag_len)
 			shadow_src_desc->nbytes = frag_len;
 
