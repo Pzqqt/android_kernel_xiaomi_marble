@@ -77,6 +77,9 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 		return -EINVAL;
 	}
 
+	if (adapter->sessionId == HDD_SESSION_ID_INVALID)
+		return -EINVAL;
+
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	if (hdd_ctx->lpss_support && hdd_ctx->config->enable_lpass_support)
 		data->lpss_support = 1;
@@ -171,6 +174,7 @@ void wlan_hdd_send_status_pkg(hdd_adapter_t *adapter,
 	if (is_on)
 		ret = wlan_hdd_gen_wlan_status_pack(&data, adapter, sta_ctx,
 						    is_on, is_connected);
+
 	if (!ret)
 		wlan_hdd_send_svc_nlink_msg(WLAN_SVC_WLAN_STATUS_IND,
 					    &data, sizeof(data));
