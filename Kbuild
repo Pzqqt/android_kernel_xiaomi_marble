@@ -1379,6 +1379,9 @@ ifneq (y,$(filter y,$(CONFIG_CNSS_EOS) $(CONFIG_ICNSS)))
 CDEFINES += -DWLAN_ENABLE_CHNL_MATRIX_RESTRICTION
 endif
 
+#Enable OBSS feature
+CDEFINES += -DQCA_HT_2040_COEX
+
 #features specific to mobile router use case
 ifeq ($(CONFIG_MOBILE_ROUTER), y)
 
@@ -1399,9 +1402,6 @@ CDEFINES += -DFEATURE_WLAN_STA_4ADDR_SCHEME
 
 #Disable STA-AP Mode DFS support
 CDEFINES += -DFEATURE_WLAN_STA_AP_MODE_DFS_DISABLE
-
-#Enable OBSS feature
-CDEFINES += -DQCA_HT_2040_COEX
 
 else #CONFIG_MOBILE_ROUTER
 
