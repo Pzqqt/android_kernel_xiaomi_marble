@@ -4054,7 +4054,6 @@ send_pdev_fips_cmd_non_tlv(wmi_unified_t wmi_handle,
 	int len = sizeof(wmi_pdev_fips_cmd) + param->data_len;
 	int retval = 0;
 
-	buf = wmi_buf_alloc(wmi_handle, len);
 	/* Data length must be multiples of 16 bytes - checked against 0xF -
 	 *  and must be less than WMI_SVC_MSG_SIZE - static size of
 	 *  wmi_pdev_fips_cmd structure
@@ -4064,9 +4063,11 @@ send_pdev_fips_cmd_non_tlv(wmi_unified_t wmi_handle,
 			((param->data_len > 0) &&
 			 (param->data_len < (WMI_HOST_MAX_BUFFER_SIZE -
 			 sizeof(wmi_pdev_fips_cmd)))))) {
-		wmi_buf_free(buf);
 		return QDF_STATUS_E_INVAL;
 	}
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+
 	if (!buf) {
 		qdf_print("%s:wmi_buf_alloc failed\n", __func__);
 		return QDF_STATUS_E_FAILURE;
@@ -4274,7 +4275,7 @@ send_mcast_group_update_cmd_non_tlv(wmi_unified_t wmi_handle,
 	wmi_buf_t buf;
 	int len;
 	int offset = 0;
-	char dummymask[4] = { 0xFF, 0xFF, 0xFF, 0xFF};
+	static char dummymask[4] = { 0xFF, 0xFF, 0xFF, 0xFF};
 
 	len = sizeof(wmi_peer_mcast_group_cmd);
 	buf = wmi_buf_alloc(wmi_handle, len);
