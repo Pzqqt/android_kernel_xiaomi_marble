@@ -1071,16 +1071,15 @@ static int hdd_parse_reassoc(hdd_adapter_t *adapter, const char *command)
 static int
 hdd_sendactionframe(hdd_adapter_t *adapter, const uint8_t *bssid,
 		    const uint8_t channel, const uint8_t dwell_time,
-		    const uint8_t payload_len, const uint8_t *payload)
+		    const int payload_len, const uint8_t *payload)
 {
 	struct ieee80211_channel chan;
-	uint8_t frame_len;
+	int frame_len, ret = 0;
 	uint8_t *frame;
 	struct ieee80211_hdr_3addr *hdr;
 	u64 cookie;
 	hdd_station_ctx_t *pHddStaCtx;
 	hdd_context_t *hdd_ctx;
-	int ret = 0;
 	tpSirMacVendorSpecificFrameHdr pVendorSpecific =
 		(tpSirMacVendorSpecificFrameHdr) payload;
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
@@ -1259,29 +1258,42 @@ hdd_parse_sendactionframe_v1(hdd_adapter_t *adapter, const char *command)
  * Return: 0 for success non-zero for failure
  */
 static int
-hdd_parse_sendactionframe_v2(hdd_adapter_t *adapter, const char *command)
+hdd_parse_sendactionframe_v2(hdd_adapter_t *adapter,
+			     const char *command, int total_len)
 {
 	struct android_wifi_af_params *params;
 	tSirMacAddr bssid;
 	int ret;
 
-	/* params are large so keep off the stack */
-	params = kmalloc(sizeof(*params), GFP_KERNEL);
-	if (!params)
-		return -ENOMEM;
-
 	/* The params are located after "SENDACTIONFRAME " */
-	memcpy(params, command + 16, sizeof(*params));
+	total_len -= 16;
+	params = (struct android_wifi_af_params *)(command + 16);
 
-	if (!mac_pton(params->bssid, (u8 *) &bssid)) {
-		hdd_err("MAC address parsing failed");
-		ret = -EINVAL;
-	} else {
-		ret = hdd_sendactionframe(adapter, bssid, params->channel,
-					  params->dwell_time, params->len,
-					  params->data);
+	if (params->len <= 0 || params->len > ANDROID_WIFI_ACTION_FRAME_SIZE ||
+		(params->len > total_len)) {
+		hdd_err("Invalid payload length: %d", params->len);
+		return -EINVAL;
 	}
-	kfree(params);
+
+	if (!mac_pton(params->bssid, (u8 *)&bssid)) {
+		hdd_err("MAC address parsing failed");
+		return -EINVAL;
+	}
+
+	if (params->channel < 0 ||
+	    params->channel > WNI_CFG_CURRENT_CHANNEL_STAMAX) {
+		hdd_err("Invalid channel: %d", params->channel);
+		return -EINVAL;
+	}
+
+	if (params->dwell_time < 0) {
+		hdd_err("Invalid dwell_time: %d", params->dwell_time);
+		return -EINVAL;
+	}
+
+	ret = hdd_sendactionframe(adapter, bssid, params->channel,
+				params->dwell_time, params->len, params->data);
+
 	return ret;
 }
 
@@ -1300,7 +1312,8 @@ hdd_parse_sendactionframe_v2(hdd_adapter_t *adapter, const char *command)
  * Return: 0 for success non-zero for failure
  */
 static int
-hdd_parse_sendactionframe(hdd_adapter_t *adapter, const char *command)
+hdd_parse_sendactionframe(hdd_adapter_t *adapter, const char *command,
+			  int total_len)
 {
 	int ret;
 
@@ -1317,11 +1330,18 @@ hdd_parse_sendactionframe(hdd_adapter_t *adapter, const char *command)
 	 * SENDACTIONFRAME xx:xx:xx:xx:xx:xx*
 	 *           111111111122222222223333
 	 * 0123456789012345678901234567890123
+	 * For both the commands, a valid command must have atleast
+	 * first 34 length of data.
 	 */
+	if (total_len < 34) {
+		hdd_err("Invalid command (total_len=%d)", total_len);
+		return -EINVAL;
+	}
+
 	if (command[33]) {
 		ret = hdd_parse_sendactionframe_v1(adapter, command);
 	} else {
-		ret = hdd_parse_sendactionframe_v2(adapter, command);
+		ret = hdd_parse_sendactionframe_v2(adapter, command, total_len);
 	}
 
 	return ret;
@@ -3708,7 +3728,8 @@ static int drv_cmd_send_action_frame(hdd_adapter_t *adapter,
 				     uint8_t command_len,
 				     hdd_priv_data_t *priv_data)
 {
-	return hdd_parse_sendactionframe(adapter, command);
+	return hdd_parse_sendactionframe(adapter, command,
+					 priv_data->total_len);
 }
 
 static int drv_cmd_get_roam_scan_channel_min_time(hdd_adapter_t *adapter,
