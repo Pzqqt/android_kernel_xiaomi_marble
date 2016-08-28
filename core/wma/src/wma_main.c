@@ -992,19 +992,20 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 			}
 			break;
 		case GEN_VDEV_PARAM_AMSDU:
-			if (soc) {
-				ret = cdp_aggr_cfg(soc, vdev, 0,
-							privcmd->param_value);
-				if (ret)
-					WMA_LOGE("cdp_aggr_cfg set amsdu failed ret %d",
-						ret);
-				else
-					intr[privcmd->param_vdev_id].config.
-					amsdu = privcmd->param_value;
-			} else {
-				WMA_LOGE("%s:SOC context is NULL", __func__);
-				return;
-			}
+			/*
+			 * Firmware currently does not support set operation
+			 * for AMSDU. It may cause crash if the configuration
+			 * is sent to firmware.
+			 * Firmware enhancement will advertise a service bit
+			 * to enable AMSDU configuration through WMI. Then
+			 * add the WMI command to configure AMSDU parameter.
+			 * For the older chipset that does not advertise the
+			 * service bit, enable the following legacy code:
+			 *    ol_txrx_aggr_cfg(vdev, 0, privcmd->param_value);
+			 *    intr[privcmd->param_vdev_id].config.amsdu =
+			 *            privcmd->param_value;
+			 */
+			WMA_LOGE("SET GEN_VDEV_PARAM_AMSDU command is currently not supported");
 			break;
 		case GEN_PARAM_CRASH_INJECT:
 			if (QDF_GLOBAL_FTM_MODE  == cds_get_conparam())

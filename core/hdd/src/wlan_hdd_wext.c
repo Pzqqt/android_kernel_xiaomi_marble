@@ -8298,6 +8298,9 @@ static int __iw_setint_getnone(struct net_device *dev,
 		ret = wma_cli_set_command(pAdapter->sessionId,
 					  GEN_VDEV_PARAM_AMSDU,
 					  set_value, GEN_CMD);
+		/* Update the stored ini value */
+		if (!ret)
+			hdd_ctx->config->max_amsdu_num = set_value;
 		break;
 	}
 

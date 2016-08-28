@@ -568,7 +568,7 @@ typedef struct tagCsrConfig {
 	 * Enable/Disable heartbeat offload
 	 */
 	bool enableHeartBeatOffload;
-	uint8_t isAmsduSupportInAMPDU;
+	uint8_t max_amsdu_num;
 	uint8_t nSelect5GHzMargin;
 	uint8_t isCoalesingInIBSSAllowed;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
