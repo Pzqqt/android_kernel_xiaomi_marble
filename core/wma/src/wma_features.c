@@ -2440,6 +2440,7 @@ static void wma_wow_wake_up_stats(tp_wma_handle wma, uint8_t *data,
 {
 	switch (event) {
 
+	case WOW_REASON_BPF_ALLOW:
 	case WOW_REASON_PATTERN_MATCH_FOUND:
 		if (WMA_BCAST_MAC_ADDR == *data) {
 			wma->wow_bcast_wake_up_count++;
@@ -3232,6 +3233,8 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 
 	case WOW_REASON_HTT_EVENT:
 		break;
+
+	case WOW_REASON_BPF_ALLOW:
 	case WOW_REASON_PATTERN_MATCH_FOUND:
 		wma_wow_wake_up_stats_display(wma);
 		WMA_LOGD("Wake up for Rx packet, dump starting from ethernet hdr");
