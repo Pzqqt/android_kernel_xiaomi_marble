@@ -3482,6 +3482,11 @@ enum dot11p_mode {
 #define CFG_SIFS_BURST_DURATION_MAX      (12)
 #define CFG_SIFS_BURST_DURATION_DEFAULT  (8)
 
+/* Optimize channel avoidance indication comming from firmware */
+#define CFG_OPTIMIZE_CA_EVENT_NAME       "goptimize_chan_avoid_event"
+#define CFG_OPTIMIZE_CA_EVENT_DISABLE    (0)
+#define CFG_OPTIMIZE_CA_EVENT_ENABLE     (1)
+#define CFG_OPTIMIZE_CA_EVENT_DEFAULT    (0)
 
 /*---------------------------------------------------------------------------
    Type declarations
@@ -4140,6 +4145,7 @@ struct hdd_config {
 	bool multicast_replay_filter;
 	/* parameter for indicating sifs burst duration to fw */
 	uint8_t sifs_burst_duration;
+	bool goptimize_chan_avoid_event;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

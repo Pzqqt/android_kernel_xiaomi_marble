@@ -6294,6 +6294,9 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 			(struct wep_update_default_key_idx *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
+	case WMA_SEND_FREQ_RANGE_CONTROL_IND:
+		wma_enable_disable_caevent_ind(wma_handle, msg->bodyval);
+		break;
 	default:
 		WMA_LOGD("unknow msg type %x", msg->type);
 		/* Do Nothing? MSG Body should be freed at here */

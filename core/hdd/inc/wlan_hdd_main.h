@@ -1866,4 +1866,6 @@ enum  sap_acs_dfs_mode wlan_hdd_get_dfs_mode(enum dfs_mode mode);
 
 void hdd_ch_avoid_cb(void *hdd_context, void *indi_param);
 void hdd_unsafe_channel_restart_sap(hdd_context_t *hdd_ctx);
+int hdd_enable_disable_ca_event(hdd_context_t *hddctx,
+				uint8_t set_value);
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

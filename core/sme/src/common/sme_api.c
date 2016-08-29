@@ -16541,6 +16541,35 @@ QDF_STATUS sme_update_sta_roam_policy(tHalHandle hal_handle,
 		csr_roam_offload_scan(mac_ctx, session_id,
 				ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 				REASON_ROAM_SCAN_STA_ROAM_POLICY_CHANGED);
+	return status;
+}
+
+/**
+ * sme_enable_disable_chanavoidind_event - configure ca event ind
+ * @hal: handler to hal
+ * @set_value: enable/disable
+ *
+ * function to enable/disable chan avoidance indication
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_enable_disable_chanavoidind_event(tHalHandle hal,
+		uint8_t set_value)
+{
+	QDF_STATUS status;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	cds_msg_t msg;
+
+	sms_log(mac_ctx, LOG1, FL("set_value: %d"), set_value);
+	status = sme_acquire_global_lock(&mac_ctx->sme);
+	if (QDF_STATUS_SUCCESS == status) {
+		qdf_mem_zero(&msg, sizeof(cds_msg_t));
+		msg.type = WMA_SEND_FREQ_RANGE_CONTROL_IND;
+		msg.bodyval = set_value;
+		status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
+		sme_release_global_lock(&mac_ctx->sme);
+		return status;
+	}
 
 	return status;
 }

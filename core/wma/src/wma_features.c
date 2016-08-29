@@ -8175,3 +8175,46 @@ void wma_process_fw_test_cmd(WMA_HANDLE handle,
 		return;
 	}
 }
+
+/**
+ * wma_enable_disable_caevent_ind() - Issue WMI command to enable or
+ * disable ca event indication
+ * @wma: wma handler
+ * @val: boolean value true or false
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wma_enable_disable_caevent_ind(tp_wma_handle wma, uint8_t val)
+{
+	WMI_CHAN_AVOID_RPT_ALLOW_CMD_fixed_param *cmd;
+	wmi_buf_t wmi_buf;
+	uint8_t *buf_ptr;
+	uint32_t len;
+
+	if (!wma || !wma->wmi_handle) {
+		WMA_LOGE(FL("WMA is closed, can not issue set/clear CA"));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	len = sizeof(*cmd);
+	wmi_buf = wmi_buf_alloc(wma->wmi_handle, len);
+	if (!wmi_buf) {
+		WMA_LOGE(FL("wmi_buf_alloc failed"));
+		return QDF_STATUS_E_NOMEM;
+	}
+	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
+	cmd = (WMI_CHAN_AVOID_RPT_ALLOW_CMD_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_WMI_CHAN_AVOID_RPT_ALLOW_CMD_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+				WMI_CHAN_AVOID_RPT_ALLOW_CMD_fixed_param));
+	cmd->rpt_allow = val;
+	if (wmi_unified_cmd_send(wma->wmi_handle, wmi_buf, len,
+				WMI_CHAN_AVOID_RPT_ALLOW_CMDID)) {
+		WMA_LOGE(FL("Failed to send enable/disable CA event command"));
+		wmi_buf_free(wmi_buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}

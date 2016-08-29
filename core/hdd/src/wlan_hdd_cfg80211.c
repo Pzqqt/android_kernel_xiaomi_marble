@@ -3868,6 +3868,7 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_MODULATED_DTIM] = {.type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_STATS_AVG_FACTOR] = {.type = NLA_U16 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_GUARD_TIME] = {.type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_CHANNEL_AVOIDANCE_IND] = {.type = NLA_U8 },
 };
 
 
@@ -3898,6 +3899,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	u32 modulated_dtim;
 	u16 stats_avg_factor;
 	u32 guard_time;
+	uint8_t set_value;
 	u32 ftm_capab;
 	QDF_STATUS status;
 	int attr_len;
@@ -4021,6 +4023,13 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		hdd_info("Failed to set vendor ie and access policy.");
 			return -EINVAL;
 		}
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_CHANNEL_AVOIDANCE_IND]) {
+		set_value = nla_get_u8(
+			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_CHANNEL_AVOIDANCE_IND]);
+		hdd_info("set_value: %d", set_value);
+		ret_val = hdd_enable_disable_ca_event(hdd_ctx, set_value);
 	}
 
 	return ret_val;

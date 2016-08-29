@@ -2341,6 +2341,8 @@ enum qca_wlan_vendor_config {
 	QCA_WLAN_VENDOR_ATTR_CONFIG_STATS_AVG_FACTOR,
 	QCA_WLAN_VENDOR_ATTR_CONFIG_GUARD_TIME,
 	QCA_WLAN_VENDOR_ATTR_CONFIG_FINE_TIME_MEASUREMENT,
+	QCA_WLAN_VENDOR_ATTR_CONFIG_PENALIZE_AFTER_NCONS_BEACON_MISS,
+	QCA_WLAN_VENDOR_ATTR_CONFIG_CHANNEL_AVOIDANCE_IND,
 	/* Attribute used to set scan default IEs to the driver.
 	*
 	* These IEs can be used by scan operations that will be initiated by

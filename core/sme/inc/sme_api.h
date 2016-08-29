@@ -1259,4 +1259,6 @@ QDF_STATUS sme_update_sta_roam_policy(tHalHandle hal,
 		enum sta_roam_policy_dfs_mode dfs_mode,
 		bool skip_unsafe_channels,
 		uint8_t session_id);
+QDF_STATUS sme_enable_disable_chanavoidind_event(tHalHandle hal,
+					uint8_t set_value);
 #endif /* #if !defined( __SME_API_H ) */
