@@ -1470,11 +1470,6 @@ typedef enum {
 #define CFG_IGNORE_DYNAMIC_DTIM_IN_P2P_MODE_MAX        (1)
 #define CFG_IGNORE_DYNAMIC_DTIM_IN_P2P_MODE_DEFAULT    (0)
 
-#define CFG_ENABLE_AUTOMATIC_TX_POWER_CONTROL_NAME  "gEnableAutomaticTxPowerControl"
-#define CFG_ENABLE_AUTOMATIC_TX_POWER_CONTROL_MIN        (0)
-#define CFG_ENABLE_AUTOMATIC_TX_POWER_CONTROL_MAX        (1)
-#define CFG_ENABLE_AUTOMATIC_TX_POWER_CONTROL_DEFAULT    (1)
-
 #define CFG_SHORT_GI_40MHZ_NAME                "gShortGI40Mhz"
 #define CFG_SHORT_GI_40MHZ_MIN                 0
 #define CFG_SHORT_GI_40MHZ_MAX                 1
@@ -3775,7 +3770,6 @@ struct hdd_config {
 	uint8_t enableDFSChnlScan;
 	uint8_t enable_dfs_pno_chnl_scan;
 	uint8_t enableDynamicDTIM;
-	uint8_t enableAutomaticTxPowerControl;
 	uint8_t ShortGI40MhzEnable;
 	eHddLinkSpeedReportType reportMaxLinkSpeed;
 	int32_t linkSpeedRssiHigh;

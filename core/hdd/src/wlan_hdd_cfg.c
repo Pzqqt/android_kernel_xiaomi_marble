@@ -1868,14 +1868,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_ENABLE_DYNAMIC_DTIM_MIN,
 		     CFG_ENABLE_DYNAMIC_DTIM_MAX),
 
-	REG_VARIABLE(CFG_ENABLE_AUTOMATIC_TX_POWER_CONTROL_NAME,
-		     WLAN_PARAM_Integer,
-		     struct hdd_config, enableAutomaticTxPowerControl,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_AUTOMATIC_TX_POWER_CONTROL_DEFAULT,
-		     CFG_ENABLE_AUTOMATIC_TX_POWER_CONTROL_MIN,
-		     CFG_ENABLE_AUTOMATIC_TX_POWER_CONTROL_MAX),
-
 	REG_VARIABLE(CFG_SHORT_GI_40MHZ_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, ShortGI40MhzEnable,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -6593,14 +6585,6 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_AP_DATA_AVAIL_POLL_PERIOD to CFG");
-	}
-
-	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_TX_PWR_CTRL_ENABLE,
-			    pConfig->enableAutomaticTxPowerControl)
-			== QDF_STATUS_E_FAILURE) {
-		fStatus = false;
-		hddLog(LOGE,
-		       "Could not pass on WNI_CFG_TX_PWR_CTRL_ENABLE to CFG");
 	}
 
 	if (sme_cfg_set_int

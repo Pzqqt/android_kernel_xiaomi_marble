@@ -274,7 +274,6 @@ unsigned char *g_cfg_param_name[] = {
 	(unsigned char *)"RPE_AGING_THRESHOLD_FOR_AC3_REG",
 	(unsigned char *)"NO_OF_ONCHIP_REORDER_SESSIONS",
 	(unsigned char *)"SINGLE_TID_RC",
-	(unsigned char *)"TX_PWR_CTRL_ENABLE",
 	(unsigned char *)"MCAST_BCAST_FILTER_SETTING",
 	(unsigned char *)"BTC_DHCP_BT_SLOTS_TO_BLOCK",
 	(unsigned char *)"DYNAMIC_PS_POLL_VALUE",
