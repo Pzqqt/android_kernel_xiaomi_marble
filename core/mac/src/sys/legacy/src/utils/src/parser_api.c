@@ -331,6 +331,8 @@ populate_dot11f_chan_switch_wrapper(tpAniSirGlobal pMac,
 				    tDot11fIEChannelSwitchWrapper *pDot11f,
 				    tpPESession psessionEntry)
 {
+	uint8_t *ie_ptr = NULL;
+
 	/*
 	 * The new country subelement is present only when
 	 * 1. AP performs Extended Channel switching to new country.
@@ -359,6 +361,22 @@ populate_dot11f_chan_switch_wrapper(tpAniSirGlobal pMac,
 	pDot11f->WiderBWChanSwitchAnn.newCenterChanFreq1 =
 		psessionEntry->gLimWiderBWChannelSwitch.newCenterChanFreq1;
 	pDot11f->WiderBWChanSwitchAnn.present = 1;
+
+	/*
+	 * Add the VHT Transmit power Envelope Sublement.
+	 */
+	ie_ptr = lim_get_ie_ptr_new(pMac,
+		psessionEntry->addIeParams.probeRespBCNData_buff,
+		psessionEntry->addIeParams.probeRespBCNDataLen,
+		DOT11F_EID_VHT_TRANSMIT_POWER_ENV, ONE_BYTE);
+	if (ie_ptr) {
+		/* Ignore EID field */
+		ie_ptr++;
+		pDot11f->vht_transmit_power_env.present = 1;
+		pDot11f->vht_transmit_power_env.num_bytes = *ie_ptr++;
+		qdf_mem_copy(pDot11f->vht_transmit_power_env.bytes,
+			ie_ptr, pDot11f->vht_transmit_power_env.num_bytes);
+	}
 
 }
 

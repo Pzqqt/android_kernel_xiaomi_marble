@@ -3581,6 +3581,45 @@ uint32_t dot11f_get_packed_ie_tgt_mac_addr(
 }; /* End extern "C". */
 #endif /* C++ */
 
+/* EID 195 (0xc3) */
+typedef struct sDot11fIEvht_transmit_power_env {
+	uint8_t             present;
+	uint8_t             num_bytes;
+	uint8_t             bytes[5];
+} tDot11fIEvht_transmit_power_env;
+
+#define DOT11F_EID_VHT_TRANSMIT_POWER_ENV (195)
+
+/* N.B. These #defines do *not* include the EID & length */
+#define DOT11F_IE_VHT_TRANSMIT_POWER_ENV_MIN_LEN (2)
+
+#define DOT11F_IE_VHT_TRANSMIT_POWER_ENV_MAX_LEN (5)
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* C++ */
+uint32_t dot11f_unpack_ie_vht_transmit_power_env(
+	tpAniSirGlobal,
+	uint8_t *,
+	uint8_t,
+	tDot11fIEvht_transmit_power_env*);
+
+uint32_t dot11f_pack_ie_vht_transmit_power_env(
+	tpAniSirGlobal,
+	tDot11fIEvht_transmit_power_env *,
+	uint8_t *,
+	uint32_t,
+	uint32_t*);
+
+uint32_t dot11f_get_packed_ie_vht_transmit_power_env(
+	tpAniSirGlobal,
+	tDot11fIEvht_transmit_power_env *,
+	uint32_t*);
+
+#ifdef __cplusplus
+}; /* End extern "C". */
+#endif /* C++ */
+
 /* EID 197 (0xc5) */
 typedef struct sDot11fIEAID {
 	uint8_t             present;
@@ -3743,6 +3782,7 @@ uint32_t dot11f_get_packed_ie_ChanSwitchAnn(
 typedef struct sDot11fIEChannelSwitchWrapper {
 	uint8_t                              present;
 	tDot11fIEWiderBWChanSwitchAnn        WiderBWChanSwitchAnn;
+	tDot11fIEvht_transmit_power_env        vht_transmit_power_env;
 } tDot11fIEChannelSwitchWrapper;
 
 #define DOT11F_EID_CHANNELSWITCHWRAPPER (196)
@@ -3750,7 +3790,7 @@ typedef struct sDot11fIEChannelSwitchWrapper {
 /* N.B. These #defines do *not* include the EID & length */
 #define DOT11F_IE_CHANNELSWITCHWRAPPER_MIN_LEN (0)
 
-#define DOT11F_IE_CHANNELSWITCHWRAPPER_MAX_LEN (5)
+#define DOT11F_IE_CHANNELSWITCHWRAPPER_MAX_LEN (12)
 
 #ifdef __cplusplus
 extern "C" {

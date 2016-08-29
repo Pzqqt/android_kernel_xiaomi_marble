@@ -120,6 +120,7 @@ const EID_AID                        =  197;
 const EID_EXT_CAP           	     =  127;
 const EID_OPERATING_MODE             =  199;
 const EID_WIDER_BW_CHANNEL_SWITCH_ANN=  194;
+const VHT_TRANSMIT_POWER_ENVELOPE    = 195;
 const EID_CHANNEL_SWITCH_WRAPPER     = 196;
 const EID_VENDOR_SPECIFIC            = 221;
 
@@ -2248,9 +2249,15 @@ IE WiderBWChanSwitchAnn (EID_WIDER_BW_CHANNEL_SWITCH_ANN)
    newCenterChanFreq1,    1;
 }
 
+IE vht_transmit_power_env (VHT_TRANSMIT_POWER_ENVELOPE)
+{
+    bytes[2..5];
+}
+
 IE ChannelSwitchWrapper (EID_CHANNEL_SWITCH_WRAPPER)
 {
     OPTIE IE  WiderBWChanSwitchAnn;
+    OPTIE IE  vht_transmit_power_env;
 }
 IE ExtCap (EID_EXT_CAP)
 {
