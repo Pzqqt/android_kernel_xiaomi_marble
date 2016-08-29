@@ -304,7 +304,6 @@ unsigned char *g_cfg_param_name[] = {
 	(unsigned char *)"PMF_SA_QUERY_MAX_RETRIES",
 	(unsigned char *)"PMF_SA_QUERY_RETRY_INTERVAL",
 	(unsigned char *)"ENABLE_ADAPT_RX_DRAIN",
-	(unsigned char *)"FLEX_CONNECT_POWER_FACTOR",
 	(unsigned char *)"ANTENNA_DIVESITY",
 	(unsigned char *)"GO_LINK_MONITOR_TIMEOUT",
 	(unsigned char *)"RMC_ACTION_PERIOD_FREQUENCY",

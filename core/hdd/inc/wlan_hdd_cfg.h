@@ -2012,15 +2012,6 @@ typedef enum {
 #define CFG_ENABLE_FAST_ROAM_IN_CONCURRENCY_DEFAULT  (1)
 
 /*
- * FlexConnectPowerFactor parameter
- * Default: Disable (0)
- */
-#define CFG_FLEX_CONNECT_POWER_FACTOR_NAME          "gFlexConnectPowerFactor"
-#define CFG_FLEX_CONNECT_POWER_FACTOR_MIN           (0)
-#define CFG_FLEX_CONNECT_POWER_FACTOR_MAX           (9)
-#define CFG_FLEX_CONNECT_POWER_FACTOR_DEFAULT       (0)
-
-/*
  * Enable heart beat monitoring offload to FW
  */
 #define CFG_ENABLE_HEART_BEAT_OFFLOAD          "gEnableIbssHeartBeatOffload"
@@ -3878,7 +3869,6 @@ struct hdd_config {
 	/* Flag indicating whether legacy fast roam during concurrency is enabled in cfg.ini or not */
 	bool bFastRoamInConIniFeatureEnabled;
 	bool fEnableAdaptRxDrain;
-	uint8_t flexConnectPowerFactor;
 	bool enableIbssHeartBeatOffload;
 	uint32_t antennaDiversity;
 	bool fEnableSNRMonitoring;
