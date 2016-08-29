@@ -573,6 +573,8 @@ bool hif_can_suspend_link(struct hif_opaque_softc *);
 
 int hif_bus_resume(struct hif_opaque_softc *);
 int hif_bus_suspend(struct hif_opaque_softc *);
+int hif_bus_resume_noirq(struct hif_opaque_softc *);
+int hif_bus_suspend_noirq(struct hif_opaque_softc *);
 
 #ifdef FEATURE_RUNTIME_PM
 int hif_pre_runtime_suspend(struct hif_opaque_softc *hif_ctx);
