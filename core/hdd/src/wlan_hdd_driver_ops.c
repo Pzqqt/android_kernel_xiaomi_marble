@@ -414,9 +414,6 @@ static inline void hdd_pld_driver_unloading(struct device *dev)
  */
 static void wlan_hdd_remove(struct device *dev)
 {
-	void *hif_ctx;
-
-
 	pr_info("%s: Removing driver v%s\n", WLAN_MODULE_NAME,
 		QWLAN_VERSIONSTR);
 
@@ -433,11 +430,6 @@ static void wlan_hdd_remove(struct device *dev)
 		hdd_err("External threads are still active attempting driver unload anyway");
 
 	hdd_pld_driver_unloading(dev);
-
-	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-
-	if (NULL == hif_ctx)
-		return;
 
 	if (QDF_IS_EPPING_ENABLED(cds_get_conparam())) {
 		epping_disable();
