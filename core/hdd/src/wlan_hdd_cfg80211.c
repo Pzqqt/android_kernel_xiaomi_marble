@@ -1800,7 +1800,7 @@ __wlan_hdd_cfg80211_get_supported_features(struct wiphy *wiphy,
 	uint32_t fset = 0;
 	int ret;
 
-	ENTER_DEV(wdev->netdev);
+	/* ENTER_DEV() intentionally not used in a frequently invoked API */
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -1888,7 +1888,6 @@ __wlan_hdd_cfg80211_get_supported_features(struct wiphy *wiphy,
 		goto nla_put_failure;
 	}
 	ret = cfg80211_vendor_cmd_reply(skb);
-	EXIT();
 	return ret;
 nla_put_failure:
 	kfree_skb(skb);

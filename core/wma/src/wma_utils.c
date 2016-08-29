@@ -706,8 +706,7 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 		 fixed_param->request_id, fixed_param->num_radio,
 		 fixed_param->more_radio_events);
 
-	WMA_LOGD("Radio Info");
-	WMA_LOGD("radio_id %u on_time %u tx_time %u rx_time %u on_time_scan %u "
+	WMA_LOGD("Radio Info: radio_id %u on_time %u tx_time %u rx_time %u on_time_scan %u "
 		 "on_time_nbd %u on_time_gscan %u on_time_roam_scan %u "
 		 "on_time_pno_scan %u on_time_hs20 %u num_channels %u",
 		 radio_stats->radio_id, radio_stats->on_time,
