@@ -543,11 +543,6 @@ typedef enum {
 #define CFG_MAX_LI_MODULATED_DTIM_MAX          (10)
 #define CFG_MAX_LI_MODULATED_DTIM_DEFAULT      (10)
 
-#define CFG_RX_ANT_CONFIGURATION_NAME          "gNumRxAnt"
-#define CFG_RX_ANT_CONFIGURATION_NAME_MIN      (1)
-#define CFG_RX_ANT_CONFIGURATION_NAME_MAX      (2)
-#define CFG_RX_ANT_CONFIGURATION_NAME_DEFAULT  (2)
-
 #define CFG_FW_HEART_BEAT_MONITORING_NAME      "gEnableFWHeartBeatMonitoring"
 #define CFG_FW_HEART_BEAT_MONITORING_MIN       (0)
 #define CFG_FW_HEART_BEAT_MONITORING_MAX       (1)
@@ -3636,7 +3631,6 @@ struct hdd_config {
 	bool fIgnoreDtim;
 	uint8_t fMaxLIModulatedDTIM;
 
-	uint8_t nRxAnt;
 	uint8_t fEnableFwHeartBeatMonitoring;
 	uint8_t fEnableFwBeaconFiltering;
 	bool fEnableFwRssiMonitoring;
