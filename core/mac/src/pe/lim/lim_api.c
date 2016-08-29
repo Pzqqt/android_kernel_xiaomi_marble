@@ -1289,9 +1289,9 @@ lim_enc_type_matched(tpAniSirGlobal mac_ctx,
 		FL("Beacon/Probe:: Privacy :%d WPA Present:%d RSN Present: %d"),
 		bcn->capabilityInfo.privacy, bcn->wpaPresent, bcn->rsnPresent);
 	lim_log(mac_ctx, LOG1,
-		FL("session:: Privacy :%d EncyptionType: %d"),
+		FL("session:: Privacy :%d EncyptionType: %d OSEN %d"),
 		SIR_MAC_GET_PRIVACY(session->limCurrentBssCaps),
-		session->encryptType);
+		session->encryptType, session->isOSENConnection);
 
 	/*
 	 * This is handled by sending probe req due to IOT issues so
@@ -1325,6 +1325,14 @@ lim_enc_type_matched(tpAniSirGlobal mac_ctx,
 	    ((session->encryptType == eSIR_ED_TKIP) ||
 		(session->encryptType == eSIR_ED_CCMP) ||
 		(session->encryptType == eSIR_ED_AES_128_CMAC)))
+		return true;
+
+	/* For HS2.0, RSN ie is not present
+	 * in beacon. Therefore no need to
+	 * check for security type in case
+	 * OSEN session.
+	 */
+	if (session->isOSENConnection)
 		return true;
 
 	return false;
