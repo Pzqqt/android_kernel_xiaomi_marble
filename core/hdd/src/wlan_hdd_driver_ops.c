@@ -554,16 +554,9 @@ static int __wlan_hdd_bus_suspend(pm_message_t state)
 	if (err)
 		goto resume_wma;
 
-	err = wma_is_target_wake_up_received();
-	if (err)
-		goto resume_hif;
-
 	hdd_err("suspend done, status = %d", err);
 	return err;
 
-resume_hif:
-	status = hif_bus_resume(hif_ctx);
-	QDF_BUG(!status);
 resume_wma:
 	status = wma_bus_resume();
 	QDF_BUG(!status);
@@ -591,6 +584,77 @@ int wlan_hdd_bus_suspend(pm_message_t state)
 
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_bus_suspend(state);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
+/**
+ * __wlan_hdd_bus_suspend_noirq() - handle .suspend_noirq callback
+ *
+ * This function is called by the platform driver to complete the
+ * bus suspend callback when device interrupts are disabled by kernel.
+ * Call HIF and WMA suspend_noirq callbacks to make sure there is no
+ * wake up pending from FW before allowing suspend.
+ *
+ * Return: 0 for success and -EBUSY if FW is requesting wake up
+ */
+int __wlan_hdd_bus_suspend_noirq(void)
+{
+	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	void *hif_ctx;
+	int err = wlan_hdd_validate_context(hdd_ctx);
+	int status;
+
+	if (err)
+		goto done;
+
+	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	if (NULL == hif_ctx) {
+		err = -EINVAL;
+		goto done;
+	}
+
+	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
+		hdd_info("Driver Module closed return success");
+		return 0;
+	}
+
+	err = hif_bus_suspend_noirq(hif_ctx);
+	if (err)
+		goto done;
+
+	err = wma_is_target_wake_up_received();
+	if (err)
+		goto resume_hif_noirq;
+
+	hdd_err("suspend_noirq done, status = %d", err);
+	return err;
+
+resume_hif_noirq:
+	status = hif_bus_resume_noirq(hif_ctx);
+	QDF_BUG(!status);
+done:
+	hdd_err("suspend_noirq done, status = %d", err);
+	return err;
+}
+
+/**
+ * wlan_hdd_bus_suspend_noirq() - handle .suspend_noirq callback
+ *
+ * This function is called by the platform driver to complete the
+ * bus suspend callback when device interrupts are disabled by kernel.
+ * Call HIF and WMA suspend_noirq callbacks to make sure there is no
+ * wake up pending from FW before allowing suspend.
+ *
+ * Return: 0 for success and -EBUSY if FW is requesting wake up
+ */
+int wlan_hdd_bus_suspend_noirq(void)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_bus_suspend_noirq();
 	cds_ssr_unprotect(__func__);
 
 	return ret;
@@ -654,6 +718,63 @@ int wlan_hdd_bus_resume(void)
 
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_bus_resume();
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
+/**
+ * __wlan_hdd_bus_resume_noirq(): handle bus resume no irq
+ *
+ * This function is called by the platform driver to do bus
+ * resume no IRQ before calling resume callback. Call WMA and HIF
+ * layers to complete the resume_noirq.
+ *
+ * Return: 0 for success and negative error code for failure
+ */
+int __wlan_hdd_bus_resume_noirq(void)
+{
+	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	void *hif_ctx;
+	int status = wlan_hdd_validate_context(hdd_ctx);
+
+	if (status)
+		return status;
+
+	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
+		hdd_info("Driver Module closed return success");
+		return 0;
+	}
+
+	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	if (NULL == hif_ctx)
+		return -EINVAL;
+
+	status = wma_clear_target_wake_up();
+	QDF_BUG(!status);
+
+	status = hif_bus_resume_noirq(hif_ctx);
+	QDF_BUG(!status);
+
+	hdd_err("resume_noirq done");
+	return status;
+}
+
+/**
+ * wlan_hdd_bus_resume_noirq(): handle bus resume no irq
+ *
+ * This function is called by the platform driver to do bus
+ * resume no IRQ before calling resume callback. Call WMA and HIF
+ * layers to complete the resume_noirq.
+ *
+ * Return: 0 for success and negative error code for failure
+ */
+int wlan_hdd_bus_resume_noirq(void)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_bus_resume_noirq();
 	cds_ssr_unprotect(__func__);
 
 	return ret;
@@ -921,6 +1042,45 @@ static int wlan_hdd_pld_resume(struct device *dev,
 	return wlan_hdd_bus_resume();
 }
 
+
+/**
+ * wlan_hdd_pld_suspend_noirq() - handle suspend no irq
+ * @dev: device
+ * @pld_bus_type: PLD bus type
+ *
+ * Complete the actions started by suspend().  Carry out any
+ * additional operations required for suspending the device that might be
+ * racing with its driver's interrupt handler, which is guaranteed not to
+ * run while suspend_noirq() is being executed. Make sure to resume device
+ * if FW has sent initial wake up message and expecting APPS to wake up.
+ *
+ * Return: 0 on success
+ */
+static int wlan_hdd_pld_suspend_noirq(struct device *dev,
+		     enum pld_bus_type bus_type)
+{
+	return wlan_hdd_bus_suspend_noirq();
+}
+
+/**
+ * wlan_hdd_pld_resume_noirq() - handle resume no irq
+ * @dev: device
+ * @pld_bus_type: PLD bus type
+ *
+ * Prepare for the execution of resume() by carrying out any
+ * operations required for resuming the device that might be racing with
+ * its driver's interrupt handler, which is guaranteed not to run while
+ * resume_noirq() is being executed. Make sure to clear target initial
+ * wake up request such that next suspend can happen cleanly.
+ *
+ * Return: 0 on success
+ */
+static int wlan_hdd_pld_resume_noirq(struct device *dev,
+		    enum pld_bus_type bus_type)
+{
+	return wlan_hdd_bus_resume_noirq();
+}
+
 /**
  * wlan_hdd_pld_reset_resume() - reset resume function registered to PLD
  * @dev: device
@@ -985,6 +1145,8 @@ struct pld_driver_ops wlan_drv_ops = {
 	.crash_shutdown = wlan_hdd_pld_crash_shutdown,
 	.suspend    = wlan_hdd_pld_suspend,
 	.resume     = wlan_hdd_pld_resume,
+	.suspend_noirq = wlan_hdd_pld_suspend_noirq,
+	.resume_noirq  = wlan_hdd_pld_resume_noirq,
 	.reset_resume = wlan_hdd_pld_reset_resume,
 	.modem_status = wlan_hdd_pld_notify_handler,
 #ifdef FEATURE_RUNTIME_PM
