@@ -338,11 +338,6 @@ typedef enum {
 #define CFG_AP_STA_SECURITY_SEPERATION_MAX     (1)
 #define CFG_AP_STA_SECURITY_SEPERATION_DEFAULT (0)
 
-#define CFG_AP_LISTEN_MODE_NAME               "gEnablePhyAgcListenMode"
-#define CFG_AP_LISTEN_MODE_MIN                (0)
-#define CFG_AP_LISTEN_MODE_MAX                (128)
-#define CFG_AP_LISTEN_MODE_DEFAULT            (128)
-
 #define CFG_AP_AUTO_SHUT_OFF                "gAPAutoShutOff"
 #define CFG_AP_AUTO_SHUT_OFF_MIN            (0)
 #define CFG_AP_AUTO_SHUT_OFF_MAX            (4294967295UL)
@@ -3556,7 +3551,6 @@ struct hdd_config {
 	uint16_t apProtection;
 	bool apOBSSProtEnabled;
 	bool apDisableIntraBssFwd;
-	uint8_t nEnableListenMode;
 	uint32_t nAPAutoShutOff;
 	uint8_t enableLTECoex;
 	uint32_t apKeepAlivePeriod;

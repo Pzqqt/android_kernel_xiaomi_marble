@@ -1250,13 +1250,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_QOS_IMPLICIT_SETUP_ENABLED_MIN,
 		     CFG_QOS_IMPLICIT_SETUP_ENABLED_MAX),
 
-	REG_VARIABLE(CFG_AP_LISTEN_MODE_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nEnableListenMode,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_AP_LISTEN_MODE_DEFAULT,
-		     CFG_AP_LISTEN_MODE_MIN,
-		     CFG_AP_LISTEN_MODE_MAX),
-
 	REG_VARIABLE(CFG_AP_AUTO_SHUT_OFF, WLAN_PARAM_Integer,
 		     struct hdd_config, nAPAutoShutOff,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -4895,9 +4888,6 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		  pHddCtx->config->WlanAutoShutdown);
 #endif
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "Name = [gEnableListenMode] Value = [%u]",
-		  pHddCtx->config->nEnableListenMode);
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [gApProtection] value = [%u]",
 		  pHddCtx->config->apProtection);
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -6375,14 +6365,6 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_ENABLE_LTE_COEX to CFG");
-	}
-
-	if (sme_cfg_set_int
-		    (pHddCtx->hHal, WNI_CFG_ENABLE_PHY_AGC_LISTEN_MODE,
-		    pConfig->nEnableListenMode) == QDF_STATUS_E_FAILURE) {
-		fStatus = false;
-		hddLog(LOGE,
-		       "Could not pass on WNI_CFG_ENABLE_PHY_AGC_LISTEN_MODE to CFG");
 	}
 
 	if (sme_cfg_set_int
