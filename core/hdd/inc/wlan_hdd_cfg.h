@@ -882,11 +882,6 @@ typedef enum {
 #define CFG_TELE_BCN_MAX_LI_NUM_IDLE_BCNS_MAX        (255)
 #define CFG_TELE_BCN_MAX_LI_NUM_IDLE_BCNS_DEFAULT    (15)
 
-#define CFG_BCN_EARLY_TERM_WAKE_NAME                 "beaconEarlyTerminationWakeInterval"
-#define CFG_BCN_EARLY_TERM_WAKE_MIN                  (2)
-#define CFG_BCN_EARLY_TERM_WAKE_MAX                  (255)
-#define CFG_BCN_EARLY_TERM_WAKE_DEFAULT              (3)
-
 #define CFG_NEIGHBOR_SCAN_TIMER_PERIOD_NAME             "gNeighborScanTimerPeriod"
 #define CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MIN              (3)
 #define CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MAX              (300)
@@ -1057,11 +1052,6 @@ typedef enum {
 #define CFG_BAND_CAPABILITY_MIN           (0)
 #define CFG_BAND_CAPABILITY_MAX           (2)
 #define CFG_BAND_CAPABILITY_DEFAULT       (0)
-
-#define CFG_ENABLE_BEACON_EARLY_TERMINATION_NAME          "enableBeaconEarlyTermination"
-#define CFG_ENABLE_BEACON_EARLY_TERMINATION_MIN           (0)
-#define CFG_ENABLE_BEACON_EARLY_TERMINATION_MAX           (1)
-#define CFG_ENABLE_BEACON_EARLY_TERMINATION_DEFAULT       (0)
 
 #define CFG_ENABLE_BYPASS_11D_NAME                 "gEnableBypass11d"
 #define CFG_ENABLE_BYPASS_11D_MIN                  (0)
@@ -3716,7 +3706,6 @@ struct hdd_config {
 	uint8_t nBandCapability;
 
 	uint32_t apDataAvailPollPeriodInMs;
-	bool fEnableBeaconEarlyTermination;
 	bool teleBcnWakeupEn;
 
 /* QDF Trace Control*/
@@ -3744,7 +3733,6 @@ struct hdd_config {
 	uint16_t nTeleBcnMaxListenInterval;
 	uint16_t nTeleBcnTransLiNumIdleBeacons;
 	uint16_t nTeleBcnMaxLiNumIdleBeacons;
-	uint8_t bcnEarlyTermWakeInterval;
 	uint8_t enableBypass11d;
 	uint8_t enableDFSChnlScan;
 	uint8_t enable_dfs_pno_chnl_scan;
