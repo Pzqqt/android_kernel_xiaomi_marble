@@ -1250,7 +1250,7 @@ static void wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work)
 static inline void wlan_hdd_copy_bssid_scan_request(tCsrScanRequest *scan_req,
 					struct cfg80211_scan_request *request)
 {
-	qdf_mem_copy(scan_req->bssid, request->bssid, VOS_MAC_ADDR_SIZE);
+	qdf_mem_copy(scan_req->bssid.bytes, request->bssid, QDF_MAC_ADDR_SIZE);
 }
 #else
 static inline void wlan_hdd_copy_bssid_scan_request(tCsrScanRequest *scan_req,
