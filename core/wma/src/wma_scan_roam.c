@@ -2947,7 +2947,8 @@ QDF_STATUS wma_pno_start(tp_wma_handle wma, tpSirPNOScanReq pno)
 	params = qdf_mem_malloc(sizeof(struct pno_scan_req_params));
 	if (params == NULL) {
 		WMA_LOGE("%s : Memory allocation failed", __func__);
-		return QDF_STATUS_E_NOMEM;
+		status = QDF_STATUS_E_NOMEM;
+		goto exit_pno_start;
 	}
 
 	params->enable = pno->enable;
@@ -2991,17 +2992,17 @@ QDF_STATUS wma_pno_start(tp_wma_handle wma, tpSirPNOScanReq pno)
 
 	status = wmi_unified_pno_start_cmd(wma->wmi_handle,
 					params, channel_list);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		qdf_mem_free(channel_list);
-		return status;
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		wma->interfaces[pno->sessionId].pno_in_progress = true;
+		WMA_LOGD("PNO start request sent successfully for vdev %d",
+			 pno->sessionId);
 	}
 
-	qdf_mem_free(channel_list);
-	wma->interfaces[pno->sessionId].pno_in_progress = true;
-
-	WMA_LOGD("PNO start request sent successfully for vdev %d",
-		 pno->sessionId);
-
+exit_pno_start:
+	if (channel_list)
+		qdf_mem_free(channel_list);
+	if (params)
+		qdf_mem_free(params);
 	return status;
 }
 
