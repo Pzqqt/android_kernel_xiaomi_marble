@@ -4144,6 +4144,55 @@ lim_send_vdev_restart(tpAniSirGlobal pMac,
 	}
 }
 
+/**
+ * __lim_process_roam_scan_offload_req() - Process Roam scan offload from csr
+ * @mac_ctx: Pointer to Global MAC structure
+ * @msg_buf: Pointer to SME message buffer
+ *
+ * Return: None
+ */
+static void __lim_process_roam_scan_offload_req(tpAniSirGlobal mac_ctx,
+						uint32_t *msg_buf)
+{
+	tpPESession pe_session;
+	tSirMsgQ wma_msg;
+	tSirRetStatus status;
+	tSirRoamOffloadScanReq *req_buffer;
+	uint16_t local_ie_len;
+	uint8_t *local_ie_buf;
+
+	req_buffer = (tSirRoamOffloadScanReq *)msg_buf;
+	pe_session = pe_find_session_by_sme_session_id(mac_ctx,
+					req_buffer->sessionId);
+
+	local_ie_buf = qdf_mem_malloc(MAX_DEFAULT_SCAN_IE_LEN);
+	if (!local_ie_buf) {
+		lim_log(mac_ctx, LOGE, FL("Mem Alloc failed for local_ie_buf"));
+		return;
+	}
+
+	local_ie_len = req_buffer->assoc_ie.length;
+	/* Update ext cap IE if present */
+	if (local_ie_len &&
+		!lim_update_ext_cap_ie(mac_ctx, req_buffer->assoc_ie.addIEdata,
+					local_ie_buf, &local_ie_len)) {
+		req_buffer->assoc_ie.length = local_ie_len;
+		qdf_mem_copy(req_buffer->assoc_ie.addIEdata, local_ie_buf,
+				local_ie_len);
+	}
+	qdf_mem_free(local_ie_buf);
+
+	wma_msg.type = WMA_ROAM_SCAN_OFFLOAD_REQ;
+	wma_msg.bodyptr = req_buffer;
+
+	status = wma_post_ctrl_msg(mac_ctx, &wma_msg);
+	if (eSIR_SUCCESS != status) {
+		lim_log(mac_ctx, LOGE,
+			FL("Posting WMA_ROAM_SCAN_OFFLOAD_REQ failed"));
+		qdf_mem_free(req_buffer);
+	}
+}
+
 static void __lim_process_sme_hide_ssid(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 {
 	tpSirUpdateParams pUpdateParams;
@@ -5212,6 +5261,10 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
 
 	case eWNI_SME_HIDE_SSID_REQ:
 		__lim_process_sme_hide_ssid(pMac, pMsgBuf);
+		break;
+	case eWNI_SME_ROAM_SCAN_OFFLOAD_REQ:
+		__lim_process_roam_scan_offload_req(pMac, pMsgBuf);
+		bufConsumed = false;
 		break;
 	case eWNI_SME_UPDATE_APWPSIE_REQ:
 		__lim_process_sme_update_apwpsi_es(pMac, pMsgBuf);

@@ -2991,6 +2991,8 @@ struct roam_ext_params {
 };
 
 typedef struct sSirRoamOffloadScanReq {
+	uint16_t message_type;
+	uint16_t length;
 	bool RoamScanOffloadEnabled;
 	bool MAWCEnabled;
 	int8_t LookupThreshold;

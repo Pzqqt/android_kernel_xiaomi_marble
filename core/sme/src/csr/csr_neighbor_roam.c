@@ -1743,8 +1743,9 @@ QDF_STATUS csr_neighbor_roam_proceed_with_handoff_req(tpAniSirGlobal pMac,
 	     pNeighborRoamInfo->neighborRoamState)
 	    || (!pNeighborRoamInfo->uOsRequestedHandoff)) {
 		sms_log(pMac, LOGE,
-			FL
-				("Received in not CONNECTED state or uOsRequestedHandoff is not set. Ignore it"));
+			FL("Received in not CONNECTED state(%d) or uOsRequestedHandoff(%d) is not set. Ignore it"),
+			pNeighborRoamInfo->neighborRoamState,
+			pNeighborRoamInfo->uOsRequestedHandoff);
 		status = QDF_STATUS_E_FAILURE;
 	} else {
 		/* Let's go ahead with handoff */

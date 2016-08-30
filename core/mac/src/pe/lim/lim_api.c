@@ -2184,3 +2184,58 @@ void lim_mon_init_session(tpAniSirGlobal mac_ptr,
 	}
 	psession_entry->vhtCapability = 1;
 }
+
+/**
+ * lim_update_ext_cap_ie() - Update Extended capabilities IE(if present)
+ *          with capabilities of Fine Time measurements(FTM) if set in driver
+ *
+ * @mac_ctx: Pointer to Global MAC structure
+ * @ie_data: Default Scan IE data
+ * @local_ie_buf: Local Scan IE data
+ * @local_ie_len: Pointer to length of @ie_data
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS lim_update_ext_cap_ie(tpAniSirGlobal mac_ctx,
+		uint8_t *ie_data, uint8_t *local_ie_buf, uint16_t *local_ie_len)
+{
+	uint32_t dot11mode;
+	bool vht_enabled = false;
+	tDot11fIEExtCap default_scan_ext_cap = {0}, driver_ext_cap = {0};
+	uint8_t ext_cap_ie_hdr[EXT_CAP_IE_HDR_LEN] = {0x7f, 0x9};
+	tSirRetStatus status;
+
+	status = lim_strip_extcap_update_struct(mac_ctx, ie_data,
+				   local_ie_len, &default_scan_ext_cap);
+	if (eSIR_SUCCESS != status) {
+		lim_log(mac_ctx, LOGE, FL("Strip ext cap fails(%d)"), status);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_mem_copy(local_ie_buf, ie_data, (*local_ie_len));
+	qdf_mem_copy(local_ie_buf + (*local_ie_len),
+			ext_cap_ie_hdr, EXT_CAP_IE_HDR_LEN);
+	(*local_ie_len) += EXT_CAP_IE_HDR_LEN;
+
+	wlan_cfg_get_int(mac_ctx, WNI_CFG_DOT11_MODE, &dot11mode);
+	if (IS_DOT11_MODE_VHT(dot11mode))
+		vht_enabled = true;
+
+	status = populate_dot11f_ext_cap(mac_ctx, vht_enabled,
+					&driver_ext_cap, NULL);
+	if (eSIR_SUCCESS != status) {
+		lim_log(mac_ctx, LOGE, FL("Failed(%d) to create ext cap IE. Use default value instead"),
+				status);
+		qdf_mem_copy(local_ie_buf + (*local_ie_len),
+				default_scan_ext_cap.bytes,
+				DOT11F_IE_EXTCAP_MAX_LEN);
+		(*local_ie_len) += DOT11F_IE_EXTCAP_MAX_LEN;
+		return QDF_STATUS_SUCCESS;
+	}
+	lim_merge_extcap_struct(&driver_ext_cap, &default_scan_ext_cap);
+
+	qdf_mem_copy(local_ie_buf + (*local_ie_len),
+			driver_ext_cap.bytes, DOT11F_IE_EXTCAP_MAX_LEN);
+	(*local_ie_len) += DOT11F_IE_EXTCAP_MAX_LEN;
+	return QDF_STATUS_SUCCESS;
+}

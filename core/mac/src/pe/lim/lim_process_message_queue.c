@@ -334,10 +334,10 @@ static void lim_process_set_default_scan_ie_request(tpAniSirGlobal mac_ctx,
 		return;
 	}
 
-	if (lim_update_default_scan_ies(mac_ctx,
+	if (lim_update_ext_cap_ie(mac_ctx,
 			(uint8_t *)set_ie_params->ie_data,
 			local_ie_buf, &local_ie_len)) {
-		lim_log(mac_ctx, LOGE, FL("Update default scan IEs fails"));
+		lim_log(mac_ctx, LOGE, FL("Update ext cap IEs fails"));
 		goto scan_ie_send_fail;
 	}
 
@@ -1542,6 +1542,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 #endif  /* FEATURE_WLAN_ESE */
 	case eWNI_SME_REGISTER_MGMT_FRAME_CB:
 	case eWNI_SME_EXT_CHANGE_CHANNEL:
+	case eWNI_SME_ROAM_SCAN_OFFLOAD_REQ:
 	case eWNI_SME_NDP_INITIATOR_REQ:
 	case eWNI_SME_NDP_RESPONDER_REQ:
 	case eWNI_SME_NDP_END_REQ:

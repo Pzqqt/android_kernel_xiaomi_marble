@@ -17487,6 +17487,29 @@ bool csr_is_RSO_cmd_allowed(tpAniSirGlobal mac_ctx, uint8_t command,
 	return ret_val;
 }
 
+/*
+ * csr_roam_send_rso_cmd() - API to send RSO command to PE
+ * @mac_ctx: Pointer to global MAC structure
+ * @session_id: Session ID
+ * @request_buf: Pointer to tSirRoamOffloadScanReq
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS csr_roam_send_rso_cmd(tpAniSirGlobal mac_ctx, uint8_t session_id,
+					tSirRoamOffloadScanReq *request_buf)
+{
+	QDF_STATUS status;
+	request_buf->message_type = eWNI_SME_ROAM_SCAN_OFFLOAD_REQ;
+	request_buf->length = sizeof(*request_buf);
+
+	status = cds_send_mb_message_to_mac(request_buf);
+	if (QDF_STATUS_SUCCESS != status) {
+		sms_log(mac_ctx, LOGE, FL("Send RSO from CSR failed"));
+		return status;
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * csr_append_assoc_ies() - Append specific IE to assoc IE's buffer
  * @mac_ctx: Pointer to global mac context
@@ -17599,7 +17622,6 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 		      uint8_t command, uint8_t reason)
 {
 	uint8_t *state = NULL;
-	cds_msg_t msg;
 	tSirRoamOffloadScanReq *req_buf;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
@@ -17790,17 +17812,11 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 		csr_update_driver_assoc_ies(mac_ctx, session, req_buf);
 	}
 
-	msg.type = WMA_ROAM_SCAN_OFFLOAD_REQ;
-	msg.reserved = 0;
-	msg.bodyptr = req_buf;
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-			 session_id, msg.type));
-	if (!QDF_IS_STATUS_SUCCESS
-		    (cds_mq_post_message(QDF_MODULE_ID_WMA, &msg))) {
+	if (!QDF_IS_STATUS_SUCCESS(
+		csr_roam_send_rso_cmd(mac_ctx, session_id, req_buf))) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Not able to post message to WMA",
+			  "%s: Not able to post message to PE",
 			  __func__);
-		qdf_mem_free(req_buf);
 		return QDF_STATUS_E_FAILURE;
 	} else {
 		if (ROAM_SCAN_OFFLOAD_START == command)
