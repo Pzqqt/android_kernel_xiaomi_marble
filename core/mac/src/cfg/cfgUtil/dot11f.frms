@@ -2621,6 +2621,123 @@ IE MeasurementRequest (EID_MEAS_REQUEST)  // 7.3.2.21
     };
 }
 
+const SUB_EID_PPET = 1;
+const SUB_EID_VHT_INFO = 2;
+
+IE vendor_he_cap (EID_VENDOR_SPECIFIC) OUI (0x00, 0x13, 0x74, 0x01)
+{
+    {
+      htc_he:1;
+      twt_request:1;
+      twt_responder:1;
+      fragmentation:2;
+      max_num_frag_msdu:3;
+      min_frag_size:2;
+      trigger_frm_mac_pad:2;
+      multi_tid_aggr:3;
+      he_link_adaptation:2;
+      all_ack:1;
+      ul_mu_rsp_sched:1;
+      a_bsr:1;
+      broadcast_twt:1;
+      ba_32bit_bitmap:1;
+      mu_cascade:1;
+      ack_enabled_multitid:1;
+      dl_mu_ba:1;
+      omi_a_ctrl:1;
+      ofdma_ra:1;
+      max_ampdu_len:2;
+      amsdu_frag:1;
+      flex_twt_sched:1;
+      rx_ctrl_frame:1;
+    }
+    {
+      bsrp_ampdu_aggr:1;
+      qtp:1;
+      a_bqr:1;
+      reserved1:5;
+    }
+    {
+      dual_band:1;
+      chan_width:7;
+      rx_pream_puncturing:4;
+      device_class:1;
+      ldpc_coding:1;
+      he_ltf_gi_ppdu:2;
+      he_ltf_gi_ndp:2;
+      stbc:2;
+      doppler:2;
+      ul_mu:2;
+      dcm_enc_tx:3;
+      dcm_enc_rx:3;
+      ul_he_mu:1;
+      su_beamformer:1;
+    }
+    {
+      su_beamformee:1;
+      mu_beamformer:1;
+      bfee_sts_lt_80:3;
+      nsts_tol_lt_80:3;
+      bfee_sta_gt_80:3;
+      nsts_tot_gt_80:3;
+      num_sounding_lt_80:3;
+      num_sounding_gt_80:3;
+      su_feedback_tone16:1;
+      mu_feedback_tone16:1;
+      codebook_su:1;
+      codebook_mu:1;
+      beamforming_feedback:3;
+      he_er_su_ppdu:1;
+      dl_mu_mimo_part_bw:1;
+      ppet_present:1;
+      srp:1;
+      power_boost:1;
+    }
+    {
+      he_ltf_gi_4x:1;
+      reserved2:7;
+    }
+    {
+      nss_supported:3;
+      mcs_supported:3;
+      tx_bw_bitmap:5;
+      rx_bw_bitmap:5;
+    }
+    OPTIE IE ppe_threshold (SUB_EID_PPET)
+    {
+      {
+        nss_count:3;
+        ru_idx_mask:4;
+        ppet_b1:1;
+      }
+      ppet[1..24];
+    }
+}
+
+IE vht_info(SUB_EID_VHT_INFO)
+{
+  chan_width, 1;
+  center_freq_seg0, 1;
+  center_freq_seg1, 1;
+}
+
+IE vendor_he_op (EID_VENDOR_SPECIFIC) OUI (0x00, 0x13, 0x74, 0x02)
+{
+    {
+        bss_color: 6;
+        default_pe: 3;
+        twt_required: 1;
+        rts_threshold: 10;
+        partial_bss_col: 1;
+        maxbssid_ind: 8;
+        tx_bssid_ind: 1;
+        bss_col_disabled: 1;
+        dual_beacon: 1;
+    }
+    basic_mcs_nss[3];
+    MANDIE IE vht_info;
+}
+
 /////////////////////////////////////////////////////////////////////////////
 //                                MULTIIEs                                 //
 /////////////////////////////////////////////////////////////////////////////
@@ -3012,6 +3129,8 @@ FRAME Beacon                              // C.f. Sec. 7.2.3.1
     OPTIE  ESEVersion;
     OPTIE  MBO_IE;
     OPTIE  QCN_IE;
+    OPTIE  vendor_he_cap;
+    OPTIE  vendor_he_op;
 } // End frame Beacon.
 
 // Ok, here's  the story on  Beacon1 & Beacon2.   We presumably beacon  a lot
@@ -3101,6 +3220,8 @@ FRAME Beacon2
     OPTIE  QComVendorIE;
     OPTIE  ESEVersion;
     OPTIE  QCN_IE;
+    OPTIE  vendor_he_cap;
+    OPTIE  vendor_he_op;
 }
 
 // This frame is just Beacon with its Fixed Fields stripped out.  It's handy
@@ -3167,6 +3288,8 @@ FRAME BeaconIEs
     OPTIE  QComVendorIE;
     OPTIE  MBO_IE;
     OPTIE  QCN_IE;
+    OPTIE  vendor_he_cap;
+    OPTIE  vendor_he_op;
 } // End frame BeaconIEs.
 
 FRAME Disassociation                      // 7.3.3.3
@@ -3207,6 +3330,7 @@ FRAME AssocRequest                        // 7.2.3.4
     OPTIE  vendor_vht_ie;
     OPTIE  hs20vendor_ie;
     OPTIE  QCN_IE;
+    OPTIE  vendor_he_cap;
 } // End frame AssocRequest.
 
 FRAME AssocResponse                       // 7.2.3.5
@@ -3242,6 +3366,8 @@ FRAME AssocResponse                       // 7.2.3.5
     OPTIE  QosMapSet;
     OPTIE  vendor_vht_ie;
     OPTIE  QCN_IE;
+    OPTIE  vendor_he_cap;
+    OPTIE  vendor_he_op;
 } // End frame AssocResponse.
 
 FRAME ReAssocRequest                      // 7.2.3.6
@@ -3280,6 +3406,7 @@ FRAME ReAssocRequest                      // 7.2.3.6
     OPTIE  QosMapSet;
     OPTIE  vendor_vht_ie;
     OPTIE  hs20vendor_ie;
+    OPTIE  vendor_he_cap;
 } // End frame ReAssocRequest.
 
 FRAME ReAssocResponse                     // 7.2.3.7
@@ -3315,6 +3442,8 @@ FRAME ReAssocResponse                     // 7.2.3.7
     OPTIE  OBSSScanParameters;
     OPTIE  QosMapSet;
     OPTIE  vendor_vht_ie;
+    OPTIE  vendor_he_cap;
+    OPTIE  vendor_he_op;
 } // End frame ReAssocResponse.
 
 FRAME ProbeRequest                        // 7.2.3.8
@@ -3331,6 +3460,7 @@ FRAME ProbeRequest                        // 7.2.3.8
     OPTIE  VHTCaps;
     OPTIE  ExtCap;
     OPTIE  QCN_IE;
+    OPTIE  vendor_he_cap;
 } // End frame ProbeRequest.
 
 FRAME ProbeResponse                       // 7.2.3.9
@@ -3390,6 +3520,8 @@ FRAME ProbeResponse                       // 7.2.3.9
     OPTIE  ESEVersion;
     OPTIE  MBO_IE;
     OPTIE  QCN_IE;
+    OPTIE  vendor_he_cap;
+    OPTIE  vendor_he_op;
 } // End frame ProbeResponse.
 
 FRAME Authentication                      // 7.2.3.10
