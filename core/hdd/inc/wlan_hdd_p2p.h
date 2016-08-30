@@ -70,6 +70,9 @@
 #define P2P_POWER_SAVE_TYPE_PERIODIC_NOA         (1 << 1)
 #define P2P_POWER_SAVE_TYPE_SINGLE_NOA           (1 << 2)
 
+#define ACTION_FRAME_RSP_WAIT 500
+#define ACTION_FRAME_ACK_WAIT 300
+
 #ifdef WLAN_FEATURE_P2P_DEBUG
 typedef enum { P2P_NOT_ACTIVE,
 	       P2P_GO_NEG_PROCESS,

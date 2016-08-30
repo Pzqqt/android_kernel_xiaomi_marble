@@ -1440,6 +1440,35 @@ int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 			    qdf_mc_timer_get_current_state(&cfgState->
 						   remain_on_chan_ctx->
 						   hdd_remain_on_chan_timer)) {
+
+				/* In the latest wpa_supplicant, the wait time
+				 * for go negotiation response is set to 100ms,
+				 * due to which, there could be a possibility
+				 * that, if the go negotaition confirmation
+				 * frame is not received within 100 msec, ROC
+				 * would be timeout and resulting in connection
+				 * failures as the device will not be on the
+				 * listen channel anymore to receive the conf
+				 * frame. Also wpa_supplicant has set the wait
+				 * to 50msec for go negotiation confirmation,
+				 * invitation response and prov discovery rsp
+				 * frames. So increase the wait time for all
+				 * these frames.
+				 */
+				actionFrmType = buf
+				[WLAN_HDD_PUBLIC_ACTION_FRAME_TYPE_OFFSET];
+				if (actionFrmType == WLAN_HDD_GO_NEG_RESP ||
+				    actionFrmType == WLAN_HDD_PROV_DIS_RESP)
+					wait = wait + ACTION_FRAME_RSP_WAIT;
+				else if (actionFrmType ==
+					 WLAN_HDD_GO_NEG_CNF ||
+					 actionFrmType ==
+					 WLAN_HDD_INVITATION_RESP)
+					wait = wait + ACTION_FRAME_ACK_WAIT;
+
+				hddLog(LOG1, FL("Extending the wait time %d for actionFrmType=%d"),
+						wait, actionFrmType);
+
 				qdf_mc_timer_stop(&cfgState->
 						  remain_on_chan_ctx->
 						  hdd_remain_on_chan_timer);
