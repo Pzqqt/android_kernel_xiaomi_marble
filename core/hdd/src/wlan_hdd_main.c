@@ -2498,7 +2498,8 @@ QDF_STATUS hdd_sme_close_session_callback(void *pContext)
 	 * For NAN Data interface, the close session results in the final
 	 * indication to the userspace
 	 */
-	hdd_ndp_session_end_handler(adapter);
+	if (adapter->device_mode == QDF_NDI_MODE)
+		hdd_ndp_session_end_handler(adapter);
 
 	clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
 

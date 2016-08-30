@@ -900,12 +900,6 @@ void hdd_ndp_session_end_handler(hdd_adapter_t *adapter)
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
 
-	/* Handle only if adapter is in NDI mode */
-	if (QDF_NDI_MODE != adapter->device_mode) {
-		hdd_err("Adapter is not in NDI mode");
-		return;
-	}
-
 	ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(adapter);
 	if (!ndp_ctx) {
 		hdd_err("ndp context is NULL");
