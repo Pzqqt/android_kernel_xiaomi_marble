@@ -203,7 +203,7 @@ static inline bool __qdf_is_macaddr_equal(struct qdf_mac_addr *mac_addr1,
 			pr_err("Assertion failed! %s:%s %s:%d\n", \
 			       # expr, __func__, __FILE__, __LINE__); \
 			dump_stack(); \
-			BUG_ON(1); \
+			QDF_BUG(0); \
 		} \
 } while (0)
 

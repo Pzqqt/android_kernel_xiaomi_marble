@@ -371,8 +371,8 @@ QDF_STATUS hif_snoc_setup_wakeup_sources(struct hif_softc *scn, bool enable)
 		return QDF_STATUS_E_RESOURCES;
 	}
 
-	HIF_ERROR("%s: expecting wake from ce %d, irq %d",
-		  __func__, dl_pipe, irq_to_wake_on);
+	HIF_INFO("%s: expecting wake from ce %d, irq %d enable %d",
+		  __func__, dl_pipe, irq_to_wake_on, enable);
 	return QDF_STATUS_SUCCESS;
 }
 
