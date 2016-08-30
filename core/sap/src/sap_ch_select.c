@@ -53,7 +53,7 @@
 #include "lim_utils.h"
 #include "parser_api.h"
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
-
+#include "cds_utils.h"
 #include "pld_common.h"
 
 /*--------------------------------------------------------------------------
@@ -635,6 +635,10 @@ bool sap_chan_sel_init(tHalHandle halHandle,
 		    eCSR_DOT11_MODE_11b != pSapCtx->csr_roamProfile.phyMode) {
 			continue;
 		}
+
+		/* Skip DSRC channels */
+		if (cds_is_dsrc_channel(cds_chan_to_freq(*pChans)))
+			continue;
 
 		if (true == chSafe) {
 			pSpectCh->chNum = *pChans;
