@@ -1487,6 +1487,7 @@ bool hdd_dfs_indicate_radar(void *context, void *param)
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
 	hdd_adapter_t *adapter;
 	QDF_STATUS status;
+	hdd_ap_ctx_t *ap_ctx;
 
 	if (!hdd_ctx || !hdd_radar_event ||
 		 hdd_ctx->config->disableDFSChSwitch)
@@ -1504,10 +1505,15 @@ bool hdd_dfs_indicate_radar(void *context, void *param)
 		status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
 		while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
 			adapter = adapterNode->pAdapter;
-			if (QDF_SAP_MODE == adapter->device_mode ||
-			    QDF_P2P_GO_MODE == adapter->device_mode) {
+			ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
+			if ((QDF_SAP_MODE == adapter->device_mode ||
+			     QDF_P2P_GO_MODE == adapter->device_mode) &&
+			     (CHANNEL_STATE_DFS ==
+			     cds_get_channel_state(ap_ctx->operatingChannel))) {
 				WLAN_HDD_GET_AP_CTX_PTR(adapter)->
 				dfs_cac_block_tx = true;
+				hdd_info("tx blocked for session:%d",
+					 adapter->sessionId);
 			}
 
 			status = hdd_get_next_adapter(hdd_ctx,
