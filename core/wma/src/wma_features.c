@@ -3842,14 +3842,12 @@ QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 	int wmi_pending_cmds;
 	struct wow_cmd_params param = {0};
 
-#ifdef CONFIG_CNSS
 	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (NULL == pMac) {
 		WMA_LOGE("%s: Unable to get PE context", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-#endif /* CONFIG_CNSS */
 
 	qdf_event_reset(&wma->target_suspend);
 	wma->wow_nack = false;
@@ -3889,15 +3887,11 @@ QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 			 wmi_get_pending_cmds(wma->wmi_handle));
 		wmi_set_target_suspend(wma->wmi_handle, false);
 		if (!cds_is_driver_recovering()) {
-#ifdef CONFIG_CNSS
 			if (pMac->sme.enableSelfRecovery) {
 				cds_trigger_recovery();
 			} else {
 				QDF_BUG(0);
 			}
-#else
-			QDF_BUG(0);
-#endif /* CONFIG_CNSS */
 		} else {
 			WMA_LOGE("%s: LOGP is in progress, ignore!", __func__);
 		}
@@ -4594,13 +4588,11 @@ static QDF_STATUS wma_send_host_wakeup_ind_to_fw(tp_wma_handle wma)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	int ret;
-#ifdef CONFIG_CNSS
 	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 	if (NULL == pMac) {
 		WMA_LOGE("%s: Unable to get PE context", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-#endif /* CONFIG_CNSS */
 
 	qdf_event_reset(&wma->wma_resume_event);
 
@@ -4620,15 +4612,11 @@ static QDF_STATUS wma_send_host_wakeup_ind_to_fw(tp_wma_handle wma)
 			 wmi_get_pending_cmds(wma->wmi_handle),
 			 wmi_get_host_credits(wma->wmi_handle));
 		if (!cds_is_driver_recovering()) {
-#ifdef CONFIG_CNSS
 			if (pMac->sme.enableSelfRecovery) {
 				cds_trigger_recovery();
 			} else {
 				QDF_BUG(0);
 			}
-#else
-			QDF_BUG(0);
-#endif /* CONFIG_CNSS */
 		} else {
 			WMA_LOGE("%s: SSR in progress, ignore resume timeout",
 				 __func__);
@@ -6732,13 +6720,11 @@ QDF_STATUS wma_resume_target(WMA_HANDLE handle)
 {
 	tp_wma_handle wma = (tp_wma_handle) handle;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-#ifdef CONFIG_CNSS
 	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 	if (NULL == pMac) {
 		WMA_LOGE("%s: Unable to get PE context", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
-#endif /* CONFIG_CNSS */
 
 	qdf_event_reset(&wma->wma_resume_event);
 	qdf_status = wmi_unified_resume_send(wma->wmi_handle,
@@ -6755,15 +6741,11 @@ QDF_STATUS wma_resume_target(WMA_HANDLE handle)
 			wmi_get_pending_cmds(wma->wmi_handle),
 			wmi_get_host_credits(wma->wmi_handle));
 		if (!cds_is_driver_recovering()) {
-#ifdef CONFIG_CNSS
 			if (pMac->sme.enableSelfRecovery) {
 				cds_trigger_recovery();
 			} else {
 				QDF_BUG(0);
 			}
-#else
-			QDF_BUG(0);
-#endif /* CONFIG_CNSS */
 		} else {
 			WMA_LOGE("%s: SSR in progress, ignore resume timeout",
 				__func__);
