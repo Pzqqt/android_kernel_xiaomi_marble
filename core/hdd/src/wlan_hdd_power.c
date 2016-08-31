@@ -2014,6 +2014,8 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 
 	if (!mode) {
 		hdd_err("DHCP start indicated through power save");
+		hdd_prevent_suspend_timeout(1000,
+					    WIFI_POWER_EVENT_WAKELOCK_DHCP);
 		sme_dhcp_start_ind(pHddCtx->hHal, pAdapter->device_mode,
 				   pAdapter->macAddressCurrent.bytes,
 				   pAdapter->sessionId);
@@ -2022,6 +2024,7 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 		sme_dhcp_stop_ind(pHddCtx->hHal, pAdapter->device_mode,
 				  pAdapter->macAddressCurrent.bytes,
 				  pAdapter->sessionId);
+		hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DHCP);
 	}
 
 	EXIT();
