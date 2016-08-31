@@ -2165,7 +2165,11 @@ int wma_ibss_peer_info_event_handler(void *handle, uint8_t *data,
 		goto send_response;
 	}
 
-	for (count = 0; count < num_peers; count++) {
+	/*
+	 *For displaying only connected IBSS peer info, iterate till
+	 *last but one entry only as last entry is used for IBSS creator
+	 */
+	for (count = 0; count < num_peers-1; count++) {
 		pSmeRsp = &pRsp->ibssPeerInfoRspParams.peerInfoParams[count];
 
 		WMI_MAC_ADDR_TO_CHAR_ARRAY(&peer_info->peer_mac_address,
