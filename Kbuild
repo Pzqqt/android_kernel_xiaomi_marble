@@ -18,7 +18,7 @@ ifdef CONFIG_ICNSS
 	CONFIG_ROME_IF = snoc
 endif
 
-ifeq ($(CONFIG_CNSS), y)
+ifeq (y,$(findstring y,$(CONFIG_CNSS) $(CONFIG_CNSS2)))
 ifndef CONFIG_ROME_IF
 	#use pci as default interface
 	CONFIG_ROME_IF = pci
@@ -107,7 +107,7 @@ ifeq ($(KERNEL_BUILD), 0)
 	CONFIG_QCOM_VOWIFI_11R := y
 
 	ifneq ($(CONFIG_QCA_CLD_WLAN),)
-		ifeq (y,$(findstring y,$(CONFIG_CNSS) $(CONFIG_ICNSS)))
+		ifeq (y,$(findstring y,$(CONFIG_CNSS) $(CONFIG_CNSS2) $(CONFIG_ICNSS)))
 		#Flag to enable Protected Managment Frames (11w) feature
 		CONFIG_WLAN_FEATURE_11W := y
 		#Flag to enable LTE CoEx feature
@@ -1105,6 +1105,10 @@ CDEFINES += -DCONFIG_PLD_SDIO_CNSS
 else
 CDEFINES += -DCONFIG_PLD_PCIE_CNSS
 endif
+endif
+
+ifeq ($(CONFIG_CNSS2), y)
+CDEFINES += -DCONFIG_PLD_PCIE_CNSS
 endif
 
 ifeq ($(CONFIG_ICNSS), y)
