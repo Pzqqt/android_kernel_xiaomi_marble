@@ -1242,9 +1242,13 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 	uint16_t addn_ie_len = 0;
 	uint8_t *vht_cap_ie;
 	uint16_t vht_cap_len = 0;
+	uint8_t *vendor_tpc_ie;
 	tSirRetStatus status, rc = eSIR_SUCCESS;
 	tDot11fIEExtCap extracted_extcap = {0};
 	bool extcap_present = true;
+	uint32_t lim_11h_enable = WNI_CFG_11H_ENABLED_STADEF;
+
+	wlan_cfg_get_int(pMac, WNI_CFG_11H_ENABLED, &lim_11h_enable);
 
 	if (pScanReq->uIEFieldLen) {
 		status = lim_strip_extcap_update_struct(pMac,
@@ -1297,6 +1301,12 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 			addn_ie_len += vht_cap_len;
 		}
 	}
+
+	if (lim_11h_enable) {
+		addn_ie_len += DOT11F_IE_WFATPC_MAX_LEN + 2;
+		len += DOT11F_IE_WFATPC_MAX_LEN + 2;
+	}
+
 	pScanOffloadReq = qdf_mem_malloc(len);
 	if (NULL == pScanOffloadReq) {
 		lim_log(pMac, LOGE,
@@ -1396,6 +1406,24 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 			pScanOffloadReq->uIEFieldLen += vht_cap_len;
 		}
 	}
+
+	if (lim_11h_enable) {
+		tDot11fIEWFATPC wfa_tpc;
+		vendor_tpc_ie = (uint8_t *) pScanOffloadReq +
+			pScanOffloadReq->uIEFieldOffset +
+			pScanOffloadReq->uIEFieldLen;
+		populate_dot11f_wfatpc(pMac, &wfa_tpc,
+			rrm_get_mgmt_tx_power(pMac, NULL), 0);
+		vendor_tpc_ie[0] = DOT11F_EID_WFATPC;
+		vendor_tpc_ie[1] = DOT11F_IE_WFATPC_MAX_LEN;
+		qdf_mem_copy(&vendor_tpc_ie[2], SIR_MAC_WFA_TPC_OUI,
+			SIR_MAC_WFA_TPC_OUI_SIZE);
+		qdf_mem_copy(&vendor_tpc_ie[SIR_MAC_WFA_TPC_OUI_SIZE + 2],
+			((uint8_t *)&wfa_tpc) + 1,
+			DOT11F_IE_WFATPC_MAX_LEN - SIR_MAC_WFA_TPC_OUI_SIZE);
+		pScanOffloadReq->uIEFieldLen += DOT11F_IE_WFATPC_MAX_LEN + 2;
+	}
+
 	rc = wma_post_ctrl_msg(pMac, &msg);
 	if (rc != eSIR_SUCCESS) {
 		lim_log(pMac, LOGE, FL("wma_post_ctrl_msg() return failure"));
