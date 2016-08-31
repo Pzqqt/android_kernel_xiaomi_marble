@@ -693,6 +693,8 @@ QDF_STATUS cds_disable(v_CONTEXT_t cds_context)
 		cds_err("Failed to stop MAC");
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
+
+	gp_cds_context->is_cds_disabled = 1;
 	return qdf_status;
 }
 
@@ -705,6 +707,40 @@ QDF_STATUS cds_disable(v_CONTEXT_t cds_context)
 QDF_STATUS cds_close(v_CONTEXT_t cds_context)
 {
 	QDF_STATUS qdf_status;
+	tp_wma_handle wma_handle;
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		cds_err("Failed to get wma_handle!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	/*
+	 * With new state machine changes cds_close can be invoked without
+	 * cds_disable. So, send the following clean up prerequisites to fw,
+	 * So Fw and host are in sync for cleanup indication:
+	 * - Send PDEV_SUSPEND indication to firmware
+	 * - Disable HIF Interrupts.
+	 * - Clean up CE tasklets.
+	 */
+
+	if (!gp_cds_context->is_cds_disabled) {
+		cds_info("send denint sequence to firmware");
+		if (!cds_is_driver_recovering()) {
+#ifdef HIF_USB
+			/* Suspend the target and enable interrupt */
+			if (wma_suspend_target(wma_handle, 0))
+				cds_err("Failed to suspend target");
+#else
+			/* Suspend the target and disable interrupt */
+			if (wma_suspend_target(wma_handle, 1))
+				cds_err("Failed to suspend target");
+#endif /* HIF_USB */
+		}
+		hif_disable_isr(
+			((cds_context_type *) cds_context)->pHIFContext);
+		hif_reset_soc(((cds_context_type *) cds_context)->pHIFContext);
+	}
 
 	qdf_status = wma_wmi_work_close(cds_context);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -778,6 +814,7 @@ QDF_STATUS cds_close(v_CONTEXT_t cds_context)
 	cds_deinit_ini_config();
 	qdf_timer_module_deinit();
 
+	gp_cds_context->is_cds_disabled = 0;
 	return QDF_STATUS_SUCCESS;
 }
 

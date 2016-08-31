@@ -321,6 +321,8 @@ typedef struct _cds_context_type {
 	bool do_hw_mode_change;
 	bool enable_fatal_event;
 	struct cds_config_info *cds_cfg;
+	/* WAR: Is cds disabled */
+	bool is_cds_disabled;
 } cds_context_type, *p_cds_contextType;
 
 /*---------------------------------------------------------------------------
