@@ -17264,6 +17264,82 @@ bool csr_is_RSO_cmd_allowed(tpAniSirGlobal mac_ctx, uint8_t command,
 }
 
 /**
+ * csr_append_assoc_ies() - Append specific IE to assoc IE's buffer
+ * @mac_ctx: Pointer to global mac context
+ * @req_buf: Pointer to Roam offload scan request
+ * @ie_id: IE ID to be appended
+ * @ie_len: IE length to be appended
+ * @ie_data: IE data to be appended
+ *
+ * Return: None
+ */
+static void csr_append_assoc_ies(tpAniSirGlobal mac_ctx,
+				tSirRoamOffloadScanReq *req_buf, uint8_t ie_id,
+				uint8_t ie_len, uint8_t *ie_data)
+{
+	tSirAddie *assoc_ie = &req_buf->assoc_ie;
+	if ((SIR_MAC_MAX_ADD_IE_LENGTH - assoc_ie->length) < ie_len) {
+		sms_log(mac_ctx, LOGE, "Appending IE(id:%d) fails", ie_id);
+		return;
+	}
+
+	assoc_ie->addIEdata[assoc_ie->length] = ie_id;
+	assoc_ie->addIEdata[assoc_ie->length + 1] = ie_len;
+	qdf_mem_copy(&assoc_ie->addIEdata[assoc_ie->length + 2],
+						ie_data, ie_len);
+	assoc_ie->length += (ie_len + 2);
+}
+
+/**
+ * csr_update_driver_assoc_ies() - Append driver built IE's to assoc IE's
+ * @mac_ctx: Pointer to global mac structure
+ * @session: pointer to CSR session
+ * @req_buf: Pointer to Roam offload scan request
+ *
+ * Return: None
+ */
+static void csr_update_driver_assoc_ies(tpAniSirGlobal mac_ctx,
+					tCsrRoamSession *session,
+					tSirRoamOffloadScanReq *req_buf)
+{
+	bool power_caps_populated = false;
+	uint32_t csr_11henable = WNI_CFG_11H_ENABLED_STADEF;
+	uint8_t *rrm_cap_ie_data
+			= (uint8_t *) &mac_ctx->rrm.rrmPEContext.rrmEnabledCaps;
+	uint8_t power_cap_ie_data[DOT11F_IE_POWERCAPS_MAX_LEN]
+			= {MIN_TX_PWR_CAP, MAX_TX_PWR_CAP};
+	uint8_t max_tx_pwr_cap
+			= csr_get_cfg_max_tx_power(mac_ctx,
+				session->pConnectBssDesc->channelId);
+
+	if (max_tx_pwr_cap)
+		power_cap_ie_data[1] = max_tx_pwr_cap;
+
+	wlan_cfg_get_int(mac_ctx, WNI_CFG_11H_ENABLED, &csr_11henable);
+
+	if (csr_11henable && csr_is11h_supported(mac_ctx)) {
+		/* Append power cap IE */
+		csr_append_assoc_ies(mac_ctx, req_buf, IEEE80211_ELEMID_PWRCAP,
+					DOT11F_IE_POWERCAPS_MAX_LEN,
+					power_cap_ie_data);
+		power_caps_populated = true;
+	}
+
+	if (mac_ctx->rrm.rrmPEContext.rrmEnable) {
+		/* Append RRM IE */
+		csr_append_assoc_ies(mac_ctx, req_buf, IEEE80211_ELEMID_RRM,
+					DOT11F_IE_RRMENABLEDCAP_MAX_LEN,
+					rrm_cap_ie_data);
+		if (!power_caps_populated)
+			/* Append Power cap IE if not appended already */
+			csr_append_assoc_ies(mac_ctx, req_buf,
+					IEEE80211_ELEMID_PWRCAP,
+					DOT11F_IE_POWERCAPS_MAX_LEN,
+					power_cap_ie_data);
+	}
+}
+
+/**
  * csr_roam_offload_scan() - populates roam offload scan request and sends to
  * WMA
  *
@@ -17457,12 +17533,15 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 			req_buf->hi_rssi_scan_delay,
 			req_buf->hi_rssi_scan_rssi_ub);
 
-	if ((command == ROAM_SCAN_OFFLOAD_START) &&
-				(reason == REASON_CONNECT)) {
+	if (((command == ROAM_SCAN_OFFLOAD_START) &&
+		(reason == REASON_CONNECT)) ||
+		((command == ROAM_SCAN_OFFLOAD_UPDATE_CFG) &&
+		(reason == REASON_CONNECT_IES_CHANGED))) {
 		req_buf->assoc_ie.length = session->nAddIEAssocLength;
 		qdf_mem_copy(req_buf->assoc_ie.addIEdata,
 				session->pAddIEAssoc,
 				session->nAddIEAssocLength);
+		csr_update_driver_assoc_ies(mac_ctx, session, req_buf);
 	} else {
 		req_buf->assoc_ie.length = 0;
 	}

@@ -3916,6 +3916,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		hdd_ctx->config->fine_time_meas_cap =
 			hdd_ctx->fine_time_meas_cap_target & ftm_capab;
 		sme_update_fine_time_measurement_capab(hdd_ctx->hHal,
+			adapter->sessionId,
 			hdd_ctx->config->fine_time_meas_cap);
 		hdd_info("FTM capability: user value: 0x%x, target value: 0x%x, final value: 0x%x",
 			 ftm_capab, hdd_ctx->fine_time_meas_cap_target,

@@ -1269,12 +1269,13 @@ QDF_STATUS sme_set_reg_info(tHalHandle hHal, uint8_t *apCntryCode)
  *
  * Return: None
  */
-void sme_update_fine_time_measurement_capab(tHalHandle hal, uint32_t val)
+void sme_update_fine_time_measurement_capab(tHalHandle hal, uint8_t session_id,
+						uint32_t val)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	mac_ctx->fine_time_meas_cap = val;
 
-	if (val == 0) {
+	if (!val) {
 		mac_ctx->rrm.rrmPEContext.rrmEnabledCaps.fine_time_meas_rpt = 0;
 		((tpRRMCaps)mac_ctx->rrm.rrmSmeContext.
 			rrmConfig.rm_capability)->fine_time_meas_rpt = 0;
@@ -1283,6 +1284,11 @@ void sme_update_fine_time_measurement_capab(tHalHandle hal, uint32_t val)
 		((tpRRMCaps)mac_ctx->rrm.rrmSmeContext.
 			rrmConfig.rm_capability)->fine_time_meas_rpt = 1;
 	}
+
+	/* Inform this RRM IE change to FW */
+	csr_roam_offload_scan(mac_ctx, session_id,
+			ROAM_SCAN_OFFLOAD_UPDATE_CFG,
+			REASON_CONNECT_IES_CHANGED);
 }
 
 /*--------------------------------------------------------------------------
