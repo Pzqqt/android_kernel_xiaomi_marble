@@ -41,6 +41,8 @@
 #ifndef __WNI_API_H
 #define __WNI_API_H
 
+#define SIR_SME_MODULE_ID 0x16
+
 /* / Start of Sirius/Host message types */
 #define WNI_HOST_MSG_START             0x1500
 

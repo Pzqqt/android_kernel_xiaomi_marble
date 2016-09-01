@@ -183,6 +183,12 @@ static uint8_t *sme_trace_get_command_string(uint32_t command)
 		CASE_RETURN_STRING(eSmeCommandSetKey);
 		CASE_RETURN_STRING(eSmeCommandAddStaSession);
 		CASE_RETURN_STRING(eSmeCommandDelStaSession);
+#ifdef FEATURE_WLAN_TDLS
+		CASE_RETURN_STRING(eSmeCommandTdlsSendMgmt);
+		CASE_RETURN_STRING(eSmeCommandTdlsAddPeer);
+		CASE_RETURN_STRING(eSmeCommandTdlsDelPeer);
+		CASE_RETURN_STRING(eSmeCommandTdlsLinkEstablish);
+#endif
 		CASE_RETURN_STRING(eSmePmcCommandMask);
 		CASE_RETURN_STRING(eSmeCommandEnterBmps);
 		CASE_RETURN_STRING(eSmeCommandExitBmps);

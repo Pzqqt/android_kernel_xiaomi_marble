@@ -2664,7 +2664,8 @@ void lim_switch_channel_cback(tpAniSirGlobal pMac, QDF_STATUS status,
 	mmhMsg.bodyptr = pSirSmeSwitchChInd;
 	mmhMsg.bodyval = 0;
 
-	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, mmhMsg.type));
+	MTRACE(mac_trace(pMac, TRACE_CODE_TX_SME_MSG,
+			 psessionEntry->peSessionId, mmhMsg.type));
 
 	sys_process_mmh_msg(pMac, &mmhMsg);
 }
