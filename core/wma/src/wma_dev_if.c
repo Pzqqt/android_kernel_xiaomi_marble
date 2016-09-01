@@ -2988,7 +2988,7 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	ol_txrx_pdev_handle pdev;
 	struct wma_vdev_start_req req;
 	struct wma_target_req *msg;
-	uint8_t vdev_id, peer_id;
+	uint8_t peer_id;
 	ol_txrx_peer_handle peer = NULL;
 	QDF_STATUS status;
 	struct wma_txrx_node *iface;
@@ -2998,6 +2998,7 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	struct sir_hw_mode_params hw_mode = {0};
 	bool peer_assoc_sent = false;
 	struct pdev_params param = {0};
+	uint8_t vdev_id = add_bss->staContext.smesessionId;
 
 	if (NULL == pMac) {
 		WMA_LOGE("%s: Unable to get PE context", __func__);
@@ -3011,7 +3012,6 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 		goto send_fail_resp;
 	}
 
-	vdev_id = add_bss->staContext.smesessionId;
 	iface = &wma->interfaces[vdev_id];
 
 	wma_set_bss_rate_flags(iface, add_bss);
@@ -3277,7 +3277,8 @@ peer_cleanup:
 			roam_synch_in_progress);
 send_fail_resp:
 	add_bss->status = QDF_STATUS_E_FAILURE;
-	wma_send_msg(wma, WMA_ADD_BSS_RSP, (void *)add_bss, 0);
+	if (!wma_is_roam_synch_in_progress(wma, vdev_id))
+		wma_send_msg(wma, WMA_ADD_BSS_RSP, (void *)add_bss, 0);
 }
 
 /**
@@ -3723,6 +3724,12 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 		goto out;
 	}
 	peer = ol_txrx_find_peer_by_addr(pdev, params->bssId, &params->staIdx);
+	if (peer == NULL) {
+		WMA_LOGE("%s: Peer is not present vdev id %d for %pM", __func__,
+			params->smesessionId, params->bssId);
+		status = QDF_STATUS_E_FAILURE;
+		goto out;
+	}
 	if (params->nonRoamReassoc) {
 		ol_txrx_peer_state_update(pdev, params->bssId,
 					  OL_TXRX_PEER_STATE_AUTH);
@@ -3916,7 +3923,9 @@ out:
 		 params->staType, params->smesessionId,
 		 params->assocId, params->bssId, params->staIdx,
 		 params->status);
-	wma_send_msg(wma, WMA_ADD_STA_RSP, (void *)params, 0);
+	/* Don't send a response during roam sync operation */
+	if (!wma_is_roam_synch_in_progress(wma, params->smesessionId))
+		wma_send_msg(wma, WMA_ADD_STA_RSP, (void *)params, 0);
 }
 
 /**
