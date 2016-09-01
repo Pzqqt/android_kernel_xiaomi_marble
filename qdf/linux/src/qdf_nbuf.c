@@ -1583,6 +1583,11 @@ uint8_t __qdf_nbuf_get_tso_cmn_seg_info(struct sk_buff *skb,
 	tso_info->eit_hdr_len = (skb_transport_header(skb)
 		 - skb_mac_header(skb)) + tcp_hdrlen(skb);
 	tso_info->ip_tcp_hdr_len = tso_info->eit_hdr_len - tso_info->l2_len;
+	TSO_DEBUG("%s seq# %u eit hdr len %u l2 len %u  skb len %u\n", __func__,
+		tso_info->tcp_seq_num,
+		tso_info->eit_hdr_len,
+		tso_info->l2_len,
+		skb->len);
 	return 0;
 }
 EXPORT_SYMBOL(__qdf_nbuf_get_tso_cmn_seg_info);
@@ -1608,10 +1613,75 @@ void __qdf_dmaaddr_to_32s(qdf_dma_addr_t dmaaddr,
 }
 
 /**
+ * __qdf_nbuf_fill_tso_cmn_seg_info() - Init function for each TSO nbuf segment
+ *
+ * @osdev: qdf device handle
+ * @curr_seg: Segment whose contents are initialized
+ * @tso_cmn_info: Parameters common to all segements
+ *
+ * Return: None
+ */
+static inline void __qdf_nbuf_fill_tso_cmn_seg_info(qdf_device_t osdev,
+				struct qdf_tso_seg_elem_t *curr_seg,
+				struct qdf_tso_cmn_seg_info_t *tso_cmn_info)
+{
+	qdf_dma_addr_t mapped;
+
+	/* Initialize the flags to 0 */
+	memset(&curr_seg->seg, 0x0, sizeof(curr_seg->seg));
+
+	/*
+	 * The following fields remain the same across all segments of
+	 * a jumbo packet
+	 */
+	curr_seg->seg.tso_flags.tso_enable = 1;
+	curr_seg->seg.tso_flags.ipv4_checksum_en =
+		tso_cmn_info->ipv4_csum_en;
+	curr_seg->seg.tso_flags.tcp_ipv6_checksum_en =
+		tso_cmn_info->tcp_ipv6_csum_en;
+	curr_seg->seg.tso_flags.tcp_ipv4_checksum_en =
+		tso_cmn_info->tcp_ipv4_csum_en;
+	curr_seg->seg.tso_flags.tcp_flags_mask = 0x1FF;
+
+	/* The following fields change for the segments */
+	curr_seg->seg.tso_flags.ip_id = tso_cmn_info->ip_id;
+	tso_cmn_info->ip_id++;
+
+	curr_seg->seg.tso_flags.syn = tso_cmn_info->tcphdr->syn;
+	curr_seg->seg.tso_flags.rst = tso_cmn_info->tcphdr->rst;
+	curr_seg->seg.tso_flags.psh = tso_cmn_info->tcphdr->psh;
+	curr_seg->seg.tso_flags.ack = tso_cmn_info->tcphdr->ack;
+	curr_seg->seg.tso_flags.urg = tso_cmn_info->tcphdr->urg;
+	curr_seg->seg.tso_flags.ece = tso_cmn_info->tcphdr->ece;
+	curr_seg->seg.tso_flags.cwr = tso_cmn_info->tcphdr->cwr;
+
+	curr_seg->seg.tso_flags.tcp_seq_num = tso_cmn_info->tcp_seq_num;
+
+	/*
+	 * First fragment for each segment always contains the ethernet,
+	 * IP and TCP header
+	 */
+	curr_seg->seg.tso_frags[0].vaddr = tso_cmn_info->eit_hdr;
+	curr_seg->seg.tso_frags[0].length = tso_cmn_info->eit_hdr_len;
+	curr_seg->seg.total_len = curr_seg->seg.tso_frags[0].length;
+	mapped = dma_map_single(osdev->dev, tso_cmn_info->eit_hdr,
+				tso_cmn_info->eit_hdr_len, DMA_TO_DEVICE);
+	curr_seg->seg.tso_frags[0].paddr = mapped;
+
+	TSO_DEBUG("%s %d eit hdr %p eit_hdr_len %d tcp_seq_num %u tso_info->total_len %u\n",
+		   __func__, __LINE__, tso_cmn_info->eit_hdr,
+		   tso_cmn_info->eit_hdr_len,
+		   curr_seg->seg.tso_flags.tcp_seq_num,
+		   curr_seg->seg.total_len);
+
+
+}
+
+/**
  * __qdf_nbuf_get_tso_info() - function to divide a TSO nbuf
  * into segments
- * @nbuf:   network buffer to be segmented
- * @tso_info:  This is the output. The information about the
+ * @nbuf: network buffer to be segmented
+ * @tso_info: This is the output. The information about the
  *           TSO segments will be populated within this.
  *
  * This function fragments a TCP jumbo packet into smaller
@@ -1625,18 +1695,17 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 {
 	/* common accross all segments */
 	struct qdf_tso_cmn_seg_info_t tso_cmn_info;
-
 	/* segment specific */
-	char *tso_frag_vaddr;
+	void *tso_frag_vaddr;
 	qdf_dma_addr_t tso_frag_paddr = 0;
 	uint32_t num_seg = 0;
 	struct qdf_tso_seg_elem_t *curr_seg;
-	const struct skb_frag_struct *frag = NULL;
+	struct skb_frag_struct *frag = NULL;
 	uint32_t tso_frag_len = 0; /* tso segment's fragment length*/
 	uint32_t skb_frag_len = 0; /* skb's fragment length (continous memory)*/
-	uint32_t foffset = 0; /* offset into the skb's fragment */
-	uint32_t skb_proc = 0; /* bytes of the skb that have been processed*/
+	uint32_t skb_proc = skb->len; /* bytes of skb pending processing */
 	uint32_t tso_seg_size = skb_shinfo(skb)->gso_size;
+	int j = 0; /* skb fragment index */
 
 	memset(&tso_cmn_info, 0x0, sizeof(tso_cmn_info));
 
@@ -1647,7 +1716,7 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 	curr_seg = tso_info->tso_seg_list;
 
 	/* length of the first chunk of data in the skb */
-	skb_proc = skb_frag_len = skb_headlen(skb);
+	skb_frag_len = skb_headlen(skb);
 
 	/* the 0th tso segment's 0th fragment always contains the EIT header */
 	/* update the remaining skb fragment length and TSO segment length */
@@ -1660,78 +1729,44 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 	tso_frag_len = min(skb_frag_len, tso_seg_size);
 	tso_frag_paddr = dma_map_single(osdev->dev,
 		 tso_frag_vaddr, tso_frag_len, DMA_TO_DEVICE);
-
+	TSO_DEBUG("%s[%d] skb frag len %d tso frag len %d\n", __func__,
+		__LINE__, skb_frag_len, tso_frag_len);
 	num_seg = tso_info->num_segs;
 	tso_info->num_segs = 0;
 	tso_info->is_tso = 1;
 
 	while (num_seg && curr_seg) {
 		int i = 1; /* tso fragment index */
-		int j = 0; /* skb fragment index */
 		uint8_t more_tso_frags = 1;
-		uint8_t from_frag_table = 0;
 
-		/* Initialize the flags to 0 */
-		memset(&curr_seg->seg, 0x0, sizeof(curr_seg->seg));
 		tso_info->num_segs++;
 
-		/* The following fields remain the same across all segments of
-		 a jumbo packet */
-		curr_seg->seg.tso_flags.tso_enable = 1;
-		curr_seg->seg.tso_flags.partial_checksum_en = 0;
-		curr_seg->seg.tso_flags.ipv4_checksum_en =
-			tso_cmn_info.ipv4_csum_en;
-		curr_seg->seg.tso_flags.tcp_ipv6_checksum_en =
-			tso_cmn_info.tcp_ipv6_csum_en;
-		curr_seg->seg.tso_flags.tcp_ipv4_checksum_en =
-			tso_cmn_info.tcp_ipv4_csum_en;
-		curr_seg->seg.tso_flags.l2_len = 0;
-		curr_seg->seg.tso_flags.tcp_flags_mask = 0x1FF;
-		curr_seg->seg.num_frags = 0;
+		__qdf_nbuf_fill_tso_cmn_seg_info(osdev, curr_seg,
+						 &tso_cmn_info);
 
-		/* The following fields change for the segments */
-		curr_seg->seg.tso_flags.ip_id = tso_cmn_info.ip_id;
-		tso_cmn_info.ip_id++;
+		if (unlikely(skb_proc == 0))
+			return tso_info->num_segs;
 
-		curr_seg->seg.tso_flags.syn = tso_cmn_info.tcphdr->syn;
-		curr_seg->seg.tso_flags.rst = tso_cmn_info.tcphdr->rst;
-		curr_seg->seg.tso_flags.psh = tso_cmn_info.tcphdr->psh;
-		curr_seg->seg.tso_flags.ack = tso_cmn_info.tcphdr->ack;
-		curr_seg->seg.tso_flags.urg = tso_cmn_info.tcphdr->urg;
-		curr_seg->seg.tso_flags.ece = tso_cmn_info.tcphdr->ece;
-		curr_seg->seg.tso_flags.cwr = tso_cmn_info.tcphdr->cwr;
-
-		curr_seg->seg.tso_flags.tcp_seq_num = tso_cmn_info.tcp_seq_num;
-
-		/* First fragment for each segment always contains the ethernet,
-		IP and TCP header */
-		curr_seg->seg.tso_frags[0].vaddr = tso_cmn_info.eit_hdr;
-		curr_seg->seg.tso_frags[0].length = tso_cmn_info.eit_hdr_len;
-		tso_info->total_len = curr_seg->seg.tso_frags[0].length;
-		{
-			qdf_dma_addr_t mapped;
-
-			mapped = dma_map_single(osdev->dev,
-				tso_cmn_info.eit_hdr,
-				tso_cmn_info.eit_hdr_len, DMA_TO_DEVICE);
-			curr_seg->seg.tso_frags[0].paddr = mapped;
-		}
 		curr_seg->seg.tso_flags.ip_len = tso_cmn_info.ip_tcp_hdr_len;
 		curr_seg->seg.num_frags++;
 
 		while (more_tso_frags) {
 			curr_seg->seg.tso_frags[i].vaddr = tso_frag_vaddr;
 			curr_seg->seg.tso_frags[i].length = tso_frag_len;
-			tso_info->total_len +=
-				 curr_seg->seg.tso_frags[i].length;
-			curr_seg->seg.tso_flags.ip_len +=
-				 curr_seg->seg.tso_frags[i].length;
+			curr_seg->seg.total_len += tso_frag_len;
+			curr_seg->seg.tso_flags.ip_len +=  tso_frag_len;
 			curr_seg->seg.num_frags++;
-			skb_proc = skb_proc - curr_seg->seg.tso_frags[i].length;
+			skb_proc = skb_proc - tso_frag_len;
 
 			/* increment the TCP sequence number */
 			tso_cmn_info.tcp_seq_num += tso_frag_len;
 			curr_seg->seg.tso_frags[i].paddr = tso_frag_paddr;
+			TSO_DEBUG("%s[%d] frag %d frag len %d total_len %u vaddr %p\n",
+				__func__, __LINE__,
+				i,
+				tso_frag_len,
+				curr_seg->seg.total_len,
+				curr_seg->seg.tso_frags[i].vaddr);
 
 			/* if there is no more data left in the skb */
 			if (!skb_proc)
@@ -1739,7 +1774,8 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 
 			/* get the next payload fragment information */
 			/* check if there are more fragments in this segment */
-			if ((tso_seg_size - tso_frag_len)) {
+			if (tso_frag_len < tso_seg_size) {
+				tso_seg_size = tso_seg_size - tso_frag_len;
 				more_tso_frags = 1;
 				i++;
 			} else {
@@ -1751,34 +1787,42 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 
 			/* if the next fragment is contiguous */
 			if (tso_frag_len < skb_frag_len) {
+				tso_frag_vaddr = tso_frag_vaddr + tso_frag_len;
 				skb_frag_len = skb_frag_len - tso_frag_len;
 				tso_frag_len = min(skb_frag_len, tso_seg_size);
-				tso_frag_vaddr = tso_frag_vaddr + tso_frag_len;
-				if (from_frag_table) {
-					tso_frag_paddr =
-						 skb_frag_dma_map(osdev->dev,
-							 frag, foffset,
-							 tso_frag_len,
-							 DMA_TO_DEVICE);
-				} else {
-					tso_frag_paddr =
-						 dma_map_single(osdev->dev,
-							 tso_frag_vaddr,
-							 tso_frag_len,
-							 DMA_TO_DEVICE);
-				}
+
 			} else { /* the next fragment is not contiguous */
-				tso_frag_len = min(skb_frag_len, tso_seg_size);
+				if (skb_shinfo(skb)->nr_frags == 0) {
+					qdf_print("TSO: nr_frags == 0!\n");
+					qdf_assert(0);
+					return 0;
+				}
+				if (j >= skb_shinfo(skb)->nr_frags) {
+					qdf_print("TSO: nr_frags %d j %d\n",
+						  skb_shinfo(skb)->nr_frags, j);
+					qdf_assert(0);
+					return 0;
+				}
 				frag = &skb_shinfo(skb)->frags[j];
 				skb_frag_len = skb_frag_size(frag);
-
-				tso_frag_vaddr = skb_frag_address(frag);
-				tso_frag_paddr = skb_frag_dma_map(osdev->dev,
-					 frag, 0, tso_frag_len,
-					 DMA_TO_DEVICE);
-				foffset += tso_frag_len;
-				from_frag_table = 1;
+				tso_frag_len = min(skb_frag_len, tso_seg_size);
+				tso_frag_vaddr = skb_frag_address_safe(frag);
 				j++;
+			}
+			TSO_DEBUG("%s[%d] skb frag len %d tso frag %d len tso_seg_size %d\n",
+				__func__, __LINE__, skb_frag_len, tso_frag_len,
+				tso_seg_size);
+
+			tso_frag_paddr =
+					 dma_map_single(osdev->dev,
+						 tso_frag_vaddr,
+						 tso_frag_len,
+						 DMA_TO_DEVICE);
+			if (unlikely(dma_mapping_error(osdev->dev,
+							tso_frag_paddr))) {
+				qdf_print("DMA mapping error!\n");
+				qdf_assert(0);
+				return 0;
 			}
 		}
 		num_seg--;
@@ -1823,6 +1867,8 @@ uint32_t __qdf_nbuf_get_tso_num_seg(struct sk_buff *skb)
 }
 EXPORT_SYMBOL(__qdf_nbuf_get_tso_num_seg);
 
+#endif /* FEATURE_TSO */
+
 struct sk_buff *__qdf_nbuf_inc_users(struct sk_buff *skb)
 {
 	atomic_inc(&skb->users);
@@ -1830,7 +1876,11 @@ struct sk_buff *__qdf_nbuf_inc_users(struct sk_buff *skb)
 }
 EXPORT_SYMBOL(__qdf_nbuf_inc_users);
 
-#endif /* FEATURE_TSO */
+int __qdf_nbuf_get_users(struct sk_buff *skb)
+{
+	return atomic_read(&skb->users);
+}
+EXPORT_SYMBOL(__qdf_nbuf_get_users);
 
 /**
  * __qdf_nbuf_ref() - Reference the nbuf so it can get held until the last free.

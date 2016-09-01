@@ -1046,6 +1046,8 @@ static inline bool __qdf_nbuf_is_tso(struct sk_buff *skb)
 
 struct sk_buff *__qdf_nbuf_inc_users(struct sk_buff *skb);
 
+int __qdf_nbuf_get_users(struct sk_buff *skb);
+
 /**
  * __qdf_nbuf_tx_info_get() - Modify pkt_type, set pkt_subtype,
  *			      and get hw_classify by peeking
