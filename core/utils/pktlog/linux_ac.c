@@ -230,9 +230,13 @@ qdf_sysctl_decl(ath_sysctl_pktlog_enable, ctl, write, filp, buffer, lenp, ppos)
 		ret = QDF_SYSCTL_PROC_DOINTVEC(ctl, write, filp, buffer,
 					       lenp, ppos);
 		if (ret == 0)
+			/*
+			 * enable/disable pktlog through sysfs should be counted
+			 * as user_triggered = 1.
+			 */
 			ret = pl_dev->pl_funcs->pktlog_enable(
 					(struct hif_opaque_softc *)scn, enable,
-						cds_is_packet_log_enabled(), 0);
+						cds_is_packet_log_enabled(), 1);
 		else
 			printk(PKTLOG_TAG "%s:proc_dointvec failed\n",
 			       __func__);
@@ -440,6 +444,7 @@ static int pktlog_attach(struct hif_opaque_softc *scn)
 	 * might be good to move to pktlog_init
 	 */
 	/* pl_dev->tgt_pktlog_alloced = false; */
+	pl_dev->enable_flag = false;
 	pl_info_lnx->proc_entry = NULL;
 	pl_info_lnx->sysctl_header = NULL;
 
@@ -509,7 +514,7 @@ static void pktlog_detach(struct hif_opaque_softc *scn)
 		ASSERT(0);
 		return;
 	}
-
+	pl_dev->enable_flag = false;
 	pl_info = pl_dev->pl_info;
 	remove_proc_entry(WLANDEV_BASENAME, g_pktlog_pde);
 	pktlog_sysctl_unregister(pl_dev);
