@@ -603,9 +603,10 @@ int __wlan_hdd_bus_suspend_noirq(void)
 {
 	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	void *hif_ctx;
-	int err = wlan_hdd_validate_context(hdd_ctx);
+	int err;
 	int status;
 
+	err = wlan_hdd_validate_context(hdd_ctx);
 	if (err) {
 		hdd_err("Invalid HDD context: %d", err);
 		return err;
@@ -637,7 +638,10 @@ resume_hif_noirq:
 	status = hif_bus_resume_noirq(hif_ctx);
 	QDF_BUG(!status);
 done:
-	hdd_err("suspend_noirq failed, status = %d", err);
+	if (err == -EAGAIN)
+		hdd_err("firmware not ready for suspend, try again");
+	else
+		hdd_err("suspend_noirq failed, status = %d", err);
 	return err;
 }
 
