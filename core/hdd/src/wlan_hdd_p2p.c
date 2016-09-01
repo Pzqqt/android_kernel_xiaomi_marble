@@ -2058,7 +2058,12 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 	if (ret)
 		return ERR_PTR(ret);
 
-	if (NL80211_IFTYPE_AP == type) {
+	/*
+	 * Once the support for session creation/deletion from
+	 * hdd_hostapd_open/hdd_host_stop is in place.
+	 * The support for starting adapter from here can be removed.
+	 */
+	if (NL80211_IFTYPE_AP == type || (NL80211_IFTYPE_P2P_GO == type)) {
 		ret = hdd_start_adapter(pAdapter);
 		if (ret) {
 			hdd_err("Failed to start %s", name);
