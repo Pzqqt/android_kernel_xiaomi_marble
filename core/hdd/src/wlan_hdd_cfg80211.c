@@ -9920,7 +9920,8 @@ struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 	 * So drop the bss and continue to next bss.
 	 */
 	if (chan == NULL) {
-		hdd_err("chan pointer is NULL");
+		hdd_err("chan pointer is NULL, chan_no: %d freq: %d",
+			chan_no, freq);
 		kfree(mgmt);
 		return NULL;
 	}
