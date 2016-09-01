@@ -669,7 +669,7 @@ struct ol_txrx_pdev_t {
 		uint32_t offset_filter;
 		struct qdf_mem_multi_page_t desc_pages;
 #ifdef DESC_DUP_DETECT_DEBUG
-		uint32_t *free_list_bitmap;
+		unsigned long *free_list_bitmap;
 #endif
 	} tx_desc;
 
