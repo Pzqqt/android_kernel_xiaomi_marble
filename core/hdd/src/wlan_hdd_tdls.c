@@ -3989,6 +3989,7 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 	/* For explicit trigger of DIS_REQ come out of BMPS for
 	   successfully receiving DIS_RSP from peer. */
 	if ((SIR_MAC_TDLS_SETUP_RSP == action_code) ||
+	    (SIR_MAC_TDLS_SETUP_CNF == action_code) ||
 	    (SIR_MAC_TDLS_DIS_RSP == action_code) ||
 	    (SIR_MAC_TDLS_DIS_REQ == action_code)) {
 		/* Fw will take care if PS offload is enabled. */
@@ -4418,7 +4419,7 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 				  MAC_ADDR_ARRAY(peer));
 			return -EINVAL;
 		}
-
+		wlan_hdd_tdls_set_cap(pAdapter, peer, eTDLS_CAP_SUPPORTED);
 		if (eTDLS_LINK_CONNECTED != pTdlsPeer->link_status) {
 			if (IS_ADVANCE_TDLS_ENABLE) {
 
