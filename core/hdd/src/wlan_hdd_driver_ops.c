@@ -554,7 +554,7 @@ static int __wlan_hdd_bus_suspend(pm_message_t state)
 	if (err)
 		goto resume_wma;
 
-	hdd_err("suspend done, status = %d", err);
+	hdd_err("suspend done");
 	return err;
 
 resume_wma:
@@ -564,7 +564,7 @@ resume_oltxrx:
 	status = ol_txrx_bus_resume();
 	QDF_BUG(!status);
 done:
-	hdd_err("suspend done, status = %d", err);
+	hdd_err("suspend failed, status = %d", err);
 	return err;
 }
 
@@ -603,9 +603,10 @@ int __wlan_hdd_bus_suspend_noirq(void)
 {
 	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	void *hif_ctx;
-	int err = wlan_hdd_validate_context(hdd_ctx);
+	int err;
 	int status;
 
+	err = wlan_hdd_validate_context(hdd_ctx);
 	if (err)
 		goto done;
 
@@ -628,14 +629,17 @@ int __wlan_hdd_bus_suspend_noirq(void)
 	if (err)
 		goto resume_hif_noirq;
 
-	hdd_err("suspend_noirq done, status = %d", err);
+	hdd_err("suspend_noirq done");
 	return err;
 
 resume_hif_noirq:
 	status = hif_bus_resume_noirq(hif_ctx);
 	QDF_BUG(!status);
 done:
-	hdd_err("suspend_noirq done, status = %d", err);
+	if (err == -EAGAIN)
+		hdd_err("firmware not ready for suspend, try again");
+	else
+		hdd_err("suspend_noirq failed, status = %d", err);
 	return err;
 }
 
