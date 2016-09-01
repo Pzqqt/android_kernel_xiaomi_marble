@@ -14028,6 +14028,11 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		else
 			csr_join_req->MgmtEncryptionType = eSIR_ED_NONE;
 #endif
+		if (pProfile->MFPEnabled &&
+			 !(pProfile->MFPRequired) &&
+			 ((pIes->RSN.present) &&
+			 (!(pIes->RSN.RSN_Cap[0] >> 7) & 0x1)))
+			csr_join_req->MgmtEncryptionType = eSIR_ED_NONE;
 #ifdef FEATURE_WLAN_ESE
 		ese_config =  pMac->roam.configParam.isEseIniFeatureEnabled;
 #endif
