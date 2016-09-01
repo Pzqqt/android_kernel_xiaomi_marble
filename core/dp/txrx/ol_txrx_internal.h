@@ -693,7 +693,7 @@ NOT_IP_TCP:
 	do { \
 		if (_p_cntrs == 1) { \
 			TXRX_STATS_ADD(_pdev, pub.tx.tso.tso_hist.pkts_1, 1); \
-		} else if (_p_cntrs > 2 && _p_cntrs <= 5) {                   \
+		} else if (_p_cntrs >= 2 && _p_cntrs <= 5) {                   \
 			TXRX_STATS_ADD(_pdev,                                 \
 				pub.tx.tso.tso_hist.pkts_2_5, 1);             \
 		} else if (_p_cntrs > 5 && _p_cntrs <= 10) {                  \

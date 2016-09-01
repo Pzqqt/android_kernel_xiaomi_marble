@@ -1355,6 +1355,18 @@ htt_tx_desc_fill_tso_info(htt_pdev_handle pdev, void *desc,
 		 tso_seg->seg.tso_flags;
 
 	/* First 24 bytes (6*4) contain the TSO flags */
+	TSO_DEBUG("%s seq# %u l2 len %d, ip len %d flags 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x\n",
+		  __func__,
+		  tso_seg->seg.tso_flags.tcp_seq_num,
+		  tso_seg->seg.tso_flags.l2_len,
+		  tso_seg->seg.tso_flags.ip_len,
+		  *word,
+		  *(word + 1),
+		  *(word + 2),
+		  *(word + 3),
+		  *(word + 4),
+		  *(word + 5));
+
 	word += 6;
 
 	for (i = 0; i < tso_seg->seg.num_frags; i++) {
@@ -1369,6 +1381,12 @@ htt_tx_desc_fill_tso_info(htt_pdev_handle pdev, void *desc,
 		/* [31:16] length of the first buffer */
 		*word = (tso_seg->seg.tso_frags[i].length << 16) | hi;
 		word++;
+		TSO_DEBUG("%s frag[%d] ptr_low 0x%x ptr_hi 0x%x len %u\n",
+			__func__, i,
+			msdu_ext_desc->frags[i].u.frag32.ptr_low,
+			msdu_ext_desc->frags[i].u.frag32.ptr_hi,
+			msdu_ext_desc->frags[i].u.frag32.len);
+
 	}
 
 	if (tso_seg->seg.num_frags < FRAG_NUM_MAX) {
@@ -1671,10 +1689,15 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 
 	local_word1 = 0;
 
-	if (tso_info->is_tso)
-		HTT_TX_DESC_FRM_LEN_SET(local_word1, tso_info->total_len);
-	else
+	if (tso_info->is_tso) {
+		uint32_t total_len = tso_info->curr_seg->seg.total_len;
+
+		HTT_TX_DESC_FRM_LEN_SET(local_word1, total_len);
+		TSO_DEBUG("%s setting HTT TX DESC Len = curr_seg->seg.total_len %d\n",
+			  __func__, total_len);
+	} else {
 		HTT_TX_DESC_FRM_LEN_SET(local_word1, qdf_nbuf_len(msdu));
+	}
 
 	HTT_TX_DESC_FRM_ID_SET(local_word1, msdu_id);
 	*word1 = local_word1;
