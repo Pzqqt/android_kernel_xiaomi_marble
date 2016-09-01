@@ -1826,7 +1826,8 @@ __wlan_hdd_cfg80211_get_supported_features(struct wiphy *wiphy,
 	fset |= WIFI_FEATURE_HOTSPOT;
 
 #ifdef FEATURE_WLAN_EXTSCAN
-	if (sme_is_feature_supported_by_fw(EXTENDED_SCAN)) {
+	if (pHddCtx->config->extscan_enabled &&
+	    sme_is_feature_supported_by_fw(EXTENDED_SCAN)) {
 		hdd_notice("EXTScan is supported by firmware");
 		fset |= WIFI_FEATURE_EXTSCAN | WIFI_FEATURE_HAL_EPNO;
 	}

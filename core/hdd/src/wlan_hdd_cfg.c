@@ -3557,6 +3557,14 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_DOT11P_MODE_MAX),
 
 #ifdef FEATURE_WLAN_EXTSCAN
+	REG_VARIABLE(CFG_EXTSCAN_ALLOWED_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, extscan_enabled,
+		     VAR_FLAGS_OPTIONAL |
+		     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_EXTSCAN_ALLOWED_DEF,
+		     CFG_EXTSCAN_ALLOWED_MIN,
+		     CFG_EXTSCAN_ALLOWED_MAX),
+
 	REG_VARIABLE(CFG_EXTSCAN_PASSIVE_MAX_CHANNEL_TIME_NAME,
 		     WLAN_PARAM_Integer,
 		     struct hdd_config, extscan_passive_max_chn_time,
