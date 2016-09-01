@@ -2393,6 +2393,7 @@ static hdd_adapter_t *hdd_alloc_station_adapter(hdd_context_t *hdd_ctx,
 		adapter->dev = pWlanDev;
 		adapter->pHddCtx = hdd_ctx;
 		adapter->magic = WLAN_HDD_ADAPTER_MAGIC;
+		adapter->sessionId = HDD_SESSION_ID_INVALID;
 
 		init_completion(&adapter->session_open_comp_var);
 		init_completion(&adapter->session_close_comp_var);
@@ -3218,8 +3219,6 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 	if (QDF_STATUS_SUCCESS != hdd_debugfs_init(adapter))
 		hdd_err("Interface %s wow debug_fs init failed", iface_name);
 
-	adapter->sessionId = HDD_SESSION_ID_INVALID;
-
 	return adapter;
 
 err_lro_cleanup:
@@ -3369,6 +3368,7 @@ static void hdd_wait_for_sme_close_sesion(hdd_context_t *hdd_ctx,
 			sme_close_session(hdd_ctx->hHal, adapter->sessionId,
 				hdd_sme_close_session_callback,
 				adapter)) {
+		adapter->sessionId = HDD_SESSION_ID_INVALID;
 		/*
 		 * Block on a completion variable. Can't wait
 		 * forever though.

@@ -6455,6 +6455,7 @@ hdd_adapter_t *hdd_wlan_create_ap_dev(hdd_context_t *pHddCtx,
 		pHostapdAdapter->dev = pWlanHostapdDev;
 		pHostapdAdapter->pHddCtx = pHddCtx;
 		pHostapdAdapter->magic = WLAN_HDD_ADAPTER_MAGIC;
+		pHostapdAdapter->sessionId = HDD_SESSION_ID_INVALID;
 
 		hdd_info("pWlanHostapdDev = %p, pHostapdAdapter = %p, concurrency_mode=0x%x",
 		       pWlanHostapdDev,
