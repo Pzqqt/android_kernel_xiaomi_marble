@@ -87,6 +87,7 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 	uint8_t fw_vht_ch_wd;
 	uint8_t vht_ch_wd;
 	uint8_t center_freq_diff;
+	struct s_ext_cap *ext_cap;
 
 	beacon_struct = qdf_mem_malloc(sizeof(tSirProbeRespBeacon));
 	if (NULL == beacon_struct) {
@@ -266,6 +267,24 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 		if (cfg_set_status != eSIR_SUCCESS)
 			lim_log(mac_ctx, LOGP,
 					FL("Set VHT_SU_BEAMFORMEE_CAP Fail"));
+	}
+	if (session->vhtCapability &&
+		session->vhtCapabilityPresentInBeacon &&
+		beacon_struct->ext_cap.present) {
+		ext_cap = (struct s_ext_cap *)beacon_struct->ext_cap.bytes;
+		session->gLimOperatingMode.present =
+			ext_cap->oper_mode_notification;
+		if (ext_cap->oper_mode_notification) {
+			if (CH_WIDTH_160MHZ > session->ch_width)
+				session->gLimOperatingMode.chanWidth =
+						session->ch_width;
+			else
+				session->gLimOperatingMode.chanWidth =
+					CH_WIDTH_160MHZ;
+		} else {
+			lim_log(mac_ctx, LOGE, FL(
+					"AP does not support op_mode rx"));
+		}
 	}
 	/* Extract the UAPSD flag from WMM Parameter element */
 	if (beacon_struct->wmeEdcaPresent)

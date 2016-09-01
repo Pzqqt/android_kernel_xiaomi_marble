@@ -1796,6 +1796,13 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		lim_log(mac_ctx, LOG1, FL("Populate VHT IEs in Assoc Request"));
 		populate_dot11f_vht_caps(mac_ctx, pe_session, &frm->VHTCaps);
 		vht_enabled = true;
+		if (pe_session->enableHtSmps &&
+				!pe_session->supported_nss_1x1) {
+			lim_log(mac_ctx, LOGE, FL(
+					"VHT OP mode IE in Assoc Req"));
+			populate_dot11f_operating_mode(mac_ctx,
+					&frm->OperatingMode, pe_session);
+		}
 	}
 	if (!vht_enabled &&
 			pe_session->is_vendor_specific_vhtcaps) {
