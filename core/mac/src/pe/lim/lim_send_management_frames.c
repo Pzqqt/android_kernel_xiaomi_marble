@@ -2265,15 +2265,15 @@ alloc_packet:
 	}
 	sir_dump_buf(mac_ctx, SIR_LIM_MODULE_ID, LOG2, frame, frame_len);
 
-	if ((SIR_BAND_5_GHZ == lim_get_rf_band(session->currentOperChannel))
-	    || (session->pePersona == QDF_P2P_CLIENT_MODE)
-	    || (session->pePersona == QDF_P2P_GO_MODE)
-	    || ((NULL != session->ftPEContext.pFTPreAuthReq) &&
-		(SIR_BAND_5_GHZ ==
-		 lim_get_rf_band(session->ftPEContext.pFTPreAuthReq->
-				 preAuthchannelNum))))
+	if ((NULL != session->ftPEContext.pFTPreAuthReq) &&
+	    (SIR_BAND_5_GHZ == lim_get_rf_band(
+	     session->ftPEContext.pFTPreAuthReq->preAuthchannelNum)))
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
-
+	else if ((SIR_BAND_5_GHZ ==
+		  lim_get_rf_band(session->currentOperChannel))
+		  || (session->pePersona == QDF_P2P_CLIENT_MODE)
+		  || (session->pePersona == QDF_P2P_GO_MODE))
+		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	if (session->pePersona == QDF_P2P_CLIENT_MODE ||
 		session->pePersona == QDF_STA_MODE)

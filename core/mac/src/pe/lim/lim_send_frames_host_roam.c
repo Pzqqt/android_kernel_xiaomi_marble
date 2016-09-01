@@ -407,12 +407,16 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	lim_log(mac_ctx, LOG1, FL("Re-assoc Req Frame is: "));
 	       sir_dump_buf(mac_ctx, SIR_LIM_MODULE_ID, LOG1,
 			    (uint8_t *) frame, (bytes + ft_ies_length));
-	if ((SIR_BAND_5_GHZ ==
-	     lim_get_rf_band(pe_session->currentOperChannel)) ||
-	    (pe_session->pePersona == QDF_P2P_CLIENT_MODE) ||
-	    (pe_session->pePersona == QDF_P2P_GO_MODE)) {
+
+	if ((NULL != pe_session->ftPEContext.pFTPreAuthReq) &&
+	    (SIR_BAND_5_GHZ == lim_get_rf_band(
+	     pe_session->ftPEContext.pFTPreAuthReq->preAuthchannelNum)))
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
-	}
+	else if ((SIR_BAND_5_GHZ ==
+		  lim_get_rf_band(pe_session->currentOperChannel))
+		 || (pe_session->pePersona == QDF_P2P_CLIENT_MODE)
+		 || (pe_session->pePersona == QDF_P2P_GO_MODE))
+		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	if (NULL != pe_session->assocReq) {
 		qdf_mem_free(pe_session->assocReq);
