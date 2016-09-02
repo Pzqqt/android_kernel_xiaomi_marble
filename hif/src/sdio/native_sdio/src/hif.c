@@ -2013,6 +2013,11 @@ static QDF_STATUS hif_enable_func(struct hif_sdio_dev *device,
 
 	device = get_hif_device(func);
 
+	if (!device) {
+		AR_DEBUG_PRINTF(ATH_DEBUG_ERR, ("HIF device is NULL\n"));
+		return QDF_STATUS_E_INVAL;
+	}
+
 	if (device->is_disabled) {
 		int setAsyncIRQ = 0;
 		__u16 manufacturer_id =
