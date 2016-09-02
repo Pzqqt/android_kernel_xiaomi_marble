@@ -267,6 +267,9 @@ typedef struct sSapContext {
 	bool is_pre_cac_on;
 	bool pre_cac_complete;
 	uint8_t chan_before_pre_cac;
+	uint8_t beacon_tx_rate;
+	tSirMacRateSet supp_rate_set;
+	tSirMacRateSet extended_rate_set;
 } *ptSapContext;
 
 /*----------------------------------------------------------------------------

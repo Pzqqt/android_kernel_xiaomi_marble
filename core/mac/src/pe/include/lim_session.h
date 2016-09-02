@@ -480,6 +480,9 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	tDot11fIEVHTCaps vht_caps;
 	tDot11fIEHTInfo ht_operation;
 	tDot11fIEVHTOperation vht_operation;
+	uint8_t beacon_tx_rate;
+	uint8_t *vendor_ie;
+	uint8_t access_policy;
 } tPESession, *tpPESession;
 
 /*-------------------------------------------------------------------------

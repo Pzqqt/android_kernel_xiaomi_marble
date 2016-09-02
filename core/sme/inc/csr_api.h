@@ -965,6 +965,9 @@ typedef struct tagCsrRoamProfile {
 	/* addIe params */
 	tSirAddIeParams addIeParams;
 	uint8_t sap_dot11mc;
+	uint8_t beacon_tx_rate;
+	tSirMacRateSet supp_rate_set;
+	tSirMacRateSet extended_rate_set;
 } tCsrRoamProfile;
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
