@@ -3902,6 +3902,7 @@ QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 
 	if (scn == NULL) {
 		WMA_LOGE("%s: Failed to get HIF context", __func__);
+		wmi_set_target_suspend(wma->wmi_handle, false);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAULT;
 	}
@@ -4333,6 +4334,56 @@ bool wma_is_p2plo_in_progress(tp_wma_handle wma, int vdev_id)
 	return wma->interfaces[vdev_id].p2p_lo_in_progress;
 }
 
+#ifdef WLAN_FEATURE_LPSS
+/**
+ * wma_is_lpass_enabled() - check if lpass is enabled
+ * @handle: Pointer to wma handle
+ *
+ * WoW is needed if LPASS or NaN feature is enabled in INI because
+ * target can't wake up itself if its put in PDEV suspend when LPASS
+ * or NaN features are supported
+ *
+ * Return: true if lpass is enabled else false
+ */
+bool static wma_is_lpass_enabled(tp_wma_handle wma)
+{
+	if (wma->is_lpass_enabled)
+		return true;
+	else
+		return false;
+}
+#else
+bool static wma_is_lpass_enabled(tp_wma_handle wma)
+{
+	return false;
+}
+#endif
+
+#ifdef WLAN_FEATURE_NAN
+/**
+ * wma_is_nan_enabled() - check if NaN is enabled
+ * @handle: Pointer to wma handle
+ *
+ * WoW is needed if LPASS or NaN feature is enabled in INI because
+ * target can't wake up itself if its put in PDEV suspend when LPASS
+ * or NaN features are supported
+ *
+ * Return: true if NaN is enabled else false
+ */
+bool static wma_is_nan_enabled(tp_wma_handle wma)
+{
+	if (wma->is_nan_enabled)
+		return true;
+	else
+		return false;
+}
+#else
+bool static wma_is_nan_enabled(tp_wma_handle wma)
+{
+	return false;
+}
+#endif
+
 /**
  * wma_is_wow_applicable(): should enable wow
  * @wma: wma handle
@@ -4346,6 +4397,8 @@ bool wma_is_p2plo_in_progress(tp_wma_handle wma, int vdev_id)
  *  6) Is any vdev in NAN data mode? BSS is already started at the
  *     the time of device creation. It is ready to accept data
  *     requests.
+ *  7) If LPASS feature is enabled
+ *  8) If NaN feature is enabled
  *  If none of above conditions is true then return false
  *
  * Return: true if wma needs to configure wow false otherwise.
@@ -4371,8 +4424,13 @@ bool wma_is_wow_applicable(tp_wma_handle wma)
 		} else if (wma_is_p2plo_in_progress(wma, vdev_id)) {
 			WMA_LOGD("P2P LO is in progress, enabling wow");
 			return true;
-		}
-		if (WMA_IS_VDEV_IN_NDI_MODE(wma->interfaces, vdev_id)) {
+		} else if (wma_is_lpass_enabled(wma)) {
+			WMA_LOGD("LPASS is enabled, enabling WoW");
+			return true;
+		} else if (wma_is_nan_enabled(wma)) {
+			WMA_LOGD("NAN is enabled, enabling WoW");
+			return true;
+		} else if (WMA_IS_VDEV_IN_NDI_MODE(wma->interfaces, vdev_id)) {
 			WMA_LOGD("vdev %d is in NAN data mode, enabling wow",
 				vdev_id);
 			return true;
@@ -4565,9 +4623,6 @@ QDF_STATUS wma_disable_wow_in_fw(WMA_HANDLE handle)
 	tp_wma_handle wma = handle;
 	QDF_STATUS ret;
 
-	if (!wma->wow.wow_enable || !wma->wow.wow_enable_cmd_sent)
-		return QDF_STATUS_SUCCESS;
-
 	ret = wma_send_host_wakeup_ind_to_fw(wma);
 
 	if (ret != QDF_STATUS_SUCCESS)
@@ -4584,55 +4639,6 @@ QDF_STATUS wma_disable_wow_in_fw(WMA_HANDLE handle)
 	return ret;
 }
 
-#ifdef WLAN_FEATURE_LPSS
-/**
- * wma_is_lpass_enabled() - check if lpass is enabled
- * @handle: Pointer to wma handle
- *
- * WoW is needed if LPASS or NaN feature is enabled in INI because
- * target can't wake up itself if its put in PDEV suspend when LPASS
- * or NaN features are supported
- *
- * Return: true if lpass is enabled else false
- */
-bool static wma_is_lpass_enabled(tp_wma_handle wma)
-{
-	if (wma->is_lpass_enabled)
-		return true;
-	else
-		return false;
-}
-#else
-bool static wma_is_lpass_enabled(tp_wma_handle wma)
-{
-	return false;
-}
-#endif
-
-#ifdef WLAN_FEATURE_NAN
-/**
- * wma_is_nan_enabled() - check if NaN is enabled
- * @handle: Pointer to wma handle
- *
- * WoW is needed if LPASS or NaN feature is enabled in INI because
- * target can't wake up itself if its put in PDEV suspend when LPASS
- * or NaN features are supported
- *
- * Return: true if NaN is enabled else false
- */
-bool static wma_is_nan_enabled(tp_wma_handle wma)
-{
-	if (wma->is_nan_enabled)
-		return true;
-	else
-		return false;
-}
-#else
-bool static wma_is_nan_enabled(tp_wma_handle wma)
-{
-	return false;
-}
-#endif
 
 /**
  * wma_is_wow_mode_selected() - check if wow needs to be enabled in fw
@@ -4645,17 +4651,8 @@ bool static wma_is_nan_enabled(tp_wma_handle wma)
 bool wma_is_wow_mode_selected(WMA_HANDLE handle)
 {
 	tp_wma_handle wma = (tp_wma_handle) handle;
-
-	if (wma_is_lpass_enabled(wma)) {
-		WMA_LOGD("LPASS is enabled select WoW");
-		return true;
-	} else if (wma_is_nan_enabled(wma)) {
-		WMA_LOGD("NAN is enabled select WoW");
-		return true;
-	} else {
-		WMA_LOGD("WoW enable %d", wma->wow.wow_enable);
-		return wma->wow.wow_enable;
-	}
+	WMA_LOGD("WoW enable %d", wma->wow.wow_enable);
+	return wma->wow.wow_enable;
 }
 
 /**
@@ -6519,7 +6516,6 @@ static inline void wma_suspend_target_timeout(bool is_self_recovery_enabled)
 QDF_STATUS wma_suspend_target(WMA_HANDLE handle, int disable_target_intr)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	struct hif_opaque_softc *scn;
 	QDF_STATUS status;
 	struct suspend_params param = {0};
 
@@ -6551,14 +6547,6 @@ QDF_STATUS wma_suspend_target(WMA_HANDLE handle, int disable_target_intr)
 		WMA_LOGE("Failed to get ACK from firmware for pdev suspend");
 		wmi_set_target_suspend(wma_handle->wmi_handle, false);
 		wma_suspend_target_timeout(pmac->sme.enableSelfRecovery);
-		return QDF_STATUS_E_FAULT;
-	}
-
-	scn = cds_get_context(QDF_MODULE_ID_HIF);
-
-	if (scn == NULL) {
-		WMA_LOGE("%s: Failed to get HIF context", __func__);
-		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAULT;
 	}
 
