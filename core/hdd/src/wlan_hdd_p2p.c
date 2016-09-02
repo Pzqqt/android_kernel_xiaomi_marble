@@ -1684,13 +1684,27 @@ void hdd_send_action_cnf(hdd_adapter_t *pAdapter, bool actionSendSuccess)
 
 	cfgState->actionFrmState = HDD_IDLE;
 
-	hddLog(LOG1, "Send Action cnf, actionSendSuccess %d",
-	       actionSendSuccess);
 
 	if (NULL == cfgState->buf) {
 		return;
 	}
 
+	if (cfgState->is_go_neg_ack_received) {
+
+		cfgState->is_go_neg_ack_received = 0;
+		/* Sometimes its possible that host may receive the ack for GO
+		 * negotiation req after sending go negotaition confirmation,
+		 * in such case drop the ack received for the go negotiation
+		 * request, so that supplicant waits for the confirmation ack
+		 * from firmware.
+		 */
+		hdd_info("Drop the pending ack received in cfgState->actionFrmState %d",
+				cfgState->actionFrmState);
+		return;
+	}
+
+	hdd_info("Send Action cnf, actionSendSuccess %d",
+		actionSendSuccess);
 	/*
 	 * buf is the same pointer it passed us to send. Since we are sending
 	 * it through control path, we use different buffers.
@@ -2482,6 +2496,7 @@ void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 					hddLog(LOG1,
 					       "%s: ACK_PENDING and But received RESP for Action frame ",
 					       __func__);
+					cfgState->is_go_neg_ack_received = 1;
 					hdd_send_action_cnf(pAdapter, true);
 				}
 			}

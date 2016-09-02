@@ -631,6 +631,11 @@ typedef struct hdd_cfg80211_state_s {
 	hdd_remain_on_chan_ctx_t *remain_on_chan_ctx;
 	struct mutex remain_on_chan_ctx_lock;
 	eP2PActionFrameState actionFrmState;
+	/* is_go_neg_ack_received flag is set to 1 when
+	* the pending ack for GO negotiation req is
+	* received.
+	*/
+	bool is_go_neg_ack_received;
 } hdd_cfg80211_state_t;
 
 /**
