@@ -855,7 +855,7 @@ typedef enum {
 #define CFG_QOS_IMPLICIT_SETUP_ENABLED_NAME                 "ImplicitQosIsEnabled"
 #define CFG_QOS_IMPLICIT_SETUP_ENABLED_MIN                  (0)
 #define CFG_QOS_IMPLICIT_SETUP_ENABLED_MAX                  (1)
-#define CFG_QOS_IMPLICIT_SETUP_ENABLED_DEFAULT              (1)
+#define CFG_QOS_IMPLICIT_SETUP_ENABLED_DEFAULT              (0)
 
 #define CFG_FT_RESOURCE_REQ_NAME                        "gFTResourceReqSupported"
 #define CFG_FT_RESOURCE_REQ_MIN                         (0)
