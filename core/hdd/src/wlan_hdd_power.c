@@ -1461,6 +1461,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 
 	cds_clear_concurrent_session_count();
 	hdd_cleanup_scan_queue(pHddCtx);
+	hdd_ipa_uc_ssr_deinit();
 	hdd_reset_all_adapters(pHddCtx);
 
 	/* Flush cached rx frame queue */
@@ -1468,7 +1469,6 @@ QDF_STATUS hdd_wlan_shutdown(void)
 
 	/* De-register the HDD callbacks */
 	hdd_deregister_cb(pHddCtx);
-	hdd_ipa_uc_ssr_deinit();
 
 	cds_sched_context = get_cds_sched_ctxt();
 

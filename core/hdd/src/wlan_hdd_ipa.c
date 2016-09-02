@@ -1876,6 +1876,97 @@ void hdd_ipa_uc_force_pipe_shutdown(hdd_context_t *hdd_ctx)
 }
 
 /**
+ * hdd_ipa_msg_free_fn() - Free an IPA message
+ * @buff: pointer to the IPA message
+ * @len: length of the IPA message
+ * @type: type of IPA message
+ *
+ * Return: None
+ */
+static void hdd_ipa_msg_free_fn(void *buff, uint32_t len, uint32_t type)
+{
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "msg type:%d, len:%d", type, len);
+	ghdd_ipa->stats.num_free_msg++;
+	qdf_mem_free(buff);
+}
+
+
+/**
+ * hdd_ipa_send_disconnect() - ipa send disconnect clients
+ * adapter: pointer to hdd adapter
+ * Send disconnect evnt to IPA driver during SSR
+ *
+ * Return: 0 - Success
+ */
+static int hdd_ipa_send_disconnect(hdd_adapter_t *adapter)
+{
+	struct ipa_msg_meta meta;
+	struct ipa_wlan_msg *msg;
+	int ret = 0;
+	int i;
+
+	for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
+		if (qdf_is_macaddr_broadcast(&adapter->aStaInfo[i].macAddrSTA))
+			continue;
+		if ((adapter->aStaInfo[i].isUsed) &&
+			(!adapter->aStaInfo[i].isDeauthInProgress)) {
+			meta.msg_len = sizeof(struct ipa_wlan_msg);
+			msg = qdf_mem_malloc(meta.msg_len);
+			if (msg == NULL) {
+				HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
+					"msg allocation failed");
+				return -ENOMEM;
+			}
+			meta.msg_type = WLAN_CLIENT_DISCONNECT;
+			strlcpy(msg->name, adapter->dev->name,
+				IPA_RESOURCE_NAME_MAX);
+			memcpy(msg->mac_addr, adapter->aStaInfo[i].macAddrSTA.bytes,
+				ETH_ALEN);
+				HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "%s: Evt: %d",
+				msg->name, meta.msg_type);
+			ret = ipa_send_msg(&meta, msg, hdd_ipa_msg_free_fn);
+			if (ret) {
+				HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
+					"%s: Evt: %d fail:%d",
+					msg->name, meta.msg_type,  ret);
+				qdf_mem_free(msg);
+				return ret;
+			}
+		}
+	}
+
+	return ret;
+}
+
+/**
+ * hdd_ipa_uc_disconnect_client() - disconnect ipa sap clients
+ * hdd_ctx: pointer to hdd context
+ * Send disconnect evnt to IPA driver during SSR
+ *
+ * Return: 0 - Success
+ */
+static int hdd_ipa_uc_disconnect_client(hdd_context_t *hdd_ctx)
+{
+	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
+	QDF_STATUS status;
+	hdd_adapter_t *adapter;
+	int ret = 0;
+
+
+	status =  hdd_get_front_adapter(hdd_ctx, &adapter_node);
+	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
+		adapter = adapter_node->pAdapter;
+		if (adapter->device_mode == QDF_SAP_MODE)
+			hdd_ipa_send_disconnect(adapter);
+		status = hdd_get_next_adapter(
+				hdd_ctx, adapter_node, &next);
+		adapter_node = next;
+	}
+
+	return ret;
+}
+
+/**
  * hdd_ipa_uc_ssr_deinit() - handle ipa deinit for SSR
  *
  * Deinit basic IPA UC host side to be in sync reloaded FW during
@@ -1892,6 +1983,8 @@ int hdd_ipa_uc_ssr_deinit(void)
 	if ((!hdd_ipa) || (!hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx)))
 		return 0;
 
+	/* send disconnect to ipa driver for connected clients */
+	hdd_ipa_uc_disconnect_client(hdd_ipa->hdd_ctx);
 	/* Clean up HDD IPA interfaces */
 	for (idx = 0; (hdd_ipa->num_iface > 0) &&
 		(idx < HDD_IPA_MAX_IFACE); idx++) {
@@ -3535,21 +3628,6 @@ end:
 	if (iface_context)
 		hdd_ipa_cleanup_iface(iface_context);
 	return ret;
-}
-
-/**
- * hdd_ipa_msg_free_fn() - Free an IPA message
- * @buff: pointer to the IPA message
- * @len: length of the IPA message
- * @type: type of IPA message
- *
- * Return: None
- */
-static void hdd_ipa_msg_free_fn(void *buff, uint32_t len, uint32_t type)
-{
-	hddLog(LOG1, "msg type:%d, len:%d", type, len);
-	ghdd_ipa->stats.num_free_msg++;
-	qdf_mem_free(buff);
 }
 
 #ifndef QCA_LL_TX_FLOW_CONTROL_V2
