@@ -283,22 +283,22 @@ typedef enum {
 #define CFG_INTF0_MAC_ADDR_NAME                  "Intf0MacAddress"
 #define CFG_INTF0_MAC_ADDR_MIN                   "000000000000"
 #define CFG_INTF0_MAC_ADDR_MAX                   "ffffffffffff"
-#define CFG_INTF0_MAC_ADDR_DEFAULT               "000AF5898980"
+#define CFG_INTF0_MAC_ADDR_DEFAULT               "000AF58989FF"
 
 #define CFG_INTF1_MAC_ADDR_NAME                  "Intf1MacAddress"
 #define CFG_INTF1_MAC_ADDR_MIN                   "000000000000"
 #define CFG_INTF1_MAC_ADDR_MAX                   "ffffffffffff"
-#define CFG_INTF1_MAC_ADDR_DEFAULT               "000AF5898981"
+#define CFG_INTF1_MAC_ADDR_DEFAULT               "000AF58989FE"
 
 #define CFG_INTF2_MAC_ADDR_NAME                  "Intf2MacAddress"
 #define CFG_INTF2_MAC_ADDR_MIN                   "000000000000"
 #define CFG_INTF2_MAC_ADDR_MAX                   "ffffffffffff"
-#define CFG_INTF2_MAC_ADDR_DEFAULT               "000AF5898982"
+#define CFG_INTF2_MAC_ADDR_DEFAULT               "000AF58989FD"
 
 #define CFG_INTF3_MAC_ADDR_NAME                  "Intf3MacAddress"
 #define CFG_INTF3_MAC_ADDR_MIN                   "000000000000"
 #define CFG_INTF3_MAC_ADDR_MAX                   "ffffffffffff"
-#define CFG_INTF3_MAC_ADDR_DEFAULT               "000AF5898983"
+#define CFG_INTF3_MAC_ADDR_DEFAULT               "000AF58989FC"
 
 #define CFG_AP_QOS_UAPSD_MODE_NAME             "gEnableApUapsd" /* ACs to setup U-APSD for at assoc */
 #define CFG_AP_QOS_UAPSD_MODE_MIN              (0)
