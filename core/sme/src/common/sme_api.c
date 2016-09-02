@@ -11060,7 +11060,7 @@ void sme_get_command_q_status(tHalHandle hHal)
 
 	return;
 }
-
+#ifdef WLAN_FEATURE_DSRC
 /**
  * sme_set_dot11p_config() - API to set the 802.11p config
  * @hHal:           The handle returned by macOpen
@@ -11633,6 +11633,7 @@ QDF_STATUS sme_deregister_for_dcc_stats_event(tHalHandle h_hal)
 
 	return status;
 }
+#endif
 
 void sme_get_recovery_stats(tHalHandle hHal)
 {

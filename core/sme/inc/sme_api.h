@@ -1021,6 +1021,7 @@ QDF_STATUS sme_update_roam_scan_hi_rssi_scan_params(tHalHandle hal_handle,
 	int32_t val);
 
 void wlan_sap_enable_phy_error_logs(tHalHandle hal, bool enable_log);
+#ifdef WLAN_FEATURE_DSRC
 void sme_set_dot11p_config(tHalHandle hal, bool enable_dot11p);
 
 QDF_STATUS sme_ocb_set_config(tHalHandle hHal, void *context,
@@ -1058,6 +1059,81 @@ QDF_STATUS sme_register_for_dcc_stats_event(tHalHandle hHal, void *context,
 					    ocb_callback callback);
 QDF_STATUS sme_deregister_for_dcc_stats_event(tHalHandle hHal);
 
+#else
+static inline void sme_set_dot11p_config(tHalHandle hal, bool enable_dot11p)
+{
+	return;
+}
+
+static inline QDF_STATUS sme_ocb_set_config(tHalHandle hHal, void *context,
+		ocb_callback callback,
+		struct sir_ocb_config *config)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS sme_ocb_set_utc_time(struct sir_ocb_utc *utc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS sme_ocb_start_timing_advert(
+		struct sir_ocb_timing_advert *timing_advert)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS sme_ocb_stop_timing_advert(struct sir_ocb_timing_advert
+		*timing_advert)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline int sme_ocb_gen_timing_advert_frame(tHalHandle hHal,
+		tSirMacAddr self_addr, uint8_t **buf,
+		uint32_t *timestamp_offset,
+		uint32_t *time_value_offset)
+{
+	return 0;
+}
+
+static inline QDF_STATUS sme_ocb_get_tsf_timer(tHalHandle hHal, void *context,
+		ocb_callback callback,
+		struct sir_ocb_get_tsf_timer *request)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS sme_dcc_get_stats(tHalHandle hHal, void *context,
+		ocb_callback callback,
+		struct sir_dcc_get_stats *request)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS sme_dcc_clear_stats(uint32_t vdev_id,
+		uint32_t dcc_stats_bitmap)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS sme_dcc_update_ndl(tHalHandle hHal, void *context,
+		ocb_callback callback,
+		struct sir_dcc_update_ndl *request)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS sme_register_for_dcc_stats_event(tHalHandle hHal,
+		void *context, ocb_callback callback)
+{
+	return QDF_STATUS_SUCCESS;
+}
+static inline QDF_STATUS sme_deregister_for_dcc_stats_event(tHalHandle hHal)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 void sme_add_set_thermal_level_callback(tHalHandle hal,
 		sme_set_thermal_level_callback callback);
 

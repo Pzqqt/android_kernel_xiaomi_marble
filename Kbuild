@@ -145,6 +145,11 @@ ifeq ($(KERNEL_BUILD), 0)
 
 	#enable TSF get feature
 	CONFIG_WLAN_SYNC_TSF := y
+	#Enable DSRC feature
+
+	ifeq ($(CONFIG_QCA_WIFI_SDIO), 1)
+	CONFIG_WLAN_FEATURE_DSRC := y
+	endif
 
 ifneq ($(CONFIG_ROME_IF),sdio)
 	#Flag to enable memdump feature
@@ -349,7 +354,6 @@ HDD_OBJS := 	$(HDD_SRC_DIR)/wlan_hdd_assoc.o \
 		$(HDD_SRC_DIR)/wlan_hdd_hostapd.o \
 		$(HDD_SRC_DIR)/wlan_hdd_ioctl.o \
 		$(HDD_SRC_DIR)/wlan_hdd_main.o \
-		$(HDD_SRC_DIR)/wlan_hdd_ocb.o \
 		$(HDD_SRC_DIR)/wlan_hdd_oemdata.o \
 		$(HDD_SRC_DIR)/wlan_hdd_power.o \
 		$(HDD_SRC_DIR)/wlan_hdd_regulatory.o \
@@ -361,6 +365,9 @@ HDD_OBJS := 	$(HDD_SRC_DIR)/wlan_hdd_assoc.o \
 		$(HDD_SRC_DIR)/wlan_hdd_wmm.o \
 		$(HDD_SRC_DIR)/wlan_hdd_wowl.o
 
+ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
+HDD_OBJS+=	$(HDD_SRC_DIR)/wlan_hdd_ocb.o
+endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_LPSS),y)
 HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_lpass.o
@@ -923,10 +930,12 @@ WMA_OBJS :=	$(WMA_SRC_DIR)/wma_main.o \
 		$(WMA_SRC_DIR)/wma_utils.o \
 		$(WMA_SRC_DIR)/wma_features.o \
 		$(WMA_SRC_DIR)/wma_dfs_interface.o \
-		$(WMA_SRC_DIR)/wma_ocb.o \
 		$(WMA_SRC_DIR)/wlan_qct_wma_legacy.o\
 		$(WMA_NDP_OBJS)
 
+ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
+WMA_OBJS+=	$(WMA_DIR)/wma_ocb.o
+endif
 ifeq ($(CONFIG_MPC_UT_FRAMEWORK),y)
 WMA_OBJS +=	$(WMA_SRC_DIR)/wma_utils_ut.o
 endif
@@ -1282,6 +1291,10 @@ CDEFINES += -DCONFIG_HL_SUPPORT \
             -DCONFIG_PER_VDEV_TX_DESC_POOL \
             -DCONFIG_SDIO \
             -DFEATURE_WLAN_FORCE_SAP_SCC
+endif
+
+ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
+CDEFINES += -DWLAN_FEATURE_DSRC
 endif
 
 #Enable USB specific APIS

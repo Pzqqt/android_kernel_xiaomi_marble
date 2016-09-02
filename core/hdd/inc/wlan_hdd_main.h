@@ -1061,8 +1061,10 @@ struct hdd_adapter_s {
 	struct sir_dcc_update_ndl_response dcc_update_ndl_resp;
 
 	/* MAC addresses used for OCB interfaces */
+#ifdef WLAN_FEATURE_DSRC
 	struct qdf_mac_addr ocb_mac_address[QDF_MAX_CONCURRENCY_PERSONA];
 	int ocb_mac_addr_count;
+#endif
 
 	/* BITMAP indicating pause reason */
 	uint32_t pause_map;
