@@ -1808,8 +1808,10 @@ void hif_send_buffer_cleanup_on_pipe(struct HIF_CE_pipe_info *pipe_info)
 				return;
 			/* Indicate the completion to higher
 			 * layer to free the buffer */
-			hif_state->msg_callbacks_current.
-			txCompletionHandler(hif_state->
+			if (hif_state->msg_callbacks_current.
+					txCompletionHandler)
+				hif_state->msg_callbacks_current.
+				    txCompletionHandler(hif_state->
 					    msg_callbacks_current.Context,
 					    netbuf, id, toeplitz_hash_result);
 		}
