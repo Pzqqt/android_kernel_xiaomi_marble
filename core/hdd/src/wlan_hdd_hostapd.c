@@ -3125,6 +3125,16 @@ static __iw_softap_setparam(struct net_device *dev,
 					WMI_WLAN_PROFILE_TRIGGER_CMDID,
 					set_value, DBG_CMD);
 		break;
+	case QCASAP_PARAM_LDPC:
+		ret = hdd_set_ldpc(pHostapdAdapter, set_value);
+		break;
+	case QCASAP_PARAM_TX_STBC:
+		ret = hdd_set_tx_stbc(pHostapdAdapter, set_value);
+		break;
+	case QCASAP_PARAM_RX_STBC:
+		ret = hdd_set_rx_stbc(pHostapdAdapter, set_value);
+		break;
+
 	default:
 		hdd_err("Invalid setparam command %d value %d",
 		       sub_cmd, set_value);
@@ -3410,6 +3420,21 @@ static __iw_softap_getparam(struct net_device *dev,
 				WMI_WLAN_PROFILE_GET_PROFILE_DATA_CMDID,
 				0, DBG_CMD);
 		break;
+	case QCASAP_PARAM_LDPC:
+	{
+		ret = hdd_get_ldpc(pHostapdAdapter, value);
+		break;
+	}
+	case QCASAP_PARAM_TX_STBC:
+	{
+		ret = hdd_get_tx_stbc(pHostapdAdapter, value);
+		break;
+	}
+	case QCASAP_PARAM_RX_STBC:
+	{
+		ret = hdd_get_rx_stbc(pHostapdAdapter, value);
+		break;
+	}
 	default:
 		hdd_err("Invalid getparam command %d", sub_cmd);
 		ret = -EINVAL;
@@ -5346,6 +5371,18 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 		0, "startProfile"
 	}, {
+		QCASAP_PARAM_LDPC,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+		0, "set_ldpc"
+	}, {
+		QCASAP_PARAM_TX_STBC,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+		0, "set_tx_stbc"
+	}, {
+		QCASAP_PARAM_RX_STBC,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+		0, "set_rx_stbc"
+	}, {
 		QCSAP_IOCTL_GETPARAM, 0,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getparam"
 	}, {
@@ -5396,6 +5433,18 @@ static const struct iw_priv_args hostapd_private_args[] = {
 	}, {
 		QCSAP_GET_ACL, 0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 		"get_acl_list"
+	}, {
+		QCASAP_PARAM_LDPC, 0,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+		"get_ldpc"
+	}, {
+		QCASAP_PARAM_TX_STBC, 0,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+		"get_tx_stbc"
+	}, {
+		QCASAP_PARAM_RX_STBC, 0,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+		"get_rx_stbc"
 	}, {
 		QCASAP_TX_CHAINMASK_CMD, 0,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,

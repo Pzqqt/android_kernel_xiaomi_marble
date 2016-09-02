@@ -1710,6 +1710,207 @@ uint8_t *wlan_hdd_get_vendor_oui_ie_ptr(uint8_t *oui, uint8_t oui_size,
 }
 
 /**
+ * hdd_get_ldpc() - Get adapter LDPC
+ * @adapter: adapter being queried
+ * @value: where to store the value
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_get_ldpc(hdd_adapter_t *adapter, int *value)
+{
+	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
+	int ret;
+
+	ENTER();
+	ret = sme_get_ht_config(hal, adapter->sessionId,
+				WNI_CFG_HT_CAP_INFO_ADVANCE_CODING);
+	if (ret < 0) {
+		hdd_alert("Failed to get LDPC value");
+	} else {
+		*value = ret;
+		ret = 0;
+	}
+	return ret;
+}
+
+/**
+ * hdd_set_ldpc() - Set adapter LDPC
+ * @adapter: adapter being modified
+ * @value: new LDPC value
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_set_ldpc(hdd_adapter_t *adapter, int value)
+{
+	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
+	int ret;
+
+	hdd_alert("%d", value);
+	if (value) {
+		/* make sure HT capabilities allow this */
+		QDF_STATUS status;
+		uint32_t cfg_value;
+		union {
+			uint16_t cfg_value16;
+			tSirMacHTCapabilityInfo ht_cap_info;
+		} u;
+
+		status = sme_cfg_get_int(hal, WNI_CFG_HT_CAP_INFO, &cfg_value);
+		if (QDF_STATUS_SUCCESS != status) {
+			hdd_alert("Failed to get HT capability info");
+			return -EIO;
+		}
+		u.cfg_value16 = cfg_value & 0xFFFF;
+		if (!u.ht_cap_info.advCodingCap) {
+			hdd_alert("LDCP not supported");
+			return -EINVAL;
+		}
+	}
+
+	ret = sme_update_ht_config(hal, adapter->sessionId,
+				   WNI_CFG_HT_CAP_INFO_ADVANCE_CODING,
+				   value);
+	if (ret)
+		hdd_alert("Failed to set LDPC value");
+
+	return ret;
+}
+
+/**
+ * hdd_get_tx_stbc() - Get adapter TX STBC
+ * @adapter: adapter being queried
+ * @value: where to store the value
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_get_tx_stbc(hdd_adapter_t *adapter, int *value)
+{
+	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
+	int ret;
+
+	ENTER();
+	ret = sme_get_ht_config(hal, adapter->sessionId,
+				WNI_CFG_HT_CAP_INFO_TX_STBC);
+	if (ret < 0) {
+		hdd_alert("Failed to get TX STBC value");
+	} else {
+		*value = ret;
+		ret = 0;
+	}
+
+	return ret;
+}
+
+/**
+ * hdd_set_tx_stbc() - Set adapter TX STBC
+ * @adapter: adapter being modified
+ * @value: new TX STBC value
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_set_tx_stbc(hdd_adapter_t *adapter, int value)
+{
+	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
+	int ret;
+
+	hdd_alert("%d", value);
+	if (value) {
+		/* make sure HT capabilities allow this */
+		QDF_STATUS status;
+		uint32_t cfg_value;
+		union {
+			uint16_t cfg_value16;
+			tSirMacHTCapabilityInfo ht_cap_info;
+		} u;
+
+		status = sme_cfg_get_int(hal, WNI_CFG_HT_CAP_INFO, &cfg_value);
+		if (QDF_STATUS_SUCCESS != status) {
+			hdd_alert("Failed to get HT capability info");
+			return -EIO;
+		}
+		u.cfg_value16 = cfg_value & 0xFFFF;
+		if (!u.ht_cap_info.txSTBC) {
+			hdd_alert("TX STBC not supported");
+			return -EINVAL;
+		}
+	}
+	ret = sme_update_ht_config(hal, adapter->sessionId,
+				   WNI_CFG_HT_CAP_INFO_TX_STBC,
+				   value);
+	if (ret)
+		hdd_alert("Failed to set TX STBC value");
+
+	return ret;
+}
+
+/**
+ * hdd_get_rx_stbc() - Get adapter RX STBC
+ * @adapter: adapter being queried
+ * @value: where to store the value
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_get_rx_stbc(hdd_adapter_t *adapter, int *value)
+{
+	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
+	int ret;
+
+	ENTER();
+	ret = sme_get_ht_config(hal, adapter->sessionId,
+				WNI_CFG_HT_CAP_INFO_RX_STBC);
+	if (ret < 0) {
+		hdd_alert("Failed to get RX STBC value");
+	} else {
+		*value = ret;
+		ret = 0;
+	}
+
+	return ret;
+}
+
+/**
+ * hdd_set_rx_stbc() - Set adapter RX STBC
+ * @adapter: adapter being modified
+ * @value: new RX STBC value
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_set_rx_stbc(hdd_adapter_t *adapter, int value)
+{
+	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
+	int ret;
+
+	hdd_alert("%d", value);
+	if (value) {
+		/* make sure HT capabilities allow this */
+		QDF_STATUS status;
+		uint32_t cfg_value;
+		union {
+			uint16_t cfg_value16;
+			tSirMacHTCapabilityInfo ht_cap_info;
+		} u;
+
+		status = sme_cfg_get_int(hal, WNI_CFG_HT_CAP_INFO, &cfg_value);
+		if (QDF_STATUS_SUCCESS != status) {
+			hdd_alert("Failed to get HT capability info");
+			return -EIO;
+		}
+		u.cfg_value16 = cfg_value & 0xFFFF;
+		if (!u.ht_cap_info.rxSTBC) {
+			hdd_alert("RX STBC not supported");
+			return -EINVAL;
+		}
+	}
+	ret = sme_update_ht_config(hal, adapter->sessionId,
+				   WNI_CFG_HT_CAP_INFO_RX_STBC,
+				   value);
+	if (ret)
+		hdd_alert("Failed to set RX STBC value");
+
+	return ret;
+}
+
+/**
  * __iw_set_commit() - SIOCSIWCOMMIT ioctl handler
  * @dev: device upon which the ioctl was received
  * @info: ioctl request information
@@ -5292,100 +5493,19 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 	case WE_SET_LDPC:
 	{
-		uint32_t value;
-		union {
-			uint16_t nCfgValue16;
-			tSirMacHTCapabilityInfo htCapInfo;
-		} uHTCapabilityInfo;
-
-		hdd_notice("LDPC val %d", set_value);
-		/* get the HT capability info */
-		ret = sme_cfg_get_int(hHal, WNI_CFG_HT_CAP_INFO, &value);
-		if (QDF_STATUS_SUCCESS != ret) {
-			hdd_err("could not get HT capability info");
-			return -EIO;
-		}
-
-		uHTCapabilityInfo.nCfgValue16 = 0xFFFF & value;
-		if ((set_value
-		     && (uHTCapabilityInfo.htCapInfo.advCodingCap))
-		    || (!set_value)) {
-			ret =
-				sme_update_ht_config(hHal,
-						     pAdapter->sessionId,
-						     WNI_CFG_HT_CAP_INFO_ADVANCE_CODING,
-						     set_value);
-		}
-
-		if (ret)
-			hdd_err("Failed to set LDPC value");
-
+		ret = hdd_set_ldpc(pAdapter, set_value);
 		break;
 	}
 
 	case WE_SET_TX_STBC:
 	{
-		uint32_t value;
-		union {
-			uint16_t nCfgValue16;
-			tSirMacHTCapabilityInfo htCapInfo;
-		} uHTCapabilityInfo;
-
-		hdd_notice("TX_STBC val %d", set_value);
-		/* get the HT capability info */
-		ret = sme_cfg_get_int(hHal, WNI_CFG_HT_CAP_INFO, &value);
-		if (QDF_STATUS_SUCCESS != ret) {
-			hdd_err("could not get HT capability info");
-			return -EIO;
-		}
-
-		uHTCapabilityInfo.nCfgValue16 = 0xFFFF & value;
-		if ((set_value && (uHTCapabilityInfo.htCapInfo.txSTBC))
-		    || (!set_value)) {
-			ret =
-				sme_update_ht_config(hHal,
-						     pAdapter->sessionId,
-						     WNI_CFG_HT_CAP_INFO_TX_STBC,
-						     set_value);
-		}
-
-		if (ret)
-			hdd_err("Failed to set TX STBC value");
-
+		ret = hdd_set_tx_stbc(pAdapter, set_value);
 		break;
 	}
 
 	case WE_SET_RX_STBC:
 	{
-		uint32_t value;
-		union {
-			uint16_t nCfgValue16;
-			tSirMacHTCapabilityInfo htCapInfo;
-		} uHTCapabilityInfo;
-
-		hdd_notice("WMI_VDEV_PARAM_RX_STBC val %d",
-		       set_value);
-		/* get the HT capability info */
-		ret = sme_cfg_get_int(hHal, WNI_CFG_HT_CAP_INFO, &value);
-		if (QDF_STATUS_SUCCESS != ret) {
-			hdd_err("could not get HT capability info");
-			return -EIO;
-		}
-
-		uHTCapabilityInfo.nCfgValue16 = 0xFFFF & value;
-		if ((set_value && (uHTCapabilityInfo.htCapInfo.rxSTBC))
-		    || (!set_value)) {
-			ret =
-				sme_update_ht_config(hHal,
-						     pAdapter->sessionId,
-						     WNI_CFG_HT_CAP_INFO_RX_STBC,
-						     (!set_value) ? set_value
-						     : uHTCapabilityInfo.
-						     htCapInfo.rxSTBC);
-		}
-
-		if (ret)
-			hdd_err("Failed to set RX STBC value");
+		ret = hdd_set_rx_stbc(pAdapter, set_value);
 		break;
 	}
 
@@ -6521,25 +6641,19 @@ static int __iw_setnone_getint(struct net_device *dev,
 
 	case WE_GET_LDPC:
 	{
-		hdd_notice("GET WMI_VDEV_PARAM_LDPC");
-		*value = sme_get_ht_config(hHal, pAdapter->sessionId,
-					   WNI_CFG_HT_CAP_INFO_ADVANCE_CODING);
+		ret = hdd_get_ldpc(pAdapter, value);
 		break;
 	}
 
 	case WE_GET_TX_STBC:
 	{
-		hdd_notice("GET WMI_VDEV_PARAM_TX_STBC");
-		*value = sme_get_ht_config(hHal, pAdapter->sessionId,
-					   WNI_CFG_HT_CAP_INFO_TX_STBC);
+		ret = hdd_get_tx_stbc(pAdapter, value);
 		break;
 	}
 
 	case WE_GET_RX_STBC:
 	{
-		hdd_notice("GET WMI_VDEV_PARAM_RX_STBC");
-		*value = sme_get_ht_config(hHal, pAdapter->sessionId,
-					   WNI_CFG_HT_CAP_INFO_RX_STBC);
+		ret = hdd_get_rx_stbc(pAdapter, value);
 		break;
 	}
 

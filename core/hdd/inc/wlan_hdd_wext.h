@@ -353,6 +353,13 @@ QDF_STATUS wlan_hdd_get_rssi(hdd_adapter_t *pAdapter, int8_t *rssi_value);
 
 QDF_STATUS wlan_hdd_get_snr(hdd_adapter_t *pAdapter, int8_t *snr);
 
+int hdd_get_ldpc(hdd_adapter_t *adapter, int *value);
+int hdd_set_ldpc(hdd_adapter_t *adapter, int value);
+int hdd_get_tx_stbc(hdd_adapter_t *adapter, int *value);
+int hdd_set_tx_stbc(hdd_adapter_t *adapter, int value);
+int hdd_get_rx_stbc(hdd_adapter_t *adapter, int *value);
+int hdd_set_rx_stbc(hdd_adapter_t *adapter, int value);
+
 #ifdef FEATURE_WLAN_TDLS
 QDF_STATUS iw_set_tdls_params(struct net_device *dev,
 			      struct iw_request_info *info,
