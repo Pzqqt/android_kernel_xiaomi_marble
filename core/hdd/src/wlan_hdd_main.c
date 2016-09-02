@@ -839,8 +839,10 @@ static void hdd_update_tgt_services(hdd_context_t *hdd_ctx,
 #endif
 #ifdef FEATURE_WLAN_TDLS
 	config->fEnableTDLSSupport &= cfg->en_tdls;
-	config->fEnableTDLSOffChannel &= cfg->en_tdls_offchan;
-	config->fEnableTDLSBufferSta &= cfg->en_tdls_uapsd_buf_sta;
+	config->fEnableTDLSOffChannel = config->fEnableTDLSOffChannel &&
+						cfg->en_tdls_offchan;
+	config->fEnableTDLSBufferSta = config->fEnableTDLSBufferSta &&
+						cfg->en_tdls_uapsd_buf_sta;
 	if (config->fTDLSUapsdMask && cfg->en_tdls_uapsd_sleep_sta) {
 		config->fEnableTDLSSleepSta = true;
 	} else {
