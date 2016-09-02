@@ -602,6 +602,7 @@ void qdf_mem_free(void *ptr)
 	 * The empty list check will guarantee that we avoid a race condition.
 	 */
 	list_del_init(&mem_struct->node);
+	qdf_mem_list.count--;
 	qdf_spin_unlock_irqrestore(&qdf_mem_list_lock);
 	kfree(mem_struct);
 	return;
