@@ -751,6 +751,12 @@ A_STATUS process_sw_event(void *pdev, void *data)
 	pl_hdr.size = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_SIZE_OFFSET) &
 		       ATH_PKTLOG_HDR_SIZE_MASK) >> ATH_PKTLOG_HDR_SIZE_SHIFT;
 	pl_hdr.timestamp = *(pl_tgt_hdr + ATH_PKTLOG_HDR_TIMESTAMP_OFFSET);
+
+#ifdef HELIUMPLUS
+	pl_hdr.type_specific_data =
+		*(pl_tgt_hdr + ATH_PKTLOG_HDR_TYPE_SPECIFIC_DATA_OFFSET);
+#endif
+
 	pl_dev = ((struct ol_txrx_pdev_t *)pdev)->pl_dev;
 	pl_info = pl_dev->pl_info;
 	log_size = pl_hdr.size;
