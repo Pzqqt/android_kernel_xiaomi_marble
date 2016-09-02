@@ -1126,6 +1126,16 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		pHostapdState->bssState = BSS_START;
 		hdd_wlan_green_ap_start_bss(pHddCtx);
 
+		/* Set default key index */
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
+			"%s: default key index %hu", __func__,
+			pHddApCtx->wep_def_key_idx);
+
+		sme_roam_set_default_key_index(
+			WLAN_HDD_GET_HAL_CTX(pHostapdAdapter),
+			pHostapdAdapter->sessionId,
+			pHddApCtx->wep_def_key_idx);
+
 		/* Set group key / WEP key every time when BSS is restarted */
 		if (pHddApCtx->groupKey.keyLength) {
 			status = wlansap_set_key_sta(

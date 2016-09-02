@@ -763,6 +763,9 @@ struct hdd_ap_ctx_s {
 	/* This will have WEP key data, if it is received before start bss */
 	tCsrRoamSetKey wepKey[CSR_MAX_NUM_KEY];
 
+	/* WEP default key index */
+	uint8_t wep_def_key_idx;
+
 	beacon_data_t *beacon;
 
 	bool bApActive;
