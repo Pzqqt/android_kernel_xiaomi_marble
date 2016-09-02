@@ -2561,7 +2561,7 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 		/* Disable to forward Intra-BSS Rx packets when
 		 * ap_isolate=1 in hostapd.conf
 		 */
-		if (adapter->sessionCtx.ap.apDisableIntraBssFwd) {
+		if (!adapter->sessionCtx.ap.apDisableIntraBssFwd) {
 			/*
 			 * When INTRA_BSS_FWD_OFFLOAD is enabled, FW will send
 			 * all Rx packets to IPA uC, which need to be forwarded
