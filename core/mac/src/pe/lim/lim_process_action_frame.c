@@ -2104,6 +2104,30 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 					    session, 0);
 		break;
 	}
+	case SIR_MAC_ACTION_PROT_DUAL_PUB:
+		lim_log(mac_ctx, LOG1,
+			FL("Rcvd Protected Dual of Public Action; action %d."),
+			action_hdr->actionID);
+		switch (action_hdr->actionID) {
+		case SIR_MAC_PDPA_GAS_INIT_REQ:
+		case SIR_MAC_PDPA_GAS_INIT_RSP:
+		case SIR_MAC_PDPA_GAS_COMEBACK_REQ:
+		case SIR_MAC_PDPA_GAS_COMEBACK_RSP:
+			mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
+			frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
+			rssi = WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info);
+			lim_send_sme_mgmt_frame_ind(mac_ctx,
+				mac_hdr->fc.subType, (uint8_t *) mac_hdr,
+				frame_len + sizeof(tSirMacMgmtHdr),
+				session->smeSessionId,
+				WMA_GET_RX_CH(rx_pkt_info), session, rssi);
+			break;
+		default:
+			lim_log(mac_ctx, LOG1,
+				FL("Unhandled - Protected Dual Public Action"));
+			break;
+		}
+		break;
 	default:
 		lim_log(mac_ctx, LOG1,
 			FL("Action category %d not handled"),

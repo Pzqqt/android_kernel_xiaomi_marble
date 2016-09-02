@@ -243,6 +243,12 @@
 #define SIR_MAC_WNM_NOTIF_REQUEST        26
 #define SIR_MAC_WNM_NOTIF_RESPONSE       27
 
+/* Protected Dual of Public Action(PDPA) frames Action field */
+#define SIR_MAC_PDPA_GAS_INIT_REQ      10
+#define SIR_MAC_PDPA_GAS_INIT_RSP      11
+#define SIR_MAC_PDPA_GAS_COMEBACK_REQ  12
+#define SIR_MAC_PDPA_GAS_COMEBACK_RSP  13
+
 #define SIR_MAC_MAX_RANDOM_LENGTH   2306
 
 /* ----------------------------------------------------------------------------- */
