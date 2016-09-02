@@ -1367,11 +1367,10 @@ static void hdd_send_association_event(struct net_device *dev,
 		cds_update_connection_info(pAdapter->sessionId);
 		memcpy(wrqu.ap_addr.sa_data, pHddStaCtx->conn_info.bssId.bytes,
 		       ETH_ALEN);
-		pr_info("wlan: new IBSS connection to " MAC_ADDRESS_STR "\n",
-			MAC_ADDR_ARRAY(pHddStaCtx->conn_info.bssId.bytes));
+		hdd_err("wlan: new IBSS connection to " MAC_ADDRESS_STR,
+			 MAC_ADDR_ARRAY(pHddStaCtx->conn_info.bssId.bytes));
 	} else {                /* Not Associated */
-
-		pr_info("wlan: disconnected\n");
+		hdd_err("wlan: disconnected");
 		memset(wrqu.ap_addr.sa_data, '\0', ETH_ALEN);
 		cds_decr_session_set_pcl(pAdapter->device_mode,
 					pAdapter->sessionId);
@@ -2817,16 +2816,15 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 		hdd_wext_state_t *pWextState =
 			WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 		if (pRoamInfo)
-			pr_info("wlan: connection failed with " MAC_ADDRESS_STR
-				" result:%d and Status:%d\n",
-				MAC_ADDR_ARRAY(pRoamInfo->bssid.bytes),
-				roamResult, roamStatus);
+			hdd_err("wlan: connection failed with " MAC_ADDRESS_STR
+				 " result:%d and Status:%d",
+				 MAC_ADDR_ARRAY(pRoamInfo->bssid.bytes),
+				 roamResult, roamStatus);
 		else
-			pr_info("wlan: connection failed with " MAC_ADDRESS_STR
-				" result:%d and Status:%d\n",
-				MAC_ADDR_ARRAY(pWextState->req_bssId.bytes),
-				roamResult, roamStatus);
-
+			hdd_err("wlan: connection failed with " MAC_ADDRESS_STR
+				 " result:%d and Status:%d",
+				 MAC_ADDR_ARRAY(pWextState->req_bssId.bytes),
+				 roamResult, roamStatus);
 		/*
 		 * CR465478: Only send up a connection failure result when CSR
 		 * has completed operation - with a ASSOCIATION_FAILURE status.
@@ -3356,12 +3354,12 @@ roam_roam_connect_status_update_handler(hdd_adapter_t *pAdapter,
 			WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 		struct station_info staInfo;
 
-		pr_info("IBSS New Peer indication from SME "
-			"with peerMac " MAC_ADDRESS_STR " BSSID: "
-			MAC_ADDRESS_STR " and stationID= %d",
-			MAC_ADDR_ARRAY(pRoamInfo->peerMac.bytes),
-			MAC_ADDR_ARRAY(pHddStaCtx->conn_info.bssId.bytes),
-			pRoamInfo->staId);
+		hdd_err("IBSS New Peer indication from SME "
+			 "with peerMac " MAC_ADDRESS_STR " BSSID: "
+			 MAC_ADDRESS_STR " and stationID= %d",
+			 MAC_ADDR_ARRAY(pRoamInfo->peerMac.bytes),
+			 MAC_ADDR_ARRAY(pHddStaCtx->conn_info.bssId.bytes),
+			 pRoamInfo->staId);
 
 		if (!hdd_save_peer
 			    (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter),
@@ -3446,12 +3444,12 @@ roam_roam_connect_status_update_handler(hdd_adapter_t *pAdapter,
 			hddLog(LOGW,
 				"IBSS peer departed by cannot find peer in our registration table with TL");
 
-		pr_info("IBSS Peer Departed from SME "
-			"with peerMac " MAC_ADDRESS_STR " BSSID: "
-			MAC_ADDRESS_STR " and stationID= %d",
-			MAC_ADDR_ARRAY(pRoamInfo->peerMac.bytes),
-			MAC_ADDR_ARRAY(pHddStaCtx->conn_info.bssId.bytes),
-			pRoamInfo->staId);
+		hdd_err("IBSS Peer Departed from SME "
+			 "with peerMac " MAC_ADDRESS_STR " BSSID: "
+			 MAC_ADDRESS_STR " and stationID= %d",
+			 MAC_ADDR_ARRAY(pRoamInfo->peerMac.bytes),
+			 MAC_ADDR_ARRAY(pHddStaCtx->conn_info.bssId.bytes),
+			 pRoamInfo->staId);
 
 		hdd_roam_deregister_sta(pAdapter, pRoamInfo->staId);
 
