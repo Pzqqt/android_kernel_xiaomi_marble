@@ -189,6 +189,9 @@ int wlan_hdd_ipv4_changed(struct notifier_block *nb,
 int wlan_hdd_ipv6_changed(struct notifier_block *nb,
 				unsigned long data, void *arg);
 
+int hdd_set_qpower_config(hdd_context_t *hddctx, hdd_adapter_t *adapter,
+			  uint8_t qpower);
+
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 void hdd_wlan_suspend_resume_event(uint8_t state);
 #else

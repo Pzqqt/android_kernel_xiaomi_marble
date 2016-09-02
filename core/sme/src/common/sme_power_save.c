@@ -1136,7 +1136,7 @@ QDF_STATUS sme_ps_close_per_session(tHalHandle hal_ctx, uint32_t session_id)
 	return qdf_status;
 }
 
-QDF_STATUS sme_is_auto_ps_timer_running(tHalHandle hal_ctx,
+bool sme_is_auto_ps_timer_running(tHalHandle hal_ctx,
 		uint32_t session_id)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);

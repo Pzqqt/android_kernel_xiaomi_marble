@@ -3871,7 +3871,6 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_CHANNEL_AVOIDANCE_IND] = {.type = NLA_U8 },
 };
 
-
 /**
  * __wlan_hdd_cfg80211_wifi_configuration_set() - Wifi configuration
  * vendor command
@@ -3901,6 +3900,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	u32 guard_time;
 	uint8_t set_value;
 	u32 ftm_capab;
+	uint8_t qpower;
 	QDF_STATUS status;
 	int attr_len;
 	int access_policy = 0;
@@ -3947,6 +3947,13 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 
 		if (QDF_STATUS_SUCCESS != status)
 			ret_val = -EPERM;
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_QPOWER]) {
+		qpower = nla_get_u8(
+			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_QPOWER]);
+		if (hdd_set_qpower_config(hdd_ctx, adapter, qpower) != 0)
+			ret_val = -EINVAL;
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_STATS_AVG_FACTOR]) {

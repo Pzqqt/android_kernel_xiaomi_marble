@@ -2333,6 +2333,8 @@ enum qca_access_policy {
  *                                                     with access policy
  * @QCA_WLAN_VENDOR_ATTR_CONFIG_IFINDEX: interface index for vdev specific
  *                                       parameters
+ * @QCA_WLAN_VENDOR_ATTR_CONFIG_QPOWER: Unsigned 8bit length attribute to update
+ *                                      power save config to turn off/on qpower
  * @QCA_WLAN_VENDOR_ATTR_CONFIG_LAST: last config
  * @QCA_WLAN_VENDOR_ATTR_CONFIG_MAX: max config
  */
@@ -2381,6 +2383,8 @@ enum qca_wlan_vendor_config {
 	* not specified, the configurations are attributed to the respective
 	* wiphy. */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_IFINDEX,
+	/* Unsigned 8-bit, for setting qpower dynamically */
+	QCA_WLAN_VENDOR_ATTR_CONFIG_QPOWER = 25,
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_LAST,
 	QCA_WLAN_VENDOR_ATTR_CONFIG_MAX =

@@ -96,7 +96,7 @@ static inline void sme_set_pno_channel_prediction(void *request_buf,
 {}
 #endif
 
-QDF_STATUS sme_is_auto_ps_timer_running(tHalHandle hal_ctx,
+bool sme_is_auto_ps_timer_running(tHalHandle hal_ctx,
 		uint32_t session_id);
 
 #endif /* #if !defined(__SME_POWER_SAVE_API_H) */

@@ -970,6 +970,29 @@ void wma_disable_sta_ps_mode(tp_wma_handle wma, tpDisablePsParams ps_req)
 }
 
 /**
+ * wma_set_powersave_config() - update power save config in wma
+ * @val: new power save value
+ *
+ * This function update qpower value in wma layer
+ *
+ * Return: QDF_STATUS_SUCCESS on success, error number otherwise
+ */
+QDF_STATUS wma_set_powersave_config(uint8_t val)
+{
+	tp_wma_handle wma_handle;
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!wma_handle) {
+		WMA_LOGE("%s: WMA context is invald!", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+	wma_handle->powersave_mode = val;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * wma_enable_uapsd_mode() - enable uapsd mode in fw
  * @wma: wma handle
  * @ps_req: power save request

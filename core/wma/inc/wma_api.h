@@ -296,9 +296,9 @@ bool wma_is_p2p_lo_capable(void);
 QDF_STATUS wma_p2p_lo_start(struct sir_p2p_lo_start *params);
 QDF_STATUS wma_p2p_lo_stop(u_int32_t vdev_id);
 QDF_STATUS wma_get_wakelock_stats(struct sir_wake_lock_stats *wake_lock_stats);
-
 void wma_process_pdev_hw_mode_trans_ind(void *wma,
 	wmi_pdev_hw_mode_transition_event_fixed_param *fixed_param,
 	wmi_pdev_set_hw_mode_response_vdev_mac_entry *vdev_mac_entry,
 	struct sir_hw_mode_trans_ind *hw_mode_trans_ind);
+QDF_STATUS wma_set_powersave_config(uint8_t val);
 #endif
