@@ -5630,7 +5630,7 @@ int __iw_get_softap_linkspeed(struct net_device *dev,
 			hdd_notice("failed to copy data to user buffer");
 			return -EFAULT;
 		}
-		pmacAddress[MAC_ADDRESS_STR_LEN] = '\0';
+		pmacAddress[MAC_ADDRESS_STR_LEN - 1] = '\0';
 
 		if (!mac_pton(pmacAddress, macAddress.bytes)) {
 			hdd_err("String to Hex conversion Failed");
