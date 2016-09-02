@@ -5684,7 +5684,8 @@ QDF_STATUS wmi_get_buf_extscan_start_cmd(wmi_unified_t wmi_handle,
 
 		if (src_bucket->reportEvents & WMI_EXTSCAN_REPORT_EVENTS_EACH_SCAN)
 			dest_blist->notify_extscan_events =
-					WMI_EXTSCAN_BUCKET_COMPLETED_EVENT;
+					WMI_EXTSCAN_CYCLE_COMPLETED_EVENT |
+					WMI_EXTSCAN_CYCLE_STARTED_EVENT;
 
 		if (src_bucket->reportEvents &
 				WMI_EXTSCAN_REPORT_EVENTS_FULL_RESULTS) {
