@@ -50,6 +50,7 @@
 #define HTT_HTC_PKT_POOL_INIT_SIZE 100  /* enough for a large A-MPDU */
 
 QDF_STATUS(*htt_h2t_rx_ring_cfg_msg)(struct htt_pdev_t *pdev);
+QDF_STATUS(*htt_h2t_rx_ring_rfs_cfg_msg)(struct htt_pdev_t *pdev);
 
 #ifdef IPA_OFFLOAD
 A_STATUS htt_ipa_config(htt_pdev_handle pdev, A_STATUS status)
@@ -425,6 +426,7 @@ htt_attach(struct htt_pdev_t *pdev, int desc_pool_size)
 					- HTT_RX_IND_HL_BYTES);
 
 		htt_h2t_rx_ring_cfg_msg = htt_h2t_rx_ring_cfg_msg_hl;
+		htt_h2t_rx_ring_rfs_cfg_msg = htt_h2t_rx_ring_rfs_cfg_msg_hl;
 
 		/* initialize the txrx credit count */
 		ol_tx_target_credit_update(
@@ -497,6 +499,7 @@ htt_attach(struct htt_pdev_t *pdev, int desc_pool_size)
 		pdev->rx_fw_desc_offset = RX_STD_DESC_FW_MSDU_OFFSET;
 
 		htt_h2t_rx_ring_cfg_msg = htt_h2t_rx_ring_cfg_msg_ll;
+		htt_h2t_rx_ring_rfs_cfg_msg = htt_h2t_rx_ring_rfs_cfg_msg_ll;
 	}
 
 	return 0;
@@ -533,6 +536,7 @@ A_STATUS htt_attach_target(htt_pdev_handle pdev)
 	 * handshaking.
 	 */
 
+	status = htt_h2t_rx_ring_rfs_cfg_msg(pdev);
 	status = htt_h2t_rx_ring_cfg_msg(pdev);
 	status = HTT_IPA_CONFIG(pdev, status);
 

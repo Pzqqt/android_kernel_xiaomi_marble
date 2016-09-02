@@ -1781,6 +1781,11 @@ QDF_STATUS wma_open(void *cds_context,
 				   ((p_cds_contextType) cds_context)->cfg_ctx,
 				   (uint8_t) cds_cfg->ap_disable_intrabss_fwd);
 
+	/* Configure Receive flow steering */
+	ol_set_cfg_flow_steering((ol_pdev_handle)
+				 ((p_cds_contextType)cds_context)->cfg_ctx,
+				 cds_cfg->flow_steering_enabled);
+
 	/* adjust the packet log enable default value based on CFG INI setting */
 	ol_set_cfg_packet_log_enabled((ol_pdev_handle)
 					((p_cds_contextType) cds_context)->

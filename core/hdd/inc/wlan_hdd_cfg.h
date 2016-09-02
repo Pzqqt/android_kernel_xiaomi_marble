@@ -2798,6 +2798,17 @@ typedef enum {
 #define CFG_LRO_ENABLED_DEFAULT        (0)
 
 /*
+ * Enable Rx traffic flow steering to enable Rx interrupts on multiple CEs based
+ * on the flows. Different CEs<==>different IRQs<==>probably different CPUs.
+ * Parallel Rx paths.
+ * 1 - enable  0 - disable
+ */
+#define CFG_FLOW_STEERING_ENABLED_NAME        "gEnableFlowSteering"
+#define CFG_FLOW_STEERING_ENABLED_MIN         (0)
+#define CFG_FLOW_STEERING_ENABLED_MAX         (1)
+#define CFG_FLOW_STEERING_ENABLED_DEFAULT     (0)
+
+/*
  * In static display use case when APPS is in stand alone power save mode enable
  * active offload mode which helps FW to filter out MC/BC data packets to avoid
  * APPS wake up and save more power.
@@ -4092,6 +4103,7 @@ struct hdd_config {
 	bool sendDeauthBeforeCon;
 	bool tso_enable;
 	bool lro_enable;
+	bool flow_steering_enable;
 	bool active_mode_offload;
 	bool bpf_packet_filter_enable;
 	uint32_t fine_time_meas_cap;

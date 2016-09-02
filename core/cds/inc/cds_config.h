@@ -95,6 +95,7 @@ enum cfg_sub_20_channel_width {
  * @tx_chain_mask_cck: Tx chain mask enabled or not
  * @self_gen_frm_pwr: Self gen from power
  * @sub_20_channel_width: Sub 20 MHz ch width, ini intersected with fw cap
+ * @flow_steering_enabled: Receive flow steering.
  * Structure for holding cds ini parameters.
  */
 
@@ -145,5 +146,6 @@ struct cds_config_info {
 	bool tx_chain_mask_cck;
 	uint16_t self_gen_frm_pwr;
 	enum cfg_sub_20_channel_width sub_20_channel_width;
+	bool flow_steering_enabled;
 };
 #endif /* !defined( __CDS_CONFIG_H ) */
