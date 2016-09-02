@@ -1029,7 +1029,7 @@ typedef enum {
 #define CFG_ENABLE_HOST_ARPOFFLOAD_NAME         "hostArpOffload"
 #define CFG_ENABLE_HOST_ARPOFFLOAD_MIN          (0)
 #define CFG_ENABLE_HOST_ARPOFFLOAD_MAX          (1)
-#define CFG_ENABLE_HOST_ARPOFFLOAD_DEFAULT      (0)
+#define CFG_ENABLE_HOST_ARPOFFLOAD_DEFAULT      (1)
 
 #define CFG_ENABLE_HOST_SSDP_NAME              "ssdp"
 #define CFG_ENABLE_HOST_SSDP_MIN               (0)
@@ -1061,7 +1061,7 @@ typedef enum {
 #define CFG_ENABLE_HOST_NSOFFLOAD_NAME         "hostNSOffload"
 #define CFG_ENABLE_HOST_NSOFFLOAD_MIN          (0)
 #define CFG_ENABLE_HOST_NSOFFLOAD_MAX          (1)
-#define CFG_ENABLE_HOST_NSOFFLOAD_DEFAULT      (0)
+#define CFG_ENABLE_HOST_NSOFFLOAD_DEFAULT      (1)
 
 #define CFG_BAND_CAPABILITY_NAME          "BandCapability"
 #define CFG_BAND_CAPABILITY_MIN           (0)
