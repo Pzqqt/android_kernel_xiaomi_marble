@@ -1100,12 +1100,12 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 
 		/* Frag Desc Pointer */
 		/* 64bits descriptor, Low 32bits */
-		*header_ptr = (uint32_t) (buffer_paddr +
-						IPA_UC_TX_BUF_FRAG_DESC_OFFSET);
+		*header_ptr = qdf_get_lower_32_bits(buffer_paddr +
+					IPA_UC_TX_BUF_FRAG_DESC_OFFSET);
 		header_ptr++;
 
 		/* 64bits descriptor, high 32bits */
-		*header_ptr = (buffer_paddr >> IPA_UC_TX_BUF_PADDR_HI_OFFSET) &
+		*header_ptr = qdf_get_upper_32_bits(buffer_paddr) &
 			IPA_UC_TX_BUF_PADDR_HI_MASK;
 		header_ptr++;
 
