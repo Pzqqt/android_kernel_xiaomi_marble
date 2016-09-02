@@ -1274,7 +1274,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		goto stopbss;
 
 	case eSAP_DFS_CAC_START:
-		wlan_hdd_send_svc_nlink_msg(WLAN_SVC_DFS_CAC_START_IND,
+		wlan_hdd_send_svc_nlink_msg(pHddCtx->radio_index,
+					WLAN_SVC_DFS_CAC_START_IND,
 					    &dfs_info,
 					    sizeof(struct wlan_dfs_info));
 		pHddCtx->dev_dfs_cac_status = DFS_CAC_IN_PROGRESS;
@@ -1306,7 +1307,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		}
 		break;
 	case eSAP_DFS_CAC_END:
-		wlan_hdd_send_svc_nlink_msg(WLAN_SVC_DFS_CAC_END_IND,
+		wlan_hdd_send_svc_nlink_msg(pHddCtx->radio_index,
+					WLAN_SVC_DFS_CAC_END_IND,
 					    &dfs_info,
 					    sizeof(struct wlan_dfs_info));
 		pHddApCtx->dfs_cac_block_tx = false;
@@ -1320,7 +1322,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		}
 		break;
 	case eSAP_DFS_RADAR_DETECT:
-		wlan_hdd_send_svc_nlink_msg(WLAN_SVC_DFS_RADAR_DETECT_IND,
+		wlan_hdd_send_svc_nlink_msg(pHddCtx->radio_index,
+					WLAN_SVC_DFS_RADAR_DETECT_IND,
 					    &dfs_info,
 					    sizeof(struct wlan_dfs_info));
 		pHddCtx->dev_dfs_cac_status = DFS_CAC_NEVER_DONE;
@@ -1358,7 +1361,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		break;
 	case eSAP_DFS_NO_AVAILABLE_CHANNEL:
 		wlan_hdd_send_svc_nlink_msg
-			(WLAN_SVC_DFS_ALL_CHANNEL_UNAVAIL_IND, &dfs_info,
+			(pHddCtx->radio_index,
+			WLAN_SVC_DFS_ALL_CHANNEL_UNAVAIL_IND, &dfs_info,
 			sizeof(struct wlan_dfs_info));
 		break;
 

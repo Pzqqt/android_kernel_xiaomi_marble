@@ -5064,7 +5064,8 @@ void hdd_pld_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 		 * dynamic delayed ack mechanism across the system
 		 */
 		if (hdd_ctx->config->enable_tcp_delack)
-			wlan_hdd_send_svc_nlink_msg(WLAN_SVC_WLAN_TP_IND,
+			wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
+					WLAN_SVC_WLAN_TP_IND,
 					    &next_rx_level,
 					    sizeof(next_rx_level));
 	}
@@ -5081,7 +5082,8 @@ void hdd_pld_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 		hdd_debug("change TCP TX trigger level %d, average_tx: %llu",
 				next_tx_level, temp_tx);
 		hdd_ctx->cur_tx_level = next_tx_level;
-		wlan_hdd_send_svc_nlink_msg(WLAN_SVC_WLAN_TP_TX_IND,
+		wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
+				WLAN_SVC_WLAN_TP_TX_IND,
 				&next_tx_level,
 				sizeof(next_tx_level));
 	}
@@ -5858,7 +5860,8 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 		} else {
 			hdd_info("sending coex indication");
 			wlan_hdd_send_svc_nlink_msg
-				(WLAN_SVC_LTE_COEX_IND, NULL, 0);
+				(hdd_ctxt->radio_index,
+				WLAN_SVC_LTE_COEX_IND, NULL, 0);
 			hdd_restart_sap(adapter_temp, restart_chan);
 		}
 
@@ -8037,13 +8040,15 @@ void wlan_hdd_enable_roaming(hdd_adapter_t *adapter)
 	}
 }
 
-void wlan_hdd_send_svc_nlink_msg(int type, void *data, int len)
+void wlan_hdd_send_svc_nlink_msg(int radio, int type, void *data, int len)
 {
 	struct sk_buff *skb;
 	struct nlmsghdr *nlh;
 	tAniMsgHdr *ani_hdr;
 	void *nl_data = NULL;
 	int flags = GFP_KERNEL;
+	struct radio_index_tlv *radio_info;
+	int tlv_len;
 
 	if (in_interrupt() || irqs_disabled() || in_atomic())
 		flags = GFP_ATOMIC;
@@ -8096,6 +8101,29 @@ void wlan_hdd_send_svc_nlink_msg(int type, void *data, int len)
 		return;
 	}
 
+	/*
+	 * Add radio index at the end of the svc event in TLV format to maintain
+	 * the backward compatibility with userspace applications.
+	*/
+
+	tlv_len = 0;
+
+	if ((sizeof(*ani_hdr) + len + sizeof(struct radio_index_tlv))
+		< WLAN_NL_MAX_PAYLOAD) {
+		radio_info  = (struct radio_index_tlv *)((char *) ani_hdr +
+		sizeof(*ani_hdr) + len);
+		radio_info->type = (unsigned short) WLAN_SVC_WLAN_RADIO_INDEX;
+		radio_info->length = (unsigned short) sizeof(radio_info->radio);
+		radio_info->radio = radio;
+		tlv_len = sizeof(*radio_info);
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
+			"Added radio index tlv - radio index %d",
+			radio_info->radio);
+	}
+
+	nlh->nlmsg_len += tlv_len;
+	skb_put(skb, NLMSG_SPACE(sizeof(tAniMsgHdr) + len + tlv_len));
+
 	nl_srv_bcast(skb);
 
 	return;
@@ -8104,8 +8132,14 @@ void wlan_hdd_send_svc_nlink_msg(int type, void *data, int len)
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 void wlan_hdd_auto_shutdown_cb(void)
 {
+	hdd_context_t *hdd_ctx = cdf_get_global_context();
+
+	if (!hdd_ctx)
+		return;
+
 	hdd_err("Wlan Idle. Sending Shutdown event..");
-	wlan_hdd_send_svc_nlink_msg(WLAN_SVC_WLAN_AUTO_SHUTDOWN_IND, NULL, 0);
+	wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
+			WLAN_SVC_WLAN_AUTO_SHUTDOWN_IND, NULL, 0);
 }
 
 void wlan_hdd_auto_shutdown_enable(hdd_context_t *hdd_ctx, bool enable)
@@ -8128,7 +8162,7 @@ void wlan_hdd_auto_shutdown_enable(hdd_context_t *hdd_ctx, bool enable)
 							QDF_STATUS_SUCCESS) {
 			hdd_err("Failed to stop wlan auto shutdown timer");
 		}
-		wlan_hdd_send_svc_nlink_msg(
+		wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
 			WLAN_SVC_WLAN_AUTO_SHUTDOWN_CANCEL_IND, NULL, 0);
 		return;
 	}

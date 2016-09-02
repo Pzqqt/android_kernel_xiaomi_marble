@@ -1364,7 +1364,8 @@ void hdd_send_rps_ind(hdd_adapter_t *adapter)
 
 	strlcpy(rps_data.ifname, adapter->dev->name,
 			sizeof(rps_data.ifname));
-	wlan_hdd_send_svc_nlink_msg(WLAN_SVC_RPS_ENABLE_IND,
+	wlan_hdd_send_svc_nlink_msg(hdd_ctxt->radio_index,
+				WLAN_SVC_RPS_ENABLE_IND,
 				&rps_data, sizeof(rps_data));
 
 err:

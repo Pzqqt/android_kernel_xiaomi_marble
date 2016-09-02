@@ -166,6 +166,10 @@ void wlan_hdd_send_status_pkg(hdd_adapter_t *adapter,
 {
 	int ret = 0;
 	struct wlan_status_data data;
+	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	if (!hdd_ctx)
+		return;
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam())
 		return;
@@ -176,7 +180,8 @@ void wlan_hdd_send_status_pkg(hdd_adapter_t *adapter,
 						    is_on, is_connected);
 
 	if (!ret)
-		wlan_hdd_send_svc_nlink_msg(WLAN_SVC_WLAN_STATUS_IND,
+		wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
+					WLAN_SVC_WLAN_STATUS_IND,
 					    &data, sizeof(data));
 }
 
@@ -196,6 +201,10 @@ void wlan_hdd_send_version_pkg(uint32_t fw_version,
 {
 	int ret = 0;
 	struct wlan_version_data data;
+	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	if (!hdd_ctx)
+		return;
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam())
 		return;
@@ -204,7 +213,8 @@ void wlan_hdd_send_version_pkg(uint32_t fw_version,
 	ret = wlan_hdd_gen_wlan_version_pack(&data, fw_version, chip_id,
 					     chip_name);
 	if (!ret)
-		wlan_hdd_send_svc_nlink_msg(WLAN_SVC_WLAN_VERSION_IND,
+		wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
+					WLAN_SVC_WLAN_VERSION_IND,
 					    &data, sizeof(data));
 }
 

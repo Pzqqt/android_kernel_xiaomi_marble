@@ -84,6 +84,7 @@
 #define WLAN_SVC_RPS_ENABLE_IND     0x10A
 #define WLAN_SVC_WLAN_TP_TX_IND     0x10B
 #define WLAN_SVC_WLAN_AUTO_SHUTDOWN_CANCEL_IND 0x10C
+#define WLAN_SVC_WLAN_RADIO_INDEX 0x10D
 #define WLAN_SVC_MAX_SSID_LEN    32
 #define WLAN_SVC_MAX_BSSID_LEN   6
 #define WLAN_SVC_MAX_STR_LEN     16
@@ -116,6 +117,12 @@ typedef struct sAniNlMsg {
 	int radio;              /* unit number of the radio */
 	tAniHdr wmsg;           /* Airgo Message Header */
 } tAniNlHdr;
+
+struct radio_index_tlv {
+	unsigned short type;
+	unsigned short length;
+	int radio;
+};
 
 struct wlan_status_data {
 	uint8_t lpss_support;

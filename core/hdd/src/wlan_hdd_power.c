@@ -1492,7 +1492,8 @@ QDF_STATUS hdd_wlan_re_init(void)
 	pHddCtx->btCoexModeSet = false;
 	hdd_ssr_timer_del();
 
-	wlan_hdd_send_svc_nlink_msg(WLAN_SVC_FW_CRASHED_IND, NULL, 0);
+	wlan_hdd_send_svc_nlink_msg(pHddCtx->radio_index,
+				WLAN_SVC_FW_CRASHED_IND, NULL, 0);
 
 	/* Allow the phone to go to sleep */
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_REINIT);
