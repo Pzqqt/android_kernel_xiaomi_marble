@@ -139,4 +139,20 @@ void
 ol_reset_lro_stats(ol_txrx_vdev_handle vdev);
 #endif /* HOST_SW_LRO_ENABLE */
 
+
+/**
+ * @brief Parse the stats header and get the payload from the message.
+ *
+ * @param pdev - the physical device object
+ * @param msg_word - stats buffer recieved from FW
+ * @param msg_len - length of the message
+ * @param type - place holder for parsed message type
+ * @param status - place holder for parsed message status
+ * @return - pointer to received stat payload
+ */
+
+#if ATH_BAND_STEERING
+uint32_t *ol_txrx_get_en_stats_base(ol_txrx_pdev_handle txrx_pdev, uint32_t *msg_word,
+    uint32_t msg_len, enum htt_t2h_en_stats_type *type,  enum htt_t2h_en_stats_status *status);
 #endif
+#endif /* _CDP_TXRX_HOST_STATS_H_ */
