@@ -65,11 +65,22 @@ int pld_sdio_get_fw_files_for_target(struct pld_fw_files *pfw_files,
 {
 	return 0;
 }
+static inline uint8_t *pld_sdio_get_wlan_mac_address(struct device *dev,
+						     uint32_t *num)
+{
+	*num = 0;
+	return NULL;
+}
 #else
 int pld_sdio_register_driver(void);
 void pld_sdio_unregister_driver(void);
 int pld_sdio_get_fw_files_for_target(struct pld_fw_files *pfw_files,
 				     u32 target_type, u32 target_version);
+static inline uint8_t *pld_sdio_get_wlan_mac_address(struct device *dev,
+						     uint32_t *num)
+{
+	return cnss_common_get_wlan_mac_address(dev, num);
+}
 #endif
 
 #endif

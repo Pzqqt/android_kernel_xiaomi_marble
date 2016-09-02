@@ -7169,7 +7169,6 @@ QDF_STATUS hdd_register_for_sap_restart_with_channel_switch(void)
 }
 #endif
 
-#ifdef CONFIG_CNSS
 /**
  * hdd_get_cnss_wlan_mac_buff() - API to query platform driver for MAC address
  * @dev: Device Pointer
@@ -7179,15 +7178,8 @@ QDF_STATUS hdd_register_for_sap_restart_with_channel_switch(void)
  */
 static uint8_t *hdd_get_cnss_wlan_mac_buff(struct device *dev, uint32_t *num)
 {
-	return cnss_common_get_wlan_mac_address(dev, num);
+	return pld_common_get_wlan_mac_address(dev, num);
 }
-#else
-static uint8_t *hdd_get_cnss_wlan_mac_buff(struct device *dev, uint32_t *num)
-{
-	*num = 0;
-	return NULL;
-}
-#endif
 
 /**
  * hdd_populate_random_mac_addr() - API to populate random mac addresses

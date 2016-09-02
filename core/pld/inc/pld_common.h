@@ -379,4 +379,5 @@ void *pld_smmu_get_mapping(struct device *dev);
 int pld_smmu_map(struct device *dev, phys_addr_t paddr,
 		 uint32_t *iova_addr, size_t size);
 unsigned int pld_socinfo_get_serial_number(struct device *dev);
+uint8_t *pld_common_get_wlan_mac_address(struct device *dev, uint32_t *num);
 #endif
