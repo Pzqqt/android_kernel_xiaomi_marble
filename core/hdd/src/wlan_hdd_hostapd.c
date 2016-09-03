@@ -6035,7 +6035,7 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		QCSAP_IOCTL_STOPBSS, IW_PRIV_TYPE_BYTE | IW_PRIV_SIZE_FIXED, 0,
 		"stopbss"
 	}, {
-		QCSAP_IOCTL_VERSION, 0, IW_PRIV_TYPE_CHAR | QCSAP_MAX_WSC_IE,
+		QCSAP_IOCTL_VERSION, 0, IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
 		"version"
 	}, {
 		QCSAP_IOCTL_GET_STA_INFO, 0,
