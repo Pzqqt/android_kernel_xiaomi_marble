@@ -691,14 +691,22 @@ void lim_deactivate_and_change_timer(tpAniSirGlobal pMac, uint32_t timerId)
 		val =
 			SYS_MS_TO_TICKS(pMac->lim.gpLimMlmScanReq->minChannelTime) /
 			2;
-		if (tx_timer_change
-			    (&pMac->lim.limTimers.gLimPeriodicProbeReqTimer, val,
-			    0) != TX_SUCCESS) {
-			/* Could not change min channel timer. */
-			/* Log error */
-			lim_log(pMac, LOGP,
+		if (val) {
+			if (tx_timer_change(
+			    &pMac->lim.limTimers.gLimPeriodicProbeReqTimer,
+			    val, 0) != TX_SUCCESS) {
+				/* Could not change min channel timer. */
+				/* Log error */
+				lim_log(pMac, LOGP,
 				FL("Unable to change periodic timer"));
-		}
+			}
+		} else
+			lim_log(pMac, LOGE,
+			       FL("Do not change gLimPeriodicProbeReqTimer values,"
+			       "value = %d minchannel time = %d"
+			       "maxchannel time = %d"), val,
+			       pMac->lim.gpLimMlmScanReq->minChannelTime,
+			       pMac->lim.gpLimMlmScanReq->maxChannelTime);
 
 		break;
 
