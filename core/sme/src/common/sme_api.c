@@ -10165,12 +10165,15 @@ QDF_STATUS sme_update_fw_tdls_state(tHalHandle hHal, void *psmeTdlsParams,
 	tpAniSirGlobal pMac = NULL;
 	cds_msg_t cds_message;
 
+	pMac = PMAC_STRUCT(hHal);
+	if (NULL == pMac) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			FL("pMac is Null"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	/* only acquire sme global lock before state update if asked to */
 	if (useSmeLock) {
-		pMac = PMAC_STRUCT(hHal);
-		if (NULL == pMac)
-			return QDF_STATUS_E_FAILURE;
-
 		status = sme_acquire_global_lock(&pMac->sme);
 		if (QDF_STATUS_SUCCESS != status)
 			return status;
