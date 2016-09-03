@@ -5263,6 +5263,12 @@ QDF_STATUS  wma_ipa_offload_enable_disable(tp_wma_handle wma,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (cds_is_driver_recovering()) {
+		WMA_LOGE("%s Recovery in Progress. State: 0x%x Ignore!!!",
+			__func__, cds_get_driver_state());
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	if (ipa_offload->offload_type > STA_RX_DATA_OFFLOAD) {
 		return QDF_STATUS_E_INVAL;
 	}
