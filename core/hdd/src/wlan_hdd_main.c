@@ -7740,7 +7740,8 @@ int hdd_register_cb(hdd_context_t *hdd_ctx)
 		ret = -EINVAL;
 		return ret;
 	}
-
+	sme_register_mgmt_frame_ind_callback(hdd_ctx->hHal,
+					     hdd_indicate_mgmt_frame);
 	sme_set_tsfcb(hdd_ctx->hHal, hdd_get_tsf_cb, hdd_ctx);
 	sme_nan_register_callback(hdd_ctx->hHal,
 				  wlan_hdd_cfg80211_nan_callback);
