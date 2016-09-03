@@ -241,6 +241,10 @@
 #define HDD_MIN_TX_POWER (-100) /* minimum tx power */
 #define HDD_MAX_TX_POWER (+100) /* maximum tx power */
 
+/* FW expects burst duration in 1020*ms */
+#define SIFS_BURST_DUR_MULTIPLIER 1020
+#define SIFS_BURST_DUR_MAX        12240
+
 /* If IPA UC data path is enabled, target should reserve extra tx descriptors
  * for IPA data path.
  * Then host data path should allow less TX packet pumping in case

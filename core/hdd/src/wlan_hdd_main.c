@@ -7410,6 +7410,7 @@ int hdd_wlan_startup(struct device *dev)
 	int ret;
 	void *hif_sc;
 	bool rtnl_held;
+	int set_value;
 
 	ENTER();
 
@@ -7523,6 +7524,15 @@ int hdd_wlan_startup(struct device *dev)
 
 	if (hdd_ctx->config->fIsImpsEnabled)
 		hdd_set_idle_ps_config(hdd_ctx, true);
+
+	if (hdd_ctx->config->sifs_burst_duration) {
+		set_value = (SIFS_BURST_DUR_MULTIPLIER) *
+			hdd_ctx->config->sifs_burst_duration;
+
+		if ((set_value > 0) && (set_value <= SIFS_BURST_DUR_MAX))
+			wma_cli_set_command(0, (int)WMI_PDEV_PARAM_BURST_DUR,
+					    set_value, PDEV_CMD);
+	}
 
 	qdf_mc_timer_start(&hdd_ctx->iface_change_timer,
 			   hdd_ctx->config->iface_change_wait_time * 5000);
