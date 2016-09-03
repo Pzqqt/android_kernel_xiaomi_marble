@@ -77,7 +77,7 @@
 #define COUNTRY_ERD_FLAG        0x8000
 #define WORLDWIDE_ROAMING_FLAG  0x4000
 #define MIN_TX_PWR_CAP    8
-#define MAX_TX_PWR_CAP    22
+#define MAX_TX_PWR_CAP    30
 
 enum country_code {
 	CTRY_AFGHANISTAN = 4,
