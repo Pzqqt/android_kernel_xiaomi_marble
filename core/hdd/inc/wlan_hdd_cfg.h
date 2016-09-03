@@ -3406,6 +3406,18 @@ enum dot11p_mode {
 #define CFG_ADAPTIVE_EXTSCAN_DWELL_MODE_DEFAULT  (0)
 
 /*
+ * This parameter will help to debug ssr reinit failure issues
+ * by raising vos bug so dumps can be collected. If OEM
+ * wants to avoid this crash, just disable this parameter.
+ * wlan driver will only recover after driver unload and load.
+ * Default: Enable
+ */
+#define CFG_BUG_ON_REINIT_FAILURE_NAME     "g_bug_on_reinit_failure"
+#define CFG_BUG_ON_REINIT_FAILURE_MIN      (0)
+#define CFG_BUG_ON_REINIT_FAILURE_MAX      (1)
+#define CFG_BUG_ON_REINIT_FAILURE_DEFAULT  (1)
+
+/*
  * This parameter will set the algo used in dwell time optimization during
  * pno scan. see enum wmi_dwelltime_adaptive_mode.
  * Acceptable values for this:
@@ -4178,6 +4190,7 @@ struct hdd_config {
 	uint8_t adapt_dwell_passive_mon_intval;
 	uint8_t adapt_dwell_wifi_act_threshold;
 	bool bug_report_for_no_scan_results;
+	bool bug_on_reinit_failure;
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 	bool enable_nan_datapath;
 	uint8_t nan_datapath_ndi_channel;

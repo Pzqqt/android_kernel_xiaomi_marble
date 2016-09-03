@@ -3965,6 +3965,14 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_INDOOR_CHANNEL_SUPPORT_MIN,
 		     CFG_INDOOR_CHANNEL_SUPPORT_MAX),
 
+	REG_VARIABLE(CFG_BUG_ON_REINIT_FAILURE_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, bug_on_reinit_failure,
+		     VAR_FLAGS_OPTIONAL |
+		     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_BUG_ON_REINIT_FAILURE_DEFAULT,
+		     CFG_BUG_ON_REINIT_FAILURE_MIN,
+		     CFG_BUG_ON_REINIT_FAILURE_MAX),
+
 	REG_VARIABLE(CFG_INTERFACE_CHANGE_WAIT_NAME, WLAN_PARAM_Integer,
 			struct hdd_config, iface_change_wait_time,
 			VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
@@ -5590,6 +5598,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_info("Name = [%s] Value = [%u]",
 		CFG_IDLE_TIME_NAME,
 		pHddCtx->config->idle_time_conc);
+	hdd_info("Name = [%s] Value = [%d]",
+		CFG_BUG_ON_REINIT_FAILURE_NAME,
+		pHddCtx->config->bug_on_reinit_failure);
 	hdd_info("Name = [%s] Value = [%u]",
 		CFG_INTERFACE_CHANGE_WAIT_NAME,
 		pHddCtx->config->iface_change_wait_time);

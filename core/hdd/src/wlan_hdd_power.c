@@ -1495,6 +1495,7 @@ QDF_STATUS hdd_wlan_re_init(void)
 	hdd_adapter_t *pAdapter;
 	QDF_STATUS qdf_status;
 	int ret;
+	bool bug_on_reinit_failure = CFG_BUG_ON_REINIT_FAILURE_DEFAULT;
 
 	hdd_prevent_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_REINIT);
 
@@ -1511,6 +1512,7 @@ QDF_STATUS hdd_wlan_re_init(void)
 		hdd_alert("HDD context is Null");
 		goto err_re_init;
 	}
+	bug_on_reinit_failure = pHddCtx->config->bug_on_reinit_failure;
 
 	/* The driver should always be initialized in STA mode after SSR */
 	hdd_set_conparam(0);
@@ -1591,7 +1593,8 @@ err_wiphy_unregister:
 err_re_init:
 	/* Allow the phone to go to sleep */
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_REINIT);
-	QDF_BUG(0);
+	if (bug_on_reinit_failure)
+		QDF_BUG(0);
 	return -EPERM;
 
 success:
