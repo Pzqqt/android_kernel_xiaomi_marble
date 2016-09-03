@@ -5008,6 +5008,12 @@ static void hdd_bus_bw_compute_cbk(void *priv)
 		if (adapterNode->pAdapter == NULL)
 			continue;
 		adapter = adapterNode->pAdapter;
+		/*
+		 * Validate magic so we don't end up accessing
+		 * an invalid adapter.
+		 */
+		if (adapter->magic != WLAN_HDD_ADAPTER_MAGIC)
+			continue;
 
 		if ((adapter->device_mode == QDF_STA_MODE ||
 		     adapter->device_mode == QDF_P2P_CLIENT_MODE) &&
