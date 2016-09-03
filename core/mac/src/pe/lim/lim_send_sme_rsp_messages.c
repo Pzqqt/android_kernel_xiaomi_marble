@@ -58,6 +58,7 @@
 #include "cds_regdomain.h"
 #include "lim_send_messages.h"
 #include "nan_datapath.h"
+#include "lim_assoc_utils.h"
 
 static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 	tpPESession session_entry, tSirResultCodes result_code,
@@ -843,13 +844,51 @@ lim_send_sme_disassoc_ntf(tpAniSirGlobal pMac,
 	uint8_t *pBuf;
 	tSirSmeDisassocRsp *pSirSmeDisassocRsp;
 	tSirSmeDisassocInd *pSirSmeDisassocInd;
-	uint32_t *pMsg;
+	uint32_t *pMsg = NULL;
 	bool failure = false;
+	tpPESession session = NULL;
+	uint16_t i, assoc_id;
+	tpDphHashNode sta_ds = NULL;
 
 	lim_log(pMac, LOG1, FL("Disassoc Ntf with trigger : %d reasonCode: %d"),
 		disassocTrigger, reasonCode);
 
 	switch (disassocTrigger) {
+	case eLIM_DUPLICATE_ENTRY:
+		/*
+		 * Duplicate entry is removed at LIM.
+		 * Initiate new entry for other session
+		 */
+		lim_log(pMac, LOG1,
+			FL("Rcvd eLIM_DUPLICATE_ENTRY for " MAC_ADDRESS_STR),
+			MAC_ADDR_ARRAY(peerMacAddr));
+
+		for (i = 0; i < pMac->lim.maxBssId; i++) {
+			if ((&pMac->lim.gpSession[i] != NULL) &&
+					(pMac->lim.gpSession[i].valid) &&
+					(pMac->lim.gpSession[i].pePersona ==
+								QDF_SAP_MODE)) {
+				/* Find the sta ds entry in another session */
+				session = &pMac->lim.gpSession[i];
+				sta_ds = dph_lookup_hash_entry(pMac,
+						peerMacAddr, &assoc_id,
+						&session->dph.dphHashTable);
+			}
+		}
+		if (sta_ds
+#ifdef WLAN_FEATURE_11W
+			&& (!sta_ds->rmfEnabled)
+#endif
+		) {
+			if (lim_add_sta(pMac, sta_ds, false, session) !=
+					eSIR_SUCCESS)
+					lim_log(pMac, LOGE,
+					FL("could not Add STA with assocId=%d"),
+					sta_ds->assocId);
+		}
+		failure = true;
+		break;
+
 	case eLIM_PEER_ENTITY_DISASSOC:
 		if (reasonCode != eSIR_SME_STA_NOT_ASSOCIATED) {
 			failure = true;

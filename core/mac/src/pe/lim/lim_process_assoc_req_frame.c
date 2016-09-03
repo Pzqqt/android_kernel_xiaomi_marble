@@ -144,15 +144,16 @@ static void lim_convert_supported_channels(tpAniSirGlobal mac_ctx,
  * will be sent on that session and the STA deletion will happen. After this,
  * the ASSOC request will be processed
  *
- * Return: void
+ * Return: True if duplicate entry found; FALSE otherwise.
  */
-void lim_check_sta_in_pe_entries(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
+static bool lim_check_sta_in_pe_entries(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 				 uint16_t sessionid)
 {
 	uint8_t i;
 	uint16_t assoc_id = 0;
 	tpDphHashNode sta_ds = NULL;
 	tpPESession session = NULL;
+	bool dup_entry = false;
 
 	for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
 		if ((&mac_ctx->lim.gpSession[i] != NULL) &&
@@ -179,11 +180,18 @@ void lim_check_sta_in_pe_entries(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 				 * msg to SME after delete sta which will update
 				 * the userspace with disconnect
 				 */
-				lim_cleanup_rx_path(mac_ctx, sta_ds, session);
+				sta_ds->mlmStaContext.cleanupTrigger =
+							eLIM_DUPLICATE_ENTRY;
+				sta_ds->mlmStaContext.disassocReason =
+				eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON;
+				lim_send_sme_disassoc_ind(mac_ctx, sta_ds,
+					session);
+				dup_entry = true;
 				break;
 			}
 		}
 	}
+	return dup_entry;
 }
 
 /**
@@ -1718,6 +1726,7 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	tSirMacCapabilityInfo local_cap;
 	tpDphHashNode sta_ds = NULL;
 	tpSirAssocReq assoc_req, tmp_assoc_req;
+	bool dup_entry = false;
 
 	lim_get_phy_mode(mac_ctx, &phy_mode, session);
 
@@ -1781,7 +1790,8 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		return;
 	}
 
-	lim_check_sta_in_pe_entries(mac_ctx, hdr, session->peSessionId);
+	dup_entry = lim_check_sta_in_pe_entries(mac_ctx, hdr,
+						session->peSessionId);
 
 	/* Get pointer to Re/Association Request frame body */
 	frm_body = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
@@ -1963,9 +1973,12 @@ sendIndToSme:
 		session->parsedAssocReq[sta_ds->assocId] = assoc_req;
 	assoc_req_copied = true;
 
-	if (false == lim_update_sta_ctx(mac_ctx, session, assoc_req,
+	/* If it is duplicate entry wait till the peer is deleted */
+	if (dup_entry != true) {
+		if (false == lim_update_sta_ctx(mac_ctx, session, assoc_req,
 					sub_type, sta_ds, update_ctx))
 		goto error;
+	}
 
 	/* AddSta is sucess here */
 	if (LIM_IS_AP_ROLE(session) && IS_DOT11_MODE_HT(session->dot11mode) &&

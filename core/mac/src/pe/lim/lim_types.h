@@ -158,7 +158,8 @@ enum eLimDisassocTrigger {
 	eLIM_PEER_ENTITY_DEAUTH,
 	eLIM_LINK_MONITORING_DEAUTH,
 	eLIM_JOIN_FAILURE,
-	eLIM_REASSOC_REJECT
+	eLIM_REASSOC_REJECT,
+	eLIM_DUPLICATE_ENTRY
 };
 
 /* Reason code to determine the channel change context while sending

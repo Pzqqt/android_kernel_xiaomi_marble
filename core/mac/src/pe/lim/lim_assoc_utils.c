@@ -818,6 +818,25 @@ lim_send_del_sta_cnf(tpAniSirGlobal pMac, struct qdf_mac_addr sta_dsaddr,
 						      smetransactionId);
 		}
 
+	} else if (mlmStaContext.cleanupTrigger == eLIM_DUPLICATE_ENTRY) {
+		/**
+		 * LIM driven Disassociation.
+		 * Issue Disassoc Confirm to SME.
+		 */
+		lim_log(pMac, LOGW,
+			FL("Lim Posting DISASSOC_CNF to Sme. Trigger: %d"),
+			mlmStaContext.cleanupTrigger);
+
+		qdf_mem_copy((uint8_t *) &mlmDisassocCnf.peerMacAddr,
+			     (uint8_t *) sta_dsaddr.bytes, QDF_MAC_ADDR_SIZE);
+		mlmDisassocCnf.resultCode = statusCode;
+		mlmDisassocCnf.disassocTrigger = eLIM_DUPLICATE_ENTRY;
+		/* Update PE session Id */
+		mlmDisassocCnf.sessionId = psessionEntry->peSessionId;
+
+		lim_post_sme_message(pMac,
+				     LIM_MLM_DISASSOC_CNF,
+				     (uint32_t *) &mlmDisassocCnf);
 	}
 
 	if (NULL != psessionEntry && !LIM_IS_AP_ROLE(psessionEntry)) {
