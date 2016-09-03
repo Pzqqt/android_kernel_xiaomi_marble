@@ -1442,6 +1442,7 @@ struct hdd_context_s {
 	qdf_mc_timer_t memdump_cleanup_timer;
 	struct mutex memdump_lock;
 	bool memdump_in_progress;
+	bool memdump_init_done;
 #endif /* WLAN_FEATURE_MEMDUMP */
 
 	bool connection_in_progress;

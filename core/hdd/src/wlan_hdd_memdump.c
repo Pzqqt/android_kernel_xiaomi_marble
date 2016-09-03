@@ -565,6 +565,7 @@ int memdump_init(void)
 	}
 
 	mutex_init(&hdd_ctx->memdump_lock);
+	hdd_ctx->memdump_init_done = true;
 
 	return 0;
 }
@@ -595,6 +596,12 @@ void memdump_deinit(void)
 		return;
 	}
 
+	if (!hdd_ctx->memdump_init_done) {
+		hdd_err("MemDump not initialized");
+		return;
+	}
+	hdd_ctx->memdump_init_done = false;
+
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	if (!qdf_ctx) {
 		hdd_err("QDF context is NULL");
@@ -612,6 +619,7 @@ void memdump_deinit(void)
 		hdd_ctx->memdump_in_progress = false;
 	}
 	mutex_unlock(&hdd_ctx->memdump_lock);
+	mutex_destroy(&hdd_ctx->memdump_lock);
 
 	if (QDF_TIMER_STATE_RUNNING ==
 	  qdf_mc_timer_get_current_state(&hdd_ctx->memdump_cleanup_timer)) {
