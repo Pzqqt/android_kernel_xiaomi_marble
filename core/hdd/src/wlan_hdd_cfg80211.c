@@ -75,6 +75,8 @@
 #include <wlan_hdd_ipa.h>
 #include "wlan_logging_sock_svc.h"
 #include "sap_api.h"
+#include "csr_api.h"
+
 
 
 #ifdef FEATURE_WLAN_EXTSCAN
@@ -6910,6 +6912,137 @@ static int wlan_hdd_cfg80211_acs_dfs_mode(struct wiphy *wiphy,
 }
 
 /**
+ * wlan_hdd_get_sta_roam_dfs_mode() - get sta roam dfs mode policy
+ * @mode : cfg80211 dfs mode
+ *
+ * Return: return csr sta roam dfs mode else return NONE
+ */
+static enum sta_roam_policy_dfs_mode wlan_hdd_get_sta_roam_dfs_mode(
+		enum dfs_mode mode)
+{
+	switch (mode) {
+	case DFS_MODE_ENABLE:
+		return CSR_STA_ROAM_POLICY_DFS_ENABLED;
+		break;
+	case DFS_MODE_DISABLE:
+		return CSR_STA_ROAM_POLICY_DFS_DISABLED;
+		break;
+	case DFS_MODE_DEPRIORITIZE:
+		return CSR_STA_ROAM_POLICY_DFS_DEPRIORITIZE;
+		break;
+	default:
+		hdd_err("STA Roam policy dfs mode is NONE");
+		return  CSR_STA_ROAM_POLICY_NONE;
+	}
+}
+
+static const struct nla_policy
+wlan_hdd_set_sta_roam_config_policy[
+QCA_WLAN_VENDOR_ATTR_STA_CONNECT_ROAM_POLICY_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_STA_DFS_MODE] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_STA_SKIP_UNSAFE_CHANNEL] = {.type = NLA_U8 },
+};
+
+/**
+ * __wlan_hdd_cfg80211_sta_roam_policy() - Set params to restrict scan channels
+ * for station connection or roaming.
+ * @wiphy: Pointer to wireless phy
+ * @wdev: Pointer to wireless device
+ * @data: Pointer to data
+ * @data_len: Length of @data
+ *
+ * __wlan_hdd_cfg80211_sta_roam_policy will decide if DFS channels or unsafe
+ * channels needs to be skipped in scanning or not.
+ * If dfs_mode is disabled, driver will not scan DFS channels.
+ * If skip_unsafe_channels is set, driver will skip unsafe channels
+ * in Scanning.
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int
+__wlan_hdd_cfg80211_sta_roam_policy(struct wiphy *wiphy,
+		struct wireless_dev *wdev,
+		const void *data, int data_len)
+{
+	struct net_device *dev = wdev->netdev;
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct nlattr *tb[
+		QCA_WLAN_VENDOR_ATTR_STA_CONNECT_ROAM_POLICY_MAX + 1];
+	int ret;
+	enum sta_roam_policy_dfs_mode sta_roam_dfs_mode;
+	enum dfs_mode mode = DFS_MODE_NONE;
+	bool skip_unsafe_channels = false;
+	QDF_STATUS status;
+
+	ENTER_DEV(dev);
+
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("Command not allowed in FTM mode");
+		return -EINVAL;
+	}
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_STA_CONNECT_ROAM_POLICY_MAX,
+				data, data_len,
+				wlan_hdd_set_sta_roam_config_policy)) {
+		hdd_err("invalid attr");
+		return -EINVAL;
+	}
+	if (tb[QCA_WLAN_VENDOR_ATTR_STA_DFS_MODE])
+		mode = nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_STA_DFS_MODE]);
+	if (!IS_DFS_MODE_VALID(mode)) {
+		hdd_err("attr sta roam dfs mode policy is not valid");
+		return -EINVAL;
+	}
+
+	sta_roam_dfs_mode = wlan_hdd_get_sta_roam_dfs_mode(mode);
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_STA_SKIP_UNSAFE_CHANNEL])
+		skip_unsafe_channels = nla_get_u8(
+			tb[QCA_WLAN_VENDOR_ATTR_STA_SKIP_UNSAFE_CHANNEL]);
+
+	status = sme_update_sta_roam_policy(hdd_ctx->hHal, sta_roam_dfs_mode,
+			skip_unsafe_channels, adapter->sessionId);
+
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("sme_update_sta_roam_policy (err=%d)", status);
+		return -EINVAL;
+	}
+	return 0;
+}
+
+/**
+ * wlan_hdd_cfg80211_sta_roam_policy() - Wrapper to restrict scan channels,
+ * connection and roaming for station.
+ * @wiphy:    wiphy structure pointer
+ * @wdev:     Wireless device structure pointer
+ * @data:     Pointer to the data received
+ * @data_len: Length of @data
+ *
+ * __wlan_hdd_cfg80211_sta_roam_policy will decide if DFS channels or unsafe
+ * channels needs to be skipped in scanning or not.
+ * If dfs_mode is disabled, driver will not scan DFS channels.
+ * If skip_unsafe_channels is set, driver will skip unsafe channels
+ * in Scanning.
+ * Return: 0 on success; errno on failure
+ */
+static int wlan_hdd_cfg80211_sta_roam_policy(struct wiphy *wiphy,
+		struct wireless_dev *wdev,
+		const void *data, int data_len)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_sta_roam_policy(wiphy, wdev, data, data_len);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
+/**
  * __wlan_hdd_cfg80211_sap_configuration_set() - ask driver to restart SAP if
  * SAP is on unsafe channel.
  * @wiphy:    wiphy structure pointer
@@ -7942,6 +8075,14 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 			WIPHY_VENDOR_CMD_NEED_NETDEV |
 			WIPHY_VENDOR_CMD_NEED_RUNNING,
 		.doit = wlan_hdd_cfg80211_acs_dfs_mode
+	},
+	{
+		.info.vendor_id = QCA_NL80211_VENDOR_ID,
+		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_STA_CONNECT_ROAM_POLICY,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+			WIPHY_VENDOR_CMD_NEED_NETDEV |
+			WIPHY_VENDOR_CMD_NEED_RUNNING,
+		.doit = wlan_hdd_cfg80211_sta_roam_policy
 	},
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,

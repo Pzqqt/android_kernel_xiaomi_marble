@@ -56,6 +56,7 @@
 #include "wma.h"
 #include "cds_concurrency.h"
 #include "sme_nan_datapath.h"
+#include "pld_common.h"
 
 #define MAX_PWR_FCC_CHAN_12 8
 #define MAX_PWR_FCC_CHAN_13 2
@@ -658,6 +659,21 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 	cds_msg_t msg;
 	uint8_t i, j, social_channel[MAX_SOCIAL_CHANNELS] = { 1, 6, 11 };
 	uint8_t channel_state;
+	uint16_t unsafe_chan[NUM_CHANNELS];
+	uint16_t unsafe_chan_cnt = 0;
+	uint16_t cnt = 0;
+	uint8_t  channel;
+	bool is_unsafe_chan;
+	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+
+	if (!qdf_ctx) {
+		cds_err("qdf_ctx is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pld_get_wlan_unsafe_channel(qdf_ctx->dev, unsafe_chan,
+		    &unsafe_chan_cnt,
+		    sizeof(unsafe_chan));
 
 	if (CSR_IS_5G_BAND_ONLY(pMac)) {
 		for (i = 0; i < MAX_SOCIAL_CHANNELS; i++) {
@@ -683,17 +699,45 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 		/* Scan is not performed on DSRC channels*/
 		if (pScan->base_channels.channelList[i] >= CDS_MIN_11P_CHANNEL)
 			continue;
+		channel = pScan->base_channels.channelList[i];
 
 		channel_state =
 			cds_get_channel_state(
 				pScan->base_channels.channelList[i]);
 		if ((CHANNEL_STATE_ENABLE == channel_state) ||
 		    pMac->scan.fEnableDFSChnlScan) {
+			if ((pMac->roam.configParam.sta_roam_policy.dfs_mode ==
+				CSR_STA_ROAM_POLICY_DFS_DISABLED) &&
+				(channel_state == CHANNEL_STATE_DFS)) {
+				QDF_TRACE(QDF_MODULE_ID_SME,
+					QDF_TRACE_LEVEL_INFO,
+					FL("skip dfs channel %d"),
+					channel);
+				continue;
+			}
+			if (pMac->roam.configParam.sta_roam_policy.
+					skip_unsafe_channels &&
+					unsafe_chan_cnt) {
+				is_unsafe_chan = false;
+				for (cnt = 0; cnt < unsafe_chan_cnt; cnt++) {
+					if (unsafe_chan[cnt] == channel) {
+						is_unsafe_chan = true;
+						break;
+					}
+				}
+				if (is_unsafe_chan) {
+					QDF_TRACE(QDF_MODULE_ID_SME,
+					QDF_TRACE_LEVEL_INFO,
+					FL("ignoring unsafe channel %d"),
+					channel);
+					continue;
+				}
+			}
 			pChanList->chanParam[num_channel].chanId =
 				pScan->base_channels.channelList[i];
 			pChanList->chanParam[num_channel].pwr =
 				csr_find_channel_pwr(pScan->defaultPowerTable,
-						  pChanList->chanParam[num_channel].chanId);
+				  pChanList->chanParam[num_channel].chanId);
 
 			if (pScan->fcc_constraint) {
 				if (12 == pChanList->chanParam[num_channel].chanId) {
@@ -1756,18 +1800,56 @@ csr_fetch_ch_lst_from_received_list(tpAniSirGlobal mac_ctx,
 	uint8_t i = 0;
 	uint8_t num_channels = 0;
 	uint8_t *ch_lst = NULL;
+	uint16_t  unsafe_chan[NUM_CHANNELS];
+	uint16_t  unsafe_chan_cnt = 0;
+	uint16_t  cnt = 0;
+	bool      is_unsafe_chan;
+	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+
+	if (!qdf_ctx) {
+		cds_err("qdf_ctx is NULL");
+		return;
+	}
+	pld_get_wlan_unsafe_channel(qdf_ctx->dev, unsafe_chan,
+			&unsafe_chan_cnt,
+			sizeof(unsafe_chan));
 
 	if (curr_ch_lst_info->numOfChannels == 0)
 		return;
 
 	ch_lst = curr_ch_lst_info->ChannelList;
 	for (i = 0; i < curr_ch_lst_info->numOfChannels; i++) {
-		if (((mac_ctx->roam.configParam.allowDFSChannelRoam
-		      != CSR_ROAMING_DFS_CHANNEL_DISABLED) ||
-		     (!CDS_IS_DFS_CH(*ch_lst))) && *ch_lst) {
-			req_buf->ConnectedNetwork.ChannelCache[num_channels++] =
-				*ch_lst;
+		if ((!mac_ctx->roam.configParam.allowDFSChannelRoam ||
+		    (mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
+			 CSR_STA_ROAM_POLICY_DFS_DISABLED)) &&
+		     (CDS_IS_DFS_CH(*ch_lst))) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+				FL("ignoring dfs channel %d"), *ch_lst);
+			ch_lst++;
+			continue;
 		}
+
+		if (mac_ctx->roam.configParam.sta_roam_policy.
+				skip_unsafe_channels &&
+				unsafe_chan_cnt) {
+			is_unsafe_chan = false;
+			for (cnt = 0; cnt < unsafe_chan_cnt; cnt++) {
+				if (unsafe_chan[cnt] == *ch_lst) {
+					is_unsafe_chan = true;
+					break;
+				}
+			}
+			if (is_unsafe_chan) {
+				QDF_TRACE(QDF_MODULE_ID_SME,
+						QDF_TRACE_LEVEL_INFO,
+					FL("ignoring unsafe channel %d"),
+					*ch_lst);
+				ch_lst++;
+				continue;
+			}
+		}
+		req_buf->ConnectedNetwork.ChannelCache[num_channels++] =
+			*ch_lst;
 		ch_lst++;
 	}
 	req_buf->ConnectedNetwork.ChannelCount = num_channels;
@@ -2430,6 +2512,10 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 
 		pMac->roam.configParam.enable_fatal_event =
 			pParam->enable_fatal_event;
+		pMac->roam.configParam.sta_roam_policy.dfs_mode =
+			pParam->sta_roam_policy_params.dfs_mode;
+		pMac->roam.configParam.sta_roam_policy.skip_unsafe_channels =
+			pParam->sta_roam_policy_params.skip_unsafe_channels;
 
 	}
 	return status;
@@ -2635,6 +2721,10 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->edca_be_aifs = pMac->roam.configParam.edca_be_aifs;
 	pParam->enable_fatal_event =
 		pMac->roam.configParam.enable_fatal_event;
+	pParam->sta_roam_policy_params.dfs_mode =
+		pMac->roam.configParam.sta_roam_policy.dfs_mode;
+	pParam->sta_roam_policy_params.skip_unsafe_channels =
+		pMac->roam.configParam.sta_roam_policy.skip_unsafe_channels;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -16802,6 +16892,21 @@ csr_fetch_ch_lst_from_ini(tpAniSirGlobal mac_ctx,
 	uint8_t i = 0;
 	uint8_t num_channels = 0;
 	uint8_t *ch_lst = roam_info->cfgParams.channelInfo.ChannelList;
+	uint16_t  unsafe_chan[NUM_CHANNELS];
+	uint16_t  unsafe_chan_cnt = 0;
+	uint16_t  cnt = 0;
+	bool      is_unsafe_chan;
+	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+
+	if (!qdf_ctx) {
+		cds_err("qdf_ctx is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pld_get_wlan_unsafe_channel(qdf_ctx->dev, unsafe_chan,
+			&unsafe_chan_cnt,
+			 sizeof(unsafe_chan));
+
 	/*
 	 * The INI channels need to be filtered with respect to the current band
 	 * that is supported.
@@ -16819,15 +16924,39 @@ csr_fetch_ch_lst_from_ini(tpAniSirGlobal mac_ctx,
 		if (!csr_check_band_channel_match(band, *ch_lst))
 			continue;
 		/* Allow DFS channels only if the DFS roaming is enabled */
-		if (((mac_ctx->roam.configParam.allowDFSChannelRoam !=
-		     CSR_ROAMING_DFS_CHANNEL_DISABLED)
-		     || (!CDS_IS_DFS_CH(*ch_lst)))
-		    && csr_roam_is_channel_valid(mac_ctx, *ch_lst)
-		    && *ch_lst && (num_channels < SIR_ROAM_MAX_CHANNELS)) {
-			req_buf->ConnectedNetwork.ChannelCache[num_channels++] =
-				*ch_lst;
+		if ((!mac_ctx->roam.configParam.allowDFSChannelRoam ||
+		    (mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
+			 CSR_STA_ROAM_POLICY_DFS_DISABLED)) &&
+		     (CDS_IS_DFS_CH(*ch_lst))) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+				FL("ignoring dfs channel %d"), *ch_lst);
+			ch_lst++;
+			continue;
 		}
+
+		if (mac_ctx->roam.configParam.sta_roam_policy.
+				skip_unsafe_channels &&
+				unsafe_chan_cnt) {
+			is_unsafe_chan = false;
+			for (cnt = 0; cnt < unsafe_chan_cnt; cnt++) {
+				if (unsafe_chan[cnt] == *ch_lst) {
+					is_unsafe_chan = true;
+					break;
+				}
+			}
+			if (is_unsafe_chan) {
+				QDF_TRACE(QDF_MODULE_ID_SME,
+						QDF_TRACE_LEVEL_INFO,
+					FL("ignoring unsafe channel %d"),
+					*ch_lst);
+				ch_lst++;
+				continue;
+			}
+		}
+		req_buf->ConnectedNetwork.ChannelCache[num_channels++] =
+			*ch_lst;
 		ch_lst++;
+
 	}
 	req_buf->ConnectedNetwork.ChannelCount = num_channels;
 	req_buf->ChannelCacheType = CHANNEL_LIST_STATIC;
@@ -16857,18 +16986,56 @@ csr_fetch_ch_lst_from_occupied_lst(tpAniSirGlobal mac_ctx,
 	uint8_t num_channels = 0;
 	uint8_t *ch_lst =
 		mac_ctx->scan.occupiedChannels[session_id].channelList;
+	uint16_t  unsafe_chan[NUM_CHANNELS];
+	uint16_t  unsafe_chan_cnt = 0;
+	uint16_t  cnt = 0;
+	bool      is_unsafe_chan;
+	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+
+	if (!qdf_ctx) {
+		cds_err("qdf_ctx is NULL");
+		return;
+	}
+
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		"Num of channels before filtering=%d",
 		mac_ctx->scan.occupiedChannels[session_id].numChannels);
+	pld_get_wlan_unsafe_channel(qdf_ctx->dev, unsafe_chan,
+			&unsafe_chan_cnt,
+			 sizeof(unsafe_chan));
 	for (i = 0; i < mac_ctx->scan.occupiedChannels[session_id].numChannels;
 	     i++) {
-		if (((mac_ctx->roam.configParam.allowDFSChannelRoam !=
-		    CSR_ROAMING_DFS_CHANNEL_DISABLED)
-			|| (!CDS_IS_DFS_CH(*ch_lst)))
-			&& *ch_lst && (num_channels < SIR_ROAM_MAX_CHANNELS)) {
-			req_buf->ConnectedNetwork.ChannelCache[num_channels++] =
-				*ch_lst;
+		if ((!mac_ctx->roam.configParam.allowDFSChannelRoam ||
+		    (mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
+			 CSR_STA_ROAM_POLICY_DFS_DISABLED)) &&
+		     (CDS_IS_DFS_CH(*ch_lst))) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+				FL("ignoring dfs channel %d"), *ch_lst);
+			ch_lst++;
+			continue;
 		}
+
+		if (mac_ctx->roam.configParam.sta_roam_policy.
+				skip_unsafe_channels &&
+				unsafe_chan_cnt) {
+			is_unsafe_chan = false;
+			for (cnt = 0; cnt < unsafe_chan_cnt; cnt++) {
+				if (unsafe_chan[cnt] == *ch_lst) {
+					is_unsafe_chan = true;
+					break;
+				}
+			}
+			if (is_unsafe_chan) {
+				QDF_TRACE(QDF_MODULE_ID_SME,
+						QDF_TRACE_LEVEL_INFO,
+					FL("ignoring unsafe channel %d"),
+					*ch_lst);
+				ch_lst++;
+				continue;
+			}
+		}
+		req_buf->ConnectedNetwork.ChannelCache[num_channels++] =
+			*ch_lst;
 		if (*ch_lst)
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				"DFSRoam=%d, ChnlState=%d, Chnl=%d, num_ch=%d",
@@ -16912,6 +17079,20 @@ csr_fetch_valid_ch_lst(tpAniSirGlobal mac_ctx,
 	uint32_t host_channels = 0;
 	uint8_t *ch_lst = NULL;
 	uint8_t i = 0, num_channels = 0;
+	uint16_t  unsafe_chan[NUM_CHANNELS];
+	uint16_t  unsafe_chan_cnt = 0;
+	uint16_t  cnt = 0;
+	bool      is_unsafe_chan;
+	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+
+	if (!qdf_ctx) {
+		cds_err("qdf_ctx is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pld_get_wlan_unsafe_channel(qdf_ctx->dev, unsafe_chan,
+			&unsafe_chan_cnt,
+			sizeof(unsafe_chan));
 
 	host_channels = sizeof(mac_ctx->roam.validChannelList);
 	status = csr_get_cfg_valid_channels(mac_ctx,
@@ -16925,11 +17106,38 @@ csr_fetch_valid_ch_lst(tpAniSirGlobal mac_ctx,
 	ch_lst = mac_ctx->roam.validChannelList;
 	mac_ctx->roam.numValidChannels = host_channels;
 	for (i = 0; i < mac_ctx->roam.numValidChannels; i++) {
-		if (((mac_ctx->roam.configParam.allowDFSChannelRoam
-		      != CSR_ROAMING_DFS_CHANNEL_DISABLED) ||
-		     (!CDS_IS_DFS_CH(*ch_lst))) && *ch_lst) {
-			req_buf->ValidChannelList[num_channels++] = *ch_lst;
+		ch_lst++;
+		if ((!mac_ctx->roam.configParam.allowDFSChannelRoam ||
+		    (mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
+			 CSR_STA_ROAM_POLICY_DFS_DISABLED)) &&
+		     (CDS_IS_DFS_CH(*ch_lst))) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+				FL("ignoring dfs channel %d"), *ch_lst);
+			ch_lst++;
+			continue;
 		}
+
+		if (mac_ctx->roam.configParam.
+				sta_roam_policy.skip_unsafe_channels &&
+				unsafe_chan_cnt) {
+			is_unsafe_chan = false;
+			for (cnt = 0; cnt < unsafe_chan_cnt; cnt++) {
+				if (unsafe_chan[cnt] == *ch_lst) {
+					is_unsafe_chan = true;
+					break;
+				}
+			}
+			if (is_unsafe_chan) {
+				QDF_TRACE(QDF_MODULE_ID_SME,
+						QDF_TRACE_LEVEL_INFO,
+					FL("ignoring unsafe channel %d"),
+					*ch_lst);
+				ch_lst++;
+				continue;
+			}
+		}
+		req_buf->ConnectedNetwork.ChannelCache[num_channels++] =
+			*ch_lst;
 		ch_lst++;
 	}
 	req_buf->ValidChannelCount = num_channels;

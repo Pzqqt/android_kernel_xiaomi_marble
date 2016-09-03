@@ -53,6 +53,7 @@
 
 #include "cds_concurrency.h"
 #include "wlan_hdd_main.h"
+#include "pld_common.h"
 
 #define MIN_CHN_TIME_TO_FIND_GO 100
 #define MAX_CHN_TIME_TO_FIND_GO 100
@@ -5363,6 +5364,23 @@ static void csr_scan_copy_request_valid_channels_only(tpAniSirGlobal mac_ctx,
 {
 	uint32_t index = 0;
 	uint32_t new_index = 0;
+	uint16_t  unsafe_chan[NUM_CHANNELS];
+	uint16_t  unsafe_chan_cnt = 0;
+	uint16_t  cnt = 0;
+	bool      is_unsafe_chan;
+	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+
+	if (!qdf_ctx) {
+		cds_err("qdf_ctx is NULL");
+		return;
+	}
+	pld_get_wlan_unsafe_channel(qdf_ctx->dev, unsafe_chan,
+			&unsafe_chan_cnt,
+			sizeof(unsafe_chan));
+
+	if (mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
+			CSR_STA_ROAM_POLICY_DFS_DISABLED)
+		skip_dfs_chnl = true;
 
 	for (index = 0; index < src_req->ChannelInfo.numOfChannels; index++) {
 		/* Allow scan on valid channels only.
@@ -5394,6 +5412,27 @@ static void csr_scan_copy_request_valid_channels_only(tpAniSirGlobal mac_ctx,
 					src_req->ChannelInfo.ChannelList
 						[index]);
 				continue;
+			}
+			if (mac_ctx->roam.configParam.
+					sta_roam_policy.skip_unsafe_channels &&
+					unsafe_chan_cnt) {
+				is_unsafe_chan = false;
+				for (cnt = 0; cnt < unsafe_chan_cnt; cnt++) {
+					if (unsafe_chan[cnt] ==
+						src_req->ChannelInfo.
+						ChannelList[index]) {
+						is_unsafe_chan = true;
+						break;
+					}
+				}
+				if (is_unsafe_chan) {
+					QDF_TRACE(QDF_MODULE_ID_SME,
+						QDF_TRACE_LEVEL_INFO,
+					      FL("ignoring unsafe channel %d"),
+						src_req->ChannelInfo.
+						ChannelList[index]);
+					continue;
+				}
 			}
 
 			dst_req->ChannelInfo.ChannelList[new_index] =

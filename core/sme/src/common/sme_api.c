@@ -60,6 +60,7 @@
 #include "wma.h"
 #include "sch_api.h"
 #include "sme_nan_datapath.h"
+#include "csr_api.h"
 
 extern tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb);
 
@@ -16458,4 +16459,57 @@ void sme_get_vdev_type_nss(tHalHandle hal, enum tQDF_ADAPTER_MODE dev_mode,
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	csr_get_vdev_type_nss(mac_ctx, dev_mode, nss_2g, nss_5g);
+}
+
+/**
+ * sme_update_sta_roam_policy() - update sta roam policy for
+ * unsafe and DFS channels.
+ * @hal_handle: hal handle for getting global mac struct
+ * @dfs_mode: dfs mode which tell if dfs channel needs to be
+ * skipped or not
+ * @skip_unsafe_channels: Param to tell if driver needs to
+ * skip unsafe channels or not.
+ * @param session_id: sme_session_id
+ *
+ * sme_update_sta_roam_policy update sta rome policies to csr
+ * this function will call csrUpdateChannelList as well
+ * to include/exclude DFS channels and unsafe channels.
+ *
+ * Return: eHAL_STATUS_SUCCESS or non-zero on failure.
+ */
+QDF_STATUS sme_update_sta_roam_policy(tHalHandle hal_handle,
+		enum sta_roam_policy_dfs_mode dfs_mode,
+		bool skip_unsafe_channels,
+		uint8_t session_id)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_handle);
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tSmeConfigParams sme_config;
+
+	if (!mac_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
+				"%s: mac_ctx is null", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	qdf_mem_zero(&sme_config, sizeof(sme_config));
+	sme_get_config_param(hal_handle, &sme_config);
+
+	sme_config.csrConfig.sta_roam_policy_params.dfs_mode =
+		dfs_mode;
+	sme_config.csrConfig.sta_roam_policy_params.skip_unsafe_channels =
+		skip_unsafe_channels;
+
+	sme_update_config(hal_handle, &sme_config);
+
+	status = csr_update_channel_list(mac_ctx);
+	if (QDF_STATUS_SUCCESS != status) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			FL("failed to update the supported channel list"));
+	}
+	if (mac_ctx->roam.configParam.isRoamOffloadScanEnabled)
+		csr_roam_offload_scan(mac_ctx, session_id,
+				ROAM_SCAN_OFFLOAD_UPDATE_CFG,
+				REASON_ROAM_SCAN_STA_ROAM_POLICY_CHANGED);
+
+	return status;
 }

@@ -420,6 +420,7 @@ enum qca_nl80211_vendor_subcmds {
 	/* Tx power scaling in db subcommands */
 	QCA_NL80211_VENDOR_SUBCMD_SET_TXPOWER_SCALE_DECR_DB = 115,
 	QCA_NL80211_VENDOR_SUBCMD_ACS_POLICY = 116,
+	QCA_NL80211_VENDOR_SUBCMD_STA_CONNECT_ROAM_POLICY = 117,
 	QCA_NL80211_VENDOR_SUBCMD_SET_SAP_CONFIG  = 118,
 	QCA_NL80211_VENDOR_SUBCMD_TSF = 119,
 	QCA_NL80211_VENDOR_SUBCMD_WISA = 120,
@@ -2787,6 +2788,27 @@ enum qca_wlan_vendor_attr_acs_config {
 		QCA_WLAN_VENDOR_ATTR_ACS_DFS_AFTER_LAST - 1,
 
 };
+
+/**
+ * enum qca_wlan_vendor_attr_sta_connect_roam_policy_config -
+ *                        config params for sta roam policy
+ * @QCA_WLAN_VENDOR_ATTR_STA_CONNECT_ROAM_POLICY_INVALID: Invalid
+ * @QCA_WLAN_VENDOR_ATTR_STA_DFS_MODE: If sta should skip Dfs channels
+ * @QCA_WLAN_VENDOR_ATTR_STA_SKIP_UNSAFE_CHANNEL:
+ * If sta should skip unsafe channels or not in scanning
+ * @QCA_WLAN_VENDOR_ATTR_STA_CONNECT_ROAM_POLICY_LAST:
+ * @QCA_WLAN_VENDOR_ATTR_STA_CONNECT_ROAM_POLICY_MAX: max attribute
+ */
+enum qca_wlan_vendor_attr_sta_connect_roam_policy_config {
+	QCA_WLAN_VENDOR_ATTR_STA_CONNECT_ROAM_POLICY_INVALID = 0,
+	QCA_WLAN_VENDOR_ATTR_STA_DFS_MODE,
+	QCA_WLAN_VENDOR_ATTR_STA_SKIP_UNSAFE_CHANNEL,
+
+	QCA_WLAN_VENDOR_ATTR_STA_CONNECT_ROAM_POLICY_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_STA_CONNECT_ROAM_POLICY_MAX =
+	QCA_WLAN_VENDOR_ATTR_STA_CONNECT_ROAM_POLICY_AFTER_LAST - 1,
+};
+
 
 /**
  * enum qca_wlan_vendor_attr_sap_config - config params for sap configuration
