@@ -472,8 +472,7 @@ static void wlan_hdd_tdls_free_list(tdlsCtx_t *pHddTdlsCtx)
 	struct list_head *pos, *q;
 
 	if (NULL == pHddTdlsCtx) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  FL("pHddTdlsCtx is NULL"));
+		hdd_notice("pHddTdlsCtx is NULL");
 		return;
 	}
 	for (i = 0; i < TDLS_PEER_LIST_SIZE; i++) {
@@ -814,7 +813,7 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 
 	if (false == pHddCtx->config->fEnableTDLSImplicitTrigger) {
 		pHddCtx->tdls_mode = eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY;
-		hdd_err("TDLS Implicit trigger not enabled!");
+		hdd_notice("TDLS Implicit trigger not enabled!");
 	} else if (true == pHddCtx->config->fTDLSExternalControl) {
 		pHddCtx->tdls_mode = eTDLS_SUPPORT_EXTERNAL_CONTROL;
 	} else {
@@ -855,7 +854,7 @@ void wlan_hdd_tdls_exit(hdd_adapter_t *pAdapter)
 	}
 
 	if (!test_bit(TDLS_INIT_DONE, &pAdapter->event_flags)) {
-		hdd_err("TDLS init was not done, exit");
+		hdd_info("TDLS init was not done, exit");
 		return;
 	}
 
@@ -2371,8 +2370,7 @@ void wlan_hdd_tdls_disconnection_callback(hdd_adapter_t *pAdapter)
 	pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
 	if (NULL == pHddTdlsCtx) {
 		mutex_unlock(&pHddCtx->tdls_lock);
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  FL("pHddTdlsCtx is NULL"));
+		hdd_notice("pHddTdlsCtx is NULL");
 		return;
 	}
 	pHddTdlsCtx->discovery_sent_cnt = 0;
@@ -2500,8 +2498,7 @@ static hddTdlsPeer_t *wlan_hdd_tdls_find_progress_peer(hdd_adapter_t *pAdapter,
 	tdlsCtx_t *pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);;
 
 	if (NULL == pHddTdlsCtx) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  FL("pHddTdlsCtx is NULL"));
+		hdd_notice("pHddTdlsCtx is NULL");
 		return NULL;
 	}
 
