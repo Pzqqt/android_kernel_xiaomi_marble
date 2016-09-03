@@ -38,7 +38,7 @@
 #define DATA_RATE_11AC_MCS_MASK    0x03
 
 /* LL stats get request time out value */
-#define WLAN_WAIT_TIME_LL_STATS 5000
+#define WLAN_WAIT_TIME_LL_STATS 800
 
 /**
  * struct index_vht_data_rate_type - vht data rate type
