@@ -5736,7 +5736,11 @@ static int drv_cmd_enable_ext_wow(hdd_adapter_t *adapter,
 	/* Move pointer to ahead of ENABLEEXTWOW */
 	value = value + command_len;
 
-	sscanf(value, "%d", &set_value);
+	if (!(sscanf(value, "%d", &set_value))) {
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
+			  ("No input identified"));
+		return -EINVAL;
+	}
 
 	return hdd_enable_ext_wow_parser(adapter,
 					 adapter->sessionId,
