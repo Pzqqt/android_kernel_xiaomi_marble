@@ -4057,9 +4057,9 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 					 msecs_to_jiffies(WAIT_TIME_TDLS_MGMT));
 
 	if ((0 == rc) || (true != pAdapter->mgmtTxCompletionStatus)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Mgmt Tx Completion timed out TxCompletion %u",
-			  __func__, pAdapter->mgmtTxCompletionStatus);
+		hdd_err("%s rc %ld mgmtTxCompletionStatus %u",
+			!rc ? "Mgmt Tx Completion timed out" : "Mgmt Tx Completion failed",
+			rc, pAdapter->mgmtTxCompletionStatus);
 
 		if (cds_is_driver_recovering()) {
 			hdd_err("Recovery in Progress. State: 0x%x Ignore!!!",

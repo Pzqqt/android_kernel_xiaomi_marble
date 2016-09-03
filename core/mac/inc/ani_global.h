@@ -815,6 +815,7 @@ typedef struct sAniSirLim {
 	qdf_mutex_t lim_frame_register_lock;
 	qdf_list_t gLimMgmtFrameRegistratinQueue;
 	uint32_t mgmtFrameSessionId;
+	uint32_t tdls_frm_session_id;
 
 	tpPESession pSessionEntry;
 	uint8_t reAssocRetryAttempt;
