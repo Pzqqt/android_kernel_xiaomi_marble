@@ -1725,8 +1725,10 @@ static uint8_t sap_random_channel_sel(ptSapContext sap_ctx)
 			break;
 	} while (true);
 
-	if (target_channel)
+	if (target_channel) {
 		mac_ctx->sap.SapDfsInfo.new_chanWidth = ch_wd;
+		mac_ctx->sap.SapDfsInfo.new_ch_params.ch_width = ch_wd;
+	}
 
 	qdf_mem_free(rule_adjusted_lst);
 	qdf_mem_free(leakage_adjusted_lst);
