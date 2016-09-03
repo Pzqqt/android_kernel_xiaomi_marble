@@ -1750,6 +1750,7 @@ ol_txrx_vdev_attach(ol_txrx_pdev_handle pdev,
 		    uint8_t vdev_id, enum wlan_op_mode op_mode)
 {
 	struct ol_txrx_vdev_t *vdev;
+	QDF_STATUS qdf_status;
 
 	/* preconditions */
 	TXRX_ASSERT2(pdev);
@@ -1809,6 +1810,7 @@ ol_txrx_vdev_attach(ol_txrx_pdev_handle pdev,
 	/* Default MAX Q depth for every VDEV */
 	vdev->ll_pause.max_q_depth =
 		ol_tx_cfg_max_tx_queue_depth_ll(vdev->pdev->ctrl_pdev);
+	qdf_status = qdf_event_create(&vdev->wait_delete_comp);
 	/* add this vdev into the pdev's list */
 	TAILQ_INSERT_TAIL(&pdev->vdev_list, vdev, vdev_list_elem);
 
@@ -1986,6 +1988,7 @@ ol_txrx_vdev_detach(ol_txrx_vdev_handle vdev,
 		return;
 	}
 	qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
+	qdf_event_destroy(&vdev->wait_delete_comp);
 
 	TXRX_PRINT(TXRX_PRINT_LEVEL_INFO1,
 		   "%s: deleting vdev obj %p (%02x:%02x:%02x:%02x:%02x:%02x)\n",
@@ -2111,7 +2114,7 @@ ol_txrx_peer_attach(ol_txrx_vdev_handle vdev, uint8_t *peer_mac_addr)
 				peer_mac_addr[4], peer_mac_addr[5]);
 			if (qdf_atomic_read(&temp_peer->delete_in_progress)) {
 				vdev->wait_on_peer_id = temp_peer->local_id;
-				qdf_event_create(&vdev->wait_delete_comp);
+				qdf_event_reset(&vdev->wait_delete_comp);
 				wait_on_deletion = true;
 			} else {
 				qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
@@ -2125,10 +2128,10 @@ ol_txrx_peer_attach(ol_txrx_vdev_handle vdev, uint8_t *peer_mac_addr)
 		/* wait for peer deletion */
 		rc = qdf_wait_single_event(&vdev->wait_delete_comp,
 					   PEER_DELETION_TIMEOUT);
-		if (!rc) {
+		if (QDF_STATUS_SUCCESS != rc) {
 			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-				"timedout waiting for peer(%d) deletion\n",
-				vdev->wait_on_peer_id);
+				"error waiting for peer(%d) deletion, status %d\n",
+				vdev->wait_on_peer_id, (int) rc);
 			vdev->wait_on_peer_id = OL_TXRX_INVALID_LOCAL_PEER_ID;
 			return NULL;
 		}
