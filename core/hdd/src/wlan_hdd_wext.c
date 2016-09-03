@@ -8002,8 +8002,9 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 			       apps_args[0]);
 			return -EINVAL;
 		}
-		if (apps_args[1] > (WMA_MAX_NUM_ARGS)) {
-			hdd_err("Too Many args %d",
+		if ((apps_args[1] > (WMA_MAX_NUM_ARGS)) ||
+		    (apps_args[1] < 0)) {
+			hdd_err("Too Many/Few args %d",
 			       apps_args[1]);
 			return -EINVAL;
 		}
