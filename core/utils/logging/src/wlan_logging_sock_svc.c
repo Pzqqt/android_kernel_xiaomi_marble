@@ -147,11 +147,12 @@ static int wlan_send_sock_msg_to_app(tAniHdr *wmsg, int radio,
 	wnl = (tAniNlHdr *) nlh;
 	wnl->radio = radio;
 	memcpy(&wnl->wmsg, wmsg, wmsg_length);
-	LOGGING_TRACE(QDF_TRACE_LEVEL_INFO,
-		      "%s: Sending Msg Type [0x%X] to pid[%d]\n",
-		      __func__, be16_to_cpu(wmsg->type), pid);
 
 	err = nl_srv_ucast(skb, pid, MSG_DONTWAIT);
+	if (err)
+		LOGGING_TRACE(QDF_TRACE_LEVEL_INFO,
+			"%s: Failed sending Msg Type [0x%X] to pid[%d]\n",
+			__func__, wmsg->type, pid);
 	return err;
 }
 
