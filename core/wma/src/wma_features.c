@@ -3857,6 +3857,7 @@ QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 		WMA_LOGE("Credits:%d; Pending_Cmds: %d",
 			 wmi_get_host_credits(wma->wmi_handle),
 			 wmi_get_pending_cmds(wma->wmi_handle));
+		wmi_set_target_suspend(wma->wmi_handle, false);
 		if (!cds_is_driver_recovering()) {
 #ifdef CONFIG_CNSS
 			if (pMac->sme.enableSelfRecovery) {
@@ -3871,7 +3872,6 @@ QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 			WMA_LOGE("%s: LOGP is in progress, ignore!", __func__);
 		}
 
-		wmi_set_target_suspend(wma->wmi_handle, false);
 		return QDF_STATUS_E_FAILURE;
 	}
 
