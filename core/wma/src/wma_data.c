@@ -2739,7 +2739,8 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	}
 	is_high_latency = ol_cfg_is_high_latency(ctrl_pdev);
 
-	downld_comp_required = tx_frm_download_comp_cb && is_high_latency;
+	downld_comp_required = tx_frm_download_comp_cb && is_high_latency &&
+					tx_frm_ota_comp_cb;
 
 	/* Fill the frame index to send */
 	if (pFc->type == SIR_MAC_MGMT_FRAME) {
@@ -2893,15 +2894,6 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			/* display scheduler stats */
 			ol_txrx_display_stats(WLAN_SCHEDULER_STATS);
 		}
-	} else {
-		/*
-		 * For Low Latency Devices
-		 * Call the download complete
-		 * callback once the frame is successfully
-		 * given to txrx module
-		 */
-		tx_frm_download_comp_cb(wma_handle->mac_context, tx_frame,
-					WMA_TX_FRAME_BUFFER_NO_FREE);
 	}
 
 	return QDF_STATUS_SUCCESS;
