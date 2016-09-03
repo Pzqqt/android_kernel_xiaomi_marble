@@ -2260,7 +2260,8 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 		adapter->mc_addr_list.mc_cnt = 0;
 	} else {
 		mc_count = netdev_mc_count(dev);
-		hdd_notice("mc_count = %u", mc_count);
+		hdd_notice("mc_count : %u", mc_count);
+
 		if (mc_count > WLAN_HDD_MAX_MC_ADDR_LIST) {
 			hdd_notice("No free filter available; allow all multicast frames");
 			adapter->mc_addr_list.mc_cnt = 0;
@@ -2270,6 +2271,9 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 		adapter->mc_addr_list.mc_cnt = mc_count;
 
 		netdev_for_each_mc_addr(ha, dev) {
+			hdd_notice("ha_addr[%d] "MAC_ADDRESS_STR,
+				i, MAC_ADDR_ARRAY(ha->addr));
+
 			if (i == mc_count)
 				break;
 			/*

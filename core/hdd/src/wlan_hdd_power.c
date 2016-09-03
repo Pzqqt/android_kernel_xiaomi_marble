@@ -1076,6 +1076,9 @@ void wlan_hdd_set_mc_addr_list(hdd_adapter_t *pAdapter, uint8_t set)
 			/* Set multicast filter */
 			sme_8023_multicast_list(hHal, pAdapter->sessionId,
 						pMulticastAddrs);
+		} else {
+			hdd_info("MC address list not sent to FW, cnt: %d",
+					pAdapter->mc_addr_list.mc_cnt);
 		}
 	} else {
 		/* Need to clear only if it was previously configured */
