@@ -2737,13 +2737,16 @@ static int __iw_get_genie(struct net_device *dev,
 	status = csr_roam_get_wpa_rsn_req_ie(WLAN_HDD_GET_HAL_CTX(pAdapter),
 					     pAdapter->sessionId,
 					     &length, genIeBytes);
-	length = QDF_MIN((uint16_t) length, DOT11F_IE_RSN_MAX_LEN);
-	if (wrqu->data.length < length) {
-		hdd_notice("failed to copy data to user buffer");
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_notice("failed to get WPA-RSN IE data");
 		return -EFAULT;
 	}
-	qdf_mem_copy(extra, (void *)genIeBytes, length);
 	wrqu->data.length = length;
+	if (length > DOT11F_IE_RSN_MAX_LEN) {
+		hdd_notice("invalid buffer length length:%d", length);
+		return -E2BIG;
+	}
+	qdf_mem_copy(extra, (void *)genIeBytes, length);
 
 	hdd_notice("RSN IE of %d bytes returned",
 	       wrqu->data.length);

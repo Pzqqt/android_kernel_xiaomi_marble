@@ -5943,7 +5943,7 @@ typedef struct sDot11fIERSN {
 /* N.B. These #defines do *not* include the EID & length */
 #define DOT11F_IE_RSN_MIN_LEN (6)
 
-#define DOT11F_IE_RSN_MAX_LEN (114)
+#define DOT11F_IE_RSN_MAX_LEN (255)
 
 #ifdef __cplusplus
 extern "C" {

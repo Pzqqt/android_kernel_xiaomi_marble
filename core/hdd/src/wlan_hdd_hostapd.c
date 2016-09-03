@@ -4054,13 +4054,12 @@ int __iw_get_genie(struct net_device *dev,
 #endif
 		&length, genIeBytes);
 	if (status == QDF_STATUS_SUCCESS) {
-		length = QDF_MIN(length, DOT11F_IE_RSN_MAX_LEN);
-		if (wrqu->data.length < length ||
-		copy_to_user(wrqu->data.pointer, (void *)genIeBytes, length)) {
-			hdd_notice("failed to copy data to user buffer");
-			return -EFAULT;
-		}
 		wrqu->data.length = length;
+		if (length > DOT11F_IE_RSN_MAX_LEN) {
+			hdd_notice("invalid buffer length length:%d", length);
+			return -E2BIG;
+		}
+		qdf_mem_copy(extra, genIeBytes, length);
 		hdd_notice(" RSN IE of %d bytes returned",
 				wrqu->data.length);
 	} else {
@@ -6026,7 +6025,7 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getProfileData"
 	}, {
 		QCSAP_IOCTL_GET_STAWPAIE,
-		IW_PRIV_TYPE_BYTE | IW_PRIV_SIZE_FIXED | 1, 0,
+		0, IW_PRIV_TYPE_BYTE | DOT11F_IE_RSN_MAX_LEN,
 		"get_staWPAIE"
 	}, {
 		QCSAP_IOCTL_SETWPAIE,
