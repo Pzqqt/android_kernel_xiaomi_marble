@@ -1660,9 +1660,10 @@ wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel,
 	pMac = PMAC_STRUCT(hHal);
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-		"%s: sap chan:%d target:%d conc:%d",
+		"%s: sap chan:%d target:%d conn on 5GHz:%d",
 		__func__, sapContext->channel, targetChannel,
-		cds_concurrent_open_sessions_running());
+		cds_is_any_mode_active_on_band_along_with_session(
+					sapContext->sessionId, CDS_BAND_5));
 
 	/*
 	 * Now, validate if the passed channel is valid in the
@@ -1673,7 +1674,8 @@ wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel,
 			CHANNEL_STATE_ENABLE) ||
 		(cds_get_channel_state(targetChannel) ==
 			CHANNEL_STATE_DFS &&
-		!cds_concurrent_open_sessions_running()))) {
+		!cds_is_any_mode_active_on_band_along_with_session(
+			sapContext->sessionId, CDS_BAND_5)))) {
 		/*
 		 * validate target channel switch w.r.t various concurrency
 		 * rules set.

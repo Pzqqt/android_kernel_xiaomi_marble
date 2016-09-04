@@ -8875,6 +8875,65 @@ void cds_dump_connection_status_info(void)
 }
 
 /**
+ * cds_is_any_mode_active_on_band_along_with_session() - Check if any connection
+ * mode is active on a band along with the given session
+ * @session_id: Session along which active sessions are looked for
+ * @band: Operating frequency band of the connection
+ * CDS_BAND_24: Looks for active connection on 2.4 GHz only
+ * CDS_BAND_5: Looks for active connection on 5 GHz only
+ *
+ * Checks if any of the connection mode is active on a given frequency band
+ *
+ * Return: True if any connection is active on a given band, false otherwise
+ */
+bool cds_is_any_mode_active_on_band_along_with_session(uint8_t session_id,
+						       enum cds_band band)
+{
+	cds_context_type *cds_ctx;
+	uint32_t i;
+	bool status = false;
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		status = false;
+		goto send_status;
+	}
+
+	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
+	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
+		switch (band) {
+		case CDS_BAND_24:
+			if ((conc_connection_list[i].vdev_id != session_id) &&
+			    (conc_connection_list[i].in_use) &&
+			    (CDS_IS_CHANNEL_24GHZ(
+			    conc_connection_list[i].chan))) {
+				status = true;
+				goto release_mutex_and_send_status;
+			}
+			break;
+		case CDS_BAND_5:
+			if ((conc_connection_list[i].vdev_id != session_id) &&
+			    (conc_connection_list[i].in_use) &&
+			    (CDS_IS_CHANNEL_5GHZ(
+			    conc_connection_list[i].chan))) {
+				status = true;
+				goto release_mutex_and_send_status;
+			}
+			break;
+		default:
+			cds_err("Invalid band option:%d", band);
+			status = false;
+			goto release_mutex_and_send_status;
+		}
+	}
+release_mutex_and_send_status:
+	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
+send_status:
+	return status;
+}
+
+/**
  * cds_get_mac_id_by_session_id() - Get MAC ID for a given session ID
  * @session_id: Session ID
  * @mac_id: Pointer to the MAC ID
