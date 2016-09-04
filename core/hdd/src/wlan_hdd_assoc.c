@@ -3518,6 +3518,7 @@ roam_roam_connect_status_update_handler(hdd_adapter_t *pAdapter,
  * @peerMac: pointer to peer MAC address
  * @staId: station identifier
  * @ucastSig: unicast signature
+ * @qos: QOS capability of TDLS station/link
  *
  * Construct the staDesc and register with TL the new STA.
  * This is called as part of ADD_STA in the TDLS setup.
@@ -3526,7 +3527,7 @@ roam_roam_connect_status_update_handler(hdd_adapter_t *pAdapter,
  */
 QDF_STATUS hdd_roam_register_tdlssta(hdd_adapter_t *pAdapter,
 				     const uint8_t *peerMac, uint16_t staId,
-				     uint8_t ucastSig)
+				     uint8_t ucastSig, uint8_t qos)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct ol_txrx_desc_type staDesc = { 0 };
@@ -3539,8 +3540,7 @@ QDF_STATUS hdd_roam_register_tdlssta(hdd_adapter_t *pAdapter,
 	staDesc.sta_id = staId;
 
 	/* set the QoS field appropriately .. */
-	(hdd_wmm_is_active(pAdapter)) ? (staDesc.is_qos_enabled = 1)
-	: (staDesc.is_qos_enabled = 0);
+	staDesc.is_qos_enabled = qos;
 
 	/* Register the vdev transmit and receive functions */
 	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));

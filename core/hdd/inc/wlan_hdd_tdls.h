@@ -405,6 +405,7 @@ typedef struct {
  * @spatial_streams: Number of TX/RX spatial streams for TDLS
  * @reason: reason
  * @state_change_notification: state change notification
+ * @qos: QOS capability of TDLS link
  */
 typedef struct _hddTdlsPeer_t {
 	struct list_head node;
@@ -437,6 +438,7 @@ typedef struct _hddTdlsPeer_t {
 	uint8_t spatial_streams;
 	tTDLSLinkReason reason;
 	cfg80211_exttdls_callback state_change_notification;
+	uint8_t qos;
 } hddTdlsPeer_t;
 
 /**

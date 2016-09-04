@@ -303,7 +303,7 @@ int hdd_set_csr_auth_type(hdd_adapter_t *pAdapter, eCsrAuthType RSNAuthType);
  */
 QDF_STATUS hdd_roam_register_tdlssta(hdd_adapter_t *pAdapter,
 				     const uint8_t *peerMac, uint16_t staId,
-				     uint8_t ucastSig);
+				     uint8_t ucastSig, uint8_t qos);
 
 /**
  * hdd_perform_roam_set_key_complete() - perform set key complete
