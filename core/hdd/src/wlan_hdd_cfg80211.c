@@ -10921,6 +10921,37 @@ static int wlan_hdd_cfg80211_set_cipher(hdd_adapter_t *pAdapter,
 }
 
 /**
+ * wlan_hdd_add_assoc_ie() - Add Assoc IE to roamProfile
+ * @wext_state: Pointer to wext state
+ * @gen_ie: Pointer to IE data
+ * @len: length of IE data
+ *
+ * Return: 0 for success, non-zero for failure
+ */
+static int wlan_hdd_add_assoc_ie(hdd_wext_state_t *wext_state,
+				const uint8_t *gen_ie, uint16_t len)
+{
+	uint16_t cur_add_ie_len =
+		wext_state->assocAddIE.length;
+
+	if (SIR_MAC_MAX_ADD_IE_LENGTH <
+			(wext_state->assocAddIE.length + len)) {
+		hdd_err("Cannot accommodate assocAddIE Need bigger buffer space");
+		QDF_ASSERT(0);
+		return -ENOMEM;
+	}
+	memcpy(wext_state->assocAddIE.addIEdata +
+			cur_add_ie_len, gen_ie, len);
+	wext_state->assocAddIE.length += len;
+
+	wext_state->roamProfile.pAddIEAssoc =
+		wext_state->assocAddIE.addIEdata;
+	wext_state->roamProfile.nAddIEAssocLength =
+		wext_state->assocAddIE.length;
+	return 0;
+}
+
+/**
  * wlan_hdd_cfg80211_set_ie() - set IEs
  * @pAdapter: Pointer to adapter
  * @ie: Pointer ot ie
@@ -10940,6 +10971,7 @@ int wlan_hdd_cfg80211_set_ie(hdd_adapter_t *pAdapter, const uint8_t *ie,
 	uint16_t akmsuiteCount;
 	int *akmlist;
 #endif
+	int status;
 
 	/* clear previous assocAddIE */
 	pWextState->assocAddIE.length = 0;
@@ -11086,6 +11118,13 @@ int wlan_hdd_cfg80211_set_ie(hdd_adapter_t *pAdapter, const uint8_t *ie,
 					pWextState->assocAddIE.addIEdata;
 				pWextState->roamProfile.nAddIEAssocLength =
 					pWextState->assocAddIE.length;
+			} else if ((0 == memcmp(&genie[0], MBO_OUI_TYPE,
+							MBO_OUI_TYPE_SIZE))){
+				hdd_info("Set MBO IE(len %d)", eLen + 2);
+				status = wlan_hdd_add_assoc_ie(pWextState,
+							genie - 2, eLen + 2);
+				if (status)
+					return status;
 			} else {
 				uint16_t add_ie_len =
 					pWextState->assocAddIE.length;
@@ -11181,6 +11220,15 @@ int wlan_hdd_cfg80211_set_ie(hdd_adapter_t *pAdapter, const uint8_t *ie,
 			}
 			break;
 #endif
+		case DOT11F_EID_SUPPOPERATINGCLASSES:
+			{
+				hdd_info("Set Supported Operating Classes IE(len %d)", eLen + 2);
+				status = wlan_hdd_add_assoc_ie(pWextState,
+							genie - 2, eLen + 2);
+				if (status)
+					return status;
+				break;
+			}
 		default:
 			hdd_err("Set UNKNOWN IE %X", elementId);
 			/* when Unknown IE is received we should break and continue

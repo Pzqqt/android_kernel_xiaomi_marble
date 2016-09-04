@@ -744,7 +744,8 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 				      uint32_t mode, uint32_t vdev_id)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct roam_offload_scan_params params = {0};
+	struct roam_offload_scan_params *params =
+				qdf_mem_malloc(sizeof(*params));
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	int auth_mode = WMI_AUTH_NONE;
@@ -753,46 +754,50 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 				    (roam_req->ConnectedNetwork.authentication,
 				    roam_req->ConnectedNetwork.encryption);
 	WMA_LOGD("%s : auth mode = %d", __func__, auth_mode);
-	params.auth_mode = auth_mode;
+	params->auth_mode = auth_mode;
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
-	params.is_roam_req_valid = 0;
-	params.mode = mode;
-	params.vdev_id = vdev_id;
+	params->is_roam_req_valid = 0;
+	params->mode = mode;
+	params->vdev_id = vdev_id;
 	if (roam_req) {
-		params.is_roam_req_valid = 1;
+		params->is_roam_req_valid = 1;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-		params.roam_offload_enabled = roam_req->RoamOffloadEnabled;
-		params.prefer_5ghz = roam_req->Prefer5GHz;
-		params.roam_rssi_cat_gap = roam_req->RoamRssiCatGap;
-		params.select_5ghz_margin = roam_req->Select5GHzMargin;
-		params.reassoc_failure_timeout =
+		params->roam_offload_enabled = roam_req->RoamOffloadEnabled;
+		params->prefer_5ghz = roam_req->Prefer5GHz;
+		params->roam_rssi_cat_gap = roam_req->RoamRssiCatGap;
+		params->select_5ghz_margin = roam_req->Select5GHzMargin;
+		params->reassoc_failure_timeout =
 				roam_req->ReassocFailureTimeout;
-		params.rokh_id_length = roam_req->R0KH_ID_Length;
-		qdf_mem_copy(params.rokh_id, roam_req->R0KH_ID,
+		params->rokh_id_length = roam_req->R0KH_ID_Length;
+		qdf_mem_copy(params->rokh_id, roam_req->R0KH_ID,
 				WMI_ROAM_R0KH_ID_MAX_LEN);
-		qdf_mem_copy(params.krk, roam_req->KRK, WMI_KRK_KEY_LEN);
-		qdf_mem_copy(params.btk, roam_req->BTK, WMI_BTK_KEY_LEN);
-		qdf_mem_copy(params.psk_pmk, roam_req->PSK_PMK,
+		qdf_mem_copy(params->krk, roam_req->KRK, WMI_KRK_KEY_LEN);
+		qdf_mem_copy(params->btk, roam_req->BTK, WMI_BTK_KEY_LEN);
+		qdf_mem_copy(params->psk_pmk, roam_req->PSK_PMK,
 				WMI_ROAM_SCAN_PSK_SIZE);
-		params.pmk_len = roam_req->pmk_len;
-		params.roam_key_mgmt_offload_enabled =
+		params->pmk_len = roam_req->pmk_len;
+		params->roam_key_mgmt_offload_enabled =
 				roam_req->RoamKeyMgmtOffloadEnabled;
 		wma_roam_scan_fill_self_caps(wma_handle,
-			&params.roam_offload_params, roam_req);
-		params.okc_enabled = roam_req->okc_enabled;
+			&params->roam_offload_params, roam_req);
+		params->okc_enabled = roam_req->okc_enabled;
 #endif
-		params.is_ese_assoc = roam_req->IsESEAssoc;
-		params.mdid.mdie_present = roam_req->MDID.mdiePresent;
-		params.mdid.mobility_domain = roam_req->MDID.mobilityDomain;
+		params->is_ese_assoc = roam_req->IsESEAssoc;
+		params->mdid.mdie_present = roam_req->MDID.mdiePresent;
+		params->mdid.mobility_domain = roam_req->MDID.mobilityDomain;
+		params->assoc_ie_length = roam_req->assoc_ie.length;
+		qdf_mem_copy(params->assoc_ie, roam_req->assoc_ie.addIEdata,
+						roam_req->assoc_ie.length);
 	}
 
 	status = wmi_unified_roam_scan_offload_mode_cmd(wma_handle->wmi_handle,
-				scan_cmd_fp, &params);
+				scan_cmd_fp, params);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
 	WMA_LOGI("%s: WMA --> WMI_ROAM_SCAN_MODE", __func__);
+	qdf_mem_free(params);
 	return status;
 }
 

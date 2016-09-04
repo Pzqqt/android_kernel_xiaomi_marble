@@ -215,6 +215,9 @@ typedef enum {
 #define WFD_OUI_TYPE_SIZE  4
 #endif
 
+#define MBO_OUI_TYPE   "\x50\x6f\x9a\x16"
+#define MBO_OUI_TYPE_SIZE  4
+
 typedef enum {
 	eWEXT_WPS_OFF = 0,
 	eWEXT_WPS_ON = 1,

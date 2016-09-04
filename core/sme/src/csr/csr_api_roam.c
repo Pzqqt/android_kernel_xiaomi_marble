@@ -17443,6 +17443,16 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 			req_buf->hi_rssi_scan_delay,
 			req_buf->hi_rssi_scan_rssi_ub);
 
+	if ((command == ROAM_SCAN_OFFLOAD_START) &&
+				(reason == REASON_CONNECT)) {
+		req_buf->assoc_ie.length = session->nAddIEAssocLength;
+		qdf_mem_copy(req_buf->assoc_ie.addIEdata,
+				session->pAddIEAssoc,
+				session->nAddIEAssocLength);
+	} else {
+		req_buf->assoc_ie.length = 0;
+	}
+
 	msg.type = WMA_ROAM_SCAN_OFFLOAD_REQ;
 	msg.reserved = 0;
 	msg.bodyptr = req_buf;
