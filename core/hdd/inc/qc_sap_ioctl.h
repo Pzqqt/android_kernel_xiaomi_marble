@@ -245,9 +245,9 @@ enum {
 	QCSAP_PARAM_CONC_SYSTEM_PREF
 };
 
-int iw_softap_get_channel_list(struct net_device *dev,
-			       struct iw_request_info *info,
-			       union iwreq_data *wrqu, char *extra);
+int iw_get_channel_list(struct net_device *dev,
+		struct iw_request_info *info,
+		union iwreq_data *wrqu, char *extra);
 
 #endif /* __linux__ */
 

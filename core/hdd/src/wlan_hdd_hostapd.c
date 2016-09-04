@@ -3938,48 +3938,65 @@ static int iw_softap_set_force_acs_ch_range(struct net_device *dev,
 	return ret;
 }
 
-static int __iw_softap_get_channel_list(struct net_device *dev,
+static int __iw_get_channel_list(struct net_device *dev,
 					struct iw_request_info *info,
 					union iwreq_data *wrqu, char *extra)
 {
 	uint32_t num_channels = 0;
 	uint8_t i = 0;
-	uint8_t bandStartChannel = CHAN_ENUM_1;
-	uint8_t bandEndChannel = CHAN_ENUM_184;
-	hdd_adapter_t *pHostapdAdapter = (netdev_priv(dev));
-	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pHostapdAdapter);
+	uint8_t band_start_channel = CHAN_ENUM_1;
+	uint8_t band_end_channel = CHAN_ENUM_184;
+	hdd_adapter_t *hostapd_adapter = (netdev_priv(dev));
+	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(hostapd_adapter);
 	tpChannelListInfo channel_list = (tpChannelListInfo) extra;
-	eCsrBand curBand = eCSR_BAND_ALL;
+	eCsrBand cur_band = eCSR_BAND_ALL;
 	hdd_context_t *hdd_ctx;
 	int ret;
+	bool is_dfs_mode_enabled = false;
 
 	ENTER_DEV(dev);
 
-	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
+	hdd_ctx = WLAN_HDD_GET_CTX(hostapd_adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
 		return ret;
 
-	if (QDF_STATUS_SUCCESS != sme_get_freq_band(hHal, &curBand)) {
+	if (QDF_STATUS_SUCCESS != sme_get_freq_band(hal, &cur_band)) {
 		hdd_err("not able get the current frequency band");
 		return -EIO;
 	}
 	wrqu->data.length = sizeof(tChannelListInfo);
 
-	if (eCSR_BAND_24 == curBand) {
-		bandStartChannel = CHAN_ENUM_1;
-		bandEndChannel = CHAN_ENUM_14;
-	} else if (eCSR_BAND_5G == curBand) {
-		bandStartChannel = CHAN_ENUM_36;
-		bandEndChannel = CHAN_ENUM_184;
+	if (eCSR_BAND_24 == cur_band) {
+		band_start_channel = CHAN_ENUM_1;
+		band_end_channel = CHAN_ENUM_14;
+	} else if (eCSR_BAND_5G == cur_band) {
+		band_start_channel = CHAN_ENUM_36;
+		band_end_channel = CHAN_ENUM_184;
+	}
+	if (cur_band != eCSR_BAND_24) {
+		if (hdd_ctx->config->dot11p_mode)
+			band_end_channel = CHAN_ENUM_184;
+		else
+			band_end_channel = CHAN_ENUM_165;
 	}
 
-	hdd_notice("curBand = %d, StartChannel = %hu, EndChannel = %hu ",
-	       curBand, bandStartChannel, bandEndChannel);
+	if (hostapd_adapter->device_mode == QDF_STA_MODE &&
+	    hdd_ctx->config->enableDFSChnlScan) {
+		is_dfs_mode_enabled = true;
+	} else if (hostapd_adapter->device_mode == QDF_SAP_MODE &&
+		   hdd_ctx->config->enableDFSMasterCap) {
+		is_dfs_mode_enabled = true;
+	}
 
-	for (i = bandStartChannel; i <= bandEndChannel; i++) {
+	hdd_notice("curBand = %d, StartChannel = %hu, EndChannel = %hu is_dfs_mode_enabled  = %d ",
+			cur_band, band_start_channel, band_end_channel,
+			is_dfs_mode_enabled);
+
+	for (i = band_start_channel; i <= band_end_channel; i++) {
 		if ((CHANNEL_STATE_ENABLE == CDS_CHANNEL_STATE(i)) ||
-		    (CHANNEL_STATE_DFS == CDS_CHANNEL_STATE(i))) {
+			(is_dfs_mode_enabled &&
+		     CHANNEL_STATE_DFS == CDS_CHANNEL_STATE(i))) {
 			channel_list->channels[num_channels] =
 				CDS_CHANNEL_NUM(i);
 			num_channels++;
@@ -3988,24 +4005,20 @@ static int __iw_softap_get_channel_list(struct net_device *dev,
 
 	hdd_notice(" number of channels %d", num_channels);
 
-	if (num_channels > IW_MAX_FREQUENCIES) {
-		num_channels = IW_MAX_FREQUENCIES;
-	}
-
 	channel_list->num_channels = num_channels;
 	EXIT();
 
 	return 0;
 }
 
-int iw_softap_get_channel_list(struct net_device *dev,
-			       struct iw_request_info *info,
-			       union iwreq_data *wrqu, char *extra)
+int iw_get_channel_list(struct net_device *dev,
+		struct iw_request_info *info,
+		union iwreq_data *wrqu, char *extra)
 {
 	int ret;
 
 	cds_ssr_protect(__func__);
-	ret = __iw_softap_get_channel_list(dev, info, wrqu, extra);
+	ret = __iw_get_channel_list(dev, info, wrqu, extra);
 	cds_ssr_unprotect(__func__);
 
 	return ret;
@@ -5600,7 +5613,7 @@ static const iw_handler hostapd_private[] = {
 	[QCSAP_IOCTL_MODIFY_ACL - SIOCIWFIRSTPRIV] =
 		iw_softap_modify_acl,
 	[QCSAP_IOCTL_GET_CHANNEL_LIST - SIOCIWFIRSTPRIV] =
-		iw_softap_get_channel_list,
+		iw_get_channel_list,
 	[QCSAP_IOCTL_GET_STA_INFO - SIOCIWFIRSTPRIV] =
 		iw_softap_get_sta_info,
 	[QCSAP_IOCTL_PRIV_GET_SOFTAP_LINK_SPEED -
