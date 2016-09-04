@@ -1521,9 +1521,11 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 		wlan_hdd_auto_shutdown_enable(pHddCtx, false);
 #endif
+		cds_host_diag_log_work(&pHddCtx->sap_wake_lock,
+				       HDD_SAP_WAKE_LOCK_DURATION,
+				       WIFI_POWER_EVENT_WAKELOCK_SAP);
 		qdf_wake_lock_timeout_acquire(&pHddCtx->sap_wake_lock,
-					      HDD_SAP_WAKE_LOCK_DURATION,
-					      WIFI_POWER_EVENT_WAKELOCK_SAP);
+					      HDD_SAP_WAKE_LOCK_DURATION);
 		{
 			struct station_info *sta_info;
 			uint16_t iesLen =

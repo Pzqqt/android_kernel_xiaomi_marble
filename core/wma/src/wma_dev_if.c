@@ -561,10 +561,12 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 	/* Acquire wake lock only when you expect a response from firmware */
 	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
 				    WMI_SERVICE_SYNC_DELETE_CMDS)) {
-		qdf_wake_lock_timeout_acquire(
-					 &wma_handle->wmi_cmd_rsp_wake_lock,
+		cds_host_diag_log_work(&wma_handle->wmi_cmd_rsp_wake_lock,
 					 WMA_FW_RSP_EVENT_WAKE_LOCK_DURATION,
 					 WIFI_POWER_EVENT_WAKELOCK_WMI_CMD_RSP);
+		qdf_wake_lock_timeout_acquire(
+					 &wma_handle->wmi_cmd_rsp_wake_lock,
+					 WMA_FW_RSP_EVENT_WAKE_LOCK_DURATION);
 		qdf_runtime_pm_prevent_suspend(
 					wma_handle->wmi_cmd_rsp_runtime_lock);
 	}
@@ -3971,9 +3973,11 @@ static void wma_delete_sta_req_ap_mode(tp_wma_handle wma,
 		 * Acquire wake lock and bus lock till
 		 * firmware sends the response
 		 */
-		qdf_wake_lock_timeout_acquire(&wma->wmi_cmd_rsp_wake_lock,
+		cds_host_diag_log_work(&wma->wmi_cmd_rsp_wake_lock,
 				      WMA_FW_RSP_EVENT_WAKE_LOCK_DURATION,
 				      WIFI_POWER_EVENT_WAKELOCK_WMI_CMD_RSP);
+		qdf_wake_lock_timeout_acquire(&wma->wmi_cmd_rsp_wake_lock,
+				      WMA_FW_RSP_EVENT_WAKE_LOCK_DURATION);
 		qdf_runtime_pm_prevent_suspend(wma->wmi_cmd_rsp_runtime_lock);
 		return;
 	}

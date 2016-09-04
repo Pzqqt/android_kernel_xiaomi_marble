@@ -3371,9 +3371,11 @@ int wma_nlo_match_evt_handler(void *handle, uint8_t *event,
 	if (node)
 		node->nlo_match_evt_received = true;
 
+	cds_host_diag_log_work(&wma->pno_wake_lock,
+			       WMA_PNO_MATCH_WAKE_LOCK_TIMEOUT,
+			       WIFI_POWER_EVENT_WAKELOCK_PNO);
 	qdf_wake_lock_timeout_acquire(&wma->pno_wake_lock,
-				      WMA_PNO_MATCH_WAKE_LOCK_TIMEOUT,
-				      WIFI_POWER_EVENT_WAKELOCK_PNO);
+				      WMA_PNO_MATCH_WAKE_LOCK_TIMEOUT);
 
 	return 0;
 }
@@ -3424,9 +3426,11 @@ int wma_nlo_scan_cmp_evt_handler(void *handle, uint8_t *event,
 	if (scan_event) {
 		/* Posting scan completion msg would take scan cache result
 		 * from LIM module and update in scan cache maintained in SME.*/
+		cds_host_diag_log_work(&wma->pno_wake_lock,
+			WMA_PNO_SCAN_COMPLETE_WAKE_LOCK_TIMEOUT,
+			WIFI_POWER_EVENT_WAKELOCK_PNO);
 		qdf_wake_lock_timeout_acquire(&wma->pno_wake_lock,
-				WMA_PNO_SCAN_COMPLETE_WAKE_LOCK_TIMEOUT,
-				WIFI_POWER_EVENT_WAKELOCK_PNO);
+				WMA_PNO_SCAN_COMPLETE_WAKE_LOCK_TIMEOUT);
 		qdf_mem_zero(scan_event, sizeof(tSirScanOffloadEvent));
 		scan_event->reasonCode = eSIR_PNO_SCAN_SUCCESS;
 		scan_event->event = SIR_SCAN_EVENT_COMPLETED;
@@ -3660,9 +3664,11 @@ int wma_extscan_operations_event_handler(void *handle,
 	case WMI_EXTSCAN_CYCLE_STARTED_EVENT:
 		WMA_LOGD("%s: received WMI_EXTSCAN_CYCLE_STARTED_EVENT",
 			 __func__);
+		cds_host_diag_log_work(&wma->extscan_wake_lock,
+				       WMA_EXTSCAN_CYCLE_WAKE_LOCK_DURATION,
+				       WIFI_POWER_EVENT_WAKELOCK_EXT_SCAN);
 		qdf_wake_lock_timeout_acquire(&wma->extscan_wake_lock,
-				      WMA_EXTSCAN_CYCLE_WAKE_LOCK_DURATION,
-				      WIFI_POWER_EVENT_WAKELOCK_EXT_SCAN);
+				      WMA_EXTSCAN_CYCLE_WAKE_LOCK_DURATION);
 		oprn_ind->scanEventType = WIFI_EXTSCAN_CYCLE_STARTED_EVENT;
 		oprn_ind->status = 0;
 		oprn_ind->buckets_scanned = 0;

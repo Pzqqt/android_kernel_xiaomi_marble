@@ -4678,7 +4678,8 @@ void hdd_allow_suspend(uint32_t reason)
 
 void hdd_prevent_suspend_timeout(uint32_t timeout, uint32_t reason)
 {
-	qdf_wake_lock_timeout_acquire(&wlan_wake_lock, timeout, reason);
+	cds_host_diag_log_work(&wlan_wake_lock, timeout, reason);
+	qdf_wake_lock_timeout_acquire(&wlan_wake_lock, timeout);
 }
 
 /**

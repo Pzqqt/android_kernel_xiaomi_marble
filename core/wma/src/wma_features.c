@@ -3203,9 +3203,11 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 		if (node) {
 			WMA_LOGD("NLO match happened");
 			node->nlo_match_evt_received = true;
-			qdf_wake_lock_timeout_acquire(&wma->pno_wake_lock,
+			cds_host_diag_log_work(&wma->pno_wake_lock,
 					WMA_PNO_MATCH_WAKE_LOCK_TIMEOUT,
 					WIFI_POWER_EVENT_WAKELOCK_PNO);
+			qdf_wake_lock_timeout_acquire(&wma->pno_wake_lock,
+					WMA_PNO_MATCH_WAKE_LOCK_TIMEOUT);
 		}
 		break;
 
@@ -3362,9 +3364,11 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 	}
 
 	if (wake_lock_duration) {
+		cds_host_diag_log_work(&wma->wow_wake_lock,
+				       wake_lock_duration,
+				       WIFI_POWER_EVENT_WAKELOCK_WOW);
 		qdf_wake_lock_timeout_acquire(&wma->wow_wake_lock,
-					      wake_lock_duration,
-					      WIFI_POWER_EVENT_WAKELOCK_WOW);
+					      wake_lock_duration);
 		WMA_LOGA("Holding %d msec wake_lock", wake_lock_duration);
 	}
 
@@ -6571,10 +6575,13 @@ void wma_target_suspend_acknowledge(void *context, bool wow_nack)
 
 	wma->wow_nack = wow_nack;
 	qdf_event_set(&wma->target_suspend);
-	if (wow_nack)
+	if (wow_nack) {
+		cds_host_diag_log_work(&wma->wow_wake_lock,
+				       WMA_WAKE_LOCK_TIMEOUT,
+				       WIFI_POWER_EVENT_WAKELOCK_WOW);
 		qdf_wake_lock_timeout_acquire(&wma->wow_wake_lock,
-					      WMA_WAKE_LOCK_TIMEOUT,
-					      WIFI_POWER_EVENT_WAKELOCK_WOW);
+					      WMA_WAKE_LOCK_TIMEOUT);
+	}
 }
 
 /**
