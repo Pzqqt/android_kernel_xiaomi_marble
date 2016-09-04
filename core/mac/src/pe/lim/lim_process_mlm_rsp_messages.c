@@ -3279,10 +3279,7 @@ void lim_process_rx_scan_event(tpAniSirGlobal pMac, void *buf)
 			 * failure.
 			 */
 			if (pMac->lim.mgmtFrameSessionId != 0xff) {
-				lim_send_sme_rsp(pMac,
-					eWNI_SME_ACTION_FRAME_SEND_CNF,
-					eSIR_SME_SEND_ACTION_FAIL,
-					pMac->lim.mgmtFrameSessionId, 0);
+				lim_p2p_action_cnf(pMac, false);
 				pMac->lim.mgmtFrameSessionId = 0xff;
 			}
 		} else if (PREAUTH_REQUESTOR_ID == pScanEvent->requestor) {

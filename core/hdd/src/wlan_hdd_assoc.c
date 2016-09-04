@@ -4893,11 +4893,6 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 	case eCSR_ROAM_REMAIN_CHAN_READY:
 		hdd_remain_chan_ready_handler(pAdapter, pRoamInfo->roc_scan_id);
 		break;
-	case eCSR_ROAM_SEND_ACTION_CNF:
-		hdd_send_action_cnf(pAdapter,
-				    (roamResult ==
-				     eCSR_ROAM_RESULT_NONE) ? true : false);
-		break;
 #ifdef FEATURE_WLAN_TDLS
 	case eCSR_ROAM_TDLS_STATUS_UPDATE:
 		qdf_ret_status =

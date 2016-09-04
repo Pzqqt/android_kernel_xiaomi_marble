@@ -173,22 +173,6 @@ QDF_STATUS sme_remain_on_chn_ready(tHalHandle hHal, uint8_t *pMsg)
 	return status;
 }
 
-QDF_STATUS sme_send_action_cnf(tHalHandle hHal, uint8_t *pMsg)
-{
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tCsrRoamInfo RoamInfo;
-	tSirSmeRsp *pSmeRsp = (tSirSmeRsp *) pMsg;
-
-	/* forward the indication to HDD */
-	/* RoamInfo can be passed as NULL....todo */
-	csr_roam_call_callback(pMac, pSmeRsp->sessionId, &RoamInfo, 0,
-			       eCSR_ROAM_SEND_ACTION_CNF,
-			       (pSmeRsp->statusCode == eSIR_SME_SUCCESS) ? 0 :
-			       eCSR_ROAM_RESULT_SEND_ACTION_FAIL);
-	return status;
-}
-
 QDF_STATUS sme_p2p_open(tHalHandle hHal)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);

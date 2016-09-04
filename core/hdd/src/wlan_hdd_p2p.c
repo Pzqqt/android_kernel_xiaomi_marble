@@ -1710,6 +1710,40 @@ void hdd_send_action_cnf(hdd_adapter_t *pAdapter, bool actionSendSuccess)
 }
 
 /**
+ * hdd_send_action_cnf_cb - action confirmation callback
+ * @session_id: SME session ID
+ * @tx_completed: ack status
+ *
+ * This function invokes hdd_sendActionCnf to update ack status to
+ * supplicant.
+ */
+void hdd_send_action_cnf_cb(uint32_t session_id, bool tx_completed)
+{
+	hdd_context_t *hdd_ctx;
+	hdd_adapter_t *adapter;
+
+	ENTER();
+
+	/* Get the HDD context.*/
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (0 != wlan_hdd_validate_context(hdd_ctx))
+		return;
+
+	adapter = hdd_get_adapter_by_sme_session_id(hdd_ctx, session_id);
+	if (NULL == adapter) {
+		hddLog(LOGE, FL("adapter not found"));
+		return;
+	}
+
+	if (WLAN_HDD_ADAPTER_MAGIC != adapter->magic) {
+		hddLog(LOGE, FL("adapter has invalid magic"));
+		return;
+	}
+
+	hdd_send_action_cnf(adapter, tx_completed);
+}
+
+/**
  * hdd_set_p2p_noa
  *
  ***FUNCTION:

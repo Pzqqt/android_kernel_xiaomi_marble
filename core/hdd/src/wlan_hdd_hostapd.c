@@ -1772,12 +1772,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		hdd_remain_chan_ready_handler(pHostapdAdapter,
 			pSapEvent->sapevt.sap_roc_ind.scan_id);
 		return QDF_STATUS_SUCCESS;
-	case eSAP_SEND_ACTION_CNF:
-		hdd_send_action_cnf(pHostapdAdapter,
-				    (eSAP_STATUS_SUCCESS ==
-				     pSapEvent->sapevt.sapActionCnf.
-				     actionSendSuccess) ? true : false);
-		return QDF_STATUS_SUCCESS;
 	case eSAP_UNKNOWN_STA_JOIN:
 		snprintf(unknownSTAEvent, IW_CUSTOM_MAX,
 			 "JOIN_UNKNOWN_STA-%02x:%02x:%02x:%02x:%02x:%02x",

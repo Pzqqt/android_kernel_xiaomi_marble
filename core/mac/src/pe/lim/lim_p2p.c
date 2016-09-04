@@ -70,8 +70,6 @@ extern tSirRetStatus lim_set_link_state(tpAniSirGlobal pMac, tSirLinkState state
 					tpSetLinkStateCallback callback,
 					void *callbackArg);
 
-QDF_STATUS lim_p2p_action_cnf(tpAniSirGlobal pMac, uint32_t txCompleteSuccess);
-
 /*------------------------------------------------------------------
  *
  * Below function is called if hdd requests a remain on channel.
@@ -364,7 +362,7 @@ void lim_remain_on_chn_rsp(tpAniSirGlobal pMac, QDF_STATUS status, uint32_t *dat
 	/* If remain on channel timer expired and action frame is pending then
 	 * indicaiton confirmation with status failure */
 	if (pMac->lim.mgmtFrameSessionId != 0xff) {
-		lim_p2p_action_cnf(pMac, 0);
+		lim_p2p_action_cnf(pMac, false);
 	}
 
 	return;
@@ -417,10 +415,9 @@ QDF_STATUS lim_p2p_action_cnf(tpAniSirGlobal pMac, uint32_t txCompleteSuccess)
 	if (pMac->lim.mgmtFrameSessionId != 0xff) {
 		/* The session entry might be invalid(0xff) action confirmation received after
 		 * remain on channel timer expired */
-		lim_send_sme_rsp(pMac, eWNI_SME_ACTION_FRAME_SEND_CNF,
-				 (txCompleteSuccess ? eSIR_SME_SUCCESS :
-				  eSIR_SME_SEND_ACTION_FAIL),
-				 pMac->lim.mgmtFrameSessionId, 0);
+		if (pMac->p2p_ack_ind_cb)
+			pMac->p2p_ack_ind_cb(pMac->lim.mgmtFrameSessionId,
+							txCompleteSuccess);
 		pMac->lim.mgmtFrameSessionId = 0xff;
 	}
 
@@ -466,9 +463,9 @@ static void lim_tx_action_frame(tpAniSirGlobal mac_ctx,
 			channel_freq);
 
 		if (!mb_msg->noack)
-			lim_send_sme_rsp(mac_ctx,
-				eWNI_SME_ACTION_FRAME_SEND_CNF,
-				qdf_status, mb_msg->sessionId, 0);
+			lim_p2p_action_cnf(mac_ctx,
+				(QDF_IS_STATUS_SUCCESS(qdf_status)) ?
+				true : false);
 		mac_ctx->lim.mgmtFrameSessionId = 0xff;
 	} else {
 		mac_ctx->lim.mgmtFrameSessionId = mb_msg->sessionId;
@@ -484,9 +481,7 @@ static void lim_tx_action_frame(tpAniSirGlobal mac_ctx,
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			lim_log(mac_ctx, LOGE,
 				FL("couldn't send action frame"));
-			lim_send_sme_rsp(mac_ctx,
-				eWNI_SME_ACTION_FRAME_SEND_CNF,
-				qdf_status, mb_msg->sessionId, 0);
+			lim_p2p_action_cnf(mac_ctx, false);
 			mac_ctx->lim.mgmtFrameSessionId = 0xff;
 		} else {
 			mac_ctx->lim.mgmtFrameSessionId = mb_msg->sessionId;
@@ -540,8 +535,7 @@ void lim_send_p2p_action_frame(tpAniSirGlobal mac_ctx,
 	if ((!mac_ctx->lim.gpLimRemainOnChanReq) && (0 != mb_msg->wait)) {
 		lim_log(mac_ctx, LOGE,
 			FL("RemainOnChannel is not running"));
-		lim_send_sme_rsp(mac_ctx, eWNI_SME_ACTION_FRAME_SEND_CNF,
-			QDF_STATUS_E_FAILURE, mb_msg->sessionId, 0);
+		lim_p2p_action_cnf(mac_ctx, false);
 		return;
 	}
 	sme_session_id = mb_msg->sessionId;

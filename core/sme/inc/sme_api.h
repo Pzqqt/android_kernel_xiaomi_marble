@@ -1157,4 +1157,6 @@ void sme_get_vdev_type_nss(tHalHandle hal, enum tQDF_ADAPTER_MODE dev_mode,
 		uint8_t *nss_2g, uint8_t *nss_5g);
 QDF_STATUS sme_roam_set_default_key_index(tHalHandle hal, uint8_t session_id,
 					  uint8_t default_idx);
+QDF_STATUS sme_register_p2p_ack_ind_callback(tHalHandle hal,
+		sir_p2p_ack_ind_callback callback);
 #endif /* #if !defined( __SME_API_H ) */

@@ -973,6 +973,7 @@ typedef struct sAniSirGlobal {
 
 	uint32_t dual_mac_feature_disable;
 	sir_mgmt_frame_ind_callback mgmt_frame_ind_cb;
+	sir_p2p_ack_ind_callback p2p_ack_ind_cb;
 	bool first_scan_done;
 	int8_t first_scan_bucket_threshold;
 	enum auth_tx_ack_status auth_ack_status;

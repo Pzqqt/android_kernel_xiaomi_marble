@@ -2672,6 +2672,21 @@ struct sir_sme_mgmt_frame_cb_req {
 	sir_mgmt_frame_ind_callback callback;
 };
 
+typedef void (*sir_p2p_ack_ind_callback)(uint32_t session_id,
+		bool tx_completion_status);
+
+/**
+ * struct sir_p2p_ack_ind_cb_req - Register a p2p ack ind callback req
+ * @message_type: message id
+ * @length: msg length
+ * @callback: callback for p2p ack indication
+ */
+struct sir_sme_p2p_ack_ind_cb_req {
+	uint16_t message_type;
+	uint16_t length;
+	sir_p2p_ack_ind_callback callback;
+};
+
 #ifdef WLAN_FEATURE_11W
 typedef struct sSirSmeUnprotMgmtFrameInd {
 	uint8_t sessionId;

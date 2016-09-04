@@ -939,13 +939,6 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 				     eSAP_REMAIN_CHAN_READY,
 				     (void *) eSAP_STATUS_SUCCESS);
 		break;
-	case eCSR_ROAM_SEND_ACTION_CNF:
-		sap_signal_hdd_event(sap_ctx, csr_roam_info,
-			eSAP_SEND_ACTION_CNF,
-			(void *) ((eSapStatus)
-			((roam_result == eCSR_ROAM_RESULT_NONE) ?
-			eSAP_STATUS_SUCCESS : eSAP_STATUS_FAILURE)));
-		break;
 	case eCSR_ROAM_DISCONNECT_ALL_P2P_CLIENTS:
 		sap_signal_hdd_event(sap_ctx, csr_roam_info,
 				     eSAP_DISCONNECT_ALL_P2P_CLIENT,

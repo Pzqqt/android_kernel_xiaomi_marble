@@ -76,7 +76,6 @@ extern QDF_STATUS p2p_process_remain_on_channel_cmd(tpAniSirGlobal pMac,
 						    tSmeCmd *p2pRemainonChn);
 extern QDF_STATUS sme_remain_on_chn_rsp(tpAniSirGlobal pMac, uint8_t *pMsg);
 extern QDF_STATUS sme_remain_on_chn_ready(tHalHandle hHal, uint8_t *pMsg);
-extern QDF_STATUS sme_send_action_cnf(tHalHandle hHal, uint8_t *pMsg);
 
 static QDF_STATUS init_sme_cmd_list(tpAniSirGlobal pMac);
 static void sme_abort_command(tpAniSirGlobal pMac, tSmeCmd *pCommand,
@@ -2556,15 +2555,6 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 	case eWNI_SME_REMAIN_ON_CHN_RDY_IND:
 		if (pMsg->bodyptr) {
 			status = sme_remain_on_chn_ready(pMac, pMsg->bodyptr);
-			qdf_mem_free(pMsg->bodyptr);
-		} else {
-			sms_log(pMac, LOGE, FL("Empty message for %d"),
-				pMsg->type);
-		}
-		break;
-	case eWNI_SME_ACTION_FRAME_SEND_CNF:
-		if (pMsg->bodyptr) {
-			status = sme_send_action_cnf(pMac, pMsg->bodyptr);
 			qdf_mem_free(pMsg->bodyptr);
 		} else {
 			sms_log(pMac, LOGE, FL("Empty message for %d"),
@@ -6494,6 +6484,44 @@ QDF_STATUS sme_get_operation_channel(tHalHandle hHal, uint32_t *pChannel,
 	}
 	return QDF_STATUS_E_FAILURE;
 } /* sme_get_operation_channel ends here */
+
+/**
+ * sme_register_p2p_ack_ind_callback() - p2p ack indication callback
+ * @hal: hal pointer
+ * @callback: callback pointer to be registered
+ *
+ * This function is used to register a callback to PE for p2p ack
+ * indication
+ *
+ * Return: Success if msg is posted to PE else Failure.
+ */
+QDF_STATUS sme_register_p2p_ack_ind_callback(tHalHandle hal,
+				sir_p2p_ack_ind_callback callback)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct sir_sme_p2p_ack_ind_cb_req *msg;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	sms_log(mac_ctx, LOG1, FL(": ENTER"));
+	status = sme_acquire_global_lock(&mac_ctx->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		msg = qdf_mem_malloc(sizeof(*msg));
+		if (NULL == msg) {
+			sms_log(mac_ctx, LOGE,
+				FL("Failed to allocate memory"));
+		sme_release_global_lock(&mac_ctx->sme);
+		return QDF_STATUS_E_NOMEM;
+		}
+		qdf_mem_zero(msg, sizeof(*msg));
+		msg->message_type = eWNI_SME_REGISTER_P2P_ACK_CB;
+		msg->length = sizeof(*msg);
+
+		msg->callback = callback;
+		status = cds_send_mb_message_to_mac(msg);
+		sme_release_global_lock(&mac_ctx->sme);
+		return status;
+	}
+	return status;
+}
 
 /**
  * sme_register_mgmt_frame_ind_callback() - Register a callback for

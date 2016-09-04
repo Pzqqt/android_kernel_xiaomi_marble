@@ -1416,6 +1416,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	case eWNI_SME_NDP_INITIATOR_REQ:
 	case eWNI_SME_NDP_RESPONDER_REQ:
 	case eWNI_SME_NDP_END_REQ:
+	case eWNI_SME_REGISTER_P2P_ACK_CB:
 		/* These messages are from HDD.No need to respond to HDD */
 		lim_process_normal_hdd_msg(mac_ctx, msg, false);
 		break;

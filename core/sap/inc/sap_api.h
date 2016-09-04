@@ -155,7 +155,6 @@ typedef enum {
 	/* Event send on WPS PBC probe request is received */
 	eSAP_WPS_PBC_PROBE_REQ_EVENT,
 	eSAP_REMAIN_CHAN_READY,
-	eSAP_SEND_ACTION_CNF,
 	eSAP_DISCONNECT_ALL_P2P_CLIENT,
 	eSAP_MAC_TRIG_STOP_BSS_EVENT,
 	/*
@@ -445,7 +444,6 @@ typedef struct sap_Event_s {
 		tSap_GetWPSPBCSessionEvent sapGetWPSPBCSessionEvent;
 		/*eSAP_WPS_PBC_PROBE_REQ_EVENT */
 		tSap_WPSPBCProbeReqEvent sapPBCProbeReqEvent;
-		/* eSAP_SEND_ACTION_CNF */
 		tSap_SendActionCnf sapActionCnf;
 		/* eSAP_UNKNOWN_STA_JOIN */
 		tSap_UnknownSTAJoinEvent sapUnknownSTAJoin;

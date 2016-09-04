@@ -617,4 +617,6 @@ static inline void lim_deactivate_and_change_timer_host_roam(
 
 bool lim_is_robust_mgmt_action_frame(uint8_t action_category);
 bool lim_is_ext_cap_ie_present (struct s_ext_cap *ext_cap);
+QDF_STATUS lim_p2p_action_cnf(tpAniSirGlobal mac_ctx,
+			uint32_t tx_complete_success);
 #endif /* __LIM_UTILS_H */
