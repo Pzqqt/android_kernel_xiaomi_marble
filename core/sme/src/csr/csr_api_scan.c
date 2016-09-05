@@ -6990,6 +6990,11 @@ QDF_STATUS csr_scan_save_preferred_network_found(tpAniSirGlobal pMac,
 		qdf_mem_free(parsed_frm);
 		return QDF_STATUS_E_RESOURCES;
 	}
+
+	if ((SIR_MAC_MGMT_FRAME == macHeader->fc.type) &&
+	    (SIR_MAC_MGMT_PROBE_RSP == macHeader->fc.subType))
+		pScanResult->Result.BssDescriptor.fProbeRsp = 1;
+
 	/* Add to scan cache */
 	csr_scan_add_result(pMac, pScanResult, local_ie,
 			    pPrefNetworkFoundInd->sessionId);
