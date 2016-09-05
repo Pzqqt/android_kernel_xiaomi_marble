@@ -1273,13 +1273,15 @@ int wlan_hdd_tdls_recv_discovery_resp(hdd_adapter_t *pAdapter,
  * @StaParams: CSR Station Parameter
  * @isBufSta: is peer buffer station
  * @isOffChannelSupported: Is off channel supported
+ * @is_qos_wmm_sta: Is QoS-WMM supported
  *
  * Return: 0 for success or negative errno otherwise
  */
 int wlan_hdd_tdls_set_peer_caps(hdd_adapter_t *pAdapter,
 				const uint8_t *mac,
 				tCsrStaParams *StaParams,
-				bool isBufSta, bool isOffChannelSupported)
+				bool isBufSta, bool isOffChannelSupported,
+				bool is_qos_wmm_sta)
 {
 	hddTdlsPeer_t *curr_peer;
 
@@ -1306,7 +1308,7 @@ int wlan_hdd_tdls_set_peer_caps(hdd_adapter_t *pAdapter,
 
 	curr_peer->supported_oper_classes_len =
 		StaParams->supported_oper_classes_len;
-	curr_peer->qos = StaParams->capability & CAPABILITIES_QOS_OFFSET;
+	curr_peer->qos = is_qos_wmm_sta;
 	return 0;
 }
 
@@ -4422,6 +4424,10 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 			return -EINVAL;
 		}
 		wlan_hdd_tdls_set_cap(pAdapter, peer, eTDLS_CAP_SUPPORTED);
+
+		qdf_mem_set(&tdlsLinkEstablishParams,
+			sizeof(tdlsLinkEstablishParams), 0);
+
 		if (eTDLS_LINK_CONNECTED != pTdlsPeer->link_status) {
 			if (IS_ADVANCE_TDLS_ENABLE) {
 
@@ -4459,6 +4465,22 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 							   eTDLS_LINK_CONNECTED,
 							   eTDLS_LINK_SUCCESS,
 							   true);
+
+			hdd_notice("%s: tdlsLinkEstablishParams of peer "
+				MAC_ADDRESS_STR "uapsdQueues: %d"
+				" qos: %d maxSp: %d isBufSta: %d"
+				" isOffChannelSupported: %d"
+				" isResponder: %d peerstaId: %d",
+				__func__,
+				MAC_ADDR_ARRAY(
+					tdlsLinkEstablishParams.peerMac),
+				tdlsLinkEstablishParams.uapsdQueues,
+				tdlsLinkEstablishParams.qos,
+				tdlsLinkEstablishParams.maxSp,
+				tdlsLinkEstablishParams.isBufSta,
+				tdlsLinkEstablishParams.isOffChannelSupported,
+				tdlsLinkEstablishParams.isResponder,
+				pTdlsPeer->staId);
 			/* start TDLS client registration with TL */
 			status =
 				hdd_roam_register_tdlssta(

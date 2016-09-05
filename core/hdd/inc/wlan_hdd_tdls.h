@@ -538,7 +538,8 @@ int wlan_hdd_tdls_recv_discovery_resp(hdd_adapter_t *pAdapter,
 int wlan_hdd_tdls_set_peer_caps(hdd_adapter_t *pAdapter,
 				const uint8_t *mac,
 				tCsrStaParams *StaParams,
-				bool isBufSta, bool isOffChannelSupported);
+				bool isBufSta, bool isOffChannelSupported,
+				bool is_qos_wmm_sta);
 
 int wlan_hdd_tdls_set_rssi(hdd_adapter_t *pAdapter, const uint8_t *mac,
 			   int8_t rxRssi);

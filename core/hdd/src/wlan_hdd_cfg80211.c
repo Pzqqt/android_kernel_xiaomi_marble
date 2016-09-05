@@ -8879,6 +8879,7 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 	tCsrStaParams StaParams = { 0 };
 	uint8_t isBufSta = 0;
 	uint8_t isOffChannelSupported = 0;
+	bool is_qos_wmm_sta = false;
 #endif
 	int ret;
 
@@ -9067,10 +9068,20 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 				}
 			}
 
+			if (pHddCtx->config->fEnableTDLSWmmMode &&
+			    (params->sta_flags_set & BIT(NL80211_STA_FLAG_WME)))
+				is_qos_wmm_sta = true;
+
+			hdd_notice("%s: TDLS Peer is QOS capable"
+				" is_qos_wmm_sta= %d HTcapPresent = %d",
+				__func__, is_qos_wmm_sta,
+				StaParams.htcap_present);
+
 			status = wlan_hdd_tdls_set_peer_caps(pAdapter, mac,
-							     &StaParams,
-							     isBufSta,
-							     isOffChannelSupported);
+						&StaParams,
+						isBufSta,
+						isOffChannelSupported,
+						is_qos_wmm_sta);
 			if (QDF_STATUS_SUCCESS != status) {
 				hdd_err("wlan_hdd_tdls_set_peer_caps failed!");
 				return -EINVAL;
