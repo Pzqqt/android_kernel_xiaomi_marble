@@ -10595,6 +10595,13 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 			}
 			pRoamProfile->ch_params.ch_width =
 				hdd_map_nl_chan_width(ch_width);
+			/*
+			 * In IBSS mode while operating in 2.4 GHz,
+			 * the device supports only 20 MHz.
+			 */
+			if (CDS_IS_CHANNEL_24GHZ(operatingChannel))
+				pRoamProfile->ch_params.ch_width =
+					CH_WIDTH_20MHZ;
 			hdd_select_cbmode(pAdapter, operatingChannel,
 					  &pRoamProfile->ch_params);
 		}
