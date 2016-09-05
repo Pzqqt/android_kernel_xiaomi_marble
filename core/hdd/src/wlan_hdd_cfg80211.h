@@ -2282,6 +2282,25 @@ enum qca_wlan_vendor_acs_hw_mode {
 };
 
 /**
+ * enum qca_access_policy - access control policy
+ *
+ * Access control policy is applied on the configured IE
+ * (QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY_IE).
+ * To be set with QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY.
+ *
+ * @QCA_ACCESS_POLICY_ACCEPT_UNLESS_LISTED: Deny Wi-Fi Connections which match
+ *»       with the specific configuration (IE) set, i.e. allow all the
+ *»       connections which do not match the configuration.
+ * @QCA_ACCESS_POLICY_DENY_UNLESS_LISTED: Accept Wi-Fi Connections which match
+ *»       with the specific configuration (IE) set, i.e. deny all the
+ *»       connections which do not match the configuration.
+ */
+enum qca_access_policy {
+	QCA_ACCESS_POLICY_ACCEPT_UNLESS_LISTED,
+	QCA_ACCESS_POLICY_DENY_UNLESS_LISTED,
+};
+
+/**
  * enum qca_wlan_vendor_config: wifi config attr
  *
  * @QCA_WLAN_VENDOR_ATTR_CONFIG_INVALID: invalid config
@@ -2289,6 +2308,23 @@ enum qca_wlan_vendor_acs_hw_mode {
  * @QCA_WLAN_VENDOR_ATTR_CONFIG_STATS_AVG_FACTOR: stats avg. factor
  * @QCA_WLAN_VENDOR_ATTR_CONFIG_GUARD_TIME: guard time
  * @QCA_WLAN_VENDOR_ATTR_CONFIG_FINE_TIME_MEASUREMENT: fine time measurement
+ * @QCA_WLAN_VENDOR_ATTR_CONFIG_SCAN_DEFAULT_IES: Update the default scan IEs
+ * @QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_COMMAND:
+ *                         Unsigned 32-bit value attribute for generic commands
+ * @QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_VALUE:
+ *                  Unsigned 32-bit data attribute for generic command response
+ * @QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_DATA:
+ *                  Unsigned 32-bit data attribute for generic command response
+ * @QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_LENGTH:
+ *                                     Unsigned 32-bit length attribute for
+ *                                     QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_DATA
+ * @QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_FLAGS:
+ * Unsigned 32-bit flags attribute for QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_DATA
+ * @QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY: Vendor IE access policy
+ * @QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY_IE_LIST: Vendor IE to be used
+ *                                                     with access policy
+ * @QCA_WLAN_VENDOR_ATTR_CONFIG_IFINDEX: interface index for vdev specific
+ *                                       parameters
  * @QCA_WLAN_VENDOR_ATTR_CONFIG_LAST: last config
  * @QCA_WLAN_VENDOR_ATTR_CONFIG_MAX: max config
  */
@@ -2298,6 +2334,43 @@ enum qca_wlan_vendor_config {
 	QCA_WLAN_VENDOR_ATTR_CONFIG_STATS_AVG_FACTOR,
 	QCA_WLAN_VENDOR_ATTR_CONFIG_GUARD_TIME,
 	QCA_WLAN_VENDOR_ATTR_CONFIG_FINE_TIME_MEASUREMENT,
+	/* Attribute used to set scan default IEs to the driver.
+	*
+	* These IEs can be used by scan operations that will be initiated by
+	* the driver/firmware.
+	*
+	* For further scan requests coming to the driver, these IEs should be
+	* merged with the IEs received along with scan request coming to the
+	* driver. If a particular IE is present in the scan default IEs but not
+	* present in the scan request, then that IE should be added to the IEs
+	* sent in the Probe Request frames for that scan request. */
+	QCA_WLAN_VENDOR_ATTR_CONFIG_SCAN_DEFAULT_IES,
+	/* Unsigned 32-bit attribute for generic commands */
+	QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_COMMAND,
+	/* Unsigned 32-bit value attribute for generic commands */
+	QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_VALUE,
+	/* Unsigned 32-bit data attribute for generic command response */
+	QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_DATA,
+	/* Unsigned 32-bit length attribute for
+	* QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_DATA */
+	QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_LENGTH,
+	/* Unsigned 32-bit flags attribute for
+	* QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_DATA */
+	QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_FLAGS,
+	/* Unsigned 32-bit, defining the access policy.
+	* See enum qca_access_policy. Used with
+	* QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY_IE_LIST. */
+	QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY,
+	/* Sets the list of full set of IEs for which a specific access policy
+	* has to be applied. Used along with
+	* QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY to control the access.
+	* Zero length payload can be used to clear this access constraint. */
+	QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY_IE_LIST,
+	/* Unsigned 32-bit, specifies the interface index (netdev) for which the
+	* corresponding configurations are applied. If the interface index is
+	* not specified, the configurations are attributed to the respective
+	* wiphy. */
+	QCA_WLAN_VENDOR_ATTR_CONFIG_IFINDEX,
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_LAST,
 	QCA_WLAN_VENDOR_ATTR_CONFIG_MAX =
