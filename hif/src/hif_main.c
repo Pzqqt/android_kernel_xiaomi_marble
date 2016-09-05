@@ -46,6 +46,9 @@
 #include "hif_debug.h"
 #include "mp_dev.h"
 #include "ce_api.h"
+#ifdef QCA_WIFI_QCA8074
+#include "hal_api.h"
+#endif
 
 void hif_dump(struct hif_opaque_softc *hif_ctx, uint8_t cmd_id, bool start)
 {
@@ -340,6 +343,20 @@ void hif_get_hw_info(struct hif_opaque_softc *scn, u32 *version, u32 *revision,
 }
 
 /**
+ * hif_get_dev_ba(): API to get device base address.
+ * @scn: scn
+ * @version: version
+ * @revision: revision
+ *
+ * Return: n/a
+ */
+void *hif_get_dev_ba(struct hif_opaque_softc *hif_handle)
+{
+	struct hif_softc *scn = (struct hif_softc *)hif_handle;
+
+	return scn->mem;
+}
+/**
  * hif_open(): hif_open
  * @qdf_ctx: QDF Context
  * @mode: Driver Mode
@@ -415,6 +432,18 @@ void hif_close(struct hif_opaque_softc *hif_ctx)
 	qdf_mem_free(scn);
 }
 
+static QDF_STATUS hif_hal_attach(struct hif_softc *scn)
+{
+#ifdef QCA_WIFI_QCA8074
+	if (ce_srng_based(scn)) {
+		scn->hal_soc = hal_attach(scn, scn->qdf_dev);
+		if (scn->hal_soc == NULL)
+			return QDF_STATUS_E_FAILURE;
+	}
+#endif
+
+	return QDF_STATUS_SUCCESS;
+}
 /**
  * hif_enable(): hif_enable
  * @hif_ctx: hif_ctx
@@ -443,6 +472,12 @@ QDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 	if (status != QDF_STATUS_SUCCESS) {
 		HIF_ERROR("%s: hif_enable_bus error = %d",
 				  __func__, status);
+		return status;
+	}
+
+	status = hif_hal_attach(scn);
+	if (status != QDF_STATUS_SUCCESS) {
+		HIF_ERROR("%s: hal attach failed", __func__);
 		return status;
 	}
 
@@ -914,6 +949,7 @@ qdf_nbuf_t hif_batch_send(struct hif_opaque_softc *osc, qdf_nbuf_t msdu,
 		uint32_t transfer_id, u_int32_t len, uint32_t sendhead)
 {
 	void *ce_tx_hdl = hif_get_ce_handle(osc, CE_HTT_TX_CE);
+
 	return ce_batch_send((struct CE_handle *)ce_tx_hdl, msdu, transfer_id,
 			len, sendhead);
 }
@@ -947,6 +983,7 @@ int hif_send_single(struct hif_opaque_softc *osc, qdf_nbuf_t msdu, uint32_t
 		transfer_id, u_int32_t len)
 {
 	void *ce_tx_hdl = hif_get_ce_handle(osc, CE_HTT_TX_CE);
+
 	return ce_send_single((struct CE_handle *)ce_tx_hdl, msdu, transfer_id,
 			len);
 }
@@ -966,6 +1003,7 @@ int hif_send_fast(struct hif_opaque_softc *osc, qdf_nbuf_t nbuf,
 		uint32_t transfer_id, uint32_t download_len)
 {
 	void *ce_tx_hdl = hif_get_ce_handle(osc, CE_HTT_TX_CE);
+
 	return ce_send_fast((struct CE_handle *)ce_tx_hdl, nbuf,
 			transfer_id, download_len);
 }

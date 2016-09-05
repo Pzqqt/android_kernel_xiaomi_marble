@@ -160,6 +160,7 @@ struct HIF_CE_state {
 	/* Copy Engine used for Diagnostic Accesses */
 	struct CE_handle *ce_diag;
 	struct ce_intr_stats stats;
+	struct ce_ops *ce_services;
 };
 
 /*

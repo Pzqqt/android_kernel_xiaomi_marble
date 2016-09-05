@@ -155,6 +155,7 @@ struct hif_softc {
 #ifdef QCA_NSS_WIFI_OFFLOAD_SUPPORT
 	uint32_t nss_wifi_ol_mode;
 #endif
+	void *hal_soc;
 };
 
 #ifdef QCA_NSS_WIFI_OFFLOAD_SUPPORT

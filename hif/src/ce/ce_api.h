@@ -484,4 +484,60 @@ int ce_lro_flush_cb_register(struct hif_opaque_softc *scn,
 			     void (handler)(void *), void *data);
 int ce_lro_flush_cb_deregister(struct hif_opaque_softc *scn);
 #endif
+struct ce_ops *ce_services_srng(void);
+struct ce_ops *ce_services_legacy(void);
+bool ce_srng_based(struct hif_softc *scn);
+/* Forward declaration */
+struct CE_ring_state;
+
+struct ce_ops {
+	uint32_t (*ce_get_desc_size)(uint8_t ring_type);
+	void (*ce_ring_setup)(struct hif_softc *scn, uint8_t ring_type,
+		uint32_t ce_id, struct CE_ring_state *ring,
+		struct CE_attr *attr);
+	int (*ce_send_nolock)(struct CE_handle *copyeng,
+			   void *per_transfer_context,
+			   qdf_dma_addr_t buffer,
+			   uint32_t nbytes,
+			   uint32_t transfer_id,
+			   uint32_t flags,
+			   uint32_t user_flags);
+	int (*ce_sendlist_send)(struct CE_handle *copyeng,
+			void *per_transfer_context,
+			struct ce_sendlist *sendlist, unsigned int transfer_id);
+	QDF_STATUS (*ce_revoke_recv_next)(struct CE_handle *copyeng,
+			void **per_CE_contextp,
+			void **per_transfer_contextp,
+			qdf_dma_addr_t *bufferp);
+	QDF_STATUS (*ce_cancel_send_next)(struct CE_handle *copyeng,
+			void **per_CE_contextp, void **per_transfer_contextp,
+			qdf_dma_addr_t *bufferp, unsigned int *nbytesp,
+			unsigned int *transfer_idp,
+			uint32_t *toeplitz_hash_result);
+	int (*ce_recv_buf_enqueue)(struct CE_handle *copyeng,
+			void *per_recv_context, qdf_dma_addr_t buffer);
+	bool (*watermark_int)(struct CE_state *CE_state, unsigned int *flags);
+	int (*ce_completed_recv_next_nolock)(struct CE_state *CE_state,
+			void **per_CE_contextp,
+			void **per_transfer_contextp,
+			qdf_dma_addr_t *bufferp,
+			unsigned int *nbytesp,
+			unsigned int *transfer_idp,
+			unsigned int *flagsp);
+	int (*ce_completed_send_next_nolock)(struct CE_state *CE_state,
+			void **per_CE_contextp,
+			void **per_transfer_contextp,
+			qdf_dma_addr_t *bufferp,
+			unsigned int *nbytesp,
+			unsigned int *transfer_idp,
+			unsigned int *sw_idx,
+			unsigned int *hw_idx,
+			uint32_t *toeplitz_hash_result);
+	unsigned int (*ce_recv_entries_done_nolock)(struct hif_softc *scn,
+			struct CE_state *CE_state);
+	unsigned int (*ce_send_entries_done_nolock)(struct hif_softc *scn,
+			    struct CE_state *CE_state);
+	void (*ce_per_engine_handler_adjust)(struct CE_state *CE_state,
+			     int disable_copy_compl_intr);
+};
 #endif /* __COPY_ENGINE_API_H__ */

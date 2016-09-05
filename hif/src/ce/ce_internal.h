@@ -94,6 +94,7 @@ struct CE_ring_state {
 
 	unsigned int low_water_mark_nentries;
 	unsigned int high_water_mark_nentries;
+	void *srng_ctx;
 	void **per_transfer_context;
 	OS_DMA_MEM_CONTEXT(ce_dmacontext) /* OS Specific DMA context */
 };
@@ -129,6 +130,7 @@ struct CE_state {
 	unsigned int src_sz_max;
 	struct CE_ring_state *src_ring;
 	struct CE_ring_state *dest_ring;
+	struct CE_ring_state *status_ring;
 	atomic_t rx_pending;
 
 	qdf_spinlock_t ce_index_lock;
@@ -288,6 +290,85 @@ struct CE_dest_desc {
 };
 #endif /* QCA_WIFI_3_0 */
 
+#ifdef QCA_WIFI_QCA8074
+struct ce_srng_src_desc {
+	uint32_t buffer_addr_lo;
+#if _BYTE_ORDER == _BIG_ENDIAN
+	uint32_t nbytes:16,
+		 rsvd:4,
+		 gather:1,
+		 dest_swap:1,
+		 byte_swap:1,
+		 toeplitz_hash_enable:1,
+		 buffer_addr_hi:8;
+	uint32_t rsvd1:16,
+		 meta_data:16;
+	uint32_t loop_count:4,
+		 ring_id:8,
+		 rsvd3:20;
+#else
+	uint32_t buffer_addr_hi:8,
+		 toeplitz_hash_enable:1,
+		 byte_swap:1,
+		 dest_swap:1,
+		 gather:1,
+		 rsvd:4,
+		 nbytes:16;
+	uint32_t meta_data:16,
+		 rsvd1:16;
+	uint32_t rsvd3:20,
+		 ring_id:8,
+		 loop_count:4;
+#endif
+};
+struct ce_srng_dest_desc {
+	uint32_t buffer_addr_lo;
+#if _BYTE_ORDER == _BIG_ENDIAN
+	uint32_t loop_count:4,
+		 ring_id:8,
+		 rsvd1:12,
+		 buffer_addr_hi:8;
+#else
+	uint32_t buffer_addr_hi:8,
+		 rsvd1:12,
+		 ring_id:8,
+		 loop_count:4;
+#endif
+};
+struct ce_srng_dest_status_desc {
+#if _BYTE_ORDER == _BIG_ENDIAN
+	uint32_t nbytes:16,
+		 rsvd:4,
+		 gather:1,
+		 dest_swap:1,
+		 byte_swap:1,
+		 toeplitz_hash_enable:1,
+		 rsvd0:8;
+	uint32_t rsvd1:16,
+		 meta_data:16;
+#else
+	uint32_t rsvd0:8,
+		 toeplitz_hash_enable:1,
+		 byte_swap:1,
+		 dest_swap:1,
+		 gather:1,
+		 rsvd:4,
+		 nbytes:16;
+	uint32_t meta_data:16,
+		 rsvd1:16;
+#endif
+	uint32_t toeplitz_hash;
+#if _BYTE_ORDER == _BIG_ENDIAN
+	uint32_t loop_count:4,
+		 ring_id:8,
+		 rsvd3:20;
+#else
+	uint32_t rsvd3:20,
+		 ring_id:8,
+		 loop_count:4;
+#endif
+};
+#endif
 #define CE_SENDLIST_ITEMS_MAX 12
 
 /**
@@ -407,6 +488,7 @@ static inline void ce_t2h_msg_ce_cleanup(struct CE_handle *ce_hdl)
 /* which ring of a CE? */
 #define CE_RING_SRC  0
 #define CE_RING_DEST 1
+#define CE_RING_STATUS 2
 
 #define CDC_WAR_MAGIC_STR   0xceef0000
 #define CDC_WAR_DATA_CE     4

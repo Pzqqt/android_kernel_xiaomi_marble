@@ -586,6 +586,136 @@ static void ce_ring_test_initial_indexes(int ce_id, struct CE_ring_state *ring,
 		QDF_BUG(0);
 }
 
+/**
+ * ce_srng_based() - Does this target use srng
+ * @ce_state : pointer to the state context of the CE
+ *
+ * Description:
+ *   returns true if the target is SRNG based
+ *
+ * Return:
+ *  false (attribute set to false)
+ *  true  (attribute set to true);
+ */
+bool ce_srng_based(struct hif_softc *scn)
+{
+	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
+	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
+
+	switch (tgt_info->target_type) {
+#ifdef QCA_WIFI_QCA8074
+	case TARGET_TYPE_QCA8074:
+		return true;
+#endif
+	default:
+		return false;
+	}
+	return false;
+}
+
+struct ce_ops *ce_services_attach(struct hif_softc *scn)
+{
+#ifdef QCA_WIFI_QCA8074
+	if (ce_srng_based(scn))
+		return ce_services_srng();
+#endif
+
+	return ce_services_legacy();
+}
+
+static inline uint32_t ce_get_desc_size(struct hif_softc *scn,
+						uint8_t ring_type)
+{
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+
+	return hif_state->ce_services->ce_get_desc_size(ring_type);
+}
+
+
+struct CE_ring_state *ce_alloc_ring_state(struct CE_state *CE_state,
+		uint8_t ring_type, uint32_t nentries)
+{
+	uint32_t ce_nbytes;
+	char *ptr;
+	qdf_dma_addr_t base_addr;
+	struct CE_ring_state *ce_ring;
+	uint32_t desc_size;
+	struct hif_softc *scn = CE_state->scn;
+
+	ce_nbytes = sizeof(struct CE_ring_state)
+		+ (nentries * sizeof(void *));
+	ptr = qdf_mem_malloc(ce_nbytes);
+	if (!ptr)
+		return NULL;
+
+	qdf_mem_zero(ptr, ce_nbytes);
+
+	ce_ring = (struct CE_ring_state *)ptr;
+	ptr += sizeof(struct CE_ring_state);
+	ce_ring->nentries = nentries;
+	ce_ring->nentries_mask = nentries - 1;
+
+	ce_ring->low_water_mark_nentries = 0;
+	ce_ring->high_water_mark_nentries = nentries;
+	ce_ring->per_transfer_context = (void **)ptr;
+
+	desc_size = ce_get_desc_size(scn, ring_type);
+
+	/* Legacy platforms that do not support cache
+	 * coherent DMA are unsupported
+	 */
+	ce_ring->base_addr_owner_space_unaligned =
+		qdf_mem_alloc_consistent(scn->qdf_dev,
+				scn->qdf_dev->dev,
+				(nentries *
+				 desc_size +
+				 CE_DESC_RING_ALIGN),
+				&base_addr);
+	if (ce_ring->base_addr_owner_space_unaligned
+			== NULL) {
+		HIF_ERROR("%s: ring has no DMA mem",
+				__func__);
+		qdf_mem_free(ptr);
+		return NULL;
+	}
+	ce_ring->base_addr_CE_space_unaligned = base_addr;
+
+	/* Correctly initialize memory to 0 to
+	 * prevent garbage data crashing system
+	 * when download firmware
+	 */
+	qdf_mem_zero(ce_ring->base_addr_owner_space_unaligned,
+			nentries * desc_size +
+			CE_DESC_RING_ALIGN);
+
+	if (ce_ring->base_addr_CE_space_unaligned & (CE_DESC_RING_ALIGN - 1)) {
+
+		ce_ring->base_addr_CE_space =
+			(ce_ring->base_addr_CE_space_unaligned +
+			 CE_DESC_RING_ALIGN - 1) & ~(CE_DESC_RING_ALIGN - 1);
+
+		ce_ring->base_addr_owner_space = (void *)
+			(((size_t) ce_ring->base_addr_owner_space_unaligned +
+			 CE_DESC_RING_ALIGN - 1) & ~(CE_DESC_RING_ALIGN - 1));
+	} else {
+		ce_ring->base_addr_CE_space =
+				ce_ring->base_addr_CE_space_unaligned;
+		ce_ring->base_addr_owner_space =
+				ce_ring->base_addr_owner_space_unaligned;
+	}
+
+	return ce_ring;
+}
+
+static void ce_ring_setup(struct hif_softc *scn, uint8_t ring_type,
+			uint32_t ce_id, struct CE_ring_state *ring,
+			struct CE_attr *attr)
+{
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+
+	hif_state->ce_services->ce_ring_setup(scn, ring_type, ce_id, ring, attr);
+}
+
 /*
  * Initialize a Copy Engine based on caller-supplied attributes.
  * This may be called once to initialize both source and destination
@@ -602,7 +732,6 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 	struct CE_state *CE_state;
 	uint32_t ctrl_addr;
 	unsigned int nentries;
-	qdf_dma_addr_t base_addr;
 	bool malloc_CE_state = false;
 	bool malloc_src_ring = false;
 
@@ -647,17 +776,15 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 	nentries = attr->src_nentries;
 	if (nentries) {
 		struct CE_ring_state *src_ring;
-		unsigned CE_nbytes;
-		char *ptr;
-		uint64_t dma_addr;
 		nentries = roundup_pwr2(nentries);
 		if (CE_state->src_ring) {
 			QDF_ASSERT(CE_state->src_ring->nentries == nentries);
 		} else {
-			CE_nbytes = sizeof(struct CE_ring_state)
-				    + (nentries * sizeof(void *));
-			ptr = qdf_mem_malloc(CE_nbytes);
-			if (!ptr) {
+			src_ring = CE_state->src_ring =
+				ce_alloc_ring_state(CE_state,
+						CE_RING_SRC,
+						nentries);
+			if (!src_ring) {
 				/* cannot allocate src ring. If the
 				 * CE_state is allocated locally free
 				 * CE_State and return error.
@@ -676,72 +803,6 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 				 * allocated locally
 				 */
 				malloc_src_ring = true;
-			}
-			qdf_mem_zero(ptr, CE_nbytes);
-
-			src_ring = CE_state->src_ring =
-					   (struct CE_ring_state *)ptr;
-			ptr += sizeof(struct CE_ring_state);
-			src_ring->nentries = nentries;
-			src_ring->nentries_mask = nentries - 1;
-			if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
-				goto error_target_access;
-			src_ring->hw_index =
-				CE_SRC_RING_READ_IDX_GET_FROM_REGISTER(scn,
-					ctrl_addr);
-			src_ring->sw_index = src_ring->hw_index;
-			src_ring->write_index =
-				CE_SRC_RING_WRITE_IDX_GET_FROM_REGISTER(scn,
-					ctrl_addr);
-
-			ce_ring_test_initial_indexes(CE_id, src_ring,
-						     "src_ring");
-
-			if (Q_TARGET_ACCESS_END(scn) < 0)
-				goto error_target_access;
-
-			src_ring->low_water_mark_nentries = 0;
-			src_ring->high_water_mark_nentries = nentries;
-			src_ring->per_transfer_context = (void **)ptr;
-
-			/* Legacy platforms that do not support cache
-			 * coherent DMA are unsupported
-			 */
-			src_ring->base_addr_owner_space_unaligned =
-				qdf_mem_alloc_consistent(scn->qdf_dev,
-						scn->qdf_dev->dev,
-						(nentries *
-						sizeof(struct CE_src_desc) +
-						CE_DESC_RING_ALIGN),
-						&base_addr);
-			if (src_ring->base_addr_owner_space_unaligned
-					== NULL) {
-				HIF_ERROR("%s: src ring has no DMA mem",
-					  __func__);
-				goto error_no_dma_mem;
-			}
-			src_ring->base_addr_CE_space_unaligned = base_addr;
-
-			if (src_ring->
-			    base_addr_CE_space_unaligned & (CE_DESC_RING_ALIGN
-							- 1)) {
-				src_ring->base_addr_CE_space =
-					(src_ring->base_addr_CE_space_unaligned
-					+ CE_DESC_RING_ALIGN -
-					 1) & ~(CE_DESC_RING_ALIGN - 1);
-
-				src_ring->base_addr_owner_space =
-					(void
-					 *)(((size_t) src_ring->
-					     base_addr_owner_space_unaligned +
-					     CE_DESC_RING_ALIGN -
-					     1) & ~(CE_DESC_RING_ALIGN - 1));
-			} else {
-				src_ring->base_addr_CE_space =
-					src_ring->base_addr_CE_space_unaligned;
-				src_ring->base_addr_owner_space =
-					src_ring->
-					base_addr_owner_space_unaligned;
 			}
 			/*
 			 * Also allocate a shadow src ring in
@@ -763,30 +824,13 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 
 			if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
 				goto error_target_access;
-			dma_addr = src_ring->base_addr_CE_space;
-			CE_SRC_RING_BASE_ADDR_SET(scn, ctrl_addr,
-				 (uint32_t)(dma_addr & 0xFFFFFFFF));
 
-			/* if SR_BA_ADDRESS_HIGH register exists */
-			if (is_register_supported(SR_BA_ADDRESS_HIGH)) {
-				uint32_t tmp;
-				tmp = CE_SRC_RING_BASE_ADDR_HIGH_GET(
-				   scn, ctrl_addr);
-				tmp &= ~0x1F;
-				dma_addr = ((dma_addr >> 32) & 0x1F)|tmp;
-				CE_SRC_RING_BASE_ADDR_HIGH_SET(scn,
-					 ctrl_addr, (uint32_t)dma_addr);
-			}
-			CE_SRC_RING_SZ_SET(scn, ctrl_addr, nentries);
-			CE_SRC_RING_DMAX_SET(scn, ctrl_addr, attr->src_sz_max);
-#ifdef BIG_ENDIAN_HOST
-			/* Enable source ring byte swap for big endian host */
-			CE_SRC_RING_BYTE_SWAP_SET(scn, ctrl_addr, 1);
-#endif
-			CE_SRC_RING_LOWMARK_SET(scn, ctrl_addr, 0);
-			CE_SRC_RING_HIGHMARK_SET(scn, ctrl_addr, nentries);
+			ce_ring_setup(scn, CE_RING_SRC, CE_id, src_ring, attr);
+
 			if (Q_TARGET_ACCESS_END(scn) < 0)
 				goto error_target_access;
+			ce_ring_test_initial_indexes(CE_id, src_ring,
+						     "src_ring");
 		}
 	}
 
@@ -794,18 +838,16 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 	nentries = attr->dest_nentries;
 	if (nentries) {
 		struct CE_ring_state *dest_ring;
-		unsigned CE_nbytes;
-		char *ptr;
-		uint64_t dma_addr;
 
 		nentries = roundup_pwr2(nentries);
 		if (CE_state->dest_ring) {
 			QDF_ASSERT(CE_state->dest_ring->nentries == nentries);
 		} else {
-			CE_nbytes = sizeof(struct CE_ring_state)
-				    + (nentries * sizeof(void *));
-			ptr = qdf_mem_malloc(CE_nbytes);
-			if (!ptr) {
+			dest_ring = CE_state->dest_ring =
+				ce_alloc_ring_state(CE_state,
+						CE_RING_DEST,
+						nentries);
+			if (!dest_ring) {
 				/* cannot allocate dst ring. If the CE_state
 				 * or src ring is allocated locally free
 				 * CE_State and src ring and return error.
@@ -825,108 +867,55 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 				}
 				return NULL;
 			}
-			qdf_mem_zero(ptr, CE_nbytes);
 
-			dest_ring = CE_state->dest_ring =
-					    (struct CE_ring_state *)ptr;
-			ptr += sizeof(struct CE_ring_state);
-			dest_ring->nentries = nentries;
-			dest_ring->nentries_mask = nentries - 1;
 			if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
 				goto error_target_access;
-			dest_ring->sw_index =
-				CE_DEST_RING_READ_IDX_GET_FROM_REGISTER(scn,
-					ctrl_addr);
-			dest_ring->write_index =
-				CE_DEST_RING_WRITE_IDX_GET_FROM_REGISTER(scn,
-					ctrl_addr);
+
+			ce_ring_setup(scn, CE_RING_DEST, CE_id, dest_ring, attr);
+
+			if (Q_TARGET_ACCESS_END(scn) < 0)
+				goto error_target_access;
 
 			ce_ring_test_initial_indexes(CE_id, dest_ring,
 						     "dest_ring");
 
-			if (Q_TARGET_ACCESS_END(scn) < 0)
-				goto error_target_access;
+#ifdef QCA_WIFI_QCA8074
+			/* For srng based target, init status ring here */
+			if (ce_srng_based(CE_state->scn)) {
+				CE_state->status_ring =
+					ce_alloc_ring_state(CE_state,
+							CE_RING_STATUS,
+							nentries);
+				if (CE_state->status_ring == NULL) {
+					/*Allocation failed. Cleanup*/
+					qdf_mem_free(CE_state->dest_ring);
+					if (malloc_src_ring) {
+						qdf_mem_free
+							(CE_state->src_ring);
+						CE_state->src_ring = NULL;
+						malloc_src_ring = false;
+					}
+					if (malloc_CE_state) {
+						/* allocated CE_state locally */
+						scn->ce_id_to_state[CE_id] =
+							NULL;
+						qdf_mem_free(CE_state);
+						malloc_CE_state = false;
+					}
 
-			dest_ring->low_water_mark_nentries = 0;
-			dest_ring->high_water_mark_nentries = nentries;
-			dest_ring->per_transfer_context = (void **)ptr;
+					return NULL;
+				}
+				if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+					goto error_target_access;
 
-			/* Legacy platforms that do not support cache
-			 * coherent DMA are unsupported */
-			dest_ring->base_addr_owner_space_unaligned =
-				qdf_mem_alloc_consistent(scn->qdf_dev,
-						scn->qdf_dev->dev,
-						(nentries *
-						sizeof(struct CE_dest_desc) +
-						CE_DESC_RING_ALIGN),
-						&base_addr);
-			if (dest_ring->base_addr_owner_space_unaligned
-				== NULL) {
-				HIF_ERROR("%s: dest ring has no DMA mem",
-					  __func__);
-				goto error_no_dma_mem;
+				ce_ring_setup(scn, CE_RING_STATUS, CE_id,
+						CE_state->status_ring, attr);
+
+				if (Q_TARGET_ACCESS_END(scn) < 0)
+					goto error_target_access;
+
 			}
-			dest_ring->base_addr_CE_space_unaligned = base_addr;
-
-			/* Correctly initialize memory to 0 to
-			 * prevent garbage data crashing system
-			 * when download firmware
-			 */
-			qdf_mem_zero(dest_ring->base_addr_owner_space_unaligned,
-				  nentries * sizeof(struct CE_dest_desc) +
-				  CE_DESC_RING_ALIGN);
-
-			if (dest_ring->
-			    base_addr_CE_space_unaligned & (CE_DESC_RING_ALIGN -
-							    1)) {
-
-				dest_ring->base_addr_CE_space =
-					(dest_ring->
-					 base_addr_CE_space_unaligned +
-					 CE_DESC_RING_ALIGN -
-					 1) & ~(CE_DESC_RING_ALIGN - 1);
-
-				dest_ring->base_addr_owner_space =
-					(void
-					 *)(((size_t) dest_ring->
-					     base_addr_owner_space_unaligned +
-					     CE_DESC_RING_ALIGN -
-					     1) & ~(CE_DESC_RING_ALIGN - 1));
-			} else {
-				dest_ring->base_addr_CE_space =
-					dest_ring->base_addr_CE_space_unaligned;
-				dest_ring->base_addr_owner_space =
-					dest_ring->
-					base_addr_owner_space_unaligned;
-			}
-
-			if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
-				goto error_target_access;
-			dma_addr = dest_ring->base_addr_CE_space;
-			CE_DEST_RING_BASE_ADDR_SET(scn, ctrl_addr,
-				 (uint32_t)(dma_addr & 0xFFFFFFFF));
-
-			/* if DR_BA_ADDRESS_HIGH exists */
-			if (is_register_supported(DR_BA_ADDRESS_HIGH)) {
-				uint32_t tmp;
-				tmp = CE_DEST_RING_BASE_ADDR_HIGH_GET(scn,
-						ctrl_addr);
-				tmp &= ~0x1F;
-				dma_addr = ((dma_addr >> 32) & 0x1F)|tmp;
-				CE_DEST_RING_BASE_ADDR_HIGH_SET(scn,
-					ctrl_addr, (uint32_t)dma_addr);
-			}
-
-			CE_DEST_RING_SZ_SET(scn, ctrl_addr, nentries);
-#ifdef BIG_ENDIAN_HOST
-			/* Enable Dest ring byte swap for big endian host */
-			CE_DEST_RING_BYTE_SWAP_SET(scn, ctrl_addr, 1);
 #endif
-			CE_DEST_RING_LOWMARK_SET(scn, ctrl_addr, 0);
-			CE_DEST_RING_HIGHMARK_SET(scn, ctrl_addr, nentries);
-			if (Q_TARGET_ACCESS_END(scn) < 0)
-				goto error_target_access;
-
 			/* epping */
 			/* poll timer */
 			if ((CE_state->attr_flags & CE_ATTR_ENABLE_POLL)) {
@@ -942,12 +931,14 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 		}
 	}
 
-	/* Enable CE error interrupts */
-	if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
-		goto error_target_access;
-	CE_ERROR_INTR_ENABLE(scn, ctrl_addr);
-	if (Q_TARGET_ACCESS_END(scn) < 0)
-		goto error_target_access;
+	if (!ce_srng_based(scn)) {
+		/* Enable CE error interrupts */
+		if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+			goto error_target_access;
+		CE_ERROR_INTR_ENABLE(scn, ctrl_addr);
+		if (Q_TARGET_ACCESS_END(scn) < 0)
+			goto error_target_access;
+	}
 
 	/* update the htt_data attribute */
 	ce_mark_datapath(CE_state);
@@ -1182,6 +1173,28 @@ void ce_fini(struct CE_handle *copyeng)
 			qdf_timer_free(&CE_state->poll_timer);
 		}
 	}
+#ifdef QCA_WIFI_QCA8074
+	if (CE_state->status_ring) {
+		/* Cleanup the datapath Tx ring */
+		ce_h2t_tx_ce_cleanup(copyeng);
+
+		if (CE_state->status_ring->shadow_base_unaligned)
+			qdf_mem_free(
+				CE_state->status_ring->shadow_base_unaligned);
+
+		if (CE_state->status_ring->base_addr_owner_space_unaligned)
+			qdf_mem_free_consistent(scn->qdf_dev,
+						scn->qdf_dev->dev,
+					    (CE_state->status_ring->nentries *
+					     sizeof(struct CE_src_desc) +
+					     CE_DESC_RING_ALIGN),
+					    CE_state->status_ring->
+					    base_addr_owner_space_unaligned,
+					    CE_state->status_ring->
+					    base_addr_CE_space, 0);
+		qdf_mem_free(CE_state->status_ring);
+	}
+#endif
 	qdf_mem_free(CE_state);
 }
 
@@ -2042,6 +2055,14 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 		target_service_to_ce_map_sz =
 			sizeof(target_service_to_ce_map_ar900b);
 		break;
+#ifdef QCA_WIFI_QCA8074
+	case TARGET_TYPE_QCA8074:
+		hif_state->host_ce_config = host_ce_config_wlan_qca8074;
+		hif_state->target_ce_config = target_ce_config_wlan_qca8074;
+		hif_state->target_ce_config_sz =
+					sizeof(target_ce_config_wlan_qca8074);
+		break;
+#endif
 	}
 }
 
@@ -2162,6 +2183,7 @@ int hif_config_ce(struct hif_softc *scn)
 
 	hif_config_rri_on_ddr(scn);
 
+	hif_state->ce_services = ce_services_attach(scn);
 	/* During CE initializtion */
 	scn->ce_count = HOST_CE_COUNT;
 	for (pipe_num = 0; pipe_num < scn->ce_count; pipe_num++) {
@@ -2195,6 +2217,9 @@ int hif_config_ce(struct hif_softc *scn)
 		if (attr->dest_nentries > 0) {
 			atomic_set(&pipe_info->recv_bufs_needed,
 				   init_buffer_count(attr->dest_nentries - 1));
+			/*SRNG based CE has one entry less */
+			if (ce_srng_based(scn))
+				atomic_dec(&pipe_info->recv_bufs_needed);
 		} else {
 			atomic_set(&pipe_info->recv_bufs_needed, 0);
 		}
