@@ -9069,7 +9069,8 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 			}
 
 			if (pHddCtx->config->fEnableTDLSWmmMode &&
-			    (params->sta_flags_set & BIT(NL80211_STA_FLAG_WME)))
+			    (params->ht_capa || params->vht_capa ||
+			    (params->sta_flags_set & BIT(NL80211_STA_FLAG_WME))))
 				is_qos_wmm_sta = true;
 
 			hdd_notice("%s: TDLS Peer is QOS capable"
