@@ -1486,6 +1486,11 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	else
 		vht_enabled = 0;
 
+	if (hdd_ctx->config->sap_force_11n_for_11ac) {
+		vht_enabled = 0;
+		hdd_log(LOG1, FL("VHT is Disabled in ACS"));
+	}
+
 	if (tb[QCA_WLAN_VENDOR_ATTR_ACS_CHWIDTH]) {
 		ch_width = nla_get_u16(tb[QCA_WLAN_VENDOR_ATTR_ACS_CHWIDTH]);
 	} else {
@@ -1494,6 +1499,15 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		else
 			ch_width = 20;
 	}
+
+	/* this may be possible, when sap_force_11n_for_11ac is set */
+	if ((ch_width == 80 || ch_width == 160) && !vht_enabled) {
+		if (ht_enabled && ht40_enabled)
+			ch_width = 40;
+		else
+			ch_width = 20;
+	}
+
 	if (ch_width == 80)
 		sap_config->acs_cfg.ch_width = CH_WIDTH_80MHZ;
 	else if (ch_width == 40)
@@ -1557,7 +1571,8 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		hdd_err("Get PCL failed");
 
 	/* ACS override for android */
-	if (hdd_ctx->config->sap_p2p_11ac_override && ht_enabled) {
+	if (hdd_ctx->config->sap_p2p_11ac_override && ht_enabled &&
+	    !hdd_ctx->config->sap_force_11n_for_11ac) {
 		hdd_notice("ACS Config override for 11AC");
 		vht_enabled = 1;
 		sap_config->acs_cfg.hw_mode = eCSR_DOT11_MODE_11ac;

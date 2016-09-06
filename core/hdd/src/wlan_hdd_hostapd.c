@@ -6799,7 +6799,8 @@ static int wlan_hdd_setup_driver_overrides(hdd_adapter_t *ap_adapter)
 	if (hdd_ctx->config->sap_p2p_11ac_override &&
 			(sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11n ||
 			sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ac ||
-			sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ac_ONLY)) {
+			sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ac_ONLY) &&
+			!hdd_ctx->config->sap_force_11n_for_11ac) {
 		hdd_notice("** Driver force 11AC override for SAP/Go **");
 
 		/* 11n only shall not be overridden since it may be on purpose*/
@@ -6840,6 +6841,12 @@ setup_acs_overrides:
 						hdd_ctx->config->dot11Mode);
 	if (sap_cfg->SapHw_mode == eCSR_DOT11_MODE_AUTO)
 		sap_cfg->SapHw_mode = eCSR_DOT11_MODE_11ac;
+
+	if (hdd_ctx->config->sap_force_11n_for_11ac) {
+		if (sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ac ||
+		    sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ac_ONLY)
+			sap_cfg->SapHw_mode = eCSR_DOT11_MODE_11n;
+	}
 
 	if ((sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11b ||
 			sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11g ||
@@ -7315,6 +7322,12 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	}
 
 	wlan_hdd_set_sap_hwmode(pHostapdAdapter);
+	if (pHddCtx->config->sap_force_11n_for_11ac) {
+		if (pConfig->SapHw_mode == eCSR_DOT11_MODE_11ac ||
+		    pConfig->SapHw_mode == eCSR_DOT11_MODE_11ac_ONLY)
+			pConfig->SapHw_mode = eCSR_DOT11_MODE_11n;
+	}
+
 	qdf_mem_zero(&sme_config, sizeof(tSmeConfigParams));
 	sme_get_config_param(pHddCtx->hHal, &sme_config);
 	/* Override hostapd.conf wmm_enabled only for 11n and 11AC configs (IOT)
@@ -7331,25 +7344,32 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		sme_config.csrConfig.WMMSupportMode = eCsrRoamWmmNoQos;
 	sme_update_config(pHddCtx->hHal, &sme_config);
 
-	if (pConfig->ch_width_orig == NL80211_CHAN_WIDTH_80P80) {
-		if (pHddCtx->isVHT80Allowed == false)
+	if (!pHddCtx->config->sap_force_11n_for_11ac) {
+		if (pConfig->ch_width_orig == NL80211_CHAN_WIDTH_80P80) {
+			if (pHddCtx->isVHT80Allowed == false)
+				pConfig->ch_width_orig = CH_WIDTH_40MHZ;
+			else
+				pConfig->ch_width_orig = CH_WIDTH_80P80MHZ;
+		} else if (pConfig->ch_width_orig == NL80211_CHAN_WIDTH_160) {
+			if (pHddCtx->isVHT80Allowed == false)
+				pConfig->ch_width_orig = CH_WIDTH_40MHZ;
+			else
+				pConfig->ch_width_orig = CH_WIDTH_160MHZ;
+		} else if (pConfig->ch_width_orig == NL80211_CHAN_WIDTH_80) {
+			if (pHddCtx->isVHT80Allowed == false)
+				pConfig->ch_width_orig = CH_WIDTH_40MHZ;
+			else
+				pConfig->ch_width_orig = CH_WIDTH_80MHZ;
+		} else if (pConfig->ch_width_orig == NL80211_CHAN_WIDTH_40) {
 			pConfig->ch_width_orig = CH_WIDTH_40MHZ;
-		else
-			pConfig->ch_width_orig = CH_WIDTH_80P80MHZ;
-	} else if (pConfig->ch_width_orig == NL80211_CHAN_WIDTH_160) {
-		if (pHddCtx->isVHT80Allowed == false)
-			pConfig->ch_width_orig = CH_WIDTH_40MHZ;
-		else
-			pConfig->ch_width_orig = CH_WIDTH_160MHZ;
-	} else if (pConfig->ch_width_orig == NL80211_CHAN_WIDTH_80) {
-		if (pHddCtx->isVHT80Allowed == false)
-			pConfig->ch_width_orig = CH_WIDTH_40MHZ;
-		else
-			pConfig->ch_width_orig = CH_WIDTH_80MHZ;
-	} else if (pConfig->ch_width_orig == NL80211_CHAN_WIDTH_40) {
-		pConfig->ch_width_orig = CH_WIDTH_40MHZ;
+		} else {
+			pConfig->ch_width_orig = CH_WIDTH_20MHZ;
+		}
 	} else {
-		pConfig->ch_width_orig = CH_WIDTH_20MHZ;
+		if (pConfig->ch_width_orig >= NL80211_CHAN_WIDTH_40)
+			pConfig->ch_width_orig = CH_WIDTH_40MHZ;
+		else
+			pConfig->ch_width_orig = CH_WIDTH_20MHZ;
 	}
 
 	if (wlan_hdd_setup_driver_overrides(pHostapdAdapter)) {
