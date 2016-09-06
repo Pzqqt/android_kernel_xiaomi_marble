@@ -783,7 +783,8 @@ static int __iw_set_scan(struct net_device *dev, struct iw_request_info *info,
 
 		if (wrqu->data.flags & IW_SCAN_THIS_ESSID) {
 
-			if (scanReq->essid_len) {
+			if (scanReq->essid_len &&
+			    (scanReq->essid_len <= SIR_MAC_MAX_SSID_LENGTH)) {
 				scanRequest.SSIDs.numOfSSIDs = 1;
 				scanRequest.SSIDs.SSIDList =
 					(tCsrSSIDInfo *)
@@ -800,6 +801,9 @@ static int __iw_set_scan(struct net_device *dev, struct iw_request_info *info,
 					hdd_err("Unable to allocate memory");
 					QDF_ASSERT(0);
 				}
+			} else {
+				hdd_err("Invalid essid length : %d",
+					scanReq->essid_len);
 			}
 		}
 
