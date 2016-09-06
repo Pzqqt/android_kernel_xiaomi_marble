@@ -381,75 +381,6 @@ QDF_STATUS hif_snoc_setup_wakeup_sources(struct hif_softc *scn, bool enable)
 }
 
 /**
- * __hif_snoc_irq_state_vote() - enable/disable all the ce interrupts
- * @scn: hif context pointer
- * @enble: true to enable the interrupts false to disable
- *
- * takes care of unwinding partial successes.
- *
- * Return: QDF_STATUS_SUCCESS on success
- */
-
-static QDF_STATUS __hif_snoc_irq_state_vote(struct hif_softc *scn, bool enable)
-{
-	int num_ce = scn->ce_count;
-	int ce_id = 0;
-	int irq;
-
-	while (ce_id < num_ce) {
-		irq = icnss_get_irq(ce_id);
-		if (irq < 0)
-			goto error;
-
-		if (enable)
-			enable_irq(irq);
-		else
-			disable_irq(irq);
-
-		ce_id++;
-	}
-
-	return QDF_STATUS_SUCCESS;
-
-error:
-	HIF_ERROR("%s: failed to map ce to irq", __func__);
-
-	while (--ce_id >= 0) {
-		irq = icnss_get_irq(ce_id);
-		if (irq < 0)
-			continue;
-
-		if (enable)
-			disable_irq(irq);
-		else
-			enable_irq(irq);
-	}
-	return QDF_STATUS_E_FAULT;
-}
-
-/**
- * hif_snoc_enable_irqs() - enable the ce irqs
- * @scn: hif context
- *
- * Return: QDF_STATUS_SUCCESS on success
- */
-static QDF_STATUS hif_snoc_enable_irqs(struct hif_softc *scn)
-{
-	return __hif_snoc_irq_state_vote(scn, true);
-}
-
-/**
- * hif_snoc_enable_irqs() - enable the ce irqs
- * @scn: hif context
- *
- * Return: QDF_STATUS_SUCCESS on success
- */
-static QDF_STATUS hif_snoc_disable_irqs(struct hif_softc *scn)
-{
-	return __hif_snoc_irq_state_vote(scn, false);
-}
-
-/**
  * hif_snoc_bus_suspend() - prepare to suspend the bus
  * @scn: hif context
  *
@@ -463,24 +394,8 @@ static QDF_STATUS hif_snoc_disable_irqs(struct hif_softc *scn)
 int hif_snoc_bus_suspend(struct hif_softc *scn)
 {
 	if (hif_snoc_setup_wakeup_sources(scn, true) != QDF_STATUS_SUCCESS)
-		goto error;
-
-	if (hif_snoc_disable_irqs(scn) != QDF_STATUS_SUCCESS)
-		goto wakeup_sources;
-
-	if (hif_drain_tasklets(scn) != 0)
-		goto enable_irqs;
+		return -EFAULT;
 	return 0;
-
-enable_irqs:
-	if (hif_snoc_enable_irqs(scn) != QDF_STATUS_SUCCESS)
-		QDF_BUG(0);
-wakeup_sources:
-	if (hif_snoc_setup_wakeup_sources(scn, false) != QDF_STATUS_SUCCESS)
-		QDF_BUG(0);
-error:
-	return -EFAULT;
-
 }
 
 /**
@@ -497,8 +412,22 @@ int hif_snoc_bus_resume(struct hif_softc *scn)
 	if (hif_snoc_setup_wakeup_sources(scn, false) != QDF_STATUS_SUCCESS)
 		QDF_BUG(0);
 
-	if (hif_snoc_enable_irqs(scn) != QDF_STATUS_SUCCESS)
-		QDF_BUG(0);
-
 	return 0;
 }
+
+/**
+ * hif_snoc_bus_suspend_noirq() - ensure there are no pending transactions
+ * @scn: hif context
+ *
+ * Ensure that if we recieved the wakeup message before the irq
+ * was disabled that the message is pocessed before suspending.
+ *
+ * Return: -EBUSY if we fail to flush the tasklets.
+ */
+int hif_snoc_bus_suspend_noirq(struct hif_softc *scn)
+{
+	if (hif_drain_tasklets(scn) != 0)
+		return -EBUSY;
+	return 0;
+}
+

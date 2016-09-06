@@ -433,5 +433,10 @@ static inline int qdf_device_init_wakeup(qdf_device_t qdf_dev, bool enable)
 	return __qdf_device_init_wakeup(qdf_dev, enable);
 }
 
+static inline
+uint64_t qdf_get_totalramsize(void)
+{
+	return __qdf_get_totalramsize();
+}
 
 #endif /*_QDF_UTIL_H*/

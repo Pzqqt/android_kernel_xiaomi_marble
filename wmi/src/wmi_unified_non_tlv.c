@@ -3141,6 +3141,49 @@ send_pdev_get_tpc_config_cmd_non_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * send_set_bwf_cmd_non_tlv() - send set bwf command to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to set bwf param
+ *
+ * Return: 0 for success or error code
+ */
+QDF_STATUS
+send_set_bwf_cmd_non_tlv(wmi_unified_t wmi_handle,
+				struct set_bwf_params *param)
+{
+	struct wmi_bwf_peer_info   *peer_info;
+	wmi_peer_bwf_request *cmd;
+	wmi_buf_t buf;
+	int len = sizeof(wmi_peer_bwf_request);
+	int i, retval = 0;
+
+	len += param->num_peers * sizeof(struct wmi_bwf_peer_info);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		qdf_print("%s:wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	cmd = (wmi_peer_bwf_request *)wmi_buf_data(buf);
+	qdf_mem_copy((void *)&(cmd->num_peers),
+			(void *)&(param->num_peers),
+			sizeof(u_int32_t));
+	peer_info = (struct wmi_bwf_peer_info *)&(cmd->peer_info[0]);
+	for (i = 0; i < param->num_peers; i++) {
+		qdf_mem_copy((void *)&(peer_info[i]),
+				(void *)&(param->peer_info[i]),
+				sizeof(struct wmi_bwf_peer_info));
+	}
+
+	retval = wmi_unified_cmd_send(wmi_handle, buf, len,
+			WMI_PEER_BWF_REQUEST_CMDID);
+
+	if (retval)
+		wmi_buf_free(buf);
+
+	return retval;
+}
+
+/**
  * send_set_atf_cmd_non_tlv() - send set atf command to fw
  * @wmi_handle: wmi handle
  * @param: pointer to set atf param
@@ -4428,7 +4471,7 @@ send_rtt_meas_req_test_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 
 	p = (u_int8_t *) wmi_buf_data(buf);
-	qdf_mem_set(p, 0, len);
+	qdf_mem_set(p, len, 0);
 
 	head = (wmi_rtt_measreq_head *) p;
 	WMI_RTT_REQ_ID_SET(head->req_id, param->req_id);
@@ -4566,7 +4609,7 @@ send_rtt_meas_req_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 
 	p = (uint8_t *) wmi_buf_data(buf);
-	qdf_mem_set(p, 0, len);
+	qdf_mem_set(p, len, 0);
 
 	/* encode header */
 	head = (wmi_rtt_measreq_head *) p;
@@ -4636,7 +4679,7 @@ send_rtt_meas_req_cmd_non_tlv(wmi_unified_t wmi_handle,
 		WMI_SET_CHANNEL_FLAG(w_chan, WMI_CHAN_FLAG_DFS);
 
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(((uint8_t *)peer), &body->dest_mac);
-	qdf_mem_set(spoof, 0 , 6);
+	qdf_mem_set(spoof, IEEE80211_ADDR_LEN, 0);
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(((uint8_t *)param->spoof_mac_addr),
 		&body->spoof_bssid);
 
@@ -4734,7 +4777,7 @@ send_lci_set_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 
 	p = (uint8_t *) wmi_buf_data(buf);
-	qdf_mem_set(p, 0, len);
+	qdf_mem_set(p, len, 0);
 
 	head = (wmi_oem_measreq_head *)p;
 	head->sub_type = TARGET_OEM_CONFIGURE_LCI;
@@ -4804,7 +4847,7 @@ send_lcr_set_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 
 	p = (uint8_t *) wmi_buf_data(buf);
-	qdf_mem_set(p, 0, len);
+	qdf_mem_set(p, len, 0);
 
 	head = (wmi_oem_measreq_head *)p;
 	head->sub_type = TARGET_OEM_CONFIGURE_LCR;
@@ -7207,6 +7250,7 @@ struct wmi_ops non_tlv_ops =  {
 	.send_scan_chan_list_cmd = send_scan_chan_list_cmd_non_tlv,
 	.send_pdev_get_tpc_config_cmd = send_pdev_get_tpc_config_cmd_non_tlv,
 	.send_set_atf_cmd = send_set_atf_cmd_non_tlv,
+	.send_set_bwf_cmd = send_set_bwf_cmd_non_tlv,
 	.send_pdev_fips_cmd = send_pdev_fips_cmd_non_tlv,
 	.send_wlan_profile_enable_cmd = send_wlan_profile_enable_cmd_non_tlv,
 	.send_wlan_profile_trigger_cmd = send_wlan_profile_trigger_cmd_non_tlv,

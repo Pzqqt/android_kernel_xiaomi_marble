@@ -2041,6 +2041,12 @@ static inline void qdf_nbuf_set_priority(qdf_nbuf_t buf, uint32_t p)
 	__qdf_nbuf_set_priority(buf, p);
 }
 
+static inline uint16_t
+qdf_nbuf_get_queue_mapping(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_get_queue_mapping(buf);
+}
+
 static inline uint8_t *
 qdf_nbuf_get_priv_ptr(qdf_nbuf_t buf)
 {

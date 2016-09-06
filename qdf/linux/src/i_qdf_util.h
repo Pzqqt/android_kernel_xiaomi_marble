@@ -36,6 +36,7 @@
 #include <linux/compiler.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
+#include <linux/mm.h>
 #include <errno.h>
 
 #include <linux/random.h>
@@ -195,6 +196,8 @@ static inline bool __qdf_is_macaddr_equal(struct qdf_mac_addr *mac_addr1,
 #define __qdf_min(_a, _b)         ((_a) < (_b) ? _a : _b)
 #define __qdf_max(_a, _b)         ((_a) > (_b) ? _a : _b)
 
+#define MEMINFO_KB(x)  ((x) << (PAGE_SHIFT - 10))   /* In kilobytes */
+
 /**
  * @brief Assert
  */
@@ -274,6 +277,19 @@ int __qdf_get_cpu(void)
 static inline int __qdf_device_init_wakeup(__qdf_device_t qdf_dev, bool enable)
 {
 	return device_init_wakeup(qdf_dev->dev, enable);
+}
+
+/**
+ * __qdf_get_totalramsize() -  Get total ram size in Kb
+ *
+ * Return: Total ram size in Kb
+ */
+static inline uint64_t
+__qdf_get_totalramsize(void)
+{
+	struct sysinfo meminfo;
+	si_meminfo(&meminfo);
+	return MEMINFO_KB(meminfo.totalram);
 }
 
 #endif /*_I_QDF_UTIL_H*/
