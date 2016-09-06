@@ -1520,6 +1520,14 @@ int wlan_hdd_get_link_speed(hdd_adapter_t *sta_adapter, uint32_t *link_speed)
 	if (ret)
 		return ret;
 
+	/* Linkspeed is allowed only for P2P mode */
+	if (sta_adapter->device_mode != QDF_P2P_CLIENT_MODE) {
+		hdd_err("Link Speed is not allowed in Device mode %s(%d)",
+			hdd_device_mode_to_string(sta_adapter->device_mode),
+			sta_adapter->device_mode);
+		return -ENOTSUPP;
+	}
+
 	if (eConnectionState_Associated != hdd_stactx->conn_info.connState) {
 		/* we are not connected so we don't have a classAstats */
 		*link_speed = 0;

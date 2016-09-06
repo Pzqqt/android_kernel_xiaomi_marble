@@ -5045,6 +5045,15 @@ int __iw_get_softap_linkspeed(struct net_device *dev,
 
 	hdd_notice("wrqu->data.length(%d)", wrqu->data.length);
 
+	/* Linkspeed is allowed only for P2P mode */
+	if (pHostapdAdapter->device_mode != QDF_P2P_GO_MODE) {
+		hdd_err("Link Speed is not allowed in Device mode %s(%d)",
+			hdd_device_mode_to_string(
+				pHostapdAdapter->device_mode),
+			pHostapdAdapter->device_mode);
+		return -ENOTSUPP;
+	}
+
 	if (wrqu->data.length >= MAC_ADDRESS_STR_LEN - 1) {
 		if (copy_from_user((void *)pmacAddress,
 				   wrqu->data.pointer, MAC_ADDRESS_STR_LEN)) {
