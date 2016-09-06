@@ -3901,6 +3901,13 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_SUB_20_CHANNEL_WIDTH_MIN,
 		     CFG_SUB_20_CHANNEL_WIDTH_MAX),
 
+	REG_VARIABLE(CFG_TGT_GTX_USR_CFG_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, tgt_gtx_usr_cfg,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_TGT_GTX_USR_CFG_DEFAULT,
+		     CFG_TGT_GTX_USR_CFG_MIN,
+		     CFG_TGT_GTX_USR_CFG_MAX),
+
 	REG_VARIABLE(CFG_ADAPT_DWELL_PASMON_INTVAL_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, adapt_dwell_passive_mon_intval,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -5614,6 +5621,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_info("Name = [%s] value = [%u]",
 		 CFG_SUB_20_CHANNEL_WIDTH_NAME,
 		 pHddCtx->config->enable_sub_20_channel_width);
+	hdd_info("Name = [%s] Value = [%u]",
+		 CFG_TGT_GTX_USR_CFG_NAME,
+		 pHddCtx->config->tgt_gtx_usr_cfg);
 	hdd_ndp_print_ini_config(pHddCtx);
 	hdd_info("Name = [%s] Value = [%s]",
 		CFG_RM_CAPABILITY_NAME,
@@ -6793,6 +6803,13 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED to CFG");
+	}
+
+	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_TGT_GTX_USR_CFG,
+	    pConfig->tgt_gtx_usr_cfg) == QDF_STATUS_E_FAILURE) {
+		fStatus = false;
+		hddLog(LOGE,
+		       "Could not pass on WNI_CFG_TGT_GTX_USR_CFG to CCM");
 	}
 	return fStatus;
 }

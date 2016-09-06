@@ -3380,6 +3380,11 @@ enum dot11p_mode {
 #define CFG_SUB_20_CHANNEL_WIDTH_MAX               (WLAN_SUB_20_CH_WIDTH_10)
 #define CFG_SUB_20_CHANNEL_WIDTH_DEFAULT           (WLAN_SUB_20_CH_WIDTH_NONE)
 
+#define CFG_TGT_GTX_USR_CFG_NAME    "tgt_gtx_usr_cfg"
+#define CFG_TGT_GTX_USR_CFG_MIN     (0)
+#define CFG_TGT_GTX_USR_CFG_MAX     (32)
+#define CFG_TGT_GTX_USR_CFG_DEFAULT (32)
+
 /*
  * This parameter determines that which defered method will be use in rx path
  * If no bits are set then rx path processing will happen in tasklet context.
@@ -4121,6 +4126,8 @@ struct hdd_config {
 	uint8_t nan_datapath_ndi_channel;
 #endif
 	uint32_t iface_change_wait_time;
+	/* parameter to control GTX */
+	uint32_t tgt_gtx_usr_cfg;
 	enum cfg_sub_20_channel_width enable_sub_20_channel_width;
 	bool indoor_channel_support;
 	bool multicast_replay_filter;

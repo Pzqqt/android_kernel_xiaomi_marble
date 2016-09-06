@@ -251,11 +251,6 @@
  */
 #define CFG_TGT_DEFAULT_GTX_VHT_MASK        0x80200
 /*
- * resv for furture use, bit 30 is used for fix tpc, bit0-3 for Power save
- * balance
- */
-#define CFG_TGT_DEFAULT_GTX_USR_CFG     0xa
-/*
  * threshold to enable GTX
  */
 #define CFG_TGT_DEFAULT_GTX_PER_THRESHOLD   3

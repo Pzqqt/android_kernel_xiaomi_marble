@@ -1796,8 +1796,15 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 		CFG_TGT_DEFAULT_GTX_HT_MASK;
 	intr[params.vdev_id].config.gtx_info.gtxRTMask[1] =
 		CFG_TGT_DEFAULT_GTX_VHT_MASK;
-	intr[params.vdev_id].config.gtx_info.gtxUsrcfg =
-		CFG_TGT_DEFAULT_GTX_USR_CFG;
+
+	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_TGT_GTX_USR_CFG,
+	    &intr[params.vdev_id].config.gtx_info.gtxUsrcfg) != eSIR_SUCCESS) {
+		intr[params.vdev_id].config.gtx_info.gtxUsrcfg =
+						WNI_CFG_TGT_GTX_USR_CFG_STADEF;
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_WARN,
+			  "Failed to get WNI_CFG_TGT_GTX_USR_CFG");
+	}
+
 	intr[params.vdev_id].config.gtx_info.gtxPERThreshold =
 		CFG_TGT_DEFAULT_GTX_PER_THRESHOLD;
 	intr[params.vdev_id].config.gtx_info.gtxPERMargin =
