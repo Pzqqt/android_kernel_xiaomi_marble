@@ -789,7 +789,7 @@ send_pdev_utf_cmd_non_tlv(wmi_unified_t wmi_handle,
 			srcp = (uint32_t *)bufpos;
 			for (i = 0; i < (roundup(chunkLen,
 						sizeof(uint32_t)) / 4); i++) {
-				*destp = le32_to_cpu(*srcp);
+				*destp = qdf_le32_to_cpu(*srcp);
 				destp++; srcp++;
 			}
 		} else {
@@ -1513,7 +1513,7 @@ QDF_STATUS send_beacon_send_cmd_non_tlv(wmi_unified_t wmi_handle,
 			srcp =  (u_int32_t *)wmi_buf_data(param->wbuf);
 			for (i = 0; i < (roundup(bcn_len,
 						sizeof(u_int32_t))/4); i++) {
-				*destp = le32_to_cpu(*srcp);
+				*destp = qdf_le32_to_cpu(*srcp);
 				destp++; srcp++;
 			}
 		}
@@ -1625,6 +1625,9 @@ QDF_STATUS send_peer_assoc_cmd_non_tlv(wmi_unified_t wmi_handle,
 {
 	wmi_peer_assoc_complete_cmd *cmd;
 	int len = sizeof(wmi_peer_assoc_complete_cmd);
+#ifdef BIG_ENDIAN_HOST
+	int i;
+#endif
 
 	wmi_buf_t buf;
 
@@ -1732,12 +1735,11 @@ QDF_STATUS send_peer_assoc_cmd_non_tlv(wmi_unified_t wmi_handle,
 			param->peer_legacy_rates.rates,
 			param->peer_legacy_rates.num_rates);
 #ifdef BIG_ENDIAN_HOST
-	int i;
 	for (i = 0;
 		i < param->peer_legacy_rates.num_rates/sizeof(A_UINT32) + 1;
 		i++)
 		cmd->peer_legacy_rates.rates[i] =
-		    le32_to_cpu(cmd->peer_legacy_rates.rates[i]);
+		    qdf_le32_to_cpu(cmd->peer_legacy_rates.rates[i]);
 #endif
 
 	cmd->peer_ht_rates.num_rates = param->peer_ht_rates.num_rates;
@@ -1748,7 +1750,7 @@ QDF_STATUS send_peer_assoc_cmd_non_tlv(wmi_unified_t wmi_handle,
 	for (i = 0; i < param->peer_ht_rates.num_rates/sizeof(A_UINT32) + 1;
 		i++)
 		cmd->peer_ht_rates.rates[i] =
-		    le32_to_cpu(cmd->peer_ht_rates.rates[i]);
+		    qdf_le32_to_cpu(cmd->peer_ht_rates.rates[i]);
 #endif
 
 	if (param->ht_flag &&
@@ -2837,9 +2839,9 @@ send_mgmt_cmd_non_tlv(wmi_unified_t wmi_handle,
 		u_int32_t *destp, *srcp;
 		destp = (u_int32_t *)cmd->bufp;
 		srcp =  (u_int32_t *)wmi_buf_data(param->tx_frame);
-		for (i = 0; i < (roundup(param->buf_len,
+		for (i = 0; i < (roundup(param->frm_len,
 				sizeof(u_int32_t))/4); i++) {
-			*destp = le32_to_cpu(*srcp);
+			*destp = qdf_le32_to_cpu(*srcp);
 			destp++; srcp++;
 		}
 	}
@@ -3311,6 +3313,21 @@ send_wlan_profile_trigger_cmd_non_tlv(wmi_unified_t wmi_handle,
 		WMI_WLAN_PROFILE_TRIGGER_CMDID);
 }
 
+#ifdef BIG_ENDIAN_HOST
+void wmi_host_swap_bytes(void *pv, size_t n)
+{
+	int noWords;
+	int i;
+	A_UINT32 *wordPtr;
+
+	noWords =   n/sizeof(u_int32_t);
+	wordPtr = (u_int32_t *)pv;
+	for (i = 0; i < noWords; i++)
+		*(wordPtr + i) = __cpu_to_le32(*(wordPtr + i));
+}
+#define WMI_HOST_SWAPME(x, len) wmi_host_swap_bytes(&x, len);
+#endif
+
 /**
  * send_set_ht_ie_cmd_non_tlv() - send ht ie command to fw
  * @wmi_handle: wmi handle
@@ -3340,8 +3357,8 @@ send_set_ht_ie_cmd_non_tlv(wmi_unified_t wmi_handle,
 	cmd->ie_len = param->ie_len;
 	qdf_mem_copy(cmd->ie_data, param->ie_data, param->ie_len);
 #ifdef BIG_ENDIAN_HOST
-	SWAPME(cmd->ie_data, len-(offsetof(wmi_pdev_set_ht_ie_cmd,
-			param->ie_data)));
+	WMI_HOST_SWAPME(cmd->ie_data, len-(offsetof(wmi_pdev_set_ht_ie_cmd,
+			ie_data)));
 #endif
 	return wmi_unified_cmd_send(wmi_handle, buf, len,
 		WMI_PDEV_SET_HT_CAP_IE_CMDID);
@@ -3376,8 +3393,8 @@ send_set_vht_ie_cmd_non_tlv(wmi_unified_t wmi_handle,
 	cmd->ie_len = param->ie_len;
 	qdf_mem_copy(cmd->ie_data, param->ie_data, param->ie_len);
 #ifdef BIG_ENDIAN_HOST
-	SWAPME(cmd->ie_data, len-(offsetof(wmi_pdev_set_vht_ie_cmd,
-			param->ie_data)));
+	WMI_HOST_SWAPME(cmd->ie_data, len-(offsetof(wmi_pdev_set_vht_ie_cmd,
+			ie_data)));
 #endif
 	return wmi_unified_cmd_send(wmi_handle, buf, len,
 		WMI_PDEV_SET_VHT_CAP_IE_CMDID);
@@ -5325,7 +5342,7 @@ static QDF_STATUS extract_fips_event_data_non_tlv(wmi_unified_t wmi_handle,
 		/*****************LE to BE conversion*************************/
 
 		/* Assigning unaligned space to copy the data */
-		unsigned char *data_unaligned = qdf_mem_malloc(NULL,
+		unsigned char *data_unaligned = qdf_mem_malloc(
 			(sizeof(u_int8_t)*event->data_len + FIPS_ALIGN));
 
 		u_int8_t *data_aligned = NULL;
@@ -5350,7 +5367,7 @@ static QDF_STATUS extract_fips_event_data_non_tlv(wmi_unified_t wmi_handle,
 		/* Endianness to LE */
 		for (c = 0; c < event->data_len/4; c++) {
 			*((u_int32_t *)data_aligned+c) =
-			    qdf_os_le32_to_cpu(*((u_int32_t *)data_aligned+c));
+			    qdf_le32_to_cpu(*((u_int32_t *)data_aligned+c));
 		}
 
 		/* Copy content to event->data */
