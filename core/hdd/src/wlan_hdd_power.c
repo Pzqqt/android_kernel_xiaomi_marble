@@ -77,6 +77,7 @@
 
 /* Preprocessor definitions and constants */
 #define HDD_SSR_BRING_UP_TIME 30000
+#define HDD_WAKE_LOCK_RESUME_DURATION 1000
 
 /* Type declarations */
 
@@ -1687,7 +1688,8 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 				 * app's is in suspended state and not able to
 				 * process the connect request to AP
 				 */
-				hdd_prevent_suspend_timeout(2000,
+				hdd_prevent_suspend_timeout(
+					HDD_WAKE_LOCK_RESUME_DURATION,
 					WIFI_POWER_EVENT_WAKELOCK_RESUME_WLAN);
 				cfg80211_sched_scan_results(pHddCtx->wiphy);
 			}
