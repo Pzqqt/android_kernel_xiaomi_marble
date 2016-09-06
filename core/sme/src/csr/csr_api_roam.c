@@ -13572,21 +13572,28 @@ static QDF_STATUS csr_roam_start_wds(tpAniSirGlobal pMac, uint32_t sessionId,
  * csr_add_supported_5Ghz_channels()- Add valid 5Ghz channels
  * in Join req.
  * @mac_ctx: pointer to global mac structure
- * @csr_join_req: join req sent to lim
+ * @chan_list: Pointer to channel list buffer to populate
+ * @num_chan: Pointer to number of channels value to update
+ * @supp_chan_ie: Boolean to check if we need to populate as IE
  *
  * This function is called to update valid 5Ghz channels
- * in Join req.
+ * in Join req. If @supp_chan_ie is true, supported channels IE
+ * format[chan num 1, num of channels 1, chan num 2, num of
+ * channels 2, ..] is populated. Else, @chan_list would be a list
+ * of supported channels[chan num 1, chan num 2..]
  *
  * Return: void
  */
 static void csr_add_supported_5Ghz_channels(tpAniSirGlobal mac_ctx,
-					tSirSmeJoinReq *csr_join_req)
+						uint8_t *chan_list,
+						uint8_t *num_chnl,
+						bool supp_chan_ie)
 {
 	uint16_t i, j;
 	uint32_t size = 0;
 
-	if (!csr_join_req) {
-		sms_log(mac_ctx, LOGE, FL("  csr_join_reqis NULL"));
+	if (!chan_list) {
+		sms_log(mac_ctx, LOGE, FL("chan_list buffer NULL"));
 		return;
 	}
 
@@ -13599,16 +13606,21 @@ static void csr_add_supported_5Ghz_channels(tpAniSirGlobal mac_ctx,
 			/* Only add 5ghz channels.*/
 			if (CDS_IS_CHANNEL_5GHZ
 					(mac_ctx->roam.validChannelList[i])) {
-				csr_join_req->supportedChannels.channelList[j] =
-					mac_ctx->roam.validChannelList[i];
+				chan_list[j]
+					= mac_ctx->roam.validChannelList[i];
 				j++;
+
+				if (supp_chan_ie) {
+					chan_list[j] = 1;
+					j++;
+				}
 			}
 		}
-		csr_join_req->supportedChannels.numChnl = j;
+		*num_chnl = (uint8_t)j;
 	} else {
 		sms_log(mac_ctx, LOGE,
 			FL("can not find any valid channel"));
-		csr_join_req->supportedChannels.numChnl = 0;
+		*num_chnl = 0;
 	}
 }
 
@@ -14273,7 +14285,10 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		else
 			csr_join_req->powerCap.maxTxPower = MAX_TX_PWR_CAP;
 
-		csr_add_supported_5Ghz_channels(pMac, csr_join_req);
+		csr_add_supported_5Ghz_channels(pMac,
+				csr_join_req->supportedChannels.channelList,
+				&csr_join_req->supportedChannels.numChnl,
+				false);
 
 		csr_join_req->uapsdPerAcBitmask = (uint8_t)pProfile->uapsd_mask;
 		/* Move the entire BssDescription into the join request. */
@@ -17283,6 +17298,7 @@ static void csr_append_assoc_ies(tpAniSirGlobal mac_ctx,
 		return;
 	}
 
+	sms_log(mac_ctx, LOG1, "Appended IE(Id:%d) to RSO", ie_id);
 	assoc_ie->addIEdata[assoc_ie->length] = ie_id;
 	assoc_ie->addIEdata[assoc_ie->length + 1] = ie_len;
 	qdf_mem_copy(&assoc_ie->addIEdata[assoc_ie->length + 2],
@@ -17312,6 +17328,10 @@ static void csr_update_driver_assoc_ies(tpAniSirGlobal mac_ctx,
 			= csr_get_cfg_max_tx_power(mac_ctx,
 				session->pConnectBssDesc->channelId);
 
+	uint8_t supp_chan_ie[DOT11F_IE_SUPPCHANNELS_MAX_LEN], supp_chan_ie_len;
+	uint8_t ese_ie[DOT11F_IE_ESEVERSION_MAX_LEN]
+			= { 0x0, 0x40, 0x96, 0x3, ESE_VERSION_SUPPORTED};
+
 	if (max_tx_pwr_cap)
 		power_cap_ie_data[1] = max_tx_pwr_cap;
 
@@ -17323,7 +17343,21 @@ static void csr_update_driver_assoc_ies(tpAniSirGlobal mac_ctx,
 					DOT11F_IE_POWERCAPS_MAX_LEN,
 					power_cap_ie_data);
 		power_caps_populated = true;
+
+		/* Append Supported channels IE */
+		csr_add_supported_5Ghz_channels(mac_ctx, supp_chan_ie,
+					&supp_chan_ie_len, true);
+
+		csr_append_assoc_ies(mac_ctx, req_buf,
+					IEEE80211_ELEMID_SUPPCHAN,
+					supp_chan_ie_len, supp_chan_ie);
 	}
+
+	/* Append ESE version IE if isEseIniFeatureEnabled INI is enabled */
+	if (mac_ctx->roam.configParam.isEseIniFeatureEnabled)
+		csr_append_assoc_ies(mac_ctx, req_buf, IEEE80211_ELEMID_VENDOR,
+					DOT11F_IE_ESEVERSION_MAX_LEN,
+					ese_ie);
 
 	if (mac_ctx->rrm.rrmPEContext.rrmEnable) {
 		/* Append RRM IE */
@@ -17533,17 +17567,11 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 			req_buf->hi_rssi_scan_delay,
 			req_buf->hi_rssi_scan_rssi_ub);
 
-	if (((command == ROAM_SCAN_OFFLOAD_START) &&
-		(reason == REASON_CONNECT)) ||
-		((command == ROAM_SCAN_OFFLOAD_UPDATE_CFG) &&
-		(reason == REASON_CONNECT_IES_CHANGED))) {
-		req_buf->assoc_ie.length = session->nAddIEAssocLength;
+	if (command != ROAM_SCAN_OFFLOAD_STOP) {
 		qdf_mem_copy(req_buf->assoc_ie.addIEdata,
 				session->pAddIEAssoc,
 				session->nAddIEAssocLength);
 		csr_update_driver_assoc_ies(mac_ctx, session, req_buf);
-	} else {
-		req_buf->assoc_ie.length = 0;
 	}
 
 	msg.type = WMA_ROAM_SCAN_OFFLOAD_REQ;
