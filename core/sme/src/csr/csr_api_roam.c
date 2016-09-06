@@ -10295,7 +10295,7 @@ csr_roam_chk_lnk_disassoc_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	cmd = qdf_mem_malloc(sizeof(*cmd));
 	if (NULL == cmd) {
 		sms_log(mac_ctx, LOGE,
-			FL("memory allocation failed for size = %ld"),
+			FL("memory allocation failed for size = %zu"),
 			sizeof(*cmd));
 		return;
 	}
