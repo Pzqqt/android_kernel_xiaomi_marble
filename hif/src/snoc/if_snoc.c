@@ -145,6 +145,10 @@ static QDF_STATUS hif_snoc_get_soc_info(struct hif_softc *scn)
 
 	scn->mem = soc_info.v_addr;
 	scn->mem_pa = soc_info.p_addr;
+
+	scn->target_info.soc_version = soc_info.soc_id;
+	scn->target_info.target_version = soc_info.soc_id;
+	scn->target_info.target_revision = 0;
 	return QDF_STATUS_SUCCESS;
 }
 

@@ -39,6 +39,7 @@
 #define AR6320_REV3_2_VERSION           0x5030000
 #define AR6320_DEV_VERSION              0x1000000
 #define QCA9377_REV1_1_VERSION          0x5020001
+#define WCN3990_v1                      0x40000000
 
 struct qwlan_hw {
 	u32 id;
