@@ -1770,6 +1770,7 @@ populate_dot11f_supp_rates(tpAniSirGlobal pMac,
  * @p_mac gloabl - header.
  * @p_supp_rates - pointer to supported rates IE
  * @p_ext_supp_rates - pointer to extended supported rates IE
+ * @curr_oper_channel - current operating channel
  *
  * This function populates the supported rates and extended supported
  * rates IE based in the STA capability. If the number of rates
@@ -1783,7 +1784,8 @@ populate_dot11f_supp_rates(tpAniSirGlobal pMac,
 tSirRetStatus
 populate_dot11f_rates_tdls(tpAniSirGlobal p_mac,
 			   tDot11fIESuppRates *p_supp_rates,
-			   tDot11fIEExtSuppRates *p_ext_supp_rates)
+			   tDot11fIEExtSuppRates *p_ext_supp_rates,
+			   uint8_t curr_oper_channel)
 {
 	tSirMacRateSet temp_rateset;
 	tSirMacRateSet temp_rateset2;
@@ -1793,15 +1795,23 @@ populate_dot11f_rates_tdls(tpAniSirGlobal p_mac,
 	wlan_cfg_get_int(p_mac, WNI_CFG_DOT11_MODE, &self_dot11mode);
 
 	/**
-	* Include 11b rates only when the device configured in
-	 * auto, 11a/b/g or 11b_only
+	 * Include 11b rates only when the device configured in
+	 * auto, 11a/b/g or 11b_only and also if current base
+	 * channel is 5 GHz then no need to advertise the 11b rates.
+	 * If devices move to 2.4GHz off-channel then they can communicate
+	 * in 11g rates i.e. (6, 9, 12, 18, 24, 36 and 54).
 	 */
-	if ((self_dot11mode == WNI_CFG_DOT11_MODE_ALL) ||
+	lim_log(p_mac, LOG1,
+		FL("Current operating channel %d self_dot11mode = %d"),
+		curr_oper_channel, self_dot11mode);
+
+	if ((curr_oper_channel <= SIR_11B_CHANNEL_END) &&
+	    ((self_dot11mode == WNI_CFG_DOT11_MODE_ALL) ||
 	    (self_dot11mode == WNI_CFG_DOT11_MODE_11A) ||
 	    (self_dot11mode == WNI_CFG_DOT11_MODE_11AC) ||
 	    (self_dot11mode == WNI_CFG_DOT11_MODE_11N) ||
 	    (self_dot11mode == WNI_CFG_DOT11_MODE_11G) ||
-	    (self_dot11mode == WNI_CFG_DOT11_MODE_11B)) {
+	    (self_dot11mode == WNI_CFG_DOT11_MODE_11B))) {
 		val = WNI_CFG_SUPPORTED_RATES_11B_LEN;
 		wlan_cfg_get_str(p_mac, WNI_CFG_SUPPORTED_RATES_11B,
 				(uint8_t *)&temp_rateset.rate, &val);

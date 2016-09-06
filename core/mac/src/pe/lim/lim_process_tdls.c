@@ -707,8 +707,9 @@ static tSirRetStatus lim_send_tdls_dis_rsp_frame(tpAniSirGlobal pMac,
 
 	/* populate supported rate and ext supported rate IE */
 	if (eSIR_FAILURE == populate_dot11f_rates_tdls(pMac,
-						&tdlsDisRsp.SuppRates,
-						&tdlsDisRsp.ExtSuppRates))
+					&tdlsDisRsp.SuppRates,
+					&tdlsDisRsp.ExtSuppRates,
+					psessionEntry->currentOperChannel))
 		lim_log(pMac, LOGE,
 			FL("could not populate supported data rates"));
 
@@ -1013,8 +1014,9 @@ tSirRetStatus lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
 
 	/* populate supported rate and ext supported rate IE */
 	if (eSIR_FAILURE == populate_dot11f_rates_tdls(pMac,
-						&tdlsSetupReq.SuppRates,
-						&tdlsSetupReq.ExtSuppRates))
+					&tdlsSetupReq.SuppRates,
+					&tdlsSetupReq.ExtSuppRates,
+					psessionEntry->currentOperChannel))
 		lim_log(pMac, LOGE,
 			FL("could not populate supported data rates"));
 
@@ -1500,8 +1502,9 @@ static tSirRetStatus lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
 
 	/* populate supported rate and ext supported rate IE */
 	if (eSIR_FAILURE == populate_dot11f_rates_tdls(pMac,
-						&tdlsSetupRsp.SuppRates,
-						&tdlsSetupRsp.ExtSuppRates))
+					&tdlsSetupRsp.SuppRates,
+					&tdlsSetupRsp.ExtSuppRates,
+					psessionEntry->currentOperChannel))
 		lim_log(pMac, LOGE,
 			FL("could not populate supported data rates"));
 

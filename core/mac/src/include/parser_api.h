@@ -757,7 +757,8 @@ populate_dot11f_supp_rates(tpAniSirGlobal pMac,
 tSirRetStatus
 populate_dot11f_rates_tdls(tpAniSirGlobal p_mac,
 			tDot11fIESuppRates *p_supp_rates,
-			tDot11fIEExtSuppRates *p_ext_supp_rates);
+			tDot11fIEExtSuppRates *p_ext_supp_rates,
+			uint8_t curr_oper_channel);
 
 tSirRetStatus populate_dot11f_tpc_report(tpAniSirGlobal pMac,
 					tDot11fIETPCReport *pDot11f,
