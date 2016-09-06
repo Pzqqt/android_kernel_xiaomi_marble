@@ -1959,7 +1959,7 @@ int dbglog_parse_debug_logs(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 
 	dropped = *((A_UINT32 *) datap);
 	if (dropped > 0) {
-		AR_DEBUG_PRINTF(ATH_DEBUG_INFO,
+		AR_DEBUG_PRINTF(ATH_DEBUG_TRC,
 				("%d log buffers are dropped \n", dropped));
 	}
 	datap += sizeof(dropped);
