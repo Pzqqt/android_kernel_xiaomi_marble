@@ -4664,8 +4664,11 @@ QDF_STATUS csr_roam_set_bss_config_cfg(tpAniSirGlobal pMac, uint32_t sessionId,
 	status = cfg_set_int(pMac, WNI_CFG_JOIN_FAILURE_TIMEOUT,
 			pBssConfig->uJoinTimeOut);
 	/* Any roaming related changes should be above this line */
-	if (pSession && pSession->roam_synch_in_progress)
+	if (pSession && pSession->roam_synch_in_progress) {
+		sms_log(pMac, LOG4, FL("Roam synch is in progress %d"),
+			sessionId);
 		return QDF_STATUS_SUCCESS;
+	}
 	/* Make this the last CFG to set. The callback will trigger a join_req */
 	/* Join time out */
 	csr_roam_substate_change(pMac, eCSR_ROAM_SUBSTATE_CONFIG, sessionId);
@@ -19169,7 +19172,6 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 		sme_release_global_lock(&mac_ctx->sme);
 		return;
 	}
-	session->roam_synch_in_progress = true;
 	switch (reason) {
 	case SIR_ROAMING_DEREGISTER_STA:
 		csr_roam_call_callback(mac_ctx, session_id, NULL, 0,
@@ -19193,6 +19195,7 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 		sme_release_global_lock(&mac_ctx->sme);
 		return;
 	}
+	session->roam_synch_in_progress = true;
 	session->roam_synch_data = roam_synch_data;
 	if (!QDF_IS_STATUS_SUCCESS(csr_get_parsed_bss_description_ies(mac_ctx,
 			bss_desc, &ies_local))) {
