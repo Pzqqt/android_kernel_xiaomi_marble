@@ -121,6 +121,14 @@
 #define WMI_HOST_MAX_BUFFER_SIZE	1712
 #define WMI_HAL_MAX_SANTENNA 4
 
+#ifdef CONFIG_WIN
+#if ATH_SUPPORT_FIPS
+#define FIPS_ALIGN 4
+#define FIPS_ALIGNTO(__addr, __to) ((((unsigned long int)(__addr)) + (__to) -  1) & ~((__to) - 1))
+#define FIPS_IS_ALIGNED(__addr, __to) (!(((unsigned long int)(__addr)) & ((__to)-1)))
+#endif
+#endif
+
 #define WMI_HOST_F_MS(_v, _f)	\
 	(((_v) & (_f)) >> (_f##_S))
 
@@ -3716,6 +3724,32 @@ typedef struct {
 	struct wmi_macaddr_t peer_macaddr;
 	uint32_t percentage_peer;
 } atf_peer_info;
+
+/**
+ * struct bwf_peer_info_t - BWF peer info params
+ * @peer_macaddr: peer mac addr
+ * @throughput: Throughput
+ * @max_airtime: Max airtime
+ * @priority: Priority level
+ * @reserved: Reserved array
+ */
+typedef struct {
+	struct wmi_macaddr_t peer_macaddr;
+	uint32_t     throughput;
+	uint32_t     max_airtime;
+	uint32_t     priority;
+	uint32_t     reserved[4];
+} bwf_peer_info;
+
+/**
+ * struct set_bwf_params - BWF params
+ * @num_peers: number of peers
+ * @atf_peer_info: BWF peer info
+ */
+struct set_bwf_params {
+	uint32_t num_peers;
+	bwf_peer_info peer_info[1];
+};
 
 /**
  * struct set_atf_params - ATF params

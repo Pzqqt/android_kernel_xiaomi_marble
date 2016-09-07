@@ -47,6 +47,9 @@ QDF_STATUS hif_initialize_snoc_ops(struct hif_bus_ops *bus_ops)
 	bus_ops->hif_reset_soc = &hif_dummy_reset_soc;
 	bus_ops->hif_bus_suspend = &hif_snoc_bus_suspend;
 	bus_ops->hif_bus_resume = &hif_snoc_bus_resume;
+	bus_ops->hif_bus_suspend_noirq = &hif_snoc_bus_suspend_noirq;
+	/* snoc_bus_resume_noirq had no side effects, use dummy resume_noirq */
+	bus_ops->hif_bus_resume_noirq = &hif_dummy_bus_resume_noirq;
 	bus_ops->hif_target_sleep_state_adjust =
 		&hif_dummy_target_sleep_state_adjust;
 

@@ -854,6 +854,9 @@ QDF_STATUS wmi_unified_stats_request_send(void *wmi_hdl,
 QDF_STATUS wmi_unified_pdev_get_tpc_config_cmd_send(void *wmi_hdl,
 				uint32_t param);
 
+QDF_STATUS wmi_unified_set_bwf_cmd_send(void *wmi_hdl,
+				struct set_bwf_params *param);
+
 QDF_STATUS wmi_unified_set_atf_cmd_send(void *wmi_hdl,
 				struct set_atf_params *param);
 

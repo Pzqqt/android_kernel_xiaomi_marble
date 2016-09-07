@@ -789,7 +789,7 @@ send_pdev_utf_cmd_non_tlv(wmi_unified_t wmi_handle,
 			srcp = (uint32_t *)bufpos;
 			for (i = 0; i < (roundup(chunkLen,
 						sizeof(uint32_t)) / 4); i++) {
-				*destp = le32_to_cpu(*srcp);
+				*destp = qdf_le32_to_cpu(*srcp);
 				destp++; srcp++;
 			}
 		} else {
@@ -1513,7 +1513,7 @@ QDF_STATUS send_beacon_send_cmd_non_tlv(wmi_unified_t wmi_handle,
 			srcp =  (u_int32_t *)wmi_buf_data(param->wbuf);
 			for (i = 0; i < (roundup(bcn_len,
 						sizeof(u_int32_t))/4); i++) {
-				*destp = le32_to_cpu(*srcp);
+				*destp = qdf_le32_to_cpu(*srcp);
 				destp++; srcp++;
 			}
 		}
@@ -1625,6 +1625,9 @@ QDF_STATUS send_peer_assoc_cmd_non_tlv(wmi_unified_t wmi_handle,
 {
 	wmi_peer_assoc_complete_cmd *cmd;
 	int len = sizeof(wmi_peer_assoc_complete_cmd);
+#ifdef BIG_ENDIAN_HOST
+	int i;
+#endif
 
 	wmi_buf_t buf;
 
@@ -1732,12 +1735,11 @@ QDF_STATUS send_peer_assoc_cmd_non_tlv(wmi_unified_t wmi_handle,
 			param->peer_legacy_rates.rates,
 			param->peer_legacy_rates.num_rates);
 #ifdef BIG_ENDIAN_HOST
-	int i;
 	for (i = 0;
 		i < param->peer_legacy_rates.num_rates/sizeof(A_UINT32) + 1;
 		i++)
 		cmd->peer_legacy_rates.rates[i] =
-		    le32_to_cpu(cmd->peer_legacy_rates.rates[i]);
+		    qdf_le32_to_cpu(cmd->peer_legacy_rates.rates[i]);
 #endif
 
 	cmd->peer_ht_rates.num_rates = param->peer_ht_rates.num_rates;
@@ -1748,7 +1750,7 @@ QDF_STATUS send_peer_assoc_cmd_non_tlv(wmi_unified_t wmi_handle,
 	for (i = 0; i < param->peer_ht_rates.num_rates/sizeof(A_UINT32) + 1;
 		i++)
 		cmd->peer_ht_rates.rates[i] =
-		    le32_to_cpu(cmd->peer_ht_rates.rates[i]);
+		    qdf_le32_to_cpu(cmd->peer_ht_rates.rates[i]);
 #endif
 
 	if (param->ht_flag &&
@@ -2837,9 +2839,9 @@ send_mgmt_cmd_non_tlv(wmi_unified_t wmi_handle,
 		u_int32_t *destp, *srcp;
 		destp = (u_int32_t *)cmd->bufp;
 		srcp =  (u_int32_t *)wmi_buf_data(param->tx_frame);
-		for (i = 0; i < (roundup(param->buf_len,
+		for (i = 0; i < (roundup(param->frm_len,
 				sizeof(u_int32_t))/4); i++) {
-			*destp = le32_to_cpu(*srcp);
+			*destp = qdf_le32_to_cpu(*srcp);
 			destp++; srcp++;
 		}
 	}
@@ -3139,6 +3141,49 @@ send_pdev_get_tpc_config_cmd_non_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * send_set_bwf_cmd_non_tlv() - send set bwf command to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to set bwf param
+ *
+ * Return: 0 for success or error code
+ */
+QDF_STATUS
+send_set_bwf_cmd_non_tlv(wmi_unified_t wmi_handle,
+				struct set_bwf_params *param)
+{
+	struct wmi_bwf_peer_info   *peer_info;
+	wmi_peer_bwf_request *cmd;
+	wmi_buf_t buf;
+	int len = sizeof(wmi_peer_bwf_request);
+	int i, retval = 0;
+
+	len += param->num_peers * sizeof(struct wmi_bwf_peer_info);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		qdf_print("%s:wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	cmd = (wmi_peer_bwf_request *)wmi_buf_data(buf);
+	qdf_mem_copy((void *)&(cmd->num_peers),
+			(void *)&(param->num_peers),
+			sizeof(u_int32_t));
+	peer_info = (struct wmi_bwf_peer_info *)&(cmd->peer_info[0]);
+	for (i = 0; i < param->num_peers; i++) {
+		qdf_mem_copy((void *)&(peer_info[i]),
+				(void *)&(param->peer_info[i]),
+				sizeof(struct wmi_bwf_peer_info));
+	}
+
+	retval = wmi_unified_cmd_send(wmi_handle, buf, len,
+			WMI_PEER_BWF_REQUEST_CMDID);
+
+	if (retval)
+		wmi_buf_free(buf);
+
+	return retval;
+}
+
+/**
  * send_set_atf_cmd_non_tlv() - send set atf command to fw
  * @wmi_handle: wmi handle
  * @param: pointer to set atf param
@@ -3311,6 +3356,21 @@ send_wlan_profile_trigger_cmd_non_tlv(wmi_unified_t wmi_handle,
 		WMI_WLAN_PROFILE_TRIGGER_CMDID);
 }
 
+#ifdef BIG_ENDIAN_HOST
+void wmi_host_swap_bytes(void *pv, size_t n)
+{
+	int noWords;
+	int i;
+	A_UINT32 *wordPtr;
+
+	noWords =   n/sizeof(u_int32_t);
+	wordPtr = (u_int32_t *)pv;
+	for (i = 0; i < noWords; i++)
+		*(wordPtr + i) = __cpu_to_le32(*(wordPtr + i));
+}
+#define WMI_HOST_SWAPME(x, len) wmi_host_swap_bytes(&x, len);
+#endif
+
 /**
  * send_set_ht_ie_cmd_non_tlv() - send ht ie command to fw
  * @wmi_handle: wmi handle
@@ -3340,8 +3400,8 @@ send_set_ht_ie_cmd_non_tlv(wmi_unified_t wmi_handle,
 	cmd->ie_len = param->ie_len;
 	qdf_mem_copy(cmd->ie_data, param->ie_data, param->ie_len);
 #ifdef BIG_ENDIAN_HOST
-	SWAPME(cmd->ie_data, len-(offsetof(wmi_pdev_set_ht_ie_cmd,
-			param->ie_data)));
+	WMI_HOST_SWAPME(cmd->ie_data, len-(offsetof(wmi_pdev_set_ht_ie_cmd,
+			ie_data)));
 #endif
 	return wmi_unified_cmd_send(wmi_handle, buf, len,
 		WMI_PDEV_SET_HT_CAP_IE_CMDID);
@@ -3376,8 +3436,8 @@ send_set_vht_ie_cmd_non_tlv(wmi_unified_t wmi_handle,
 	cmd->ie_len = param->ie_len;
 	qdf_mem_copy(cmd->ie_data, param->ie_data, param->ie_len);
 #ifdef BIG_ENDIAN_HOST
-	SWAPME(cmd->ie_data, len-(offsetof(wmi_pdev_set_vht_ie_cmd,
-			param->ie_data)));
+	WMI_HOST_SWAPME(cmd->ie_data, len-(offsetof(wmi_pdev_set_vht_ie_cmd,
+			ie_data)));
 #endif
 	return wmi_unified_cmd_send(wmi_handle, buf, len,
 		WMI_PDEV_SET_VHT_CAP_IE_CMDID);
@@ -4411,7 +4471,7 @@ send_rtt_meas_req_test_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 
 	p = (u_int8_t *) wmi_buf_data(buf);
-	qdf_mem_set(p, 0, len);
+	qdf_mem_set(p, len, 0);
 
 	head = (wmi_rtt_measreq_head *) p;
 	WMI_RTT_REQ_ID_SET(head->req_id, param->req_id);
@@ -4549,7 +4609,7 @@ send_rtt_meas_req_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 
 	p = (uint8_t *) wmi_buf_data(buf);
-	qdf_mem_set(p, 0, len);
+	qdf_mem_set(p, len, 0);
 
 	/* encode header */
 	head = (wmi_rtt_measreq_head *) p;
@@ -4619,7 +4679,7 @@ send_rtt_meas_req_cmd_non_tlv(wmi_unified_t wmi_handle,
 		WMI_SET_CHANNEL_FLAG(w_chan, WMI_CHAN_FLAG_DFS);
 
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(((uint8_t *)peer), &body->dest_mac);
-	qdf_mem_set(spoof, 0 , 6);
+	qdf_mem_set(spoof, IEEE80211_ADDR_LEN, 0);
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(((uint8_t *)param->spoof_mac_addr),
 		&body->spoof_bssid);
 
@@ -4717,7 +4777,7 @@ send_lci_set_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 
 	p = (uint8_t *) wmi_buf_data(buf);
-	qdf_mem_set(p, 0, len);
+	qdf_mem_set(p, len, 0);
 
 	head = (wmi_oem_measreq_head *)p;
 	head->sub_type = TARGET_OEM_CONFIGURE_LCI;
@@ -4787,7 +4847,7 @@ send_lcr_set_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 
 	p = (uint8_t *) wmi_buf_data(buf);
-	qdf_mem_set(p, 0, len);
+	qdf_mem_set(p, len, 0);
 
 	head = (wmi_oem_measreq_head *)p;
 	head->sub_type = TARGET_OEM_CONFIGURE_LCR;
@@ -5325,7 +5385,7 @@ static QDF_STATUS extract_fips_event_data_non_tlv(wmi_unified_t wmi_handle,
 		/*****************LE to BE conversion*************************/
 
 		/* Assigning unaligned space to copy the data */
-		unsigned char *data_unaligned = qdf_mem_malloc(NULL,
+		unsigned char *data_unaligned = qdf_mem_malloc(
 			(sizeof(u_int8_t)*event->data_len + FIPS_ALIGN));
 
 		u_int8_t *data_aligned = NULL;
@@ -5350,7 +5410,7 @@ static QDF_STATUS extract_fips_event_data_non_tlv(wmi_unified_t wmi_handle,
 		/* Endianness to LE */
 		for (c = 0; c < event->data_len/4; c++) {
 			*((u_int32_t *)data_aligned+c) =
-			    qdf_os_le32_to_cpu(*((u_int32_t *)data_aligned+c));
+			    qdf_le32_to_cpu(*((u_int32_t *)data_aligned+c));
 		}
 
 		/* Copy content to event->data */
@@ -7190,6 +7250,7 @@ struct wmi_ops non_tlv_ops =  {
 	.send_scan_chan_list_cmd = send_scan_chan_list_cmd_non_tlv,
 	.send_pdev_get_tpc_config_cmd = send_pdev_get_tpc_config_cmd_non_tlv,
 	.send_set_atf_cmd = send_set_atf_cmd_non_tlv,
+	.send_set_bwf_cmd = send_set_bwf_cmd_non_tlv,
 	.send_pdev_fips_cmd = send_pdev_fips_cmd_non_tlv,
 	.send_wlan_profile_enable_cmd = send_wlan_profile_enable_cmd_non_tlv,
 	.send_wlan_profile_trigger_cmd = send_wlan_profile_trigger_cmd_non_tlv,

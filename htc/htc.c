@@ -992,3 +992,21 @@ bool htc_can_suspend_link(HTC_HANDLE htc_handle)
 
 	return hif_can_suspend_link(target->hif_dev);
 }
+
+#ifdef FEATURE_RUNTIME_PM
+int htc_pm_runtime_get(HTC_HANDLE htc_handle)
+{
+	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(htc_handle);
+
+	HTC_INFO("%s: %pS\n", __func__, (void *)_RET_IP_);
+	return hif_pm_runtime_get(target->hif_dev);
+}
+
+int htc_pm_runtime_put(HTC_HANDLE htc_handle)
+{
+	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(htc_handle);
+
+	HTC_INFO("%s: %pS\n", __func__, (void *)_RET_IP_);
+	return hif_pm_runtime_put(target->hif_dev);
+}
+#endif

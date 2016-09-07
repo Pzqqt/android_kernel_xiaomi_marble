@@ -2417,6 +2417,7 @@ void hif_pci_disable_bus(struct hif_softc *scn)
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 	struct pci_dev *pdev;
 	void __iomem *mem;
+	struct hif_target_info *tgt_info = &scn->target_info;
 
 	/* Attach did not succeed, all resources have been
 	 * freed in error handler
@@ -2431,7 +2432,18 @@ void hif_pci_disable_bus(struct hif_softc *scn)
 			       HOST_GROUP0_MASK);
 	}
 
+#if defined(CPU_WARM_RESET_WAR)
+	/* Currently CPU warm reset sequence is tested only for AR9888_REV2
+	 * Need to enable for AR9888_REV1 once CPU warm reset sequence is
+	 * verified for AR9888_REV1
+	 */
+	if ((tgt_info->target_version == AR9888_REV2_VERSION) || (tgt_info->target_version == AR9887_REV1_VERSION))
+		hif_pci_device_warm_reset(sc);
+	else
+		hif_pci_device_reset(sc);
+#else
 	hif_pci_device_reset(sc);
+#endif
 	mem = (void __iomem *)sc->mem;
 	if (mem) {
 		pci_disable_msi(pdev);

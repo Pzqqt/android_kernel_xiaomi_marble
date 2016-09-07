@@ -57,6 +57,7 @@ typedef struct _HTC_INIT_INFO {
 	void *pContext;         /* context for target notifications */
 	void (*TargetFailure)(void *Instance, QDF_STATUS Status);
 	void (*TargetSendSuspendComplete)(void *ctx, bool is_nack);
+	void (*target_initial_wakeup_cb)(void);
 } HTC_INIT_INFO;
 
 /* Struct for HTC layer packet stats*/
@@ -749,4 +750,11 @@ void htc_dump_bundle_stats(HTC_HANDLE HTCHandle);
 void htc_clear_bundle_stats(HTC_HANDLE HTCHandle);
 #endif
 
+#ifdef FEATURE_RUNTIME_PM
+int htc_pm_runtime_get(HTC_HANDLE htc_handle);
+int htc_pm_runtime_put(HTC_HANDLE htc_handle);
+#else
+static inline int htc_pm_runtime_get(HTC_HANDLE htc_handle) { return 0; }
+static inline int htc_pm_runtime_put(HTC_HANDLE htc_handle) { return 0; }
+#endif
 #endif /* _HTC_API_H_ */

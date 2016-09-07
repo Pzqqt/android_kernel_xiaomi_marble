@@ -1647,6 +1647,8 @@ static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info)
 				__func__, pipe_info->pipe_num,
 				atomic_read(&pipe_info->recv_bufs_needed),
 				pipe_info->nbuf_ce_enqueue_err_count);
+			qdf_nbuf_unmap_single(scn->qdf_dev, nbuf,
+						QDF_DMA_FROM_DEVICE);
 			atomic_inc(&pipe_info->recv_bufs_needed);
 			qdf_nbuf_free(nbuf);
 			return 1;
