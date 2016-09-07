@@ -2640,20 +2640,17 @@ static int wow_get_wmi_eventid(int32_t reason, uint32_t tag)
 static bool tlv_check_required(int32_t reason)
 {
 	switch (reason) {
-	case WOW_REASON_PATTERN_MATCH_FOUND:
-	case WOW_REASON_BPF_ALLOW:
-	case WOW_REASON_AUTH_REQ_RECV:
-	case WOW_REASON_ASSOC_REQ_RECV:
-	case WOW_REASON_DEAUTH_RECVD:
-	case WOW_REASON_DISASSOC_RECVD:
-	case WOW_REASON_ASSOC_RES_RECV:
-	case WOW_REASON_REASSOC_REQ_RECV:
-	case WOW_REASON_REASSOC_RES_RECV:
-	case WOW_REASON_BEACON_RECV:
-	case WOW_REASON_ACTION_FRAME_RECV:
-		return false;
-	default:
+	case WOW_REASON_NLO_SCAN_COMPLETE:
+	case WOW_REASON_CSA_EVENT:
+	case WOW_REASON_LOW_RSSI:
+	case WOW_REASON_CLIENT_KICKOUT_EVENT:
+	case WOW_REASON_EXTSCAN:
+	case WOW_REASON_RSSI_BREACH_EVENT:
+	case WOW_REASON_NAN_EVENT:
+	case WOW_REASON_NAN_DATA:
 		return true;
+	default:
+		return false;
 	}
 }
 
