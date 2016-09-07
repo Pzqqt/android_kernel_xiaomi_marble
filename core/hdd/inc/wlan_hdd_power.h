@@ -167,6 +167,7 @@ int wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy);
 
 void hdd_ipv4_notifier_work_queue(struct work_struct *work);
 #ifdef WLAN_NS_OFFLOAD
+void hdd_conf_ns_offload(hdd_adapter_t *adapter, bool fenable);
 void hdd_ipv6_notifier_work_queue(struct work_struct *work);
 #endif
 

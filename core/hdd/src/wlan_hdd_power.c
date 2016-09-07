@@ -508,7 +508,7 @@ static void hdd_enable_ns_offload(hdd_adapter_t *adapter)
  *
  * Return: nothing
  */
-static void hdd_conf_ns_offload(hdd_adapter_t *adapter, bool fenable)
+void hdd_conf_ns_offload(hdd_adapter_t *adapter, bool fenable)
 {
 	hdd_context_t *hdd_ctx;
 

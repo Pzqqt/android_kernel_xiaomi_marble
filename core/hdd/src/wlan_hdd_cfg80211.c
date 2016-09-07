@@ -4849,6 +4849,8 @@ __wlan_hdd_cfg80211_set_ns_offload(struct wiphy *wiphy,
 	int status;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_ND_OFFLOAD_MAX + 1];
 	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
+	struct net_device *dev = wdev->netdev;
+	hdd_adapter_t *adapter =  WLAN_HDD_GET_PRIV_PTR(dev);
 
 	ENTER_DEV(wdev->netdev);
 
@@ -4874,6 +4876,9 @@ __wlan_hdd_cfg80211_set_ns_offload(struct wiphy *wiphy,
 
 	pHddCtx->ns_offload_enable =
 		nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_ND_OFFLOAD_FLAG]);
+
+	/* update ns offload in case it is already enabled/disabled */
+	hdd_conf_ns_offload(adapter, pHddCtx->ns_offload_enable);
 
 	return 0;
 }
