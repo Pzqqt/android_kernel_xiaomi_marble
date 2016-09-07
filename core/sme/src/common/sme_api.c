@@ -2174,6 +2174,8 @@ QDF_STATUS sme_set_ese_beacon_request(tHalHandle hHal, const uint8_t sessionId,
 	if (status != QDF_STATUS_SUCCESS)
 		pSmeRrmContext->eseBcnReqInProgress = false;
 
+	qdf_mem_free(pSmeBcnReportReq);
+
 	return status;
 }
 
