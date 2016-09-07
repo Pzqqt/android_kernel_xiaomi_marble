@@ -2742,9 +2742,20 @@ void hdd_cleanup_actionframe(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
  * Return: None.
  */
 void hdd_station_adapter_deinit(hdd_context_t *hdd_ctx,
-				hdd_adapter_t *adapter)
+				hdd_adapter_t *adapter,
+				bool rtnl_held)
 {
 	ENTER_DEV(adapter->dev);
+
+	if (adapter->dev) {
+		if (rtnl_held)
+			adapter->dev->wireless_handlers = NULL;
+		else {
+			rtnl_lock();
+			adapter->dev->wireless_handlers = NULL;
+			rtnl_unlock();
+		}
+	}
 
 	if (test_bit(INIT_TX_RX_SUCCESS, &adapter->event_flags)) {
 		hdd_deinit_tx_rx(adapter);
@@ -2798,7 +2809,7 @@ void hdd_deinit_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 	case QDF_P2P_CLIENT_MODE:
 	case QDF_P2P_DEVICE_MODE:
 	{
-		hdd_station_adapter_deinit(hdd_ctx, adapter);
+		hdd_station_adapter_deinit(hdd_ctx, adapter, rtnl_held);
 		break;
 	}
 
