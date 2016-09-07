@@ -796,7 +796,9 @@ QDF_STATUS wmi_unified_pdev_set_dual_mac_config_cmd(void *wmi_hdl,
 		struct wmi_dual_mac_config *msg);
 
 QDF_STATUS wmi_unified_enable_arp_ns_offload_cmd(void *wmi_hdl,
-			   struct host_offload_req_param *param, bool arp_only,
+			   struct host_offload_req_param *arp_offload_req,
+			   struct host_offload_req_param *ns_offload_req,
+			   bool arp_only,
 			   uint8_t vdev_id);
 
 QDF_STATUS wmi_unified_set_led_flashing_cmd(void *wmi_hdl,
