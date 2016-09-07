@@ -1564,6 +1564,26 @@ bool hdd_is_valid_mac_address(const uint8_t *pMacAddr)
 }
 
 /**
+ * hdd_mon_mode_ether_setup() - Update monitor mode struct net_device.
+ * @dev: Handle to struct net_device to be updated.
+ *
+ * Return: None
+ */
+static void hdd_mon_mode_ether_setup(struct net_device *dev)
+{
+	dev->header_ops         = NULL;
+	dev->type               = ARPHRD_IEEE80211_RADIOTAP;
+	dev->hard_header_len    = ETH_HLEN;
+	dev->mtu                = ETH_DATA_LEN;
+	dev->addr_len           = ETH_ALEN;
+	dev->tx_queue_len       = 1000; /* Ethernet wants good queues */
+	dev->flags              = IFF_BROADCAST|IFF_MULTICAST;
+	dev->priv_flags        |= IFF_TX_SKB_SHARING;
+
+	memset(dev->broadcast, 0xFF, ETH_ALEN);
+}
+
+/**
  * __hdd__mon_open() - HDD Open function
  * @dev: Pointer to net_device structure
  *
@@ -1576,6 +1596,7 @@ static int __hdd_mon_open(struct net_device *dev)
 	int ret;
 
 	ENTER_DEV(dev);
+	hdd_mon_mode_ether_setup(dev);
 	ret = hdd_set_mon_rx_cb(dev);
 	return ret;
 }
@@ -2332,26 +2353,6 @@ void hdd_set_station_ops(struct net_device *pWlanDev)
 		pWlanDev->netdev_ops = &wlan_mon_drv_ops;
 	else
 		pWlanDev->netdev_ops = &wlan_drv_ops;
-}
-
-/**
- * hdd_mon_mode_ether_setup() - Update monitor mode struct net_device.
- * @dev: Handle to struct net_device to be updated.
- *
- * Return: None
- */
-static void hdd_mon_mode_ether_setup(struct net_device *dev)
-{
-	dev->header_ops         = NULL;
-	dev->type               = ARPHRD_IEEE80211_RADIOTAP;
-	dev->hard_header_len    = ETH_HLEN;
-	dev->mtu                = ETH_DATA_LEN;
-	dev->addr_len           = ETH_ALEN;
-	dev->tx_queue_len       = 1000; /* Ethernet wants good queues */
-	dev->flags              = IFF_BROADCAST|IFF_MULTICAST;
-	dev->priv_flags        |= IFF_TX_SKB_SHARING;
-
-	memset(dev->broadcast, 0xFF, ETH_ALEN);
 }
 
 /**
