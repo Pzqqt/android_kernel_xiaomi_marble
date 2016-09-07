@@ -1471,6 +1471,7 @@ struct hdd_context_s {
 	 * at runtime and intersecting it with target capab before updating.
 	 */
 	uint32_t fine_time_meas_cap_target;
+	uint32_t rx_high_ind_cnt;
 	/* completion variable to indicate set antenna mode complete*/
 	struct completion set_antenna_mode_cmpl;
 	/* Current number of TX X RX chains being used */

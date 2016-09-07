@@ -60,6 +60,7 @@
 #include "ol_txrx.h"
 
 #include "wlan_hdd_nan_datapath.h"
+#include "pld_common.h"
 
 const uint8_t hdd_wmm_ac_to_highest_up[] = {
 	SME_QOS_WMM_UP_RESV,
@@ -1396,4 +1397,21 @@ err:
 	hdd_ctxt->enableRxThread = true;
 }
 
+#ifdef MSM_PLATFORM
+/**
+ * hdd_reset_tcp_delack() - Reset tcp delack value to default
+ * @hdd_ctx: Handle to hdd context
+ *
+ * Function used to reset TCP delack value to its default value
+ *
+ * Return: None
+ */
+void hdd_reset_tcp_delack(hdd_context_t *hdd_ctx)
+{
+	enum pld_bus_width_type next_level = PLD_BUS_WIDTH_LOW;
 
+	hdd_ctx->rx_high_ind_cnt = 0;
+	wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index, WLAN_SVC_WLAN_TP_IND,
+				    &next_level, sizeof(next_level));
+}
+#endif /* MSM_PLATFORM */

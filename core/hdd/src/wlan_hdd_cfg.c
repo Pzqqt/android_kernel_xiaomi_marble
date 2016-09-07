@@ -3015,13 +3015,19 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_TCP_DELACK_THRESHOLD_LOW_MIN,
 		     CFG_TCP_DELACK_THRESHOLD_LOW_MAX),
 
-	REG_VARIABLE(CFG_TCP_TX_HIGH_TPUT_THRESHOLD_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, tcp_tx_high_tput_thres,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_TCP_TX_HIGH_TPUT_THRESHOLD_DEFAULT,
-		CFG_TCP_TX_HIGH_TPUT_THRESHOLD_MIN,
-		CFG_TCP_TX_HIGH_TPUT_THRESHOLD_MAX),
+	REG_VARIABLE(CFG_TCP_DELACK_TIMER_COUNT, WLAN_PARAM_Integer,
+		     struct hdd_config, tcp_delack_timer_count,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_TCP_DELACK_TIMER_COUNT_DEFAULT,
+		     CFG_TCP_DELACK_TIMER_COUNT_MIN,
+		     CFG_TCP_DELACK_TIMER_COUNT_MAX),
 
+	REG_VARIABLE(CFG_TCP_TX_HIGH_TPUT_THRESHOLD_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, tcp_tx_high_tput_thres,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_TCP_TX_HIGH_TPUT_THRESHOLD_DEFAULT,
+		     CFG_TCP_TX_HIGH_TPUT_THRESHOLD_MIN,
+		     CFG_TCP_TX_HIGH_TPUT_THRESHOLD_MAX),
 #endif
 
 	REG_VARIABLE(CFG_ENABLE_FW_LOG_TYPE, WLAN_PARAM_Integer,
@@ -5331,9 +5337,13 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		  "Name = [gTcpDelAckThresholdLow] Value = [%u] ",
 		  pHddCtx->config->tcpDelackThresholdLow);
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
-		"Name = [%s] Value = [%u] ",
-		CFG_TCP_TX_HIGH_TPUT_THRESHOLD_NAME,
-		pHddCtx->config->tcp_tx_high_tput_thres);
+		  "Name = [%s] Value = [%u] ",
+		  CFG_TCP_DELACK_TIMER_COUNT,
+		  pHddCtx->config->tcp_delack_timer_count);
+	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
+		  "Name = [%s] Value = [%u] ",
+		  CFG_TCP_TX_HIGH_TPUT_THRESHOLD_NAME,
+		  pHddCtx->config->tcp_tx_high_tput_thres);
 
 #endif
 

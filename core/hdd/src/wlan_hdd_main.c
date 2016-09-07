@@ -4596,6 +4596,7 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 	if (QDF_TIMER_STATE_RUNNING ==
 	    qdf_mc_timer_get_current_state(&hdd_ctx->bus_bw_timer)) {
 		qdf_mc_timer_stop(&hdd_ctx->bus_bw_timer);
+		hdd_reset_tcp_delack(hdd_ctx);
 	}
 
 	if (!QDF_IS_STATUS_SUCCESS
@@ -5058,6 +5059,7 @@ void hdd_pld_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 	enum pld_bus_width_type next_vote_level = PLD_BUS_WIDTH_NONE;
 	enum wlan_tp_level next_rx_level = WLAN_SVC_TP_NONE;
 	enum wlan_tp_level next_tx_level = WLAN_SVC_TP_NONE;
+	uint32_t delack_timer_cnt = hdd_ctx->config->tcp_delack_timer_count;
 
 	if (total > hdd_ctx->config->busBandwidthHighThreshold)
 		next_vote_level = PLD_BUS_WIDTH_HIGH;
@@ -5099,10 +5101,14 @@ void hdd_pld_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 	temp_rx = (rx_packets + hdd_ctx->prev_rx) / 2;
 
 	hdd_ctx->prev_rx = rx_packets;
-	if (temp_rx > hdd_ctx->config->tcpDelackThresholdHigh)
+	if (temp_rx > hdd_ctx->config->tcpDelackThresholdHigh &&
+	    (hdd_ctx->cur_rx_level != WLAN_SVC_TP_HIGH &&
+	    ++hdd_ctx->rx_high_ind_cnt == delack_timer_cnt)) {
 		next_rx_level = WLAN_SVC_TP_HIGH;
-	else
+	} else {
 		next_rx_level = WLAN_SVC_TP_LOW;
+		hdd_ctx->rx_high_ind_cnt = 0;
+	}
 
 	hdd_ctx->hdd_txrx_hist[hdd_ctx->hdd_txrx_hist_idx].next_rx_level =
 								next_rx_level;
@@ -8400,8 +8406,10 @@ void hdd_stop_bus_bw_compute_timer(hdd_adapter_t *adapter)
 		}
 	}
 
-	if (can_stop == true)
+	if (can_stop == true) {
 		qdf_mc_timer_stop(&hdd_ctx->bus_bw_timer);
+		hdd_reset_tcp_delack(hdd_ctx);
+	}
 }
 #endif
 
