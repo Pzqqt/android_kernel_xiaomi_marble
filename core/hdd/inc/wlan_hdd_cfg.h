@@ -2325,12 +2325,12 @@ typedef enum {
 #define CFG_SET_TXPOWER_LIMIT2G_NAME               "TxPower2g"
 #define CFG_SET_TXPOWER_LIMIT2G_MIN                (0)
 #define CFG_SET_TXPOWER_LIMIT2G_MAX                (30)
-#define CFG_SET_TXPOWER_LIMIT2G_DEFAULT            (15)
+#define CFG_SET_TXPOWER_LIMIT2G_DEFAULT            (30)
 
 #define CFG_SET_TXPOWER_LIMIT5G_NAME               "TxPower5g"
 #define CFG_SET_TXPOWER_LIMIT5G_MIN                (0)
 #define CFG_SET_TXPOWER_LIMIT5G_MAX                (30)
-#define CFG_SET_TXPOWER_LIMIT5G_DEFAULT            (15)
+#define CFG_SET_TXPOWER_LIMIT5G_DEFAULT            (30)
 
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 #define CFG_LL_TX_FLOW_LWM                         "TxFlowLowWaterMark"
