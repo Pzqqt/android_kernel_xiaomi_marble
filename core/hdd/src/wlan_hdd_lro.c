@@ -517,7 +517,7 @@ int hdd_lro_enable(hdd_context_t *hdd_ctx,
 	uint8_t *lro_mem_ptr;
 
 	if (!hdd_ctx->config->lro_enable ||
-		 NL80211_IFTYPE_STATION != adapter->wdev.iftype) {
+		 QDF_STA_MODE != adapter->device_mode) {
 		hdd_info("LRO Disabled");
 		return 0;
 	}
@@ -598,7 +598,7 @@ int hdd_lro_enable(hdd_context_t *hdd_ctx,
 void hdd_lro_disable(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 {
 	if (!hdd_ctx->config->lro_enable ||
-		 NL80211_IFTYPE_STATION != adapter->wdev.iftype)
+		 QDF_STA_MODE != adapter->device_mode)
 		return;
 
 	/* Deregister the flush callback */
