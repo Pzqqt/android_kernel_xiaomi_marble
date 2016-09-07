@@ -374,142 +374,165 @@ static int hdd_fill_ipv6_ac_addr(struct inet6_dev *idev,
 }
 
 /**
+ * hdd_disable_ns_offload() - Disables IPv6 NS offload
+ * @adapter:	ponter to the adapter
+ *
+ * Return:	nothing
+ */
+static void hdd_disable_ns_offload(hdd_adapter_t *adapter)
+{
+	tSirHostOffloadReq offloadReq;
+	QDF_STATUS status;
+
+	qdf_mem_zero((void *)&offloadReq, sizeof(tSirHostOffloadReq));
+	hdd_wlan_offload_event(SIR_IPV6_NS_OFFLOAD, SIR_OFFLOAD_DISABLE);
+	offloadReq.enableOrDisable = SIR_OFFLOAD_DISABLE;
+	offloadReq.offloadType =  SIR_IPV6_NS_OFFLOAD;
+	status = sme_set_host_offload(
+		WLAN_HDD_GET_HAL_CTX(adapter),
+		adapter->sessionId, &offloadReq);
+
+	if (QDF_STATUS_SUCCESS != status)
+		hdd_err("Failed to disable NS Offload");
+}
+
+/**
+ * hdd_enable_ns_offload() - Enables IPv6 NS offload
+ * @adapter:	ponter to the adapter
+ *
+ * Return:	nothing
+ */
+static void hdd_enable_ns_offload(hdd_adapter_t *adapter)
+{
+	struct inet6_dev *in6_dev;
+	uint8_t ipv6_addr[SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA]
+					[SIR_MAC_IPV6_ADDR_LEN] = { {0,} };
+	uint8_t ipv6_addr_type[SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA] = { 0 };
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	tSirHostOffloadReq offloadReq;
+	QDF_STATUS status;
+	uint32_t count = 0;
+	int err, i;
+
+	in6_dev = __in6_dev_get(adapter->dev);
+	if (NULL == in6_dev) {
+		hdd_err("IPv6 dev does not exist. Failed to request NSOffload");
+		return;
+	}
+
+	/* Unicast Addresses */
+	err = hdd_fill_ipv6_uc_addr(in6_dev, ipv6_addr, ipv6_addr_type, &count);
+	if (err) {
+		hdd_disable_ns_offload(adapter);
+		hdd_notice("Reached max supported addresses and not enabling "
+			"NS offload");
+		return;
+	}
+
+	/* Anycast Addresses */
+	err = hdd_fill_ipv6_ac_addr(in6_dev, ipv6_addr, ipv6_addr_type, &count);
+	if (err) {
+		hdd_disable_ns_offload(adapter);
+		hdd_notice("Reached max supported addresses and not enabling "
+			"NS offload");
+		return;
+	}
+
+	qdf_mem_zero(&offloadReq, sizeof(offloadReq));
+	for (i = 0; i < count; i++) {
+		/* Filling up the request structure
+		 * Filling the selfIPv6Addr with solicited address
+		 * A Solicited-Node multicast address is created by
+		 * taking the last 24 bits of a unicast or anycast
+		 * address and appending them to the prefix
+		 *
+		 * FF02:0000:0000:0000:0000:0001:FFXX:XXXX
+		 *
+		 * here XX is the unicast/anycast bits
+		 */
+		offloadReq.nsOffloadInfo.selfIPv6Addr[i][0] = 0xFF;
+		offloadReq.nsOffloadInfo.selfIPv6Addr[i][1] = 0x02;
+		offloadReq.nsOffloadInfo.selfIPv6Addr[i][11] = 0x01;
+		offloadReq.nsOffloadInfo.selfIPv6Addr[i][12] = 0xFF;
+		offloadReq.nsOffloadInfo.selfIPv6Addr[i][13] =
+					ipv6_addr[i][13];
+		offloadReq.nsOffloadInfo.selfIPv6Addr[i][14] =
+					ipv6_addr[i][14];
+		offloadReq.nsOffloadInfo.selfIPv6Addr[i][15] =
+					ipv6_addr[i][15];
+		offloadReq.nsOffloadInfo.slotIdx = i;
+		qdf_mem_copy(&offloadReq.nsOffloadInfo.targetIPv6Addr[i],
+			&ipv6_addr[i][0], SIR_MAC_IPV6_ADDR_LEN);
+
+		offloadReq.nsOffloadInfo.targetIPv6AddrValid[i] =
+			SIR_IPV6_ADDR_VALID;
+		offloadReq.nsOffloadInfo.target_ipv6_addr_ac_type[i] =
+			ipv6_addr_type[i];
+
+		qdf_mem_copy(&offloadReq.params.hostIpv6Addr,
+			&offloadReq.nsOffloadInfo.targetIPv6Addr[i],
+			SIR_MAC_IPV6_ADDR_LEN);
+
+		hdd_info("Setting NSOffload with solicitedIp: "
+			"%pI6, targetIp: %pI6, Index %d",
+			&offloadReq.nsOffloadInfo.selfIPv6Addr[i],
+			&offloadReq.nsOffloadInfo.targetIPv6Addr[i], i);
+	}
+
+	hdd_info("configuredMcastBcastFilter: %d",
+		hdd_ctx->configuredMcastBcastFilter);
+	hdd_wlan_offload_event(SIR_IPV6_NS_OFFLOAD, SIR_OFFLOAD_ENABLE);
+	offloadReq.offloadType =  SIR_IPV6_NS_OFFLOAD;
+	offloadReq.enableOrDisable = SIR_OFFLOAD_ENABLE;
+	qdf_copy_macaddr(&offloadReq.nsOffloadInfo.self_macaddr,
+			 &adapter->macAddressCurrent);
+
+	/* set number of ns offload address count */
+	offloadReq.num_ns_offload_count = count;
+
+	/* Configure the Firmware with this */
+	status = sme_set_host_offload(WLAN_HDD_GET_HAL_CTX(adapter),
+		adapter->sessionId, &offloadReq);
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_err("Failed to enable HostOffload feature with status: %d",
+			status);
+	}
+}
+
+/**
  * hdd_conf_ns_offload() - Configure NS offload
- * @pAdapter:   pointer to the adapter
+ * @adapter:   pointer to the adapter
  * @fenable:    flag to enable or disable
  *              0 - disable
  *              1 - enable
  *
  * Return: nothing
  */
-static void hdd_conf_ns_offload(hdd_adapter_t *pAdapter, bool fenable)
+static void hdd_conf_ns_offload(hdd_adapter_t *adapter, bool fenable)
 {
-	struct inet6_dev *in6_dev;
-	uint8_t ipv6_addr[SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA]
-					[SIR_MAC_IPV6_ADDR_LEN] = { {0,} };
-	uint8_t ipv6_addr_type[SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA] = { 0 };
-	tSirHostOffloadReq offLoadRequest;
-	hdd_context_t *pHddCtx;
-
-	int i = 0, ret;
-	QDF_STATUS returnStatus;
-	uint32_t count = 0;
+	hdd_context_t *hdd_ctx;
 
 	ENTER();
 	hdd_notice(" fenable = %d", fenable);
 
-	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	/* In SAP/P2PGo mode, ARP/NS offload feature capability
 	 * is controlled by one bit.
 	 */
 
-	if ((QDF_SAP_MODE == pAdapter->device_mode ||
-		QDF_P2P_GO_MODE == pAdapter->device_mode) &&
-		!pHddCtx->ap_arpns_support) {
+	if ((QDF_SAP_MODE == adapter->device_mode ||
+		QDF_P2P_GO_MODE == adapter->device_mode) &&
+		!hdd_ctx->ap_arpns_support) {
 		hdd_notice("NS Offload is not supported in SAP/P2PGO mode");
 		return;
 	}
 
-	if (fenable) {
-		in6_dev = __in6_dev_get(pAdapter->dev);
-		if (NULL != in6_dev) {
-			/* Unicast Addresses */
-			ret = hdd_fill_ipv6_uc_addr(in6_dev, ipv6_addr,
-						ipv6_addr_type, &count);
+	if (fenable)
+		hdd_enable_ns_offload(adapter);
+	else
+		hdd_disable_ns_offload(adapter);
 
-			if (0 > ret) {
-				hdd_notice(
-				"Reached max supported addresses and not enabling NS offload");
-				return;
-			}
-
-			/* Anycast Addresses */
-			ret = hdd_fill_ipv6_ac_addr(in6_dev, ipv6_addr,
-						ipv6_addr_type, &count);
-
-			if (0 > ret) {
-				hdd_notice(
-				"Reached max supported addresses and not enabling NS offload");
-				return;
-			}
-
-			qdf_mem_zero(&offLoadRequest, sizeof(offLoadRequest));
-			for (i = 0; i < count; i++) {
-				/* Filling up the request structure
-				 * Filling the selfIPv6Addr with solicited address
-				 * A Solicited-Node multicast address is created by
-				 * taking the last 24 bits of a unicast or anycast
-				 * address and appending them to the prefix
-				 *
-				 * FF02:0000:0000:0000:0000:0001:FFXX:XXXX
-				 *
-				 * here XX is the unicast/anycast bits
-				 */
-				offLoadRequest.nsOffloadInfo.selfIPv6Addr[i][0] = 0xFF;
-				offLoadRequest.nsOffloadInfo.selfIPv6Addr[i][1] = 0x02;
-				offLoadRequest.nsOffloadInfo.selfIPv6Addr[i][11] = 0x01;
-				offLoadRequest.nsOffloadInfo.selfIPv6Addr[i][12] = 0xFF;
-				offLoadRequest.nsOffloadInfo.selfIPv6Addr[i][13] =
-							ipv6_addr[i][13];
-				offLoadRequest.nsOffloadInfo.selfIPv6Addr[i][14] =
-							ipv6_addr[i][14];
-				offLoadRequest.nsOffloadInfo.selfIPv6Addr[i][15] =
-							ipv6_addr[i][15];
-				offLoadRequest.nsOffloadInfo.slotIdx = i;
-				qdf_mem_copy(&offLoadRequest.nsOffloadInfo.
-					targetIPv6Addr[i], &ipv6_addr[i][0],
-					SIR_MAC_IPV6_ADDR_LEN);
-
-				offLoadRequest.nsOffloadInfo.targetIPv6AddrValid[i] =
-							SIR_IPV6_ADDR_VALID;
-				offLoadRequest.nsOffloadInfo.
-						target_ipv6_addr_ac_type[i] =
-							ipv6_addr_type[i];
-
-				qdf_mem_copy(&offLoadRequest.params.hostIpv6Addr,
-					&offLoadRequest.nsOffloadInfo.targetIPv6Addr[i],
-					SIR_MAC_IPV6_ADDR_LEN);
-
-				hdd_info("Setting NSOffload with solicitedIp: %pI6, targetIp: %pI6, Index %d",
-					&offLoadRequest.nsOffloadInfo.selfIPv6Addr[i],
-					&offLoadRequest.nsOffloadInfo.targetIPv6Addr[i], i);
-			}
-
-			hdd_info("configuredMcastBcastFilter: %d",
-				pHddCtx->configuredMcastBcastFilter);
-			hdd_wlan_offload_event(SIR_IPV6_NS_OFFLOAD,
-				SIR_OFFLOAD_ENABLE);
-			offLoadRequest.offloadType =  SIR_IPV6_NS_OFFLOAD;
-			offLoadRequest.enableOrDisable = SIR_OFFLOAD_ENABLE;
-			qdf_copy_macaddr(&offLoadRequest.nsOffloadInfo.self_macaddr,
-					 &pAdapter->macAddressCurrent);
-			/* set number of ns offload address count */
-			offLoadRequest.num_ns_offload_count = count;
-			/* Configure the Firmware with this */
-			returnStatus = sme_set_host_offload(WLAN_HDD_GET_HAL_CTX(pAdapter),
-				pAdapter->sessionId, &offLoadRequest);
-			if (QDF_STATUS_SUCCESS != returnStatus) {
-				hdd_err("Failed to enable HostOffload feature with status: %d",
-					returnStatus);
-			}
-		} else {
-			hdd_err("IPv6 dev does not exist. Failed to request NSOffload");
-			return;
-		}
-	} else {
-		hdd_wlan_offload_event(SIR_IPV6_NS_OFFLOAD,
-			SIR_OFFLOAD_DISABLE);
-		/* Disable NSOffload */
-		qdf_mem_zero((void *)&offLoadRequest, sizeof(tSirHostOffloadReq));
-		offLoadRequest.enableOrDisable = SIR_OFFLOAD_DISABLE;
-		offLoadRequest.offloadType =  SIR_IPV6_NS_OFFLOAD;
-
-		if (QDF_STATUS_SUCCESS !=
-			sme_set_host_offload(WLAN_HDD_GET_HAL_CTX(pAdapter),
-				pAdapter->sessionId, &offLoadRequest))
-				hdd_err("Failed to disable NS Offload");
-	}
 	EXIT();
 	return;
 }
