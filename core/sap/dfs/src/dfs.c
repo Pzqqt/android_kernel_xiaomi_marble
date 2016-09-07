@@ -458,16 +458,14 @@ int dfs_attach(struct ieee80211com *ic)
 	return 0;
 
 bad2:
-	if (dfs->dfs_radartable != NULL) {
-		for (n = 0; n < 256; n++) {
-			if (dfs->dfs_radartable[n] != NULL) {
-				OS_FREE(dfs->dfs_radartable[n]);
-				dfs->dfs_radartable[n] = NULL;
-			}
+	for (n = 0; n < 256; n++) {
+		if (dfs->dfs_radartable[n] != NULL) {
+			OS_FREE(dfs->dfs_radartable[n]);
+			dfs->dfs_radartable[n] = NULL;
 		}
-		OS_FREE(dfs->dfs_radartable);
-		dfs->dfs_radartable = NULL;
 	}
+	OS_FREE(dfs->dfs_radartable);
+	dfs->dfs_radartable = NULL;
 bad1:
 	for (n = 0; n < DFS_MAX_RADAR_TYPES; n++) {
 		if (dfs->dfs_radarf[n] != NULL) {
