@@ -1133,8 +1133,10 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
 			return QDF_STATUS_E_NOMEM;
 		}
 		msg->messageType = eWNI_SME_SET_BCN_FILTER_REQ;
-		msg->length = sizeof(uint8_t);
+		msg->length = sizeof(tSirSetActiveModeSetBncFilterReq);
 		msg->seesionId = session_id;
+		qdf_copy_macaddr(&msg->bssid,
+			&session->connectedProfile.bssid);
 		status = cds_send_mb_message_to_mac(msg);
 		qdf_copy_macaddr(&roamInfo.peerMac,
 			&session->connectedProfile.bssid);

@@ -3577,6 +3577,7 @@ typedef struct sSirActiveModeSetBcnFilterReq {
 	uint16_t messageType;
 	uint16_t length;
 	uint8_t seesionId;
+	struct qdf_mac_addr bssid;
 } tSirSetActiveModeSetBncFilterReq, *tpSirSetActiveModeSetBncFilterReq;
 
 /* Reset AP Caps Changed */

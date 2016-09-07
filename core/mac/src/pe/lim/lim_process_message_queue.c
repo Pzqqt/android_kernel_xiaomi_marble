@@ -1349,6 +1349,8 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	tTdlsLinkEstablishParams *tdls_link_params = NULL;
 #endif
 	tSirMbMsgP2p *p2p_msg = NULL;
+	tSirSetActiveModeSetBncFilterReq *bcn_filter_req = NULL;
+
 	if (ANI_DRIVER_TYPE(mac_ctx) == eDRIVER_TYPE_MFG) {
 		qdf_mem_free(msg->bodyptr);
 		msg->bodyptr = NULL;
@@ -1857,8 +1859,10 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		msg->bodyptr = NULL;
 		break;
 	case eWNI_SME_SET_BCN_FILTER_REQ:
-		session_id = (uint8_t) msg->bodyval;
-		session_entry = &mac_ctx->lim.gpSession[session_id];
+		bcn_filter_req =
+			(tSirSetActiveModeSetBncFilterReq *) msg->bodyptr;
+		session_entry = pe_find_session_by_bssid(mac_ctx,
+			bcn_filter_req->bssid.bytes, &session_id);
 		if ((session_entry != NULL) &&
 			(lim_send_beacon_filter_info(mac_ctx, session_entry) !=
 			 eSIR_SUCCESS))

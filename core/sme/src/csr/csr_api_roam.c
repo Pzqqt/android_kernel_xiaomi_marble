@@ -11183,8 +11183,11 @@ csr_roam_chk_lnk_set_ctx_rsp(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 			pMsg = qdf_mem_malloc(
 				    sizeof(tSirSetActiveModeSetBncFilterReq));
 			pMsg->messageType = eWNI_SME_SET_BCN_FILTER_REQ;
-			pMsg->length = sizeof(uint8_t);
+			pMsg->length = sizeof(tSirSetActiveModeSetBncFilterReq);
 			pMsg->seesionId = sessionId;
+			qdf_copy_macaddr(&pMsg->bssid,
+				&session->connectedProfile.bssid);
+
 			status = cds_send_mb_message_to_mac(pMsg);
 			/*
 			 * OBSS SCAN Indication will be sent to Firmware
