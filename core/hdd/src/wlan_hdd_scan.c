@@ -1271,7 +1271,8 @@ static void wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work)
  *
  * Return: None
  */
-#ifdef CFG80211_SCAN_BSSID
+#if defined(CFG80211_SCAN_BSSID) || \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0))
 static inline void wlan_hdd_copy_bssid_scan_request(tCsrScanRequest *scan_req,
 					struct cfg80211_scan_request *request)
 {

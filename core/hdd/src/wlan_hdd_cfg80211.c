@@ -12148,7 +12148,8 @@ disconnected:
  *
  * Return: true if connect was for ReAssociation, false otherwise
  */
-#ifdef CFG80211_CONNECT_PREV_BSSID
+#if defined(CFG80211_CONNECT_PREV_BSSID) || \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0))
 static bool wlan_hdd_reassoc_bssid_hint(hdd_adapter_t *adapter,
 					struct cfg80211_connect_params *req,
 					int *status)
