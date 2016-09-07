@@ -511,8 +511,19 @@ QDF_STATUS send_pdev_set_hw_mode_cmd_tlv(wmi_unified_t wmi_handle,
 QDF_STATUS send_soc_set_dual_mac_config_cmd_tlv(wmi_unified_t wmi_handle,
 		struct wmi_dual_mac_config *msg);
 
+static void fill_arp_offload_params_tlv(wmi_unified_t wmi_handle,
+		struct host_offload_req_param *offload_req, uint8_t **buf_ptr);
+
+static void fill_ns_offload_params_tlv(wmi_unified_t wmi_handle,
+		struct host_offload_req_param *offload_req, uint8_t **buf_ptr);
+
+static void fill_nsoffload_ext_tlv(wmi_unified_t wmi_handle,
+		struct host_offload_req_param *offload_req, uint8_t **buf_ptr);
+
 QDF_STATUS send_enable_arp_ns_offload_cmd_tlv(wmi_unified_t wmi_handle,
-			   struct host_offload_req_param *param, bool arp_only,
+			   struct host_offload_req_param *arp_offload_req,
+			   struct host_offload_req_param *ns_offload_req,
+			   bool arp_only,
 			   uint8_t vdev_id);
 
 QDF_STATUS send_set_led_flashing_cmd_tlv(wmi_unified_t wmi_handle,
