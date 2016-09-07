@@ -3141,14 +3141,16 @@ QDF_STATUS wmi_unified_pdev_set_dual_mac_config_cmd(void *wmi_hdl,
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_unified_enable_arp_ns_offload_cmd(void *wmi_hdl,
-			   struct host_offload_req_param *param, bool arp_only,
+			   struct host_offload_req_param *arp_offload_req,
+			   struct host_offload_req_param *ns_offload_req,
+			   bool arp_only,
 			   uint8_t vdev_id)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
 	if (wmi_handle->ops->send_enable_arp_ns_offload_cmd)
 		return wmi_handle->ops->send_enable_arp_ns_offload_cmd(wmi_handle,
-				  param, arp_only,
+				  arp_offload_req, ns_offload_req, arp_only,
 				  vdev_id);
 
 	return QDF_STATUS_E_FAILURE;
