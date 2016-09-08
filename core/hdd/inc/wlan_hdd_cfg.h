@@ -1739,12 +1739,12 @@ typedef enum {
 
 /*
  * Enable/Disable Multicast MAC Address List feature
- * Default: Disable
+ * Default: Enable
  */
 #define CFG_MC_ADDR_LIST_ENABLE_NAME          "gMCAddrListEnable"
 #define CFG_MC_ADDR_LIST_ENABLE_MIN           (0)
 #define CFG_MC_ADDR_LIST_ENABLE_MAX           (1)
-#define CFG_MC_ADDR_LIST_ENABLE_DEFAULT       (0)
+#define CFG_MC_ADDR_LIST_ENABLE_DEFAULT       (1)
 
 #define CFG_ENABLE_RX_STBC                       "gEnableRXSTBC"
 #define CFG_ENABLE_RX_STBC_MIN                   (0)
