@@ -1327,4 +1327,6 @@ QDF_STATUS sme_encrypt_decrypt_msg(tHalHandle hal,
 QDF_STATUS sme_set_cts2self_for_p2p_go(tHalHandle hal);
 void sme_set_prefer_80MHz_over_160MHz(tHalHandle hal,
 		bool sta_prefer_80MHz_over_160MHz);
+QDF_STATUS sme_update_tx_fail_cnt_threshold(tHalHandle hal_handle,
+		uint8_t session_id, uint32_t tx_fail_count);
 #endif /* #if !defined( __SME_API_H ) */

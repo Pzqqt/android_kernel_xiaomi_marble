@@ -6586,4 +6586,13 @@ struct sir_encrypt_decrypt_rsp_params {
 	uint8_t *data;
 };
 
+/**
+ * struct sme_tx_fail_cnt_threshold - tx failure count for disconnect to fw
+ * @session_id: Session id
+ * @tx_fail_cnt_threshold: Tx failure count to do disconnect
+ */
+struct sme_tx_fail_cnt_threshold {
+	uint8_t session_id;
+	uint32_t tx_fail_cnt_threshold;
+};
 #endif /* __SIR_API_H */

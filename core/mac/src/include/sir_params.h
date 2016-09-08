@@ -636,6 +636,7 @@ typedef struct sSirMbMsgP2p {
 #define SIR_HAL_SET_DTIM_PERIOD             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 363)
 #define SIR_HAL_ENCRYPT_DECRYPT_MSG         (SIR_HAL_ITC_MSG_TYPES_BEGIN + 364)
 
+#define SIR_HAL_UPDATE_TX_FAIL_CNT_TH       (SIR_HAL_ITC_MSG_TYPES_BEGIN + 367)
 #define SIR_HAL_MSG_TYPES_END                (SIR_HAL_MSG_TYPES_BEGIN + 0x1FF)
 
 /* CFG message types */

@@ -16805,3 +16805,49 @@ QDF_STATUS sme_set_cts2self_for_p2p_go(tHalHandle hal_handle)
 	}
 	return QDF_STATUS_SUCCESS;
 }
+/**
+ * sme_update_tx_fail_cnt_threshold() - update tx fail count Threshold
+ * @hal: Handle returned by mac_open
+ * @session_id: Session ID on which tx fail count needs to be updated to FW
+ * @tx_fail_count: Count for tx fail threshold after which FW will disconnect
+ *
+ * This function is used to set tx fail count threshold to firmware.
+ * firmware will issue disocnnect with peer device once this threshold is
+ * reached.
+ *
+ * Return: Return QDF_STATUS, otherwise appropriate failure code
+ */
+QDF_STATUS sme_update_tx_fail_cnt_threshold(tHalHandle hal_handle,
+				uint8_t session_id, uint32_t tx_fail_count)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_handle);
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct sme_tx_fail_cnt_threshold *tx_fail_cnt;
+	cds_msg_t msg;
+
+	tx_fail_cnt = qdf_mem_malloc(sizeof(*tx_fail_cnt));
+	if (NULL == tx_fail_cnt) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			"%s: fail to alloc filter_param", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	sms_log(mac_ctx, LOG1,
+			FL("session_id %d tx_fail_count: %d"),
+			session_id, tx_fail_count);
+	tx_fail_cnt->session_id = session_id;
+	tx_fail_cnt->tx_fail_cnt_threshold = tx_fail_count;
+
+	qdf_mem_zero(&msg, sizeof(cds_msg_t));
+	msg.type = SIR_HAL_UPDATE_TX_FAIL_CNT_TH;
+	msg.reserved = 0;
+	msg.bodyptr = tx_fail_cnt;
+	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
+
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				FL("Not able to post Tx fail count message to WDA"));
+		qdf_mem_free(tx_fail_cnt);
+	}
+
+	return status;
+}

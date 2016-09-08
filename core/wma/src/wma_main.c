@@ -5914,6 +5914,46 @@ static QDF_STATUS wma_update_wep_default_key(tp_wma_handle wma,
 	return QDF_STATUS_SUCCESS;
 }
 
+
+/**
+ * wma_update_tx_fail_cnt_th() - Set threshold for TX pkt fail
+ * @wma_handle: WMA handle
+ * @tx_fail_cnt_th: sme_tx_fail_cnt_threshold parameter
+ *
+ * This function is used to set Tx pkt fail count threshold,
+ * FW will do disconnect with station once this threshold is reached.
+ *
+ * Return: VOS_STATUS_SUCCESS on success, error number otherwise
+ */
+static QDF_STATUS wma_update_tx_fail_cnt_th(tp_wma_handle wma,
+				struct sme_tx_fail_cnt_threshold *tx_fail_cnt_th)
+{
+	u_int8_t vdev_id;
+	u_int32_t tx_fail_disconn_th;
+	int ret = -EIO;
+
+	if (!wma || !wma->wmi_handle) {
+		WMA_LOGE(FL("WMA is closed, can not issue Tx pkt fail count threshold"));
+		return QDF_STATUS_E_INVAL;
+	}
+	vdev_id = tx_fail_cnt_th->session_id;
+	tx_fail_disconn_th = tx_fail_cnt_th->tx_fail_cnt_threshold;
+	WMA_LOGD("Set TX pkt fail count threshold  vdevId %d count %d",
+			vdev_id, tx_fail_disconn_th);
+
+
+	ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
+			WMI_VDEV_PARAM_DISCONNECT_TH,
+			tx_fail_disconn_th);
+
+	if (ret) {
+		WMA_LOGE(FL("Failed to send TX pkt fail count threshold command"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * wma_mc_process_msg() - process wma messages and call appropriate function.
  * @cds_context: cds context
@@ -6723,6 +6763,10 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 		break;
 	case WMA_ENCRYPT_DECRYPT_MSG:
 		wma_encrypt_decrypt_msg(wma_handle, msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case SIR_HAL_UPDATE_TX_FAIL_CNT_TH:
+		wma_update_tx_fail_cnt_th(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	default:
