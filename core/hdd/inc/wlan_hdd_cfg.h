@@ -1279,6 +1279,21 @@ typedef enum {
 #define CFG_ENABLE_FW_MODULE_LOG_LEVEL    "gFwDebugModuleLoglevel"
 #define CFG_ENABLE_FW_MODULE_LOG_DEFAULT  ""
 
+/*
+ * gEnableRTSProfiles for configuring different RTS profiles
+ * to firmware.
+ * Following are the valid values for the rtsprofile:
+ * RTSCTS_DISABLED                           0
+ * RTSCTS_ENABLED_4_SECOND_RATESERIES        17
+ * CTS2SELF_ENABLED_4_SECOND_RATESERIES      18
+ * RTSCTS_ENABLED_4_SWRETRIES                33
+ * CTS2SELF_ENABLED_4_SWRETRIES              34
+ */
+#define CFG_ENABLE_FW_RTS_PROFILE              "gEnableRTSProfiles"
+#define CFG_ENABLE_FW_RTS_PROFILE_MIN          (0)
+#define CFG_ENABLE_FW_RTS_PROFILE_MAX          (34)
+#define CFG_ENABLE_FW_RTS_PROFILE_DEFAULT      (33)
+
 #ifdef FEATURE_GREEN_AP
 #define CFG_ENABLE_GREEN_AP_FEATURE         "gEnableGreenAp"
 #define CFG_ENABLE_GREEN_AP_FEATURE_MIN     (0)
@@ -4023,6 +4038,9 @@ struct hdd_config {
 	uint32_t enableFwLogType;
 	uint32_t enableFwLogLevel;
 	uint8_t enableFwModuleLogLevel[FW_MODULE_LOG_LEVEL_STRING_LENGTH];
+
+	/* RTS profile parameter */
+	uint32_t rts_profile;
 
 #ifdef WLAN_FEATURE_11W
 	uint32_t pmfSaQueryMaxRetries;
