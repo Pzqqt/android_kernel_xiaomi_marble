@@ -576,7 +576,7 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t msdu,
 
 	hif_record_ce_desc_event(scn, ce_state->id,
 				FAST_TX_SOFTWARE_INDEX_UPDATE,
-				NULL, NULL, write_index);
+				NULL, NULL, sw_index);
 
 	if (qdf_unlikely(CE_RING_DELTA(nentries_mask, write_index, sw_index - 1)
 			 < SLOTS_PER_DATAPATH_TX)) {
