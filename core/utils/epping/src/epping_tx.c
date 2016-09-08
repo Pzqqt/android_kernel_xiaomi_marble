@@ -338,14 +338,14 @@ void epping_tx_complete_multiple(void *ctx, HTC_PACKET_QUEUE *pPacketQueue)
 
 		if (!pktSkb) {
 			EPPING_LOG(QDF_TRACE_LEVEL_ERROR,
-				 "%s: pktSkb is NULL", __func__);
-			ASSERT(0);
+				 "%s: NULL skb from hc packet", __func__);
+			QDF_BUG(0);
 		} else {
 			if (htc_pkt->pBuffer != qdf_nbuf_data(pktSkb)) {
 				EPPING_LOG(QDF_TRACE_LEVEL_ERROR,
 				  "%s: htc_pkt buffer not equal to skb->data",
 				  __func__);
-				ASSERT(0);
+				QDF_BUG(0);
 			}
 			/* add this to the list, use faster non-lock API */
 			qdf_nbuf_queue_add(&skb_queue, pktSkb);
@@ -356,7 +356,7 @@ void epping_tx_complete_multiple(void *ctx, HTC_PACKET_QUEUE *pPacketQueue)
 					EPPING_LOG(QDF_TRACE_LEVEL_ERROR,
 					  "%s: htc_pkt length not equal to skb->len",
 					  __func__);
-					ASSERT(0);
+					QDF_BUG(0);
 				}
 			}
 		}

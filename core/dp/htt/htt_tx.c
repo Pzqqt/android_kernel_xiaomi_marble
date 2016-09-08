@@ -1599,9 +1599,19 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 	void *qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	QDF_STATUS status;
 
-	if (!qdf_ctx) {
+	if (qdf_unlikely(!qdf_ctx)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s: qdf_ctx is NULL", __func__);
+		return;
+	}
+	if (qdf_unlikely(!msdu_info)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s: bad arg: msdu_info is NULL", __func__);
+		return;
+	}
+	if (qdf_unlikely(!tso_info)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s: bad arg: tso_info is NULL", __func__);
 		return;
 	}
 
@@ -1639,24 +1649,23 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 	 */
 
 	local_word0 = 0;
-	if (msdu_info) {
-		HTT_H2T_MSG_TYPE_SET(local_word0, HTT_H2T_MSG_TYPE_TX_FRM);
-		HTT_TX_DESC_PKT_TYPE_SET(local_word0, pkt_type);
-		HTT_TX_DESC_PKT_SUBTYPE_SET(local_word0, pkt_subtype);
-		HTT_TX_DESC_VDEV_ID_SET(local_word0, msdu_info->info.vdev_id);
-		HTT_TX_DESC_EXT_TID_SET(local_word0, htt_get_ext_tid(type,
-						ext_header_data, msdu_info));
-		HTT_TX_DESC_EXTENSION_SET(local_word0, desc_ext_required);
-		HTT_TX_DESC_EXT_TID_SET(local_word0, msdu_info->info.ext_tid);
-		HTT_TX_DESC_CKSUM_OFFLOAD_SET(local_word0,
-					      msdu_info->action.cksum_offload);
-		if (pdev->cfg.is_high_latency)
-			HTT_TX_DESC_TX_COMP_SET(local_word0, msdu_info->action.
-								tx_comp_req);
-		HTT_TX_DESC_NO_ENCRYPT_SET(local_word0,
-					   msdu_info->action.do_encrypt ?
-					   0 : 1);
-	}
+
+	HTT_H2T_MSG_TYPE_SET(local_word0, HTT_H2T_MSG_TYPE_TX_FRM);
+	HTT_TX_DESC_PKT_TYPE_SET(local_word0, pkt_type);
+	HTT_TX_DESC_PKT_SUBTYPE_SET(local_word0, pkt_subtype);
+	HTT_TX_DESC_VDEV_ID_SET(local_word0, msdu_info->info.vdev_id);
+	HTT_TX_DESC_EXT_TID_SET(local_word0, htt_get_ext_tid(type,
+					ext_header_data, msdu_info));
+	HTT_TX_DESC_EXTENSION_SET(local_word0, desc_ext_required);
+	HTT_TX_DESC_EXT_TID_SET(local_word0, msdu_info->info.ext_tid);
+	HTT_TX_DESC_CKSUM_OFFLOAD_SET(local_word0,
+				      msdu_info->action.cksum_offload);
+	if (pdev->cfg.is_high_latency)
+		HTT_TX_DESC_TX_COMP_SET(local_word0, msdu_info->action.
+							tx_comp_req);
+	HTT_TX_DESC_NO_ENCRYPT_SET(local_word0,
+				   msdu_info->action.do_encrypt ?
+				   0 : 1);
 
 	*word0 = local_word0;
 

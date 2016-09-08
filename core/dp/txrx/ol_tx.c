@@ -1867,6 +1867,16 @@ void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 	c_element = qdf_mem_malloc(sizeof(struct qdf_tso_seg_elem_t));
 	pdev->tso_seg_pool.freelist = c_element;
 	for (i = 0; i < (num_seg - 1); i++) {
+		if (qdf_unlikely(!c_element)) {
+			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+				   "%s: ERROR: c_element NULL for seg %d",
+				   __func__, i);
+			QDF_BUG(0);
+			pdev->tso_seg_pool.pool_size = i;
+			qdf_spinlock_create(&pdev->tso_seg_pool.tso_mutex);
+			return;
+		}
+
 		c_element->next =
 			qdf_mem_malloc(sizeof(struct qdf_tso_seg_elem_t));
 		c_element = c_element->next;

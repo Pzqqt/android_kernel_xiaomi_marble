@@ -289,7 +289,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 #endif
 
 	if (file == ATH_BOARD_DATA_FILE) {
-		uint32_t board_ext_address;
+		uint32_t board_ext_address = 0;
 		int32_t board_ext_data_size;
 
 		temp_eeprom = qdf_mem_malloc(fw_entry_size);
