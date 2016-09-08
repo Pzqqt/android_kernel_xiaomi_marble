@@ -149,6 +149,7 @@ struct wma_dfs_radar_ind {
  * @lpss_support: lpass support
  * @egap_support: enhanced green ap support
  * @nan_datapath_enabled: nan data path support
+ * @bool is_ra_rate_limit_enabled: RA filter support
  */
 struct wma_tgt_cfg {
 	uint32_t target_fw_version;
@@ -169,6 +170,9 @@ struct wma_tgt_cfg {
 #endif
 	uint32_t fine_time_measurement_cap;
 	bool bpf_enabled;
+#ifdef FEATURE_WLAN_RA_FILTERING
+	bool is_ra_rate_limit_enabled;
+#endif
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 	bool nan_datapath_enabled;
 #endif

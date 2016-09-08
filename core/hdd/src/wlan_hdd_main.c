@@ -1358,6 +1358,27 @@ static int hdd_generate_macaddr_auto(hdd_context_t *hdd_ctx)
 	return 0;
 }
 
+/**
+ * hdd_update_ra_rate_limit() - Update RA rate limit from target
+ *  configuration to cfg_ini in HDD
+ * @hdd_ctx: Pointer to hdd_ctx
+ * @cfg: target configuration
+ *
+ * Return: None
+ */
+#ifdef FEATURE_WLAN_RA_FILTERING
+static void hdd_update_ra_rate_limit(hdd_context_t *hdd_ctx,
+				     struct wma_tgt_cfg *cfg)
+{
+	hdd_ctx->config->IsRArateLimitEnabled = cfg->is_ra_rate_limit_enabled;
+}
+#else
+static void hdd_update_ra_rate_limit(hdd_context_t *hdd_ctx,
+				     struct wma_tgt_cfg *cfg)
+{
+}
+#endif
+
 void hdd_update_tgt_cfg(void *context, void *param)
 {
 	hdd_context_t *hdd_ctx = (hdd_context_t *) context;
@@ -1456,6 +1477,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 		cfg->bpf_enabled, hdd_ctx->config->bpf_packet_filter_enable);
 	hdd_ctx->bpf_enabled = (cfg->bpf_enabled &&
 				hdd_ctx->config->bpf_packet_filter_enable);
+	hdd_update_ra_rate_limit(hdd_ctx, cfg);
 
 	/*
 	 * If BPF is enabled, maxWowFilters set to WMA_STA_WOW_DEFAULT_PTRN_MAX

@@ -1824,6 +1824,8 @@ QDF_STATUS wma_open(void *cds_context,
 	wma_handle->driver_type = cds_cfg->driver_type;
 	wma_handle->ssdp = cds_cfg->ssdp;
 	wma_handle->enable_mc_list = cds_cfg->enable_mc_list;
+	wma_handle->bpf_packet_filter_enable =
+		cds_cfg->bpf_packet_filter_enable;
 #ifdef FEATURE_WLAN_RA_FILTERING
 	wma_handle->IsRArateLimitEnabled = cds_cfg->is_ra_ratelimit_enabled;
 	wma_handle->RArateLimitInterval = cds_cfg->ra_ratelimit_interval;
@@ -3908,6 +3910,26 @@ static void wma_update_target_ext_vht_cap(t_wma_handle *wma_handle,
 }
 
 /**
+ * wma_update_ra_rate_limit() - update wma config
+ * @wma_handle: wma handle
+ * @cfg: target config
+ *
+ * Return: none
+ */
+#ifdef FEATURE_WLAN_RA_FILTERING
+static void wma_update_ra_rate_limit(tp_wma_handle wma_handle,
+				     struct wma_tgt_cfg *cfg)
+{
+	cfg->is_ra_rate_limit_enabled = wma_handle->IsRArateLimitEnabled;
+}
+#else
+static void wma_update_ra_rate_limit(tp_wma_handle wma_handle,
+				     struct wma_tgt_cfg *cfg)
+{
+}
+#endif
+
+/**
  * wma_update_hdd_cfg() - update HDD config
  * @wma_handle: wma handle
  *
@@ -3961,6 +3983,7 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 #endif /* WLAN_FEATURE_LPSS */
 	tgt_cfg.ap_arpns_support = wma_handle->ap_arpns_support;
 	tgt_cfg.bpf_enabled = wma_handle->bpf_enabled;
+	wma_update_ra_rate_limit(wma_handle, &tgt_cfg);
 	tgt_cfg.fine_time_measurement_cap =
 		wma_handle->fine_time_measurement_cap;
 	wma_setup_egap_support(&tgt_cfg, wma_handle);
@@ -4150,6 +4173,25 @@ done:
 }
 
 /**
+ * wma_update_ra_limit() - update ra limit based on bpf filter
+ *  enabled or not
+ * @handle: wma handle
+ *
+ * Return: none
+ */
+#ifdef FEATURE_WLAN_RA_FILTERING
+static void wma_update_ra_limit(tp_wma_handle wma_handle)
+{
+	if (wma_handle->bpf_enabled)
+		wma_handle->IsRArateLimitEnabled = false;
+}
+#else
+static void wma_update_ra__limit(tp_wma_handle handle)
+{
+}
+#endif
+
+/**
  * wma_rx_service_ready_event() - event handler to process
  *                                wmi rx sevice ready event.
  * @handle: wma handle
@@ -4280,10 +4322,10 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
 				WMI_SERVICE_AP_ARPNS_OFFLOAD);
 
-	wma_handle->bpf_enabled =
+	wma_handle->bpf_enabled = (wma_handle->bpf_packet_filter_enable &&
 		WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				WMI_SERVICE_BPF_OFFLOAD);
-
+				WMI_SERVICE_BPF_OFFLOAD));
+	wma_update_ra_limit(wma_handle);
 	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
 				   WMI_SERVICE_CSA_OFFLOAD)) {
 		WMA_LOGD("%s: FW support CSA offload capability", __func__);
