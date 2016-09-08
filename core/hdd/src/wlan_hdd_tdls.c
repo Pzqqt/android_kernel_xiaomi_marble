@@ -4387,7 +4387,8 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 	{
 		QDF_STATUS status;
 		unsigned long rc;
-		tCsrTdlsLinkEstablishParams tdlsLinkEstablishParams;
+		tCsrTdlsLinkEstablishParams tdlsLinkEstablishParams = { {0}, 0,
+						0, 0, 0, 0, 0, {0}, 0, {0} };
 
 		pTdlsPeer =
 			wlan_hdd_tdls_find_peer(pAdapter, peer, true);

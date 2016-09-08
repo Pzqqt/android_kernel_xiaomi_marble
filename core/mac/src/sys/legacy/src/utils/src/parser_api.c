@@ -3268,17 +3268,21 @@ sir_beacon_ie_ese_bcn_report(tpAniSirGlobal pMac,
 			retStatus = eSIR_FAILURE;
 			goto err_bcnrep;
 		}
-		*pos = SIR_MAC_RATESET_EID;
-		pos++;
-		*pos = eseBcnReportMandatoryIe.supportedRates.numRates;
-		pos++;
-		qdf_mem_copy(pos,
+		if (eseBcnReportMandatoryIe.supportedRates.numRates <=
+			SIR_MAC_RATESET_EID_MAX) {
+			*pos = SIR_MAC_RATESET_EID;
+			pos++;
+			*pos = eseBcnReportMandatoryIe.supportedRates.numRates;
+			pos++;
+			qdf_mem_copy(pos,
 			     (uint8_t *) eseBcnReportMandatoryIe.supportedRates.
 			     rate,
 			     eseBcnReportMandatoryIe.supportedRates.numRates);
-		pos += eseBcnReportMandatoryIe.supportedRates.numRates;
-		freeBytes -=
-			(1 + 1 + eseBcnReportMandatoryIe.supportedRates.numRates);
+			pos += eseBcnReportMandatoryIe.supportedRates.numRates;
+			freeBytes -=
+			(1 + 1 +
+			 eseBcnReportMandatoryIe.supportedRates.numRates);
+		}
 	}
 
 	/* Fill FH Parameter set IE */
