@@ -1103,6 +1103,43 @@ nla_put_failure:
 	return;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
+/**
+ * hdd_cfg80211_scan_done() - Scan completed callback to cfg80211
+ * @adapter: Pointer to the adapter
+ * @req : Scan request
+ * @aborted : true scan aborted false scan success
+ *
+ * This function notifies scan done to cfg80211
+ *
+ * Return: none
+ */
+static void hdd_cfg80211_scan_done(hdd_adapter_t *adapter,
+				   struct cfg80211_scan_request *req,
+				   bool aborted)
+{
+	if (adapter->dev->flags & IFF_UP)
+		cfg80211_scan_done(req, aborted);
+}
+#else
+/**
+ * hdd_cfg80211_scan_done() - Scan completed callback to cfg80211
+ * @adapter: Pointer to the adapter
+ * @req : Scan request
+ * @aborted : true scan aborted false scan success
+ *
+ * This function notifies scan done to cfg80211
+ *
+ * Return: none
+ */
+static void hdd_cfg80211_scan_done(hdd_adapter_t *adapter,
+				   struct cfg80211_scan_request *req,
+				   bool aborted)
+{
+	cfg80211_scan_done(req, aborted);
+}
+#endif
+
 /**
  * hdd_cfg80211_scan_done_callback() - scan done callback function called after
  *				       scan is finished
@@ -1200,7 +1237,7 @@ static QDF_STATUS hdd_cfg80211_scan_done_callback(tHalHandle halHandle,
 	 * scan done event will be posted
 	 */
 	if (NL_SCAN == source)
-		cfg80211_scan_done(req, aborted);
+		hdd_cfg80211_scan_done(pAdapter, req, aborted);
 	else
 		hdd_vendor_scan_callback(pAdapter, req, aborted);
 
