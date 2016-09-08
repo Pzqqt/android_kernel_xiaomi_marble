@@ -676,7 +676,7 @@ QDF_STATUS (*send_process_roam_synch_complete_cmd)(wmi_unified_t wmi_handle,
 		 uint8_t vdev_id);
 
 QDF_STATUS (*send_unit_test_cmd)(wmi_unified_t wmi_handle,
-			       struct wmi_unit_test_cmd *wmi_utest);
+				 struct wmi_unit_test_cmd *wmi_utest);
 
 QDF_STATUS (*send_roam_invoke_cmd)(wmi_unified_t wmi_handle,
 		struct wmi_roam_invoke_cmd *roaminvoke,
@@ -1124,6 +1124,9 @@ QDF_STATUS (*send_power_dbg_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*send_adapt_dwelltime_params_cmd)(wmi_unified_t wmi_handle,
 			struct wmi_adaptive_dwelltime_params *dwelltime_params);
+
+QDF_STATUS (*send_fw_test_cmd)(wmi_unified_t wmi_handle,
+			       struct set_fwtest_params *wmi_fwtest);
 };
 
 struct target_abi_version {

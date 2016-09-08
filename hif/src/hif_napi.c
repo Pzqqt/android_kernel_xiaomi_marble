@@ -31,8 +31,6 @@
  * HIF NAPI interface implementation
  */
 
-#include <string.h> /* memset */
-
 #include <hif_napi.h>
 #include <hif_debug.h>
 #include <hif_io32.h>
@@ -96,7 +94,7 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 	}
 	for (i = 0; i < hif->ce_count; i++) {
 		ce_state = hif->ce_id_to_state[i];
-		NAPI_DEBUG("ce %d: htt_rx=%d htt_rx=%d",
+		NAPI_DEBUG("ce %d: htt_rx=%d htt_tx=%d",
 			   i, ce_state->htt_rx_data,
 			   ce_state->htt_tx_data);
 		if (!ce_state->htt_rx_data)
@@ -109,6 +107,7 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 		memset(napii, 0, sizeof(struct qca_napi_info));
 		napii->scale = scale;
 		napii->id    = NAPI_PIPE2ID(i);
+		napii->hif_ctx = hif_ctx;
 		init_dummy_netdev(&(napii->netdev));
 
 		NAPI_DEBUG("adding napi=%p to netdev=%p (poll=%p, bdgt=%d)",

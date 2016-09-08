@@ -10105,6 +10105,48 @@ QDF_STATUS send_process_roam_synch_complete_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * send_fw_test_cmd_tlv() - send fw test command to fw.
+ * @wmi_handle: wmi handle
+ * @wmi_fwtest: fw test command
+ *
+ * This function sends fw test command to fw.
+ *
+ * Return: CDF STATUS
+ */
+QDF_STATUS send_fw_test_cmd_tlv(wmi_unified_t wmi_handle,
+			       struct set_fwtest_params *wmi_fwtest)
+{
+	wmi_fwtest_set_param_cmd_fixed_param *cmd;
+	wmi_buf_t wmi_buf;
+	uint16_t len;
+
+	len = sizeof(*cmd);
+
+	wmi_buf = wmi_buf_alloc(wmi_handle, len);
+	if (!wmi_buf) {
+		WMI_LOGE("%s: wmai_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_fwtest_set_param_cmd_fixed_param *) wmi_buf_data(wmi_buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_fwtest_set_param_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+		       wmi_fwtest_set_param_cmd_fixed_param));
+	cmd->param_id = wmi_fwtest->arg;
+	cmd->param_value = wmi_fwtest->value;
+
+	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
+				 WMI_FWTEST_CMDID)) {
+		WMI_LOGP("%s: failed to send fw test command", __func__);
+		qdf_nbuf_free(wmi_buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * send_unit_test_cmd_tlv() - send unit test command to fw.
  * @wmi_handle: wmi handle
  * @wmi_utest: unit test command
@@ -12095,6 +12137,7 @@ struct wmi_ops tlv_ops =  {
 	.extract_profile_data = extract_profile_data_tlv,
 	.extract_chan_info_event = extract_chan_info_event_tlv,
 	.extract_channel_hopping_event = extract_channel_hopping_event_tlv,
+	.send_fw_test_cmd = send_fw_test_cmd_tlv,
 };
 
 #ifdef WMI_TLV_AND_NON_TLV_SUPPORT

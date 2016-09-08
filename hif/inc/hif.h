@@ -126,6 +126,7 @@ struct qca_napi_stat {
  */
 struct qca_napi_info {
 	struct net_device    netdev; /* dummy net_dev */
+	void 		     *hif_ctx;
 	struct napi_struct   napi;    /* one NAPI Instance per CE in phase I */
 	uint8_t              scale;   /* currently same on all instances */
 	uint8_t              id;
