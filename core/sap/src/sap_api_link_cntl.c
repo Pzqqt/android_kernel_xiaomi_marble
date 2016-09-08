@@ -1065,26 +1065,12 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			qdf_ret_status = QDF_STATUS_E_FAILURE;
 		break;
+	case eCSR_ROAM_RESULT_DEAUTH_IND:
 	case eCSR_ROAM_RESULT_DISASSOC_IND:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  FL("CSR roam_result = eCSR_ROAM_RESULT_DISASSOC_IND (%d)"),
+			  FL("CSR roam_result = eCSR_ROAM_RESULT_DEAUTH/DISASSOC_IND (%d)"),
 			  roam_result);
 		/* Fill in the event structure */
-		qdf_status = sap_signal_hdd_event(sap_ctx, csr_roam_info,
-					eSAP_STA_DISASSOC_EVENT,
-					(void *) eSAP_STATUS_SUCCESS);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-			qdf_ret_status = QDF_STATUS_E_FAILURE;
-		break;
-	case eCSR_ROAM_RESULT_DEAUTH_IND:
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  FL("CSR roam_result = eCSR_ROAM_RESULT_DEAUTH_IND (%d)"),
-			  roam_result);
-		/*
-		 * Fill in the event structure
-		 * we use the same event inorder to inform HDD to disassociate
-		 * the station
-		 */
 		qdf_status = sap_signal_hdd_event(sap_ctx, csr_roam_info,
 					eSAP_STA_DISASSOC_EVENT,
 					(void *) eSAP_STATUS_SUCCESS);

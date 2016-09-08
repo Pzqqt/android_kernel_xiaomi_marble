@@ -849,6 +849,7 @@ lim_send_sme_disassoc_ntf(tpAniSirGlobal pMac,
 	tpPESession session = NULL;
 	uint16_t i, assoc_id;
 	tpDphHashNode sta_ds = NULL;
+	struct sir_sme_discon_done_ind *sir_sme_dis_ind;
 
 	lim_log(pMac, LOG1, FL("Disassoc Ntf with trigger : %d reasonCode: %d"),
 		disassocTrigger, reasonCode);
@@ -888,12 +889,6 @@ lim_send_sme_disassoc_ntf(tpAniSirGlobal pMac,
 		}
 		failure = true;
 		break;
-
-	case eLIM_PEER_ENTITY_DISASSOC:
-		if (reasonCode != eSIR_SME_STA_NOT_ASSOCIATED) {
-			failure = true;
-			goto error;
-		}
 
 	case eLIM_HOST_DISASSOC:
 		/**
@@ -939,6 +934,32 @@ lim_send_sme_disassoc_ntf(tpAniSirGlobal pMac,
 				      psessionEntry, (uint16_t) reasonCode, 0);
 #endif
 		pMsg = (uint32_t *) pSirSmeDisassocRsp;
+		break;
+
+	case eLIM_PEER_ENTITY_DISASSOC:
+	case eLIM_LINK_MONITORING_DISASSOC:
+		sir_sme_dis_ind =
+			qdf_mem_malloc(sizeof(*sir_sme_dis_ind));
+		if (!sir_sme_dis_ind) {
+			lim_log(pMac, LOGE,
+				FL("call to AllocateMemory failed for disconnect indication"));
+			return;
+		}
+
+		lim_log(pMac, LOG1,
+			FL("send  eWNI_SME_DISCONNECT_DONE_IND with retCode: %d"),
+				reasonCode);
+
+		sir_sme_dis_ind->message_type =
+			eWNI_SME_DISCONNECT_DONE_IND;
+		sir_sme_dis_ind->length =
+			sizeof(*sir_sme_dis_ind);
+		qdf_mem_copy(sir_sme_dis_ind->peer_mac, peerMacAddr,
+			     sizeof(tSirMacAddr));
+		sir_sme_dis_ind->session_id   = smesessionId;
+		sir_sme_dis_ind->reason_code  = reasonCode;
+		pMsg = (uint32_t *)sir_sme_dis_ind;
+
 		break;
 
 	default:
@@ -1340,12 +1361,10 @@ lim_send_sme_deauth_ntf(tpAniSirGlobal pMac, tSirMacAddr peerMacAddr,
 	tpPESession psessionEntry;
 	uint8_t sessionId;
 	uint32_t *pMsg;
+	struct sir_sme_discon_done_ind *sir_sme_dis_ind;
 
 	psessionEntry = pe_find_session_by_bssid(pMac, peerMacAddr, &sessionId);
 	switch (deauthTrigger) {
-	case eLIM_PEER_ENTITY_DEAUTH:
-		return;
-
 	case eLIM_HOST_DEAUTH:
 		/**
 		 * Deauthentication response to host triggered
@@ -1377,6 +1396,32 @@ lim_send_sme_deauth_ntf(tpAniSirGlobal pMac, tSirMacAddr peerMacAddr,
 				      psessionEntry, 0, (uint16_t) reasonCode);
 #endif
 		pMsg = (uint32_t *) pSirSmeDeauthRsp;
+
+		break;
+
+	case eLIM_PEER_ENTITY_DEAUTH:
+	case eLIM_LINK_MONITORING_DEAUTH:
+		sir_sme_dis_ind =
+			qdf_mem_malloc(sizeof(*sir_sme_dis_ind));
+		if (!sir_sme_dis_ind) {
+			lim_log(pMac, LOGE,
+				FL("call to AllocateMemory failed for disconnect indication"));
+			return;
+		}
+
+		lim_log(pMac, LOG1,
+		       FL("send  eWNI_SME_DISCONNECT_DONE_IND withretCode: %d"),
+				reasonCode);
+
+		sir_sme_dis_ind->message_type =
+			eWNI_SME_DISCONNECT_DONE_IND;
+		sir_sme_dis_ind->length =
+			sizeof(*sir_sme_dis_ind);
+		sir_sme_dis_ind->session_id = smesessionId;
+		sir_sme_dis_ind->reason_code = reasonCode;
+		qdf_mem_copy(sir_sme_dis_ind->peer_mac, peerMacAddr,
+			 ETH_ALEN);
+		pMsg = (uint32_t *)sir_sme_dis_ind;
 
 		break;
 

@@ -1552,6 +1552,23 @@ typedef struct sSirSmeDisassocCnf {
 } tSirSmeDisassocCnf, *tpSirSmeDisassocCnf,
 	tSirSmeDeauthCnf, *tpSirSmeDeauthCnf;
 
+/**
+ * struct sir_sme_discon_done_ind  - disconnect done indiaction
+ * @message_type: msg type
+ * @length: length of msg
+ * @session_id: session id of the indication
+ * @reason_code: reason for disconnect indication
+ * @peer_mac: peer mac
+ */
+struct sir_sme_discon_done_ind {
+	uint16_t           message_type;
+	uint16_t           length;
+	uint8_t            session_id;
+	tSirResultCodes    reason_code;
+	tSirMacAddr        peer_mac;
+};
+
+
 /* / Definition for Deauthetication request */
 typedef struct sSirSmeDeauthReq {
 	uint16_t messageType;   /* eWNI_SME_DEAUTH_REQ */
