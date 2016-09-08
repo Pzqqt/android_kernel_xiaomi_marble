@@ -2649,9 +2649,10 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 					hddLog(LOG1,
 					       FL("ft_carrier_on is %d, sending connect indication"),
 					       ft_carrier_on);
-					cfg80211_connect_result(dev,
+					hdd_connect_result(dev,
 								pRoamInfo->
 								bssid.bytes,
+								pRoamInfo,
 								pFTAssocReq,
 								assocReqlen,
 								pFTAssocRsp,
@@ -2692,9 +2693,10 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 						       roamResult, roamStatus);
 
 						/* inform connect result to nl80211 */
-						cfg80211_connect_result(dev,
+						hdd_connect_result(dev,
 									pRoamInfo->
 									bssid.bytes,
+									pRoamInfo,
 									reqRsnIe,
 									reqRsnLength,
 									rspRsnIe,
@@ -2854,15 +2856,15 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 			if (eCSR_ROAM_RESULT_ASSOC_FAIL_CON_CHANNEL ==
 			    roamResult) {
 				if (pRoamInfo)
-					cfg80211_connect_result(dev,
+					hdd_connect_result(dev,
 						pRoamInfo->bssid.bytes,
-						NULL, 0, NULL, 0,
+						NULL, NULL, 0, NULL, 0,
 						WLAN_STATUS_ASSOC_DENIED_UNSPEC,
 						GFP_KERNEL);
 				else
-					cfg80211_connect_result(dev,
+					hdd_connect_result(dev,
 						pWextState->req_bssId.bytes,
-						NULL, 0, NULL, 0,
+						NULL, NULL, 0, NULL, 0,
 						WLAN_STATUS_ASSOC_DENIED_UNSPEC,
 						GFP_KERNEL);
 			} else {
@@ -2893,18 +2895,18 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 					 * applications to reconnect the station
 					 * with correct configuration.
 					 */
-					cfg80211_connect_result(dev,
-						pRoamInfo->bssid.bytes, NULL, 0,
-						NULL, 0,
+					hdd_connect_result(dev,
+						pRoamInfo->bssid.bytes,
+						NULL, NULL, 0, NULL, 0,
 						(isWep &&
 						 pRoamInfo->reasonCode) ?
 						pRoamInfo->reasonCode :
 						WLAN_STATUS_UNSPECIFIED_FAILURE,
 						GFP_KERNEL);
 				} else
-					cfg80211_connect_result(dev,
+					hdd_connect_result(dev,
 						pWextState->req_bssId.bytes,
-						NULL, 0, NULL, 0,
+						NULL, NULL, 0, NULL, 0,
 						WLAN_STATUS_UNSPECIFIED_FAILURE,
 						GFP_KERNEL);
 			}
