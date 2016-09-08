@@ -6937,18 +6937,6 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	hdd_hex_string_to_u8_array(pConfig->rm_capability,
 			smeConfig->rrmConfig.rm_capability, &rrm_capab_len,
 			DOT11F_IE_RRMENABLEDCAP_MAX_LEN);
-	/*
-	 * Update the INI values gRrmOperChanMax and gRrmNonOperChanMax
-	 * appropriately
-	 */
-	smeConfig->rrmConfig.rm_capability[2] =
-		((pConfig->nOutChanMeasMaxDuration <<
-		  CAP_NONOPER_CHAN_MAX_DURATION_OFFSET) |
-		 (pConfig->nOutChanMeasMaxDuration <<
-		  CAP_OPER_CHAN_MAX_DURATION_OFFSET) |
-		 (smeConfig->rrmConfig.rm_capability[2] &
-		  (RM_CAP_RM_MIB | RM_CAP_AP_CHAN_REPORT)));
-
 	/* Remaining config params not obtained from registry
 	 * On RF EVB beacon using channel 1.
 	 */
