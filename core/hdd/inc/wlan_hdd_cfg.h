@@ -846,11 +846,11 @@ typedef enum {
  * (last 4bytes are reserved). Bit details are updated as per
  * Draft version of 11mc spec. (Draft P802.11REVmc_D4.2)
  *
- * Bitwise details are defined as bit mask in rrmGlobal.h
+ * Bitwise details are defined as bit mask in rrm_global.h
  * Comma is used as a separator for each byte.
  */
 #define CFG_RM_CAPABILITY_NAME            "rm_capability"
-#define CFG_RM_CAPABILITY_DEFAULT         "73,10,6D,00,04"
+#define CFG_RM_CAPABILITY_DEFAULT         "73,10,91,00,04"
 
 #define CFG_QOS_IMPLICIT_SETUP_ENABLED_NAME                 "ImplicitQosIsEnabled"
 #define CFG_QOS_IMPLICIT_SETUP_ENABLED_MIN                  (0)
