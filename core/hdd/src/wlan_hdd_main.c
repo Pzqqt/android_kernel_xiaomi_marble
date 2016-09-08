@@ -5711,7 +5711,78 @@ void hdd_restart_sap(hdd_adapter_t *adapter, uint8_t channel)
 
 	cds_change_sap_channel_with_csa(adapter, hdd_ap_ctx);
 }
+/**
+ * hdd_unsafe_channel_restart_sap() - restart sap if sap is on unsafe channel
+ * @hdd_ctx: hdd context pointer
+ *
+ * hdd_unsafe_channel_restart_sap check all unsafe channel list
+ * and if ACS is enabled, driver will ask userspace to restart the
+ * sap. User space on LTE coex indication restart driver.
+ *
+ * Return - none
+ */
+void hdd_unsafe_channel_restart_sap(hdd_context_t *hdd_ctxt)
+{
+	QDF_STATUS status;
+	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
+	hdd_adapter_t *adapter_temp;
+	uint32_t i;
+	bool found = false;
+	uint8_t restart_chan;
 
+	status = hdd_get_front_adapter(hdd_ctxt, &adapter_node);
+	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
+		adapter_temp = adapter_node->pAdapter;
+
+		if (!adapter_temp) {
+			hdd_err("adapter is NULL, moving to next one");
+			goto next_adapater;
+		}
+
+		if (!((adapter_temp->device_mode == QDF_SAP_MODE) &&
+		   (adapter_temp->sessionCtx.ap.sapConfig.acs_cfg.acs_mode))) {
+			hdd_info("skip device mode:%d acs:%d",
+				adapter_temp->device_mode,
+				adapter_temp->sessionCtx.ap.sapConfig.
+				acs_cfg.acs_mode);
+			goto next_adapater;
+		}
+
+		found = false;
+		for (i = 0; i < hdd_ctxt->unsafe_channel_count; i++) {
+			if (cds_chan_to_freq(
+				adapter_temp->sessionCtx.ap.operatingChannel) ==
+				hdd_ctxt->unsafe_channel_list[i]) {
+				found = true;
+				hdd_info("operating ch:%d is unsafe",
+				  adapter_temp->sessionCtx.ap.operatingChannel);
+				break;
+			}
+		}
+
+		if (!found) {
+			hdd_info("ch:%d is safe. no need to change channel",
+				adapter_temp->sessionCtx.ap.operatingChannel);
+			goto next_adapater;
+		}
+
+		restart_chan =
+			hdd_get_safe_channel_from_pcl_and_acs_range(
+					adapter_temp);
+		if (!restart_chan) {
+			hdd_alert("fail to restart SAP");
+		} else {
+			hdd_info("sending coex indication");
+			wlan_hdd_send_svc_nlink_msg(hdd_ctxt->radio_index,
+					WLAN_SVC_LTE_COEX_IND, NULL, 0);
+			hdd_restart_sap(adapter_temp, restart_chan);
+		}
+
+next_adapater:
+		status = hdd_get_next_adapter(hdd_ctxt, adapter_node, &next);
+		adapter_node = next;
+	}
+}
 /**
  * hdd_ch_avoid_cb() - Avoid notified channels from FW handler
  * @adapter:	HDD adapter pointer
@@ -5723,7 +5794,7 @@ void hdd_restart_sap(hdd_adapter_t *adapter, uint8_t channel)
  *
  * Return: None
  */
-static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
+void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 {
 	hdd_context_t *hdd_ctxt;
 	tSirChAvoidIndType *ch_avoid_indi;
@@ -5735,11 +5806,6 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 	v_CONTEXT_t cds_context;
 	tHddAvoidFreqList hdd_avoid_freq_list;
 	uint32_t i;
-	QDF_STATUS status;
-	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
-	hdd_adapter_t *adapter_temp;
-	uint8_t restart_chan;
-	bool found = false;
 
 	/* Basic sanity */
 	if (!hdd_context || !indi_param) {
@@ -5866,64 +5932,7 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 		hdd_info("no unsafe channels - not restarting SAP");
 		return;
 	}
-
-	/* No channel change is done for fixed channel SAP.
-	 * Loop through all ACS SAP interfaces and change the channels for
-	 * the ones operating on unsafe channels.
-	 */
-	status = hdd_get_front_adapter(hdd_ctxt, &adapter_node);
-	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter_temp = adapter_node->pAdapter;
-
-		if (!adapter_temp) {
-			hdd_err("adapter is NULL, moving to next one");
-			goto next_adapater;
-		}
-
-		if (!((adapter_temp->device_mode == QDF_SAP_MODE) &&
-		   (adapter_temp->sessionCtx.ap.sapConfig.acs_cfg.acs_mode))) {
-			hdd_info("skip device mode:%d acs:%d",
-				adapter_temp->device_mode,
-				adapter_temp->sessionCtx.ap.sapConfig.
-				acs_cfg.acs_mode);
-			goto next_adapater;
-		}
-
-		found = false;
-		for (i = 0; i < hdd_ctxt->unsafe_channel_count; i++) {
-			if (cds_chan_to_freq(
-				adapter_temp->sessionCtx.ap.operatingChannel) ==
-				hdd_ctxt->unsafe_channel_list[i]) {
-				found = true;
-				hdd_info("operating ch:%d is unsafe",
-				  adapter_temp->sessionCtx.ap.operatingChannel);
-				break;
-			}
-		}
-
-		if (!found) {
-			hdd_info("ch:%d is safe. no need to change channel",
-				adapter_temp->sessionCtx.ap.operatingChannel);
-			goto next_adapater;
-		}
-
-		restart_chan =
-			hdd_get_safe_channel_from_pcl_and_acs_range(
-					adapter_temp);
-		if (!restart_chan) {
-			hdd_alert("fail to restart SAP");
-		} else {
-			hdd_info("sending coex indication");
-			wlan_hdd_send_svc_nlink_msg
-				(hdd_ctxt->radio_index,
-				WLAN_SVC_LTE_COEX_IND, NULL, 0);
-			hdd_restart_sap(adapter_temp, restart_chan);
-		}
-
-next_adapater:
-		status = hdd_get_next_adapter(hdd_ctxt, adapter_node, &next);
-		adapter_node = next;
-	}
+	hdd_unsafe_channel_restart_sap(hdd_ctxt);
 	return;
 }
 
