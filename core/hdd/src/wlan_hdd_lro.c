@@ -256,6 +256,11 @@ static int hdd_lro_desc_find(hdd_adapter_t *adapter,
 		return -ENOMEM;
 	}
 
+	if (list_empty(&entry->lro_node)) {
+		hdd_err("Reached max supported lro_desc range\n");
+		return -EINVAL;
+	}
+
 	list_del_init(&entry->lro_node);
 	qdf_spin_unlock_bh(&free_pool.lro_pool_lock);
 
