@@ -907,7 +907,8 @@ typedef struct {
  * @chain_mask: chain mask can be used by the vdev
  * @mac_id: the mac on which vdev is on
  * @wep_default_key_idx: wep default index for group key
- *
+ * @arp_offload_req: cached arp offload request
+ * @ns_offload_req: cached ns offload request
  * It stores parameters per vdev in wma.
  */
 struct wma_txrx_node {
@@ -985,6 +986,8 @@ struct wma_txrx_node {
 	uint8_t nss_5g;
 	bool p2p_lo_in_progress;
 	uint8_t wep_default_key_idx;
+	tSirHostOffloadReq arp_offload_req;
+	tSirHostOffloadReq ns_offload_req;
 };
 
 #if defined(QCA_WIFI_FTM)

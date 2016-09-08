@@ -1407,6 +1407,13 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 			status = -EINVAL;
 			goto free_req_msg;
 		}
+
+		/* Clear arp and ns offload cache */
+		qdf_mem_zero(&iface->ns_offload_req,
+			sizeof(iface->ns_offload_req));
+		qdf_mem_zero(&iface->arp_offload_req,
+			sizeof(iface->arp_offload_req));
+
 		if (wma_is_vdev_in_ibss_mode(wma, resp_event->vdev_id))
 			wma_delete_all_ibss_peers(wma, resp_event->vdev_id);
 		else if (WMA_IS_VDEV_IN_NDI_MODE(wma->interfaces,
