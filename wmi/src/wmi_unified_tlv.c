@@ -4282,7 +4282,8 @@ QDF_STATUS send_roam_scan_offload_mode_cmd_tlv(wmi_unified_t wmi_handle,
 				buf_ptr += WMI_TLV_HDR_SIZE;
 				roam_offload_11i =
 				     (wmi_roam_11i_offload_tlv_param *) buf_ptr;
-				if (roam_req->roam_key_mgmt_offload_enabled) {
+				if (roam_req->roam_key_mgmt_offload_enabled &&
+				    roam_req->okc_enabled) {
 					WMI_SET_ROAM_OFFLOAD_OKC_ENABLED
 						(roam_offload_11i->flags);
 					WMI_LOGE("LFR3:OKC Enabled");
