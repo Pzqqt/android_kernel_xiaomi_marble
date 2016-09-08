@@ -271,11 +271,11 @@ int hif_drain_tasklets(struct hif_softc *scn)
 
 #ifdef WLAN_SUSPEND_RESUME_TEST
 static bool g_hif_apps_fake_suspended;
-static hdd_fake_resume_callback hdd_fake_aps_resume;
+static hdd_fake_resume_callback hdd_fake_apps_resume;
 
 static void hif_wlan_resume_work_handler(struct work_struct *work)
 {
-	hdd_fake_aps_resume(0);
+	hdd_fake_apps_resume(0);
 }
 
 static DECLARE_WORK(hif_resume_work, hif_wlan_resume_work_handler);
@@ -284,41 +284,66 @@ static DECLARE_WORK(hif_resume_work, hif_wlan_resume_work_handler);
  * hif_fake_apps_suspend(): Suspend WLAN
  *
  * Set the fake suspend flag such that hif knows that it will need
- * to fake the aps resume process using the hdd_fake_aps_resume
+ * to fake the apps resume process using the hdd_fake_apps_resume
  *
  * Return: none
  */
 void hif_fake_apps_suspend(hdd_fake_resume_callback callback)
 {
-	hdd_fake_aps_resume = callback;
+	hdd_fake_apps_resume = callback;
 	g_hif_apps_fake_suspended = true;
 }
 
 /**
- * hif_fake_aps_resume(): check if WLAN resume is needed
+ * hif_fake_apps_resume(): trigger WLAN resume if needed
+ * @fid_hdl: hif context
+ * @ce_id: copy engine Id
  *
- * Return: true if a fake apps resume has been been triggered
- *         returns false if regular interrupt processing is needed
+ * Return: True if a fake apps resume has been been triggered,
+ *         returns false if regular interrupt processing is needed.
+ *	   Ensures copy engine Id matches mapped Irq
  */
-static bool hif_fake_aps_resume(void)
+static bool hif_fake_apps_resume(struct hif_opaque_softc *hif_hdl, int ce_id)
 {
-	if (g_hif_apps_fake_suspended) {
-		g_hif_apps_fake_suspended = false;
-		schedule_work(&hif_resume_work);
-		return true;
-	} else {
+	uint8_t ul_pipe, dl_pipe;
+	int ul_is_polled, dl_is_polled;
+	QDF_STATUS status;
+
+	/* can't resume if not already suspended */
+	if (!g_hif_apps_fake_suspended)
+		return false;
+
+	/* ensure passed copy engine Id matches Id from irq map */
+
+	status = hif_map_service_to_pipe(hif_hdl, HTC_CTRL_RSVD_SVC,
+					 &ul_pipe, &dl_pipe,
+					 &ul_is_polled, &dl_is_polled);
+
+	if (status) {
+		HIF_ERROR("%s: pipe_mapping failure", __func__);
 		return false;
 	}
+
+	/* dl_pipe is equivalent to a copy engine Id at this point */
+	if (ce_id != dl_pipe)
+		return false;
+
+	/* trigger fake apps resume */
+	g_hif_apps_fake_suspended = false;
+	schedule_work(&hif_resume_work);
+	return true;
 }
 
 #else
 
 /**
- * hif_fake_aps_resume(): check if WLAN resume is needed
+ * hif_fake_apps_resume(): trigger WLAN resume if needed
+ * @hif_hdl: hif context
+ * @ce_id: copy engine Id
  *
  * Return: always false if WLAN_SUSPEND_RESUME_TEST is not defined
  */
-static bool hif_fake_aps_resume(void)
+static bool hif_fake_apps_resume(struct hif_opaque_softc *hif_hdl, int ce_id)
 {
 	return false;
 }
@@ -426,7 +451,7 @@ irqreturn_t ce_dispatch_interrupt(int ce_id,
 	hif_record_ce_desc_event(scn, ce_id, HIF_IRQ_EVENT, NULL, NULL, 0);
 	hif_ce_increment_interrupt_count(hif_ce_state, ce_id);
 
-	if (unlikely(hif_fake_aps_resume())) {
+	if (unlikely(hif_fake_apps_resume(hif_hdl, ce_id))) {
 		HIF_ERROR("received resume interrupt");
 		hif_irq_enable(scn, ce_id);
 		return IRQ_HANDLED;
