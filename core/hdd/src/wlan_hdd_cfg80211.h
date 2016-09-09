@@ -383,6 +383,7 @@ enum qca_nl80211_vendor_subcmds {
 	QCA_NL80211_VENDOR_SUBCMD_ND_OFFLOAD = 82,
 
 	QCA_NL80211_VENDOR_SUBCMD_PACKET_FILTER = 83,
+	QCA_NL80211_VENDOR_SUBCMD_GET_BUS_SIZE = 84,
 
 	QCA_NL80211_VENDOR_SUBCMD_GET_WAKE_REASON_STATS = 85,
 
@@ -2873,6 +2874,22 @@ enum qca_wlan_vendor_attr_p2p_listen_offload {
 	QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_AFTER_LAST,
 	QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_MAX =
 	QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_AFTER_LAST - 1
+};
+
+/**
+ * enum qca_wlan_vendor_drv_info - WLAN driver info
+ * @QCA_WLAN_VENDOR_ATTR_DRV_INFO_INVALID: Invalid
+ * @QCA_WLAN_VENDOR_ATTR_DRV_INFO_BUS_SIZE: Maximum Message size info
+ * between Firmware & Host.
+ */
+enum qca_wlan_vendor_drv_info {
+	QCA_WLAN_VENDOR_ATTR_DRV_INFO_INVALID = 0,
+	QCA_WLAN_VENDOR_ATTR_DRV_INFO_BUS_SIZE,
+
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_DRV_INFO_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_DRV_INFO_MAX =
+		QCA_WLAN_VENDOR_ATTR_DRV_INFO_AFTER_LAST - 1,
 };
 
 struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_db(hdd_adapter_t *pAdapter,

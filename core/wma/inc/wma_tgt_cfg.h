@@ -175,5 +175,6 @@ struct wma_tgt_cfg {
 	bool nan_datapath_enabled;
 #endif
 	bool sub_20_support;
+	uint16_t wmi_max_len;
 };
 #endif /* WMA_TGT_CFG_H */

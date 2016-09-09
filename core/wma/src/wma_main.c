@@ -82,6 +82,8 @@
 
 #define WMA_LOG_COMPLETION_TIMER 10000 /* 10 seconds */
 
+#define WMI_TLV_HEADROOM 128
+
 static uint32_t g_fw_wlan_feat_caps;
 
 /**
@@ -4043,6 +4045,8 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	wma_update_ra_rate_limit(wma_handle, &tgt_cfg);
 	tgt_cfg.fine_time_measurement_cap =
 		wma_handle->fine_time_measurement_cap;
+	tgt_cfg.wmi_max_len = wmi_get_max_msg_len(wma_handle->wmi_handle)
+			      - WMI_TLV_HEADROOM;
 	wma_setup_egap_support(&tgt_cfg, wma_handle);
 
 	wma_update_hdd_cfg_ndp(wma_handle, &tgt_cfg);

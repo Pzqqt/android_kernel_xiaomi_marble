@@ -1509,6 +1509,7 @@ struct hdd_context_s {
 	bool start_modules_in_progress;
 	bool update_mac_addr_to_fw;
 	struct acs_dfs_policy acs_policy;
+	uint16_t wmi_max_len;
 };
 
 /*---------------------------------------------------------------------------

@@ -1482,6 +1482,8 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	if (hdd_ctx->bpf_enabled)
 		hdd_ctx->config->maxWoWFilters = WMA_STA_WOW_DEFAULT_PTRN_MAX;
 
+	hdd_ctx->wmi_max_len = cfg->wmi_max_len;
+
 	/* Configure NAN datapath features */
 	hdd_nan_datapath_target_config(hdd_ctx, cfg);
 }
