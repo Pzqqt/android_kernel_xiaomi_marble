@@ -1405,7 +1405,6 @@ eCsrBand csr_get_current_band(tHalHandle hHal)
 	return pMac->roam.configParam.bandCapability;
 }
 
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 /*
    This function flushes the roam scan cache
  */
@@ -1459,7 +1458,6 @@ QDF_STATUS csr_create_bg_scan_roam_channel_list(tpAniSirGlobal pMac,
 	return status;
 }
 
-#endif
 
 #ifdef FEATURE_WLAN_ESE
 /**
@@ -1597,18 +1595,6 @@ bool csr_roam_is_ese_assoc(tpAniSirGlobal mac_ctx, uint32_t session_id)
 	return mac_ctx->roam.neighborRoamInfo[session_id].isESEAssoc;
 }
 
-/**
- * csr_roam_is_roam_offload_scan_enabled() - is roam offload enabled
- * @mac_ctx: Global MAC context
- *
- * Returns whether "FW based BG scan" is currently enabled or not
- *
- * Return: true if roam offload scan enabled; false otherwise
- */
-bool csr_roam_is_roam_offload_scan_enabled(tpAniSirGlobal pMac)
-{
-	return pMac->roam.configParam.isRoamOffloadScanEnabled;
-}
 
 /**
  * csr_roam_is_ese_ini_feature_enabled() - is ese feature enabled
@@ -1853,6 +1839,19 @@ QDF_STATUS csr_roam_read_tsf(tpAniSirGlobal pMac, uint8_t *pTimestamp,
 }
 
 #endif /* FEATURE_WLAN_ESE */
+
+/**
+ * csr_roam_is_roam_offload_scan_enabled() - is roam offload enabled
+ * @mac_ctx: Global MAC context
+ *
+ * Returns whether firmware based background scan is currently enabled or not.
+ *
+ * Return: true if roam offload scan enabled; false otherwise
+ */
+bool csr_roam_is_roam_offload_scan_enabled(tpAniSirGlobal mac_ctx)
+{
+	return mac_ctx->roam.configParam.isRoamOffloadScanEnabled;
+}
 
 QDF_STATUS csr_set_band(tHalHandle hHal, uint8_t sessionId, eCsrBand eBand)
 {
