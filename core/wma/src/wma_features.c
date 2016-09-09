@@ -2972,8 +2972,7 @@ static void wma_wow_parse_data_pkt_buffer(uint8_t *data,
 
 	default:
 end:
-		WMA_LOGE("wow_buf_pkt_len: %u", buf_len);
-		WMA_LOGE("Unknown Packet or Insufficient packet buffer");
+		WMA_LOGD("wow_buf_pkt_len: %u", buf_len);
 		break;
 	}
 }
