@@ -748,6 +748,8 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_rx_stats_thresh,
 	WMITLV_TAG_STRUC_wmi_pdev_set_stats_threshold_cmd_fixed_param,
 	WMITLV_TAG_STRUC_wmi_request_wlan_stats_cmd_fixed_param,
+	WMITLV_TAG_STRUC_wmi_rx_aggr_failure_event_fixed_param,
+	WMITLV_TAG_STRUC_wmi_rx_aggr_failure_info,
 } WMITLV_TAG_ID;
 
 /*
@@ -1210,6 +1212,7 @@ typedef enum {
 	OP(WMI_PDEV_CHIP_POWER_STATS_EVENTID) \
 	OP(WMI_COEX_REPORT_ANTENNA_ISOLATION_EVENTID) \
 	OP(WMI_REPORT_STATS_EVENTID) \
+	OP(WMI_REPORT_RX_AGGR_FAILURE_EVENTID) \
 	/* add new EVT_LIST elements above this line */
 
 /* TLV definitions of WMI commands */
@@ -3378,6 +3381,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_UPDATE_STATS_EVENTID);
 	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_rate_stats_event_fixed_param, wmi_vdev_rate_stats_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
 	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_vdev_rate_ht_info, ht_info, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_UPDATE_VDEV_RATE_STATS_EVENTID);
+
+/* report rx aggregation failure information */
+#define WMITLV_TABLE_WMI_REPORT_RX_AGGR_FAILURE_EVENTID(id, op, buf, len)\
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_rx_aggr_failure_event_fixed_param, wmi_rx_aggr_failure_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_STRUC, wmi_rx_aggr_failure_info, failure_info, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_REPORT_RX_AGGR_FAILURE_EVENTID);
 
 /* Update memory dump complete Event */
 #define  WMITLV_TABLE_WMI_UPDATE_FW_MEM_DUMP_EVENTID(id,op,buf,len)\
