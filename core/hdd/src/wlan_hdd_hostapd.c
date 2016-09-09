@@ -246,6 +246,7 @@ static int __hdd_hostapd_open(struct net_device *dev)
 		goto done;
 	}
 
+	set_bit(DEVICE_IFACE_OPENED, &pAdapter->event_flags);
 	/* Enable all Tx queues */
 	hdd_notice("Enabling queues");
 	wlan_hdd_netif_queue_control(pAdapter,
@@ -287,6 +288,7 @@ static int __hdd_hostapd_stop(struct net_device *dev)
 
 	ENTER_DEV(dev);
 
+	clear_bit(DEVICE_IFACE_OPENED, &adapter->event_flags);
 	/* Stop all tx queues */
 	hdd_notice("Disabling queues");
 	wlan_hdd_netif_queue_control(adapter, WLAN_NETIF_TX_DISABLE_N_CARRIER,
