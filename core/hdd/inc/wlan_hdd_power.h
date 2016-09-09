@@ -179,7 +179,8 @@ int wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 				  enum nl80211_tx_power_setting type,
 				  int dbm);
 int wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
-				     struct net_device *dev, bool mode,
+				     struct net_device *dev,
+				     bool allow_power_save,
 				     int timeout);
 
 int wlan_hdd_ipv4_changed(struct notifier_block *nb,

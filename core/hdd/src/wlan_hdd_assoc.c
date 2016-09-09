@@ -2133,7 +2133,12 @@ static int hdd_change_sta_state_authenticated(hdd_adapter_t *adapter,
 						 tCsrRoamInfo *roaminfo)
 {
 	int ret;
+	uint32_t timeout;
 	hdd_station_ctx_t *hddstactx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+	timeout = hddstactx->hdd_ReassocScenario ?
+		AUTO_PS_ENTRY_TIMER_DEFAULT_VALUE :
+		AUTO_DEFERRED_PS_ENTRY_TIMER_DEFAULT_VALUE;
 
 	hddLog(LOG1,
 		"Changing TL state to AUTHENTICATED for StaId= %d",
@@ -2152,7 +2157,7 @@ static int hdd_change_sta_state_authenticated(hdd_adapter_t *adapter,
 		sme_ps_enable_auto_ps_timer(
 			WLAN_HDD_GET_HAL_CTX(adapter),
 			adapter->sessionId,
-			hddstactx->hdd_ReassocScenario);
+			timeout);
 	}
 
 	return ret;

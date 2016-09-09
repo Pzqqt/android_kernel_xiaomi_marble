@@ -71,7 +71,7 @@ tSirRetStatus sme_post_pe_message(tpAniSirGlobal mac_ctx, tpSirMsgQ pMsg);
 
 QDF_STATUS sme_ps_enable_auto_ps_timer(tHalHandle hal_ctx,
 		uint32_t sessionId,
-		bool isReassoc);
+		uint32_t timeout);
 QDF_STATUS sme_ps_disable_auto_ps_timer(tHalHandle hal_ctx,
 		uint32_t sessionId);
 

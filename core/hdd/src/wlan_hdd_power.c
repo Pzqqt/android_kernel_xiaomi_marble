@@ -81,16 +81,6 @@
 
 /* Type declarations */
 
-/**
- * enum hdd_power_mode - Power Mode enumerations
- * @DRIVER_POWER_MODE_AUTO: Driver can place device into power save
- * @DRIVER_POWER_MODE_ACTIVE: Driver should operate at full power
- */
-enum hdd_power_mode {
-	DRIVER_POWER_MODE_AUTO = 0,
-	DRIVER_POWER_MODE_ACTIVE = 1,
-};
-
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 /**
  * hdd_wlan_suspend_resume_event()- send suspend/resume state
@@ -1572,12 +1562,13 @@ success:
 /**
  * wlan_hdd_set_powersave() - Set powersave mode
  * @adapter: adapter upon which the request was received
- * @mode: desired powersave mode
+ * @allow_power_save: is wlan allowed to go into power save mode
+ * @timeout: timeout period in ms
  *
  * Return: 0 on success, non-zero on any error
  */
-static int
-wlan_hdd_set_powersave(hdd_adapter_t *adapter, enum hdd_power_mode mode)
+static int wlan_hdd_set_powersave(hdd_adapter_t *adapter,
+	bool allow_power_save, uint32_t timeout)
 {
 	tHalHandle hal;
 	hdd_context_t *hdd_ctx;
@@ -1593,26 +1584,18 @@ wlan_hdd_set_powersave(hdd_adapter_t *adapter, enum hdd_power_mode mode)
 		return -EINVAL;
 	}
 
-	hdd_info("power mode=%d", mode);
+	hdd_info("Allow power save: %d", allow_power_save);
 	hal = WLAN_HDD_GET_HAL_CTX(adapter);
 
-
-	if (DRIVER_POWER_MODE_ACTIVE == mode) {
-		hdd_info("Wlan driver Entering Full Power");
-
-		/*
-		 * Enter Full power command received from GUI
-		 * this means we are disconnected
-		 */
-		sme_ps_enable_disable(hal, adapter->sessionId, SME_PS_DISABLE);
-	} else if (DRIVER_POWER_MODE_AUTO == mode) {
-		if ((QDF_STA_MODE == adapter->device_mode) ||
-				(QDF_P2P_CLIENT_MODE == adapter->device_mode)) {
+	if (allow_power_save) {
+		if (QDF_STA_MODE == adapter->device_mode ||
+		    QDF_P2P_CLIENT_MODE == adapter->device_mode) {
 			hdd_notice("Disabling Auto Power save timer");
-			sme_ps_disable_auto_ps_timer(WLAN_HDD_GET_HAL_CTX
-					(adapter),
-					adapter->sessionId);
+			sme_ps_disable_auto_ps_timer(
+				WLAN_HDD_GET_HAL_CTX(adapter),
+				adapter->sessionId);
 		}
+
 		if (hdd_ctx->config && hdd_ctx->config->is_ps_enabled) {
 			hdd_notice("Wlan driver Entering Power save");
 
@@ -1625,7 +1608,20 @@ wlan_hdd_set_powersave(hdd_adapter_t *adapter, enum hdd_power_mode mode)
 		} else {
 			hdd_info("Power Save is not enabled in the cfg");
 		}
+	} else {
+		hdd_info("Wlan driver Entering Full Power");
+
+		/*
+		 * Enter Full power command received from GUI
+		 * this means we are disconnected
+		 */
+		sme_ps_disable_auto_ps_timer(WLAN_HDD_GET_HAL_CTX(adapter),
+			adapter->sessionId);
+		sme_ps_enable_disable(hal, adapter->sessionId, SME_PS_DISABLE);
+		sme_ps_enable_auto_ps_timer(WLAN_HDD_GET_HAL_CTX(adapter),
+			adapter->sessionId, timeout);
 	}
+
 	return 0;
 }
 
@@ -1983,19 +1979,26 @@ int wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
  * __wlan_hdd_cfg80211_set_power_mgmt() - set cfg80211 power management config
  * @wiphy: Pointer to wiphy
  * @dev: Pointer to network device
- * @mode: Driver mode
- * @timeout: Timeout value
+ * @allow_power_save: is wlan allowed to go into power save mode
+ * @timeout: Timeout value in ms
  *
  * Return: 0 for success, non-zero for failure
  */
 static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
-					      struct net_device *dev, bool mode,
+					      struct net_device *dev,
+					      bool allow_power_save,
 					      int timeout)
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *pHddCtx;
 	QDF_STATUS qdf_status;
 	int status;
+
+	if (timeout < 0) {
+		hdd_notice("User space timeout: %d; Using default instead: %d",
+			timeout, AUTO_PS_ENTRY_USER_TIMER_DEFAULT_VALUE);
+		timeout = AUTO_PS_ENTRY_USER_TIMER_DEFAULT_VALUE;
+	}
 
 	ENTER();
 
@@ -2022,13 +2025,13 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 	}
 	mutex_unlock(&pHddCtx->iface_change_lock);
 
-	if ((DRIVER_POWER_MODE_AUTO == !mode) &&
-	    (true == pHddCtx->hdd_wlan_suspended) &&
-	    (pHddCtx->config->fhostArpOffload) &&
+	if (allow_power_save &&
+	    pHddCtx->hdd_wlan_suspended &&
+	    pHddCtx->config->fhostArpOffload &&
 	    (eConnectionState_Associated ==
 	     (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->conn_info.connState)) {
-
-		hdd_notice("offload: in cfg80211_set_power_mgmt, calling arp offload");
+		hdd_notice("offload: in cfg80211_set_power_mgmt, "
+			"calling arp offload");
 		qdf_status = hdd_conf_arp_offload(pAdapter, true);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			hdd_notice("Failed to enable ARPOFFLOAD Feature %d",
@@ -2036,21 +2039,21 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 		}
 	}
 
-	status = wlan_hdd_set_powersave(pAdapter, !mode);
+	status = wlan_hdd_set_powersave(pAdapter, allow_power_save, timeout);
 
-	if (!mode) {
+	if (allow_power_save) {
+		hdd_warn("DHCP stop indicated through power save");
+		sme_dhcp_stop_ind(pHddCtx->hHal, pAdapter->device_mode,
+				  pAdapter->macAddressCurrent.bytes,
+				  pAdapter->sessionId);
+		hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DHCP);
+	} else {
 		hdd_err("DHCP start indicated through power save");
 		hdd_prevent_suspend_timeout(1000,
 					    WIFI_POWER_EVENT_WAKELOCK_DHCP);
 		sme_dhcp_start_ind(pHddCtx->hHal, pAdapter->device_mode,
 				   pAdapter->macAddressCurrent.bytes,
 				   pAdapter->sessionId);
-	} else {
-		hdd_warn("DHCP stop indicated through power save");
-		sme_dhcp_stop_ind(pHddCtx->hHal, pAdapter->device_mode,
-				  pAdapter->macAddressCurrent.bytes,
-				  pAdapter->sessionId);
-		hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DHCP);
 	}
 
 	EXIT();
@@ -2061,19 +2064,21 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
  * wlan_hdd_cfg80211_set_power_mgmt() - set cfg80211 power management config
  * @wiphy: Pointer to wiphy
  * @dev: Pointer to network device
- * @mode: Driver mode
+ * @allow_power_save: is wlan allowed to go into power save mode
  * @timeout: Timeout value
  *
  * Return: 0 for success, non-zero for failure
  */
 int wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
-				     struct net_device *dev, bool mode,
+				     struct net_device *dev,
+				     bool allow_power_save,
 				     int timeout)
 {
 	int ret;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_set_power_mgmt(wiphy, dev, mode, timeout);
+	ret = __wlan_hdd_cfg80211_set_power_mgmt(wiphy, dev,
+		allow_power_save, timeout);
 	cds_ssr_unprotect(__func__);
 
 	return ret;
