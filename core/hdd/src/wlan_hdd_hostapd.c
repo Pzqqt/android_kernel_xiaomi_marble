@@ -6983,22 +6983,28 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 			}
 		}
 
-		if (QDF_STATUS_SUCCESS !=
+		/*
+		 * If auto channel is configured i.e. channel is 0,
+		 * so skip channel validation.
+		 */
+		if (AUTO_CHANNEL_SELECT != pConfig->channel) {
+			if (QDF_STATUS_SUCCESS !=
 			    wlan_hdd_validate_operation_channel(pHostapdAdapter,
 							pConfig->channel)) {
-			hdd_err("Invalid Channel [%d]",
+				hdd_err("Invalid Channel [%d]",
 							pConfig->channel);
 				ret = -EINVAL;
 				goto error;
-		}
+			}
 
-		/* reject SAP if DFS channel scan is not allowed */
-		if (!(pHddCtx->config->enableDFSChnlScan) &&
-		    (CHANNEL_STATE_DFS == cds_get_channel_state(
-					     pConfig->channel))) {
-			hdd_err("not allowed to start SAP on DFS channel");
+			/* reject SAP if DFS channel scan is not allowed */
+			if (!(pHddCtx->config->enableDFSChnlScan) &&
+				(CHANNEL_STATE_DFS == cds_get_channel_state(
+					pConfig->channel))) {
+				hdd_err("No SAP start on DFS channel");
 				ret = -EOPNOTSUPP;
 				goto error;
+			}
 		}
 		wlansap_set_dfs_ignore_cac(hHal, iniConfig->ignoreCAC);
 		wlansap_set_dfs_restrict_japan_w53(hHal,
