@@ -146,7 +146,6 @@ int wma_runtime_suspend(void);
 int wma_runtime_resume(void);
 int wma_bus_suspend(void);
 int wma_is_target_wake_up_received(void);
-int wma_clear_target_wake_up(void);
 QDF_STATUS wma_suspend_target(WMA_HANDLE handle, int disable_target_intr);
 void wma_target_suspend_acknowledge(void *context, bool wow_nack);
 void wma_handle_initial_wake_up(void);

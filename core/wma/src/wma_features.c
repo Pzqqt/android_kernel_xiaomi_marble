@@ -6625,30 +6625,9 @@ int wma_is_target_wake_up_received(void)
 	if (wma->wow_initial_wake_up) {
 		WMA_LOGE("Target initial wake up received try again");
 		return -EAGAIN;
+	} else {
+		return 0;
 	}
-
-	return 0;
-}
-
-/**
- * wma_clear_target_wake_up() - clear initial wake up
- *
- * Clear target initial wake up reason
- *
- * Return: 0 for success and negative error code for failure
- */
-int wma_clear_target_wake_up(void)
-{
-	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-
-	if (NULL == wma) {
-		WMA_LOGE("%s: wma is NULL", __func__);
-		return -EFAULT;
-	}
-
-	wma->wow_initial_wake_up = false;
-
-	return 0;
 }
 
 /**
