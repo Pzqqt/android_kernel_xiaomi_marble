@@ -292,4 +292,33 @@ __qdf_get_totalramsize(void)
 	return MEMINFO_KB(meminfo.totalram);
 }
 
+/**
+ * __qdf_get_lower_32_bits() - get lower 32 bits from an address.
+ * @addr: address
+ *
+ * This api returns the lower 32 bits of an address.
+ *
+ * Return: lower 32 bits.
+ */
+static inline
+uint32_t __qdf_get_lower_32_bits(__qdf_dma_addr_t addr)
+{
+	return lower_32_bits(addr);
+}
+
+/**
+ * __qdf_get_upper_32_bits() - get upper 32 bits from an address.
+ * @addr: address
+ *
+ * This api returns the upper 32 bits of an address.
+ *
+ * Return: upper 32 bits.
+ */
+static inline
+uint32_t __qdf_get_upper_32_bits(__qdf_dma_addr_t addr)
+{
+	return upper_32_bits(addr);
+}
+
+
 #endif /*_I_QDF_UTIL_H*/
