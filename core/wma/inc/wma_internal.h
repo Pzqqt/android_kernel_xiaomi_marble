@@ -493,7 +493,7 @@ bool wma_is_vdev_in_ibss_mode(tp_wma_handle wma, uint8_t vdev_id);
  * Return false since no vdev can be in ibss mode without ibss support
  */
 static inline
-bool wma_is_vdev_in_ibss_mode(tp_wma_handle wma, uint8_t vdev_id);
+bool wma_is_vdev_in_ibss_mode(tp_wma_handle wma, uint8_t vdev_id)
 {
 	return false;
 }
