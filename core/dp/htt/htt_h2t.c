@@ -355,8 +355,20 @@ QDF_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev)
 #if HTT_PADDR64
 	HTT_RX_RING_CFG_BASE_PADDR_LO_SET(*msg_word,
 					  pdev->rx_ring.base_paddr);
-	msg_word++;
-	HTT_RX_RING_CFG_BASE_PADDR_HI_SET(*msg_word, 0);
+	{
+		uint32_t tmp;
+
+		tmp = (pdev->rx_ring.base_paddr >> 32);
+		if (tmp & 0xfffffe0) {
+			qdf_print("%s:%d paddr > 37 bits!. Trimmed.",
+				  __func__, __LINE__);
+			tmp &= 0x01f;
+		}
+
+
+		msg_word++;
+		HTT_RX_RING_CFG_BASE_PADDR_HI_SET(*msg_word, tmp);
+	}
 #else /* ! HTT_PADDR64 */
 	HTT_RX_RING_CFG_BASE_PADDR_SET(*msg_word, pdev->rx_ring.base_paddr);
 #endif /* HTT_PADDR64 */
