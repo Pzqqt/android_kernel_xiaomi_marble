@@ -4119,12 +4119,11 @@ typedef struct {
 } tSirStatsExtEvent, *tpSirStatsExtEvent;
 #endif
 
-#ifdef WLAN_FEATURE_NAN
 typedef struct {
 	uint32_t event_data_len;
 	uint8_t event_data[];
 } tSirNanEvent, *tpSirNanEvent;
-#endif
+
 typedef struct sSirSmeRoamOffloadSynchInd {
 	uint16_t messageType;   /*eWNI_SME_ROAM_OFFLOAD_SYNCH_IND */
 	uint16_t length;

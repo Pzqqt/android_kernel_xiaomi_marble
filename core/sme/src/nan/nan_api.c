@@ -46,7 +46,7 @@
  * Returns:
  * void
  *****************************************************************************/
-void sme_nan_register_callback(tHalHandle hHal, NanCallback callback)
+void sme_nan_register_callback(tHalHandle hHal, nan_callback callback)
 {
 	tpAniSirGlobal pMac = NULL;
 
