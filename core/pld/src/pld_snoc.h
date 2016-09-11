@@ -87,25 +87,6 @@ static inline int pld_snoc_get_irq(int ce_id)
 {
 	return 0;
 }
-static inline int pld_snoc_set_wlan_unsafe_channel(u16 *unsafe_ch_list,
-						   u16 ch_count)
-{
-	return 0;
-}
-static inline int pld_snoc_get_wlan_unsafe_channel(u16 *unsafe_ch_list,
-						   u16 *ch_count,
-						   u16 buf_len)
-{
-	return 0;
-}
-static inline int pld_snoc_wlan_set_dfs_nol(const void *info, u16 info_len)
-{
-	return 0;
-}
-static inline int pld_snoc_wlan_get_dfs_nol(void *info, u16 info_len)
-{
-	return 0;
-}
 #else
 int pld_snoc_register_driver(void);
 void pld_snoc_unregister_driver(void);
@@ -123,10 +104,6 @@ int pld_snoc_get_ce_id(int irq);
 int pld_snoc_power_on(struct device *dev);
 int pld_snoc_power_off(struct device *dev);
 int pld_snoc_get_irq(int ce_id);
-int pld_snoc_set_wlan_unsafe_channel(u16 *unsafe_ch_list, u16 ch_count);
-int pld_snoc_get_wlan_unsafe_channel(u16 *unsafe_ch_list, u16 *ch_count,
-				     u16 buf_len);
-int pld_snoc_wlan_set_dfs_nol(const void *info, u16 info_len);
-int pld_snoc_wlan_get_dfs_nol(void *info, u16 info_len);
 #endif
+
 #endif
