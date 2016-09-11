@@ -6122,3 +6122,23 @@ QDF_STATUS wmi_unified_send_power_dbg_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+/**
+ * wmi_unified_encrypt_decrypt_send_cmd() - send encryptdecrypt cmd to fw
+ * @wmi_hdl: wmi handle
+ * @params: encrypt/decrypt params
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_encrypt_decrypt_send_cmd(void *wmi_hdl,
+				struct encrypt_decrypt_req_params *params)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_encrypt_decrypt_send_cmd)
+		return wmi_handle->ops->send_encrypt_decrypt_send_cmd(
+						wmi_handle,
+						params);
+
+	return QDF_STATUS_E_FAILURE;
+}

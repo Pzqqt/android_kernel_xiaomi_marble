@@ -4028,6 +4028,88 @@ QDF_STATUS send_setup_install_key_cmd_tlv(wmi_unified_t wmi_handle,
 	return status;
 }
 
+/**
+ * send_encrypt_decrypt_send_cmd() - send encrypt/decrypt cmd to fw
+ * @wmi_handle: wmi handle
+ * @params: encrypt/decrypt params
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS send_encrypt_decrypt_send_cmd_tlv(wmi_unified_t wmi_handle,
+		struct encrypt_decrypt_req_params *encrypt_decrypt_params)
+{
+	wmi_vdev_encrypt_decrypt_data_req_cmd_fixed_param *cmd;
+	wmi_buf_t wmi_buf;
+	uint8_t *buf_ptr;
+	QDF_STATUS ret;
+	uint32_t len;
+
+	WMI_LOGD(FL("Send encrypt decrypt cmd"));
+
+	len = sizeof(*cmd) +
+		roundup(encrypt_decrypt_params->data_len, sizeof(A_UINT32)) +
+		WMI_TLV_HDR_SIZE;
+	wmi_buf = wmi_buf_alloc(wmi_handle, len);
+	if (!wmi_buf) {
+		WMI_LOGP("%s: failed to allocate memory for encrypt/decrypt msg",
+			 __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = wmi_buf_data(wmi_buf);
+	cmd = (wmi_vdev_encrypt_decrypt_data_req_cmd_fixed_param *)buf_ptr;
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_vdev_encrypt_decrypt_data_req_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+			wmi_vdev_encrypt_decrypt_data_req_cmd_fixed_param));
+
+	cmd->vdev_id = encrypt_decrypt_params->vdev_id;
+	cmd->key_flag = encrypt_decrypt_params->key_flag;
+	cmd->key_idx = encrypt_decrypt_params->key_idx;
+	cmd->key_cipher = encrypt_decrypt_params->key_cipher;
+	cmd->key_len = encrypt_decrypt_params->key_len;
+	cmd->key_txmic_len = encrypt_decrypt_params->key_txmic_len;
+	cmd->key_rxmic_len = encrypt_decrypt_params->key_rxmic_len;
+
+	qdf_mem_copy(cmd->key_data, encrypt_decrypt_params->key_data,
+				encrypt_decrypt_params->key_len);
+
+	qdf_mem_copy(cmd->mac_hdr, encrypt_decrypt_params->mac_header,
+				MAX_MAC_HEADER_LEN);
+
+	cmd->data_len = encrypt_decrypt_params->data_len;
+
+	if (cmd->data_len) {
+		buf_ptr += sizeof(*cmd);
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
+				roundup(encrypt_decrypt_params->data_len,
+					sizeof(A_UINT32)));
+		buf_ptr += WMI_TLV_HDR_SIZE;
+		qdf_mem_copy(buf_ptr, encrypt_decrypt_params->data,
+					encrypt_decrypt_params->data_len);
+	}
+
+	/* This conversion is to facilitate data to FW in little endian */
+	cmd->pn[5] = encrypt_decrypt_params->pn[0];
+	cmd->pn[4] = encrypt_decrypt_params->pn[1];
+	cmd->pn[3] = encrypt_decrypt_params->pn[2];
+	cmd->pn[2] = encrypt_decrypt_params->pn[3];
+	cmd->pn[1] = encrypt_decrypt_params->pn[4];
+	cmd->pn[0] = encrypt_decrypt_params->pn[5];
+
+	ret = wmi_unified_cmd_send(wmi_handle,
+				   wmi_buf, len,
+				   WMI_VDEV_ENCRYPT_DECRYPT_DATA_REQ_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		WMI_LOGE("Failed to send ENCRYPT DECRYPT cmd: %d", ret);
+		wmi_buf_free(wmi_buf);
+	}
+
+	return ret;
+}
+
+
 
 /**
  * send_p2p_go_set_beacon_ie_cmd_tlv() - set beacon IE for p2p go
@@ -12541,6 +12623,8 @@ struct wmi_ops tlv_ops =  {
 	.extract_chan_info_event = extract_chan_info_event_tlv,
 	.extract_channel_hopping_event = extract_channel_hopping_event_tlv,
 	.send_fw_test_cmd = send_fw_test_cmd_tlv,
+	.send_encrypt_decrypt_send_cmd =
+				send_encrypt_decrypt_send_cmd_tlv,
 };
 
 #ifndef CONFIG_MCL
