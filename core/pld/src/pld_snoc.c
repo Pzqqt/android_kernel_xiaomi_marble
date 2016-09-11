@@ -148,26 +148,25 @@ static void pld_snoc_crash_shutdown(void *dev)
 }
 
 /**
- * pld_snoc_pm_suspend() - PM suspend callback function for power management
+ * pld_snoc_suspend() - Suspend callback function for power management
  * @dev: device
+ * @state: power state
  *
  * This function is to suspend the platform device when power management
  * is enabled.
  *
  * Return: void
  */
-static int pld_snoc_pm_suspend(struct device *dev)
+static int pld_snoc_suspend(struct device *dev, pm_message_t state)
 {
 	struct pld_context *pld_context;
-	pm_message_t state;
 
-	state.event = PM_EVENT_SUSPEND;
 	pld_context = pld_get_global_context();
 	return pld_context->ops->suspend(dev, PLD_BUS_TYPE_SNOC, state);
 }
 
 /**
- * pld_snoc_pm_resume() - PM resume callback function for power management
+ * pld_snoc_resume() - Resume callback function for power management
  * @pdev: device
  *
  * This function is to resume the platform device when power management
@@ -175,64 +174,12 @@ static int pld_snoc_pm_suspend(struct device *dev)
  *
  * Return: void
  */
-static int pld_snoc_pm_resume(struct device *dev)
+static int pld_snoc_resume(struct device *dev)
 {
 	struct pld_context *pld_context;
 
 	pld_context = pld_get_global_context();
 	return pld_context->ops->resume(dev, PLD_BUS_TYPE_SNOC);
-}
-
-/**
- * pld_snoc_suspend_noirq() - Complete the actions started by suspend()
- * @dev: device
- *
- * Complete the actions started by suspend().  Carry out any
- * additional operations required for suspending the device that might be
- * racing with its driver's interrupt handler, which is guaranteed not to
- * run while suspend_noirq() is being executed.
- *
- * Return: 0 for success
- *         Non zero failure code for errors
- */
-static int pld_snoc_suspend_noirq(struct device *dev)
-{
-	struct pld_context *pld_context;
-
-	pld_context = pld_get_global_context();
-	if (!pld_context)
-		return -EINVAL;
-
-	if (pld_context->ops->suspend_noirq)
-		return pld_context->ops->
-			suspend_noirq(dev, PLD_BUS_TYPE_SNOC);
-	return 0;
-}
-
-/**
- * pld_snoc_resume_noirq() - Prepare for the execution of resume()
- * @pdev: device
- *
- * Prepare for the execution of resume() by carrying out any
- * operations required for resuming the device that might be racing with
- * its driver's interrupt handler, which is guaranteed not to run while
- * resume_noirq() is being executed.
- *
- * Return: 0 for success
- *         Non zero failure code for errors
- */
-static int pld_snoc_resume_noirq(struct device *dev)
-{
-	struct pld_context *pld_context;
-
-	pld_context = pld_get_global_context();
-	if (!pld_context)
-		return -EINVAL;
-
-	if (pld_context->ops->resume_noirq)
-		return pld_context->ops->
-			resume_noirq(dev, PLD_BUS_TYPE_SNOC);
-	return 0;
 }
 
 struct icnss_driver_ops pld_snoc_ops = {
@@ -242,10 +189,8 @@ struct icnss_driver_ops pld_snoc_ops = {
 	.shutdown   = pld_snoc_shutdown,
 	.reinit     = pld_snoc_reinit,
 	.crash_shutdown = pld_snoc_crash_shutdown,
-	.pm_suspend = pld_snoc_pm_suspend,
-	.pm_resume  = pld_snoc_pm_resume,
-	.suspend_noirq = pld_snoc_suspend_noirq,
-	.resume_noirq = pld_snoc_resume_noirq,
+	.suspend    = pld_snoc_suspend,
+	.resume     = pld_snoc_resume,
 };
 
 /**
