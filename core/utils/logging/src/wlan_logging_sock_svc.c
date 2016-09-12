@@ -258,14 +258,19 @@ static int wlan_queue_logmsg_for_app(void)
  *
  * For discrete solution e.g rome use system tick and convert it into
  * seconds.milli seconds
+ *
+ * Return: number of characters written in target buffer not including
+ *		trailing '/0'
  */
 static int wlan_add_user_log_radio_time_stamp(char *tbuf, size_t tbuf_sz,
 					      uint64_t ts, int radio)
 {
 	int tlen;
 
-	tlen = scnprintf(tbuf, tbuf_sz, "R%d: [%s][%llu] ",
-			 radio, current->comm, ts);
+	tlen = scnprintf(tbuf, tbuf_sz, "R%d: [%s][%llu] ", radio,
+			((in_irq() ? "irq" : in_softirq() ?  "soft_irq" :
+			current->comm)),
+			ts);
 	return tlen;
 }
 #else
@@ -281,6 +286,9 @@ static int wlan_add_user_log_radio_time_stamp(char *tbuf, size_t tbuf_sz,
  *
  * For discrete solution e.g rome use system tick and convert it into
  * seconds.milli seconds
+ *
+ * Return: number of characters written in target buffer not including
+ *		trailing '/0'
  */
 static int wlan_add_user_log_radio_time_stamp(char *tbuf, size_t tbuf_sz,
 					      uint64_t ts, int radio)
@@ -290,7 +298,10 @@ static int wlan_add_user_log_radio_time_stamp(char *tbuf, size_t tbuf_sz,
 
 	rem = do_div(ts, QDF_MC_TIMER_TO_SEC_UNIT);
 	tlen = scnprintf(tbuf, tbuf_sz, "R%d: [%s][%lu.%06lu] ", radio,
-			 current->comm, (unsigned long) ts, (unsigned long)rem);
+			((in_irq() ? "irq" : in_softirq() ?  "soft_irq" :
+			current->comm)),
+			(unsigned long) ts,
+			(unsigned long)rem);
 	return tlen;
 }
 #endif
