@@ -3140,6 +3140,11 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 		return -EINVAL;
 	}
 
+	if (cds_is_driver_recovering()) {
+		WMA_LOGW(FL("Recovery in progress"));
+		return -EINVAL;
+	}
+
 	qdf_mem_zero(rx_pkt, sizeof(*rx_pkt));
 
 	/*
