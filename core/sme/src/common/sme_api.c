@@ -15624,6 +15624,26 @@ QDF_STATUS sme_send_egap_conf_params(uint32_t enable, uint32_t inactivity_time,
 #endif
 
 /**
+ * sme_set_fw_test() - set fw test
+ * @fw_test: fw test param
+ *
+ * Return: Return QDF_STATUS, otherwise appropriate failure code
+ */
+QDF_STATUS sme_set_fw_test(struct set_fwtest_params *fw_test)
+{
+	void *wma_handle;
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"wma handle is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	wma_process_fw_test_cmd(wma_handle, fw_test);
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * sme_ht40_stop_obss_scan() - ht40 obss stop scan
  * @hal: mac handel
  * @vdev_id: vdev identifier

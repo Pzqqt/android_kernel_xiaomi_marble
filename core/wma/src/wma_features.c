@@ -8039,3 +8039,31 @@ QDF_STATUS wma_get_wakelock_stats(struct sir_wake_lock_stats *wake_lock_stats)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * wma_process_fw_test_cmd() - send unit test command to fw.
+ * @handle: wma handle
+ * @wma_fwtest: fw test command
+ *
+ * This function send fw test command to fw.
+ *
+ * Return: none
+ */
+void wma_process_fw_test_cmd(WMA_HANDLE handle,
+			     struct set_fwtest_params *wma_fwtest)
+{
+	tp_wma_handle wma_handle = (tp_wma_handle) handle;
+
+	if (!wma_handle || !wma_handle->wmi_handle) {
+		WMA_LOGE("%s: WMA is closed, can not issue fw test cmd",
+			 __func__);
+		return;
+	}
+
+	if (wmi_unified_fw_test_cmd(wma_handle->wmi_handle,
+				    (struct set_fwtest_params *)wma_fwtest)) {
+		WMA_LOGE("%s: Failed to issue fw test cmd",
+			 __func__);
+		return;
+	}
+}

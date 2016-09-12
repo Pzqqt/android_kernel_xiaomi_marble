@@ -283,7 +283,6 @@ enum ds_mode {
 #define WMA_TX_FRAME_BUFFER_NO_FREE    0
 #define WMA_TX_FRAME_BUFFER_FREE       1
 
-
 /* Default InActivity Time is 200 ms */
 #define POWERSAVE_DEFAULT_INACTIVITY_TIME 200
 
@@ -2157,6 +2156,10 @@ wma_indicate_err(enum ol_rx_err_type err_type,
 
 QDF_STATUS wma_ht40_stop_obss_scan(tp_wma_handle wma_handle,
 				int32_t vdev_id);
+
+void wma_process_fw_test_cmd(WMA_HANDLE handle,
+				      struct set_fwtest_params *wma_fwtest);
+
 QDF_STATUS wma_send_ht40_obss_scanind(tp_wma_handle wma,
 	struct obss_ht40_scanind *req);
 

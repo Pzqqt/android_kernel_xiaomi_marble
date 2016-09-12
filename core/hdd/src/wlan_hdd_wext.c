@@ -299,6 +299,7 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_SET_WLAN_DBG      1
 #define WE_SET_DP_TRACE      2
 #define WE_SET_SAP_CHANNELS  3
+#define WE_SET_FW_TEST       4
 
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_GET_CHAR_SET_NONE   (SIOCIWFIRSTPRIV + 5)
@@ -7000,6 +7001,47 @@ static int iw_setnone_getint(struct net_device *dev,
 	return ret;
 }
 
+static int hdd_set_fwtest(int argc, int cmd, int value)
+{
+	struct set_fwtest_params *fw_test;
+
+	/* check for max number of arguments */
+	if (argc > (WMA_MAX_NUM_ARGS) ||
+	    argc != HDD_FWTEST_PARAMS) {
+		hdd_err("Too Many args %d", argc);
+		return -EINVAL;
+	}
+	/*
+	 * check if number of arguments are 3 then, check
+	 * then set the default value for sounding interval.
+	 */
+	if (HDD_FWTEST_PARAMS == argc) {
+		if (HDD_FWTEST_SU_PARAM_ID == cmd && 0 == value)
+			value = HDD_FWTEST_SU_DEFAULT_VALUE;
+		if (HDD_FWTEST_MU_PARAM_ID == cmd && 0 == value)
+			value = HDD_FWTEST_MU_DEFAULT_VALUE;
+	}
+	/* check sounding interval value should not exceed to max */
+	if (value > HDD_FWTEST_MAX_VALUE) {
+		hdd_err("Invalid arguments value should not exceed max: %d",
+			value);
+		return -EINVAL;
+	}
+	fw_test = qdf_mem_malloc(sizeof(*fw_test));
+	if (NULL == fw_test) {
+		hdd_err("qdf_mem_malloc failed for fw_test");
+		return -ENOMEM;
+	}
+	fw_test->arg = cmd;
+	fw_test->value = value;
+	if (QDF_STATUS_SUCCESS != sme_set_fw_test(fw_test)) {
+		qdf_mem_free(fw_test);
+		hdd_err("Not able to post FW_TEST_CMD message to WMA");
+		return -EINVAL;
+	}
+	return 0;
+}
+
 /**
  * iw_set_three_ints_getnone() - Generic "set 3 params" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -7063,6 +7105,15 @@ static int __iw_set_three_ints_getnone(struct net_device *dev,
 		hdd_debug("%d %d %d", value[1], value[2], value[3]);
 		cds_set_dual_mac_scan_config(value[1], value[2], value[3]);
 		break;
+	case WE_SET_FW_TEST:
+	{
+		ret = hdd_set_fwtest(value[1], value[2], value[3]);
+		if (ret) {
+			hdd_err("Not able to set fwtest %d", ret);
+			return ret;
+		}
+	}
+	break;
 	default:
 		hdd_err("Invalid IOCTL command %d", sub_cmd);
 		break;
@@ -8211,7 +8262,6 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		}
 	}
 	break;
-
 	default:
 	{
 		hdd_err("Invalid IOCTL command %d", sub_cmd);
@@ -10703,6 +10753,11 @@ static const struct iw_priv_args we_private_args[] = {
 	IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 3,
 	0,
 	"setsapchannels"},
+
+	{WE_SET_FW_TEST,
+	IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 3,
+	0, "fw_test"},
+
 	/* handlers for main ioctl */
 	{WLAN_PRIV_SET_NONE_GET_THREE_INT,
 	 0,

@@ -291,6 +291,16 @@ typedef struct ccp_freq_chan_map_s {
 	wlan_hdd_get_vendor_oui_ie_ptr(WFD_OUI_TYPE, WFD_OUI_TYPE_SIZE, ie, ie_len)
 #endif
 
+/*
+ * Defines for fw_test command
+ */
+#define HDD_FWTEST_PARAMS 3
+#define HDD_FWTEST_SU_PARAM_ID 53
+#define HDD_FWTEST_MU_PARAM_ID 2
+#define HDD_FWTEST_SU_DEFAULT_VALUE 100
+#define HDD_FWTEST_MU_DEFAULT_VALUE 40
+#define HDD_FWTEST_MAX_VALUE 500
+
 extern int hdd_unregister_wext(struct net_device *dev);
 extern int hdd_register_wext(struct net_device *dev);
 extern int hdd_wlan_get_freq(uint32_t chan, uint32_t *freq);
