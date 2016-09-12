@@ -12626,6 +12626,7 @@ struct wmi_ops tlv_ops =  {
 	.send_fw_test_cmd = send_fw_test_cmd_tlv,
 	.send_encrypt_decrypt_send_cmd =
 				send_encrypt_decrypt_send_cmd_tlv,
+	.send_power_dbg_cmd = send_power_dbg_cmd_tlv,
 };
 
 #ifndef CONFIG_MCL
