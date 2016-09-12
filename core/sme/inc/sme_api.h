@@ -583,6 +583,10 @@ QDF_STATUS sme_update_is_fast_roam_ini_feature_enabled(tHalHandle hHal,
 		uint8_t sessionId,
 		const bool
 		isFastRoamIniFeatureEnabled);
+
+QDF_STATUS sme_config_fast_roaming(tHalHandle hal, uint8_t session_id,
+		const bool is_fast_roam_enabled);
+
 QDF_STATUS sme_update_is_mawc_ini_feature_enabled(tHalHandle hHal,
 		const bool MAWCEnabled);
 QDF_STATUS sme_stop_roaming(tHalHandle hHal, uint8_t sessionId, uint8_t reason);

@@ -8921,6 +8921,41 @@ QDF_STATUS sme_update_is_fast_roam_ini_feature_enabled
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * sme_config_fast_roaming() - enable/disable LFR support at runtime
+ * @hal - The handle returned by macOpen.
+ * @session_id - Session Identifier
+ * @is_fast_roam_enabled - flag to enable/disable roaming
+ *
+ * When Supplicant issues enabled/disable fast roaming on the basis
+ * of the Bssid modification in network block (e.g. AutoJoin mode N/W block)
+ *
+ * Return: QDF_STATUS
+ */
+
+QDF_STATUS sme_config_fast_roaming(tHalHandle hal, uint8_t session_id,
+				   const bool is_fast_roam_enabled)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	QDF_STATUS status;
+
+	if (!mac_ctx->roam.configParam.isFastRoamIniFeatureEnabled) {
+		sms_log(mac_ctx, LOGE, FL("Fast roam is disabled through ini"));
+		if (!is_fast_roam_enabled)
+			return QDF_STATUS_SUCCESS;
+		return  QDF_STATUS_E_FAILURE;
+	}
+	status = csr_neighbor_roam_update_fast_roaming_enabled(mac_ctx,
+					 session_id, is_fast_roam_enabled);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		sms_log(mac_ctx, LOGE,
+			FL("csr_neighbor_roam_update_fast_roaming_enabled failed"));
+		return  QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /*--------------------------------------------------------------------------
    \brief sme_update_is_mawc_ini_feature_enabled() -
    Enable/disable LFR MAWC support at runtime
