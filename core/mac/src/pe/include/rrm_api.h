@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -70,8 +70,6 @@ extern tSirRetStatus rrm_process_neighbor_report_response(tpAniSirGlobal pMac,
 							  *pNeighborRep,
 							  tpPESession
 							  pSessionEntry);
-
-extern void rrm_process_message(tpAniSirGlobal pMac, tpSirMsgQ pMsg);
 
 extern tSirRetStatus rrm_send_set_max_tx_power_req(tpAniSirGlobal pMac,
 						   int8_t txPower,

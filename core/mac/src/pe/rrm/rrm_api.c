@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1331,37 +1331,6 @@ tSirRetStatus rrm_cleanup(tpAniSirGlobal pMac)
 
 	pMac->rrm.rrmPEContext.pCurrentReq = NULL;
 	return eSIR_SUCCESS;
-}
-
-/* -------------------------------------------------------------------- */
-/**
- * rrm_process_message
- *
- * FUNCTION:  Processes the next received Radio Resource Management message
- *
- * LOGIC:
- *
- * ASSUMPTIONS:
- *
- * NOTE:
- *
- * @param None
- * @return None
- */
-
-void rrm_process_message(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
-{
-	switch (pMsg->type) {
-	case eWNI_SME_NEIGHBOR_REPORT_REQ_IND:
-		rrm_process_neighbor_report_req(pMac, pMsg->bodyptr);
-		break;
-	case eWNI_SME_BEACON_REPORT_RESP_XMIT_IND:
-		rrm_process_beacon_report_xmit(pMac, pMsg->bodyptr);
-		break;
-	default:
-		lim_log(pMac, LOGE, FL("Invalid msg type:%d"), pMsg->type);
-	}
-
 }
 
 /**
