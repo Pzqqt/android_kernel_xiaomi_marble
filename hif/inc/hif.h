@@ -189,11 +189,9 @@ struct qca_napi_data {
 					not used by clients (clients use an
 					id returned by create) */
 	struct qca_napi_info napis[CE_COUNT_MAX];
-#ifdef HELIUMPLUS
 	struct qca_napi_cpu  napi_cpu[NR_CPUS];
 	int                  lilcl_head, bigcl_head;
 	enum qca_napi_tput_state napi_mode;
-#endif
 };
 
 /**

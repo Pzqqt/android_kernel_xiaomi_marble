@@ -39,9 +39,11 @@
 #include <linux/cpu.h>
 #include <linux/topology.h>
 #include <linux/interrupt.h>
+#ifdef HELIUMPLUS
 #include <soc/qcom/irq-helper.h>
-#include <linux/pm.h>
 #include <soc/qcom/icnss.h> /* replace with pld when available */
+#endif
+#include <linux/pm.h>
 
 /* Driver headers */
 #include <cds_api.h>
@@ -57,6 +59,25 @@ enum napi_decision_vector {
 	HIF_NAPI_CONF_UP = 2
 };
 #define ENABLE_NAPI_MASK (HIF_NAPI_INITED | HIF_NAPI_CONF_UP)
+
+#ifdef HELIUMPLUS
+static inline int hif_get_irq_for_ce(int ce_id)
+{
+	return icnss_get_irq(ce_id);
+}
+#else /* HELIUMPLUS */
+static inline int hif_get_irq_for_ce(int ce_id)
+{
+	return -EINVAL;
+}
+static int hif_napi_cpu_migrate(struct qca_napi_data *napid, int cpu,
+				int action)
+{
+	return 0;
+}
+
+int hif_napi_cpu_blacklist(bool is_on) { return 0; }
+#endif /* HELIUMPLUS */
 
 /**
  * hif_napi_create() - creates the NAPI structures for a given CE
@@ -129,7 +150,7 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 		napii->scale = scale;
 		napii->id    = NAPI_PIPE2ID(i);
 		napii->hif_ctx = hif_ctx;
-		napii->irq   = icnss_get_irq(i);
+		napii->irq   = hif_get_irq_for_ce(i);
 		if (napii->irq < 0)
 			HIF_WARN("%s: bad IRQ value for CE %d: %d",
 				 __func__, i, napii->irq);

@@ -123,42 +123,10 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx,
 #define NAPI_DEBUG(fmt, ...) /* NO-OP */
 #endif /* FEATURE NAPI_DEBUG */
 
-/**
- * Local interface to HIF implemented functions of NAPI CPU affinity management.
- * Note:
- * 1- The symbols in this file are NOT supposed to be used by any
- *    entity other than hif_napi.c
- * 2- The symbols are valid only if HELIUMPLUS is defined. They are otherwise
- *    mere wrappers.
- *
- */
-#ifndef HELIUMPLUS
-/**
- * stub functions
- */
-/* fw-declare to make compiler happy */
-struct qca_napi_data;
-static inline int hif_napi_cpu_init(void *) { return 0; }
-static inline int hif_napi_cpu_deinit(void *) { return 0; }
-static int hif_napi_cpu_migrate(struct qca_napi_data *, int, int) { return 0; }
-static int hif_napi_cpu_(bool) { return 0; }
-
-#else /* HELIUMPLUS - NAPI CPU symbols are valid */
-
-/*
- * prototype signatures
- */
-int hif_napi_cpu_init(void *);
-int hif_napi_cpu_deinit(void *);
-
 #define HNC_ANY_CPU (-1)
 #define HNC_ACT_RELOCATE (0)
 #define HNC_ACT_COLLAPSE (1)
 #define HNC_ACT_DISPERSE (-1)
-int hif_napi_cpu_migrate(struct qca_napi_data *napid, int cpu, int action);
-int hif_napi_cpu_blacklist(bool is_on);
-
-#endif /* HELIUMPLUS */
 
 /**
  * Local interface to HIF implemented functions of NAPI CPU affinity management.
@@ -175,11 +143,8 @@ int hif_napi_cpu_blacklist(bool is_on);
  */
 /* fw-declare to make compiler happy */
 struct qca_napi_data;
-static inline int hif_napi_cpu_init(void *) { return 0; }
-static inline int hif_napi_cpu_deinit(void *) { return 0; }
-static int hif_napi_cpu_migrate(struct qca_napi_data *, int, int) { return 0; }
-static int hif_napi_cpu_(bool) { return 0; }
-
+static inline int hif_napi_cpu_init(void *ctx) { return 0; }
+static inline int hif_napi_cpu_deinit(void *ctx) { return 0; }
 #else /* HELIUMPLUS - NAPI CPU symbols are valid */
 
 /*
@@ -188,15 +153,10 @@ static int hif_napi_cpu_(bool) { return 0; }
 int hif_napi_cpu_init(void *);
 int hif_napi_cpu_deinit(void *);
 
-#define HNC_ANY_CPU (-1)
-#define HNC_ACT_RELOCATE (0)
-#define HNC_ACT_COLLAPSE (1)
-#define HNC_ACT_DISPERSE (-1)
 int hif_napi_cpu_migrate(struct qca_napi_data *napid, int cpu, int action);
 int hif_napi_cpu_blacklist(bool is_on);
 
 #endif /* HELIUMPLUS */
-
 
 #else /* ! defined(FEATURE_NAPI) */
 
