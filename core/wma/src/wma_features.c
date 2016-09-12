@@ -6654,7 +6654,7 @@ void wma_target_suspend_acknowledge(void *context, bool wow_nack)
 
 	wma->wow_nack = wow_nack;
 	qdf_event_set(&wma->target_suspend);
-	if (wow_nack) {
+	if (wow_nack && !wmi_get_runtime_pm_inprogress(wma->wmi_handle)) {
 		cds_host_diag_log_work(&wma->wow_wake_lock,
 				       WMA_WAKE_LOCK_TIMEOUT,
 				       WIFI_POWER_EVENT_WAKELOCK_WOW);
