@@ -66,8 +66,9 @@ int hdd_napi_apply_throughput_policy(struct hdd_context_s *hddctx,
 				     uint64_t              tx_packets,
 				     uint64_t              rx_packets);
 #else /* FEATURE_NAPI and NOT HELIUM */
-static inline int hdd_napi_apply_throughput_policy(struct hdd_context_s *,
-						   uint64_t, uint64_t)
+static inline int hdd_napi_apply_throughput_policy(struct hdd_context_s *hddctx,
+						   uint64_t tx_packets,
+						   uint64_t rx_packets)
 {
 	return 0;
 }
