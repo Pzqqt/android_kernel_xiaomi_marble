@@ -755,6 +755,18 @@ typedef struct {
 } vdev_cli_config_t;
 
 /**
+ * struct wma_version_info - Store wmi version info
+ * @major: wmi major version
+ * @minor: wmi minor version
+ * @revision: wmi revision number
+ */
+struct wma_version_info {
+	u_int32_t major;
+	u_int32_t minor;
+	u_int32_t revision;
+};
+
+/**
  * struct wma_wow - store wow patterns
  * @magic_ptrn_enable: magic pattern enable/disable
  * @wow_enable: wow enable/disable

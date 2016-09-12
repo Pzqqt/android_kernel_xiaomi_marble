@@ -1637,6 +1637,8 @@ static void wma_init_max_no_of_peers(tp_wma_handle wma_handle,
 	cfg->max_no_of_peers = max_peers;
 }
 
+struct wma_version_info g_wmi_version_info;
+
 /**
  * wma_open() - Allocate wma context and initialize it.
  * @cds_context:  cds context
@@ -1662,6 +1664,10 @@ QDF_STATUS wma_open(void *cds_context,
 	bool use_cookie = false;
 
 	WMA_LOGD("%s: Enter", __func__);
+
+	g_wmi_version_info.major = __WMI_VER_MAJOR_;
+	g_wmi_version_info.minor = __WMI_VER_MINOR_;
+	g_wmi_version_info.revision = __WMI_REVISION_;
 
 	qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	htc_handle = cds_get_context(QDF_MODULE_ID_HTC);
