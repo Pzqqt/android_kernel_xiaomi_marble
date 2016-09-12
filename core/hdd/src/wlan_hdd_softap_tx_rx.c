@@ -201,7 +201,7 @@ void hdd_softap_tx_resume_cb(void *adapter_context, bool tx_resume)
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
 /**
- * hdd_softap_hard_start_xmit() - Transmit a frame
+ * __hdd_softap_hard_start_xmit() - Transmit a frame
  * @skb: pointer to OS packet (sk_buff)
  * @dev: pointer to network device
  *
@@ -211,7 +211,7 @@ void hdd_softap_tx_resume_cb(void *adapter_context, bool tx_resume)
  *
  * Return: Always returns NETDEV_TX_OK
  */
-int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
+int __hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 {
 	sme_ac_enum_type ac = SME_AC_BE;
 	hdd_adapter_t *pAdapter = (hdd_adapter_t *) netdev_priv(dev);
@@ -369,6 +369,27 @@ drop_pkt_accounting:
 	++pAdapter->hdd_stats.hddTxRxStats.txXmitDropped;
 
 	return NETDEV_TX_OK;
+}
+
+/**
+ * hdd_softap_hard_start_xmit() - Wrapper function to protect
+ * __hdd_softap_hard_start_xmit from SSR
+ * @skb: pointer to OS packet
+ * @dev: pointer to net_device structure
+ *
+ * Function called by OS if any packet needs to transmit.
+ *
+ * Return: Always returns NETDEV_TX_OK
+ */
+int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __hdd_softap_hard_start_xmit(skb, dev);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
 }
 
 /**

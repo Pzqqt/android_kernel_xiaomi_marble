@@ -387,7 +387,7 @@ static void hdd_get_transmit_sta_id(hdd_adapter_t *adapter,
 }
 
 /**
- * hdd_hard_start_xmit() - Transmit a frame
+ * __hdd_hard_start_xmit() - Transmit a frame
  * @skb: pointer to OS packet (sk_buff)
  * @dev: pointer to network device
  *
@@ -397,7 +397,7 @@ static void hdd_get_transmit_sta_id(hdd_adapter_t *adapter,
  *
  * Return: Always returns NETDEV_TX_OK
  */
-int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
+int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 {
 	QDF_STATUS status;
 	sme_ac_enum_type ac;
@@ -616,6 +616,27 @@ drop_pkt_accounting:
 	++pAdapter->hdd_stats.hddTxRxStats.txXmitDropped;
 
 	return NETDEV_TX_OK;
+}
+
+/**
+ * hdd_hard_start_xmit() - Wrapper function to protect
+ * __hdd_hard_start_xmit from SSR
+ * @skb: pointer to OS packet
+ * @dev: pointer to net_device structure
+ *
+ * Function called by OS if any packet needs to transmit.
+ *
+ * Return: Always returns NETDEV_TX_OK
+ */
+int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __hdd_hard_start_xmit(skb, dev);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
 }
 
 /**
