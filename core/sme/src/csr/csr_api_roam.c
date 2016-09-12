@@ -7209,6 +7209,7 @@ QDF_STATUS csr_roam_copy_profile(tpAniSirGlobal pMac,
 	pDstProfile->wps_state = pSrcProfile->wps_state;
 	pDstProfile->ieee80211d = pSrcProfile->ieee80211d;
 	pDstProfile->sap_dot11mc = pSrcProfile->sap_dot11mc;
+	pDstProfile->do_not_roam = pSrcProfile->do_not_roam;
 	qdf_mem_copy(&pDstProfile->Keys, &pSrcProfile->Keys,
 		sizeof(pDstProfile->Keys));
 #ifdef WLAN_FEATURE_11W
@@ -17404,6 +17405,13 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 	if (NULL == session) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("session is null"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if ((ROAM_SCAN_OFFLOAD_START == command) && session->pCurRoamProfile &&
+	    session->pCurRoamProfile->do_not_roam) {
+		sms_log(mac_ctx, LOGE,
+			FL("Supplicant disabled driver roaming"));
 		return QDF_STATUS_E_FAILURE;
 	}
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD

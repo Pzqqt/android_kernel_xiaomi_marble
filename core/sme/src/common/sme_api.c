@@ -8937,6 +8937,7 @@ QDF_STATUS sme_config_fast_roaming(tHalHandle hal, uint8_t session_id,
 				   const bool is_fast_roam_enabled)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
 	QDF_STATUS status;
 
 	if (!mac_ctx->roam.configParam.isFastRoamIniFeatureEnabled) {
@@ -8945,6 +8946,10 @@ QDF_STATUS sme_config_fast_roaming(tHalHandle hal, uint8_t session_id,
 			return QDF_STATUS_SUCCESS;
 		return  QDF_STATUS_E_FAILURE;
 	}
+
+	if (is_fast_roam_enabled && session && session->pCurRoamProfile)
+		session->pCurRoamProfile->do_not_roam = false;
+
 	status = csr_neighbor_roam_update_fast_roaming_enabled(mac_ctx,
 					 session_id, is_fast_roam_enabled);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {

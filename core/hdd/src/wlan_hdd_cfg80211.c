@@ -10591,8 +10591,10 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 		qdf_mem_copy((void *)(pRoamProfile->SSIDs.SSIDList->SSID.ssId),
 			     ssid, ssid_len);
 
+		pRoamProfile->do_not_roam = false;
 		if (bssid) {
 			pRoamProfile->BSSIDs.numOfBSSIDs = 1;
+			pRoamProfile->do_not_roam = true;
 			qdf_mem_copy((void *)(pRoamProfile->BSSIDs.bssid),
 				     bssid, QDF_MAC_ADDR_SIZE);
 			/*
