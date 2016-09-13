@@ -855,7 +855,7 @@ uint16_t wlansap_check_cc_intf(void *Ctx);
 QDF_STATUS wlansap_set_mac_acl(void *p_cds_gctx, tsap_Config_t *pConfig);
 QDF_STATUS wlansap_stop_bss(void *p_cds_gctx);
 QDF_STATUS wlansap_disassoc_sta(void *p_cds_gctx,
-				const uint8_t *pPeerStaMac);
+				struct tagCsrDelStaParams *p_del_sta_params);
 QDF_STATUS wlansap_deauth_sta(void *p_cds_gctx,
 			struct tagCsrDelStaParams *pDelStaParams);
 QDF_STATUS wlansap_set_channel_change_with_csa(void *p_cds_gctx,

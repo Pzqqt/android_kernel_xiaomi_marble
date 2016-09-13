@@ -538,6 +538,7 @@ void hdd_clear_all_sta(hdd_adapter_t *pHostapdAdapter,
 {
 	uint8_t staId = 0;
 	struct net_device *dev;
+	struct tagCsrDelStaParams del_sta_params;
 	dev = (struct net_device *)usrDataForCallback;
 
 	hdd_err("Clearing all the STA entry....");
@@ -545,11 +546,14 @@ void hdd_clear_all_sta(hdd_adapter_t *pHostapdAdapter,
 		if (pHostapdAdapter->aStaInfo[staId].isUsed &&
 		    (staId !=
 		     (WLAN_HDD_GET_AP_CTX_PTR(pHostapdAdapter))->uBCStaId)) {
+			wlansap_populate_del_sta_params(
+				&pHostapdAdapter->aStaInfo[staId].macAddrSTA.
+				bytes[0], eSIR_MAC_DEAUTH_LEAVING_BSS_REASON,
+				(SIR_MAC_MGMT_DISASSOC >> 4), &del_sta_params);
+
 			/* Disconnect all the stations */
 			hdd_softap_sta_disassoc(pHostapdAdapter,
-						&pHostapdAdapter->
-						aStaInfo[staId].macAddrSTA.
-						bytes[0]);
+						&del_sta_params);
 		}
 	}
 }
@@ -3739,6 +3743,7 @@ static __iw_softap_disassoc_sta(struct net_device *dev,
 	hdd_context_t *hdd_ctx;
 	uint8_t *peerMacAddr;
 	int ret;
+	struct tagCsrDelStaParams del_sta_params;
 
 	ENTER_DEV(dev);
 
@@ -3759,7 +3764,11 @@ static __iw_softap_disassoc_sta(struct net_device *dev,
 
 	hdd_notice("data " MAC_ADDRESS_STR,
 	       MAC_ADDR_ARRAY(peerMacAddr));
-	hdd_softap_sta_disassoc(pHostapdAdapter, peerMacAddr);
+	wlansap_populate_del_sta_params(peerMacAddr,
+			eSIR_MAC_DEAUTH_LEAVING_BSS_REASON,
+			(SIR_MAC_MGMT_DISASSOC >> 4),
+			&del_sta_params);
+	hdd_softap_sta_disassoc(pHostapdAdapter, &del_sta_params);
 	EXIT();
 	return 0;
 }

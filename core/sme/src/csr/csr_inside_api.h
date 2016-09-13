@@ -909,20 +909,20 @@ void csr_call_roaming_completion_callback(tpAniSirGlobal pMac,
 					  tCsrRoamSession *pSession,
 					  tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 					  eCsrRoamResult roamResult);
-
-/* ---------------------------------------------------------------------------
-    \fn csr_roam_issue_disassociate_sta_cmd
-    \brief csr function that HDD calls to disassociate a associated station
-    \param sessionId    - session Id for Soft AP
-    \param pPeerMacAddr - MAC of associated station to delete
-    \param reason - reason code, be one of the tSirMacReasonCodes
-    \return QDF_STATUS
-   ---------------------------------------------------------------------------*/
+/**
+ * csr_roam_issue_disassociate_sta_cmd() - disassociate a associated station
+ * @pMac:          Pointer to global structure for MAC
+ * @sessionId:     Session Id for Soft AP
+ * @p_del_sta_params: Pointer to parameters of the station to disassoc
+ *
+ * CSR function that HDD calls to issue a deauthenticate station command
+ *
+ * Return: QDF_STATUS_SUCCESS on success or another QDF_STATUS_* on error
+ */
 QDF_STATUS csr_roam_issue_disassociate_sta_cmd(tpAniSirGlobal pMac,
 					       uint32_t sessionId,
-					       const uint8_t *pPeerMacAddr,
-					       uint32_t reason);
-
+					       struct tagCsrDelStaParams
+					       *p_del_sta_params);
 /**
  * csr_roam_issue_deauth_sta_cmd() - issue deauthenticate station command
  * @pMac:          Pointer to global structure for MAC
