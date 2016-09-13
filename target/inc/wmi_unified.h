@@ -16774,6 +16774,8 @@ typedef enum wmi_coex_config_type {
 	WMI_COEX_CONFIG_DURING_WLAN_CONN = 4,
 	/* config to enable/disable BTC */
 	WMI_COEX_CONFIG_BTC_ENABLE = 5,
+	/* config of COEX debug setting */
+	WMI_COEX_CONFIG_COEX_DBG = 6,
 } WMI_COEX_CONFIG_TYPE;
 
 typedef struct {
