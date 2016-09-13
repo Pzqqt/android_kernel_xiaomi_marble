@@ -243,16 +243,10 @@ QDF_STATUS wlan_hdd_remain_on_channel_callback(tHalHandle hHal, void *pCtx,
 		   (QDF_P2P_GO_MODE == pAdapter->device_mode)
 		   ) {
 		wlansap_de_register_mgmt_frame(
-#ifdef WLAN_FEATURE_MBSSID
-			WLAN_HDD_GET_SAP_CTX_PTR
-				(pAdapter),
-#else
-			(WLAN_HDD_GET_CTX
-				 (pAdapter))->pcds_context,
-#endif
+			WLAN_HDD_GET_SAP_CTX_PTR(pAdapter),
 			(SIR_MAC_MGMT_FRAME << 2) |
-			(SIR_MAC_MGMT_PROBE_REQ <<
-			 4), NULL, 0);
+			(SIR_MAC_MGMT_PROBE_REQ << 4),
+			 NULL, 0);
 
 	}
 
@@ -341,13 +335,8 @@ void wlan_hdd_cancel_existing_remain_on_channel(hdd_adapter_t *pAdapter)
 			   || (QDF_P2P_GO_MODE == pAdapter->device_mode)
 			   ) {
 			wlansap_cancel_remain_on_channel(
-#ifdef WLAN_FEATURE_MBSSID
-				WLAN_HDD_GET_SAP_CTX_PTR
-					(pAdapter),
-#else
-			(WLAN_HDD_GET_CTX(pAdapter))->pcds_context,
-#endif
-			pRemainChanCtx->scan_id);
+				WLAN_HDD_GET_SAP_CTX_PTR(pAdapter),
+				pRemainChanCtx->scan_id);
 		}
 
 		rc = wait_for_completion_timeout(&pAdapter->
@@ -647,11 +636,7 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
 		   (QDF_P2P_GO_MODE == pAdapter->device_mode)) {
 		/* call sme API to start remain on channel. */
 		if (QDF_STATUS_SUCCESS != wlansap_remain_on_channel(
-#ifdef WLAN_FEATURE_MBSSID
 			    WLAN_HDD_GET_SAP_CTX_PTR(pAdapter),
-#else
-			    (WLAN_HDD_GET_CTX(pAdapter))->pcds_context,
-#endif
 			    pRemainChanCtx->chan.hw_value,
 			    duration, wlan_hdd_remain_on_channel_callback,
 			    pAdapter, &pRemainChanCtx->scan_id)) {
@@ -668,22 +653,14 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
 		}
 
 		if (QDF_STATUS_SUCCESS != wlansap_register_mgmt_frame(
-#ifdef WLAN_FEATURE_MBSSID
-			    WLAN_HDD_GET_SAP_CTX_PTR(pAdapter),
-#else
-			    (WLAN_HDD_GET_CTX(pAdapter))->pcds_context,
-#endif
+			WLAN_HDD_GET_SAP_CTX_PTR(pAdapter),
 			(SIR_MAC_MGMT_FRAME << 2) |
 			(SIR_MAC_MGMT_PROBE_REQ << 4), NULL, 0)) {
 			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 				FL("wlansap_register_mgmt_frame return fail"));
 			wlansap_cancel_remain_on_channel(
-#ifdef WLAN_FEATURE_MBSSID
 				WLAN_HDD_GET_SAP_CTX_PTR(pAdapter),
-#else
-				(WLAN_HDD_GET_CTX(pAdapter))->pcds_context,
-#endif
-			pRemainChanCtx->scan_id);
+				pRemainChanCtx->scan_id);
 			hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_ROC);
 			return -EINVAL;
 		}
@@ -1196,11 +1173,7 @@ int __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 		   (QDF_P2P_GO_MODE == pAdapter->device_mode)
 		   ) {
 		wlansap_cancel_remain_on_channel(
-#ifdef WLAN_FEATURE_MBSSID
 			WLAN_HDD_GET_SAP_CTX_PTR(pAdapter),
-#else
-			(WLAN_HDD_GET_CTX(pAdapter))->pcds_context,
-#endif
 			pRemainChanCtx->scan_id);
 
 	} else {
@@ -1630,12 +1603,7 @@ send_frame:
 	} else if (QDF_SAP_MODE == pAdapter->device_mode ||
 		   QDF_P2P_GO_MODE == pAdapter->device_mode) {
 		if (QDF_STATUS_SUCCESS !=
-#ifdef WLAN_FEATURE_MBSSID
 		    wlansap_send_action(WLAN_HDD_GET_SAP_CTX_PTR(pAdapter),
-#else
-		    wlansap_send_action((WLAN_HDD_GET_CTX(pAdapter))->
-					pcds_context,
-#endif
 					buf, len, 0, current_freq)) {
 			hddLog(LOGE,
 				FL("wlansap_send_action returned fail"));
@@ -2002,27 +1970,18 @@ int hdd_set_p2p_ps(struct net_device *dev, void *msgData)
 
 static uint8_t wlan_hdd_get_session_type(enum nl80211_iftype type)
 {
-	uint8_t sessionType;
-
 	switch (type) {
 	case NL80211_IFTYPE_AP:
-		sessionType = QDF_SAP_MODE;
-		break;
+		return QDF_SAP_MODE;
 	case NL80211_IFTYPE_P2P_GO:
-		sessionType = QDF_P2P_GO_MODE;
-		break;
+		return QDF_P2P_GO_MODE;
 	case NL80211_IFTYPE_P2P_CLIENT:
-		sessionType = QDF_P2P_CLIENT_MODE;
-		break;
+		return QDF_P2P_CLIENT_MODE;
 	case NL80211_IFTYPE_STATION:
-		sessionType = QDF_STA_MODE;
-		break;
+		return QDF_STA_MODE;
 	default:
-		sessionType = QDF_STA_MODE;
-		break;
+		return QDF_STA_MODE;
 	}
-
-	return sessionType;
 }
 
 /**
@@ -2068,11 +2027,9 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 	 * session type.
 	 */
 	session_type = wlan_hdd_get_session_type(type);
-	if ((hdd_get_adapter(pHddCtx, session_type) != NULL)
-#ifdef WLAN_FEATURE_MBSSID
+	if (hdd_get_adapter(pHddCtx, session_type) != NULL
 	    && QDF_SAP_MODE != session_type
 	    && QDF_P2P_GO_MODE != session_type
-#endif
 	    && QDF_P2P_CLIENT_MODE != session_type
 	    && QDF_STA_MODE != session_type) {
 		hddLog(LOGE,
@@ -2107,13 +2064,13 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 						pHddCtx->p2pDeviceAddress;
 		p2pDeviceAddress.bytes[4] ^= 0x80;
 		pAdapter = hdd_open_adapter(pHddCtx,
-					    wlan_hdd_get_session_type(type),
+					    session_type,
 					    name, p2pDeviceAddress.bytes,
 					    name_assign_type,
 					    true);
 	} else {
 		pAdapter = hdd_open_adapter(pHddCtx,
-					    wlan_hdd_get_session_type(type),
+					    session_type,
 					    name,
 					    wlan_hdd_get_intf_addr(pHddCtx),
 					    name_assign_type,
