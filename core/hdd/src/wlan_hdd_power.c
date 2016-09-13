@@ -2008,13 +2008,13 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 	QDF_STATUS qdf_status;
 	int status;
 
+	ENTER();
+
 	if (timeout < 0) {
 		hdd_notice("User space timeout: %d; Using default instead: %d",
 			timeout, AUTO_PS_ENTRY_USER_TIMER_DEFAULT_VALUE);
 		timeout = AUTO_PS_ENTRY_USER_TIMER_DEFAULT_VALUE;
 	}
-
-	ENTER();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");

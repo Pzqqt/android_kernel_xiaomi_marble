@@ -982,7 +982,6 @@ tSirRetStatus sme_post_pe_message(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 
 /**
  * sme_ps_enable_auto_ps_timer(): Enable power-save auto timer with timeout
- *
  * @hal_ctx:	HAL context
  * @session_id:	adapter session Id
  * @timeout:	timeout period in ms
