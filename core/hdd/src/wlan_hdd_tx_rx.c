@@ -969,7 +969,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		++pAdapter->hdd_stats.hddTxRxStats.rxDropped[cpu_index];
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO,
 			"%s: Dropping multicast replay pkt", __func__);
-		kfree_skb(skb);
+		qdf_nbuf_free(skb);
 		return QDF_STATUS_SUCCESS;
 	}
 
