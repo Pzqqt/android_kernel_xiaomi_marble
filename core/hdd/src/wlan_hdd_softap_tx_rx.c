@@ -40,6 +40,7 @@
 #include <wlan_hdd_napi.h>
 #include <ol_txrx.h>
 #include <cdp_txrx_peer_ops.h>
+#include <cds_utils.h>
 
 #ifdef IPA_OFFLOAD
 #include <wlan_hdd_ipa.h>

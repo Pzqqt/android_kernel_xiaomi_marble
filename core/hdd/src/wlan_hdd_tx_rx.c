@@ -39,6 +39,7 @@
 #include <linux/etherdevice.h>
 #include <linux/if_ether.h>
 #include <cds_sched.h>
+#include <cds_utils.h>
 
 #include <wlan_hdd_p2p.h>
 #include <linux/wireless.h>
