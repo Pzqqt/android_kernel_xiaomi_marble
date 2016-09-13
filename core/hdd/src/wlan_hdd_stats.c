@@ -1674,6 +1674,12 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 
 	if (true == pHddStaCtx->hdd_ReassocScenario) {
 		hdd_notice("Roaming is in progress, cannot continue with this request");
+		/*
+		 * supplicant reports very low rssi to upper layer
+		 * and handover happens to cellular.
+		 * send the cached rssi when get_station
+		 */
+		sinfo->signal = pAdapter->rssi;
 		return 0;
 	}
 
