@@ -90,6 +90,8 @@ static void __lim_process_sme_disassoc_cnf(tpAniSirGlobal, uint32_t *);
 static void __lim_process_sme_deauth_req(tpAniSirGlobal, uint32_t *);
 static void __lim_process_sme_set_context_req(tpAniSirGlobal, uint32_t *);
 static bool __lim_process_sme_stop_bss_req(tpAniSirGlobal, tpSirMsgQ pMsg);
+static void __lim_process_send_disassoc_frame(tpAniSirGlobal mac_ctx,
+				uint32_t *msg_buf);
 static void lim_process_sme_channel_change_request(tpAniSirGlobal pMac,
 						   uint32_t *pMsg);
 static void lim_process_sme_start_beacon_req(tpAniSirGlobal pMac, uint32_t *pMsg);
@@ -119,7 +121,6 @@ extern void pe_register_callbacks_with_wma(tpAniSirGlobal pMac,
 		tSirSmeReadyReq *ready_req);
 static void lim_process_ext_change_channel(tpAniSirGlobal mac_ctx,
 						uint32_t *msg);
-
 
 /**
  * lim_process_set_hw_mode() - Send set HW mode command to WMA
@@ -4763,6 +4764,69 @@ static void lim_register_mgmt_frame_ind_cb(tpAniSirGlobal mac_ctx,
 }
 
 /**
+ *__lim_process_send_disassoc_frame: function processes disassoc frame
+ * @mac_ctx: pointer to mac context
+ * @msg_buf: message buffer
+ *
+ * function processes disassoc request received from SME
+ *
+ * return: none
+ */
+static void __lim_process_send_disassoc_frame(tpAniSirGlobal mac_ctx,
+					uint32_t *msg_buf)
+{
+	struct sme_send_disassoc_frm_req sme_send_disassoc_frame_req;
+	tSirRetStatus status;
+	tpPESession session_entry = NULL;
+	uint8_t sme_session_id;
+	uint16_t sme_trans_id;
+
+	if (msg_buf == NULL) {
+		lim_log(mac_ctx, LOGE, FL("Buffer is Pointing to NULL"));
+		return;
+	}
+
+	lim_get_session_info(mac_ctx, (uint8_t *)msg_buf, &sme_session_id,
+			&sme_trans_id);
+
+	status = lim_send_disassoc_frm_req_ser_des(mac_ctx,
+				&sme_send_disassoc_frame_req,
+				(uint8_t *)msg_buf);
+
+	if ((eSIR_FAILURE == status) ||
+		(lim_is_group_addr(sme_send_disassoc_frame_req.peer_mac) &&
+		!lim_is_addr_bc(sme_send_disassoc_frame_req.peer_mac))) {
+		PELOGE(lim_log(mac_ctx, LOGE,
+			FL("received invalid SME_DISASSOC_REQ message"));)
+		return;
+	}
+
+	session_entry = pe_find_session_by_sme_session_id(
+				mac_ctx, sme_session_id);
+	if (session_entry == NULL) {
+		lim_log(mac_ctx, LOGE,
+			FL("session does not exist for given bssId "MAC_ADDRESS_STR),
+			MAC_ADDR_ARRAY(sme_send_disassoc_frame_req.peer_mac));
+		return;
+	}
+
+	lim_log(mac_ctx, LOG1,
+			FL("msg_type->%d len->%d sess_id->%d trans_id->%d mac->"MAC_ADDRESS_STR" reason->%d wait_for_ack->%d"),
+			sme_send_disassoc_frame_req.msg_type,
+			sme_send_disassoc_frame_req.length,
+			sme_send_disassoc_frame_req.session_id,
+			sme_send_disassoc_frame_req.trans_id,
+			MAC_ADDR_ARRAY(sme_send_disassoc_frame_req.peer_mac),
+			sme_send_disassoc_frame_req.reason,
+			sme_send_disassoc_frame_req.wait_for_ack);
+
+	lim_send_disassoc_mgmt_frame(mac_ctx,
+		sme_send_disassoc_frame_req.reason,
+		sme_send_disassoc_frame_req.peer_mac,
+		session_entry, sme_send_disassoc_frame_req.wait_for_ack);
+}
+
+/**
  * lim_set_pdev_ht_ie() - sends the set HT IE req to FW
  * @mac_ctx: Pointer to Global MAC structure
  * @pdev_id: pdev id to set the IE.
@@ -5029,6 +5093,10 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
 
 	case eWNI_SME_DEAUTH_REQ:
 		__lim_process_sme_deauth_req(pMac, pMsgBuf);
+		break;
+
+	case eWNI_SME_SEND_DISASSOC_FRAME:
+		__lim_process_send_disassoc_frame(pMac, pMsgBuf);
 		break;
 
 	case eWNI_SME_SETCONTEXT_REQ:

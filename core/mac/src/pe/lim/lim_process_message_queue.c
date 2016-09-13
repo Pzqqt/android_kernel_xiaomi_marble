@@ -1364,7 +1364,10 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		/* These messages are from HDD. Need to respond to HDD */
 		lim_process_normal_hdd_msg(mac_ctx, msg, true);
 		break;
-
+	case eWNI_SME_SEND_DISASSOC_FRAME:
+		/* Need to response to hdd */
+		lim_process_normal_hdd_msg(mac_ctx, msg, true);
+		break;
 	case eWNI_SME_SCAN_ABORT_IND:
 		req_msg = msg->bodyptr;
 		if (req_msg) {
