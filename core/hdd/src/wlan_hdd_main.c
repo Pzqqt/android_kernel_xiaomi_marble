@@ -3697,6 +3697,47 @@ struct cfg80211_bss *hdd_cfg80211_get_bss(struct wiphy *wiphy,
 #endif
 #endif
 
+#if defined CFG80211_CONNECT_BSS
+/**
+ * hdd_connect_bss() - API to send connection status to supplicant
+ * @dev: network device
+ * @bssid: bssid to which we want to associate
+ * @req_ie: Request Information Element
+ * @req_ie_len: len of the req IE
+ * @resp_ie: Response IE
+ * @resp_ie_len: len of ht response IE
+ * @status: status
+ * @gfp: Kernel Flag
+ * @connect_timeout: If timed out waiting for Auth/Assoc/Probe resp
+ *
+ * The API is a wrapper to send connection status to supplicant
+ *
+ * Return: Void
+ */
+#if defined CFG80211_CONNECT_TIMEOUT
+static void hdd_connect_bss(struct net_device *dev, const u8 *bssid,
+			struct cfg80211_bss *bss, const u8 *req_ie,
+			size_t req_ie_len, const u8 *resp_ie,
+			size_t resp_ie_len, int status, gfp_t gfp,
+			bool connect_timeout)
+{
+	if (connect_timeout)
+		cfg80211_connect_timeout(dev, bssid, NULL, 0, GFP_KERNEL);
+	else
+		cfg80211_connect_bss(dev, bssid, bss, req_ie, req_ie_len,
+			resp_ie, resp_ie_len, status, gfp);
+}
+#else
+static void hdd_connect_bss(struct net_device *dev, const u8 *bssid,
+			struct cfg80211_bss *bss, const u8 *req_ie,
+			size_t req_ie_len, const u8 *resp_ie,
+			size_t resp_ie_len, int status, gfp_t gfp,
+			bool connect_timeout)
+{
+	cfg80211_connect_bss(dev, bssid, bss, req_ie, req_ie_len,
+		resp_ie, resp_ie_len, status, gfp);
+}
+#endif
 
 /**
  * hdd_connect_result() - API to send connection status to supplicant
@@ -3709,17 +3750,18 @@ struct cfg80211_bss *hdd_cfg80211_get_bss(struct wiphy *wiphy,
  * @resp_ie_len: len of ht response IE
  * @status: status
  * @gfp: Kernel Flag
+ * @connect_timeout: If timed out waiting for Auth/Assoc/Probe resp
  *
  * The API is a wrapper to send connection status to supplicant
  * and allow runtime suspend
  *
  * Return: Void
  */
-#if defined CFG80211_CONNECT_BSS
 void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 			tCsrRoamInfo *roam_info, const u8 *req_ie,
 			size_t req_ie_len, const u8 *resp_ie,
-			size_t resp_ie_len, u16 status, gfp_t gfp)
+			size_t resp_ie_len, u16 status, gfp_t gfp,
+			bool connect_timeout)
 {
 	hdd_adapter_t *padapter = (hdd_adapter_t *) netdev_priv(dev);
 	struct cfg80211_bss *bss = NULL;
@@ -3741,14 +3783,16 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 			roam_info->u.pConnectedProfile->SSID.ssId,
 			roam_info->u.pConnectedProfile->SSID.length);
 	}
-	cfg80211_connect_bss(dev, bssid, bss, req_ie, req_ie_len,
-		resp_ie, resp_ie_len, status, gfp);
+	hdd_connect_bss(dev, bssid, bss, req_ie,
+		req_ie_len, resp_ie, resp_ie_len,
+		status, gfp, connect_timeout);
 }
 #else
 void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 			tCsrRoamInfo *roam_info, const u8 *req_ie,
 			size_t req_ie_len, const u8 *resp_ie,
-			size_t resp_ie_len, u16 status, gfp_t gfp)
+			size_t resp_ie_len, u16 status, gfp_t gfp,
+			bool connect_timeout)
 {
 	cfg80211_connect_result(dev, bssid, req_ie, req_ie_len,
 				resp_ie, resp_ie_len, status, gfp);
@@ -3817,7 +3861,7 @@ QDF_STATUS hdd_start_all_adapters(hdd_context_t *hdd_ctx)
 				hdd_connect_result(adapter->dev, NULL, NULL,
 							NULL, 0, NULL, 0,
 							WLAN_STATUS_ASSOC_DENIED_UNSPEC,
-							GFP_KERNEL);
+							GFP_KERNEL, false);
 			}
 
 			hdd_register_tx_flow_control(adapter,
