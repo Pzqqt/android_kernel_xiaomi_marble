@@ -282,6 +282,7 @@ QDF_STATUS sme_roam_reassoc(tHalHandle hHal, uint8_t sessionId,
 QDF_STATUS sme_roam_connect_to_last_profile(tHalHandle hHal, uint8_t sessionId);
 QDF_STATUS sme_roam_disconnect(tHalHandle hHal, uint8_t sessionId,
 		eCsrRoamDisconnectReason reason);
+void sme_dhcp_done_ind(tHalHandle hal, uint8_t session_id);
 QDF_STATUS sme_roam_stop_bss(tHalHandle hHal, uint8_t sessionId);
 QDF_STATUS sme_roam_get_associated_stas(tHalHandle hHal, uint8_t sessionId,
 		QDF_MODULE_ID modId, void *pUsrContext,

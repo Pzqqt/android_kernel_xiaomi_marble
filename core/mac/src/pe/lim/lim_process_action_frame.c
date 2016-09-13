@@ -1899,7 +1899,10 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 		break;
 
 	case SIR_MAC_ACTION_RRM:
-		if (mac_ctx->rrm.rrmPEContext.rrmEnable) {
+		/* Ignore RRM measurement request until DHCP is set */
+		if (mac_ctx->rrm.rrmPEContext.rrmEnable &&
+		    mac_ctx->roam.roamSession
+		    [session->smeSessionId].dhcp_done) {
 			switch (action_hdr->actionID) {
 			case SIR_MAC_RRM_RADIO_MEASURE_REQ:
 				__lim_process_radio_measure_request(mac_ctx,
@@ -1926,7 +1929,10 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 		} else {
 			/* Else we will just ignore the RRM messages. */
 			lim_log(mac_ctx, LOG1,
-				FL("RRM frm ignored, it is disabled in cfg"));
+			  FL("RRM frm ignored, it is disabled in cfg %d or DHCP not completed %d"),
+			  mac_ctx->rrm.rrmPEContext.rrmEnable,
+			  mac_ctx->roam.roamSession
+			  [session->smeSessionId].dhcp_done);
 		}
 		break;
 
