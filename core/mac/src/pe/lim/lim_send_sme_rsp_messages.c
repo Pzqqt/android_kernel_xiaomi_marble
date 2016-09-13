@@ -393,19 +393,25 @@ static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 
 /**
  * lim_add_bss_info() - copy data from session entry to join rsp
- * @session_entry: PE Session Info
+ * @sta_ds: Station dph entry
  * @sme_join_rsp: Join response buffer to be filled up
  *
  * Return: None
  */
-void lim_add_bss_info(tpPESession session_entry,
-					tpSirSmeJoinRsp sme_join_rsp)
+void lim_add_bss_info(tpDphHashNode sta_ds, tpSirSmeJoinRsp sme_join_rsp)
 {
-	sme_join_rsp->hs20vendor_ie = session_entry->hs20vendor_ie;
-	sme_join_rsp->vht_caps = session_entry->vht_caps;
-	sme_join_rsp->ht_caps = session_entry->ht_caps;
-	sme_join_rsp->ht_operation = session_entry->ht_operation;
-	sme_join_rsp->vht_operation = session_entry->vht_operation;
+	struct parsed_ies *parsed_ies = &sta_ds->parsed_ies;
+
+	if (parsed_ies->hs20vendor_ie.present)
+		sme_join_rsp->hs20vendor_ie = parsed_ies->hs20vendor_ie;
+	if (parsed_ies->vht_caps.present)
+		sme_join_rsp->vht_caps = parsed_ies->vht_caps;
+	if (parsed_ies->ht_caps.present)
+		sme_join_rsp->ht_caps = parsed_ies->ht_caps;
+	if (parsed_ies->ht_operation.present)
+		sme_join_rsp->ht_operation = parsed_ies->ht_operation;
+	if (parsed_ies->vht_operation.present)
+		sme_join_rsp->vht_operation = parsed_ies->vht_operation;
 }
 
 /**
@@ -500,6 +506,7 @@ lim_send_sme_join_reassoc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 				sme_join_rsp->nss = sta_ds->nss;
 				sme_join_rsp->max_rate_flags =
 					lim_get_max_rate_flags(mac_ctx, sta_ds);
+				lim_add_bss_info(sta_ds, sme_join_rsp);
 			}
 		}
 		sme_join_rsp->beaconLength = 0;
@@ -509,7 +516,6 @@ lim_send_sme_join_reassoc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 #ifdef FEATURE_WLAN_ESE
 		sme_join_rsp->tspecIeLen = 0;
 #endif
-		lim_add_bss_info(session_entry, sme_join_rsp);
 		lim_handle_join_rsp_status(mac_ctx, session_entry, result_code,
 			sme_join_rsp);
 

@@ -941,7 +941,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			session->vht_config.su_beam_former = 0;
 			session->vht_config.tx_stbc = 0;
 			session->vht_config.num_soundingdim = 0;
-			session->ht_caps.txSTBC = 0;
+			session->htConfig.ht_tx_stbc = 0;
 		}
 		/*
 		 * keep the RSN/WPA IE information in PE Session Entry
@@ -1931,7 +1931,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			session->vht_config.su_beam_former = 0;
 			session->vht_config.tx_stbc = 0;
 			session->vht_config.num_soundingdim = 0;
-			session->ht_caps.txSTBC = 0;
+			session->htConfig.ht_tx_stbc = 0;
 		}
 
 #ifdef FEATURE_WLAN_ESE

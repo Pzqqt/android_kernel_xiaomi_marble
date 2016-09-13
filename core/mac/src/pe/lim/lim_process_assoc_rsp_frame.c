@@ -996,11 +996,16 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		ie_len,
 		beacon);
 
-	session_entry->vht_caps = beacon->VHTCaps;
-	session_entry->ht_caps = beacon->HTCaps;
-	session_entry->hs20vendor_ie = beacon->hs20vendor_ie;
-	session_entry->ht_operation = beacon->HTInfo;
-	session_entry->vht_operation = beacon->VHTOperation;
+	if (beacon->VHTCaps.present)
+		sta_ds->parsed_ies.vht_caps = beacon->VHTCaps;
+	if (beacon->HTCaps.present)
+		sta_ds->parsed_ies.ht_caps = beacon->HTCaps;
+	if (beacon->hs20vendor_ie.present)
+		sta_ds->parsed_ies.hs20vendor_ie = beacon->hs20vendor_ie;
+	if (beacon->HTInfo.present)
+		sta_ds->parsed_ies.ht_operation = beacon->HTInfo;
+	if (beacon->VHTOperation.present)
+		sta_ds->parsed_ies.vht_operation = beacon->VHTOperation;
 
 	if (mac_ctx->lim.gLimProtectionControl !=
 		WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE)
