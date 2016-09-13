@@ -2013,17 +2013,23 @@ void lim_process_channel_switch_timeout(tpAniSirGlobal pMac)
 	psessionEntry = pe_find_session_by_session_id(pMac,
 			pMac->lim.limTimers.gLimChannelSwitchTimer.sessionId);
 	if (psessionEntry == NULL) {
-		lim_log(pMac, LOGP,
+		lim_log(pMac, LOGE,
 			FL("Session Does not exist for given sessionID"));
 		return;
 	}
 
 	if (!LIM_IS_STA_ROLE(psessionEntry)) {
-		PELOGW(lim_log
-			       (pMac, LOGW,
+		lim_log(pMac, LOGW,
 			       "Channel switch can be done only in STA role, Current Role = %d",
 			       GET_LIM_SYSTEM_ROLE(psessionEntry));
-		       )
+		return;
+	}
+
+	if (psessionEntry->gLimSpecMgmt.dot11hChanSwState !=
+	   eLIM_11H_CHANSW_RUNNING) {
+		lim_log(pMac, LOGW,
+			FL("Channel switch timer should not have been running in state %d"),
+			psessionEntry->gLimSpecMgmt.dot11hChanSwState);
 		return;
 	}
 
@@ -2048,15 +2054,22 @@ void lim_process_channel_switch_timeout(tpAniSirGlobal pMac)
 			return;
 		}
 
-		/* If the channel-list that AP is asking us to switch is invalid,
+		/*
+		 * If the channel-list that AP is asking us to switch is invalid
 		 * then we cannot switch the channel. Just disassociate from AP.
 		 * We will find a better AP !!!
 		 */
-		lim_tear_down_link_with_ap(pMac,
+		if ((psessionEntry->limMlmState ==
+		   eLIM_MLM_LINK_ESTABLISHED_STATE) &&
+		   (psessionEntry->limSmeState != eLIM_SME_WT_DISASSOC_STATE) &&
+		   (psessionEntry->limSmeState != eLIM_SME_WT_DEAUTH_STATE)) {
+			lim_log(pMac, LOGE, FL("Invalid channel! Disconnect"));
+			lim_tear_down_link_with_ap(pMac,
 					   pMac->lim.limTimers.
 					   gLimChannelSwitchTimer.sessionId,
 					   eSIR_MAC_UNSPEC_FAILURE_REASON);
-		return;
+			return;
+		}
 	}
 	lim_covert_channel_scan_type(pMac, psessionEntry->currentOperChannel,
 				     false);

@@ -457,7 +457,15 @@ void lim_handle_heart_beat_failure(tpAniSirGlobal mac_ctx,
 		if (!mac_ctx->sys.gSysEnableLinkMonitorMode)
 			return;
 
-		 /* Beacon frame not received within heartbeat timeout. */
+		/* Ignore HB if channel switch is in progress */
+		if (session->gLimSpecMgmt.dot11hChanSwState ==
+		   eLIM_11H_CHANSW_RUNNING) {
+			lim_log(mac_ctx, LOGE,
+				FL("Ignore Heartbeat failure as Channel switch is in progress"));
+			session->pmmOffloadInfo.bcnmiss = false;
+			return;
+		}
+		/* Beacon frame not received within heartbeat timeout. */
 		lim_log(mac_ctx, LOGW, FL("Heartbeat Failure"));
 		mac_ctx->lim.gLimHBfailureCntInLinkEstState++;
 
