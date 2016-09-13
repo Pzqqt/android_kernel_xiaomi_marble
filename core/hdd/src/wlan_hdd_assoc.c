@@ -2510,10 +2510,26 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 				wlan_hdd_cfg80211_update_bss_db(pAdapter,
 								pRoamInfo);
 			if (NULL == bss) {
-				pr_err("wlan: Not able to create BSS entry\n");
+				hdd_err("wlan: Not able to create BSS entry");
 				wlan_hdd_netif_queue_control(pAdapter,
 					WLAN_NETIF_CARRIER_OFF,
 					WLAN_CONTROL_PATH);
+				if (!hddDisconInProgress) {
+					/*
+					 * Here driver was not able to add bss
+					 * in cfg80211 database this can happen
+					 * if connected channel is not valid,
+					 * i.e reg domain was changed during
+					 * connection. Queue disconnect for the
+					 * session if disconnect is not in
+					 * progress.
+					 */
+					hdd_err("Disconnecting...");
+					sme_roam_disconnect(
+					   WLAN_HDD_GET_HAL_CTX(pAdapter),
+					   pAdapter->sessionId,
+					   eCSR_DISCONNECT_REASON_UNSPECIFIED);
+				}
 				return QDF_STATUS_E_FAILURE;
 			}
 			if (pRoamInfo->u.pConnectedProfile->AuthType ==
