@@ -6452,4 +6452,21 @@ struct sir_mac_pwr_dbg_cmd {
 	uint8_t wait_for_ack;
  };
 
+/**
+ * struct sme_update_access_policy_vendor_ie - update vendor ie and access
+ * policy
+ * @msg_type: message id
+ * @msg_len: message length
+ * @sme_session_id: sme session id
+ * @ie: vendor ie
+ * @access_policy: access policy for vendor ie
+ */
+struct sme_update_access_policy_vendor_ie {
+	uint16_t msg_type;
+	uint16_t length;
+	uint32_t sme_session_id;
+	uint8_t ie[SIR_MAC_MAX_IE_LENGTH];
+	uint8_t access_policy;
+};
+
 #endif /* __SIR_API_H */

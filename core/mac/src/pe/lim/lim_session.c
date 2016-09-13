@@ -704,6 +704,11 @@ void pe_delete_session(tpAniSirGlobal mac_ctx, tpPESession session)
 #endif
 	session->valid = false;
 
+	if (session->access_policy_vendor_ie)
+		qdf_mem_free(session->access_policy_vendor_ie);
+
+	session->access_policy_vendor_ie = NULL;
+
 	if (LIM_IS_AP_ROLE(session))
 		lim_check_and_reset_protection_params(mac_ctx);
 

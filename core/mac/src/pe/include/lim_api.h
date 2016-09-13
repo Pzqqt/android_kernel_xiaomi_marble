@@ -83,6 +83,22 @@
 /* LIM exported function templates */
 #define LIM_MIN_BCN_PR_LENGTH  12
 #define LIM_BCN_PR_CAPABILITY_OFFSET 10
+#define LIM_ASSOC_REQ_IE_OFFSET 4
+
+/**
+ * enum lim_vendor_ie_access_policy - vendor ie access policy
+ * @LIM_ACCESS_POLICY_NONE: access policy not valid
+ * @LIM_ACCESS_POLICY_RESPOND_IF_IE_IS_PRESENT: respond only if vendor ie
+ *         is present in probe request and assoc request frames
+ * @LIM_ACCESS_POLICY_DONOT_RESPOND_IF_IE_IS_PRESENT: do not respond if vendor
+ *         ie is present in probe request or assoc request frames
+ */
+enum lim_vendor_ie_access_policy {
+	LIM_ACCESS_POLICY_NONE,
+	LIM_ACCESS_POLICY_RESPOND_IF_IE_IS_PRESENT,
+	LIM_ACCESS_POLICY_DONOT_RESPOND_IF_IE_IS_PRESENT,
+};
+
 typedef enum eMgmtFrmDropReason {
 	eMGMT_DROP_NO_DROP,
 	eMGMT_DROP_NOT_LAST_IBSS_BCN,

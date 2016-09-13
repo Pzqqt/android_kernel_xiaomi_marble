@@ -1164,4 +1164,8 @@ QDF_STATUS sme_register_p2p_ack_ind_callback(tHalHandle hal,
 void sme_send_disassoc_req_frame(tHalHandle hal, uint8_t session_id, uint8_t
 				*peer_mac, uint16_t reason, uint8_t
 				wait_for_ack);
+QDF_STATUS sme_update_access_policy_vendor_ie(tHalHandle hal,
+					uint8_t session_id, uint8_t *vendor_ie,
+					int access_policy);
+
 #endif /* #if !defined( __SME_API_H ) */
