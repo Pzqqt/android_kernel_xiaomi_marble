@@ -95,9 +95,9 @@ void
 ol_txrx_copy_mac_addr_raw(ol_txrx_vdev_handle vdev, uint8_t *bss_addr)
 {
 	if (bss_addr && vdev->last_real_peer &&
-	    (qdf_mem_cmp((u8 *)bss_addr,
+	    !qdf_mem_cmp((u8 *)bss_addr,
 			     vdev->last_real_peer->mac_addr.raw,
-			     IEEE80211_ADDR_LEN) == 0))
+			     IEEE80211_ADDR_LEN))
 		qdf_mem_copy(vdev->hl_tdls_ap_mac_addr.raw,
 			     vdev->last_real_peer->mac_addr.raw,
 			     OL_TXRX_MAC_ADDR_LEN);
@@ -2087,7 +2087,6 @@ ol_txrx_peer_attach(ol_txrx_vdev_handle vdev, uint8_t *peer_mac_addr)
 	struct ol_txrx_peer_t *peer;
 	struct ol_txrx_peer_t *temp_peer;
 	uint8_t i;
-	int differs;
 	bool wait_on_deletion = false;
 	unsigned long rc;
 	struct ol_txrx_pdev_t *pdev;
@@ -2191,9 +2190,8 @@ ol_txrx_peer_attach(ol_txrx_vdev_handle vdev, uint8_t *peer_mac_addr)
 	/*
 	 * For every peer MAp message search and set if bss_peer
 	 */
-	differs = qdf_mem_cmp(peer->mac_addr.raw, vdev->mac_addr.raw,
-				OL_TXRX_MAC_ADDR_LEN);
-	if (differs)
+	if (qdf_mem_cmp(peer->mac_addr.raw, vdev->mac_addr.raw,
+				OL_TXRX_MAC_ADDR_LEN))
 		peer->bss_peer = 1;
 
 	/*

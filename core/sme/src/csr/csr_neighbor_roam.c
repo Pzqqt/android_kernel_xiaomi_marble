@@ -1695,7 +1695,7 @@ QDF_STATUS csr_neighbor_roam_handoff_req_hdlr(
 	}
 
 	/* sanity check */
-	if (true != qdf_mem_cmp(handoff_req->bssid,
+	if (!qdf_mem_cmp(handoff_req->bssid,
 		roam_ctrl_info->currAPbssid.bytes,
 		sizeof(tSirMacAddr))) {
 		sms_log(mac_ctx, LOGE,

@@ -214,10 +214,8 @@ static void ol_rx_process_inv_peer(ol_txrx_pdev_handle pdev,
 	/* ignore frames for non-existent bssids */
 	qdf_mem_copy(a1, wh->i_addr1, IEEE80211_ADDR_LEN);
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
-		if (qdf_mem_cmp(a1, vdev->mac_addr.raw, IEEE80211_ADDR_LEN)
-		    != 0) {
+		if (qdf_mem_cmp(a1, vdev->mac_addr.raw, IEEE80211_ADDR_LEN))
 			break;
-		}
 	}
 	if (!vdev)
 		return;

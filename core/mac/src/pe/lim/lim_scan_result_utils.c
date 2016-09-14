@@ -261,7 +261,7 @@ bool lim_is_scan_requested_ssid(tpAniSirGlobal pMac, tSirMacSSid *ssId)
 	uint8_t i = 0;
 
 	for (i = 0; i < pMac->lim.gpLimMlmScanReq->numSsid; i++) {
-		if (true != qdf_mem_cmp((uint8_t *) ssId,
+		if (!qdf_mem_cmp((uint8_t *) ssId,
 					    (uint8_t *) &pMac->lim.
 					    gpLimMlmScanReq->ssId[i],
 					    (uint8_t) (pMac->lim.

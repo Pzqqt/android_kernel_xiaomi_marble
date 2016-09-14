@@ -2197,7 +2197,7 @@ QDF_STATUS csr_scan_flush_selective_result(tpAniSirGlobal pMac, bool flushP2P)
 	pEntry = csr_ll_peek_head(pList, LL_ACCESS_NOLOCK);
 	while (pEntry != NULL) {
 		pBssDesc = GET_BASE_ADDR(pEntry, tCsrScanResult, Link);
-		if (flushP2P != qdf_mem_cmp(pBssDesc->Result.ssId.ssId,
+		if (flushP2P && !qdf_mem_cmp(pBssDesc->Result.ssId.ssId,
 						"DIRECT-", 7)) {
 			pFreeElem = pEntry;
 			pEntry = csr_ll_next(pList, pEntry, LL_ACCESS_NOLOCK);
@@ -4676,13 +4676,13 @@ QDF_STATUS csr_scan_process_single_bssdescr(tpAniSirGlobal mac_ctx,
 bool csr_scan_is_wild_card_scan(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 {
 	uint8_t bssid[QDF_MAC_ADDR_SIZE] = {0};
-	bool f = qdf_mem_cmp(pCommand->u.scanCmd.u.scanRequest.bssid.bytes,
-				 bssid, sizeof(struct qdf_mac_addr));
 	/*
 	 * It is not a wild card scan if the bssid is not broadcast and
 	 * the number of SSID is 1.
 	 */
-	return ((!f) || (0xff == pCommand->u.scanCmd.u.scanRequest.bssid.bytes[0]))
+	return ((!qdf_mem_cmp(pCommand->u.scanCmd.u.scanRequest.bssid.bytes,
+					bssid, sizeof(struct qdf_mac_addr)))
+		|| (0xff == pCommand->u.scanCmd.u.scanRequest.bssid.bytes[0]))
 		&& (pCommand->u.scanCmd.u.scanRequest.SSIDs.numOfSSIDs != 1);
 }
 

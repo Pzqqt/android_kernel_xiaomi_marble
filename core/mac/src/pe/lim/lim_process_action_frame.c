@@ -1946,7 +1946,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 
 		/* Check if it is a vendor specific action frame. */
 		if (LIM_IS_STA_ROLE(session) &&
-		    (true != qdf_mem_cmp(session->selfMacAddr,
+		    (!qdf_mem_cmp(session->selfMacAddr,
 					&mac_hdr->da[0], sizeof(tSirMacAddr)))
 		    && IS_WES_MODE_ENABLED(mac_ctx)
 		    && !qdf_mem_cmp(vendor_specific->Oui, oui, 3)) {

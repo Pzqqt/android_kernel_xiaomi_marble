@@ -4439,7 +4439,7 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 	 * if the target bssid is same as currently associated AP,
 	 * issue reassoc to same AP
 	 */
-	if (true != qdf_mem_cmp(targetApBssid,
+	if (!qdf_mem_cmp(targetApBssid,
 				    pHddStaCtx->conn_info.bssId.bytes,
 				    QDF_MAC_ADDR_SIZE)) {
 		hdd_info("Reassoc BSSID is same as currently associated AP bssid");

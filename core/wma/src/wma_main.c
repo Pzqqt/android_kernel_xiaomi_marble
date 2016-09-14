@@ -3649,7 +3649,7 @@ static void wma_derive_ext_ht_cap(tp_wma_handle wma_handle,
 	if (NULL == wma_handle || NULL == ht_cap)
 		return;
 
-	if (0 == qdf_mem_cmp(ht_cap, &tmp, sizeof(struct wma_tgt_ht_cap))) {
+	if (!qdf_mem_cmp(ht_cap, &tmp, sizeof(struct wma_tgt_ht_cap))) {
 		ht_cap->ht_rx_stbc = (!!(value & WMI_HT_CAP_RX_STBC));
 		ht_cap->ht_tx_stbc = (!!(value & WMI_HT_CAP_TX_STBC));
 		ht_cap->mpdu_density = (!!(value & WMI_HT_CAP_MPDU_DENSITY));
@@ -3733,7 +3733,7 @@ static void wma_update_target_ext_ht_cap(tp_wma_handle wma_handle,
 		}
 	}
 
-	if (0 != qdf_mem_cmp(&tmp_cap, &tmp_ht_cap,
+	if (qdf_mem_cmp(&tmp_cap, &tmp_ht_cap,
 				sizeof(struct wma_tgt_ht_cap))) {
 			qdf_mem_copy(ht_cap, &tmp_ht_cap,
 					sizeof(struct wma_tgt_ht_cap));
@@ -3770,7 +3770,7 @@ static void wma_derive_ext_vht_cap(t_wma_handle *wma_handle,
 	if (NULL == wma_handle || NULL == vht_cap)
 		return;
 
-	if (0 == qdf_mem_cmp(vht_cap, &tmp_cap,
+	if (!qdf_mem_cmp(vht_cap, &tmp_cap,
 				sizeof(struct wma_tgt_vht_cap))) {
 		if (value & WMI_VHT_CAP_MAX_MPDU_LEN_11454)
 			vht_cap->vht_max_mpdu = WMI_VHT_CAP_MAX_MPDU_LEN_11454;
@@ -3904,7 +3904,7 @@ static void wma_update_target_ext_vht_cap(t_wma_handle *wma_handle,
 		}
 	}
 
-	if (0 != qdf_mem_cmp(&tmp_cap, &tmp_vht_cap,
+	if (qdf_mem_cmp(&tmp_cap, &tmp_vht_cap,
 				sizeof(struct wma_tgt_vht_cap))) {
 			qdf_mem_copy(vht_cap, &tmp_vht_cap,
 					sizeof(struct wma_tgt_vht_cap));

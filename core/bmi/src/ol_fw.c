@@ -127,7 +127,7 @@ static int ol_check_fw_hash(struct device *dev,
 		goto end;
 	}
 
-	if (qdf_mem_cmp(hash, digest, SHA256_DIGEST_SIZE) == 0) {
+	if (qdf_mem_cmp(hash, digest, SHA256_DIGEST_SIZE)) {
 		BMI_ERR("Hash Mismatch");
 		qdf_trace_hex_dump(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 				   digest, SHA256_DIGEST_SIZE);

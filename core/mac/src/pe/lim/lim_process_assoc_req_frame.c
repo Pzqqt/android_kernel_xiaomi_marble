@@ -203,15 +203,14 @@ static bool lim_check_sta_in_pe_entries(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr 
  *
  * Checks source addr to destination addr of assoc req frame
  *
- * Return: true of no error, false otherwise
+ * Return: true if source and destination address are different
  */
 static bool lim_chk_sa_da(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 			  tpPESession session, uint8_t sub_type)
 {
-	int result = qdf_mem_cmp((uint8_t *) hdr->sa,
+	if (qdf_mem_cmp((uint8_t *) hdr->sa,
 					(uint8_t *) hdr->da,
-					(uint8_t) (sizeof(tSirMacAddr)));
-	if (0 != result)
+					(uint8_t) (sizeof(tSirMacAddr))))
 		return true;
 
 	lim_log(mac_ctx, LOGE, FL("Assoc Req rejected: wlan.sa = wlan.da"));
@@ -1103,7 +1102,7 @@ static bool lim_process_assoc_req_sta_ctx(tpAniSirGlobal mac_ctx,
 
 	/* no change in the capability so drop the frame */
 	if ((sub_type == LIM_ASSOC) &&
-		(0 == qdf_mem_cmp(&sta_ds->mlmStaContext.capabilityInfo,
+		(!qdf_mem_cmp(&sta_ds->mlmStaContext.capabilityInfo,
 			&assoc_req->capabilityInfo,
 			sizeof(tSirMacCapabilityInfo)))) {
 		lim_log(mac_ctx, LOGE,
