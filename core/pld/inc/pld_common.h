@@ -96,23 +96,6 @@ struct pld_fw_files {
 	char setup_file[PLD_MAX_FILE_NAME];
 };
 
-/**
- * struct pld_image_desc_info - FW image description
- * @fw_addr: FW image address
- * @fw_size: FW image size
- * @bdata_addr: FW board data address
- * @bdata_size: FW board data size
- *
- * pld_image_desc_info is used to store FW image description
- * information.
- */
-struct pld_image_desc_info {
-	dma_addr_t fw_addr;
-	u32 fw_size;
-	dma_addr_t bdata_addr;
-	u32 bdata_size;
-};
-
 #define PLD_CODESWAP_MAX_CODESEGS 16
 
 /**
@@ -348,8 +331,6 @@ void pld_get_default_fw_files(struct pld_fw_files *pfw_files);
 int pld_get_fw_files_for_target(struct device *dev,
 				struct pld_fw_files *pfw_files,
 				u32 target_type, u32 target_version);
-int pld_get_fw_image(struct device *dev,
-		     struct pld_image_desc_info *image_desc_info);
 void pld_is_pci_link_down(struct device *dev);
 int pld_shadow_control(struct device *dev, bool enable);
 int pld_get_codeswap_struct(struct device *dev,

@@ -487,37 +487,6 @@ int pld_get_fw_files_for_target(struct device *dev,
 }
 
 /**
- * pld_get_fw_image() - Get FW image descriptor
- * @dev: device
- * @image_desc_info: buffer for image descriptor
- *
- * Return FW image descriptor to the buffer.
- *
- * Return: 0 for success
- *         Non zero failure code for errors
- */
-int pld_get_fw_image(struct device *dev,
-		     struct pld_image_desc_info *image_desc_info)
-{
-	int ret = 0;
-
-	switch (pld_get_bus_type(dev)) {
-	case PLD_BUS_TYPE_PCIE:
-		ret = pld_pcie_get_fw_image(image_desc_info);
-		break;
-	case PLD_BUS_TYPE_SNOC:
-		break;
-	case PLD_BUS_TYPE_SDIO:
-		break;
-	default:
-		ret = -EINVAL;
-		break;
-	}
-
-	return ret;
-}
-
-/**
  * pld_is_pci_link_down() - Notification for pci link down event
  * @dev: device
  *
