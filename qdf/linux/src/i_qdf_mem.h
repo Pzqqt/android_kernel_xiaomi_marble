@@ -198,7 +198,7 @@ static inline int32_t __qdf_str_len(const char *str)
  * Function to compare two pieces of memory, similar to memcmp function
  * in standard C.
  * Return:
- * int32_t - returns a bool value that tells if the memory
+ * int32_t - returns an int value that tells if the memory
  * locations are equal or not equal.
  * 0 -- equal
  * < 0 -- *memory1 is less than *memory2
