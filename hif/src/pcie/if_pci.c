@@ -2202,7 +2202,6 @@ void hif_disable_pci(struct hif_pci_softc *sc)
 		HIF_ERROR("%s: ol_sc = NULL", __func__);
 		return;
 	}
-	pci_set_drvdata(sc->pdev, NULL);
 	hif_pci_device_reset(sc);
 	pci_iounmap(sc->pdev, sc->mem);
 	sc->mem = NULL;
@@ -2559,7 +2558,6 @@ void hif_pci_disable_bus(struct hif_softc *scn)
 			athdiag_procfs_remove();
 			scn->athdiag_procfs_inited = false;
 		}
-		pci_set_drvdata(pdev, NULL);
 		pci_iounmap(pdev, mem);
 		scn->mem = NULL;
 		pci_release_region(pdev, BAR_NUM);
@@ -3623,9 +3621,6 @@ again:
 		goto err_tgtstate;
 	}
 	ol_sc->mem_pa = sc->soc_pcie_bar0;
-
-	BUG_ON(pci_get_drvdata(sc->pdev) != NULL);
-	pci_set_drvdata(sc->pdev, sc);
 
 	hif_target_sync(ol_sc);
 
