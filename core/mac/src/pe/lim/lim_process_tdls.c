@@ -520,14 +520,16 @@ tSirRetStatus lim_send_tdls_dis_req_frame(tpAniSirGlobal pMac,
 		MAC_ADDR_ARRAY(peer_mac.bytes));
 
 	pMac->lim.tdls_frm_session_id = psessionEntry->peSessionId;
-	qdf_status = wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
-					      TXRX_FRM_802_11_DATA,
-					      ANI_TXDIR_TODS,
-					      TID_AC_VI,
-					      lim_tx_complete, pFrame,
-					      lim_mgmt_tdls_tx_complete,
-					      HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME,
-					      smeSessionId, false, 0);
+	qdf_status = wma_tx_frameWithTxComplete(pMac, pPacket,
+					(uint16_t) nBytes,
+					TXRX_FRM_802_11_DATA,
+					ANI_TXDIR_TODS,
+					TID_AC_VI,
+					lim_tx_complete, pFrame,
+					lim_mgmt_tdls_tx_complete,
+					HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME |
+					HAL_USE_PEER_STA_REQUESTED_MASK,
+					smeSessionId, false, 0);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		pMac->lim.tdls_frm_session_id = NO_SESSION;
 		lim_log(pMac, LOGE,
@@ -935,7 +937,8 @@ wma_tx_frame_with_tx_complete_send(tpAniSirGlobal pMac, void *pPacket,
 					  tid,
 					  lim_tx_complete, pFrame,
 					  lim_mgmt_tdls_tx_complete,
-					  HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME,
+					  HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME
+					  | HAL_USE_PEER_STA_REQUESTED_MASK,
 					  smeSessionId, flag, 0);
 }
 #else
@@ -954,7 +957,8 @@ wma_tx_frame_with_tx_complete_send(tpAniSirGlobal pMac, void *pPacket,
 					  tid,
 					  lim_tx_complete, pFrame,
 					  lim_mgmt_tdls_tx_complete,
-					  HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME,
+					  HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME
+					  | HAL_USE_PEER_STA_REQUESTED_MASK,
 					  smeSessionId, false, 0);
 }
 #endif
