@@ -117,14 +117,13 @@ void cds_deinit(void)
 	if (gp_cds_context == NULL)
 		return;
 
+	qdf_mc_timer_manager_exit();
+	qdf_mem_exit();
+
 	gp_cds_context->qdf_ctx = NULL;
 	gp_cds_context = NULL;
 
 	qdf_mem_zero(&g_cds_context, sizeof(g_cds_context));
-
-	qdf_mc_timer_manager_exit();
-	qdf_mem_exit();
-
 	return;
 }
 
