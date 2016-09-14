@@ -3634,6 +3634,8 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 		if (eSIR_SME_SUCCESS != pRoamInfo->statusCode) {
 			hdd_err("Add Sta failed. status code(=%d)",
 				pRoamInfo->statusCode);
+			pAdapter->tdlsAddStaStatus = QDF_STATUS_E_FAILURE;
+
 		} else {
 			/*
 			 * Check if there is available index for this new TDLS

@@ -3624,7 +3624,7 @@ int wlan_hdd_tdls_add_station(struct wiphy *wiphy,
 	hddTdlsPeer_t *pTdlsPeer;
 	uint16_t numCurrTdlsPeers;
 	unsigned long rc;
-	long ret;
+	int ret;
 	int rate_idx;
 
 	ENTER();
@@ -3763,16 +3763,15 @@ int wlan_hdd_tdls_add_station(struct wiphy *wiphy,
 						 (WAIT_TIME_TDLS_ADD_STA));
 
 	if (!rc) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: timeout waiting for tdls add station indication",
-			  __func__);
-		return -EPERM;
+		hdd_err("timeout waiting for tdls add station indication %ld  peer link status %u",
+			rc, pTdlsPeer->link_status);
+		goto error;
 	}
 
 	if (QDF_STATUS_SUCCESS != pAdapter->tdlsAddStaStatus) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Add Station is unsuccessful", __func__);
-		return -EPERM;
+		goto error;
 	}
 
 	return 0;
