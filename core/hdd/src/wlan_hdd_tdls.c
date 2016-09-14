@@ -874,22 +874,34 @@ void wlan_hdd_tdls_exit(hdd_adapter_t *pAdapter)
 
 	mutex_lock(&pHddCtx->tdls_lock);
 
+	pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
+	if (NULL == pHddTdlsCtx) {
+		/*
+		 * TDLS context can be null and might have been freed up during
+		 * cleanup for STA adapter
+		 */
+		mutex_unlock(&pHddCtx->tdls_lock);
+
+		hdd_info("pHddTdlsCtx is NULL, adapter device mode: %s(%d)",
+			 hdd_device_mode_to_string(pAdapter->device_mode),
+			 pAdapter->device_mode);
+		goto done;
+	}
+
 	/* must stop timer here before freeing peer list, because peerIdleTimer is
 	   part of peer list structure. */
 	wlan_hdd_tdls_timers_destroy(pHddTdlsCtx);
 	wlan_hdd_tdls_free_list(pHddTdlsCtx);
 
-	mutex_unlock(&pHddCtx->tdls_lock);
-
 	wlan_hdd_tdls_free_scan_request(&pHddCtx->tdls_scan_ctxt);
 
 	pHddTdlsCtx->magic = 0;
 	pHddTdlsCtx->pAdapter = NULL;
+	pAdapter->sessionCtx.station.pHddTdlsCtx = NULL;
+
+	mutex_unlock(&pHddCtx->tdls_lock);
 
 	qdf_mem_free(pHddTdlsCtx);
-	pAdapter->sessionCtx.station.pHddTdlsCtx = NULL;
-	pHddTdlsCtx = NULL;
-
 done:
 	EXIT();
 	clear_bit(TDLS_INIT_DONE, &pAdapter->event_flags);
