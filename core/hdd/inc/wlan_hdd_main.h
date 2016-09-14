@@ -1496,6 +1496,7 @@ struct hdd_context_s {
 	bool napi_enable;
 	bool stop_modules_in_progress;
 	bool start_modules_in_progress;
+	bool update_mac_addr_to_fw;
 };
 
 /*---------------------------------------------------------------------------

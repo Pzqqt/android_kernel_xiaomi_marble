@@ -1424,6 +1424,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 
 	if (!qdf_is_macaddr_zero(&cfg->hw_macaddr)) {
 		hdd_update_macaddr(hdd_ctx->config, cfg->hw_macaddr);
+		hdd_ctx->update_mac_addr_to_fw = false;
 	} else {
 		static struct qdf_mac_addr default_mac_addr = {
 			{0x00, 0x0A, 0xF5, 0x89, 0x89, 0xFF}
@@ -1441,6 +1442,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 				MAC_ADDR_ARRAY(hdd_ctx->config->
 					       intfMacAddr[0].bytes));
 		}
+		hdd_ctx->update_mac_addr_to_fw = true;
 	}
 
 	hdd_ctx->target_fw_version = cfg->target_fw_version;
@@ -6988,6 +6990,30 @@ static int hdd_cnss_wlan_mac(hdd_context_t *hdd_ctx)
 }
 
 /**
+ * hdd_update_mac_addr_to_fw() - API to update wlan mac addresses to FW
+ * @hdd_ctx: HDD Context
+ *
+ * Update MAC address to FW. If MAC address passed by FW is invalid, host
+ * will generate its own MAC and update it to FW.
+ *
+ * Return: 0 for success
+ *         Non-zero error code for failure
+ */
+static int hdd_update_mac_addr_to_fw(hdd_context_t *hdd_ctx)
+{
+	tSirMacAddr customMacAddr;
+	QDF_STATUS status;
+
+	qdf_mem_copy(&customMacAddr,
+		     &hdd_ctx->config->intfMacAddr[0].bytes[0],
+		     sizeof(tSirMacAddr));
+	status = sme_set_custom_mac_addr(customMacAddr);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		return -EAGAIN;
+	return 0;
+}
+
+/**
  * hdd_initialize_mac_address() - API to get wlan mac addresses
  * @hdd_ctx: HDD Context
  *
@@ -7010,8 +7036,18 @@ static void hdd_initialize_mac_address(hdd_context_t *hdd_ctx)
 
 	status = hdd_update_mac_config(hdd_ctx);
 
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_warn("can't update mac config, using MAC from ini file");
+	if (QDF_IS_STATUS_SUCCESS(status))
+		return;
+
+	hdd_warn("can't update mac config via wlan_mac.bin, using MAC from ini file or auto-gen");
+
+	if (hdd_ctx->update_mac_addr_to_fw)
+		ret = hdd_update_mac_addr_to_fw(hdd_ctx);
+
+	if (ret != 0) {
+		hdd_err("MAC address out-of-sync, ret:%d", ret);
+		QDF_ASSERT(ret);
+	}
 }
 
 /**
