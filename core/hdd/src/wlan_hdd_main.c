@@ -7634,6 +7634,10 @@ int hdd_wlan_startup(struct device *dev)
 	}
 
 	hif_sc = cds_get_context(QDF_MODULE_ID_HIF);
+	if (!hif_sc) {
+		hdd_err("HIF context is NULL");
+		goto err_close_adapter;
+	}
 	/*
 	 * target hw version/revision would only be retrieved after firmware
 	 * donwload
@@ -7704,18 +7708,19 @@ int hdd_wlan_startup(struct device *dev)
 
 err_debugfs_exit:
 	hdd_debugfs_exit(adapter);
+
+err_close_adapter:
 	hdd_close_all_adapters(hdd_ctx, false);
 
 	if (rtnl_held)
 		hdd_release_rtnl_lock();
 
+err_ipa_cleanup:
+	hdd_ipa_cleanup(hdd_ctx);
 
 err_wiphy_unregister:
 	wiphy_unregister(hdd_ctx->wiphy);
 	wlan_hdd_cfg80211_deinit(hdd_ctx->wiphy);
-
-err_ipa_cleanup:
-	hdd_ipa_cleanup(hdd_ctx);
 
 err_stop_modules:
 	hdd_wlan_stop_modules(hdd_ctx, false);

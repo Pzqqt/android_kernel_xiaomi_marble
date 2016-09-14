@@ -800,9 +800,16 @@ int wlan_hdd_bus_resume_noirq(void)
 static int wlan_hdd_bus_reset_resume(void)
 {
 	int ret;
+	struct hif_opaque_softc *scn = NULL;
+
+	scn = cds_get_context(QDF_MODULE_ID_HIF);
+	if (!scn) {
+		hdd_err("Failed to get HIF context");
+		return -EFAULT;
+	}
 
 	cds_ssr_protect(__func__);
-	ret = hif_bus_reset_resume(cds_get_context(QDF_MODULE_ID_HIF));
+	ret = hif_bus_reset_resume(scn);
 	cds_ssr_unprotect(__func__);
 	return ret;
 }
