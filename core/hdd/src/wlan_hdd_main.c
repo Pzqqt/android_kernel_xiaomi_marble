@@ -3419,9 +3419,11 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 	union iwreq_data wrqu;
 	tSirUpdateIE updateIE;
 	unsigned long rc;
+	hdd_scaninfo_t *scan_info = NULL;
 
 	ENTER();
 
+	scan_info = &adapter->scan_info;
 	hdd_notice("Disabling queues");
 	wlan_hdd_netif_queue_control(adapter, WLAN_NETIF_TX_DISABLE_N_CARRIER,
 				   WLAN_CONTROL_PATH);
@@ -3474,7 +3476,8 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			memset(wrqu.ap_addr.sa_data, '\0', ETH_ALEN);
 			wireless_send_event(adapter->dev, SIOCGIWAP, &wrqu,
 					    NULL);
-		} else {
+		}
+		if (scan_info != NULL && scan_info->mScanPending) {
 			wlan_hdd_scan_abort(adapter);
 		}
 		hdd_lro_disable(hdd_ctx, adapter);
