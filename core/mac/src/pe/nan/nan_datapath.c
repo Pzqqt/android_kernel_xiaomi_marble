@@ -310,7 +310,7 @@ static void lim_ndp_delete_peers(tpAniSirGlobal mac_ctx,
 		/* Check if this peer is already in the deleted list */
 		found = false;
 		for (j = 0; j < deleted_num && !found; j++) {
-			if (qdf_mem_cmp(
+			if (!qdf_mem_cmp(
 				&deleted_peers[j].bytes,
 				&ndp_map[i].peer_ndi_mac_addr.bytes,
 				QDF_MAC_ADDR_SIZE)) {
