@@ -151,7 +151,7 @@ ol_reset_lro_stats(ol_txrx_vdev_handle vdev);
  * @return - pointer to received stat payload
  */
 
-#if ATH_BAND_STEERING
+#if ATH_BAND_STEERING || ENHANCED_STATS
 uint32_t *ol_txrx_get_en_stats_base(ol_txrx_pdev_handle txrx_pdev, uint32_t *msg_word,
     uint32_t msg_len, enum htt_t2h_en_stats_type *type,  enum htt_t2h_en_stats_status *status);
 #endif
