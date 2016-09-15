@@ -7285,7 +7285,9 @@ static bool is_management_record_non_tlv(uint32_t cmd_id)
 {
 	if ((cmd_id == WMI_BCN_TX_CMDID) ||
 		(cmd_id == WMI_PDEV_SEND_BCN_CMDID) ||
-		(cmd_id == WMI_MGMT_TX_CMDID)) {
+		(cmd_id == WMI_MGMT_TX_CMDID) ||
+		(cmd_id == WMI_GPIO_OUTPUT_CMDID) ||
+		(cmd_id == WMI_HOST_SWBA_EVENTID)) {
 		return true;
 	}
 
