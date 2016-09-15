@@ -70,7 +70,7 @@
  * This function is called in various places within LIM code
  * to determine whether received SSID is same as SSID in use.
  *
- * Return: true if SSID matched, false otherwise.
+ * Return: zero if SSID matched, non-zero otherwise.
  */
 uint32_t lim_cmp_ssid(tSirMacSSid *rx_ssid, tpPESession session_entry)
 {
