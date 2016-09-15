@@ -120,16 +120,13 @@ lim_process_beacon_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	 * beacon/Pr belongs to one of the session, fill up the
 	 * following, TBD - HB couter
 	 */
-	if ((!session->lastBeaconDtimPeriod) &&
-	    (sir_compare_mac_addr(session->bssId,
-				bcn_ptr->bssid))) {
+	if (sir_compare_mac_addr(session->bssId,
+				bcn_ptr->bssid)) {
 		qdf_mem_copy((uint8_t *)&session->lastBeaconTimeStamp,
 			(uint8_t *) bcn_ptr->timeStamp,
 			sizeof(uint64_t));
 		session->lastBeaconDtimCount =
 				bcn_ptr->tim.dtimCount;
-		session->lastBeaconDtimPeriod =
-				bcn_ptr->tim.dtimPeriod;
 		session->currentBssBeaconCnt++;
 	}
 	MTRACE(mac_trace(mac_ctx,

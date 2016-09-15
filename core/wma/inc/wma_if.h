@@ -1171,6 +1171,16 @@ struct set_ie_param {
 	uint8_t *ie_ptr;
 };
 
+/**
+ * struct set_dtim_params - dtim params
+ * @session_id: SME Session ID
+ * @dtim_period: dtim period
+ */
+struct set_dtim_params {
+	uint8_t session_id;
+	uint8_t dtim_period;
+};
+
 #define DOT11_HT_IE     1
 #define DOT11_VHT_IE    2
 

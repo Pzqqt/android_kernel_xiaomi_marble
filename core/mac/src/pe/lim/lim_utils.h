@@ -621,4 +621,6 @@ QDF_STATUS lim_p2p_action_cnf(tpAniSirGlobal mac_ctx,
 			uint32_t tx_complete_success);
 void lim_update_caps_info_for_bss(tpAniSirGlobal mac_ctx,
 			uint16_t *caps, uint16_t bss_caps);
+void lim_send_set_dtim_period(tpAniSirGlobal mac_ctx, uint8_t dtim_period,
+			      tpPESession session);
 #endif /* __LIM_UTILS_H */

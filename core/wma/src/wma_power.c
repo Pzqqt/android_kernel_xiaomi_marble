@@ -931,7 +931,6 @@ void wma_enable_sta_ps_mode(tp_wma_handle wma, tpEnablePsParams ps_req)
 			return;
 		}
 	}
-	iface->dtimPeriod = ps_req->bcnDtimPeriod;
 }
 
 /**

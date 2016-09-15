@@ -756,6 +756,32 @@ static int32_t wma_set_priv_cfg(tp_wma_handle wma_handle,
 }
 
 /**
+ * wma_set_dtim_period() - set dtim period to FW
+ * @wma: wma handle
+ * @dtim_params: dtim params
+ *
+ * Return: none
+ */
+void wma_set_dtim_period(tp_wma_handle wma,
+			    struct set_dtim_params *dtim_params)
+{
+	QDF_STATUS ret;
+	uint8_t vdev_id = dtim_params->session_id;
+	struct wma_txrx_node *iface =
+		&wma->interfaces[vdev_id];
+
+	WMA_LOGI("%s: set dtim_period %d", __func__,
+			dtim_params->dtim_period);
+	iface->dtimPeriod = dtim_params->dtim_period;
+	ret = wma_vdev_set_param(wma->wmi_handle,
+			vdev_id,
+			WMI_VDEV_PARAM_LISTEN_INTERVAL,
+			dtim_params->dtim_period);
+	if (QDF_IS_STATUS_ERROR(ret))
+		WMA_LOGW("Failed to set listen interval");
+
+}
+/**
  * wma_set_modulated_dtim() - function to configure modulated dtim
  * @wma: wma handle
  * @privcmd: structure containing parameters
@@ -5612,6 +5638,11 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 	case WMA_DISABLE_UAPSD_REQ:
 		wma_disable_uapsd_mode(wma_handle,
 				       (tpDisableUapsdParams) msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case WMA_SET_DTIM_PERIOD:
+		wma_set_dtim_period(wma_handle,
+				       (struct set_dtim_params *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_SET_TX_POWER_REQ:

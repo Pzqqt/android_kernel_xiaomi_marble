@@ -393,9 +393,12 @@ sch_bcn_process_sta(tpAniSirGlobal mac_ctx,
 	qdf_mem_copy((uint8_t *) &session->lastBeaconTimeStamp,
 			(uint8_t *) bcn->timeStamp, sizeof(uint64_t));
 	session->lastBeaconDtimCount = bcn->tim.dtimCount;
-	session->lastBeaconDtimPeriod = bcn->tim.dtimPeriod;
 	session->currentBssBeaconCnt++;
-
+	if (session->lastBeaconDtimPeriod != bcn->tim.dtimPeriod) {
+		session->lastBeaconDtimPeriod = bcn->tim.dtimPeriod;
+		lim_send_set_dtim_period(mac_ctx, bcn->tim.dtimPeriod,
+				session);
+	}
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_RX_MGMT_TSF,
 	       session->peSessionId, bcn->timeStamp[0]);)
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_RX_MGMT_TSF,
