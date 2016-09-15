@@ -53,29 +53,29 @@ extern "C" {
  * WMI_EVENT_ID=WMI_EXTENSION_EVENTID.
  */
 typedef struct {
-    A_UINT32    commandId;
+	A_UINT32 commandId;
 } POSTPACK WMIX_CMD_HDR;
 
 typedef enum {
-    WMIX_DSETOPEN_REPLY_CMDID           = 0x2001,
-    WMIX_DSETDATA_REPLY_CMDID,
-    WMIX_HB_CHALLENGE_RESP_CMDID,
-    WMIX_DBGLOG_CFG_MODULE_CMDID,
-    WMIX_PROF_CFG_CMDID,                 /* 0x200a */
-    WMIX_PROF_ADDR_SET_CMDID,
-    WMIX_PROF_START_CMDID,
-    WMIX_PROF_STOP_CMDID,
-    WMIX_PROF_COUNT_GET_CMDID,
+	WMIX_DSETOPEN_REPLY_CMDID = 0x2001,
+	WMIX_DSETDATA_REPLY_CMDID,
+	WMIX_HB_CHALLENGE_RESP_CMDID,
+	WMIX_DBGLOG_CFG_MODULE_CMDID,
+	WMIX_PROF_CFG_CMDID,            /* 0x200a */
+	WMIX_PROF_ADDR_SET_CMDID,
+	WMIX_PROF_START_CMDID,
+	WMIX_PROF_STOP_CMDID,
+	WMIX_PROF_COUNT_GET_CMDID,
 } WMIX_COMMAND_ID;
 
 typedef enum {
-    WMIX_DSETOPENREQ_EVENTID            = 0x3001,
-    WMIX_DSETCLOSE_EVENTID,
-    WMIX_DSETDATAREQ_EVENTID,
-    WMIX_HB_CHALLENGE_RESP_EVENTID,
-    WMIX_DBGLOG_EVENTID,
-    WMIX_PROF_COUNT_EVENTID,
-    WMIX_PKTLOG_EVENTID,
+	WMIX_DSETOPENREQ_EVENTID = 0x3001,
+	WMIX_DSETCLOSE_EVENTID,
+	WMIX_DSETDATAREQ_EVENTID,
+	WMIX_HB_CHALLENGE_RESP_EVENTID,
+	WMIX_DBGLOG_EVENTID,
+	WMIX_PROF_COUNT_EVENTID,
+	WMIX_PKTLOG_EVENTID,
 } WMIX_EVENT_ID;
 
 /*
@@ -87,10 +87,10 @@ typedef enum {
  * DataSet Open Request Event
  */
 typedef struct {
-    A_UINT32 dset_id;
-    A_UINT32 targ_dset_handle;  /* echo'ed, not used by Host, */
-    A_UINT32 targ_reply_fn;     /* echo'ed, not used by Host, */
-    A_UINT32 targ_reply_arg;    /* echo'ed, not used by Host, */
+	A_UINT32 dset_id;
+	A_UINT32 targ_dset_handle;              /* echo'ed, not used by Host, */
+	A_UINT32 targ_reply_fn;         /* echo'ed, not used by Host, */
+	A_UINT32 targ_reply_arg;                /* echo'ed, not used by Host, */
 } POSTPACK WMIX_DSETOPENREQ_EVENT;
 
 /*
@@ -98,7 +98,7 @@ typedef struct {
  * DataSet Close Event
  */
 typedef struct {
-    A_UINT32 access_cookie;
+	A_UINT32 access_cookie;
 } POSTPACK WMIX_DSETCLOSE_EVENT;
 
 /*
@@ -106,33 +106,32 @@ typedef struct {
  * DataSet Data Request Event
  */
 typedef struct {
-    A_UINT32 access_cookie;
-    A_UINT32 offset;
-    A_UINT32 length;
-    A_UINT32 targ_buf;         /* echo'ed, not used by Host, */
-    A_UINT32 targ_reply_fn;    /* echo'ed, not used by Host, */
-    A_UINT32 targ_reply_arg;   /* echo'ed, not used by Host, */
+	A_UINT32 access_cookie;
+	A_UINT32 offset;
+	A_UINT32 length;
+	A_UINT32 targ_buf;              /* echo'ed, not used by Host, */
+	A_UINT32 targ_reply_fn;         /* echo'ed, not used by Host, */
+	A_UINT32 targ_reply_arg;                /* echo'ed, not used by Host, */
 } WMIX_DSETDATAREQ_EVENT;
 
 typedef struct {
-    A_UINT32              status;
-    A_UINT32              targ_dset_handle;
-    A_UINT32              targ_reply_fn;
-    A_UINT32              targ_reply_arg;
-    A_UINT32              access_cookie;
-    A_UINT32              size;
-    A_UINT32              version;
-}  WMIX_DSETOPEN_REPLY_CMD;
+	A_UINT32 status;
+	A_UINT32 targ_dset_handle;
+	A_UINT32 targ_reply_fn;
+	A_UINT32 targ_reply_arg;
+	A_UINT32 access_cookie;
+	A_UINT32 size;
+	A_UINT32 version;
+} WMIX_DSETOPEN_REPLY_CMD;
 
 typedef struct {
-    A_UINT32              status;
-    A_UINT32              targ_buf;
-    A_UINT32              targ_reply_fn;
-    A_UINT32              targ_reply_arg;
-    A_UINT32              length;
-    A_UINT8               buf[1];
-}  WMIX_DSETDATA_REPLY_CMD;
-
+	A_UINT32 status;
+	A_UINT32 targ_buf;
+	A_UINT32 targ_reply_fn;
+	A_UINT32 targ_reply_arg;
+	A_UINT32 length;
+	A_UINT8 buf[1];
+} WMIX_DSETDATA_REPLY_CMD;
 
 /*
  * =============Error Detection support=================
@@ -143,9 +142,9 @@ typedef struct {
  * Heartbeat Challenge Response command
  */
 typedef struct {
-    A_UINT32              cookie;
-    A_UINT32              source;
-}  WMIX_HB_CHALLENGE_RESP_CMD;
+	A_UINT32 cookie;
+	A_UINT32 source;
+} WMIX_HB_CHALLENGE_RESP_CMD;
 
 /*
  * WMIX_HB_CHALLENGE_RESP_EVENTID
@@ -158,13 +157,13 @@ typedef struct {
  */
 
 typedef struct {
-    A_UINT32 period; /* Time (in 30.5us ticks) between samples */
-    A_UINT32 nbins;
-}  WMIX_PROF_CFG_CMD;
+	A_UINT32 period;                /* Time (in 30.5us ticks) between samples */
+	A_UINT32 nbins;
+} WMIX_PROF_CFG_CMD;
 
 typedef struct {
-    A_UINT32 addr;
-}  WMIX_PROF_ADDR_SET_CMD;
+	A_UINT32 addr;
+} WMIX_PROF_ADDR_SET_CMD;
 
 /*
  * Target responds to Hosts's earlier WMIX_PROF_COUNT_GET_CMDID request
@@ -173,13 +172,11 @@ typedef struct {
  *   count set to the corresponding count
  */
 typedef struct {
-    A_UINT32              addr;
-    A_UINT32              count;
-}  WMIX_PROF_COUNT_EVENT;
-
+	A_UINT32 addr;
+	A_UINT32 count;
+} WMIX_PROF_COUNT_EVENT;
 
 #ifdef __cplusplus
 }
 #endif
-
 #endif /* _WMIX_H_ */

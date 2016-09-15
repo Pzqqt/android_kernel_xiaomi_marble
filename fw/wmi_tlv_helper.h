@@ -24,6 +24,7 @@
  * under proprietary terms before Copyright ownership was assigned
  * to the Linux Foundation.
  */
+
 #ifndef _WMI_TLV_HELPER_H_
 #define _WMI_TLV_HELPER_H_
 
@@ -42,7 +43,7 @@
  * (5) Either WMITLV_SIZE_FIX or WMITLV_SIZE_VAR to indicate if this TLV is variable size.
  *
  * Note: It is important that the last TLV_ELEM does not have the "\" character.
-*/
+ */
 
 /* Size of the TLV Header which is the Tag and Length fields */
 #define WMI_TLV_HDR_SIZE   (1 * sizeof(A_UINT32))
@@ -75,20 +76,19 @@ typedef struct {
 	A_UINT32 tag_struct_size;
 	A_UINT32 tag_varied_size;
 	A_UINT32 tag_array_size;
-    A_UINT32 cmd_num_tlv;
+	A_UINT32 cmd_num_tlv;
 } wmitlv_attributes_struc;
-
 
 /* Template structure definition for a variable size array of UINT32 */
 typedef struct {
-    A_UINT32    tlv_header;     /* TLV tag and len; tag equals WMI_TLVTAG_ARRAY_UINT32 */
-    A_UINT32    uint32_array[1]; /* variable length Array of UINT32 */
+	A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMI_TLVTAG_ARRAY_UINT32 */
+	A_UINT32 uint32_array[1];       /* variable length Array of UINT32 */
 } wmitlv_array_uint32;
 
 /* Template structure definition for a variable size array of unknown structure */
 typedef struct {
-    A_UINT32    tlv_header;     /* TLV tag and len; tag equals WMI_TLVTAG_ARRAY_STRUC */
-    A_UINT32    struc_array[1]; /* variable length Array of structures */
+	A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMI_TLVTAG_ARRAY_STRUC */
+	A_UINT32 struc_array[1];        /* variable length Array of structures */
 } wmitlv_array_struc;
 
 /*
@@ -97,60 +97,64 @@ typedef struct {
  */
 #define WMITLV_ARR_SIZE_INVALID  0x1FE
 
-#define WMITLV_GET_TAG_NUM_TLV_ATTRIB(wmi_cmd_event_id)      \
-       WMI_TLV_HLPR_NUM_TLVS_FOR_##wmi_cmd_event_id
-
-
-void
-wmitlv_set_static_param_tlv_buf(void *param_tlv_buf, A_UINT32 max_tlvs_accomodated);
+#define WMITLV_GET_TAG_NUM_TLV_ATTRIB(wmi_cmd_event_id)	     \
+	WMI_TLV_HLPR_NUM_TLVS_FOR_ ## wmi_cmd_event_id
 
 void
-wmitlv_free_allocated_command_tlvs(
-    A_UINT32 cmd_id,
-    void **wmi_cmd_struct_ptr);
+wmitlv_set_static_param_tlv_buf(void *param_tlv_buf,
+				A_UINT32 max_tlvs_accomodated);
 
 void
-wmitlv_free_allocated_event_tlvs(
-    A_UINT32 event_id,
-    void **wmi_cmd_struct_ptr);
+wmitlv_free_allocated_command_tlvs(A_UINT32 cmd_id, void **wmi_cmd_struct_ptr);
+
+void
+wmitlv_free_allocated_event_tlvs(A_UINT32 event_id, void **wmi_cmd_struct_ptr);
 
 int
-wmitlv_check_command_tlv_params(
-    void *os_ctx, void *param_struc_ptr, A_UINT32 param_buf_len, A_UINT32 wmi_cmd_event_id);
+wmitlv_check_command_tlv_params(void *os_ctx, void *param_struc_ptr,
+				A_UINT32 param_buf_len,
+				A_UINT32 wmi_cmd_event_id);
 
 int
-wmitlv_check_event_tlv_params(
-    void *os_ctx, void *param_struc_ptr, A_UINT32 param_buf_len, A_UINT32 wmi_cmd_event_id);
+wmitlv_check_event_tlv_params(void *os_ctx, void *param_struc_ptr,
+			      A_UINT32 param_buf_len,
+			      A_UINT32 wmi_cmd_event_id);
 
 int
-wmitlv_check_and_pad_command_tlvs(
-    void *os_ctx, void *param_struc_ptr, A_UINT32 param_buf_len, A_UINT32 wmi_cmd_event_id, void **wmi_cmd_struct_ptr);
+wmitlv_check_and_pad_command_tlvs(void *os_ctx, void *param_struc_ptr,
+				  A_UINT32 param_buf_len,
+				  A_UINT32 wmi_cmd_event_id,
+				  void **wmi_cmd_struct_ptr);
 
 int
-wmitlv_check_and_pad_event_tlvs(
-    void *os_ctx, void *param_struc_ptr, A_UINT32 param_buf_len, A_UINT32 wmi_cmd_event_id, void **wmi_cmd_struct_ptr);
+wmitlv_check_and_pad_event_tlvs(void *os_ctx, void *param_struc_ptr,
+				A_UINT32 param_buf_len,
+				A_UINT32 wmi_cmd_event_id,
+				void **wmi_cmd_struct_ptr);
 
 /** This structure is the element for the Version WhiteList
  *  table. */
 typedef struct {
-    A_UINT32      major;
-    A_UINT32      minor;
-    A_UINT32      namespace_0;
-    A_UINT32      namespace_1;
-    A_UINT32      namespace_2;
-    A_UINT32      namespace_3;
+	A_UINT32 major;
+	A_UINT32 minor;
+	A_UINT32 namespace_0;
+	A_UINT32 namespace_1;
+	A_UINT32 namespace_2;
+	A_UINT32 namespace_3;
 } wmi_whitelist_version_info;
 
-struct _wmi_abi_version;   /* Forward declaration to make the ARM compiler happy */
+struct _wmi_abi_version;        /* Forward declaration to make the ARM compiler happy */
 
 int
-wmi_cmp_and_set_abi_version(int num_whitelist, wmi_whitelist_version_info *version_whitelist_table,
-                            struct _wmi_abi_version *my_vers,
-                            struct _wmi_abi_version *opp_vers,
-                            struct _wmi_abi_version *out_vers);
+wmi_cmp_and_set_abi_version(int num_whitelist,
+			    wmi_whitelist_version_info *
+			    version_whitelist_table,
+			    struct _wmi_abi_version *my_vers,
+			    struct _wmi_abi_version *opp_vers,
+			    struct _wmi_abi_version *out_vers);
 
 int
-wmi_versions_are_compatible(struct _wmi_abi_version *vers1, struct _wmi_abi_version *vers2);
+wmi_versions_are_compatible(struct _wmi_abi_version *vers1,
+			    struct _wmi_abi_version *vers2);
 
 #endif /*_WMI_TLV_HELPER_H_*/
-
