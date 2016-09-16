@@ -1224,12 +1224,6 @@ ol_txrx_pdev_post_attach(ol_txrx_pdev_handle pdev)
 			c_element->tx_desc.htt_frag_desc = htt_frag_desc;
 			c_element->tx_desc.htt_frag_desc_paddr = frag_paddr;
 		}
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
-			"%s:%d - %d FRAG VA 0x%p FRAG PA 0x%llx",
-			__func__, __LINE__, i,
-			c_element->tx_desc.htt_frag_desc,
-			(long long unsigned int)
-			c_element->tx_desc.htt_frag_desc_paddr);
 #ifdef QCA_SUPPORT_TXDESC_SANITY_CHECKS
 		c_element->tx_desc.pkt_type = 0xff;
 #ifdef QCA_COMPUTE_TX_DELAY
@@ -2790,15 +2784,15 @@ void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 	 * concurrently with the empty check.
 	 */
 	qdf_spin_lock_bh(&pdev->peer_ref_mutex);
+
 	if (qdf_atomic_dec_and_test(&peer->ref_cnt)) {
 		u_int16_t peer_id;
 
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-			   "Deleting peer %p (%02x:%02x:%02x:%02x:%02x:%02x)",
+			   "Deleting peer %p (%pM) ref_cnt %d\n",
 			   peer,
-			   peer->mac_addr.raw[0], peer->mac_addr.raw[1],
-			   peer->mac_addr.raw[2], peer->mac_addr.raw[3],
-			   peer->mac_addr.raw[4], peer->mac_addr.raw[5]);
+			   peer->mac_addr.raw,
+			   qdf_atomic_read(&peer->ref_cnt));
 
 		peer_id = peer->local_id;
 		/* remove the reference to the peer from the hash table */
@@ -2949,14 +2943,15 @@ QDF_STATUS ol_txrx_clear_peer(uint8_t sta_id)
 }
 
 /**
- * ol_txrx_peer_detach - Delete a peer's data object.
- * @data_peer - the object to delete
+ * ol_txrx_peer_detach() - Delete a peer's data object.
+ * @peer - the object to detach
  *
  * When the host's control SW disassociates a peer, it calls
- * this function to delete the peer's data object. The reference
+ * this function to detach and delete the peer. The reference
  * stored in the control peer object to the data peer
  * object (set up by a call to ol_peer_store()) is provided.
  *
+ * Return: None
  */
 void ol_txrx_peer_detach(ol_txrx_peer_handle peer)
 {
@@ -2992,9 +2987,12 @@ void ol_txrx_peer_detach(ol_txrx_peer_handle peer)
 
 	qdf_spinlock_destroy(&peer->peer_info_lock);
 	qdf_spinlock_destroy(&peer->bufq_lock);
-	/* set delete_in_progress to identify that wma
-	 * is waiting for unmap massage for this peer */
+	/*
+	 * set delete_in_progress to identify that wma
+	 * is waiting for unmap massage for this peer
+	 */
 	qdf_atomic_set(&peer->delete_in_progress, 1);
+
 	/*
 	 * Remove the reference added during peer_attach.
 	 * The peer will still be left allocated until the
@@ -3002,6 +3000,40 @@ void ol_txrx_peer_detach(ol_txrx_peer_handle peer)
 	 * reference, added by the PEER_MAP message.
 	 */
 	ol_txrx_peer_unref_delete(peer);
+}
+
+/**
+ * ol_txrx_peer_detach_force_delete() - Detach and delete a peer's data object
+ * @peer - the object to detach
+ *
+ * Detach a peer and force the peer object to be removed. It is called during
+ * roaming scenario when the firmware has already deleted a peer.
+ * Peer object is freed immediately to avoid duplicate peers during roam sync
+ * indication processing.
+ *
+ * Return: None
+ */
+void ol_txrx_peer_detach_force_delete(ol_txrx_peer_handle peer)
+{
+	ol_txrx_pdev_handle pdev = peer->vdev->pdev;
+
+	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "%s peer %p, peer->ref_cnt %d",
+		__func__, peer, qdf_atomic_read(&peer->ref_cnt));
+
+	/* Clear the peer_id_to_obj map entries */
+	qdf_spin_lock_bh(&pdev->peer_map_unmap_lock);
+	ol_txrx_peer_remove_obj_map_entries(pdev, peer);
+	qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
+
+	/*
+	 * Set ref_cnt = 1 so that ol_txrx_peer_unref_delete() called by
+	 * ol_txrx_peer_detach() will actually delete this peer entry properly.
+	 */
+	qdf_spin_lock_bh(&pdev->peer_ref_mutex);
+	qdf_atomic_set(&peer->ref_cnt, 1);
+	qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
+
+	ol_txrx_peer_detach(peer);
 }
 
 ol_txrx_peer_handle

@@ -1079,9 +1079,13 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 			wma->interfaces[vdev_id].peer_count);
 		return;
 	}
-	if (peer)
-		ol_txrx_peer_detach(peer);
 
+	if (peer) {
+		if (roam_synch_in_progress)
+			ol_txrx_peer_detach_force_delete(peer);
+		else
+			ol_txrx_peer_detach(peer);
+	}
 	peer_mac_addr = ol_txrx_peer_get_peer_mac_addr(peer);
 	if (peer_mac_addr == NULL) {
 		WMA_LOGE("%s: peer mac addr is NULL, Can't remove peer with peer_addr %pM vdevid %d peer_count %d",
@@ -1146,8 +1150,8 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, ol_txrx_pdev_handle pdev,
 		WMA_LOGE("%s : Unable to attach peer %pM", __func__, peer_addr);
 		goto err;
 	}
-	if (roam_synch_in_progress) {
 
+	if (roam_synch_in_progress) {
 		WMA_LOGE("%s: LFR3: Created peer %p with peer_addr %pM vdev_id %d,"
 			 "peer_count - %d",
 			 __func__, peer, peer_addr, vdev_id,
