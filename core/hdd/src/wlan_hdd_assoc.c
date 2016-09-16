@@ -62,6 +62,7 @@
 #include "ol_rx_fwd.h"
 #include "cdp_txrx_flow_ctrl_legacy.h"
 #include "cdp_txrx_peer_ops.h"
+#include "wlan_hdd_napi.h"
 
 /* These are needed to recognize WPA and RSN suite types */
 #define HDD_WPA_OUI_SIZE 4
@@ -4601,6 +4602,8 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		 * after reassoc.
 		 */
 		hdd_info("Disabling queues");
+		hdd_info("Roam Synch Ind: NAPI Serialize ON");
+		hdd_napi_serialize(1);
 		wlan_hdd_netif_queue_control(pAdapter,
 				WLAN_NETIF_TX_DISABLE,
 				WLAN_CONTROL_PATH);
@@ -4612,6 +4615,10 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		pHddStaCtx->hdd_ReassocScenario = true;
 		hdd_info("hdd_ReassocScenario set to: %d, due to eCSR_ROAM_FT_START, session: %d",
 			 pHddStaCtx->hdd_ReassocScenario, pAdapter->sessionId);
+		break;
+	case eCSR_ROAM_NAPI_OFF:
+		hdd_info("After Roam Synch Comp: NAPI Serialize OFF");
+		hdd_napi_serialize(0);
 		break;
 	case eCSR_ROAM_SHOULD_ROAM:
 		/* notify apps that we can't pass traffic anymore */
@@ -4897,11 +4904,13 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		wlan_hdd_netif_queue_control(pAdapter,
 				WLAN_NETIF_TX_DISABLE,
 				WLAN_CONTROL_PATH);
+		hdd_napi_serialize(1);
 		cds_set_connection_in_progress(true);
 		cds_restart_opportunistic_timer(true);
 		break;
 	case eCSR_ROAM_ABORT:
 		hdd_info("Firmware aborted roaming operation, previous connection is still valid");
+		hdd_napi_serialize(0);
 		wlan_hdd_netif_queue_control(pAdapter,
 				WLAN_WAKE_ALL_NETIF_QUEUE,
 				WLAN_CONTROL_PATH);

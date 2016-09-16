@@ -203,6 +203,7 @@ enum sir_roam_op_code {
 	SIR_ROAMING_START,
 	SIR_ROAMING_ABORT,
 	SIR_ROAM_SYNCH_COMPLETE,
+	SIR_ROAM_SYNCH_NAPI_OFF,
 };
 /**
  * Module ID definitions.

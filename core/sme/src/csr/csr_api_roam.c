@@ -18822,6 +18822,8 @@ void csr_process_ho_fail_ind(tpAniSirGlobal pMac, void *pMsgBuf)
 		return;
 	}
 	cds_set_connection_in_progress(false);
+	csr_roam_call_callback(pMac, sessionId, NULL, 0,
+			eCSR_ROAM_NAPI_OFF, eSIR_SME_SUCCESS);
 	csr_roam_synch_clean_up(pMac, sessionId);
 	csr_roaming_report_diag_event(pMac, NULL,
 			eCSR_REASON_ROAM_HO_FAIL);
@@ -19558,6 +19560,11 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	case SIR_ROAMING_ABORT:
 		csr_roam_call_callback(mac_ctx, session_id, NULL, 0,
 				eCSR_ROAM_ABORT, eSIR_SME_SUCCESS);
+		sme_release_global_lock(&mac_ctx->sme);
+		return;
+	case SIR_ROAM_SYNCH_NAPI_OFF:
+		csr_roam_call_callback(mac_ctx, session_id, NULL, 0,
+				eCSR_ROAM_NAPI_OFF, eSIR_SME_SUCCESS);
 		sme_release_global_lock(&mac_ctx->sme);
 		return;
 	case SIR_ROAM_SYNCH_PROPAGATION:

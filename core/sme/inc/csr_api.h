@@ -512,6 +512,7 @@ typedef enum {
 	eCSR_ROAM_UPDATE_SCAN_RESULT,
 	eCSR_ROAM_START,
 	eCSR_ROAM_ABORT,
+	eCSR_ROAM_NAPI_OFF,
 } eRoamCmdStatus;
 
 /* comment inside indicates what roaming callback gets */

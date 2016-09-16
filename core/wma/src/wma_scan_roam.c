@@ -2331,6 +2331,8 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 		qdf_get_system_timestamp() - roam_synch_received;
 	WMA_LOGD("LFR3: roam_synch_delay:%d",
 		wma->interfaces[synch_event->vdev_id].roam_synch_delay);
+	wma->csr_roam_synch_cb((tpAniSirGlobal)wma->mac_context,
+		roam_synch_ind_ptr, bss_desc_ptr, SIR_ROAM_SYNCH_NAPI_OFF);
 cleanup_label:
 	if (roam_synch_ind_ptr->join_rsp)
 		qdf_mem_free(roam_synch_ind_ptr->join_rsp);
