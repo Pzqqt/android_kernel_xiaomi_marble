@@ -1861,9 +1861,8 @@ IE Vendor3IE (EID_VENDOR_SPECIFIC) OUI (0x00, 0x16, 0x32)
 {
 }
 
-IE hs20vendor_ie (EID_VENDOR_SPECIFIC) OUI (0x50, 0x6F, 0x9A)
+IE hs20vendor_ie (EID_VENDOR_SPECIFIC) OUI (0x50, 0x6F, 0x9A, 0x10)
 {
-    type,                       1;
     /* hotspot_configurations */
     {
         dgaf_dis:               1;
