@@ -3501,9 +3501,6 @@ static inline void wma_update_target_services(tp_wma_handle wh,
 	cfg->en_tdls_uapsd_sleep_sta =
 		WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap,
 				       WMI_SERVICE_TDLS_UAPSD_SLEEP_STA);
-	cfg->per_band_chainmask_supp =
-		WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap,
-				WMI_SERVICE_PER_BAND_CHAINMASK_SUPPORT);
 #endif /* FEATURE_WLAN_TDLS */
 	if (WMI_SERVICE_IS_ENABLED
 		    (wh->wmi_service_bitmap, WMI_SERVICE_BEACON_OFFLOAD))

@@ -15639,7 +15639,6 @@ void sme_update_tgt_services(tHalHandle hal, struct wma_tgt_services *cfg)
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 
 	mac_ctx->lteCoexAntShare = cfg->lte_coex_ant_share;
-	mac_ctx->per_band_chainmask_supp = cfg->per_band_chainmask_supp;
 	mac_ctx->beacon_offload = cfg->beacon_offload;
 	mac_ctx->pmf_offload = cfg->pmf_offload;
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
@@ -16282,9 +16281,6 @@ void sme_set_pdev_ht_vht_ies(tHalHandle hal, bool enable2x2)
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	struct sir_set_ht_vht_cfg *ht_vht_cfg;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-
-	if (!mac_ctx->per_band_chainmask_supp)
-		return;
 
 	if (!((mac_ctx->roam.configParam.uCfgDot11Mode ==
 					eCSR_CFG_DOT11_MODE_AUTO) ||

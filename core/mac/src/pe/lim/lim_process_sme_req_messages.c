@@ -1236,13 +1236,9 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 {
 	tSirScanOffloadReq *pScanOffloadReq;
 	uint8_t *p;
-	uint8_t *ht_cap_ie;
 	tSirMsgQ msg;
 	uint16_t i, len;
-	uint16_t ht_cap_len = 0;
 	uint16_t addn_ie_len = 0;
-	uint8_t *vht_cap_ie;
-	uint16_t vht_cap_len = 0;
 	uint8_t *vendor_tpc_ie;
 	tSirRetStatus status, rc = eSIR_SUCCESS;
 	tDot11fIEExtCap extracted_extcap = {0};
@@ -1280,28 +1276,6 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 	len = sizeof(tSirScanOffloadReq) +
 		(pScanReq->channelList.numChannels - 1) +
 		pScanReq->uIEFieldLen;
-	if (!pMac->per_band_chainmask_supp) {
-		if (IS_DOT11_MODE_HT(pScanReq->dot11mode)) {
-			lim_log(pMac, LOG1, FL(
-				"Adding HT Caps IE since dot11mode=%d"),
-					pScanReq->dot11mode);
-			/* 2 bytes for EID and Length */
-			ht_cap_len = 2 + sizeof(tHtCaps);
-			len += ht_cap_len;
-			addn_ie_len += ht_cap_len;
-		}
-
-		if (IS_DOT11_MODE_VHT(pScanReq->dot11mode)) {
-			lim_log(pMac, LOG1, FL(
-				"Adding VHT Caps IE since dot11mode=%d"),
-				pScanReq->dot11mode);
-			/* 2 bytes for EID and Length */
-			vht_cap_len = 2 + sizeof(tSirMacVHTCapabilityInfo) +
-				sizeof(tSirVhtMcsInfo);
-			len += vht_cap_len;
-			addn_ie_len += vht_cap_len;
-		}
-	}
 
 	if (lim_11h_enable) {
 		addn_ie_len += DOT11F_IE_WFATPC_MAX_LEN + 2;
@@ -1380,33 +1354,6 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 		     pScanOffloadReq->uIEFieldOffset,
 		     (uint8_t *) pScanReq + pScanReq->uIEFieldOffset,
 		     pScanReq->uIEFieldLen);
-	if (!pMac->per_band_chainmask_supp) {
-		/* Copy HT Capability info if dot11mode is HT */
-		if (IS_DOT11_MODE_HT(pScanReq->dot11mode)) {
-			/* Populate EID and Length field here */
-			ht_cap_ie = (uint8_t *) pScanOffloadReq +
-				pScanOffloadReq->uIEFieldOffset +
-				pScanOffloadReq->uIEFieldLen;
-			qdf_mem_set(ht_cap_ie, ht_cap_len, 0);
-			*ht_cap_ie = SIR_MAC_HT_CAPABILITIES_EID;
-			*(ht_cap_ie + 1) =  ht_cap_len - 2;
-			lim_set_ht_caps(pMac, NULL, ht_cap_ie, ht_cap_len);
-			pScanOffloadReq->uIEFieldLen += ht_cap_len;
-		}
-
-		/* Copy VHT Capability info if dot11mode is VHT Capable */
-		if (IS_DOT11_MODE_VHT(pScanReq->dot11mode)) {
-			/* Populate EID and Length field here */
-			vht_cap_ie = (uint8_t *) pScanOffloadReq +
-				pScanOffloadReq->uIEFieldOffset +
-				pScanOffloadReq->uIEFieldLen;
-			qdf_mem_set(vht_cap_ie, vht_cap_len, 0);
-			*vht_cap_ie = SIR_MAC_VHT_CAPABILITIES_EID;
-			*(vht_cap_ie + 1) =  vht_cap_len - 2;
-			lim_set_vht_caps(pMac, NULL, vht_cap_ie, vht_cap_len);
-			pScanOffloadReq->uIEFieldLen += vht_cap_len;
-		}
-	}
 
 	if (lim_11h_enable) {
 		tDot11fIEWFATPC wfa_tpc;
@@ -4878,7 +4825,7 @@ static void lim_set_pdev_ht_ie(tpAniSirGlobal mac_ctx, uint8_t pdev_id,
 	tHtCaps *p_ht_cap;
 	int i;
 
-	for (i = nss; i > 0; i--) {
+	for (i = 1; i <= nss; i++) {
 		ie_params = qdf_mem_malloc(sizeof(*ie_params));
 		if (NULL == ie_params) {
 			lim_log(mac_ctx, LOGE, FL("mem alloc failed"));
@@ -4953,7 +4900,7 @@ static void lim_set_pdev_vht_ie(tpAniSirGlobal mac_ctx, uint8_t pdev_id,
 	int i;
 	tSirVhtMcsInfo *vht_mcs;
 
-	for (i = nss; i > 0; i--) {
+	for (i = 1; i <= nss; i++) {
 		ie_params = qdf_mem_malloc(sizeof(*ie_params));
 		if (NULL == ie_params) {
 			lim_log(mac_ctx, LOGE, FL("mem alloc failed"));
