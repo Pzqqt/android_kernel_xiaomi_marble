@@ -7306,6 +7306,8 @@ struct wmi_ops non_tlv_ops =  {
 	.send_scan_chan_list_cmd = send_scan_chan_list_cmd_non_tlv,
 	.send_pdev_get_tpc_config_cmd = send_pdev_get_tpc_config_cmd_non_tlv,
 	.send_set_atf_cmd = send_set_atf_cmd_non_tlv,
+	.send_atf_peer_request_cmd = send_atf_peer_request_cmd_non_tlv,
+	.send_set_atf_grouping_cmd = send_set_atf_grouping_cmd_non_tlv,
 	.send_set_bwf_cmd = send_set_bwf_cmd_non_tlv,
 	.send_pdev_fips_cmd = send_pdev_fips_cmd_non_tlv,
 	.send_wlan_profile_enable_cmd = send_wlan_profile_enable_cmd_non_tlv,
@@ -7393,6 +7395,7 @@ struct wmi_ops non_tlv_ops =  {
 	.send_rtt_meas_req_test_cmd = send_rtt_meas_req_test_cmd_non_tlv,
 	.send_rtt_meas_req_cmd = send_rtt_meas_req_cmd_non_tlv,
 	.send_lci_set_cmd = send_lci_set_cmd_non_tlv,
+	.send_lcr_set_cmd = send_lcr_set_cmd_non_tlv,
 	.send_rtt_keepalive_req_cmd = send_rtt_keepalive_req_cmd_non_tlv,
 	.send_periodic_chan_stats_config_cmd =
 			send_periodic_chan_stats_config_cmd_non_tlv,
