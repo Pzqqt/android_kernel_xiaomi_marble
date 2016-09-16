@@ -64,6 +64,8 @@
  * EVT_CMD_STATE  : cmd arg          : by the vendor cmd
  * EVT_CPU_STATE  : (cpu << 16)|state: CPU hotplug events
  * EVT_TPUT_STATE : (high/low)       : tput trigger
+ * EVT_USR_SERIAL : num-serial_calls : WMA/ROAMING-START/IND
+ * EVT_USR_NORMAL : N/A              : WMA/ROAMING-END
  */
 enum qca_napi_event {
 	NAPI_EVT_INVALID,
@@ -71,6 +73,8 @@ enum qca_napi_event {
 	NAPI_EVT_CMD_STATE,
 	NAPI_EVT_CPU_STATE,
 	NAPI_EVT_TPUT_STATE,
+	NAPI_EVT_USR_SERIAL,
+	NAPI_EVT_USR_NORMAL
 };
 
 /**
@@ -145,6 +149,10 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx,
 struct qca_napi_data;
 static inline int hif_napi_cpu_init(void *ctx) { return 0; }
 static inline int hif_napi_cpu_deinit(void *ctx) { return 0; }
+static inline int hif_napi_serialize(struct hif_opaque_softc *hif, int is_on)
+{
+	return -EPERM;
+}
 #else /* HELIUMPLUS - NAPI CPU symbols are valid */
 
 /*
@@ -155,6 +163,8 @@ int hif_napi_cpu_deinit(void *);
 
 int hif_napi_cpu_migrate(struct qca_napi_data *napid, int cpu, int action);
 int hif_napi_cpu_blacklist(bool is_on);
+
+int hif_napi_serialize(struct hif_opaque_softc *hif, int is_on);
 
 #endif /* HELIUMPLUS */
 

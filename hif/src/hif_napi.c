@@ -317,6 +317,22 @@ inline struct qca_napi_data *hif_napi_get_all(struct hif_opaque_softc *hif_ctx)
  *      separate performance cores).
  *    - CPU eligibility is kept up-to-date by NAPI_EVT_CPU_STATE events.
  *
+ *    + In some cases (roaming peer management is the only case so far), a
+ *      a client can trigger a "SERIALIZE" event. Basically, this means that the
+ *      users is asking NAPI to go into a truly single execution context state.
+ *      So, NAPI indicates to msm-irqbalancer that it wants to be blacklisted,
+ *      (if called for the first time) and then moves all IRQs (for NAPI
+ *      instances) to be collapsed to a single core. If called multiple times,
+ *      it will just re-collapse the CPUs. This is because blacklist-on() API
+ *      is reference-counted, and because the API has already been called.
+ *
+ *      Such a user, should call "DESERIALIZE" (NORMAL) event, to set NAPI to go
+ *      to its "normal" operation. Optionally, they can give a timeout value (in
+ *      multiples of BusBandwidthCheckPeriod -- 100 msecs by default). In this
+ *      case, NAPI will just set the current throughput state to uninitialized
+ *      and set the delay period. Once policy handler is called, it would skip
+ *      applying the policy delay period times, and otherwise apply the policy.
+ *
  * Return:
  *  < 0: some error
  *  = 0: event handled successfully
@@ -331,6 +347,11 @@ int hif_napi_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 	struct hif_softc *hif = HIF_GET_SOFTC(hif_ctx);
 	struct qca_napi_data *napid = &(hif->napi_data);
 	enum qca_napi_tput_state tput_mode = QCA_NAPI_TPUT_UNINITIALIZED;
+	enum {
+		BLACKLIST_NOT_PENDING,
+		BLACKLIST_ON_PENDING,
+		BLACKLIST_OFF_PENDING
+	     } blacklist_pending = BLACKLIST_NOT_PENDING;
 
 	NAPI_DEBUG("%s: -->(event=%d, aux=%p)", __func__, event, data);
 
@@ -399,6 +420,7 @@ int hif_napi_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 			rc = hif_napi_cpu_migrate(napid,
 						  HNC_ANY_CPU,
 						  HNC_ACT_COLLAPSE);
+			blacklist_pending = BLACKLIST_OFF_PENDING;
 		} else {
 			/* from TPUT_LO -> TPUT->HI */
 			NAPI_DEBUG("%s: Moving to napi_tput_HI state",
@@ -407,12 +429,35 @@ int hif_napi_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 			rc = hif_napi_cpu_migrate(napid,
 						  HNC_ANY_CPU,
 						  HNC_ACT_DISPERSE);
+			blacklist_pending = BLACKLIST_ON_PENDING;
 		}
 		napid->napi_mode = tput_mode;
 
 		break;
 	}
+	case NAPI_EVT_USR_SERIAL: {
+		unsigned long users = (unsigned long)data;
 
+		NAPI_DEBUG("%s: User forced SERIALIZATION; users=%ld",
+			   __func__, users);
+
+		rc = hif_napi_cpu_migrate(napid,
+					  HNC_ANY_CPU,
+					  HNC_ACT_COLLAPSE);
+		if ((users == 0) && (rc == 0))
+			blacklist_pending = BLACKLIST_ON_PENDING;
+		break;
+	}
+	case NAPI_EVT_USR_NORMAL: {
+		NAPI_DEBUG("%s: User forced DE-SERIALIZATION", __func__);
+		/*
+		 * Deserialization timeout is handled at hdd layer;
+		 * just mark current mode to uninitialized to ensure
+		 * it will be set when the delay is over
+		 */
+		napid->napi_mode = QCA_NAPI_TPUT_UNINITIALIZED;
+		break;
+	}
 	default: {
 		HIF_ERROR("%s: unknown event: %d (data=0x%0lx)",
 			  __func__, event, (unsigned long) data);
@@ -424,11 +469,18 @@ int hif_napi_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 	spin_unlock_bh(&(napid->lock));
 
 	/* Call this API without spin_locks hif_napi_cpu_blacklist */
-	if (tput_mode == QCA_NAPI_TPUT_LO)
-		/* yield control of IRQs to kernel */
-		hif_napi_cpu_blacklist(false);
-	else if (tput_mode == QCA_NAPI_TPUT_HI)
+	switch (blacklist_pending) {
+	case BLACKLIST_ON_PENDING:
+		/* assume the control of WLAN IRQs */
 		hif_napi_cpu_blacklist(true);
+		break;
+	case BLACKLIST_OFF_PENDING:
+		/* yield the control of WLAN IRQs */
+		hif_napi_cpu_blacklist(false);
+		break;
+	default: /* nothing to do */
+		break;
+	} /* switch blacklist_pending */
 
 	if (prev_state != hif->napi_data.state) {
 		if (hif->napi_data.state == ENABLE_NAPI_MASK) {
@@ -1177,14 +1229,59 @@ hncm_return:
 int hif_napi_cpu_blacklist(bool is_on)
 {
 	int rc = 0;
+	static int ref_count; /* = 0 by the compiler */
 
 	NAPI_DEBUG("-->%s(%d)", __func__, is_on);
-	if (is_on)
+	if (is_on) {
+		ref_count++;
 		rc = irq_blacklist_on();
-	else
-		rc = irq_blacklist_off();
+	} else {
+		do {
+			rc = irq_blacklist_off();
+			ref_count--;
+		} while (ref_count > 0);
+	}
 
 	NAPI_DEBUG("<--%s[%d]", __func__, rc);
+	return rc;
+}
+
+/**
+ * hif_napi_serialize() - [de-]serialize NAPI operations
+ * @hif:   context
+ * @is_on: 1: serialize, 0: deserialize
+ *
+ * hif_napi_serialize(hif, 1) can be called multiple times. It will perform the
+ * following steps (see hif_napi_event for code):
+ * - put irqs of all NAPI instances on the same CPU
+ * - only for the first serialize call: blacklist
+ *
+ * hif_napi_serialize(hif, 0):
+ * - start a timer (multiple of BusBandwidthTimer -- default: 100 msec)
+ * - at the end of the timer, check the current throughput state and
+ *   implement it.
+ */
+static unsigned long napi_serialize_reqs;
+int hif_napi_serialize(struct hif_opaque_softc *hif, int is_on)
+{
+	int rc = -EINVAL;
+
+	if (hif != NULL)
+		switch (is_on) {
+		case 0: { /* de-serialize */
+			rc = hif_napi_event(hif, NAPI_EVT_USR_NORMAL,
+					    (void *) 0);
+			napi_serialize_reqs = 0;
+			break;
+		} /* end de-serialize */
+		case 1: { /* serialize */
+			rc = hif_napi_event(hif, NAPI_EVT_USR_SERIAL,
+					    (void *)napi_serialize_reqs++);
+			break;
+		} /* end serialize */
+		default:
+			break; /* no-op */
+		} /* switch */
 	return rc;
 }
 
