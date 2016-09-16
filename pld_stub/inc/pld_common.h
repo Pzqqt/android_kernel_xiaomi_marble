@@ -176,6 +176,28 @@ static inline void pld_intr_notify_q6(struct device *dev)
 {
 	return;
 }
+
+static inline int pld_get_user_msi_assignment(struct device *dev,
+			char *user_name, int *num_vectors,
+			uint32_t *user_base_data, uint32_t *base_vector)
+{
+	return -EINVAL;
+}
+
+/* should not be called if pld_get_user_msi_assignment returns error */
+static inline int pld_get_msi_irq(struct device *dev, unsigned int vector)
+{
+	return -EINVAL;
+}
+
+/* should not be called if pld_get_user_msi_assignment returns error */
+static inline void pld_get_msi_address(struct device *dev,
+				       uint32_t *msi_addr_low,
+				       uint32_t *msi_addr_high)
+{
+	return;
+}
+
 static inline int pld_ce_request_irq(struct device *dev, unsigned int ce_id,
 				     irqreturn_t (*handler)(int, void *),
 				     unsigned long flags, const char *name,

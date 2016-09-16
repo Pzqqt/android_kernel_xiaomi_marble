@@ -2546,6 +2546,38 @@ end:
 	return ret;
 }
 
+static int hif_ce_srng_msi_free_irq(struct hif_softc *scn)
+{
+	int ret;
+	int ce_id, irq;
+	uint32_t msi_data_start;
+	uint32_t msi_data_count;
+	uint32_t msi_irq_start;
+	struct HIF_CE_state *ce_sc = HIF_GET_CE_STATE(scn);
+
+	ret = pld_get_user_msi_assignment(scn->qdf_dev->dev, "CE",
+					    &msi_data_count, &msi_data_start,
+					    &msi_irq_start);
+	if (ret)
+		return ret;
+
+	/* needs to match the ce_id -> irq data mapping
+	 * used in the srng parameter configuration
+	 */
+	for (ce_id = 0; ce_id < scn->ce_count; ce_id++) {
+		unsigned int msi_data;
+		msi_data = (ce_id % msi_data_count) + msi_irq_start;
+		irq = pld_get_msi_irq(scn->qdf_dev->dev, msi_data);
+
+		HIF_INFO("%s: (ce_id %d, msi_data %d, irq %d)", __func__,
+			  ce_id, msi_data, irq);
+
+		free_irq(irq, &ce_sc->tasklets[ce_id]);
+	}
+
+	return ret;
+}
+
 /**
  * hif_nointrs(): disable IRQ
  *
@@ -2557,13 +2589,15 @@ end:
  */
 void hif_pci_nointrs(struct hif_softc *scn)
 {
-	int i;
+	int i, ret;
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 
 	if (scn->request_irq_done == false)
 		return;
-	if (sc->num_msi_intrs > 0) {
+
+	ret = hif_ce_srng_msi_free_irq(scn);
+	if (ret != 0 && sc->num_msi_intrs > 0) {
 		/* MSI interrupt(s) */
 		for (i = 0; i < sc->num_msi_intrs; i++) {
 			free_irq(sc->irq + i, sc);
@@ -3510,6 +3544,63 @@ int hif_ahb_configure_irq(struct hif_pci_softc *sc)
 }
 #endif
 
+irqreturn_t hif_ce_interrupt_handler(int irq, void *context)
+{
+	struct ce_tasklet_entry *tasklet_entry = context;
+	return ce_dispatch_interrupt(tasklet_entry->ce_id, tasklet_entry);
+}
+extern const char *ce_name[];
+
+static int hif_ce_srng_msi_request_irq(struct hif_softc *scn)
+{
+	int ret;
+	int ce_id, irq;
+	uint32_t msi_data_start;
+	uint32_t msi_data_count;
+	uint32_t msi_irq_start;
+	struct HIF_CE_state *ce_sc = HIF_GET_CE_STATE(scn);
+
+	ret = pld_get_user_msi_assignment(scn->qdf_dev->dev, "CE",
+					    &msi_data_count, &msi_data_start,
+					    &msi_irq_start);
+
+	if (ret)
+		return ret;
+
+	/* needs to match the ce_id -> irq data mapping
+	 * used in the srng parameter configuration
+	 */
+	for (ce_id = 0; ce_id < scn->ce_count; ce_id++) {
+		unsigned int msi_data = (ce_id % msi_data_count) +
+			msi_irq_start;
+		irq = pld_get_msi_irq(scn->qdf_dev->dev, msi_data);
+
+		HIF_INFO("%s: (ce_id %d, msi_data %d, irq %d tasklet %p)",
+			 __func__, ce_id, msi_data, irq,
+			 &ce_sc->tasklets[ce_id]);
+		ret = request_irq(irq, hif_ce_interrupt_handler,
+				  IRQF_SHARED,
+				  ce_name[ce_id],
+				  &ce_sc->tasklets[ce_id]);
+		if (ret)
+			goto free_irq;
+	}
+
+	return ret;
+
+free_irq:
+	/* the request_irq for the last ce_id failed so skip it. */
+	while (ce_id > 0 && ce_id < scn->ce_count) {
+		unsigned int msi_data;
+
+		ce_id--;
+		msi_data = (ce_id % msi_data_count) + msi_data_start;
+		irq = pld_get_msi_irq(scn->qdf_dev->dev, msi_data);
+		free_irq(irq, &ce_sc->tasklets[ce_id]);
+	}
+	return ret;
+}
+
 /**
  * hif_configure_irq() - configure interrupt
  *
@@ -3528,6 +3619,11 @@ int hif_configure_irq(struct hif_softc *scn)
 	HIF_TRACE("%s: E", __func__);
 
 	hif_init_reschedule_tasklet_work(sc);
+
+	ret = hif_ce_srng_msi_request_irq(scn);
+	if (ret == 0) {
+		goto end;
+	}
 
 	if (ENABLE_MSI) {
 		ret = hif_configure_msi(sc);

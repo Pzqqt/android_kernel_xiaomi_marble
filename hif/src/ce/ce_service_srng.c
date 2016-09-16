@@ -28,6 +28,7 @@
 #include "hif_main.h"
 #include "hif_debug.h"
 #include "hal_api.h"
+#include "pld_common.h"
 
 /*
  * Support for Copy Engine hardware, which is mainly used for
@@ -584,10 +585,46 @@ uint32_t ce_get_desc_size_srng(uint8_t ring_type)
 	return 0;
 }
 
+static void ce_srng_msi_ring_params_setup(struct hif_softc *scn, uint32_t ce_id,
+			      struct hal_srng_params *ring_params)
+{
+	uint32_t addr_low;
+	uint32_t addr_high;
+	uint32_t msi_data_start;
+	uint32_t msi_data_count;
+	uint32_t msi_irq_start;
+	int ret;
+
+	ret = pld_get_user_msi_assignment(scn->qdf_dev->dev, "CE",
+					  &msi_data_count, &msi_data_start,
+					  &msi_irq_start);
+
+	/* msi config not found */
+	if (ret)
+		return;
+
+	HIF_INFO("%s: ce_id %d, msi_start: %d, msi_count %d", __func__, ce_id,
+		  msi_data_start, msi_data_count);
+
+	pld_get_msi_address(scn->qdf_dev->dev, &addr_low, &addr_high);
+
+	ring_params->msi_addr = addr_low;
+	ring_params->msi_addr |= (qdf_dma_addr_t)(((uint64_t)addr_high) << 32);
+	ring_params->msi_data = (ce_id % msi_data_count) + msi_data_start;
+	ring_params->flags |= HAL_SRNG_MSI_INTR;
+
+	HIF_INFO("%s: ce_id %d, msi_addr %p, msi_data %d", __func__, ce_id,
+		  (void *)ring_params->msi_addr, ring_params->msi_data);
+}
+
 void ce_srng_src_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 			struct CE_ring_state *src_ring)
 {
 	struct hal_srng_params ring_params = {0};
+
+	HIF_INFO("%s: ce_id %d", __func__, ce_id);
+
+	ce_srng_msi_ring_params_setup(scn, ce_id, &ring_params);
 
 	ring_params.ring_base_paddr = src_ring->base_addr_CE_space;
 	ring_params.ring_base_vaddr = src_ring->base_addr_owner_space;
@@ -617,6 +654,10 @@ void ce_srng_dest_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 {
 	struct hal_srng_params ring_params = {0};
 
+	HIF_INFO("%s: ce_id %d", __func__, ce_id);
+
+	ce_srng_msi_ring_params_setup(scn, ce_id, &ring_params);
+
 	ring_params.ring_base_paddr = dest_ring->base_addr_CE_space;
 	ring_params.ring_base_vaddr = dest_ring->base_addr_owner_space;
 	ring_params.num_entries = dest_ring->nentries;
@@ -639,6 +680,10 @@ void ce_srng_status_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 				struct CE_ring_state *status_ring)
 {
 	struct hal_srng_params ring_params = {0};
+
+	HIF_INFO("%s: ce_id %d", __func__, ce_id);
+
+	ce_srng_msi_ring_params_setup(scn, ce_id, &ring_params);
 
 	ring_params.ring_base_paddr = status_ring->base_addr_CE_space;
 	ring_params.ring_base_vaddr = status_ring->base_addr_owner_space;
