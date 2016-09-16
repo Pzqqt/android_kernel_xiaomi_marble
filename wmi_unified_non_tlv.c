@@ -6651,6 +6651,9 @@ QDF_STATUS extract_composite_phyerr_non_tlv(wmi_unified_t wmi_handle,
 	phyerr->phy_err_mask0 = ph->phy_err_mask0;
 	phyerr->phy_err_mask1 = ph->phy_err_mask1;
 
+	phyerr->rf_info.rssi_comb =
+	    WMI_UNIFIED_RSSI_COMB_GET(ph);
+
 	/* Handle Spectral PHY Error */
 	if ((ph->phy_err_mask0 & WMI_HOST_AR900B_SPECTRAL_PHYERR_MASK)) {
 #if ATH_SUPPORT_SPECTRAL
@@ -6667,9 +6670,6 @@ QDF_STATUS extract_composite_phyerr_non_tlv(wmi_unified_t wmi_handle,
 			    WMI_UNIFIED_NF_CHAIN_GET(ph, 3);
 
 			/* populate the rf info */
-			phyerr->rf_info.rssi_comb =
-			    WMI_UNIFIED_RSSI_COMB_GET(ph);
-
 			/* Need to unroll loop due to macro constraints */
 			/* chain 0 */
 			phyerr->rf_info.pc_rssi_info[0].rssi_pri20 =
