@@ -3468,14 +3468,12 @@ static QDF_STATUS wma_send_wow_patterns_to_fw(tp_wma_handle wma,
 {
 	struct wma_txrx_node *iface;
 	int ret;
-	uint8_t default_patterns;
 
 	iface = &wma->interfaces[vdev_id];
-	default_patterns = iface->num_wow_default_patterns++;
 	ret = wmi_unified_wow_patterns_to_fw_cmd(wma->wmi_handle,
 			    vdev_id, ptrn_id, ptrn,
 				ptrn_len, ptrn_offset, mask,
-				mask_len, user, default_patterns);
+				mask_len, user, 0);
 	if (ret) {
 		if (!user)
 			iface->num_wow_default_patterns--;
@@ -3502,10 +3500,16 @@ static QDF_STATUS wma_wow_ap(tp_wma_handle wma, uint8_t vdev_id)
 	QDF_STATUS ret;
 	uint8_t arp_offset = 20;
 	uint8_t mac_mask[IEEE80211_ADDR_LEN];
+	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
 
-	/* Setup unicast pkt pattern */
+	/*
+	 * Setup unicast pkt pattern
+	 * WoW pattern id should be unique for each vdev
+	 * WoW pattern id can be same on 2 different VDEVs
+	 */
 	qdf_mem_set(&mac_mask, IEEE80211_ADDR_LEN, 0xFF);
-	ret = wma_send_wow_patterns_to_fw(wma, vdev_id, 0,
+	ret = wma_send_wow_patterns_to_fw(wma, vdev_id,
+				iface->num_wow_default_patterns++,
 				wma->interfaces[vdev_id].addr,
 				IEEE80211_ADDR_LEN, 0, mac_mask,
 				IEEE80211_ADDR_LEN, false);
@@ -3516,9 +3520,10 @@ static QDF_STATUS wma_wow_ap(tp_wma_handle wma, uint8_t vdev_id)
 
 	/*
 	 * Setup all ARP pkt pattern. This is dummy pattern hence the length
-	 * is zero
+	 * is zero. Pattern ID should be unique per vdev.
 	 */
-	ret = wma_send_wow_patterns_to_fw(wma, vdev_id, 0,
+	ret = wma_send_wow_patterns_to_fw(wma, vdev_id,
+			iface->num_wow_default_patterns++,
 			arp_ptrn, 0, arp_offset, arp_mask, 0, false);
 	if (ret != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to add WOW ARP pattern ret %d", ret);
@@ -3541,8 +3546,14 @@ static QDF_STATUS wma_configure_wow_ssdp(tp_wma_handle wma, uint8_t vdev_id)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint8_t discvr_offset = 30;
+	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
 
-	 status = wma_send_wow_patterns_to_fw(wma, vdev_id, 0,
+	/*
+	 * WoW pattern ID should be unique for each vdev
+	 * Different WoW patterns can use same pattern ID
+	 */
+	 status = wma_send_wow_patterns_to_fw(wma, vdev_id,
+				iface->num_wow_default_patterns++,
 				discvr_ptrn, sizeof(discvr_ptrn), discvr_offset,
 				discvr_mask, sizeof(discvr_ptrn), false);
 
@@ -3638,10 +3649,16 @@ static QDF_STATUS wma_wow_sta(tp_wma_handle wma, uint8_t vdev_id)
 	uint8_t arp_offset = 12;
 	uint8_t mac_mask[IEEE80211_ADDR_LEN];
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
 
-	/* Setup unicast pkt pattern */
 	qdf_mem_set(&mac_mask, IEEE80211_ADDR_LEN, 0xFF);
-	ret = wma_send_wow_patterns_to_fw(wma, vdev_id, 0,
+	/*
+	 * Set up unicast wow pattern
+	 * WoW pattern ID should be unique for each vdev
+	 * Different WoW patterns can use same pattern ID
+	 */
+	ret = wma_send_wow_patterns_to_fw(wma, vdev_id,
+				iface->num_wow_default_patterns++,
 				wma->interfaces[vdev_id].addr,
 				IEEE80211_ADDR_LEN, 0, mac_mask,
 				IEEE80211_ADDR_LEN, false);
@@ -3660,7 +3677,9 @@ static QDF_STATUS wma_wow_sta(tp_wma_handle wma, uint8_t vdev_id)
 	 */
 	if (!(wma->ol_ini_info & 0x1)) {
 		/* Setup all ARP pkt pattern */
-		ret = wma_send_wow_patterns_to_fw(wma, vdev_id, 0,
+		WMA_LOGI("ARP offload is disabled in INI enable WoW for ARP");
+		ret = wma_send_wow_patterns_to_fw(wma, vdev_id,
+				iface->num_wow_default_patterns++,
 				arp_ptrn, sizeof(arp_ptrn), arp_offset,
 				arp_mask, sizeof(arp_mask), false);
 		if (ret != QDF_STATUS_SUCCESS) {
@@ -3672,7 +3691,9 @@ static QDF_STATUS wma_wow_sta(tp_wma_handle wma, uint8_t vdev_id)
 	/* for NS or NDP offload packets */
 	if (!(wma->ol_ini_info & 0x2)) {
 		/* Setup all NS pkt pattern */
-		ret = wma_send_wow_patterns_to_fw(wma, vdev_id, 0,
+		WMA_LOGI("NS offload is disabled in INI enable WoW for NS");
+		ret = wma_send_wow_patterns_to_fw(wma, vdev_id,
+				iface->num_wow_default_patterns++,
 				ns_ptrn, sizeof(arp_ptrn), arp_offset,
 				arp_mask, sizeof(arp_mask), false);
 		if (ret != QDF_STATUS_SUCCESS) {
