@@ -740,7 +740,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 
 	if (assoc_rsp->statusCode != eSIR_MAC_SUCCESS_STATUS
 #ifdef WLAN_FEATURE_11W
-		&& (session_entry->limRmfEnabled ||
+		&& (!session_entry->limRmfEnabled ||
 			assoc_rsp->statusCode != eSIR_MAC_TRY_AGAIN_LATER)
 #endif
 	    ) {
