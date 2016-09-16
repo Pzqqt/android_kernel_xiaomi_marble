@@ -712,7 +712,11 @@ void convert_qos_mapset_frame(tpAniSirGlobal pMac, tSirQosMapSet *Qos,
 
 	qos_dscp_sz = (sizeof(Qos->dscp_exceptions)/2);
 	dot11_dscp_sz = sizeof(dot11fIE->dscp_exceptions);
-	Qos->num_dscp_exceptions = (dot11fIE->num_dscp_exceptions - 16) / 2;
+	if (dot11fIE->num_dscp_exceptions > QOS_MAP_LEN_MAX)
+		dot11fIE->num_dscp_exceptions = QOS_MAP_LEN_MAX;
+	Qos->num_dscp_exceptions =
+		(dot11fIE->num_dscp_exceptions - QOS_MAP_LEN_MIN) / 2;
+
 	for (i = 0;
 			i < Qos->num_dscp_exceptions &&
 			i < qos_dscp_sz && j < dot11_dscp_sz;

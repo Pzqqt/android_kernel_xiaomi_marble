@@ -108,7 +108,10 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
 #define MAX_VDEV_SUPPORTED                        4
 
 #define MAX_POWER_DBG_ARGS_SUPPORTED 8
-
+#define QOS_MAP_MAX_EX  21
+#define QOS_MAP_LEN_MIN 16
+#define QOS_MAP_LEN_MAX \
+	(QOS_MAP_LEN_MIN + 2 * QOS_MAP_MAX_EX)
 #define NUM_CHAINS_MAX  2
 
 /**
