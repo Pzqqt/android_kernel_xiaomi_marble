@@ -2090,6 +2090,28 @@ sap_dfs_is_channel_in_nol_list(ptSapContext sap_context,
 }
 
 /**
+ * sap_select_default_oper_chan() - Select operating channel based on acs hwmode
+ * @hal: pointer to HAL
+ * @acs_hwmode: HW mode of ACS
+ *
+ * Return: selected operating channel
+ */
+uint8_t sap_select_default_oper_chan(tHalHandle hal, uint32_t acs_hwmode)
+{
+	uint8_t channel;
+
+	if ((acs_hwmode == QCA_ACS_MODE_IEEE80211A) ||
+			(acs_hwmode == QCA_ACS_MODE_IEEE80211AD))
+		channel = SAP_DEFAULT_5GHZ_CHANNEL;
+	else
+		channel = SAP_DEFAULT_24GHZ_CHANNEL;
+
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+			FL("channel selected to start bss %d"), channel);
+	return channel;
+}
+
+/**
  * sap_goto_channel_sel - Function for initiating scan request for SME
  * @sap_context: Sap Context value.
  * @sap_event: State machine event
@@ -2297,8 +2319,9 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 				  FL("SAP Configuring default channel, Ch=%d"),
 				  sap_context->channel);
-			/* In case of error, switch to default channel */
-			sap_context->channel = SAP_DEFAULT_24GHZ_CHANNEL;
+			sap_context->channel =
+				sap_select_default_oper_chan(h_hal,
+					sap_context->acs_cfg->hw_mode);
 
 #ifdef SOFTAP_CHANNEL_RANGE
 			if (sap_context->channelList != NULL) {

@@ -325,14 +325,9 @@ wlansap_pre_start_bss_acs_scan_callback(tHalHandle hal_handle, void *pcontext,
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			FL("CSR scan_status = eCSR_SCAN_ABORT/FAILURE (%d), choose default channel"),
 			scan_status);
-#ifdef SOFTAP_CHANNEL_RANGE
-		if (sap_ctx->acs_cfg->hw_mode == eCSR_DOT11_MODE_11a)
-			sap_ctx->channel = SAP_DEFAULT_5GHZ_CHANNEL;
-		else
-			sap_ctx->channel = SAP_DEFAULT_24GHZ_CHANNEL;
-#else
-		sap_ctx->channel = SAP_DEFAULT_24GHZ_CHANNEL;
-#endif
+		sap_ctx->channel =
+			sap_select_default_oper_chan(hal_handle,
+					sap_ctx->acs_cfg->hw_mode);
 		sap_ctx->sap_state = eSAP_ACS_CHANNEL_SELECTED;
 		sap_ctx->sap_status = eSAP_STATUS_SUCCESS;
 		goto close_session;
@@ -396,7 +391,9 @@ wlansap_pre_start_bss_acs_scan_callback(tHalHandle hal_handle, void *pcontext,
 		goto close_session;
 	} else {
 #else
-		sap_ctx->channel = SAP_DEFAULT_24GHZ_CHANNEL;
+		sap_ctx->channel =
+			sap_select_default_oper_chan(hal_handle,
+				sap_ctx->acs_cfg->hw_mode);
 	} else {
 #endif
 		/* Valid Channel Found from scan results. */

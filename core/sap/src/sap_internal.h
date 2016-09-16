@@ -434,4 +434,5 @@ QDF_STATUS sap_close_session(tHalHandle hHal,
 #ifdef __cplusplus
 }
 #endif
+uint8_t sap_select_default_oper_chan(tHalHandle hal, uint32_t acs_hwmode);
 #endif
