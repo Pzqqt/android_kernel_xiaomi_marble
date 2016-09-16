@@ -5809,6 +5809,7 @@ typedef enum {
 typedef enum {
 	HOST_PLATFORM_HIGH_PERF,
 	HOST_PLATFORM_LOW_PERF,
+	HOST_PLATFORM_LOW_PERF_NO_FETCH,
 } HOST_PLATFORM_TYPE;
 
 enum wmi_host_sta_ps_mode {
