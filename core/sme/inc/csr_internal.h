@@ -707,7 +707,6 @@ typedef struct tagCsrScanStruct {
 	qdf_mc_timer_t hTimerStaApConcTimer;
 #endif
 	qdf_mc_timer_t hTimerIdleScan;
-	qdf_mc_timer_t hTimerResultCfgAging;
 	/*
 	 * changes on every scan, it is used as a flag for whether 11d info is
 	 * found on every scan

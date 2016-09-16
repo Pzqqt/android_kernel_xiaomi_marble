@@ -83,7 +83,6 @@
 	((pMac)->scan.nBssLimit <= (csr_ll_count(&(pMac)->scan.scanResultList)))
 
 void csr_scan_get_result_timer_handler(void *);
-static void csr_scan_result_cfg_aging_timer_handler(void *pv);
 static void csr_set_default_scan_timing(tpAniSirGlobal pMac, tSirScanType scanType,
 					tCsrScanRequest *pScanRequest);
 #ifdef WLAN_AP_STA_CONCURRENCY
@@ -106,6 +105,7 @@ static bool csr_scan_validate_scan_result(tpAniSirGlobal pMac, uint8_t *pChannel
 bool csr_roam_is_valid_channel(tpAniSirGlobal pMac, uint8_t channel);
 void csr_prune_channel_list_for_mode(tpAniSirGlobal pMac,
 				     tCsrChannel *pChannelList);
+static void csr_purge_scan_result_by_age(void *pv);
 
 #define CSR_IS_SOCIAL_CHANNEL(channel) \
 	(((channel) == 1) || ((channel) == 6) || ((channel) == 11))
@@ -180,14 +180,6 @@ QDF_STATUS csr_scan_open(tpAniSirGlobal mac_ctx)
 		return status;
 	}
 #endif
-	status = qdf_mc_timer_init(&mac_ctx->scan.hTimerResultCfgAging,
-				   QDF_TIMER_TYPE_SW,
-				   csr_scan_result_cfg_aging_timer_handler,
-				   mac_ctx);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		sms_log(mac_ctx, LOGE,
-			FL("Mem Alloc failed for CFG ResultAging timer"));
-
 	return status;
 }
 
@@ -208,7 +200,6 @@ QDF_STATUS csr_scan_close(tpAniSirGlobal pMac)
 	csr_ll_close(&pMac->scan.channelPowerInfoList24);
 	csr_ll_close(&pMac->scan.channelPowerInfoList5G);
 	csr_scan_disable(pMac);
-	qdf_mc_timer_destroy(&pMac->scan.hTimerResultCfgAging);
 #ifdef WLAN_AP_STA_CONCURRENCY
 	qdf_mc_timer_destroy(&pMac->scan.hTimerStaApConcTimer);
 #endif
@@ -225,8 +216,6 @@ QDF_STATUS csr_scan_enable(tpAniSirGlobal pMac)
 
 QDF_STATUS csr_scan_disable(tpAniSirGlobal pMac)
 {
-
-	csr_scan_stop_timers(pMac);
 	pMac->scan.fScanEnable = false;
 
 	return QDF_STATUS_SUCCESS;
@@ -4719,6 +4708,9 @@ QDF_STATUS csr_scan_sme_scan_response(tpAniSirGlobal pMac,
 	if (eSmeCommandScan != pCommand->command)
 		goto error_handling;
 
+	 /* Purge the scan results based on Aging */
+	if (pEntry && pMac->scan.scanResultCfgAgingTime)
+		csr_purge_scan_result_by_age(pMac);
 	scanStatus = (eSIR_SME_SUCCESS == pScanRsp->statusCode) ?
 			eCSR_SCAN_SUCCESS : eCSR_SCAN_FAILURE;
 	reason = pCommand->u.scanCmd.reason;
@@ -5717,14 +5709,6 @@ void csr_scan_call_callback(tpAniSirGlobal pMac, tSmeCmd *pCommand,
 	}
 }
 
-void csr_scan_stop_timers(tpAniSirGlobal pMac)
-{
-	if (0 != pMac->scan.scanResultCfgAgingTime) {
-		csr_scan_stop_result_cfg_aging_timer(pMac);
-	}
-
-}
-
 #ifdef WLAN_AP_STA_CONCURRENCY
 /**
  * csr_sta_ap_conc_timer_handler - Function to handle STA,AP concurrency timer
@@ -5901,45 +5885,27 @@ static void csr_sta_ap_conc_timer_handler(void *pv)
 }
 #endif
 
-QDF_STATUS csr_scan_start_result_cfg_aging_timer(tpAniSirGlobal pMac)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-
-	if (pMac->scan.fScanEnable) {
-		status =
-			qdf_mc_timer_start(&pMac->scan.hTimerResultCfgAging,
-					   CSR_SCAN_RESULT_CFG_AGING_INTERVAL /
-					   QDF_MC_TIMER_TO_MS_UNIT);
-	}
-	return status;
-}
-
-QDF_STATUS csr_scan_stop_result_cfg_aging_timer(tpAniSirGlobal pMac)
-{
-	return qdf_mc_timer_stop(&pMac->scan.hTimerResultCfgAging);
-}
-
 /**
- * csr_scan_result_cfg_aging_timer_handler() - Time based scan aging handler
+ * csr_purge_scan_result_by_age() - Purge scan results based on Age
  * @pv: Global context
  *
- * This routine is to handle scan aging based on user configured timer value.
+ * This routine is to purge scan results based on aging.
  *
  * Return: None
  */
-static void csr_scan_result_cfg_aging_timer_handler(void *pv)
+static void csr_purge_scan_result_by_age(void *pv)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(pv);
 	tListElem *entry, *tmp_entry;
 	tCsrScanResult *result;
-	uint32_t ageout_time =
+	unsigned long ageout_time =
 		mac_ctx->scan.scanResultCfgAgingTime * QDF_TICKS_PER_SECOND/10;
-	uint32_t cur_time = (uint32_t) qdf_mc_timer_get_system_ticks();
+	unsigned long cur_time =  qdf_mc_timer_get_system_ticks();
 	uint8_t *bssId;
 
 	csr_ll_lock(&mac_ctx->scan.scanResultList);
 	entry = csr_ll_peek_head(&mac_ctx->scan.scanResultList, LL_ACCESS_NOLOCK);
-	sms_log(mac_ctx, LOG1, FL(" Ageout time=%d"), ageout_time);
+	sms_log(mac_ctx, LOG1, FL(" Ageout time=%ld"), ageout_time);
 	while (entry) {
 		tmp_entry = csr_ll_next(&mac_ctx->scan.scanResultList, entry,
 					LL_ACCESS_NOLOCK);
@@ -5959,9 +5925,6 @@ static void csr_scan_result_cfg_aging_timer_handler(void *pv)
 		entry = tmp_entry;
 	}
 	csr_ll_unlock(&mac_ctx->scan.scanResultList);
-	qdf_mc_timer_start(&mac_ctx->scan.hTimerResultCfgAging,
-			   CSR_SCAN_RESULT_CFG_AGING_INTERVAL /
-			   QDF_MC_TIMER_TO_MS_UNIT);
 }
 
 bool csr_scan_remove_fresh_scan_command(tpAniSirGlobal pMac, uint8_t sessionId)

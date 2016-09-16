@@ -74,7 +74,6 @@
 #define CSR_MIC_ERROR_TIMEOUT  (60 * QDF_MC_TIMER_TO_SEC_UNIT)  /* 60 seconds */
 #define CSR_TKIP_COUNTER_MEASURE_TIMEOUT  (60 * QDF_MC_TIMER_TO_SEC_UNIT)       /* 60 seconds */
 
-#define CSR_SCAN_RESULT_CFG_AGING_INTERVAL    (QDF_MC_TIMER_TO_SEC_UNIT)        /* 1  second */
 /* the following defines are NOT used by palTimer */
 #define CSR_SCAN_AGING_TIME_NOT_CONNECT_NO_PS 50        /* 50 seconds */
 #define CSR_SCAN_AGING_TIME_NOT_CONNECT_W_PS 300        /* 300 seconds */
@@ -265,9 +264,6 @@ QDF_STATUS csr_scan_copy_result_list(tpAniSirGlobal pMac, tScanResultHandle hIn,
 QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal pMac, uint32_t sessionId,
 			     tCsrRoamProfile *pProfile, uint32_t roamId,
 			     bool notify);
-QDF_STATUS csr_scan_start_result_cfg_aging_timer(tpAniSirGlobal pMac);
-QDF_STATUS csr_scan_stop_result_cfg_aging_timer(tpAniSirGlobal pMac);
-void csr_scan_stop_timers(tpAniSirGlobal pMac);
 /* To remove fresh scan commands from the pending queue */
 bool csr_scan_remove_fresh_scan_command(tpAniSirGlobal pMac, uint8_t sessionId);
 QDF_STATUS csr_scan_abort_mac_scan(tpAniSirGlobal pMac, uint8_t sessionId,

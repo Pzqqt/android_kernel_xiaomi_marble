@@ -876,9 +876,6 @@ QDF_STATUS csr_ready(tpAniSirGlobal pMac)
 	/* If the gScanAgingTime is set to '0' then scan results aging timeout
 	   based  on timer feature is not enabled */
 
-	if (0 != pMac->scan.scanResultCfgAgingTime) {
-		csr_scan_start_result_cfg_aging_timer(pMac);
-	}
 	status = csr_apply_channel_and_power_list(pMac);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(pMac, LOGE,
