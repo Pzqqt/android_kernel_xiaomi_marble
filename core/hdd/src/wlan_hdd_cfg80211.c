@@ -10480,16 +10480,27 @@ static bool wlan_hdd_handle_sap_sta_dfs_conc(hdd_adapter_t *adapter,
 	}
 	/*
 	 * find out by looking in to scan cache where sta is going to
-	 * connect by passing its roam_profile. if channel is 0 or DFS then
-	 * better to call pcl and find out the best channel. if channel
-	 * is non-dfs then better move SAP to STA's channel to make
-	 * scc, so we have room for 3port MCC scenario
+	 * connect by passing its roam_profile.
 	 */
 	status = cds_get_channel_from_scan_result(adapter,
 			roam_profile, &channel);
 
-	if ((QDF_STATUS_SUCCESS != status) || (0 == channel) ||
-	    CDS_IS_DFS_CH(channel))
+	/*
+	 * If the STA's channel is 2.4 GHz, then set pcl with only 2.4 GHz
+	 * channels for roaming case.
+	 */
+	if (CDS_IS_CHANNEL_24GHZ(channel)) {
+		hdd_info("sap is on dfs, new sta conn on 2.4 is allowed");
+		return true;
+	}
+
+	/*
+	 * If channel is 0 or DFS then better to call pcl and find out the
+	 * best channel. If channel is non-dfs 5 GHz then better move SAP
+	 * to STA's channel to make scc, so we have room for 3port MCC
+	 * scenario.
+	 */
+	if ((0 == channel) || CDS_IS_DFS_CH(channel))
 		channel = cds_get_nondfs_preferred_channel(CDS_SAP_MODE,
 								true);
 
