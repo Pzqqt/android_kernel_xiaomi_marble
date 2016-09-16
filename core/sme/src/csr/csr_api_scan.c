@@ -2853,6 +2853,53 @@ bool csr_process_bss_desc_for_bkid_list(tpAniSirGlobal pMac,
 
 #endif
 
+/**
+ * csr_purge_old_scan_results() - This function removes old scan entries
+ * @mac_ctx: pointer to Global MAC structure
+ *
+ * This function removes old scan entries
+ *
+ * Return: None
+ */
+
+static void csr_purge_old_scan_results(tpAniSirGlobal mac_ctx)
+{
+	tListElem *pentry, *tmp_entry;
+	tCsrScanResult *presult, *oldest_bss = NULL;
+	uint32_t oldest_entry = 0;
+	uint32_t curr_time = qdf_mc_timer_get_system_ticks();
+
+	csr_ll_unlock(&mac_ctx->scan.scanResultList);
+	pentry = csr_ll_peek_head(&mac_ctx->scan.scanResultList,
+					LL_ACCESS_NOLOCK);
+	while (pentry) {
+		tmp_entry = csr_ll_next(&mac_ctx->scan.scanResultList, pentry,
+			LL_ACCESS_NOLOCK);
+		presult = GET_BASE_ADDR(pentry, tCsrScanResult, Link);
+		if ((curr_time - presult->Result.BssDescriptor.nReceivedTime) >
+		     oldest_entry) {
+			oldest_entry = curr_time -
+				presult->Result.BssDescriptor.nReceivedTime;
+			oldest_bss = presult;
+		}
+		pentry = tmp_entry;
+	}
+	if (oldest_bss) {
+		/* Free the old BSS Entries */
+		if (csr_ll_remove_entry(&mac_ctx->scan.scanResultList,
+		    &oldest_bss->Link, LL_ACCESS_NOLOCK)) {
+			sms_log(mac_ctx, LOG1,
+				FL("Current time delta (%d) of BSSID to be removed" MAC_ADDRESS_STR),
+				(curr_time -
+				oldest_bss->Result.BssDescriptor.nReceivedTime),
+				MAC_ADDR_ARRAY(
+				oldest_bss->Result.BssDescriptor.bssId));
+			csr_free_scan_result_entry(mac_ctx, oldest_bss);
+		}
+	}
+	csr_ll_unlock(&mac_ctx->scan.scanResultList);
+}
+
 static void
 csr_remove_from_tmp_list(tpAniSirGlobal mac_ctx,
 			 uint8_t reason,
@@ -2894,12 +2941,8 @@ csr_remove_from_tmp_list(tpAniSirGlobal mac_ctx,
 		 * LFR candidates came from FW
 		 */
 		if (CSR_SCAN_IS_OVER_BSS_LIMIT(mac_ctx)) {
-			sms_log(mac_ctx, LOGW, FL("BSS limit reached"));
-			if ((bss_dscp->Result.pvIes == NULL) && local_ie)
-				qdf_mem_free(local_ie);
-			csr_free_scan_result_entry(mac_ctx, bss_dscp);
-			/* Continue because there may be duplicated BSS */
-			continue;
+			sms_log(mac_ctx, LOG1, FL("BSS Limit reached"));
+			csr_purge_old_scan_results(mac_ctx);
 		}
 		/* check for duplicate scan results */
 		if (!dup_bss) {
@@ -5896,6 +5939,7 @@ static void csr_scan_result_cfg_aging_timer_handler(void *pv)
 
 	csr_ll_lock(&mac_ctx->scan.scanResultList);
 	entry = csr_ll_peek_head(&mac_ctx->scan.scanResultList, LL_ACCESS_NOLOCK);
+	sms_log(mac_ctx, LOG1, FL(" Ageout time=%d"), ageout_time);
 	while (entry) {
 		tmp_entry = csr_ll_next(&mac_ctx->scan.scanResultList, entry,
 					LL_ACCESS_NOLOCK);
