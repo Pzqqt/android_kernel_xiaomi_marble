@@ -935,6 +935,8 @@ void lim_log_operating_mode(tpAniSirGlobal pMac, tDot11fIEOperatingMode *pDot11f
 void lim_log_qos_map_set(tpAniSirGlobal pMac, tSirQosMapSet *pQosMapSet)
 {
 	uint8_t i;
+	if (pQosMapSet->num_dscp_exceptions > QOS_MAP_MAX_EX)
+		pQosMapSet->num_dscp_exceptions = QOS_MAP_MAX_EX;
 	lim_log(pMac, LOG1, FL("num of dscp exceptions : %d"),
 		pQosMapSet->num_dscp_exceptions);
 	for (i = 0; i < pQosMapSet->num_dscp_exceptions; i++) {
