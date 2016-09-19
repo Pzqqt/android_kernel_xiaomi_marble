@@ -13623,13 +13623,13 @@ static QDF_STATUS csr_set_ldpc_exception(tpAniSirGlobal mac_ctx,
 			bool usr_cfg_rx_ldpc)
 {
 	if (!mac_ctx) {
-		sms_log(mac_ctx, LOGE,
-			FL("mac_ctx is NULL"));
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			"mac_ctx is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (!session) {
-		sms_log(mac_ctx, LOGE,
-			FL("session is NULL"));
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			"session is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (usr_cfg_rx_ldpc && wma_is_rx_ldpc_supported_for_channel(channel)) {
