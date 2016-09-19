@@ -750,6 +750,8 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_request_wlan_stats_cmd_fixed_param,
 	WMITLV_TAG_STRUC_wmi_rx_aggr_failure_event_fixed_param,
 	WMITLV_TAG_STRUC_wmi_rx_aggr_failure_info,
+	WMITLV_TAG_STRUC_wmi_vdev_encrypt_decrypt_data_req_cmd_fixed_param,
+	WMITLV_TAG_STRUC_wmi_vdev_encrypt_decrypt_data_resp_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1053,6 +1055,7 @@ typedef enum {
 	OP(WMI_COEX_GET_ANTENNA_ISOLATION_CMDID) \
 	OP(WMI_PDEV_SET_STATS_THRESHOLD_CMDID) \
 	OP(WMI_REQUEST_WLAN_STATS_CMDID) \
+	OP(WMI_VDEV_ENCRYPT_DECRYPT_DATA_REQ_CMDID) \
 	/* add new CMD_LIST elements above this line */
 
 /*
@@ -1213,6 +1216,7 @@ typedef enum {
 	OP(WMI_COEX_REPORT_ANTENNA_ISOLATION_EVENTID) \
 	OP(WMI_REPORT_STATS_EVENTID) \
 	OP(WMI_REPORT_RX_AGGR_FAILURE_EVENTID) \
+	OP(WMI_VDEV_ENCRYPT_DECRYPT_DATA_RESP_EVENTID) \
 	/* add new EVT_LIST elements above this line */
 
 /* TLV definitions of WMI commands */
@@ -2582,6 +2586,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_GET_TEMPERATURE_CMDID);
 #define WMITLV_TABLE_WMI_PDEV_GET_ANTDIV_STATUS_CMDID(id, op, buf, len) \
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_pdev_get_antdiv_status_cmd_fixed_param, wmi_pdev_get_antdiv_status_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_GET_ANTDIV_STATUS_CMDID);
+
+/* DISA feature : vdev encrypt decrypt request */
+#define WMITLV_TABLE_WMI_VDEV_ENCRYPT_DECRYPT_DATA_REQ_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_vdev_encrypt_decrypt_data_req_cmd_fixed_param, wmi_vdev_encrypt_decrypt_data_req_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_ENCRYPT_DECRYPT_DATA_REQ_CMDID);
 
 /* Set antenna diversity Cmd */
 #define WMITLV_TABLE_WMI_SET_ANTENNA_DIVERSITY_CMDID(id,op,buf,len) \
@@ -4015,6 +4025,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_RADIO_TX_POWER_LEVEL_STATS_EVENTID);
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, rx_mpdu_aggr, WMITLV_SIZE_VAR) \
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, rx_mcs, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_REPORT_STATS_EVENTID);
+
+#define WMITLV_TABLE_WMI_VDEV_ENCRYPT_DECRYPT_DATA_RESP_EVENTID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_vdev_encrypt_decrypt_data_resp_event_fixed_param, wmi_vdev_encrypt_decrypt_data_resp_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, enc80211_frame, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_ENCRYPT_DECRYPT_DATA_RESP_EVENTID);
 
 #ifdef __cplusplus
 }
