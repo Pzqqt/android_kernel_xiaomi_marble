@@ -14031,6 +14031,7 @@ static struct cfg80211_ops wlan_hdd_cfg80211_ops = {
 	.mgmt_tx_cancel_wait = wlan_hdd_cfg80211_mgmt_tx_cancel_wait,
 	.set_default_mgmt_key = wlan_hdd_set_default_mgmt_key,
 	.set_txq_params = wlan_hdd_set_txq_params,
+	.dump_station = wlan_hdd_cfg80211_dump_station,
 	.get_station = wlan_hdd_cfg80211_get_station,
 	.set_power_mgmt = wlan_hdd_cfg80211_set_power_mgmt,
 	.del_station = wlan_hdd_cfg80211_del_station,

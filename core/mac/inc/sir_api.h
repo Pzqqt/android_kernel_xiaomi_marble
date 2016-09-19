@@ -109,6 +109,8 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
 
 #define MAX_POWER_DBG_ARGS_SUPPORTED 8
 
+#define NUM_CHAINS_MAX  2
+
 /**
  * enum sir_conn_update_reason: Reason for conc connection update
  * @SIR_UPDATE_REASON_SET_OPER_CHAN: Set probable operating channel
