@@ -31,6 +31,14 @@
 * This file contains the definitions specific to the wlan_nlink_srv
 *
 ******************************************************************************/
+/*
+ * If MULTI_IF_NAME is not defined, then this is the primary instance of the
+ * driver and the diagnostics netlink socket will be available. If
+ * MULTI_IF_NAME is defined then this is not the primary instance of the driver
+ * and the diagnotics netlink socket will not be available since this
+ * diagnostics netlink socket can only be exposed by one instance of the driver.
+ */
+#ifndef MULTI_IF_NAME
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -490,5 +498,42 @@ int nl_srv_is_initialized(void)
 
 	return -EPERM;
 }
+#endif
+#else /* ifndef MULTI_IF_NAME */
 
+#include <wlan_nlink_srv.h>
+
+int nl_srv_init(void)
+{
+	return 0;
+}
+
+void nl_srv_exit(int dst_pid)
+{
+}
+
+int nl_srv_register(tWlanNlModTypes msg_type, nl_srv_msg_callback msg_handler)
+{
+	return 0;
+}
+
+int nl_srv_unregister(tWlanNlModTypes msg_type, nl_srv_msg_callback msg_handler)
+{
+	return 0;
+}
+
+int nl_srv_ucast(struct sk_buff *skb, int dst_pid, int flag)
+{
+	return 0;
+}
+
+int nl_srv_bcast(struct sk_buff *skb)
+{
+	return 0;
+}
+
+int nl_srv_is_initialized(void)
+{
+	return 0;
+}
 #endif

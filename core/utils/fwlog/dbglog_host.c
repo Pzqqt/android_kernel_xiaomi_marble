@@ -46,7 +46,12 @@
 #endif /* WLAN_OPEN_SOURCE */
 #include "wmi_unified_priv.h"
 
+#ifdef MULTI_IF_NAME
+#define CLD_DEBUGFS_DIR          "cld" MULTI_IF_NAME
+#else
+
 #define CLD_DEBUGFS_DIR          "cld"
+#endif
 #define DEBUGFS_BLOCK_NAME       "dbglog_block"
 
 #define ATH_MODULE_NAME fwlog

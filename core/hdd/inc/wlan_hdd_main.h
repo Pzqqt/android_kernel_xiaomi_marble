@@ -871,7 +871,28 @@ struct hdd_connect_pm_context {
 	qdf_runtime_lock_t connect;
 };
 
+/*
+ * WLAN_HDD_ADAPTER_MAGIC is a magic number used to identify net devices
+ * belonging to this driver from net devices belonging to other devices.
+ * Therefore, the magic number must be unique relative to the numbers for
+ * other drivers in the system. If WLAN_HDD_ADAPTER_MAGIC is already defined
+ * (e.g. by compiler argument), then use that. If it's not already defined,
+ * then use the first 4 characters of MULTI_IF_NAME to construct the magic
+ * number. If MULTI_IF_NAME is not defined, then use a default magic number.
+ */
+#ifndef WLAN_HDD_ADAPTER_MAGIC
+#ifdef MULTI_IF_NAME
+#define WLAN_HDD_ADAPTER_MAGIC                                          \
+	(MULTI_IF_NAME[0] == 0 ? 0x574c414e :                           \
+	(MULTI_IF_NAME[1] == 0 ? (MULTI_IF_NAME[0] << 24) :             \
+	(MULTI_IF_NAME[2] == 0 ? (MULTI_IF_NAME[0] << 24) |             \
+		(MULTI_IF_NAME[1] << 16) :                              \
+	(MULTI_IF_NAME[0] << 24) | (MULTI_IF_NAME[1] << 16) |           \
+	(MULTI_IF_NAME[2] << 8) | MULTI_IF_NAME[3])))
+#else
 #define WLAN_HDD_ADAPTER_MAGIC 0x574c414e       /* ASCII "WLAN" */
+#endif
+#endif
 
 struct hdd_adapter_s {
 	/* Magic cookie for adapter sanity verification.  Note that this

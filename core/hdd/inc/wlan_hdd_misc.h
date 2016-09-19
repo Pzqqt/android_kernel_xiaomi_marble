@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014,2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -27,13 +27,22 @@
 
 #ifndef WLAN_HDD_MISC_H
 #define WLAN_HDD_MISC_H
+/*
+ * If MULTI_IF_NAME is defined, then prepend MULTI_IF_NAME to the filename
+ * to prevent name conflicts when loading multiple instances of the driver.
+ */
+#ifdef MULTI_IF_NAME
+#define PREFIX MULTI_IF_NAME
+#else
+#define PREFIX ""
+#endif
 
 #ifdef MSM_PLATFORM
-#define WLAN_INI_FILE              "wlan/qca_cld/WCNSS_qcom_cfg.ini"
-#define WLAN_MAC_FILE              "wlan/qca_cld/wlan_mac.bin"
+#define WLAN_INI_FILE              "wlan/qca_cld/" PREFIX "WCNSS_qcom_cfg.ini"
+#define WLAN_MAC_FILE              "wlan/qca_cld/" PREFIX "wlan_mac.bin"
 #else
-#define WLAN_INI_FILE              "wlan/qcom_cfg.ini"
-#define WLAN_MAC_FILE              "wlan/wlan_mac.bin"
+#define WLAN_INI_FILE              "wlan/" PREFIX "qcom_cfg.ini"
+#define WLAN_MAC_FILE              "wlan/" PREFIX "wlan_mac.bin"
 #endif /* MSM_PLATFORM */
 
 #endif /* WLAN_HDD_MISC_H */

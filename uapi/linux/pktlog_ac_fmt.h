@@ -33,11 +33,15 @@
 #define PKTLOG_MAGIC_NUM        7735225
 
 #ifdef __linux__
+#ifdef MULTI_IF_NAME
+#define PKTLOG_PROC_DIR "ath_pktlog" MULTI_IF_NAME
+#define WLANDEV_BASENAME "cld" MULTI_IF_NAME
+#else
 #define PKTLOG_PROC_DIR "ath_pktlog"
-#define PKTLOG_PROC_SYSTEM "system"
 #define WLANDEV_BASENAME "cld"
 #endif
-
+#endif
+#define PKTLOG_PROC_SYSTEM "system"
 #ifdef WIN32
 #pragma pack(push, pktlog_fmt, 1)
 #define __ATTRIB_PACK
