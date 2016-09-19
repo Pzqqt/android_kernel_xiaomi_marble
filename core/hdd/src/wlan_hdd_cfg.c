@@ -864,13 +864,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_MAX_LI_MODULATED_DTIM_MIN,
 		     CFG_MAX_LI_MODULATED_DTIM_MAX),
 
-	REG_VARIABLE(CFG_RX_ANT_CONFIGURATION_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nRxAnt,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_RX_ANT_CONFIGURATION_NAME_DEFAULT,
-		     CFG_RX_ANT_CONFIGURATION_NAME_MIN,
-		     CFG_RX_ANT_CONFIGURATION_NAME_MAX),
-
 	REG_VARIABLE(CFG_FW_HEART_BEAT_MONITORING_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, fEnableFwHeartBeatMonitoring,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -6316,14 +6309,6 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 		     pConfig->nMaxPsPoll) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE, "Could not pass on WNI_CFG_MAX_PS_POLL to CFG");
-	}
-
-	if (sme_cfg_set_int
-		    (pHddCtx->hHal, WNI_CFG_CURRENT_RX_ANTENNA,
-		     pConfig->nRxAnt) == QDF_STATUS_E_FAILURE) {
-		fStatus = false;
-		hddLog(LOGE,
-		       "Could not pass on WNI_CFG_CURRENT_RX_ANTENNA to CFG");
 	}
 
 	if (sme_cfg_set_int (pHddCtx->hHal, WNI_CFG_LOW_GAIN_OVERRIDE,

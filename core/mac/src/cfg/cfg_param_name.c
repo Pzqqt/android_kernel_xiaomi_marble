@@ -111,7 +111,6 @@ unsigned char *g_cfg_param_name[] = {
 	(unsigned char *)"NETWORK_DENSITY",
 	(unsigned char *)"ADAPTIVE_THRESHOLD_ALGORITHM",
 	(unsigned char *)"CURRENT_TX_ANTENNA",
-	(unsigned char *)"CURRENT_RX_ANTENNA",
 	(unsigned char *)"CURRENT_TX_POWER_LEVEL",
 	(unsigned char *)"NEW_BSS_FOUND_IND",
 	(unsigned char *)"PROPRIETARY_RATES_ENABLED",
