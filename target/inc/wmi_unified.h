@@ -7833,6 +7833,9 @@ typedef struct {
 	A_UINT32 vdev_id;
 } wmi_peer_add_wds_entry_cmd_fixed_param;
 
+#define WMI_CHAN_INFO_START_RESP  0
+#define WMI_CHAN_INFO_END_RESP    1
+
 typedef struct {
 	A_UINT32 tlv_header;            /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_remove_wds_entry_cmd_fixed_param */
 	/** wds MAC addr */
@@ -7897,6 +7900,10 @@ typedef struct {
 	A_UINT32 my_bss_rx_cycle_count;
 	/** b-mode data rx time (units are microseconds) */
 	A_UINT32 rx_11b_mode_data_duration;
+	/** tx frame count */
+	A_UINT32 tx_frame_cnt;
+	/** mac clock */
+	A_UINT32 mac_clk_mhz;
 } wmi_chan_info_event_fixed_param;
 
 /**
