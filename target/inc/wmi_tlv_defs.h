@@ -3886,8 +3886,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_RADIO_TX_POWER_LEVEL_STATS_EVENTID);
  *    A_UINT32                 tx_mpdu_aggr[][][];       Array size is num_peer_ac_tx_stats * WLAN_MAX_AC * tx_mpdu_aggr_array_size,
  *                                                       array index is (peer_index * WLAN_MAX_AC + ac_index) * tx_mpdu_aggr_array_size + A-MPDU size index
  *                                                       Contains a histogram of how many A-MPDUs of a given size (i.e. number of MPDUs) have been transmitted.
- *                                                       Element 0 contains the count of PPDUs containing a single MPDU, element 1 counts PPDUs containing 2 MPDUs, etc.
- *                                                       Element tx_mpdu_aggr_array_size-1 contains the histogram count for A-MPDUs of size >= tx_mpdu_aggr_array_size.
+ *                                                       Element 0 contains the number of MPDUs within a single-MPDU A-MPDU.
+ *                                                       Element 1 contains the number of MPDUs within a 2-MPDU A-MPDU (number of A-MPDUs x2).
+ *                                                       Element 2 contains the number of MPDUs within a 3-MPDU A-MPDU (number of A-MPDUs x3).
+ *                                                       Element tx_mpdu_aggr_array_size-1 contains the number of MPDUs within A-MPDUs with >= tx_mpdu_aggr_array_size MPDUs.
  *    A_UINT32                 tx_msdu_acked_mcs[][][];  Array size is num_peer_ac_tx_stats * WLAN_MAX_AC * tx_msdu_acked_mcs_array_size,
  *                                                       array index is (peer_index * WLAN_MAX_AC + ac_index) * tx_msdu_acked_mcs_array_size + MCS index
  *                                                       Contains a count of how many tx MSDUs have been acked for each MCS of each AC of each peer.
@@ -3896,7 +3898,7 @@ WMITLV_CREATE_PARAM_STRUC(WMI_RADIO_TX_POWER_LEVEL_STATS_EVENTID);
  *                                                       Contains a count of how many MSDUs failed tx due to no ack for each MCS of each AC of each peer.
  *    A_UINT32                 tx_msdu_delay[][][];      Array size is num_peer_ac_tx_stats * WLAN_MAX_AC * tx_msdu_delay_array_size,
  *                                                       array index is (peer_index * WLAN_MAX_AC + ac_index) * tx_msdu_delay_array_size + delay index
- *                                                       Contains a histogram of how many MSDUs encountered each level of delay due to retries.
+ *                                                       Contains a histogram of how many MSDUs encountered each level of delay due to retries or air interface contention.
  *                                                       The time represented by each array element (i.e. histogram bin) is specified by tx_delay_bin_size_ms.
  *                                                       Element 0 contains the count of MSDUs delayed by less than tx_delay_bin_size_ms.
  *                                                       Element 1 contains the count of MSDUs delayed by more than 1x tx_delay_bin_size_ms but less than 2x.
@@ -3907,8 +3909,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_RADIO_TX_POWER_LEVEL_STATS_EVENTID);
  *    A_UINT32                 rx_mpdu_aggr[][][];       Array size is num_peer_ac_rx_stats * WLAN_MAX_AC * rx_mpdu_aggr_array_size,
  *                                                       array index is (peer_index * WLAN_MAX_AC + ac_index) * rx_mpdu_aggr_array_size + A-MPDU size index
  *                                                       Contains a histogram of how many A-MPDUs of a given size (i.e. number of MPDUs) have been received.
- *                                                       Element 0 contains the count of PPDUs containing a single MPDU, element 1 counts PPDUs containing 2 MPDUs, etc.
- *                                                       Element rx_mpdu_aggr_array_size-1 contains the histogram count for A-MPDUs of size >= rx_mpdu_aggr_array_size.
+ *                                                       Element 0 contains the number of MPDUs within a single-MPDU A-MPDU.
+ *                                                       Element 1 contains the number of MPDUs within a 2-MPDU A-MPDU (number of A-MPDUs x2).
+ *                                                       Element 2 contains the number of MPDUs within a 3-MPDU A-MPDU (number of A-MPDUs x3).
+ *                                                       Element rx_mpdu_aggr_array_size-1 contains the number of MPDUs within A-MPDUs with >= rx_mpdu_aggr_array_size MPDUs.
  *    A_UINT32                 rx_msdu_mcs[][][];        Array size is (num_peer_ac_rx_stats * WLAN_MAX_AC) * rx_msdu_mcs_array_size,
  *                                                       array index is (peer_index * WLAN_MAX_AC + ac_index) * rx_msdu_mcs_array_size + MCS index
  *                                                       Contains a count of rx MSDUs for each MCS of each AC of each peer.
