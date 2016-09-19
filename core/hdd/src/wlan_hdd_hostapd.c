@@ -570,15 +570,8 @@ static int hdd_stop_bss_link(hdd_adapter_t *pHostapdAdapter,
 		return status;
 
 	if (test_bit(SOFTAP_BSS_STARTED, &pHostapdAdapter->event_flags)) {
-#ifdef WLAN_FEATURE_MBSSID
-		status =
-			wlansap_stop_bss(WLAN_HDD_GET_SAP_CTX_PTR(
-					 pHostapdAdapter));
-#else
-		status =
-			wlansap_stop_bss((WLAN_HDD_GET_CTX(pHostapdAdapter))->
-					 pcds_context);
-#endif
+		status = wlansap_stop_bss(
+			WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter));
 		if (QDF_IS_STATUS_SUCCESS(status))
 			hdd_err("Deleting SAP/P2P link!!!!!!");
 
@@ -839,7 +832,6 @@ static void hdd_send_conditional_chan_switch_status(hdd_context_t *hdd_ctx,
 	cfg80211_vendor_event(event, GFP_KERNEL);
 }
 
-#ifdef WLAN_FEATURE_MBSSID
 /**
  * wlan_hdd_set_pre_cac_complete_status() - Set pre cac complete status
  * @ap_adapter: AP adapter
@@ -861,20 +853,6 @@ static int wlan_hdd_set_pre_cac_complete_status(hdd_adapter_t *ap_adapter,
 
 	return 0;
 }
-#else
-static int wlan_hdd_set_pre_cac_complete_status(hdd_adapter_t *ap_adapter,
-		bool status)
-{
-	QDF_STATUS ret;
-
-	ret = wlan_sap_set_pre_cac_complete_status(
-			(WLAN_HDD_GET_CTX(ap_adapter))->pcds_context, status);
-	if (QDF_IS_STATUS_ERROR(ret))
-		return -EINVAL;
-
-	return 0;
-}
-#endif
 
 /**
  * wlan_hdd_sap_pre_cac_failure() - Process the pre cac failure
@@ -1141,14 +1119,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		/* Set group key / WEP key every time when BSS is restarted */
 		if (pHddApCtx->groupKey.keyLength) {
 			status = wlansap_set_key_sta(
-#ifdef WLAN_FEATURE_MBSSID
-				WLAN_HDD_GET_SAP_CTX_PTR
-					(pHostapdAdapter),
-#else
-				(WLAN_HDD_GET_CTX
-					 (pHostapdAdapter))->
-				pcds_context,
-#endif
+				WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter),
 				&pHddApCtx->groupKey);
 			if (!QDF_IS_STATUS_SUCCESS(status))
 				hdd_err("wlansap_set_key_sta failed");
@@ -1158,15 +1129,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 					continue;
 
 				status = wlansap_set_key_sta(
-#ifdef WLAN_FEATURE_MBSSID
 					WLAN_HDD_GET_SAP_CTX_PTR
 						(pHostapdAdapter),
-#else
-					(WLAN_HDD_GET_CTX(pHostapdAdapter))->
-					 pcds_context,
-#endif
-					&pHddApCtx->
-					wepKey[i]);
+					&pHddApCtx->wepKey[i]);
 				if (!QDF_IS_STATUS_SUCCESS(status)) {
 					hdd_err("set_key failed idx %d", i);
 				}
@@ -1239,12 +1204,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		hdd_wlan_green_ap_stop_bss(pHddCtx);
 
 		/* Free up Channel List incase if it is set */
-#ifdef WLAN_FEATURE_MBSSID
-		sap_cleanup_channel_list(WLAN_HDD_GET_SAP_CTX_PTR
-					 (pHostapdAdapter));
-#else
-		sap_cleanup_channel_list();
-#endif
+		sap_cleanup_channel_list(
+			WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter));
+
 		/* Invalidate the channel info. */
 		pHddApCtx->operatingChannel = 0;
 		if (hdd_ipa_is_enabled(pHddCtx)) {
@@ -1424,13 +1386,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		       MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 		we_event = IWEVREGISTERED;
 
-#ifdef WLAN_FEATURE_MBSSID
-		wlansap_get_wps_state(WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter),
-				      &bWPSState);
-#else
-		wlansap_get_wps_state((WLAN_HDD_GET_CTX(pHostapdAdapter))->
-				      pcds_context, &bWPSState);
-#endif
+		wlansap_get_wps_state(
+			WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter),
+			&bWPSState);
 
 		if ((eCSR_ENCRYPT_TYPE_NONE == pHddApCtx->ucEncryptType) ||
 		    (eCSR_ENCRYPT_TYPE_WEP40_STATICKEY ==
@@ -2157,11 +2115,6 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 	hdd_adapter_t *sta_adapter;
 	hdd_station_ctx_t *sta_ctx;
 
-#ifndef WLAN_FEATURE_MBSSID
-	v_CONTEXT_t p_cds_context =
-		(WLAN_HDD_GET_CTX(pHostapdAdapter))->pcds_context;
-#endif
-
 	pHddCtx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 	ret = wlan_hdd_validate_context(pHddCtx);
 	if (ret)
@@ -2207,14 +2160,8 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 	 * Post the Channel Change request to SAP.
 	 */
 	status = wlansap_set_channel_change_with_csa(
-#ifdef WLAN_FEATURE_MBSSID
-		WLAN_HDD_GET_SAP_CTX_PTR
-			(pHostapdAdapter),
-#else
-		p_cds_context,
-#endif
-		(uint32_t)
-		target_channel,
+		WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter),
+		(uint32_t)target_channel,
 		target_bw);
 
 	if (QDF_STATUS_SUCCESS != status) {
@@ -2446,11 +2393,7 @@ static QDF_STATUS hdd_print_acl(hdd_adapter_t *pHostapdAdapter)
 	uint8_t listnum;
 	void *p_cds_gctx = NULL;
 
-#ifdef WLAN_FEATURE_MBSSID
 	p_cds_gctx = WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter);
-#else
-	p_cds_gctx = (WLAN_HDD_GET_CTX(pHostapdAdapter))->pcds_context;
-#endif
 	qdf_mem_zero(&MacList[0], sizeof(MacList));
 	if (QDF_STATUS_SUCCESS == wlansap_get_acl_mode(p_cds_gctx, &acl_mode)) {
 		pr_info("******** ACL MODE *********\n");
@@ -2509,7 +2452,6 @@ static __iw_softap_setparam(struct net_device *dev,
 	int set_value = value[1];
 	QDF_STATUS status;
 	int ret = 0;            /* success */
-	v_CONTEXT_t p_cds_context;
 	hdd_context_t *hdd_ctx;
 
 	ENTER_DEV(dev);
@@ -2525,12 +2467,6 @@ static __iw_softap_setparam(struct net_device *dev,
 		return -EINVAL;
 	}
 
-	p_cds_context = hdd_ctx->pcds_context;
-	if (!p_cds_context) {
-		hdd_err("cds ctx is null");
-		return -ENOENT;
-	}
-
 	switch (sub_cmd) {
 	case QCASAP_SET_RADAR_DBG:
 		hdd_notice("QCASAP_SET_RADAR_DBG called with: value: %d",
@@ -2540,13 +2476,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCSAP_PARAM_CLR_ACL:
 		if (QDF_STATUS_SUCCESS != wlansap_clear_acl(
-#ifdef WLAN_FEATURE_MBSSID
-			    WLAN_HDD_GET_SAP_CTX_PTR
-				    (pHostapdAdapter)
-#else
-			    p_cds_context
-#endif
-			    )) {
+		    WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter))) {
 			ret = -EIO;
 		}
 		break;
@@ -2558,13 +2488,9 @@ static __iw_softap_setparam(struct net_device *dev,
 			       set_value);
 			ret = -EINVAL;
 		} else {
-#ifdef WLAN_FEATURE_MBSSID
-			wlansap_set_mode(WLAN_HDD_GET_SAP_CTX_PTR
-						 (pHostapdAdapter), set_value);
-#else
-			wlansap_set_mode(p_cds_context, set_value);
-#endif
-
+			wlansap_set_mode(
+				WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter),
+				set_value);
 		}
 		break;
 
@@ -2995,12 +2921,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCASAP_SET_DFS_NOL:
 		wlansap_set_dfs_nol(
-#ifdef WLAN_FEATURE_MBSSID
-			WLAN_HDD_GET_SAP_CTX_PTR
-				(pHostapdAdapter),
-#else
-			p_cds_context,
-#endif
+			WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter),
 			(eSapDfsNolType) set_value);
 		break;
 
@@ -3357,14 +3278,8 @@ static __iw_softap_getparam(struct net_device *dev,
 	case QCASAP_GET_DFS_NOL:
 	{
 		wlansap_get_dfs_nol(
-#ifdef WLAN_FEATURE_MBSSID
-			WLAN_HDD_GET_SAP_CTX_PTR
-				(pHostapdAdapter),
-#else
-			pHddCtx->pcds_context,
-#endif
-			nol, &nol_len
-			);
+			WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter),
+			nol, &nol_len);
 	}
 	break;
 
@@ -3485,9 +3400,6 @@ int __iw_softap_modify_acl(struct net_device *dev,
 			   union iwreq_data *wrqu, char *extra)
 {
 	hdd_adapter_t *pHostapdAdapter = (netdev_priv(dev));
-#ifndef WLAN_FEATURE_MBSSID
-	v_CONTEXT_t cds_ctx;
-#endif
 	uint8_t *value = (uint8_t *) extra;
 	uint8_t pPeerStaMac[QDF_MAC_ADDR_SIZE];
 	int listType, cmd, i;
@@ -3502,14 +3414,6 @@ int __iw_softap_modify_acl(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
-#ifndef WLAN_FEATURE_MBSSID
-	cds_ctx =  hdd_ctx->pcds_context;
-	if (NULL == cds_ctx) {
-		hdd_err("Vos Context is NULL");
-		return -EINVAL;
-	}
-#endif
-
 	for (i = 0; i < QDF_MAC_ADDR_SIZE; i++)
 		pPeerStaMac[i] = *(value + i);
 
@@ -3520,16 +3424,9 @@ int __iw_softap_modify_acl(struct net_device *dev,
 	hdd_notice("Modify ACL mac:" MAC_ADDRESS_STR " type: %d cmd: %d",
 	       MAC_ADDR_ARRAY(pPeerStaMac), listType, cmd);
 
-#ifdef WLAN_FEATURE_MBSSID
-	qdf_status =
-		wlansap_modify_acl(WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter),
-				   pPeerStaMac, (eSapACLType) listType,
-				   (eSapACLCmdType) cmd);
-#else
-	qdf_status =
-		wlansap_modify_acl(p_cds_context, pPeerStaMac,
-				   (eSapACLType) listType, (eSapACLCmdType) cmd);
-#endif
+	qdf_status = wlansap_modify_acl(
+		WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter),
+		pPeerStaMac, (eSapACLType) listType, (eSapACLCmdType) cmd);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("Modify ACL failed");
 		ret = -EIO;
@@ -4067,9 +3964,6 @@ int __iw_get_genie(struct net_device *dev,
 	hdd_adapter_t *pHostapdAdapter = (netdev_priv(dev));
 	hdd_context_t *hdd_ctx;
 	int ret;
-#ifndef WLAN_FEATURE_MBSSID
-	v_CONTEXT_t cds_ctx;
-#endif
 	QDF_STATUS status;
 	uint32_t length = DOT11F_IE_RSN_MAX_LEN;
 	uint8_t genIeBytes[DOT11F_IE_RSN_MAX_LEN];
@@ -4081,25 +3975,12 @@ int __iw_get_genie(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
-#ifndef WLAN_FEATURE_MBSSID
-	cds_ctx = hdd_ctx->pcds_context;
-	if (NULL == cds_ctx) {
-		hdd_err("vos context is not valid ");
-		return -EINVAL;
-	}
-#endif
-
 	/*
 	 * Actually retrieve the RSN IE from CSR.
 	 * (We previously sent it down in the CSR Roam Profile.)
 	 */
 	status = wlan_sap_getstation_ie_information(
-#ifdef WLAN_FEATURE_MBSSID
-		WLAN_HDD_GET_SAP_CTX_PTR
-			(pHostapdAdapter),
-#else
-		cds_ctx,
-#endif
+		WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter),
 		&length, genIeBytes);
 	if (status == QDF_STATUS_SUCCESS) {
 		wrqu->data.length = length;
@@ -4288,9 +4169,6 @@ static int __iw_set_ap_encodeext(struct net_device *dev,
 			       union iwreq_data *wrqu, char *extra)
 {
 	hdd_adapter_t *pHostapdAdapter = (netdev_priv(dev));
-#ifndef WLAN_FEATURE_MBSSID
-	v_CONTEXT_t cds_ctx;
-#endif
 	hdd_ap_ctx_t *pHddApCtx = WLAN_HDD_GET_AP_CTX_PTR(pHostapdAdapter);
 	hdd_context_t *hdd_ctx;
 	int ret;
@@ -4307,14 +4185,6 @@ static int __iw_set_ap_encodeext(struct net_device *dev,
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
 		return ret;
-
-#ifndef WLAN_FEATURE_MBSSID
-	cds_ctx = hdd_ctx->pcds_context;
-	if (NULL == cds_ctx) {
-		hdd_err("pVosContext is NULL");
-		return -EINVAL;
-	}
-#endif
 
 	key_index = encoding->flags & IW_ENCODE_INDEX;
 
@@ -4415,13 +4285,8 @@ static int __iw_set_ap_encodeext(struct net_device *dev,
 	for (i = 0; i < ext->key_len; i++)
 		hdd_notice("%02x", setKey.Key[i]);
 
-#ifdef WLAN_FEATURE_MBSSID
-	vstatus =
-		wlansap_set_key_sta(WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter),
-				    &setKey);
-#else
-	vstatus = wlansap_set_key_sta(cds_ctx, &setKey);
-#endif
+	vstatus = wlansap_set_key_sta(
+		WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter), &setKey);
 
 	if (vstatus != QDF_STATUS_SUCCESS) {
 		hdd_err("wlansap_set_key_sta failed, status= %d",
@@ -4757,14 +4622,8 @@ __iw_softap_stopbss(struct net_device *dev,
 			WLAN_HDD_GET_HOSTAP_STATE_PTR(pHostapdAdapter);
 
 		qdf_event_reset(&pHostapdState->qdf_stop_bss_event);
-#ifdef WLAN_FEATURE_MBSSID
-		status =
-			wlansap_stop_bss(WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter));
-#else
-		status =
-			wlansap_stop_bss((WLAN_HDD_GET_CTX(pHostapdAdapter))->
-					 pcds_context);
-#endif
+		status = wlansap_stop_bss(
+			WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter));
 		if (QDF_IS_STATUS_SUCCESS(status)) {
 			qdf_status =
 				qdf_wait_single_event(&pHostapdState->
@@ -4941,9 +4800,6 @@ static int __iw_set_ap_genie(struct net_device *dev,
 			   union iwreq_data *wrqu, char *extra) {
 
 	hdd_adapter_t *pHostapdAdapter = netdev_priv(dev);
-#ifndef WLAN_FEATURE_MBSSID
-	v_CONTEXT_t cds_ctx;
-#endif
 	hdd_context_t *hdd_ctx;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 	uint8_t *genie = (uint8_t *)extra;
@@ -4955,14 +4811,6 @@ static int __iw_set_ap_genie(struct net_device *dev,
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
 		return ret;
-
-#ifndef WLAN_FEATURE_MBSSID
-	cds_ctx = hdd_ctx->pcds_context;
-	if (NULL == cds_ctx) {
-		hdd_err("QDF Context is NULL");
-		return -EINVAL;
-	}
-#endif
 
 	if (!wrqu->data.length) {
 		EXIT();
@@ -4977,16 +4825,9 @@ static int __iw_set_ap_genie(struct net_device *dev,
 			hdd_softap_register_bc_sta(pHostapdAdapter, 1);
 		}
 		(WLAN_HDD_GET_AP_CTX_PTR(pHostapdAdapter))->uPrivacy = 1;
-#ifdef WLAN_FEATURE_MBSSID
-		qdf_ret_status =
-			wlansap_set_wparsn_ies(WLAN_HDD_GET_SAP_CTX_PTR
-						       (pHostapdAdapter), genie,
-					       wrqu->data.length);
-#else
-		qdf_ret_status =
-			wlansap_set_wparsn_ies(cds_ctx, genie,
-					       wrqu->data.length);
-#endif
+		qdf_ret_status = wlansap_set_wparsn_ies(
+			WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter),
+			 genie, wrqu->data.length);
 		break;
 
 	default:
@@ -5740,17 +5581,14 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	QDF_STATUS status;
 	QDF_STATUS qdf_status;
-#ifdef WLAN_FEATURE_MBSSID
 	v_CONTEXT_t p_cds_context = (WLAN_HDD_GET_CTX(pAdapter))->pcds_context;
 	v_CONTEXT_t sapContext = NULL;
-#endif
 	int ret;
 	enum tQDF_ADAPTER_MODE mode;
 	uint32_t session_id = CSR_SESSION_ID_INVALID;
 
 	ENTER();
 
-#ifdef WLAN_FEATURE_MBSSID
 	sapContext = wlansap_open(p_cds_context);
 	if (sapContext == NULL) {
 		hdd_err("ERROR: wlansap_open failed!!");
@@ -5778,7 +5616,6 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 		return status;
 	}
 	pAdapter->sessionId = session_id;
-#endif
 
 	/* Allocate the Wireless Extensions state structure */
 	phostapdBuf = WLAN_HDD_GET_HOSTAP_STATE_PTR(pAdapter);
@@ -5793,30 +5630,24 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 	status = hdd_set_hostapd(pAdapter);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("ERROR: hdd_set_hostapd failed!!");
-#ifdef WLAN_FEATURE_MBSSID
 		wlansap_close(sapContext);
 		pAdapter->sessionCtx.ap.sapContext = NULL;
-#endif
 		return status;
 	}
 
 	qdf_status = qdf_event_create(&phostapdBuf->qdf_event);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("ERROR: Hostapd HDD qdf event init failed!!");
-#ifdef WLAN_FEATURE_MBSSID
 		wlansap_close(sapContext);
 		pAdapter->sessionCtx.ap.sapContext = NULL;
-#endif
 		return qdf_status;
 	}
 
 	qdf_status = qdf_event_create(&phostapdBuf->qdf_stop_bss_event);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("ERROR: Hostapd HDD stop bss event init failed!!");
-#ifdef WLAN_FEATURE_MBSSID
 		wlansap_close(sapContext);
 		pAdapter->sessionCtx.ap.sapContext = NULL;
-#endif
 		return qdf_status;
 	}
 
@@ -5859,10 +5690,8 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 
 error_wmm_init:
 	hdd_softap_deinit_tx_rx(pAdapter);
-#ifdef WLAN_FEATURE_MBSSID
 	wlansap_close(sapContext);
 	pAdapter->sessionCtx.ap.sapContext = NULL;
-#endif
 	EXIT();
 	return status;
 }
@@ -5998,10 +5827,8 @@ QDF_STATUS hdd_register_hostapd(hdd_adapter_t *pAdapter,
  */
 QDF_STATUS hdd_unregister_hostapd(hdd_adapter_t *pAdapter, bool rtnl_held)
 {
-#ifdef WLAN_FEATURE_MBSSID
 	QDF_STATUS status;
 	void *sapContext = WLAN_HDD_GET_SAP_CTX_PTR(pAdapter);
-#endif
 
 	ENTER();
 
@@ -6022,7 +5849,6 @@ QDF_STATUS hdd_unregister_hostapd(hdd_adapter_t *pAdapter, bool rtnl_held)
 		}
 	}
 
-#ifdef WLAN_FEATURE_MBSSID
 	status = wlansap_stop(sapContext);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("Failed:wlansap_stop");
@@ -6031,7 +5857,6 @@ QDF_STATUS hdd_unregister_hostapd(hdd_adapter_t *pAdapter, bool rtnl_held)
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("Failed:WLANSAP_close");
 	pAdapter->sessionCtx.ap.sapContext = NULL;
-#endif
 
 	EXIT();
 	return 0;
@@ -6820,7 +6645,7 @@ QDF_STATUS wlan_hdd_config_acs(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 
 	sap_config->enOverLapCh = !!hdd_ctx->config->gEnableOverLapCh;
 
-#if defined(WLAN_FEATURE_MBSSID) && defined(FEATURE_WLAN_AP_AP_ACS_OPTIMIZE)
+#ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 	hdd_notice("HDD_ACS_SKIP_STATUS = %d",
 						hdd_ctx->skip_acs_scan_status);
 	if (hdd_ctx->skip_acs_scan_status == eSAP_SKIP_ACS_SCAN) {
@@ -7078,10 +6903,6 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	int qdf_status = QDF_STATUS_SUCCESS;
 	tpWLAN_SAPEventCB pSapEventCallback;
 	hdd_hostapd_state_t *pHostapdState;
-#ifndef WLAN_FEATURE_MBSSID
-	v_CONTEXT_t p_cds_context =
-		(WLAN_HDD_GET_CTX(pHostapdAdapter))->pcds_context;
-#endif
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pHostapdAdapter);
 	struct qc_mac_acl_entry *acl_entry = NULL;
 	int32_t i;
@@ -7541,14 +7362,8 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 
 	qdf_event_reset(&pHostapdState->qdf_event);
 	status = wlansap_start_bss(
-#ifdef WLAN_FEATURE_MBSSID
-		WLAN_HDD_GET_SAP_CTX_PTR
-			(pHostapdAdapter),
-#else
-		p_cds_context,
-#endif
-		pSapEventCallback, pConfig,
-		pHostapdAdapter->dev);
+		WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter),
+		pSapEventCallback, pConfig, pHostapdAdapter->dev);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		wlansap_reset_sap_config_add_ie(pConfig, eUPDATE_IE_ALL);
 		cds_set_connection_in_progress(false);
@@ -7567,11 +7382,7 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		hdd_err("ERROR: HDD qdf wait for single_event failed!!");
 		cds_set_connection_in_progress(false);
 		sme_get_command_q_status(hHal);
-#ifdef WLAN_FEATURE_MBSSID
 		wlansap_stop_bss(WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter));
-#else
-		wlansap_stop_bss(p_cds_context);
-#endif
 		QDF_ASSERT(0);
 		ret = -EINVAL;
 		goto error;
@@ -7740,11 +7551,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 			WLAN_HDD_GET_HOSTAP_STATE_PTR(pAdapter);
 
 		qdf_event_reset(&pHostapdState->qdf_stop_bss_event);
-#ifdef WLAN_FEATURE_MBSSID
 		status = wlansap_stop_bss(WLAN_HDD_GET_SAP_CTX_PTR(pAdapter));
-#else
-		status = wlansap_stop_bss(pHddCtx->pcds_context);
-#endif
 		if (QDF_IS_STATUS_SUCCESS(status)) {
 			qdf_status =
 				qdf_wait_single_event(&pHostapdState->
