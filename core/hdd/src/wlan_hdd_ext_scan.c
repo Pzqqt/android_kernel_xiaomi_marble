@@ -4326,7 +4326,7 @@ __wlan_hdd_cfg80211_extscan_set_ssid_hotlist(struct wiphy *wiphy,
 	struct hdd_ext_scan_context *context;
 	uint32_t request_id;
 	char ssid_string[SIR_MAC_MAX_SSID_LENGTH + 1];
-	int ssid_len, i, rem;
+	int ssid_len, i, rem, ssid_str_len;
 	QDF_STATUS status;
 	int retval;
 	unsigned long rc;
@@ -4408,9 +4408,13 @@ __wlan_hdd_cfg80211_extscan_set_ssid_hotlist(struct wiphy *wiphy,
 			hdd_err("attr ssid failed");
 			goto fail;
 		}
-		nla_memcpy(ssid_string,
+		ssid_str_len = nla_strlcpy(ssid_string,
 			   tb2[PARAM_SSID],
 			   sizeof(ssid_string));
+		if (ssid_str_len > SIR_MAC_MAX_SSID_LENGTH) {
+			hdd_err("Invalid length exceeds max ssid length");
+			goto fail;
+		}
 		hdd_notice("SSID %s",
 		       ssid_string);
 		ssid_len = strlen(ssid_string);
