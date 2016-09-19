@@ -825,16 +825,6 @@ typedef enum {
 #define CFG_RRM_ENABLE_MAX                               (1)
 #define CFG_RRM_ENABLE_DEFAULT                           (0)
 
-#define CFG_RRM_OPERATING_CHAN_MAX_DURATION_NAME         "gRrmOperChanMax"      /* section 11.10.3 IEEE std. 802.11k-2008 */
-#define CFG_RRM_OPERATING_CHAN_MAX_DURATION_MIN          (0)    /* Maxduration = 2^(maxDuration - 4) * bcnIntvl. */
-#define CFG_RRM_OPERATING_CHAN_MAX_DURATION_MAX          (8)
-#define CFG_RRM_OPERATING_CHAN_MAX_DURATION_DEFAULT      (3)    /* max duration = 2^-1 * bcnIntvl (50% of bcn intvl) */
-
-#define CFG_RRM_NON_OPERATING_CHAN_MAX_DURATION_NAME     "gRrmNonOperChanMax"   /* Same as above. */
-#define CFG_RRM_NON_OPERATING_CHAN_MAX_DURATION_MIN      (0)
-#define CFG_RRM_NON_OPERATING_CHAN_MAX_DURATION_MAX      (8)
-#define CFG_RRM_NON_OPERATING_CHAN_MAX_DURATION_DEFAULT  (3)
-
 #define CFG_RRM_MEAS_RANDOMIZATION_INTVL_NAME            "gRrmRandnIntvl"
 #define CFG_RRM_MEAS_RANDOMIZATION_INTVL_MIN             (10)
 #define CFG_RRM_MEAS_RANDOMIZATION_INTVL_MAX             (100)
@@ -3533,8 +3523,6 @@ struct hdd_config {
 	bool fIsLowGainOverride;
 	uint8_t disablePacketFilter;
 	bool fRrmEnable;
-	uint8_t nInChanMeasMaxDuration;
-	uint8_t nOutChanMeasMaxDuration;
 	uint16_t nRrmRandnIntvl;
 	/* length includes separator */
 	char rm_capability[3 * DOT11F_IE_RRMENABLEDCAP_MAX_LEN];
