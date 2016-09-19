@@ -2388,6 +2388,7 @@ ol_txrx_is_rx_fwd_disabled(ol_txrx_vdev_handle vdev)
 	return cfg->rx_fwd_disabled;
 }
 
+#ifdef QCA_IBSS_SUPPORT
 /**
  * ol_txrx_update_ibss_add_peer_num_of_vdev() - update and return peer num
  * @vdev: vdev handle
@@ -2427,6 +2428,7 @@ uint16_t ol_txrx_set_ibss_vdev_heart_beat_timer(ol_txrx_vdev_handle vdev,
 
 	return old_timer_value;
 }
+#endif
 
 /**
  * ol_txrx_remove_peers_for_vdev() - remove all vdev peers with lock held
