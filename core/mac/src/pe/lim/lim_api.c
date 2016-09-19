@@ -1902,6 +1902,11 @@ QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	lim_delete_tdls_peers(mac_ctx, session_ptr);
 	curr_sta_ds = dph_lookup_hash_entry(mac_ctx, session_ptr->bssId,
 			&aid, &session_ptr->dph.dphHashTable);
+	if (curr_sta_ds == NULL) {
+		lim_log(mac_ctx, LOGE, FL("LFR3:failed to lookup hash entry"));
+		ft_session_ptr->bRoamSynchInProgress = false;
+		return status;
+	}
 	local_nss = curr_sta_ds->nss;
 	session_ptr->limSmeState = eLIM_SME_IDLE_STATE;
 	lim_cleanup_rx_path(mac_ctx, curr_sta_ds, session_ptr);
