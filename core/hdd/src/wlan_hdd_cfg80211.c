@@ -1178,8 +1178,6 @@ static int is_driver_dfs_capable(struct wiphy *wiphy,
  *
  * Return: 0 - No DFS issue, 1 - Override done and negative error codes
  */
-
-#ifdef WLAN_FEATURE_MBSSID
 int wlan_hdd_sap_cfg_dfs_override(hdd_adapter_t *adapter)
 {
 	hdd_adapter_t *con_sap_adapter;
@@ -1248,12 +1246,6 @@ int wlan_hdd_sap_cfg_dfs_override(hdd_adapter_t *adapter)
 
 	return con_ch;
 }
-#else
-int wlan_hdd_sap_cfg_dfs_override(hdd_adapter_t *adapter)
-{
-	return 0;
-}
-#endif
 
 /**
  * wlan_hdd_set_acs_ch_range : Start ACS channel range values
@@ -1358,11 +1350,7 @@ static int wlan_hdd_cfg80211_start_acs(hdd_adapter_t *adapter)
 		adapter->macAddressCurrent.bytes, sizeof(struct qdf_mac_addr));
 	hdd_notice("ACS Started for wlan%d", adapter->dev->ifindex);
 	status = wlansap_acs_chselect(
-#ifdef WLAN_FEATURE_MBSSID
 		WLAN_HDD_GET_SAP_CTX_PTR(adapter),
-#else
-		hdd_ctx->pcds_context,
-#endif
 		acs_event_callback, sap_config, adapter->dev);
 
 
@@ -6348,7 +6336,6 @@ static int wlan_hdd_cfg80211_bpf_offload(struct wiphy *wiphy,
 	return ret;
 }
 
-#ifdef WLAN_FEATURE_MBSSID
 /**
  * wlan_hdd_set_pre_cac_status() - Set the pre cac status
  * @pre_cac_adapter: AP adapter used for pre cac
@@ -6418,49 +6405,6 @@ static int wlan_hdd_sap_get_nol(hdd_adapter_t *ap_adapter, uint8_t *nol,
 
 	return 0;
 }
-#else
-static int wlan_hdd_set_pre_cac_status(hdd_adapter_t *pre_cac_adapter,
-				bool status, tHalHandle handle)
-{
-	QDF_STATUS ret;
-
-	ret = wlan_sap_set_pre_cac_status(
-		(WLAN_HDD_GET_CTX(pre_cac_adapter))->pcds_context, status,
-		handle);
-	if (QDF_IS_STATUS_ERROR(ret))
-		return -EINVAL;
-
-	return 0;
-}
-
-static int wlan_hdd_set_chan_before_pre_cac(hdd_adapter_t *ap_adapter,
-			uint8_t chan_before_pre_cac)
-{
-	QDF_STATUS ret;
-
-	ret = wlan_sap_set_chan_before_pre_cac(
-		(WLAN_HDD_GET_CTX(ap_adapter))->pcds_context,
-		chan_before_pre_cac);
-	if (QDF_IS_STATUS_ERROR(ret))
-		return -EINVAL;
-
-	return 0;
-}
-
-static int wlan_hdd_sap_get_nol(hdd_adapter_t *ap_adapter, uint8_t *nol,
-				uint32_t *nol_len)
-{
-	QDF_STATUS ret;
-
-	ret = wlansap_get_dfs_nol(
-		(WLAN_HDD_GET_CTX(ap_adapter))->pcds_context,
-		nol, nol_len);
-	if (QDF_IS_STATUS_ERROR(ret))
-		return -EINVAL;
-
-	return 0;
-}
-#endif
 
 /**
  * wlan_hdd_validate_and_get_pre_cac_ch() - Validate and get pre cac channel
@@ -9133,9 +9077,6 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 	tCsrRoamSetKey setKey;
 	int status;
 	uint32_t roamId = 0xFF;
-#ifndef WLAN_FEATURE_MBSSID
-	v_CONTEXT_t p_cds_context = (WLAN_HDD_GET_CTX(pAdapter))->pcds_context;
-#endif
 	hdd_hostapd_state_t *pHostapdState;
 	QDF_STATUS qdf_ret_status;
 	hdd_context_t *pHddCtx;
@@ -9302,13 +9243,8 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 	    (pAdapter->device_mode == QDF_P2P_GO_MODE)) {
 		pHostapdState = WLAN_HDD_GET_HOSTAP_STATE_PTR(pAdapter);
 		if (pHostapdState->bssState == BSS_START) {
-#ifdef WLAN_FEATURE_MBSSID
-			status =
-				wlansap_set_key_sta(WLAN_HDD_GET_SAP_CTX_PTR
-							    (pAdapter), &setKey);
-#else
-			status = wlansap_set_key_sta(p_cds_context, &setKey);
-#endif
+			status = wlansap_set_key_sta(
+				WLAN_HDD_GET_SAP_CTX_PTR(pAdapter), &setKey);
 			if (status != QDF_STATUS_SUCCESS) {
 				hdd_err("[%4d] wlansap_set_key_sta returned ERROR status= %d",
 					  __LINE__, status);
@@ -13426,13 +13362,8 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 					     sizeof(qcmacaddr));
 			}
 		}
-#ifdef WLAN_FEATURE_MBSSID
-		qdf_status =
-			wlansap_set_mac_acl(WLAN_HDD_GET_SAP_CTX_PTR(pAdapter),
-					    pConfig);
-#else
-		qdf_status = wlansap_set_mac_acl(p_cds_context, pConfig);
-#endif
+		qdf_status = wlansap_set_mac_acl(
+			WLAN_HDD_GET_SAP_CTX_PTR(pAdapter), pConfig);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			hdd_err("SAP Set Mac Acl fail");
 			return -EINVAL;
