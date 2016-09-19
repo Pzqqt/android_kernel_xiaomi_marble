@@ -7982,6 +7982,11 @@ int wma_p2p_lo_event_handler(void *handle, uint8_t *event_buf,
 	wmi_p2p_lo_stopped_event_fixed_param *fix_param;
 	tpAniSirGlobal p_mac = cds_get_context(QDF_MODULE_ID_PE);
 
+	if (!wma) {
+		WMA_LOGE("%s: Invalid WMA Context", __func__);
+		return -EINVAL;
+	}
+
 	if (!p_mac) {
 		WMA_LOGE("%s: Invalid p_mac", __func__);
 		return -EINVAL;
