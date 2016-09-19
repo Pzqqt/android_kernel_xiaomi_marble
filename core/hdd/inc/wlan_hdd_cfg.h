@@ -1073,11 +1073,6 @@ typedef enum {
 #define CFG_ENABLE_BEACON_EARLY_TERMINATION_MAX           (1)
 #define CFG_ENABLE_BEACON_EARLY_TERMINATION_DEFAULT       (0)
 
-#define CFG_ENABLE_CLOSE_LOOP_NAME                 "gEnableCloseLoop"
-#define CFG_ENABLE_CLOSE_LOOP_MIN                  WNI_CFG_FIXED_RATE_STAMIN
-#define CFG_ENABLE_CLOSE_LOOP_MAX                  WNI_CFG_FIXED_RATE_STAMAX
-#define CFG_ENABLE_CLOSE_LOOP_DEFAULT              WNI_CFG_FIXED_RATE_STADEF
-
 #define CFG_ENABLE_BYPASS_11D_NAME                 "gEnableBypass11d"
 #define CFG_ENABLE_BYPASS_11D_MIN                  (0)
 #define CFG_ENABLE_BYPASS_11D_MAX                  (1)
@@ -3776,7 +3771,6 @@ struct hdd_config {
 	uint16_t nTeleBcnTransLiNumIdleBeacons;
 	uint16_t nTeleBcnMaxLiNumIdleBeacons;
 	uint8_t bcnEarlyTermWakeInterval;
-	uint32_t enableCloseLoop;
 	uint8_t enableBypass11d;
 	uint8_t enableDFSChnlScan;
 	uint8_t enable_dfs_pno_chnl_scan;

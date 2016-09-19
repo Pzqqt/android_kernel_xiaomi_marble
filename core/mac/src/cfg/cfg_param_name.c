@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -291,7 +291,6 @@ unsigned char *g_cfg_param_name[] = {
 	(unsigned char *)"SAP_CHANNEL_SELECT_END_CHANNEL",
 	(unsigned char *)"SAP_CHANNEL_SELECT_OPERATING_BAND",
 	(unsigned char *)"AP_DATA_AVAIL_POLL_PERIOD",
-	(unsigned char *)"ENABLE_CLOSE_LOOP",
 	(unsigned char *)"ENABLE_LTE_COEX",
 	(unsigned char *)"AP_KEEP_ALIVE_TIMEOUT",
 	(unsigned char *)"GO_KEEP_ALIVE_TIMEOUT",

@@ -1840,13 +1840,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_AP_DATA_AVAIL_POLL_PERIOD_MIN,
 		     CFG_AP_DATA_AVAIL_POLL_PERIOD_MAX),
 
-	REG_VARIABLE(CFG_ENABLE_CLOSE_LOOP_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, enableCloseLoop,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_CLOSE_LOOP_DEFAULT,
-		     CFG_ENABLE_CLOSE_LOOP_MIN,
-		     CFG_ENABLE_CLOSE_LOOP_MAX),
-
 	REG_VARIABLE(CFG_ENABLE_BYPASS_11D_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, enableBypass11d,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -6600,14 +6593,6 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_AP_DATA_AVAIL_POLL_PERIOD to CFG");
-	}
-
-	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_ENABLE_CLOSE_LOOP,
-			    pConfig->enableCloseLoop) ==
-			QDF_STATUS_E_FAILURE) {
-		fStatus = false;
-		hddLog(LOGE,
-		       "Could not pass on WNI_CFG_ENABLE_CLOSE_LOOP to CFG");
 	}
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_TX_PWR_CTRL_ENABLE,
