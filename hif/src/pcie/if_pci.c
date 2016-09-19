@@ -2040,6 +2040,7 @@ int hif_pci_bus_configure(struct hif_softc *hif_sc)
 		}
 	}
 
+	/* todo: consider replacing this with an srng field */
 	if (hif_sc->target_info.target_type == TARGET_TYPE_QCA8074) {
 		hif_sc->per_ce_irq = true;
 	}

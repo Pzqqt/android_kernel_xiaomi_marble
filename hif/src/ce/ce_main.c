@@ -604,10 +604,9 @@ bool ce_srng_based(struct hif_softc *scn)
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
 
 	switch (tgt_info->target_type) {
-#ifdef QCA_WIFI_QCA8074
 	case TARGET_TYPE_QCA8074:
+	case TARGET_TYPE_QCA6290:
 		return true;
-#endif
 	default:
 		return false;
 	}
@@ -616,10 +615,8 @@ bool ce_srng_based(struct hif_softc *scn)
 
 struct ce_ops *ce_services_attach(struct hif_softc *scn)
 {
-#ifdef QCA_WIFI_QCA8074
 	if (ce_srng_based(scn))
 		return ce_services_srng();
-#endif
 
 	return ce_services_legacy();
 }
@@ -881,7 +878,6 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 			ce_ring_test_initial_indexes(CE_id, dest_ring,
 						     "dest_ring");
 
-#ifdef QCA_WIFI_QCA8074
 			/* For srng based target, init status ring here */
 			if (ce_srng_based(CE_state->scn)) {
 				CE_state->status_ring =
@@ -917,7 +913,7 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 					goto error_target_access;
 
 			}
-#endif
+
 			/* epping */
 			/* poll timer */
 			if ((CE_state->attr_flags & CE_ATTR_ENABLE_POLL)) {
@@ -1179,8 +1175,7 @@ void ce_fini(struct CE_handle *copyeng)
 			qdf_timer_free(&CE_state->poll_timer);
 		}
 	}
-#ifdef QCA_WIFI_QCA8074
-	if (CE_state->status_ring) {
+	if ((ce_srng_based(CE_state->scn)) && (CE_state->status_ring)) {
 		/* Cleanup the datapath Tx ring */
 		ce_h2t_tx_ce_cleanup(copyeng);
 
@@ -1200,7 +1195,6 @@ void ce_fini(struct CE_handle *copyeng)
 					    base_addr_CE_space, 0);
 		qdf_mem_free(CE_state->status_ring);
 	}
-#endif
 	qdf_mem_free(CE_state);
 }
 
@@ -2088,14 +2082,19 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 		target_service_to_ce_map_sz =
 			sizeof(target_service_to_ce_map_ar900b);
 		break;
-#ifdef QCA_WIFI_QCA8074
+
 	case TARGET_TYPE_QCA8074:
 		hif_state->host_ce_config = host_ce_config_wlan_qca8074;
 		hif_state->target_ce_config = target_ce_config_wlan_qca8074;
 		hif_state->target_ce_config_sz =
 					sizeof(target_ce_config_wlan_qca8074);
 		break;
-#endif
+	case TARGET_TYPE_QCA6290:
+		hif_state->host_ce_config = host_ce_config_wlan_qca6290;
+		hif_state->target_ce_config = target_ce_config_wlan_qca6290;
+		hif_state->target_ce_config_sz =
+					sizeof(target_ce_config_wlan_qca6290);
+		break;
 	}
 }
 

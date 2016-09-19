@@ -63,6 +63,7 @@ typedef void *hif_handle_t;
 #define HIF_TYPE_IPQ4019 13
 #define HIF_TYPE_QCA9888 14
 #define HIF_TYPE_QCA8074 15
+#define HIF_TYPE_QCA6290 16
 
 /* TARGET definition needs to be abstracted in fw common
  * header files, below is the placeholder till WIN codebase
@@ -98,6 +99,9 @@ typedef void *hif_handle_t;
 #endif /* CONFIG_WIN */
 #ifndef TARGET_TYPE_QCA8074
 #define TARGET_TYPE_QCA8074   20
+#endif
+#ifndef TARGET_TYPE_QCA6290
+#define TARGET_TYPE_QCA6290   21
 #endif
 
 /* enum hif_ic_irq - enum defining integrated chip irq numbers

@@ -440,13 +440,11 @@ void hif_close(struct hif_opaque_softc *hif_ctx)
 
 static QDF_STATUS hif_hal_attach(struct hif_softc *scn)
 {
-#ifdef QCA_WIFI_QCA8074
 	if (ce_srng_based(scn)) {
 		scn->hal_soc = hal_attach(scn, scn->qdf_dev);
 		if (scn->hal_soc == NULL)
 			return QDF_STATUS_E_FAILURE;
 	}
-#endif
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -657,7 +655,6 @@ int hif_get_device_type(uint32_t device_id,
 	int ret = 0;
 
 	switch (device_id) {
-	case ADRASTEA_DEVICE_ID:
 	case ADRASTEA_DEVICE_ID_P2_E12:
 
 		*hif_type = HIF_TYPE_ADRASTEA;
@@ -726,6 +723,12 @@ int hif_get_device_type(uint32_t device_id,
 		*hif_type = HIF_TYPE_QCA8074;
 		*target_type = TARGET_TYPE_QCA8074;
 		HIF_INFO(" *********** QCA8074  *************\n");
+		break;
+
+	case QCA6290_EMULATION_DEVICE_ID:
+		*hif_type = HIF_TYPE_QCA6290;
+		*target_type = TARGET_TYPE_QCA6290;
+		HIF_INFO(" *********** QCA6290EMU *************\n");
 		break;
 
 	default:

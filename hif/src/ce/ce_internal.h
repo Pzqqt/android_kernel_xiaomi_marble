@@ -291,7 +291,6 @@ struct CE_dest_desc {
 };
 #endif /* QCA_WIFI_3_0 */
 
-#ifdef QCA_WIFI_QCA8074
 struct ce_srng_src_desc {
 	uint32_t buffer_addr_lo;
 #if _BYTE_ORDER == _BIG_ENDIAN
@@ -369,7 +368,7 @@ struct ce_srng_dest_status_desc {
 		 loop_count:4;
 #endif
 };
-#endif
+
 #define CE_SENDLIST_ITEMS_MAX 12
 
 /**
