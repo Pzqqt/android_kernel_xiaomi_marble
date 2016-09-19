@@ -1372,16 +1372,6 @@ typedef enum {
 #define HDD_MULTICAST_FILTER_LIST                              0x04
 #define HDD_MULTICAST_FILTER_LIST_CLEAR                        0x05
 
-/*BMPS Logic
- * Notes:
- * 1 - Then Host driver and above layers control the PS mechanism
- * 0 - Diver/Core Stack internally control the Power saving mechanism
- */
-#define CFG_ANDRIOD_POWER_SAVE_NAME      "isAndroidPsEn"
-#define CFG_ANDRIOD_POWER_SAVE_MIN       (0)
-#define CFG_ANDRIOD_POWER_SAVE_MAX       (1)
-#define CFG_ANDRIOD_POWER_SAVE_DEFAULT   (0)
-
 /*
  * Enable Dynamic DTIM
  * Options
@@ -3846,7 +3836,6 @@ struct hdd_config {
 	bool enableTxLdpc;
 	uint8_t disableLDPCWithTxbfAP;
 	uint8_t enableMCCAdaptiveScheduler;
-	bool isAndroidPsEn;
 	bool sapAllowAllChannel;
 	uint8_t retryLimitZero;
 	uint8_t retryLimitOne;
