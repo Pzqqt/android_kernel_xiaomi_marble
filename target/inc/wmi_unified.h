@@ -14260,6 +14260,11 @@ typedef struct {
 	A_UINT32 channel_count;
 	A_UINT32 schedule_size;
 	A_UINT32 flags;
+	/**
+	 * Max duration of continuing multichannel operation without
+	 * receiving a TA frame (units = seconds)
+	 */
+	A_UINT32 ta_max_duration;
 
 	/** This is followed by a TLV array of wmi_channel.
 	* This is followed by a TLV array of wmi_ocb_channel.
@@ -16748,10 +16753,31 @@ typedef enum {
 } WLAN_BAND_CAPABILITY;
 
 typedef enum wmi_hw_mode_config_type {
+	/* Only one PHY is active. */
 	WMI_HW_MODE_SINGLE      = 0,
+	/**
+	 * Both PHYs are active in different bands, one in 2G
+	 * and another in 5G.
+	 */
 	WMI_HW_MODE_DBS         = 1,
+	/**
+	 * Both PHYs are in passive mode (only rx) in same band;
+	 * no tx allowed.
+	 */
 	WMI_HW_MODE_SBS_PASSIVE = 2,
+	/**
+	 * Both PHYs are active in the same band.
+	 * Support for both PHYs within one band is planned for 5G only
+	 * (as indicated in WMI_MAC_PHY_CAPABILITIES),
+	 * but could be extended to other bands in the future.
+	 * The separation of the band between the two PHYs needs to be
+	 * communicated separately.
+	 */
 	WMI_HW_MODE_SBS         = 3,
+	/**
+	 * 3 PHYs, with 2 on the same band doing SBS
+	 * as in WMI_HW_MODE_SBS, and 3rd on the other band
+	 */
 	WMI_HW_MODE_DBS_SBS     = 4,
 } WMI_HW_MODE_CONFIG_TYPE;
 
@@ -16883,10 +16909,9 @@ typedef struct {
 	 * as specified by the subsequent fields
 	 */
 	A_UINT32 hw_mode_id;
-	/* BIT0 represents phy_id 0, BIT1 represent phy_id 1 and so on */
-	A_UINT32 phy_id_map;
-	/*
-	 * number of bits set in phy_id_map represents number of
+	/**
+	 * BIT0 represents phy_id 0, BIT1 represent phy_id 1 and so on.
+	 * Number of bits set in phy_id_map represents number of
 	 * WMI_MAC_PHY_CAPABILITIES TLV's
 	 * one for each active PHY for current HW mode
 	 * identified by hw_mode_id. For example for
@@ -16896,6 +16921,7 @@ typedef struct {
 	 * will be 1 WMI_MAC_PHY_CAPABILITIES
 	 * TLVs
 	 */
+	 A_UINT32 phy_id_map;
 	/**
 	 * hw_mode_config_type
 	 * Identify a particular type of HW mode such as SBS, DBS etc.
