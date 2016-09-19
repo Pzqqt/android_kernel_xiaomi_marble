@@ -2523,13 +2523,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_ENABLE_ADAPT_RX_DRAIN_MIN,
 		     CFG_ENABLE_ADAPT_RX_DRAIN_MAX),
 
-	REG_VARIABLE(CFG_FLEX_CONNECT_POWER_FACTOR_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, flexConnectPowerFactor,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_MINMAX,
-		     CFG_FLEX_CONNECT_POWER_FACTOR_DEFAULT,
-		     CFG_FLEX_CONNECT_POWER_FACTOR_MIN,
-		     CFG_FLEX_CONNECT_POWER_FACTOR_MAX),
-
 	REG_VARIABLE(CFG_ENABLE_HEART_BEAT_OFFLOAD, WLAN_PARAM_Integer,
 		     struct hdd_config, enableIbssHeartBeatOffload,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -5255,10 +5248,6 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [gEnableVhtFor24GHzBand] Value = [%u] ",
 		  pHddCtx->config->enableVhtFor24GHzBand);
-
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "Name = [gFlexConnectPowerFactor] Value = [%u] ",
-		  pHddCtx->config->flexConnectPowerFactor);
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [gEnableIbssHeartBeatOffload] Value = [%u] ",
 		  pHddCtx->config->enableIbssHeartBeatOffload);
@@ -6782,14 +6771,6 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_ENABLE_ADAPT_RX_DRAIN to CFG");
-	}
-
-	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_FLEX_CONNECT_POWER_FACTOR,
-			    pConfig->flexConnectPowerFactor) ==
-			QDF_STATUS_E_FAILURE) {
-		fStatus = false;
-		hddLog(LOGE, "Failure: Could not pass on "
-		       "WNI_CFG_FLEX_CONNECT_POWER_FACTOR to CFG");
 	}
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_ANTENNA_DIVESITY,
