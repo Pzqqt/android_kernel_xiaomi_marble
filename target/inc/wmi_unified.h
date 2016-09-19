@@ -1349,6 +1349,9 @@ typedef enum {
 	/** event to provide requested data from the target's flash memory */
 	WMI_READ_DATA_FROM_FLASH_EVENTID,
 
+	/** event to report rx aggregation failure frame information */
+	WMI_REPORT_RX_AGGR_FAILURE_EVENTID,
+
 	/* GPIO Event */
 	WMI_GPIO_INPUT_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_GPIO),
 	/** upload H_CV info WMI event
@@ -4984,6 +4987,25 @@ typedef struct {
 	A_UINT32 tx_preamble;           /* Bits 30-29 from tx_rate_kbps */
 	A_UINT32 rx_preamble;           /* Bits 26-25 from rx_rate_kbps */
 } wmi_vdev_rate_ht_info;
+
+typedef struct {
+	/**
+	 * TLV tag and len, tag equals
+	 * WMITLV_TAG_STRUC_wmi_rx_aggr_failure_event_fixed_param
+	 */
+	A_UINT32 tlv_header;
+	A_UINT32 num_failure_info; /* How many holes on rx aggregation */
+} wmi_rx_aggr_failure_event_fixed_param;
+
+typedef struct {
+	/**
+	 * TLV tag and len, tag equals
+	 * WMITLV_wmi_rx_aggr_failure_info
+	 */
+	A_UINT32 tlv_header;
+	A_UINT32 start_seq; /* start sequence number of the hole */
+	A_UINT32 end_seq; /* end sequence number of the hole */
+} wmi_rx_aggr_failure_info;
 
 typedef struct {
 	A_UINT32 tlv_header;            /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_stats_event_fixed_param */
