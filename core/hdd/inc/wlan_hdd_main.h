@@ -67,6 +67,7 @@
 #include "cdp_txrx_flow_ctrl_legacy.h"
 #include <cdp_txrx_peer_ops.h>
 #include "wlan_hdd_nan_datapath.h"
+#include "wlan_tgt_def_config.h"
 
 /*---------------------------------------------------------------------------
    Preprocessor definitions and constants
@@ -803,7 +804,7 @@ typedef struct hdd_scaninfo_s {
 
 } hdd_scaninfo_t;
 
-#define WLAN_HDD_MAX_MC_ADDR_LIST 10
+#define WLAN_HDD_MAX_MC_ADDR_LIST CFG_TGT_MAX_MULTICAST_FILTER_ENTRIES
 
 #ifdef WLAN_FEATURE_PACKET_FILTERING
 typedef struct multicast_addr_list {
