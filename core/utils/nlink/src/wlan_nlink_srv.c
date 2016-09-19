@@ -73,7 +73,7 @@ int nl_srv_init(void *wiphy)
 
 	wiphy_ptr = wiphy;
 	radio_idx = cnss_logger_device_register(wiphy, THIS_MODULE->name);
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR
+	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 		  "%s: radio_index: %d, wiphy_ptr: %p",
 		  __func__, radio_idx, wiphy_ptr);
 
