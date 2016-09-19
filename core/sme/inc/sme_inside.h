@@ -262,8 +262,6 @@ QDF_STATUS csr_flush_cfg_bg_scan_roam_channel_list(tpAniSirGlobal pMac,
 QDF_STATUS csr_create_bg_scan_roam_channel_list(tpAniSirGlobal pMac,
 		uint8_t sessionId, const uint8_t *pChannelList,
 		const uint8_t numChannels);
-QDF_STATUS csr_update_bg_scan_config_ini_channel_list(tpAniSirGlobal pMac,
-		uint8_t sessionId, eCsrBand eBand);
 
 #ifdef FEATURE_WLAN_ESE
 QDF_STATUS csr_create_roam_scan_channel_list(tpAniSirGlobal pMac,

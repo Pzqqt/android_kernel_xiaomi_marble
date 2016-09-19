@@ -4693,6 +4693,40 @@ void wma_aggr_qos_req(tp_wma_handle wma,
 	wma_send_msg(wma, WMA_AGGR_QOS_RSP, pAggrQosRspMsg, 0);
 }
 
+#ifdef FEATURE_WLAN_ESE
+/**
+ * wma_set_tsm_interval() - Set TSM interval
+ * @req: pointer to ADDTS request
+ *
+ * Return: QDF_STATUS_E_FAILURE or QDF_STATUS_SUCCESS
+ */
+static QDF_STATUS wma_set_tsm_interval(tAddTsParams *req)
+{
+	/*
+	 * msmt_interval is in unit called TU (1 TU = 1024 us)
+	 * max value of msmt_interval cannot make resulting
+	 * interval_milliseconds overflow 32 bit
+	 *
+	 */
+	uint32_t interval_milliseconds;
+	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	if (NULL == pdev) {
+		WMA_LOGE("%s: Failed to get pdev", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	interval_milliseconds = (req->tsm_interval * 1024) / 1000;
+
+	ol_tx_set_compute_interval(pdev, interval_milliseconds);
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static inline QDF_STATUS wma_set_tsm_interval(tAddTsParams *req)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* FEATURE_WLAN_ESE */
+
 /**
  * wma_add_ts_req() - send ADDTS request to fw
  * @wma: wma handle
@@ -4703,40 +4737,23 @@ void wma_aggr_qos_req(tp_wma_handle wma,
 void wma_add_ts_req(tp_wma_handle wma, tAddTsParams *msg)
 {
 	struct add_ts_param cmd = {0};
-
-#ifdef FEATURE_WLAN_ESE
-	/*
-	 * msmt_interval is in unit called TU (1 TU = 1024 us)
-	 * max value of msmt_interval cannot make resulting
-	 * interval_miliseconds overflow 32 bit
-	 */
-	uint32_t intervalMiliseconds;
-	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (NULL == pdev) {
-		WMA_LOGE("%s: Failed to get pdev", __func__);
-		goto err;
-	}
-
-	intervalMiliseconds = (msg->tsm_interval * 1024) / 1000;
-
-	ol_tx_set_compute_interval(pdev, intervalMiliseconds);
-#endif /* FEATURE_WLAN_ESE */
 	msg->status = QDF_STATUS_SUCCESS;
 
+	if (wma_set_tsm_interval(msg) == QDF_STATUS_SUCCESS) {
 
-	cmd.sme_session_id = msg->sme_session_id;
-	cmd.tspec.tsinfo.traffic.userPrio =
+		cmd.sme_session_id = msg->sme_session_id;
+		cmd.tspec.tsinfo.traffic.userPrio =
 			TID_TO_WME_AC(msg->tspec.tsinfo.traffic.userPrio);
-	cmd.tspec.mediumTime = msg->tspec.mediumTime;
-	if (wmi_unified_add_ts_cmd(wma->wmi_handle, &cmd))
-		msg->status = QDF_STATUS_E_FAILURE;
+		cmd.tspec.mediumTime = msg->tspec.mediumTime;
+		if (wmi_unified_add_ts_cmd(wma->wmi_handle, &cmd))
+			msg->status = QDF_STATUS_E_FAILURE;
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (msg->setRICparams == true)
-		wma_set_ric_req(wma, msg, true);
+		if (msg->setRICparams == true)
+			wma_set_ric_req(wma, msg, true);
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
-err:
+	}
 	wma_send_msg(wma, WMA_ADD_TS_RSP, msg, 0);
 }
 
