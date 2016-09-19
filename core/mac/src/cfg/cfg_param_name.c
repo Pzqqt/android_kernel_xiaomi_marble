@@ -265,7 +265,6 @@ unsigned char *g_cfg_param_name[] = {
 	(unsigned char *)"WPS_DEVICE_PASSWORD_ID",
 	(unsigned char *)"WPS_ASSOC_METHOD",
 	(unsigned char *)"LOW_GAIN_OVERRIDE",
-	(unsigned char *)"ENABLE_PHY_AGC_LISTEN_MODE",
 	(unsigned char *)"RPE_POLLING_THRESHOLD",
 	(unsigned char *)"RPE_AGING_THRESHOLD_FOR_AC0_REG",
 	(unsigned char *)"RPE_AGING_THRESHOLD_FOR_AC1_REG",
