@@ -1648,14 +1648,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_BAND_CAPABILITY_MIN,
 		     CFG_BAND_CAPABILITY_MAX),
 
-	REG_VARIABLE(CFG_ENABLE_BEACON_EARLY_TERMINATION_NAME,
-		     WLAN_PARAM_Integer,
-		     struct hdd_config, fEnableBeaconEarlyTermination,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_BEACON_EARLY_TERMINATION_DEFAULT,
-		     CFG_ENABLE_BEACON_EARLY_TERMINATION_MIN,
-		     CFG_ENABLE_BEACON_EARLY_TERMINATION_MAX),
-
 /* CFG_QDF_TRACE_ENABLE Parameters */
 	REG_VARIABLE(CFG_QDF_TRACE_ENABLE_WDI_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, qdf_trace_enable_wdi,
@@ -1811,13 +1803,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_TELE_BCN_MAX_LI_NUM_IDLE_BCNS_DEFAULT,
 		     CFG_TELE_BCN_MAX_LI_NUM_IDLE_BCNS_MIN,
 		     CFG_TELE_BCN_MAX_LI_NUM_IDLE_BCNS_MAX),
-
-	REG_VARIABLE(CFG_BCN_EARLY_TERM_WAKE_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, bcnEarlyTermWakeInterval,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_BCN_EARLY_TERM_WAKE_DEFAULT,
-		     CFG_BCN_EARLY_TERM_WAKE_MIN,
-		     CFG_BCN_EARLY_TERM_WAKE_MAX),
 
 	REG_VARIABLE(CFG_AP_DATA_AVAIL_POLL_PERIOD_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, apDataAvailPollPeriodInMs,
@@ -5186,9 +5171,6 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		  "Name = [BandCapability] Value = [%u] ",
 		  pHddCtx->config->nBandCapability);
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "Name = [fEnableBeaconEarlyTermination] Value = [%u] ",
-		  pHddCtx->config->fEnableBeaconEarlyTermination);
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [teleBcnWakeupEnable] Value = [%u] ",
 		  pHddCtx->config->teleBcnWakeupEn);
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -5203,9 +5185,6 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [maxLiNumIdleBeacons] Value = [%u] ",
 		  pHddCtx->config->nTeleBcnMaxLiNumIdleBeacons);
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "Name = [bcnEarlyTermWakeInterval] Value = [%u] ",
-		  pHddCtx->config->bcnEarlyTermWakeInterval);
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [gApDataAvailPollInterVal] Value = [%u] ",
 		  pHddCtx->config->apDataAvailPollPeriodInMs);
