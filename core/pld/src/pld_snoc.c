@@ -393,4 +393,63 @@ int pld_snoc_get_irq(int ce_id)
 	return icnss_get_irq(ce_id);
 }
 
+/**
+ * pld_snoc_set_wlan_unsafe_channel() - Set unsafe channel
+ * @unsafe_ch_list: unsafe channel list
+ * @ch_count: number of channel
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_snoc_set_wlan_unsafe_channel(u16 *unsafe_ch_list, u16 ch_count)
+{
+	return icnss_set_wlan_unsafe_channel(unsafe_ch_list, ch_count);
+}
+
+/**
+ * pld_get_wlan_unsafe_channel() - Get unsafe channel
+ * @unsafe_ch_list: buffer to unsafe channel list
+ * @ch_count: number of channel
+ * @buf_len: buffer length
+ *
+ * Return WLAN unsafe channel to the buffer.
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_snoc_get_wlan_unsafe_channel(u16 *unsafe_ch_list, u16 *ch_count,
+				     u16 buf_len)
+{
+	return icnss_get_wlan_unsafe_channel(unsafe_ch_list, ch_count,
+					     buf_len);
+}
+
+/**
+ * pld_wlan_set_dfs_nol() - Set DFS info
+ * @info: DFS info
+ * @info_len: info length
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_snoc_wlan_set_dfs_nol(const void *info, u16 info_len)
+{
+	return icnss_wlan_set_dfs_nol(info, info_len);
+}
+
+/**
+ * pld_wlan_get_dfs_nol() - Get DFS info
+ * @info: buffer to DFS info
+ * @info_len: info length
+ *
+ * Return DFS info to the buffer.
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_snoc_wlan_get_dfs_nol(void *info, u16 info_len)
+{
+	return icnss_wlan_get_dfs_nol(info, info_len);
+}
+
 #endif
