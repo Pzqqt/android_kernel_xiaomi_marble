@@ -3859,18 +3859,17 @@ typedef enum {
 	 */
 	WMI_PDEV_PARAM_STATS_OBSERVATION_PERIOD,
 	/**
-	 * Set tx_msdu_delay[] bin size to specify how many
-	 * milliseconds each bin of the wmi_tx_stats.tx_msdu_delay[]
+	 * Set tx_delay[] bin size to specify how many
+	 * milliseconds each bin of the wmi_tx_stats.tx_delay[]
 	 * histogram represents.
 	 */
 	WMI_PDEV_PARAM_TX_DELAY_BIN_SIZE_MS,
-	/** set wmi_tx_stats.tx_msdu_delay[] array size */
-	WMI_PDEV_PARAM_TX_DELAY_ARRAY_SIZE,
-	/** set wmi_tx_stats.tx_mpdu_aggr[] array size */
-	WMI_PDEV_PARAM_TX_MPDU_AGGR_ARRAY_SIZE,
-	/** set wmi_rx_stats.rx_mpdu_aggr[] array size */
-	WMI_PDEV_PARAM_RX_MPDU_AGGR_ARRAY_SIZE,
-
+	/** set wmi_tx_stats.tx_delay[] array length */
+	WMI_PDEV_PARAM_TX_DELAY_ARRAY_LEN,
+	/** set wmi_tx_stats.tx_mpdu_aggr[] array length */
+	WMI_PDEV_PARAM_TX_MPDU_AGGR_ARRAY_LEN,
+	/** set wmi_rx_stats.rx_mpdu_aggr[] array length */
+	WMI_PDEV_PARAM_RX_MPDU_AGGR_ARRAY_LEN,
 } WMI_PDEV_PARAM;
 
 typedef enum {
@@ -5035,110 +5034,119 @@ typedef struct {
 } wmi_stats_event_fixed_param;
 
 /* WLAN channel CCA stats bitmap  */
-#define WLAN_STATS_IDLE_TIME_SHIFT              0
-#define WLAN_STATS_IDLE_TIME_TIME               0x00000001
+#define WLAN_STATS_IDLE_TIME_SHIFT             0
+#define WLAN_STATS_IDLE_TIME_TIME              0x00000001
 
-#define WLAN_STATS_TX_TIME_SHIFT                1
-#define WLAN_STATS_TX_TIME_MASK                 0x00000002
+#define WLAN_STATS_TX_TIME_SHIFT               1
+#define WLAN_STATS_TX_TIME_MASK                0x00000002
 
-#define WLAN_STATS_RX_IN_BSS_TIME_SHIFT         2
-#define WLAN_STATS_RX_IN_BSS_TIME_MASK          0x00000004
+#define WLAN_STATS_RX_IN_BSS_TIME_SHIFT        2
+#define WLAN_STATS_RX_IN_BSS_TIME_MASK         0x00000004
 
-#define WLAN_STATS_RX_OUT_BSS_TIME_SHIFT        3
-#define WLAN_STATS_RX_OUT_BSS_TIME_MASK         0x00000008
+#define WLAN_STATS_RX_OUT_BSS_TIME_SHIFT       3
+#define WLAN_STATS_RX_OUT_BSS_TIME_MASK        0x00000008
 
-#define WLAN_STATS_RX_BUSY_TIME_SHIFT           4
-#define WLAN_STATS_RX_BUSY_TIME_MASK            0x00000010
+#define WLAN_STATS_RX_BUSY_TIME_SHIFT          4
+#define WLAN_STATS_RX_BUSY_TIME_MASK           0x00000010
 
-#define WLAN_STATS_RX_IN_BAD_COND_TIME_SHIFT    5
-#define WLAN_STATS_RX_IN_BAD_COND_TIME_MASK     0x00000020
+#define WLAN_STATS_RX_IN_BAD_COND_TIME_SHIFT   5
+#define WLAN_STATS_RX_IN_BAD_COND_TIME_MASK    0x00000020
 
-#define WLAN_STATS_TX_IN_BAD_COND_TIME_SHIFT    6
-#define WLAN_STATS_TX_IN_BAD_COND_TIME_MASK     0x00000040
+#define WLAN_STATS_TX_IN_BAD_COND_TIME_SHIFT   6
+#define WLAN_STATS_TX_IN_BAD_COND_TIME_MASK    0x00000040
 
-#define WLAN_STATS_WLAN_NOT_AVAIL_TIME_SHIFT    7
-#define WLAN_STATS_WLAN_NOT_AVAIL_TIME_MASK     0x00000080
+#define WLAN_STATS_WLAN_NOT_AVAIL_TIME_SHIFT   7
+#define WLAN_STATS_WLAN_NOT_AVAIL_TIME_MASK    0x00000080
 
 /* WLAN peer signal stats bitmap  */
-#define WLAN_STATS_PER_ANT_SNR_SHIFT            0
-#define WLAN_STATS_PER_ANT_SNR_MASK             0x00000001
+#define WLAN_STATS_PER_CHAIN_SNR_SHIFT         0
+#define WLAN_STATS_PER_CHAIN_SNR_MASK          0x00000001
 
-#define WLAN_STATS_NF_SHIFT                     1
-#define WLAN_STATS_NF_MASK                      0x00000002
+#define WLAN_STATS_PER_CHAIN_NF_SHIFT          1
+#define WLAN_STATS_PER_CHAIN_NF_MASK           0x00000002
 
 /* WLAN TX stats bitmap  */
-#define WLAN_STATS_TX_MSDUS_SHIFT              0
-#define WLAN_STATS_TX_MSDUS_MASK               0x00000001
+#define WLAN_STATS_TX_MSDU_CNT_SHIFT           0
+#define WLAN_STATS_TX_MSDU_CNT_MASK            0x00000001
 
-#define WLAN_STATS_TX_BYTES_SHIFT              1
-#define WLAN_STATS_TX_BYTES_MASK               0x00000002
+#define WLAN_STATS_TX_MPDU_CNT_SHIFT           1
+#define WLAN_STATS_TX_MPDU_CNT_MASK            0x00000002
 
-#define WLAN_STATS_TX_MSDU_DROPS_SHIFT         2
-#define WLAN_STATS_TX_MSDU_DROPS_MASK          0x00000004
+#define WLAN_STATS_TX_PPDU_CNT_SHIFT           2
+#define WLAN_STATS_TX_PPDU_CNT_MASK            0x00000004
 
-#define WLAN_STATS_TX_DROP_BYTES_SHIFT         3
-#define WLAN_STATS_TX_DROP_BYTES_MASK          0x00000008
+#define WLAN_STATS_TX_BYTES_SHIFT              3
+#define WLAN_STATS_TX_BYTES_MASK               0x00000008
 
-#define WLAN_STATS_TX_MPDU_RETRIES_SHIFT       4
-#define WLAN_STATS_TX_MPDU_RETRIES_MASK        0x00000010
+#define WLAN_STATS_TX_MSDU_DROP_CNT_SHIFT      4
+#define WLAN_STATS_TX_MSDU_DROP_CNT_MASK       0x00000010
 
-#define WLAN_STATS_TX_MSDU_FAILED_SHIFT        5
-#define WLAN_STATS_TX_MSDU_FAILED_MASK         0x00000020
+#define WLAN_STATS_TX_DROP_BYTES_SHIFT         5
+#define WLAN_STATS_TX_DROP_BYTES_MASK          0x00000020
 
-#define WLAN_STATS_TX_MPDU_AGGR_SHIFT          6
-#define WLAN_STATS_TX_MPDU_AGGR_MASK           0x00000040
+#define WLAN_STATS_TX_MPDU_RETRY_CNT_SHIFT     6
+#define WLAN_STATS_TX_MPDU_RETRY_CNT_MASK      0x00000040
 
-#define WLAN_STATS_TX_MSDU_ACKED_MCS_SHIFT     7
-#define WLAN_STATS_TX_MSDU_ACKED_MCS_MASK      0x00000080
+#define WLAN_STATS_TX_MPDU_FAIL_CNT_SHIFT      7
+#define WLAN_STATS_TX_MPDU_FAIL_CNT_MASK       0x00000080
 
-#define WLAN_STATS_TX_MSDU_FAILED_MCS_SHIFT    8
-#define WLAN_STATS_TX_MSDU_FAILED_MCS_MASK     0x00000100
+#define WLAN_STATS_TX_PPDU_FAIL_CNT_SHIFT      8
+#define WLAN_STATS_TX_PPDU_FAIL_CNT_MASK       0x00000100
 
-#define WLAN_STATS_TX_MSDU_DELAY_SHIFT         9
-#define WLAN_STATS_TX_MSDU_DELAY_MASK          0x00000200
+#define WLAN_STATS_TX_MPDU_AGGR_SHIFT          9
+#define WLAN_STATS_TX_MPDU_AGGR_MASK           0x00000200
+
+#define WLAN_STATS_TX_SUCC_MCS_SHIFT           10
+#define WLAN_STATS_TX_SUCC_MCS_MASK            0x00000400
+
+#define WLAN_STATS_TX_FAIL_MCS_SHIFT           11
+#define WLAN_STATS_TX_FAIL_MCS_MASK            0x00000800
+
+#define WLAN_STATS_TX_DELAY_SHIFT              12
+#define WLAN_STATS_TX_DELAY_MASK               0x00001000
 
 /* WLAN RX stats bitmap  */
-#define WLAN_STATS_MAC_RX_MSDUS_SHIFT       0
-#define WLAN_STATS_MAC_RX_MSDUS_MASK        0x00000001
+#define WLAN_STATS_MAC_RX_MPDU_CNT_SHIFT    0
+#define WLAN_STATS_MAC_RX_MPDU_CNT_MASK     0x00000001
 
 #define WLAN_STATS_MAC_RX_BYTES_SHIFT       1
 #define WLAN_STATS_MAC_RX_BYTES_MASK        0x00000002
 
-#define WLAN_STATS_PHY_RX_MSDUS_SHIFT       2
-#define WLAN_STATS_PHY_RX_MSDUS_MASK        0x00000004
+#define WLAN_STATS_PHY_RX_PPDU_CNT_SHIFT    2
+#define WLAN_STATS_PHY_RX_PPDU_CNT_MASK     0x00000004
 
 #define WLAN_STATS_PHY_RX_BYTES_SHIFT       3
 #define WLAN_STATS_PHY_RX_BYTES_MASK        0x00000008
 
-#define WLAN_STATS_SEQ_DCONT_NUM_SHIFT      4
-#define WLAN_STATS_SEQ_DCONT_NUM_MASK       0x00000010
+#define WLAN_STATS_RX_DISORDER_CNT_SHIFT    4
+#define WLAN_STATS_RX_DISORDER_CNT_MASK     0x00000010
 
-#define WLAN_STATS_RX_MSDU_RETRY_SHIFT      5
-#define WLAN_STATS_RX_MSDU_RETRY_MASK       0x00000020
+#define WLAN_STATS_RX_RETRY_CNT_SHIFT       5
+#define WLAN_STATS_RX_RETRY_CNT_MASK        0x00000020
 
-#define WLAN_STATS_RX_MSDU_DUP_SHIFT        6
-#define WLAN_STATS_RX_MSDU_DUP_MASK         0x00000040
+#define WLAN_STATS_RX_DUP_CNT_SHIFT         6
+#define WLAN_STATS_RX_DUP_CNT_MASK          0x00000040
 
-#define WLAN_STATS_RX_MSDU_DISCARD_SHIFT    7
-#define WLAN_STATS_RX_MSDU_DISCARD_MASK     0x00000080
+#define WLAN_STATS_RX_DISCARD_CNT_SHIFT     7
+#define WLAN_STATS_RX_DISCARD_CNT_MASK      0x00000080
 
-#define WLAN_STATS_STA_PS_INDS_SHIFT        8
-#define WLAN_STATS_STA_PS_INDS_MASK         0x00000100
+#define WLAN_STATS_RX_MPDU_AGGR_SHIFT       8
+#define WLAN_STATS_RX_MPDU_AGGR_MASK        0x00000100
 
-#define WLAN_STATS_STA_PS_DURS_SHIFT        9
-#define WLAN_STATS_STA_PS_DURS_MASK         0x00000200
+#define WLAN_STATS_RX_MCS_SHIFT             9
+#define WLAN_STATS_RX_MCS_MASK              0x00000200
 
-#define WLAN_STATS_RX_PROBE_REQS_SHIFT      10
-#define WLAN_STATS_RX_PROBE_REQS_MASK       0x00000400
+#define WLAN_STATS_STA_PS_INDS_SHIFT        10
+#define WLAN_STATS_STA_PS_INDS_MASK         0x00000400
 
-#define WLAN_STATS_RX_OTH_MGMTS_SHIFT       11
-#define WLAN_STATS_RX_OTH_MGMTS_MASK        0x00000800
+#define WLAN_STATS_STA_PS_DURS_SHIFT        11
+#define WLAN_STATS_STA_PS_DURS_MASK         0x00000800
 
-#define WLAN_STATS_RX_MPDU_AGGR_SHIFT       12
-#define WLAN_STATS_RX_MPDU_AGGR_MASK        0x00001000
+#define WLAN_STATS_RX_PROBE_REQS_SHIFT      12
+#define WLAN_STATS_RX_PROBE_REQS_MASK       0x00001000
 
-#define WLAN_STATS_RX_MSDU_MCS_SHIFT        13
-#define WLAN_STATS_RX_MSDU_MCS_MASK         0x00002000
+#define WLAN_STATS_RX_OTH_MGMTS_SHIFT       13
+#define WLAN_STATS_RX_OTH_MGMTS_MASK        0x00002000
 
 typedef struct {
 	A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_chan_cca_stats */
@@ -5181,10 +5189,10 @@ typedef struct {
 	A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_signal_stats */
 	A_UINT32 vdev_id;
 	A_UINT32 peer_id;
-	/** per antenna SNR in current bss, units are dB */
-	A_INT32 per_ant_snr[WMI_MAX_CHAINS];
-	/** Background noise, units are dBm */
-	A_INT32 nf;
+	/** per chain SNR in current bss, units are dB */
+	A_INT32 per_chain_snr[WMI_MAX_CHAINS];
+	/** per chain background noise, units are dBm */
+	A_INT32 per_chain_nf[WMI_MAX_CHAINS];
 } wmi_peer_signal_stats;
 
 /** Thresholds of signal stats, stand for percentage of stats variation.
@@ -5196,30 +5204,43 @@ typedef struct {
 	 * WMITLV_TAG_STRUC_wmi_peer_signal_stats_thresh
 	 */
 	A_UINT32 tlv_header;
-	A_UINT32 per_ant_snr; /* units = dB */
-	A_UINT32 nf; /* units = dBm */
+	A_UINT32 per_chain_snr; /* units = dB */
+	A_UINT32 per_chain_nf; /* units = dBm */
 } wmi_peer_signal_stats_thresh;
 
 typedef struct {
-	A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_tx_stats */
-	/** Number of total TX packets on MAC layer in the period */
-	A_UINT32 tx_msdus;
+	/**
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_tx_stats
+	 */
+	A_UINT32 tlv_header;
+	/** Number of total TX MSDUs on MAC layer in the period */
+	A_UINT32 tx_msdu_cnt;
+	/** Number of total TX MPDUs on MAC layer in the period */
+	A_UINT32 tx_mpdu_cnt;
+	/** Number of total TX PPDUs on MAC layer in the period */
+	A_UINT32 tx_ppdu_cnt;
 	/** Bytes of tx data on MAC layer in the period */
 	A_UINT32 tx_bytes;
-	/** Number of TX packets cancelled due to any reason in the period,
-	 * such as WMM limitation/bandwidth limitation/radio congestion */
-	A_UINT32 tx_msdu_drops;
+	/**
+	 * Number of TX MSDUs cancelled due to any reason in the period,
+	 * such as WMM limitation/bandwidth limitation/radio congestion
+	 */
+	A_UINT32 tx_msdu_drop_cnt;
 	/** Bytes of dropped TX packets in the period */
 	A_UINT32 tx_drop_bytes;
 	/** Number of unacked transmissions of MPDUs */
-	A_UINT32 tx_mpdu_retries;
-	/** Number of packets have not been ACKed despite retried */
-	A_UINT32 tx_msdu_failed;
-	/* This TLV is followed by TLVs below: :
-	 *     A_UINT32 tx_mpdu_aggr[tx_mpdu_aggr_array_size];
-	 *     A_UINT32 tx_msdu_acked_mcs[tx_msdu_acked_mcs_array_size];
-	 *     A_UINT32 tx_msdu_failed_mcs[tx_msdu_failed_mcs_array_size];
-	 *     A_UINT32 tx_msdu_delay[tx_msdu_delay_array_size];
+	A_UINT32 tx_mpdu_retry_cnt;
+	/** Number of MPDUs have not been ACKed despite retried */
+	A_UINT32 tx_mpdu_fail_cnt;
+	/** Number of PPDUs which received no block ack */
+	A_UINT32 tx_ppdu_fail_cnt;
+	/**
+	 * This TLV is followed by TLVs below: :
+	 *     A_UINT32 tx_mpdu_aggr[tx_mpdu_aggr_array_len];
+	 *     A_UINT32 tx_succ_mcs[tx_msdu_acked_mcs_array_len];
+	 *     A_UINT32 tx_fail_mcs[tx_msdu_failed_mcs_array_len];
+	 *     A_UINT32 tx_delay[tx_msdu_delay_array_len];
 	 */
 } wmi_tx_stats;
 
@@ -5228,16 +5249,19 @@ typedef struct {
  */
 typedef struct {
 	A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_tx_stats_thresh */
-	A_UINT32 tx_msdus;
+	A_UINT32 tx_msdu_cnt;
+	A_UINT32 tx_mpdu_cnt;
+	A_UINT32 tx_ppdu_cnt;
 	A_UINT32 tx_bytes;
-	A_UINT32 tx_msdu_drops;
+	A_UINT32 tx_msdu_drop_cnt;
 	A_UINT32 tx_drop_bytes;
-	A_UINT32 tx_mpdu_retries;
-	A_UINT32 tx_msdu_failed;
+	A_UINT32 tx_mpdu_retry_cnt;
+	A_UINT32 tx_mpdu_fail_cnt;
+	A_UINT32 tx_ppdu_fail_cnt;
 	A_UINT32 tx_mpdu_aggr;
-	A_UINT32 tx_msdu_acked_mcs;
-	A_UINT32 tx_msdu_failed_mcs;
-	A_UINT32 tx_msdu_delay;
+	A_UINT32 tx_succ_mcs;
+	A_UINT32 tx_fail_mcs;
+	A_UINT32 tx_delay;
 } wmi_tx_stats_thresh;
 
 typedef struct {
@@ -5252,33 +5276,26 @@ typedef struct {
 typedef struct {
 	/** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_rx_stats */
 	A_UINT32 tlv_header;
-	/** Number of RX packets on MAC layer */
-	A_UINT32 mac_rx_msdus;
+	/** Number of RX MSDUs on MAC layer */
+	A_UINT32 mac_rx_msdu_cnt;
 	/** Bytes of RX packets on MAC layer */
 	A_UINT32 mac_rx_bytes;
 	/** Number of RX packets on PHY layer */
-	A_UINT32 phy_rx_msdus;
+	A_UINT32 phy_rx_ppdu_cnt;
 	/** Bytes of RX packets on PHY layer */
 	A_UINT32 phy_rx_bytes;
 	/** Number of discontinuity in seqnum */
-	A_UINT32 seq_dcont_num;
-	/** Number of RX packets flagged as retransmissions */
-	A_UINT32 rx_msdu_retry;
-	/** Number of RX packets identified as duplicates */
-	A_UINT32 rx_msdu_dup;
-	/** Number of RX packets discarded */
-	A_UINT32 rx_msdu_discard;
-	/** How many times STAs go to sleep */
-	A_UINT32 sta_ps_inds;
-	/** Total sleep time of STAs, milliseconds units */
-	A_UINT32 sta_ps_durs;
-	/** Number of probe requests received */
-	A_UINT32 rx_probe_reqs;
-	/** Number of other management frames received, not including probe requests */
-	A_UINT32 rx_oth_mgmts;
-	/* This TLV is followed by TLVs below:
-	 *     A_UINT32 rx_mpdu_aggr[rx_mpdu_aggr_array_size];
-	 *     A_UINT32 rx_msdu_mcs[rx_msdu_mcs_array_size];
+	A_UINT32 rx_disorder_cnt;
+	/** Number of RX MPDUs flagged as retransmissions */
+	A_UINT32 rx_retry_cnt;
+	/** Number of RX MPDUs identified as duplicates */
+	A_UINT32 rx_dup_cnt;
+	/** Number of RX MSDUs discarded */
+	A_UINT32 rx_msdu_discard_cnt;
+	/**
+	 * This TLV is followed by TLVs below:
+	 *     A_UINT32 rx_mpdu_aggr[rx_mpdu_aggr_array_len];
+	 *     A_UINT32 rx_mcs[rx_msdu_mcs_array_len];
 	 */
 } wmi_rx_stats;
 
@@ -5288,20 +5305,20 @@ typedef struct {
 typedef struct {
 	/** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_rx_stats_thresh */
 	A_UINT32 tlv_header;
-	A_UINT32 mac_rx_msdus;
+	A_UINT32 mac_rx_mpdu_cnt;
 	A_UINT32 mac_rx_bytes;
-	A_UINT32 phy_rx_msdus;
+	A_UINT32 phy_rx_ppdu_cnt;
 	A_UINT32 phy_rx_bytes;
-	A_UINT32 seq_dcont_num;
-	A_UINT32 rx_msdu_retry;
-	A_UINT32 rx_msdu_dup;
-	A_UINT32 rx_msdu_discard;
+	A_UINT32 rx_disorder_cnt;
+	A_UINT32 rx_retry_cnt;
+	A_UINT32 rx_dup_cnt;
+	A_UINT32 rx_discard_cnt;
+	A_UINT32 rx_mpdu_aggr;
+	A_UINT32 rx_mcs;
 	A_UINT32 sta_ps_inds;
 	A_UINT32 sta_ps_durs;
 	A_UINT32 rx_probe_reqs;
 	A_UINT32 rx_oth_mgmts;
-	A_UINT32 rx_mpdu_aggr;
-	A_UINT32 rx_msdu_mcs;
 } wmi_rx_stats_thresh;
 
 typedef struct {
@@ -5309,8 +5326,20 @@ typedef struct {
 	A_UINT32 tlv_header;
 	A_UINT32 vdev_id;
 	A_UINT32 peer_id;
-	/* The TLVs for the 4 AC follows:
-	 * wmi_rx_stats rx_stats[];  wmi_rx_stats for BE/BK/VI/VO
+	/** How many times STAs go to sleep */
+	A_UINT32 sta_ps_inds;
+	/** Total sleep time of STAs, milliseconds units */
+	A_UINT32 sta_ps_durs;
+	/** Number of probe requests received */
+	A_UINT32 rx_probe_reqs;
+	/**
+	 * Number of other management frames received, not including probe
+	 * requests
+	 */
+	A_UINT32 rx_oth_mgmts;
+	/**
+	 * The TLVs for the 4 AC follows:
+	 *     wmi_rx_stats rx_stats[];  wmi_rx_stats for BE/BK/VI/VO
 	 */
 } wmi_peer_ac_rx_stats;
 
@@ -5348,65 +5377,76 @@ typedef struct {
 	A_UINT32 num_peer_signal_stats;
 	/** number of per peer ac TX stats structures (wmi_peer_ac_tx_stats), 0 to max peers*/
 	A_UINT32 num_peer_ac_tx_stats;
-	/** Array size of tx_mpdu_aggr[] which is histogram of MPDU aggregation size(1 to 7 and 8+).
-	 *  The array indicates number of MPDUs sent on specified aggregation size
-	 *  (per number of MPDUs per AMPDUs / 1 to 7 and 8+).
-	 *  Array size can be set per WMI_PDEV_PARAM_TX_MPDU_AGGR_ARRAY_SIZE */
-	A_UINT32 tx_mpdu_aggr_array_size;
-	/** Array size of tx_msdu_acked_mcs[] which is histogram of encoding rate.
-	 *  The array indicates number of acked packets sent at a specific rate */
-	A_UINT32 tx_msdu_acked_mcs_array_size;
-	/** Array size of tx_msdu_failed_mcs[] which is histogram of encoding rate.
-	 *  The array indicates number of failed packets sent at a specific rate */
-	A_UINT32 tx_msdu_failed_mcs_array_size;
-	/** tx_msdu_delay[]is a histogram of delays on MAC layer.
-	* The array stands for numbers of packets on different TX time delays.
-	* TX delay here means time interval between the time the packet has been received
-	* at the MAC layer and the time lower layers returns a tx status (<10ms to >100ms)
-	*
-	* The bin size tx_delay_bin_size_ms specifies how many milliseconds
-	* each bin of the tx_delay histogram represents.
-	* By default the bin size is 10ms.
-	* tx_msdu_delay[0] -> delays between 0-9 ms
-	* tx_msdu_delay[1] -> delays between 10-19 ms
-	* ...
-	* tx_msdu_delay[9] -> delays between 90-99 ms
-	* tx_msdu_delay[10] -> delays >= 100 ms
-	* Bin size can be set per WMI_PDEV_PARAM_TX_DELAY_BIN_SIZE_MS.
-	*/
-	A_UINT32 tx_msdu_delay_bin_size_ms;
-	/** Array size of tx_msdu_delay[]. It can be set per WMI_PDEV_PARAM_TX_DELAY_ARRAY_SIZE */
-	A_UINT32 tx_msdu_delay_array_size;
+	/**
+	 * Array length of tx_mpdu_aggr[] which is histogram of MPDU aggregation size(1 to 7 and 8+).
+	 * The array indicates number of MPDUs sent on specified aggregation size
+	 * (per number of MPDUs per AMPDUs / 1 to 7 and 8+).
+	 * Array length can be set per WMI_PDEV_PARAM_TX_MPDU_AGGR_ARRAY_LEN
+	 */
+	A_UINT32 tx_mpdu_aggr_array_len;
+	/**
+	 * Array length of tx_succ_mcs[] which is histogram of encoding rate.
+	 * The array indicates number of acked PPDUs sent at a specific rate
+	 */
+	A_UINT32 tx_succ_mcs_array_len;
+	/**
+	 * Array length of tx_fail_mcs[] which is histogram of encoding rate.
+	 * The array indicates number of unacked PPDUs sent at a specific rate
+	 */
+	A_UINT32 tx_fail_mcs_array_len;
+	/**
+	 * tx_delay[]is a histogram of delays on MAC layer.
+	 * The array counts numbers of PPDUs encountering different TX time delays.
+	 * TX delay here means time interval between the time the packet has been received
+	 * at the MAC layer and the time lower layers returns a tx status (<10ms to >100ms)
+	 *
+	 * The bin size tx_delay_bin_size_ms specifies how many milliseconds
+	 * each bin of the tx_delay histogram represents.
+	 * By default the bin size is 10ms.
+	 * tx_delay[0] -> delays between 0-9 ms
+	 * tx_delay[1] -> delays between 10-19 ms
+	 * ...
+	 * tx_delay[9] -> delays between 90-99 ms
+	 * tx_delay[10] -> delays >= 100 ms
+	 * Bin size can be set per WMI_PDEV_PARAM_TX_DELAY_BIN_SIZE_MS.
+	 */
+	A_UINT32 tx_delay_bin_size_ms;
+	/** Array length of tx_delay[]. It can be set per WMI_PDEV_PARAM_TX_DELAY_ARRAY_LEN */
+	A_UINT32 tx_delay_array_len;
 	/** number of per peer ac RX stats structures (wmi_peer_ac_rx_stats), 0 to max peers*/
 	A_UINT32 num_peer_ac_rx_stats;
-	/** Array size of rx_mpdu_aggr[] which is histogram of MPDU aggregation size(1 to 7 and 8+).
-	 *  It can be set per WMI_PDEV_PARAM_RX_MPDU_AGGR_ARRAY_SIZE */
-	A_UINT32 rx_mpdu_aggr_array_size;
-	/** Array size of rx_msdu_mcs[] which is histogram of encoding rate.
-	 *  The array indicates number of packets received at a specific rate */
-	A_UINT32 rx_msdu_mcs_array_size;
+	/**
+	 * Array length of rx_mpdu_aggr[] which is histogram of MPDU aggregation size(1 to 7 and 8+).
+	 * It can be set per WMI_PDEV_PARAM_RX_MPDU_AGGR_ARRAY_LEN
+	 */
+	A_UINT32 rx_mpdu_aggr_array_len;
+	/**
+	 * Array size of rx_mcs[] which is histogram of encoding rate.
+	 * The array indicates number of PPDUs received at a specific rate
+	 */
+	A_UINT32 rx_mcs_array_size;
 
 	/**
 	 * This TLV is followed by TLVs below:
-	 *    wmi_chan_cca_stats       chan_cca_stats[];         Array size is specified by num_chan_cca_stats
-	 *    wmi_peer_signal_stats    peer_signal_stats[];      Array size is specified by num_peer_signal_stats
-	 *    wmi_peer_ac_tx_stats     peer_ac_tx_stats[];       Array size is specified by num_peer_ac_tx_stats
-	 *    wmi_tx_stats             tx_stats[][];             Array size is num_peer_ac_tx_stats * WLAN_MAX_AC, array index is (peer_index * WLAN_MAX_AC + ac_index)
-	 *    A_UINT32                 tx_mpdu_aggr[][][];       Array size is num_peer_ac_tx_stats * WLAN_MAX_AC * tx_mpdu_aggr_array_size,
-	 *                                                       array index is (peer_index * WLAN_MAX_AC + ac_index) * tx_mpdu_aggr_array_size + A-MPDU aggregation index
-	 *    A_UINT32                 tx_msdu_acked_mcs[][][];  Array size is num_peer_ac_tx_stats * WLAN_MAX_AC * tx_msdu_acked_mcs_array_size,
-	 *                                                       array index is (peer_index * WLAN_MAX_AC + ac_index) * tx_msdu_acked_mcs_array_size + MCS index
-	 *    A_UINT32                 tx_msdu_failed_mcs[][][]; Array size is num_peer_ac_tx_stats * WLAN_MAX_AC * tx_msdu_failed_mcs_array_size,
-	 *                                                       array index is (peer_index * WLAN_MAX_AC + ac_index) * tx_msdu_failed_mcs_array_size + MCS index
-	 *    A_UINT32                 tx_msdu_delay[][][];      Array size is num_peer_ac_tx_stats * WLAN_MAX_AC * tx_msdu_delay_array_size,
-	 *                                                       array index is (peer_index * WLAN_MAX_AC + ac_index) * tx_msdu_delay_array_size + tx delay index
-	 *    wmi_peer_ac_rx_stats     peer_ac_rx_stats[];       Array size is specified by num_peer_ac_rx_stats
-	 *    wmi_rx_stats             rx_stats[][];             Array size is num_peer_ac_rx_stats * WLAN_MAX_AC, array index is (peer_index * WLAN_MAX_AC + ac_index)
-	 *    A_UINT32                 rx_mpdu_aggr[][][];       Array size is num_peer_ac_rx_stats * WLAN_MAX_AC * rx_mpdu_aggr_array_size,
-	 *                                                       array index is (peer_index * WLAN_MAX_AC + ac_index) * rx_mpdu_aggr_array_size + A-MPDU aggregation index
-	 *    A_UINT32                 rx_msdu_mcs[][][];        Array size is (num_peer_ac_rx_stats * WLAN_MAX_AC) * rx_msdu_mcs_array_size,
-	 *                                                       array index is (peer_index * WLAN_MAX_AC + ac_index) * rx_msdu_mcs_array_size + MCS index
-	 **/
+	 *    wmi_chan_cca_stats       chan_cca_stats[];         Array length is specified by num_chan_cca_stats
+	 *    wmi_peer_signal_stats    peer_signal_stats[];      Array length is specified by num_peer_signal_stats
+	 *    wmi_peer_ac_tx_stats     peer_ac_tx_stats[];       Array length is specified by num_peer_ac_tx_stats
+	 *    wmi_tx_stats             tx_stats[][];             Array length is num_peer_ac_tx_stats * WLAN_MAX_AC, array index is (peer_index * WLAN_MAX_AC + ac_index)
+	 *    A_UINT32                 tx_mpdu_aggr[][][];       Array length is num_peer_ac_tx_stats * WLAN_MAX_AC * tx_mpdu_aggr_array_len,
+	 *                                                       array index is (peer_index * WLAN_MAX_AC + ac_index) * tx_mpdu_aggr_array_len + A-MPDU aggregation index
+	 *    A_UINT32                 tx_succ_mcs[][][];        Array length is num_peer_ac_tx_stats * WLAN_MAX_AC * tx_succ_mcs_array_len,
+	 *                                                       array index is (peer_index * WLAN_MAX_AC + ac_index) * tx_succ_mcs_array_len + MCS index
+	 *    A_UINT32                 tx_fail_mcs[][][];        Array length is num_peer_ac_tx_stats * WLAN_MAX_AC * tx_fail_mcs_array_len,
+	 *                                                       array index is (peer_index * WLAN_MAX_AC + ac_index) * tx_fail_mcs_array_len + MCS index
+	 *    A_UINT32                 tx_delay[][][];           Array length is num_peer_ac_tx_stats * WLAN_MAX_AC * tx_delay_array_len,
+	 *                                                       array index is (peer_index * WLAN_MAX_AC + ac_index) * tx_delay_array_len + tx delay index
+	 *    wmi_peer_ac_rx_stats     peer_ac_rx_stats[];       Array length is specified by num_peer_ac_rx_stats
+	 *    wmi_rx_stats             rx_stats[][];             Array length is num_peer_ac_rx_stats * WLAN_MAX_AC, array index is (peer_index * WLAN_MAX_AC + ac_index)
+	 *    A_UINT32                 rx_mpdu_aggr[][][];       Array length is num_peer_ac_rx_stats * WLAN_MAX_AC * rx_mpdu_aggr_array_len,
+	 *                                                       array index is (peer_index * WLAN_MAX_AC + ac_index) * rx_mpdu_aggr_array_len + A-MPDU aggregation index
+	 *    A_UINT32                 rx_mcs[][][];             Array length is (num_peer_ac_rx_stats * WLAN_MAX_AC) * rx_mcs_array_len,
+	 *                                                       array index is (peer_index * WLAN_MAX_AC + ac_index) * rx_mcs_array_len + MCS index
+	 */
 } wmi_report_stats_event_fixed_param;
 
 
@@ -16902,13 +16942,13 @@ typedef struct {
 	 */
 	A_UINT32 gbl_thresh;
 	/** Enable/disable bitmap for threshold mechanism of CCA stats */
-	A_UINT32 cca_thresh_bitmap;
+	A_UINT32 cca_thresh_enable_bitmap;
 	/** Enable/disable bitmap for threshold mechanism of signal stats */
-	A_UINT32 signal_thresh_bitmap;
+	A_UINT32 signal_thresh_enable_bitmap;
 	/** Enable/disable bitmap for threshold mechanism of TX stats */
-	A_UINT32 tx_thresh_bitmap;
+	A_UINT32 tx_thresh_enable_bitmap;
 	/** Enable/disable bitmap for threshold mechanism of RX stats */
-	A_UINT32 rx_thresh_bitmap;
+	A_UINT32 rx_thresh_enable_bitmap;
 	/* This TLV is followed by TLVs below:
 	 *    wmi_chan_cca_stats_thresh     cca_thresh;
 	 *    wmi_peer_signal_stats_thresh  signal_thresh;
