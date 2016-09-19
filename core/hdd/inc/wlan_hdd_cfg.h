@@ -572,7 +572,7 @@ typedef enum {
 #define CFG_DATA_INACTIVITY_TIMEOUT_NAME       "gDataInactivityTimeout"
 #define CFG_DATA_INACTIVITY_TIMEOUT_MIN        (1)
 #define CFG_DATA_INACTIVITY_TIMEOUT_MAX        (255)
-#define CFG_DATA_INACTIVITY_TIMEOUT_DEFAULT    (20)
+#define CFG_DATA_INACTIVITY_TIMEOUT_DEFAULT    (200)
 
 #define CFG_RF_SETTLING_TIME_CLK_NAME          "rfSettlingTimeUs"
 #define CFG_RF_SETTLING_TIME_CLK_MIN           (0)
