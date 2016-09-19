@@ -2359,6 +2359,11 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	/* validate config */
+	if (!pHddCtx->config) {
+		hdd_err("config is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
 	/* HDD has initiated disconnect, do not send connect result indication
 	 * to kernel as it will be handled by __cfg80211_disconnect.
 	 */
