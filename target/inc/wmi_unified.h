@@ -911,6 +911,7 @@ typedef enum {
 	WMI_CHAN_AVOID_UPDATE_CMDID,
 	WMI_COEX_CONFIG_CMDID,
 	WMI_CHAN_AVOID_RPT_ALLOW_CMDID,
+	WMI_COEX_GET_ANTENNA_ISOLATION_CMDID,
 
 	/**
 	 *  OBSS scan offload enable/disable commands
@@ -1368,6 +1369,10 @@ typedef enum {
 	WMI_NAN_DISC_IFACE_DELETED_EVENTID,
 	WMI_NAN_STARTED_CLUSTER_EVENTID,
 	WMI_NAN_JOINED_CLUSTER_EVENTID,
+
+	/* Coex Event */
+	WMI_COEX_REPORT_ANTENNA_ISOLATION_EVENTID =
+		WMI_EVT_GRP_START_ID(WMI_GRP_COEX),
 
 	/* LPI Event */
 	WMI_LPI_RESULT_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_LPI),
@@ -16490,6 +16495,28 @@ typedef struct {
 	 * wmi_scan_adaptive_dwell_parameters_tlv param[]; (0 or 1 elements)
 	 */
 } wmi_scan_adaptive_dwell_config_fixed_param;
+
+typedef struct {
+	/** TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_coex_get_antenna_isolation_cmd_fixed_param */
+	A_UINT32 tlv_header;
+	/* Currently there are no parameters for this message. */
+} wmi_coex_get_antenna_isolation_cmd_fixed_param;
+
+typedef struct {
+	/** TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_coex_report_isolation_event_fixed_param */
+	A_UINT32 tlv_header;
+	/** Antenna isolation value in dB units, none zero value is valid while 0 means failed to do isolation measurement or corresponding chain is not active.
+	 *  Currently the HW descriptor only supports 4 chains at most.
+	 *  Further isolation_chainX elements can be added in the future
+	 *  for additional chains, if needed.
+	 */
+	A_UINT32 isolation_chain0:8, /* [7:0],   isolation value for chain 0 */
+		isolation_chain1:8, /* [15:8],  isolation value for chain 1 */
+		isolation_chain2:8, /* [23:16], isolation value for chain 2 */
+		isolation_chain3:8; /* [31:24], isolation value for chain 3 */
+} wmi_coex_report_isolation_event_fixed_param;
 
 /* ADD NEW DEFS HERE */
 
