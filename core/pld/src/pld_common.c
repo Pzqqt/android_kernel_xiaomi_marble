@@ -1410,7 +1410,7 @@ int pld_power_off(struct device *dev)
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		ret = pld_pcie_power_on(dev);
+		ret = pld_pcie_power_off(dev);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		ret = pld_snoc_power_off(dev);
