@@ -4962,6 +4962,35 @@ static void lim_set_pdev_vht_ie(tpAniSirGlobal mac_ctx, uint8_t pdev_id,
 }
 
 /**
+ * lim_process_set_vdev_ies_per_band() - process the set vdev IE req
+ * @mac_ctx: Pointer to Global MAC structure
+ * @msg_buf: Pointer to the SME message buffer
+ *
+ * This function is called by limProcessMessageQueue(). This function sets the
+ * VDEV IEs to the FW.
+ *
+ * Return: None
+ */
+static void lim_process_set_vdev_ies_per_band(tpAniSirGlobal mac_ctx,
+						uint32_t *msg_buf)
+{
+	struct sir_set_vdev_ies_per_band *p_msg =
+				(struct sir_set_vdev_ies_per_band *)msg_buf;
+
+	if (NULL == p_msg) {
+		lim_log(mac_ctx, LOGE, FL("NULL p_msg"));
+		return;
+	}
+
+	lim_log(mac_ctx, LOG1, FL("rcvd set vdev ie per band req vdev_id = %d"),
+		p_msg->vdev_id);
+	/* intentionally using NULL here so that self capabilty are sent */
+	if (lim_send_ies_per_band(mac_ctx, NULL, p_msg->vdev_id) !=
+			QDF_STATUS_SUCCESS)
+		lim_log(mac_ctx, LOGE, FL("Unable to send HT/VHT Cap to FW"));
+}
+
+/**
  * lim_process_set_pdev_IEs() - process the set pdev IE req
  * @mac_ctx: Pointer to Global MAC structure
  * @msg_buf: Pointer to the SME message buffer
@@ -5285,6 +5314,10 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
 		break;
 	case eWNI_SME_PDEV_SET_HT_VHT_IE:
 		lim_process_set_pdev_IEs(pMac, pMsgBuf);
+		break;
+	case eWNI_SME_SET_VDEV_IES_PER_BAND:
+		lim_process_set_vdev_ies_per_band(pMac, pMsgBuf);
+		break;
 	case eWNI_SME_NDP_END_REQ:
 	case eWNI_SME_NDP_INITIATOR_REQ:
 	case eWNI_SME_NDP_RESPONDER_REQ:

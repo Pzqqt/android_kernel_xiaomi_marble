@@ -6498,136 +6498,79 @@ QDF_STATUS lim_send_ie(tpAniSirGlobal mac_ctx, uint32_t sme_session_id,
 }
 
 /**
- * lim_populate_ht_caps_from_hw_caps() - gets HTCAPs IE from session, then
- * updates, HTCAPs 16 bit from hw caps
- * @mac_ctx: global MAC context
- * @session: pe session
- * @ht_caps: HTCAPs struct to populate
- * @hw_caps: hw caps
+ * lim_get_rx_ldpc() - gets ldpc setting for given channel(band)
+ * @mac_ctx: global mac context
+ * @ch: channel for which ldpc setting is required
  *
- * This funciton sends the IE data to WMA.
- *
- * Return: status of operation
+ * Return: true if enabled and false otherwise
  */
-QDF_STATUS lim_populate_ht_caps_from_hw_caps(tpAniSirGlobal mac_ctx,
-					     tpPESession session,
-					     tDot11fIEHTCaps *ht_caps,
-					     uint32_t hw_caps)
+static inline bool lim_get_rx_ldpc(tpAniSirGlobal mac_ctx, uint8_t ch)
 {
-	tSirRetStatus status;
-
-	if (!mac_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
-			FL("mac_ctx is NULL"));
-		return QDF_STATUS_E_INVAL;
-	}
-
-	/* following functions that use session can take NULL */
-	status = populate_dot11f_ht_caps(mac_ctx, session, ht_caps);
-	if (eSIR_SUCCESS != status) {
-		lim_log(mac_ctx, LOGE, FL("Failed to populate ht cap IE"));
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	ht_caps->rxSTBC = !!(hw_caps & WMI_HT_CAP_RX_STBC);
-	ht_caps->txSTBC = !!(hw_caps & WMI_HT_CAP_TX_STBC);
-	ht_caps->advCodingCap = !!(hw_caps & WMI_HT_CAP_RX_LDPC);
-	ht_caps->shortGI20MHz = !!(hw_caps & WMI_HT_CAP_HT20_SGI);
-	ht_caps->shortGI40MHz = !!(hw_caps & WMI_HT_CAP_HT40_SGI);
-	return QDF_STATUS_SUCCESS;
+	if (mac_ctx->roam.configParam.rxLdpcEnable &&
+		wma_is_rx_ldpc_supported_for_channel(CDS_CHANNEL_NUM(ch)))
+		return true;
+	else
+		return false;
 }
 
 /**
- * lim_populate_vht_caps_from_hw_caps() - gets VHTCAPs IE from session, then
- * updates, HTCAPs 16 bit from hw caps
- * @mac_ctx: global MAC context
- * @session: pe session
- * @vht_caps: VHTCAPs struct to populate
- * @hw_caps: hw caps
- *
- * This funciton sends the IE data to WMA.
- *
- * Return: status of operation
- */
-QDF_STATUS lim_populate_vht_caps_from_hw_caps(tpAniSirGlobal mac_ctx,
-					      tpPESession session,
-					      tDot11fIEVHTCaps *vht_caps,
-					      uint32_t hw_caps)
-{
-	uint8_t *ie_buff = (uint8_t *)vht_caps;
-	tSirRetStatus status;
-
-	if (!mac_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
-			FL("mac_ctx is NULL"));
-		return QDF_STATUS_E_INVAL;
-	}
-
-	/* following functions that use session can take NULL */
-	status = populate_dot11f_vht_caps(mac_ctx, session, vht_caps);
-	if (eSIR_SUCCESS != status) {
-		lim_log(mac_ctx, LOGE, FL("Failed to populate vht cap IE"));
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	*((uint32_t *)(ie_buff + 1)) = hw_caps;
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * lim_send_ht_vht_ie() - gets ht and vht capability and send to firmware via
+ * lim_send_ies_per_band() - gets ht and vht capability and send to firmware via
  * wma
- * updates, HTCAPs 16 bit from hw caps
- * @session: pe session
+ * @mac_ctx: global mac context
+ * @session: pe session. This can be NULL. In that case self cap will be sent
+ * @vdev_id: vdev for which IE is targeted
  *
  * This funciton gets ht and vht capability and send to firmware via wma
  *
  * Return: status of operation
  */
-QDF_STATUS lim_send_ht_vht_ie(tpAniSirGlobal mac_ctx, tpPESession session)
+QDF_STATUS lim_send_ies_per_band(tpAniSirGlobal mac_ctx,
+				 tpPESession session,
+				 uint8_t vdev_id)
 {
-	uint8_t *ie_buff;
-	tDot11fIEHTCaps ht_caps;
-	tDot11fIEVHTCaps vht_caps;
-	struct wma_caps_per_phy caps_2g;
-	struct wma_caps_per_phy caps_5g;
+	uint8_t ht_caps[DOT11F_IE_HTCAPS_MIN_LEN + 2] = {0};
+	uint8_t vht_caps[DOT11F_IE_VHTCAPS_MAX_LEN + 2] = {0};
+	tHtCaps *p_ht_cap = (tHtCaps *)ht_caps;
+	tSirMacVHTCapabilityInfo *p_vht_cap =
+			(tSirMacVHTCapabilityInfo *)vht_caps;
 
-	if (wma_is_dbs_enable()) {
-		wma_get_caps_for_phyidx_hwmode(&caps_2g, HW_MODE_DBS,
-						CDS_BAND_2GHZ);
-		wma_get_caps_for_phyidx_hwmode(&caps_5g, HW_MODE_DBS,
-						CDS_BAND_5GHZ);
-	} else {
-		wma_get_caps_for_phyidx_hwmode(&caps_2g, HW_MODE_DBS_NONE,
-						CDS_BAND_2GHZ);
-		wma_get_caps_for_phyidx_hwmode(&caps_5g, HW_MODE_DBS_NONE,
-						CDS_BAND_5GHZ);
-	}
-	lim_log(mac_ctx, LOG1,
-		FL("HT Caps: 2G: 0x%X, 5G: 0x%X, VHT Caps: 2G: 0x%X, 5G: 0x%X"),
-		caps_2g.ht_2g, caps_5g.ht_5g, caps_2g.vht_2g, caps_5g.vht_5g);
+	/*
+	 * Note: Do not use Dot11f VHT structure, since 1 byte present flag in
+	 * it is causing weird padding errors. Instead use Sir Mac VHT struct
+	 * to send IE to wma.
+	 */
+	ht_caps[0] = DOT11F_EID_HTCAPS;
+	ht_caps[1] = DOT11F_IE_HTCAPS_MIN_LEN;
+	lim_set_ht_caps(mac_ctx, session, ht_caps,
+			DOT11F_IE_HTCAPS_MIN_LEN + 2);
+	/* Get LDPC and over write for 2G */
+	p_ht_cap->advCodingCap = lim_get_rx_ldpc(mac_ctx, CHAN_ENUM_6);
+	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_HTCAPS,
+		CDS_BAND_2GHZ, &ht_caps[2], DOT11F_IE_HTCAPS_MIN_LEN);
+	/*
+	 * Get LDPC and over write for 5G - using channel 64 because it
+	 * is available in all reg domains.
+	 */
+	p_ht_cap->advCodingCap = lim_get_rx_ldpc(mac_ctx, CHAN_ENUM_64);
+	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_HTCAPS,
+		CDS_BAND_5GHZ, &ht_caps[2], DOT11F_IE_HTCAPS_MIN_LEN);
 
-	ie_buff = (uint8_t *)&ht_caps;
-	lim_populate_ht_caps_from_hw_caps(mac_ctx, session,
-					  &ht_caps, caps_2g.ht_2g);
-	lim_send_ie(mac_ctx, session->smeSessionId, DOT11F_EID_HTCAPS,
-			CDS_BAND_2GHZ, ie_buff + 1, DOT11F_IE_HTCAPS_MIN_LEN);
+	vht_caps[0] = DOT11F_EID_VHTCAPS;
+	vht_caps[1] = DOT11F_IE_VHTCAPS_MAX_LEN;
+	/* Get LDPC and over write for 2G */
+	lim_set_vht_caps(mac_ctx, session, vht_caps,
+			 DOT11F_IE_VHTCAPS_MIN_LEN + 2);
+	p_vht_cap->ldpcCodingCap = lim_get_rx_ldpc(mac_ctx, CHAN_ENUM_6);
+	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_VHTCAPS,
+			CDS_BAND_2GHZ, &vht_caps[2], DOT11F_IE_VHTCAPS_MIN_LEN);
 
-	lim_populate_ht_caps_from_hw_caps(mac_ctx, session,
-					  &ht_caps, caps_5g.ht_5g);
-	lim_send_ie(mac_ctx, session->smeSessionId, DOT11F_EID_HTCAPS,
-			CDS_BAND_5GHZ, ie_buff + 1, DOT11F_IE_HTCAPS_MIN_LEN);
-
-	ie_buff = (uint8_t *)&vht_caps;
-	lim_populate_vht_caps_from_hw_caps(mac_ctx, session,
-					   &vht_caps, caps_2g.vht_2g);
-	lim_send_ie(mac_ctx, session->smeSessionId, DOT11F_EID_VHTCAPS,
-			CDS_BAND_2GHZ, ie_buff + 1, DOT11F_IE_VHTCAPS_MAX_LEN);
-
-	lim_populate_vht_caps_from_hw_caps(mac_ctx, session,
-					   &vht_caps, caps_5g.vht_5g);
-	lim_send_ie(mac_ctx, session->smeSessionId, DOT11F_EID_VHTCAPS,
-			CDS_BAND_5GHZ, ie_buff + 1, DOT11F_IE_VHTCAPS_MAX_LEN);
+	/*
+	 * Get LDPC and over write for 5G - using channel 64 because it
+	 * is available in all reg domains.
+	 */
+	p_vht_cap->ldpcCodingCap = lim_get_rx_ldpc(mac_ctx, CHAN_ENUM_64);
+	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_VHTCAPS,
+			CDS_BAND_5GHZ, &vht_caps[2], DOT11F_IE_VHTCAPS_MIN_LEN);
 
 	return QDF_STATUS_SUCCESS;
 }

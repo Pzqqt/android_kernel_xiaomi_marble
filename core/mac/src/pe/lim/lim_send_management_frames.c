@@ -1781,6 +1781,8 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	    mac_ctx->lim.htCapabilityPresentInBeacon) {
 		lim_log(mac_ctx, LOG1, FL("Populate HT Caps in Assoc Request"));
 		populate_dot11f_ht_caps(mac_ctx, pe_session, &frm->HTCaps);
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+				   &frm->HTCaps, sizeof(frm->HTCaps));
 	}
 	lim_log(mac_ctx, LOG1,
 		FL("SupportedChnlWidth: %d, mimoPS: %d, GF: %d, short GI20:%d, shortGI40: %d, dsssCck: %d, AMPDU Param: %x"),
@@ -1795,6 +1797,8 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	    pe_session->vhtCapabilityPresentInBeacon) {
 		lim_log(mac_ctx, LOG1, FL("Populate VHT IEs in Assoc Request"));
 		populate_dot11f_vht_caps(mac_ctx, pe_session, &frm->VHTCaps);
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+				   &frm->VHTCaps, sizeof(frm->VHTCaps));
 		vht_enabled = true;
 		if (pe_session->enableHtSmps &&
 				!pe_session->supported_nss_1x1) {

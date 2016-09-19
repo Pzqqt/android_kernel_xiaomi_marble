@@ -2483,11 +2483,6 @@ lim_process_sta_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 			goto end;
 		}
 
-		if (lim_send_ht_vht_ie(mac_ctx, session_entry) !=
-				QDF_STATUS_SUCCESS)
-			lim_log(mac_ctx, LOGE,
-				FL("Unable to send HT/VHT Cap to FW"));
-
 		/* Set MLME state */
 		session_entry->limMlmState = eLIM_MLM_WT_ADD_STA_RSP_STATE;
 		MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE,

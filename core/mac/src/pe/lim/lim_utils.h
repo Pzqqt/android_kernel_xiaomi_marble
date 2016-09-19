@@ -574,17 +574,8 @@ void lim_check_and_reset_protection_params(tpAniSirGlobal mac_ctx);
 QDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx, uint32_t session_id,
 			       tDot11fIEExtCap *extracted_extcap, bool merge);
 
-QDF_STATUS lim_populate_vht_caps_from_hw_caps(tpAniSirGlobal mac_ctx,
-					      tpPESession session,
-					      tDot11fIEVHTCaps *vht_caps,
-					      uint32_t hw_caps);
-
-QDF_STATUS lim_populate_ht_caps_from_hw_caps(tpAniSirGlobal mac_ctx,
-					     tpPESession session,
-					     tDot11fIEHTCaps *ht_caps,
-					     uint32_t hw_caps);
-
-QDF_STATUS lim_send_ht_vht_ie(tpAniSirGlobal mac_ctx, tpPESession session);
+QDF_STATUS lim_send_ies_per_band(tpAniSirGlobal mac_ctx,
+				 tpPESession session, uint8_t vdev_id);
 
 tSirRetStatus lim_strip_extcap_ie(tpAniSirGlobal mac_ctx, uint8_t *addn_ie,
 			  uint16_t *addn_ielen, uint8_t *extracted_extcap);

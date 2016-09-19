@@ -16268,6 +16268,38 @@ QDF_STATUS sme_set_adaptive_dwelltime_config(tHalHandle hal,
 	}
 	return status;
 }
+
+/**
+ * sme_set_vdev_ies_per_band() - sends the per band IEs to vdev
+ * @hal: Pointer to HAL
+ * @vdev_id: vdev_id for which IE is targeted
+ *
+ * Return: None
+ */
+void sme_set_vdev_ies_per_band(tHalHandle hal, uint8_t vdev_id)
+{
+	tpAniSirGlobal p_mac = PMAC_STRUCT(hal);
+	struct sir_set_vdev_ies_per_band *p_msg;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	p_msg = qdf_mem_malloc(sizeof(*p_msg));
+	if (NULL == p_msg) {
+		sms_log(p_mac, LOGE, FL("mem alloc failed for sme msg"));
+		return;
+	}
+
+	p_msg->vdev_id = vdev_id;
+	p_msg->msg_type = eWNI_SME_SET_VDEV_IES_PER_BAND;
+	p_msg->len = sizeof(*p_msg);
+	sms_log(p_mac, LOG1,
+		FL("sending eWNI_SME_SET_VDEV_IES_PER_BAND: vdev_id: %d "),
+		vdev_id);
+	status = cds_send_mb_message_to_mac(p_msg);
+	if (QDF_STATUS_SUCCESS != status)
+		sms_log(p_mac, LOGE,
+			FL("Send eWNI_SME_SET_VDEV_IES_PER_BAND fail"));
+}
+
 /**
  * sme_set_pdev_ht_vht_ies() - sends the set pdev IE req
  * @hal: Pointer to HAL
@@ -16325,7 +16357,6 @@ void sme_set_pdev_ht_vht_ies(tHalHandle hal, bool enable2x2)
 		if (QDF_STATUS_SUCCESS != status) {
 			sms_log(mac_ctx, LOGE, FL(
 					"Send SME_PDEV_SET_HT_VHT_IE fail"));
-			qdf_mem_free(ht_vht_cfg);
 		}
 		sme_release_global_lock(&mac_ctx->sme);
 	}

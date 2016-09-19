@@ -882,18 +882,18 @@ void lim_log_vht_cap(tpAniSirGlobal pMac, tDot11fIEVHTCaps *pDot11f)
 	lim_log(pMac, LOG1, FL("vhtLinkAdaptCap (2): %d"),
 		pDot11f->vhtLinkAdaptCap);
 	lim_log(pMac, LOG1, FL("rxAntPattern (1): %d"),
-		pDot11f->vhtLinkAdaptCap);
+		pDot11f->rxAntPattern);
 	lim_log(pMac, LOG1, FL("txAntPattern (1): %d"),
-		pDot11f->vhtLinkAdaptCap);
+		pDot11f->txAntPattern);
 	lim_log(pMac, LOG1, FL("reserved1 (2): %d"), pDot11f->reserved1);
 	lim_log(pMac, LOG1, FL("rxMCSMap (16): %d"), pDot11f->rxMCSMap);
 	lim_log(pMac, LOG1, FL("rxHighSupDataRate (13): %d"),
 		pDot11f->rxHighSupDataRate);
-	lim_log(pMac, LOG1, FL("reserve (3): %d"), pDot11f->reserved2);
+	lim_log(pMac, LOG1, FL("reserved2(3): %d"), pDot11f->reserved2);
 	lim_log(pMac, LOG1, FL("txMCSMap (16): %d"), pDot11f->txMCSMap);
 	lim_log(pMac, LOG1, FL("txSupDataRate (13): %d"),
 		pDot11f->txSupDataRate);
-	lim_log(pMac, LOG1, FL("reserv (3): %d"), pDot11f->reserved3);
+	lim_log(pMac, LOG1, FL("reserved3 (3): %d"), pDot11f->reserved3);
 #endif /* DUMP_MGMT_CNTNTS */
 }
 
