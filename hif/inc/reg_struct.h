@@ -609,6 +609,7 @@ struct ce_reg_def {
 	uint32_t d_CE_DDR_ADDRESS_FOR_RRI_LOW;
 	uint32_t d_CE_DDR_ADDRESS_FOR_RRI_HIGH;
 	uint32_t d_HOST_IE_ADDRESS;
+	uint32_t d_HOST_IE_ADDRESS_2;
 	uint32_t d_HOST_IE_COPY_COMPLETE_MASK;
 	uint32_t d_SR_BA_ADDRESS;
 	uint32_t d_SR_BA_ADDRESS_HIGH;

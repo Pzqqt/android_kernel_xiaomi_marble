@@ -193,6 +193,7 @@
 #define CE_DEBUG_SEL_LSB          (scn->target_ce_def->d_CE_DEBUG_SEL_LSB)
 #define CE_DEBUG_SEL_MASK         (scn->target_ce_def->d_CE_DEBUG_SEL_MASK)
 #define HOST_IE_ADDRESS           (scn->target_ce_def->d_HOST_IE_ADDRESS)
+#define HOST_IE_ADDRESS_2         (scn->target_ce_def->d_HOST_IE_ADDRESS_2)
 #define HOST_IS_ADDRESS           (scn->target_ce_def->d_HOST_IS_ADDRESS)
 
 #define SRC_WATERMARK_LOW_SET(x) \
