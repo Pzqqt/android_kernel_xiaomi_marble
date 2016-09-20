@@ -6024,6 +6024,14 @@ void hdd_unsafe_channel_restart_sap(hdd_context_t *hdd_ctxt)
 		if (!restart_chan) {
 			hdd_alert("fail to restart SAP");
 		} else {
+			/* SAP restart due to unsafe channel. While restarting
+			 * the SAP, make sure to clear acs_channel, channel to
+			 * reset to 0. Otherwise these settings will override
+			 * the ACS while restart.
+			*/
+			hdd_ctxt->acs_policy.acs_channel = AUTO_CHANNEL_SELECT;
+			adapter_temp->sessionCtx.ap.sapConfig.channel =
+							AUTO_CHANNEL_SELECT;
 			hdd_info("sending coex indication");
 			wlan_hdd_send_svc_nlink_msg(hdd_ctxt->radio_index,
 					WLAN_SVC_LTE_COEX_IND, NULL, 0);
