@@ -1259,10 +1259,11 @@ static void hif_enable_power_gating(struct hif_pci_softc *sc)
  * hif_enable_power_management() - enable power management
  * @hif_ctx: hif context
  *
- * Currently only does runtime pm.  Eventually this function could
- * consolidate other power state features such as only letting
- * the soc sleep after the driver finishes loading and re-enabling
- * aspm (hif_enable_power_gating).
+ * Enables runtime pm, aspm(PCI.. hif_enable_power_gating) and re-enabling
+ * soc-sleep after driver load (hif_pci_target_sleep_state_adjust).
+ *
+ * note: epping mode does not call this function as it does not
+ *       care about saving power.
  */
 void hif_pci_enable_power_management(struct hif_softc *hif_sc,
 				 bool is_packet_log_enabled)
@@ -1281,6 +1282,7 @@ void hif_pci_enable_power_management(struct hif_softc *hif_sc,
 
 	if (!CONFIG_ATH_PCIE_MAX_PERF &&
 	    CONFIG_ATH_PCIE_AWAKE_WHILE_DRIVER_LOAD) {
+		/* allow sleep for PCIE_AWAKE_WHILE_DRIVER_LOAD feature */
 		if (hif_pci_target_sleep_state_adjust(hif_sc, true, false) < 0)
 			HIF_ERROR("%s, failed to set target to sleep",
 				  __func__);
@@ -1903,8 +1905,6 @@ int hif_pci_bus_configure(struct hif_softc *hif_sc)
 {
 	int status = 0;
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_sc);
-	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(hif_sc);
-	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
 
 	hif_ce_prepare_config(hif_sc);
 
@@ -1933,8 +1933,17 @@ int hif_pci_bus_configure(struct hif_softc *hif_sc)
 
 	if (CONFIG_ATH_PCIE_MAX_PERF ||
 	    CONFIG_ATH_PCIE_AWAKE_WHILE_DRIVER_LOAD) {
-		/* Force AWAKE forever/till the driver is loaded */
-		if (tgt_info->target_type != TARGET_TYPE_IPQ4019) {
+		/*
+		 * prevent sleep for PCIE_AWAKE_WHILE_DRIVER_LOAD feature
+		 * prevent sleep when we want to keep firmware always awake
+		 * note: when we want to keep firmware always awake,
+		 *       hif_target_sleep_state_adjust will point to a dummy
+		 *       function, and hif_pci_target_sleep_state_adjust must
+		 *       be called instead.
+		 * note: bus type check is here because AHB bus is reusing
+		 *       hif_pci_bus_configure code.
+		 */
+		if (hif_sc->bus_type == QDF_BUS_TYPE_PCI) {
 			if (hif_pci_target_sleep_state_adjust(hif_sc,
 					false, true) < 0) {
 				status = -EACCES;
