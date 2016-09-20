@@ -3915,14 +3915,14 @@ WMITLV_CREATE_PARAM_STRUC(WMI_RADIO_TX_POWER_LEVEL_STATS_EVENTID);
  *    A_UINT32                 tx_fail_mcs[][][];        Array length is num_peer_ac_tx_stats * WLAN_MAX_AC * tx_fail_mcs_array_len,
  *                                                       array index is (peer_index * WLAN_MAX_AC + ac_index) * tx_fail_mcs_array_len + MCS index
  *                                                       Contains a count of how many PPDUs failed tx due to no ack for each MCS of each AC of each peer.
- *    A_UINT32                 tx_delay[][][];           Array length is num_peer_ac_tx_stats * WLAN_MAX_AC * tx_delay_array_len,
- *                                                       array index is (peer_index * WLAN_MAX_AC + ac_index) * tx_delay_array_len + delay index
+ *    A_UINT32                 tx_ppdu_delay[][][];      Array length is num_peer_ac_tx_stats * WLAN_MAX_AC * tx_ppdu_delay_array_len,
+ *                                                       array index is (peer_index * WLAN_MAX_AC + ac_index) * tx_ppdu_delay_array_len + delay index
  *                                                       Contains a histogram of how many PPDUs encountered each level of delay due to retries or air interface contention.
- *                                                       The time represented by each array element (i.e. histogram bin) is specified by tx_delay_bin_size_ms.
- *                                                       Element 0 contains the count of PPDUs delayed by less than tx_delay_bin_size_ms.
- *                                                       Element 1 contains the count of PPDUs delayed by more than 1x tx_delay_bin_size_ms but less than 2x.
+ *                                                       The time represented by each array element (i.e. histogram bin) is specified by tx_ppdu_delay_bin_size_ms.
+ *                                                       Element 0 contains the count of PPDUs delayed by less than tx_ppdu_delay_bin_size_ms.
+ *                                                       Element 1 contains the count of PPDUs delayed by more than 1x tx_ppdu_delay_bin_size_ms but less than 2x.
  *                                                       Element tx_delay_array_len-1 contains the count of PPDUs delayed by
- *                                                           >= tx_delay_bin_size_ms * (tx_delay_array_len-1)
+ *                                                           >= tx_ppdu_delay_bin_size_ms * (tx_ppdu_delay_array_len-1)
  *    wmi_peer_ac_rx_stats     peer_ac_rx_stats[];       Array length is specified by num_peer_ac_rx_stats
  *    wmi_rx_stats             rx_stats[][];             Array length is num_peer_ac_rx_stats * WLAN_MAX_AC, array index is (peer_index * WLAN_MAX_AC + ac_index)
  *    A_UINT32                 rx_mpdu_aggr[][][];       Array length is num_peer_ac_rx_stats * WLAN_MAX_AC * rx_mpdu_aggr_array_len,
@@ -3975,14 +3975,14 @@ WMITLV_CREATE_PARAM_STRUC(WMI_RADIO_TX_POWER_LEVEL_STATS_EVENTID);
  * 36. tx_fail_mcs[1][1][] for peer Y, AC 1
  * 37. tx_fail_mcs[1][2][] for peer Y, AC 2
  * 38. tx_fail_mcs[1][3][] for peer Y, AC 3
- * 39. tx_delay[0][0][] for peer X, AC 0
- * 40. tx_delay[0][1][] for peer X, AC 1
- * 41. tx_delay[0][2][] for peer X, AC 2
- * 42. tx_delay[0][3][] for peer X, AC 3
- * 43. tx_delay[1][0][] for peer Y, AC 0
- * 44. tx_delay[1][1][] for peer Y, AC 1
- * 45. tx_delay[1][2][] for peer Y, AC 2
- * 46. tx_delay[1][3][] for peer Y, AC 3
+ * 39. tx_ppdu_delay[0][0][] for peer X, AC 0
+ * 40. tx_ppdu_delay[0][1][] for peer X, AC 1
+ * 41. tx_ppdu_delay[0][2][] for peer X, AC 2
+ * 42. tx_ppdu_delay[0][3][] for peer X, AC 3
+ * 43. tx_ppdu_delay[1][0][] for peer Y, AC 0
+ * 44. tx_ppdu_delay[1][1][] for peer Y, AC 1
+ * 45. tx_ppdu_delay[1][2][] for peer Y, AC 2
+ * 46. tx_ppdu_delay[1][3][] for peer Y, AC 3
  * 47. peer_ac_rx_stats[0] for X
  * 48. peer_ac_rx_stats[1] for Y
  * 49. rx_stats[0][0] for peer X, AC 0
@@ -4019,7 +4019,7 @@ WMITLV_CREATE_PARAM_STRUC(WMI_RADIO_TX_POWER_LEVEL_STATS_EVENTID);
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, tx_mpdu_aggr, WMITLV_SIZE_VAR) \
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, tx_succ_mcs, WMITLV_SIZE_VAR) \
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, tx_fail_mcs, WMITLV_SIZE_VAR) \
-	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, tx_delay, WMITLV_SIZE_VAR) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, tx_ppdu_delay, WMITLV_SIZE_VAR) \
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_ac_rx_stats, peer_ac_rx_stats, WMITLV_SIZE_VAR) \
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_STRUC, wmi_rx_stats, rx_stats, WMITLV_SIZE_VAR) \
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, rx_mpdu_aggr, WMITLV_SIZE_VAR) \
