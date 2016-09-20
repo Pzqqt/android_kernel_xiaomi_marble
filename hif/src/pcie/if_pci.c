@@ -1651,7 +1651,8 @@ int hif_set_hia(struct hif_softc *scn)
 
 	HIF_TRACE("%s: E", __func__);
 
-	hif_get_target_ce_config(&target_ce_config, &target_ce_config_sz,
+	hif_get_target_ce_config(scn,
+				 &target_ce_config, &target_ce_config_sz,
 				 &target_service_to_ce_map,
 				 &target_service_to_ce_map_sz,
 				 NULL, NULL);

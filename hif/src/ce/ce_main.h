@@ -38,6 +38,7 @@
 
 #define CE_OFFSET		0x00000400
 #define CE_USEFUL_SIZE		0x00000058
+#define CE_ALL_BITMAP  0xFFFF
 
 /**
  * enum ce_id_type
@@ -128,6 +129,9 @@ struct HIF_CE_state {
 	bool sleep_timer_init;
 	qdf_time_t sleep_ticks;
 
+	struct CE_pipe_config *target_ce_config;
+	struct CE_attr *host_ce_config;
+	uint32_t target_ce_config_sz;
 	/* Per-pipe state. */
 	struct HIF_CE_pipe_info pipe_info[CE_COUNT_MAX];
 	/* to be activated after BMI_DONE */
@@ -187,7 +191,8 @@ void hif_ce_ipa_get_ce_resource(struct hif_softc *scn,
 #endif
 int hif_wlan_enable(struct hif_softc *scn);
 void hif_wlan_disable(struct hif_softc *scn);
-void hif_get_target_ce_config(struct CE_pipe_config **target_ce_config_ret,
+void hif_get_target_ce_config(struct hif_softc *scn,
+		struct CE_pipe_config **target_ce_config_ret,
 		int *target_ce_config_sz_ret,
 		struct service_to_pipe **target_service_to_ce_map_ret,
 		int *target_service_to_ce_map_sz_ret,

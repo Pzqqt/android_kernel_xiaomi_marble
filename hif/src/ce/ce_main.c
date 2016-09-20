@@ -1283,6 +1283,7 @@ void hif_send_complete_check(struct hif_opaque_softc *hif_ctx, uint8_t pipe,
 								int force)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
 
 	if (!force) {
 		int resources;
@@ -1298,7 +1299,7 @@ void hif_send_complete_check(struct hif_opaque_softc *hif_ctx, uint8_t pipe,
 		 * If at least 50% of the total resources are still available,
 		 * don't bother checking again yet.
 		 */
-		if (resources > (host_ce_config[pipe].src_nentries >> 1)) {
+		if (resources > (hif_state->host_ce_config[pipe].src_nentries >> 1)) {
 			return;
 		}
 	}
@@ -1485,7 +1486,7 @@ int hif_completion_thread_startup(struct HIF_CE_state *hif_state)
 		if (pipe_info->ce_hdl == ce_diag) {
 			continue;       /* Handle Diagnostic CE specially */
 		}
-		attr = host_ce_config[pipe_num];
+		attr = hif_state->host_ce_config[pipe_num];
 		if (attr.src_nentries) {
 			/* pipe used to send to target */
 			HIF_INFO_MED("%s: pipe_num:%d pipe_info:0x%p",
@@ -1915,15 +1916,18 @@ void hif_ce_stop(struct hif_softc *scn)
  *
  * Return: return by parameter.
  */
-void hif_get_target_ce_config(struct CE_pipe_config **target_ce_config_ret,
+void hif_get_target_ce_config(struct hif_softc *scn,
+		struct CE_pipe_config **target_ce_config_ret,
 		int *target_ce_config_sz_ret,
 		struct service_to_pipe **target_service_to_ce_map_ret,
 		int *target_service_to_ce_map_sz_ret,
 		struct shadow_reg_cfg **target_shadow_reg_cfg_ret,
 		int *shadow_cfg_sz_ret)
 {
-	*target_ce_config_ret = target_ce_config;
-	*target_ce_config_sz_ret = target_ce_config_sz;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+
+	*target_ce_config_ret = hif_state->target_ce_config;
+	*target_ce_config_sz_ret = hif_state->target_ce_config_sz;
 	*target_service_to_ce_map_ret = target_service_to_ce_map;
 	*target_service_to_ce_map_sz_ret = target_service_to_ce_map_sz;
 
@@ -1949,7 +1953,8 @@ int hif_wlan_enable(struct hif_softc *scn)
 	enum pld_driver_mode mode;
 	uint32_t con_mode = hif_get_conparam(scn);
 
-	hif_get_target_ce_config((struct CE_pipe_config **)&cfg.ce_tgt_cfg,
+	hif_get_target_ce_config(scn,
+			(struct CE_pipe_config **)&cfg.ce_tgt_cfg,
 			&cfg.num_ce_tgt_cfg,
 			(struct service_to_pipe **)&cfg.ce_svc_cfg,
 			&cfg.num_ce_svc_pipe_cfg,
@@ -1988,15 +1993,16 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 	uint32_t mode = hif_get_conparam(scn);
 	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 
 	/* if epping is enabled we need to use the epping configuration. */
 	if (QDF_IS_EPPING_ENABLED(mode)) {
 		if (CE_EPPING_USES_IRQ)
-			host_ce_config = host_ce_config_wlan_epping_irq;
+			hif_state->host_ce_config = host_ce_config_wlan_epping_irq;
 		else
-			host_ce_config = host_ce_config_wlan_epping_poll;
-		target_ce_config = target_ce_config_wlan_epping;
-		target_ce_config_sz = sizeof(target_ce_config_wlan_epping);
+			hif_state->host_ce_config = host_ce_config_wlan_epping_poll;
+		hif_state->target_ce_config = target_ce_config_wlan_epping;
+		hif_state->target_ce_config_sz = sizeof(target_ce_config_wlan_epping);
 		target_service_to_ce_map =
 		    target_service_to_ce_map_wlan_epping;
 		target_service_to_ce_map_sz =
@@ -2007,14 +2013,18 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 
 	switch (tgt_info->target_type) {
 	default:
+		hif_state->host_ce_config = host_ce_config_wlan;
+		hif_state->target_ce_config = target_ce_config_wlan;
+		hif_state->target_ce_config_sz = sizeof(target_ce_config_wlan);
 		break;
 	case TARGET_TYPE_AR900B:
 	case TARGET_TYPE_QCA9984:
 	case TARGET_TYPE_IPQ4019:
 	case TARGET_TYPE_QCA9888:
-		host_ce_config = host_ce_config_wlan_ar900b;
-		target_ce_config = target_ce_config_wlan_ar900b;
-		target_ce_config_sz = sizeof(target_ce_config_wlan_ar900b);
+		hif_state->host_ce_config = host_ce_config_wlan_ar900b;
+		hif_state->target_ce_config = target_ce_config_wlan_ar900b;
+		hif_state->target_ce_config_sz =
+				sizeof(target_ce_config_wlan_ar900b);
 
 		target_service_to_ce_map = target_service_to_ce_map_ar900b;
 		target_service_to_ce_map_sz =
@@ -2023,9 +2033,10 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 
 	case TARGET_TYPE_AR9888:
 	case TARGET_TYPE_AR9888V2:
-		host_ce_config = host_ce_config_wlan_ar9888;
-		target_ce_config = target_ce_config_wlan_ar9888;
-		target_ce_config_sz = sizeof(target_ce_config_wlan_ar9888);
+		hif_state->host_ce_config = host_ce_config_wlan_ar9888;
+		hif_state->target_ce_config = target_ce_config_wlan_ar9888;
+		hif_state->target_ce_config_sz =
+					sizeof(target_ce_config_wlan_ar9888);
 
 		target_service_to_ce_map = target_service_to_ce_map_ar900b;
 		target_service_to_ce_map_sz =
@@ -2154,7 +2165,7 @@ int hif_config_ce(struct hif_softc *scn)
 		pipe_info = &hif_state->pipe_info[pipe_num];
 		pipe_info->pipe_num = pipe_num;
 		pipe_info->HIF_CE_state = hif_state;
-		attr = &host_ce_config[pipe_num];
+		attr = &hif_state->host_ce_config[pipe_num];
 		pipe_info->ce_hdl = ce_init(scn, pipe_num, attr);
 		ce_state = scn->ce_id_to_state[pipe_num];
 		QDF_ASSERT(pipe_info->ce_hdl != NULL);
@@ -2530,6 +2541,7 @@ int hif_map_service_to_pipe(struct hif_opaque_softc *hif_hdl, uint16_t svc_id,
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
 	bool dl_updated = false;
 	bool ul_updated = false;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 
 	if (QDF_IS_EPPING_ENABLED(mode)) {
 		tgt_svc_map_to_use = target_service_to_ce_map_wlan_epping;
@@ -2564,7 +2576,7 @@ int hif_map_service_to_pipe(struct hif_opaque_softc *hif_hdl, uint16_t svc_id,
 			if (element.pipedir == PIPEDIR_OUT) {
 				*ul_pipe = element.pipenum;
 				*ul_is_polled =
-					(host_ce_config[*ul_pipe].flags &
+					(hif_state->host_ce_config[*ul_pipe].flags &
 					 CE_ATTR_DISABLE_INTR) != 0;
 				ul_updated = true;
 			} else if (element.pipedir == PIPEDIR_IN) {
@@ -2640,8 +2652,9 @@ inline unsigned int hif_get_src_ring_read_index(struct hif_softc *scn,
 		uint32_t CE_ctrl_addr)
 {
 	struct CE_attr attr;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 
-	attr = host_ce_config[COPY_ENGINE_ID(CE_ctrl_addr)];
+	attr = hif_state->host_ce_config[COPY_ENGINE_ID(CE_ctrl_addr)];
 	if (attr.flags & CE_ATTR_DISABLE_INTR)
 		return CE_SRC_RING_READ_IDX_GET_FROM_DDR(scn, CE_ctrl_addr);
 	else
@@ -2664,8 +2677,9 @@ inline unsigned int hif_get_dst_ring_read_index(struct hif_softc *scn,
 		uint32_t CE_ctrl_addr)
 {
 	struct CE_attr attr;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 
-	attr = host_ce_config[COPY_ENGINE_ID(CE_ctrl_addr)];
+	attr = hif_state->host_ce_config[COPY_ENGINE_ID(CE_ctrl_addr)];
 
 	if (attr.flags & CE_ATTR_DISABLE_INTR)
 		return CE_DEST_RING_READ_IDX_GET_FROM_DDR(scn, CE_ctrl_addr);
