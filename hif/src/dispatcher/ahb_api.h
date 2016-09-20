@@ -43,5 +43,6 @@ void hif_ahb_device_reset(struct hif_softc *scn);
 int hif_ahb_enable_radio(struct hif_pci_softc *sc,
 		struct platform_device *pdev,
 		const struct platform_device_id *id);
+int hif_ahb_configure_irq(struct hif_pci_softc *sc);
 
 #endif

@@ -2055,6 +2055,7 @@ QDF_STATUS hif_ce_open(struct hif_softc *hif_sc)
 {
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_sc);
 
+	qdf_spinlock_create(&hif_state->irq_reg_lock);
 	qdf_spinlock_create(&hif_state->keep_awake_lock);
 	return QDF_STATUS_SUCCESS;
 }
@@ -2065,6 +2066,9 @@ QDF_STATUS hif_ce_open(struct hif_softc *hif_sc)
  */
 void hif_ce_close(struct hif_softc *hif_sc)
 {
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_sc);
+
+	qdf_spinlock_destroy(&hif_state->irq_reg_lock);
 }
 
 /**

@@ -91,6 +91,10 @@
 #define QCA9984_DEVICE_ID   (0x0046)
 #define QCA9888_DEVICE_ID   (0x0056)
 #define IPQ4019_DEVICE_ID   (0x12ef)
+#define QCA8074_DEVICE_ID   (0xffff) /* Todo: replace this with
+					actual number once available.
+					currently defining this to 0xffff for
+					emulation purpose */
 
 #define HIF_GET_PCI_SOFTC(scn) ((struct hif_pci_softc *)scn)
 #define HIF_GET_CE_STATE(scn) ((struct HIF_CE_state *)scn)
@@ -127,6 +131,7 @@ struct hif_softc {
 
 	bool recovery;
 	bool notice_send;
+	bool per_ce_irq;
 	uint32_t ce_irq_summary;
 	/* No of copy engines supported */
 	unsigned int ce_count;

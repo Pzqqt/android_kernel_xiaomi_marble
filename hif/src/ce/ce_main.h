@@ -122,6 +122,7 @@ struct HIF_CE_state {
 	bool started;
 	struct ce_tasklet_entry tasklets[CE_COUNT_MAX];
 	qdf_spinlock_t keep_awake_lock;
+	qdf_spinlock_t irq_reg_lock;
 	unsigned int keep_awake_count;
 	bool verified_awake;
 	bool fake_sleep;

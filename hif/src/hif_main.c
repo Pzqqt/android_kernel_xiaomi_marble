@@ -680,6 +680,12 @@ int hif_get_device_type(uint32_t device_id,
 		HIF_INFO(" *********** IPQ4019  *************");
 		break;
 
+	case QCA8074_DEVICE_ID:
+		*hif_type = HIF_TYPE_QCA8074;
+		*target_type = TARGET_TYPE_QCA8074;
+		HIF_INFO(" *********** QCA8074  *************\n");
+		break;
+
 	default:
 		HIF_ERROR("%s: Unsupported device ID!", __func__);
 		ret = -ENODEV;

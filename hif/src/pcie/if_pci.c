@@ -1952,6 +1952,10 @@ int hif_pci_bus_configure(struct hif_softc *hif_sc)
 		}
 	}
 
+	if (hif_sc->target_info.target_type == TARGET_TYPE_QCA8074) {
+		hif_sc->per_ce_irq = true;
+	}
+
 	status = hif_config_ce(hif_sc);
 	if (status)
 		goto disable_wlan;
@@ -3318,6 +3322,9 @@ int hif_configure_irq(struct hif_softc *scn)
 	switch (scn->target_info.target_type) {
 	case TARGET_TYPE_IPQ4019:
 		ret = hif_ahb_configure_legacy_irq(sc);
+		break;
+	case TARGET_TYPE_QCA8074:
+		ret = hif_ahb_configure_irq(sc);
 		break;
 	default:
 		ret = hif_pci_configure_legacy_irq(sc);
