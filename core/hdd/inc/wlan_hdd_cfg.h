@@ -1226,7 +1226,7 @@ typedef enum {
 #define CFG_PPS_ENABLE_5G_EBT                 "gEnable5gEBT"
 #define CFG_PPS_ENABLE_5G_EBT_FEATURE_MIN     (0)
 #define CFG_PPS_ENABLE_5G_EBT_FEATURE_MAX     (1)
-#define CFG_PPS_ENABLE_5G_EBT_FEATURE_DEFAULT (0)
+#define CFG_PPS_ENABLE_5G_EBT_FEATURE_DEFAULT (1)
 
 #define CFG_ENABLE_MEMORY_DEEP_SLEEP          "gEnableMemDeepSleep"
 #define CFG_ENABLE_MEMORY_DEEP_SLEEP_MIN      (0)
