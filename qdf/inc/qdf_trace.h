@@ -180,6 +180,7 @@ typedef struct s_qdf_trace_data {
  * @QDF_DP_TRACE_DHCP_PACKET_RECORD - record DHCP packet
  * @QDF_DP_TRACE_ARP_PACKET_RECORD - record ARP packet
  * @QDF_DP_TRACE_MGMT_PACKET_RECORD - record MGMT pacekt
+ * QDF_DP_TRACE_EVENT_RECORD - record events
  * @QDF_DP_TRACE_DEFAULT_VERBOSITY - below this are part of default verbosity
  * @QDF_DP_TRACE_HDD_TX_TIMEOUT - HDD tx timeout
  * @QDF_DP_TRACE_HDD_SOFTAP_TX_TIMEOUT- SOFTAP HDD tx timeout
@@ -209,6 +210,7 @@ enum  QDF_DP_TRACE_ID {
 	QDF_DP_TRACE_DHCP_PACKET_RECORD,
 	QDF_DP_TRACE_ARP_PACKET_RECORD,
 	QDF_DP_TRACE_MGMT_PACKET_RECORD,
+	QDF_DP_TRACE_EVENT_RECORD,
 	QDF_DP_TRACE_DEFAULT_VERBOSITY,
 	QDF_DP_TRACE_HDD_TX_TIMEOUT,
 	QDF_DP_TRACE_HDD_SOFTAP_TX_TIMEOUT,
@@ -282,6 +284,18 @@ struct qdf_dp_trace_proto_buf {
  * @subtype: packet subtype
  */
 struct qdf_dp_trace_mgmt_buf {
+	uint8_t vdev_id;
+	uint8_t type;
+	uint8_t subtype;
+};
+
+/**
+ * struct qdf_dp_trace_event_buf - event buffer
+ * @vdev_id : vdev id
+ * @type: packet type
+ * @subtype: packet subtype
+ */
+struct qdf_dp_trace_event_buf {
 	uint8_t vdev_id;
 	uint8_t type;
 	uint8_t subtype;
@@ -410,6 +424,10 @@ void qdf_dp_trace_mgmt_pkt(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
 		enum qdf_proto_type type, enum qdf_proto_subtype subtype);
 void qdf_dp_display_mgmt_pkt(struct qdf_dp_trace_record_s *record,
 			      uint16_t index);
+void qdf_dp_display_event_record(struct qdf_dp_trace_record_s *record,
+			      uint16_t index);
+void qdf_dp_trace_record_event(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
+		enum qdf_proto_type type, enum qdf_proto_subtype subtype);
 #else
 static inline
 void qdf_dp_trace_log_pkt(uint8_t session_id, struct sk_buff *skb,

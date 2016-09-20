@@ -821,6 +821,8 @@ void qdf_dp_trace_init(void)
 						qdf_dp_display_proto_pkt;
 	qdf_dp_trace_cb_table[QDF_DP_TRACE_MGMT_PACKET_RECORD] =
 					qdf_dp_display_mgmt_pkt;
+	qdf_dp_trace_cb_table[QDF_DP_TRACE_EVENT_RECORD] =
+					qdf_dp_display_event_record;
 
 	qdf_dp_trace_cb_table[QDF_DP_TRACE_MAX] = qdf_dp_unused;
 }
@@ -967,6 +969,8 @@ const char *qdf_dp_code_to_string(enum QDF_DP_TRACE_ID code)
 		return "ARP:";
 	case QDF_DP_TRACE_MGMT_PACKET_RECORD:
 		return "MGMT:";
+	case QDF_DP_TRACE_EVENT_RECORD:
+		return "EVENT:";
 	case QDF_DP_TRACE_HDD_TX_PACKET_PTR_RECORD:
 		return "HDD: TX: PTR:";
 	case QDF_DP_TRACE_HDD_TX_PACKET_RECORD:
@@ -1041,6 +1045,8 @@ static const char *qdf_dp_type_to_str(enum qdf_proto_type type)
 		return "ARP";
 	case QDF_PROTO_TYPE_MGMT:
 		return "MGMT";
+	case QDF_PROTO_TYPE_EVENT:
+		return "EVENT";
 	default:
 		return "invalid";
 	}
@@ -1091,6 +1097,12 @@ static const char *qdf_dp_subtype_to_str(enum qdf_proto_subtype subtype)
 		return "AUTH";
 	case QDF_PROTO_MGMT_DEAUTH:
 		return "DEAUTH";
+	case QDF_ROAM_SYNCH:
+		return "ROAM SYNCH";
+	case QDF_ROAM_COMPLETE:
+		return "ROAM COMPLETE";
+	case QDF_ROAM_EVENTID:
+		return "ROAM EVENTID";
 	default:
 		return "invalid";
 	}
@@ -1353,6 +1365,54 @@ void qdf_dp_trace_mgmt_pkt(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
 }
 EXPORT_SYMBOL(qdf_dp_trace_mgmt_pkt);
 
+/**
+ * qdf_dp_display_event_record() - display event records
+ * @record: dptrace record
+ * @index: index
+ *
+ * Return: none
+ */
+void qdf_dp_display_event_record(struct qdf_dp_trace_record_s *record,
+			      uint16_t index)
+{
+	struct qdf_dp_trace_event_buf *buf =
+		(struct qdf_dp_trace_event_buf *)record->data;
+
+	qdf_print("DPT: %04d: %012llu: %s vdev_id %d", index,
+		record->time, qdf_dp_code_to_string(record->code),
+		buf->vdev_id);
+	qdf_print("DPT: Type %s Subtype %s", qdf_dp_type_to_str(buf->type),
+		qdf_dp_subtype_to_str(buf->subtype));
+}
+EXPORT_SYMBOL(qdf_dp_display_event_record);
+
+/**
+ * qdf_dp_trace_record_event() - record events
+ * @code: dptrace code
+ * @vdev_id: vdev id
+ * @type: proto type
+ * @subtype: proto subtype
+ *
+ * Return: none
+ */
+void qdf_dp_trace_record_event(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
+		enum qdf_proto_type type, enum qdf_proto_subtype subtype)
+{
+	struct qdf_dp_trace_event_buf buf;
+	int buf_size = sizeof(struct qdf_dp_trace_event_buf);
+
+	if (qdf_dp_enable_check(NULL, code, QDF_NA) == false)
+		return;
+
+	if (buf_size > QDF_DP_TRACE_RECORD_SIZE)
+		QDF_BUG(0);
+
+	buf.type = type;
+	buf.subtype = subtype;
+	buf.vdev_id = vdev_id;
+	qdf_dp_add_record(code, (uint8_t *)&buf, buf_size, true);
+}
+EXPORT_SYMBOL(qdf_dp_trace_record_event);
 
 /**
  * qdf_dp_display_proto_pkt() - display proto packet
