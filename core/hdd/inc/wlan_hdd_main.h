@@ -1676,7 +1676,6 @@ void wlan_hdd_txrx_pause_cb(uint8_t vdev_id,
 	enum netif_action_type action, enum netif_reason_type reason);
 
 void hdd_wlan_dump_stats(hdd_adapter_t *adapter, int value);
-int wlan_hdd_init_tx_rx_histogram(hdd_context_t *hdd_ctx);
 void wlan_hdd_deinit_tx_rx_histogram(hdd_context_t *hdd_ctx);
 void wlan_hdd_display_tx_rx_histogram(hdd_context_t *pHddCtx);
 void wlan_hdd_clear_tx_rx_histogram(hdd_context_t *pHddCtx);

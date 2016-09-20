@@ -5263,7 +5263,7 @@ static void hdd_bus_bw_compute_cbk(void *priv)
  *
  * Return: 0 for success or error code
  */
-int wlan_hdd_init_tx_rx_histogram(hdd_context_t *hdd_ctx)
+static int wlan_hdd_init_tx_rx_histogram(hdd_context_t *hdd_ctx)
 {
 	hdd_ctx->hdd_txrx_hist = qdf_mem_malloc(
 		(sizeof(struct hdd_tx_rx_histogram) * NUM_TX_RX_HISTOGRAM));
@@ -6130,6 +6130,36 @@ static void hdd_set_trace_level_for_each(hdd_context_t *hdd_ctx)
 }
 
 /**
+ * hdd_context_deinit() - Deinitialize HDD context
+ * @hdd_ctx:    HDD context.
+ *
+ * Deinitialize HDD context along with all the feature specific contexts but
+ * do not free hdd context itself. Caller of this API is supposed to free
+ * HDD context.
+ *
+ * return: 0 on success and errno on failure.
+ */
+static int hdd_context_deinit(hdd_context_t *hdd_ctx)
+{
+	wlan_hdd_cfg80211_deinit(hdd_ctx->wiphy);
+
+	hdd_roc_context_destroy(hdd_ctx);
+
+	hdd_sap_context_destroy(hdd_ctx);
+
+	hdd_rx_wake_lock_destroy(hdd_ctx);
+
+	hdd_tdls_context_destroy(hdd_ctx);
+
+	hdd_scan_context_destroy(hdd_ctx);
+
+	qdf_list_destroy(&hdd_ctx->hddAdapters);
+
+	return 0;
+}
+
+
+/**
  * hdd_context_init() - Initialize HDD context
  * @hdd_ctx:	HDD context.
  *
@@ -6286,9 +6316,9 @@ hdd_context_t *hdd_context_create(struct device *dev)
 
 	cds_set_multicast_logging(hdd_ctx->config->multicast_host_fw_msgs);
 
-	status = wlan_hdd_init_tx_rx_histogram(hdd_ctx);
-	if (status)
-		goto err_free_config;
+	ret = wlan_hdd_init_tx_rx_histogram(hdd_ctx);
+	if (ret)
+		goto err_deinit_hdd_context;
 
 	ret = hdd_logging_sock_activate_svc(hdd_ctx);
 	if (ret)
@@ -6310,6 +6340,9 @@ skip_multicast_logging:
 
 err_free_histogram:
 	wlan_hdd_deinit_tx_rx_histogram(hdd_ctx);
+
+err_deinit_hdd_context:
+	hdd_context_deinit(hdd_ctx);
 
 err_free_config:
 	qdf_mem_free(hdd_ctx->config);
