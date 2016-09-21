@@ -80,7 +80,6 @@
 #ifdef MSM_PLATFORM
 #include <soc/qcom/subsystem_restart.h>
 #endif
-#include <soc/qcom/socinfo.h>
 #include <wlan_hdd_hostapd.h>
 #include <wlan_hdd_softap_tx_rx.h>
 #include "cfg_api.h"
@@ -1344,7 +1343,7 @@ static int hdd_generate_macaddr_auto(hdd_context_t *hdd_ctx)
 		{0x00, 0x0A, 0xF5, 0x00, 0x00, 0x00}
 	};
 
-	serialno = socinfo_get_serial_number();
+	serialno = pld_socinfo_get_serial_number(hdd_ctx->parent_dev);
 	if (serialno == 0)
 		return -EINVAL;
 

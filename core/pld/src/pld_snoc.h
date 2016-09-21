@@ -130,6 +130,11 @@ static inline int pld_snoc_smmu_map(struct device *dev, phys_addr_t paddr,
 {
 	return 0;
 }
+static inline
+unsigned int pld_snoc_socinfo_get_serial_number(struct device *dev)
+{
+	return 0;
+}
 #else
 int pld_snoc_register_driver(void);
 void pld_snoc_unregister_driver(void);
@@ -212,6 +217,11 @@ static inline int pld_snoc_smmu_map(struct device *dev, phys_addr_t paddr,
 				    uint32_t *iova_addr, size_t size)
 {
 	return icnss_smmu_map(dev, paddr, iova_addr, size);
+}
+static inline
+unsigned int pld_snoc_socinfo_get_serial_number(struct device *dev)
+{
+	return icnss_socinfo_get_serial_number(dev);
 }
 #endif
 #endif

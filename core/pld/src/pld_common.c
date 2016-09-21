@@ -1518,3 +1518,29 @@ int pld_smmu_map(struct device *dev, phys_addr_t paddr,
 
 	return ret;
 }
+
+/**
+ * pld_socinfo_get_serial_number() - Get SOC serial number
+ * @dev: device
+ *
+ * Return: SOC serial number
+ */
+unsigned int pld_socinfo_get_serial_number(struct device *dev)
+{
+	unsigned int ret = 0;
+	enum pld_bus_type type = pld_get_bus_type(dev);
+
+	switch (type) {
+	case PLD_BUS_TYPE_SNOC:
+		ret = pld_snoc_socinfo_get_serial_number(dev);
+		break;
+	case PLD_BUS_TYPE_PCIE:
+		pr_err("Not supported on type %d\n", type);
+		break;
+	default:
+		pr_err("Invalid device type %d\n", type);
+		break;
+	}
+
+	return ret;
+}

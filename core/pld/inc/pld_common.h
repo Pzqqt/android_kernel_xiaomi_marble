@@ -378,4 +378,5 @@ int pld_athdiag_write(struct device *dev, uint32_t offset, uint32_t memtype,
 void *pld_smmu_get_mapping(struct device *dev);
 int pld_smmu_map(struct device *dev, phys_addr_t paddr,
 		 uint32_t *iova_addr, size_t size);
+unsigned int pld_socinfo_get_serial_number(struct device *dev);
 #endif
