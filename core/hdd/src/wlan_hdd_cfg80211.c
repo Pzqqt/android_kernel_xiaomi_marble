@@ -4203,9 +4203,9 @@ static int __wlan_hdd_cfg80211_wifi_logger_start(struct wiphy *wiphy,
 		hdd_err("attr flag failed");
 		return -EINVAL;
 	}
-	start_log.flag = nla_get_u32(
+	start_log.is_iwpriv_command = nla_get_u32(
 			tb[QCA_WLAN_VENDOR_ATTR_WIFI_LOGGER_FLAGS]);
-	hdd_info("flag=%d", start_log.flag);
+	hdd_info("is_iwpriv_command =%d", start_log.is_iwpriv_command);
 
 	cds_set_ring_log_level(start_log.ring_id, start_log.verbose_level);
 

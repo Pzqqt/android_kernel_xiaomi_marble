@@ -72,7 +72,8 @@ wdi_pktlog_unsubscribe(struct ol_txrx_pdev_t *txrx_pdev, uint32_t log_state);
 struct ol_pl_arch_dep_funcs {
 	void (*pktlog_init)(struct hif_opaque_softc *scn);
 	int (*pktlog_enable)(struct hif_opaque_softc *scn, int32_t log_state,
-				bool ini, uint8_t user);
+			     bool ini, uint8_t user,
+			     uint32_t is_iwpriv_command);
 	int (*pktlog_setsize)(struct hif_opaque_softc *scn, int32_t log_state);
 	int (*pktlog_disable)(struct hif_opaque_softc *scn);
 };
@@ -104,6 +105,7 @@ struct ol_pktlog_dev_t {
 	uint32_t htc_err_cnt;
 	uint8_t htc_endpoint;
 	void *htc_pdev;
+	bool vendor_cmd_send;
 };
 
 #define PKTLOG_SYSCTL_SIZE      14
@@ -131,7 +133,7 @@ void pktlog_callback(void *pdev, enum WDI_EVENT event, void *log_data);
 
 void pktlog_init(struct hif_opaque_softc *scn);
 int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
-		 bool, uint8_t);
+		 bool, uint8_t, uint32_t);
 int pktlog_setsize(struct hif_opaque_softc *scn, int32_t log_state);
 int pktlog_disable(struct hif_opaque_softc *scn);
 int pktlogmod_init(void *context);
@@ -161,7 +163,7 @@ static inline void pktlog_init(struct hif_opaque_softc *scn)
 	return;
 }
 static int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
-			 bool ini, uint8_t user)
+			 bool ini, uint8_t user, uint32_t is_iwpriv_command)
 {
 	return 0;
 }

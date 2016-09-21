@@ -32,7 +32,11 @@
 #include <ol_txrx_internal.h>
 #include <pktlog_ac.h>
 
-#define PKTLOG_DEFAULT_BUFSIZE          (1024 * 1024)
+#ifdef FEATURE_PKTLOG
+#define PKTLOG_DEFAULT_BUFSIZE          (10 * 1024 * 1024) /* 10MB */
+#else
+#define PKTLOG_DEFAULT_BUFSIZE          (1 * 1024 * 1024) /* 1MB */
+#endif
 #define PKTLOG_DEFAULT_SACK_THR         3
 #define PKTLOG_DEFAULT_TAIL_LENGTH      100
 #define PKTLOG_DEFAULT_THRUPUT_THRESH   (64 * 1024)

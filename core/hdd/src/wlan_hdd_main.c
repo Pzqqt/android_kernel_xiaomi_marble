@@ -6913,7 +6913,15 @@ int hdd_pktlog_enable_disable(hdd_context_t *hdd_ctx, bool enable,
 			enable ? WLAN_LOG_LEVEL_ACTIVE : WLAN_LOG_LEVEL_OFF;
 	start_log.ini_triggered = cds_is_packet_log_enabled();
 	start_log.user_triggered = user_triggered;
-
+	/*
+	 * Use "is_iwpriv_command" flag to distinguish iwpriv command from other
+	 * commands. Host uses this flag to decide whether to send pktlog
+	 * disable command to fw without sending pktlog enable command
+	 * previously. For eg, If vendor sends pktlog disable command without
+	 * sending pktlog enable command, then host discards the packet
+	 * but for iwpriv command, host will send it to fw.
+	 */
+	start_log.is_iwpriv_command = 1;
 	status = sme_wifi_start_logger(hdd_ctx->hHal, start_log);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_wifi_start_logger failed(err=%d)", status);

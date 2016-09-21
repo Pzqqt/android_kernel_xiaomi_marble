@@ -3219,14 +3219,14 @@ typedef struct {
  * @name:          Attribute which indicates the type of logging like per packet
  *                 statistics, connectivity etc.
  * @verbose_level: Verbose level which can be 0,1,2,3
- * @flag:          Flag field for future use
+ * @is_iwpriv_command: Set 1 for iwpriv command
  * @ini_triggered: triggered using ini
  * @user_triggered: triggered by user
  */
 struct sir_wifi_start_log {
 	uint32_t ring_id;
 	uint32_t verbose_level;
-	uint32_t flag;
+	uint32_t is_iwpriv_command;
 	bool ini_triggered;
 	uint8_t user_triggered;
 };

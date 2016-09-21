@@ -1246,7 +1246,13 @@ typedef enum {
 #define CFG_ENABLE_PACKET_LOG            "gEnablePacketLog"
 #define CFG_ENABLE_PACKET_LOG_MIN        (0)
 #define CFG_ENABLE_PACKET_LOG_MAX        (1)
+#ifdef FEATURE_PKTLOG
 #define CFG_ENABLE_PACKET_LOG_DEFAULT    (1)
+#else
+#define CFG_ENABLE_PACKET_LOG_DEFAULT    (0)
+#endif
+
+
 
 /* gFwDebugLogType takes values from enum dbglog_process_t,
  * make default value as DBGLOG_PROCESS_NET_RAW to give the

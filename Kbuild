@@ -65,6 +65,7 @@ ifeq ($(KERNEL_BUILD), 0)
 	# builds. Other OEMs are also protected using the TARGET_BUILD_VARIANT
 	# config.
 	ifneq ($(TARGET_BUILD_VARIANT),user)
+		CONFIG_FEATURE_PKTLOG := y
 		ifeq ($(CONFIG_SLUB_DEBUG_ON),y)
 			CONFIG_FEATURE_DP_TRACE := y
 		else
@@ -1112,6 +1113,10 @@ endif
 
 ifeq ($(CONFIG_WLAN_FASTPATH), y)
 CDEFINES +=	-DWLAN_FEATURE_FASTPATH
+endif
+
+ifeq ($(CONFIG_FEATURE_PKTLOG), y)
+CDEFINES +=     -DFEATURE_PKTLOG
 endif
 
 ifeq ($(CONFIG_FEATURE_DP_TRACE), y)

@@ -14672,7 +14672,7 @@ QDF_STATUS sme_wifi_start_logger(tHalHandle hal,
 	qdf_mem_zero(req_msg, len);
 
 	req_msg->verbose_level = start_log.verbose_level;
-	req_msg->flag = start_log.flag;
+	req_msg->is_iwpriv_command = start_log.is_iwpriv_command;
 	req_msg->ring_id = start_log.ring_id;
 	req_msg->ini_triggered = start_log.ini_triggered;
 	req_msg->user_triggered = start_log.user_triggered;
