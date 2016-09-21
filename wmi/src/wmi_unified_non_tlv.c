@@ -446,7 +446,14 @@ QDF_STATUS send_vdev_install_key_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 #endif
 
-	qdf_mem_copy(cmd->key_data, param->key_data, cmd->key_len);
+	/* for big endian host, copy engine byte_swap is enabled
+	 * But the key data content is in network byte order
+	 * Need to byte swap the key data content - so when copy engine
+	 * does byte_swap - target gets key_data content in the correct order
+	 */
+	WMI_HOST_IF_MSG_COPY_CHAR_ARRAY(cmd->key_data, param->key_data,
+					cmd->key_len);
+
 	return wmi_unified_cmd_send(wmi_handle, buf, len,
 			WMI_VDEV_INSTALL_KEY_CMDID);
 
