@@ -12261,6 +12261,101 @@ QDF_STATUS sme_update_access_policy_vendor_ie(tHalHandle hal,
 }
 
 /**
+ * sme_update_short_retry_limit_threshold() - update short frame retry limit TH
+ * @hal: Handle returned by mac_open
+ * @session_id: Session ID on which short frame retry limit needs to be
+ * updated to FW
+ * @short_limit_count_th: Retry count TH to retry short frame.
+ *
+ * This function is used to configure count to retry short frame.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_update_short_retry_limit_threshold(tHalHandle hal_handle,
+		struct sme_short_retry_limit *short_retry_limit_th)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_handle);
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct sme_short_retry_limit *srl;
+	cds_msg_t msg;
+
+	srl = qdf_mem_malloc(sizeof(*srl));
+	if (NULL == srl) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			"%s: fail to alloc short retry limit", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	sms_log(mac_ctx, LOG1, FL("session_id %d short retry limit count: %d"),
+		short_retry_limit_th->session_id,
+		short_retry_limit_th->short_retry_limit);
+
+	srl->session_id = short_retry_limit_th->session_id;
+	srl->short_retry_limit = short_retry_limit_th->short_retry_limit;
+
+	qdf_mem_zero(&msg, sizeof(msg));
+	msg.type = SIR_HAL_SHORT_RETRY_LIMIT_CNT;
+	msg.reserved = 0;
+	msg.bodyptr = srl;
+	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
+	if (status != QDF_STATUS_SUCCESS) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			FL("Not able to post short retry limit count to WDA"));
+			qdf_mem_free(srl);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return status;
+}
+
+/**
+ * sme_update_long_retry_limit_threshold() - update long retry limit TH
+ * @hal: Handle returned by mac_open
+ * @session_id: Session ID on which long frames retry TH needs to be updated
+ * to FW
+ * @long_limit_count_th: Retry count to retry long frame.
+ *
+ * This function is used to configure TH to retry long frame.
+ *
+ * Return: QDF_STATUS
+*/
+QDF_STATUS sme_update_long_retry_limit_threshold(tHalHandle hal_handle,
+		struct sme_long_retry_limit  *long_retry_limit_th)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_handle);
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct sme_long_retry_limit *lrl;
+	cds_msg_t msg;
+
+	lrl = qdf_mem_malloc(sizeof(*lrl));
+	if (NULL == lrl) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+		"%s: fail to alloc long retry limit", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	sms_log(mac_ctx, LOG1, FL("session_id %d long retry limit count: %d"),
+		long_retry_limit_th->session_id,
+		long_retry_limit_th->long_retry_limit);
+
+	lrl->session_id = long_retry_limit_th->session_id;
+	lrl->long_retry_limit = long_retry_limit_th->long_retry_limit;
+
+	qdf_mem_zero(&msg, sizeof(msg));
+	msg.type = SIR_HAL_LONG_RETRY_LIMIT_CNT;
+	msg.reserved = 0;
+	msg.bodyptr = lrl;
+	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
+
+	if (status != QDF_STATUS_SUCCESS) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			FL("Not able to post long retry limit count to WDA"));
+		qdf_mem_free(lrl);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return status;
+}
+
+/**
  * sme_get_reg_info() - To get registration info
  * @hHal: HAL context
  * @chanId: channel id

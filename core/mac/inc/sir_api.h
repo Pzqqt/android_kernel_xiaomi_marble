@@ -6595,4 +6595,26 @@ struct sme_tx_fail_cnt_threshold {
 	uint8_t session_id;
 	uint32_t tx_fail_cnt_threshold;
 };
+
+/**
+ * struct sme_short_retry_limit - transmission retry limit for short frames.
+ * @session_id: Session id
+ * @short_retry_limit: tranmission retry limit for short frame.
+ *
+ */
+struct sme_short_retry_limit {
+	uint8_t session_id;
+	uint32_t short_retry_limit;
+};
+
+/**
+ * struct sme_long_retry_limit - tranmission retry limit for long frames
+ * @session_id: Session id
+ * @short_retry_limit: tranmission retry limit for long frames.
+ *
+ */
+struct sme_long_retry_limit {
+	uint8_t session_id;
+	uint32_t long_retry_limit;
+};
 #endif /* __SIR_API_H */

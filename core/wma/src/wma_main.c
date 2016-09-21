@@ -5955,6 +5955,81 @@ static QDF_STATUS wma_update_tx_fail_cnt_th(tp_wma_handle wma,
 }
 
 /**
+ * wma_update_short_retry_limit() - Set retry limit for short frames
+ * @wma_handle: WMA handle
+ * @short_retry_limit_th: retry limir count for Short frames.
+ *
+ * This function is used to configure the transmission retry limit at which
+ * short frames needs to be retry.
+ *
+ * Return: VOS_STATUS_SUCCESS on success, error number otherwise
+ */
+static QDF_STATUS wma_update_short_retry_limit(tp_wma_handle wma,
+		struct sme_short_retry_limit *short_retry_limit_th)
+{
+	uint8_t vdev_id;
+	uint32_t short_retry_limit;
+	int ret;
+
+	if (!wma || !wma->wmi_handle) {
+		WMA_LOGE("WMA is closed, can not issue short retry limit threshold");
+		return QDF_STATUS_E_INVAL;
+	}
+	vdev_id = short_retry_limit_th->session_id;
+	short_retry_limit = short_retry_limit_th->short_retry_limit;
+	WMA_LOGD("Set short retry limit threshold  vdevId %d count %d",
+		vdev_id, short_retry_limit);
+
+	ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
+		WMI_VDEV_PARAM_NON_AGG_SW_RETRY_TH,
+		short_retry_limit);
+
+	if (ret) {
+		WMA_LOGE("Failed to send short limit threshold command");
+		return QDF_STATUS_E_FAILURE;
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wma_update_long_retry_limit() - Set retry limit for long frames
+ * @wma_handle: WMA handle
+ * @long_retry_limit_th: retry limir count for long frames
+ *
+ * This function is used to configure the transmission retry limit at which
+ * long frames needs to be retry
+ *
+ * Return: VOS_STATUS_SUCCESS on success, error number otherwise
+ */
+static QDF_STATUS wma_update_long_retry_limit(tp_wma_handle wma,
+		struct sme_long_retry_limit  *long_retry_limit_th)
+{
+	uint8_t vdev_id;
+	uint32_t long_retry_limit;
+	int ret;
+
+	if (!wma || !wma->wmi_handle) {
+		WMA_LOGE("WMA is closed, can not issue long retry limit threshold");
+		return QDF_STATUS_E_INVAL;
+	}
+	vdev_id = long_retry_limit_th->session_id;
+	long_retry_limit = long_retry_limit_th->long_retry_limit;
+	WMA_LOGD("Set TX pkt fail count threshold  vdevId %d count %d",
+		vdev_id, long_retry_limit);
+
+	ret  = wma_vdev_set_param(wma->wmi_handle, vdev_id,
+			WMI_VDEV_PARAM_AGG_SW_RETRY_TH,
+			long_retry_limit);
+
+	if (ret) {
+		WMA_LOGE("Failed to send long limit threshold command");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * wma_mc_process_msg() - process wma messages and call appropriate function.
  * @cds_context: cds context
  * @msg: message
@@ -6767,6 +6842,14 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 		break;
 	case SIR_HAL_UPDATE_TX_FAIL_CNT_TH:
 		wma_update_tx_fail_cnt_th(wma_handle, msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case SIR_HAL_LONG_RETRY_LIMIT_CNT:
+		wma_update_long_retry_limit(wma_handle, msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case SIR_HAL_SHORT_RETRY_LIMIT_CNT:
+		wma_update_short_retry_limit(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	default:
