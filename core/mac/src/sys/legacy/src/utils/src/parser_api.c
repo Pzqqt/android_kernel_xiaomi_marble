@@ -2225,6 +2225,71 @@ sir_convert_probe_req_frame2_struct(tpAniSirGlobal pMac,
 	return eSIR_SUCCESS;
 } /* End sir_convert_probe_req_frame2_struct. */
 
+
+/**
+ * sir_validate_and_rectify_ies() - API to check malformed frame
+ * @mac_ctx: mac context
+ * @mgmt_frame: pointer to management frame
+ * @frame_bytes: no of bytes in frame
+ * @missing_rsn_bytes: missing rsn bytes
+ *
+ * The frame would contain fixed IEs of 12 bytes followed by variable IEs
+ * (Tagged elements). Every Tagged IE has tag number, tag length and data.
+ * Tag length indicates the size of data in bytes.
+ * This function checks for size of Frame received with the sum of all IEs.
+ * And also rectifies missing optional fields in IE.
+ *
+ * NOTE : Presently this function rectifies RSN capability in RSN IE, can
+ * be extended to rectify other optional fields in other IEs.
+ *
+ * Return: 0 on success, error number otherwise.
+ */
+tSirRetStatus
+sir_validate_and_rectify_ies(tpAniSirGlobal mac_ctx,
+				uint8_t *mgmt_frame,
+				uint32_t frame_bytes,
+				uint32_t *missing_rsn_bytes)
+{
+	uint32_t length = SIZE_OF_FIXED_PARAM;
+	uint8_t *ref_frame;
+
+	/* Frame contains atleast one IE */
+	if (frame_bytes > (SIZE_OF_FIXED_PARAM +
+			SIZE_OF_TAG_PARAM_NUM + SIZE_OF_TAG_PARAM_LEN)) {
+		while (length < frame_bytes) {
+			/* ref frame points to next IE */
+			ref_frame = mgmt_frame + length;
+			length += (uint32_t)(SIZE_OF_TAG_PARAM_NUM +
+					SIZE_OF_TAG_PARAM_LEN +
+					(*(ref_frame + SIZE_OF_TAG_PARAM_NUM)));
+		}
+		if (length != frame_bytes) {
+			/*
+			 * Workaround : Some APs may not include RSN
+			 * Capability but the length of which is included in
+			 * RSN IE length. This may cause in updating RSN
+			 * Capability with junk value. To avoid this, add RSN
+			 * Capability value with default value.
+			 */
+			if ((*ref_frame == RSNIEID) &&
+				(length == (frame_bytes +
+					RSNIE_CAPABILITY_LEN))) {
+				/* Assume RSN Capability as 00 */
+				qdf_mem_set((uint8_t *)(mgmt_frame +
+					(frame_bytes)),
+					RSNIE_CAPABILITY_LEN,
+					DEFAULT_RSNIE_CAP_VAL);
+				*missing_rsn_bytes = RSNIE_CAPABILITY_LEN;
+				lim_log(mac_ctx, LOG1,
+					FL("Added RSN Capability to RSNIE as 0x00 0x00"));
+				return eSIR_SUCCESS;
+			}
+			return eSIR_FAILURE;
+		}
+	}
+	return eSIR_SUCCESS;
+}
+
 tSirRetStatus sir_convert_probe_frame2_struct(tpAniSirGlobal pMac,
 					      uint8_t *pFrame,
 					      uint32_t nFrame,
