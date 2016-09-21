@@ -12057,6 +12057,51 @@ QDF_STATUS sme_send_rate_update_ind(tHalHandle hHal,
 }
 
 /**
+ * sme_update_access_policy_vendor_ie() - update vendor ie and access policy.
+ * @hal: Pointer to the mac context
+ * @session_id: sme session id
+ * @vendor_ie: vendor ie
+ * @access_policy: vendor ie access policy
+ *
+ * This function updates the vendor ie and access policy to lim.
+ *
+ * Return: success or failure.
+ */
+QDF_STATUS sme_update_access_policy_vendor_ie(tHalHandle hal,
+		uint8_t session_id, uint8_t *vendor_ie, int access_policy)
+{
+	struct sme_update_access_policy_vendor_ie *msg;
+	uint16_t msg_len;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+
+	msg_len  = sizeof(*msg);
+
+	msg = qdf_mem_malloc(msg_len);
+	if (!msg) {
+		sms_log(mac, LOGE,
+			"failed to allocate memory for sme_update_access_policy_vendor_ie");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_mem_set(msg, msg_len, 0);
+	msg->msg_type = (uint16_t)eWNI_SME_UPDATE_ACCESS_POLICY_VENDOR_IE;
+	msg->length = (uint16_t)msg_len;
+
+	qdf_mem_copy(&msg->ie[0], vendor_ie, sizeof(msg->ie));
+
+	msg->sme_session_id = session_id;
+	msg->access_policy = access_policy;
+
+	sms_log(mac, LOG1, "sme_session_id %hu, access_policy %d", session_id,
+			access_policy);
+
+	status = cds_send_mb_message_to_mac(msg);
+
+	return status;
+}
+
+/**
  * sme_get_reg_info() - To get registration info
  * @hHal: HAL context
  * @chanId: channel id

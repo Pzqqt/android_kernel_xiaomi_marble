@@ -5014,6 +5014,58 @@ static void lim_process_set_pdev_IEs(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 }
 
 /**
+ * lim_process_sme_update_access_policy_vendor_ie: function updates vendor IE
+ *
+ * access policy
+ * @mac_ctx: pointer to mac context
+ * @msg: message buffer
+ *
+ * function processes vendor IE and access policy from SME and updates PE
+ *
+ * session entry
+ *
+ * return: none
+*/
+static void lim_process_sme_update_access_policy_vendor_ie(
+						tpAniSirGlobal mac_ctx,
+						uint32_t *msg)
+{
+	struct sme_update_access_policy_vendor_ie *update_vendor_ie;
+	struct sPESession *pe_session_entry;
+	uint8_t num_bytes;
+
+	if (!msg) {
+		lim_log(mac_ctx, LOGE, FL("Buffer is Pointing to NULL"));
+		return;
+	}
+	update_vendor_ie = (struct sme_update_access_policy_vendor_ie *) msg;
+	pe_session_entry = pe_find_session_by_sme_session_id(mac_ctx,
+					update_vendor_ie->sme_session_id);
+
+	if (!pe_session_entry) {
+		lim_log(mac_ctx, LOGE,
+			FL("Session does not exist for given sme session id(%hu)"),
+			update_vendor_ie->sme_session_id);
+		return;
+	}
+	if (pe_session_entry->access_policy_vendor_ie)
+		qdf_mem_free(pe_session_entry->access_policy_vendor_ie);
+
+	num_bytes = update_vendor_ie->ie[1] + 2;
+	pe_session_entry->access_policy_vendor_ie = qdf_mem_malloc(num_bytes);
+
+	if (!pe_session_entry->access_policy_vendor_ie) {
+		lim_log(mac_ctx, LOGE,
+			FL("Failed to allocate memory for vendor ie"));
+		return;
+	}
+	qdf_mem_copy(pe_session_entry->access_policy_vendor_ie,
+		&update_vendor_ie->ie[0], num_bytes);
+
+	pe_session_entry->access_policy = update_vendor_ie->access_policy;
+}
+
+/**
  * lim_process_sme_req_messages()
  *
  ***FUNCTION:
@@ -5262,6 +5314,9 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
 		break;
 	case eWNI_SME_REGISTER_P2P_ACK_CB:
 		lim_register_p2p_ack_ind_cb(pMac, pMsgBuf);
+		break;
+	case eWNI_SME_UPDATE_ACCESS_POLICY_VENDOR_IE:
+		lim_process_sme_update_access_policy_vendor_ie(pMac, pMsgBuf);
 		break;
 	default:
 		qdf_mem_free((void *)pMsg->bodyptr);

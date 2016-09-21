@@ -1818,6 +1818,22 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	if (false == lim_chk_tkip(mac_ctx, hdr, session, sub_type))
 		return;
 
+	/* check for the presence of vendor IE */
+	if ((session->access_policy_vendor_ie) &&
+		(session->access_policy ==
+		LIM_ACCESS_POLICY_RESPOND_IF_IE_IS_PRESENT)) {
+		if (!cfg_get_vendor_ie_ptr_from_oui(mac_ctx,
+			&session->access_policy_vendor_ie[2],
+			3, frm_body + LIM_ASSOC_REQ_IE_OFFSET, frame_len)) {
+			lim_log(mac_ctx, LOGE,
+				FL("Vendor ie not present and access policy is %x, Rejected association"),
+				session->access_policy);
+			lim_send_assoc_rsp_mgmt_frame(mac_ctx,
+				eSIR_MAC_UNSPEC_FAILURE_STATUS, 1, hdr->sa,
+				sub_type, 0, session);
+			return;
+		}
+	}
 	/* Allocate memory for the Assoc Request frame */
 	assoc_req = qdf_mem_malloc(sizeof(*assoc_req));
 	if (NULL == assoc_req) {
