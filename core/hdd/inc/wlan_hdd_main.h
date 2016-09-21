@@ -60,9 +60,7 @@
 #include "wlan_hdd_tsf.h"
 #include "wlan_hdd_cfg80211.h"
 #include <qdf_defer.h>
-#ifdef WLAN_FEATURE_MBSSID
 #include "sap_api.h"
-#endif
 #include "ol_txrx_osif_api.h"
 #include "ol_txrx_ctrl_api.h"
 #include <wlan_hdd_lro.h>
@@ -779,10 +777,10 @@ struct hdd_ap_ctx_s {
 	beacon_data_t *beacon;
 
 	bool bApActive;
-#ifdef WLAN_FEATURE_MBSSID
+
 	/* SAP Context */
 	void *sapContext;
-#endif
+
 	bool dfs_cac_block_tx;
 };
 
@@ -1095,9 +1093,7 @@ struct hdd_adapter_s {
 #define WLAN_HDD_GET_HAL_CTX(pAdapter)  (((hdd_context_t *)(pAdapter->pHddCtx))->hHal)
 #define WLAN_HDD_GET_HOSTAP_STATE_PTR(pAdapter) (&(pAdapter)->sessionCtx.ap.HostapdState)
 #define WLAN_HDD_GET_CFG_STATE_PTR(pAdapter)  (&(pAdapter)->cfg80211State)
-#ifdef WLAN_FEATURE_MBSSID
 #define WLAN_HDD_GET_SAP_CTX_PTR(pAdapter) (pAdapter->sessionCtx.ap.sapContext)
-#endif
 #ifdef FEATURE_WLAN_TDLS
 #define WLAN_HDD_IS_TDLS_SUPPORTED_ADAPTER(pAdapter) \
 	(((QDF_STA_MODE != pAdapter->device_mode) && \
@@ -1659,13 +1655,8 @@ QDF_STATUS wlan_hdd_check_custom_con_channel_rules(hdd_adapter_t *sta_adapter,
 						  tCsrRoamProfile *roam_profile,
 						  tScanResultHandle *scan_cache,
 						  bool *concurrent_chnl_same);
-#ifdef WLAN_FEATURE_MBSSID
 void wlan_hdd_stop_sap(hdd_adapter_t *ap_adapter);
 void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter);
-#else
-static inline void wlan_hdd_stop_sap(hdd_adapter_t *ap_adapter) {}
-static inline void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter) {}
-#endif
 
 void wlan_hdd_soc_set_antenna_mode_cb(enum set_antenna_mode_status status);
 

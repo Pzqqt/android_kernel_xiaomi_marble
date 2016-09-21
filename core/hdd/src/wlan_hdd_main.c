@@ -3529,13 +3529,8 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			QDF_STATUS qdf_status;
 
 			/* Stop Bss. */
-#ifdef WLAN_FEATURE_MBSSID
 			status = wlansap_stop_bss(
 					WLAN_HDD_GET_SAP_CTX_PTR(adapter));
-#else
-			status = wlansap_stop_bss(
-				(WLAN_HDD_GET_CTX(adapter))->pcds_context);
-#endif
 
 			if (QDF_IS_STATUS_SUCCESS(status)) {
 				hdd_hostapd_state_t *hostapd_state =
@@ -7945,9 +7940,6 @@ void hdd_deregister_cb(hdd_context_t *hdd_ctx)
 QDF_STATUS hdd_softap_sta_deauth(hdd_adapter_t *adapter,
 				 struct tagCsrDelStaParams *pDelStaParams)
 {
-#ifndef WLAN_FEATURE_MBSSID
-	v_CONTEXT_t p_cds_context = (WLAN_HDD_GET_CTX(adapter))->pcds_context;
-#endif
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAULT;
 
 	ENTER();
@@ -7959,13 +7951,9 @@ QDF_STATUS hdd_softap_sta_deauth(hdd_adapter_t *adapter,
 	if (pDelStaParams->peerMacAddr.bytes[0] & 0x1)
 		return qdf_status;
 
-#ifdef WLAN_FEATURE_MBSSID
 	qdf_status =
 		wlansap_deauth_sta(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
 				   pDelStaParams);
-#else
-	qdf_status = wlansap_deauth_sta(p_cds_context, pDelStaParams);
-#endif
 
 	EXIT();
 	return qdf_status;
@@ -7983,10 +7971,6 @@ QDF_STATUS hdd_softap_sta_deauth(hdd_adapter_t *adapter,
 void hdd_softap_sta_disassoc(hdd_adapter_t *adapter,
 			     struct tagCsrDelStaParams *pDelStaParams)
 {
-#ifndef WLAN_FEATURE_MBSSID
-	v_CONTEXT_t p_cds_context = (WLAN_HDD_GET_CTX(adapter))->pcds_context;
-#endif
-
 	ENTER();
 
 	hdd_err("hdd_softap_sta_disassoc:(%p, false)",
@@ -7996,32 +7980,20 @@ void hdd_softap_sta_disassoc(hdd_adapter_t *adapter,
 	if (pDelStaParams->peerMacAddr.bytes[0] & 0x1)
 		return;
 
-#ifdef WLAN_FEATURE_MBSSID
 	wlansap_disassoc_sta(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
 			     pDelStaParams);
-#else
-	wlansap_disassoc_sta(p_cds_context, pDelStaParams);
-#endif
 }
 
 void hdd_softap_tkip_mic_fail_counter_measure(hdd_adapter_t *adapter,
 					      bool enable)
 {
-#ifndef WLAN_FEATURE_MBSSID
-	v_CONTEXT_t p_cds_context = (WLAN_HDD_GET_CTX(adapter))->pcds_context;
-#endif
-
 	ENTER();
 
 	hdd_err("hdd_softap_tkip_mic_fail_counter_measure:(%p, false)",
 	       (WLAN_HDD_GET_CTX(adapter))->pcds_context);
 
-#ifdef WLAN_FEATURE_MBSSID
 	wlansap_set_counter_measure(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
 				    (bool) enable);
-#else
-	wlansap_set_counter_measure(p_cds_context, (bool) enable);
-#endif
 }
 
 /**
@@ -8474,7 +8446,6 @@ QDF_STATUS wlan_hdd_check_custom_con_channel_rules(hdd_adapter_t *sta_adapter,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef WLAN_FEATURE_MBSSID
 /**
  * wlan_hdd_stop_sap() - This function stops bss of SAP.
  * @ap_adapter: SAP adapter
@@ -8596,7 +8567,6 @@ end:
 	mutex_unlock(&hdd_ctx->sap_lock);
 	return;
 }
-#endif
 
 /**
  * wlan_hdd_soc_set_antenna_mode_cb() - Callback for set dual

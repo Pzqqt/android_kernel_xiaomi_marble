@@ -829,11 +829,7 @@ QDF_STATUS hdd_softap_register_bc_sta(hdd_adapter_t *pAdapter,
 	pHddApCtx = WLAN_HDD_GET_AP_CTX_PTR(pAdapter);
 
 	pHddCtx->sta_to_adapter[WLAN_RX_BCMC_STA_ID] = pAdapter;
-#ifdef WLAN_FEATURE_MBSSID
 	pHddCtx->sta_to_adapter[pHddApCtx->uBCStaId] = pAdapter;
-#else
-	pHddCtx->sta_to_adapter[WLAN_RX_SAP_SELF_STA_ID] = pAdapter;
-#endif
 	qdf_status =
 		hdd_softap_register_sta(pAdapter, false, fPrivacyBit,
 					(WLAN_HDD_GET_AP_CTX_PTR(pAdapter))->
