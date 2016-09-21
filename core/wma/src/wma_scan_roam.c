@@ -528,7 +528,7 @@ QDF_STATUS wma_start_scan(tp_wma_handle wma_handle,
 	if (scan_req->p2pScanType == P2P_SCAN_TYPE_LISTEN)
 		wma_set_p2p_scan_info(wma_handle, cmd.scan_id,
 			 cmd.vdev_id, P2P_SCAN_TYPE_LISTEN);
-	WMA_LOGE("scan_id 0x%x, vdev_id %d, p2pScanType %d, msg_type 0x%x",
+	WMA_LOGI("scan_id 0x%x, vdev_id %d, p2pScanType %d, msg_type 0x%x",
 		 cmd.scan_id, cmd.vdev_id, scan_req->p2pScanType, msg_type);
 	/*
 	 * Cache vdev_id and scan_id because cmd is freed after calling
@@ -613,7 +613,7 @@ QDF_STATUS wma_stop_scan(tp_wma_handle wma_handle,
 			qdf_status);
 		goto error;
 	}
-	WMA_LOGE("scan_id 0x%x, scan_requestor_id 0x%x, vdev_id %d",
+	WMA_LOGI("scan_id 0x%x, scan_requestor_id 0x%x, vdev_id %d",
 		 abort_scan_req->scan_id,
 		 abort_scan_req->scan_requestor_id,
 		 abort_scan_req->SessionId);
@@ -5659,7 +5659,7 @@ int wma_scan_event_callback(WMA_HANDLE handle, uint8_t *data,
 	/* Stop scan completion timeout if event is WMI_SCAN_EVENT_COMPLETED */
 	if (scan_event->event ==
 			(enum sir_scan_event_type) WMI_SCAN_EVENT_COMPLETED) {
-		WMA_LOGE("scan complete:scan_id 0x%x, requestor 0x%x, vdev %d",
+		WMA_LOGI("scan complete:scan_id 0x%x, requestor 0x%x, vdev %d",
 			 wmi_event->scan_id, wmi_event->requestor, vdev_id);
 	}
 

@@ -749,7 +749,7 @@ bool sme_process_scan_queue(tpAniSirGlobal pMac)
 	if (!pEntry)
 		goto end;
 
-	sms_log(pMac, LOGE,
+	sms_log(pMac, LOG1,
 		FL("scan_count in active scanlist %d "),
 		pMac->sme.smeScanCmdActiveList.Count);
 

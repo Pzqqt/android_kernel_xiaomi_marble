@@ -3672,7 +3672,7 @@ QDF_STATUS wlan_hdd_get_class_astats(hdd_adapter_t *pAdapter)
 				     pHddStaCtx->conn_info.staId[0],
 				     &context, pAdapter->sessionId);
 	if (QDF_STATUS_SUCCESS != hstatus) {
-		hdd_err("Unable to retrieve Class A statistics");
+		hdd_warn("Unable to retrieve Class A statistics");
 		/* we'll returned a cached value below */
 	} else {
 		/* request was sent -- wait for the response */
@@ -3680,7 +3680,7 @@ QDF_STATUS wlan_hdd_get_class_astats(hdd_adapter_t *pAdapter)
 			(&context.completion,
 			 msecs_to_jiffies(WLAN_WAIT_TIME_STATS));
 		if (!rc) {
-			hdd_err("SME timed out while retrieving Class A statistics");
+			hdd_warn("SME timed out while retrieving Class A statistics");
 		}
 	}
 
