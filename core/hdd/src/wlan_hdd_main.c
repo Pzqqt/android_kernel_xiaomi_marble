@@ -8968,15 +8968,59 @@ static int fwpath_changed_handler(const char *kmessage, struct kernel_param *kp)
 	return param_set_copystring(kmessage, kp);
 }
 
+/**
+ * is_con_mode_valid() check con mode is valid or not
+ * @mode: global con mode
+ *
+ * Return: TRUE on success FALSE on failure
+ */
+static bool is_con_mode_valid(enum tQDF_GLOBAL_CON_MODE mode)
+{
+	switch (mode) {
+	case QDF_GLOBAL_MONITOR_MODE:
+	case QDF_GLOBAL_FTM_MODE:
+	case QDF_GLOBAL_EPPING_MODE:
+		return true;
+	default:
+		return false;
+	}
+}
+
+/**
+ * hdd_get_adpter_mode() - returns adapter mode based on global con mode
+ * @mode: global con mode
+ *
+ * Return: adapter mode
+ */
+static enum tQDF_ADAPTER_MODE hdd_get_adpter_mode(
+					enum tQDF_GLOBAL_CON_MODE mode)
+{
+
+	switch (mode) {
+	case QDF_GLOBAL_MISSION_MODE:
+		return QDF_STA_MODE;
+	case QDF_GLOBAL_MONITOR_MODE:
+		return QDF_MONITOR_MODE;
+	case QDF_GLOBAL_FTM_MODE:
+		return QDF_MONITOR_MODE;
+	case QDF_GLOBAL_EPPING_MODE:
+		return QDF_EPPING_MODE;
+	case QDF_GLOBAL_QVIT_MODE:
+		return QDF_QVIT_MODE;
+	default:
+		return QDF_MAX_NO_OF_MODE;
+	}
+}
 
 /**
  * con_mode_handler() - Handles module param con_mode change
+ * @kmessage: con mode name on which driver to be bring up
+ * @kp: The associated kernel parameter
  *
- * Handler function for module param con_mode when it is changed by userspace
- * Dynamically linked - do nothing
- * Statically linked - exit and init driver, as in rmmod and insmod
+ * This function is invoked when user updates con mode using sys entry,
+ * to initialize and bring-up driver in that specific mode.
  *
- * Return -
+ * Return - 0 on success and failure code on failure
  */
 static int con_mode_handler(const char *kmessage, struct kernel_param *kp)
 {
@@ -8984,6 +9028,8 @@ static int con_mode_handler(const char *kmessage, struct kernel_param *kp)
 	hdd_context_t *hdd_ctx;
 	hdd_adapter_t *adapter;
 	qdf_device_t qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	enum tQDF_GLOBAL_CON_MODE curr_mode;
+	enum tQDF_ADAPTER_MODE adapter_mode;
 	QDF_STATUS status;
 
 	hdd_info("con_mode handler: %s", kmessage);
@@ -9000,15 +9046,32 @@ static int con_mode_handler(const char *kmessage, struct kernel_param *kp)
 		return -EINVAL;
 	}
 
+	if (!(is_con_mode_valid(con_mode))) {
+		hdd_err("invlaid con_mode %d", con_mode);
+		return -EINVAL;
+	}
+	curr_mode = hdd_get_conparam();
+	if (curr_mode == con_mode) {
+		hdd_err("curr mode: %d is same as user triggered mode %d",
+		       curr_mode, con_mode);
+		return 0;
+	}
+
+	adapter_mode = hdd_get_adpter_mode(curr_mode);
+	if (adapter_mode == QDF_MAX_NO_OF_MODE) {
+		hdd_err("invalid adapter");
+		return -EINVAL;
+	}
+
 	ret = hdd_wlan_stop_modules(hdd_ctx, false);
 	if (ret) {
 		hdd_err("Stop wlan modules failed");
 		return -EINVAL;
 	}
 
-	adapter = hdd_get_adapter(hdd_ctx, QDF_STA_MODE);
+	adapter = hdd_get_adapter(hdd_ctx, adapter_mode);
 	if (!adapter) {
-		hdd_err("Failed to get station adapter");
+		hdd_err("Failed to get adapter, mode: %d", curr_mode);
 		return -EINVAL;
 	}
 
@@ -9035,9 +9098,6 @@ static int con_mode_handler(const char *kmessage, struct kernel_param *kp)
 		}
 		hdd_info("epping mode successfully enabled");
 		return 0;
-	} else {
-		hdd_info("Con mode not supported");
-		return -EINVAL;
 	}
 
 	ret = hdd_wlan_start_modules(hdd_ctx, adapter, false);
