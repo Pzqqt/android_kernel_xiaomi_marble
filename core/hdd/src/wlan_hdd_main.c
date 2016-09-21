@@ -7876,13 +7876,14 @@ QDF_STATUS hdd_softap_sta_deauth(hdd_adapter_t *adapter,
 /**
  * hdd_softap_sta_disassoc() - take counter measure to handle deauth req from HDD
  * @adapter:	Pointer to the HDD
+ * @p_del_sta_params: pointer to station deletion parameters
  *
  * This to take counter measure to handle deauth req from HDD
  *
  * Return: None
  */
 void hdd_softap_sta_disassoc(hdd_adapter_t *adapter,
-			     uint8_t *pDestMacAddress)
+			     struct tagCsrDelStaParams *pDelStaParams)
 {
 #ifndef WLAN_FEATURE_MBSSID
 	v_CONTEXT_t p_cds_context = (WLAN_HDD_GET_CTX(adapter))->pcds_context;
@@ -7894,14 +7895,14 @@ void hdd_softap_sta_disassoc(hdd_adapter_t *adapter,
 	       (WLAN_HDD_GET_CTX(adapter))->pcds_context);
 
 	/* Ignore request to disassoc bcmc station */
-	if (pDestMacAddress[0] & 0x1)
+	if (pDelStaParams->peerMacAddr.bytes[0] & 0x1)
 		return;
 
 #ifdef WLAN_FEATURE_MBSSID
 	wlansap_disassoc_sta(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
-			     pDestMacAddress);
+			     pDelStaParams);
 #else
-	wlansap_disassoc_sta(p_cds_context, pDestMacAddress);
+	wlansap_disassoc_sta(p_cds_context, pDelStaParams);
 #endif
 }
 

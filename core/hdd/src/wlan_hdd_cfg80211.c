@@ -12550,7 +12550,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 
 					qdf_event_reset(&hapd_state->qdf_event);
 					hdd_softap_sta_disassoc(pAdapter,
-								mac);
+								pDelStaParams);
 					qdf_status =
 						hdd_softap_sta_deauth(pAdapter,
 							pDelStaParams);
@@ -12608,7 +12608,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 				goto fn_end;
 
 			qdf_event_reset(&hapd_state->qdf_event);
-			hdd_softap_sta_disassoc(pAdapter, mac);
+			hdd_softap_sta_disassoc(pAdapter, pDelStaParams);
 			qdf_status = hdd_softap_sta_deauth(pAdapter,
 							   pDelStaParams);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {

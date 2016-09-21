@@ -1452,14 +1452,15 @@ wlansap_modify_acl
  * @pCtx: Pointer to the global cds context; a handle to SAP's control block
  *        can be extracted from its context. When MBSSID feature is enabled,
  *        SAP context is directly passed to SAP APIs.
- * @pPeerStaMac: Mac address of the station to disassociate
+ * @p_del_sta_params: pointer to station deletion parameters
  *
  * This api function provides for Ap App/HDD initiated disassociation of station
  *
  * Return: The QDF_STATUS code associated with performing the operation
  *         QDF_STATUS_SUCCESS:  Success
  */
-QDF_STATUS wlansap_disassoc_sta(void *pCtx, const uint8_t *pPeerStaMac)
+QDF_STATUS wlansap_disassoc_sta(void *pCtx,
+				struct tagCsrDelStaParams *p_del_sta_params)
 {
 	ptSapContext pSapCtx = CDS_GET_SAP_CB(pCtx);
 
@@ -1474,7 +1475,7 @@ QDF_STATUS wlansap_disassoc_sta(void *pCtx, const uint8_t *pPeerStaMac)
 	}
 
 	sme_roam_disconnect_sta(CDS_GET_HAL_CB(pSapCtx->p_cds_gctx),
-				pSapCtx->sessionId, pPeerStaMac);
+				pSapCtx->sessionId, p_del_sta_params);
 
 	return QDF_STATUS_SUCCESS;
 }

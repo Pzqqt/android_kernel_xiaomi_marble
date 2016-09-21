@@ -3476,18 +3476,20 @@ QDF_STATUS csr_roam_issue_disassociate(tpAniSirGlobal pMac, uint32_t sessionId,
 	return status;
 }
 
-/* ---------------------------------------------------------------------------
-    \fn csr_roam_issue_disassociate_sta_cmd
-    \brief csr function that HDD calls to disassociate a associated station
-    \param sessionId    - session Id for Soft AP
-    \param pPeerMacAddr - MAC of associated station to delete
-    \param reason - reason code, be one of the tSirMacReasonCodes
-    \return QDF_STATUS
-   ---------------------------------------------------------------------------*/
+/**
+ * csr_roam_issue_disassociate_sta_cmd() - disassociate a associated station
+ * @sessionId:     Session Id for Soft AP
+ * @p_del_sta_params: Pointer to parameters of the station to disassoc
+ *
+ * CSR function that HDD calls to delete a associated station
+ *
+ * Return: QDF_STATUS_SUCCESS on success or another QDF_STATUS_* on error
+ */
 QDF_STATUS csr_roam_issue_disassociate_sta_cmd(tpAniSirGlobal pMac,
 					       uint32_t sessionId,
-					       const uint8_t *pPeerMacAddr,
-					       uint32_t reason)
+					       struct tagCsrDelStaParams
+					       *p_del_sta_params)
+
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSmeCmd *pCommand;
@@ -3502,8 +3504,11 @@ QDF_STATUS csr_roam_issue_disassociate_sta_cmd(tpAniSirGlobal pMac,
 		pCommand->command = eSmeCommandRoam;
 		pCommand->sessionId = (uint8_t) sessionId;
 		pCommand->u.roamCmd.roamReason = eCsrForcedDisassocSta;
-		qdf_mem_copy(pCommand->u.roamCmd.peerMac, pPeerMacAddr, 6);
-		pCommand->u.roamCmd.reason = (tSirMacReasonCodes) reason;
+		qdf_mem_copy(pCommand->u.roamCmd.peerMac,
+				p_del_sta_params->peerMacAddr.bytes,
+				sizeof(pCommand->u.roamCmd.peerMac));
+		pCommand->u.roamCmd.reason =
+			(tSirMacReasonCodes)p_del_sta_params->reason_code;
 		status = csr_queue_sme_command(pMac, pCommand, false);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			sms_log(pMac, LOGE,

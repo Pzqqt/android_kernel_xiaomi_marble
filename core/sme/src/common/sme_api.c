@@ -3993,16 +3993,19 @@ QDF_STATUS sme_roam_stop_bss(tHalHandle hHal, uint8_t sessionId)
 	return status;
 }
 
-/* ---------------------------------------------------------------------------
-    \fn sme_roam_disconnect_sta
-    \brief To disassociate a station. This is an asynchronous API.
-    \param hHal - Global structure
-    \param sessionId - sessionId of SoftAP
-    \param pPeerMacAddr - Caller allocated memory filled with peer MAC address (6 bytes)
-    \return QDF_STATUS  SUCCESS  Roam callback will be called to indicate actual results
-   -------------------------------------------------------------------------------*/
+/**
+ * sme_roam_disconnect_sta() - disassociate a station
+ * @hHal:          Global structure
+ * @sessionId:     SessionId of SoftAP
+ * @p_del_sta_params: Pointer to parameters of the station to disassoc
+ *
+ * To disassociate a station. This is an asynchronous API.
+ *
+ * Return: QDF_STATUS_SUCCESS on success.Roam callback will
+ *         be called to indicate actual result.
+ */
 QDF_STATUS sme_roam_disconnect_sta(tHalHandle hHal, uint8_t sessionId,
-				   const uint8_t *pPeerMacAddr)
+				   struct tagCsrDelStaParams *p_del_sta_params)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -4016,8 +4019,7 @@ QDF_STATUS sme_roam_disconnect_sta(tHalHandle hHal, uint8_t sessionId,
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		if (CSR_IS_SESSION_VALID(pMac, sessionId)) {
 			status = csr_roam_issue_disassociate_sta_cmd(pMac,
-					sessionId, pPeerMacAddr,
-					eSIR_MAC_DEAUTH_LEAVING_BSS_REASON);
+					sessionId, p_del_sta_params);
 		} else {
 			status = QDF_STATUS_E_INVAL;
 		}

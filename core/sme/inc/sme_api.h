@@ -288,7 +288,7 @@ QDF_STATUS sme_roam_get_associated_stas(tHalHandle hHal, uint8_t sessionId,
 		void *pfnSapEventCallback,
 		uint8_t *pAssocStasBuf);
 QDF_STATUS sme_roam_disconnect_sta(tHalHandle hHal, uint8_t sessionId,
-		const uint8_t *pPeerMacAddr);
+		struct tagCsrDelStaParams *p_del_sta_params);
 QDF_STATUS sme_roam_deauth_sta(tHalHandle hHal, uint8_t sessionId,
 		struct tagCsrDelStaParams *pDelStaParams);
 QDF_STATUS sme_roam_tkip_counter_measures(tHalHandle hHal, uint8_t sessionId,
