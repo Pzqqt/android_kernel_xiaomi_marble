@@ -7825,6 +7825,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	hdd_context_t *pHddCtx;
 	enum hw_mode_bandwidth channel_width;
 	int status;
+	struct sme_sta_inactivity_timeout  *sta_inactivity_timer;
 	uint8_t channel;
 
 	ENTER();
@@ -7988,6 +7989,20 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 				&params->beacon,
 				params->ssid, params->ssid_len,
 				params->hidden_ssid, true);
+
+		if (pHddCtx->config->sap_max_inactivity_override) {
+			sta_inactivity_timer = qdf_mem_malloc(
+					sizeof(*sta_inactivity_timer));
+			if (!sta_inactivity_timer) {
+				hdd_err("Failed to allocate Memory");
+				return QDF_STATUS_E_FAILURE;
+			}
+			sta_inactivity_timer->session_id = pAdapter->sessionId;
+			sta_inactivity_timer->sta_inactivity_timeout =
+				params->inactivity_timeout;
+			sme_update_sta_inactivity_timeout(WLAN_HDD_GET_HAL_CTX
+					(pAdapter), sta_inactivity_timer);
+		}
 	}
 
 	EXIT();

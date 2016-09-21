@@ -6029,6 +6029,56 @@ static QDF_STATUS wma_update_long_retry_limit(tp_wma_handle wma,
 	return QDF_STATUS_SUCCESS;
 }
 
+/*
+ * wma_update_sta_inactivity_timeout() - Set sta_inactivity_timeout to fw
+ * @wma_handle: WMA handle
+ * @sta_inactivity_timer: sme_sta_inactivity_timeout
+ *
+ * This function is used to set sta_inactivity_timeout.
+ * If a station does not send anything in sta_inactivity_timeout seconds, an
+ * empty data frame is sent to it in order to verify whether it is
+ * still in range. If this frame is not ACKed, the station will be
+ * disassociated and then deauthenticated.
+ *
+ * Return: None
+ */
+void wma_update_sta_inactivity_timeout(tp_wma_handle wma,
+		struct sme_sta_inactivity_timeout  *sta_inactivity_timer)
+{
+	uint8_t vdev_id;
+	uint32_t max_unresponsive_time;
+	uint32_t min_inactive_time, max_inactive_time;
+
+	if (!wma || !wma->wmi_handle) {
+		WMA_LOGE("WMA is closed, can not issue sta_inactivity_timeout");
+		return;
+	}
+	vdev_id = sta_inactivity_timer->session_id;
+	max_unresponsive_time = sta_inactivity_timer->sta_inactivity_timeout;
+	max_inactive_time = max_unresponsive_time * TWO_THIRD;
+	min_inactive_time = max_unresponsive_time - max_inactive_time;
+
+	if (wma_vdev_set_param(wma->wmi_handle, vdev_id,
+			WMI_VDEV_PARAM_AP_KEEPALIVE_MIN_IDLE_INACTIVE_TIME_SECS,
+			min_inactive_time))
+		WMA_LOGE("Failed to Set AP MIN IDLE INACTIVE TIME");
+
+	if (wma_vdev_set_param(wma->wmi_handle, vdev_id,
+			WMI_VDEV_PARAM_AP_KEEPALIVE_MAX_IDLE_INACTIVE_TIME_SECS,
+			max_inactive_time))
+		WMA_LOGE("Failed to Set AP MAX IDLE INACTIVE TIME");
+
+	if (wma_vdev_set_param(wma->wmi_handle, vdev_id,
+		WMI_VDEV_PARAM_AP_KEEPALIVE_MAX_UNRESPONSIVE_TIME_SECS,
+		max_unresponsive_time))
+		WMA_LOGE("Failed to Set MAX UNRESPONSIVE TIME");
+
+	WMA_LOGI("%s:vdev_id:%d min_inactive_time: %u max_inactive_time: %u max_unresponsive_time: %u",
+			__func__, vdev_id,
+			min_inactive_time, max_inactive_time,
+			max_unresponsive_time);
+}
+
 /**
  * wma_mc_process_msg() - process wma messages and call appropriate function.
  * @cds_context: cds context

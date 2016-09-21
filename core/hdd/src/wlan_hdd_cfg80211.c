@@ -8900,7 +8900,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 #ifdef QCA_HT_2040_COEX
 	wiphy->features |= NL80211_FEATURE_AP_MODE_CHAN_WIDTH_CHANGE;
 #endif
-
+	wiphy->features |= NL80211_FEATURE_INACTIVITY_TIMER;
 	hdd_add_channel_switch_support(&wiphy->flags);
 
 	EXIT();

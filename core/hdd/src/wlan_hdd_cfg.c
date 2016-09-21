@@ -4036,6 +4036,12 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		CFG_RX_AGGREGATION_SIZE_DEFAULT,
 		CFG_RX_AGGREGATION_SIZE_MIN,
 		CFG_RX_AGGREGATION_SIZE_MAX),
+	REG_VARIABLE(CFG_SAP_MAX_INACTIVITY_OVERRIDE_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, sap_max_inactivity_override,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_SAP_MAX_INACTIVITY_OVERRIDE_DEFAULT,
+		CFG_SAP_MAX_INACTIVITY_OVERRIDE_MIN,
+		CFG_SAP_MAX_INACTIVITY_OVERRIDE_MAX)
 };
 
 /**
@@ -5701,6 +5707,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_info("Name = [%s] Value = [%u]",
 		 CFG_TGT_GTX_USR_CFG_NAME,
 		 pHddCtx->config->tgt_gtx_usr_cfg);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_SAP_MAX_INACTIVITY_OVERRIDE_NAME,
+		pHddCtx->config->sap_max_inactivity_override);
 	hdd_ndp_print_ini_config(pHddCtx);
 	hdd_info("Name = [%s] Value = [%s]",
 		CFG_RM_CAPABILITY_NAME,

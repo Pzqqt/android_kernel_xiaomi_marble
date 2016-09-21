@@ -183,7 +183,6 @@
 #define WMA_IPV6_PROTO_GET_MIN_LEN        21
 #define WMA_IPV6_PKT_INFO_GET_MIN_LEN     62
 #define WMA_ICMPV6_SUBTYPE_GET_MIN_LEN    55
-
 /**
  * ds_mode: distribution system mode
  * @IEEE80211_NO_DS: NO DS at either side
@@ -388,6 +387,7 @@ enum ds_mode {
 #define WMA_NEXT_20MHZ_START_CH_DIFF 4
 
 #define WMA_DEFAULT_HW_MODE_INDEX 0xFFFF
+#define TWO_THIRD (2/3)
 
 /**
  * WMA hardware mode list bit-mask definitions.
@@ -2335,3 +2335,5 @@ void wma_register_packetdump_callback(
 		tp_wma_packetdump_cb wma_mgmt_tx_packetdump_cb,
 		tp_wma_packetdump_cb wma_mgmt_rx_packetdump_cb);
 void wma_deregister_packetdump_callback(void);
+void wma_update_sta_inactivity_timeout(tp_wma_handle wma,
+		struct sme_sta_inactivity_timeout  *sta_inactivity_timer);

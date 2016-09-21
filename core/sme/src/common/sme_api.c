@@ -12356,6 +12356,45 @@ QDF_STATUS sme_update_long_retry_limit_threshold(tHalHandle hal_handle,
 }
 
 /**
+ * sme_update_sta_inactivity_timeout(): Update sta_inactivity_timeout to FW
+ * @hal: Handle returned by mac_open
+ * @session_id: Session ID on which sta_inactivity_timeout needs
+ * to be updated to FW
+ * @sta_inactivity_timeout: sta inactivity timeout.
+ *
+ * If a station does not send anything in sta_inactivity_timeout seconds, an
+ * empty data frame is sent to it in order to verify whether it is
+ * still in range. If this frame is not ACKed, the station will be
+ * disassociated and then deauthenticated.
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure.
+*/
+QDF_STATUS sme_update_sta_inactivity_timeout(tHalHandle hal_handle,
+		 struct sme_sta_inactivity_timeout  *sta_inactivity_timer)
+{
+	struct sme_sta_inactivity_timeout *inactivity_time;
+	void *wma_handle;
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	inactivity_time = qdf_mem_malloc(sizeof(*inactivity_time));
+	if (NULL == inactivity_time) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			"%s: fail to alloc inactivity_time", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			FL("sta_inactivity_timeout: %d"),
+			sta_inactivity_timer->sta_inactivity_timeout);
+	inactivity_time->session_id = sta_inactivity_timer->session_id;
+	inactivity_time->sta_inactivity_timeout =
+		sta_inactivity_timer->sta_inactivity_timeout;
+
+	wma_update_sta_inactivity_timeout(wma_handle,
+				inactivity_time);
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * sme_get_reg_info() - To get registration info
  * @hHal: HAL context
  * @chanId: channel id

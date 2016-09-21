@@ -1333,4 +1333,20 @@ QDF_STATUS sme_update_short_retry_limit_threshold(tHalHandle hal_handle,
 		struct sme_short_retry_limit *short_retry_limit_th);
 QDF_STATUS sme_update_long_retry_limit_threshold(tHalHandle hal_handle,
 		struct sme_long_retry_limit  *long_retry_limit_th);
+
+/**
+ * sme_update_sta_inactivity_timeout(): Update sta_inactivity_timeout to FW
+ * @hal: Handle returned by mac_open
+ * @sta_inactivity_timer:  struct for sta inactivity timer
+ *
+ * If a station does not send anything in sta_inactivity_timeout seconds, an
+ * empty data frame is sent to it in order to verify whether it is
+ * still in range. If this frame is not ACKed, the station will be
+ * disassociated and then deauthenticated.
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure.
+*/
+QDF_STATUS sme_update_sta_inactivity_timeout(tHalHandle hal_handle,
+		struct sme_sta_inactivity_timeout  *sta_inactivity_timer);
+
 #endif /* #if !defined( __SME_API_H ) */

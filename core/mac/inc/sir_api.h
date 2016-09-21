@@ -6617,4 +6617,15 @@ struct sme_long_retry_limit {
 	uint8_t session_id;
 	uint32_t long_retry_limit;
 };
+
+/**
+ * struct sme_sta_inactivity_timeout - set sta_inactivity_timeout
+ * @session_id: session Id.
+ * @sta_inactivity_timeout: Timeout to disconnect STA after there
+ * is no activity.
+ */
+struct sme_sta_inactivity_timeout {
+	uint8_t session_id;
+	uint32_t sta_inactivity_timeout;
+};
 #endif /* __SIR_API_H */
