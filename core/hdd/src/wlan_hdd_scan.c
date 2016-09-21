@@ -1123,6 +1123,7 @@ static QDF_STATUS hdd_cfg80211_scan_done_callback(tHalHandle halHandle,
 	bool aborted = false;
 	hdd_context_t *hddctx = WLAN_HDD_GET_CTX(pAdapter);
 	int ret = 0;
+	unsigned int current_timestamp, time_elapsed;
 	uint8_t source;
 	uint32_t scan_time;
 	uint32_t size = 0;
@@ -1150,8 +1151,28 @@ static QDF_STATUS hdd_cfg80211_scan_done_callback(tHalHandle halHandle,
 
 	ret = wlan_hdd_cfg80211_update_bss((WLAN_HDD_GET_CTX(pAdapter))->wiphy,
 					   pAdapter, scan_time);
-	if (0 > ret)
+	if (0 > ret) {
 		hdd_notice("NO SCAN result");
+		if (hddctx->config->bug_report_for_no_scan_results) {
+			current_timestamp = jiffies_to_msecs(jiffies);
+			time_elapsed = current_timestamp -
+				hddctx->last_nil_scan_bug_report_timestamp;
+
+			/*
+			 * check if we have generated bug report in
+			 * MIN_TIME_REQUIRED_FOR_NEXT_BUG_REPORT time.
+			 */
+			if (time_elapsed >
+			    MIN_TIME_REQUIRED_FOR_NEXT_BUG_REPORT) {
+				cds_flush_logs(WLAN_LOG_TYPE_NON_FATAL,
+						WLAN_LOG_INDICATOR_HOST_DRIVER,
+						WLAN_LOG_REASON_NO_SCAN_RESULTS,
+						true, true);
+				hddctx->last_nil_scan_bug_report_timestamp =
+					current_timestamp;
+			}
+		}
+	}
 
 	/*
 	 * cfg80211_scan_done informing NL80211 about completion

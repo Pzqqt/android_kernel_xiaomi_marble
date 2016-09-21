@@ -3104,6 +3104,14 @@ enum dot11p_mode {
 #define CFG_ROAM_DENSE_RSSI_THRE_OFFSET_DEFAULT (10)
 
 /*
+ * Create bug report in case of nil scan results
+ */
+#define CFG_CREATE_BUG_REPORT_FOR_SCAN       "gbug_report_for_scan_results"
+#define CFG_CREATE_BUG_REPORT_FOR_SCAN_DISABLE    (0)
+#define CFG_CREATE_BUG_REPORT_FOR_SCAN_ENABLE     (1)
+#define CFG_CREATE_BUG_REPORT_FOR_SCAN_DEFAULT    (0)
+
+/*
  * Enabling gignore_peer_ht_opmode will enable 11g
  * protection only when there is a 11g AP in vicinity.
  */
@@ -4107,6 +4115,7 @@ struct hdd_config {
 	uint8_t adapt_dwell_lpf_weight;
 	uint8_t adapt_dwell_passive_mon_intval;
 	uint8_t adapt_dwell_wifi_act_threshold;
+	bool bug_report_for_no_scan_results;
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 	bool enable_nan_datapath;
 	uint8_t nan_datapath_ndi_channel;
