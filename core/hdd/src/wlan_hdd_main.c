@@ -6042,9 +6042,6 @@ static QDF_STATUS wlan_hdd_disable_all_dual_mac_features(hdd_context_t *hdd_ctx)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (hdd_ctx->config->dual_mac_feature_disable)
-		return QDF_STATUS_SUCCESS;
-
 	cfg.scan_config = 0;
 	cfg.fw_mode_config = 0;
 	cfg.set_dual_mac_cb = cds_soc_set_dual_mac_cfg_cb;
@@ -7330,14 +7327,6 @@ static int hdd_features_init(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 		hdd_err("Error setting txlimit in sme: %d", status);
 
 	hdd_tsf_init(hdd_ctx);
-
-	if (hdd_ctx->config->dual_mac_feature_disable) {
-		status = wlan_hdd_disable_all_dual_mac_features(hdd_ctx);
-		if (status != QDF_STATUS_SUCCESS) {
-			hdd_err("Failed to disable dual mac features");
-			goto deregister_frames;
-		}
-	}
 
 	ret = hdd_register_cb(hdd_ctx);
 	if (ret) {
