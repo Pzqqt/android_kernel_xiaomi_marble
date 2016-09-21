@@ -37,7 +37,7 @@
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/mm.h>
-#include <errno.h>
+#include <linux/errno.h>
 
 #include <linux/random.h>
 

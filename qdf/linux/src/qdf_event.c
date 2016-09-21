@@ -36,6 +36,7 @@
 
 /* Include Files */
 #include "qdf_event.h"
+#include <linux/export.h>
 
 /* Function Definitions and Documentation */
 

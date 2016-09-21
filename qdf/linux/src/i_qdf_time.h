@@ -192,6 +192,7 @@ static inline uint64_t __qdf_get_monotonic_boottime(void)
 }
 
 #ifdef QCA_WIFI_3_0_ADRASTEA
+#include <asm/arch_timer.h>
 
 /**
  * __qdf_get_log_timestamp() - get QTIMER ticks

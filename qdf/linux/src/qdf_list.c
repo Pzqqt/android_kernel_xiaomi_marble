@@ -35,6 +35,7 @@
 
 /* Include files */
 #include <qdf_list.h>
+#include <linux/export.h>
 
 /* Function declarations and documenation */
 

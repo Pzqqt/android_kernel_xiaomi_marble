@@ -36,6 +36,7 @@
 #include "qdf_lock.h"
 #include "qdf_list.h"
 #include "qdf_mem.h"
+#include <linux/export.h>
 #ifdef CONFIG_MCL
 #include <cds_mc_timer.h>
 #endif

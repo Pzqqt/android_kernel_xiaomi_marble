@@ -38,6 +38,7 @@
 #include <linux/sched.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
+#include <linux/export.h>
 
 /* Function declarations and documenation */
 
