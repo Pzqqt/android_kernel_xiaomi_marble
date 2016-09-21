@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2015,2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -94,5 +94,9 @@ static inline uint32_t lim_get_u32(uint8_t *ptr)
 #error "Unknown combination of OS Type and endianess"
 #endif
 }
+
+tSirRetStatus lim_send_disassoc_frm_req_ser_des(tpAniSirGlobal mac_ctx,
+		struct sme_send_disassoc_frm_req *disassoc_frm_req,
+		uint8_t *buf);
 
 #endif /* __LIM_SERDES_UTILS_H */
