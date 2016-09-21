@@ -104,7 +104,6 @@ struct ol_pktlog_dev_t {
 	uint32_t htc_err_cnt;
 	uint8_t htc_endpoint;
 	void *htc_pdev;
-	bool enable_flag;
 };
 
 #define PKTLOG_SYSCTL_SIZE      14

@@ -311,7 +311,6 @@ int pktlog_disable(struct hif_opaque_softc *scn)
 		return -EFAULT;
 
 	pl_dev = txrx_pdev->pl_dev;
-	pl_dev->enable_flag = false;
 	pl_info = pl_dev->pl_info;
 
 	if (pktlog_wma_post_msg(0, WMI_PDEV_PKTLOG_DISABLE_CMDID, 0, 0)) {
@@ -356,7 +355,6 @@ void pktlog_init(struct hif_opaque_softc *scn)
 	pl_info->pktlen = 0;
 	pl_info->start_time_thruput = 0;
 	pl_info->start_time_per = 0;
-	pdev_txrx_handle->pl_dev->enable_flag = false;
 
 	PKTLOG_TX_SUBSCRIBER.callback = pktlog_callback;
 	PKTLOG_RX_SUBSCRIBER.callback = pktlog_callback;
@@ -398,17 +396,6 @@ int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
 
 	if (!pl_info)
 		return 0;
-	/*
-	 * Do not send the pktlog disable command in case when pktlog
-	 * is enabled from INI during init, SO make enable_flag as false.
-	 * send the pktlog disable command only after when user will triggere
-	 * iwpriv pktlog enable command or enable through pktlog conf tool or
-	 * vendor will send pktlog enable command.
-	 */
-	if (ini_triggered == 1 && user_triggered == 0 && log_state != 0)
-		pl_dev->enable_flag = false;
-	else if (log_state != 0)
-		pl_dev->enable_flag = true;
 
 	if (!pl_dev->tgt_pktlog_alloced) {
 		if (pl_info->buf == NULL) {
@@ -455,7 +442,7 @@ int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
 			printk("Device cannot be enabled, %s\n", __func__);
 			return -1;
 		}
-	} else if (pl_dev->enable_flag) {
+	} else {
 		pl_dev->pl_funcs->pktlog_disable(scn);
 	}
 
