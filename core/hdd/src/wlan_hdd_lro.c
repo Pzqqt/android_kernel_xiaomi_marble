@@ -214,7 +214,7 @@ static int hdd_lro_desc_find(hdd_adapter_t *adapter,
 	struct hdd_lro_desc_table *lro_hash_table;
 	struct list_head *ptr;
 	struct hdd_lro_desc_entry *entry;
-	struct hdd_lro_desc_pool free_pool;
+	struct hdd_lro_desc_pool *free_pool;
 	struct hdd_lro_desc_info *desc_info = &adapter->lro_info.lro_desc_info;
 
 	*lro_desc = NULL;
@@ -245,24 +245,19 @@ static int hdd_lro_desc_find(hdd_adapter_t *adapter,
 	qdf_spin_unlock_bh(&desc_info->lro_hash_lock);
 
 	/* no existing flow found, a new LRO desc needs to be allocated */
-	free_pool = adapter->lro_info.lro_desc_info.lro_desc_pool;
-	qdf_spin_lock_bh(&free_pool.lro_pool_lock);
+	free_pool = &adapter->lro_info.lro_desc_info.lro_desc_pool;
+	qdf_spin_lock_bh(&free_pool->lro_pool_lock);
 	entry = list_first_entry_or_null(
-		 &free_pool.lro_free_list_head,
+		 &free_pool->lro_free_list_head,
 		 struct hdd_lro_desc_entry, lro_node);
 	if (NULL == entry) {
 		hdd_err("Could not allocate LRO desc!");
-		qdf_spin_unlock_bh(&free_pool.lro_pool_lock);
+		qdf_spin_unlock_bh(&free_pool->lro_pool_lock);
 		return -ENOMEM;
 	}
 
-	if (list_empty(&entry->lro_node)) {
-		hdd_err("Reached max supported lro_desc range\n");
-		return -EINVAL;
-	}
-
 	list_del_init(&entry->lro_node);
-	qdf_spin_unlock_bh(&free_pool.lro_pool_lock);
+	qdf_spin_unlock_bh(&free_pool->lro_pool_lock);
 
 	if (NULL == entry->lro_desc) {
 		hdd_err("entry->lro_desc is NULL!\n");
