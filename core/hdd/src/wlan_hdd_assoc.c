@@ -364,7 +364,7 @@ static int hdd_add_beacon_filter(hdd_adapter_t *adapter)
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	for (i = 0; i < ARRAY_SIZE(beacon_filter_table); i++)
-		qdf_set_bit((beacon_filter_table[i] - 1),
+		qdf_set_bit((beacon_filter_table[i]),
 				(unsigned long int *)ie_map);
 
 	status = sme_add_beacon_filter(hdd_ctx->hHal,

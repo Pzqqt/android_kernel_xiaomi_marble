@@ -1132,7 +1132,6 @@ QDF_STATUS wma_add_beacon_filter(WMA_HANDLE handle,
 		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
-	WMA_LOGD("added beacon filter = %d", ret);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1180,7 +1179,6 @@ QDF_STATUS wma_remove_beacon_filter(WMA_HANDLE handle,
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
-	WMA_LOGD("removed beacon filter = %d", ret);
 
 	return QDF_STATUS_SUCCESS;
 }
