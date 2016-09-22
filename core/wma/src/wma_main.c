@@ -4159,9 +4159,8 @@ void wma_dump_dbs_hw_mode(tp_wma_handle wma_handle)
 			WMI_DBS_HW_MODE_MAC1_TX_STREAMS_GET(param),
 			WMI_DBS_HW_MODE_MAC1_RX_STREAMS_GET(param),
 			WMI_DBS_HW_MODE_MAC1_BANDWIDTH_GET(param));
-		WMA_LOGA("%s:[%d] DBS:%d Agile DFS:%d", __func__, i,
-			WMI_DBS_HW_MODE_DBS_MODE_GET(param),
-			WMI_DBS_HW_MODE_AGILE_DFS_GET(param));
+		WMA_LOGA("%s:[%d] DBS:%d", __func__, i,
+			WMI_DBS_HW_MODE_DBS_MODE_GET(param));
 	}
 }
 
@@ -4801,6 +4800,200 @@ static void wma_print_populate_soc_caps(t_wma_handle *wma_handle)
 }
 
 /**
+ * wma_map_wmi_channel_width_to_hw_mode_bw() - returns bandwidth
+ * in terms of hw_mode_bandwidth
+ * @width: bandwidth in terms of wmi_channel_width
+ *
+ * This function returns the bandwidth in terms of hw_mode_bandwidth.
+ *
+ * Return: BW in terms of hw_mode_bandwidth.
+ */
+enum hw_mode_bandwidth wma_map_wmi_channel_width_to_hw_mode_bw(
+			wmi_channel_width width)
+{
+	switch (width) {
+	case WMI_CHAN_WIDTH_20:
+		return HW_MODE_20_MHZ;
+	case WMI_CHAN_WIDTH_40:
+		return HW_MODE_40_MHZ;
+	case WMI_CHAN_WIDTH_80:
+		return HW_MODE_80_MHZ;
+	case WMI_CHAN_WIDTH_160:
+		return HW_MODE_160_MHZ;
+	case WMI_CHAN_WIDTH_80P80:
+		return HW_MODE_80_PLUS_80_MHZ;
+	case WMI_CHAN_WIDTH_5:
+		return HW_MODE_5_MHZ;
+	case WMI_CHAN_WIDTH_10:
+		return HW_MODE_10_MHZ;
+	default:
+		return HW_MODE_BW_NONE;
+	}
+
+	return HW_MODE_BW_NONE;
+}
+
+/**
+ * wma_get_hw_mode_params() - get TX-RX stream and bandwidth
+ * supported from the capabilities.
+ * @caps: PHY capability
+ * @info: param to store TX-RX stream and BW information
+ *
+ * This function will calculate TX-RX stream and bandwidth supported
+ * as per the PHY capability, and assign to mac_ss_bw_info.
+ *
+ * Return: none
+ */
+static void wma_get_hw_mode_params(WMI_MAC_PHY_CAPABILITIES *caps,
+			struct mac_ss_bw_info *info)
+{
+	if (!caps) {
+		WMA_LOGE("%s: Invalid capabilities", __func__);
+		return;
+	}
+
+	info->mac_tx_stream = wma_get_num_of_setbits_from_bitmask(
+				QDF_MAX(caps->tx_chain_mask_2G,
+					caps->tx_chain_mask_5G));
+	info->mac_rx_stream = wma_get_num_of_setbits_from_bitmask(
+				QDF_MAX(caps->rx_chain_mask_2G,
+					caps->rx_chain_mask_5G));
+	info->mac_bw = wma_map_wmi_channel_width_to_hw_mode_bw(
+				QDF_MAX(caps->max_bw_supported_2G,
+					caps->max_bw_supported_5G));
+}
+
+/**
+ * wma_set_hw_mode_params() - sets TX-RX stream, bandwidth and
+ * DBS in hw_mode_list
+ * @wma_handle: pointer to wma global structure
+ * @mac0_ss_bw_info: TX-RX streams, BW for MAC0
+ * @mac1_ss_bw_info: TX-RX streams, BW for MAC1
+ * @pos: refers to hw_mode_index
+ * @dbs_mode: dbs_mode for the dbs_hw_mode
+ *
+ * This function sets TX-RX stream, bandwidth and DBS mode in
+ * hw_mode_list.
+ *
+ * Return: none
+ */
+static void wma_set_hw_mode_params(t_wma_handle *wma_handle,
+			struct mac_ss_bw_info mac0_ss_bw_info,
+			struct mac_ss_bw_info mac1_ss_bw_info,
+			uint32_t pos, uint32_t dbs_mode)
+{
+	WMI_DBS_HW_MODE_MAC0_TX_STREAMS_SET(
+		wma_handle->hw_mode.hw_mode_list[pos],
+		mac0_ss_bw_info.mac_tx_stream);
+	WMI_DBS_HW_MODE_MAC0_RX_STREAMS_SET(
+		wma_handle->hw_mode.hw_mode_list[pos],
+		mac0_ss_bw_info.mac_rx_stream);
+	WMI_DBS_HW_MODE_MAC0_BANDWIDTH_SET(
+		wma_handle->hw_mode.hw_mode_list[pos],
+		mac0_ss_bw_info.mac_bw);
+	WMI_DBS_HW_MODE_MAC1_TX_STREAMS_SET(
+		wma_handle->hw_mode.hw_mode_list[pos],
+		mac1_ss_bw_info.mac_tx_stream);
+	WMI_DBS_HW_MODE_MAC1_RX_STREAMS_SET(
+		wma_handle->hw_mode.hw_mode_list[pos],
+		mac1_ss_bw_info.mac_rx_stream);
+	WMI_DBS_HW_MODE_MAC1_BANDWIDTH_SET(
+		wma_handle->hw_mode.hw_mode_list[pos],
+		mac1_ss_bw_info.mac_bw);
+	WMI_DBS_HW_MODE_DBS_MODE_SET(
+		wma_handle->hw_mode.hw_mode_list[pos],
+		dbs_mode);
+	WMI_DBS_HW_MODE_AGILE_DFS_SET(
+		wma_handle->hw_mode.hw_mode_list[pos],
+		0);
+}
+
+/**
+ * wma_update_hw_mode_list() - updates hw_mode_list
+ * @wma_handle: pointer to wma global structure
+ *
+ * This function updates hw_mode_list with tx_streams, rx_streams,
+ * bandwidth, dbs and agile dfs for each hw_mode.
+ *
+ * Returns: 0 for success else failure.
+ */
+static QDF_STATUS wma_update_hw_mode_list(t_wma_handle *wma_handle)
+{
+	struct extended_caps *phy_caps;
+	WMI_MAC_PHY_CAPABILITIES *tmp;
+	uint32_t i, dbs_mode, hw_config_type, j = 0;
+	struct mac_ss_bw_info mac0_ss_bw_info = {0};
+	struct mac_ss_bw_info mac1_ss_bw_info = {0};
+
+	if (!wma_handle) {
+		WMA_LOGE("%s: Invalid wma handle", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	phy_caps = &wma_handle->phy_caps;
+	if (!phy_caps) {
+		WMA_LOGE("%s: Invalid phy capabilities", __func__);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	if (!phy_caps->num_hw_modes.num_hw_modes) {
+		WMA_LOGE("%s: Number of HW modes: %d",
+			 __func__, phy_caps->num_hw_modes.num_hw_modes);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	/*
+	 * This list was updated as part of service ready event. Re-populate
+	 * HW mode list from the device capabilities.
+	 */
+	if (wma_handle->hw_mode.hw_mode_list) {
+		qdf_mem_free(wma_handle->hw_mode.hw_mode_list);
+		wma_handle->hw_mode.hw_mode_list = NULL;
+		WMA_LOGI("%s: DBS list is freed", __func__);
+	}
+
+	wma_handle->num_dbs_hw_modes = phy_caps->num_hw_modes.num_hw_modes;
+	wma_handle->hw_mode.hw_mode_list =
+		qdf_mem_malloc(sizeof(*wma_handle->hw_mode.hw_mode_list) *
+			       wma_handle->num_dbs_hw_modes);
+	if (!wma_handle->hw_mode.hw_mode_list) {
+		WMA_LOGE("%s: Memory allocation failed for DBS", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	WMA_LOGA("%s: Updated HW mode list: Num modes:%d",
+		 __func__, wma_handle->num_dbs_hw_modes);
+
+	for (i = 0; i < wma_handle->num_dbs_hw_modes; i++) {
+		/* Update for MAC0 */
+		tmp = &phy_caps->each_phy_cap_per_hwmode[j++];
+		wma_get_hw_mode_params(tmp, &mac0_ss_bw_info);
+		hw_config_type =
+			phy_caps->each_hw_mode_cap[i].hw_mode_config_type;
+		dbs_mode = 0;
+		mac1_ss_bw_info.mac_tx_stream = 0;
+		mac1_ss_bw_info.mac_rx_stream = 0;
+		mac1_ss_bw_info.mac_bw = 0;
+
+		/* SBS and DBS have dual MAC. Upto 2 MACs are considered. */
+		if ((hw_config_type == WMI_HW_MODE_DBS) ||
+		    (hw_config_type == WMI_HW_MODE_SBS_PASSIVE) ||
+		    (hw_config_type == WMI_HW_MODE_SBS)) {
+			/* Update for MAC1 */
+			tmp = &phy_caps->each_phy_cap_per_hwmode[j++];
+			wma_get_hw_mode_params(tmp, &mac1_ss_bw_info);
+			dbs_mode = 1;
+		}
+
+		/* Updating HW mode list */
+		wma_set_hw_mode_params(wma_handle, mac0_ss_bw_info,
+				       mac1_ss_bw_info, i, dbs_mode);
+	}
+	wma_dump_dbs_hw_mode(wma_handle);
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * wma_populate_soc_caps() - populate entire SOC's capabilities
  * @wma_handle: pointer to wma global structure
  * @param_buf: pointer to param of service ready extension event from fw
@@ -4987,6 +5180,12 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 		return -EINVAL;
 	}
 	wma_populate_soc_caps(wma_handle, param_buf);
+
+	ret = wma_update_hw_mode_list(wma_handle);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		WMA_LOGE("Failed to update hw mode list");
+		return -EINVAL;
+	}
 
 	WMA_LOGA("WMA --> WMI_INIT_CMDID");
 	status = wmi_unified_send_saved_init_cmd(wma_handle->wmi_handle);

@@ -2572,7 +2572,12 @@ static int8_t wma_get_matching_hw_mode_index(tp_wma_handle wma,
 
 		t_mac0_bw = WMI_DBS_HW_MODE_MAC0_BANDWIDTH_GET(
 				wma->hw_mode.hw_mode_list[i]);
-		if (t_mac0_bw != mac0_bw)
+		/*
+		 * Firmware advertises max bw capability as CBW 80+80
+		 * for single MAC. Thus CBW 20/40/80 should also be
+		 * supported, if CBW 80+80 is supported.
+		 */
+		if (t_mac0_bw < mac0_bw)
 			continue;
 
 		t_mac1_tx_ss = WMI_DBS_HW_MODE_MAC1_TX_STREAMS_GET(
@@ -2587,7 +2592,7 @@ static int8_t wma_get_matching_hw_mode_index(tp_wma_handle wma,
 
 		t_mac1_bw = WMI_DBS_HW_MODE_MAC1_BANDWIDTH_GET(
 				wma->hw_mode.hw_mode_list[i]);
-		if (t_mac1_bw != mac1_bw)
+		if (t_mac1_bw < mac1_bw)
 			continue;
 
 		dbs_mode = WMI_DBS_HW_MODE_DBS_MODE_GET(
@@ -2760,58 +2765,6 @@ bool wma_is_hw_dbs_capable(void)
 		WMA_LOGI("%s: HW param: %x", __func__, param);
 		if (WMI_DBS_HW_MODE_DBS_MODE_GET(param)) {
 			WMA_LOGI("%s: HW (%d) is DBS capable", __func__, i);
-			found = 1;
-			break;
-		}
-	}
-
-	if (found)
-		return true;
-
-	return false;
-}
-
-/**
- * wma_is_hw_agile_dfs_capable() - Check if HW is agile DFS capable
- *
- * Checks if the HW is agile DFS capable
- *
- * Return: true if the HW is agile DFS capable
- */
-bool wma_is_hw_agile_dfs_capable(void)
-{
-	tp_wma_handle wma;
-	uint32_t param, i, found = 0;
-
-	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		WMA_LOGE("%s: Invalid WMA handle", __func__);
-		return false;
-	}
-
-	if (!wma_is_agile_dfs_enable()) {
-		WMA_LOGI("%s: Agile DFS is disabled", __func__);
-		return false;
-	}
-
-	WMA_LOGI("%s: DBS service bit map: %d", __func__,
-		WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-		WMI_SERVICE_DUAL_BAND_SIMULTANEOUS_SUPPORT));
-
-	/* The agreement with FW is that to know if the target is Agile DFS
-	 * capable, DBS needs to be supported in the service bit map and
-	 * Agile DFS needs to be supported in the HW mode list
-	 */
-	if (!(WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-			WMI_SERVICE_DUAL_BAND_SIMULTANEOUS_SUPPORT)))
-		return false;
-
-	for (i = 0; i < wma->num_dbs_hw_modes; i++) {
-		param = wma->hw_mode.hw_mode_list[i];
-		WMA_LOGI("%s: HW param: %x", __func__, param);
-		if (WMI_DBS_HW_MODE_AGILE_DFS_GET(param)) {
-			WMA_LOGI("%s: HW %d is agile DFS capable",
-				__func__, i);
 			found = 1;
 			break;
 		}
@@ -3087,42 +3040,6 @@ bool wma_is_dbs_enable(void)
 	    WMI_DBS_FW_MODE_CFG_DBS_GET(wma->dual_mac_cfg.cur_fw_mode_config));
 
 	if (WMI_DBS_FW_MODE_CFG_DBS_GET(wma->dual_mac_cfg.cur_fw_mode_config))
-		return true;
-
-	return false;
-}
-
-/**
- * wma_is_agile_dfs_enable() - Check if master Agile DFS control is enabled
- *
- * Checks if the master Agile DFS control is enabled. This will be used
- * to override any other Agile DFS capability
- *
- * Return: True if master Agile DFS control is enabled
- */
-bool wma_is_agile_dfs_enable(void)
-{
-	tp_wma_handle wma;
-
-	if (wma_is_dual_mac_disabled_in_ini())
-		return false;
-
-	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		WMA_LOGE("%s: Invalid WMA handle", __func__);
-		return false;
-	}
-
-	WMA_LOGD("%s: DFS=%d Single mac with DFS=%d", __func__,
-			WMI_DBS_FW_MODE_CFG_AGILE_DFS_GET(
-				wma->dual_mac_cfg.cur_fw_mode_config),
-			WMI_DBS_CONC_SCAN_CFG_AGILE_DFS_SCAN_GET(
-				wma->dual_mac_cfg.cur_scan_config));
-
-	if ((WMI_DBS_FW_MODE_CFG_AGILE_DFS_GET(
-			wma->dual_mac_cfg.cur_fw_mode_config)) &&
-			(WMI_DBS_CONC_SCAN_CFG_AGILE_DFS_SCAN_GET(
-					    wma->dual_mac_cfg.cur_scan_config)))
 		return true;
 
 	return false;

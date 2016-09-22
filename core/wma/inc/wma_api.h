@@ -192,7 +192,6 @@ QDF_STATUS wma_get_hw_mode_from_idx(uint32_t idx,
 		struct sir_hw_mode_params *hw_mode);
 int8_t wma_get_num_dbs_hw_modes(void);
 bool wma_is_hw_dbs_capable(void);
-bool wma_is_hw_agile_dfs_capable(void);
 int8_t wma_get_mac_id_of_vdev(uint32_t vdev_id);
 void wma_update_intf_hw_mode_params(uint32_t vdev_id, uint32_t mac_id,
 				uint32_t cfgd_hw_mode_index);
@@ -202,7 +201,6 @@ void wma_set_dbs_capability_ut(uint32_t dbs);
 QDF_STATUS wma_get_dbs_hw_modes(bool *one_by_one_dbs, bool *two_by_two_dbs);
 QDF_STATUS wma_get_current_hw_mode(struct sir_hw_mode_params *hw_mode);
 bool wma_is_dbs_enable(void);
-bool wma_is_agile_dfs_enable(void);
 QDF_STATUS wma_get_updated_scan_config(uint32_t *scan_config,
 		bool dbs_scan,
 		bool dbs_plus_agile_scan,
