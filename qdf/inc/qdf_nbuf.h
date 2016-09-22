@@ -2247,4 +2247,18 @@ qdf_nbuf_mark_wakeup_frame(qdf_nbuf_t buf)
 	 __qdf_nbuf_mark_wakeup_frame(buf);
 }
 
+/**
+ * qdf_nbuf_reg_free_cb - Registers nbuf free callback
+ * @cb_func_ptr: Callback pointer
+ *
+ * This function registers nbuf free callback
+ *
+ * Return: void
+ */
+static inline void
+qdf_nbuf_reg_free_cb(qdf_nbuf_free_t cb_func_ptr)
+{
+	 __qdf_nbuf_reg_free_cb(cb_func_ptr);
+}
+
 #endif /* _QDF_NBUF_H */

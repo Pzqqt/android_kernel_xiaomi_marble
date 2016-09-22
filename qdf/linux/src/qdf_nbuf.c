@@ -166,6 +166,7 @@ EXPORT_SYMBOL(qdf_nbuf_set_state);
 
 /* globals do not need to be initialized to NULL/0 */
 qdf_nbuf_trace_update_t qdf_trace_update_cb;
+qdf_nbuf_free_t nbuf_free_cb;
 
 /**
  * __qdf_nbuf_alloc() - Allocate nbuf
@@ -236,9 +237,8 @@ EXPORT_SYMBOL(__qdf_nbuf_alloc);
 #ifdef CONFIG_MCL
 void __qdf_nbuf_free(struct sk_buff *skb)
 {
-	if (qdf_nbuf_ipa_owned_get(skb))
-		/* IPA cleanup function will need to be called here */
-		QDF_BUG(1);
+	if (nbuf_free_cb)
+		nbuf_free_cb(skb);
 	else
 		dev_kfree_skb_any(skb);
 }
@@ -2641,3 +2641,17 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 	return 0;
 }
 #endif
+
+/**
+ * __qdf_nbuf_reg_free_cb() - register nbuf free callback
+ * @cb_func_ptr: function pointer to the nbuf free callback
+ *
+ * This function registers a callback function for nbuf free.
+ *
+ * Return: none
+ */
+void __qdf_nbuf_reg_free_cb(qdf_nbuf_free_t cb_func_ptr)
+{
+	nbuf_free_cb = cb_func_ptr;
+	return;
+}
