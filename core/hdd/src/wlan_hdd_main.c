@@ -3821,7 +3821,7 @@ QDF_STATUS hdd_start_all_adapters(hdd_context_t *hdd_ctx)
 		adapter = adapterNode->pAdapter;
 
 		if (!hdd_is_interface_up(adapter))
-			continue;
+			goto get_adapter;
 
 		hdd_wmm_init(adapter);
 
@@ -3894,7 +3894,7 @@ QDF_STATUS hdd_start_all_adapters(hdd_context_t *hdd_ctx)
 		default:
 			break;
 		}
-
+get_adapter:
 		status = hdd_get_next_adapter(hdd_ctx, adapterNode, &pNext);
 		adapterNode = pNext;
 	}
