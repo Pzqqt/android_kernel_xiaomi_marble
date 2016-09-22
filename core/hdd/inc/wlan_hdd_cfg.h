@@ -217,7 +217,7 @@ typedef enum {
 #define CFG_SCAN_RESULT_AGE_COUNT_NAME         "gScanResultAgeCount"
 #define CFG_SCAN_RESULT_AGE_COUNT_MIN          (1)
 #define CFG_SCAN_RESULT_AGE_COUNT_MAX          (100)
-#define CFG_SCAN_RESULT_AGE_COUNT_DEFAULT      (3)
+#define CFG_SCAN_RESULT_AGE_COUNT_DEFAULT      (1)
 
 /* All in seconds */
 /* Not Connect, No Power Save */
@@ -1880,7 +1880,7 @@ typedef enum {
 #define CFG_SCAN_AGING_PARAM_NAME          "gScanAgingTime"
 #define CFG_SCAN_AGING_PARAM_MIN           (0)
 #define CFG_SCAN_AGING_PARAM_MAX           (200)
-#define CFG_SCAN_AGING_PARAM_DEFAULT       (60)
+#define CFG_SCAN_AGING_PARAM_DEFAULT       (30)
 
 /* Config Param to enable the txLdpc capability
  * 0 - disable
