@@ -278,8 +278,9 @@ struct hdd_ipa_stats {
 	uint64_t num_rx_ipa_write_done;
 	uint64_t num_max_ipa_tx_mul;
 	uint64_t num_rx_ipa_hw_maxed_out;
-	uint64_t max_pend_q_cnt;
 
+	uint64_t num_tx_desc_q_cnt;
+	uint64_t num_tx_desc_error;
 	uint64_t num_tx_comp_cnt;
 	uint64_t num_tx_queued;
 	uint64_t num_tx_dequeued;
@@ -404,6 +405,20 @@ struct ipa_uc_quota_ind {
 };
 #endif
 
+/**
+ * struct hdd_ipa_tx_desc
+ * @link: link to list head
+ * @priv: pointer to priv list entry
+ * @id: Tx desc idex
+ * @ipa_tx_desc_ptr: pointer to IPA Tx descriptor
+ */
+struct hdd_ipa_tx_desc {
+	struct list_head link;
+	void *priv;
+	uint32_t id;
+	struct ipa_rx_data *ipa_tx_desc_ptr;
+};
+
 struct hdd_ipa_priv {
 	struct hdd_ipa_sys_pipe sys_pipe[HDD_IPA_MAX_SYSBAM_PIPE];
 	struct hdd_ipa_iface_context iface_context[HDD_IPA_MAX_IFACE];
@@ -429,14 +444,11 @@ struct hdd_ipa_priv {
 	qdf_spinlock_t pm_lock;
 	bool suspended;
 
-	uint32_t pending_hw_desc_cnt;
-	uint32_t hw_desc_cnt;
-	spinlock_t q_lock;
-	uint32_t freeq_cnt;
-	struct list_head free_desc_head;
+	qdf_spinlock_t q_lock;
 
-	uint32_t pend_q_cnt;
 	struct list_head pend_desc_head;
+	struct hdd_ipa_tx_desc *tx_desc_list;
+	struct list_head free_tx_desc_head;
 
 	hdd_context_t *hdd_ctx;
 
@@ -493,31 +505,6 @@ struct hdd_ipa_priv {
 	struct completion ipa_uc_set_quota_comp;
 #endif
 };
-
-/**
- * FIXME: The following conversion routines are just stubs.
- *        They will be implemented fully by another update.
- *        The stubs will let the compile go ahead, and functionality
- *        is broken.
- * This should be OK and IPA is not enabled yet
- */
-static void *wlan_hdd_stub_priv_to_addr(uint32_t priv)
-{
-	void    *vaddr;
-	uint32_t ipa_priv = priv;
-
-	vaddr = &ipa_priv; /* just to use the var */
-	vaddr = NULL;
-	return vaddr;
-}
-
-static uint32_t wlan_hdd_stub_addr_to_priv(void *ptr)
-{
-	uint32_t       ipa_priv = 0;
-
-	BUG_ON(ptr == NULL);
-	return ipa_priv;
-}
 
 #define HDD_IPA_WLAN_FRAG_HEADER        sizeof(struct frag_header)
 #define HDD_IPA_WLAN_IPA_HEADER         sizeof(struct ipa_header)
@@ -1212,14 +1199,7 @@ static void hdd_ipa_dump_hdd_ipa(struct hdd_ipa_priv *hdd_ipa)
 		&hdd_ipa->pm_work,
 		&hdd_ipa->pm_lock,
 		hdd_ipa->suspended);
-	hdd_info("\npending_hw_desc_cnt: %d\n"
-		"hw_desc_cnt: %d\n"
-		"q_lock: %p\n"
-		"freeq_cnt: %d\n"
-		"free_desc_head----\n"
-		"\tnext: %p\n"
-		"\tprev: %p\n"
-		"pend_q_cnt: %d\n"
+	hdd_err("\nq_lock: %p\n"
 		"pend_desc_head----\n"
 		"\tnext: %p\n"
 		"\tprev: %p\n"
@@ -1232,13 +1212,7 @@ static void hdd_ipa_dump_hdd_ipa(struct hdd_ipa_priv *hdd_ipa)
 		"activated_fw_pipe: %d\n"
 		"sap_num_connected_sta: %d\n"
 		"sta_connected: %d\n",
-		hdd_ipa->pending_hw_desc_cnt,
-		hdd_ipa->hw_desc_cnt,
 		&hdd_ipa->q_lock,
-		hdd_ipa->freeq_cnt,
-		hdd_ipa->free_desc_head.next,
-		hdd_ipa->free_desc_head.prev,
-		hdd_ipa->pend_q_cnt,
 		hdd_ipa->pend_desc_head.next,
 		hdd_ipa->pend_desc_head.prev,
 		hdd_ipa->hdd_ctx,
@@ -3701,14 +3675,6 @@ static int hdd_ipa_rm_try_release(struct hdd_ipa_priv *hdd_ipa)
 	if (atomic_read(&hdd_ipa->tx_ref_cnt))
 		return -EAGAIN;
 
-	spin_lock_bh(&hdd_ipa->q_lock);
-	if (!hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx) &&
-		(hdd_ipa->pending_hw_desc_cnt || hdd_ipa->pend_q_cnt)) {
-		spin_unlock_bh(&hdd_ipa->q_lock);
-		return -EAGAIN;
-	}
-	spin_unlock_bh(&hdd_ipa->q_lock);
-
 	qdf_spin_lock_bh(&hdd_ipa->pm_lock);
 
 	if (!qdf_nbuf_is_queue_empty(&hdd_ipa->pm_queue_head)) {
@@ -4383,12 +4349,31 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 void hdd_ipa_nbuf_cb(qdf_nbuf_t skb)
 {
 	struct hdd_ipa_priv *hdd_ipa = ghdd_ipa;
+	struct ipa_rx_data *ipa_tx_desc;
+	struct hdd_ipa_tx_desc *tx_desc;
+	uint16_t id;
 
-	HDD_IPA_DP_LOG(QDF_TRACE_LEVEL_DEBUG, "%p",
-		wlan_hdd_stub_priv_to_addr(QDF_NBUF_CB_TX_IPA_PRIV(skb)));
-	/* FIXME: This is broken; PRIV_DATA is now 31 bits */
-	ipa_free_skb((struct ipa_rx_data *)
-		wlan_hdd_stub_priv_to_addr(QDF_NBUF_CB_TX_IPA_PRIV(skb)));
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "%x", QDF_NBUF_CB_TX_IPA_PRIV(skb));
+
+	if (!qdf_nbuf_ipa_owned_get(skb)) {
+		dev_kfree_skb_any(skb);
+		return;
+	}
+
+	/* Get Tx desc pointer from SKB CB */
+	id = QDF_NBUF_CB_TX_IPA_PRIV(skb);
+	tx_desc = hdd_ipa->tx_desc_list + id;
+	ipa_tx_desc = tx_desc->ipa_tx_desc_ptr;
+
+	/* Return Tx Desc to IPA */
+	ipa_free_skb(ipa_tx_desc);
+
+	/* Return to free tx desc list */
+	qdf_spin_lock_bh(&hdd_ipa->q_lock);
+	tx_desc->ipa_tx_desc_ptr = NULL;
+	list_add_tail(&tx_desc->link, &hdd_ipa->free_tx_desc_head);
+	hdd_ipa->stats.num_tx_desc_q_cnt--;
+	qdf_spin_unlock_bh(&hdd_ipa->q_lock);
 
 	hdd_ipa->stats.num_tx_comp_cnt++;
 
@@ -4411,6 +4396,7 @@ static void hdd_ipa_send_pkt_to_tl(
 	struct hdd_ipa_priv *hdd_ipa = iface_context->hdd_ipa;
 	hdd_adapter_t *adapter = NULL;
 	qdf_nbuf_t skb;
+	struct hdd_ipa_tx_desc *tx_desc;
 
 	qdf_spin_lock_bh(&iface_context->interface_lock);
 	adapter = iface_context->adapter;
@@ -4442,10 +4428,9 @@ static void hdd_ipa_send_pkt_to_tl(
 	skb = ipa_tx_desc->skb;
 
 	qdf_mem_set(skb->cb, sizeof(skb->cb), 0);
+
+	/* Store IPA Tx buffer ownership into SKB CB */
 	qdf_nbuf_ipa_owned_set(skb);
-	/* FIXME: This is broken. No such field in cb any more:
-	 * NBUF_CALLBACK_FN(skb) = hdd_ipa_nbuf_cb;
-	 */
 	if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx)) {
 		qdf_nbuf_mapped_paddr_set(skb,
 					  ipa_tx_desc->dma_addr
@@ -4456,8 +4441,25 @@ static void hdd_ipa_send_pkt_to_tl(
 	} else
 		qdf_nbuf_mapped_paddr_set(skb, ipa_tx_desc->dma_addr);
 
-	/* FIXME: This is broken: priv_data is 31 bits */
-	qdf_nbuf_ipa_priv_set(skb, wlan_hdd_stub_addr_to_priv(ipa_tx_desc));
+	qdf_spin_lock_bh(&hdd_ipa->q_lock);
+	/* get free Tx desc and assign ipa_tx_desc pointer */
+	if (!list_empty(&hdd_ipa->free_tx_desc_head)) {
+		tx_desc = list_first_entry(&hdd_ipa->free_tx_desc_head,
+					   struct hdd_ipa_tx_desc, link);
+		list_del(&tx_desc->link);
+		tx_desc->ipa_tx_desc_ptr = ipa_tx_desc;
+		hdd_ipa->stats.num_tx_desc_q_cnt++;
+		qdf_spin_unlock_bh(&hdd_ipa->q_lock);
+		/* Store Tx Desc index into SKB CB */
+		QDF_NBUF_CB_TX_IPA_PRIV(skb) = tx_desc->id;
+	} else {
+		hdd_ipa->stats.num_tx_desc_error++;
+		qdf_spin_unlock_bh(&hdd_ipa->q_lock);
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "No free Tx desc!");
+		ipa_free_skb(ipa_tx_desc);
+		hdd_ipa_rm_try_release(hdd_ipa);
+		return;
+	}
 
 	adapter->stats.tx_bytes += ipa_tx_desc->skb->len;
 
@@ -4475,7 +4477,6 @@ static void hdd_ipa_send_pkt_to_tl(
 	atomic_inc(&hdd_ipa->tx_ref_cnt);
 
 	iface_context->stats.num_tx++;
-
 }
 
 /**
@@ -4753,6 +4754,49 @@ int hdd_ipa_resume(hdd_context_t *hdd_ctx)
 }
 
 /**
+ * hdd_ipa_alloc_tx_desc_list() - Allocate IPA Tx desc list
+ * @hdd_ipa: Global HDD IPA context
+ *
+ * Return: 0 on success, negative errno on error
+ */
+static int hdd_ipa_alloc_tx_desc_list(struct hdd_ipa_priv *hdd_ipa)
+{
+	int i;
+	uint32_t max_desc_cnt;
+	struct hdd_ipa_tx_desc *tmp_desc;
+
+	max_desc_cnt = hdd_ipa->hdd_ctx->config->IpaUcTxBufCount;
+
+	INIT_LIST_HEAD(&hdd_ipa->free_tx_desc_head);
+
+	tmp_desc = qdf_mem_malloc(sizeof(struct hdd_ipa_tx_desc)*max_desc_cnt);
+
+	if (!tmp_desc) {
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
+			    "Free Tx descriptor allocation failed");
+		return -ENOMEM;
+	}
+
+	hdd_ipa->tx_desc_list = tmp_desc;
+
+	qdf_spin_lock_bh(&hdd_ipa->q_lock);
+	for (i = 0; i < max_desc_cnt; i++) {
+		tmp_desc->id = i;
+		tmp_desc->ipa_tx_desc_ptr = NULL;
+		list_add_tail(&tmp_desc->link,
+			      &hdd_ipa->free_tx_desc_head);
+		tmp_desc++;
+	}
+
+	hdd_ipa->stats.num_tx_desc_q_cnt = 0;
+	hdd_ipa->stats.num_tx_desc_error = 0;
+
+	qdf_spin_unlock_bh(&hdd_ipa->q_lock);
+
+	return 0;
+}
+
+/**
  * hdd_ipa_setup_sys_pipe() - Setup all IPA Sys pipes
  * @hdd_ipa: Global HDD IPA context
  *
@@ -4844,6 +4888,11 @@ static int hdd_ipa_setup_sys_pipe(struct hdd_ipa_priv *hdd_ipa)
 		hdd_ipa->sys_pipe[HDD_IPA_RX_PIPE].conn_hdl_valid = 1;
 	}
 
+       /* Allocate free Tx desc list */
+	ret = hdd_ipa_alloc_tx_desc_list(hdd_ipa);
+	if (ret)
+		goto setup_sys_pipe_fail;
+
 	return ret;
 
 setup_sys_pipe_fail:
@@ -4866,6 +4915,10 @@ setup_sys_pipe_fail:
 static void hdd_ipa_teardown_sys_pipe(struct hdd_ipa_priv *hdd_ipa)
 {
 	int ret = 0, i;
+	uint32_t max_desc_cnt;
+	struct hdd_ipa_tx_desc *tmp_desc;
+	struct ipa_rx_data *ipa_tx_desc;
+
 	for (i = 0; i < HDD_IPA_MAX_SYSBAM_PIPE; i++) {
 		if (hdd_ipa->sys_pipe[i].conn_hdl_valid) {
 			ret =
@@ -4877,6 +4930,24 @@ static void hdd_ipa_teardown_sys_pipe(struct hdd_ipa_priv *hdd_ipa)
 
 			hdd_ipa->sys_pipe[i].conn_hdl_valid = 0;
 		}
+	}
+
+	if (hdd_ipa->tx_desc_list) {
+		max_desc_cnt = hdd_ipa->hdd_ctx->config->IpaUcTxBufCount;
+
+		qdf_spin_lock_bh(&hdd_ipa->q_lock);
+		for (i = 0; i < max_desc_cnt; i++) {
+			tmp_desc = hdd_ipa->tx_desc_list + i;
+			ipa_tx_desc = tmp_desc->ipa_tx_desc_ptr;
+			if (ipa_tx_desc)
+				ipa_free_skb(ipa_tx_desc);
+		}
+		tmp_desc = hdd_ipa->tx_desc_list;
+		hdd_ipa->tx_desc_list = NULL;
+		hdd_ipa->stats.num_tx_desc_q_cnt = 0;
+		hdd_ipa->stats.num_tx_desc_error = 0;
+		qdf_spin_unlock_bh(&hdd_ipa->q_lock);
+		qdf_mem_free(tmp_desc);
 	}
 }
 
@@ -4979,6 +5050,9 @@ static int hdd_ipa_register_interface(struct hdd_ipa_priv *hdd_ipa,
 
 	/* Call the ipa api to register interface */
 	ret = ipa_register_intf(ifname, &tx_intf, &rx_intf);
+
+	/* Register IPA Tx desc free callback */
+	qdf_nbuf_reg_free_cb(hdd_ipa_nbuf_cb);
 
 register_interface_fail:
 	qdf_mem_free(tx_prop);
@@ -6032,6 +6106,7 @@ static QDF_STATUS __hdd_ipa_init(hdd_context_t *hdd_ctx)
 
 	INIT_WORK(&hdd_ipa->pm_work, hdd_ipa_pm_flush);
 	qdf_spinlock_create(&hdd_ipa->pm_lock);
+	qdf_spinlock_create(&hdd_ipa->q_lock);
 	qdf_nbuf_queue_init(&hdd_ipa->pm_queue_head);
 
 	ret = hdd_ipa_setup_rm(hdd_ipa);
@@ -6165,6 +6240,7 @@ static QDF_STATUS __hdd_ipa_cleanup(hdd_context_t *hdd_ctx)
 	qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
 
 	qdf_spinlock_destroy(&hdd_ipa->pm_lock);
+	qdf_spinlock_destroy(&hdd_ipa->q_lock);
 
 	/* destory the interface lock */
 	for (i = 0; i < HDD_IPA_MAX_IFACE; i++) {
@@ -6172,24 +6248,6 @@ static QDF_STATUS __hdd_ipa_cleanup(hdd_context_t *hdd_ctx)
 		qdf_spinlock_destroy(&iface_context->interface_lock);
 	}
 
-	/* This should never hit but still make sure that there are no pending
-	 * descriptor in IPA hardware
-	 */
-	if (hdd_ipa->pending_hw_desc_cnt != 0) {
-		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
-			    "IPA Pending write done: %d Waiting!",
-			    hdd_ipa->pending_hw_desc_cnt);
-
-		for (i = 0; hdd_ipa->pending_hw_desc_cnt != 0 && i < 10; i++) {
-			usleep_range(100, 100);
-		}
-
-		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
-			    "IPA Pending write done: desc: %d %s(%d)!",
-			    hdd_ipa->pending_hw_desc_cnt,
-			    hdd_ipa->pending_hw_desc_cnt == 0 ? "completed"
-			    : "leak", i);
-	}
 	if (hdd_ipa_uc_is_enabled(hdd_ctx)) {
 		if (ipa_uc_dereg_rdyCB())
 			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
