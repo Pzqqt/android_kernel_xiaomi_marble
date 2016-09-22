@@ -62,20 +62,30 @@
 #include "wlan_hdd_nan_datapath.h"
 #include "pld_common.h"
 
-const uint8_t hdd_wmm_ac_to_highest_up[] = {
-	SME_QOS_WMM_UP_RESV,
-	SME_QOS_WMM_UP_EE,
-	SME_QOS_WMM_UP_VI,
-	SME_QOS_WMM_UP_NC
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+/*
+ * Mapping Linux AC interpretation to SME AC.
+ * Host has 5 tx queues, 4 flow-controlled queues for regular traffic and
+ * one non-flow-controlled queue for high priority control traffic(EOPOL, DHCP).
+ * The fifth queue is mapped to AC_VO to allow for proper prioritization.
+ */
+const uint8_t hdd_qdisc_ac_to_tl_ac[] = {
+	SME_AC_VO,
+	SME_AC_VI,
+	SME_AC_BE,
+	SME_AC_BK,
+	SME_AC_VO,
 };
 
-/* Mapping Linux AC interpretation to SME AC. */
+#else
 const uint8_t hdd_qdisc_ac_to_tl_ac[] = {
 	SME_AC_VO,
 	SME_AC_VI,
 	SME_AC_BE,
 	SME_AC_BK,
 };
+
+#endif
 
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 /**
