@@ -7546,6 +7546,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	}
 
 	hdd_cleanup_actionframe(pHddCtx, pAdapter);
+	wlan_hdd_cleanup_remain_on_channel_ctx(pAdapter);
 
 	mutex_lock(&pHddCtx->sap_lock);
 	if (test_bit(SOFTAP_BSS_STARTED, &pAdapter->event_flags)) {

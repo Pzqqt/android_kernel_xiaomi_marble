@@ -566,6 +566,9 @@ QDF_STATUS wma_start_scan(tp_wma_handle wma_handle,
 			 cmd.vdev_id, P2P_SCAN_TYPE_LISTEN);
 	WMA_LOGI("scan_id 0x%x, vdev_id %d, p2pScanType %d, msg_type 0x%x",
 		 cmd.scan_id, cmd.vdev_id, scan_req->p2pScanType, msg_type);
+
+	if (scan_req->p2pScanType)
+		cmd.scan_priority = WMI_SCAN_PRIORITY_MEDIUM;
 	/*
 	 * Cache vdev_id and scan_id because cmd is freed after calling
 	 * wmi_unified_cmd_send cmd. WMI internally frees cmd buffer after
