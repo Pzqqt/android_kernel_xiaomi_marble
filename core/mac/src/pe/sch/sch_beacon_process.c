@@ -494,8 +494,7 @@ void update_nss(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 		tpSirMacMgmtHdr mgmt_hdr)
 {
 	if (sta_ds->vhtSupportedRxNss != (beacon->OperatingMode.rxNSS + 1)) {
-		sta_ds->vhtSupportedRxNss =
-			beacon->OperatingMode.rxNSS + 1;
+		sta_ds->vhtSupportedRxNss = beacon->OperatingMode.rxNSS;
 		lim_set_nss_change(mac_ctx, session_entry,
 			sta_ds->vhtSupportedRxNss, sta_ds->staIndex,
 			mgmt_hdr->sa);
