@@ -4562,7 +4562,7 @@ QDF_STATUS wma_suspend_req(tp_wma_handle wma, enum qdf_suspend_type type)
 		wmi_set_runtime_pm_inprogress(wma->wmi_handle, true);
 
 	if (wma_is_wow_applicable(wma)) {
-		WMA_LOGE("WOW Suspend");
+		WMA_LOGI("WOW Suspend");
 		wma_apply_lphb(wma);
 
 		wma_configure_dynamic_wake_events(wma);
@@ -6414,7 +6414,7 @@ static int __wma_bus_suspend(enum qdf_suspend_type type)
 	}
 
 	if (type == QDF_SYSTEM_SUSPEND)
-		WMA_LOGE("%s: wow mode selected %d", __func__,
+		WMA_LOGI("%s: wow mode selected %d", __func__,
 				wma_is_wow_mode_selected(handle));
 
 	if (wma_is_wow_mode_selected(handle)) {
@@ -6469,7 +6469,7 @@ int __wma_bus_resume(WMA_HANDLE handle)
 	tp_wma_handle wma = handle;
 	QDF_STATUS status;
 
-	WMA_LOGE("%s: wow mode %d", __func__, wow_mode);
+	WMA_LOGI("%s: wow mode %d", __func__, wow_mode);
 
 	wma->wow_initial_wake_up = false;
 

@@ -541,8 +541,7 @@ static int __wlan_hdd_bus_suspend(pm_message_t state)
 		goto done;
 	}
 
-	err = qdf_status_to_os_return(
-			ol_txrx_bus_suspend());
+	err = qdf_status_to_os_return(ol_txrx_bus_suspend());
 	if (err)
 		goto done;
 
@@ -554,8 +553,8 @@ static int __wlan_hdd_bus_suspend(pm_message_t state)
 	if (err)
 		goto resume_wma;
 
-	hdd_err("suspend done");
-	return err;
+	hdd_info("suspend done");
+	return 0;
 
 resume_wma:
 	status = wma_bus_resume();
@@ -632,14 +631,14 @@ int __wlan_hdd_bus_suspend_noirq(void)
 		goto resume_hif_noirq;
 
 	hdd_info("suspend_noirq done");
-	return err;
+	return 0;
 
 resume_hif_noirq:
 	status = hif_bus_resume_noirq(hif_ctx);
 	QDF_BUG(!status);
 done:
 	if (err == -EAGAIN)
-		hdd_err("firmware not ready for suspend, try again");
+		hdd_err("Firmware attempting wakeup, try again");
 	else
 		hdd_err("suspend_noirq failed, status = %d", err);
 	return err;
@@ -706,7 +705,7 @@ static int __wlan_hdd_bus_resume(void)
 	status = ol_txrx_bus_resume();
 	QDF_BUG(!status);
 
-	hdd_err("resume done");
+	hdd_info("resume done");
 	return status;
 }
 
