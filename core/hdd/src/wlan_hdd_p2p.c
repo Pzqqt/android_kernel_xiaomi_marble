@@ -1568,14 +1568,13 @@ send_frame:
 
 	if ((QDF_STA_MODE == pAdapter->device_mode) ||
 	    (QDF_P2P_CLIENT_MODE == pAdapter->device_mode) ||
-	    (QDF_P2P_DEVICE_MODE == pAdapter->device_mode)
-	    ) {
+	    (QDF_P2P_DEVICE_MODE == pAdapter->device_mode)) {
 		uint8_t sessionId = pAdapter->sessionId;
 
 		if ((type == SIR_MAC_MGMT_FRAME) &&
 		    (subType == SIR_MAC_MGMT_ACTION) &&
-		    (buf[WLAN_HDD_PUBLIC_ACTION_FRAME_OFFSET] ==
-		     WLAN_HDD_PUBLIC_ACTION_FRAME)) {
+		     wlan_hdd_is_type_p2p_action(&buf
+				[WLAN_HDD_PUBLIC_ACTION_FRAME_BODY_OFFSET])) {
 			actionFrmType =
 				buf[WLAN_HDD_PUBLIC_ACTION_FRAME_TYPE_OFFSET];
 			hddLog(LOG1, "Tx Action Frame %u", actionFrmType);
