@@ -2101,11 +2101,21 @@ static void __lim_process_sme_reassoc_req(tpAniSirGlobal mac_ctx,
 			reassoc_req->bssDescription.bssId,
 			&session_id);
 	if (session_entry == NULL) {
-		lim_print_mac_addr(mac_ctx, reassoc_req->bssDescription.bssId,
-				LOGE);
 		lim_log(mac_ctx, LOGE,
 			FL("Session does not exist for given bssId"));
+		lim_print_mac_addr(mac_ctx, reassoc_req->bssDescription.bssId,
+				LOGE);
 		ret_code = eSIR_SME_INVALID_PARAMETERS;
+		lim_get_session_info(mac_ctx, (uint8_t *)msg_buf,
+				&sme_session_id, &transaction_id);
+		session_entry =
+			pe_find_session_by_sme_session_id(mac_ctx,
+					sme_session_id);
+		if (session_entry != NULL)
+			lim_handle_sme_join_result(mac_ctx,
+					eSIR_SME_INVALID_PARAMETERS,
+					eSIR_MAC_UNSPEC_FAILURE_STATUS,
+					session_entry);
 		goto end;
 	}
 #ifdef FEATURE_WLAN_DIAG_SUPPORT /* FEATURE_WLAN_DIAG_SUPPORT */

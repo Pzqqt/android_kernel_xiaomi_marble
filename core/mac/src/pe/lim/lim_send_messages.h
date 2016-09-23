@@ -106,4 +106,6 @@ tSirRetStatus lim_send_exclude_unencrypt_ind(tpAniSirGlobal pMac,
 #endif
 tSirRetStatus lim_send_ht40_obss_scanind(tpAniSirGlobal mac_ctx,
 						tpPESession session);
+void lim_handle_sme_join_result(tpAniSirGlobal,
+		tSirResultCodes, uint16_t, tpPESession);
 #endif

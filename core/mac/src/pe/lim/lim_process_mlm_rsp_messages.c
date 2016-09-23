@@ -53,8 +53,6 @@
 
 #define MAX_SUPPORTED_PEERS_WEP 16
 
-static void lim_handle_sme_join_result(tpAniSirGlobal, tSirResultCodes, uint16_t,
-				       tpPESession);
 void lim_process_mlm_join_cnf(tpAniSirGlobal, uint32_t *);
 void lim_process_mlm_auth_cnf(tpAniSirGlobal, uint32_t *);
 void lim_process_mlm_start_cnf(tpAniSirGlobal, uint32_t *);
@@ -1341,8 +1339,7 @@ void lim_process_mlm_set_keys_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
  *
  * Return: None
  */
-static void
-lim_handle_sme_join_result(tpAniSirGlobal mac_ctx,
+void lim_handle_sme_join_result(tpAniSirGlobal mac_ctx,
 	tSirResultCodes result_code, uint16_t prot_status_code,
 	tpPESession session_entry)
 {
