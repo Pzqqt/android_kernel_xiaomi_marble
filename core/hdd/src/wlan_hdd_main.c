@@ -1961,6 +1961,14 @@ static int __hdd_open(struct net_device *dev)
 					     WLAN_CONTROL_PATH);
 	}
 
+	/* Enable carrier and transmit queues for NDI */
+	if (WLAN_HDD_IS_NDI(adapter)) {
+		hdd_notice("Enabling Tx Queues");
+		wlan_hdd_netif_queue_control(adapter,
+			WLAN_START_ALL_NETIF_QUEUE_N_CARRIER,
+			WLAN_CONTROL_PATH);
+	}
+
 	return ret;
 }
 
@@ -2027,6 +2035,18 @@ static int __hdd_stop(struct net_device *dev)
 	hdd_notice("Disabling queues");
 	wlan_hdd_netif_queue_control(adapter, WLAN_NETIF_TX_DISABLE_N_CARRIER,
 				   WLAN_CONTROL_PATH);
+
+	/*
+	 * NAN data interface is different in some sense. The traffic on NDI is
+	 * bursty in nature and depends on the need to transfer. The service
+	 * layer may down the interface after the usage and up again when
+	 * required. In some sense, the NDI is expected to be available
+	 * (like SAP) iface until NDI delete request is issued by the service
+	 * layer. Skip BSS termination and adapter deletion for NAN Data
+	 * interface (NDI).
+	 */
+	if (WLAN_HDD_IS_NDI(adapter))
+		return 0;
 
 	/*
 	 * The interface is marked as down for outside world (aka kernel)
