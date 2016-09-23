@@ -232,6 +232,8 @@ EXPORT_SYMBOL(__qdf_nbuf_alloc);
  *
  * Return: none
  */
+
+#ifdef CONFIG_MCL
 void __qdf_nbuf_free(struct sk_buff *skb)
 {
 	if (qdf_nbuf_ipa_owned_get(skb))
@@ -240,6 +242,13 @@ void __qdf_nbuf_free(struct sk_buff *skb)
 	else
 		dev_kfree_skb_any(skb);
 }
+#else
+void __qdf_nbuf_free(struct sk_buff *skb)
+{
+	dev_kfree_skb_any(skb);
+}
+#endif
+
 EXPORT_SYMBOL(__qdf_nbuf_free);
 
 /**
