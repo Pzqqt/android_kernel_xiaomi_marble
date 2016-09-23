@@ -1392,10 +1392,7 @@ static void hdd_send_association_event(struct net_device *dev,
 							NULL,
 							pAdapter->device_mode);
 		}
-#ifdef WLAN_FEATURE_LPSS
-		pAdapter->rssi_send = false;
-		wlan_hdd_send_status_pkg(pAdapter, pHddStaCtx, 1, 0);
-#endif
+		hdd_lpass_notify_disconnect(pAdapter);
 #ifdef FEATURE_WLAN_TDLS
 		hdd_info("Disassoc: Check and enable or disable TDLS state ");
 		if ((pAdapter->device_mode == QDF_STA_MODE ||

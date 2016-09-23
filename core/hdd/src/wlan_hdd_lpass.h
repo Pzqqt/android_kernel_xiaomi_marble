@@ -37,6 +37,17 @@ void wlan_hdd_send_status_pkg(hdd_adapter_t *adapter,
 			      uint8_t is_on, uint8_t is_connected);
 
 /**
+ * hdd_lpass_notify_disconnect() - Notify LPASS of interface disconnect
+ * @adapter: The adapter that connected
+ *
+ * This function is used to notify the LPASS feature that an adapter
+ * has disconnected.
+ *
+ * Return: none
+ */
+void hdd_lpass_notify_disconnect(struct hdd_adapter_s *adapter);
+
+/**
  * hdd_lpass_notify_mode_change() - Notify LPASS of interface mode change
  * @adapter: The adapter whose mode was changed
  *
@@ -76,6 +87,9 @@ static inline void wlan_hdd_send_status_pkg(hdd_adapter_t *adapter,
 	return;
 }
 
+static inline void hdd_lpass_notify_disconnect(struct hdd_adapter_s *adapter)
+{
+}
 static inline void hdd_lpass_notify_mode_change(struct hdd_adapter_s *adapter)
 {
 }

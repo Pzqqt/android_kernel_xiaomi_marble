@@ -262,6 +262,24 @@ static void wlan_hdd_send_all_scan_intf_info(struct hdd_context_s *hdd_ctx)
 }
 
 /**
+ * hdd_lpass_notify_disconnect() - Notify LPASS of interface disconnect
+ * @adapter: The adapter that connected
+ *
+ * This function is used to notify the LPASS feature that an adapter
+ * has disconnected.
+ *
+ * Return: none
+ */
+void hdd_lpass_notify_disconnect(struct hdd_adapter_s *adapter)
+{
+	struct hdd_station_ctx *sta_ctx;
+
+	adapter->rssi_send = false;
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	wlan_hdd_send_status_pkg(adapter, sta_ctx, 1, 0);
+}
+
+/**
  * hdd_lpass_notify_mode_change() - Notify LPASS of interface mode change
  * @adapter: The adapter whose mode was changed
  *
