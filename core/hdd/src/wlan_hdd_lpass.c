@@ -229,7 +229,7 @@ static void wlan_hdd_send_version_pkg(uint32_t fw_version,
  *
  * Return: none
  */
-void wlan_hdd_send_all_scan_intf_info(hdd_context_t *hdd_ctx)
+static void wlan_hdd_send_all_scan_intf_info(struct hdd_context_s *hdd_ctx)
 {
 	hdd_adapter_t *adapter = NULL;
 	hdd_adapter_list_node_t *node = NULL, *next = NULL;
@@ -259,6 +259,24 @@ void wlan_hdd_send_all_scan_intf_info(hdd_context_t *hdd_ctx)
 
 	if (!scan_intf_found)
 		wlan_hdd_send_status_pkg(adapter, NULL, 1, 0);
+}
+
+/**
+ * hdd_lpass_notify_mode_change() - Notify LPASS of interface mode change
+ * @adapter: The adapter whose mode was changed
+ *
+ * This function is used to notify the LPASS feature that an adapter
+ * had its mode changed.
+ *
+ * Return: none
+ */
+/* implementation note: when one changes we notify them all */
+void hdd_lpass_notify_mode_change(struct hdd_adapter_s *adapter)
+{
+	struct hdd_context_s *hdd_ctx;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	wlan_hdd_send_all_scan_intf_info(hdd_ctx);
 }
 
 /**

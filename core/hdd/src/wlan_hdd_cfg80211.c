@@ -9268,7 +9268,7 @@ done:
 	/* Set bitmask based on updated value */
 	cds_set_concurrency_mode(pAdapter->device_mode);
 
-	wlan_hdd_send_all_scan_intf_info(pHddCtx);
+	hdd_lpass_notify_mode_change(pAdapter);
 
 	EXIT();
 	return 0;

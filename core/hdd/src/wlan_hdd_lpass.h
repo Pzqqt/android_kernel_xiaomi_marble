@@ -29,12 +29,23 @@
 #define WLAN_HDD_LPASS_H
 
 struct hdd_context_s;
+struct hdd_adapter_s;
 
 #ifdef WLAN_FEATURE_LPSS
 void wlan_hdd_send_status_pkg(hdd_adapter_t *adapter,
 			      hdd_station_ctx_t *sta_ctx,
 			      uint8_t is_on, uint8_t is_connected);
-void wlan_hdd_send_all_scan_intf_info(hdd_context_t *hdd_ctx);
+
+/**
+ * hdd_lpass_notify_mode_change() - Notify LPASS of interface mode change
+ * @adapter: The adapter whose mode was changed
+ *
+ * This function is used to notify the LPASS feature that an adapter
+ * had its mode changed.
+ *
+ * Return: none
+ */
+void hdd_lpass_notify_mode_change(struct hdd_adapter_s *adapter);
 
 /**
  * hdd_lpass_notify_start() - Notify LPASS of driver start
@@ -65,9 +76,8 @@ static inline void wlan_hdd_send_status_pkg(hdd_adapter_t *adapter,
 	return;
 }
 
-static inline void wlan_hdd_send_all_scan_intf_info(hdd_context_t *hdd_ctx)
+static inline void hdd_lpass_notify_mode_change(struct hdd_adapter_s *adapter)
 {
-	return;
 }
 static inline void hdd_lpass_notify_start(struct hdd_context_s *hdd_ctx) { }
 static inline void hdd_lpass_notify_stop(struct hdd_context_s *hdd_ctx) { }
