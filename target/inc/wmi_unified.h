@@ -4636,6 +4636,17 @@ typedef enum {
 	WMI_MESH_STATS = 6,
 } wmi_link_iface_type;
 
+/* channel operating width */
+typedef enum {
+	WMI_CHAN_WIDTH_20    = 0,
+	WMI_CHAN_WIDTH_40    = 1,
+	WMI_CHAN_WIDTH_80    = 2,
+	WMI_CHAN_WIDTH_160   = 3,
+	WMI_CHAN_WIDTH_80P80 = 4,
+	WMI_CHAN_WIDTH_5     = 5,
+	WMI_CHAN_WIDTH_10    = 6,
+} wmi_channel_width;
+
 /*Clear stats*/
 typedef struct {
 	A_UINT32 tlv_header;
