@@ -160,9 +160,9 @@ static int wlan_hdd_gen_wlan_version_pack(struct wlan_version_data *data,
  *
  * Return: none
  */
-void wlan_hdd_send_status_pkg(hdd_adapter_t *adapter,
-			      hdd_station_ctx_t *sta_ctx,
-			      uint8_t is_on, uint8_t is_connected)
+static void wlan_hdd_send_status_pkg(struct hdd_adapter_s *adapter,
+				     struct hdd_station_ctx *sta_ctx,
+				     uint8_t is_on, uint8_t is_connected)
 {
 	int ret = 0;
 	struct wlan_status_data data;
@@ -259,6 +259,32 @@ static void wlan_hdd_send_all_scan_intf_info(struct hdd_context_s *hdd_ctx)
 
 	if (!scan_intf_found)
 		wlan_hdd_send_status_pkg(adapter, NULL, 1, 0);
+}
+
+/**
+ * hdd_lpass_notify_connect() - Notify LPASS of interface connect
+ * @adapter: The adapter that connected
+ *
+ * This function is used to notify the LPASS feature that an adapter
+ * has connected.
+ *
+ * Return: none
+ */
+void hdd_lpass_notify_connect(struct hdd_adapter_s *adapter)
+{
+	struct hdd_station_ctx *sta_ctx;
+
+	/* only send once per connection */
+	if (adapter->rssi_send)
+		return;
+
+	/* don't send if driver is unloading */
+	if (cds_is_driver_unloading())
+		return;
+
+	adapter->rssi_send = true;
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	wlan_hdd_send_status_pkg(adapter, sta_ctx, 1, 1);
 }
 
 /**

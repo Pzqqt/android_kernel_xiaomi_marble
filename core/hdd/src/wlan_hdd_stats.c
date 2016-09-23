@@ -1700,13 +1700,13 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	sinfo->filled |= BIT(NL80211_STA_INFO_SIGNAL);
 #endif
 
-#ifdef WLAN_FEATURE_LPSS
-	if (!pAdapter->rssi_send) {
-		pAdapter->rssi_send = true;
-		if (cds_is_driver_unloading())
-			wlan_hdd_send_status_pkg(pAdapter, pHddStaCtx, 1, 1);
-	}
-#endif
+	/*
+	 * we notify connect to lpass here instead of during actual
+	 * connect processing because rssi info is not accurate during
+	 * actual connection.  lpass will ensure the notification is
+	 * only processed once per association.
+	 */
+	hdd_lpass_notify_connect(pAdapter);
 
 	wlan_hdd_get_station_stats(pAdapter);
 	rate_flags = pAdapter->hdd_stats.ClassA_stat.tx_rate_flags;

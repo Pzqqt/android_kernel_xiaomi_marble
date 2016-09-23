@@ -32,9 +32,16 @@ struct hdd_context_s;
 struct hdd_adapter_s;
 
 #ifdef WLAN_FEATURE_LPSS
-void wlan_hdd_send_status_pkg(hdd_adapter_t *adapter,
-			      hdd_station_ctx_t *sta_ctx,
-			      uint8_t is_on, uint8_t is_connected);
+/**
+ * hdd_lpass_notify_connect() - Notify LPASS of interface connect
+ * @adapter: The adapter that connected
+ *
+ * This function is used to notify the LPASS feature that an adapter
+ * has connected.
+ *
+ * Return: none
+ */
+void hdd_lpass_notify_connect(struct hdd_adapter_s *adapter);
 
 /**
  * hdd_lpass_notify_disconnect() - Notify LPASS of interface disconnect
@@ -80,13 +87,9 @@ void hdd_lpass_notify_start(struct hdd_context_s *hdd_ctx);
  */
 void hdd_lpass_notify_stop(struct hdd_context_s *hdd_ctx);
 #else
-static inline void wlan_hdd_send_status_pkg(hdd_adapter_t *adapter,
-					    hdd_station_ctx_t *sta_ctx,
-					    uint8_t is_on, uint8_t is_connected)
+static inline void hdd_lpass_notify_connect(struct hdd_adapter_s *adapter)
 {
-	return;
 }
-
 static inline void hdd_lpass_notify_disconnect(struct hdd_adapter_s *adapter)
 {
 }
