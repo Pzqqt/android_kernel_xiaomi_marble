@@ -277,3 +277,17 @@ void hdd_lpass_notify_start(struct hdd_context_s *hdd_ctx)
 				  hdd_ctx->target_hw_version,
 				  hdd_ctx->target_hw_name);
 }
+
+/**
+ * hdd_lpass_notify_stop() - Notify LPASS of driver stop
+ * @hdd_ctx: The global HDD context
+ *
+ * This function is used to notify the LPASS feature that the wlan
+ * driver has stopped
+ *
+ * Return: none
+ */
+void hdd_lpass_notify_stop(struct hdd_context_s *hdd_ctx)
+{
+	wlan_hdd_send_status_pkg(NULL, NULL, 0, 0);
+}

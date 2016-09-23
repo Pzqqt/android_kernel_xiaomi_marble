@@ -1469,7 +1469,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	wlansap_global_deinit();
 	hdd_wlan_stop_modules(pHddCtx, true);
 
-	wlan_hdd_send_status_pkg(NULL, NULL, 0, 0);
+	hdd_lpass_notify_stop(pHddCtx);
 
 	hdd_alert("WLAN driver shutdown complete");
 	return QDF_STATUS_SUCCESS;

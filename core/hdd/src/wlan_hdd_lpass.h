@@ -46,6 +46,17 @@ void wlan_hdd_send_all_scan_intf_info(hdd_context_t *hdd_ctx);
  * Return: none
  */
 void hdd_lpass_notify_start(struct hdd_context_s *hdd_ctx);
+
+/**
+ * hdd_lpass_notify_stop() - Notify LPASS of driver stop
+ * @hdd_ctx: The global HDD context
+ *
+ * This function is used to notify the LPASS feature that the wlan
+ * driver has stopped.
+ *
+ * Return: none
+ */
+void hdd_lpass_notify_stop(struct hdd_context_s *hdd_ctx);
 #else
 static inline void wlan_hdd_send_status_pkg(hdd_adapter_t *adapter,
 					    hdd_station_ctx_t *sta_ctx,
@@ -59,6 +70,7 @@ static inline void wlan_hdd_send_all_scan_intf_info(hdd_context_t *hdd_ctx)
 	return;
 }
 static inline void hdd_lpass_notify_start(struct hdd_context_s *hdd_ctx) { }
+static inline void hdd_lpass_notify_stop(struct hdd_context_s *hdd_ctx) { }
 #endif
 
 #endif /* WLAN_HDD_LPASS_H */

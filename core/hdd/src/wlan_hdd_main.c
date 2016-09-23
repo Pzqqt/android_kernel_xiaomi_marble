@@ -4685,7 +4685,7 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 	wiphy_unregister(wiphy);
 	wlan_hdd_cfg80211_deinit(wiphy);
 
-	wlan_hdd_send_status_pkg(NULL, NULL, 0, 0);
+	hdd_lpass_notify_stop(hdd_ctx);
 
 	hdd_exit_netlink_services(hdd_ctx);
 	mutex_destroy(&hdd_ctx->iface_change_lock);
