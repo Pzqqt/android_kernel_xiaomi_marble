@@ -7738,10 +7738,7 @@ int hdd_wlan_startup(struct device *dev)
 			  hdd_bus_bw_compute_cbk, (void *)hdd_ctx);
 #endif
 
-	wlan_hdd_send_all_scan_intf_info(hdd_ctx);
-	wlan_hdd_send_version_pkg(hdd_ctx->target_fw_version,
-				  hdd_ctx->target_hw_version,
-				  hdd_ctx->target_hw_name);
+	hdd_lpass_notify_start(hdd_ctx);
 
 	if (hdd_ctx->rps)
 		hdd_set_rps_cpu_mask(hdd_ctx);

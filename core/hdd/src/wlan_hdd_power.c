@@ -1555,10 +1555,7 @@ QDF_STATUS hdd_wlan_re_init(void)
 		goto err_cds_disable;
 	}
 
-	wlan_hdd_send_all_scan_intf_info(pHddCtx);
-	wlan_hdd_send_version_pkg(pHddCtx->target_fw_version,
-				  pHddCtx->target_hw_version,
-				  pHddCtx->target_hw_name);
+	hdd_lpass_notify_start(pHddCtx);
 	qdf_status = wlansap_global_init();
 	if (QDF_IS_STATUS_ERROR(qdf_status))
 		goto err_cds_disable;

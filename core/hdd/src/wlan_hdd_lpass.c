@@ -196,8 +196,9 @@ void wlan_hdd_send_status_pkg(hdd_adapter_t *adapter,
  *
  * Return: none
  */
-void wlan_hdd_send_version_pkg(uint32_t fw_version,
-			       uint32_t chip_id, const char *chip_name)
+static void wlan_hdd_send_version_pkg(uint32_t fw_version,
+				      uint32_t chip_id,
+				      const char *chip_name)
 {
 	int ret = 0;
 	struct wlan_version_data data;
@@ -258,4 +259,21 @@ void wlan_hdd_send_all_scan_intf_info(hdd_context_t *hdd_ctx)
 
 	if (!scan_intf_found)
 		wlan_hdd_send_status_pkg(adapter, NULL, 1, 0);
+}
+
+/**
+ * hdd_lpass_notify_start() - Notify LPASS of driver start
+ * @hdd_ctx: The global HDD context
+ *
+ * This function is used to notify the LPASS feature that the wlan
+ * driver has (re-)started.
+ *
+ * Return: none
+ */
+void hdd_lpass_notify_start(struct hdd_context_s *hdd_ctx)
+{
+	wlan_hdd_send_all_scan_intf_info(hdd_ctx);
+	wlan_hdd_send_version_pkg(hdd_ctx->target_fw_version,
+				  hdd_ctx->target_hw_version,
+				  hdd_ctx->target_hw_name);
 }
