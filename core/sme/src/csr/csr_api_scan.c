@@ -6854,7 +6854,6 @@ static void csr_send_scan_abort(tpAniSirGlobal mac_ctx,
 		scan_id, session_id);
 	status = cds_send_mb_message_to_mac(msg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		qdf_mem_free(msg);
 		sms_log(mac_ctx, LOGE,
 			FL("Failed to send abort scan.scan_id %d session %d"),
 			scan_id, session_id);
@@ -7378,7 +7377,6 @@ void csr_scan_active_list_timeout_handle(void *userData)
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac_ctx, LOGE,
 			FL(" Failed to post message to LIM"));
-		qdf_mem_free(msg);
 	}
 	csr_save_scan_results(mac_ctx, scan_cmd->u.scanCmd.reason,
 		scan_cmd->sessionId);
