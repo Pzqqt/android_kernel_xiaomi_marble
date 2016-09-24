@@ -38,7 +38,9 @@
 int wlan_hdd_register_driver(void);
 void wlan_hdd_unregister_driver(void);
 int wlan_hdd_bus_suspend(pm_message_t state);
+int wlan_hdd_bus_suspend_noirq(void);
 int wlan_hdd_bus_resume(void);
+int wlan_hdd_bus_resume_noirq(void);
 void hdd_hif_close(void *hif_ctx);
 int hdd_hif_open(struct device *dev, void *bdev, const hif_bus_id *bid,
 		 enum qdf_bus_type bus_type, bool reinit);

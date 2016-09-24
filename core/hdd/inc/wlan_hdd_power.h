@@ -200,4 +200,26 @@ void hdd_wlan_suspend_resume_event(uint8_t state) {}
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
 
+/*
+ * Unit-test suspend/resume is a testing feature that allows putting firmware
+ * into WoW suspend irrespective of Apps suspend status. It emulates the chain
+ * of events that occur durring normal system-level suspend/resume, such as
+ * initiating all of the suspend/resume stages in the correct order, and
+ * enabling/disabling appropriate copy engine irqs.
+ */
+#ifdef WLAN_SUSPEND_RESUME_TEST
+int hdd_wlan_fake_apps_resume(struct wiphy *wiphy);
+int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy);
+#else
+static inline int hdd_wlan_fake_apps_resume(struct wiphy *wiphy)
+{
+	return 0;
+}
+
+static inline int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy)
+{
+	return 0;
+}
+#endif /* WLAN_SUSPEND_RESUME_TEST */
+
 #endif /* __WLAN_HDD_POWER_H */
