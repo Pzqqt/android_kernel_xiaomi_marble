@@ -28,10 +28,24 @@
 #if !defined(WLAN_HDD_LPASS_H)
 #define WLAN_HDD_LPASS_H
 
+struct cds_config_info;
 struct hdd_context_s;
 struct hdd_adapter_s;
 
 #ifdef WLAN_FEATURE_LPSS
+/**
+ * hdd_lpass_populate_cds_config() - Populate LPASS configuration
+ * @cds_config: CDS configuration to populate with lpass info
+ * @hdd_ctx: HDD global context which contains lpass information
+ *
+ * This function seeds the CDS configuration structure with
+ * lpass-specific information gleaned from the HDD context.
+ *
+ * Return: none
+ */
+void hdd_lpass_populate_cds_config(struct cds_config_info *cds_config,
+				   struct hdd_context_s *hdd_ctx);
+
 /**
  * hdd_lpass_notify_connect() - Notify LPASS of interface connect
  * @adapter: The adapter that connected
@@ -87,6 +101,11 @@ void hdd_lpass_notify_start(struct hdd_context_s *hdd_ctx);
  */
 void hdd_lpass_notify_stop(struct hdd_context_s *hdd_ctx);
 #else
+static inline
+void hdd_lpass_populate_cds_config(struct cds_config_info *cds_config,
+				   struct hdd_context_s *hdd_ctx)
+{
+}
 static inline void hdd_lpass_notify_connect(struct hdd_adapter_s *adapter)
 {
 }

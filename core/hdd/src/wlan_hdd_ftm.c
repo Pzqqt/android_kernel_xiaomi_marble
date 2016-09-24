@@ -48,6 +48,7 @@
 #include "i_cds_packet.h"
 #include "cds_reg_service.h"
 #include "wlan_hdd_main.h"
+#include "wlan_hdd_lpass.h"
 #include "qwlan_version.h"
 #include "wma_types.h"
 #include "cfg_api.h"
@@ -56,7 +57,6 @@
 #include "bmi.h"
 #include "ol_fw.h"
 #include "wlan_hdd_cfg80211.h"
-#include "wlan_hdd_main.h"
 #include "hif.h"
 #endif
 
@@ -114,18 +114,6 @@ static uint32_t wlan_ftm_postmsg(uint8_t *cmd_ptr, uint16_t cmd_len)
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef WLAN_FEATURE_LPSS
-static inline void hdd_is_lpass_supported(struct cds_config_info *cds_cfg,
-						hdd_context_t *hdd_ctx)
-{
-	cds_cfg->is_lpass_enabled = hdd_ctx->config->enable_lpass_support;
-}
-#else
-static inline void hdd_is_lpass_supported(struct cds_config_info *cds_cfg,
-						hdd_context_t *hdd_ctx)
-{ }
-#endif
-
 /**
  * hdd_update_cds_config_ftm() - API to update cds configuration parameters
  * for FTM mode.
@@ -138,17 +126,16 @@ int hdd_update_cds_config_ftm(hdd_context_t *hdd_ctx)
 {
 	struct cds_config_info *cds_cfg;
 
-	cds_cfg = qdf_mem_malloc(sizeof(struct cds_config_info));
+	cds_cfg = qdf_mem_malloc(sizeof(*cds_cfg));
 	if (!cds_cfg) {
 		hdd_err("failed to allocate cds config");
 		return -ENOMEM;
 	}
-	qdf_mem_zero(cds_cfg, sizeof(struct cds_config_info));
 
 	cds_cfg->driver_type = eDRIVER_TYPE_MFG;
 	cds_cfg->powersave_offload_enabled =
 			hdd_ctx->config->enablePowersaveOffload;
-	hdd_is_lpass_supported(cds_cfg, hdd_ctx);
+	hdd_lpass_populate_cds_config(cds_cfg, hdd_ctx);
 	/* UMA is supported in hardware for performing the
 	 * frame translation 802.11 <-> 802.3
 	 */

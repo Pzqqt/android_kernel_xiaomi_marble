@@ -262,6 +262,22 @@ static void wlan_hdd_send_all_scan_intf_info(struct hdd_context_s *hdd_ctx)
 }
 
 /**
+ * hdd_lpass_populate_cds_config() - Populate LPASS configuration
+ * @cds_config: CDS configuration to populate with lpass info
+ * @hdd_ctx: HDD global context which contains lpass information
+ *
+ * This function seeds the CDS configuration structure with
+ * lpass-specific information gleaned from the HDD context.
+ *
+ * Return: none
+ */
+void hdd_lpass_populate_cds_config(struct cds_config_info *cds_config,
+				   struct hdd_context_s *hdd_ctx)
+{
+	cds_config->is_lpass_enabled = hdd_ctx->config->enable_lpass_support;
+}
+
+/**
  * hdd_lpass_notify_connect() - Notify LPASS of interface connect
  * @adapter: The adapter that connected
  *
