@@ -9156,18 +9156,6 @@ void hdd_set_conparam(uint32_t con_param)
 	curr_con_mode = con_param;
 }
 
-#ifdef WLAN_FEATURE_LPSS
-static inline bool hdd_is_lpass_supported(hdd_context_t *hdd_ctx)
-{
-	return hdd_ctx->config->enable_lpass_support;
-}
-#else
-static inline bool hdd_is_lpass_supported(hdd_context_t *hdd_ctx)
-{
-	return false;
-}
-#endif
-
 /**
  * hdd_clean_up_pre_cac_interface() - Clean up the pre cac interface
  * @hdd_ctx: HDD context
@@ -9219,7 +9207,7 @@ static void hdd_update_ol_config(hdd_context_t *hdd_ctx)
 	cfg.enable_uart_print = hdd_ctx->config->enablefwprint;
 	cfg.enable_fw_log = hdd_ctx->config->enable_fw_log;
 	cfg.enable_ramdump_collection = hdd_ctx->config->is_ramdump_enabled;
-	cfg.enable_lpass_support = hdd_is_lpass_supported(hdd_ctx);
+	cfg.enable_lpass_support = hdd_lpass_is_supported(hdd_ctx);
 
 	ol_init_ini_config(ol_ctx, &cfg);
 }

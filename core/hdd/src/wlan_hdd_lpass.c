@@ -369,3 +369,15 @@ void hdd_lpass_notify_stop(struct hdd_context_s *hdd_ctx)
 {
 	wlan_hdd_send_status_pkg(NULL, NULL, 0, 0);
 }
+
+/**
+ * hdd_lpass_is_supported() - Is lpass feature supported?
+ * @hdd_ctx: The global HDD context
+ *
+ * Return: true if feature is enabled and supported by firmware, false
+ * if the feature is not enabled or not supported by firmware.
+ */
+bool hdd_lpass_is_supported(struct hdd_context_s *hdd_ctx)
+{
+	return hdd_ctx->config->enable_lpass_support;
+}

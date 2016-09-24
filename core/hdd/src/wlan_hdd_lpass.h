@@ -100,6 +100,16 @@ void hdd_lpass_notify_start(struct hdd_context_s *hdd_ctx);
  * Return: none
  */
 void hdd_lpass_notify_stop(struct hdd_context_s *hdd_ctx);
+
+/**
+ * hdd_lpass_is_supported() - Is lpass feature supported?
+ * @hdd_ctx: The global HDD context
+ *
+ * Return: true if feature is enabled and supported by firmware, false
+ * if the feature is not enabled or not supported by firmware.
+ */
+bool hdd_lpass_is_supported(struct hdd_context_s *hdd_ctx);
+
 #else
 static inline
 void hdd_lpass_populate_cds_config(struct cds_config_info *cds_config,
@@ -117,6 +127,10 @@ static inline void hdd_lpass_notify_mode_change(struct hdd_adapter_s *adapter)
 }
 static inline void hdd_lpass_notify_start(struct hdd_context_s *hdd_ctx) { }
 static inline void hdd_lpass_notify_stop(struct hdd_context_s *hdd_ctx) { }
+static inline bool hdd_lpass_is_supported(struct hdd_context_s *hdd_ctx)
+{
+	return false;
+}
 #endif
 
 #endif /* WLAN_HDD_LPASS_H */
