@@ -424,6 +424,7 @@ void wma_vdev_detach_callback(void *ctx)
 		return;
 	}
 	param = (struct del_sta_self_params *) iface->del_staself_req;
+	iface->del_staself_req = NULL;
 	WMA_LOGE("%s: sending eWNI_SME_DEL_STA_SELF_RSP for vdev %d",
 		 __func__, param->session_id);
 	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
@@ -1483,7 +1484,9 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 				     0);
 		}
 
-		if (iface->del_staself_req) {
+		if ((iface->del_staself_req != NULL) &&
+			(iface->type == WMI_VDEV_TYPE_AP) &&
+			(iface->sub_type == WMI_UNIFIED_VDEV_SUBTYPE_P2P_GO)) {
 			WMA_LOGA("scheduling defered deletion (vdev id %x)",
 				 resp_event->vdev_id);
 			wma_vdev_detach(wma, iface->del_staself_req, 1);
@@ -2520,60 +2523,14 @@ void wma_vdev_resp_timer(void *data)
 		qdf_mem_zero(iface, sizeof(*iface));
 	} else if (tgt_req->msg_type == WMA_ADD_BSS_REQ) {
 		tpAddBssParams params = (tpAddBssParams) tgt_req->user_data;
-		tDeleteBssParams *del_bss_params =
-			qdf_mem_malloc(sizeof(tDeleteBssParams));
-		if (NULL == del_bss_params) {
-			WMA_LOGE("Failed to allocate memory for del_bss_params");
-			peer = ol_txrx_find_peer_by_addr(pdev, params->bssId,
-							  &peer_id);
-			goto error0;
-		}
-
-		del_bss_params->status = params->status =
-						 QDF_STATUS_FW_MSG_TIMEDOUT;
-		del_bss_params->sessionId = params->sessionId;
-		del_bss_params->bssIdx = params->bssIdx;
-		qdf_mem_copy(del_bss_params->bssid, params->bssId,
-			     sizeof(tSirMacAddr));
 
 		WMA_LOGA("%s: WMA_ADD_BSS_REQ timedout", __func__);
-		peer = ol_txrx_find_peer_by_addr(pdev, params->bssId, &peer_id);
-		if (!peer) {
-			WMA_LOGP("%s: Failed to find peer %pM", __func__,
-				 params->bssId);
-		}
-		msg = wma_fill_vdev_req(wma, tgt_req->vdev_id, WMA_DELETE_BSS_REQ,
-					  WMA_TARGET_REQ_TYPE_VDEV_STOP,
-					  del_bss_params,
-					  WMA_VDEV_STOP_REQUEST_TIMEOUT);
-		if (!msg) {
-			WMA_LOGP("%s: Failed to fill vdev request for vdev_id %d",
-				__func__, tgt_req->vdev_id);
-			goto error0;
-		}
-		WMA_LOGD("%s, vdev_id: %d, pausing tx_ll_queue for VDEV_STOP (WDA_ADD_BSS_REQ timedout)",
-			 __func__, tgt_req->vdev_id);
-		ol_txrx_vdev_pause(wma->interfaces[tgt_req->vdev_id].handle,
-				   OL_TXQ_PAUSE_REASON_VDEV_STOP);
-		wma->interfaces[tgt_req->vdev_id].pause_bitmap |=
-							(1 << PAUSE_TYPE_HOST);
-		if (wmi_unified_vdev_stop_send
-			    (wma->wmi_handle, tgt_req->vdev_id)) {
-			WMA_LOGP("%s: %d Failed to send vdev stop", __func__,
-				 __LINE__);
-			wma_remove_vdev_req(wma, tgt_req->vdev_id,
-					    WMA_TARGET_REQ_TYPE_VDEV_STOP);
-			goto error0;
-		}
 		WMA_LOGI("%s: bssid %pM vdev_id %d", __func__, params->bssId,
 			 tgt_req->vdev_id);
 		wma_send_msg(wma, WMA_ADD_BSS_RSP, (void *)params, 0);
+		QDF_ASSERT(0);
 		goto free_tgt_req;
-error0:
-		if (peer)
-			wma_remove_peer(wma, params->bssId,
-					tgt_req->vdev_id, peer, false);
-		wma_send_msg(wma, WMA_ADD_BSS_RSP, (void *)params, 0);
+
 	} else if (tgt_req->msg_type == WMA_OCB_SET_CONFIG_CMD) {
 		struct wma_txrx_node *iface;
 
