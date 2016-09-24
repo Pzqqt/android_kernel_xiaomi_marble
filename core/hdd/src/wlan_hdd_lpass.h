@@ -29,10 +29,24 @@
 #define WLAN_HDD_LPASS_H
 
 struct cds_config_info;
+struct wma_tgt_cfg;
 struct hdd_context_s;
 struct hdd_adapter_s;
 
 #ifdef WLAN_FEATURE_LPSS
+/**
+ * hdd_lpass_target_config() - Handle LPASS target configuration
+ * @hdd_ctx: HDD global context where lpass information is stored
+ * @target_config: Target configuration containing lpass info
+ *
+ * This function updates the HDD context with lpass-specific
+ * information provided by the target.
+ *
+ * Return: none
+ */
+void hdd_lpass_target_config(struct hdd_context_s *hdd_ctx,
+			     struct wma_tgt_cfg *target_config);
+
 /**
  * hdd_lpass_populate_cds_config() - Populate LPASS configuration
  * @cds_config: CDS configuration to populate with lpass info
@@ -111,6 +125,10 @@ void hdd_lpass_notify_stop(struct hdd_context_s *hdd_ctx);
 bool hdd_lpass_is_supported(struct hdd_context_s *hdd_ctx);
 
 #else
+static inline void hdd_lpass_target_config(struct hdd_context_s *hdd_ctx,
+					   struct wma_tgt_cfg *target_config)
+{
+}
 static inline
 void hdd_lpass_populate_cds_config(struct cds_config_info *cds_config,
 				   struct hdd_context_s *hdd_ctx)

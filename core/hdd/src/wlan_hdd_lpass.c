@@ -262,6 +262,22 @@ static void wlan_hdd_send_all_scan_intf_info(struct hdd_context_s *hdd_ctx)
 }
 
 /**
+ * hdd_lpass_target_config() - Handle LPASS target configuration
+ * @hdd_ctx: HDD global context where lpass information is stored
+ * @target_config: Target configuration containing lpass info
+ *
+ * This function updates the HDD context with lpass-specific
+ * information provided by the target.
+ *
+ * Return: none
+ */
+void hdd_lpass_target_config(struct hdd_context_s *hdd_ctx,
+			     struct wma_tgt_cfg *target_config)
+{
+	hdd_ctx->lpss_support = target_config->lpss_support;
+}
+
+/**
  * hdd_lpass_populate_cds_config() - Populate LPASS configuration
  * @cds_config: CDS configuration to populate with lpass info
  * @hdd_ctx: HDD global context which contains lpass information

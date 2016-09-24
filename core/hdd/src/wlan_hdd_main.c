@@ -40,9 +40,6 @@
 #include <cds_api.h>
 #include <cds_sched.h>
 #include <linux/cpu.h>
-#ifdef WLAN_FEATURE_LPSS
-#include <cds_utils.h>
-#endif
 #include <linux/etherdevice.h>
 #include <linux/firmware.h>
 #include <wlan_hdd_tx_rx.h>
@@ -1448,10 +1445,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 
 	hdd_ctx->max_intf_count = cfg->max_intf_count;
 
-#ifdef WLAN_FEATURE_LPSS
-	hdd_ctx->lpss_support = cfg->lpss_support;
-#endif
-
+	hdd_lpass_target_config(hdd_ctx, cfg);
 	hdd_wlan_set_egap_support(hdd_ctx, cfg);
 
 	hdd_ctx->ap_arpns_support = cfg->ap_arpns_support;
