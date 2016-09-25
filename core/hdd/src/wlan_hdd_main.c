@@ -93,6 +93,7 @@
 #include "wlan_hdd_driver_ops.h"
 #include "epping_main.h"
 #include "wlan_hdd_memdump.h"
+#include "wlan_hdd_he.h"
 
 #include <wlan_hdd_ipa.h>
 #include "hif.h"
@@ -1452,6 +1453,10 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	hdd_update_tgt_ht_cap(hdd_ctx, &cfg->ht_cap);
 
 	hdd_update_tgt_vht_cap(hdd_ctx, &cfg->vht_cap);
+	if (cfg->services.en_11ax) {
+		hdd_info("11AX: 11ax is enabled - update HDD config");
+		hdd_update_tgt_he_cap(hdd_ctx, cfg);
+	}
 
 	hdd_update_vdev_nss(hdd_ctx);
 

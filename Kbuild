@@ -491,6 +491,10 @@ ifeq ($(CONFIG_WLAN_FEATURE_NAN_DATAPATH), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_nan_datapath.o
 endif
 
+ifeq ($(CONFIG_WLAN_FEATURE_11AX),y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_he.o
+endif
+
 ########### HOST DIAG LOG ###########
 HOST_DIAG_LOG_DIR :=	$(WLAN_COMMON_ROOT)/utils/host_diag_log
 
