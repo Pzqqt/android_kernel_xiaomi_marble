@@ -6163,7 +6163,7 @@ QDF_STATUS hdd_hex_string_to_u16_array(char *str,
 
 /**
  * hdd_update_ht_cap_in_cfg() - to update HT cap in global CFG
- * @hdd_ctx: pointer to hdd context
+ * @pHddCtx: pointer to hdd context
  *
  * This API will update the HT config in CFG after taking intersection
  * of INI and firmware capabilities provided reading CFG
@@ -6216,6 +6216,127 @@ static bool hdd_update_ht_cap_in_cfg(hdd_context_t *pHddCtx)
 }
 
 /**
+ * hdd_update_vht_cap_in_cfg() - to update VHT cap in global CFG
+ * @pHddctx: pointer to hdd context
+ *
+ * This API will update the VHT config in CFG after taking intersection
+ * of INI and firmware capabilities provided reading CFG
+ *
+ * Return: true or false
+ */
+static bool hdd_update_vht_cap_in_cfg(hdd_context_t *pHddCtx)
+{
+	bool fStatus = true;
+	uint32_t val;
+	struct hdd_config *pConfig = pHddCtx->config;
+
+	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_VHT_ENABLE_TXBF_20MHZ,
+			    pConfig->enableTxBFin20MHz) ==
+			QDF_STATUS_E_FAILURE) {
+		fStatus = false;
+		hddLog(LOGE,
+		       "Could not set value for WNI_CFG_VHT_ENABLE_TXBF_20MHZ");
+	}
+	/* Based on cfg.ini, update the Basic MCS set, RX/TX MCS map
+	 * in the cfg.dat. Valid values are 0(MCS0-7), 1(MCS0-8), 2(MCS0-9)
+	 * we update only the least significant 2 bits in the
+	 * corresponding fields.
+	 */
+	if ((pConfig->dot11Mode == eHDD_DOT11_MODE_AUTO) ||
+	    (pConfig->dot11Mode == eHDD_DOT11_MODE_11ac_ONLY) ||
+	    (pConfig->dot11Mode == eHDD_DOT11_MODE_11ac)) {
+		/* Currently shortGI40Mhz is used for shortGI80Mhz */
+		if (sme_cfg_set_int
+			    (pHddCtx->hHal, WNI_CFG_VHT_SHORT_GI_80MHZ,
+			    pConfig->ShortGI40MhzEnable) ==
+			    QDF_STATUS_E_FAILURE) {
+			fStatus = false;
+			hddLog(LOGE,
+			       "Could not pass WNI_VHT_SHORT_GI_80MHZ to CFG");
+		}
+		/* Hardware is capable of doing
+		 * 128K AMPDU in 11AC mode */
+		if (sme_cfg_set_int(pHddCtx->hHal,
+			     WNI_CFG_VHT_AMPDU_LEN_EXPONENT,
+			     pConfig->fVhtAmpduLenExponent) ==
+			    QDF_STATUS_E_FAILURE) {
+			fStatus = false;
+			hddLog(LOGE,
+			       "Could not pass on WNI_CFG_VHT_AMPDU_LEN_EXPONENT to CFG");
+		}
+		/* Change MU Bformee only when TxBF is enabled */
+		if (pConfig->enableTxBF) {
+			sme_cfg_get_int(pHddCtx->hHal,
+				WNI_CFG_VHT_MU_BEAMFORMEE_CAP, &val);
+
+			if (val != pConfig->enableMuBformee) {
+				if (sme_cfg_set_int(pHddCtx->hHal,
+					    WNI_CFG_VHT_MU_BEAMFORMEE_CAP,
+					    pConfig->enableMuBformee
+					    ) == QDF_STATUS_E_FAILURE) {
+					fStatus = false;
+					hddLog(LOGE,
+						"Could not pass on WNI_CFG_VHT_MU_BEAMFORMEE_CAP to CFG");
+				}
+			}
+		}
+		if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_VHT_MAX_MPDU_LENGTH,
+			    pConfig->vhtMpduLen) == QDF_STATUS_E_FAILURE) {
+			fStatus = false;
+			hddLog(LOGE,
+			       "Could not pass on WNI_CFG_VHT_MAX_MPDU_LENGTH to CFG");
+		}
+
+		if (pConfig->enable2x2 && pConfig->enable_su_tx_bformer) {
+			if (sme_cfg_set_int(pHddCtx->hHal,
+					WNI_CFG_VHT_SU_BEAMFORMER_CAP,
+					pConfig->enable_su_tx_bformer) ==
+				QDF_STATUS_E_FAILURE) {
+				fStatus = false;
+				hdd_err("set SU_BEAMFORMER_CAP to CFG failed");
+			}
+			if (sme_cfg_set_int(pHddCtx->hHal,
+					WNI_CFG_VHT_NUM_SOUNDING_DIMENSIONS,
+					NUM_OF_SOUNDING_DIMENSIONS) ==
+				QDF_STATUS_E_FAILURE) {
+				fStatus = false;
+				hdd_err("failed to set NUM_OF_SOUNDING_DIM");
+			}
+		}
+	}
+
+	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_VHT_RXSTBC,
+			    pConfig->enableRxSTBC) == QDF_STATUS_E_FAILURE) {
+		fStatus = false;
+		hddLog(LOGE, "Could not pass on WNI_CFG_VHT_RXSTBC to CFG");
+	}
+
+	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_VHT_TXSTBC,
+			    pConfig->enableTxSTBC) == QDF_STATUS_E_FAILURE) {
+		fStatus = false;
+		hddLog(LOGE, "Could not pass on WNI_CFG_VHT_TXSTBC to CFG");
+	}
+
+	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_VHT_LDPC_CODING_CAP,
+			    pConfig->enableRxLDPC) == QDF_STATUS_E_FAILURE) {
+		fStatus = false;
+		hddLog(LOGE,
+		       "Could not pass on WNI_CFG_VHT_LDPC_CODING_CAP to CFG");
+	}
+
+	if (sme_cfg_set_int(pHddCtx->hHal,
+		WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED,
+		pConfig->txBFCsnValue) ==
+			QDF_STATUS_E_FAILURE) {
+		fStatus = false;
+		hddLog(LOGE,
+		       "Could not pass on WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED to CFG");
+	}
+	return fStatus;
+
+}
+
+/**
  * hdd_update_config_dat() - scan the string and convery to u8 array
  * @str: the pointer to the string
  * @intArray: the pointer of buffer to store the u8 value
@@ -6237,6 +6358,11 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 	if (!hdd_update_ht_cap_in_cfg(pHddCtx)) {
 		fStatus = false;
 		hddLog(LOGE, "Could not set HT CAP in cfg");
+	}
+
+	if (!hdd_update_vht_cap_in_cfg(pHddCtx)) {
+		fStatus = false;
+		hddLog(LOGE, "Could not set VHT CAP in cfg");
 	}
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_FIXED_RATE, pConfig->TxRate)
@@ -6532,14 +6658,6 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 		       "Failure: Could not set value for WNI_CFG_DFS_MASTER_ENABLED");
 	}
 
-	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_VHT_ENABLE_TXBF_20MHZ,
-			    pConfig->enableTxBFin20MHz) ==
-			QDF_STATUS_E_FAILURE) {
-		fStatus = false;
-		hddLog(LOGE,
-		       "Could not set value for WNI_CFG_VHT_ENABLE_TXBF_20MHZ");
-	}
-
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_HEART_BEAT_THRESHOLD,
 		    pConfig->HeartbeatThresh24) == QDF_STATUS_E_FAILURE) {
@@ -6564,93 +6682,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_ENABLE_MC_ADDR_LIST to CFG");
 	}
-	/* Based on cfg.ini, update the Basic MCS set, RX/TX MCS map
-	 * in the cfg.dat. Valid values are 0(MCS0-7), 1(MCS0-8), 2(MCS0-9)
-	 * we update only the least significant 2 bits in the
-	 * corresponding fields.
-	 */
-	if ((pConfig->dot11Mode == eHDD_DOT11_MODE_AUTO) ||
-	    (pConfig->dot11Mode == eHDD_DOT11_MODE_11ac_ONLY) ||
-	    (pConfig->dot11Mode == eHDD_DOT11_MODE_11ac)) {
-		/* Currently shortGI40Mhz is used for shortGI80Mhz */
-		if (sme_cfg_set_int
-			    (pHddCtx->hHal, WNI_CFG_VHT_SHORT_GI_80MHZ,
-			    pConfig->ShortGI40MhzEnable) ==
-			    QDF_STATUS_E_FAILURE) {
-			fStatus = false;
-			hddLog(LOGE,
-			       "Could not pass WNI_VHT_SHORT_GI_80MHZ to CFG");
-		}
-		/* Hardware is capable of doing
-		 * 128K AMPDU in 11AC mode */
-		if (sme_cfg_set_int(pHddCtx->hHal,
-			     WNI_CFG_VHT_AMPDU_LEN_EXPONENT,
-			     pConfig->fVhtAmpduLenExponent) ==
-			    QDF_STATUS_E_FAILURE) {
-			fStatus = false;
-			hddLog(LOGE,
-			       "Could not pass on WNI_CFG_VHT_AMPDU_LEN_EXPONENT to CFG");
-		}
-		/* Change MU Bformee only when TxBF is enabled */
-		if (pConfig->enableTxBF) {
-			sme_cfg_get_int(pHddCtx->hHal,
-				WNI_CFG_VHT_MU_BEAMFORMEE_CAP, &val);
 
-			if (val != pConfig->enableMuBformee) {
-				if (sme_cfg_set_int(pHddCtx->hHal,
-					    WNI_CFG_VHT_MU_BEAMFORMEE_CAP,
-					    pConfig->enableMuBformee
-					    ) == QDF_STATUS_E_FAILURE) {
-					fStatus = false;
-					hddLog(LOGE,
-						"Could not pass on WNI_CFG_VHT_MU_BEAMFORMEE_CAP to CFG");
-				}
-			}
-		}
-		if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_VHT_MAX_MPDU_LENGTH,
-			    pConfig->vhtMpduLen) == QDF_STATUS_E_FAILURE) {
-			fStatus = false;
-			hddLog(LOGE,
-			       "Could not pass on WNI_CFG_VHT_MAX_MPDU_LENGTH to CFG");
-		}
-
-		if (pConfig->enable2x2 && pConfig->enable_su_tx_bformer) {
-			if (sme_cfg_set_int(pHddCtx->hHal,
-					WNI_CFG_VHT_SU_BEAMFORMER_CAP,
-					pConfig->enable_su_tx_bformer) ==
-				QDF_STATUS_E_FAILURE) {
-				fStatus = false;
-				hdd_err("set SU_BEAMFORMER_CAP to CFG failed");
-			}
-			if (sme_cfg_set_int(pHddCtx->hHal,
-					WNI_CFG_VHT_NUM_SOUNDING_DIMENSIONS,
-					NUM_OF_SOUNDING_DIMENSIONS) ==
-				QDF_STATUS_E_FAILURE) {
-				fStatus = false;
-				hdd_err("failed to set NUM_OF_SOUNDING_DIM");
-			}
-		}
-	}
-
-
-	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_VHT_RXSTBC,
-			    pConfig->enableRxSTBC) == QDF_STATUS_E_FAILURE) {
-		fStatus = false;
-		hddLog(LOGE, "Could not pass on WNI_CFG_VHT_RXSTBC to CFG");
-	}
-
-	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_VHT_TXSTBC,
-			    pConfig->enableTxSTBC) == QDF_STATUS_E_FAILURE) {
-		fStatus = false;
-		hddLog(LOGE, "Could not pass on WNI_CFG_VHT_TXSTBC to CFG");
-	}
-
-	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_VHT_LDPC_CODING_CAP,
-			    pConfig->enableRxLDPC) == QDF_STATUS_E_FAILURE) {
-		fStatus = false;
-		hddLog(LOGE,
-		       "Could not pass on WNI_CFG_VHT_LDPC_CODING_CAP to CFG");
-	}
 #ifdef WLAN_SOFTAP_VSTA_FEATURE
 	if (pConfig->fEnableVSTASupport) {
 		sme_cfg_get_int(pHddCtx->hHal, WNI_CFG_ASSOC_STA_LIMIT, &val);
@@ -6825,15 +6857,6 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_IBSS_ATIM_WIN_SIZE to CFG");
-	}
-
-	if (sme_cfg_set_int(pHddCtx->hHal,
-		WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED,
-		pConfig->txBFCsnValue) ==
-			QDF_STATUS_E_FAILURE) {
-		fStatus = false;
-		hddLog(LOGE,
-		       "Could not pass on WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED to CFG");
 	}
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_TGT_GTX_USR_CFG,
