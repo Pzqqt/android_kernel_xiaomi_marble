@@ -1061,7 +1061,6 @@ struct wma_txrx_node {
 	int8_t max_tx_power;
 	uint32_t nwType;
 	void *staKeyParams;
-	bool ps_enabled;
 	uint32_t dtim_policy;
 	uint32_t peer_count;
 	bool roam_synch_in_progress;

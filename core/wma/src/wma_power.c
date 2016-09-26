@@ -135,8 +135,6 @@ QDF_STATUS wma_unified_set_sta_ps_param(wmi_unified_t wmi_handle,
 	status = wmi_unified_sta_ps_cmd_send(wmi_handle, &sta_ps_param);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
-	/* Store the PS Status */
-	iface->ps_enabled = value ? true : false;
 
 	return status;
 }
@@ -1744,7 +1742,6 @@ static void wma_set_vdev_suspend_dtim(tp_wma_handle wma, uint8_t vdev_id)
 	enum powersave_qpower_mode qpower_config = wma_get_qpower_config(wma);
 
 	if ((iface->type == WMI_VDEV_TYPE_STA) &&
-	    (iface->ps_enabled == true) &&
 	    (iface->dtimPeriod != 0)) {
 		QDF_STATUS ret;
 		uint32_t listen_interval;
@@ -1797,8 +1794,6 @@ static void wma_set_vdev_suspend_dtim(tp_wma_handle wma, uint8_t vdev_id)
 						0);
 			if (QDF_IS_STATUS_ERROR(ret))
 				WMA_LOGE("Failed to disable Qpower in suspend mode!");
-
-			iface->ps_enabled = true;
 		}
 
 		ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
@@ -1850,7 +1845,6 @@ static void wma_set_vdev_resume_dtim(tp_wma_handle wma, uint8_t vdev_id)
 	enum powersave_qpower_mode qpower_config = wma_get_qpower_config(wma);
 
 	if ((iface->type == WMI_VDEV_TYPE_STA) &&
-	    (iface->ps_enabled == true) &&
 	    (iface->dtim_policy == NORMAL_DTIM)) {
 		QDF_STATUS ret;
 		uint32_t cfg_data_val = 0;
