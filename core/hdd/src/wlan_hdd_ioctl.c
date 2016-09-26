@@ -870,12 +870,6 @@ void hdd_wma_send_fastreassoc_cmd(int sessionId, const tSirMacAddr bssid,
 		hdd_err("Not able to post ROAM_INVOKE_CMD message to WMA");
 	}
 }
-#else
-void hdd_wma_send_fastreassoc_cmd(int sessionId, const tSirMacAddr bssid,
-				  int channel)
-{
-}
-
 #endif
 
 /**

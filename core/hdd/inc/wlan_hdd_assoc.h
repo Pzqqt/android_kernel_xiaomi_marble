@@ -346,6 +346,11 @@ QDF_STATUS hdd_roam_deregister_sta(hdd_adapter_t *adapter, uint8_t sta_id);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 void hdd_wma_send_fastreassoc_cmd(int session_id, const tSirMacAddr bssid,
 				  int channel);
+#else
+static inline void hdd_wma_send_fastreassoc_cmd(int sessionId,
+		const tSirMacAddr bssid, int channel)
+{
+}
 #endif
 
 #endif
