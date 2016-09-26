@@ -41,7 +41,7 @@
 #include <linux/interrupt.h>
 #ifdef HELIUMPLUS
 #include <soc/qcom/irq-helper.h>
-#include <soc/qcom/icnss.h> /* replace with pld when available */
+#include <pld_snoc.h>
 #endif
 #include <linux/pm.h>
 
@@ -63,7 +63,7 @@ enum napi_decision_vector {
 #ifdef HELIUMPLUS
 static inline int hif_get_irq_for_ce(int ce_id)
 {
-	return icnss_get_irq(ce_id);
+	return pld_snoc_get_irq(ce_id);
 }
 #else /* HELIUMPLUS */
 static inline int hif_get_irq_for_ce(int ce_id)
@@ -1077,7 +1077,7 @@ retry_collapse:
 retry_disperse:
 		while (i >= 0) {
 			if ((napid->napi_cpu[i].state == QCA_NAPI_CPU_UP) &&
-			    (hweight32(napid->napi_cpu[i].napis) < smallest)) {
+			    (hweight32(napid->napi_cpu[i].napis) <= smallest)) {
 				smallest = napid->napi_cpu[i].napis;
 				smallidx = i;
 			}
