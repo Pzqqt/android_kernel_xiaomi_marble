@@ -1638,7 +1638,7 @@ QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 		     param->peer_legacy_rates.num_rates);
 
 	/* Update peer HT rate information */
-	buf_ptr += param->peer_legacy_rates.num_rates;
+	buf_ptr += peer_legacy_rates_align;
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
 			  peer_ht_rates_align);
 	buf_ptr += WMI_TLV_HDR_SIZE;
@@ -1647,7 +1647,7 @@ QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 				 param->peer_ht_rates.num_rates);
 
 	/* VHT Rates */
-	buf_ptr += param->peer_ht_rates.num_rates;
+	buf_ptr += peer_ht_rates_align;
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_STRUC_wmi_vht_rate_set,
 		       WMITLV_GET_STRUCT_TLVLEN(wmi_vht_rate_set));
 
