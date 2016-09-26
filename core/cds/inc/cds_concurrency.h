@@ -693,6 +693,7 @@ void cds_decr_session_set_pcl(enum tQDF_ADAPTER_MODE mode,
 		uint8_t session_id);
 QDF_STATUS cds_init_policy_mgr(struct cds_sme_cbacks *sme_cbacks);
 QDF_STATUS cds_deinit_policy_mgr(void);
+uint8_t cds_get_channel(enum cds_con_mode mode, uint32_t *vdev_id);
 QDF_STATUS cds_get_pcl(enum cds_con_mode mode,
 			uint8_t *pcl_channels, uint32_t *len,
 			uint8_t *pcl_weight, uint32_t weight_len);

@@ -4951,6 +4951,36 @@ bool cds_map_concurrency_mode(enum tQDF_ADAPTER_MODE *old_mode,
 }
 
 /**
+ * cds_get_channel() - provide channel number of given mode and vdevid
+ * @mode: given CDS mode
+ * @vdev_id: pointer to vdev_id
+ *
+ * This API will provide channel number of matching mode and vdevid.
+ * If vdev_id is NULL then it will match only mode
+ * If vdev_id is not NULL the it will match both mode and vdev_id
+ *
+ * Return: channel number
+ */
+uint8_t cds_get_channel(enum cds_con_mode mode, uint32_t *vdev_id)
+{
+	uint32_t idx = 0;
+
+	if (mode >= CDS_MAX_NUM_OF_MODE) {
+		cds_err("incorrect mode");
+		return 0;
+	}
+
+	for (idx = 0; idx < MAX_NUMBER_OF_CONC_CONNECTIONS; idx++) {
+		if ((conc_connection_list[idx].mode == mode) &&
+				(!vdev_id || (*vdev_id ==
+					conc_connection_list[idx].vdev_id))
+				&& conc_connection_list[idx].in_use)
+			return conc_connection_list[idx].chan;
+	}
+	return 0;
+}
+
+/**
  * cds_get_pcl() - provides the preferred channel list for
  * new connection
  * @mode:	Device mode

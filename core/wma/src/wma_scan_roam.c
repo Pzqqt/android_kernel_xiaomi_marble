@@ -415,14 +415,19 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 	if (wma_is_sap_active(wma_handle)) {
 		/* P2P/STA scan while SoftAP is sending beacons.
 		 * Max duration of CTS2self is 32 ms, which limits the
-		 * dwell time.
+		 * dwell time. If DBS is supported and if SAP is on 2G channel
+		 * then keep passive dwell time default.
 		 */
 		cmd->dwell_time_active =
 			QDF_MIN(scan_req->maxChannelTime,
 					(WMA_CTS_DURATION_MS_MAX -
 					 WMA_ROAM_SCAN_CHANNEL_SWITCH_TIME));
-		cmd->dwell_time_passive =
-			cmd->dwell_time_active;
+		if (!wma_is_hw_dbs_capable() ||
+			(wma_is_hw_dbs_capable() &&
+				CDS_IS_CHANNEL_5GHZ(
+					cds_get_channel(CDS_SAP_MODE, NULL)))) {
+			cmd->dwell_time_passive = cmd->dwell_time_active;
+		}
 		cmd->burst_duration = 0;
 	}
 
