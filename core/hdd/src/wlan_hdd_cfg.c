@@ -6161,29 +6161,23 @@ QDF_STATUS hdd_hex_string_to_u16_array(char *str,
 	return QDF_STATUS_SUCCESS;
 }
 
-
 /**
- * hdd_update_config_dat() - scan the string and convery to u8 array
- * @str: the pointer to the string
- * @intArray: the pointer of buffer to store the u8 value
- * @len: size of the buffer
+ * hdd_update_ht_cap_in_cfg() - to update HT cap in global CFG
+ * @hdd_ctx: pointer to hdd context
  *
- * Return: QDF_STATUS_SUCCESS if the configuration could be updated corectly,
- *		otherwise QDF_STATUS_E_INVAL
+ * This API will update the HT config in CFG after taking intersection
+ * of INI and firmware capabilities provided reading CFG
+ *
+ * Return: true or false
  */
-bool hdd_update_config_dat(hdd_context_t *pHddCtx)
+static bool hdd_update_ht_cap_in_cfg(hdd_context_t *pHddCtx)
 {
 	bool fStatus = true;
 	uint32_t val;
 	uint16_t val16;
-
 	struct hdd_config *pConfig = pHddCtx->config;
 	tSirMacHTCapabilityInfo *phtCapInfo;
 
-	/*
-	 * During the initialization both 2G and 5G capabilities should be same.
-	 * So read 5G HT capablity and update 2G and 5G capablities.
-	 */
 	if (sme_cfg_get_int(pHddCtx->hHal, WNI_CFG_HT_CAP_INFO,
 			    &val) ==
 			QDF_STATUS_E_FAILURE) {
@@ -6205,6 +6199,44 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 			QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hdd_err("Could not pass on WNI_CFG_HT_CAP_INFO to CFG");
+	}
+	sme_cfg_get_int(pHddCtx->hHal, WNI_CFG_HT_CAP_INFO, &val);
+	val16 = (uint16_t) val;
+	phtCapInfo = (tSirMacHTCapabilityInfo *) &val16;
+	phtCapInfo->rxSTBC = pConfig->enableRxSTBC;
+	phtCapInfo->advCodingCap = pConfig->enableRxLDPC;
+	val = val16;
+	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_HT_CAP_INFO, val)
+			== QDF_STATUS_E_FAILURE) {
+		fStatus = false;
+		hddLog(LOGE, "Could not pass on WNI_CFG_HT_CAP_INFO to CFG");
+	}
+
+	return fStatus;
+}
+
+/**
+ * hdd_update_config_dat() - scan the string and convery to u8 array
+ * @str: the pointer to the string
+ * @intArray: the pointer of buffer to store the u8 value
+ * @len: size of the buffer
+ *
+ * Return: QDF_STATUS_SUCCESS if the configuration could be updated corectly,
+ *		otherwise QDF_STATUS_E_INVAL
+ */
+bool hdd_update_config_dat(hdd_context_t *pHddCtx)
+{
+	bool fStatus = true;
+	uint32_t val;
+	struct hdd_config *pConfig = pHddCtx->config;
+
+	/*
+	 * During the initialization both 2G and 5G capabilities should be same.
+	 * So read 5G HT capablity and update 2G and 5G capablities.
+	 */
+	if (!hdd_update_ht_cap_in_cfg(pHddCtx)) {
+		fStatus = false;
+		hddLog(LOGE, "Could not set HT CAP in cfg");
 	}
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_FIXED_RATE, pConfig->TxRate)
@@ -6600,17 +6632,6 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 		}
 	}
 
-	sme_cfg_get_int(pHddCtx->hHal, WNI_CFG_HT_CAP_INFO, &val);
-	val16 = (uint16_t) val;
-	phtCapInfo = (tSirMacHTCapabilityInfo *) &val16;
-	phtCapInfo->rxSTBC = pConfig->enableRxSTBC;
-	phtCapInfo->advCodingCap = pConfig->enableRxLDPC;
-	val = val16;
-	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_HT_CAP_INFO, val)
-			== QDF_STATUS_E_FAILURE) {
-		fStatus = false;
-		hddLog(LOGE, "Could not pass on WNI_CFG_HT_CAP_INFO to CFG");
-	}
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_VHT_RXSTBC,
 			    pConfig->enableRxSTBC) == QDF_STATUS_E_FAILURE) {
