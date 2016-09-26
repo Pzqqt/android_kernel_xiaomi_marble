@@ -1256,34 +1256,6 @@ void lim_process_abort_scan_ind(tpAniSirGlobal mac_ctx,
 	return;
 }
 
-/**
- * lim_message_processor() - Process messages from LIM.
- *
- * @mac_ctx:          Pointer to the Global Mac Context.
- * @msg:              Received LIM message.
- *
- * Wrapper function for lim_process_messages when handling messages received by
- * LIM.Could either defer messages or process them.
- *
- * Return:  None.
- */
-void lim_message_processor(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
-{
-	if (eLIM_MLM_OFFLINE_STATE == mac_ctx->lim.gLimMlmState) {
-		pe_free_msg(mac_ctx, msg);
-		return;
-	}
-
-	if (!def_msg_decision(mac_ctx, msg)) {
-		lim_process_messages(mac_ctx, msg);
-		/* process deferred message queue if allowed */
-		if ((!(mac_ctx->lim.gLimAddtsSent)) &&
-			(!(lim_is_system_in_scan_state(mac_ctx))) &&
-			(true == GET_LIM_PROCESS_DEFD_MESGS(mac_ctx)))
-			lim_process_deferred_message_queue(mac_ctx);
-	}
-}
-
 static void lim_process_sme_obss_scan_ind(tpAniSirGlobal mac_ctx,
 							struct sSirMsgQ *msg)
 {
@@ -1319,12 +1291,12 @@ static void lim_process_sme_obss_scan_ind(tpAniSirGlobal mac_ctx,
 /**
  * lim_process_messages() - Process messages from upper layers.
  *
- * @mac_ctx:          Pointer to the Global Mac Context.
- * @msg:              Received message.
+ * @mac_ctx: Pointer to the Global Mac Context.
+ * @msg: Received message.
  *
  * Return:  None.
  */
-void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
+static void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 {
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	uint8_t vdev_id = 0;
@@ -2043,26 +2015,17 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 } /*** end lim_process_messages() ***/
 
 /**
- * lim_process_deferred_message_queue
+ * lim_process_deferred_message_queue()
  *
- ***FUNCTION:
  * This function is called by LIM while exiting from Learn
  * mode. This function fetches messages posted to the LIM
  * deferred message queue limDeferredMsgQ.
  *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- * NA
- *
- ***NOTE:
- * NA
- *
- * @param  pMac - Pointer to Global MAC structure
+ * @pMac: Pointer to Global MAC structure
  * @return None
  */
 
-void lim_process_deferred_message_queue(tpAniSirGlobal pMac)
+static void lim_process_deferred_message_queue(tpAniSirGlobal pMac)
 {
 	tSirMsgQ limMsg = { 0, 0, 0 };
 
@@ -2088,6 +2051,33 @@ void lim_process_deferred_message_queue(tpAniSirGlobal pMac)
 		}
 	}
 } /*** end lim_process_deferred_message_queue() ***/
+
+/**
+ * lim_message_processor() - Process messages from LIM.
+ * @mac_ctx: Pointer to the Global Mac Context.
+ * @msg: Received LIM message.
+ *
+ * Wrapper function for lim_process_messages when handling messages received by
+ * LIM. Could either defer messages or process them.
+ *
+ * Return:  None.
+ */
+void lim_message_processor(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
+{
+	if (eLIM_MLM_OFFLINE_STATE == mac_ctx->lim.gLimMlmState) {
+		pe_free_msg(mac_ctx, msg);
+		return;
+	}
+
+	if (!def_msg_decision(mac_ctx, msg)) {
+		lim_process_messages(mac_ctx, msg);
+		/* process deferred message queue if allowed */
+		if ((!(mac_ctx->lim.gLimAddtsSent)) &&
+		    (!(lim_is_system_in_scan_state(mac_ctx))) &&
+		    (true == GET_LIM_PROCESS_DEFD_MESGS(mac_ctx)))
+			lim_process_deferred_message_queue(mac_ctx);
+	}
+}
 
 /**
  * lim_process_normal_hdd_msg() - Process the message and defer if needed

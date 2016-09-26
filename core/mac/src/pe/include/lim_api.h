@@ -136,7 +136,6 @@ uint32_t lim_post_msg_high_priority(tpAniSirGlobal mac, tSirMsgQ *msg);
  * and dispatch to various sub modules within LIM module.
  */
 extern void lim_message_processor(tpAniSirGlobal, tpSirMsgQ);
-extern void lim_process_messages(tpAniSirGlobal, tpSirMsgQ);      /* DT test alt deferred 2 */
 /**
  * Function to check the LIM state if system is in Scan/Learn state.
  */

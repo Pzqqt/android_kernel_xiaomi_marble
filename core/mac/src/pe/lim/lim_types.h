@@ -551,9 +551,6 @@ void lim_tear_down_link_with_ap(tpAniSirGlobal, uint8_t, tSirMacReasonCodes);
 /* / Function that processes Max retries interrupt from TFP */
 void limHandleMaxRetriesInterrupt(uint32_t);
 
-/* / Function that processes messages deferred during Learn mode */
-void lim_process_deferred_message_queue(tpAniSirGlobal);
-
 /* / Function that defers the messages received */
 uint32_t lim_defer_msg(tpAniSirGlobal, tSirMsgQ *);
 
