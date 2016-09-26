@@ -6172,46 +6172,31 @@ QDF_STATUS hdd_hex_string_to_u16_array(char *str,
  */
 static bool hdd_update_ht_cap_in_cfg(hdd_context_t *hdd_ctx)
 {
-	bool status = true;
-	uint32_t val;
+	uint32_t val32;
 	uint16_t val16;
-	struct hdd_config *config = hdd_ctx->config;
+	bool status = true;
 	tSirMacHTCapabilityInfo *ht_cap_info;
 
 	if (sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_HT_CAP_INFO,
-			    &val) ==
+				&val32) ==
 			QDF_STATUS_E_FAILURE) {
 		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_HT_CAP_INFO to CFG");
+		hdd_err("Could not get WNI_CFG_HT_CAP_INFO");
 	}
-	if (config->ShortGI20MhzEnable)
-		val |= HT_CAPS_SHORT_GI20;
-	else
-		val &= ~(HT_CAPS_SHORT_GI20);
-
-	if (config->ShortGI40MhzEnable)
-		val |= HT_CAPS_SHORT_GI40;
-	else
-		val &= ~(HT_CAPS_SHORT_GI40);
-
-	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_HT_CAP_INFO,
-			  val) ==
-			QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_HT_CAP_INFO to CFG");
-	}
-	sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_HT_CAP_INFO, &val);
-	val16 = (uint16_t) val;
+	val16 = (uint16_t) val32;
 	ht_cap_info = (tSirMacHTCapabilityInfo *) &val16;
-	ht_cap_info->rxSTBC = config->enableRxSTBC;
-	ht_cap_info->advCodingCap = config->enableRxLDPC;
-	val = val16;
-	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_HT_CAP_INFO, val)
-			== QDF_STATUS_E_FAILURE) {
+	ht_cap_info->advCodingCap &= hdd_ctx->config->enableRxLDPC;
+	ht_cap_info->rxSTBC = QDF_MIN(ht_cap_info->rxSTBC,
+			hdd_ctx->config->enableRxSTBC);
+	ht_cap_info->txSTBC &= hdd_ctx->config->enableTxSTBC;
+	ht_cap_info->shortGI20MHz &= hdd_ctx->config->ShortGI20MhzEnable;
+	ht_cap_info->shortGI40MHz &= hdd_ctx->config->ShortGI40MhzEnable;
+	val32 = val16;
+	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_HT_CAP_INFO, val32) ==
+			QDF_STATUS_E_FAILURE) {
 		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_HT_CAP_INFO to CFG");
+		hdd_err("Could not set WNI_CFG_HT_CAP_INFO");
 	}
-
 	return status;
 }
 
@@ -6310,8 +6295,13 @@ static bool hdd_update_vht_cap_in_cfg(hdd_context_t *hdd_ctx)
 		hdd_err("Couldn't pass on WNI_CFG_VHT_TXSTBC to CFG");
 	}
 
+	if (sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_VHT_LDPC_CODING_CAP, &val) ==
+							QDF_STATUS_E_FAILURE) {
+		status &= false;
+		hdd_err("Could not get WNI_CFG_VHT_LDPC_CODING_CAP");
+	}
 	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_VHT_LDPC_CODING_CAP,
-			    config->enableRxLDPC) == QDF_STATUS_E_FAILURE) {
+			config->enableRxLDPC & val) == QDF_STATUS_E_FAILURE) {
 		status = false;
 		hdd_err("Couldn't pass on WNI_CFG_VHT_LDPC_CODING_CAP to CFG");
 	}
