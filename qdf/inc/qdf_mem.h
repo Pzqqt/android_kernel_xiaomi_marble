@@ -298,6 +298,8 @@ void qdf_mem_multi_pages_alloc(qdf_device_t osdev,
 void qdf_mem_multi_pages_free(qdf_device_t osdev,
 			      struct qdf_mem_multi_page_t *pages,
 			      qdf_dma_context_t memctxt, bool cacheable);
-
+int qdf_mem_multi_page_link(qdf_device_t osdev,
+		struct qdf_mem_multi_page_t *pages,
+		uint32_t elem_size, uint32_t elem_count, uint8_t cacheable);
 
 #endif /* __QDF_MEMORY_H */
