@@ -7167,7 +7167,7 @@ static int hdd_pre_enable_configure(hdd_context_t *hdd_ctx)
 	}
 
 	/* Apply the cfg.ini to cfg.dat */
-	if (!hdd_update_config_dat(hdd_ctx)) {
+	if (!hdd_update_config_cfg(hdd_ctx)) {
 		hdd_alert("config update failed");
 		ret = -EINVAL;
 		goto out;

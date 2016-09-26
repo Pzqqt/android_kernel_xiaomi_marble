@@ -4255,7 +4255,7 @@ QDF_STATUS hdd_parse_config_ini(hdd_context_t *pHddCtx);
 QDF_STATUS hdd_update_mac_config(hdd_context_t *pHddCtx);
 QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx);
 QDF_STATUS hdd_set_sme_chan_list(hdd_context_t *hdd_ctx);
-bool hdd_update_config_dat(hdd_context_t *pHddCtx);
+bool hdd_update_config_cfg(hdd_context_t *pHddCtx);
 QDF_STATUS hdd_cfg_get_global_config(hdd_context_t *pHddCtx, char *pBuf,
 				     int buflen);
 

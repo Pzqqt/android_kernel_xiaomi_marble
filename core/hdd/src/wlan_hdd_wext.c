@@ -5075,7 +5075,7 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 		phddctx->config->nChannelBondingMode5GHz =
 			smeconfig.csrConfig.channelBondingMode5GHz;
 		phddctx->config->vhtChannelWidth = vhtchanwidth;
-		if (hdd_update_config_dat(phddctx) == false) {
+		if (hdd_update_config_cfg(phddctx) == false) {
 			hdd_err("could not update config_dat");
 			return -EIO;
 		}
