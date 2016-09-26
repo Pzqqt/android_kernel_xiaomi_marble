@@ -926,7 +926,6 @@ end:
 #ifdef FEATURE_RUNTIME_PM
 #define HIF_PCI_RUNTIME_PM_STATS(_s, _sc, _name) \
 	seq_printf(_s, "%30s: %u\n", #_name, _sc->pm_stats._name)
-
 /**
  * hif_pci_runtime_pm_warn() - Runtime PM Debugging API
  * @sc: hif_pci_softc context
@@ -1069,7 +1068,6 @@ static int hif_pci_runtime_pm_open(struct inode *inode, struct file *file)
 			inode->i_private);
 }
 
-#ifdef WLAN_OPEN_SOURCE
 static const struct file_operations hif_pci_runtime_pm_fops = {
 	.owner          = THIS_MODULE,
 	.open           = hif_pci_runtime_pm_open,
@@ -1090,6 +1088,7 @@ static void hif_runtime_pm_debugfs_create(struct hif_pci_softc *sc)
 					S_IRUSR, NULL, sc,
 					&hif_pci_runtime_pm_fops);
 }
+
 /**
  * hif_runtime_pm_debugfs_remove() - removes runtimepm debugfs entry
  * @sc: pci context
@@ -1100,14 +1099,22 @@ static void hif_runtime_pm_debugfs_remove(struct hif_pci_softc *sc)
 {
 	debugfs_remove(sc->pm_dentry);
 }
-#else
-static inline void hif_runtime_pm_debugfs_create(struct hif_pci_softc *sc)
+
+static void hif_runtime_init(struct device *dev, int delay)
 {
+	pm_runtime_set_autosuspend_delay(dev, delay);
+	pm_runtime_use_autosuspend(dev);
+	pm_runtime_allow(dev);
+	pm_runtime_mark_last_busy(dev);
+	pm_runtime_put_noidle(dev);
+	pm_suspend_ignore_children(dev, true);
 }
-static inline void hif_runtime_pm_debugfs_remove(struct hif_pci_softc *sc)
+
+static void hif_runtime_exit(struct device *dev)
 {
+	pm_runtime_get_noresume(dev);
+	pm_runtime_set_active(dev);
 }
-#endif
 
 static void hif_pm_runtime_lock_timeout_fn(unsigned long data);
 
@@ -1139,7 +1146,7 @@ static void hif_pm_runtime_start(struct hif_pci_softc *sc)
 	HIF_INFO("%s: Enabling RUNTIME PM, Delay: %d ms", __func__,
 			ol_sc->hif_config.runtime_pm_delay);
 
-	pld_runtime_init(sc->dev, ol_sc->hif_config.runtime_pm_delay);
+	hif_runtime_init(sc->dev, ol_sc->hif_config.runtime_pm_delay);
 	qdf_atomic_set(&sc->pm_state, HIF_PM_RUNTIME_STATE_ON);
 	hif_runtime_pm_debugfs_create(sc);
 }
@@ -1162,7 +1169,7 @@ static void hif_pm_runtime_stop(struct hif_pci_softc *sc)
 	if (mode == QDF_GLOBAL_FTM_MODE || QDF_IS_EPPING_ENABLED(mode))
 		return;
 
-	pld_runtime_exit(sc->dev);
+	hif_runtime_exit(sc->dev);
 	hif_pm_runtime_resume(sc->dev);
 
 	qdf_atomic_set(&sc->pm_state, HIF_PM_RUNTIME_STATE_NONE);
