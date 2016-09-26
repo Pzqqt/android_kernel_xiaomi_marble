@@ -108,11 +108,6 @@ enum eWniMsgTypes {
 	eWNI_SME_UPDATE_NOA,
 	eWNI_SME_CLEAR_DFS_CHANNEL_LIST,
 	eWNI_SME_GET_SNR_REQ,
-	/* General Power Save Messages */
-	eWNI_PMC_MSG_TYPES_BEGIN,
-
-	/* WOWL Messages */
-	eWNI_PMC_SMPS_STATE_IND,
 
 	eWNI_SME_RRM_MSG_TYPE_BEGIN,
 

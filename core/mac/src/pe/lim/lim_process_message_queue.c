@@ -1524,13 +1524,6 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		/* These messages are from HDD.No need to respond to HDD */
 		lim_process_normal_hdd_msg(mac_ctx, msg, false);
 		break;
-
-	case eWNI_PMC_SMPS_STATE_IND:
-		if (msg->bodyptr) {
-			qdf_mem_free(msg->bodyptr);
-			msg->bodyptr = NULL;
-		}
-		break;
 	case eWNI_SME_SEND_ACTION_FRAME_IND:
 		lim_send_p2p_action_frame(mac_ctx, msg);
 		qdf_mem_free(msg->bodyptr);

@@ -2594,8 +2594,6 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 		qdf_mem_free(pMsg->bodyptr);
 		break;
 #endif
-	case eWNI_PMC_SMPS_STATE_IND:
-		break;
 	case WNI_CFG_SET_CNF:
 	case WNI_CFG_DNLD_CNF:
 	case WNI_CFG_GET_RSP:
