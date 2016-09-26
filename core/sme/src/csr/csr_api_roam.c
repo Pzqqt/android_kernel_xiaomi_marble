@@ -1372,7 +1372,6 @@ static void init_config_param(tpAniSirGlobal pMac)
 	}
 	csr_assign_rssi_for_category(pMac, CSR_BEST_RSSI_VALUE,
 			CSR_DEFAULT_RSSI_DB_GAP);
-	pMac->roam.configParam.nRoamingTime = CSR_DEFAULT_ROAMING_TIME;
 	pMac->roam.configParam.fSupplicantCountryCodeHasPriority = false;
 	pMac->roam.configParam.nActiveMaxChnTime = CSR_ACTIVE_MAX_CHANNEL_TIME;
 	pMac->roam.configParam.nActiveMinChnTime = CSR_ACTIVE_MIN_CHANNEL_TIME;
@@ -2265,7 +2264,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		csr_assign_rssi_for_category(pMac,
 			pMac->first_scan_bucket_threshold,
 			pParam->bCatRssiOffset);
-		pMac->roam.configParam.nRoamingTime = pParam->nRoamingTime;
 		pMac->roam.configParam.fSupplicantCountryCodeHasPriority =
 			pParam->fSupplicantCountryCodeHasPriority;
 		pMac->roam.configParam.vccRssiThreshold =
@@ -2576,7 +2574,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->scanAgeTimeCNPS = cfg_params->scanAgeTimeCNPS;
 	pParam->scanAgeTimeCPS = cfg_params->scanAgeTimeCPS;
 	pParam->bCatRssiOffset = cfg_params->bCatRssiOffset;
-	pParam->nRoamingTime = cfg_params->nRoamingTime;
 	pParam->fSupplicantCountryCodeHasPriority =
 		cfg_params->fSupplicantCountryCodeHasPriority;
 	pParam->vccRssiThreshold = cfg_params->vccRssiThreshold;
@@ -11393,10 +11390,6 @@ bool csr_roam_complete_roaming(tpAniSirGlobal pMac, uint32_t sessionId,
 			       bool fForce, eCsrRoamResult roamResult)
 {
 	bool fCompleted = true;
-	uint32_t roamTime =
-		(uint32_t) (pMac->roam.configParam.nRoamingTime *
-			    QDF_TICKS_PER_SECOND);
-	uint32_t curTime = (uint32_t) qdf_mc_timer_get_system_ticks();
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
 	if (!pSession) {
 		sms_log(pMac, LOGE, FL("  session %d not found "), sessionId);
@@ -11404,7 +11397,6 @@ bool csr_roam_complete_roaming(tpAniSirGlobal pMac, uint32_t sessionId,
 	}
 	/* Check whether time is up */
 	if (pSession->fCancelRoaming || fForce ||
-	    ((curTime - pSession->roamingStartTime) > roamTime) ||
 	    eCsrReassocRoaming == pSession->roamingReason ||
 	    eCsrDynamicRoaming == pSession->roamingReason) {
 		sms_log(pMac, LOGW, FL("  indicates roaming completion"));
@@ -11682,7 +11674,6 @@ QDF_STATUS csr_roam_lost_link(tpAniSirGlobal pMac, uint32_t sessionId,
 	tSirSmeDeauthInd *pDeauthIndMsg = NULL;
 	tSirSmeDisassocInd *pDisassocIndMsg = NULL;
 	eCsrRoamResult result = eCSR_ROAM_RESULT_LOSTLINK;
-	tCsrRoamInfo *pRoamInfo = NULL;
 	tCsrRoamInfo roamInfo;
 	bool fToRoam;
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
@@ -11774,50 +11765,7 @@ QDF_STATUS csr_roam_lost_link(tpAniSirGlobal pMac, uint32_t sessionId,
 				(eWNI_SME_DEAUTH_IND == type) ?
 				eCsrLostlinkRoamingDeauth :
 				eCsrLostlinkRoamingDisassoc);
-		if (pMac->roam.configParam.nRoamingTime) {
-			status = csr_roam_start_roaming(pMac, sessionId,
-					(eWNI_SME_DEAUTH_IND == type) ?
-					eCsrLostlinkRoamingDeauth :
-					eCsrLostlinkRoamingDisassoc);
-			if (QDF_IS_STATUS_SUCCESS(status)) {
-				qdf_mem_set(&roamInfo, sizeof(tCsrRoamInfo), 0);
-				/* For IBSS, we need to give some more info to HDD */
-				if (csr_is_bss_type_ibss
-					(pSession->connectedProfile.BSSType)) {
-					roamInfo.u.pConnectedProfile =
-						&pSession->connectedProfile;
-					roamInfo.statusCode =
-						(tSirResultCodes) pSession->
-						roamingStatusCode;
-					roamInfo.reasonCode =
-						pSession->joinFailStatusCode.
-						reasonCode;
-				} else {
-					roamInfo.reasonCode =
-						eCsrRoamReasonSmeIssuedForLostLink;
-				}
-				pRoamInfo = &roamInfo;
-				pSession->roamingReason =
-					(eWNI_SME_DEAUTH_IND ==
-					 type) ? eCsrLostlinkRoamingDeauth :
-					eCsrLostlinkRoamingDisassoc;
-				pSession->roamingStartTime =
-					(uint32_t) qdf_mc_timer_get_system_ticks();
-				csr_roam_call_callback(pMac, sessionId, pRoamInfo,
-						       0, eCSR_ROAM_ROAMING_START,
-						       eCSR_ROAM_RESULT_LOSTLINK);
-			} else {
-				sms_log(pMac, LOGW,
-					" %s Fail to start roaming, status = %d",
-					__func__, status);
-				fToRoam = false;
-			}
-		} else {
-			/* We are told not to roam, indicate lostlink */
-			fToRoam = false;
-		}
-	}
-	if (!fToRoam) {
+
 		/* Tell HDD about the lost link */
 		if (!CSR_IS_INFRA_AP(&pSession->connectedProfile)) {
 			/* Don't call csr_roam_call_callback for GO/SoftAp case as this indication
@@ -11833,58 +11781,6 @@ QDF_STATUS csr_roam_lost_link(tpAniSirGlobal pMac, uint32_t sessionId,
 	return status;
 }
 
-QDF_STATUS csr_roam_lost_link_afterhandoff_failure(tpAniSirGlobal pMac,
-						   uint32_t sessionId)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tListElem *pEntry = NULL;
-	tSmeCmd *pCommand = NULL;
-	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
-
-	if (!pSession) {
-		sms_log(pMac, LOGE, FL("  session %d not found "), sessionId);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	pSession->fCancelRoaming = false;
-	/* Only remove the connected BSS in infrastructure mode */
-	csr_roam_remove_connected_bss_from_scan_cache(pMac,
-						      &pSession->connectedProfile);
-	if (pMac->roam.configParam.nRoamingTime) {
-		status = csr_roam_start_roaming(pMac, sessionId,
-				pSession->roamingReason);
-		if (QDF_IS_STATUS_SUCCESS(status)) {
-			/*
-			 * before starting the lost link logic release
-			 * the roam command for handoff
-			 */
-			pEntry =
-				csr_ll_peek_head(&pMac->sme.smeCmdActiveList,
-						 LL_ACCESS_LOCK);
-			if (pEntry) {
-				pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-			}
-			if (pCommand) {
-				if ((eSmeCommandRoam == pCommand->command) &&
-				    (eCsrSmeIssuedAssocToSimilarAP ==
-				     pCommand->u.roamCmd.roamReason)) {
-					if (csr_ll_remove_entry
-						    (&pMac->sme.smeCmdActiveList,
-						    pEntry, LL_ACCESS_LOCK)) {
-						csr_release_command_roam(pMac,
-									 pCommand);
-					}
-				}
-			}
-			sms_log(pMac, LOGW, "Lost link roaming started ...");
-		}
-	} else {
-		/* We are told not to roam, indicate lostlink */
-		status = QDF_STATUS_E_FAILURE;
-	}
-
-	return status;
-}
 
 void csr_roam_wm_status_change_complete(tpAniSirGlobal pMac)
 {

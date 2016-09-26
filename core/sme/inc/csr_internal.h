@@ -525,8 +525,6 @@ typedef struct tagCsrConfig {
 	uint32_t BssPreferValue[CSR_NUM_RSSI_CAT];
 	int RSSICat[CSR_NUM_RSSI_CAT];
 	uint8_t bCatRssiOffset; /* to set RSSI difference for each category */
-	/* In secs, CSR'll try this long before gives up, 0 means no roaming */
-	uint32_t nRoamingTime;
 	/*
 	 * Whether to limit the channels to the ones set in Csr11dInfo.
 	 * If true, the opertaional channels are limited to the default channel
@@ -948,7 +946,6 @@ typedef struct tagCsrRoamSession {
 	uint8_t *pAddIEScan;
 	uint32_t nAddIEAssocLength;     /* the byte count for pAddIeAssocIE */
 	uint8_t *pAddIEAssoc;
-	uint32_t roamingStartTime;      /* in units of 10ms */
 	tCsrTimerInfo roamingTimerInfo;
 	eCsrRoamingReason roamingReason;
 	bool fCancelRoaming;

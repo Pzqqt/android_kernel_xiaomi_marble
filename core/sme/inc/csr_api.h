@@ -1119,8 +1119,6 @@ typedef struct tagCsrConfigParam {
 	uint32_t scanAgeTimeCNPS;
 	/* scan res aging time threshold when Connect-Power-Save, in sec */
 	uint32_t scanAgeTimeCPS;
-	/* In sec, CSR'll try this long before gives up. 0 means no roaming */
-	uint32_t nRoamingTime;
 	/* to set the RSSI difference for each category */
 	uint8_t bCatRssiOffset;
 	/* to set MCC Enable/Disable mode */

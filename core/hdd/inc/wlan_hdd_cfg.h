@@ -396,12 +396,6 @@ typedef enum {
 #define CFG_BEACON_INTERVAL_MAX                WNI_CFG_BEACON_INTERVAL_STAMAX
 #define CFG_BEACON_INTERVAL_DEFAULT            WNI_CFG_BEACON_INTERVAL_STADEF
 
-/* Additional Handoff related Parameters */
-#define CFG_ROAMING_TIME_NAME                 "gRoamingTime"
-#define CFG_ROAMING_TIME_MIN                  (0)
-#define CFG_ROAMING_TIME_MAX                  (4294967UL)
-#define CFG_ROAMING_TIME_DEFAULT              (10)
-
 #define CFG_VCC_RSSI_TRIGGER_NAME             "gVccRssiTrigger"
 #define CFG_VCC_RSSI_TRIGGER_MIN              (0)
 #define CFG_VCC_RSSI_TRIGGER_MAX              (80)
@@ -3587,7 +3581,6 @@ struct hdd_config {
 	int32_t nhi_rssi_scan_rssi_ub;
 
 	/* Additional Handoff params */
-	uint32_t nRoamingTime;
 	uint16_t nVccRssiTrigger;
 	uint32_t nVccUlMacLossThreshold;
 

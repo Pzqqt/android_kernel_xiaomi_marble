@@ -687,13 +687,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_BEACON_INTERVAL_MIN,
 		     CFG_BEACON_INTERVAL_MAX),
 
-	REG_VARIABLE(CFG_ROAMING_TIME_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nRoamingTime,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ROAMING_TIME_DEFAULT,
-		     CFG_ROAMING_TIME_MIN,
-		     CFG_ROAMING_TIME_MAX),
-
 	REG_VARIABLE(CFG_VCC_RSSI_TRIGGER_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, nVccRssiTrigger,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -6866,7 +6859,6 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	smeConfig->csrConfig.vccRssiThreshold = pConfig->nVccRssiTrigger;
 	smeConfig->csrConfig.vccUlMacLossThreshold =
 		pConfig->nVccUlMacLossThreshold;
-	smeConfig->csrConfig.nRoamingTime = pConfig->nRoamingTime;
 	smeConfig->csrConfig.nInitialDwellTime = pConfig->nInitialDwellTime;
 	smeConfig->csrConfig.initial_scan_no_dfs_chnl =
 					pConfig->initial_scan_no_dfs_chnl;
