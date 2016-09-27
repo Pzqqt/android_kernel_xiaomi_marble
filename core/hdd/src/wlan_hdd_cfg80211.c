@@ -11969,8 +11969,8 @@ disconnected:
  * @req: Pointer to the structure cfg_connect_params receieved from user space
  * @status: out variable for status of reassoc request
  *
- * This function will start reassociation if bssid hint, channel hint and
- * previous bssid parameters are present in the connect request
+ * This function will start reassociation if prev_bssid is set and bssid/
+ * bssid_hint, channel/channel_hint parameters are present in connect request.
  *
  * Return: true if connect was for ReAssociation, false otherwise
  */
@@ -11980,13 +11980,24 @@ static bool wlan_hdd_reassoc_bssid_hint(hdd_adapter_t *adapter,
 					int *status)
 {
 	bool reassoc = false;
-	if (req->bssid_hint && req->channel_hint && req->prev_bssid) {
+	const uint8_t *bssid = NULL;
+	uint16_t channel = 0;
+
+	if (req->bssid)
+		bssid = req->bssid;
+	else if (req->bssid_hint)
+		bssid = req->bssid_hint;
+
+	if (req->channel)
+		channel = req->channel->hw_value;
+	else if (req->channel_hint)
+		channel = req->channel_hint->hw_value;
+
+	if (bssid && channel && req->prev_bssid) {
 		reassoc = true;
 		hdd_info(FL("REASSOC Attempt on channel %d to "MAC_ADDRESS_STR),
-			 req->channel_hint->hw_value,
-			 MAC_ADDR_ARRAY(req->bssid_hint));
-		*status = hdd_reassoc(adapter, req->bssid_hint,
-				      req->channel_hint->hw_value,
+				channel, MAC_ADDR_ARRAY(bssid));
+		*status = hdd_reassoc(adapter, bssid, channel,
 				      CONNECT_CMD_USERSPACE);
 		hdd_debug("hdd_reassoc: status: %d", *status);
 	}
