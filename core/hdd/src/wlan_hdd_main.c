@@ -8037,7 +8037,7 @@ int hdd_wlan_startup(struct device *dev)
 		goto err_exit_nl_srv;
 	}
 
-	wlan_hdd_update_wiphy(hdd_ctx->wiphy, hdd_ctx->config);
+	wlan_hdd_update_wiphy(hdd_ctx);
 
 	hdd_ctx->hHal = cds_get_context(QDF_MODULE_ID_SME);
 
