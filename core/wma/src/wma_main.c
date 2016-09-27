@@ -3191,19 +3191,6 @@ QDF_STATUS wma_stop(void *cds_ctx, uint8_t reason)
 		WMA_LOGE("Failed to destroy the log completion timer");
 	}
 
-	/* There's no need suspend target which is already down during SSR. */
-	if (!cds_is_driver_recovering()) {
-#ifdef HIF_USB
-		/* Suspend the target and enable interrupt */
-		if (wma_suspend_target(wma_handle, 0))
-			WMA_LOGE("Failed to suspend target");
-#else
-		/* Suspend the target and disable interrupt */
-		if (wma_suspend_target(wma_handle, 1))
-			WMA_LOGE("Failed to suspend target");
-#endif /* HIF_USB */
-	}
-
 	/* clean up ll-queue for all vdev */
 	for (i = 0; i < wma_handle->max_bssid; i++) {
 		if (wma_handle->interfaces[i].handle &&

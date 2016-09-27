@@ -688,9 +688,6 @@ QDF_STATUS cds_disable(v_CONTEXT_t cds_context)
 		wma_setneedshutdown(cds_context);
 	}
 
-	hif_disable_isr(((cds_context_type *) cds_context)->pHIFContext);
-	hif_reset_soc(((cds_context_type *) cds_context)->pHIFContext);
-
 	handle = cds_get_context(QDF_MODULE_ID_PE);
 	if (!handle) {
 		cds_err("Invalid PE context return!");
@@ -708,24 +705,48 @@ QDF_STATUS cds_disable(v_CONTEXT_t cds_context)
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
 
-	gp_cds_context->is_cds_disabled = 1;
 	return qdf_status;
 }
 
+#ifdef HIF_USB
+static inline void cds_suspend_target(tp_wma_handle wma_handle)
+{
+	QDF_STATUS status;
+	/* Suspend the target and disable interrupt */
+	status = wma_suspend_target(wma_handle, 0);
+	if (status)
+		cds_err("Failed to suspend target, status = %d", status);
+}
+#else
+static inline void cds_suspend_target(tp_wma_handle wma_handle)
+{
+	QDF_STATUS status;
+	/* Suspend the target and disable interrupt */
+	status = wma_suspend_target(wma_handle, 1);
+	if (status)
+		cds_err("Failed to suspend target, status = %d", status);
+}
+#endif /* HIF_USB */
+
 /**
- * cds_close() - close cds module
+ * cds_post_disable() - post disable cds module
  * @cds_context: CDS context
  *
  * Return: QDF status
  */
-QDF_STATUS cds_close(v_CONTEXT_t cds_context)
+QDF_STATUS cds_post_disable(v_CONTEXT_t cds_context)
 {
-	QDF_STATUS qdf_status;
 	tp_wma_handle wma_handle;
-
+	struct hif_opaque_softc *hif_ctx;
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma_handle) {
 		cds_err("Failed to get wma_handle!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	if (!hif_ctx) {
+		cds_err("Failed to get hif_handle!");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -738,23 +759,27 @@ QDF_STATUS cds_close(v_CONTEXT_t cds_context)
 	 * - Clean up CE tasklets.
 	 */
 
-	if (!gp_cds_context->is_cds_disabled) {
-		cds_info("send denint sequence to firmware");
-		if (!cds_is_driver_recovering()) {
-#ifdef HIF_USB
-			/* Suspend the target and enable interrupt */
-			if (wma_suspend_target(wma_handle, 0))
-				cds_err("Failed to suspend target");
-#else
-			/* Suspend the target and disable interrupt */
-			if (wma_suspend_target(wma_handle, 1))
-				cds_err("Failed to suspend target");
-#endif /* HIF_USB */
-		}
-		hif_disable_isr(
-			((cds_context_type *) cds_context)->pHIFContext);
-		hif_reset_soc(((cds_context_type *) cds_context)->pHIFContext);
-	}
+	cds_info("send denint sequence to firmware");
+	if (!cds_is_driver_recovering())
+		cds_suspend_target(wma_handle);
+	hif_disable_isr(hif_ctx);
+	hif_reset_soc(hif_ctx);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * cds_close() - close cds module
+ * @cds_context: CDS context
+ *
+ * This API allows user to close modules registered
+ * with connectivity device services.
+ *
+ * Return: QDF status
+ */
+QDF_STATUS cds_close(v_CONTEXT_t cds_context)
+{
+	QDF_STATUS qdf_status;
 
 	qdf_status = wma_wmi_work_close(cds_context);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -830,7 +855,6 @@ QDF_STATUS cds_close(v_CONTEXT_t cds_context)
 	cds_deinit_ini_config();
 	qdf_timer_module_deinit();
 
-	gp_cds_context->is_cds_disabled = 0;
 	return QDF_STATUS_SUCCESS;
 }
 

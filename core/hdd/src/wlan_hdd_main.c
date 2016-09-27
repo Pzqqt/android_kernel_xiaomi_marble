@@ -7852,9 +7852,17 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx)
 		goto done;
 	}
 
+	qdf_status = cds_post_disable(hdd_ctx->pcds_context);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		hdd_err("Failed to process post CDS disable Modules! :%d",
+			qdf_status);
+		ret = -EINVAL;
+		QDF_ASSERT(0);
+	}
 	qdf_status = cds_close(hdd_ctx->pcds_context);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_warn("Failed to stop CDS:%d", qdf_status);
+		ret = -EINVAL;
 		QDF_ASSERT(0);
 	}
 	/* Clean up message queues of TX, RX and MC thread */
