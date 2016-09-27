@@ -93,8 +93,8 @@ static inline int hdd_napi_event(enum qca_napi_event event, void *data)
 	return 0;
 }
 static inline struct qca_napi_data *hdd_napi_get_all(void) { return NULL; }
-static inline int hdd_napi_apply_throughput_policy(struct hdd_context_s *,
-						   uint64_t, uint64_t)
+static inline int hdd_napi_apply_throughput_policy(void *hdd_ctx,
+				uint64_t tx_packets, uint64_t rx_packets)
 {
 	return 0;
 }
