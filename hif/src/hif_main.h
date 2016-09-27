@@ -111,6 +111,22 @@ struct hif_ce_stats {
 	int ce_ring_delta_fail_count;
 };
 
+#ifdef WLAN_SUSPEND_RESUME_TEST
+struct fake_apps_context {
+	unsigned long state;
+	hif_fake_resume_callback resume_callback;
+	struct work_struct resume_work;
+};
+
+enum hif_fake_apps_state_bits {
+	HIF_FA_SUSPENDED_BIT = 0
+};
+
+void hif_fake_apps_resume_work(struct work_struct *work);
+#else
+static inline void hif_init_fake_apps_ctx(struct hif_softc *scn) {}
+#endif /* WLAN_SUSPEND_RESUME_TEST */
+
 struct hif_softc {
 	struct hif_opaque_softc osc;
 	struct hif_config_info hif_config;
@@ -156,6 +172,9 @@ struct hif_softc {
 	uint32_t nss_wifi_ol_mode;
 #endif
 	void *hal_soc;
+#ifdef WLAN_SUSPEND_RESUME_TEST
+	struct fake_apps_context fake_apps_ctx;
+#endif /* WLAN_SUSPEND_RESUME_TEST */
 };
 
 #ifdef QCA_NSS_WIFI_OFFLOAD_SUPPORT
@@ -224,4 +243,5 @@ static inline void hif_ramdump_handler(struct hif_opaque_softc *scn) {}
 #endif
 void hif_ext_grp_tasklet(unsigned long data);
 void hif_grp_tasklet_kill(struct hif_softc *scn);
+
 #endif /* __HIF_MAIN_H__ */

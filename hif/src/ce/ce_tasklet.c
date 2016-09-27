@@ -253,11 +253,12 @@ void ce_tasklet_kill(struct hif_softc *scn)
 int hif_drain_tasklets(struct hif_softc *scn)
 {
 	uint32_t ce_drain_wait_cnt = 0;
+	int32_t tasklet_cnt;
 
-	while (qdf_atomic_read(&scn->active_tasklet_cnt)) {
+	while ((tasklet_cnt = qdf_atomic_read(&scn->active_tasklet_cnt))) {
 		if (++ce_drain_wait_cnt > HIF_CE_DRAIN_WAIT_CNT) {
-			HIF_ERROR("%s: CE still not done with access",
-			       __func__);
+			HIF_ERROR("%s: CE still not done with access: %d",
+				  __func__, tasklet_cnt);
 
 			return -EFAULT;
 		}
@@ -267,55 +268,81 @@ int hif_drain_tasklets(struct hif_softc *scn)
 	return 0;
 }
 
-
-
 #ifdef WLAN_SUSPEND_RESUME_TEST
-static bool g_hif_apps_fake_suspended;
-static hdd_fake_resume_callback hdd_fake_apps_resume;
-
-static void hif_wlan_resume_work_handler(struct work_struct *work)
-{
-	hdd_fake_apps_resume(0);
-}
-
-static DECLARE_WORK(hif_resume_work, hif_wlan_resume_work_handler);
-
 /**
- * hif_fake_apps_suspend(): Suspend WLAN
- *
- * Set the fake suspend flag such that hif knows that it will need
- * to fake the apps resume process using the hdd_fake_apps_resume
+ * hif_fake_apps_resume_work() - Work handler for fake apps resume callback
+ * @work:	The work struct being passed from the linux kernel
  *
  * Return: none
  */
-void hif_fake_apps_suspend(hdd_fake_resume_callback callback)
+void hif_fake_apps_resume_work(struct work_struct *work)
 {
-	hdd_fake_apps_resume = callback;
-	g_hif_apps_fake_suspended = true;
+	struct fake_apps_context *ctx =
+		container_of(work, struct fake_apps_context, resume_work);
+
+	QDF_BUG(ctx->resume_callback);
+	ctx->resume_callback(0);
+	ctx->resume_callback = NULL;
 }
 
 /**
- * hif_fake_apps_resume(): trigger WLAN resume if needed
- * @fid_hdl: hif context
- * @ce_id: copy engine Id
+ * hif_fake_apps_suspend(): Setup unit-test related suspend state. Call after
+ *	a normal WoW suspend has been completed.
+ * @hif_ctx:	The HIF context to operate on
+ * @callback:	The function to call when fake apps resume is triggered
  *
- * Return: True if a fake apps resume has been been triggered,
- *         returns false if regular interrupt processing is needed.
- *	   Ensures copy engine Id matches mapped Irq
+ * Set the fake suspend flag such that hif knows that it will need
+ * to fake the apps resume process using hdd_trigger_fake_apps_resume
+ *
+ * Return: none
  */
-static bool hif_fake_apps_resume(struct hif_opaque_softc *hif_hdl, int ce_id)
+void hif_fake_apps_suspend(struct hif_opaque_softc *hif_ctx,
+			   hif_fake_resume_callback callback)
 {
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	scn->fake_apps_ctx.resume_callback = callback;
+	set_bit(HIF_FA_SUSPENDED_BIT, &scn->fake_apps_ctx.state);
+}
+
+/**
+ * hif_fake_apps_resume(): Cleanup unit-test related suspend state. Call before
+ *	doing a normal WoW resume if suspend was initiated via fake apps
+ *	suspend.
+ * @hif_ctx:	The HIF context to operate on
+ *
+ * Return: none
+ */
+void hif_fake_apps_resume(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	clear_bit(HIF_FA_SUSPENDED_BIT, &scn->fake_apps_ctx.state);
+	scn->fake_apps_ctx.resume_callback = NULL;
+}
+
+/**
+ * hif_interrupt_is_fake_apps_resume(): Determines if the raised irq should
+ *	trigger a fake apps resume.
+ * @hif_ctx:	The HIF context to operate on
+ * @ce_id:	The copy engine Id from the originating interrupt
+ *
+ * Return: true if the raised irq should trigger a fake apps resume
+ */
+static bool hif_interrupt_is_fake_apps_resume(struct hif_opaque_softc *hif_ctx,
+					      int ce_id)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	uint8_t ul_pipe, dl_pipe;
 	int ul_is_polled, dl_is_polled;
 	QDF_STATUS status;
 
-	/* can't resume if not already suspended */
-	if (!g_hif_apps_fake_suspended)
+	if (!test_bit(HIF_FA_SUSPENDED_BIT, &scn->fake_apps_ctx.state))
 		return false;
 
-	/* ensure passed copy engine Id matches Id from irq map */
-
-	status = hif_map_service_to_pipe(hif_hdl, HTC_CTRL_RSVD_SVC,
+	/* ensure passed ce_id matches wake irq */
+	/* dl_pipe will be populated with the wake irq number */
+	status = hif_map_service_to_pipe(hif_ctx, HTC_CTRL_RSVD_SVC,
 					 &ul_pipe, &dl_pipe,
 					 &ul_is_polled, &dl_is_polled);
 
@@ -324,29 +351,40 @@ static bool hif_fake_apps_resume(struct hif_opaque_softc *hif_hdl, int ce_id)
 		return false;
 	}
 
-	/* dl_pipe is equivalent to a copy engine Id at this point */
-	if (ce_id != dl_pipe)
-		return false;
+	return ce_id == dl_pipe;
+}
 
-	/* trigger fake apps resume */
-	g_hif_apps_fake_suspended = false;
-	schedule_work(&hif_resume_work);
-	return true;
+/**
+ * hif_trigger_fake_apps_resume(): Trigger a fake apps resume by scheduling the
+ *	previously registered callback for execution
+ * @hif_ctx:	The HIF context to operate on
+ *
+ * Return: None
+ */
+static void hif_trigger_fake_apps_resume(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	if (!test_and_clear_bit(HIF_FA_SUSPENDED_BIT,
+				&scn->fake_apps_ctx.state))
+		return;
+
+	schedule_work(&scn->fake_apps_ctx.resume_work);
 }
 
 #else
 
-/**
- * hif_fake_apps_resume(): trigger WLAN resume if needed
- * @hif_hdl: hif context
- * @ce_id: copy engine Id
- *
- * Return: always false if WLAN_SUSPEND_RESUME_TEST is not defined
- */
-static bool hif_fake_apps_resume(struct hif_opaque_softc *hif_hdl, int ce_id)
+static inline bool
+hif_interrupt_is_fake_apps_resume(struct hif_opaque_softc *hif_ctx, int ce_id)
 {
 	return false;
 }
+
+static inline void
+hif_trigger_fake_apps_resume(struct hif_opaque_softc *hif_ctx)
+{
+}
+
 #endif /* End of WLAN_SUSPEND_RESUME_TEST */
 
 /**
@@ -447,15 +485,16 @@ irqreturn_t ce_dispatch_interrupt(int ce_id,
 		return IRQ_NONE;
 	}
 	hif_irq_disable(scn, ce_id);
-	qdf_atomic_inc(&scn->active_tasklet_cnt);
 	hif_record_ce_desc_event(scn, ce_id, HIF_IRQ_EVENT, NULL, NULL, 0);
 	hif_ce_increment_interrupt_count(hif_ce_state, ce_id);
 
-	if (unlikely(hif_fake_apps_resume(hif_hdl, ce_id))) {
-		HIF_ERROR("received resume interrupt");
+	if (unlikely(hif_interrupt_is_fake_apps_resume(hif_hdl, ce_id))) {
+		hif_trigger_fake_apps_resume(hif_hdl);
 		hif_irq_enable(scn, ce_id);
 		return IRQ_HANDLED;
 	}
+
+	qdf_atomic_inc(&scn->active_tasklet_cnt);
 
 	if (hif_napi_enabled(hif_hdl, ce_id))
 		hif_napi_schedule(hif_hdl, ce_id);

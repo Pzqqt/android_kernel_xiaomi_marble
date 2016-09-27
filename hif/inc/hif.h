@@ -724,8 +724,10 @@ void hif_set_bundle_mode(struct hif_opaque_softc *scn, bool enabled,
 int hif_bus_reset_resume(struct hif_opaque_softc *scn);
 
 #ifdef WLAN_SUSPEND_RESUME_TEST
-typedef void (*hdd_fake_resume_callback)(uint32_t val);
-void hif_fake_apps_suspend(hdd_fake_resume_callback callback);
+typedef void (*hif_fake_resume_callback)(uint32_t val);
+void hif_fake_apps_suspend(struct hif_opaque_softc *hif_ctx,
+			   hif_fake_resume_callback callback);
+void hif_fake_apps_resume(struct hif_opaque_softc *hif_ctx);
 #endif
 
 uint32_t hif_register_ext_group_int_handler(struct hif_opaque_softc *hif_ctx,
