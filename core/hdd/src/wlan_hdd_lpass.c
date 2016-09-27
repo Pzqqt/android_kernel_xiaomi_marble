@@ -261,15 +261,9 @@ static void wlan_hdd_send_all_scan_intf_info(struct hdd_context_s *hdd_ctx)
 		wlan_hdd_send_status_pkg(adapter, NULL, 1, 0);
 }
 
-/**
+/*
  * hdd_lpass_target_config() - Handle LPASS target configuration
- * @hdd_ctx: HDD global context where lpass information is stored
- * @target_config: Target configuration containing lpass info
- *
- * This function updates the HDD context with lpass-specific
- * information provided by the target.
- *
- * Return: none
+ * (public function documented in wlan_hdd_lpass.h)
  */
 void hdd_lpass_target_config(struct hdd_context_s *hdd_ctx,
 			     struct wma_tgt_cfg *target_config)
@@ -277,15 +271,9 @@ void hdd_lpass_target_config(struct hdd_context_s *hdd_ctx,
 	hdd_ctx->lpss_support = target_config->lpss_support;
 }
 
-/**
+/*
  * hdd_lpass_populate_cds_config() - Populate LPASS configuration
- * @cds_config: CDS configuration to populate with lpass info
- * @hdd_ctx: HDD global context which contains lpass information
- *
- * This function seeds the CDS configuration structure with
- * lpass-specific information gleaned from the HDD context.
- *
- * Return: none
+ * (public function documented in wlan_hdd_lpass.h)
  */
 void hdd_lpass_populate_cds_config(struct cds_config_info *cds_config,
 				   struct hdd_context_s *hdd_ctx)
@@ -293,14 +281,9 @@ void hdd_lpass_populate_cds_config(struct cds_config_info *cds_config,
 	cds_config->is_lpass_enabled = hdd_ctx->config->enable_lpass_support;
 }
 
-/**
+/*
  * hdd_lpass_notify_connect() - Notify LPASS of interface connect
- * @adapter: The adapter that connected
- *
- * This function is used to notify the LPASS feature that an adapter
- * has connected.
- *
- * Return: none
+ * (public function documented in wlan_hdd_lpass.h)
  */
 void hdd_lpass_notify_connect(struct hdd_adapter_s *adapter)
 {
@@ -319,14 +302,9 @@ void hdd_lpass_notify_connect(struct hdd_adapter_s *adapter)
 	wlan_hdd_send_status_pkg(adapter, sta_ctx, 1, 1);
 }
 
-/**
+/*
  * hdd_lpass_notify_disconnect() - Notify LPASS of interface disconnect
- * @adapter: The adapter that connected
- *
- * This function is used to notify the LPASS feature that an adapter
- * has disconnected.
- *
- * Return: none
+ * (public function documented in wlan_hdd_lpass.h)
  */
 void hdd_lpass_notify_disconnect(struct hdd_adapter_s *adapter)
 {
@@ -337,16 +315,13 @@ void hdd_lpass_notify_disconnect(struct hdd_adapter_s *adapter)
 	wlan_hdd_send_status_pkg(adapter, sta_ctx, 1, 0);
 }
 
-/**
+/*
  * hdd_lpass_notify_mode_change() - Notify LPASS of interface mode change
- * @adapter: The adapter whose mode was changed
+ * (public function documented in wlan_hdd_lpass.h)
  *
- * This function is used to notify the LPASS feature that an adapter
- * had its mode changed.
- *
- * Return: none
+ * implementation note: when one interfaces changes we notify the
+ * state of all of the interfaces.
  */
-/* implementation note: when one changes we notify them all */
 void hdd_lpass_notify_mode_change(struct hdd_adapter_s *adapter)
 {
 	struct hdd_context_s *hdd_ctx;
@@ -355,14 +330,9 @@ void hdd_lpass_notify_mode_change(struct hdd_adapter_s *adapter)
 	wlan_hdd_send_all_scan_intf_info(hdd_ctx);
 }
 
-/**
+/*
  * hdd_lpass_notify_start() - Notify LPASS of driver start
- * @hdd_ctx: The global HDD context
- *
- * This function is used to notify the LPASS feature that the wlan
- * driver has (re-)started.
- *
- * Return: none
+ * (public function documented in wlan_hdd_lpass.h)
  */
 void hdd_lpass_notify_start(struct hdd_context_s *hdd_ctx)
 {
@@ -372,26 +342,18 @@ void hdd_lpass_notify_start(struct hdd_context_s *hdd_ctx)
 				  hdd_ctx->target_hw_name);
 }
 
-/**
+/*
  * hdd_lpass_notify_stop() - Notify LPASS of driver stop
- * @hdd_ctx: The global HDD context
- *
- * This function is used to notify the LPASS feature that the wlan
- * driver has stopped
- *
- * Return: none
+ * (public function documented in wlan_hdd_lpass.h)
  */
 void hdd_lpass_notify_stop(struct hdd_context_s *hdd_ctx)
 {
 	wlan_hdd_send_status_pkg(NULL, NULL, 0, 0);
 }
 
-/**
+/*
  * hdd_lpass_is_supported() - Is lpass feature supported?
- * @hdd_ctx: The global HDD context
- *
- * Return: true if feature is enabled and supported by firmware, false
- * if the feature is not enabled or not supported by firmware.
+ * (public function documented in wlan_hdd_lpass.h)
  */
 bool hdd_lpass_is_supported(struct hdd_context_s *hdd_ctx)
 {
