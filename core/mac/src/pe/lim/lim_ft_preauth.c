@@ -31,6 +31,7 @@
 #include <lim_prop_exts_utils.h>
 #include <lim_assoc_utils.h>
 #include <lim_session.h>
+#include <lim_session_utils.h>
 #include <lim_admit_control.h>
 #include "wma.h"
 
@@ -191,9 +192,13 @@ int lim_process_ft_pre_auth_req(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 			      session, 0, 0);
 #endif
 
-	/* Dont need to suspend if APs are in same channel */
-	if (session->currentOperChannel !=
-	    session->ftPEContext.pFTPreAuthReq->preAuthchannelNum) {
+	/*
+	 * Dont need to suspend if APs are in same channel and DUT
+	 * is not in MCC state
+	 */
+	if ((session->currentOperChannel !=
+	    session->ftPEContext.pFTPreAuthReq->preAuthchannelNum)
+	    || lim_is_in_mcc(mac_ctx)) {
 		/* Need to suspend link only if the channels are different */
 		lim_log(mac_ctx, LOG2,
 			FL("Performing pre-auth on diff channel(session %p)"),
