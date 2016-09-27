@@ -3179,6 +3179,8 @@ void wlan_hdd_cfg80211_deinit(struct wiphy *wiphy);
 
 void wlan_hdd_update_wiphy(hdd_context_t *hdd_ctx);
 
+void wlan_hdd_update_11n_mode(struct hdd_config *cfg);
+
 int wlan_hdd_cfg80211_register(struct wiphy *wiphy);
 void wlan_hdd_cfg80211_register_frames(hdd_adapter_t *pAdapter);
 

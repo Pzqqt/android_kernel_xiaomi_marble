@@ -9001,6 +9001,15 @@ static void wlan_hdd_update_band_cap(hdd_context_t *hdd_ctx)
 			hdd_ctx->wiphy->bands[NL80211_BAND_5GHZ]->ht_cap.cap |=
 						IEEE80211_HT_CAP_TX_STBC;
 	}
+
+	if (!sme_is_feature_supported_by_fw(DOT11AC)) {
+		hdd_ctx->wiphy->bands[NL80211_BAND_2GHZ]->
+						vht_cap.vht_supported = 0;
+		hdd_ctx->wiphy->bands[NL80211_BAND_2GHZ]->vht_cap.cap = 0;
+		hdd_ctx->wiphy->bands[NL80211_BAND_5GHZ]->
+						vht_cap.vht_supported = 0;
+		hdd_ctx->wiphy->bands[NL80211_BAND_5GHZ]->vht_cap.cap = 0;
+	}
 }
 
 /*
@@ -9014,6 +9023,28 @@ void wlan_hdd_update_wiphy(hdd_context_t *hdd_ctx)
 	hdd_ctx->wiphy->max_ap_assoc_sta = hdd_ctx->config->maxNumberOfPeers;
 
 	wlan_hdd_update_band_cap(hdd_ctx);
+}
+
+/**
+ * wlan_hdd_update_11n_mode - update 11n mode in hdd cfg
+ * @cfg: hdd cfg
+ *
+ * this function update 11n mode in hdd cfg
+ *
+ * Return: void
+ */
+void wlan_hdd_update_11n_mode(struct hdd_config *cfg)
+{
+	if (sme_is_feature_supported_by_fw(DOT11AC)) {
+		hdd_notice("support 11ac");
+	} else {
+		hdd_notice("not support 11ac");
+		if ((cfg->dot11Mode == eHDD_DOT11_MODE_11ac_ONLY) ||
+		    (cfg->dot11Mode == eHDD_DOT11_MODE_11ac)) {
+			cfg->dot11Mode = eHDD_DOT11_MODE_11n;
+			cfg->sap_p2p_11ac_override = 0;
+		}
+	}
 }
 
 /* In this function we are registering wiphy. */
