@@ -192,8 +192,6 @@ struct qca_napi_info {
  * @thread_mask: mask for this core within the cluster
  * @max_freq:    maximum clock this core can be clocked at
  *               same for all cpus of the same core.
- * @efficiency:  a coefficient to mark relative efficiency
- *               same for all cpus of the same core.
  * @napis:       bitmap of napi instances on this core
  * cluster_nxt:  chain to link cores within the same cluster
  *
@@ -220,7 +218,6 @@ struct qca_napi_cpu {
 	cpumask_t		core_mask;
 	cpumask_t		thread_mask;
 	unsigned int		max_freq;
-	unsigned long		efficiency;
 	uint32_t		napis;
 	int			cluster_nxt;  /* index, not pointer */
 };

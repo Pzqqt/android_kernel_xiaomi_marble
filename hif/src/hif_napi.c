@@ -692,13 +692,13 @@ static void hnc_dump_cpus(struct qca_napi_data *napid)
 		  napid->lilcl_head, napid->bigcl_head);
 	for (i = 0; i < NR_CPUS; i++) {
 		NAPI_DEBUG("CPU[%02d]: state:%d crid=%02d clid=%02d "
-			  "crmk:0x%0lx thmk:0x%0lx frq:%d eff:%ld "
+			  "crmk:0x%0lx thmk:0x%0lx frq:%d "
 			  "napi = 0x%08x lnk:%d",
 			  i,
 			  cpu[i].state, cpu[i].core_id, cpu[i].cluster_id,
 			  cpu[i].core_mask.bits[0],
 			  cpu[i].thread_mask.bits[0],
-			  cpu[i].max_freq, cpu[i].efficiency, cpu[i].napis,
+			  cpu[i].max_freq, cpu[i].napis,
 			  cpu[i].cluster_nxt);
 	}
 	/* return; -- Linus does not like it, I do. */
@@ -740,7 +740,6 @@ static int hnc_link_clusters(struct qca_napi_data *napid)
 	unsigned int lilfrq = INT_MAX;
 	unsigned int bigfrq = 0;
 	unsigned int clfrq;
-	unsigned long cleff;
 	int prev;
 	struct qca_napi_cpu *cpus = napid->napi_cpu;
 
@@ -773,7 +772,6 @@ static int hnc_link_clusters(struct qca_napi_data *napid)
 					curcl = cl;
 					curclhead = i; /* row */
 					clfrq = cpus[i].max_freq;
-					cleff = cpus[i].efficiency;
 					prev = -1;
 				};
 				if ((curcl >= 0) && (curcl != cl)) {
@@ -782,9 +780,6 @@ static int hnc_link_clusters(struct qca_napi_data *napid)
 						   cl, curcl);
 					continue;
 				}
-				if (cpus[i].efficiency != cleff)
-					NAPI_DEBUG("WARN: ef(%ld)!=clef(%ld)\n",
-						   cpus[i].efficiency, cleff);
 				if (cpus[i].max_freq != clfrq)
 					NAPI_DEBUG("WARN: frq(%d)!=clfrq(%d)\n",
 						   cpus[i].max_freq, clfrq);
@@ -987,7 +982,6 @@ int hif_napi_cpu_init(void *ctx)
 		cpumask_copy(&(cpus[i].thread_mask),
 			     topology_sibling_cpumask(i));
 		cpus[i].max_freq    = cpufreq_quick_get_max(i);
-		cpus[i].efficiency  = arch_get_cpu_efficiency(i);
 		cpus[i].napis       = 0x0;
 		cpus[i].cluster_nxt = -1; /* invalid */
 	}
