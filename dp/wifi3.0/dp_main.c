@@ -563,6 +563,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	}
 
 
+	soc->num_tcl_data_rings = 0;
 	/* Tx data rings */
 	if (!wlan_cfg_per_pdev_tx_ring(soc->wlan_cfg_ctx)) {
 		soc->num_tcl_data_rings =
@@ -588,6 +589,12 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	} else {
 		/* This will be incremented during per pdev ring setup */
 		soc->num_tcl_data_rings = 0;
+	}
+
+	if (dp_tx_soc_attach(soc)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				"%s: dp_tx_soc_attach failed\n", __func__);
+		goto fail1;
 	}
 
 	/* TCL command and status rings */
@@ -753,6 +760,13 @@ void *dp_pdev_attach_wifi3(void *txrx_soc, void *ctrl_pdev,
 			goto fail0;
 		}
 		soc->num_tcl_data_rings++;
+	}
+
+	/* Tx specific init */
+	if (dp_tx_pdev_attach(pdev)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s: dp_tx_pdev_attach failed\n", __func__);
+		goto fail0;
 	}
 
 	/* Setup per PDEV REO rings if configured */
@@ -1022,6 +1036,8 @@ void *dp_vdev_attach_wifi3(void *txrx_pdev,
 	TAILQ_INSERT_TAIL(&pdev->vdev_list, vdev, vdev_list_elem);
 	pdev->vdev_count++;
 
+	dp_tx_vdev_attach(vdev);
+
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 		"Created vdev %p (%02x:%02x:%02x:%02x:%02x:%02x)\n", vdev,
 		vdev->mac_addr.raw[0], vdev->mac_addr.raw[1],
@@ -1107,6 +1123,7 @@ void dp_vdev_detach_wifi3(void *vdev_handle,
 	}
 	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 
+	dp_tx_vdev_detach(vdev);
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
 		"%s: deleting vdev object %p (%02x:%02x:%02x:%02x:%02x:%02x)\n",
 		__func__, vdev,

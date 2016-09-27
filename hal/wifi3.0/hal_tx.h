@@ -87,6 +87,9 @@ do {                                            \
 #define HAL_TX_EXT_BUF_LEN_LSB  TX_MSDU_EXTENSION_7_BUF0_LEN_LSB
 #define HAL_TX_EXT_BUF_WD_SIZE  2
 
+#define HAL_TX_DESC_ADDRX_EN 0x1
+#define HAL_TX_DESC_ADDRY_EN 0x2
+
 enum hal_tx_ret_buf_manager {
 	HAL_WBM_SW0_BM_ID = 3,
 	HAL_WBM_SW1_BM_ID = 4,
