@@ -156,6 +156,9 @@
 
 #define MAX_CFG_STRING_LEN  255
 
+/* SSR Retry Count */
+#define HDD_MOD_EXIT_SSR_MAX_RETRIES 75
+
 #define MAC_ADDR_ARRAY(a) (a)[0], (a)[1], (a)[2], (a)[3], (a)[4], (a)[5]
 /** Mac Address string **/
 #define MAC_ADDRESS_STR "%02x:%02x:%02x:%02x:%02x:%02x"

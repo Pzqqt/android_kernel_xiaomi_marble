@@ -8766,6 +8766,28 @@ out:
 }
 
 /**
+ * hdd_wait_for_recovery_completion() - Wait for cds recovery completion
+ *
+ * Block the unloading of the driver until the cds recovery is completed
+ *
+ * Return: None
+ */
+static void hdd_wait_for_recovery_completion(void)
+{
+	int retry = 0;
+
+	/* Wait for recovery to complete */
+	while (cds_is_driver_recovering()) {
+		hdd_alert("Recovery in progress; wait here!!!");
+		msleep(1000);
+		if (retry++ == HDD_MOD_EXIT_SSR_MAX_RETRIES) {
+			hdd_alert("SSR never completed, fatal error");
+			QDF_BUG(0);
+		}
+	}
+}
+
+/**
  * __hdd_module_exit - Module exit helper
  *
  * Module exit helper function used by both module and static driver.
@@ -8774,6 +8796,8 @@ static void __hdd_module_exit(void)
 {
 	pr_info("%s: Unloading driver v%s\n", WLAN_MODULE_NAME,
 		QWLAN_VERSIONSTR);
+
+	hdd_wait_for_recovery_completion();
 
 	wlan_hdd_unregister_driver();
 

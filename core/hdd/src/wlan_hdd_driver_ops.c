@@ -417,11 +417,6 @@ static void wlan_hdd_remove(struct device *dev)
 	pr_info("%s: Removing driver v%s\n", WLAN_MODULE_NAME,
 		QWLAN_VERSIONSTR);
 
-	/* Wait for recovery to complete */
-	while (cds_is_driver_recovering()) {
-		hdd_alert("Recovery in progress; wait here!!!");
-		msleep(1000);
-	}
 
 	cds_set_driver_loaded(false);
 	cds_set_unload_in_progress(true);
