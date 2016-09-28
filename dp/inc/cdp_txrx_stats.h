@@ -31,9 +31,31 @@
  */
 #ifndef _CDP_TXRX_STATS_H_
 #define _CDP_TXRX_STATS_H_
+#include <cdp_txrx_ops.h>
 
-void ol_txrx_display_stats(uint16_t bitmap);
-void ol_txrx_clear_stats(uint16_t bitmap);
-int ol_txrx_stats(uint8_t vdev_id, char *buffer, unsigned buf_len);
+static inline void
+cdp_display_stats(ol_txrx_soc_handle soc, uint16_t bitmap)
+{
+	if (soc->ops->mob_stats_ops->display_stats)
+		return soc->ops->mob_stats_ops->display_stats(bitmap);
+	return;
+}
+
+static inline void
+cdp_clear_stats(ol_txrx_soc_handle soc, uint16_t bitmap)
+{
+	if (soc->ops->mob_stats_ops->clear_stats)
+		return soc->ops->mob_stats_ops->clear_stats(bitmap);
+	return;
+}
+
+static inline int
+cdp_stats(ol_txrx_soc_handle soc, uint8_t vdev_id, char *buffer,
+		unsigned buf_len)
+{
+	if (soc->ops->mob_stats_ops->stats)
+		return soc->ops->mob_stats_ops->stats(vdev_id, buffer, buf_len);
+	return 0;
+}
 
 #endif /* _CDP_TXRX_STATS_H_ */

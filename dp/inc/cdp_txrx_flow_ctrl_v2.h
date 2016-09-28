@@ -31,33 +31,81 @@
  */
 #ifndef _CDP_TXRX_FC_V2_H_
 #define _CDP_TXRX_FC_V2_H_
-
-#include "cdp_txrx_flow_ctrl_legacy.h"
+#include <cdp_txrx_ops.h>
 
 /**
- * @typedef ol_tx_pause_callback_fp
- * @brief OSIF function registered with the data path
+ * cdp_register_pause_cb() - Register flow control callback function pointer
+ * @soc - data path soc handle
+ * @pause_cb - callback function pointer
+ *
+ * Register flow control callback function pointer and client context pointer
+ *
+ * return QDF_STATUS_SUCCESS success
  */
-typedef void (*ol_tx_pause_callback_fp)(uint8_t vdev_id,
-					enum netif_action_type action,
-					enum netif_reason_type reason);
-
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
-QDF_STATUS ol_txrx_register_pause_cb(ol_tx_pause_callback_fp pause_cb);
-
-void ol_tx_set_desc_global_pool_size(uint32_t num_msdu_desc);
-#else
-static inline
-QDF_STATUS ol_txrx_register_pause_cb(ol_tx_pause_callback_fp pause_cb)
+static inline QDF_STATUS
+cdp_register_pause_cb(ol_txrx_soc_handle soc,
+		ol_tx_pause_callback_fp pause_cb)
 {
-	return QDF_STATUS_SUCCESS;
+	if (!soc || !soc->ops || !soc->ops->flowctl_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
 
+	if (soc->ops->flowctl_ops->register_pause_cb)
+		return soc->ops->flowctl_ops->register_pause_cb(pause_cb);
+
+	return QDF_STATUS_SUCCESS;
 }
 
-static inline void ol_tx_set_desc_global_pool_size(uint32_t num_msdu_desc)
+/**
+ * cdp_set_desc_global_pool_size() - set global device pool size
+ * @soc - data path soc handle
+ * @num_msdu_desc - descriptor pool size
+ *
+ * set global device pool size
+ *
+ * return none
+ */
+static inline void
+cdp_set_desc_global_pool_size(ol_txrx_soc_handle soc,
+		uint32_t num_msdu_desc)
 {
+	if (!soc || !soc->ops || !soc->ops->flowctl_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->flowctl_ops->set_desc_global_pool_size)
+		return soc->ops->flowctl_ops->set_desc_global_pool_size(
+			num_msdu_desc);
+
 	return;
 }
-#endif
+
+/**
+ * cdp_dump_flow_pool_info() - dump flow pool information
+ * @soc - data path soc handle
+ *
+ * dump flow pool information
+ *
+ * return none
+ */
+static inline void
+cdp_dump_flow_pool_info(ol_txrx_soc_handle soc)
+{
+	if (!soc || !soc->ops || !soc->ops->flowctl_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->flowctl_ops->dump_flow_pool_info)
+		return soc->ops->flowctl_ops->dump_flow_pool_info();
+
+	return;
+}
+
 
 #endif /* _CDP_TXRX_FC_V2_H_ */

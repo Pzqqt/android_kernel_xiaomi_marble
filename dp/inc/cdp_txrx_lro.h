@@ -31,9 +31,52 @@
  */
 #ifndef _CDP_TXRX_LRO_H_
 #define _CDP_TXRX_LRO_H_
+/**
+ * cdp_register_lro_flush_cb() - register lro flsu cb function pointer
+ * @soc - data path soc handle
+ * @pdev - device instance pointer
+ *
+ * register lro flush callback function pointer
+ *
+ * return none
+ */
+static inline void cdp_register_lro_flush_cb(ol_txrx_soc_handle soc,
+		void (lro_flush_cb)(void *), void *(lro_init_cb)(void))
+{
+	if (!soc || !soc->ops || !soc->ops->lro_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
 
-void ol_register_lro_flush_cb(void (lro_flush_cb)(void *),
-				void *(lro_init_cb)(void));
-void ol_deregister_lro_flush_cb(void (lro_deinit_cb)(void *));
+	if (soc->ops->lro_ops->register_lro_flush_cb)
+		return soc->ops->lro_ops->register_lro_flush_cb(lro_flush_cb,
+			lro_init_cb);
+
+	return;
+}
+/**
+ * cdp_deregister_lro_flush_cb() - deregister lro flsu cb function pointer
+ * @soc - data path soc handle
+ *
+ * deregister lro flush callback function pointer
+ *
+ * return none
+ */
+static inline void cdp_deregister_lro_flush_cb(ol_txrx_soc_handle soc
+		void (lro_deinit_cb)(void *))
+{
+	if (!soc || !soc->ops || !soc->ops->lro_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->lro_ops->deregister_lro_flush_cb)
+		return soc->ops->lro_ops->deregister_lro_flush_cb(
+			lro_deinit_cb);
+
+	return;
+}
 
 #endif /* _CDP_TXRX_LRO_H_ */

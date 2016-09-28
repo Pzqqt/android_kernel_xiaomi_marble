@@ -30,100 +30,212 @@
  */
 #ifndef _CDP_TXRX_IPA_H_
 #define _CDP_TXRX_IPA_H_
-
+#include <cdp_txrx_mob_def.h>
 
 /**
- * ol_txrx_ipa_resources - Resources needed for IPA
+ * cdp_ipa_get_resource() - Get allocated wlan resources for ipa data path
+ * @soc - data path soc handle
+ * @pdev - device instance pointer
+ * @ipa_res - ipa resources pointer
+ *
+ * Get allocated wlan resources for ipa data path
+ *
+ * return none
  */
-struct ol_txrx_ipa_resources {
-	qdf_dma_addr_t ce_sr_base_paddr;
-	uint32_t ce_sr_ring_size;
-	qdf_dma_addr_t ce_reg_paddr;
-
-	qdf_dma_addr_t tx_comp_ring_base_paddr;
-	uint32_t tx_comp_ring_size;
-	uint32_t tx_num_alloc_buffer;
-
-	qdf_dma_addr_t rx_rdy_ring_base_paddr;
-	uint32_t rx_rdy_ring_size;
-	qdf_dma_addr_t rx_proc_done_idx_paddr;
-	void *rx_proc_done_idx_vaddr;
-
-	qdf_dma_addr_t rx2_rdy_ring_base_paddr;
-	uint32_t rx2_rdy_ring_size;
-	qdf_dma_addr_t rx2_proc_done_idx_paddr;
-	void *rx2_proc_done_idx_vaddr;
-};
-
-#ifdef IPA_OFFLOAD
-
-void
-ol_txrx_ipa_uc_get_resource(ol_txrx_pdev_handle pdev,
-		 struct ol_txrx_ipa_resources *ipa_res);
-
-void
-ol_txrx_ipa_uc_set_doorbell_paddr(ol_txrx_pdev_handle pdev,
-		 qdf_dma_addr_t ipa_tx_uc_doorbell_paddr,
-		 qdf_dma_addr_t ipa_rx_uc_doorbell_paddr);
-
-void
-ol_txrx_ipa_uc_set_active(ol_txrx_pdev_handle pdev,
-		 bool uc_active, bool is_tx);
-
-void ol_txrx_ipa_uc_op_response(ol_txrx_pdev_handle pdev, uint8_t *op_msg);
-
-void ol_txrx_ipa_uc_register_op_cb(ol_txrx_pdev_handle pdev,
-		 void (*ipa_uc_op_cb_type)(uint8_t *op_msg,
-		 void *osif_ctxt),
-		 void *osif_dev);
-
-void ol_txrx_ipa_uc_get_stat(ol_txrx_pdev_handle pdev);
-
-qdf_nbuf_t ol_tx_send_ipa_data_frame(void *vdev, qdf_nbuf_t skb);
-#else
-
 static inline void
-ol_txrx_ipa_uc_get_resource(ol_txrx_pdev_handle pdev,
+cdp_ipa_get_resource(ol_txrx_soc_handle soc, void *pdev,
 		 struct ol_txrx_ipa_resources *ipa_res)
 {
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->ipa_ops->ipa_get_resource)
+		return soc->ops->ipa_ops->ipa_get_resource(pdev, ipa_res);
+
 	return;
 }
 
+/**
+ * cdp_ipa_set_doorbell_paddr() - give IPA db paddr to fw
+ * @soc - data path soc handle
+ * @pdev - device instance pointer
+ * @ipa_tx_uc_doorbell_paddr - tx db paddr
+ * @ipa_rx_uc_doorbell_paddr - rx db paddr
+ *
+ * give IPA db paddr to fw
+ *
+ * return none
+ */
 static inline void
-ol_txrx_ipa_uc_set_doorbell_paddr(ol_txrx_pdev_handle pdev,
-				  qdf_dma_addr_t ipa_tx_uc_doorbell_paddr,
-				  qdf_dma_addr_t ipa_rx_uc_doorbell_paddr)
+cdp_ipa_set_doorbell_paddr(ol_txrx_soc_handle soc, void *pdev,
+		 qdf_dma_addr_t ipa_tx_uc_doorbell_paddr,
+		 qdf_dma_addr_t ipa_rx_uc_doorbell_paddr)
 {
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->ipa_ops->ipa_set_doorbell_paddr)
+		return soc->ops->ipa_ops->ipa_set_doorbell_paddr(pdev,
+			ipa_tx_uc_doorbell_paddr, ipa_rx_uc_doorbell_paddr);
+
 	return;
 }
 
+/**
+ * cdp_ipa_set_active() - activate/de-ctivate wlan fw ipa data path
+ * @soc - data path soc handle
+ * @pdev - device instance pointer
+ * @uc_active - activate or de-activate
+ * @is_tx - toggle tx or rx data path
+ *
+ * activate/de-ctivate wlan fw ipa data path
+ *
+ * return none
+ */
 static inline void
-ol_txrx_ipa_uc_set_active(ol_txrx_pdev_handle pdev,
-	bool uc_active, bool is_tx)
+cdp_ipa_set_active(ol_txrx_soc_handle soc, void *pdev,
+		 bool uc_active, bool is_tx)
 {
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->ipa_ops->ipa_set_active)
+		return soc->ops->ipa_ops->ipa_set_active(pdev, uc_active,
+				is_tx);
+
 	return;
 }
 
+/**
+ * cdp_ipa_op_response() - event handler from fw
+ * @soc - data path soc handle
+ * @pdev - device instance pointer
+ * @op_msg - event contents from firmware
+ *
+ * event handler from fw
+ *
+ * return none
+ */
 static inline void
-ol_txrx_ipa_uc_op_response(ol_txrx_pdev_handle pdev, uint8_t *op_msg)
+cdp_ipa_op_response(ol_txrx_soc_handle soc, void *pdev,
+		uint8_t *op_msg)
 {
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->ipa_ops->ipa_op_response)
+		return soc->ops->ipa_ops->ipa_op_response(pdev, op_msg);
+
 	return;
 }
 
+/**
+ * cdp_ipa_register_op_cb() - register event handler function pointer
+ * @soc - data path soc handle
+ * @pdev - device instance pointer
+ * @op_cb - event handler callback function pointer
+ * @osif_dev -  osif instance pointer
+ *
+ * register event handler function pointer
+ *
+ * return none
+ */
 static inline void
-ol_txrx_ipa_uc_register_op_cb(ol_txrx_pdev_handle pdev,
-				   void (*ipa_uc_op_cb_type)(uint8_t *op_msg,
-							     void *osif_ctxt),
-				   void *osif_dev)
+cdp_ipa_register_op_cb(ol_txrx_soc_handle soc, void *pdev,
+		 ipa_op_cb_type op_cb, void *osif_dev)
 {
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->ipa_ops->ipa_register_op_cb)
+		return soc->ops->ipa_ops->ipa_register_op_cb(pdev, op_cb,
+			osif_dev);
+
 	return;
 }
 
-static inline void ol_txrx_ipa_uc_get_stat(ol_txrx_pdev_handle pdev)
+/**
+ * cdp_ipa_get_stat() - get ipa data path stats from fw
+ * @soc - data path soc handle
+ * @pdev - device instance pointer
+ *
+ * get ipa data path stats from fw async
+ *
+ * return none
+ */
+static inline void
+cdp_ipa_get_stat(ol_txrx_soc_handle soc, void *pdev)
 {
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->ipa_ops->ipa_get_stat)
+		return soc->ops->ipa_ops->ipa_get_stat(pdev);
+
 	return;
 }
-#endif /* IPA_OFFLOAD */
 
+/**
+ * cdp_tx_send_ipa_data_frame() - send IPA data frame
+ * @vdev: vdev
+ * @skb: skb
+ *
+ * Return: skb/ NULL is for success
+ */
+static inline qdf_nbuf_t cdp_ipa_tx_send_data_frame(ol_txrx_soc_handle soc,
+						void *vdev, qdf_nbuf_t skb)
+{
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return skb;
+	}
+
+	if (soc->ops->ipa_ops->ipa_tx_data_frame)
+		return soc->ops->ipa_ops->ipa_tx_data_frame(vdev, skb);
+
+	return skb;
+}
+
+/**
+ * cdp_ipa_set_uc_tx_partition_base() - set tx packet partition base
+ * @pdev: physical device instance
+ * @value: partition base value
+ *
+ * Return: none
+ */
+static inline void cdp_ipa_set_uc_tx_partition_base(ol_txrx_soc_handle soc,
+						void *pdev, uint32_t value)
+{
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->ipa_ops->ipa_set_uc_tx_partition_base)
+		return soc->ops->ipa_ops->ipa_set_uc_tx_partition_base(pdev,
+								       value);
+
+	return;
+}
 #endif /* _CDP_TXRX_IPA_H_ */
 

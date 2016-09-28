@@ -47,6 +47,12 @@ cdp_set_wds_rx_policy(ol_txrx_soc_handle soc,
 	void *vdev,
 	u_int32_t val)
 {
+	if (!soc || !soc->ops || !soc->ops->wds_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
 	if (soc->ops->wds_ops->txrx_set_wds_rx_policy)
 		return soc->ops->wds_ops->txrx_set_wds_rx_policy(vdev, val);
 	return;

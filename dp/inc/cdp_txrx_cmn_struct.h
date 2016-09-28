@@ -24,10 +24,24 @@
 #ifndef _CDP_TXRX_CMN_STRUCT_H_
 #define _CDP_TXRX_CMN_STRUCT_H_
 
+/**
+ * For WIN legacy header compilation
+ * Temporary add dummy definitions
+ * should be removed properly WIN legacy code handle
+ */
+
 #include "htc_api.h"
 #include "qdf_types.h"
 #include "qdf_nbuf.h"
+#ifndef CONFIG_WIN
+#include <cdp_txrx_mob_def.h>
+#endif /* CONFIG_WIN */
 
+#ifndef OL_TXRX_NUM_LOCAL_PEER_IDS
+#define OL_TXRX_NUM_LOCAL_PEER_IDS 33   /* default */
+#endif
+
+#define OL_TXRX_INVALID_LOCAL_PEER_ID 0xffff
 
 /*
  * htt_dbg_stats_type -
@@ -104,6 +118,16 @@ enum htt_cmn_t2h_en_stats_status {
     HTT_CMN_T2H_EN_STATS_STATUS_SERIES_DONE         = 7,
 };
 
+/**
+ * struct ol_txrx_peer_state - Peer state information
+ */
+enum ol_txrx_peer_state {
+	OL_TXRX_PEER_STATE_INVALID,
+	OL_TXRX_PEER_STATE_DISC,    /* initial state */
+	OL_TXRX_PEER_STATE_CONN,    /* authentication in progress */
+	OL_TXRX_PEER_STATE_AUTH,    /* authentication successful */
+};
+
 typedef struct cdp_soc_t *ol_txrx_soc_handle;
 
 /**
@@ -135,6 +159,7 @@ enum wlan_op_mode {
 	wlan_op_mode_sta,
 	wlan_op_mode_monitor,
 	wlan_op_mode_ocb,
+	wlan_op_mode_ndi,
 };
 
 /**
@@ -310,7 +335,7 @@ struct ol_txrx_stats_req {
 /* DP soc struct definition */
 struct cdp_soc_t {
 	struct cdp_ops *ops;
-    struct ol_if_ops *ol_ops;
+	struct ol_if_ops *ol_ops;
 };
 
 

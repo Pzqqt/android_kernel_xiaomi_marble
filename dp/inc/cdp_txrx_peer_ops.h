@@ -31,148 +31,616 @@
  */
 #ifndef _CDP_TXRX_PEER_H_
 #define _CDP_TXRX_PEER_H_
-
-typedef QDF_STATUS(*ol_rx_callback_fp)(void *p_cds_gctx,
-			 qdf_nbuf_t pDataBuff,
-			 uint8_t ucSTAId);
+#include <cdp_txrx_ops.h>
 
 /**
- * struct ol_txrx_peer_state - Peer state information
- */
-enum ol_txrx_peer_state {
-	OL_TXRX_PEER_STATE_INVALID,
-	OL_TXRX_PEER_STATE_DISC,    /* initial state */
-	OL_TXRX_PEER_STATE_CONN,    /* authentication in progress */
-	OL_TXRX_PEER_STATE_AUTH,    /* authentication successful */
-};
-
-/**
- * struct ol_txrx_desc_type - txrx descriptor type
- * @sta_id: sta id
- * @is_qos_enabled: is station qos enabled
- * @is_wapi_supported: is station wapi supported
- */
-struct ol_txrx_desc_type {
-	uint8_t sta_id;
-	uint8_t is_qos_enabled;
-	uint8_t is_wapi_supported;
-};
-
-QDF_STATUS ol_txrx_register_peer(struct ol_txrx_desc_type *sta_desc);
-
-/**
- * ol_txrx_vdev_peer_remove_cb - wma_remove_peer callback
- */
-typedef void (*ol_txrx_vdev_peer_remove_cb)(void *handle, uint8_t *bssid,
-					    uint8_t vdev_id,
-					    ol_txrx_peer_handle peer,
-					    bool roam_synch_in_progress);
-
-QDF_STATUS ol_txrx_clear_peer(uint8_t sta_id);
-
-QDF_STATUS ol_txrx_change_peer_state(uint8_t sta_id,
-			 enum ol_txrx_peer_state sta_state,
-			 bool roam_synch_in_progress);
-
-ol_txrx_peer_handle ol_txrx_find_peer_by_addr(ol_txrx_pdev_handle pdev,
-			 uint8_t *peer_addr,
-			 uint8_t *peer_id);
-
-ol_txrx_peer_handle
-ol_txrx_find_peer_by_addr_and_vdev(ol_txrx_pdev_handle pdev,
-			 ol_txrx_vdev_handle vdev,
-			 uint8_t *peer_addr, uint8_t *peer_id);
-
-#ifdef QCA_SUPPORT_TXRX_LOCAL_PEER_ID
-uint16_t ol_txrx_local_peer_id(ol_txrx_peer_handle peer);
-
-ol_txrx_peer_handle ol_txrx_find_peer_by_addr(ol_txrx_pdev_handle pdev,
-					      uint8_t *peer_addr,
-					      uint8_t *peer_id);
-ol_txrx_peer_handle
-ol_txrx_find_peer_by_addr_and_vdev(ol_txrx_pdev_handle pdev,
-				   ol_txrx_vdev_handle vdev,
-				   uint8_t *peer_addr, uint8_t *peer_id);
-ol_txrx_peer_handle
-ol_txrx_peer_find_by_local_id(ol_txrx_pdev_handle pdev, uint8_t local_peer_id);
-#else
-#define ol_txrx_local_peer_id(peer) OL_TXRX_INVALID_LOCAL_PEER_ID
-#define ol_txrx_find_peer_by_addr(pdev, peer_addr, peer_id) NULL
-#define ol_txrx_find_peer_by_addr_and_vdev(pdev, vdev, peer_addr, peer_id) NULL
-#define ol_txrx_peer_find_by_local_id(pdev, local_peer_id) NULL
-#endif /* QCA_SUPPORT_TXRX_LOCAL_PEER_ID */
-
-QDF_STATUS
-ol_txrx_peer_state_update(ol_txrx_pdev_handle pdev, uint8_t *peer_addr,
-			 enum ol_txrx_peer_state state);
-
-QDF_STATUS ol_txrx_get_vdevid(struct ol_txrx_peer_t *peer, uint8_t *vdev_id);
-
-void *ol_txrx_get_vdev_by_sta_id(uint8_t sta_id);
-
-QDF_STATUS ol_txrx_register_ocb_peer(void *cds_ctx, uint8_t *mac_addr,
-			 uint8_t *peer_id);
-
-/**
- * ol_txrx_peer_get_peer_mac_addr() - return mac_addr from peer handle.
- * @peer: handle to peer
+ * cdp_peer_register() - Register peer into physical device
+ * @soc - data path soc handle
+ * @pdev - data path device instance
+ * @sta_desc - peer description
  *
- * returns mac addrs for module which do not know peer type
+ * Register peer into physical device
  *
- * Return: the mac_addr from peer
+ * Return: QDF_STATUS_SUCCESS registration success
+ *         QDF_STATUS_E_NOSUPPORT not support this feature
  */
-uint8_t *ol_txrx_peer_get_peer_mac_addr(ol_txrx_peer_handle peer);
+static inline QDF_STATUS
+cdp_peer_register(ol_txrx_soc_handle soc, void *pdev,
+		struct ol_txrx_desc_type *sta_desc)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (soc->ops->peer_ops->register_peer)
+		return soc->ops->peer_ops->register_peer(pdev, sta_desc);
+
+	return QDF_STATUS_E_NOSUPPORT;
+}
 
 /**
- * ol_txrx_get_peer_state() - Return peer state of peer
- * @peer: peer handle
+ * cdp_peer_clear() - remove peer from physical device
+ * @soc - data path soc handle
+ * @pdev - data path device instance
+ * @sta_id - local peer id
  *
- * Return: return peer state
+ * remove peer from physical device
+ *
+ * Return: QDF_STATUS_SUCCESS registration success
+ *         QDF_STATUS_E_NOSUPPORT not support this feature
  */
-int ol_txrx_get_peer_state(ol_txrx_peer_handle peer);
+static inline QDF_STATUS
+cdp_peer_clear(ol_txrx_soc_handle soc, void *pdev, uint8_t sta_id)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return QDF_STATUS_E_NOSUPPORT;
+}
 
 /**
- * ol_txrx_get_vdev_for_peer() - Return vdev from peer handle
- * @peer: peer handle
+ * cdp_peer_register_ocb_peer() - register ocb peer from physical device
+ * @soc - data path soc handle
+ * @cds_ctx - cds void context
+ * @mac_addr - mac address for ocb self peer
+ * @peer_id - local peer id
  *
- * Return: vdev handle from peer
+ * register ocb peer from physical device
+ *
+ * Return: QDF_STATUS_SUCCESS registration success
+ *         QDF_STATUS_E_NOSUPPORT not support this feature
  */
-ol_txrx_vdev_handle
-ol_txrx_get_vdev_for_peer(ol_txrx_peer_handle peer);
+static inline QDF_STATUS
+cdp_peer_register_ocb_peer(ol_txrx_soc_handle soc, void *cds_ctx,
+		uint8_t *mac_addr, uint8_t *peer_id)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (soc->ops->peer_ops->register_ocb_peer)
+		return soc->ops->peer_ops->register_ocb_peer(cds_ctx,
+			mac_addr, peer_id);
+
+	return QDF_STATUS_E_NOSUPPORT;
+}
 
 /**
- * ol_txrx_update_ibss_add_peer_num_of_vdev() - update and return peer num
- * @vdev: vdev handle
- * @peer_num_delta: peer nums to be adjusted
+ * cdp_peer_remove_for_vdev() - remove peer instance from virtual interface
+ * @soc - data path soc handle
+ * @vdev - virtual interface instance
+ * @callback - remove done notification callback function pointer
+ * @callback_context - callback caller context
+ * @remove_last_peer - removed peer is last peer or not
  *
- * Return: -1 for failure or total peer nums after adjustment.
- */
-int16_t
-ol_txrx_update_ibss_add_peer_num_of_vdev(ol_txrx_vdev_handle vdev,
-					 int16_t peer_num_delta);
-/**
- * ol_txrx_remove_peers_for_vdev() - remove all vdev peers with lock held
- * @vdev: vdev handle
- * @callback: callback function to remove the peer.
- * @callback_context: handle for callback function
- * @remove_last_peer: Does it required to last peer.
+ * remove peer instance from virtual interface
  *
  * Return: NONE
  */
-void
-ol_txrx_remove_peers_for_vdev(ol_txrx_vdev_handle vdev,
-			      ol_txrx_vdev_peer_remove_cb callback,
-			      void *callback_context, bool remove_last_peer);
+static inline void
+cdp_peer_remove_for_vdev(ol_txrx_soc_handle soc,
+		void *vdev, ol_txrx_vdev_peer_remove_cb callback,
+		void *callback_context, bool remove_last_peer)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->peer_ops->remove_peers_for_vdev)
+		return soc->ops->peer_ops->remove_peers_for_vdev(
+			vdev, callback, callback_context, remove_last_peer);
+
+	return;
+}
+
 /**
- * ol_txrx_remove_peers_for_vdev_no_lock() - remove vdev peers with no lock.
- * @vdev: vdev handle
- * @callback: callback function to remove the peer.
- * @callback_context: handle for callback function
+ * cdp_peer_find_by_addr() - Find peer by peer mac address
+ * @soc - data path soc handle
+ * @pdev - data path device instance
+ * @peer_addr - peer mac address
+ * @peer_id - local peer id with target mac address
  *
- * Return: NONE
+ * Find peer and local peer id by peer mac address
+ *
+ * Return: peer instance void pointer
+ *         NULL cannot find target peer
  */
-void
-ol_txrx_remove_peers_for_vdev_no_lock(ol_txrx_vdev_handle vdev,
-			      ol_txrx_vdev_peer_remove_cb callback,
-			      void *callback_context);
+static inline void
+*cdp_peer_find_by_addr(ol_txrx_soc_handle soc, void *pdev,
+		uint8_t *peer_addr, uint8_t *peer_id)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return NULL;
+	}
+
+	if (soc->ops->peer_ops->find_peer_by_addr)
+		return soc->ops->peer_ops->find_peer_by_addr(
+			pdev, peer_addr, peer_id);
+
+	return NULL;
+}
+
+/**
+ * cdp_peer_find_by_addr_and_vdev() - Find peer by peer mac address within vdev
+ * @soc - data path soc handle
+ * @pdev - data path device instance
+ * @vdev - virtual interface instance
+ * @peer_addr - peer mac address
+ * @peer_id - local peer id with target mac address
+ *
+ * Find peer by peer mac address within vdev
+ *
+ * Return: peer instance void pointer
+ *         NULL cannot find target peer
+ */
+static inline void
+*cdp_peer_find_by_addr_and_vdev(ol_txrx_soc_handle soc, void *pdev,
+		void *vdev, uint8_t *peer_addr, uint8_t *peer_id)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return NULL;
+	}
+
+	if (soc->ops->peer_ops->find_peer_by_addr_and_vdev)
+		return soc->ops->peer_ops->find_peer_by_addr_and_vdev(
+			pdev, vdev, peer_addr, peer_id);
+
+	return NULL;
+}
+
+/**
+ * cdp_peer_find_by_local_id() - Find peer by local peer id
+ * @soc - data path soc handle
+ * @pdev - data path device instance
+ * @local_peer_id - local peer id want to find
+ *
+ * Find peer by local peer id within physical device
+ *
+ * Return: peer instance void pointer
+ *         NULL cannot find target peer
+ */
+static inline void
+*cdp_peer_find_by_local_id(ol_txrx_soc_handle soc, void *pdev,
+		uint8_t local_peer_id)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return NULL;
+	}
+
+	if (soc->ops->peer_ops->peer_find_by_local_id)
+		return soc->ops->peer_ops->peer_find_by_local_id(
+			pdev, local_peer_id);
+
+	return NULL;
+}
+
+/**
+ * cdp_peer_state_update() - update peer local state
+ * @soc - data path soc handle
+ * @pdev - data path device instance
+ * @peer_addr - peer mac address
+ * @state - new peer local state
+ *
+ * update peer local state
+ *
+ * Return: QDF_STATUS_SUCCESS registration success
+ *         QDF_STATUS_E_NOSUPPORT not support this feature
+ */
+static inline QDF_STATUS
+cdp_peer_state_update(ol_txrx_soc_handle soc, void *pdev,
+		uint8_t *peer_addr, enum ol_txrx_peer_state state)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (soc->ops->peer_ops->peer_state_update)
+		return soc->ops->peer_ops->peer_state_update(
+			pdev, peer_addr, state);
+
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+/**
+ * cdp_peer_state_get() - Get local peer state
+ * @soc - data path soc handle
+ * @peer - peer instance
+ *
+ * Get local peer state
+ *
+ * Return: peer status
+ */
+static inline int
+cdp_peer_state_get(ol_txrx_soc_handle soc, void *peer)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return 0;
+	}
+
+	if (soc->ops->peer_ops->get_peer_state)
+		return soc->ops->peer_ops->get_peer_state(peer);
+
+	return 0;
+}
+
+/**
+ * cdp_peer_get_local_peer_id() - Find local peer id within peer instance
+ * @soc - data path soc handle
+ * @peer - peer instance
+ *
+ * Find local peer id within peer instance
+ *
+ * Return: local peer id
+ *         HTT_INVALID_PEER Invalid peer
+ */
+static inline uint16_t
+cdp_peer_get_local_peer_id(ol_txrx_soc_handle soc, void *peer)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return HTT_INVALID_PEER;
+	}
+
+	if (soc->ops->peer_ops->local_peer_id)
+		return soc->ops->peer_ops->local_peer_id(peer);
+
+	return HTT_INVALID_PEER;
+}
+
+/**
+ * cdp_peer_get_vdevid() - Get virtaul interface id which peer registered
+ * @soc - data path soc handle
+ * @peer - peer instance
+ * @vdev_id - virtaul interface id which peer registered
+ *
+ * Get virtaul interface id which peer registered
+ *
+ * Return: QDF_STATUS_SUCCESS registration success
+ *         QDF_STATUS_E_NOSUPPORT not support this feature
+ */
+static inline QDF_STATUS
+cdp_peer_get_vdevid(ol_txrx_soc_handle soc, void *peer, uint8_t *vdev_id)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (soc->ops->peer_ops->get_vdevid)
+		return soc->ops->peer_ops->get_vdevid(peer, vdev_id);
+
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+/**
+ * cdp_peer_get_vdev_by_sta_id() - Get vdev instance by local peer id
+ * @soc - data path soc handle
+ * @sta_id - local peer id
+ *
+ * Get virtaul interface id by local peer id
+ *
+ * Return: Virtual interface instance
+ *         NULL in case cannot find
+ */
+static inline void
+*cdp_peer_get_vdev_by_sta_id(ol_txrx_soc_handle soc, uint8_t sta_id)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return NULL;
+	}
+
+	if (soc->ops->peer_ops->get_vdev_by_sta_id)
+		return soc->ops->peer_ops->get_vdev_by_sta_id(sta_id);
+
+	return NULL;
+}
+
+/**
+ * cdp_peer_get_peer_mac_addr() - Get peer mac address
+ * @soc - data path soc handle
+ * @peer - peer instance
+ *
+ * Get peer mac address
+ *
+ * Return: peer mac address pointer
+ *         NULL in case cannot find
+ */
+static inline uint8_t
+*cdp_peer_get_peer_mac_addr(ol_txrx_soc_handle soc, void *peer)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return NULL;
+	}
+
+	if (soc->ops->peer_ops->peer_get_peer_mac_addr)
+		return soc->ops->peer_ops->peer_get_peer_mac_addr(peer);
+
+	return NULL;
+}
+
+/**
+ * cdp_peer_get_vdev() - Get virtual interface instance which peer belongs
+ * @soc - data path soc handle
+ * @peer - peer instance
+ *
+ * Get virtual interface instance which peer belongs
+ *
+ * Return: virtual interface instance pointer
+ *         NULL in case cannot find
+ */
+static inline void
+*cdp_peer_get_vdev(ol_txrx_soc_handle soc, void *peer)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return NULL;
+	}
+
+	if (soc->ops->peer_ops->get_vdev_for_peer)
+		return soc->ops->peer_ops->get_vdev_for_peer(peer);
+
+	return NULL;
+}
+
+/**
+ * cdp_peer_update_ibss_add_peer_num_of_vdev() - update number of peer
+ * @soc - data path soc handle
+ * @vdev - virtual interface instance
+ * @peer_num_delta - number of peer should be updated
+ *
+ * update number of peer
+ *
+ * Return: updated number of peer
+ *         0 fail
+ */
+static inline int16_t
+cdp_peer_update_ibss_add_peer_num_of_vdev(ol_txrx_soc_handle soc,
+		void *vdev, int16_t peer_num_delta)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return 0;
+	}
+
+	if (soc->ops->peer_ops->update_ibss_add_peer_num_of_vdev)
+		return soc->ops->peer_ops->update_ibss_add_peer_num_of_vdev(
+			vdev, peer_num_delta);
+
+	return 0;
+}
+
+/**
+ * cdp_peer_copy_mac_addr_raw() - copy peer mac address
+ * @soc - data path soc handle
+ * @vdev - virtual interface instance
+ * @bss_addr - mac address should be copied
+ *
+ * copy peer mac address
+ *
+ * Return: none
+ */
+static inline void
+cdp_peer_copy_mac_addr_raw(ol_txrx_soc_handle soc,
+		void *vdev, uint8_t *bss_addr)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->peer_ops->copy_mac_addr_raw)
+		return soc->ops->peer_ops->copy_mac_addr_raw(vdev, bss_addr);
+
+	return;
+}
+
+/**
+ * cdp_peer_add_last_real_peer() - Add peer with last peer marking
+ * @soc - data path soc handle
+ * @pdev - data path device instance
+ * @vdev - virtual interface instance
+ * @peer_id - local peer id
+ *
+ * copy peer mac address
+ *
+ * Return: none
+ */
+static inline void
+cdp_peer_add_last_real_peer(ol_txrx_soc_handle soc,
+		void *pdev, void *vdev, uint8_t *peer_id)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->peer_ops->add_last_real_peer)
+		return soc->ops->peer_ops->add_last_real_peer(
+			pdev, vdev, peer_id);
+	return;
+}
+
+/**
+ * cdp_peer_last_assoc_received() - last assoc received peer
+ * @soc - data path soc handle
+ * @peer - peer instance pointer
+ *
+ * !!! This should be implemented on legacy also
+ * last assoc received peer
+ *
+ * Return: pointer
+ */
+static inline qdf_time_t *
+cdp_peer_last_assoc_received(ol_txrx_soc_handle soc, void *peer)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return NULL;
+	}
+
+	if (soc->ops->peer_ops->last_assoc_received)
+		return soc->ops->peer_ops->last_assoc_received(peer);
+
+	return NULL;
+}
+
+/**
+ * cdp_peer_last_disassoc_received() - last disassoc received peer
+ * @soc - data path soc handle
+ * @peer - peer instance pointer
+ *
+ * !!! This should be implemented on legacy also
+ * last disassoc received peer
+ *
+ * Return: pointer
+ */
+static inline qdf_time_t *
+cdp_peer_last_disassoc_received(ol_txrx_soc_handle soc, void *peer)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return NULL;
+	}
+
+	if (soc->ops->peer_ops->last_disassoc_received)
+		return soc->ops->peer_ops->last_disassoc_received(peer);
+
+	return NULL;
+}
+
+/**
+ * cdp_peer_last_deauth_received() - last deauth received peer
+ * @soc - data path soc handle
+ * @peer - peer instance pointer
+ *
+ * !!! This should be implemented on legacy also
+ * last deauth received peer
+ *
+ * Return: pointer
+ */
+static inline qdf_time_t *
+cdp_peer_last_deauth_received(ol_txrx_soc_handle soc, void *peer)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return NULL;
+	}
+
+	if (soc->ops->peer_ops->last_deauth_received)
+		return soc->ops->peer_ops->last_deauth_received(peer);
+
+	return NULL;
+}
+
+/**
+ * cdp_peer_is_vdev_restore_last_peer() - restore last peer
+ * @soc - data path soc handle
+ * @peer - peer instance pointer
+ *
+ * restore last peer
+ *
+ * Return: true, restore success
+ *         fasle, restore fail
+ */
+static inline bool
+cdp_peer_is_vdev_restore_last_peer(ol_txrx_soc_handle soc, void *peer)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return false;
+	}
+
+	if (soc->ops->peer_ops->is_vdev_restore_last_peer)
+		return soc->ops->peer_ops->is_vdev_restore_last_peer(peer);
+
+	return false;
+}
+
+/**
+ * cdp_peer_update_last_real_peer() - update last real peer
+ * @soc - data path soc handle
+ * @pdev - data path device instance
+ * @peer - peer instance pointer
+ * @peer_id - local peer id
+ * @restore_last_peer - restore last peer or not
+ *
+ * update last real peer
+ *
+ * Return: none
+ */
+static inline void
+cdp_peer_update_last_real_peer(ol_txrx_soc_handle soc, void *pdev,
+		void *peer, uint8_t *peer_id, bool restore_last_peer)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->peer_ops->update_last_real_peer)
+		return soc->ops->peer_ops->update_last_real_peer(pdev, peer,
+			peer_id, restore_last_peer);
+
+	return;
+}
+
+/**
+ * ol_txrx_peer_detach_force_delete() - Detach and delete a peer's data object
+ * @peer - the object to detach
+ *
+ * Detach a peer and force the peer object to be removed. It is called during
+ * roaming scenario when the firmware has already deleted a peer.
+ * Peer object is freed immediately to avoid duplicate peers during roam sync
+ * indication processing.
+ *
+ * Return: None
+ */
+static inline void cdp_peer_detach_force_delete(ol_txrx_soc_handle soc,
+		void *peer)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->peer_ops->peer_detach_force_delete)
+		return soc->ops->peer_ops->peer_detach_force_delete(peer);
+
+	return;
+}
 #endif /* _CDP_TXRX_PEER_H_ */

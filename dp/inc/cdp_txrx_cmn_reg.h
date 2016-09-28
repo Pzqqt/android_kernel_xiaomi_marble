@@ -34,13 +34,36 @@
 
 ol_txrx_soc_handle ol_txrx_soc_attach(struct ol_if_ops *dp_ol_if_ops);
 
+#ifdef QCA_WIFI_QCA8074
+void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
+	HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
+	struct ol_if_ops *ol_ops);
+#else
+/*
+ * dp_soc_attach_wifi3() - Attach txrx SOC
+ * @osif_soc:		Opaque SOC handle from OSIF/HDD
+ * @htc_handle:	Opaque HTC handle
+ * @hif_handle:	Opaque HIF handle
+ * @qdf_osdev:	QDF device
+ *
+ * Return: DP SOC handle on success, NULL on failure
+ */
+static inline void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
+	HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
+	struct ol_if_ops *ol_ops)
+{
+	return NULL;
+}
+#endif /* QCA_WIFI_QCA8074 */
+
 static inline ol_txrx_soc_handle cdp_soc_attach(u_int16_t devid,
-	void *hif_handle, void *scn, void *htc_handle, qdf_device_t *qdf_dev,
-	struct ol_if_ops *dp_ol_if_ops)
+		void *hif_handle, void *scn, void *htc_handle,
+		qdf_device_t qdf_dev, struct ol_if_ops *dp_ol_if_ops)
 {
 	switch (devid) {
 	case LITHIUM_DP: /*FIXME Add lithium devide IDs */
-		return NULL;
+		return dp_soc_attach_wifi3(scn, hif_handle, htc_handle,
+			qdf_dev, dp_ol_if_ops);
 	break;
 	default:
 		return ol_txrx_soc_attach(dp_ol_if_ops);

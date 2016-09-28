@@ -32,24 +32,53 @@
  */
 #ifndef _CDP_TXRX_TX_THROTTLE_H_
 #define _CDP_TXRX_TX_THROTTLE_H_
+#include <cdp_txrx_ops.h>
 
-#if defined(QCA_SUPPORT_TX_THROTTLE)
-void ol_tx_throttle_init_period(struct ol_txrx_pdev_t *pdev, int period,
-				uint8_t *dutycycle_level);
-
-void ol_tx_throttle_set_level(struct ol_txrx_pdev_t *pdev, int level);
-#else
-static inline void ol_tx_throttle_set_level(struct ol_txrx_pdev_t *pdev,
-	int level)
+/**
+ * cdp_throttle_init_period() - init tx throttle period
+ * @soc: data path soc handle
+ * @pdev: physical device instance
+ * @period: throttle period
+ * @dutycycle_level: duty cycle level
+ *
+ * Return: NONE
+ */
+static inline void
+cdp_throttle_init_period(ol_txrx_soc_handle soc, void *pdev, int period,
+		uint8_t *dutycycle_level)
 {
-	/* no-op */
+	if (!soc || !soc->ops || !soc->ops->throttle_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->throttle_ops->throttle_init_period)
+		return soc->ops->throttle_ops->throttle_init_period(pdev,
+				period, dutycycle_level);
+	return;
 }
 
-static inline void ol_tx_throttle_init_period(struct ol_txrx_pdev_t *pdev,
-					      int period,
-					      uint8_t *dutycycle_level)
+/**
+ * cdp_throttle_init_period() - init tx throttle period
+ * @soc: data path soc handle
+ * @pdev: physical device instance
+ * @level: throttle level
+ *
+ * Return: NONE
+ */
+static inline void
+cdp_throttle_set_level(ol_txrx_soc_handle soc, void *pdev, int level)
 {
-	/* no-op */
+	if (!soc || !soc->ops || !soc->ops->throttle_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->throttle_ops->throttle_set_level)
+		return soc->ops->throttle_ops->throttle_set_level(pdev, level);
+	return;
 }
-#endif
+
 #endif /* _CDP_TXRX_TX_THROTTLE_H_ */

@@ -27,32 +27,51 @@
 
 #ifndef _CDP_TXRX_OCB_H_
 #define _CDP_TXRX_OCB_H_
+#include <cdp_txrx_mob_def.h>
 
 /**
- * struct ol_txrx_ocb_set_chan - txrx OCB channel info
- * @ocb_channel_count: Channel count
- * @ocb_channel_info: OCB channel info
- */
-struct ol_txrx_ocb_set_chan {
-	uint32_t ocb_channel_count;
-	struct ol_txrx_ocb_chan_info *ocb_channel_info;
-};
-
-/**
- * ol_txrx_set_ocb_chan_info() - set OCB channel info to vdev.
+ * cdp_set_ocb_chan_info() - set OCB channel info to vdev.
+ * @soc - data path soc handle
  * @vdev: vdev handle
  * @ocb_set_chan: OCB channel information to be set in vdev.
  *
  * Return: NONE
  */
-void ol_txrx_set_ocb_chan_info(ol_txrx_vdev_handle vdev,
-			  struct ol_txrx_ocb_set_chan ocb_set_chan);
+static inline void
+cdp_set_ocb_chan_info(ol_txrx_soc_handle soc, void *vdev,
+		struct ol_txrx_ocb_set_chan ocb_set_chan)
+{
+	if (!soc || !soc->ops || !soc->ops->ocb_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->ocb_ops->set_ocb_chan_info)
+		return soc->ops->ocb_ops->set_ocb_chan_info(vdev,
+			ocb_set_chan);
+
+	return;
+}
 /**
- * ol_txrx_get_ocb_chan_info() - return handle to vdev ocb_channel_info
+ * cdp_get_ocb_chan_info() - return handle to vdev ocb_channel_info
+ * @soc - data path soc handle
  * @vdev: vdev handle
  *
  * Return: handle to struct ol_txrx_ocb_chan_info
  */
-struct ol_txrx_ocb_chan_info *
-ol_txrx_get_ocb_chan_info(ol_txrx_vdev_handle vdev);
+static inline struct ol_txrx_ocb_chan_info *
+cdp_get_ocb_chan_info(ol_txrx_soc_handle soc, void *vdev)
+{
+	if (!soc || !soc->ops || !soc->ops->ocb_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return NULL;
+	}
+
+	if (soc->ops->ocb_ops->get_ocb_chan_info)
+		return soc->ops->ocb_ops->get_ocb_chan_info(vdev);
+
+	return NULL;
+}
 #endif /* _CDP_TXRX_OCB_H_ */

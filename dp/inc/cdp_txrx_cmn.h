@@ -87,6 +87,13 @@ static inline void *cdp_pdev_attach
 	return NULL;
 }
 
+static inline int cdp_pdev_post_attach(ol_txrx_soc_handle soc, void *pdev)
+{
+	if (soc->ops->cmn_drv_ops->txrx_pdev_post_attach)
+		return soc->ops->cmn_drv_ops->txrx_pdev_post_attach(pdev);
+	return 0;
+}
+
 static inline void
 cdp_pdev_detach(ol_txrx_soc_handle soc, void *pdev, int force)
 {
@@ -310,11 +317,12 @@ cdp_get_ctrl_pdev_from_vdev(ol_txrx_soc_handle soc, void *vdev)
 }
 
 static inline void *
-cdp_get_vdev_from_vdev_id(ol_txrx_soc_handle soc, uint8_t vdev_id)
+cdp_get_vdev_from_vdev_id(ol_txrx_soc_handle soc, void *pdev,
+		uint8_t vdev_id)
 {
 	if (soc->ops->cmn_drv_ops->txrx_get_vdev_from_vdev_id)
 		return soc->ops->cmn_drv_ops->txrx_get_vdev_from_vdev_id
-			(vdev_id);
+			(pdev, vdev_id);
 	return NULL;
 }
 

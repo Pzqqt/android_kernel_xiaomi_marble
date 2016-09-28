@@ -32,58 +32,225 @@
 #define _CDP_TXRX_CFG_H_
 
 /**
- * struct txrx_pdev_cfg_param_t - configuration information
- * passed to the data path
+ * cdp_cfg_set_rx_fwd_disabled() - enable/disable rx forwarding
+ * @soc - data path soc handle
+ * @pdev - data path device instance
+ * @disable_rx_fwd - enable or disable rx forwarding
+ *
+ * enable/disable rx forwarding
+ *
+ * return NONE
  */
-struct txrx_pdev_cfg_param_t {
-	uint8_t is_full_reorder_offload;
-	/* IPA Micro controller data path offload enable flag */
-	uint8_t is_uc_offload_enabled;
-	/* IPA Micro controller data path offload TX buffer count */
-	uint32_t uc_tx_buffer_count;
-	/* IPA Micro controller data path offload TX buffer size */
-	uint32_t uc_tx_buffer_size;
-	/* IPA Micro controller data path offload RX indication ring count */
-	uint32_t uc_rx_indication_ring_count;
-	/* IPA Micro controller data path offload TX partition base */
-	uint32_t uc_tx_partition_base;
-	/* IP, TCP and UDP checksum offload */
-	bool ip_tcp_udp_checksum_offload;
-	/* Rx processing in thread from TXRX */
-	bool enable_rxthread;
-	/* CE classification enabled through INI */
-	bool ce_classify_enabled;
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
-	/* Threshold to stop queue in percentage */
-	uint32_t tx_flow_stop_queue_th;
-	/* Start queue offset in percentage */
-	uint32_t tx_flow_start_queue_offset;
-#endif
-};
+static inline void
+cdp_cfg_set_rx_fwd_disabled(ol_txrx_soc_handle soc, void *pdev,
+		uint8_t disable_rx_fwd)
+{
+	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
 
-void ol_set_cfg_rx_fwd_disabled(ol_pdev_handle pdev, uint8_t disable_rx_fwd);
-
-void ol_set_cfg_packet_log_enabled(ol_pdev_handle pdev, uint8_t val);
-
-ol_pdev_handle ol_pdev_cfg_attach(qdf_device_t osdev,
-	struct txrx_pdev_cfg_param_t cfg_param);
-
-void ol_vdev_rx_set_intrabss_fwd(ol_txrx_vdev_handle vdev, bool val);
+	if (soc->ops->cfg_ops->set_cfg_rx_fwd_disabled)
+		return soc->ops->cfg_ops->set_cfg_rx_fwd_disabled(pdev,
+			disable_rx_fwd);
+}
 
 /**
- * ol_txrx_get_opmode() - Return operation mode of vdev
- * @vdev: vdev handle
+ * cdp_cfg_set_packet_log_enabled() - enable/disable packet log
+ * @soc - data path soc handle
+ * @pdev - data path device instance
+ * @val - enable or disable packet log
  *
- * Return: operation mode.
+ * packet log enable or disable
+ *
+ * return NONE
  */
-int ol_txrx_get_opmode(ol_txrx_vdev_handle vdev);
+static inline void
+cdp_cfg_set_packet_log_enabled(ol_txrx_soc_handle soc,
+		void *pdev, uint8_t val)
+{
+	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->cfg_ops->set_cfg_packet_log_enabled)
+		return soc->ops->cfg_ops->set_cfg_packet_log_enabled(pdev,
+				val);
+}
 
 /**
- * ol_txrx_is_rx_fwd_disabled() - returns the rx_fwd_disabled status on vdev
- * @vdev: vdev handle
+ * cdp_cfg_attach() - attach config module
+ * @soc - data path soc handle
+ * @osdev - os instance
+ * @cfg_param - configuration parameter should be propagated
  *
- * Return: Rx Fwd disabled status
+ * Allocate configuration module instance, and propagate configuration values
+ *
+ * return soc configuration module instance
  */
-uint8_t
-ol_txrx_is_rx_fwd_disabled(ol_txrx_vdev_handle vdev);
+static inline void
+*cdp_cfg_attach(ol_txrx_soc_handle soc,
+		qdf_device_t osdev, void *cfg_param)
+{
+	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return NULL;
+	}
+
+	if (soc->ops->cfg_ops->cfg_attach)
+		return soc->ops->cfg_ops->cfg_attach(osdev, cfg_param);
+
+	return NULL;
+}
+
+/**
+ * cdp_cfg_vdev_rx_set_intrabss_fwd() - enable/disable intra bass forwarding
+ * @soc - data path soc handle
+ * @vdev - virtual interface instance
+ * @val - enable or disable intra bss forwarding
+ *
+ * ap isolate, do not forward intra bss traffic
+ *
+ * return NONE
+ */
+static inline void
+cdp_cfg_vdev_rx_set_intrabss_fwd(ol_txrx_soc_handle soc, void *vdev, bool val)
+{
+	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->cfg_ops->vdev_rx_set_intrabss_fwd)
+		return soc->ops->cfg_ops->vdev_rx_set_intrabss_fwd(vdev, val);
+}
+
+/**
+ * cdp_cfg_is_rx_fwd_disabled() - get vdev rx forward
+ * @soc - data path soc handle
+ * @vdev - virtual interface instance
+ *
+ * Return rx forward feature enable status
+ *
+ * return 1 enabled
+ *        0 disabled
+ */
+static inline uint8_t
+cdp_cfg_is_rx_fwd_disabled(ol_txrx_soc_handle soc, void *vdev)
+{
+	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return 0;
+	}
+
+	if (soc->ops->cfg_ops->is_rx_fwd_disabled)
+		return soc->ops->cfg_ops->is_rx_fwd_disabled(vdev);
+	return 0;
+}
+
+/**
+ * cdp_cfg_tx_set_is_mgmt_over_wmi_enabled() - mgmt tx over wmi enable/disable
+ * @soc - data path soc handle
+ * @value - feature enable or disable
+ *
+ * Enable or disable management packet TX over WMI feature
+ *
+ * return None
+ */
+static inline void
+cdp_cfg_tx_set_is_mgmt_over_wmi_enabled(ol_txrx_soc_handle soc,
+		uint8_t value)
+{
+	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->cfg_ops->tx_set_is_mgmt_over_wmi_enabled)
+		return soc->ops->cfg_ops->tx_set_is_mgmt_over_wmi_enabled(
+			value);
+}
+
+/**
+ * cdp_cfg_is_high_latency() - query data path is in high or low latency
+ * @soc - data path soc handle
+ * @pdev - data path device instance
+ *
+ * query data path is in high or low latency
+ *
+ * return 1 high latency data path, usb or sdio
+ *        0 low latency data path
+ */
+static inline int
+cdp_cfg_is_high_latency(ol_txrx_soc_handle soc, void *pdev)
+{
+	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return 0;
+	}
+
+	if (soc->ops->cfg_ops->is_high_latency)
+		return soc->ops->cfg_ops->is_high_latency(pdev);
+
+	return 0;
+}
+
+/**
+ * cdp_cfg_set_flow_control_parameters() - set flow control params
+ * @soc - data path soc handle
+ * @cfg - dp config module instance
+ * @param - parameters should set
+ *
+ * set flow control params
+ *
+ * return None
+ */
+static inline void
+cdp_cfg_set_flow_control_parameters(ol_txrx_soc_handle soc,
+		void *cfg, void *param)
+{
+	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->cfg_ops->set_flow_control_parameters)
+		return soc->ops->cfg_ops->set_flow_control_parameters(cfg,
+				param);
+
+	return;
+}
+
+/**
+ * cdp_cfg_set_flow_steering - Set Rx flow steering config based on CFG ini
+ *			config.
+ *
+ * @pdev - handle to the physical device
+ * @val - 0 - disable, 1 - enable
+ *
+ * Return: None
+ */
+static inline void cdp_cfg_set_flow_steering(ol_txrx_soc_handle soc,
+		void *pdev, uint8_t val)
+{
+	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->cfg_ops->set_flow_steering)
+		return soc->ops->cfg_ops->set_flow_steering(pdev, val);
+
+	return;
+}
 #endif /* _CDP_TXRX_CFG_H_ */

@@ -28,7 +28,8 @@
 #define _CDP_TXRX_PMF_H_
 
 /**
- * ol_txrx_get_pn_info() - Returns pn info from peer
+ * cdp_get_pn_info() - Returns pn info from peer
+ * @soc - data path soc handle
  * @peer: handle to peer
  * @last_pn_valid: return last_rmf_pn_valid value from peer.
  * @last_pn: return last_rmf_pn value from peer.
@@ -36,7 +37,20 @@
  *
  * Return: NONE
  */
-void
-ol_txrx_get_pn_info(ol_txrx_peer_handle peer, uint8_t **last_pn_valid,
-		    uint64_t **last_pn, uint32_t **rmf_pn_replays);
+static inline void
+cdp_get_pn_info(ol_txrx_soc_handle soc, void *peer, uint8_t **last_pn_valid,
+		    uint64_t **last_pn, uint32_t **rmf_pn_replays)
+{
+	if (!soc || !soc->ops || !soc->ops->pmf_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->pmf_ops->get_pn_info)
+		return soc->ops->pmf_ops->get_pn_info(
+			peer, last_pn_valid, last_pn, rmf_pn_replays);
+
+	return;
+}
 #endif /* _CDP_TXRX_PMF_H_ */

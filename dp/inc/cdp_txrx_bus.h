@@ -31,7 +31,46 @@
 #ifndef _CDP_TXRX_BUS_H_
 #define _CDP_TXRX_BUS_H_
 
-QDF_STATUS ol_txrx_bus_suspend(void);
-QDF_STATUS ol_txrx_bus_resume(void);
+/**
+ * cdp_bus_suspend() - suspend bus
+ * @soc - data path soc handle
+ *
+ * suspend bus
+ *
+ * return QDF_STATUS_SUCCESS suspend is not implemented or suspend done
+ */
+static inline QDF_STATUS cdp_bus_suspend(ol_txrx_soc_handle soc)
+{
+	if (!soc || !soc->ops || !soc->ops->bus_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (soc->ops->bus_ops->bus_suspend)
+		return soc->ops->bus_ops->bus_suspend();
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+/**
+ * cdp_bus_resume() - resume bus
+ * @soc - data path soc handle
+ *
+ * resume bus
+ *
+ * return QDF_STATUS_SUCCESS resume is not implemented or suspend done
+ */
+static inline QDF_STATUS cdp_bus_resume(ol_txrx_soc_handle soc)
+{
+	if (!soc || !soc->ops || !soc->ops->bus_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (soc->ops->bus_ops->bus_resume)
+		return soc->ops->bus_ops->bus_resume();
+	return QDF_STATUS_E_NOSUPPORT;
+}
 
 #endif /* _CDP_TXRX_BUS_H_ */
