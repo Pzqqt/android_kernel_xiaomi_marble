@@ -246,6 +246,7 @@ enum {
 	QCASAP_PARAM_LDPC,
 	QCASAP_PARAM_TX_STBC,
 	QCASAP_PARAM_RX_STBC,
+	QCSAP_PARAM_CHAN_WIDTH,
 };
 
 int iw_get_channel_list(struct net_device *dev,

@@ -3619,3 +3619,20 @@ void wlan_sap_enable_phy_error_logs(tHalHandle hal, bool enable_log)
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	mac_ctx->sap.enable_dfs_phy_error_logs = enable_log;
 }
+
+
+/**
+ * wlansap_get_chan_width() - get sap channel width.
+ * @cds_ctx: pointer of global cds context
+ *
+ * This function get channel width of sap.
+ *
+ * Return: sap channel width
+ */
+uint32_t wlansap_get_chan_width(void *cds_ctx)
+{
+	ptSapContext sapcontext;
+
+	sapcontext = CDS_GET_SAP_CB(cds_ctx);
+	return wlan_sap_get_vht_ch_width(sapcontext);
+}
