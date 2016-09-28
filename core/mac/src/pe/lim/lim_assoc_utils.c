@@ -585,6 +585,7 @@ lim_cleanup_rx_path(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 			 * Release our assigned AID back to the free pool
 			 */
 			if (LIM_IS_AP_ROLE(psessionEntry)) {
+				lim_del_sta(pMac, pStaDs, false, psessionEntry);
 				lim_release_peer_idx(pMac, pStaDs->assocId,
 						     psessionEntry);
 			}
