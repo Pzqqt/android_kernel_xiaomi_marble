@@ -2312,6 +2312,20 @@ enum qca_access_policy {
 };
 
 /**
+ * enum qca_ignore_assoc_disallowed - Ignore assoc disallowed values
+ *
+ * The valid values for the ignore assoc disallowed
+ *
+ * @QCA_IGNORE_ASSOC_DISALLOWED_DISABLE: Disable ignore assoc disallowed
+ * @QCA_IGNORE_ASSOC_DISALLOWED_ENABLE: Enable ignore assoc disallowed
+ *
+ */
+enum qca_ignore_assoc_disallowed {
+	QCA_IGNORE_ASSOC_DISALLOWED_DISABLE,
+	QCA_IGNORE_ASSOC_DISALLOWED_ENABLE
+};
+
+/**
  * enum qca_wlan_vendor_config: wifi config attr
  *
  * @QCA_WLAN_VENDOR_ATTR_CONFIG_INVALID: invalid config
@@ -2342,6 +2356,8 @@ enum qca_access_policy {
  *                                       parameters
  * @QCA_WLAN_VENDOR_ATTR_CONFIG_QPOWER: Unsigned 8bit length attribute to update
  *                                      power save config to turn off/on qpower
+ * @QCA_WLAN_VENDOR_ATTR_CONFIG_IGNORE_ASSOC_DISALLOWED: Ignore Assoc Disallowed
+ *                                                       [MBO]
  * @QCA_WLAN_VENDOR_ATTR_CONFIG_LAST: last config
  * @QCA_WLAN_VENDOR_ATTR_CONFIG_MAX: max config
  */
@@ -2396,6 +2412,7 @@ enum qca_wlan_vendor_config {
 	QCA_WLAN_VENDOR_ATTR_CONFIG_IFINDEX,
 	/* Unsigned 8-bit, for setting qpower dynamically */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_QPOWER = 25,
+	QCA_WLAN_VENDOR_ATTR_CONFIG_IGNORE_ASSOC_DISALLOWED = 26,
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_LAST,
 	QCA_WLAN_VENDOR_ATTR_CONFIG_MAX =

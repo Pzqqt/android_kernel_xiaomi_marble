@@ -4057,16 +4057,16 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		if (access_policy == QCA_ACCESS_POLICY_DENY_UNLESS_LISTED) {
 			access_policy =
 				WLAN_HDD_VENDOR_IE_ACCESS_ALLOW_IF_LISTED;
-	} else {
+		} else {
 			access_policy = WLAN_HDD_VENDOR_IE_ACCESS_NONE;
-	}
+		}
 
-	hdd_info("calling sme_update_access_policy_vendor_ie");
-	status = sme_update_access_policy_vendor_ie(hdd_ctx->hHal,
-			adapter->sessionId, &vendor_ie[0],
-			access_policy);
-	if (QDF_STATUS_SUCCESS != status) {
-		hdd_info("Failed to set vendor ie and access policy.");
+		hdd_info("calling sme_update_access_policy_vendor_ie");
+		status = sme_update_access_policy_vendor_ie(hdd_ctx->hHal,
+				adapter->sessionId, &vendor_ie[0],
+				access_policy);
+		if (QDF_STATUS_SUCCESS != status) {
+			hdd_info("Failed to set vendor ie and access policy.");
 			return -EINVAL;
 		}
 	}
@@ -4138,6 +4138,26 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 				request.rx_aggregation_size);
 			ret_val = -EINVAL;
 		}
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_IGNORE_ASSOC_DISALLOWED]) {
+		uint8_t ignore_assoc_disallowed;
+
+		ignore_assoc_disallowed
+			= nla_get_u8(tb[
+			QCA_WLAN_VENDOR_ATTR_CONFIG_IGNORE_ASSOC_DISALLOWED]);
+		hdd_info("Set ignore_assoc_disallowed value - %d",
+					ignore_assoc_disallowed);
+		if ((ignore_assoc_disallowed <
+			QCA_IGNORE_ASSOC_DISALLOWED_DISABLE) ||
+			(ignore_assoc_disallowed >
+				QCA_IGNORE_ASSOC_DISALLOWED_ENABLE))
+			return -EPERM;
+
+		sme_update_session_param(hdd_ctx->hHal,
+					adapter->sessionId,
+					SIR_PARAM_IGNORE_ASSOC_DISALLOWED,
+					ignore_assoc_disallowed);
 	}
 
 	return ret_val;

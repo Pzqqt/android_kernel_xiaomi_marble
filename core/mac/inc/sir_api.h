@@ -2506,9 +2506,11 @@ typedef struct sSirUpdateAPWPSIEsReq {
 /*
  * enum sir_update_session_param_type - session param type
  * @SIR_PARAM_SSID_HIDDEN: ssidHidden parameter
+ * @SIR_PARAM_IGNORE_ASSOC_DISALLOWED: ignore_assoc_disallowed parameter
  */
 enum sir_update_session_param_type {
 	SIR_PARAM_SSID_HIDDEN,
+	SIR_PARAM_IGNORE_ASSOC_DISALLOWED,
 };
 
 /*
