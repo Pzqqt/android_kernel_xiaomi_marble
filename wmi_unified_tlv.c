@@ -777,7 +777,8 @@ send_pdev_utf_cmd_tlv(wmi_unified_t wmi_handle,
 {
 	wmi_buf_t buf;
 	uint8_t *cmd;
-	QDF_STATUS ret;
+	/* if param->len is 0 no data is sent, return error */
+	QDF_STATUS ret = QDF_STATUS_E_INVAL;
 	static uint8_t msgref = 1;
 	uint8_t segNumber = 0, segInfo, numSegments;
 	uint16_t chunk_len, total_bytes;
