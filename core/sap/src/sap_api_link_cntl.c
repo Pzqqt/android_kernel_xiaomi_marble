@@ -1239,13 +1239,18 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 						csr_roam_info, &qdf_ret_status);
 		break;
 	case eCSR_ROAM_RESULT_CHANNEL_CHANGE_FAILURE:
-		/*
-		 * This is much more serious issue, we have to vacate the
+		/* This is much more serious issue, we have to vacate the
 		 * channel due to the presence of radar but our channel change
 		 * failed, stop the BSS operation completely and inform hostapd
 		 */
-		sap_ctx->sapsMachine = eSAP_DISCONNECTED;
-		/* Inform cfg80211 and hostapd that BSS is not alive anymore */
+		sap_event.event = eWNI_SME_CHANNEL_CHANGE_RSP;
+		sap_event.params = 0;
+		sap_event.u1 = eCSR_ROAM_INFRA_IND;
+		sap_event.u2 = eCSR_ROAM_RESULT_CHANNEL_CHANGE_FAILURE;
+
+		qdf_status = sap_fsm(sap_ctx, &sap_event);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+			qdf_ret_status = QDF_STATUS_E_FAILURE;
 		break;
 	case eCSR_ROAM_EXT_CHG_CHNL_UPDATE_IND:
 		qdf_status = sap_signal_hdd_event(sap_ctx, csr_roam_info,
