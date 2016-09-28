@@ -1707,6 +1707,44 @@ err_start_adapter:
 }
 
 /**
+ * hdd_enable_power_management() - API to Enable Power Management
+ *
+ * API invokes Bus Interface Layer power management functionality
+ *
+ * Return: None
+ */
+static void hdd_enable_power_management(void)
+{
+	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+
+	if (!hif_ctx) {
+		hdd_err("Bus Interface Context is Invalid");
+		return;
+	}
+
+	hif_enable_power_management(hif_ctx, cds_is_packet_log_enabled());
+}
+
+/**
+ * hdd_disable_power_management() - API to disable Power Management
+ *
+ * API disable Bus Interface Layer Power management functionality
+ *
+ * Return: None
+ */
+static void hdd_disable_power_management(void)
+{
+	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+
+	if (!hif_ctx) {
+		hdd_err("Bus Interface Context is Invalid");
+		return;
+	}
+
+	hif_disable_power_management(hif_ctx);
+}
+
+/**
  * hdd_wlan_start_modules() - Single driver state machine for starting modules
  * @hdd_ctx: HDD context
  * @adapter: HDD adapter
@@ -1835,6 +1873,7 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			hdd_err("Failed to Enable cds modules");
 			goto close;
 		}
+		hdd_enable_power_management();
 		hdd_info("Driver Modules Successfully Enabled");
 		hdd_ctx->driver_status = DRIVER_MODULES_ENABLED;
 		break;
@@ -7601,6 +7640,7 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx, bool shutdown)
 		hdd_info("Modules already closed");
 		goto done;
 	case DRIVER_MODULES_ENABLED:
+		hdd_disable_power_management();
 		if (hdd_deconfigure_cds(hdd_ctx)) {
 			hdd_alert("Failed to de-configure CDS");
 			QDF_ASSERT(0);

@@ -266,8 +266,6 @@ int hdd_hif_open(struct device *dev, void *bdev, const hif_bus_id *bid,
 		}
 	}
 
-	hif_enable_power_management(hif_ctx, cds_is_packet_log_enabled());
-
 	return 0;
 
 err_hif_close:
@@ -286,8 +284,6 @@ void hdd_hif_close(void *hif_ctx)
 {
 	if (hif_ctx == NULL)
 		return;
-
-	hif_disable_power_management(hif_ctx);
 
 	hif_disable(hif_ctx, HIF_DISABLE_TYPE_REMOVE);
 
