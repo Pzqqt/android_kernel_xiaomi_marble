@@ -165,7 +165,7 @@ void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 	switch (msg_type) {
 	case HTT_T2H_MSG_TYPE_VERSION_CONF:
 	{
-		htc_pm_runtime_get(pdev->htc_pdev);
+		htc_pm_runtime_put(pdev->htc_pdev);
 		pdev->tgt_ver.major = HTT_VER_CONF_MAJOR_GET(*msg_word);
 		pdev->tgt_ver.minor = HTT_VER_CONF_MINOR_GET(*msg_word);
 		qdf_print
