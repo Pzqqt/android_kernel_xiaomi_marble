@@ -1824,9 +1824,6 @@
 /* WLAN WPS credentials */
 #define LOG_WLAN_WPS_CREDENTIALS_C                      (0x4A0 + LOG_1X_BASE_C)
 
-/* WLAN Linklayer stat*/
-#define LOG_WLAN_LINKLAYER_STAT_C                       (0x4A1 + LOG_1X_BASE_C)
-
 /* WLAN Qos TSpec*/
 #define LOG_WLAN_QOS_TSPEC_C                            (0x4A2 + LOG_1X_BASE_C)
 
