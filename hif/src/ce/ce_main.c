@@ -521,10 +521,11 @@ bool ce_mark_datapath(struct CE_state *ce_state)
 	size_t map_sz;
 	int    i;
 	bool   rc = false;
-	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(ce_state->scn);
-	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
+	struct hif_target_info *tgt_info;
 
 	if (ce_state != NULL) {
+		tgt_info = &ce_state->scn->target_info;
+
 		if (QDF_IS_EPPING_ENABLED(hif_get_conparam(ce_state->scn))) {
 			svc_map = target_service_to_ce_map_wlan_epping;
 			map_sz = sizeof(target_service_to_ce_map_wlan_epping) /
