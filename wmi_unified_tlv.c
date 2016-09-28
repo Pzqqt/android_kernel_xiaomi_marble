@@ -722,6 +722,94 @@ QDF_STATUS send_peer_create_cmd_tlv(wmi_unified_t wmi,
 }
 
 /**
+ * send_peer_rx_reorder_queue_setup_cmd_tlv() - send rx reorder setup
+ * 	command to fw
+ * @wmi: wmi handle
+ * @rx_reorder_queue_setup_params: Rx reorder queue setup parameters
+ *
+ * Return: 0 for success or error code
+ */
+QDF_STATUS send_peer_rx_reorder_queue_setup_cmd_tlv(wmi_unified_t wmi,
+		struct rx_reorder_queue_setup_params *param)
+{
+	wmi_peer_reorder_queue_setup_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi, len);
+	if (!buf) {
+		WMI_LOGP("%s: wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_peer_reorder_queue_setup_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_peer_reorder_queue_setup_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN
+			(wmi_peer_reorder_queue_setup_cmd_fixed_param));
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(param->peer_macaddr, &cmd->peer_macaddr);
+	cmd->vdev_id = param->vdev_id;
+	cmd->tid = param->tid;
+	cmd->queue_ptr_lo = param->hw_qdesc_paddr_lo;
+	cmd->queue_ptr_hi = param->hw_qdesc_paddr_hi;
+	cmd->queue_no = param->queue_no;
+
+	if (wmi_unified_cmd_send(wmi, buf, len,
+			WMI_PEER_REORDER_QUEUE_SETUP_CMDID)) {
+		WMI_LOGP("%s: fail to send WMI_PEER_REORDER_QUEUE_SETUP_CMDID",
+			__func__);
+		qdf_nbuf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+	WMI_LOGD("%s: peer_macaddr %pM vdev_id %d, tid %d\n", __func__,
+		param->peer_macaddr, param->vdev_id, param->tid);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_peer_rx_reorder_queue_remove_cmd_tlv() - send rx reorder remove
+ * 	command to fw
+ * @wmi: wmi handle
+ * @rx_reorder_queue_remove_params: Rx reorder queue remove parameters
+ *
+ * Return: 0 for success or error code
+ */
+QDF_STATUS send_peer_rx_reorder_queue_remove_cmd_tlv(wmi_unified_t wmi,
+		struct rx_reorder_queue_remove_params *param)
+{
+	wmi_peer_reorder_queue_remove_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi, len);
+	if (!buf) {
+		WMI_LOGP("%s: wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_peer_reorder_queue_remove_cmd_fixed_param *)
+			wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_peer_reorder_queue_remove_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN
+			(wmi_peer_reorder_queue_remove_cmd_fixed_param));
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(param->peer_macaddr, &cmd->peer_macaddr);
+	cmd->vdev_id = param->vdev_id;
+	cmd->tid_mask = param->peer_tid_bitmap;
+
+	if (wmi_unified_cmd_send(wmi, buf, len,
+			WMI_PEER_REORDER_QUEUE_REMOVE_CMDID)) {
+		WMI_LOGP("%s: fail to send WMI_PEER_REORDER_QUEUE_REMOVE_CMDID",
+			__func__);
+		qdf_nbuf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+	WMI_LOGD("%s: peer_macaddr %pM vdev_id %d, tid_map %d", __func__,
+		param->peer_macaddr, param->vdev_id, param->peer_tid_bitmap);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * send_green_ap_ps_cmd_tlv() - enable green ap powersave command
  * @wmi_handle: wmi handle
  * @value: value
@@ -12437,6 +12525,10 @@ struct wmi_ops tlv_ops =  {
 	.send_vdev_stop_cmd = send_vdev_stop_cmd_tlv,
 	.send_peer_create_cmd = send_peer_create_cmd_tlv,
 	.send_peer_delete_cmd = send_peer_delete_cmd_tlv,
+	.send_peer_rx_reorder_queue_setup_cmd =
+		send_peer_rx_reorder_queue_setup_cmd_tlv,
+	.send_peer_rx_reorder_queue_remove_cmd =
+		send_peer_rx_reorder_queue_remove_cmd_tlv,
 	.send_green_ap_ps_cmd = send_green_ap_ps_cmd_tlv,
 	.send_pdev_utf_cmd = send_pdev_utf_cmd_tlv,
 	.send_pdev_param_cmd = send_pdev_param_cmd_tlv,
