@@ -132,6 +132,10 @@ static inline void ol_rx_fwd_to_tx(struct ol_txrx_vdev_t *vdev, qdf_nbuf_t msdu)
 							    rx_desc));
 		}
 
+	/* Clear the msdu control block as it will be re-interpreted */
+	qdf_mem_set(msdu->cb, sizeof(msdu->cb), 0);
+	/* update any cb field expected by OL_TX_SEND */
+
 	msdu = OL_TX_SEND(vdev, msdu);
 
 	if (msdu) {
