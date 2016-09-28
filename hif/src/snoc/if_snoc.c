@@ -229,6 +229,12 @@ QDF_STATUS hif_snoc_enable_bus(struct hif_softc *ol_sc,
 	int ret;
 	int hif_type;
 	int target_type;
+
+	if (!ol_sc) {
+		HIF_ERROR("%s: hif_ctx is NULL", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0)
 	ret = dma_set_mask_and_coherent(dev, DMA_BIT_MASK(37));
 #else
@@ -248,11 +254,6 @@ QDF_STATUS hif_snoc_enable_bus(struct hif_softc *ol_sc,
 		HIF_ERROR("%s: device_init_wakeup: err= %d",
 				__func__, ret);
 		return ret;
-	}
-
-	if (!ol_sc) {
-		HIF_ERROR("%s: hif_ctx is NULL", __func__);
-		return QDF_STATUS_E_NOMEM;
 	}
 
 	ret = hif_snoc_get_target_type(ol_sc, dev, bdev, bid,
