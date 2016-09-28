@@ -1108,7 +1108,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 						    operatingChannel);
 
 		pHostapdState->bssState = BSS_START;
-		hdd_wlan_green_ap_start_bss(pHddCtx);
+		hdd_green_ap_start_bss(pHddCtx);
 
 		/* Set default key index */
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
@@ -1205,7 +1205,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		hdd_hostapd_channel_allow_suspend(pHostapdAdapter,
 						  pHddApCtx->operatingChannel);
 
-		hdd_wlan_green_ap_stop_bss(pHddCtx);
+		hdd_green_ap_stop_bss(pHddCtx);
 
 		/* Free up Channel List incase if it is set */
 		sap_cleanup_channel_list(
@@ -1560,7 +1560,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 					chan_info,
 					pHostapdAdapter->device_mode);
 		}
-		hdd_wlan_green_ap_add_sta(pHddCtx);
+		hdd_green_ap_add_sta(pHddCtx);
 		break;
 
 	case eSAP_STA_DISASSOC_EVENT:
@@ -1684,7 +1684,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			hdd_stop_bus_bw_compute_timer(pHostapdAdapter);
 		}
 #endif
-		hdd_wlan_green_ap_del_sta(pHddCtx);
+		hdd_green_ap_del_sta(pHddCtx);
 		break;
 
 	case eSAP_WPS_PBC_PROBE_REQ_EVENT:

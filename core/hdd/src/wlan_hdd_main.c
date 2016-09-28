@@ -1446,7 +1446,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	hdd_ctx->max_intf_count = cfg->max_intf_count;
 
 	hdd_lpass_target_config(hdd_ctx, cfg);
-	hdd_wlan_set_egap_support(hdd_ctx, cfg);
+	hdd_green_ap_target_config(hdd_ctx, cfg);
 
 	hdd_ctx->ap_arpns_support = cfg->ap_arpns_support;
 	hdd_update_tgt_services(hdd_ctx, &cfg->services);
@@ -4663,7 +4663,7 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 	 * that requires pMac access after this.
 	 */
 
-	hdd_wlan_green_ap_deinit(hdd_ctx);
+	hdd_green_ap_deinit(hdd_ctx);
 
 	hdd_close_all_adapters(hdd_ctx, false);
 
@@ -7656,7 +7656,7 @@ int hdd_wlan_startup(struct device *dev)
 	if (ret)
 		goto err_hdd_free_context;
 
-	hdd_wlan_green_ap_init(hdd_ctx);
+	hdd_green_ap_init(hdd_ctx);
 
 	ret = hdd_wlan_start_modules(hdd_ctx, adapter, false);
 	if (ret) {
