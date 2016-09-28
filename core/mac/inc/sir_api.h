@@ -3333,6 +3333,7 @@ struct sir_hw_mode_params {
 	uint8_t mac1_bw;
 	uint8_t dbs_cap;
 	uint8_t agile_dfs_cap;
+	uint8_t sbs_cap;
 };
 
 /**

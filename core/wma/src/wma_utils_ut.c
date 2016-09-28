@@ -73,7 +73,7 @@ void wma_set_dbs_capability_ut(uint32_t dbs)
 	}
 
 	for (i = 0; i < wma->num_dbs_hw_modes; i++) {
-		WMI_DBS_HW_MODE_DBS_MODE_SET(wma->hw_mode.hw_mode_list[i],
+		WMA_HW_MODE_DBS_MODE_SET(wma->hw_mode.hw_mode_list[i],
 				dbs);
 	}
 

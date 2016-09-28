@@ -2485,8 +2485,8 @@ static void cds_pdev_set_hw_mode_cb(uint32_t status,
 		hw_mode.mac0_tx_ss, hw_mode.mac0_rx_ss, hw_mode.mac0_bw);
 	cds_info("MAC1: TxSS:%d, RxSS:%d, Bw:%d",
 		hw_mode.mac1_tx_ss, hw_mode.mac1_rx_ss, hw_mode.mac1_bw);
-	cds_info("DBS:%d, Agile DFS:%d",
-		hw_mode.dbs_cap, hw_mode.agile_dfs_cap);
+	cds_info("DBS:%d, Agile DFS:%d, SBS:%d",
+		hw_mode.dbs_cap, hw_mode.agile_dfs_cap, hw_mode.sbs_cap);
 
 	/* update conc_connection_list */
 	cds_update_hw_mode_conn_info(num_vdev_mac_entries,
@@ -2544,8 +2544,8 @@ void cds_hw_mode_transition_cb(uint32_t old_hw_mode_index,
 		hw_mode.mac0_tx_ss, hw_mode.mac0_rx_ss, hw_mode.mac0_bw);
 	cds_info("MAC1: TxSS:%d, RxSS:%d, Bw:%d",
 		hw_mode.mac1_tx_ss, hw_mode.mac1_rx_ss, hw_mode.mac1_bw);
-	cds_info("DBS:%d, Agile DFS:%d",
-		hw_mode.dbs_cap, hw_mode.agile_dfs_cap);
+	cds_info("DBS:%d, Agile DFS:%d, SBS:%d",
+		hw_mode.dbs_cap, hw_mode.agile_dfs_cap, hw_mode.sbs_cap);
 
 	/* update conc_connection_list */
 	cds_update_hw_mode_conn_info(num_vdev_mac_entries,
@@ -2564,6 +2564,7 @@ void cds_hw_mode_transition_cb(uint32_t old_hw_mode_index,
  * @mac1_bw: MAC1 bandwidth configuration
  * @dbs: HW DBS capability
  * @dfs: HW Agile DFS capability
+ * @sbs: HW SBS capability
  * @reason: Reason for connection update
  *
  * Sends the set hw mode to the SME module which will pass on
@@ -2572,15 +2573,18 @@ void cds_hw_mode_transition_cb(uint32_t old_hw_mode_index,
  * e.g.: To configure 2x2_80
  *       mac0_ss = HW_MODE_SS_2x2, mac0_bw = HW_MODE_80_MHZ
  *       mac1_ss = HW_MODE_SS_0x0, mac1_bw = HW_MODE_BW_NONE
- *       dbs = HW_MODE_DBS_NONE, dfs = HW_MODE_AGILE_DFS_NONE
+ *       dbs = HW_MODE_DBS_NONE, dfs = HW_MODE_AGILE_DFS_NONE,
+ *       sbs = HW_MODE_SBS_NONE
  * e.g.: To configure 1x1_80_1x1_40 (DBS)
  *       mac0_ss = HW_MODE_SS_1x1, mac0_bw = HW_MODE_80_MHZ
  *       mac1_ss = HW_MODE_SS_1x1, mac1_bw = HW_MODE_40_MHZ
- *       dbs = HW_MODE_DBS, dfs = HW_MODE_AGILE_DFS_NONE
+ *       dbs = HW_MODE_DBS, dfs = HW_MODE_AGILE_DFS_NONE,
+ *       sbs = HW_MODE_SBS_NONE
  * e.g.: To configure 1x1_80_1x1_40 (Agile DFS)
  *       mac0_ss = HW_MODE_SS_1x1, mac0_bw = HW_MODE_80_MHZ
  *       mac1_ss = HW_MODE_SS_1x1, mac1_bw = HW_MODE_40_MHZ
- *       dbs = HW_MODE_DBS, dfs = HW_MODE_AGILE_DFS
+ *       dbs = HW_MODE_DBS, dfs = HW_MODE_AGILE_DFS,
+ *       sbs = HW_MODE_SBS_NONE
  *
  * Return: Success if the message made it down to the next layer
  */
@@ -2591,6 +2595,7 @@ QDF_STATUS cds_pdev_set_hw_mode(uint32_t session_id,
 		enum hw_mode_bandwidth mac1_bw,
 		enum hw_mode_dbs_capab dbs,
 		enum hw_mode_agile_dfs_capab dfs,
+		enum hw_mode_sbs_capab sbs,
 		enum sir_conn_update_reason reason)
 {
 	int8_t hw_mode_index;
@@ -2618,7 +2623,7 @@ QDF_STATUS cds_pdev_set_hw_mode(uint32_t session_id,
 	}
 
 	hw_mode_index = wma_get_hw_mode_idx_from_dbs_hw_list(mac0_ss,
-			mac0_bw, mac1_ss, mac1_bw, dbs, dfs);
+			mac0_bw, mac1_ss, mac1_bw, dbs, dfs, sbs);
 	if (hw_mode_index < 0) {
 		cds_err("Invalid HW mode index obtained");
 		return QDF_STATUS_E_FAILURE;
@@ -6306,6 +6311,7 @@ QDF_STATUS cds_next_actions(uint32_t session_id,
 						HW_MODE_SS_1x1, HW_MODE_40_MHZ,
 						HW_MODE_DBS,
 						HW_MODE_AGILE_DFS_NONE,
+						HW_MODE_SBS_NONE,
 						reason);
 		break;
 	case CDS_SINGLE_MAC_UPGRADE:
@@ -6318,6 +6324,7 @@ QDF_STATUS cds_next_actions(uint32_t session_id,
 						HW_MODE_SS_0x0, HW_MODE_BW_NONE,
 						HW_MODE_DBS_NONE,
 						HW_MODE_AGILE_DFS_NONE,
+						HW_MODE_SBS_NONE,
 						reason);
 		/*
 		* check if we have a beaconing entity that advertised 2x2
@@ -6334,6 +6341,7 @@ QDF_STATUS cds_next_actions(uint32_t session_id,
 						HW_MODE_SS_0x0, HW_MODE_BW_NONE,
 						HW_MODE_DBS_NONE,
 						HW_MODE_AGILE_DFS_NONE,
+						HW_MODE_SBS_NONE,
 						reason);
 		break;
 	default:

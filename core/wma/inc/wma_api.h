@@ -187,7 +187,8 @@ int8_t wma_get_hw_mode_idx_from_dbs_hw_list(enum hw_mode_ss_config mac0_ss,
 		enum hw_mode_ss_config mac1_ss,
 		enum hw_mode_bandwidth mac1_bw,
 		enum hw_mode_dbs_capab dbs,
-		enum hw_mode_agile_dfs_capab dfs);
+		enum hw_mode_agile_dfs_capab dfs,
+		enum hw_mode_sbs_capab sbs);
 QDF_STATUS wma_get_hw_mode_from_idx(uint32_t idx,
 		struct sir_hw_mode_params *hw_mode);
 int8_t wma_get_num_dbs_hw_modes(void);

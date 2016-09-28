@@ -2534,6 +2534,7 @@ void wma_get_tx_rx_ss_from_config(enum hw_mode_ss_config mac_ss,
  * @mac1_bw: Bandwidth of MAC1 of type 'hw_mode_bandwidth'
  * @dbs: DBS capability of type 'hw_mode_dbs_capab'
  * @dfs: Agile DFS capability of type 'hw_mode_agile_dfs_capab'
+ * @sbs: SBS capability of type 'hw_mode_sbs_capab'
  *
  * Fetches the HW mode index corresponding to the HW mode provided
  *
@@ -2546,12 +2547,13 @@ static int8_t wma_get_matching_hw_mode_index(tp_wma_handle wma,
 				uint32_t mac1_tx_ss, uint32_t mac1_rx_ss,
 				enum hw_mode_bandwidth mac1_bw,
 				enum hw_mode_dbs_capab dbs,
-				enum hw_mode_agile_dfs_capab dfs)
+				enum hw_mode_agile_dfs_capab dfs,
+				enum hw_mode_sbs_capab sbs)
 {
 	uint32_t i;
 	uint32_t t_mac0_tx_ss, t_mac0_rx_ss, t_mac0_bw;
 	uint32_t t_mac1_tx_ss, t_mac1_rx_ss, t_mac1_bw;
-	uint32_t dbs_mode, agile_dfs_mode;
+	uint32_t dbs_mode, agile_dfs_mode, sbs_mode;
 	int8_t found = -EINVAL;
 
 	if (!wma) {
@@ -2560,17 +2562,17 @@ static int8_t wma_get_matching_hw_mode_index(tp_wma_handle wma,
 	}
 
 	for (i = 0; i < wma->num_dbs_hw_modes; i++) {
-		t_mac0_tx_ss = WMI_DBS_HW_MODE_MAC0_TX_STREAMS_GET(
+		t_mac0_tx_ss = WMA_HW_MODE_MAC0_TX_STREAMS_GET(
 				wma->hw_mode.hw_mode_list[i]);
 		if (t_mac0_tx_ss != mac0_tx_ss)
 			continue;
 
-		t_mac0_rx_ss = WMI_DBS_HW_MODE_MAC0_RX_STREAMS_GET(
+		t_mac0_rx_ss = WMA_HW_MODE_MAC0_RX_STREAMS_GET(
 				wma->hw_mode.hw_mode_list[i]);
 		if (t_mac0_rx_ss != mac0_rx_ss)
 			continue;
 
-		t_mac0_bw = WMI_DBS_HW_MODE_MAC0_BANDWIDTH_GET(
+		t_mac0_bw = WMA_HW_MODE_MAC0_BANDWIDTH_GET(
 				wma->hw_mode.hw_mode_list[i]);
 		/*
 		 * Firmware advertises max bw capability as CBW 80+80
@@ -2580,29 +2582,34 @@ static int8_t wma_get_matching_hw_mode_index(tp_wma_handle wma,
 		if (t_mac0_bw < mac0_bw)
 			continue;
 
-		t_mac1_tx_ss = WMI_DBS_HW_MODE_MAC1_TX_STREAMS_GET(
+		t_mac1_tx_ss = WMA_HW_MODE_MAC1_TX_STREAMS_GET(
 				wma->hw_mode.hw_mode_list[i]);
 		if (t_mac1_tx_ss != mac1_tx_ss)
 			continue;
 
-		t_mac1_rx_ss = WMI_DBS_HW_MODE_MAC1_RX_STREAMS_GET(
+		t_mac1_rx_ss = WMA_HW_MODE_MAC1_RX_STREAMS_GET(
 				wma->hw_mode.hw_mode_list[i]);
 		if (t_mac1_rx_ss != mac1_rx_ss)
 			continue;
 
-		t_mac1_bw = WMI_DBS_HW_MODE_MAC1_BANDWIDTH_GET(
+		t_mac1_bw = WMA_HW_MODE_MAC1_BANDWIDTH_GET(
 				wma->hw_mode.hw_mode_list[i]);
 		if (t_mac1_bw < mac1_bw)
 			continue;
 
-		dbs_mode = WMI_DBS_HW_MODE_DBS_MODE_GET(
+		dbs_mode = WMA_HW_MODE_DBS_MODE_GET(
 				wma->hw_mode.hw_mode_list[i]);
 		if (dbs_mode != dbs)
 			continue;
 
-		agile_dfs_mode = WMI_DBS_HW_MODE_AGILE_DFS_GET(
+		agile_dfs_mode = WMA_HW_MODE_AGILE_DFS_GET(
 				wma->hw_mode.hw_mode_list[i]);
 		if (agile_dfs_mode != dfs)
+			continue;
+
+		sbs_mode = WMA_HW_MODE_SBS_MODE_GET(
+				wma->hw_mode.hw_mode_list[i]);
+		if (sbs_mode != sbs)
 			continue;
 
 		found = i;
@@ -2621,9 +2628,10 @@ static int8_t wma_get_matching_hw_mode_index(tp_wma_handle wma,
  * @mac1_bw: MAC1 bandwidth configuration
  * @dbs: HW DBS capability
  * @dfs: HW Agile DFS capability
+ * @sbs: HW SBS capability
  *
  * Get the HW mode index corresponding to the HW modes spatial stream,
- * bandwidth, DBS and Agile DFS capability
+ * bandwidth, DBS, Agile DFS and SBS capability
  *
  * Return: Index number if a match is found or -negative value if not found
  */
@@ -2632,7 +2640,8 @@ int8_t wma_get_hw_mode_idx_from_dbs_hw_list(enum hw_mode_ss_config mac0_ss,
 					    enum hw_mode_ss_config mac1_ss,
 					    enum hw_mode_bandwidth mac1_bw,
 					    enum hw_mode_dbs_capab dbs,
-					    enum hw_mode_agile_dfs_capab dfs)
+					    enum hw_mode_agile_dfs_capab dfs,
+					    enum hw_mode_sbs_capab sbs)
 {
 	tp_wma_handle wma;
 	uint32_t mac0_tx_ss, mac0_rx_ss;
@@ -2651,14 +2660,14 @@ int8_t wma_get_hw_mode_idx_from_dbs_hw_list(enum hw_mode_ss_config mac0_ss,
 		__func__, mac0_tx_ss, mac0_rx_ss, mac0_bw);
 	WMA_LOGI("%s: MAC1: TxSS=%d, RxSS=%d, BW=%d",
 		__func__, mac1_tx_ss, mac1_rx_ss, mac1_bw);
-	WMA_LOGI("%s: DBS capab=%d, Agile DFS capab=%d",
-		__func__, dbs, dfs);
+	WMA_LOGI("%s: DBS=%d, Agile DFS=%d, SBS=%d",
+		__func__, dbs, dfs, sbs);
 
 	return wma_get_matching_hw_mode_index(wma, mac0_tx_ss, mac0_rx_ss,
 						mac0_bw,
 						mac1_tx_ss, mac1_rx_ss,
 						mac1_bw,
-						dbs, dfs);
+						dbs, dfs, sbs);
 }
 
 /**
@@ -2694,14 +2703,15 @@ QDF_STATUS wma_get_hw_mode_from_idx(uint32_t idx,
 
 	param = wma->hw_mode.hw_mode_list[idx];
 
-	hw_mode->mac0_tx_ss = WMI_DBS_HW_MODE_MAC0_TX_STREAMS_GET(param);
-	hw_mode->mac0_rx_ss = WMI_DBS_HW_MODE_MAC0_RX_STREAMS_GET(param);
-	hw_mode->mac0_bw = WMI_DBS_HW_MODE_MAC0_BANDWIDTH_GET(param);
-	hw_mode->mac1_tx_ss = WMI_DBS_HW_MODE_MAC1_TX_STREAMS_GET(param);
-	hw_mode->mac1_rx_ss = WMI_DBS_HW_MODE_MAC1_RX_STREAMS_GET(param);
-	hw_mode->mac1_bw = WMI_DBS_HW_MODE_MAC1_BANDWIDTH_GET(param);
-	hw_mode->dbs_cap = WMI_DBS_HW_MODE_DBS_MODE_GET(param);
-	hw_mode->agile_dfs_cap = WMI_DBS_HW_MODE_AGILE_DFS_GET(param);
+	hw_mode->mac0_tx_ss = WMA_HW_MODE_MAC0_TX_STREAMS_GET(param);
+	hw_mode->mac0_rx_ss = WMA_HW_MODE_MAC0_RX_STREAMS_GET(param);
+	hw_mode->mac0_bw = WMA_HW_MODE_MAC0_BANDWIDTH_GET(param);
+	hw_mode->mac1_tx_ss = WMA_HW_MODE_MAC1_TX_STREAMS_GET(param);
+	hw_mode->mac1_rx_ss = WMA_HW_MODE_MAC1_RX_STREAMS_GET(param);
+	hw_mode->mac1_bw = WMA_HW_MODE_MAC1_BANDWIDTH_GET(param);
+	hw_mode->dbs_cap = WMA_HW_MODE_DBS_MODE_GET(param);
+	hw_mode->agile_dfs_cap = WMA_HW_MODE_AGILE_DFS_GET(param);
+	hw_mode->sbs_cap = WMA_HW_MODE_SBS_MODE_GET(param);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2763,7 +2773,7 @@ bool wma_is_hw_dbs_capable(void)
 	for (i = 0; i < wma->num_dbs_hw_modes; i++) {
 		param = wma->hw_mode.hw_mode_list[i];
 		WMA_LOGI("%s: HW param: %x", __func__, param);
-		if (WMI_DBS_HW_MODE_DBS_MODE_GET(param)) {
+		if (WMA_HW_MODE_DBS_MODE_GET(param)) {
 			WMA_LOGI("%s: HW (%d) is DBS capable", __func__, i);
 			found = 1;
 			break;
@@ -2866,14 +2876,14 @@ void wma_update_intf_hw_mode_params(uint32_t vdev_id, uint32_t mac_id,
 	wma->interfaces[vdev_id].mac_id = mac_id;
 	if (mac_id == 0) {
 		wma->interfaces[vdev_id].tx_streams =
-			WMI_DBS_HW_MODE_MAC0_TX_STREAMS_GET(param);
+			WMA_HW_MODE_MAC0_TX_STREAMS_GET(param);
 		wma->interfaces[vdev_id].rx_streams =
-			WMI_DBS_HW_MODE_MAC0_RX_STREAMS_GET(param);
+			WMA_HW_MODE_MAC0_RX_STREAMS_GET(param);
 	} else {
 		wma->interfaces[vdev_id].tx_streams =
-			WMI_DBS_HW_MODE_MAC1_TX_STREAMS_GET(param);
+			WMA_HW_MODE_MAC1_TX_STREAMS_GET(param);
 		wma->interfaces[vdev_id].rx_streams =
-			WMI_DBS_HW_MODE_MAC1_RX_STREAMS_GET(param);
+			WMA_HW_MODE_MAC1_RX_STREAMS_GET(param);
 	}
 }
 
@@ -2929,15 +2939,15 @@ QDF_STATUS wma_get_dbs_hw_modes(bool *one_by_one_dbs, bool *two_by_two_dbs)
 		uint32_t t_conf1_tx_ss, t_conf1_rx_ss;
 		uint32_t dbs_mode;
 
-		t_conf0_tx_ss = WMI_DBS_HW_MODE_MAC0_TX_STREAMS_GET(
+		t_conf0_tx_ss = WMA_HW_MODE_MAC0_TX_STREAMS_GET(
 				wma->hw_mode.hw_mode_list[i]);
-		t_conf0_rx_ss = WMI_DBS_HW_MODE_MAC0_RX_STREAMS_GET(
+		t_conf0_rx_ss = WMA_HW_MODE_MAC0_RX_STREAMS_GET(
 				wma->hw_mode.hw_mode_list[i]);
-		t_conf1_tx_ss = WMI_DBS_HW_MODE_MAC1_TX_STREAMS_GET(
+		t_conf1_tx_ss = WMA_HW_MODE_MAC1_TX_STREAMS_GET(
 				wma->hw_mode.hw_mode_list[i]);
-		t_conf1_rx_ss = WMI_DBS_HW_MODE_MAC1_RX_STREAMS_GET(
+		t_conf1_rx_ss = WMA_HW_MODE_MAC1_RX_STREAMS_GET(
 				wma->hw_mode.hw_mode_list[i]);
-		dbs_mode = WMI_DBS_HW_MODE_DBS_MODE_GET(
+		dbs_mode = WMA_HW_MODE_DBS_MODE_GET(
 				wma->hw_mode.hw_mode_list[i]);
 
 		if (((((t_conf0_tx_ss == conf1_tx_ss) &&

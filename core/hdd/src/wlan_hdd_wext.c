@@ -8067,6 +8067,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 					HW_MODE_SS_0x0, HW_MODE_BW_NONE,
 					HW_MODE_DBS_NONE,
 					HW_MODE_AGILE_DFS_NONE,
+					HW_MODE_SBS_NONE,
 					SIR_UPDATE_REASON_UT);
 		} else if (apps_args[0] == 1) {
 			hdd_err("set hw mode for dual mac");
@@ -8077,6 +8078,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 					HW_MODE_SS_1x1, HW_MODE_40_MHZ,
 					HW_MODE_DBS,
 					HW_MODE_AGILE_DFS_NONE,
+					HW_MODE_SBS_NONE,
 					SIR_UPDATE_REASON_UT);
 		}
 	}
