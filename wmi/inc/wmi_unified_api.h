@@ -1266,4 +1266,8 @@ QDF_STATUS wmi_unified_send_adapt_dwelltime_params_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_fw_test_cmd(void *wmi_hdl,
 				   struct set_fwtest_params *wmi_fwtest);
 
+QDF_STATUS wmi_unified_peer_rx_reorder_queue_setup_send(void *wmi_hdl,
+					struct rx_reorder_queue_setup_params *param);
+QDF_STATUS wmi_unified_peer_rx_reorder_queue_remove_send(void *wmi_hdl,
+					struct rx_reorder_queue_remove_params *param);
 #endif /* _WMI_UNIFIED_API_H_ */

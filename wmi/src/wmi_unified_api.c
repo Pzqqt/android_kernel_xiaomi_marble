@@ -251,6 +251,46 @@ QDF_STATUS wmi_unified_peer_create_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
+/**
+ * wmi_unified_peer_rx_reorder_queue_setup_send() - send rx reorder queue
+ * 	setup command to fw
+ * @wmi: wmi handle
+ * @rx_reorder_queue_setup_params: Rx reorder queue setup parameters
+ *
+ * Return: QDF_STATUS for success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_peer_rx_reorder_queue_setup_send(void *wmi_hdl,
+					struct rx_reorder_queue_setup_params *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_peer_rx_reorder_queue_setup_cmd)
+		return wmi_handle->ops->send_peer_rx_reorder_queue_setup_cmd(
+			wmi_handle, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_peer_rx_reorder_queue_remove_send() - send rx reorder queue
+ * 	remove command to fw
+ * @wmi: wmi handle
+ * @rx_reorder_queue_remove_params: Rx reorder queue remove parameters
+ *
+ * Return: QDF_STATUS for success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_peer_rx_reorder_queue_remove_send(void *wmi_hdl,
+					struct rx_reorder_queue_remove_params *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_peer_rx_reorder_queue_remove_cmd)
+		return wmi_handle->ops->send_peer_rx_reorder_queue_remove_cmd(
+			wmi_handle, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 #if defined(FEATURE_GREEN_AP) || defined(ATH_SUPPORT_GREEN_AP)
 /**
  * wmi_unified_green_ap_ps_send() - enable green ap powersave command

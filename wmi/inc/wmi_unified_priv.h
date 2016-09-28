@@ -1132,6 +1132,12 @@ QDF_STATUS (*send_fw_test_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*send_encrypt_decrypt_send_cmd)(wmi_unified_t wmi_handle,
 				struct encrypt_decrypt_req_params *params);
+
+QDF_STATUS (*send_peer_rx_reorder_queue_setup_cmd)(wmi_unified_t wmi_handle,
+		struct rx_reorder_queue_setup_params *param);
+
+QDF_STATUS (*send_peer_rx_reorder_queue_remove_cmd)(wmi_unified_t wmi_handle,
+		struct rx_reorder_queue_remove_params *param);
 };
 
 struct target_abi_version {
