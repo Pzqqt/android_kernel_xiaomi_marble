@@ -119,7 +119,7 @@ static struct s_qdf_dp_trace_data g_qdf_dp_trace_data;
  * all the call back functions for dumping DPTRACE messages from ring buffer
  * are stored in qdf_dp_trace_cb_table, callbacks are initialized during init
  */
-static tp_qdf_dp_trace_cb qdf_dp_trace_cb_table[QDF_DP_TRACE_MAX];
+static tp_qdf_dp_trace_cb qdf_dp_trace_cb_table[QDF_DP_TRACE_MAX+1];
 #endif
 /**
  * qdf_trace_set_level() - Set the trace level for a particular module
@@ -781,6 +781,13 @@ QDF_STATUS qdf_state_info_dump_all(char *buf, uint16_t size,
 EXPORT_SYMBOL(qdf_state_info_dump_all);
 
 #ifdef FEATURE_DP_TRACE
+static void qdf_dp_unused(struct qdf_dp_trace_record_s *record,
+			  uint16_t index)
+{
+	qdf_print("%s: QDF_DP_TRACE_MAX event should not be generated",
+		  __func__);
+}
+
 /**
  * qdf_dp_trace_init() - enables the DP trace
  * Called during driver load and it enables DP trace
@@ -801,7 +808,7 @@ void qdf_dp_trace_init(void)
 	g_qdf_dp_trace_data.verbosity    = QDF_DP_TRACE_VERBOSITY_LOW;
 	g_qdf_dp_trace_data.enable = true;
 
-	for (i = 0; i < QDF_DP_TRACE_MAX; i++)
+	for (i = 0; i < ARRAY_SIZE(qdf_dp_trace_cb_table); i++)
 		qdf_dp_trace_cb_table[i] = qdf_dp_display_record;
 
 	qdf_dp_trace_cb_table[QDF_DP_TRACE_TXRX_PACKET_PTR_RECORD] =
@@ -815,6 +822,7 @@ void qdf_dp_trace_init(void)
 	qdf_dp_trace_cb_table[QDF_DP_TRACE_MGMT_PACKET_RECORD] =
 					qdf_dp_display_mgmt_pkt;
 
+	qdf_dp_trace_cb_table[QDF_DP_TRACE_MAX] = qdf_dp_unused;
 }
 EXPORT_SYMBOL(qdf_dp_trace_init);
 
