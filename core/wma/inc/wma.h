@@ -493,7 +493,7 @@ typedef struct probeTime_dwellTime {
 
 static const t_probeTime_dwellTime
 	probe_time_dwell_time_map[WMA_DWELL_TIME_PROBE_TIME_MAP_SIZE] = {
-	{28, 0},                /* 0 SSID */
+	{28, 11},               /* 0 SSID */
 	{28, 20},               /* 1 SSID */
 	{28, 20},               /* 2 SSID */
 	{28, 20},               /* 3 SSID */

@@ -233,10 +233,6 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 	} else
 		cmd->dwell_time_passive = scan_req->maxChannelTime;
 
-	WMA_LOGI("Scan Type %x, Active dwell time %u, Passive dwell time %u",
-		 scan_req->scanType, cmd->dwell_time_active,
-		 cmd->dwell_time_passive);
-
 	/* Ensure correct number of probes are sent on active channel */
 	cmd->repeat_probe_time =
 		cmd->dwell_time_active / WMA_SCAN_NPROBES_DEFAULT;
@@ -465,8 +461,19 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 				QDF_MIN(SSID_num,
 					WMA_DWELL_TIME_PROBE_TIME_MAP_SIZE
 					- 1)].probe_time;
+			cmd->n_probes = (cmd->repeat_probe_time > 0) ?
+				cmd->dwell_time_active/
+				cmd->repeat_probe_time : 0;
 		}
 	}
+	WMA_LOGI("Scan Type 0x%x, Active dwell time %u, Passive dwell time %u",
+		scan_req->scanType, cmd->dwell_time_active,
+		cmd->dwell_time_passive);
+	WMA_LOGI("Scan repeat_probe_time %u n_probes %u num_ssids %u num_bssid %u",
+		cmd->repeat_probe_time,
+		cmd->n_probes,
+		cmd->num_ssids,
+		cmd->num_bssid);
 
 	qdf_mem_copy(cmd->mac_add_bytes, scan_req->bssId.bytes, QDF_MAC_ADDR_SIZE);
 	cmd->ie_len = scan_req->uIEFieldLen;
