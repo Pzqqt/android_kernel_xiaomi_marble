@@ -8361,55 +8361,41 @@ QDF_STATUS sme_set_tx_power(tHalHandle hHal, uint8_t sessionId,
 	return QDF_STATUS_SUCCESS;
 }
 
-/* ---------------------------------------------------------------------------
-
-    \fn sme_hide_ssid
-
-    \brief hide/show SSID dynamically. Note: this setting will
-    not persist over reboots.
-
-    \param hHal
-    \param sessionId
-    \param ssidHidden 0 - Broadcast SSID, 1 - Disable broadcast SSID
-   \- return QDF_STATUS
-
-   -------------------------------------------------------------------------------*/
-QDF_STATUS sme_hide_ssid(tHalHandle hHal, uint8_t sessionId, uint8_t ssidHidden)
+QDF_STATUS sme_update_session_param(tHalHandle hal, uint8_t session_id,
+			uint32_t param_type, uint32_t param_val)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	uint16_t len;
 
-	status = sme_acquire_global_lock(&pMac->sme);
+	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		tpSirUpdateParams pMsg;
-		tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
+		struct sir_update_session_param *msg;
+		tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
 
-		if (!pSession) {
-			sms_log(pMac, LOGE, FL("  session %d not found "),
-				sessionId);
-			sme_release_global_lock(&pMac->sme);
-			return QDF_STATUS_E_FAILURE;
+		if (!session) {
+			sms_log(mac_ctx, LOGE, FL("session %d not found"),
+				session_id);
+			sme_release_global_lock(&mac_ctx->sme);
+			return status;
 		}
 
-		if (!pSession->sessionActive)
+		if (!session->sessionActive)
 			QDF_ASSERT(0);
 
-		/* Create the message and send to lim */
-		len = sizeof(tSirUpdateParams);
-		pMsg = qdf_mem_malloc(len);
-		if (NULL == pMsg)
+		len = sizeof(*msg);
+		msg = qdf_mem_malloc(len);
+		if (!msg)
 			status = QDF_STATUS_E_NOMEM;
 		else {
-			qdf_mem_set(pMsg, sizeof(tSirUpdateParams), 0);
-			pMsg->messageType = eWNI_SME_HIDE_SSID_REQ;
-			pMsg->length = len;
-			/* Data starts from here */
-			pMsg->sessionId = sessionId;
-			pMsg->ssidHidden = ssidHidden;
-			status = cds_send_mb_message_to_mac(pMsg);
+			msg->message_type = eWNI_SME_SESSION_UPDATE_PARAM;
+			msg->length = len;
+			msg->session_id = session_id;
+			msg->param_type = param_type;
+			msg->param_val = param_val;
+			status = cds_send_mb_message_to_mac(msg);
 		}
-		sme_release_global_lock(&pMac->sme);
+		sme_release_global_lock(&mac_ctx->sme);
 	}
 	return status;
 }

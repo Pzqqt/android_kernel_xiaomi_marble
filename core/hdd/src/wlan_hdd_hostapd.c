@@ -2553,13 +2553,13 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCSAP_PARAM_HIDE_SSID:
 	{
-		QDF_STATUS status = QDF_STATUS_SUCCESS;
-		status =
-			sme_hide_ssid(hHal, pHostapdAdapter->sessionId,
-				      set_value);
+		QDF_STATUS status;
+		status = sme_update_session_param(hHal,
+				pHostapdAdapter->sessionId,
+				SIR_PARAM_SSID_HIDDEN, set_value);
 		if (QDF_STATUS_SUCCESS != status) {
 			hdd_err("QCSAP_PARAM_HIDE_SSID failed");
-			return status;
+			return -EIO;
 		}
 		break;
 	}

@@ -1263,4 +1263,17 @@ QDF_STATUS sme_enable_disable_chanavoidind_event(tHalHandle hal,
 					uint8_t set_value);
 QDF_STATUS sme_set_default_scan_ie(tHalHandle hal, uint16_t session_id,
 				uint8_t *ie_data, uint16_t ie_len);
+/**
+ * sme_update_session_param() - API to update PE session param
+ * @hal: HAL handle for device
+ * @session_id: Session ID
+ * @param_type: Param type to be updated
+ * @param_val: Param value to be update
+ *
+ * Note: this setting will not persist over reboots.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_update_session_param(tHalHandle hal, uint8_t session_id,
+		uint32_t param_type, uint32_t param_val);
 #endif /* #if !defined( __SME_API_H ) */

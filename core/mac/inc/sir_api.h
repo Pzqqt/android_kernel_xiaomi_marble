@@ -2502,12 +2502,29 @@ typedef struct sSirUpdateAPWPSIEsReq {
 	tSirAPWPSIEs APWPSIEs;
 } tSirUpdateAPWPSIEsReq, *tpSirUpdateAPWPSIEsReq;
 
-typedef struct sSirUpdateParams {
-	uint16_t messageType;
+/*
+ * enum sir_update_session_param_type - session param type
+ * @SIR_PARAM_SSID_HIDDEN: ssidHidden parameter
+ */
+enum sir_update_session_param_type {
+	SIR_PARAM_SSID_HIDDEN,
+};
+
+/*
+ * struct sir_update_session_param
+ * @message_type: SME message type
+ * @length: size of struct sir_update_session_param
+ * @session_id: Session ID
+ * @param_type: parameter to be updated
+ * @param_val: Parameter value to update
+ */
+struct sir_update_session_param {
+	uint16_t message_type;
 	uint16_t length;
-	uint8_t sessionId;      /* Session ID */
-	uint8_t ssidHidden;     /* Hide SSID */
-} tSirUpdateParams, *tpSirUpdateParams;
+	uint8_t session_id;
+	uint32_t param_type;
+	uint32_t param_val;
+};
 
 /**
  * struct sir_create_session - Used for creating session in monitor mode
