@@ -3412,6 +3412,20 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 		WMA_LOGE("%s: Peer already exists, Deleted peer with peer_addr %pM",
 			__func__, add_sta->staMac);
 	}
+	/* The code above only checks the peer existence on its own vdev.
+	 * Need to check whether the peer exists on other vDevs because firmware
+	 * can't create the peer if the peer with same MAC address already
+	 * exists on the pDev. As this peer belongs to other vDevs, just return
+	 * here.
+	 */
+	peer = ol_txrx_find_peer_by_addr(pdev, add_sta->staMac, &peer_id);
+	if (peer) {
+		WMA_LOGE("%s: My vdev:%d, but Peer exists on other vdev with "
+				"peer_addr %pM and peer_id %d",
+			__func__, vdev->vdev_id, add_sta->staMac, peer_id);
+		add_sta->status = QDF_STATUS_E_FAILURE;
+		goto send_rsp;
+	}
 
 	status = wma_create_peer(wma, pdev, vdev, add_sta->staMac,
 				 WMI_PEER_TYPE_DEFAULT, add_sta->smesessionId,
