@@ -171,7 +171,7 @@ void wmi_buf_free(wmi_buf_t net_buf);
  *  @param cmd_id          : WMI cmd id
  *  @return 0  on success and -ve on failure.
  */
-int
+QDF_STATUS
 wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t buflen,
 			uint32_t cmd_id);
 

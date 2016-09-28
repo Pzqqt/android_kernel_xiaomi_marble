@@ -1719,8 +1719,8 @@ static bool wmi_is_pm_resume_cmd(uint32_t cmd_id)
  *
  * Return: 0 on success
  */
-int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t len,
-			 uint32_t cmd_id)
+QDF_STATUS wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf,
+				uint32_t len, uint32_t cmd_id)
 {
 	HTC_PACKET *pkt;
 	A_STATUS status;
@@ -1739,7 +1739,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t len,
 	if (wmi_handle->wmi_stopinprogress) {
 		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
 			"WMI  stop in progress\n");
-		return -EINVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 #ifndef WMI_NON_TLV_SUPPORT
