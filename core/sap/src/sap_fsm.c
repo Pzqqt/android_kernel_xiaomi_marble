@@ -1062,7 +1062,6 @@ sap_mark_leaking_ch(ptSapContext sap_ctx,
 					FL("sapdfs: channel: %d will have bad leakage due to channel: %d\n"),
 					dfs_nol_channel, temp_ch_lst[j]);
 				temp_ch_lst[j] = 0;
-				break;
 			}
 			j++;
 			k++;
