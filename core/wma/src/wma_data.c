@@ -1556,11 +1556,6 @@ QDF_STATUS wma_tx_detach(tp_wma_handle wma_handle)
 						NULL, txrx_pdev);
 		}
 	}
-	/* Destroy Tx Frame Complete event */
-	qdf_event_destroy(&wma_handle->tx_frm_download_comp_event);
-
-	/* Tx queue empty check event (dummy event) */
-	qdf_event_destroy(&wma_handle->tx_queue_empty_event);
 
 	/* Reset Tx Frm Callbacks */
 	wma_handle->tx_frm_download_comp_cb = NULL;
