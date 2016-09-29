@@ -2112,10 +2112,10 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 		pAdapter->hdd_stats.summary_stat.tx_frm_cnt[3];
 
 	sinfo->tx_retries =
-		pAdapter->hdd_stats.summary_stat.retry_cnt[0] +
-		pAdapter->hdd_stats.summary_stat.retry_cnt[1] +
-		pAdapter->hdd_stats.summary_stat.retry_cnt[2] +
-		pAdapter->hdd_stats.summary_stat.retry_cnt[3];
+		pAdapter->hdd_stats.summary_stat.multiple_retry_cnt[0] +
+		pAdapter->hdd_stats.summary_stat.multiple_retry_cnt[1] +
+		pAdapter->hdd_stats.summary_stat.multiple_retry_cnt[2] +
+		pAdapter->hdd_stats.summary_stat.multiple_retry_cnt[3];
 
 	sinfo->tx_failed =
 		pAdapter->hdd_stats.summary_stat.fail_cnt[0] +
