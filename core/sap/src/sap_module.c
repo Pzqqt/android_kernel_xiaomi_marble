@@ -456,6 +456,8 @@ QDF_STATUS wlansap_close(void *pCtx)
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "wlansap_close");
 
+	sap_cleanup_channel_list(pCtx);
+
 	/* empty queues/lists/pkts if any */
 	wlansap_clean_cb(pSapCtx, true);
 
