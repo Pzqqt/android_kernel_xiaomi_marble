@@ -5818,6 +5818,11 @@ hdd_adapter_t *hdd_wlan_create_ap_dev(hdd_context_t *pHddCtx,
 		pWlanHostapdDev->mtu = HDD_DEFAULT_MTU;
 		pWlanHostapdDev->tx_queue_len = HDD_NETDEV_TX_QUEUE_LEN;
 
+		if (pHddCtx->config->enable_ip_tcp_udp_checksum_offload)
+			pWlanHostapdDev->features |=
+				NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
+		pWlanHostapdDev->features |= NETIF_F_RXCSUM;
+
 		qdf_mem_copy(pWlanHostapdDev->dev_addr, (void *)macAddr,
 			     sizeof(tSirMacAddr));
 		qdf_mem_copy(pHostapdAdapter->macAddressCurrent.bytes,
