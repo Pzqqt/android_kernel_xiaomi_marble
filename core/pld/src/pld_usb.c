@@ -30,6 +30,7 @@
 #define VENDOR_ATHR             0x0CF3
 static struct usb_device_id pld_usb_id_table[] = {
 	{USB_DEVICE_AND_INTERFACE_INFO(VENDOR_ATHR, 0x9378, 0xFF, 0xFF, 0xFF)},
+	{USB_DEVICE_AND_INTERFACE_INFO(VENDOR_ATHR, 0x9379, 0xFF, 0xFF, 0xFF)},
 	{}			/* Terminating entry */
 };
 
