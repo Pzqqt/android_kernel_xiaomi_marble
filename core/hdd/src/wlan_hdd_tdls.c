@@ -4499,7 +4499,7 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 					pAdapter, peer,
 					pTdlsPeer->staId,
 					pTdlsPeer->signature,
-					tdlsLinkEstablishParams.qos);
+					pTdlsPeer->qos);
 			if (QDF_STATUS_SUCCESS == status) {
 				uint8_t i;
 
