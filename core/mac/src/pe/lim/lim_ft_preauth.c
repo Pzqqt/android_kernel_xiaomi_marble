@@ -469,6 +469,12 @@ void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal pMac, tSirRetStatus status,
 			     sizeof(psessionEntry->htConfig));
 		pftSessionEntry->limSmeState = eLIM_SME_WT_REASSOC_STATE;
 
+		if (IS_5G_CH(psessionEntry->ftPEContext.pFTPreAuthReq->
+			preAuthchannelNum))
+			pftSessionEntry->vdev_nss = pMac->vdev_type_nss_5g.sta;
+		else
+			pftSessionEntry->vdev_nss = pMac->vdev_type_nss_2g.sta;
+
 		lim_log(pMac, LOG1, FL("created session (%p) with id = %d"),
 			pftSessionEntry, pftSessionEntry->peSessionId);
 
