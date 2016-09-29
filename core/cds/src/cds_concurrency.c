@@ -4644,7 +4644,7 @@ QDF_STATUS cds_get_channel_list(enum cds_pcl_type pcl,
 
 	if (CDS_NONE == pcl) {
 		/* msg */
-		cds_err("pcl is 0");
+		cds_info("pcl is 0");
 		return QDF_STATUS_SUCCESS;
 	}
 	/* get the channel list for current domain */
