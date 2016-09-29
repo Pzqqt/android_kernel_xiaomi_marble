@@ -100,6 +100,35 @@ enum extscan_report_events_type {
 #endif
 
 /**
+ * wma_set_scan_info() - set scan info in wma handle
+ * @wma_handle: wma handle
+ * @scan_id: scan id
+ * @vdev_id: vdev id
+ *
+ * Return: none
+ */
+static inline void wma_set_scan_info(tp_wma_handle wma_handle,
+				     uint32_t scan_id,
+				     uint32_t vdev_id)
+{
+	wma_handle->interfaces[vdev_id].scan_info.scan_id = scan_id;
+}
+
+/**
+ * wma_reset_scan_info() - reset scan info from wma handle
+ * @wma_handle: wma handle
+ * @vdev_id: vdev id
+ *
+ * Return: none
+ */
+static inline void wma_reset_scan_info(tp_wma_handle wma_handle,
+					   uint8_t vdev_id)
+{
+	qdf_mem_zero((void *)&(wma_handle->interfaces[vdev_id].scan_info),
+		     sizeof(wma_handle->interfaces[vdev_id].scan_info));
+}
+
+/**
  * wma_set_p2p_scan_info() - set p2p scan info in wma handle
  * @wma_handle: wma handle
  * @scan_id: scan id
@@ -529,6 +558,8 @@ QDF_STATUS wma_start_scan(tp_wma_handle wma_handle,
 		WMA_LOGE("Failed to get buffer for start scan cmd");
 		goto error1;
 	}
+
+	wma_set_scan_info(wma_handle, cmd.scan_id, cmd.vdev_id);
 
 	if (scan_req->p2pScanType == P2P_SCAN_TYPE_LISTEN)
 		wma_set_p2p_scan_info(wma_handle, cmd.scan_id,
@@ -5637,6 +5668,12 @@ int wma_scan_event_callback(WMA_HANDLE handle, uint8_t *data,
 	scan_event->scanId = wmi_event->scan_id;
 	scan_event->requestor = wmi_event->requestor;
 	scan_event->chanFreq = wmi_event->channel_freq;
+
+	if (scan_event->scanId ==
+		wma_handle->interfaces[vdev_id].scan_info.scan_id) {
+		if (scan_event->event == SIR_SCAN_EVENT_COMPLETED)
+			wma_reset_scan_info(wma_handle, vdev_id);
+	}
 
 	if (scan_event->scanId ==
 		wma_handle->interfaces[vdev_id].p2p_scan_info.scan_id) {
