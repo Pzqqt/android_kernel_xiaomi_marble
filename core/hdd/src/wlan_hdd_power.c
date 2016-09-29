@@ -2052,6 +2052,48 @@ int wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 }
 
 /**
+ * hdd_stop_dhcp_ind() - API to stop DHCP sequence
+ * @adapter: Adapter on which DHCP needs to be stopped
+ *
+ * Release the wakelock held for DHCP process and allow
+ * the runtime pm to continue
+ *
+ * Return: None
+ */
+static void hdd_stop_dhcp_ind(hdd_adapter_t *adapter)
+{
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	hdd_warn("DHCP stop indicated through power save");
+	sme_dhcp_stop_ind(hdd_ctx->hHal, adapter->device_mode,
+			  adapter->macAddressCurrent.bytes,
+			  adapter->sessionId);
+	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DHCP);
+	qdf_runtime_pm_allow_suspend(adapter->connect_rpm_ctx.connect);
+}
+
+/**
+ * hdd_start_dhcp_ind() - API to start DHCP sequence
+ * @adapter: Adapter on which DHCP needs to be stopped
+ *
+ * Prevent APPS suspend and the runtime suspend during
+ * DHCP sequence
+ *
+ * Return: None
+ */
+static void hdd_start_dhcp_ind(hdd_adapter_t *adapter)
+{
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	hdd_err("DHCP start indicated through power save");
+	qdf_runtime_pm_prevent_suspend(adapter->connect_rpm_ctx.connect);
+	hdd_prevent_suspend_timeout(1000, WIFI_POWER_EVENT_WAKELOCK_DHCP);
+	sme_dhcp_start_ind(hdd_ctx->hHal, adapter->device_mode,
+			   adapter->macAddressCurrent.bytes,
+			   adapter->sessionId);
+}
+
+/**
  * __wlan_hdd_cfg80211_set_power_mgmt() - set cfg80211 power management config
  * @wiphy: Pointer to wiphy
  * @dev: Pointer to network device
@@ -2117,20 +2159,8 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 
 	status = wlan_hdd_set_powersave(pAdapter, allow_power_save, timeout);
 
-	if (allow_power_save) {
-		hdd_warn("DHCP stop indicated through power save");
-		sme_dhcp_stop_ind(pHddCtx->hHal, pAdapter->device_mode,
-				  pAdapter->macAddressCurrent.bytes,
-				  pAdapter->sessionId);
-		hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DHCP);
-	} else {
-		hdd_err("DHCP start indicated through power save");
-		hdd_prevent_suspend_timeout(1000,
-					    WIFI_POWER_EVENT_WAKELOCK_DHCP);
-		sme_dhcp_start_ind(pHddCtx->hHal, pAdapter->device_mode,
-				   pAdapter->macAddressCurrent.bytes,
-				   pAdapter->sessionId);
-	}
+	allow_power_save ? hdd_stop_dhcp_ind(pAdapter) :
+		hdd_start_dhcp_ind(pAdapter);
 
 	EXIT();
 	return status;

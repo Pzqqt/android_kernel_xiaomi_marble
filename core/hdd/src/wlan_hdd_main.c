@@ -2451,6 +2451,25 @@ void hdd_set_station_ops(struct net_device *pWlanDev)
 		pWlanDev->netdev_ops = &wlan_drv_ops;
 }
 
+#ifdef FEATURE_RUNTIME_PM
+static void hdd_adapter_runtime_suspend_init(hdd_adapter_t *adapter)
+{
+	struct hdd_connect_pm_context *ctx = &adapter->connect_rpm_ctx;
+
+	ctx->connect = qdf_runtime_lock_init("connect");
+}
+
+static void hdd_adapter_runtime_suspend_denit(hdd_adapter_t *adapter)
+{
+	struct hdd_connect_pm_context *ctx = &adapter->connect_rpm_ctx;
+
+	qdf_runtime_lock_deinit(ctx->connect);
+	ctx->connect = NULL;
+}
+#else /* FEATURE_RUNTIME_PM */
+static inline void hdd_adapter_runtime_suspend_init(hdd_adapter_t *adapter) {}
+static inline void hdd_adapter_runtime_suspend_denit(hdd_adapter_t *adapter) {}
+#endif /* FEATURE_RUNTIME_PM */
 /**
  * hdd_alloc_station_adapter() - allocate the station hdd adapter
  * @hdd_ctx: global hdd context
@@ -2542,6 +2561,7 @@ static hdd_adapter_t *hdd_alloc_station_adapter(hdd_context_t *hdd_ctx,
 		/* set pWlanDev's parent to underlying device */
 		SET_NETDEV_DEV(pWlanDev, hdd_ctx->parent_dev);
 		hdd_wmm_init(adapter);
+		hdd_adapter_runtime_suspend_init(adapter);
 		spin_lock_init(&adapter->pause_map_lock);
 		adapter->start_time = adapter->last_time = qdf_system_ticks();
 	}
@@ -2915,6 +2935,8 @@ static void hdd_cleanup_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 		qdf_mem_free(adapter->scan_info.default_scan_ies);
 		adapter->scan_info.default_scan_ies = NULL;
 	}
+
+	hdd_adapter_runtime_suspend_denit(adapter);
 
 	/*
 	 * The adapter is marked as closed. When hdd_wlan_exit() call returns,
@@ -3943,9 +3965,12 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 			roam_info->u.pConnectedProfile->SSID.ssId,
 			roam_info->u.pConnectedProfile->SSID.length);
 	}
+
 	hdd_connect_bss(dev, bssid, bss, req_ie,
 		req_ie_len, resp_ie, resp_ie_len,
 		status, gfp, connect_timeout);
+
+	qdf_runtime_pm_allow_suspend(padapter->connect_rpm_ctx.connect);
 }
 #else
 void hdd_connect_result(struct net_device *dev, const u8 *bssid,
@@ -3954,8 +3979,11 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 			size_t resp_ie_len, u16 status, gfp_t gfp,
 			bool connect_timeout)
 {
+	hdd_adapter_t *padapter = (hdd_adapter_t *) netdev_priv(dev);
+
 	cfg80211_connect_result(dev, bssid, req_ie, req_ie_len,
 				resp_ie, resp_ie_len, status, gfp);
+	qdf_runtime_pm_allow_suspend(padapter->connect_rpm_ctx.connect);
 }
 #endif
 
