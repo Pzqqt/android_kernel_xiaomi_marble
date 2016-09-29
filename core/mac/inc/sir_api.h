@@ -5232,6 +5232,10 @@ typedef struct {
 #define WIFI_STATS_IFACE_AC           0x00000040
 /* all contention (min, max, avg) statistics (within ac statistics) */
 #define WIFI_STATS_IFACE_CONTENTION   0x00000080
+/* All peer stats on this interface */
+#define WIFI_STATS_IFACE_ALL_PEER      0x00000100
+/* Clear particular peer stats depending on the peer_mac */
+#define WIFI_STATS_IFACE_PER_PEER      0x00000200
 
 typedef struct {
 	uint32_t paramId;
