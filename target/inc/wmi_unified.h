@@ -3519,11 +3519,40 @@ typedef struct {
 	A_UINT32 enable_cmd;
 } wmi_vdev_spectral_enable_cmd_fixed_param;
 
+/* information sub element id for QSBW, expected value is 0x02 */
+#define WMI_CSA_EVENT_QSBW_ISE_ID_MASK    0x000000FF
+/* length of QSBW ISE data, expected value is 0x02 */
+#define WMI_CSA_EVENT_QSBW_ISE_LEN_MASK   0x0000FF00
+/* capabilities, 0x01 for 5MHz, 0x02 for 10MHz, 0x01|0x2 for both
+ * (see WMI_CSA_EVENT_QSBW_ISE bitmask defs)
+ */
+#define WMI_CSA_EVENT_QSBW_ISE_CAP_MASK   0x00FF0000
+/* notification from AP, 0x01 for 5MHz, 0x02 for 10MHz
+ * (see WMI_CSA_EVENT_QSBW_ISE bitmask defs)
+ */
+#define WMI_CSA_EVENT_QSBW_ISE_NOTIF_MASK 0xFF000000
+
+#define WMI_CSA_EVENT_QSBW_ISE_ID 0x02
+#define WMI_CSA_EVENT_QSBW_ISE_LEN 0x02
+
+#define WMI_CSA_EVENT_QSBW_ISE_5M_BITMASK  0x01
+#define WMI_CSA_EVENT_QSBW_ISE_10M_BITMASK  0x02
+
+#define WMI_CSA_EVENT_QSBW_ISE_CAP_5M(qsbw_ise) \
+	(((qsbw_ise) >> 16) & WMI_CSA_EVENT_QSBW_ISE_5M_BITMASK)
+#define WMI_CSA_EVENT_QSBW_ISE_CAP_10M(qsbw_ise) \
+	(((qsbw_ise) >> 16) & WMI_CSA_EVENT_QSBW_ISE_10M_BITMASK)
+#define WMI_CSA_EVENT_QSBW_ISE_NOTIF_5M(qsbw_ise) \
+	(((qsbw_ise) >> 24) & WMI_CSA_EVENT_QSBW_ISE_5M_BITMASK)
+#define WMI_CSA_EVENT_QSBW_ISE_NOTIF_10M(qsbw_ise) \
+	(((qsbw_ise) >> 24) & WMI_CSA_EVENT_QSBW_ISE_10M_BITMASK)
+
 typedef enum {
 	WMI_CSA_IE_PRESENT = 0x00000001,
 	WMI_XCSA_IE_PRESENT = 0x00000002,
 	WMI_WBW_IE_PRESENT = 0x00000004,
 	WMI_CSWARP_IE_PRESENT = 0x00000008,
+	WMI_QSBW_ISE_PRESENT  = 0x00000010,
 } WMI_CSA_EVENT_IES_PRESENT_FLAG;
 
 /* wmi CSA receive event from beacon frame */
@@ -3541,6 +3570,7 @@ typedef struct {
 	A_UINT32 wb_ie[2];
 	A_UINT32 cswarp_ie;
 	A_UINT32 ies_present_flag;              /* WMI_CSA_EVENT_IES_PRESENT_FLAG */
+	A_UINT32 qsbw_ise;
 } wmi_csa_event_fixed_param;
 
 typedef enum {
