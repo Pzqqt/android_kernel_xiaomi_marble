@@ -99,6 +99,8 @@
 					actual number once available.
 					currently defining this to 0xffff for
 					emulation purpose */
+#define RUMIM2M_DEVICE_ID_NODE0	0xabc0
+#define RUMIM2M_DEVICE_ID_NODE1	0xabc1
 
 #define HIF_GET_PCI_SOFTC(scn) ((struct hif_pci_softc *)scn)
 #define HIF_GET_CE_STATE(scn) ((struct HIF_CE_state *)scn)

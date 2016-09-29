@@ -2018,6 +2018,7 @@ int hif_pci_bus_configure(struct hif_softc *hif_sc)
 	int status = 0;
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_sc);
 	struct hif_opaque_softc *hif_osc = GET_HIF_OPAQUE_HDL(hif_sc);
+
 	hif_ce_prepare_config(hif_sc);
 
 	/* initialize sleep state adjust variables */
@@ -2044,7 +2045,7 @@ int hif_pci_bus_configure(struct hif_softc *hif_sc)
 	A_TARGET_ACCESS_LIKELY(hif_sc);
 
 	if (CONFIG_ATH_PCIE_MAX_PERF ||
-	    CONFIG_ATH_PCIE_AWAKE_WHILE_DRIVER_LOAD) {
+		CONFIG_ATH_PCIE_AWAKE_WHILE_DRIVER_LOAD) {
 		/*
 		 * prevent sleep for PCIE_AWAKE_WHILE_DRIVER_LOAD feature
 		 * prevent sleep when we want to keep firmware always awake
@@ -2065,7 +2066,8 @@ int hif_pci_bus_configure(struct hif_softc *hif_sc)
 	}
 
 	/* todo: consider replacing this with an srng field */
-	if (hif_sc->target_info.target_type == TARGET_TYPE_QCA8074) {
+	if ((hif_sc->target_info.target_type == TARGET_TYPE_QCA8074) &&
+			(hif_sc->bus_type == QDF_BUS_TYPE_AHB)) {
 		hif_sc->per_ce_irq = true;
 	}
 
@@ -2084,9 +2086,15 @@ int hif_pci_bus_configure(struct hif_softc *hif_sc)
 		hif_register_bmi_callbacks(hif_sc);
 	}
 
-	status = hif_configure_irq(hif_sc);
-	if (status < 0)
-		goto unconfig_ce;
+	if ((hif_sc->target_info.target_type == TARGET_TYPE_QCA8074) &&
+			(hif_sc->bus_type == QDF_BUS_TYPE_PCI))
+		HIF_INFO_MED("%s: Skip irq config for PCI based 8074 target",
+						__func__);
+	else {
+		status = hif_configure_irq(hif_sc);
+		if (status < 0)
+			goto unconfig_ce;
+	}
 
 	A_TARGET_ACCESS_UNLIKELY(hif_sc);
 
@@ -2209,6 +2217,9 @@ static int hif_enable_pci(struct hif_pci_softc *sc,
 	pr_err("*****BAR is %p\n", mem);
 
 	sc->mem = mem;
+
+	HIF_INFO("%s, mem after pci_iomap:%p\n",
+	       __func__, sc->mem);
 	sc->pdev = pdev;
 	sc->dev = &pdev->dev;
 	sc->devid = id->device;
@@ -3517,7 +3528,7 @@ end:
 	return 0;
 }
 
-#ifndef QCA_WIFI_QCA8074_VP
+#ifndef QCA_WIFI_NAPIER_EMULATION
 /**
  * hif_target_sync() : ensure the target is ready
  * @scn: hif controll structure
@@ -3639,17 +3650,22 @@ again:
 	hif_register_tbl_attach(ol_sc, hif_type);
 	hif_target_register_tbl_attach(ol_sc, target_type);
 
+	if ((id->device == RUMIM2M_DEVICE_ID_NODE0) ||
+		(id->device == RUMIM2M_DEVICE_ID_NODE1))
+		HIF_TRACE("%s:Skip tgt_wake up for PCI based 8074\n", __func__);
+	else {
 #ifndef QCA_WIFI_NAPIER_EMULATION
-	ret = hif_pci_probe_tgt_wakeup(sc);
+		ret = hif_pci_probe_tgt_wakeup(sc);
 #endif
-	if (ret < 0) {
-		HIF_ERROR("%s: ERROR - hif_pci_prob_wakeup error = %d",
-			   __func__, ret);
-		if (ret == -EAGAIN)
-			probe_again++;
-		goto err_tgtstate;
+		if (ret < 0) {
+			HIF_ERROR("%s: ERROR - hif_pci_prob_wakeup error = %d",
+					__func__, ret);
+			if (ret == -EAGAIN)
+				probe_again++;
+			goto err_tgtstate;
+		}
+		HIF_TRACE("%s: hif_pci_probe_tgt_wakeup done", __func__);
 	}
-	HIF_TRACE("%s: hif_pci_probe_tgt_wakeup done", __func__);
 
 	tgt_info->target_type = target_type;
 
@@ -3661,12 +3677,15 @@ again:
 	}
 	ol_sc->mem_pa = sc->soc_pcie_bar0;
 
-#ifndef QCA_WIFI_QCA8074_VP
-	hif_target_sync(ol_sc);
+	if ((id->device != RUMIM2M_DEVICE_ID_NODE0) &&
+		(id->device != RUMIM2M_DEVICE_ID_NODE1)) {
+#ifndef QCA_WIFI_NAPIER_EMULATION
+		hif_target_sync(ol_sc);
 #endif
 
-	if (ADRASTEA_BU)
-		hif_vote_link_up(hif_hdl);
+		if (ADRASTEA_BU)
+			hif_vote_link_up(hif_hdl);
+	}
 
 	return 0;
 

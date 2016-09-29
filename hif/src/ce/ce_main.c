@@ -2085,10 +2085,20 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 		break;
 
 	case TARGET_TYPE_QCA8074:
-		hif_state->host_ce_config = host_ce_config_wlan_qca8074;
-		hif_state->target_ce_config = target_ce_config_wlan_qca8074;
-		hif_state->target_ce_config_sz =
-					sizeof(target_ce_config_wlan_qca8074);
+		if (scn->bus_type == QDF_BUS_TYPE_PCI) {
+			hif_state->host_ce_config =
+					host_ce_config_wlan_qca8074_pci;
+			hif_state->target_ce_config =
+				target_ce_config_wlan_qca8074_pci;
+			hif_state->target_ce_config_sz =
+				sizeof(target_ce_config_wlan_qca8074_pci);
+		} else {
+			hif_state->host_ce_config = host_ce_config_wlan_qca8074;
+			hif_state->target_ce_config =
+					target_ce_config_wlan_qca8074;
+			hif_state->target_ce_config_sz =
+				sizeof(target_ce_config_wlan_qca8074);
+		}
 		break;
 	case TARGET_TYPE_QCA6290:
 		hif_state->host_ce_config = host_ce_config_wlan_qca6290;
@@ -2235,6 +2245,7 @@ int hif_config_ce(struct hif_softc *scn)
 		pipe_info->pipe_num = pipe_num;
 		pipe_info->HIF_CE_state = hif_state;
 		attr = &hif_state->host_ce_config[pipe_num];
+
 		pipe_info->ce_hdl = ce_init(scn, pipe_num, attr);
 		ce_state = scn->ce_id_to_state[pipe_num];
 		QDF_ASSERT(pipe_info->ce_hdl != NULL);
