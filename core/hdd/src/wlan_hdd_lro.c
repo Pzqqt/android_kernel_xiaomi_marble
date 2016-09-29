@@ -442,20 +442,47 @@ void hdd_lro_flush_pkt(struct net_lro_mgr *lro_mgr,
 void hdd_lro_flush(void *data)
 {
 	hdd_adapter_t *adapter = (hdd_adapter_t *)data;
-	struct hdd_lro_s *hdd_lro = &adapter->lro_info;
+	struct hdd_lro_s *hdd_lro;
+	struct hdd_context_s *ctx;
+	QDF_STATUS status;
+	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
 	int i;
 
-	qdf_spin_lock_bh(&hdd_lro->lro_mgr_arr_access_lock);
-	for (i = 0; i < adapter->lro_info.lro_mgr->max_desc; i++) {
-		if (adapter->lro_info.lro_mgr->lro_arr[i].active) {
-			hdd_lro_desc_free(
-				 &adapter->lro_info.lro_mgr->lro_arr[i],
-				 (void *)adapter);
-			lro_flush_desc(adapter->lro_info.lro_mgr,
-				 &adapter->lro_info.lro_mgr->lro_arr[i]);
-		}
+	/*
+	 * There is a more comprehensive solution that refactors
+	 * lro_mgr in the adapter into multiple instances, that
+	 * will replace this solution. The following is an interim
+	 * fix.
+	 */
+
+	/* Loop over all adapters and flush them all */
+	ctx = (struct hdd_context_s *)cds_get_context(QDF_MODULE_ID_HDD);
+	if (unlikely(ctx == NULL)) {
+		hdd_err("%s: cannot get hdd_ctx. Flushing failed", __func__);
+		return;
 	}
-	qdf_spin_unlock_bh(&hdd_lro->lro_mgr_arr_access_lock);
+
+	status = hdd_get_front_adapter(ctx, &adapter_node);
+	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
+		adapter = adapter_node->pAdapter;
+		hdd_lro = &adapter->lro_info;
+		if (adapter->dev->features & NETIF_F_LRO) {
+			qdf_spin_lock_bh(&hdd_lro->lro_mgr_arr_access_lock);
+			for (i = 0; i < hdd_lro->lro_mgr->max_desc; i++) {
+				if (hdd_lro->lro_mgr->lro_arr[i].active) {
+					hdd_lro_desc_free(
+						&hdd_lro->lro_mgr->lro_arr[i],
+						(void *)adapter);
+					lro_flush_desc(
+						hdd_lro->lro_mgr,
+						&hdd_lro->lro_mgr->lro_arr[i]);
+				}
+			}
+			qdf_spin_unlock_bh(&hdd_lro->lro_mgr_arr_access_lock);
+		}
+		status = hdd_get_next_adapter(ctx, adapter_node, &next);
+		adapter_node = next;
+	}
 }
 
 /**
