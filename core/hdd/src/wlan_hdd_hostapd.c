@@ -149,14 +149,16 @@ static void hdd_hostapd_channel_allow_suspend(hdd_adapter_t *pAdapter,
 	if (pHostapdState->bssState == BSS_STOP)
 		return;
 
+	if (CHANNEL_STATE_DFS != cds_get_channel_state(channel))
+		return;
+
 	/* Release wakelock when no more DFS channels are used */
-	if (CHANNEL_STATE_DFS == cds_get_channel_state(channel)) {
-		if (atomic_dec_and_test(&pHddCtx->sap_dfs_ref_cnt)) {
-			hdd_err("DFS: allowing suspend (chan %d)",
-			       channel);
-			qdf_wake_lock_release(&pHddCtx->sap_dfs_wakelock,
-					      WIFI_POWER_EVENT_WAKELOCK_DFS);
-		}
+	if (atomic_dec_and_test(&pHddCtx->sap_dfs_ref_cnt)) {
+		hdd_err("DFS: allowing suspend (chan %d)", channel);
+		qdf_wake_lock_release(&pHddCtx->sap_dfs_wakelock,
+				      WIFI_POWER_EVENT_WAKELOCK_DFS);
+		qdf_runtime_pm_allow_suspend(pHddCtx->runtime_context.dfs);
+
 	}
 }
 
@@ -185,14 +187,15 @@ static void hdd_hostapd_channel_prevent_suspend(hdd_adapter_t *pAdapter,
 		(atomic_read(&pHddCtx->sap_dfs_ref_cnt) >= 1))
 		return;
 
+	if (CHANNEL_STATE_DFS != cds_get_channel_state(channel))
+		return;
+
 	/* Acquire wakelock if we have at least one DFS channel in use */
-	if (CHANNEL_STATE_DFS == cds_get_channel_state(channel)) {
-		if (atomic_inc_return(&pHddCtx->sap_dfs_ref_cnt) == 1) {
-			hdd_err("DFS: preventing suspend (chan %d)",
-			       channel);
-			qdf_wake_lock_acquire(&pHddCtx->sap_dfs_wakelock,
-					      WIFI_POWER_EVENT_WAKELOCK_DFS);
-		}
+	if (atomic_inc_return(&pHddCtx->sap_dfs_ref_cnt) == 1) {
+		hdd_err("DFS: preventing suspend (chan %d)", channel);
+		qdf_runtime_pm_prevent_suspend(pHddCtx->runtime_context.dfs);
+		qdf_wake_lock_acquire(&pHddCtx->sap_dfs_wakelock,
+				      WIFI_POWER_EVENT_WAKELOCK_DFS);
 	}
 }
 
