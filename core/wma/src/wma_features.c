@@ -6820,6 +6820,7 @@ int wma_tdls_event_handler(void *handle, uint8_t *event, uint32_t len)
 			WMA_TDLS_CONNECTION_TRACKER_NOTIFICATION_CMD;
 		break;
 	default:
+		qdf_mem_free(tdls_event);
 		WMA_LOGE("%s: Discarding unknown tdls event(%d) from target",
 			 __func__, peer_event->peer_status);
 		return -EINVAL;
@@ -6868,6 +6869,7 @@ int wma_tdls_event_handler(void *handle, uint8_t *event, uint32_t len)
 		break;
 
 	default:
+		qdf_mem_free(tdls_event);
 		WMA_LOGE("%s: unknown reason(%d) in tdls event(%d) from target",
 			 __func__, peer_event->peer_reason,
 			 peer_event->peer_status);
