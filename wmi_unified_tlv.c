@@ -357,6 +357,7 @@ static QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->preferred_tx_streams = req->preferred_tx_streams;
 	cmd->cac_duration_ms = req->cac_duration_ms;
 	cmd->regdomain = req->regdomain;
+	cmd->he_ops = req->he_ops;
 
 	buf_ptr = (uint8_t *) (((uintptr_t) cmd) + sizeof(*cmd) +
 			       sizeof(wmi_channel));
@@ -366,13 +367,13 @@ static QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 	WMI_LOGA("%s: vdev_id %d freq %d chanmode %d ch_info: 0x%x is_dfs %d "
 		"beacon interval %d dtim %d center_chan %d center_freq2 %d "
 		"reg_info_1: 0x%x reg_info_2: 0x%x, req->max_txpow: 0x%x "
-		"Tx SS %d, Rx SS %d, cac %d, regd %d",
+		"Tx SS %d, Rx SS %d, cac %d, regd %d, HE ops: %d",
 		__func__, req->vdev_id, chan->mhz, req->chan_mode, chan->info,
 		req->is_dfs, req->beacon_intval, cmd->dtim_period,
 		chan->band_center_freq1, chan->band_center_freq2,
 		chan->reg_info_1, chan->reg_info_2, req->max_txpow,
 		req->preferred_tx_streams, req->preferred_rx_streams,
-		req->cac_duration_ms, req->regdomain);
+		req->cac_duration_ms, req->regdomain, req->he_ops);
 
 	if (req->is_restart)
 		ret = wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -1880,6 +1881,15 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->peer_vht_caps = param->peer_vht_caps;
 	cmd->peer_phymode = param->peer_phymode;
 
+	/* Update 11ax capabilities */
+	cmd->peer_he_cap_info = param->peer_he_cap_macinfo;
+	cmd->peer_he_ops = param->peer_he_ops;
+	cmd->peer_he_mcs = param->peer_he_mcs;
+	qdf_mem_copy(&cmd->peer_he_cap_phy, &param->peer_he_cap_phyinfo,
+				sizeof(param->peer_he_cap_phyinfo));
+	qdf_mem_copy(&cmd->peer_ppet, &param->peer_ppet,
+				sizeof(param->peer_ppet));
+
 	/* Update peer legacy rate information */
 	buf_ptr += sizeof(*cmd);
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
@@ -1911,14 +1921,6 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 		mcs->tx_max_rate = param->tx_max_rate;
 		mcs->tx_mcs_set = param->tx_mcs_set;
 	}
-	/* Update 11ax capabilities */
-	cmd->peer_he_cap_info = param->peer_he_cap_macinfo;
-	cmd->peer_he_ops = param->peer_he_ops;
-	cmd->peer_he_mcs = param->peer_he_mcs;
-	qdf_mem_copy(&cmd->peer_he_cap_phy, &param->peer_he_cap_phyinfo,
-				sizeof(param->peer_he_cap_phyinfo));
-	qdf_mem_copy(&cmd->peer_ppet, &param->peer_ppet,
-				sizeof(param->peer_ppet));
 
 	WMI_LOGD("%s: vdev_id %d associd %d peer_flags %x rate_caps %x "
 		 "peer_caps %x listen_intval %d ht_caps %x max_mpdu %d "
