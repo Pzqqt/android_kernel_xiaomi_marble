@@ -958,6 +958,16 @@ lim_send_sme_disassoc_ntf(tpAniSirGlobal pMac,
 			     sizeof(tSirMacAddr));
 		sir_sme_dis_ind->session_id   = smesessionId;
 		sir_sme_dis_ind->reason_code  = reasonCode;
+		/*
+		 * Instead of sending deauth reason code as 505 which is
+		 * internal value(eSIR_SME_LOST_LINK_WITH_PEER_RESULT_CODE)
+		 * Send reason code as zero to Supplicant
+		 */
+		if (reasonCode == eSIR_SME_LOST_LINK_WITH_PEER_RESULT_CODE)
+			sir_sme_dis_ind->reason_code = 0;
+		else
+			sir_sme_dis_ind->reason_code = reasonCode;
+
 		pMsg = (uint32_t *)sir_sme_dis_ind;
 
 		break;
@@ -1424,6 +1434,16 @@ lim_send_sme_deauth_ntf(tpAniSirGlobal pMac, tSirMacAddr peerMacAddr,
 		sir_sme_dis_ind->reason_code = reasonCode;
 		qdf_mem_copy(sir_sme_dis_ind->peer_mac, peerMacAddr,
 			 ETH_ALEN);
+		/*
+		 * Instead of sending deauth reason code as 505 which is
+		 * internal value(eSIR_SME_LOST_LINK_WITH_PEER_RESULT_CODE)
+		 * Send reason code as zero to Supplicant
+		 */
+		if (reasonCode == eSIR_SME_LOST_LINK_WITH_PEER_RESULT_CODE)
+			sir_sme_dis_ind->reason_code = 0;
+		else
+			sir_sme_dis_ind->reason_code = reasonCode;
+
 		pMsg = (uint32_t *)sir_sme_dis_ind;
 
 		break;
