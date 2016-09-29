@@ -721,7 +721,8 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 						 */
 
 						if ((deltaT >
-						     (dfs->dfs_pri_multiplier *
+						     ((u_int64_t)dfs->
+						       dfs_pri_multiplier *
 						      rf->rf_maxpri))
 						    || (deltaT <
 							rf->rf_minpri)) {
