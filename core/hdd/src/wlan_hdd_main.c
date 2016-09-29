@@ -2463,6 +2463,7 @@ static void hdd_runtime_suspend_context_init(hdd_context_t *hdd_ctx)
 	struct hdd_runtime_pm_context *ctx = &hdd_ctx->runtime_context;
 
 	ctx->scan = qdf_runtime_lock_init("scan");
+	ctx->roc = qdf_runtime_lock_init("roc");
 }
 
 /**
@@ -2477,6 +2478,8 @@ static void hdd_runtime_suspend_context_deinit(hdd_context_t *hdd_ctx)
 
 	qdf_runtime_lock_deinit(ctx->scan);
 	ctx->scan = NULL;
+	qdf_runtime_lock_deinit(ctx->roc);
+	ctx->roc = NULL;
 }
 
 static void hdd_adapter_runtime_suspend_init(hdd_adapter_t *adapter)
