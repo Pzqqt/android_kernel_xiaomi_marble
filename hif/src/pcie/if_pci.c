@@ -1227,8 +1227,21 @@ static void hif_pm_runtime_open(struct hif_pci_softc *sc)
  */
 static void hif_pm_runtime_sanitize_on_exit(struct hif_pci_softc *sc)
 {
+	unsigned long flags;
+	struct hif_pm_runtime_lock *ctx, *tmp;
+
 	if (atomic_read(&sc->dev->power.usage_count) != 1)
 		hif_pci_runtime_pm_warn(sc, "Driver UnLoaded");
+	else
+		return;
+
+	spin_lock_irqsave(&sc->runtime_lock, flags);
+	list_for_each_entry_safe(ctx, tmp, &sc->prevent_suspend_list, list) {
+		spin_unlock_irqrestore(&sc->runtime_lock, flags);
+		hif_runtime_lock_deinit(GET_HIF_OPAQUE_HDL(sc), ctx);
+		spin_lock_irqsave(&sc->runtime_lock, flags);
+	}
+	spin_unlock_irqrestore(&sc->runtime_lock, flags);
 
 	/* ensure 1 and only 1 usage count so that when the wlan
 	 * driver is re-insmodded runtime pm won't be
@@ -1241,6 +1254,29 @@ static void hif_pm_runtime_sanitize_on_exit(struct hif_pci_softc *sc)
 		hif_pm_runtime_put_auto(sc->dev);
 }
 
+static int __hif_pm_runtime_allow_suspend(struct hif_pci_softc *hif_sc,
+					  struct hif_pm_runtime_lock *lock);
+
+/**
+ * hif_pm_runtime_sanitize_on_ssr_exit() - Empty the suspend list on SSR
+ * @sc: PCIe Context
+ *
+ * API is used to empty the runtime pm prevent suspend list.
+ *
+ * Return: void
+ */
+static void hif_pm_runtime_sanitize_on_ssr_exit(struct hif_pci_softc *sc)
+{
+	unsigned long flags;
+	struct hif_pm_runtime_lock *ctx, *tmp;
+
+	spin_lock_irqsave(&sc->runtime_lock, flags);
+	list_for_each_entry_safe(ctx, tmp, &sc->prevent_suspend_list, list) {
+		 __hif_pm_runtime_allow_suspend(sc, ctx);
+	}
+	spin_unlock_irqrestore(&sc->runtime_lock, flags);
+}
+
 /**
  * hif_pm_runtime_close(): close runtime pm
  * @sc: pci bus handle
@@ -1249,17 +1285,18 @@ static void hif_pm_runtime_sanitize_on_exit(struct hif_pci_softc *sc)
  */
 static void hif_pm_runtime_close(struct hif_pci_softc *sc)
 {
+	struct hif_softc *scn = HIF_GET_SOFTC(sc);
+
 	if (qdf_atomic_read(&sc->pm_state) == HIF_PM_RUNTIME_STATE_NONE)
 		return;
 	else
 		hif_pm_runtime_stop(sc);
 
-	hif_pm_runtime_sanitize_on_exit(sc);
+	hif_is_recovery_in_progress(scn) ?
+		hif_pm_runtime_sanitize_on_ssr_exit(sc) :
+		hif_pm_runtime_sanitize_on_exit(sc);
 }
-
-
 #else
-
 static void hif_pm_runtime_close(struct hif_pci_softc *sc) {}
 static void hif_pm_runtime_open(struct hif_pci_softc *sc) {}
 static void hif_pm_runtime_start(struct hif_pci_softc *sc) {}
@@ -4133,5 +4170,4 @@ void hif_runtime_lock_deinit(struct hif_opaque_softc *hif_ctx,
 
 	qdf_mem_free(context);
 }
-
 #endif /* FEATURE_RUNTIME_PM */
