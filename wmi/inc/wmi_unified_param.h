@@ -647,6 +647,7 @@ struct vdev_start_params {
 	uint32_t preferred_tx_streams;
 	uint32_t cac_duration_ms;
 	uint32_t regdomain;
+	uint32_t he_ops;
 #ifndef CONFIG_MCL
 	uint8_t oper_mode;
 	int32_t dfs_pri_multiplier;
@@ -975,14 +976,14 @@ typedef struct {
 #define WMI_HOST_MAX_NUM_SS                    8
 #define WMI_HOST_MAX_HECAP_PHY_SIZE            3
 /**
- *  struct wmi_host_ppe_threshold -PPE threshold
- *  @numss_m1: NSS - 1
- *  @ru_count: Max RU count
- *  @ppet16_ppet8_ru3_ru0: ppet8 and ppet16 for max num ss
+ * struct wmi_host_ppe_threshold -PPE threshold
+ * @numss_m1: NSS - 1
+ * @ru_bit_mask: RU bit mask indicating the supported RU's
+ * @ppet16_ppet8_ru3_ru0: ppet8 and ppet16 for max num ss
  */
 struct wmi_host_ppe_threshold {
 	uint32_t numss_m1;
-	uint32_t ru_count;
+	uint32_t ru_bit_mask;
 	uint32_t ppet16_ppet8_ru3_ru0[WMI_HOST_MAX_NUM_SS];
 };
 
@@ -7074,7 +7075,7 @@ struct encrypt_decrypt_req_params {
 	uint8_t *data;
 };
 
-/*
+/**
  * HW mode config type replicated from FW header
  * @WMI_HOST_HW_MODE_SINGLE: Only one PHY is active.
  * @WMI_HOST_HW_MODE_DBS: Both PHYs are active in different bands,

@@ -141,12 +141,12 @@ struct wlan_psoc_host_hal_reg_capabilities_ext {
 /**
  * struct wlan_psoc_host_ppe_threshold - PPE threshold
  * @numss_m1: NSS - 1
- * @ru_count: Max RU count
+ * @ru_bit_mask: RU bit mask indicating the supported RU's
  * @ppet16_ppet8_ru3_ru0: ppet8 and ppet16 for max num ss
  */
 struct wlan_psoc_host_ppe_threshold {
 	uint32_t numss_m1;
-	uint32_t ru_count;
+	uint32_t ru_bit_mask;
 	uint32_t ppet16_ppet8_ru3_ru0[PSOC_HOST_MAX_NUM_SS];
 };
 
