@@ -817,6 +817,22 @@ QDF_STATUS cds_close(v_CONTEXT_t cds_context)
 	return QDF_STATUS_SUCCESS;
 }
 
+void cds_flush_cache_rx_queue(void)
+{
+	uint8_t sta_id;
+	struct ol_txrx_peer_t *peer;
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++) {
+		peer = ol_txrx_peer_find_by_local_id(pdev, sta_id);
+		if (!peer)
+			continue;
+		ol_txrx_flush_rx_frames(peer, 1);
+	}
+	return;
+}
+
+
 /**
  * cds_get_context() - get context data area
  *
