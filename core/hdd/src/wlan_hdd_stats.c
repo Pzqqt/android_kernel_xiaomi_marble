@@ -1736,6 +1736,11 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 		 (int)pCfg->linkSpeedRssiLow, (int)rate_flags,
 		 (int)pAdapter->hdd_stats.ClassA_stat.mcs_index);
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 0, 0)) || defined(WITH_BACKPORTS)
+	/* assume basic BW. anything else will override this later */
+	sinfo->txrate.bw = RATE_INFO_BW_20;
+#endif
+
 	if (eHDD_LINK_SPEED_REPORT_ACTUAL != pCfg->reportMaxLinkSpeed) {
 		/* we do not want to necessarily report the current speed */
 		if (eHDD_LINK_SPEED_REPORT_MAX == pCfg->reportMaxLinkSpeed) {
