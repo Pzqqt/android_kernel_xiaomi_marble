@@ -855,6 +855,16 @@ struct hdd_chan_change_params {
 };
 
 /**
+ * struct hdd_runtime_pm_context - context to prevent/allow runtime pm
+ * @scan: scan context to prvent/allow runtime pm
+ *
+ * Prevent Runtime PM for scan
+ */
+struct hdd_runtime_pm_context {
+	qdf_runtime_lock_t scan;
+};
+
+/**
  * struct hdd_connect_pm_context - Runtime PM connect context per adapter
  * @connect: Runtime Connect Context
  *
@@ -1537,9 +1547,9 @@ struct hdd_context_s {
 	bool update_mac_addr_to_fw;
 	struct acs_dfs_policy acs_policy;
 	uint16_t wmi_max_len;
-
 	/* counters for failed suspend reasons */
 	uint32_t suspend_fail_stats[SUSPEND_FAIL_MAX_COUNT];
+	struct hdd_runtime_pm_context runtime_context;
 };
 
 /*---------------------------------------------------------------------------

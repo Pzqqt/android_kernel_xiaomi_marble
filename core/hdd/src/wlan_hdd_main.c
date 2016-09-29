@@ -2452,6 +2452,33 @@ void hdd_set_station_ops(struct net_device *pWlanDev)
 }
 
 #ifdef FEATURE_RUNTIME_PM
+/**
+ * hdd_runtime_suspend_context_init() - API to initialize HDD Runtime Contexts
+ * @hdd_ctx: HDD context
+ *
+ * Return: None
+ */
+static void hdd_runtime_suspend_context_init(hdd_context_t *hdd_ctx)
+{
+	struct hdd_runtime_pm_context *ctx = &hdd_ctx->runtime_context;
+
+	ctx->scan = qdf_runtime_lock_init("scan");
+}
+
+/**
+ * hdd_runtime_suspend_context_deinit() - API to deinit HDD runtime context
+ * @hdd_ctx: HDD Context
+ *
+ * Return: None
+ */
+static void hdd_runtime_suspend_context_deinit(hdd_context_t *hdd_ctx)
+{
+	struct hdd_runtime_pm_context *ctx = &hdd_ctx->runtime_context;
+
+	qdf_runtime_lock_deinit(ctx->scan);
+	ctx->scan = NULL;
+}
+
 static void hdd_adapter_runtime_suspend_init(hdd_adapter_t *adapter)
 {
 	struct hdd_connect_pm_context *ctx = &adapter->connect_rpm_ctx;
@@ -2467,6 +2494,8 @@ static void hdd_adapter_runtime_suspend_denit(hdd_adapter_t *adapter)
 	ctx->connect = NULL;
 }
 #else /* FEATURE_RUNTIME_PM */
+static void hdd_runtime_suspend_context_init(hdd_context_t *hdd_ctx) {}
+static void hdd_runtime_suspend_context_deinit(hdd_context_t *hdd_ctx) {}
 static inline void hdd_adapter_runtime_suspend_init(hdd_adapter_t *adapter) {}
 static inline void hdd_adapter_runtime_suspend_denit(hdd_adapter_t *adapter) {}
 #endif /* FEATURE_RUNTIME_PM */
@@ -4842,6 +4871,7 @@ static void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 
 	hdd_green_ap_deinit(hdd_ctx);
 
+	hdd_runtime_suspend_context_deinit(hdd_ctx);
 	hdd_close_all_adapters(hdd_ctx, false);
 
 	hdd_ipa_cleanup(hdd_ctx);
@@ -8031,6 +8061,7 @@ int hdd_wlan_startup(struct device *dev)
 	if (QDF_IS_STATUS_ERROR(status))
 		goto err_debugfs_exit;
 
+	hdd_runtime_suspend_context_init(hdd_ctx);
 	memdump_init();
 	hdd_driver_memdump_init();
 
