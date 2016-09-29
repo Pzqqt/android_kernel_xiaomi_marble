@@ -748,6 +748,7 @@ htt_h2t_dbg_stats_get(struct htt_pdev_t *pdev,
 		/* FIX THIS - add more details? */
 		qdf_print("%#x %#x stats not supported\n",
 			  stats_type_upload_mask, stats_type_reset_mask);
+		htt_htc_pkt_free(pdev, pkt);
 		return -EINVAL;      /* failure */
 	}
 
