@@ -1353,6 +1353,22 @@ static void wma_hidden_ssid_vdev_restart_on_vdev_stop(tp_wma_handle wma_handle,
 }
 
 /**
+ * wma_cleanup_target_req_param() - free param memory of target request
+ * @tgt_req: target request params
+ *
+ * Return: none
+ */
+static void wma_cleanup_target_req_param(struct wma_target_req *tgt_req)
+{
+	if (tgt_req->msg_type == WMA_CHNL_SWITCH_REQ ||
+	   tgt_req->msg_type == WMA_DELETE_BSS_REQ ||
+	   tgt_req->msg_type == WMA_ADD_BSS_REQ) {
+		qdf_mem_free(tgt_req->user_data);
+		tgt_req->user_data = NULL;
+	}
+}
+
+/**
  * wma_vdev_stop_resp_handler() - vdev stop response handler
  * @handle: wma handle
  * @cmd_param_info: event buffer
@@ -1423,6 +1439,7 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 	if (!pdev) {
 		WMA_LOGE("%s: pdev is NULL", __func__);
 		status = -EINVAL;
+		wma_cleanup_target_req_param(req_msg);
 		qdf_mc_timer_stop(&req_msg->event_timeout);
 		goto free_req_msg;
 	}
@@ -1435,6 +1452,7 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 		if (resp_event->vdev_id > wma->max_bssid) {
 			WMA_LOGE("%s: Invalid vdev_id %d", __func__,
 				 resp_event->vdev_id);
+			wma_cleanup_target_req_param(req_msg);
 			status = -EINVAL;
 			goto free_req_msg;
 		}
@@ -1443,6 +1461,7 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 		if (iface->handle == NULL) {
 			WMA_LOGE("%s vdev id %d is already deleted",
 				 __func__, resp_event->vdev_id);
+			wma_cleanup_target_req_param(req_msg);
 			status = -EINVAL;
 			goto free_req_msg;
 		}
@@ -1512,7 +1531,7 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 		 * to send response to UMAC
 		 */
 		if (params->status == QDF_STATUS_FW_MSG_TIMEDOUT) {
-			qdf_mem_free(params);
+			wma_cleanup_target_req_param(req_msg);
 			WMA_LOGE("%s: DEL BSS from ADD BSS timeout do not send "
 				 "resp to UMAC (vdev id %x)",
 				 __func__, resp_event->vdev_id);
@@ -2444,6 +2463,7 @@ void wma_vdev_resp_timer(void *data)
 	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (NULL == mac_ctx) {
 		WMA_LOGE("%s: Failed to get mac_ctx", __func__);
+		wma_cleanup_target_req_param(tgt_req);
 		goto free_tgt_req;
 	}
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
@@ -2452,6 +2472,7 @@ void wma_vdev_resp_timer(void *data)
 
 	if (NULL == wma) {
 		WMA_LOGE("%s: Failed to get wma", __func__);
+		wma_cleanup_target_req_param(tgt_req);
 		goto free_tgt_req;
 	}
 
@@ -2459,6 +2480,7 @@ void wma_vdev_resp_timer(void *data)
 
 	if (NULL == pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
+		wma_cleanup_target_req_param(tgt_req);
 		qdf_mc_timer_stop(&tgt_req->event_timeout);
 		goto free_tgt_req;
 	}
@@ -2470,6 +2492,7 @@ void wma_vdev_resp_timer(void *data)
 	if (!msg) {
 		WMA_LOGE("%s: Failed to lookup request message - %d",
 			 __func__, tgt_req->msg_type);
+		wma_cleanup_target_req_param(tgt_req);
 		goto free_tgt_req;
 	}
 
@@ -2498,6 +2521,7 @@ void wma_vdev_resp_timer(void *data)
 		if (tgt_req->vdev_id > wma->max_bssid) {
 			WMA_LOGE("%s: Invalid vdev_id %d", __func__,
 				 tgt_req->vdev_id);
+			wma_cleanup_target_req_param(tgt_req);
 			qdf_mc_timer_stop(&tgt_req->event_timeout);
 			goto free_tgt_req;
 		}
@@ -2506,6 +2530,7 @@ void wma_vdev_resp_timer(void *data)
 		if (iface->handle == NULL) {
 			WMA_LOGE("%s vdev id %d is already deleted",
 				 __func__, tgt_req->vdev_id);
+			wma_cleanup_target_req_param(tgt_req);
 			qdf_mc_timer_stop(&tgt_req->event_timeout);
 			goto free_tgt_req;
 		}
