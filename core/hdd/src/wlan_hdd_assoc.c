@@ -3292,7 +3292,7 @@ roam_roam_connect_status_update_handler(hdd_adapter_t *pAdapter,
 	{
 		hdd_station_ctx_t *pHddStaCtx =
 			WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-		struct station_info staInfo;
+		struct station_info *stainfo;
 
 		hdd_err("IBSS New Peer indication from SME "
 			 "with peerMac " MAC_ADDRESS_STR " BSSID: "
@@ -3322,13 +3322,18 @@ roam_roam_connect_status_update_handler(hdd_adapter_t *pAdapter,
 				qdf_status, qdf_status);
 		}
 		pHddStaCtx->ibss_sta_generation++;
-		memset(&staInfo, 0, sizeof(staInfo));
-		staInfo.filled = 0;
-		staInfo.generation = pHddStaCtx->ibss_sta_generation;
+		stainfo = qdf_mem_malloc(sizeof(*stainfo));
+		if (stainfo == NULL) {
+			hdd_err("memory allocation for station_info failed");
+			return QDF_STATUS_E_NOMEM;
+		}
+		stainfo->filled = 0;
+		stainfo->generation = pHddStaCtx->ibss_sta_generation;
 
 		cfg80211_new_sta(pAdapter->dev,
 				 (const u8 *)pRoamInfo->peerMac.bytes,
-				 &staInfo, GFP_KERNEL);
+				 stainfo, GFP_KERNEL);
+		qdf_mem_free(stainfo);
 
 		if (eCSR_ENCRYPT_TYPE_WEP40_STATICKEY ==
 		    pHddStaCtx->ibss_enc_key.encType
