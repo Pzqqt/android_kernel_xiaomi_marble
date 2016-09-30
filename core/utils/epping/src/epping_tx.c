@@ -183,6 +183,7 @@ void epping_tx_timer_expire(epping_adapter_t *pAdapter)
 
 	/* try to flush nodrop queue */
 	while ((nodrop_skb = qdf_nbuf_queue_remove(&pAdapter->nodrop_queue))) {
+		htc_set_nodrop_pkt(pAdapter->pEpping_ctx->HTCHandle, true);
 		if (epping_tx_send_int(nodrop_skb, pAdapter)) {
 			EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 				   "%s: nodrop: %p xmit fail in timer\n",
@@ -192,6 +193,7 @@ void epping_tx_timer_expire(epping_adapter_t *pAdapter)
 						   nodrop_skb);
 			break;
 		} else {
+			htc_set_nodrop_pkt(pAdapter->pEpping_ctx->HTCHandle, false);
 			EPPING_LOG(QDF_TRACE_LEVEL_INFO,
 				   "%s: nodrop: %p xmit ok in timer\n",
 				   __func__, nodrop_skb);
@@ -253,6 +255,7 @@ int epping_tx_send(qdf_nbuf_t skb, epping_adapter_t *pAdapter)
 
 	/* check the nodrop queue first */
 	while ((nodrop_skb = qdf_nbuf_queue_remove(&pAdapter->nodrop_queue))) {
+		htc_set_nodrop_pkt(pAdapter->pEpping_ctx->HTCHandle, true);
 		if (epping_tx_send_int(nodrop_skb, pAdapter)) {
 			EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 				   "%s: nodrop: %p xmit fail\n", __func__,
@@ -263,6 +266,7 @@ int epping_tx_send(qdf_nbuf_t skb, epping_adapter_t *pAdapter)
 			/* no cookie so free the current skb */
 			goto tx_fail;
 		} else {
+			htc_set_nodrop_pkt(pAdapter->pEpping_ctx->HTCHandle, false);
 			EPPING_LOG(QDF_TRACE_LEVEL_INFO,
 				   "%s: nodrop: %p xmit ok\n", __func__,
 				   nodrop_skb);
@@ -303,11 +307,11 @@ tx_fail:
 #ifdef HIF_SDIO
 HTC_SEND_FULL_ACTION epping_tx_queue_full(void *Context, HTC_PACKET *pPacket)
 {
-	epping_context_t *pEpping_ctx = (epping_context_t *) Context;
-	epping_adapter_t *pAdapter = pEpping_ctx->epping_adapter;
-	HTC_SEND_FULL_ACTION action = HTC_SEND_FULL_KEEP;
-	netif_stop_queue(pAdapter->dev);
-	return action;
+	/*
+	 * Call netif_stop_queue frequently will impact the mboxping tx t-put.
+	 * Return HTC_SEND_FULL_KEEP directly in epping_tx_queue_full to avoid.
+	 */
+	return HTC_SEND_FULL_KEEP;
 }
 #endif /* HIF_SDIO */
 void epping_tx_complete_multiple(void *ctx, HTC_PACKET_QUEUE *pPacketQueue)
