@@ -201,6 +201,12 @@ typedef struct _HTC_TARGET {
 #endif
 
 	uint32_t con_mode;
+
+	/*
+	 * This flag is from the mboxping tool. It indicates that we cannot
+	 * drop it. Besides, nodrop pkts have higher priority than normal pkts.
+	 */
+	A_BOOL is_nodrop_pkt;
 } HTC_TARGET;
 
 #if defined ENABLE_BUNDLE_TX

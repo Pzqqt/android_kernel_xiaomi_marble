@@ -638,6 +638,19 @@ bool htc_is_endpoint_active(HTC_HANDLE HTCHandle,
 			      HTC_ENDPOINT_ID Endpoint);
 
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   @desc: Set up nodrop pkt flag for mboxping nodrop pkt
+   @function name: htc_set_nodrop_pkt
+   @input:  HTCHandle - HTC handle
+	isNodropPkt - indicates whether it is nodrop pkt
+   @output:
+   @return:
+   @notes:
+   @example:
+   @see also:
+ +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+void htc_set_nodrop_pkt(HTC_HANDLE HTCHandle, A_BOOL isNodropPkt);
+
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    @desc: Get the number of recv buffers currently queued into an HTC endpoint
    @function name: htc_get_num_recv_buffers
    @input:  HTCHandle - HTC handle

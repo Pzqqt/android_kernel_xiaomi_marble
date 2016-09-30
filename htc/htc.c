@@ -266,6 +266,7 @@ HTC_HANDLE htc_create(void *ol_sc, HTC_INIT_INFO *pInfo, qdf_device_t osdev,
 	qdf_spinlock_create(&target->HTCRxLock);
 	qdf_spinlock_create(&target->HTCTxLock);
 	qdf_spinlock_create(&target->HTCCreditLock);
+	target->is_nodrop_pkt = false;
 
 	do {
 		qdf_mem_copy(&target->HTCInitInfo, pInfo,
