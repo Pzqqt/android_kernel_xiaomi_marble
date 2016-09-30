@@ -1425,7 +1425,9 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 			&(assoc_req->supportedRates),
 			&(assoc_req->extendedRates),
 			assoc_req->HTCaps.supportedMCSSet,
-			session, vht_caps) != eSIR_SUCCESS) {
+			session, vht_caps,
+			&assoc_req->he_cap) != eSIR_SUCCESS)
+	{
 		/* Could not update hash table entry at DPH with rateset */
 		lim_log(mac_ctx, LOGE,
 			FL("Couldn't update hash entry for aid=%d, MacAddr: "

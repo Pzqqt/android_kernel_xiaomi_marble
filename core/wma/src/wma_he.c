@@ -274,6 +274,7 @@ static void wma_convert_he_cap(tDot11fIEvendor_he_cap *he_cap, uint32_t mac_cap,
 
 	he_cap->nss_supported = nss - 1;
 	he_cap->mcs_supported = mcs;
+
 	/* For Draft 1.0, following fields will be zero */
 	he_cap->tx_bw_bitmap = 0;
 	he_cap->rx_bw_bitmap = 0;
@@ -627,7 +628,7 @@ void wma_update_target_ext_he_cap(tp_wma_handle wma_handle,
 				  struct wma_tgt_cfg *tgt_cfg)
 {
 	tDot11fIEvendor_he_cap *he_cap = &tgt_cfg->he_cap;
-	int i, j = 0, max_mac;
+	int i, j = 0, k, max_mac;
 	uint32_t he_mac;
 	uint32_t he_phy[WMI_MAX_HECAP_PHY_SIZE];
 	uint8_t *he_ppet;
@@ -635,7 +636,7 @@ void wma_update_target_ext_he_cap(tp_wma_handle wma_handle,
 	WMI_MAC_PHY_CAPABILITIES *mac_cap;
 	tDot11fIEvendor_he_cap he_cap_mac0 = {0}, he_cap_mac1 = {0};
 	tDot11fIEvendor_he_cap tmp_he_cap = {0};
-	uint8_t mcs, nss;
+	uint8_t mcs, nss, mcs_temp;
 
 	if (!wma_handle ||
 		(0 == wma_handle->phy_caps.num_hw_modes.num_hw_modes)) {
@@ -662,11 +663,18 @@ void wma_update_target_ext_he_cap(tp_wma_handle wma_handle,
 			qdf_mem_copy(he_phy, mac_cap->he_cap_phy_info_2G,
 				     WMI_MAX_HECAP_PHY_SIZE * 4);
 			he_ppet = (uint8_t *)&mac_cap->he_ppet2G;
-			mcs = mac_cap->he_supp_mcs_2G;
 			nss = (mac_cap->tx_chain_mask_2G >
 				mac_cap->rx_chain_mask_2G) ?
 					mac_cap->tx_chain_mask_2G :
 					mac_cap->rx_chain_mask_2G;
+			mcs = 0;
+			for (k = 1; k < nss; k++) {
+				mcs_temp = WMI_HE_MAX_MCS_4_SS_MASK(
+						mac_cap->he_supp_mcs_2G, k);
+				if (mcs_temp > mcs)
+					mcs = mcs_temp;
+			}
+
 			wma_convert_he_cap(&he_cap_mac0, he_mac, he_phy,
 					   he_ppet, mcs, nss);
 			if (he_cap_mac0.present)
@@ -677,11 +685,17 @@ void wma_update_target_ext_he_cap(tp_wma_handle wma_handle,
 			qdf_mem_copy(he_phy, mac_cap->he_cap_phy_info_5G,
 				     WMI_MAX_HECAP_PHY_SIZE * 4);
 			he_ppet = (uint8_t *)&mac_cap->he_ppet5G;
-			mcs = mac_cap->he_supp_mcs_5G;
 			nss = (mac_cap->tx_chain_mask_5G >
 				mac_cap->rx_chain_mask_5G) ?
 					mac_cap->tx_chain_mask_5G :
 					mac_cap->rx_chain_mask_5G;
+			mcs = 0;
+			for (k = 1; k < nss; k++) {
+				mcs_temp = WMI_HE_MAX_MCS_4_SS_MASK(
+						mac_cap->he_supp_mcs_5G, k);
+				if (mcs_temp > mcs)
+					mcs = mcs_temp;
+			}
 			wma_convert_he_cap(&he_cap_mac1, he_mac, he_phy,
 					   he_ppet, mcs, nss);
 			if (he_cap_mac1.present)
@@ -830,7 +844,7 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 	tDot11fIEvendor_he_op *he_op = &params->he_op;
 	uint32_t *phy_cap = peer->peer_he_cap_phyinfo;
 	uint32_t mac_cap = 0, he_ops = 0;
-	uint8_t temp;
+	uint8_t temp, i;
 
 	if (params->he_capable)
 		peer->peer_flags |= WMI_PEER_HE;
@@ -911,6 +925,17 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 	WMI_HECAP_PHY_SRPPRESENT_SET(phy_cap, he_cap->srp);
 	WMI_HECAP_PHY_PWRBOOSTAR_SET(phy_cap, he_cap->power_boost);
 	WMI_HECAP_PHY_4XLTFAND800NSECSGI_SET(phy_cap, he_cap->he_ltf_gi_4x);
+
+	/* until further update in standard */
+	peer->peer_he_mcs_count = WMI_HOST_MAX_HE_RATE_SET;
+	for (i = 0; i < peer->peer_he_mcs_count; i++) {
+		peer->peer_he_rx_mcs_set[i] = params->supportedRates.he_rx_mcs;
+		peer->peer_he_tx_mcs_set[i] = params->supportedRates.he_tx_mcs;
+
+		WMA_LOGD(FL("[HE - MCS Map: %d] rx_mcs: %x, tx_mcs: %x"), i,
+			 peer->peer_he_rx_mcs_set[i],
+			 peer->peer_he_tx_mcs_set[i]);
+	}
 
 	WMI_HEOPS_COLOR_SET(he_ops, he_op->bss_color);
 	WMI_HEOPS_DEFPE_SET(he_ops, he_op->default_pe);

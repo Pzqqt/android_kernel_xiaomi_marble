@@ -440,7 +440,8 @@ void lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 					   supportedRates,
 					   pBeaconStruct->HTCaps.supportedMCSSet,
 					   false, pftSessionEntry,
-					   &pBeaconStruct->VHTCaps);
+					   &pBeaconStruct->VHTCaps,
+					   &pBeaconStruct->vendor_he_cap);
 	}
 
 	pAddBssParams->maxTxPower = pftSessionEntry->maxTxPower;

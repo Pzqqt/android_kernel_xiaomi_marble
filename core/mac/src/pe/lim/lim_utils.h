@@ -680,7 +680,11 @@ tSirRetStatus lim_strip_ie(tpAniSirGlobal mac_ctx,
 		uint8_t *oui, uint8_t out_len, uint8_t *extracted_ie,
 		uint32_t eid_max_len);
 
+#define MCSMAPMASK1x1 0x3
+#define MCSMAPMASK2x2 0xC
+
 #ifdef WLAN_FEATURE_11AX
+
 /**
  * lim_intersect_ap_he_caps() - Intersect AP capability with self STA capability
  * @session: pointer to PE session
@@ -891,6 +895,22 @@ void lim_set_he_caps(tpAniSirGlobal mac, tpPESession session,
  */
 QDF_STATUS lim_send_he_caps_ie(tpAniSirGlobal mac_ctx, tpPESession session,
 			       uint8_t vdev_id);
+
+/**
+ * lim_populate_he_mcs_set - function to populate HE mcs rate set
+ * @mac_ctx: pointer to global mac structure
+ * @rates: pointer to supported rate set
+ * @peer_vht_caps: pointer to peer HE capabilities
+ * @session_entry: pe session entry
+ *
+ * Populates HE mcs rate set based on peer and self capabilities
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS lim_populate_he_mcs_set(tpAniSirGlobal mac_ctx,
+		tpSirSupportedRates rates, tDot11fIEvendor_he_cap *peer_he_caps,
+		tpPESession session_entry, uint8_t nss);
+
 #else
 static inline void lim_add_he_cap(tpAddStaParams add_sta_params,
 				  tpSirAssocReq assoc_req)
@@ -940,6 +960,7 @@ static inline void lim_copy_bss_he_cap(tpPESession session,
 				tpSirSmeStartBssReq sme_start_bss_req)
 {
 }
+
 static inline void lim_copy_join_req_he_cap(tpPESession session,
 			tpSirSmeJoinReq sme_join_req)
 {
@@ -999,6 +1020,14 @@ static inline void lim_set_he_caps(tpAniSirGlobal mac, tpPESession session,
 static inline QDF_STATUS lim_send_he_caps_ie(tpAniSirGlobal mac_ctx,
 					     tpPESession session,
 					     uint8_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS lim_populate_he_mcs_set(tpAniSirGlobal mac_ctx,
+				tpSirSupportedRates rates,
+				tDot11fIEvendor_he_cap *peer_he_caps,
+				tpPESession session_entry, uint8_t nss)
 {
 	return QDF_STATUS_SUCCESS;
 }

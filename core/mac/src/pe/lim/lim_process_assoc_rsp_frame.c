@@ -154,6 +154,7 @@ void lim_update_assoc_sta_datas(tpAniSirGlobal mac_ctx,
 	uint32_t phy_mode;
 	bool qos_mode;
 	tDot11fIEVHTCaps *vht_caps = NULL;
+	tDot11fIEvendor_he_cap *he_cap = NULL;
 
 	lim_get_phy_mode(mac_ctx, &phy_mode, session_entry);
 	sta_ds->staType = STA_ENTRY_SELF;
@@ -196,10 +197,17 @@ void lim_update_assoc_sta_datas(tpAniSirGlobal mac_ctx,
 			}
 		}
 	}
+
+	if (IS_DOT11_MODE_HE(session_entry->dot11mode))
+		lim_update_stads_he_caps(sta_ds, assoc_rsp, session_entry);
+
+	if (lim_is_sta_he_capable(sta_ds))
+		he_cap = &assoc_rsp->vendor_he_cap;
+
 	if (lim_populate_peer_rate_set(mac_ctx, &sta_ds->supportedRates,
 				assoc_rsp->HTCaps.supportedMCSSet,
 				false, session_entry,
-				vht_caps) != eSIR_SUCCESS) {
+				vht_caps, he_cap) != eSIR_SUCCESS) {
 		lim_log(mac_ctx, LOGP,
 			FL("could not get rateset and extended rate set"));
 		return;
@@ -207,9 +215,6 @@ void lim_update_assoc_sta_datas(tpAniSirGlobal mac_ctx,
 	sta_ds->vhtSupportedRxNss =
 		((sta_ds->supportedRates.vhtRxMCSMap & MCSMAPMASK2x2)
 		 == MCSMAPMASK2x2) ? 1 : 2;
-
-	if (IS_DOT11_MODE_HE(session_entry->dot11mode))
-		lim_update_stads_he_caps(sta_ds, assoc_rsp, session_entry);
 
 	/* If one of the rates is 11g rates, set the ERP mode. */
 	if ((phy_mode == WNI_CFG_PHY_MODE_11G) &&

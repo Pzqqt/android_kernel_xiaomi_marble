@@ -7896,6 +7896,106 @@ QDF_STATUS lim_send_he_caps_ie(tpAniSirGlobal mac_ctx, tpPESession session,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+/**
+ * MCS-NSS Map will be as follows - Each MCS is 3 bits
+ *  - 0 indicates support for HE-MCS 0-7 for n spatial streams
+ *  - 1 indicates support for HE-MCS 0-8 for n spatial streams
+ *  - 2 indicates support for HE-MCS 0-9 for n spatial streams
+ *  - 3 indicates support for HE-MCS 0-10 for n spatial streams
+ *  - 4 indicates support for HE-MCS 0-11 for n spatial streams
+ *  - 5-6 reserved
+ *  - 7 indicates that n spatial streams is not supported
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-
+ * |  SS |  8  |  7  |  6  |  5  |  4  |  3  |  2  |  1  |
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * | MCS |   7 |  7  |  7  |  7  |  7  |  7  |  4  |  4  |
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ */
+QDF_STATUS lim_populate_he_mcs_set(tpAniSirGlobal mac_ctx,
+				   tpSirSupportedRates rates,
+				   tDot11fIEvendor_he_cap *peer_he_caps,
+				   tpPESession session_entry, uint8_t nss)
+{
+	uint32_t val;
+	uint32_t self_sta_dot11mode = 0;
+	uint8_t self_mcs, peer_mcs, negotiated_mcs;
+	uint32_t mcsmap = 0xFFFFFFFF;
+	bool support_2x2 = false;
+
+	wlan_cfg_get_int(mac_ctx, WNI_CFG_DOT11_MODE, &self_sta_dot11mode);
+
+	if (!IS_DOT11_MODE_HE(self_sta_dot11mode))
+		return QDF_STATUS_SUCCESS;
+
+	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_HE_MCS, &val) != eSIR_SUCCESS) {
+		lim_log(mac_ctx, LOGE, FL("could not retrieve HE_MCS"));
+		goto error;
+	}
+
+	self_mcs = (uint16_t) val;
+	if (NSS_1x1_MODE == nss) {
+		/* Add MCS for SS-1 */
+		mcsmap = self_mcs;
+		mcsmap |= HE_MCS_1x1;
+	} else if (NSS_2x2_MODE == nss) {
+		/* Add MCS for SS-1 */
+		mcsmap = self_mcs;
+		/* Add MCS for SS-2 */
+		mcsmap |= (self_mcs << HEMCSSIZE);
+		mcsmap |= HE_MCS_2x2;
+
+	}
+	rates->he_rx_mcs = rates->he_tx_mcs = mcsmap;
+
+	if ((peer_he_caps == NULL) || (!peer_he_caps->present)) {
+		lim_log(mac_ctx, LOG1,
+			FL("self rate: nss %d he_rx_mcs - %x he_tx_mcs - %x"),
+			nss, rates->he_rx_mcs, rates->he_tx_mcs);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	lim_log(mac_ctx, LOG1, FL("peer rates: rx_mcs - %x tx_mcs - %x"),
+		peer_he_caps->mcs_supported, peer_he_caps->mcs_supported);
+
+	if (session_entry && session_entry->nss == NSS_2x2_MODE) {
+		if (mac_ctx->lteCoexAntShare &&
+			IS_24G_CH(session_entry->currentOperChannel)) {
+			if (IS_2X2_CHAIN(session_entry->chainMask))
+				support_2x2 = true;
+			else
+				lim_log(mac_ctx, LOGE, FL("2x2 not enabled %d"),
+					session_entry->chainMask);
+		} else {
+			support_2x2 = true;
+		}
+	}
+
+	peer_mcs = peer_he_caps->mcs_supported;
+	negotiated_mcs = QDF_MIN(peer_mcs, self_mcs);
+
+	if (support_2x2) {
+		/* Add MCS for SS-1 */
+		mcsmap = negotiated_mcs;
+		/* Add MCS for SS-2 */
+		mcsmap |= (negotiated_mcs << HEMCSSIZE);
+		mcsmap |= HE_MCS_2x2;
+	} else {
+		/* Add MCS for SS-1 */
+		mcsmap = negotiated_mcs;
+		mcsmap |= HE_MCS_1x1;
+	}
+	rates->he_rx_mcs = rates->he_tx_mcs = mcsmap;
+
+	lim_log(mac_ctx, LOG1,
+		FL("enable2x2 - %d nss %d he_rx_mcs - %x he_tx_mcs - %x"),
+		mac_ctx->roam.configParam.enable2x2, nss,
+		rates->he_rx_mcs, rates->he_tx_mcs);
+
+	return QDF_STATUS_SUCCESS;
+error:
+	return QDF_STATUS_E_FAILURE;
+}
 #endif
 
 void lim_decrement_pending_mgmt_count(tpAniSirGlobal mac_ctx)

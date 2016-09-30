@@ -337,37 +337,42 @@ struct rrm_config_param {
 const char *lim_bss_type_to_string(const uint16_t bss_type);
 const char *lim_scan_type_to_string(const uint8_t scan_type);
 
+/**
+ * struct sSirSupportedRates - stores rates/MCS supported
+ * @llbRates: 11b rates in unit of 500kbps
+ * @llaRates: 11a rates in unit of 500kbps
+ * @supportedMCSSet: supported basic MCS, 0-76 bits used, remaining reserved
+ *                    bits 0-15 and 32 should be set.
+ * @rxHighestDataRate: RX Highest Supported Data Rate defines the highest data
+ *                      rate that the STA is able to receive, in unites of 1Mbps
+ *                      This value is derived from "Supported MCS Set field"
+ *                      inside the HT capability element.
+ * @vhtRxMCSMap: Indicates the Maximum MCS(VHT) that can be received for each
+ *                number of spacial streams
+ * @vhtRxHighestDataRate: Indicate the highest VHT data rate that the STA is
+ *                         able to receive
+ * @vhtTxMCSMap: Indicates the Maximum MCS(VHT) that can be transmitted for
+ *                each number of spacial streams
+ * @vhtTxHighestDataRate: Indicate the highest VHT data rate that the STA is
+ *                         able to transmit
+ * @he_rx_mcs: Indicates the Maximum MCS(HE) that can be received for each
+ *              number of spacial streams
+ * @he_tx_mcs: Indicates the Maximum MCS(HE) that can be transmitted for each
+ *              number of spacial streams
+ */
 typedef struct sSirSupportedRates {
-	/*
-	 * 11b, 11a and aniLegacyRates are IE rates which gives rate in unit
-	 * of 500Kbps
-	 */
 	uint16_t llbRates[SIR_NUM_11B_RATES];
 	uint16_t llaRates[SIR_NUM_11A_RATES];
-	/*
-	 * 0-76 bits used, remaining reserved
-	 * bits 0-15 and 32 should be set.
-	 */
 	uint8_t supportedMCSSet[SIR_MAC_MAX_SUPPORTED_MCS_SET];
-
-	/*
-	 * RX Highest Supported Data Rate defines the highest data
-	 * rate that the STA is able to receive, in unites of 1Mbps.
-	 * This value is derived from "Supported MCS Set field" inside
-	 * the HT capability element.
-	 */
 	uint16_t rxHighestDataRate;
-
-	/*Indicates the Maximum MCS that can be received for each number
-	   of spacial streams */
 	uint16_t vhtRxMCSMap;
-	/*Indicate the highest VHT data rate that the STA is able to receive */
 	uint16_t vhtRxHighestDataRate;
-	/*Indicates the Maximum MCS that can be transmitted for each number
-	   of spacial streams */
 	uint16_t vhtTxMCSMap;
-	/*Indicate the highest VHT data rate that the STA is able to transmit */
 	uint16_t vhtTxHighestDataRate;
+#ifdef WLAN_FEATURE_11AX
+	uint16_t he_rx_mcs;
+	uint16_t he_tx_mcs;
+#endif
 } tSirSupportedRates, *tpSirSupportedRates;
 
 typedef enum eSirRFBand {
@@ -6863,6 +6868,17 @@ struct wow_enable_params {
 #define HE_BYTE_SIZE 8
 
 #define HE_MAX_PHY_CAP_SIZE 3
+
+/*
+ * Three bits are used for each MCS
+ * For SS - 1; bits 0-2
+ * For SS - 2; bits 3-5
+ * MCS values are interpreted as in IEEE 11ax-D1.0 spec
+ */
+#define HE_MCS_1x1 0xFFF8
+#define HE_MCS_2x2 0xFFC7
+
+#define HEMCSSIZE 3
 
 /**
  * struct he_capability - to store 11ax HE capabilities

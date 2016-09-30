@@ -1231,6 +1231,10 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 		}
 	}
 
+	WMA_LOGD(FL("rx_max_rate: %d, rx_mcs: %x, tx_max_rate: %d, tx_mcs: %x"),
+		 cmd->rx_max_rate, cmd->rx_mcs_set, cmd->tx_max_rate,
+		 cmd->tx_mcs_set);
+
 	/*
 	 * Limit nss to max number of rf chain supported by target
 	 * Otherwise Fw will crash

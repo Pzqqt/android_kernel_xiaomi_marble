@@ -496,7 +496,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 	pAddStaParams->shortPreambleSupported =
 		(uint8_t) psessionEntry->beaconParams.fShortPreamble;
 	lim_populate_peer_rate_set(pMac, &pAddStaParams->supportedRates, NULL,
-				   false, psessionEntry, NULL);
+				   false, psessionEntry, NULL, NULL);
 
 	if (psessionEntry->htCapability) {
 		pAddStaParams->htCapable = psessionEntry->htCapability;

@@ -1536,7 +1536,8 @@ tSirRetStatus
 lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
 		tpSirSupportedRates rates, uint8_t *supported_mcs_set,
 		uint8_t basic_only, tpPESession session_entry,
-		tDot11fIEVHTCaps *vht_caps)
+		struct sDot11fIEVHTCaps *vht_caps,
+		struct sDot11fIEvendor_he_cap *he_caps)
 {
 	tSirMacRateSet temp_rate_set;
 	tSirMacRateSet temp_rate_set2;
@@ -1674,16 +1675,17 @@ lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
 	}
 	lim_populate_vht_mcs_set(mac_ctx, rates, vht_caps,
 			session_entry, session_entry->nss);
+	lim_populate_he_mcs_set(mac_ctx, rates, he_caps,
+			session_entry, session_entry->nss);
 
 	return eSIR_SUCCESS;
 }
 
 tSirRetStatus
 lim_populate_peer_rate_set(tpAniSirGlobal pMac,
-			   tpSirSupportedRates pRates,
-			   uint8_t *pSupportedMCSSet,
-			   uint8_t basicOnly,
-			   tpPESession psessionEntry, tDot11fIEVHTCaps *pVHTCaps)
+		tpSirSupportedRates pRates, uint8_t *pSupportedMCSSet,
+		uint8_t basicOnly, tpPESession psessionEntry,
+		tDot11fIEVHTCaps *pVHTCaps, tDot11fIEvendor_he_cap *he_caps)
 {
 	tSirMacRateSet tempRateSet;
 	tSirMacRateSet tempRateSet2;
@@ -1820,6 +1822,9 @@ lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 	}
 	lim_populate_vht_mcs_set(pMac, pRates, pVHTCaps,
 			psessionEntry, psessionEntry->nss);
+	lim_populate_he_mcs_set(pMac, pRates, he_caps,
+			psessionEntry, psessionEntry->nss);
+
 	return eSIR_SUCCESS;
 } /*** lim_populate_peer_rate_set() ***/
 
@@ -1859,7 +1864,8 @@ tSirRetStatus lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx,
 					     tSirMacRateSet *ext_rate_set,
 					     uint8_t *supported_mcs_set,
 					     tpPESession session_entry,
-					     tDot11fIEVHTCaps *vht_caps)
+					     tDot11fIEVHTCaps *vht_caps,
+					     tDot11fIEvendor_he_cap *he_caps)
 {
 	tSirMacRateSet temp_rate_set;
 	tSirMacRateSet temp_rate_set2;
@@ -2048,6 +2054,8 @@ tSirRetStatus lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx,
 	}
 	lim_populate_vht_mcs_set(mac_ctx, &sta_ds->supportedRates, vht_caps,
 				 session_entry, session_entry->nss);
+	lim_populate_he_mcs_set(mac_ctx, &sta_ds->supportedRates, he_caps,
+				session_entry, session_entry->nss);
 	/*
 	 * Set the erpEnabled bit if the phy is in G mode and at least
 	 * one A rate is supported
@@ -2737,7 +2745,7 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 	}
 
 	lim_populate_own_rate_set(pMac, &pAddStaParams->supportedRates, NULL, false,
-				  psessionEntry, NULL);
+				  psessionEntry, NULL, NULL);
 	if (IS_DOT11_MODE_HT(selfStaDot11Mode)) {
 		pAddStaParams->htCapable = true;
 #ifdef DISABLE_GF_FOR_INTEROP
@@ -4488,7 +4496,8 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 			supportedRates,
 			pBeaconStruct->HTCaps.supportedMCSSet,
 			false, psessionEntry,
-			&pBeaconStruct->VHTCaps);
+			&pBeaconStruct->VHTCaps,
+			&pBeaconStruct->vendor_he_cap);
 
 	pAddBssParams->staContext.encryptType = psessionEntry->encryptType;
 
