@@ -2300,9 +2300,10 @@ void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 	QDF_STATUS status;
 	hdd_remain_on_chan_ctx_t *pRemainChanCtx = NULL;
 	hdd_context_t *pHddCtx;
+	uint8_t broadcast = 0;
 
 	hdd_info("Frame Type = %d Frame Length = %d",
-		 frameType, nFrameLength);
+		frameType, nFrameLength);
 
 	if (NULL == pAdapter) {
 		hdd_err("pAdapter is NULL");
@@ -2326,7 +2327,7 @@ void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 	/* Get pAdapter from Destination mac address of the frame */
 	if ((type == SIR_MAC_MGMT_FRAME) && (subType != SIR_MAC_MGMT_PROBE_REQ)) {
 		pAdapter =
-			hdd_get_adapter_by_macaddr(WLAN_HDD_GET_CTX(pAdapter),
+			hdd_get_adapter_by_macaddr(pHddCtx,
 						   &pbFrames
 						   [WLAN_HDD_80211_FRM_DA_OFFSET]);
 		if (NULL == pAdapter) {
@@ -2341,7 +2342,23 @@ void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 						 [WLAN_HDD_80211_FRM_DA_OFFSET]));
 			hdd_alert("Frame Type = %d Frame Length = %d subType = %d",
 				frameType, nFrameLength, subType);
+			/* We will receive broadcast management frames
+			* in OCB mode */
+			pAdapter = hdd_get_adapter(pHddCtx, QDF_OCB_MODE);
+			if (NULL == pAdapter || !qdf_is_macaddr_broadcast(
+				(struct qdf_mac_addr *)&pbFrames
+				[WLAN_HDD_80211_FRM_DA_OFFSET])) {
+				/*
+				* Under assumtion that we don't
+				*receive any action
+				* frame with BCST as destination,
+				* we are dropping action frame
+				*/
 			return;
+			}
+
+		 broadcast = 1;
+
 		}
 	}
 
@@ -2366,7 +2383,8 @@ void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 
 	cfgState = WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
 
-	if ((type == SIR_MAC_MGMT_FRAME) && (subType == SIR_MAC_MGMT_ACTION)) {
+	if ((type == SIR_MAC_MGMT_FRAME) &&
+		(subType == SIR_MAC_MGMT_ACTION) && !broadcast) {
 		if (pbFrames[WLAN_HDD_PUBLIC_ACTION_FRAME_OFFSET] ==
 		    WLAN_HDD_PUBLIC_ACTION_FRAME) {
 			/* Public action frame */
@@ -2533,15 +2551,18 @@ void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 		   pAdapter->sessionId, pAdapter->dev->ifindex);
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 18, 0))
-	cfg80211_rx_mgmt(pAdapter->dev->ieee80211_ptr, freq, 0, pbFrames,
+	cfg80211_rx_mgmt(pAdapter->dev->ieee80211_ptr,
+		 freq, rxRssi * 100, pbFrames,
 			 nFrameLength, NL80211_RXMGMT_FLAG_ANSWERED);
 #elif (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 12, 0))
-	cfg80211_rx_mgmt(pAdapter->dev->ieee80211_ptr, freq, 0, pbFrames,
+	cfg80211_rx_mgmt(pAdapter->dev->ieee80211_ptr,
+			freq, rxRssi * 100, pbFrames,
 			 nFrameLength, NL80211_RXMGMT_FLAG_ANSWERED,
 			 GFP_ATOMIC);
 #else
-	cfg80211_rx_mgmt(pAdapter->dev->ieee80211_ptr, freq, 0,
-			 pbFrames, nFrameLength, GFP_ATOMIC);
+	cfg80211_rx_mgmt(pAdapter->dev->ieee80211_ptr, freq,
+			rxRssi * 100,
+			pbFrames, nFrameLength, GFP_ATOMIC);
 #endif /* LINUX_VERSION_CODE */
 }
 

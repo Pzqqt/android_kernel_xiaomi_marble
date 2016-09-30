@@ -2019,7 +2019,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 						sizeof(tSirMacMgmtHdr),
 						session->smeSessionId,
 						WMA_GET_RX_CH(rx_pkt_info),
-						session, 0);
+				session, WMA_GET_RX_RSSI_RAW(rx_pkt_info));
 			} else {
 				lim_log(mac_ctx, LOG1,
 					FL("Unhandled public action frame (Vendor specific). OUI %x %x %x %x"),
@@ -2027,6 +2027,20 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 					pub_action->Oui[2], pub_action->Oui[3]);
 			}
 		break;
+		/* Handle vendor specific action */
+		case SIR_MAC_ACTION_VENDOR_SPECIFIC_CATEGORY:
+		{
+			tpSirMacMgmtHdr     header;
+			uint32_t            frame_len;
+
+		header = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
+		frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
+		lim_send_sme_mgmt_frame_ind(mac_ctx, header->fc.subType,
+		(uint8_t *)header, frame_len + sizeof(tSirMacMgmtHdr), 0,
+		WMA_GET_RX_CH(rx_pkt_info), NULL,
+			WMA_GET_RX_RSSI_RAW(rx_pkt_info));
+			break;
+		}
 
 		case SIR_MAC_ACTION_2040_BSS_COEXISTENCE:
 			mac_hdr = NULL;
