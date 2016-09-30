@@ -2507,33 +2507,14 @@ QDF_STATUS lim_send_disassoc_cnf(tpAniSirGlobal mac_ctx)
 			pe_err("cleanup_rx_path error");
 			goto end;
 		}
-		if (LIM_IS_STA_ROLE(pe_session) && (
-#ifdef FEATURE_WLAN_ESE
-			    (pe_session->isESEconnection) ||
-#endif
-			    (pe_session->isFastRoamIniFeatureEnabled) ||
-			    (pe_session->is11Rconnection)) &&
-			    (disassoc_req->reasonCode !=
+		if (LIM_IS_STA_ROLE(pe_session) &&
+			(disassoc_req->reasonCode !=
 				eSIR_MAC_DISASSOC_DUE_TO_FTHANDOFF_REASON)) {
 			pe_debug("FT Preauth Session (%p %d) Clean up",
 					pe_session, pe_session->peSessionId);
 
 			/* Delete FT session if there exists one */
 			lim_ft_cleanup_pre_auth_info(mac_ctx, pe_session);
-		} else {
-			pe_debug("FT Preauth Session %d Clean up"
-#ifdef FEATURE_WLAN_ESE
-				" isESE %d"
-#endif
-				" isLFR %d"
-				" is11r %d reason %d",
-				GET_LIM_SYSTEM_ROLE(pe_session),
-#ifdef FEATURE_WLAN_ESE
-				pe_session->isESEconnection,
-#endif
-				pe_session->isFastRoamIniFeatureEnabled,
-				pe_session->is11Rconnection,
-				disassoc_req->reasonCode);
 		}
 		/* Free up buffer allocated for mlmDisassocReq */
 		qdf_mem_free(disassoc_req);
