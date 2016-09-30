@@ -1,2 +1,2 @@
-Current Component wlan-cmn.driver.lnx.1.0 version 5.1.1.1M
+Current Component wlan-cmn.driver.lnx.1.0 version 5.1.1.1N
 Matches Component wlan-cld3.driver.lnx.1.1 version 5.1.0.22C
