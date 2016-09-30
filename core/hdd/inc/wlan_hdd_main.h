@@ -1553,6 +1553,7 @@ QDF_STATUS hdd_close_adapter(hdd_context_t *pHddCtx, hdd_adapter_t *pAdapter,
 			     bool rtnl_held);
 QDF_STATUS hdd_close_all_adapters(hdd_context_t *pHddCtx, bool rtnl_held);
 QDF_STATUS hdd_stop_all_adapters(hdd_context_t *pHddCtx);
+void hdd_deinit_all_adapters(hdd_context_t *hdd_ctx, bool rtnl_held);
 QDF_STATUS hdd_reset_all_adapters(hdd_context_t *pHddCtx);
 QDF_STATUS hdd_start_all_adapters(hdd_context_t *pHddCtx);
 hdd_adapter_t *hdd_get_adapter_by_vdev(hdd_context_t *pHddCtx,

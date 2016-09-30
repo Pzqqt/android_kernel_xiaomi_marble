@@ -1827,6 +1827,10 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			hdd_alert("adapter is Null");
 			goto close;
 		}
+		if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+			hdd_err("in ftm mode, no need to configure cds modules");
+			break;
+		}
 		if (hdd_configure_cds(hdd_ctx, adapter)) {
 			hdd_err("Failed to Enable cds modules");
 			goto close;
@@ -3613,6 +3617,32 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 
 	EXIT();
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * hdd_deinit_all_adapters - deinit all adapters
+ * @hdd_ctx:   HDD context
+ * @rtnl_held: True if RTNL lock held
+ *
+ */
+void  hdd_deinit_all_adapters(hdd_context_t *hdd_ctx, bool rtnl_held)
+{
+	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
+	QDF_STATUS status;
+	hdd_adapter_t *adapter;
+
+	ENTER();
+
+	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
+
+	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
+		adapter = adapter_node->pAdapter;
+		hdd_deinit_adapter(hdd_ctx, adapter, rtnl_held);
+		status = hdd_get_next_adapter(hdd_ctx, adapter_node, &next);
+		adapter_node = next;
+	}
+
+	EXIT();
 }
 
 QDF_STATUS hdd_stop_all_adapters(hdd_context_t *hdd_ctx)
@@ -9057,7 +9087,7 @@ static enum tQDF_ADAPTER_MODE hdd_get_adpter_mode(
 	case QDF_GLOBAL_MONITOR_MODE:
 		return QDF_MONITOR_MODE;
 	case QDF_GLOBAL_FTM_MODE:
-		return QDF_MONITOR_MODE;
+		return QDF_FTM_MODE;
 	case QDF_GLOBAL_EPPING_MODE:
 		return QDF_EPPING_MODE;
 	case QDF_GLOBAL_QVIT_MODE:
@@ -9117,6 +9147,9 @@ static int con_mode_handler(const char *kmessage, struct kernel_param *kp)
 		hdd_err("invalid adapter");
 		return -EINVAL;
 	}
+
+	hdd_stop_all_adapters(hdd_ctx);
+	hdd_deinit_all_adapters(hdd_ctx, false);
 
 	ret = hdd_wlan_stop_modules(hdd_ctx, false);
 	if (ret) {
