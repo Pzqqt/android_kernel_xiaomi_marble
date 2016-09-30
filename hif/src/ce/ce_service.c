@@ -68,6 +68,15 @@
 #endif /* QCA_WIFI_3_0 */
 #endif /* IPA_OFFLOAD */
 
+#ifndef DATA_CE_SW_INDEX_NO_INLINE_UPDATE
+#define DATA_CE_UPDATE_SWINDEX(x, scn, addr)				\
+	do {                                            		\
+		x = CE_SRC_RING_READ_IDX_GET_FROM_DDR(scn, addr); 	\
+	} while (0);
+#else
+#define DATA_CE_UPDATE_SWINDEX(x, scn, addr)
+#endif
+
 static int war1_allow_sleep;
 /* io32 write workaround */
 static int hif_ce_war1;
@@ -597,7 +606,7 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t msdu,
 	qdf_spin_lock_bh(&ce_state->ce_index_lock);
 	Q_TARGET_ACCESS_BEGIN(scn);
 
-	src_ring->sw_index = CE_SRC_RING_READ_IDX_GET_FROM_DDR(scn, ctrl_addr);
+	DATA_CE_UPDATE_SWINDEX(src_ring->sw_index, scn, ctrl_addr);
 	write_index = src_ring->write_index;
 	sw_index = src_ring->sw_index;
 
@@ -800,6 +809,7 @@ qdf_nbuf_t ce_batch_send(struct CE_handle *ce_tx_hdl,  qdf_nbuf_t msdu,
 	int deltacount = 0;
 	qdf_nbuf_t freelist = NULL, hfreelist = NULL, tempnext;
 
+	DATA_CE_UPDATE_SWINDEX(src_ring->sw_index, scn, ctrl_addr);
 	sw_index = src_ring->sw_index;
 	write_index = src_ring->write_index;
 
@@ -878,6 +888,7 @@ qdf_nbuf_t ce_batch_send(struct CE_handle *ce_tx_hdl,  qdf_nbuf_t msdu,
  *
  * Return: void
  */
+#ifdef DATA_CE_SW_INDEX_NO_INLINE_UPDATE
 void ce_update_tx_ring(struct CE_handle *ce_tx_hdl, uint32_t num_htt_cmpls)
 {
 	struct CE_state *ce_state = (struct CE_state *)ce_tx_hdl;
@@ -891,6 +902,10 @@ void ce_update_tx_ring(struct CE_handle *ce_tx_hdl, uint32_t num_htt_cmpls)
 		CE_RING_IDX_ADD(nentries_mask, src_ring->sw_index,
 				num_htt_cmpls);
 }
+#else
+void ce_update_tx_ring(struct CE_handle *ce_tx_hdl, uint32_t num_htt_cmpls)
+{}
+#endif
 
 /**
  * ce_send_single() - sends
@@ -923,6 +938,7 @@ int ce_send_single(struct CE_handle *ce_tx_hdl, qdf_nbuf_t msdu,
 
 	struct CE_src_desc lsrc_desc = {0};
 
+	DATA_CE_UPDATE_SWINDEX(src_ring->sw_index, scn, ctrl_addr);
 	sw_index = src_ring->sw_index;
 	write_index = src_ring->write_index;
 
