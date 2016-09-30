@@ -55,6 +55,7 @@
 
 /* Ms to Time Unit Micro Sec */
 #define MS_TO_TU_MUS(x)   ((x) * 1024)
+#define MAX_MUS_VAL       (INT_MAX / 1024)
 
 static uint8_t *hdd_get_action_string(uint16_t MsgType)
 {
@@ -1739,6 +1740,11 @@ int hdd_set_p2p_noa(struct net_device *dev, uint8_t *command)
 	if (ret != 3) {
 		hdd_err("P2P_SET GO NoA: fail to read params, ret=%d",
 			ret);
+		return -EINVAL;
+	}
+	if (count < 0 || interval < 0 || duration < 0 ||
+	    interval > MAX_MUS_VAL || duration > MAX_MUS_VAL) {
+		hdd_err("Invalid NOA parameters");
 		return -EINVAL;
 	}
 	hdd_info("P2P_SET GO NoA: count=%d interval=%d duration=%d",
