@@ -5058,6 +5058,11 @@ static int drv_cmd_get_ibss_peer_info_all(hdd_adapter_t *adapter,
 			tx_rate =
 				pHddStaCtx->ibss_peer_info.peerInfoParams[idx].
 									txRate;
+			/*
+			 * Only lower 3 bytes are rate info. Mask of the MSByte
+			 */
+			tx_rate &= 0x00FFFFFF;
+
 			rssi = pHddStaCtx->ibss_peer_info.peerInfoParams[idx].
 									rssi;
 
@@ -5175,6 +5180,8 @@ static int drv_cmd_get_ibss_peer_info(hdd_adapter_t *adapter,
 	if (QDF_STATUS_SUCCESS == status) {
 		uint32_t txRate =
 			pHddStaCtx->ibss_peer_info.peerInfoParams[0].txRate;
+		/* Only lower 3 bytes are rate info. Mask of the MSByte */
+		txRate &= 0x00FFFFFF;
 
 		length = scnprintf(extra, sizeof(extra), "%d %d",
 				(int)txRate,
