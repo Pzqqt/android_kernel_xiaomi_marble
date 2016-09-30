@@ -3417,8 +3417,12 @@ static void hdd_wait_for_sme_close_sesion(hdd_context_t *hdd_ctx,
 				&adapter->session_close_comp_var,
 				msecs_to_jiffies
 				(WLAN_WAIT_TIME_SESSIONOPENCLOSE));
-		if (!rc)
+		if (!rc) {
 			hdd_err("failure waiting for session_close_comp_var");
+			if (adapter->device_mode == QDF_NDI_MODE)
+				hdd_ndp_session_end_handler(adapter);
+			clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
+		}
 	}
 }
 
