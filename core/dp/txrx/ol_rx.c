@@ -851,21 +851,21 @@ ol_rx_offload_deliver_ind_handler(ol_txrx_pdev_handle pdev,
 	htt_pdev_handle htt_pdev = pdev->htt_pdev;
 
 	while (msdu_cnt) {
-		htt_rx_offload_msdu_pop(htt_pdev, msg, &vdev_id, &peer_id,
-					&tid, &fw_desc, &head_buf, &tail_buf);
-
-		peer = ol_txrx_peer_find_by_id(pdev, peer_id);
-		if (peer) {
-			ol_rx_data_process(peer, head_buf);
-		} else {
-			buf = head_buf;
-			while (1) {
-				qdf_nbuf_t next;
-				next = qdf_nbuf_next(buf);
-				htt_rx_desc_frame_free(htt_pdev, buf);
-				if (buf == tail_buf)
-					break;
-				buf = next;
+		if (!htt_rx_offload_msdu_pop(htt_pdev, msg, &vdev_id, &peer_id,
+					&tid, &fw_desc, &head_buf, &tail_buf)) {
+			peer = ol_txrx_peer_find_by_id(pdev, peer_id);
+			if (peer) {
+				ol_rx_data_process(peer, head_buf);
+			} else {
+				buf = head_buf;
+				while (1) {
+					qdf_nbuf_t next;
+					next = qdf_nbuf_next(buf);
+					htt_rx_desc_frame_free(htt_pdev, buf);
+					if (buf == tail_buf)
+						break;
+					buf = next;
+				}
 			}
 		}
 		msdu_cnt--;

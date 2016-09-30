@@ -1375,9 +1375,39 @@ htt_rx_offload_msdu_pop_hl(htt_pdev_handle pdev,
 			   qdf_nbuf_t *head_buf,
 			   qdf_nbuf_t *tail_buf)
 {
-	return 0;
-}
+	adf_nbuf_t buf;
+	u_int32_t *msdu_hdr, msdu_len;
+	int ret = 0;
 
+	*head_buf = *tail_buf = buf = offload_deliver_msg;
+	msdu_hdr = (u_int32_t *)adf_nbuf_data(buf);
+	/* First dword */
+
+	/* Second dword */
+	msdu_hdr++;
+	msdu_len = HTT_RX_OFFLOAD_DELIVER_IND_MSDU_LEN_GET(*msdu_hdr);
+	*peer_id = HTT_RX_OFFLOAD_DELIVER_IND_MSDU_PEER_ID_GET(*msdu_hdr);
+
+	/* Third dword */
+	msdu_hdr++;
+	*vdev_id = HTT_RX_OFFLOAD_DELIVER_IND_MSDU_VDEV_ID_GET(*msdu_hdr);
+	*tid = HTT_RX_OFFLOAD_DELIVER_IND_MSDU_TID_GET(*msdu_hdr);
+	*fw_desc = HTT_RX_OFFLOAD_DELIVER_IND_MSDU_DESC_GET(*msdu_hdr);
+
+	adf_nbuf_pull_head(buf, HTT_RX_OFFLOAD_DELIVER_IND_MSDU_HDR_BYTES \
+			+ HTT_RX_OFFLOAD_DELIVER_IND_HDR_BYTES);
+
+	if (msdu_len <= adf_nbuf_len(buf)) {
+		adf_nbuf_set_pktlen(buf, msdu_len);
+	} else {
+		adf_os_print("%s: drop frame with invalid msdu len %d %d\n",
+				__FUNCTION__, msdu_len, (int)adf_nbuf_len(buf));
+		adf_nbuf_free(offload_deliver_msg);
+		ret = -1;
+	}
+
+	return ret;
+}
 #endif
 
 int

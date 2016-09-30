@@ -213,7 +213,15 @@ void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 		ol_rx_offload_deliver_ind_handler(pdev->txrx_pdev,
 						  htt_t2h_msg,
 						  msdu_cnt);
-		break;
+		if (pdev->cfg.is_high_latency) {
+			/*
+			 * return here for HL to avoid double free on
+			 * htt_t2h_msg
+			 */
+			return;
+		} else {
+			break;
+		}
 	}
 	case HTT_T2H_MSG_TYPE_RX_FRAG_IND:
 	{
