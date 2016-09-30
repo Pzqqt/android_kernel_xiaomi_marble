@@ -1030,7 +1030,7 @@ lim_send_sme_disassoc_ind(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 
 	pSirSmeDisassocInd->sessionId = psessionEntry->smeSessionId;
 	pSirSmeDisassocInd->transactionId = psessionEntry->transactionId;
-	pSirSmeDisassocInd->statusCode = pStaDs->mlmStaContext.disassocReason;
+	pSirSmeDisassocInd->statusCode = eSIR_SME_DEAUTH_STATUS;
 	pSirSmeDisassocInd->reasonCode = pStaDs->mlmStaContext.disassocReason;
 
 	qdf_mem_copy(pSirSmeDisassocInd->bssid.bytes, psessionEntry->bssId,
