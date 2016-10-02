@@ -5412,16 +5412,28 @@ QDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
 	params->request_id = req->request_id;
 	params->session_id = req->session_id;
 	params->num_networks = req->num_networks;
-	for (i = 0; i < req->num_networks; i++) {
-		params->networks[i].rssi_threshold =
-				req->networks[i].rssi_threshold;
-		params->networks[i].auth_bit_field =
-				req->networks[i].auth_bit_field;
-		params->networks[i].flags = req->networks[i].flags;
-		params->networks[i].ssid.length = req->networks[i].ssid.length;
-		qdf_mem_copy(params->networks[i].ssid.mac_ssid,
-				req->networks[i].ssid.ssId,
-				WMI_MAC_MAX_SSID_LENGTH);
+
+	/* Fill only when num_networks are non zero */
+	if (req->num_networks) {
+		params->min_5ghz_rssi = req->min_5ghz_rssi;
+		params->min_24ghz_rssi = req->min_24ghz_rssi;
+		params->initial_score_max = req->initial_score_max;
+		params->same_network_bonus = req->same_network_bonus;
+		params->secure_bonus = req->secure_bonus;
+		params->band_5ghz_bonus = req->band_5ghz_bonus;
+		params->current_connection_bonus =
+			req->current_connection_bonus;
+
+		for (i = 0; i < req->num_networks; i++) {
+			params->networks[i].flags = req->networks[i].flags;
+			params->networks[i].auth_bit_field =
+					req->networks[i].auth_bit_field;
+			params->networks[i].ssid.length =
+					req->networks[i].ssid.length;
+			qdf_mem_copy(params->networks[i].ssid.mac_ssid,
+					req->networks[i].ssid.ssId,
+					WMI_MAC_MAX_SSID_LENGTH);
+		}
 	}
 
 	status = wmi_unified_set_epno_network_list_cmd(wma->wmi_handle, params);
