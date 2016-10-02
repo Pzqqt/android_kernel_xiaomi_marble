@@ -726,7 +726,7 @@ void send_flush_completion_to_user(void)
 	wlan_report_log_completion(is_fatal, indicator, reason_code);
 
 	if (recovery_needed)
-		cds_trigger_recovery();
+		cds_trigger_recovery(false);
 }
 
 /**

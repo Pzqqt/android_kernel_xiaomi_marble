@@ -1547,11 +1547,32 @@ bool cds_is_packet_log_enabled(void)
 }
 
 /**
- * cds_trigger_recovery() - trigger self recovery
+ * cds_config_recovery_work() - configure self recovery
+ * @qdf_ctx: pointer of qdf context
  *
  * Return: none
  */
-void cds_trigger_recovery(void)
+
+void cds_config_recovery_work(qdf_device_t qdf_ctx)
+{
+	if (cds_is_driver_recovering()) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			"Recovery is in progress, ignore!");
+	} else {
+		cds_set_recovery_in_progress(true);
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			"schedule recovery work!");
+		pld_schedule_recovery_work(qdf_ctx->dev);
+	}
+}
+
+/**
+ * cds_trigger_recovery() - trigger self recovery
+ * @skip_crash_inject: Boolean value to skip to send crash inject cmd
+ *
+ * Return: none
+ */
+void cds_trigger_recovery(bool skip_crash_inject)
 {
 	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -1573,21 +1594,19 @@ void cds_trigger_recovery(void)
 
 	qdf_runtime_pm_prevent_suspend(recovery_lock);
 
-	wma_crash_inject(wma_handle, RECOVERY_SIM_SELF_RECOVERY, 0);
+	if (!skip_crash_inject) {
 
-	status = qdf_wait_single_event(&wma_handle->recovery_event,
-		WMA_CRASH_INJECT_TIMEOUT);
+		wma_crash_inject(wma_handle, RECOVERY_SIM_SELF_RECOVERY, 0);
+		status = qdf_wait_single_event(&wma_handle->recovery_event,
+			WMA_CRASH_INJECT_TIMEOUT);
 
-	if (QDF_STATUS_SUCCESS != status) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			"CRASH_INJECT command is timed out!");
-		if (cds_is_driver_recovering()) {
+		if (QDF_STATUS_SUCCESS != status) {
 			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-				"Recovery is in progress, ignore!");
-		} else {
-			cds_set_recovery_in_progress(true);
-			pld_schedule_recovery_work(qdf_ctx->dev);
+				"CRASH_INJECT command is timed out!");
+			cds_config_recovery_work(qdf_ctx);
 		}
+	} else {
+		cds_config_recovery_work(qdf_ctx);
 	}
 
 	qdf_runtime_pm_allow_suspend(recovery_lock);

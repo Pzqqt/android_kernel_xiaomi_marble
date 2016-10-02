@@ -3888,7 +3888,7 @@ QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 		wmi_set_target_suspend(wma->wmi_handle, false);
 		if (!cds_is_driver_recovering()) {
 			if (pMac->sme.enableSelfRecovery) {
-				cds_trigger_recovery();
+				cds_trigger_recovery(false);
 			} else {
 				QDF_BUG(0);
 			}
@@ -4613,7 +4613,7 @@ static QDF_STATUS wma_send_host_wakeup_ind_to_fw(tp_wma_handle wma)
 			 wmi_get_host_credits(wma->wmi_handle));
 		if (!cds_is_driver_recovering()) {
 			if (pMac->sme.enableSelfRecovery) {
-				cds_trigger_recovery();
+				cds_trigger_recovery(false);
 			} else {
 				QDF_BUG(0);
 			}
@@ -6552,7 +6552,7 @@ static inline void wma_suspend_target_timeout(bool is_self_recovery_enabled)
 		WMA_LOGE("%s: recovery is in progress, ignore!", __func__);
 	} else {
 		if (is_self_recovery_enabled) {
-			cds_trigger_recovery();
+			cds_trigger_recovery(false);
 		} else {
 			QDF_BUG(0);
 		}
@@ -6566,7 +6566,7 @@ static inline void wma_suspend_target_timeout(bool is_self_recovery_enabled)
 			 __func__);
 	} else {
 		if (is_self_recovery_enabled) {
-			cds_trigger_recovery();
+			cds_trigger_recovery(false);
 		} else {
 			QDF_BUG(0);
 		}
@@ -6742,7 +6742,7 @@ QDF_STATUS wma_resume_target(WMA_HANDLE handle)
 			wmi_get_host_credits(wma->wmi_handle));
 		if (!cds_is_driver_recovering()) {
 			if (pMac->sme.enableSelfRecovery) {
-				cds_trigger_recovery();
+				cds_trigger_recovery(false);
 			} else {
 				QDF_BUG(0);
 			}
