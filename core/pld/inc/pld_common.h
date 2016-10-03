@@ -379,7 +379,4 @@ void *pld_smmu_get_mapping(struct device *dev);
 int pld_smmu_map(struct device *dev, phys_addr_t paddr,
 		 uint32_t *iova_addr, size_t size);
 unsigned int pld_socinfo_get_serial_number(struct device *dev);
-
-void pld_enable_irq(struct device *dev, unsigned int ce_id);
-void pld_disable_irq(struct device *dev, unsigned int ce_id);
 #endif

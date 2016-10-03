@@ -208,7 +208,20 @@ void hdd_wlan_suspend_resume_event(uint8_t state) {}
  * enabling/disabling appropriate copy engine irqs.
  */
 #ifdef WLAN_SUSPEND_RESUME_TEST
+/**
+ * hdd_wlan_fake_apps_resume() - Resume from unit-test triggered suspend
+ * @wiphy: wiphy struct from a validated hdd context
+ *
+ * Return: Zero on success, calls QDF_BUG() on failure
+ */
 int hdd_wlan_fake_apps_resume(struct wiphy *wiphy);
+
+/**
+ * hdd_wlan_fake_apps_suspend() - Initiate a unit-test triggered suspend
+ * @wiphy: wiphy struct from a validated hdd context
+ *
+ * Return: Zero on success, suspend related non-zero error code on failure
+ */
 int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy);
 #else
 static inline int hdd_wlan_fake_apps_resume(struct wiphy *wiphy)

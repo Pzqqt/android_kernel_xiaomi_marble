@@ -2356,7 +2356,7 @@ int hdd_set_qpower_config(hdd_context_t *hddctx, hdd_adapter_t *adapter,
 
 #ifdef WLAN_SUSPEND_RESUME_TEST
 /*
- * On Rome/iHelium there are 12 CE irqs and #2 is the wake irq. This may not be
+ * On iHelium there are 12 CE irqs and #2 is the wake irq. This may not be
  * a valid assumption on future platforms.
  */
 #define CE_IRQ_COUNT 12
@@ -2366,7 +2366,41 @@ static struct wiphy *g_wiphy;
 #define HDD_FA_SUSPENDED_BIT (0)
 static unsigned long fake_apps_state;
 
-static int __hdd_wlan_fake_apps_resume(struct wiphy *wiphy);
+/**
+ * __hdd_wlan_fake_apps_resume() - The core logic for
+ *	hdd_wlan_fake_apps_resume() skipping the call to hif_fake_apps_resume(),
+ *	which is only need for non-irq resume
+ * @wiphy: wiphy struct from a validated hdd context
+ *
+ * Return: Zero on success, calls QDF_BUG() on failure
+ */
+static void __hdd_wlan_fake_apps_resume(struct wiphy *wiphy)
+{
+	qdf_device_t qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	int i, resume_err;
+
+	hdd_info("Unit-test resume WLAN");
+	if (!test_and_clear_bit(HDD_FA_SUSPENDED_BIT, &fake_apps_state)) {
+		hdd_info("Not unit-test suspended; Nothing to do");
+		return;
+	}
+
+	/* disable wake irq */
+	pld_disable_irq(qdf_dev->dev, CE_WAKE_IRQ);
+
+	resume_err = wlan_hdd_bus_resume_noirq();
+	QDF_BUG(resume_err == 0);
+
+	/* simulate kernel enable irqs */
+	for (i = 0; i < CE_IRQ_COUNT; i++)
+		pld_enable_irq(qdf_dev->dev, i);
+
+	resume_err = wlan_hdd_bus_resume();
+	QDF_BUG(resume_err == 0);
+
+	resume_err = wlan_hdd_cfg80211_resume_wlan(wiphy);
+	QDF_BUG(resume_err == 0);
+}
 
 /**
  * hdd_wlan_fake_apps_resume_irq_callback() - Irq callback function for resuming
@@ -2386,12 +2420,6 @@ static void hdd_wlan_fake_apps_resume_irq_callback(uint32_t val)
 	g_wiphy = NULL;
 }
 
-/**
- * hdd_wlan_fake_apps_suspend() - Initiate a unit-test triggered suspend
- * @wiphy: wiphy struct from a validated hdd context
- *
- * Return: Zero on success, suspend related non-zero error code on failure
- */
 int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy)
 {
 	qdf_device_t qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
@@ -2449,62 +2477,12 @@ resume_done:
 	return suspend_err;
 }
 
-/**
- * hdd_wlan_fake_apps_resume() - Resume from unit-test triggered suspend
- * @wiphy: wiphy struct from a validated hdd context
- *
- * Return: Zero on success, calls QDF_BUG() on failure
- */
 int hdd_wlan_fake_apps_resume(struct wiphy *wiphy)
 {
 	struct hif_opaque_softc *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-	int err;
 
 	hif_fake_apps_resume(hif_ctx);
-	err = __hdd_wlan_fake_apps_resume(wiphy);
-	if (err) {
-		hif_fake_apps_suspend(hif_ctx,
-				      hdd_wlan_fake_apps_resume_irq_callback);
-		return err;
-	}
-
-	return 0;
-}
-
-/**
- * __hdd_wlan_fake_apps_resume() - The core logic for
- *	hdd_wlan_fake_apps_resume() skipping the call to hif_fake_apps_resume(),
- *	which is only need for non-irq resume
- * @wiphy: wiphy struct from a validated hdd context
- *
- * Return: Zero on success, calls QDF_BUG() on failure
- */
-static int __hdd_wlan_fake_apps_resume(struct wiphy *wiphy)
-{
-	qdf_device_t qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-	int i, resume_err;
-
-	hdd_info("Unit-test resume WLAN");
-	if (!test_and_clear_bit(HDD_FA_SUSPENDED_BIT, &fake_apps_state)) {
-		hdd_info("Not unit-test suspended; Nothing to do");
-		return 0;
-	}
-
-	/* disable wake irq */
-	pld_disable_irq(qdf_dev->dev, CE_WAKE_IRQ);
-
-	resume_err = wlan_hdd_bus_resume_noirq();
-	QDF_BUG(resume_err == 0);
-
-	/* simulate kernel enable irqs */
-	for (i = 0; i < CE_IRQ_COUNT; i++)
-		pld_enable_irq(qdf_dev->dev, i);
-
-	resume_err = wlan_hdd_bus_resume();
-	QDF_BUG(resume_err == 0);
-
-	resume_err = wlan_hdd_cfg80211_resume_wlan(wiphy);
-	QDF_BUG(resume_err == 0);
+	__hdd_wlan_fake_apps_resume(wiphy);
 
 	return 0;
 }
