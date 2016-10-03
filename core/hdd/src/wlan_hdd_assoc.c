@@ -277,38 +277,6 @@ hdd_conn_get_connected_cipher_algo(hdd_station_ctx_t *pHddStaCtx,
 }
 
 /**
- * hdd_conn_save_connected_bss_type() - set connected bss type
- * @pHddStaCtx: pointer to global HDD Station context
- * @csr_roamBssType: bss type
- *
- * Return: none
- */
-static inline void
-hdd_conn_save_connected_bss_type(hdd_station_ctx_t *pHddStaCtx,
-				 eCsrRoamBssType csr_roamBssType)
-{
-	switch (csr_roamBssType) {
-	case eCSR_BSS_TYPE_INFRASTRUCTURE:
-		pHddStaCtx->conn_info.connDot11DesiredBssType =
-			eMib_dot11DesiredBssType_infrastructure;
-		break;
-
-	case eCSR_BSS_TYPE_IBSS:
-	case eCSR_BSS_TYPE_START_IBSS:
-		pHddStaCtx->conn_info.connDot11DesiredBssType =
-			eMib_dot11DesiredBssType_independent;
-		break;
-
-	/** We will never set the BssType to 'any' when attempting a connection
-	      so CSR should never send this back to us.*/
-	case eCSR_BSS_TYPE_ANY:
-	default:
-		QDF_ASSERT(0);
-		break;
-	}
-}
-
-/**
  * hdd_remove_beacon_filter() - remove beacon filter
  * @adapter: Pointer to the hdd adapter
  *
@@ -920,8 +888,6 @@ hdd_conn_save_connect_info(hdd_adapter_t *pAdapter, tCsrRoamInfo *pRoamInfo,
 		}
 		hdd_save_bss_info(pAdapter, pRoamInfo);
 	}
-	/* save the connected BssType */
-	hdd_conn_save_connected_bss_type(pHddStaCtx, eBssType);
 }
 
 /**
@@ -1444,8 +1410,6 @@ static void hdd_conn_remove_connect_info(hdd_station_ctx_t *pHddStaCtx)
 	qdf_mem_zero(&pHddStaCtx->conn_info.Keys, sizeof(tCsrKeys));
 	qdf_mem_zero(&pHddStaCtx->ibss_enc_key, sizeof(tCsrRoamSetKey));
 
-	/* Set not-connected state */
-	pHddStaCtx->conn_info.connDot11DesiredBssType = eCSR_BSS_TYPE_ANY;
 	pHddStaCtx->conn_info.proxyARPService = 0;
 
 	qdf_mem_zero(&pHddStaCtx->conn_info.SSID, sizeof(tCsrSSIDInfo));
