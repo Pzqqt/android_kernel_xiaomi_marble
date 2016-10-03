@@ -323,7 +323,13 @@ QDF_STATUS cds_open(void)
 	 * and keeps correct limit in cds_cfg.max_station. So, make sure
 	 * config entry pHddCtx->config->maxNumberOfPeers has adjusted value
 	 */
-	pHddCtx->config->maxNumberOfPeers = cds_cfg->max_station;
+	/* In FTM mode cds_cfg->max_stations will be zero. On updating same
+	 * into hdd context config entry, leads to pe_open() to fail, if
+	 * con_mode change happens from FTM mode to any other mode.
+	 */
+	if (DRIVER_TYPE_PRODUCTION == cds_cfg->driver_type)
+		pHddCtx->config->maxNumberOfPeers = cds_cfg->max_station;
+
 	HTCHandle = cds_get_context(QDF_MODULE_ID_HTC);
 	if (!HTCHandle) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
