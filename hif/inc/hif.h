@@ -680,6 +680,7 @@ void hif_process_runtime_suspend_failure(struct hif_opaque_softc *);
 void hif_process_runtime_resume_success(struct hif_opaque_softc *);
 #endif
 
+int hif_get_irq_num(struct hif_opaque_softc *scn, int *irq, uint32_t size);
 int hif_dump_registers(struct hif_opaque_softc *scn);
 int ol_copy_ramdump(struct hif_opaque_softc *scn);
 void hif_crash_shutdown(struct hif_opaque_softc *hif_ctx);

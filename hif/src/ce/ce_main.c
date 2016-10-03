@@ -2805,14 +2805,26 @@ int hif_dump_ce_registers(struct hif_softc *scn)
 				HIF_ERROR("Dumping CE register failed!");
 				return -EACCES;
 		}
-		HIF_ERROR("CE%d Registers:", i);
+		HIF_ERROR("CE%d=>\n", i);
 		qdf_trace_hex_dump(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_DEBUG,
 				   (uint8_t *) &ce_reg_values[0],
 				   ce_reg_word_size * sizeof(uint32_t));
+		qdf_print("ADDR:[0x%08X], SR_WR_INDEX:%d\n", (ce_reg_address
+				+ SR_WR_INDEX_ADDRESS),
+				ce_reg_values[SR_WR_INDEX_ADDRESS/4]);
+		qdf_print("ADDR:[0x%08X], CURRENT_SRRI:%d\n", (ce_reg_address
+				+ CURRENT_SRRI_ADDRESS),
+				ce_reg_values[CURRENT_SRRI_ADDRESS/4]);
+		qdf_print("ADDR:[0x%08X], DST_WR_INDEX:%d\n", (ce_reg_address
+				+ DST_WR_INDEX_ADDRESS),
+				ce_reg_values[DST_WR_INDEX_ADDRESS/4]);
+		qdf_print("ADDR:[0x%08X], CURRENT_DRRI:%d\n", (ce_reg_address
+				+ CURRENT_DRRI_ADDRESS),
+				ce_reg_values[CURRENT_DRRI_ADDRESS/4]);
+		qdf_print("---\n");
 	}
 	return 0;
 }
-
 #ifdef QCA_NSS_WIFI_OFFLOAD_SUPPORT
 struct hif_pipe_addl_info *hif_get_addl_pipe_info(struct hif_opaque_softc *osc,
 		struct hif_pipe_addl_info *hif_info, uint32_t pipe)

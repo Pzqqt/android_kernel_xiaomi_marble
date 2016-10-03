@@ -304,6 +304,33 @@ bool hif_pci_targ_is_present(struct hif_softc *scn, void *__iomem *mem)
 	return 1;               /* FIX THIS */
 }
 
+int hif_get_irq_num(struct hif_opaque_softc *scn, int *irq, uint32_t size)
+{
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
+	int i = 0;
+
+	if (!irq || !size) {
+		return -EINVAL;
+	}
+
+	if (!sc->num_msi_intrs || sc->num_msi_intrs == 1) {
+		irq[0] = sc->irq;
+		return 1;
+	}
+
+	if (sc->num_msi_intrs > size) {
+		qdf_print("Not enough space in irq buffer to return irqs\n");
+		return -EINVAL;
+	}
+
+	for (i = 0; i < sc->num_msi_intrs; i++) {
+		irq[i] = sc->irq +  i + MSI_ASSIGN_CE_INITIAL;
+	}
+
+	return sc->num_msi_intrs;
+}
+
+
 /**
  * hif_pci_cancel_deferred_target_sleep() - cancels the defered target sleep
  * @scn: hif_softc
