@@ -14760,6 +14760,7 @@ QDF_STATUS sme_wifi_start_logger(tHalHandle hal,
 	req_msg->ring_id = start_log.ring_id;
 	req_msg->ini_triggered = start_log.ini_triggered;
 	req_msg->user_triggered = start_log.user_triggered;
+	req_msg->size = start_log.size;
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (status != QDF_STATUS_SUCCESS) {

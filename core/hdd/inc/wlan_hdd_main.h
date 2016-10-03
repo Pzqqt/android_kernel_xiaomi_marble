@@ -1802,14 +1802,19 @@ static inline QDF_STATUS hdd_register_for_sap_restart_with_channel_switch(void)
 #endif
 
 #if !defined(REMOVE_PKT_LOG)
-int hdd_process_pktlog_command(hdd_context_t *hdd_ctx, uint32_t set_value);
-int hdd_pktlog_enable_disable(hdd_context_t *hdd_ctx, bool enable, uint8_t);
+int hdd_process_pktlog_command(hdd_context_t *hdd_ctx, uint32_t set_value,
+			       int set_value2);
+int hdd_pktlog_enable_disable(hdd_context_t *hdd_ctx, bool enable,
+			      uint8_t user_triggered, int size);
+
 #else
-int hdd_pktlog_enable_disable(hdd_context_t *hdd_ctx, bool enable, uint8_t)
+static inline int hdd_pktlog_enable_disable(hdd_context_t *hdd_ctx, bool enable,
+					    uint8_t user_triggered, int size)
 {
 	return 0;
 }
-int hdd_process_pktlog_command(hdd_context_t *hdd_ctx, uint32_t set_value)
+static inline int hdd_process_pktlog_command(hdd_context_t *hdd_ctx,
+					     uint32_t set_value, int set_value2)
 {
 	return 0;
 }

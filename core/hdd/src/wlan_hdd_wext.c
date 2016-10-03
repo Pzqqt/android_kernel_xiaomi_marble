@@ -5382,11 +5382,6 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 		break;
 	}
-	case WE_SET_PKTLOG:
-	{
-		hdd_process_pktlog_command(hdd_ctx, set_value);
-		break;
-	}
 	case WE_SET_HIGHER_DTIM_TRANSITION:
 	{
 		if (!((set_value == false) || (set_value == true))) {
@@ -8236,6 +8231,22 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	}
 	break;
 #endif
+	case WE_SET_PKTLOG:
+	{
+		int ret;
+
+		if (num_args < 1 || num_args > 2) {
+			hdd_err("pktlog: either 1 or 2 parameters are required");
+			return -EINVAL;
+		}
+
+		ret = hdd_process_pktlog_command(hdd_ctx, apps_args[0],
+						   apps_args[1]);
+		if (ret)
+			return ret;
+		break;
+	}
+
 	case WE_MAC_PWR_DEBUG_CMD:
 	{
 		struct sir_mac_pwr_dbg_cmd mac_pwr_dbg_args;
@@ -10065,7 +10076,7 @@ static const struct iw_priv_args we_private_args[] = {
 	 "setTxMaxPower5G"},
 
 	{WE_SET_PKTLOG,
-	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
 	 0,
 	 "pktlog"},
 

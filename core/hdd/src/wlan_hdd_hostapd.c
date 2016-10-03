@@ -3603,8 +3603,13 @@ static __iw_softap_set_pktlog(struct net_device *dev,
 	if (NULL == value)
 		return -ENOMEM;
 
+	if (wrqu->data.length < 1 || wrqu->data.length > 2) {
+		hdd_err("pktlog: either 1 or 2 parameters are required");
+		return -EINVAL;
+	}
+
 	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
-	return hdd_process_pktlog_command(hdd_ctx, value[0]);
+	return hdd_process_pktlog_command(hdd_ctx, value[0], value[1]);
 }
 
 int
@@ -5488,7 +5493,7 @@ static const struct iw_priv_args hostapd_private_args[] = {
 	,
 	{
 		QCSAP_IOCTL_SET_PKTLOG,
-		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+		IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
 		0, "pktlog"
 	}
 	,

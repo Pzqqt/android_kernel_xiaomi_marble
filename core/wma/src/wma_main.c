@@ -5778,6 +5778,8 @@ void wma_enable_specific_fw_logs(tp_wma_handle wma_handle,
 }
 
 #if !defined(REMOVE_PKT_LOG)
+
+#define MEGABYTE	(1024 * 1024)
 /**
  * wma_set_wifi_start_packet_stats() - Start/stop packet stats
  * @wma_handle: WMA handle
@@ -5820,6 +5822,11 @@ void wma_set_wifi_start_packet_stats(void *wma_handle,
 	log_state = ATH_PKTLOG_ANI | ATH_PKTLOG_RCUPDATE | ATH_PKTLOG_RCFIND |
 		ATH_PKTLOG_RX | ATH_PKTLOG_TX |
 		ATH_PKTLOG_TEXT | ATH_PKTLOG_SW_EVENT;
+
+	if (start_log->size != 0) {
+		pktlog_setsize(scn, start_log->size * MEGABYTE);
+		return;
+	}
 
 	if (start_log->verbose_level == WLAN_LOG_LEVEL_ACTIVE) {
 		pktlog_enable(scn, log_state, start_log->ini_triggered,

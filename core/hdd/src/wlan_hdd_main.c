@@ -7062,14 +7062,53 @@ static inline void hdd_release_rtnl_lock(void) { }
 
 #if !defined(REMOVE_PKT_LOG)
 
+/* MAX iwpriv command support */
+#define PKTLOG_SET_BUFF_SIZE	3
+#define MAX_PKTLOG_SIZE		16
+
+/**
+ * hdd_pktlog_set_buff_size() - set pktlog buffer size
+ * @hdd_ctx: hdd context
+ * @set_value2: pktlog buffer size value
+ *
+ *
+ * Return: 0 for success or error.
+ */
+static int hdd_pktlog_set_buff_size(hdd_context_t *hdd_ctx, int set_value2)
+{
+	struct sir_wifi_start_log start_log = { 0 };
+	QDF_STATUS status;
+
+	start_log.ring_id = RING_ID_PER_PACKET_STATS;
+	start_log.verbose_level = WLAN_LOG_LEVEL_OFF;
+	start_log.ini_triggered = cds_is_packet_log_enabled();
+	start_log.user_triggered = 1;
+	start_log.size = set_value2;
+
+	status = sme_wifi_start_logger(hdd_ctx->hHal, start_log);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("sme_wifi_start_logger failed(err=%d)", status);
+		EXIT();
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 /**
  * hdd_process_pktlog_command() - process pktlog command
  * @hdd_ctx: hdd context
  * @set_value: value set by user
+ * @set_value2: pktlog buffer size value
+ *
+ * This function process pktlog command.
+ * set_value2 only matters when set_value is 3 (set buff size)
+ * otherwise we ignore it.
  *
  * Return: 0 for success or error.
  */
-int hdd_process_pktlog_command(hdd_context_t *hdd_ctx, uint32_t set_value)
+int hdd_process_pktlog_command(hdd_context_t *hdd_ctx, uint32_t set_value,
+			       int set_value2)
 {
 	int ret;
 	bool enable;
@@ -7079,11 +7118,22 @@ int hdd_process_pktlog_command(hdd_context_t *hdd_ctx, uint32_t set_value)
 	if (0 != ret)
 		return ret;
 
-	hdd_info("set pktlog %d", set_value);
+	hdd_info("set pktlog %d, set size %d", set_value, set_value2);
 
-	if (set_value > 2) {
+	if (set_value > PKTLOG_SET_BUFF_SIZE) {
 		hdd_err("invalid pktlog value %d", set_value);
 		return -EINVAL;
+	}
+
+	if (set_value == PKTLOG_SET_BUFF_SIZE) {
+		if (set_value2 <= 0) {
+			hdd_err("invalid pktlog size %d", set_value2);
+			return -EINVAL;
+		} else if (set_value2 > MAX_PKTLOG_SIZE) {
+			hdd_err("Pktlog buff size is too large. max value is 16MB.\n");
+			return -EINVAL;
+		}
+		return hdd_pktlog_set_buff_size(hdd_ctx, set_value2);
 	}
 
 	/*
@@ -7100,17 +7150,19 @@ int hdd_process_pktlog_command(hdd_context_t *hdd_ctx, uint32_t set_value)
 		user_triggered = 1;
 	}
 
-	return hdd_pktlog_enable_disable(hdd_ctx, enable, user_triggered);
+	return hdd_pktlog_enable_disable(hdd_ctx, enable, user_triggered, 0);
 }
 /**
  * hdd_pktlog_enable_disable() - Enable/Disable packet logging
  * @hdd_ctx: HDD context
  * @enable: Flag to enable/disable
+ * @user_triggered: triggered through iwpriv
+ * @size: buffer size to be used for packetlog
  *
  * Return: 0 on success; error number otherwise
  */
 int hdd_pktlog_enable_disable(hdd_context_t *hdd_ctx, bool enable,
-				uint8_t user_triggered)
+				uint8_t user_triggered, int size)
 {
 	struct sir_wifi_start_log start_log;
 	QDF_STATUS status;
@@ -7120,6 +7172,7 @@ int hdd_pktlog_enable_disable(hdd_context_t *hdd_ctx, bool enable,
 			enable ? WLAN_LOG_LEVEL_ACTIVE : WLAN_LOG_LEVEL_OFF;
 	start_log.ini_triggered = cds_is_packet_log_enabled();
 	start_log.user_triggered = user_triggered;
+	start_log.size = size;
 	/*
 	 * Use "is_iwpriv_command" flag to distinguish iwpriv command from other
 	 * commands. Host uses this flag to decide whether to send pktlog
@@ -8048,7 +8101,7 @@ int hdd_wlan_startup(struct device *dev)
 
 
 	if (cds_is_packet_log_enabled())
-		hdd_pktlog_enable_disable(hdd_ctx, true, 0);
+		hdd_pktlog_enable_disable(hdd_ctx, true, 0, 0);
 
 	ret = hdd_register_notifiers(hdd_ctx);
 	if (ret)

@@ -4345,6 +4345,9 @@ static int __wlan_hdd_cfg80211_wifi_logger_start(struct wiphy *wiphy,
 			tb[QCA_WLAN_VENDOR_ATTR_WIFI_LOGGER_FLAGS]);
 	hdd_info("is_iwpriv_command =%d", start_log.is_iwpriv_command);
 
+	/* size is buff size which can be set using iwpriv command*/
+	start_log.size = 0;
+
 	cds_set_ring_log_level(start_log.ring_id, start_log.verbose_level);
 
 	if (start_log.ring_id == RING_ID_WAKELOCK) {

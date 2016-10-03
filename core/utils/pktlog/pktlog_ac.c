@@ -484,12 +484,15 @@ int pktlog_setsize(struct hif_opaque_softc *scn, int32_t size)
 	if (size < 0)
 		return -EINVAL;
 
-	if (size == pl_info->buf_size)
+	if (size == pl_info->buf_size) {
+		qdf_print("%s: Pktlog Buff Size is already of same size.",
+			  __func__);
 		return 0;
+	}
 
 	if (pl_info->log_state) {
-		printk
-			("Logging should be disabled before changing bufer size\n");
+		qdf_print("%s: Logging should be disabled before changing"
+			  "buffer size.", __func__);
 		return -EINVAL;
 	}
 
@@ -505,8 +508,10 @@ int pktlog_setsize(struct hif_opaque_softc *scn, int32_t size)
 		pl_dev->tgt_pktlog_alloced = false;
 	}
 
-	if (size != 0)
+	if (size != 0) {
+		qdf_print("%s: New Pktlog Buff Size is %d\n", __func__, size);
 		pl_info->buf_size = size;
+	}
 
 	return 0;
 }
