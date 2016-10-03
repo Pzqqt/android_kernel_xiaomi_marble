@@ -277,29 +277,6 @@ hdd_conn_get_connected_cipher_algo(hdd_station_ctx_t *pHddStaCtx,
 }
 
 /**
- * hdd_conn_get_connected_bss_type() - get current bss type
- * @pHddStaCtx: pointer to global HDD Station context
- * @pConnectedBssType: pointer to connected bss type
- *
- * Return: false if any errors encountered, true otherwise
- */
-inline bool
-hdd_conn_get_connected_bss_type(hdd_station_ctx_t *pHddStaCtx,
-				eMib_dot11DesiredBssType *pConnectedBssType)
-{
-	bool fConnected = false;
-
-	fConnected = hdd_conn_get_connection_state(pHddStaCtx, NULL);
-
-	if (pConnectedBssType) {
-		*pConnectedBssType =
-			pHddStaCtx->conn_info.connDot11DesiredBssType;
-	}
-
-	return fConnected;
-}
-
-/**
  * hdd_conn_save_connected_bss_type() - set connected bss type
  * @pHddStaCtx: pointer to global HDD Station context
  * @csr_roamBssType: bss type

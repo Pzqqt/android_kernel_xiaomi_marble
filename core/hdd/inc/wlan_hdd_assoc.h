@@ -261,17 +261,6 @@ QDF_STATUS hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo,
 				 eCsrRoamResult roamResult);
 
 /**
- * hdd_conn_get_connected_bss_type() - get current bss type
- * @pHddStaCtx:         pointer to global HDD Station context
- * @pConnectedBssType:  pointer to connected bss type
- *
- * Return: false if any errors encountered, true otherwise
- */
-bool
-hdd_conn_get_connected_bss_type(hdd_station_ctx_t *pHddStaCtx,
-				eMib_dot11DesiredBssType *pConnectedBssType);
-
-/**
  * hdd_set_genie_to_csr() - set genie to csr
  * @pAdapter: pointer to adapter
  * @RSNAuthType: pointer to auth type
