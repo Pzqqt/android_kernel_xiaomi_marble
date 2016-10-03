@@ -2468,6 +2468,14 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_ENABLE_VHT_FOR_24GHZ_MIN,
 		     CFG_ENABLE_VHT_FOR_24GHZ_MAX),
 
+
+	REG_VARIABLE(CFG_ENABLE_VENDOR_VHT_FOR_24GHZ_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, enable_sap_vendor_vht,
+		     VAR_FLAGS_OPTIONAL,
+		     CFG_ENABLE_VENDOR_VHT_FOR_24GHZ_DEFAULT,
+		     CFG_ENABLE_VENDOR_VHT_FOR_24GHZ_MIN,
+		     CFG_ENABLE_VENDOR_VHT_FOR_24GHZ_MAX),
+
 	REG_DYNAMIC_VARIABLE(CFG_ENABLE_FAST_ROAM_IN_CONCURRENCY,
 			     WLAN_PARAM_Integer,
 			     struct hdd_config, bFastRoamInConIniFeatureEnabled,
@@ -5568,6 +5576,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		CFG_IGNORE_PEER_HT_MODE_NAME,
 		pHddCtx->config->ignore_peer_ht_opmode);
 	hdd_info("Name = [%s] Value = [%u]",
+		 CFG_ENABLE_VENDOR_VHT_FOR_24GHZ_NAME,
+		 pHddCtx->config->enable_sap_vendor_vht);
+	hdd_info("Name = [%s] Value = [%u]",
 		CFG_ENABLE_FATAL_EVENT_TRIGGER,
 		pHddCtx->config->enable_fatal_event);
 	hdd_info("Name = [%s] Value = [%u]",
@@ -6918,6 +6929,8 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 		pConfig->enable_txbf_sap_mode;
 	smeConfig->csrConfig.enable2x2 = pConfig->enable2x2;
 	smeConfig->csrConfig.enableVhtFor24GHz = pConfig->enableVhtFor24GHzBand;
+	smeConfig->csrConfig.vendor_vht_sap =
+		pConfig->enable_sap_vendor_vht;
 	smeConfig->csrConfig.enableMuBformee = pConfig->enableMuBformee;
 	smeConfig->csrConfig.enableVhtpAid = pConfig->enableVhtpAid;
 	smeConfig->csrConfig.enableVhtGid = pConfig->enableVhtGid;

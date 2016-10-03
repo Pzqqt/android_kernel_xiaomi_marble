@@ -2427,6 +2427,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->isRoamOffloadEnabled;
 #endif
 		pMac->roam.configParam.obssEnabled = pParam->obssEnabled;
+		pMac->roam.configParam.vendor_vht_sap =
+			pParam->vendor_vht_sap;
 		pMac->roam.configParam.conc_custom_rule1 =
 			pParam->conc_custom_rule1;
 		pMac->roam.configParam.conc_custom_rule2 =
@@ -2653,8 +2655,10 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->enable_dot11p = pMac->enable_dot11p;
 	csr_set_channels(pMac, pParam);
 	pParam->obssEnabled = cfg_params->obssEnabled;
+	pParam->vendor_vht_sap =
+		pMac->roam.configParam.vendor_vht_sap;
 	pParam->roam_dense_rssi_thresh_offset =
-			cfg_params->roam_params.dense_rssi_thresh_offset;
+		cfg_params->roam_params.dense_rssi_thresh_offset;
 	pParam->roam_dense_min_aps =
 			cfg_params->roam_params.dense_min_aps_cnt;
 	pParam->roam_dense_traffic_thresh =
@@ -14282,10 +14286,11 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 					pIes->VHTCaps.numSoundingDim)
 				txBFCsnValue = QDF_MIN(txBFCsnValue,
 						pIes->VHTCaps.numSoundingDim);
-			else if (IS_BSS_VHT_CAPABLE(pIes->vendor2_ie.VHTCaps)
-				&& pIes->vendor2_ie.VHTCaps.numSoundingDim)
+			else if (IS_BSS_VHT_CAPABLE(pIes->vendor_vht_ie.VHTCaps)
+				&& pIes->vendor_vht_ie.VHTCaps.numSoundingDim)
 				txBFCsnValue = QDF_MIN(txBFCsnValue,
-					pIes->vendor2_ie.VHTCaps.numSoundingDim);
+					pIes->vendor_vht_ie.
+					VHTCaps.numSoundingDim);
 		}
 		csr_join_req->vht_config.csnof_beamformer_antSup = txBFCsnValue;
 
@@ -15074,6 +15079,8 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t sessionId
 		     sizeof(pParam->addIeParams));
 	pMsg->obssEnabled = pMac->roam.configParam.obssEnabled;
 	pMsg->sap_dot11mc = pParam->sap_dot11mc;
+	pMsg->vendor_vht_sap =
+			pMac->roam.configParam.vendor_vht_sap;
 
 	return cds_send_mb_message_to_mac(pMsg);
 }

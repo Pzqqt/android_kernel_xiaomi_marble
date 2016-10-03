@@ -304,14 +304,14 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 			pe_session->is_vendor_specific_vhtcaps) {
 		lim_log(mac_ctx, LOG1,
 			FL("Populate Vendor VHT IEs in Re-Assoc Request"));
-		frm.vendor2_ie.present = 1;
-		frm.vendor2_ie.type =
+		frm.vendor_vht_ie.present = 1;
+		frm.vendor_vht_ie.type =
 			pe_session->vendor_specific_vht_ie_type;
-		frm.vendor2_ie.sub_type =
+		frm.vendor_vht_ie.sub_type =
 			pe_session->vendor_specific_vht_ie_sub_type;
-		frm.vendor2_ie.VHTCaps.present = 1;
+		frm.vendor_vht_ie.VHTCaps.present = 1;
 		populate_dot11f_vht_caps(mac_ctx, pe_session,
-				&frm.vendor2_ie.VHTCaps);
+				&frm.vendor_vht_ie.VHTCaps);
 		vht_enabled = true;
 	}
 	status = dot11f_get_packed_re_assoc_request_size(mac_ctx, &frm,

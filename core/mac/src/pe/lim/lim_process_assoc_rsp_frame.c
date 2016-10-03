@@ -172,8 +172,8 @@ void lim_update_assoc_sta_datas(tpAniSirGlobal mac_ctx,
 
 	if (assoc_rsp->VHTCaps.present)
 		vht_caps = &assoc_rsp->VHTCaps;
-	else if (assoc_rsp->vendor2_ie.VHTCaps.present)
-		vht_caps = &assoc_rsp->vendor2_ie.VHTCaps;
+	else if (assoc_rsp->vendor_vht_ie.VHTCaps.present)
+		vht_caps = &assoc_rsp->vendor_vht_ie.VHTCaps;
 
 	if (IS_DOT11_MODE_VHT(session_entry->dot11mode)) {
 		if ((vht_caps != NULL) && vht_caps->present) {

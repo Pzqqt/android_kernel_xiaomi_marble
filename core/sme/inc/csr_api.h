@@ -1216,6 +1216,7 @@ typedef struct tagCsrConfigParam {
 	uint8_t enable_txbf_sap_mode;
 	uint8_t enable2x2;
 	bool enableVhtFor24GHz;
+	bool vendor_vht_sap;
 	uint8_t enableMuBformee;
 	uint8_t enableVhtpAid;
 	uint8_t enableVhtGid;

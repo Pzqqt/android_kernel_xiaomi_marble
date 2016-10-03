@@ -1974,6 +1974,16 @@ typedef enum {
 #define CFG_ENABLE_VHT_FOR_24GHZ_MAX              (1)
 #define CFG_ENABLE_VHT_FOR_24GHZ_DEFAULT          (0)
 
+/*
+ * Parameter to control VHT support based on vendor ie in 2.4 GHz band
+ * This parameter will enable SAP to read VHT capability in vendor ie in Assoc
+ * Req and send VHT caps in Resp to establish connection in VHT Mode.
+ */
+#define CFG_ENABLE_VENDOR_VHT_FOR_24GHZ_NAME      "gEnableVendorVhtFor24GHzBand"
+#define CFG_ENABLE_VENDOR_VHT_FOR_24GHZ_MIN       (0)
+#define CFG_ENABLE_VENDOR_VHT_FOR_24GHZ_MAX       (1)
+#define CFG_ENABLE_VENDOR_VHT_FOR_24GHZ_DEFAULT   (1)
+
 #define CFG_MAX_MEDIUM_TIME                      "gMaxMediumTime"
 #define CFG_MAX_MEDIUM_TIME_STAMIN               WNI_CFG_MAX_MEDIUM_TIME_STAMIN
 #define CFG_MAX_MEDIUM_TIME_STAMAX               WNI_CFG_MAX_MEDIUM_TIME_STAMAX
@@ -3889,6 +3899,7 @@ struct hdd_config {
 	bool enableSSR;
 	uint32_t cfgMaxMediumTime;
 	bool enableVhtFor24GHzBand;
+	bool enable_sap_vendor_vht;
 	/* Flag indicating whether legacy fast roam during concurrency is enabled in cfg.ini or not */
 	bool bFastRoamInConIniFeatureEnabled;
 	bool fEnableAdaptRxDrain;

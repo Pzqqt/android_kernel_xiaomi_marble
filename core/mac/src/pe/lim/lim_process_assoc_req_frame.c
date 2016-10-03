@@ -504,9 +504,19 @@ static bool lim_chk_11ac_only(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 			      tpPESession session, tpSirAssocReq assoc_req,
 			      uint8_t sub_type)
 {
+	tDot11fIEVHTCaps *vht_caps;
+
+	if (assoc_req->VHTCaps.present)
+		vht_caps = &assoc_req->VHTCaps;
+	else if (assoc_req->vendor_vht_ie.VHTCaps.present &&
+		 session->vendor_vht_sap)
+		vht_caps = &assoc_req->vendor_vht_ie.VHTCaps;
+	else
+		vht_caps = NULL;
+
 	if (LIM_IS_AP_ROLE(session) &&
 		(session->dot11mode == WNI_CFG_DOT11_MODE_11AC_ONLY) &&
-		(!assoc_req->VHTCaps.present)) {
+		((vht_caps != NULL) && (!vht_caps->present))) {
 		lim_send_assoc_rsp_mgmt_frame(mac_ctx,
 			eSIR_MAC_CAPABILITIES_NOT_SUPPORTED_STATUS,
 			1, hdr->sa, sub_type, 0, session);
@@ -1231,6 +1241,16 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 	tPmfSaQueryTimerId timer_id;
 	uint32_t retry_interval;
 #endif
+	tDot11fIEVHTCaps *vht_caps;
+
+	if (assoc_req->VHTCaps.present)
+		vht_caps = &assoc_req->VHTCaps;
+	else if (assoc_req->vendor_vht_ie.VHTCaps.present &&
+		 session->vendor_vht_sap)
+		vht_caps = &assoc_req->vendor_vht_ie.VHTCaps;
+	else
+		vht_caps = NULL;
+
 	/*
 	 * check here if the parsedAssocReq already pointing to the assoc_req
 	 * and free it before assigning this new assoc_req
@@ -1252,7 +1272,10 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 	}
 
 	sta_ds->mlmStaContext.htCapability = assoc_req->HTCaps.present;
-	sta_ds->mlmStaContext.vhtCapability = assoc_req->VHTCaps.present;
+	if ((vht_caps != NULL) && vht_caps->present)
+		sta_ds->mlmStaContext.vhtCapability = vht_caps->present;
+	else
+		sta_ds->mlmStaContext.vhtCapability = false;
 	sta_ds->qos.addtsPresent =
 		(assoc_req->addtsPresent == 0) ? false : true;
 	sta_ds->qos.addts = assoc_req->addtsReq;
@@ -1348,7 +1371,7 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 				(uint8_t) (assoc_req->operMode.chanWidth ?
 				eHT_CHANNEL_WIDTH_40MHZ :
 				eHT_CHANNEL_WIDTH_20MHZ);
-		} else if (assoc_req->VHTCaps.present) {
+		} else if ((vht_caps != NULL) && vht_caps->present) {
 			/*
 			 * Check if STA has enabled it's channel bonding mode.
 			 * If channel bonding mode is enabled, we decide based
@@ -1360,7 +1383,7 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 					WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ :
 					session->ch_width - 1);
 			sta_ds->htMaxRxAMpduFactor =
-				assoc_req->VHTCaps.maxAMPDULenExp;
+				vht_caps->maxAMPDULenExp;
 		}
 		/* Lesser among the AP and STA bandwidth of operation. */
 		sta_ds->htSupportedChannelWidthSet =
@@ -1373,9 +1396,10 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 			(uint8_t) assoc_req->HTCaps.advCodingCap;
 	}
 
-	if (assoc_req->VHTCaps.present && assoc_req->wmeInfoPresent) {
+	if ((vht_caps != NULL) && vht_caps->present &&
+	    assoc_req->wmeInfoPresent) {
 		sta_ds->vhtLdpcCapable =
-			(uint8_t) assoc_req->VHTCaps.ldpcCodingCap;
+			(uint8_t) vht_caps->ldpcCodingCap;
 	}
 
 	if (!assoc_req->wmeInfoPresent) {
@@ -1398,8 +1422,7 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 			&(assoc_req->supportedRates),
 			&(assoc_req->extendedRates),
 			assoc_req->HTCaps.supportedMCSSet,
-			session, &assoc_req->VHTCaps) != eSIR_SUCCESS)
-	{
+			session, vht_caps) != eSIR_SUCCESS) {
 		/* Could not update hash table entry at DPH with rateset */
 		lim_log(mac_ctx, LOGE,
 			FL("Couldn't update hash entry for aid=%d, MacAddr: "

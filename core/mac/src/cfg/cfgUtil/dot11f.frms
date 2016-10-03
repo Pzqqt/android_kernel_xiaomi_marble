@@ -2894,7 +2894,7 @@ MULTIIE P2PDisAssoc ( EID_VENDOR_SPECIFIC ) OUI( 0x50, 0x6F, 0x9A, 0x09 )
    MANDATORYTLV MinorReasonCode;
 }
 
-IE vendor2_ie (EID_VENDOR_SPECIFIC) OUI (0x00, 0x90, 0x4c)
+IE vendor_vht_ie (EID_VENDOR_SPECIFIC) OUI (0x00, 0x90, 0x4c)
 {
    type, 1;
    sub_type, 1;
@@ -2957,7 +2957,7 @@ FRAME Beacon                              // C.f. Sec. 7.2.3.1
     OPTIE  WiderBWChanSwitchAnn;
     OPTIE  OBSSScanParameters;
     OPTIE  Vendor1IE;
-    OPTIE  vendor2_ie;
+    OPTIE  vendor_vht_ie;
     OPTIE  Vendor3IE;
     OPTIE  hs20vendor_ie;
     OPTIE  ChannelSwitchWrapper;
@@ -3046,7 +3046,7 @@ FRAME Beacon2
     OPTIE  WiderBWChanSwitchAnn;
     OPTIE  OBSSScanParameters;
     OPTIE  Vendor1IE;
-    OPTIE  vendor2_ie;
+    OPTIE  vendor_vht_ie;
     OPTIE  Vendor3IE;
     OPTIE  hs20vendor_ie;
     OPTIE  ChannelSwitchWrapper;
@@ -3111,7 +3111,7 @@ FRAME BeaconIEs
     OPTIE  WiderBWChanSwitchAnn;
     OPTIE  OBSSScanParameters;
     OPTIE  Vendor1IE;
-    OPTIE  vendor2_ie;
+    OPTIE  vendor_vht_ie;
     OPTIE  Vendor3IE;
     OPTIE  hs20vendor_ie;
     OPTIE  ChannelSwitchWrapper;
@@ -3153,7 +3153,7 @@ FRAME AssocRequest                        // 7.2.3.4
     OPTIE  ExtCap;
     OPTIE  OperatingMode;
     OPTIE  QosMapSet;
-    OPTIE  vendor2_ie;
+    OPTIE  vendor_vht_ie;
     OPTIE  hs20vendor_ie;
 } // End frame AssocRequest.
 
@@ -3188,7 +3188,7 @@ FRAME AssocResponse                       // 7.2.3.5
     OPTIE  ExtCap;
     OPTIE  OBSSScanParameters;
     OPTIE  QosMapSet;
-    OPTIE  vendor2_ie;
+    OPTIE  vendor_vht_ie;
 } // End frame AssocResponse.
 
 FRAME ReAssocRequest                      // 7.2.3.6
@@ -3225,7 +3225,7 @@ FRAME ReAssocRequest                      // 7.2.3.6
     OPTIE  ExtCap;
     OPTIE  OperatingMode;
     OPTIE  QosMapSet;
-    OPTIE  vendor2_ie;
+    OPTIE  vendor_vht_ie;
     OPTIE  hs20vendor_ie;
 } // End frame ReAssocRequest.
 
@@ -3261,7 +3261,7 @@ FRAME ReAssocResponse                     // 7.2.3.7
     OPTIE  ExtCap;
     OPTIE  OBSSScanParameters;
     OPTIE  QosMapSet;
-    OPTIE  vendor2_ie;
+    OPTIE  vendor_vht_ie;
 } // End frame ReAssocResponse.
 
 FRAME ProbeRequest                        // 7.2.3.8
@@ -3328,7 +3328,7 @@ FRAME ProbeResponse                       // 7.2.3.9
     OPTIE  ExtCap;
     OPTIE  OBSSScanParameters;
     OPTIE  Vendor1IE;
-    OPTIE  vendor2_ie;
+    OPTIE  vendor_vht_ie;
     OPTIE  Vendor3IE;
     OPTIE  hs20vendor_ie;
     OPTIE  ChannelSwitchWrapper;

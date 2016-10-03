@@ -3224,12 +3224,12 @@ lim_check_and_announce_join_success(tpAniSirGlobal mac_ctx,
 	wlan_cfg_get_int(mac_ctx, WNI_CFG_DOT11_MODE, &selfStaDot11Mode);
 
 	if ((IS_DOT11_MODE_VHT(selfStaDot11Mode)) &&
-		beacon_probe_rsp->vendor2_ie.VHTCaps.present) {
+		beacon_probe_rsp->vendor_vht_ie.VHTCaps.present) {
 		session_entry->is_vendor_specific_vhtcaps = true;
 		session_entry->vendor_specific_vht_ie_type =
-			beacon_probe_rsp->vendor2_ie.type;
+			beacon_probe_rsp->vendor_vht_ie.type;
 		session_entry->vendor_specific_vht_ie_sub_type =
-			beacon_probe_rsp->vendor2_ie.sub_type;
+			beacon_probe_rsp->vendor_vht_ie.sub_type;
 		lim_log(mac_ctx, LOG1, FL(
 			"VHT caps are present in vendor specific IE"));
 	}
@@ -3678,13 +3678,13 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 		vht_caps =  &pAssocRsp->VHTCaps;
 		vht_oper = &pAssocRsp->VHTOperation;
 	} else if (psessionEntry->vhtCapability &&
-			pAssocRsp->vendor2_ie.VHTCaps.present){
+			pAssocRsp->vendor_vht_ie.VHTCaps.present){
 		pAddBssParams->vhtCapable =
-			pAssocRsp->vendor2_ie.VHTCaps.present;
+			pAssocRsp->vendor_vht_ie.VHTCaps.present;
 		lim_log(pMac, LOG1,
 			FL("VHT Caps and Operation are present in vendor Specfic IE"));
-		vht_caps = &pAssocRsp->vendor2_ie.VHTCaps;
-		vht_oper = &pAssocRsp->vendor2_ie.VHTOperation;
+		vht_caps = &pAssocRsp->vendor_vht_ie.VHTCaps;
+		vht_oper = &pAssocRsp->vendor_vht_ie.VHTOperation;
 	} else {
 		pAddBssParams->vhtCapable = 0;
 	}
@@ -3757,15 +3757,15 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 				pAddBssParams->staContext.lsigTxopProtection);
 		if (psessionEntry->vhtCapability &&
 				(IS_BSS_VHT_CAPABLE(pBeaconStruct->VHTCaps) ||
-				 IS_BSS_VHT_CAPABLE(
-					 pBeaconStruct->vendor2_ie.VHTCaps))) {
+				 IS_BSS_VHT_CAPABLE(pBeaconStruct->
+						    vendor_vht_ie.VHTCaps))) {
 			pAddBssParams->staContext.vhtCapable = 1;
 			pAddBssParams->staContext.vhtSupportedRxNss =
 				pStaDs->vhtSupportedRxNss;
 			if (pAssocRsp->VHTCaps.present)
 				vht_caps = &pAssocRsp->VHTCaps;
-			else if (pAssocRsp->vendor2_ie.VHTCaps.present) {
-				vht_caps = &pAssocRsp->vendor2_ie.VHTCaps;
+			else if (pAssocRsp->vendor_vht_ie.VHTCaps.present) {
+				vht_caps = &pAssocRsp->vendor_vht_ie.VHTCaps;
 				lim_log(pMac, LOG1, FL(
 					"VHT Caps are in vendor Specfic IE"));
 			}
@@ -3790,8 +3790,9 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 				pAssocRsp->HTInfo.recommendedTxWidthSet;
 			if (pAssocRsp->VHTCaps.present)
 				vht_oper = &pAssocRsp->VHTOperation;
-			else if (pAssocRsp->vendor2_ie.VHTCaps.present) {
-				vht_oper = &pAssocRsp->vendor2_ie.VHTOperation;
+			else if (pAssocRsp->vendor_vht_ie.VHTCaps.present) {
+				vht_oper = &pAssocRsp->
+						vendor_vht_ie.VHTOperation;
 				lim_log(pMac, LOG1, FL(
 					"VHT Op IE is in vendor Specfic IE"));
 			}
@@ -3874,8 +3875,8 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 
 			if (pAssocRsp->VHTCaps.present)
 				vht_caps = &pAssocRsp->VHTCaps;
-			else if (pAssocRsp->vendor2_ie.VHTCaps.present) {
-				vht_caps = &pAssocRsp->vendor2_ie.VHTCaps;
+			else if (pAssocRsp->vendor_vht_ie.VHTCaps.present) {
+				vht_caps = &pAssocRsp->vendor_vht_ie.VHTCaps;
 				lim_log(pMac, LOG1, FL(
 					"VHT Caps is in vendor Specfic IE"));
 			}
@@ -4218,13 +4219,13 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 		pAddBssParams->currentOperChannel);
 	if (psessionEntry->vhtCapability &&
 		(IS_BSS_VHT_CAPABLE(pBeaconStruct->VHTCaps) ||
-		 IS_BSS_VHT_CAPABLE(pBeaconStruct->vendor2_ie.VHTCaps))) {
+		 IS_BSS_VHT_CAPABLE(pBeaconStruct->vendor_vht_ie.VHTCaps))) {
 
 		pAddBssParams->vhtCapable = 1;
 		if (pBeaconStruct->VHTOperation.present)
 			vht_oper = &pBeaconStruct->VHTOperation;
-		else if (pBeaconStruct->vendor2_ie.VHTOperation.present) {
-			vht_oper = &pBeaconStruct->vendor2_ie.VHTOperation;
+		else if (pBeaconStruct->vendor_vht_ie.VHTOperation.present) {
+			vht_oper = &pBeaconStruct->vendor_vht_ie.VHTOperation;
 			lim_log(pMac, LOG1,
 					FL("VHT Operation is present in vendor Specfic IE"));
 		}
@@ -4301,12 +4302,13 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 		if (psessionEntry->vhtCapability &&
 			(IS_BSS_VHT_CAPABLE(pBeaconStruct->VHTCaps) ||
 			 IS_BSS_VHT_CAPABLE(
-				 pBeaconStruct->vendor2_ie.VHTCaps))) {
+				 pBeaconStruct->vendor_vht_ie.VHTCaps))) {
 			pAddBssParams->staContext.vhtCapable = 1;
 			if (pBeaconStruct->VHTCaps.present)
 				vht_caps = &pBeaconStruct->VHTCaps;
-			else if (pBeaconStruct->vendor2_ie.VHTCaps.present)
-				vht_caps = &pBeaconStruct->vendor2_ie.VHTCaps;
+			else if (pBeaconStruct->vendor_vht_ie.VHTCaps.present)
+				vht_caps = &pBeaconStruct->
+						vendor_vht_ie.VHTCaps;
 
 			if ((vht_caps != NULL) && (vht_caps->suBeamFormerCap ||
 				vht_caps->muBeamformerCap) &&
@@ -4389,9 +4391,9 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 
 			if (pBeaconStruct->VHTCaps.present)
 				vht_caps = &pBeaconStruct->VHTCaps;
-			else if (pBeaconStruct->vendor2_ie.VHTCaps.present) {
+			else if (pBeaconStruct->vendor_vht_ie.VHTCaps.present) {
 				vht_caps =
-					&pBeaconStruct->vendor2_ie.VHTCaps;
+					&pBeaconStruct->vendor_vht_ie.VHTCaps;
 				lim_log(pMac, LOG1, FL(
 					"VHT Caps are in vendor Specfic IE"));
 			}

@@ -167,7 +167,7 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 			session->vhtCapability) {
 		session->vhtCapabilityPresentInBeacon = 1;
 		if (((beacon_struct->Vendor1IEPresent &&
-		      beacon_struct->vendor2_ie.present &&
+		      beacon_struct->vendor_vht_ie.present &&
 		      beacon_struct->Vendor3IEPresent)) &&
 		      (((beacon_struct->VHTCaps.txMCSMap & VHT_MCS_3x3_MASK) ==
 			VHT_MCS_3x3_MASK) &&

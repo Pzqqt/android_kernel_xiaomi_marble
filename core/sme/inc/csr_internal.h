@@ -663,6 +663,7 @@ typedef struct tagCsrConfig {
 	uint32_t edca_bk_aifs;
 	uint32_t edca_be_aifs;
 	bool enable_fatal_event;
+	bool vendor_vht_sap;
 	enum wmi_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
 	enum wmi_dwelltime_adaptive_mode roamscan_adaptive_dwell_mode;
 	struct csr_sta_roam_policy_params sta_roam_policy;
