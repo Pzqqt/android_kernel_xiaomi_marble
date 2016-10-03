@@ -1802,12 +1802,29 @@ struct wifi_epno_network_params {
 
 /**
  * struct wifi_enhanched_pno_params - enhanced pno network params
+ * @request_id: request id number
+ * @session_id: session_id number
+ * @min_5ghz_rssi: minimum 5GHz RSSI for a BSSID to be considered
+ * @min_24ghz_rssi: minimum 2.4GHz RSSI for a BSSID to be considered
+ * @initial_score_max: maximum score that a network can have before bonuses
+ * @current_connection_bonus: only report when there is a network's score this
+ *    much higher than the current connection
+ * @same_network_bonus: score bonus for all n/w with the same network flag
+ * @secure_bonus: score bonus for networks that are not open
+ * @band_5ghz_bonus: 5GHz RSSI score bonus (applied to all 5GHz networks)
  * @num_networks: number of ssids
- * @networks: PNO networks
+ * @networks: EPNO networks
  */
 struct wifi_enhanched_pno_params {
 	uint32_t    request_id;
 	uint32_t    session_id;
+	uint32_t    min_5ghz_rssi;
+	uint32_t    min_24ghz_rssi;
+	uint32_t    initial_score_max;
+	uint32_t    current_connection_bonus;
+	uint32_t    same_network_bonus;
+	uint32_t    secure_bonus;
+	uint32_t    band_5ghz_bonus;
 	uint32_t    num_networks;
 	struct wifi_epno_network_params networks[];
 };
