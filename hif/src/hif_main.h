@@ -123,8 +123,6 @@ enum hif_fake_apps_state_bits {
 };
 
 void hif_fake_apps_resume_work(struct work_struct *work);
-#else
-static inline void hif_init_fake_apps_ctx(struct hif_softc *scn) {}
 #endif /* WLAN_SUSPEND_RESUME_TEST */
 
 struct hif_softc {
