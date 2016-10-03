@@ -199,6 +199,20 @@ static inline
 void hdd_wlan_suspend_resume_event(uint8_t state) {}
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
+/**
+ * wlan_hdd_inc_suspend_stats() - Prints, then increments, then prints suspend
+ *	failed statistics.
+ * @hdd_ctx:	The HDD context to operate on
+ * @reason:	The suspend failed reason to increment
+ *
+ * This function prints all of the suspend failed statistics, increments the
+ * specified suspend fail reason statistic, and prints the them all again. This
+ * is for easily keeping track of the most common reasons suspend fails.
+ *
+ * Return: none
+ */
+void wlan_hdd_inc_suspend_stats(hdd_context_t *hdd_ctx,
+				enum suspend_fail_reason reason);
 
 /*
  * Unit-test suspend/resume is a testing feature that allows putting firmware

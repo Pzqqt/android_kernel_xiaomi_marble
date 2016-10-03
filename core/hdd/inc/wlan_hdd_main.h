@@ -1235,8 +1235,25 @@ struct acs_dfs_policy {
 	uint8_t acs_channel;
 };
 
-/** Adapter structure definition */
+/**
+ * enum suspend_fail_reason: Reasons a WLAN suspend might fail
+ * SUSPEND_FAIL_IPA: IPA in progress
+ * SUSPEND_FAIL_RADAR: radar scan in progress
+ * SUSPEND_FAIL_ROAM: roaming in progress
+ * SUSPEND_FAIL_SCAN: scan in progress
+ * SUSPEND_FAIL_INITIAL_WAKEUP: received initial wakeup from firmware
+ * SUSPEND_FAIL_MAX_COUNT: the number of wakeup reasons, always at the end
+ */
+enum suspend_fail_reason {
+	SUSPEND_FAIL_IPA,
+	SUSPEND_FAIL_RADAR,
+	SUSPEND_FAIL_ROAM,
+	SUSPEND_FAIL_SCAN,
+	SUSPEND_FAIL_INITIAL_WAKEUP,
+	SUSPEND_FAIL_MAX_COUNT
+};
 
+/** Adapter structure definition */
 struct hdd_context_s {
 	/** Global CDS context  */
 	v_CONTEXT_t pcds_context;
@@ -1510,6 +1527,9 @@ struct hdd_context_s {
 	bool update_mac_addr_to_fw;
 	struct acs_dfs_policy acs_policy;
 	uint16_t wmi_max_len;
+
+	/* counters for failed suspend reasons */
+	uint32_t suspend_fail_stats[SUSPEND_FAIL_MAX_COUNT];
 };
 
 /*---------------------------------------------------------------------------

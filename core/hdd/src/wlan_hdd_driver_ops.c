@@ -618,10 +618,14 @@ resume_hif_noirq:
 	status = hif_bus_resume_noirq(hif_ctx);
 	QDF_BUG(!status);
 done:
-	if (err == -EAGAIN)
+	if (err == -EAGAIN) {
 		hdd_err("Firmware attempting wakeup, try again");
-	else
+		wlan_hdd_inc_suspend_stats(hdd_ctx,
+					   SUSPEND_FAIL_INITIAL_WAKEUP);
+	} else {
 		hdd_err("suspend_noirq failed, status = %d", err);
+	}
+
 	return err;
 }
 

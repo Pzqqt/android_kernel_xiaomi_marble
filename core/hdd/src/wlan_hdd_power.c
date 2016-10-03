@@ -1667,6 +1667,24 @@ static int wlan_hdd_set_powersave(hdd_adapter_t *adapter,
 	return 0;
 }
 
+static void wlan_hdd_print_suspend_fail_stats(hdd_context_t *hdd_ctx)
+{
+	hdd_err("ipa:%d, radar:%d, roam:%d, scan:%d, initial_wakeup:%d",
+		hdd_ctx->suspend_fail_stats[SUSPEND_FAIL_IPA],
+		hdd_ctx->suspend_fail_stats[SUSPEND_FAIL_RADAR],
+		hdd_ctx->suspend_fail_stats[SUSPEND_FAIL_ROAM],
+		hdd_ctx->suspend_fail_stats[SUSPEND_FAIL_SCAN],
+		hdd_ctx->suspend_fail_stats[SUSPEND_FAIL_INITIAL_WAKEUP]);
+}
+
+void wlan_hdd_inc_suspend_stats(hdd_context_t *hdd_ctx,
+				enum suspend_fail_reason reason)
+{
+	wlan_hdd_print_suspend_fail_stats(hdd_ctx);
+	hdd_ctx->suspend_fail_stats[reason]++;
+	wlan_hdd_print_suspend_fail_stats(hdd_ctx);
+}
+
 /**
  * __wlan_hdd_cfg80211_resume_wlan() - cfg80211 resume callback
  * @wiphy: Pointer to wiphy
@@ -1859,6 +1877,8 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 			    WLAN_HDD_GET_AP_CTX_PTR(pAdapter)->
 			    dfs_cac_block_tx) {
 				hdd_err("RADAR detection in progress, do not allow suspend");
+				wlan_hdd_inc_suspend_stats(pHddCtx,
+							   SUSPEND_FAIL_RADAR);
 				return -EAGAIN;
 			} else if (!pHddCtx->config->enableSapSuspend) {
 				/* return -EOPNOTSUPP if SAP does not support
@@ -1891,6 +1911,8 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 		if (sme_sta_in_middle_of_roaming
 			    (pHddCtx->hHal, pAdapter->sessionId)) {
 			hdd_err("Roaming in progress, do not allow suspend");
+			wlan_hdd_inc_suspend_stats(pHddCtx,
+						   SUSPEND_FAIL_ROAM);
 			return -EAGAIN;
 		}
 
@@ -1905,6 +1927,8 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 				    msecs_to_jiffies(WLAN_WAIT_TIME_ABORTSCAN));
 			if (!status) {
 				hdd_err("Timeout occurred while waiting for abort scan");
+				wlan_hdd_inc_suspend_stats(pHddCtx,
+							   SUSPEND_FAIL_SCAN);
 				return -ETIME;
 			}
 		}
@@ -1918,6 +1942,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	 */
 	if (hdd_ipa_suspend(pHddCtx)) {
 		hdd_err("IPA not ready to suspend!");
+		wlan_hdd_inc_suspend_stats(pHddCtx, SUSPEND_FAIL_IPA);
 		return -EAGAIN;
 	}
 
