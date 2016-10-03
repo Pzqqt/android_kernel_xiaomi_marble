@@ -12079,14 +12079,11 @@ static int wlan_hdd_try_disconnect(hdd_adapter_t *pAdapter)
 {
 	unsigned long rc;
 	hdd_station_ctx_t *pHddStaCtx;
-	eMib_dot11DesiredBssType connectedBssType;
 	int status, result = 0;
 
 	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
-	hdd_conn_get_connected_bss_type(pHddStaCtx, &connectedBssType);
-
-	if ((eMib_dot11DesiredBssType_independent == connectedBssType) ||
+	if ((QDF_IBSS_MODE == pAdapter->device_mode) ||
 	  (eConnectionState_Associated == pHddStaCtx->conn_info.connState) ||
 	  (eConnectionState_Connecting == pHddStaCtx->conn_info.connState) ||
 	  (eConnectionState_IbssConnected == pHddStaCtx->conn_info.connState)) {
