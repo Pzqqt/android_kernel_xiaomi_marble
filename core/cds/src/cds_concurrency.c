@@ -4364,6 +4364,8 @@ QDF_STATUS cds_decr_connection_count(uint32_t vdev_id)
 			conc_connection_list[next_conn_index].mac;
 		conc_connection_list[conn_index].chan =
 			conc_connection_list[next_conn_index].chan;
+		conc_connection_list[conn_index].bw =
+			conc_connection_list[next_conn_index].bw;
 		conc_connection_list[conn_index].chain_mask =
 			conc_connection_list[next_conn_index].chain_mask;
 		conc_connection_list[conn_index].original_nss =
