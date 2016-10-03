@@ -5477,7 +5477,6 @@ static int __iw_set_essid(struct net_device *dev,
 	hdd_context_t *hdd_ctx;
 	uint32_t roamId;
 	tCsrRoamProfile *pRoamProfile;
-	eMib_dot11DesiredBssType connectedBssType;
 	eCsrAuthType RSNAuthType;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
@@ -5491,7 +5490,8 @@ static int __iw_set_essid(struct net_device *dev,
 		return ret;
 
 	if (pAdapter->device_mode != QDF_STA_MODE &&
-		pAdapter->device_mode != QDF_P2P_CLIENT_MODE) {
+	    pAdapter->device_mode != QDF_IBSS_MODE &&
+	    pAdapter->device_mode != QDF_P2P_CLIENT_MODE) {
 		hdd_warn("device mode %s(%d) is not allowed",
 			 hdd_device_mode_to_string(pAdapter->device_mode),
 			 pAdapter->device_mode);
@@ -5508,9 +5508,8 @@ static int __iw_set_essid(struct net_device *dev,
 		return -EINVAL;
 
 	pRoamProfile = &pWextState->roamProfile;
-	if (hdd_conn_get_connected_bss_type(pHddStaCtx, &connectedBssType) ||
-	    (eMib_dot11DesiredBssType_independent ==
-	     pHddStaCtx->conn_info.connDot11DesiredBssType)) {
+	if (hdd_conn_is_connected(pHddStaCtx) ||
+	    (pAdapter->device_mode == QDF_IBSS_MODE)) {
 		QDF_STATUS qdf_status;
 
 		/* Need to issue a disconnect to CSR. */
