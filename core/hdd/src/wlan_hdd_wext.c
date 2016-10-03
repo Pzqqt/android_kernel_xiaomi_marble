@@ -2037,7 +2037,6 @@ static int __iw_set_mode(struct net_device *dev,
 	hdd_context_t *hdd_ctx;
 	tCsrRoamProfile *pRoamProfile;
 	eCsrRoamBssType LastBSSType;
-	eMib_dot11DesiredBssType connectedBssType;
 	struct hdd_config *pConfig;
 	struct wireless_dev *wdev;
 	int ret;
@@ -2085,8 +2084,8 @@ static int __iw_set_mode(struct net_device *dev,
 		/* the BSS mode changed.  We need to issue disconnect
 		 * if connected or in IBSS disconnect state
 		 */
-		if (hdd_conn_get_connected_bss_type
-			    (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter), &connectedBssType)
+		if (hdd_conn_is_connected
+			    (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))
 		    || (eCSR_BSS_TYPE_START_IBSS == LastBSSType)) {
 			QDF_STATUS qdf_status;
 			/* need to issue a disconnect to CSR. */
