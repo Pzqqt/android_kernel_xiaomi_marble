@@ -919,6 +919,35 @@ bool hif_is_load_or_unload_in_progress(struct hif_softc *scn)
 }
 
 /**
+ * hif_update_pipe_callback() - API to register pipe specific callbacks
+ * @osc: Opaque softc
+ * @pipeid: pipe id
+ * @callbacks: callbacks to register
+ *
+ * Return: void
+ */
+
+void hif_update_pipe_callback(struct hif_opaque_softc *osc,
+					u_int8_t pipeid,
+					struct hif_msg_callbacks *callbacks)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(osc);
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+	struct HIF_CE_pipe_info *pipe_info;
+
+	QDF_BUG(pipeid < CE_COUNT_MAX);
+
+	HIF_INFO_LO("+%s pipeid %d\n", __func__, pipeid);
+
+	pipe_info = &hif_state->pipe_info[pipeid];
+
+	qdf_mem_copy(&pipe_info->pipe_callbacks,
+			callbacks, sizeof(pipe_info->pipe_callbacks));
+
+	HIF_INFO_LO("-%s\n", __func__);
+}
+
+/**
  * hif_is_recovery_in_progress() - API to query upper layers if recovery in
  * progress
  * @scn: HIF Context

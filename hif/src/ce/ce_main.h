@@ -95,6 +95,7 @@ struct HIF_CE_pipe_info {
 	uint32_t nbuf_alloc_err_count;
 	uint32_t nbuf_dma_err_count;
 	uint32_t nbuf_ce_enqueue_err_count;
+	struct hif_msg_callbacks pipe_callbacks;
 };
 
 /**
