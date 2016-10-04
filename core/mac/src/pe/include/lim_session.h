@@ -344,6 +344,10 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	uint8_t freePeerIdxTail;
 	uint16_t gLimNumOfCurrentSTAs;
 #ifdef FEATURE_WLAN_TDLS
+	 /* TDLS parameters to check whether TDLS
+	  * and TDLS channel switch is allowed in the
+	  * AP network
+	  */
 	uint32_t peerAIDBitmap[2];
 	bool tdls_prohibited;
 	bool tdls_chan_swit_prohibited;

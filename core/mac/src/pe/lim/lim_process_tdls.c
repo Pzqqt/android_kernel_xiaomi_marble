@@ -963,6 +963,15 @@ wma_tx_frame_with_tx_complete_send(tpAniSirGlobal pMac, void *pPacket,
 }
 #endif
 
+void lim_set_tdls_flags(roam_offload_synch_ind *roam_sync_ind_ptr,
+		   tpPESession ft_session_ptr)
+{
+	roam_sync_ind_ptr->join_rsp->tdls_prohibited =
+		ft_session_ptr->tdls_prohibited;
+	roam_sync_ind_ptr->join_rsp->tdls_chan_swit_prohibited =
+		ft_session_ptr->tdls_chan_swit_prohibited;
+}
+
 /*
  * TDLS setup Request frame on AP link
  */

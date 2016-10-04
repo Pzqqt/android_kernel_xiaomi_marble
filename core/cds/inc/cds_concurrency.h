@@ -592,8 +592,22 @@ struct cds_conc_connection_info {
 
 bool cds_is_connection_in_progress(void);
 void cds_dump_concurrency_info(void);
+
+#ifdef FEATURE_WLAN_TDLS
 bool cds_check_is_tdls_allowed(enum tQDF_ADAPTER_MODE device_mode);
 void cds_set_tdls_ct_mode(hdd_context_t *hdd_ctx);
+#else
+static inline bool cds_check_is_tdls_allowed(enum tQDF_ADAPTER_MODE device_mode)
+{
+	return false;
+}
+
+static inline void cds_set_tdls_ct_mode(hdd_context_t *hdd_ctx)
+{
+
+}
+#endif
+
 void cds_set_concurrency_mode(enum tQDF_ADAPTER_MODE mode);
 void cds_clear_concurrency_mode(enum tQDF_ADAPTER_MODE mode);
 uint32_t cds_get_connection_count(void);

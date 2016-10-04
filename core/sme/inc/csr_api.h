@@ -476,10 +476,12 @@ typedef enum {
 	eCSR_ROAM_PREAUTH_STATUS_SUCCESS,
 	eCSR_ROAM_PREAUTH_STATUS_FAILURE,
 	eCSR_ROAM_HANDOVER_SUCCESS,
-#ifdef FEATURE_WLAN_TDLS
+	/*
+	 * TDLS callback events
+	 */
 	eCSR_ROAM_TDLS_STATUS_UPDATE,
 	eCSR_ROAM_RESULT_MGMT_TX_COMPLETE_IND,
-#endif
+
 	/* Disaconnect all the clients */
 	eCSR_ROAM_DISCONNECT_ALL_P2P_CLIENTS,
 	/* Stopbss triggered from SME due to different */
@@ -587,7 +589,7 @@ typedef enum {
 	eCSR_ROAM_RESULT_MAX_ASSOC_EXCEEDED,
 	/* Assoc rejected due to concurrent session running on a diff channel */
 	eCSR_ROAM_RESULT_ASSOC_FAIL_CON_CHANNEL,
-#ifdef FEATURE_WLAN_TDLS
+	/* TDLS events */
 	eCSR_ROAM_RESULT_ADD_TDLS_PEER,
 	eCSR_ROAM_RESULT_UPDATE_TDLS_PEER,
 	eCSR_ROAM_RESULT_DELETE_TDLS_PEER,
@@ -598,7 +600,6 @@ typedef enum {
 	eCSR_ROAM_RESULT_TDLS_SHOULD_TEARDOWN,
 	eCSR_ROAM_RESULT_TDLS_SHOULD_PEER_DISCONNECTED,
 	eCSR_ROAM_RESULT_TDLS_CONNECTION_TRACKER_NOTIFICATION,
-#endif
 
 	eCSR_ROAM_RESULT_IBSS_PEER_INFO_SUCCESS,
 	eCSR_ROAM_RESULT_IBSS_PEER_INFO_FAILED,
@@ -1386,6 +1387,11 @@ typedef struct tagCsrRoamInfo {
 	uint32_t roc_scan_id;
 	uint32_t rxChan;
 #ifdef FEATURE_WLAN_TDLS
+	/*
+	 * TDLS parameters to check whether TDLS
+	 * and TDLS channel switch is allowed in the
+	 * AP network
+	 */
 	uint8_t staType;
 	bool tdls_prohibited;           /* per ExtCap in Assoc/Reassoc resp */
 	bool tdls_chan_swit_prohibited; /* per ExtCap in Assoc/Reassoc resp */
@@ -1740,10 +1746,11 @@ QDF_STATUS csr_roam_issue_ft_roam_offload_synch(tHalHandle hHal,
 #endif
 typedef void (*tCsrLinkStatusCallback)(uint8_t status, void *pContext);
 #ifdef FEATURE_WLAN_TDLS
-void csr_roam_fill_tdls_info(tCsrRoamInfo *roam_info, tpSirSmeJoinRsp join_rsp);
+void csr_roam_fill_tdls_info(tpAniSirGlobal mac_ctx, tCsrRoamInfo *roam_info,
+				tpSirSmeJoinRsp join_rsp);
 #else
-static inline void csr_roam_fill_tdls_info(tCsrRoamInfo *roam_info,
-		tpSirSmeJoinRsp join_rsp)
+static inline void csr_roam_fill_tdls_info(tpAniSirGlobal mac_ctx, tCsrRoamInfo *roam_info,
+				tpSirSmeJoinRsp join_rsp)
 {}
 #endif
 

@@ -6639,8 +6639,7 @@ static int drv_cmd_set_antenna_mode(hdd_adapter_t *adapter,
 
 	/* Check TDLS status and update antenna mode */
 	if ((QDF_STA_MODE == adapter->device_mode) &&
-	    cds_is_sta_active_connection_exists() &&
-	    (hdd_ctx->connected_peer_count > 0)) {
+	    cds_is_sta_active_connection_exists()) {
 		ret = wlan_hdd_tdls_antenna_switch(hdd_ctx, adapter,
 						   mode);
 		if (0 != ret)

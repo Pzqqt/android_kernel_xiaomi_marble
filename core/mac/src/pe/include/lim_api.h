@@ -164,6 +164,23 @@ extern void lim_trigger_sta_deletion(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 extern void lim_send_sme_tdls_del_sta_ind(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 					  tpPESession psessionEntry,
 					  uint16_t reasonCode);
+/**
+ * lim_set_tdls_flags() - update tdls flags based on newer STA connection
+ * information
+ * @roam_sync_ind_ptr: pointer to roam offload structure
+ * @ft_session_ptr: pointer to PE session
+ *
+ * Set TDLS flags as per new STA connection capabilities.
+ *
+ * Return: None
+ */
+void lim_set_tdls_flags(roam_offload_synch_ind *roam_sync_ind_ptr,
+		   tpPESession ft_session_ptr);
+#else
+static inline void lim_set_tdls_flags(roam_offload_synch_ind *roam_sync_ind_ptr,
+		   tpPESession ft_session_ptr)
+{
+}
 #endif
 
 /* / Function that checks for change in AP's capabilties on STA */

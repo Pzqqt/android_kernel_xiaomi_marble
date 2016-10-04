@@ -54,9 +54,7 @@
 #include <linux/wakelock.h>
 #endif
 #include <wlan_hdd_ftm.h>
-#ifdef FEATURE_WLAN_TDLS
 #include "wlan_hdd_tdls.h"
-#endif
 #include "wlan_hdd_tsf.h"
 #include "wlan_hdd_cfg80211.h"
 #include <qdf_defer.h>

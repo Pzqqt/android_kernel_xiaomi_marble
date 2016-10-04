@@ -539,6 +539,11 @@ static inline tSirRetStatus lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
 {
 	return eSIR_SUCCESS;
 }
+static inline void lim_init_tdls_data(tpAniSirGlobal pMac,
+					tpPESession pSessionEntry)
+{
+
+}
 #endif
 
 /* Algorithms & Link Monitoring related functions */

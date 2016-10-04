@@ -3340,6 +3340,7 @@ void cds_dump_concurrency_info(void)
 	hdd_ctx->mcc_mode = !cds_current_concurrency_is_scc();
 }
 
+#ifdef FEATURE_WLAN_TDLS
 /*
  * cds_check_is_tdls_allowed() - check is tdls allowed or not
  * @adapter: pointer to adapter
@@ -3419,6 +3420,7 @@ set_state:
 	cds_info("enable_tdls_connection_tracker %d",
 		 hdd_ctx->enable_tdls_connection_tracker);
 }
+#endif
 
 /**
  * cds_set_concurrency_mode() - To set concurrency mode

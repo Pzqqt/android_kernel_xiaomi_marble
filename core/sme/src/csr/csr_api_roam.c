@@ -19468,11 +19468,16 @@ fail:
  *
  * Return: None
  */
-void csr_roam_fill_tdls_info(tCsrRoamInfo *roam_info, tpSirSmeJoinRsp join_rsp)
+void csr_roam_fill_tdls_info(tpAniSirGlobal mac_ctx, tCsrRoamInfo *roam_info,
+				tpSirSmeJoinRsp join_rsp)
 {
 	roam_info->tdls_prohibited = join_rsp->tdls_prohibited;
 	roam_info->tdls_chan_swit_prohibited =
 		join_rsp->tdls_chan_swit_prohibited;
+	sms_log(mac_ctx, LOG1,
+		FL("tdls:prohibit: %d, chan_swit_prohibit: %d"),
+		roam_info->tdls_prohibited,
+		roam_info->tdls_chan_swit_prohibited);
 }
 #endif
 
@@ -19717,11 +19722,7 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	roam_info->chan_info.nss = roam_synch_data->join_rsp->nss;
 	roam_info->chan_info.rate_flags =
 		roam_synch_data->join_rsp->max_rate_flags;
-	csr_roam_fill_tdls_info(roam_info, roam_synch_data->join_rsp);
-	sms_log(mac_ctx, LOG1,
-		FL("tdls:prohibit: %d, chan_swit_prohibit: %d"),
-		roam_info->tdls_prohibited,
-		roam_info->tdls_chan_swit_prohibited);
+	csr_roam_fill_tdls_info(mac_ctx, roam_info, roam_synch_data->join_rsp);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	src_profile = &roam_synch_data->join_rsp->HTProfile;
 	dst_profile = &conn_profile->HTProfile;

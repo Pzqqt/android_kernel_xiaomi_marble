@@ -47,18 +47,12 @@
 #include <net/ieee80211_radiotap.h>
 #include "sap_api.h"
 #include "wlan_hdd_wmm.h"
-
-#ifdef FEATURE_WLAN_TDLS
 #include "wlan_hdd_tdls.h"
-#endif
 #include <wlan_hdd_ipa.h>
-
 #include "wlan_hdd_ocb.h"
 #include "wlan_hdd_lro.h"
-
 #include "cdp_txrx_peer_ops.h"
 #include "ol_txrx.h"
-
 #include "wlan_hdd_nan_datapath.h"
 #include "pld_common.h"
 
@@ -419,8 +413,8 @@ int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	hdd_station_ctx_t *pHddStaCtx = &pAdapter->sessionCtx.station;
 #ifdef QCA_PKT_PROTO_TRACE
 	uint8_t proto_type = 0;
-#endif /* QCA_PKT_PROTO_TRACE */
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+#endif /* QCA_PKT_PROTO_TRACE */
 
 #ifdef QCA_WIFI_FTM
 	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
@@ -551,8 +545,7 @@ int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	pAdapter->stats.tx_bytes += skb->len;
 
-	if (hdd_ctx->enable_tdls_connection_tracker)
-		wlan_hdd_tdls_update_tx_pkt_cnt(pAdapter, skb);
+	wlan_hdd_tdls_update_tx_pkt_cnt(pAdapter, skb);
 
 	++pAdapter->stats.tx_packets;
 
@@ -965,8 +958,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		qdf_nbuf_data_addr(rxBuf),
 		sizeof(qdf_nbuf_data(rxBuf)), QDF_RX));
 
-	if (pHddCtx->enable_tdls_connection_tracker)
-		wlan_hdd_tdls_update_rx_pkt_cnt(pAdapter, skb);
+	wlan_hdd_tdls_update_rx_pkt_cnt(pAdapter, skb);
 
 	skb->dev = pAdapter->dev;
 	skb->protocol = eth_type_trans(skb, skb->dev);

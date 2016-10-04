@@ -1768,16 +1768,15 @@ int wlan_hdd_tdls_set_params(struct net_device *dev,
 }
 
 /**
- * wlan_hdd_tdls_check_and_enable() - check system state and enable tdls
+ * wlan_hdd_tdls_get_adapter() - check system state and return hdd adapter
  * @hdd_ctx: hdd context
  *
- * After every disassociation in the system, check whether TDLS
- * can be enabled in the system. If TDLS possible return the
- * corresponding hdd adapter to enable TDLS.
+ * If TDLS possible, return the corresponding hdd adapter
+ * to enable TDLS in the system.
  *
  * Return: hdd adapter pointer or NULL.
  */
-hdd_adapter_t *wlan_hdd_tdls_check_and_enable(hdd_context_t *hdd_ctx)
+static hdd_adapter_t *wlan_hdd_tdls_get_adapter(hdd_context_t *hdd_ctx)
 {
 	if (cds_get_connection_count() > 1)
 		return NULL;
@@ -1949,6 +1948,74 @@ void wlan_hdd_update_tdls_info(hdd_adapter_t *adapter, bool tdls_prohibited,
 
 	mutex_unlock(&hdd_ctx->tdls_lock);
 	return;
+}
+
+/**
+ * wlan_hdd_tdls_notify_connect() - Update tdls state for every
+ * connect event.
+ * @adapter: hdd adapter
+ * @csr_roam_info: csr information
+ *
+ * After every connect event in the system, check whether TDLS
+ * can be enabled in the system. If TDLS can be enabled, update the
+ * TDLS state as needed.
+ *
+ * Return: None
+ */
+void wlan_hdd_tdls_notify_connect(hdd_adapter_t *adapter,
+				  tCsrRoamInfo *csr_roam_info)
+{
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	hdd_info("Check and update TDLS state");
+
+	/* Association event */
+	if ((adapter->device_mode == QDF_STA_MODE ||
+	     adapter->device_mode == QDF_P2P_CLIENT_MODE) &&
+	     !hdd_ctx->concurrency_marked) {
+		wlan_hdd_update_tdls_info(adapter,
+					  csr_roam_info->tdls_prohibited,
+					  csr_roam_info->tdls_chan_swit_prohibited);
+	}
+}
+
+/**
+ * wlan_hdd_tdls_notify_disconnect() - Update tdls state for every
+ * disconnect event.
+ * @adapter: hdd adapter
+ *
+ * After every disconnect event in the system, check whether TDLS
+ * can be disabled/enabled in the system and update the
+ * TDLS state as needed.
+ *
+ * Return: None
+ */
+void wlan_hdd_tdls_notify_disconnect(hdd_adapter_t *adapter)
+{
+	hdd_adapter_t *temp_adapter;
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	hdd_info("Check and update TDLS state");
+
+	/* Disassociation event */
+	if ((adapter->device_mode == QDF_STA_MODE ||
+	     adapter->device_mode == QDF_P2P_CLIENT_MODE) &&
+	     !hdd_ctx->concurrency_marked) {
+		wlan_hdd_update_tdls_info(adapter, true, true);
+	}
+
+	/* If concurrency is not marked, then we have to
+	 * check, whether TDLS could be enabled in the
+	 * system after this disassoc event.
+	 */
+	if (!hdd_ctx->concurrency_marked) {
+		temp_adapter = wlan_hdd_tdls_get_adapter(
+					hdd_ctx);
+		if (NULL != temp_adapter)
+			wlan_hdd_update_tdls_info(temp_adapter,
+						  false,
+						  false);
+	}
 }
 
 /**
@@ -2483,7 +2550,7 @@ void wlan_hdd_tdls_decrement_peer_count(hdd_adapter_t *pAdapter)
 			hdd_err("TDLS set state is not cleared correctly !!!");
 			pHddCtx->concurrency_marked = false;
 		}
-		tdls_adapter = wlan_hdd_tdls_check_and_enable(pHddCtx);
+		tdls_adapter = wlan_hdd_tdls_get_adapter(pHddCtx);
 		if (tdls_adapter)
 			wlan_hdd_update_tdls_info(tdls_adapter, false, false);
 	}
@@ -5134,6 +5201,11 @@ void wlan_hdd_tdls_update_rx_pkt_cnt(hdd_adapter_t *adapter,
 	uint8_t valid_mac_entries;
 	struct qdf_mac_addr *mac_addr;
 
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	if (!hdd_ctx->enable_tdls_connection_tracker)
+		return;
+
 	mac_addr = (struct qdf_mac_addr *)(skb->data+QDF_MAC_ADDR_SIZE);
 	if (qdf_is_macaddr_group(mac_addr))
 		return;
@@ -5143,7 +5215,6 @@ void wlan_hdd_tdls_update_rx_pkt_cnt(hdd_adapter_t *adapter,
 			mac_addr, QDF_MAC_ADDR_SIZE) == 0)
 		return;
 
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	tdls_ctx = adapter->sessionCtx.station.pHddTdlsCtx;
 
 	qdf_spin_lock_bh(&hdd_ctx->tdls_ct_spinlock);
@@ -5197,6 +5268,11 @@ void wlan_hdd_tdls_update_tx_pkt_cnt(hdd_adapter_t *adapter,
 	uint8_t valid_mac_entries;
 	struct qdf_mac_addr *mac_addr;
 
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	if (!hdd_ctx->enable_tdls_connection_tracker)
+		return;
+
 	mac_addr = (struct qdf_mac_addr *)skb->data;
 	if (qdf_is_macaddr_group(mac_addr))
 		return;
@@ -5206,7 +5282,6 @@ void wlan_hdd_tdls_update_tx_pkt_cnt(hdd_adapter_t *adapter,
 	    QDF_MAC_ADDR_SIZE) == 0)
 		return;
 
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	tdls_ctx = adapter->sessionCtx.station.pHddTdlsCtx;
 
 	qdf_spin_lock_bh(&hdd_ctx->tdls_ct_spinlock);
@@ -5816,9 +5891,12 @@ int wlan_hdd_tdls_antenna_switch(hdd_context_t *hdd_ctx,
 {
 	uint8_t tdls_peer_cnt;
 	uint32_t vdev_nss;
-	hdd_station_ctx_t *sta_ctx =
-		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	hdd_station_ctx_t *sta_ctx;
 
+	if (hdd_ctx->connected_peer_count == 0)
+		return 0;
+
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	/* Check whether TDLS antenna switch is in progress */
 	if (hdd_ctx->tdls_nss_switch_in_progress) {
 		if (hdd_ctx->tdls_nss_teardown_complete == false) {

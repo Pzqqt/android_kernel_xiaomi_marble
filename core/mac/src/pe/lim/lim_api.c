@@ -2070,10 +2070,7 @@ QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	roam_sync_ind_ptr->join_rsp->nss = curr_sta_ds->nss;
 	roam_sync_ind_ptr->join_rsp->max_rate_flags =
 		lim_get_max_rate_flags(mac_ctx, curr_sta_ds);
-	roam_sync_ind_ptr->join_rsp->tdls_prohibited =
-		ft_session_ptr->tdls_prohibited;
-	roam_sync_ind_ptr->join_rsp->tdls_chan_swit_prohibited =
-		ft_session_ptr->tdls_chan_swit_prohibited;
+	lim_set_tdls_flags(roam_sync_ind_ptr, ft_session_ptr);
 	roam_sync_ind_ptr->join_rsp->aid = ft_session_ptr->limAID;
 	lim_fill_join_rsp_ht_caps(ft_session_ptr, roam_sync_ind_ptr->join_rsp);
 	ft_session_ptr->limPrevSmeState = ft_session_ptr->limSmeState;
