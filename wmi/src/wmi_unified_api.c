@@ -251,7 +251,7 @@ QDF_STATUS wmi_unified_peer_create_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-#ifdef FEATURE_GREEN_AP
+#if defined(FEATURE_GREEN_AP) || defined(ATH_SUPPORT_GREEN_AP)
 /**
  * wmi_unified_green_ap_ps_send() - enable green ap powersave command
  * @wmi_handle: wmi handle
@@ -277,7 +277,7 @@ QDF_STATUS wmi_unified_green_ap_ps_send(void *wmi_hdl,
 {
 	return 0;
 }
-#endif /* FEATURE_GREEN_AP */
+#endif /* FEATURE_GREEN_AP or ATH_SUPPORT_GREEN_AP*/
 
 /**
  * wmi_unified_pdev_utf_cmd() - send utf command to fw
