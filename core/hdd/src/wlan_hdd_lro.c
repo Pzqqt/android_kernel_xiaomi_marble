@@ -461,7 +461,9 @@ void hdd_lro_flush(void *data)
 	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
 		adapter = adapter_node->pAdapter;
 		hdd_lro = &adapter->lro_info;
-		if (adapter->dev->features & NETIF_F_LRO) {
+		if (adapter->dev == NULL) {
+			hdd_err("vdev interface going down");
+		} else if (adapter->dev->features & NETIF_F_LRO) {
 			qdf_spin_lock_bh(&hdd_lro->lro_mgr_arr_access_lock);
 			for (i = 0; i < hdd_lro->lro_mgr->max_desc; i++) {
 				if (hdd_lro->lro_mgr->lro_arr[i].active) {
