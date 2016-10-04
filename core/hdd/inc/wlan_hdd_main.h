@@ -905,8 +905,6 @@ struct hdd_adapter_s {
 	hdd_stats_t hdd_stats;
 	/** linkspeed statistics */
 	tSirLinkSpeedInfo ls_stats;
-	/**Mib information*/
-	sHddMib_t hdd_mib;
 
 	uint8_t sessionId;
 
