@@ -1001,6 +1001,11 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 		wiphy->bands[IEEE80211_BAND_5GHZ];
 	uint32_t temp = 0;
 
+	if (!band_5g) {
+		hdd_info("5GHz band disabled, skipping capability population");
+		return;
+	}
+
 	/* Get the current MPDU length */
 	status =
 		sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_VHT_MAX_MPDU_LENGTH,
