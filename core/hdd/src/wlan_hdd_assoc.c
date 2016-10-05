@@ -1425,7 +1425,7 @@ QDF_STATUS hdd_roam_deregister_sta(hdd_adapter_t *pAdapter, uint8_t staId)
  *
  * Return: None
  */
-void hdd_print_bss_info(hdd_station_ctx_t *hdd_sta_ctx)
+static void hdd_print_bss_info(hdd_station_ctx_t *hdd_sta_ctx)
 {
 	uint32_t *cap_info;
 
@@ -1685,7 +1685,7 @@ static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
  *
  * Return: None
  */
-void hdd_set_peer_authorized_event(uint32_t vdev_id)
+static void hdd_set_peer_authorized_event(uint32_t vdev_id)
 {
 	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	hdd_adapter_t *adapter = NULL;
