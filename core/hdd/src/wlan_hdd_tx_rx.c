@@ -402,7 +402,7 @@ static void hdd_get_transmit_sta_id(hdd_adapter_t *adapter,
  *
  * Return: Always returns NETDEV_TX_OK
  */
-int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
+static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 {
 	QDF_STATUS status;
 	sme_ac_enum_type ac;
@@ -1099,7 +1099,7 @@ static void wlan_hdd_update_queue_oper_stats(hdd_adapter_t *adapter,
  *
  * Return: none
  */
-void wlan_hdd_update_txq_timestamp(struct net_device *dev)
+static void wlan_hdd_update_txq_timestamp(struct net_device *dev)
 {
 	struct netdev_queue *txq;
 	int i;
