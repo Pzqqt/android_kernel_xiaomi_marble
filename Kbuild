@@ -1750,6 +1750,7 @@ ifneq (y,$(CONFIG_ARCH_MSM))
 EXTRA_CFLAGS += -Wframe-larger-than=4096
 endif
 endif
+EXTRA_CFLAGS += -Wmissing-prototypes
 
 ifeq ($(call cc-option-yn, -Wheader-guard),y)
 EXTRA_CFLAGS += -Wheader-guard
