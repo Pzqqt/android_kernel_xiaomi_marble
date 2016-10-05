@@ -5868,7 +5868,7 @@ static void hdd_override_all_ps(hdd_context_t *hdd_ctx)
  *
  * Return: none
  */
-void hdd_set_rx_mode_value(hdd_context_t *hdd_ctx)
+static void hdd_set_rx_mode_value(hdd_context_t *hdd_ctx)
 {
 	if (hdd_ctx->config->rx_mode & CFG_ENABLE_RX_THREAD &&
 		 hdd_ctx->config->rx_mode & CFG_ENABLE_RPS) {
@@ -6136,8 +6136,9 @@ static QDF_STATUS hdd_convert_string_to_array(char *str, uint8_t *array,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS hdd_hex_string_to_u8_array(char *str, uint8_t *hex_array,
-				      uint8_t *len, uint8_t array_max_len)
+static QDF_STATUS hdd_hex_string_to_u8_array(char *str, uint8_t *hex_array,
+					     uint8_t *len,
+					     uint8_t array_max_len)
 {
 	return hdd_convert_string_to_array(str, hex_array, len,
 					   array_max_len, true);
