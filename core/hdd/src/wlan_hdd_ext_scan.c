@@ -2435,8 +2435,8 @@ int wlan_hdd_cfg80211_extscan_set_significant_change(struct wiphy *wiphy,
  *
  * Return: none
  */
-void hdd_remove_dsrc_channels(struct wiphy *wiphy, uint32_t *chan_list,
-				 uint8_t *num_channels)
+static void hdd_remove_dsrc_channels(struct wiphy *wiphy, uint32_t *chan_list,
+				     uint8_t *num_channels)
 {
 	uint8_t num_chan_temp = 0;
 	int i;
@@ -2460,8 +2460,8 @@ void hdd_remove_dsrc_channels(struct wiphy *wiphy, uint32_t *chan_list,
  * Return: none
  */
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 16, 0))
-void hdd_remove_indoor_channels(struct wiphy *wiphy, uint32_t *chan_list,
-				 uint8_t *num_channels)
+static void hdd_remove_indoor_channels(struct wiphy *wiphy, uint32_t *chan_list,
+				       uint8_t *num_channels)
 {
 	uint8_t num_chan_temp = 0;
 	int i, j, k;
@@ -2485,8 +2485,8 @@ void hdd_remove_indoor_channels(struct wiphy *wiphy, uint32_t *chan_list,
 	*num_channels = num_chan_temp;
 }
 #else
-void hdd_remove_indoor_channels(struct wiphy *wiphy, uint32_t *chan_list,
-				 uint8_t *num_channels)
+static void hdd_remove_indoor_channels(struct wiphy *wiphy, uint32_t *chan_list,
+				       uint8_t *num_channels)
 {
 	*num_channels = 0;
 }
