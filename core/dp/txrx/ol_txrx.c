@@ -4368,6 +4368,20 @@ static void ol_txrx_ipa_uc_get_stat(struct cdp_pdev *ppdev)
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	htt_h2t_ipa_uc_get_stats(pdev->htt_pdev);
 }
+
+static void ol_txrx_ipa_uc_get_share_stats(struct cdp_pdev *ppdev,
+					   uint8_t reset_stats)
+{
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
+	htt_h2t_ipa_uc_get_share_stats(pdev->htt_pdev, reset_stats);
+}
+
+static void ol_txrx_ipa_uc_set_quota(struct cdp_pdev *ppdev,
+				     uint64_t quota_bytes)
+{
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
+	htt_h2t_ipa_uc_set_quota(pdev->htt_pdev, quota_bytes);
+}
 #endif /* IPA_UC_OFFLOAD */
 
 /*
@@ -5357,7 +5371,9 @@ static struct cdp_ipa_ops ol_ops_ipa = {
 	.ipa_register_op_cb = ol_txrx_ipa_uc_register_op_cb,
 	.ipa_get_stat = ol_txrx_ipa_uc_get_stat,
 	.ipa_tx_data_frame = ol_tx_send_ipa_data_frame,
-	.ipa_set_uc_tx_partition_base = ol_cfg_set_ipa_uc_tx_partition_base
+	.ipa_set_uc_tx_partition_base = ol_cfg_set_ipa_uc_tx_partition_base,
+	.ipa_uc_get_share_stats = ol_txrx_ipa_uc_get_share_stats,
+	.ipa_uc_set_quota = ol_txrx_ipa_uc_set_quota
 #endif /* IPA_OFFLOAD */
 };
 

@@ -119,6 +119,7 @@ ifeq ($(KERNEL_BUILD), 0)
 	endif
 	ifeq ($(CONFIG_ARCH_MSM8998), y)
 	CONFIG_QCACLD_FEATURE_GREEN_AP := y
+	CONFIG_QCACLD_FEATURE_METERING := y
 	endif
 
 	ifeq ($(CONFIG_ARCH_SDM660), y)
@@ -1901,6 +1902,11 @@ endif #CONFIG_MOBILE_ROUTER
 #Green AP feature
 ifeq ($(CONFIG_QCACLD_FEATURE_GREEN_AP),y)
 CDEFINES += -DFEATURE_GREEN_AP
+endif
+
+#Stats & Quota Metering feature
+ifeq ($(CONFIG_QCACLD_FEATURE_METERING),y)
+CDEFINES += -DFEATURE_METERING
 endif
 
 #Enable RX Full re-order OL feature only "LL and NON-MDM9630 platform"

@@ -786,6 +786,7 @@ static int32_t wma_set_priv_cfg(tp_wma_handle wma_handle,
 
 	case WMA_VDEV_TXRX_GET_IPA_UC_FW_STATS_CMDID:
 	{
+		void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 		struct cdp_pdev *pdev;
 
 		pdev = cds_get_context(QDF_MODULE_ID_TXRX);
@@ -793,8 +794,43 @@ static int32_t wma_set_priv_cfg(tp_wma_handle wma_handle,
 			WMA_LOGE("pdev NULL for uc stat");
 			return -EINVAL;
 		}
-		cdp_ipa_get_stat(cds_get_context(QDF_MODULE_ID_SOC),
-			pdev);
+		cdp_ipa_get_stat(soc, pdev);
+	}
+		break;
+
+	case WMA_VDEV_TXRX_GET_IPA_UC_SHARING_STATS_CMDID:
+	{
+		void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+		struct cdp_pdev *pdev;
+		uint8_t reset_stats = privcmd->param_value;
+
+		WMA_LOGE("%s: reset_stats=%d",
+			 "WMA_VDEV_TXRX_GET_IPA_UC_SHARING_STATS_CMDID",
+			 reset_stats);
+		pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+		if (!pdev) {
+			WMA_LOGE("pdev NULL for uc stat");
+			return -EINVAL;
+		}
+		cdp_ipa_uc_get_share_stats(soc, pdev, reset_stats);
+	}
+		break;
+
+	case WMA_VDEV_TXRX_SET_IPA_UC_QUOTA_CMDID:
+	{
+		void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+		struct cdp_pdev *pdev;
+		uint64_t quota_bytes = privcmd->param_value;
+
+		WMA_LOGE("%s: quota_bytes=%llu",
+			 "WMA_VDEV_TXRX_SET_IPA_UC_QUOTA_CMDID",
+			 quota_bytes);
+		pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+		if (!pdev) {
+			WMA_LOGE("pdev NULL for uc stat");
+			return -EINVAL;
+		}
+		cdp_ipa_uc_set_quota(soc, pdev, quota_bytes);
 	}
 		break;
 

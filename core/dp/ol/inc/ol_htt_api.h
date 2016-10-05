@@ -243,6 +243,11 @@ htt_h2t_ipa_uc_set_active(struct htt_pdev_t *pdev, bool uc_active, bool is_tx);
 
 int htt_h2t_ipa_uc_get_stats(struct htt_pdev_t *pdev);
 
+int htt_h2t_ipa_uc_get_share_stats(struct htt_pdev_t *pdev,
+				   uint8_t reset_stats);
+
+int htt_h2t_ipa_uc_set_quota(struct htt_pdev_t *pdev, uint64_t quota_bytes);
+
 int htt_ipa_uc_attach(struct htt_pdev_t *pdev);
 
 void htt_ipa_uc_detach(struct htt_pdev_t *pdev);
@@ -336,6 +341,30 @@ htt_h2t_ipa_uc_set_active(struct htt_pdev_t *pdev, bool uc_active,
  * Return: 0 success
  */
 static inline int htt_h2t_ipa_uc_get_stats(struct htt_pdev_t *pdev)
+{
+	return 0;
+}
+
+/**
+ * htt_h2t_ipa_uc_get_share_stats() - WDI UC wifi sharing state request to FW
+ * @pdev: handle to the HTT instance
+ *
+ * Return: 0 success
+ */
+static inline int htt_h2t_ipa_uc_get_share_stats(struct htt_pdev_t *pdev,
+						uint8_t reset_stats)
+{
+	return 0;
+}
+
+/**
+ * htt_h2t_ipa_uc_set_quota() - WDI UC set quota request to firmware
+ * @pdev: handle to the HTT instance
+ *
+ * Return: 0 success
+ */
+static inline int htt_h2t_ipa_uc_set_quota(struct htt_pdev_t *pdev,
+					   uint64_t quota_bytes)
 {
 	return 0;
 }
