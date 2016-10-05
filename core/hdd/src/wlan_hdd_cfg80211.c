@@ -2135,7 +2135,8 @@ wlan_hdd_cfg80211_get_concurrency_matrix(struct wiphy *wiphy,
  * This is called to turn ON or SET the feature flag for the requested feature.
  **/
 #define NUM_BITS_IN_BYTE       8
-void wlan_hdd_cfg80211_set_feature(uint8_t *feature_flags, uint8_t feature)
+static void wlan_hdd_cfg80211_set_feature(uint8_t *feature_flags,
+					  uint8_t feature)
 {
 	uint32_t index;
 	uint8_t bit_mask;
@@ -6607,10 +6608,10 @@ static int wlan_hdd_sap_get_nol(hdd_adapter_t *ap_adapter, uint8_t *nol,
  *
  * Return: Zero on success and non zero value on error
  */
-int wlan_hdd_validate_and_get_pre_cac_ch(hdd_context_t *hdd_ctx,
-					hdd_adapter_t *ap_adapter,
-					uint8_t channel,
-					uint8_t *pre_cac_chan)
+static int wlan_hdd_validate_and_get_pre_cac_ch(hdd_context_t *hdd_ctx,
+						hdd_adapter_t *ap_adapter,
+						uint8_t channel,
+						uint8_t *pre_cac_chan)
 {
 	uint32_t i, j;
 	QDF_STATUS status;
@@ -10423,6 +10424,7 @@ static int wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
  * Return: bss found in kernel cache
  */
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)) && !defined(WITH_BACKPORTS)
+static
 struct cfg80211_bss *wlan_hdd_cfg80211_get_bss(struct wiphy *wiphy,
 	struct ieee80211_channel *channel, const u8 *bssid,
 	const u8 *ssid, size_t ssid_len)
@@ -10434,6 +10436,7 @@ struct cfg80211_bss *wlan_hdd_cfg80211_get_bss(struct wiphy *wiphy,
 			WLAN_CAPABILITY_ESS);
 }
 #else
+static
 struct cfg80211_bss *wlan_hdd_cfg80211_get_bss(struct wiphy *wiphy,
 	struct ieee80211_channel *channel, const u8 *bssid,
 	const u8 *ssid, size_t ssid_len)
@@ -11664,7 +11667,7 @@ static int wlan_hdd_add_assoc_ie(hdd_wext_state_t *wext_state,
  *
  * Return: 0 for success, non-zero for failure
  */
-int wlan_hdd_cfg80211_set_ie(hdd_adapter_t *pAdapter, const uint8_t *ie,
+static int wlan_hdd_cfg80211_set_ie(hdd_adapter_t *pAdapter, const uint8_t *ie,
 			     size_t ie_len)
 {
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
@@ -11991,8 +11994,8 @@ static bool hdd_is_wpaie_present(const uint8_t *ie, uint8_t ie_len)
  *
  * Return: 0 for success, non-zero for failure
  */
-int wlan_hdd_cfg80211_set_privacy(hdd_adapter_t *pAdapter,
-				  struct cfg80211_connect_params *req)
+static int wlan_hdd_cfg80211_set_privacy(hdd_adapter_t *pAdapter,
+					 struct cfg80211_connect_params *req)
 {
 	int status = 0;
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
@@ -12364,7 +12367,7 @@ static int wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
  *
  * Return: 0 for success, non-zero for failure
  */
-int wlan_hdd_disconnect(hdd_adapter_t *pAdapter, u16 reason)
+static int wlan_hdd_disconnect(hdd_adapter_t *pAdapter, u16 reason)
 {
 	int status, result = 0;
 	unsigned long rc;
@@ -13929,6 +13932,7 @@ void wlan_hdd_cfg80211_update_replay_counter_callback(void *callbackContext,
  *
  * Return: 0 for success, non-zero for failure
  */
+static
 int __wlan_hdd_cfg80211_set_rekey_data(struct wiphy *wiphy,
 				       struct net_device *dev,
 				       struct cfg80211_gtk_rekey_data *data)
@@ -14017,6 +14021,7 @@ int __wlan_hdd_cfg80211_set_rekey_data(struct wiphy *wiphy,
  *
  * Return: 0 for success, non-zero for failure
  */
+static
 int wlan_hdd_cfg80211_set_rekey_data(struct wiphy *wiphy,
 				     struct net_device *dev,
 				     struct cfg80211_gtk_rekey_data *data)
@@ -14182,7 +14187,8 @@ wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
  *
  * Return: none
  */
-void wlan_hdd_cfg80211_lphb_ind_handler(void *pHddCtx, tSirLPHBInd *lphbInd)
+static void wlan_hdd_cfg80211_lphb_ind_handler(void *pHddCtx,
+					       tSirLPHBInd *lphbInd)
 {
 	struct sk_buff *skb;
 
