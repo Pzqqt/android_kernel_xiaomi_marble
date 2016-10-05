@@ -52,6 +52,7 @@
 #include <wlan_nlink_srv.h>
 #include <wlan_hdd_misc.h>
 #include <wlan_hdd_power.h>
+#include <wlan_hdd_host_offload.h>
 #include <dbglog_host.h>
 #include <wlan_hdd_trace.h>
 #include <wlan_hdd_p2p.h>
@@ -544,7 +545,7 @@ void hdd_conf_ns_offload(hdd_adapter_t *adapter, bool fenable)
  *
  * Return: None
  */
-void __hdd_ipv6_notifier_work_queue(struct work_struct *work)
+static void __hdd_ipv6_notifier_work_queue(struct work_struct *work)
 {
 	hdd_adapter_t *pAdapter =
 		container_of(work, hdd_adapter_t, ipv6NotifierWorkQueue);
@@ -663,7 +664,7 @@ void hdd_conf_hostoffload(hdd_adapter_t *pAdapter, bool fenable)
  *
  * Return: None
  */
-void __hdd_ipv4_notifier_work_queue(struct work_struct *work)
+static void __hdd_ipv4_notifier_work_queue(struct work_struct *work)
 {
 	hdd_adapter_t *pAdapter =
 		container_of(work, hdd_adapter_t, ipv4NotifierWorkQueue);
