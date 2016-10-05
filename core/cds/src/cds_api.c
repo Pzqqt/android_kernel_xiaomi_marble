@@ -117,14 +117,13 @@ void cds_deinit(void)
 	if (gp_cds_context == NULL)
 		return;
 
+	qdf_mc_timer_manager_exit();
+	qdf_mem_exit();
+
 	gp_cds_context->qdf_ctx = NULL;
 	gp_cds_context = NULL;
 
 	qdf_mem_zero(&g_cds_context, sizeof(g_cds_context));
-
-	qdf_mc_timer_manager_exit();
-	qdf_mem_exit();
-
 	return;
 }
 
@@ -158,25 +157,6 @@ void cds_tdls_tx_rx_mgmt_event(uint8_t event_id, uint8_t tx_rx,
 }
 #endif
 
-#ifdef WLAN_FEATURE_NAN
-/**
- * cds_set_nan_enable() - set nan enable flag in mac open param
- * @wma_handle: Pointer to mac open param
- * @hdd_ctx: Pointer to hdd context
- *
- * Return: none
- */
-static void cds_set_nan_enable(tMacOpenParameters *param,
-					hdd_context_t *hdd_ctx)
-{
-	param->is_nan_enabled = hdd_ctx->config->enable_nan_support;
-}
-#else
-static void cds_set_nan_enable(tMacOpenParameters *param,
-					hdd_context_t *pHddCtx)
-{
-}
-#endif
 
 /**
  * cds_open() - open the CDS Module
@@ -197,18 +177,20 @@ QDF_STATUS cds_open(void)
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	int iter = 0;
 	tSirRetStatus sirStatus = eSIR_SUCCESS;
-	tMacOpenParameters mac_openParms;
+	struct cds_config_info *cds_cfg;
 	qdf_device_t qdf_ctx;
 	HTC_INIT_INFO htcInfo;
 	struct ol_context *ol_ctx;
 	struct hif_opaque_softc *scn;
 	void *HTCHandle;
 	hdd_context_t *pHddCtx;
+	cds_context_type *cds_ctx;
 
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: Opening CDS", __func__);
 
-	if (NULL == gp_cds_context) {
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Trying to open CDS without a PreOpen", __func__);
 		QDF_ASSERT(0);
@@ -255,25 +237,27 @@ QDF_STATUS cds_open(void)
 			   &(gp_cds_context->aMsgWrappers[iter]));
 	}
 
-	/* Now Open the CDS Scheduler */
-	qdf_status = cds_sched_open(gp_cds_context, &gp_cds_context->qdf_sched,
-				    sizeof(cds_sched_context));
-
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		/* Critical Error ...  Cannot proceed further */
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			  "%s: Failed to open CDS Scheduler", __func__);
-		QDF_ASSERT(0);
-		goto err_msg_queue;
-	}
-
 	pHddCtx = (hdd_context_t *) (gp_cds_context->pHDDContext);
 	if ((NULL == pHddCtx) || (NULL == pHddCtx->config)) {
 		/* Critical Error ...  Cannot proceed further */
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			  "%s: Hdd Context is Null", __func__);
+		cds_err("Hdd Context is Null");
 		QDF_ASSERT(0);
-		goto err_sched_close;
+		goto err_msg_queue;
+	}
+	/* Now Open the CDS Scheduler */
+
+	if (pHddCtx->driver_status == DRIVER_MODULES_UNINITIALIZED) {
+		qdf_status = cds_sched_open(gp_cds_context,
+					    &gp_cds_context->qdf_sched,
+					    sizeof(cds_sched_context));
+
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			/* Critical Error ...  Cannot proceed further */
+			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
+				  "%s: Failed to open CDS Scheduler", __func__);
+			QDF_ASSERT(0);
+			goto err_msg_queue;
+		}
 	}
 
 	scn = cds_get_context(QDF_MODULE_ID_HIF);
@@ -283,7 +267,14 @@ QDF_STATUS cds_open(void)
 		goto err_sched_close;
 	}
 
-	hdd_update_config(pHddCtx);
+	cds_cfg = cds_get_ini_config();
+	if (!cds_cfg) {
+		cds_err("Cds config is NULL");
+		QDF_ASSERT(0);
+		goto err_sched_close;
+	}
+	hdd_enable_fastpath(pHddCtx->config, scn);
+	hdd_wlan_update_target_info(pHddCtx, scn);
 
 	ol_ctx = cds_get_context(QDF_MODULE_ID_BMI);
 	/* Initialize BMI and Download firmware */
@@ -293,10 +284,10 @@ QDF_STATUS cds_open(void)
 			  "BMI FIALED status:%d", qdf_status);
 		goto err_bmi_close;
 	}
-
 	htcInfo.pContext = ol_ctx;
 	htcInfo.TargetFailure = ol_target_failure;
 	htcInfo.TargetSendSuspendComplete = wma_target_suspend_acknowledge;
+	htcInfo.target_initial_wakeup_cb = wma_handle_initial_wake_up;
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
 	/* Create HTC */
@@ -314,91 +305,10 @@ QDF_STATUS cds_open(void)
 		goto err_htc_close;
 	}
 
-	/*
-	** Need to open WMA first because it calls WDI_Init, which calls wpalOpen
-	** The reason that is needed becasue cds_packet_open need to use PAL APIs
-	*/
-
 	/*Open the WMA module */
-	qdf_mem_set(&mac_openParms, sizeof(mac_openParms), 0);
-	/* UMA is supported in hardware for performing the
-	** frame translation 802.11 <-> 802.3
-	*/
-	mac_openParms.frameTransRequired = 1;
-	mac_openParms.driverType = eDRIVER_TYPE_PRODUCTION;
-	mac_openParms.powersaveOffloadEnabled =
-		pHddCtx->config->enablePowersaveOffload;
-	mac_openParms.staDynamicDtim = pHddCtx->config->enableDynamicDTIM;
-	mac_openParms.staModDtim = pHddCtx->config->enableModulatedDTIM;
-	mac_openParms.staMaxLIModDtim = pHddCtx->config->fMaxLIModulatedDTIM;
-	mac_openParms.wowEnable = pHddCtx->config->wowEnable;
-	mac_openParms.maxWoWFilters = pHddCtx->config->maxWoWFilters;
-	/* Here olIniInfo is used to store ini status of arp offload
-	 * ns offload and others. Currently 1st bit is used for arp
-	 * off load and 2nd bit for ns offload currently, rest bits are unused
-	 */
-	if (pHddCtx->config->fhostArpOffload)
-		mac_openParms.olIniInfo = mac_openParms.olIniInfo | 0x1;
-	if (pHddCtx->config->fhostNSOffload)
-		mac_openParms.olIniInfo = mac_openParms.olIniInfo | 0x2;
-	/*
-	 * Copy the DFS Phyerr Filtering Offload status.
-	 * This parameter reflects the value of the
-	 * dfsPhyerrFilterOffload flag  as set in the ini.
-	 */
-	mac_openParms.dfsPhyerrFilterOffload =
-		pHddCtx->config->fDfsPhyerrFilterOffload;
-	if (pHddCtx->config->ssdp)
-		mac_openParms.ssdp = pHddCtx->config->ssdp;
-	mac_openParms.enable_mc_list = pHddCtx->config->fEnableMCAddrList;
-#ifdef FEATURE_WLAN_RA_FILTERING
-	mac_openParms.RArateLimitInterval =
-		pHddCtx->config->RArateLimitInterval;
-	mac_openParms.IsRArateLimitEnabled =
-		pHddCtx->config->IsRArateLimitEnabled;
-#endif
-
-	mac_openParms.apMaxOffloadPeers = pHddCtx->config->apMaxOffloadPeers;
-
-	mac_openParms.apMaxOffloadReorderBuffs =
-		pHddCtx->config->apMaxOffloadReorderBuffs;
-
-	mac_openParms.apDisableIntraBssFwd =
-		pHddCtx->config->apDisableIntraBssFwd;
-
-	mac_openParms.dfsRadarPriMultiplier =
-		pHddCtx->config->dfsRadarPriMultiplier;
-	mac_openParms.reorderOffload = pHddCtx->config->reorderOffloadSupport;
-
-	/* IPA micro controller data path offload resource config item */
-	mac_openParms.ucOffloadEnabled = hdd_ipa_uc_is_enabled(pHddCtx);
-	mac_openParms.ucTxBufCount = pHddCtx->config->IpaUcTxBufCount;
-	mac_openParms.ucTxBufSize = pHddCtx->config->IpaUcTxBufSize;
-	mac_openParms.ucRxIndRingCount = pHddCtx->config->IpaUcRxIndRingCount;
-	mac_openParms.ucTxPartitionBase = pHddCtx->config->IpaUcTxPartitionBase;
-	mac_openParms.max_scan = pHddCtx->config->max_scan_count;
-
-	mac_openParms.ip_tcp_udp_checksum_offload =
-			pHddCtx->config->enable_ip_tcp_udp_checksum_offload;
-	mac_openParms.enable_rxthread = pHddCtx->config->enableRxThread;
-	mac_openParms.ce_classify_enabled =
-				pHddCtx->config->ce_classify_enabled;
-
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
-	mac_openParms.tx_flow_stop_queue_th =
-				pHddCtx->config->TxFlowStopQueueThreshold;
-	mac_openParms.tx_flow_start_queue_offset =
-				pHddCtx->config->TxFlowStartQueueOffset;
-#endif
-	cds_set_nan_enable(&mac_openParms, pHddCtx);
-
-	mac_openParms.tx_chain_mask_cck = pHddCtx->config->tx_chain_mask_cck;
-	mac_openParms.self_gen_frm_pwr = pHddCtx->config->self_gen_frm_pwr;
-	mac_openParms.maxStation = pHddCtx->config->maxNumberOfPeers;
-
 	qdf_status = wma_open(gp_cds_context,
 			      hdd_update_tgt_cfg,
-			      hdd_dfs_indicate_radar, &mac_openParms);
+			      hdd_dfs_indicate_radar, cds_cfg);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		/* Critical Error ...  Cannot proceed further */
@@ -410,10 +320,10 @@ QDF_STATUS cds_open(void)
 
 	/* Number of peers limit differs in each chip version. If peer max
 	 * limit configured in ini exceeds more than supported, WMA adjusts
-	 * and keeps correct limit in mac_openParms.maxStation. So, make sure
+	 * and keeps correct limit in cds_cfg.max_station. So, make sure
 	 * config entry pHddCtx->config->maxNumberOfPeers has adjusted value
 	 */
-	pHddCtx->config->maxNumberOfPeers = mac_openParms.maxStation;
+	pHddCtx->config->maxNumberOfPeers = cds_cfg->max_station;
 	HTCHandle = cds_get_context(QDF_MODULE_ID_HTC);
 	if (!HTCHandle) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
@@ -431,11 +341,11 @@ QDF_STATUS cds_open(void)
 	/* UMA is supported in hardware for performing the
 	 * frame translation 802.11 <-> 802.3
 	 */
-	mac_openParms.frameTransRequired = 1;
+	cds_cfg->frame_xln_reqd = 1;
 
 	sirStatus =
-		mac_open(&(gp_cds_context->pMACContext), gp_cds_context->pHDDContext,
-			 &mac_openParms);
+		mac_open(&(gp_cds_context->pMACContext),
+			gp_cds_context->pHDDContext, cds_cfg);
 
 	if (eSIR_SUCCESS != sirStatus) {
 		/* Critical Error ...  Cannot proceed further */
@@ -466,6 +376,8 @@ QDF_STATUS cds_open(void)
 		QDF_ASSERT(0);
 		goto err_sme_close;
 	}
+
+	gp_cds_context->ol_txrx_update_mac_id = ol_txrx_update_mac_id;
 
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: CDS successfully Opened", __func__);
@@ -549,8 +461,11 @@ QDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context)
 	}
 
 	/* call Packetlog connect service */
-	htt_pkt_log_init(gp_cds_context->pdev_txrx_ctx, scn);
-	pktlog_htc_attach();
+	if (QDF_GLOBAL_FTM_MODE != cds_get_conparam() &&
+	    QDF_GLOBAL_EPPING_MODE != cds_get_conparam()) {
+		htt_pkt_log_init(gp_cds_context->pdev_txrx_ctx, scn);
+		pktlog_htc_attach();
+	}
 
 	/* Reset wma wait event */
 	qdf_event_reset(&gp_cds_context->wmaCompleteEvent);
@@ -748,18 +663,12 @@ err_wma_stop:
 QDF_STATUS cds_disable(v_CONTEXT_t cds_context)
 {
 	QDF_STATUS qdf_status;
-
-	/* wma_stop is called before the SYS so that the processing of target
-	 * pending responses will not be handled during uninitialization of
-	 * WLAN driver
-	 */
-	qdf_event_reset(&(gp_cds_context->wmaCompleteEvent));
+	void *handle;
 
 	qdf_status = wma_stop(cds_context, HAL_STOP_TYPE_RF_KILL);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to stop wma", __func__);
+		cds_err("Failed to stop wma");
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 		wma_setneedshutdown(cds_context);
 	}
@@ -767,15 +676,25 @@ QDF_STATUS cds_disable(v_CONTEXT_t cds_context)
 	hif_disable_isr(((cds_context_type *) cds_context)->pHIFContext);
 	hif_reset_soc(((cds_context_type *) cds_context)->pHIFContext);
 
-	/* SYS STOP will stop SME and MAC */
-	qdf_status = sys_stop(cds_context);
+	handle = cds_get_context(QDF_MODULE_ID_PE);
+	if (!handle) {
+		cds_err("Invalid PE context return!");
+		return QDF_STATUS_E_INVAL;
+	}
+	qdf_status = sme_stop(handle, HAL_STOP_TYPE_SYS_DEEP_SLEEP);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to stop SYS", __func__);
+		cds_err("Failed to stop SME: %d", qdf_status);
+		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
+	}
+	qdf_status = mac_stop(handle, HAL_STOP_TYPE_SYS_DEEP_SLEEP);
+
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		cds_err("Failed to stop MAC");
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
 
-	return QDF_STATUS_SUCCESS;
+	gp_cds_context->is_cds_disabled = 1;
+	return qdf_status;
 }
 
 /**
@@ -787,6 +706,40 @@ QDF_STATUS cds_disable(v_CONTEXT_t cds_context)
 QDF_STATUS cds_close(v_CONTEXT_t cds_context)
 {
 	QDF_STATUS qdf_status;
+	tp_wma_handle wma_handle;
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		cds_err("Failed to get wma_handle!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	/*
+	 * With new state machine changes cds_close can be invoked without
+	 * cds_disable. So, send the following clean up prerequisites to fw,
+	 * So Fw and host are in sync for cleanup indication:
+	 * - Send PDEV_SUSPEND indication to firmware
+	 * - Disable HIF Interrupts.
+	 * - Clean up CE tasklets.
+	 */
+
+	if (!gp_cds_context->is_cds_disabled) {
+		cds_info("send denint sequence to firmware");
+		if (!cds_is_driver_recovering()) {
+#ifdef HIF_USB
+			/* Suspend the target and enable interrupt */
+			if (wma_suspend_target(wma_handle, 0))
+				cds_err("Failed to suspend target");
+#else
+			/* Suspend the target and disable interrupt */
+			if (wma_suspend_target(wma_handle, 1))
+				cds_err("Failed to suspend target");
+#endif /* HIF_USB */
+		}
+		hif_disable_isr(
+			((cds_context_type *) cds_context)->pHIFContext);
+		hif_reset_soc(((cds_context_type *) cds_context)->pHIFContext);
+	}
 
 	qdf_status = wma_wmi_work_close(cds_context);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -857,11 +810,28 @@ QDF_STATUS cds_close(v_CONTEXT_t cds_context)
 	}
 
 	cds_deinit_log_completion();
+	cds_deinit_ini_config();
+	qdf_timer_module_deinit();
 
-	gp_cds_context->pHDDContext = NULL;
-
+	gp_cds_context->is_cds_disabled = 0;
 	return QDF_STATUS_SUCCESS;
 }
+
+void cds_flush_cache_rx_queue(void)
+{
+	uint8_t sta_id;
+	struct ol_txrx_peer_t *peer;
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++) {
+		peer = ol_txrx_peer_find_by_local_id(pdev, sta_id);
+		if (!peer)
+			continue;
+		ol_txrx_flush_rx_frames(peer, 1);
+	}
+	return;
+}
+
 
 /**
  * cds_get_context() - get context data area
@@ -1276,18 +1246,21 @@ QDF_STATUS cds_free_context(void *p_cds_context, QDF_MODULE_ID moduleID,
 } /* cds_free_context() */
 
 /**
- * cds_mq_post_message() - post a message to a message queue
- * @msgQueueId: identifies the message queue upon which the message
- *	will be posted.
- * @message: a pointer to a message buffer. Memory for this message
- *	buffer is allocated by the caller and free'd by the QDF after the
- *	message is posted to the message queue.  If the consumer of the
- *	message needs anything in this message, it needs to copy the contents
- *	before returning from the message queue handler.
+ * cds_mq_post_message_by_priority() - posts message using priority
+ * to message queue
+ * @msgQueueId: message queue id
+ * @pMsg: message to be posted
+ * @is_high_priority: wheather message is high priority
  *
- * Return: QDF status
+ * This function is used to post high priority message to message queue
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ *         QDF_STATUS_E_FAILURE on failure
+ *         QDF_STATUS_E_RESOURCES on resource allocation failure
  */
-QDF_STATUS cds_mq_post_message(CDS_MQ_ID msgQueueId, cds_msg_t *pMsg)
+QDF_STATUS cds_mq_post_message_by_priority(CDS_MQ_ID msgQueueId,
+					   cds_msg_t *pMsg,
+					   int is_high_priority)
 {
 	p_cds_mq_type pTargetMq = NULL;
 	p_cds_msg_wrapper pMsgWrapper = NULL;
@@ -1371,7 +1344,10 @@ QDF_STATUS cds_mq_post_message(CDS_MQ_ID msgQueueId, cds_msg_t *pMsg)
 	qdf_mem_copy((void *)pMsgWrapper->pVosMsg,
 		     (void *)pMsg, sizeof(cds_msg_t));
 
-	cds_mq_put(pTargetMq, pMsgWrapper);
+	if (is_high_priority)
+		cds_mq_put_front(pTargetMq, pMsgWrapper);
+	else
+		cds_mq_put(pTargetMq, pMsgWrapper);
 
 	set_bit(MC_POST_EVENT_MASK, &gp_cds_context->qdf_sched.mcEventFlag);
 	wake_up_interruptible(&gp_cds_context->qdf_sched.mcWaitQueue);
@@ -2236,4 +2212,140 @@ QDF_STATUS cds_set_radio_index(int radio_index)
 	p_cds_context->radio_index = radio_index;
 
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * cds_init_ini_config() - API to initialize CDS configuration parameters
+ * @cfg: CDS Configuration
+ *
+ * Return: void
+ */
+
+void cds_init_ini_config(struct cds_config_info *cfg)
+{
+	cds_context_type *cds_ctx;
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return;
+	}
+
+	cds_ctx->cds_cfg = cfg;
+}
+
+/**
+ * cds_deinit_ini_config() - API to free CDS configuration parameters
+ *
+ * Return: void
+ */
+void cds_deinit_ini_config(void)
+{
+	cds_context_type *cds_ctx;
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return;
+	}
+
+	if (cds_ctx->cds_cfg)
+		qdf_mem_free(cds_ctx->cds_cfg);
+
+	cds_ctx->cds_cfg = NULL;
+}
+
+/**
+ * cds_get_ini_config() - API to get CDS configuration parameters
+ *
+ * Return: cds config structure
+ */
+struct cds_config_info *cds_get_ini_config(void)
+{
+	cds_context_type *cds_ctx;
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return NULL;
+	}
+
+	return cds_ctx->cds_cfg;
+}
+
+/**
+ * cds_is_5_mhz_enabled() - API to get 5MHZ enabled
+ *
+ * Return: true if 5 mhz is enabled, false otherwise
+ */
+bool cds_is_5_mhz_enabled(void)
+{
+	p_cds_contextType p_cds_context;
+
+	p_cds_context = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!p_cds_context) {
+		cds_err("%s: cds context is invalid", __func__);
+		return false;
+	}
+
+	if (p_cds_context->cds_cfg)
+		return (p_cds_context->cds_cfg->sub_20_channel_width ==
+						WLAN_SUB_20_CH_WIDTH_5);
+
+	return false;
+}
+
+/**
+ * cds_is_10_mhz_enabled() - API to get 10-MHZ enabled
+ *
+ * Return: true if 10 mhz is enabled, false otherwise
+ */
+bool cds_is_10_mhz_enabled(void)
+{
+	p_cds_contextType p_cds_context;
+
+	p_cds_context = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!p_cds_context) {
+		cds_err("%s: cds context is invalid", __func__);
+		return false;
+	}
+
+	if (p_cds_context->cds_cfg)
+		return (p_cds_context->cds_cfg->sub_20_channel_width ==
+						WLAN_SUB_20_CH_WIDTH_10);
+
+	return false;
+}
+
+/**
+ * cds_is_sub_20_mhz_enabled() - API to get sub 20-MHZ enabled
+ *
+ * Return: true if 5 or 10 mhz is enabled, false otherwise
+ */
+bool cds_is_sub_20_mhz_enabled(void)
+{
+	p_cds_contextType p_cds_context;
+
+	p_cds_context = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!p_cds_context) {
+		cds_err("%s: cds context is invalid", __func__);
+		return false;
+	}
+
+	if (p_cds_context->cds_cfg)
+		return p_cds_context->cds_cfg->sub_20_channel_width;
+
+	return false;
+}
+
+/**
+ * cds_svc_fw_shutdown_ind() - API to send userspace about FW crash
+ *
+ * @dev: Device Pointer
+ *
+ * Return: None
+ */
+void cds_svc_fw_shutdown_ind(struct device *dev)
+{
+	hdd_svc_fw_shutdown_ind(dev);
 }

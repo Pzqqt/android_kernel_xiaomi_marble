@@ -1215,8 +1215,10 @@ struct ol_tx_desc_t *ol_tx_hl_desc_alloc(struct ol_txrx_pdev_t *pdev,
 			TXRX_HL_TX_DESC_HI_PRIO_RESERVED) {
 		tx_desc = ol_tx_desc_hl(pdev, vdev, msdu, msdu_info);
 	} else if (qdf_nbuf_is_ipv4_pkt(msdu) == true) {
-		if ((qdf_nbuf_is_ipv4_dhcp_pkt(msdu) == true) ||
-		    (qdf_nbuf_is_ipv4_eapol_pkt(msdu) == true)) {
+		if ((QDF_NBUF_CB_GET_PACKET_TYPE(msdu) ==
+				QDF_NBUF_CB_PACKET_TYPE_DHCP) ||
+		    (QDF_NBUF_CB_GET_PACKET_TYPE(msdu) ==
+			QDF_NBUF_CB_PACKET_TYPE_EAPOL)) {
 			tx_desc = ol_tx_desc_hl(pdev, vdev, msdu, msdu_info);
 			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 				   "Provided tx descriptor from reserve pool for DHCP/EAPOL\n");
@@ -1705,10 +1707,11 @@ void dump_frag_desc(char *msg, struct ol_tx_desc_t *tx_desc)
 
 	qdf_print("OL TX Descriptor 0x%p msdu_id %d\n",
 		 tx_desc, tx_desc->id);
-	qdf_print("HTT TX Descriptor vaddr: 0x%p paddr: 0x%llx",
-		 tx_desc->htt_tx_desc, tx_desc->htt_tx_desc_paddr);
-	qdf_print("%s %d: Fragment Descriptor 0x%p (paddr=0x%llx)",
-		 __func__, __LINE__, tx_desc->htt_frag_desc, tx_desc->htt_frag_desc_paddr);
+	qdf_print("HTT TX Descriptor vaddr: 0x%p paddr: %pad",
+		 tx_desc->htt_tx_desc, &tx_desc->htt_tx_desc_paddr);
+	qdf_print("%s %d: Fragment Descriptor 0x%p (paddr=%pad)",
+		 __func__, __LINE__, tx_desc->htt_frag_desc,
+		 &tx_desc->htt_frag_desc_paddr);
 
 	/* it looks from htt_tx_desc_frag() that tx_desc->htt_frag_desc
 	   is already de-referrable (=> in virtual address space) */
@@ -1864,6 +1867,16 @@ void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 	c_element = qdf_mem_malloc(sizeof(struct qdf_tso_seg_elem_t));
 	pdev->tso_seg_pool.freelist = c_element;
 	for (i = 0; i < (num_seg - 1); i++) {
+		if (qdf_unlikely(!c_element)) {
+			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+				   "%s: ERROR: c_element NULL for seg %d",
+				   __func__, i);
+			QDF_BUG(0);
+			pdev->tso_seg_pool.pool_size = i;
+			qdf_spinlock_create(&pdev->tso_seg_pool.tso_mutex);
+			return;
+		}
+
 		c_element->next =
 			qdf_mem_malloc(sizeof(struct qdf_tso_seg_elem_t));
 		c_element = c_element->next;
@@ -1881,18 +1894,19 @@ void ol_tso_seg_list_deinit(struct ol_txrx_pdev_t *pdev)
 
 	qdf_spin_lock_bh(&pdev->tso_seg_pool.tso_mutex);
 	c_element = pdev->tso_seg_pool.freelist;
-	for (i = 0; i < pdev->tso_seg_pool.pool_size; i++) {
-		temp = c_element->next;
-		qdf_mem_free(c_element);
-		c_element = temp;
-		if (!c_element)
-			break;
-	}
+	i = pdev->tso_seg_pool.pool_size;
 
 	pdev->tso_seg_pool.freelist = NULL;
 	pdev->tso_seg_pool.num_free = 0;
 	pdev->tso_seg_pool.pool_size = 0;
+
 	qdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
 	qdf_spinlock_destroy(&pdev->tso_seg_pool.tso_mutex);
+
+	while (i-- > 0 && c_element) {
+		temp = c_element->next;
+		qdf_mem_free(c_element);
+		c_element = temp;
+	}
 }
 #endif /* FEATURE_TSO */

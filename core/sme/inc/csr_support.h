@@ -355,8 +355,6 @@ QDF_STATUS csr_reassoc(tpAniSirGlobal pMac, uint32_t sessionId,
 		tCsrRoamModifyProfileFields *pModProfileFields,
 		uint32_t *pRoamId, bool fForce);
 
-QDF_STATUS csr_isconcurrentsession_valid(tpAniSirGlobal pMac,
-		uint32_t cursessionId, enum tQDF_ADAPTER_MODE currBssPersona);
 /* BeaconInterval validation for MCC support */
 QDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal pMac, uint8_t channelId,
 		uint16_t *beaconInterval, uint32_t cursessionId,

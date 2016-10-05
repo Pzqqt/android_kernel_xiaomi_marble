@@ -270,15 +270,15 @@ int cds_sched_handle_cpu_hot_plug(void)
 	if (cds_is_load_or_unload_in_progress())
 		return 0;
 
-	spin_lock_bh(&pSchedContext->affinity_lock);
+	mutex_lock(&pSchedContext->affinity_lock);
 	if (cds_sched_find_attach_cpu(pSchedContext,
 		pSchedContext->high_throughput_required)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			"%s: handle hot plug fail", __func__);
-		spin_unlock_bh(&pSchedContext->affinity_lock);
+		mutex_unlock(&pSchedContext->affinity_lock);
 		return 1;
 	}
-	spin_unlock_bh(&pSchedContext->affinity_lock);
+	mutex_unlock(&pSchedContext->affinity_lock);
 	return 0;
 }
 
@@ -308,15 +308,15 @@ int cds_sched_handle_throughput_req(bool high_tput_required)
 		return 0;
 	}
 
-	spin_lock_bh(&pSchedContext->affinity_lock);
+	mutex_lock(&pSchedContext->affinity_lock);
 	pSchedContext->high_throughput_required = high_tput_required;
 	if (cds_sched_find_attach_cpu(pSchedContext, high_tput_required)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			"%s: handle throughput req fail", __func__);
-		spin_unlock_bh(&pSchedContext->affinity_lock);
+		mutex_unlock(&pSchedContext->affinity_lock);
 		return 1;
 	}
-	spin_unlock_bh(&pSchedContext->affinity_lock);
+	mutex_unlock(&pSchedContext->affinity_lock);
 	return 0;
 }
 
@@ -510,7 +510,7 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 	}
 	register_hotcpu_notifier(&cds_cpu_hotplug_notifier);
 	pSchedContext->cpu_hot_plug_notifier = &cds_cpu_hotplug_notifier;
-	spin_lock_init(&pSchedContext->affinity_lock);
+	mutex_init(&pSchedContext->affinity_lock);
 	pSchedContext->high_throughput_required = false;
 #endif
 	gp_cds_sched_context = pSchedContext;
@@ -1176,6 +1176,7 @@ QDF_STATUS cds_sched_close(void *p_cds_context)
 	cds_drop_rxpkt_by_staid(gp_cds_sched_context, WLAN_MAX_STA_COUNT);
 	cds_free_ol_rx_pkt_freeq(gp_cds_sched_context);
 	unregister_hotcpu_notifier(&cds_cpu_hotplug_notifier);
+	gp_cds_sched_context->cpu_hot_plug_notifier = NULL;
 #endif
 	return QDF_STATUS_SUCCESS;
 } /* cds_sched_close() */

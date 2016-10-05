@@ -35,6 +35,7 @@
 #ifdef IPA_OFFLOAD
 
 /* Include Files */
+#include <linux/ipa.h>
 #include <wlan_hdd_includes.h>
 #include <wlan_hdd_ipa.h>
 
@@ -492,6 +493,10 @@ uint32_t wlan_hdd_stub_addr_to_priv(void *ptr)
 	QDF_TRACE(QDF_MODULE_ID_HDD, LVL, \
 		  "%s:%d: "fmt, __func__, __LINE__, ## args)
 
+#define HDD_IPA_DP_LOG(LVL, fmt, args...) \
+	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, LVL, \
+		  "%s:%d: "fmt, __func__, __LINE__, ## args)
+
 #define HDD_IPA_DBG_DUMP(_lvl, _prefix, _buf, _len) \
 	do { \
 		QDF_TRACE(QDF_MODULE_ID_HDD, _lvl, "%s:", _prefix); \
@@ -593,6 +598,7 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 			   unsigned long data);
 
 static void hdd_ipa_cleanup_iface(struct hdd_ipa_iface_context *iface_context);
+static void hdd_ipa_uc_proc_pending_event (struct hdd_ipa_priv *hdd_ipa);
 
 /**
  * hdd_ipa_is_enabled() - Is IPA enabled?
@@ -1290,40 +1296,6 @@ static void hdd_ipa_uc_rm_notify_defer(struct work_struct *work)
 }
 
 /**
- * hdd_ipa_uc_proc_pending_event() - Process IPA uC pending events
- * @hdd_ipa: Global HDD IPA context
- *
- * Return: None
- */
-static void hdd_ipa_uc_proc_pending_event(struct hdd_ipa_priv *hdd_ipa)
-{
-	unsigned int pending_event_count;
-	struct ipa_uc_pending_event *pending_event = NULL;
-
-	pending_event_count = qdf_list_size(&hdd_ipa->pending_event);
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
-		"%s, Pending Event Count %d", __func__, pending_event_count);
-	if (!pending_event_count) {
-		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
-			"%s, No Pending Event", __func__);
-		return;
-	}
-
-	qdf_list_remove_front(&hdd_ipa->pending_event,
-			(qdf_list_node_t **)&pending_event);
-	while (pending_event != NULL) {
-		hdd_ipa_wlan_evt(pending_event->adapter,
-			pending_event->type,
-			pending_event->sta_id,
-			pending_event->mac_addr);
-		qdf_mem_free(pending_event);
-		pending_event = NULL;
-		qdf_list_remove_front(&hdd_ipa->pending_event,
-			(qdf_list_node_t **)&pending_event);
-	}
-}
-
-/**
  * hdd_ipa_uc_op_cb() - IPA uC operation callback
  * @op_msg: operation message received from firmware
  * @usr_ctxt: user context registered with TL (we register the HDD Global
@@ -1364,7 +1336,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 
 	hdd_ipa = (struct hdd_ipa_priv *)hdd_ctx->hdd_ipa;
 
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG,
+	HDD_IPA_DP_LOG(QDF_TRACE_LEVEL_DEBUG,
 		    "%s, OPCODE %s", __func__, op_string[msg->op_code]);
 
 	if ((HDD_IPA_UC_OPCODE_TX_RESUME == msg->op_code) ||
@@ -1620,20 +1592,15 @@ static void hdd_ipa_uc_offload_enable_disable(hdd_adapter_t *adapter,
 {
 	struct sir_ipa_offload_enable_disable ipa_offload_enable_disable;
 
-	/* Lower layer may send multiple START_BSS_EVENT in DFS mode or during
-	 * channel change indication. Since these indications are sent by lower
-	 * layer as SAP updates and IPA doesn't have to do anything for these
-	 * updates so ignoring!
-	 */
-	if (QDF_SAP_MODE == adapter->device_mode && adapter->ipa_context)
+	if (!adapter)
 		return;
 
 	/* Lower layer may send multiple START_BSS_EVENT in DFS mode or during
 	 * channel change indication. Since these indications are sent by lower
 	 * layer as SAP updates and IPA doesn't have to do anything for these
 	 * updates so ignoring!
-	*/
-	if (adapter->ipa_context)
+	 */
+	if (QDF_SAP_MODE == adapter->device_mode && adapter->ipa_context)
 		return;
 
 	qdf_mem_zero(&ipa_offload_enable_disable,
@@ -1801,6 +1768,10 @@ static QDF_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx)
 	/* Connect WDI IPA PIPE */
 	ipa_connect_wdi_pipe(&pipe_in, &pipe_out);
 	/* Micro Controller Doorbell register */
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO_HIGH,
+		"%s CONS DB pipe out 0x%x TX PIPE Handle 0x%x",
+		__func__, (unsigned int)pipe_out.uc_door_bell_pa,
+		ipa_ctxt->tx_pipe_handle);
 	ipa_ctxt->tx_comp_doorbell_paddr = pipe_out.uc_door_bell_pa;
 	/* WLAN TX PIPE Handle */
 	ipa_ctxt->tx_pipe_handle = pipe_out.clnt_hdl;
@@ -2555,7 +2526,7 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 		if (hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx)) {
 			session_id = (uint8_t)skb->cb[0];
 			iface_id = vdev_to_iface[session_id];
-			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO_HIGH,
+			HDD_IPA_DP_LOG(QDF_TRACE_LEVEL_INFO_HIGH,
 				"IPA_RECEIVE: session_id=%u, iface_id=%u",
 				session_id, iface_id);
 		} else {
@@ -2590,7 +2561,7 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 		/* Disable to forward Intra-BSS Rx packets when
 		 * ap_isolate=1 in hostapd.conf
 		 */
-		if (adapter->sessionCtx.ap.apDisableIntraBssFwd) {
+		if (!adapter->sessionCtx.ap.apDisableIntraBssFwd) {
 			/*
 			 * When INTRA_BSS_FWD_OFFLOAD is enabled, FW will send
 			 * all Rx packets to IPA uC, which need to be forwarded
@@ -2604,7 +2575,7 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 			fw_desc = (uint8_t)skb->cb[1];
 
 			if (fw_desc & HDD_IPA_FW_RX_DESC_FORWARD_M) {
-				HDD_IPA_LOG(
+				HDD_IPA_DP_LOG(
 					QDF_TRACE_LEVEL_DEBUG,
 					"Forward packet to Tx (fw_desc=%d)",
 					fw_desc);
@@ -2658,7 +2629,7 @@ void hdd_ipa_nbuf_cb(qdf_nbuf_t skb)
 {
 	struct hdd_ipa_priv *hdd_ipa = ghdd_ipa;
 
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "%p",
+	HDD_IPA_DP_LOG(QDF_TRACE_LEVEL_DEBUG, "%p",
 		wlan_hdd_stub_priv_to_addr(QDF_NBUF_CB_TX_IPA_PRIV(skb)));
 	/* FIXME: This is broken; PRIV_DATA is now 31 bits */
 	ipa_free_skb((struct ipa_rx_data *)
@@ -3582,15 +3553,59 @@ static inline char *hdd_ipa_wlan_event_to_str(enum ipa_wlan_event event)
 }
 
 /**
- * hdd_ipa_wlan_evt() - IPA event handler
+ * hdd_to_ipa_wlan_event() - convert hdd_ipa_wlan_event to ipa_wlan_event
+ * @hdd_ipa_event_type: HDD IPA WLAN event to be converted to an ipa_wlan_event
+ *
+ * Return: ipa_wlan_event representing the hdd_ipa_wlan_event
+ */
+static enum ipa_wlan_event
+hdd_to_ipa_wlan_event(enum hdd_ipa_wlan_event hdd_ipa_event_type)
+{
+	enum ipa_wlan_event ipa_event;
+
+	switch (hdd_ipa_event_type) {
+	case HDD_IPA_CLIENT_CONNECT:
+		ipa_event = WLAN_CLIENT_CONNECT;
+		break;
+	case HDD_IPA_CLIENT_DISCONNECT:
+		ipa_event = WLAN_CLIENT_DISCONNECT;
+		break;
+	case HDD_IPA_AP_CONNECT:
+		ipa_event = WLAN_AP_CONNECT;
+		break;
+	case HDD_IPA_AP_DISCONNECT:
+		ipa_event = WLAN_AP_DISCONNECT;
+		break;
+	case HDD_IPA_STA_CONNECT:
+		ipa_event = WLAN_STA_CONNECT;
+		break;
+	case HDD_IPA_STA_DISCONNECT:
+		ipa_event = WLAN_STA_DISCONNECT;
+		break;
+	case HDD_IPA_CLIENT_CONNECT_EX:
+		ipa_event = WLAN_CLIENT_CONNECT_EX;
+		break;
+	case HDD_IPA_WLAN_EVENT_MAX:
+	default:
+		ipa_event = IPA_WLAN_EVENT_MAX;
+		break;
+	}
+	return ipa_event;
+
+}
+
+/**
+ * __hdd_ipa_wlan_evt() - IPA event handler
  * @adapter: adapter upon which the event was received
  * @sta_id: station id for the event
- * @type: the event type
+ * @type: event enum of type ipa_wlan_event
  * @mac_address: MAC address associated with the event
+ *
+ * This function is meant to be called from within wlan_hdd_ipa.c
  *
  * Return: 0 on success, negative errno value on error
  */
-int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
+static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		     enum ipa_wlan_event type, uint8_t *mac_addr)
 {
 	struct hdd_ipa_priv *hdd_ipa = ghdd_ipa;
@@ -3676,43 +3691,28 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		if (hdd_ipa->sta_connected)
 			hdd_ipa_cleanup_iface(adapter->ipa_context);
 
-		if ((hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx)) &&
-			(!hdd_ipa->sta_connected))
+		if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx) &&
+		    (hdd_ipa->sap_num_connected_sta > 0) &&
+		    !hdd_ipa->sta_connected)
 			hdd_ipa_uc_offload_enable_disable(adapter,
 				SIR_STA_RX_DATA_OFFLOAD, 1);
 
 		qdf_mutex_acquire(&hdd_ipa->event_lock);
 
-		if (!hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx)) {
-			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
-				"%s: Evt: %d, IPA UC OFFLOAD NOT ENABLED",
-				msg_ex->name, meta.msg_type);
-		} else if ((!hdd_ipa->sap_num_connected_sta) &&
-			(!hdd_ipa->sta_connected)) {
-			/* Enable IPA UC TX PIPE when STA connected */
-			ret = hdd_ipa_uc_handle_first_con(hdd_ipa);
-			if (ret) {
-				qdf_mutex_release(&hdd_ipa->event_lock);
-				HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
-					"handle 1st con ret %d", ret);
-				hdd_ipa_uc_offload_enable_disable(adapter,
-					SIR_STA_RX_DATA_OFFLOAD, 0);
-				goto end;
-			}
-		}
 		ret = hdd_ipa_setup_iface(hdd_ipa, adapter, sta_id);
 		if (ret) {
 			qdf_mutex_release(&hdd_ipa->event_lock);
-			hdd_ipa_uc_offload_enable_disable(adapter,
-				SIR_STA_RX_DATA_OFFLOAD, 0);
+			if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx) &&
+			    (hdd_ipa->sap_num_connected_sta > 0) &&
+			    !hdd_ipa->sta_connected)
+				hdd_ipa_uc_offload_enable_disable(adapter,
+					SIR_STA_RX_DATA_OFFLOAD, 0);
 			goto end;
+		}
 
-#ifdef IPA_UC_OFFLOAD
 		vdev_to_iface[adapter->sessionId] =
 			((struct hdd_ipa_iface_context *)
-				(adapter->ipa_context))->iface_id;
-#endif /* IPA_UC_OFFLOAD */
-		}
+			(adapter->ipa_context))->iface_id;
 
 		qdf_mutex_release(&hdd_ipa->event_lock);
 
@@ -3729,10 +3729,10 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		if (adapter->ipa_context)
 			return 0;
 
-		if (hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx)) {
+		if (hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx))
 			hdd_ipa_uc_offload_enable_disable(adapter,
 				SIR_AP_RX_DATA_OFFLOAD, 1);
-		}
+
 		qdf_mutex_acquire(&hdd_ipa->event_lock);
 		ret = hdd_ipa_setup_iface(hdd_ipa, adapter, sta_id);
 		if (ret) {
@@ -3741,13 +3741,12 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 				msg_ex->name, meta.msg_type);
 			qdf_mutex_release(&hdd_ipa->event_lock);
 			goto end;
+		}
 
-#ifdef IPA_UC_OFFLOAD
 		vdev_to_iface[adapter->sessionId] =
 			((struct hdd_ipa_iface_context *)
-				(adapter->ipa_context))->iface_id;
-#endif /* IPA_UC_OFFLOAD */
-		}
+			(adapter->ipa_context))->iface_id;
+
 		qdf_mutex_release(&hdd_ipa->event_lock);
 		break;
 
@@ -3762,22 +3761,23 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 			qdf_mutex_release(&hdd_ipa->event_lock);
 			return -EINVAL;
 		}
+
 		hdd_ipa->sta_connected = 0;
+
 		if (!hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx)) {
 			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 				"%s: IPA UC OFFLOAD NOT ENABLED",
 				msg_ex->name);
 		} else {
 			/* Disable IPA UC TX PIPE when STA disconnected */
-			if ((!hdd_ipa->sap_num_connected_sta) ||
-				((!hdd_ipa->num_iface) &&
-					(HDD_IPA_UC_NUM_WDI_PIPE ==
-					hdd_ipa->activated_fw_pipe))) {
+			if (!hdd_ipa->num_iface &&
+			    (HDD_IPA_UC_NUM_WDI_PIPE ==
+			    hdd_ipa->activated_fw_pipe))
 				hdd_ipa_uc_handle_last_discon(hdd_ipa);
-			}
 		}
 
-		if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx)) {
+		if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx) &&
+		    (hdd_ipa->sap_num_connected_sta > 0)) {
 			hdd_ipa_uc_offload_enable_disable(adapter,
 				SIR_STA_RX_DATA_OFFLOAD, 0);
 			vdev_to_iface[adapter->sessionId] = HDD_IPA_MAX_IFACE;
@@ -3819,6 +3819,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 				SIR_AP_RX_DATA_OFFLOAD, 0);
 			vdev_to_iface[adapter->sessionId] = HDD_IPA_MAX_IFACE;
 		}
+
 		qdf_mutex_release(&hdd_ipa->event_lock);
 		break;
 
@@ -3844,15 +3845,30 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		}
 
 		/* Enable IPA UC Data PIPEs when first STA connected */
-		if ((0 == hdd_ipa->sap_num_connected_sta) &&
-		   (!hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx) ||
-		   !hdd_ipa->sta_connected)) {
+		if (0 == hdd_ipa->sap_num_connected_sta) {
+			if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx) &&
+			    hdd_ipa->sta_connected)
+				hdd_ipa_uc_offload_enable_disable(
+					hdd_get_adapter(hdd_ipa->hdd_ctx,
+							QDF_STA_MODE),
+					SIR_STA_RX_DATA_OFFLOAD, 1);
+
 			ret = hdd_ipa_uc_handle_first_con(hdd_ipa);
 			if (ret) {
 				qdf_mutex_release(&hdd_ipa->event_lock);
 				HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 					    "%s: handle 1st con ret %d",
 					    adapter->dev->name, ret);
+
+				if (hdd_ipa_uc_sta_is_enabled(
+					hdd_ipa->hdd_ctx) &&
+				    hdd_ipa->sta_connected)
+					hdd_ipa_uc_offload_enable_disable(
+						hdd_get_adapter(
+							hdd_ipa->hdd_ctx,
+							QDF_STA_MODE),
+						SIR_STA_RX_DATA_OFFLOAD, 0);
+
 				return ret;
 			}
 		}
@@ -3915,12 +3931,18 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		hdd_ipa->sap_num_connected_sta--;
 		/* Disable IPA UC TX PIPE when last STA disconnected */
 		if (!hdd_ipa->sap_num_connected_sta
-			&& (!hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx) ||
-			!hdd_ipa->sta_connected)
 			&& (false == hdd_ipa->resource_unloading)
 			&& (HDD_IPA_UC_NUM_WDI_PIPE ==
 				hdd_ipa->activated_fw_pipe))
 			hdd_ipa_uc_handle_last_discon(hdd_ipa);
+
+		if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx) &&
+		    hdd_ipa->sta_connected)
+			hdd_ipa_uc_offload_enable_disable(
+				hdd_get_adapter(hdd_ipa->hdd_ctx,
+						QDF_STA_MODE),
+						SIR_STA_RX_DATA_OFFLOAD, 0);
+
 		qdf_mutex_release(&hdd_ipa->event_lock);
 		break;
 
@@ -3958,6 +3980,60 @@ end:
 }
 
 /**
+ * hdd_ipa_wlan_evt() - IPA event handler
+ * @adapter: adapter upon which the event was received
+ * @sta_id: station id for the event
+ * @hdd_event_type: event enum of type hdd_ipa_wlan_event
+ * @mac_address: MAC address associated with the event
+ *
+ * This function is meant to be called from outside of wlan_hdd_ipa.c.
+ *
+ * Return: 0 on success, negative errno value on error
+ */
+int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
+	enum hdd_ipa_wlan_event hdd_event_type, uint8_t *mac_addr)
+{
+	enum ipa_wlan_event type = hdd_to_ipa_wlan_event(hdd_event_type);
+
+	return __hdd_ipa_wlan_evt(adapter, sta_id, type, mac_addr);
+}
+
+/**
+ * hdd_ipa_uc_proc_pending_event() - Process IPA uC pending events
+ * @hdd_ipa: Global HDD IPA context
+ *
+ * Return: None
+ */
+static void
+hdd_ipa_uc_proc_pending_event(struct hdd_ipa_priv *hdd_ipa)
+{
+	unsigned int pending_event_count;
+	struct ipa_uc_pending_event *pending_event = NULL;
+
+	pending_event_count = qdf_list_size(&hdd_ipa->pending_event);
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
+		"%s, Pending Event Count %d", __func__, pending_event_count);
+	if (!pending_event_count) {
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
+			"%s, No Pending Event", __func__);
+		return;
+	}
+
+	qdf_list_remove_front(&hdd_ipa->pending_event,
+			(qdf_list_node_t **)&pending_event);
+	while (pending_event != NULL) {
+		__hdd_ipa_wlan_evt(pending_event->adapter,
+			pending_event->type,
+			pending_event->sta_id,
+			pending_event->mac_addr);
+		qdf_mem_free(pending_event);
+		pending_event = NULL;
+		qdf_list_remove_front(&hdd_ipa->pending_event,
+			(qdf_list_node_t **)&pending_event);
+	}
+}
+
+/**
  * hdd_ipa_rm_state_to_str() - Convert IPA RM state to string
  * @state: IPA RM state value
  *
@@ -3991,9 +4067,15 @@ QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
 	struct hdd_ipa_priv *hdd_ipa = NULL;
 	int ret, i;
 	struct hdd_ipa_iface_context *iface_context = NULL;
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (!hdd_ipa_is_enabled(hdd_ctx))
 		return QDF_STATUS_SUCCESS;
+
+	if (!pdev) {
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_FATAL, "pdev is NULL");
+		goto fail_return;
+	}
 
 	hdd_ipa = qdf_mem_malloc(sizeof(*hdd_ipa));
 	if (!hdd_ipa) {
@@ -4005,8 +4087,7 @@ QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
 	ghdd_ipa = hdd_ipa;
 	hdd_ipa->hdd_ctx = hdd_ctx;
 	hdd_ipa->num_iface = 0;
-	ol_txrx_ipa_uc_get_resource(cds_get_context(QDF_MODULE_ID_TXRX),
-				&hdd_ipa->ipa_resource);
+	ol_txrx_ipa_uc_get_resource(pdev, &hdd_ipa->ipa_resource);
 	if ((0 == hdd_ipa->ipa_resource.ce_sr_base_paddr) ||
 	    (0 == hdd_ipa->ipa_resource.tx_comp_ring_base_paddr) ||
 	    (0 == hdd_ipa->ipa_resource.rx_rdy_ring_base_paddr) ||
@@ -4168,10 +4249,12 @@ QDF_STATUS hdd_ipa_cleanup(hdd_context_t *hdd_ctx)
 	if (hdd_ipa_uc_is_enabled(hdd_ctx)) {
 		hdd_ipa_uc_rt_debug_deinit(hdd_ctx);
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
-			    "%s: Disconnect TX PIPE", __func__);
+			    "%s: Disconnect TX PIPE tx_pipe_handle=0x%x",
+			    __func__, hdd_ipa->tx_pipe_handle);
 		ipa_disconnect_wdi_pipe(hdd_ipa->tx_pipe_handle);
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
-			    "%s: Disconnect RX PIPE", __func__);
+			    "%s: Disconnect RX PIPE rx_pipe_handle=0x%x",
+			    __func__, hdd_ipa->rx_pipe_handle);
 		ipa_disconnect_wdi_pipe(hdd_ipa->rx_pipe_handle);
 		qdf_mutex_destroy(&hdd_ipa->event_lock);
 		qdf_mutex_destroy(&hdd_ipa->ipa_lock);

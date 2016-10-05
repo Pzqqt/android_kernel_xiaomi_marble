@@ -55,9 +55,6 @@
 
 static void lim_handle_sme_join_result(tpAniSirGlobal, tSirResultCodes, uint16_t,
 				       tpPESession);
-#ifdef FEATURE_OEM_DATA_SUPPORT
-void lim_process_mlm_oem_data_req_cnf(tpAniSirGlobal, uint32_t *);
-#endif
 void lim_process_mlm_join_cnf(tpAniSirGlobal, uint32_t *);
 void lim_process_mlm_auth_cnf(tpAniSirGlobal, uint32_t *);
 void lim_process_mlm_start_cnf(tpAniSirGlobal, uint32_t *);
@@ -102,14 +99,6 @@ lim_process_mlm_rsp_messages(tpAniSirGlobal pMac, uint32_t msgType,
 	}
 	MTRACE(mac_trace(pMac, TRACE_CODE_TX_LIM_MSG, 0, msgType));
 	switch (msgType) {
-
-#ifdef FEATURE_OEM_DATA_SUPPORT
-	case LIM_MLM_OEM_DATA_CNF:
-		lim_process_mlm_oem_data_req_cnf(pMac, pMsgBuf);
-		pMsgBuf = NULL;
-		break;
-#endif
-
 	case LIM_MLM_AUTH_CNF:
 		lim_process_mlm_auth_cnf(pMac, pMsgBuf);
 		break;
@@ -153,44 +142,6 @@ lim_process_mlm_rsp_messages(tpAniSirGlobal pMac, uint32_t msgType,
 	} /* switch (msgType) */
 	return;
 } /*** end lim_process_mlm_rsp_messages() ***/
-
-#ifdef FEATURE_OEM_DATA_SUPPORT
-
-/**
- * lim_process_mlm_oem_data_req_cnf()
- *
- ***FUNCTION:
- * This function is called to processes LIM_MLM_OEM_DATA_REQ_CNF
- * message from MLM State machine.
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- *
- ***NOTE:
- *
- * @param pMac       Pointer to Global MAC structure
- * @param pMsgBuf    A pointer to the MLM message buffer
- *
- * @return None
- */
-
-void lim_process_mlm_oem_data_req_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
-{
-	tLimMlmOemDataRsp *measRsp;
-
-	tSirResultCodes resultCode = eSIR_SME_SUCCESS;
-
-	measRsp = (tLimMlmOemDataRsp *) (pMsgBuf);
-
-	/* Now send the meas confirm message to the sme */
-	lim_send_sme_oem_data_rsp(pMac, (uint32_t *) measRsp, resultCode);
-
-	/* Dont free the memory here. It will be freed up by the callee */
-
-	return;
-}
-#endif
 
 /**
  * lim_process_mlm_start_cnf()
@@ -580,7 +531,7 @@ void lim_process_mlm_auth_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg)
 		return;
 	}
 
-	if (((tLimMlmAuthCnf *) msg)->resultCode == eSIR_SME_SUCCESS) {
+	if (auth_cnf->resultCode == eSIR_SME_SUCCESS) {
 		if (session_entry->limSmeState == eLIM_SME_WT_AUTH_STATE) {
 			lim_send_mlm_assoc_req(mac_ctx, session_entry);
 		} else {
@@ -617,9 +568,10 @@ void lim_process_mlm_auth_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg)
 	}
 
 	if ((auth_type == eSIR_AUTO_SWITCH) &&
-		(((tLimMlmAuthCnf *) msg)->authType ==  eSIR_SHARED_KEY)
-		&& (eSIR_MAC_AUTH_ALGO_NOT_SUPPORTED_STATUS ==
-		((tLimMlmAuthCnf *) msg)->protStatusCode)) {
+		(auth_cnf->authType == eSIR_SHARED_KEY) &&
+		((eSIR_MAC_AUTH_ALGO_NOT_SUPPORTED_STATUS ==
+			auth_cnf->protStatusCode) ||
+		(auth_cnf->resultCode == eSIR_SME_AUTH_TIMEOUT_RESULT_CODE))) {
 		/*
 		 * When shared authentication fails with reason
 		 * code "13" and authType set to 'auto switch',
@@ -683,8 +635,8 @@ void lim_process_mlm_auth_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg)
 			 * auth failure to Host.
 			 */
 			lim_handle_sme_join_result(mac_ctx,
-				((tLimMlmAuthCnf *)msg)->resultCode,
-				((tLimMlmAuthCnf *)msg)->protStatusCode,
+				auth_cnf->resultCode,
+				auth_cnf->protStatusCode,
 				session_entry);
 		} else {
 			/*
@@ -922,7 +874,8 @@ void lim_process_mlm_assoc_ind(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	pSirSmeAssocInd->staId = pStaDs->staIndex;
 	pSirSmeAssocInd->reassocReq = pStaDs->mlmStaContext.subType;
 	pSirSmeAssocInd->timingMeasCap = pStaDs->timingMeasCap;
-	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, msgQ.type));
+	MTRACE(mac_trace(pMac, TRACE_CODE_TX_SME_MSG,
+			 psessionEntry->peSessionId, msgQ.type));
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 	lim_diag_event_report(pMac, WLAN_PE_DIAG_ASSOC_IND_EVENT, psessionEntry, 0,
 			      0);
@@ -2191,12 +2144,12 @@ static void lim_process_ap_mlm_add_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsg
 			if ((psessionEntry->gStartBssRSNIe.present)
 			    || (psessionEntry->gStartBssWPAIe.present))
 				lim_log(pMac, LOG1,
-					FL("WPA/WPA2 SAP configuration\n"));
+					FL("WPA/WPA2 SAP configuration"));
 			else {
 				if (pMac->lim.gLimAssocStaLimit >
 				    MAX_SUPPORTED_PEERS_WEP) {
 					lim_log(pMac, LOG1,
-						FL("WEP SAP Configuration\n"));
+						FL("WEP SAP Configuration"));
 					pMac->lim.gLimAssocStaLimit =
 						MAX_SUPPORTED_PEERS_WEP;
 					isWepEnabled = true;
@@ -3322,10 +3275,7 @@ void lim_process_rx_scan_event(tpAniSirGlobal pMac, void *buf)
 			 * failure.
 			 */
 			if (pMac->lim.mgmtFrameSessionId != 0xff) {
-				lim_send_sme_rsp(pMac,
-					eWNI_SME_ACTION_FRAME_SEND_CNF,
-					eSIR_SME_SEND_ACTION_FAIL,
-					pMac->lim.mgmtFrameSessionId, 0);
+				lim_p2p_action_cnf(pMac, false);
 				pMac->lim.mgmtFrameSessionId = 0xff;
 			}
 		} else if (PREAUTH_REQUESTOR_ID == pScanEvent->requestor) {

@@ -246,19 +246,6 @@ QDF_STATUS sme_ndp_end_req_handler(tHalHandle hal, struct ndp_end_req *req)
 }
 
 /**
- * sme_ndp_sched_req_handler() - ndp schedule request handler
- * @session_id: session id over which the ndp is being created
- * @req_params: request parameters
- *
- * Return: QDF_STATUS_SUCCESS on success; error number otherwise
- */
-QDF_STATUS sme_ndp_sched_req_handler(uint32_t session_id,
-	struct ndp_schedule_update_req *req_params)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * csr_roam_start_ndi() - Start connection for NAN datapath
  * @mac_ctx: Global MAC context
  * @session: SME session ID
@@ -373,6 +360,7 @@ void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
 		roam_info->ndp.ndi_create_params.reason = 0;
 		roam_info->ndp.ndi_create_params.status =
 					NDP_RSP_STATUS_SUCCESS;
+		roam_info->ndp.ndi_create_params.sta_id = roam_info->staId;
 		*roam_status = eCSR_ROAM_NDP_STATUS_UPDATE;
 		*roam_result = eCSR_ROAM_RESULT_NDI_CREATE_RSP;
 		break;
@@ -668,13 +656,6 @@ void sme_ndp_msg_processor(tpAniSirGlobal mac_ctx, cds_msg_t *msg)
 		}
 		release_active_cmd = true;
 		cmd_to_rel = eSmeCommandNdpDataEndInitiatorRequest;
-		/*
-		 * get num of ndp requested to terminated from sme command
-		 * being released
-		 */
-		if (cmd != NULL && cmd_to_rel == cmd->command)
-			roam_info.ndp.ndp_end_rsp_params->num_ndp_terminated =
-				cmd->u.data_end_req->num_ndp_instances;
 		break;
 	}
 	case eWNI_SME_NDP_END_IND:

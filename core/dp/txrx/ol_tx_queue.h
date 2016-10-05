@@ -76,6 +76,7 @@ ol_tx_queue_log_dequeue(struct ol_txrx_pdev_t *pdev,
  * @tid: tid value
  * @frms: number of frames for which logs need to be freed
  * @bytes: number of bytes
+ * @is_peer_txq - peer queue or not
  *
  *
  * Return: None
@@ -83,7 +84,7 @@ ol_tx_queue_log_dequeue(struct ol_txrx_pdev_t *pdev,
 void
 ol_tx_queue_log_free(struct ol_txrx_pdev_t *pdev,
 		     struct ol_tx_frms_queue_t *txq,
-		     int tid, int frms, int bytes);
+		     int tid, int frms, int bytes, bool is_peer_txq);
 
 #else
 
@@ -105,7 +106,7 @@ ol_tx_queue_log_dequeue(struct ol_txrx_pdev_t *pdev,
 static inline void
 ol_tx_queue_log_free(struct ol_txrx_pdev_t *pdev,
 		     struct ol_tx_frms_queue_t *txq,
-		     int tid, int frms, int bytes)
+		     int tid, int frms, int bytes, bool is_peer_txq)
 {
 	return;
 }
@@ -171,12 +172,13 @@ ol_tx_dequeue(
  * @param pdev - the physical device object, which stores the txqs
  * @param txq - which tx queue to free frames from
  * @param tid - the extended TID that the queue belongs to
+ * @param is_peer_txq - peer queue or not
  */
 void
 ol_tx_queue_free(
 		struct ol_txrx_pdev_t *pdev,
 		struct ol_tx_frms_queue_t *txq,
-		int tid);
+		int tid, bool is_peer_txq);
 
 /**
  * @brief - discard pending tx frames from the tx queue
@@ -224,7 +226,7 @@ static inline void
 ol_tx_queue_free(
 		struct ol_txrx_pdev_t *pdev,
 		struct ol_tx_frms_queue_t *txq,
-		int tid)
+		int tid, bool is_peer_txq)
 {
 	return;
 }

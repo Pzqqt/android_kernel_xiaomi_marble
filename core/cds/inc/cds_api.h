@@ -206,6 +206,13 @@ QDF_STATUS cds_enable(v_CONTEXT_t cds_context);
 
 QDF_STATUS cds_disable(v_CONTEXT_t cds_context);
 
+/**
+ * cds_flush_cache_rx_queue() - flush cache rx queue frame
+ *
+ * Return: None
+ */
+void cds_flush_cache_rx_queue(void);
+
 QDF_STATUS cds_close(v_CONTEXT_t cds_context);
 
 QDF_STATUS cds_shutdown(v_CONTEXT_t cds_context);
@@ -264,7 +271,7 @@ QDF_STATUS cds_flush_logs(uint32_t is_fatal,
 		bool dump_mac_trace,
 		bool recovery_needed);
 void cds_logging_set_fw_flush_complete(void);
-
+void cds_svc_fw_shutdown_ind(struct device *dev);
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 void cds_tdls_tx_rx_mgmt_event(uint8_t event_id, uint8_t tx_rx,
 			uint8_t type, uint8_t sub_type, uint8_t *peer_mac);
@@ -279,4 +286,11 @@ void cds_tdls_tx_rx_mgmt_event(uint8_t event_id, uint8_t tx_rx,
 
 int cds_get_radio_index(void);
 QDF_STATUS cds_set_radio_index(int radio_index);
+void cds_init_ini_config(struct cds_config_info *cds_cfg);
+void cds_deinit_ini_config(void);
+struct cds_config_info *cds_get_ini_config(void);
+
+bool cds_is_5_mhz_enabled(void);
+bool cds_is_10_mhz_enabled(void);
+bool cds_is_sub_20_mhz_enabled(void);
 #endif /* if !defined __CDS_API_H */

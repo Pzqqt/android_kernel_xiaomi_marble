@@ -213,7 +213,7 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	uint32_t status, bytes, payload;
 	uint8_t *frame;
 	void *packet;
-	QDF_STATUS qdf_status, extcap_status;
+	QDF_STATUS qdf_status;
 	tpPESession pesession;
 	uint8_t sessionid;
 	uint8_t *p2pie = NULL;
@@ -222,6 +222,9 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	bool is_vht_enabled = false;
 	uint8_t txPower;
 	uint16_t addn_ielen = additional_ielen;
+	bool extracted_ext_cap_flag = false;
+	tDot11fIEExtCap extracted_ext_cap;
+	tSirRetStatus sir_status;
 
 	/* The probe req should not send 11ac capabilieties if band is 2.4GHz,
 	 * unless enableVhtFor24GHz is enabled in INI. So if enableVhtFor24GHz
@@ -353,13 +356,25 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 			FL("There were warnings while calculating the packed size for a Probe Request (0x%08x)."), status);
 	}
 
-	/* Strip extended capability IE (if present). FW will add that IE */
 	if (addn_ielen) {
-		extcap_status = lim_strip_extcap_ie(mac_ctx, additional_ie,
-					&addn_ielen, NULL);
-		if (QDF_STATUS_SUCCESS != extcap_status)
-			lim_log(mac_ctx, LOGE,
-			    FL("Error:%d stripping extcap IE"), extcap_status);
+		qdf_mem_zero((uint8_t *)&extracted_ext_cap,
+			sizeof(tDot11fIEExtCap));
+		sir_status = lim_strip_extcap_update_struct(mac_ctx,
+					additional_ie,
+					&addn_ielen,
+					&extracted_ext_cap);
+		if (eSIR_SUCCESS != sir_status) {
+			lim_log(mac_ctx, LOG1,
+			FL("Unable to Stripoff ExtCap IE from Probe Req"));
+		} else {
+			struct s_ext_cap *p_ext_cap =
+				(struct s_ext_cap *)
+					extracted_ext_cap.bytes;
+			if (p_ext_cap->interworking_service)
+				p_ext_cap->qos_map = 1;
+			extracted_ext_cap_flag =
+				lim_is_ext_cap_ie_present(p_ext_cap);
+		}
 	}
 
 	bytes = payload + sizeof(tSirMacMgmtHdr) + addn_ielen;
@@ -377,6 +392,10 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(mac_ctx, frame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_PROBE_REQ, bssid, self_macaddr);
+
+	/* merge the ExtCap struct*/
+	if (extracted_ext_cap_flag)
+		lim_merge_extcap_struct(&pr.ExtCap, &extracted_ext_cap);
 
 	/* That done, pack the Probe Request: */
 	status = dot11f_pack_probe_request(mac_ctx, &pr, frame +
@@ -516,7 +535,7 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 	uint32_t cfg, payload, bytes, status;
 	tpSirMacMgmtHdr mac_hdr;
 	uint8_t *frame;
-	void *packet;
+	void *packet = NULL;
 	QDF_STATUS qdf_status;
 	uint32_t addn_ie_present = false;
 
@@ -532,7 +551,7 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 	uint8_t sme_sessionid = 0;
 	bool is_vht_enabled = false;
 	tDot11fIEExtCap extracted_ext_cap;
-	bool extracted_ext_cap_flag = true;
+	bool extracted_ext_cap_flag = false;
 
 	/* We don't answer requests in this case*/
 	if (ANI_DRIVER_TYPE(mac_ctx) == eDRIVER_TYPE_MFG)
@@ -734,9 +753,10 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 					add_ie, &addn_ie_len,
 					&extracted_ext_cap);
 		if (eSIR_SUCCESS != sir_status) {
-			extracted_ext_cap_flag = false;
 			lim_log(mac_ctx, LOG1,
 				FL("Unable to strip off ExtCap IE"));
+		} else {
+			extracted_ext_cap_flag = true;
 		}
 
 		bytes = bytes + addn_ie_len;
@@ -1639,17 +1659,7 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 
 			if (p_ext_cap->interworking_service)
 				p_ext_cap->qos_map = 1;
-			else {
-			/*
-			 * No need to merge the EXT Cap from Supplicant
-			 * if interworkingService is not set, as currently
-			 * driver is only interested in interworkingService
-			 * capability from supplicant. if in future any other
-			 * EXT Cap info is required from supplicant
-			 * it needs to be handled here.
-			 */
-				extr_ext_flag = false;
-			}
+			extr_ext_flag = lim_is_ext_cap_ie_present(p_ext_cap);
 		}
 	} else {
 		lim_log(mac_ctx, LOG1,
@@ -1771,6 +1781,8 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	    mac_ctx->lim.htCapabilityPresentInBeacon) {
 		lim_log(mac_ctx, LOG1, FL("Populate HT Caps in Assoc Request"));
 		populate_dot11f_ht_caps(mac_ctx, pe_session, &frm->HTCaps);
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+				   &frm->HTCaps, sizeof(frm->HTCaps));
 	}
 	lim_log(mac_ctx, LOG1,
 		FL("SupportedChnlWidth: %d, mimoPS: %d, GF: %d, short GI20:%d, shortGI40: %d, dsssCck: %d, AMPDU Param: %x"),
@@ -1785,7 +1797,16 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	    pe_session->vhtCapabilityPresentInBeacon) {
 		lim_log(mac_ctx, LOG1, FL("Populate VHT IEs in Assoc Request"));
 		populate_dot11f_vht_caps(mac_ctx, pe_session, &frm->VHTCaps);
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+				   &frm->VHTCaps, sizeof(frm->VHTCaps));
 		vht_enabled = true;
+		if (pe_session->enableHtSmps &&
+				!pe_session->supported_nss_1x1) {
+			lim_log(mac_ctx, LOGE, FL(
+					"VHT OP mode IE in Assoc Req"));
+			populate_dot11f_operating_mode(mac_ctx,
+					&frm->OperatingMode, pe_session);
+		}
 	}
 	if (!vht_enabled &&
 			pe_session->is_vendor_specific_vhtcaps) {
@@ -2255,15 +2276,15 @@ alloc_packet:
 	}
 	sir_dump_buf(mac_ctx, SIR_LIM_MODULE_ID, LOG2, frame, frame_len);
 
-	if ((SIR_BAND_5_GHZ == lim_get_rf_band(session->currentOperChannel))
-	    || (session->pePersona == QDF_P2P_CLIENT_MODE)
-	    || (session->pePersona == QDF_P2P_GO_MODE)
-	    || ((NULL != session->ftPEContext.pFTPreAuthReq) &&
-		(SIR_BAND_5_GHZ ==
-		 lim_get_rf_band(session->ftPEContext.pFTPreAuthReq->
-				 preAuthchannelNum))))
+	if ((NULL != session->ftPEContext.pFTPreAuthReq) &&
+	    (SIR_BAND_5_GHZ == lim_get_rf_band(
+	     session->ftPEContext.pFTPreAuthReq->preAuthchannelNum)))
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
-
+	else if ((SIR_BAND_5_GHZ ==
+		  lim_get_rf_band(session->currentOperChannel))
+		  || (session->pePersona == QDF_P2P_CLIENT_MODE)
+		  || (session->pePersona == QDF_P2P_GO_MODE))
+		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	if (session->pePersona == QDF_P2P_CLIENT_MODE ||
 		session->pePersona == QDF_STA_MODE)
@@ -2510,12 +2531,16 @@ end:
 QDF_STATUS lim_disassoc_tx_complete_cnf(tpAniSirGlobal pMac,
 					uint32_t txCompleteSuccess)
 {
+	lim_log(pMac, LOG1,
+		FL("txCompleteSuccess: %d"), txCompleteSuccess);
 	return lim_send_disassoc_cnf(pMac);
 }
 
 QDF_STATUS lim_deauth_tx_complete_cnf(tpAniSirGlobal pMac,
 				      uint32_t txCompleteSuccess)
 {
+	lim_log(pMac, LOG1,
+		FL("txCompleteSuccess: %d"), txCompleteSuccess);
 	return lim_send_deauth_cnf(pMac);
 }
 

@@ -33,16 +33,6 @@ extern "C" {
 #endif
 
 /*
- * The target state machine framework will send dbglog messages on behalf on
- * other modules. We do this do avoid each target module adding identical
- * dbglog code for state transitions and event processing. We also don't want
- * to force each module to define the the same XXX_DBGID_SM_MSG with the same
- * value below. Instead we use a special ID that the host dbglog code
- * recognizes as a message sent by the SM on behalf on another module.
- */
-#define DBGLOG_DBGID_SM_FRAMEWORK_PROXY_DBGLOG_MSG 1000
-
-/*
  * The nomenclature for the debug identifiers is MODULE_DESCRIPTION.
  * Please ensure that the definition of any new debugid introduced is captured
  * between the <MODULE>_DBGID_DEFINITION_START and

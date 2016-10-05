@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -111,7 +111,6 @@ unsigned char *g_cfg_param_name[] = {
 	(unsigned char *)"NETWORK_DENSITY",
 	(unsigned char *)"ADAPTIVE_THRESHOLD_ALGORITHM",
 	(unsigned char *)"CURRENT_TX_ANTENNA",
-	(unsigned char *)"CURRENT_RX_ANTENNA",
 	(unsigned char *)"CURRENT_TX_POWER_LEVEL",
 	(unsigned char *)"NEW_BSS_FOUND_IND",
 	(unsigned char *)"PROPRIETARY_RATES_ENABLED",
@@ -266,7 +265,6 @@ unsigned char *g_cfg_param_name[] = {
 	(unsigned char *)"WPS_DEVICE_PASSWORD_ID",
 	(unsigned char *)"WPS_ASSOC_METHOD",
 	(unsigned char *)"LOW_GAIN_OVERRIDE",
-	(unsigned char *)"ENABLE_PHY_AGC_LISTEN_MODE",
 	(unsigned char *)"RPE_POLLING_THRESHOLD",
 	(unsigned char *)"RPE_AGING_THRESHOLD_FOR_AC0_REG",
 	(unsigned char *)"RPE_AGING_THRESHOLD_FOR_AC1_REG",
@@ -274,7 +272,6 @@ unsigned char *g_cfg_param_name[] = {
 	(unsigned char *)"RPE_AGING_THRESHOLD_FOR_AC3_REG",
 	(unsigned char *)"NO_OF_ONCHIP_REORDER_SESSIONS",
 	(unsigned char *)"SINGLE_TID_RC",
-	(unsigned char *)"TX_PWR_CTRL_ENABLE",
 	(unsigned char *)"MCAST_BCAST_FILTER_SETTING",
 	(unsigned char *)"BTC_DHCP_BT_SLOTS_TO_BLOCK",
 	(unsigned char *)"DYNAMIC_PS_POLL_VALUE",
@@ -291,7 +288,6 @@ unsigned char *g_cfg_param_name[] = {
 	(unsigned char *)"SAP_CHANNEL_SELECT_END_CHANNEL",
 	(unsigned char *)"SAP_CHANNEL_SELECT_OPERATING_BAND",
 	(unsigned char *)"AP_DATA_AVAIL_POLL_PERIOD",
-	(unsigned char *)"ENABLE_CLOSE_LOOP",
 	(unsigned char *)"ENABLE_LTE_COEX",
 	(unsigned char *)"AP_KEEP_ALIVE_TIMEOUT",
 	(unsigned char *)"GO_KEEP_ALIVE_TIMEOUT",
@@ -308,7 +304,6 @@ unsigned char *g_cfg_param_name[] = {
 	(unsigned char *)"PMF_SA_QUERY_MAX_RETRIES",
 	(unsigned char *)"PMF_SA_QUERY_RETRY_INTERVAL",
 	(unsigned char *)"ENABLE_ADAPT_RX_DRAIN",
-	(unsigned char *)"FLEX_CONNECT_POWER_FACTOR",
 	(unsigned char *)"ANTENNA_DIVESITY",
 	(unsigned char *)"GO_LINK_MONITOR_TIMEOUT",
 	(unsigned char *)"RMC_ACTION_PERIOD_FREQUENCY",

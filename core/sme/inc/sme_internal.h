@@ -153,6 +153,7 @@ typedef void (*preferred_network_found_ind_cb)(void *callback_context,
 typedef void (*ocb_callback)(void *context, void *response);
 typedef void (*sme_set_thermal_level_callback)(void *context, u_int8_t level);
 typedef void (*p2p_lo_callback)(void *context, void *event);
+typedef void (*sme_send_oem_data_rsp_msg)(struct oem_data_rsp *);
 
 typedef struct tagSmeStruct {
 	eSmeState state;
@@ -242,6 +243,9 @@ typedef struct tagSmeStruct {
 			struct sir_bpf_get_offload *);
 	p2p_lo_callback p2p_lo_event_callback;
 	void *p2p_lo_event_context;
+	sme_send_oem_data_rsp_msg oem_data_rsp_callback;
+	void (*encrypt_decrypt_cb)(void *,
+			struct sir_encrypt_decrypt_rsp_params *);
 } tSmeStruct, *tpSmeStruct;
 
 #endif /* #if !defined( __SMEINTERNAL_H ) */

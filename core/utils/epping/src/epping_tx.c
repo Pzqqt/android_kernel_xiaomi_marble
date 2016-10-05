@@ -336,15 +336,31 @@ void epping_tx_complete_multiple(void *ctx, HTC_PACKET_QUEUE *pPacketQueue)
 		pktSkb = GET_HTC_PACKET_NET_BUF_CONTEXT(htc_pkt);
 		cookie = htc_pkt->pPktContext;
 
-		ASSERT(pktSkb);
-		ASSERT(htc_pkt->pBuffer == qdf_nbuf_data(pktSkb));
+		if (!pktSkb) {
+			EPPING_LOG(QDF_TRACE_LEVEL_ERROR,
+				 "%s: NULL skb from hc packet", __func__);
+			QDF_BUG(0);
+		} else {
+			if (htc_pkt->pBuffer != qdf_nbuf_data(pktSkb)) {
+				EPPING_LOG(QDF_TRACE_LEVEL_ERROR,
+				  "%s: htc_pkt buffer not equal to skb->data",
+				  __func__);
+				QDF_BUG(0);
+			}
+			/* add this to the list, use faster non-lock API */
+			qdf_nbuf_queue_add(&skb_queue, pktSkb);
 
-		/* add this to the list, use faster non-lock API */
-		qdf_nbuf_queue_add(&skb_queue, pktSkb);
-
-		if (A_SUCCESS(status)) {
-			ASSERT(htc_pkt->ActualLength == qdf_nbuf_len(pktSkb));
+			if (A_SUCCESS(status)) {
+				if (htc_pkt->ActualLength !=
+						qdf_nbuf_len(pktSkb)) {
+					EPPING_LOG(QDF_TRACE_LEVEL_ERROR,
+					  "%s: htc_pkt length not equal to skb->len",
+					  __func__);
+					QDF_BUG(0);
+				}
+			}
 		}
+
 		EPPING_LOG(QDF_TRACE_LEVEL_INFO,
 			   "%s skb=%p data=%p len=0x%x eid=%d ",
 			   __func__, pktSkb, htc_pkt->pBuffer,

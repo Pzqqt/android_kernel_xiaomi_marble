@@ -343,6 +343,26 @@ struct ch_params_s {
 	uint8_t center_freq_seg1;
 };
 
+/**
+ * enum dfs_region - DFS region
+ * @DFS_UNINIT_REGION: un-initialized region
+ * @DFS_FCC_REGION: FCC region
+ * @DFS_ETSI_REGION: ETSI region
+ * @DFS_MKK_REGION: MKK region
+ * @DFS_CN_REGION: China region
+ * @DFS_KR_REGION: Korea region
+ * @DFS_UNDEF_REGION: Undefined region
+ */
+enum dfs_region {
+	DFS_UNINIT_REGION = 0,
+	DFS_FCC_REGION = 1,
+	DFS_ETSI_REGION = 2,
+	DFS_MKK_REGION = 3,
+	DFS_CN_REGION = 4,
+	DFS_KR_REGION = 5,
+	DFS_UNDEF_REGION
+};
+
 extern const struct chan_map chan_mapping[NUM_CHANNELS];
 extern struct regulatory_channel reg_channels[NUM_CHANNELS];
 
@@ -357,8 +377,8 @@ QDF_STATUS cds_get_channel_list_with_power(struct channel_power
 					   uint8_t *num_base_channels);
 
 enum channel_state cds_get_channel_state(uint32_t chan_num);
-QDF_STATUS cds_get_dfs_region(uint8_t *dfs_region);
-QDF_STATUS cds_put_dfs_region(uint8_t dfs_region);
+QDF_STATUS cds_get_dfs_region(enum dfs_region *dfs_reg);
+QDF_STATUS cds_put_dfs_region(enum dfs_region dfs_reg);
 
 bool cds_is_dsrc_channel(uint16_t center_freq);
 enum channel_state cds_get_5g_bonded_channel_state(uint16_t chan_num,

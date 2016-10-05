@@ -97,16 +97,16 @@ struct hdd_green_ap_ctx {
 };
 
 /**
- * hdd_wlan_green_ap_update() - update the current State and Event
+ * hdd_green_ap_update() - update the current State and Event
  * @hdd_ctx: Global HDD context
  * @state: New state
  * @event: New event
  *
  * Return: none
  */
-static void hdd_wlan_green_ap_update(struct hdd_context_s *hdd_ctx,
-				     enum hdd_green_ap_ps_state state,
-				     enum hdd_green_ap_event event)
+static void hdd_green_ap_update(struct hdd_context_s *hdd_ctx,
+				enum hdd_green_ap_ps_state state,
+				enum hdd_green_ap_event event)
 {
 	struct hdd_green_ap_ctx *green_ap = hdd_ctx->green_ap_ctx;
 
@@ -115,14 +115,13 @@ static void hdd_wlan_green_ap_update(struct hdd_context_s *hdd_ctx,
 }
 
 /**
- * hdd_wlan_green_ap_enable() - Send Green AP configuration to firmware
+ * hdd_green_ap_enable() - Send Green AP configuration to firmware
  * @adapter: Adapter upon which Green AP is being configured
  * @enable: Flag which indicates if Green AP is being enabled or disabled
  *
  * Return: 0 upon success, non-zero upon failure
  */
-static int hdd_wlan_green_ap_enable(hdd_adapter_t *adapter,
-				    uint8_t enable)
+static int hdd_green_ap_enable(hdd_adapter_t *adapter, uint8_t enable)
 {
 	int ret;
 
@@ -136,14 +135,14 @@ static int hdd_wlan_green_ap_enable(hdd_adapter_t *adapter,
 }
 
 /**
- * hdd_wlan_green_ap_mc() - Green AP state machine
+ * hdd_green_ap_mc() - Green AP state machine
  * @hdd_ctx: HDD global context
  * @event: New event being processed
  *
  * Return: none
  */
-static void hdd_wlan_green_ap_mc(struct hdd_context_s *hdd_ctx,
-				 enum hdd_green_ap_event event)
+static void hdd_green_ap_mc(struct hdd_context_s *hdd_ctx,
+			    enum hdd_green_ap_event event)
 {
 	struct hdd_green_ap_ctx *green_ap;
 	hdd_adapter_t *adapter;
@@ -187,9 +186,9 @@ static void hdd_wlan_green_ap_mc(struct hdd_context_s *hdd_ctx,
 	/* Confirm that power save is enabled before doing state transitions */
 	if (!green_ap->ps_enable) {
 		hdd_notice("Green-AP is disabled");
-		hdd_wlan_green_ap_update(hdd_ctx,
-					 GREEN_AP_PS_IDLE_STATE,
-					 GREEN_AP_PS_WAIT_EVENT);
+		hdd_green_ap_update(hdd_ctx,
+				    GREEN_AP_PS_IDLE_STATE,
+				    GREEN_AP_PS_WAIT_EVENT);
 		goto done;
 	}
 
@@ -202,16 +201,16 @@ static void hdd_wlan_green_ap_mc(struct hdd_context_s *hdd_ctx,
 	/* handle the green ap ps state */
 	switch (green_ap->ps_state) {
 	case GREEN_AP_PS_IDLE_STATE:
-		hdd_wlan_green_ap_update(hdd_ctx,
-					 GREEN_AP_PS_OFF_STATE,
-					 GREEN_AP_PS_WAIT_EVENT);
+		hdd_green_ap_update(hdd_ctx,
+				    GREEN_AP_PS_OFF_STATE,
+				    GREEN_AP_PS_WAIT_EVENT);
 		break;
 
 	case GREEN_AP_PS_OFF_STATE:
 		if (!green_ap->num_nodes) {
-			hdd_wlan_green_ap_update(hdd_ctx,
-						 GREEN_AP_PS_WAIT_STATE,
-						 GREEN_AP_PS_WAIT_EVENT);
+			hdd_green_ap_update(hdd_ctx,
+					    GREEN_AP_PS_WAIT_STATE,
+					    GREEN_AP_PS_WAIT_EVENT);
 			qdf_mc_timer_start(&green_ap->ps_timer,
 					   green_ap->ps_delay_time);
 		}
@@ -219,44 +218,44 @@ static void hdd_wlan_green_ap_mc(struct hdd_context_s *hdd_ctx,
 
 	case GREEN_AP_PS_WAIT_STATE:
 		if (!green_ap->num_nodes) {
-			hdd_wlan_green_ap_update(hdd_ctx,
-						 GREEN_AP_PS_ON_STATE,
-						 GREEN_AP_PS_WAIT_EVENT);
+			hdd_green_ap_update(hdd_ctx,
+					    GREEN_AP_PS_ON_STATE,
+					    GREEN_AP_PS_WAIT_EVENT);
 
-			hdd_wlan_green_ap_enable(adapter, 1);
+			hdd_green_ap_enable(adapter, 1);
 
 			if (green_ap->ps_on_time) {
-				hdd_wlan_green_ap_update(hdd_ctx,
-							 0,
-							 GREEN_AP_PS_WAIT_EVENT);
+				hdd_green_ap_update(hdd_ctx,
+						    0,
+						    GREEN_AP_PS_WAIT_EVENT);
 				qdf_mc_timer_start(&green_ap->ps_timer,
 						   green_ap->ps_on_time);
 			}
 		} else {
-			hdd_wlan_green_ap_update(hdd_ctx,
-						 GREEN_AP_PS_OFF_STATE,
-						 GREEN_AP_PS_WAIT_EVENT);
+			hdd_green_ap_update(hdd_ctx,
+					    GREEN_AP_PS_OFF_STATE,
+					    GREEN_AP_PS_WAIT_EVENT);
 		}
 		break;
 
 	case GREEN_AP_PS_ON_STATE:
 		if (green_ap->num_nodes) {
-			if (hdd_wlan_green_ap_enable(adapter, 0)) {
+			if (hdd_green_ap_enable(adapter, 0)) {
 				hdd_err("FAILED TO SET GREEN-AP mode");
 				goto done;
 			}
-			hdd_wlan_green_ap_update(hdd_ctx,
-						 GREEN_AP_PS_OFF_STATE,
-						 GREEN_AP_PS_WAIT_EVENT);
+			hdd_green_ap_update(hdd_ctx,
+					    GREEN_AP_PS_OFF_STATE,
+					    GREEN_AP_PS_WAIT_EVENT);
 		} else if ((green_ap->ps_event == GREEN_AP_PS_WAIT_EVENT)
 			   && (green_ap->ps_on_time)) {
 
 			/* ps_on_time timeout, switch to ps off */
-			hdd_wlan_green_ap_update(hdd_ctx,
-						 GREEN_AP_PS_WAIT_STATE,
-						 GREEN_AP_PS_ON_EVENT);
+			hdd_green_ap_update(hdd_ctx,
+					    GREEN_AP_PS_WAIT_STATE,
+					    GREEN_AP_PS_ON_EVENT);
 
-			if (hdd_wlan_green_ap_enable(adapter, 0)) {
+			if (hdd_green_ap_enable(adapter, 0)) {
 				hdd_err("FAILED TO SET GREEN-AP mode");
 				goto done;
 			}
@@ -268,8 +267,8 @@ static void hdd_wlan_green_ap_mc(struct hdd_context_s *hdd_ctx,
 
 	default:
 		hdd_err("invalid state %d", green_ap->ps_state);
-		hdd_wlan_green_ap_update(hdd_ctx, GREEN_AP_PS_OFF_STATE,
-					 GREEN_AP_PS_WAIT_EVENT);
+		hdd_green_ap_update(hdd_ctx, GREEN_AP_PS_OFF_STATE,
+				    GREEN_AP_PS_WAIT_EVENT);
 		break;
 	}
 
@@ -278,12 +277,12 @@ done:
 }
 
 /**
- * hdd_wlan_green_ap_timer_fn() - Green AP Timer handler
+ * hdd_green_ap_timer_fn() - Green AP Timer handler
  * @ctx: Global HDD context
  *
  * Return: none
  */
-static void hdd_wlan_green_ap_timer_fn(void *ctx)
+static void hdd_green_ap_timer_fn(void *ctx)
 {
 	struct hdd_context_s *hdd_ctx = ctx;
 	struct hdd_green_ap_ctx *green_ap;
@@ -293,16 +292,16 @@ static void hdd_wlan_green_ap_timer_fn(void *ctx)
 
 	green_ap = hdd_ctx->green_ap_ctx;
 	if (green_ap)
-		hdd_wlan_green_ap_mc(hdd_ctx, green_ap->ps_event);
+		hdd_green_ap_mc(hdd_ctx, green_ap->ps_event);
 }
 
 /**
- * hdd_wlan_green_ap_attach() - Attach Green AP context to HDD context
+ * hdd_green_ap_attach() - Attach Green AP context to HDD context
  * @hdd_ctx: Global HDD contect
  *
  * Return: QDF_STATUS_SUCCESS on success, otherwise QDF_STATUS_E_** error
  */
-static QDF_STATUS hdd_wlan_green_ap_attach(struct hdd_context_s *hdd_ctx)
+static QDF_STATUS hdd_green_ap_attach(struct hdd_context_s *hdd_ctx)
 {
 	struct hdd_green_ap_ctx *green_ap;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -325,7 +324,7 @@ static QDF_STATUS hdd_wlan_green_ap_attach(struct hdd_context_s *hdd_ctx)
 
 	qdf_mc_timer_init(&green_ap->ps_timer,
 			  QDF_TIMER_TYPE_SW,
-			  hdd_wlan_green_ap_timer_fn, hdd_ctx);
+			  hdd_green_ap_timer_fn, hdd_ctx);
 
 error:
 	hdd_ctx->green_ap_ctx = green_ap;
@@ -335,12 +334,12 @@ error:
 }
 
 /**
- * hdd_wlan_green_ap_deattach() - Detach Green AP context from HDD context
+ * hdd_green_ap_deattach() - Detach Green AP context from HDD context
  * @hdd_ctx: Global HDD contect
  *
  * Return: QDF_STATUS_SUCCESS on success, otherwise QDF_STATUS_E_** error
  */
-static QDF_STATUS hdd_wlan_green_ap_deattach(struct hdd_context_s *hdd_ctx)
+static QDF_STATUS hdd_green_ap_deattach(struct hdd_context_s *hdd_ctx)
 {
 	struct hdd_green_ap_ctx *green_ap = hdd_ctx->green_ap_ctx;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -373,37 +372,31 @@ done:
 	return status;
 }
 
-/**
- * hdd_wlan_green_ap_init() - Initialize Green AP feature
- * @hdd_ctx: HDD global context
- *
- * Return: none
+/*
+ * hdd_green_ap_init() - Initialize Green AP feature
+ * (public function documented in wlan_hdd_green_ap.h)
  */
-void hdd_wlan_green_ap_init(struct hdd_context_s *hdd_ctx)
+void hdd_green_ap_init(struct hdd_context_s *hdd_ctx)
 {
-	if (!QDF_IS_STATUS_SUCCESS(hdd_wlan_green_ap_attach(hdd_ctx)))
+	if (!QDF_IS_STATUS_SUCCESS(hdd_green_ap_attach(hdd_ctx)))
 		hdd_err("Failed to allocate Green-AP resource");
 }
 
-/**
- * hdd_wlan_green_ap_deinit() - De-initialize Green AP feature
- * @hdd_ctx: HDD global context
- *
- * Return: none
+/*
+ * hdd_green_ap_deinit() - De-initialize Green AP feature
+ * (public function documented in wlan_hdd_green_ap.h)
  */
-void hdd_wlan_green_ap_deinit(struct hdd_context_s *hdd_ctx)
+void hdd_green_ap_deinit(struct hdd_context_s *hdd_ctx)
 {
-	if (!QDF_IS_STATUS_SUCCESS(hdd_wlan_green_ap_deattach(hdd_ctx)))
+	if (!QDF_IS_STATUS_SUCCESS(hdd_green_ap_deattach(hdd_ctx)))
 		hdd_err("Cannot deallocate Green-AP resource");
 }
 
-/**
- * hdd_wlan_green_ap_start_bss() - Notify Green AP of Start BSS event
- * @hdd_ctx: HDD global context
- *
- * Return: none
+/*
+ * hdd_green_ap_start_bss() - Notify Green AP of Start BSS event
+ * (public function documented in wlan_hdd_green_ap.h)
  */
-void hdd_wlan_green_ap_start_bss(struct hdd_context_s *hdd_ctx)
+void hdd_green_ap_start_bss(struct hdd_context_s *hdd_ctx)
 {
 	struct hdd_config *cfg = hdd_ctx->config;
 
@@ -420,7 +413,7 @@ void hdd_wlan_green_ap_start_bss(struct hdd_context_s *hdd_ctx)
 					       cfg->egap_wait_time,
 					       cfg->egap_feature_flag)) {
 			/* EGAP is enabled, disable host GAP */
-			hdd_wlan_green_ap_mc(hdd_ctx, GREEN_AP_PS_STOP_EVENT);
+			hdd_green_ap_mc(hdd_ctx, GREEN_AP_PS_STOP_EVENT);
 			goto exit;
 		}
 		/* fall through, if send_egap_conf_params() failed,
@@ -430,9 +423,9 @@ void hdd_wlan_green_ap_start_bss(struct hdd_context_s *hdd_ctx)
 
 	if (!(QDF_STA_MASK & hdd_ctx->concurrency_mode) &&
 	    cfg->enable2x2 && cfg->enableGreenAP) {
-		hdd_wlan_green_ap_mc(hdd_ctx, GREEN_AP_PS_START_EVENT);
+		hdd_green_ap_mc(hdd_ctx, GREEN_AP_PS_START_EVENT);
 	} else {
-		hdd_wlan_green_ap_mc(hdd_ctx, GREEN_AP_PS_STOP_EVENT);
+		hdd_green_ap_mc(hdd_ctx, GREEN_AP_PS_STOP_EVENT);
 		hdd_notice("Green-AP: is disabled, due to sta_concurrency: %d, enable2x2: %d, enableGreenAP: %d",
 			   QDF_STA_MASK & hdd_ctx->concurrency_mode,
 			   cfg->enable2x2, cfg->enableGreenAP);
@@ -441,50 +434,44 @@ exit:
 	return;
 }
 
-/**
- * hdd_wlan_green_ap_stop_bss() - Notify Green AP of Stop BSS event
- * @hdd_ctx: HDD global context
- *
- * Return: none
+/*
+ * hdd_green_ap_stop_bss() - Notify Green AP of Stop BSS event
+ * (public function documented in wlan_hdd_green_ap.h)
  */
-void hdd_wlan_green_ap_stop_bss(struct hdd_context_s *hdd_ctx)
+void hdd_green_ap_stop_bss(struct hdd_context_s *hdd_ctx)
 {
-	hdd_wlan_green_ap_mc(hdd_ctx, GREEN_AP_PS_STOP_EVENT);
+	hdd_green_ap_mc(hdd_ctx, GREEN_AP_PS_STOP_EVENT);
 }
 
-/**
- * hdd_wlan_green_ap_add_sta() - Notify Green AP of Add Station  event
- * @hdd_ctx: HDD global context
- *
- * Return: none
+/*
+ * hdd_green_ap_add_sta() - Notify Green AP of Add Station event
+ * (public function documented in wlan_hdd_green_ap.h)
  */
-void hdd_wlan_green_ap_add_sta(struct hdd_context_s *hdd_ctx)
+void hdd_green_ap_add_sta(struct hdd_context_s *hdd_ctx)
 {
-	hdd_wlan_green_ap_mc(hdd_ctx, GREEN_AP_ADD_STA_EVENT);
+	hdd_green_ap_mc(hdd_ctx, GREEN_AP_ADD_STA_EVENT);
 }
 
-/**
- * hdd_wlan_green_ap_del_sta() - Notify Green AP of Delete Station event
- * @hdd_ctx: HDD global context
- *
- * Return: none
+/*
+ * hdd_green_ap_del_sta() - Notify Green AP of Delete Station event
+ * (public function documented in wlan_hdd_green_ap.h)
  */
-void hdd_wlan_green_ap_del_sta(struct hdd_context_s *hdd_ctx)
+void hdd_green_ap_del_sta(struct hdd_context_s *hdd_ctx)
 {
-	hdd_wlan_green_ap_mc(hdd_ctx, GREEN_AP_DEL_STA_EVENT);
+	hdd_green_ap_mc(hdd_ctx, GREEN_AP_DEL_STA_EVENT);
 }
 
-/**
- * hdd_wlan_set_egap_support() - helper function to set egap support flag
- * @hdd_ctx:   pointer to hdd context
- * @param:     pointer to target configuration
+/*
+ * hdd_green_ap_target_config() - Handle Green AP target configuration
+ * (public function documented in wlan_hdd_green_ap.h)
  *
- * Return:     None
+ * Implementation notes:
+ * Target indicates whether or not Enhanced Green AP (EGAP) is supported
  */
-void hdd_wlan_set_egap_support(hdd_context_t *hdd_ctx, void *param)
+void hdd_green_ap_target_config(struct hdd_context_s *hdd_ctx,
+				struct wma_tgt_cfg *target_config)
 {
-	struct wma_tgt_cfg *cfg = (struct wma_tgt_cfg *) param;
+	struct hdd_green_ap_ctx *green_ap = hdd_ctx->green_ap_ctx;
 
-	if (hdd_ctx && cfg)
-		hdd_ctx->green_ap_ctx->egap_support = cfg->egap_support;
+	green_ap->egap_support = target_config->egap_support;
 }

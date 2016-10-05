@@ -77,6 +77,9 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 		return -EINVAL;
 	}
 
+	if (adapter->sessionId == HDD_SESSION_ID_INVALID)
+		return -EINVAL;
+
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	if (hdd_ctx->lpss_support && hdd_ctx->config->enable_lpass_support)
 		data->lpss_support = 1;
@@ -157,12 +160,16 @@ static int wlan_hdd_gen_wlan_version_pack(struct wlan_version_data *data,
  *
  * Return: none
  */
-void wlan_hdd_send_status_pkg(hdd_adapter_t *adapter,
-			      hdd_station_ctx_t *sta_ctx,
-			      uint8_t is_on, uint8_t is_connected)
+static void wlan_hdd_send_status_pkg(struct hdd_adapter_s *adapter,
+				     struct hdd_station_ctx *sta_ctx,
+				     uint8_t is_on, uint8_t is_connected)
 {
 	int ret = 0;
 	struct wlan_status_data data;
+	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	if (!hdd_ctx)
+		return;
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam())
 		return;
@@ -171,8 +178,10 @@ void wlan_hdd_send_status_pkg(hdd_adapter_t *adapter,
 	if (is_on)
 		ret = wlan_hdd_gen_wlan_status_pack(&data, adapter, sta_ctx,
 						    is_on, is_connected);
+
 	if (!ret)
-		wlan_hdd_send_svc_nlink_msg(WLAN_SVC_WLAN_STATUS_IND,
+		wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
+					WLAN_SVC_WLAN_STATUS_IND,
 					    &data, sizeof(data));
 }
 
@@ -187,11 +196,16 @@ void wlan_hdd_send_status_pkg(hdd_adapter_t *adapter,
  *
  * Return: none
  */
-void wlan_hdd_send_version_pkg(uint32_t fw_version,
-			       uint32_t chip_id, const char *chip_name)
+static void wlan_hdd_send_version_pkg(uint32_t fw_version,
+				      uint32_t chip_id,
+				      const char *chip_name)
 {
 	int ret = 0;
 	struct wlan_version_data data;
+	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	if (!hdd_ctx)
+		return;
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam())
 		return;
@@ -200,7 +214,8 @@ void wlan_hdd_send_version_pkg(uint32_t fw_version,
 	ret = wlan_hdd_gen_wlan_version_pack(&data, fw_version, chip_id,
 					     chip_name);
 	if (!ret)
-		wlan_hdd_send_svc_nlink_msg(WLAN_SVC_WLAN_VERSION_IND,
+		wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
+					WLAN_SVC_WLAN_VERSION_IND,
 					    &data, sizeof(data));
 }
 
@@ -214,7 +229,7 @@ void wlan_hdd_send_version_pkg(uint32_t fw_version,
  *
  * Return: none
  */
-void wlan_hdd_send_all_scan_intf_info(hdd_context_t *hdd_ctx)
+static void wlan_hdd_send_all_scan_intf_info(struct hdd_context_s *hdd_ctx)
 {
 	hdd_adapter_t *adapter = NULL;
 	hdd_adapter_list_node_t *node = NULL, *next = NULL;
@@ -244,4 +259,103 @@ void wlan_hdd_send_all_scan_intf_info(hdd_context_t *hdd_ctx)
 
 	if (!scan_intf_found)
 		wlan_hdd_send_status_pkg(adapter, NULL, 1, 0);
+}
+
+/*
+ * hdd_lpass_target_config() - Handle LPASS target configuration
+ * (public function documented in wlan_hdd_lpass.h)
+ */
+void hdd_lpass_target_config(struct hdd_context_s *hdd_ctx,
+			     struct wma_tgt_cfg *target_config)
+{
+	hdd_ctx->lpss_support = target_config->lpss_support;
+}
+
+/*
+ * hdd_lpass_populate_cds_config() - Populate LPASS configuration
+ * (public function documented in wlan_hdd_lpass.h)
+ */
+void hdd_lpass_populate_cds_config(struct cds_config_info *cds_config,
+				   struct hdd_context_s *hdd_ctx)
+{
+	cds_config->is_lpass_enabled = hdd_ctx->config->enable_lpass_support;
+}
+
+/*
+ * hdd_lpass_notify_connect() - Notify LPASS of interface connect
+ * (public function documented in wlan_hdd_lpass.h)
+ */
+void hdd_lpass_notify_connect(struct hdd_adapter_s *adapter)
+{
+	struct hdd_station_ctx *sta_ctx;
+
+	/* only send once per connection */
+	if (adapter->rssi_send)
+		return;
+
+	/* don't send if driver is unloading */
+	if (cds_is_driver_unloading())
+		return;
+
+	adapter->rssi_send = true;
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	wlan_hdd_send_status_pkg(adapter, sta_ctx, 1, 1);
+}
+
+/*
+ * hdd_lpass_notify_disconnect() - Notify LPASS of interface disconnect
+ * (public function documented in wlan_hdd_lpass.h)
+ */
+void hdd_lpass_notify_disconnect(struct hdd_adapter_s *adapter)
+{
+	struct hdd_station_ctx *sta_ctx;
+
+	adapter->rssi_send = false;
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	wlan_hdd_send_status_pkg(adapter, sta_ctx, 1, 0);
+}
+
+/*
+ * hdd_lpass_notify_mode_change() - Notify LPASS of interface mode change
+ * (public function documented in wlan_hdd_lpass.h)
+ *
+ * implementation note: when one interfaces changes we notify the
+ * state of all of the interfaces.
+ */
+void hdd_lpass_notify_mode_change(struct hdd_adapter_s *adapter)
+{
+	struct hdd_context_s *hdd_ctx;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	wlan_hdd_send_all_scan_intf_info(hdd_ctx);
+}
+
+/*
+ * hdd_lpass_notify_start() - Notify LPASS of driver start
+ * (public function documented in wlan_hdd_lpass.h)
+ */
+void hdd_lpass_notify_start(struct hdd_context_s *hdd_ctx)
+{
+	wlan_hdd_send_all_scan_intf_info(hdd_ctx);
+	wlan_hdd_send_version_pkg(hdd_ctx->target_fw_version,
+				  hdd_ctx->target_hw_version,
+				  hdd_ctx->target_hw_name);
+}
+
+/*
+ * hdd_lpass_notify_stop() - Notify LPASS of driver stop
+ * (public function documented in wlan_hdd_lpass.h)
+ */
+void hdd_lpass_notify_stop(struct hdd_context_s *hdd_ctx)
+{
+	wlan_hdd_send_status_pkg(NULL, NULL, 0, 0);
+}
+
+/*
+ * hdd_lpass_is_supported() - Is lpass feature supported?
+ * (public function documented in wlan_hdd_lpass.h)
+ */
+bool hdd_lpass_is_supported(struct hdd_context_s *hdd_ctx)
+{
+	return hdd_ctx->config->enable_lpass_support;
 }

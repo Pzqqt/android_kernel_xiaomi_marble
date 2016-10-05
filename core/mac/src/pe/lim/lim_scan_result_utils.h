@@ -46,7 +46,7 @@ void lim_restore_pre_scan_state(tpAniSirGlobal);
 void lim_copy_scan_result(tpAniSirGlobal, uint8_t *);
 void lim_check_and_add_bss_description(tpAniSirGlobal, tpSirProbeRespBeacon,
 				       uint8_t *, bool, uint8_t);
-QDF_STATUS lim_collect_bss_description(tpAniSirGlobal pMac,
+void lim_collect_bss_description(tpAniSirGlobal pMac,
 			    tSirBssDescription *pBssDescr,
 			    tpSirProbeRespBeacon pBPR,
 			    uint8_t *pRxPacketInfo, uint8_t fScanning);

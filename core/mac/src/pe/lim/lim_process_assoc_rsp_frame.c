@@ -740,7 +740,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 
 	if (assoc_rsp->statusCode != eSIR_MAC_SUCCESS_STATUS
 #ifdef WLAN_FEATURE_11W
-		&& (session_entry->limRmfEnabled ||
+		&& (!session_entry->limRmfEnabled ||
 			assoc_rsp->statusCode != eSIR_MAC_TRY_AGAIN_LATER)
 #endif
 	    ) {
@@ -810,11 +810,34 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 					timeout_value)) {
 				lim_log(mac_ctx, LOGE,
 					FL("Failed to start comeback timer."));
+
+				assoc_cnf.resultCode = eSIR_SME_ASSOC_REFUSED;
+				assoc_cnf.protStatusCode =
+					eSIR_MAC_UNSPEC_FAILURE_STATUS;
+
+				/*
+				 * Delete Pre-auth context for the
+				 * associated BSS
+				 */
+				if (lim_search_pre_auth_list(mac_ctx, hdr->sa))
+					lim_delete_pre_auth_node(mac_ctx,
+						hdr->sa);
+
+				goto assocReject;
 			}
 		} else {
 			lim_log(mac_ctx, LOGW,
-				FL("ASSOC resp with try again event recvd. "
-				"But try again time interval IE is wrong."));
+				FL("ASSOC resp with try again event recvd, but try again time interval IE is wrong"));
+
+			assoc_cnf.resultCode = eSIR_SME_ASSOC_REFUSED;
+			assoc_cnf.protStatusCode =
+				eSIR_MAC_UNSPEC_FAILURE_STATUS;
+
+			/* Delete Pre-auth context for the associated BSS */
+			if (lim_search_pre_auth_list(mac_ctx, hdr->sa))
+				lim_delete_pre_auth_node(mac_ctx, hdr->sa);
+
+			goto assocReject;
 		}
 		qdf_mem_free(beacon);
 		qdf_mem_free(assoc_rsp);
@@ -972,6 +995,17 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		(uint8_t *) session_entry->pLimJoinReq->bssDescription.ieFields,
 		ie_len,
 		beacon);
+
+	if (beacon->VHTCaps.present)
+		sta_ds->parsed_ies.vht_caps = beacon->VHTCaps;
+	if (beacon->HTCaps.present)
+		sta_ds->parsed_ies.ht_caps = beacon->HTCaps;
+	if (beacon->hs20vendor_ie.present)
+		sta_ds->parsed_ies.hs20vendor_ie = beacon->hs20vendor_ie;
+	if (beacon->HTInfo.present)
+		sta_ds->parsed_ies.ht_operation = beacon->HTInfo;
+	if (beacon->VHTOperation.present)
+		sta_ds->parsed_ies.vht_operation = beacon->VHTOperation;
 
 	if (mac_ctx->lim.gLimProtectionControl !=
 		WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE)

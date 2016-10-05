@@ -137,20 +137,23 @@ static void lim_convert_supported_channels(tpAniSirGlobal mac_ctx,
  * lim_check_sta_in_pe_entries() - checks if sta exists in any dph tables.
  * @mac_ctx: Pointer to Global MAC structure
  * @hdr: A pointer to the MAC header
+ * @sessionid - session id for which session is initiated
  *
  * This function is called by lim_process_assoc_req_frame() to check if STA
  * entry already exists in any of the PE entries of the AP. If it exists, deauth
  * will be sent on that session and the STA deletion will happen. After this,
  * the ASSOC request will be processed
  *
- * Return: void
+ * Return: True if duplicate entry found; FALSE otherwise.
  */
-void lim_check_sta_in_pe_entries(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr)
+static bool lim_check_sta_in_pe_entries(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
+				 uint16_t sessionid)
 {
 	uint8_t i;
 	uint16_t assoc_id = 0;
 	tpDphHashNode sta_ds = NULL;
 	tpPESession session = NULL;
+	bool dup_entry = false;
 
 	for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
 		if ((&mac_ctx->lim.gpSession[i] != NULL) &&
@@ -161,22 +164,34 @@ void lim_check_sta_in_pe_entries(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr)
 					&assoc_id, &session->dph.dphHashTable);
 			if (sta_ds
 #ifdef WLAN_FEATURE_11W
-			    && !sta_ds->rmfEnabled
+				&& (!sta_ds->rmfEnabled ||
+				    (sessionid != session->peSessionId))
 #endif
 			    ) {
 				lim_log(mac_ctx, LOGE,
-					FL("Sending Deauth and Deleting existing STA entry: "
+					FL("Sending Disassoc and Deleting existing STA entry: "
 					   MAC_ADDRESS_STR),
 					MAC_ADDR_ARRAY(session->selfMacAddr));
-				lim_send_deauth_mgmt_frame(mac_ctx,
+				lim_send_disassoc_mgmt_frame(mac_ctx,
 					eSIR_MAC_UNSPEC_FAILURE_REASON,
 					(uint8_t *) hdr->sa, session, false);
-				lim_trigger_sta_deletion(mac_ctx, sta_ds,
-							 session);
+				/*
+				 * Cleanup Rx path posts eWNI_SME_DISASSOC_RSP
+				 * msg to SME after delete sta which will update
+				 * the userspace with disconnect
+				 */
+				sta_ds->mlmStaContext.cleanupTrigger =
+							eLIM_DUPLICATE_ENTRY;
+				sta_ds->mlmStaContext.disassocReason =
+				eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON;
+				lim_send_sme_disassoc_ind(mac_ctx, sta_ds,
+					session);
+				dup_entry = true;
 				break;
 			}
 		}
 	}
+	return dup_entry;
 }
 
 /**
@@ -188,15 +203,14 @@ void lim_check_sta_in_pe_entries(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr)
  *
  * Checks source addr to destination addr of assoc req frame
  *
- * Return: true of no error, false otherwise
+ * Return: true if source and destination address are different
  */
 static bool lim_chk_sa_da(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 			  tpPESession session, uint8_t sub_type)
 {
-	int result = qdf_mem_cmp((uint8_t *) hdr->sa,
+	if (qdf_mem_cmp((uint8_t *) hdr->sa,
 					(uint8_t *) hdr->da,
-					(uint8_t) (sizeof(tSirMacAddr)));
-	if (0 != result)
+					(uint8_t) (sizeof(tSirMacAddr))))
 		return true;
 
 	lim_log(mac_ctx, LOGE, FL("Assoc Req rejected: wlan.sa = wlan.da"));
@@ -1088,7 +1102,7 @@ static bool lim_process_assoc_req_sta_ctx(tpAniSirGlobal mac_ctx,
 
 	/* no change in the capability so drop the frame */
 	if ((sub_type == LIM_ASSOC) &&
-		(0 == qdf_mem_cmp(&sta_ds->mlmStaContext.capabilityInfo,
+		(!qdf_mem_cmp(&sta_ds->mlmStaContext.capabilityInfo,
 			&assoc_req->capabilityInfo,
 			sizeof(tSirMacCapabilityInfo)))) {
 		lim_log(mac_ctx, LOGE,
@@ -1369,12 +1383,12 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 		sta_ds->mlmStaContext.vhtCapability = 0;
 	}
 	if (sta_ds->mlmStaContext.vhtCapability) {
-		if (session->txBFIniFeatureEnabled &&
+		if (session->vht_config.su_beam_formee &&
 				assoc_req->VHTCaps.suBeamFormerCap)
 			sta_ds->vhtBeamFormerCapable = 1;
 		else
 			sta_ds->vhtBeamFormerCapable = 0;
-		if (session->enable_su_tx_bformer &&
+		if (session->vht_config.su_beam_former &&
 				assoc_req->VHTCaps.suBeamformeeCap)
 			sta_ds->vht_su_bfee_capable = 1;
 		else
@@ -1711,6 +1725,7 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	tSirMacCapabilityInfo local_cap;
 	tpDphHashNode sta_ds = NULL;
 	tpSirAssocReq assoc_req, tmp_assoc_req;
+	bool dup_entry = false;
 
 	lim_get_phy_mode(mac_ctx, &phy_mode, session);
 
@@ -1774,7 +1789,8 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		return;
 	}
 
-	lim_check_sta_in_pe_entries(mac_ctx, hdr);
+	dup_entry = lim_check_sta_in_pe_entries(mac_ctx, hdr,
+						session->peSessionId);
 
 	/* Get pointer to Re/Association Request frame body */
 	frm_body = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
@@ -1801,6 +1817,22 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	if (false == lim_chk_tkip(mac_ctx, hdr, session, sub_type))
 		return;
 
+	/* check for the presence of vendor IE */
+	if ((session->access_policy_vendor_ie) &&
+		(session->access_policy ==
+		LIM_ACCESS_POLICY_RESPOND_IF_IE_IS_PRESENT)) {
+		if (!cfg_get_vendor_ie_ptr_from_oui(mac_ctx,
+			&session->access_policy_vendor_ie[2],
+			3, frm_body + LIM_ASSOC_REQ_IE_OFFSET, frame_len)) {
+			lim_log(mac_ctx, LOGE,
+				FL("Vendor ie not present and access policy is %x, Rejected association"),
+				session->access_policy);
+			lim_send_assoc_rsp_mgmt_frame(mac_ctx,
+				eSIR_MAC_UNSPEC_FAILURE_STATUS, 1, hdr->sa,
+				sub_type, 0, session);
+			return;
+		}
+	}
 	/* Allocate memory for the Assoc Request frame */
 	assoc_req = qdf_mem_malloc(sizeof(*assoc_req));
 	if (NULL == assoc_req) {
@@ -1956,9 +1988,12 @@ sendIndToSme:
 		session->parsedAssocReq[sta_ds->assocId] = assoc_req;
 	assoc_req_copied = true;
 
-	if (false == lim_update_sta_ctx(mac_ctx, session, assoc_req,
+	/* If it is duplicate entry wait till the peer is deleted */
+	if (dup_entry != true) {
+		if (false == lim_update_sta_ctx(mac_ctx, session, assoc_req,
 					sub_type, sta_ds, update_ctx))
 		goto error;
+	}
 
 	/* AddSta is sucess here */
 	if (LIM_IS_AP_ROLE(session) && IS_DOT11_MODE_HT(session->dot11mode) &&

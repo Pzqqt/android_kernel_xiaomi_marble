@@ -41,7 +41,7 @@ qca_wlan_vendor_ndp_policy[QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID] = { .type = NLA_U16 },
 	[QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR] = { .type = NLA_STRING,
 					.len = IFNAMSIZ },
-	[QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_INSTANCE_ID] = { .type = NLA_U16 },
+	[QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_INSTANCE_ID] = { .type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL] = { .type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_NDP_PEER_DISCOVERY_MAC_ADDR] = {
 					.type = NLA_BINARY,
@@ -237,7 +237,6 @@ static int hdd_ndi_start_bss(hdd_adapter_t *adapter,
 		roam_profile->ChannelInfo.ChannelList[0] =
 			NAN_SOCIAL_CHANNEL_2_4GHZ;
 	}
-	hdd_select_cbmode(adapter, operating_channel);
 
 	roam_profile->SSIDs.numOfSSIDs = 1;
 	roam_profile->SSIDs.SSIDList->SSID.length = 0;
@@ -370,6 +369,7 @@ static int hdd_ndi_delete_req_handler(hdd_context_t *hdd_ctx,
 	uint16_t transaction_id;
 	struct nan_datapath_ctx *ndp_ctx;
 	int ret;
+	hdd_station_ctx_t *sta_ctx;
 
 	ENTER();
 
@@ -407,12 +407,25 @@ static int hdd_ndi_delete_req_handler(hdd_context_t *hdd_ctx,
 		return -EINVAL;
 	}
 
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (!sta_ctx) {
+		hdd_err("sta_ctx is NULL");
+		return -EINVAL;
+	}
+
 	/* check if there are active peers on the adapter */
 	if (ndp_ctx->active_ndp_peers > 0) {
 		hdd_err("NDP peers active: %d, cannot delete NDI",
 			ndp_ctx->active_ndp_peers);
 		return -EINVAL;
 	}
+
+	/*
+	 * Since, the interface is being deleted, remove the
+	 * broadcast id.
+	 */
+	hdd_ctx->sta_to_adapter[sta_ctx->broadcast_staid] = 0;
+	sta_ctx->broadcast_staid = HDD_WLAN_INVALID_STA_ID;
 
 	ndp_ctx->ndp_delete_transaction_id = transaction_id;
 	ndp_ctx->state = NAN_DATA_NDI_DELETING_STATE;
@@ -497,7 +510,7 @@ static int hdd_ndp_initiator_req_handler(hdd_context_t *hdd_ctx,
 		return -EINVAL;
 	}
 	req.service_instance_id =
-		nla_get_u16(tb[QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_INSTANCE_ID]);
+		nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_INSTANCE_ID]);
 
 	qdf_mem_copy(req.self_ndi_mac_addr.bytes,
 		     adapter->macAddressCurrent.bytes, QDF_MAC_ADDR_SIZE);
@@ -735,6 +748,10 @@ static void hdd_ndp_iface_create_rsp_handler(hdd_adapter_t *adapter,
 	uint8_t create_transaction_id = 0;
 	uint32_t create_status = NDP_RSP_STATUS_ERROR;
 	uint32_t create_reason = NDP_NAN_DATA_IFACE_CREATE_FAILED;
+	hdd_station_ctx_t *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct qdf_mac_addr bc_mac_addr = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
+	tCsrRoamInfo roam_info = {0};
+	tSirBssDescription tmp_bss_descp = {0};
 
 	ENTER();
 
@@ -754,6 +771,11 @@ static void hdd_ndp_iface_create_rsp_handler(hdd_adapter_t *adapter,
 		create_transaction_id = ndp_ctx->ndp_create_transaction_id;
 	} else {
 		hdd_err("ndp_ctx is NULL");
+		create_fail = true;
+	}
+
+	if (!sta_ctx) {
+		hdd_err("sta_ctx is NULL");
 		create_fail = true;
 	}
 
@@ -826,6 +848,14 @@ static void hdd_ndp_iface_create_rsp_handler(hdd_adapter_t *adapter,
 	/* Something went wrong while starting the BSS */
 	if (create_fail)
 		goto close_ndi;
+
+	sta_ctx->broadcast_staid = ndi_rsp->sta_id;
+	hdd_save_peer(sta_ctx, sta_ctx->broadcast_staid, &bc_mac_addr);
+	hdd_roam_register_sta(adapter, &roam_info,
+				sta_ctx->broadcast_staid,
+				&bc_mac_addr, &tmp_bss_descp);
+	hdd_ctx->sta_to_adapter[sta_ctx->broadcast_staid] = adapter;
+
 
 	EXIT();
 	return;
@@ -900,12 +930,6 @@ void hdd_ndp_session_end_handler(hdd_adapter_t *adapter)
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
-
-	/* Handle only if adapter is in NDI mode */
-	if (QDF_NDI_MODE != adapter->device_mode) {
-		hdd_err("Adapter is not in NDI mode");
-		return;
-	}
 
 	ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(adapter);
 	if (!ndp_ctx) {
@@ -1081,7 +1105,6 @@ static void hdd_ndp_new_peer_ind_handler(hdd_adapter_t *adapter,
 	tCsrRoamInfo roam_info = {0};
 	struct nan_datapath_ctx *ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(adapter);
 	hdd_station_ctx_t *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	struct qdf_mac_addr bc_mac_addr = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
 
 	ENTER();
 
@@ -1110,10 +1133,6 @@ static void hdd_ndp_new_peer_ind_handler(hdd_adapter_t *adapter,
 	hdd_ctx->sta_to_adapter[new_peer_ind->sta_id] = adapter;
 	/* perform following steps for first new peer ind */
 	if (ndp_ctx->active_ndp_peers == 1) {
-		hdd_ctx->sta_to_adapter[NDP_BROADCAST_STAID] = adapter;
-		hdd_save_peer(sta_ctx, NDP_BROADCAST_STAID, &bc_mac_addr);
-		hdd_roam_register_sta(adapter, &roam_info, NDP_BROADCAST_STAID,
-				    &bc_mac_addr, &tmp_bss_descp);
 		hdd_info("Set ctx connection state to connected");
 		sta_ctx->conn_info.connState = eConnectionState_NdiConnected;
 		hdd_wmm_connect(adapter, &roam_info, eCSR_BSS_TYPE_NDI);
@@ -1274,7 +1293,7 @@ ndp_confirm_nla_failed:
  * QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD =
  *         QCA_WLAN_VENDOR_ATTR_NDP_REQUEST_IND (4 bytes)
  * QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR (IFNAMSIZ)
- * QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_INSTANCE_ID (2 bytes)
+ * QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_INSTANCE_ID (4 bytes)
  * QCA_WLAN_VENDOR_ATTR_NDP_NDI_MAC_ADDR (6 bytes)
  * QCA_WLAN_VENDOR_ATTR_NDP_PEER_DISCOVERY_MAC_ADDR (6 bytes)
  * QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID (4 bytes)
@@ -1333,9 +1352,8 @@ static void hdd_ndp_indication_handler(hdd_adapter_t *adapter,
 		return;
 	}
 
-	data_len = 3 * sizeof(uint32_t) + sizeof(uint16_t) +
-		2 * QDF_MAC_ADDR_SIZE + IFNAMSIZ +
-		event->ndp_info.ndp_app_info_len + 8 * NLA_HDRLEN +
+	data_len = (4 * sizeof(uint32_t)) + (2 * QDF_MAC_ADDR_SIZE) + IFNAMSIZ +
+		event->ndp_info.ndp_app_info_len + (8 * NLA_HDRLEN) +
 		NLMSG_HDRLEN;
 
 	/* notify response to the upper layer */
@@ -1356,7 +1374,7 @@ static void hdd_ndp_indication_handler(hdd_adapter_t *adapter,
 	   IFNAMSIZ, adapter->dev->name))
 		goto ndp_indication_nla_failed;
 
-	if (nla_put_u16(vendor_event,
+	if (nla_put_u32(vendor_event,
 	   QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_INSTANCE_ID,
 	   event->service_instance_id))
 		goto ndp_indication_nla_failed;
@@ -1491,10 +1509,7 @@ static void hdd_ndp_end_rsp_handler(hdd_adapter_t *adapter, void *rsp_params)
 	struct sk_buff *vendor_event;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct ndp_end_rsp_event *rsp = rsp_params;
-	struct nan_datapath_ctx *ndp_ctx;
-	uint32_t data_len, i;
-	int idx;
-	hdd_station_ctx_t *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	uint32_t data_len;
 
 	ENTER();
 
@@ -1505,30 +1520,6 @@ static void hdd_ndp_end_rsp_handler(hdd_adapter_t *adapter, void *rsp_params)
 
 	if (0 != wlan_hdd_validate_context(hdd_ctx))
 		return;
-
-	/* adjust active ndp instances per peer */
-	if (rsp->status == NDP_CMD_RSP_STATUS_SUCCESS) {
-		for (i = 0; i < rsp->num_peers; i++) {
-			adapter = hdd_get_adapter_by_vdev(hdd_ctx,
-						rsp->ndp_map[i].vdev_id);
-			if (NULL == adapter) {
-				hdd_err("adapter for vdev_id: %d not found",
-					rsp->ndp_map[i].vdev_id);
-				continue;
-			}
-			sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-			ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(adapter);
-			idx = hdd_get_peer_idx(sta_ctx,
-					&rsp->ndp_map[i].peer_ndi_mac_addr);
-			if (idx == INVALID_PEER_IDX)
-				hdd_err("can't find addr: %pM in vdev_id: %d, peer table.",
-					&rsp->ndp_map[i].peer_ndi_mac_addr,
-					rsp->ndp_map[i].vdev_id);
-			else
-				ndp_ctx->active_ndp_sessions[idx] =
-					rsp->ndp_map[i].num_active_ndp_sessions;
-		}
-	}
 
 	data_len = NLMSG_HDRLEN + (4 * NLA_HDRLEN) + (3 * sizeof(uint32_t)) +
 		   sizeof(uint16_t);
@@ -1621,6 +1612,11 @@ static void hdd_ndp_end_ind_handler(hdd_adapter_t *adapter,
 			continue;
 		}
 		ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(ndi_adapter);
+		if (!ndp_ctx) {
+			hdd_err("ndp_ctx is NULL for vdev id: %d",
+				end_ind->ndp_map[i].vdev_id);
+			continue;
+		}
 		idx = hdd_get_peer_idx(sta_ctx,
 				&end_ind->ndp_map[i].peer_ndi_mac_addr);
 		if (idx == INVALID_PEER_IDX) {
@@ -1872,7 +1868,7 @@ int hdd_init_nan_data_mode(struct hdd_adapter_s *adapter)
 	status = sme_open_session(hdd_ctx->hHal, hdd_sme_roam_callback,
 			adapter, (uint8_t *)&adapter->macAddressCurrent,
 			&adapter->sessionId, type, sub_type);
-	if (QDF_STATUS_SUCCESS == status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("sme_open_session() failed with status code %d",
 			status);
 		ret_val = -EAGAIN;

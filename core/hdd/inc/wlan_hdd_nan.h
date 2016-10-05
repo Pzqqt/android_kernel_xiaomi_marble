@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -46,13 +46,30 @@ int wlan_hdd_cfg80211_nan_request(struct wiphy *wiphy,
 				  int data_len);
 
 bool wlan_hdd_nan_is_supported(void);
-void wlan_hdd_nan_init(struct hdd_context_s *hdd_ctx);
+/**
+ * hdd_nan_populate_cds_config() - Populate NAN cds configuration
+ * @cds_cfg: CDS Configuration
+ * @hdd_ctx: Pointer to hdd context
+ *
+ * Return: none
+ */
+static inline void hdd_nan_populate_cds_config(struct cds_config_info *cds_cfg,
+			hdd_context_t *hdd_ctx)
+{
+	cds_cfg->is_nan_enabled = hdd_ctx->config->enable_nan_support;
+}
+void wlan_hdd_cfg80211_nan_callback(void *ctx, tSirNanEvent *msg);
 #else
 static inline bool wlan_hdd_nan_is_supported(void)
 {
 	return false;
 }
-static inline void wlan_hdd_nan_init(struct hdd_context_s *hdd_ctx)
+static inline void hdd_nan_populate_cds_config(struct cds_config_info *cds_cfg,
+			hdd_context_t *hdd_ctx)
+{
+}
+static inline void wlan_hdd_cfg80211_nan_callback(void *ctx,
+						  tSirNanEvent *msg)
 {
 }
 #endif /* WLAN_FEATURE_NAN */

@@ -40,6 +40,7 @@
 #include <wlan_hdd_napi.h>
 #include <ol_txrx.h>
 #include <cdp_txrx_peer_ops.h>
+#include <cds_utils.h>
 
 #ifdef IPA_OFFLOAD
 #include <wlan_hdd_ipa.h>
@@ -200,7 +201,7 @@ void hdd_softap_tx_resume_cb(void *adapter_context, bool tx_resume)
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
 /**
- * hdd_softap_hard_start_xmit() - Transmit a frame
+ * __hdd_softap_hard_start_xmit() - Transmit a frame
  * @skb: pointer to OS packet (sk_buff)
  * @dev: pointer to network device
  *
@@ -210,7 +211,7 @@ void hdd_softap_tx_resume_cb(void *adapter_context, bool tx_resume)
  *
  * Return: Always returns NETDEV_TX_OK
  */
-int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
+int __hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 {
 	sme_ac_enum_type ac = SME_AC_BE;
 	hdd_adapter_t *pAdapter = (hdd_adapter_t *) netdev_priv(dev);
@@ -251,10 +252,12 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		goto drop_pkt;
 	}
 
+	wlan_hdd_classify_pkt(skb);
+
 	pDestMacAddress = (struct qdf_mac_addr *) skb->data;
 
-	if (qdf_is_macaddr_broadcast(pDestMacAddress) ||
-	    qdf_is_macaddr_group(pDestMacAddress)) {
+	if (QDF_NBUF_CB_GET_IS_BCAST(skb) ||
+	    QDF_NBUF_CB_GET_IS_MCAST(skb)) {
 		/* The BC/MC station ID is assigned during BSS
 		 * starting phase.  SAP will return the station ID
 		 * used for BC/MC traffic.
@@ -324,8 +327,7 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	pAdapter->stats.tx_bytes += skb->len;
 	++pAdapter->stats.tx_packets;
 
-	/* Zero out skb's context buffer for the driver to use */
-	qdf_mem_set(skb->cb, sizeof(skb->cb), 0);
+	hdd_event_eapol_log(skb, QDF_TX);
 	qdf_dp_trace_log_pkt(pAdapter->sessionId, skb, QDF_TX);
 	QDF_NBUF_CB_TX_PACKET_TRACK(skb) = QDF_NBUF_TX_PKT_DATA_TRACK;
 	QDF_NBUF_UPDATE_TX_PKT_COUNT(skb, QDF_NBUF_TX_PKT_HDD);
@@ -367,6 +369,27 @@ drop_pkt_accounting:
 	++pAdapter->hdd_stats.hddTxRxStats.txXmitDropped;
 
 	return NETDEV_TX_OK;
+}
+
+/**
+ * hdd_softap_hard_start_xmit() - Wrapper function to protect
+ * __hdd_softap_hard_start_xmit from SSR
+ * @skb: pointer to OS packet
+ * @dev: pointer to net_device structure
+ *
+ * Function called by OS if any packet needs to transmit.
+ *
+ * Return: Always returns NETDEV_TX_OK
+ */
+int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __hdd_softap_hard_start_xmit(skb, dev);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
 }
 
 /**
@@ -593,6 +616,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 	++pAdapter->stats.rx_packets;
 	pAdapter->stats.rx_bytes += skb->len;
 
+	hdd_event_eapol_log(skb, QDF_RX);
 	DPTRACE(qdf_dp_trace(rxBuf,
 		QDF_DP_TRACE_RX_HDD_PACKET_PTR_RECORD,
 		qdf_nbuf_data_addr(rxBuf),
@@ -600,16 +624,19 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 
 	skb->protocol = eth_type_trans(skb, skb->dev);
 #ifdef WLAN_FEATURE_HOLD_RX_WAKELOCK
+	cds_host_diag_log_work(&pHddCtx->rx_wake_lock,
+			       HDD_WAKE_LOCK_DURATION,
+			       WIFI_POWER_EVENT_WAKELOCK_HOLD_RX);
 	qdf_wake_lock_timeout_acquire(&pHddCtx->rx_wake_lock,
-				      HDD_WAKE_LOCK_DURATION,
-				      WIFI_POWER_EVENT_WAKELOCK_HOLD_RX);
+				      HDD_WAKE_LOCK_DURATION);
 #endif
 
 	/* Remove SKB from internal tracking table before submitting
 	 * it to stack
 	 */
 	qdf_net_buf_debug_release_skb(rxBuf);
-	if (hdd_napi_enabled(HDD_NAPI_ANY) && !pHddCtx->config->enableRxThread)
+	if (hdd_napi_enabled(HDD_NAPI_ANY) &&
+		!pHddCtx->enableRxThread)
 		rxstat = netif_receive_skb(skb);
 	else
 		rxstat = netif_rx_ni(skb);
@@ -802,11 +829,7 @@ QDF_STATUS hdd_softap_register_bc_sta(hdd_adapter_t *pAdapter,
 	pHddApCtx = WLAN_HDD_GET_AP_CTX_PTR(pAdapter);
 
 	pHddCtx->sta_to_adapter[WLAN_RX_BCMC_STA_ID] = pAdapter;
-#ifdef WLAN_FEATURE_MBSSID
 	pHddCtx->sta_to_adapter[pHddApCtx->uBCStaId] = pAdapter;
-#else
-	pHddCtx->sta_to_adapter[WLAN_RX_SAP_SELF_STA_ID] = pAdapter;
-#endif
 	qdf_status =
 		hdd_softap_register_sta(pAdapter, false, fPrivacyBit,
 					(WLAN_HDD_GET_AP_CTX_PTR(pAdapter))->

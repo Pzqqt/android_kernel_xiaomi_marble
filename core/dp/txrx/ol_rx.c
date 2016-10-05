@@ -64,6 +64,47 @@
 void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 			qdf_nbuf_t rx_buf_list);
 
+/**
+ * ol_rx_send_pktlog_event() - send rx packetlog event
+ * @pdev: pdev handle
+ * @peer: peer handle
+ * @msdu: skb list
+ * @pktlog_bit: packetlog bit from firmware
+ *
+ * Return: none
+ */
+#ifdef HELIUMPLUS
+void ol_rx_send_pktlog_event(struct ol_txrx_pdev_t *pdev,
+	struct ol_txrx_peer_t *peer, qdf_nbuf_t msdu, uint8_t pktlog_bit)
+{
+	struct ol_rx_remote_data data;
+
+	if (!pktlog_bit)
+		return;
+
+	data.msdu = msdu;
+	if (peer)
+		data.mac_id = peer->vdev->mac_id;
+	else
+		data.mac_id = 0;
+
+	wdi_event_handler(WDI_EVENT_RX_DESC_REMOTE, pdev, &data);
+}
+#else
+void ol_rx_send_pktlog_event(struct ol_txrx_pdev_t *pdev,
+	struct ol_txrx_peer_t *peer, qdf_nbuf_t msdu, uint8_t pktlog_bit)
+{
+	struct ol_rx_remote_data data;
+
+	data.msdu = msdu;
+	if (peer)
+		data.mac_id = peer->vdev->mac_id;
+	else
+		data.mac_id = 0;
+
+	wdi_event_handler(WDI_EVENT_RX_DESC_REMOTE, pdev, &data);
+}
+#endif
 
 #ifdef HTT_RX_RESTORE
 
@@ -173,10 +214,8 @@ static void ol_rx_process_inv_peer(ol_txrx_pdev_handle pdev,
 	/* ignore frames for non-existent bssids */
 	qdf_mem_copy(a1, wh->i_addr1, IEEE80211_ADDR_LEN);
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
-		if (qdf_mem_cmp(a1, vdev->mac_addr.raw, IEEE80211_ADDR_LEN)
-		    != 0) {
+		if (qdf_mem_cmp(a1, vdev->mac_addr.raw, IEEE80211_ADDR_LEN))
 			break;
-		}
 	}
 	if (!vdev)
 		return;
@@ -508,8 +547,7 @@ ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
 
 				/* Pktlog */
 #ifdef WDI_EVENT_ENABLE
-				wdi_event_handler(WDI_EVENT_RX_DESC_REMOTE,
-						  pdev, head_msdu);
+		ol_rx_send_pktlog_event(pdev, peer, head_msdu, 1);
 #endif
 
 				if (msdu_chaining) {
@@ -586,9 +624,8 @@ ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
 #ifdef WDI_EVENT_ENABLE
 				if (status != htt_rx_status_ctrl_mgmt_null) {
 					/* Pktlog */
-					wdi_event_handler(
-						WDI_EVENT_RX_DESC_REMOTE, pdev,
-						msdu);
+					ol_rx_send_pktlog_event(pdev,
+						 peer, head_msdu, 1);
 				}
 #endif
 				if (status == htt_rx_status_err_inv_peer) {
@@ -1290,6 +1327,9 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 	htt_pdev_handle htt_pdev = NULL;
 	int status;
 	qdf_nbuf_t head_msdu, tail_msdu = NULL;
+#ifdef WDI_EVENT_ENABLE
+	uint8_t pktlog_bit;
+#endif
 
 	if (pdev) {
 		if (qdf_unlikely(QDF_GLOBAL_MONITOR_MODE == cds_get_conparam()))
@@ -1307,6 +1347,10 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 #if defined(HELIUMPLUS_DEBUG)
 	qdf_print("%s %d: rx_ind_msg 0x%p peer_id %d tid %d is_offload %d\n",
 		  __func__, __LINE__, rx_ind_msg, peer_id, tid, is_offload);
+#endif
+
+#ifdef WDI_EVENT_ENABLE
+	pktlog_bit = (htt_rx_amsdu_rx_in_order_get_pktlog(rx_ind_msg) == 0x01);
 #endif
 
 	/*
@@ -1332,7 +1376,7 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 
 	/* Pktlog */
 #ifdef WDI_EVENT_ENABLE
-	wdi_event_handler(WDI_EVENT_RX_DESC_REMOTE, pdev, head_msdu);
+	ol_rx_send_pktlog_event(pdev, peer, head_msdu, pktlog_bit);
 #endif
 
 	/* if this is an offload indication, peer id is carried in the

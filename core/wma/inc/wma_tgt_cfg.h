@@ -67,8 +67,6 @@ struct wma_tgt_services {
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	bool en_roam_offload;
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
-	/* per band chain mask support */
-	bool per_band_chainmask_supp;
 };
 
 /**
@@ -149,6 +147,7 @@ struct wma_dfs_radar_ind {
  * @lpss_support: lpass support
  * @egap_support: enhanced green ap support
  * @nan_datapath_enabled: nan data path support
+ * @bool is_ra_rate_limit_enabled: RA filter support
  */
 struct wma_tgt_cfg {
 	uint32_t target_fw_version;
@@ -169,8 +168,13 @@ struct wma_tgt_cfg {
 #endif
 	uint32_t fine_time_measurement_cap;
 	bool bpf_enabled;
+#ifdef FEATURE_WLAN_RA_FILTERING
+	bool is_ra_rate_limit_enabled;
+#endif
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 	bool nan_datapath_enabled;
 #endif
+	bool sub_20_support;
+	uint16_t wmi_max_len;
 };
 #endif /* WMA_TGT_CFG_H */

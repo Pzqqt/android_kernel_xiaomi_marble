@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -64,13 +64,14 @@ enum qca_wlan_vendor_attr_memory_dump {
 #define FW_DRAM_LOCATION    0x00400000
 #define FW_MEM_DUMP_REQ_ID  1
 #define FW_MEM_DUMP_NUM_SEG 1
-#define MEMDUMP_COMPLETION_TIME_MS 5000
+#define MEMDUMP_COMPLETION_TIME_MS 800
 
 int memdump_init(void);
 void memdump_deinit(void);
 int wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 				      struct wireless_dev *wdev,
 				      const void *data, int data_len);
+void wlan_hdd_cfg80211_fw_mem_dump_cb(void *ctx, struct fw_dump_rsp *dump_rsp);
 #else
 static inline int memdump_init(void)
 {
@@ -86,6 +87,13 @@ static inline int wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 					const void *data, int data_len)
 {
 	return -ENOTSUPP;
+}
+
+
+static inline void wlan_hdd_cfg80211_fw_mem_dump_cb(void *ctx,
+						    struct fw_dump_rsp
+						    *dump_rsp)
+{
 }
 #endif
 

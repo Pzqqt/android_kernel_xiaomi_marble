@@ -41,6 +41,7 @@
 #include "wlan_ptt_sock_svc.h"
 #include "wlan_nlink_srv.h"
 #include "cds_api.h"
+#include "wlan_ps_wow_diag.h"
 
 #define PTT_MSG_DIAG_CMDS_TYPE   (0x5050)
 
@@ -262,3 +263,46 @@ void host_diag_event_report_payload(uint16_t event_Id, uint16_t length,
 	return;
 
 }
+
+/**
+ * host_log_low_resource_failure() - This function is used to send low
+ * resource failure event
+ * @event_sub_type: Reason why the failure was observed
+ *
+ * This function is used to send low resource failure events to user space
+ *
+ * Return: None
+ *
+ */
+void host_log_low_resource_failure(uint8_t event_sub_type)
+{
+	WLAN_HOST_DIAG_EVENT_DEF(wlan_diag_event,
+			struct host_event_wlan_low_resource_failure);
+
+	wlan_diag_event.event_sub_type = event_sub_type;
+
+	WLAN_HOST_DIAG_EVENT_REPORT(&wlan_diag_event,
+					EVENT_WLAN_LOW_RESOURCE_FAILURE);
+}
+
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+/**
+ * qdf_wow_wakeup_host_event()- send wow wakeup event
+ * @wow_wakeup_cause: WOW wakeup reason code
+ *
+ * This function sends wow wakeup reason code diag event
+ *
+ * Return: void.
+ */
+void qdf_wow_wakeup_host_event(uint8_t wow_wakeup_cause)
+{
+	WLAN_HOST_DIAG_EVENT_DEF(wowRequest,
+		host_event_wlan_powersave_wow_payload_type);
+	qdf_mem_zero(&wowRequest, sizeof(wowRequest));
+
+	wowRequest.event_subtype = WLAN_WOW_WAKEUP;
+	wowRequest.wow_wakeup_cause = wow_wakeup_cause;
+	WLAN_HOST_DIAG_EVENT_REPORT(&wowRequest,
+		EVENT_WLAN_POWERSAVE_WOW);
+}
+#endif

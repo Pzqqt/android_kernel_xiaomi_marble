@@ -383,5 +383,6 @@ static inline void htt_clear_bundle_stats(struct htt_pdev_t *pdev)
 }
 #endif
 
+void htt_mark_first_wakeup_packet(htt_pdev_handle pdev, uint8_t value);
 
 #endif /* _OL_HTT_API__H_ */

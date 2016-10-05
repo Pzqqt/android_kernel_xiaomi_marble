@@ -38,13 +38,25 @@
 
 #include "qdf_types.h"
 
+typedef void (*nan_callback)(void *, tSirNanEvent *);
+
+#ifdef WLAN_FEATURE_NAN
 typedef struct sNanRequestReq {
 	uint16_t request_data_len;
 	const uint8_t *request_data;
 } tNanRequestReq, *tpNanRequestReq;
 
-typedef void (*NanCallback)(void *, tSirNanEvent *);
-void sme_nan_register_callback(tHalHandle hHal, NanCallback callback);
+void sme_nan_register_callback(tHalHandle hHal, nan_callback callback);
+void sme_nan_deregister_callback(tHalHandle hHal);
 QDF_STATUS sme_nan_request(tpNanRequestReq input);
+#else
+static inline void sme_nan_register_callback(tHalHandle hHal,
+					     nan_callback callback)
+{
+}
+static inline void sme_nan_deregister_callback(tHalHandle hHal)
+{
+}
+#endif /* WLAN_FEATURE_NAN */
 
 #endif /* __NAN_API_H__ */

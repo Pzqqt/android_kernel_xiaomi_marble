@@ -133,6 +133,11 @@ tpDphHashNode dph_lookup_hash_entry(tpAniSirGlobal pMac, uint8_t staAddr[],
 	tpDphHashNode ptr = NULL;
 	uint16_t index = hash_function(pMac, staAddr, pDphHashTable->size);
 
+	if (!pDphHashTable->pHashTable) {
+		lim_log(pMac, LOGE, FL("pHashTable is NULL"));
+		return ptr;
+	}
+
 	for (ptr = pDphHashTable->pHashTable[index]; ptr; ptr = ptr->next) {
 		if (dph_compare_mac_addr(staAddr, ptr->staAddr)) {
 			*pAssocId = ptr->assocId;
@@ -277,6 +282,7 @@ tpDphHashNode dph_init_sta_state(tpAniSirGlobal pMac, tSirMacAddr staAddr,
 #ifdef WLAN_FEATURE_11W
 	pStaDs->last_assoc_received_time = 0;
 #endif
+	pStaDs->sta_deletion_in_progress = false;
 	pStaDs->valid = 1;
 	return pStaDs;
 }
@@ -419,6 +425,7 @@ tSirRetStatus dph_delete_hash_entry(tpAniSirGlobal pMac, tSirMacAddr staAddr,
 #ifdef WLAN_FEATURE_11W
 		ptr->last_assoc_received_time = 0;
 #endif
+		ptr->sta_deletion_in_progress = false;
 		ptr->next = 0;
 	} else {
 		/* / Entry not present */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -57,7 +57,12 @@
 struct ath_pktlog_hdr {
 	uint16_t flags;
 	uint16_t missed_cnt;
+#ifdef HELIUMPLUS
+	uint8_t log_type;
+	uint8_t macId;
+#else
 	uint16_t log_type;
+#endif
 	uint16_t size;
 	uint32_t timestamp;
 #ifdef HELIUMPLUS
@@ -71,9 +76,19 @@ struct ath_pktlog_hdr {
 #define ATH_PKTLOG_HDR_MISSED_CNT_MASK 0xffff0000
 #define ATH_PKTLOG_HDR_MISSED_CNT_SHIFT 16
 #define ATH_PKTLOG_HDR_MISSED_CNT_OFFSET 0
+#ifdef HELIUMPLUS
+#define ATH_PKTLOG_HDR_LOG_TYPE_MASK 0x00ff
+#define ATH_PKTLOG_HDR_LOG_TYPE_SHIFT 0
+#define ATH_PKTLOG_HDR_LOG_TYPE_OFFSET 1
+#define ATH_PKTLOG_HDR_MAC_ID_MASK 0xff00
+#define ATH_PKTLOG_HDR_MAC_ID_SHIFT 8
+#define ATH_PKTLOG_HDR_MAC_ID_OFFSET 1
+#else
 #define ATH_PKTLOG_HDR_LOG_TYPE_MASK 0xffff
 #define ATH_PKTLOG_HDR_LOG_TYPE_SHIFT 0
 #define ATH_PKTLOG_HDR_LOG_TYPE_OFFSET 1
+#endif
+
 #define ATH_PKTLOG_HDR_SIZE_MASK 0xffff0000
 #define ATH_PKTLOG_HDR_SIZE_SHIFT 16
 #define ATH_PKTLOG_HDR_SIZE_OFFSET 1
@@ -108,6 +123,8 @@ enum {
 #define ATH_PKTLOG_TEXT     0x000000020
 #define ATH_PKTLOG_PHYERR   0x000000040
 #define ATH_PKTLOG_PROMISC  0x000000080
+#define ATH_PKTLOG_SW_EVENT 0x000000100
+
 
 /* Types of packet log events */
 #define PKTLOG_TYPE_TX_CTRL     1
@@ -118,7 +135,9 @@ enum {
 #define PKTLOG_TYPE_RC_FIND     6
 #define PKTLOG_TYPE_RC_UPDATE   7
 #define PKTLOG_TYPE_TX_VIRT_ADDR 8
-#define PKTLOG_TYPE_MAX          9
+#define PKTLOG_TYPE_SMART_ANTENNA 9
+#define PKTLOG_TYPE_SW_EVENT     10
+#define PKTLOG_TYPE_MAX          11
 
 #define PKTLOG_MAX_TXCTL_WORDS 57       /* +2 words for bitmap */
 #define PKTLOG_MAX_TXSTATUS_WORDS 32
@@ -208,6 +227,11 @@ struct ath_pktlog_rx_info {
 struct ath_pktlog_rc_find {
 	struct ath_pktlog_hdr pl_hdr;
 	void *rcFind;
+} __ATTRIB_PACK;
+
+struct ath_pktlog_sw_event {
+	struct ath_pktlog_hdr pl_hdr;
+	void *sw_event;
 } __ATTRIB_PACK;
 
 struct ath_pktlog_rc_update {

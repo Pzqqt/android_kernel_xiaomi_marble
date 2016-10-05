@@ -93,6 +93,7 @@ struct txrx_pdev_cfg_t {
 	uint32_t tx_flow_stop_queue_th;
 	uint32_t tx_flow_start_queue_offset;
 #endif
+	bool flow_steering_enabled;
 };
 
 /**
@@ -546,4 +547,34 @@ static inline unsigned int ol_cfg_ipa_uc_tx_partition_base(
 	return 0;
 }
 #endif /* IPA_OFFLOAD */
+
+/**
+ * ol_set_cfg_flow_steering - Set Rx flow steering config based on CFG ini
+ *			      config.
+ *
+ * @pdev - handle to the physical device
+ * @val - 0 - disable, 1 - enable
+ *
+ * Return: None
+ */
+static inline void ol_set_cfg_flow_steering(ol_pdev_handle pdev, uint8_t val)
+{
+	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
+
+	cfg->flow_steering_enabled = val;
+}
+
+/**
+ * ol_cfg_is_flow_steering_enabled - Return Rx flow steering config.
+ *
+ * @pdev - handle to the physical device
+ *
+ * Return: value of configured flow steering value.
+ */
+static inline uint8_t ol_cfg_is_flow_steering_enabled(ol_pdev_handle pdev)
+{
+	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
+
+	return cfg->flow_steering_enabled;
+}
 #endif /* _OL_CFG__H_ */

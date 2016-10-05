@@ -56,6 +56,38 @@
 #include "wma.h"
 
 #define LIM_GET_NOISE_MAX_TRY 5
+
+/**
+ * get_local_power_constraint_probe_response() - extracts local constraint
+ * from probe response
+ * @beacon_struct: beacon structure
+ * @local_constraint: local constraint pointer
+ * @session: A pointer to session entry.
+ *
+ * Return: None
+ */
+#ifdef FEATURE_WLAN_ESE
+static void get_local_power_constraint_probe_response(
+		tpSirProbeRespBeacon beacon_struct,
+		int8_t *local_constraint,
+		tpPESession session)
+{
+	if (beacon_struct->eseTxPwr.present)
+		*local_constraint =
+			beacon_struct->eseTxPwr.power_limit;
+		session->is_ese_version_ie_present =
+			beacon_struct->is_ese_ver_ie_present;
+}
+#else
+static void get_local_power_constraint_probe_response(
+		tpSirProbeRespBeacon beacon_struct,
+		int8_t *local_constraint,
+		tpPESession session)
+{
+
+}
+#endif
+
 /**
  * lim_extract_ap_capability() - extract AP's HCF/WME/WSM capability
  * @mac_ctx: Pointer to Global MAC structure
@@ -87,6 +119,7 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 	uint8_t fw_vht_ch_wd;
 	uint8_t vht_ch_wd;
 	uint8_t center_freq_diff;
+	struct s_ext_cap *ext_cap;
 
 	beacon_struct = qdf_mem_malloc(sizeof(tSirProbeRespBeacon));
 	if (NULL == beacon_struct) {
@@ -140,13 +173,13 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 			VHT_MCS_3x3_MASK) &&
 		      ((beacon_struct->VHTCaps.txMCSMap & VHT_MCS_2x2_MASK) !=
 		       VHT_MCS_2x2_MASK)))
-			session->txBFIniFeatureEnabled = 0;
+			session->vht_config.su_beam_formee = 0;
 	} else {
 		session->vhtCapabilityPresentInBeacon = 0;
 	}
 
 	if (session->vhtCapabilityPresentInBeacon == 1 &&
-			session->txBFIniFeatureEnabled == 0) {
+			session->vht_config.su_beam_formee == 0) {
 		cfg_set_status = cfg_set_int(mac_ctx,
 				WNI_CFG_VHT_SU_BEAMFORMEE_CAP,
 				0);
@@ -161,7 +194,7 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 				&enable_txbf_20mhz);
 		if ((IS_SIR_STATUS_SUCCESS(cfg_get_status)) &&
 				(false == enable_txbf_20mhz))
-			session->txBFIniFeatureEnabled = 0;
+			session->vht_config.su_beam_formee = 0;
 	} else if (session->vhtCapabilityPresentInBeacon &&
 			vht_op->chanWidth) {
 		/* If VHT is supported min 80 MHz support is must */
@@ -186,6 +219,17 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 
 		fw_vht_ch_wd = wma_get_vht_ch_width();
 		vht_ch_wd = QDF_MIN(fw_vht_ch_wd, ap_bcon_ch_width);
+		/*
+		 * If the supported channel width is greater than 80MHz and
+		 * AP supports Nss > 1 in 160MHz mode then connect the STA
+		 * in 2x2 80MHz mode instead of connecting in 160MHz mode.
+		 */
+		if (vht_ch_wd > WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ) {
+			if (!(IS_VHT_NSS_1x1(beacon_struct->VHTCaps.txMCSMap))
+					&&
+			   (!IS_VHT_NSS_1x1(beacon_struct->VHTCaps.rxMCSMap)))
+				vht_ch_wd = WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ;
+		}
 		/*
 		 * VHT OP IE old definition:
 		 * vht_op->chanCenterFreqSeg1: center freq of 80MHz/160MHz/
@@ -242,13 +286,13 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 				session->ch_center_freq_seg1,
 				session->ch_width);
 		if (CH_WIDTH_80MHZ < session->ch_width) {
-			session->enable_su_tx_bformer = 0;
+			session->vht_config.su_beam_former = 0;
 			session->nss = 1;
 		}
 	}
 	if (session->vhtCapabilityPresentInBeacon == 1 &&
 			!session->htSupportedChannelWidthSet &&
-			session->txBFIniFeatureEnabled == 0) {
+			session->vht_config.su_beam_formee == 0) {
 		cfg_set_status = cfg_set_int(mac_ctx,
 				WNI_CFG_VHT_SU_BEAMFORMEE_CAP,
 				0);
@@ -256,23 +300,37 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 			lim_log(mac_ctx, LOGP,
 					FL("Set VHT_SU_BEAMFORMEE_CAP Fail"));
 	}
+	if (session->vhtCapability &&
+		session->vhtCapabilityPresentInBeacon &&
+		beacon_struct->ext_cap.present) {
+		ext_cap = (struct s_ext_cap *)beacon_struct->ext_cap.bytes;
+		session->gLimOperatingMode.present =
+			ext_cap->oper_mode_notification;
+		if (ext_cap->oper_mode_notification) {
+			if (CH_WIDTH_160MHZ > session->ch_width)
+				session->gLimOperatingMode.chanWidth =
+						session->ch_width;
+			else
+				session->gLimOperatingMode.chanWidth =
+					CH_WIDTH_160MHZ;
+		} else {
+			lim_log(mac_ctx, LOGE, FL(
+					"AP does not support op_mode rx"));
+		}
+	}
 	/* Extract the UAPSD flag from WMM Parameter element */
 	if (beacon_struct->wmeEdcaPresent)
 		*uapsd = beacon_struct->edcaParams.qosInfo.uapsd;
-#if defined FEATURE_WLAN_ESE
-	/* If there is Power Constraint Element specifically,
-	 * adapt to it. Hence there is else condition check
-	 * for this if statement.
-	 */
-	if (beacon_struct->eseTxPwr.present)
-		*local_constraint = beacon_struct->eseTxPwr.power_limit;
-	session->is_ese_version_ie_present =
-		beacon_struct->is_ese_ver_ie_present;
-#endif
-	if (beacon_struct->powerConstraintPresent) {
-		*local_constraint -=
-			beacon_struct->localPowerConstraint.
-			localPowerConstraints;
+
+	if (mac_ctx->roam.configParam.allow_tpc_from_ap) {
+		if (beacon_struct->powerConstraintPresent) {
+			*local_constraint -=
+				beacon_struct->localPowerConstraint.
+					localPowerConstraints;
+		} else {
+			get_local_power_constraint_probe_response(
+				beacon_struct, local_constraint, session);
+		}
 	}
 	session->country_info_present = false;
 	/* Initializing before first use */

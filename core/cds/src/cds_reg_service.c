@@ -40,6 +40,7 @@
 #include "cds_reg_service.h"
 #include "cds_regdomain.h"
 
+
 const struct chan_map chan_mapping[NUM_CHANNELS] = {
 	[CHAN_ENUM_1] = {2412, 1},
 	[CHAN_ENUM_2] = {2417, 2},
@@ -152,7 +153,7 @@ static const enum phy_ch_width next_lower_bw[] = {
 
 struct regulatory_channel reg_channels[NUM_CHANNELS];
 static uint8_t default_country[CDS_COUNTRY_CODE_LEN + 1];
-static uint8_t dfs_region;
+static enum dfs_region dfs_region;
 
 /**
  * cds_get_channel_list_with_power() - retrieve channel list with power
@@ -580,7 +581,7 @@ void cds_set_channel_params(uint16_t oper_ch, uint16_t sec_ch_2g,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS cds_get_dfs_region(uint8_t *dfs_reg)
+QDF_STATUS cds_get_dfs_region(enum dfs_region *dfs_reg)
 {
 	*dfs_reg = dfs_region;
 
@@ -670,7 +671,7 @@ QDF_STATUS cds_set_reg_domain(void *client_ctxt, v_REGDOMAIN_t reg_domain)
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS cds_put_dfs_region(uint8_t dfs_reg)
+QDF_STATUS cds_put_dfs_region(enum dfs_region dfs_reg)
 {
 	dfs_region = dfs_reg;
 

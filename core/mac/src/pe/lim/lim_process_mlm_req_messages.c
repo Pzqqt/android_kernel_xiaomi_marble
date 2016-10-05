@@ -48,9 +48,6 @@
 #include "wma_if.h"
 
 static void lim_process_mlm_start_req(tpAniSirGlobal, uint32_t *);
-#ifdef FEATURE_OEM_DATA_SUPPORT
-static void lim_process_mlm_oem_data_req(tpAniSirGlobal, uint32_t *);
-#endif
 static void lim_process_mlm_join_req(tpAniSirGlobal, uint32_t *);
 static void lim_process_mlm_auth_req(tpAniSirGlobal, uint32_t *);
 static void lim_process_mlm_assoc_req(tpAniSirGlobal, uint32_t *);
@@ -87,16 +84,10 @@ static void lim_process_auth_retry_timer(tpAniSirGlobal);
  */
 void lim_process_mlm_req_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 {
-	MTRACE(mac_trace_msg_rx(mac_ctx, NO_SESSION, msg->type));
 	switch (msg->type) {
 	case LIM_MLM_START_REQ:
 		lim_process_mlm_start_req(mac_ctx, msg->bodyptr);
 		break;
-#ifdef FEATURE_OEM_DATA_SUPPORT
-	case LIM_MLM_OEM_DATA_REQ:
-		lim_process_mlm_oem_data_req(mac_ctx, msg->bodyptr);
-		break;
-#endif
 	case LIM_MLM_JOIN_REQ:
 		lim_process_mlm_join_req(mac_ctx, msg->bodyptr);
 		break;
@@ -348,100 +339,6 @@ void lim_restore_pre_scan_state(tpAniSirGlobal mac_ctx)
 		(tx_time_get() - mac_ctx->lim.scanStartTime));
 }
 
-#ifdef FEATURE_OEM_DATA_SUPPORT
-/**
- * lim_send_hal_oem_data_req() - send oem data request
- * @mac_ctx: global MAC context
- *
- * This function is used to send OEM data request to HAL.
- *
- * Return: None
- */
-void lim_send_hal_oem_data_req(tpAniSirGlobal mac_ctx)
-{
-	tSirMsgQ msg;
-	tpStartOemDataReq start_oem_data_req = NULL;
-	tSirRetStatus rc = eSIR_SUCCESS;
-	tpLimMlmOemDataRsp mlm_oem_data_rsp;
-
-	if (NULL == mac_ctx->lim.gpLimMlmOemDataReq) {
-		lim_log(mac_ctx, LOGE, FL("Null pointer"));
-		goto error;
-	}
-
-	start_oem_data_req = qdf_mem_malloc(sizeof(*start_oem_data_req));
-	if (NULL == start_oem_data_req) {
-		lim_log(mac_ctx, LOGE, FL
-			("Could not allocate memory for start_oem_data_req"));
-		goto error;
-	}
-
-	start_oem_data_req->data =
-		qdf_mem_malloc(mac_ctx->lim.gpLimMlmOemDataReq->data_len);
-	if (!start_oem_data_req->data) {
-		lim_log(mac_ctx, LOGE, FL("memory allocation failed"));
-		qdf_mem_free(start_oem_data_req);
-		goto error;
-	}
-
-	/* Now copy over the information to the OEM DATA REQ to HAL */
-	qdf_copy_macaddr(&start_oem_data_req->selfMacAddr,
-			 &mac_ctx->lim.gpLimMlmOemDataReq->selfMacAddr);
-
-	start_oem_data_req->data_len =
-			mac_ctx->lim.gpLimMlmOemDataReq->data_len;
-	qdf_mem_copy(start_oem_data_req->data,
-		     mac_ctx->lim.gpLimMlmOemDataReq->data,
-		     mac_ctx->lim.gpLimMlmOemDataReq->data_len);
-
-	/* Create the message to be passed to HAL */
-	msg.type = WMA_START_OEM_DATA_REQ;
-	msg.bodyptr = start_oem_data_req;
-	msg.bodyval = 0;
-
-	SET_LIM_PROCESS_DEFD_MESGS(mac_ctx, false);
-	MTRACE(mac_trace_msg_tx(mac_ctx, NO_SESSION, msg.type));
-
-	rc = wma_post_ctrl_msg(mac_ctx, &msg);
-	if (rc == eSIR_SUCCESS)
-		return;
-
-	SET_LIM_PROCESS_DEFD_MESGS(mac_ctx, true);
-	qdf_mem_free(start_oem_data_req->data);
-	qdf_mem_free(start_oem_data_req);
-	lim_log(mac_ctx, LOGE,
-		FL("OEM_DATA: posting WMA_START_OEM_DATA_REQ to HAL failed"));
-
-error:
-	mac_ctx->lim.gLimMlmState = mac_ctx->lim.gLimPrevMlmState;
-	MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE, NO_SESSION,
-		       mac_ctx->lim.gLimMlmState));
-
-	mlm_oem_data_rsp = qdf_mem_malloc(sizeof(tLimMlmOemDataRsp));
-	if (NULL == mlm_oem_data_rsp) {
-		lim_log(mac_ctx->hHdd, LOGP, FL
-			("memory allocation for mlm_oem_data_rsp"));
-		return;
-	}
-	mlm_oem_data_rsp->target_rsp = false;
-
-	if (NULL != mac_ctx->lim.gpLimMlmOemDataReq) {
-		if (NULL != mac_ctx->lim.gpLimMlmOemDataReq->data) {
-			qdf_mem_free(
-				mac_ctx->lim.gpLimMlmOemDataReq->data);
-			mac_ctx->lim.gpLimMlmOemDataReq->data = NULL;
-		}
-		qdf_mem_free(mac_ctx->lim.gpLimMlmOemDataReq);
-		mac_ctx->lim.gpLimMlmOemDataReq = NULL;
-	}
-
-	lim_post_sme_message(mac_ctx, LIM_MLM_OEM_DATA_CNF,
-			     (uint32_t *) mlm_oem_data_rsp);
-
-	return;
-}
-#endif /* FEATURE_OEM_DATA_SUPPORT */
-
 /**
  * mlm_add_sta() - MLM add sta
  * @mac_ctx: global MAC context
@@ -528,10 +425,11 @@ static void mlm_add_sta(tpAniSirGlobal mac_ctx, tpAddStaParams sta_param,
 	if (session_entry->vhtCapability) {
 		sta_param->vhtCapable = true;
 		sta_param->vhtTxBFCapable =
-				session_entry->txBFIniFeatureEnabled;
-		sta_param->vhtTxMUBformeeCapable = session_entry->txMuBformee;
+				session_entry->vht_config.su_beam_formee;
+		sta_param->vhtTxMUBformeeCapable =
+				session_entry->vht_config.mu_beam_formee;
 		sta_param->enable_su_tx_bformer =
-				session_entry->enable_su_tx_bformer;
+				session_entry->vht_config.su_beam_former;
 	}
 	/*
 	 * Since this is Self-STA, need to populate Self MAX_AMPDU_SIZE
@@ -701,6 +599,14 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 	lim_log(mac_ctx, LOG2, FL("dot11_mode:%d nss value:%d"),
 			addbss_param->dot11_mode, addbss_param->nss);
 
+	if (cds_is_5_mhz_enabled()) {
+		addbss_param->ch_width = CH_WIDTH_5MHZ;
+		addbss_param->staContext.ch_width = CH_WIDTH_5MHZ;
+	} else if (cds_is_10_mhz_enabled()) {
+		addbss_param->ch_width = CH_WIDTH_10MHZ;
+		addbss_param->staContext.ch_width = CH_WIDTH_10MHZ;
+	}
+
 	msg_buf.type = WMA_ADD_BSS_REQ;
 	msg_buf.reserved = 0;
 	msg_buf.bodyptr = addbss_param;
@@ -791,77 +697,6 @@ end:
 				     (uint32_t *) &mlm_start_cnf);
 }
 
-#ifdef FEATURE_OEM_DATA_SUPPORT
-/**
- * lim_process_mlm_oem_data_req() - process MLM OEM_DATA_REQ message
- * @mac_ctx: global MAC context
- * @msg_buf: MLM message buffer
- *
- * This function process MLM OEM_DATA_REQ message.
- *
- * Return: None
- */
-static void lim_process_mlm_oem_data_req(tpAniSirGlobal mac_ctx,
-					 uint32_t *msg_buf)
-{
-	tLimMlmOemDataRsp *mlm_oem_data_rsp;
-	tLimMlmOemDataReq *data_req = (tLimMlmOemDataReq *) msg_buf;
-
-	if (((mac_ctx->lim.gLimMlmState == eLIM_MLM_IDLE_STATE) ||
-	     (mac_ctx->lim.gLimMlmState == eLIM_MLM_JOINED_STATE) ||
-	     (mac_ctx->lim.gLimMlmState == eLIM_MLM_AUTHENTICATED_STATE) ||
-	     (mac_ctx->lim.gLimMlmState == eLIM_MLM_BSS_STARTED_STATE) ||
-	     (mac_ctx->lim.gLimMlmState == eLIM_MLM_LINK_ESTABLISHED_STATE))) {
-		/*
-		 * Hold onto the oem data request criteria
-		 * Free gpLimMlmOemDataReq to avoid memory leak due to
-		 * second OEM data request
-		 */
-		if (mac_ctx->lim.gpLimMlmOemDataReq) {
-			if (mac_ctx->lim.gpLimMlmOemDataReq->data) {
-				qdf_mem_free(
-				 mac_ctx->lim.gpLimMlmOemDataReq->data);
-				mac_ctx->lim.gpLimMlmOemDataReq->data =
-				 NULL;
-			}
-			qdf_mem_free(mac_ctx->lim.gpLimMlmOemDataReq);
-			mac_ctx->lim.gpLimMlmOemDataReq = NULL;
-		}
-
-		mac_ctx->lim.gpLimMlmOemDataReq = data_req;
-		mac_ctx->lim.gpLimMlmOemDataReq->data =
-			data_req->data;
-		mac_ctx->lim.gLimPrevMlmState = mac_ctx->lim.gLimMlmState;
-
-		lim_log(mac_ctx, LOG2, FL("Calling lim_send_hal_oem_data_req"));
-		lim_send_hal_oem_data_req(mac_ctx);
-	} else {
-		/* Should not have received oem data req in other states */
-		lim_log(mac_ctx, LOGW, FL
-			("unexpected LIM_MLM_OEM_DATA_REQ in invalid state %X"),
-			mac_ctx->lim.gLimMlmState);
-		lim_print_mlm_state(mac_ctx, LOGW, mac_ctx->lim.gLimMlmState);
-
-		/* Free up buffer allocated */
-		qdf_mem_free(msg_buf);
-
-		/* Return Meas confirm with INVALID_PARAMETERS */
-		mlm_oem_data_rsp = qdf_mem_malloc(sizeof(tLimMlmOemDataRsp));
-		if (mlm_oem_data_rsp != NULL) {
-			mlm_oem_data_rsp->target_rsp = false;
-			lim_post_sme_message(mac_ctx, LIM_MLM_OEM_DATA_CNF,
-					     (uint32_t *) mlm_oem_data_rsp);
-			qdf_mem_free(mlm_oem_data_rsp);
-		} else {
-			lim_log(mac_ctx, LOGP, FL
-			    ("Could not allocate memory for mlm_oem_data_rsp"));
-			return;
-		}
-	}
-
-	return;
-}
-#endif /* FEATURE_OEM_DATA_SUPPORT */
 /**
  * lim_post_join_set_link_state_callback()- registered callback to perform post
  * peer creation operations
@@ -2337,9 +2172,6 @@ static void lim_process_periodic_probe_req_timer(tpAniSirGlobal mac_ctx)
 		i++;
 	} while (i < mlm_scan_req->numSsid);
 	/* Activate timer again */
-	MTRACE(mac_trace(mac_ctx, TRACE_CODE_TIMER_ACTIVATE,
-			 probe_req_timer->sessionId,
-			 eLIM_PERIODIC_PROBE_REQ_TIMER));
 	if (tx_timer_activate(probe_req_timer) != TX_SUCCESS) {
 		lim_log(mac_ctx, LOGP,
 			FL("could not start periodic probe req timer"));
@@ -2562,6 +2394,9 @@ static void lim_process_auth_failure_timeout(tpAniSirGlobal mac_ctx)
 		session->peSessionId, session->limMlmState,
 		session->limSmeState);
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM
+	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_AUTH_TIMEOUT, session,
+				0, AUTH_FAILURE_TIMEOUT);
+
 	WLAN_HOST_DIAG_LOG_ALLOC(rssi_log, host_log_rssi_pkt_type,
 				 LOG_WLAN_RSSI_UPDATE_C);
 	if (rssi_log)
@@ -2631,6 +2466,11 @@ lim_process_auth_rsp_timeout(tpAniSirGlobal mac_ctx, uint32_t auth_idx)
 		return;
 	}
 
+#ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM
+		lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_AUTH_TIMEOUT,
+				session, 0, AUTH_RESPONSE_TIMEOUT);
+#endif
+
 	if (LIM_IS_AP_ROLE(session) || LIM_IS_IBSS_ROLE(session)) {
 		if (auth_node->mlmState != eLIM_MLM_WT_AUTH_FRAME3_STATE) {
 			lim_log(mac_ctx, LOGE,
@@ -2692,6 +2532,9 @@ lim_process_assoc_failure_timeout(tpAniSirGlobal mac_ctx, uint32_t msg_type)
 		return;
 	}
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM
+	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_ASSOC_TIMEOUT,
+				session, 0, 0);
+
 	WLAN_HOST_DIAG_LOG_ALLOC(rssi_log,
 				 host_log_rssi_pkt_type,
 				 LOG_WLAN_RSSI_UPDATE_C);
@@ -2702,6 +2545,19 @@ lim_process_assoc_failure_timeout(tpAniSirGlobal mac_ctx, uint32_t msg_type)
 
 	lim_log(mac_ctx, LOG1,
 		FL("Re/Association Response not received before timeout "));
+
+	/*
+	 * Send Deauth to handle the scenareo where association timeout happened
+	 * when device has missed the assoc resp sent by peer.
+	 * By sending deauth try to clear the session created on peer device.
+	 */
+	lim_log(mac_ctx, LOGE,
+		FL("Sessionid: %d try sending deauth on channel %d to BSSID: "
+		MAC_ADDRESS_STR), session->peSessionId,
+		session->currentOperChannel,
+		MAC_ADDR_ARRAY(session->bssId));
+	lim_send_deauth_mgmt_frame(mac_ctx, eSIR_MAC_UNSPEC_FAILURE_REASON,
+		session->bssId, session, false);
 
 	if ((LIM_IS_AP_ROLE(session)) ||
 	    ((session->limMlmState != eLIM_MLM_WT_ASSOC_RSP_STATE) &&

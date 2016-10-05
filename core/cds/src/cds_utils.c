@@ -483,7 +483,7 @@ cds_is_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm, uint8_t *efrm)
 
 	/* Validate IPN */
 	rx_ipn = mmie->sequence_number;
-	if (OS_MEMCMP(rx_ipn, ipn, CMAC_IPN_LEN) > 0) {
+	if (OS_MEMCMP(rx_ipn, ipn, CMAC_IPN_LEN) <= 0) {
 		/* Replay error */
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "Replay error mmie ipn %02X %02X %02X %02X %02X %02X"
@@ -546,7 +546,7 @@ cds_is_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm, uint8_t *efrm)
 		  mic[0], mic[1], mic[2], mic[3],
 		  mic[4], mic[5], mic[6], mic[7]);
 
-	if (OS_MEMCMP(mic, mmie->mic, CMAC_TLEN) == 0) {
+	if (OS_MEMCMP(mic, mmie->mic, CMAC_TLEN) != 0) {
 		/* MMIE MIC mismatch */
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "BC/MC MGMT frame MMIE MIC check Failed"
@@ -1128,7 +1128,7 @@ uint8_t cds_freq_to_chan(uint32_t freq)
 	return chan;
 }
 
-uint8_t cds_chan_to_band(uint32_t chan)
+enum cds_band_type cds_chan_to_band(uint32_t chan)
 {
 	if (chan <= CDS_24_GHZ_CHANNEL_14)
 		return CDS_BAND_2GHZ;

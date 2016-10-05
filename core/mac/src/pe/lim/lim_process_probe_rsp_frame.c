@@ -52,14 +52,42 @@
 
 #include "parser_api.h"
 
-tSirRetStatus lim_validate_ie_information_in_probe_rsp_frame(uint8_t *pRxPacketInfo)
+/**
+ * lim_validate_ie_information_in_probe_rsp_frame () - validates ie
+ * information in probe response.
+ * @mac_ctx: mac context
+ * @pRxPacketInfo: Rx packet info
+ *
+ * Return: 0 on success, one on failure
+ */
+tSirRetStatus
+lim_validate_ie_information_in_probe_rsp_frame(tpAniSirGlobal mac_ctx,
+				uint8_t *pRxPacketInfo)
 {
 	tSirRetStatus status = eSIR_SUCCESS;
+	uint8_t *pframe;
+	uint32_t nframe;
+	uint32_t missing_rsn_bytes;
+
+	/*
+	 * Validate a Probe response frame for malformed frame.
+	 * If the frame is malformed then do not consider as it
+	 * may cause problem fetching wrong IE values
+	 */
 
 	if (WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo) <
-	    (SIR_MAC_B_PR_SSID_OFFSET + SIR_MAC_MIN_IE_LEN)) {
-		status = eSIR_FAILURE;
-	}
+		(SIR_MAC_B_PR_SSID_OFFSET + SIR_MAC_MIN_IE_LEN))
+		return eSIR_FAILURE;
+
+	pframe = WMA_GET_RX_MPDU_DATA(pRxPacketInfo);
+	nframe = WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo);
+	missing_rsn_bytes = 0;
+
+	status = sir_validate_and_rectify_ies(mac_ctx,
+			pframe, nframe, &missing_rsn_bytes);
+
+	if (status == eSIR_SUCCESS)
+		WMA_GET_RX_MPDU_LEN(pRxPacketInfo) += missing_rsn_bytes;
 
 	return status;
 }
@@ -116,7 +144,8 @@ lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
 		MAC_ADDR_ARRAY(header->sa));
 
 	/* Validate IE information before processing Probe Response Frame */
-	if (lim_validate_ie_information_in_probe_rsp_frame(rx_Packet_info) !=
+	if (lim_validate_ie_information_in_probe_rsp_frame(mac_ctx,
+				rx_Packet_info) !=
 		eSIR_SUCCESS) {
 		lim_log(mac_ctx, LOG1,
 			FL("Parse error ProbeResponse, length=%d"), frame_len);
@@ -141,6 +170,16 @@ lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
 		qdf_mem_free(probe_rsp);
 		return;
 	}
+
+	if (probe_rsp->assoc_disallowed) {
+		lim_log(mac_ctx, LOG1,
+			FL("Association disallowed by AP "MAC_ADDRESS_STR " Reason code %d"),
+				MAC_ADDR_ARRAY(header->bssId),
+				probe_rsp->assoc_disallowed_reason);
+		qdf_mem_free(probe_rsp);
+		return;
+	}
+
 	lim_check_and_add_bss_description(mac_ctx, probe_rsp,
 			  rx_Packet_info, false, true);
 	/* To Support BT-AMP */
@@ -336,7 +375,8 @@ lim_process_probe_rsp_frame_no_session(tpAniSirGlobal mac_ctx,
 	lim_print_mac_addr(mac_ctx, header->sa, LOG2);
 
 	/* Validate IE information before processing Probe Response Frame */
-	if (lim_validate_ie_information_in_probe_rsp_frame(rx_packet_info) !=
+	if (lim_validate_ie_information_in_probe_rsp_frame(mac_ctx,
+				rx_packet_info) !=
 								eSIR_SUCCESS) {
 		lim_log(mac_ctx, LOG1,
 			FL("Parse error ProbeResponse, length=%d"), frame_len);
@@ -363,6 +403,16 @@ lim_process_probe_rsp_frame_no_session(tpAniSirGlobal mac_ctx,
 		qdf_mem_free(probe_rsp);
 		return;
 	}
+
+	if (probe_rsp->assoc_disallowed) {
+		lim_log(mac_ctx, LOG1,
+			FL("Association disallowed by AP "MAC_ADDRESS_STR " Reason code %d"),
+				MAC_ADDR_ARRAY(header->bssId),
+				probe_rsp->assoc_disallowed_reason);
+		qdf_mem_free(probe_rsp);
+		return;
+	}
+
 	lim_log(mac_ctx, LOG2, FL("Save this probe rsp in LFR cache"));
 	lim_check_and_add_bss_description(mac_ctx, probe_rsp,
 		  rx_packet_info, false, true);

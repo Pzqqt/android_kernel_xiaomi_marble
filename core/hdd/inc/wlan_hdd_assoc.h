@@ -39,6 +39,8 @@
 #include <wlan_defs.h>
 #include "ol_txrx_ctrl_api.h"
 #include "cdp_txrx_peer_ops.h"
+#include <net/cfg80211.h>
+#include <linux/ieee80211.h>
 
 /* Preprocessor Definitions and Constants */
 #ifdef FEATURE_WLAN_TDLS
@@ -93,6 +95,58 @@ typedef enum {
 } ePeerStatus;
 
 /**
+ * struct hdd_conn_flag - connection flags
+ * @ht_present: ht element present or not
+ * @vht_present: vht element present or not
+ * @hs20_present: hs20 element present or not
+ * @ht_op_present: ht operation present or not
+ * @vht_op_present: vht operation present or not
+ */
+struct hdd_conn_flag {
+	uint8_t ht_present:1;
+	uint8_t vht_present:1;
+	uint8_t hs20_present:1;
+	uint8_t ht_op_present:1;
+	uint8_t vht_op_present:1;
+	uint8_t reserved:3;
+};
+
+/*defines for tx_BF_cap_info */
+#define TX_BF_CAP_INFO_TX_BF			0x00000001
+#define TX_BF_CAP_INFO_RX_STAG_RED_SOUNDING	0x00000002
+#define TX_BF_CAP_INFO_TX_STAG_RED_SOUNDING	0x00000004
+#define TX_BF_CAP_INFO_RX_ZFL			0x00000008
+#define TX_BF_CAP_INFO_TX_ZFL			0x00000010
+#define TX_BF_CAP_INFO_IMP_TX_BF		0x00000020
+#define TX_BF_CAP_INFO_CALIBRATION		0x000000c0
+#define TX_BF_CAP_INFO_CALIBRATION_SHIFT	6
+#define TX_BF_CAP_INFO_EXP_CSIT_BF		0x00000100
+#define TX_BF_CAP_INFO_EXP_UNCOMP_STEER_MAT	0x00000200
+#define TX_BF_CAP_INFO_EXP_BF_CSI_FB		0x00001c00
+#define TX_BF_CAP_INFO_EXP_BF_CSI_FB_SHIFT	10
+#define TX_BF_CAP_INFO_EXP_UNCMP_STEER_MAT	0x0000e000
+#define TX_BF_CAP_INFO_EXP_UNCMP_STEER_MAT_SHIFT 13
+#define TX_BF_CAP_INFO_EXP_CMP_STEER_MAT_FB	0x00070000
+#define TX_BF_CAP_INFO_EXP_CMP_STEER_MAT_FB_SHIFT 16
+#define TX_BF_CAP_INFO_CSI_NUM_BF_ANT		0x00180000
+#define TX_BF_CAP_INFO_CSI_NUM_BF_ANT_SHIFT	18
+#define TX_BF_CAP_INFO_UNCOMP_STEER_MAT_BF_ANT	0x00600000
+#define TX_BF_CAP_INFO_UNCOMP_STEER_MAT_BF_ANT_SHIFT 20
+#define TX_BF_CAP_INFO_COMP_STEER_MAT_BF_ANT	0x01800000
+#define TX_BF_CAP_INFO_COMP_STEER_MAT_BF_ANT_SHIFT 22
+#define TX_BF_CAP_INFO_RSVD			0xfe000000
+
+/* defines for antenna selection info */
+#define ANTENNA_SEL_INFO			0x01
+#define ANTENNA_SEL_INFO_EXP_CSI_FB_TX		0x02
+#define ANTENNA_SEL_INFO_ANT_ID_FB_TX		0x04
+#define ANTENNA_SEL_INFO_EXP_CSI_FB		0x08
+#define ANTENNA_SEL_INFO_ANT_ID_FB		0x10
+#define ANTENNA_SEL_INFO_RX_AS			0x20
+#define ANTENNA_SEL_INFO_TX_SOUNDING_PPDU	0x40
+#define ANTENNA_SEL_INFO_RSVD			0x80
+
+/**
  * typedef connection_info_t - structure to store connection information
  * @connState: connection state of the NIC
  * @connDot11DesiredBssType: BSS type of the current connection.
@@ -115,6 +169,16 @@ typedef enum {
  * @gtk_installed: gtk installed state
  * @nss: number of spatial streams negotiated
  * @rate_flags: rate flags for current connection
+ * @freq: channel frequency
+ * @txrate: txrate structure holds nss & datarate info
+ * @noise: holds noise information
+ * @ht_caps: holds ht capabilities info
+ * @vht_caps: holds vht capabilities info
+ * @hs20vendor_ie: holds passpoint/hs20 info
+ * @conn_flag: flag conn info params is present or not
+ * @roam_count: roaming counter
+ * @signal: holds rssi info
+ * @assoc_status_code: holds assoc fail reason
  */
 typedef struct connection_info_s {
 	eConnectionState connState;
@@ -135,6 +199,18 @@ typedef struct connection_info_s {
 	bool gtk_installed;
 	uint8_t nss;
 	uint32_t rate_flags;
+	uint32_t freq;
+	struct rate_info txrate;
+	int8_t noise;
+	struct ieee80211_ht_cap ht_caps;
+	struct ieee80211_vht_cap vht_caps;
+	struct hdd_conn_flag conn_flag;
+	tDot11fIEhs20vendor_ie hs20vendor_ie;
+	struct ieee80211_ht_operation ht_operation;
+	struct ieee80211_vht_operation vht_operation;
+	uint32_t roam_count;
+	int8_t signal;
+	int32_t assoc_status_code;
 } connection_info_t;
 
 /* Forward declarations */
@@ -227,7 +303,7 @@ int hdd_set_csr_auth_type(hdd_adapter_t *pAdapter, eCsrAuthType RSNAuthType);
  */
 QDF_STATUS hdd_roam_register_tdlssta(hdd_adapter_t *pAdapter,
 				     const uint8_t *peerMac, uint16_t staId,
-				     uint8_t ucastSig);
+				     uint8_t ucastSig, uint8_t qos);
 
 /**
  * hdd_perform_roam_set_key_complete() - perform set key complete
@@ -281,5 +357,10 @@ bool hdd_save_peer(hdd_station_ctx_t *sta_ctx, uint8_t sta_id,
 void hdd_delete_peer(hdd_station_ctx_t *sta_ctx, uint8_t sta_id);
 int hdd_get_peer_idx(hdd_station_ctx_t *sta_ctx, struct qdf_mac_addr *addr);
 QDF_STATUS hdd_roam_deregister_sta(hdd_adapter_t *adapter, uint8_t sta_id);
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+void hdd_wma_send_fastreassoc_cmd(int session_id, const tSirMacAddr bssid,
+				  int channel);
+#endif
 
 #endif

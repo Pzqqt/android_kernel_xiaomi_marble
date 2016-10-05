@@ -32,7 +32,11 @@
 #include <ol_txrx_internal.h>
 #include <pktlog_ac.h>
 
-#define PKTLOG_DEFAULT_BUFSIZE          (1024 * 1024)
+#ifdef FEATURE_PKTLOG
+#define PKTLOG_DEFAULT_BUFSIZE          (10 * 1024 * 1024) /* 10MB */
+#else
+#define PKTLOG_DEFAULT_BUFSIZE          (1 * 1024 * 1024) /* 1MB */
+#endif
 #define PKTLOG_DEFAULT_SACK_THR         3
 #define PKTLOG_DEFAULT_TAIL_LENGTH      100
 #define PKTLOG_DEFAULT_THRUPUT_THRESH   (64 * 1024)
@@ -43,7 +47,12 @@ struct ath_pktlog_arg {
 	struct ath_pktlog_info *pl_info;
 	uint32_t flags;
 	uint16_t missed_cnt;
+#ifdef HELIUMPLUS
+	uint8_t log_type;
+	uint8_t macId;
+#else
 	uint16_t log_type;
+#endif
 	size_t log_size;
 	uint16_t timestamp;
 #ifdef HELIUMPLUS
@@ -59,9 +68,11 @@ char *pktlog_getbuf(struct ol_pktlog_dev_t *pl_dev,
 
 A_STATUS process_tx_info(struct ol_txrx_pdev_t *pdev, void *data);
 A_STATUS process_rx_info(void *pdev, void *data);
-A_STATUS process_rx_info_remote(void *pdev, qdf_nbuf_t amsdu);
+A_STATUS process_rx_info_remote(void *pdev, void *data);
 A_STATUS process_rate_find(void *pdev, void *data);
 A_STATUS process_rate_update(void *pdev, void *data);
+A_STATUS process_sw_event(void *pdev, void *data);
+
 
 #endif /* REMOVE_PKT_LOG */
 #endif

@@ -165,7 +165,7 @@ void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 	switch (msg_type) {
 	case HTT_T2H_MSG_TYPE_VERSION_CONF:
 	{
-		qdf_runtime_pm_put();
+		htc_pm_runtime_put(pdev->htc_pdev);
 		pdev->tgt_ver.major = HTT_VER_CONF_MAJOR_GET(*msg_word);
 		pdev->tgt_ver.minor = HTT_VER_CONF_MINOR_GET(*msg_word);
 		qdf_print
@@ -328,7 +328,7 @@ void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 			ol_tx_single_completion_handler(pdev->txrx_pdev,
 							compl_msg->status,
 							compl_msg->desc_id);
-			qdf_runtime_pm_put();
+			htc_pm_runtime_put(pdev->htc_pdev);
 			HTT_TX_SCHED(pdev);
 		} else {
 			qdf_print("Ignoring HTT_T2H_MSG_TYPE_MGMT_TX_COMPL_IND indication");
@@ -344,7 +344,7 @@ void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 		cookie |= ((uint64_t) (*(msg_word + 2))) << 32;
 
 		stats_info_list = (uint8_t *) (msg_word + 3);
-		qdf_runtime_pm_put();
+		htc_pm_runtime_put(pdev->htc_pdev);
 		ol_txrx_fw_stats_handler(pdev->txrx_pdev, cookie,
 					 stats_info_list);
 		break;
@@ -387,7 +387,7 @@ void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 		uint8_t *op_msg_buffer;
 		uint8_t *msg_start_ptr;
 
-		qdf_runtime_pm_put();
+		htc_pm_runtime_put(pdev->htc_pdev);
 		msg_start_ptr = (uint8_t *) msg_word;
 		op_code =
 			HTT_WDI_IPA_OP_RESPONSE_OP_CODE_GET(*msg_word);

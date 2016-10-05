@@ -262,6 +262,11 @@ tSirRetStatus lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 
 	pChnlParams->restart_on_chan_switch = is_restart;
 
+	if (cds_is_5_mhz_enabled())
+		pChnlParams->ch_width = CH_WIDTH_5MHZ;
+	else if (cds_is_10_mhz_enabled())
+		pChnlParams->ch_width = CH_WIDTH_10MHZ;
+
 	/* we need to defer the message until we
 	 * get the response back from WMA
 	 */

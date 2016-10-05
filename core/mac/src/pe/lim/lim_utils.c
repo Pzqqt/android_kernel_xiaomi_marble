@@ -57,6 +57,7 @@
 #include "lim_session.h"
 #include "cds_reg_service.h"
 #include "nan_datapath.h"
+#include "wma.h"
 
 #ifdef WLAN_FEATURE_11W
 #include "wni_cfg.h"
@@ -277,12 +278,6 @@ char *lim_msg_str(uint32_t msgType)
 		return "eWNI_SME_SYS_READY_IND";
 	case eWNI_SME_SCAN_REQ:
 		return "eWNI_SME_SCAN_REQ";
-#ifdef FEATURE_OEM_DATA_SUPPORT
-	case eWNI_SME_OEM_DATA_REQ:
-		return "eWNI_SME_OEM_DATA_REQ";
-	case eWNI_SME_OEM_DATA_RSP:
-		return "eWNI_SME_OEM_DATA_RSP";
-#endif
 	case eWNI_SME_SCAN_RSP:
 		return "eWNI_SME_SCAN_RSP";
 	case eWNI_SME_JOIN_REQ:
@@ -708,16 +703,12 @@ void lim_cleanup_mlm(tpAniSirGlobal mac_ctx)
 	 * each STA associated per BSSId and deactivate/delete
 	 * the pmfSaQueryTimer for it
 	 */
-	if (cds_is_driver_recovering()) {
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
-				FL("SSR is detected, proceed to clean up pmfSaQueryTimer"));
-		for (bss_entry = 0; bss_entry < mac_ctx->lim.maxBssId;
-						bss_entry++) {
-			if (!mac_ctx->lim.gpSession[bss_entry].valid)
-				continue;
-			lim_deactivate_del_sta(mac_ctx, bss_entry,
-					psession_entry, sta_ds);
-		}
+	for (bss_entry = 0; bss_entry < mac_ctx->lim.maxBssId;
+					bss_entry++) {
+		if (!mac_ctx->lim.gpSession[bss_entry].valid)
+			continue;
+		lim_deactivate_del_sta(mac_ctx, bss_entry,
+				psession_entry, sta_ds);
 	}
 #endif
 
@@ -2022,17 +2013,23 @@ void lim_process_channel_switch_timeout(tpAniSirGlobal pMac)
 	psessionEntry = pe_find_session_by_session_id(pMac,
 			pMac->lim.limTimers.gLimChannelSwitchTimer.sessionId);
 	if (psessionEntry == NULL) {
-		lim_log(pMac, LOGP,
+		lim_log(pMac, LOGE,
 			FL("Session Does not exist for given sessionID"));
 		return;
 	}
 
 	if (!LIM_IS_STA_ROLE(psessionEntry)) {
-		PELOGW(lim_log
-			       (pMac, LOGW,
+		lim_log(pMac, LOGW,
 			       "Channel switch can be done only in STA role, Current Role = %d",
 			       GET_LIM_SYSTEM_ROLE(psessionEntry));
-		       )
+		return;
+	}
+
+	if (psessionEntry->gLimSpecMgmt.dot11hChanSwState !=
+	   eLIM_11H_CHANSW_RUNNING) {
+		lim_log(pMac, LOGW,
+			FL("Channel switch timer should not have been running in state %d"),
+			psessionEntry->gLimSpecMgmt.dot11hChanSwState);
 		return;
 	}
 
@@ -2057,15 +2054,22 @@ void lim_process_channel_switch_timeout(tpAniSirGlobal pMac)
 			return;
 		}
 
-		/* If the channel-list that AP is asking us to switch is invalid,
+		/*
+		 * If the channel-list that AP is asking us to switch is invalid
 		 * then we cannot switch the channel. Just disassociate from AP.
 		 * We will find a better AP !!!
 		 */
-		lim_tear_down_link_with_ap(pMac,
+		if ((psessionEntry->limMlmState ==
+		   eLIM_MLM_LINK_ESTABLISHED_STATE) &&
+		   (psessionEntry->limSmeState != eLIM_SME_WT_DISASSOC_STATE) &&
+		   (psessionEntry->limSmeState != eLIM_SME_WT_DEAUTH_STATE)) {
+			lim_log(pMac, LOGE, FL("Invalid channel! Disconnect"));
+			lim_tear_down_link_with_ap(pMac,
 					   pMac->lim.limTimers.
 					   gLimChannelSwitchTimer.sessionId,
 					   eSIR_MAC_UNSPEC_FAILURE_REASON);
-		return;
+			return;
+		}
 	}
 	lim_covert_channel_scan_type(pMac, psessionEntry->currentOperChannel,
 				     false);
@@ -2674,7 +2678,8 @@ void lim_switch_channel_cback(tpAniSirGlobal pMac, QDF_STATUS status,
 	mmhMsg.bodyptr = pSirSmeSwitchChInd;
 	mmhMsg.bodyval = 0;
 
-	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, mmhMsg.type));
+	MTRACE(mac_trace(pMac, TRACE_CODE_TX_SME_MSG,
+			 psessionEntry->peSessionId, mmhMsg.type));
 
 	sys_process_mmh_msg(pMac, &mmhMsg);
 }
@@ -6455,6 +6460,135 @@ void lim_set_stads_rtt_cap(tpDphHashNode sta_ds, struct s_ext_cap *ext_cap,
 }
 
 /**
+ * lim_send_ie() - sends IE to wma
+ * @mac_ctx: global MAC context
+ * @sme_session_id: sme session id
+ * @eid: IE id
+ * @band: band for which IE is intended
+ * @buf: buffer containing IE
+ * @len: length of buffer
+ *
+ * This funciton sends the IE data to WMA.
+ *
+ * Return: status of operation
+ */
+QDF_STATUS lim_send_ie(tpAniSirGlobal mac_ctx, uint32_t sme_session_id,
+			uint8_t eid, enum cds_band_type band, uint8_t *buf,
+			uint32_t len)
+{
+	struct vdev_ie_info *ie_msg;
+	cds_msg_t msg = {0};
+	QDF_STATUS status;
+
+	/* Allocate memory for the WMI request */
+	ie_msg = qdf_mem_malloc(sizeof(*ie_msg) + len);
+	if (!ie_msg) {
+		lim_log(mac_ctx, LOGE, FL("Failed to allocate memory"));
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	ie_msg->vdev_id = sme_session_id;
+	ie_msg->ie_id = eid;
+	ie_msg->length = len;
+	ie_msg->band = band;
+	/* IE data buffer starts at end of the struct */
+	ie_msg->data = (uint8_t *)&ie_msg[1];
+
+	qdf_mem_copy(ie_msg->data, buf, len);
+	msg.type = WMA_SET_IE_INFO;
+	msg.bodyptr = ie_msg;
+	msg.reserved = 0;
+
+	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
+	if (QDF_STATUS_SUCCESS != status) {
+		lim_log(mac_ctx, LOGE,
+		       FL("Not able to post WMA_SET_IE_INFO to WMA"));
+		qdf_mem_free(ie_msg);
+		return status;
+	}
+
+	return status;
+}
+
+/**
+ * lim_get_rx_ldpc() - gets ldpc setting for given channel(band)
+ * @mac_ctx: global mac context
+ * @ch: channel for which ldpc setting is required
+ *
+ * Return: true if enabled and false otherwise
+ */
+static inline bool lim_get_rx_ldpc(tpAniSirGlobal mac_ctx, uint8_t ch)
+{
+	if (mac_ctx->roam.configParam.rxLdpcEnable &&
+		wma_is_rx_ldpc_supported_for_channel(CDS_CHANNEL_NUM(ch)))
+		return true;
+	else
+		return false;
+}
+
+/**
+ * lim_send_ies_per_band() - gets ht and vht capability and send to firmware via
+ * wma
+ * @mac_ctx: global mac context
+ * @session: pe session. This can be NULL. In that case self cap will be sent
+ * @vdev_id: vdev for which IE is targeted
+ *
+ * This funciton gets ht and vht capability and send to firmware via wma
+ *
+ * Return: status of operation
+ */
+QDF_STATUS lim_send_ies_per_band(tpAniSirGlobal mac_ctx,
+				 tpPESession session,
+				 uint8_t vdev_id)
+{
+	uint8_t ht_caps[DOT11F_IE_HTCAPS_MIN_LEN + 2] = {0};
+	uint8_t vht_caps[DOT11F_IE_VHTCAPS_MAX_LEN + 2] = {0};
+	tHtCaps *p_ht_cap = (tHtCaps *)ht_caps;
+	tSirMacVHTCapabilityInfo *p_vht_cap =
+			(tSirMacVHTCapabilityInfo *)vht_caps;
+
+	/*
+	 * Note: Do not use Dot11f VHT structure, since 1 byte present flag in
+	 * it is causing weird padding errors. Instead use Sir Mac VHT struct
+	 * to send IE to wma.
+	 */
+	ht_caps[0] = DOT11F_EID_HTCAPS;
+	ht_caps[1] = DOT11F_IE_HTCAPS_MIN_LEN;
+	lim_set_ht_caps(mac_ctx, session, ht_caps,
+			DOT11F_IE_HTCAPS_MIN_LEN + 2);
+	/* Get LDPC and over write for 2G */
+	p_ht_cap->advCodingCap = lim_get_rx_ldpc(mac_ctx, CHAN_ENUM_6);
+	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_HTCAPS,
+		CDS_BAND_2GHZ, &ht_caps[2], DOT11F_IE_HTCAPS_MIN_LEN);
+	/*
+	 * Get LDPC and over write for 5G - using channel 64 because it
+	 * is available in all reg domains.
+	 */
+	p_ht_cap->advCodingCap = lim_get_rx_ldpc(mac_ctx, CHAN_ENUM_64);
+	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_HTCAPS,
+		CDS_BAND_5GHZ, &ht_caps[2], DOT11F_IE_HTCAPS_MIN_LEN);
+
+	vht_caps[0] = DOT11F_EID_VHTCAPS;
+	vht_caps[1] = DOT11F_IE_VHTCAPS_MAX_LEN;
+	/* Get LDPC and over write for 2G */
+	lim_set_vht_caps(mac_ctx, session, vht_caps,
+			 DOT11F_IE_VHTCAPS_MIN_LEN + 2);
+	p_vht_cap->ldpcCodingCap = lim_get_rx_ldpc(mac_ctx, CHAN_ENUM_6);
+	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_VHTCAPS,
+			CDS_BAND_2GHZ, &vht_caps[2], DOT11F_IE_VHTCAPS_MIN_LEN);
+
+	/*
+	 * Get LDPC and over write for 5G - using channel 64 because it
+	 * is available in all reg domains.
+	 */
+	p_vht_cap->ldpcCodingCap = lim_get_rx_ldpc(mac_ctx, CHAN_ENUM_64);
+	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_VHTCAPS,
+			CDS_BAND_5GHZ, &vht_caps[2], DOT11F_IE_VHTCAPS_MIN_LEN);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * lim_send_ext_cap_ie() - send ext cap IE to FW
  * @mac_ctx: global MAC context
  * @session_entry: PE session
@@ -6509,6 +6643,7 @@ QDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx,
 	vdev_ie->vdev_id = session_id;
 	vdev_ie->ie_id = DOT11F_EID_EXTCAP;
 	vdev_ie->length = num_bytes;
+	vdev_ie->band = 0;
 
 	lim_log(mac_ctx, LOG1, FL("vdev %d ieid %d len %d"), session_id,
 			DOT11F_EID_EXTCAP, num_bytes);
@@ -6949,4 +7084,95 @@ bool lim_is_robust_mgmt_action_frame(uint8_t action_category)
 		break;
 	}
 	return false;
+}
+
+/**
+ * lim_is_ext_cap_ie_present - checks if ext ie is present
+ * @ext_cap: extended IEs structure
+ *
+ * Return: true if ext IEs are present else false
+ */
+bool lim_is_ext_cap_ie_present (struct s_ext_cap *ext_cap)
+{
+	int i, size;
+	uint8_t *tmp_buf;
+
+	tmp_buf = (uint8_t *) ext_cap;
+	size = sizeof(*ext_cap);
+
+	for (i = 0; i < size; i++)
+		if (tmp_buf[i])
+			return true;
+
+	return false;
+}
+
+/**
+ * lim_update_caps_info_for_bss - Update capability info for this BSS
+ *
+ * @mac_ctx: mac context
+ * @caps: Pointer to capability info to be updated
+ * @bss_caps: Capability info of the BSS
+ *
+ * Update the capability info in Assoc/Reassoc request frames and reset
+ * the spectrum management, short preamble, immediate block ack bits
+ * if the BSS doesnot support it
+ *
+ * Return: None
+ */
+void lim_update_caps_info_for_bss(tpAniSirGlobal mac_ctx,
+		uint16_t *caps, uint16_t bss_caps)
+{
+	if (!(bss_caps & LIM_SPECTRUM_MANAGEMENT_BIT_MASK)) {
+		*caps &= (~LIM_SPECTRUM_MANAGEMENT_BIT_MASK);
+		lim_log(mac_ctx, LOG1, FL("Clearing spectrum management:no AP support"));
+	}
+
+	if (!(bss_caps & LIM_SHORT_PREAMBLE_BIT_MASK)) {
+		*caps &= (~LIM_SHORT_PREAMBLE_BIT_MASK);
+		lim_log(mac_ctx, LOG1, FL("Clearing short preamble:no AP support"));
+	}
+
+	if (!(bss_caps & LIM_IMMEDIATE_BLOCK_ACK_MASK)) {
+		*caps &= (~LIM_IMMEDIATE_BLOCK_ACK_MASK);
+		lim_log(mac_ctx, LOG1, FL("Clearing Immed Blk Ack:no AP support"));
+	}
+}
+/**
+ * lim_send_set_dtim_period(): Send SIR_HAL_SET_DTIM_PERIOD message
+ * to set dtim period.
+ *
+ * @sesssion: LIM session
+ * @dtim_period: dtim value
+ * @mac_ctx: Mac context
+ * @return None
+ */
+void lim_send_set_dtim_period(tpAniSirGlobal mac_ctx, uint8_t dtim_period,
+			      tpPESession session)
+{
+	struct set_dtim_params *dtim_params = NULL;
+	tSirRetStatus ret = eSIR_SUCCESS;
+	tSirMsgQ msg;
+
+	if (session == NULL) {
+		lim_log(mac_ctx, LOGE, FL("Inavalid parameters"));
+		return;
+	}
+	dtim_params = qdf_mem_malloc(sizeof(*dtim_params));
+	if (NULL == dtim_params) {
+		lim_log(mac_ctx, LOGP,
+			FL("Unable to allocate memory"));
+		return;
+	}
+	dtim_params->dtim_period = dtim_period;
+	dtim_params->session_id = session->smeSessionId;
+	msg.type = WMA_SET_DTIM_PERIOD;
+	msg.bodyptr = dtim_params;
+	msg.bodyval = 0;
+	lim_log(mac_ctx, LOG1, FL("Post WMA_SET_DTIM_PERIOD to WMA"));
+	ret = wma_post_ctrl_msg(mac_ctx, &msg);
+	if (eSIR_SUCCESS != ret) {
+		lim_log(mac_ctx, LOGE, FL("wma_post_ctrl_msg() failed"));
+		qdf_mem_free(dtim_params);
+	}
 }

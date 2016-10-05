@@ -1300,7 +1300,7 @@ int dbglog_vap_log_enable(wmi_unified_t wmi_handle, A_UINT16 vap_id,
 	return 0;
 }
 
-int dbglog_set_log_lvl(wmi_unified_t wmi_handle, DBGLOG_LOG_LVL log_lvl)
+int dbglog_set_log_lvl(wmi_unified_t wmi_handle, enum DBGLOG_LOG_LVL log_lvl)
 {
 	A_UINT32 val = 0;
 
@@ -1959,7 +1959,7 @@ int dbglog_parse_debug_logs(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 
 	dropped = *((A_UINT32 *) datap);
 	if (dropped > 0) {
-		AR_DEBUG_PRINTF(ATH_DEBUG_INFO,
+		AR_DEBUG_PRINTF(ATH_DEBUG_TRC,
 				("%d log buffers are dropped \n", dropped));
 	}
 	datap += sizeof(dropped);

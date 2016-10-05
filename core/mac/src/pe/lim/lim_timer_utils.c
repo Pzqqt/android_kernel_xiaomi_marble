@@ -39,6 +39,7 @@
 #include "lim_utils.h"
 #include "lim_assoc_utils.h"
 #include "lim_security_utils.h"
+#include <lim_api.h>
 
 /* channel Switch Timer in ticks */
 #define LIM_CHANNEL_SWITCH_TIMER_TICKS           1
@@ -474,7 +475,7 @@ void lim_timer_handler(void *pMacGlobal, uint32_t param)
 	msg.bodyptr = NULL;
 	msg.bodyval = 0;
 
-	statusCode = lim_post_msg_api(pMac, &msg);
+	statusCode = lim_post_msg_high_priority(pMac, &msg);
 	if (statusCode != eSIR_SUCCESS)
 		lim_log(pMac, LOGE,
 			FL("posting message %X to LIM failed, reason=%d"),
@@ -661,9 +662,6 @@ void lim_deactivate_and_change_timer(tpAniSirGlobal pMac, uint32_t timerId)
 	uint32_t val = 0;
 	tpPESession  session_entry;
 
-	MTRACE(mac_trace
-		       (pMac, TRACE_CODE_TIMER_DEACTIVATE, NO_SESSION, timerId));
-
 	switch (timerId) {
 	case eLIM_REASSOC_FAIL_TIMER:
 	case eLIM_FT_PREAUTH_RSP_TIMER:
@@ -694,14 +692,22 @@ void lim_deactivate_and_change_timer(tpAniSirGlobal pMac, uint32_t timerId)
 		val =
 			SYS_MS_TO_TICKS(pMac->lim.gpLimMlmScanReq->minChannelTime) /
 			2;
-		if (tx_timer_change
-			    (&pMac->lim.limTimers.gLimPeriodicProbeReqTimer, val,
-			    0) != TX_SUCCESS) {
-			/* Could not change min channel timer. */
-			/* Log error */
-			lim_log(pMac, LOGP,
+		if (val) {
+			if (tx_timer_change(
+			    &pMac->lim.limTimers.gLimPeriodicProbeReqTimer,
+			    val, 0) != TX_SUCCESS) {
+				/* Could not change min channel timer. */
+				/* Log error */
+				lim_log(pMac, LOGP,
 				FL("Unable to change periodic timer"));
-		}
+			}
+		} else
+			lim_log(pMac, LOGE,
+			       FL("Do not change gLimPeriodicProbeReqTimer values,"
+			       "value = %d minchannel time = %d"
+			       "maxchannel time = %d"), val,
+			       pMac->lim.gpLimMlmScanReq->minChannelTime,
+			       pMac->lim.gpLimMlmScanReq->maxChannelTime);
 
 		break;
 
@@ -1063,8 +1069,6 @@ lim_deactivate_and_change_per_sta_id_timer(tpAniSirGlobal pMac, uint32_t timerId
 					   uint16_t staId)
 {
 	uint32_t val;
-	MTRACE(mac_trace
-		       (pMac, TRACE_CODE_TIMER_DEACTIVATE, NO_SESSION, timerId));
 
 	switch (timerId) {
 	case eLIM_CNF_WAIT_TIMER:
@@ -1181,9 +1185,6 @@ lim_deactivate_and_change_per_sta_id_timer(tpAniSirGlobal pMac, uint32_t timerId
 void lim_activate_cnf_timer(tpAniSirGlobal pMac, uint16_t staId,
 			    tpPESession psessionEntry)
 {
-	MTRACE(mac_trace
-		       (pMac, TRACE_CODE_TIMER_ACTIVATE, psessionEntry->peSessionId,
-		       eLIM_CNF_WAIT_TIMER));
 	pMac->lim.limTimers.gpLimCnfWaitTimer[staId].sessionId =
 		psessionEntry->peSessionId;
 	if (tx_timer_activate(&pMac->lim.limTimers.gpLimCnfWaitTimer[staId])
@@ -1214,9 +1215,6 @@ void lim_activate_cnf_timer(tpAniSirGlobal pMac, uint16_t staId,
 
 void lim_activate_auth_rsp_timer(tpAniSirGlobal pMac, tLimPreAuthNode *pAuthNode)
 {
-	MTRACE(mac_trace
-		       (pMac, TRACE_CODE_TIMER_ACTIVATE, NO_SESSION,
-		       eLIM_AUTH_RESP_TIMER));
 	if (tx_timer_activate(&pAuthNode->timer) != TX_SUCCESS) {
 		/* / Could not activate auth rsp timer. */
 		/* Log error */

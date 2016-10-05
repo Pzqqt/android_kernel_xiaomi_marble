@@ -38,6 +38,8 @@
 #include "htc_api.h"
 #endif
 #include "lim_global.h"
+#include "cds_concurrency.h"
+#include "cds_utils.h"
 
 typedef void *WMA_HANDLE;
 
@@ -70,6 +72,25 @@ typedef enum {
 	GEN_PARAM_RESET_TSF_GPIO,
 	GEN_VDEV_ROAM_SYNCH_DELAY,
 } GEN_PARAM;
+
+/**
+ * struct wma_caps_per_phy - various caps per phy
+ * @ht_2g: entire HT cap for 2G band in terms of 32 bit flag
+ * @ht_5g: entire HT cap for 5G band in terms of 32 bit flag
+ * @vht_2g: entire VHT cap for 2G band in terms of 32 bit flag
+ * @vht_5g: entire VHT cap for 5G band in terms of 32 bit flag
+ * @he_2g: entire HE cap for 2G band in terms of 32 bit flag
+ * @he_5g: entire HE cap for 5G band in terms of 32 bit flag
+ */
+struct wma_caps_per_phy {
+	uint32_t ht_2g;
+	uint32_t ht_5g;
+	uint32_t vht_2g;
+	uint32_t vht_5g;
+	uint32_t he_2g;
+	uint32_t he_5g;
+};
+
 
 #define VDEV_CMD 1
 #define PDEV_CMD 2
@@ -124,8 +145,11 @@ QDF_STATUS wma_get_wcnss_software_version(void *p_cds_gctx,
 int wma_runtime_suspend(void);
 int wma_runtime_resume(void);
 int wma_bus_suspend(void);
+int wma_is_target_wake_up_received(void);
+int wma_clear_target_wake_up(void);
 QDF_STATUS wma_suspend_target(WMA_HANDLE handle, int disable_target_intr);
 void wma_target_suspend_acknowledge(void *context, bool wow_nack);
+void wma_handle_initial_wake_up(void);
 int wma_bus_resume(void);
 QDF_STATUS wma_resume_target(WMA_HANDLE handle);
 QDF_STATUS wma_disable_wow_in_fw(WMA_HANDLE handle);
@@ -197,6 +221,9 @@ bool wma_get_prev_agile_dfs_config(void);
 bool wma_get_prev_dbs_scan_config(void);
 bool wma_get_prev_dbs_plus_agile_scan_config(void);
 bool wma_get_prev_single_mac_scan_with_dfs_config(void);
+QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
+		enum hw_mode_dbs_capab hw_mode, enum cds_band_type band);
+bool wma_is_rx_ldpc_supported_for_channel(uint32_t channel);
 
 #define LRO_IPV4_SEED_ARR_SZ 5
 #define LRO_IPV6_SEED_ARR_SZ 11
@@ -268,4 +295,12 @@ static inline QDF_STATUS wma_register_ndp_cb(QDF_STATUS (*pe_ndp_event_handler)
 bool wma_is_p2p_lo_capable(void);
 QDF_STATUS wma_p2p_lo_start(struct sir_p2p_lo_start *params);
 QDF_STATUS wma_p2p_lo_stop(u_int32_t vdev_id);
+QDF_STATUS wma_get_wakelock_stats(struct sir_wake_lock_stats *wake_lock_stats);
+void wma_process_pdev_hw_mode_trans_ind(void *wma,
+	wmi_pdev_hw_mode_transition_event_fixed_param *fixed_param,
+	wmi_pdev_set_hw_mode_response_vdev_mac_entry *vdev_mac_entry,
+	struct sir_hw_mode_trans_ind *hw_mode_trans_ind);
+QDF_STATUS wma_set_powersave_config(uint8_t val);
+QDF_STATUS wma_encrypt_decrypt_msg(WMA_HANDLE wma,
+		struct encrypt_decrypt_req_params *encrypt_decrypt_params);
 #endif

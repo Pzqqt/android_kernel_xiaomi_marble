@@ -42,11 +42,17 @@
 #include "if_sdio.h"
 #include "regtable_sdio.h"
 #endif
+#if defined(HIF_USB)
+#include "if_usb.h"
+#include "regtable_usb.h"
+#endif
 #include "pld_common.h"
+#include "hif_main.h"
 
 #include "i_bmi.h"
 #include "qwlan_version.h"
 #include "cds_concurrency.h"
+#include "dbglog_host.h"
 
 #ifdef FEATURE_SECURE_FIRMWARE
 static struct hash_fw fw_hash;
@@ -121,7 +127,7 @@ static int ol_check_fw_hash(struct device *dev,
 		goto end;
 	}
 
-	if (qdf_mem_cmp(hash, digest, SHA256_DIGEST_SIZE) == 0) {
+	if (qdf_mem_cmp(hash, digest, SHA256_DIGEST_SIZE)) {
 		BMI_ERR("Hash Mismatch");
 		qdf_trace_hex_dump(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 				   digest, SHA256_DIGEST_SIZE);
@@ -283,7 +289,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 #endif
 
 	if (file == ATH_BOARD_DATA_FILE) {
-		uint32_t board_ext_address;
+		uint32_t board_ext_address = 0;
 		int32_t board_ext_data_size;
 
 		temp_eeprom = qdf_mem_malloc(fw_entry_size);
@@ -473,17 +479,13 @@ static inline void ol_get_ramdump_mem(struct device *dev,
 int ol_copy_ramdump(struct hif_opaque_softc *scn)
 {
 	int ret = -1;
-	struct hif_opaque_softc **ol_ctx_ptr = &scn;
-	struct ol_context *ol_ctx;
-	qdf_device_t qdf_dev;
 	struct ramdump_info *info;
+	qdf_device_t qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
-	ol_ctx = container_of(ol_ctx_ptr, struct ol_context , scn);
-	if (!ol_ctx) {
-		BMI_ERR("%s: Invalid ol_ctx\n", __func__);
+	if (!qdf_dev) {
+		BMI_ERR("%s qdf_dev is NULL", __func__);
 		return -EINVAL;
 	}
-	qdf_dev = ol_ctx->qdf_dev;
 
 	if (hif_get_bus_type(scn) == QDF_BUS_TYPE_SDIO)
 		return 0;
@@ -591,6 +593,7 @@ void ol_target_failure(void *instance, QDF_STATUS status)
 	struct hif_opaque_softc *scn = ol_ctx->scn;
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	struct ol_config_info *ini_cfg = ol_get_ini_handle(ol_ctx);
+	qdf_device_t qdf_dev = ol_ctx->qdf_dev;
 	int ret;
 	enum hif_target_status target_status = hif_get_target_status(scn);
 
@@ -607,6 +610,12 @@ void ol_target_failure(void *instance, QDF_STATUS status)
 	}
 
 	hif_set_target_status(scn, TARGET_STATUS_RESET);
+
+	if (hif_get_bus_type(scn) == QDF_BUS_TYPE_USB) {
+		if (status == QDF_STATUS_E_USB_ERROR)
+			hif_ramdump_handler(scn);
+		return;
+	}
 
 	if (cds_is_driver_recovering()) {
 		BMI_ERR("%s: Recovery in progress, ignore!\n", __func__);
@@ -632,6 +641,7 @@ void ol_target_failure(void *instance, QDF_STATUS status)
 
 	BMI_ERR("XXX TARGET ASSERTED XXX");
 
+	cds_svc_fw_shutdown_ind(qdf_dev->dev);
 	/* Collect the RAM dump through a workqueue */
 	if (ini_cfg->enable_ramdump_collection)
 		qdf_sched_work(0, &ol_ctx->ramdump_work);
@@ -1252,11 +1262,12 @@ QDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 						__func__, address);
 	}
 
-	ret = ol_patch_pll_switch(ol_ctx);
-
-	if (ret != QDF_STATUS_SUCCESS) {
-		BMI_ERR("pll switch failed. status %d", ret);
-		return ret;
+	if (hif_get_bus_type(scn) != QDF_BUS_TYPE_USB) {
+		ret = ol_patch_pll_switch(ol_ctx);
+		if (ret != QDF_STATUS_SUCCESS) {
+			BMI_ERR("pll switch failed. status %d", ret);
+			return ret;
+		}
 	}
 
 	if (ol_ctx->cal_in_flash) {
@@ -1545,7 +1556,8 @@ void ol_dump_target_memory(struct hif_opaque_softc *scn, void *memory_block)
 	u_int32_t address = 0;
 	u_int32_t size = 0;
 
-	if (hif_get_bus_type(scn) == QDF_BUS_TYPE_SDIO)
+	if (hif_get_bus_type(scn) == QDF_BUS_TYPE_SDIO ||
+	    hif_get_bus_type(scn) == QDF_BUS_TYPE_USB)
 		return;
 
 	for (; section_count < 2; section_count++) {

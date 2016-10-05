@@ -28,31 +28,126 @@
 #if !defined(WLAN_HDD_LPASS_H)
 #define WLAN_HDD_LPASS_H
 
+struct cds_config_info;
+struct wma_tgt_cfg;
+struct hdd_context_s;
+struct hdd_adapter_s;
+
 #ifdef WLAN_FEATURE_LPSS
-void wlan_hdd_send_status_pkg(hdd_adapter_t *adapter,
-			      hdd_station_ctx_t *sta_ctx,
-			      uint8_t is_on, uint8_t is_connected);
-void wlan_hdd_send_version_pkg(uint32_t fw_version,
-			       uint32_t chip_id, const char *chip_name);
-void wlan_hdd_send_all_scan_intf_info(hdd_context_t *hdd_ctx);
+/**
+ * hdd_lpass_target_config() - Handle LPASS target configuration
+ * @hdd_ctx: HDD global context where lpass information is stored
+ * @target_config: Target configuration containing lpass info
+ *
+ * This function updates the HDD context with lpass-specific
+ * information provided by the target.
+ *
+ * Return: none
+ */
+void hdd_lpass_target_config(struct hdd_context_s *hdd_ctx,
+			     struct wma_tgt_cfg *target_config);
+
+/**
+ * hdd_lpass_populate_cds_config() - Populate LPASS configuration
+ * @cds_config: CDS configuration to populate with lpass info
+ * @hdd_ctx: HDD global context which contains lpass information
+ *
+ * This function seeds the CDS configuration structure with
+ * lpass-specific information gleaned from the HDD context.
+ *
+ * Return: none
+ */
+void hdd_lpass_populate_cds_config(struct cds_config_info *cds_config,
+				   struct hdd_context_s *hdd_ctx);
+
+/**
+ * hdd_lpass_notify_connect() - Notify LPASS of interface connect
+ * @adapter: The adapter that connected
+ *
+ * This function is used to notify the LPASS feature that an adapter
+ * has connected.
+ *
+ * Return: none
+ */
+void hdd_lpass_notify_connect(struct hdd_adapter_s *adapter);
+
+/**
+ * hdd_lpass_notify_disconnect() - Notify LPASS of interface disconnect
+ * @adapter: The adapter that connected
+ *
+ * This function is used to notify the LPASS feature that an adapter
+ * has disconnected.
+ *
+ * Return: none
+ */
+void hdd_lpass_notify_disconnect(struct hdd_adapter_s *adapter);
+
+/**
+ * hdd_lpass_notify_mode_change() - Notify LPASS of interface mode change
+ * @adapter: The adapter whose mode was changed
+ *
+ * This function is used to notify the LPASS feature that an adapter
+ * had its mode changed.
+ *
+ * Return: none
+ */
+void hdd_lpass_notify_mode_change(struct hdd_adapter_s *adapter);
+
+/**
+ * hdd_lpass_notify_start() - Notify LPASS of driver start
+ * @hdd_ctx: The global HDD context
+ *
+ * This function is used to notify the LPASS feature that the wlan
+ * driver has (re-)started.
+ *
+ * Return: none
+ */
+void hdd_lpass_notify_start(struct hdd_context_s *hdd_ctx);
+
+/**
+ * hdd_lpass_notify_stop() - Notify LPASS of driver stop
+ * @hdd_ctx: The global HDD context
+ *
+ * This function is used to notify the LPASS feature that the wlan
+ * driver has stopped.
+ *
+ * Return: none
+ */
+void hdd_lpass_notify_stop(struct hdd_context_s *hdd_ctx);
+
+/**
+ * hdd_lpass_is_supported() - Is lpass feature supported?
+ * @hdd_ctx: The global HDD context
+ *
+ * Return: true if feature is enabled and supported by firmware, false
+ * if the feature is not enabled or not supported by firmware.
+ */
+bool hdd_lpass_is_supported(struct hdd_context_s *hdd_ctx);
+
 #else
-static inline void wlan_hdd_send_status_pkg(hdd_adapter_t *adapter,
-					    hdd_station_ctx_t *sta_ctx,
-					    uint8_t is_on, uint8_t is_connected)
+static inline void hdd_lpass_target_config(struct hdd_context_s *hdd_ctx,
+					   struct wma_tgt_cfg *target_config)
 {
-	return;
 }
-
-static inline void wlan_hdd_send_version_pkg(uint32_t fw_version,
-					     uint32_t chip_id,
-					     const char *chip_name)
+static inline
+void hdd_lpass_populate_cds_config(struct cds_config_info *cds_config,
+				   struct hdd_context_s *hdd_ctx)
 {
-	return;
 }
-
-static inline void wlan_hdd_send_all_scan_intf_info(hdd_context_t *hdd_ctx)
+static inline void hdd_lpass_notify_connect(struct hdd_adapter_s *adapter)
 {
-	return;
+}
+static inline void hdd_lpass_notify_disconnect(struct hdd_adapter_s *adapter)
+{
+}
+static inline void hdd_lpass_notify_mode_change(struct hdd_adapter_s *adapter)
+{
+}
+static inline void hdd_lpass_notify_start(struct hdd_context_s *hdd_ctx) { }
+static inline void hdd_lpass_notify_stop(struct hdd_context_s *hdd_ctx) { }
+static inline bool hdd_lpass_is_supported(struct hdd_context_s *hdd_ctx)
+{
+	return false;
 }
 #endif
 

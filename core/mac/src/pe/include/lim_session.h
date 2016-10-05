@@ -261,6 +261,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	uint8_t ssidHidden;
 	bool fwdWPSPBCProbeReq;
 	uint8_t wps_state;
+	bool wps_registration;
 
 	uint8_t limQosEnabled:1;        /* 11E */
 	uint8_t limWmeEnabled:1;        /* WME */
@@ -314,12 +315,8 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	uint8_t ch_center_freq_seg0;
 	enum phy_ch_width ch_width;
 	uint8_t ch_center_freq_seg1;
-	uint8_t txBFIniFeatureEnabled;
-	uint8_t txbf_csn_value;
-	uint8_t txMuBformee;
 	uint8_t enableVhtpAid;
 	uint8_t enableVhtGid;
-	uint8_t enable_su_tx_bformer;
 	tLimWiderBWChannelSwitchInfo gLimWiderBWChannelSwitch;
 	uint8_t enableAmpduPs;
 	uint8_t enableHtSmps;
@@ -361,7 +358,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	uint8_t isCoalesingInIBSSAllowed;
 
 	tSirHTConfig htConfig;
-
+	struct sir_vht_config vht_config;
 	/*
 	 * Place holder for StartBssReq message
 	 * received by SME state machine
@@ -479,6 +476,9 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	/* Supported NSS is intersection of self and peer NSS */
 	bool supported_nss_1x1;
 	bool is_ext_caps_present;
+	uint8_t beacon_tx_rate;
+	uint8_t *access_policy_vendor_ie;
+	uint8_t access_policy;
 } tPESession, *tpPESession;
 
 /*-------------------------------------------------------------------------

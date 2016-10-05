@@ -73,7 +73,7 @@ int nl_srv_init(void *wiphy)
 
 	wiphy_ptr = wiphy;
 	radio_idx = cnss_logger_device_register(wiphy, THIS_MODULE->name);
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR
+	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 		  "%s: radio_index: %d, wiphy_ptr: %p",
 		  __func__, radio_idx, wiphy_ptr);
 
@@ -352,7 +352,7 @@ int nl_srv_ucast(struct sk_buff *skb, int dst_pid, int flag)
 
 	if (err < 0)
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_WARN,
-			  "NLINK: netlink_unicast to pid[%d] failed, ret[0x%X]",
+			  "NLINK: netlink_unicast to pid[%d] failed, ret[%d]",
 			  dst_pid, err);
 
 	return err;

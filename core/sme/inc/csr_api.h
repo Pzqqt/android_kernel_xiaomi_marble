@@ -61,10 +61,8 @@ typedef enum {
 	eCSR_AUTH_TYPE_WAPI_WAI_CERTIFICATE,
 	eCSR_AUTH_TYPE_WAPI_WAI_PSK,
 #endif /* FEATURE_WLAN_WAPI */
-#ifdef FEATURE_WLAN_ESE
 	eCSR_AUTH_TYPE_CCKM_WPA,
 	eCSR_AUTH_TYPE_CCKM_RSN,
-#endif /* FEATURE_WLAN_ESE */
 #ifdef WLAN_FEATURE_11W
 	eCSR_AUTH_TYPE_RSN_PSK_SHA256,
 	eCSR_AUTH_TYPE_RSN_8021X_SHA256,
@@ -465,7 +463,6 @@ typedef enum {
 	eCSR_ROAM_FT_RESPONSE,
 	eCSR_ROAM_FT_START,
 	eCSR_ROAM_REMAIN_CHAN_READY,
-	eCSR_ROAM_SEND_ACTION_CNF,
 	/* this mean error happens before assoc_start/roam_start is called. */
 	eCSR_ROAM_SESSION_OPENED,
 	eCSR_ROAM_FT_REASSOC_FAILED,
@@ -508,10 +505,11 @@ typedef enum {
 	/* Channel sw update notification */
 	eCSR_ROAM_DFS_CHAN_SW_NOTIFY,
 	eCSR_ROAM_EXT_CHG_CHNL_IND,
-	eCSR_ROAM_DISABLE_QUEUES,
-	eCSR_ROAM_ENABLE_QUEUES,
 	eCSR_ROAM_STA_CHANNEL_SWITCH,
 	eCSR_ROAM_NDP_STATUS_UPDATE,
+	eCSR_ROAM_UPDATE_SCAN_RESULT,
+	eCSR_ROAM_START,
+	eCSR_ROAM_ABORT,
 } eRoamCmdStatus;
 
 /* comment inside indicates what roaming callback gets */
@@ -621,6 +619,8 @@ typedef enum {
 	eCSR_ROAM_RESULT_NDP_END_RSP,
 	eCSR_ROAM_RESULT_NDP_PEER_DEPARTED_IND,
 	eCSR_ROAM_RESULT_NDP_END_IND,
+	/* If Scan for SSID failed to found proper BSS */
+	eCSR_ROAM_RESULT_SCAN_FOR_SSID_FAILURE,
 } eCsrRoamResult;
 
 /*----------------------------------------------------------------------------
@@ -964,6 +964,10 @@ typedef struct tagCsrRoamProfile {
 	/* addIe params */
 	tSirAddIeParams addIeParams;
 	uint8_t sap_dot11mc;
+	uint8_t beacon_tx_rate;
+	tSirMacRateSet supp_rate_set;
+	tSirMacRateSet extended_rate_set;
+	bool do_not_roam;
 } tCsrRoamProfile;
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
@@ -1056,6 +1060,30 @@ typedef struct tagCsrNeighborRoamConfigParams {
 	int32_t nhi_rssi_scan_rssi_ub;
 } tCsrNeighborRoamConfigParams;
 
+/**
+ * enum sta_roam_policy_dfs_mode - state of DFS mode for STA ROME policy
+ * @CSR_STA_ROAM_POLICY_NONE: DFS mode attribute is not valid
+ * @CSR_STA_ROAM_POLICY_DFS_ENABLED:  DFS mode is enabled
+ * @CSR_STA_ROAM_POLICY_DFS_DISABLED: DFS mode is disabled
+ * @CSR_STA_ROAM_POLICY_DFS_DEPRIORITIZE: Deprioritize DFS channels in scanning
+ */
+enum sta_roam_policy_dfs_mode {
+	CSR_STA_ROAM_POLICY_NONE,
+	CSR_STA_ROAM_POLICY_DFS_ENABLED,
+	CSR_STA_ROAM_POLICY_DFS_DISABLED,
+	CSR_STA_ROAM_POLICY_DFS_DEPRIORITIZE
+};
+
+/**
+ * struct csr_sta_roam_policy_params - sta roam policy params for station
+ * @dfs_mode: tell is DFS channels needs to be skipped while scanning
+ * @skip_unsafe_channels: tells if unsafe channels needs to be skip in scanning
+ */
+struct csr_sta_roam_policy_params {
+	enum sta_roam_policy_dfs_mode dfs_mode;
+	bool skip_unsafe_channels;
+};
+
 typedef struct tagCsrConfigParam {
 	uint32_t FragmentationThreshold;
 	/* keep this uint32_t. This gets converted to ePhyChannelBondState */
@@ -1091,8 +1119,6 @@ typedef struct tagCsrConfigParam {
 	uint32_t scanAgeTimeCNPS;
 	/* scan res aging time threshold when Connect-Power-Save, in sec */
 	uint32_t scanAgeTimeCPS;
-	/* In sec, CSR'll try this long before gives up. 0 means no roaming */
-	uint32_t nRoamingTime;
 	/* to set the RSSI difference for each category */
 	uint8_t bCatRssiOffset;
 	/* to set MCC Enable/Disable mode */
@@ -1140,6 +1166,7 @@ typedef struct tagCsrConfigParam {
 	 * default setting.
 	 */
 	uint8_t nTxPowerCap;
+	bool allow_tpc_from_ap;
 	/* stats request frequency from PE while in full power */
 	uint32_t statsReqPeriodicity;
 	/* stats request frequency from PE while in power save */
@@ -1186,7 +1213,6 @@ typedef struct tagCsrConfigParam {
 	uint32_t nVhtChannelWidth;
 	uint8_t enableTxBF;
 	uint8_t enable_txbf_sap_mode;
-	uint8_t txBFCsnValue;
 	uint8_t enable2x2;
 	bool enableVhtFor24GHz;
 	uint8_t enableMuBformee;
@@ -1210,6 +1236,7 @@ typedef struct tagCsrConfigParam {
 	bool bFastRoamInConIniFeatureEnabled;
 	uint8_t scanCfgAgingTime;
 	uint8_t enableTxLdpc;
+	uint8_t enableRxLDPC;
 	uint8_t isAmsduSupportInAMPDU;
 	uint8_t nSelect5GHzMargin;
 	uint8_t isCoalesingInIBSSAllowed;
@@ -1276,6 +1303,7 @@ typedef struct tagCsrConfigParam {
 	bool enable_fatal_event;
 	enum wmi_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
 	enum wmi_dwelltime_adaptive_mode roamscan_adaptive_dwell_mode;
+	struct csr_sta_roam_policy_params sta_roam_policy_params;
 } tCsrConfigParam;
 
 /* Tush */
@@ -1393,6 +1421,12 @@ typedef struct tagCsrRoamInfo {
 		struct ndi_delete_rsp ndi_delete_params;
 	} ndp;
 #endif
+	tDot11fIEHTCaps ht_caps;
+	tDot11fIEVHTCaps vht_caps;
+	tDot11fIEhs20vendor_ie hs20vendor_ie;
+	tDot11fIEVHTOperation vht_operation;
+	tDot11fIEHTInfo ht_operation;
+	bool reassoc;
 } tCsrRoamInfo;
 
 typedef struct tagCsrFreqScanInfo {
@@ -1515,6 +1549,16 @@ typedef struct tagCsrPerStaStatsInfo {
 	uint32_t tx_mpdu_in_ampdu_cnt;
 } tCsrPerStaStatsInfo;
 
+/**
+ * struct csr_per_chain_rssi_stats_info - stores chain rssi
+ * @rssi: array containing rssi for all chains
+ * @peer_mac_addr: peer mac address
+ */
+struct csr_per_chain_rssi_stats_info {
+	int8_t rssi[NUM_CHAINS_MAX];
+	tSirMacAddr peer_mac_addr;
+};
+
 typedef struct tagCsrRoamSetKey {
 	eCsrEncryptionType encType;
 	tAniKeyDirection keyDirection;  /* Tx, Rx or Tx-and-Rx */
@@ -1545,6 +1589,7 @@ typedef struct tagCsrLinkEstablishParams {
 	uint8_t supportedChannels[SIR_MAC_MAX_SUPP_CHANNELS];
 	uint8_t supportedOperClassesLen;
 	uint8_t supportedOperClasses[CDS_MAX_SUPP_OPER_CLASSES];
+	uint8_t qos;
 } tCsrTdlsLinkEstablishParams;
 
 typedef struct tagCsrTdlsSendMgmt {
@@ -1564,7 +1609,8 @@ typedef void *tScanResultHandle;
 
 typedef enum {
 	REASSOC = 0,
-	FASTREASSOC = 1
+	FASTREASSOC = 1,
+	CONNECT_CMD_USERSPACE = 2,
 } handoff_src;
 
 typedef struct tagCsrHandoffRequest {
@@ -1591,6 +1637,19 @@ struct tagCsrDelStaParams {
 	struct qdf_mac_addr peerMacAddr;
 	uint16_t reason_code;
 	uint8_t subtype;
+};
+
+/**
+ * struct wep_update_default_key_idx: wep default key index structure
+ * @session_id: session ID for the connection session
+ * @default_idx: default key index for wep
+ *
+ * structure includes sesssion id for connection and default key
+ * index used for wep
+ */
+struct wep_update_default_key_idx {
+	uint8_t session_id;
+	uint8_t default_idx;
 };
 
 /*

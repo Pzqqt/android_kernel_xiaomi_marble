@@ -228,15 +228,10 @@
 #define WMA_BTC_SET_CFG                SIR_HAL_BTC_SET_CFG
 #define WMA_HANDLE_FW_MBOX_RSP         SIR_HAL_HANDLE_FW_MBOX_RSP
 
-#ifdef FEATURE_OEM_DATA_SUPPORT
-/* PE <-> HAL OEM_DATA RELATED MESSAGES */
-#define WMA_START_OEM_DATA_REQ         SIR_HAL_START_OEM_DATA_REQ
-#define WMA_START_OEM_DATA_RSP         SIR_HAL_START_OEM_DATA_RSP
-#endif
-
 #define WMA_SET_MAX_TX_POWER_REQ       SIR_HAL_SET_MAX_TX_POWER_REQ
 #define WMA_SET_MAX_TX_POWER_RSP       SIR_HAL_SET_MAX_TX_POWER_RSP
 #define WMA_SET_TX_POWER_REQ           SIR_HAL_SET_TX_POWER_REQ
+#define WMA_SET_DTIM_PERIOD            SIR_HAL_SET_DTIM_PERIOD
 
 #define WMA_SET_MAX_TX_POWER_PER_BAND_REQ \
 	SIR_HAL_SET_MAX_TX_POWER_PER_BAND_REQ
@@ -477,6 +472,10 @@
 #define WDA_BPF_SET_INSTRUCTIONS_REQ         SIR_HAL_BPF_SET_INSTRUCTIONS_REQ
 
 #define WMA_SET_PDEV_IE_REQ                  SIR_HAL_SET_PDEV_IE_REQ
+#define WMA_UPDATE_WEP_DEFAULT_KEY           SIR_HAL_UPDATE_WEP_DEFAULT_KEY
+#define WMA_SEND_FREQ_RANGE_CONTROL_IND      SIR_HAL_SEND_FREQ_RANGE_CONTROL_IND
+#define WMA_ENCRYPT_DECRYPT_MSG              SIR_HAL_ENCRYPT_DECRYPT_MSG
+
 /* Bit 6 will be used to control BD rate for Management frames */
 #define HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME 0x40
 
@@ -701,7 +700,7 @@ QDF_STATUS wma_tx_packet(void *pWMA,
 QDF_STATUS wma_open(void *p_cds_context,
 		    wma_tgt_cfg_cb pTgtUpdCB,
 		    wma_dfs_radar_indication_cb radar_ind_cb,
-		    tMacOpenParameters *pMacParams);
+		    struct cds_config_info *cds_cfg);
 
 typedef QDF_STATUS (*wma_mgmt_frame_rx_callback)(void *p_cds_gctx,
 					     void *cds_buff);

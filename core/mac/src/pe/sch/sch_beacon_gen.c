@@ -228,7 +228,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 
 	/* Skip over the timestamp (it'll be updated later). */
 	bcn_1->BeaconInterval.interval =
-		mac_ctx->sch.schObject.gSchBeaconInterval;
+		session->beaconParams.beaconInterval;
 	populate_dot11f_capabilities(mac_ctx, &bcn_1->Capabilities, session);
 	if (session->ssidHidden) {
 		bcn_1->SSID.present = 1;
@@ -395,8 +395,9 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 			populate_dot11f_operating_mode(mac_ctx,
 						&bcn_2->OperatingMode, session);
 	}
-	populate_dot11f_ext_cap(mac_ctx, is_vht_enabled, &bcn_2->ExtCap,
-				session);
+	if (session->limSystemRole != eLIM_STA_IN_IBSS_ROLE)
+		populate_dot11f_ext_cap(mac_ctx, is_vht_enabled, &bcn_2->ExtCap,
+					session);
 	populate_dot11f_ext_supp_rates(mac_ctx,
 				POPULATE_DOT11F_RATES_OPERATIONAL,
 				&bcn_2->ExtSuppRates, session);
@@ -498,7 +499,8 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 			sch_log(mac_ctx, LOG1, FL("extcap not extracted"));
 		}
 		/* merge extcap IE */
-		if (extcap_present)
+		if (extcap_present &&
+			session->limSystemRole != eLIM_STA_IN_IBSS_ROLE)
 			lim_merge_extcap_struct(&bcn_2->ExtCap,
 						&extracted_extcap);
 

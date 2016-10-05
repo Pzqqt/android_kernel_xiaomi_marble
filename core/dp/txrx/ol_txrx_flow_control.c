@@ -157,6 +157,11 @@ void ol_tx_dump_flow_pool_info(void)
 
 
 	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Global Pool");
+	if (!pdev) {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "ERROR: pdev NULL");
+		QDF_ASSERT(0); /* traceback */
+		return;
+	}
 	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Total %d :: Available %d",
 		pdev->tx_desc.pool_size, pdev->tx_desc.num_free);
 	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Invalid flow_pool %d",
@@ -413,6 +418,13 @@ int ol_tx_delete_flow_pool(struct ol_tx_flow_pool_t *pool, bool force)
 	if (!pool) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 		   "%s: pool is NULL\n", __func__);
+		QDF_ASSERT(0);
+		return -ENOMEM;
+	}
+	if (!pdev) {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+		   "%s: pdev is NULL\n", __func__);
+		QDF_ASSERT(0);
 		return -ENOMEM;
 	}
 
@@ -512,6 +524,12 @@ struct ol_tx_flow_pool_t *ol_tx_get_flow_pool(uint8_t flow_pool_id)
 	struct ol_tx_flow_pool_t *pool = NULL;
 	bool is_found = false;
 
+	if (!pdev) {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "ERROR: pdev NULL");
+		QDF_ASSERT(0); /* traceback */
+		return NULL;
+	}
+
 	qdf_spin_lock_bh(&pdev->tx_desc.flow_pool_list_lock);
 	TAILQ_FOREACH(pool, &pdev->tx_desc.flow_pool_list,
 					 flow_pool_list_elem) {
@@ -529,7 +547,6 @@ struct ol_tx_flow_pool_t *ol_tx_get_flow_pool(uint8_t flow_pool_id)
 		pool = NULL;
 
 	return pool;
-
 }
 
 

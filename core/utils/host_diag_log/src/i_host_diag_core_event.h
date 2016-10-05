@@ -81,6 +81,16 @@ void host_diag_event_report_payload(uint16_t event_Id, uint16_t length,
 
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
+/**
+ * enum auth_timeout_type - authentication timeout type
+ * @AUTH_FAILURE_TIMEOUT: auth failure timeout
+ * @AUTH_RESPONSE_TIMEOUT: auth response timeout
+ */
+enum auth_timeout_type {
+	AUTH_FAILURE_TIMEOUT,
+	AUTH_RESPONSE_TIMEOUT,
+};
+
 /*-------------------------------------------------------------------------
    Function declarations and documenation
    ------------------------------------------------------------------------*/
@@ -96,6 +106,23 @@ static inline void host_diag_log_wlock(uint32_t reason,
 }
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+void host_log_low_resource_failure(uint8_t event_sub_type);
+#else
+static inline void host_log_low_resource_failure(uint8_t event_sub_type)
+{
+
+}
+#endif /* FEATURE_WLAN_DIAG_SUPPORT */
+
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+void qdf_wow_wakeup_host_event(uint8_t wow_wakeup_cause);
+#else
+static inline void qdf_wow_wakeup_host_event(uint8_t wow_wakeup_cause)
+{
+	return;
+}
+#endif /* FEATURE_WLAN_DIAG_SUPPORT */
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

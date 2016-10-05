@@ -28,6 +28,7 @@
 #include "sme_power_save.h"
 #include "sme_power_save_api.h"
 #include "sms_debug.h"
+#include "sme_trace.h"
 #include "qdf_mem.h"
 #include "qdf_types.h"
 #include "wma_types.h"
@@ -884,6 +885,8 @@ QDF_STATUS sme_set_ps_host_offload(tHalHandle hal_ctx,
 	msg.type = WMA_SET_HOST_OFFLOAD;
 	msg.reserved = 0;
 	msg.bodyptr = request_buf;
+	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+			 session_id, msg.type));
 	if (QDF_STATUS_SUCCESS !=
 			cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -932,6 +935,8 @@ QDF_STATUS sme_set_ps_ns_offload(tHalHandle hal_ctx,
 	msg.type = WMA_SET_NS_OFFLOAD;
 	msg.reserved = 0;
 	msg.bodyptr = request_buf;
+	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+			 session_id, msg.type));
 	if (QDF_STATUS_SUCCESS !=
 			cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -975,26 +980,27 @@ tSirRetStatus sme_post_pe_message(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	return eSIR_SUCCESS;
 }
 
+/**
+ * sme_ps_enable_auto_ps_timer(): Enable power-save auto timer with timeout
+ * @hal_ctx:	HAL context
+ * @session_id:	adapter session Id
+ * @timeout:	timeout period in ms
+ *
+ * Returns:	0 on success, non-zero on failure
+ */
 QDF_STATUS sme_ps_enable_auto_ps_timer(tHalHandle hal_ctx,
-		uint32_t session_id,
-		bool is_reassoc)
+	uint32_t session_id, uint32_t timeout)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
 	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
 	struct ps_params *ps_param = &ps_global_info->ps_params[session_id];
 	QDF_STATUS qdf_status;
-	uint32_t timer_value;
 
-	if (is_reassoc)
-		timer_value = AUTO_PS_ENTRY_TIMER_DEFAULT_VALUE;
-	else
-		timer_value = AUTO_DEFERRED_PS_ENTRY_TIMER_DEFAULT_VALUE;
-
-	sms_log(mac_ctx, LOGE, FL("Start auto_ps_timer for %d is_reassoc:%d "),
-			timer_value, is_reassoc);
+	sms_log(mac_ctx, LOGE, FL("Start auto_ps_timer for %d ms"),
+		timeout);
 
 	qdf_status = qdf_mc_timer_start(&ps_param->auto_ps_enable_timer,
-			timer_value);
+		timeout);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		if (QDF_STATUS_E_ALREADY == qdf_status) {
 			/* Consider this ok since the timer is already started*/
@@ -1130,7 +1136,7 @@ QDF_STATUS sme_ps_close_per_session(tHalHandle hal_ctx, uint32_t session_id)
 	return qdf_status;
 }
 
-QDF_STATUS sme_is_auto_ps_timer_running(tHalHandle hal_ctx,
+bool sme_is_auto_ps_timer_running(tHalHandle hal_ctx,
 		uint32_t session_id)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);

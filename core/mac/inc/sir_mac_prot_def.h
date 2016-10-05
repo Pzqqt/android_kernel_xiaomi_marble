@@ -243,6 +243,12 @@
 #define SIR_MAC_WNM_NOTIF_REQUEST        26
 #define SIR_MAC_WNM_NOTIF_RESPONSE       27
 
+/* Protected Dual of Public Action(PDPA) frames Action field */
+#define SIR_MAC_PDPA_GAS_INIT_REQ      10
+#define SIR_MAC_PDPA_GAS_INIT_RSP      11
+#define SIR_MAC_PDPA_GAS_COMEBACK_REQ  12
+#define SIR_MAC_PDPA_GAS_COMEBACK_RSP  13
+
 #define SIR_MAC_MAX_RANDOM_LENGTH   2306
 
 /* ----------------------------------------------------------------------------- */
@@ -449,6 +455,10 @@
 #define SIR_MAC_CISCO_OUI "\x00\x40\x96"
 #define SIR_MAC_CISCO_OUI_SIZE 3
 
+/* WFA vendor specific TPC OUI */
+#define SIR_MAC_WFA_TPC_OUI             "\x00\x50\xF2\x08\x00"
+#define SIR_MAC_WFA_TPC_OUI_SIZE        5
+
 /* min size of wme oui header: oui(3) + type + subtype + version */
 #define SIR_MAC_OUI_WME_HDR_MIN       6
 
@@ -497,6 +507,8 @@
 #define SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA   16
 #define SIR_MAC_IPV6_ADDR_LEN               16
 #define SIR_IPV6_ADDR_VALID                 1
+#define SIR_IPV6_ADDR_UC_TYPE               0
+#define SIR_IPV6_ADDR_AC_TYPE               1
 #endif /* WLAN_NS_OFFLOAD */
 
 /* ----------------------------------------------------------------------------- */

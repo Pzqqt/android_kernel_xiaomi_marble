@@ -46,7 +46,7 @@
  * Returns:
  * void
  *****************************************************************************/
-void sme_nan_register_callback(tHalHandle hHal, NanCallback callback)
+void sme_nan_register_callback(tHalHandle hHal, nan_callback callback)
 {
 	tpAniSirGlobal pMac = NULL;
 
@@ -58,6 +58,28 @@ void sme_nan_register_callback(tHalHandle hHal, NanCallback callback)
 	pMac = PMAC_STRUCT(hHal);
 	pMac->sme.nanCallback = callback;
 }
+
+/**
+ * sme_nan_deregister_callback() - NAN De-register cb function
+ * @h_hal: Hal handle
+ *
+ * De-register nan rsp callback with sme layer.
+ *
+ * Return: void
+ */
+void sme_nan_deregister_callback(tHalHandle h_hal)
+{
+	tpAniSirGlobal pmac;
+
+	if (!h_hal) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  FL("hHal is not valid"));
+		return;
+	}
+	pmac = PMAC_STRUCT(h_hal);
+	pmac->sme.nanCallback = NULL;
+}
+
 
 /******************************************************************************
  * Function: sme_nan_request

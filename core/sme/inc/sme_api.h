@@ -48,10 +48,6 @@
 #include "sme_internal.h"
 #include "wma_tgt_cfg.h"
 
-#ifdef FEATURE_OEM_DATA_SUPPORT
-#include "oem_data_api.h"
-#endif
-
 #include "sme_rrm_internal.h"
 #include "sir_types.h"
 /*--------------------------------------------------------------------------
@@ -64,6 +60,7 @@
 #define SME_GLOBAL_CLASSC_STATS   8
 #define SME_GLOBAL_CLASSD_STATS  16
 #define SME_PER_STA_STATS        32
+#define SME_PER_CHAIN_RSSI_STATS 64
 
 #define SME_SESSION_ID_ANY        50
 
@@ -285,13 +282,14 @@ QDF_STATUS sme_roam_reassoc(tHalHandle hHal, uint8_t sessionId,
 QDF_STATUS sme_roam_connect_to_last_profile(tHalHandle hHal, uint8_t sessionId);
 QDF_STATUS sme_roam_disconnect(tHalHandle hHal, uint8_t sessionId,
 		eCsrRoamDisconnectReason reason);
+void sme_dhcp_done_ind(tHalHandle hal, uint8_t session_id);
 QDF_STATUS sme_roam_stop_bss(tHalHandle hHal, uint8_t sessionId);
 QDF_STATUS sme_roam_get_associated_stas(tHalHandle hHal, uint8_t sessionId,
 		QDF_MODULE_ID modId, void *pUsrContext,
 		void *pfnSapEventCallback,
 		uint8_t *pAssocStasBuf);
 QDF_STATUS sme_roam_disconnect_sta(tHalHandle hHal, uint8_t sessionId,
-		const uint8_t *pPeerMacAddr);
+		struct tagCsrDelStaParams *p_del_sta_params);
 QDF_STATUS sme_roam_deauth_sta(tHalHandle hHal, uint8_t sessionId,
 		struct tagCsrDelStaParams *pDelStaParams);
 QDF_STATUS sme_roam_tkip_counter_measures(tHalHandle hHal, uint8_t sessionId,
@@ -365,15 +363,23 @@ extern QDF_STATUS sme_set_host_power_save(tHalHandle hHal, bool psMode);
 void sme_set_dhcp_till_power_active_flag(tHalHandle hHal, uint8_t flag);
 extern QDF_STATUS sme_register11d_scan_done_callback(tHalHandle hHal,
 		csr_scan_completeCallback);
+void sme_deregister11d_scan_done_callback(tHalHandle hHal);
+
 #ifdef FEATURE_OEM_DATA_SUPPORT
 extern QDF_STATUS sme_register_oem_data_rsp_callback(tHalHandle h_hal,
 		sme_send_oem_data_rsp_msg callback);
+void sme_deregister_oem_data_rsp_callback(tHalHandle h_hal);
+
 #else
 static inline QDF_STATUS sme_register_oem_data_rsp_callback(tHalHandle h_hal,
 		sme_send_oem_data_rsp_msg callback)
 {
 	return QDF_STATUS_SUCCESS;
 }
+static inline void sme_deregister_oem_data_rsp_callback(tHalHandle h_hal)
+{
+}
+
 #endif
 
 extern QDF_STATUS sme_wow_add_pattern(tHalHandle hHal,
@@ -451,10 +457,7 @@ QDF_STATUS sme_scan_get_bkid_candidate_list(tHalHandle hHal, uint32_t sessionId,
 		uint32_t *pNumItems);
 #endif /* FEATURE_WLAN_WAPI */
 #ifdef FEATURE_OEM_DATA_SUPPORT
-QDF_STATUS sme_oem_data_req(tHalHandle hHal,
-		uint8_t sessionId,
-		tOemDataReqConfig *,
-		uint32_t *pOemDataReqID);
+QDF_STATUS sme_oem_data_req(tHalHandle hHal, struct oem_data_req *);
 QDF_STATUS sme_oem_update_capability(tHalHandle hHal,
 				     struct sme_oem_capability *cap);
 QDF_STATUS sme_oem_get_capability(tHalHandle hHal,
@@ -580,6 +583,10 @@ QDF_STATUS sme_update_is_fast_roam_ini_feature_enabled(tHalHandle hHal,
 		uint8_t sessionId,
 		const bool
 		isFastRoamIniFeatureEnabled);
+
+QDF_STATUS sme_config_fast_roaming(tHalHandle hal, uint8_t session_id,
+		const bool is_fast_roam_enabled);
+
 QDF_STATUS sme_update_is_mawc_ini_feature_enabled(tHalHandle hHal,
 		const bool MAWCEnabled);
 QDF_STATUS sme_stop_roaming(tHalHandle hHal, uint8_t sessionId, uint8_t reason);
@@ -812,6 +819,7 @@ typedef struct sStatsExtRequestReq {
 typedef void (*StatsExtCallback)(void *, tStatsExtEvent *);
 void sme_stats_ext_register_callback(tHalHandle hHal,
 		StatsExtCallback callback);
+void sme_stats_ext_deregister_callback(tHalHandle hhal);
 QDF_STATUS sme_stats_ext_request(uint8_t session_id,
 		tpStatsExtRequestReq input);
 QDF_STATUS sme_stats_ext_event(tHalHandle hHal, void *pMsg);
@@ -878,6 +886,7 @@ QDF_STATUS sme_ll_stats_get_req(tHalHandle hHal,
 QDF_STATUS sme_set_link_layer_stats_ind_cb(tHalHandle hHal,
 		void (*callbackRoutine)(void *callbackCtx,
 				int indType, void *pRsp));
+QDF_STATUS sme_reset_link_layer_stats_ind_cb(tHalHandle hhal);
 #endif /* WLAN_FEATURE_LINK_LAYER_STATS */
 
 QDF_STATUS sme_fw_mem_dump(tHalHandle hHal, void *recvd_req);
@@ -890,9 +899,10 @@ QDF_STATUS sme_set_wisa_params(tHalHandle hal,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS sme_update_roam_offload_enabled(tHalHandle hHal,
 		bool nRoamOffloadEnabled);
-QDF_STATUS sme_update_roam_key_mgmt_offload_enabled(tHalHandle hHal,
-		uint8_t sessionId,
-		bool nRoamKeyMgmtOffloadEnabled);
+QDF_STATUS sme_update_roam_key_mgmt_offload_enabled(tHalHandle hal_ctx,
+		uint8_t session_id,
+		bool key_mgmt_offload_enabled,
+		bool okc_enabled);
 #endif
 #ifdef WLAN_FEATURE_NAN
 QDF_STATUS sme_nan_event(tHalHandle hHal, void *pMsg);
@@ -973,6 +983,7 @@ QDF_STATUS sme_set_rssi_monitoring(tHalHandle hal,
 					struct rssi_monitor_req *input);
 QDF_STATUS sme_set_rssi_threshold_breached_cb(tHalHandle hal,
 			void (*cb)(void *, struct rssi_breach_event *));
+QDF_STATUS sme_reset_rssi_threshold_breached_cb(tHalHandle hal);
 
 QDF_STATUS sme_register_mgmt_frame_ind_callback(tHalHandle hal,
 			sir_mgmt_frame_ind_callback callback);
@@ -1015,6 +1026,7 @@ QDF_STATUS sme_update_roam_scan_hi_rssi_scan_params(tHalHandle hal_handle,
 	int32_t val);
 
 void wlan_sap_enable_phy_error_logs(tHalHandle hal, bool enable_log);
+#ifdef WLAN_FEATURE_DSRC
 void sme_set_dot11p_config(tHalHandle hal, bool enable_dot11p);
 
 QDF_STATUS sme_ocb_set_config(tHalHandle hHal, void *context,
@@ -1050,6 +1062,83 @@ QDF_STATUS sme_dcc_update_ndl(tHalHandle hHal, void *context,
 
 QDF_STATUS sme_register_for_dcc_stats_event(tHalHandle hHal, void *context,
 					    ocb_callback callback);
+QDF_STATUS sme_deregister_for_dcc_stats_event(tHalHandle hHal);
+
+#else
+static inline void sme_set_dot11p_config(tHalHandle hal, bool enable_dot11p)
+{
+	return;
+}
+
+static inline QDF_STATUS sme_ocb_set_config(tHalHandle hHal, void *context,
+		ocb_callback callback,
+		struct sir_ocb_config *config)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS sme_ocb_set_utc_time(struct sir_ocb_utc *utc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS sme_ocb_start_timing_advert(
+		struct sir_ocb_timing_advert *timing_advert)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS sme_ocb_stop_timing_advert(struct sir_ocb_timing_advert
+		*timing_advert)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline int sme_ocb_gen_timing_advert_frame(tHalHandle hHal,
+		tSirMacAddr self_addr, uint8_t **buf,
+		uint32_t *timestamp_offset,
+		uint32_t *time_value_offset)
+{
+	return 0;
+}
+
+static inline QDF_STATUS sme_ocb_get_tsf_timer(tHalHandle hHal, void *context,
+		ocb_callback callback,
+		struct sir_ocb_get_tsf_timer *request)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS sme_dcc_get_stats(tHalHandle hHal, void *context,
+		ocb_callback callback,
+		struct sir_dcc_get_stats *request)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS sme_dcc_clear_stats(uint32_t vdev_id,
+		uint32_t dcc_stats_bitmap)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS sme_dcc_update_ndl(tHalHandle hHal, void *context,
+		ocb_callback callback,
+		struct sir_dcc_update_ndl *request)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS sme_register_for_dcc_stats_event(tHalHandle hHal,
+		void *context, ocb_callback callback)
+{
+	return QDF_STATUS_SUCCESS;
+}
+static inline QDF_STATUS sme_deregister_for_dcc_stats_event(tHalHandle hHal)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 void sme_add_set_thermal_level_callback(tHalHandle hal,
 		sme_set_thermal_level_callback callback);
 
@@ -1091,18 +1180,29 @@ static inline QDF_STATUS sme_send_egap_conf_params(uint32_t enable,
 }
 #endif
 
-void sme_update_fine_time_measurement_capab(tHalHandle hal, uint32_t val);
+void sme_update_fine_time_measurement_capab(tHalHandle hal, uint8_t session_id,
+								uint32_t val);
 QDF_STATUS sme_ht40_stop_obss_scan(tHalHandle hHal, uint32_t vdev_id);
+QDF_STATUS sme_set_fw_test(struct set_fwtest_params *fw_test);
 QDF_STATUS sme_set_tsfcb(tHalHandle hHal,
 	int (*cb_fn)(void *cb_ctx, struct stsf *ptsf), void *cb_ctx);
 
+QDF_STATUS sme_reset_tsfcb(tHalHandle h_hal);
+
 #ifdef WLAN_FEATURE_TSF
 QDF_STATUS sme_set_tsf_gpio(tHalHandle h_hal, uint32_t pinvalue);
+QDF_STATUS sme_reset_tsf_gpio(tHalHandle h_hal);
+
 #else
 static inline QDF_STATUS sme_set_tsf_gpio(tHalHandle h_hal, uint32_t pinvalue)
 {
 	return QDF_STATUS_E_FAILURE;
 }
+static inline QDF_STATUS sme_reset_tsf_gpio(tHalHandle h_hal)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
 #endif
 
 QDF_STATUS sme_update_mimo_power_save(tHalHandle hHal,
@@ -1117,6 +1217,7 @@ QDF_STATUS sme_remove_beacon_filter(tHalHandle hal, uint32_t session_id);
 QDF_STATUS sme_bpf_offload_register_callback(tHalHandle hal,
 					void (*pbpf_get_offload_cb)(void *,
 					struct sir_bpf_get_offload *));
+QDF_STATUS sme_bpf_offload_deregister_callback(tHalHandle hal);
 
 QDF_STATUS sme_get_bpf_offload_capabilities(tHalHandle hal);
 QDF_STATUS sme_set_bpf_instructions(tHalHandle hal,
@@ -1125,6 +1226,8 @@ uint32_t sme_get_wni_dot11_mode(tHalHandle hal);
 QDF_STATUS sme_create_mon_session(tHalHandle hal_handle, uint8_t *bssid);
 QDF_STATUS sme_set_adaptive_dwelltime_config(tHalHandle hal,
 			struct adaptive_dwelltime_params *dwelltime_params);
+
+void sme_set_vdev_ies_per_band(tHalHandle hal, uint8_t vdev_id);
 void sme_set_pdev_ht_vht_ies(tHalHandle hHal, bool enable2x2);
 
 void sme_update_vdev_type_nss(tHalHandle hal, uint8_t max_supp_nss,
@@ -1132,10 +1235,85 @@ void sme_update_vdev_type_nss(tHalHandle hal, uint8_t max_supp_nss,
 void sme_register_p2p_lo_event(tHalHandle hHal, void *context,
 					p2p_lo_callback callback);
 
+QDF_STATUS sme_remove_bssid_from_scan_list(tHalHandle hal,
+	tSirMacAddr bssid);
+
 QDF_STATUS sme_process_mac_pwr_dbg_cmd(tHalHandle hal, uint32_t session_id,
 				       struct sir_mac_pwr_dbg_cmd*
 				       dbg_args);
 
 void sme_get_vdev_type_nss(tHalHandle hal, enum tQDF_ADAPTER_MODE dev_mode,
 		uint8_t *nss_2g, uint8_t *nss_5g);
+QDF_STATUS sme_roam_set_default_key_index(tHalHandle hal, uint8_t session_id,
+					  uint8_t default_idx);
+QDF_STATUS sme_register_p2p_ack_ind_callback(tHalHandle hal,
+		sir_p2p_ack_ind_callback callback);
+void sme_send_disassoc_req_frame(tHalHandle hal, uint8_t session_id, uint8_t
+				*peer_mac, uint16_t reason, uint8_t
+				wait_for_ack);
+QDF_STATUS sme_update_access_policy_vendor_ie(tHalHandle hal,
+					uint8_t session_id, uint8_t *vendor_ie,
+					int access_policy);
+
+QDF_STATUS sme_update_sta_roam_policy(tHalHandle hal,
+		enum sta_roam_policy_dfs_mode dfs_mode,
+		bool skip_unsafe_channels,
+		uint8_t session_id);
+QDF_STATUS sme_enable_disable_chanavoidind_event(tHalHandle hal,
+					uint8_t set_value);
+QDF_STATUS sme_set_default_scan_ie(tHalHandle hal, uint16_t session_id,
+				uint8_t *ie_data, uint16_t ie_len);
+/**
+ * sme_update_session_param() - API to update PE session param
+ * @hal: HAL handle for device
+ * @session_id: Session ID
+ * @param_type: Param type to be updated
+ * @param_val: Param value to be update
+ *
+ * Note: this setting will not persist over reboots.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_update_session_param(tHalHandle hal, uint8_t session_id,
+		uint32_t param_type, uint32_t param_val);
+
+/**
+ * sme_encrypt_decrypt_msg_register_callback() - Registers
+ * encrypt/decrypt message callback
+ *
+ * @hal - MAC global handle
+ * @callback_routine - callback routine from HDD
+ *
+ * This API is invoked by HDD to register its callback in SME
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_encrypt_decrypt_msg_register_callback(tHalHandle hal,
+		void (*encrypt_decrypt_cb)(void *hdd_context,
+			struct sir_encrypt_decrypt_rsp_params
+					*encrypt_decrypt_rsp_params));
+
+/**
+ * sme_encrypt_decrypt_msg_deregister_callback() - Registers
+ * encrypt/decrypt message callback
+ *
+ * @h_hal - MAC global handle
+ * @callback_routine - callback routine from HDD
+ *
+ * This API is invoked by HDD to de-register its callback in SME
+ *
+ * Return: QDF_STATUS Enumeration
+ */
+QDF_STATUS sme_encrypt_decrypt_msg_deregister_callback(tHalHandle h_hal);
+
+/**
+ * sme_encrypt_decrypt_msg() - handles encrypt/decrypt mesaage
+ * @hal: HAL handle
+ * @encrypt_decrypt_params: struct to set encryption/decryption params.
+ *
+ * Return: QDF_STATUS enumeration.
+ */
+QDF_STATUS sme_encrypt_decrypt_msg(tHalHandle hal,
+	struct encrypt_decrypt_req_params *encrypt_decrypt_params);
+
 #endif /* #if !defined( __SME_API_H ) */

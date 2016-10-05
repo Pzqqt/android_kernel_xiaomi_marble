@@ -70,6 +70,9 @@
 #define P2P_POWER_SAVE_TYPE_PERIODIC_NOA         (1 << 1)
 #define P2P_POWER_SAVE_TYPE_SINGLE_NOA           (1 << 2)
 
+#define ACTION_FRAME_RSP_WAIT 500
+#define ACTION_FRAME_ACK_WAIT 300
+
 #ifdef WLAN_FEATURE_P2P_DEBUG
 typedef enum { P2P_NOT_ACTIVE,
 	       P2P_GO_NEG_PROCESS,
@@ -119,6 +122,7 @@ void hdd_remain_chan_ready_handler(hdd_adapter_t *pAdapter,
 	uint32_t scan_id);
 void hdd_send_action_cnf(hdd_adapter_t *pAdapter, bool actionSendSuccess);
 int wlan_hdd_check_remain_on_channel(hdd_adapter_t *pAdapter);
+void hdd_send_action_cnf_cb(uint32_t session_id, bool status);
 void wlan_hdd_cancel_existing_remain_on_channel(hdd_adapter_t *pAdapter);
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))

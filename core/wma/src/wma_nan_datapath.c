@@ -569,9 +569,6 @@ static int wma_ndp_end_response_event_handler(void *handle,
 	struct ndp_end_rsp_event *end_rsp;
 	WMI_NDP_END_RSP_EVENTID_param_tlvs *event;
 	wmi_ndp_end_rsp_event_fixed_param *fixed_params = NULL;
-	wmi_ndp_end_rsp_per_ndi *end_rsp_tlv;
-	uint32_t i;
-	uint32_t len_end_rsp;
 	tp_wma_handle wma_handle = handle;
 
 	event = (WMI_NDP_END_RSP_EVENTID_param_tlvs *) event_info;
@@ -580,9 +577,7 @@ static int wma_ndp_end_response_event_handler(void *handle,
 		 WMI_NDP_END_RSP_EVENTID, fixed_params->transaction_id,
 		 fixed_params->rsp_status, fixed_params->reason_code);
 
-	len_end_rsp = sizeof(*end_rsp) + (event->num_ndp_end_rsp_per_ndi_list *
-						sizeof(struct peer_ndp_map));
-	end_rsp = qdf_mem_malloc(len_end_rsp);
+	end_rsp = qdf_mem_malloc(sizeof(*end_rsp));
 	if (NULL == end_rsp) {
 		WMA_LOGE("malloc failed");
 		pe_msg.bodyval = true;
@@ -590,37 +585,11 @@ static int wma_ndp_end_response_event_handler(void *handle,
 		goto send_ndp_end_rsp;
 	}
 	pe_msg.bodyptr = end_rsp;
-	qdf_mem_zero(end_rsp, len_end_rsp);
+	qdf_mem_zero(end_rsp, sizeof(*end_rsp));
 
 	end_rsp->transaction_id = fixed_params->transaction_id;
 	end_rsp->reason = fixed_params->reason_code;
 	end_rsp->status = fixed_params->rsp_status;
-
-	if (end_rsp->status == NDP_CMD_RSP_STATUS_SUCCESS) {
-		WMA_LOGD(FL("NDP end rsp, num_peers: %d"),
-			event->num_ndp_end_rsp_per_ndi_list);
-		end_rsp->num_peers = event->num_ndp_end_rsp_per_ndi_list;
-		if (end_rsp->num_peers == 0) {
-			WMA_LOGE(FL("num_peers in NDP rsp should not be 0."));
-			end_rsp->status = NDP_CMD_RSP_STATUS_ERROR;
-			end_rsp->reason = NDP_END_FAILED;
-			goto send_ndp_end_rsp;
-		}
-		/* copy per peer response to return path buffer */
-		end_rsp_tlv = event->ndp_end_rsp_per_ndi_list;
-		for (i = 0; i < end_rsp->num_peers; i++) {
-			end_rsp->ndp_map[i].vdev_id = end_rsp_tlv[i].vdev_id;
-			WMI_MAC_ADDR_TO_CHAR_ARRAY(
-				&end_rsp_tlv[i].peer_mac_addr,
-				end_rsp->ndp_map[i].peer_ndi_mac_addr.bytes);
-			end_rsp->ndp_map[i].num_active_ndp_sessions =
-					end_rsp_tlv[i].num_active_ndps_on_ndi;
-			WMA_LOGD(FL("vdev_id: %d, peer_addr: %pM, active_ndp_left: %d"),
-				end_rsp->ndp_map[i].vdev_id,
-				&end_rsp->ndp_map[i].peer_ndi_mac_addr,
-				end_rsp->ndp_map[i].num_active_ndp_sessions);
-		}
-	}
 
 send_ndp_end_rsp:
 	pe_msg.type = SIR_HAL_NDP_END_RSP;
@@ -856,7 +825,7 @@ void wma_ndp_add_wow_wakeup_event(tp_wma_handle wma_handle,
  * Return: 0 if TLV tag is invalid
  *           else return corresponding WMI event id
  */
-static int wma_ndp_get_eventid_from_tlvtag(uint32_t tag)
+uint32_t wma_ndp_get_eventid_from_tlvtag(uint32_t tag)
 {
 	uint32_t event_id;
 
@@ -900,6 +869,7 @@ static int wma_ndp_get_eventid_from_tlvtag(uint32_t tag)
  * @handle: WMA handle
  * @event: event buffer
  * @len: length of @event buffer
+ * @event_id: event id for ndp wow event
  *
  * The wow event WOW_REASON_NAN_DATA is followed by the payload of the event
  * which generated the wow event.
@@ -910,66 +880,41 @@ static int wma_ndp_get_eventid_from_tlvtag(uint32_t tag)
  *
  * Return: none
  */
-void wma_ndp_wow_event_callback(void *handle, void *event,
-						  uint32_t len)
+void wma_ndp_wow_event_callback(void *handle, void *event, uint32_t len,
+				uint32_t event_id)
 {
-	uint32_t id;
-	int tlv_ok_status = 0;
-	void *wmi_cmd_struct_ptr = NULL;
-	uint32_t tag = WMITLV_GET_TLVTAG(WMITLV_GET_HDR(event));
-
-	/* Reverse map fixed params tag to EVENT_ID */
-	id = wma_ndp_get_eventid_from_tlvtag(tag);
-	if (!id) {
-		WMA_LOGE(FL("Invalid  Tag: %d"), tag);
-		return;
-	}
-
-	tlv_ok_status = wmitlv_check_and_pad_event_tlvs(handle, event, len,
-							id,
-							&wmi_cmd_struct_ptr);
-	if (tlv_ok_status != 0) {
-		WMA_LOGE(FL("Invalid Tag: %d could not check and pad tlvs"),
-			 tag);
-		return;
-	}
-
-	switch (id) {
+	WMA_LOGD(FL("ndp_wow_event dump"));
+	qdf_trace_hex_dump(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+			   event, len);
+	switch (event_id) {
 	case WMI_NDP_INITIATOR_RSP_EVENTID:
-		wma_ndp_initiator_rsp_event_handler(handle,
-						wmi_cmd_struct_ptr, len);
+		wma_ndp_initiator_rsp_event_handler(handle, event, len);
 		break;
 
 	case WMI_NDP_RESPONDER_RSP_EVENTID:
-		wma_ndp_responder_rsp_event_handler(handle,
-						wmi_cmd_struct_ptr, len);
+		wma_ndp_responder_rsp_event_handler(handle, event, len);
 		break;
 
 	case WMI_NDP_END_RSP_EVENTID:
-		wma_ndp_end_response_event_handler(handle,
-						wmi_cmd_struct_ptr, len);
+		wma_ndp_end_response_event_handler(handle, event, len);
 		break;
 
 	case WMI_NDP_INDICATION_EVENTID:
-		wma_ndp_indication_event_handler(handle,
-						wmi_cmd_struct_ptr, len);
+		wma_ndp_indication_event_handler(handle, event, len);
 		break;
 
 	case WMI_NDP_CONFIRM_EVENTID:
-		wma_ndp_confirm_event_handler(handle,
-						wmi_cmd_struct_ptr, len);
+		wma_ndp_confirm_event_handler(handle, event, len);
 		break;
 
 	case WMI_NDP_END_INDICATION_EVENTID:
-		wma_ndp_end_indication_event_handler(handle,
-						wmi_cmd_struct_ptr, len);
+		wma_ndp_end_indication_event_handler(handle, event, len);
 		break;
 
 	default:
-		WMA_LOGE(FL("Unknown tag: %d"), tag);
+		WMA_LOGE(FL("Unknown event: %d"), event_id);
 		break;
 	}
-	wmitlv_free_allocated_event_tlvs(id, &wmi_cmd_struct_ptr);
 }
 
 /**
@@ -998,7 +943,7 @@ void wma_add_bss_ndi_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	}
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	if (pdev) {
+	if (!pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
 		goto send_fail_resp;
 	}

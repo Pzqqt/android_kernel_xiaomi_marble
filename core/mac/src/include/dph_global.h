@@ -103,6 +103,28 @@ typedef struct sDphQueueAttr {
 	uint16_t rsvd:1;
 } tDphQueueAttr, *tpDphQueueAttr;
 
+/**
+ * struct parsed_ies: Parsed IE's of BSS capability
+ * @ht_caps: HT caps IE
+ * @vht_caps: VHT caps IE
+ * @ht_operation: HT operation IE
+ * @vht_operation: VHT operation IE
+ * @hs20vendor_ie: HS2.0 vendor IE
+ *
+ * This structure holds the parsed IE of connected BSS
+ * and this is not the intersection of BSS and STA
+ * capability. For example, if BSS supports 80 MHz
+ * and STA connects to BSS in 20 MHz, this structure
+ * holds 80 MHz as peer capability.
+ */
+struct parsed_ies {
+	tDot11fIEHTCaps ht_caps;
+	tDot11fIEVHTCaps vht_caps;
+	tDot11fIEHTInfo ht_operation;
+	tDot11fIEVHTOperation vht_operation;
+	tDot11fIEhs20vendor_ie hs20vendor_ie;
+};
+
 /* STA state node */
 typedef struct sDphHashNode {
 	/*
@@ -241,6 +263,8 @@ typedef struct sDphHashNode {
 
 	uint8_t nss;
 	int8_t del_sta_ctx_rssi;
+	bool sta_deletion_in_progress;
+	struct parsed_ies parsed_ies;
 
 	/*
 	 * When a station with already an existing dph entry tries to

@@ -145,7 +145,7 @@ enum suspend_resume_state {
 
 /* SSR shutdown & re-init functions */
 QDF_STATUS hdd_wlan_shutdown(void);
-QDF_STATUS hdd_wlan_re_init(void *hif_sc);
+QDF_STATUS hdd_wlan_re_init(void);
 
 void hdd_conf_mcastbcast_filter(hdd_context_t *pHddCtx, bool setfilter);
 QDF_STATUS hdd_conf_arp_offload(hdd_adapter_t *pAdapter, bool fenable);
@@ -167,6 +167,7 @@ int wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy);
 
 void hdd_ipv4_notifier_work_queue(struct work_struct *work);
 #ifdef WLAN_NS_OFFLOAD
+void hdd_conf_ns_offload(hdd_adapter_t *adapter, bool fenable);
 void hdd_ipv6_notifier_work_queue(struct work_struct *work);
 #endif
 
@@ -178,7 +179,8 @@ int wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 				  enum nl80211_tx_power_setting type,
 				  int dbm);
 int wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
-				     struct net_device *dev, bool mode,
+				     struct net_device *dev,
+				     bool allow_power_save,
 				     int timeout);
 
 int wlan_hdd_ipv4_changed(struct notifier_block *nb,
@@ -186,6 +188,9 @@ int wlan_hdd_ipv4_changed(struct notifier_block *nb,
 
 int wlan_hdd_ipv6_changed(struct notifier_block *nb,
 				unsigned long data, void *arg);
+
+int hdd_set_qpower_config(hdd_context_t *hddctx, hdd_adapter_t *adapter,
+			  uint8_t qpower);
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 void hdd_wlan_suspend_resume_event(uint8_t state);

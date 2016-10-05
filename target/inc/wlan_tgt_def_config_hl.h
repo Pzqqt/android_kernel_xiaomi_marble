@@ -45,7 +45,7 @@
 
 /* # of WDS entries to support.
  */
-#define CFG_TGT_WDS_ENTRIES             0
+#define CFG_TGT_WDS_ENTRIES             2
 
 /* MAC DMA burst size. 0: 128B - default, 1: 256B, 2: 64B
  */
@@ -232,7 +232,7 @@
  */
 #define CFG_TGT_NUM_TDLS_CONC_BUFFER_STAS    1
 
-#define CFG_TGT_MAX_MULTICAST_FILTER_ENTRIES 5
+#define CFG_TGT_MAX_MULTICAST_FILTER_ENTRIES 16
 /*
  * Maximum number of VDEV that beacon tx offload will support
  */
@@ -250,11 +250,6 @@
  * vht enable highest MCS by default
  */
 #define CFG_TGT_DEFAULT_GTX_VHT_MASK        0x80200
-/*
- * resv for furture use, bit 30 is used for fix tpc, bit0-3 for Power save
- * balance
- */
-#define CFG_TGT_DEFAULT_GTX_USR_CFG     0xa
 /*
  * threshold to enable GTX
  */

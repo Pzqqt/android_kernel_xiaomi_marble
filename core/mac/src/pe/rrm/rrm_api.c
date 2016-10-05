@@ -441,7 +441,8 @@ rrm_process_neighbor_report_response(tpAniSirGlobal pMac,
 	/* Send request to SME. */
 	mmhMsg.type = pSmeNeighborRpt->messageType;
 	mmhMsg.bodyptr = pSmeNeighborRpt;
-	MTRACE(mac_trace_msg_tx(pMac, pSessionEntry->peSessionId, mmhMsg.type));
+	MTRACE(mac_trace(pMac, TRACE_CODE_TX_SME_MSG,
+			 pSessionEntry->peSessionId, mmhMsg.type));
 	status = lim_sys_process_mmh_msg_api(pMac, &mmhMsg, ePROT);
 
 	return status;
@@ -696,7 +697,8 @@ rrm_process_beacon_report_req(tpAniSirGlobal pMac,
 	/* Send request to SME. */
 	mmhMsg.type = eWNI_SME_BEACON_REPORT_REQ_IND;
 	mmhMsg.bodyptr = pSmeBcnReportReq;
-	MTRACE(mac_trace_msg_tx(pMac, pSessionEntry->peSessionId, mmhMsg.type));
+	MTRACE(mac_trace(pMac, TRACE_CODE_TX_SME_MSG,
+			 pSessionEntry->peSessionId, mmhMsg.type));
 	return lim_sys_process_mmh_msg_api(pMac, &mmhMsg, ePROT);
 }
 
@@ -795,12 +797,12 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 {
 	tSirRetStatus status = eSIR_SUCCESS;
 	tSirMacRadioMeasureReport *report = NULL;
-	tSirMacBeaconReport beacon_report;
+	tSirMacBeaconReport *beacon_report;
 	tpSirBssDescription bss_desc;
 	tpRRMReq curr_req = mac_ctx->rrm.rrmPEContext.pCurrentReq;
 	tpPESession session_entry;
 	uint8_t session_id;
-	bool flag_bss_present, bss_desc_count = 0;
+	uint8_t bss_desc_count = 0;
 
 	lim_log(mac_ctx, LOG1, FL("Received beacon report xmit indication"));
 
@@ -842,43 +844,41 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 		for (bss_desc_count = 0; bss_desc_count <
 		     beacon_xmit_ind->numBssDesc; bss_desc_count++) {
 			beacon_report =
-				report[bss_desc_count].report.beaconReport;
+				&report[bss_desc_count].report.beaconReport;
+			/*
+			 * If the scan result is NULL then send report request
+			 * with option subelement as NULL.
+			 */
 			bss_desc = beacon_xmit_ind->
 				   pBssDescription[bss_desc_count];
-			flag_bss_present = false;
 			/* Prepare the beacon report and send it to the peer.*/
 			report[bss_desc_count].token =
 				beacon_xmit_ind->uDialogToken;
 			report[bss_desc_count].refused = 0;
 			report[bss_desc_count].incapable = 0;
 			report[bss_desc_count].type = SIR_MAC_RRM_BEACON_TYPE;
-			/*
-			 * If the scan result is NULL then send report request
-			 * with option subelement as NULL.
-			 */
-			if (NULL != bss_desc)
-				flag_bss_present = true;
+
 			/*
 			 * Valid response is included if the size of
 			 * becon xmit is == size of beacon xmit ind + ies
 			 */
 			if (beacon_xmit_ind->length < sizeof(*beacon_xmit_ind))
 				continue;
-			beacon_report.regClass = beacon_xmit_ind->regClass;
-			if (flag_bss_present) {
-				beacon_report.channel = bss_desc->channelId;
-				qdf_mem_copy(beacon_report.measStartTime,
+			beacon_report->regClass = beacon_xmit_ind->regClass;
+			if (bss_desc) {
+				beacon_report->channel = bss_desc->channelId;
+				qdf_mem_copy(beacon_report->measStartTime,
 					bss_desc->startTSF,
 					sizeof(bss_desc->startTSF));
-				beacon_report.measDuration =
+				beacon_report->measDuration =
 					SYS_MS_TO_TU(beacon_xmit_ind->duration);
-				beacon_report.phyType = bss_desc->nwType;
-				beacon_report.bcnProbeRsp = 1;
-				beacon_report.rsni = bss_desc->sinr;
-				beacon_report.rcpi = bss_desc->rssi;
-				beacon_report.antennaId = 0;
-				beacon_report.parentTSF = bss_desc->parentTSF;
-				qdf_mem_copy(beacon_report.bssid,
+				beacon_report->phyType = bss_desc->nwType;
+				beacon_report->bcnProbeRsp = 1;
+				beacon_report->rsni = bss_desc->sinr;
+				beacon_report->rcpi = bss_desc->rssi;
+				beacon_report->antennaId = 0;
+				beacon_report->parentTSF = bss_desc->parentTSF;
+				qdf_mem_copy(beacon_report->bssid,
 					bss_desc->bssId, sizeof(tSirMacAddr));
 			}
 
@@ -893,10 +893,10 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 				lim_log(mac_ctx, LOG3,
 					FL("Only requested IEs in reporting detail requested"));
 
-				if (flag_bss_present) {
+				if (bss_desc) {
 					rrm_fill_beacon_ies(mac_ctx,
-					    (uint8_t *) &beacon_report.Ies[0],
-					    (uint8_t *) &beacon_report.numIes,
+					    (uint8_t *) &beacon_report->Ies[0],
+					    (uint8_t *) &beacon_report->numIes,
 					    BEACON_REPORT_MAX_IES,
 					    curr_req->request.Beacon.reqIes.
 					    pElementIds,
@@ -908,10 +908,10 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 				/* 2: default - Include all FFs and all Ies. */
 			default:
 				lim_log(mac_ctx, LOG3, FL("Default all IEs and FFs"));
-				if (flag_bss_present) {
+				if (bss_desc) {
 					rrm_fill_beacon_ies(mac_ctx,
-					    (uint8_t *) &beacon_report.Ies[0],
-					    (uint8_t *) &beacon_report.numIes,
+					    (uint8_t *) &beacon_report->Ies[0],
+					    (uint8_t *) &beacon_report->numIes,
 					    BEACON_REPORT_MAX_IES,
 					    NULL,
 					    0,

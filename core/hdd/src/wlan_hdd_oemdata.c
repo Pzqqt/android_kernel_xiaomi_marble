@@ -295,28 +295,29 @@ static void send_oem_err_rsp_nlink_msg(int32_t app_pid, uint8_t error_code)
 
 /**
  * hdd_send_oem_data_rsp_msg() - send oem data response
- * @length: length of the OEM Data Response message
- * @oemDataRsp: the actual OEM Data Response message
+ * @oem_data_rsp: the actual OEM Data Response message
  *
  * This function sends an OEM Data Response message to a registered
  * application process over the netlink socket.
  *
  * Return: 0 for success, non zero for failure
  */
-void hdd_send_oem_data_rsp_msg(int length, uint8_t *oemDataRsp)
+void hdd_send_oem_data_rsp_msg(struct oem_data_rsp *oem_data_rsp)
 {
 	struct sk_buff *skb;
 	struct nlmsghdr *nlh;
-	tAniMsgHdr *aniHdr;
-	uint8_t *oemData;
+	tAniMsgHdr *ani_hdr;
+	uint8_t *oem_data;
 
-	/* OEM message is always to a specific process and cannot be a broadcast */
+	/*
+	 * OEM message is always to a specific process and cannot be a broadcast
+	 */
 	if (p_hdd_ctx->oem_pid == 0) {
 		hdd_err("invalid dest pid");
 		return;
 	}
 
-	if (length > OEM_DATA_RSP_SIZE) {
+	if (oem_data_rsp->rsp_len > OEM_DATA_RSP_SIZE) {
 		hdd_err("invalid length of Oem Data response");
 		return;
 	}
@@ -333,18 +334,18 @@ void hdd_send_oem_data_rsp_msg(int length, uint8_t *oemDataRsp)
 	nlh->nlmsg_flags = 0;
 	nlh->nlmsg_seq = 0;
 	nlh->nlmsg_type = WLAN_NL_MSG_OEM;
-	aniHdr = NLMSG_DATA(nlh);
-	aniHdr->type = ANI_MSG_OEM_DATA_RSP;
+	ani_hdr = NLMSG_DATA(nlh);
+	ani_hdr->type = ANI_MSG_OEM_DATA_RSP;
 
-	aniHdr->length = length;
-	nlh->nlmsg_len = NLMSG_LENGTH((sizeof(tAniMsgHdr) + aniHdr->length));
-	oemData = (uint8_t *) ((char *)aniHdr + sizeof(tAniMsgHdr));
-	qdf_mem_copy(oemData, oemDataRsp, length);
+	ani_hdr->length = oem_data_rsp->rsp_len;
+	nlh->nlmsg_len = NLMSG_LENGTH((sizeof(tAniMsgHdr) + ani_hdr->length));
+	oem_data = (uint8_t *) ((char *)ani_hdr + sizeof(tAniMsgHdr));
+	qdf_mem_copy(oem_data, oem_data_rsp->data, oem_data_rsp->rsp_len);
 
-	skb_put(skb, NLMSG_SPACE((sizeof(tAniMsgHdr) + aniHdr->length)));
+	skb_put(skb, NLMSG_SPACE((sizeof(tAniMsgHdr) + ani_hdr->length)));
 
 	hdd_notice("sending Oem Data Response of len (%d) to process pid (%d)",
-		   length, p_hdd_ctx->oem_pid);
+		   oem_data_rsp->rsp_len, p_hdd_ctx->oem_pid);
 
 	(void)nl_srv_ucast(skb, p_hdd_ctx->oem_pid, MSG_DONTWAIT);
 
@@ -353,52 +354,48 @@ void hdd_send_oem_data_rsp_msg(int length, uint8_t *oemDataRsp)
 
 /**
  * oem_process_data_req_msg() - process oem data request
- * @oemDataLen: Length to OEM Data buffer
- * @oemData: Pointer to OEM Data buffer
+ * @oem_data_len: Length to OEM Data buffer
+ * @oem_data: Pointer to OEM Data buffer
  *
  * This function sends oem message to SME
  *
  * Return: QDF_STATUS enumeration
  */
-static QDF_STATUS oem_process_data_req_msg(int oemDataLen, char *oemData)
+static QDF_STATUS oem_process_data_req_msg(int oem_data_len, char *oem_data)
 {
-	hdd_adapter_t *pAdapter = NULL;
-	tOemDataReqConfig oemDataReqConfig;
-	uint32_t oemDataReqID = 0;
+	hdd_adapter_t *adapter = NULL;
+	struct oem_data_req oem_data_req;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	/* for now, STA interface only */
-	pAdapter = hdd_get_adapter(p_hdd_ctx, QDF_STA_MODE);
-	if (!pAdapter) {
+	adapter = hdd_get_adapter(p_hdd_ctx, QDF_STA_MODE);
+	if (!adapter) {
 		hdd_err("No adapter for STA mode");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!oemData) {
-		hdd_err("oemData is null");
+	if (!oem_data) {
+		hdd_err("oem_data is null");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	qdf_mem_zero(&oemDataReqConfig, sizeof(tOemDataReqConfig));
+	qdf_mem_zero(&oem_data_req, sizeof(oem_data_req));
 
-	oemDataReqConfig.data = qdf_mem_malloc(oemDataLen);
-	if (!oemDataReqConfig.data) {
+	oem_data_req.data = qdf_mem_malloc(oem_data_len);
+	if (!oem_data_req.data) {
 		hdd_err("malloc failed for data req buffer");
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	oemDataReqConfig.data_len = oemDataLen;
-	qdf_mem_copy(oemDataReqConfig.data, oemData, oemDataLen);
+	oem_data_req.data_len = oem_data_len;
+	qdf_mem_copy(oem_data_req.data, oem_data, oem_data_len);
 
 	hdd_notice("calling sme_oem_data_req");
 
-	status = sme_oem_data_req(p_hdd_ctx->hHal,
-				  pAdapter->sessionId,
-				  &oemDataReqConfig,
-				  &oemDataReqID);
+	status = sme_oem_data_req(p_hdd_ctx->hHal, &oem_data_req);
 
-	qdf_mem_free(oemDataReqConfig.data);
-	oemDataReqConfig.data = NULL;
+	qdf_mem_free(oem_data_req.data);
+	oem_data_req.data = NULL;
 
 	return status;
 }

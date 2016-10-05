@@ -49,6 +49,7 @@
 #include <qdf_types.h>
 #include "qdf_lock.h"
 #include "qdf_mc_timer.h"
+#include "cds_config.h"
 
 #define TX_POST_EVENT_MASK               0x001
 #define TX_SUSPEND_EVENT_MASK            0x002
@@ -202,7 +203,7 @@ typedef struct _cds_sched_context {
 	struct notifier_block *cpu_hot_plug_notifier;
 
 	/* affinity lock */
-	spinlock_t affinity_lock;
+	struct mutex affinity_lock;
 
 	/* rx thread affinity cpu */
 	unsigned long rx_thread_cpu;
@@ -309,6 +310,8 @@ typedef struct _cds_context_type {
 	void (*sme_get_nss_for_vdev)(void*, enum tQDF_ADAPTER_MODE,
 		uint8_t *, uint8_t *);
 
+	void (*ol_txrx_update_mac_id)(uint8_t , uint8_t);
+
 	/* This list is not sessionized. This mandatory channel list would be
 	 * as per OEMs preference as per the regulatory/other considerations.
 	 * So, this would remain same for all the interfaces.
@@ -317,6 +320,9 @@ typedef struct _cds_context_type {
 	uint32_t sap_mandatory_channels_len;
 	bool do_hw_mode_change;
 	bool enable_fatal_event;
+	struct cds_config_info *cds_cfg;
+	/* WAR: Is cds disabled */
+	bool is_cds_disabled;
 } cds_context_type, *p_cds_contextType;
 
 /*---------------------------------------------------------------------------
@@ -529,6 +535,7 @@ QDF_STATUS cds_sched_close(void *p_cds_context);
 QDF_STATUS cds_mq_init(p_cds_mq_type pMq);
 void cds_mq_deinit(p_cds_mq_type pMq);
 void cds_mq_put(p_cds_mq_type pMq, p_cds_msg_wrapper pMsgWrapper);
+void cds_mq_put_front(p_cds_mq_type mq, p_cds_msg_wrapper msg_wrapper);
 p_cds_msg_wrapper cds_mq_get(p_cds_mq_type pMq);
 bool cds_is_mq_empty(p_cds_mq_type pMq);
 p_cds_sched_context get_cds_sched_ctxt(void);
@@ -537,6 +544,7 @@ void cds_sched_deinit_mqs(p_cds_sched_context pSchedContext);
 void cds_sched_flush_mc_mqs(p_cds_sched_context pSchedContext);
 
 void qdf_timer_module_init(void);
+void qdf_timer_module_deinit(void);
 void cds_ssr_protect_init(void);
 void cds_ssr_protect(const char *caller_func);
 void cds_ssr_unprotect(const char *caller_func);

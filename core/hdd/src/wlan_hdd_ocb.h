@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -238,7 +238,7 @@ enum qca_wlan_vendor_attr_dcc_update_ndl {
 	QCA_WLAN_VENDOR_ATTR_DCC_UPDATE_NDL_MAX =
 		QCA_WLAN_VENDOR_ATTR_DCC_UPDATE_NDL_AFTER_LAST - 1,
 };
-
+#ifdef WLAN_FEATURE_DSRC
 void hdd_set_dot11p_config(hdd_context_t *hdd_ctx);
 
 void hdd_remove_ocb_tx_header(struct sk_buff *skb);
@@ -288,5 +288,99 @@ int wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 				     int data_len);
 
 void wlan_hdd_dcc_register_for_dcc_stats_event(hdd_context_t *hdd_ctx);
+
+void wlan_hdd_dcc_stats_event(void *context_ptr, void *response_ptr);
+#else
+static inline void hdd_set_dot11p_config(hdd_context_t *hdd_ctx)
+{
+	return;
+}
+
+static inline void hdd_remove_ocb_tx_header(struct sk_buff *skb)
+{
+	return;
+}
+static inline int iw_set_dot11p_channel_sched(struct net_device *dev,
+		struct iw_request_info *info,
+		union iwreq_data *wrqu, char *extra)
+{
+	return 0;
+}
+
+static inline int wlan_hdd_cfg80211_ocb_set_config(struct wiphy *wiphy,
+		struct wireless_dev *wdev,
+		const void *data,
+		int data_len)
+{
+	return 0;
+}
+
+static inline int wlan_hdd_cfg80211_ocb_set_utc_time(struct wiphy *wiphy,
+		struct wireless_dev *wdev,
+		const void *data,
+		int data_len)
+{
+	return 0;
+}
+
+static inline int wlan_hdd_cfg80211_ocb_start_timing_advert(struct wiphy *wiphy,
+		struct wireless_dev *wdev,
+		const void *data,
+		int data_len)
+{
+	return 0;
+}
+
+static inline int wlan_hdd_cfg80211_ocb_stop_timing_advert(struct wiphy *wiphy,
+		struct wireless_dev *wdev,
+		const void *data,
+		int data_len)
+{
+	return 0;
+}
+
+static inline int wlan_hdd_cfg80211_ocb_get_tsf_timer(struct wiphy *wiphy,
+		struct wireless_dev *wdev,
+		const void *data,
+		int data_len)
+{
+	return 0;
+}
+
+static inline int wlan_hdd_cfg80211_dcc_get_stats(struct wiphy *wiphy,
+		struct wireless_dev *wdev,
+		const void *data,
+		int data_len)
+{
+	return 0;
+}
+
+static inline int wlan_hdd_cfg80211_dcc_clear_stats(struct wiphy *wiphy,
+		struct wireless_dev *wdev,
+		const void *data,
+		int data_len)
+{
+	return 0;
+}
+
+static inline int wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
+		struct wireless_dev *wdev,
+		const void *data,
+		int data_len)
+{
+	return 0;
+}
+
+static inline void wlan_hdd_dcc_register_for_dcc_stats_event(
+		hdd_context_t *hdd_ctx)
+{
+	return;
+}
+static inline void wlan_hdd_dcc_stats_event(void *context_ptr,
+		void *response_ptr)
+{
+	return;
+}
+#endif
 
 #endif /* __WLAN_HDD_OCB_H */

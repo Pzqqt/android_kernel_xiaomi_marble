@@ -158,6 +158,8 @@
 #define WMA_ICMP_V6_HEADER_OFFSET (6 + 6 + 2 + 6)
 /* WMA_ICMP_V6_TYPE_OFFSET = sa(6) + da(6) + eth_type(2) + 40 */
 #define WMA_ICMP_V6_TYPE_OFFSET (6 + 6 + 2 + 40)
+/* WMA_IPV4_PROTOCOL = sa(6) + da(6) + eth_type(2) + 9 */
+#define WMA_IPV4_PROTOCOL (6 + 6 + 2 + 9)
 #define WMA_ICMP_V6_HEADER_TYPE (0x3A)
 #define WMA_ICMP_V6_RA_TYPE (0x86)
 #define WMA_ICMP_V6_NS_TYPE (0x87)
@@ -165,7 +167,36 @@
 #define WMA_BCAST_MAC_ADDR (0xFF)
 #define WMA_MCAST_IPV4_MAC_ADDR (0x01)
 #define WMA_MCAST_IPV6_MAC_ADDR (0x33)
+#define WMA_ICMP_PROTOCOL (0x01)
 
+#define WMA_IS_EAPOL_GET_MIN_LEN          14
+#define WMA_EAPOL_SUBTYPE_GET_MIN_LEN     21
+#define WMA_EAPOL_INFO_GET_MIN_LEN        23
+#define WMA_IS_DHCP_GET_MIN_LEN           38
+#define WMA_DHCP_SUBTYPE_GET_MIN_LEN      0x11D
+#define WMA_DHCP_INFO_GET_MIN_LEN         50
+#define WMA_IS_ARP_GET_MIN_LEN            14
+#define WMA_ARP_SUBTYPE_GET_MIN_LEN       22
+#define WMA_IPV4_PROTO_GET_MIN_LEN        24
+#define WMA_IPV4_PKT_INFO_GET_MIN_LEN     42
+#define WMA_ICMP_SUBTYPE_GET_MIN_LEN      35
+#define WMA_IPV6_PROTO_GET_MIN_LEN        21
+#define WMA_IPV6_PKT_INFO_GET_MIN_LEN     62
+#define WMA_ICMPV6_SUBTYPE_GET_MIN_LEN    55
+
+/**
+ * ds_mode: distribution system mode
+ * @IEEE80211_NO_DS: NO DS at either side
+ * @IEEE80211_TO_DS: DS at receiver side
+ * @IEEE80211_FROM_DS: DS at sender side
+ * @IEEE80211_DS_TO_DS: DS at both sender and revceiver side
+ */
+enum ds_mode {
+	IEEE80211_NO_DS,
+	IEEE80211_TO_DS,
+	IEEE80211_FROM_DS,
+	IEEE80211_DS_TO_DS
+};
 
 /* Roaming default values
  * All time and period values are in milliseconds.
@@ -212,7 +243,7 @@
 #define WMA_NUM_BITS_IN_BYTE           8
 
 #define WMA_AP_WOW_DEFAULT_PTRN_MAX    4
-#define WMA_STA_WOW_DEFAULT_PTRN_MAX   4
+#define WMA_STA_WOW_DEFAULT_PTRN_MAX   5
 
 #define WMA_BSS_STATUS_STARTED 0x1
 #define WMA_BSS_STATUS_STOPPED 0x2
@@ -251,7 +282,6 @@
 #define WMA_TX_FRAME_COMPLETE_TIMEOUT  1000
 #define WMA_TX_FRAME_BUFFER_NO_FREE    0
 #define WMA_TX_FRAME_BUFFER_FREE       1
-
 
 /* Default InActivity Time is 200 ms */
 #define POWERSAVE_DEFAULT_INACTIVITY_TIME 200
@@ -385,6 +415,9 @@ static const t_probeTime_dwellTime
 };
 
 typedef void (*txFailIndCallback)(uint8_t *peer_mac, uint8_t seqNo);
+typedef void (*encrypt_decrypt_cb)(struct sir_encrypt_decrypt_rsp_params
+		*encrypt_decrypt_rsp_params);
+
 
 /**
  * enum t_wma_drv_type - wma driver type
@@ -725,6 +758,18 @@ typedef struct {
 } vdev_cli_config_t;
 
 /**
+ * struct wma_version_info - Store wmi version info
+ * @major: wmi major version
+ * @minor: wmi minor version
+ * @revision: wmi revision number
+ */
+struct wma_version_info {
+	u_int32_t major;
+	u_int32_t minor;
+	u_int32_t revision;
+};
+
+/**
  * struct wma_wow - store wow patterns
  * @magic_ptrn_enable: magic pattern enable/disable
  * @wow_enable: wow enable/disable
@@ -864,7 +909,9 @@ typedef struct {
  * @rx_streams: number of rx streams can be used by the vdev
  * @chain_mask: chain mask can be used by the vdev
  * @mac_id: the mac on which vdev is on
- *
+ * @wep_default_key_idx: wep default index for group key
+ * @arp_offload_req: cached arp offload request
+ * @ns_offload_req: cached ns offload request
  * It stores parameters per vdev in wma.
  */
 struct wma_txrx_node {
@@ -898,6 +945,7 @@ struct wma_txrx_node {
 	uint8_t ht_capable;
 	A_UINT32 mhz;
 	enum phy_ch_width chan_width;
+	bool vdev_active;
 	bool vdev_up;
 	uint64_t tsfadjust;
 	void *addBssStaContext;
@@ -940,6 +988,9 @@ struct wma_txrx_node {
 	uint8_t nss_2g;
 	uint8_t nss_5g;
 	bool p2p_lo_in_progress;
+	uint8_t wep_default_key_idx;
+	tSirHostOffloadReq arp_offload_req;
+	tSirHostOffloadReq ns_offload_req;
 };
 
 #if defined(QCA_WIFI_FTM)
@@ -1233,6 +1284,8 @@ struct extended_caps {
  * @wow_ipv6_mcast_ra_stats: WoW IPV6 mcast RA packet wake up count
  * @wow_ipv6_mcast_ns_stats: WoW IPV6 mcast NS packet wake up count
  * @wow_ipv6_mcast_na_stats: WoW IPV6 mcast NA packet wake up count
+ * @wow_icmpv4_count: WoW ipv4 icmp packet wake up count
+ * @wow_icmpv6_count: WoW ipv6 icmp packet wake up count
  * @dual_mac_cfg: Dual mac configuration params for scan and fw mode
  *
  * @max_scan:  maximum scan requests than can be queued
@@ -1240,6 +1293,7 @@ struct extended_caps {
  * It contains global wma module parameters and
  * handle of other modules.
  * @saved_wmi_init_cmd: Saved WMI INIT command
+ * @bool bpf_packet_filter_enable: BPF filter enabled or not
  * @service_ready_ext_evt: Wait event for service ready ext
  * @wmi_cmd_rsp_wake_lock: wmi command response wake lock
  * @wmi_cmd_rsp_runtime_lock: wmi command response bus lock
@@ -1348,6 +1402,7 @@ typedef struct {
 #endif
 	qdf_wake_lock_t wow_wake_lock;
 	int wow_nack;
+	bool wow_initial_wake_up;
 	qdf_atomic_t is_wow_bus_suspended;
 	qdf_mc_timer_t wma_scan_comp_timer;
 	uint8_t dfs_phyerr_filter_offload;
@@ -1393,6 +1448,9 @@ typedef struct {
 	uint32_t wow_ipv6_mcast_ra_stats;
 	uint32_t wow_ipv6_mcast_ns_stats;
 	uint32_t wow_ipv6_mcast_na_stats;
+	uint32_t wow_icmpv4_count;
+	uint32_t wow_icmpv6_count;
+	uint32_t wow_oem_response_wake_up_count;
 
 	/* OCB request contexts */
 	struct sir_ocb_config *ocb_config_req;
@@ -1430,12 +1488,15 @@ typedef struct {
 	qdf_runtime_lock_t wmi_cmd_rsp_runtime_lock;
 	qdf_runtime_lock_t wma_runtime_resume_lock;
 	uint32_t fine_time_measurement_cap;
+	bool bpf_enabled;
+	bool bpf_packet_filter_enable;
 	struct wma_ini_config ini_config;
 	struct wma_valid_channels saved_chan;
 	/* NAN datapath support enabled in firmware */
 	bool nan_datapath_enabled;
 	QDF_STATUS (*pe_ndp_event_handler)(tpAniSirGlobal mac_ctx,
 					   cds_msg_t *msg);
+	bool sub_20_support;
 } t_wma_handle, *tp_wma_handle;
 
 /**
@@ -1592,6 +1653,7 @@ struct wma_vdev_start_req {
 	bool is_quarter_rate;
 	uint32_t preferred_tx_streams;
 	uint32_t preferred_rx_streams;
+	uint8_t beacon_tx_rate;
 };
 
 /**
@@ -2077,7 +2139,9 @@ struct wmi_desc_t *wmi_desc_get(tp_wma_handle wma_handle);
 void wmi_desc_put(tp_wma_handle wma_handle, struct wmi_desc_t *wmi_desc);
 int wma_mgmt_tx_completion_handler(void *handle, uint8_t *cmpl_event_params,
 				   uint32_t len);
-void wma_set_dfs_region(tp_wma_handle wma, uint8_t dfs_region);
+int wma_mgmt_tx_bundle_completion_handler(void *handle,
+	uint8_t *cmpl_event_params, uint32_t len);
+void wma_set_dfs_region(tp_wma_handle wma, enum dfs_region dfs_region);
 uint32_t wma_get_vht_ch_width(void);
 QDF_STATUS
 wma_config_debug_module_cmd(wmi_unified_t wmi_handle, A_UINT32 param,
@@ -2110,6 +2174,10 @@ wma_indicate_err(enum ol_rx_err_type err_type,
 
 QDF_STATUS wma_ht40_stop_obss_scan(tp_wma_handle wma_handle,
 				int32_t vdev_id);
+
+void wma_process_fw_test_cmd(WMA_HANDLE handle,
+				      struct set_fwtest_params *wma_fwtest);
+
 QDF_STATUS wma_send_ht40_obss_scanind(tp_wma_handle wma,
 	struct obss_ht40_scanind *req);
 
@@ -2143,3 +2211,11 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, ol_txrx_pdev_handle pdev,
 struct wma_ini_config *wma_get_ini_handle(tp_wma_handle wma_handle);
 WLAN_PHY_MODE wma_chan_phy_mode(u8 chan, enum phy_ch_width chan_width,
 	u8 dot11_mode);
+
+#ifdef FEATURE_OEM_DATA_SUPPORT
+QDF_STATUS wma_start_oem_data_req(tp_wma_handle wma_handle,
+				  struct oem_data_req *oem_req);
+#endif
+
+QDF_STATUS wma_enable_disable_caevent_ind(tp_wma_handle wma_handle,
+				uint8_t val);

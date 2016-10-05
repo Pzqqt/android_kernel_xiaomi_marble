@@ -64,6 +64,8 @@ typedef enum {
 #define VHT_MCS_3x3_MASK    0x30
 #define VHT_MCS_2x2_MASK    0x0C
 
+#define IS_VHT_NSS_1x1(__mcs_map)	((__mcs_map & 0xFFFC) == 0xFFFC)
+
 #ifdef WLAN_FEATURE_11W
 typedef union uPmfSaQueryTimerId {
 	struct {
@@ -519,6 +521,8 @@ typedef enum {
 	WLAN_PE_DIAG_ROAM_ASSOC_COMP_EVENT,
 	RESERVED1, /* = 64 for SCAN_COMPLETE */
 	RESERVED2, /* = 65 for SCAN_RES_FOUND */
+	WLAN_PE_DIAG_ASSOC_TIMEOUT,
+	WLAN_PE_DIAG_AUTH_TIMEOUT,
 } WLAN_PE_DIAG_EVENT_TYPE;
 
 void lim_diag_event_report(tpAniSirGlobal pMac, uint16_t eventType,
@@ -570,6 +574,9 @@ void lim_check_and_reset_protection_params(tpAniSirGlobal mac_ctx);
 QDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx, uint32_t session_id,
 			       tDot11fIEExtCap *extracted_extcap, bool merge);
 
+QDF_STATUS lim_send_ies_per_band(tpAniSirGlobal mac_ctx,
+				 tpPESession session, uint8_t vdev_id);
+
 tSirRetStatus lim_strip_extcap_ie(tpAniSirGlobal mac_ctx, uint8_t *addn_ie,
 			  uint16_t *addn_ielen, uint8_t *extracted_extcap);
 void lim_update_extcap_struct(tpAniSirGlobal mac_ctx, uint8_t *buf,
@@ -600,4 +607,11 @@ static inline void lim_deactivate_and_change_timer_host_roam(
 #endif
 
 bool lim_is_robust_mgmt_action_frame(uint8_t action_category);
+bool lim_is_ext_cap_ie_present (struct s_ext_cap *ext_cap);
+QDF_STATUS lim_p2p_action_cnf(tpAniSirGlobal mac_ctx,
+			uint32_t tx_complete_success);
+void lim_update_caps_info_for_bss(tpAniSirGlobal mac_ctx,
+			uint16_t *caps, uint16_t bss_caps);
+void lim_send_set_dtim_period(tpAniSirGlobal mac_ctx, uint8_t dtim_period,
+			      tpPESession session);
 #endif /* __LIM_UTILS_H */

@@ -387,7 +387,7 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 	uint32_t addnIELenWoP2pIe = 0;
 	uint32_t retStatus;
 	tDot11fIEExtCap extracted_extcap;
-	bool extcap_present = true;
+	bool extcap_present = false;
 	tDot11fProbeResponse *prb_rsp_frm;
 	tSirRetStatus status;
 	uint16_t addn_ielen = 0;
@@ -458,8 +458,9 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 		status = lim_strip_extcap_update_struct(pMac, addIE,
 				&addn_ielen, &extracted_extcap);
 		if (eSIR_SUCCESS != status) {
-			extcap_present = false;
 			sch_log(pMac, LOG1, FL("extcap not extracted"));
+		} else {
+			extcap_present = true;
 		}
 	}
 

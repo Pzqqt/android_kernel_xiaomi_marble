@@ -155,7 +155,6 @@ typedef enum {
 	/* Event send on WPS PBC probe request is received */
 	eSAP_WPS_PBC_PROBE_REQ_EVENT,
 	eSAP_REMAIN_CHAN_READY,
-	eSAP_SEND_ACTION_CNF,
 	eSAP_DISCONNECT_ALL_P2P_CLIENT,
 	eSAP_MAC_TRIG_STOP_BSS_EVENT,
 	/*
@@ -171,7 +170,9 @@ typedef enum {
 	eSAP_DFS_CAC_START,
 	eSAP_DFS_CAC_INTERRUPTED,
 	eSAP_DFS_CAC_END,
+	eSAP_DFS_PRE_CAC_END,
 	eSAP_DFS_RADAR_DETECT,
+	eSAP_DFS_RADAR_DETECT_DURING_PRE_CAC,
 	/* Event sent when user need to get the DFS NOL from CNSS */
 	eSAP_DFS_NOL_GET,
 	/* Event sent when user need to set the DFS NOL to CNSS */
@@ -443,7 +444,6 @@ typedef struct sap_Event_s {
 		tSap_GetWPSPBCSessionEvent sapGetWPSPBCSessionEvent;
 		/*eSAP_WPS_PBC_PROBE_REQ_EVENT */
 		tSap_WPSPBCProbeReqEvent sapPBCProbeReqEvent;
-		/* eSAP_SEND_ACTION_CNF */
 		tSap_SendActionCnf sapActionCnf;
 		/* eSAP_UNKNOWN_STA_JOIN */
 		tSap_UnknownSTAJoinEvent sapUnknownSTAJoin;
@@ -492,6 +492,34 @@ struct sap_acs_cfg {
 	uint8_t    ht_sec_ch;
 	uint8_t    vht_seg0_center_ch;
 	uint8_t    vht_seg1_center_ch;
+};
+
+/*
+ * enum vendor_ie_access_policy- access policy
+ * @ACCESS_POLICY_NONE: access policy attribute is not valid
+ * @ACCESS_POLICY_RESPOND_IF_IE_IS_PRESENT: respond to probe req/assoc req
+ *  only if ie is present
+ * @ACCESS_POLICY_DONOT_RESPOND_IF_IE_IS_PRESENT: do not respond to probe req/
+ *  assoc req if ie is present
+*/
+enum vendor_ie_access_policy {
+	ACCESS_POLICY_NONE,
+	ACCESS_POLICY_RESPOND_IF_IE_IS_PRESENT,
+	ACCESS_POLICY_DONOT_RESPOND_IF_IE_IS_PRESENT,
+};
+
+/*
+ * enum sap_acs_dfs_mode- state of DFS mode
+ * @ACS_DFS_MODE_NONE: DFS mode attribute is not valid
+ * @ACS_DFS_MODE_ENABLE:  DFS mode is enabled
+ * @ACS_DFS_MODE_DISABLE: DFS mode is disabled
+ * @ACS_DFS_MODE_DEPRIORITIZE: Deprioritize DFS channels in scanning
+ */
+enum  sap_acs_dfs_mode {
+	ACS_DFS_MODE_NONE,
+	ACS_DFS_MODE_ENABLE,
+	ACS_DFS_MODE_DISABLE,
+	ACS_DFS_MODE_DEPRIORITIZE
 };
 
 typedef struct sap_Config {
@@ -553,6 +581,17 @@ typedef struct sap_Config {
 	/* buffer for addn ies comes from hostapd */
 	void *pProbeRespBcnIEsBuffer;
 	uint8_t sap_dot11mc; /* Specify if 11MC is enabled or disabled*/
+	uint8_t beacon_tx_rate;
+	uint8_t *vendor_ie;
+	enum vendor_ie_access_policy vendor_ie_access_policy;
+	uint16_t sta_inactivity_timeout;
+	uint16_t tx_pkt_fail_cnt_threshold;
+	uint8_t short_retry_limit;
+	uint8_t long_retry_limit;
+	uint8_t ampdu_size;
+	tSirMacRateSet supp_rate_set;
+	tSirMacRateSet extended_rate_set;
+	enum sap_acs_dfs_mode acs_dfs_mode;
 } tsap_Config_t;
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
@@ -818,14 +857,20 @@ uint8_t wlansap_get_state(void *p_cds_gctx);
 QDF_STATUS wlansap_start_bss(void *p_cds_gctx,
 	 tpWLAN_SAPEventCB pSapEventCallback,
 	 tsap_Config_t *pConfig, void *pUsrContext);
-
+QDF_STATUS wlan_sap_set_pre_cac_status(void *ctx, bool status,
+		tHalHandle handle);
+QDF_STATUS wlan_sap_set_chan_before_pre_cac(void *ctx,
+		uint8_t chan_before_pre_cac);
+QDF_STATUS wlan_sap_set_pre_cac_complete_status(void *ctx, bool status);
+bool wlan_sap_is_pre_cac_active(tHalHandle handle);
+QDF_STATUS wlan_sap_get_pre_cac_vdev_id(tHalHandle handle, uint8_t *vdev_id);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 uint16_t wlansap_check_cc_intf(void *Ctx);
 #endif
 QDF_STATUS wlansap_set_mac_acl(void *p_cds_gctx, tsap_Config_t *pConfig);
 QDF_STATUS wlansap_stop_bss(void *p_cds_gctx);
 QDF_STATUS wlansap_disassoc_sta(void *p_cds_gctx,
-				const uint8_t *pPeerStaMac);
+				struct tagCsrDelStaParams *p_del_sta_params);
 QDF_STATUS wlansap_deauth_sta(void *p_cds_gctx,
 			struct tagCsrDelStaParams *pDelStaParams);
 QDF_STATUS wlansap_set_channel_change_with_csa(void *p_cds_gctx,
@@ -898,7 +943,7 @@ void wlansap_extend_to_acs_range(uint8_t *startChannelNum,
 		uint8_t *endChannelNum,
 		uint8_t *bandStartChannel,
 		uint8_t *bandEndChannel);
-QDF_STATUS wlansap_get_dfs_nol(void *pSapCtx);
+QDF_STATUS wlansap_get_dfs_nol(void *pSapCtx, uint8_t *nol, uint32_t *nol_len);
 QDF_STATUS wlansap_set_dfs_nol(void *pSapCtx, eSapDfsNolType conf);
 void wlansap_populate_del_sta_params(const uint8_t *mac,
 		uint16_t reason_code,

@@ -428,7 +428,8 @@ ol_tx_classify(
 				OL_TXRX_PEER_SECURITY_MULTICAST].sec_type
 						!= htt_sec_type_wapi) &&
 				   (qdf_nbuf_is_ipv4_pkt(tx_nbuf) == true)) {
-				if (true == qdf_nbuf_is_ipv4_dhcp_pkt(
+				if (QDF_NBUF_CB_PACKET_TYPE_DHCP ==
+						QDF_NBUF_CB_GET_PACKET_TYPE(
 								tx_nbuf)) {
 					/* DHCP frame to go with
 					 * voice priority
@@ -561,7 +562,8 @@ ol_tx_classify(
 				OL_TXRX_PEER_SECURITY_UNICAST].sec_type
 					!= htt_sec_type_wapi) &&
 			   (qdf_nbuf_is_ipv4_pkt(tx_nbuf) == true)) {
-			if (true == qdf_nbuf_is_ipv4_dhcp_pkt(tx_nbuf))
+			if (QDF_NBUF_CB_PACKET_TYPE_DHCP ==
+					QDF_NBUF_CB_GET_PACKET_TYPE(tx_nbuf))
 				/* DHCP frame to go with voice priority */
 				tid = TX_DHCP_TID;
 		}
@@ -692,6 +694,12 @@ ol_tx_classify_mgmt(
 							mac_addr,
 							&peer->mac_addr) != 0) {
 					qdf_atomic_dec(&peer->ref_cnt);
+					QDF_TRACE(QDF_MODULE_ID_TXRX,
+						 QDF_TRACE_LEVEL_INFO_HIGH,
+						 "%s: peer %p peer->ref_cnt %d",
+						 __func__, peer,
+						 qdf_atomic_read
+							(&peer->ref_cnt));
 					peer = NULL;
 				}
 			}

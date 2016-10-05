@@ -200,6 +200,7 @@ bmi_get_target_info(struct bmi_target_info *targ_info,
 	switch (hif_get_bus_type(scn)) {
 	case QDF_BUS_TYPE_PCI:
 	case QDF_BUS_TYPE_SNOC:
+	case QDF_BUS_TYPE_USB:
 		status = bmi_get_target_info_message_based(targ_info, ol_ctx);
 		break;
 #ifdef HIF_SDIO

@@ -38,7 +38,9 @@
 #define DATA_RATE_11AC_MCS_MASK    0x03
 
 /* LL stats get request time out value */
-#define WLAN_WAIT_TIME_LL_STATS 5000
+#define WLAN_WAIT_TIME_LL_STATS 800
+
+#define WLAN_HDD_TGT_NOISE_FLOOR_DBM     (-96)
 
 /**
  * struct index_vht_data_rate_type - vht data rate type
@@ -87,8 +89,6 @@ struct index_data_rate_type {
  * statistics.
  */
 #define LL_STATS_EVENT_BUF_SIZE 4096
-
-void hdd_cfg80211_link_layer_stats_init(hdd_context_t *pHddCtx);
 
 /**
  * wlan_hdd_cfg80211_ll_stats_set() - set link layer stats
@@ -142,11 +142,6 @@ static inline bool hdd_link_layer_stats_supported(void)
 
 #else
 
-static inline void hdd_cfg80211_link_layer_stats_init(hdd_context_t *pHddCtx)
-{
-	return;
-}
-
 static inline void hdd_init_ll_stats_ctx(void)
 {
 	return;
@@ -174,7 +169,6 @@ int wlan_hdd_cfg80211_stats_ext_request(struct wiphy *wiphy,
 					const void *data,
 					int data_len);
 
-void wlan_hdd_cfg80211_stats_ext_init(hdd_context_t *pHddCtx);
 #else
 static inline void wlan_hdd_cfg80211_stats_ext_init(hdd_context_t *pHddCtx) {}
 #endif /* End of WLAN_FEATURE_STATS_EXT */
@@ -198,6 +192,21 @@ int wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 				  struct station_info *sinfo);
 #endif
 
+/**
+ * wlan_hdd_cfg80211_dump_station() - dump station statistics
+ * @wiphy: Pointer to wiphy
+ * @dev: Pointer to network device
+ * @idx: variable to determine whether to get stats or not
+ * @mac: Pointer to mac
+ * @sinfo: Pointer to station info
+ *
+ * Return: 0 for success, non-zero for failure
+ */
+int wlan_hdd_cfg80211_dump_station(struct wiphy *wiphy,
+				struct net_device *dev,
+				int idx, u8 *mac,
+				struct station_info *sinfo);
+
 struct net_device_stats *hdd_get_stats(struct net_device *dev);
 
 int wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
@@ -207,5 +216,10 @@ int wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 void hdd_display_hif_stats(void);
 void hdd_clear_hif_stats(void);
 
+void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
+					  tStatsExtEvent *msg);
+
+void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
+						 int indType, void *pRsp);
 #endif /* end #if !defined(WLAN_HDD_STATS_H) */
 

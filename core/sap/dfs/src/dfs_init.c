@@ -384,53 +384,67 @@ int dfs_init_radar_filters(struct ieee80211com *ic,
 	dfs_print_filters(ic);
 #endif
 	dfs->dfs_rinfo.rn_numbin5radars = numb5radars;
-	if (dfs->dfs_b5radars != NULL)
+	if (dfs->dfs_b5radars != NULL) {
 		OS_FREE(dfs->dfs_b5radars);
-
-	dfs->dfs_b5radars = (struct dfs_bin5radars *)os_malloc(NULL,
-							       numb5radars *
-							       sizeof(struct
-								      dfs_bin5radars),
-							       GFP_KERNEL);
-	if (dfs->dfs_b5radars == NULL) {
-		DFS_DPRINTK(dfs, ATH_DEBUG_DFS,
-			    "%s: cannot allocate memory for bin5 radars",
-			    __func__);
-		goto bad4;
+		dfs->dfs_b5radars = NULL;
 	}
 
-	if (ic->dfs_hw_bd_id !=  DFS_HWBD_QCA6174) {
-		dfs->dfs_b5radars_ext_seg =
-			(struct dfs_bin5radars *)os_malloc(NULL, numb5radars *
-						sizeof(struct dfs_bin5radars),
-						GFP_KERNEL);
-		if (dfs->dfs_b5radars_ext_seg == NULL) {
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-				  "%s:Fail allocate memory for ext bin5 radars",
-				  __func__);
+	if (dfs->dfs_b5radars_ext_seg != NULL) {
+		OS_FREE(dfs->dfs_b5radars_ext_seg);
+		dfs->dfs_b5radars_ext_seg = NULL;
+	}
+
+	if (numb5radars) {
+		dfs->dfs_b5radars = (struct dfs_bin5radars *)os_malloc(NULL,
+					numb5radars *
+					sizeof(struct dfs_bin5radars),
+					GFP_KERNEL);
+		if (dfs->dfs_b5radars == NULL) {
+			DFS_DPRINTK(dfs, ATH_DEBUG_DFS,
+				"%s: cannot allocate memory for bin5 radars",
+				__func__);
 			goto bad4;
 		}
-	}
 
-	for (n = 0; n < numb5radars; n++) {
-		dfs->dfs_b5radars[n].br_pulse = b5pulses[n];
-		dfs->dfs_b5radars[n].br_pulse.b5_timewindow *=
-					DFS_BIN5_TIME_WINDOW_UNITS_MULTIPLIER;
-		if (dfs->dfs_b5radars[n].br_pulse.b5_rssithresh <
-		    min_rssithresh)
-			min_rssithresh =
-				dfs->dfs_b5radars[n].br_pulse.b5_rssithresh;
-		if (dfs->dfs_b5radars[n].br_pulse.b5_maxdur > max_pulsedur)
-			max_pulsedur = dfs->dfs_b5radars[n].br_pulse.b5_maxdur;
-	}
+		if (ic->dfs_hw_bd_id !=  DFS_HWBD_QCA6174) {
+			dfs->dfs_b5radars_ext_seg =
+				(struct dfs_bin5radars *)os_malloc(NULL,
+						numb5radars *
+						sizeof(struct dfs_bin5radars),
+						GFP_KERNEL);
+			if (dfs->dfs_b5radars_ext_seg == NULL) {
+				QDF_TRACE(QDF_MODULE_ID_SAP,
+				QDF_TRACE_LEVEL_ERROR,
+				"%s:Fail allocate memory for ext bin5 radars",
+				__func__);
+				goto bad4;
+			}
+		}
 
-	if (ic->dfs_hw_bd_id !=  DFS_HWBD_QCA6174) {
 		for (n = 0; n < numb5radars; n++) {
-			dfs->dfs_b5radars_ext_seg[n].br_pulse = b5pulses[n];
+			dfs->dfs_b5radars[n].br_pulse = b5pulses[n];
+			dfs->dfs_b5radars[n].br_pulse.b5_timewindow *=
+				DFS_BIN5_TIME_WINDOW_UNITS_MULTIPLIER;
+			if (dfs->dfs_b5radars[n].br_pulse.b5_rssithresh <
+					min_rssithresh)
+				min_rssithresh =
+				dfs->dfs_b5radars[n].br_pulse.b5_rssithresh;
+
+			if (dfs->dfs_b5radars[n].br_pulse.b5_maxdur >
+					max_pulsedur)
+				max_pulsedur =
+				dfs->dfs_b5radars[n].br_pulse.b5_maxdur;
+		}
+
+		if (ic->dfs_hw_bd_id !=  DFS_HWBD_QCA6174) {
+			for (n = 0; n < numb5radars; n++) {
+				dfs->dfs_b5radars_ext_seg[n].br_pulse =
+					b5pulses[n];
 			dfs->dfs_b5radars_ext_seg[n].br_pulse.b5_timewindow *=
-					DFS_BIN5_TIME_WINDOW_UNITS_MULTIPLIER;
+				DFS_BIN5_TIME_WINDOW_UNITS_MULTIPLIER;
 			b5_rssithresh =
-			    dfs->dfs_b5radars_ext_seg[n].br_pulse.b5_rssithresh;
+			dfs->dfs_b5radars_ext_seg[n].br_pulse.b5_rssithresh;
+
 			if (b5_rssithresh < min_rssithresh)
 				min_rssithresh = b5_rssithresh;
 
@@ -439,6 +453,7 @@ int dfs_init_radar_filters(struct ieee80211com *ic,
 			if (b5_maxdur > max_pulsedur)
 				max_pulsedur = b5_maxdur;
 
+			}
 		}
 	}
 

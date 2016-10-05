@@ -82,7 +82,6 @@ static char g_log2ceil[] = {
 /*---*/
 
 /* reorder array elements are known to be non-NULL */
-#define OL_RX_REORDER_PTR_CHECK(ptr)    /* no-op */
 #define OL_RX_REORDER_LIST_APPEND(head_msdu, tail_msdu, rx_reorder_array_elem) \
 	do {								\
 		if (tail_msdu) {					\
@@ -262,15 +261,14 @@ ol_rx_reorder_release(struct ol_txrx_vdev_t *vdev,
 	head_msdu = rx_reorder_array_elem->head;
 	tail_msdu = rx_reorder_array_elem->tail;
 	rx_reorder_array_elem->head = rx_reorder_array_elem->tail = NULL;
-	OL_RX_REORDER_PTR_CHECK(head_msdu) {
+	if (head_msdu)
 		OL_RX_REORDER_MPDU_CNT_DECR(&peer->tids_rx_reorder[tid], 1);
-	}
 
 	idx = (idx_start + 1);
 	OL_RX_REORDER_IDX_WRAP(idx, win_sz, win_sz_mask);
 	while (idx != idx_end) {
 		rx_reorder_array_elem = &peer->tids_rx_reorder[tid].array[idx];
-		OL_RX_REORDER_PTR_CHECK(rx_reorder_array_elem->head) {
+		if (rx_reorder_array_elem->head) {
 			OL_RX_REORDER_MPDU_CNT_DECR(&peer->tids_rx_reorder[tid],
 						    1);
 			OL_RX_REORDER_LIST_APPEND(head_msdu, tail_msdu,
@@ -282,7 +280,7 @@ ol_rx_reorder_release(struct ol_txrx_vdev_t *vdev,
 		idx++;
 		OL_RX_REORDER_IDX_WRAP(idx, win_sz, win_sz_mask);
 	}
-	OL_RX_REORDER_PTR_CHECK(head_msdu) {
+	if (head_msdu) {
 		uint16_t seq_num;
 		htt_pdev_handle htt_pdev = vdev->pdev->htt_pdev;
 

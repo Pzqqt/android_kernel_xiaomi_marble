@@ -65,6 +65,7 @@ ifeq ($(KERNEL_BUILD), 0)
 	# builds. Other OEMs are also protected using the TARGET_BUILD_VARIANT
 	# config.
 	ifneq ($(TARGET_BUILD_VARIANT),user)
+		CONFIG_FEATURE_PKTLOG := y
 		ifeq ($(CONFIG_SLUB_DEBUG_ON),y)
 			CONFIG_FEATURE_DP_TRACE := y
 		else
@@ -78,9 +79,6 @@ ifeq ($(KERNEL_BUILD), 0)
 	CONFIG_QCACLD_WLAN_LFR2 := y
 	#Flag to enable Legacy Fast Roaming3(LFR3)
 	CONFIG_QCACLD_WLAN_LFR3 := y
-
-	#JB kernel has PMKSA patches, hence enabling this flag
-	CONFIG_PRIMA_WLAN_OKC := y
 
 	# JB kernel has CPU enablement patches, so enable
 	ifeq ($(CONFIG_ROME_IF),pci)
@@ -99,6 +97,9 @@ ifeq ($(KERNEL_BUILD), 0)
 	endif
 
 	ifeq ($(CONFIG_MOBILE_ROUTER), y)
+	CONFIG_QCACLD_FEATURE_GREEN_AP := y
+	endif
+	ifeq ($(CONFIG_ARCH_MSMCOBALT), y)
 	CONFIG_QCACLD_FEATURE_GREEN_AP := y
 	endif
 
@@ -148,10 +149,18 @@ ifeq ($(KERNEL_BUILD), 0)
 
 	#enable TSF get feature
 	CONFIG_WLAN_SYNC_TSF := y
+	#Enable DSRC feature
+
+	ifeq ($(CONFIG_QCA_WIFI_SDIO), 1)
+	CONFIG_WLAN_FEATURE_DSRC := y
+	endif
 
 ifneq ($(CONFIG_ROME_IF),sdio)
 	#Flag to enable memdump feature
 	CONFIG_WLAN_FEATURE_MEMDUMP := n
+
+	#Flag to enable DISA
+	CONFIG_WLAN_FEATURE_DISA := y
 
 	#Flag to enable Fast Path feature
 	CONFIG_WLAN_FASTPATH := y
@@ -168,12 +177,10 @@ ifneq ($(CONFIG_ROME_IF),sdio)
 	endif
 
 	# Flag to enable LRO (Large Receive Offload)
-	ifeq ($(CONFIG_CNSS_EOS), y)
-		ifeq ($(CONFIG_INET_LRO), y)
-			CONFIG_WLAN_LRO := y
-		else
-			CONFIG_WLAN_LRO := n
-		endif
+	ifeq ($(CONFIG_INET_LRO), y)
+		CONFIG_WLAN_LRO := y
+	else
+		CONFIG_WLAN_LRO := n
 	endif
 endif
 
@@ -236,6 +243,11 @@ ifeq ($(CONFIG_ROME_IF),pci)
 	CONFIG_HIF_PCI := 1
 endif
 
+#Enable USB specific APIS
+ifeq ($(CONFIG_ROME_IF),usb)
+	CONFIG_HIF_USB := 1
+endif
+
 #Enable pci read/write config functions
 ifeq ($(CONFIG_ROME_IF),pci)
 	CONFIG_ATH_PCI := 1
@@ -243,10 +255,6 @@ endif
 
 ifeq ($(CONFIG_ROME_IF),snoc)
 	CONFIG_HIF_SNOC:= 1
-endif
-
-ifeq ($(CONFIG_ROME_IF),usb)
-#CONFIG_ATH_PCI := 1
 endif
 
 ifneq ($(CONFIG_MOBILE_ROUTER), y)
@@ -287,6 +295,13 @@ CONFIG_GTK_OFFLOAD := 1
 #Enable EXT WOW
 ifeq ($(CONFIG_ROME_IF),pci)
 	CONFIG_EXT_WOW := 1
+endif
+
+# Flag to enable bus auto suspend
+ifeq ($(CONFIG_ROME_IF),pci)
+ifeq ($(CONFIG_BUS_AUTO_SUSPEND), y)
+CDEFINES += -DFEATURE_RUNTIME_PM
+endif
 endif
 
 #Set this to 1 to catch erroneous Target accesses during debug.
@@ -346,7 +361,6 @@ HDD_OBJS := 	$(HDD_SRC_DIR)/wlan_hdd_assoc.o \
 		$(HDD_SRC_DIR)/wlan_hdd_hostapd.o \
 		$(HDD_SRC_DIR)/wlan_hdd_ioctl.o \
 		$(HDD_SRC_DIR)/wlan_hdd_main.o \
-		$(HDD_SRC_DIR)/wlan_hdd_ocb.o \
 		$(HDD_SRC_DIR)/wlan_hdd_oemdata.o \
 		$(HDD_SRC_DIR)/wlan_hdd_power.o \
 		$(HDD_SRC_DIR)/wlan_hdd_regulatory.o \
@@ -358,6 +372,9 @@ HDD_OBJS := 	$(HDD_SRC_DIR)/wlan_hdd_assoc.o \
 		$(HDD_SRC_DIR)/wlan_hdd_wmm.o \
 		$(HDD_SRC_DIR)/wlan_hdd_wowl.o
 
+ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
+HDD_OBJS+=	$(HDD_SRC_DIR)/wlan_hdd_ocb.o
+endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_LPSS),y)
 HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_lpass.o
@@ -404,6 +421,10 @@ endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_MEMDUMP),y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_memdump.o
+endif
+
+ifeq ($(CONFIG_WLAN_FEATURE_DISA),y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_disa.o
 endif
 
 ifeq ($(CONFIG_LFR_SUBNET_DETECTION), y)
@@ -594,8 +615,6 @@ SME_CMN_OBJS := $(SME_SRC_DIR)/common/sme_api.o \
 		$(SME_SRC_DIR)/common/sme_power_save.o \
 		$(SME_SRC_DIR)/common/sme_trace.o
 
-SME_OEM_DATA_OBJS := $(SME_SRC_DIR)/oem_data/oem_data_api.o
-
 SME_P2P_OBJS = $(SME_SRC_DIR)/p2p/p2p_api.o
 
 SME_RRM_OBJS := $(SME_SRC_DIR)/rrm/sme_rrm.o
@@ -610,7 +629,6 @@ endif
 
 SME_OBJS :=	$(SME_CMN_OBJS) \
 		$(SME_CSR_OBJS) \
-		$(SME_OEM_DATA_OBJS) \
 		$(SME_P2P_OBJS) \
 		$(SME_QOS_OBJS) \
 		$(SME_RRM_OBJS) \
@@ -799,13 +817,12 @@ HTC_OBJS := $(WLAN_COMMON_ROOT)/$(HTC_DIR)/htc.o \
 ########### HIF ###########
 HIF_DIR := hif
 HIF_CE_DIR := $(HIF_DIR)/src/ce
-HIF_CNSS_STUB_DIR := $(HIF_DIR)/src/icnss_stub
-
 
 HIF_DISPATCHER_DIR := $(HIF_DIR)/src/dispatcher
 
 HIF_PCIE_DIR := $(HIF_DIR)/src/pcie
 HIF_SNOC_DIR := $(HIF_DIR)/src/snoc
+HIF_USB_DIR := $(HIF_DIR)/src/usb
 HIF_SDIO_DIR := $(HIF_DIR)/src/sdio
 
 HIF_SDIO_NATIVE_DIR := $(HIF_SDIO_DIR)/native_sdio
@@ -814,9 +831,7 @@ HIF_SDIO_NATIVE_SRC_DIR := $(HIF_SDIO_NATIVE_DIR)/src
 
 HIF_INC := -I$(WLAN_COMMON_INC)/$(HIF_DIR)/inc \
 	   -I$(WLAN_COMMON_INC)/$(HIF_DIR)/src \
-	   -I$(WLAN_COMMON_INC)/$(HIF_CE_DIR) \
-	   -I$(WLAN_COMMON_INC)/$(HIF_CNSS_STUB_DIR)
-
+	   -I$(WLAN_COMMON_INC)/$(HIF_CE_DIR)
 
 ifeq ($(CONFIG_HIF_PCI), 1)
 HIF_INC += -I$(WLAN_COMMON_INC)/$(HIF_DISPATCHER_DIR)
@@ -826,6 +841,11 @@ endif
 ifeq ($(CONFIG_HIF_SNOC), 1)
 HIF_INC += -I$(WLAN_COMMON_INC)/$(HIF_DISPATCHER_DIR)
 HIF_INC += -I$(WLAN_COMMON_INC)/$(HIF_SNOC_DIR)
+endif
+
+ifeq ($(CONFIG_HIF_USB), 1)
+HIF_INC += -I$(WLAN_COMMON_INC)/$(HIF_DISPATCHER_DIR)
+HIF_INC += -I$(WLAN_COMMON_INC)/$(HIF_USB_DIR)
 endif
 
 ifeq ($(CONFIG_HIF_SDIO), 1)
@@ -845,6 +865,11 @@ HIF_CE_OBJS :=  $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_bmi.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_tasklet.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/regtable.o
 
+HIF_USB_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_USB_DIR)/usbdrv.o \
+                $(WLAN_COMMON_ROOT)/$(HIF_USB_DIR)/hif_usb.o \
+                $(WLAN_COMMON_ROOT)/$(HIF_USB_DIR)/if_usb.o \
+                $(WLAN_COMMON_ROOT)/$(HIF_USB_DIR)/regtable_usb.o
+
 HIF_SDIO_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/hif_sdio_send.o \
                  $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/hif_bmi_reg_access.o \
                  $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/hif_diag_reg_access.o \
@@ -855,10 +880,6 @@ HIF_SDIO_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/hif_sdio_send.o \
 
 HIF_SDIO_NATIVE_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_SDIO_NATIVE_SRC_DIR)/hif.o \
                         $(WLAN_COMMON_ROOT)/$(HIF_SDIO_NATIVE_SRC_DIR)/hif_scatter.o
-
-ifneq ($(CONFIG_ICNSS), y)
-HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_CNSS_STUB_DIR)/icnss_stub.o
-endif
 
 ifeq ($(CONFIG_WLAN_NAPI), y)
 HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_napi.o
@@ -892,6 +913,12 @@ HIF_OBJS += $(HIF_COMMON_OBJS)
 HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/multibus_sdio.o
 endif
 
+ifeq ($(CONFIG_HIF_USB), 1)
+HIF_OBJS += $(HIF_USB_OBJS)
+HIF_OBJS += $(HIF_COMMON_OBJS)
+HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/multibus_usb.o
+endif
+
 ############ WMA ############
 WMA_DIR :=	core/wma
 
@@ -914,10 +941,12 @@ WMA_OBJS :=	$(WMA_SRC_DIR)/wma_main.o \
 		$(WMA_SRC_DIR)/wma_utils.o \
 		$(WMA_SRC_DIR)/wma_features.o \
 		$(WMA_SRC_DIR)/wma_dfs_interface.o \
-		$(WMA_SRC_DIR)/wma_ocb.o \
 		$(WMA_SRC_DIR)/wlan_qct_wma_legacy.o\
 		$(WMA_NDP_OBJS)
 
+ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
+WMA_OBJS+=	$(WMA_DIR)/wma_ocb.o
+endif
 ifeq ($(CONFIG_MPC_UT_FRAMEWORK),y)
 WMA_OBJS +=	$(WMA_SRC_DIR)/wma_utils_ut.o
 endif
@@ -940,6 +969,9 @@ PLD_OBJS +=	$(PLD_SRC_DIR)/pld_snoc.o
 endif
 ifeq ($(CONFIG_CNSS_SDIO),y)
 PLD_OBJS +=	$(PLD_SRC_DIR)/pld_sdio.o
+endif
+ifeq ($(CONFIG_USB), y)
+PLD_OBJS +=	$(PLD_SRC_DIR)/pld_usb.o
 endif
 
 TARGET_INC :=	-I$(WLAN_ROOT)/target/inc
@@ -1057,11 +1089,14 @@ CDEFINES :=	-DANI_LITTLE_BYTE_ENDIAN \
 		-DWMI_INTERFACE_EVENT_LOGGING \
 		-DATH_SUPPORT_WAPI \
 		-DWLAN_FEATURE_LINK_LAYER_STATS \
-		-DWLAN_LOGGING_SOCK_SVC_ENABLE \
 		-DFEATURE_WLAN_EXTSCAN \
 		-DWLAN_FEATURE_MBSSID \
 		-DCONFIG_160MHZ_SUPPORT \
 		-DCONFIG_MCL
+
+ifneq ($(CONFIG_HIF_USB), 1)
+CDEFINES += -DWLAN_LOGGING_SOCK_SVC_ENABLE
+endif
 
 ifeq ($(CONFIG_CNSS), y)
 ifeq ($(CONFIG_CNSS_SDIO), y)
@@ -1088,6 +1123,10 @@ endif
 
 ifeq ($(CONFIG_WLAN_FASTPATH), y)
 CDEFINES +=	-DWLAN_FEATURE_FASTPATH
+endif
+
+ifeq ($(CONFIG_FEATURE_PKTLOG), y)
+CDEFINES +=     -DFEATURE_PKTLOG
 endif
 
 ifeq ($(CONFIG_FEATURE_DP_TRACE), y)
@@ -1165,10 +1204,6 @@ ifeq ($(CONFIG_QCACLD_WLAN_LFR2),y)
 CDEFINES += -DWLAN_FEATURE_HOST_ROAM
 endif
 
-ifeq ($(CONFIG_PRIMA_WLAN_OKC),y)
-CDEFINES += -DFEATURE_WLAN_OKC
-endif
-
 ifeq ($(BUILD_DIAG_VERSION),1)
 CDEFINES += -DFEATURE_WLAN_DIAG_SUPPORT
 CDEFINES += -DFEATURE_WLAN_DIAG_SUPPORT_CSR
@@ -1182,7 +1217,6 @@ ifeq ($(CONFIG_HIF_USB), 1)
 CDEFINES += -DCONFIG_ATH_PROCFS_DIAG_SUPPORT
 CDEFINES += -DQCA_SUPPORT_OL_RX_REORDER_TIMEOUT
 CDEFINES += -DCONFIG_ATH_PCIE_MAX_PERF=0 -DCONFIG_ATH_PCIE_AWAKE_WHILE_DRIVER_LOAD=0 -DCONFIG_DISABLE_CDC_MAX_PERF_WAR=0
-CDEFINES += -DQCA_TX_HTT2_SUPPORT
 endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_11W),y)
@@ -1274,10 +1308,14 @@ CDEFINES += -DCONFIG_HL_SUPPORT \
             -DFEATURE_WLAN_FORCE_SAP_SCC
 endif
 
+ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
+CDEFINES += -DWLAN_FEATURE_DSRC
+endif
+
 #Enable USB specific APIS
 ifeq ($(CONFIG_HIF_USB), 1)
-CDEFINES += -DHIF_USB
-CDEFINES += -DCONFIG_HL_SUPPORT
+CDEFINES += -DHIF_USB \
+	    -DCONFIG_HL_SUPPORT
 endif
 
 #Enable FW logs through ini
@@ -1369,6 +1407,9 @@ ifneq (y,$(filter y,$(CONFIG_CNSS_EOS) $(CONFIG_ICNSS)))
 CDEFINES += -DWLAN_ENABLE_CHNL_MATRIX_RESTRICTION
 endif
 
+#Enable OBSS feature
+CDEFINES += -DQCA_HT_2040_COEX
+
 #features specific to mobile router use case
 ifeq ($(CONFIG_MOBILE_ROUTER), y)
 
@@ -1389,9 +1430,6 @@ CDEFINES += -DFEATURE_WLAN_STA_4ADDR_SCHEME
 
 #Disable STA-AP Mode DFS support
 CDEFINES += -DFEATURE_WLAN_STA_AP_MODE_DFS_DISABLE
-
-#Enable OBSS feature
-CDEFINES += -DQCA_HT_2040_COEX
 
 else #CONFIG_MOBILE_ROUTER
 
@@ -1512,6 +1550,10 @@ endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_MEMDUMP),y)
 CDEFINES += -DWLAN_FEATURE_MEMDUMP
+endif
+
+ifeq ($(CONFIG_WLAN_FEATURE_DISA),y)
+CDEFINES += -DWLAN_FEATURE_DISA
 endif
 
 ifeq ($(CONFIG_LFR_SUBNET_DETECTION), y)

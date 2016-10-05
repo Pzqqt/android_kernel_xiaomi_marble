@@ -513,6 +513,7 @@ typedef struct {
 	uint8_t nss;
 	uint8_t nss_2g;
 	uint8_t nss_5g;
+	uint8_t beacon_tx_rate;
 } tAddBssParams, *tpAddBssParams;
 
 /**
@@ -668,19 +669,6 @@ typedef struct {
 #ifndef OEM_DATA_RSP_SIZE
 #define OEM_DATA_RSP_SIZE 1724
 #endif
-
-/**
- * struct tStartOemDataReq - start OEM Data request
- * @selfMacAddr: self mac address
- * @status: return status
- * @oemDataReq: OEM Data request
- */
-typedef struct {
-	struct qdf_mac_addr selfMacAddr;
-	QDF_STATUS status;
-	uint8_t data_len;
-	uint8_t *data;
-} tStartOemDataReq, *tpStartOemDataReq;
 
 /**
  * struct tStartOemDataRsp - start OEM Data response
@@ -1181,6 +1169,16 @@ struct set_ie_param {
 	uint8_t nss;
 	uint8_t ie_len;
 	uint8_t *ie_ptr;
+};
+
+/**
+ * struct set_dtim_params - dtim params
+ * @session_id: SME Session ID
+ * @dtim_period: dtim period
+ */
+struct set_dtim_params {
+	uint8_t session_id;
+	uint8_t dtim_period;
 };
 
 #define DOT11_HT_IE     1

@@ -64,7 +64,7 @@
 
 #define CSR_MAX_2_4_GHZ_SUPPORTED_CHANNELS 14
 
-#define CSR_MAX_BSS_SUPPORT            300
+#define CSR_MAX_BSS_SUPPORT            512
 #define SYSTEM_TIME_MSEC_TO_USEC      1000
 
 /* This number minus 1 means the number of times a channel is scanned before a BSS is remvoed from */
@@ -74,7 +74,6 @@
 #define CSR_MIC_ERROR_TIMEOUT  (60 * QDF_MC_TIMER_TO_SEC_UNIT)  /* 60 seconds */
 #define CSR_TKIP_COUNTER_MEASURE_TIMEOUT  (60 * QDF_MC_TIMER_TO_SEC_UNIT)       /* 60 seconds */
 
-#define CSR_SCAN_RESULT_CFG_AGING_INTERVAL    (QDF_MC_TIMER_TO_SEC_UNIT)        /* 1  second */
 /* the following defines are NOT used by palTimer */
 #define CSR_SCAN_AGING_TIME_NOT_CONNECT_NO_PS 50        /* 50 seconds */
 #define CSR_SCAN_AGING_TIME_NOT_CONNECT_W_PS 300        /* 300 seconds */
@@ -91,7 +90,6 @@
 #define CSR_BSS_CAP_VALUE_WMM   1
 #define CSR_BSS_CAP_VALUE_UAPSD 1
 #define CSR_BSS_CAP_VALUE_5GHZ  2
-#define CSR_DEFAULT_ROAMING_TIME 10     /* 10 seconds */
 
 #define CSR_ROAMING_DFS_CHANNEL_DISABLED           (0)
 #define CSR_ROAMING_DFS_CHANNEL_ENABLED_NORMAL     (1)
@@ -265,9 +263,6 @@ QDF_STATUS csr_scan_copy_result_list(tpAniSirGlobal pMac, tScanResultHandle hIn,
 QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal pMac, uint32_t sessionId,
 			     tCsrRoamProfile *pProfile, uint32_t roamId,
 			     bool notify);
-QDF_STATUS csr_scan_start_result_cfg_aging_timer(tpAniSirGlobal pMac);
-QDF_STATUS csr_scan_stop_result_cfg_aging_timer(tpAniSirGlobal pMac);
-void csr_scan_stop_timers(tpAniSirGlobal pMac);
 /* To remove fresh scan commands from the pending queue */
 bool csr_scan_remove_fresh_scan_command(tpAniSirGlobal pMac, uint8_t sessionId);
 QDF_STATUS csr_scan_abort_mac_scan(tpAniSirGlobal pMac, uint8_t sessionId,
@@ -771,18 +766,10 @@ QDF_STATUS csr_roam_set_pmkid_cache(tpAniSirGlobal pMac, uint32_t sessionId,
 QDF_STATUS csr_roam_set_psk_pmk(tpAniSirGlobal pMac, uint32_t sessionId,
 				uint8_t *pPSK_PMK, size_t pmk_len);
 
-/* ---------------------------------------------------------------------------
-   *\fn csr_roam_set_key_mgmt_offload
-   *\brief sets nRoamKeyMgmtOffloadEnabled
-   *\param pMac  - pointer to global structure for MAC
-   *\param sessionId - Sme session id
-   *\param nRoamKeyMgmtOffloadEnabled - value of key mgmt offload enable
-   *\return QDF_STATUS - usually it succeed unless sessionId is not found
-   *\Note:
- *-------------------------------------------------------------------------------*/
-QDF_STATUS csr_roam_set_key_mgmt_offload(tpAniSirGlobal pMac,
-					 uint32_t sessionId,
-					 bool nRoamKeyMgmtOffloadEnabled);
+QDF_STATUS csr_roam_set_key_mgmt_offload(tpAniSirGlobal mac_ctx,
+					 uint32_t session_id,
+					 bool roam_key_mgmt_offload_enabled,
+					 bool okc_enabled);
 #endif
 /* ---------------------------------------------------------------------------
     \fn csr_roam_get_wpa_rsn_req_ie
@@ -917,20 +904,20 @@ void csr_call_roaming_completion_callback(tpAniSirGlobal pMac,
 					  tCsrRoamSession *pSession,
 					  tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 					  eCsrRoamResult roamResult);
-
-/* ---------------------------------------------------------------------------
-    \fn csr_roam_issue_disassociate_sta_cmd
-    \brief csr function that HDD calls to disassociate a associated station
-    \param sessionId    - session Id for Soft AP
-    \param pPeerMacAddr - MAC of associated station to delete
-    \param reason - reason code, be one of the tSirMacReasonCodes
-    \return QDF_STATUS
-   ---------------------------------------------------------------------------*/
+/**
+ * csr_roam_issue_disassociate_sta_cmd() - disassociate a associated station
+ * @pMac:          Pointer to global structure for MAC
+ * @sessionId:     Session Id for Soft AP
+ * @p_del_sta_params: Pointer to parameters of the station to disassoc
+ *
+ * CSR function that HDD calls to issue a deauthenticate station command
+ *
+ * Return: QDF_STATUS_SUCCESS on success or another QDF_STATUS_* on error
+ */
 QDF_STATUS csr_roam_issue_disassociate_sta_cmd(tpAniSirGlobal pMac,
 					       uint32_t sessionId,
-					       const uint8_t *pPeerMacAddr,
-					       uint32_t reason);
-
+					       struct tagCsrDelStaParams
+					       *p_del_sta_params);
 /**
  * csr_roam_issue_deauth_sta_cmd() - issue deauthenticate station command
  * @pMac:          Pointer to global structure for MAC
@@ -1081,6 +1068,9 @@ QDF_STATUS csr_roam_prepare_bss_config_from_profile(tpAniSirGlobal mac_ctx,
 void csr_roam_prepare_bss_params(tpAniSirGlobal mac_ctx, uint32_t session_id,
 		tCsrRoamProfile *profile, tSirBssDescription *bss_desc,
 		tBssConfigParam *bss_cfg, tDot11fBeaconIEs *ies);
+
+void csr_remove_bssid_from_scan_list(tpAniSirGlobal mac_ctx,
+	tSirMacAddr bssid);
 
 QDF_STATUS csr_roam_set_bss_config_cfg(tpAniSirGlobal mac_ctx,
 		uint32_t session_id,

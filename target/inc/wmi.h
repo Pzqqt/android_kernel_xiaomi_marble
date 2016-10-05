@@ -81,9 +81,16 @@ PREPACK struct host_app_area_s {
 #define WMI_SET_FIELD(_msg_buf, _msg_type, _f, _val) \
 	SET_FIELD(_msg_buf, _msg_type ## _ ## _f, _val)
 
-#define WMI_EP_APASS           0x0
+/* TYPO: leave incorrect name as an alias for the correct name */
+#define WMI_EP_APASS WMI_EP_APSS
+/* WLAN driver running on apps processor sub-system */
+#define WMI_EP_APSS            0x0
 #define WMI_EP_LPASS           0x1
 #define WMI_EP_SENSOR          0x2
+/* WLAN driver running on NANO Hub */
+#define WMI_EP_NANOHUB         0x3
+#define WMI_EP_MODEM           0x4
+#define WMI_EP_LOCATION        0x5
 
 /*
  * Control Path

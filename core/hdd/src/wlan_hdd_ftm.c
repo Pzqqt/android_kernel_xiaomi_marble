@@ -31,6 +31,9 @@
  * This file contains the WLAN factory test mode implementation
  */
 
+/* denote that this file does not allow legacy hddLog */
+#define HDD_DISALLOW_LEGACY_HDDLOG 1
+
 #include <cds_mq.h>
 #include "cds_sched.h"
 #include <cds_api.h>
@@ -45,6 +48,7 @@
 #include "i_cds_packet.h"
 #include "cds_reg_service.h"
 #include "wlan_hdd_main.h"
+#include "wlan_hdd_lpass.h"
 #include "qwlan_version.h"
 #include "wma_types.h"
 #include "cfg_api.h"
@@ -53,7 +57,6 @@
 #include "bmi.h"
 #include "ol_fw.h"
 #include "wlan_hdd_cfg80211.h"
-#include "wlan_hdd_main.h"
 #include "hif.h"
 #endif
 
@@ -76,6 +79,7 @@ typedef struct qcmbr_queue_s {
 } qcmbr_queue_t;
 LIST_HEAD(qcmbr_queue_head);
 DEFINE_SPINLOCK(qcmbr_queue_lock);
+static void wlanqcmbr_mc_process_msg(void *message);
 #endif
 #endif
 
@@ -101,8 +105,7 @@ static uint32_t wlan_ftm_postmsg(uint8_t *cmd_ptr, uint16_t cmd_len)
 
 	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA,
 						      &ftmMsg)) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, "%s: : Failed to post Msg to HAL",
-		       __func__);
+		hdd_err("Failed to post Msg to HAL");
 
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -112,595 +115,36 @@ static uint32_t wlan_ftm_postmsg(uint8_t *cmd_ptr, uint16_t cmd_len)
 }
 
 /**
- * wlan_hdd_ftm_update_tgt_cfg() - Update target configuration
- * @context: context registered with WMA
- * @param: target configuration
+ * hdd_update_cds_config_ftm() - API to update cds configuration parameters
+ * for FTM mode.
+ * @hdd_ctx: HDD Context
  *
- * This function is registered with WMA via wma_open(), and is
- * invoked via callback when target parameters are received
- * from firmware.
- *
- * Return: None
+ * Return: 0 on success; errno on failure
  */
-static void wlan_hdd_ftm_update_tgt_cfg(void *context, void *param)
+
+int hdd_update_cds_config_ftm(hdd_context_t *hdd_ctx)
 {
-	hdd_context_t *hdd_ctx = (hdd_context_t *) context;
-	struct wma_tgt_cfg *cfg = (struct wma_tgt_cfg *)param;
+	struct cds_config_info *cds_cfg;
 
-	if (!qdf_is_macaddr_zero(&cfg->hw_macaddr)) {
-		hdd_update_macaddr(hdd_ctx->config, cfg->hw_macaddr);
-	} else {
-		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       "%s: Invalid MAC passed from target, using MAC from ini file"
-		       MAC_ADDRESS_STR, __func__,
-		       MAC_ADDR_ARRAY(hdd_ctx->config->intfMacAddr[0].bytes));
-	}
-}
-
-#ifdef WLAN_FEATURE_LPSS
-static inline void hdd_is_lpass_supported(tMacOpenParameters *mac_openParms,
-						hdd_context_t *hdd_ctx)
-{
-	mac_openParms->is_lpass_enabled = hdd_ctx->config->enable_lpass_support;
-}
-#else
-static inline void hdd_is_lpass_supported(tMacOpenParameters *mac_openParms,
-						hdd_context_t *hdd_ctx)
-{ }
-#endif
-
-/**
- * wlan_ftm_cds_open() - Open the CDS Module in FTM mode
- * @p_cds_context: pointer to the global CDS context
- * @hddContextSize: Size of the HDD context to allocate.
- *
- * The wlan_ftm_cds_open() function opens the QDF Scheduler
- * Upon successful initialization:
- * - All CDS submodules should have been initialized
- * - The CDS scheduler should have opened
- * - All the WLAN SW components should have been opened. This includes MAC.
- *
- * Returns:
- *	QDF_STATUS_SUCCESS - Scheduler was successfully initialized and
- *	is ready to be used.
- *	QDF_STATUS_E_RESOURCES - System resources (other than memory)
- *	are unavailable to initialize the scheduler
- *	QDF_STATUS_E_FAILURE - Failure to initialize the scheduler
- */
-static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
-				    uint32_t hddContextSize)
-{
-	QDF_STATUS vStatus = QDF_STATUS_SUCCESS;
-	int iter = 0;
-	tSirRetStatus sirStatus = eSIR_SUCCESS;
-	tMacOpenParameters mac_openParms;
-	p_cds_contextType gp_cds_context = (p_cds_contextType) p_cds_context;
-#if  defined(QCA_WIFI_FTM)
-	qdf_device_t qdf_ctx;
-	HTC_INIT_INFO htcInfo;
-	void *pHifContext = NULL;
-	void *pHtcContext = NULL;
-	struct ol_context *ol_ctx;
-#endif
-	hdd_context_t *hdd_ctx;
-
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s: Opening CDS", __func__);
-
-	if (NULL == gp_cds_context) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Trying to open CDS without a PreOpen", __func__);
-		QDF_ASSERT(0);
-		return QDF_STATUS_E_FAILURE;
+	cds_cfg = qdf_mem_malloc(sizeof(*cds_cfg));
+	if (!cds_cfg) {
+		hdd_err("failed to allocate cds config");
+		return -ENOMEM;
 	}
 
-	/* Initialize the probe event */
-	if (qdf_event_create(&gp_cds_context->ProbeEvent) != QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Unable to init probeEvent", __func__);
-		QDF_ASSERT(0);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (qdf_event_create(&(gp_cds_context->wmaCompleteEvent)) !=
-	    QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Unable to init wmaCompleteEvent", __func__);
-		QDF_ASSERT(0);
-
-		goto err_probe_event;
-	}
-
-	/* Initialize the free message queue */
-	vStatus = cds_mq_init(&gp_cds_context->freeVosMq);
-	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
-
-		/* Critical Error ...  Cannot proceed further */
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to initialize CDS free message queue %d",
-			  __func__, vStatus);
-		QDF_ASSERT(0);
-		goto err_wma_complete_event;
-	}
-
-	for (iter = 0; iter < CDS_CORE_MAX_MESSAGES; iter++) {
-		(gp_cds_context->aMsgWrappers[iter]).pVosMsg =
-			&(gp_cds_context->aMsgBuffers[iter]);
-		INIT_LIST_HEAD(&gp_cds_context->aMsgWrappers[iter].msgNode);
-		cds_mq_put(&gp_cds_context->freeVosMq,
-			   &(gp_cds_context->aMsgWrappers[iter]));
-	}
-
-	/* Now Open the CDS Scheduler */
-	vStatus = cds_sched_open(gp_cds_context, &gp_cds_context->qdf_sched,
-				 sizeof(cds_sched_context));
-
-	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
-		/* Critical Error ...  Cannot proceed further */
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to open CDS Scheduler %d", __func__,
-			  vStatus);
-		QDF_ASSERT(0);
-		goto err_msg_queue;
-	}
-#if  defined(QCA_WIFI_FTM)
-	/* Initialize BMI and Download firmware */
-	pHifContext = cds_get_context(QDF_MODULE_ID_HIF);
-	if (!pHifContext) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			  "%s: failed to get HIF context", __func__);
-		goto err_sched_close;
-	}
-
-	ol_ctx = cds_get_context(QDF_MODULE_ID_BMI);
-	if (bmi_download_firmware(ol_ctx)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			  "%s: BMI failed to download target", __func__);
-		goto err_bmi_close;
-	}
-
-	htcInfo.pContext = ol_ctx;
-	htcInfo.TargetFailure = ol_target_failure;
-	htcInfo.TargetSendSuspendComplete = wma_target_suspend_acknowledge;
-	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-
-	/* Create HTC */
-	gp_cds_context->htc_ctx =
-		htc_create(pHifContext, &htcInfo, qdf_ctx, hdd_get_conparam());
-	if (!gp_cds_context->htc_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			  "%s: Failed to Create HTC", __func__);
-		goto err_bmi_close;
-	}
-
-	if (bmi_done(ol_ctx)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			  "%s: Failed to complete BMI phase", __func__);
-		goto err_htc_close;
-	}
-#endif /* QCA_WIFI_FTM */
-
-	/*Open the WMA module */
-	qdf_mem_set(&mac_openParms, sizeof(mac_openParms), 0);
-	mac_openParms.driverType = eDRIVER_TYPE_MFG;
-
-	hdd_ctx = (hdd_context_t *) (gp_cds_context->pHDDContext);
-	if ((NULL == hdd_ctx) || (NULL == hdd_ctx->config)) {
-		/* Critical Error ...  Cannot proceed further */
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Hdd Context is Null", __func__);
-		QDF_ASSERT(0);
-		goto err_htc_close;
-	}
-
-	mac_openParms.powersaveOffloadEnabled =
-		hdd_ctx->config->enablePowersaveOffload;
-
-	hdd_is_lpass_supported(&mac_openParms, hdd_ctx);
-
-	vStatus = wma_open(gp_cds_context,
-			   wlan_hdd_ftm_update_tgt_cfg, NULL, &mac_openParms);
-	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
-		/* Critical Error ...  Cannot proceed further */
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to open WMA module %d", __func__,
-			  vStatus);
-		QDF_ASSERT(0);
-		goto err_htc_close;
-	}
-#if  defined(QCA_WIFI_FTM)
-	hdd_update_config(hdd_ctx);
-
-	pHtcContext = cds_get_context(QDF_MODULE_ID_HTC);
-	if (!pHtcContext) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			  "%s: failed to get HTC context", __func__);
-		goto err_wma_close;
-	}
-	if (htc_wait_target(pHtcContext)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			  "%s: Failed to complete BMI phase", __func__);
-		goto err_wma_close;
-	}
-#endif
-
-	/* Now proceed to open the MAC */
-
+	cds_cfg->driver_type = eDRIVER_TYPE_MFG;
+	cds_cfg->powersave_offload_enabled =
+			hdd_ctx->config->enablePowersaveOffload;
+	hdd_lpass_populate_cds_config(cds_cfg, hdd_ctx);
 	/* UMA is supported in hardware for performing the
 	 * frame translation 802.11 <-> 802.3
 	 */
-	mac_openParms.frameTransRequired = 1;
-
-	sirStatus =
-		mac_open(&(gp_cds_context->pMACContext),
-			 gp_cds_context->pHDDContext,
-			 &mac_openParms);
-
-	if (eSIR_SUCCESS != sirStatus) {
-		/* Critical Error ...  Cannot proceed further */
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to open MAC %d", __func__, sirStatus);
-		QDF_ASSERT(0);
-		goto err_wma_close;
-	}
-#ifndef QCA_WIFI_FTM
-	/* Now proceed to open the SME */
-	vStatus = sme_open(gp_cds_context->pMACContext);
-	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
-		/* Critical Error ...  Cannot proceed further */
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to open SME %d", __func__, vStatus);
-		goto err_mac_close;
-	}
-
-	vStatus = sme_init_chan_list(gp_cds_context->pMACContext,
-				     hdd_ctx->reg.alpha2, hdd_ctx->reg.cc_src);
-	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to init sme channel list", __func__);
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "%s: CDS successfully Opened", __func__);
-		return QDF_STATUS_SUCCESS;
-	}
-#else
-	return QDF_STATUS_SUCCESS;
-#endif
-
-#ifndef QCA_WIFI_FTM
-err_mac_close:
-#endif
-	mac_close(gp_cds_context->pMACContext);
-
-err_wma_close:
-	wma_close(gp_cds_context);
-
-err_htc_close:
-#if  defined(QCA_WIFI_FTM)
-	if (gp_cds_context->htc_ctx) {
-		htc_destroy(gp_cds_context->htc_ctx);
-		gp_cds_context->htc_ctx = NULL;
-	}
-
-err_bmi_close:
-	bmi_cleanup(ol_ctx);
-#endif /* QCA_WIFI_FTM */
-
-err_sched_close:
-	cds_sched_close(gp_cds_context);
-err_msg_queue:
-	cds_mq_deinit(&gp_cds_context->freeVosMq);
-
-err_wma_complete_event:
-	qdf_event_destroy(&gp_cds_context->wmaCompleteEvent);
-
-err_probe_event:
-	qdf_event_destroy(&gp_cds_context->ProbeEvent);
-
-	return QDF_STATUS_E_FAILURE;
-
-} /* wlan_ftm_cds_open() */
-
-/**
- * wlan_ftm_cds_close() - Close the QDF Module in FTM mode
- * @cds_context:  context of cds
- *
- * The wlan_ftm_cds_close() function closes the QDF Module
- *
- * Return: QDF_STATUS_SUCCESS - successfully closed
- */
-static QDF_STATUS wlan_ftm_cds_close(v_CONTEXT_t cds_context)
-{
-	QDF_STATUS qdf_status;
-	p_cds_contextType gp_cds_context = (p_cds_contextType) cds_context;
-
-#ifndef QCA_WIFI_FTM
-	qdf_status = sme_close(((p_cds_contextType) cds_context)->pMACContext);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to close SME %d", __func__, qdf_status);
-		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-	}
-#endif
-
-	qdf_status = mac_close(((p_cds_contextType) cds_context)->pMACContext);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to close MAC %d", __func__, qdf_status);
-		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-	}
-
-	((p_cds_contextType) cds_context)->pMACContext = NULL;
-
-
-	qdf_status = wma_close(cds_context);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to close WMA %d", __func__, qdf_status);
-		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-	}
-#if  defined(QCA_WIFI_FTM)
-	if (gp_cds_context->htc_ctx) {
-		htc_stop(gp_cds_context->htc_ctx);
-		htc_destroy(gp_cds_context->htc_ctx);
-		gp_cds_context->htc_ctx = NULL;
-	}
-	qdf_status = wma_wmi_service_close(cds_context);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to close wma_wmi_service", __func__);
-		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-	}
-
-	hif_disable_isr(gp_cds_context->pHIFContext);
-#endif
-
-	cds_mq_deinit(&((p_cds_contextType) cds_context)->freeVosMq);
-
-	qdf_status = qdf_event_destroy(&gp_cds_context->ProbeEvent);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to destroy ProbeEvent %d", __func__,
-			  qdf_status);
-		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-	}
-
-	qdf_status = qdf_event_destroy(&gp_cds_context->wmaCompleteEvent);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to destroy wmaCompleteEvent %d", __func__,
-			  qdf_status);
-		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * cds_ftm_pre_start() - Pre-start CDS Module in FTM Mode
- * @cds_context: The CDS context
- *
- * The cds_ftm_pre_start() function performs all pre-start activities
- * in FTM mode.
- *
- * Return: QDF_STATUS_SUCCESS if pre-start was successful, an
- *	   appropriate QDF_STATUS_E_** error code otherwise
- */
-static QDF_STATUS cds_ftm_pre_start(v_CONTEXT_t cds_context)
-{
-	QDF_STATUS vStatus = QDF_STATUS_SUCCESS;
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	p_cds_contextType p_cds_context = (p_cds_contextType) cds_context;
-#if  defined(QCA_WIFI_FTM)
-	p_cds_contextType gp_cds_context =
-		cds_get_global_context();
-#endif
-
-	QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO, "cds prestart");
-	if (NULL == p_cds_context->pWMAContext) {
-		QDF_ASSERT(0);
-		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
-			  "%s: WMA NULL context", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	/* Reset WMA wait event */
-	qdf_event_reset(&p_cds_context->wmaCompleteEvent);
-
-	/*call WMA pre start */
-	vStatus = wma_pre_start(p_cds_context);
-	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
-		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
-			  "Failed to WMA prestart ");
-		QDF_ASSERT(0);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	/* Need to update time out of complete */
-	qdf_status = qdf_wait_single_event(&p_cds_context->wmaCompleteEvent,
-					HDD_FTM_WMA_PRE_START_TIMEOUT);
-	if (qdf_status != QDF_STATUS_SUCCESS) {
-		if (qdf_status == QDF_STATUS_E_TIMEOUT) {
-			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Timeout occurred before WMA complete",
-				  __func__);
-		} else {
-			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-				  "%s: wma_pre_start reporting  other error",
-				  __func__);
-		}
-		QDF_ASSERT(0);
-		return QDF_STATUS_E_FAILURE;
-	}
-#if  defined(QCA_WIFI_FTM)
-	vStatus = htc_start(gp_cds_context->htc_ctx);
-	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
-		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_FATAL,
-			  "Failed to Start HTC");
-		QDF_ASSERT(0);
-		return QDF_STATUS_E_FAILURE;
-	}
-	wma_wait_for_ready_event(gp_cds_context->pWMAContext);
-#endif /* QCA_WIFI_FTM */
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * wlan_hdd_ftm_open() - Open HDD in FTM Mode
- * @hdd_ctx: global HDD context
- *
- * The function hdd_wlan_startup calls this function to initialize the
- * FTM specific modules.
- *
- * Return: 0 on success, non-zero on error
- */
-int wlan_hdd_ftm_open(hdd_context_t *hdd_ctx)
-{
-	QDF_STATUS vStatus = QDF_STATUS_SUCCESS;
-	p_cds_contextType p_cds_context = NULL;
-
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s: Opening CDS", __func__);
-
-	p_cds_context = cds_get_global_context();
-
-	if (NULL == p_cds_context) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Trying to open CDS without a PreOpen", __func__);
-		QDF_ASSERT(0);
-		goto err_qdf_status_failure;
-	}
-
-	vStatus = wlan_ftm_cds_open(p_cds_context, 0);
-
-	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
-		hddLog(QDF_TRACE_LEVEL_FATAL, "%s: cds_open failed", __func__);
-		goto err_qdf_status_failure;
-	}
-
-	/*
-	 * only needed to start WMA, which happens in wlan_hdd_ftm_start()
-	 */
-
-	/* Save the hal context in Adapter */
-	hdd_ctx->hHal =
-		(tHalHandle) cds_get_context(QDF_MODULE_ID_SME);
-
-	if (NULL == hdd_ctx->hHal) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, "%s: HAL context is null",
-		       __func__);
-		goto err_ftm_close;
-	}
+	cds_cfg->frame_xln_reqd = 1;
+	cds_cfg->sub_20_channel_width = WLAN_SUB_20_CH_WIDTH_NONE;
+	cds_init_ini_config(cds_cfg);
 
 	return 0;
-
-err_ftm_close:
-	wlan_ftm_cds_close(p_cds_context);
-
-err_qdf_status_failure:
-	return -EPERM;
 }
-
-/**
- * hdd_ftm_service_registration() - Register FTM service
- * @hdd_ctx: global HDD context
- *
- * Return: 0 on success, non-zero on failure
- */
-static int hdd_ftm_service_registration(hdd_context_t *hdd_ctx)
-{
-	hdd_adapter_t *adapter;
-	adapter = hdd_open_adapter(hdd_ctx, QDF_FTM_MODE, "wlan%d",
-				    wlan_hdd_get_intf_addr(hdd_ctx),
-					NET_NAME_UNKNOWN, false);
-	if (NULL == adapter) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, "%s: hdd_open_adapter failed",
-		       __func__);
-		goto err_adapter_open_failure;
-	}
-
-	hdd_ctx->ftm.ftm_state = WLAN_FTM_INITIALIZED;
-
-	return 0;
-
-err_adapter_open_failure:
-
-	return -EPERM;
-}
-
-/**
- * wlan_ftm_stop() - Stop HDD in FTM mode
- * @hdd_ctx: pointer to HDD context
- *
- * This function stops the following modules
- * WMA
- *
- * Return: 0 on success, non-zero on failure
- */
-static int wlan_ftm_stop(hdd_context_t *hdd_ctx)
-{
-	if (hdd_ctx->ftm.ftm_state != WLAN_FTM_STARTED) {
-		hddLog(LOGP, FL("FTM has not started. No need to stop"));
-		return -EPERM;
-	}
-	wma_stop(hdd_ctx->pcds_context, HAL_STOP_TYPE_RF_KILL);
-	return 0;
-}
-
-/**
- * wlan_hdd_ftm_close() - Close HDD in FTM mode
- * @hdd_ctx: pointer to HDD context
- *
- * Return: 0 on success, non-zero on failure
- */
-int wlan_hdd_ftm_close(hdd_context_t *hdd_ctx)
-{
-	QDF_STATUS qdf_status;
-	v_CONTEXT_t cds_context = hdd_ctx->pcds_context;
-
-	hdd_adapter_t *adapter = hdd_get_adapter(hdd_ctx, QDF_FTM_MODE);
-	ENTER();
-	if (adapter == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_FATAL,
-			  "%s:adapter is NULL", __func__);
-		return -ENXIO;
-	}
-
-	if (WLAN_FTM_STARTED == hdd_ctx->ftm.ftm_state) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_FATAL,
-			  "%s: Ftm has been started. stopping ftm", __func__);
-		wlan_ftm_stop(hdd_ctx);
-	}
-
-	hdd_close_all_adapters(hdd_ctx, false);
-
-	qdf_status = cds_sched_close(cds_context);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to close CDS Scheduler", __func__);
-		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-	}
-	/* Close CDS */
-	wlan_ftm_cds_close(cds_context);
-
-#if defined(QCA_WIFI_FTM) && defined(LINUX_QCMBR)
-	spin_lock_bh(&qcmbr_queue_lock);
-	if (!list_empty(&qcmbr_queue_head)) {
-		qcmbr_queue_t *msg_buf, *tmp_buf;
-		list_for_each_entry_safe(msg_buf, tmp_buf, &qcmbr_queue_head,
-					 list) {
-			list_del(&msg_buf->list);
-			kfree(msg_buf);
-		}
-	}
-	spin_unlock_bh(&qcmbr_queue_lock);
-#endif
-
-	return 0;
-
-}
-
 
 /**
  * hdd_ftm_mc_process_msg() - Process FTM mailbox message
@@ -710,7 +154,7 @@ int wlan_hdd_ftm_close(hdd_context_t *hdd_ctx)
  *
  * Return: void
  */
-static void hdd_ftm_mc_process_msg(void *message)
+void hdd_ftm_mc_process_msg(void *message)
 {
 	void *data;
 	uint32_t data_len;
@@ -732,107 +176,6 @@ static void hdd_ftm_mc_process_msg(void *message)
 #endif
 	return;
 }
-
-/**
- * wlan_hdd_ftm_start() - Start HDD in FTM mode
- * @hdd_ctx: Global HDD context
- *
- * This function  starts the following modules.
- * 1) WMA Start.
- * 2) HTC Start.
- * 3) MAC Start to download the firmware.
- *
- * Return: 0 for success, non zero for failure
- */
-static int wlan_hdd_ftm_start(hdd_context_t *hdd_ctx)
-{
-	QDF_STATUS vStatus = QDF_STATUS_SUCCESS;
-	p_cds_contextType p_cds_context =
-		(p_cds_contextType) (hdd_ctx->pcds_context);
-
-	if (WLAN_FTM_STARTED == hdd_ctx->ftm.ftm_state) {
-		return 0;
-	}
-
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Starting CLD SW", __func__);
-
-	/* We support only one instance for now ... */
-	if (p_cds_context == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: mismatch in context", __func__);
-		goto err_status_failure;
-	}
-
-	if (p_cds_context->pMACContext == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: MAC NULL context", __func__);
-		goto err_status_failure;
-	}
-
-	/* Vos preStart is calling */
-	if (!QDF_IS_STATUS_SUCCESS(cds_ftm_pre_start(hdd_ctx->pcds_context))) {
-		hddLog(QDF_TRACE_LEVEL_FATAL, "%s: cds_pre_enable failed",
-		       __func__);
-		goto err_status_failure;
-	}
-
-	sme_register_ftm_msg_processor(hdd_ctx->hHal, hdd_ftm_mc_process_msg);
-
-	vStatus = wma_start(p_cds_context);
-	if (vStatus != QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to start WMA", __func__);
-		goto err_status_failure;
-	}
-
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: MAC correctly started", __func__);
-
-	if (hdd_ftm_service_registration(hdd_ctx)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed", __func__);
-		goto err_ftm_service_reg;
-	}
-
-	hdd_ctx->ftm.ftm_state = WLAN_FTM_STARTED;
-
-	return 0;
-
-err_ftm_service_reg:
-	wlan_hdd_ftm_close(hdd_ctx);
-
-err_status_failure:
-
-	return -EPERM;
-
-}
-
-#if  defined(QCA_WIFI_FTM)
-/**
- * hdd_ftm_start() - Start HDD in FTM mode
- * @hdd_ctx: Global HDD context
- *
- * Return: 0 for success, non zero for failure
- */
-int hdd_ftm_start(hdd_context_t *hdd_ctx)
-{
-	return wlan_hdd_ftm_start(hdd_ctx);
-}
-#endif
-
-#if  defined(QCA_WIFI_FTM)
-/**
- * hdd_ftm_stop() - Stop HDD in FTM mode
- * @hdd_ctx: Global HDD context
- *
- * Return: 0 for success, non zero for failure
- */
-int hdd_ftm_stop(hdd_context_t *hdd_ctx)
-{
-	return wlan_ftm_stop(hdd_ctx);
-}
-#endif
 
 #if  defined(QCA_WIFI_FTM)
 #if defined(LINUX_QCMBR)
@@ -1023,16 +366,14 @@ QDF_STATUS wlan_hdd_ftm_testmode_cmd(void *data, int len)
 		   qdf_mem_malloc(sizeof(*cmd_data));
 
 	if (!cmd_data) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  ("Failed to allocate FTM command data"));
+		hdd_err("Failed to allocate FTM command data");
 		return QDF_STATUS_E_NOMEM;
 	}
 
 	cmd_data->data = qdf_mem_malloc(len);
 
 	if (!cmd_data->data) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  ("Failed to allocate FTM command data buffer"));
+		hdd_err("Failed to allocate FTM command data buffer");
 		qdf_mem_free(cmd_data);
 		return QDF_STATUS_E_NOMEM;
 	}

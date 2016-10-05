@@ -83,7 +83,7 @@ hdd_translate_wpa_to_csr_encryption_type(uint8_t cipher_suite[4]);
 
 QDF_STATUS hdd_softap_sta_deauth(hdd_adapter_t *,
 		struct tagCsrDelStaParams *);
-void hdd_softap_sta_disassoc(hdd_adapter_t *, uint8_t *);
+void hdd_softap_sta_disassoc(hdd_adapter_t *, struct tagCsrDelStaParams *);
 void hdd_softap_tkip_mic_fail_counter_measure(hdd_adapter_t *, bool);
 int hdd_softap_unpack_ie(tHalHandle halHandle,
 			 eCsrEncryptionType *pEncryptType,

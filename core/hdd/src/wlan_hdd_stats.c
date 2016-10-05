@@ -962,7 +962,7 @@ static void hdd_link_layer_process_radio_stats(hdd_adapter_t *pAdapter,
  *
  * Return: None
  */
-static void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
+void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
 							int indType, void *pRsp)
 {
 	hdd_context_t *pHddCtx = (hdd_context_t *) ctx;
@@ -1069,18 +1069,6 @@ static void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
 	}
 
 	return;
-}
-
-/**
- * hdd_cfg80211_link_layer_stats_init() - Initialize link layer stats
- * @pHddCtx: Pointer to hdd context
- *
- * Return: None
- */
-void hdd_cfg80211_link_layer_stats_init(hdd_context_t *pHddCtx)
-{
-	sme_set_link_layer_stats_ind_cb(pHddCtx->hHal,
-					wlan_hdd_cfg80211_link_layer_stats_callback);
 }
 
 const struct
@@ -1234,6 +1222,7 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 	tSirLLStatsGetReq LinkLayerStatsGetReq;
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	hdd_station_ctx_t *hddstactx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	int status;
 
 	ENTER_DEV(dev);
@@ -1251,6 +1240,11 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 		hdd_warn("isLinkLayerStatsSet: %d",
 			 pAdapter->isLinkLayerStatsSet);
 		return -EINVAL;
+	}
+
+	if (hddstactx->hdd_ReassocScenario) {
+		hdd_err("Roaming in progress, so unable to proceed this request");
+		return -EBUSY;
 	}
 
 	if (nla_parse(tb_vendor, QCA_WLAN_VENDOR_ATTR_LL_STATS_GET_MAX,
@@ -1557,7 +1551,7 @@ int wlan_hdd_cfg80211_stats_ext_request(struct wiphy *wiphy,
  *
  * Return: nothing
  */
-static void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
+void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
 						 tStatsExtEvent *msg)
 {
 
@@ -1614,18 +1608,6 @@ static void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
 	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
 
 }
-
-/**
- * wlan_hdd_cfg80211_stats_ext_init() - ext stats init
- * @ctx: Pointer to HDD context
- *
- * Return: nothing
- */
-void wlan_hdd_cfg80211_stats_ext_init(hdd_context_t *pHddCtx)
-{
-	sme_stats_ext_register_callback(pHddCtx->hHal,
-					wlan_hdd_cfg80211_stats_ext_callback);
-}
 #endif /* End of WLAN_FEATURE_STATS_EXT */
 
 /**
@@ -1657,6 +1639,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	uint8_t MCSRates[SIZE_OF_BASIC_MCS_SET];
 	uint32_t MCSLeng = SIZE_OF_BASIC_MCS_SET;
 	uint16_t maxRate = 0;
+	int8_t snr = 0;
 	uint16_t myRate;
 	uint16_t currentRate = 0;
 	uint8_t maxSpeedMCS = 0;
@@ -1667,6 +1650,9 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	int status, mode = 0, maxHtIdx;
 	struct index_vht_data_rate_type *supported_vht_mcs_rate;
 	struct index_data_rate_type *supported_mcs_rate;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
+	bool rssi_stats_valid = false;
+#endif
 
 	uint32_t vht_mcs_map;
 	enum eDataRate11ACMaxMcs vhtMaxMcs;
@@ -1688,6 +1674,12 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 
 	if (true == pHddStaCtx->hdd_ReassocScenario) {
 		hdd_notice("Roaming is in progress, cannot continue with this request");
+		/*
+		 * supplicant reports very low rssi to upper layer
+		 * and handover happens to cellular.
+		 * send the cached rssi when get_station
+		 */
+		sinfo->signal = pAdapter->rssi;
 		return 0;
 	}
 
@@ -1697,19 +1689,24 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 		return status;
 
 	wlan_hdd_get_rssi(pAdapter, &sinfo->signal);
+	wlan_hdd_get_snr(pAdapter, &snr);
+	pHddStaCtx->conn_info.signal = sinfo->signal;
+	pHddStaCtx->conn_info.noise =
+		pHddStaCtx->conn_info.signal - snr;
+
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
 	sinfo->filled |= STATION_INFO_SIGNAL;
 #else
 	sinfo->filled |= BIT(NL80211_STA_INFO_SIGNAL);
 #endif
 
-#ifdef WLAN_FEATURE_LPSS
-	if (!pAdapter->rssi_send) {
-		pAdapter->rssi_send = true;
-		if (cds_is_driver_unloading())
-			wlan_hdd_send_status_pkg(pAdapter, pHddStaCtx, 1, 1);
-	}
-#endif
+	/*
+	 * we notify connect to lpass here instead of during actual
+	 * connect processing because rssi info is not accurate during
+	 * actual connection.  lpass will ensure the notification is
+	 * only processed once per association.
+	 */
+	hdd_lpass_notify_connect(pAdapter);
 
 	wlan_hdd_get_station_stats(pAdapter);
 	rate_flags = pAdapter->hdd_stats.ClassA_stat.tx_rate_flags;
@@ -1738,6 +1735,11 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 		 (int)pCfg->linkSpeedRssiHigh, (int)pCfg->linkSpeedRssiMid,
 		 (int)pCfg->linkSpeedRssiLow, (int)rate_flags,
 		 (int)pAdapter->hdd_stats.ClassA_stat.mcs_index);
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 0, 0)) || defined(WITH_BACKPORTS)
+	/* assume basic BW. anything else will override this later */
+	sinfo->txrate.bw = RATE_INFO_BW_20;
+#endif
 
 	if (eHDD_LINK_SPEED_REPORT_ACTUAL != pCfg->reportMaxLinkSpeed) {
 		/* we do not want to necessarily report the current speed */
@@ -2110,6 +2112,9 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	sinfo->rx_bytes = pAdapter->stats.rx_bytes;
 	sinfo->rx_packets = pAdapter->stats.rx_packets;
 
+	qdf_mem_copy(&pHddStaCtx->conn_info.txrate,
+		     &sinfo->txrate, sizeof(sinfo->txrate));
+
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
 	sinfo->filled |= STATION_INFO_TX_BITRATE |
 			 STATION_INFO_TX_BYTES   |
@@ -2136,6 +2141,35 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 		hdd_notice("Reporting MCS rate %d flags 0x%x pkt cnt tx %d rx %d",
 			sinfo->txrate.mcs, sinfo->txrate.flags,
 			sinfo->tx_packets, sinfo->rx_packets);
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
+	sinfo->signal_avg = WLAN_HDD_TGT_NOISE_FLOOR_DBM;
+	for (i = 0; i < NUM_CHAINS_MAX; i++) {
+		sinfo->chain_signal_avg[i] =
+			   pAdapter->hdd_stats.per_chain_rssi_stats.rssi[i];
+		sinfo->chains |= 1 << i;
+		if (sinfo->chain_signal_avg[i] > sinfo->signal_avg &&
+				   sinfo->chain_signal_avg[i] != 0)
+			sinfo->signal_avg = sinfo->chain_signal_avg[i];
+
+		hdd_info("RSSI for chain %d, vdev_id %d is %d",
+			i, pAdapter->sessionId, sinfo->chain_signal_avg[i]);
+
+		if (!rssi_stats_valid && sinfo->chain_signal_avg[i])
+			rssi_stats_valid = true;
+	}
+
+	if (rssi_stats_valid) {
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
+		sinfo->filled |= STATION_INFO_CHAIN_SIGNAL_AVG;
+		sinfo->filled |= STATION_INFO_SIGNAL_AVG;
+#else
+		sinfo->filled |= BIT(NL80211_STA_INFO_CHAIN_SIGNAL_AVG);
+		sinfo->filled |= BIT(NL80211_STA_INFO_SIGNAL_AVG);
+#endif
+	}
+#endif
+
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_GET_STA,
@@ -2169,6 +2203,54 @@ int wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	ret = __wlan_hdd_cfg80211_get_station(wiphy, dev, mac, sinfo);
 	cds_ssr_unprotect(__func__);
 
+	return ret;
+}
+
+/**
+ * __wlan_hdd_cfg80211_dump_station() - dump station statistics
+ * @wiphy: Pointer to wiphy
+ * @dev: Pointer to network device
+ * @idx: variable to determine whether to get stats or not
+ * @mac: Pointer to mac
+ * @sinfo: Pointer to station info
+ *
+ * Return: 0 for success, non-zero for failure
+ */
+static int __wlan_hdd_cfg80211_dump_station(struct wiphy *wiphy,
+				struct net_device *dev,
+				int idx, u8 *mac,
+				struct station_info *sinfo)
+{
+	hdd_context_t *hdd_ctx = (hdd_context_t *) wiphy_priv(wiphy);
+
+	hdd_debug("%s: idx %d", __func__, idx);
+	if (idx != 0)
+		return -ENOENT;
+	qdf_mem_copy(mac, hdd_ctx->config->intfMacAddr[0].bytes,
+				QDF_MAC_ADDR_SIZE);
+	return __wlan_hdd_cfg80211_get_station(wiphy, dev, mac, sinfo);
+}
+
+/**
+ * wlan_hdd_cfg80211_dump_station() - dump station statistics
+ * @wiphy: Pointer to wiphy
+ * @dev: Pointer to network device
+ * @idx: variable to determine whether to get stats or not
+ * @mac: Pointer to mac
+ * @sinfo: Pointer to station info
+ *
+ * Return: 0 for success, non-zero for failure
+ */
+int wlan_hdd_cfg80211_dump_station(struct wiphy *wiphy,
+				struct net_device *dev,
+				int idx, u8 *mac,
+				struct station_info *sinfo)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_dump_station(wiphy, dev, idx, mac, sinfo);
+	cds_ssr_unprotect(__func__);
 	return ret;
 }
 

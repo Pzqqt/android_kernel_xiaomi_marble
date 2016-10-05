@@ -318,25 +318,34 @@ static uint32_t lim_prepare_tdls_frame_header(tpAniSirGlobal pMac, uint8_t *pFra
 	return header_offset;
 }
 
-/*
- * TX Complete for Management frames
+/**
+ * lim_mgmt_tdls_tx_complete - callback to indicate Tx completion
+ * @mac_ctx: pointer to mac structure
+ * @tx_complete: indicates tx sucess/failure
+ *
+ * function will be invoked on receiving tx completion indication
+ *
+ * return: success: eHAL_STATUS_SUCCESS failure: eHAL_STATUS_FAILURE
  */
-QDF_STATUS lim_mgmt_tx_complete(tpAniSirGlobal pMac, uint32_t txCompleteSuccess)
+QDF_STATUS lim_mgmt_tdls_tx_complete(tpAniSirGlobal mac_ctx,
+				     uint32_t tx_complete)
 {
-	tpPESession psessionEntry = NULL;
+	tpPESession session_entry = NULL;
 
-	if (0xff != pMac->lim.mgmtFrameSessionId) {
-		psessionEntry =
-			pe_find_session_by_session_id(pMac,
-						      pMac->lim.mgmtFrameSessionId);
-		if (NULL == psessionEntry) {
-			lim_log(pMac, LOGE, FL("sessionID %d is not found"),
-				pMac->lim.mgmtFrameSessionId);
+	lim_log(mac_ctx, LOG1, FL("tdls_frm_session_id %x tx_complete %x"),
+		mac_ctx->lim.tdls_frm_session_id, tx_complete);
+
+	if (NO_SESSION != mac_ctx->lim.tdls_frm_session_id) {
+		session_entry = pe_find_session_by_session_id(mac_ctx,
+					mac_ctx->lim.tdls_frm_session_id);
+		if (!session_entry) {
+			lim_log(mac_ctx, LOGE, FL("session id %d is not found"),
+				mac_ctx->lim.tdls_frm_session_id);
 			return QDF_STATUS_E_FAILURE;
 		}
-		lim_send_sme_mgmt_tx_completion(pMac, psessionEntry,
-						txCompleteSuccess);
-		pMac->lim.mgmtFrameSessionId = 0xff;
+		lim_send_sme_mgmt_tx_completion(mac_ctx, session_entry,
+						tx_complete);
+		mac_ctx->lim.tdls_frm_session_id = NO_SESSION;
 	}
 	return QDF_STATUS_SUCCESS;
 }
@@ -510,17 +519,17 @@ tSirRetStatus lim_send_tdls_dis_req_frame(tpAniSirGlobal pMac,
 		lim_trace_tdls_action_string(SIR_MAC_TDLS_DIS_REQ),
 		MAC_ADDR_ARRAY(peer_mac.bytes));
 
-	pMac->lim.mgmtFrameSessionId = psessionEntry->peSessionId;
+	pMac->lim.tdls_frm_session_id = psessionEntry->peSessionId;
 	qdf_status = wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
 					      TXRX_FRM_802_11_DATA,
 					      ANI_TXDIR_TODS,
 					      TID_AC_VI,
 					      lim_tx_complete, pFrame,
-					      lim_mgmt_tx_complete,
+					      lim_mgmt_tdls_tx_complete,
 					      HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME,
 					      smeSessionId, false, 0);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		pMac->lim.mgmtFrameSessionId = 0xff;
+		pMac->lim.tdls_frm_session_id = NO_SESSION;
 		lim_log(pMac, LOGE,
 			FL("could not send TDLS Discovery Request frame"));
 		return eSIR_FAILURE;
@@ -698,8 +707,9 @@ static tSirRetStatus lim_send_tdls_dis_rsp_frame(tpAniSirGlobal pMac,
 
 	/* populate supported rate and ext supported rate IE */
 	if (eSIR_FAILURE == populate_dot11f_rates_tdls(pMac,
-						&tdlsDisRsp.SuppRates,
-						&tdlsDisRsp.ExtSuppRates))
+					&tdlsDisRsp.SuppRates,
+					&tdlsDisRsp.ExtSuppRates,
+					psessionEntry->currentOperChannel))
 		lim_log(pMac, LOGE,
 			FL("could not populate supported data rates"));
 
@@ -827,7 +837,7 @@ static tSirRetStatus lim_send_tdls_dis_rsp_frame(tpAniSirGlobal pMac,
 		lim_trace_tdls_action_string(SIR_MAC_TDLS_DIS_RSP),
 		MAC_ADDR_ARRAY(peer_mac.bytes));
 
-	pMac->lim.mgmtFrameSessionId = psessionEntry->peSessionId;
+	pMac->lim.tdls_frm_session_id = psessionEntry->peSessionId;
 	/*
 	 * Transmit Discovery response and watch if this is delivered to
 	 * peer STA.
@@ -841,11 +851,11 @@ static tSirRetStatus lim_send_tdls_dis_rsp_frame(tpAniSirGlobal pMac,
 					      ANI_TXDIR_IBSS,
 					      0,
 					      lim_tx_complete, pFrame,
-					      lim_mgmt_tx_complete,
+					      lim_mgmt_tdls_tx_complete,
 					      HAL_USE_SELF_STA_REQUESTED_MASK,
 					      smeSessionId, false, 0);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		pMac->lim.mgmtFrameSessionId = 0xff;
+		pMac->lim.tdls_frm_session_id = NO_SESSION;
 		lim_log(pMac, LOGE,
 			FL("could not send TDLS Discovery Response frame!"));
 		return eSIR_FAILURE;
@@ -924,7 +934,7 @@ wma_tx_frame_with_tx_complete_send(tpAniSirGlobal pMac, void *pPacket,
 					  ANI_TXDIR_TODS,
 					  tid,
 					  lim_tx_complete, pFrame,
-					  lim_mgmt_tx_complete,
+					  lim_mgmt_tdls_tx_complete,
 					  HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME,
 					  smeSessionId, flag, 0);
 }
@@ -943,7 +953,7 @@ wma_tx_frame_with_tx_complete_send(tpAniSirGlobal pMac, void *pPacket,
 					  ANI_TXDIR_TODS,
 					  tid,
 					  lim_tx_complete, pFrame,
-					  lim_mgmt_tx_complete,
+					  lim_mgmt_tdls_tx_complete,
 					  HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME,
 					  smeSessionId, false, 0);
 }
@@ -1004,8 +1014,9 @@ tSirRetStatus lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
 
 	/* populate supported rate and ext supported rate IE */
 	if (eSIR_FAILURE == populate_dot11f_rates_tdls(pMac,
-						&tdlsSetupReq.SuppRates,
-						&tdlsSetupReq.ExtSuppRates))
+					&tdlsSetupReq.SuppRates,
+					&tdlsSetupReq.ExtSuppRates,
+					psessionEntry->currentOperChannel))
 		lim_log(pMac, LOGE,
 			FL("could not populate supported data rates"));
 
@@ -1208,7 +1219,7 @@ tSirRetStatus lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
 		lim_trace_tdls_action_string(SIR_MAC_TDLS_SETUP_REQ),
 		MAC_ADDR_ARRAY(peer_mac.bytes));
 
-	pMac->lim.mgmtFrameSessionId = psessionEntry->peSessionId;
+	pMac->lim.tdls_frm_session_id = psessionEntry->peSessionId;
 
 	qdf_status = wma_tx_frame_with_tx_complete_send(pMac, pPacket,
 						     (uint16_t) nBytes,
@@ -1217,7 +1228,7 @@ tSirRetStatus lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
 						     smeSessionId, true);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		pMac->lim.mgmtFrameSessionId = 0xff;
+		pMac->lim.tdls_frm_session_id = NO_SESSION;
 		lim_log(pMac, LOGE,
 			FL("could not send TDLS Setup Request frame!"));
 		return eSIR_FAILURE;
@@ -1407,7 +1418,7 @@ tSirRetStatus lim_send_tdls_teardown_frame(tpAniSirGlobal pMac,
 		    "DIRECT"),
 		MAC_ADDR_ARRAY(peer_mac.bytes));
 
-	pMac->lim.mgmtFrameSessionId = psessionEntry->peSessionId;
+	pMac->lim.tdls_frm_session_id = psessionEntry->peSessionId;
 
 	qdf_status = wma_tx_frame_with_tx_complete_send(pMac, pPacket,
 						     (uint16_t) nBytes,
@@ -1418,7 +1429,7 @@ tSirRetStatus lim_send_tdls_teardown_frame(tpAniSirGlobal pMac,
 						     ? true : false);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		pMac->lim.mgmtFrameSessionId = 0xff;
+		pMac->lim.tdls_frm_session_id = NO_SESSION;
 		lim_log(pMac, LOGE,
 			FL("could not send TDLS Teardown frame"));
 		return eSIR_FAILURE;
@@ -1491,8 +1502,9 @@ static tSirRetStatus lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
 
 	/* populate supported rate and ext supported rate IE */
 	if (eSIR_FAILURE == populate_dot11f_rates_tdls(pMac,
-						&tdlsSetupRsp.SuppRates,
-						&tdlsSetupRsp.ExtSuppRates))
+					&tdlsSetupRsp.SuppRates,
+					&tdlsSetupRsp.ExtSuppRates,
+					psessionEntry->currentOperChannel))
 		lim_log(pMac, LOGE,
 			FL("could not populate supported data rates"));
 
@@ -1684,7 +1696,7 @@ static tSirRetStatus lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
 		lim_trace_tdls_action_string(SIR_MAC_TDLS_SETUP_RSP),
 		MAC_ADDR_ARRAY(peer_mac.bytes));
 
-	pMac->lim.mgmtFrameSessionId = psessionEntry->peSessionId;
+	pMac->lim.tdls_frm_session_id = psessionEntry->peSessionId;
 
 	qdf_status = wma_tx_frame_with_tx_complete_send(pMac, pPacket,
 						     (uint16_t) nBytes,
@@ -1693,7 +1705,7 @@ static tSirRetStatus lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
 						     smeSessionId, true);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		pMac->lim.mgmtFrameSessionId = 0xff;
+		pMac->lim.tdls_frm_session_id = NO_SESSION;
 		lim_log(pMac, LOGE,
 			FL("could not send TDLS Dis Request frame!"));
 		return eSIR_FAILURE;
@@ -1901,7 +1913,7 @@ tSirRetStatus lim_send_tdls_link_setup_cnf_frame(tpAniSirGlobal pMac,
 		lim_trace_tdls_action_string(SIR_MAC_TDLS_SETUP_CNF),
 	       MAC_ADDR_ARRAY(peer_mac.bytes));
 
-	pMac->lim.mgmtFrameSessionId = psessionEntry->peSessionId;
+	pMac->lim.tdls_frm_session_id = psessionEntry->peSessionId;
 
 	qdf_status = wma_tx_frame_with_tx_complete_send(pMac, pPacket,
 						     (uint16_t) nBytes,
@@ -1910,7 +1922,7 @@ tSirRetStatus lim_send_tdls_link_setup_cnf_frame(tpAniSirGlobal pMac,
 						     smeSessionId, true);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		pMac->lim.mgmtFrameSessionId = 0xff;
+		pMac->lim.tdls_frm_session_id = NO_SESSION;
 		lim_log(pMac, LOGE,
 			FL("could not send TDLS Setup Confirm frame"));
 		return eSIR_FAILURE;
@@ -2357,8 +2369,18 @@ static void lim_tdls_update_hash_node_info(tpAniSirGlobal pMac,
 		 * channel width of STA-AP link. So take this setting from the
 		 * psessionEntry.
 		 */
+		lim_log(pMac, LOG1,
+			FL("supportedChannelWidthSet 0x%x htSupportedChannelWidthSet 0x%x"),
+				htCaps->supportedChannelWidthSet,
+				psessionEntry->htSupportedChannelWidthSet);
 		pStaDs->htSupportedChannelWidthSet =
-			psessionEntry->htSupportedChannelWidthSet;
+				(htCaps->supportedChannelWidthSet <
+				 psessionEntry->htSupportedChannelWidthSet) ?
+				htCaps->supportedChannelWidthSet :
+				psessionEntry->htSupportedChannelWidthSet;
+		lim_log(pMac, LOG1, FL("pStaDs->htSupportedChannelWidthSet 0x%x"),
+				pStaDs->htSupportedChannelWidthSet);
+
 		pStaDs->htMIMOPSState = htCaps->mimoPowerSave;
 		pStaDs->htMaxAmsduLength = htCaps->maximalAMSDUsize;
 		pStaDs->htAMpduDensity = htCaps->mpduDensity;
@@ -2388,9 +2410,15 @@ static void lim_tdls_update_hash_node_info(tpAniSirGlobal pMac,
 		 * width of the BSS to which the TDLS peer STAs are
 		 * associated.
 		 */
-		pStaDs->vhtSupportedChannelWidthSet = psessionEntry->ch_width;
+		if (psessionEntry->ch_width)
+			pStaDs->vhtSupportedChannelWidthSet =
+					psessionEntry->ch_width - 1;
+		else
+			pStaDs->vhtSupportedChannelWidthSet =
+					psessionEntry->ch_width;
+
 		lim_log(pMac, LOG1, FL("vhtSupportedChannelWidthSet = %hu, htSupportedChannelWidthSet %hu"),
-			pStaDs->htSupportedChannelWidthSet,
+			pStaDs->vhtSupportedChannelWidthSet,
 			pStaDs->htSupportedChannelWidthSet);
 
 		pStaDs->vhtLdpcCapable = pVhtCaps->ldpcCodingCap;

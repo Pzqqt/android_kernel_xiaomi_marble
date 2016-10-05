@@ -186,7 +186,7 @@ int iw_get_oem_data_cap(struct net_device *dev, struct iw_request_info *info,
 
 int oem_activate_service(struct hdd_context_s *hdd_ctx);
 
-void hdd_send_oem_data_rsp_msg(int length, uint8_t *oemDataRsp);
+void hdd_send_oem_data_rsp_msg(struct oem_data_rsp *oem_rsp);
 #else
 static inline int oem_activate_service(struct hdd_context_s *hdd_ctx)
 {

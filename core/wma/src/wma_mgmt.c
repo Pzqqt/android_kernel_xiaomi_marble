@@ -1112,8 +1112,8 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	status = wmi_unified_peer_assoc_send(wma->wmi_handle,
 					 cmd);
 	if (QDF_IS_STATUS_ERROR(status))
-		WMA_LOGP("%s: Failed to send peer assoc command ret = %d",
-			 __func__, ret);
+		WMA_LOGP(FL("Failed to send peer assoc command status = %d"),
+			status);
 	qdf_mem_free(cmd);
 
 	return status;
@@ -1766,6 +1766,11 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 	     key_info->encType == eSIR_ED_WEP104)) {
 		wma_read_cfg_wepkey(wma_handle, key_info->key,
 				    &def_key_idx, &key_info->numKeys);
+	} else if ((key_info->encType == eSIR_ED_WEP40) ||
+		(key_info->encType == eSIR_ED_WEP104)) {
+		struct wma_txrx_node *intf =
+			&wma_handle->interfaces[key_info->smesessionId];
+		key_params.def_key_idx = intf->wep_default_key_idx;
 	}
 
 	for (i = 0; i < key_info->numKeys; i++) {
@@ -2387,19 +2392,25 @@ void wma_send_beacon(tp_wma_handle wma, tpSendbeaconParams bcn_info)
 		WMA_LOGE("%s : wma_store_bcn_tmpl Failed", __func__);
 		return;
 	}
-	if (!wma->interfaces[vdev_id].vdev_up) {
-		param.vdev_id = vdev_id;
-		param.assoc_id = 0;
-		status = wmi_unified_vdev_up_send(wma->wmi_handle,
-						  bcn_info->bssId,
-						  &param);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			WMA_LOGE("%s : failed to send vdev up", __func__);
-			cds_set_do_hw_mode_change_flag(false);
-			return;
+	if (!((qdf_atomic_read(
+		&wma->interfaces[vdev_id].vdev_restart_params.
+		hidden_ssid_restart_in_progress)) ||
+		(wma->interfaces[vdev_id].is_channel_switch))) {
+		if (!wma->interfaces[vdev_id].vdev_up) {
+			param.vdev_id = vdev_id;
+			param.assoc_id = 0;
+			status = wmi_unified_vdev_up_send(wma->wmi_handle,
+					bcn_info->bssId,
+					&param);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				WMA_LOGE(FL("failed to send vdev up"));
+				cds_set_do_hw_mode_change_flag(false);
+				return;
+			}
+			wma->interfaces[vdev_id].vdev_up = true;
+			wma_set_sap_keepalive(wma, vdev_id);
+
 		}
-		wma->interfaces[vdev_id].vdev_up = true;
-		wma_set_sap_keepalive(wma, vdev_id);
 	}
 }
 
@@ -2452,6 +2463,51 @@ void wma_beacon_miss_handler(tp_wma_handle wma, uint32_t vdev_id)
 }
 
 /**
+ * wma_process_mgmt_tx_completion() - process mgmt completion
+ * @wma_handle: wma handle
+ * @desc_id: descriptor id
+ * @status: status
+ *
+ * Return: 0 for success or error code
+ */
+int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
+		uint32_t desc_id, uint32_t status)
+{
+	struct wmi_desc_t *wmi_desc;
+	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if (pdev == NULL) {
+		WMA_LOGE("%s: NULL pdev pointer", __func__);
+		return -EINVAL;
+	}
+
+	WMA_LOGI("%s: status:%d wmi_desc_id:%d", __func__, status, desc_id);
+
+	wmi_desc = (struct wmi_desc_t *)
+			(&wma_handle->wmi_desc_pool.array[desc_id]);
+
+	if (!wmi_desc) {
+		WMA_LOGE("%s: Invalid wmi desc", __func__);
+		return -EINVAL;
+	}
+
+	if (wmi_desc->nbuf)
+		qdf_nbuf_unmap_single(pdev->osdev, wmi_desc->nbuf,
+					  QDF_DMA_TO_DEVICE);
+	if (wmi_desc->tx_cmpl_cb)
+		wmi_desc->tx_cmpl_cb(wma_handle->mac_context,
+					   wmi_desc->nbuf, 1);
+
+	if (wmi_desc->ota_post_proc_cb)
+		wmi_desc->ota_post_proc_cb((tpAniSirGlobal)
+						 wma_handle->mac_context,
+						 status);
+
+	wmi_desc_put(wma_handle, wmi_desc);
+	return 0;
+}
+
+/**
  * wma_mgmt_tx_completion_handler() - wma mgmt Tx completion event handler
  * @handle: wma handle
  * @cmpl_event_params: completion event handler data
@@ -2466,18 +2522,6 @@ int wma_mgmt_tx_completion_handler(void *handle, uint8_t *cmpl_event_params,
 	tp_wma_handle wma_handle = (tp_wma_handle)handle;
 	WMI_MGMT_TX_COMPLETION_EVENTID_param_tlvs *param_buf;
 	wmi_mgmt_tx_compl_event_fixed_param	*cmpl_params;
-	struct wmi_desc_t *wmi_desc;
-
-	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!pdev) {
-		WMA_LOGE("%s: txrx pdev is NULL", __func__);
-		return -EINVAL;
-	}
-
-	if (pdev == NULL) {
-		WMA_LOGE("%s: NULL pdev pointer", __func__);
-		return -EINVAL;
-	}
 
 	param_buf = (WMI_MGMT_TX_COMPLETION_EVENTID_param_tlvs *)
 		cmpl_event_params;
@@ -2487,31 +2531,44 @@ int wma_mgmt_tx_completion_handler(void *handle, uint8_t *cmpl_event_params,
 	}
 	cmpl_params = param_buf->fixed_param;
 
-	WMA_LOGI("%s: status:%d wmi_desc_id:%d", __func__, cmpl_params->status,
-		 cmpl_params->desc_id);
+	wma_process_mgmt_tx_completion(wma_handle,
+		cmpl_params->desc_id, cmpl_params->status);
 
-	wmi_desc = (struct wmi_desc_t *)
-		(&wma_handle->wmi_desc_pool.array[cmpl_params->desc_id]);
+	return 0;
+}
 
-	if (!wmi_desc) {
-		WMA_LOGE("%s: Invalid wmi desc", __func__);
+/**
+ * wma_mgmt_tx_bundle_completion_handler() - mgmt bundle comp handler
+ * @handle: wma handle
+ * @buf: buffer
+ * @len: length
+ *
+ * Return: 0 for success or error code
+ */
+int wma_mgmt_tx_bundle_completion_handler(void *handle, uint8_t *buf,
+				   uint32_t len)
+{
+	tp_wma_handle wma_handle = (tp_wma_handle)handle;
+	WMI_MGMT_TX_BUNDLE_COMPLETION_EVENTID_param_tlvs *param_buf;
+	wmi_mgmt_tx_compl_bundle_event_fixed_param	*cmpl_params;
+	uint32_t num_reports;
+	uint32_t *desc_ids;
+	uint32_t *status;
+	int i;
+
+	param_buf = (WMI_MGMT_TX_BUNDLE_COMPLETION_EVENTID_param_tlvs *)buf;
+	if (!param_buf && !wma_handle) {
+		WMA_LOGE("%s: Invalid mgmt Tx completion event", __func__);
 		return -EINVAL;
 	}
+	cmpl_params = param_buf->fixed_param;
+	num_reports = cmpl_params->num_reports;
+	desc_ids = (uint32_t *)(param_buf->desc_ids);
+	status = (uint32_t *)(param_buf->status);
 
-	if (wmi_desc->nbuf)
-		qdf_nbuf_unmap_single(pdev->osdev, wmi_desc->nbuf,
-				      QDF_DMA_TO_DEVICE);
-	if (wmi_desc->tx_cmpl_cb)
-		wmi_desc->tx_cmpl_cb(wma_handle->mac_context,
-				       wmi_desc->nbuf, 1);
-
-	if (wmi_desc->ota_post_proc_cb)
-		wmi_desc->ota_post_proc_cb((tpAniSirGlobal)
-					     wma_handle->mac_context,
-					     cmpl_params->status);
-
-	wmi_desc_put(wma_handle, wmi_desc);
-
+	for (i = 0; i < num_reports; i++)
+		wma_process_mgmt_tx_completion(wma_handle,
+			desc_ids[i], status[i]);
 	return 0;
 }
 
@@ -2659,6 +2716,7 @@ void wma_hidden_ssid_vdev_restart(tp_wma_handle wma_handle,
 				  tHalHiddenSsidVdevRestart *pReq)
 {
 	struct wma_txrx_node *intr = wma_handle->interfaces;
+	struct wma_target_req *msg;
 
 	if ((pReq->sessionId !=
 	     intr[pReq->sessionId].vdev_restart_params.vdev_id)
@@ -2672,6 +2730,16 @@ void wma_hidden_ssid_vdev_restart(tp_wma_handle wma_handle,
 	qdf_atomic_set(&intr[pReq->sessionId].vdev_restart_params.
 		       hidden_ssid_restart_in_progress, 1);
 
+	msg = wma_fill_vdev_req(wma_handle, pReq->sessionId,
+			WMA_HIDDEN_SSID_VDEV_RESTART,
+			WMA_TARGET_REQ_TYPE_VDEV_STOP, pReq,
+			WMA_VDEV_STOP_REQUEST_TIMEOUT);
+	if (!msg) {
+		WMA_LOGE("%s: Failed to fill vdev restart request for vdev_id %d",
+				__func__, pReq->sessionId);
+		return;
+	}
+
 	/* vdev stop -> vdev restart -> vdev up */
 	WMA_LOGD("%s, vdev_id: %d, pausing tx_ll_queue for VDEV_STOP",
 		 __func__, pReq->sessionId);
@@ -2683,6 +2751,8 @@ void wma_hidden_ssid_vdev_restart(tp_wma_handle wma_handle,
 		WMA_LOGE("%s: %d Failed to send vdev stop", __func__, __LINE__);
 		qdf_atomic_set(&intr[pReq->sessionId].vdev_restart_params.
 			       hidden_ssid_restart_in_progress, 0);
+		wma_remove_vdev_req(wma_handle, pReq->sessionId,
+					WMA_TARGET_REQ_TYPE_VDEV_STOP);
 		return;
 	}
 }
@@ -2888,8 +2958,13 @@ int wma_process_rmf_frame(tp_wma_handle wma_handle,
 			sizeof(*wh));
 		qdf_nbuf_pull_head(wbuf,
 			IEEE80211_CCMP_HEADERLEN);
-			qdf_nbuf_trim_tail(wbuf, IEEE80211_CCMP_MICLEN);
-
+		qdf_nbuf_trim_tail(wbuf, IEEE80211_CCMP_MICLEN);
+		/*
+		 * CCMP header has been pulled off
+		 * reinitialize the start pointer of mac header
+		 * to avoid accessing incorrect address
+		 */
+		wh = (struct ieee80211_frame *) qdf_nbuf_data(wbuf);
 		rx_pkt->pkt_meta.mpdu_hdr_ptr =
 				qdf_nbuf_data(wbuf);
 		rx_pkt->pkt_meta.mpdu_len = qdf_nbuf_len(wbuf);
@@ -3065,6 +3140,11 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 		return -EINVAL;
 	}
 
+	if (cds_is_driver_recovering()) {
+		WMA_LOGW(FL("Recovery in progress"));
+		return -EINVAL;
+	}
+
 	qdf_mem_zero(rx_pkt, sizeof(*rx_pkt));
 
 	/*
@@ -3170,6 +3250,12 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 			if (iface->rmfEnabled) {
 				status = wma_process_rmf_frame(wma_handle,
 					iface, wh, rx_pkt, wbuf);
+				/*
+				 * CCMP header might have been pulled off
+				 * reinitialize the start pointer of mac header
+				 */
+				wh = (struct ieee80211_frame *)
+						qdf_nbuf_data(wbuf);
 				if (status != 0)
 					return status;
 			}

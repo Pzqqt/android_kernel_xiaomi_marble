@@ -201,7 +201,6 @@ const char *get_e_roam_cmd_status_str(eRoamCmdStatus val)
 		CASE_RETURN_STR(eCSR_ROAM_FT_RESPONSE);
 		CASE_RETURN_STR(eCSR_ROAM_FT_START);
 		CASE_RETURN_STR(eCSR_ROAM_REMAIN_CHAN_READY);
-		CASE_RETURN_STR(eCSR_ROAM_SEND_ACTION_CNF);
 		CASE_RETURN_STR(eCSR_ROAM_SESSION_OPENED);
 		CASE_RETURN_STR(eCSR_ROAM_FT_REASSOC_FAILED);
 		CASE_RETURN_STR(eCSR_ROAM_PMK_NOTIFY);
@@ -1056,16 +1055,11 @@ bool csr_is_valid_mc_concurrent_session(tpAniSirGlobal mac_ctx,
 	pSession = CSR_GET_SESSION(mac_ctx, session_id);
 	if (NULL == pSession->pCurRoamProfile)
 		return false;
-	if (QDF_STATUS_SUCCESS ==
-		csr_isconcurrentsession_valid(mac_ctx, session_id,
-			pSession->pCurRoamProfile->csrPersona)) {
-		if (QDF_STATUS_SUCCESS ==
-			csr_validate_mcc_beacon_interval(mac_ctx,
-				bss_descr->channelId,
-				&bss_descr->beaconInterval, session_id,
-				pSession->pCurRoamProfile->csrPersona))
-			return true;
-	}
+	if (QDF_STATUS_SUCCESS == csr_validate_mcc_beacon_interval(mac_ctx,
+					bss_descr->channelId,
+					&bss_descr->beaconInterval, session_id,
+					pSession->pCurRoamProfile->csrPersona))
+		return true;
 	return false;
 }
 
@@ -1878,111 +1872,6 @@ bool csr_is_profile_rsn(tCsrRoamProfile *pProfile)
 		}
 	}
 	return fRSNProfile;
-}
-
-/**
- * csr_isconcurrentsession_valid() - check if concurrent session is valid
- * @mac_ctx: pointer to mac context
- * @cur_sessionid: current session id
- * @cur_bss_persona: current BSS persona
- *
- * This function will check if concurrent session is valid
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-csr_isconcurrentsession_valid(tpAniSirGlobal mac_ctx, uint32_t cur_sessionid,
-			      enum tQDF_ADAPTER_MODE cur_bss_persona)
-{
-	uint32_t sessionid = 0;
-	enum tQDF_ADAPTER_MODE bss_persona;
-	eCsrConnectState connect_state, temp;
-	tCsrRoamSession *roam_session;
-
-	for (sessionid = 0; sessionid < CSR_ROAM_SESSION_MAX; sessionid++) {
-		if (cur_sessionid == sessionid)
-			continue;
-		if (!CSR_IS_SESSION_VALID(mac_ctx, sessionid))
-			continue;
-		roam_session = &mac_ctx->roam.roamSession[sessionid];
-		bss_persona = roam_session->bssParams.bssPersona;
-		connect_state = roam_session->connectState;
-
-		switch (cur_bss_persona) {
-		case QDF_STA_MODE:
-			QDF_TRACE(QDF_MODULE_ID_SME,
-					QDF_TRACE_LEVEL_INFO,
-					FL("** STA session **"));
-			return QDF_STATUS_SUCCESS;
-
-		case QDF_SAP_MODE:
-			temp = eCSR_ASSOC_STATE_TYPE_IBSS_DISCONNECTED;
-			if ((bss_persona == QDF_IBSS_MODE)
-				&& (connect_state != temp)) {
-				/* allow IBSS+SAP for Emulation only */
-#ifndef QCA_WIFI_3_0_EMU
-				QDF_TRACE(QDF_MODULE_ID_SME,
-						QDF_TRACE_LEVEL_ERROR,
-						FL("Can't start SAP"));
-				return QDF_STATUS_E_FAILURE;
-#endif
-			}
-			break;
-
-		case QDF_P2P_GO_MODE:
-			temp = eCSR_ASSOC_STATE_TYPE_IBSS_DISCONNECTED;
-			if ((bss_persona == QDF_IBSS_MODE)
-					&& (connect_state != temp)) {
-				QDF_TRACE(QDF_MODULE_ID_SME,
-						QDF_TRACE_LEVEL_ERROR,
-						FL("Can't start SAP"));
-				return QDF_STATUS_E_FAILURE;
-			}
-			break;
-		case QDF_IBSS_MODE:
-			if ((bss_persona == QDF_IBSS_MODE) &&
-				(connect_state ==
-					eCSR_ASSOC_STATE_TYPE_IBSS_CONNECTED)) {
-				QDF_TRACE(QDF_MODULE_ID_SME,
-						QDF_TRACE_LEVEL_ERROR,
-						FL("IBSS mode already exist"));
-				return QDF_STATUS_E_FAILURE;
-			} else if (((bss_persona == QDF_P2P_GO_MODE) ||
-					(bss_persona == QDF_SAP_MODE)) &&
-					(connect_state !=
-					 eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED)) {
-				/* allow IBSS+SAP for Emulation only */
-#ifndef QCA_WIFI_3_0_EMU
-				QDF_TRACE(QDF_MODULE_ID_SME,
-						QDF_TRACE_LEVEL_ERROR,
-						FL("Can't start GO/SAP"));
-				return QDF_STATUS_E_FAILURE;
-#endif
-			}
-			break;
-		case QDF_P2P_CLIENT_MODE:
-			QDF_TRACE(QDF_MODULE_ID_SME,
-				QDF_TRACE_LEVEL_INFO,
-				FL("**P2P-Client session**"));
-			return QDF_STATUS_SUCCESS;
-		case QDF_NDI_MODE:
-			if (bss_persona != QDF_STA_MODE) {
-				QDF_TRACE(QDF_MODULE_ID_SME,
-					QDF_TRACE_LEVEL_ERROR,
-					FL("***NDI mode can co-exist only with STA ***"));
-				return QDF_STATUS_E_FAILURE;
-			}
-			break;
-		default:
-			QDF_TRACE(QDF_MODULE_ID_SME,
-				QDF_TRACE_LEVEL_ERROR,
-				FL("Persona not handled = %d"),
-				cur_bss_persona);
-			break;
-		}
-	}
-	return QDF_STATUS_SUCCESS;
-
 }
 
 /**
@@ -2940,25 +2829,21 @@ csr_is_pmf_capabilities_in_rsn_match(tHalHandle hHal,
 		/* Extracting MFPCapable bit from RSN Ie */
 		apProfileMFPCapable = (pRSNIe->RSN_Cap[0] >> 7) & 0x1;
 		apProfileMFPRequired = (pRSNIe->RSN_Cap[0] >> 6) & 0x1;
+
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			FL("pFilterMFPEnabled=%d pFilterMFPRequired=%d"
+			   "pFilterMFPCapable=%d apProfileMFPCapable=%d"
+			   "apProfileMFPRequired=%d"),
+			 *pFilterMFPEnabled, *pFilterMFPRequired,
+			 *pFilterMFPCapable, apProfileMFPCapable,
+			 apProfileMFPRequired);
+
 		if (*pFilterMFPEnabled && *pFilterMFPCapable
 		    && *pFilterMFPRequired && (apProfileMFPCapable == 0)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 				  "AP is not capable to make PMF connection");
 			return false;
-		} else if (*pFilterMFPEnabled && *pFilterMFPCapable &&
-			   !(*pFilterMFPRequired) &&
-				(apProfileMFPCapable == 0)) {
-			/*
-			 * This is tricky, because supplicant asked us to
-			 * make mandatory PMF connection eventhough PMF
-			 * connection is optional here.
-			 * so if AP is not capable of PMF then drop it.
-			 * Don't try to connect with it.
-			 */
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-				  "we need PMF connection & AP isn't capable to make PMF connection");
-			return false;
-		} else if (!(*pFilterMFPCapable) &&
+		}  else if (!(*pFilterMFPCapable) &&
 			   apProfileMFPCapable && apProfileMFPRequired) {
 
 			/*
@@ -2968,11 +2853,6 @@ csr_is_pmf_capabilities_in_rsn_match(tHalHandle hHal,
 			 */
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 				  "AP needs PMF connection and we are not capable of pmf connection");
-			return false;
-		} else if (!(*pFilterMFPEnabled) && *pFilterMFPCapable &&
-			   (apProfileMFPCapable == 1)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-				  "we don't need PMF connection even though both parties are capable");
 			return false;
 		}
 	}
@@ -3152,7 +3032,11 @@ uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 		}
 
 #ifdef WLAN_FEATURE_11W
-		if (pProfile->MFPEnabled) {
+		/* Advertise BIP in group cipher key management only if PMF is
+		 * enabled and AP is capable.
+		 */
+		if (pProfile->MFPEnabled &&
+			(RSNCapabilities.MFPCapable && pProfile->MFPCapable)) {
 			pGroupMgmtCipherSuite =
 				(uint8_t *) pPMK + sizeof(uint16_t) +
 				(pPMK->cPMKIDs * CSR_RSN_PMKID_SIZE);
@@ -3176,7 +3060,8 @@ uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 							       CSR_RSN_PMKID_SIZE));
 		}
 #ifdef WLAN_FEATURE_11W
-		if (pProfile->MFPEnabled) {
+		if (pProfile->MFPEnabled &&
+			(RSNCapabilities.MFPCapable && pProfile->MFPCapable)) {
 			if (0 == pPMK->cPMKIDs)
 				pRSNIe->IeHeader.Length += sizeof(uint16_t);
 			pRSNIe->IeHeader.Length += CSR_WPA_OUI_SIZE;
@@ -5783,4 +5668,20 @@ enum tQDF_ADAPTER_MODE csr_get_session_persona(tpAniSirGlobal pmac,
 		return QDF_MAX_NO_OF_MODE;
 
 	return session->pCurRoamProfile->csrPersona;
+}
+
+/**
+ * csr_is_ndi_started() - function to check if NDI is started
+ * @mac_ctx: handle to mac context
+ * @session_id: session identifier
+ *
+ * returns: true if NDI is started, false otherwise
+ */
+bool csr_is_ndi_started(tpAniSirGlobal mac_ctx, uint32_t session_id)
+{
+	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
+	if (!session)
+		return false;
+
+	return eCSR_CONNECT_STATE_TYPE_NDI_STARTED == session->connectState;
 }

@@ -89,6 +89,10 @@
 #include "cdp_txrx_flow_ctrl_legacy.h"
 #include "wlan_hdd_nan_datapath.h"
 #include "wlan_hdd_stats.h"
+#ifdef WLAN_SUSPEND_RESUME_TEST
+#include "wlan_hdd_driver_ops.h"
+#include "hif.h"
+#endif
 
 #define HDD_FINISH_ULA_TIME_OUT         800
 #define HDD_SET_MCBC_FILTERS_TO_FW      1
@@ -161,7 +165,7 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_TXRX_FWSTATS_RESET           41
 #define WE_SET_MAX_TX_POWER_2_4   42
 #define WE_SET_MAX_TX_POWER_5_0   43
-/* 44 is unused */
+#define WE_SET_PKTLOG                   44
 /* Private ioctl for packet powe save */
 #define  WE_PPS_PAID_MATCH              45
 #define  WE_PPS_GID_MATCH               46
@@ -295,6 +299,7 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_SET_WLAN_DBG      1
 #define WE_SET_DP_TRACE      2
 #define WE_SET_SAP_CHANNELS  3
+#define WE_SET_FW_TEST       4
 
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_GET_CHAR_SET_NONE   (SIOCIWFIRSTPRIV + 5)
@@ -433,6 +438,11 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 /* Private sub ioctl for enabling and setting histogram interval of profiling */
 #define WE_ENABLE_FW_PROFILE    4
 #define WE_SET_FW_PROFILE_HIST_INTVL    5
+
+#ifdef WLAN_SUSPEND_RESUME_TEST
+#define WE_SET_WLAN_SUSPEND    6
+#define WE_SET_WLAN_RESUME    7
+#endif
 
 /* (SIOCIWFIRSTPRIV + 29) is currently unused */
 
@@ -718,7 +728,7 @@ void hdd_wlan_dump_stats(hdd_adapter_t *adapter, int value)
 
 /**
  * hdd_wlan_get_version() - Get driver version information
- * @pAdapter: Pointer to the adapter.
+ * @hdd_ctx: Global HDD context
  * @wrqu: Pointer to IOCTL REQUEST Data.
  * @extra: Pointer to destination buffer
  *
@@ -729,43 +739,40 @@ void hdd_wlan_dump_stats(hdd_adapter_t *adapter, int value)
  *
  * Return: none
  */
-void hdd_wlan_get_version(hdd_adapter_t *pAdapter, union iwreq_data *wrqu,
+void hdd_wlan_get_version(hdd_context_t *hdd_ctx, union iwreq_data *wrqu,
 			  char *extra)
 {
-	tSirVersionString wcnss_SW_version;
-	const char *pSWversion;
-	const char *pHWversion;
-	uint32_t MSPId = 0, mSPId = 0, SIId = 0, CRMId = 0;
+	tSirVersionString wcnss_sw_version;
+	const char *swversion;
+	const char *hwversion;
+	uint32_t msp_id = 0, mspid = 0, siid = 0, crmid = 0;
 
-	hdd_context_t *pHddContext;
-
-	pHddContext = WLAN_HDD_GET_CTX(pAdapter);
-	if (!pHddContext) {
+	if (!hdd_ctx) {
 		hdd_err("Invalid context, HDD context is null");
 		goto error;
 	}
 
-	snprintf(wcnss_SW_version, sizeof(tSirVersionString), "%08x",
-		 pHddContext->target_fw_version);
+	snprintf(wcnss_sw_version, sizeof(wcnss_sw_version), "%08x",
+		 hdd_ctx->target_fw_version);
 
-	pSWversion = wcnss_SW_version;
-	MSPId = (pHddContext->target_fw_version & 0xf0000000) >> 28;
-	mSPId = (pHddContext->target_fw_version & 0xf000000) >> 24;
-	SIId = (pHddContext->target_fw_version & 0xf00000) >> 20;
-	CRMId = pHddContext->target_fw_version & 0x7fff;
+	swversion = wcnss_sw_version;
+	msp_id = (hdd_ctx->target_fw_version & 0xf0000000) >> 28;
+	mspid = (hdd_ctx->target_fw_version & 0xf000000) >> 24;
+	siid = (hdd_ctx->target_fw_version & 0xf00000) >> 20;
+	crmid = hdd_ctx->target_fw_version & 0x7fff;
 
-	pHWversion = pHddContext->target_hw_name;
+	hwversion = hdd_ctx->target_hw_name;
 
 	if (wrqu && extra) {
 		wrqu->data.length =
 			scnprintf(extra, WE_MAX_STR_LEN,
 				  "Host SW:%s, FW:%d.%d.%d.%d, HW:%s",
 				  QWLAN_VERSIONSTR,
-				  MSPId, mSPId, SIId, CRMId, pHWversion);
+				  msp_id, mspid, siid, crmid, hwversion);
 	} else {
 		pr_info("Host SW:%s, FW:%d.%d.%d.%d, HW:%s\n",
 			QWLAN_VERSIONSTR,
-			MSPId, mSPId, SIId, CRMId, pHWversion);
+			msp_id, mspid, siid, crmid, hwversion);
 	}
 error:
 	return;
@@ -1514,6 +1521,14 @@ int wlan_hdd_get_link_speed(hdd_adapter_t *sta_adapter, uint32_t *link_speed)
 	if (ret)
 		return ret;
 
+	/* Linkspeed is allowed only for P2P mode */
+	if (sta_adapter->device_mode != QDF_P2P_CLIENT_MODE) {
+		hdd_err("Link Speed is not allowed in Device mode %s(%d)",
+			hdd_device_mode_to_string(sta_adapter->device_mode),
+			sta_adapter->device_mode);
+		return -ENOTSUPP;
+	}
+
 	if (eConnectionState_Associated != hdd_stactx->conn_info.connState) {
 		/* we are not connected so we don't have a classAstats */
 		*link_speed = 0;
@@ -1701,6 +1716,207 @@ uint8_t *wlan_hdd_get_vendor_oui_ie_ptr(uint8_t *oui, uint8_t oui_size,
 		ptr += (elem_len + 2);
 	}
 	return NULL;
+}
+
+/**
+ * hdd_get_ldpc() - Get adapter LDPC
+ * @adapter: adapter being queried
+ * @value: where to store the value
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_get_ldpc(hdd_adapter_t *adapter, int *value)
+{
+	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
+	int ret;
+
+	ENTER();
+	ret = sme_get_ht_config(hal, adapter->sessionId,
+				WNI_CFG_HT_CAP_INFO_ADVANCE_CODING);
+	if (ret < 0) {
+		hdd_alert("Failed to get LDPC value");
+	} else {
+		*value = ret;
+		ret = 0;
+	}
+	return ret;
+}
+
+/**
+ * hdd_set_ldpc() - Set adapter LDPC
+ * @adapter: adapter being modified
+ * @value: new LDPC value
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_set_ldpc(hdd_adapter_t *adapter, int value)
+{
+	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
+	int ret;
+
+	hdd_alert("%d", value);
+	if (value) {
+		/* make sure HT capabilities allow this */
+		QDF_STATUS status;
+		uint32_t cfg_value;
+		union {
+			uint16_t cfg_value16;
+			tSirMacHTCapabilityInfo ht_cap_info;
+		} u;
+
+		status = sme_cfg_get_int(hal, WNI_CFG_HT_CAP_INFO, &cfg_value);
+		if (QDF_STATUS_SUCCESS != status) {
+			hdd_alert("Failed to get HT capability info");
+			return -EIO;
+		}
+		u.cfg_value16 = cfg_value & 0xFFFF;
+		if (!u.ht_cap_info.advCodingCap) {
+			hdd_alert("LDCP not supported");
+			return -EINVAL;
+		}
+	}
+
+	ret = sme_update_ht_config(hal, adapter->sessionId,
+				   WNI_CFG_HT_CAP_INFO_ADVANCE_CODING,
+				   value);
+	if (ret)
+		hdd_alert("Failed to set LDPC value");
+
+	return ret;
+}
+
+/**
+ * hdd_get_tx_stbc() - Get adapter TX STBC
+ * @adapter: adapter being queried
+ * @value: where to store the value
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_get_tx_stbc(hdd_adapter_t *adapter, int *value)
+{
+	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
+	int ret;
+
+	ENTER();
+	ret = sme_get_ht_config(hal, adapter->sessionId,
+				WNI_CFG_HT_CAP_INFO_TX_STBC);
+	if (ret < 0) {
+		hdd_alert("Failed to get TX STBC value");
+	} else {
+		*value = ret;
+		ret = 0;
+	}
+
+	return ret;
+}
+
+/**
+ * hdd_set_tx_stbc() - Set adapter TX STBC
+ * @adapter: adapter being modified
+ * @value: new TX STBC value
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_set_tx_stbc(hdd_adapter_t *adapter, int value)
+{
+	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
+	int ret;
+
+	hdd_alert("%d", value);
+	if (value) {
+		/* make sure HT capabilities allow this */
+		QDF_STATUS status;
+		uint32_t cfg_value;
+		union {
+			uint16_t cfg_value16;
+			tSirMacHTCapabilityInfo ht_cap_info;
+		} u;
+
+		status = sme_cfg_get_int(hal, WNI_CFG_HT_CAP_INFO, &cfg_value);
+		if (QDF_STATUS_SUCCESS != status) {
+			hdd_alert("Failed to get HT capability info");
+			return -EIO;
+		}
+		u.cfg_value16 = cfg_value & 0xFFFF;
+		if (!u.ht_cap_info.txSTBC) {
+			hdd_alert("TX STBC not supported");
+			return -EINVAL;
+		}
+	}
+	ret = sme_update_ht_config(hal, adapter->sessionId,
+				   WNI_CFG_HT_CAP_INFO_TX_STBC,
+				   value);
+	if (ret)
+		hdd_alert("Failed to set TX STBC value");
+
+	return ret;
+}
+
+/**
+ * hdd_get_rx_stbc() - Get adapter RX STBC
+ * @adapter: adapter being queried
+ * @value: where to store the value
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_get_rx_stbc(hdd_adapter_t *adapter, int *value)
+{
+	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
+	int ret;
+
+	ENTER();
+	ret = sme_get_ht_config(hal, adapter->sessionId,
+				WNI_CFG_HT_CAP_INFO_RX_STBC);
+	if (ret < 0) {
+		hdd_alert("Failed to get RX STBC value");
+	} else {
+		*value = ret;
+		ret = 0;
+	}
+
+	return ret;
+}
+
+/**
+ * hdd_set_rx_stbc() - Set adapter RX STBC
+ * @adapter: adapter being modified
+ * @value: new RX STBC value
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_set_rx_stbc(hdd_adapter_t *adapter, int value)
+{
+	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
+	int ret;
+
+	hdd_alert("%d", value);
+	if (value) {
+		/* make sure HT capabilities allow this */
+		QDF_STATUS status;
+		uint32_t cfg_value;
+		union {
+			uint16_t cfg_value16;
+			tSirMacHTCapabilityInfo ht_cap_info;
+		} u;
+
+		status = sme_cfg_get_int(hal, WNI_CFG_HT_CAP_INFO, &cfg_value);
+		if (QDF_STATUS_SUCCESS != status) {
+			hdd_alert("Failed to get HT capability info");
+			return -EIO;
+		}
+		u.cfg_value16 = cfg_value & 0xFFFF;
+		if (!u.ht_cap_info.rxSTBC) {
+			hdd_alert("RX STBC not supported");
+			return -EINVAL;
+		}
+	}
+	ret = sme_update_ht_config(hal, adapter->sessionId,
+				   WNI_CFG_HT_CAP_INFO_RX_STBC,
+				   value);
+	if (ret)
+		hdd_alert("Failed to set RX STBC value");
+
+	return ret;
 }
 
 /**
@@ -2731,13 +2947,16 @@ static int __iw_get_genie(struct net_device *dev,
 	status = csr_roam_get_wpa_rsn_req_ie(WLAN_HDD_GET_HAL_CTX(pAdapter),
 					     pAdapter->sessionId,
 					     &length, genIeBytes);
-	length = QDF_MIN((uint16_t) length, DOT11F_IE_RSN_MAX_LEN);
-	if (wrqu->data.length < length) {
-		hdd_notice("failed to copy data to user buffer");
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_notice("failed to get WPA-RSN IE data");
 		return -EFAULT;
 	}
-	qdf_mem_copy(extra, (void *)genIeBytes, length);
 	wrqu->data.length = length;
+	if (length > DOT11F_IE_RSN_MAX_LEN) {
+		hdd_notice("invalid buffer length length:%d", length);
+		return -E2BIG;
+	}
+	qdf_mem_copy(extra, (void *)genIeBytes, length);
 
 	hdd_notice("RSN IE of %d bytes returned",
 	       wrqu->data.length);
@@ -3453,7 +3672,7 @@ QDF_STATUS wlan_hdd_get_class_astats(hdd_adapter_t *pAdapter)
 				     pHddStaCtx->conn_info.staId[0],
 				     &context, pAdapter->sessionId);
 	if (QDF_STATUS_SUCCESS != hstatus) {
-		hdd_err("Unable to retrieve Class A statistics");
+		hdd_warn("Unable to retrieve Class A statistics");
 		/* we'll returned a cached value below */
 	} else {
 		/* request was sent -- wait for the response */
@@ -3461,7 +3680,7 @@ QDF_STATUS wlan_hdd_get_class_astats(hdd_adapter_t *pAdapter)
 			(&context.completion,
 			 msecs_to_jiffies(WLAN_WAIT_TIME_STATS));
 		if (!rc) {
-			hdd_err("SME timed out while retrieving Class A statistics");
+			hdd_warn("SME timed out while retrieving Class A statistics");
 		}
 	}
 
@@ -3498,6 +3717,7 @@ static void hdd_get_station_statistics_cb(void *pStats, void *pContext)
 	struct statsContext *pStatsContext;
 	tCsrSummaryStatsInfo *pSummaryStats;
 	tCsrGlobalClassAStatsInfo *pClassAStats;
+	struct csr_per_chain_rssi_stats_info *per_chain_rssi_stats;
 	hdd_adapter_t *pAdapter;
 
 	if (ioctl_debug) {
@@ -3520,6 +3740,8 @@ static void hdd_get_station_statistics_cb(void *pStats, void *pContext)
 
 	pSummaryStats = (tCsrSummaryStatsInfo *) pStats;
 	pClassAStats = (tCsrGlobalClassAStatsInfo *) (pSummaryStats + 1);
+	per_chain_rssi_stats = (struct csr_per_chain_rssi_stats_info *)
+				(pClassAStats + 1);
 	pStatsContext = pContext;
 	pAdapter = pStatsContext->pAdapter;
 	if ((NULL == pAdapter) ||
@@ -3545,6 +3767,7 @@ static void hdd_get_station_statistics_cb(void *pStats, void *pContext)
 	/* copy over the stats. do so as a struct copy */
 	pAdapter->hdd_stats.summary_stat = *pSummaryStats;
 	pAdapter->hdd_stats.ClassA_stat = *pClassAStats;
+	pAdapter->hdd_stats.per_chain_rssi_stats = *per_chain_rssi_stats;
 
 	/* notify the caller */
 	complete(&pStatsContext->completion);
@@ -3580,7 +3803,8 @@ QDF_STATUS wlan_hdd_get_station_stats(hdd_adapter_t *pAdapter)
 	hstatus = sme_get_statistics(WLAN_HDD_GET_HAL_CTX(pAdapter),
 				     eCSR_HDD,
 				     SME_SUMMARY_STATS |
-					SME_GLOBAL_CLASSA_STATS,
+				     SME_GLOBAL_CLASSA_STATS |
+				     SME_PER_CHAIN_RSSI_STATS,
 				     hdd_get_station_statistics_cb,
 				     0, /* not periodic */
 				     false, /* non-cached results */
@@ -4851,7 +5075,7 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 		phddctx->config->nChannelBondingMode5GHz =
 			smeconfig.csrConfig.channelBondingMode5GHz;
 		phddctx->config->vhtChannelWidth = vhtchanwidth;
-		if (hdd_update_config_dat(phddctx) == false) {
+		if (hdd_update_config_cfg(phddctx) == false) {
 			hdd_err("could not update config_dat");
 			return -EIO;
 		}
@@ -5152,6 +5376,11 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 		break;
 	}
+	case WE_SET_PKTLOG:
+	{
+		hdd_process_pktlog_command(hdd_ctx, set_value);
+		break;
+	}
 	case WE_SET_HIGHER_DTIM_TRANSITION:
 	{
 		if (!((set_value == false) || (set_value == true))) {
@@ -5278,100 +5507,19 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 	case WE_SET_LDPC:
 	{
-		uint32_t value;
-		union {
-			uint16_t nCfgValue16;
-			tSirMacHTCapabilityInfo htCapInfo;
-		} uHTCapabilityInfo;
-
-		hdd_notice("LDPC val %d", set_value);
-		/* get the HT capability info */
-		ret = sme_cfg_get_int(hHal, WNI_CFG_HT_CAP_INFO, &value);
-		if (QDF_STATUS_SUCCESS != ret) {
-			hdd_err("could not get HT capability info");
-			return -EIO;
-		}
-
-		uHTCapabilityInfo.nCfgValue16 = 0xFFFF & value;
-		if ((set_value
-		     && (uHTCapabilityInfo.htCapInfo.advCodingCap))
-		    || (!set_value)) {
-			ret =
-				sme_update_ht_config(hHal,
-						     pAdapter->sessionId,
-						     WNI_CFG_HT_CAP_INFO_ADVANCE_CODING,
-						     set_value);
-		}
-
-		if (ret)
-			hdd_err("Failed to set LDPC value");
-
+		ret = hdd_set_ldpc(pAdapter, set_value);
 		break;
 	}
 
 	case WE_SET_TX_STBC:
 	{
-		uint32_t value;
-		union {
-			uint16_t nCfgValue16;
-			tSirMacHTCapabilityInfo htCapInfo;
-		} uHTCapabilityInfo;
-
-		hdd_notice("TX_STBC val %d", set_value);
-		/* get the HT capability info */
-		ret = sme_cfg_get_int(hHal, WNI_CFG_HT_CAP_INFO, &value);
-		if (QDF_STATUS_SUCCESS != ret) {
-			hdd_err("could not get HT capability info");
-			return -EIO;
-		}
-
-		uHTCapabilityInfo.nCfgValue16 = 0xFFFF & value;
-		if ((set_value && (uHTCapabilityInfo.htCapInfo.txSTBC))
-		    || (!set_value)) {
-			ret =
-				sme_update_ht_config(hHal,
-						     pAdapter->sessionId,
-						     WNI_CFG_HT_CAP_INFO_TX_STBC,
-						     set_value);
-		}
-
-		if (ret)
-			hdd_err("Failed to set TX STBC value");
-
+		ret = hdd_set_tx_stbc(pAdapter, set_value);
 		break;
 	}
 
 	case WE_SET_RX_STBC:
 	{
-		uint32_t value;
-		union {
-			uint16_t nCfgValue16;
-			tSirMacHTCapabilityInfo htCapInfo;
-		} uHTCapabilityInfo;
-
-		hdd_notice("WMI_VDEV_PARAM_RX_STBC val %d",
-		       set_value);
-		/* get the HT capability info */
-		ret = sme_cfg_get_int(hHal, WNI_CFG_HT_CAP_INFO, &value);
-		if (QDF_STATUS_SUCCESS != ret) {
-			hdd_err("could not get HT capability info");
-			return -EIO;
-		}
-
-		uHTCapabilityInfo.nCfgValue16 = 0xFFFF & value;
-		if ((set_value && (uHTCapabilityInfo.htCapInfo.rxSTBC))
-		    || (!set_value)) {
-			ret =
-				sme_update_ht_config(hHal,
-						     pAdapter->sessionId,
-						     WNI_CFG_HT_CAP_INFO_RX_STBC,
-						     (!set_value) ? set_value
-						     : uHTCapabilityInfo.
-						     htCapInfo.rxSTBC);
-		}
-
-		if (ret)
-			hdd_err("Failed to set RX STBC value");
+		ret = hdd_set_rx_stbc(pAdapter, set_value);
 		break;
 	}
 
@@ -5636,7 +5784,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	case WE_SET_BURST_DUR:
 	{
 		hdd_notice("SET Burst duration val %d", set_value);
-		if ((set_value > 0) && (set_value <= 8192))
+		if ((set_value > 0) && (set_value <= 102400))
 			ret = wma_cli_set_command(pAdapter->sessionId,
 						  WMI_PDEV_PARAM_BURST_DUR,
 						  set_value,  PDEV_CMD);
@@ -6507,25 +6655,19 @@ static int __iw_setnone_getint(struct net_device *dev,
 
 	case WE_GET_LDPC:
 	{
-		hdd_notice("GET WMI_VDEV_PARAM_LDPC");
-		*value = sme_get_ht_config(hHal, pAdapter->sessionId,
-					   WNI_CFG_HT_CAP_INFO_ADVANCE_CODING);
+		ret = hdd_get_ldpc(pAdapter, value);
 		break;
 	}
 
 	case WE_GET_TX_STBC:
 	{
-		hdd_notice("GET WMI_VDEV_PARAM_TX_STBC");
-		*value = sme_get_ht_config(hHal, pAdapter->sessionId,
-					   WNI_CFG_HT_CAP_INFO_TX_STBC);
+		ret = hdd_get_tx_stbc(pAdapter, value);
 		break;
 	}
 
 	case WE_GET_RX_STBC:
 	{
-		hdd_notice("GET WMI_VDEV_PARAM_RX_STBC");
-		*value = sme_get_ht_config(hHal, pAdapter->sessionId,
-					   WNI_CFG_HT_CAP_INFO_RX_STBC);
+		ret = hdd_get_rx_stbc(pAdapter, value);
 		break;
 	}
 
@@ -6864,6 +7006,47 @@ static int iw_setnone_getint(struct net_device *dev,
 	return ret;
 }
 
+static int hdd_set_fwtest(int argc, int cmd, int value)
+{
+	struct set_fwtest_params *fw_test;
+
+	/* check for max number of arguments */
+	if (argc > (WMA_MAX_NUM_ARGS) ||
+	    argc != HDD_FWTEST_PARAMS) {
+		hdd_err("Too Many args %d", argc);
+		return -EINVAL;
+	}
+	/*
+	 * check if number of arguments are 3 then, check
+	 * then set the default value for sounding interval.
+	 */
+	if (HDD_FWTEST_PARAMS == argc) {
+		if (HDD_FWTEST_SU_PARAM_ID == cmd && 0 == value)
+			value = HDD_FWTEST_SU_DEFAULT_VALUE;
+		if (HDD_FWTEST_MU_PARAM_ID == cmd && 0 == value)
+			value = HDD_FWTEST_MU_DEFAULT_VALUE;
+	}
+	/* check sounding interval value should not exceed to max */
+	if (value > HDD_FWTEST_MAX_VALUE) {
+		hdd_err("Invalid arguments value should not exceed max: %d",
+			value);
+		return -EINVAL;
+	}
+	fw_test = qdf_mem_malloc(sizeof(*fw_test));
+	if (NULL == fw_test) {
+		hdd_err("qdf_mem_malloc failed for fw_test");
+		return -ENOMEM;
+	}
+	fw_test->arg = cmd;
+	fw_test->value = value;
+	if (QDF_STATUS_SUCCESS != sme_set_fw_test(fw_test)) {
+		qdf_mem_free(fw_test);
+		hdd_err("Not able to post FW_TEST_CMD message to WMA");
+		return -EINVAL;
+	}
+	return 0;
+}
+
 /**
  * iw_set_three_ints_getnone() - Generic "set 3 params" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -6927,6 +7110,15 @@ static int __iw_set_three_ints_getnone(struct net_device *dev,
 		hdd_debug("%d %d %d", value[1], value[2], value[3]);
 		cds_set_dual_mac_scan_config(value[1], value[2], value[3]);
 		break;
+	case WE_SET_FW_TEST:
+	{
+		ret = hdd_set_fwtest(value[1], value[2], value[3]);
+		if (ret) {
+			hdd_err("Not able to set fwtest %d", ret);
+			return ret;
+		}
+	}
+	break;
 	default:
 		hdd_err("Invalid IOCTL command %d", sub_cmd);
 		break;
@@ -7005,7 +7197,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 	switch (sub_cmd) {
 	case WE_WLAN_VERSION:
 	{
-		hdd_wlan_get_version(pAdapter, wrqu, extra);
+		hdd_wlan_get_version(hdd_ctx, wrqu, extra);
 		break;
 	}
 
@@ -7252,8 +7444,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		tChannelListInfo channel_list;
 
 		memset(&channel_list, 0, sizeof(channel_list));
-		status =
-			iw_softap_get_channel_list(dev, info, wrqu,
+		status = iw_get_channel_list(dev, info, wrqu,
 						   (char *)&channel_list);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("GetChannelList Failed!!!");
@@ -7570,22 +7761,24 @@ static int __iw_setnone_getnone(struct net_device *dev,
 	{
 		hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 		tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
+		tSirMacAddr bssid;
 		uint32_t roamId = 0;
+		uint8_t operating_ch =
+			adapter->sessionCtx.station.conn_info.operationChannel;
 		tCsrRoamModifyProfileFields modProfileFields;
-		hdd_station_ctx_t *hdd_sta_ctx =
-				   WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-
-		/* Reassoc to same AP, only supported for Open Security*/
-		if ((hdd_sta_ctx->conn_info.ucEncryptionType ||
-			  hdd_sta_ctx->conn_info.mcEncryptionType)) {
-			hdd_err("Reassoc to same AP, only supported for Open Security");
-			return -ENOTSUPP;
-		}
 
 		sme_get_modify_profile_fields(hHal, adapter->sessionId,
 					      &modProfileFields);
-		sme_roam_reassoc(hHal, adapter->sessionId,
-				 NULL, modProfileFields, &roamId, 1);
+		if (roaming_offload_enabled(hdd_ctx)) {
+			qdf_mem_copy(bssid,
+				&adapter->sessionCtx.station.conn_info.bssId,
+				sizeof(bssid));
+			hdd_wma_send_fastreassoc_cmd((int)adapter->sessionId,
+						     bssid, operating_ch);
+		} else {
+			sme_roam_reassoc(hdd_ctx->hHal, adapter->sessionId,
+				NULL, modProfileFields, &roamId, 1);
+		}
 		return 0;
 	}
 
@@ -7986,8 +8179,9 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 			       apps_args[0]);
 			return -EINVAL;
 		}
-		if (apps_args[1] > (WMA_MAX_NUM_ARGS)) {
-			hdd_err("Too Many args %d",
+		if ((apps_args[1] > (WMA_MAX_NUM_ARGS)) ||
+		    (apps_args[1] < 0)) {
+			hdd_err("Too Many/Few args %d",
 			       apps_args[1]);
 			return -EINVAL;
 		}
@@ -8073,7 +8267,6 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		}
 	}
 	break;
-
 	default:
 	{
 		hdd_err("Invalid IOCTL command %d", sub_cmd);
@@ -9569,11 +9762,11 @@ static int wlan_hdd_set_mon_chan(hdd_adapter_t *adapter, uint32_t chan,
 	}
 
 	hdd_info("Set monitor mode Channel %d", chan);
-	hdd_select_cbmode(adapter, chan);
 	roam_profile.ChannelInfo.ChannelList = &ch_info->channel;
 	roam_profile.ChannelInfo.numOfChannels = 1;
 	roam_profile.phyMode = ch_info->phy_mode;
 	roam_profile.ch_params.ch_width = bandwidth;
+	hdd_select_cbmode(adapter, chan, &roam_profile.ch_params);
 
 	qdf_mem_copy(bssid.bytes, adapter->macAddressCurrent.bytes,
 		     QDF_MAC_ADDR_SIZE);
@@ -9590,6 +9783,25 @@ static int wlan_hdd_set_mon_chan(hdd_adapter_t *adapter, uint32_t chan,
 	return qdf_status_to_os_return(status);
 }
 
+#ifdef WLAN_SUSPEND_RESUME_TEST
+static void *g_wiphy;
+
+/**
+ * hdd_wlan_trigger_resume() - resume wlan
+ * @val: interrupt val
+ *
+ * Resume wlan after getting very 1st CE interrupt from target
+ *
+ * Return: none
+ */
+static void hdd_wlan_trigger_resume(uint32_t val)
+{
+	hdd_err("Resume WLAN val 0x%x", val);
+	wlan_hdd_bus_resume();
+	wlan_hdd_cfg80211_resume_wlan(g_wiphy);
+}
+#endif
+
 static int __iw_set_two_ints_getnone(struct net_device *dev,
 				     struct iw_request_info *info,
 				     union iwreq_data *wrqu, char *extra)
@@ -9599,6 +9811,10 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 	int sub_cmd = value[0];
 	int ret;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+#ifdef WLAN_SUSPEND_RESUME_TEST
+	pm_message_t state;
+#endif
+
 
 	ENTER_DEV(dev);
 
@@ -9662,6 +9878,21 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 	case WE_SET_MON_MODE_CHAN:
 		ret = wlan_hdd_set_mon_chan(pAdapter, value[1], value[2]);
 		break;
+#ifdef WLAN_SUSPEND_RESUME_TEST
+	case WE_SET_WLAN_SUSPEND:
+		hdd_err("Suspend WLAN");
+		g_wiphy = hdd_ctx->wiphy;
+		state.event = PM_EVENT_SUSPEND;
+		ret = wlan_hdd_cfg80211_suspend_wlan(hdd_ctx->wiphy, NULL);
+		wlan_hdd_bus_suspend(state);
+		hif_fake_apps_suspend(hdd_wlan_trigger_resume);
+		break;
+	case WE_SET_WLAN_RESUME:
+		hdd_err("Resume WLAN");
+		wlan_hdd_bus_resume();
+		ret = wlan_hdd_cfg80211_resume_wlan(hdd_ctx->wiphy);
+		break;
+#endif
 	default:
 		hdd_err("Invalid IOCTL command %d", sub_cmd);
 		break;
@@ -9848,6 +10079,11 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0,
 	 "setTxMaxPower5G"},
+
+	{WE_SET_PKTLOG,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	 0,
+	 "pktlog"},
 
 	/* SAP has TxMax whereas STA has MaxTx, adding TxMax for STA
 	 * as well to keep same syntax as in SAP. Now onwards, STA
@@ -10522,6 +10758,11 @@ static const struct iw_priv_args we_private_args[] = {
 	IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 3,
 	0,
 	"setsapchannels"},
+
+	{WE_SET_FW_TEST,
+	IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 3,
+	0, "fw_test"},
+
 	/* handlers for main ioctl */
 	{WLAN_PRIV_SET_NONE_GET_THREE_INT,
 	 0,
@@ -10872,6 +11113,16 @@ static const struct iw_priv_args we_private_args[] = {
 	{WE_SET_FW_CRASH_INJECT,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
 	 0, "crash_inject"}
+	,
+#endif
+#ifdef WLAN_SUSPEND_RESUME_TEST
+	{WE_SET_WLAN_SUSPEND,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
+	 0, "wlan_suspend"}
+	,
+	{WE_SET_WLAN_RESUME,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
+	 0, "wlan_resume"}
 	,
 #endif
 	{WE_ENABLE_FW_PROFILE,

@@ -120,6 +120,7 @@ const EID_AID                        =  197;
 const EID_EXT_CAP           	     =  127;
 const EID_OPERATING_MODE             =  199;
 const EID_WIDER_BW_CHANNEL_SWITCH_ANN=  194;
+const VHT_TRANSMIT_POWER_ENVELOPE    = 195;
 const EID_CHANNEL_SWITCH_WRAPPER     = 196;
 const EID_VENDOR_SPECIFIC            = 221;
 
@@ -1860,9 +1861,8 @@ IE Vendor3IE (EID_VENDOR_SPECIFIC) OUI (0x00, 0x16, 0x32)
 {
 }
 
-IE hs20vendor_ie (EID_VENDOR_SPECIFIC) OUI (0x50, 0x6F, 0x9A)
+IE hs20vendor_ie (EID_VENDOR_SPECIFIC) OUI (0x50, 0x6F, 0x9A, 0x10)
 {
-    type,                       1;
     /* hotspot_configurations */
     {
         dgaf_dis:               1;
@@ -2248,9 +2248,15 @@ IE WiderBWChanSwitchAnn (EID_WIDER_BW_CHANNEL_SWITCH_ANN)
    newCenterChanFreq1,    1;
 }
 
+IE vht_transmit_power_env (VHT_TRANSMIT_POWER_ENVELOPE)
+{
+    bytes[2..5];
+}
+
 IE ChannelSwitchWrapper (EID_CHANNEL_SWITCH_WRAPPER)
 {
     OPTIE IE  WiderBWChanSwitchAnn;
+    OPTIE IE  vht_transmit_power_env;
 }
 IE ExtCap (EID_EXT_CAP)
 {
@@ -2411,6 +2417,12 @@ IE TimeAdvertisement (EID_TIME_ADVERTISEMENT)   // 8.4.2.63
     timing_capabilities, 1;
     time_value[10];
     time_error[5];
+}
+
+IE MBO_IE (EID_VENDOR_SPECIFIC) OUI ( 0x50, 0x6F, 0x9A, 0x16 )
+{
+    mbo_cap[3];
+    assoc_disallowed[0..3];
 }
 
 const EID_RRM_BEACON_REPORTING     = 1;
@@ -2951,6 +2963,7 @@ FRAME Beacon                              // C.f. Sec. 7.2.3.1
     OPTIE  ChannelSwitchWrapper;
     OPTIE  QComVendorIE;
     OPTIE  ESEVersion;
+    OPTIE  MBO_IE;
 } // End frame Beacon.
 
 // Ok, here's  the story on  Beacon1 & Beacon2.   We presumably beacon  a lot
@@ -3103,6 +3116,7 @@ FRAME BeaconIEs
     OPTIE  hs20vendor_ie;
     OPTIE  ChannelSwitchWrapper;
     OPTIE  QComVendorIE;
+    OPTIE  MBO_IE;
 } // End frame BeaconIEs.
 
 FRAME Disassociation                      // 7.3.3.3
@@ -3320,6 +3334,7 @@ FRAME ProbeResponse                       // 7.2.3.9
     OPTIE  ChannelSwitchWrapper;
     OPTIE  QComVendorIE;
     OPTIE  ESEVersion;
+    OPTIE  MBO_IE;
 } // End frame ProbeResponse.
 
 FRAME Authentication                      // 7.2.3.10

@@ -127,6 +127,9 @@ void htt_rx_hash_deinit(struct htt_pdev_t *pdev)
 
 	if (NULL == pdev->rx_ring.hash_table)
 		return;
+
+	qdf_spin_lock_bh(&(pdev->rx_ring.rx_hash_lock));
+
 	for (i = 0; i < RX_NUM_HASH_BUCKETS; i++) {
 		/* Free the hash entries in hash bucket i */
 		list_iter = pdev->rx_ring.hash_table[i]->listhead.next;
@@ -157,6 +160,10 @@ void htt_rx_hash_deinit(struct htt_pdev_t *pdev)
 	}
 	qdf_mem_free(pdev->rx_ring.hash_table);
 	pdev->rx_ring.hash_table = NULL;
+
+	qdf_spin_unlock_bh(&(pdev->rx_ring.rx_hash_lock));
+	qdf_spinlock_destroy(&(pdev->rx_ring.rx_hash_lock));
+
 }
 
 /*
@@ -969,8 +976,8 @@ void htt_rx_print_rx_indication(qdf_nbuf_t rx_ind_msg, htt_pdev_handle pdev)
 
 	qdf_print
 		("------------------HTT RX IND-----------------------------\n");
-	qdf_print("alloc idx paddr %x (*vaddr) %d\n",
-		  pdev->rx_ring.alloc_idx.paddr,
+	qdf_print("alloc idx paddr %llx (*vaddr) %d\n",
+		  (unsigned long long)pdev->rx_ring.alloc_idx.paddr,
 		  *pdev->rx_ring.alloc_idx.vaddr);
 
 	qdf_print("sw_rd_idx msdu_payld %d msdu_desc %d\n",
@@ -1441,6 +1448,16 @@ htt_rx_offload_paddr_msdu_pop_ll(htt_pdev_handle pdev,
 #else
 	qdf_nbuf_unmap(pdev->osdev, buf, QDF_DMA_FROM_DEVICE);
 #endif
+
+	if (pdev->cfg.is_first_wakeup_packet) {
+		if (HTT_RX_IN_ORD_PADDR_IND_MSDU_INFO_GET(*(curr_msdu + 1)) &
+			   FW_MSDU_INFO_FIRST_WAKEUP_M) {
+			qdf_nbuf_mark_wakeup_frame(buf);
+			qdf_print("%s: First packet after WOW Wakeup rcvd\n",
+				__func__);
+		}
+	}
+
 	msdu_hdr = (uint32_t *) qdf_nbuf_data(buf);
 
 	/* First dword */
@@ -1929,6 +1946,14 @@ void htt_rx_mon_note_capture_channel(htt_pdev_handle pdev, int mon_ch)
 
 extern void
 dump_pkt(qdf_nbuf_t nbuf, uint32_t nbuf_paddr, int len);
+
+uint32_t htt_rx_amsdu_rx_in_order_get_pktlog(qdf_nbuf_t rx_ind_msg)
+{
+	uint32_t *msg_word;
+
+	msg_word = (uint32_t *) qdf_nbuf_data(rx_ind_msg);
+	return HTT_RX_IN_ORD_PADDR_IND_PKTLOG_GET(*msg_word);
+}
 
 /* Return values: 1 - success, 0 - failure */
 int
@@ -2895,7 +2920,10 @@ htt_rx_hash_list_insert(struct htt_pdev_t *pdev, uint32_t paddr,
 			qdf_nbuf_t netbuf)
 {
 	int i;
+	int rc = 0;
 	struct htt_rx_hash_entry *hash_element = NULL;
+
+	qdf_spin_lock_bh(&(pdev->rx_ring.rx_hash_lock));
 
 	i = RX_HASH_FUNCTION(paddr);
 
@@ -2910,7 +2938,8 @@ htt_rx_hash_list_insert(struct htt_pdev_t *pdev, uint32_t paddr,
 				pdev->rx_ring.listnode_offset);
 		if (qdf_unlikely(NULL == hash_element)) {
 			HTT_ASSERT_ALWAYS(0);
-			return 1;
+			rc = 1;
+			goto hli_end;
 		}
 
 		htt_list_remove(pdev->rx_ring.hash_table[i]->freepool.next);
@@ -2918,7 +2947,8 @@ htt_rx_hash_list_insert(struct htt_pdev_t *pdev, uint32_t paddr,
 		hash_element = qdf_mem_malloc(sizeof(struct htt_rx_hash_entry));
 		if (qdf_unlikely(NULL == hash_element)) {
 			HTT_ASSERT_ALWAYS(0);
-			return 1;
+			rc = 1;
+			goto hli_end;
 		}
 		hash_element->fromlist = 0;
 	}
@@ -2936,7 +2966,9 @@ htt_rx_hash_list_insert(struct htt_pdev_t *pdev, uint32_t paddr,
 	HTT_RX_HASH_COUNT_INCR(pdev->rx_ring.hash_table[i]);
 	HTT_RX_HASH_COUNT_PRINT(pdev->rx_ring.hash_table[i]);
 
-	return 0;
+hli_end:
+	qdf_spin_unlock_bh(&(pdev->rx_ring.rx_hash_lock));
+	return rc;
 }
 
 /* Given a physical address this function will find the corresponding network
@@ -2948,6 +2980,8 @@ qdf_nbuf_t htt_rx_hash_list_lookup(struct htt_pdev_t *pdev, uint32_t paddr)
 	struct htt_list_node *list_iter = NULL;
 	qdf_nbuf_t netbuf = NULL;
 	struct htt_rx_hash_entry *hash_entry;
+
+	qdf_spin_lock_bh(&(pdev->rx_ring.rx_hash_lock));
 
 	i = RX_HASH_FUNCTION(paddr);
 
@@ -2980,6 +3014,8 @@ qdf_nbuf_t htt_rx_hash_list_lookup(struct htt_pdev_t *pdev, uint32_t paddr)
 			      __func__, paddr, netbuf, (int)i));
 	HTT_RX_HASH_COUNT_PRINT(pdev->rx_ring.hash_table[i]);
 
+	qdf_spin_unlock_bh(&(pdev->rx_ring.rx_hash_lock));
+
 	if (netbuf == NULL) {
 		qdf_print("rx hash: %s: no entry found for 0x%x!!!\n",
 			  __func__, paddr);
@@ -2995,6 +3031,7 @@ qdf_nbuf_t htt_rx_hash_list_lookup(struct htt_pdev_t *pdev, uint32_t paddr)
 int htt_rx_hash_init(struct htt_pdev_t *pdev)
 {
 	int i, j;
+	int rc = 0;
 
 	HTT_ASSERT2(QDF_IS_PWR2(RX_NUM_HASH_BUCKETS));
 
@@ -3007,6 +3044,9 @@ int htt_rx_hash_init(struct htt_pdev_t *pdev)
 		qdf_print("rx hash table allocation failed!\n");
 		return 1;
 	}
+
+	qdf_spinlock_create(&(pdev->rx_ring.rx_hash_lock));
+	qdf_spin_lock_bh(&(pdev->rx_ring.rx_hash_lock));
 
 	for (i = 0; i < RX_NUM_HASH_BUCKETS; i++) {
 
@@ -3038,7 +3078,8 @@ int htt_rx_hash_init(struct htt_pdev_t *pdev)
 			}
 			qdf_mem_free(pdev->rx_ring.hash_table);
 			pdev->rx_ring.hash_table = NULL;
-			return 1;
+			rc = 1;
+			goto hi_end;
 		}
 
 		/* initialize the free list with pre-allocated entries */
@@ -3052,8 +3093,10 @@ int htt_rx_hash_init(struct htt_pdev_t *pdev)
 
 	pdev->rx_ring.listnode_offset =
 		qdf_offsetof(struct htt_rx_hash_entry, listnode);
+hi_end:
+	qdf_spin_unlock_bh(&(pdev->rx_ring.rx_hash_lock));
 
-	return 0;
+	return rc;
 }
 
 void htt_rx_hash_dump_table(struct htt_pdev_t *pdev)

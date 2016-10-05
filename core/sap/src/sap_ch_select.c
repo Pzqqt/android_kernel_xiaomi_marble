@@ -53,7 +53,7 @@
 #include "lim_utils.h"
 #include "parser_api.h"
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
-
+#include "cds_utils.h"
 #include "pld_common.h"
 
 /*--------------------------------------------------------------------------
@@ -586,7 +586,8 @@ bool sap_chan_sel_init(tHalHandle halHandle,
 #endif
 	sme_cfg_get_int(halHandle, WNI_CFG_DFS_MASTER_ENABLED,
 			&dfs_master_cap_enabled);
-	if (dfs_master_cap_enabled == 0)
+	if (dfs_master_cap_enabled == 0 ||
+	    ACS_DFS_MODE_DISABLE == pSapCtx->dfs_mode)
 		include_dfs_ch = false;
 
 	/* Fill the channel number in the spectrum in the operating freq band */
@@ -635,6 +636,10 @@ bool sap_chan_sel_init(tHalHandle halHandle,
 		    eCSR_DOT11_MODE_11b != pSapCtx->csr_roamProfile.phyMode) {
 			continue;
 		}
+
+		/* Skip DSRC channels */
+		if (cds_is_dsrc_channel(cds_chan_to_freq(*pChans)))
+			continue;
 
 		if (true == chSafe) {
 			pSpectCh->chNum = *pChans;
@@ -1127,7 +1132,7 @@ void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 	pBeaconStruct = qdf_mem_malloc(sizeof(tSirProbeRespBeacon));
 	if (NULL == pBeaconStruct) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "Unable to allocate memory in sap_compute_spect_weight\n");
+			  "Unable to allocate memory in sap_compute_spect_weight");
 		return;
 	}
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -1220,7 +1225,7 @@ void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_INFO_HIGH,
-					  "In %s, bssdes.ch_self=%d, bssdes.ch_ID=%d, bssdes.rssi=%d, SpectCh.bssCount=%d, pScanResult=%p, ChannelWidth %d, secondaryChanOffset %d, center frequency %d \n",
+					  "In %s, bssdes.ch_self=%d, bssdes.ch_ID=%d, bssdes.rssi=%d, SpectCh.bssCount=%d, pScanResult=%p, ChannelWidth %d, secondaryChanOffset %d, center frequency %d",
 					  __func__,
 					  pScanResult->BssDescriptor.
 					  channelIdSelf,
@@ -1895,13 +1900,15 @@ bool sap_filter_over_lap_ch(ptSapContext pSapCtx, uint16_t chNum)
  *
  * Returns: channel number if success, 0 otherwise
  */
-static uint8_t sap_select_channel_no_scan_result(ptSapContext sap_ctx)
+static uint8_t sap_select_channel_no_scan_result(tHalHandle hal,
+						ptSapContext sap_ctx)
 {
 	uint32_t start_ch_num, end_ch_num;
 #ifdef FEATURE_WLAN_CH_AVOID
 	enum channel_state ch_type;
 	uint8_t i, first_safe_ch_in_range = SAP_CHANNEL_NOT_SELECTED;
 #endif
+	uint32_t dfs_master_cap_enabled;
 	start_ch_num = sap_ctx->acs_cfg->start_ch;
 	end_ch_num = sap_ctx->acs_cfg->end_ch;
 
@@ -1914,6 +1921,11 @@ static uint8_t sap_select_channel_no_scan_result(ptSapContext sap_ctx)
 	/* pick the first channel in configured range */
 	return start_ch_num;
 #else
+	sme_cfg_get_int(hal, WNI_CFG_DFS_MASTER_ENABLED,
+				&dfs_master_cap_enabled);
+
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+		"%s: dfs_master %x", __func__, dfs_master_cap_enabled);
 
 	/* get a channel in PCL and within the range */
 	for (i = 0; i < sap_ctx->acs_cfg->pcl_ch_count; i++) {
@@ -1937,6 +1949,16 @@ static uint8_t sap_select_channel_no_scan_result(ptSapContext sap_ctx)
 
 		if ((ch_type == CHANNEL_STATE_DISABLE) ||
 			(ch_type == CHANNEL_STATE_INVALID))
+			continue;
+		if ((!dfs_master_cap_enabled) &&
+			(CHANNEL_STATE_DFS == ch_type)) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+				"%s: DFS master mode disabled. Skip DFS channel %d",
+				__func__, safe_channels[i].channelNumber);
+			continue;
+		}
+		if ((sap_ctx->dfs_mode == ACS_DFS_MODE_DISABLE) &&
+		    (CHANNEL_STATE_DFS == ch_type))
 			continue;
 
 		if (safe_channels[i].isSafe == true) {
@@ -1993,7 +2015,7 @@ uint8_t sap_select_channel(tHalHandle hal, ptSapContext sap_ctx,
 #ifndef SOFTAP_CHANNEL_RANGE
 		return SAP_CHANNEL_NOT_SELECTED;
 #else
-		return sap_select_channel_no_scan_result(sap_ctx);
+		return sap_select_channel_no_scan_result(hal, sap_ctx);
 #endif
 	}
 

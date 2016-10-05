@@ -58,6 +58,7 @@ struct htt_host_fw_desc_base {
 	} u;
 };
 
+
 /*
  * This struct defines the basic descriptor information used by host,
  * which is written either by the 11ac HW MAC into the host Rx data
@@ -478,6 +479,10 @@ htt_h2t_frag_desc_bank_cfg_msg(struct htt_pdev_t *pdev);
 #endif /* defined(HELIUMPLUS_PADDR64) */
 
 extern QDF_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev);
+
+extern QDF_STATUS htt_h2t_rx_ring_rfs_cfg_msg_ll(struct htt_pdev_t *pdev);
+
+extern QDF_STATUS htt_h2t_rx_ring_rfs_cfg_msg_hl(struct htt_pdev_t *pdev);
 
 extern QDF_STATUS htt_h2t_rx_ring_cfg_msg_hl(struct htt_pdev_t *pdev);
 

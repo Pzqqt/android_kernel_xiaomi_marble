@@ -38,6 +38,8 @@
 #define WLAN_NLINK_COMMON_H__
 
 #include <linux/netlink.h>
+#include <linux/if.h>
+
 
 /*---------------------------------------------------------------------------
  * External Functions
@@ -79,8 +81,11 @@
 #define WLAN_SVC_WLAN_VERSION_IND   0x107
 #define WLAN_SVC_DFS_ALL_CHANNEL_UNAVAIL_IND 0x108
 #define WLAN_SVC_WLAN_TP_IND        0x109
+#define WLAN_SVC_RPS_ENABLE_IND     0x10A
 #define WLAN_SVC_WLAN_TP_TX_IND     0x10B
 #define WLAN_SVC_WLAN_AUTO_SHUTDOWN_CANCEL_IND 0x10C
+#define WLAN_SVC_WLAN_RADIO_INDEX 0x10D
+#define WLAN_SVC_FW_SHUTDOWN_IND  0x10E
 #define WLAN_SVC_MAX_SSID_LEN    32
 #define WLAN_SVC_MAX_BSSID_LEN   6
 #define WLAN_SVC_MAX_STR_LEN     16
@@ -114,6 +119,12 @@ typedef struct sAniNlMsg {
 	tAniHdr wmsg;           /* Airgo Message Header */
 } tAniNlHdr;
 
+struct radio_index_tlv {
+	unsigned short type;
+	unsigned short length;
+	int radio;
+};
+
 struct wlan_status_data {
 	uint8_t lpss_support;
 	uint8_t is_on;
@@ -141,6 +152,29 @@ struct wlan_version_data {
 struct wlan_dfs_info {
 	uint16_t channel;
 	uint8_t country_code[WLAN_SVC_COUNTRY_CODE_LEN];
+};
+
+/*
+ * Maximim number of queues supported by WLAN driver. Setting an upper
+ * limit. Actual number of queues may be smaller than this value.
+ */
+#define WLAN_SVC_IFACE_NUM_QUEUES 6
+
+/**
+ * struct wlan_rps_data - structure to send RPS info to cnss-daemon
+ * @ifname:         interface name for which the RPS data belongs to
+ * @num_queues:     number of rx queues for which RPS data is being sent
+ * @cpu_map_list:   array of cpu maps for different rx queues supported by
+ *                  the wlan driver
+ *
+ * The structure specifies the format of data exchanged between wlan
+ * driver and cnss-daemon. On receipt of the data, cnss-daemon is expected
+ * to apply the 'cpu_map' for each rx queue belonging to the interface 'ifname'
+ */
+struct wlan_rps_data {
+	char ifname[IFNAMSIZ];
+	uint16_t num_queues;
+	uint16_t cpu_map_list[WLAN_SVC_IFACE_NUM_QUEUES];
 };
 
 /**

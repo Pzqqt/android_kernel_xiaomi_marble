@@ -249,21 +249,24 @@ PREPACK struct bmi_target_info {
 #define TARGET_TYPE_AR9888    7
 #define TARGET_TYPE_AR6320    8
 #define TARGET_TYPE_AR900B    9
-#define TARGET_TYPE_QCA9984   10
-#define TARGET_TYPE_IPQ4019   11
-#define TARGET_TYPE_QCA9888   12
 /* For attach Peregrine 2.0 board target_reg_tbl only */
-#define TARGET_TYPE_AR9888V2  13
+#define TARGET_TYPE_AR9888V2  10
 /* For attach Rome1.0 target_reg_tbl only*/
-#define TARGET_TYPE_AR6320V1    14
+#define TARGET_TYPE_AR6320V1  11
 /* For Rome2.0/2.1 target_reg_tbl ID*/
-#define TARGET_TYPE_AR6320V2    15
+#define TARGET_TYPE_AR6320V2  12
 /* For Rome3.0 target_reg_tbl ID*/
-#define TARGET_TYPE_AR6320V3    16
+#define TARGET_TYPE_AR6320V3  13
 /* For Tufello1.0 target_reg_tbl ID*/
-#define TARGET_TYPE_QCA9377V1   17
+#define TARGET_TYPE_QCA9377V1 14
+/* cascade */
+#define TARGET_TYPE_QCA9984   15
+/* dakota */
+#define TARGET_TYPE_IPQ4019   16
+/* besra */
+#define TARGET_TYPE_QCA9888   17
 /* For Adrastea target */
-#define TARGET_TYPE_ADRASTEA     19
+#define TARGET_TYPE_ADRASTEA  19
 
 extern void target_register_tbl_attach(A_UINT32 target_type);
 

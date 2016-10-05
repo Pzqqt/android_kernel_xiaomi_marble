@@ -130,6 +130,7 @@ static void hdd_lro_desc_info_init(struct hdd_lro_s *hdd_info)
 	}
 
 	qdf_spinlock_create(&hdd_info->lro_desc_info.lro_hash_lock);
+	qdf_spinlock_create(&hdd_info->lro_mgr_arr_access_lock);
 }
 
 /**
@@ -162,6 +163,7 @@ static void hdd_lro_desc_info_deinit(struct hdd_lro_s *hdd_info)
 
 	hdd_lro_desc_pool_deinit(&desc_info->lro_desc_pool);
 	qdf_spinlock_destroy(&desc_info->lro_hash_lock);
+	qdf_spinlock_destroy(&hdd_info->lro_mgr_arr_access_lock);
 }
 
 /**
@@ -212,7 +214,7 @@ static int hdd_lro_desc_find(hdd_adapter_t *adapter,
 	struct hdd_lro_desc_table *lro_hash_table;
 	struct list_head *ptr;
 	struct hdd_lro_desc_entry *entry;
-	struct hdd_lro_desc_pool free_pool;
+	struct hdd_lro_desc_pool *free_pool;
 	struct hdd_lro_desc_info *desc_info = &adapter->lro_info.lro_desc_info;
 
 	*lro_desc = NULL;
@@ -243,19 +245,19 @@ static int hdd_lro_desc_find(hdd_adapter_t *adapter,
 	qdf_spin_unlock_bh(&desc_info->lro_hash_lock);
 
 	/* no existing flow found, a new LRO desc needs to be allocated */
-	free_pool = adapter->lro_info.lro_desc_info.lro_desc_pool;
-	qdf_spin_lock_bh(&free_pool.lro_pool_lock);
+	free_pool = &adapter->lro_info.lro_desc_info.lro_desc_pool;
+	qdf_spin_lock_bh(&free_pool->lro_pool_lock);
 	entry = list_first_entry_or_null(
-		 &free_pool.lro_free_list_head,
+		 &free_pool->lro_free_list_head,
 		 struct hdd_lro_desc_entry, lro_node);
 	if (NULL == entry) {
 		hdd_err("Could not allocate LRO desc!");
-		qdf_spin_unlock_bh(&free_pool.lro_pool_lock);
+		qdf_spin_unlock_bh(&free_pool->lro_pool_lock);
 		return -ENOMEM;
 	}
 
 	list_del_init(&entry->lro_node);
-	qdf_spin_unlock_bh(&free_pool.lro_pool_lock);
+	qdf_spin_unlock_bh(&free_pool->lro_pool_lock);
 
 	if (NULL == entry->lro_desc) {
 		hdd_err("entry->lro_desc is NULL!\n");
@@ -417,11 +419,10 @@ void hdd_lro_flush_pkt(struct net_lro_mgr *lro_mgr,
 
 	lro_desc = hdd_lro_get_desc(lro_mgr, lro_mgr->lro_arr, iph, tcph);
 
-	if (!lro_desc)
-		return;
-
-	hdd_lro_desc_free(lro_desc, adapter);
-	lro_flush_desc(lro_mgr, lro_desc);
+	if (lro_desc) {
+		hdd_lro_desc_free(lro_desc, adapter);
+		lro_flush_desc(lro_mgr, lro_desc);
+	}
 }
 
 /**
@@ -436,16 +437,46 @@ void hdd_lro_flush_pkt(struct net_lro_mgr *lro_mgr,
 void hdd_lro_flush(void *data)
 {
 	hdd_adapter_t *adapter = (hdd_adapter_t *)data;
+	struct hdd_lro_s *hdd_lro;
+	struct hdd_context_s *ctx;
+	QDF_STATUS status;
+	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
 	int i;
 
-	for (i = 0; i < adapter->lro_info.lro_mgr->max_desc; i++) {
-		if (adapter->lro_info.lro_mgr->lro_arr[i].active) {
-			hdd_lro_desc_free(
-				 &adapter->lro_info.lro_mgr->lro_arr[i],
-				 (void *)adapter);
-			lro_flush_desc(adapter->lro_info.lro_mgr,
-				 &adapter->lro_info.lro_mgr->lro_arr[i]);
+	/*
+	 * There is a more comprehensive solution that refactors
+	 * lro_mgr in the adapter into multiple instances, that
+	 * will replace this solution. The following is an interim
+	 * fix.
+	 */
+
+	/* Loop over all adapters and flush them all */
+	ctx = (struct hdd_context_s *)cds_get_context(QDF_MODULE_ID_HDD);
+	if (unlikely(ctx == NULL)) {
+		hdd_err("%s: cannot get hdd_ctx. Flushing failed", __func__);
+		return;
+	}
+
+	status = hdd_get_front_adapter(ctx, &adapter_node);
+	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
+		adapter = adapter_node->pAdapter;
+		hdd_lro = &adapter->lro_info;
+		if (adapter->dev->features & NETIF_F_LRO) {
+			qdf_spin_lock_bh(&hdd_lro->lro_mgr_arr_access_lock);
+			for (i = 0; i < hdd_lro->lro_mgr->max_desc; i++) {
+				if (hdd_lro->lro_mgr->lro_arr[i].active) {
+					hdd_lro_desc_free(
+						&hdd_lro->lro_mgr->lro_arr[i],
+						(void *)adapter);
+					lro_flush_desc(
+						hdd_lro->lro_mgr,
+						&hdd_lro->lro_mgr->lro_arr[i]);
+				}
+			}
+			qdf_spin_unlock_bh(&hdd_lro->lro_mgr_arr_access_lock);
 		}
+		status = hdd_get_next_adapter(ctx, adapter_node, &next);
+		adapter_node = next;
 	}
 }
 
@@ -455,6 +486,8 @@ void hdd_lro_flush(void *data)
  *
  * This function sends the LRO configuration to the firmware
  * via WMA
+ * Make sure that this function gets called after NAPI
+ * instances have been created.
  *
  * Return: 0 - success, < 0 - failure
  */
@@ -462,8 +495,10 @@ int hdd_lro_init(hdd_context_t *hdd_ctx)
 {
 	struct wma_lro_config_cmd_t lro_config;
 
-	if (!hdd_ctx->config->lro_enable) {
-		hdd_err("LRO Disabled");
+	if ((!hdd_ctx->config->lro_enable) &&
+	    (hdd_napi_enabled(HDD_NAPI_ANY) == 0))
+	{
+		hdd_err("LRO and NAPI are both disabled.");
 		return 0;
 	}
 
@@ -509,7 +544,7 @@ int hdd_lro_enable(hdd_context_t *hdd_ctx,
 	uint8_t *lro_mem_ptr;
 
 	if (!hdd_ctx->config->lro_enable ||
-		 NL80211_IFTYPE_STATION != adapter->wdev.iftype) {
+		 QDF_STA_MODE != adapter->device_mode) {
 		hdd_info("LRO Disabled");
 		return 0;
 	}
@@ -557,7 +592,7 @@ int hdd_lro_enable(hdd_context_t *hdd_ctx,
 	 hdd_lro_desc_info_init(hdd_lro);
 
 	hdd_lro->lro_mgr->dev = adapter->dev;
-	if (hdd_ctx->config->enableRxThread)
+	if (hdd_ctx->enableRxThread)
 		hdd_lro->lro_mgr->features = LRO_F_NI;
 
 	if (hdd_napi_enabled(HDD_NAPI_ANY))
@@ -590,7 +625,7 @@ int hdd_lro_enable(hdd_context_t *hdd_ctx,
 void hdd_lro_disable(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 {
 	if (!hdd_ctx->config->lro_enable ||
-		 NL80211_IFTYPE_STATION != adapter->wdev.iftype)
+		 QDF_STA_MODE != adapter->device_mode)
 		return;
 
 	/* Deregister the flush callback */
@@ -629,8 +664,11 @@ enum hdd_lro_rx_status hdd_lro_rx(hdd_context_t *hdd_ctx,
 		struct iphdr *iph;
 		struct tcphdr *tcph;
 		struct net_lro_desc *lro_desc = NULL;
+		struct hdd_lro_s *hdd_lro = &adapter->lro_info;
 		iph = (struct iphdr *)skb->data;
 		tcph = (struct tcphdr *)(skb->data + QDF_NBUF_CB_RX_TCP_OFFSET(skb));
+		qdf_spin_lock_bh(
+			&hdd_lro->lro_mgr_arr_access_lock);
 		if (hdd_lro_eligible(adapter, skb, iph, tcph, &lro_desc)) {
 			struct net_lro_info hdd_lro_info;
 
@@ -647,14 +685,17 @@ enum hdd_lro_rx_status hdd_lro_rx(hdd_context_t *hdd_ctx,
 			lro_receive_skb_ext(adapter->lro_info.lro_mgr, skb,
 				 (void *)adapter, &hdd_lro_info);
 
-			if (!hdd_lro_info.lro_desc->active)
+			if (!hdd_lro_info.lro_desc->active) {
 				hdd_lro_desc_free(lro_desc, adapter);
+			}
 
 			status = HDD_LRO_RX;
 		} else {
 			hdd_lro_flush_pkt(adapter->lro_info.lro_mgr,
 				 iph, tcph, adapter);
 		}
+		qdf_spin_unlock_bh(
+			&hdd_lro->lro_mgr_arr_access_lock);
 	}
 	return status;
 }

@@ -142,10 +142,8 @@ QDF_STATUS csr_roam_issue_reassociate_cmd(tpAniSirGlobal pMac,
  * Return: void
  */
 
-static void
-csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
-		uint8_t sessionid,
-		tScanResultHandle *scan_results_list)
+void csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
+		uint8_t sessionid, tScanResultHandle *scan_results_list)
 {
 	tCsrScanResultInfo *scan_result;
 	tpCsrNeighborRoamControlInfo n_roam_info =
@@ -204,6 +202,25 @@ csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 					  QDF_TRACE_LEVEL_INFO,
 					  "SKIP-currently associated AP");
 				continue;
+			}
+
+			/*
+			 * Continue if MCC is disabled in INI and if AP
+			 * will create MCC
+			 */
+			if (cds_concurrent_open_sessions_running() &&
+			   !mac_ctx->roam.configParam.fenableMCCMode) {
+				uint8_t conc_channel;
+
+				conc_channel =
+				  csr_get_concurrent_operation_channel(mac_ctx);
+				if (conc_channel &&
+				   (conc_channel !=
+				   scan_result->BssDescriptor.channelId)) {
+					sms_log(mac_ctx, LOG1, FL("MCC not supported so Ignore AP on channel %d"),
+					  scan_result->BssDescriptor.channelId);
+					continue;
+				}
 			}
 			/*
 			 * In case of reassoc requested by upper layer, look
@@ -356,8 +373,8 @@ csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-static void csr_neighbor_roam_trigger_handoff(tpAniSirGlobal mac_ctx,
-					      uint8_t session_id)
+void csr_neighbor_roam_trigger_handoff(tpAniSirGlobal mac_ctx,
+				      uint8_t session_id)
 {
 	if (csr_roam_is_fast_roam_enabled(mac_ctx, session_id))
 		csr_neighbor_roam_issue_preauth_req(mac_ctx, session_id);

@@ -86,14 +86,6 @@ QDF_STATUS sme_ndp_responder_req_handler(tHalHandle hal,
 /* NAN indication response handler */
 QDF_STATUS sme_ndp_end_req_handler(tHalHandle hal, struct ndp_end_req *req);
 
-/* NAN schedule update request handler */
-QDF_STATUS sme_ndp_sched_req_handler(uint32_t session_id,
-				struct ndp_schedule_update_req *req_params);
-
-/* Function to handle NDP messages from lower layers */
-void sme_ndp_message_processor(tpAniSirGlobal mac_ctx, uint16_t msg_type,
-				void *msg);
-
 /* Start NDI BSS */
 QDF_STATUS csr_roam_start_ndi(tpAniSirGlobal mac_ctx, uint32_t session_id,
 			      tCsrRoamProfile *profile);
@@ -124,6 +116,18 @@ void csr_release_ndp_data_end_req(tpAniSirGlobal mac_ctx, tSmeCmd *cmd);
 
 #else
 
+/* NAN initiator request handler */
+static inline QDF_STATUS sme_ndp_initiator_req_handler(tHalHandle hal,
+					void *req_params) {
+	return QDF_STATUS_SUCCESS;
+}
+
+/* NAN responder request handler */
+static inline QDF_STATUS sme_ndp_responder_req_handler(tHalHandle hal,
+					void *req_params) {
+	return QDF_STATUS_SUCCESS;
+}
+
 /* Start NDI BSS */
 static inline QDF_STATUS csr_roam_start_ndi(tpAniSirGlobal mac_ctx,
 					uint32_t session_id,
@@ -147,13 +151,11 @@ static inline void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
 {
 }
 
-/* NaN indication response handler */
-QDF_STATUS sme_ndp_end_req_handler(uint32_t session_id,
-					struct ndp_end_req *req_params);
-
-/* NaN schedule update request handler */
-QDF_STATUS sme_ndp_sched_req_handler(uint32_t session_id,
-				struct ndp_schedule_update_req *req_params);
+/* NAN indication response handler */
+static inline QDF_STATUS sme_ndp_end_req_handler(uint32_t session_id,
+				   void *req_params) {
+	return QDF_STATUS_SUCCESS;
+}
 
 static inline QDF_STATUS csr_process_ndp_initiator_request(
 				tpAniSirGlobal mac_ctx, tSmeCmd *cmd)

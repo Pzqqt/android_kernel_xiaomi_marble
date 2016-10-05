@@ -1100,12 +1100,12 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 
 		/* Frag Desc Pointer */
 		/* 64bits descriptor, Low 32bits */
-		*header_ptr = (uint32_t) (buffer_paddr +
-						IPA_UC_TX_BUF_FRAG_DESC_OFFSET);
+		*header_ptr = qdf_get_lower_32_bits(buffer_paddr +
+					IPA_UC_TX_BUF_FRAG_DESC_OFFSET);
 		header_ptr++;
 
 		/* 64bits descriptor, high 32bits */
-		*header_ptr = (buffer_paddr >> IPA_UC_TX_BUF_PADDR_HI_OFFSET) &
+		*header_ptr = qdf_get_upper_32_bits(buffer_paddr) &
 			IPA_UC_TX_BUF_PADDR_HI_MASK;
 		header_ptr++;
 
@@ -1355,6 +1355,18 @@ htt_tx_desc_fill_tso_info(htt_pdev_handle pdev, void *desc,
 		 tso_seg->seg.tso_flags;
 
 	/* First 24 bytes (6*4) contain the TSO flags */
+	TSO_DEBUG("%s seq# %u l2 len %d, ip len %d flags 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x\n",
+		  __func__,
+		  tso_seg->seg.tso_flags.tcp_seq_num,
+		  tso_seg->seg.tso_flags.l2_len,
+		  tso_seg->seg.tso_flags.ip_len,
+		  *word,
+		  *(word + 1),
+		  *(word + 2),
+		  *(word + 3),
+		  *(word + 4),
+		  *(word + 5));
+
 	word += 6;
 
 	for (i = 0; i < tso_seg->seg.num_frags; i++) {
@@ -1369,6 +1381,12 @@ htt_tx_desc_fill_tso_info(htt_pdev_handle pdev, void *desc,
 		/* [31:16] length of the first buffer */
 		*word = (tso_seg->seg.tso_frags[i].length << 16) | hi;
 		word++;
+		TSO_DEBUG("%s frag[%d] ptr_low 0x%x ptr_hi 0x%x len %u\n",
+			__func__, i,
+			msdu_ext_desc->frags[i].u.frag32.ptr_low,
+			msdu_ext_desc->frags[i].u.frag32.ptr_hi,
+			msdu_ext_desc->frags[i].u.frag32.len);
+
 	}
 
 	if (tso_seg->seg.num_frags < FRAG_NUM_MAX) {
@@ -1599,9 +1617,19 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 	void *qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	QDF_STATUS status;
 
-	if (!qdf_ctx) {
+	if (qdf_unlikely(!qdf_ctx)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s: qdf_ctx is NULL", __func__);
+		return;
+	}
+	if (qdf_unlikely(!msdu_info)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s: bad arg: msdu_info is NULL", __func__);
+		return;
+	}
+	if (qdf_unlikely(!tso_info)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s: bad arg: tso_info is NULL", __func__);
 		return;
 	}
 
@@ -1639,33 +1667,37 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 	 */
 
 	local_word0 = 0;
-	if (msdu_info) {
-		HTT_H2T_MSG_TYPE_SET(local_word0, HTT_H2T_MSG_TYPE_TX_FRM);
-		HTT_TX_DESC_PKT_TYPE_SET(local_word0, pkt_type);
-		HTT_TX_DESC_PKT_SUBTYPE_SET(local_word0, pkt_subtype);
-		HTT_TX_DESC_VDEV_ID_SET(local_word0, msdu_info->info.vdev_id);
-		HTT_TX_DESC_EXT_TID_SET(local_word0, htt_get_ext_tid(type,
-						ext_header_data, msdu_info));
-		HTT_TX_DESC_EXTENSION_SET(local_word0, desc_ext_required);
-		HTT_TX_DESC_EXT_TID_SET(local_word0, msdu_info->info.ext_tid);
-		HTT_TX_DESC_CKSUM_OFFLOAD_SET(local_word0,
-					      msdu_info->action.cksum_offload);
-		if (pdev->cfg.is_high_latency)
-			HTT_TX_DESC_TX_COMP_SET(local_word0, msdu_info->action.
-								tx_comp_req);
-		HTT_TX_DESC_NO_ENCRYPT_SET(local_word0,
-					   msdu_info->action.do_encrypt ?
-					   0 : 1);
-	}
+
+	HTT_H2T_MSG_TYPE_SET(local_word0, HTT_H2T_MSG_TYPE_TX_FRM);
+	HTT_TX_DESC_PKT_TYPE_SET(local_word0, pkt_type);
+	HTT_TX_DESC_PKT_SUBTYPE_SET(local_word0, pkt_subtype);
+	HTT_TX_DESC_VDEV_ID_SET(local_word0, msdu_info->info.vdev_id);
+	HTT_TX_DESC_EXT_TID_SET(local_word0, htt_get_ext_tid(type,
+					ext_header_data, msdu_info));
+	HTT_TX_DESC_EXTENSION_SET(local_word0, desc_ext_required);
+	HTT_TX_DESC_EXT_TID_SET(local_word0, msdu_info->info.ext_tid);
+	HTT_TX_DESC_CKSUM_OFFLOAD_SET(local_word0,
+				      msdu_info->action.cksum_offload);
+	if (pdev->cfg.is_high_latency)
+		HTT_TX_DESC_TX_COMP_SET(local_word0, msdu_info->action.
+							tx_comp_req);
+	HTT_TX_DESC_NO_ENCRYPT_SET(local_word0,
+				   msdu_info->action.do_encrypt ?
+				   0 : 1);
 
 	*word0 = local_word0;
 
 	local_word1 = 0;
 
-	if (tso_info->is_tso)
-		HTT_TX_DESC_FRM_LEN_SET(local_word1, tso_info->total_len);
-	else
+	if (tso_info->is_tso) {
+		uint32_t total_len = tso_info->curr_seg->seg.total_len;
+
+		HTT_TX_DESC_FRM_LEN_SET(local_word1, total_len);
+		TSO_DEBUG("%s setting HTT TX DESC Len = curr_seg->seg.total_len %d\n",
+			  __func__, total_len);
+	} else {
 		HTT_TX_DESC_FRM_LEN_SET(local_word1, qdf_nbuf_len(msdu));
+	}
 
 	HTT_TX_DESC_FRM_ID_SET(local_word1, msdu_id);
 	*word1 = local_word1;

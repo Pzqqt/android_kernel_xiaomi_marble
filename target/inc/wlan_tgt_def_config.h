@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -155,7 +155,7 @@
 #define CFG_TGT_DEFAULT_MCAST2UCAST_MODE 2
 #endif
 
-#define CFG_TGT_MAX_MULTICAST_FILTER_ENTRIES 5
+#define CFG_TGT_MAX_MULTICAST_FILTER_ENTRIES 32
 /*
  * Specify how much memory the target should allocate for a debug log of
  * tx PPDU meta-information (how large the PPDU was, when it was sent,
@@ -218,10 +218,6 @@
  * vht enable highest MCS by default
  */
 #define CFG_TGT_DEFAULT_GTX_VHT_MASK            0x80200
-/*
- * resv for furture use, bit 30 is used for fix tpc, bit0-3 for Power save balance
- */
-#define CFG_TGT_DEFAULT_GTX_USR_CFG             0xa
 /*
  * threshold to enable GTX
  */

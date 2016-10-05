@@ -656,7 +656,9 @@ void ol_tx_desc_frame_list_free(struct ol_txrx_pdev_t *pdev,
 		/* restore original hdr offset */
 		OL_TX_RESTORE_HDR(tx_desc, msdu);
 #endif
-		qdf_nbuf_unmap(pdev->osdev, msdu, QDF_DMA_TO_DEVICE);
+		if (qdf_nbuf_get_users(msdu) <= 1)
+			qdf_nbuf_unmap(pdev->osdev, msdu, QDF_DMA_TO_DEVICE);
+
 		/* free the tx desc */
 		ol_tx_desc_free(pdev, tx_desc);
 		/* link the netbuf into a list to free as a batch */

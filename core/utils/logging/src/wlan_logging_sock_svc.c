@@ -125,7 +125,7 @@ static int wlan_send_sock_msg_to_app(tAniHdr *wmsg, int radio,
 		return -EINVAL;
 	}
 
-	payload_len = wmsg_length + sizeof(wnl->radio);
+	payload_len = wmsg_length + sizeof(wnl->radio) + sizeof(*wmsg);
 	tot_msg_len = NLMSG_SPACE(payload_len);
 	skb = dev_alloc_skb(tot_msg_len);
 	if (skb == NULL) {
@@ -147,11 +147,12 @@ static int wlan_send_sock_msg_to_app(tAniHdr *wmsg, int radio,
 	wnl = (tAniNlHdr *) nlh;
 	wnl->radio = radio;
 	memcpy(&wnl->wmsg, wmsg, wmsg_length);
-	LOGGING_TRACE(QDF_TRACE_LEVEL_INFO,
-		      "%s: Sending Msg Type [0x%X] to pid[%d]\n",
-		      __func__, be16_to_cpu(wmsg->type), pid);
 
 	err = nl_srv_ucast(skb, pid, MSG_DONTWAIT);
+	if (err)
+		LOGGING_TRACE(QDF_TRACE_LEVEL_INFO,
+			"%s: Failed sending Msg Type [0x%X] to pid[%d]\n",
+			__func__, wmsg->type, pid);
 	return err;
 }
 
@@ -233,15 +234,6 @@ static int wlan_queue_logmsg_for_app(void)
 		gwlan_logging.pcur_node =
 			(struct log_msg *)(gwlan_logging.filled_list.next);
 		++gwlan_logging.drop_count;
-		/* print every 64th drop count */
-		if (cds_is_multicast_logging() &&
-				(!(gwlan_logging.drop_count % 0x40))) {
-			pr_info
-				("%s: drop_count = %u index = %d filled_length = %d\n",
-				__func__, gwlan_logging.drop_count,
-				gwlan_logging.pcur_node->index,
-				gwlan_logging.pcur_node->filled_length);
-		}
 		list_del_init(gwlan_logging.filled_list.next);
 		ret = 1;
 	}
@@ -266,14 +258,19 @@ static int wlan_queue_logmsg_for_app(void)
  *
  * For discrete solution e.g rome use system tick and convert it into
  * seconds.milli seconds
+ *
+ * Return: number of characters written in target buffer not including
+ *		trailing '/0'
  */
 static int wlan_add_user_log_radio_time_stamp(char *tbuf, size_t tbuf_sz,
 					      uint64_t ts, int radio)
 {
 	int tlen;
 
-	tlen = scnprintf(tbuf, tbuf_sz, "R%d: [%s][%llu] ",
-			 radio, current->comm, ts);
+	tlen = scnprintf(tbuf, tbuf_sz, "R%d: [%s][%llu] ", radio,
+			((in_irq() ? "irq" : in_softirq() ?  "soft_irq" :
+			current->comm)),
+			ts);
 	return tlen;
 }
 #else
@@ -289,6 +286,9 @@ static int wlan_add_user_log_radio_time_stamp(char *tbuf, size_t tbuf_sz,
  *
  * For discrete solution e.g rome use system tick and convert it into
  * seconds.milli seconds
+ *
+ * Return: number of characters written in target buffer not including
+ *		trailing '/0'
  */
 static int wlan_add_user_log_radio_time_stamp(char *tbuf, size_t tbuf_sz,
 					      uint64_t ts, int radio)
@@ -298,7 +298,10 @@ static int wlan_add_user_log_radio_time_stamp(char *tbuf, size_t tbuf_sz,
 
 	rem = do_div(ts, QDF_MC_TIMER_TO_SEC_UNIT);
 	tlen = scnprintf(tbuf, tbuf_sz, "R%d: [%s][%lu.%06lu] ", radio,
-			 current->comm, (unsigned long) ts, (unsigned long)rem);
+			((in_irq() ? "irq" : in_softirq() ?  "soft_irq" :
+			current->comm)),
+			(unsigned long) ts,
+			(unsigned long)rem);
 	return tlen;
 }
 #endif
@@ -315,10 +318,12 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 	unsigned long flags;
 	uint64_t ts;
 	int radio;
+	bool log_overflow = false;
 
 	radio = cds_get_radio_index();
 
-	if (!cds_is_multicast_logging() || radio == -EINVAL) {
+	if (!cds_is_multicast_logging() || (radio == -EINVAL) ||
+		(!gwlan_logging.is_active)) {
 		/*
 		 * This is to make sure that we print the logs to kmsg console
 		 * when no logger app is running. This is also needed to
@@ -369,13 +374,11 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 	/* Assumption here is that we receive logs which is always less than
 	 * MAX_LOGMSG_LENGTH, where we can accomodate the
 	 *   tAniNlHdr + [context][timestamp] + log
-	 * QDF_ASSERT if we cannot accomodate the the complete log into
-	 * the available buffer.
 	 *
 	 * Continue and copy logs to the available length and discard the rest.
 	 */
 	if (MAX_LOGMSG_LENGTH < (sizeof(tAniNlHdr) + total_log_len)) {
-		QDF_ASSERT(0);
+		log_overflow = true;
 		total_log_len = MAX_LOGMSG_LENGTH - sizeof(tAniNlHdr) - 2;
 	}
 
@@ -387,6 +390,11 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 	*pfilled_length += 1;
 
 	spin_unlock_irqrestore(&gwlan_logging.spin_lock, flags);
+	/*
+	 * QDF_ASSERT if complete log was not accomodated into
+	 * the available buffer.
+	 */
+	QDF_ASSERT(!log_overflow);
 
 	/* Wakeup logger thread */
 	if ((true == wake_up_thread)) {
@@ -574,10 +582,9 @@ static int wlan_logging_thread(void *Arg)
 			break;
 		}
 
-		if (gwlan_logging.exit) {
-			pr_err("%s: Exiting the thread\n", __func__);
+		if (gwlan_logging.exit)
 			break;
-		}
+
 
 		if (test_and_clear_bit(HOST_LOG_DRIVER_MSG,
 					&gwlan_logging.eventFlag)) {
@@ -626,8 +633,6 @@ static int wlan_logging_thread(void *Arg)
 			}
 		}
 	}
-
-	pr_info("%s: Terminating\n", __func__);
 
 	complete_and_exit(&gwlan_logging.shutdown_comp, 0);
 
@@ -689,9 +694,6 @@ int wlan_logging_sock_activate_svc(int log_fe_to_console, int num_buf)
 	int i = 0;
 	unsigned long irq_flag;
 
-	pr_info("%s: Initalizing FEConsoleLog = %d NumBuff = %d\n",
-		__func__, log_fe_to_console, num_buf);
-
 	gapp_pid = INVALID_PID;
 
 	gplog_msg = (struct log_msg *)vmalloc(num_buf * sizeof(struct log_msg));
@@ -742,7 +744,6 @@ int wlan_logging_sock_activate_svc(int log_fe_to_console, int num_buf)
 
 	nl_srv_register(ANI_NL_MSG_LOG, wlan_logging_proc_sock_rx_msg);
 
-	pr_info("%s: Activated wlan_logging svc\n", __func__);
 	return 0;
 }
 
@@ -773,8 +774,6 @@ int wlan_logging_sock_deactivate_svc(void)
 	spin_unlock_irqrestore(&gwlan_logging.spin_lock, irq_flag);
 	vfree(gplog_msg);
 	gplog_msg = NULL;
-
-	pr_info("%s: Deactivate wlan_logging svc\n", __func__);
 
 	return 0;
 }

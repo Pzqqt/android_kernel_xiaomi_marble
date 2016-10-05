@@ -55,12 +55,14 @@
 #define FW_PDEV_STATS_SET 0x1
 #define FW_VDEV_STATS_SET 0x2
 #define FW_PEER_STATS_SET 0x4
-#define FW_STATS_SET 0x7
+#define FW_RSSI_PER_CHAIN_STATS_SET 0x8
+#define FW_STATS_SET 0xf
 
 /*AR9888/AR6320  noise floor approx value
  * similar to the mentioned the WMA
  */
 #define WMA_TGT_NOISE_FLOOR_DBM (-96)
+#define WMA_TGT_RSSI_INVALID      96
 
 /*
  * Make sure that link monitor and keep alive
@@ -204,7 +206,7 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
-					wmi_roam_offload_tlv_param *
+					roam_offload_param *
 					roam_offload_params,
 					tSirRoamOffloadScanReq *roam_req);
 #endif
@@ -493,7 +495,7 @@ bool wma_is_vdev_in_ibss_mode(tp_wma_handle wma, uint8_t vdev_id);
  * Return false since no vdev can be in ibss mode without ibss support
  */
 static inline
-bool wma_is_vdev_in_ibss_mode(tp_wma_handle wma, uint8_t vdev_id);
+bool wma_is_vdev_in_ibss_mode(tp_wma_handle wma, uint8_t vdev_id)
 {
 	return false;
 }
@@ -794,9 +796,14 @@ int wma_mcc_vdev_tx_pause_evt_handler(void *handle, uint8_t *event,
 #if defined(CONFIG_HL_SUPPORT) && defined(QCA_BAD_PEER_TX_FLOW_CL)
 QDF_STATUS wma_process_init_bad_peer_tx_ctl_info(tp_wma_handle wma,
 					struct t_bad_peer_txtcl_config *config);
-
+#else
+static inline QDF_STATUS
+wma_process_init_bad_peer_tx_ctl_info(tp_wma_handle wma,
+			struct t_bad_peer_txtcl_config *config)
+{
+	return QDF_STATUS_E_FAILURE;
+}
 #endif
-
 
 QDF_STATUS wma_process_init_thermal_info(tp_wma_handle wma,
 					 t_thermal_mgmt *pThermalParams);
@@ -940,15 +947,6 @@ int wma_gtk_offload_status_event(void *handle, uint8_t *event, uint32_t len);
 #endif
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
-int wma_oem_capability_event_callback(void *handle,
-				      uint8_t *datap, uint32_t len);
-
-int wma_oem_measurement_report_event_callback(void *handle, uint8_t *datap,
-					      uint32_t len);
-
-int wma_oem_error_report_event_callback(void *handle, uint8_t *datap,
-					uint32_t len);
-
 int wma_oem_data_response_handler(void *handle, uint8_t *datap,
 				  uint32_t len);
 #endif
@@ -1010,11 +1008,6 @@ int wma_process_receive_filter_set_filter_req(tp_wma_handle wma_handle,
 int wma_process_receive_filter_clear_filter_req(tp_wma_handle wma_handle,
 						       tSirRcvFltPktClearParam *
 						       rcv_clear_param);
-
-#ifdef FEATURE_OEM_DATA_SUPPORT
-void wma_start_oem_data_req(tp_wma_handle wma_handle,
-				   tStartOemDataReq * startOemDataReq);
-#endif
 
 #ifdef FEATURE_WLAN_ESE
 QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
@@ -1220,5 +1213,8 @@ int wma_p2p_lo_event_handler(void *handle, uint8_t *event_buf,
 QDF_STATUS wma_process_hal_pwr_dbg_cmd(WMA_HANDLE handle,
 				       struct sir_mac_pwr_dbg_cmd *
 				       sir_pwr_dbg_params);
+
+int wma_encrypt_decrypt_msg_handler(void *handle, uint8_t *data,
+			uint32_t data_len);
 
 #endif

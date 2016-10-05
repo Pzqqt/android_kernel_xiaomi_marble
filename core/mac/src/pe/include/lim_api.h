@@ -83,6 +83,22 @@
 /* LIM exported function templates */
 #define LIM_MIN_BCN_PR_LENGTH  12
 #define LIM_BCN_PR_CAPABILITY_OFFSET 10
+#define LIM_ASSOC_REQ_IE_OFFSET 4
+
+/**
+ * enum lim_vendor_ie_access_policy - vendor ie access policy
+ * @LIM_ACCESS_POLICY_NONE: access policy not valid
+ * @LIM_ACCESS_POLICY_RESPOND_IF_IE_IS_PRESENT: respond only if vendor ie
+ *         is present in probe request and assoc request frames
+ * @LIM_ACCESS_POLICY_DONOT_RESPOND_IF_IE_IS_PRESENT: do not respond if vendor
+ *         ie is present in probe request or assoc request frames
+ */
+enum lim_vendor_ie_access_policy {
+	LIM_ACCESS_POLICY_NONE,
+	LIM_ACCESS_POLICY_RESPOND_IF_IE_IS_PRESENT,
+	LIM_ACCESS_POLICY_DONOT_RESPOND_IF_IE_IS_PRESENT,
+};
+
 typedef enum eMgmtFrmDropReason {
 	eMGMT_DROP_NO_DROP,
 	eMGMT_DROP_NOT_LAST_IBSS_BCN,
@@ -98,7 +114,7 @@ typedef enum eMgmtFrmDropReason {
  * This called upon LIM thread creation.
  */
 extern tSirRetStatus lim_initialize(tpAniSirGlobal);
-tSirRetStatus pe_open(tpAniSirGlobal pMac, tMacOpenParameters *pMacOpenParam);
+tSirRetStatus pe_open(tpAniSirGlobal pMac, struct cds_config_info *cds_cfg);
 tSirRetStatus pe_close(tpAniSirGlobal pMac);
 void pe_register_tl_handle(tpAniSirGlobal pMac);
 tSirRetStatus lim_start(tpAniSirGlobal pMac);
@@ -113,6 +129,8 @@ tSirRetStatus peProcessMsg(tpAniSirGlobal pMac, tSirMsgQ *limMsg);
 extern void lim_cleanup(tpAniSirGlobal);
 /* / Function to post messages to LIM thread */
 extern uint32_t lim_post_msg_api(tpAniSirGlobal, tSirMsgQ *);
+uint32_t lim_post_msg_high_priority(tpAniSirGlobal mac, tSirMsgQ *msg);
+
 /**
  * Function to process messages posted to LIM thread
  * and dispatch to various sub modules within LIM module.
@@ -256,6 +274,7 @@ static inline void lim_fill_join_rsp_ht_caps(tpPESession session,
 	tpSirSmeJoinRsp rsp)
 {}
 #endif
-
+QDF_STATUS lim_update_ext_cap_ie(tpAniSirGlobal mac_ctx,
+	uint8_t *ie_data, uint8_t *local_ie_buf, uint16_t *local_ie_len);
 /************************************************************/
 #endif /* __LIM_API_H */

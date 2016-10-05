@@ -76,9 +76,9 @@ static inline void ol_ap_fwd_check(struct ol_txrx_vdev_t *vdev, qdf_nbuf_t msdu)
 	if (type != IEEE80211_FC0_TYPE_DATA ||
 	    subtype != 0x0 ||
 	    ((tods != 1) || (fromds != 0)) ||
-	    (qdf_mem_cmp
+	    qdf_mem_cmp
 		     (mac_header->i_addr3, vdev->mac_addr.raw,
-		     IEEE80211_ADDR_LEN) != 0)) {
+		     IEEE80211_ADDR_LEN)) {
 #ifdef DEBUG_HOST_RC
 		TXRX_PRINT(TXRX_PRINT_LEVEL_INFO1,
 			   "Exit: %s | Unnecessary to adjust mac header\n",
@@ -131,6 +131,10 @@ static inline void ol_rx_fwd_to_tx(struct ol_txrx_vdev_t *vdev, qdf_nbuf_t msdu)
 				htt_rx_msdu_rx_desc_size_hl(pdev->htt_pdev,
 							    rx_desc));
 		}
+
+	/* Clear the msdu control block as it will be re-interpreted */
+	qdf_mem_set(msdu->cb, sizeof(msdu->cb), 0);
+	/* update any cb field expected by OL_TX_SEND */
 
 	msdu = OL_TX_SEND(vdev, msdu);
 

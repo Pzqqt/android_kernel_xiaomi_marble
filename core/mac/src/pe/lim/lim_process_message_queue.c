@@ -242,6 +242,130 @@ static void lim_process_set_antenna_resp(tpAniSirGlobal mac, void *body)
 }
 
 /**
+ * lim_update_default_scan_ies() - Update Extended capabilities IE(if present)
+ * with capabilities of Fine Time measurements(FTM) if set in driver
+ *
+ * @mac_ctx: Pointer to Global MAC structure
+ * @ie_data: Default Scan IE data
+ * @local_ie_buf: Local Scan IE data
+ * @local_ie_len: Pointer to length of @ie_data
+ *
+ * Return: eSIR_SUCCESS on success, eSIR_FAILURE otherwise
+ */
+tSirRetStatus lim_update_default_scan_ies(tpAniSirGlobal mac_ctx,
+		uint8_t *ie_data, uint8_t *local_ie_buf, uint16_t *local_ie_len)
+{
+	uint32_t dot11mode;
+	bool vht_enabled = false;
+	tDot11fIEExtCap default_scan_ext_cap = {0}, driver_ext_cap = {0};
+	uint8_t ext_cap_ie_hdr[EXT_CAP_IE_HDR_LEN] = {
+			DOT11F_EID_EXTCAP, DOT11F_IE_EXTCAP_MAX_LEN};
+	tSirRetStatus status;
+
+	status = lim_strip_extcap_update_struct(mac_ctx, ie_data,
+				   local_ie_len, &default_scan_ext_cap);
+	if (eSIR_SUCCESS != status ||
+		(((*local_ie_len) + EXT_CAP_IE_HDR_LEN
+		 + DOT11F_IE_EXTCAP_MAX_LEN) > MAX_DEFAULT_SCAN_IE_LEN)) {
+		lim_log(mac_ctx, LOGE, FL("Strip ext cap fails(%d)"), status);
+		return eSIR_FAILURE;
+	}
+
+	qdf_mem_copy(local_ie_buf, ie_data, (*local_ie_len));
+	qdf_mem_copy(local_ie_buf + (*local_ie_len),
+			ext_cap_ie_hdr, EXT_CAP_IE_HDR_LEN);
+	(*local_ie_len) += EXT_CAP_IE_HDR_LEN;
+
+	wlan_cfg_get_int(mac_ctx, WNI_CFG_DOT11_MODE, &dot11mode);
+	if (IS_DOT11_MODE_VHT(dot11mode))
+		vht_enabled = true;
+
+	status = populate_dot11f_ext_cap(mac_ctx, vht_enabled,
+					&driver_ext_cap, NULL);
+	if (eSIR_SUCCESS != status) {
+		lim_log(mac_ctx, LOGE, FL("Update ext cap fails"));
+		qdf_mem_copy(local_ie_buf + (*local_ie_len),
+				default_scan_ext_cap.bytes,
+				DOT11F_IE_EXTCAP_MAX_LEN);
+		(*local_ie_len) += DOT11F_IE_EXTCAP_MAX_LEN;
+		return eSIR_SUCCESS;
+	}
+	lim_merge_extcap_struct(&driver_ext_cap, &default_scan_ext_cap);
+
+	qdf_mem_copy(local_ie_buf + (*local_ie_len),
+			driver_ext_cap.bytes, DOT11F_IE_EXTCAP_MAX_LEN);
+	(*local_ie_len) += DOT11F_IE_EXTCAP_MAX_LEN;
+	return eSIR_SUCCESS;
+}
+
+/**
+ * lim_process_set_default_scan_ie_request() - Process the Set default
+ * Scan IE request from HDD.
+ * @mac_ctx: Pointer to Global MAC structure
+ * @msg_buf: Pointer to incoming data
+ *
+ * This function receives the default scan IEs and updates the ext cap IE
+ * (if present) with FTM capabilities and pass the Scan IEs to WMA.
+ *
+ * Return: None
+ */
+static void lim_process_set_default_scan_ie_request(tpAniSirGlobal mac_ctx,
+							uint32_t *msg_buf)
+{
+	struct hdd_default_scan_ie *set_ie_params;
+	struct vdev_ie_info *wma_ie_params;
+	uint8_t *local_ie_buf;
+	uint16_t local_ie_len;
+	tSirMsgQ msg_q;
+	tSirRetStatus ret_code;
+
+	if (!msg_buf) {
+		lim_log(mac_ctx, LOGE, FL("msg_buf is NULL"));
+		return;
+	}
+
+	set_ie_params = (struct hdd_default_scan_ie *) msg_buf;
+	local_ie_len = set_ie_params->ie_len;
+
+	local_ie_buf = qdf_mem_malloc(MAX_DEFAULT_SCAN_IE_LEN);
+	if (!local_ie_buf) {
+		lim_log(mac_ctx, LOGE,
+			FL("Scan IE Update fails due to malloc failure"));
+		return;
+	}
+
+	if (lim_update_ext_cap_ie(mac_ctx,
+			(uint8_t *)set_ie_params->ie_data,
+			local_ie_buf, &local_ie_len)) {
+		lim_log(mac_ctx, LOGE, FL("Update ext cap IEs fails"));
+		goto scan_ie_send_fail;
+	}
+
+	wma_ie_params = qdf_mem_malloc(sizeof(*wma_ie_params) + local_ie_len);
+	if (!wma_ie_params) {
+		lim_log(mac_ctx, LOGE, FL("fail to alloc wma_ie_params"));
+		goto scan_ie_send_fail;
+	}
+	wma_ie_params->vdev_id = set_ie_params->session_id;
+	wma_ie_params->ie_id = DEFAULT_SCAN_IE_ID;
+	wma_ie_params->length = local_ie_len;
+	wma_ie_params->data = (uint8_t *)(wma_ie_params)
+					+ sizeof(*wma_ie_params);
+	qdf_mem_copy(wma_ie_params->data, local_ie_buf, local_ie_len);
+
+	msg_q.type = WMA_SET_IE_INFO;
+	msg_q.bodyptr = wma_ie_params;
+	msg_q.bodyval = 0;
+	ret_code = wma_post_ctrl_msg(mac_ctx, &msg_q);
+	if (eSIR_SUCCESS != ret_code) {
+		lim_log(mac_ctx, LOGE, FL("fail to send WMA_SET_IE_INFO"));
+		qdf_mem_free(wma_ie_params);
+	}
+scan_ie_send_fail:
+	qdf_mem_free(local_ie_buf);
+}
+
+/**
  * lim_process_hw_mode_trans_ind() - Process set HW mode transition indication
  * @mac: Global MAC pointer
  * @body: Set HW mode response in sir_hw_mode_trans_ind format
@@ -332,9 +456,6 @@ uint8_t static def_msg_decision(tpAniSirGlobal pMac, tpSirMsgQ limMsg)
 		    && (limMsg->type != WMA_SWITCH_CHANNEL_RSP)
 		    && (limMsg->type != WMA_P2P_NOA_ATTR_IND)
 		    && (limMsg->type != WMA_P2P_NOA_START_IND) &&
-#ifdef FEATURE_OEM_DATA_SUPPORT
-		    (limMsg->type != WMA_START_OEM_DATA_RSP) &&
-#endif
 		    (limMsg->type != WMA_ADD_TS_RSP) &&
 		    /*
 		     * LIM won't process any defer queue commands if gLimAddtsSent is
@@ -1163,52 +1284,6 @@ void lim_message_processor(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	}
 }
 
-#ifdef FEATURE_OEM_DATA_SUPPORT
-
-void lim_oem_data_rsp_handle_resume_link_rsp(tpAniSirGlobal pMac, QDF_STATUS status,
-					     uint32_t *mlmOemDataRsp)
-{
-	if (status != QDF_STATUS_SUCCESS) {
-		lim_log(pMac, LOGE,
-			FL
-				("OEM Data Rsp failed to get the response for resume link"));
-	}
-
-	if (NULL != pMac->lim.gpLimMlmOemDataReq) {
-		qdf_mem_free(pMac->lim.gpLimMlmOemDataReq);
-		pMac->lim.gpLimMlmOemDataReq = NULL;
-	}
-	/* "Failure" status doesn't mean that Oem Data Rsp did not happen */
-	/* and hence we need to respond to upper layers. Only Resume link is failed, but */
-	/* we got the oem data response already. */
-	/* Post the meessage to MLM */
-	lim_post_sme_message(pMac, LIM_MLM_OEM_DATA_CNF,
-			     (uint32_t *) (mlmOemDataRsp));
-
-	return;
-}
-
-void lim_process_oem_data_rsp(tpAniSirGlobal pMac, uint32_t *body)
-{
-	tpLimMlmOemDataRsp mlmOemDataRsp = NULL;
-
-	/* Process all the messages for the lim queue */
-	SET_LIM_PROCESS_DEFD_MESGS(pMac, true);
-
-	mlmOemDataRsp = (tpLimMlmOemDataRsp) body;
-
-	PELOG1(lim_log
-		       (pMac, LOG1, FL("%s: sending oem data response msg to sme"),
-		       __func__);
-	       )
-	lim_post_sme_message(pMac, LIM_MLM_OEM_DATA_CNF,
-			     (uint32_t *) (mlmOemDataRsp));
-
-	return;
-}
-
-#endif
-
 static void lim_process_sme_obss_scan_ind(tpAniSirGlobal mac_ctx,
 							struct sSirMsgQ *msg)
 {
@@ -1274,6 +1349,8 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	tTdlsLinkEstablishParams *tdls_link_params = NULL;
 #endif
 	tSirMbMsgP2p *p2p_msg = NULL;
+	tSirSetActiveModeSetBncFilterReq *bcn_filter_req = NULL;
+
 	if (ANI_DRIVER_TYPE(mac_ctx) == eDRIVER_TYPE_MFG) {
 		qdf_mem_free(msg->bodyptr);
 		msg->bodyptr = NULL;
@@ -1287,8 +1364,27 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 #ifdef WLAN_DEBUG
 	mac_ctx->lim.numTot++;
 #endif
-	MTRACE(mac_trace_msg_rx(mac_ctx, NO_SESSION,
-		LIM_TRACE_MAKE_RXMSG(msg->type, LIM_MSG_PROCESSED));)
+	/*
+	 * MTRACE logs not captured for events received from SME
+	 * SME enums (eWNI_SME_START_REQ) starts with 0x16xx.
+	 * Compare received SME events with SIR_SME_MODULE_ID
+	 */
+	if (SIR_SME_MODULE_ID ==
+	    (uint8_t)MAC_TRACE_GET_MODULE_ID(msg->type)) {
+		MTRACE(mac_trace(mac_ctx, TRACE_CODE_RX_SME_MSG,
+				 NO_SESSION, msg->type));
+	} else {
+		/*
+		 * Omitting below message types as these are too frequent
+		 * and when crash happens we loose critical trace logs
+		 * if these are also logged
+		 */
+		if (msg->type != SIR_CFG_PARAM_UPDATE_IND &&
+		    msg->type != SIR_BB_XPORT_MGMT_MSG)
+			MTRACE(mac_trace_msg_rx(mac_ctx, NO_SESSION,
+				LIM_TRACE_MAKE_RXMSG(msg->type,
+				LIM_MSG_PROCESSED));)
+	}
 
 	switch (msg->type) {
 
@@ -1311,12 +1407,6 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 			lim_print_msg_name(mac_ctx, LOGE, msg->type);
 		}
 		break;
-#ifdef FEATURE_OEM_DATA_SUPPORT
-	case WMA_START_OEM_DATA_RSP:
-		lim_process_oem_data_rsp(mac_ctx, msg->bodyptr);
-		msg->bodyptr = NULL;
-		break;
-#endif
 	case WMA_SWITCH_CHANNEL_RSP:
 		lim_process_switch_channel_rsp(mac_ctx, msg->bodyptr);
 		msg->bodyptr = NULL;
@@ -1387,9 +1477,6 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	case eWNI_SME_REMAIN_ON_CHANNEL_REQ:
 	case eWNI_SME_DISASSOC_REQ:
 	case eWNI_SME_DEAUTH_REQ:
-#ifdef FEATURE_OEM_DATA_SUPPORT
-	case eWNI_SME_OEM_DATA_REQ:
-#endif
 #ifdef FEATURE_WLAN_TDLS
 	case eWNI_SME_TDLS_SEND_MGMT_REQ:
 	case eWNI_SME_TDLS_ADD_STA_REQ:
@@ -1400,10 +1487,14 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	case eWNI_SME_SET_HW_MODE_REQ:
 	case eWNI_SME_SET_DUAL_MAC_CFG_REQ:
 	case eWNI_SME_SET_ANTENNA_MODE_REQ:
+	case eWNI_SME_UPDATE_ACCESS_POLICY_VENDOR_IE:
 		/* These messages are from HDD. Need to respond to HDD */
 		lim_process_normal_hdd_msg(mac_ctx, msg, true);
 		break;
-
+	case eWNI_SME_SEND_DISASSOC_FRAME:
+		/* Need to response to hdd */
+		lim_process_normal_hdd_msg(mac_ctx, msg, true);
+		break;
 	case eWNI_SME_SCAN_ABORT_IND:
 		req_msg = msg->bodyptr;
 		if (req_msg) {
@@ -1416,6 +1507,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		}
 		break;
 	case eWNI_SME_PDEV_SET_HT_VHT_IE:
+	case eWNI_SME_SET_VDEV_IES_PER_BAND:
 	case eWNI_SME_SYS_READY_IND:
 	case eWNI_SME_JOIN_REQ:
 	case eWNI_SME_REASSOC_REQ:
@@ -1431,7 +1523,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	case eWNI_SME_GET_ASSOC_STAS_REQ:
 	case eWNI_SME_TKIP_CNTR_MEAS_REQ:
 	case eWNI_SME_UPDATE_APWPSIE_REQ:
-	case eWNI_SME_HIDE_SSID_REQ:
+	case eWNI_SME_SESSION_UPDATE_PARAM:
 	case eWNI_SME_GET_WPSPBC_SESSION_REQ:
 	case eWNI_SME_SET_APWPARSNIEs_REQ:
 	case eWNI_SME_CHNG_MCC_BEACON_INTERVAL:
@@ -1452,9 +1544,11 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 #endif  /* FEATURE_WLAN_ESE */
 	case eWNI_SME_REGISTER_MGMT_FRAME_CB:
 	case eWNI_SME_EXT_CHANGE_CHANNEL:
+	case eWNI_SME_ROAM_SCAN_OFFLOAD_REQ:
 	case eWNI_SME_NDP_INITIATOR_REQ:
 	case eWNI_SME_NDP_RESPONDER_REQ:
 	case eWNI_SME_NDP_END_REQ:
+	case eWNI_SME_REGISTER_P2P_ACK_CB:
 		/* These messages are from HDD.No need to respond to HDD */
 		lim_process_normal_hdd_msg(mac_ctx, msg, false);
 		break;
@@ -1765,8 +1859,10 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		msg->bodyptr = NULL;
 		break;
 	case eWNI_SME_SET_BCN_FILTER_REQ:
-		session_id = (uint8_t) msg->bodyval;
-		session_entry = &mac_ctx->lim.gpSession[session_id];
+		bcn_filter_req =
+			(tSirSetActiveModeSetBncFilterReq *) msg->bodyptr;
+		session_entry = pe_find_session_by_bssid(mac_ctx,
+			bcn_filter_req->bssid.bytes, &session_id);
 		if ((session_entry != NULL) &&
 			(lim_send_beacon_filter_info(mac_ctx, session_entry) !=
 			 eSIR_SUCCESS))
@@ -1925,6 +2021,11 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		break;
 	case SIR_HAL_SOC_ANTENNA_MODE_RESP:
 		lim_process_set_antenna_resp(mac_ctx, msg->bodyptr);
+		qdf_mem_free((void *)msg->bodyptr);
+		msg->bodyptr = NULL;
+		break;
+	case eWNI_SME_DEFAULT_SCAN_IE:
+		lim_process_set_default_scan_ie_request(mac_ctx, msg->bodyptr);
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;

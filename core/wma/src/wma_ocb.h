@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -31,6 +31,7 @@
 #include "wma.h"
 #include "sir_api.h"
 
+#ifdef WLAN_FEATURE_DSRC
 int wma_ocb_set_config_resp(tp_wma_handle wma_handle, uint8_t status);
 
 int wma_ocb_set_config_req(tp_wma_handle handle,
@@ -64,5 +65,81 @@ int wma_dcc_update_ndl(tp_wma_handle wma_handle,
 		       struct sir_dcc_update_ndl *update_ndl_param);
 
 int wma_ocb_register_event_handlers(tp_wma_handle wma_handle);
+#else
+static inline int wma_ocb_set_config_resp(tp_wma_handle wma_handle,
+		uint8_t status)
+{
+	return 0;
+}
 
+static inline int wma_ocb_set_config_req(tp_wma_handle handle,
+		struct sir_ocb_config *config_req)
+{
+	return 0;
+}
+
+static inline int wma_ocb_set_config_event_handler(void *handle,
+		uint8_t *event_buf, uint32_t len)
+{
+	return 0;
+}
+
+static inline int wma_ocb_start_resp_ind_cont(tp_wma_handle wma_handle)
+{
+	return 0;
+}
+
+static inline int wma_ocb_set_config(tp_wma_handle wma_handle,
+		struct sir_ocb_config *config)
+{
+	return 0;
+}
+
+static inline int wma_ocb_set_utc_time(tp_wma_handle wma_handle,
+		struct sir_ocb_utc *utc)
+{
+	return 0;
+}
+
+static inline int wma_ocb_start_timing_advert(tp_wma_handle wma_handle,
+		struct sir_ocb_timing_advert *timing_advert)
+{
+	return 0;
+}
+
+static inline int wma_ocb_stop_timing_advert(tp_wma_handle wma_handle,
+		struct sir_ocb_timing_advert *timing_advert)
+{
+	return 0;
+}
+
+static inline int wma_ocb_get_tsf_timer(tp_wma_handle wma_handle,
+		struct sir_ocb_get_tsf_timer *request)
+{
+	return 0;
+}
+
+static inline int wma_dcc_get_stats(tp_wma_handle wma_handle,
+		struct sir_dcc_get_stats *get_stats_param)
+{
+	return 0 ;
+}
+
+static inline int wma_dcc_clear_stats(tp_wma_handle wma_handle,
+		struct sir_dcc_clear_stats *clear_stats_param)
+{
+	return 0;
+}
+
+static inline int wma_dcc_update_ndl(tp_wma_handle wma_handle,
+		struct sir_dcc_update_ndl *update_ndl_param)
+{
+	return 0;
+}
+
+static inline int wma_ocb_register_event_handlers(tp_wma_handle wma_handle)
+{
+	return 0;
+}
+#endif
 #endif /* __WMA_OCB_H */

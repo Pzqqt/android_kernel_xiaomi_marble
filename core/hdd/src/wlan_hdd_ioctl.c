@@ -446,21 +446,24 @@ hdd_get_ibss_peer_info_cb(void *pUserData,
 	pStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	if (NULL != pPeerInfo && QDF_STATUS_SUCCESS == pPeerInfo->status) {
 		/* validate number of peers */
-		if (pPeerInfo->numPeers < SIR_MAX_NUM_STA_IN_IBSS) {
-			pStaCtx->ibss_peer_info.status = pPeerInfo->status;
-			pStaCtx->ibss_peer_info.numPeers = pPeerInfo->numPeers;
-
-			for (i = 0; i < pPeerInfo->numPeers; i++) {
-				pStaCtx->ibss_peer_info.peerInfoParams[i] =
-					pPeerInfo->peerInfoParams[i];
-			}
-			hdd_info("Peer Info copied in HDD");
-		} else {
-			hdd_info("Number of peers %d returned is more than limit %d",
+		if (pPeerInfo->numPeers > SIR_MAX_NUM_STA_IN_IBSS) {
+			hdd_warn("Limiting num_peers %u to %u",
 				pPeerInfo->numPeers, SIR_MAX_NUM_STA_IN_IBSS);
+			pPeerInfo->numPeers = SIR_MAX_NUM_STA_IN_IBSS;
 		}
+		pStaCtx->ibss_peer_info.status = pPeerInfo->status;
+		pStaCtx->ibss_peer_info.numPeers = pPeerInfo->numPeers;
+
+		for (i = 0; i < pPeerInfo->numPeers; i++)
+			pStaCtx->ibss_peer_info.peerInfoParams[i] =
+				pPeerInfo->peerInfoParams[i];
 	} else {
-		hdd_info("peerInfo returned is NULL");
+		hdd_err("peerInfo %s: status %u, numPeers %u",
+			pPeerInfo ? "valid" : "null",
+			pPeerInfo ? pPeerInfo->status : QDF_STATUS_E_FAILURE,
+			pPeerInfo ? pPeerInfo->numPeers : 0);
+		pStaCtx->ibss_peer_info.numPeers = 0;
+		pStaCtx->ibss_peer_info.status = QDF_STATUS_E_FAILURE;
 	}
 
 	complete(&adapter->ibss_peer_info_comp);
@@ -837,22 +840,66 @@ static int hdd_parse_reassoc_command_v1_data(const uint8_t *pValue,
 	return 0;
 }
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+void hdd_wma_send_fastreassoc_cmd(int sessionId, const tSirMacAddr bssid,
+				  int channel)
+{
+	struct wma_roam_invoke_cmd *fastreassoc;
+	cds_msg_t msg = {0};
+
+	fastreassoc = qdf_mem_malloc(sizeof(*fastreassoc));
+	if (NULL == fastreassoc) {
+		hdd_err("qdf_mem_malloc failed for fastreassoc");
+		return;
+	}
+	fastreassoc->vdev_id = sessionId;
+	fastreassoc->channel = channel;
+	fastreassoc->bssid[0] = bssid[0];
+	fastreassoc->bssid[1] = bssid[1];
+	fastreassoc->bssid[2] = bssid[2];
+	fastreassoc->bssid[3] = bssid[3];
+	fastreassoc->bssid[4] = bssid[4];
+	fastreassoc->bssid[5] = bssid[5];
+
+	msg.type = SIR_HAL_ROAM_INVOKE;
+	msg.reserved = 0;
+	msg.bodyptr = fastreassoc;
+	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA,
+								&msg)) {
+		qdf_mem_free(fastreassoc);
+		hdd_err("Not able to post ROAM_INVOKE_CMD message to WMA");
+	}
+}
+#else
+void hdd_wma_send_fastreassoc_cmd(int sessionId, const tSirMacAddr bssid,
+				  int channel)
+{
+}
+
+#endif
+
 /**
  * hdd_reassoc() - perform a userspace-directed reassoc
  * @adapter:	Adapter upon which the command was received
  * @bssid:	BSSID with which to reassociate
  * @channel:	channel upon which to reassociate
+ * @src:        The source for the trigger of this action
  *
  * This function performs a userspace-directed reassoc operation
  *
  * Return: 0 for success non-zero for failure
  */
-static int
-hdd_reassoc(hdd_adapter_t *adapter, const uint8_t *bssid,
-	    const uint8_t channel)
+int hdd_reassoc(hdd_adapter_t *adapter, const uint8_t *bssid,
+		const uint8_t channel, const handoff_src src)
 {
 	hdd_station_ctx_t *pHddStaCtx;
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int ret = 0;
+
+	if (hdd_ctx == NULL) {
+		hdd_err("Invalid hdd ctx");
+		return -EINVAL;
+	}
 
 	if (QDF_STA_MODE != adapter->device_mode) {
 		hdd_warn("Unsupported in mode %s(%d)",
@@ -890,12 +937,14 @@ hdd_reassoc(hdd_adapter_t *adapter, const uint8_t *bssid,
 	}
 
 	/* Proceed with reassoc */
-	{
+	if (roaming_offload_enabled(hdd_ctx)) {
+		hdd_wma_send_fastreassoc_cmd((int)adapter->sessionId,
+					bssid, (int)channel);
+	} else {
 		tCsrHandoffRequest handoffInfo;
-		hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 		handoffInfo.channel = channel;
-		handoffInfo.src = REASSOC;
+		handoffInfo.src = src;
 		qdf_mem_copy(handoffInfo.bssid.bytes, bssid, QDF_MAC_ADDR_SIZE);
 		sme_handoff_request(hdd_ctx->hHal, adapter->sessionId,
 				    &handoffInfo);
@@ -931,7 +980,7 @@ static int hdd_parse_reassoc_v1(hdd_adapter_t *adapter, const char *command)
 	if (ret) {
 		hdd_err("Failed to parse reassoc command data");
 	} else {
-		ret = hdd_reassoc(adapter, bssid, channel);
+		ret = hdd_reassoc(adapter, bssid, channel, REASSOC);
 	}
 	return ret;
 }
@@ -961,7 +1010,7 @@ static int hdd_parse_reassoc_v2(hdd_adapter_t *adapter, const char *command)
 		hdd_err("MAC address parsing failed");
 		ret = -EINVAL;
 	} else {
-		ret = hdd_reassoc(adapter, bssid, params.channel);
+		ret = hdd_reassoc(adapter, bssid, params.channel, REASSOC);
 	}
 	return ret;
 }
@@ -4344,41 +4393,6 @@ exit:
 	return ret;
 }
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-static void hdd_wma_send_fastreassoc_cmd(int sessionId, tSirMacAddr bssid,
-							int channel)
-{
-	struct wma_roam_invoke_cmd *fastreassoc;
-	cds_msg_t msg = {0};
-
-	fastreassoc = qdf_mem_malloc(sizeof(*fastreassoc));
-	if (NULL == fastreassoc) {
-		hdd_err("qdf_mem_malloc failed for fastreassoc");
-		return;
-	}
-	fastreassoc->vdev_id = sessionId;
-	fastreassoc->channel = channel;
-	fastreassoc->bssid[0] = bssid[0];
-	fastreassoc->bssid[1] = bssid[1];
-	fastreassoc->bssid[2] = bssid[2];
-	fastreassoc->bssid[3] = bssid[3];
-	fastreassoc->bssid[4] = bssid[4];
-	fastreassoc->bssid[5] = bssid[5];
-
-	msg.type = SIR_HAL_ROAM_INVOKE;
-	msg.reserved = 0;
-	msg.bodyptr = fastreassoc;
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA,
-								&msg)) {
-		qdf_mem_free(fastreassoc);
-		hdd_err("Not able to post ROAM_INVOKE_CMD message to WMA");
-	}
-}
-#else
-static inline void hdd_wma_send_fastreassoc_cmd(int sessionId,
-		tSirMacAddr bssid, int channel)
-{}
-#endif
 static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 				hdd_context_t *hdd_ctx,
 				uint8_t *command,
@@ -4417,33 +4431,34 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 		goto exit;
 	}
 
-	/*
-	 * if the target bssid is same as currently associated AP,
-	 * issue reassoc to same AP
-	 */
-	if (true != qdf_mem_cmp(targetApBssid,
-				    pHddStaCtx->conn_info.bssId.bytes,
-				    QDF_MAC_ADDR_SIZE)) {
-		/* Reassoc to same AP, only supported for Open Security*/
-		if ((pHddStaCtx->conn_info.ucEncryptionType ||
-			  pHddStaCtx->conn_info.mcEncryptionType)) {
-			hdd_err("Reassoc to same AP, only supported for Open Security");
-			return -ENOTSUPP;
-		}
-		hdd_info("Reassoc BSSID is same as currently associated AP bssid");
-		sme_get_modify_profile_fields(hdd_ctx->hHal, adapter->sessionId,
-				&modProfileFields);
-		sme_roam_reassoc(hdd_ctx->hHal, adapter->sessionId,
-			NULL, modProfileFields, &roamId, 1);
-		return 0;
-	}
-
 	/* Check channel number is a valid channel number */
 	if (QDF_STATUS_SUCCESS !=
 		wlan_hdd_validate_operation_channel(adapter, channel)) {
 		hdd_err("Invalid Channel [%d]", channel);
 		return -EINVAL;
 	}
+
+	/*
+	 * if the target bssid is same as currently associated AP,
+	 * issue reassoc to same AP
+	 */
+	if (!qdf_mem_cmp(targetApBssid,
+				    pHddStaCtx->conn_info.bssId.bytes,
+				    QDF_MAC_ADDR_SIZE)) {
+		hdd_info("Reassoc BSSID is same as currently associated AP bssid");
+		if (roaming_offload_enabled(hdd_ctx)) {
+			hdd_wma_send_fastreassoc_cmd((int)adapter->sessionId,
+				targetApBssid, (int)channel);
+		} else {
+			sme_get_modify_profile_fields(hdd_ctx->hHal,
+				adapter->sessionId,
+				&modProfileFields);
+			sme_roam_reassoc(hdd_ctx->hHal, adapter->sessionId,
+				NULL, modProfileFields, &roamId, 1);
+		}
+		return 0;
+	}
+
 	if (roaming_offload_enabled(hdd_ctx)) {
 		hdd_wma_send_fastreassoc_cmd((int)adapter->sessionId,
 					targetApBssid, (int)channel);
@@ -5046,6 +5061,11 @@ static int drv_cmd_get_ibss_peer_info_all(hdd_adapter_t *adapter,
 			tx_rate =
 				pHddStaCtx->ibss_peer_info.peerInfoParams[idx].
 									txRate;
+			/*
+			 * Only lower 3 bytes are rate info. Mask of the MSByte
+			 */
+			tx_rate &= 0x00FFFFFF;
+
 			rssi = pHddStaCtx->ibss_peer_info.peerInfoParams[idx].
 									rssi;
 
@@ -5163,6 +5183,8 @@ static int drv_cmd_get_ibss_peer_info(hdd_adapter_t *adapter,
 	if (QDF_STATUS_SUCCESS == status) {
 		uint32_t txRate =
 			pHddStaCtx->ibss_peer_info.peerInfoParams[0].txRate;
+		/* Only lower 3 bytes are rate info. Mask of the MSByte */
+		txRate &= 0x00FFFFFF;
 
 		length = scnprintf(extra, sizeof(extra), "%d %d",
 				(int)txRate,
@@ -5724,7 +5746,11 @@ static int drv_cmd_enable_ext_wow(hdd_adapter_t *adapter,
 	/* Move pointer to ahead of ENABLEEXTWOW */
 	value = value + command_len;
 
-	sscanf(value, "%d", &set_value);
+	if (!(sscanf(value, "%d", &set_value))) {
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
+			  ("No input identified"));
+		return -EINVAL;
+	}
 
 	return hdd_enable_ext_wow_parser(adapter,
 					 adapter->sessionId,
@@ -6679,6 +6705,17 @@ static int drv_cmd_set_antenna_mode(hdd_adapter_t *adapter,
 		 hdd_ctx->current_antenna_mode);
 	ret = 0;
 exit:
+#ifdef FEATURE_WLAN_TDLS
+	/* Reset tdls NSS flags */
+	if (hdd_ctx->tdls_nss_switch_in_progress &&
+	    hdd_ctx->tdls_nss_teardown_complete) {
+		hdd_ctx->tdls_nss_switch_in_progress = false;
+		hdd_ctx->tdls_nss_teardown_complete = false;
+	}
+	hdd_info("tdls_nss_switch_in_progress: %d tdls_nss_teardown_complete: %d",
+		  hdd_ctx->tdls_nss_switch_in_progress,
+		  hdd_ctx->tdls_nss_teardown_complete);
+#endif
 	hdd_info("Set antenna status: %d current mode: %d",
 		 ret, hdd_ctx->current_antenna_mode);
 	return ret;
@@ -6981,9 +7018,7 @@ static const hdd_drv_cmd_t hdd_drv_cmds[] = {
 	{"SETFASTTRANSITION",         drv_cmd_set_fast_transition},
 	{"FASTREASSOC",               drv_cmd_fast_reassoc},
 	{"SETROAMSCANCONTROL",        drv_cmd_set_roam_scan_control},
-#ifdef FEATURE_WLAN_OKC
 	{"SETOKCMODE",                drv_cmd_set_okc_mode},
-#endif /* FEATURE_WLAN_OKC */
 	{"GETROAMSCANCONTROL",        drv_cmd_get_roam_scan_control},
 	{"BTCOEXMODE",                drv_cmd_bt_coex_mode},
 	{"SCAN-ACTIVE",               drv_cmd_scan_active},

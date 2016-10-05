@@ -50,37 +50,32 @@
 #define LIM_START_PEER_IDX   1
 
 /**
- * lim_init_peer_idxpool()
+ * lim_init_peer_idxpool() -- initializes peer index pool
+ * @pMac: mac context
+ * @pSessionEntry: session entry
  *
- ***FUNCTION:
  * This function is called while starting a BSS at AP
  * to initialize AID pool. This may also be called while
  * starting/joining an IBSS if 'Association' is allowed
  * in IBSS.
  *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- * NA
- *
- ***NOTE:
- * NA
- *
- * @param  pMac - Pointer to Global MAC structure
- * @return None
+ * Return: None
  */
 
 void lim_init_peer_idxpool(tpAniSirGlobal pMac, tpPESession pSessionEntry)
 {
 	uint8_t i;
-	uint8_t maxAssocSta = pMac->lim.gLimAssocStaLimit;
+	uint8_t maxAssocSta = pMac->lim.maxStation;
 
 	pSessionEntry->gpLimPeerIdxpool[0] = 0;
 
 #ifdef FEATURE_WLAN_TDLS
-	/* In station role, DPH_STA_HASH_INDEX_PEER (index 1) is reserved for peer */
-	/* station index corresponding to AP. Avoid choosing that index and get index */
-	/* starting from (DPH_STA_HASH_INDEX_PEER + 1) (index 2) for TDLS stations; */
+	/*
+	* In station role, DPH_STA_HASH_INDEX_PEER (index 1) is reserved
+	* for peer station index corresponding to AP. Avoid choosing that index
+	* and get index starting from (DPH_STA_HASH_INDEX_PEER + 1)
+	* (index 2) for TDLS stations;
+	*/
 	if (LIM_IS_STA_ROLE(pSessionEntry)) {
 		pSessionEntry->freePeerIdxHead = DPH_STA_HASH_INDEX_PEER + 1;
 	} else
@@ -88,7 +83,6 @@ void lim_init_peer_idxpool(tpAniSirGlobal pMac, tpPESession pSessionEntry)
 #ifdef QCA_IBSS_SUPPORT
 	if (LIM_IS_IBSS_ROLE(pSessionEntry)) {
 		pSessionEntry->freePeerIdxHead = LIM_START_PEER_IDX;
-		maxAssocSta = pMac->lim.gLimIbssStaLimit;
 	} else
 #endif
 	{

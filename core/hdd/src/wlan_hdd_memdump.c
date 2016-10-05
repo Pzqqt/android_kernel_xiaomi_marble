@@ -32,6 +32,9 @@
  *
  */
 
+/* denote that this file does not allow legacy hddLog */
+#define HDD_DISALLOW_LEGACY_HDDLOG 1
+
 #include <sme_api.h>
 #include <wlan_hdd_includes.h>
 #include "wlan_hdd_memdump.h"
@@ -77,13 +80,13 @@ static void memdump_cleanup_timer_cb(void *data)
 
 
 	if (!hdd_ctx->fw_dump_loc) {
-		hddLog(LOG1, FL("Memory dump already freed"));
+		hdd_notice("Memory dump already freed");
 		return;
 	}
 
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	if (!qdf_ctx) {
-		hddLog(LOGE, FL("QDF context is NULL"));
+		hdd_err("QDF context is NULL");
 		return;
 	}
 
@@ -100,14 +103,14 @@ static void memdump_cleanup_timer_cb(void *data)
 /**
  * wlan_hdd_cfg80211_fw_mem_dump_cb() -  Callback to receive FW memory dump
  * @ctx: pointer to HDD context.
- * @rsp: pointer to fw dump copy complete response
+ * @dump_rsp: pointer to fw dump copy complete response
  *
  * This is a callback function used to indicate user space about the
  * availability for firmware memory dump via vendor event.
  *
  * Return: None
  */
-static void wlan_hdd_cfg80211_fw_mem_dump_cb(void *ctx,
+void wlan_hdd_cfg80211_fw_mem_dump_cb(void *ctx,
 					     struct fw_dump_rsp *dump_rsp)
 {
 	hdd_context_t *hdd_ctx = ctx;
@@ -125,8 +128,7 @@ static void wlan_hdd_cfg80211_fw_mem_dump_cb(void *ctx,
 	if (!dump_rsp->dump_complete ||
 	    context->request_id != dump_rsp->request_id) {
 		spin_unlock(&hdd_context_lock);
-		hddLog(LOGE,
-		       FL("Error @ request_id: %d response_id: %d status: %d"),
+		hdd_err("Error @ request_id: %d response_id: %d status: %d",
 		       context->request_id, dump_rsp->request_id,
 		       dump_rsp->dump_complete);
 		return;
@@ -158,18 +160,18 @@ static int wlan_hdd_send_memdump_rsp(hdd_context_t *hdd_ctx)
 			NLMSG_HDRLEN + NLA_HDRLEN + sizeof(uint32_t));
 
 	if (!skb) {
-		hddLog(LOGE, FL("cfg80211_vendor_cmd_alloc_reply_skb failed"));
+		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
 		return -ENOMEM;
 	}
 
 	if (nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_MEMDUMP_SIZE,
 			     FW_MEM_DUMP_SIZE)) {
-		hddLog(LOGE, FL("nla put fail"));
+		hdd_err("nla put fail");
 		goto nla_put_failure;
 	}
 
 	cfg80211_vendor_cmd_reply(skb);
-	hddLog(LOG1, FL("Memdump event sent successfully to user space"));
+	hdd_notice("Memdump event sent successfully to user space");
 	return 0;
 
 nla_put_failure:
@@ -214,12 +216,12 @@ static int __wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	if (!qdf_ctx) {
-		hddLog(LOGE, FL("QDF context is NULL"));
+		hdd_err("QDF context is NULL");
 		return -EINVAL;
 	}
 
 	if (hdd_ctx->memdump_in_progress) {
-		hddLog(LOGE, FL("Already a memdump req in progress."));
+		hdd_err("Already a memdump req in progress.");
 		return -EBUSY;
 	}
 
@@ -236,7 +238,7 @@ static int __wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 			qdf_ctx, qdf_ctx->dev, FW_MEM_DUMP_SIZE, &paddr);
 		if (!hdd_ctx->fw_dump_loc) {
 			mutex_unlock(&hdd_ctx->memdump_lock);
-			hddLog(LOGE, FL("qdf_mem_alloc_consistent failed"));
+			hdd_err("qdf_mem_alloc_consistent failed");
 			return -ENOMEM;
 		}
 		hdd_ctx->dump_loc_paddr = paddr;
@@ -252,7 +254,7 @@ static int __wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 	fw_mem_dump_req.request_id = FW_MEM_DUMP_REQ_ID;
 	fw_mem_dump_req.num_seg = FW_MEM_DUMP_NUM_SEG;
 
-	hddLog(LOG1, FL("request_id:%d num_seg:%d"),
+	hdd_notice("request_id:%d num_seg:%d",
 		fw_mem_dump_req.request_id, fw_mem_dump_req.num_seg);
 	seg_req = (struct fw_dump_seg_req *) fw_mem_dump_req.segment;
 	for (loop = 0; loop < fw_mem_dump_req.num_seg; loop++) {
@@ -262,13 +264,11 @@ static int __wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 		seg_req->seg_length = FW_MEM_DUMP_SIZE;
 		seg_req->dst_addr_lo = hdd_ctx->dump_loc_paddr;
 		seg_req->dst_addr_hi = 0;
-		hddLog(LOG1, FL("seg_number:%d"), loop);
-		hddLog(LOG1,
-		    FL("seg_id:%d start_addr_lo:0x%x start_addr_hi:0x%x"),
+		hdd_notice("seg_number:%d", loop);
+		hdd_notice("seg_id:%d start_addr_lo:0x%x start_addr_hi:0x%x",
 		    seg_req->seg_id, seg_req->seg_start_addr_lo,
 		    seg_req->seg_start_addr_hi);
-		hddLog(LOG1,
-		    FL("seg_length:%d dst_addr_lo:0x%x dst_addr_hi:0x%x"),
+		hdd_notice("seg_length:%d dst_addr_lo:0x%x dst_addr_hi:0x%x",
 		    seg_req->seg_length, seg_req->dst_addr_lo,
 		    seg_req->dst_addr_hi);
 		seg_req++;
@@ -295,7 +295,7 @@ static int __wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 
 	sme_status = sme_fw_mem_dump(hdd_ctx->hHal, &fw_mem_dump_req);
 	if (QDF_STATUS_SUCCESS != sme_status) {
-		hddLog(LOGE, FL("sme_fw_mem_dump Failed"));
+		hdd_err("sme_fw_mem_dump Failed");
 		mutex_lock(&hdd_ctx->memdump_lock);
 		qdf_mem_free_consistent(qdf_ctx, qdf_ctx->dev,
 			FW_MEM_DUMP_SIZE, hdd_ctx->fw_dump_loc, paddr, dma_ctx);
@@ -313,15 +313,14 @@ static int __wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 	rc = wait_for_completion_timeout(&context->response_event,
 		msecs_to_jiffies(MEMDUMP_COMPLETION_TIME_MS));
 	if (!rc) {
-		hddLog(LOGE, FL("Target response timed out for request_id: %d"),
+		hdd_err("Target response timed out for request_id: %d",
 		       context->request_id);
 		return -ETIMEDOUT;
 	}
 
 	status = wlan_hdd_send_memdump_rsp(hdd_ctx);
 	if (status)
-		hddLog(LOGE,
-			FL("Failed to send FW memory dump rsp to user space"));
+		hdd_err("Failed to send FW memory dump rsp to user space");
 
 	return status;
 }
@@ -397,39 +396,39 @@ static ssize_t memdump_read(struct file *file, char __user *buf,
 
 	hdd_ctx = memdump_get_file_data(file);
 
-	hddLog(LOG1, FL("Read req for size:%zu pos:%llu"), count, *pos);
+	hdd_notice("Read req for size:%zu pos:%llu", count, *pos);
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (status)
 		return status;
 
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	if (!qdf_ctx) {
-		hddLog(LOGE, FL("QDF context is NULL"));
+		hdd_err("QDF context is NULL");
 		return -EINVAL;
 	}
 
 	if (!hdd_ctx->memdump_in_progress) {
-		hddLog(LOGE, FL("Current mem dump request timed out/failed"));
+		hdd_err("Current mem dump request timed out/failed");
 		return -EINVAL;
 	}
 
 	if (*pos < 0) {
-		hddLog(LOGE, FL("Invalid start offset for memdump read"));
+		hdd_err("Invalid start offset for memdump read");
 		return -EINVAL;
 	} else if (*pos >= FW_MEM_DUMP_SIZE || !count) {
-		hddLog(LOGE, FL("No more data to copy"));
+		hdd_err("No more data to copy");
 		return 0;
 	} else if (count > FW_MEM_DUMP_SIZE - *pos) {
 		count = FW_MEM_DUMP_SIZE - *pos;
 	}
 
 	if (!hdd_ctx->fw_dump_loc) {
-		hddLog(LOGE, FL("Invalid fw mem dump location"));
+		hdd_err("Invalid fw mem dump location");
 		return -EINVAL;
 	}
 
 	if (copy_to_user(buf, hdd_ctx->fw_dump_loc + *pos, count)) {
-		hddLog(LOGE, FL("copy to user space failed"));
+		hdd_err("copy to user space failed");
 		return -EFAULT;
 	}
 
@@ -480,7 +479,7 @@ static int memdump_procfs_init(void)
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
-		hddLog(LOGE , FL("Invalid HDD context"));
+		hdd_err("Invalid HDD context");
 		return -EINVAL;
 	}
 
@@ -536,30 +535,22 @@ int memdump_init(void)
 {
 	hdd_context_t *hdd_ctx;
 	int status = 0;
-	QDF_STATUS cb_status;
 	QDF_STATUS qdf_status;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
-		hddLog(LOGE , FL("Invalid HDD context"));
+		hdd_err("Invalid HDD context");
 		return -EINVAL;
 	}
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
-		hddLog(LOGE, FL("Not initializing memdump in FTM mode"));
-		return -EINVAL;
-	}
-
-	cb_status = sme_fw_mem_dump_register_cb(hdd_ctx->hHal,
-				wlan_hdd_cfg80211_fw_mem_dump_cb);
-	if (QDF_STATUS_SUCCESS != cb_status) {
-		hddLog(LOGE , FL("Failed to register the callback"));
+		hdd_err("Not initializing memdump in FTM mode");
 		return -EINVAL;
 	}
 
 	status = memdump_procfs_init();
 	if (status) {
-		hddLog(LOGE , FL("Failed to create proc file"));
+		hdd_err("Failed to create proc file");
 		return status;
 	}
 
@@ -569,11 +560,12 @@ int memdump_init(void)
 				    QDF_TIMER_TYPE_SW, memdump_cleanup_timer_cb,
 				    (void *)hdd_ctx);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hddLog(LOGE, FL("Failed to init memdump cleanup timer"));
+		hdd_err("Failed to init memdump cleanup timer");
 		return -EINVAL;
 	}
 
 	mutex_init(&hdd_ctx->memdump_lock);
+	hdd_ctx->memdump_init_done = true;
 
 	return 0;
 }
@@ -595,23 +587,28 @@ void memdump_deinit(void)
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
-		hddLog(LOGE , FL("Invalid HDD context"));
+		hdd_err("Invalid HDD context");
 		return;
 	}
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
-		hddLog(LOGE, FL("Not deinitializing memdump in FTM mode"));
+		hdd_err("Not deinitializing memdump in FTM mode");
 		return;
 	}
 
+	if (!hdd_ctx->memdump_init_done) {
+		hdd_err("MemDump not initialized");
+		return;
+	}
+	hdd_ctx->memdump_init_done = false;
+
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	if (!qdf_ctx) {
-		hddLog(LOGE, FL("QDF context is NULL"));
+		hdd_err("QDF context is NULL");
 		return;
 	}
 
 	memdump_procfs_remove();
-	sme_fw_mem_dump_unregister_cb(hdd_ctx->hHal);
 
 	mutex_lock(&hdd_ctx->memdump_lock);
 	if (hdd_ctx->fw_dump_loc) {
@@ -622,6 +619,7 @@ void memdump_deinit(void)
 		hdd_ctx->memdump_in_progress = false;
 	}
 	mutex_unlock(&hdd_ctx->memdump_lock);
+	mutex_destroy(&hdd_ctx->memdump_lock);
 
 	if (QDF_TIMER_STATE_RUNNING ==
 	  qdf_mc_timer_get_current_state(&hdd_ctx->memdump_cleanup_timer)) {
@@ -630,5 +628,5 @@ void memdump_deinit(void)
 
 	qdf_status = qdf_mc_timer_destroy(&hdd_ctx->memdump_cleanup_timer);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-		hddLog(LOGE, FL("Failed to deallocate timer"));
+		hdd_err("Failed to deallocate timer");
 }

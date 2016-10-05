@@ -57,6 +57,14 @@
 
 #define NSS_1x1_MODE 1
 #define NSS_2x2_MODE 2
+#define MBO_IE_ASSOC_DISALLOWED_SUBATTR_ID 0x04
+
+#define SIZE_OF_FIXED_PARAM 12
+#define SIZE_OF_TAG_PARAM_NUM 1
+#define SIZE_OF_TAG_PARAM_LEN 1
+#define RSNIEID 0x30
+#define RSNIE_CAPABILITY_LEN 2
+#define DEFAULT_RSNIE_CAP_VAL 0x00
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 #define QCOM_VENDOR_IE_MCC_AVOID_CH 0x01
@@ -167,6 +175,10 @@ typedef struct sSirProbeRespBeacon {
 	uint8_t    is_ese_ver_ie_present;
 #endif
 	tDot11fIEOBSSScanParameters obss_scanparams;
+	bool MBO_IE_present;
+	uint8_t MBO_capability;
+	bool assoc_disallowed;
+	uint8_t assoc_disallowed_reason;
 } tSirProbeRespBeacon, *tpSirProbeRespBeacon;
 
 /* probe Request structure */
@@ -752,7 +764,8 @@ populate_dot11f_supp_rates(tpAniSirGlobal pMac,
 tSirRetStatus
 populate_dot11f_rates_tdls(tpAniSirGlobal p_mac,
 			tDot11fIESuppRates *p_supp_rates,
-			tDot11fIEExtSuppRates *p_ext_supp_rates);
+			tDot11fIEExtSuppRates *p_ext_supp_rates,
+			uint8_t curr_oper_channel);
 
 tSirRetStatus populate_dot11f_tpc_report(tpAniSirGlobal pMac,
 					tDot11fIETPCReport *pDot11f,
@@ -944,5 +957,11 @@ tSirRetStatus populate_dot11f_timing_advert_frame(tpAniSirGlobal pMac,
 	tDot11fTimingAdvertisementFrame *frame);
 void populate_dot11_supp_operating_classes(tpAniSirGlobal mac_ptr,
 	tDot11fIESuppOperatingClasses *dot_11_ptr, tpPESession session_entry);
+
+tSirRetStatus
+sir_validate_and_rectify_ies(tpAniSirGlobal mac_ctx,
+				uint8_t *mgmt_frame,
+				uint32_t frame_bytes,
+				uint32_t *missing_rsn_bytes);
 
 #endif /* __PARSE_H__ */

@@ -28,12 +28,6 @@
 #ifndef _ANIGLOBAL_H
 #define _ANIGLOBAL_H
 
-/* Take care to avoid redefinition of this type, if it is */
-/* already defined in "halWmmApi.h" */
-#if !defined(_HALMAC_WMM_API_H)
-typedef struct sAniSirGlobal *tpAniSirGlobal;
-#endif
-
 #include "qdf_types.h"
 #include "sir_common.h"
 #include "ani_system_defs.h"
@@ -52,10 +46,6 @@ typedef struct sAniSirGlobal *tpAniSirGlobal;
 #include "sme_internal.h"
 #include "sap_api.h"
 #include "csr_internal.h"
-
-#ifdef FEATURE_OEM_DATA_SUPPORT
-#include "oem_data_internal.h"
-#endif
 
 #include "sme_rrm_internal.h"
 #include "rrm_global.h"
@@ -178,6 +168,7 @@ enum log_event_indicator {
  * @WLAN_LOG_REASON_VOS_MSG_UNDER_RUN: VOS Core runs out of message wrapper
  * @WLAN_LOG_REASON_HDD_TIME_OUT: Wait for event Timeout in HDD layer
    @WLAN_LOG_REASON_SME_OUT_OF_CMD_BUFL sme out of cmd buffer
+ * @WLAN_LOG_REASON_NO_SCAN_RESULTS: no scan results to report from HDD
  * This enum contains the different reason codes for bug report
  */
 enum log_event_host_reason_code {
@@ -191,6 +182,7 @@ enum log_event_host_reason_code {
 	WLAN_LOG_REASON_VOS_MSG_UNDER_RUN,
 	WLAN_LOG_REASON_HDD_TIME_OUT,
 	WLAN_LOG_REASON_SME_OUT_OF_CMD_BUF,
+	WLAN_LOG_REASON_NO_SCAN_RESULTS,
 };
 
 
@@ -821,15 +813,11 @@ typedef struct sAniSirLim {
 	uint8_t gSmeSessionId;
 	uint16_t gTransactionId;
 
-#ifdef FEATURE_OEM_DATA_SUPPORT
-	tLimMlmOemDataReq *gpLimMlmOemDataReq;
-	tLimMlmOemDataRsp *gpLimMlmOemDataRsp;
-#endif
-
 	tSirRemainOnChnReq *gpLimRemainOnChanReq;       /* hold remain on chan request in this buf */
 	qdf_mutex_t lim_frame_register_lock;
 	qdf_list_t gLimMgmtFrameRegistratinQueue;
 	uint32_t mgmtFrameSessionId;
+	uint32_t tdls_frm_session_id;
 
 	tpPESession pSessionEntry;
 	uint8_t reAssocRetryAttempt;
@@ -876,96 +864,6 @@ typedef enum {
 	eDRIVER_TYPE_PRODUCTION = 0,
 	eDRIVER_TYPE_MFG = 1,
 } tDriverType;
-
-/** ------------------------------------------------------------------------- *
-
-    \typedef tMacOpenParameters
-
-    \brief Parameters needed for Enumeration of all status codes returned by the higher level
-    interface functions.
-
-    -------------------------------------------------------------------------- */
-
-typedef struct sMacOpenParameters {
-	uint16_t maxStation;
-	uint16_t maxBssId;
-	uint32_t frameTransRequired;
-	uint8_t powersaveOffloadEnabled;
-	/* Powersave Parameters */
-	uint8_t staMaxLIModDtim;
-	uint8_t staModDtim;
-	uint8_t staDynamicDtim;
-	tDriverType driverType;
-	uint8_t maxWoWFilters;
-	uint8_t wowEnable;
-/* Here olIniInfo is used to store ini
- * status of arp offload, ns offload
- * and others. Currently 1st bit is used
- * for arp off load and 2nd bit for ns
- * offload currently, rest bits are unused
- */
-	uint8_t olIniInfo;
-	bool ssdp;
-	bool enable_mc_list;
-	/*
-	 * DFS Phyerror Filtering offload status from ini
-	 * 0 indicates offload disabled
-	 * 1 indicates offload enabled
-	 */
-	uint8_t dfsPhyerrFilterOffload;
-/* pass intra-bss-fwd info to txrx module */
-	uint8_t apDisableIntraBssFwd;
-
-	/* max offload peer */
-	uint8_t apMaxOffloadPeers;
-
-	/* max offload reorder buffs */
-	uint8_t apMaxOffloadReorderBuffs;
-
-#ifdef FEATURE_WLAN_RA_FILTERING
-	uint16_t RArateLimitInterval;
-	bool IsRArateLimitEnabled;
-#endif
-	/* is RX re-ordering offloaded to the fw */
-	uint8_t reorderOffload;
-
-	/* dfs radar pri multiplier */
-	int32_t dfsRadarPriMultiplier;
-
-	/* IPA Micro controller data path offload enable flag */
-	uint8_t ucOffloadEnabled;
-	/* IPA Micro controller data path offload TX buffer count */
-	uint32_t ucTxBufCount;
-	/* IPA Micro controller data path offload TX buffer size */
-	uint32_t ucTxBufSize;
-	/* IPA Micro controller data path offload RX indication ring count */
-	uint32_t ucRxIndRingCount;
-	/* IPA Micro controller data path offload TX partition base */
-	uint32_t ucTxPartitionBase;
-	bool enable_rxthread;
-	bool ip_tcp_udp_checksum_offload;
-
-	/* CE based classification enabled */
-	bool ce_classify_enabled;
-
-	/* Maximum number of parallel scans */
-	uint8_t max_scan;
-
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
-	/* Threshold to stop queue in percentage */
-	uint32_t tx_flow_stop_queue_th;
-	/* Start queue offset in percentage */
-	uint32_t tx_flow_start_queue_offset;
-#endif
-#ifdef WLAN_FEATURE_LPSS
-	bool is_lpass_enabled;
-#endif
-#ifdef WLAN_FEATURE_NAN
-	bool is_nan_enabled;
-#endif
-	bool      tx_chain_mask_cck;
-	uint16_t  self_gen_frm_pwr;
-} tMacOpenParameters;
 
 typedef struct sHalMacStartParameters {
 	/* parametes for the Firmware */
@@ -1031,9 +929,6 @@ typedef struct sAniSirGlobal {
 	tCsrScanStruct scan;
 	tCsrRoamStruct roam;
 
-#ifdef FEATURE_OEM_DATA_SUPPORT
-	tOemDataStruct oemData;
-#endif
 	tRrmContext rrm;
 #ifdef WLAN_FEATURE_CONCURRENT_P2P
 	tp2pContext p2pContext[MAX_NO_OF_P2P_SESSIONS];
@@ -1070,8 +965,6 @@ typedef struct sAniSirGlobal {
 	uint8_t f_prefer_non_dfs_on_radar;
 	hdd_ftm_msg_processor ftm_msg_processor_callback;
 	uint32_t fine_time_meas_cap;
-	/* per band chain mask support */
-	bool per_band_chainmask_supp;
 	struct vdev_type_nss vdev_type_nss_2g;
 	struct vdev_type_nss vdev_type_nss_5g;
 
@@ -1080,6 +973,7 @@ typedef struct sAniSirGlobal {
 
 	uint32_t dual_mac_feature_disable;
 	sir_mgmt_frame_ind_callback mgmt_frame_ind_cb;
+	sir_p2p_ack_ind_callback p2p_ack_ind_cb;
 	bool first_scan_done;
 	int8_t first_scan_bucket_threshold;
 	enum auth_tx_ack_status auth_ack_status;

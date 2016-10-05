@@ -669,7 +669,7 @@ struct ol_txrx_pdev_t {
 		uint32_t offset_filter;
 		struct qdf_mem_multi_page_t desc_pages;
 #ifdef DESC_DUP_DETECT_DEBUG
-		uint32_t *free_list_bitmap;
+		unsigned long *free_list_bitmap;
 #endif
 	} tx_desc;
 
@@ -711,6 +711,8 @@ struct ol_txrx_pdev_t {
 	 * benefit to having a per-vdev lock.
 	 */
 	OL_RX_MUTEX_TYPE last_real_peer_mutex;
+
+	qdf_spinlock_t peer_map_unmap_lock;
 
 	struct {
 		struct {
@@ -1058,6 +1060,7 @@ struct ol_txrx_vdev_t {
 	uint64_t fwd_tx_packets;
 	uint64_t fwd_rx_packets;
 	bool is_wisa_mode_enable;
+	uint8_t mac_id;
 };
 
 struct ol_rx_reorder_array_elem_t {
@@ -1251,4 +1254,10 @@ struct ol_error_info {
 		struct ol_mic_error_info mic_err;
 	} u;
 };
+
+struct ol_rx_remote_data {
+	qdf_nbuf_t msdu;
+	uint8_t mac_id;
+};
+
 #endif /* _OL_TXRX_TYPES__H_ */

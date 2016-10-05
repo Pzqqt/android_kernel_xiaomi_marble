@@ -321,6 +321,9 @@ void csr_roam_reset_roam_params(tpAniSirGlobal mac_ptr);
 #define REASON_ROAM_SCAN_HI_RSSI_DELTA_CHANGED      31
 #define REASON_ROAM_SCAN_HI_RSSI_DELAY_CHANGED      32
 #define REASON_ROAM_SCAN_HI_RSSI_UB_CHANGED         33
+#define REASON_CONNECT_IES_CHANGED                  34
+#define REASON_ROAM_SCAN_STA_ROAM_POLICY_CHANGED    35
+
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 QDF_STATUS csr_roam_offload_scan(tpAniSirGlobal pMac, uint8_t sessionId,

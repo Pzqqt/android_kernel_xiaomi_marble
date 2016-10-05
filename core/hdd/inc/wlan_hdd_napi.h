@@ -37,8 +37,11 @@
 
 /* CLD headers */
 #include "hif_napi.h"
+
 /* Linux headers */
 #include <linux/netdevice.h> /* net_device */
+
+struct hdd_context_s;
 
 #define HDD_NAPI_ANY (-1)
 
@@ -58,6 +61,19 @@ int hdd_napi_poll(struct napi_struct *napi, int budget);
 
 struct qca_napi_data *hdd_napi_get_all(void);
 
+#ifdef HELIUMPLUS
+int hdd_napi_apply_throughput_policy(struct hdd_context_s *hddctx,
+				     uint64_t              tx_packets,
+				     uint64_t              rx_packets);
+#else /* FEATURE_NAPI and NOT HELIUM */
+static inline int hdd_napi_apply_throughput_policy(struct hdd_context_s *hddctx,
+						   uint64_t tx_packets,
+						   uint64_t rx_packets)
+{
+	return 0;
+}
+#endif /* HELIUMPLUS */
+
 #else /* ! defined(FEATURE_NAPI) */
 #include "hif_napi.h"
 /**
@@ -71,11 +87,17 @@ static inline int hdd_napi_enabled(int id) { return 0; }
 static inline int hdd_napi_create(void) { return 0; }
 static inline int hdd_napi_destroy(int force) { return 0; }
 static inline int hdd_napi_stats(char *buf, int max, char *indp,
-				 struct qca_napi_data *napid)
-{ return 0; }
+				 struct qca_napi_data *napid) { return 0; }
 static inline int hdd_napi_event(enum qca_napi_event event, void *data)
-{ return 0; }
+{
+	return 0;
+}
 static inline struct qca_napi_data *hdd_napi_get_all(void) { return NULL; }
+static inline int hdd_napi_apply_throughput_policy(void *hdd_ctx,
+				uint64_t tx_packets, uint64_t rx_packets)
+{
+	return 0;
+}
 
 #endif /* FEATURE_NAPI */
 

@@ -215,6 +215,9 @@ typedef enum {
 #define WFD_OUI_TYPE_SIZE  4
 #endif
 
+#define MBO_OUI_TYPE   "\x50\x6f\x9a\x16"
+#define MBO_OUI_TYPE_SIZE  4
+
 typedef enum {
 	eWEXT_WPS_OFF = 0,
 	eWEXT_WPS_ON = 1,
@@ -288,6 +291,18 @@ typedef struct ccp_freq_chan_map_s {
 	wlan_hdd_get_vendor_oui_ie_ptr(WFD_OUI_TYPE, WFD_OUI_TYPE_SIZE, ie, ie_len)
 #endif
 
+#define wlan_hdd_get_mbo_ie_ptr(ie, ie_len) \
+	wlan_hdd_get_vendor_oui_ie_ptr(MBO_OUI_TYPE, MBO_OUI_TYPE_SIZE, ie, ie_len)
+/*
+ * Defines for fw_test command
+ */
+#define HDD_FWTEST_PARAMS 3
+#define HDD_FWTEST_SU_PARAM_ID 53
+#define HDD_FWTEST_MU_PARAM_ID 2
+#define HDD_FWTEST_SU_DEFAULT_VALUE 100
+#define HDD_FWTEST_MU_DEFAULT_VALUE 40
+#define HDD_FWTEST_MAX_VALUE 500
+
 extern int hdd_unregister_wext(struct net_device *dev);
 extern int hdd_register_wext(struct net_device *dev);
 extern int hdd_wlan_get_freq(uint32_t chan, uint32_t *freq);
@@ -295,7 +310,7 @@ extern int hdd_wlan_get_rts_threshold(hdd_adapter_t *pAdapter,
 				      union iwreq_data *wrqu);
 extern int hdd_wlan_get_frag_threshold(hdd_adapter_t *pAdapter,
 				       union iwreq_data *wrqu);
-extern void hdd_wlan_get_version(hdd_adapter_t *pAdapter,
+extern void hdd_wlan_get_version(hdd_context_t *hdd_ctx,
 				 union iwreq_data *wrqu, char *extra);
 
 extern void hdd_wlan_get_stats(hdd_adapter_t *pAdapter, uint16_t *length,
@@ -352,6 +367,13 @@ QDF_STATUS wlan_hdd_get_station_stats(hdd_adapter_t *pAdapter);
 QDF_STATUS wlan_hdd_get_rssi(hdd_adapter_t *pAdapter, int8_t *rssi_value);
 
 QDF_STATUS wlan_hdd_get_snr(hdd_adapter_t *pAdapter, int8_t *snr);
+
+int hdd_get_ldpc(hdd_adapter_t *adapter, int *value);
+int hdd_set_ldpc(hdd_adapter_t *adapter, int value);
+int hdd_get_tx_stbc(hdd_adapter_t *adapter, int *value);
+int hdd_set_tx_stbc(hdd_adapter_t *adapter, int value);
+int hdd_get_rx_stbc(hdd_adapter_t *adapter, int *value);
+int hdd_set_rx_stbc(hdd_adapter_t *adapter, int value);
 
 #ifdef FEATURE_WLAN_TDLS
 QDF_STATUS iw_set_tdls_params(struct net_device *dev,

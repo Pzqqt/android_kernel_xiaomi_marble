@@ -55,14 +55,11 @@ struct wlan_hdd_ftm_status {
 	enum wlan_hdd_ftm_state ftm_state;
 };
 
-int wlan_hdd_ftm_open(hdd_context_t *hdd_ctx);
-int wlan_hdd_ftm_close(hdd_context_t *hdd_ctx);
-
+int hdd_update_cds_config_ftm(hdd_context_t *hdd_ctx);
+void hdd_ftm_mc_process_msg(void *message);
 #if  defined(QCA_WIFI_FTM)
 QDF_STATUS wlan_hdd_ftm_testmode_cmd(void *data, int len);
 int wlan_hdd_qcmbr_unified_ioctl(hdd_adapter_t *adapter, struct ifreq *ifr);
-int hdd_ftm_start(hdd_context_t *hdd_ctx);
-int hdd_ftm_stop(hdd_context_t *hdd_ctx);
 #endif
 
 #endif

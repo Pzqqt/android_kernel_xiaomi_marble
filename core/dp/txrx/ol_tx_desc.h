@@ -296,7 +296,7 @@ static inline
 void ol_tx_desc_dup_detect_init(struct ol_txrx_pdev_t *pdev, uint16_t pool_size)
 {
 	uint16_t size = (pool_size >> DIV_BY_8) +
-			((pool_size & MOD_BY_8) ? 1 : 0);
+		sizeof(*pdev->tx_desc.free_list_bitmap);
 	pdev->tx_desc.free_list_bitmap = qdf_mem_malloc(size);
 	if (!pdev->tx_desc.free_list_bitmap)
 		qdf_print("%s: malloc failed", __func__);
@@ -329,13 +329,19 @@ void ol_tx_desc_dup_detect_set(struct ol_txrx_pdev_t *pdev,
 				struct ol_tx_desc_t *tx_desc)
 {
 	uint16_t msdu_id = ol_tx_desc_id(pdev, tx_desc);
-	uint16_t index = msdu_id >> DIV_BY_32;
-	uint8_t pos = msdu_id & MOD_BY_32;
+	bool test;
 
 	if (!pdev->tx_desc.free_list_bitmap)
 		return;
 
-	if (qdf_unlikely(pdev->tx_desc.free_list_bitmap[index] & (1 << pos))) {
+	if (qdf_unlikely(msdu_id > pdev->tx_desc.pool_size)) {
+		qdf_print("%s: msdu_id %d > pool_size %d",
+			  __func__, msdu_id, pdev->tx_desc.pool_size);
+		QDF_BUG(0);
+	}
+
+	test = test_and_set_bit(msdu_id, pdev->tx_desc.free_list_bitmap);
+	if (qdf_unlikely(test)) {
 		uint16_t size = (pdev->tx_desc.pool_size >> DIV_BY_8) +
 			((pdev->tx_desc.pool_size & MOD_BY_8) ? 1 : 0);
 		qdf_print("duplicate msdu_id %d detected !!\n", msdu_id);
@@ -343,7 +349,6 @@ void ol_tx_desc_dup_detect_set(struct ol_txrx_pdev_t *pdev,
 		(void *)pdev->tx_desc.free_list_bitmap, size);
 		QDF_BUG(0);
 	}
-	pdev->tx_desc.free_list_bitmap[index] |= (1 << pos);
 }
 
 /**
@@ -358,14 +363,19 @@ void ol_tx_desc_dup_detect_reset(struct ol_txrx_pdev_t *pdev,
 				 struct ol_tx_desc_t *tx_desc)
 {
 	uint16_t msdu_id = ol_tx_desc_id(pdev, tx_desc);
-	uint16_t index = msdu_id >> DIV_BY_32;
-	uint8_t pos = msdu_id & MOD_BY_32;
+	bool test;
 
 	if (!pdev->tx_desc.free_list_bitmap)
 		return;
 
-	if (qdf_unlikely(!
-		(pdev->tx_desc.free_list_bitmap[index] & (1 << pos)))) {
+	if (qdf_unlikely(msdu_id > pdev->tx_desc.pool_size)) {
+		qdf_print("%s: msdu_id %d > pool_size %d",
+			  __func__, msdu_id, pdev->tx_desc.pool_size);
+		QDF_BUG(0);
+	}
+
+	test = !test_and_clear_bit(msdu_id, pdev->tx_desc.free_list_bitmap);
+	if (qdf_unlikely(test)) {
 		uint16_t size = (pdev->tx_desc.pool_size >> DIV_BY_8) +
 			((pdev->tx_desc.pool_size & MOD_BY_8) ? 1 : 0);
 		qdf_print("duplicate free msg received for msdu_id %d!!\n",
@@ -374,7 +384,6 @@ void ol_tx_desc_dup_detect_reset(struct ol_txrx_pdev_t *pdev,
 		(void *)pdev->tx_desc.free_list_bitmap, size);
 		QDF_BUG(0);
 	}
-	pdev->tx_desc.free_list_bitmap[index] &= ~(1 << pos);
 }
 #else
 static inline

@@ -148,25 +148,26 @@ static void pld_snoc_crash_shutdown(void *dev)
 }
 
 /**
- * pld_snoc_suspend() - Suspend callback function for power management
+ * pld_snoc_pm_suspend() - PM suspend callback function for power management
  * @dev: device
- * @state: power state
  *
  * This function is to suspend the platform device when power management
  * is enabled.
  *
  * Return: void
  */
-static int pld_snoc_suspend(struct device *dev, pm_message_t state)
+static int pld_snoc_pm_suspend(struct device *dev)
 {
 	struct pld_context *pld_context;
+	pm_message_t state;
 
+	state.event = PM_EVENT_SUSPEND;
 	pld_context = pld_get_global_context();
 	return pld_context->ops->suspend(dev, PLD_BUS_TYPE_SNOC, state);
 }
 
 /**
- * pld_snoc_resume() - Resume callback function for power management
+ * pld_snoc_pm_resume() - PM resume callback function for power management
  * @pdev: device
  *
  * This function is to resume the platform device when power management
@@ -174,12 +175,64 @@ static int pld_snoc_suspend(struct device *dev, pm_message_t state)
  *
  * Return: void
  */
-static int pld_snoc_resume(struct device *dev)
+static int pld_snoc_pm_resume(struct device *dev)
 {
 	struct pld_context *pld_context;
 
 	pld_context = pld_get_global_context();
 	return pld_context->ops->resume(dev, PLD_BUS_TYPE_SNOC);
+}
+
+/**
+ * pld_snoc_suspend_noirq() - Complete the actions started by suspend()
+ * @dev: device
+ *
+ * Complete the actions started by suspend().  Carry out any
+ * additional operations required for suspending the device that might be
+ * racing with its driver's interrupt handler, which is guaranteed not to
+ * run while suspend_noirq() is being executed.
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+static int pld_snoc_suspend_noirq(struct device *dev)
+{
+	struct pld_context *pld_context;
+
+	pld_context = pld_get_global_context();
+	if (!pld_context)
+		return -EINVAL;
+
+	if (pld_context->ops->suspend_noirq)
+		return pld_context->ops->
+			suspend_noirq(dev, PLD_BUS_TYPE_SNOC);
+	return 0;
+}
+
+/**
+ * pld_snoc_resume_noirq() - Prepare for the execution of resume()
+ * @pdev: device
+ *
+ * Prepare for the execution of resume() by carrying out any
+ * operations required for resuming the device that might be racing with
+ * its driver's interrupt handler, which is guaranteed not to run while
+ * resume_noirq() is being executed.
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+static int pld_snoc_resume_noirq(struct device *dev)
+{
+	struct pld_context *pld_context;
+
+	pld_context = pld_get_global_context();
+	if (!pld_context)
+		return -EINVAL;
+
+	if (pld_context->ops->resume_noirq)
+		return pld_context->ops->
+			resume_noirq(dev, PLD_BUS_TYPE_SNOC);
+	return 0;
 }
 
 struct icnss_driver_ops pld_snoc_ops = {
@@ -189,8 +242,10 @@ struct icnss_driver_ops pld_snoc_ops = {
 	.shutdown   = pld_snoc_shutdown,
 	.reinit     = pld_snoc_reinit,
 	.crash_shutdown = pld_snoc_crash_shutdown,
-	.suspend    = pld_snoc_suspend,
-	.resume     = pld_snoc_resume,
+	.pm_suspend = pld_snoc_pm_suspend,
+	.pm_resume  = pld_snoc_pm_resume,
+	.suspend_noirq = pld_snoc_suspend_noirq,
+	.resume_noirq = pld_snoc_resume_noirq,
 };
 
 /**
@@ -293,69 +348,4 @@ int pld_snoc_get_soc_info(struct pld_soc_info *info)
 	memcpy(info, &icnss_info, sizeof(*info));
 	return 0;
 }
-
-/**
- * pld_snoc_ce_request_irq() - Register IRQ for CE
- * @ce_id: CE number
- * @handler: IRQ callback function
- * @flags: IRQ flags
- * @name: IRQ name
- * @ctx: IRQ context
- *
- * Return: 0 for success
- *         Non zero failure code for errors
- */
-int pld_snoc_ce_request_irq(unsigned int ce_id,
-			    irqreturn_t (*handler)(int, void *),
-			    unsigned long flags, const char *name, void *ctx)
-{
-	return icnss_ce_request_irq(ce_id, handler, flags, name, ctx);
-}
-
-/**
- * pld_snoc_ce_free_irq() - Free IRQ for CE
- * @ce_id: CE number
- * @ctx: IRQ context
- *
- * Return: 0 for success
- *         Non zero failure code for errors
- */
-int pld_snoc_ce_free_irq(unsigned int ce_id, void *ctx)
-{
-	return icnss_ce_free_irq(ce_id, ctx);
-}
-
-/**
- * pld_snoc_enable_irq() - Enable IRQ for CE
- * @ce_id: CE number
- *
- * Return: void
- */
-void pld_snoc_enable_irq(unsigned int ce_id)
-{
-	icnss_enable_irq(ce_id);
-}
-
-/**
- * pld_snoc_disable_irq() - Disable IRQ for CE
- * @ce_id: CE number
- *
- * Return: void
- */
-void pld_snoc_disable_irq(unsigned int ce_id)
-{
-	icnss_disable_irq(ce_id);
-}
-
-/**
- * pld_snoc_get_ce_id() - Get CE number for the provided IRQ
- * @irq: IRQ number
- *
- * Return: CE number
- */
-int pld_snoc_get_ce_id(int irq)
-{
-	return icnss_get_ce_id(irq);
-}
-
 #endif

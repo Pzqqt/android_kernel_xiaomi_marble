@@ -371,6 +371,8 @@ csr_neighbor_roam_prepare_scan_profile_filter(tpAniSirGlobal pMac,
 	pScanFilter->scan_filter_for_roam = 1;
 	/* only for HDD requested handoff fill in the BSSID in the filter */
 	if (nbr_roam_info->uOsRequestedHandoff) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+			FL("OS Requested Handoff"));
 		pScanFilter->BSSIDs.numOfBSSIDs = 1;
 		pScanFilter->BSSIDs.bssid =
 			qdf_mem_malloc(sizeof(tSirMacAddr) *
@@ -1131,8 +1133,10 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
 			return QDF_STATUS_E_NOMEM;
 		}
 		msg->messageType = eWNI_SME_SET_BCN_FILTER_REQ;
-		msg->length = sizeof(uint8_t);
+		msg->length = sizeof(tSirSetActiveModeSetBncFilterReq);
 		msg->seesionId = session_id;
+		qdf_copy_macaddr(&msg->bssid,
+			&session->connectedProfile.bssid);
 		status = cds_send_mb_message_to_mac(msg);
 		qdf_copy_macaddr(&roamInfo.peerMac,
 			&session->connectedProfile.bssid);
@@ -1494,6 +1498,10 @@ QDF_STATUS csr_neighbor_roam_process_handoff_req(
 	tCsrRoamProfile *profile = NULL;
 	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
 	uint8_t i = 0;
+	uint8_t roam_now = 0;
+	uint8_t roamable_ap_count = 0;
+	tCsrScanResultFilter    scan_filter;
+	tScanResultHandle       scan_result;
 
 	if (NULL == session) {
 		sms_log(mac_ctx, LOGE, FL("session is NULL "));
@@ -1553,11 +1561,36 @@ QDF_STATUS csr_neighbor_roam_process_handoff_req(
 	profile->ChannelInfo.ChannelList[0] =
 		roam_ctrl_info->handoffReqInfo.channel;
 
-	/* do a SSID scan */
-	status =
-		csr_scan_for_ssid(mac_ctx, session_id, profile, roam_id, false);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sms_log(mac_ctx, LOGE, FL("SSID scan failed"));
+	/*
+	 * For User space connect requests, the scan has already been done.
+	 * So, check if the BSS descriptor exists in the scan cache and
+	 * proceed with the handoff instead of a redundant scan again.
+	 */
+	if (roam_ctrl_info->handoffReqInfo.src == CONNECT_CMD_USERSPACE) {
+		sms_log(mac_ctx, LOG1,
+			FL("Connect cmd with bssid within same ESS"));
+		status = csr_neighbor_roam_prepare_scan_profile_filter(mac_ctx,
+								&scan_filter,
+								session_id);
+		sms_log(mac_ctx, LOG1, FL("Filter creation status = %d"),
+			status);
+		status = csr_scan_get_result(mac_ctx, &scan_filter,
+					     &scan_result);
+		csr_neighbor_roam_process_scan_results(mac_ctx, session_id,
+							&scan_result);
+		roamable_ap_count = csr_ll_count(
+					&roam_ctrl_info->roamableAPList);
+		csr_free_scan_filter(mac_ctx, &scan_filter);
+		sms_log(mac_ctx, LOG1, FL("roam_now=%d, roamable_ap_count=%d"),
+			roam_now, roamable_ap_count);
+	}
+	if (roam_now && roamable_ap_count) {
+		csr_neighbor_roam_trigger_handoff(mac_ctx, session_id);
+	} else {
+		status = csr_scan_for_ssid(mac_ctx, session_id, profile,
+					   roam_id, false);
+		if (status != QDF_STATUS_SUCCESS)
+			sms_log(mac_ctx, LOGE, FL("SSID scan failed"));
 	}
 
 end:
@@ -1664,7 +1697,7 @@ QDF_STATUS csr_neighbor_roam_handoff_req_hdlr(
 	}
 
 	/* sanity check */
-	if (true != qdf_mem_cmp(handoff_req->bssid,
+	if (!qdf_mem_cmp(handoff_req->bssid,
 		roam_ctrl_info->currAPbssid.bytes,
 		sizeof(tSirMacAddr))) {
 		sms_log(mac_ctx, LOGE,
@@ -1712,8 +1745,9 @@ QDF_STATUS csr_neighbor_roam_proceed_with_handoff_req(tpAniSirGlobal pMac,
 	     pNeighborRoamInfo->neighborRoamState)
 	    || (!pNeighborRoamInfo->uOsRequestedHandoff)) {
 		sms_log(pMac, LOGE,
-			FL
-				("Received in not CONNECTED state or uOsRequestedHandoff is not set. Ignore it"));
+			FL("Received in not CONNECTED state(%d) or uOsRequestedHandoff(%d) is not set. Ignore it"),
+			pNeighborRoamInfo->neighborRoamState,
+			pNeighborRoamInfo->uOsRequestedHandoff);
 		status = QDF_STATUS_E_FAILURE;
 	} else {
 		/* Let's go ahead with handoff */

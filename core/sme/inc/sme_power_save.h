@@ -41,6 +41,11 @@
 /* Auto Deferred Ps Entry Timer value - 20000 ms */
 #define AUTO_DEFERRED_PS_ENTRY_TIMER_DEFAULT_VALUE 20000
 
+/*
+ * Auto Ps Entry User default timeout value, used instead of negative timeouts
+ * from user space - 5000ms
+ */
+#define AUTO_PS_ENTRY_USER_TIMER_DEFAULT_VALUE 5000
 
 
 /**

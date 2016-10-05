@@ -64,6 +64,48 @@
 		(WEIGHT_OF_GROUP2_PCL_CHANNELS - PCL_GROUPS_WEIGHT_DIFFERENCE)
 
 #define WEIGHT_OF_NON_PCL_CHANNELS 1
+#define WEIGHT_OF_DISALLOWED_CHANNELS 0
+
+/**
+ * enum hw_mode_ss_config - Possible spatial stream configuration
+ * @SS_0x0: Unused Tx and Rx of MAC
+ * @SS_1x1: 1 Tx SS and 1 Rx SS
+ * @SS_2x2: 2 Tx SS and 2 Rx SS
+ * @SS_3x3: 3 Tx SS and 3 Rx SS
+ * @SS_4x4: 4 Tx SS and 4 Rx SS
+ *
+ * Note: Right now only 1x1 and 2x2 are being supported. Other modes should
+ * be added when supported. Asymmetric configuration like 1x2, 2x1 are also
+ * not supported now. But, they are still valid. Right now, Tx/Rx SS support is
+ * 4 bits long. So, we can go upto 15x15
+ */
+enum hw_mode_ss_config {
+	HW_MODE_SS_0x0,
+	HW_MODE_SS_1x1,
+	HW_MODE_SS_2x2,
+	HW_MODE_SS_3x3,
+	HW_MODE_SS_4x4,
+};
+
+/**
+ * enum hw_mode_dbs_capab - DBS HW mode capability
+ * @HW_MODE_DBS_NONE: Non DBS capable
+ * @HW_MODE_DBS: DFS capable
+ */
+enum hw_mode_dbs_capab {
+	HW_MODE_DBS_NONE,
+	HW_MODE_DBS,
+};
+
+/**
+ * enum hw_mode_agile_dfs_capab - Agile DFS HW mode capability
+ * @HW_MODE_AGILE_DFS_NONE: Non Agile DFS capable
+ * @HW_MODE_AGILE_DFS: Agile DFS capable
+ */
+enum hw_mode_agile_dfs_capab {
+	HW_MODE_AGILE_DFS_NONE,
+	HW_MODE_AGILE_DFS,
+};
 
 /**
  * enum cds_pcl_group_id - Identifies the pcl groups to be used
@@ -550,6 +592,7 @@ struct cds_conc_connection_info {
 
 bool cds_is_connection_in_progress(void);
 void cds_dump_concurrency_info(void);
+bool cds_check_is_tdls_allowed(enum tQDF_ADAPTER_MODE device_mode);
 void cds_set_tdls_ct_mode(hdd_context_t *hdd_ctx);
 void cds_set_concurrency_mode(enum tQDF_ADAPTER_MODE mode);
 void cds_clear_concurrency_mode(enum tQDF_ADAPTER_MODE mode);
@@ -592,13 +635,10 @@ static inline void cds_force_sap_on_scc(eCsrRoamResult roam_result,
 #endif /* FEATURE_WLAN_FORCE_SAP_SCC */
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-void cds_check_concurrent_intf_and_restart_sap(
-		hdd_station_ctx_t *hdd_sta_ctx,
-		hdd_adapter_t *adapter);
+void cds_check_concurrent_intf_and_restart_sap(hdd_adapter_t *adapter);
 #else
 static inline void cds_check_concurrent_intf_and_restart_sap(
-		hdd_station_ctx_t *hdd_sta_ctx,
-		hdd_adapter_t *adapter)
+						hdd_adapter_t *adapter)
 {
 
 }
@@ -650,9 +690,12 @@ void cds_decr_session_set_pcl(enum tQDF_ADAPTER_MODE mode,
 		uint8_t session_id);
 QDF_STATUS cds_init_policy_mgr(struct cds_sme_cbacks *sme_cbacks);
 QDF_STATUS cds_deinit_policy_mgr(void);
+uint8_t cds_get_channel(enum cds_con_mode mode, uint32_t *vdev_id);
 QDF_STATUS cds_get_pcl(enum cds_con_mode mode,
 			uint8_t *pcl_channels, uint32_t *len,
 			uint8_t *pcl_weight, uint32_t weight_len);
+void cds_update_with_safe_channel_list(uint8_t *pcl_channels, uint32_t *len,
+		uint8_t *weight_list, uint32_t weight_len);
 uint8_t cds_get_nondfs_preferred_channel(enum cds_con_mode mode,
 					bool for_existing_conn);
 bool cds_is_any_nondfs_chnl_present(uint8_t *channel);
@@ -752,10 +795,7 @@ QDF_STATUS qdf_wait_for_connection_update(void);
 QDF_STATUS qdf_reset_connection_update(void);
 QDF_STATUS qdf_set_connection_update(void);
 QDF_STATUS qdf_init_connection_update(void);
-QDF_STATUS cds_stop_start_opportunistic_timer(void);
-QDF_STATUS cds_handle_hw_mode_change_on_csa(uint16_t session_id,
-		uint8_t channel, uint8_t *bssid, void *dst, void *src,
-		uint32_t numbytes);
+QDF_STATUS cds_restart_opportunistic_timer(bool check_state);
 QDF_STATUS cds_modify_sap_pcl_based_on_mandatory_channel(uint8_t *pcl_list_org,
 		uint8_t *weight_list_org,
 		uint32_t *pcl_len_org);
@@ -772,7 +812,14 @@ QDF_STATUS cds_reset_sap_mandatory_channels(void);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 QDF_STATUS cds_register_sap_restart_channel_switch_cb(
 		void (*sap_restart_chan_switch_cb)(void *, uint32_t, uint32_t));
+QDF_STATUS cds_deregister_sap_restart_channel_switch_cb(void);
 #endif
+bool cds_is_any_mode_active_on_band_along_with_session(uint8_t session_id,
+						       enum cds_band band);
+QDF_STATUS cds_get_mac_id_by_session_id(uint8_t session_id, uint8_t *mac_id);
+QDF_STATUS cds_get_mcc_session_id_on_mac(uint8_t mac_id, uint8_t session_id,
+						uint8_t *mcc_session_id);
+uint8_t cds_get_mcc_operating_channel(uint8_t session_id);
 QDF_STATUS cds_get_pcl_for_existing_conn(enum cds_con_mode mode,
 			uint8_t *pcl_ch, uint32_t *len,
 			uint8_t *weight_list, uint32_t weight_len);
@@ -781,4 +828,10 @@ QDF_STATUS cds_set_hw_mode_on_channel_switch(uint8_t session_id);
 void cds_set_do_hw_mode_change_flag(bool flag);
 bool cds_is_hw_mode_change_after_vdev_up(void);
 void cds_dump_connection_status_info(void);
+uint32_t cds_mode_specific_connection_count(enum cds_con_mode mode,
+						uint32_t *list);
+void cds_hw_mode_transition_cb(uint32_t old_hw_mode_index,
+			uint32_t new_hw_mode_index,
+			uint32_t num_vdev_mac_entries,
+			 struct sir_vdev_mac_map *vdev_mac_map);
 #endif /* __CDS_CONCURRENCY_H */

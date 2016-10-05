@@ -50,6 +50,7 @@
 #define HTT_HTC_PKT_POOL_INIT_SIZE 100  /* enough for a large A-MPDU */
 
 QDF_STATUS(*htt_h2t_rx_ring_cfg_msg)(struct htt_pdev_t *pdev);
+QDF_STATUS(*htt_h2t_rx_ring_rfs_cfg_msg)(struct htt_pdev_t *pdev);
 
 #ifdef IPA_OFFLOAD
 A_STATUS htt_ipa_config(htt_pdev_handle pdev, A_STATUS status)
@@ -178,7 +179,7 @@ htt_htc_tx_htt2_service_start(struct htt_pdev_t *pdev,
 	/* Enable HTC schedule mechanism for TX HTT2 service. */
 	connect_req->ConnectionFlags |= HTC_CONNECT_FLAGS_ENABLE_HTC_SCHEDULE;
 
-	connect_req->ServiceID = HTT_DATA2_MSG_SVC;
+	connect_req->service_id = HTT_DATA2_MSG_SVC;
 
 	status = htc_connect_service(pdev->htc_pdev, connect_req, connect_resp);
 
@@ -425,6 +426,7 @@ htt_attach(struct htt_pdev_t *pdev, int desc_pool_size)
 					- HTT_RX_IND_HL_BYTES);
 
 		htt_h2t_rx_ring_cfg_msg = htt_h2t_rx_ring_cfg_msg_hl;
+		htt_h2t_rx_ring_rfs_cfg_msg = htt_h2t_rx_ring_rfs_cfg_msg_hl;
 
 		/* initialize the txrx credit count */
 		ol_tx_target_credit_update(
@@ -497,6 +499,7 @@ htt_attach(struct htt_pdev_t *pdev, int desc_pool_size)
 		pdev->rx_fw_desc_offset = RX_STD_DESC_FW_MSDU_OFFSET;
 
 		htt_h2t_rx_ring_cfg_msg = htt_h2t_rx_ring_cfg_msg_ll;
+		htt_h2t_rx_ring_rfs_cfg_msg = htt_h2t_rx_ring_rfs_cfg_msg_ll;
 	}
 
 	return 0;
@@ -533,6 +536,7 @@ A_STATUS htt_attach_target(htt_pdev_handle pdev)
 	 * handshaking.
 	 */
 
+	status = htt_h2t_rx_ring_rfs_cfg_msg(pdev);
 	status = htt_h2t_rx_ring_cfg_msg(pdev);
 	status = HTT_IPA_CONFIG(pdev, status);
 
@@ -663,13 +667,15 @@ void htt_display(htt_pdev_handle pdev, int indent)
 	qdf_print("%*srx ring: space for %d elems, filled with %d buffers\n",
 		  indent + 4, " ",
 		  pdev->rx_ring.size, pdev->rx_ring.fill_level);
-	qdf_print("%*sat %p (%#x paddr)\n", indent + 8, " ",
-		  pdev->rx_ring.buf.paddrs_ring, pdev->rx_ring.base_paddr);
+	qdf_print("%*sat %p (%llx paddr)\n", indent + 8, " ",
+		  pdev->rx_ring.buf.paddrs_ring,
+		  (unsigned long long)pdev->rx_ring.base_paddr);
 	qdf_print("%*snetbuf ring @ %p\n", indent + 8, " ",
 		  pdev->rx_ring.buf.netbufs_ring);
-	qdf_print("%*sFW_IDX shadow register: vaddr = %p, paddr = %#x\n",
+	qdf_print("%*sFW_IDX shadow register: vaddr = %p, paddr = %llx\n",
 		  indent + 8, " ",
-		  pdev->rx_ring.alloc_idx.vaddr, pdev->rx_ring.alloc_idx.paddr);
+		  pdev->rx_ring.alloc_idx.vaddr,
+		  (unsigned long long)pdev->rx_ring.alloc_idx.paddr);
 	qdf_print("%*sSW enqueue idx= %d, SW dequeue idx: desc= %d, buf= %d\n",
 		  indent + 8, " ", *pdev->rx_ring.alloc_idx.vaddr,
 		  pdev->rx_ring.sw_rd_idx.msdu_desc,
@@ -813,3 +819,23 @@ htt_ipa_uc_set_doorbell_paddr(htt_pdev_handle pdev,
 	return 0;
 }
 #endif /* IPA_OFFLOAD */
+
+/**
+ * htt_mark_first_wakeup_packet() - set flag to indicate that
+ *    fw is compatible for marking first packet after wow wakeup
+ * @pdev: pointer to htt pdev
+ * @value: 1 for enabled/ 0 for disabled
+ *
+ * Return: None
+ */
+void htt_mark_first_wakeup_packet(htt_pdev_handle pdev,
+			uint8_t value)
+{
+	if (!pdev) {
+		qdf_print("%s: htt pdev is NULL", __func__);
+		return;
+	}
+
+	pdev->cfg.is_first_wakeup_packet = value;
+}
+

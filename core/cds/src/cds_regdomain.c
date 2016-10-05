@@ -187,6 +187,7 @@ static const struct reg_dmn_pair g_reg_dmn_pairs[] = {
 	{APL1_ETSIC, APL1, ETSIC, CTRY_DEFAULT},
 	{APL6_WORLD, APL6, WORLD, CTRY_DEFAULT},
 	{APL7_FCCA, APL7, FCCA, CTRY_DEFAULT},
+	{APL8_WORLD, APL8, WORLD, CTRY_DEFAULT},
 	{APL9_WORLD, APL9, WORLD, CTRY_DEFAULT},
 	{APL10_WORLD, APL10, WORLD, CTRY_DEFAULT},
 	{APL12_WORLD, APL12, WORLD, CTRY_DEFAULT},
@@ -312,6 +313,7 @@ static const struct country_code_to_reg_dmn g_all_countries[] = {
 	{CTRY_MONGOLIA, FCC3_WORLD, "MN", "MONGOLIA"},
 	{CTRY_MONTENEGRO, ETSI1_WORLD, "ME", "MONTENEGRO"},
 	{CTRY_MOROCCO, ETSI3_WORLD, "MA", "MOROCCO"},
+	{CTRY_NAMIBIA, APL10_WORLD, "NA", "NAMIBIA"},
 	{CTRY_NEPAL, APL6_WORLD, "NP", "NEPAL"},
 	{CTRY_NETHERLANDS, ETSI1_WORLD, "NL", "NETHERLANDS"},
 	{CTRY_NETHERLANDS_ANTILLES, ETSI1_WORLD, "AN", "NETHERLANDS ANTILLES"},
@@ -321,7 +323,7 @@ static const struct country_code_to_reg_dmn g_all_countries[] = {
 	{CTRY_NICARAGUA, FCC3_FCCA, "NI", "NICARAGUA"},
 	{CTRY_NORWAY, ETSI1_WORLD, "NO", "NORWAY"},
 	{CTRY_OMAN, ETSI1_WORLD, "OM", "OMAN"},
-	{CTRY_PAKISTAN, APL1_WORLD, "PK", "PAKISTAN"},
+	{CTRY_PAKISTAN, APL1_ETSIC, "PK", "PAKISTAN"},
 	{CTRY_PALAU, FCC3_FCCA, "PW", "PALAU"},
 	{CTRY_PANAMA, FCC1_FCCA, "PA", "PANAMA"},
 	{CTRY_PAPUA_NEW_GUINEA, FCC3_WORLD, "PG", "PAPUA NEW GUINEA"},
@@ -368,7 +370,7 @@ static const struct country_code_to_reg_dmn g_all_countries[] = {
 	{CTRY_UKRAINE, ETSI9_WORLD, "UA", "UKRAINE"},
 	{CTRY_UAE, FCC3_WORLD, "AE", "UNITED ARAB EMIRATES"},
 	{CTRY_UNITED_KINGDOM, ETSI1_WORLD, "GB", "UNITED KINGDOM"},
-	{CTRY_UNITED_STATES, FCC8_FCCA, "US", "UNITED STATES"},
+	{CTRY_UNITED_STATES, FCC3_FCCA, "US", "UNITED STATES"},
 	{CTRY_UNITED_STATES_PS, FCC4_FCCA, "PS", "US PUBLIC SAFETY"},
 	{CTRY_URUGUAY, FCC2_WORLD, "UY", "URUGUAY"},
 	{CTRY_UZBEKISTAN, ETSI3_WORLD, "UZ", "UZBEKISTAN"},
@@ -418,6 +420,7 @@ static const struct reg_dmn g_reg_dmns[] = {
 	{APL11, ETSI},
 	{APL12, ETSI},
 	{APL13, ETSI},
+	{APL14, FCC},
 	{NULL1, NO_CTL},
 	{MKK3, MKK},
 	{MKK4, MKK},
@@ -816,11 +819,11 @@ uint16_t cds_reg_dmn_get_chanwidth_from_opclass(uint8_t *country,
 	const struct reg_dmn_op_class_map_t *class;
 	uint16_t i;
 
-	if (true != qdf_mem_cmp(country, "US", 2))
+	if (!qdf_mem_cmp(country, "US", 2))
 		class = us_op_class;
-	else if (true != qdf_mem_cmp(country, "EU", 2))
+	else if (!qdf_mem_cmp(country, "EU", 2))
 		class = euro_op_class;
-	else if (true != qdf_mem_cmp(country, "JP", 2))
+	else if (!qdf_mem_cmp(country, "JP", 2))
 		class = japan_op_class;
 	else
 		class = global_op_class;
@@ -856,11 +859,11 @@ uint16_t cds_reg_dmn_get_opclass_from_channel(uint8_t *country, uint8_t channel,
 	const struct reg_dmn_op_class_map_t *class = NULL;
 	uint16_t i = 0;
 
-	if (true != qdf_mem_cmp(country, "US", 2)) {
+	if (!qdf_mem_cmp(country, "US", 2)) {
 		class = us_op_class;
-	} else if (true != qdf_mem_cmp(country, "EU", 2)) {
+	} else if (!qdf_mem_cmp(country, "EU", 2)) {
 		class = euro_op_class;
-	} else if (true != qdf_mem_cmp(country, "JP", 2)) {
+	} else if (!qdf_mem_cmp(country, "JP", 2)) {
 		class = japan_op_class;
 	} else {
 		class = global_op_class;

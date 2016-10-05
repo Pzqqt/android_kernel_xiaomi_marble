@@ -94,7 +94,7 @@ int ptt_sock_send_msg_to_app(tAniHdr *wmsg, int radio, int src_mod, int pid)
 			  __func__, radio);
 		return -EINVAL;
 	}
-	payload_len = wmsg_length + 4;  /* 4 extra bytes for the radio idx */
+	payload_len = wmsg_length + sizeof(wnl->radio) + sizeof(*wmsg);
 	tot_msg_len = NLMSG_SPACE(payload_len);
 	skb = dev_alloc_skb(tot_msg_len);
 	if (skb  == NULL) {
@@ -116,9 +116,6 @@ int ptt_sock_send_msg_to_app(tAniHdr *wmsg, int radio, int src_mod, int pid)
 	wnl = (tAniNlHdr *) nlh;
 	wnl->radio = radio;
 	memcpy(&wnl->wmsg, wmsg, wmsg_length);
-	PTT_TRACE(QDF_TRACE_LEVEL_INFO,
-		  "%s: Sending Msg Type [0x%X] to pid[%d]\n", __func__,
-		  be16_to_cpu(wmsg->type), pid);
 #ifdef PTT_SOCK_DEBUG_VERBOSE
 	ptt_sock_dump_buf((const unsigned char *)skb->data, skb->len);
 #endif
@@ -128,6 +125,10 @@ int ptt_sock_send_msg_to_app(tAniHdr *wmsg, int radio, int src_mod, int pid)
 	else
 		err = nl_srv_bcast(skb);
 
+	if (err)
+		PTT_TRACE(QDF_TRACE_LEVEL_INFO,
+			  "%s:Failed sending Msg Type [0x%X] to pid[%d]\n",
+			  __func__, be16_to_cpu(wmsg->type), pid);
 	return err;
 }
 
@@ -151,7 +152,7 @@ static void ptt_sock_proc_reg_req(tAniHdr *wmsg, int radio)
 	rspmsg.wniHdr.length = cpu_to_be16(sizeof(rspmsg));
 	if (ptt_sock_send_msg_to_app((tAniHdr *) &rspmsg.wniHdr, radio,
 				     ANI_NL_MSG_PUMAC, ptt_pid) < 0) {
-		PTT_TRACE(QDF_TRACE_LEVEL_ERROR,
+		PTT_TRACE(QDF_TRACE_LEVEL_INFO,
 			  "%s: Error sending ANI_MSG_APP_REG_RSP to pid[%d]\n",
 			  __func__, ptt_pid);
 	}

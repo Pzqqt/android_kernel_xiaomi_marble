@@ -240,6 +240,7 @@ typedef enum {
 	eCsrGlobalClassCStats,
 	eCsrGlobalClassDStats,
 	eCsrPerStaStats,
+	csr_per_chain_rssi_stats,
 	eCsrMaxStats
 } eCsrRoamStatsClassTypes;
 
@@ -359,6 +360,7 @@ typedef struct tagCsrRoamStartBssParams {
 #endif
 	tSirAddIeParams addIeParams;
 	uint8_t sap_dot11mc;
+	uint8_t beacon_tx_rate;
 } tCsrRoamStartBssParams;
 
 typedef struct tagScanCmd {
@@ -523,8 +525,6 @@ typedef struct tagCsrConfig {
 	uint32_t BssPreferValue[CSR_NUM_RSSI_CAT];
 	int RSSICat[CSR_NUM_RSSI_CAT];
 	uint8_t bCatRssiOffset; /* to set RSSI difference for each category */
-	/* In secs, CSR'll try this long before gives up, 0 means no roaming */
-	uint32_t nRoamingTime;
 	/*
 	 * Whether to limit the channels to the ones set in Csr11dInfo.
 	 * If true, the opertaional channels are limited to the default channel
@@ -565,6 +565,7 @@ typedef struct tagCsrConfig {
 	 * value & 11d. If 11d is disable, the lesser of this & default setting.
 	 */
 	uint8_t nTxPowerCap;
+	bool allow_tpc_from_ap;
 	uint32_t statsReqPeriodicity;    /* stats req freq while in fullpower */
 	uint32_t statsReqPeriodicityInPS;/* stats req freq while in powersave */
 	uint32_t dtimPeriod;
@@ -602,12 +603,9 @@ typedef struct tagCsrConfig {
 	/* To enable scanning 2g channels twice on single scan req from HDD */
 	bool fScanTwice;
 	uint32_t nVhtChannelWidth;
-	uint8_t txBFEnable;
 	uint8_t enable_txbf_sap_mode;
-	uint8_t txBFCsnValue;
 	uint8_t enable2x2;
 	bool enableVhtFor24GHz;
-	uint8_t txMuBformee;
 	uint8_t enableVhtpAid;
 	uint8_t enableVhtGid;
 	uint8_t enableAmpduPs;
@@ -615,6 +613,7 @@ typedef struct tagCsrConfig {
 	uint8_t htSmps;
 	bool send_smps_action;
 	uint8_t txLdpcEnable;
+	uint8_t rxLdpcEnable;
 	/*
 	 * Enable/Disable heartbeat offload
 	 */
@@ -666,6 +665,7 @@ typedef struct tagCsrConfig {
 	bool enable_fatal_event;
 	enum wmi_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
 	enum wmi_dwelltime_adaptive_mode roamscan_adaptive_dwell_mode;
+	struct csr_sta_roam_policy_params sta_roam_policy;
 } tCsrConfig;
 
 typedef struct tagCsrChannelPowerInfo {
@@ -707,7 +707,6 @@ typedef struct tagCsrScanStruct {
 	qdf_mc_timer_t hTimerStaApConcTimer;
 #endif
 	qdf_mc_timer_t hTimerIdleScan;
-	qdf_mc_timer_t hTimerResultCfgAging;
 	/*
 	 * changes on every scan, it is used as a flag for whether 11d info is
 	 * found on every scan
@@ -777,6 +776,7 @@ typedef struct tagCsrScanStruct {
 #endif
 	/* This includes all channels on which candidate APs are found */
 	tCsrChannel occupiedChannels[CSR_ROAM_SESSION_MAX];
+	int8_t roam_candidate_count[CSR_ROAM_SESSION_MAX];
 	int8_t inScanResultBestAPRssi;
 	csr_scan_completeCallback callback11dScanDone;
 	bool fcc_constraint;
@@ -946,7 +946,6 @@ typedef struct tagCsrRoamSession {
 	uint8_t *pAddIEScan;
 	uint32_t nAddIEAssocLength;     /* the byte count for pAddIeAssocIE */
 	uint8_t *pAddIEAssoc;
-	uint32_t roamingStartTime;      /* in units of 10ms */
 	tCsrTimerInfo roamingTimerInfo;
 	eCsrRoamingReason roamingReason;
 	bool fCancelRoaming;
@@ -977,6 +976,7 @@ typedef struct tagCsrRoamSession {
 #endif
 	uint8_t bRefAssocStartCnt;      /* Tracking assoc start indication */
 	tSirHTConfig htConfig;
+	struct sir_vht_config vht_config;
 #ifdef FEATURE_WLAN_SCAN_PNO
 	bool pnoStarted;
 #endif
@@ -986,6 +986,7 @@ typedef struct tagCsrRoamSession {
 	size_t pmk_len;
 	uint8_t RoamKeyMgmtOffloadEnabled;
 	roam_offload_synch_ind *roam_synch_data;
+	bool okc_enabled;
 #endif
 	tftSMEContext ftSmeContext;
 	/* This count represents the number of bssid's we try to join. */
@@ -995,6 +996,7 @@ typedef struct tagCsrRoamSession {
 	bool roam_synch_in_progress;
 	bool supported_nss_1x1;
 	bool disable_hi_rssi;
+	bool dhcp_done;
 } tCsrRoamSession;
 
 typedef struct tagCsrRoamStruct {
@@ -1021,6 +1023,7 @@ typedef struct tagCsrRoamStruct {
 	tCsrGlobalClassCStatsInfo classCStatsInfo;
 	tCsrGlobalClassDStatsInfo classDStatsInfo;
 	tCsrPerStaStatsInfo perStaStatsInfo[CSR_MAX_STA];
+	struct csr_per_chain_rssi_stats_info  per_chain_rssi_stats;
 	tDblLinkList statsClientReqList;
 	tDblLinkList peStatsReqList;
 	tCsrTlStatsReqInfo tlStatsReqInfo;
@@ -1309,7 +1312,7 @@ bool csr_roam_is11r_assoc(tpAniSirGlobal pMac, uint8_t sessionId);
 
 #ifdef FEATURE_WLAN_ESE
 /* Returns whether the current association is a ESE assoc or not */
-bool csr_roam_is_ese_assoc(tpAniSirGlobal pMac, uint8_t sessionId);
+bool csr_roam_is_ese_assoc(tpAniSirGlobal pMac, uint32_t sessionId);
 bool csr_roam_is_ese_ini_feature_enabled(tpAniSirGlobal pMac);
 QDF_STATUS csr_get_tsm_stats(tpAniSirGlobal pMac,
 		tCsrTsmStatsCallback callback,
@@ -1422,4 +1425,10 @@ enum tQDF_ADAPTER_MODE csr_get_session_persona(tpAniSirGlobal pmac,
 void csr_roam_substate_change(tpAniSirGlobal pMac, eCsrRoamSubState NewSubstate,
 			      uint32_t sessionId);
 
+void csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
+		uint8_t sessionid, tScanResultHandle *scan_results_list);
+
+void csr_neighbor_roam_trigger_handoff(tpAniSirGlobal mac_ctx,
+					uint8_t session_id);
+bool csr_is_ndi_started(tpAniSirGlobal mac_ctx, uint32_t session_id);
 #endif

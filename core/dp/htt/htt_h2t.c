@@ -292,6 +292,85 @@ A_STATUS htt_h2t_ver_req_msg(struct htt_pdev_t *pdev)
 	return A_OK;
 }
 
+#if defined(HELIUMPLUS)
+/**
+ * htt_h2t_rx_ring_rfs_cfg_msg_ll() - Configure receive flow steering
+ * @pdev: handle to the HTT instance
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ *         A_NO_MEMORY No memory fail
+ */
+QDF_STATUS htt_h2t_rx_ring_rfs_cfg_msg_ll(struct htt_pdev_t *pdev)
+{
+	struct htt_htc_pkt *pkt;
+	qdf_nbuf_t msg;
+	uint32_t *msg_word;
+
+	qdf_print("Receive flow steering configuration, disable gEnableFlowSteering(=0) in ini if FW doesnot support it\n");
+	pkt = htt_htc_pkt_alloc(pdev);
+	if (!pkt)
+		return QDF_STATUS_E_NOMEM; /* failure */
+
+	pkt->msdu_id = HTT_TX_COMPL_INV_MSDU_ID;
+	pkt->pdev_ctxt = NULL;  /* not used during send-done callback */
+
+	/* reserve room for the HTC header */
+	msg = qdf_nbuf_alloc(pdev->osdev,
+			     HTT_MSG_BUF_SIZE(HTT_RFS_CFG_REQ_BYTES),
+			     HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING, 4,
+			     true);
+	if (!msg) {
+		htt_htc_pkt_free(pdev, pkt);
+		return QDF_STATUS_E_NOMEM; /* failure */
+	}
+	/*
+	 * Set the length of the message.
+	 * The contribution from the HTC_HDR_ALIGNMENT_PADDING is added
+	 * separately during the below call to qdf_nbuf_push_head.
+	 * The contribution from the HTC header is added separately inside HTC.
+	 */
+	qdf_nbuf_put_tail(msg, HTT_RFS_CFG_REQ_BYTES);
+
+	/* fill in the message contents */
+	msg_word = (uint32_t *) qdf_nbuf_data(msg);
+
+	/* rewind beyond alignment pad to get to the HTC header reserved area */
+	qdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
+
+	*msg_word = 0;
+	HTT_H2T_MSG_TYPE_SET(*msg_word, HTT_H2T_MSG_TYPE_RFS_CONFIG);
+	if (ol_cfg_is_flow_steering_enabled(pdev->ctrl_pdev)) {
+		HTT_RX_RFS_CONFIG_SET(*msg_word, 1);
+	    qdf_print("Enable Rx flow steering\n");
+	} else {
+	    qdf_print("Disable Rx flow steering\n");
+	}
+
+	SET_HTC_PACKET_INFO_TX(&pkt->htc_pkt,
+			       htt_h2t_send_complete_free_netbuf,
+			       qdf_nbuf_data(msg), qdf_nbuf_len(msg),
+			       pdev->htc_tx_endpoint,
+			       1); /* tag - not relevant here */
+
+	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
+	HTT_SEND_HTC_PKT(pdev, pkt);
+	return QDF_STATUS_SUCCESS;
+}
+#else
+/**
+ * htt_h2t_rx_ring_rfs_cfg_msg_ll() - Configure receive flow steering
+ * @pdev: handle to the HTT instance
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ *         A_NO_MEMORY No memory fail
+ */
+QDF_STATUS htt_h2t_rx_ring_rfs_cfg_msg_ll(struct htt_pdev_t *pdev)
+{
+	qdf_print("Doesnot support receive flow steering configuration\n");
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* HELIUMPLUS */
+
 QDF_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev)
 {
 	struct htt_htc_pkt *pkt;
@@ -355,8 +434,20 @@ QDF_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev)
 #if HTT_PADDR64
 	HTT_RX_RING_CFG_BASE_PADDR_LO_SET(*msg_word,
 					  pdev->rx_ring.base_paddr);
-	msg_word++;
-	HTT_RX_RING_CFG_BASE_PADDR_HI_SET(*msg_word, 0);
+	{
+		uint32_t tmp;
+
+		tmp = (pdev->rx_ring.base_paddr >> 32);
+		if (tmp & 0xfffffe0) {
+			qdf_print("%s:%d paddr > 37 bits!. Trimmed.",
+				  __func__, __LINE__);
+			tmp &= 0x01f;
+		}
+
+
+		msg_word++;
+		HTT_RX_RING_CFG_BASE_PADDR_HI_SET(*msg_word, tmp);
+	}
 #else /* ! HTT_PADDR64 */
 	HTT_RX_RING_CFG_BASE_PADDR_SET(*msg_word, pdev->rx_ring.base_paddr);
 #endif /* HTT_PADDR64 */
@@ -621,6 +712,19 @@ htt_h2t_rx_ring_cfg_msg_hl(struct htt_pdev_t *pdev)
 	    (!pdev->cfg.default_tx_comp_req))
 		ol_tx_target_credit_update(pdev->txrx_pdev, -1);
 
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * htt_h2t_rx_ring_rfs_cfg_msg_hl() - Configure receive flow steering
+ * @pdev: handle to the HTT instance
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ *         A_NO_MEMORY No memory fail
+ */
+QDF_STATUS htt_h2t_rx_ring_rfs_cfg_msg_hl(struct htt_pdev_t *pdev)
+{
+	qdf_print("Doesnot support Receive flow steering configuration\n");
 	return QDF_STATUS_SUCCESS;
 }
 

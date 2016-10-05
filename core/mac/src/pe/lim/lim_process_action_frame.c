@@ -504,6 +504,12 @@ static void __lim_process_operating_mode_action_frame(tpAniSirGlobal mac_ctx,
 	}
 	sta_ptr = dph_lookup_hash_entry(mac_ctx, mac_hdr->sa, &aid,
 			&session->dph.dphHashTable);
+
+	if (sta_ptr == NULL) {
+		lim_log(mac_ctx, LOGE, FL("Station context not found"));
+		goto end;
+	}
+
 	if (sta_ptr->htSupportedChannelWidthSet) {
 		if (WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ <
 				sta_ptr->vhtSupportedChannelWidthSet)
@@ -571,9 +577,12 @@ static void __lim_process_operating_mode_action_frame(tpAniSirGlobal mac_ctx,
 			(operating_mode_frm->OperatingMode.rxNSS + 1)) {
 		sta_ptr->vhtSupportedRxNss =
 			operating_mode_frm->OperatingMode.rxNSS + 1;
-		lim_set_nss_change(mac_ctx, session, sta_ptr->vhtSupportedRxNss,
+		lim_set_nss_change(mac_ctx, session,
+			operating_mode_frm->OperatingMode.rxNSS,
 			sta_ptr->staIndex, mac_hdr->sa);
 	}
+
+end:
 	qdf_mem_free(operating_mode_frm);
 	return;
 }
@@ -1891,7 +1900,10 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 		break;
 
 	case SIR_MAC_ACTION_RRM:
-		if (mac_ctx->rrm.rrmPEContext.rrmEnable) {
+		/* Ignore RRM measurement request until DHCP is set */
+		if (mac_ctx->rrm.rrmPEContext.rrmEnable &&
+		    mac_ctx->roam.roamSession
+		    [session->smeSessionId].dhcp_done) {
 			switch (action_hdr->actionID) {
 			case SIR_MAC_RRM_RADIO_MEASURE_REQ:
 				__lim_process_radio_measure_request(mac_ctx,
@@ -1918,7 +1930,10 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 		} else {
 			/* Else we will just ignore the RRM messages. */
 			lim_log(mac_ctx, LOG1,
-				FL("RRM frm ignored, it is disabled in cfg"));
+			  FL("RRM frm ignored, it is disabled in cfg %d or DHCP not completed %d"),
+			  mac_ctx->rrm.rrmPEContext.rrmEnable,
+			  mac_ctx->roam.roamSession
+			  [session->smeSessionId].dhcp_done);
 		}
 		break;
 
@@ -1932,7 +1947,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 
 		/* Check if it is a vendor specific action frame. */
 		if (LIM_IS_STA_ROLE(session) &&
-		    (true != qdf_mem_cmp(session->selfMacAddr,
+		    (!qdf_mem_cmp(session->selfMacAddr,
 					&mac_hdr->da[0], sizeof(tSirMacAddr)))
 		    && IS_WES_MODE_ENABLED(mac_ctx)
 		    && !qdf_mem_cmp(vendor_specific->Oui, oui, 3)) {
@@ -2104,6 +2119,30 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 					    session, 0);
 		break;
 	}
+	case SIR_MAC_ACTION_PROT_DUAL_PUB:
+		lim_log(mac_ctx, LOG1,
+			FL("Rcvd Protected Dual of Public Action; action %d."),
+			action_hdr->actionID);
+		switch (action_hdr->actionID) {
+		case SIR_MAC_PDPA_GAS_INIT_REQ:
+		case SIR_MAC_PDPA_GAS_INIT_RSP:
+		case SIR_MAC_PDPA_GAS_COMEBACK_REQ:
+		case SIR_MAC_PDPA_GAS_COMEBACK_RSP:
+			mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
+			frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
+			rssi = WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info);
+			lim_send_sme_mgmt_frame_ind(mac_ctx,
+				mac_hdr->fc.subType, (uint8_t *) mac_hdr,
+				frame_len + sizeof(tSirMacMgmtHdr),
+				session->smeSessionId,
+				WMA_GET_RX_CH(rx_pkt_info), session, rssi);
+			break;
+		default:
+			lim_log(mac_ctx, LOG1,
+				FL("Unhandled - Protected Dual Public Action"));
+			break;
+		}
+		break;
 	default:
 		lim_log(mac_ctx, LOG1,
 			FL("Action category %d not handled"),
