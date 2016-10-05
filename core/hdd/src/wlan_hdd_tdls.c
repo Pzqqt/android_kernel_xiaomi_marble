@@ -1621,8 +1621,8 @@ static void wlan_hdd_tdls_implicit_enable(tdlsCtx_t *pHddTdlsCtx)
  *
  * Return: Void
  */
-void wlan_hdd_tdls_set_mode(hdd_context_t *pHddCtx,
-			    eTDLSSupportMode tdls_mode, bool bUpdateLast)
+static void wlan_hdd_tdls_set_mode(hdd_context_t *pHddCtx,
+				   eTDLSSupportMode tdls_mode, bool bUpdateLast)
 {
 	hdd_adapter_list_node_t *pAdapterNode = NULL, *pNext = NULL;
 	QDF_STATUS status;

@@ -567,7 +567,7 @@ void wlan_hdd_tdls_disconnection_callback(hdd_adapter_t *pAdapter);
 void wlan_hdd_tdls_mgmt_completion_callback(hdd_adapter_t *pAdapter,
 					    uint32_t statusCode);
 
-void wlan_hdd_tdls_tncrement_peer_count(hdd_adapter_t *pAdapter);
+void wlan_hdd_tdls_increment_peer_count(hdd_adapter_t *pAdapter);
 
 void wlan_hdd_tdls_decrement_peer_count(hdd_adapter_t *pAdapter);
 
