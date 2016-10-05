@@ -549,7 +549,7 @@ hdd_cfg80211_get_ibss_peer_info(hdd_adapter_t *adapter, uint8_t staIdx)
 }
 
 /* Function header is left blank intentionally */
-QDF_STATUS
+static QDF_STATUS
 hdd_parse_get_ibss_peer_info(uint8_t *pValue, struct qdf_mac_addr *pPeerMacAddr)
 {
 	uint8_t *inPtr = pValue;
@@ -1647,7 +1647,7 @@ hdd_parse_set_roam_scan_channels(hdd_adapter_t *adapter, const char *command)
  *
  * Return: 0 for success non-zero for failure
  */
-QDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
+static QDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 {
 	uint8_t *cmdPtr = NULL;
 	int count, content = 0, ret = 0;
