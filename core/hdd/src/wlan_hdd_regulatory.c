@@ -173,7 +173,7 @@ struct regulatory *reg)
  *
  * Return: bool
  */
-bool hdd_is_world_regdomain(uint32_t reg_domain)
+static bool hdd_is_world_regdomain(uint32_t reg_domain)
 {
 	uint32_t temp_regd = reg_domain & ~WORLDWIDE_ROAMING_FLAG;
 
