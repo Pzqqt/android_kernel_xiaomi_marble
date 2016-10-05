@@ -375,7 +375,7 @@ int wlan_hdd_check_remain_on_channel(hdd_adapter_t *pAdapter)
  *
  * Return: None
  */
-void wlan_hdd_cancel_pending_roc(hdd_adapter_t *adapter)
+static void wlan_hdd_cancel_pending_roc(hdd_adapter_t *adapter)
 {
 	hdd_remain_on_chan_ctx_t *roc_ctx;
 	unsigned long rc;
@@ -463,7 +463,7 @@ void wlan_hdd_cleanup_remain_on_channel_ctx(hdd_adapter_t *pAdapter)
 
 }
 
-void wlan_hdd_remain_on_chan_timeout(void *data)
+static void wlan_hdd_remain_on_chan_timeout(void *data)
 {
 	hdd_adapter_t *pAdapter = (hdd_adapter_t *) data;
 	hdd_remain_on_chan_ctx_t *pRemainChanCtx;
@@ -707,8 +707,8 @@ static int wlan_hdd_roc_request_enqueue(hdd_adapter_t *adapter,
  *
  * Return: None
  */
-void wlan_hdd_indicate_roc_drop(hdd_adapter_t *adapter,
-				hdd_remain_on_chan_ctx_t *ctx)
+static void wlan_hdd_indicate_roc_drop(hdd_adapter_t *adapter,
+				       hdd_remain_on_chan_ctx_t *ctx)
 {
 	hdd_debug("indicate roc drop to userspace");
 	cfg80211_ready_on_channel(
@@ -886,10 +886,11 @@ static int wlan_hdd_request_remain_on_channel(struct wiphy *wiphy,
 	return 0;
 }
 
-int __wlan_hdd_cfg80211_remain_on_channel(struct wiphy *wiphy,
-					  struct wireless_dev *wdev,
-					  struct ieee80211_channel *chan,
-					  unsigned int duration, u64 *cookie)
+static int __wlan_hdd_cfg80211_remain_on_channel(struct wiphy *wiphy,
+						 struct wireless_dev *wdev,
+						 struct ieee80211_channel *chan,
+						 unsigned int duration,
+						 u64 *cookie)
 {
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
@@ -1027,9 +1028,10 @@ void hdd_remain_chan_ready_handler(hdd_adapter_t *pAdapter,
 	return;
 }
 
-int __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
-						 struct wireless_dev *wdev,
-						 u64 cookie)
+static int
+__wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
+					     struct wireless_dev *wdev,
+					     u64 cookie)
 {
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
@@ -1172,11 +1174,11 @@ int wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 	return ret;
 }
 
-int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
-		       struct ieee80211_channel *chan, bool offchan,
-		       unsigned int wait,
-		       const u8 *buf, size_t len, bool no_cck,
-		       bool dont_wait_for_ack, u64 *cookie)
+static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
+			      struct ieee80211_channel *chan, bool offchan,
+			      unsigned int wait,
+			      const u8 *buf, size_t len, bool no_cck,
+			      bool dont_wait_for_ack, u64 *cookie)
 {
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
@@ -1602,9 +1604,9 @@ int wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 	return ret;
 }
 
-int __wlan_hdd_cfg80211_mgmt_tx_cancel_wait(struct wiphy *wiphy,
-					    struct wireless_dev *wdev,
-					    u64 cookie)
+static int __wlan_hdd_cfg80211_mgmt_tx_cancel_wait(struct wiphy *wiphy,
+						   struct wireless_dev *wdev,
+						   u64 cookie)
 {
 	return wlan_hdd_cfg80211_cancel_remain_on_channel(wiphy, wdev, cookie);
 }
@@ -1942,6 +1944,7 @@ static uint8_t wlan_hdd_get_session_type(enum nl80211_iftype type)
  *
  * Return: the pointer of wireless dev, otherwise ERR_PTR.
  */
+static
 struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 						 const char *name,
 						 unsigned char name_assign_type,
