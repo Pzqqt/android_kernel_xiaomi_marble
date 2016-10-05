@@ -412,8 +412,9 @@ static void hdd_lro_desc_free(struct net_lro_desc *desc,
  *
  * Return: none
  */
-void hdd_lro_flush_pkt(struct net_lro_mgr *lro_mgr,
-	 struct iphdr *iph, struct tcphdr *tcph, hdd_adapter_t *adapter)
+static void hdd_lro_flush_pkt(struct net_lro_mgr *lro_mgr,
+			      struct iphdr *iph, struct tcphdr *tcph,
+			      hdd_adapter_t *adapter)
 {
 	struct net_lro_desc *lro_desc;
 
@@ -434,7 +435,7 @@ void hdd_lro_flush_pkt(struct net_lro_mgr *lro_mgr,
  *
  * Return: none
  */
-void hdd_lro_flush(void *data)
+static void hdd_lro_flush(void *data)
 {
 	hdd_adapter_t *adapter = (hdd_adapter_t *)data;
 	struct hdd_lro_s *hdd_lro;
