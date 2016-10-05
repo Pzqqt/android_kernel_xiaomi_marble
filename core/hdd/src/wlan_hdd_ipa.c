@@ -454,7 +454,7 @@ struct hdd_ipa_priv {
  *        is broken.
  * This should be OK and IPA is not enabled yet
  */
-void *wlan_hdd_stub_priv_to_addr(uint32_t priv)
+static void *wlan_hdd_stub_priv_to_addr(uint32_t priv)
 {
 	void    *vaddr;
 	uint32_t ipa_priv = priv;
@@ -464,7 +464,7 @@ void *wlan_hdd_stub_priv_to_addr(uint32_t priv)
 	return vaddr;
 }
 
-uint32_t wlan_hdd_stub_addr_to_priv(void *ptr)
+static uint32_t wlan_hdd_stub_addr_to_priv(void *ptr)
 {
 	uint32_t       ipa_priv = 0;
 
@@ -838,7 +838,7 @@ static void hdd_ipa_uc_rt_debug_handler(void *ctext)
  *
  * Return: none
  */
-void hdd_ipa_uc_rt_debug_destructor(struct sk_buff *skb)
+static void hdd_ipa_uc_rt_debug_destructor(struct sk_buff *skb)
 {
 	if (!ghdd_ipa) {
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
@@ -4163,7 +4163,7 @@ fail_return:
  *
  * Return: none
  */
-void hdd_ipa_cleanup_pending_event(struct hdd_ipa_priv *hdd_ipa)
+static void hdd_ipa_cleanup_pending_event(struct hdd_ipa_priv *hdd_ipa)
 {
 	struct ipa_uc_pending_event *pending_event = NULL;
 
