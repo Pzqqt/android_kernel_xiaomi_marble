@@ -810,7 +810,8 @@ hdd_wlan_get_ibss_mac_addr_from_staid(hdd_adapter_t *pAdapter,
  * Return: QDF_STATUS_STATUS if the peer was found and displayed,
  * otherwise an appropriate QDF_STATUS_E_* failure code.
  */
-QDF_STATUS hdd_wlan_get_ibss_peer_info(hdd_adapter_t *pAdapter, uint8_t staIdx)
+static QDF_STATUS hdd_wlan_get_ibss_peer_info(hdd_adapter_t *pAdapter,
+					      uint8_t staIdx)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
@@ -859,7 +860,7 @@ QDF_STATUS hdd_wlan_get_ibss_peer_info(hdd_adapter_t *pAdapter, uint8_t staIdx)
  * Return: QDF_STATUS_STATUS if the peer information was retrieved and
  * displayed, otherwise an appropriate QDF_STATUS_E_* failure code.
  */
-QDF_STATUS hdd_wlan_get_ibss_peer_info_all(hdd_adapter_t *pAdapter)
+static QDF_STATUS hdd_wlan_get_ibss_peer_info_all(hdd_adapter_t *pAdapter)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
@@ -1558,7 +1559,7 @@ int wlan_hdd_get_link_speed(hdd_adapter_t *sta_adapter, uint32_t *link_speed)
  *
  * Return: None
  */
-void hdd_statistics_cb(void *pStats, void *pContext)
+static void hdd_statistics_cb(void *pStats, void *pContext)
 {
 	hdd_adapter_t *pAdapter = (hdd_adapter_t *) pContext;
 	hdd_stats_t *pStatsCache = NULL;
@@ -1956,7 +1957,7 @@ static int __iw_set_commit(struct net_device *dev, struct iw_request_info *info,
  *
  * Return: 0 on success, error number otherwise
  */
-int iw_set_commit(struct net_device *dev, struct iw_request_info *info,
+static int iw_set_commit(struct net_device *dev, struct iw_request_info *info,
 		  union iwreq_data *wrqu, char *extra)
 {
 	int ret;
@@ -3308,8 +3309,8 @@ static int iw_set_frag_threshold(struct net_device *dev,
  * Return: 0 on success, non-zero on error
  */
 static int __iw_get_power_mode(struct net_device *dev,
-			     struct iw_request_info *info,
-			     union iwreq_data *wrqu, char *extra)
+			       struct iw_request_info *info,
+			       union iwreq_data *wrqu, char *extra)
 {
 	hdd_adapter_t *adapter;
 	hdd_context_t *hdd_ctx;
@@ -3335,9 +3336,9 @@ static int __iw_get_power_mode(struct net_device *dev,
  *
  * Return: 0 on success, error number otherwise
  */
-int iw_get_power_mode(struct net_device *dev,
-		      struct iw_request_info *info,
-		      union iwreq_data *wrqu, char *extra)
+static int iw_get_power_mode(struct net_device *dev,
+			     struct iw_request_info *info,
+			     union iwreq_data *wrqu, char *extra)
 {
 	int ret;
 
@@ -3358,8 +3359,8 @@ int iw_get_power_mode(struct net_device *dev,
  * Return: 0 on success, non-zero on error
  */
 static int __iw_set_power_mode(struct net_device *dev,
-			     struct iw_request_info *info,
-			     union iwreq_data *wrqu, char *extra)
+			       struct iw_request_info *info,
+			       union iwreq_data *wrqu, char *extra)
 {
 	hdd_adapter_t *adapter;
 	hdd_context_t *hdd_ctx;
@@ -3385,9 +3386,9 @@ static int __iw_set_power_mode(struct net_device *dev,
  *
  * Return: 0 on success, error number otherwise
  */
-int iw_set_power_mode(struct net_device *dev,
-		      struct iw_request_info *info,
-		      union iwreq_data *wrqu, char *extra)
+static int iw_set_power_mode(struct net_device *dev,
+			     struct iw_request_info *info,
+			     union iwreq_data *wrqu, char *extra)
 {
 	int ret;
 
@@ -9291,8 +9292,8 @@ static int iw_get_statistics(struct net_device *dev,
 
 /*Max Len for PNO notification*/
 #define MAX_PNO_NOTIFY_LEN 100
-void found_pref_network_cb(void *callbackContext,
-			   tSirPrefNetworkFoundInd *pPrefNetworkFoundInd)
+static void found_pref_network_cb(void *callbackContext,
+				  tSirPrefNetworkFoundInd *pPrefNetworkFoundInd)
 {
 	hdd_adapter_t *pAdapter = (hdd_adapter_t *) callbackContext;
 	union iwreq_data wrqu;
@@ -11146,7 +11147,7 @@ const struct iw_handler_def we_handler_def = {
  *
  * Returns: none
  */
-int hdd_set_wext(hdd_adapter_t *pAdapter)
+static int hdd_set_wext(hdd_adapter_t *pAdapter)
 {
 	hdd_wext_state_t *pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
