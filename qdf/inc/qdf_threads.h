@@ -34,6 +34,7 @@
 #define __QDF_THREADS_H
 
 #include <qdf_types.h>
+#include <qdf_util.h>
 
 /* Function declarations and documenation */
 
@@ -42,5 +43,32 @@ void qdf_sleep(uint32_t ms_interval);
 void qdf_sleep_us(uint32_t us_interval);
 
 void qdf_busy_wait(uint32_t us_interval);
+
+/**
+ * qdf_set_user_nice() - set thread's nice value
+ * @thread: pointer to thread
+ * @nice: nice value
+ *
+ * Return: none
+ */
+void qdf_set_user_nice(qdf_thread_t *thread, long nice);
+
+/**
+ * qdf_create_thread() - create a kernel thread
+ * @thread: pointer to thread
+ * @nice: nice value
+ *
+ * Return: pointer to created kernel thread
+ */
+qdf_thread_t *qdf_create_thread(int (*thread_handler)(void *data), void *data,
+				const char thread_name[]);
+
+/**
+ * qdf_wake_up_process() - wake up given thread
+ * @thread: pointer to thread which needs to be woken up
+ *
+ * Return: none
+ */
+int qdf_wake_up_process(qdf_thread_t *thread);
 
 #endif /* __QDF_THREADS_H */

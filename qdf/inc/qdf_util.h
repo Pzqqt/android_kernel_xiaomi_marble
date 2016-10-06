@@ -41,6 +41,9 @@
 #define QDF_MAX_AVAILABLE_CPU	1
 #endif
 
+typedef __qdf_thread_t qdf_thread_t;
+typedef __qdf_wait_queue_head_t qdf_wait_queue_head_t;
+
 /**
  * qdf_unlikely - Compiler-dependent macro denoting code likely to execute
  * @_expr: expression to be checked
@@ -110,6 +113,42 @@ static inline int qdf_status_to_os_return(QDF_STATUS status)
  * Return: none
  */
 #define qdf_set_bit(nr, addr)    __qdf_set_bit(nr, addr)
+
+/**
+ * qdf_clear_bit() - clear bit in address
+ * @nr: bit number to be clear
+ * @addr: address buffer pointer
+ *
+ * Return: none
+ */
+#define qdf_clear_bit(nr, addr)    __qdf_clear_bit(nr, addr)
+
+/**
+ * qdf_test_bit() - test bit position in address
+ * @nr: bit number to be tested
+ * @addr: address buffer pointer
+ *
+ * Return: none
+ */
+#define qdf_test_bit(nr, addr)    __qdf_test_bit(nr, addr)
+
+/**
+ * qdf_test_and_clear_bit() - test and clear bit position in address
+ * @nr: bit number to be tested
+ * @addr: address buffer pointer
+ *
+ * Return: none
+ */
+#define qdf_test_and_clear_bit(nr, addr)    __qdf_test_and_clear_bit(nr, addr)
+
+#define qdf_wait_queue_interruptible(wait_queue, condition) \
+		__qdf_wait_queue_interruptible(wait_queue, condition)
+
+#define qdf_init_waitqueue_head(_q) __qdf_init_waitqueue_head(_q)
+
+#define qdf_wake_up_interruptible(_q) __qdf_wake_up_interruptible(_q)
+
+#define qdf_wake_up_completion(_q) __qdf_wake_up_completion(_q)
 
 /**
  * qdf_container_of - cast a member of a structure out to the containing

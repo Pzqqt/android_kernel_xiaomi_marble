@@ -47,9 +47,10 @@ typedef struct qdf_list_s {
 } __qdf_list_t;
 
 /**
- * __qdf_list_create() - Initialize list head
+ * __qdf_list_create() - Create qdf list and initialize list head
  * @list: object of list
  * @max_size: max size of the list
+ *
  * Return: none
  */
 static inline void __qdf_list_create(__qdf_list_t *list, uint32_t max_size)
@@ -57,6 +58,17 @@ static inline void __qdf_list_create(__qdf_list_t *list, uint32_t max_size)
 	INIT_LIST_HEAD(&list->anchor);
 	list->count = 0;
 	list->max_size = max_size;
+}
+
+/**
+ * __qdf_init_list_head() - initialize list head
+ * @list_head: pointer to list head
+ *
+ * Return: none
+ */
+static inline void __qdf_init_list_head(__qdf_list_node_t *list_head)
+{
+	INIT_LIST_HEAD(list_head);
 }
 
 bool qdf_list_has_node(__qdf_list_t *list, __qdf_list_node_t *node);

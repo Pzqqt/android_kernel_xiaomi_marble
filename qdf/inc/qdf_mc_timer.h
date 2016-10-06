@@ -277,4 +277,5 @@ void qdf_timer_module_deinit(void);
  * Return: None
  */
 void qdf_get_time_of_the_day_in_hr_min_sec_usec(char *tbuf, int len);
+void qdf_register_mc_timer_callback(void (*callback) (unsigned long data));
 #endif /* __QDF_MC_TIMER_H */

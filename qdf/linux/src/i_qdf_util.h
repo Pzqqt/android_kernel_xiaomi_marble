@@ -64,9 +64,19 @@
 #include <linux/byteorder/generic.h>
 #endif
 
-/*
- * Generic compiler-dependent macros if defined by the OS
- */
+typedef struct task_struct __qdf_thread_t;
+typedef wait_queue_head_t __qdf_wait_queue_head_t;
+
+/* Generic compiler-dependent macros if defined by the OS */
+#define __qdf_wait_queue_interruptible(wait_queue, condition) \
+		wait_event_interruptible(wait_queue, condition)
+
+#define __qdf_init_waitqueue_head(_q) init_waitqueue_head(_q)
+
+#define __qdf_wake_up_interruptible(_q) wake_up_interruptible(_q)
+
+#define __qdf_wake_up_completion(_q) wake_up_completion(_q)
+
 #define __qdf_unlikely(_expr)   unlikely(_expr)
 #define __qdf_likely(_expr)     likely(_expr)
 
@@ -139,6 +149,22 @@ static inline int __qdf_status_to_os_return(QDF_STATUS status)
 static inline void __qdf_set_bit(unsigned int nr, unsigned long *addr)
 {
 	__set_bit(nr, addr);
+}
+
+static inline void __qdf_clear_bit(unsigned int nr, unsigned long *addr)
+{
+	__clear_bit(nr, addr);
+}
+
+static inline bool __qdf_test_bit(unsigned int nr, unsigned long *addr)
+{
+	return test_bit(nr, addr);
+}
+
+static inline bool __qdf_test_and_clear_bit(unsigned int nr,
+					unsigned long *addr)
+{
+	return __test_and_clear_bit(nr, addr);
 }
 
 /**

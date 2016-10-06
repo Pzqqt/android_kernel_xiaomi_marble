@@ -19,6 +19,9 @@
 #include <qdf_types.h>
 #include <qdf_trace.h>
 #include <dispatcher_init_deinit.h>
+#ifdef NAPIER_CODE
+#include <scheduler_api.h>
+#endif
 
 /**
  * DOC: This file provides various init/deinit trigger point for new
@@ -70,18 +73,6 @@ static QDF_STATUS tdls_deinit(void)
 {
 	return QDF_STATUS_SUCCESS;
 }
-
-
-static QDF_STATUS scheduler_init(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS scheduler_deinit(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
 
 static QDF_STATUS scm_psoc_open(void)
 {
@@ -145,6 +136,18 @@ static QDF_STATUS tdls_psoc_disable(void)
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifndef NAPIER_CODE
+static QDF_STATUS scheduler_init(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS scheduler_deinit(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 QDF_STATUS dispatcher_init(void)
 {

@@ -267,3 +267,35 @@ QDF_STATUS qdf_wait_single_event(qdf_event_t *event, uint32_t timeout)
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(qdf_wait_single_event);
+
+QDF_STATUS qdf_event_complete_and_exit(qdf_event_t *event, long reason_code)
+{
+	if (in_interrupt()) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "%s cannot be called from interrupt context!!!",
+			  __func__);
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAULT;
+	}
+
+	/* check for null pointer */
+	if (NULL == event) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "NULL event passed into %s", __func__);
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAULT;
+	}
+
+	/* check if cookie is same as that of initialized event */
+	if (LINUX_EVENT_COOKIE != event->cookie) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "Uninitialized event passed into %s", __func__);
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	complete_and_exit(&event->complete, reason_code);
+
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(qdf_event_complete_and_exit);

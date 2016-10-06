@@ -54,6 +54,7 @@
 
 typedef __qdf_list_node_t qdf_list_node_t;
 typedef __qdf_list_t qdf_list_t;
+
 /* Function declarations */
 QDF_STATUS qdf_list_insert_front(qdf_list_t *list, qdf_list_node_t *node);
 
@@ -66,9 +67,10 @@ QDF_STATUS qdf_list_peek_next(qdf_list_t *list,	qdf_list_node_t *node,
 			      qdf_list_node_t **node1);
 
 /**
- * qdf_list_create() - Initialize list head
+ * qdf_list_create() - Create qdf list and initialize list head
  * @list: object of list
  * @max_size: max size of the list
+ *
  * Return: none
  */
 static inline void qdf_list_create(__qdf_list_t *list, uint32_t max_size)
@@ -76,6 +78,16 @@ static inline void qdf_list_create(__qdf_list_t *list, uint32_t max_size)
 	__qdf_list_create(list, max_size);
 }
 
+/**
+ * qdf_init_list_head() - initialize list head
+ * @list_head: pointer to list head
+ *
+ * Return: none
+ */
+static inline void qdf_init_list_head(__qdf_list_node_t *list_head)
+{
+	__qdf_init_list_head(list_head);
+}
 
 /**
  * qdf_list_destroy() - Destroy the list

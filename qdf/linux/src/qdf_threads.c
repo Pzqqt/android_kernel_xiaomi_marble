@@ -39,6 +39,7 @@
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/export.h>
+#include <linux/kthread.h>
 
 /* Function declarations and documenation */
 
@@ -104,3 +105,22 @@ void qdf_busy_wait(uint32_t us_interval)
 	udelay(us_interval);
 }
 EXPORT_SYMBOL(qdf_busy_wait);
+
+void qdf_set_user_nice(qdf_thread_t *thread, long nice)
+{
+	set_user_nice(thread, nice);
+}
+EXPORT_SYMBOL(qdf_set_user_nice);
+
+qdf_thread_t *qdf_create_thread(int (*thread_handler)(void *data), void *data,
+				const char thread_name[])
+{
+	return kthread_create(thread_handler, data, thread_name);
+}
+EXPORT_SYMBOL(qdf_create_thread);
+
+int qdf_wake_up_process(qdf_thread_t *thread)
+{
+	return wake_up_process(thread);
+}
+EXPORT_SYMBOL(qdf_wake_up_process);

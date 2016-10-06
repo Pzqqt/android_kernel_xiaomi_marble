@@ -239,6 +239,11 @@ typedef void (*qdf_timer_func_t)(void *);
  * @QDF_MODULE_ID_BMI: BMI module ID
  * @QDF_MODULE_ID_EPPING: EPPING module ID
  * @QDF_MODULE_ID_QVIT: QVIT module ID
+ * @QDF_MODULE_ID_DP: Data path module ID
+ * @QDF_MODULE_ID_SOC: SOC module ID
+ * @QDF_MODULE_ID_OS_IF: Scheduler OS interface queue module ID
+ * @QDF_MODULE_ID_TARGET_IF: Scheduler target interface queue module ID
+ * @QDF_MODULE_ID_SCHEDULER: Scheduler's module ID
  * @QDF_MODULE_ID_MAX: Max place holder module ID
  *
  * These are generic IDs that identify the various modules in the software
@@ -271,6 +276,9 @@ typedef enum {
 	QDF_MODULE_ID_QVIT = 23,
 	QDF_MODULE_ID_DP = 24,
 	QDF_MODULE_ID_SOC = 25,
+	QDF_MODULE_ID_OS_IF = 26,
+	QDF_MODULE_ID_TARGET_IF = 27,
+	QDF_MODULE_ID_SCHEDULER = 28,
 	QDF_MODULE_ID_MAX
 } QDF_MODULE_ID;
 
