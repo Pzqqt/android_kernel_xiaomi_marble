@@ -2370,7 +2370,7 @@ typedef enum {
 #define CFG_RA_FILTER_ENABLE_NAME                  "gRAFilterEnable"
 #define CFG_RA_FILTER_ENABLE_MIN                   (0)
 #define CFG_RA_FILTER_ENABLE_MAX                   (1)
-#define CFG_RA_FILTER_ENABLE_DEFAULT               (0)
+#define CFG_RA_FILTER_ENABLE_DEFAULT               (1)
 
 #define CFG_RA_RATE_LIMIT_INTERVAL_NAME            "gRArateLimitInterval"
 #define CFG_RA_RATE_LIMIT_INTERVAL_MIN             (60)
