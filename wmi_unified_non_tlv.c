@@ -1060,7 +1060,7 @@ QDF_STATUS send_resume_cmd_non_tlv(wmi_unified_t wmi_handle,
 QDF_STATUS send_wow_enable_cmd_non_tlv(wmi_unified_t wmi_handle,
 		struct wow_cmd_params *param, uint8_t mac_id)
 {
-	A_STATUS res;
+	QDF_STATUS res;
 	wmi_buf_t buf = NULL;
 
 	buf = wmi_buf_alloc(wmi_handle, 4);
@@ -1070,7 +1070,8 @@ QDF_STATUS send_wow_enable_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 	res = wmi_unified_cmd_send(wmi_handle, buf, 4, WMI_WOW_ENABLE_CMDID);
 	qdf_print("send_wow_enable result: %d\n", res);
-	return (res == A_OK) ? QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
+	return (res == QDF_STATUS_SUCCESS) ?
+		QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
 }
 
 /**
@@ -1081,7 +1082,7 @@ QDF_STATUS send_wow_enable_cmd_non_tlv(wmi_unified_t wmi_handle,
  */
 QDF_STATUS send_wow_wakeup_cmd_non_tlv(wmi_unified_t wmi_handle)
 {
-	A_STATUS res;
+	QDF_STATUS res;
 	wmi_buf_t buf = NULL;
 
 	buf = wmi_buf_alloc(wmi_handle, 4);
@@ -1092,7 +1093,8 @@ QDF_STATUS send_wow_wakeup_cmd_non_tlv(wmi_unified_t wmi_handle)
 	res = wmi_unified_cmd_send(wmi_handle, buf, 4,
 			WMI_WOW_HOSTWAKEUP_FROM_SLEEP_CMDID);
 	qdf_print("ol_wow_wakeup result: %d\n", res);
-	return (res == A_OK) ? QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
+	return (res == QDF_STATUS_SUCCESS) ?
+		QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
 }
 
 /**
@@ -1105,7 +1107,7 @@ QDF_STATUS send_wow_wakeup_cmd_non_tlv(wmi_unified_t wmi_handle)
 QDF_STATUS send_wow_add_wakeup_event_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct wow_add_wakeup_params *param)
 {
-	A_STATUS res;
+	QDF_STATUS res;
 	WMI_WOW_ADD_DEL_EVT_CMD *cmd;
 	wmi_buf_t buf = NULL;
 	int len = sizeof(WMI_WOW_ADD_DEL_EVT_CMD);
@@ -1120,7 +1122,8 @@ QDF_STATUS send_wow_add_wakeup_event_cmd_non_tlv(wmi_unified_t wmi_handle,
 	cmd->event_bitmap = param->type;
 	res = wmi_unified_cmd_send(wmi_handle, buf, len,
 			WMI_WOW_ENABLE_DISABLE_WAKE_EVENT_CMDID);
-	return (res == A_OK) ? QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
+	return (res == QDF_STATUS_SUCCESS) ?
+		QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
 }
 
 /**
@@ -1140,7 +1143,7 @@ QDF_STATUS send_wow_add_wakeup_pattern_cmd_non_tlv(wmi_unified_t wmi_handle,
 	OL_WOW_PATTERN *pattern;
 	struct ol_ath_softc_net80211 *scn = OL_ATH_SOFTC_NET80211(ic);
 	*/
-	A_STATUS res;
+	QDF_STATUS res;
 	WMI_WOW_ADD_PATTERN_CMD *cmd;
 	wmi_buf_t buf = NULL;
 	int len = sizeof(WMI_WOW_ADD_PATTERN_CMD);
@@ -1166,7 +1169,8 @@ QDF_STATUS send_wow_add_wakeup_pattern_cmd_non_tlv(wmi_unified_t wmi_handle,
 	res = wmi_unified_cmd_send(wmi_handle, buf, len,
 			WMI_WOW_ADD_WAKE_PATTERN_CMDID);
 
-	return (res == A_OK) ? QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
+	return (res == QDF_STATUS_SUCCESS) ?
+		QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
 }
 
 /**
@@ -1181,7 +1185,7 @@ QDF_STATUS send_wow_remove_wakeup_pattern_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct wow_remove_wakeup_pattern_params *param)
 {
 	WMI_WOW_DEL_PATTERN_CMD *cmd;
-	A_STATUS res;
+	QDF_STATUS res;
 	wmi_buf_t buf = NULL;
 	int len = sizeof(WMI_WOW_DEL_PATTERN_CMD);
 
@@ -1195,7 +1199,8 @@ QDF_STATUS send_wow_remove_wakeup_pattern_cmd_non_tlv(wmi_unified_t wmi_handle,
 	cmd->pattern_type = WOW_BITMAP_PATTERN;
 	res = wmi_unified_cmd_send(wmi_handle, buf, len,
 			WMI_WOW_DEL_WAKE_PATTERN_CMDID);
-	return (res == A_OK) ? QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
+	return (res == QDF_STATUS_SUCCESS) ?
+		QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
 }
 
 /**
@@ -2220,7 +2225,7 @@ QDF_STATUS send_phyerr_enable_cmd_non_tlv(wmi_unified_t wmi_handle)
 
 	qdf_print("%s: about to send\n", __func__);
 	if (wmi_unified_cmd_send(wmi_handle, buf, 32,
-	  WMI_PDEV_DFS_ENABLE_CMDID) != A_OK) {
+	  WMI_PDEV_DFS_ENABLE_CMDID) != QDF_STATUS_SUCCESS) {
 		qdf_print("%s: send failed\n", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2249,7 +2254,7 @@ QDF_STATUS send_phyerr_disable_cmd_non_tlv(wmi_unified_t wmi_handle)
 
 	qdf_print("%s: about to send\n", __func__);
 	if (wmi_unified_cmd_send(wmi_handle, buf, 32,
-	  WMI_PDEV_DFS_DISABLE_CMDID) != A_OK) {
+	  WMI_PDEV_DFS_DISABLE_CMDID) != QDF_STATUS_SUCCESS) {
 		qdf_print("%s: send failed\n", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2813,7 +2818,7 @@ send_set_beacon_filter_cmd_non_tlv(wmi_unified_t wmi_handle,
 	/* Issue WMI command to set beacon filter */
 	int i;
 	wmi_add_bcn_filter_cmd_t *cmd;
-	A_STATUS res;
+	QDF_STATUS res;
 	wmi_buf_t buf = NULL;
 	int len = sizeof(wmi_add_bcn_filter_cmd_t);
 
@@ -2835,7 +2840,8 @@ send_set_beacon_filter_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 	res = wmi_unified_cmd_send(wmi_handle, buf, len,
 			WMI_ADD_BCN_FILTER_CMDID);
-	return (res == A_OK) ? QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
+	return (res == QDF_STATUS_SUCCESS) ?
+		QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
 }
 
 /**
@@ -2851,7 +2857,7 @@ send_remove_beacon_filter_cmd_non_tlv(wmi_unified_t wmi_handle,
 			struct remove_beacon_filter_params *param)
 {
 	wmi_rmv_bcn_filter_cmd_t *cmd;
-	A_STATUS res;
+	QDF_STATUS res;
 	wmi_buf_t buf = NULL;
 	int len = sizeof(wmi_rmv_bcn_filter_cmd_t);
 
@@ -2864,7 +2870,8 @@ send_remove_beacon_filter_cmd_non_tlv(wmi_unified_t wmi_handle,
 	cmd->vdev_id = param->vdev_id;
 	res = wmi_unified_cmd_send(wmi_handle, buf, len,
 			WMI_RMV_BCN_FILTER_CMDID);
-	return (res == A_OK) ? QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
+	return (res == QDF_STATUS_SUCCESS) ?
+		QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
 }
 
 /**
