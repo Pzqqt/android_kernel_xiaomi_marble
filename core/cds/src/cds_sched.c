@@ -669,7 +669,7 @@ cds_indicate_rxpkt(p_cds_sched_context pSchedContext,
 	spin_lock_bh(&pSchedContext->ol_rx_queue_lock);
 	list_add_tail(&pkt->list, &pSchedContext->ol_rx_thread_queue);
 	spin_unlock_bh(&pSchedContext->ol_rx_queue_lock);
-	set_bit(RX_POST_EVENT_MASK, &pSchedContext->ol_rx_event_flag);
+	set_bit(RX_POST_EVENT, &pSchedContext->ol_rx_event_flag);
 	wake_up_interruptible(&pSchedContext->ol_rx_wait_queue);
 }
 
@@ -788,22 +788,22 @@ static int cds_ol_rx_thread(void *arg)
 	while (!shutdown) {
 		status =
 			wait_event_interruptible(pSchedContext->ol_rx_wait_queue,
-						 test_bit(RX_POST_EVENT_MASK,
+						 test_bit(RX_POST_EVENT,
 							  &pSchedContext->ol_rx_event_flag)
-						 || test_bit(RX_SUSPEND_EVENT_MASK,
+						 || test_bit(RX_SUSPEND_EVENT,
 							     &pSchedContext->ol_rx_event_flag));
 		if (status == -ERESTARTSYS)
 			break;
 
-		clear_bit(RX_POST_EVENT_MASK, &pSchedContext->ol_rx_event_flag);
+		clear_bit(RX_POST_EVENT, &pSchedContext->ol_rx_event_flag);
 		while (true) {
-			if (test_bit(RX_SHUTDOWN_EVENT_MASK,
+			if (test_bit(RX_SHUTDOWN_EVENT,
 				     &pSchedContext->ol_rx_event_flag)) {
-				clear_bit(RX_SHUTDOWN_EVENT_MASK,
+				clear_bit(RX_SHUTDOWN_EVENT,
 					  &pSchedContext->ol_rx_event_flag);
-				if (test_bit(RX_SUSPEND_EVENT_MASK,
+				if (test_bit(RX_SUSPEND_EVENT,
 					     &pSchedContext->ol_rx_event_flag)) {
-					clear_bit(RX_SUSPEND_EVENT_MASK,
+					clear_bit(RX_SUSPEND_EVENT,
 						  &pSchedContext->ol_rx_event_flag);
 					complete
 						(&pSchedContext->ol_suspend_rx_event);
@@ -817,9 +817,9 @@ static int cds_ol_rx_thread(void *arg)
 			}
 			cds_rx_from_queue(pSchedContext);
 
-			if (test_bit(RX_SUSPEND_EVENT_MASK,
+			if (test_bit(RX_SUSPEND_EVENT,
 				     &pSchedContext->ol_rx_event_flag)) {
-				clear_bit(RX_SUSPEND_EVENT_MASK,
+				clear_bit(RX_SUSPEND_EVENT,
 					  &pSchedContext->ol_rx_event_flag);
 				spin_lock(&pSchedContext->ol_rx_thread_lock);
 				INIT_COMPLETION
@@ -862,8 +862,8 @@ QDF_STATUS cds_sched_close(void *p_cds_context)
 	}
 #ifdef QCA_CONFIG_SMP
 	/* Shut down Tlshim Rx thread */
-	set_bit(RX_SHUTDOWN_EVENT_MASK, &gp_cds_sched_context->ol_rx_event_flag);
-	set_bit(RX_POST_EVENT_MASK, &gp_cds_sched_context->ol_rx_event_flag);
+	set_bit(RX_SHUTDOWN_EVENT, &gp_cds_sched_context->ol_rx_event_flag);
+	set_bit(RX_POST_EVENT, &gp_cds_sched_context->ol_rx_event_flag);
 	wake_up_interruptible(&gp_cds_sched_context->ol_rx_wait_queue);
 	wait_for_completion(&gp_cds_sched_context->ol_rx_shutdown);
 	gp_cds_sched_context->ol_rx_thread = NULL;
