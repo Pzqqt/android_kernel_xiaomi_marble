@@ -11212,6 +11212,18 @@ void sme_get_command_q_status(tHalHandle hHal)
 
 	return;
 }
+/**
+ * sme_set_prefer_80MHz_over_160MHz() - API to set sta_prefer_80MHz_over_160MHz
+ * @hal:           The handle returned by macOpen
+ * @sta_prefer_80MHz_over_160MHz: sta_prefer_80MHz_over_160MHz config param
+ */
+void sme_set_prefer_80MHz_over_160MHz(tHalHandle hal,
+		bool sta_prefer_80MHz_over_160MHz)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	mac_ctx->sta_prefer_80MHz_over_160MHz = sta_prefer_80MHz_over_160MHz;
+}
+
 #ifdef WLAN_FEATURE_DSRC
 /**
  * sme_set_dot11p_config() - API to set the 802.11p config

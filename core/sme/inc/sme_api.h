@@ -1323,4 +1323,6 @@ QDF_STATUS sme_encrypt_decrypt_msg(tHalHandle hal,
  * Return: QDF_STATUS
  */
 QDF_STATUS sme_set_cts2self_for_p2p_go(tHalHandle hal);
+void sme_set_prefer_80MHz_over_160MHz(tHalHandle hal,
+		bool sta_prefer_80MHz_over_160MHz);
 #endif /* #if !defined( __SME_API_H ) */

@@ -1098,6 +1098,14 @@ typedef enum {
 #define CFG_VHT_ENABLE_2x2_CAP_FEATURE_MAX     (1)
 #define CFG_VHT_ENABLE_2x2_CAP_FEATURE_DEFAULT (0)
 
+/* 0 - Connects in 160MHz 1x1 when AP is 160MHz 2x2
+ * 1 - Connects in 80MHz 2x2 when AP is 160MHz 2x2
+ */
+#define CFG_STA_PREFER_80MHZ_OVER_160MHZ         "gStaPrefer80MHzOver160MHz"
+#define CFG_STA_PREFER_80MHZ_OVER_160MHZ_MIN     (0)
+#define CFG_STA_PREFER_80MHZ_OVER_160MHZ_MAX     (1)
+#define CFG_STA_PREFER_80MHZ_OVER_160MHZ_DEFAULT (1)
+
 /*
  * NSS cfg bit definition.
  * STA          BIT[0:1]
@@ -4225,6 +4233,7 @@ struct hdd_config {
 	bool enable_go_cts2self_for_sta;
 	uint32_t tx_aggregation_size;
 	uint32_t rx_aggregation_size;
+	bool sta_prefer_80MHz_over_160MHz;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

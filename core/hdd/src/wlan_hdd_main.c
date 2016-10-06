@@ -7458,6 +7458,8 @@ static int hdd_features_init(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 
 	/* FW capabilities received, Set the Dot11 mode */
 	sme_setdef_dot11mode(hdd_ctx->hHal);
+	sme_set_prefer_80MHz_over_160MHz(hdd_ctx->hHal,
+			hdd_ctx->config->sta_prefer_80MHz_over_160MHz);
 
 
 	if (hdd_ctx->config->fIsImpsEnabled)
