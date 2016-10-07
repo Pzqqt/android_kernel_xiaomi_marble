@@ -1214,10 +1214,10 @@ lim_decide_ap_protection_on_delete(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-void lim_decide_short_preamble(tpAniSirGlobal mac_ctx,
-			       tpDphHashNode sta_ds,
-			       tpUpdateBeaconParams beacon_params,
-			       tpPESession session_entry)
+static void lim_decide_short_preamble(tpAniSirGlobal mac_ctx,
+				      tpDphHashNode sta_ds,
+				      tpUpdateBeaconParams beacon_params,
+				      tpPESession session_entry)
 {
 	uint32_t i;
 
@@ -1270,7 +1270,7 @@ void lim_decide_short_preamble(tpAniSirGlobal mac_ctx,
  *        the BSS.
  * Return: None
  */
-void
+static void
 lim_decide_short_slot(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 		      tpUpdateBeaconParams beacon_params,
 		      tpPESession session_entry)
@@ -3403,7 +3403,7 @@ lim_del_bss(tpAniSirGlobal pMac, tpDphHashNode pStaDs, uint16_t bssIdx,
  *
  * Return : void
  */
-void lim_update_vhtcaps_assoc_resp(tpAniSirGlobal mac_ctx,
+static void lim_update_vhtcaps_assoc_resp(tpAniSirGlobal mac_ctx,
 		tpAddBssParams pAddBssParams,
 		tDot11fIEVHTCaps *vht_caps, tpPESession psessionEntry)
 {
@@ -3466,7 +3466,7 @@ void lim_update_vhtcaps_assoc_resp(tpAniSirGlobal mac_ctx,
  *
  * Return : void
  */
-void lim_update_vht_oper_assoc_resp(tpAniSirGlobal mac_ctx,
+static void lim_update_vht_oper_assoc_resp(tpAniSirGlobal mac_ctx,
 		tpAddBssParams pAddBssParams,
 		tDot11fIEVHTOperation *vht_oper, tpPESession psessionEntry)
 {
