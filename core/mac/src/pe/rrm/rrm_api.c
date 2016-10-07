@@ -941,9 +941,10 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 	return status;
 }
 
-void rrm_process_beacon_request_failure(tpAniSirGlobal pMac,
-					tpPESession pSessionEntry, tSirMacAddr peer,
-					tRrmRetStatus status)
+static void rrm_process_beacon_request_failure(tpAniSirGlobal pMac,
+					       tpPESession pSessionEntry,
+					       tSirMacAddr peer,
+					       tRrmRetStatus status)
 {
 	tpSirMacRadioMeasureReport pReport = NULL;
 	tpRRMReq pCurrentReq = pMac->rrm.rrmPEContext.pCurrentReq;
@@ -1000,6 +1001,7 @@ void rrm_process_beacon_request_failure(tpAniSirGlobal pMac,
  *
  * Return: tSirRetStatus
  */
+static
 tSirRetStatus rrm_process_beacon_req(tpAniSirGlobal mac_ctx, tSirMacAddr peer,
 			     tpPESession session_entry, tpRRMReq curr_req,
 			     tpSirMacRadioMeasureReport report,
@@ -1071,7 +1073,7 @@ tSirRetStatus rrm_process_beacon_req(tpAniSirGlobal mac_ctx, tSirMacAddr peer,
  *
  * Return: tSirRetStatus
  */
-
+static
 tSirRetStatus update_rrm_report(tpAniSirGlobal mac_ctx,
 				tpSirMacRadioMeasureReport report,
 				tDot11fRadioMeasurementRequest *rrm_req,
