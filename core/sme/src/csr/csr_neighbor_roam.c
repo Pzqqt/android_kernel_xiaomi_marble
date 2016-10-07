@@ -270,8 +270,9 @@ static void csr_neighbor_roam_reset_channel_info(tpCsrNeighborRoamChannelInfo
  *
  * Return: None
  */
-void csr_neighbor_roam_reset_connected_state_control_info(tpAniSirGlobal pMac,
-							  uint8_t sessionId)
+static void csr_neighbor_roam_reset_connected_state_control_info(
+							tpAniSirGlobal pMac,
+							uint8_t sessionId)
 {
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 		&pMac->roam.neighborRoamInfo[sessionId];
@@ -294,8 +295,9 @@ void csr_neighbor_roam_reset_connected_state_control_info(tpAniSirGlobal pMac,
 		     sizeof(tCsrHandoffRequest));
 }
 
-void csr_neighbor_roam_reset_report_scan_state_control_info(tpAniSirGlobal pMac,
-							    uint8_t sessionId)
+static void csr_neighbor_roam_reset_report_scan_state_control_info(
+							tpAniSirGlobal pMac,
+							uint8_t sessionId)
 {
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 		&pMac->roam.neighborRoamInfo[sessionId];
@@ -325,8 +327,8 @@ void csr_neighbor_roam_reset_report_scan_state_control_info(tpAniSirGlobal pMac,
  *
  * Return: None
  */
-void csr_neighbor_roam_reset_init_state_control_info(tpAniSirGlobal pMac,
-						     uint8_t sessionId)
+static void csr_neighbor_roam_reset_init_state_control_info(tpAniSirGlobal pMac,
+							    uint8_t sessionId)
 {
 	csr_neighbor_roam_reset_connected_state_control_info(pMac, sessionId);
 
@@ -655,7 +657,7 @@ QDF_STATUS csr_neighbor_roam_merge_channel_lists(tpAniSirGlobal pMac,
  *
  * Return: bool
  */
-bool csr_neighbor_roam_is_ssid_and_security_match(tpAniSirGlobal pMac,
+static bool csr_neighbor_roam_is_ssid_and_security_match(tpAniSirGlobal pMac,
 		tCsrRoamConnectedProfile *pCurProfile,
 		tSirBssDescription *pBssDesc, tDot11fBeaconIEs *pIes)
 {
@@ -1194,7 +1196,7 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
     \return QDF_STATUS_SUCCESS on success, corresponding error code otherwise
 
    ---------------------------------------------------------------------------*/
-QDF_STATUS csr_neighbor_roam_init11r_assoc_info(tpAniSirGlobal pMac)
+static QDF_STATUS csr_neighbor_roam_init11r_assoc_info(tpAniSirGlobal pMac)
 {
 	QDF_STATUS status;
 	uint8_t i;
@@ -1487,7 +1489,7 @@ bool csr_neighbor_middle_of_roaming(tpAniSirGlobal pMac, uint8_t sessionId)
  *
  * Return: status
  */
-QDF_STATUS csr_neighbor_roam_process_handoff_req(
+static QDF_STATUS csr_neighbor_roam_process_handoff_req(
 			tpAniSirGlobal mac_ctx,
 			uint8_t session_id)
 {
