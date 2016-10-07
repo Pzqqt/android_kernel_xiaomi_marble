@@ -1058,10 +1058,11 @@ void htt_tx_desc_display(void *tx_desc)
  *
  * Return: 0 success
  */
-int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
-			 unsigned int uc_tx_buf_sz,
-			 unsigned int uc_tx_buf_cnt,
-			 unsigned int uc_tx_partition_base)
+
+static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
+					  unsigned int uc_tx_buf_sz,
+					  unsigned int uc_tx_buf_cnt,
+					  unsigned int uc_tx_partition_base)
 {
 	unsigned int tx_buffer_count;
 	void *buffer_vaddr;
@@ -1126,10 +1127,10 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 	return tx_buffer_count;
 }
 #else
-int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
-			 unsigned int uc_tx_buf_sz,
-			 unsigned int uc_tx_buf_cnt,
-			 unsigned int uc_tx_partition_base)
+static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
+					  unsigned int uc_tx_buf_sz,
+					  unsigned int uc_tx_buf_cnt,
+					  unsigned int uc_tx_partition_base)
 {
 	unsigned int tx_buffer_count;
 	qdf_nbuf_t buffer_vaddr;

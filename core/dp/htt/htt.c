@@ -53,7 +53,7 @@ QDF_STATUS(*htt_h2t_rx_ring_cfg_msg)(struct htt_pdev_t *pdev);
 QDF_STATUS(*htt_h2t_rx_ring_rfs_cfg_msg)(struct htt_pdev_t *pdev);
 
 #ifdef IPA_OFFLOAD
-A_STATUS htt_ipa_config(htt_pdev_handle pdev, A_STATUS status)
+static A_STATUS htt_ipa_config(htt_pdev_handle pdev, A_STATUS status)
 {
 	if ((A_OK == status) &&
 	    ol_cfg_ipa_uc_offload_enabled(pdev->ctrl_pdev))

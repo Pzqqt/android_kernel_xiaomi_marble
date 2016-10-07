@@ -765,8 +765,8 @@ static inline uint8_t htt_msg_read8(uint8_t *p8)
 #endif
 }
 
-void htt_make_u8_list_str(uint32_t *aligned_data,
-			  char *buffer, int space, int max_elems)
+static void htt_make_u8_list_str(uint32_t *aligned_data,
+				 char *buffer, int space, int max_elems)
 {
 	uint8_t *p8 = (uint8_t *) aligned_data;
 	char *buf_p = buffer;
@@ -794,8 +794,8 @@ void htt_make_u8_list_str(uint32_t *aligned_data,
 
 }
 
-void htt_make_u16_list_str(uint32_t *aligned_data,
-			   char *buffer, int space, int max_elems)
+static void htt_make_u16_list_str(uint32_t *aligned_data,
+				  char *buffer, int space, int max_elems)
 {
 	uint16_t *p16 = (uint16_t *) aligned_data;
 	char *buf_p = buffer;
@@ -822,7 +822,7 @@ void htt_make_u16_list_str(uint32_t *aligned_data,
 		*(buf_p - 1) = '\0';    /* erase the final comma */
 }
 
-void
+static void
 htt_t2h_tx_ppdu_log_print(struct ol_fw_tx_dbg_ppdu_msg_hdr *hdr,
 			  struct ol_fw_tx_dbg_ppdu_base *record,
 			  int length, int concise)
@@ -980,7 +980,7 @@ htt_t2h_tx_ppdu_log_print(struct ol_fw_tx_dbg_ppdu_msg_hdr *hdr,
 	}
 }
 
-void htt_t2h_stats_tidq_stats_print(
+static void htt_t2h_stats_tidq_stats_print(
 	struct wlan_dbg_tidq_stats *tidq_stats, int concise)
 {
 	qdf_print("TID QUEUE STATS:");
@@ -1045,7 +1045,7 @@ void htt_t2h_stats_tidq_stats_print(
 		tidq_stats->txq_st.tid_sw_qdepth[19]);
 }
 
-void htt_t2h_stats_tx_mu_stats_print(
+static void htt_t2h_stats_tx_mu_stats_print(
 	struct wlan_dbg_tx_mu_stats *tx_mu_stats, int concise)
 {
 	qdf_print("TX MU STATS:");
@@ -1089,7 +1089,7 @@ void htt_t2h_stats_tx_mu_stats_print(
 
 }
 
-void htt_t2h_stats_sifs_resp_stats_print(
+static void htt_t2h_stats_sifs_resp_stats_print(
 	struct wlan_dbg_sifs_resp_stats *sifs_stats, int concise)
 {
 	qdf_print("SIFS RESP STATS:");

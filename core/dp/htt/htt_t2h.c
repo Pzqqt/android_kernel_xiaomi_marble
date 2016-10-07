@@ -153,8 +153,8 @@ static uint8_t *htt_t2h_mac_addr_deswizzle(uint8_t *tgt_mac_addr,
 }
 
 /* Target to host Msg/event  handler  for low priority messages*/
-void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
-			    bool free_msg_buf)
+static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
+				   bool free_msg_buf)
 {
 	struct htt_pdev_t *pdev = (struct htt_pdev_t *)context;
 	uint32_t *msg_word;
