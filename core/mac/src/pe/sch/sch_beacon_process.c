@@ -300,9 +300,12 @@ static void __sch_beacon_process_no_session(tpAniSirGlobal pMac,
 		lim_handle_ibss_coalescing(pMac, pBeacon, pRxPacketInfo,
 					   psessionEntry);
 	}
-	/* If station(STA/BT-STA/BT-AP/IBSS) mode, Always save the beacon in the scan results, if atleast one session is active */
-	/* sch_beacon_processNoSession will be called only when there is atleast one session active, so not checking */
-	/* it again here. */
+	/* If station(STA/BT-STA/BT-AP/IBSS) mode, Always save the
+	 * beacon in the scan results, if atleast one session is
+	 * active.  sch_beacon_process_no_session will be called only
+	 * when there is atleast one session active, so not checking
+	 * it again here.
+	 */
 	lim_check_and_add_bss_description(pMac, pBeacon, pRxPacketInfo, false,
 					  false);
 	return;
@@ -310,14 +313,14 @@ static void __sch_beacon_process_no_session(tpAniSirGlobal pMac,
 
 /**
  * get_operating_channel_width() - Get operating channel width
- * @pStaDs - station entry.
+ * @stads - station entry.
  *
- * This function returns the oeprating channgl width based on
+ * This function returns the operating channel width based on
  * the supported channel width entry.
  *
  * Return: tSirMacHTChannelWidth on success
  */
-tSirMacHTChannelWidth get_operating_channel_width(tpDphHashNode stads)
+static tSirMacHTChannelWidth get_operating_channel_width(tpDphHashNode stads)
 {
 	tSirMacHTChannelWidth ch_width = eHT_CHANNEL_WIDTH_20MHZ;
 
@@ -489,9 +492,9 @@ sch_bcn_process_sta(tpAniSirGlobal mac_ctx,
  *
  * Return: none
  */
-void update_nss(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
-		tpSchBeaconStruct beacon, tpPESession session_entry,
-		tpSirMacMgmtHdr mgmt_hdr)
+static void update_nss(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
+		       tpSchBeaconStruct beacon, tpPESession session_entry,
+		       tpSirMacMgmtHdr mgmt_hdr)
 {
 	if (sta_ds->vhtSupportedRxNss != (beacon->OperatingMode.rxNSS + 1)) {
 		sta_ds->vhtSupportedRxNss = beacon->OperatingMode.rxNSS;
