@@ -301,6 +301,22 @@ void ol_rx_defrag_push_rx_desc(qdf_nbuf_t nbuf,
 }
 #endif /* CONFIG_HL_SUPPORT */
 
+#ifdef WDI_EVENT_ENABLE
+static inline
+void ol_rx_frag_send_pktlog_event(struct ol_txrx_pdev_t *pdev,
+	struct ol_txrx_peer_t *peer, qdf_nbuf_t msdu, uint8_t pktlog_bit)
+{
+	ol_rx_send_pktlog_event(pdev, peer, msdu, pktlog_bit);
+}
+
+#else
+static inline
+void ol_rx_frag_send_pktlog_event(struct ol_txrx_pdev_t *pdev,
+	struct ol_txrx_peer_t *peer, qdf_nbuf_t msdu, uint8_t pktlog_bit)
+{
+}
+
+#endif
 
 /*
  * Process incoming fragments
@@ -316,6 +332,7 @@ ol_rx_frag_indication_handler(ol_txrx_pdev_handle pdev,
 	htt_pdev_handle htt_pdev;
 	qdf_nbuf_t head_msdu, tail_msdu;
 	void *rx_mpdu_desc;
+	uint8_t pktlog_bit;
 
 	htt_pdev = pdev->htt_pdev;
 	peer = ol_txrx_peer_find_by_id(pdev, peer_id);
@@ -332,6 +349,8 @@ ol_rx_frag_indication_handler(ol_txrx_pdev_handle pdev,
 		 */
 		ol_rx_reorder_flush_frag(htt_pdev, peer, tid, seq_num_start);
 	}
+	pktlog_bit =
+		(htt_rx_amsdu_rx_in_order_get_pktlog(rx_frag_ind_msg) == 0x01);
 	if (peer) {
 		htt_rx_frag_pop(htt_pdev, rx_frag_ind_msg, &head_msdu,
 				&tail_msdu);
@@ -347,6 +366,7 @@ ol_rx_frag_indication_handler(ol_txrx_pdev_handle pdev,
 		seq_num = htt_rx_mpdu_desc_seq_num(htt_pdev, rx_mpdu_desc);
 		OL_RX_ERR_STATISTICS_1(pdev, peer->vdev, peer, rx_mpdu_desc,
 				       OL_RX_ERR_NONE_FRAG);
+		ol_rx_frag_send_pktlog_event(pdev, peer, head_msdu, pktlog_bit);
 		ol_rx_reorder_store_frag(pdev, peer, tid, seq_num, head_msdu);
 	} else {
 		/* invalid frame - discard it */
@@ -357,6 +377,7 @@ ol_rx_frag_indication_handler(ol_txrx_pdev_handle pdev,
 		else
 			htt_rx_mpdu_desc_list_next(htt_pdev, rx_frag_ind_msg);
 
+		ol_rx_frag_send_pktlog_event(pdev, peer, head_msdu, pktlog_bit);
 		htt_rx_desc_frame_free(htt_pdev, head_msdu);
 	}
 	/* request HTT to provide new rx MSDU buffers for the target to fill. */

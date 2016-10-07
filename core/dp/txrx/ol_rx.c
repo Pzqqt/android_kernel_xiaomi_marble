@@ -873,6 +873,24 @@ ol_rx_offload_deliver_ind_handler(ol_txrx_pdev_handle pdev,
 	htt_rx_msdu_buff_replenish(htt_pdev);
 }
 
+#ifdef WDI_EVENT_ENABLE
+static inline
+void ol_rx_mic_error_send_pktlog_event(struct ol_txrx_pdev_t *pdev,
+	struct ol_txrx_peer_t *peer, qdf_nbuf_t msdu, uint8_t pktlog_bit)
+{
+	ol_rx_send_pktlog_event(pdev, peer, msdu, pktlog_bit);
+}
+
+#else
+static inline
+void ol_rx_mic_error_send_pktlog_event(struct ol_txrx_pdev_t *pdev,
+	struct ol_txrx_peer_t *peer, qdf_nbuf_t msdu, uint8_t pktlog_bit)
+{
+}
+
+#endif
+
+
 void
 ol_rx_mic_error_handler(
 	ol_txrx_pdev_handle pdev,
@@ -907,6 +925,8 @@ ol_rx_mic_error_handler(
 				}
 			}
 		}
+		/* Pktlog */
+		ol_rx_mic_error_send_pktlog_event(pdev, peer, msdu, 1);
 	}
 }
 

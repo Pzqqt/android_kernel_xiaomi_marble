@@ -47,6 +47,10 @@ void ol_rx_peer_init(struct ol_txrx_pdev_t *pdev, struct ol_txrx_peer_t *peer);
 void
 ol_rx_peer_cleanup(struct ol_txrx_vdev_t *vdev, struct ol_txrx_peer_t *peer);
 
+void ol_rx_send_pktlog_event(struct ol_txrx_pdev_t *pdev,
+	struct ol_txrx_peer_t *peer, qdf_nbuf_t msdu, uint8_t pktlog_bit);
+
+
 void
 ol_rx_in_order_deliver(struct ol_txrx_vdev_t *vdev,
 		       struct ol_txrx_peer_t *peer,
