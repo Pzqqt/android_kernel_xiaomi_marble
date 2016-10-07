@@ -312,7 +312,7 @@ void lim_wpspbc_close(tpAniSirGlobal pMac, tpPESession psessionEntry)
  * @return BOOLEAN
  */
 
-bool lim_check11b_rates(uint8_t rate)
+static bool lim_check11b_rates(uint8_t rate)
 {
 	if ((0x02 == (rate))
 	    || (0x04 == (rate))
