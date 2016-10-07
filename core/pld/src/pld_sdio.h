@@ -60,6 +60,7 @@ static inline void pld_sdio_unregister_driver(void)
 {
 }
 
+static inline
 int pld_sdio_get_fw_files_for_target(struct pld_fw_files *pfw_files,
 				     u32 target_type, u32 target_version)
 {

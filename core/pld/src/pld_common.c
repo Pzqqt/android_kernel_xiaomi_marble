@@ -176,7 +176,7 @@ void pld_del_dev(struct pld_context *pld_context,
  *
  * Return: PLD bus type
  */
-enum pld_bus_type pld_get_bus_type(struct device *dev)
+static enum pld_bus_type pld_get_bus_type(struct device *dev)
 {
 	struct pld_context *pld_context;
 	struct dev_node *dev_node;

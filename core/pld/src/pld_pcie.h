@@ -160,7 +160,7 @@ static inline int pld_pcie_wlan_get_dfs_nol(void *info, u16 info_len)
 {
 	return 0;
 }
-static void pld_pcie_schedule_recovery_work(void)
+static inline void pld_pcie_schedule_recovery_work(void)
 {
 	return;
 }
@@ -204,11 +204,11 @@ static inline int pld_pcie_auto_resume(void)
 {
 	return 0;
 }
-static void pld_pcie_lock_pm_sem(void)
+static inline void pld_pcie_lock_pm_sem(void)
 {
 	return;
 }
-static void pld_pcie_release_pm_sem(void)
+static inline void pld_pcie_release_pm_sem(void)
 {
 	return;
 }

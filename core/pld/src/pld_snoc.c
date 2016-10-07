@@ -35,6 +35,7 @@
 #endif
 
 #include "pld_internal.h"
+#include "pld_snoc.h"
 
 #ifdef CONFIG_PLD_SNOC_ICNSS
 /**

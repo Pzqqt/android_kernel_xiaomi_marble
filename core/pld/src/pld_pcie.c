@@ -36,6 +36,7 @@
 #endif
 
 #include "pld_internal.h"
+#include "pld_pcie.h"
 
 #ifdef CONFIG_PCI
 
