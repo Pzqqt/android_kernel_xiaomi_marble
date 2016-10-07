@@ -349,6 +349,17 @@ QDF_STATUS wmi_unified_wow_enable_send(void *wmi_hdl,
 				struct wow_cmd_params *param,
 				uint8_t mac_id);
 
+QDF_STATUS wmi_unified_wow_wakeup_send(void *wmi_hdl);
+
+QDF_STATUS wmi_unified_wow_add_wakeup_event_send(void *wmi_hdl,
+		struct wow_add_wakeup_params *param);
+
+QDF_STATUS wmi_unified_wow_add_wakeup_pattern_send(void *wmi_hdl,
+		struct wow_add_wakeup_pattern_params *param);
+
+QDF_STATUS wmi_unified_wow_remove_wakeup_pattern_send(void *wmi_hdl,
+		struct wow_remove_wakeup_pattern_params *param);
+
 #ifndef CONFIG_MCL
 QDF_STATUS wmi_unified_packet_log_enable_send(void *wmi_hdl,
 				WMI_HOST_PKTLOG_EVENT PKTLOG_EVENT);
@@ -1186,6 +1197,9 @@ QDF_STATUS wmi_extract_peer_sta_kickout_ev(void *wmi_hdl, void *evt_buf,
 QDF_STATUS wmi_extract_peer_ratecode_list_ev(void *wmi_hdl, void *evt_buf,
 		uint8_t *peer_mac, wmi_sa_rate_cap *rate_cap);
 
+QDF_STATUS wmi_extract_bcnflt_stats(void *wmi_hdl, void *evt_buf,
+		 uint32_t index, wmi_host_bcnflt_stats *bcnflt_stats);
+
 QDF_STATUS wmi_extract_rtt_hdr(void *wmi_hdl, void *evt_buf,
 		wmi_host_rtt_event_hdr *ev);
 
@@ -1195,6 +1209,9 @@ QDF_STATUS wmi_extract_rtt_ev(void *wmi_hdl, void *evt_buf,
 
 QDF_STATUS wmi_extract_rtt_error_report_ev(void *wmi_hdl, void *evt_buf,
 		wmi_host_rtt_error_report_event *ev);
+
+QDF_STATUS wmi_extract_chan_stats(void *wmi_hdl, void *evt_buf,
+		uint32_t index, wmi_host_chan_stats *chan_stats);
 
 QDF_STATUS wmi_extract_thermal_stats(void *wmi_hdl, void *evt_buf,
 		uint32_t *temp, uint32_t *level);
