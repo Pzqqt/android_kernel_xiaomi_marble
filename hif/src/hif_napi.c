@@ -1016,7 +1016,7 @@ int hncm_migrate_to(struct qca_napi_data *napid,
 
 	NAPI_DEBUG("-->%s(napi_cd=%d, didx=%d)", __func__, napi_ce, didx);
 
-	cpumask.bits[0] = (1 << napid->napi_cpu[didx].core_id);
+	cpumask.bits[0] = (1 << didx);
 	rc = irq_set_affinity_hint(napid->napis[napi_ce].irq, &cpumask);
 	napid->napi_cpu[didx].napis |= (1 << napi_ce);
 
