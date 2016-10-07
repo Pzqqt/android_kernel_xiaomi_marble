@@ -1167,7 +1167,7 @@ uint8_t lim_is_null_ssid(tSirMacSSid *ssid)
    \param      tHalBitVal lsigTxopSupported
    \return      None
    -------------------------------------------------------------*/
-void
+static void
 lim_update_prot_sta_params(tpAniSirGlobal pMac,
 			   tSirMacAddr peerMacAddr,
 			   tLimProtStaCacheType protStaCacheType,
@@ -6472,9 +6472,9 @@ void lim_set_stads_rtt_cap(tpDphHashNode sta_ds, struct s_ext_cap *ext_cap,
  *
  * Return: status of operation
  */
-QDF_STATUS lim_send_ie(tpAniSirGlobal mac_ctx, uint32_t sme_session_id,
-			uint8_t eid, enum cds_band_type band, uint8_t *buf,
-			uint32_t len)
+static QDF_STATUS lim_send_ie(tpAniSirGlobal mac_ctx, uint32_t sme_session_id,
+			      uint8_t eid, enum cds_band_type band,
+			      uint8_t *buf, uint32_t len)
 {
 	struct vdev_ie_info *ie_msg;
 	cds_msg_t msg = {0};
