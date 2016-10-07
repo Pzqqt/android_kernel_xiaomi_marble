@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -210,9 +210,10 @@ void sch_process_message(tpAniSirGlobal pMac, tpSirMsgQ pSchMsg)
 
 /* get the local or broadcast parameters based on the profile sepcified in the config */
 /* params are delivered in this order: BK, BE, VI, VO */
-tSirRetStatus
+static tSirRetStatus
 sch_get_params(tpAniSirGlobal pMac,
-	       uint32_t params[][WNI_CFG_EDCA_ANI_ACBK_LOCAL_LEN], uint8_t local)
+	       uint32_t params[][WNI_CFG_EDCA_ANI_ACBK_LOCAL_LEN],
+	       uint8_t local)
 {
 	uint32_t val;
 	uint32_t i, idx;
