@@ -299,7 +299,6 @@ void wma_process_pdev_hw_mode_trans_ind(void *wma,
 	wmi_pdev_hw_mode_transition_event_fixed_param *fixed_param,
 	wmi_pdev_set_hw_mode_response_vdev_mac_entry *vdev_mac_entry,
 	struct sir_hw_mode_trans_ind *hw_mode_trans_ind);
-QDF_STATUS wma_set_powersave_config(uint8_t val);
 QDF_STATUS wma_encrypt_decrypt_msg(WMA_HANDLE wma,
 		struct encrypt_decrypt_req_params *encrypt_decrypt_params);
 
@@ -317,4 +316,13 @@ QDF_STATUS wma_set_cts2self_for_p2p_go(void *wma_handle,
 		uint32_t cts2self_for_p2p_go);
 QDF_STATUS wma_set_tx_rx_aggregation_size
 	(struct sir_set_tx_rx_aggregation_size *tx_rx_aggregation_size);
+
+/**
+ * wma_set_qpower_config() - update qpower config in wma
+ * @vdev_id:	the Id of the vdev to configure
+ * @qpower:	new qpower value
+ *
+ * Return: QDF_STATUS_SUCCESS on success, error number otherwise
+ */
+QDF_STATUS wma_set_qpower_config(uint8_t vdev_id, uint8_t qpower);
 #endif

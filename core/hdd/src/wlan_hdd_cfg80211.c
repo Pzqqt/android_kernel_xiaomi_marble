@@ -3933,7 +3933,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	u32 guard_time;
 	uint8_t set_value;
 	u32 ftm_capab;
-	uint8_t qpower;
+	u8 qpower;
 	QDF_STATUS status;
 	int attr_len;
 	int access_policy = 0;

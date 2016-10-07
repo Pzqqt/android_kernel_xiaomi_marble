@@ -2343,40 +2343,27 @@ int wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
  * Return: 0 on success; Errno on failure
  */
 int hdd_set_qpower_config(hdd_context_t *hddctx, hdd_adapter_t *adapter,
-				 uint8_t qpower)
+			  u8 qpower)
 {
-	QDF_STATUS qdf_status;
-	int status;
-	bool is_timer_running;
+	QDF_STATUS status;
 
 	if (!hddctx->config->enablePowersaveOffload) {
 		hdd_err("qpower is disabled in configuration");
 		return -EINVAL;
 	}
+
 	if (qpower > PS_DUTY_CYCLING_QPOWER ||
 	    qpower < PS_LEGACY_NODEEPSLEEP) {
-		hdd_err("invalid qpower value=%d", qpower);
+		hdd_err("invalid qpower value: %d", qpower);
 		return -EINVAL;
 	}
-	hdd_info("updating qpower value=%d to wma", qpower);
-	qdf_status = wma_set_powersave_config(qpower);
-	if (qdf_status != QDF_STATUS_SUCCESS) {
-		hdd_err("failed to update qpower %d",
-			qdf_status);
-		return -EINVAL;
-	}
-	is_timer_running = sme_is_auto_ps_timer_running(
-						WLAN_HDD_GET_HAL_CTX(adapter),
-						adapter->sessionId);
-	if (!is_timer_running) {
-		status =  wlan_hdd_set_powersave(adapter, true, 0);
 
-		if (status != 0) {
-			hdd_err("failed to put device in power save mode %d",
-				status);
-			return -EINVAL;
-		}
+	status = wma_set_qpower_config(adapter->sessionId, qpower);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("failed to configure qpower: %d", status);
+		return -EINVAL;
 	}
+
 	return 0;
 }
 
