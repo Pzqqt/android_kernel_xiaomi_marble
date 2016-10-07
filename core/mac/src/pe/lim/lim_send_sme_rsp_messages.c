@@ -398,7 +398,7 @@ static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-void lim_add_bss_info(tpDphHashNode sta_ds, tpSirSmeJoinRsp sme_join_rsp)
+static void lim_add_bss_info(tpDphHashNode sta_ds, tpSirSmeJoinRsp sme_join_rsp)
 {
 	struct parsed_ies *parsed_ies = &sta_ds->parsed_ies;
 
