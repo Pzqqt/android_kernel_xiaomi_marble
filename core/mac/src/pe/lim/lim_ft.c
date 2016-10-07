@@ -861,7 +861,7 @@ bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	return true;
 }
 
-void
+static void
 lim_ft_send_aggr_qos_rsp(tpAniSirGlobal pMac, uint8_t rspReqd,
 			 tpAggrAddTsParams aggrQosRsp, uint8_t smesessionId)
 {

@@ -350,12 +350,13 @@ tSirRetStatus lim_ft_setup_auth_session(tpAniSirGlobal pMac,
  * lim_ft_process_pre_auth_result() - Process the Auth frame
  * @pMac: Global MAC context
  * @status: Status code
- * psessionEntry: PE Session
+ * @psessionEntry: PE Session
  *
  * Return: None
  */
-void lim_ft_process_pre_auth_result(tpAniSirGlobal pMac, QDF_STATUS status,
-				    tpPESession psessionEntry)
+static void lim_ft_process_pre_auth_result(tpAniSirGlobal pMac,
+					   QDF_STATUS status,
+					   tpPESession psessionEntry)
 {
 	if (NULL == psessionEntry ||
 	    NULL == psessionEntry->ftPEContext.pFTPreAuthReq)
