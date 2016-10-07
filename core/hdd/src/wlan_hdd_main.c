@@ -5305,10 +5305,11 @@ static void hdd_pld_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 	temp_rx = (rx_packets + hdd_ctx->prev_rx) / 2;
 
 	hdd_ctx->prev_rx = rx_packets;
-	if (temp_rx > hdd_ctx->config->tcpDelackThresholdHigh &&
-	    (hdd_ctx->cur_rx_level != WLAN_SVC_TP_HIGH &&
-	    ++hdd_ctx->rx_high_ind_cnt == delack_timer_cnt)) {
-		next_rx_level = WLAN_SVC_TP_HIGH;
+	if (temp_rx > hdd_ctx->config->tcpDelackThresholdHigh) {
+		if ((hdd_ctx->cur_rx_level != WLAN_SVC_TP_HIGH) &&
+		   (++hdd_ctx->rx_high_ind_cnt == delack_timer_cnt)) {
+			next_rx_level = WLAN_SVC_TP_HIGH;
+		}
 	} else {
 		next_rx_level = WLAN_SVC_TP_LOW;
 		hdd_ctx->rx_high_ind_cnt = 0;
