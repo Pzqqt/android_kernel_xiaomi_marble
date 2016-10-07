@@ -233,47 +233,6 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 } /*** end lim_collect_bss_description() ***/
 
 /**
- * lim_is_scan_requested_ssid()
- *
- ***FUNCTION:
- * This function is called during scan upon receiving
- * Beacon/Probe Response frame to check if the received
- * SSID is present in the list of requested SSIDs in scan
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- * NA
- *
- ***NOTE:
- * NA
- *
- * @param  pMac - Pointer to Global MAC structure
- * @param  ssId - SSID Received in beacons/Probe responses that is compared
- * against therequeusted SSID in scan list
- * ---------------------------------------------
- *
- * @return bool - true if SSID is present in requested list, false otherwise
- */
-
-bool lim_is_scan_requested_ssid(tpAniSirGlobal pMac, tSirMacSSid *ssId)
-{
-	uint8_t i = 0;
-
-	for (i = 0; i < pMac->lim.gpLimMlmScanReq->numSsid; i++) {
-		if (!qdf_mem_cmp((uint8_t *) ssId,
-					    (uint8_t *) &pMac->lim.
-					    gpLimMlmScanReq->ssId[i],
-					    (uint8_t) (pMac->lim.
-						       gpLimMlmScanReq->ssId[i].
-						       length + 1))) {
-			return true;
-		}
-	}
-	return false;
-}
-
-/**
  * lim_check_and_add_bss_description()
  * @mac_ctx: Pointer to Global MAC structure
  * @bpr: Pointer to parsed Beacon/Probe Response structure
