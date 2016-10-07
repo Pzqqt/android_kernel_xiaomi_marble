@@ -60,7 +60,7 @@
  *
  * Return: 0 on success, one on failure
  */
-tSirRetStatus
+static tSirRetStatus
 lim_validate_ie_information_in_probe_rsp_frame(tpAniSirGlobal mac_ctx,
 				uint8_t *pRxPacketInfo)
 {
