@@ -607,7 +607,7 @@ static void hmac_sha1_complete(struct crypto_async_request *req, int err)
 	complete(&r->completion);
 }
 
-int
+static int
 hmac_sha1(uint8_t *key, uint8_t ksize, char *plaintext, uint8_t psize,
 	  uint8_t *output, uint8_t outlen)
 {
@@ -768,7 +768,7 @@ static void hmac_md5_complete(struct crypto_async_request *req, int err)
 	complete(&r->completion);
 }
 
-int
+static int
 hmac_md5(uint8_t *key, uint8_t ksize, char *plaintext, uint8_t psize,
 	 uint8_t *output, uint8_t outlen)
 {

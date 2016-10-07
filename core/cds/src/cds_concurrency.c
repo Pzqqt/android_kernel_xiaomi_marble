@@ -3905,7 +3905,7 @@ void cds_decr_active_session(enum tQDF_ADAPTER_MODE mode,
  *
  * Return: None
  */
-void cds_dbs_opportunistic_timer_handler(void *data)
+static void cds_dbs_opportunistic_timer_handler(void *data)
 {
 	enum cds_conc_next_action action = CDS_NOP;
 	cds_context_type *cds_ctx = (cds_context_type *)data;
@@ -4063,7 +4063,7 @@ QDF_STATUS cds_init_policy_mgr(struct cds_sme_cbacks *sme_cbacks)
  *
  * Return: index in the connection table
  */
-uint32_t cds_get_connection_for_vdev_id(uint32_t vdev_id)
+static uint32_t cds_get_connection_for_vdev_id(uint32_t vdev_id)
 {
 	uint32_t conn_index = 0;
 	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
@@ -4408,6 +4408,7 @@ QDF_STATUS cds_decr_connection_count(uint32_t vdev_id)
  *
  * Return: QDF_STATUS
  */
+static
 QDF_STATUS cds_get_connection_channels(uint8_t *channels,
 			uint32_t *len, enum cds_pcl_channel_order order,
 			bool skip_dfs_channel,
@@ -4619,10 +4620,11 @@ void cds_update_with_safe_channel_list(uint8_t *pcl_channels, uint32_t *len,
  *
  * Return: Channel List
  */
-QDF_STATUS cds_get_channel_list(enum cds_pcl_type pcl,
-			uint8_t *pcl_channels, uint32_t *len,
-			enum cds_con_mode mode,
-			uint8_t *pcl_weights, uint32_t weight_len)
+static QDF_STATUS cds_get_channel_list(enum cds_pcl_type pcl,
+				       uint8_t *pcl_channels, uint32_t *len,
+				       enum cds_con_mode mode,
+				       uint8_t *pcl_weights,
+				       uint32_t weight_len)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint32_t num_channels = WNI_CFG_VALID_CHANNEL_LIST_LEN;
@@ -5136,7 +5138,7 @@ QDF_STATUS cds_get_pcl(enum cds_con_mode mode,
  *
  * Return: True/False
  */
-bool cds_disallow_mcc(uint8_t channel)
+static bool cds_disallow_mcc(uint8_t channel)
 {
 	uint32_t index = 0;
 	bool match = false;
@@ -5171,7 +5173,8 @@ bool cds_disallow_mcc(uint8_t channel)
  *
  * Return: True/False
  */
-bool cds_allow_new_home_channel(uint8_t channel, uint32_t num_connections)
+static bool cds_allow_new_home_channel(uint8_t channel,
+				       uint32_t num_connections)
 {
 	bool status = true;
 
@@ -5246,7 +5249,7 @@ bool cds_is_ibss_conn_exist(uint8_t *ibss_channel)
  *
  * Return: true if vht160 connection exist else false
  */
-bool cds_vht160_conn_exist(void)
+static bool cds_vht160_conn_exist(void)
 {
 	uint32_t conn_index;
 	bool status = false;
@@ -6123,9 +6126,9 @@ done:
  *
  * Return: None
  */
-void cds_nss_update_cb(void *context, uint8_t tx_status, uint8_t vdev_id,
-				uint8_t next_action,
-				enum sir_conn_update_reason reason)
+static void cds_nss_update_cb(void *context, uint8_t tx_status, uint8_t vdev_id,
+			      uint8_t next_action,
+			      enum sir_conn_update_reason reason)
 {
 	cds_context_type *cds_ctx;
 	uint32_t conn_index = 0;
@@ -6172,9 +6175,9 @@ void cds_nss_update_cb(void *context, uint8_t tx_status, uint8_t vdev_id,
  *
  * Return: QDF_STATUS enum
  */
-QDF_STATUS cds_complete_action(uint8_t  new_nss, uint8_t next_action,
-				enum sir_conn_update_reason reason,
-				uint32_t session_id)
+static QDF_STATUS cds_complete_action(uint8_t  new_nss, uint8_t next_action,
+				      enum sir_conn_update_reason reason,
+				      uint32_t session_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint32_t index, count;
@@ -8146,7 +8149,7 @@ QDF_STATUS qdf_init_connection_update(void)
  * Return: No change (CDS_NOP), MCC (CDS_SINGLE_MAC_UPGRADE),
  *         DBS (CDS_DBS_DOWNGRADE)
  */
-enum cds_conc_next_action cds_get_current_pref_hw_mode(void)
+static enum cds_conc_next_action cds_get_current_pref_hw_mode(void)
 {
 	uint32_t num_connections;
 	uint8_t band1, band2, band3;
