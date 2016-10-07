@@ -108,6 +108,7 @@ wmitlv_set_static_param_tlv_buf(void *param_tlv_buf,
  *
  * Return: 0 if success. Return >=1 if failure.
  */
+static
 A_UINT32 wmitlv_get_attributes(A_UINT32 is_cmd_id, A_UINT32 cmd_event_id,
 			       A_UINT32 curr_tlv_order,
 			       wmitlv_attributes_struc *tlv_attr_ptr)
@@ -1136,7 +1137,7 @@ wmi_versions_are_compatible(wmi_abi_version *vers1, wmi_abi_version *vers2)
  *
  * Return: 0 if success. Return < 0 if failure.
  */
-int
+static int
 wmi_versions_can_downgrade(int num_whitelist,
 			   wmi_whitelist_version_info *version_whitelist_table,
 			   wmi_abi_version *my_vers,
