@@ -43,6 +43,7 @@
 #include "lim_trace.h"
 #include "lim_send_sme_rsp_messages.h"
 #include "lim_types.h"
+#include "lim_admit_control.h"
 
 #define ADMIT_CONTROL_LOGLEVEL        LOG1
 #define ADMIT_CONTROL_POLICY_LOGLEVEL LOG1
@@ -348,8 +349,9 @@ lim_admit_policy_oversubscription(tpAniSirGlobal mac_ctx,
    \return eSirRetStatus - status
    -------------------------------------------------------------*/
 
-tSirRetStatus lim_admit_policy(tpAniSirGlobal pMac,
-			       tSirMacTspecIE *pTspec, tpPESession psessionEntry)
+static tSirRetStatus lim_admit_policy(tpAniSirGlobal pMac,
+				      tSirMacTspecIE *pTspec,
+				      tpPESession psessionEntry)
 {
 	tSirRetStatus retval = eSIR_FAILURE;
 	tpLimAdmitPolicyInfo pAdmitPolicy = &pMac->lim.admitPolicyInfo;
@@ -395,7 +397,7 @@ tSirRetStatus lim_admit_policy(tpAniSirGlobal pMac,
 
 /* ----------------------------------------------------------------------------- */
 /* delete the specified tspec */
-void lim_tspec_delete(tpAniSirGlobal pMac, tpLimTspecInfo pInfo)
+static void lim_tspec_delete(tpAniSirGlobal pMac, tpLimTspecInfo pInfo)
 {
 	if (pInfo == NULL)
 		return;
@@ -500,7 +502,7 @@ lim_tspec_find_by_assoc_id(tpAniSirGlobal pMac,
    \return eSirRetStatus - status of the comparison
    -------------------------------------------------------------*/
 
-tSirRetStatus
+static tSirRetStatus
 lim_find_tspec(tpAniSirGlobal pMac,
 	       uint16_t assocId,
 	       tSirMacTSInfo *pTsInfo,
