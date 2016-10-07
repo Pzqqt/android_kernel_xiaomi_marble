@@ -350,6 +350,7 @@ void hif_snoc_irq_disable(struct hif_softc *scn, int ce_id)
  *
  * Return: 0 for success
  */
+static
 QDF_STATUS hif_snoc_setup_wakeup_sources(struct hif_softc *scn, bool enable)
 {
 	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);

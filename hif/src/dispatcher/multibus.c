@@ -30,6 +30,7 @@
 #include "hif_debug.h"
 #include "hif.h"
 #include "hif_main.h"
+#include "hif_io32.h"
 #include "multibus.h"
 #include "dummy.h"
 #if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB)

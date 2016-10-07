@@ -27,6 +27,7 @@
 
 #include "hif_io32.h"
 #include "hif_debug.h"
+#include "mp_dev.h"
 
 /*chaninfo*/
 #define  CHANINFOMEM_S2_READ_MASK               0x00000008
@@ -116,7 +117,7 @@ void priv_start_agc(struct hif_softc *scn)
 			    0x0f);
 }
 
-void priv_stop_agc(struct hif_softc *scn)
+static void priv_stop_agc(struct hif_softc *scn)
 {
 	set_target_reg_bits(scn->mem, BB_gains_min_offsets,
 			    AGC_HISTORY_DUMP_MASK,

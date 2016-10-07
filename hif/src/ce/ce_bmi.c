@@ -38,6 +38,7 @@
 #include <a_debug.h>
 #include "hif_main.h"
 #include "ce_api.h"
+#include "ce_bmi.h"
 #include "qdf_trace.h"
 #include "hif_debug.h"
 

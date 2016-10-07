@@ -103,8 +103,8 @@ hif_ce_dump_target_memory(struct hif_softc *scn, void *ramdump_base,
  *
  * Return: soc physical address
  */
-qdf_dma_addr_t get_ce_phy_addr(struct hif_softc *sc, uint32_t  address,
-			       unsigned int target_type)
+static qdf_dma_addr_t get_ce_phy_addr(struct hif_softc *sc, uint32_t  address,
+				      unsigned int target_type)
 {
 	qdf_dma_addr_t ce_phy_addr;
 	struct hif_softc *scn = sc;

@@ -76,7 +76,7 @@ static int hif_napi_cpu_migrate(struct qca_napi_data *napid, int cpu,
 	return 0;
 }
 
-int hif_napi_cpu_blacklist(bool is_on) { return 0; }
+static int hif_napi_cpu_blacklist(bool is_on) { return 0; }
 #endif /* HELIUMPLUS */
 
 /**
@@ -1176,9 +1176,9 @@ int hif_napi_cpu_deinit(void *ctx)
  *  =0 : success
  *  <0 : error
  */
-int hncm_migrate_to(struct qca_napi_data *napid,
-		    int                   napi_ce,
-		    int                   didx)
+static int hncm_migrate_to(struct qca_napi_data *napid,
+			   int                   napi_ce,
+			   int                   didx)
 {
 	int rc = 0;
 	cpumask_t cpumask;
@@ -1207,7 +1207,7 @@ int hncm_migrate_to(struct qca_napi_data *napid,
  * Return: >=0 : index in the cpu topology table
  *       : < 0 : error
  */
-int hncm_dest_cpu(struct qca_napi_data *napid, int act)
+static int hncm_dest_cpu(struct qca_napi_data *napid, int act)
 {
 	int destidx = -1;
 	int head, i;

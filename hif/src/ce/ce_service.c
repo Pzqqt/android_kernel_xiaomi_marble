@@ -259,6 +259,7 @@ bool hif_ce_service_should_yield(struct hif_softc *scn,
  * The caller takes responsibility for any needed locking.
  */
 
+static
 void war_ce_src_ring_write_idx_set(struct hif_softc *scn,
 				   u32 ctrl_addr, unsigned int write_index)
 {
@@ -315,7 +316,7 @@ static void ce_validate_nbytes(uint32_t nbytes, struct CE_state *ce_state)
 }
 #endif
 
-int
+static int
 ce_send_nolock_legacy(struct CE_handle *copyeng,
 			   void *per_transfer_context,
 			   qdf_dma_addr_t buffer,
@@ -480,7 +481,8 @@ ce_sendlist_send(struct CE_handle *copyeng,
 	return hif_state->ce_services->ce_sendlist_send(copyeng,
 			per_transfer_context, sendlist, transfer_id);
 }
-int
+
+static int
 ce_sendlist_send_legacy(struct CE_handle *copyeng,
 		 void *per_transfer_context,
 		 struct ce_sendlist *sendlist, unsigned int transfer_id)
@@ -999,7 +1001,7 @@ ce_recv_buf_enqueue(struct CE_handle *copyeng,
  *
  * Return: 0 if the buffer is enqueued
  */
-int
+static int
 ce_recv_buf_enqueue_legacy(struct CE_handle *copyeng,
 		    void *per_recv_context, qdf_dma_addr_t buffer)
 {
@@ -1123,7 +1125,7 @@ unsigned int ce_recv_entries_avail(struct CE_handle *copyeng)
  * Guts of ce_send_entries_done.
  * The caller takes responsibility for any necessary locking.
  */
-unsigned int
+static unsigned int
 ce_send_entries_done_nolock_legacy(struct hif_softc *scn,
 			    struct CE_state *CE_state)
 {
@@ -1158,7 +1160,7 @@ unsigned int ce_send_entries_done(struct CE_handle *copyeng)
  * Guts of ce_recv_entries_done.
  * The caller takes responsibility for any necessary locking.
  */
-unsigned int
+static unsigned int
 ce_recv_entries_done_nolock_legacy(struct hif_softc *scn,
 			    struct CE_state *CE_state)
 {
@@ -1199,7 +1201,7 @@ void *ce_debug_cmplsn_context;  /* completed send next context */
  * Guts of ce_completed_recv_next.
  * The caller takes responsibility for any necessary locking.
  */
-int
+static int
 ce_completed_recv_next_nolock_legacy(struct CE_state *CE_state,
 			      void **per_CE_contextp,
 			      void **per_transfer_contextp,
@@ -1305,7 +1307,7 @@ ce_revoke_recv_next(struct CE_handle *copyeng,
 			per_CE_contextp, per_transfer_contextp, bufferp);
 }
 /* NB: Modeled after ce_completed_recv_next_nolock */
-QDF_STATUS
+static QDF_STATUS
 ce_revoke_recv_next_legacy(struct CE_handle *copyeng,
 		    void **per_CE_contextp,
 		    void **per_transfer_contextp, qdf_dma_addr_t *bufferp)
@@ -1366,7 +1368,7 @@ ce_revoke_recv_next_legacy(struct CE_handle *copyeng,
  * Guts of ce_completed_send_next.
  * The caller takes responsibility for any necessary locking.
  */
-int
+static int
 ce_completed_send_next_nolock_legacy(struct CE_state *CE_state,
 			      void **per_CE_contextp,
 			      void **per_transfer_contextp,
@@ -1472,7 +1474,7 @@ ce_cancel_send_next(struct CE_handle *copyeng,
 }
 
 /* NB: Modeled after ce_completed_send_next */
-QDF_STATUS
+static QDF_STATUS
 ce_cancel_send_next_legacy(struct CE_handle *copyeng,
 		void **per_CE_contextp,
 		void **per_transfer_contextp,
@@ -2412,7 +2414,8 @@ void ce_ipa_get_resource(struct CE_handle *ce,
 }
 #endif /* IPA_OFFLOAD */
 
-bool ce_check_int_watermark(struct CE_state *CE_state, unsigned int *flags)
+static bool ce_check_int_watermark(struct CE_state *CE_state,
+				   unsigned int *flags)
 {
 	uint32_t ce_int_status;
 	uint32_t ctrl_addr = CE_state->ctrl_addr;
@@ -2430,7 +2433,7 @@ bool ce_check_int_watermark(struct CE_state *CE_state, unsigned int *flags)
 	return false;
 }
 
-void ce_legacy_src_ring_setup(struct hif_softc *scn, uint32_t ce_id,
+static void ce_legacy_src_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 			struct CE_ring_state *src_ring,
 			struct CE_attr *attr)
 {
@@ -2471,7 +2474,7 @@ void ce_legacy_src_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 
 }
 
-void ce_legacy_dest_ring_setup(struct hif_softc *scn, uint32_t ce_id,
+static void ce_legacy_dest_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 				struct CE_ring_state *dest_ring,
 				struct CE_attr *attr)
 {
@@ -2509,7 +2512,7 @@ void ce_legacy_dest_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 	CE_DEST_RING_HIGHMARK_SET(scn, ctrl_addr, dest_ring->nentries);
 }
 
-uint32_t ce_get_desc_size_legacy(uint8_t ring_type)
+static uint32_t ce_get_desc_size_legacy(uint8_t ring_type)
 {
 	switch (ring_type) {
 	case CE_RING_SRC:
@@ -2526,7 +2529,7 @@ uint32_t ce_get_desc_size_legacy(uint8_t ring_type)
 	return 0;
 }
 
-void ce_ring_setup_legacy(struct hif_softc *scn, uint8_t ring_type,
+static void ce_ring_setup_legacy(struct hif_softc *scn, uint8_t ring_type,
 		uint32_t ce_id, struct CE_ring_state *ring,
 		struct CE_attr *attr)
 {
