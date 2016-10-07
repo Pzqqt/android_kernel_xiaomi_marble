@@ -117,8 +117,6 @@ static void lim_process_modify_add_ies(tpAniSirGlobal pMac, uint32_t *pMsg);
 
 static void lim_process_update_add_ies(tpAniSirGlobal pMac, uint32_t *pMsg);
 
-extern void pe_register_callbacks_with_wma(tpAniSirGlobal pMac,
-		tSirSmeReadyReq *ready_req);
 static void lim_process_ext_change_channel(tpAniSirGlobal mac_ctx,
 						uint32_t *msg);
 
@@ -3099,8 +3097,8 @@ end:
  * Return: None
  */
 
-void lim_process_sme_get_assoc_sta_info(tpAniSirGlobal mac_ctx,
-					uint32_t *msg_buf)
+static void lim_process_sme_get_assoc_sta_info(tpAniSirGlobal mac_ctx,
+					       uint32_t *msg_buf)
 {
 	tSirSmeGetAssocSTAsReq get_assoc_stas_req;
 	tpDphHashNode sta_ds = NULL;
@@ -3206,8 +3204,8 @@ lim_assoc_sta_end:
  *
  * Return: None
  */
-void lim_process_sme_get_wpspbc_sessions(tpAniSirGlobal mac_ctx,
-		uint32_t *msg_buf)
+static void lim_process_sme_get_wpspbc_sessions(tpAniSirGlobal mac_ctx,
+						uint32_t *msg_buf)
 {
 	tSirSmeGetWPSPBCSessionsReq get_wps_pbc_sessions_req;
 	tpPESession session_entry = NULL;
@@ -3306,7 +3304,8 @@ static void __lim_counter_measures(tpAniSirGlobal pMac, tpPESession psessionEntr
 					     mac, psessionEntry, false);
 };
 
-void lim_process_tkip_counter_measures(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
+static void lim_process_tkip_counter_measures(tpAniSirGlobal pMac,
+					      uint32_t *pMsgBuf)
 {
 	tSirSmeTkipCntrMeasReq tkipCntrMeasReq;
 	tpPESession psessionEntry;
@@ -3948,7 +3947,8 @@ end:
 			       smesessionId, smetransactionId);
 }
 
-void lim_process_sme_addts_rsp_timeout(tpAniSirGlobal pMac, uint32_t param)
+static void lim_process_sme_addts_rsp_timeout(tpAniSirGlobal pMac,
+					      uint32_t param)
 {
 	/* fetch the sessionEntry based on the sessionId */
 	tpPESession psessionEntry;
@@ -4513,7 +4513,7 @@ static void __lim_process_sme_set_ht2040_mode(tpAniSirGlobal pMac,
  * @return None
  */
 
-void __lim_process_report_message(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
+static void __lim_process_report_message(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
 {
 	switch (pMsg->type) {
 	case eWNI_SME_NEIGHBOR_REPORT_REQ_IND:
