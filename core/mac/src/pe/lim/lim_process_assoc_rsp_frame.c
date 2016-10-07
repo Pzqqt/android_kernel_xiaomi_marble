@@ -473,7 +473,7 @@ static void lim_update_stads_ext_cap(tpAniSirGlobal mac_ctx,
  *
  *  Return: None
  */
-void lim_stop_reassoc_retry_timer(tpAniSirGlobal mac_ctx)
+static void lim_stop_reassoc_retry_timer(tpAniSirGlobal mac_ctx)
 {
 	mac_ctx->lim.reAssocRetryAttempt = 0;
 	if ((NULL != mac_ctx->lim.pSessionEntry)
