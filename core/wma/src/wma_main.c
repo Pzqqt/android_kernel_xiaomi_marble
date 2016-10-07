@@ -121,8 +121,8 @@ static void wma_service_ready_ext_evt_timeout(void *data)
 	}
 
 end:
-	/* Panic so that we can debug why FW is not responding */
-	QDF_BUG(0);
+	/* Assert here. Panic is being called in insmod thread */
+	QDF_ASSERT(0);
 }
 
 /**

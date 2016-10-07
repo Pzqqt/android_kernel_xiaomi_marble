@@ -519,8 +519,8 @@ QDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context)
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "Failed to get ready event from target firmware");
+		QDF_BUG(0);
 		htc_stop(gp_cds_context->htc_ctx);
-		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
 
