@@ -58,7 +58,8 @@
 
    --------------------------------------------------------------------------*/
 
-void pe_init_beacon_params(tpAniSirGlobal pMac, tpPESession psessionEntry)
+static void pe_init_beacon_params(tpAniSirGlobal pMac,
+				  tpPESession psessionEntry)
 {
 	psessionEntry->beaconParams.beaconInterval = 0;
 	psessionEntry->beaconParams.fShortPreamble = 0;
@@ -100,7 +101,7 @@ void pe_init_beacon_params(tpAniSirGlobal pMac, tpPESession psessionEntry)
  *
  * Return: void
  */
-void pe_reset_protection_callback(void *ptr)
+static void pe_reset_protection_callback(void *ptr)
 {
 	tpPESession pe_session_entry = (tpPESession)ptr;
 	tpAniSirGlobal mac_ctx = (tpAniSirGlobal)pe_session_entry->mac_ctx;
