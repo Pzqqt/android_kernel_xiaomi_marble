@@ -432,7 +432,6 @@ void hif_display_ce_stats(struct HIF_CE_state *hif_ce_state)
 	for (i = 0; i < CE_COUNT_MAX; i++) {
 		size = STR_SIZE;
 		pos = 0;
-		qdf_print("CE id: %d", i);
 		for (j = 0; j < QDF_MAX_AVAILABLE_CPU; j++) {
 			ret = snprintf(str_buffer + pos, size, "[%d]: %d",
 				j, hif_ce_state->stats.ce_per_cpu[i][j]);
@@ -441,7 +440,7 @@ void hif_display_ce_stats(struct HIF_CE_state *hif_ce_state)
 			size -= ret;
 			pos += ret;
 		}
-		qdf_print("%s", str_buffer);
+		qdf_print("CE id[%d] - %s", i, str_buffer);
 	}
 #undef STR_SIZE
 }
@@ -454,7 +453,7 @@ void hif_display_ce_stats(struct HIF_CE_state *hif_ce_state)
  */
 void hif_clear_ce_stats(struct HIF_CE_state *hif_ce_state)
 {
-	qdf_mem_zero(&hif_ce_state->stats, sizeof(struct ce_intr_stats));
+	qdf_mem_zero(&hif_ce_state->stats, sizeof(struct ce_stats));
 }
 
 /**

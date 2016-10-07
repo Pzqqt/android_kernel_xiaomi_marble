@@ -35,6 +35,7 @@
 #include "regtable.h"
 #include "hif_main.h"
 #include "hif_debug.h"
+#include "hif_napi.h"
 
 #ifdef IPA_OFFLOAD
 #ifdef QCA_WIFI_3_0
@@ -216,9 +217,20 @@ bool hif_ce_service_should_yield(struct hif_softc *scn,
 bool hif_ce_service_should_yield(struct hif_softc *scn,
 				 struct CE_state *ce_state)
 {
-	bool yield = qdf_system_time_after_eq(qdf_system_ticks(),
-					     ce_state->ce_service_yield_time) ||
-		     hif_max_num_receives_reached(scn, ce_state->receive_count);
+	bool yield, time_limit_reached, rxpkt_thresh_reached = 0;
+
+	time_limit_reached = qdf_system_time_after_eq(qdf_system_ticks(),
+					ce_state->ce_service_yield_time);
+	if (!time_limit_reached)
+		rxpkt_thresh_reached = hif_max_num_receives_reached
+					(scn, ce_state->receive_count);
+
+	yield =  time_limit_reached || rxpkt_thresh_reached;
+
+	if (yield)
+		hif_napi_update_yield_stats(ce_state,
+					    time_limit_reached,
+					    rxpkt_thresh_reached);
 	return yield;
 }
 #endif

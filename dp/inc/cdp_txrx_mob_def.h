@@ -39,6 +39,7 @@
 #define WLAN_TXRX_DESC_STATS  6
 #define WLAN_HIF_STATS  7
 #define WLAN_LRO_STATS  8
+#define WLAN_NAPI_STATS  9
 #define WLAN_SCHEDULER_STATS        21
 #define WLAN_TX_QUEUE_STATS         22
 #define WLAN_BUNDLE_STATS           23

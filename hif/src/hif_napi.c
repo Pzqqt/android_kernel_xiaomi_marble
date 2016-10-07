@@ -808,22 +808,78 @@ out:
 }
 
 #ifdef HELIUMPLUS
-/*
- * Local functions
- * - no argument checks, all internal/trusted callers
+/**
+ *
+ * hif_napi_update_yield_stats() - update NAPI yield related stats
+ * @cpu_id: CPU ID for which stats needs to be updates
+ * @ce_id: Copy Engine ID for which yield stats needs to be updates
+ * @time_limit_reached: indicates whether the time limit was reached
+ * @rxpkt_thresh_reached: indicates whether rx packet threshold was reached
+ *
+ * Return: None
  */
+void hif_napi_update_yield_stats(struct CE_state *ce_state,
+				 bool time_limit_reached,
+				 bool rxpkt_thresh_reached)
+{
+	struct hif_softc *hif;
+	struct qca_napi_data *napi_data = NULL;
+	int ce_id = 0;
+	int cpu_id = 0;
 
-#ifdef FEATURE_NAPI_DEBUG
-static void hnc_dump_cpus(struct qca_napi_data *napid)
+	if (unlikely(NULL == ce_state)) {
+		QDF_ASSERT(NULL != ce_state);
+		return;
+	}
+
+	hif = ce_state->scn;
+
+	if (unlikely(NULL == hif)) {
+		QDF_ASSERT(NULL != hif);
+		return;
+	} else {
+		napi_data = &(hif->napi_data);
+		if (unlikely(NULL == napi_data))
+			QDF_ASSERT(NULL != napi_data);
+		return;
+	}
+
+	ce_id = ce_state->id;
+	cpu_id = qdf_get_cpu();
+
+	if (time_limit_reached)
+		napi_data->napis[ce_id].stats[cpu_id].time_limit_reached++;
+	else
+		napi_data->napis[ce_id].stats[cpu_id].rxpkt_thresh_reached++;
+}
+
+/**
+ *
+ * hif_napi_stats() - display NAPI CPU statistics
+ * @napid: pointer to qca_napi_data
+ *
+ * Description:
+ *    Prints the various CPU cores on which the NAPI instances /CEs interrupts
+ *    are being executed. Can be called from outside NAPI layer.
+ *
+ * Return: None
+ */
+void hif_napi_stats(struct qca_napi_data *napid)
 {
 	int i;
-	struct qca_napi_cpu *cpu = napid->napi_cpu;
+	struct qca_napi_cpu *cpu;
 
-	NAPI_DEBUG("%s: NAPI CPU TABLE", __func__);
-	NAPI_DEBUG("lilclhead=%d, bigclhead=%d",
+	if (napid == NULL) {
+		qdf_print("%s: napiid struct is null", __func__);
+		return;
+	}
+
+	cpu = napid->napi_cpu;
+	qdf_print("NAPI CPU TABLE");
+	qdf_print("lilclhead=%d, bigclhead=%d",
 		  napid->lilcl_head, napid->bigcl_head);
 	for (i = 0; i < NR_CPUS; i++) {
-		NAPI_DEBUG("CPU[%02d]: state:%d crid=%02d clid=%02d "
+		qdf_print("CPU[%02d]: state:%d crid=%02d clid=%02d "
 			  "crmk:0x%0lx thmk:0x%0lx frq:%d "
 			  "napi = 0x%08x lnk:%d",
 			  i,
@@ -833,7 +889,16 @@ static void hnc_dump_cpus(struct qca_napi_data *napid)
 			  cpu[i].max_freq, cpu[i].napis,
 			  cpu[i].cluster_nxt);
 	}
-	/* return; -- Linus does not like it, I do. */
+}
+
+#ifdef FEATURE_NAPI_DEBUG
+/*
+ * Local functions
+ * - no argument checks, all internal/trusted callers
+ */
+static void hnc_dump_cpus(struct qca_napi_data *napid)
+{
+	hif_napi_stats(napid);
 }
 #else
 static void hnc_dump_cpus(struct qca_napi_data *napid) { /* no-op */ };

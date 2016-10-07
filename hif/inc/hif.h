@@ -182,13 +182,15 @@ struct CE_state;
 
 /* NOTE: "napi->scale" can be changed,
    but this does not change the number of buckets */
-#define QCA_NAPI_NUM_BUCKETS (QCA_NAPI_BUDGET / QCA_NAPI_DEF_SCALE)
+#define QCA_NAPI_NUM_BUCKETS 4
 struct qca_napi_stat {
 	uint32_t napi_schedules;
 	uint32_t napi_polls;
 	uint32_t napi_completes;
 	uint32_t napi_workdone;
 	uint32_t napi_budget_uses[QCA_NAPI_NUM_BUCKETS];
+	uint32_t time_limit_reached;
+	uint32_t rxpkt_thresh_reached;
 };
 
 /**
@@ -201,7 +203,7 @@ struct qca_napi_stat {
 struct qca_napi_info {
 	struct net_device    netdev; /* dummy net_dev */
 	void 		     *hif_ctx;
-	struct napi_struct   napi;    /* one NAPI Instance per CE in phase I */
+	struct napi_struct   napi;
 	uint8_t              scale;   /* currently same on all instances */
 	uint8_t              id;
 	int                  irq;
