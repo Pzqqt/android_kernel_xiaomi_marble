@@ -2139,8 +2139,8 @@ static QDF_STATUS wma_unified_bcn_tmpl_send(tp_wma_handle wma,
  *
  * Return: QDF status
  */
-QDF_STATUS wma_store_bcn_tmpl(tp_wma_handle wma, uint8_t vdev_id,
-			      tpSendbeaconParams bcn_info)
+static QDF_STATUS wma_store_bcn_tmpl(tp_wma_handle wma, uint8_t vdev_id,
+				     tpSendbeaconParams bcn_info)
 {
 	struct beacon_info *bcn;
 	uint32_t len;
@@ -2472,8 +2472,8 @@ void wma_beacon_miss_handler(tp_wma_handle wma, uint32_t vdev_id)
  *
  * Return: 0 for success or error code
  */
-int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
-		uint32_t desc_id, uint32_t status)
+static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
+					  uint32_t desc_id, uint32_t status)
 {
 	struct wmi_desc_t *wmi_desc;
 	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);

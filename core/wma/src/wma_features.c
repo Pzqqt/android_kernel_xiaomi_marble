@@ -523,8 +523,9 @@ error:
  *
  * Return: QDF status
  */
-QDF_STATUS wma_lphb_conf_hbenable(tp_wma_handle wma_handle,
-				  tSirLPHBReq *lphb_conf_req, bool by_user)
+static QDF_STATUS wma_lphb_conf_hbenable(tp_wma_handle wma_handle,
+					 tSirLPHBReq *lphb_conf_req,
+					 bool by_user)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	int status = 0;
@@ -598,8 +599,8 @@ error:
  *
  * Return: QDF status
  */
-QDF_STATUS wma_lphb_conf_tcp_params(tp_wma_handle wma_handle,
-				    tSirLPHBReq *lphb_conf_req)
+static QDF_STATUS wma_lphb_conf_tcp_params(tp_wma_handle wma_handle,
+					   tSirLPHBReq *lphb_conf_req)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	int status = 0;
@@ -655,8 +656,8 @@ error:
  *
  * Return: QDF status
  */
-QDF_STATUS wma_lphb_conf_tcp_pkt_filter(tp_wma_handle wma_handle,
-					tSirLPHBReq *lphb_conf_req)
+static QDF_STATUS wma_lphb_conf_tcp_pkt_filter(tp_wma_handle wma_handle,
+					       tSirLPHBReq *lphb_conf_req)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	int status = 0;
@@ -705,8 +706,8 @@ error:
  *
  * Return: QDF status
  */
-QDF_STATUS wma_lphb_conf_udp_params(tp_wma_handle wma_handle,
-				    tSirLPHBReq *lphb_conf_req)
+static QDF_STATUS wma_lphb_conf_udp_params(tp_wma_handle wma_handle,
+					   tSirLPHBReq *lphb_conf_req)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	int status = 0;
@@ -761,8 +762,8 @@ error:
  *
  * Return: QDF status
  */
-QDF_STATUS wma_lphb_conf_udp_pkt_filter(tp_wma_handle wma_handle,
-					tSirLPHBReq *lphb_conf_req)
+static QDF_STATUS wma_lphb_conf_udp_pkt_filter(tp_wma_handle wma_handle,
+					       tSirLPHBReq *lphb_conf_req)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	int status = 0;
@@ -2675,7 +2676,7 @@ static bool tlv_check_required(int32_t reason)
  *
  * Return: string for proto subtype for data packet
  */
-const char *
+static const char *
 wma_pkt_proto_subtype_to_string(enum qdf_proto_subtype proto_subtype)
 {
 	switch (proto_subtype) {
@@ -4433,7 +4434,7 @@ bool static wma_is_nan_enabled(tp_wma_handle wma)
  *
  * Return: true if wma needs to configure wow false otherwise.
  */
-bool wma_is_wow_applicable(tp_wma_handle wma)
+static bool wma_is_wow_applicable(tp_wma_handle wma)
 {
 	int vdev_id;
 	if (wma_support_wow_for_beaconing(wma)) {
@@ -4479,7 +4480,7 @@ bool wma_is_wow_applicable(tp_wma_handle wma)
  *
  * Return: none
  */
-void wma_configure_dynamic_wake_events(tp_wma_handle wma)
+static void wma_configure_dynamic_wake_events(tp_wma_handle wma)
 {
 	int vdev_id;
 	int enable_mask;
@@ -6491,7 +6492,7 @@ int wma_bus_suspend(void)
  *
  * Return: os error code.
  */
-int __wma_bus_resume(WMA_HANDLE handle)
+static int __wma_bus_resume(WMA_HANDLE handle)
 {
 	bool wow_mode = wma_is_wow_mode_selected(handle);
 	tp_wma_handle wma = handle;
@@ -7417,8 +7418,8 @@ void wma_set_dfs_region(tp_wma_handle wma, enum dfs_region dfs_region)
  *
  * Return: return number of channels
  */
-int wma_get_channels(struct dfs_ieee80211_channel *ichan,
-		     struct wma_dfs_radar_channel_list *chan_list)
+static int wma_get_channels(struct dfs_ieee80211_channel *ichan,
+			    struct wma_dfs_radar_channel_list *chan_list)
 {
 	uint8_t center_chan = cds_freq_to_chan(ichan->ic_vhtop_ch_freq_seg1);
 	int count = 0;

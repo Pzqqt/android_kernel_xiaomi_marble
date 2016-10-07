@@ -362,19 +362,6 @@ send_ndp_end_fail:
 }
 
 /**
- * wma_handle_ndp_sched_update_req() - NDP schedule update request handler
- * @wma_handle: wma handle
- * @req_params: request parameters
- *
- * Return: QDF_STATUS_SUCCESS on success; error number otherwise
- */
-QDF_STATUS wma_handle_ndp_sched_update_req(tp_wma_handle wma_handle,
-					struct ndp_end_req *req_params)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * wma_ndp_indication_event_handler() - NDP indication event handler
  * @handle: wma handle
  * @event_info: event handler data

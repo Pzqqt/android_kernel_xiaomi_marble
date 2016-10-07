@@ -77,7 +77,7 @@
 #include <cdp_txrx_peer_ops.h>
 #include <cdp_txrx_cfg.h>
 #include "cdp_txrx_stats.h"
-
+#include "ol_ctrl_txrx_api.h"
 
 typedef struct {
 	int32_t rate;
@@ -1996,7 +1996,7 @@ QDF_STATUS wma_set_thermal_mgmt(tp_wma_handle wma_handle,
  *
  * Return: thermal (throttle) level
  */
-uint8_t wma_thermal_mgmt_get_level(void *handle, uint32_t temp)
+static uint8_t wma_thermal_mgmt_get_level(void *handle, uint32_t temp)
 {
 	tp_wma_handle wma = (tp_wma_handle) handle;
 	int i;

@@ -71,7 +71,7 @@ tSirRetStatus wma_post_ctrl_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
  * Return: Success or Failure
  */
 
-tSirRetStatus wma_post_cfg_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
+static tSirRetStatus wma_post_cfg_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
 {
 	tSirRetStatus rc = eSIR_SUCCESS;
 

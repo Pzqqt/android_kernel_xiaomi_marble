@@ -190,7 +190,7 @@ void *wma_find_vdev_by_bssid(tp_wma_handle wma, uint8_t *bssid,
  *
  * Return: return operating mode as enum wlan_op_mode type
  */
-enum wlan_op_mode wma_get_txrx_vdev_type(uint32_t type)
+static enum wlan_op_mode wma_get_txrx_vdev_type(uint32_t type)
 {
 	enum wlan_op_mode vdev_type = wlan_op_mode_unknown;
 	switch (type) {
@@ -407,7 +407,7 @@ static struct wma_target_req *wma_find_vdev_req(tp_wma_handle wma,
  *
  * Return: none
  */
-void wma_vdev_detach_callback(void *ctx)
+static void wma_vdev_detach_callback(void *ctx)
 {
 	tp_wma_handle wma;
 	struct wma_txrx_node *iface = (struct wma_txrx_node *)ctx;
@@ -1283,8 +1283,8 @@ static void wma_delete_all_ap_remote_peers(tp_wma_handle wma, A_UINT32 vdev_id)
  *
  * Return: none
  */
-void wma_hidden_ssid_vdev_restart_on_vdev_stop(tp_wma_handle wma_handle,
-					       uint8_t sessionId)
+static void wma_hidden_ssid_vdev_restart_on_vdev_stop(tp_wma_handle wma_handle,
+						      uint8_t sessionId)
 {
 	struct wma_txrx_node *intr = wma_handle->interfaces;
 	struct hidden_ssid_vdev_restart_params params;

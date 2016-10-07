@@ -1169,13 +1169,6 @@ struct dfs_ieee80211_channel *wma_dfs_configure_channel(
 						*req);
 void wma_set_sap_keepalive(tp_wma_handle wma, uint8_t vdev_id);
 
-#ifdef REMOVE_PKT_LOG
-static inline void wma_set_wifi_start_packet_stats(void *wma_handle,
-		struct sir_wifi_start_log *start_log)
-{
-	return;
-}
-#endif
 int wma_rssi_breached_event_handler(void *handle,
 				u_int8_t  *cmd_param_info, u_int32_t len);
 #ifdef WLAN_FEATURE_MEMDUMP

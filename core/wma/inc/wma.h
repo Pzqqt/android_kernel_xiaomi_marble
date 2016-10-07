@@ -2196,7 +2196,6 @@ void ieee80211_mark_dfs(struct ieee80211com *ic,
 			struct dfs_ieee80211_channel *ichan);
 int wma_dfs_indicate_radar(struct ieee80211com *ic,
 			   struct dfs_ieee80211_channel *ichan);
-uint16_t dfs_usenol(struct ieee80211com *ic);
 
 QDF_STATUS wma_trigger_uapsd_params(tp_wma_handle wma_handle, uint32_t vdev_id,
 				    tp_wma_trigger_uapsd_params

@@ -1547,8 +1547,8 @@ QDF_STATUS wma_roam_scan_offload_ap_profile(tp_wma_handle wma_handle,
  * Return: Return success upon succesfully passing the
  *         parameters to the firmware, otherwise failure.
  */
-QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
-	tSirRoamOffloadScanReq *roam_req)
+static QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
+				       tSirRoamOffloadScanReq *roam_req)
 {
 	int i;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -2089,9 +2089,9 @@ void wma_process_roam_synch_fail(WMA_HANDLE handle,
  *
  * Return: None
  */
-void wma_fill_roam_synch_buffer(tp_wma_handle wma,
-		roam_offload_synch_ind *roam_synch_ind_ptr,
-		WMI_ROAM_SYNCH_EVENTID_param_tlvs *param_buf)
+static void wma_fill_roam_synch_buffer(tp_wma_handle wma,
+				roam_offload_synch_ind *roam_synch_ind_ptr,
+				WMI_ROAM_SYNCH_EVENTID_param_tlvs *param_buf)
 {
 	wmi_roam_synch_event_fixed_param *synch_event;
 	uint8_t *bcn_probersp_ptr;
@@ -2181,8 +2181,8 @@ void wma_fill_roam_synch_buffer(tp_wma_handle wma,
  *
  * Return: None
  */
-void wma_roam_update_vdev(tp_wma_handle wma,
-	roam_offload_synch_ind *roam_synch_ind_ptr)
+static void wma_roam_update_vdev(tp_wma_handle wma,
+				 roam_offload_synch_ind *roam_synch_ind_ptr)
 {
 	tDeleteBssParams *del_bss_params;
 	tDeleteStaParams *del_sta_params;
@@ -2701,7 +2701,8 @@ void wma_process_roam_synch_complete(WMA_HANDLE handle, uint8_t vdev_id)
  *
  * Return: 0 for success, otherwise appropriate error code
  */
-QDF_STATUS wma_switch_channel(tp_wma_handle wma, struct wma_vdev_start_req *req)
+static QDF_STATUS wma_switch_channel(tp_wma_handle wma,
+				     struct wma_vdev_start_req *req)
 {
 
 	wmi_buf_t buf;

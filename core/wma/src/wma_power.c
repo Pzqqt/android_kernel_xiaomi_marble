@@ -489,8 +489,8 @@ end:
  *
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
-QDF_STATUS wmi_unified_set_sta_ps(wmi_unified_t wmi_handle,
-			       uint32_t vdev_id, uint8_t val)
+static QDF_STATUS wmi_unified_set_sta_ps(wmi_unified_t wmi_handle,
+					 uint32_t vdev_id, uint8_t val)
 {
 	QDF_STATUS ret;
 
@@ -1248,7 +1248,7 @@ QDF_STATUS wma_process_tx_power_limits(WMA_HANDLE handle,
  *
  * Return: ptr after p2p ie
  */
-uint8_t *wma_add_p2p_ie(uint8_t *frm)
+static uint8_t *wma_add_p2p_ie(uint8_t *frm)
 {
 	uint8_t wfa_oui[3] = WMA_P2P_WFA_OUI;
 	struct p2p_ie *p2p_ie = (struct p2p_ie *)frm;

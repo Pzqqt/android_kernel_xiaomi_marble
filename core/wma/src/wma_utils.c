@@ -1839,7 +1839,7 @@ int32_t wma_txrx_fw_stats_reset(tp_wma_handle wma_handle,
 #endif
 
 #ifdef HELIUMPLUS
-bool wma_is_valid_fw_stats_cmd(uint32_t value)
+static bool wma_is_valid_fw_stats_cmd(uint32_t value)
 {
 	if (value > (HTT_DBG_NUM_STATS + 1) ||
 		value == (HTT_DBG_STATS_RX_RATE_INFO + 1) ||
@@ -1851,7 +1851,7 @@ bool wma_is_valid_fw_stats_cmd(uint32_t value)
 	return true;
 }
 #else
-bool wma_is_valid_fw_stats_cmd(uint32_t value)
+static bool wma_is_valid_fw_stats_cmd(uint32_t value)
 {
 	if (value > (HTT_DBG_NUM_STATS + 1) ||
 		value == (HTT_DBG_STATS_RX_RATE_INFO_V2 + 1) ||
@@ -2158,7 +2158,8 @@ bool wma_is_vdev_up(uint8_t vdev_id)
  *
  * Return: 0 for success or error code
  */
-int wma_utf_rsp(tp_wma_handle wma_handle, uint8_t **payload, uint32_t *len)
+static int wma_utf_rsp(tp_wma_handle wma_handle, uint8_t **payload,
+		       uint32_t *len)
 {
 	int ret = -1;
 	uint32_t payload_len;
@@ -2333,7 +2334,8 @@ void wma_utf_attach(tp_wma_handle wma_handle)
  *
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
-QDF_STATUS wma_utf_cmd(tp_wma_handle wma_handle, uint8_t *data, uint16_t len)
+static QDF_STATUS wma_utf_cmd(tp_wma_handle wma_handle, uint8_t *data,
+			      uint16_t len)
 {
 	struct pdev_utf_params param = {0};
 
@@ -2420,9 +2422,8 @@ QDF_STATUS wma_get_wcnss_software_version(void *p_cds_gctx,
  *
  * Return: None
  */
-void wma_get_tx_rx_ss_from_config(enum hw_mode_ss_config mac_ss,
-				  uint32_t *tx_ss,
-				  uint32_t *rx_ss)
+static void wma_get_tx_rx_ss_from_config(enum hw_mode_ss_config mac_ss,
+					 uint32_t *tx_ss, uint32_t *rx_ss)
 {
 	switch (mac_ss) {
 	case HW_MODE_SS_0x0:

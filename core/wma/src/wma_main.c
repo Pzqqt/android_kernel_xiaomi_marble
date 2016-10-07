@@ -766,8 +766,8 @@ static int32_t wma_set_priv_cfg(tp_wma_handle wma_handle,
  *
  * Return: none
  */
-void wma_set_dtim_period(tp_wma_handle wma,
-			    struct set_dtim_params *dtim_params)
+static void wma_set_dtim_period(tp_wma_handle wma,
+				struct set_dtim_params *dtim_params)
 {
 	QDF_STATUS ret;
 	uint8_t vdev_id = dtim_params->session_id;
@@ -4333,7 +4333,7 @@ static int wma_setup_wmi_init_msg(tp_wma_handle wma_handle,
  *
  * Return: None
  */
-void wma_dump_dbs_hw_mode(tp_wma_handle wma_handle)
+static void wma_dump_dbs_hw_mode(tp_wma_handle wma_handle)
 {
 	uint32_t i, param;
 
@@ -4371,9 +4371,9 @@ void wma_dump_dbs_hw_mode(tp_wma_handle wma_handle)
  *
  * Return: None
  */
-void wma_init_scan_fw_mode_config(tp_wma_handle wma_handle,
-				uint32_t scan_config,
-				uint32_t fw_config)
+static void wma_init_scan_fw_mode_config(tp_wma_handle wma_handle,
+					 uint32_t scan_config,
+					 uint32_t fw_config)
 {
 	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
 
@@ -5004,7 +5004,7 @@ static void wma_print_populate_soc_caps(t_wma_handle *wma_handle)
  *
  * Return: BW in terms of hw_mode_bandwidth.
  */
-enum hw_mode_bandwidth wma_map_wmi_channel_width_to_hw_mode_bw(
+static enum hw_mode_bandwidth wma_map_wmi_channel_width_to_hw_mode_bw(
 			wmi_channel_width width)
 {
 	switch (width) {
@@ -5654,8 +5654,8 @@ pkt_pwr_save_config:
  *
  * Return: QDF_SUCCESS for success otherwise failure
  */
-QDF_STATUS wma_process_set_mas(tp_wma_handle wma,
-		uint32_t *mas_val)
+static QDF_STATUS wma_process_set_mas(tp_wma_handle wma,
+				      uint32_t *mas_val)
 {
 	uint32_t val;
 
@@ -5687,7 +5687,8 @@ QDF_STATUS wma_process_set_mas(tp_wma_handle wma,
  * Return: QDF_SUCCESS for success otherwise failure
  *
  */
-QDF_STATUS wma_process_set_miracast(tp_wma_handle wma, uint32_t *miracast_val)
+static QDF_STATUS wma_process_set_miracast(tp_wma_handle wma,
+					   uint32_t *miracast_val)
 {
 	if (NULL == wma || NULL == miracast_val) {
 		WMA_LOGE("%s: Invalid input to store miracast value", __func__);
@@ -5780,8 +5781,8 @@ static QDF_STATUS wma_config_guard_time(tp_wma_handle wma,
  *
  * Return: None
  */
-void wma_enable_specific_fw_logs(tp_wma_handle wma_handle,
-		struct sir_wifi_start_log *start_log)
+static void wma_enable_specific_fw_logs(tp_wma_handle wma_handle,
+					struct sir_wifi_start_log *start_log)
 {
 
 	if (!start_log) {
@@ -5806,8 +5807,6 @@ void wma_enable_specific_fw_logs(tp_wma_handle wma_handle,
 	return;
 }
 
-#if !defined(REMOVE_PKT_LOG)
-
 #define MEGABYTE	(1024 * 1024)
 /**
  * wma_set_wifi_start_packet_stats() - Start/stop packet stats
@@ -5820,8 +5819,15 @@ void wma_enable_specific_fw_logs(tp_wma_handle wma_handle,
  * Return: None
  *
  */
-void wma_set_wifi_start_packet_stats(void *wma_handle,
-		struct sir_wifi_start_log *start_log)
+#ifdef REMOVE_PKT_LOG
+static void wma_set_wifi_start_packet_stats(void *wma_handle,
+					struct sir_wifi_start_log *start_log)
+{
+	return;
+}
+#else
+static void wma_set_wifi_start_packet_stats(void *wma_handle,
+					struct sir_wifi_start_log *start_log)
 {
 	struct hif_opaque_softc *scn;
 	uint32_t log_state;

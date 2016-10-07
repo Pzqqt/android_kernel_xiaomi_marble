@@ -34,6 +34,7 @@
 #include "wma.h"
 #include "ath_dfs_structs.h"
 #include "wma_dfs_interface.h"
+#include "dfs_interface.h"
 
 #ifndef ATH_SUPPORT_DFS
 #define ATH_SUPPORT_DFS 1
