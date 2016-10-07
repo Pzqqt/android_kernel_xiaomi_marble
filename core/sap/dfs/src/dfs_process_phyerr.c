@@ -143,7 +143,7 @@ dfs_get_event_freqcentre(struct ath_dfs *dfs, int is_pri, int is_ext, int is_dc)
  *
  * Return 1 on success or 0 on failure.
  */
-int
+static int
 dfs_process_phyerr_owl(struct ath_dfs *dfs, void *buf, uint16_t datalen,
 		       uint8_t rssi, uint8_t ext_rssi, uint32_t rs_tstamp,
 		       uint64_t fulltsf, struct dfs_phy_err *e)
@@ -205,7 +205,7 @@ dfs_process_phyerr_owl(struct ath_dfs *dfs, void *buf, uint16_t datalen,
 /*
  * Process a Sowl/Howl style phy error.
  */
-int
+static int
 dfs_process_phyerr_sowl(struct ath_dfs *dfs, void *buf, uint16_t datalen,
 			uint8_t rssi, uint8_t ext_rssi, uint32_t rs_tstamp,
 			uint64_t fulltsf, struct dfs_phy_err *e)
@@ -357,7 +357,7 @@ dfs_process_phyerr_sowl(struct ath_dfs *dfs, void *buf, uint16_t datalen,
 /*
  * Process a Merlin/Osprey style phy error.
  */
-int
+static int
 dfs_process_phyerr_merlin(struct ath_dfs *dfs, void *buf,
 			  uint16_t datalen, uint8_t rssi, uint8_t ext_rssi,
 			  uint32_t rs_tstamp, uint64_t fulltsf,
