@@ -508,7 +508,7 @@ done:
 	return status;
 }
 
-void dump_csr_command_info(tpAniSirGlobal pMac, tSmeCmd *pCmd)
+static void dump_csr_command_info(tpAniSirGlobal pMac, tSmeCmd *pCmd)
 {
 	switch (pCmd->command) {
 	case eSmeCommandScan:
@@ -702,6 +702,7 @@ static void sme_abort_command(tpAniSirGlobal pMac, tSmeCmd *pCommand,
 
 }
 
+static
 tListElem *csr_get_cmd_to_process(tpAniSirGlobal pMac, tDblLinkList *pList,
 				  uint8_t sessionId, bool fInterlocked)
 {
@@ -726,7 +727,7 @@ tListElem *csr_get_cmd_to_process(tpAniSirGlobal pMac, tDblLinkList *pList,
 	return NULL;
 }
 
-bool sme_process_scan_queue(tpAniSirGlobal pMac)
+static bool sme_process_scan_queue(tpAniSirGlobal pMac)
 {
 	tListElem *pEntry;
 	tSmeCmd *pCommand;
@@ -823,7 +824,7 @@ end:
  * Return: true indicates that caller function can proceed to next cmd
  *         false otherwise.
  */
-bool sme_process_command(tpAniSirGlobal pMac)
+static bool sme_process_command(tpAniSirGlobal pMac)
 {
 	bool fContinue = false;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -1082,7 +1083,7 @@ bool sme_command_pending(tpAniSirGlobal pMac)
  *
  * Return: returns session id
  */
-uint32_t sme_get_sessionid_from_activelist(tpAniSirGlobal mac)
+static uint32_t sme_get_sessionid_from_activelist(tpAniSirGlobal mac)
 {
 	tListElem *entry;
 	tSmeCmd *command;
@@ -1547,7 +1548,7 @@ QDF_STATUS sme_update_roam_params(tHalHandle hal,
 }
 
 #ifdef WLAN_FEATURE_GTK_OFFLOAD
-void sme_process_get_gtk_info_rsp(tHalHandle hHal,
+static void sme_process_get_gtk_info_rsp(tHalHandle hHal,
 				  tpSirGtkOffloadGetInfoRspParams
 				  pGtkOffloadGetInfoRsp)
 {
@@ -1585,8 +1586,8 @@ void sme_process_get_gtk_info_rsp(tHalHandle hHal,
    \sa
 
    --------------------------------------------------------------------------*/
-void sme_process_ready_to_suspend(tHalHandle hHal,
-				  tpSirReadyToSuspendInd pReadyToSuspend)
+static void sme_process_ready_to_suspend(tHalHandle hHal,
+					 tpSirReadyToSuspendInd pReadyToSuspend)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
@@ -1616,8 +1617,8 @@ void sme_process_ready_to_suspend(tHalHandle hHal,
  *
  * Return: None
  */
-void sme_process_ready_to_ext_wow(tHalHandle hHal,
-				   tpSirReadyToExtWoWInd pReadyToExtWoW)
+static void sme_process_ready_to_ext_wow(tHalHandle hHal,
+					 tpSirReadyToExtWoWInd pReadyToExtWoW)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
@@ -2385,9 +2386,10 @@ QDF_STATUS sme_set_ese_roam_scan_channel_list(tHalHandle hHal,
 
 #endif /* FEATURE_WLAN_ESE */
 
-QDF_STATUS sme_ibss_peer_info_response_handleer(tHalHandle hHal,
-						tpSirIbssGetPeerInfoRspParams
-						pIbssPeerInfoParams)
+static
+QDF_STATUS sme_ibss_peer_info_response_handler(tHalHandle hHal,
+					       tpSirIbssGetPeerInfoRspParams
+					       pIbssPeerInfoParams)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
@@ -2794,9 +2796,8 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 #endif /* FEATURE_WLAN_LPHB */
 	case eWNI_SME_IBSS_PEER_INFO_RSP:
 		if (pMsg->bodyptr) {
-			sme_ibss_peer_info_response_handleer(pMac,
-							     pMsg->
-							     bodyptr);
+			sme_ibss_peer_info_response_handler(pMac,
+							    pMsg->bodyptr);
 			qdf_mem_free(pMsg->bodyptr);
 		} else {
 			sms_log(pMac, LOGE, FL("Empty message for %d"),
@@ -11802,7 +11803,7 @@ void sme_get_recovery_stats(tHalHandle hHal)
  *
  * Return: None
  */
-void sme_save_active_cmd_stats(tHalHandle hHal)
+static void sme_save_active_cmd_stats(tHalHandle hHal)
 {
 	tSmeCmd *pTempCmd = NULL;
 	tListElem *pEntry;
