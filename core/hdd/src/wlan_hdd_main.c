@@ -3463,7 +3463,6 @@ static void hdd_wait_for_sme_close_sesion(hdd_context_t *hdd_ctx,
 			sme_close_session(hdd_ctx->hHal, adapter->sessionId,
 				hdd_sme_close_session_callback,
 				adapter)) {
-		adapter->sessionId = HDD_SESSION_ID_INVALID;
 		/*
 		 * Block on a completion variable. Can't wait
 		 * forever though.
@@ -3477,7 +3476,9 @@ static void hdd_wait_for_sme_close_sesion(hdd_context_t *hdd_ctx,
 			if (adapter->device_mode == QDF_NDI_MODE)
 				hdd_ndp_session_end_handler(adapter);
 			clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
+			return;
 		}
+		adapter->sessionId = HDD_SESSION_ID_INVALID;
 	}
 }
 
