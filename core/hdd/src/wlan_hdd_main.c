@@ -4791,7 +4791,6 @@ static void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 	/* Free up RoC request queue and flush workqueue */
 	cds_flush_work(&hdd_ctx->roc_req_work);
 
-	hdd_encrypt_decrypt_deinit(hdd_ctx);
 	wlansap_global_deinit();
 	wlan_hdd_deinit_tx_rx_histogram(hdd_ctx);
 	wiphy_unregister(wiphy);
@@ -7518,6 +7517,7 @@ static int hdd_features_init(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 		hdd_err("Error setting txlimit in sme: %d", status);
 
 	hdd_tsf_init(hdd_ctx);
+	hdd_encrypt_decrypt_init(hdd_ctx);
 
 	ret = hdd_register_cb(hdd_ctx);
 	if (ret) {
@@ -7627,6 +7627,7 @@ static int hdd_deconfigure_cds(hdd_context_t *hdd_ctx)
 	ENTER();
 	/* De-register the SME callbacks */
 	hdd_deregister_cb(hdd_ctx);
+	hdd_encrypt_decrypt_deinit(hdd_ctx);
 
 	/* De-init Policy Manager */
 	if (!QDF_IS_STATUS_SUCCESS(cds_deinit_policy_mgr())) {
@@ -7974,7 +7975,6 @@ int hdd_wlan_startup(struct device *dev)
 		goto err_debugfs_exit;
 
 	memdump_init();
-	hdd_encrypt_decrypt_init(hdd_ctx);
 	hdd_driver_memdump_init();
 
 	if (hdd_ctx->config->fIsImpsEnabled)
