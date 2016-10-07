@@ -342,7 +342,7 @@ void *htc_get_hif_device(HTC_HANDLE HTCHandle)
 	return target->hif_dev;
 }
 
-void htc_control_tx_complete(void *Context, HTC_PACKET *pPacket)
+static void htc_control_tx_complete(void *Context, HTC_PACKET *pPacket)
 {
 	HTC_TARGET *target = (HTC_TARGET *) Context;
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRC,
@@ -394,6 +394,7 @@ htc_setup_epping_credit_allocation(struct hif_opaque_softc *scn,
  *
  * Return: A_STATUS
  */
+static
 A_STATUS htc_setup_target_buffer_assignments(HTC_TARGET *target)
 {
 	HTC_SERVICE_TX_CREDIT_ALLOCATION *pEntry;

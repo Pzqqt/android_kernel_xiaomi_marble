@@ -751,9 +751,9 @@ static void queue_htc_pm_packets(HTC_ENDPOINT *endpoint,
  *
  * Return: None
  */
-void get_htc_send_packets_credit_based(HTC_TARGET *target,
-				       HTC_ENDPOINT *pEndpoint,
-				       HTC_PACKET_QUEUE *pQueue)
+static void get_htc_send_packets_credit_based(HTC_TARGET *target,
+					      HTC_ENDPOINT *pEndpoint,
+					      HTC_PACKET_QUEUE *pQueue)
 {
 	int creditsRequired;
 	int remainder;
@@ -888,9 +888,9 @@ void get_htc_send_packets_credit_based(HTC_TARGET *target,
 
 }
 
-void get_htc_send_packets(HTC_TARGET *target,
-			  HTC_ENDPOINT *pEndpoint,
-			  HTC_PACKET_QUEUE *pQueue, int Resources)
+static void get_htc_send_packets(HTC_TARGET *target,
+				 HTC_ENDPOINT *pEndpoint,
+				 HTC_PACKET_QUEUE *pQueue, int Resources)
 {
 
 	HTC_PACKET *pPacket;
