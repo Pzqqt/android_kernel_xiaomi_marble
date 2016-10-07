@@ -122,6 +122,18 @@ tSirRetStatus pe_start(tpAniSirGlobal pMac);
 void pe_stop(tpAniSirGlobal pMac);
 tSirRetStatus pe_post_msg_api(tpAniSirGlobal pMac, tSirMsgQ *pMsg);
 tSirRetStatus peProcessMsg(tpAniSirGlobal pMac, tSirMsgQ *limMsg);
+
+/**
+ * pe_register_callbacks_with_wma() - register SME and PE callback functions to
+ * WMA.
+ * @pMac: mac global ctx
+ * @ready_req: Ready request parameters, containing callback pointers
+ *
+ * Return: None
+ */
+void pe_register_callbacks_with_wma(tpAniSirGlobal pMac,
+				    tSirSmeReadyReq *ready_req);
+
 /**
  * Function to cleanup LIM state.
  * This called upon reset/persona change etc
