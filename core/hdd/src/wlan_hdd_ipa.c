@@ -244,6 +244,7 @@ struct hdd_ipa_iface_context {
 	qdf_spinlock_t interface_lock;
 	uint32_t ifa_address;
 	struct hdd_ipa_iface_stats stats;
+	uint32_t offload_enabled;
 };
 
 struct hdd_ipa_stats {
@@ -1353,9 +1354,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			hdd_ipa->pending_cons_req = false;
 		}
 		qdf_mutex_release(&hdd_ipa->ipa_lock);
-	}
-
-	if ((HDD_IPA_UC_OPCODE_TX_SUSPEND == msg->op_code) ||
+	} else if ((HDD_IPA_UC_OPCODE_TX_SUSPEND == msg->op_code) ||
 	    (HDD_IPA_UC_OPCODE_RX_SUSPEND == msg->op_code)) {
 		qdf_mutex_acquire(&hdd_ipa->ipa_lock);
 		hdd_ipa->activated_fw_pipe--;
@@ -1371,9 +1370,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			hdd_ipa->pending_cons_req = false;
 		}
 		qdf_mutex_release(&hdd_ipa->ipa_lock);
-	}
-
-	if ((HDD_IPA_UC_OPCODE_STATS == msg->op_code) &&
+	} else if ((HDD_IPA_UC_OPCODE_STATS == msg->op_code) &&
 		(HDD_IPA_UC_STAT_REASON_DEBUG == hdd_ipa->stat_req_reason)) {
 		struct ol_txrx_ipa_resources *res = &hdd_ipa->ipa_resource;
 		/* STATs from host */
@@ -1572,8 +1569,8 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			uc_fw_stat->rx_num_pkts_indicated);
 		qdf_mutex_release(&hdd_ipa->ipa_lock);
 	} else {
-		HDD_IPA_LOG(LOGE, "INVALID REASON %d",
-			    hdd_ipa->stat_req_reason);
+		HDD_IPA_LOG(LOGE, "Invalid message: op_code=%d, reason=%d",
+			    msg->op_code, hdd_ipa->stat_req_reason);
 	}
 	qdf_mem_free(op_msg);
 }
@@ -1591,9 +1588,21 @@ static void hdd_ipa_uc_offload_enable_disable(hdd_adapter_t *adapter,
 			uint32_t offload_type, uint32_t enable)
 {
 	struct sir_ipa_offload_enable_disable ipa_offload_enable_disable;
+	struct hdd_ipa_iface_context *iface_context = NULL;
 
 	if (!adapter)
 		return;
+
+	iface_context = adapter->ipa_context;
+
+	if (!iface_context || (enable == iface_context->offload_enabled)) {
+		/* IPA offload status is already set as desired */
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
+			    "offload_type=%d, vdev_id=%d, enable=%d",
+			    offload_type, adapter->sessionId, enable);
+		WARN_ON(1);
+		return;
+	}
 
 	/* Lower layer may send multiple START_BSS_EVENT in DFS mode or during
 	 * channel change indication. Since these indications are sent by lower
@@ -1610,7 +1619,7 @@ static void hdd_ipa_uc_offload_enable_disable(hdd_adapter_t *adapter,
 	ipa_offload_enable_disable.enable = enable;
 
 	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
-		"%s: offload_type=%d, vdev_id=%d, enable=%d", __func__,
+		"offload_type=%d, vdev_id=%d, enable=%d",
 		ipa_offload_enable_disable.offload_type,
 		ipa_offload_enable_disable.vdev_id,
 		ipa_offload_enable_disable.enable);
@@ -1624,6 +1633,10 @@ static void hdd_ipa_uc_offload_enable_disable(hdd_adapter_t *adapter,
 			ipa_offload_enable_disable.offload_type,
 			ipa_offload_enable_disable.vdev_id,
 			ipa_offload_enable_disable.enable);
+	} else {
+		/* Update the IPA offload status */
+		iface_context->offload_enabled =
+			ipa_offload_enable_disable.enable;
 	}
 }
 
@@ -4107,6 +4120,7 @@ QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
 			hdd_ipa_adapter_2_client[i].prod_client;
 		iface_context->iface_id = i;
 		iface_context->adapter = NULL;
+		iface_context->offload_enabled = 0;
 		qdf_spinlock_create(&iface_context->interface_lock);
 	}
 
