@@ -43,7 +43,7 @@
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_post_ps_msg_to_wma(uint16_t type, void *body)
+static QDF_STATUS sme_post_ps_msg_to_wma(uint16_t type, void *body)
 {
 	cds_msg_t msg;
 
@@ -142,7 +142,7 @@ static void sme_get_ps_state(tpAniSirGlobal mac_ctx,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_ps_enable_ps_req_params(tpAniSirGlobal mac_ctx,
+static QDF_STATUS sme_ps_enable_ps_req_params(tpAniSirGlobal mac_ctx,
 		uint32_t session_id)
 {
 	struct sEnablePsParams *enable_ps_req_params;
@@ -186,7 +186,7 @@ QDF_STATUS sme_ps_enable_ps_req_params(tpAniSirGlobal mac_ctx,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_ps_disable_ps_req_params(tpAniSirGlobal mac_ctx,
+static QDF_STATUS sme_ps_disable_ps_req_params(tpAniSirGlobal mac_ctx,
 		uint32_t session_id)
 {
 	struct  sDisablePsParams *disable_ps_req_params;
@@ -218,7 +218,7 @@ QDF_STATUS sme_ps_disable_ps_req_params(tpAniSirGlobal mac_ctx,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_ps_enable_uapsd_req_params(tpAniSirGlobal mac_ctx,
+static QDF_STATUS sme_ps_enable_uapsd_req_params(tpAniSirGlobal mac_ctx,
 		uint32_t session_id)
 {
 
@@ -257,7 +257,7 @@ QDF_STATUS sme_ps_enable_uapsd_req_params(tpAniSirGlobal mac_ctx,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_ps_disable_uapsd_req_params(tpAniSirGlobal mac_ctx,
+static QDF_STATUS sme_ps_disable_uapsd_req_params(tpAniSirGlobal mac_ctx,
 		uint32_t session_id)
 {
 	struct sDisableUapsdParams *disable_uapsd_req_params;
@@ -296,7 +296,7 @@ QDF_STATUS sme_ps_disable_uapsd_req_params(tpAniSirGlobal mac_ctx,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_ps_enter_wowl_req_params(tpAniSirGlobal mac_ctx,
+static QDF_STATUS sme_ps_enter_wowl_req_params(tpAniSirGlobal mac_ctx,
 		uint32_t session_id)
 {
 	struct sSirHalWowlEnterParams *hal_wowl_params;
@@ -410,7 +410,7 @@ end:
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_ps_exit_wowl_req_params(tpAniSirGlobal mac_ctx,
+static QDF_STATUS sme_ps_exit_wowl_req_params(tpAniSirGlobal mac_ctx,
 		uint32_t session_id)
 {
 	struct sSirHalWowlExitParams *hal_wowl_msg;
