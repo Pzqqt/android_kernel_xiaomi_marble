@@ -626,7 +626,7 @@ uint16_t wlansap_check_cc_intf(void *Ctx)
   * Return:                                 The result code associated with
   *                                         performing the operation
   */
-QDF_STATUS
+static QDF_STATUS
 wlansap_set_scan_acs_channel_params(tsap_Config_t *pconfig,
 				ptSapContext psap_ctx,
 				void *pusr_context)

@@ -487,6 +487,7 @@ void sap_cleanup_channel_list(void *p_cds_gctx)
  *
  * Return: uint8_t best channel
  */
+static
 uint8_t sap_select_preferred_channel_from_channel_list(uint8_t best_chnl,
 				ptSapContext sap_ctx,
 				tSapChSelSpectInfo *spectinfo_param)
@@ -541,8 +542,9 @@ uint8_t sap_select_preferred_channel_from_channel_list(uint8_t best_chnl,
 
    SIDE EFFECTS
    ============================================================================*/
-bool sap_chan_sel_init(tHalHandle halHandle,
-		       tSapChSelSpectInfo *pSpectInfoParams, ptSapContext pSapCtx)
+static bool sap_chan_sel_init(tHalHandle halHandle,
+			      tSapChSelSpectInfo *pSpectInfoParams,
+			      ptSapContext pSapCtx)
 {
 	tSapSpectChInfo *pSpectCh = NULL;
 	uint8_t *pChans = NULL;
@@ -672,7 +674,7 @@ bool sap_chan_sel_init(tHalHandle halHandle,
 
    SIDE EFFECTS
    ============================================================================*/
-uint32_t sapweight_rssi_count(int8_t rssi, uint16_t count)
+static uint32_t sapweight_rssi_count(int8_t rssi, uint16_t count)
 {
 	int32_t rssiWeight = 0;
 	int32_t countWeight = 0;
@@ -716,8 +718,8 @@ uint32_t sapweight_rssi_count(int8_t rssi, uint16_t count)
  * Return: None.
  */
 
-void sap_update_rssi_bsscount(tSapSpectChInfo *pSpectCh, int32_t offset,
-			      bool sap_24g)
+static void sap_update_rssi_bsscount(tSapSpectChInfo *pSpectCh, int32_t offset,
+				     bool sap_24g)
 {
 	tSapSpectChInfo *pExtSpectCh = NULL;
 	int32_t rssi, rsssi_effect;
@@ -790,12 +792,12 @@ void sap_update_rssi_bsscount(tSapSpectChInfo *pSpectCh, int32_t offset,
  * Return: NA.
  */
 
-void sap_upd_chan_spec_params(tSirProbeRespBeacon *pBeaconStruct,
-			      uint16_t *channelWidth,
-			      uint16_t *secondaryChannelOffset,
-			      uint16_t *vhtSupport,
-			      uint16_t *centerFreq,
-			      uint16_t *centerFreq_2)
+static void sap_upd_chan_spec_params(tSirProbeRespBeacon *pBeaconStruct,
+				     uint16_t *channelWidth,
+				     uint16_t *secondaryChannelOffset,
+				     uint16_t *vhtSupport,
+				     uint16_t *centerFreq,
+				     uint16_t *centerFreq_2)
 {
 	if (NULL == pBeaconStruct) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -830,7 +832,7 @@ void sap_upd_chan_spec_params(tSirProbeRespBeacon *pBeaconStruct,
 /**
  * sap_update_rssi_bsscount_vht_5G() - updates bss count and rssi effect.
  *
- * @pSpectCh:     Channel Information
+ * @spect_ch:     Channel Information
  * @offset:       Channel Offset
  * @num_ch:       no.of channels
  *
@@ -840,8 +842,9 @@ void sap_upd_chan_spec_params(tSirProbeRespBeacon *pBeaconStruct,
  * Return: None.
  */
 
-void sap_update_rssi_bsscount_vht_5G(tSapSpectChInfo *spect_ch, int32_t offset,
-			      uint16_t num_ch)
+static void sap_update_rssi_bsscount_vht_5G(tSapSpectChInfo *spect_ch,
+					    int32_t offset,
+					    uint16_t num_ch)
 {
 	int32_t ch_offset;
 	uint16_t i, cnt;
@@ -875,12 +878,12 @@ void sap_update_rssi_bsscount_vht_5G(tSapSpectChInfo *spect_ch, int32_t offset,
  * Return: NA.
  */
 
-void sap_interference_rssi_count_5G(tSapSpectChInfo *spect_ch,
-				 uint16_t chan_width,
-				 uint16_t sec_chan_offset,
-				 uint16_t center_freq,
-				 uint16_t center_freq_2,
-				 uint8_t channel_id)
+static void sap_interference_rssi_count_5G(tSapSpectChInfo *spect_ch,
+					   uint16_t chan_width,
+					   uint16_t sec_chan_offset,
+					   uint16_t center_freq,
+					   uint16_t center_freq_2,
+					   uint8_t channel_id)
 {
 	uint16_t num_ch;
 	int32_t offset = 0;
@@ -964,7 +967,7 @@ void sap_interference_rssi_count_5G(tSapSpectChInfo *spect_ch,
  * Return: None.
  */
 
-void sap_interference_rssi_count(tSapSpectChInfo *spect_ch)
+static void sap_interference_rssi_count(tSapSpectChInfo *spect_ch)
 {
 	if (NULL == spect_ch) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -1060,21 +1063,18 @@ void sap_interference_rssi_count(tSapSpectChInfo *spect_ch)
 	}
 }
 
-/*==========================================================================
-  Function    ch_in_pcl
-
-  Description
-   Check if a channel is in the preferred channel list
-
-  Parameters
-   sap_ctx   SAP context pointer
-   channel   input channel number
-
-  Return Value
-   true:    channel is in PCL
-   false:   channel is not in PCL
- ==========================================================================*/
-bool ch_in_pcl(ptSapContext sap_ctx, uint8_t channel)
+/**
+ * ch_in_pcl() - Is channel in the Preferred Channel List (PCL)
+ * @sap_ctx: SAP context which contains the current PCL
+ * @channel: Input channel number to be checked
+ *
+ * Check if a channel is in the preferred channel list
+ *
+ * Return:
+ *   true:    channel is in PCL,
+ *   false:   channel is not in PCL
+ */
+static bool ch_in_pcl(ptSapContext sap_ctx, uint8_t channel)
 {
 	uint32_t i;
 
@@ -1086,32 +1086,21 @@ bool ch_in_pcl(ptSapContext sap_ctx, uint8_t channel)
 	return false;
 }
 
-/*==========================================================================
-   FUNCTION    sap_compute_spect_weight
-
-   DESCRIPTION
-    Main function for computing the weight of each channel in the
-    spectrum based on the RSSI value of the BSSes on the channel
-    and number of BSS
-
-   DEPENDENCIES
-    NA.
-
-   PARAMETERS
-
-    IN
-    pSpectInfoParams       : Pointer to the tSpectInfoParams structure
-    halHandle              : Pointer to HAL handle
-    pResult                : Pointer to tScanResultHandle
-
-   RETURN VALUE
-    void     : NULL
-
-   SIDE EFFECTS
-   ============================================================================*/
-void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
-			      tHalHandle halHandle, tScanResultHandle pResult,
-				ptSapContext sap_ctx)
+/**
+ * sap_compute_spect_weight() - Compute spectrum weight
+ * @pSpectInfoParams: Pointer to the tSpectInfoParams structure
+ * @halHandle: Pointer to HAL handle
+ * @pResult: Pointer to tScanResultHandle
+ * @sap_ctx: Context of the SAP
+ *
+ * Main function for computing the weight of each channel in the
+ * spectrum based on the RSSI value of the BSSes on the channel
+ * and number of BSS
+ */
+static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
+				     tHalHandle halHandle,
+				     tScanResultHandle pResult,
+				     ptSapContext sap_ctx)
 {
 	int8_t rssi = 0;
 	uint8_t chn_num = 0;
@@ -1299,7 +1288,7 @@ void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 
    SIDE EFFECTS
    ============================================================================*/
-void sap_chan_sel_exit(tSapChSelSpectInfo *pSpectInfoParams)
+static void sap_chan_sel_exit(tSapChSelSpectInfo *pSpectInfoParams)
 {
 	/* Free all the allocated memory */
 	qdf_mem_free(pSpectInfoParams->pSpectCh);
@@ -1324,7 +1313,7 @@ void sap_chan_sel_exit(tSapChSelSpectInfo *pSpectInfoParams)
 
    SIDE EFFECTS
    ============================================================================*/
-void sap_sort_chl_weight(tSapChSelSpectInfo *pSpectInfoParams)
+static void sap_sort_chl_weight(tSapChSelSpectInfo *pSpectInfoParams)
 {
 	tSapSpectChInfo temp;
 
@@ -1358,7 +1347,7 @@ void sap_sort_chl_weight(tSapChSelSpectInfo *pSpectInfoParams)
  *
  * Return: none
  */
-void sap_sort_chl_weight_ht80(tSapChSelSpectInfo *pSpectInfoParams)
+static void sap_sort_chl_weight_ht80(tSapChSelSpectInfo *pSpectInfoParams)
 {
 	uint8_t i, j, n;
 	tSapSpectChInfo *pSpectInfo;
@@ -1459,7 +1448,7 @@ void sap_sort_chl_weight_ht80(tSapChSelSpectInfo *pSpectInfoParams)
  *
  * Return: none
  */
-void sap_sort_chl_weight_vht160(tSapChSelSpectInfo *pSpectInfoParams)
+static void sap_sort_chl_weight_vht160(tSapChSelSpectInfo *pSpectInfoParams)
 {
 	uint8_t i, j, n, idx;
 	tSapSpectChInfo *pSpectInfo;
@@ -1598,7 +1587,7 @@ void sap_sort_chl_weight_vht160(tSapChSelSpectInfo *pSpectInfoParams)
  *
  * Return: none
  */
-void sap_sort_chl_weight_ht40_24_g(tSapChSelSpectInfo *pSpectInfoParams)
+static void sap_sort_chl_weight_ht40_24_g(tSapChSelSpectInfo *pSpectInfoParams)
 {
 	uint8_t i, j;
 	tSapSpectChInfo *pSpectInfo;
@@ -1708,7 +1697,7 @@ void sap_sort_chl_weight_ht40_24_g(tSapChSelSpectInfo *pSpectInfoParams)
 
    SIDE EFFECTS
    ============================================================================*/
-void sap_sort_chl_weight_ht40_5_g(tSapChSelSpectInfo *pSpectInfoParams)
+static void sap_sort_chl_weight_ht40_5_g(tSapChSelSpectInfo *pSpectInfoParams)
 {
 	uint8_t i, j;
 	tSapSpectChInfo *pSpectInfo;
@@ -1790,9 +1779,9 @@ void sap_sort_chl_weight_ht40_5_g(tSapChSelSpectInfo *pSpectInfoParams)
 
    SIDE EFFECTS
    ============================================================================*/
-void sap_sort_chl_weight_all(ptSapContext pSapCtx,
-			     tSapChSelSpectInfo *pSpectInfoParams,
-			     uint32_t operatingBand)
+static void sap_sort_chl_weight_all(ptSapContext pSapCtx,
+				    tSapChSelSpectInfo *pSpectInfoParams,
+				    uint32_t operatingBand)
 {
 	tSapSpectChInfo *pSpectCh = NULL;
 	uint32_t j = 0;
@@ -1882,7 +1871,7 @@ void sap_sort_chl_weight_all(ptSapContext pSapCtx,
 
    SIDE EFFECTS
    ============================================================================*/
-bool sap_filter_over_lap_ch(ptSapContext pSapCtx, uint16_t chNum)
+static bool sap_filter_over_lap_ch(ptSapContext pSapCtx, uint16_t chNum)
 {
 	if (pSapCtx->enableOverLapCh)
 		return eSAP_TRUE;
