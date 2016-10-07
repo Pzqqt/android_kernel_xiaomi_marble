@@ -249,4 +249,22 @@ unsigned long qdf_mc_timer_get_system_ticks(void);
  */
 unsigned long qdf_mc_timer_get_system_time(void);
 
+/**
+ * qdf_timer_module_init() - initializes a QDF timer module.
+ *
+ * This API initializes the QDF timer module. This needs to be called
+ * exactly once prior to using any QDF timers.
+ *
+ * Return: none
+ */
+void qdf_timer_module_init(void);
+
+/**
+ * qdf_timer_module_deinit() - Deinitializes a QDF timer module.
+ *
+ * This API deinitializes the QDF timer module.
+ * Return: none
+ */
+void qdf_timer_module_deinit(void);
+
 #endif /* __QDF_MC_TIMER_H */

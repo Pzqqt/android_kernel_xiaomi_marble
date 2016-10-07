@@ -953,6 +953,7 @@ EXPORT_SYMBOL(dump_hex_trace);
  *
  * Return: string version of code
  */
+static
 const char *qdf_dp_code_to_string(enum QDF_DP_TRACE_ID code)
 {
 	switch (code) {
@@ -1004,7 +1005,6 @@ const char *qdf_dp_code_to_string(enum QDF_DP_TRACE_ID code)
 		return "Invalid";
 	}
 }
-EXPORT_SYMBOL(qdf_dp_code_to_string);
 
 /**
  * qdf_dp_dir_to_str() - convert direction to string
@@ -1012,7 +1012,7 @@ EXPORT_SYMBOL(qdf_dp_code_to_string);
  *
  * Return: string version of direction
  */
-const char *qdf_dp_dir_to_str(enum qdf_proto_dir dir)
+static const char *qdf_dp_dir_to_str(enum qdf_proto_dir dir)
 {
 	switch (dir) {
 	case QDF_TX:
@@ -1023,7 +1023,6 @@ const char *qdf_dp_dir_to_str(enum qdf_proto_dir dir)
 		return "invalid";
 	}
 }
-EXPORT_SYMBOL(qdf_dp_dir_to_str);
 
 /**
  * qdf_dp_type_to_str() - convert packet type to string
@@ -1031,7 +1030,7 @@ EXPORT_SYMBOL(qdf_dp_dir_to_str);
  *
  * Return: string version of packet type
  */
-const char *qdf_dp_type_to_str(enum qdf_proto_type type)
+static const char *qdf_dp_type_to_str(enum qdf_proto_type type)
 {
 	switch (type) {
 	case QDF_PROTO_TYPE_DHCP:
@@ -1046,7 +1045,6 @@ const char *qdf_dp_type_to_str(enum qdf_proto_type type)
 		return "invalid";
 	}
 }
-EXPORT_SYMBOL(qdf_dp_type_to_str);
 
 /**
  * qdf_dp_subtype_to_str() - convert packet subtype to string
@@ -1054,7 +1052,7 @@ EXPORT_SYMBOL(qdf_dp_type_to_str);
  *
  * Return: string version of packet subtype
  */
-const char *qdf_dp_subtype_to_str(enum qdf_proto_subtype subtype)
+static const char *qdf_dp_subtype_to_str(enum qdf_proto_subtype subtype)
 {
 	switch (subtype) {
 	case QDF_PROTO_EAPOL_M1:
@@ -1097,7 +1095,6 @@ const char *qdf_dp_subtype_to_str(enum qdf_proto_subtype subtype)
 		return "invalid";
 	}
 }
-EXPORT_SYMBOL(qdf_dp_subtype_to_str);
 
 /**
  * qdf_dp_enable_check() - check if dptrace is enable or not
@@ -1106,8 +1103,8 @@ EXPORT_SYMBOL(qdf_dp_subtype_to_str);
  *
  * Return: true/false
  */
-bool qdf_dp_enable_check(qdf_nbuf_t nbuf, enum QDF_DP_TRACE_ID code,
-		enum qdf_proto_dir dir)
+static bool qdf_dp_enable_check(qdf_nbuf_t nbuf, enum QDF_DP_TRACE_ID code,
+				enum qdf_proto_dir dir)
 {
 	/* Return when Dp trace is not enabled */
 	if (!g_qdf_dp_trace_data.enable)
@@ -1124,7 +1121,6 @@ bool qdf_dp_enable_check(qdf_nbuf_t nbuf, enum QDF_DP_TRACE_ID code,
 
 	return true;
 }
-EXPORT_SYMBOL(qdf_dp_enable_check);
 
 /**
  * qdf_dp_add_record() - add dp trace record
@@ -1135,8 +1131,8 @@ EXPORT_SYMBOL(qdf_dp_enable_check);
  *
  * Return: none
  */
-void qdf_dp_add_record(enum QDF_DP_TRACE_ID code,
-		       uint8_t *data, uint8_t size, bool print)
+static void qdf_dp_add_record(enum QDF_DP_TRACE_ID code,
+			      uint8_t *data, uint8_t size, bool print)
 {
 	struct qdf_dp_trace_record_s *rec = NULL;
 	int index;
@@ -1184,7 +1180,6 @@ void qdf_dp_add_record(enum QDF_DP_TRACE_ID code,
 	if (g_qdf_dp_trace_data.live_mode || (print == true))
 		qdf_dp_trace_cb_table[rec->code] (rec, index);
 }
-EXPORT_SYMBOL(qdf_dp_add_record);
 
 
 /**
@@ -1195,8 +1190,8 @@ EXPORT_SYMBOL(qdf_dp_add_record);
  *
  * Return: true/false
  */
-bool qdf_log_eapol_pkt(uint8_t session_id, struct sk_buff *skb,
-		       enum qdf_proto_dir dir)
+static bool qdf_log_eapol_pkt(uint8_t session_id, struct sk_buff *skb,
+			      enum qdf_proto_dir dir)
 {
 	enum qdf_proto_subtype subtype;
 
@@ -1218,7 +1213,6 @@ bool qdf_log_eapol_pkt(uint8_t session_id, struct sk_buff *skb,
 	}
 	return false;
 }
-EXPORT_SYMBOL(qdf_log_eapol_pkt);
 
 /**
  * qdf_log_dhcp_pkt() - log DHCP packet
@@ -1228,8 +1222,8 @@ EXPORT_SYMBOL(qdf_log_eapol_pkt);
  *
  * Return: true/false
  */
-bool qdf_log_dhcp_pkt(uint8_t session_id, struct sk_buff *skb,
-		      enum qdf_proto_dir dir)
+static bool qdf_log_dhcp_pkt(uint8_t session_id, struct sk_buff *skb,
+			     enum qdf_proto_dir dir)
 {
 	enum qdf_proto_subtype subtype = QDF_PROTO_INVALID;
 
@@ -1251,7 +1245,6 @@ bool qdf_log_dhcp_pkt(uint8_t session_id, struct sk_buff *skb,
 	}
 	return false;
 }
-EXPORT_SYMBOL(qdf_log_dhcp_pkt);
 
 /**
  * qdf_log_arp_pkt() - log ARP packet
@@ -1261,8 +1254,8 @@ EXPORT_SYMBOL(qdf_log_dhcp_pkt);
  *
  * Return: true/false
  */
-bool qdf_log_arp_pkt(uint8_t session_id, struct sk_buff *skb,
-		     enum qdf_proto_dir dir)
+static bool qdf_log_arp_pkt(uint8_t session_id, struct sk_buff *skb,
+			    enum qdf_proto_dir dir)
 {
 	enum qdf_proto_subtype proto_subtype;
 
@@ -1284,7 +1277,6 @@ bool qdf_log_arp_pkt(uint8_t session_id, struct sk_buff *skb,
 	}
 	return false;
 }
-EXPORT_SYMBOL(qdf_log_arp_pkt);
 
 /**
  * qdf_dp_trace_log_pkt() - log packet type enabled through iwpriv
