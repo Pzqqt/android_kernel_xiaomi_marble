@@ -4144,7 +4144,6 @@ void ol_txrx_ipa_uc_fw_op_event_handler(void *context,
 	}
 }
 
-#ifdef QCA_CONFIG_SMP
 /**
  * ol_txrx_ipa_uc_op_response() - Handle OP command response from firmware
  * @pdev: handle to the HTT instance
@@ -4152,28 +4151,6 @@ void ol_txrx_ipa_uc_fw_op_event_handler(void *context,
  *
  * Return: none
  */
-void ol_txrx_ipa_uc_op_response(ol_txrx_pdev_handle pdev, uint8_t *op_msg)
-{
-	p_cds_sched_context sched_ctx = get_cds_sched_ctxt();
-	struct cds_ol_rx_pkt *pkt;
-
-	if (qdf_unlikely(!sched_ctx))
-		return;
-
-	pkt = cds_alloc_ol_rx_pkt(sched_ctx);
-	if (qdf_unlikely(!pkt)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Not able to allocate context", __func__);
-		return;
-	}
-
-	pkt->callback = (cds_ol_rx_thread_cb) ol_txrx_ipa_uc_fw_op_event_handler;
-	pkt->context = pdev;
-	pkt->Rxpkt = (void *)op_msg;
-	pkt->staId = 0;
-	cds_indicate_rxpkt(sched_ctx, pkt);
-}
-#else
 void ol_txrx_ipa_uc_op_response(ol_txrx_pdev_handle pdev,
 				uint8_t *op_msg)
 {
@@ -4186,7 +4163,6 @@ void ol_txrx_ipa_uc_op_response(ol_txrx_pdev_handle pdev,
 		return;
 	}
 }
-#endif
 
 /**
  * ol_txrx_ipa_uc_register_op_cb() - Register OP handler function
