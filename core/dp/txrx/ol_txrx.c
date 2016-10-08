@@ -2213,6 +2213,8 @@ ol_txrx_peer_attach(void *pvdev, uint8_t *peer_mac_addr)
 			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 				"error waiting for peer(%d) deletion, status %d\n",
 				vdev->wait_on_peer_id, (int) rc);
+			/* Added for debugging only */
+			QDF_BUG(0);
 			vdev->wait_on_peer_id = OL_TXRX_INVALID_LOCAL_PEER_ID;
 			return NULL;
 		}
