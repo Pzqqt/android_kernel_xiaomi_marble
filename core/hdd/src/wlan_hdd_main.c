@@ -3209,6 +3209,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 	case QDF_P2P_DEVICE_MODE:
 	case QDF_OCB_MODE:
 	case QDF_NDI_MODE:
+	case QDF_MONITOR_MODE:
 		adapter = hdd_alloc_station_adapter(hdd_ctx, macAddr,
 						    name_assign_type,
 						    iface_name);
@@ -3223,6 +3224,8 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 			adapter->wdev.iftype = NL80211_IFTYPE_P2P_CLIENT;
 		else if (QDF_P2P_DEVICE_MODE == session_type)
 			adapter->wdev.iftype = NL80211_IFTYPE_P2P_DEVICE;
+		else if (QDF_MONITOR_MODE == session_type)
+			adapter->wdev.iftype = NL80211_IFTYPE_MONITOR;
 		else
 			adapter->wdev.iftype = NL80211_IFTYPE_STATION;
 
@@ -3285,6 +3288,27 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 			hdd_deinit_adapter(hdd_ctx, adapter, rtnl_held);
 			goto err_free_netdev;
 		}
+		hdd_info("Disabling queues");
+		wlan_hdd_netif_queue_control(adapter,
+					     WLAN_NETIF_TX_DISABLE_N_CARRIER,
+					     WLAN_CONTROL_PATH);
+		break;
+	case QDF_FTM_MODE:
+		adapter = hdd_alloc_station_adapter(hdd_ctx, macAddr,
+						    name_assign_type,
+						    "wlan0");
+		if (NULL == adapter) {
+			hdd_err("Failed to allocate adapter for FTM mode");
+			return NULL;
+		}
+		adapter->wdev.iftype = NL80211_IFTYPE_STATION;
+		adapter->device_mode = session_type;
+		status = hdd_register_interface(adapter, rtnl_held);
+		if (QDF_STATUS_SUCCESS != status) {
+			hdd_deinit_adapter(hdd_ctx, adapter, rtnl_held);
+			goto err_free_netdev;
+		}
+		/* Stop the Interface TX queue. */
 		hdd_info("Disabling queues");
 		wlan_hdd_netif_queue_control(adapter,
 					     WLAN_NETIF_TX_DISABLE_N_CARRIER,
@@ -3390,6 +3414,7 @@ QDF_STATUS hdd_close_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 		/* Fw will take care incase of concurrency */
 		return QDF_STATUS_SUCCESS;
 	}
+
 	return QDF_STATUS_E_FAILURE;
 }
 
@@ -3412,9 +3437,14 @@ QDF_STATUS hdd_close_all_adapters(hdd_context_t *hdd_ctx, bool rtnl_held)
 	do {
 		status = hdd_remove_front_adapter(hdd_ctx, &pHddAdapterNode);
 		if (pHddAdapterNode && QDF_STATUS_SUCCESS == status) {
+			wlan_hdd_release_intf_addr(hdd_ctx,
+			pHddAdapterNode->pAdapter->macAddressCurrent.bytes);
 			hdd_cleanup_adapter(hdd_ctx, pHddAdapterNode->pAdapter,
 					    rtnl_held);
 			qdf_mem_free(pHddAdapterNode);
+			/* Adapter removed. Decrement vdev count */
+			if (hdd_ctx->current_intf_count != 0)
+				hdd_ctx->current_intf_count--;
 		}
 	} while (NULL != pHddAdapterNode && QDF_STATUS_E_EMPTY != status);
 
@@ -9229,6 +9259,7 @@ static bool is_con_mode_valid(enum tQDF_GLOBAL_CON_MODE mode)
 	case QDF_GLOBAL_MONITOR_MODE:
 	case QDF_GLOBAL_FTM_MODE:
 	case QDF_GLOBAL_EPPING_MODE:
+	case QDF_GLOBAL_MISSION_MODE:
 		return true;
 	default:
 		return false;
@@ -9250,15 +9281,96 @@ static enum tQDF_ADAPTER_MODE hdd_get_adpter_mode(
 		return QDF_STA_MODE;
 	case QDF_GLOBAL_MONITOR_MODE:
 		return QDF_MONITOR_MODE;
-	case QDF_GLOBAL_FTM_MODE:
-		return QDF_FTM_MODE;
 	case QDF_GLOBAL_EPPING_MODE:
 		return QDF_EPPING_MODE;
+	case QDF_GLOBAL_FTM_MODE:
+		return QDF_FTM_MODE;
 	case QDF_GLOBAL_QVIT_MODE:
 		return QDF_QVIT_MODE;
 	default:
 		return QDF_MAX_NO_OF_MODE;
 	}
+}
+
+static void hdd_cleanup_present_mode(hdd_context_t *hdd_ctx,
+				    enum tQDF_GLOBAL_CON_MODE curr_mode)
+{
+	switch (curr_mode) {
+	case QDF_GLOBAL_MISSION_MODE:
+	case QDF_GLOBAL_MONITOR_MODE:
+	case QDF_GLOBAL_FTM_MODE:
+		hdd_abort_mac_scan_all_adapters(hdd_ctx);
+		hdd_stop_all_adapters(hdd_ctx);
+		hdd_deinit_all_adapters(hdd_ctx, false);
+		hdd_close_all_adapters(hdd_ctx, false);
+		break;
+	case QDF_GLOBAL_EPPING_MODE:
+		epping_disable();
+		epping_close();
+		break;
+	default:
+		return;
+	}
+}
+
+static int hdd_register_req_mode(hdd_context_t *hdd_ctx,
+				 enum tQDF_GLOBAL_CON_MODE mode)
+{
+	hdd_adapter_t *adapter;
+	int ret = 0;
+	bool rtnl_held;
+	qdf_device_t qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	QDF_STATUS status;
+
+	if (!qdf_dev) {
+		hdd_err("qdf device context is Null return!");
+		return -EINVAL;
+	}
+
+	rtnl_held = hdd_hold_rtnl_lock();
+	switch (mode) {
+	case QDF_GLOBAL_MISSION_MODE:
+		adapter = hdd_open_interfaces(hdd_ctx, rtnl_held);
+		if (IS_ERR(adapter)) {
+			hdd_alert("Failed to open interface, adapter is NULL");
+			ret = -EINVAL;
+		}
+		break;
+	case QDF_GLOBAL_FTM_MODE:
+		adapter = hdd_open_adapter(hdd_ctx, QDF_FTM_MODE, "wlan%d",
+					   wlan_hdd_get_intf_addr(hdd_ctx),
+					   NET_NAME_UNKNOWN, rtnl_held);
+		if (adapter == NULL)
+			ret = -EINVAL;
+		break;
+	case QDF_GLOBAL_MONITOR_MODE:
+		adapter = hdd_open_adapter(hdd_ctx, QDF_MONITOR_MODE, "wlan%d",
+					   wlan_hdd_get_intf_addr(hdd_ctx),
+					   NET_NAME_UNKNOWN, rtnl_held);
+		if (adapter == NULL)
+			ret = -EINVAL;
+		break;
+	case QDF_GLOBAL_EPPING_MODE:
+		status = epping_open();
+		 if (status != QDF_STATUS_SUCCESS) {
+			hdd_err("Failed to open in eeping mode: %d", status);
+			ret = -EINVAL;
+			break;
+		}
+		ret = epping_enable(qdf_dev->dev);
+		if (ret) {
+			hdd_err("Failed to enable in epping mode : %d", ret);
+			epping_close();
+		}
+		break;
+	default:
+		hdd_info("Mode not supported");
+		ret = -ENOTSUPP;
+		break;
+	}
+	hdd_release_rtnl_lock();
+	rtnl_held = false;
+	return ret;
 }
 
 /**
@@ -9271,100 +9383,103 @@ static enum tQDF_ADAPTER_MODE hdd_get_adpter_mode(
  *
  * Return - 0 on success and failure code on failure
  */
-static int con_mode_handler(const char *kmessage, struct kernel_param *kp)
+static int __con_mode_handler(const char *kmessage, struct kernel_param *kp,
+			      hdd_context_t *hdd_ctx)
 {
 	int ret;
-	hdd_context_t *hdd_ctx;
 	hdd_adapter_t *adapter;
-	qdf_device_t qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	enum tQDF_GLOBAL_CON_MODE curr_mode;
 	enum tQDF_ADAPTER_MODE adapter_mode;
-	QDF_STATUS status;
+
+	cds_set_load_in_progress(true);
 
 	hdd_info("con_mode handler: %s", kmessage);
 	ret = param_set_int(kmessage, kp);
 
-	if (!qdf_dev) {
-		hdd_err("qdf device context is Null return!");
-		return -EINVAL;
-	}
 
-	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("Hdd context Null return!");
-		return -EINVAL;
-	}
 
 	if (!(is_con_mode_valid(con_mode))) {
 		hdd_err("invlaid con_mode %d", con_mode);
-		return -EINVAL;
+		ret = -EINVAL;
+		goto reset_flags;
 	}
+
 	curr_mode = hdd_get_conparam();
 	if (curr_mode == con_mode) {
 		hdd_err("curr mode: %d is same as user triggered mode %d",
 		       curr_mode, con_mode);
-		return 0;
+		ret = 0;
+		goto reset_flags;
 	}
 
-	adapter_mode = hdd_get_adpter_mode(curr_mode);
-	if (adapter_mode == QDF_MAX_NO_OF_MODE) {
-		hdd_err("invalid adapter");
-		return -EINVAL;
-	}
-
-	hdd_stop_all_adapters(hdd_ctx);
-	hdd_deinit_all_adapters(hdd_ctx, false);
+	/* Cleanup present mode before switching to new mode */
+	hdd_cleanup_present_mode(hdd_ctx, curr_mode);
 
 	ret = hdd_wlan_stop_modules(hdd_ctx);
 	if (ret) {
 		hdd_err("Stop wlan modules failed");
-		return -EINVAL;
+		goto reset_flags;
+	}
+
+	hdd_set_conparam(con_mode);
+
+	/* Register for new con_mode & then kick_start modules again */
+	ret = hdd_register_req_mode(hdd_ctx, con_mode);
+	if (ret) {
+		hdd_err("Failed to register for new mode");
+		goto reset_flags;
+	}
+
+	adapter_mode = hdd_get_adpter_mode(con_mode);
+	if (adapter_mode == QDF_MAX_NO_OF_MODE) {
+		hdd_err("invalid adapter");
+		ret = -EINVAL;
+		goto reset_flags;
 	}
 
 	adapter = hdd_get_adapter(hdd_ctx, adapter_mode);
 	if (!adapter) {
-		hdd_err("Failed to get adapter, mode: %d", curr_mode);
-		return -EINVAL;
-	}
-
-	if (con_mode == QDF_GLOBAL_FTM_MODE) {
-		adapter->device_mode = QDF_FTM_MODE;
-		hdd_set_conparam(QDF_GLOBAL_FTM_MODE);
-	} else if (con_mode == QDF_GLOBAL_MONITOR_MODE) {
-		adapter->wdev.iftype = NL80211_IFTYPE_MONITOR;
-		adapter->device_mode = QDF_MONITOR_MODE;
-		hdd_set_conparam(QDF_GLOBAL_MONITOR_MODE);
-		hdd_set_station_ops(adapter->dev);
-	} else if (con_mode == QDF_GLOBAL_EPPING_MODE) {
-		hdd_set_conparam(QDF_GLOBAL_EPPING_MODE);
-		status = epping_open();
-		if (status != QDF_STATUS_SUCCESS) {
-			hdd_err("Failed to open in eeping mode: %d", status);
-			return -EINVAL;
-		}
-		ret = epping_enable(qdf_dev->dev);
-		if (ret) {
-			hdd_err("Failed to enable in epping mode : %d", ret);
-			epping_close();
-			return -EINVAL;
-		}
-		hdd_info("epping mode successfully enabled");
-		return 0;
+		hdd_err("Failed to get adapter:%d", adapter_mode);
+		goto reset_flags;
 	}
 
 	ret = hdd_wlan_start_modules(hdd_ctx, adapter, false);
 	if (ret) {
 		hdd_err("Start wlan modules failed: %d", ret);
-		return -EINVAL;
+		goto reset_flags;
 	}
 
-	if (hdd_start_adapter(adapter)) {
-		hdd_err("Failed to start %s adapter", kmessage);
-		return -EINVAL;
-	} else {
-		hdd_info("Mode successfully changed to %s", kmessage);
-		ret = 0;
+	if (con_mode == QDF_GLOBAL_MONITOR_MODE ||
+		con_mode == QDF_GLOBAL_FTM_MODE) {
+		if (hdd_start_adapter(adapter)) {
+			hdd_err("Failed to start %s adapter", kmessage);
+			ret = -EINVAL;
+			goto reset_flags;
+		}
 	}
+
+	hdd_info("Mode successfully changed to %s", kmessage);
+	ret = 0;
+
+reset_flags:
+	cds_set_load_in_progress(false);
+	return ret;
+}
+
+
+static int con_mode_handler(const char *kmessage, struct kernel_param *kp)
+{
+	int ret;
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret)
+		return ret;
+
+	cds_ssr_protect(__func__);
+	ret = __con_mode_handler(kmessage, kp, hdd_ctx);
+	cds_ssr_unprotect(__func__);
 
 	return ret;
 }
