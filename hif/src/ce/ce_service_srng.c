@@ -519,7 +519,7 @@ ce_completed_send_next_nolock_srng(struct CE_state *CE_state,
 		src_ring->sw_index = sw_index;
 		status = QDF_STATUS_SUCCESS;
 	}
-	hal_srng_access_end(scn->hal_soc, src_ring->srng_ctx);
+	hal_srng_access_end_reap(scn->hal_soc, src_ring->srng_ctx);
 
 	return status;
 }

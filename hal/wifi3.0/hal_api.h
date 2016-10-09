@@ -492,6 +492,21 @@ static inline void hal_srng_access_end(void *hal_soc, void *hal_ring)
 	SRNG_UNLOCK(&(srng->lock));
 }
 
+/**
+ * hal_srng_access_end_reap - Unlock ring access
+ * This should be used only if hal_srng_access_start to start ring access
+ * and should be used only while reaping SRC ring completions
+ *
+ * @hal_soc: Opaque HAL SOC handle
+ * @hal_ring: Ring pointer (Source or Destination ring)
+ *
+ * Return: 0 on success; error on failire
+ */
+static inline void hal_srng_access_end_reap(void *hal_soc, void *hal_ring)
+{
+	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	SRNG_UNLOCK(&(srng->lock));
+}
 
 /* TODO: Check if the following definitions is available in HW headers */
 #define WBM_IDLE_DESC_LIST 1
