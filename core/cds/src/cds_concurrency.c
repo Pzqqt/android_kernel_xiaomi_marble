@@ -3958,23 +3958,27 @@ static void cds_dbs_opportunistic_timer_handler(void *data)
 QDF_STATUS cds_deinit_policy_mgr(void)
 {
 	cds_context_type *cds_ctx;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
 		cds_err("Invalid CDS Context");
-		return QDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
+		QDF_ASSERT(0);
 	}
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_event_destroy
 				  (&cds_ctx->connection_update_done_evt))) {
 		cds_err("Failed to destroy connection_update_done_evt");
-		return QDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
+		QDF_ASSERT(0);
 	}
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_destroy(
 					&cds_ctx->qdf_conc_list_lock))) {
 		cds_err("Failed to destroy qdf_conc_list_lock");
-		return QDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
+		QDF_ASSERT(0);
 	}
 
 	if (QDF_TIMER_STATE_RUNNING ==
@@ -3986,7 +3990,8 @@ QDF_STATUS cds_deinit_policy_mgr(void)
 	if (!QDF_IS_STATUS_SUCCESS(qdf_mc_timer_destroy(
 				      &cds_ctx->dbs_opportunistic_timer))) {
 		cds_err("Cannot deallocate dbs opportunistic timer");
-		return QDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
+		QDF_ASSERT(0);
 	}
 
 	cds_ctx->sme_get_valid_channels = NULL;
@@ -3994,10 +3999,11 @@ QDF_STATUS cds_deinit_policy_mgr(void)
 
 	if (QDF_IS_STATUS_ERROR(cds_reset_sap_mandatory_channels())) {
 		cds_err("failed to reset sap mandatory channels");
-		return QDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
+		QDF_ASSERT(0);
 	}
 
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 
 /**
