@@ -394,8 +394,9 @@ static QDF_STATUS sme_ps_enter_wowl_req_params(tpAniSirGlobal mac_ctx,
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 			FL("Msg WMA_WOWL_ENTER_REQ Successfully sent to WMA"));
 		return QDF_STATUS_SUCCESS;
-	} else
-		goto end;
+	} else {
+		return QDF_STATUS_E_FAILURE;
+	}
 
 end:
 	if (hal_wowl_params != NULL)
@@ -429,10 +430,9 @@ static QDF_STATUS sme_ps_exit_wowl_req_params(tpAniSirGlobal mac_ctx,
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 			FL("Msg WMA_WOWL_EXIT_REQ Successfully sent to WMA"));
 		return QDF_STATUS_SUCCESS;
+	} else {
+		return QDF_STATUS_E_FAILURE;
 	}
-	if (hal_wowl_msg != NULL)
-		qdf_mem_free(hal_wowl_msg);
-	return QDF_STATUS_E_FAILURE;
 }
 
 /**
