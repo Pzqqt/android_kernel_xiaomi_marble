@@ -7711,6 +7711,7 @@ out:
 static int hdd_deconfigure_cds(hdd_context_t *hdd_ctx)
 {
 	QDF_STATUS qdf_status;
+	int ret = 0;
 
 	ENTER();
 	/* De-register the SME callbacks */
@@ -7721,18 +7722,18 @@ static int hdd_deconfigure_cds(hdd_context_t *hdd_ctx)
 	if (!QDF_IS_STATUS_SUCCESS(cds_deinit_policy_mgr())) {
 		hdd_err("Failed to deinit policy manager");
 		/* Proceed and complete the clean up */
-		return -EINVAL;
+		ret = -EINVAL;
 	}
 
 	qdf_status = cds_disable(hdd_ctx->pcds_context);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("Failed to Disable the CDS Modules! :%d",
 			qdf_status);
-		return -EINVAL;
+		ret = -EINVAL;
 	}
 
 	EXIT();
-	return 0;
+	return ret;
 }
 
 
@@ -7786,7 +7787,6 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx)
 			hdd_alert("Failed to de-configure CDS");
 			QDF_ASSERT(0);
 			ret = -EINVAL;
-			goto done;
 		}
 		hdd_info("successfully Disabled the CDS modules!");
 		hdd_ctx->driver_status = DRIVER_MODULES_OPENED;
@@ -7815,7 +7815,6 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx)
 	if (!hif_ctx) {
 		hdd_err("Hif context is Null");
 		ret = -EINVAL;
-		goto done;
 	}
 
 	hdd_hif_close(hif_ctx);
