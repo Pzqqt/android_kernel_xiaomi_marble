@@ -9335,13 +9335,12 @@ void found_pref_network_cb(void *callbackContext,
  * for each network:
  *    <ssid_len> <ssid> <authentication> <encryption>
  *    <ch_num> <channel_list optional> <bcast_type> <rssi_threshold>
- * <number of scan timers>
- * for each timer:
- *    <scan_time> <scan_repeat>
+ * <scan_time (seconds)>
+ * <scan_repeat_count (0 means indefinite)>
  * <suspend mode>
  *
  * e.g:
- * 1 2 4 test 0 0 3 1 6 11 2 40 5 test2 4 4 6 1 2 3 4 5 6 1 0 2 5 2 300 0 1
+ * 1 2 4 test 0 0 3 1 6 11 2 40 5 test2 4 4 6 1 2 3 4 5 6 1 0 5 2 1
  *
  * this translates into:
  * -----------------------------
@@ -9357,10 +9356,8 @@ void found_pref_network_cb(void *callbackContext,
  *   search on 6 channels 1, 2, 3, 4, 5 and 6
  *   bcast type is non-bcast (directed probe will be sent)
  *   and must not meet any RSSI threshold
- * 2 scan timers:
  *   scan every 5 seconds 2 times
- *   then scan every 300 seconds until stopped
- * enable on suspend
+ *   enable on suspend
  */
 static int __iw_set_pno(struct net_device *dev,
 			struct iw_request_info *info,
@@ -9525,6 +9522,17 @@ static int __iw_set_pno(struct net_device *dev,
 		/* Advance to next network */
 		ptr += offset;
 	} /* For ucNetworkCount */
+
+	request.fast_scan_period = 0;
+	if (sscanf(ptr, "%u %n", &(request.fast_scan_period), &offset) > 0) {
+		request.fast_scan_period *= MSEC_PER_SEC;
+		ptr += offset;
+	}
+
+	request.fast_scan_max_cycles = 0;
+	if (sscanf(ptr, "%hhu %n", &(request.fast_scan_max_cycles),
+		   &offset) > 0)
+		ptr += offset;
 
 	params = sscanf(ptr, "%hhu %n", &(mode), &offset);
 
