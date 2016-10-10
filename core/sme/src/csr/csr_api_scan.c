@@ -104,8 +104,6 @@ static bool csr_scan_validate_scan_result(tpAniSirGlobal pMac, uint8_t *pChannel
 					  tSirBssDescription *pBssDesc,
 					  tDot11fBeaconIEs **ppIes);
 bool csr_roam_is_valid_channel(tpAniSirGlobal pMac, uint8_t channel);
-void csr_prune_channel_list_for_mode(tpAniSirGlobal pMac,
-				     tCsrChannel *pChannelList);
 static void csr_purge_scan_result_by_age(void *pv);
 
 #define CSR_IS_SOCIAL_CHANNEL(channel) \

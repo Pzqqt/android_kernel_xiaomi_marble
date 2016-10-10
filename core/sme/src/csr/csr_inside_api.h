@@ -1077,4 +1077,5 @@ QDF_STATUS csr_roam_set_bss_config_cfg(tpAniSirGlobal mac_ctx,
 		tCsrRoamProfile *profile, tSirBssDescription *bss_desc,
 		tBssConfigParam *bss_cfg, tDot11fBeaconIEs *ies,
 		bool reset_country);
-
+void csr_prune_channel_list_for_mode(tpAniSirGlobal pMac,
+				     tCsrChannel *pChannelList);
