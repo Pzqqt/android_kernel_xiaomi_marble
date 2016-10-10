@@ -353,7 +353,11 @@ struct ol_tx_sched_t;
 
 
 #ifndef OL_TXRX_NUM_LOCAL_PEER_IDS
-#define OL_TXRX_NUM_LOCAL_PEER_IDS 33   /* default */
+/*
+ * Each AP will occupy one ID, so it will occupy two IDs for AP-AP mode.
+ * And the remainder IDs will be assigned to other 32 clients.
+ */
+#define OL_TXRX_NUM_LOCAL_PEER_IDS (2 + 32)
 #endif
 
 #ifndef ol_txrx_local_peer_id_t
