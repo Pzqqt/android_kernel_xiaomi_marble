@@ -6150,17 +6150,24 @@ void wlan_hdd_display_tx_rx_histogram(hdd_context_t *hdd_ctx)
 	hdd_err("index, total_rx, interval_rx, total_tx, interval_tx, bus_bw_level, RX TP Level, TX TP Level");
 
 	for (i = 0; i < NUM_TX_RX_HISTOGRAM; i++) {
-		hdd_err("%d: %llu, %llu, %llu, %llu, %s, %s, %s",
-			i, hdd_ctx->hdd_txrx_hist[i].total_rx,
-			hdd_ctx->hdd_txrx_hist[i].interval_rx,
-			hdd_ctx->hdd_txrx_hist[i].total_tx,
-			hdd_ctx->hdd_txrx_hist[i].interval_tx,
-			convert_level_to_string(
-				hdd_ctx->hdd_txrx_hist[i].next_vote_level),
-			convert_level_to_string(
-				hdd_ctx->hdd_txrx_hist[i].next_rx_level),
-			convert_level_to_string(
-				hdd_ctx->hdd_txrx_hist[i].next_tx_level));
+		/* using hdd_log to avoid printing function name */
+		if (hdd_ctx->hdd_txrx_hist[i].total_rx != 0 ||
+			hdd_ctx->hdd_txrx_hist[i].total_tx != 0)
+			hdd_log(QDF_TRACE_LEVEL_ERROR,
+				"%d: %llu, %llu, %llu, %llu, %s, %s, %s",
+				i, hdd_ctx->hdd_txrx_hist[i].total_rx,
+				hdd_ctx->hdd_txrx_hist[i].interval_rx,
+				hdd_ctx->hdd_txrx_hist[i].total_tx,
+				hdd_ctx->hdd_txrx_hist[i].interval_tx,
+				convert_level_to_string(
+					hdd_ctx->hdd_txrx_hist[i].
+						next_vote_level),
+				convert_level_to_string(
+					hdd_ctx->hdd_txrx_hist[i].
+						next_rx_level),
+				convert_level_to_string(
+					hdd_ctx->hdd_txrx_hist[i].
+						next_tx_level));
 	}
 	return;
 }
@@ -6197,7 +6204,7 @@ void wlan_hdd_display_netif_queue_history(hdd_context_t *hdd_ctx)
 	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
 		adapter = adapter_node->pAdapter;
 
-		hdd_err("\nNetif queue operation statistics:");
+		hdd_err("Netif queue operation statistics:");
 		hdd_err("Session_id %d device mode %d",
 			adapter->sessionId, adapter->device_mode);
 		hdd_err("Current pause_map value %x", adapter->pause_map);
@@ -6223,7 +6230,9 @@ void wlan_hdd_display_netif_queue_history(hdd_context_t *hdd_ctx)
 			if (adapter->pause_map & (1 << i))
 				pause_delta = delta;
 
-			hdd_err("%s: %d: %d: %ums",
+			/* using hdd_log to avoid printing function name */
+			hdd_log(QDF_TRACE_LEVEL_ERROR,
+				"%s: %d: %d: %ums",
 				hdd_reason_type_to_string(i),
 				adapter->queue_oper_stats[i].pause_count,
 				adapter->queue_oper_stats[i].unpause_count,
@@ -6232,14 +6241,18 @@ void wlan_hdd_display_netif_queue_history(hdd_context_t *hdd_ctx)
 				pause_delta));
 		}
 
-		hdd_err("\nNetif queue operation history:");
+		hdd_err("Netif queue operation history:");
 		hdd_err("Total entries: %d current index %d",
 			WLAN_HDD_MAX_HISTORY_ENTRY, adapter->history_index);
 
 		hdd_err("index: time: action_type: reason_type: pause_map");
 
 		for (i = 0; i < WLAN_HDD_MAX_HISTORY_ENTRY; i++) {
-			hdd_err("%d: %u: %s: %s: %x",
+			/* using hdd_log to avoid printing function name */
+			if (adapter->queue_oper_history[i].time == 0)
+				continue;
+			hdd_log(QDF_TRACE_LEVEL_ERROR,
+				"%d: %u: %s: %s: %x",
 				i, qdf_system_ticks_to_msecs(
 					adapter->queue_oper_history[i].time),
 				hdd_action_type_to_string(

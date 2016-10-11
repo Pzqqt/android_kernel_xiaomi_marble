@@ -2931,14 +2931,14 @@ void hdd_wlan_get_stats(hdd_adapter_t *pAdapter, uint16_t *length,
 	}
 
 	len = scnprintf(buffer, buf_len,
-		"\nTransmit"
-		"\ncalled %u, dropped %u,"
-		"\n      dropped BK %u, BE %u, VI %u, VO %u"
-		"\n   classified BK %u, BE %u, VI %u, VO %u"
-		"\ncompleted %u,"
-		"\n\nReceive  Total"
-		"\n packets %u, dropped %u, delivered %u, refused %u"
+		"\nTransmit[%lu] - "
+		"called %u, dropped %u,"
+		"\n[dropped]    BK %u, BE %u, VI %u, VO %u"
+		"\n[classified] BK %u, BE %u, VI %u, VO %u"
+		"\n\nReceive[%lu] - "
+		"packets %u, dropped %u, delivered %u, refused %u"
 		"\n",
+		qdf_system_ticks(),
 		pStats->txXmitCalled,
 		pStats->txXmitDropped,
 
@@ -2951,21 +2951,22 @@ void hdd_wlan_get_stats(hdd_adapter_t *pAdapter, uint16_t *length,
 		pStats->txXmitClassifiedAC[SME_AC_BE],
 		pStats->txXmitClassifiedAC[SME_AC_VI],
 		pStats->txXmitClassifiedAC[SME_AC_VO],
-
-		pStats->txCompleted,
+		qdf_system_ticks(),
 		total_rx_pkt, total_rx_dropped, total_rx_delv, total_rx_refused
 		);
 
 	for (i = 0; i < NUM_CPUS; i++) {
+		if (pStats->rxPackets[i] == 0)
+			continue;
 		len += scnprintf(buffer + len, buf_len - len,
-			"\nReceive CPU: %d"
-			"\n  packets %u, dropped %u, delivered %u, refused %u",
+			"Rx CPU[%d]:"
+			"packets %u, dropped %u, delivered %u, refused %u\n",
 			i, pStats->rxPackets[i], pStats->rxDropped[i],
 			pStats->rxDelivered[i], pStats->rxRefused[i]);
 	}
 
 	len += scnprintf(buffer + len, buf_len - len,
-		"\n\nTX_FLOW"
+		"\nTX_FLOW"
 		"\nCurrent status: %s"
 		"\ntx-flow timer start count %u"
 		"\npause count %u, unpause count %u",
@@ -2976,10 +2977,6 @@ void hdd_wlan_get_stats(hdd_adapter_t *pAdapter, uint16_t *length,
 
 	len += cdp_stats(cds_get_context(QDF_MODULE_ID_SOC),
 		pAdapter->sessionId, &buffer[len], (buf_len - len));
-
-	len += hdd_napi_stats(buffer + len, buf_len - len,
-			   NULL, hdd_napi_get_all());
-
 	*length = len + 1;
 }
 
@@ -3092,20 +3089,41 @@ void hdd_wlan_list_fw_profile(uint16_t *length,
 
 	*length = len + 1;
 }
+/**
+ * hdd_display_stats_help() - print statistics help
+ *
+ * Return: none
+ */
+void hdd_display_stats_help(void)
+{
+	hdd_err("iwpriv wlan0 dumpStats [option] - dump statistics");
+	hdd_err("iwpriv wlan0 clearStats [option] - clear statistics");
+	hdd_err("options:");
+	hdd_err("  1 -- TXRX Layer statistics");
+	hdd_err("  2 -- Bandwidth compute timer stats");
+	hdd_err("  3 -- TSO statistics");
+	hdd_err("  4 -- Network queue statistics");
+	hdd_err("  5 -- Flow control statistics");
+	hdd_err("  6 -- Per Layer statistics");
+	hdd_err("  7 -- Copy engine interrupt statistics");
+	hdd_err("  8 -- LRO statistics");
+	hdd_err("  9 -- NAPI statistics");
+}
 
 /**
  * hdd_wlan_dump_stats() - display dump Stats
  * @adapter: adapter handle
  * @value: value from user
  *
- * Return: none
+ * Return: 0 => success, error code on failure
  */
-void hdd_wlan_dump_stats(hdd_adapter_t *adapter, int value)
+int hdd_wlan_dump_stats(hdd_adapter_t *adapter, int value)
 {
+	int ret = 0;
+	QDF_STATUS status;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	switch (value) {
-
 	case WLAN_TXRX_HIST_STATS:
 		wlan_hdd_display_tx_rx_histogram(hdd_ctx);
 		break;
@@ -3117,11 +3135,22 @@ void hdd_wlan_dump_stats(hdd_adapter_t *adapter, int value)
 		break;
 	case WLAN_LRO_STATS:
 		hdd_lro_display_stats(hdd_ctx);
+	case WLAN_NAPI_STATS:
+		if (hdd_display_napi_stats()) {
+			hdd_err("error displaying napi stats");
+			ret = EFAULT;
+		}
 		break;
 	default:
-		cdp_display_stats(cds_get_context(QDF_MODULE_ID_SOC), value);
+		status = cdp_display_stats(cds_get_context(QDF_MODULE_ID_SOC),
+							value);
+		if (status == QDF_STATUS_E_INVAL) {
+			hdd_display_stats_help();
+			ret = EINVAL;
+		}
 		break;
 	}
+	return ret;
 }
 
 /**
@@ -8369,7 +8398,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	case WE_DUMP_STATS:
 	{
 		hdd_notice("WE_DUMP_STATS val %d", set_value);
-		hdd_wlan_dump_stats(pAdapter, set_value);
+		ret = hdd_wlan_dump_stats(pAdapter, set_value);
 		break;
 	}
 

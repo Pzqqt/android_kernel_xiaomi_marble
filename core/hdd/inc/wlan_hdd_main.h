@@ -322,7 +322,7 @@ extern spinlock_t hdd_context_lock;
 #define WLAN_SAP_HDD_TX_FLOW_CONTROL_OS_Q_BLOCK_TIME 100
 #define WLAN_HDD_TX_FLOW_CONTROL_MAX_24BAND_CH   14
 
-#define NUM_TX_RX_HISTOGRAM 1024
+#define NUM_TX_RX_HISTOGRAM 128
 #define NUM_TX_RX_HISTOGRAM_MASK (NUM_TX_RX_HISTOGRAM - 1)
 
 /**
@@ -1984,7 +1984,7 @@ void hdd_clean_up_pre_cac_interface(hdd_context_t *hdd_ctx);
 void wlan_hdd_txrx_pause_cb(uint8_t vdev_id,
 	enum netif_action_type action, enum netif_reason_type reason);
 
-void hdd_wlan_dump_stats(hdd_adapter_t *adapter, int value);
+int hdd_wlan_dump_stats(hdd_adapter_t *adapter, int value);
 void wlan_hdd_deinit_tx_rx_histogram(hdd_context_t *hdd_ctx);
 void wlan_hdd_display_tx_rx_histogram(hdd_context_t *pHddCtx);
 void wlan_hdd_clear_tx_rx_histogram(hdd_context_t *pHddCtx);

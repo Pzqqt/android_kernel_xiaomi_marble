@@ -301,6 +301,7 @@ typedef struct ccp_freq_chan_map_s {
 extern int hdd_unregister_wext(struct net_device *dev);
 extern int hdd_register_wext(struct net_device *dev);
 extern int hdd_wlan_get_freq(uint32_t chan, uint32_t *freq);
+extern void hdd_display_stats_help(void);
 extern void hdd_wlan_get_version(hdd_context_t *hdd_ctx,
 				 union iwreq_data *wrqu, char *extra);
 

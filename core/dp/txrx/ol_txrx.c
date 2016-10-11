@@ -3919,7 +3919,7 @@ ol_txrx_stats(uint8_t vdev_id, char *buffer, unsigned buf_len)
 	}
 
 	len = scnprintf(buffer, buf_len,
-			"\nTXRX stats:\n\nllQueue State : %s\n pause %u unpause %u\n overflow %u\n llQueue timer state : %s\n",
+			"\n\nTXRX stats:\nllQueue State : %s\npause %u unpause %u\noverflow %u\nllQueue timer state : %s",
 			((vdev->ll_pause.is_q_paused == false) ?
 			 "UNPAUSED" : "PAUSED"),
 			vdev->ll_pause.q_pause_cnt,
@@ -4383,44 +4383,21 @@ static void ol_txrx_ipa_uc_get_stat(struct cdp_pdev *ppdev)
 #endif /* IPA_UC_OFFLOAD */
 
 /**
- * ol_txrx_display_stats_help() - print statistics help
+ * ol_txrx_display_stats() - Display OL TXRX display stats
+ * @value: Module id for which stats needs to be displayed
  *
- * Return: none
+ * Return: None
  */
-static void ol_txrx_display_stats_help(void)
-{
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"iwpriv wlan0 dumpStats [option] - dump statistics");
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"iwpriv wlan0 clearStats [option] - clear statistics");
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"options:");
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"  1 -- TXRX Layer statistics");
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"  2 -- Bandwidth compute timer stats");
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"  3 -- TSO statistics");
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"  4 -- Network queue statistics");
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"  5 -- Flow control statistics");
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"  6 -- Per Layer statistics");
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"  7 -- Copy engine interrupt statistics");
-
-}
-
-static void ol_txrx_display_stats(uint16_t value)
+static QDF_STATUS ol_txrx_display_stats(uint16_t value)
 {
 	ol_txrx_pdev_handle pdev;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s: pdev is NULL", __func__);
-		return;
+		return QDF_STATUS_E_NULL_VALUE;
 	}
 
 	switch (value) {
@@ -4457,14 +4434,22 @@ static void ol_txrx_display_stats(uint16_t value)
 #endif
 #endif
 	default:
-		ol_txrx_display_stats_help();
+		status = QDF_STATUS_E_INVAL;
 		break;
 	}
+	return status;
 }
 
+/**
+ * ol_txrx_clear_stats() - Clear OL TXRX stats
+ * @value: Module id for which stats needs to be cleared
+ *
+ * Return: None
+ */
 static void ol_txrx_clear_stats(uint16_t value)
 {
 	ol_txrx_pdev_handle pdev;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
@@ -4500,9 +4485,11 @@ static void ol_txrx_clear_stats(uint16_t value)
 		break;
 #endif
 	default:
-		ol_txrx_display_stats_help();
+		status = QDF_STATUS_E_INVAL;
 		break;
 	}
+
+	return;
 }
 
 /**
