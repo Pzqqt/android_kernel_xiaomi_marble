@@ -7896,6 +7896,16 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 			return -EINVAL;
 		}
 	}
+	if (pAdapter->device_mode == QDF_P2P_GO_MODE) {
+		hdd_adapter_t  *p2p_adapter;
+		p2p_adapter = hdd_get_adapter(pHddCtx, QDF_P2P_DEVICE_MODE);
+		if (p2p_adapter) {
+			hdd_info("cancel active p2p device ROC before GO "
+				"starting");
+			wlan_hdd_cancel_existing_remain_on_channel(
+				p2p_adapter);
+		}
+	}
 
 	if ((pAdapter->device_mode == QDF_SAP_MODE)
 	    || (pAdapter->device_mode == QDF_P2P_GO_MODE)
