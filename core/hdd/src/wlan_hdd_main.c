@@ -4693,18 +4693,7 @@ static void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 
 	hdd_unregister_notifiers(hdd_ctx);
 
-#ifdef MSM_PLATFORM
-	if (QDF_TIMER_STATE_RUNNING ==
-	    qdf_mc_timer_get_current_state(&hdd_ctx->bus_bw_timer)) {
-		qdf_mc_timer_stop(&hdd_ctx->bus_bw_timer);
-		hdd_reset_tcp_delack(hdd_ctx);
-	}
-
-	if (!QDF_IS_STATUS_SUCCESS
-		    (qdf_mc_timer_destroy(&hdd_ctx->bus_bw_timer))) {
-		hdd_err("Cannot deallocate Bus bandwidth timer");
-	}
-#endif
+	hdd_bus_bandwidth_destroy(hdd_ctx);
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 	if (QDF_TIMER_STATE_RUNNING ==
@@ -5270,6 +5259,9 @@ static void hdd_bus_bw_compute_cbk(void *priv)
 	bool connected = false;
 	uint32_t ipa_tx_packets = 0, ipa_rx_packets = 0;
 
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return;
+
 	for (status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
 	     NULL != adapterNode && QDF_STATUS_SUCCESS == status;
 	     status =
@@ -5361,6 +5353,26 @@ static void hdd_bus_bw_compute_cbk(void *priv)
 
 	qdf_mc_timer_start(&hdd_ctx->bus_bw_timer,
 			   hdd_ctx->config->busBandwidthComputeInterval);
+}
+
+int hdd_bus_bandwidth_init(hdd_context_t *hdd_ctx)
+{
+	spin_lock_init(&hdd_ctx->bus_bw_lock);
+
+	qdf_mc_timer_init(&hdd_ctx->bus_bw_timer,
+			  QDF_TIMER_TYPE_SW,
+			  hdd_bus_bw_compute_cbk, (void *)hdd_ctx);
+
+	return 0;
+}
+
+void hdd_bus_bandwidth_destroy(hdd_context_t *hdd_ctx)
+{
+	if (qdf_mc_timer_get_current_state(&hdd_ctx->bus_bw_timer) ==
+	    QDF_TIMER_STATE_RUNNING)
+		hdd_reset_tcp_delack(hdd_ctx);
+
+	qdf_mc_timer_destroy(&hdd_ctx->bus_bw_timer);
 }
 #endif
 
@@ -7922,12 +7934,7 @@ int hdd_wlan_startup(struct device *dev)
 		hdd_err("Failed to init ACS Skip timer");
 #endif
 
-#ifdef MSM_PLATFORM
-	spin_lock_init(&hdd_ctx->bus_bw_lock);
-	qdf_mc_timer_init(&hdd_ctx->bus_bw_timer,
-			  QDF_TIMER_TYPE_SW,
-			  hdd_bus_bw_compute_cbk, (void *)hdd_ctx);
-#endif
+	hdd_bus_bandwidth_init(hdd_ctx);
 
 	hdd_lpass_notify_start(hdd_ctx);
 

@@ -1619,6 +1619,26 @@ void hdd_checkandupdate_phymode(hdd_context_t *pHddCtx);
 #ifdef MSM_PLATFORM
 void hdd_start_bus_bw_compute_timer(hdd_adapter_t *pAdapter);
 void hdd_stop_bus_bw_compute_timer(hdd_adapter_t *pAdapter);
+
+/**
+ * hdd_bus_bandwidth_init() - Initialize bus bandwidth data structures.
+ * hdd_ctx: HDD context
+ *
+ * Initialize bus bandwidth related data structures like spinlock and timer.
+ *
+ * Return: None.
+ */
+int hdd_bus_bandwidth_init(hdd_context_t *hdd_ctx);
+
+/**
+ * hdd_bus_bandwidth_destroy() - Destroy bus bandwidth data structures.
+ * hdd_ctx: HDD context
+ *
+ * Destroy bus bandwidth related data structures like timer.
+ *
+ * Return: None.
+ */
+void hdd_bus_bandwidth_destroy(hdd_context_t *hdd_ctx);
 #else
 static inline void hdd_start_bus_bw_compute_timer(hdd_adapter_t *pAdapter)
 {
@@ -1626,6 +1646,16 @@ static inline void hdd_start_bus_bw_compute_timer(hdd_adapter_t *pAdapter)
 }
 
 static inline void hdd_stop_bus_bw_computer_timer(hdd_adapter_t *pAdapter)
+{
+	return;
+}
+
+int hdd_bus_bandwidth_init(hdd_context_t *hdd_ctx)
+{
+	return 0;
+}
+
+void hdd_bus_bandwidth_destroy(hdd_context_t *hdd_ctx)
 {
 	return;
 }

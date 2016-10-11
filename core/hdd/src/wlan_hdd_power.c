@@ -1476,6 +1476,8 @@ QDF_STATUS hdd_wlan_shutdown(void)
 		QDF_ASSERT(false);
 	}
 
+	hdd_bus_bandwidth_destroy(pHddCtx);
+
 	wlansap_global_deinit();
 	hdd_wlan_stop_modules(pHddCtx);
 
@@ -1536,6 +1538,8 @@ QDF_STATUS hdd_wlan_re_init(void)
 
 	if (pHddCtx->config->enable_dp_trace)
 		qdf_dp_trace_init();
+
+	hdd_bus_bandwidth_init(pHddCtx);
 
 	ret = hdd_wlan_start_modules(pHddCtx, pAdapter, true);
 	if (ret) {
