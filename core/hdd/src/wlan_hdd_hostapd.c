@@ -1810,12 +1810,14 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 	case eSAP_CHANNEL_CHANGE_EVENT:
 		hdd_notice("Received eSAP_CHANNEL_CHANGE_EVENT event");
-		/* Prevent suspend for new channel */
-		hdd_hostapd_channel_prevent_suspend(pHostapdAdapter,
-					pSapEvent->sapevt.sap_ch_selected.pri_ch);
-		/* Allow suspend for old channel */
-		hdd_hostapd_channel_allow_suspend(pHostapdAdapter,
-					pHddApCtx->operatingChannel);
+		if (pHostapdState->bssState != BSS_STOP) {
+			/* Prevent suspend for new channel */
+			hdd_hostapd_channel_prevent_suspend(pHostapdAdapter,
+				pSapEvent->sapevt.sap_ch_selected.pri_ch);
+			/* Allow suspend for old channel */
+			hdd_hostapd_channel_allow_suspend(pHostapdAdapter,
+				pHddApCtx->operatingChannel);
+		}
 		/* SME/PE is already updated for new operation channel. So update
 		* HDD layer also here. This resolves issue in AP-AP mode where
 		* AP1 channel is changed due to RADAR then CAC is going on and
