@@ -4751,7 +4751,7 @@ static void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 		hdd_stop_all_adapters(hdd_ctx);
 	}
 
-	hdd_wlan_stop_modules(hdd_ctx, false);
+	hdd_wlan_stop_modules(hdd_ctx);
 	/*
 	 * Close the scheduler before calling cds_close to make sure no thread
 	 * is scheduled after the each module close is called i.e after all the
@@ -7618,7 +7618,6 @@ static int hdd_deconfigure_cds(hdd_context_t *hdd_ctx)
 /**
  * hdd_wlan_stop_modules - Single driver state machine for stoping modules
  * @hdd_ctx: HDD context
- * @shutdown: flag to indicate from SSR or normal path
  *
  * This function maintains the driver state machine it will be invoked from
  * exit, shutdown and con_mode change handler. Depending on the driver state
@@ -7626,7 +7625,7 @@ static int hdd_deconfigure_cds(hdd_context_t *hdd_ctx)
  *
  * Return: 0 for success; non-zero for failure
  */
-int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx, bool shutdown)
+int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx)
 {
 	void *hif_ctx;
 	qdf_device_t qdf_ctx;
@@ -7688,7 +7687,8 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx, bool shutdown)
 		QDF_ASSERT(0);
 	}
 	/* Clean up message queues of TX, RX and MC thread */
-	cds_sched_flush_mc_mqs(cds_sched_context);
+	if (!cds_is_driver_recovering())
+		cds_sched_flush_mc_mqs(cds_sched_context);
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!hif_ctx) {
@@ -7701,7 +7701,7 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx, bool shutdown)
 
 	ol_cds_free();
 
-	if (!shutdown) {
+	if (!cds_is_driver_recovering()) {
 		ret = pld_power_off(qdf_ctx->dev);
 		if (ret)
 			hdd_err("CNSS power down failed put device into Low power mode:%d",
@@ -7738,7 +7738,7 @@ static void hdd_iface_change_callback(void *priv)
 
 	ENTER();
 	hdd_info("Interface change timer expired close the modules!");
-	ret = hdd_wlan_stop_modules(hdd_ctx, false);
+	ret = hdd_wlan_stop_modules(hdd_ctx);
 	if (ret)
 		hdd_alert("Failed to stop modules");
 	EXIT();
@@ -7990,7 +7990,7 @@ err_wiphy_unregister:
 	wlan_hdd_cfg80211_deinit(hdd_ctx->wiphy);
 
 err_stop_modules:
-	hdd_wlan_stop_modules(hdd_ctx, false);
+	hdd_wlan_stop_modules(hdd_ctx);
 
 
 	status = cds_sched_close(hdd_ctx->pcds_context);
@@ -9289,7 +9289,7 @@ static int con_mode_handler(const char *kmessage, struct kernel_param *kp)
 	hdd_stop_all_adapters(hdd_ctx);
 	hdd_deinit_all_adapters(hdd_ctx, false);
 
-	ret = hdd_wlan_stop_modules(hdd_ctx, false);
+	ret = hdd_wlan_stop_modules(hdd_ctx);
 	if (ret) {
 		hdd_err("Stop wlan modules failed");
 		return -EINVAL;

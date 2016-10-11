@@ -1423,6 +1423,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	v_CONTEXT_t p_cds_context = NULL;
 	hdd_context_t *pHddCtx;
 	p_cds_sched_context cds_sched_context = NULL;
+	QDF_STATUS qdf_status;
 
 	hdd_alert("WLAN driver shutting down!");
 
@@ -1443,8 +1444,6 @@ QDF_STATUS hdd_wlan_shutdown(void)
 		hdd_alert("HDD context is Null");
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	cds_set_recovery_in_progress(true);
 
 	cds_clear_concurrent_session_count();
 	hdd_cleanup_scan_queue(pHddCtx);
@@ -1471,8 +1470,14 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	}
 #endif
 
+	qdf_status = cds_sched_close(p_cds_context);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		hdd_err("Failed to close CDS Scheduler");
+		QDF_ASSERT(false);
+	}
+
 	wlansap_global_deinit();
-	hdd_wlan_stop_modules(pHddCtx, true);
+	hdd_wlan_stop_modules(pHddCtx);
 
 	hdd_lpass_notify_stop(pHddCtx);
 
@@ -1574,7 +1579,7 @@ QDF_STATUS hdd_wlan_re_init(void)
 	goto success;
 
 err_cds_disable:
-	hdd_wlan_stop_modules(pHddCtx, true);
+	hdd_wlan_stop_modules(pHddCtx);
 
 err_wiphy_unregister:
 	if (pHddCtx) {

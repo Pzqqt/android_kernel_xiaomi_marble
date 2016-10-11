@@ -1865,7 +1865,7 @@ int hdd_start_ftm_adapter(hdd_adapter_t *adapter);
 int hdd_set_fw_params(hdd_adapter_t *adapter);
 int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			   bool reinit);
-int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx, bool shutdown);
+int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx);
 int hdd_start_adapter(hdd_adapter_t *adapter);
 void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 			tCsrRoamInfo *roam_info, const u8 *req_ie,

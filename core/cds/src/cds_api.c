@@ -247,7 +247,8 @@ QDF_STATUS cds_open(void)
 	}
 	/* Now Open the CDS Scheduler */
 
-	if (pHddCtx->driver_status == DRIVER_MODULES_UNINITIALIZED) {
+	if (pHddCtx->driver_status == DRIVER_MODULES_UNINITIALIZED ||
+	    cds_is_driver_recovering()) {
 		qdf_status = cds_sched_open(gp_cds_context,
 					    &gp_cds_context->qdf_sched,
 					    sizeof(cds_sched_context));
