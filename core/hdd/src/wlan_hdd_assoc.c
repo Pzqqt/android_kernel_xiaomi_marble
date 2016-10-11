@@ -1900,6 +1900,8 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	tCsrRoamConnectedProfile roam_profile;
 	tHalHandle hal_handle = WLAN_HDD_GET_HAL_CTX(pAdapter);
 
+	qdf_mem_zero(&roam_profile, sizeof(roam_profile));
+
 	if (!rspRsnIe) {
 		hdd_err("Unable to allocate RSN IE");
 		goto done;
@@ -1951,7 +1953,6 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 
 	chan = ieee80211_get_channel(pAdapter->wdev.wiphy,
 				     (int)pCsrRoamInfo->pBssDesc->channelId);
-	qdf_mem_zero(&roam_profile, sizeof(tCsrRoamConnectedProfile));
 	sme_roam_get_connect_profile(hal_handle, pAdapter->sessionId,
 		&roam_profile);
 	bss = cfg80211_get_bss(pAdapter->wdev.wiphy, chan,
