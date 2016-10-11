@@ -3196,11 +3196,6 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 			 wake_info->vdev_id);
 		wma_beacon_miss_handler(wma, wake_info->vdev_id);
 		break;
-#ifdef FEATURE_WLAN_RA_FILTERING
-	case WOW_REASON_RA_MATCH:
-		wma_wow_wake_up_stats(wma, NULL, 0, WOW_REASON_RA_MATCH);
-		break;
-#endif /* FEATURE_WLAN_RA_FILTERING */
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 	case WOW_REASON_HOST_AUTO_SHUTDOWN:
 		wake_lock_duration = WMA_AUTO_SHUTDOWN_WAKE_LOCK_DURATION;
@@ -3251,6 +3246,10 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 
 	case WOW_REASON_BPF_ALLOW:
 	case WOW_REASON_PATTERN_MATCH_FOUND:
+#ifdef FEATURE_WLAN_RA_FILTERING
+	case WOW_REASON_RA_MATCH:
+#endif /* FEATURE_WLAN_RA_FILTERING */
+	case WOW_REASON_RECV_MAGIC_PATTERN:
 		wma_wow_wake_up_stats_display(wma);
 		WMA_LOGD("Wake up for Rx packet, dump starting from ethernet hdr");
 		if (param_buf->wow_packet_buffer) {
@@ -3263,7 +3262,7 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 				wma_wow_wake_up_stats(wma,
 					param_buf->wow_packet_buffer + 4,
 					wow_buf_pkt_len,
-					WOW_REASON_PATTERN_MATCH_FOUND);
+					wake_info->wake_reason);
 				qdf_trace_hex_dump(QDF_MODULE_ID_WMA,
 					QDF_TRACE_LEVEL_DEBUG,
 					param_buf->wow_packet_buffer + 4,
