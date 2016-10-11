@@ -260,6 +260,16 @@ typedef enum {
 	WMI_SERVICE_FLASH_RDWR_SUPPORT = 110,
 	WMI_SERVICE_WLAN_STATS_REPORT = 111, /* support WLAN stats report */
 
+	/* WMI_SERVICE_TX_MSDU_ID_NEW_PARTITION_SUPPORT -
+	 * FW supports bigger MSDU ID partition which is defined as
+	 * HTT_TX_IPA_NEW_MSDU_ID_SPACE_BEGIN. When both host and FW support
+	 * new partition, FW uses HTT_TX_IPA_NEW_MSDU_ID_SPACE_BEGIN. If host
+	 * doesn't support, FW falls back to HTT_TX_IPA_MSDU_ID_SPACE_BEGIN
+	 * Handshaking is done through WMI_INIT and WMI service ready
+	 *
+	 * support bigger MSDU ID partition
+	 */
+	WMI_SERVICE_TX_MSDU_ID_NEW_PARTITION_SUPPORT = 112,
 
 	/*** ADD NEW SERVICES HERE UNTIL ALL VALUES UP TO 128 ARE USED ***/
 
