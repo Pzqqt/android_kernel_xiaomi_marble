@@ -7603,21 +7603,8 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(pHddCtx);
-	if (0 != ret) {
-		if (cds_is_driver_unloading()) {
-			/*
-			 * Unloading the driver so free the memory for ch_list,
-			 * otherwise it will result in memory leak
-			 */
-			if (pAdapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list) {
-				qdf_mem_free(pAdapter->sessionCtx.ap.sapConfig.
-					acs_cfg.ch_list);
-				pAdapter->sessionCtx.ap.sapConfig.acs_cfg.
-					ch_list = NULL;
-			}
-		}
+	if (0 != ret)
 		return ret;
-	}
 
 	status = hdd_get_front_adapter(pHddCtx, &pAdapterNode);
 	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
@@ -7663,8 +7650,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		qdf_spin_unlock(&pHddCtx->sap_update_info_lock);
 	}
 	pAdapter->sessionCtx.ap.sapConfig.acs_cfg.acs_mode = false;
-	if (pAdapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list)
-		qdf_mem_free(pAdapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list);
+	wlan_hdd_undo_acs(pAdapter);
 	qdf_mem_zero(&pAdapter->sessionCtx.ap.sapConfig.acs_cfg,
 						sizeof(struct sap_acs_cfg));
 	hdd_hostapd_stop(dev);
