@@ -7669,22 +7669,29 @@ int hdd_configure_cds(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 	status = hdd_post_cds_enable_config(hdd_ctx);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_alert("hdd_post_cds_enable_config failed");
-		goto out;
+		goto cds_disable;
 	}
 
 	ret = hdd_features_init(hdd_ctx, adapter);
 	if (ret)
-		goto out;
+		goto cds_disable;
 
 	sme_cbacks.sme_get_valid_channels = sme_get_cfg_valid_channels;
 	sme_cbacks.sme_get_nss_for_vdev = sme_get_vdev_type_nss;
 	status = cds_init_policy_mgr(&sme_cbacks);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("Policy manager initialization failed");
-		goto out;
+		goto hdd_features_deinit;
 	}
 
 	return 0;
+
+hdd_features_deinit:
+	hdd_deregister_cb(hdd_ctx);
+	wlan_hdd_cfg80211_deregister_frames(adapter);
+cds_disable:
+	cds_disable(hdd_ctx->pcds_context);
+
 out:
 	return -EINVAL;
 }
