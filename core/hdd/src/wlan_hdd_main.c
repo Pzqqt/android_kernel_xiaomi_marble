@@ -4747,17 +4747,18 @@ static void hdd_roc_context_destroy(hdd_context_t *hdd_ctx)
 }
 
 /**
- * hdd_context_destroy() - Destroy HDD context
- * @hdd_ctx:	HDD context to be destroyed.
+ * hdd_context_deinit() - Deinitialize HDD context
+ * @hdd_ctx:    HDD context.
  *
- * Free config and HDD context as well as destroy all the resources.
+ * Deinitialize HDD context along with all the feature specific contexts but
+ * do not free hdd context itself. Caller of this API is supposed to free
+ * HDD context.
  *
- * Return: None
+ * return: 0 on success and errno on failure.
  */
-static void hdd_context_destroy(hdd_context_t *hdd_ctx)
+static int hdd_context_deinit(hdd_context_t *hdd_ctx)
 {
-	if (QDF_GLOBAL_FTM_MODE != hdd_get_conparam())
-		hdd_logging_sock_deactivate_svc(hdd_ctx);
+	wlan_hdd_cfg80211_deinit(hdd_ctx->wiphy);
 
 	hdd_roc_context_destroy(hdd_ctx);
 
@@ -4770,6 +4771,24 @@ static void hdd_context_destroy(hdd_context_t *hdd_ctx)
 	hdd_scan_context_destroy(hdd_ctx);
 
 	qdf_list_destroy(&hdd_ctx->hddAdapters);
+
+	return 0;
+}
+
+/**
+ * hdd_context_destroy() - Destroy HDD context
+ * @hdd_ctx:	HDD context to be destroyed.
+ *
+ * Free config and HDD context as well as destroy all the resources.
+ *
+ * Return: None
+ */
+static void hdd_context_destroy(hdd_context_t *hdd_ctx)
+{
+	if (QDF_GLOBAL_FTM_MODE != hdd_get_conparam())
+		hdd_logging_sock_deactivate_svc(hdd_ctx);
+
+	hdd_context_deinit(hdd_ctx);
 
 	qdf_mem_free(hdd_ctx->config);
 	hdd_ctx->config = NULL;
@@ -6373,36 +6392,6 @@ static void hdd_set_trace_level_for_each(hdd_context_t *hdd_ctx)
 
 	hdd_cfg_print(hdd_ctx);
 }
-
-/**
- * hdd_context_deinit() - Deinitialize HDD context
- * @hdd_ctx:    HDD context.
- *
- * Deinitialize HDD context along with all the feature specific contexts but
- * do not free hdd context itself. Caller of this API is supposed to free
- * HDD context.
- *
- * return: 0 on success and errno on failure.
- */
-static int hdd_context_deinit(hdd_context_t *hdd_ctx)
-{
-	wlan_hdd_cfg80211_deinit(hdd_ctx->wiphy);
-
-	hdd_roc_context_destroy(hdd_ctx);
-
-	hdd_sap_context_destroy(hdd_ctx);
-
-	hdd_rx_wake_lock_destroy(hdd_ctx);
-
-	hdd_tdls_context_destroy(hdd_ctx);
-
-	hdd_scan_context_destroy(hdd_ctx);
-
-	qdf_list_destroy(&hdd_ctx->hddAdapters);
-
-	return 0;
-}
-
 
 /**
  * hdd_context_init() - Initialize HDD context
@@ -8102,7 +8091,6 @@ err_ipa_cleanup:
 
 err_wiphy_unregister:
 	wiphy_unregister(hdd_ctx->wiphy);
-	wlan_hdd_cfg80211_deinit(hdd_ctx->wiphy);
 
 err_stop_modules:
 	hdd_wlan_stop_modules(hdd_ctx);
