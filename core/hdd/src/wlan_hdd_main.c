@@ -8112,10 +8112,6 @@ err_stop_modules:
 err_exit_nl_srv:
 	hdd_exit_netlink_services(hdd_ctx);
 
-	if (!QDF_IS_STATUS_SUCCESS(cds_deinit_policy_mgr())) {
-		hdd_err("Failed to deinit policy manager");
-		/* Proceed and complete the clean up */
-	}
 	cds_deinit_ini_config();
 err_hdd_free_context:
 	qdf_mc_timer_destroy(&hdd_ctx->iface_change_timer);
