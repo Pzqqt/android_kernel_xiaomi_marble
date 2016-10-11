@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "pld_common.h"
+#include "pld_usb.h"
 #include "pld_internal.h"
 
 #include <linux/atomic.h>
@@ -208,4 +208,3 @@ void pld_usb_unregister_driver(void)
 	usb_deregister(&pld_usb_ops);
 	pr_info("%s usb_deregister done!\n", __func__);
 }
-
