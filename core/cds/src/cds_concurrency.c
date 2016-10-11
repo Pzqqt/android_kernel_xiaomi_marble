@@ -3018,36 +3018,39 @@ static void cds_dump_current_concurrency(void)
 }
 
 /**
- * cds_current_concurrency_is_scc() - To check the current
- * concurrency combination if it is doing SCC
+ * cds_current_concurrency_is_mcc() - To check the current
+ * concurrency combination if it is doing MCC
  *
- * This routine is called to check if it is doing SCC
+ * This routine is called to check if it is doing MCC
  *
- * Return: True - SCC, False - Otherwise
+ * Return: True - MCC, False - Otherwise
  */
-static bool cds_current_concurrency_is_scc(void)
+static bool cds_current_concurrency_is_mcc(void)
 {
 	uint32_t num_connections = 0;
-	bool is_scc = false;
+	bool is_mcc = false;
 
 	num_connections = cds_get_connection_count();
 
 	switch (num_connections) {
 	case 1:
-		is_scc = true;
 		break;
 	case 2:
-		if (conc_connection_list[0].chan ==
-			conc_connection_list[1].chan) {
-			is_scc = true;
+		if ((conc_connection_list[0].chan !=
+			conc_connection_list[1].chan) &&
+		    (conc_connection_list[0].mac ==
+			conc_connection_list[1].mac)) {
+			is_mcc = true;
 		}
 		break;
 	case 3:
-		if ((conc_connection_list[0].chan ==
-			conc_connection_list[1].chan) &&
-			(conc_connection_list[0].chan ==
-				conc_connection_list[2].chan)){
-				is_scc = true;
+		if ((conc_connection_list[0].chan !=
+			conc_connection_list[1].chan) ||
+		    (conc_connection_list[0].chan !=
+			conc_connection_list[2].chan) ||
+		    (conc_connection_list[1].chan !=
+			conc_connection_list[2].chan)){
+				is_mcc = true;
 		}
 		break;
 	default:
@@ -3056,7 +3059,7 @@ static bool cds_current_concurrency_is_scc(void)
 		break;
 	}
 
-	return is_scc;
+	return is_mcc;
 }
 
 /**
@@ -3342,7 +3345,7 @@ void cds_dump_concurrency_info(void)
 		adapterNode = pNext;
 	}
 	cds_dump_current_concurrency();
-	hdd_ctx->mcc_mode = !cds_current_concurrency_is_scc();
+	hdd_ctx->mcc_mode = cds_current_concurrency_is_mcc();
 }
 
 #ifdef FEATURE_WLAN_TDLS

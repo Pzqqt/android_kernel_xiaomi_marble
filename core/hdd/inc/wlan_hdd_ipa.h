@@ -88,7 +88,15 @@ void hdd_ipa_uc_rt_debug_host_dump(hdd_context_t *hdd_ctx);
 void hdd_ipa_uc_stat_request(hdd_adapter_t *adapter, uint8_t reason);
 bool hdd_ipa_is_enabled(hdd_context_t *pHddCtx);
 bool hdd_ipa_uc_is_enabled(hdd_context_t *pHddCtx);
-int hdd_ipa_send_mcc_scc_msg(hdd_context_t *pHddCtx, bool mcc_mode);
+#ifndef QCA_LL_TX_FLOW_CONTROL_V2
+int hdd_ipa_send_mcc_scc_msg(hdd_context_t *hdd_ctx, bool mcc_mode);
+#else
+static inline int hdd_ipa_send_mcc_scc_msg(hdd_context_t *hdd_ctx,
+					   bool mcc_mode)
+{
+	return 0;
+}
+#endif
 int hdd_ipa_uc_ssr_reinit(void);
 int hdd_ipa_uc_ssr_deinit(void);
 void hdd_ipa_uc_force_pipe_shutdown(hdd_context_t *hdd_ctx);

@@ -3468,6 +3468,7 @@ static void hdd_ipa_msg_free_fn(void *buff, uint32_t len, uint32_t type)
 	qdf_mem_free(buff);
 }
 
+#ifndef QCA_LL_TX_FLOW_CONTROL_V2
 /**
  * hdd_ipa_send_mcc_scc_msg() - send IPA WLAN_SWITCH_TO_MCC/SCC message
  * @mcc_mode: 0=MCC/1=SCC
@@ -3526,6 +3527,7 @@ int hdd_ipa_send_mcc_scc_msg(hdd_context_t *pHddCtx, bool mcc_mode)
 
 	return ret;
 }
+#endif
 
 /**
  * hdd_ipa_wlan_event_to_str() - convert IPA WLAN event to string
