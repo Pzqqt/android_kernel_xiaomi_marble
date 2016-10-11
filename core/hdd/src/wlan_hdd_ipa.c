@@ -952,7 +952,7 @@ void hdd_ipa_uc_stat_query(hdd_context_t *pHddCtx,
 		(false == hdd_ipa->resource_loading)) {
 		*ipa_tx_diff = hdd_ipa->ipa_tx_packets_diff;
 		*ipa_rx_diff = hdd_ipa->ipa_rx_packets_diff;
-		HDD_IPA_LOG(LOG1, "STAT Query TX DIFF %d, RX DIFF %d",
+		HDD_IPA_LOG(LOGOFF, "STAT Query TX DIFF %d, RX DIFF %d",
 			    *ipa_tx_diff, *ipa_rx_diff);
 	}
 	qdf_mutex_release(&hdd_ipa->ipa_lock);
@@ -2482,13 +2482,13 @@ static void hdd_ipa_send_skb_to_network(qdf_nbuf_t skb,
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO_LOW, "Invalid adapter: 0x%p",
 			    adapter);
 		HDD_IPA_INCREASE_INTERNAL_DROP_COUNT(hdd_ipa);
-		qdf_nbuf_free(skb);
+		kfree_skb(skb);
 		return;
 	}
 
 	if (cds_is_driver_unloading()) {
 		HDD_IPA_INCREASE_INTERNAL_DROP_COUNT(hdd_ipa);
-		qdf_nbuf_free(skb);
+		kfree_skb(skb);
 		return;
 	}
 
@@ -2510,7 +2510,7 @@ static void hdd_ipa_send_skb_to_network(qdf_nbuf_t skb,
 }
 
 /**
- * hdd_ipa_w2i_cb() - WLAN to IPA callback handler
+ * __hdd_ipa_w2i_cb() - WLAN to IPA callback handler
  * @priv: pointer to private data registered with IPA (we register a
  *	pointer to the global IPA context)
  * @evt: the IPA event which triggered the callback
@@ -2518,7 +2518,7 @@ static void hdd_ipa_send_skb_to_network(qdf_nbuf_t skb,
  *
  * Return: None
  */
-static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
+static void __hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 			   unsigned long data)
 {
 	struct hdd_ipa_priv *hdd_ipa = NULL;
@@ -2530,12 +2530,27 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 	qdf_nbuf_t copy;
 	uint8_t fw_desc;
 	int ret;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	hdd_ipa = (struct hdd_ipa_priv *)priv;
 
 	switch (evt) {
 	case IPA_RECEIVE:
 		skb = (qdf_nbuf_t) data;
+
+		/*
+		 * When SSR is going on or driver is unloading,
+		 * just drop the packets.
+		 */
+		status = wlan_hdd_validate_context(hdd_ipa->hdd_ctx);
+		if (0 != status) {
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
+					"Invalid context: drop packet");
+			HDD_IPA_INCREASE_INTERNAL_DROP_COUNT(hdd_ipa);
+			kfree_skb(skb);
+			return;
+		}
+
 		if (hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx)) {
 			session_id = (uint8_t)skb->cb[0];
 			iface_id = vdev_to_iface[session_id];
@@ -2553,7 +2568,7 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 			HDD_IPA_DBG_DUMP(QDF_TRACE_LEVEL_INFO_HIGH,
 				"w2i -- skb", skb->data, 8);
 			HDD_IPA_INCREASE_INTERNAL_DROP_COUNT(hdd_ipa);
-			qdf_nbuf_free(skb);
+			kfree_skb(skb);
 			return;
 		}
 
@@ -2613,7 +2628,7 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 			if (fw_desc & HDD_IPA_FW_RX_DESC_DISCARD_M) {
 				HDD_IPA_INCREASE_INTERNAL_DROP_COUNT(hdd_ipa);
 				hdd_ipa->ipa_rx_discard++;
-				qdf_nbuf_free(skb);
+				kfree_skb(skb);
 				break;
 			}
 
@@ -2630,6 +2645,23 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 			    "w2i cb wrong event: 0x%x", evt);
 		return;
 	}
+}
+
+/**
+ * hdd_ipa_w2i_cb() - SSR wrapper for __hdd_ipa_w2i_cb
+ * @priv: pointer to private data registered with IPA (we register a
+ *	pointer to the global IPA context)
+ * @evt: the IPA event which triggered the callback
+ * @data: data associated with the event
+ *
+ * Return: None
+ */
+static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
+			   unsigned long data)
+{
+	cds_ssr_protect(__func__);
+	__hdd_ipa_w2i_cb(priv, evt, data);
+	cds_ssr_unprotect(__func__);
 }
 
 /**
