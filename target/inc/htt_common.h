@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -113,8 +113,21 @@ enum htt_pkt_type {
 	htt_pkt_num_types
 };
 
+/*
+ * TX MSDU ID partition -
+ * FW supports bigger MSDU ID partition which is defined as
+ * HTT_TX_IPA_NEW_MSDU_ID_SPACE_BEGIN
+ * When both host and FW support new partition, FW uses
+ * HTT_TX_IPA_NEW_MSDU_ID_SPACE_BEGIN
+ * If host doesn't support, FW falls back to HTT_TX_IPA_MSDU_ID_SPACE_BEGIN
+ * Handshaking is done through WMI_READY and WMI_INIT
+ */
 #define HTT_TX_HOST_MSDU_ID_SPACE_BEGIN 0
 #define HTT_TX_IPA_MSDU_ID_SPACE_BEGIN  3000
 #define TGT_RX2TX_MSDU_ID_SPACE_BEGIN 6000
+/* 8192 = 0xr2000 */
+#define HTT_TX_IPA_NEW_MSDU_ID_SPACE_BEGIN 8192
+/* 12288 = 0x3000 */
+#define TGT_RX2TX_NEW_MSDU_ID_SPACE_BEGIN  12288
 
 #endif /* _HTT_COMMON_H_ */

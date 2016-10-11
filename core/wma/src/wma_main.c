@@ -241,6 +241,8 @@ static void wma_set_default_tgt_config(tp_wma_handle wma_handle)
 	tgt_cfg.scan_max_pending_req = wma_handle->max_scan;
 
 	WMI_RSRC_CFG_FLAG_MGMT_COMP_EVT_BUNDLE_SUPPORT_SET(tgt_cfg.flag1, 1);
+	WMI_RSRC_CFG_FLAG_TX_MSDU_ID_NEW_PARTITION_SUPPORT_SET(tgt_cfg.flag1,
+							       1);
 
 	WMITLV_SET_HDR(&tgt_cfg.tlv_header,
 		       WMITLV_TAG_STRUC_wmi_resource_config,
@@ -3723,6 +3725,21 @@ static inline void wma_update_target_services(tp_wma_handle wh,
 
 	if (WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap, WMI_SERVICE_RTT))
 		g_fw_wlan_feat_caps |= (1 << RTT);
+
+	if (WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap,
+			WMI_SERVICE_TX_MSDU_ID_NEW_PARTITION_SUPPORT)) {
+		ol_cfg_set_ipa_uc_tx_partition_base((ol_pdev_handle)
+				((p_cds_contextType) wh->cds_context)->cfg_ctx,
+				HTT_TX_IPA_NEW_MSDU_ID_SPACE_BEGIN);
+		WMA_LOGI("%s: TX_MSDU_ID_NEW_PARTITION=%d", __func__,
+				HTT_TX_IPA_NEW_MSDU_ID_SPACE_BEGIN);
+	} else {
+		ol_cfg_set_ipa_uc_tx_partition_base((ol_pdev_handle)
+				((p_cds_contextType) wh->cds_context)->cfg_ctx,
+				HTT_TX_IPA_MSDU_ID_SPACE_BEGIN);
+		WMA_LOGI("%s: TX_MSDU_ID_OLD_PARTITION=%d", __func__,
+				HTT_TX_IPA_MSDU_ID_SPACE_BEGIN);
+	}
 }
 
 /**

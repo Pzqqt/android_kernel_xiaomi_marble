@@ -516,6 +516,7 @@ unsigned int ol_cfg_ipa_uc_rx_ind_ring_size(ol_pdev_handle pdev);
  * @param pdev - handle to the physical device
  */
 unsigned int ol_cfg_ipa_uc_tx_partition_base(ol_pdev_handle pdev);
+void ol_cfg_set_ipa_uc_tx_partition_base(ol_pdev_handle pdev, uint32_t value);
 #else
 static inline unsigned int ol_cfg_ipa_uc_offload_enabled(
 	ol_pdev_handle pdev)
@@ -545,6 +546,12 @@ static inline unsigned int ol_cfg_ipa_uc_tx_partition_base(
 	ol_pdev_handle pdev)
 {
 	return 0;
+}
+
+static inline void ol_cfg_set_ipa_uc_tx_partition_base(
+	ol_pdev_handle pdev, uint32_t value)
+{
+	return;
 }
 #endif /* IPA_OFFLOAD */
 
