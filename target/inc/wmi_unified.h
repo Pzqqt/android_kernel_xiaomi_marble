@@ -2011,6 +2011,12 @@ typedef struct {
 	 * Value 0 means FW hasn't given any limit to host.
 	 */
 	A_UINT32 max_bssid_rx_filters;
+	/*
+	 * Extended FW build version information:
+	 * bits 27:0  -> reserved
+	 * bits 31:28 -> CRM sub ID
+	 */
+	A_UINT32 fw_build_vers_ext;
 } wmi_service_ready_ext_event_fixed_param;
 
 typedef enum {
