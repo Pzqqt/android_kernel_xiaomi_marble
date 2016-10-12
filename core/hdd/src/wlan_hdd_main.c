@@ -5233,11 +5233,13 @@ QDF_STATUS hdd_set_sme_chan_list(hdd_context_t *hdd_ctx)
  */
 bool hdd_is_5g_supported(hdd_context_t *hdd_ctx)
 {
-	/*
-	 * If wcnss_wlan_iris_xo_mode() returns WCNSS_XO_48MHZ(1);
-	 * then hardware support 5Ghz.
-	 */
-	return true;
+	if (!hdd_ctx || !hdd_ctx->config)
+		return true;
+
+	if (hdd_ctx->config->nBandCapability != eCSR_BAND_24)
+		return true;
+	else
+		return false;
 }
 
 static int hdd_wiphy_init(hdd_context_t *hdd_ctx)
