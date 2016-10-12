@@ -4570,6 +4570,9 @@ void cds_update_with_safe_channel_list(uint8_t *pcl_channels, uint32_t *len,
 				     &unsafe_channel_count,
 				     sizeof(unsafe_channel_list));
 
+	if (unsafe_channel_count == 0)
+		cds_notice("There are no unsafe channels");
+
 	if (unsafe_channel_count) {
 		qdf_mem_copy(current_channel_list, pcl_channels,
 			current_channel_count);
@@ -4592,11 +4595,12 @@ void cds_update_with_safe_channel_list(uint8_t *pcl_channels, uint32_t *len,
 				}
 			}
 			if (!is_unsafe) {
-				pcl_channels[safe_channel_count++] =
+				pcl_channels[safe_channel_count] =
 					current_channel_list[i];
 				if (safe_channel_count < weight_len)
-					weight_list[safe_channel_count++] =
+					weight_list[safe_channel_count] =
 						org_weight_list[i];
+				safe_channel_count++;
 			}
 		}
 		*len = safe_channel_count;

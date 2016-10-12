@@ -5784,8 +5784,8 @@ static uint8_t hdd_get_safe_channel_from_pcl_and_acs_range(
 		hdd_info("chan[%d]:%d", i, pcl.pcl_list[i]);
 		found = false;
 		for (j = 0; j < hdd_ctx->unsafe_channel_count; j++) {
-			if (cds_chan_to_freq(pcl.pcl_list[i]) ==
-			   hdd_ctx->unsafe_channel_list[j]) {
+			if (pcl.pcl_list[i] ==
+					hdd_ctx->unsafe_channel_list[j]) {
 				hdd_info("unsafe chan:%d", pcl.pcl_list[i]);
 				found = true;
 				break;
@@ -5887,8 +5887,7 @@ void hdd_unsafe_channel_restart_sap(hdd_context_t *hdd_ctxt)
 
 		found = false;
 		for (i = 0; i < hdd_ctxt->unsafe_channel_count; i++) {
-			if (cds_chan_to_freq(
-				adapter_temp->sessionCtx.ap.operatingChannel) ==
+			if (adapter_temp->sessionCtx.ap.operatingChannel ==
 				hdd_ctxt->unsafe_channel_list[i]) {
 				found = true;
 				hdd_info("operating ch:%d is unsafe",
@@ -6028,7 +6027,7 @@ void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 					end_channel_idx; channel_loop++) {
 			hdd_ctxt->unsafe_channel_list[
 				hdd_ctxt->unsafe_channel_count++] =
-				CDS_CHANNEL_FREQ(channel_loop);
+				CDS_CHANNEL_NUM(channel_loop);
 			if (hdd_ctxt->unsafe_channel_count >=
 							NUM_CHANNELS) {
 				hdd_warn("LTECoex unsafe ch list full");
