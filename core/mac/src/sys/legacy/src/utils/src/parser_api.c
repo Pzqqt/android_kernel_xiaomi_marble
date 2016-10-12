@@ -4636,7 +4636,7 @@ sir_convert_qos_map_configure_frame2_struct(tpAniSirGlobal pMac,
 	uint32_t status;
 	status =
 		dot11f_unpack_qos_map_configure(pMac, pFrame, nFrame, &mapConfigure);
-	if (DOT11F_FAILED(status)) {
+	if (DOT11F_FAILED(status) || !mapConfigure.QosMapSet.present) {
 		dot11f_log(pMac, LOGE,
 			   FL("Failed to parse Qos Map Configure frame (0x%08x, %d bytes):"),
 			   status, nFrame);
