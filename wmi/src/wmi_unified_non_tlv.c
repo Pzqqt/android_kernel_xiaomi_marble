@@ -6541,6 +6541,10 @@ QDF_STATUS extract_single_phyerr_non_tlv(wmi_unified_t wmi_handle,
 		phyerr->buf_len = ev->hdr.buf_len;
 #endif /* ATH_SUPPORT_DFS */
 
+		/* populate the rf info */
+		phyerr->rf_info.rssi_comb =
+			WMI_UNIFIED_RSSI_COMB_GET(&ev->hdr);
+
 #if ATH_SUPPORT_SPECTRAL
 
 	   /*
@@ -6560,10 +6564,6 @@ QDF_STATUS extract_single_phyerr_non_tlv(wmi_unified_t wmi_handle,
 				    WMI_UNIFIED_NF_CHAIN_GET(&ev->hdr, 2);
 				phyerr->rf_info.noise_floor[3] =
 				    WMI_UNIFIED_NF_CHAIN_GET(&ev->hdr, 3);
-
-				/* populate the rf info */
-				phyerr->rf_info.rssi_comb =
-				    WMI_UNIFIED_RSSI_COMB_GET(&ev->hdr);
 
 				/* Need to unroll loop due to macro
 				 * constraints
