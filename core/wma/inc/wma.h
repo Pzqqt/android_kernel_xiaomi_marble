@@ -1291,6 +1291,7 @@ struct extended_caps {
  * @target_abi_vers: target firmware version
  * @final_abi_vers: The final ABI version to be used for communicating
  * @target_fw_version: Target f/w build version
+ * @target_fw_vers_ext: Target f/w build version sub id
  * @lpss_support: LPSS feature is supported in target or not
  * @egap_support: Enhanced Green AP support flag
  * @wmi_ready: wmi status flag
@@ -1422,6 +1423,7 @@ typedef struct {
 	wmi_abi_version target_abi_vers;
 	wmi_abi_version final_abi_vers;
 	uint32_t target_fw_version;
+	uint32_t target_fw_vers_ext;
 #ifdef WLAN_FEATURE_LPSS
 	uint8_t lpss_support;
 #endif

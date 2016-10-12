@@ -4189,6 +4189,7 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	wma_update_target_ext_vht_cap(wma_handle, &tgt_cfg.vht_cap);
 
 	tgt_cfg.target_fw_version = wma_handle->target_fw_version;
+	tgt_cfg.target_fw_vers_ext = wma_handle->target_fw_vers_ext;
 #ifdef WLAN_FEATURE_LPSS
 	tgt_cfg.lpss_support = wma_handle->lpss_support;
 #endif /* WLAN_FEATURE_LPSS */
@@ -5359,7 +5360,7 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 	wma_init_scan_fw_mode_config(wma_handle,
 				ev->default_conc_scan_config_bits,
 				ev->default_fw_config_bits);
-
+	wma_handle->target_fw_vers_ext = ev->fw_build_vers_ext;
 	return 0;
 }
 

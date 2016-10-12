@@ -1448,6 +1448,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	}
 
 	hdd_ctx->target_fw_version = cfg->target_fw_version;
+	hdd_ctx->target_fw_vers_ext = cfg->target_fw_vers_ext;
 
 	hdd_ctx->max_intf_count = cfg->max_intf_count;
 

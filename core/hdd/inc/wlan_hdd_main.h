@@ -1417,6 +1417,7 @@ struct hdd_context_s {
 
 	/* defining the firmware version */
 	uint32_t target_fw_version;
+	uint32_t target_fw_vers_ext;
 	qdf_atomic_t dfs_radar_found;
 
 	/* defining the chip/rom version */
