@@ -8279,6 +8279,7 @@ QDF_STATUS wma_enable_disable_caevent_ind(tp_wma_handle wma, uint8_t val)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_DISA
 /**
  * wma_encrypt_decrypt_msg() -
  * @encrypt_decrypt_params: encryption/decryption params
@@ -8383,3 +8384,4 @@ int wma_encrypt_decrypt_msg_handler(void *handle, uint8_t *data,
 
 	return 0;
 }
+#endif

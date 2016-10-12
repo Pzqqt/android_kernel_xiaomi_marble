@@ -1277,6 +1277,7 @@ QDF_STATUS sme_set_default_scan_ie(tHalHandle hal, uint16_t session_id,
 QDF_STATUS sme_update_session_param(tHalHandle hal, uint8_t session_id,
 		uint32_t param_type, uint32_t param_val);
 
+#ifdef WLAN_FEATURE_DISA
 /**
  * sme_encrypt_decrypt_msg_register_callback() - Registers
  * encrypt/decrypt message callback
@@ -1315,6 +1316,7 @@ QDF_STATUS sme_encrypt_decrypt_msg_deregister_callback(tHalHandle h_hal);
  */
 QDF_STATUS sme_encrypt_decrypt_msg(tHalHandle hal,
 	struct encrypt_decrypt_req_params *encrypt_decrypt_params);
+#endif
 
 /**
  * sme_set_cts2self_for_p2p_go() - sme function to set ini parms to FW.

@@ -16653,6 +16653,7 @@ QDF_STATUS sme_set_default_scan_ie(tHalHandle hal, uint16_t session_id,
 	return status;
 }
 
+#ifdef WLAN_FEATURE_DISA
 /**
  * sme_encrypt_decrypt_msg() - handles encrypt/decrypt mesaage
  * @hal: HAL handle
@@ -16783,6 +16784,7 @@ QDF_STATUS sme_encrypt_decrypt_msg_deregister_callback(tHalHandle h_hal)
 	}
 	return status;
 }
+#endif
 
 QDF_STATUS sme_set_cts2self_for_p2p_go(tHalHandle hal_handle)
 {
