@@ -215,8 +215,6 @@ void cds_flush_cache_rx_queue(void);
 
 QDF_STATUS cds_close(v_CONTEXT_t cds_context);
 
-QDF_STATUS cds_shutdown(v_CONTEXT_t cds_context);
-
 void cds_core_return_msg(void *pVContext, p_cds_msg_wrapper pMsgWrapper);
 
 void *cds_get_context(QDF_MODULE_ID moduleId);
