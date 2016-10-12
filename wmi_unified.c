@@ -1795,7 +1795,8 @@ QDF_STATUS wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf,
 		htc_dump_counter_info(wmi_handle->htc_handle);
 		qdf_atomic_dec(&wmi_handle->pending_cmds);
 		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
-		    "%s: MAX 1024 WMI Pending cmds reached.", __func__);
+			"%s: MAX %d WMI Pending cmds reached.", __func__,
+			WMI_MAX_CMDS);
 		QDF_BUG(0);
 		return QDF_STATUS_E_BUSY;
 	}
