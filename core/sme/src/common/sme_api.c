@@ -13236,7 +13236,6 @@ QDF_STATUS sme_update_dsc_pto_up_mapping(tHalHandle hHal,
 			if ((pSession->QosMapSet.dscp_range[i][0] == 255)
 				&& (pSession->QosMapSet.dscp_range[i][1] ==
 							255)) {
-				dscpmapping[j] = 0;
 				QDF_TRACE(QDF_MODULE_ID_SME,
 					QDF_TRACE_LEVEL_ERROR,
 					FL("User Priority %d isn't used"), i);
