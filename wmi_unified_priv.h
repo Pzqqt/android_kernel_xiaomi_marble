@@ -37,7 +37,11 @@
 #include "qdf_atomic.h"
 
 #define WMI_UNIFIED_MAX_EVENT 0x100
-#define WMI_MAX_CMDS  1024
+#ifdef CONFIG_MCL
+#define WMI_MAX_CMDS  256
+#else
+#define WMI_MAX_CMDS 1024
+#endif
 
 typedef qdf_nbuf_t wmi_buf_t;
 
