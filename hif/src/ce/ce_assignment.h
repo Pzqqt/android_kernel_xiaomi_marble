@@ -364,6 +364,78 @@ static struct CE_attr host_ce_config_wlan_ar900b[] = {
 	{ /* CE11 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL, },   /* Target autonomous HIF_memcpy */
 };
 
+static struct CE_attr host_lowdesc_ce_cfg_wlan_ar9888[] = {
+	{ /* CE0 */ CE_ATTR_FLAGS, 0, 16, 256, 0, NULL, }, /* host->target HTC control and raw streams */
+	/* could be moved to share CE3 */
+#if WLAN_FEATURE_FASTPATH
+	{ /* CE1 */ CE_ATTR_FLAGS, 0, 0, 512, 64, NULL, },/* target->host BMI + HTC control */
+#else
+	{ /* CE1 */ CE_ATTR_FLAGS, 0, 0, 512, 512, NULL, },/* target->host BMI + HTC control */
+#endif
+	{ /* CE2 */ CE_ATTR_FLAGS, 0, 0, 2048, 128, NULL, },/* target->host WMI */
+	{ /* CE3 */ CE_ATTR_FLAGS, 0, 32, 2048, 0, NULL, },/* host->target WMI */
+	{ /* CE4 */ CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR, 0,
+		CE_HTT_H2T_MSG_SRC_NENTRIES_AR900B, 256, 0, NULL, }, /* host->target HTT */
+#if WLAN_FEATURE_FASTPATH
+	{ /* CE5 */ CE_ATTR_FLAGS, 0, 0, 512, 512, NULL, },    /* target->host HTT messages */
+#else   /* WLAN_FEATURE_FASTPATH */
+	{ /* CE5 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL, },    /* unused */
+#endif  /* WLAN_FEATURE_FASTPATH */
+	{ /* CE6 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL, },    /* Target autonomous HIF_memcpy */
+	{ /* CE7 */ CE_ATTR_FLAGS, 0, 2, DIAG_TRANSFER_LIMIT, 2, NULL, }, /* ce_diag, the Diagnostic Window */
+	{ /* CE8 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL, },    /* Target autonomous HIF_memcpy */
+};
+
+static struct CE_attr host_lowdesc_ce_cfg_wlan_ar900b[] = {
+	{ /* CE0 */ CE_ATTR_FLAGS, 0, 16, 256, 0, NULL, }, /* host->target HTC control and raw streams */
+	/* could be moved to share CE3 */
+#if WLAN_FEATURE_FASTPATH
+	{ /* CE1 */ CE_ATTR_FLAGS, 0, 0, 512, 64, NULL, },/* target->host BMI + HTC control */
+#else
+	{ /* CE1 */ CE_ATTR_FLAGS, 0, 0, 512, 512, NULL, },/* target->host BMI + HTC control */
+#endif
+	{ /* CE2 */ CE_ATTR_FLAGS, 0, 0, 2048, 128, NULL, },/* target->host WMI */
+	{ /* CE3 */ CE_ATTR_FLAGS, 0, 32, 2048, 0, NULL, },/* host->target WMI */
+	{ /* CE4 */ CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR, 0,
+		CE_HTT_H2T_MSG_SRC_NENTRIES_AR900B, 256, 0, NULL, }, /* host->target HTT */
+#if WLAN_FEATURE_FASTPATH
+	{ /* CE5 */ CE_ATTR_FLAGS, 0, 0, 512, 512, NULL, },    /* target->host HTT messages */
+#else   /* WLAN_FEATURE_FASTPATH */
+	{ /* CE5 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL, },    /* unused */
+#endif  /* WLAN_FEATURE_FASTPATH */
+	{ /* CE6 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL, },    /* Target autonomous HIF_memcpy */
+	{ /* CE7 */ CE_ATTR_FLAGS, 0, 2, DIAG_TRANSFER_LIMIT, 2, NULL, }, /* ce_diag, the Diagnostic Window */
+	{ /* CE8 */ CE_ATTR_FLAGS, 0, 0, 2048, 128, NULL, },/* target->host pktlog */
+	{ /* CE9 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL, },    /* Target autonomous HIF_memcpy */
+	{ /* CE10 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL, },   /* Target autonomous HIF_memcpy */
+	{ /* CE11 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL, },   /* Target autonomous HIF_memcpy */
+};
+
+static struct CE_attr host_lowdesc_ce_cfg_wlan_ar900b_nopktlog[] = {
+	{ /* CE0 */ CE_ATTR_FLAGS, 0, 16, 256, 0, NULL, }, /* host->target HTC control and raw streams */
+	/* could be moved to share CE3 */
+#if WLAN_FEATURE_FASTPATH
+	{ /* CE1 */ CE_ATTR_FLAGS, 0, 0, 512, 64, NULL, },/* target->host BMI + HTC control */
+#else
+	{ /* CE1 */ CE_ATTR_FLAGS, 0, 0, 512, 512, NULL, },/* target->host BMI + HTC control */
+#endif
+	{ /* CE2 */ CE_ATTR_FLAGS, 0, 0, 2048, 128, NULL, },/* target->host WMI */
+	{ /* CE3 */ CE_ATTR_FLAGS, 0, 32, 2048, 0, NULL, },/* host->target WMI */
+	{ /* CE4 */ CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR, 0,
+		CE_HTT_H2T_MSG_SRC_NENTRIES_AR900B, 256, 0, NULL, }, /* host->target HTT */
+#if WLAN_FEATURE_FASTPATH
+	{ /* CE5 */ CE_ATTR_FLAGS, 0, 0, 512, 512, NULL, },    /* target->host HTT messages */
+#else   /* WLAN_FEATURE_FASTPATH */
+	{ /* CE5 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL, },    /* unused */
+#endif  /* WLAN_FEATURE_FASTPATH */
+	{ /* CE6 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL, },    /* Target autonomous HIF_memcpy */
+	{ /* CE7 */ CE_ATTR_FLAGS, 0, 2, DIAG_TRANSFER_LIMIT, 2, NULL, }, /* ce_diag, the Diagnostic Window */
+	{ /* CE8 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL, },/* target->host pktlog */
+	{ /* CE9 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL, },    /* Target autonomous HIF_memcpy */
+	{ /* CE10 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL, },   /* Target autonomous HIF_memcpy */
+	{ /* CE11 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL, },   /* Target autonomous HIF_memcpy */
+};
+
 static struct CE_pipe_config target_ce_config_wlan_ar9888[] = {
 	{ /* CE0 */ 0, PIPEDIR_OUT, 32, 256, CE_ATTR_FLAGS, 0, },   /* host->target HTC control and raw streams */
 	{ /* CE1 */ 1, PIPEDIR_IN, 32, 512, CE_ATTR_FLAGS, 0, },    /* target->host HTC control */

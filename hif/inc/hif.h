@@ -510,6 +510,18 @@ enum hif_target_status {
 	TARGET_STATUS_SUSPEND /*target got suspend */
 };
 
+/**
+ * enum hif_attribute_flags: configure hif
+ *
+ * @HIF_LOWDESC_CE_CFG: Configure HIF with Low descriptor CE
+ * @HIF_LOWDESC_CE_NO_PKTLOG_CFG: Configure HIF with Low descriptor
+ *  							+ No pktlog CE
+ */
+enum hif_attribute_flags {
+	HIF_LOWDESC_CE_CFG = 1,
+	HIF_LOWDESC_CE_NO_PKTLOG_CFG
+};
+
 #define HIF_DATA_ATTR_SET_TX_CLASSIFY(attr, v) \
 	(attr |= (v & 0x01) << 5)
 #define HIF_DATA_ATTR_SET_ENCAPSULATION_TYPE(attr, v) \
@@ -722,6 +734,8 @@ int32_t hif_get_nss_wifiol_bypass_nw_process(struct hif_opaque_softc *osc);
 void hif_set_bundle_mode(struct hif_opaque_softc *scn, bool enabled,
 				int rx_bundle_cnt);
 int hif_bus_reset_resume(struct hif_opaque_softc *scn);
+
+void hif_set_attribute(struct hif_opaque_softc *osc, uint8_t hif_attrib);
 
 #ifdef WLAN_SUSPEND_RESUME_TEST
 typedef void (*hif_fake_resume_callback)(uint32_t val);
