@@ -62,7 +62,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 	qdf_nbuf_t rx_netbuf;
 	void *rxdma_ring_entry;
 	union dp_rx_desc_list_elem_t *next;
-	struct dp_srng *dp_rxdma_srng = &dp_pdev->rxdma_buf_ring;
+	struct dp_srng *dp_rxdma_srng = &dp_pdev->rx_refill_buf_ring;
 	void *rxdma_srng = dp_rxdma_srng->hal_srng;
 
 	if (!rxdma_srng) {
@@ -425,7 +425,7 @@ dp_rx_pdev_attach(struct dp_pdev *pdev)
 
 	qdf_spinlock_create(&soc->rx_desc_mutex[pdev_id]);
 	pdev = soc->pdev_list[pdev_id];
-	rxdma_srng = pdev->rxdma_buf_ring;
+	rxdma_srng = pdev->rx_refill_buf_ring;
 
 	rxdma_entries = rxdma_srng.alloc_size/hal_srng_get_entrysize(
 						     soc->hal_soc, RXDMA_BUF);

@@ -120,6 +120,8 @@ struct hal_srng_params {
 	uint32_t low_threshold;
 	/* Misc flags */
 	uint32_t flags;
+	/* Unique ring id */
+	uint8_t ring_id;
 };
 
 /**
