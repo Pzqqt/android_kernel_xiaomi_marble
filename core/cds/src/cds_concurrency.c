@@ -3651,10 +3651,22 @@ enum cds_conc_next_action cds_need_opportunistic_upgrade(void)
 	uint32_t conn_index;
 	enum cds_conc_next_action upgrade = CDS_NOP;
 	uint8_t mac = 0;
+	struct sir_hw_mode_params hw_mode;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (wma_is_hw_dbs_capable() == false) {
 		cds_err("driver isn't dbs capable, no further action needed");
-		return upgrade;
+		goto done;
+	}
+
+	status = wma_get_current_hw_mode(&hw_mode);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		cds_err("wma_get_current_hw_mode failed");
+		goto done;
+	}
+	if (!hw_mode.dbs_cap) {
+		cds_info("current HW mode is non-DBS capable");
+		goto done;
 	}
 
 	/* Are both mac's still in use */
