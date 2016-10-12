@@ -1468,6 +1468,8 @@ typedef struct sSirSmeAssocIndToUpperLayerCnf {
 } tSirSmeAssocIndToUpperLayerCnf, *tpSirSmeAssocIndToUpperLayerCnf;
 
 typedef struct tagCsrSummaryStatsInfo {
+	uint32_t snr;
+	uint32_t rssi;
 	uint32_t retry_cnt[4];
 	uint32_t multiple_retry_cnt[4];
 	uint32_t tx_frm_cnt[4];

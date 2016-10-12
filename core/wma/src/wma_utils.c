@@ -1054,6 +1054,11 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 	cds_msg_t sme_msg = { 0 };
 	int8_t bcn_snr, dat_snr;
 
+	bcn_snr = vdev_stats->vdev_snr.bcn_snr;
+	dat_snr = vdev_stats->vdev_snr.dat_snr;
+	WMA_LOGD("vdev id %d beancon snr %d data snr %d",
+		 vdev_stats->vdev_id, bcn_snr, dat_snr);
+
 	node = &wma->interfaces[vdev_stats->vdev_id];
 	stats_rsp_params = node->stats_rsp;
 	if (stats_rsp_params) {
@@ -1079,13 +1084,21 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 			summary_stats->ack_fail_cnt = vdev_stats->ack_fail_cnt;
 			summary_stats->rts_succ_cnt = vdev_stats->rts_succ_cnt;
 			summary_stats->rts_fail_cnt = vdev_stats->rts_fail_cnt;
+			/* Update SNR and RSSI in SummaryStats */
+			if (bcn_snr != WMA_TGT_INVALID_SNR) {
+				summary_stats->snr = bcn_snr;
+				summary_stats->rssi =
+					bcn_snr + WMA_TGT_NOISE_FLOOR_DBM;
+			} else if (dat_snr != WMA_TGT_INVALID_SNR) {
+				summary_stats->snr = dat_snr;
+				summary_stats->rssi =
+					bcn_snr + WMA_TGT_NOISE_FLOOR_DBM;
+			} else {
+				summary_stats->snr = WMA_TGT_INVALID_SNR;
+				summary_stats->rssi = 0;
+			}
 		}
 	}
-	bcn_snr = vdev_stats->vdev_snr.bcn_snr;
-	dat_snr = vdev_stats->vdev_snr.dat_snr;
-
-	WMA_LOGD("vdev id %d beancon snr %d data snr %d",
-		 vdev_stats->vdev_id, bcn_snr, dat_snr);
 
 	if (pGetRssiReq && pGetRssiReq->sessionId == vdev_stats->vdev_id) {
 		if ((bcn_snr == WMA_TGT_INVALID_SNR) &&
@@ -1132,10 +1145,8 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 
 		if (bcn_snr != WMA_TGT_INVALID_SNR)
 			p_snr_req->snr = bcn_snr;
-		else if (dat_snr != WMA_TGT_INVALID_SNR)
-			p_snr_req->snr = dat_snr;
 		else
-			p_snr_req->snr = (int8_t)WMA_TGT_INVALID_SNR;
+			p_snr_req->snr = dat_snr;
 
 		sme_msg.type = eWNI_SME_SNR_IND;
 		sme_msg.bodyptr = p_snr_req;

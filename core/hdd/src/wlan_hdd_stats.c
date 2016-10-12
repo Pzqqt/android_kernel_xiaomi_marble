@@ -1683,8 +1683,12 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	if (0 != status)
 		return status;
 
-	wlan_hdd_get_rssi(pAdapter, &sinfo->signal);
-	wlan_hdd_get_snr(pAdapter, &snr);
+	wlan_hdd_get_station_stats(pAdapter);
+	sinfo->signal = pAdapter->hdd_stats.summary_stat.rssi;
+	snr = pAdapter->hdd_stats.summary_stat.snr;
+	hdd_info("snr: %d, rssi: %d",
+		pAdapter->hdd_stats.summary_stat.snr,
+		pAdapter->hdd_stats.summary_stat.rssi);
 	pHddStaCtx->conn_info.signal = sinfo->signal;
 	pHddStaCtx->conn_info.noise =
 		pHddStaCtx->conn_info.signal - snr;
@@ -1703,7 +1707,6 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	 */
 	hdd_lpass_notify_connect(pAdapter);
 
-	wlan_hdd_get_station_stats(pAdapter);
 	rate_flags = pAdapter->hdd_stats.ClassA_stat.tx_rate_flags;
 
 	/* convert to the UI units of 100kbps */
