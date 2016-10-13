@@ -1994,14 +1994,16 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 	qdf_nbuf_t msdu, next, prev = NULL;
 	uint8_t *rx_ind_data;
 	uint32_t *msg_word;
+	uint32_t rx_ctx_id;
 	unsigned int msdu_count = 0;
 	uint8_t offload_ind, frag_ind;
-	struct htt_host_rx_desc_base *rx_desc;
 	uint8_t peer_id;
+	struct htt_host_rx_desc_base *rx_desc;
 
 	HTT_ASSERT1(htt_rx_in_order_ring_elems(pdev) != 0);
 
 	rx_ind_data = qdf_nbuf_data(rx_ind_msg);
+	rx_ctx_id = QDF_NBUF_CB_RX_CTX_ID(rx_ind_msg);
 	msg_word = (uint32_t *) rx_ind_data;
 	peer_id = HTT_RX_IN_ORD_PADDR_IND_PEER_ID_GET(
 					*(u_int32_t *)rx_ind_data);
@@ -2059,6 +2061,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 		QDF_NBUF_CB_DP_TRACE_PRINT(msdu) = false;
 		qdf_dp_trace_set_track(msdu, QDF_RX);
 		QDF_NBUF_CB_TX_PACKET_TRACK(msdu) = QDF_NBUF_TX_PKT_DATA_TRACK;
+		QDF_NBUF_CB_RX_CTX_ID(msdu) = rx_ctx_id;
 		ol_rx_log_packet(pdev, peer_id, msdu);
 		DPTRACE(qdf_dp_trace(msdu,
 			QDF_DP_TRACE_RX_HTT_PACKET_PTR_RECORD,

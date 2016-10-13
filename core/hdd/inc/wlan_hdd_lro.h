@@ -72,7 +72,6 @@ struct hdd_lro_desc_entry {
 struct hdd_lro_desc_pool {
 	struct hdd_lro_desc_entry *lro_desc_array;
 	struct list_head lro_free_list_head;
-	qdf_spinlock_t lro_pool_lock;
 };
 
 /**
@@ -93,7 +92,6 @@ struct hdd_lro_desc_table {
  */
 struct hdd_lro_desc_info {
 	struct hdd_lro_desc_table *lro_hash_table;
-	qdf_spinlock_t lro_hash_lock;
 	struct hdd_lro_desc_pool lro_desc_pool;
 };
 
@@ -151,8 +149,6 @@ struct hdd_lro_stats {
 struct hdd_lro_s {
 	struct net_lro_mgr *lro_mgr;
 	struct hdd_lro_desc_info lro_desc_info;
-	qdf_spinlock_t lro_mgr_arr_access_lock;
-	struct hdd_lro_stats lro_stats;
 };
 
 int hdd_lro_init(hdd_context_t *hdd_ctx);
