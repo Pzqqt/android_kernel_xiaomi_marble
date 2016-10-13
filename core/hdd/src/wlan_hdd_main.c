@@ -998,7 +998,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 	struct hdd_config *pconfig = hdd_ctx->config;
 	struct wiphy *wiphy = hdd_ctx->wiphy;
 	struct ieee80211_supported_band *band_5g =
-		wiphy->bands[IEEE80211_BAND_5GHZ];
+		wiphy->bands[NL80211_BAND_5GHZ];
 	uint32_t temp = 0;
 
 	if (!band_5g) {
@@ -3992,10 +3992,10 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 
 		if (chan_no <= 14)
 			freq = ieee80211_channel_to_frequency(chan_no,
-			IEEE80211_BAND_2GHZ);
+			NL80211_BAND_2GHZ);
 		else
 			freq = ieee80211_channel_to_frequency(chan_no,
-			IEEE80211_BAND_5GHZ);
+			NL80211_BAND_5GHZ);
 
 		chan = ieee80211_get_channel(padapter->wdev.wiphy, freq);
 		bss = hdd_cfg80211_get_bss(padapter->wdev.wiphy, chan, bssid,

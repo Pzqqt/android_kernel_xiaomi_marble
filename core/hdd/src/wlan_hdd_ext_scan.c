@@ -2455,7 +2455,7 @@ static void hdd_remove_indoor_channels(struct wiphy *wiphy, uint32_t *chan_list,
 	int i, j, k;
 
 	for (i = 0; i < *num_channels; i++)
-		for (j = 0; j < IEEE80211_NUM_BANDS; j++) {
+		for (j = 0; j < NUM_NL80211_BANDS; j++) {
 			if (wiphy->bands[j] == NULL)
 				continue;
 			for (k = 0; k < wiphy->bands[j]->n_channels; k++) {

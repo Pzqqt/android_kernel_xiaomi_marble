@@ -1798,7 +1798,7 @@ int wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
  * Return: o for failure, rate bitmap for success
  */
 static uint32_t wlan_hdd_get_rates(struct wiphy *wiphy,
-	enum ieee80211_band band,
+	enum nl80211_band band,
 	const u8 *rates, unsigned int rate_count)
 {
 	uint32_t j, count, rate_bitmap = 0;
@@ -1885,7 +1885,7 @@ static int __wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_SCAN_MAX + 1];
 	struct cfg80211_scan_request *request = NULL;
 	struct nlattr *attr;
-	enum ieee80211_band band;
+	enum nl80211_band band;
 	uint8_t n_channels = 0, n_ssid = 0, ie_len = 0;
 	uint32_t tmp, count, j;
 	unsigned int len;
@@ -1910,7 +1910,7 @@ static int __wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 			tb[QCA_WLAN_VENDOR_ATTR_SCAN_FREQUENCIES], tmp)
 			n_channels++;
 	} else {
-		for (band = 0; band < IEEE80211_NUM_BANDS; band++)
+		for (band = 0; band < NUM_NL80211_BANDS; band++)
 			if (wiphy->bands[band])
 				n_channels += wiphy->bands[band]->n_channels;
 	}
@@ -1965,7 +1965,7 @@ static int __wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 			count++;
 		}
 	} else {
-		for (band = 0; band < IEEE80211_NUM_BANDS; band++) {
+		for (band = 0; band < NUM_NL80211_BANDS; band++) {
 			if (!wiphy->bands[band])
 				continue;
 			for (j = 0; j < wiphy->bands[band]->n_channels;
@@ -2001,7 +2001,7 @@ static int __wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 				request->ie_len);
 	}
 
-	for (count = 0; count < IEEE80211_NUM_BANDS; count++)
+	for (count = 0; count < NUM_NL80211_BANDS; count++)
 		if (wiphy->bands[count])
 			request->rates[count] =
 				(1 << wiphy->bands[count]->n_bitrates) - 1;

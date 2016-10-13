@@ -5086,10 +5086,10 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			return -EIO;
 		}
 		if (phddctx->config->nChannelBondingMode5GHz)
-			phddctx->wiphy->bands[IEEE80211_BAND_5GHZ]->ht_cap.cap
+			phddctx->wiphy->bands[NL80211_BAND_5GHZ]->ht_cap.cap
 				|= IEEE80211_HT_CAP_SUP_WIDTH_20_40;
 		else
-			phddctx->wiphy->bands[IEEE80211_BAND_5GHZ]->ht_cap.cap
+			phddctx->wiphy->bands[NL80211_BAND_5GHZ]->ht_cap.cap
 				&= ~IEEE80211_HT_CAP_SUP_WIDTH_20_40;
 
 		hdd_warn("New_Phymode= %d ch_bonding=%d band=%d VHT_ch_width=%u",

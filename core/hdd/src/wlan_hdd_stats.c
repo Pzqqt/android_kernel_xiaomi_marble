@@ -2355,7 +2355,7 @@ static int __wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 	sme_get_operation_channel(halHandle, &channel, pAdapter->sessionId);
 	hdd_wlan_get_freq(channel, &freq);
 
-	for (i = 0; i < IEEE80211_NUM_BANDS; i++) {
+	for (i = 0; i < NUM_NL80211_BANDS; i++) {
 		if (NULL == wiphy->bands[i])
 			continue;
 
