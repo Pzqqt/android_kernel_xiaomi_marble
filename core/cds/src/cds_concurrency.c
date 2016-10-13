@@ -7639,6 +7639,8 @@ void cds_restart_sap(hdd_adapter_t *ap_adapter)
 				      sap_config,
 				      ap_adapter->dev) != QDF_STATUS_SUCCESS) {
 			cds_err("SAP Start Bss fail");
+			wlansap_reset_sap_config_add_ie(sap_config,
+					eUPDATE_IE_ALL);
 			goto end;
 		}
 
@@ -7646,6 +7648,8 @@ void cds_restart_sap(hdd_adapter_t *ap_adapter)
 		qdf_status =
 			qdf_wait_single_event(&hostapd_state->qdf_event,
 					BSS_WAIT_TIMEOUT);
+		wlansap_reset_sap_config_add_ie(sap_config,
+				eUPDATE_IE_ALL);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			cds_err("SAP Start failed");
 			goto end;
