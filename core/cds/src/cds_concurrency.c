@@ -9117,6 +9117,45 @@ uint8_t cds_get_mcc_operating_channel(uint8_t session_id)
 }
 
 /**
+ * cds_checkn_update_hw_mode_single_mac_mode() - Set hw_mode to SMM
+ * if required
+ * @channel: channel number for the new STA connection
+ *
+ * After the STA disconnection, if the hw_mode is in DBS and the new STA
+ * connection is coming in the band in which existing connections are
+ * present, then this function stops the dbs opportunistic timer and sets
+ * the hw_mode to Single MAC mode (SMM).
+ *
+ * Return: None
+ */
+void cds_checkn_update_hw_mode_single_mac_mode(uint8_t channel)
+{
+	uint8_t i;
+	cds_context_type *cds_ctx;
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return;
+	}
+
+	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
+		if (conc_connection_list[i].in_use)
+			if (!CDS_IS_SAME_BAND_CHANNELS(channel,
+				conc_connection_list[i].chan)) {
+				cds_info("DBS required");
+				return;
+			}
+	}
+
+	if (QDF_TIMER_STATE_RUNNING ==
+		cds_ctx->dbs_opportunistic_timer.state)
+		qdf_mc_timer_stop(&cds_ctx->dbs_opportunistic_timer);
+
+	cds_dbs_opportunistic_timer_handler((void *)cds_ctx);
+}
+
+/**
  * cds_set_do_hw_mode_change_flag() - Set flag to indicate hw mode change
  * @flag: Indicate if hw mode change is required or not
  *
