@@ -7413,8 +7413,6 @@ static int hdd_pre_enable_configure(hdd_context_t *hdd_ctx)
 		goto out;
 	}
 
-	hdd_initialize_mac_address(hdd_ctx);
-
 	/*
 	 * Set the MAC Address Currently this is used by HAL to add self sta.
 	 * Remove this once self sta is added as part of session open.
@@ -7999,9 +7997,9 @@ int hdd_wlan_startup(struct device *dev)
 	if (hdd_ipa_init(hdd_ctx) == QDF_STATUS_E_FAILURE)
 		goto err_wiphy_unregister;
 
+	hdd_initialize_mac_address(hdd_ctx);
 
 	rtnl_held = hdd_hold_rtnl_lock();
-
 
 	adapter = hdd_open_interfaces(hdd_ctx, rtnl_held);
 
