@@ -7636,7 +7636,7 @@ static int wlan_hdd_cfg80211_get_wakelock_stats(struct wiphy *wiphy,
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_cfg80211_get_wakelock_stats(wiphy, wdev, data,
 								data_len);
-	cds_ssr_protect(__func__);
+	cds_ssr_unprotect(__func__);
 
 	return ret;
 }
