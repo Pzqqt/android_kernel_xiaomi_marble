@@ -137,7 +137,8 @@ struct qdf_nbuf_cb {
 				tcp_pure_ack:1,
 				ipv6_proto:1,
 				ip_offset:7,
-				tcp_offset:7;
+				tcp_offset:7,
+				rx_ctx_id:4;
 			uint32_t tcp_udp_chksum:16,
 				tcp_win:16;
 			uint32_t tcp_seq_num;
@@ -214,6 +215,8 @@ struct qdf_nbuf_cb {
 
 #define QDF_NBUF_CB_RX_LRO_ELIGIBLE(skb) \
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.lro_eligible)
+#define QDF_NBUF_CB_RX_CTX_ID(skb) \
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.rx_ctx_id)
 #define QDF_NBUF_CB_RX_TCP_PROTO(skb) \
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.tcp_proto)
 #define QDF_NBUF_CB_RX_TCP_PURE_ACK(skb) \

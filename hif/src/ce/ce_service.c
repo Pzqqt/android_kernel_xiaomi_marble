@@ -1692,7 +1692,7 @@ static void ce_fastpath_rx_handle(struct CE_state *ce_state,
 	uint32_t write_index;
 
 	qdf_spin_unlock(&ce_state->ce_index_lock);
-	(ce_state->fastpath_handler)(ce_state->context, cmpl_msdus, num_cmpls);
+	(ce_state->fastpath_handler)(ce_state->context,	cmpl_msdus, num_cmpls);
 	qdf_spin_lock(&ce_state->ce_index_lock);
 
 	/* Update Destination Ring Write Index */
@@ -1723,6 +1723,7 @@ static void ce_fastpath_rx_handle(struct CE_state *ce_state,
 static void ce_per_engine_service_fast(struct hif_softc *scn, int ce_id)
 {
 	struct CE_state *ce_state = scn->ce_id_to_state[ce_id];
+	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 	struct CE_ring_state *dest_ring = ce_state->dest_ring;
 	struct CE_dest_desc *dest_ring_base =
 		(struct CE_dest_desc *)dest_ring->base_addr_owner_space;
@@ -1795,6 +1796,8 @@ more_data:
 
 		qdf_assert_always(nbuf->data != NULL);
 
+		QDF_NBUF_CB_RX_CTX_ID(nbuf) =
+				hif_get_rx_ctx_id(ce_state->id, hif_hdl);
 		cmpl_msdus[nbuf_cmpl_idx++] = nbuf;
 
 		/*

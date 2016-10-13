@@ -479,10 +479,13 @@ static inline void ce_pkt_error_count_incr(
 }
 
 bool ce_check_rx_pending(struct CE_state *CE_state);
+void *hif_ce_get_lro_ctx(struct hif_opaque_softc *hif_hdl, int ctx_id);
 #if defined(FEATURE_LRO)
 int ce_lro_flush_cb_register(struct hif_opaque_softc *scn,
-			     void (handler)(void *), void *data);
-int ce_lro_flush_cb_deregister(struct hif_opaque_softc *scn);
+			     void (handler)(void *),
+			     void *(lro_init_handler)(void));
+int ce_lro_flush_cb_deregister(struct hif_opaque_softc *hif_hdl,
+			       void (lro_deinit_cb)(void *));
 #endif
 struct ce_ops *ce_services_srng(void);
 struct ce_ops *ce_services_legacy(void);

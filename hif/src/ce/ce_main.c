@@ -756,6 +756,7 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 		CE_state->ctrl_addr = ctrl_addr;
 		CE_state->state = CE_RUNNING;
 		CE_state->attr_flags = attr->flags;
+		qdf_spinlock_create(&CE_state->lro_unloading_lock);
 	}
 	CE_state->scn = scn;
 
@@ -2497,6 +2498,18 @@ u32 shadow_dst_wr_ind_addr(struct hif_softc *scn, u32 ctrl_addr)
 #endif
 
 #if defined(FEATURE_LRO)
+void *hif_ce_get_lro_ctx(struct hif_opaque_softc *hif_hdl, int ctx_id)
+{
+	struct CE_state *ce_state;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
+
+	QDF_ASSERT(scn != NULL);
+
+	ce_state = scn->ce_id_to_state[ctx_id];
+
+	return ce_state->lro_data;
+}
+
 /**
  * ce_lro_flush_cb_register() - register the LRO flush
  * callback
@@ -2509,12 +2522,14 @@ u32 shadow_dst_wr_ind_addr(struct hif_softc *scn, u32 ctrl_addr)
  * Return: Number of instances the callback is registered for
  */
 int ce_lro_flush_cb_register(struct hif_opaque_softc *hif_hdl,
-			     void (handler)(void *), void *data)
+			     void (handler)(void *),
+			     void *(lro_init_handler)(void))
 {
 	int rc = 0;
 	int i;
 	struct CE_state *ce_state;
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
+	void *data = NULL;
 
 	QDF_ASSERT(scn != NULL);
 
@@ -2522,6 +2537,12 @@ int ce_lro_flush_cb_register(struct hif_opaque_softc *hif_hdl,
 		for (i = 0; i < scn->ce_count; i++) {
 			ce_state = scn->ce_id_to_state[i];
 			if ((ce_state != NULL) && (ce_state->htt_rx_data)) {
+				data = lro_init_handler();
+				if (data == NULL) {
+					HIF_ERROR("%s: Failed to init LRO for CE %d",
+						  __func__, i);
+					continue;
+				}
 				ce_state->lro_flush_cb = handler;
 				ce_state->lro_data = data;
 				rc++;
@@ -2542,7 +2563,8 @@ int ce_lro_flush_cb_register(struct hif_opaque_softc *hif_hdl,
  *
  * Return: Number of instances the callback is de-registered
  */
-int ce_lro_flush_cb_deregister(struct hif_opaque_softc *hif_hdl)
+int ce_lro_flush_cb_deregister(struct hif_opaque_softc *hif_hdl,
+			       void (lro_deinit_cb)(void *))
 {
 	int rc = 0;
 	int i;
@@ -2554,8 +2576,15 @@ int ce_lro_flush_cb_deregister(struct hif_opaque_softc *hif_hdl)
 		for (i = 0; i < scn->ce_count; i++) {
 			ce_state = scn->ce_id_to_state[i];
 			if ((ce_state != NULL) && (ce_state->htt_rx_data)) {
+				qdf_spin_lock_bh(
+					&ce_state->lro_unloading_lock);
 				ce_state->lro_flush_cb = NULL;
+				lro_deinit_cb(ce_state->lro_data);
 				ce_state->lro_data = NULL;
+				qdf_spin_unlock_bh(
+					&ce_state->lro_unloading_lock);
+				qdf_spinlock_destroy(
+					&ce_state->lro_unloading_lock);
 				rc++;
 			}
 		}

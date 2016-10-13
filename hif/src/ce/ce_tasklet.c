@@ -172,11 +172,13 @@ static void ce_tasklet(unsigned long data)
 		QDF_BUG(0);
 	}
 
+	qdf_spin_lock_bh(&CE_state->lro_unloading_lock);
 	ce_per_engine_service(scn, tasklet_entry->ce_id);
 
 	if (CE_state->lro_flush_cb != NULL) {
 		CE_state->lro_flush_cb(CE_state->lro_data);
 	}
+	qdf_spin_unlock_bh(&CE_state->lro_unloading_lock);
 
 	if (ce_check_rx_pending(CE_state)) {
 		/*

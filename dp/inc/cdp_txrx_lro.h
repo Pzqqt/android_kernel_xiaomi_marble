@@ -32,7 +32,8 @@
 #ifndef _CDP_TXRX_LRO_H_
 #define _CDP_TXRX_LRO_H_
 
-void ol_register_lro_flush_cb(void (handler)(void *), void *data);
-void ol_deregister_lro_flush_cb(void);
+void ol_register_lro_flush_cb(void (lro_flush_cb)(void *),
+				void *(lro_init_cb)(void));
+void ol_deregister_lro_flush_cb(void (lro_deinit_cb)(void *));
 
 #endif /* _CDP_TXRX_LRO_H_ */

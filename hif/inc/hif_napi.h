@@ -77,13 +77,21 @@ enum qca_napi_event {
 	NAPI_EVT_USR_NORMAL
 };
 
+
 /**
  * Macros to map ids -returned by ...create()- to pipes and vice versa
  */
 #define NAPI_ID2PIPE(i) ((i)-1)
 #define NAPI_PIPE2ID(p) ((p)+1)
 
+int hif_napi_lro_flush_cb_register(struct hif_opaque_softc *hif_hdl,
+				   void (lro_flush_handler)(void *),
+				   void *(lro_init_handler)(void));
 
+void hif_napi_lro_flush_cb_deregister(struct hif_opaque_softc *hif_hdl,
+				      void (lro_deinit_cb)(void *));
+
+void *hif_napi_get_lro_info(struct hif_opaque_softc *hif_hdl, int napi_id);
 #ifdef FEATURE_NAPI
 
 /**

@@ -155,6 +155,7 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 			HIF_WARN("%s: bad IRQ value for CE %d: %d",
 				 __func__, i, napii->irq);
 
+		qdf_spinlock_create(&napii->lro_unloading_lock);
 		init_dummy_netdev(&(napii->netdev));
 
 		NAPI_DEBUG("adding napi=%p to netdev=%p (poll=%p, bdgt=%d)",
@@ -272,6 +273,119 @@ int hif_napi_destroy(struct hif_opaque_softc *hif_ctx,
 	}
 
 	return rc;
+}
+
+/**
+ * hif_napi_lro_flush_cb_register() - init and register flush callback for LRO
+ * @hif_hdl: pointer to hif context
+ * @lro_flush_handler: register LRO flush callback
+ * @lro_init_handler: Callback for initializing LRO
+ *
+ * Return: positive value on success and 0 on failure
+ */
+int hif_napi_lro_flush_cb_register(struct hif_opaque_softc *hif_hdl,
+				   void (lro_flush_handler)(void *),
+				   void *(lro_init_handler)(void))
+{
+	int rc = 0;
+	int i;
+	struct CE_state *ce_state;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
+	void *data = NULL;
+	struct qca_napi_data *napid;
+	struct qca_napi_info *napii;
+
+	QDF_ASSERT(scn != NULL);
+
+	napid = hif_napi_get_all(hif_hdl);
+	if (scn != NULL) {
+		for (i = 0; i < scn->ce_count; i++) {
+			ce_state = scn->ce_id_to_state[i];
+			if ((ce_state != NULL) && (ce_state->htt_rx_data)) {
+				data = lro_init_handler();
+				if (data == NULL) {
+					HIF_ERROR("%s: Failed to init LRO for CE %d",
+						  __func__, i);
+					continue;
+				}
+				napii = &(napid->napis[i]);
+				napii->lro_flush_cb = lro_flush_handler;
+				napii->lro_ctx = data;
+				HIF_ERROR("Registering LRO for ce_id %d NAPI callback for %d flush_cb %p, lro_data %p\n",
+					i, napii->id, napii->lro_flush_cb,
+					napii->lro_ctx);
+				rc++;
+			}
+		}
+	} else {
+		HIF_ERROR("%s: hif_state NULL!", __func__);
+	}
+	return rc;
+}
+
+/**
+ * hif_napi_lro_flush_cb_deregister() - Degregister and free LRO.
+ * @hif: pointer to hif context
+ * @lro_deinit_cb: LRO deinit callback
+ *
+ * Return: NONE
+ */
+void hif_napi_lro_flush_cb_deregister(struct hif_opaque_softc *hif_hdl,
+				     void (lro_deinit_cb)(void *))
+{
+	int i;
+	struct CE_state *ce_state;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
+	struct qca_napi_data *napid;
+	struct qca_napi_info *napii;
+
+	QDF_ASSERT(scn != NULL);
+
+	napid = hif_napi_get_all(hif_hdl);
+	if (scn != NULL) {
+		for (i = 0; i < scn->ce_count; i++) {
+			ce_state = scn->ce_id_to_state[i];
+			if ((ce_state != NULL) && (ce_state->htt_rx_data)) {
+				napii = &(napid->napis[i]);
+				HIF_ERROR("deRegistering LRO for ce_id %d NAPI callback for %d flush_cb %p, lro_data %p\n",
+					i, napii->id, napii->lro_flush_cb,
+					napii->lro_ctx);
+				qdf_spin_lock_bh(&napii->lro_unloading_lock);
+				napii->lro_flush_cb = NULL;
+				lro_deinit_cb(napii->lro_ctx);
+				napii->lro_ctx = NULL;
+				qdf_spin_unlock_bh(
+					&napii->lro_unloading_lock);
+				qdf_spinlock_destroy(
+					&napii->lro_unloading_lock);
+			}
+		}
+	} else {
+		HIF_ERROR("%s: hif_state NULL!", __func__);
+	}
+}
+
+/**
+ * hif_napi_get_lro_info() - returns the address LRO data for napi_id
+ * @hif: pointer to hif context
+ * @napi_id: napi instance
+ *
+ * Description:
+ *    Returns the address of the LRO structure
+ *
+ * Return:
+ *  <addr>: address of the LRO structure
+ */
+void *hif_napi_get_lro_info(struct hif_opaque_softc *hif_hdl, int napi_id)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
+	struct qca_napi_data *napid;
+	struct qca_napi_info *napii;
+
+	napid = &(scn->napi_data);
+	napii = &(napid->napis[NAPI_ID2PIPE(napi_id)]);
+
+	return napii->lro_ctx;
 }
 
 /**
@@ -612,9 +726,12 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx, struct napi_struct *napi,
 	hif_record_ce_desc_event(hif, NAPI_ID2PIPE(napi_info->id),
 				 NAPI_POLL_ENTER, NULL, NULL, cpu);
 
-	if (unlikely(NULL == hif))
-		QDF_ASSERT(hif != NULL); /* emit a warning if hif NULL */
-	else {
+	qdf_spin_lock_bh(&napi_info->lro_unloading_lock);
+	if (unlikely(NULL == hif)) {
+		HIF_ERROR("%s: hif context is NULL", __func__);
+		QDF_ASSERT(0); /* emit a warning if hif NULL */
+		goto out;
+	} else {
 		rc = ce_per_engine_service(hif, NAPI_ID2PIPE(napi_info->id));
 		NAPI_DEBUG("%s: ce_per_engine_service processed %d msgs",
 			    __func__, rc);
@@ -622,11 +739,11 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx, struct napi_struct *napi,
 	napi_info->stats[cpu].napi_workdone += rc;
 	normalized = (rc / napi_info->scale);
 
-	if (NULL != hif) {
-		ce_state = hif->ce_id_to_state[NAPI_ID2PIPE(napi_info->id)];
-		if (ce_state && ce_state->lro_flush_cb)
-			ce_state->lro_flush_cb(ce_state->lro_data);
-	}
+	ce_state = hif->ce_id_to_state[NAPI_ID2PIPE(napi_info->id)];
+
+	if (napi_info->lro_flush_cb)
+		napi_info->lro_flush_cb(napi_info->lro_ctx);
+	qdf_spin_unlock_bh(&napi_info->lro_unloading_lock);
 
 	/* do not return 0, if there was some work done,
 	 * even if it is below the scale
@@ -673,6 +790,8 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx, struct napi_struct *napi,
 
 	NAPI_DEBUG("%s <--[normalized=%d]", __func__, normalized);
 	return normalized;
+out:
+	return rc;
 }
 
 #ifdef HELIUMPLUS
