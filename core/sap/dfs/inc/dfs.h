@@ -127,6 +127,7 @@ enum {
 /* use 145 for osprey conversion is already done using dfs->dur_multiplier */
 #define MAX_BIN5_DUR  145
 #define MAX_BIN5_DUR_MICROSEC 105
+#define MAX_DFS_RADAR_TABLE_TYPE 256
 
 #define DFS_BIN5_TIME_WINDOW_UNITS_MULTIPLIER 1000000
 
