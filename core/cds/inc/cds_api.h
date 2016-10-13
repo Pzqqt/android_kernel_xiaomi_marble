@@ -291,4 +291,5 @@ struct cds_config_info *cds_get_ini_config(void);
 bool cds_is_5_mhz_enabled(void);
 bool cds_is_10_mhz_enabled(void);
 bool cds_is_sub_20_mhz_enabled(void);
+bool cds_is_self_recovery_enabled(void);
 #endif /* if !defined __CDS_API_H */

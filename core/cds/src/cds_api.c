@@ -520,7 +520,14 @@ QDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context)
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "Failed to get ready event from target firmware");
-		QDF_BUG(0);
+		/*
+		 * Panic only if recovery is disabled, else return failure so
+		 * that driver load can fail gracefully. We cannot trigger self
+		 * recovery here because driver is not fully loaded yet.
+		 */
+		if (!cds_is_self_recovery_enabled())
+			QDF_BUG(0);
+
 		htc_stop(gp_cds_context->htc_ctx);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2250,6 +2257,27 @@ bool cds_is_sub_20_mhz_enabled(void)
 
 	if (p_cds_context->cds_cfg)
 		return p_cds_context->cds_cfg->sub_20_channel_width;
+
+	return false;
+}
+
+/**
+ * cds_is_self_recovery_enabled() - API to get self recovery enabled
+ *
+ * Return: true if self recovery enabled, false otherwise
+ */
+bool cds_is_self_recovery_enabled(void)
+{
+	p_cds_contextType p_cds_context;
+
+	p_cds_context = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!p_cds_context) {
+		cds_err("%s: cds context is invalid", __func__);
+		return false;
+	}
+
+	if (p_cds_context->cds_cfg)
+		return p_cds_context->cds_cfg->self_recovery_enabled;
 
 	return false;
 }
