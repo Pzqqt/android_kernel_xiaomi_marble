@@ -184,9 +184,12 @@ QDF_STATUS wlan_hdd_remain_on_channel_callback(tHalHandle hHal, void *pCtx,
 	}
 
 	hdd_notice("Received remain on channel rsp");
-	qdf_mc_timer_stop(&pRemainChanCtx->hdd_remain_on_chan_timer);
-	qdf_mc_timer_destroy(&pRemainChanCtx->hdd_remain_on_chan_timer);
-
+	if (qdf_mc_timer_stop(&pRemainChanCtx->hdd_remain_on_chan_timer)
+			!= QDF_STATUS_SUCCESS)
+		hdd_err("Failed to stop hdd_remain_on_chan_timer");
+	if (qdf_mc_timer_destroy(&pRemainChanCtx->hdd_remain_on_chan_timer)
+			!= QDF_STATUS_SUCCESS)
+		hdd_err("Failed to destroy hdd_remain_on_chan_timer");
 	cfgState->remain_on_chan_ctx = NULL;
 	/*
 	 * Resetting the roc in progress early ensures that the subsequent
@@ -275,13 +278,15 @@ void wlan_hdd_cancel_existing_remain_on_channel(hdd_adapter_t *pAdapter)
 		hdd_err("Cancel Existing Remain on Channel");
 
 		if (QDF_TIMER_STATE_RUNNING == qdf_mc_timer_get_current_state(
-		    &cfgState->remain_on_chan_ctx->hdd_remain_on_chan_timer))
-			qdf_mc_timer_stop(&cfgState->remain_on_chan_ctx->
-					  hdd_remain_on_chan_timer);
+		    &cfgState->remain_on_chan_ctx->hdd_remain_on_chan_timer)) {
+			if (qdf_mc_timer_stop(&cfgState->remain_on_chan_ctx->
+				hdd_remain_on_chan_timer) != QDF_STATUS_SUCCESS)
+				hdd_err("Failed to stop hdd_remain_on_chan_timer");
+		}
 
 		pRemainChanCtx = cfgState->remain_on_chan_ctx;
 		if (pRemainChanCtx->hdd_remain_on_chan_cancel_in_progress ==
-		    true) {
+			true) {
 			mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
 			hdd_err("ROC timer cancellation in progress wait for completion");
 			rc = wait_for_completion_timeout(&pAdapter->
@@ -425,9 +430,14 @@ wait:
 		roc_ctx = cfg_state->remain_on_chan_ctx;
 		if (roc_ctx != NULL) {
 			cfg_state->remain_on_chan_ctx = NULL;
-			qdf_mc_timer_stop(&roc_ctx->hdd_remain_on_chan_timer);
-			qdf_mc_timer_destroy(
-					&roc_ctx->hdd_remain_on_chan_timer);
+			if (qdf_mc_timer_stop(&roc_ctx->
+				hdd_remain_on_chan_timer)
+				!= QDF_STATUS_SUCCESS)
+				hdd_err("Failed to stop hdd_remain_on_chan_timer");
+			if (qdf_mc_timer_destroy(
+				&roc_ctx->hdd_remain_on_chan_timer)
+				!= QDF_STATUS_SUCCESS)
+				hdd_err("Failed to destroy hdd_remain_on_chan_timer");
 			if (roc_ctx->action_pkt_buff.frame_ptr != NULL
 				&& roc_ctx->action_pkt_buff.frame_length != 0) {
 				qdf_mem_free(
@@ -598,12 +608,21 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
 				 &pRemainChanCtx->scan_id)) {
 			hdd_err("sme_remain_on_channel failed");
 			mutex_lock(&cfgState->remain_on_chan_ctx_lock);
-			cfgState->remain_on_chan_ctx = NULL;
 			pAdapter->is_roc_inprogress = false;
+			pRemainChanCtx = cfgState->remain_on_chan_ctx;
+			hddLog(LOG1,
+				FL("Freeing ROC ctx cfgState->remain_on_chan_ctx=%p"),
+				cfgState->remain_on_chan_ctx);
+			if (pRemainChanCtx) {
+				if (qdf_mc_timer_destroy(
+					&pRemainChanCtx->
+						hdd_remain_on_chan_timer)
+						!= QDF_STATUS_SUCCESS)
+					hdd_err("Failed to destroy hdd_remain_on_chan_timer");
+				qdf_mem_free(pRemainChanCtx);
+				cfgState->remain_on_chan_ctx = NULL;
+			}
 			mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
-			qdf_mc_timer_destroy(
-				&pRemainChanCtx->hdd_remain_on_chan_timer);
-			qdf_mem_free(pRemainChanCtx);
 			qdf_runtime_pm_allow_suspend(pHddCtx->runtime_context.
 						     roc);
 			hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_ROC);
@@ -631,12 +650,21 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
 			    pAdapter, &pRemainChanCtx->scan_id)) {
 			hdd_err("wlansap_remain_on_channel failed");
 			mutex_lock(&cfgState->remain_on_chan_ctx_lock);
-			cfgState->remain_on_chan_ctx = NULL;
 			pAdapter->is_roc_inprogress = false;
+			pRemainChanCtx = cfgState->remain_on_chan_ctx;
+			hddLog(LOG1,
+				FL("Freeing ROC ctx cfgState->remain_on_chan_ctx=%p"),
+				cfgState->remain_on_chan_ctx);
+			if (pRemainChanCtx) {
+				if (qdf_mc_timer_destroy(
+					&pRemainChanCtx->
+					hdd_remain_on_chan_timer)
+					!= QDF_STATUS_SUCCESS)
+					hdd_err("Failed to destroy hdd_remain_on_chan_timer");
+				qdf_mem_free(pRemainChanCtx);
+				cfgState->remain_on_chan_ctx = NULL;
+			}
 			mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
-			qdf_mc_timer_destroy(
-				&pRemainChanCtx->hdd_remain_on_chan_timer);
-			qdf_mem_free(pRemainChanCtx);
 			qdf_runtime_pm_allow_suspend(pHddCtx->runtime_context.
 						     roc);
 			hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_ROC);
@@ -973,8 +1001,10 @@ void hdd_remain_chan_ready_handler(hdd_adapter_t *pAdapter,
 			qdf_mc_timer_get_current_state(
 				&pRemainChanCtx->hdd_remain_on_chan_timer)) {
 			hdd_err("Timer Started before ready event!!!");
-			qdf_mc_timer_stop(&pRemainChanCtx->
-					  hdd_remain_on_chan_timer);
+			if (qdf_mc_timer_stop(&pRemainChanCtx->
+						hdd_remain_on_chan_timer)
+					!= QDF_STATUS_SUCCESS)
+				hdd_err("Failed to stop hdd_remain_on_chan_timer");
 		}
 		status =
 			qdf_mc_timer_start(&pRemainChanCtx->
@@ -1093,8 +1123,10 @@ __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 	}
 
 	if (NULL != cfgState->remain_on_chan_ctx) {
-		qdf_mc_timer_stop(&cfgState->remain_on_chan_ctx->
-				  hdd_remain_on_chan_timer);
+		if (qdf_mc_timer_stop(&cfgState->remain_on_chan_ctx->
+					hdd_remain_on_chan_timer)
+				!= QDF_STATUS_SUCCESS)
+			hdd_err("Failed to stop hdd_remain_on_chan_timer");
 		if (true ==
 		    pRemainChanCtx->hdd_remain_on_chan_cancel_in_progress) {
 			mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
@@ -1409,9 +1441,11 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 				hddLog(LOG1, FL("Extending the wait time %d for actionFrmType=%d"),
 						wait, actionFrmType);
 
-				qdf_mc_timer_stop(&cfgState->
-						  remain_on_chan_ctx->
-						  hdd_remain_on_chan_timer);
+				if (qdf_mc_timer_stop(&cfgState->
+						remain_on_chan_ctx->
+						hdd_remain_on_chan_timer)
+						!= QDF_STATUS_SUCCESS)
+					hdd_err("Failed to stop hdd_remain_on_chan_timer");
 				status =
 					qdf_mc_timer_start(&cfgState->
 							   remain_on_chan_ctx->
