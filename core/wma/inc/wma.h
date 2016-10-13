@@ -477,6 +477,10 @@ enum ds_mode {
 		WMA_HW_MODE_SBS_MODE_BITPOS)
 
 
+#define WMA_SCAN_END_EVENT	(WMI_SCAN_EVENT_COMPLETED |	\
+				WMI_SCAN_EVENT_DEQUEUED   |	\
+				WMI_SCAN_EVENT_START_FAILED)
+
 /**
  * struct probeTime_dwellTime - probe time, dwell time map
  * @dwell_time: dwell time
@@ -1010,7 +1014,6 @@ struct wma_txrx_node {
 	vdev_restart_params_t vdev_restart_params;
 	vdev_cli_config_t config;
 	struct scan_param scan_info;
-	struct p2p_scan_param p2p_scan_info;
 	uint32_t type;
 	uint32_t sub_type;
 #ifdef FEATURE_WLAN_SCAN_PNO
@@ -1536,6 +1539,7 @@ typedef struct {
 	uint32_t new_hw_mode_index;
 	struct extended_caps phy_caps;
 	qdf_atomic_t scan_id_counter;
+	qdf_atomic_t num_pending_scans;
 	wma_peer_authorized_fp peer_authorized_cb;
 	uint32_t wow_pno_match_wake_up_count;
 	uint32_t wow_pno_complete_wake_up_count;
