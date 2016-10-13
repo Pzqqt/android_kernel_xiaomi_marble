@@ -1225,7 +1225,7 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 	hdd_station_ctx_t *hddstactx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	int status;
 
-	ENTER_DEV(dev);
+	/* ENTER() intentionally not used in a frequently invoked API */
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -1272,11 +1272,6 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 			    [QCA_WLAN_VENDOR_ATTR_LL_STATS_GET_CONFIG_REQ_MASK]);
 
 	LinkLayerStatsGetReq.staId = pAdapter->sessionId;
-
-	hdd_notice("LL_STATS_GET reqId = %d, staId = %d, paramIdMask = %d",
-		LinkLayerStatsGetReq.reqId,
-		LinkLayerStatsGetReq.staId,
-		LinkLayerStatsGetReq.paramIdMask);
 
 	context = &ll_stats_context;
 	spin_lock(&context->context_lock);

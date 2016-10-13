@@ -4883,10 +4883,6 @@ bool csr_scan_age_out_bss(tpAniSirGlobal pMac, tCsrScanResult *pResult)
 			(uint32_t) qdf_mc_timer_get_system_ticks();
 		return fRet;
 	}
-	sms_log(pMac, LOGW,
-		"Aging out BSS " MAC_ADDRESS_STR " Channel %d",
-		MAC_ADDR_ARRAY(pResult->Result.BssDescriptor.bssId),
-		pResult->Result.BssDescriptor.channelId);
 	/*
 	 * No need to hold the spin lock because caller should hold the lock for
 	 * pMac->scan.scanResultList
@@ -5957,8 +5953,9 @@ static void csr_purge_scan_result_by_age(void *pv)
 			    ageout_time) {
 			bssId = result->Result.BssDescriptor.bssId;
 			sms_log(mac_ctx, LOGW,
-				FL("age out due to time out"MAC_ADDRESS_STR),
-				MAC_ADDR_ARRAY(bssId));
+				FL("age out for BSSID" MAC_ADDRESS_STR" Channel %d"),
+				MAC_ADDR_ARRAY(bssId),
+				result->Result.BssDescriptor.channelId);
 			csr_scan_age_out_bss(mac_ctx, result);
 		}
 		entry = tmp_entry;

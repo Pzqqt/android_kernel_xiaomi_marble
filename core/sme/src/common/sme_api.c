@@ -14102,13 +14102,6 @@ QDF_STATUS sme_ll_stats_get_req(tHalHandle hHal, tSirLLStatsGetReq *pgetStatsReq
 	cds_msg_t cds_message;
 	tSirLLStatsGetReq *get_stats_req;
 
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-		  "reqId = %u", pgetStatsReq->reqId);
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-		  "staId = %u", pgetStatsReq->staId);
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-		  "Stats Type = %u", pgetStatsReq->paramIdMask);
-
 	get_stats_req = qdf_mem_malloc(sizeof(*get_stats_req));
 
 	if (!get_stats_req) {

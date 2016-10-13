@@ -514,7 +514,6 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 		return -EINVAL;
 	}
 
-	WMA_LOGD("%s: Posting Peer Stats event to HDD", __func__);
 	param_tlvs = (WMI_PEER_LINK_STATS_EVENTID_param_tlvs *) cmd_param_info;
 	if (!param_tlvs) {
 		WMA_LOGA("%s: Invalid stats event", __func__);
@@ -561,12 +560,6 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 		return -ENOMEM;
 	}
 
-	WMA_LOGD("Peer stats from FW event buf");
-	WMA_LOGD("Fixed Param:");
-	WMA_LOGD("request_id %u num_peers %u peer_event_number %u more_data %u",
-		 fixed_param->request_id, fixed_param->num_peers,
-		 fixed_param->peer_event_number, fixed_param->more_data);
-
 	qdf_mem_zero(link_stats_results, link_stats_results_size);
 
 	link_stats_results->paramId = WMI_LINK_STATS_ALL_PEER;
@@ -586,25 +579,12 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 	next_peer_offset = WMI_TLV_HDR_SIZE;
 	next_rate_offset = WMI_TLV_HDR_SIZE;
 	for (rate_cnt = 0; rate_cnt < fixed_param->num_peers; rate_cnt++) {
-		WMA_LOGD("Peer Info:");
-		WMA_LOGD("peer_type %u capabilities %u num_rates %u",
-			 peer_stats->peer_type, peer_stats->capabilities,
-			 peer_stats->num_rates);
-
 		qdf_mem_copy(results + next_res_offset,
 			     t_peer_stats + next_peer_offset, peer_info_size);
 		next_res_offset += peer_info_size;
 
 		/* Copy rate stats associated with this peer */
 		for (count = 0; count < peer_stats->num_rates; count++) {
-			WMA_LOGD("Rate Stats Info:");
-			WMA_LOGD("rate %u bitrate %u tx_mpdu %u rx_mpdu %u "
-				 "mpdu_lost %u retries %u retries_short %u "
-				 "retries_long %u", rate_stats->rate,
-				 rate_stats->bitrate, rate_stats->tx_mpdu,
-				 rate_stats->rx_mpdu, rate_stats->mpdu_lost,
-				 rate_stats->retries, rate_stats->retries_short,
-				 rate_stats->retries_long);
 			rate_stats++;
 
 			qdf_mem_copy(results + next_res_offset,
@@ -624,7 +604,6 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 	pMac->sme.pLinkLayerStatsIndCallback(pMac->hHdd,
 					     WMA_LINK_LAYER_STATS_RESULTS_RSP,
 					     link_stats_results);
-	WMA_LOGD("%s: Peer Stats event posted to HDD", __func__);
 	qdf_mem_free(link_stats_results);
 
 	return 0;
@@ -933,7 +912,6 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 		return -EINVAL;
 	}
 
-	WMA_LOGD("%s: Posting Iface Stats event to HDD", __func__);
 	param_tlvs = (WMI_IFACE_LINK_STATS_EVENTID_param_tlvs *) cmd_param_info;
 	if (!param_tlvs) {
 		WMA_LOGA("%s: Invalid stats event", __func__);
@@ -967,32 +945,6 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 		return -ENOMEM;
 	}
 
-	WMA_LOGD("Interface stats from FW event buf");
-	WMA_LOGD("Fixed Param:");
-	WMA_LOGD("request_id %u vdev_id %u",
-		 fixed_param->request_id, fixed_param->vdev_id);
-
-	WMA_LOGD("Iface Stats:");
-	WMA_LOGD("beacon_rx %u mgmt_rx %u mgmt_action_rx %u mgmt_action_tx %u "
-		 "rssi_mgmt %u rssi_data %u rssi_ack %u num_peers %u "
-		 "num_peer_events %u num_ac %u roam_state %u"
-		 " avg_bcn_spread_offset_high %u"
-		 " avg_bcn_spread_offset_low %u"
-		 " is leaky_ap %u"
-		 " avg_rx_frames_leaked %u"
-		 " rx_leak_window %u",
-		 link_stats->beacon_rx, link_stats->mgmt_rx,
-		 link_stats->mgmt_action_rx, link_stats->mgmt_action_tx,
-		 link_stats->rssi_mgmt, link_stats->rssi_data,
-		 link_stats->rssi_ack, link_stats->num_peers,
-		 link_stats->num_peer_events, link_stats->num_ac,
-		 link_stats->roam_state,
-		 link_stats->avg_bcn_spread_offset_high,
-		 link_stats->avg_bcn_spread_offset_low,
-		 link_stats->is_leaky_ap,
-		 link_stats->avg_rx_frms_leaked,
-		 link_stats->rx_leak_window);
-
 	qdf_mem_zero(link_stats_results, link_stats_results_size);
 
 	link_stats_results->paramId = WMI_LINK_STATS_IFACE;
@@ -1021,22 +973,7 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 	next_res_offset = link_stats_size - WIFI_AC_MAX * ac_stats_size;
 	next_ac_offset = WMI_TLV_HDR_SIZE;
 
-	WMA_LOGD("AC Stats:");
 	for (count = 0; count < link_stats->num_ac; count++) {
-		WMA_LOGD("ac_type %u tx_mpdu %u rx_mpdu %u tx_mcast %u "
-			 "rx_mcast %u rx_ampdu %u tx_ampdu %u mpdu_lost %u "
-			 "retries %u retries_short %u retries_long %u "
-			 "contention_time_min %u contention_time_max %u "
-			 "contention_time_avg %u contention_num_samples %u",
-			 ac_stats->ac_type, ac_stats->tx_mpdu,
-			 ac_stats->rx_mpdu, ac_stats->tx_mcast,
-			 ac_stats->rx_mcast, ac_stats->rx_ampdu,
-			 ac_stats->tx_ampdu, ac_stats->mpdu_lost,
-			 ac_stats->retries, ac_stats->retries_short,
-			 ac_stats->retries_long, ac_stats->contention_time_min,
-			 ac_stats->contention_time_max,
-			 ac_stats->contention_time_avg,
-			 ac_stats->contention_num_samples);
 		ac_stats++;
 
 		qdf_mem_copy(results + next_res_offset,
@@ -1052,7 +989,6 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 	pMac->sme.pLinkLayerStatsIndCallback(pMac->hHdd,
 					     WMA_LINK_LAYER_STATS_RESULTS_RSP,
 					     link_stats_results);
-	WMA_LOGD("%s: Iface Stats event posted to HDD", __func__);
 	qdf_mem_free(link_stats_results);
 
 	return 0;
@@ -1286,16 +1222,11 @@ static void wma_update_peer_stats(tp_wma_handle wma,
 				classa_stats->rx_frag_cnt = node->nss;
 				classa_stats->promiscuous_rx_frag_cnt =
 					mcsRateFlags;
-				WMA_LOGD("Computed mcs_idx:%d mcs_rate_flags:%d",
-					classa_stats->mcs_index, mcsRateFlags);
 			}
 			/* FW returns tx power in intervals of 0.5 dBm
 			   Convert it back to intervals of 1 dBm */
 			classa_stats->max_pwr =
 				roundup(classa_stats->max_pwr, 2) >> 1;
-			WMA_LOGD("peer tx rate flags:%d nss:%d max_txpwr:%d",
-				 node->rate_flags, node->nss,
-				 classa_stats->max_pwr);
 		}
 	}
 }
@@ -1553,8 +1484,6 @@ int wma_stats_event_handler(void *handle, uint8_t *cmd_param_info,
 			  WMITLV_TAG_STRUC_wmi_per_chain_rssi_stats) &&
 			  ((rssi_event->tlv_header & 0x0000FFFF) ==
 			  WMITLV_GET_STRUCT_TLVLEN(wmi_per_chain_rssi_stats))) {
-			WMA_LOGD("%s: num_rssi_stats %u", __func__,
-				rssi_event->num_per_chain_rssi_stats);
 			if (rssi_event->num_per_chain_rssi_stats > 0) {
 				temp = (uint8_t *) rssi_event;
 				temp += sizeof(*rssi_event);

@@ -802,13 +802,12 @@ static int wlan_hdd_request_remain_on_channel(struct wiphy *wiphy,
 	int ret;
 	int status = 0;
 
-	ENTER();
-
 	hdd_notice("Device_mode %s(%d)",
 		   hdd_device_mode_to_string(pAdapter->device_mode),
 		   pAdapter->device_mode);
 	hdd_info("chan(hw_val)0x%x chan(centerfreq) %d, duration %d",
 		 chan->hw_value, chan->center_freq, duration);
+
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(pHddCtx);
 	if (0 != ret)
@@ -894,7 +893,6 @@ static int wlan_hdd_request_remain_on_channel(struct wiphy *wiphy,
 		hdd_debug("scheduling delayed work: no connection/roc active");
 		schedule_delayed_work(&pHddCtx->roc_req_work, 0);
 	}
-	EXIT();
 	return 0;
 }
 
