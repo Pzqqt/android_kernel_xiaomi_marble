@@ -80,7 +80,27 @@ ol_tx_queue_vdev_flush(struct ol_txrx_pdev_t *pdev, struct ol_txrx_vdev_t *vdev)
 	/* flush VDEV TX queues */
 	for (i = 0; i < OL_TX_VDEV_NUM_QUEUES; i++) {
 		txq = &vdev->txqs[i];
-		ol_tx_queue_free(pdev, txq, (i + OL_TX_NUM_TIDS), false);
+		/*
+		 * currently txqs of MCAST_BCAST/DEFAULT_MGMT packet are using
+		 * tid HTT_TX_EXT_TID_NON_QOS_MCAST_BCAST/HTT_TX_EXT_TID_MGMT
+		 * when inserted into scheduler, so use same tid when we flush
+		 * them
+		 */
+		if (i == OL_TX_VDEV_MCAST_BCAST)
+			ol_tx_queue_free(pdev,
+					txq,
+					HTT_TX_EXT_TID_NON_QOS_MCAST_BCAST,
+					false);
+		else if (i == OL_TX_VDEV_DEFAULT_MGMT)
+			ol_tx_queue_free(pdev,
+					txq,
+					HTT_TX_EXT_TID_MGMT,
+					false);
+		else
+			ol_tx_queue_free(pdev,
+					txq,
+					(i + OL_TX_NUM_TIDS),
+					false);
 	}
 	/* flush PEER TX queues */
 	do {
