@@ -1449,14 +1449,17 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 		} else
 			mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
 
+		mutex_lock(&cfgState->remain_on_chan_ctx_lock);
 		if ((cfgState->remain_on_chan_ctx != NULL) &&
 		    (cfgState->current_freq == chan->center_freq)
 		    ) {
+			mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
 			hdd_notice("action frame: extending the wait time");
 			extendedWait = (uint16_t) wait;
 			goto send_frame;
 		}
 
+		mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
 		INIT_COMPLETION(pAdapter->offchannel_tx_event);
 
 		status = wlan_hdd_request_remain_on_channel(wiphy, dev, chan,
