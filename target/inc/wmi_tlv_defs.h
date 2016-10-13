@@ -752,6 +752,9 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_rx_aggr_failure_info,
 	WMITLV_TAG_STRUC_wmi_vdev_encrypt_decrypt_data_req_cmd_fixed_param,
 	WMITLV_TAG_STRUC_wmi_vdev_encrypt_decrypt_data_resp_event_fixed_param,
+	WMITLV_TAG_STRUC_wmi_pdev_band_to_mac,
+	WMITLV_TAG_STRUC_wmi_tbtt_offset_info,
+	WMITLV_TAG_STRUC_wmi_tbtt_offset_ext_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1217,6 +1220,7 @@ typedef enum {
 	OP(WMI_REPORT_STATS_EVENTID) \
 	OP(WMI_REPORT_RX_AGGR_FAILURE_EVENTID) \
 	OP(WMI_VDEV_ENCRYPT_DECRYPT_DATA_RESP_EVENTID) \
+	OP(WMI_TBTTOFFSET_EXT_UPDATE_EVENTID) \
 	/* add new EVT_LIST elements above this line */
 
 /* TLV definitions of WMI commands */
@@ -1226,7 +1230,8 @@ typedef enum {
 	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_init_cmd_fixed_param, wmi_init_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
 	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_resource_config, wmi_resource_config, resource_config, WMITLV_SIZE_FIX)	\
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_STRUC, wlan_host_memory_chunk, host_mem_chunks, WMITLV_SIZE_VAR) \
-	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_pdev_set_hw_mode_cmd_fixed_param, wmi_pdev_set_hw_mode_cmd_fixed_param, hw_mode, WMITLV_SIZE_FIX)
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_pdev_set_hw_mode_cmd_fixed_param, wmi_pdev_set_hw_mode_cmd_fixed_param, hw_mode, WMITLV_SIZE_FIX) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_pdev_band_to_mac, wmi_pdev_band_to_mac, band_to_mac, WMITLV_SIZE_VAR)
 
 WMITLV_CREATE_PARAM_STRUC(WMI_INIT_CMDID);
 
@@ -3192,6 +3197,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MGMT_RX_EVENTID);
 	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_tbtt_offset_event_fixed_param, wmi_tbtt_offset_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)	\
 	WMITLV_FXAR(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, tbttoffset_list, WMITLV_SIZE_FIX, WMI_MAX_AP_VDEV)
 WMITLV_CREATE_PARAM_STRUC(WMI_TBTTOFFSET_UPDATE_EVENTID);
+
+/* TBTT EXT offset Event */
+#define WMITLV_TABLE_WMI_TBTTOFFSET_EXT_UPDATE_EVENTID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_tbtt_offset_ext_event_fixed_param, wmi_tbtt_offset_ext_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_STRUC, wmi_tbtt_offset_info, tbtt_offset_info, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_TBTTOFFSET_EXT_UPDATE_EVENTID);
 
 /* TX DELBA Complete Event */
 #define WMITLV_TABLE_WMI_TX_DELBA_COMPLETE_EVENTID(id,op,buf,len)					    \
