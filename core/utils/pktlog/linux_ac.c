@@ -852,8 +852,9 @@ int pktlog_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 
 	get_page(virt_to_page((void *)address));
 	vmf->page = virt_to_page((void *)address);
-	return VM_FAULT_MINOR;
+	return 0;
 }
+
 static struct vm_operations_struct pktlog_vmops = {
 	open:  pktlog_vopen,
 	close:pktlog_vclose,
