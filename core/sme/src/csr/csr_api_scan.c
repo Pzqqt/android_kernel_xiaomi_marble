@@ -5149,37 +5149,6 @@ send_scan_req:
 	return status;
 }
 
-QDF_STATUS csr_send_mb_scan_result_req(tpAniSirGlobal pMac,
-				       uint32_t sessionId,
-				       tScanReqParam *pScanReqParam)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tSirSmeScanReq *pMsg;
-	uint16_t msgLen;
-
-	msgLen = (uint16_t) (sizeof(tSirSmeScanReq));
-	pMsg = qdf_mem_malloc(msgLen);
-	if (NULL == pMsg)
-		return QDF_STATUS_E_NOMEM;
-
-	pMsg->messageType = eWNI_SME_SCAN_REQ;
-	pMsg->length = msgLen;
-	pMsg->sessionId = sessionId;
-	pMsg->transactionId = 0;
-	pMsg->returnFreshResults = pScanReqParam->freshScan;
-	/* Always ask for unique result */
-	pMsg->returnUniqueResults = pScanReqParam->fUniqueResult;
-	pMsg->returnAfterFirstMatch =
-		pScanReqParam->bReturnAfter1stMatch;
-	status = cds_send_mb_message_to_mac(pMsg);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sms_log(pMac, LOGE,
-			FL("Failed to send down scan req with status = %d\n"),
-			status);
-	}
-	return status;
-}
-
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 static void csr_diag_scan_channels(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 {
