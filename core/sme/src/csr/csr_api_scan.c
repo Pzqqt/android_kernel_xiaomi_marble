@@ -645,9 +645,9 @@ release_cmd:
 	return status;
 }
 
-QDF_STATUS csr_issue_roam_after_lostlink_scan(tpAniSirGlobal pMac,
-					      uint32_t sessionId,
-					      eCsrRoamReason reason)
+static QDF_STATUS csr_issue_roam_after_lostlink_scan(tpAniSirGlobal pMac,
+						     uint32_t sessionId,
+						     eCsrRoamReason reason)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tScanResultHandle hBSSList = NULL;
@@ -2157,7 +2157,7 @@ QDF_STATUS csr_scan_get_result(tpAniSirGlobal pMac,
  * csr_scan_get_result returns with a failure because
  * of not being able to find the roaming BSS.
  */
-bool csr_scan_flush_denied(tpAniSirGlobal pMac)
+static bool csr_scan_flush_denied(tpAniSirGlobal pMac)
 {
 	uint8_t sessionId;
 
@@ -2265,7 +2265,7 @@ void csr_scan_flush_bss_entry(tpAniSirGlobal pMac,
  * @return Status
  */
 
-QDF_STATUS csr_check11d_channel(uint8_t channelId, uint8_t *pChannelList,
+static QDF_STATUS csr_check11d_channel(uint8_t channelId, uint8_t *pChannelList,
 				uint32_t numChannels)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -2526,8 +2526,9 @@ QDF_STATUS csr_scanning_state_msg_processor(tpAniSirGlobal pMac,
 	return status;
 }
 
-void csr_check_n_save_wsc_ie(tpAniSirGlobal pMac, tSirBssDescription *pNewBssDescr,
-			     tSirBssDescription *pOldBssDescr)
+static void csr_check_n_save_wsc_ie(tpAniSirGlobal pMac,
+				    tSirBssDescription *pNewBssDescr,
+				    tSirBssDescription *pOldBssDescr)
 {
 	int idx, len;
 	uint8_t *pbIe;
@@ -2563,10 +2564,11 @@ void csr_check_n_save_wsc_ie(tpAniSirGlobal pMac, tSirBssDescription *pNewBssDes
 }
 
 /* pIes may be NULL */
-bool csr_remove_dup_bss_description(tpAniSirGlobal pMac,
-				    tSirBssDescription *bss_dscp,
-				    tDot11fBeaconIEs *pIes, tAniSSID *pSsid,
-				    unsigned long *timer, bool fForced)
+static bool csr_remove_dup_bss_description(tpAniSirGlobal pMac,
+					   tSirBssDescription *bss_dscp,
+					   tDot11fBeaconIEs *pIes,
+					   tAniSSID *pSsid,
+					   unsigned long *timer, bool fForced)
 {
 	tListElem *pEntry;
 	tCsrScanResult *scan_entry;
@@ -2648,9 +2650,10 @@ bool csr_remove_dup_bss_description(tpAniSirGlobal pMac,
 	return fRC;
 }
 
-QDF_STATUS csr_add_pmkid_candidate_list(tpAniSirGlobal pMac, uint32_t sessionId,
-					tSirBssDescription *pBssDesc,
-					tDot11fBeaconIEs *pIes)
+static QDF_STATUS csr_add_pmkid_candidate_list(tpAniSirGlobal pMac,
+					       uint32_t sessionId,
+					       tSirBssDescription *pBssDesc,
+					       tDot11fBeaconIEs *pIes)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
@@ -2709,10 +2712,10 @@ QDF_STATUS csr_add_pmkid_candidate_list(tpAniSirGlobal pMac, uint32_t sessionId,
  * profile. If it is found, it return the sessionId, else it return invalid
  * sessionID
  */
-QDF_STATUS csr_process_bss_desc_for_pmkid_list(tpAniSirGlobal pMac,
-					       tSirBssDescription *pBssDesc,
-					       tDot11fBeaconIEs *pIes,
-					       uint8_t sessionId)
+static QDF_STATUS csr_process_bss_desc_for_pmkid_list(tpAniSirGlobal pMac,
+						tSirBssDescription *pBssDesc,
+						tDot11fBeaconIEs *pIes,
+						uint8_t sessionId)
 {
 	tCsrRoamSession *pSession;
 	tDot11fBeaconIEs *pIesLocal = pIes;
@@ -2753,9 +2756,10 @@ QDF_STATUS csr_process_bss_desc_for_pmkid_list(tpAniSirGlobal pMac,
 }
 
 #ifdef FEATURE_WLAN_WAPI
-QDF_STATUS csr_add_bkid_candidate_list(tpAniSirGlobal pMac, uint32_t sessionId,
-				       tSirBssDescription *pBssDesc,
-				       tDot11fBeaconIEs *pIes)
+static QDF_STATUS csr_add_bkid_candidate_list(tpAniSirGlobal pMac,
+					      uint32_t sessionId,
+					      tSirBssDescription *pBssDesc,
+					      tDot11fBeaconIEs *pIes)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
@@ -2803,9 +2807,9 @@ QDF_STATUS csr_add_bkid_candidate_list(tpAniSirGlobal pMac, uint32_t sessionId,
  * This function checks whether new AP is found for the current connected
  * profile, if so add to BKIDCandidateList
  */
-bool csr_process_bss_desc_for_bkid_list(tpAniSirGlobal pMac,
-					tSirBssDescription *pBssDesc,
-					tDot11fBeaconIEs *pIes)
+static bool csr_process_bss_desc_for_bkid_list(tpAniSirGlobal pMac,
+					       tSirBssDescription *pBssDesc,
+					       tDot11fBeaconIEs *pIes)
 {
 	bool fRC = false;
 	tDot11fBeaconIEs *pIesLocal = pIes;
@@ -3485,9 +3489,9 @@ QDF_STATUS csr_set_country_code(tpAniSirGlobal pMac, uint8_t *pCountry)
 /* caller allocated memory for pNumChn and pChnPowerInfo */
 /* As input, *pNumChn has the size of the array of pChnPowerInfo */
 /* Upon return, *pNumChn has the number of channels assigned. */
-void csr_get_channel_power_info(tpAniSirGlobal pMac, tDblLinkList *list,
-				uint32_t *num_ch,
-				struct channel_power *chn_pwr_info)
+static void csr_get_channel_power_info(tpAniSirGlobal pMac, tDblLinkList *list,
+				       uint32_t *num_ch,
+				       struct channel_power *chn_pwr_info)
 {
 	tListElem *entry;
 	uint32_t chn_idx = 0, idx;
@@ -3512,7 +3516,7 @@ void csr_get_channel_power_info(tpAniSirGlobal pMac, tDblLinkList *list,
 }
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
-void csr_diag_apply_country_info(tpAniSirGlobal mac_ctx)
+static void csr_diag_apply_country_info(tpAniSirGlobal mac_ctx)
 {
 	host_log_802_11d_pkt_type *p11dLog;
 	struct channel_power chnPwrInfo[WNI_CFG_VALID_CHANNEL_LIST_LEN];
@@ -3765,10 +3769,11 @@ void csr_reinit_scan_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 	qdf_mem_set(&pCommand->u.scanCmd, sizeof(tScanCmd), 0);
 }
 
-eCsrScanCompleteNextCommand csr_scan_get_next_command_state(tpAniSirGlobal pMac,
-							    tSmeCmd *pCommand,
-							    bool fSuccess,
-							    uint8_t *chan)
+static eCsrScanCompleteNextCommand csr_scan_get_next_command_state(
+							tpAniSirGlobal pMac,
+							tSmeCmd *pCommand,
+							bool fSuccess,
+							uint8_t *chan)
 {
 	eCsrScanCompleteNextCommand NextCommand = eCsrNextScanNothing;
 	int8_t channel;
@@ -3831,7 +3836,7 @@ eCsrScanCompleteNextCommand csr_scan_get_next_command_state(tpAniSirGlobal pMac,
 }
 
 /* Return whether the pCommand is finished. */
-bool csr_handle_scan11d1_failure(tpAniSirGlobal pMac, tSmeCmd *pCommand)
+static bool csr_handle_scan11d1_failure(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 {
 	bool fRet = true;
 
@@ -3930,8 +3935,8 @@ csr_diag_scan_complete(tpAniSirGlobal pMac,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS csr_save_profile(tpAniSirGlobal mac_ctx,
-			    tSmeCmd *save_cmd, tSmeCmd *command)
+static QDF_STATUS csr_save_profile(tpAniSirGlobal mac_ctx,
+				   tSmeCmd *save_cmd, tSmeCmd *command)
 {
 	tCsrScanResult *scan_result;
 	tCsrScanResult *temp;
@@ -4333,10 +4338,10 @@ csr_scan_remove_dup_bss_description_from_interim_list(tpAniSirGlobal mac_ctx,
 
 /* Caller allocated memory pfNewBssForConn to return whether new candidate for */
 /* current connection is found. Cannot be NULL */
-tCsrScanResult *csr_scan_save_bss_description_to_interim_list(tpAniSirGlobal pMac,
-							      tSirBssDescription *
-							      pBSSDescription,
-							      tDot11fBeaconIEs *pIes)
+static tCsrScanResult *csr_scan_save_bss_description_to_interim_list(
+					tpAniSirGlobal pMac,
+					tSirBssDescription *pBSSDescription,
+					tDot11fBeaconIEs *pIes)
 {
 	tCsrScanResult *pCsrBssDescription = NULL;
 	uint32_t cbBSSDesc;
@@ -4674,7 +4679,7 @@ QDF_STATUS csr_scan_process_single_bssdescr(tpAniSirGlobal mac_ctx,
 }
 
 
-bool csr_scan_is_wild_card_scan(tpAniSirGlobal pMac, tSmeCmd *pCommand)
+static bool csr_scan_is_wild_card_scan(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 {
 	uint8_t bssid[QDF_MAC_ADDR_SIZE] = {0};
 	/*
@@ -4847,7 +4852,7 @@ QDF_STATUS csr_move_bss_to_head_from_bssid(tpAniSirGlobal pMac,
 /* Remove the BSS if possible. */
 /* Return -- true == the BSS is remove. False == Fail to remove it */
 /* This function is called when list lock is held. Be caution what functions it can call. */
-bool csr_scan_age_out_bss(tpAniSirGlobal pMac, tCsrScanResult *pResult)
+static bool csr_scan_age_out_bss(tpAniSirGlobal pMac, tCsrScanResult *pResult)
 {
 	bool fRet = false;
 	uint32_t i;
@@ -4949,9 +4954,9 @@ QDF_STATUS csr_scan_age_results(tpAniSirGlobal pMac,
 	return status;
 }
 
-QDF_STATUS csr_send_mb_scan_req(tpAniSirGlobal pMac, uint16_t sessionId,
-				tCsrScanRequest *pScanReq,
-				tScanReqParam *pScanReqParam)
+static QDF_STATUS csr_send_mb_scan_req(tpAniSirGlobal pMac, uint16_t sessionId,
+				       tCsrScanRequest *pScanReq,
+				       tScanReqParam *pScanReqParam)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSirSmeScanReq *pMsg;
