@@ -614,4 +614,9 @@ void lim_update_caps_info_for_bss(tpAniSirGlobal mac_ctx,
 			uint16_t *caps, uint16_t bss_caps);
 void lim_send_set_dtim_period(tpAniSirGlobal mac_ctx, uint8_t dtim_period,
 			      tpPESession session);
+
+tSirRetStatus lim_strip_ie(tpAniSirGlobal mac_ctx,
+		uint8_t *addn_ie, uint16_t *addn_ielen,
+		uint8_t eid, eSizeOfLenField size_of_len_field,
+		uint8_t *oui, uint8_t out_len, uint8_t *extracted_ie);
 #endif /* __LIM_UTILS_H */

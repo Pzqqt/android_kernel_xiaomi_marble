@@ -6691,25 +6691,32 @@ QDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx,
 }
 
 /**
- * lim_strip_extcap_ie() - strip extended capability IE from IE buffer
+ * lim_strip_ie() - strip requested IE from IE buffer
  * @mac_ctx: global MAC context
  * @addn_ie: Additional IE buffer
  * @addn_ielen: Length of additional IE
+ * @eid: EID of IE to strip
+ * @size_of_len_field: lenght of IE length field
+ * @oui: if present matches OUI also
+ * @oui_length: if previous present, this is length of oui
  * @extracted_ie: if not NULL, copy the stripped IE to this buffer
  *
- * This utility function is used to strip of the extended capability IE present
- * in additional IE buffer.
+ * This utility function is used to strip of the requested IE if present
+ * in IE buffer.
  *
  * Return: tSirRetStatus
  */
-tSirRetStatus lim_strip_extcap_ie(tpAniSirGlobal mac_ctx,
-		uint8_t *addn_ie, uint16_t *addn_ielen, uint8_t *extracted_ie)
+tSirRetStatus lim_strip_ie(tpAniSirGlobal mac_ctx,
+		uint8_t *addn_ie, uint16_t *addn_ielen,
+		uint8_t eid, eSizeOfLenField size_of_len_field,
+		uint8_t *oui, uint8_t oui_length, uint8_t *extracted_ie)
 {
 	uint8_t *tempbuf = NULL;
 	uint16_t templen = 0;
 	int left = *addn_ielen;
 	uint8_t *ptr = addn_ie;
-	uint8_t elem_id, elem_len;
+	uint8_t elem_id;
+	uint16_t elem_len;
 
 	if (NULL == addn_ie) {
 		lim_log(mac_ctx, LOG1, FL("NULL addn_ie pointer"));
@@ -6724,8 +6731,14 @@ tSirRetStatus lim_strip_extcap_ie(tpAniSirGlobal mac_ctx,
 
 	while (left >= 2) {
 		elem_id  = ptr[0];
-		elem_len = ptr[1];
-		left -= 2;
+		left -= 1;
+		if (size_of_len_field == TWO_BYTE) {
+			elem_len = *((uint16_t *)&ptr[1]);
+			left -= 2;
+		} else {
+			elem_len = ptr[1];
+			left -= 1;
+		}
 		if (elem_len > left) {
 			lim_log(mac_ctx, LOGE,
 				FL("Invalid IEs eid = %d elem_len=%d left=%d"),
@@ -6733,20 +6746,31 @@ tSirRetStatus lim_strip_extcap_ie(tpAniSirGlobal mac_ctx,
 			qdf_mem_free(tempbuf);
 			return eSIR_FAILURE;
 		}
-		if (!(DOT11F_EID_EXTCAP == elem_id)) {
-			qdf_mem_copy(tempbuf + templen, &ptr[0], elem_len + 2);
-			templen += (elem_len + 2);
+
+		if (eid != elem_id ||
+				(oui && qdf_mem_cmp(oui,
+						&ptr[size_of_len_field + 1],
+						oui_length))) {
+			qdf_mem_copy(tempbuf + templen, &ptr[0],
+				     elem_len + size_of_len_field + 1);
+			templen += (elem_len + size_of_len_field + 1);
 		} else {
+			/*
+			 * eid matched and if provided OUI also matched
+			 * take oui IE and store in provided buffer.
+			 */
 			if (NULL != extracted_ie) {
 				qdf_mem_set(extracted_ie,
-					DOT11F_IE_EXTCAP_MAX_LEN + 2, 0);
+					DOT11F_IE_EXTCAP_MAX_LEN +
+						size_of_len_field + 1, 0);
 				if (elem_len <= DOT11F_IE_EXTCAP_MAX_LEN)
 					qdf_mem_copy(extracted_ie, &ptr[0],
-						     elem_len + 2);
+						elem_len +
+						size_of_len_field + 1);
 			}
 		}
 		left -= elem_len;
-		ptr += (elem_len + 2);
+		ptr += (elem_len + size_of_len_field + 1);
 	}
 	qdf_mem_copy(addn_ie, tempbuf, templen);
 
@@ -6817,8 +6841,9 @@ tSirRetStatus lim_strip_extcap_update_struct(tpAniSirGlobal mac_ctx,
 
 	qdf_mem_set((uint8_t *)&extracted_buff[0], DOT11F_IE_EXTCAP_MAX_LEN + 2,
 		     0);
-	status = lim_strip_extcap_ie(mac_ctx, addn_ie, addn_ielen,
-				     extracted_buff);
+	status = lim_strip_ie(mac_ctx, addn_ie, addn_ielen,
+			      DOT11F_EID_EXTCAP, ONE_BYTE,
+			      NULL, 0, extracted_buff);
 	if (eSIR_SUCCESS != status) {
 		lim_log(mac_ctx, LOG1,
 		       FL("Failed to strip extcap IE status = (%d)."), status);

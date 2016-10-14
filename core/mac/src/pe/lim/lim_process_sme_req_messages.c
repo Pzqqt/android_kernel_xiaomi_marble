@@ -1276,7 +1276,6 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 	len = sizeof(tSirScanOffloadReq) +
 		(pScanReq->channelList.numChannels - 1) +
 		pScanReq->uIEFieldLen;
-
 	if (lim_11h_enable) {
 		addn_ie_len += DOT11F_IE_WFATPC_MAX_LEN + 2;
 		len += DOT11F_IE_WFATPC_MAX_LEN + 2;
@@ -1370,6 +1369,13 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 			((uint8_t *)&wfa_tpc) + 1,
 			DOT11F_IE_WFATPC_MAX_LEN - SIR_MAC_WFA_TPC_OUI_SIZE);
 		pScanOffloadReq->uIEFieldLen += DOT11F_IE_WFATPC_MAX_LEN + 2;
+		if (pScanReq->uIEFieldLen)
+			lim_strip_ie(pMac,
+				(uint8_t *) pScanReq + pScanReq->uIEFieldOffset,
+				&pScanReq->uIEFieldLen,
+				DOT11F_EID_WFATPC, ONE_BYTE,
+				SIR_MAC_WFA_TPC_OUI, SIR_MAC_WFA_TPC_OUI_SIZE,
+				NULL);
 	}
 
 	rc = wma_post_ctrl_msg(pMac, &msg);
