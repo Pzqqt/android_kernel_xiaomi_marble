@@ -4080,7 +4080,12 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 {
 	enum ipa_wlan_event type = hdd_to_ipa_wlan_event(hdd_event_type);
 
-	return __hdd_ipa_wlan_evt(adapter, sta_id, type, mac_addr);
+	/* Data path offload only support for STA and SAP mode */
+	if ((QDF_STA_MODE == adapter->device_mode) ||
+	    (QDF_SAP_MODE == adapter->device_mode))
+		return __hdd_ipa_wlan_evt(adapter, sta_id, type, mac_addr);
+
+	return 0;
 }
 
 /**
