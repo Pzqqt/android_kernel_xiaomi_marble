@@ -411,6 +411,7 @@ struct htt_pdev_t {
 
 #ifdef DEBUG_RX_RING_BUFFER
 	struct rx_buf_debug *rx_buff_list;
+	qdf_spinlock_t       rx_buff_list_lock;
 	int rx_buff_index;
 #endif
 

@@ -135,8 +135,10 @@ struct htt_host_rx_desc_base {
 struct rx_buf_debug {
 	qdf_dma_addr_t paddr;
 	qdf_nbuf_t     nbuf;
-	void     *nbuf_data;
-	bool     in_use;
+	void     *nbuf_data; /* lsb of this field is used for "in_use" */
+			     /* bool     in_use; */
+	uint64_t  ts;        /* timestamp */
+
 };
 #endif
 
@@ -619,6 +621,8 @@ void htt_rx_dbg_rxbuf_init(struct htt_pdev_t *pdev)
 	if (!pdev->rx_buff_list) {
 		qdf_print("HTT: debug RX buffer allocation failed\n");
 		QDF_ASSERT(0);
+	} else {
+		qdf_spinlock_create(&(pdev->rx_buff_list_lock));
 	}
 }
 
@@ -634,16 +638,24 @@ static inline
 void htt_rx_dbg_rxbuf_set(struct htt_pdev_t *pdev, qdf_dma_addr_t paddr,
 			  qdf_nbuf_t rx_netbuf)
 {
+	void *tmp;
 	if (pdev->rx_buff_list) {
+		qdf_spin_lock_bh(&(pdev->rx_buff_list_lock));
 		pdev->rx_buff_list[pdev->rx_buff_index].paddr = paddr;
-		pdev->rx_buff_list[pdev->rx_buff_index].in_use = true;
 		pdev->rx_buff_list[pdev->rx_buff_index].nbuf_data =
 							rx_netbuf->data;
+		/* pdev->rx_buff_list[pdev->rx_buff_index].in_use = true; */
+		tmp = pdev->rx_buff_list[pdev->rx_buff_index].nbuf_data;
+		tmp = (void *)((uint64_t) tmp | 0x01);
+		pdev->rx_buff_list[pdev->rx_buff_index].nbuf_data = tmp;
 		pdev->rx_buff_list[pdev->rx_buff_index].nbuf = rx_netbuf;
+		pdev->rx_buff_list[pdev->rx_buff_index].ts =
+						qdf_get_log_timestamp();
 		NBUF_MAP_ID(rx_netbuf) = pdev->rx_buff_index;
 		if (++pdev->rx_buff_index ==
 				HTT_RX_RING_BUFF_DBG_LIST)
 			pdev->rx_buff_index = 0;
+		qdf_spin_unlock_bh(&(pdev->rx_buff_list_lock));
 	}
 }
 
@@ -658,12 +670,20 @@ void htt_rx_dbg_rxbuf_reset(struct htt_pdev_t *pdev,
 				qdf_nbuf_t netbuf)
 {
 	uint32_t index;
+	void *tmp;
 
 	if (pdev->rx_buff_list) {
+		qdf_spin_lock_bh(&(pdev->rx_buff_list_lock));
 		index = NBUF_MAP_ID(netbuf);
 		if (index < HTT_RX_RING_BUFF_DBG_LIST) {
-			pdev->rx_buff_list[index].in_use = false;
+			/* in_use = false */
+			tmp = pdev->rx_buff_list[index].nbuf_data;
+			tmp = (void *)((uint64_t)tmp & 0xfffffffffffffffe);
+			pdev->rx_buff_list[index].nbuf_data = tmp;
+			pdev->rx_buff_list[index].ts     =
+				qdf_get_log_timestamp();
 		}
+		qdf_spin_unlock_bh(&(pdev->rx_buff_list_lock));
 	}
 }
 /**
