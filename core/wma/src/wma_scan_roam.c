@@ -1849,10 +1849,10 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 			wma_roam_scan_fill_scan_params(wma_handle, pMac,
 						       NULL, &scan_params);
 			qdf_status = wma_roam_scan_offload_mode(wma_handle,
-								&scan_params,
-								NULL,
-								WMI_ROAM_SCAN_MODE_NONE,
-								roam_req->sessionId);
+						&scan_params, NULL,
+						WMI_ROAM_SCAN_MODE_NONE |
+						WMI_ROAM_SCAN_MODE_ROAMOFFLOAD,
+						roam_req->sessionId);
 		}
 		/*
 		 * If the STOP command is due to a disconnect, then
