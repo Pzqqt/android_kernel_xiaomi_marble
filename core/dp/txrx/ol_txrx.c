@@ -4119,36 +4119,6 @@ ol_txrx_ipa_uc_set_active(ol_txrx_pdev_handle pdev, bool uc_active, bool is_tx)
 }
 
 /**
- * ol_txrx_ipa_uc_fw_op_event_handler() - opcode event handler
- * @context: pdev context
- * @rxpkt: received packet
- * @staid: peer id
- *
- * Return: None
- */
-void ol_txrx_ipa_uc_fw_op_event_handler(void *context,
-					void *rxpkt,
-					uint16_t staid)
-{
-	ol_txrx_pdev_handle pdev = (ol_txrx_pdev_handle)context;
-
-	if (qdf_unlikely(!pdev)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			      "%s: Invalid context", __func__);
-		qdf_mem_free(rxpkt);
-		return;
-	}
-
-	if (pdev->ipa_uc_op_cb) {
-		pdev->ipa_uc_op_cb(rxpkt, pdev->osif_dev);
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			      "%s: ipa_uc_op_cb NULL", __func__);
-		qdf_mem_free(rxpkt);
-	}
-}
-
-/**
  * ol_txrx_ipa_uc_op_response() - Handle OP command response from firmware
  * @pdev: handle to the HTT instance
  * @op_msg: op response message from firmware
