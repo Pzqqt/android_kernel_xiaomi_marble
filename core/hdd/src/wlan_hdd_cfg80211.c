@@ -3599,7 +3599,7 @@ __wlan_hdd_cfg80211_get_wifi_info(struct wiphy *wiphy,
 			goto error_nla_fail;
 	}
 
-	if (tb_vendor[QCA_WLAN_VENDOR_ATTR_WIFI_INFO_DRIVER_VERSION]) {
+	if (tb_vendor[QCA_WLAN_VENDOR_ATTR_WIFI_INFO_FIRMWARE_VERSION]) {
 		if (nla_put_string(reply_skb,
 			    QCA_WLAN_VENDOR_ATTR_WIFI_INFO_FIRMWARE_VERSION,
 			    firmware_version))
