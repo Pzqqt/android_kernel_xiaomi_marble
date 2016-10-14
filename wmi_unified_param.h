@@ -3939,6 +3939,8 @@ struct ctl_table_params {
 	uint8_t *ctl_array;
 	uint16_t ctl_len;
 	bool is_acfg_ctl;
+	uint32_t target_type;
+	bool is_2g;
 };
 
 /**
