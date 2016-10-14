@@ -351,7 +351,7 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 		++pAdapter->hdd_stats.hddTxRxStats.txXmitDroppedAC[ac];
 		goto drop_pkt;
 	}
-	dev->trans_start = jiffies;
+	netif_trans_update(dev);
 
 	return NETDEV_TX_OK;
 
@@ -425,9 +425,7 @@ static void __hdd_softap_tx_timeout(struct net_device *dev)
 		return;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
-		  "%s: Transmission timeout occurred jiffies %lu trans_start %lu"
-			, __func__, jiffies, dev->trans_start);
+	TX_TIMEOUT_TRACE(dev, QDF_MODULE_ID_HDD_SAP_DATA);
 
 	for (i = 0; i < NUM_TX_QUEUES; i++) {
 		txq = netdev_get_tx_queue(dev, i);
@@ -441,7 +439,6 @@ static void __hdd_softap_tx_timeout(struct net_device *dev)
 	ol_tx_dump_flow_pool_info();
 	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			"carrier state: %d", netif_carrier_ok(dev));
-
 }
 
 /**
