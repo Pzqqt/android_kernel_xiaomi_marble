@@ -12029,33 +12029,6 @@ QDF_STATUS sme_set_ht2040_mode(tHalHandle hHal, uint8_t sessionId,
 	return status;
 }
 
-/* ---------------------------------------------------------------------------
-
-    \fn sme_set_phy_cb_mode24_g
-
-    \brief Changes PHY channel bonding mode
-
-    \param hHal - The handle returned by mac_open.
-
-    \param cbMode new channel bonding mode which is to set
-
-    \return QDF_STATUS  SUCCESS.
-
-   -------------------------------------------------------------------------------*/
-QDF_STATUS sme_set_phy_cb_mode24_g(tHalHandle hHal, ePhyChanBondState phyCBMode)
-{
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	if (NULL == pMac) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: invalid context", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	pMac->roam.configParam.channelBondingMode24GHz = phyCBMode;
-
-	return QDF_STATUS_SUCCESS;
-}
 #endif
 
 /*
