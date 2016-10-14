@@ -4747,36 +4747,6 @@ void csr_roam_ccm_cfg_set_callback(tpAniSirGlobal pMac, int32_t result)
 	}
 }
 
-/* This function is very dump. It is here because PE still need WNI_CFG_PHY_MODE */
-uint32_t csr_roam_get_phy_mode_from_dot11_mode(eCsrCfgDot11Mode dot11Mode,
-					       eCsrBand band)
-{
-	if (eCSR_CFG_DOT11_MODE_11B == dot11Mode) {
-		return WNI_CFG_PHY_MODE_11B;
-	} else {
-		if (eCSR_BAND_24 == band)
-			return WNI_CFG_PHY_MODE_11G;
-	}
-	return WNI_CFG_PHY_MODE_11A;
-}
-
-ePhyChanBondState csr_get_htcb_state_from_vhtcb_state(ePhyChanBondState aniCBMode)
-{
-	switch (aniCBMode) {
-	case PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_LOW:
-	case PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_CENTERED:
-	case PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_HIGH:
-		return PHY_DOUBLE_CHANNEL_HIGH_PRIMARY;
-	case PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_LOW:
-	case PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_CENTERED:
-	case PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_HIGH:
-		return PHY_DOUBLE_CHANNEL_LOW_PRIMARY;
-	case PHY_QUADRUPLE_CHANNEL_20MHZ_CENTERED_40MHZ_CENTERED:
-	default:
-		return PHY_SINGLE_CHANNEL_CENTERED;
-	}
-}
-
 /* pIes may be NULL */
 QDF_STATUS csr_roam_set_bss_config_cfg(tpAniSirGlobal pMac, uint32_t sessionId,
 				       tCsrRoamProfile *pProfile,
@@ -8801,21 +8771,6 @@ bool csr_is_roam_command_waiting(tpAniSirGlobal pMac)
 			break;
 		}
 	}
-	return fRet;
-}
-
-bool csr_is_command_waiting(tpAniSirGlobal pMac)
-{
-	bool fRet = false;
-	/* alwasy lock active list before locking pending list */
-	csr_ll_lock(&pMac->sme.smeCmdActiveList);
-	fRet = csr_ll_is_list_empty(&pMac->sme.smeCmdActiveList, LL_ACCESS_NOLOCK);
-	if (false == fRet) {
-		fRet =
-			csr_ll_is_list_empty(&pMac->sme.smeCmdPendingList,
-					     LL_ACCESS_LOCK);
-	}
-	csr_ll_unlock(&pMac->sme.smeCmdActiveList);
 	return fRet;
 }
 
