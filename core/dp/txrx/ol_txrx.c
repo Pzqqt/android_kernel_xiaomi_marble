@@ -3349,16 +3349,18 @@ ol_txrx_peer_find_by_addr(struct ol_txrx_pdev_t *pdev, uint8_t *peer_mac_addr)
 static void ol_txrx_dump_tx_desc(ol_txrx_pdev_handle pdev_handle)
 {
 	struct ol_txrx_pdev_t *pdev = (ol_txrx_pdev_handle) pdev_handle;
-	uint32_t total;
+	uint32_t total, num_free;
 
 	if (ol_cfg_is_high_latency(pdev->ctrl_pdev))
 		total = qdf_atomic_read(&pdev->orig_target_tx_credit);
 	else
 		total = ol_tx_get_desc_global_pool_size(pdev);
 
+	num_free = ol_tx_get_total_free_desc(pdev);
+
 	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 		   "total tx credit %d num_free %d",
-		   total, pdev->tx_desc.num_free);
+		   total, num_free);
 
 	return;
 }
