@@ -46,6 +46,7 @@
 #ifdef QCA_SUPPORT_SW_TXRX_ENCAP
 #include <ol_txrx_encap.h>      /* ol_rx_decap_info_t, etc */
 #endif
+#include <ol_rx.h>
 
 /* FIX THIS: txrx should not include private header files of other modules */
 #include <htt_types.h>
@@ -272,9 +273,9 @@ ol_rx_mpdu_rssi_update(struct ol_txrx_peer_t *peer, void *rx_mpdu_desc)
 #define ol_rx_mpdu_rssi_update(peer, rx_mpdu_desc)      /* no-op */
 #endif /* QCA_SUPPORT_PEER_DATA_RX_RSSI */
 
-void discard_msdus(htt_pdev_handle htt_pdev,
-		   qdf_nbuf_t head_msdu,
-		   qdf_nbuf_t tail_msdu)
+static void discard_msdus(htt_pdev_handle htt_pdev,
+			  qdf_nbuf_t head_msdu,
+			  qdf_nbuf_t tail_msdu)
 {
 	while (1) {
 		qdf_nbuf_t next;
@@ -292,9 +293,9 @@ void discard_msdus(htt_pdev_handle htt_pdev,
 	return;
 }
 
-void chain_msdus(htt_pdev_handle htt_pdev,
-		 qdf_nbuf_t head_msdu,
-		 qdf_nbuf_t tail_msdu)
+static void chain_msdus(htt_pdev_handle htt_pdev,
+			qdf_nbuf_t head_msdu,
+			qdf_nbuf_t tail_msdu)
 {
 	while (1) {
 		qdf_nbuf_t next;
@@ -309,16 +310,15 @@ void chain_msdus(htt_pdev_handle htt_pdev,
 	return;
 }
 
-void process_reorder(ol_txrx_pdev_handle pdev,
-		     void *rx_mpdu_desc,
-		     uint8_t tid,
-		     struct ol_txrx_peer_t *peer,
-		     qdf_nbuf_t head_msdu,
-		     qdf_nbuf_t tail_msdu,
-		     int num_mpdu_ranges,
-		     int num_pdus,
-		     bool rx_ind_release
-	)
+static void process_reorder(ol_txrx_pdev_handle pdev,
+			    void *rx_mpdu_desc,
+			    uint8_t tid,
+			    struct ol_txrx_peer_t *peer,
+			    qdf_nbuf_t head_msdu,
+			    qdf_nbuf_t tail_msdu,
+			    int num_mpdu_ranges,
+			    int num_pdus,
+			    bool rx_ind_release)
 {
 	htt_pdev_handle htt_pdev = pdev->htt_pdev;
 	enum htt_rx_status mpdu_status;
@@ -808,7 +808,7 @@ void ol_rx_notify(ol_pdev_handle pdev,
  *      by sniffing the IGMP frame.
  */
 #define SIZEOF_80211_HDR (sizeof(struct ieee80211_frame))
-void
+static void
 ol_rx_inspect(struct ol_txrx_vdev_t *vdev,
 	      struct ol_txrx_peer_t *peer,
 	      unsigned tid, qdf_nbuf_t msdu, void *rx_desc)
@@ -934,7 +934,7 @@ ol_rx_mic_error_handler(
 /**
  * @brief Check the first msdu to decide whether the a-msdu should be accepted.
  */
-bool
+static bool
 ol_rx_filter(struct ol_txrx_vdev_t *vdev,
 	     struct ol_txrx_peer_t *peer, qdf_nbuf_t msdu, void *rx_desc)
 {

@@ -1787,6 +1787,7 @@ void ol_txrx_vdev_flush(void *data_vdev)
 #endif
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
+#ifndef CONFIG_ICNSS
 
 /**
  * ol_txrx_map_to_netif_reason_type() - map to netif_reason_type
@@ -1794,7 +1795,7 @@ void ol_txrx_vdev_flush(void *data_vdev)
  *
  * Return: netif_reason_type
  */
-enum netif_reason_type
+static enum netif_reason_type
 ol_txrx_map_to_netif_reason_type(uint32_t reason)
 {
 	switch (reason) {
@@ -1816,7 +1817,6 @@ ol_txrx_map_to_netif_reason_type(uint32_t reason)
 	}
 }
 
-#ifndef CONFIG_ICNSS
 /**
  * ol_txrx_vdev_pause() - pause vdev network queues
  * @vdev: vdev handle
@@ -1966,7 +1966,7 @@ void ol_txrx_thermal_unpause(struct ol_txrx_pdev_t *pdev)
 }
 #endif
 
-void ol_tx_pdev_throttle_phase_timer(void *context)
+static void ol_tx_pdev_throttle_phase_timer(void *context)
 {
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)context;
 	int ms;
@@ -2015,7 +2015,7 @@ void ol_tx_pdev_throttle_phase_timer(void *context)
 }
 
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
-void ol_tx_pdev_throttle_tx_timer(void *context)
+static void ol_tx_pdev_throttle_tx_timer(void *context)
 {
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)context;
 	ol_tx_pdev_ll_pause_queue_send_all(pdev);

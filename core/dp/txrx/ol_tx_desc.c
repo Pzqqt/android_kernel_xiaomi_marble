@@ -408,7 +408,7 @@ const uint32_t htt_to_ce_pkt_type[] = {
  *
  * Return: extension header type
  */
-enum extension_header_type
+static enum extension_header_type
 ol_tx_get_wisa_ext_hdr_type(qdf_nbuf_t netbuf)
 {
 	uint8_t *buf = qdf_nbuf_data(netbuf);

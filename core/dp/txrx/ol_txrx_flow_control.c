@@ -289,7 +289,7 @@ static int ol_tx_move_desc_n(struct ol_tx_flow_pool_t *src_pool,
  *
  * Return: 0 for sucess
  */
-int
+static int
 ol_tx_distribute_descs_to_deficient_pools(struct ol_tx_flow_pool_t *src_pool)
 {
 	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
@@ -518,7 +518,7 @@ int ol_tx_free_invalid_flow_pool(struct ol_tx_flow_pool_t *pool)
  *
  * Return: flow_pool ptr / NULL if not found
  */
-struct ol_tx_flow_pool_t *ol_tx_get_flow_pool(uint8_t flow_pool_id)
+static struct ol_tx_flow_pool_t *ol_tx_get_flow_pool(uint8_t flow_pool_id)
 {
 	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	struct ol_tx_flow_pool_t *pool = NULL;
@@ -557,8 +557,8 @@ struct ol_tx_flow_pool_t *ol_tx_get_flow_pool(uint8_t flow_pool_id)
  *
  * Return: none
  */
-void ol_tx_flow_pool_vdev_map(struct ol_tx_flow_pool_t *pool,
-			      uint8_t vdev_id)
+static void ol_tx_flow_pool_vdev_map(struct ol_tx_flow_pool_t *pool,
+				     uint8_t vdev_id)
 {
 	ol_txrx_vdev_handle vdev;
 
@@ -585,8 +585,8 @@ void ol_tx_flow_pool_vdev_map(struct ol_tx_flow_pool_t *pool,
  *
  * Return: none
  */
-void ol_tx_flow_pool_vdev_unmap(struct ol_tx_flow_pool_t *pool,
-				uint8_t vdev_id)
+static void ol_tx_flow_pool_vdev_unmap(struct ol_tx_flow_pool_t *pool,
+				       uint8_t vdev_id)
 {
 	ol_txrx_vdev_handle vdev;
 

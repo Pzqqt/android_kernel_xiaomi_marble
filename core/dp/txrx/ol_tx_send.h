@@ -74,7 +74,7 @@ ol_tx_send(struct ol_txrx_pdev_t *pdev,
  * @param num_msdus - Total msdus chained in msdu_list
  */
 
-int
+void
 ol_tx_send_batch(struct ol_txrx_pdev_t *pdev,
 		 qdf_nbuf_t msdu_list, int num_msdus);
 

@@ -52,6 +52,7 @@
 #include <ol_txrx_internal.h>   /* OL_TX_DESC_NO_REFS, etc. */
 #include <ol_osif_txrx_api.h>
 #include <ol_tx.h>              /* ol_tx_reinject */
+#include <ol_tx_send.h>
 
 #include <ol_cfg.h>             /* ol_cfg_is_high_latency */
 #include <ol_tx_sched.h>
@@ -941,7 +942,7 @@ ol_tx_packet_count(void *ppdev,
 	pdev->packet_loss_count[category] = 0;
 }
 
-uint32_t ol_tx_delay_avg(uint64_t sum, uint32_t num)
+static uint32_t ol_tx_delay_avg(uint64_t sum, uint32_t num)
 {
 	uint32_t sum32;
 	int shift = 0;

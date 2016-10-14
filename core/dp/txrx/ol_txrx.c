@@ -72,7 +72,10 @@
 #include <ol_txrx.h>
 #include <ol_txrx_types.h>
 #include <cdp_txrx_flow_ctrl_legacy.h>
+#include <cdp_txrx_bus.h>
 #include <cdp_txrx_ipa.h>
+#include <cdp_txrx_lro.h>
+#include <cdp_txrx_pmf.h>
 #include "wma.h"
 #include "hif.h"
 #include <cdp_txrx_peer_ops.h>
@@ -1140,7 +1143,7 @@ void htt_pkt_log_init(void *ppdev, void *scn)
  *
  * Return: void
  */
-void htt_pktlogmod_exit(struct ol_txrx_pdev_t *handle, void *scn)
+static void htt_pktlogmod_exit(struct ol_txrx_pdev_t *handle, void *scn)
 {
 	if (scn && cds_get_conparam() != QDF_GLOBAL_FTM_MODE &&
 		!QDF_IS_EPPING_ENABLED(cds_get_conparam()) &&
@@ -1151,7 +1154,7 @@ void htt_pktlogmod_exit(struct ol_txrx_pdev_t *handle, void *scn)
 }
 #else
 void htt_pkt_log_init(void *handle, void *ol_sc) { }
-void htt_pktlogmod_exit(ol_txrx_pdev_handle handle, void *sc)  { }
+static void htt_pktlogmod_exit(ol_txrx_pdev_handle handle, void *sc)  { }
 #endif
 
 /**
@@ -3708,7 +3711,7 @@ void ol_txrx_peer_display(ol_txrx_peer_handle peer, int indent)
 #endif /* TXRX_DEBUG_LEVEL */
 
 #if defined(FEATURE_TSO) && defined(FEATURE_TSO_DEBUG)
-void ol_txrx_stats_display_tso(ol_txrx_pdev_handle pdev)
+static void ol_txrx_stats_display_tso(ol_txrx_pdev_handle pdev)
 {
 	int msdu_idx;
 	int seg_idx;
@@ -3777,7 +3780,7 @@ void ol_txrx_stats_display_tso(ol_txrx_pdev_handle pdev)
 	}
 }
 #else
-void ol_txrx_stats_display_tso(ol_txrx_pdev_handle pdev)
+static void ol_txrx_stats_display_tso(ol_txrx_pdev_handle pdev)
 {
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 	 "TSO is not supported\n");
@@ -4734,9 +4737,9 @@ QDF_STATUS ol_txrx_register_pause_cb(ol_tx_pause_callback_fp pause_cb)
  *
  * Return: none
  */
-void ol_txrx_lro_flush_handler(void *context,
-			       void *rxpkt,
-			       uint16_t staid)
+static void ol_txrx_lro_flush_handler(void *context,
+				      void *rxpkt,
+				      uint16_t staid)
 {
 	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
@@ -4763,7 +4766,7 @@ void ol_txrx_lro_flush_handler(void *context,
  *
  * Return: none
  */
-void ol_txrx_lro_flush(void *data)
+static void ol_txrx_lro_flush(void *data)
 {
 	p_cds_sched_context sched_ctx = get_cds_sched_ctxt();
 	struct cds_ol_rx_pkt *pkt;
