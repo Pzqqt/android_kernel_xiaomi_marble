@@ -598,7 +598,7 @@ static int wlan_hdd_scan_request_enqueue(hdd_adapter_t *adapter,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_hdd_scan_request_dequeue(hdd_context_t *hdd_ctx,
+static QDF_STATUS wlan_hdd_scan_request_dequeue(hdd_context_t *hdd_ctx,
 	uint32_t scan_id, struct cfg80211_scan_request **req, uint8_t *source,
 	uint32_t *timestamp)
 {

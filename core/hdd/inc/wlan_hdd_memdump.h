@@ -37,6 +37,10 @@
 
 #include "wlan_hdd_main.h"
 
+/* Assigned size of driver memory dump is 4096 bytes */
+#define DRIVER_MEM_DUMP_SIZE    4096
+
+
 #ifdef WLAN_FEATURE_MEMDUMP
 /**
  * enum qca_wlan_vendor_attr_memory_dump - values for memory dump attributes
@@ -72,6 +76,10 @@ int wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 				      struct wireless_dev *wdev,
 				      const void *data, int data_len);
 void wlan_hdd_cfg80211_fw_mem_dump_cb(void *ctx, struct fw_dump_rsp *dump_rsp);
+
+int hdd_driver_memdump_init(void);
+void hdd_driver_memdump_deinit(void);
+
 #else
 static inline int memdump_init(void)
 {
@@ -95,6 +103,16 @@ static inline void wlan_hdd_cfg80211_fw_mem_dump_cb(void *ctx,
 						    *dump_rsp)
 {
 }
+
+static inline int hdd_driver_memdump_init(void)
+{
+	return -ENOTSUPP;
+}
+
+static inline void hdd_driver_memdump_deinit(void)
+{
+}
+
 #endif
 
 #endif /* if !defined(WLAN_HDD_MEMDUMP_H)*/

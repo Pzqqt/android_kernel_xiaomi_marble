@@ -1098,6 +1098,14 @@ typedef enum {
 #define CFG_VHT_ENABLE_2x2_CAP_FEATURE_MAX     (1)
 #define CFG_VHT_ENABLE_2x2_CAP_FEATURE_DEFAULT (0)
 
+/* 0 - Connects in 160MHz 1x1 when AP is 160MHz 2x2
+ * 1 - Connects in 80MHz 2x2 when AP is 160MHz 2x2
+ */
+#define CFG_STA_PREFER_80MHZ_OVER_160MHZ         "gStaPrefer80MHzOver160MHz"
+#define CFG_STA_PREFER_80MHZ_OVER_160MHZ_MIN     (0)
+#define CFG_STA_PREFER_80MHZ_OVER_160MHZ_MAX     (1)
+#define CFG_STA_PREFER_80MHZ_OVER_160MHZ_DEFAULT (1)
+
 /*
  * NSS cfg bit definition.
  * STA          BIT[0:1]
@@ -1278,6 +1286,21 @@ typedef enum {
  */
 #define CFG_ENABLE_FW_MODULE_LOG_LEVEL    "gFwDebugModuleLoglevel"
 #define CFG_ENABLE_FW_MODULE_LOG_DEFAULT  ""
+
+/*
+ * gEnableRTSProfiles for configuring different RTS profiles
+ * to firmware.
+ * Following are the valid values for the rtsprofile:
+ * RTSCTS_DISABLED                           0
+ * RTSCTS_ENABLED_4_SECOND_RATESERIES        17
+ * CTS2SELF_ENABLED_4_SECOND_RATESERIES      18
+ * RTSCTS_ENABLED_4_SWRETRIES                33
+ * CTS2SELF_ENABLED_4_SWRETRIES              34
+ */
+#define CFG_ENABLE_FW_RTS_PROFILE              "gEnableRTSProfiles"
+#define CFG_ENABLE_FW_RTS_PROFILE_MIN          (0)
+#define CFG_ENABLE_FW_RTS_PROFILE_MAX          (34)
+#define CFG_ENABLE_FW_RTS_PROFILE_DEFAULT      (33)
 
 #ifdef FEATURE_GREEN_AP
 #define CFG_ENABLE_GREEN_AP_FEATURE         "gEnableGreenAp"
@@ -1974,6 +1997,16 @@ typedef enum {
 #define CFG_ENABLE_VHT_FOR_24GHZ_MAX              (1)
 #define CFG_ENABLE_VHT_FOR_24GHZ_DEFAULT          (0)
 
+/*
+ * Parameter to control VHT support based on vendor ie in 2.4 GHz band
+ * This parameter will enable SAP to read VHT capability in vendor ie in Assoc
+ * Req and send VHT caps in Resp to establish connection in VHT Mode.
+ */
+#define CFG_ENABLE_VENDOR_VHT_FOR_24GHZ_NAME      "gEnableVendorVhtFor24GHzBand"
+#define CFG_ENABLE_VENDOR_VHT_FOR_24GHZ_MIN       (0)
+#define CFG_ENABLE_VENDOR_VHT_FOR_24GHZ_MAX       (1)
+#define CFG_ENABLE_VENDOR_VHT_FOR_24GHZ_DEFAULT   (1)
+
 #define CFG_MAX_MEDIUM_TIME                      "gMaxMediumTime"
 #define CFG_MAX_MEDIUM_TIME_STAMIN               WNI_CFG_MAX_MEDIUM_TIME_STAMIN
 #define CFG_MAX_MEDIUM_TIME_STAMAX               WNI_CFG_MAX_MEDIUM_TIME_STAMAX
@@ -2360,7 +2393,7 @@ typedef enum {
 #define CFG_RA_FILTER_ENABLE_NAME                  "gRAFilterEnable"
 #define CFG_RA_FILTER_ENABLE_MIN                   (0)
 #define CFG_RA_FILTER_ENABLE_MAX                   (1)
-#define CFG_RA_FILTER_ENABLE_DEFAULT               (0)
+#define CFG_RA_FILTER_ENABLE_DEFAULT               (1)
 
 #define CFG_RA_RATE_LIMIT_INTERVAL_NAME            "gRArateLimitInterval"
 #define CFG_RA_RATE_LIMIT_INTERVAL_MIN             (60)
@@ -2823,6 +2856,24 @@ typedef enum {
 #define CFG_SELF_GEN_FRM_PWR_DEFAULT  (0)
 
 /*
+ * gTxAggregationSize gives an option to configure Tx aggregation size
+ * in no of MPDUs. This can be useful in debugging throughput issues
+ */
+#define CFG_TX_AGGREGATION_SIZE      "gTxAggregationSize"
+#define CFG_TX_AGGREGATION_SIZE_MIN      (0)
+#define CFG_TX_AGGREGATION_SIZE_MAX      (64)
+#define CFG_TX_AGGREGATION_SIZE_DEFAULT  (64)
+
+/*
+ * gRxAggregationSize gives an option to configure Rx aggregation size
+ * in no of MPDUs. This can be useful in debugging throughput issues
+ */
+#define CFG_RX_AGGREGATION_SIZE      "gRxAggregationSize"
+#define CFG_RX_AGGREGATION_SIZE_MIN      (1)
+#define CFG_RX_AGGREGATION_SIZE_MAX      (64)
+#define CFG_RX_AGGREGATION_SIZE_DEFAULT  (64)
+
+/*
  * fine timing measurement capability information
  *
  * <----- fine_time_meas_cap (in bits) ----->
@@ -2916,6 +2967,16 @@ enum dot11p_mode {
 #define CFG_EXTSCAN_ACTIVE_MIN_CHANNEL_TIME_MAX        (110)
 #define CFG_EXTSCAN_ACTIVE_MIN_CHANNEL_TIME_DEFAULT    (20)
 #endif
+
+/* When gEnable_go_cts2self_for_sta is
+ * enabled  then if a legacy client connects to P2P GO,
+ * Host will send a WMI VDEV command to FW to stop using NOA for P2P GO
+ * and start using CTS2SELF.
+ */
+#define CFG_ENABLE_GO_CTS2SELF_FOR_STA   "gEnable_go_cts2self_for_sta"
+#define CFG_ENABLE_GO_CTS2SELF_FOR_STA_DEFAULT  (0)
+#define CFG_ENABLE_GO_CTS2SELF_FOR_STA_MIN      (0)
+#define CFG_ENABLE_GO_CTS2SELF_FOR_STA_MAX      (1)
 
 #define CFG_CE_CLASSIFY_ENABLE_NAME	"gCEClassifyEnable"
 #define CFG_CE_CLASSIFY_ENABLE_MIN	(0)
@@ -3366,6 +3427,18 @@ enum dot11p_mode {
 #define CFG_ADAPTIVE_EXTSCAN_DWELL_MODE_MIN      (0)
 #define CFG_ADAPTIVE_EXTSCAN_DWELL_MODE_MAX      (4)
 #define CFG_ADAPTIVE_EXTSCAN_DWELL_MODE_DEFAULT  (0)
+
+/*
+ * This parameter will help to debug ssr reinit failure issues
+ * by raising vos bug so dumps can be collected. If OEM
+ * wants to avoid this crash, just disable this parameter.
+ * wlan driver will only recover after driver unload and load.
+ * Default: Enable
+ */
+#define CFG_BUG_ON_REINIT_FAILURE_NAME     "g_bug_on_reinit_failure"
+#define CFG_BUG_ON_REINIT_FAILURE_MIN      (0)
+#define CFG_BUG_ON_REINIT_FAILURE_MAX      (1)
+#define CFG_BUG_ON_REINIT_FAILURE_DEFAULT  (1)
 
 /*
  * This parameter will set the algo used in dwell time optimization during
@@ -3861,6 +3934,7 @@ struct hdd_config {
 	bool enableSSR;
 	uint32_t cfgMaxMediumTime;
 	bool enableVhtFor24GHzBand;
+	bool enable_sap_vendor_vht;
 	/* Flag indicating whether legacy fast roam during concurrency is enabled in cfg.ini or not */
 	bool bFastRoamInConIniFeatureEnabled;
 	bool fEnableAdaptRxDrain;
@@ -3972,6 +4046,9 @@ struct hdd_config {
 	uint32_t enableFwLogType;
 	uint32_t enableFwLogLevel;
 	uint8_t enableFwModuleLogLevel[FW_MODULE_LOG_LEVEL_STRING_LENGTH];
+
+	/* RTS profile parameter */
+	uint32_t rts_profile;
 
 #ifdef WLAN_FEATURE_11W
 	uint32_t pmfSaQueryMaxRetries;
@@ -4139,6 +4216,7 @@ struct hdd_config {
 	uint8_t adapt_dwell_passive_mon_intval;
 	uint8_t adapt_dwell_wifi_act_threshold;
 	bool bug_report_for_no_scan_results;
+	bool bug_on_reinit_failure;
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 	bool enable_nan_datapath;
 	uint8_t nan_datapath_ndi_channel;
@@ -4152,6 +4230,10 @@ struct hdd_config {
 	/* parameter for indicating sifs burst duration to fw */
 	uint8_t sifs_burst_duration;
 	bool goptimize_chan_avoid_event;
+	bool enable_go_cts2self_for_sta;
+	uint32_t tx_aggregation_size;
+	uint32_t rx_aggregation_size;
+	bool sta_prefer_80MHz_over_160MHz;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

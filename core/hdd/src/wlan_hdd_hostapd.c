@@ -133,8 +133,8 @@ int hdd_sap_context_init(hdd_context_t *hdd_ctx)
  *
  * Return: None
  */
-void hdd_hostapd_channel_allow_suspend(hdd_adapter_t *pAdapter,
-				       uint8_t channel)
+static void hdd_hostapd_channel_allow_suspend(hdd_adapter_t *pAdapter,
+					      uint8_t channel)
 {
 
 	hdd_context_t *pHddCtx = (hdd_context_t *) (pAdapter->pHddCtx);
@@ -169,8 +169,8 @@ void hdd_hostapd_channel_allow_suspend(hdd_adapter_t *pAdapter,
  *
  * Return - None
  */
-void hdd_hostapd_channel_prevent_suspend(hdd_adapter_t *pAdapter,
-					 uint8_t channel)
+static void hdd_hostapd_channel_prevent_suspend(hdd_adapter_t *pAdapter,
+						uint8_t channel)
 {
 	hdd_context_t *pHddCtx = (hdd_context_t *) (pAdapter->pHddCtx);
 	hdd_hostapd_state_t *pHostapdState =
@@ -473,9 +473,20 @@ static int hdd_hostapd_set_mac_address(struct net_device *dev, void *addr)
 	return ret;
 }
 
-void hdd_hostapd_inactivity_timer_cb(void *usrDataForCallback)
+/**
+ * hdd_hostapd_inactivity_timer_cb() - Inactivity timeout handler
+ * @context: Context registered with qdf_mc_timer_init()
+ *
+ * This is the callback function registered with qdf_mc_timer_init()
+ * to handle the AP inactivity timer. The @context registered is the
+ * struct net_device associated with the interface.  When this
+ * function is called it means the AP inactivity timer has fired, and
+ * this function in turn indicates the timeout to userspace.
+ */
+
+static void hdd_hostapd_inactivity_timer_cb(void *context)
 {
-	struct net_device *dev = (struct net_device *)usrDataForCallback;
+	struct net_device *dev = (struct net_device *)context;
 	uint8_t we_custom_event[64];
 	union iwreq_data wrqu;
 #ifdef DISABLE_CONCURRENCY_AUTOSAVE
@@ -533,8 +544,8 @@ void hdd_hostapd_inactivity_timer_cb(void *usrDataForCallback)
 	EXIT();
 }
 
-void hdd_clear_all_sta(hdd_adapter_t *pHostapdAdapter,
-		       void *usrDataForCallback)
+static void hdd_clear_all_sta(hdd_adapter_t *pHostapdAdapter,
+			      void *usrDataForCallback)
 {
 	uint8_t staId = 0;
 	struct net_device *dev;
@@ -729,10 +740,10 @@ QDF_STATUS hdd_chan_change_notify(hdd_adapter_t *adapter,
  * Return: Success on sending notifying userspace
  *
  */
-QDF_STATUS hdd_send_radar_event(hdd_context_t *hdd_context,
-		eSapHddEvent event,
-		struct wlan_dfs_info dfs_info,
-		struct wireless_dev *wdev)
+static QDF_STATUS hdd_send_radar_event(hdd_context_t *hdd_context,
+				       eSapHddEvent event,
+				       struct wlan_dfs_info dfs_info,
+				       struct wireless_dev *wdev)
 {
 
 	struct sk_buff *vendor_event;
@@ -6309,10 +6320,11 @@ static void wlan_hdd_add_extra_ie(hdd_adapter_t *pHostapdAdapter,
  *
  * Return: 0 for success non-zero for failure
  */
-int wlan_hdd_cfg80211_alloc_new_beacon(hdd_adapter_t *pAdapter,
-				       beacon_data_t **ppBeacon,
-				       struct cfg80211_beacon_data *params,
-				       int dtim_period)
+static int
+wlan_hdd_cfg80211_alloc_new_beacon(hdd_adapter_t *pAdapter,
+				   beacon_data_t **ppBeacon,
+				   struct cfg80211_beacon_data *params,
+				   int dtim_period)
 {
 	int size;
 	beacon_data_t *beacon = NULL;
@@ -6761,7 +6773,7 @@ QDF_STATUS wlan_hdd_config_acs(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
  *
  * Return: 0 for Success or Negative error codes.
  */
-int wlan_hdd_setup_driver_overrides(hdd_adapter_t *ap_adapter)
+static int wlan_hdd_setup_driver_overrides(hdd_adapter_t *ap_adapter)
 {
 	tsap_Config_t *sap_cfg = &ap_adapter->sessionCtx.ap.sapConfig;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
@@ -6942,10 +6954,21 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 
 	pConfig->enOverLapCh = iniConfig->gEnableOverLapCh;
 	pConfig->dtim_period = pBeacon->dtim_period;
-	if (pHddCtx->acs_policy.acs_channel)
-		pConfig->channel = pHddCtx->acs_policy.acs_channel;
-	mode = pHddCtx->acs_policy.acs_dfs_mode;
-	pConfig->acs_dfs_mode = wlan_hdd_get_dfs_mode(mode);
+	hdd_info("acs_mode %d", pConfig->acs_cfg.acs_mode);
+
+	if (pConfig->acs_cfg.acs_mode == true) {
+		hdd_info("acs_channel %d, acs_dfs_mode %d",
+			pHddCtx->acs_policy.acs_channel,
+			pHddCtx->acs_policy.acs_dfs_mode);
+
+		if (pHddCtx->acs_policy.acs_channel)
+			pConfig->channel = pHddCtx->acs_policy.acs_channel;
+		mode = pHddCtx->acs_policy.acs_dfs_mode;
+		pConfig->acs_dfs_mode = wlan_hdd_get_dfs_mode(mode);
+	}
+
+	hdd_info("pConfig->channel %d, pConfig->acs_dfs_mode %d",
+		pConfig->channel, pConfig->acs_dfs_mode);
 
 	hdd_info("****pConfig->dtim_period=%d***",
 		pConfig->dtim_period);
@@ -7248,6 +7271,40 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 			qdf_mem_copy(&pConfig->accept_mac[i], acl_entry->addr,
 				     sizeof(qcmacaddr));
 			acl_entry++;
+		}
+	}
+	if (!pHddCtx->config->force_sap_acs) {
+		pIe = wlan_hdd_cfg80211_get_ie_ptr(
+				&pMgmt_frame->u.beacon.variable[0],
+				pBeacon->head_len, WLAN_EID_SUPP_RATES);
+
+		if (pIe != NULL) {
+			pIe++;
+			pConfig->supported_rates.numRates = pIe[0];
+			pIe++;
+			for (i = 0;
+			     i < pConfig->supported_rates.numRates; i++) {
+				if (pIe[i]) {
+				     pConfig->supported_rates.rate[i] = pIe[i];
+				     hdd_info("Configured Supported rate is %2x",
+					pConfig->supported_rates.rate[i]);
+				}
+			}
+		}
+		pIe = wlan_hdd_cfg80211_get_ie_ptr(pBeacon->tail,
+				pBeacon->tail_len,
+				WLAN_EID_EXT_SUPP_RATES);
+		if (pIe != NULL) {
+			pIe++;
+			pConfig->extended_rates.numRates = pIe[0];
+			pIe++;
+			for (i = 0; i < pConfig->extended_rates.numRates; i++) {
+				if (pIe[i]) {
+				      pConfig->extended_rates.rate[i] = pIe[i];
+				      hdd_info("Configured ext Supported rate is %2x",
+					pConfig->extended_rates.rate[i]);
+				}
+			}
 		}
 	}
 
@@ -7617,6 +7674,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		global_p2p_connection_status = P2P_NOT_ACTIVE;
 	}
 #endif
+	pAdapter->sessionId = HDD_SESSION_ID_INVALID;
 	EXIT();
 	return ret;
 }

@@ -595,6 +595,10 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 	if (QDF_IBSS_MODE == addbss_param->halPersona) {
 		addbss_param->nss_2g = mac_ctx->vdev_type_nss_2g.ibss;
 		addbss_param->nss_5g = mac_ctx->vdev_type_nss_5g.ibss;
+		addbss_param->tx_aggregation_size =
+			mac_ctx->roam.configParam.tx_aggregation_size;
+		addbss_param->rx_aggregation_size =
+			mac_ctx->roam.configParam.rx_aggregation_size;
 	}
 	lim_log(mac_ctx, LOG2, FL("dot11_mode:%d nss value:%d"),
 			addbss_param->dot11_mode, addbss_param->nss);

@@ -211,7 +211,8 @@ void hdd_softap_tx_resume_cb(void *adapter_context, bool tx_resume)
  *
  * Return: Always returns NETDEV_TX_OK
  */
-int __hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
+static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
+					struct net_device *dev)
 {
 	sme_ac_enum_type ac = SME_AC_BE;
 	hdd_adapter_t *pAdapter = (hdd_adapter_t *) netdev_priv(dev);

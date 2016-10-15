@@ -164,7 +164,7 @@ typedef struct sSirProbeRespBeacon {
 	uint8_t WiderBWChanSwitchAnnPresent;
 	tDot11fIEWiderBWChanSwitchAnn WiderBWChanSwitchAnn;
 	uint8_t Vendor1IEPresent;
-	tDot11fIEvendor2_ie vendor2_ie;
+	tDot11fIEvendor_vht_ie vendor_vht_ie;
 	uint8_t Vendor3IEPresent;
 	tDot11fIEhs20vendor_ie hs20vendor_ie;
 	tDot11fIEIBSSParams IBSSParams;
@@ -245,6 +245,7 @@ typedef struct sSirAssocReq {
 	tDot11fIEVHTCaps VHTCaps;
 	tDot11fIEOperatingMode operMode;
 	tDot11fIEExtCap ExtCap;
+	tDot11fIEvendor_vht_ie vendor_vht_ie;
 	tDot11fIEhs20vendor_ie hs20vendor_ie;
 } tSirAssocReq, *tpSirAssocReq;
 
@@ -294,7 +295,7 @@ typedef struct sSirAssocRsp {
 #ifdef WLAN_FEATURE_11W
 	tDot11fIETimeoutInterval TimeoutInterval;
 #endif
-	tDot11fIEvendor2_ie vendor2_ie;
+	tDot11fIEvendor_vht_ie vendor_vht_ie;
 	tDot11fIEOBSSScanParameters obss_scanparams;
 } tSirAssocRsp, *tpSirAssocRsp;
 

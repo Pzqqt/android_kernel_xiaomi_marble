@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014, 2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -54,7 +54,6 @@
 #include <cds_api.h>
 #include <sme_api.h>
 #include "wlan_hdd_assoc.h"
-#include "wlan_hdd_mib.h"
 #include "wlan_hdd_wext.h"
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_tx_rx.h"

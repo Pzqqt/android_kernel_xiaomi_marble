@@ -1073,6 +1073,104 @@ bool sme_command_pending(tpAniSirGlobal pMac)
 					 LL_ACCESS_NOLOCK);
 }
 
+/**
+ * sme_get_sessionid_from_activelist() - gets session id
+ * @mac: mac context
+ *
+ * This function is used to get session id from sme command
+ * active list
+ *
+ * Return: returns session id
+ */
+uint32_t sme_get_sessionid_from_activelist(tpAniSirGlobal mac)
+{
+	tListElem *entry;
+	tSmeCmd *command;
+	uint32_t session_id = CSR_SESSION_ID_INVALID;
+
+	entry = csr_ll_peek_head(&mac->sme.smeCmdActiveList, LL_ACCESS_LOCK);
+	if (entry) {
+		command = GET_BASE_ADDR(entry, tSmeCmd, Link);
+		session_id = command->sessionId;
+	}
+
+	return session_id;
+}
+
+/**
+ * sme_state_info_dump() - prints state information of sme layer
+ * @buf: buffer pointer
+ * @size: size of buffer to be filled
+ *
+ * This function is used to dump state information of sme layer
+ *
+ * Return: None
+ */
+static void sme_state_info_dump(char **buf_ptr, uint16_t *size)
+{
+	uint32_t session_id, active_session_id;
+	tHalHandle hal;
+	tpAniSirGlobal mac;
+	uint16_t len = 0;
+	char *buf = *buf_ptr;
+	eCsrConnectState connect_state;
+
+	hal = cds_get_context(QDF_MODULE_ID_SME);
+	if (hal == NULL) {
+		QDF_ASSERT(0);
+		return;
+	}
+
+	mac = PMAC_STRUCT(hal);
+	sms_log(mac, LOG1, FL("size of buffer: %d"), *size);
+
+	active_session_id = sme_get_sessionid_from_activelist(mac);
+	if (active_session_id != CSR_SESSION_ID_INVALID) {
+		len += qdf_scnprintf(buf + len, *size - len,
+			"\n active command sessionid %d", active_session_id);
+	}
+
+	for (session_id = 0; session_id < CSR_ROAM_SESSION_MAX; session_id++) {
+		if (CSR_IS_SESSION_VALID(mac, session_id)) {
+			connect_state =
+				mac->roam.roamSession[session_id].connectState;
+			if ((eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED ==
+			     connect_state)
+			    || (eCSR_ASSOC_STATE_TYPE_INFRA_CONNECTED ==
+				connect_state)) {
+				len += qdf_scnprintf(buf + len, *size - len,
+					"\n NeighborRoamState: %d",
+					mac->roam.neighborRoamInfo[session_id].
+						neighborRoamState);
+				len += qdf_scnprintf(buf + len, *size - len,
+					"\n RoamState: %d", mac->roam.
+						curState[session_id]);
+				len += qdf_scnprintf(buf + len, *size - len,
+					"\n RoamSubState: %d", mac->roam.
+						curSubState[session_id]);
+				len += qdf_scnprintf(buf + len, *size - len,
+					"\n ConnectState: %d",
+					connect_state);
+			}
+		}
+	}
+
+	*size -= len;
+	*buf_ptr += len;
+}
+
+/**
+ * sme_register_debug_callback() - registration function sme layer
+ * to print sme state information
+ *
+ * Return: None
+ */
+static void sme_register_debug_callback(void)
+{
+	qdf_register_debug_callback(QDF_MODULE_ID_SME, &sme_state_info_dump);
+}
+
+
 /* Global APIs */
 
 /**
@@ -1134,6 +1232,7 @@ QDF_STATUS sme_open(tHalHandle hHal)
 	}
 	sme_p2p_open(pMac);
 	sme_trace_init(pMac);
+	sme_register_debug_callback();
 	return status;
 }
 
@@ -2495,8 +2594,6 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 		qdf_mem_free(pMsg->bodyptr);
 		break;
 #endif
-	case eWNI_PMC_SMPS_STATE_IND:
-		break;
 	case WNI_CFG_SET_CNF:
 	case WNI_CFG_DNLD_CNF:
 	case WNI_CFG_GET_RSP:
@@ -11115,6 +11212,18 @@ void sme_get_command_q_status(tHalHandle hHal)
 
 	return;
 }
+/**
+ * sme_set_prefer_80MHz_over_160MHz() - API to set sta_prefer_80MHz_over_160MHz
+ * @hal:           The handle returned by macOpen
+ * @sta_prefer_80MHz_over_160MHz: sta_prefer_80MHz_over_160MHz config param
+ */
+void sme_set_prefer_80MHz_over_160MHz(tHalHandle hal,
+		bool sta_prefer_80MHz_over_160MHz)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	mac_ctx->sta_prefer_80MHz_over_160MHz = sta_prefer_80MHz_over_160MHz;
+}
+
 #ifdef WLAN_FEATURE_DSRC
 /**
  * sme_set_dot11p_config() - API to set the 802.11p config
@@ -16714,4 +16823,29 @@ QDF_STATUS sme_encrypt_decrypt_msg_deregister_callback(tHalHandle h_hal)
 			FL("sme_acquire_global_lock failed"));
 	}
 	return status;
+}
+
+QDF_STATUS sme_set_cts2self_for_p2p_go(tHalHandle hal_handle)
+{
+	cds_msg_t message;
+	void *wma_handle;
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"wma_handle is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	message.bodyptr = NULL;
+	message.type = WMA_SET_CTS2SELF_FOR_STA;
+
+	if (QDF_STATUS_SUCCESS !=
+		wma_set_cts2self_for_p2p_go(wma_handle, true)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			"%s: Failed to set cts2self for p2p GO to firmware",
+			__func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	return QDF_STATUS_SUCCESS;
 }

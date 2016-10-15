@@ -199,5 +199,54 @@ static inline
 void hdd_wlan_suspend_resume_event(uint8_t state) {}
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
+/**
+ * wlan_hdd_inc_suspend_stats() - Prints, then increments, then prints suspend
+ *	failed statistics.
+ * @hdd_ctx:	The HDD context to operate on
+ * @reason:	The suspend failed reason to increment
+ *
+ * This function prints all of the suspend failed statistics, increments the
+ * specified suspend fail reason statistic, and prints the them all again. This
+ * is for easily keeping track of the most common reasons suspend fails.
+ *
+ * Return: none
+ */
+void wlan_hdd_inc_suspend_stats(hdd_context_t *hdd_ctx,
+				enum suspend_fail_reason reason);
+
+/*
+ * Unit-test suspend/resume is a testing feature that allows putting firmware
+ * into WoW suspend irrespective of Apps suspend status. It emulates the chain
+ * of events that occur durring normal system-level suspend/resume, such as
+ * initiating all of the suspend/resume stages in the correct order, and
+ * enabling/disabling appropriate copy engine irqs.
+ */
+#ifdef WLAN_SUSPEND_RESUME_TEST
+/**
+ * hdd_wlan_fake_apps_resume() - Resume from unit-test triggered suspend
+ * @wiphy: wiphy struct from a validated hdd context
+ *
+ * Return: Zero on success, calls QDF_BUG() on failure
+ */
+int hdd_wlan_fake_apps_resume(struct wiphy *wiphy);
+
+/**
+ * hdd_wlan_fake_apps_suspend() - Initiate a unit-test triggered suspend
+ * @wiphy: wiphy struct from a validated hdd context
+ *
+ * Return: Zero on success, suspend related non-zero error code on failure
+ */
+int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy);
+#else
+static inline int hdd_wlan_fake_apps_resume(struct wiphy *wiphy)
+{
+	return 0;
+}
+
+static inline int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy)
+{
+	return 0;
+}
+#endif /* WLAN_SUSPEND_RESUME_TEST */
 
 #endif /* __WLAN_HDD_POWER_H */

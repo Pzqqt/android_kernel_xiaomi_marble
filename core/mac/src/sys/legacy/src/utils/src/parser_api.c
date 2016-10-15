@@ -2561,19 +2561,19 @@ tSirRetStatus sir_convert_probe_frame2_struct(tpAniSirGlobal pMac,
 	pProbeResp->Vendor1IEPresent = pr->Vendor1IE.present;
 	pProbeResp->Vendor3IEPresent = pr->Vendor3IE.present;
 
-	pProbeResp->vendor2_ie.present = pr->vendor2_ie.present;
-	if (pr->vendor2_ie.present) {
-		pProbeResp->vendor2_ie.type = pr->vendor2_ie.type;
-		pProbeResp->vendor2_ie.sub_type = pr->vendor2_ie.sub_type;
+	pProbeResp->vendor_vht_ie.present = pr->vendor_vht_ie.present;
+	if (pr->vendor_vht_ie.present) {
+		pProbeResp->vendor_vht_ie.type = pr->vendor_vht_ie.type;
+		pProbeResp->vendor_vht_ie.sub_type = pr->vendor_vht_ie.sub_type;
 	}
-	if (pr->vendor2_ie.VHTCaps.present) {
-		qdf_mem_copy(&pProbeResp->vendor2_ie.VHTCaps,
-				&pr->vendor2_ie.VHTCaps,
+	if (pr->vendor_vht_ie.VHTCaps.present) {
+		qdf_mem_copy(&pProbeResp->vendor_vht_ie.VHTCaps,
+				&pr->vendor_vht_ie.VHTCaps,
 				sizeof(tDot11fIEVHTCaps));
 	}
-	if (pr->vendor2_ie.VHTOperation.present) {
-		qdf_mem_copy(&pProbeResp->vendor2_ie.VHTOperation,
-				&pr->vendor2_ie.VHTOperation,
+	if (pr->vendor_vht_ie.VHTOperation.present) {
+		qdf_mem_copy(&pProbeResp->vendor_vht_ie.VHTOperation,
+				&pr->vendor_vht_ie.VHTOperation,
 				sizeof(tDot11fIEVHTOperation));
 	}
 	/* Update HS 2.0 Information Element */
@@ -2798,6 +2798,22 @@ sir_convert_assoc_req_frame2_struct(tpAniSirGlobal pMac,
 			ext_cap->timing_meas, ext_cap->fine_time_meas_initiator,
 			ext_cap->fine_time_meas_responder);
 	}
+
+	pAssocReq->vendor_vht_ie.present = ar->vendor_vht_ie.present;
+	if (ar->vendor_vht_ie.present) {
+		pAssocReq->vendor_vht_ie.type = ar->vendor_vht_ie.type;
+		pAssocReq->vendor_vht_ie.sub_type = ar->vendor_vht_ie.sub_type;
+
+		if (ar->vendor_vht_ie.VHTCaps.present) {
+			qdf_mem_copy(&pAssocReq->vendor_vht_ie.VHTCaps,
+				     &ar->vendor_vht_ie.VHTCaps,
+				     sizeof(tDot11fIEVHTCaps));
+			lim_log(pMac, LOG1,
+				FL("Received Assoc Request with Vendor specific VHT Cap"));
+			lim_log_vht_cap(pMac, &pAssocReq->VHTCaps);
+		}
+	}
+
 	qdf_mem_free(ar);
 	return eSIR_SUCCESS;
 
@@ -2998,27 +3014,27 @@ sir_convert_assoc_resp_frame2_struct(tpAniSirGlobal pMac,
 		lim_log_qos_map_set(pMac, &pAssocRsp->QosMapSet);
 	}
 
-	pAssocRsp->vendor2_ie.present = ar.vendor2_ie.present;
-	if (ar.vendor2_ie.present) {
-		pAssocRsp->vendor2_ie.type = ar.vendor2_ie.type;
-		pAssocRsp->vendor2_ie.sub_type = ar.vendor2_ie.sub_type;
+	pAssocRsp->vendor_vht_ie.present = ar.vendor_vht_ie.present;
+	if (ar.vendor_vht_ie.present) {
+		pAssocRsp->vendor_vht_ie.type = ar.vendor_vht_ie.type;
+		pAssocRsp->vendor_vht_ie.sub_type = ar.vendor_vht_ie.sub_type;
 	}
 	if (ar.OBSSScanParameters.present) {
 		qdf_mem_copy(&pAssocRsp->obss_scanparams,
 			&ar.OBSSScanParameters,
 			sizeof(struct sDot11fIEOBSSScanParameters));
 	}
-	if (ar.vendor2_ie.VHTCaps.present) {
-		qdf_mem_copy(&pAssocRsp->vendor2_ie.VHTCaps,
-				&ar.vendor2_ie.VHTCaps,
+	if (ar.vendor_vht_ie.VHTCaps.present) {
+		qdf_mem_copy(&pAssocRsp->vendor_vht_ie.VHTCaps,
+				&ar.vendor_vht_ie.VHTCaps,
 				sizeof(tDot11fIEVHTCaps));
 		lim_log(pMac, LOG1,
 		FL("Received Assoc Response with Vendor specific VHT Cap"));
 		lim_log_vht_cap(pMac, &pAssocRsp->VHTCaps);
 	}
-	if (ar.vendor2_ie.VHTOperation.present) {
-		qdf_mem_copy(&pAssocRsp->vendor2_ie.VHTOperation,
-				&ar.vendor2_ie.VHTOperation,
+	if (ar.vendor_vht_ie.VHTOperation.present) {
+		qdf_mem_copy(&pAssocRsp->vendor_vht_ie.VHTOperation,
+				&ar.vendor_vht_ie.VHTOperation,
 				sizeof(tDot11fIEVHTOperation));
 		lim_log(pMac, LOG1,
 		FL("Received Assoc Response with Vendor specific VHT Oper"));
@@ -3733,22 +3749,23 @@ sir_parse_beacon_ie(tpAniSirGlobal pMac,
 
 	pBeaconStruct->Vendor1IEPresent = pBies->Vendor1IE.present;
 	pBeaconStruct->Vendor3IEPresent = pBies->Vendor3IE.present;
-	pBeaconStruct->vendor2_ie.present = pBies->vendor2_ie.present;
-	if (pBies->vendor2_ie.present) {
-		pBeaconStruct->vendor2_ie.type = pBies->vendor2_ie.type;
-		pBeaconStruct->vendor2_ie.sub_type = pBies->vendor2_ie.sub_type;
+	pBeaconStruct->vendor_vht_ie.present = pBies->vendor_vht_ie.present;
+	if (pBies->vendor_vht_ie.present) {
+		pBeaconStruct->vendor_vht_ie.type = pBies->vendor_vht_ie.type;
+		pBeaconStruct->vendor_vht_ie.sub_type =
+						pBies->vendor_vht_ie.sub_type;
 	}
 
-	if (pBies->vendor2_ie.VHTCaps.present) {
-		pBeaconStruct->vendor2_ie.VHTCaps.present = 1;
-		qdf_mem_copy(&pBeaconStruct->vendor2_ie.VHTCaps,
-				&pBies->vendor2_ie.VHTCaps,
+	if (pBies->vendor_vht_ie.VHTCaps.present) {
+		pBeaconStruct->vendor_vht_ie.VHTCaps.present = 1;
+		qdf_mem_copy(&pBeaconStruct->vendor_vht_ie.VHTCaps,
+				&pBies->vendor_vht_ie.VHTCaps,
 				sizeof(tDot11fIEVHTCaps));
 	}
-	if (pBies->vendor2_ie.VHTOperation.present) {
-		pBeaconStruct->vendor2_ie.VHTOperation.present = 1;
-		qdf_mem_copy(&pBeaconStruct->vendor2_ie.VHTOperation,
-				&pBies->vendor2_ie.VHTOperation,
+	if (pBies->vendor_vht_ie.VHTOperation.present) {
+		pBeaconStruct->vendor_vht_ie.VHTOperation.present = 1;
+		qdf_mem_copy(&pBeaconStruct->vendor_vht_ie.VHTOperation,
+				&pBies->vendor_vht_ie.VHTOperation,
 				sizeof(tDot11fIEVHTOperation));
 	}
 	if (pBies->ExtCap.present) {
@@ -4090,24 +4107,24 @@ sir_convert_beacon_frame2_struct(tpAniSirGlobal pMac,
 	pBeaconStruct->Vendor1IEPresent = pBeacon->Vendor1IE.present;
 	pBeaconStruct->Vendor3IEPresent = pBeacon->Vendor3IE.present;
 
-	pBeaconStruct->vendor2_ie.present = pBeacon->vendor2_ie.present;
-	if (pBeacon->vendor2_ie.present) {
-		pBeaconStruct->vendor2_ie.type = pBeacon->vendor2_ie.type;
-		pBeaconStruct->vendor2_ie.sub_type =
-			pBeacon->vendor2_ie.sub_type;
+	pBeaconStruct->vendor_vht_ie.present = pBeacon->vendor_vht_ie.present;
+	if (pBeacon->vendor_vht_ie.present) {
+		pBeaconStruct->vendor_vht_ie.type = pBeacon->vendor_vht_ie.type;
+		pBeaconStruct->vendor_vht_ie.sub_type =
+			pBeacon->vendor_vht_ie.sub_type;
 	}
-	if (pBeacon->vendor2_ie.present) {
+	if (pBeacon->vendor_vht_ie.present) {
 		PELOG1(lim_log(pMac, LOG1,
 		FL("Vendor Specific VHT caps present in Beacon Frame!"));
 		      )
 	}
-	if (pBeacon->vendor2_ie.VHTCaps.present) {
-		qdf_mem_copy(&pBeaconStruct->vendor2_ie.VHTCaps,
-				&pBeacon->vendor2_ie.VHTCaps,
+	if (pBeacon->vendor_vht_ie.VHTCaps.present) {
+		qdf_mem_copy(&pBeaconStruct->vendor_vht_ie.VHTCaps,
+				&pBeacon->vendor_vht_ie.VHTCaps,
 				sizeof(tDot11fIEVHTCaps));
 	}
-	if (pBeacon->vendor2_ie.VHTOperation.present) {
-		qdf_mem_copy(&pBeaconStruct->vendor2_ie.VHTOperation,
+	if (pBeacon->vendor_vht_ie.VHTOperation.present) {
+		qdf_mem_copy(&pBeaconStruct->vendor_vht_ie.VHTOperation,
 				&pBeacon->VHTOperation,
 				sizeof(tDot11fIEVHTOperation));
 	}

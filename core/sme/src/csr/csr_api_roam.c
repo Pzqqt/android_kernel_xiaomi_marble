@@ -2427,6 +2427,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->isRoamOffloadEnabled;
 #endif
 		pMac->roam.configParam.obssEnabled = pParam->obssEnabled;
+		pMac->roam.configParam.vendor_vht_sap =
+			pParam->vendor_vht_sap;
 		pMac->roam.configParam.conc_custom_rule1 =
 			pParam->conc_custom_rule1;
 		pMac->roam.configParam.conc_custom_rule2 =
@@ -2517,6 +2519,11 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->sta_roam_policy_params.dfs_mode;
 		pMac->roam.configParam.sta_roam_policy.skip_unsafe_channels =
 			pParam->sta_roam_policy_params.skip_unsafe_channels;
+
+		pMac->roam.configParam.tx_aggregation_size =
+			pParam->tx_aggregation_size;
+		pMac->roam.configParam.rx_aggregation_size =
+			pParam->rx_aggregation_size;
 
 	}
 	return status;
@@ -2648,8 +2655,10 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->enable_dot11p = pMac->enable_dot11p;
 	csr_set_channels(pMac, pParam);
 	pParam->obssEnabled = cfg_params->obssEnabled;
+	pParam->vendor_vht_sap =
+		pMac->roam.configParam.vendor_vht_sap;
 	pParam->roam_dense_rssi_thresh_offset =
-			cfg_params->roam_params.dense_rssi_thresh_offset;
+		cfg_params->roam_params.dense_rssi_thresh_offset;
 	pParam->roam_dense_min_aps =
 			cfg_params->roam_params.dense_min_aps_cnt;
 	pParam->roam_dense_traffic_thresh =
@@ -2726,6 +2735,10 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 		pMac->roam.configParam.sta_roam_policy.dfs_mode;
 	pParam->sta_roam_policy_params.skip_unsafe_channels =
 		pMac->roam.configParam.sta_roam_policy.skip_unsafe_channels;
+	pParam->tx_aggregation_size =
+		pMac->roam.configParam.tx_aggregation_size;
+	pParam->rx_aggregation_size =
+		pMac->roam.configParam.rx_aggregation_size;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -7315,6 +7328,20 @@ QDF_STATUS csr_roam_copy_profile(tpAniSirGlobal pMac,
 	}
 	qdf_mem_copy(&pDstProfile->addIeParams, &pSrcProfile->addIeParams,
 			sizeof(tSirAddIeParams));
+	if (pSrcProfile->supported_rates.numRates) {
+		qdf_mem_copy(pDstProfile->supported_rates.rate,
+				pSrcProfile->supported_rates.rate,
+				pSrcProfile->supported_rates.numRates);
+		pDstProfile->supported_rates.numRates =
+			pSrcProfile->supported_rates.numRates;
+	}
+	if (pSrcProfile->extended_rates.numRates) {
+		qdf_mem_copy(pDstProfile->extended_rates.rate,
+				pSrcProfile->extended_rates.rate,
+				pSrcProfile->extended_rates.numRates);
+		pDstProfile->extended_rates.numRates =
+			pSrcProfile->extended_rates.numRates;
+	}
 end:
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		csr_release_profile(pMac, pDstProfile);
@@ -12517,12 +12544,11 @@ uint8_t csr_roam_get_ibss_start_channel_number24(tpAniSirGlobal pMac)
 
 	return channel;
 }
-
 /**
  * csr_populate_basic_rates() - populates OFDM or CCK rates
  * @rates:         rate struct to populate
- * @type:          true: ofdm rates, false: cck rates
- * @masked:        indicates if rates are to be masked with
+ * @is_ofdm_rates:          true: ofdm rates, false: cck rates
+ * @is_basic_rates:        indicates if rates are to be masked with
  *                 CSR_DOT11_BASIC_RATE_MASK
  *
  * This function will populate OFDM or CCK rates
@@ -12530,8 +12556,10 @@ uint8_t csr_roam_get_ibss_start_channel_number24(tpAniSirGlobal pMac)
  * Return: void
  */
 static void
-csr_populate_basic_rates(tSirMacRateSet *rate_set, bool type, bool masked)
+csr_populate_basic_rates(tSirMacRateSet *rate_set, bool is_ofdm_rates,
+		bool is_basic_rates)
 {
+	int i = 0;
 	uint8_t ofdm_rates[8] = {
 		SIR_MAC_RATE_6,
 		SIR_MAC_RATE_9,
@@ -12549,23 +12577,30 @@ csr_populate_basic_rates(tSirMacRateSet *rate_set, bool type, bool masked)
 		SIR_MAC_RATE_11
 	};
 
-	if (type == true) {
+	if (is_ofdm_rates == true) {
 		rate_set->numRates = 8;
 		qdf_mem_copy(rate_set->rate, ofdm_rates, sizeof(ofdm_rates));
-		if (masked) {
+		if (is_basic_rates) {
 			rate_set->rate[0] |= CSR_DOT11_BASIC_RATE_MASK;
 			rate_set->rate[2] |= CSR_DOT11_BASIC_RATE_MASK;
 			rate_set->rate[4] |= CSR_DOT11_BASIC_RATE_MASK;
 		}
+		for (i = 0; i < rate_set->numRates; i++)
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			FL("Default OFDM rate is %2x"), rate_set->rate[i]);
 	} else {
 		rate_set->numRates = 4;
 		qdf_mem_copy(rate_set->rate, cck_rates, sizeof(cck_rates));
-		if (masked) {
+		if (is_basic_rates) {
 			rate_set->rate[0] |= CSR_DOT11_BASIC_RATE_MASK;
 			rate_set->rate[1] |= CSR_DOT11_BASIC_RATE_MASK;
 			rate_set->rate[2] |= CSR_DOT11_BASIC_RATE_MASK;
 			rate_set->rate[3] |= CSR_DOT11_BASIC_RATE_MASK;
 		}
+		for (i = 0; i < rate_set->numRates; i++)
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			FL("Default CCK rate is %2x"), rate_set->rate[i]);
+
 	}
 }
 
@@ -12600,6 +12635,41 @@ csr_convert_mode_to_nw_type(eCsrCfgDot11Mode dot11_mode, eCsrBand band)
 	return eSIR_DONOT_USE_NW_TYPE;
 }
 
+/**
+ * csr_populate_supported_rates_from_hostapd() - populates operational
+ * and extended rates.
+ * from hostapd.conf file
+ * @opr_rates:         rate struct to populate operational rates
+ * @ext_rates:         rate struct to populate extended rates
+ * @profile:       bss profile
+ *
+ * Return: void
+ */
+static void csr_populate_supported_rates_from_hostapd(tSirMacRateSet *opr_rates,
+		tSirMacRateSet *ext_rates,
+		tCsrRoamProfile *pProfile)
+{
+	int i = 0;
+	if (pProfile->supported_rates.numRates) {
+		opr_rates->numRates = pProfile->supported_rates.numRates;
+		qdf_mem_copy(opr_rates->rate,
+				pProfile->supported_rates.rate,
+				pProfile->supported_rates.numRates);
+		for (i = 0; i < opr_rates->numRates; i++)
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			FL("Supported Rate is %2x"), opr_rates->rate[i]);
+	}
+	if (pProfile->extended_rates.numRates) {
+		ext_rates->numRates =
+			pProfile->extended_rates.numRates;
+		qdf_mem_copy(ext_rates->rate,
+				pProfile->extended_rates.rate,
+				pProfile->extended_rates.numRates);
+		for (i = 0; i < ext_rates->numRates; i++)
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			FL("Extended Rate is %2x"), ext_rates->rate[i]);
+	}
+}
 /**
  * csr_roam_get_bss_start_parms() - get bss start param from profile
  * @pMac:          mac global context
@@ -12642,58 +12712,77 @@ csr_roam_get_bss_start_parms(tpAniSirGlobal pMac,
 
 	nw_type = csr_convert_mode_to_nw_type(pParam->uCfgDot11Mode, band);
 	ext_rates->numRates = 0;
-
-	switch (nw_type) {
-	default:
-		sms_log(pMac, LOGE, FL("sees an unknown pSirNwType (%d)"),
-			nw_type);
-	case eSIR_11A_NW_TYPE:
-		csr_populate_basic_rates(opr_rates, true, true);
-		if (eCSR_OPERATING_CHANNEL_ANY != tmp_opr_ch) {
-			opr_ch = tmp_opr_ch;
+	/*
+	 * hostapd.conf will populate its basic and extended rates
+	 * as per hw_mode but if acs in ini is enabled, driver should
+	 * ignore basic and extended rates from hostapd.conf and should
+	 * populate default rates.
+	 */
+	if (pProfile->supported_rates.numRates ||
+			pProfile->extended_rates.numRates) {
+		csr_populate_supported_rates_from_hostapd(opr_rates,
+				ext_rates, pProfile);
+		pParam->operationChn = tmp_opr_ch;
+	} else {
+		switch (nw_type) {
+		default:
+			sms_log(pMac, LOGE,
+					FL("sees an unknown pSirNwType (%d)"),
+					nw_type);
+		case eSIR_11A_NW_TYPE:
+			csr_populate_basic_rates(opr_rates, true, true);
+			if (eCSR_OPERATING_CHANNEL_ANY != tmp_opr_ch) {
+				opr_ch = tmp_opr_ch;
+				break;
+			}
+			opr_ch = csr_roam_get_ibss_start_channel_number50(pMac);
+			if (0 == opr_ch &&
+			    CSR_IS_PHY_MODE_DUAL_BAND(pProfile->phyMode) &&
+			    CSR_IS_PHY_MODE_DUAL_BAND(
+				    pMac->roam.configParam.phyMode)) {
+				/*
+				 * We could not find a 5G channel by auto pick,
+				 * let's try 2.4G channels. We only do this here
+				 * because csr_roam_get_phy_mode_band_for_bss
+				 * always picks 11a  for AUTO
+				 */
+				nw_type = eSIR_11B_NW_TYPE;
+				opr_ch =
+				csr_roam_get_ibss_start_channel_number24(pMac);
+				csr_populate_basic_rates(opr_rates, false,
+						true);
+			}
+			break;
+		case eSIR_11B_NW_TYPE:
+			csr_populate_basic_rates(opr_rates, false, true);
+			if (eCSR_OPERATING_CHANNEL_ANY == tmp_opr_ch)
+				opr_ch =
+				csr_roam_get_ibss_start_channel_number24(pMac);
+			else
+				opr_ch = tmp_opr_ch;
+			break;
+		case eSIR_11G_NW_TYPE:
+			/* For P2P Client and P2P GO, disable 11b rates */
+			if ((pProfile->csrPersona == QDF_P2P_CLIENT_MODE) ||
+			    (pProfile->csrPersona == QDF_P2P_GO_MODE) ||
+			    (eCSR_CFG_DOT11_MODE_11G_ONLY ==
+						pParam->uCfgDot11Mode)) {
+				csr_populate_basic_rates(opr_rates, true, true);
+			} else {
+				csr_populate_basic_rates(opr_rates, false,
+						true);
+				csr_populate_basic_rates(ext_rates, true,
+						false);
+			}
+			if (eCSR_OPERATING_CHANNEL_ANY == tmp_opr_ch)
+				opr_ch =
+				csr_roam_get_ibss_start_channel_number24(pMac);
+			else
+				opr_ch = tmp_opr_ch;
 			break;
 		}
-		opr_ch = csr_roam_get_ibss_start_channel_number50(pMac);
-		if (0 == opr_ch &&
-		    CSR_IS_PHY_MODE_DUAL_BAND(pProfile->phyMode) &&
-		    CSR_IS_PHY_MODE_DUAL_BAND(pMac->roam.configParam.phyMode)) {
-			/*
-			 * We could not find a 5G channel by auto pick, let's
-			 * try 2.4G channels. We only do this here because
-			 * csr_roam_get_phy_mode_band_for_bss always picks 11a
-			 * for AUTO
-			 */
-			nw_type = eSIR_11B_NW_TYPE;
-			opr_ch = csr_roam_get_ibss_start_channel_number24(pMac);
-			csr_populate_basic_rates(opr_rates, false, true);
-		}
-		break;
-	case eSIR_11B_NW_TYPE:
-		csr_populate_basic_rates(opr_rates, false, true);
-		if (eCSR_OPERATING_CHANNEL_ANY == tmp_opr_ch)
-			opr_ch = csr_roam_get_ibss_start_channel_number24(pMac);
-		else
-			opr_ch = tmp_opr_ch;
-		break;
-	case eSIR_11G_NW_TYPE:
-		/* For P2P Client and P2P GO, disable 11b rates */
-		if ((pProfile->csrPersona == QDF_P2P_CLIENT_MODE)
-		    || (pProfile->csrPersona == QDF_P2P_GO_MODE)
-		    || (eCSR_CFG_DOT11_MODE_11G_ONLY ==
-					pParam->uCfgDot11Mode)) {
-			csr_populate_basic_rates(opr_rates, true, true);
-		} else {
-			csr_populate_basic_rates(opr_rates, false, true);
-			csr_populate_basic_rates(ext_rates, true, false);
-		}
-
-		if (eCSR_OPERATING_CHANNEL_ANY == tmp_opr_ch)
-			opr_ch = csr_roam_get_ibss_start_channel_number24(pMac);
-		else
-			opr_ch = tmp_opr_ch;
-		break;
+		pParam->operationChn = opr_ch;
 	}
-	pParam->operationChn = opr_ch;
 	pParam->sirNwType = nw_type;
 	pParam->ch_params.ch_width = pProfile->ch_params.ch_width;
 	pParam->ch_params.center_freq_seg0 =
@@ -14197,10 +14286,11 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 					pIes->VHTCaps.numSoundingDim)
 				txBFCsnValue = QDF_MIN(txBFCsnValue,
 						pIes->VHTCaps.numSoundingDim);
-			else if (IS_BSS_VHT_CAPABLE(pIes->vendor2_ie.VHTCaps)
-				&& pIes->vendor2_ie.VHTCaps.numSoundingDim)
+			else if (IS_BSS_VHT_CAPABLE(pIes->vendor_vht_ie.VHTCaps)
+				&& pIes->vendor_vht_ie.VHTCaps.numSoundingDim)
 				txBFCsnValue = QDF_MIN(txBFCsnValue,
-					pIes->vendor2_ie.VHTCaps.numSoundingDim);
+					pIes->vendor_vht_ie.
+					VHTCaps.numSoundingDim);
 		}
 		csr_join_req->vht_config.csnof_beamformer_antSup = txBFCsnValue;
 
@@ -14989,6 +15079,8 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t sessionId
 		     sizeof(pParam->addIeParams));
 	pMsg->obssEnabled = pMac->roam.configParam.obssEnabled;
 	pMsg->sap_dot11mc = pParam->sap_dot11mc;
+	pMsg->vendor_vht_sap =
+			pMac->roam.configParam.vendor_vht_sap;
 
 	return cds_send_mb_message_to_mac(pMsg);
 }
@@ -15224,6 +15316,10 @@ QDF_STATUS csr_process_add_sta_session_command(tpAniSirGlobal pMac,
 	add_sta_self_req->sub_type = pAddStaReq->subType;
 	add_sta_self_req->nss_2g = nss_2g;
 	add_sta_self_req->nss_5g = nss_5g;
+	add_sta_self_req->tx_aggregation_size =
+			pMac->roam.configParam.tx_aggregation_size;
+	add_sta_self_req->rx_aggregation_size =
+			pMac->roam.configParam.rx_aggregation_size;
 
 	msg.type = WMA_ADD_STA_SELF_REQ;
 	msg.reserved = 0;
@@ -15244,59 +15340,67 @@ QDF_STATUS csr_process_add_sta_session_command(tpAniSirGlobal pMac,
 	return status;
 }
 
-QDF_STATUS csr_roam_open_session(tpAniSirGlobal pMac,
+QDF_STATUS csr_roam_open_session(tpAniSirGlobal mac_ctx,
 				 csr_roam_completeCallback callback,
 				 void *pContext,
 				 uint8_t *pSelfMacAddr, uint8_t *pbSessionId,
 				 uint32_t type, uint32_t subType)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	uint32_t i, value = 0;
+	uint32_t i, value = 0, session_id;
 	union {
 		uint16_t nCfgValue16;
 		tSirMacHTCapabilityInfo htCapInfo;
 	} uHTCapabilityInfo;
 	uint32_t nCfgValue = 0;
-	tCsrRoamSession *pSession;
+	tCsrRoamSession *session;
 	*pbSessionId = CSR_SESSION_ID_INVALID;
 
-	for (i = 0; i < pMac->sme.max_intf_count; i++) {
-		sms_log(pMac, LOG1, FL("session:%d active:%d"), i,
-			pMac->roam.roamSession[i].sessionActive);
-		if (!CSR_IS_SESSION_VALID(pMac, i)) {
-			pSession = CSR_GET_SESSION(pMac, i);
-			if (!pSession) {
-				sms_log(pMac, LOGE,
-					FL
-						("Session does not exist for interface %d"),
+	if (QDF_STATUS_SUCCESS == csr_roam_get_session_id_from_bssid(mac_ctx,
+				(struct qdf_mac_addr *)pSelfMacAddr,
+				&session_id)) {
+		sms_log(mac_ctx, LOGE,
+			FL("Session %d exists with mac address"
+			MAC_ADDRESS_STR),
+			session_id, MAC_ADDR_ARRAY(pSelfMacAddr));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	for (i = 0; i < mac_ctx->sme.max_intf_count; i++) {
+		sms_log(mac_ctx, LOG1, FL("session:%d active:%d"), i,
+			mac_ctx->roam.roamSession[i].sessionActive);
+		if (!CSR_IS_SESSION_VALID(mac_ctx, i)) {
+			session = CSR_GET_SESSION(mac_ctx, i);
+			if (!session) {
+				sms_log(mac_ctx, LOGE,
+					FL("Session does not exist for interface %d"),
 					i);
 				break;
 			}
 			status = QDF_STATUS_SUCCESS;
-			pSession->sessionActive = true;
-			pSession->sessionId = (uint8_t) i;
+			session->sessionActive = true;
+			session->sessionId = (uint8_t) i;
 
 			/* Initialize FT related data structures only in STA mode */
-			sme_ft_open(pMac, pSession->sessionId);
+			sme_ft_open(mac_ctx, session->sessionId);
 
-			pSession->callback = callback;
-			pSession->pContext = pContext;
-			qdf_mem_copy(&pSession->selfMacAddr, pSelfMacAddr,
+			session->callback = callback;
+			session->pContext = pContext;
+			qdf_mem_copy(&session->selfMacAddr, pSelfMacAddr,
 				     sizeof(struct qdf_mac_addr));
 			*pbSessionId = (uint8_t) i;
 			status =
-				qdf_mc_timer_init(&pSession->hTimerRoaming,
+				qdf_mc_timer_init(&session->hTimerRoaming,
 						  QDF_TIMER_TYPE_SW,
 						  csr_roam_roaming_timer_handler,
-						  &pSession->roamingTimerInfo);
+						  &session->roamingTimerInfo);
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
-				sms_log(pMac, LOGE,
-					FL
-						("cannot allocate memory for Roaming timer"));
+				sms_log(mac_ctx, LOGE,
+					FL("cannot allocate memory for Roaming timer"));
 				break;
 			}
 			/* get the HT capability info */
-			if (wlan_cfg_get_int(pMac, WNI_CFG_HT_CAP_INFO, &value)
+			if (wlan_cfg_get_int(mac_ctx, WNI_CFG_HT_CAP_INFO, &value)
 					!= eSIR_SUCCESS) {
 				QDF_TRACE(QDF_MODULE_ID_QDF,
 					  QDF_TRACE_LEVEL_ERROR,
@@ -15305,134 +15409,137 @@ QDF_STATUS csr_roam_open_session(tpAniSirGlobal pMac,
 				break;
 			}
 #ifdef FEATURE_WLAN_BTAMP_UT_RF
-			status = qdf_mc_timer_init(&pSession->hTimerJoinRetry,
+			status = qdf_mc_timer_init(&session->hTimerJoinRetry,
 						   QDF_TIMER_TYPE_SW,
 						   csr_roam_join_retry_timer_handler,
-						   &pSession->
+						   &session->
 						   joinRetryTimerInfo);
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
-				sms_log(pMac, LOGE,
+				sms_log(mac_ctx, LOGE,
 					FL
 						("cannot allocate memory for join retry timer"));
 				break;
 			}
 #endif
 			uHTCapabilityInfo.nCfgValue16 = 0xFFFF & value;
-			pSession->htConfig.ht_rx_ldpc =
+			session->htConfig.ht_rx_ldpc =
 				uHTCapabilityInfo.htCapInfo.advCodingCap;
-			pSession->htConfig.ht_tx_stbc =
+			session->htConfig.ht_tx_stbc =
 				uHTCapabilityInfo.htCapInfo.txSTBC;
-			pSession->htConfig.ht_rx_stbc =
+			session->htConfig.ht_rx_stbc =
 				uHTCapabilityInfo.htCapInfo.rxSTBC;
-			pSession->htConfig.ht_sgi20 =
+			session->htConfig.ht_sgi20 =
 				uHTCapabilityInfo.htCapInfo.shortGI20MHz;
-			pSession->htConfig.ht_sgi40 =
+			session->htConfig.ht_sgi40 =
 				uHTCapabilityInfo.htCapInfo.shortGI40MHz;
 
-			wlan_cfg_get_int(pMac, WNI_CFG_VHT_MAX_MPDU_LENGTH,
+			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_MAX_MPDU_LENGTH,
 					 &nCfgValue);
-			pSession->vht_config.max_mpdu_len = nCfgValue;
+			session->vht_config.max_mpdu_len = nCfgValue;
 
 			nCfgValue = 0;
-			wlan_cfg_get_int(pMac,
+			wlan_cfg_get_int(mac_ctx,
 					 WNI_CFG_VHT_SUPPORTED_CHAN_WIDTH_SET,
 					 &nCfgValue);
-			pSession->vht_config.supported_channel_widthset =
+			session->vht_config.supported_channel_widthset =
 								nCfgValue;
 
 			nCfgValue = 0;
-			wlan_cfg_get_int(pMac, WNI_CFG_VHT_LDPC_CODING_CAP,
+			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_LDPC_CODING_CAP,
 					 &nCfgValue);
-			pSession->vht_config.ldpc_coding = nCfgValue;
+			session->vht_config.ldpc_coding = nCfgValue;
 
 			nCfgValue = 0;
-			wlan_cfg_get_int(pMac, WNI_CFG_VHT_SHORT_GI_80MHZ,
+			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_SHORT_GI_80MHZ,
 					 &nCfgValue);
-			pSession->vht_config.shortgi80 = nCfgValue;
+			session->vht_config.shortgi80 = nCfgValue;
 
 			nCfgValue = 0;
-			wlan_cfg_get_int(pMac,
+			wlan_cfg_get_int(mac_ctx,
 				WNI_CFG_VHT_SHORT_GI_160_AND_80_PLUS_80MHZ,
 				&nCfgValue);
-			pSession->vht_config.shortgi160and80plus80 = nCfgValue;
+			session->vht_config.shortgi160and80plus80 = nCfgValue;
 
 			nCfgValue = 0;
-			wlan_cfg_get_int(pMac, WNI_CFG_VHT_TXSTBC, &nCfgValue);
-			pSession->vht_config.tx_stbc = nCfgValue;
+			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_TXSTBC,
+					&nCfgValue);
+			session->vht_config.tx_stbc = nCfgValue;
 
 			nCfgValue = 0;
-			wlan_cfg_get_int(pMac, WNI_CFG_VHT_RXSTBC, &nCfgValue);
-			pSession->vht_config.rx_stbc = nCfgValue;
+			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_RXSTBC,
+					&nCfgValue);
+			session->vht_config.rx_stbc = nCfgValue;
 
 			nCfgValue = 0;
-			wlan_cfg_get_int(pMac, WNI_CFG_VHT_SU_BEAMFORMER_CAP,
+			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_SU_BEAMFORMER_CAP,
 						&nCfgValue);
-			pSession->vht_config.su_beam_former = nCfgValue;
+			session->vht_config.su_beam_former = nCfgValue;
 
 			nCfgValue = 0;
-			wlan_cfg_get_int(pMac, WNI_CFG_VHT_SU_BEAMFORMEE_CAP,
+			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_SU_BEAMFORMEE_CAP,
 						&nCfgValue);
-			pSession->vht_config.su_beam_formee = nCfgValue;
+			session->vht_config.su_beam_formee = nCfgValue;
 
 			nCfgValue = 0;
-			wlan_cfg_get_int(pMac,
+			wlan_cfg_get_int(mac_ctx,
 				WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED,
 				&nCfgValue);
-			pSession->vht_config.csnof_beamformer_antSup =
+			session->vht_config.csnof_beamformer_antSup =
 								nCfgValue;
 
 			nCfgValue = 0;
-			wlan_cfg_get_int(pMac,
+			wlan_cfg_get_int(mac_ctx,
 					WNI_CFG_VHT_NUM_SOUNDING_DIMENSIONS,
 					&nCfgValue);
-			pSession->vht_config.num_soundingdim = nCfgValue;
+			session->vht_config.num_soundingdim = nCfgValue;
 
 			nCfgValue = 0;
-			wlan_cfg_get_int(pMac, WNI_CFG_VHT_MU_BEAMFORMER_CAP,
+			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_MU_BEAMFORMER_CAP,
 						&nCfgValue);
-			pSession->vht_config.mu_beam_former = nCfgValue;
+			session->vht_config.mu_beam_former = nCfgValue;
 
 			nCfgValue = 0;
-			wlan_cfg_get_int(pMac, WNI_CFG_VHT_MU_BEAMFORMEE_CAP,
+			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_MU_BEAMFORMEE_CAP,
 						&nCfgValue);
-			pSession->vht_config.mu_beam_formee = nCfgValue;
+			session->vht_config.mu_beam_formee = nCfgValue;
 
 			nCfgValue = 0;
-			wlan_cfg_get_int(pMac, WNI_CFG_VHT_TXOP_PS,
+			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_TXOP_PS,
 					 &nCfgValue);
-			pSession->vht_config.vht_txops = nCfgValue;
+			session->vht_config.vht_txops = nCfgValue;
 
 			nCfgValue = 0;
-			wlan_cfg_get_int(pMac, WNI_CFG_VHT_HTC_VHTC_CAP,
+			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_HTC_VHTC_CAP,
 					 &nCfgValue);
-			pSession->vht_config.htc_vhtcap = nCfgValue;
+			session->vht_config.htc_vhtcap = nCfgValue;
 
 			nCfgValue = 0;
-			wlan_cfg_get_int(pMac, WNI_CFG_VHT_RX_ANT_PATTERN,
+			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_RX_ANT_PATTERN,
 					 &nCfgValue);
-			pSession->vht_config.rx_antpattern = nCfgValue;
+			session->vht_config.rx_antpattern = nCfgValue;
 
 			nCfgValue = 0;
-			wlan_cfg_get_int(pMac, WNI_CFG_VHT_TX_ANT_PATTERN,
+			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_TX_ANT_PATTERN,
 					 &nCfgValue);
-			pSession->vht_config.tx_antpattern = nCfgValue;
+			session->vht_config.tx_antpattern = nCfgValue;
 
 			nCfgValue = 0;
-			wlan_cfg_get_int(pMac, WNI_CFG_VHT_AMPDU_LEN_EXPONENT,
+			wlan_cfg_get_int(mac_ctx,
+					 WNI_CFG_VHT_AMPDU_LEN_EXPONENT,
 					 &nCfgValue);
-			pSession->vht_config.max_ampdu_lenexp = nCfgValue;
+			session->vht_config.max_ampdu_lenexp = nCfgValue;
 
-			status = csr_issue_add_sta_for_session_req(pMac, i,
+			status = csr_issue_add_sta_for_session_req(mac_ctx, i,
 								pSelfMacAddr,
 								type, subType);
 			break;
 		}
 	}
-	if (pMac->sme.max_intf_count == i) {
+	if (mac_ctx->sme.max_intf_count == i) {
 		/* No session is available */
-		sms_log(pMac, LOGE,
+		sms_log(mac_ctx, LOGE,
 			"%s: Reached max interfaces: %d! Session creation will fail",
-			__func__, pMac->sme.max_intf_count);
+			__func__, mac_ctx->sme.max_intf_count);
 		status = QDF_STATUS_E_RESOURCES;
 	}
 	return status;
@@ -19361,11 +19468,16 @@ fail:
  *
  * Return: None
  */
-void csr_roam_fill_tdls_info(tCsrRoamInfo *roam_info, tpSirSmeJoinRsp join_rsp)
+void csr_roam_fill_tdls_info(tpAniSirGlobal mac_ctx, tCsrRoamInfo *roam_info,
+				tpSirSmeJoinRsp join_rsp)
 {
 	roam_info->tdls_prohibited = join_rsp->tdls_prohibited;
 	roam_info->tdls_chan_swit_prohibited =
 		join_rsp->tdls_chan_swit_prohibited;
+	sms_log(mac_ctx, LOG1,
+		FL("tdls:prohibit: %d, chan_swit_prohibit: %d"),
+		roam_info->tdls_prohibited,
+		roam_info->tdls_chan_swit_prohibited);
 }
 #endif
 
@@ -19610,11 +19722,7 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	roam_info->chan_info.nss = roam_synch_data->join_rsp->nss;
 	roam_info->chan_info.rate_flags =
 		roam_synch_data->join_rsp->max_rate_flags;
-	csr_roam_fill_tdls_info(roam_info, roam_synch_data->join_rsp);
-	sms_log(mac_ctx, LOG1,
-		FL("tdls:prohibit: %d, chan_swit_prohibit: %d"),
-		roam_info->tdls_prohibited,
-		roam_info->tdls_chan_swit_prohibited);
+	csr_roam_fill_tdls_info(mac_ctx, roam_info, roam_synch_data->join_rsp);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	src_profile = &roam_synch_data->join_rsp->HTProfile;
 	dst_profile = &conn_profile->HTProfile;

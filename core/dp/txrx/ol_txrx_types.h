@@ -58,7 +58,7 @@
  * multicast key the peer uses, and another ID to represent the
  * unicast key the peer uses.
  */
-#define MAX_NUM_PEER_ID_PER_PEER 8
+#define MAX_NUM_PEER_ID_PER_PEER 16
 
 #define OL_TXRX_INVALID_NUM_PEERS (-1)
 
@@ -484,9 +484,19 @@ struct ol_tx_flow_pool_t {
 
 #endif
 
+/*
+ * struct ol_txrx_peer_id_map - Map of firmware peer_ids to peers on host
+ * @peer: Pointer to peer object
+ * @peer_id_ref_cnt: No. of firmware references to the peer_id
+ * @del_peer_id_ref_cnt: No. of outstanding unmap events for peer_id
+ *                       after the peer object is deleted on the host.
+ *
+ * peer_id is used as an index into the array of ol_txrx_peer_id_map.
+ */
 struct ol_txrx_peer_id_map {
 	struct ol_txrx_peer_t *peer;
 	qdf_atomic_t peer_id_ref_cnt;
+	qdf_atomic_t del_peer_id_ref_cnt;
 };
 
 /*

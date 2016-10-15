@@ -2068,11 +2068,13 @@ static int __wlan_hdd_cfg80211_get_concurrency_matrix(struct wiphy *wiphy,
 	/* Fill feature combination matrix */
 	feature_sets = 0;
 	feature_set_matrix[feature_sets++] = WIFI_FEATURE_INFRA |
-		WIFI_FEATURE_P2P;
+						WIFI_FEATURE_P2P;
+	feature_set_matrix[feature_sets++] = WIFI_FEATURE_INFRA |
+						WIFI_FEATURE_NAN;
 	/* Add more feature combinations here */
 
 	feature_sets = QDF_MIN(feature_sets, max_feature_sets);
-	hdd_info("Number of feature sets:%d", feature_sets);
+	hdd_info("Number of feature sets: %d", feature_sets);
 	hdd_info("Feature set matrix");
 	for (i = 0; i < feature_sets; i++)
 		hdd_info("[%d] 0x%02X", i, feature_set_matrix[i]);
@@ -2135,7 +2137,8 @@ wlan_hdd_cfg80211_get_concurrency_matrix(struct wiphy *wiphy,
  * This is called to turn ON or SET the feature flag for the requested feature.
  **/
 #define NUM_BITS_IN_BYTE       8
-void wlan_hdd_cfg80211_set_feature(uint8_t *feature_flags, uint8_t feature)
+static void wlan_hdd_cfg80211_set_feature(uint8_t *feature_flags,
+					  uint8_t feature)
 {
 	uint32_t index;
 	uint8_t bit_mask;
@@ -3870,6 +3873,8 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_STATS_AVG_FACTOR] = {.type = NLA_U16 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_GUARD_TIME] = {.type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_CHANNEL_AVOIDANCE_IND] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_MPDU_AGGREGATION] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MPDU_AGGREGATION] = {.type = NLA_U8 },
 };
 
 /**
@@ -3930,7 +3935,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	u32 guard_time;
 	uint8_t set_value;
 	u32 ftm_capab;
-	uint8_t qpower;
+	u8 qpower;
 	QDF_STATUS status;
 	int attr_len;
 	int access_policy = 0;
@@ -3938,6 +3943,8 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	bool vendor_ie_present = false, access_policy_present = false;
 	uint16_t scan_ie_len = 0;
 	uint8_t *scan_ie;
+	struct sir_set_tx_rx_aggregation_size request;
+	QDF_STATUS qdf_status;
 
 	ENTER_DEV(dev);
 
@@ -4096,6 +4103,44 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		} else
 			ret_val = -EPERM;
 	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_MPDU_AGGREGATION] ||
+	    tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MPDU_AGGREGATION]) {
+		/* if one is specified, both must be specified */
+		if (!tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_MPDU_AGGREGATION] ||
+		    !tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MPDU_AGGREGATION]) {
+			hdd_err("Both TX and RX MPDU Aggregation required");
+			return -EINVAL;
+		}
+
+		request.tx_aggregation_size = nla_get_u8(
+			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_MPDU_AGGREGATION]);
+		request.rx_aggregation_size = nla_get_u8(
+			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MPDU_AGGREGATION]);
+		request.vdev_id = adapter->sessionId;
+
+		if (request.tx_aggregation_size >=
+					CFG_TX_AGGREGATION_SIZE_MIN &&
+			request.tx_aggregation_size <=
+					CFG_TX_AGGREGATION_SIZE_MAX &&
+			request.rx_aggregation_size >=
+					CFG_RX_AGGREGATION_SIZE_MIN &&
+			request.rx_aggregation_size <=
+					CFG_RX_AGGREGATION_SIZE_MAX) {
+			qdf_status = wma_set_tx_rx_aggregation_size(&request);
+			if (qdf_status != QDF_STATUS_SUCCESS) {
+				hdd_err("failed to set aggr sizes err %d",
+					qdf_status);
+				ret_val = -EPERM;
+			}
+		} else {
+			hdd_err("TX %d RX %d MPDU aggr size not in range",
+				request.tx_aggregation_size,
+				request.rx_aggregation_size);
+			ret_val = -EINVAL;
+		}
+	}
+
 	return ret_val;
 }
 
@@ -6565,10 +6610,10 @@ static int wlan_hdd_sap_get_nol(hdd_adapter_t *ap_adapter, uint8_t *nol,
  *
  * Return: Zero on success and non zero value on error
  */
-int wlan_hdd_validate_and_get_pre_cac_ch(hdd_context_t *hdd_ctx,
-					hdd_adapter_t *ap_adapter,
-					uint8_t channel,
-					uint8_t *pre_cac_chan)
+static int wlan_hdd_validate_and_get_pre_cac_ch(hdd_context_t *hdd_ctx,
+						hdd_adapter_t *ap_adapter,
+						uint8_t channel,
+						uint8_t *pre_cac_chan)
 {
 	uint32_t i, j;
 	QDF_STATUS status;
@@ -10381,6 +10426,7 @@ static int wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
  * Return: bss found in kernel cache
  */
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)) && !defined(WITH_BACKPORTS)
+static
 struct cfg80211_bss *wlan_hdd_cfg80211_get_bss(struct wiphy *wiphy,
 	struct ieee80211_channel *channel, const u8 *bssid,
 	const u8 *ssid, size_t ssid_len)
@@ -10392,6 +10438,7 @@ struct cfg80211_bss *wlan_hdd_cfg80211_get_bss(struct wiphy *wiphy,
 			WLAN_CAPABILITY_ESS);
 }
 #else
+static
 struct cfg80211_bss *wlan_hdd_cfg80211_get_bss(struct wiphy *wiphy,
 	struct ieee80211_channel *channel, const u8 *bssid,
 	const u8 *ssid, size_t ssid_len)
@@ -11622,7 +11669,7 @@ static int wlan_hdd_add_assoc_ie(hdd_wext_state_t *wext_state,
  *
  * Return: 0 for success, non-zero for failure
  */
-int wlan_hdd_cfg80211_set_ie(hdd_adapter_t *pAdapter, const uint8_t *ie,
+static int wlan_hdd_cfg80211_set_ie(hdd_adapter_t *pAdapter, const uint8_t *ie,
 			     size_t ie_len)
 {
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
@@ -11949,8 +11996,8 @@ static bool hdd_is_wpaie_present(const uint8_t *ie, uint8_t ie_len)
  *
  * Return: 0 for success, non-zero for failure
  */
-int wlan_hdd_cfg80211_set_privacy(hdd_adapter_t *pAdapter,
-				  struct cfg80211_connect_params *req)
+static int wlan_hdd_cfg80211_set_privacy(hdd_adapter_t *pAdapter,
+					 struct cfg80211_connect_params *req)
 {
 	int status = 0;
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
@@ -12079,14 +12126,11 @@ static int wlan_hdd_try_disconnect(hdd_adapter_t *pAdapter)
 {
 	unsigned long rc;
 	hdd_station_ctx_t *pHddStaCtx;
-	eMib_dot11DesiredBssType connectedBssType;
 	int status, result = 0;
 
 	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
-	hdd_conn_get_connected_bss_type(pHddStaCtx, &connectedBssType);
-
-	if ((eMib_dot11DesiredBssType_independent == connectedBssType) ||
+	if ((QDF_IBSS_MODE == pAdapter->device_mode) ||
 	  (eConnectionState_Associated == pHddStaCtx->conn_info.connState) ||
 	  (eConnectionState_Connecting == pHddStaCtx->conn_info.connState) ||
 	  (eConnectionState_IbssConnected == pHddStaCtx->conn_info.connState)) {
@@ -12325,7 +12369,7 @@ static int wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
  *
  * Return: 0 for success, non-zero for failure
  */
-int wlan_hdd_disconnect(hdd_adapter_t *pAdapter, u16 reason)
+static int wlan_hdd_disconnect(hdd_adapter_t *pAdapter, u16 reason)
 {
 	int status, result = 0;
 	unsigned long rc;
@@ -13890,6 +13934,7 @@ void wlan_hdd_cfg80211_update_replay_counter_callback(void *callbackContext,
  *
  * Return: 0 for success, non-zero for failure
  */
+static
 int __wlan_hdd_cfg80211_set_rekey_data(struct wiphy *wiphy,
 				       struct net_device *dev,
 				       struct cfg80211_gtk_rekey_data *data)
@@ -13978,6 +14023,7 @@ int __wlan_hdd_cfg80211_set_rekey_data(struct wiphy *wiphy,
  *
  * Return: 0 for success, non-zero for failure
  */
+static
 int wlan_hdd_cfg80211_set_rekey_data(struct wiphy *wiphy,
 				     struct net_device *dev,
 				     struct cfg80211_gtk_rekey_data *data)
@@ -14143,7 +14189,8 @@ wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
  *
  * Return: none
  */
-void wlan_hdd_cfg80211_lphb_ind_handler(void *pHddCtx, tSirLPHBInd *lphbInd)
+static void wlan_hdd_cfg80211_lphb_ind_handler(void *pHddCtx,
+					       tSirLPHBInd *lphbInd)
 {
 	struct sk_buff *skb;
 

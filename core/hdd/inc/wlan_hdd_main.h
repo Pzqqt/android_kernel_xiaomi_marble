@@ -54,9 +54,7 @@
 #include <linux/wakelock.h>
 #endif
 #include <wlan_hdd_ftm.h>
-#ifdef FEATURE_WLAN_TDLS
 #include "wlan_hdd_tdls.h"
-#endif
 #include "wlan_hdd_tsf.h"
 #include "wlan_hdd_cfg80211.h"
 #include <qdf_defer.h>
@@ -905,8 +903,6 @@ struct hdd_adapter_s {
 	hdd_stats_t hdd_stats;
 	/** linkspeed statistics */
 	tSirLinkSpeedInfo ls_stats;
-	/**Mib information*/
-	sHddMib_t hdd_mib;
 
 	uint8_t sessionId;
 
@@ -1239,8 +1235,25 @@ struct acs_dfs_policy {
 	uint8_t acs_channel;
 };
 
-/** Adapter structure definition */
+/**
+ * enum suspend_fail_reason: Reasons a WLAN suspend might fail
+ * SUSPEND_FAIL_IPA: IPA in progress
+ * SUSPEND_FAIL_RADAR: radar scan in progress
+ * SUSPEND_FAIL_ROAM: roaming in progress
+ * SUSPEND_FAIL_SCAN: scan in progress
+ * SUSPEND_FAIL_INITIAL_WAKEUP: received initial wakeup from firmware
+ * SUSPEND_FAIL_MAX_COUNT: the number of wakeup reasons, always at the end
+ */
+enum suspend_fail_reason {
+	SUSPEND_FAIL_IPA,
+	SUSPEND_FAIL_RADAR,
+	SUSPEND_FAIL_ROAM,
+	SUSPEND_FAIL_SCAN,
+	SUSPEND_FAIL_INITIAL_WAKEUP,
+	SUSPEND_FAIL_MAX_COUNT
+};
 
+/** Adapter structure definition */
 struct hdd_context_s {
 	/** Global CDS context  */
 	v_CONTEXT_t pcds_context;
@@ -1471,6 +1484,8 @@ struct hdd_context_s {
 	bool memdump_in_progress;
 	bool memdump_init_done;
 #endif /* WLAN_FEATURE_MEMDUMP */
+	uint16_t driver_dump_size;
+	uint8_t *driver_dump_mem;
 
 	bool connection_in_progress;
 	qdf_spinlock_t connection_status_lock;
@@ -1512,6 +1527,9 @@ struct hdd_context_s {
 	bool update_mac_addr_to_fw;
 	struct acs_dfs_policy acs_policy;
 	uint16_t wmi_max_len;
+
+	/* counters for failed suspend reasons */
+	uint32_t suspend_fail_stats[SUSPEND_FAIL_MAX_COUNT];
 };
 
 /*---------------------------------------------------------------------------

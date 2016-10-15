@@ -167,7 +167,7 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 			session->vhtCapability) {
 		session->vhtCapabilityPresentInBeacon = 1;
 		if (((beacon_struct->Vendor1IEPresent &&
-		      beacon_struct->vendor2_ie.present &&
+		      beacon_struct->vendor_vht_ie.present &&
 		      beacon_struct->Vendor3IEPresent)) &&
 		      (((beacon_struct->VHTCaps.txMCSMap & VHT_MCS_3x3_MASK) ==
 			VHT_MCS_3x3_MASK) &&
@@ -224,7 +224,8 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 		 * AP supports Nss > 1 in 160MHz mode then connect the STA
 		 * in 2x2 80MHz mode instead of connecting in 160MHz mode.
 		 */
-		if (vht_ch_wd > WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ) {
+		if ((vht_ch_wd > WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ) &&
+				mac_ctx->sta_prefer_80MHz_over_160MHz) {
 			if (!(IS_VHT_NSS_1x1(beacon_struct->VHTCaps.txMCSMap))
 					&&
 			   (!IS_VHT_NSS_1x1(beacon_struct->VHTCaps.rxMCSMap)))

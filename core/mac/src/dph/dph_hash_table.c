@@ -96,7 +96,8 @@ void dph_hash_table_class_init(tpAniSirGlobal pMac,
  * @return None
  */
 
-uint16_t hash_function(tpAniSirGlobal pMac, uint8_t staAddr[], uint16_t numSta)
+static uint16_t hash_function(tpAniSirGlobal pMac, uint8_t staAddr[],
+			      uint16_t numSta)
 {
 	int i;
 	uint16_t sum = 0;

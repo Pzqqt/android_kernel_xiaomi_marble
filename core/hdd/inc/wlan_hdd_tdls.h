@@ -567,7 +567,7 @@ void wlan_hdd_tdls_disconnection_callback(hdd_adapter_t *pAdapter);
 void wlan_hdd_tdls_mgmt_completion_callback(hdd_adapter_t *pAdapter,
 					    uint32_t statusCode);
 
-void wlan_hdd_tdls_tncrement_peer_count(hdd_adapter_t *pAdapter);
+void wlan_hdd_tdls_increment_peer_count(hdd_adapter_t *pAdapter);
 
 void wlan_hdd_tdls_decrement_peer_count(hdd_adapter_t *pAdapter);
 
@@ -710,8 +710,33 @@ void hdd_tdls_context_destroy(hdd_context_t *hdd_ctx);
 int wlan_hdd_tdls_antenna_switch(hdd_context_t *hdd_ctx,
 				 hdd_adapter_t *adapter,
 				 uint32_t mode);
-hdd_adapter_t *wlan_hdd_tdls_check_and_enable(hdd_context_t *hdd_ctx);
+/**
+ * wlan_hdd_tdls_notify_connect() - Update tdls state for every
+ * connect event.
+ * @adapter: hdd adapter
+ * @csr_roam_info: csr information
+ *
+ * After every connect event in the system, check whether TDLS
+ * can be enabled in the system. If TDLS can be enabled, update the
+ * TDLS state as needed.
+ *
+ * Return: None
+ */
+void wlan_hdd_tdls_notify_connect(hdd_adapter_t *adapter,
+				  tCsrRoamInfo *csr_roam_info);
 
+/**
+ * wlan_hdd_tdls_notify_disconnect() - Update tdls state for every
+ * disconnect event.
+ * @adapter: hdd adapter
+ *
+ * After every disconnect event in the system, check whether TDLS
+ * can be disabled/enabled in the system and update the
+ * TDLS state as needed.
+ *
+ * Return: None
+ */
+void wlan_hdd_tdls_notify_disconnect(hdd_adapter_t *adapter);
 
 #else
 static inline void hdd_tdls_notify_mode_change(hdd_adapter_t *adapter,
@@ -742,19 +767,18 @@ static inline int wlan_hdd_tdls_antenna_switch(hdd_context_t *hdd_ctx,
 {
 	return 0;
 }
-
-static inline hdd_adapter_t *wlan_hdd_tdls_check_and_enable(
-						hdd_context_t *hdd_ctx)
-{
-	return NULL;
-}
-
 static inline void wlan_hdd_update_tdls_info(hdd_adapter_t *adapter,
 						bool tdls_prohibited,
 						bool tdls_chan_swit_prohibited)
 {
 }
-
+static inline void wlan_hdd_tdls_notify_connect(hdd_adapter_t *adapter,
+				  tCsrRoamInfo *csr_roam_info)
+{
+}
+static inline void wlan_hdd_tdls_notify_disconnect(hdd_adapter_t *adapter)
+{
+}
 #endif /* End of FEATURE_WLAN_TDLS */
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT

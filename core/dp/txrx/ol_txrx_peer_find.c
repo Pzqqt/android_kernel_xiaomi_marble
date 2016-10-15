@@ -327,14 +327,27 @@ static void ol_txrx_peer_find_map_detach(struct ol_txrx_pdev_t *pdev)
 	qdf_mem_free(pdev->peer_id_to_obj_map);
 }
 
-static inline void
-ol_txrx_peer_find_add_id(struct ol_txrx_pdev_t *pdev,
-			 uint8_t *peer_mac_addr, uint16_t peer_id)
+/*
+ * ol_txrx_peer_find_add_id() - Add peer_id entry to peer
+ *
+ * @pdev: Handle to pdev object
+ * @peer_mac_addr: MAC address of peer provided by firmware
+ * @peer_id: peer_id provided by firmware
+ *
+ * Search for peer object for the MAC address, add the peer_id to
+ * its array of peer_id's and update the peer_id_to_obj map entry
+ * for that peer_id. Increment corresponding reference counts.
+ *
+ * Return: None
+ */
+static inline void ol_txrx_peer_find_add_id(struct ol_txrx_pdev_t *pdev,
+				uint8_t *peer_mac_addr, uint16_t peer_id)
 {
 	struct ol_txrx_peer_t *peer;
 	int status;
 	int del_peer_ref = 0;
 	int i;
+	bool found = false;
 
 	/* check if there's already a peer object with this MAC address */
 	peer =
@@ -366,10 +379,18 @@ ol_txrx_peer_find_add_id(struct ol_txrx_pdev_t *pdev,
 	qdf_atomic_inc
 		(&pdev->peer_id_to_obj_map[peer_id].peer_id_ref_cnt);
 
-	if (peer->peer_ids[0] == HTT_INVALID_PEER)
+	/* Check if entire peer_id array is empty */
+	for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++) {
+		if (peer->peer_ids[i] != HTT_INVALID_PEER) {
+			found = true;
+			break;
+		}
+	}
+	if (!found)
 		del_peer_ref = 1;
-
 	status = 1;
+
+	/* find a place in peer_id array and insert peer_id */
 	for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++) {
 		if (peer->peer_ids[i] == HTT_INVALID_PEER) {
 			peer->peer_ids[i] = peer_id;
@@ -506,7 +527,20 @@ void ol_txrx_peer_tx_ready_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 
 #endif
 
-
+/*
+ * ol_rx_peer_unmap_handler() - Handle peer unmap event from firmware
+ *
+ * @pdev: Handle to pdev pbject
+ * @peer_id: peer_id unmapped by firmware
+ *
+ * Decrement reference count for the peer_id in peer_id_to_obj_map,
+ * decrement reference count in corresponding peer object and clear the entry
+ * in peer's peer_ids array.
+ * In case of unmap events for a peer that is already deleted, just decrement
+ * del_peer_id_ref_cnt.
+ *
+ * Return: None
+ */
 void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 {
 	struct ol_txrx_peer_t *peer;
@@ -518,24 +552,39 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 		return;
 	}
 
-	qdf_spin_lock(&pdev->peer_map_unmap_lock);
+	qdf_spin_lock_bh(&pdev->peer_map_unmap_lock);
 
+	if (qdf_atomic_read(
+		&pdev->peer_id_to_obj_map[peer_id].del_peer_id_ref_cnt)) {
+		/* This peer_id belongs to a peer already deleted */
+		qdf_atomic_dec(&pdev->peer_id_to_obj_map[peer_id].
+					del_peer_id_ref_cnt);
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			   "%s: Remove the ID %d reference to deleted peer. del_peer_id_ref_cnt %d",
+			   __func__, peer_id,
+			   qdf_atomic_read(&pdev->peer_id_to_obj_map[peer_id].
+							del_peer_id_ref_cnt));
+		qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
+		return;
+	}
 	peer = pdev->peer_id_to_obj_map[peer_id].peer;
 
 	if (peer == NULL) {
-	/*
-	 * Currently peer IDs are assigned for vdevs as well as peers.
-	 * If the peer ID is for a vdev, then the peer pointer stored
-	 * in peer_id_to_obj_map will be NULL.
-	 */
-		qdf_spin_unlock(&pdev->peer_map_unmap_lock);
+		/*
+		 * Currently peer IDs are assigned for vdevs as well as peers.
+		 * If the peer ID is for a vdev, then the peer pointer stored
+		 * in peer_id_to_obj_map will be NULL.
+		 */
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			   "%s: peer not found for peer_id %d",
+			   __func__, peer_id);
+		qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
 		return;
 	}
 
 	if (qdf_atomic_dec_and_test
 		(&pdev->peer_id_to_obj_map[peer_id].peer_id_ref_cnt)) {
 		pdev->peer_id_to_obj_map[peer_id].peer = NULL;
-
 		for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++) {
 			if (peer->peer_ids[i] == peer_id) {
 				peer->peer_ids[i] = HTT_INVALID_PEER;
@@ -543,9 +592,6 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 			}
 		}
 	}
-
-	qdf_spin_unlock(&pdev->peer_map_unmap_lock);
-
 	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 		   "%s: Remove the ID %d reference to peer %p peer_id_ref_cnt %d",
 		   __func__, peer_id, peer,
@@ -557,6 +603,59 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 	 * If there are no more references, delete the peer object.
 	 */
 	ol_txrx_peer_unref_delete(peer);
+
+	qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
+}
+
+/**
+ * ol_txrx_peer_remove_obj_map_entries() - Remove matching pdev peer map entries
+ * @pdev: pdev handle
+ * @peer: peer to be removed
+ *
+ * Return: None
+ */
+void ol_txrx_peer_remove_obj_map_entries(ol_txrx_pdev_handle pdev,
+					struct ol_txrx_peer_t *peer)
+{
+	int i;
+	uint16_t peer_id;
+	int32_t peer_id_ref_cnt;
+
+	for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++) {
+		peer_id = peer->peer_ids[i];
+		if (peer_id == HTT_INVALID_PEER ||
+			pdev->peer_id_to_obj_map[peer_id].peer == NULL) {
+			/* unused peer_id, or object is already dereferenced */
+			continue;
+		}
+		if (pdev->peer_id_to_obj_map[peer_id].peer != peer) {
+			QDF_TRACE(QDF_MODULE_ID_TXRX,
+				QDF_TRACE_LEVEL_ERROR,
+				FL("peer pointer mismatch in peer_id_to_obj"));
+			continue;
+		}
+		peer_id_ref_cnt = qdf_atomic_read(
+					&pdev->peer_id_to_obj_map[peer_id].
+						peer_id_ref_cnt);
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
+			  FL("peer_id = %d, peer_id_ref_cnt = %d, index = %d"),
+			  peer_id, peer_id_ref_cnt, i);
+		/*
+		 * Transfer peer_id_ref_cnt into del_peer_id_ref_cnt so that
+		 * ol_txrx_peer_unref_delete will decrement del_peer_id_ref_cnt
+		 * and any map events will increment peer_id_ref_cnt. Otherwise
+		 * accounting will be messed up.
+		 *
+		 * Add operation will ensure that back to back roaming in the
+		 * middle of unmap/map event sequence will be accounted for.
+		 */
+		qdf_atomic_add(peer_id_ref_cnt,
+			&pdev->peer_id_to_obj_map[peer_id].del_peer_id_ref_cnt);
+		qdf_atomic_init(&pdev->peer_id_to_obj_map[peer_id].
+				peer_id_ref_cnt);
+		pdev->peer_id_to_obj_map[peer_id].peer = NULL;
+		peer->peer_ids[i] = HTT_INVALID_PEER;
+	}
 }
 
 struct ol_txrx_peer_t *ol_txrx_assoc_peer_find(struct ol_txrx_vdev_t *vdev)
@@ -623,4 +722,5 @@ void ol_txrx_peer_find_display(ol_txrx_pdev_handle pdev, int indent)
 		}
 	}
 }
+
 #endif /* if TXRX_DEBUG_LEVEL */

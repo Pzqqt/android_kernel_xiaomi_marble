@@ -30,6 +30,7 @@
  */
 
 #include "wlan_hdd_main.h"
+#include "wlan_hdd_tsf.h"
 #include "wma_api.h"
 
 static struct completion tsf_sync_get_completion_evt;
@@ -110,13 +111,13 @@ int hdd_capture_tsf(struct hdd_adapter_s *adapter, uint32_t *buf, int len)
  * Return: TSF_RETURN on Success, TSF_RESET_GPIO_FAIL on failure
  */
 #ifdef QCA_WIFI_3_0
-int hdd_tsf_reset_gpio(struct hdd_adapter_s *adapter)
+static int hdd_tsf_reset_gpio(struct hdd_adapter_s *adapter)
 {
 	/* No GPIO Host timer sync for integrated WIFI Device */
 	return TSF_RETURN;
 }
 #else
-int hdd_tsf_reset_gpio(struct hdd_adapter_s *adapter)
+static int hdd_tsf_reset_gpio(struct hdd_adapter_s *adapter)
 {
 	int ret;
 	ret = wma_cli_set_command((int)adapter->sessionId,

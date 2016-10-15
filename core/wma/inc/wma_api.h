@@ -187,12 +187,12 @@ int8_t wma_get_hw_mode_idx_from_dbs_hw_list(enum hw_mode_ss_config mac0_ss,
 		enum hw_mode_ss_config mac1_ss,
 		enum hw_mode_bandwidth mac1_bw,
 		enum hw_mode_dbs_capab dbs,
-		enum hw_mode_agile_dfs_capab dfs);
+		enum hw_mode_agile_dfs_capab dfs,
+		enum hw_mode_sbs_capab sbs);
 QDF_STATUS wma_get_hw_mode_from_idx(uint32_t idx,
 		struct sir_hw_mode_params *hw_mode);
 int8_t wma_get_num_dbs_hw_modes(void);
 bool wma_is_hw_dbs_capable(void);
-bool wma_is_hw_agile_dfs_capable(void);
 int8_t wma_get_mac_id_of_vdev(uint32_t vdev_id);
 void wma_update_intf_hw_mode_params(uint32_t vdev_id, uint32_t mac_id,
 				uint32_t cfgd_hw_mode_index);
@@ -202,7 +202,6 @@ void wma_set_dbs_capability_ut(uint32_t dbs);
 QDF_STATUS wma_get_dbs_hw_modes(bool *one_by_one_dbs, bool *two_by_two_dbs);
 QDF_STATUS wma_get_current_hw_mode(struct sir_hw_mode_params *hw_mode);
 bool wma_is_dbs_enable(void);
-bool wma_is_agile_dfs_enable(void);
 QDF_STATUS wma_get_updated_scan_config(uint32_t *scan_config,
 		bool dbs_scan,
 		bool dbs_plus_agile_scan,
@@ -300,7 +299,30 @@ void wma_process_pdev_hw_mode_trans_ind(void *wma,
 	wmi_pdev_hw_mode_transition_event_fixed_param *fixed_param,
 	wmi_pdev_set_hw_mode_response_vdev_mac_entry *vdev_mac_entry,
 	struct sir_hw_mode_trans_ind *hw_mode_trans_ind);
-QDF_STATUS wma_set_powersave_config(uint8_t val);
 QDF_STATUS wma_encrypt_decrypt_msg(WMA_HANDLE wma,
 		struct encrypt_decrypt_req_params *encrypt_decrypt_params);
+
+/**
+ * wma_set_cts2self_for_p2p_go() - set CTS2SELF command for P2P GO.
+ * @wma_handle:                  pointer to wma handle.
+ * @cts2self_for_p2p_go:         value needs to set to firmware.
+ *
+ * At the time of driver startup, inform about ini parma to FW that
+ * if legacy client connects to P2P GO, stop using NOA for P2P GO.
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS wma_set_cts2self_for_p2p_go(void *wma_handle,
+		uint32_t cts2self_for_p2p_go);
+QDF_STATUS wma_set_tx_rx_aggregation_size
+	(struct sir_set_tx_rx_aggregation_size *tx_rx_aggregation_size);
+
+/**
+ * wma_set_qpower_config() - update qpower config in wma
+ * @vdev_id:	the Id of the vdev to configure
+ * @qpower:	new qpower value
+ *
+ * Return: QDF_STATUS_SUCCESS on success, error number otherwise
+ */
+QDF_STATUS wma_set_qpower_config(uint8_t vdev_id, uint8_t qpower);
 #endif

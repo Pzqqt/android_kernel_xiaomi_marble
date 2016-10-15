@@ -412,8 +412,9 @@ static void hdd_lro_desc_free(struct net_lro_desc *desc,
  *
  * Return: none
  */
-void hdd_lro_flush_pkt(struct net_lro_mgr *lro_mgr,
-	 struct iphdr *iph, struct tcphdr *tcph, hdd_adapter_t *adapter)
+static void hdd_lro_flush_pkt(struct net_lro_mgr *lro_mgr,
+			      struct iphdr *iph, struct tcphdr *tcph,
+			      hdd_adapter_t *adapter)
 {
 	struct net_lro_desc *lro_desc;
 
@@ -434,7 +435,7 @@ void hdd_lro_flush_pkt(struct net_lro_mgr *lro_mgr,
  *
  * Return: none
  */
-void hdd_lro_flush(void *data)
+static void hdd_lro_flush(void *data)
 {
 	hdd_adapter_t *adapter = (hdd_adapter_t *)data;
 	struct hdd_lro_s *hdd_lro;
@@ -461,7 +462,9 @@ void hdd_lro_flush(void *data)
 	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
 		adapter = adapter_node->pAdapter;
 		hdd_lro = &adapter->lro_info;
-		if (adapter->dev->features & NETIF_F_LRO) {
+		if (adapter->dev == NULL) {
+			hdd_err("vdev interface going down");
+		} else if (adapter->dev->features & NETIF_F_LRO) {
 			qdf_spin_lock_bh(&hdd_lro->lro_mgr_arr_access_lock);
 			for (i = 0; i < hdd_lro->lro_mgr->max_desc; i++) {
 				if (hdd_lro->lro_mgr->lro_arr[i].active) {

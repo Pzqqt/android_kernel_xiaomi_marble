@@ -848,8 +848,8 @@ ol_check_dataset_patch(struct hif_opaque_softc *scn, uint32_t *address)
 }
 
 
-QDF_STATUS ol_fw_populate_clk_settings(A_refclk_speed_t refclk,
-				     struct cmnos_clock_s *clock_s)
+static QDF_STATUS ol_fw_populate_clk_settings(A_refclk_speed_t refclk,
+					      struct cmnos_clock_s *clock_s)
 {
 	if (!clock_s)
 		return QDF_STATUS_E_FAILURE;
@@ -913,7 +913,7 @@ QDF_STATUS ol_fw_populate_clk_settings(A_refclk_speed_t refclk,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS ol_patch_pll_switch(struct ol_context *ol_ctx)
+static QDF_STATUS ol_patch_pll_switch(struct ol_context *ol_ctx)
 {
 	struct hif_opaque_softc *hif = ol_ctx->scn;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -1207,7 +1207,7 @@ end:
 /* AXI Start Address */
 #define TARGET_ADDR (0xa0000)
 
-void ol_transfer_codeswap_struct(struct ol_context *ol_ctx)
+static void ol_transfer_codeswap_struct(struct ol_context *ol_ctx)
 {
 	struct pld_codeswap_codeseg_info wlan_codeswap;
 	QDF_STATUS rv;
@@ -1411,8 +1411,8 @@ QDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 	return status;
 }
 
-int ol_diag_read(struct hif_opaque_softc *scn, uint8_t *buffer,
-		 uint32_t pos, size_t count)
+static int ol_diag_read(struct hif_opaque_softc *scn, uint8_t *buffer,
+			uint32_t pos, size_t count)
 {
 	int result = 0;
 
@@ -1549,6 +1549,7 @@ out:
 	return result;
 }
 
+static
 void ol_dump_target_memory(struct hif_opaque_softc *scn, void *memory_block)
 {
 	char *buffer_loc = memory_block;

@@ -71,7 +71,7 @@ uint32_t cfg_need_restart(tpAniSirGlobal pMac, uint16_t cfgId)
 	return !!(pMac->cfg.gCfgEntry[cfgId].control & CFG_CTL_RESTART);
 }
 
-void cfg_get_strindex(tpAniSirGlobal pMac, uint16_t cfgId)
+static void cfg_get_strindex(tpAniSirGlobal pMac, uint16_t cfgId)
 {
 	uint16_t i = 0;
 

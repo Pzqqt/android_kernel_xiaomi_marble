@@ -39,6 +39,7 @@
 #define HDD_DISALLOW_LEGACY_HDDLOG 1
 
 #include <wlan_hdd_includes.h>
+#include <wlan_hdd_debugfs.h>
 #include <wlan_hdd_wowl.h>
 #include <cds_sched.h>
 

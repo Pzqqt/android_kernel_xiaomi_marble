@@ -692,25 +692,6 @@ int32_t cds_fill_some_regulatory_info(struct regulatory *reg)
 }
 
 /**
- * get_reg_dmn_for_country() - get regulatory domain for country
- * @alpha2: country alpha2
- *
- * Return: regulatory domain
- */
-int32_t get_reg_dmn_for_country(uint8_t *alpha2)
-{
-	uint8_t i;
-
-	for (i = 0; i < g_reg_dmn_tbl.all_countries_cnt; i++) {
-		if ((g_reg_dmn_tbl.all_countries[i].alpha2[0] == alpha2[0]) &&
-		    (g_reg_dmn_tbl.all_countries[i].alpha2[1] == alpha2[1]))
-			return g_reg_dmn_tbl.all_countries[i].reg_dmn_pair;
-	}
-
-	return -1;
-}
-
-/**
  * cds_fill_and_send_ctl_to_fw() - fill and send ctl to firmware
  * @reg: the regulatory handle
  *
@@ -776,28 +757,6 @@ void cds_set_wma_dfs_region(uint8_t dfs_region)
 		  "dfs_region: %d", dfs_region);
 
 	wma_set_dfs_region(wma, dfs_region);
-}
-
-/**
- * cds_get_reg_dmn_5g() - get the 5G reg-domain
- * @reg_dmn: the complete reg domain
- *
- * Return: 5 G reg domain
- */
-uint16_t cds_get_reg_dmn_5g(uint32_t reg_dmn)
-{
-	uint16_t i;
-
-	for (i = 0; i < g_reg_dmn_tbl.reg_dmn_pairs_cnt; i++) {
-		if (g_reg_dmn_tbl.reg_dmn_pairs[i].reg_dmn_pair == reg_dmn)
-			return g_reg_dmn_tbl.reg_dmn_pairs[i].reg_dmn_5ghz;
-	}
-
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-		  "invalid regulatory domain/country code 0x%x",
-		  reg_dmn);
-
-	return 0;
 }
 
 /**

@@ -668,7 +668,8 @@ void lim_ibss_init(tpAniSirGlobal pMac)
  * @return None
  */
 
-void lim_ibss_delete_all_peers(tpAniSirGlobal pMac, tpPESession psessionEntry)
+static void lim_ibss_delete_all_peers(tpAniSirGlobal pMac,
+				      tpPESession psessionEntry)
 {
 	tLimIbssPeerNode *pCurrNode, *pTempNode;
 	tpDphHashNode pStaDs;

@@ -468,6 +468,7 @@ static void lim_tx_action_frame(tpAniSirGlobal mac_ctx,
 	 * need to go at OFDM rates. And BD rate2 we configured at 6Mbps.
 	 */
 	tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
+	mac_ctx->lim.mgmtFrameSessionId = sme_session_id;
 
 	if ((SIR_MAC_MGMT_PROBE_RSP == fc->subType) ||
 		(mb_msg->noack)) {
@@ -483,7 +484,6 @@ static void lim_tx_action_frame(tpAniSirGlobal mac_ctx,
 				true : false);
 		mac_ctx->lim.mgmtFrameSessionId = 0xff;
 	} else {
-		mac_ctx->lim.mgmtFrameSessionId = mb_msg->sessionId;
 		qdf_status =
 			wma_tx_frameWithTxComplete(mac_ctx, packet,
 				(uint16_t) msg_len,
@@ -550,7 +550,9 @@ void lim_send_p2p_action_frame(tpAniSirGlobal mac_ctx,
 	if ((!mac_ctx->lim.gpLimRemainOnChanReq) && (0 != mb_msg->wait)) {
 		lim_log(mac_ctx, LOGE,
 			FL("RemainOnChannel is not running"));
+		mac_ctx->lim.mgmtFrameSessionId = mb_msg->sessionId;
 		lim_p2p_action_cnf(mac_ctx, false);
+		mac_ctx->lim.mgmtFrameSessionId = 0xff;
 		return;
 	}
 	sme_session_id = mb_msg->sessionId;

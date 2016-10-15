@@ -219,4 +219,10 @@ static inline void lim_send_sme_tsm_ie_ind(tpAniSirGlobal pMac,
 {}
 #endif /* FEATURE_WLAN_ESE */
 
+tSirRetStatus lim_populate_vht_mcs_set(tpAniSirGlobal pMac,
+				       tpSirSupportedRates pRates,
+				       tDot11fIEVHTCaps *pPeerVHTCaps,
+				       tpPESession psessionEntry,
+				       uint8_t nss);
+
 #endif /* __LIM_ASSOC_UTILS_H */

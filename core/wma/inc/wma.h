@@ -390,6 +390,94 @@ enum ds_mode {
 #define WMA_DEFAULT_HW_MODE_INDEX 0xFFFF
 
 /**
+ * WMA hardware mode list bit-mask definitions.
+ * Bits 4:0, 31:29 are unused.
+ *
+ * The below definitions are added corresponding to WMI DBS HW mode
+ * list to make it independent of firmware changes for WMI definitions.
+ * Currently these definitions have dependency with BIT positions of
+ * the existing WMI macros. Thus, if the BIT positions are changed for
+ * WMI macros, then these macros' BIT definitions are also need to be
+ * changed.
+ */
+#define WMA_HW_MODE_MAC0_TX_STREAMS_BITPOS  (28)
+#define WMA_HW_MODE_MAC0_RX_STREAMS_BITPOS  (24)
+#define WMA_HW_MODE_MAC1_TX_STREAMS_BITPOS  (20)
+#define WMA_HW_MODE_MAC1_RX_STREAMS_BITPOS  (16)
+#define WMA_HW_MODE_MAC0_BANDWIDTH_BITPOS   (12)
+#define WMA_HW_MODE_MAC1_BANDWIDTH_BITPOS   (8)
+#define WMA_HW_MODE_DBS_MODE_BITPOS         (7)
+#define WMA_HW_MODE_AGILE_DFS_MODE_BITPOS   (6)
+#define WMA_HW_MODE_SBS_MODE_BITPOS         (5)
+
+#define WMA_HW_MODE_MAC0_TX_STREAMS_MASK    \
+			(0xf << WMA_HW_MODE_MAC0_TX_STREAMS_BITPOS)
+#define WMA_HW_MODE_MAC0_RX_STREAMS_MASK    \
+			(0xf << WMA_HW_MODE_MAC0_RX_STREAMS_BITPOS)
+#define WMA_HW_MODE_MAC1_TX_STREAMS_MASK    \
+			(0xf << WMA_HW_MODE_MAC1_TX_STREAMS_BITPOS)
+#define WMA_HW_MODE_MAC1_RX_STREAMS_MASK    \
+			(0xf << WMA_HW_MODE_MAC1_RX_STREAMS_BITPOS)
+#define WMA_HW_MODE_MAC0_BANDWIDTH_MASK     \
+			(0xf << WMA_HW_MODE_MAC0_BANDWIDTH_BITPOS)
+#define WMA_HW_MODE_MAC1_BANDWIDTH_MASK     \
+			(0xf << WMA_HW_MODE_MAC1_BANDWIDTH_BITPOS)
+#define WMA_HW_MODE_DBS_MODE_MASK           \
+			(0x1 << WMA_HW_MODE_DBS_MODE_BITPOS)
+#define WMA_HW_MODE_AGILE_DFS_MODE_MASK     \
+			(0x1 << WMA_HW_MODE_AGILE_DFS_MODE_BITPOS)
+#define WMA_HW_MODE_SBS_MODE_MASK           \
+			(0x1 << WMA_HW_MODE_SBS_MODE_BITPOS)
+
+#define WMA_HW_MODE_MAC0_TX_STREAMS_SET(hw_mode, value) \
+	WMI_SET_BITS(hw_mode, WMA_HW_MODE_MAC0_TX_STREAMS_BITPOS, 4, value)
+#define WMA_HW_MODE_MAC0_RX_STREAMS_SET(hw_mode, value) \
+	WMI_SET_BITS(hw_mode, WMA_HW_MODE_MAC0_RX_STREAMS_BITPOS, 4, value)
+#define WMA_HW_MODE_MAC1_TX_STREAMS_SET(hw_mode, value) \
+	WMI_SET_BITS(hw_mode, WMA_HW_MODE_MAC1_TX_STREAMS_BITPOS, 4, value)
+#define WMA_HW_MODE_MAC1_RX_STREAMS_SET(hw_mode, value) \
+	WMI_SET_BITS(hw_mode, WMA_HW_MODE_MAC1_RX_STREAMS_BITPOS, 4, value)
+#define WMA_HW_MODE_MAC0_BANDWIDTH_SET(hw_mode, value)  \
+	WMI_SET_BITS(hw_mode, WMA_HW_MODE_MAC0_BANDWIDTH_BITPOS, 4, value)
+#define WMA_HW_MODE_MAC1_BANDWIDTH_SET(hw_mode, value)  \
+	WMI_SET_BITS(hw_mode, WMA_HW_MODE_MAC1_BANDWIDTH_BITPOS, 4, value)
+#define WMA_HW_MODE_DBS_MODE_SET(hw_mode, value)        \
+	WMI_SET_BITS(hw_mode, WMA_HW_MODE_DBS_MODE_BITPOS, 1, value)
+#define WMA_HW_MODE_AGILE_DFS_SET(hw_mode, value)       \
+	WMI_SET_BITS(hw_mode, WMA_HW_MODE_AGILE_DFS_MODE_BITPOS, 1, value)
+#define WMA_HW_MODE_SBS_MODE_SET(hw_mode, value)        \
+	WMI_SET_BITS(hw_mode, WMA_HW_MODE_SBS_MODE_BITPOS, 1, value)
+
+#define WMA_HW_MODE_MAC0_TX_STREAMS_GET(hw_mode)                \
+	((hw_mode & WMA_HW_MODE_MAC0_TX_STREAMS_MASK) >>        \
+		WMA_HW_MODE_MAC0_TX_STREAMS_BITPOS)
+#define WMA_HW_MODE_MAC0_RX_STREAMS_GET(hw_mode)                \
+	((hw_mode & WMA_HW_MODE_MAC0_RX_STREAMS_MASK) >>        \
+		WMA_HW_MODE_MAC0_RX_STREAMS_BITPOS)
+#define WMA_HW_MODE_MAC1_TX_STREAMS_GET(hw_mode)                \
+	((hw_mode & WMA_HW_MODE_MAC1_TX_STREAMS_MASK) >>        \
+		WMA_HW_MODE_MAC1_TX_STREAMS_BITPOS)
+#define WMA_HW_MODE_MAC1_RX_STREAMS_GET(hw_mode)                \
+	((hw_mode & WMA_HW_MODE_MAC1_RX_STREAMS_MASK) >>        \
+		WMA_HW_MODE_MAC1_RX_STREAMS_BITPOS)
+#define WMA_HW_MODE_MAC0_BANDWIDTH_GET(hw_mode)                 \
+	((hw_mode & WMA_HW_MODE_MAC0_BANDWIDTH_MASK) >>         \
+		WMA_HW_MODE_MAC0_BANDWIDTH_BITPOS)
+#define WMA_HW_MODE_MAC1_BANDWIDTH_GET(hw_mode)                 \
+	((hw_mode & WMA_HW_MODE_MAC1_BANDWIDTH_MASK) >>         \
+		WMA_HW_MODE_MAC1_BANDWIDTH_BITPOS)
+#define WMA_HW_MODE_DBS_MODE_GET(hw_mode)                       \
+	((hw_mode & WMA_HW_MODE_DBS_MODE_MASK) >>               \
+		WMA_HW_MODE_DBS_MODE_BITPOS)
+#define WMA_HW_MODE_AGILE_DFS_GET(hw_mode)                      \
+	((hw_mode & WMA_HW_MODE_AGILE_DFS_MODE_MASK) >>         \
+		WMA_HW_MODE_AGILE_DFS_MODE_BITPOS)
+#define WMA_HW_MODE_SBS_MODE_GET(hw_mode)                       \
+	((hw_mode & WMA_HW_MODE_SBS_MODE_MASK) >>               \
+		WMA_HW_MODE_SBS_MODE_BITPOS)
+
+
+/**
  * struct probeTime_dwellTime - probe time, dwell time map
  * @dwell_time: dwell time
  * @probe_time: repeat probe time
@@ -991,6 +1079,7 @@ struct wma_txrx_node {
 	uint8_t wep_default_key_idx;
 	tSirHostOffloadReq arp_offload_req;
 	tSirHostOffloadReq ns_offload_req;
+	bool is_vdev_valid;
 };
 
 #if defined(QCA_WIFI_FTM)
@@ -1068,6 +1157,18 @@ typedef struct {
 struct dbs_hw_mode_info {
 	uint32_t tlv_header;
 	uint32_t *hw_mode_list;
+};
+
+/**
+ * struct mac_ss_bw_info - hw_mode_list PHY/MAC params for each MAC
+ * @mac_tx_stream: Max TX stream
+ * @mac_rx_stream: Max RX stream
+ * @mac_bw: Max bandwidth
+ */
+struct mac_ss_bw_info {
+	uint32_t mac_tx_stream;
+	uint32_t mac_rx_stream;
+	uint32_t mac_bw;
 };
 
 /* Current HTC credit is 2, pool size of 50 is sufficient */

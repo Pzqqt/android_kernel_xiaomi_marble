@@ -90,7 +90,7 @@ enum hw_mode_ss_config {
 /**
  * enum hw_mode_dbs_capab - DBS HW mode capability
  * @HW_MODE_DBS_NONE: Non DBS capable
- * @HW_MODE_DBS: DFS capable
+ * @HW_MODE_DBS: DBS capable
  */
 enum hw_mode_dbs_capab {
 	HW_MODE_DBS_NONE,
@@ -105,6 +105,16 @@ enum hw_mode_dbs_capab {
 enum hw_mode_agile_dfs_capab {
 	HW_MODE_AGILE_DFS_NONE,
 	HW_MODE_AGILE_DFS,
+};
+
+/**
+ * enum hw_mode_sbs_capab - SBS HW mode capability
+ * @HW_MODE_SBS_NONE: Non SBS capable
+ * @HW_MODE_SBS: SBS capable
+ */
+enum hw_mode_sbs_capab {
+	HW_MODE_SBS_NONE,
+	HW_MODE_SBS,
 };
 
 /**
@@ -592,8 +602,22 @@ struct cds_conc_connection_info {
 
 bool cds_is_connection_in_progress(void);
 void cds_dump_concurrency_info(void);
+
+#ifdef FEATURE_WLAN_TDLS
 bool cds_check_is_tdls_allowed(enum tQDF_ADAPTER_MODE device_mode);
 void cds_set_tdls_ct_mode(hdd_context_t *hdd_ctx);
+#else
+static inline bool cds_check_is_tdls_allowed(enum tQDF_ADAPTER_MODE device_mode)
+{
+	return false;
+}
+
+static inline void cds_set_tdls_ct_mode(hdd_context_t *hdd_ctx)
+{
+
+}
+#endif
+
 void cds_set_concurrency_mode(enum tQDF_ADAPTER_MODE mode);
 void cds_clear_concurrency_mode(enum tQDF_ADAPTER_MODE mode);
 uint32_t cds_get_connection_count(void);
@@ -766,6 +790,7 @@ QDF_STATUS cds_pdev_set_hw_mode(uint32_t session_id,
 		enum hw_mode_bandwidth mac1_bw,
 		enum hw_mode_dbs_capab dbs,
 		enum hw_mode_agile_dfs_capab dfs,
+		enum hw_mode_sbs_capab sbs,
 		enum sir_conn_update_reason reason);
 enum cds_conc_next_action cds_need_opportunistic_upgrade(void);
 QDF_STATUS cds_next_actions(uint32_t session_id,

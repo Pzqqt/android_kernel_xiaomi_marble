@@ -173,7 +173,7 @@ struct regulatory *reg)
  *
  * Return: bool
  */
-bool hdd_is_world_regdomain(uint32_t reg_domain)
+static bool hdd_is_world_regdomain(uint32_t reg_domain)
 {
 	uint32_t temp_regd = reg_domain & ~WORLDWIDE_ROAMING_FLAG;
 
@@ -488,17 +488,17 @@ int hdd_regulatory_init(hdd_context_t *hdd_ctx, struct wiphy *wiphy)
 
 	reg_info = &hdd_ctx->reg;
 
-	hdd_regulatory_wiphy_init(hdd_ctx, reg_info, wiphy);
-
-	hdd_process_regulatory_data(hdd_ctx, wiphy, true);
-
-	reg_info->cc_src = SOURCE_DRIVER;
-
 	ret_val = cds_fill_some_regulatory_info(reg_info);
 	if (ret_val) {
 		hdd_err("incorrect BDF regulatory data");
 		return ret_val;
 	}
+
+	hdd_regulatory_wiphy_init(hdd_ctx, reg_info, wiphy);
+
+	hdd_process_regulatory_data(hdd_ctx, wiphy, true);
+
+	reg_info->cc_src = SOURCE_DRIVER;
 
 	cds_put_default_country(reg_info->alpha2);
 

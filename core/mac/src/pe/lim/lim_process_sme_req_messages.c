@@ -610,6 +610,8 @@ lim_configure_ap_start_bss_session(tpAniSirGlobal mac_ctx, tpPESession session,
 	session->ssidHidden = sme_start_bss_req->ssidHidden;
 	session->wps_state = sme_start_bss_req->wps_state;
 	session->sap_dot11mc = sme_start_bss_req->sap_dot11mc;
+	session->vendor_vht_sap =
+			sme_start_bss_req->vendor_vht_sap;
 	lim_get_short_slot_from_phy_mode(mac_ctx, session, session->gLimPhyMode,
 		&session->shortSlotTimeSupported);
 	session->isCoalesingInIBSSAllowed =
