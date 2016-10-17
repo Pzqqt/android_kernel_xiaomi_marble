@@ -230,7 +230,7 @@ static int hdd_extscan_nl_fill_bss(struct sk_buff *skb, tSirWifiScanResult *ap,
 	if (!nla_ap)
 		return -EINVAL;
 
-	if (nla_put_u64(skb, PARAM_TIME_STAMP, ap->ts) ||
+	if (hdd_wlan_nla_put_u64(skb, PARAM_TIME_STAMP, ap->ts) ||
 	    nla_put(skb, PARAM_SSID, sizeof(ap->ssid), ap->ssid) ||
 	    nla_put(skb, PARAM_BSSID, sizeof(ap->bssid), ap->bssid.bytes) ||
 	    nla_put_u32(skb, PARAM_CHANNEL, ap->channel) ||
@@ -591,7 +591,7 @@ wlan_hdd_cfg80211_extscan_hotlist_match_ind(void *ctx,
 			if (!ap)
 				goto fail;
 
-			if (nla_put_u64(skb,
+			if (hdd_wlan_nla_put_u64(skb,
 				QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_SCAN_RESULT_TIME_STAMP,
 				data->ap[i].ts) ||
 			    nla_put(skb,
@@ -837,7 +837,7 @@ wlan_hdd_cfg80211_extscan_full_scan_result_event(void *ctx,
 	if (nla_put_u32(skb,
 		QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_REQUEST_ID,
 		pData->requestId) ||
-	    nla_put_u64(skb,
+	    hdd_wlan_nla_put_u64(skb,
 		QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_SCAN_RESULT_TIME_STAMP,
 		pData->ap.ts) ||
 	    nla_put(skb,
@@ -1383,7 +1383,7 @@ wlan_hdd_cfg80211_extscan_hotlist_ssid_match_ind(void *ctx,
 				goto fail;
 			}
 
-			if (nla_put_u64(skb,
+			if (hdd_wlan_nla_put_u64(skb,
 					QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_SCAN_RESULT_TIME_STAMP,
 					event->ap[i].ts) ||
 			    nla_put(skb,

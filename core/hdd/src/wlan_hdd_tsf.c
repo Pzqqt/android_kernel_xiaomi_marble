@@ -342,12 +342,13 @@ static int __wlan_hdd_cfg80211_handle_tsf_cmd(struct wiphy *wiphy,
 			status = -ENOMEM;
 			goto end;
 		}
-		if (nla_put_u64(reply_skb, QCA_WLAN_VENDOR_ATTR_TSF_TIMER_VALUE,
+		if (hdd_wlan_nla_put_u64(reply_skb,
+				QCA_WLAN_VENDOR_ATTR_TSF_TIMER_VALUE,
 				((uint64_t) adapter->tsf_high << 32 |
 				adapter->tsf_low)) ||
-				nla_put_u64(reply_skb,
+		    hdd_wlan_nla_put_u64(reply_skb,
 				QCA_WLAN_VENDOR_ATTR_TSF_SOC_TIMER_VALUE,
-				adapter->tsf_sync_soc_timer)){
+				adapter->tsf_sync_soc_timer)) {
 			hdd_err("nla put fail");
 			kfree_skb(reply_skb);
 			status = -EINVAL;

@@ -1085,7 +1085,7 @@ static void hdd_vendor_scan_callback(hdd_adapter_t *adapter,
 		nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_SCAN_FLAGS, req->flags))
 		goto nla_put_failure;
 
-	if (nla_put_u64(skb, QCA_WLAN_VENDOR_ATTR_SCAN_COOKIE, cookie))
+	if (hdd_wlan_nla_put_u64(skb, QCA_WLAN_VENDOR_ATTR_SCAN_COOKIE, cookie))
 		goto nla_put_failure;
 
 	scan_status = (aborted == true) ? VENDOR_SCAN_STATUS_ABORTED :
@@ -1842,7 +1842,8 @@ static int wlan_hdd_send_scan_start_event(struct wiphy *wiphy,
 		return -ENOMEM;
 	}
 
-	if (nla_put_u64(skb, QCA_WLAN_VENDOR_ATTR_SCAN_COOKIE, cookie)) {
+	if (hdd_wlan_nla_put_u64(skb, QCA_WLAN_VENDOR_ATTR_SCAN_COOKIE,
+				 cookie)) {
 		hdd_err("nla put fail");
 		kfree_skb(skb);
 		return -EINVAL;
@@ -1859,7 +1860,8 @@ static int wlan_hdd_send_scan_start_event(struct wiphy *wiphy,
 		return -ENOMEM;
 	}
 
-	if (nla_put_u64(skb, QCA_WLAN_VENDOR_ATTR_SCAN_COOKIE, cookie)) {
+	if (hdd_wlan_nla_put_u64(skb, QCA_WLAN_VENDOR_ATTR_SCAN_COOKIE,
+				 cookie)) {
 		kfree_skb(skb);
 		return -EINVAL;
 	}

@@ -473,7 +473,7 @@ static bool put_wifi_iface_stats(tpSirWifiIfaceStat pWifiIfaceStat,
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_LEAKY_AP_GUARD_TIME,
 			pWifiIfaceStat->rx_leak_window) ||
-	    nla_put_u64(vendor_event,
+	    hdd_wlan_nla_put_u64(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_AVERAGE_TSF_OFFSET,
 			average_tsf_offset)) {
 		hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
