@@ -14461,7 +14461,7 @@ __wlan_hdd_cfg80211_set_ap_channel_width(struct wiphy *wiphy,
 	hdd_context_t *pHddCtx;
 	QDF_STATUS status;
 	tSmeConfigParams sme_config;
-	bool cbModeChange;
+	bool cbModeChange = false;
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");

@@ -275,7 +275,7 @@ int hdd_napi_apply_throughput_policy(struct hdd_context_s *hddctx,
 	uint64_t packets = tx_packets + rx_packets;
 	enum qca_napi_tput_state req_state;
 	struct qca_napi_data *napid = hdd_napi_get_all();
-	int    enabled;
+	int enabled = 0;
 
 	NAPI_DEBUG("-->%s(tx=%lld, rx=%lld)", __func__, tx_packets, rx_packets);
 
