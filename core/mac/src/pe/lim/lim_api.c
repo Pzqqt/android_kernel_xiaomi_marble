@@ -1871,8 +1871,8 @@ lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 	qdf_mem_copy((uint8_t *) &bss_desc_ptr->bssId,
 			(uint8_t *) mac_hdr->bssId,
 			sizeof(tSirMacAddr));
-	bss_desc_ptr->nReceivedTime =
-		(uint32_t)qdf_mc_timer_get_system_ticks();
+	bss_desc_ptr->received_time =
+		      (uint64_t)qdf_mc_timer_get_system_time();
 	if (parsed_frm_ptr->mdiePresent) {
 		bss_desc_ptr->mdiePresent = parsed_frm_ptr->mdiePresent;
 		qdf_mem_copy((uint8_t *)bss_desc_ptr->mdie,

@@ -175,11 +175,11 @@ void lim_process_insert_single_shot_noa_timeout(tpAniSirGlobal pMac)
  *------------------------------------------------------------------*/
 void lim_convert_active_channel_to_passive_channel(tpAniSirGlobal pMac)
 {
-	uint32_t currentTime;
-	uint32_t lastTime = 0;
-	uint32_t timeDiff;
+	uint64_t currentTime;
+	uint64_t lastTime = 0;
+	uint64_t timeDiff;
 	uint8_t i;
-	currentTime = qdf_mc_timer_get_system_time();
+	currentTime = (uint64_t)qdf_mc_timer_get_system_time();
 	for (i = 1; i < SIR_MAX_24G_5G_CHANNEL_RANGE; i++) {
 		if ((pMac->lim.dfschannelList.timeStamp[i]) != 0) {
 			lastTime = pMac->lim.dfschannelList.timeStamp[i];
