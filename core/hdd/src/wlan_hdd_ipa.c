@@ -2802,6 +2802,26 @@ static void hdd_ipa_send_pkt_to_tl(
 }
 
 /**
+ * hdd_ipa_is_present() - get IPA hw status
+ * @hdd_ctx: pointer to hdd context
+ *
+ * ipa_uc_reg_rdyCB is not directly designed to check
+ * ipa hw status. This is an undocumented function which
+ * has confirmed with IPA team.
+ *
+ * Return: true - ipa hw present
+ *         false - ipa hw not present
+ */
+bool hdd_ipa_is_present(hdd_context_t *hdd_ctx)
+{
+	/* Check if ipa hw is enabled */
+	if (ipa_uc_reg_rdyCB(NULL) != -EPERM)
+		return true;
+	else
+		return false;
+}
+
+/**
  * hdd_ipa_pm_flush() - flush queued packets
  * @work: pointer to the scheduled work
  *

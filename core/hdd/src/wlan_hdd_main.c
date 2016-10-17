@@ -6319,6 +6319,9 @@ static void hdd_override_ini_config(hdd_context_t *hdd_ctx)
 		hdd_ctx->config->Is11dSupportEnabled = enable_11d;
 		hdd_notice("Module enable_11d set to %d", enable_11d);
 	}
+
+	if (!hdd_ipa_is_present(hdd_ctx))
+		hdd_ctx->config->IpaConfig = 0;
 }
 
 /**
