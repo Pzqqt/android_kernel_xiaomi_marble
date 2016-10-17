@@ -4542,6 +4542,10 @@ QDF_STATUS send_roam_scan_offload_mode_cmd_tlv(wmi_unified_t wmi_handle,
 		}
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
+	if (roam_req->mode == (WMI_ROAM_SCAN_MODE_NONE
+				|WMI_ROAM_SCAN_MODE_ROAMOFFLOAD))
+		len = sizeof(wmi_roam_scan_mode_fixed_param);
+
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
 		WMI_LOGE("%s : wmi_buf_alloc failed", __func__);
@@ -4558,8 +4562,13 @@ QDF_STATUS send_roam_scan_offload_mode_cmd_tlv(wmi_unified_t wmi_handle,
 
 	roam_scan_mode_fp->roam_scan_mode = roam_req->mode;
 	roam_scan_mode_fp->vdev_id = roam_req->vdev_id;
+	if (roam_req->mode == (WMI_ROAM_SCAN_MODE_NONE
+			|WMI_ROAM_SCAN_MODE_ROAMOFFLOAD))
+		goto send_roam_scan_mode_cmd;
+
 	/* Fill in scan parameters suitable for roaming scan */
 	buf_ptr += sizeof(wmi_roam_scan_mode_fixed_param);
+
 	qdf_mem_copy(buf_ptr, scan_cmd_fp,
 		     sizeof(wmi_start_scan_cmd_fixed_param));
 	/* Ensure there is no additional IEs */
@@ -4769,6 +4778,8 @@ QDF_STATUS send_roam_scan_offload_mode_cmd_tlv(wmi_unified_t wmi_handle,
 				WMITLV_GET_STRUCT_TLVLEN(0));
 	}
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
+
+send_roam_scan_mode_cmd:
 	status = wmi_unified_cmd_send(wmi_handle, buf,
 				      len, WMI_ROAM_SCAN_MODE);
 	if (QDF_IS_STATUS_ERROR(status)) {
