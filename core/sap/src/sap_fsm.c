@@ -2215,7 +2215,18 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 #endif
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 		if (sap_context->cc_switch_mode !=
-						QDF_MCC_TO_SCC_SWITCH_DISABLE) {
+					QDF_MCC_TO_SCC_SWITCH_DISABLE &&
+					sap_context->channel) {
+			/*
+			 * For ACS request ,the sapContext->channel is 0,
+			 * we skip below overlap checking. When the ACS
+			 * finish and SAPBSS start, the sapContext->channel
+			 * will not be 0. Then the overlap checking will be
+			 * reactivated.If we use sapContext->channel = 0
+			 * to perform the overlap checking, an invalid overlap
+			 * channel con_ch could becreated. That may cause
+			 * SAP start failed.
+			 */
 			con_ch = sme_check_concurrent_channel_overlap(h_hal,
 					sap_context->channel,
 					sap_context->csr_roamProfile.phyMode,
@@ -2245,7 +2256,8 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 #endif
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 		if (sap_context->cc_switch_mode !=
-						QDF_MCC_TO_SCC_SWITCH_DISABLE) {
+					QDF_MCC_TO_SCC_SWITCH_DISABLE &&
+					sap_context->channel) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 				FL("check for overlap: chan:%d mode:%d"),
 				sap_context->channel,
