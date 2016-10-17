@@ -4576,7 +4576,7 @@ static int __iw_set_retry(struct net_device *dev, struct iw_request_info *info,
 			if (sme_cfg_set_int (hHal, WNI_CFG_SHORT_RETRY_LIMIT,
 						wrqu->retry.value) !=
 					QDF_STATUS_SUCCESS) {
-				hdd_err("failed to set ini parameter, WNI_CFG_LONG_RETRY_LIMIT");
+				hdd_err("failed to set ini parameter, WNI_CFG_SHORT_RETRY_LIMIT");
 				return -EIO;
 			}
 		}
@@ -4653,7 +4653,7 @@ static int __iw_get_retry(struct net_device *dev, struct iw_request_info *info,
 
 		if (sme_cfg_get_int(hHal, WNI_CFG_SHORT_RETRY_LIMIT, &retry) !=
 		    QDF_STATUS_SUCCESS) {
-			hdd_warn("failed to get ini parameter, WNI_CFG_LONG_RETRY_LIMIT");
+			hdd_warn("failed to get ini parameter, WNI_CFG_SHORT_RETRY_LIMIT");
 			return -EIO;
 		}
 
