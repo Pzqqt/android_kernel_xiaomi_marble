@@ -3716,6 +3716,11 @@ bool csr_learn_11dcountry_information(tpAniSirGlobal pMac,
 	else
 		pCountryCodeSelected = pMac->scan.countryCodeElected;
 
+	if (qdf_mem_cmp(pCountryCodeSelected, pMac->scan.countryCode11d,
+		   CDS_COUNTRY_CODE_LEN) == 0)
+		goto free_ie;
+
+	pMac->is_11d_hint = true;
 	status = csr_get_regulatory_domain_for_country(pMac,
 				pCountryCodeSelected, &domainId, SOURCE_11D);
 	if (status != QDF_STATUS_SUCCESS) {

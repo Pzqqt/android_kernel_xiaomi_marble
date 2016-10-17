@@ -7838,24 +7838,19 @@ sme_handle_generic_change_country_code(tpAniSirGlobal mac_ctx,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	v_REGDOMAIN_t reg_domain_id = 0;
-	bool is_11d_country = false;
 	bool supplicant_priority =
 		mac_ctx->roam.configParam.fSupplicantCountryCodeHasPriority;
 	tAniGenericChangeCountryCodeReq *msg = pMsgBuf;
 
 	sms_log(mac_ctx, LOG1, FL(" called"));
 
-	if (memcmp(msg->countryCode, mac_ctx->scan.countryCode11d,
-		   CDS_COUNTRY_CODE_LEN) == 0) {
-		is_11d_country = true;
-	}
 	/* Set the country code given by userspace when 11dOriginal is false
 	 * when 11doriginal is True,is_11d_country =0 and
 	 * fSupplicantCountryCodeHasPriority = 0, then revert the country code,
 	 * and return failure
 	 */
 	if (mac_ctx->roam.configParam.Is11dSupportEnabledOriginal == true
-	    && !is_11d_country && !supplicant_priority) {
+	    && !mac_ctx->is_11d_hint && !supplicant_priority) {
 		sms_log(mac_ctx, LOGW,
 			FL("Incorrect country req, nullify this"));
 
@@ -7879,37 +7874,14 @@ sme_handle_generic_change_country_code(tpAniSirGlobal mac_ctx,
 	}
 
 	/* if Supplicant country code has priority, disable 11d */
-	if (!is_11d_country && supplicant_priority)
+	if (supplicant_priority && !mac_ctx->is_11d_hint)
 		mac_ctx->roam.configParam.Is11dSupportEnabled = false;
+
+	qdf_mem_copy(mac_ctx->scan.countryCode11d, msg->countryCode,
+		     WNI_CFG_COUNTRY_CODE_LEN);
 	qdf_mem_copy(mac_ctx->scan.countryCodeCurrent, msg->countryCode,
 		     WNI_CFG_COUNTRY_CODE_LEN);
-	status = wma_set_reg_domain(mac_ctx, reg_domain_id);
-	if (false == is_11d_country) {
-		/* overwrite the defualt country code */
-		qdf_mem_copy(mac_ctx->scan.countryCodeDefault,
-			     mac_ctx->scan.countryCodeCurrent,
-			     WNI_CFG_COUNTRY_CODE_LEN);
-		/* set to default domain ID */
-		mac_ctx->scan.domainIdDefault = mac_ctx->scan.domainIdCurrent;
-	}
-	if (status != QDF_STATUS_SUCCESS) {
-		sms_log(mac_ctx, LOGE, FL("fail to set regId %d"),
-			reg_domain_id);
-		return status;
-	} else {
-		/* if 11d has priority, clear currentCountryBssid &
-		 * countryCode11d to get set again if we find AP with 11d info
-		 * during scan
-		 */
-		if (!supplicant_priority && (false == is_11d_country)) {
-			sms_log(mac_ctx, LOGW,
-				FL("Clearing currentCountryBssid, countryCode11d"));
-			qdf_mem_zero(&mac_ctx->scan.currentCountryBssid,
-				     sizeof(struct qdf_mac_addr));
-			qdf_mem_zero(mac_ctx->scan.countryCode11d,
-				     sizeof(mac_ctx->scan.countryCode11d));
-		}
-	}
+
 	/* get the channels based on new cc */
 	status = csr_get_channel_and_power_list(mac_ctx);
 
@@ -7929,6 +7901,8 @@ sme_handle_generic_change_country_code(tpAniSirGlobal mac_ctx,
 	 * Country IE
 	 */
 	mac_ctx->scan.curScanType = eSIR_ACTIVE_SCAN;
+	mac_ctx->is_11d_hint = false;
+
 	sme_disconnect_connected_sessions(mac_ctx);
 	sms_log(mac_ctx, LOG1, FL(" returned"));
 	return QDF_STATUS_SUCCESS;
