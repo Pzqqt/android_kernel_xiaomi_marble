@@ -1879,6 +1879,7 @@ static bool sap_filter_over_lap_ch(ptSapContext pSapCtx, uint16_t chNum)
 	return eSAP_FALSE;
 }
 
+#ifdef FEATURE_WLAN_CH_AVOID
 /**
  * sap_select_channel_no_scan_result() - select SAP channel when no scan results
  * are available.
@@ -1887,26 +1888,17 @@ static bool sap_filter_over_lap_ch(ptSapContext pSapCtx, uint16_t chNum)
  * Returns: channel number if success, 0 otherwise
  */
 static uint8_t sap_select_channel_no_scan_result(tHalHandle hal,
-						ptSapContext sap_ctx)
+						 ptSapContext sap_ctx)
 {
-	uint32_t start_ch_num, end_ch_num;
-#ifdef FEATURE_WLAN_CH_AVOID
 	enum channel_state ch_type;
 	uint8_t i, first_safe_ch_in_range = SAP_CHANNEL_NOT_SELECTED;
-#endif
 	uint32_t dfs_master_cap_enabled;
-	start_ch_num = sap_ctx->acs_cfg->start_ch;
-	end_ch_num = sap_ctx->acs_cfg->end_ch;
+	uint32_t start_ch_num = sap_ctx->acs_cfg->start_ch;
+	uint32_t end_ch_num = sap_ctx->acs_cfg->end_ch;
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  FL("start - end: %d - %d"), start_ch_num, end_ch_num);
 
-#ifndef FEATURE_WLAN_CH_AVOID
-	sap_ctx->acs_cfg->pri_ch = start_ch_num;
-	sap_ctx->acs_cfg->ht_sec_ch = 0;
-	/* pick the first channel in configured range */
-	return start_ch_num;
-#else
 	sme_cfg_get_int(hal, WNI_CFG_DFS_MASTER_ENABLED,
 				&dfs_master_cap_enabled);
 
@@ -1962,8 +1954,25 @@ static uint8_t sap_select_channel_no_scan_result(tHalHandle hal,
 
 	/* if no channel selected return SAP_CHANNEL_NOT_SELECTED */
 	return first_safe_ch_in_range;
-#endif /* !FEATURE_WLAN_CH_AVOID */
 }
+#else
+static uint8_t sap_select_channel_no_scan_result(tHalHandle hal,
+						 ptSapContext sap_ctx)
+{
+	uint32_t start_ch_num = sap_ctx->acs_cfg->start_ch;
+
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+		  FL("start - end: %d - %d"),
+		  start_ch_num,
+		  sap_ctx->acs_cfg->end_ch);
+
+	sap_ctx->acs_cfg->pri_ch = start_ch_num;
+	sap_ctx->acs_cfg->ht_sec_ch = 0;
+
+	/* pick the first channel in configured range */
+	return start_ch_num;
+}
+#endif /* FEATURE_WLAN_CH_AVOID */
 
 /**
  * sap_select_channel() - select SAP channel
