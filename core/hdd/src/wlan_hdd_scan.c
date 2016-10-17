@@ -1103,7 +1103,29 @@ nla_put_failure:
 	return;
 }
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0))
+/**
+ * hdd_cfg80211_scan_done() - Scan completed callback to cfg80211
+ * @adapter: Pointer to the adapter
+ * @req : Scan request
+ * @aborted : true scan aborted false scan success
+ *
+ * This function notifies scan done to cfg80211
+ *
+ * Return: none
+ */
+static void hdd_cfg80211_scan_done(hdd_adapter_t *adapter,
+				   struct cfg80211_scan_request *req,
+				   bool aborted)
+{
+	struct cfg80211_scan_info info = {
+		.aborted = aborted
+	};
+
+	if (adapter->dev->flags & IFF_UP)
+		cfg80211_scan_done(req, &info);
+}
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
 /**
  * hdd_cfg80211_scan_done() - Scan completed callback to cfg80211
  * @adapter: Pointer to the adapter
@@ -1294,7 +1316,7 @@ static void wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work)
 		request->n_channels = 0;
 
 		hdd_err("##In DFS Master mode. Scan aborted. Null result sent");
-		cfg80211_scan_done(request, true);
+		hdd_cfg80211_scan_done(adapter, request, true);
 		adapter->request = NULL;
 	}
 }
@@ -2669,7 +2691,7 @@ void hdd_cleanup_scan_queue(hdd_context_t *hdd_ctx)
 			hdd_err("HDD adapter magic is invalid");
 		} else {
 			if (NL_SCAN == source)
-				cfg80211_scan_done(req, aborted);
+				hdd_cfg80211_scan_done(adapter, req, aborted);
 			else
 				hdd_vendor_scan_callback(adapter, req, aborted);
 			hdd_info("removed Scan id: %d, req = %p",
