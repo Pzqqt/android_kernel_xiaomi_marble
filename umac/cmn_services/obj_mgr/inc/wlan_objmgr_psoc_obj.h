@@ -1,0 +1,742 @@
+/*
+ * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for
+ * any purpose with or without fee is hereby granted, provided that the
+ * above copyright notice and this permission notice appear in all
+ * copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+ * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+ /**
+  * DOC: Define the pSoc data structure of UMAC
+  *      Public APIs to perform operations on Global objects
+  */
+#ifndef _WLAN_OBJMGR_PSOC_OBJ_H_
+#define _WLAN_OBJMGR_PSOC_OBJ_H_
+
+#include "wlan_objmgr_cmn.h"
+
+#define REG_DMN_CH144        0x0001
+#define REG_DMN_ENTREPRISE   0x0002
+
+
+/* fw_caps */
+	/* CAPABILITY: WEP available */
+#define WLAN_SOC_C_WEP                  0x00000001
+	/* CAPABILITY: TKIP available */
+#define WLAN_SOC_C_TKIP                 0x00000002
+	/* CAPABILITY: AES OCB avail */
+#define WLAN_SOC_C_AES                  0x00000004
+	/* CAPABILITY: AES CCM avail */
+#define WLAN_SOC_C_AES_CCM              0x00000008
+	/* CAPABILITY: 11n HT available */
+#define WLAN_SOC_C_HT                   0x00000010
+	/* CAPABILITY: CKIP available */
+#define WLAN_SOC_C_CKIP                 0x00000020
+	/* CAPABILITY: ATH FF avail */
+#define WLAN_SOC_C_FF                   0x00000040
+	/* CAPABILITY: ATH Turbo avail*/
+#define WLAN_SOC_C_TURBOP               0x00000080
+	/* CAPABILITY: IBSS available */
+#define WLAN_SOC_C_IBSS                 0x00000100
+	/* CAPABILITY: Power mgmt */
+#define WLAN_SOC_C_PMGT                 0x00000200
+	/* CAPABILITY: HOSTAP avail */
+#define WLAN_SOC_C_HOSTAP               0x00000400
+	/* CAPABILITY: Old Adhoc Demo */
+#define WLAN_SOC_C_AHDEMO               0x00000800
+	/* CAPABILITY: tx power mgmt */
+#define WLAN_SOC_C_TXPMGT               0x00001000
+	/* CAPABILITY: short slottime */
+#define WLAN_SOC_C_SHSLOT               0x00002000
+	/* CAPABILITY: short preamble */
+#define WLAN_SOC_C_SHPREAMBLE           0x00004000
+	/* CAPABILITY: monitor mode */
+#define WLAN_SOC_C_MONITOR              0x00008000
+	/* CAPABILITY: TKIP MIC avail */
+#define WLAN_SOC_C_TKIPMIC              0x00010000
+	/* CAPABILITY: ATH WAPI avail */
+#define WLAN_SOC_C_WAPI                 0x00020000
+	/* CONF: WDS auto Detect/DELBA */
+#define WLAN_SOC_C_WDS_AUTODETECT       0x00040000
+	/* CAPABILITY: WPA1 avail */
+#define WLAN_SOC_C_WPA1                 0x00080000
+	/* CAPABILITY: WPA2 avail */
+#define WLAN_SOC_C_WPA2                 0x00100000
+	/* CAPABILITY: WPA1+WPA2 avail*/
+#define WLAN_SOC_C_WPA                  0x00180000
+	/* CAPABILITY: frame bursting */
+#define WLAN_SOC_C_BURST                0x00200000
+	/* CAPABILITY: WME avail */
+#define WLAN_SOC_C_WME                  0x00400000
+	/* CAPABILITY: 4-addr support */
+#define WLAN_SOC_C_WDS                  0x00800000
+	/* CAPABILITY: TKIP MIC for QoS frame */
+#define WLAN_SOC_C_WME_TKIPMIC          0x01000000
+	/* CAPABILITY: bg scanning */
+#define WLAN_SOC_C_BGSCAN               0x02000000
+	/* CAPABILITY: UAPSD */
+#define WLAN_SOC_C_UAPSD                0x04000000
+	/* CAPABILITY: enabled 11.h */
+#define WLAN_SOC_C_DOTH                 0x08000000
+
+/* XXX protection/barker? */
+	/* CAPABILITY: crypto alg's */
+#define WLAN_SOC_C_CRYPTO         0x0000002f
+
+/* fw_caps_ext */
+	/* CAPABILITY: fast channel change */
+#define WLAN_SOC_CEXT_FASTCC           0x00000001
+	/* CAPABILITY: P2P */
+#define WLAN_SOC_CEXT_P2P              0x00000002
+	/* CAPABILITY: Multi-Channel Operations */
+#define WLAN_SOC_CEXT_MULTICHAN        0x00000004
+	/* CAPABILITY: the device supports perf and power offload */
+#define WLAN_SOC_CEXT_PERF_PWR_OFLD    0x00000008
+	/* CAPABILITY: the device supports 11ac */
+#define WLAN_SOC_CEXT_11AC             0x00000010
+	/* CAPABILITY: the device support acs channel hopping */
+#define WLAN_SOC_CEXT_ACS_CHAN_HOP     0x00000020
+	/* CAPABILITY: the device support STA DFS */
+#define WLAN_SOC_CEXT_STADFS           0x00000040
+
+/* feature_flags */
+	/* CONF: ATH FF enabled */
+#define WLAN_SOC_F_FF                   0x00000001
+	/* CONF: ATH Turbo enabled*/
+#define WLAN_SOC_F_TURBOP               0x00000002
+	/* STATUS: promiscuous mode */
+#define WLAN_SOC_F_PROMISC              0x00000004
+	/* STATUS: all multicast mode */
+#define WLAN_SOC_F_ALLMULTI             0x00000008
+/* NB: this is intentionally setup to be IEEE80211_CAPINFO_PRIVACY */
+	/* STATUS: start IBSS */
+#define WLAN_SOC_F_SIBSS                0x00000010
+/* NB: this is intentionally setup to be IEEE80211_CAPINFO_SHORT_SLOTTIME */
+	/* CONF: Power mgmt enable */
+#define WLAN_SOC_F_PMGTON               0x00000020
+	/* CONF: IBSS creation enable */
+#define WLAN_SOC_F_IBSSON               0x00000040
+	/* force chanswitch */
+#define WLAN_SOC_F_CHANSWITCH           0x00000080
+
+/* ic_flags_ext and/or iv_flags_ext */
+	/* CONF: enable country IE */
+#define WLAN_SOC_F_COUNTRYIE           0x00000100
+	/* STATE: enable full bgscan completion */
+#define WLAN_SOC_F_BGSCAN              0x00000200
+	/* CONF: enable U-APSD */
+#define WLAN_SOC_F_UAPSD               0x00000400
+	/* STATUS: sleeping */
+#define WLAN_SOC_F_SLEEP               0x00000800
+	/* Enable marking of dfs interfernce */
+#define WLAN_SOC_F_MARKDFS             0x00001000
+	/* enable or disable s/w ccmp encrypt decrypt support */
+#define WLAN_SOC_F_CCMPSW_ENCDEC       0x00002000
+	/* STATE: hibernating */
+#define WLAN_SOC_F_HIBERNATION         0x00004000
+	/* CONF: desired country has been set */
+#define WLAN_SOC_F_DESCOUNTRY          0x00008000
+	/* CONF: enable power capability or contraint IE */
+#define WLAN_SOC_F_PWRCNSTRIE          0x00010000
+	/* STATUS: 11D in used */
+#define WLAN_SOC_F_DOT11D              0x00020000
+
+/**
+ * struct wlan_objmgr_psoc_regulatory -  Regulatory sub structure of PSOC
+ * @country_code:  Country code
+ * @reg_dmn:       Regulatory Domain
+ * @reg_flags:     Regulatory flags
+ */
+struct wlan_objmgr_psoc_regulatory {
+	uint16_t country_code;
+	uint16_t reg_dmn;
+	uint16_t reg_flags;
+};
+
+/**
+ * struct wlan_objmgr_psoc_nif - HDD/OSIF specific sub structure of PSOC
+ * @phy_version:     phy version, read in device probe
+ * @phy_type:        OL/DA type
+ * @soc_fw_caps:     FW capabilities
+ * @soc_fw_ext_caps: FW ext capabilities
+ * @soc_feature_caps:Feature capabilities
+ * @soc_hw_macaddr[]:HW MAC address
+ */
+struct wlan_objmgr_psoc_nif {
+	uint32_t phy_version;
+	WLAN_DEV_TYPE phy_type;
+	uint32_t soc_fw_caps;
+	uint32_t soc_fw_ext_caps;
+	uint32_t soc_feature_caps;
+	uint8_t soc_hw_macaddr[WLAN_MACADDR_LEN];
+};
+
+/**
+ * struct wlan_objmgr_psoc_objmgr - psoc object manager sub structure
+ * @wlan_pdev_count:      PDEV count
+ * @wlan_pdev_list[]:     PDEV list
+ * @wlan_pdev_id_map:     PDEV id map, to allocate free ids
+ * @wlan_vdev_count:      VDEV count
+ * @max_vdev_count:       Max no. of VDEVs supported by this PSOC
+ * @wlan_vdev_list[]:     VDEV list
+ * @wlan_vdev_id_map[]:   VDEV id map, to allocate free ids
+ * @wlan_peer_count:      PEER count
+ * @peer_list:            Peer list
+ */
+struct wlan_objmgr_psoc_objmgr {
+	uint8_t wlan_pdev_count;
+	struct wlan_objmgr_pdev *wlan_pdev_list[WLAN_UMAC_MAX_PDEVS];
+	uint8_t wlan_pdev_id_map;
+	uint8_t wlan_vdev_count;
+	uint8_t max_vdev_count;
+	struct wlan_objmgr_vdev *wlan_vdev_list[WLAN_UMAC_PSOC_MAX_VDEVS];
+	uint32_t wlan_vdev_id_map[2];
+	uint16_t wlan_peer_count;
+	struct wlan_peer_list peer_list;
+};
+
+/**
+ * struct wlan_soc_southbound_cb - structure for south bound callbacks
+ *
+ */
+struct wlan_soc_southbound_cb {
+};
+
+/**
+ * struct wlan_concurrency_info - structure for concurrency info
+ *
+ */
+struct wlan_concurrency_info {
+};
+
+/**
+ * struct wlan_soc_timer - structure for soc timer
+ *
+ */
+struct wlan_soc_timer {
+};
+
+/**
+ * struct wlan_objmgr_psoc - PSOC common object
+ * @soc_reg:               regulatory sub structure
+ * @soc_nif:               nif sub strucutre
+ * @soc_objmgr:            object manager sub structure
+ * @soc_cb:                south bound callbacks
+ * @soc_timer:             soc timer for inactivity
+ * @soc_concurrency:       concurrency info
+ * @wlan_active_vdevs[]:   List of active VDEVs
+ * @soc_comp_obj[]:        component object pointers
+ * @obj_status[]:          component object status
+ * @obj_state:             object state
+ * @psoc_lock:             psoc lock
+ */
+struct wlan_objmgr_psoc {
+	struct wlan_objmgr_psoc_regulatory soc_reg;
+	struct wlan_objmgr_psoc_nif  soc_nif;
+	struct wlan_objmgr_psoc_objmgr soc_objmgr;
+	struct wlan_soc_southbound_cb soc_cb;
+	struct wlan_soc_timer soc_timer;
+	struct wlan_concurrency_info soc_concurrency; /*TODO */
+	uint8_t wlan_active_vdevs[WLAN_UMAC_PSOC_MAX_VDEVS];
+	void *soc_comp_obj[WLAN_UMAC_MAX_COMPONENTS];
+	QDF_STATUS obj_status[WLAN_UMAC_MAX_COMPONENTS];
+	WLAN_OBJ_STATE obj_state;
+	qdf_spinlock_t psoc_lock;
+};
+
+/**
+ ** APIs to Create/Delete Global object APIs
+ */
+/**
+ * wlan_objmgr_psoc_obj_create() - psoc object create
+ * @phy_version: device id (from probe)
+ * @dev_type: Offload/DA
+ *
+ * Creates PSOC object, intializes with default values
+ * Invokes the registered notifiers to create component object
+ *
+ * Return: Handle to struct wlan_objmgr_psoc on successful creation,
+ *         NULL on Failure (on Mem alloc failure and Component objects
+ *         Failure)
+ */
+struct wlan_objmgr_psoc *wlan_objmgr_psoc_obj_create(uint32_t phy_version,
+				WLAN_DEV_TYPE dev_type);
+
+/**
+ * wlan_objmgr_psoc_obj_delete() - psoc object delete
+ * @psoc: PSOC object
+ *
+ * Deletes PSOC object,
+ * Invokes the registered notifiers to delete component objects
+ *
+ * Return: SUCCESS/FAILURE
+ */
+QDF_STATUS wlan_objmgr_psoc_obj_delete(struct wlan_objmgr_psoc *psoc);
+
+/**
+ ** APIs to attach/detach component objects
+ */
+
+/**
+ * wlan_objmgr_psoc_component_obj_attach() - psoc comp object attach
+ * @psoc: PSOC object
+ * @id: Component id
+ * @comp_objptr: component's private object pointer
+ * @status: Component's private object creation status
+ *
+ * API to be used for attaching component object with PSOC common object
+ *
+ * Return: SUCCESS on successful storing of component's object in common object
+ *         On FAILURE (appropriate failure codes are returned)
+ */
+QDF_STATUS wlan_objmgr_psoc_component_obj_attach(
+		struct wlan_objmgr_psoc *psoc,
+		enum wlan_umac_comp_id id,
+		void *comp_objptr,
+		QDF_STATUS status);
+
+/**
+ * wlan_objmgr_psoc_component_obj_detach() - psoc comp object detach
+ * @psoc: PSOC object
+ * @id: Component id
+ * @comp_objptr: component's private object pointer
+ *
+ * API to be used for detaching component object with PSOC common object
+ *
+ * Return: SUCCESS on successful removal of component's object from common
+ *         object
+ *         On FAILURE (appropriate failure codes are returned)
+ */
+QDF_STATUS wlan_objmgr_psoc_component_obj_detach(
+		struct wlan_objmgr_psoc *psoc,
+		enum wlan_umac_comp_id id,
+		void *comp_objptr);
+
+/**
+ ** APIs to operations on psoc objects
+ */
+/**
+ * wlan_objmgr_iterate_obj_list() - iterate through all psoc objects
+ * @psoc: PSOC object
+ * @obj_type: PDEV_OP/VDEV_OP/PEER_OP
+ * @handler: the handler will be called for each object of requested type
+ *            the handler should be implemented to perform required operation
+ * @arg:     agruments passed by caller
+ * @lock_free_op: This gives provision to run this API with out lock protected
+ *                 It would be useful, for operations like Obj Delete, where
+ *                 lock should not be taken by caller.
+ *
+ * API to be used for performing the operations on all PDEV/VDEV/PEER objects
+ * of psoc
+ *
+ * Return: SUCCESS/FAILURE
+ */
+typedef void (*wlan_objmgr_op_handler)(struct wlan_objmgr_psoc *psoc,
+					void *object,
+					void *arg);
+/* handler should not take obj lock */
+QDF_STATUS wlan_objmgr_iterate_obj_list(
+		struct wlan_objmgr_psoc *psoc,
+		enum wlan_objmgr_obj_type obj_type,
+		wlan_objmgr_op_handler handler,
+		void *arg, uint8_t lock_free_op);
+
+/**
+ * wlan_objmgr_free_all_objects_per_psoc() - free all psoc objects
+ * @psoc: PSOC object
+ *
+ * API to be used free all the objects(pdev/vdev/peer) of psoc
+ *
+ * Return: SUCCESS/FAILURE
+ */
+QDF_STATUS wlan_objmgr_free_all_objects_per_psoc(
+		struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_objmgr_trigger_psoc_comp_object_creation() - create psoc comp object
+ * @psoc: PSOC object
+ * @id: Component id
+ *
+ * API to create component object in run time, this would be used for features
+ * which gets enabled in run time
+ *
+ * Return: SUCCESS on successful creation
+ *         On FAILURE (appropriate failure codes are returned)
+ */
+QDF_STATUS wlan_objmgr_trigger_psoc_comp_object_creation(
+		struct wlan_objmgr_psoc *psoc,
+		enum wlan_umac_comp_id id);
+
+/**
+ * wlan_objmgr_trigger_psoc_comp_object_deletion() - delete psoc comp object
+ * @psoc: PSOC object
+ * @id: Component id
+ *
+ * API to delete component object in run time, this would be used for features
+ * which gets disabled in run time
+ *
+ * Return: SUCCESS on successful deletion
+ *         On FAILURE (appropriate failure codes are returned)
+ */
+QDF_STATUS wlan_objmgr_trigger_psoc_comp_object_deletion(
+		struct wlan_objmgr_psoc *psoc,
+		enum wlan_umac_comp_id id);
+
+/**
+ * wlan_objmgr_find_peer() - find peer from psoc's peer list
+ * @psoc: PSOC object
+ * @macaddr: MAC address
+ *
+ * API to find peer object pointer by MAC addr
+ *
+ * Return: peer pointer
+ *         NULL on FAILURE
+ */
+struct wlan_objmgr_peer *wlan_objmgr_find_peer(
+			struct wlan_objmgr_psoc *psoc, uint8_t *macaddr);
+
+/**
+ * wlan_objmgr_find_pdev_by_id() - retrieve pdev by id
+ * @psoc: PSOC object
+ * @id: pdev id
+ *
+ * API to find pdev object pointer by pdev id
+ *
+ * Return: pdev pointer
+ *         NULL on FAILURE
+ */
+struct wlan_objmgr_pdev *wlan_objmgr_find_pdev_by_id(
+		struct wlan_objmgr_psoc *psoc, uint8_t id);
+
+/**
+ * wlan_objmgr_find_pdev_by_macaddr() - retrieve pdev by macaddr
+ * @psoc: PSOC object
+ * @macaddr: MAC address
+ *
+ * API to find pdev object pointer by pdev macaddr
+ *
+ * Return: pdev pointer
+ *         NULL on FAILURE
+ */
+struct wlan_objmgr_pdev *wlan_objmgr_find_pdev_by_macaddr(
+		struct wlan_objmgr_psoc *psoc, uint8_t *macaddr);
+
+/**
+ * wlan_objmgr_find_vdev_by_id_from_psoc() - retrieve vdev by id
+ * @psoc: PSOC object
+ * @id: vdev id
+ *
+ * API to find vdev object pointer by vdev id from psoc
+ *
+ * Return: vdev pointer
+ *         NULL on FAILURE
+ */
+struct wlan_objmgr_vdev *wlan_objmgr_find_vdev_by_id_from_psoc(
+			struct wlan_objmgr_psoc *psoc, uint8_t vdev_id);
+
+/**
+ * wlan_objmgr_find_vdev_by_macaddr_from_psoc() - retrieve vdev by macaddr
+ * @psoc: PSOC object
+ * @macaddr: macaddr
+ *
+ * API to find vdev object pointer by vdev macaddr from psoc
+ *
+ * Return: vdev pointer
+ *         NULL on FAILURE
+ */
+struct wlan_objmgr_vdev *wlan_objmgr_find_vdev_by_macaddr_from_psoc(
+		struct wlan_objmgr_psoc *psoc, uint8_t *macaddr);
+
+/**
+ * wlan_psoc_obj_lock() - Acquire PSOC spinlock
+ * @psoc: PSOC object
+ *
+ * API to acquire PSOC lock
+ *
+ * Return: void
+ */
+static inline void wlan_psoc_obj_lock(struct wlan_objmgr_psoc *psoc)
+{
+	qdf_spin_lock_bh(&psoc->psoc_lock);
+}
+
+/**
+ * wlan_psoc_obj_unlock() - Release PSOC spinlock
+ * @psoc: PSOC object
+ *
+ * API to Release PSOC lock
+ *
+ * Return: void
+ */
+static inline void wlan_psoc_obj_unlock(struct wlan_objmgr_psoc *psoc)
+{
+	qdf_spin_unlock_bh(&psoc->psoc_lock);
+}
+
+/**
+ * wlan_psoc_set_nif_phy_version() - set nif phy version
+ * @psoc: PSOC object
+ * @phy_ver: phy version
+ *
+ * API to set nif phy version in psoc
+ *
+ * Caller need to acquire lock with wlan_psoc_obj_lock()
+ *
+ * Return: void
+ */
+static inline void wlan_psoc_set_nif_phy_version(struct wlan_objmgr_psoc *psoc,
+			uint32_t phy_ver)
+{
+	psoc->soc_nif.phy_version = phy_ver;
+}
+
+/**
+ * wlan_psoc_get_nif_phy_version() - get nif phy version
+ * @psoc: PSOC object
+ *
+ * API to set nif phy version in psoc
+ *
+ * Caller need to acquire lock with wlan_psoc_obj_lock()
+ *
+ * Return: @phy_ver: phy version
+ */
+static inline uint32_t wlan_psoc_get_nif_phy_version(
+			struct wlan_objmgr_psoc *psoc)
+{
+	if (psoc == NULL)
+		return (uint32_t)-1;
+	return psoc->soc_nif.phy_version;
+}
+
+/**
+ * wlan_psoc_set_dev_type() - set dev type
+ * @psoc: PSOC object
+ * @phy_type: phy type (OL/DA)
+ *
+ * API to set dev type in psoc
+ *
+ * Caller need to acquire lock with wlan_psoc_obj_lock()
+ *
+ * Return: void
+ */
+static inline void wlan_psoc_set_dev_type(struct wlan_objmgr_psoc *psoc,
+				WLAN_DEV_TYPE phy_type)
+{
+	psoc->soc_nif.phy_type = phy_type;
+}
+
+/**
+ * wlan_objmgr_psoc_get_dev_type - get dev type
+ * @psoc: PSOC object
+ *
+ * API to get dev type in psoc
+ *
+ * Caller need to acquire lock with wlan_psoc_obj_lock()
+ *
+ * Return: phy type (OL/DA)
+ */
+static inline WLAN_DEV_TYPE wlan_objmgr_psoc_get_dev_type(
+				struct wlan_objmgr_psoc *psoc)
+{
+	if (psoc == NULL)
+		return (uint32_t)-1;
+	return psoc->soc_nif.phy_type;
+}
+
+/**
+ * wlan_psoc_nif_fw_cap_set() - set fw caps
+ * @psoc: PSOC object
+ * @cap: capability flag to be set
+ *
+ * API to set fw caps in psoc
+ *
+ * Caller need to acquire lock with wlan_psoc_obj_lock()
+ *
+ * Return: void
+ */
+static inline void wlan_psoc_nif_fw_cap_set(struct wlan_objmgr_psoc *psoc,
+					uint32_t cap)
+{
+	psoc->soc_nif.soc_fw_caps |= cap;
+}
+
+/**
+ * wlan_psoc_nif_fw_cap_clear() - clear fw caps
+ * @psoc: PSOC object
+ * @cap: capability flag to be cleared
+ *
+ * API to clear fw caps in psoc
+ *
+ * Caller need to acquire lock with wlan_psoc_obj_lock()
+ *
+ * Return: void
+ */
+static inline void wlan_psoc_nif_fw_cap_clear(struct wlan_objmgr_psoc *psoc,
+				uint32_t cap)
+{
+	psoc->soc_nif.soc_fw_caps &= ~cap;
+}
+
+/**
+ * wlan_psoc_nif_fw_cap_get() - get fw caps
+ * @psoc: PSOC object
+ * @cap: capability flag to be checked
+ *
+ * API to know, whether particular fw caps flag is set in psoc
+ *
+ * Caller need to acquire lock with wlan_psoc_obj_lock()
+ *
+ * Return: 1 (for set) or 0 (for not set)
+ */
+static inline uint8_t wlan_psoc_nif_fw_cap_get(struct wlan_objmgr_psoc *psoc,
+				uint32_t cap)
+{
+	return (psoc->soc_nif.soc_fw_caps & cap) ? 1 : 0;
+}
+
+/**
+ * wlan_psoc_nif_fw_ext_cap_set() - set fw ext caps
+ * @psoc: PSOC object
+ * @ext_cap: capability flag to be set
+ *
+ * API to set fw ext caps in psoc
+ *
+ * Caller need to acquire lock with wlan_psoc_obj_lock()
+ *
+ * Return: void
+ */
+static inline void wlan_psoc_nif_fw_ext_cap_set(struct wlan_objmgr_psoc *psoc,
+				uint32_t ext_cap)
+{
+	psoc->soc_nif.soc_fw_ext_caps |= ext_cap;
+}
+
+/**
+ * wlan_psoc_nif_fw_ext_cap_clear() - clear fw ext caps
+ * @psoc: PSOC object
+ * @ext_cap: capability flag to be cleared
+ *
+ * API to clear fw ext caps in psoc
+ *
+ * Caller need to acquire lock with wlan_psoc_obj_lock()
+ *
+ * Return: void
+ */
+static inline void wlan_psoc_nif_fw_ext_cap_clear(struct wlan_objmgr_psoc *psoc,
+				uint32_t ext_cap)
+{
+	psoc->soc_nif.soc_fw_ext_caps &= ~ext_cap;
+}
+
+/**
+ * wlan_psoc_nif_fw_ext_cap_get() - get fw caps
+ * @psoc: PSOC object
+ * @ext_cap: capability flag to be checked
+ *
+ * API to know, whether particular fw caps flag is set in psoc
+ *
+ * Caller need to acquire lock with wlan_psoc_obj_lock()
+ *
+ * Return: 1 (for set) or 0 (for not set)
+ */
+static inline uint8_t wlan_psoc_nif_fw_ext_cap_get(
+		struct wlan_objmgr_psoc *psoc, uint32_t ext_cap)
+{
+	return (psoc->soc_nif.soc_fw_ext_caps & ext_cap) ? 1 : 0;
+}
+
+/**
+ * wlan_psoc_nif_feat_cap_set() - set feature caps
+ * @psoc: PSOC object
+ * @cap: feature flag to be set
+ *
+ * API to set feature caps in psoc
+ *
+ * Caller need to acquire lock with wlan_psoc_obj_lock()
+ *
+ * Return: void
+ */
+static inline void wlan_psoc_nif_feat_cap_set(struct wlan_objmgr_psoc *psoc,
+				uint32_t feat_cap)
+{
+	psoc->soc_nif.soc_feature_caps |= feat_cap;
+}
+
+/**
+ * wlan_psoc_nif_feat_cap_clear() - clear feature caps
+ * @psoc: PSOC object
+ * @cap: feature flag to be cleared
+ *
+ * API to clear feature caps in psoc
+ *
+ * Caller need to acquire lock with wlan_psoc_obj_lock()
+ *
+ * Return: void
+ */
+static inline void wlan_psoc_nif_feat_cap_clear(struct wlan_objmgr_psoc *psoc,
+				uint32_t feat_cap)
+{
+	psoc->soc_nif.soc_feature_caps &= ~feat_cap;
+}
+
+/**
+ * wlan_psoc_nif_feat_cap_get() - get feature caps
+ * @psoc: PSOC object
+ * @cap: feature flag to be checked
+ *
+ * API to know, whether particular feature cap flag is set in psoc
+ *
+ * Caller need to acquire lock with wlan_psoc_obj_lock()
+ *
+ * Return: 1 (for set) or 0 (for not set)
+ */
+static inline uint8_t wlan_psoc_nif_feat_cap_get(struct wlan_objmgr_psoc *psoc,
+				uint32_t feat_cap)
+{
+	return (psoc->soc_nif.soc_feature_caps & feat_cap) ? 1 : 0;
+}
+
+/**
+ * wlan_psoc_set_hw_macaddr() - set hw mac addr
+ * @psoc: PSOC object
+ * @macaddr: hw macaddr
+ *
+ * API to set hw macaddr of psoc
+ *
+ * Caller need to acquire lock with wlan_psoc_obj_lock()
+ *
+ * Return: void
+ */
+static inline void wlan_psoc_set_hw_macaddr(struct wlan_objmgr_psoc *psoc,
+					uint8_t *macaddr)
+{
+	if (psoc != NULL)
+		WLAN_ADDR_COPY(psoc->soc_nif.soc_hw_macaddr, macaddr);
+}
+
+/**
+ * wlan_psoc_get_hw_macaddr() - get hw macaddr
+ * @psoc: PSOC object
+ *
+ * API to set hw macaddr of psoc
+ *
+ * Caller need to acquire lock with wlan_psoc_obj_lock()
+ *
+ * Return: hw macaddr
+ */
+static inline uint8_t *wlan_psoc_get_hw_macaddr(struct wlan_objmgr_psoc *psoc)
+{
+	if (psoc == NULL)
+		return NULL;
+	return psoc->soc_nif.soc_hw_macaddr;
+}
+#endif /* _WLAN_OBJMGR_PSOC_OBJ_H_*/
