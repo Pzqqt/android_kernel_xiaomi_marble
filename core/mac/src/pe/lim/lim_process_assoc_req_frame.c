@@ -1775,6 +1775,15 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			     WMA_GET_RX_MPDU_DATA(rx_pkt_info), frame_len);
 		return;
 	}
+	if (session->limMlmState == eLIM_MLM_WT_DEL_BSS_RSP_STATE) {
+		lim_log(mac_ctx, LOGE, FL("drop ASSOC REQ on sessionid: %d "
+			"role=%d from: "MAC_ADDRESS_STR" in limMlmState %d"),
+			session->peSessionId,
+			GET_LIM_SYSTEM_ROLE(session),
+			MAC_ADDR_ARRAY(hdr->sa),
+			eLIM_MLM_WT_DEL_BSS_RSP_STATE);
+		return;
+	}
 
 	/*
 	 * If a STA is already present in DPH and it is initiating a Assoc
