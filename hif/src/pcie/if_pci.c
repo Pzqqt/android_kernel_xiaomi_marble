@@ -2220,6 +2220,16 @@ static int hif_enable_pci(struct hif_pci_softc *sc,
 
 	HIF_INFO("%s, mem after pci_iomap:%p\n",
 	       __func__, sc->mem);
+
+	/* Hawkeye emulation specific change */
+	if ((device_id == RUMIM2M_DEVICE_ID_NODE0) ||
+		(device_id == RUMIM2M_DEVICE_ID_NODE1)) {
+		mem = mem + 0x0c000000;
+		sc->mem = mem;
+		HIF_INFO("%s: Changing PCI mem base to %p\n",
+			__func__, sc->mem);
+	}
+
 	sc->pdev = pdev;
 	sc->dev = &pdev->dev;
 	sc->devid = id->device;
