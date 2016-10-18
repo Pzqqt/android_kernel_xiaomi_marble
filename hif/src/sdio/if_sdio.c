@@ -133,8 +133,10 @@ static A_STATUS hif_sdio_probe(void *context, void *hif_handle)
 		target_type = TARGET_TYPE_AR9888;
 #elif defined(CONFIG_AR6320_SUPPORT)
 		id = ((struct hif_sdio_dev *) hif_handle)->id;
-		if ((id->device & MANUFACTURER_ID_AR6K_BASE_MASK) ==
-				MANUFACTURER_ID_QCA9377_BASE) {
+		if (((id->device & MANUFACTURER_ID_AR6K_BASE_MASK) ==
+				MANUFACTURER_ID_QCA9377_BASE) ||
+			((id->device & MANUFACTURER_ID_AR6K_BASE_MASK) ==
+				MANUFACTURER_ID_QCA9379_BASE)) {
 			hif_register_tbl_attach(ol_sc, HIF_TYPE_AR6320V2);
 			target_register_tbl_attach(ol_sc, TARGET_TYPE_AR6320V2);
 		} else if ((id->device & MANUFACTURER_ID_AR6K_BASE_MASK) ==

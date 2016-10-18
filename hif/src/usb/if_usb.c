@@ -436,6 +436,7 @@ void hif_usb_reg_tbl_attach(struct hif_softc *scn)
 			case AR6320_REV2_1_VERSION:
 			case AR6320_REV3_VERSION:
 			case QCA9377_REV1_1_VERSION:
+			case QCA9379_REV1_VERSION:
 				hif_type = HIF_TYPE_AR6320V2;
 				target_type = TARGET_TYPE_AR6320V2;
 				break;
