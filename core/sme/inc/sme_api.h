@@ -1358,4 +1358,9 @@ QDF_STATUS sme_update_sta_inactivity_timeout(tHalHandle hal_handle,
  */
 QDF_STATUS sme_set_lost_link_info_cb(tHalHandle hal,
 		void (*cb)(void *, struct sir_lost_link_info *));
+#ifdef WLAN_POWER_DEBUGFS
+QDF_STATUS sme_power_debug_stats_req(tHalHandle hal, void (*callback_fn)
+				(struct  power_stats_response *response,
+				void *context), void *power_stats_context);
+#endif
 #endif /* #if !defined( __SME_API_H ) */

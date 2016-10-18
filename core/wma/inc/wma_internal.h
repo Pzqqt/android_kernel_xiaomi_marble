@@ -1231,4 +1231,6 @@ static inline int wma_encrypt_decrypt_msg_handler(void *handle, uint8_t *data,
  */
 void wma_lost_link_info_handler(tp_wma_handle wma, uint32_t vdev_id,
 				int32_t rssi);
+int wma_unified_power_debug_stats_event_handler(void *handle,
+			uint8_t *cmd_param_info, uint32_t len);
 #endif
