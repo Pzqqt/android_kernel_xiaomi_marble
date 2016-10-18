@@ -987,7 +987,7 @@ void hdd_ipa_uc_stat_request(hdd_adapter_t *adapter, uint8_t reason)
 		return;
 	}
 
-	HDD_IPA_LOG(LOG1, "STAT REQ Reason %d", reason);
+	HDD_IPA_LOG(LOGOFF, "STAT REQ Reason %d", reason);
 	qdf_mutex_acquire(&hdd_ipa->ipa_lock);
 	if ((HDD_IPA_UC_NUM_WDI_PIPE == hdd_ipa->activated_fw_pipe) &&
 		(false == hdd_ipa->resource_loading)) {
@@ -1603,19 +1603,11 @@ static void hdd_ipa_uc_offload_enable_disable(hdd_adapter_t *adapter,
 	if (!iface_context || (enable == iface_context->offload_enabled)) {
 		/* IPA offload status is already set as desired */
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
-			    "offload_type=%d, vdev_id=%d, enable=%d",
+			    "IPA offload status is already set: \
+			    (offload_type=%d, vdev_id=%d, enable=%d)",
 			    offload_type, adapter->sessionId, enable);
-		WARN_ON(1);
 		return;
 	}
-
-	/* Lower layer may send multiple START_BSS_EVENT in DFS mode or during
-	 * channel change indication. Since these indications are sent by lower
-	 * layer as SAP updates and IPA doesn't have to do anything for these
-	 * updates so ignoring!
-	 */
-	if (QDF_SAP_MODE == adapter->device_mode && adapter->ipa_context)
-		return;
 
 	qdf_mem_zero(&ipa_offload_enable_disable,
 		sizeof(ipa_offload_enable_disable));
@@ -2290,10 +2282,10 @@ int hdd_ipa_set_perf_level(hdd_context_t *hdd_ctx, uint64_t tx_packets,
 	else
 		next_prod_bw = hdd_ctx->config->IpaLowBandwidthMbps;
 
-	HDD_IPA_LOG(LOG1,
+	HDD_IPA_LOG(LOGOFF,
 		"CONS perf curr: %d, next: %d",
 		hdd_ipa->curr_cons_bw, next_cons_bw);
-	HDD_IPA_LOG(LOG1,
+	HDD_IPA_LOG(LOGOFF,
 		"PROD perf curr: %d, next: %d",
 		hdd_ipa->curr_prod_bw, next_prod_bw);
 
@@ -3793,55 +3785,52 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 	meta.msg_type = type;
 	switch (type) {
 	case WLAN_STA_CONNECT:
+		qdf_mutex_acquire(&hdd_ipa->event_lock);
+
 		/* STA already connected and without disconnect, connect again
 		 * This is Roaming scenario
 		 */
 		if (hdd_ipa->sta_connected)
 			hdd_ipa_cleanup_iface(adapter->ipa_context);
 
-		if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx) &&
-		    (hdd_ipa->sap_num_connected_sta > 0) &&
-		    !hdd_ipa->sta_connected)
-			hdd_ipa_uc_offload_enable_disable(adapter,
-				SIR_STA_RX_DATA_OFFLOAD, 1);
-
-		qdf_mutex_acquire(&hdd_ipa->event_lock);
-
 		ret = hdd_ipa_setup_iface(hdd_ipa, adapter, sta_id);
 		if (ret) {
 			qdf_mutex_release(&hdd_ipa->event_lock);
-			if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx) &&
-			    (hdd_ipa->sap_num_connected_sta > 0) &&
-			    !hdd_ipa->sta_connected)
-				hdd_ipa_uc_offload_enable_disable(adapter,
-					SIR_STA_RX_DATA_OFFLOAD, 0);
 			goto end;
+		}
+
+		if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx) &&
+		    (hdd_ipa->sap_num_connected_sta > 0) &&
+		    !hdd_ipa->sta_connected) {
+			qdf_mutex_release(&hdd_ipa->event_lock);
+			hdd_ipa_uc_offload_enable_disable(adapter,
+				SIR_STA_RX_DATA_OFFLOAD, 1);
+			qdf_mutex_acquire(&hdd_ipa->event_lock);
 		}
 
 		vdev_to_iface[adapter->sessionId] =
 			((struct hdd_ipa_iface_context *)
 			(adapter->ipa_context))->iface_id;
 
-		qdf_mutex_release(&hdd_ipa->event_lock);
-
 		hdd_ipa->sta_connected = 1;
+
+		qdf_mutex_release(&hdd_ipa->event_lock);
 		break;
 
 	case WLAN_AP_CONNECT:
+		qdf_mutex_acquire(&hdd_ipa->event_lock);
+
 		/* For DFS channel we get two start_bss event (before and after
 		 * CAC). Also when ACS range includes both DFS and non DFS
 		 * channels, we could possibly change channel many times due to
 		 * RADAR detection and chosen channel may not be a DFS channels.
 		 * So dont return error here. Just discard the event.
 		 */
-		if (adapter->ipa_context)
+		if (adapter->ipa_context) {
+			qdf_mutex_release(&hdd_ipa->event_lock);
 			return 0;
+		}
 
-		if (hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx))
-			hdd_ipa_uc_offload_enable_disable(adapter,
-				SIR_AP_RX_DATA_OFFLOAD, 1);
-
-		qdf_mutex_acquire(&hdd_ipa->event_lock);
 		ret = hdd_ipa_setup_iface(hdd_ipa, adapter, sta_id);
 		if (ret) {
 			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
@@ -3849,6 +3838,13 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 				msg_ex->name, meta.msg_type);
 			qdf_mutex_release(&hdd_ipa->event_lock);
 			goto end;
+		}
+
+		if (hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx)) {
+			qdf_mutex_release(&hdd_ipa->event_lock);
+			hdd_ipa_uc_offload_enable_disable(adapter,
+				SIR_AP_RX_DATA_OFFLOAD, 1);
+			qdf_mutex_acquire(&hdd_ipa->event_lock);
 		}
 
 		vdev_to_iface[adapter->sessionId] =
@@ -3860,7 +3856,6 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 
 	case WLAN_STA_DISCONNECT:
 		qdf_mutex_acquire(&hdd_ipa->event_lock);
-		hdd_ipa_cleanup_iface(adapter->ipa_context);
 
 		if (!hdd_ipa->sta_connected) {
 			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
@@ -3886,24 +3881,29 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 
 		if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx) &&
 		    (hdd_ipa->sap_num_connected_sta > 0)) {
+			qdf_mutex_release(&hdd_ipa->event_lock);
 			hdd_ipa_uc_offload_enable_disable(adapter,
 				SIR_STA_RX_DATA_OFFLOAD, 0);
-			vdev_to_iface[adapter->sessionId] = HDD_IPA_MAX_IFACE;
+			qdf_mutex_acquire(&hdd_ipa->event_lock);
+			vdev_to_iface[adapter->sessionId] = CSR_ROAM_SESSION_MAX;
 		}
+
+		hdd_ipa_cleanup_iface(adapter->ipa_context);
 
 		qdf_mutex_release(&hdd_ipa->event_lock);
 		break;
 
 	case WLAN_AP_DISCONNECT:
+		qdf_mutex_acquire(&hdd_ipa->event_lock);
+
 		if (!adapter->ipa_context) {
 			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 				"%s: Evt: %d, SAP already disconnected",
 				msg_ex->name, meta.msg_type);
+			qdf_mutex_release(&hdd_ipa->event_lock);
 			return -EINVAL;
 		}
 
-		qdf_mutex_acquire(&hdd_ipa->event_lock);
-		hdd_ipa_cleanup_iface(adapter->ipa_context);
 		if ((!hdd_ipa->num_iface) &&
 			(HDD_IPA_UC_NUM_WDI_PIPE ==
 				hdd_ipa->activated_fw_pipe)) {
@@ -3923,18 +3923,19 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		}
 
 		if (hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx)) {
+			qdf_mutex_release(&hdd_ipa->event_lock);
 			hdd_ipa_uc_offload_enable_disable(adapter,
 				SIR_AP_RX_DATA_OFFLOAD, 0);
-			vdev_to_iface[adapter->sessionId] = HDD_IPA_MAX_IFACE;
+			qdf_mutex_acquire(&hdd_ipa->event_lock);
+			vdev_to_iface[adapter->sessionId] = CSR_ROAM_SESSION_MAX;
 		}
+
+		hdd_ipa_cleanup_iface(adapter->ipa_context);
 
 		qdf_mutex_release(&hdd_ipa->event_lock);
 		break;
 
 	case WLAN_CLIENT_CONNECT_EX:
-		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "%d %d",
-			    adapter->dev->ifindex, sta_id);
-
 		if (!hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx)) {
 			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 				"%s: Evt: %d, IPA UC OFFLOAD NOT ENABLED",
@@ -3945,37 +3946,43 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		qdf_mutex_acquire(&hdd_ipa->event_lock);
 		if (hdd_ipa_uc_find_add_assoc_sta(hdd_ipa,
 				true, sta_id)) {
+			qdf_mutex_release(&hdd_ipa->event_lock);
 			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 				"%s: STA ID %d found, not valid",
 				adapter->dev->name, sta_id);
-			qdf_mutex_release(&hdd_ipa->event_lock);
 			return 0;
 		}
 
 		/* Enable IPA UC Data PIPEs when first STA connected */
 		if (0 == hdd_ipa->sap_num_connected_sta) {
 			if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx) &&
-			    hdd_ipa->sta_connected)
+			    hdd_ipa->sta_connected) {
+				qdf_mutex_release(&hdd_ipa->event_lock);
 				hdd_ipa_uc_offload_enable_disable(
 					hdd_get_adapter(hdd_ipa->hdd_ctx,
 							QDF_STA_MODE),
 					SIR_STA_RX_DATA_OFFLOAD, 1);
+				qdf_mutex_acquire(&hdd_ipa->event_lock);
+			}
 
 			ret = hdd_ipa_uc_handle_first_con(hdd_ipa);
 			if (ret) {
-				qdf_mutex_release(&hdd_ipa->event_lock);
 				HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 					    "%s: handle 1st con ret %d",
 					    adapter->dev->name, ret);
 
 				if (hdd_ipa_uc_sta_is_enabled(
 					hdd_ipa->hdd_ctx) &&
-				    hdd_ipa->sta_connected)
+				    hdd_ipa->sta_connected) {
+					qdf_mutex_release(&hdd_ipa->event_lock);
 					hdd_ipa_uc_offload_enable_disable(
 						hdd_get_adapter(
 							hdd_ipa->hdd_ctx,
 							QDF_STA_MODE),
 						SIR_STA_RX_DATA_OFFLOAD, 0);
+				} else {
+					qdf_mutex_release(&hdd_ipa->event_lock);
+				}
 
 				return ret;
 			}
@@ -4045,13 +4052,15 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 			hdd_ipa_uc_handle_last_discon(hdd_ipa);
 
 		if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx) &&
-		    hdd_ipa->sta_connected)
+		    hdd_ipa->sta_connected) {
+			qdf_mutex_release(&hdd_ipa->event_lock);
 			hdd_ipa_uc_offload_enable_disable(
 				hdd_get_adapter(hdd_ipa->hdd_ctx,
 						QDF_STA_MODE),
 						SIR_STA_RX_DATA_OFFLOAD, 0);
-
-		qdf_mutex_release(&hdd_ipa->event_lock);
+		} else {
+			qdf_mutex_release(&hdd_ipa->event_lock);
+		}
 		break;
 
 	default:
@@ -4222,6 +4231,7 @@ QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
 		iface_context->adapter = NULL;
 		iface_context->offload_enabled = 0;
 		qdf_spinlock_create(&iface_context->interface_lock);
+		vdev_to_iface[i] = CSR_ROAM_SESSION_MAX;
 	}
 
 	INIT_WORK(&hdd_ipa->pm_work, hdd_ipa_pm_flush);
