@@ -266,20 +266,6 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		   (psessionEntry->limSmeState != eLIM_SME_WT_ASSOC_STATE) &&
 		   (psessionEntry->limSmeState != eLIM_SME_WT_REASSOC_STATE))) {
 		switch (reasonCode) {
-		case eSIR_MAC_UNSPEC_FAILURE_REASON:
-		case eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON:
-		case eSIR_MAC_DISASSOC_DUE_TO_DISABILITY_REASON:
-		case eSIR_MAC_CLASS2_FRAME_FROM_NON_AUTH_STA_REASON:
-		case eSIR_MAC_CLASS3_FRAME_FROM_NON_ASSOC_STA_REASON:
-		case eSIR_MAC_MIC_FAILURE_REASON:
-		case eSIR_MAC_4WAY_HANDSHAKE_TIMEOUT_REASON:
-		case eSIR_MAC_GR_KEY_UPDATE_TIMEOUT_REASON:
-		case eSIR_MAC_RSN_IE_MISMATCH_REASON:
-		case eSIR_MAC_1X_AUTH_FAILURE_REASON:
-		case eSIR_MAC_PREV_AUTH_NOT_VALID_REASON:
-			/* Valid reasonCode in received Disassociation frame */
-			break;
-
 		case eSIR_MAC_DEAUTH_LEAVING_BSS_REASON:
 		case eSIR_MAC_DISASSOC_LEAVING_BSS_REASON:
 			/* Valid reasonCode in received Disassociation frame */
@@ -297,15 +283,7 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 			break;
 
 		default:
-			/* Invalid reasonCode in received Disassociation frame */
-			/* Log error and ignore the frame */
-			PELOGE(lim_log(pMac, LOGE,
-				       FL
-					       ("received Disassoc frame with invalid reasonCode "
-					       "%d from " MAC_ADDRESS_STR), reasonCode,
-				       MAC_ADDR_ARRAY(pHdr->sa));
-			       )
-			return;
+			break;
 		}
 	} else {
 		/* Received Disassociation frame in either IBSS */
