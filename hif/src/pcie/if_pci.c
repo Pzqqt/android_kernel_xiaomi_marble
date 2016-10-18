@@ -3155,6 +3155,7 @@ static inline void hif_msm_pcie_debug_info(struct hif_pci_softc *sc)
 static inline void hif_msm_pcie_debug_info(struct hif_pci_softc *sc) {};
 #endif
 
+#ifndef QCA_WIFI_NAPIER_EMULATION
 /**
  * hif_log_soc_wakeup_timeout() - API to log PCIe and SOC Info
  * @sc: HIF PCIe Context
@@ -3219,6 +3220,7 @@ static int hif_log_soc_wakeup_timeout(struct hif_pci_softc *sc)
 	pld_is_pci_link_down(sc->dev);
 	return -EACCES;
 }
+#endif
 
 /*
  * For now, we use simple on-demand sleep/wake.
@@ -3259,12 +3261,12 @@ static int hif_log_soc_wakeup_timeout(struct hif_pci_softc *sc)
 int hif_pci_target_sleep_state_adjust(struct hif_softc *scn,
 			      bool sleep_ok, bool wait_for_it)
 {
+#ifndef QCA_WIFI_NAPIER_EMULATION
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	A_target_id_t pci_addr = scn->mem;
 	static int max_delay;
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 	static int debug;
-
 	if (scn->recovery)
 		return -EACCES;
 
@@ -3368,6 +3370,7 @@ int hif_pci_target_sleep_state_adjust(struct hif_softc *scn,
 				CE_WRAPPER_INTERRUPT_SUMMARY_ADDRESS));
 	}
 
+#endif
 	return 0;
 }
 
@@ -3634,7 +3637,9 @@ again:
 	hif_register_tbl_attach(ol_sc, hif_type);
 	hif_target_register_tbl_attach(ol_sc, target_type);
 
+#ifndef QCA_WIFI_NAPIER_EMULATION
 	ret = hif_pci_probe_tgt_wakeup(sc);
+#endif
 	if (ret < 0) {
 		HIF_ERROR("%s: ERROR - hif_pci_prob_wakeup error = %d",
 			   __func__, ret);
@@ -3654,7 +3659,9 @@ again:
 	}
 	ol_sc->mem_pa = sc->soc_pcie_bar0;
 
+#ifndef QCA_WIFI_QCA8074_VP
 	hif_target_sync(ol_sc);
+#endif
 
 	if (ADRASTEA_BU)
 		hif_vote_link_up(hif_hdl);
