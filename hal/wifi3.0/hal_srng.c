@@ -589,6 +589,22 @@ static inline void hal_srng_src_hw_init(struct hal_soc *hal,
 	uint32_t reg_val = 0;
 	uint64_t tp_addr = 0;
 
+	HIF_INFO("%s: hw_init srng %d", __func__, srng->ring_id);
+
+	if (srng->flags & HAL_SRNG_MSI_INTR) {
+		SRNG_SRC_REG_WRITE(srng, MSI1_BASE_LSB,
+			srng->msi_addr & 0xffffffff);
+		reg_val = SRNG_SM(SRNG_SRC_FLD(MSI1_BASE_MSB, ADDR),
+			(uint64_t)(srng->msi_addr) >> 32) |
+			SRNG_SM(SRNG_SRC_FLD(MSI1_BASE_MSB,
+			MSI1_ENABLE), 1);
+		SRNG_SRC_REG_WRITE(srng, MSI1_BASE_MSB, reg_val);
+		SRNG_SRC_REG_WRITE(srng, MSI1_DATA, srng->msi_data);
+	}
+
+	HIF_INFO("%s: hw_init srng (msi_end) %d", __func__, srng->ring_id);
+
+
 	SRNG_SRC_REG_WRITE(srng, BASE_LSB, srng->ring_base_paddr & 0xffffffff);
 	reg_val = SRNG_SM(SRNG_SRC_FLD(BASE_MSB, RING_BASE_ADDR_MSB),
 		((uint64_t)(srng->ring_base_paddr) >> 32)) |
@@ -639,17 +655,6 @@ static inline void hal_srng_src_hw_init(struct hal_soc *hal,
 
 	SRNG_SRC_REG_WRITE(srng, CONSUMER_INT_SETUP_IX1, reg_val);
 
-	if (srng->flags & HAL_SRNG_MSI_INTR) {
-		SRNG_SRC_REG_WRITE(srng, MSI1_BASE_LSB,
-			srng->msi_addr & 0xffffffff);
-		reg_val = SRNG_SM(SRNG_SRC_FLD(MSI1_BASE_MSB, ADDR),
-			(uint64_t)(srng->msi_addr) >> 32) |
-			SRNG_SM(SRNG_SRC_FLD(MSI1_BASE_MSB,
-			MSI1_ENABLE), 1);
-		SRNG_SRC_REG_WRITE(srng, MSI1_BASE_MSB, reg_val);
-		SRNG_SRC_REG_WRITE(srng, MSI1_DATA, srng->msi_data);
-	}
-
 	tp_addr = (uint64_t)(hal->shadow_rdptr_mem_paddr +
 		((unsigned long)(srng->u.src_ring.tp_addr) -
 		(unsigned long)(hal->shadow_rdptr_mem_vaddr)));
@@ -673,6 +678,21 @@ static inline void hal_srng_dst_hw_init(struct hal_soc *hal,
 {
 	uint32_t reg_val = 0;
 	uint64_t hp_addr = 0;
+
+	HIF_INFO("%s: hw_init srng %d", __func__, srng->ring_id);
+
+	if (srng->flags & HAL_SRNG_MSI_INTR) {
+		SRNG_DST_REG_WRITE(srng, MSI1_BASE_LSB,
+			srng->msi_addr & 0xffffffff);
+		reg_val = SRNG_SM(SRNG_DST_FLD(MSI1_BASE_MSB, ADDR),
+			(uint64_t)(srng->msi_addr) >> 32) |
+			SRNG_SM(SRNG_DST_FLD(MSI1_BASE_MSB,
+			MSI1_ENABLE), 1);
+		SRNG_DST_REG_WRITE(srng, MSI1_BASE_MSB, reg_val);
+		SRNG_DST_REG_WRITE(srng, MSI1_DATA, srng->msi_data);
+	}
+
+	HIF_INFO("%s: hw_init srng msi end %d", __func__, srng->ring_id);
 
 	SRNG_DST_REG_WRITE(srng, BASE_LSB, srng->ring_base_paddr & 0xffffffff);
 	reg_val = SRNG_SM(SRNG_DST_FLD(BASE_MSB, RING_BASE_ADDR_MSB),
@@ -712,19 +732,8 @@ static inline void hal_srng_dst_hw_init(struct hal_soc *hal,
 			srng->intr_batch_cntr_thres_entries *
 			srng->entry_size);
 	}
+
 	SRNG_DST_REG_WRITE(srng, PRODUCER_INT_SETUP, reg_val);
-
-	if (srng->flags & HAL_SRNG_MSI_INTR) {
-		SRNG_DST_REG_WRITE(srng, MSI1_BASE_LSB,
-			srng->msi_addr & 0xffffffff);
-		reg_val = SRNG_SM(SRNG_DST_FLD(MSI1_BASE_MSB, ADDR),
-			(uint64_t)(srng->msi_addr) >> 32) |
-			SRNG_SM(SRNG_DST_FLD(MSI1_BASE_MSB,
-			MSI1_ENABLE), 1);
-		SRNG_DST_REG_WRITE(srng, MSI1_BASE_MSB, reg_val);
-		SRNG_DST_REG_WRITE(srng, MSI1_DATA, srng->msi_data);
-	}
-
 	hp_addr = (uint64_t)(hal->shadow_rdptr_mem_paddr +
 		((unsigned long)(srng->u.dst_ring.hp_addr) -
 		(unsigned long)(hal->shadow_rdptr_mem_vaddr)));
