@@ -1665,10 +1665,10 @@ static uint8_t *wmi_id_to_name(uint32_t wmi_command)
 	return "Invalid WMI cmd";
 }
 
-static inline void wma_log_cmd_id(uint32_t cmd_id)
+static inline void wma_log_cmd_id(uint32_t cmd_id, uint32_t tag)
 {
-	WMI_LOGD("Send WMI command:%s command_id:%d",
-		 wmi_id_to_name(cmd_id), cmd_id);
+	WMI_LOGD("Send WMI command:%s command_id:%d htc_tag:%d\n",
+		 wmi_id_to_name(cmd_id), cmd_id, tag);
 }
 #else
 static uint8_t *wmi_id_to_name(uint32_t wmi_command)
@@ -1816,7 +1816,7 @@ QDF_STATUS wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf,
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(pkt, buf);
 #ifdef CONFIG_MCL
-	wma_log_cmd_id(cmd_id);
+	wma_log_cmd_id(cmd_id, htc_tag);
 #endif
 
 #ifdef WMI_INTERFACE_EVENT_LOGGING
