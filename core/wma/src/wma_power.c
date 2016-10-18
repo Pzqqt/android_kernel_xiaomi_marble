@@ -1896,7 +1896,7 @@ static void wma_set_vdev_resume_dtim(tp_wma_handle wma, uint8_t vdev_id)
 			ret = wma_unified_set_sta_ps_param(wma->wmi_handle,
 						vdev_id,
 						WMI_STA_PS_ENABLE_QPOWER,
-						1);
+						qpower_config);
 			if (QDF_IS_STATUS_ERROR(ret))
 				WMA_LOGE("Failed to enable Qpower in resume mode!");
 		}
