@@ -185,9 +185,9 @@ void csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 			descr = &scan_result->BssDescriptor;
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				  FL("Scan result: BSSID " MAC_ADDRESS_STR
-				     " (Rssi %ld, Ch:%d)"),
+				     " (Rssi %d, Ch:%d)"),
 				  MAC_ADDR_ARRAY(descr->bssId),
-				  abs(descr->rssi), descr->channelId);
+				  (int)abs(descr->rssi), descr->channelId);
 
 			if (!qdf_mem_cmp(descr->bssId,
 					n_roam_info->currAPbssid.bytes,

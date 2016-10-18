@@ -754,13 +754,15 @@ tlv_calc_event_freq_chirp(struct ath_dfs *dfs, struct rx_radar_status *rs,
 
 	DFS_DPRINTK(dfs, ATH_DEBUG_DFS_PHYERR | ATH_DEBUG_DFS_PHYERR_SUM,
 		    "%s: delta_peak=%d, pulse_duration=%d, bin_resolution=%d.%dKHz, "
-		    "radar_fft_long_period=%d, total_bw=%d.%ldKHz",
+		    "radar_fft_long_period=%d, total_bw=%d.%dKHz",
 		    __func__,
 		    delta_peak,
 		    pulse_duration,
 		    bin_resolution / 1000,
 		    bin_resolution % 1000,
-		    radar_fft_long_period, total_bw / 100, abs(total_bw % 100));
+		    radar_fft_long_period,
+		    total_bw / 100,
+		    (int)abs(total_bw % 100));
 
 	total_bw /= 100;        /* back to KHz */
 
