@@ -304,9 +304,12 @@ static int hdd_fill_ipv6_uc_addr(struct inet6_dev *idev,
 	struct list_head *p;
 	uint32_t scope;
 
+	read_lock_bh(&idev->lock);
 	list_for_each(p, &idev->addr_list) {
-		if (*count >= SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA)
+		if (*count >= SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA) {
+			read_unlock_bh(&idev->lock);
 			return -EINVAL;
+		}
 		ifa = list_entry(p, struct inet6_ifaddr, if_list);
 		if (ifa->flags & IFA_F_DADFAILED)
 			continue;
@@ -326,6 +329,8 @@ static int hdd_fill_ipv6_uc_addr(struct inet6_dev *idev,
 			hdd_err("The Scope %d is not supported", scope);
 		}
 	}
+
+	read_unlock_bh(&idev->lock);
 	return 0;
 }
 
@@ -347,9 +352,12 @@ static int hdd_fill_ipv6_ac_addr(struct inet6_dev *idev,
 	struct ifacaddr6 *ifaca;
 	uint32_t scope;
 
+	read_lock_bh(&idev->lock);
 	for (ifaca = idev->ac_list; ifaca; ifaca = ifaca->aca_next) {
-		if (*count >= SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA)
+		if (*count >= SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA) {
+			read_unlock_bh(&idev->lock);
 			return -EINVAL;
+		}
 		/* For anycast addr no DAD */
 		scope = ipv6_addr_src_scope(&ifaca->aca_addr);
 		switch (scope) {
@@ -367,6 +375,8 @@ static int hdd_fill_ipv6_ac_addr(struct inet6_dev *idev,
 			hdd_err("The Scope %d is not supported", scope);
 		}
 	}
+
+	read_unlock_bh(&idev->lock);
 	return 0;
 }
 
