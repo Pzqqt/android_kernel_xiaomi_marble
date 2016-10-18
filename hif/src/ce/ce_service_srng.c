@@ -592,7 +592,13 @@ void ce_srng_src_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 	ring_params.ring_base_paddr = src_ring->base_addr_CE_space;
 	ring_params.ring_base_vaddr = src_ring->base_addr_owner_space;
 	ring_params.num_entries = src_ring->nentries;
-	ring_params.intr_timer_thres_us = 4;
+	/*
+	 * The minimum increment for the timer is 8us
+	 * A default value of 0 disables the timer
+	 * A valid default value caused continuous interrupts to
+	 * fire with MSI enabled. Need to revisit usage of the timer
+	 */
+	ring_params.intr_timer_thres_us = 0;
 	ring_params.intr_batch_cntr_thres_entries = 1;
 
 	/* TODO
@@ -613,7 +619,7 @@ void ce_srng_dest_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 	ring_params.ring_base_paddr = dest_ring->base_addr_CE_space;
 	ring_params.ring_base_vaddr = dest_ring->base_addr_owner_space;
 	ring_params.num_entries = dest_ring->nentries;
-	ring_params.intr_timer_thres_us = 4;
+	ring_params.intr_timer_thres_us = 0;
 	ring_params.intr_batch_cntr_thres_entries = 1;
 
 	/* TODO
@@ -635,7 +641,7 @@ void ce_srng_status_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 	ring_params.ring_base_paddr = status_ring->base_addr_CE_space;
 	ring_params.ring_base_vaddr = status_ring->base_addr_owner_space;
 	ring_params.num_entries = status_ring->nentries;
-	ring_params.intr_timer_thres_us = 4;
+	ring_params.intr_timer_thres_us = 0;
 	ring_params.intr_batch_cntr_thres_entries = 1;
 
 	/* TODO
