@@ -80,6 +80,8 @@ typedef struct sp2pContext {
 	uint32_t probeRspIeLength;
 } tp2pContext, *tPp2pContext;
 
+QDF_STATUS sme_remain_on_chn_rsp(tpAniSirGlobal pMac, uint8_t *pMsg);
+QDF_STATUS sme_remain_on_chn_ready(tHalHandle hHal, uint8_t *pMsg);
 QDF_STATUS sme_remain_on_channel(tHalHandle hHal, uint8_t sessionId,
 		uint8_t channel, uint32_t duration,
 		remainOnChanCallback callback,

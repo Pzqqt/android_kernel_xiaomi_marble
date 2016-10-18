@@ -271,6 +271,8 @@ QDF_STATUS csr_create_roam_scan_channel_list(tpAniSirGlobal pMac,
 		const eCsrBand eBand);
 #endif
 
+QDF_STATUS p2p_process_remain_on_channel_cmd(tpAniSirGlobal pMac,
+					     tSmeCmd *p2pRemainonChn);
 ePhyChanBondState csr_convert_cb_ini_value_to_phy_cb_state(uint32_t cbIniValue);
 void active_list_cmd_timeout_handle(void *userData);
 void csr_process_set_dual_mac_config(tpAniSirGlobal mac, tSmeCmd *command);

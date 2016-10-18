@@ -73,10 +73,6 @@ extern QDF_STATUS pmc_prepare_command(tpAniSirGlobal pMac, uint32_t sessionId,
 				      uint32_t size, tSmeCmd **ppCmd);
 extern void pmc_release_command(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 extern void qos_release_command(tpAniSirGlobal pMac, tSmeCmd *pCommand);
-extern QDF_STATUS p2p_process_remain_on_channel_cmd(tpAniSirGlobal pMac,
-						    tSmeCmd *p2pRemainonChn);
-extern QDF_STATUS sme_remain_on_chn_rsp(tpAniSirGlobal pMac, uint8_t *pMsg);
-extern QDF_STATUS sme_remain_on_chn_ready(tHalHandle hHal, uint8_t *pMsg);
 
 static QDF_STATUS init_sme_cmd_list(tpAniSirGlobal pMac);
 static void sme_abort_command(tpAniSirGlobal pMac, tSmeCmd *pCommand,
