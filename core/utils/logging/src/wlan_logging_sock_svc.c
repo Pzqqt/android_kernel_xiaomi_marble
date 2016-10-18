@@ -314,7 +314,8 @@ static int wlan_add_user_log_radio_time_stamp(char *tbuf, size_t tbuf_sz,
 }
 #else
 /**
- * wlan_add_user_log_radio_time_stamp() - add radio and time stamp in log buffer
+ * wlan_add_user_log_radio_time_stamp() - add radio, firmware timestamp and
+ * logcat timestamp in log buffer
  * @tbuf: Pointer to time stamp buffer
  * @tbuf_sz: Time buffer size
  * @ts: Time stamp value
@@ -322,6 +323,9 @@ static int wlan_add_user_log_radio_time_stamp(char *tbuf, size_t tbuf_sz,
  *
  * For adrastea time stamp QTIMER raw tick which will be used by cnss_diag
  * to convert it into user visible time stamp
+ *
+ * Also add logcat timestamp so that driver logs and
+ * logcat logs can be co-related
  *
  * For discrete solution e.g rome use system tick and convert it into
  * seconds.milli seconds
@@ -334,13 +338,16 @@ static int wlan_add_user_log_radio_time_stamp(char *tbuf, size_t tbuf_sz,
 {
 	int tlen;
 	uint32_t rem;
+	char time_buf[20];
+
+	qdf_get_time_of_the_day_in_hr_min_sec_usec(time_buf, sizeof(time_buf));
 
 	rem = do_div(ts, QDF_MC_TIMER_TO_SEC_UNIT);
-	tlen = scnprintf(tbuf, tbuf_sz, "R%d: [%s][%lu.%06lu] ", radio,
+	tlen = scnprintf(tbuf, tbuf_sz, "R%d: [%.6s][%lu.%06lu] %s ", radio,
 			((in_irq() ? "irq" : in_softirq() ?  "soft_irq" :
 			current->comm)),
 			(unsigned long) ts,
-			(unsigned long)rem);
+			(unsigned long)rem, time_buf);
 	return tlen;
 }
 #endif
@@ -349,7 +356,7 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 {
 	/* Add the current time stamp */
 	char *ptr;
-	char tbuf[50];
+	char tbuf[60];
 	int tlen;
 	int total_log_len;
 	unsigned int *pfilled_length;
@@ -444,7 +451,7 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 	if (gwlan_logging.log_fe_to_console
 	    && ((QDF_TRACE_LEVEL_FATAL == log_level)
 		|| (QDF_TRACE_LEVEL_ERROR == log_level))) {
-		pr_info("%s\n", to_be_sent);
+		pr_info("%s %s\n", tbuf, to_be_sent);
 	}
 
 	return 0;

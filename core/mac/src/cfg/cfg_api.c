@@ -919,8 +919,6 @@ static void notify(tpAniSirGlobal pMac, uint16_t cfgId, uint32_t ntfMask)
 	mmhMsg.bodyval = (uint32_t) cfgId;
 	mmhMsg.bodyptr = NULL;
 
-	MTRACE(mac_trace_msg_tx(pMac, NO_SESSION, mmhMsg.type));
-
 	if ((ntfMask & CFG_CTL_NTF_SCH) != 0)
 		sch_post_message(pMac, &mmhMsg);
 
