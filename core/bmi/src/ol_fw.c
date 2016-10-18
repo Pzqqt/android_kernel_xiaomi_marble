@@ -527,7 +527,7 @@ void ramdump_work_handler(void *data)
 	}
 	tgt_info = hif_get_target_info_handle(ramdump_scn);
 	target_type = tgt_info->target_type;
-#ifdef DEBUG
+#ifdef WLAN_DEBUG
 	ret = hif_check_soc_status(ramdump_scn);
 	if (ret)
 		goto out_fail;
