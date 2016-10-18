@@ -3188,18 +3188,18 @@ int hdd_set_fw_params(hdd_adapter_t *adapter)
 				ret);
 			goto error;
 		}
+
+		ret = wma_cli_set_command(adapter->sessionId,
+					  WMI_VDEV_PARAM_ENABLE_RTSCTS,
+					  hdd_ctx->config->rts_profile,
+					  VDEV_CMD);
+		if (ret) {
+			hdd_err("FAILED TO SET RTSCTS Profile ret:%d", ret);
+			goto error;
+		}
 	}
 
 	hdd_set_fw_log_params(hdd_ctx, adapter);
-
-	ret = wma_cli_set_command(adapter->sessionId,
-				  WMI_VDEV_PARAM_ENABLE_RTSCTS,
-				  hdd_ctx->config->rts_profile,
-				  VDEV_CMD);
-	if (ret) {
-		hdd_err("FAILED TO SET RTSCTS Profile ret:%d", ret);
-		goto error;
-	}
 
 	EXIT();
 	return 0;
