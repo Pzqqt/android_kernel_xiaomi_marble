@@ -1574,3 +1574,34 @@ uint8_t *pld_common_get_wlan_mac_address(struct device *dev, uint32_t *num)
 	*num = 0;
 	return NULL;
 }
+
+/**
+ * pld_is_qmi_disable() - Check QMI support is present or not
+ * @dev: device
+ *
+ *  Return: 1 QMI is not supported
+ *          0 QMI is supported
+ *          Non zero failure code for errors
+ */
+int pld_is_qmi_disable(struct device *dev)
+{
+	int ret = 0;
+	enum pld_bus_type type = pld_get_bus_type(dev);
+
+	switch (type) {
+	case PLD_BUS_TYPE_SNOC:
+		ret = pld_snoc_is_qmi_disable();
+		break;
+	case PLD_BUS_TYPE_PCIE:
+	case PLD_BUS_TYPE_SDIO:
+		pr_err("Not supported on type %d\n", type);
+		ret = -EINVAL;
+		break;
+	default:
+		pr_err("Invalid device type %d\n", type);
+		ret = -EINVAL;
+		break;
+	}
+
+	return ret;
+}
