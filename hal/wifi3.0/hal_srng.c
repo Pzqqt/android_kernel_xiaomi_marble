@@ -540,7 +540,7 @@ void *hal_attach(void *hif_handle, qdf_device_t qdf_dev)
 	return (void *)hal;
 
 fail2:
-	qdf_mem_free_consistent(hal->qdf_dev, NULL,
+	qdf_mem_free_consistent(qdf_dev, qdf_dev->dev,
 		sizeof(*(hal->shadow_rdptr_mem_vaddr)) * HAL_SRNG_ID_MAX,
 		hal->shadow_rdptr_mem_vaddr, hal->shadow_rdptr_mem_paddr, 0);
 fail1:
@@ -564,10 +564,10 @@ extern void hal_detach(void *hal_soc)
 {
 	struct hal_soc *hal = (struct hal_soc *)hal_soc;
 
-	qdf_mem_free_consistent(hal->qdf_dev, NULL,
+	qdf_mem_free_consistent(hal->qdf_dev, hal->qdf_dev->dev,
 		sizeof(*(hal->shadow_rdptr_mem_vaddr)) * HAL_SRNG_ID_MAX,
 		hal->shadow_rdptr_mem_vaddr, hal->shadow_rdptr_mem_paddr, 0);
-	qdf_mem_free_consistent(hal->qdf_dev, NULL,
+	qdf_mem_free_consistent(hal->qdf_dev, hal->qdf_dev->dev,
 		sizeof(*(hal->shadow_wrptr_mem_vaddr)) * HAL_MAX_LMAC_RINGS,
 		hal->shadow_wrptr_mem_vaddr, hal->shadow_wrptr_mem_paddr, 0);
 	qdf_mem_free(hal);
