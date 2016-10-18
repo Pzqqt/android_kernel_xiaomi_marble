@@ -1567,7 +1567,6 @@ QDF_STATUS hdd_wlan_re_init(void)
 
 	pHddCtx->hdd_mcastbcast_filter_set = false;
 	pHddCtx->btCoexModeSet = false;
-	hdd_ssr_timer_del();
 
 	wlan_hdd_send_svc_nlink_msg(pHddCtx->radio_index,
 				WLAN_SVC_FW_CRASHED_IND, NULL, 0);
@@ -1618,6 +1617,7 @@ err_re_init:
 	return -EPERM;
 
 success:
+	hdd_ssr_timer_del();
 	return QDF_STATUS_SUCCESS;
 }
 
