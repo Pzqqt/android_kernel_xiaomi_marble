@@ -111,6 +111,30 @@ void hif_pci_route_adrastea_interrupt(struct hif_pci_softc *sc)
 }
 #endif
 
+
+#ifdef QCA_WIFI_NAPIER_EMULATION
+void __iomem *napier_emu_ioremap(struct pci_dev *dev,
+		int bar, unsigned long maxlen)
+{
+	resource_size_t start = pci_resource_start(dev, bar);
+	resource_size_t len = 0xD00000;
+	unsigned long flags = pci_resource_flags(dev, bar);
+
+	if (!len || !start)
+		return NULL;
+
+	if ((flags & IORESOURCE_IO) || (flags & IORESOURCE_MEM)) {
+		if (flags & IORESOURCE_CACHEABLE && !(flags & IORESOURCE_IO))
+			return ioremap(start, len);
+		else
+			return ioremap_nocache(start, len);
+	}
+
+	return NULL;
+}
+#endif
+
+
 /**
  * pci_dispatch_ce_irq() - pci_dispatch_ce_irq
  * @scn: scn
@@ -2171,12 +2195,19 @@ int hif_enable_pci(struct hif_pci_softc *sc,
 	pci_set_master(pdev);
 
 	/* Arrange for access to Target SoC registers. */
+#ifdef QCA_WIFI_NAPIER_EMULATION
+	mem = napier_emu_ioremap(pdev, BAR_NUM, 0);
+#else
 	mem = pci_iomap(pdev, BAR_NUM, 0);
+#endif
 	if (!mem) {
 		HIF_ERROR("%s: PCI iomap error", __func__);
 		ret = -EIO;
 		goto err_iomap;
 	}
+
+	pr_err("*****BAR is %p\n", mem);
+
 	sc->mem = mem;
 	sc->pdev = pdev;
 	sc->dev = &pdev->dev;
