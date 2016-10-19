@@ -43,6 +43,7 @@
    ------------------------------------------------------------------------*/
 #include <qdf_types.h>
 #include <qdf_status.h>
+#include <scheduler_api.h>
 
 /*--------------------------------------------------------------------------
    Preprocessor definitions and constants
@@ -57,7 +58,6 @@
    the cds Message Queues.
    \note This is mapped directly to the tSirMsgQ for backward
    compatibility with the legacy MAC code */
-
 typedef struct cds_msg_s {
 	uint16_t type;
 	/*
@@ -85,28 +85,10 @@ typedef struct cds_msg_s {
 
 } cds_msg_t;
 
-/*-------------------------------------------------------------------------
-   Function declarations and documenation
-   ------------------------------------------------------------------------*/
-
-/* Message Queue IDs */
-typedef enum {
-	/* Message Queue ID for messages bound for SME */
-	CDS_MQ_ID_SME = QDF_MODULE_ID_SME,
-
-	/* Message Queue ID for messages bound for PE */
-	CDS_MQ_ID_PE = QDF_MODULE_ID_PE,
-
-	/* Message Queue ID for messages bound for WMA */
-	CDS_MQ_ID_WMA = QDF_MODULE_ID_WMA,
-
-	/* Message Queue ID for messages bound for the SYS module */
-	CDS_MQ_ID_SYS = QDF_MODULE_ID_SYS,
-
-} CDS_MQ_ID;
-
 #define HIGH_PRIORITY 1
 #define LOW_PRIORITY 0
+
+#ifndef NAPIER_CODE
 QDF_STATUS cds_mq_post_message_by_priority(CDS_MQ_ID msg_queue_id,
 					   cds_msg_t *message,
 					   int is_high_priority);
@@ -133,6 +115,12 @@ static inline QDF_STATUS cds_mq_post_message(CDS_MQ_ID msg_queue_id,
 	return cds_mq_post_message_by_priority(msg_queue_id, message,
 						LOW_PRIORITY);
 }
+#else
+#define cds_mq_post_message_by_priority(_x, _y, _z) \
+	scheduler_post_msg_by_priority((_x), ((struct scheduler_msg *)_y), (_z))
+#define cds_mq_post_message(_x, _y) \
+	scheduler_post_msg((_x), ((struct scheduler_msg *)_y))
+#endif
 
 /**---------------------------------------------------------------------------
 

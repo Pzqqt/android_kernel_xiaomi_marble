@@ -37,13 +37,6 @@
 #include "mac_init_api.h"
 #include "qdf_trace.h"
 
-/*
- * Cookie for SYS messages.  Note that anyone posting a SYS Message
- * has to write the COOKIE in the reserved field of the message.  The
- * SYS Module relies on this COOKIE
- */
-#define SYS_MSG_COOKIE      0xFACE
-
 /* SYS stop timeout 30 seconds */
 #define SYS_STOP_TIMEOUT (30000)
 static qdf_event_t g_stop_evt;
@@ -141,7 +134,6 @@ QDF_STATUS sys_stop(v_CONTEXT_t p_cds_context)
 QDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, cds_msg_t *pMsg)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	qdf_mc_timer_callback_t timerCB;
 	tpAniSirGlobal mac_ctx;
 	void *hHal;
 
@@ -208,12 +200,6 @@ QDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, cds_msg_t *pMsg)
 				pMsg->type, pMsg->type);
 			break;
 
-		case SYS_MSG_ID_MC_TIMER:
-			timerCB = pMsg->callback;
-			if (NULL != timerCB)
-				timerCB(pMsg->bodyptr);
-			break;
-
 		case SYS_MSG_ID_FTM_RSP:
 			hHal = cds_get_context(QDF_MODULE_ID_PE);
 			if (NULL == hHal) {
@@ -263,6 +249,20 @@ QDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, cds_msg_t *pMsg)
 	}
 	return qdf_status;
 }
+
+#ifdef NAPIER_CODE
+QDF_STATUS sys_mc_process_handler(struct scheduler_msg *msg)
+{
+	void *cds_ctx = cds_get_global_context();
+
+	if (cds_ctx == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
+			"CDS context is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	return sys_mc_process_msg(cds_ctx, (cds_msg_t *)msg);
+}
+#endif
 
 /**
  * sys_process_mmh_msg() - this api to process mmh message

@@ -988,6 +988,23 @@ tSirRetStatus pe_process_messages(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
 	return eSIR_SUCCESS;
 }
 
+#ifdef NAPIER_CODE
+QDF_STATUS pe_mc_process_handler(struct scheduler_msg *msg)
+{
+	tSirRetStatus status;
+	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+
+	if (mac_ctx == NULL)
+		return QDF_STATUS_E_FAILURE;
+
+	status = pe_process_messages((tHalHandle)mac_ctx, (tSirMsgQ *)msg);
+	if (status == eSIR_SUCCESS)
+		return QDF_STATUS_SUCCESS;
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+
 /* --------------------------------------------------------------------------- */
 /**
  * pe_handle_mgmt_frame

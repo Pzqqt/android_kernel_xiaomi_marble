@@ -6888,6 +6888,20 @@ end:
 	return qdf_status;
 }
 
+#ifdef NAPIER_CODE
+QDF_STATUS wma_mc_process_handler(struct scheduler_msg *msg)
+{
+	void *cds_ctx = cds_get_global_context();
+
+	if (cds_ctx == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
+			"CDS context is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	return wma_mc_process_msg(cds_ctx, (cds_msg_t *)msg);
+}
+#endif
+
 /**
  * wma_log_completion_timeout() - Log completion timeout
  * @data: Timeout handler data

@@ -50,6 +50,8 @@
 
 #include "sme_rrm_internal.h"
 #include "sir_types.h"
+#include "scheduler_api.h"
+
 /*--------------------------------------------------------------------------
   Preprocessor definitions and constants
   ------------------------------------------------------------------------*/
@@ -238,6 +240,9 @@ QDF_STATUS sme_get_soft_ap_domain(tHalHandle hHal,
 QDF_STATUS sme_set_reg_info(tHalHandle hHal, uint8_t *apCntryCode);
 QDF_STATUS sme_hdd_ready_ind(tHalHandle hHal);
 QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg);
+#ifdef NAPIER_CODE
+QDF_STATUS sme_mc_process_handler(struct scheduler_msg *msg);
+#endif
 void sme_free_msg(tHalHandle hHal, cds_msg_t *pMsg);
 QDF_STATUS sme_scan_request(tHalHandle hHal, uint8_t sessionId,
 		tCsrScanRequest *, csr_scan_completeCallback callback,

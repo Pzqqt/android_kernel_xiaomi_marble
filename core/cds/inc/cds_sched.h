@@ -53,12 +53,16 @@
 
 #define TX_POST_EVENT_MASK               0x001
 #define TX_SUSPEND_EVENT_MASK            0x002
+#ifndef NAPIER_CODE
 #define MC_POST_EVENT_MASK               0x001
 #define MC_SUSPEND_EVENT_MASK            0x002
+#endif
 #define RX_POST_EVENT_MASK               0x001
 #define RX_SUSPEND_EVENT_MASK            0x002
 #define TX_SHUTDOWN_EVENT_MASK           0x010
+#ifndef NAPIER_CODE
 #define MC_SHUTDOWN_EVENT_MASK           0x010
+#endif
 #define RX_SHUTDOWN_EVENT_MASK           0x010
 #define WD_POST_EVENT_MASK               0x001
 #define WD_SHUTDOWN_EVENT_MASK           0x002
@@ -76,7 +80,11 @@
  *
  * Increased to 8000 to handle more RX frames
  */
+#ifndef NAPIER_CODE
 #define CDS_CORE_MAX_MESSAGES 8000
+#else
+#define CDS_CORE_MAX_MESSAGES 1000
+#endif
 
 #ifdef QCA_CONFIG_SMP
 /*
@@ -131,6 +139,7 @@ struct cds_ol_rx_pkt {
 typedef struct _cds_sched_context {
 	/* Place holder to the CDS Context */
 	void *pVContext;
+#ifndef NAPIER_CODE
 	/* WMA Message queue on the Main thread */
 	cds_mq_type wmaMcMq;
 
@@ -161,6 +170,7 @@ typedef struct _cds_sched_context {
 
 	/* lock to make sure that McThread suspend/resume mechanism is in sync */
 	spinlock_t McThreadLock;
+#endif
 #ifdef QCA_CONFIG_SMP
 	spinlock_t ol_rx_thread_lock;
 

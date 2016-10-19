@@ -732,8 +732,7 @@ CDS_OBJS :=	$(CDS_SRC_DIR)/cds_api.o \
 		$(CDS_SRC_DIR)/cds_regdomain.o \
 		$(CDS_SRC_DIR)/cds_sched.o \
 		$(CDS_SRC_DIR)/cds_concurrency.o \
-		$(CDS_SRC_DIR)/cds_utils.o \
-		$(CDS_SRC_DIR)/cds_mc_timer.o
+		$(CDS_SRC_DIR)/cds_utils.o
 
 
 ########### BMI ###########
@@ -1310,6 +1309,10 @@ endif
 ifeq ($(CONFIG_WLAN_FEATURE_11W),y)
 CDEFINES += -DWLAN_FEATURE_11W
 endif
+
+#common scheduler changes are enabled using this macro
+#This needs to be cleaned up once WIN and MCL changes ready
+CDEFINES += -DNAPIER_CODE
 
 ifeq ($(CONFIG_QCA_TXDESC_SANITY_CHECKS), 1)
 CDEFINES += -DQCA_SUPPORT_TXDESC_SANITY_CHECKS

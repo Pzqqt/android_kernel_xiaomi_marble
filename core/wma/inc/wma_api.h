@@ -40,6 +40,7 @@
 #include "lim_global.h"
 #include "cds_concurrency.h"
 #include "cds_utils.h"
+#include "scheduler_api.h"
 
 typedef void *WMA_HANDLE;
 
@@ -106,6 +107,10 @@ typedef void (*wma_peer_authorized_fp) (uint32_t vdev_id);
 QDF_STATUS wma_pre_start(void *cds_context);
 
 QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg);
+
+#ifdef NAPIER_CODE
+QDF_STATUS wma_mc_process_handler(struct scheduler_msg *msg);
+#endif
 
 QDF_STATUS wma_start(void *cds_context);
 

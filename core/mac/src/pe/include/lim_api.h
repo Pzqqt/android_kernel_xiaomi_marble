@@ -49,6 +49,7 @@
 #include "lim_global.h"
 #include "wma_if.h"
 #include "wma_types.h"
+#include "scheduler_api.h"
 
 /* Macro to count heartbeat */
 #define limResetHBPktCount(psessionEntry)   (psessionEntry->LimRxedBeaconCntDuringHB = 0)
@@ -275,6 +276,10 @@ static inline void lim_get_rf_band_new(tpAniSirGlobal pMac, tSirRFBand *band,
 
    --------------------------------------------------------------------------*/
 tSirRetStatus pe_process_messages(tpAniSirGlobal pMac, tSirMsgQ *pMsg);
+#ifdef NAPIER_CODE
+QDF_STATUS pe_mc_process_handler(struct scheduler_msg *msg);
+#endif
+
 /** -------------------------------------------------------------
    \fn pe_free_msg
    \brief Called by CDS scheduler (function cds_sched_flush_mc_mqs)

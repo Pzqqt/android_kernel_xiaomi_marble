@@ -88,8 +88,9 @@ enum notifier_state {
 
 
 static p_cds_sched_context gp_cds_sched_context;
-
+#ifndef NAPIER_CODE
 static int cds_mc_thread(void *Arg);
+#endif
 #ifdef QCA_CONFIG_SMP
 static int cds_ol_rx_thread(void *arg);
 static unsigned long affine_cpu;
@@ -469,7 +470,10 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 		p_cds_sched_context pSchedContext,
 		uint32_t SchedCtxSize)
 {
+#ifndef NAPIER_CODE
 	QDF_STATUS vStatus = QDF_STATUS_SUCCESS;
+#endif
+
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: Opening the CDS Scheduler", __func__);
 	/* Sanity checks */
@@ -486,6 +490,7 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 	}
 	qdf_mem_zero(pSchedContext, sizeof(cds_sched_context));
 	pSchedContext->pVContext = p_cds_context;
+#ifndef NAPIER_CODE
 	vStatus = cds_sched_init_mqs(pSchedContext);
 	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
@@ -499,14 +504,11 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 	init_completion(&pSchedContext->ResumeMcEvent);
 
 	spin_lock_init(&pSchedContext->McThreadLock);
-#ifdef QCA_CONFIG_SMP
-	spin_lock_init(&pSchedContext->ol_rx_thread_lock);
-#endif
-
 	init_waitqueue_head(&pSchedContext->mcWaitQueue);
 	pSchedContext->mcEventFlag = 0;
-
+#endif
 #ifdef QCA_CONFIG_SMP
+	spin_lock_init(&pSchedContext->ol_rx_thread_lock);
 	init_waitqueue_head(&pSchedContext->ol_rx_wait_queue);
 	init_completion(&pSchedContext->ol_rx_start_event);
 	init_completion(&pSchedContext->ol_suspend_rx_event);
@@ -528,6 +530,7 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 #endif
 	gp_cds_sched_context = pSchedContext;
 
+#ifndef NAPIER_CODE
 	/* Create the CDS Main Controller thread */
 	pSchedContext->McThread = kthread_create(cds_mc_thread, pSchedContext,
 						 "cds_mc_thread");
@@ -540,7 +543,14 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 	wake_up_process(pSchedContext->McThread);
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: CDS Main Controller thread Created", __func__);
-
+	/*
+	 * Now make sure all threads have started before we exit.
+	 * Each thread should normally ACK back when it starts.
+	 */
+	wait_for_completion_interruptible(&pSchedContext->McStartEvent);
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
+		  "%s: CDS MC Thread has started", __func__);
+#endif
 #ifdef QCA_CONFIG_SMP
 	pSchedContext->ol_rx_thread = kthread_create(cds_ol_rx_thread,
 						       pSchedContext,
@@ -556,15 +566,6 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 	wake_up_process(pSchedContext->ol_rx_thread);
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
 		  ("CDS OL RX thread Created"));
-#endif
-	/*
-	 * Now make sure all threads have started before we exit.
-	 * Each thread should normally ACK back when it starts.
-	 */
-	wait_for_completion_interruptible(&pSchedContext->McStartEvent);
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s: CDS MC Thread has started", __func__);
-#ifdef QCA_CONFIG_SMP
 	wait_for_completion_interruptible(&pSchedContext->ol_rx_start_event);
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: CDS OL Rx Thread has started", __func__);
@@ -576,6 +577,7 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 
 #ifdef QCA_CONFIG_SMP
 OL_RX_THREAD_START_FAILURE:
+#ifndef NAPIER_CODE
 	/* Try and force the Main thread controller to exit */
 	set_bit(MC_SHUTDOWN_EVENT_MASK, &pSchedContext->mcEventFlag);
 	set_bit(MC_POST_EVENT_MASK, &pSchedContext->mcEventFlag);
@@ -583,21 +585,29 @@ OL_RX_THREAD_START_FAILURE:
 	/* Wait for MC to exit */
 	wait_for_completion_interruptible(&pSchedContext->McShutdown);
 #endif
+#endif
 
+#ifndef NAPIER_CODE
 MC_THREAD_START_FAILURE:
+	/* De-initialize all the message queues */
+	cds_sched_deinit_mqs(pSchedContext);
+#endif
 
 #ifdef QCA_CONFIG_SMP
 	unregister_hotcpu_notifier(&cds_cpu_hotplug_notifier);
 	cds_free_ol_rx_pkt_freeq(gp_cds_sched_context);
 pkt_freeqalloc_failure:
 #endif
+#ifndef NAPIER_CODE
 	/* De-initialize all the message queues */
 	cds_sched_deinit_mqs(pSchedContext);
+#endif
 
 	return QDF_STATUS_E_RESOURCES;
 
 } /* cds_sched_open() */
 
+#ifndef NAPIER_CODE
 /**
  * cds_mc_thread() - cds main controller thread execution handler
  * @Arg: Pointer to the global CDS Sched Context
@@ -845,6 +855,7 @@ static int cds_mc_thread(void *Arg)
 		  "%s: MC Thread exiting!!!!", __func__);
 	complete_and_exit(&pSchedContext->McShutdown, 0);
 } /* cds_mc_thread() */
+#endif
 
 #ifdef QCA_CONFIG_SMP
 /**
@@ -1165,6 +1176,9 @@ QDF_STATUS cds_sched_close(void *p_cds_context)
 			  "%s: gp_cds_sched_context == NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
+
+#ifndef NAPIER_CODE
+
 	/* shut down MC Thread */
 	set_bit(MC_SHUTDOWN_EVENT_MASK, &gp_cds_sched_context->mcEventFlag);
 	set_bit(MC_POST_EVENT_MASK, &gp_cds_sched_context->mcEventFlag);
@@ -1178,6 +1192,7 @@ QDF_STATUS cds_sched_close(void *p_cds_context)
 
 	/* Deinit all the queues */
 	cds_sched_deinit_mqs(gp_cds_sched_context);
+#endif
 
 #ifdef QCA_CONFIG_SMP
 	/* Shut down Tlshim Rx thread */
@@ -1193,6 +1208,8 @@ QDF_STATUS cds_sched_close(void *p_cds_context)
 #endif
 	return QDF_STATUS_SUCCESS;
 } /* cds_sched_close() */
+
+#ifndef NAPIER_CODE
 
 /**
  * cds_sched_init_mqs() - initialize the cds scheduler message queues
@@ -1353,6 +1370,8 @@ void cds_sched_flush_mc_mqs(p_cds_sched_context pSchedContext)
 		cds_core_return_msg(pSchedContext->pVContext, pMsgWrapper);
 	}
 } /* cds_sched_flush_mc_mqs() */
+
+#endif
 
 /**
  * get_cds_sched_ctxt() - get cds scheduler context

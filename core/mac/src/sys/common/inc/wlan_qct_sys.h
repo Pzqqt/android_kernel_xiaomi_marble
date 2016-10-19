@@ -44,6 +44,7 @@
 #include <qdf_types.h>
 #include <qdf_status.h>
 #include <cds_mq.h>
+#include <scheduler_api.h>
 
 /*---------------------------------------------------------------------------
    Preprocessor definitions and constants
@@ -69,16 +70,6 @@
 
    --------------------------------------------------------------------------*/
 typedef void (*sysResponseCback)(void *pUserData);
-
-typedef enum {
-	SYS_MSG_ID_MC_START,
-	SYS_MSG_ID_MC_THR_PROBE,
-	SYS_MSG_ID_MC_TIMER,
-	SYS_MSG_ID_MC_STOP,
-	SYS_MSG_ID_FTM_RSP,
-	SYS_MSG_ID_QVIT,
-
-} SYS_MSG_ID;
 
 /*---------------------------------------------------------------------------
    Preprocessor definitions and constants
@@ -189,6 +180,9 @@ QDF_STATUS sys_stop(v_CONTEXT_t p_cds_context);
 
    --------------------------------------------------------------------------*/
 QDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, cds_msg_t *pMsg);
+#ifdef NAPIER_CODE
+QDF_STATUS sys_mc_process_handler(struct scheduler_msg *msg);
+#endif
 
 void wlan_sys_probe(void);
 

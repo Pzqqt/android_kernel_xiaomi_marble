@@ -74,8 +74,10 @@ static cds_context_type g_cds_context;
 static p_cds_contextType gp_cds_context;
 static struct __qdf_device g_qdf_ctx;
 
+#ifndef NAPIER_CODE
 /* Debug variable to detect MC thread stuck */
 static atomic_t cds_wrapper_empty_count;
+#endif
 
 static uint8_t cds_multicast_logging;
 
@@ -216,6 +218,55 @@ static void cds_cdp_cfg_attach(struct cds_config_info *cds_cfg)
 	cdp_cfg_set_packet_log_enabled(soc, gp_cds_context->cfg_ctx,
 		(uint8_t)cds_is_packet_log_enabled());
 }
+#ifdef NAPIER_CODE
+static QDF_STATUS cds_register_all_modules(void)
+{
+	QDF_STATUS status;
+
+	scheduler_register_wma_legacy_handler(&wma_mc_process_handler);
+	scheduler_register_sys_legacy_handler(&sys_mc_process_handler);
+
+	/* Register message queues in given order such that queue priority is
+	 * intact:
+	 * 1) QDF_MODULE_ID_SYS: Timer queue(legacy SYS queue)
+	 * 2) QDF_MODULE_ID_TARGET_IF: Target interface queue
+	 * 3) QDF_MODULE_ID_PE: Legacy PE message queue
+	 * 4) QDF_MODULE_ID_SME: Legacy SME message queue
+	 * 5) QDF_MODULE_ID_OS_IF: OS IF message queue for new components
+	 */
+	status = scheduler_register_module(QDF_MODULE_ID_SYS,
+					&scheduler_timer_q_mq_handler);
+	status = scheduler_register_module(QDF_MODULE_ID_TARGET_IF,
+					&scheduler_target_if_mq_handler);
+	status = scheduler_register_module(QDF_MODULE_ID_PE,
+					&pe_mc_process_handler);
+	status = scheduler_register_module(QDF_MODULE_ID_SME,
+					&sme_mc_process_handler);
+	status = scheduler_register_module(QDF_MODULE_ID_OS_IF,
+					&scheduler_os_if_mq_handler);
+	return status;
+}
+
+static QDF_STATUS cds_deregister_all_modules(void)
+{
+	QDF_STATUS status;
+	status = scheduler_deregister_module(QDF_MODULE_ID_SYS);
+	status = scheduler_deregister_module(QDF_MODULE_ID_WMA);
+	status = scheduler_deregister_module(QDF_MODULE_ID_PE);
+	status = scheduler_deregister_module(QDF_MODULE_ID_SME);
+	status = scheduler_deregister_module(QDF_MODULE_ID_OS_IF);
+	return status;
+}
+#else
+static QDF_STATUS cds_register_all_modules(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+static QDF_STATUS cds_deregister_all_modules(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * cds_open() - open the CDS Module
@@ -472,6 +523,7 @@ QDF_STATUS cds_open(void)
 	gp_cds_context->cdp_update_mac_id = cdp_update_mac_id;
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: CDS successfully Opened", __func__);
+	cds_register_all_modules();
 
 	dispatcher_psoc_open();
 
@@ -970,8 +1022,9 @@ QDF_STATUS cds_close(v_CONTEXT_t cds_context)
 	cds_deinit_ini_config();
 	qdf_timer_module_deinit();
 
-	dispatcher_psoc_close();
+	cds_deregister_all_modules();
 
+	dispatcher_psoc_close();
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1409,6 +1462,7 @@ QDF_STATUS cds_free_context(void *p_cds_context, QDF_MODULE_ID moduleID,
 	return QDF_STATUS_SUCCESS;
 } /* cds_free_context() */
 
+#ifndef NAPIER_CODE
 /**
  * cds_mq_post_message_by_priority() - posts message using priority
  * to message queue
@@ -1518,6 +1572,7 @@ QDF_STATUS cds_mq_post_message_by_priority(CDS_MQ_ID msgQueueId,
 
 	return QDF_STATUS_SUCCESS;
 } /* cds_mq_post_message() */
+#endif
 
 /**
  * cds_sys_probe_thread_cback() -  probe mc thread callback

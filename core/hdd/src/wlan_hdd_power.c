@@ -77,6 +77,7 @@
 #include "pld_common.h"
 #include "wlan_hdd_driver_ops.h"
 #include <wlan_logging_sock_svc.h>
+#include "scheduler_api.h"
 
 /* Preprocessor definitions and constants */
 #define HDD_SSR_BRING_UP_TIME 30000
@@ -1479,7 +1480,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 
 	/* Wakeup all driver threads */
 	if (true == pHddCtx->isMcThreadSuspended) {
-		complete(&cds_sched_context->ResumeMcEvent);
+		scheduler_resume_complete();
 		pHddCtx->isMcThreadSuspended = false;
 	}
 #ifdef QCA_CONFIG_SMP
@@ -1757,7 +1758,7 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 
 	/* Resume MC thread */
 	if (pHddCtx->isMcThreadSuspended) {
-		complete(&cds_sched_context->ResumeMcEvent);
+		scheduler_resume_complete();
 		pHddCtx->isMcThreadSuspended = false;
 	}
 #ifdef QCA_CONFIG_SMP
@@ -1851,6 +1852,19 @@ int wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 	cds_ssr_unprotect(__func__);
 
 	return ret;
+}
+
+static void hdd_suspend_cb(void)
+{
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return;
+	}
+
+	complete(&hdd_ctx->mc_sus_event_var);
 }
 
 /**
@@ -2004,15 +2018,15 @@ next_adapter:
 	}
 
 	/* Suspend MC thread */
-	set_bit(MC_SUSPEND_EVENT_MASK, &cds_sched_context->mcEventFlag);
-	wake_up_interruptible(&cds_sched_context->mcWaitQueue);
+	scheduler_register_hdd_suspend_callback(hdd_suspend_cb);
+	scheduler_set_event_mask(MC_SUSPEND_EVENT_MASK);
+	scheduler_wake_up_controller_thread();
 
 	/* Wait for suspend confirmation from MC thread */
 	rc = wait_for_completion_timeout(&pHddCtx->mc_sus_event_var,
 		msecs_to_jiffies(WLAN_WAIT_TIME_MCTHREAD_SUSPEND));
 	if (!rc) {
-		clear_bit(MC_SUSPEND_EVENT_MASK,
-			  &cds_sched_context->mcEventFlag);
+		scheduler_clear_event_mask(MC_SUSPEND_EVENT_MASK);
 		hdd_err("Failed to stop mc thread");
 		goto resume_tx;
 	}
@@ -2048,7 +2062,7 @@ next_adapter:
 #ifdef QCA_CONFIG_SMP
 resume_all:
 
-	complete(&cds_sched_context->ResumeMcEvent);
+	scheduler_resume_complete();
 	pHddCtx->isMcThreadSuspended = false;
 #endif
 
