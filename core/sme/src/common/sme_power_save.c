@@ -313,7 +313,6 @@ static QDF_STATUS sme_ps_enter_wowl_req_params(tpAniSirGlobal mac_ctx,
 			FL("Fail to allocate memory for Enter Wowl Request"));
 		return  QDF_STATUS_E_NOMEM;
 	}
-	qdf_mem_set((uint8_t *) hal_wowl_params, sizeof(*hal_wowl_params), 0);
 
 	/* fill in the message field */
 	hal_wowl_params->ucMagicPktEnable = sme_wowl_params->ucMagicPktEnable;
@@ -421,8 +420,6 @@ static QDF_STATUS sme_ps_exit_wowl_req_params(tpAniSirGlobal mac_ctx,
 			FL("Fail to allocate memory for WoWLAN Add Bcast Pattern "));
 		return  QDF_STATUS_E_NOMEM;
 	}
-	qdf_mem_set((uint8_t *) hal_wowl_msg,
-			sizeof(*hal_wowl_msg), 0);
 	hal_wowl_msg->sessionId = session_id;
 
 	if (QDF_STATUS_SUCCESS == sme_post_ps_msg_to_wma(WMA_WOWL_EXIT_REQ,

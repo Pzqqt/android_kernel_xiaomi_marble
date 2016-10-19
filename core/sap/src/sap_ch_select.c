@@ -574,9 +574,6 @@ static bool sap_chan_sel_init(tHalHandle halHandle,
 		return eSAP_FALSE;
 	}
 
-	qdf_mem_zero(pSpectCh,
-		     (pSpectInfoParams->numSpectChans) * sizeof(*pSpectCh));
-
 	/* Initialize the pointers in the DfsParams to the allocated memory */
 	pSpectInfoParams->pSpectCh = pSpectCh;
 

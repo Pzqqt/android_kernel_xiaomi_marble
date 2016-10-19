@@ -195,7 +195,6 @@ sme_rrm_send_beacon_report_xmit_ind(tpAniSirGlobal mac_ctx,
 				"Unable to allocate memory for beacon report");
 			return QDF_STATUS_E_NOMEM;
 		}
-		qdf_mem_zero(beacon_rep, length);
 		beacon_rep->messageType = eWNI_SME_BEACON_REPORT_RESP_XMIT_IND;
 		beacon_rep->length = length;
 		beacon_rep->uDialogToken = rrm_ctx->token;
@@ -216,7 +215,6 @@ sme_rrm_send_beacon_report_xmit_ind(tpAniSirGlobal mac_ctx,
 			if (NULL ==
 				beacon_rep->pBssDescription[i])
 				break;
-			qdf_mem_zero(beacon_rep->pBssDescription[i], tot_len);
 			qdf_mem_copy(beacon_rep->pBssDescription[i],
 				bss_desc, sizeof(tSirBssDescription));
 			qdf_mem_copy(
@@ -446,7 +444,6 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 			sms_log(mac_ctx, LOGP, FL("qdf_mem_malloc failed"));
 			return QDF_STATUS_E_NOMEM;
 		}
-		qdf_mem_zero(filter.SSIDs.SSIDList, sizeof(tCsrSSIDInfo));
 
 		filter.SSIDs.SSIDList->SSID.length =
 			rrm_ctx->ssId.length;
@@ -535,7 +532,6 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 		sms_log(mac_ctx, LOG1, "Scan res timer:%lu, rrm scan timer:%llu",
 				scan_results->timer, rrm_scan_timer);
 		if (scan_results->timer >= rrm_scan_timer) {
-			qdf_mem_zero(roam_info, sizeof(*roam_info));
 			roam_info->pBssDesc = &scan_results->BssDescriptor;
 			csr_roam_call_callback(mac_ctx, session_id, roam_info,
 						0, eCSR_ROAM_UPDATE_SCAN_RESULT,
@@ -692,8 +688,6 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 					FL("qdf_mem_malloc failed"));
 				return QDF_STATUS_E_NOMEM;
 			}
-			qdf_mem_zero(scan_req.SSIDs.SSIDList,
-					sizeof(tCsrSSIDInfo));
 			scan_req.SSIDs.SSIDList->SSID.length =
 				sme_rrm_ctx->ssId.length;
 			qdf_mem_copy(scan_req.SSIDs.SSIDList->SSID.ssId,
@@ -952,7 +946,6 @@ QDF_STATUS sme_rrm_neighbor_report_request(tpAniSirGlobal pMac, uint8_t sessionI
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	qdf_mem_zero(pMsg, sizeof(tSirNeighborReportReqInd));
 	rrm_ll_purge_neighbor_cache(pMac,
 			    &pMac->rrm.rrmSmeContext.neighborReportCache);
 
@@ -1183,8 +1176,6 @@ static QDF_STATUS sme_rrm_process_neighbor_report(tpAniSirGlobal pMac,
 
 		}
 
-		qdf_mem_zero(pNeighborReportDesc,
-			     sizeof(tRrmNeighborReportDesc));
 		pNeighborReportDesc->pNeighborBssDescription =
 			qdf_mem_malloc(sizeof(tSirNeighborBssDescription));
 		if (NULL == pNeighborReportDesc->pNeighborBssDescription) {
@@ -1194,8 +1185,6 @@ static QDF_STATUS sme_rrm_process_neighbor_report(tpAniSirGlobal pMac,
 			status = QDF_STATUS_E_NOMEM;
 			goto end;
 		}
-		qdf_mem_zero(pNeighborReportDesc->pNeighborBssDescription,
-			     sizeof(tSirNeighborBssDescription));
 		qdf_mem_copy(pNeighborReportDesc->pNeighborBssDescription,
 			     &pNeighborRpt->sNeighborBssDescription[i],
 			     sizeof(tSirNeighborBssDescription));

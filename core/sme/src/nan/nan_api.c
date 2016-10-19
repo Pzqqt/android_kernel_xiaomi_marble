@@ -108,8 +108,6 @@ QDF_STATUS sme_nan_request(tpNanRequestReq input)
 			  FL("Memory allocation failure"));
 		return QDF_STATUS_E_NOMEM;
 	}
-
-	qdf_mem_zero(data, data_len);
 	data->request_data_len = input->request_data_len;
 	if (input->request_data_len) {
 		qdf_mem_copy(data->request_data,

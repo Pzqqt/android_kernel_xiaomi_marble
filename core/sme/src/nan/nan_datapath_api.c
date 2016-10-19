@@ -419,7 +419,6 @@ QDF_STATUS csr_process_ndp_initiator_request(tpAniSirGlobal mac_ctx,
 	if (NULL == lim_msg)
 		return QDF_STATUS_E_NOMEM;
 
-	qdf_mem_set(lim_msg, msg_len, 0);
 	lim_msg->msg_type = eWNI_SME_NDP_INITIATOR_REQ;
 	lim_msg->msg_len = msg_len;
 	/*
@@ -478,7 +477,6 @@ QDF_STATUS csr_process_ndp_responder_request(tpAniSirGlobal mac_ctx,
 		goto free_config;
 	}
 
-	qdf_mem_set(lim_msg, msg_len, 0);
 	lim_msg->msg_type = eWNI_SME_NDP_RESPONDER_REQ;
 	lim_msg->msg_len = msg_len;
 	/*
