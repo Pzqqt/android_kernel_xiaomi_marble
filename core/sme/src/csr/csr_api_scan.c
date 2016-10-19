@@ -3702,9 +3702,13 @@ bool csr_learn_11dcountry_information(tpAniSirGlobal pMac,
 	else
 		pCountryCodeSelected = pMac->scan.countryCodeElected;
 
-	if (qdf_mem_cmp(pCountryCodeSelected, pMac->scan.countryCode11d,
-		   CDS_COUNTRY_CODE_LEN) == 0)
+	if (qdf_mem_cmp(pCountryCodeSelected, pMac->scan.countryCodeCurrent,
+			CDS_COUNTRY_CODE_LEN) == 0) {
+		qdf_mem_copy(pMac->scan.countryCode11d,
+			     pMac->scan.countryCodeCurrent,
+			     CDS_COUNTRY_CODE_LEN);
 		goto free_ie;
+	}
 
 	pMac->is_11d_hint = true;
 	status = csr_get_regulatory_domain_for_country(pMac,
@@ -3715,9 +3719,6 @@ bool csr_learn_11dcountry_information(tpAniSirGlobal pMac,
 		goto free_ie;
 	}
 
-	/* updating 11d Country Code with Country code selected. */
-	qdf_mem_copy(pMac->scan.countryCode11d, pCountryCodeSelected,
-		     WNI_CFG_COUNTRY_CODE_LEN);
 	fRet = true;
 free_ie:
 	if (!pIes && pIesLocal) {

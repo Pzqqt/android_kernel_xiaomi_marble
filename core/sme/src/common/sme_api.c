@@ -7837,48 +7837,45 @@ sme_handle_generic_change_country_code(tpAniSirGlobal mac_ctx,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	v_REGDOMAIN_t reg_domain_id = 0;
-	bool supplicant_priority =
+	bool user_ctry_priority =
 		mac_ctx->roam.configParam.fSupplicantCountryCodeHasPriority;
 	tAniGenericChangeCountryCodeReq *msg = pMsgBuf;
 
 	sms_log(mac_ctx, LOG1, FL(" called"));
 
-	/* Set the country code given by userspace when 11dOriginal is false
-	 * when 11doriginal is True,is_11d_country =0 and
-	 * fSupplicantCountryCodeHasPriority = 0, then revert the country code,
-	 * and return failure
-	 */
-	if (mac_ctx->roam.configParam.Is11dSupportEnabledOriginal == true
-	    && !mac_ctx->is_11d_hint && !supplicant_priority) {
-		sms_log(mac_ctx, LOGW,
-			FL("Incorrect country req, nullify this"));
+	if (!mac_ctx->is_11d_hint) {
+		if (user_ctry_priority)
+			mac_ctx->roam.configParam.Is11dSupportEnabled = false;
+		else {
+			if (mac_ctx->roam.configParam.Is11dSupportEnabled &&
+			    mac_ctx->scan.countryCode11d[0] != 0) {
 
-		/* we have got a request for a country that should not have been
-		 * added since the STA is associated; nullify this request. If
-		 * both countryCode11d[0] and countryCode11d[1] are zero, revert
-		 * it to World domain to avoid from causing cfg80211 call trace.
-		 */
-		if ((mac_ctx->scan.countryCode11d[0] == 0)
-		    && (mac_ctx->scan.countryCode11d[1] == 0))
-			status = csr_get_regulatory_domain_for_country(mac_ctx,
-					"00", (v_REGDOMAIN_t *) &reg_domain_id,
-					SOURCE_11D);
-		else
-			status = csr_get_regulatory_domain_for_country(mac_ctx,
+				sms_log(mac_ctx, LOGW,
+					FL("restore 11d"));
+
+				status = csr_get_regulatory_domain_for_country(
+					mac_ctx,
 					mac_ctx->scan.countryCode11d,
-					(v_REGDOMAIN_t *) &reg_domain_id,
+					&reg_domain_id,
 					SOURCE_11D);
 
-		return QDF_STATUS_E_FAILURE;
+				return QDF_STATUS_E_FAILURE;
+			}
+		}
+	} else {
+		/* if kernel gets invalid country code; it
+		 *  resets the country code to world
+		 */
+		if (('0' != msg->countryCode[0]) ||
+		    ('0' != msg->countryCode[1]))
+			qdf_mem_copy(mac_ctx->scan.countryCode11d,
+				     msg->countryCode,
+				     WNI_CFG_COUNTRY_CODE_LEN);
+		mac_ctx->is_11d_hint = false;
 	}
 
-	/* if Supplicant country code has priority, disable 11d */
-	if (supplicant_priority && !mac_ctx->is_11d_hint)
-		mac_ctx->roam.configParam.Is11dSupportEnabled = false;
-
-	qdf_mem_copy(mac_ctx->scan.countryCode11d, msg->countryCode,
-		     WNI_CFG_COUNTRY_CODE_LEN);
-	qdf_mem_copy(mac_ctx->scan.countryCodeCurrent, msg->countryCode,
+	qdf_mem_copy(mac_ctx->scan.countryCodeCurrent,
+		     msg->countryCode,
 		     WNI_CFG_COUNTRY_CODE_LEN);
 
 	/* get the channels based on new cc */
@@ -7888,21 +7885,19 @@ sme_handle_generic_change_country_code(tpAniSirGlobal mac_ctx,
 		sms_log(mac_ctx, LOGE, FL("fail to get Channels"));
 		return status;
 	}
+
 	/* reset info based on new cc, and we are done */
 	csr_apply_channel_power_info_wrapper(mac_ctx);
 
-	/* Country code  Changed, Purge Only scan result
-	 * which does not have channel number belong to 11d
-	 * channel list
-	 */
 	csr_scan_filter_results(mac_ctx);
-	/* Do active scans after the country is set by User hints or
+
+	/* scans after the country is set by User hints or
 	 * Country IE
 	 */
 	mac_ctx->scan.curScanType = eSIR_ACTIVE_SCAN;
-	mac_ctx->is_11d_hint = false;
 
 	sme_disconnect_connected_sessions(mac_ctx);
+
 	sms_log(mac_ctx, LOG1, FL(" returned"));
 	return QDF_STATUS_SUCCESS;
 }
