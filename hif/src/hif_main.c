@@ -745,7 +745,14 @@ end:
 bool hif_needs_bmi(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
-	return hif_sc->bus_type != QDF_BUS_TYPE_SNOC;
+
+	if (hif_sc->bus_type == QDF_BUS_TYPE_SNOC)
+		return false;
+
+	if (hif_sc->target_info.target_type == TARGET_TYPE_QCA8074)
+		return false;
+
+	return true;
 }
 
 /**

@@ -1956,7 +1956,7 @@ int hif_pci_bus_configure(struct hif_softc *hif_sc)
 {
 	int status = 0;
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_sc);
-
+	struct hif_opaque_softc *hif_osc = GET_HIF_OPAQUE_HDL(hif_sc);
 	hif_ce_prepare_config(hif_sc);
 
 	/* initialize sleep state adjust variables */
@@ -2011,15 +2011,16 @@ int hif_pci_bus_configure(struct hif_softc *hif_sc)
 	if (status)
 		goto disable_wlan;
 
-#ifndef QCA_WIFI_QCA8074_VP
-	status = hif_set_hia(hif_sc);
-	if (status)
-		goto unconfig_ce;
+	/* QCA_WIFI_QCA8074_VP:Should not be executed on 8074 VP platform */
+	if (hif_needs_bmi(hif_osc)) {
+		status = hif_set_hia(hif_sc);
+		if (status)
+			goto unconfig_ce;
 
-	HIF_INFO_MED("%s: hif_set_hia done", __func__);
+		HIF_INFO_MED("%s: hif_set_hia done", __func__);
 
-	hif_register_bmi_callbacks(hif_sc);
-#endif
+		hif_register_bmi_callbacks(hif_sc);
+	}
 
 	status = hif_configure_irq(hif_sc);
 	if (status < 0)
