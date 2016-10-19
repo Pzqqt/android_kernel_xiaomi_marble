@@ -6235,7 +6235,7 @@ static void wlan_hdd_check_11gmode(u8 *pIe, u8 *require_ht, u8 *require_vht,
  * Return: 0 for success non-zero for failure
  */
 static int wlan_hdd_add_ie(hdd_adapter_t *pHostapdAdapter, uint8_t *genie,
-			   uint8_t *total_ielen, uint8_t *oui,
+			   uint16_t *total_ielen, uint8_t *oui,
 			   uint8_t oui_size)
 {
 	uint16_t ielen = 0;
@@ -6268,7 +6268,7 @@ static int wlan_hdd_add_ie(hdd_adapter_t *pHostapdAdapter, uint8_t *genie,
  */
 static void wlan_hdd_add_hostapd_conf_vsie(hdd_adapter_t *pHostapdAdapter,
 					   uint8_t *genie,
-					   uint8_t *total_ielen)
+					   uint16_t *total_ielen)
 {
 	beacon_data_t *pBeacon = pHostapdAdapter->sessionCtx.ap.beacon;
 	int left = pBeacon->tail_len;
@@ -6341,7 +6341,7 @@ static void wlan_hdd_add_hostapd_conf_vsie(hdd_adapter_t *pHostapdAdapter,
  * Return: none
  */
 static void wlan_hdd_add_extra_ie(hdd_adapter_t *pHostapdAdapter,
-				  uint8_t *genie, uint8_t *total_ielen,
+				  uint8_t *genie, uint16_t *total_ielen,
 				  uint8_t temp_ie_id)
 {
 	beacon_data_t *pBeacon = pHostapdAdapter->sessionCtx.ap.beacon;
@@ -6492,6 +6492,23 @@ wlan_hdd_cfg80211_alloc_new_beacon(hdd_adapter_t *pAdapter,
 
 }
 
+#ifdef QCA_HT_2040_COEX
+static void wlan_hdd_add_sap_obss_scan_ie(
+	hdd_adapter_t *hostapd_adapter, uint8_t *ie_buf, uint16_t *ie_len)
+{
+	if (QDF_SAP_MODE == hostapd_adapter->device_mode) {
+		if (wlan_hdd_get_sap_obss(hostapd_adapter))
+			wlan_hdd_add_extra_ie(hostapd_adapter, ie_buf, ie_len,
+					WLAN_EID_OVERLAP_BSS_SCAN_PARAM);
+	}
+}
+#else
+static void wlan_hdd_add_sap_obss_scan_ie(
+	hdd_adapter_t *hostapd_adapter, uint8_t *ie_buf, uint16_t *ie_len)
+{
+}
+#endif
+
 /**
  * wlan_hdd_cfg80211_update_apies() - update ap mode ies
  * @adapter: Pointer to hostapd adapter
@@ -6501,11 +6518,13 @@ wlan_hdd_cfg80211_alloc_new_beacon(hdd_adapter_t *pAdapter,
 int wlan_hdd_cfg80211_update_apies(hdd_adapter_t *adapter)
 {
 	uint8_t *genie;
-	uint8_t total_ielen = 0;
+	uint16_t total_ielen = 0;
 	int ret = 0;
 	tsap_Config_t *pConfig;
 	tSirUpdateIE updateIE;
 	beacon_data_t *beacon = NULL;
+	uint16_t proberesp_ies_len;
+	uint8_t *proberesp_ies = NULL;
 
 	pConfig = &adapter->sessionCtx.ap.sapConfig;
 	beacon = adapter->sessionCtx.ap.beacon;
@@ -6559,18 +6578,8 @@ int wlan_hdd_cfg80211_update_apies(hdd_adapter_t *adapter)
 		goto done;
 	}
 
-#ifdef QCA_HT_2040_COEX
-	if (QDF_SAP_MODE == adapter->device_mode) {
-		tSmeConfigParams smeConfig;
-		qdf_mem_zero(&smeConfig, sizeof(smeConfig));
-		sme_get_config_param(WLAN_HDD_GET_HAL_CTX(adapter),
-				     &smeConfig);
-		if (smeConfig.csrConfig.obssEnabled)
-			wlan_hdd_add_extra_ie(adapter, genie,
-					      &total_ielen,
-					      WLAN_EID_OVERLAP_BSS_SCAN_PARAM);
-	}
-#endif
+	wlan_hdd_add_sap_obss_scan_ie(adapter, genie, &total_ielen);
+
 	qdf_copy_macaddr(&updateIE.bssid, &adapter->macAddressCurrent);
 	updateIE.smeSessionId = adapter->sessionId;
 
@@ -6596,9 +6605,24 @@ int wlan_hdd_cfg80211_update_apies(hdd_adapter_t *adapter)
 	}
 
 	/* Added for Probe Response IE */
+	proberesp_ies = qdf_mem_malloc(beacon->proberesp_ies_len +
+				      MAX_GENIE_LEN);
+	if (proberesp_ies == NULL) {
+		hdd_err("mem alloc failed for probe resp ies %d",
+			proberesp_ies_len);
+		ret = -EINVAL;
+		goto done;
+	}
+	qdf_mem_copy(proberesp_ies, beacon->proberesp_ies,
+		    beacon->proberesp_ies_len);
+	proberesp_ies_len = beacon->proberesp_ies_len;
+
+	wlan_hdd_add_sap_obss_scan_ie(adapter, proberesp_ies,
+				     &proberesp_ies_len);
+
 	if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
-		updateIE.ieBufferlength = beacon->proberesp_ies_len;
-		updateIE.pAdditionIEBuffer = (uint8_t *) beacon->proberesp_ies;
+		updateIE.ieBufferlength = proberesp_ies_len;
+		updateIE.pAdditionIEBuffer = proberesp_ies;
 		updateIE.append = false;
 		updateIE.notify = false;
 		if (sme_update_add_ie(WLAN_HDD_GET_HAL_CTX(adapter),
@@ -6612,8 +6636,8 @@ int wlan_hdd_cfg80211_update_apies(hdd_adapter_t *adapter)
 		wlansap_reset_sap_config_add_ie(pConfig, eUPDATE_IE_PROBE_RESP);
 	} else {
 		wlansap_update_sap_config_add_ie(pConfig,
-						 beacon->proberesp_ies,
-						 beacon->proberesp_ies_len,
+						 proberesp_ies,
+						 proberesp_ies_len,
 						 eUPDATE_IE_PROBE_RESP);
 	}
 
@@ -6641,6 +6665,7 @@ int wlan_hdd_cfg80211_update_apies(hdd_adapter_t *adapter)
 
 done:
 	qdf_mem_free(genie);
+	qdf_mem_free(proberesp_ies);
 	return ret;
 }
 
