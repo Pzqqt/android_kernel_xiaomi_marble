@@ -230,6 +230,8 @@ static void hdd_regulatory_wiphy_init(hdd_context_t *hdd_ctx,
 				     struct wiphy *wiphy)
 {
 	const struct ieee80211_regdomain *reg_rules;
+	int chan_num;
+	struct ieee80211_channel chan;
 
 	if (hdd_is_world_regdomain(reg->reg_domain)) {
 		reg_rules = hdd_get_world_regrules(reg);
@@ -247,6 +249,17 @@ static void hdd_regulatory_wiphy_init(hdd_context_t *hdd_ctx,
 	 */
 	hdd_ctx->reg.reg_flags = wiphy->regulatory_flags;
 	wiphy_apply_custom_regulatory(wiphy, reg_rules);
+
+	/*
+	 * disable 2.4 Ghz channels that dont have 20 mhz bw
+	 */
+	for (chan_num = 0;
+	     chan_num < wiphy->bands[IEEE80211_BAND_2GHZ]->n_channels;
+	     chan_num++) {
+		chan = wiphy->bands[IEEE80211_BAND_2GHZ]->channels[chan_num];
+		if (chan.flags & IEEE80211_CHAN_NO_20MHZ)
+			chan.flags |= IEEE80211_CHAN_DISABLED;
+	}
 
 	/*
 	 * restore the driver regulatory flags since
