@@ -6894,8 +6894,6 @@ static int hdd_update_cds_config(hdd_context_t *hdd_ctx)
 		return -ENOMEM;
 	}
 
-	qdf_mem_zero(cds_cfg, sizeof(*cds_cfg));
-
 	/* UMA is supported in hardware for performing the
 	 * frame translation 802.11 <-> 802.3
 	 */

@@ -325,7 +325,6 @@ static struct sir_ocb_config *hdd_ocb_config_new(int num_channels,
 	if (!cursor)
 		goto fail;
 
-	qdf_mem_zero(cursor, len);
 	ret = cursor;
 	cursor += sizeof(*ret);
 
@@ -1121,7 +1120,6 @@ __wlan_hdd_cfg80211_ocb_start_timing_advert(struct wiphy *wiphy,
 		hdd_err("qdf_mem_malloc failed");
 		return -ENOMEM;
 	}
-	qdf_mem_zero(timing_advert, sizeof(*timing_advert));
 	timing_advert->vdev_id = adapter->sessionId;
 
 	/* Parse the netlink message */
@@ -1239,7 +1237,6 @@ __wlan_hdd_cfg80211_ocb_stop_timing_advert(struct wiphy *wiphy,
 		hdd_err("qdf_mem_malloc failed");
 		return -ENOMEM;
 	}
-	qdf_mem_zero(timing_advert, sizeof(sizeof(*timing_advert)));
 	timing_advert->vdev_id = adapter->sessionId;
 
 	/* Parse the netlink message */

@@ -6465,7 +6465,6 @@ static int hdd_set_reset_bpf_offload(hdd_context_t *hdd_ctx,
 		hdd_err("qdf_mem_malloc failed for bpf_set_offload");
 		return -ENOMEM;
 	}
-	qdf_mem_zero(bpf_set_offload, sizeof(*bpf_set_offload));
 
 	/* Parse and fetch bpf packet size */
 	if (!tb[BPF_PACKET_SIZE]) {
@@ -9215,7 +9214,6 @@ static void wlan_hdd_set_dhcp_server_offload(hdd_adapter_t *pHostapdAdapter)
 		hdd_err("could not allocate tDhcpSrvOffloadInfo!");
 		return;
 	}
-	qdf_mem_zero(pDhcpSrvInfo, sizeof(*pDhcpSrvInfo));
 	pDhcpSrvInfo->vdev_id = pHostapdAdapter->sessionId;
 	pDhcpSrvInfo->dhcpSrvOffloadEnabled = true;
 	pDhcpSrvInfo->dhcpClientNum = pHddCtx->config->dhcpMaxNumClients;
@@ -11482,7 +11480,6 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 					eConnectionState_NotConnected);
 			return -ENOMEM;
 		}
-		qdf_mem_zero(sme_config, sizeof(*sme_config));
 		sme_get_config_param(pHddCtx->hHal, sme_config);
 		/* These values are not sessionized. So, any change in these SME
 		 * configs on an older or parallel interface will affect the

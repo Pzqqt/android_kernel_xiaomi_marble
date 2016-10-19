@@ -6876,7 +6876,6 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 			  "%s: unable to allocate smeConfig", __func__);
 		return QDF_STATUS_E_NOMEM;
 	}
-	qdf_mem_zero(smeConfig, sizeof(*smeConfig));
 
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s bWmmIsEnabled=%d 802_11e_enabled=%d dot11Mode=%d",

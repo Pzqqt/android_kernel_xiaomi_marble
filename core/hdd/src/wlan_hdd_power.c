@@ -1057,7 +1057,6 @@ void wlan_hdd_set_mc_addr_list(hdd_adapter_t *pAdapter, uint8_t set)
 		hdd_err("Could not allocate Memory");
 		return;
 	}
-	qdf_mem_zero(pMulticastAddrs, sizeof(tSirRcvFltMcAddrList));
 	pMulticastAddrs->action = set;
 
 	if (set) {

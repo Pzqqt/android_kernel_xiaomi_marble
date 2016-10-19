@@ -741,8 +741,6 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 			hdd_err("malloc failed!");
 			return -ENOMEM;
 		}
-		/* initialize TDLS pAdater context */
-		qdf_mem_zero(pHddTdlsCtx, sizeof(tdlsCtx_t));
 
 		/* Initialize connection tracker timer */
 		qdf_mc_timer_init(&pHddTdlsCtx->peer_update_timer,
@@ -1023,7 +1021,6 @@ hddTdlsPeer_t *wlan_hdd_tdls_get_peer(hdd_adapter_t *pAdapter, const u8 *mac,
 	key = wlan_hdd_tdls_hash_key(mac);
 	head = &pHddTdlsCtx->peer_list[key];
 
-	qdf_mem_zero(peer, sizeof(hddTdlsPeer_t));
 	qdf_mem_copy(peer->peerMac, mac, sizeof(peer->peerMac));
 	peer->pHddTdlsCtx = pHddTdlsCtx;
 	peer->pref_off_chan_num = pHddCtx->config->fTDLSPrefOffChanNum;

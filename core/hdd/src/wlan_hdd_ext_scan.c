@@ -3894,7 +3894,6 @@ static int __wlan_hdd_cfg80211_set_epno_list(struct wiphy *wiphy,
 		hdd_err("qdf_mem_malloc failed");
 		return -ENOMEM;
 	}
-	qdf_mem_zero(req_msg, len);
 	req_msg->num_networks = num_networks;
 
 	/* Parse and fetch request Id */

@@ -1162,7 +1162,6 @@ hdd_sendactionframe(hdd_adapter_t *adapter, const uint8_t *bssid,
 		ret = -ENOMEM;
 		goto exit;
 	}
-	qdf_mem_zero(frame, frame_len);
 
 	hdr = (struct ieee80211_hdr_3addr *)frame;
 	hdr->frame_control =
@@ -2819,7 +2818,6 @@ static int hdd_parse_get_cckm_ie(uint8_t *pValue, uint8_t **pCckmIe,
 		hdd_err("qdf_mem_malloc failed");
 		return -ENOMEM;
 	}
-	qdf_mem_zero(*pCckmIe, (*pCckmIeLen + 1) / 2);
 	/*
 	 * the buffer received from the upper layer is character buffer,
 	 * we need to prepare the buffer taking 2 characters in to a U8 hex
@@ -4854,7 +4852,6 @@ static int drv_cmd_set_ibss_beacon_oui_data(hdd_adapter_t *adapter,
 		ret = -ENOMEM;
 		goto exit;
 	}
-	qdf_mem_zero(ibss_ie, command_len);
 
 	ibss_ie_length = hdd_parse_set_ibss_oui_data_command(value, ibss_ie,
 							     &oui_length,
