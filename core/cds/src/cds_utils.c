@@ -426,7 +426,6 @@ cds_attach_mmie(uint8_t *igtk, uint8_t *ipn, uint16_t key_id,
 	 * Copy the AAD, Management frame body, and
 	 * MMIE with 8 bit MIC zeroed out
 	 */
-	qdf_mem_zero(input, nBytes);
 	qdf_mem_copy(input, aad, AAD_LEN);
 	/* Copy Management Frame Body and MMIE without MIC */
 	qdf_mem_copy(input + AAD_LEN,
@@ -533,7 +532,6 @@ cds_is_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm, uint8_t *efrm)
 	}
 
 	/* Copy the AAD, MMIE with 8 bit MIC zeroed out */
-	qdf_mem_zero(input, nBytes);
 	qdf_mem_copy(input, aad, AAD_LEN);
 	qdf_mem_copy(input + AAD_LEN, (uint8_t *) (wh + 1),
 		     nBytes - AAD_LEN - CMAC_TLEN);

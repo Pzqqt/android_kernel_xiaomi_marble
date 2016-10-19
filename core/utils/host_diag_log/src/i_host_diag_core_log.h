@@ -85,7 +85,6 @@ void host_diag_log_submit(void *plog_hdr_ptr);
 	do { \
 		payload_ptr = (payload_type *)qdf_mem_malloc(sizeof(payload_type)); \
 		if (payload_ptr) { \
-			qdf_mem_zero(payload_ptr, sizeof(payload_type)); \
 			host_diag_log_set_code(payload_ptr, log_code); \
 			host_diag_log_set_length(payload_ptr, sizeof(payload_type)); \
 		} \

@@ -991,8 +991,6 @@ ol_tx_sched_init_wrr_adv(
 	if (scheduler == NULL)
 		return scheduler;
 
-	qdf_mem_zero(scheduler, sizeof(*scheduler));
-
 	OL_TX_SCHED_WRR_ADV_CAT_CFG_STORE(VO, scheduler);
 	OL_TX_SCHED_WRR_ADV_CAT_CFG_STORE(VI, scheduler);
 	OL_TX_SCHED_WRR_ADV_CAT_CFG_STORE(BE, scheduler);

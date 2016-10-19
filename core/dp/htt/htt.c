@@ -294,7 +294,6 @@ htt_pdev_alloc(ol_txrx_pdev_handle txrx_pdev,
 	pdev->txrx_pdev = txrx_pdev;
 	pdev->htc_pdev = htc_pdev;
 
-	qdf_mem_set(&pdev->stats, sizeof(pdev->stats), 0);
 	pdev->htt_htc_pkt_freelist = NULL;
 #ifdef ATH_11AC_TXCOMPACT
 	pdev->htt_htc_pkt_misclist = NULL;

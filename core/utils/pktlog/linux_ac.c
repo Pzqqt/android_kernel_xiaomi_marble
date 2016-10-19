@@ -603,7 +603,6 @@ int pktlog_send_per_pkt_stats_to_user(void)
 			return -ENOMEM;
 		}
 
-		qdf_mem_zero(pktlog, VOS_LOG_PKT_LOG_SIZE);
 		host_diag_log_set_code(pktlog, LOG_WLAN_PKT_LOG_INFO_C);
 
 		pktlog->buf_len = 0;

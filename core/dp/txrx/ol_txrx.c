@@ -975,7 +975,6 @@ ol_txrx_pdev_attach(ol_pdev_handle ctrl_pdev,
 	pdev = qdf_mem_malloc(sizeof(*pdev));
 	if (!pdev)
 		goto fail0;
-	qdf_mem_zero(pdev, sizeof(*pdev));
 
 	/* init LL/HL cfg here */
 	pdev->cfg.is_high_latency = ol_cfg_is_high_latency(ctrl_pdev);
@@ -2134,7 +2133,6 @@ ol_txrx_peer_attach(ol_txrx_vdev_handle vdev, uint8_t *peer_mac_addr)
 	peer = qdf_mem_malloc(sizeof(*peer));
 	if (!peer)
 		return NULL;    /* failure */
-	qdf_mem_zero(peer, sizeof(*peer));
 
 	/* store provided params */
 	peer->vdev = vdev;

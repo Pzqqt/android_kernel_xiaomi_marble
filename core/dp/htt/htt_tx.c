@@ -1240,9 +1240,6 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 		return_code = -ENOBUFS;
 		goto free_tx_comp_base;
 	}
-	qdf_mem_zero(pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg,
-		     uc_tx_buf_cnt *
-			sizeof(*pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg));
 
 	pdev->ipa_uc_tx_rsc.paddr_strg =
 		qdf_mem_malloc(uc_tx_buf_cnt *
@@ -1252,9 +1249,6 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 		return_code = -ENOBUFS;
 		goto free_tx_comp_base;
 	}
-	qdf_mem_zero(pdev->ipa_uc_tx_rsc.paddr_strg,
-		     uc_tx_buf_cnt *
-			sizeof(*pdev->ipa_uc_tx_rsc.paddr_strg));
 
 	pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt = htt_tx_ipa_uc_wdi_tx_buf_alloc(
 		pdev, uc_tx_buf_sz, uc_tx_buf_cnt, uc_tx_partition_base);

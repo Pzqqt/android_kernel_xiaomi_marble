@@ -1130,9 +1130,6 @@ QDF_STATUS cds_alloc_context(void *p_cds_context, QDF_MODULE_ID moduleID,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	if (moduleID == QDF_MODULE_ID_TLSHIM)
-		qdf_mem_zero(*ppModuleContext, size);
-
 	*pGpModContext = *ppModuleContext;
 
 	return QDF_STATUS_SUCCESS;

@@ -880,7 +880,6 @@ static QDF_STATUS cds_alloc_ol_rx_pkt_freeq(p_cds_sched_context pSchedContext)
 				  __func__);
 			goto free;
 		}
-		memset(pkt, 0, sizeof(*pkt));
 		spin_lock_bh(&pSchedContext->cds_ol_rx_pkt_freeq_lock);
 		list_add_tail(&pkt->list, &pSchedContext->cds_ol_rx_pkt_freeq);
 		spin_unlock_bh(&pSchedContext->cds_ol_rx_pkt_freeq_lock);

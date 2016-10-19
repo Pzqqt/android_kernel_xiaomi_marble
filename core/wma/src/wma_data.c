@@ -2974,7 +2974,6 @@ void ol_rx_err(ol_pdev_handle pdev, uint8_t vdev_id,
 			__func__);
 		return;
 	}
-	qdf_mem_set((void *)mic_err_ind, sizeof(*mic_err_ind), 0);
 
 	mic_err_ind->messageType = eWNI_SME_MIC_FAILURE_IND;
 	mic_err_ind->length = sizeof(*mic_err_ind);

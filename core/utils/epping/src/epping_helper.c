@@ -68,9 +68,6 @@ int epping_cookie_init(epping_context_t *pEpping_ctx)
 				   i);
 			goto error;
 		}
-		qdf_mem_zero(pEpping_ctx->s_cookie_mem[i],
-			     sizeof(struct epping_cookie) *
-			     MAX_COOKIE_SLOT_SIZE);
 	}
 	qdf_spinlock_create(&pEpping_ctx->cookie_lock);
 

@@ -696,7 +696,6 @@ static void wma_vdev_start_rsp(tp_wma_handle wma,
 			add_bss->status = QDF_STATUS_E_NOMEM;
 			goto send_fail_resp;
 		}
-		qdf_mem_zero(bcn, sizeof(*bcn));
 		bcn->buf = qdf_nbuf_alloc(NULL, WMA_BCN_BUF_MAX_SIZE, 0,
 					  sizeof(uint32_t), 0);
 		if (!bcn->buf) {
@@ -3641,7 +3640,6 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 			goto send_rsp;
 		}
 
-		qdf_mem_zero(peerStateParams, sizeof(*peerStateParams));
 		peerStateParams->peerState = WMI_TDLS_PEER_STATE_PEERING;
 		peerStateParams->vdevId = add_sta->smesessionId;
 		qdf_mem_copy(&peerStateParams->peerMacAddr,
@@ -4050,7 +4048,6 @@ static void wma_del_tdls_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 		goto send_del_rsp;
 	}
 
-	qdf_mem_zero(peerStateParams, sizeof(*peerStateParams));
 	peerStateParams->peerState = WMA_TDLS_PEER_STATE_TEARDOWN;
 	peerStateParams->vdevId = del_sta->smesessionId;
 	qdf_mem_copy(&peerStateParams->peerMacAddr,

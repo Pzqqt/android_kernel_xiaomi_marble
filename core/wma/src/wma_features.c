@@ -175,7 +175,6 @@ QDF_STATUS wma_send_snr_request(tp_wma_handle wma_handle,
 			wma_handle->pGetRssiReq = NULL;
 			return QDF_STATUS_E_NOMEM;
 		}
-		qdf_mem_set(pRssiBkUp, sizeof(tAniGetRssiReq), 0);
 		pRssiBkUp->sessionId =
 			((tAniGetRssiReq *) pGetRssiReq)->sessionId;
 		pRssiBkUp->rssiCallback =
