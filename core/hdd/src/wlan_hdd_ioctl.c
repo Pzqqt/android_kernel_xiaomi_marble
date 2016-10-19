@@ -3528,7 +3528,7 @@ static int drv_cmd_get_roam_scan_channels(hdd_adapter_t *adapter,
 	 */
 	len = scnprintf(extra, sizeof(extra), "%s %d", command,
 			numChannels);
-	for (j = 0; (j < numChannels); j++)
+	for (j = 0; (j < numChannels) && len <= sizeof(extra); j++)
 		len += scnprintf(extra + len, sizeof(extra) - len,
 				 " %d", ChannelList[j]);
 
