@@ -70,6 +70,22 @@
 #define TDLS_CT_MAC_MAX_TABLE_SIZE 8
 
 /**
+ * enum tdls_disable_source - TDLS disable sources
+ * @HDD_SET_TDLS_MODE_SOURCE_USER: disable from user
+ * @HDD_SET_TDLS_MODE_SOURCE_SCAN: disable during scan
+ * @HDD_SET_TDLS_MODE_SOURCE_OFFCHANNEL: disable during offchannel
+ * @HDD_SET_TDLS_MODE_SOURCE_BTC: disable during bluetooth
+ * @HDD_SET_TDLS_MODE_SOURCE_P2P: disable during p2p
+ */
+enum tdls_disable_source {
+	HDD_SET_TDLS_MODE_SOURCE_USER = 0,
+	HDD_SET_TDLS_MODE_SOURCE_SCAN,
+	HDD_SET_TDLS_MODE_SOURCE_OFFCHANNEL,
+	HDD_SET_TDLS_MODE_SOURCE_BTC,
+	HDD_SET_TDLS_MODE_SOURCE_P2P,
+};
+
+/**
  * struct tdls_config_params_t - tdls config params
  *
  * @tdls: tdls

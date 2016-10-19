@@ -1546,6 +1546,8 @@ struct hdd_context_s {
 	/* counters for failed suspend reasons */
 	uint32_t suspend_fail_stats[SUSPEND_FAIL_MAX_COUNT];
 	struct hdd_runtime_pm_context runtime_context;
+	/* bit map to set/reset TDLS by different sources */
+	unsigned long tdls_source_bitmap;
 };
 
 /*---------------------------------------------------------------------------
