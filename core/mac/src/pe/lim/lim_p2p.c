@@ -407,10 +407,11 @@ void lim_send_sme_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameType,
 	return;
 }
 
-QDF_STATUS lim_p2p_action_cnf(tpAniSirGlobal pMac, uint32_t txCompleteSuccess)
+QDF_STATUS lim_p2p_action_cnf(tpAniSirGlobal pMac, uint32_t tx_status)
 {
 	QDF_STATUS status;
 	uint32_t mgmt_frame_sessionId;
+	bool tx_complete_ack = (tx_status) ? false : true;
 
 	status = pe_acquire_global_lock(&pMac->lim);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -429,7 +430,7 @@ QDF_STATUS lim_p2p_action_cnf(tpAniSirGlobal pMac, uint32_t txCompleteSuccess)
 					 mgmt_frame_sessionId);
 			if (pMac->p2p_ack_ind_cb)
 				pMac->p2p_ack_ind_cb(mgmt_frame_sessionId,
-							txCompleteSuccess);
+						     tx_complete_ack);
 		}
 	}
 
