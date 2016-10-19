@@ -35,7 +35,7 @@ extern struct hostdef_s *QCA9984_HOSTdef;
 extern struct hostdef_s *QCA9888_HOSTdef;
 #ifdef ATH_AHB
 extern struct hostdef_s *IPQ4019_HOSTdef;
-extern struct hostdef_s *QCA8074_HOSTdef;
 #endif
+extern struct hostdef_s *QCA8074_HOSTdef;
 
 #endif
