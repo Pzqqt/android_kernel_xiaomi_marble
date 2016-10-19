@@ -533,9 +533,12 @@ do { \
 	pipe_in.u.ul.rdy_comp_ring_wp_va = \
 		ipa_ctxt->ipa_resource.rx2_proc_done_idx_vaddr; \
 } while (0)
+
+#define HDD_IPA_CHECK_HW() ipa_uc_reg_rdyCB(NULL)
 #else
 /* Do nothing */
 #define HDD_IPA_WDI2_SET(pipe_in, ipa_ctxt)
+#define HDD_IPA_CHECK_HW() 0
 #endif /* IPA3 */
 
 static struct hdd_ipa_adapter_2_client {
@@ -2815,7 +2818,7 @@ static void hdd_ipa_send_pkt_to_tl(
 bool hdd_ipa_is_present(hdd_context_t *hdd_ctx)
 {
 	/* Check if ipa hw is enabled */
-	if (ipa_uc_reg_rdyCB(NULL) != -EPERM)
+	if (HDD_IPA_CHECK_HW() != -EPERM)
 		return true;
 	else
 		return false;
