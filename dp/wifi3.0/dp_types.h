@@ -268,7 +268,7 @@ struct dp_soc {
 	qdf_device_t osdev;
 
 	/* WLAN config context */
-	void *wlan_cfg_ctx;
+	struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx;
 
 	/* HTT handle for host-fw interaction */
 	void *htt_handle;
@@ -303,7 +303,6 @@ struct dp_soc {
 	void *wbm_idle_scatter_buf_base_vaddr[MAX_IDLE_SCATTER_BUFS];
 	uint32_t wbm_idle_scatter_buf_size;
 
-	/* Tx SW descriptor pool */
 	/* Tx SW descriptor pool */
 	struct dp_tx_desc_pool_s tx_desc[MAX_TXDESC_POOLS];
 
