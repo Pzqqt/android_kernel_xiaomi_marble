@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -100,6 +100,7 @@ QDF_STATUS wma_handle_ndp_initiator_req(tp_wma_handle wma_handle, void *req)
 
 	cmd->ndp_cfg_len = ndp_req->ndp_config.ndp_cfg_len;
 	cmd->ndp_app_info_len = ndp_req->ndp_info.ndp_app_info_len;
+	cmd->ndp_channel_cfg = ndp_req->channel_cfg;
 
 	ch_tlv = (wmi_channel *)&cmd[1];
 	WMITLV_SET_HDR(ch_tlv, WMITLV_TAG_STRUC_wmi_channel,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -72,6 +72,7 @@ struct wireless_dev;
  * @QCA_WLAN_VENDOR_ATTR_NDP_NDI_MAC_ADDR: NDI mac address
  * @QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_TYPE: Driver return status
  * @QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_VALUE: Driver return value
+ * @QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL_CONFIG: Channel config request type
  */
 enum qca_wlan_vendor_attr_ndp_params {
 	QCA_WLAN_VENDOR_ATTR_NDP_PARAM_INVALID = 0,
@@ -90,6 +91,7 @@ enum qca_wlan_vendor_attr_ndp_params {
 	QCA_WLAN_VENDOR_ATTR_NDP_NDI_MAC_ADDR,
 	QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_TYPE,
 	QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_VALUE,
+	QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL_CONFIG,
 
 	QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_AFTER_LAST,
 	QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX =
