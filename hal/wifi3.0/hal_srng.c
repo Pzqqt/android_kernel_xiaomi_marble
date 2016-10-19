@@ -521,7 +521,7 @@ void *hal_attach(void *hif_handle, qdf_device_t qdf_dev)
 	hal->dev_base_addr = hif_get_dev_ba(hif_handle);
 	hal->qdf_dev = qdf_dev;
 	hal->shadow_rdptr_mem_vaddr = (uint32_t *)qdf_mem_alloc_consistent(
-		qdf_dev, NULL, sizeof(*(hal->shadow_rdptr_mem_vaddr)) *
+		qdf_dev, qdf_dev->dev, sizeof(*(hal->shadow_rdptr_mem_vaddr)) *
 		HAL_SRNG_ID_MAX, &(hal->shadow_rdptr_mem_paddr));
 	if (!hal->shadow_rdptr_mem_paddr) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -531,7 +531,7 @@ void *hal_attach(void *hif_handle, qdf_device_t qdf_dev)
 	}
 
 	hal->shadow_wrptr_mem_vaddr =
-		(uint32_t *)qdf_mem_alloc_consistent(qdf_dev, NULL,
+		(uint32_t *)qdf_mem_alloc_consistent(qdf_dev, qdf_dev->dev,
 		sizeof(*(hal->shadow_wrptr_mem_vaddr)) * HAL_MAX_LMAC_RINGS,
 		&(hal->shadow_wrptr_mem_paddr));
 	if (!hal->shadow_wrptr_mem_vaddr) {
