@@ -1568,9 +1568,11 @@ struct hdd_context_s {
 	/* counters for failed suspend reasons */
 	uint32_t suspend_fail_stats[SUSPEND_FAIL_MAX_COUNT];
 	struct hdd_runtime_pm_context runtime_context;
+	bool roaming_in_progress;
 	/* bit map to set/reset TDLS by different sources */
 	unsigned long tdls_source_bitmap;
-	bool roaming_in_progress;
+	/* tdls source timer to enable/disable TDLS on p2p listen */
+	qdf_mc_timer_t tdls_source_timer;
 };
 
 /*---------------------------------------------------------------------------

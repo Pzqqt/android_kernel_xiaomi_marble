@@ -4798,6 +4798,8 @@ static void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 
 	hdd_unregister_notifiers(hdd_ctx);
 
+	qdf_mc_timer_destroy(&hdd_ctx->tdls_source_timer);
+
 	hdd_bus_bandwidth_destroy(hdd_ctx);
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
@@ -8105,6 +8107,11 @@ int hdd_wlan_startup(struct device *dev)
 		hdd_err("Failed to init ACS Skip timer");
 	qdf_spinlock_create(&hdd_ctx->acs_skip_lock);
 #endif
+
+	qdf_mc_timer_init(&hdd_ctx->tdls_source_timer,
+			  QDF_TIMER_TYPE_SW,
+			  wlan_hdd_change_tdls_mode,
+			  hdd_ctx);
 
 	hdd_bus_bandwidth_init(hdd_ctx);
 

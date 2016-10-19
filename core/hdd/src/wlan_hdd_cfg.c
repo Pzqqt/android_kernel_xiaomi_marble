@@ -3481,6 +3481,13 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_BPF_PACKET_FILTER_OFFLOAD_MIN,
 		     CFG_BPF_PACKET_FILTER_OFFLOAD_MAX),
 
+	REG_VARIABLE(CFG_TDLS_ENABLE_DEFER_TIMER, WLAN_PARAM_Integer,
+		     struct hdd_config, tdls_enable_defer_time,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_TDLS_ENABLE_DEFER_TIMER_DEFAULT,
+		     CFG_TDLS_ENABLE_DEFER_TIMER_MIN,
+		     CFG_TDLS_ENABLE_DEFER_TIMER_MAX),
+
 	REG_VARIABLE(CFG_FLOW_STEERING_ENABLED_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, flow_steering_enable,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -5747,6 +5754,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_info("Name = [%s] Value = [%d]",
 		CFG_BPF_PACKET_FILTER_OFFLOAD,
 		pHddCtx->config->bpf_packet_filter_enable);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_TDLS_ENABLE_DEFER_TIMER,
+		pHddCtx->config->tdls_enable_defer_time);
 	hdd_info("Name = [%s] Value = [%d]",
 		CFG_FILTER_MULTICAST_REPLAY_NAME,
 		pHddCtx->config->multicast_replay_filter);

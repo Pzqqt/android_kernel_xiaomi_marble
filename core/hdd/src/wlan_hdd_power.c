@@ -1495,6 +1495,8 @@ QDF_STATUS hdd_wlan_shutdown(void)
 		QDF_ASSERT(false);
 	}
 
+	qdf_mc_timer_stop(&pHddCtx->tdls_source_timer);
+
 	hdd_bus_bandwidth_destroy(pHddCtx);
 
 	wlansap_global_deinit();

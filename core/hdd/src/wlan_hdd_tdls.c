@@ -6007,3 +6007,45 @@ int wlan_hdd_tdls_antenna_switch(hdd_context_t *hdd_ctx,
 tdls_ant_sw_done:
 	return 0;
 }
+
+/**
+ * wlan_hdd_change_tdls_mode - Change TDLS mode
+ * @data: void pointer
+ *
+ * Return: None
+ */
+void wlan_hdd_change_tdls_mode(void *data)
+{
+	hdd_context_t *hdd_ctx = (hdd_context_t *)data;
+
+	wlan_hdd_tdls_set_mode(hdd_ctx, eTDLS_SUPPORT_ENABLED, false,
+			       HDD_SET_TDLS_MODE_SOURCE_OFFCHANNEL);
+}
+
+/**
+ * hdd_restart_tdls_source_timer - Restart TDLS source timer
+ * @pHddCtx: ptr to hdd context.
+ * @tdls_mode: value for TDLS support mode.
+ *
+ * This timer is the handler for avoiding overlapping for P2P listen
+ * and TDLS operation. This handler will start the source timer for
+ * the duration of tdls_enable_defer_time after P2P listen ends and
+ * before enabling TDLS again.
+ *
+ * Return: None
+ */
+void hdd_restart_tdls_source_timer(hdd_context_t *pHddCtx,
+				eTDLSSupportMode tdls_mode)
+{
+	qdf_mc_timer_stop(&pHddCtx->tdls_source_timer);
+
+	if (tdls_mode == eTDLS_SUPPORT_DISABLED)
+		wlan_hdd_tdls_set_mode(pHddCtx, tdls_mode, false,
+				HDD_SET_TDLS_MODE_SOURCE_OFFCHANNEL);
+
+	qdf_mc_timer_start(&pHddCtx->tdls_source_timer,
+			   pHddCtx->config->tdls_enable_defer_time);
+
+	return;
+}
+

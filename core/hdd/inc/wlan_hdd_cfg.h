@@ -1903,6 +1903,29 @@ typedef enum {
 
 #endif
 
+/*
+ * <ini>
+ * gTDLSEnableDeferTime - Timer to defer for enabling TDLS on P2P listen.
+ * @Min: 2000
+ * @Max: 6000
+ * @Default: 5000
+ *
+ * This ini is used to set the timer to defer for enabling TDLS on P2P
+ * listen (value in milliseconds).
+ *
+ * Related: gEnableTDLSSupport.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_TDLS_ENABLE_DEFER_TIMER                "gTDLSEnableDeferTime"
+#define CFG_TDLS_ENABLE_DEFER_TIMER_MIN            (2000)
+#define CFG_TDLS_ENABLE_DEFER_TIMER_MAX            (6000)
+#define CFG_TDLS_ENABLE_DEFER_TIMER_DEFAULT        (5000)
+
 /* Enable/Disable LPWR Image(cMEM uBSP) Transition */
 #define CFG_ENABLE_LPWR_IMG_TRANSITION_NAME        "gEnableLpwrImgTransition"
 #define CFG_ENABLE_LPWR_IMG_TRANSITION_MIN         (0)
@@ -4595,6 +4618,8 @@ struct hdd_config {
 	bool flow_steering_enable;
 	bool active_mode_offload;
 	bool bpf_packet_filter_enable;
+	/* parameter for defer timer for enabling TDLS on p2p listen */
+	uint16_t tdls_enable_defer_time;
 	uint32_t fine_time_meas_cap;
 	uint8_t max_scan_count;
 #ifdef WLAN_FEATURE_FASTPATH

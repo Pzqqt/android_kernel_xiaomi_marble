@@ -526,6 +526,7 @@ static void wlan_hdd_remain_on_chan_timeout(void *data)
 			pRemainChanCtx->scan_id);
 	}
 
+	hdd_restart_tdls_source_timer(hdd_ctx, eTDLS_SUPPORT_ENABLED);
 	qdf_runtime_pm_allow_suspend(hdd_ctx->runtime_context.roc);
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_ROC);
 }
@@ -687,6 +688,7 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
 		}
 
 	}
+	hdd_restart_tdls_source_timer(pHddCtx, eTDLS_SUPPORT_DISABLED);
 	return 0;
 }
 
