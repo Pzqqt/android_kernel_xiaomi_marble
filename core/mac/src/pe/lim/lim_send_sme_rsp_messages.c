@@ -462,7 +462,6 @@ lim_send_sme_join_reassoc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 			return;
 		}
 
-		qdf_mem_set((uint8_t *) sme_join_rsp, rsp_len, 0);
 		sme_join_rsp->beaconLength = 0;
 		sme_join_rsp->assocReqLength = 0;
 		sme_join_rsp->assocRspLength = 0;
@@ -480,7 +479,6 @@ lim_send_sme_join_reassoc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 				FL("MemAlloc fail - JOIN/REASSOC_RSP"));
 			return;
 		}
-		qdf_mem_set((uint8_t *) sme_join_rsp, rsp_len, 0);
 		if (result_code == eSIR_SME_SUCCESS) {
 			sta_ds = dph_get_hash_entry(mac_ctx,
 				DPH_STA_HASH_INDEX_PEER,
@@ -592,8 +590,6 @@ lim_send_sme_start_bss_rsp(tpAniSirGlobal pMac,
 					("call to AllocateMemory failed for eWNI_SME_START_BSS_RSP"));
 			return;
 		}
-		qdf_mem_set((uint8_t *) pSirSmeRsp, size, 0);
-
 	} else {
 		/* subtract size of beaconLength + Mac Hdr + Fixed Fields before SSID */
 		ieOffset = sizeof(tAniBeaconStruct) + SIR_MAC_B_PR_SSID_OFFSET;
@@ -611,7 +607,6 @@ lim_send_sme_start_bss_rsp(tpAniSirGlobal pMac,
 
 			return;
 		}
-		qdf_mem_set((uint8_t *) pSirSmeRsp, size, 0);
 		size = sizeof(tSirSmeStartBssRsp);
 		if (resultCode == eSIR_SME_SUCCESS) {
 
@@ -769,7 +764,6 @@ lim_post_sme_scan_rsp_message(tpAniSirGlobal pMac,
 			FL("AllocateMemory failed for eWNI_SME_SCAN_RSP"));
 		return;
 	}
-	qdf_mem_set((void *)pSirSmeScanRsp, sizeof(tSirSmeScanRsp), 0);
 
 	pSirSmeScanRsp->messageType = eWNI_SME_SCAN_RSP;
 	pSirSmeScanRsp->statusCode = resultCode;
@@ -1697,7 +1691,6 @@ lim_send_sme_addts_rsp(tpAniSirGlobal pMac, uint8_t rspReqd, uint32_t status,
 		return;
 	}
 
-	qdf_mem_set((uint8_t *) rsp, sizeof(*rsp), 0);
 	rsp->messageType = eWNI_SME_ADDTS_RSP;
 	rsp->rc = status;
 	rsp->rsp.status = (enum eSirMacStatusCodes)status;
@@ -1746,7 +1739,6 @@ lim_send_sme_delts_rsp(tpAniSirGlobal pMac, tpSirDeltsReq delts, uint32_t status
 		lim_log(pMac, LOGP, FL("AllocateMemory failed for DELTS_RSP"));
 		return;
 	}
-	qdf_mem_set((uint8_t *) rsp, sizeof(*rsp), 0);
 
 	if (psessionEntry != NULL) {
 
@@ -1797,7 +1789,6 @@ lim_send_sme_delts_ind(tpAniSirGlobal pMac, tpSirDeltsReqInfo delts, uint16_t ai
 		lim_log(pMac, LOGP, FL("AllocateMemory failed for DELTS_IND"));
 		return;
 	}
-	qdf_mem_set((uint8_t *) rsp, sizeof(*rsp), 0);
 
 	rsp->messageType = eWNI_SME_DELTS_IND;
 	rsp->rc = eSIR_SUCCESS;
@@ -1948,9 +1939,6 @@ lim_send_sme_ibss_peer_ind(tpAniSirGlobal pMac,
 		PELOGE(lim_log(pMac, LOGE, FL("Failed to allocate memory"));)
 		return;
 	}
-
-	qdf_mem_set((void *)pNewPeerInd, (sizeof(tSmeIbssPeerInd) + beaconLen),
-		    0);
 
 	qdf_mem_copy((uint8_t *) pNewPeerInd->peer_addr.bytes,
 		     peerMacAddr, QDF_MAC_ADDR_SIZE);
@@ -2180,7 +2168,6 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 			goto err;
 		}
 
-		qdf_mem_set(csa_offload_ind, sizeof(tSmeCsaOffloadInd), 0);
 		csa_offload_ind->mesgType = eWNI_SME_CSA_OFFLOAD_EVENT;
 		csa_offload_ind->mesgLen = sizeof(tSmeCsaOffloadInd);
 		qdf_mem_copy(csa_offload_ind->bssid.bytes, session_entry->bssId,
@@ -2275,7 +2262,6 @@ void lim_send_sme_max_assoc_exceeded_ntf(tpAniSirGlobal pMac, tSirMacAddr peerMa
 		PELOGE(lim_log(pMac, LOGE, FL("Failed to allocate memory"));)
 		return;
 	}
-	qdf_mem_set((void *)pSmeMaxAssocInd, sizeof(tSmeMaxAssocInd), 0);
 	qdf_mem_copy((uint8_t *) pSmeMaxAssocInd->peer_mac.bytes,
 		     (uint8_t *) peerMacAddr, QDF_MAC_ADDR_SIZE);
 	pSmeMaxAssocInd->mesgType = eWNI_SME_MAX_ASSOC_EXCEEDED;
@@ -2377,9 +2363,6 @@ lim_send_sme_ap_channel_switch_resp(tpAniSirGlobal pMac,
 			FL("AllocateMemory failed for pSmeSwithChnlParams\n"));
 		return;
 	}
-
-	qdf_mem_set((void *)pSmeSwithChnlParams,
-		    sizeof(tSwitchChannelParams), 0);
 
 	qdf_mem_copy(pSmeSwithChnlParams, pChnlParams,
 		     sizeof(tSwitchChannelParams));
@@ -2501,7 +2484,6 @@ lim_process_beacon_tx_success_ind(tpAniSirGlobal pMac, uint16_t msgType, void *e
 				return;
 			}
 
-			qdf_mem_set((void *)pChanSwTxResponse, length, 0);
 			pChanSwTxResponse->sessionId =
 				psessionEntry->smeSessionId;
 			pChanSwTxResponse->chanSwIeTxStatus =
@@ -2526,8 +2508,6 @@ lim_process_beacon_tx_success_ind(tpAniSirGlobal pMac, uint16_t msgType, void *e
 				("AllocateMemory failed for beacon_tx_comp_rsp_ptr"));
 			return;
 		}
-		qdf_mem_set((void *)beacon_tx_comp_rsp_ptr,
-					sizeof(*beacon_tx_comp_rsp_ptr), 0);
 		beacon_tx_comp_rsp_ptr->session_id =
 			psessionEntry->smeSessionId;
 		beacon_tx_comp_rsp_ptr->tx_status = QDF_STATUS_SUCCESS;

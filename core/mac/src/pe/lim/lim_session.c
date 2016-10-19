@@ -314,9 +314,6 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 		session_ptr->dph.dphHashTable.pDphNodeArray = NULL;
 		return NULL;
 	}
-	qdf_mem_set(session_ptr->gpLimPeerIdxpool,
-		    sizeof(*session_ptr->gpLimPeerIdxpool) * (numSta + 1),
-		    0);
 	session_ptr->freePeerIdxHead = 0;
 	session_ptr->freePeerIdxTail = 0;
 	session_ptr->gLimNumOfCurrentSTAs = 0;

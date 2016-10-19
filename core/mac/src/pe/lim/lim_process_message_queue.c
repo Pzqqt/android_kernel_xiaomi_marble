@@ -521,7 +521,6 @@ __lim_pno_match_fwd_bcn_probepsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 	}
 	hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	body = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
-	qdf_mem_zero(result, sizeof(*result) + ie_len);
 
 	/* Received frame does not have request id, hence set 0 */
 	result->request_id = 0;
@@ -574,7 +573,6 @@ __lim_ext_scan_forward_bcn_probe_rsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 	}
 	hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	body = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
-	qdf_mem_zero(result, sizeof(*result) + ie_len);
 
 	/* Received frame does not have request id, hence set 0 */
 	result->requestId = 0;

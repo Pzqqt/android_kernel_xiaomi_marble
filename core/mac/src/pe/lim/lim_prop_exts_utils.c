@@ -127,7 +127,6 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 		return;
 	}
 
-	qdf_mem_set((uint8_t *) beacon_struct, sizeof(tSirProbeRespBeacon), 0);
 	*qos_cap = 0;
 	*prop_cap = 0;
 	*uapsd = 0;

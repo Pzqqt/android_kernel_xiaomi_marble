@@ -597,7 +597,6 @@ int sch_gen_timing_advert_frame(tpAniSirGlobal mac_ctx, tSirMacAddr self_addr,
 		sch_log(mac_ctx, LOGE, FL("Cannot allocate memory"));
 		return eSIR_FAILURE;
 	}
-	qdf_mem_zero(*buf, buf_size);
 
 	payload_size = 0;
 	status = dot11f_pack_timing_advertisement_frame(mac_ctx, &frame,

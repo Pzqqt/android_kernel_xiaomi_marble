@@ -103,7 +103,6 @@ tSirRetStatus lim_send_cf_params(tpAniSirGlobal pMac, uint8_t bssIdx,
 		retCode = eSIR_MEM_ALLOC_FAILED;
 		goto returnFailure;
 	}
-	qdf_mem_set((uint8_t *) pCFParams, sizeof(tUpdateCFParams), 0);
 	pCFParams->cfpCount = cfpCount;
 	pCFParams->cfpPeriod = cfpPeriod;
 	pCFParams->bssIdx = bssIdx;
@@ -227,7 +226,6 @@ tSirRetStatus lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 			"Unable to allocate memory for Switch Ch Params"));
 		return eSIR_MEM_ALLOC_FAILED;
 	}
-	qdf_mem_set((uint8_t *) pChnlParams, sizeof(tSwitchChannelParams), 0);
 	pChnlParams->channelNumber = chnlNumber;
 	pChnlParams->ch_center_freq_seg0 = ch_center_freq_seg0;
 	pChnlParams->ch_center_freq_seg1 = ch_center_freq_seg1;
@@ -491,7 +489,6 @@ tSirRetStatus lim_set_link_state(tpAniSirGlobal pMac, tSirLinkState state,
 		retCode = eSIR_MEM_ALLOC_FAILED;
 		return retCode;
 	}
-	qdf_mem_set((uint8_t *) pLinkStateParams, sizeof(tLinkStateParams), 0);
 	pLinkStateParams->state = state;
 	pLinkStateParams->callback = callback;
 	pLinkStateParams->callbackArg = callbackArg;
@@ -534,7 +531,6 @@ extern tSirRetStatus lim_set_link_state_ft(tpAniSirGlobal pMac, tSirLinkState
 		retCode = eSIR_MEM_ALLOC_FAILED;
 		return retCode;
 	}
-	qdf_mem_set((uint8_t *) pLinkStateParams, sizeof(tLinkStateParams), 0);
 	pLinkStateParams->state = state;
 	/* Copy Mac address */
 	sir_copy_mac_addr(pLinkStateParams->bssid, bssId);
@@ -593,7 +589,6 @@ tSirRetStatus lim_send_beacon_filter_info(tpAniSirGlobal pMac,
 		retCode = eSIR_MEM_ALLOC_FAILED;
 		return retCode;
 	}
-	qdf_mem_set((uint8_t *) pBeaconFilterMsg, msgSize, 0);
 	/* Fill in capability Info and mask */
 	/* Don't send this message if no active Infra session is found. */
 	pBeaconFilterMsg->capabilityInfo = psessionEntry->limCurrentBssCaps;

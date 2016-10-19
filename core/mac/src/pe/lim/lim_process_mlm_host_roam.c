@@ -425,9 +425,6 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 			if (NULL ==
 				pMac->lim.pSessionEntry->pLimMlmReassocRetryReq)
 				goto end;
-			qdf_mem_set(pMac->lim.pSessionEntry->
-					pLimMlmReassocRetryReq,
-					sizeof(tLimMlmReassocReq), 0);
 			qdf_mem_copy(pMac->lim.pSessionEntry->
 					pLimMlmReassocRetryReq,
 					psessionEntry->pLimMlmReassocReq,
@@ -472,7 +469,6 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 			FL("Unable to allocate memory during ADD_STA"));
 		goto end;
 	}
-	qdf_mem_set((uint8_t *) pAddStaParams, sizeof(tAddStaParams), 0);
 
 	/* / Add STA context at MAC HW (BMU, RHP & TFP) */
 	qdf_mem_copy((uint8_t *) pAddStaParams->staMac,

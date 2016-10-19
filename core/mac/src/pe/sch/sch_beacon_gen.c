@@ -219,9 +219,6 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 	mac->fc.fromDS = 0;
 	mac->fc.toDS = 0;
 
-	/* Now set the beacon body */
-	qdf_mem_set((uint8_t *) bcn_1, sizeof(tDot11fBeacon1), 0);
-
 	/* Skip over the timestamp (it'll be updated later). */
 	bcn_1->BeaconInterval.interval =
 		session->beaconParams.beaconInterval;
@@ -279,8 +276,6 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 			FL("Warnings while packing a tDot11fBeacon1(0x%08x.)."),
 			n_status);
 	}
-	/*changed  to correct beacon corruption */
-	qdf_mem_set((uint8_t *) bcn_2, sizeof(tDot11fBeacon2), 0);
 	session->schBeaconOffsetBegin = offset + (uint16_t) n_bytes;
 	sch_log(mac_ctx, LOG1, FL("Initialized beacon begin, offset %d"),
 		offset);

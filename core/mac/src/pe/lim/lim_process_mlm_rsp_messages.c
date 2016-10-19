@@ -586,8 +586,6 @@ void lim_process_mlm_auth_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg)
 				FL("mlmAuthReq :Memory alloc failed "));
 			return;
 		}
-		qdf_mem_set((uint8_t *) auth_req,
-			sizeof(tLimMlmAuthReq), 0);
 		if (session_entry->limSmeState ==
 			eLIM_SME_WT_AUTH_STATE) {
 			sir_copy_mac_addr(auth_req->peerMacAddr,
@@ -3197,7 +3195,6 @@ void lim_send_beacon_ind(tpAniSirGlobal pMac, tpPESession psessionEntry)
 		       )
 		return;
 	}
-	qdf_mem_set(pBeaconGenParams, sizeof(*pBeaconGenParams), 0);
 	qdf_mem_copy((void *)pBeaconGenParams->bssId,
 		     (void *)psessionEntry->bssId, QDF_MAC_ADDR_SIZE);
 	limMsg.bodyptr = pBeaconGenParams;

@@ -491,7 +491,6 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 		return eSIR_MEM_ALLOC_FAILED;
 	}
 
-	qdf_mem_set(addbss_param, sizeof(tAddBssParams), 0);
 	/* Fill in tAddBssParams members */
 	qdf_mem_copy(addbss_param->bssId, mlm_start_req->bssId,
 		     sizeof(tSirMacAddr));

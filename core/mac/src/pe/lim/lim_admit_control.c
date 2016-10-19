@@ -933,7 +933,6 @@ lim_send_hal_msg_add_ts(tpAniSirGlobal pMac,
 		return eSIR_MEM_ALLOC_FAILED;
 	}
 
-	qdf_mem_set((uint8_t *) pAddTsParam, sizeof(tAddTsParams), 0);
 	pAddTsParam->staIdx = staIdx;
 	pAddTsParam->tspecIdx = tspecIdx;
 	qdf_mem_copy(&pAddTsParam->tspec, &tspecIE, sizeof(tSirMacTspecIE));
@@ -997,7 +996,6 @@ lim_send_hal_msg_del_ts(tpAniSirGlobal pMac,
 	msg.type = WMA_DEL_TS_REQ;
 	msg.bodyptr = pDelTsParam;
 	msg.bodyval = 0;
-	qdf_mem_set((uint8_t *) pDelTsParam, sizeof(tDelTsParams), 0);
 
 	/* filling message parameters. */
 	pDelTsParam->staIdx = staIdx;

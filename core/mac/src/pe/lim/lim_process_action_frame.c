@@ -422,8 +422,6 @@ lim_process_ext_channel_switch_action_frame(tpAniSirGlobal mac_ctx,
 			return;
 		}
 
-		qdf_mem_zero(ext_cng_chan_ind,
-			sizeof(*ext_cng_chan_ind));
 		ext_cng_chan_ind->session_id =
 					session_entry->smeSessionId;
 

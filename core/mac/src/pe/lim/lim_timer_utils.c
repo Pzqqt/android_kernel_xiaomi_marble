@@ -310,8 +310,6 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 		lim_log(pMac, LOGP, FL("AllocateMemory failed!"));
 		goto err_timer;
 	}
-	qdf_mem_zero(pMac->lim.gLimPreAuthTimerTable.pTable,
-		     cfgValue * sizeof(tLimPreAuthNode *));
 
 	for (i = 0; i < cfgValue; i++) {
 		pMac->lim.gLimPreAuthTimerTable.pTable[i] =

@@ -1863,7 +1863,6 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			FL("Allocate Memory failed in assoc_req"));
 		return;
 	}
-	qdf_mem_set((void *)assoc_req, sizeof(*assoc_req), 0);
 
 	/* Parse Assoc Request frame */
 	if (false == lim_chk_assoc_req_parse_error(mac_ctx, hdr, session,
@@ -2198,7 +2197,6 @@ void lim_send_mlm_assoc_ind(tpAniSirGlobal mac_ctx,
 				FL("AllocateMemory failed for assoc_ind"));
 			return;
 		}
-		qdf_mem_set(assoc_ind, temp, 0);
 		qdf_mem_copy((uint8_t *) assoc_ind->peerMacAddr,
 			(uint8_t *) sta_ds->staAddr, sizeof(tSirMacAddr));
 		assoc_ind->aid = sta_ds->assocId;
