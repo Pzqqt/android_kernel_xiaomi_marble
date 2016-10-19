@@ -38,7 +38,7 @@
 #define ATH_MODULE_NAME hif
 #include <a_debug.h>
 
-#ifdef DEBUG
+#if defined(WLAN_DEBUG) || defined(DEBUG)
 static ATH_DEBUG_MASK_DESCRIPTION g_hif_debug_description[] = {
 	{USB_HIF_DEBUG_CTRL_TRANS, "Control Transfers"},
 	{USB_HIF_DEBUG_BULK_IN, "BULK In Transfers"},

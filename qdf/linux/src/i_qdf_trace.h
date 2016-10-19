@@ -53,7 +53,7 @@
  * This allows us to build 'performance' builds where we can measure performance
  * without being bogged down by all the tracing in the code
  */
-#if defined(WLAN_DEBUG)
+#if defined(WLAN_DEBUG) || defined(DEBUG)
 #define QDF_TRACE qdf_trace_msg
 #define QDF_TRACE_HEX_DUMP qdf_trace_hex_dump
 #else

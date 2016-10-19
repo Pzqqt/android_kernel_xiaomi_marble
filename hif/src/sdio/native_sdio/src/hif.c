@@ -251,7 +251,7 @@ static QDF_STATUS hif_disable_func(struct hif_sdio_dev *device,
 static QDF_STATUS hif_enable_func(struct hif_sdio_dev *device,
 		   struct sdio_func *func);
 
-#ifdef DEBUG
+#if defined(WLAN_DEBUG) || defined(DEBUG)
 ATH_DEBUG_INSTANTIATE_MODULE_VAR(hif,
 				 "hif",
 				 "(Linux MMC) Host Interconnect Framework",

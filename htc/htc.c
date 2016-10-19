@@ -31,7 +31,7 @@
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <qdf_types.h>          /* qdf_print */
 
-#ifdef DEBUG
+#if defined(WLAN_DEBUG) || defined(DEBUG)
 static ATH_DEBUG_MASK_DESCRIPTION g_htc_debug_description[] = {
 	{ATH_DEBUG_SEND, "Send"},
 	{ATH_DEBUG_RECV, "Recv"},

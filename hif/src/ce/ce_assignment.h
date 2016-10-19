@@ -42,7 +42,7 @@
 #define HIF_PCI_DEBUG   ATH_DEBUG_MAKE_MODULE_MASK(0)
 #define HIF_PCI_IPA_UC_ASSIGNED_CE  5
 
-#if defined(DEBUG)
+#if defined(WLAN_DEBUG) || defined(DEBUG)
 static ATH_DEBUG_MASK_DESCRIPTION g_hif_debug_description[] = {
 	{HIF_PCI_DEBUG, "hif_pci"},
 };
