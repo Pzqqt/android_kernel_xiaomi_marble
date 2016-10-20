@@ -313,6 +313,11 @@ static const struct qwlan_hw qwlan_hw_list[] = {
 		.id = QCA9379_REV1_VERSION,
 		.subid = 0xC,
 		.name = "QCA9379_REV1",
+	},
+	{
+		.id = QCA9379_REV1_VERSION,
+		.subid = 0xD,
+		.name = "QCA9379_REV1_1",
 	}
 };
 
