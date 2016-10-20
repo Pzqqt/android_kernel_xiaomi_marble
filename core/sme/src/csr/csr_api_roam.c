@@ -7432,7 +7432,7 @@ QDF_STATUS csr_roam_copy_connected_profile(tpAniSirGlobal pMac,
 	pDstProfile->BSSIDs.numOfBSSIDs = 1;
 	qdf_copy_macaddr(pDstProfile->BSSIDs.bssid, &pSrcProfile->bssid);
 
-	if (pSrcProfile->SSID.ssId) {
+	if (pSrcProfile->SSID.length > 0) {
 		pDstProfile->SSIDs.SSIDList =
 			qdf_mem_malloc(sizeof(tCsrSSIDInfo));
 		if (NULL == pDstProfile->SSIDs.SSIDList) {
