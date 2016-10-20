@@ -3622,7 +3622,6 @@ void wlan_sap_enable_phy_error_logs(tHalHandle hal, bool enable_log)
 	mac_ctx->sap.enable_dfs_phy_error_logs = enable_log;
 }
 
-
 /**
  * wlansap_get_chan_width() - get sap channel width.
  * @cds_ctx: pointer of global cds context
@@ -3637,4 +3636,32 @@ uint32_t wlansap_get_chan_width(void *cds_ctx)
 
 	sapcontext = CDS_GET_SAP_CB(cds_ctx);
 	return wlan_sap_get_vht_ch_width(sapcontext);
+}
+
+/**
+ * wlansap_set_tx_leakage_threshold() - set sap tx leakage threshold.
+ * @hal: HAL pointer
+ * @tx_leakage_threshold: sap tx leakage threshold
+ *
+ * This function set sap tx leakage threshold.
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS wlansap_set_tx_leakage_threshold(tHalHandle hal,
+			uint16_t tx_leakage_threshold)
+{
+	tpAniSirGlobal mac;
+
+	if (NULL == hal) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			"%s: Invalid hal pointer", __func__);
+		return QDF_STATUS_E_FAULT;
+	}
+
+	mac = PMAC_STRUCT(hal);
+	mac->sap.SapDfsInfo.tx_leakage_threshold = tx_leakage_threshold;
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+			"%s: leakage_threshold %d", __func__,
+			mac->sap.SapDfsInfo.tx_leakage_threshold);
+	return QDF_STATUS_SUCCESS;
 }

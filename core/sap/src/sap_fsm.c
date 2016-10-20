@@ -1007,6 +1007,16 @@ sap_mark_leaking_ch(ptSapContext sap_ctx,
 	uint32_t         j = 0;
 	uint32_t         k = 0;
 	uint8_t          dfs_nol_channel;
+	tHalHandle      hal = CDS_GET_HAL_CB(sap_ctx->pvosGCtx);
+	tpAniSirGlobal  mac;
+
+	if (NULL == hal) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			"%s: Invalid hal pointer", __func__);
+		return QDF_STATUS_E_FAULT;
+	}
+
+	mac = PMAC_STRUCT(hal);
 
 
 	/* traverse target_chan_matrix and */
@@ -1051,7 +1061,7 @@ sap_mark_leaking_ch(ptSapContext sap_ctx,
 			 * to NOL channel
 			 */
 			if (target_chan_matrix[k].leak_lvl <=
-					SAP_TX_LEAKAGE_THRES) {
+				mac->sap.SapDfsInfo.tx_leakage_threshold) {
 				/*
 				 * candidate channel will have
 				 * bad leakage in NOL channel,

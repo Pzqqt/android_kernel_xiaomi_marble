@@ -3571,6 +3571,17 @@ enum dot11p_mode {
 #define CFG_SAP_FORCE_11N_FOR_11AC_DEFAULT (0)
 
 /*
+ * sap tx leakage threshold
+ * customer can set this value from 100 to 1000 which means
+ * sap tx leakage threshold is -10db to -100db
+ */
+#define CFG_SAP_TX_LEAKAGE_THRESHOLD_NAME    "gsap_tx_leakage_threshold"
+#define CFG_SAP_TX_LEAKAGE_THRESHOLD_MIN     (100)
+#define CFG_SAP_TX_LEAKAGE_THRESHOLD_MAX     (1000)
+#define CFG_SAP_TX_LEAKAGE_THRESHOLD_DEFAULT (310)
+
+
+/*
  * Enable filtering of replayed multicast packets
  * In a typical infrastructure setup, it is quite normal to receive
  * replayed multicast packets. These packets may cause more harm than
@@ -4289,6 +4300,7 @@ struct hdd_config {
 	bool indoor_channel_support;
 	/* parameter to force sap into 11n */
 	bool sap_force_11n_for_11ac;
+	uint16_t sap_tx_leakage_threshold;
 	bool multicast_replay_filter;
 	/* parameter for indicating sifs burst duration to fw */
 	uint8_t sifs_burst_duration;
