@@ -533,10 +533,6 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		lim_log(mac_ctx, LOGE,
 			FL("LFR3: Reassoc response packet header is NULL"));
 		return;
-	} else if (hdr->sa == NULL) {
-		lim_log(mac_ctx, LOGE,
-			FL("LFR3: Reassoc resp packet source address is NULL"));
-		return;
 	}
 
 	lim_log(mac_ctx, LOG1,

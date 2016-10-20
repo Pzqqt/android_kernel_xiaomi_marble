@@ -263,11 +263,10 @@ lim_process_deauth_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	 *     AP we're currently associated with (case a), then proceed
 	 *     with normal deauth processing.
 	 */
-	if (psessionEntry->limReAssocbssId != NULL) {
-		pRoamSessionEntry =
-			pe_find_session_by_bssid(pMac, psessionEntry->limReAssocbssId,
-						 &roamSessionId);
-	}
+	pRoamSessionEntry =
+		pe_find_session_by_bssid(pMac, psessionEntry->limReAssocbssId,
+							&roamSessionId);
+
 	if (lim_is_reassoc_in_progress(pMac, psessionEntry)
 	    || lim_is_reassoc_in_progress(pMac, pRoamSessionEntry)) {
 		if (!IS_REASSOC_BSSID(pMac, pHdr->sa, psessionEntry)) {
