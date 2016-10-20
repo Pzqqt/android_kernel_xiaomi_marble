@@ -2315,6 +2315,7 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(hdd_adapter_t *pAdapter, uint32_t handle)
 	case SME_QOS_STATUS_RELEASE_FAILURE_RSP:
 		/* nothing we can do with the existing flow except leave it */
 		status = HDD_WLAN_WMM_STATUS_RELEASE_FAILED;
+		break;
 
 	default:
 		/* we didn't get back one of the
