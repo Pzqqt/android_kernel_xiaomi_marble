@@ -15708,6 +15708,9 @@ QDF_STATUS csr_roam_close_session(tpAniSirGlobal pMac, uint32_t sessionId,
 			purge_sme_session_cmd_list(pMac, sessionId,
 					   &pMac->sme.smeScanCmdPendingList);
 
+			purge_sme_session_cmd_list(pMac, sessionId,
+					   &pMac->sme.smeScanCmdActiveList);
+
 			purge_csr_session_cmd_list(pMac, sessionId);
 			status = csr_issue_del_sta_for_session_req(pMac,
 						 sessionId,
