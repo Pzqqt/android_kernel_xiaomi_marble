@@ -2526,8 +2526,8 @@ static void hdd_ipa_send_skb_to_network(qdf_nbuf_t skb,
  *
  * Return: None
  */
-void hdd_ipa_forward(struct hdd_ipa_priv *hdd_ipa,
-		hdd_adapter_t *adapter, qdf_nbuf_t skb)
+static void hdd_ipa_forward(struct hdd_ipa_priv *hdd_ipa,
+			    hdd_adapter_t *adapter, qdf_nbuf_t skb)
 {
 	qdf_nbuf_t copy;
 	struct hdd_ipa_pm_tx_cb *pm_tx_cb;
