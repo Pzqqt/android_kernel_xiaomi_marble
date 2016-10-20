@@ -629,6 +629,11 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 		return;
 	}
 
+	if (hdd_ctx->isWiphySuspended == true) {
+		hdd_err("%s: system/cfg80211 is already suspend", __func__);
+		return;
+	}
+
 	if (('K' == request->alpha2[0]) &&
 	    ('R' == request->alpha2[1]))
 		request->dfs_region = DFS_KR_REGION;
