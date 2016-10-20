@@ -1305,15 +1305,20 @@ void lim_process_mlm_set_keys_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	* Firmware so we can set the protection bit
 	*/
 	if (eSIR_SME_SUCCESS == pMlmSetKeysCnf->resultCode) {
-		psessionEntry->is_key_installed = 1;
+		if (pMlmSetKeysCnf->key_len_nonzero)
+			psessionEntry->is_key_installed = 1;
 		if (LIM_IS_AP_ROLE(psessionEntry)) {
 			sta_ds = dph_lookup_hash_entry(pMac,
 				pMlmSetKeysCnf->peer_macaddr.bytes,
 				&aid, &psessionEntry->dph.dphHashTable);
-			if (sta_ds != NULL)
+			if (sta_ds != NULL && pMlmSetKeysCnf->key_len_nonzero)
 				sta_ds->is_key_installed = 1;
 		}
 	}
+	lim_log(pMac, LOG1,
+		FL("is_key_installed = %d"),
+		psessionEntry->is_key_installed);
+
 	lim_send_sme_set_context_rsp(pMac,
 				     pMlmSetKeysCnf->peer_macaddr,
 				     1,
@@ -2708,6 +2713,8 @@ void lim_process_mlm_set_sta_key_rsp(tpAniSirGlobal mac_ctx,
 	tLimMlmSetKeysCnf mlm_set_key_cnf;
 	uint8_t session_id = 0;
 	tpPESession session_entry;
+	uint16_t key_len;
+	uint16_t result_status;
 
 	SET_LIM_PROCESS_DEFD_MESGS(mac_ctx, true);
 	qdf_mem_set((void *)&mlm_set_key_cnf, sizeof(tLimMlmSetKeysCnf), 0);
@@ -2735,6 +2742,15 @@ void lim_process_mlm_set_sta_key_rsp(tpAniSirGlobal mac_ctx,
 		mlm_set_key_cnf.resultCode =
 			(uint16_t)(((tpSetStaKeyParams) msg->bodyptr)->status);
 	}
+
+	result_status = (uint16_t)(((tpSetStaKeyParams) msg->bodyptr)->status);
+	key_len = ((tpSetStaKeyParams)msg->bodyptr)->key[0].keyLength;
+
+	if (result_status == eSIR_SME_SUCCESS && key_len)
+		mlm_set_key_cnf.key_len_nonzero = true;
+	else
+		mlm_set_key_cnf.key_len_nonzero = false;
+
 
 	qdf_mem_free(msg->bodyptr);
 	msg->bodyptr = NULL;
@@ -2781,6 +2797,7 @@ void lim_process_mlm_set_bss_key_rsp(tpAniSirGlobal mac_ctx,
 	uint8_t session_id = 0;
 	tpPESession session_entry;
 	tpLimMlmSetKeysReq set_key_req;
+	uint16_t key_len;
 
 	SET_LIM_PROCESS_DEFD_MESGS(mac_ctx, true);
 	qdf_mem_set((void *)&set_key_cnf, sizeof(tLimMlmSetKeysCnf), 0);
@@ -2798,16 +2815,24 @@ void lim_process_mlm_set_bss_key_rsp(tpAniSirGlobal mac_ctx,
 		msg->bodyptr = NULL;
 		return;
 	}
-	if (eLIM_MLM_WT_SET_BSS_KEY_STATE == session_entry->limMlmState)
+	if (eLIM_MLM_WT_SET_BSS_KEY_STATE == session_entry->limMlmState) {
 		result_status =
 			(uint16_t)(((tpSetBssKeyParams)msg->bodyptr)->status);
-	else
+		key_len = ((tpSetBssKeyParams)msg->bodyptr)->key[0].keyLength;
+	} else {
 		/*
 		 * BCAST key also uses tpSetStaKeyParams.
 		 * Done this way for readabilty.
 		 */
 		result_status =
 			(uint16_t)(((tpSetStaKeyParams)msg->bodyptr)->status);
+		key_len = ((tpSetStaKeyParams)msg->bodyptr)->key[0].keyLength;
+	}
+
+	if (result_status == eSIR_SME_SUCCESS && key_len)
+		set_key_cnf.key_len_nonzero = true;
+	else
+		set_key_cnf.key_len_nonzero = false;
 
 	/* Validate MLME state */
 	if (eLIM_MLM_WT_SET_BSS_KEY_STATE != session_entry->limMlmState &&

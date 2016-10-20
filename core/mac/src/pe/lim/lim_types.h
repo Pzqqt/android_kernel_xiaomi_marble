@@ -369,11 +369,20 @@ typedef struct sLimMlmPurgeStaInd {
 	uint8_t sessionId;
 } tLimMlmPurgeStaInd, *tpLimMlmPurgeStaInd;
 
+/**
+ * struct sLimMlmSetKeysCnf - set key confirmation parameters
+ * @peer_macaddr: peer mac address
+ * @resultCode: Result of set key operation
+ * @aid: association id
+ * @sessionId: PE session id
+ * @key_len_nonzero: Keys are non-zero length
+ */
 typedef struct sLimMlmSetKeysCnf {
 	struct qdf_mac_addr peer_macaddr;
 	uint16_t resultCode;
 	uint16_t aid;
 	uint8_t sessionId;
+	bool key_len_nonzero;
 } tLimMlmSetKeysCnf, *tpLimMlmSetKeysCnf;
 
 typedef struct sLimMlmResetReq {
