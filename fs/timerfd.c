@@ -48,6 +48,8 @@ struct timerfd_ctx {
 	bool might_cancel;
 };
 
+static atomic_t instance_count = ATOMIC_INIT(0);
+
 static LIST_HEAD(cancel_list);
 static DEFINE_SPINLOCK(cancel_lock);
 
@@ -393,7 +395,9 @@ SYSCALL_DEFINE2(timerfd_create, int, clockid, int, flags)
 {
 	int ufd;
 	struct timerfd_ctx *ctx;
+	char task_comm_buf[TASK_COMM_LEN];
 	char file_name_buf[32];
+	int instance;
 
 	/* Check the TFD_* constants for consistency.  */
 	BUILD_BUG_ON(TFD_CLOEXEC != O_CLOEXEC);
@@ -430,8 +434,12 @@ SYSCALL_DEFINE2(timerfd_create, int, clockid, int, flags)
 
 	ctx->moffs = ktime_mono_to_real(0);
 
-	strlcpy(file_name_buf, "[timerfd]", sizeof(file_name_buf));
+	instance = atomic_inc_return(&instance_count);
+	get_task_comm(task_comm_buf, current);
+	snprintf(file_name_buf, sizeof(file_name_buf), "[timerfd%d_%.*s]",
+		 instance, (int)sizeof(task_comm_buf), task_comm_buf);
 	trace_android_vh_timerfd_create(file_name_buf, sizeof(file_name_buf));
+
 	ufd = anon_inode_getfd(file_name_buf, &timerfd_fops, ctx,
 			       O_RDWR | (flags & TFD_SHARED_FCNTL_FLAGS));
 	if (ufd < 0)
