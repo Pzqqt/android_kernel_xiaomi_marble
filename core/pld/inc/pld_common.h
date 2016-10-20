@@ -94,6 +94,7 @@ struct pld_fw_files {
 	char epping_file[PLD_MAX_FILE_NAME];
 	char evicted_data[PLD_MAX_FILE_NAME];
 	char setup_file[PLD_MAX_FILE_NAME];
+	char ibss_image_file[PLD_MAX_FILE_NAME];
 };
 
 /**

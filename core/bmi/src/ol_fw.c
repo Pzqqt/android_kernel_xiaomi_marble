@@ -194,7 +194,13 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 			break;
 		}
 #endif
-		filename = bmi_ctx->fw_files.image_file;
+		if (cds_get_conparam() == QDF_GLOBAL_IBSS_MODE &&
+		    (bmi_ctx->fw_files.ibss_image_file[0] != '\0')) {
+			filename = bmi_ctx->fw_files.ibss_image_file;
+		} else {
+			filename = bmi_ctx->fw_files.image_file;
+		}
+
 		if (SIGNED_SPLIT_BINARY_VALUE)
 			bin_sign = true;
 		break;
