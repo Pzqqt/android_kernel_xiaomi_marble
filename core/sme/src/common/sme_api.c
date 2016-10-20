@@ -17058,6 +17058,7 @@ QDF_STATUS sme_set_cts2self_for_p2p_go(tHalHandle hal_handle)
 	}
 	return QDF_STATUS_SUCCESS;
 }
+
 /**
  * sme_update_tx_fail_cnt_threshold() - update tx fail count Threshold
  * @hal: Handle returned by mac_open
@@ -17122,3 +17123,48 @@ QDF_STATUS sme_set_lost_link_info_cb(tHalHandle hal,
 	}
 	return status;
 }
+
+
+#ifdef WLAN_FEATURE_WOW_PULSE
+/**
+ * sme_set_wow_pulse() - set wow pulse info
+ * @wow_pulse_set_info: wow_pulse_mode structure pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_set_wow_pulse(struct wow_pulse_mode *wow_pulse_set_info)
+{
+	cds_msg_t message;
+	QDF_STATUS status;
+	struct wow_pulse_mode *wow_pulse_set_cmd;
+
+	if (!wow_pulse_set_info) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			"%s: invalid wow_pulse_set_info pointer", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	wow_pulse_set_cmd = qdf_mem_malloc(sizeof(*wow_pulse_set_cmd));
+	if (NULL == wow_pulse_set_cmd) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			"%s: fail to alloc wow_pulse_set_cmd", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	*wow_pulse_set_cmd = *wow_pulse_set_info;
+
+	message.type = WMA_SET_WOW_PULSE_CMD;
+	message.bodyptr = wow_pulse_set_cmd;
+	status = cds_mq_post_message(QDF_MODULE_ID_WMA,
+					&message);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			"%s: Not able to post msg to WDA!",
+			__func__);
+		qdf_mem_free(wow_pulse_set_cmd);
+		status = QDF_STATUS_E_FAILURE;
+	}
+
+	return status;
+}
+#endif

@@ -132,6 +132,13 @@
 #define WMA_GET_RX_RSSI_RAW(pRxMeta) \
 		       (((t_packetmeta *)pRxMeta)->rssi_raw)
 
+/*
+ * the repeat_cnt is reserved by FW team, the current value
+ * is always 0xffffffff
+ */
+#define WMI_WOW_PULSE_REPEAT_CNT 0xffffffff
+
+
 /* WMA Messages */
 #define WMA_MSG_TYPES_BEGIN            SIR_HAL_MSG_TYPES_BEGIN
 #define WMA_ITC_MSG_TYPES_BEGIN        SIR_HAL_ITC_MSG_TYPES_BEGIN
@@ -478,6 +485,8 @@
 #define WMA_SEND_FREQ_RANGE_CONTROL_IND      SIR_HAL_SEND_FREQ_RANGE_CONTROL_IND
 #define WMA_ENCRYPT_DECRYPT_MSG              SIR_HAL_ENCRYPT_DECRYPT_MSG
 #define WMA_POWER_DEBUG_STATS_REQ            SIR_HAL_POWER_DEBUG_STATS_REQ
+
+#define WMA_SET_WOW_PULSE_CMD                SIR_HAL_SET_WOW_PULSE_CMD
 
 /* Bit 6 will be used to control BD rate for Management frames */
 #define HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME 0x40

@@ -1358,10 +1358,17 @@ QDF_STATUS sme_update_sta_inactivity_timeout(tHalHandle hal_handle,
  */
 QDF_STATUS sme_set_lost_link_info_cb(tHalHandle hal,
 		void (*cb)(void *, struct sir_lost_link_info *));
+
 #ifdef WLAN_POWER_DEBUGFS
 QDF_STATUS sme_power_debug_stats_req(tHalHandle hal, void (*callback_fn)
 				(struct  power_stats_response *response,
 				void *context), void *power_stats_context);
 #endif
 void sme_set_cc_src(tHalHandle hal_handle, enum country_src);
+
+
+#ifdef WLAN_FEATURE_WOW_PULSE
+QDF_STATUS sme_set_wow_pulse(struct wow_pulse_mode *wow_pulse_set_info);
+#endif
+
 #endif /* #if !defined( __SME_API_H ) */

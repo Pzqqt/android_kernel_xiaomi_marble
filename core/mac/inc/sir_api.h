@@ -6766,4 +6766,22 @@ struct sme_sta_inactivity_timeout {
 	uint8_t session_id;
 	uint32_t sta_inactivity_timeout;
 };
+
+/*
+ * struct wow_pulse_mode - WoW Pulse set cmd struct
+ * @wow_pulse_enable: enable or disable this feature
+ * @wow_pulse_pin: GPIO PIN for Pulse
+ * @wow_pulse_interval_low: Pulse interval low
+ * @wow_pulse_interval_high: Pulse interval high
+ *
+ * SME uses this structure to configure wow pulse info
+ * and send it to WMA
+ */
+struct wow_pulse_mode {
+	bool                       wow_pulse_enable;
+	uint8_t                    wow_pulse_pin;
+	uint16_t                   wow_pulse_interval_high;
+	uint16_t                   wow_pulse_interval_low;
+};
+
 #endif /* __SIR_API_H */

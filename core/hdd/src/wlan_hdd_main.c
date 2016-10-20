@@ -5816,6 +5816,61 @@ static void hdd_init_offloaded_packets_ctx(hdd_context_t *hdd_ctx)
 }
 #endif
 
+#ifdef WLAN_FEATURE_WOW_PULSE
+/**
+ * wlan_hdd_set_wow_pulse() - call SME to send wmi cmd of wow pulse
+ * @phddctx: hdd_context_t structure pointer
+ * @enable: enable or disable this behaviour
+ *
+ * Return: int
+ */
+static int wlan_hdd_set_wow_pulse(hdd_context_t *phddctx, bool enable)
+{
+	struct hdd_config *pcfg_ini = phddctx->config;
+	struct wow_pulse_mode wow_pulse_set_info;
+	QDF_STATUS status;
+
+	hdd_notice("wow pulse enable flag is %d", enable);
+
+	if (false == phddctx->config->wow_pulse_support)
+		return 0;
+
+	/* prepare the request to send to SME */
+	if (enable == true) {
+		wow_pulse_set_info.wow_pulse_enable = true;
+		wow_pulse_set_info.wow_pulse_pin =
+				pcfg_ini->wow_pulse_pin;
+		wow_pulse_set_info.wow_pulse_interval_low =
+				pcfg_ini->wow_pulse_interval_low;
+		wow_pulse_set_info.wow_pulse_interval_high =
+				pcfg_ini->wow_pulse_interval_high;
+	} else {
+		wow_pulse_set_info.wow_pulse_enable = false;
+		wow_pulse_set_info.wow_pulse_pin = 0;
+		wow_pulse_set_info.wow_pulse_interval_low = 0;
+		wow_pulse_set_info.wow_pulse_interval_high = 0;
+	}
+	hdd_notice("enable %d pin %d low %d high %d",
+		wow_pulse_set_info.wow_pulse_enable,
+		wow_pulse_set_info.wow_pulse_pin,
+		wow_pulse_set_info.wow_pulse_interval_low,
+		wow_pulse_set_info.wow_pulse_interval_high);
+
+	status = sme_set_wow_pulse(&wow_pulse_set_info);
+	if (QDF_STATUS_E_FAILURE == status) {
+		hdd_notice("sme_set_wow_pulse failure!");
+		return -EIO;
+	}
+	hdd_notice("sme_set_wow_pulse success!");
+	return 0;
+}
+#else
+static inline int wlan_hdd_set_wow_pulse(hdd_context_t *phddctx, bool enable)
+{
+	return 0;
+}
+#endif
+
 #ifdef WLAN_FEATURE_FASTPATH
 /**
  * hdd_enable_fastpath() - Enable fastpath if enabled in config INI
@@ -8109,6 +8164,9 @@ int hdd_wlan_startup(struct device *dev)
 	}
 
 	wlan_hdd_update_wiphy(hdd_ctx);
+
+	if (0 != wlan_hdd_set_wow_pulse(hdd_ctx, true))
+		hdd_notice("Failed to set wow pulse");
 
 	hdd_ctx->hHal = cds_get_context(QDF_MODULE_ID_SME);
 

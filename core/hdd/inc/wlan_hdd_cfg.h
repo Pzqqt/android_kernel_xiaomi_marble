@@ -4742,6 +4742,47 @@ enum dot11p_mode {
  */
 #define CFG_RPS_RX_QUEUE_CPU_MAP_LIST_LEN 30
 
+#ifdef WLAN_FEATURE_WOW_PULSE
+/*
+ * Enable/Disable  WOW PULSE feature
+ * Set the wakeup pulse which FW use to wake up HOST
+ * Default : Disable
+ */
+#define CFG_WOW_PULSE_SUPPORT_NAME     "gwow_pulse_support"
+#define CFG_WOW_PULSE_SUPPORT_MIN      (0)
+#define CFG_WOW_PULSE_SUPPORT_MAX      (1)
+#define CFG_WOW_PULSE_SUPPORT_DEFAULT  (CFG_WOW_PULSE_SUPPORT_MIN)
+
+/*
+ * GPIO PIN for Pulse
+ * Which PIN to send the Pulse
+ */
+#define CFG_WOW_PULSE_PIN_NAME         "gwow_pulse_pin"
+#define CFG_WOW_PULSE_PIN_MIN          (CFG_SET_TSF_GPIO_PIN_MIN)
+#define CFG_WOW_PULSE_PIN_MAX          (CFG_SET_TSF_GPIO_PIN_MAX)
+#define CFG_WOW_PULSE_PIN_DEFAULT      (35)
+
+/*
+ * Pulse interval low
+ * The interval of low level in the pulse
+ * The value which defined by customer should between 160 and 480
+ */
+#define CFG_WOW_PULSE_INTERVAL_LOW_NAME     "gwow_pulse_interval_low"
+#define CFG_WOW_PULSE_INTERVAL_LOW_MIN      (160)
+#define CFG_WOW_PULSE_INTERVAL_LOW_MAX      (480)
+#define CFG_WOW_PULSE_INTERVAL_LOW_DEFAULT  (180)
+
+/*
+ * Pulse interval high
+ * The interval of high level in the pulse
+ * The value which defined by customer should between 20 and 40
+ */
+#define CFG_WOW_PULSE_INTERVAL_HIGH_NAME    "gwow_pulse_interval_high"
+#define CFG_WOW_PULSE_INTERVAL_HIGH_MIN     (20)
+#define CFG_WOW_PULSE_INTERVAL_HIGH_MAX     (40)
+#define CFG_WOW_PULSE_INTERVAL_HIGH_DEFAULT (20)
+#endif
+
 /*
  * Support to start sap in indoor channel
  * Customer can config this item to enable/disable sap in indoor channel
@@ -5553,6 +5594,12 @@ struct hdd_config {
 	uint32_t rx_wakelock_timeout;
 	uint32_t max_sched_scan_plan_interval;
 	uint32_t max_sched_scan_plan_iterations;
+#ifdef WLAN_FEATURE_WOW_PULSE
+	bool wow_pulse_support;
+	uint8_t wow_pulse_pin;
+	uint16_t wow_pulse_interval_high;
+	uint16_t wow_pulse_interval_low;
+#endif
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
