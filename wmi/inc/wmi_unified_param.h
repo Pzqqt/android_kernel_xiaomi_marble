@@ -4204,6 +4204,8 @@ struct lci_set_params {
 		reg_loc_dse:1,
 		dep_sta:1,
 		version:2;
+	uint8_t *colocated_bss;
+	int msg_len;
 };
 
 /**
@@ -4212,6 +4214,7 @@ struct lci_set_params {
  */
 struct lcr_set_params {
 	void *lcr_data;
+	int msg_len;
 };
 
 /**
