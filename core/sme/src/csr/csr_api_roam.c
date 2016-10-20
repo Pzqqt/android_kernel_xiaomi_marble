@@ -9499,9 +9499,6 @@ void csr_roaming_state_msg_processor(tpAniSirGlobal pMac, void *pMsgBuf)
 		pSmeRsp->messageType, pSmeRsp->messageType,
 		mac_trace_getcsr_roam_sub_state(
 			pMac->roam.curSubState[pSmeRsp->sessionId]));
-	pSmeRsp->messageType = pSmeRsp->messageType;
-	pSmeRsp->length = pSmeRsp->length;
-	pSmeRsp->statusCode = pSmeRsp->statusCode;
 
 	switch (pSmeRsp->messageType) {
 
