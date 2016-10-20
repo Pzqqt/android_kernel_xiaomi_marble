@@ -1272,23 +1272,19 @@ QDF_STATUS wlansap_clear_acl(void *pCtx)
 		return QDF_STATUS_E_RESOURCES;
 	}
 
-	if (pSapCtx->denyMacList != NULL) {
-		for (i = 0; i < (pSapCtx->nDenyMac - 1); i++) {
-			qdf_mem_zero((pSapCtx->denyMacList + i)->bytes,
-				     QDF_MAC_ADDR_SIZE);
-
-		}
+	for (i = 0; i < (pSapCtx->nDenyMac - 1); i++) {
+		qdf_mem_zero((pSapCtx->denyMacList + i)->bytes,
+			     QDF_MAC_ADDR_SIZE);
 	}
+
 	sap_print_acl(pSapCtx->denyMacList, pSapCtx->nDenyMac);
 	pSapCtx->nDenyMac = 0;
 
-	if (pSapCtx->acceptMacList != NULL) {
-		for (i = 0; i < (pSapCtx->nAcceptMac - 1); i++) {
-			qdf_mem_zero((pSapCtx->acceptMacList + i)->bytes,
-				     QDF_MAC_ADDR_SIZE);
-
-		}
+	for (i = 0; i < (pSapCtx->nAcceptMac - 1); i++) {
+		qdf_mem_zero((pSapCtx->acceptMacList + i)->bytes,
+			     QDF_MAC_ADDR_SIZE);
 	}
+
 	sap_print_acl(pSapCtx->acceptMacList, pSapCtx->nAcceptMac);
 	pSapCtx->nAcceptMac = 0;
 
