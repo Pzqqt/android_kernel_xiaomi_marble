@@ -1625,7 +1625,6 @@ static void hdd_statistics_cb(void *pStats, void *pContext)
  */
 void hdd_clear_roam_profile_ie(hdd_adapter_t *pAdapter)
 {
-	int i = 0;
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 
 	ENTER();
@@ -1668,11 +1667,8 @@ void hdd_clear_roam_profile_ie(hdd_adapter_t *pAdapter)
 
 	pWextState->authKeyMgmt = 0;
 
-	for (i = 0; i < CSR_MAX_NUM_KEY; i++) {
-		if (pWextState->roamProfile.Keys.KeyMaterial[i]) {
-			pWextState->roamProfile.Keys.KeyLength[i] = 0;
-		}
-	}
+	qdf_mem_zero(pWextState->roamProfile.Keys.KeyLength, CSR_MAX_NUM_KEY);
+
 #ifdef FEATURE_WLAN_WAPI
 	pAdapter->wapi_info.wapiAuthMode = WAPI_AUTH_MODE_OPEN;
 	pAdapter->wapi_info.nWapiMode = 0;
@@ -3043,7 +3039,7 @@ static int __iw_get_encode(struct net_device *dev,
 	}
 
 	for (i = 0; i < MAX_WEP_KEYS; i++) {
-		if (pRoamProfile->Keys.KeyMaterial[i] == NULL) {
+		if (pRoamProfile->Keys.KeyLength[i] == 0) {
 			continue;
 		} else {
 			break;
@@ -4057,7 +4053,6 @@ static int __iw_set_encode(struct net_device *dev, struct iw_request_info *info,
 	uint8_t key_length;
 	eCsrEncryptionType encryptionType = eCSR_ENCRYPT_TYPE_NONE;
 	bool fKeyPresent = 0;
-	int i;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	int ret;
 
@@ -4084,13 +4079,8 @@ static int __iw_set_encode(struct net_device *dev, struct iw_request_info *info,
 	if (wrqu->data.flags & IW_ENCODE_DISABLED) {
 		hdd_notice("****iwconfig wlan0 key off*****");
 		if (!fKeyPresent) {
-
-			for (i = 0; i < CSR_MAX_NUM_KEY; i++) {
-
-				if (pWextState->roamProfile.Keys.KeyMaterial[i])
-					pWextState->roamProfile.Keys.
-					KeyLength[i] = 0;
-			}
+			qdf_mem_zero(pWextState->roamProfile.Keys.KeyLength,
+							CSR_MAX_NUM_KEY);
 		}
 		pHddStaCtx->conn_info.authType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 		pWextState->wpaVersion = IW_AUTH_WPA_VERSION_DISABLED;
@@ -4270,7 +4260,7 @@ static int __iw_get_encodeext(struct net_device *dev,
 	}
 
 	for (i = 0; i < MAX_WEP_KEYS; i++) {
-		if (pRoamProfile->Keys.KeyMaterial[i] == NULL) {
+		if (pRoamProfile->Keys.KeyLength[i] == 0) {
 			continue;
 		} else {
 			break;
@@ -4379,7 +4369,7 @@ static int __iw_set_encodeext(struct net_device *dev,
 			return -EINVAL;
 		} else {
 			/*Static wep, update the roam profile with the keys */
-			if (ext->key
+			if (ext->key_len
 			    && (ext->key_len <=
 				eCSR_SECURITY_WEP_KEYSIZE_MAX_BYTES)
 			    && key_index < CSR_MAX_NUM_KEY) {
