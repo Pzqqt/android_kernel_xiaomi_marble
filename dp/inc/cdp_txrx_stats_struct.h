@@ -37,6 +37,13 @@
 #define TXRX_STATS_LEVEL_BASIC 1
 #define TXRX_STATS_LEVEL_FULL  2
 
+#define BSS_CHAN_INFO_READ                        1
+#define BSS_CHAN_INFO_READ_AND_CLEAR              2
+
+#define TX_FRAME_TYPE_DATA 0
+#define TX_FRAME_TYPE_MGMT 1
+#define TX_FRAME_TYPE_BEACON 2
+
 #ifndef TXRX_STATS_LEVEL
 #define TXRX_STATS_LEVEL TXRX_STATS_LEVEL_BASIC
 #endif

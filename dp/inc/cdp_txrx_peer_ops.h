@@ -32,7 +32,7 @@
 #ifndef _CDP_TXRX_PEER_H_
 #define _CDP_TXRX_PEER_H_
 
-typedef QDF_STATUS (*ol_rx_callback_fp)(void *p_cds_gctx,
+typedef QDF_STATUS(*ol_rx_callback_fp)(void *p_cds_gctx,
 			 qdf_nbuf_t pDataBuff,
 			 uint8_t ucSTAId);
 
@@ -85,6 +85,7 @@ ol_txrx_find_peer_by_addr_and_vdev(ol_txrx_pdev_handle pdev,
 
 #ifdef QCA_SUPPORT_TXRX_LOCAL_PEER_ID
 uint16_t ol_txrx_local_peer_id(ol_txrx_peer_handle peer);
+
 ol_txrx_peer_handle ol_txrx_find_peer_by_addr(ol_txrx_pdev_handle pdev,
 					      uint8_t *peer_addr,
 					      uint8_t *peer_id);
@@ -106,6 +107,7 @@ ol_txrx_peer_state_update(ol_txrx_pdev_handle pdev, uint8_t *peer_addr,
 			 enum ol_txrx_peer_state state);
 
 QDF_STATUS ol_txrx_get_vdevid(struct ol_txrx_peer_t *peer, uint8_t *vdev_id);
+
 void *ol_txrx_get_vdev_by_sta_id(uint8_t sta_id);
 
 QDF_STATUS ol_txrx_register_ocb_peer(void *cds_ctx, uint8_t *mac_addr,

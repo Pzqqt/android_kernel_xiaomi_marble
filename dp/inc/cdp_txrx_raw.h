@@ -33,9 +33,15 @@
 #define _CDP_TXRX_RAW_H_
 
 
+#include "cdp_txrx_ops.h"
 /* TODO: adf need to be replaced with qdf */
-extern int ol_txrx_get_nwifi_mode(ol_txrx_vdev_handle vdev);
-#define OL_TXRX_GET_NWIFI_MODE(vdev)  ol_txrx_get_nwifi_mode(vdev)
+static inline int cdp_get_nwifi_mode(ol_txrx_soc_handle soc,
+	void *vdev)
+{
+	if (soc->ops->raw_ops->txrx_get_nwifi_mode)
+		return soc->ops->raw_ops->txrx_get_nwifi_mode(vdev);
+	return 0;
+}
 /* Questionable -- should this be in OL AND/OR is this used? */
 /* Called by ol_tx_ll_umac_raw_process() */
 /**
@@ -57,6 +63,13 @@ extern int ol_txrx_get_nwifi_mode(ol_txrx_vdev_handle vdev);
  * @return - 0 on success, -1 on error, 1 if more nbufs need to be consumed.
  */
 
-int
-ol_rsim_tx_encap(ol_txrx_vdev_handle vdev, qdf_nbuf_t *pnbuf);
+static inline int
+cdp_rsim_tx_encap(ol_txrx_soc_handle soc,
+	void *vdev, qdf_nbuf_t *pnbuf)
+{
+	if (soc->ops->raw_ops->rsim_tx_encap)
+		return soc->ops->raw_ops->rsim_tx_encap(vdev, pnbuf);
+	return 0;
+}
+
 #endif

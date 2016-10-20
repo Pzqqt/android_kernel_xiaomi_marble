@@ -33,9 +33,17 @@
 #define _CDP_TXRX_PFLOW_H_
 
 #include <cdp_txrx_stats_struct.h>
-#if PEER_FLOW_CONTROL
-extern uint32_t ol_pflow_update_pdev_params(struct ol_txrx_pdev_t *,
-		ol_ath_param_t, uint32_t, void *);
-#endif
-#endif
+#include "cdp_txrx_ops.h"
 
+#if PEER_FLOW_CONTROL
+static inline uint32_t cdp_pflow_update_pdev_params
+	(ol_txrx_soc_handle soc, void *pdev,
+	ol_ath_param_t param, uint32_t val, void *ctx)
+{
+	if (soc->ops->pflow_ops->pflow_update_pdev_params)
+		return soc->ops->pflow_ops->pflow_update_pdev_params
+			(pdev, param, val, ctx);
+	return 0;
+}
+#endif
+#endif

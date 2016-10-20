@@ -66,7 +66,7 @@ void ol_set_cfg_rx_fwd_disabled(ol_pdev_handle pdev, uint8_t disable_rx_fwd);
 void ol_set_cfg_packet_log_enabled(ol_pdev_handle pdev, uint8_t val);
 
 ol_pdev_handle ol_pdev_cfg_attach(qdf_device_t osdev,
-			 struct txrx_pdev_cfg_param_t cfg_param);
+	struct txrx_pdev_cfg_param_t cfg_param);
 
 void ol_vdev_rx_set_intrabss_fwd(ol_txrx_vdev_handle vdev, bool val);
 

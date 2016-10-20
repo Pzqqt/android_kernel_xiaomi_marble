@@ -34,23 +34,20 @@
 
 #ifdef QCA_COMPUTE_TX_DELAY
 void
-ol_tx_delay(ol_txrx_pdev_handle pdev,
-		 uint32_t *queue_delay_microsec,
-		 uint32_t *tx_delay_microsec, int category);
+ol_tx_delay(ol_txrx_pdev_handle pdev, uint32_t *queue_delay_microsec,
+	 uint32_t *tx_delay_microsec, int category);
 void
 ol_tx_delay_hist(ol_txrx_pdev_handle pdev,
-		 uint16_t *bin_values, int category);
+	 uint16_t *bin_values, int category);
 void
-ol_tx_packet_count(ol_txrx_pdev_handle pdev,
-		 uint16_t *out_packet_count,
-		 uint16_t *out_packet_loss_count, int category);
+ol_tx_packet_count(ol_txrx_pdev_handle pdev, uint16_t *out_packet_count,
+	uint16_t *out_packet_loss_count, int category);
 void ol_tx_set_compute_interval(ol_txrx_pdev_handle pdev,
 		 uint32_t interval);
 #else
 static inline void
-ol_tx_delay(ol_txrx_pdev_handle pdev,
-		 uint32_t *queue_delay_microsec,
-		 uint32_t *tx_delay_microsec, int category)
+ol_tx_delay(ol_txrx_pdev_handle pdev, uint32_t *queue_delay_microsec,
+	 uint32_t *tx_delay_microsec, int category)
 {
 	return;
 }
@@ -63,16 +60,14 @@ ol_tx_delay_hist(ol_txrx_pdev_handle pdev,
 }
 
 static inline void
-ol_tx_packet_count(ol_txrx_pdev_handle pdev,
-		 uint16_t *out_packet_count,
-		 uint16_t *out_packet_loss_count, int category)
+ol_tx_packet_count(ol_txrx_pdev_handle pdev, uint16_t *out_packet_count,
+	 uint16_t *out_packet_loss_count, int category)
 {
 	return;
 }
 
 static inline void
-ol_tx_set_compute_interval(ol_txrx_pdev_handle pdev,
-		 uint32_t interval)
+ol_tx_set_compute_interval(ol_txrx_pdev_handle pdev, uint32_t interval)
 {
 	return;
 }

@@ -40,7 +40,7 @@ void ol_tx_throttle_init_period(struct ol_txrx_pdev_t *pdev, int period,
 void ol_tx_throttle_set_level(struct ol_txrx_pdev_t *pdev, int level);
 #else
 static inline void ol_tx_throttle_set_level(struct ol_txrx_pdev_t *pdev,
-					    int level)
+	int level)
 {
 	/* no-op */
 }

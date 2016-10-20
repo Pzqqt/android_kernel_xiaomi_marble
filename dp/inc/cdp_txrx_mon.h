@@ -32,18 +32,61 @@
 
 #ifndef _CDP_TXRX_MON_H_
 #define _CDP_TXRX_MON_H_
-void ol_txrx_monitor_set_filter_ucast_data(ol_txrx_pdev_handle, u_int8_t val);
-void ol_txrx_monitor_set_filter_mcast_data(ol_txrx_pdev_handle, u_int8_t val);
-void ol_txrx_monitor_set_filter_non_data(ol_txrx_pdev_handle, u_int8_t val);
 
-u_int8_t ol_txrx_monitor_get_filter_ucast_data(
-				ol_txrx_vdev_handle vdev_txrx_handle);
-u_int8_t ol_txrx_monitor_get_filter_mcast_data(
-				ol_txrx_vdev_handle vdev_txrx_handle);
-u_int8_t ol_txrx_monitor_get_filter_non_data(
-				ol_txrx_vdev_handle vdev_txrx_handle);
+static inline void cdp_monitor_set_filter_ucast_data
+	(ol_txrx_soc_handle soc, void *pdev, u_int8_t val)
+{
+	if (soc->ops->mon_ops->txrx_monitor_set_filter_ucast_data)
+		return soc->ops->mon_ops->txrx_monitor_set_filter_ucast_data
+			(pdev, val);
+	return;
+}
+static inline void cdp_monitor_set_filter_mcast_data
+	(ol_txrx_soc_handle soc, void *pdev, u_int8_t val)
+{
+	if (soc->ops->mon_ops->txrx_monitor_set_filter_mcast_data)
+		return soc->ops->mon_ops->txrx_monitor_set_filter_mcast_data
+			(pdev, val);
+	return;
+}
+static inline void cdp_monitor_set_filter_non_data
+	(ol_txrx_soc_handle soc, void *pdev, u_int8_t val)
+{
+	if (soc->ops->mon_ops->txrx_monitor_set_filter_non_data)
+		return soc->ops->mon_ops->txrx_monitor_set_filter_non_data
+			(pdev, val);
+	return;
+}
 
-
-int ol_txrx_reset_monitor_mode(ol_txrx_pdev_handle pdev);
-
+static inline u_int8_t cdp_monitor_get_filter_ucast_data(ol_txrx_soc_handle soc,
+				void *vdev_txrx_handle)
+{
+	if (soc->ops->mon_ops->txrx_monitor_get_filter_ucast_data)
+		return soc->ops->mon_ops->txrx_monitor_get_filter_ucast_data
+			(vdev_txrx_handle);
+	return 0;
+}
+static inline u_int8_t cdp_monitor_get_filter_mcast_data(ol_txrx_soc_handle soc,
+				void *vdev_txrx_handle)
+{
+	if (soc->ops->mon_ops->txrx_monitor_get_filter_mcast_data)
+		return soc->ops->mon_ops->txrx_monitor_get_filter_mcast_data
+			(vdev_txrx_handle);
+	return 0;
+}
+static inline u_int8_t cdp_monitor_get_filter_non_data(ol_txrx_soc_handle soc,
+				void *vdev_txrx_handle)
+{
+	if (soc->ops->mon_ops->txrx_monitor_get_filter_non_data)
+		return soc->ops->mon_ops->txrx_monitor_get_filter_non_data
+			(vdev_txrx_handle);
+	return 0;
+}
+static inline int cdp_reset_monitor_mode
+(ol_txrx_soc_handle soc, void *pdev)
+{
+	if (soc->ops->mon_ops->txrx_reset_monitor_mode)
+		return soc->ops->mon_ops->txrx_reset_monitor_mode(pdev);
+	return 0;
+}
 #endif

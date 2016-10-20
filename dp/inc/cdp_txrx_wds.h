@@ -43,9 +43,15 @@
  * @return - void
  */
 #if WDS_VENDOR_EXTENSION
-void
-ol_txrx_set_wds_rx_policy(
-	ol_txrx_vdev_handle vdev,
-	u_int32_t val);
+static inline void
+cdp_set_wds_rx_policy(ol_txrx_soc_handle soc,
+	void *vdev,
+	u_int32_t val)
+{
+	if (soc->ops->wds_ops->txrx_set_wds_rx_policy)
+		return soc->ops->wds_ops->txrx_set_wds_rx_policy(vdev, val);
+	return;
+}
+
 #endif
 #endif

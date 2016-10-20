@@ -31,35 +31,60 @@
  */
 #ifndef _CDP_TXRX_HOST_STATS_H_
 #define _CDP_TXRX_HOST_STATS_H_
-
-#include <cdp_txrx_stats_struct.h>
 /* WIN */
 /* Need to remove the "req" parameter */
 /* Need to rename the function to reflect the functionality "show" / "display"
  * WIN -- to figure out whether to change OSIF to converge (not an immediate AI)
  * */
 #if WLAN_FEATURE_FASTPATH
-int ol_txrx_host_stats_get(
-	ol_txrx_vdev_handle vdev,
-	struct ol_txrx_stats_req *req);
+static inline int cdp_host_stats_get(ol_txrx_soc_handle soc,
+	void *vdev,
+	struct ol_txrx_stats_req *req)
+{
+	if (soc->ops->host_stats_ops->txrx_host_stats_get)
+		return soc->ops->host_stats_ops->txrx_host_stats_get(vdev, req);
+	return 0;
+}
 
 
-void
-ol_txrx_host_stats_clr(ol_txrx_vdev_handle vdev);
+static inline void
+cdp_host_stats_clr(ol_txrx_soc_handle soc, void *vdev)
+{
+	if (soc->ops->host_stats_ops->txrx_host_stats_clr)
+		return soc->ops->host_stats_ops->txrx_host_stats_clr(vdev);
+	return;
+}
 
-void
-ol_txrx_host_ce_stats(ol_txrx_vdev_handle vdev);
+static inline void
+cdp_host_ce_stats(ol_txrx_soc_handle soc, void *vdev)
+{
+	if (soc->ops->host_stats_ops->txrx_host_ce_stats)
+		return soc->ops->host_stats_ops->txrx_host_ce_stats(vdev);
+	return;
+}
 
-int
-ol_txrx_stats_publish(ol_txrx_pdev_handle pdev, struct ol_txrx_stats *buf);
+static inline int cdp_stats_publish
+	(ol_txrx_soc_handle soc, void *pdev,
+	struct ol_txrx_stats *buf)
+{
+	if (soc->ops->host_stats_ops->txrx_stats_publish)
+		return soc->ops->host_stats_ops->txrx_stats_publish(pdev, buf);
+	return 0;
+}
 /**
  * @brief Enable enhanced stats functionality.
  *
  * @param pdev - the physical device object
  * @return - void
  */
-void
-ol_txrx_enable_enhanced_stats(ol_txrx_pdev_handle pdev);
+static inline void
+cdp_enable_enhanced_stats(ol_txrx_soc_handle soc, void *pdev)
+{
+	if (soc->ops->host_stats_ops->txrx_enable_enhanced_stats)
+		return soc->ops->host_stats_ops->txrx_enable_enhanced_stats
+			(pdev);
+	return;
+}
 
 /**
  * @brief Disable enhanced stats functionality.
@@ -67,8 +92,14 @@ ol_txrx_enable_enhanced_stats(ol_txrx_pdev_handle pdev);
  * @param pdev - the physical device object
  * @return - void
  */
-void
-ol_txrx_disable_enhanced_stats(ol_txrx_pdev_handle pdev);
+static inline void
+cdp_disable_enhanced_stats(ol_txrx_soc_handle soc, void *pdev)
+{
+	if (soc->ops->host_stats_ops->txrx_disable_enhanced_stats)
+		return soc->ops->host_stats_ops->txrx_disable_enhanced_stats
+			(pdev);
+	return;
+}
 
 #if ENHANCED_STATS
 /**
@@ -79,64 +110,124 @@ ol_txrx_disable_enhanced_stats(ol_txrx_pdev_handle pdev);
  * @param type - stats type.
  * @return - pointer to requested stat identified by type
  */
-uint32_t *ol_txrx_get_stats_base(ol_txrx_pdev_handle pdev,
-	uint32_t *stats_base, uint32_t msg_len, uint8_t type);
+static inline uint32_t *cdp_get_stats_base
+	(ol_txrx_soc_handle soc, void *pdev,
+	uint32_t *stats_base, uint32_t msg_len, uint8_t type)
+{
+	if (soc->ops->host_stats_ops->txrx_get_stats_base)
+		return (uint32_t *)soc->ops->host_stats_ops->txrx_get_stats_base
+			(pdev, stats_base, msg_len, type);
+	return 0;
+}
 #endif
 #endif /* WLAN_FEATURE_FASTPATH*/
 #if (HOST_SW_TSO_ENABLE || HOST_SW_TSO_SG_ENABLE)
-void
-ol_tx_print_tso_stats(
-	ol_txrx_vdev_handle vdev);
+static inline void
+cdp_tx_print_tso_stats(ol_txrx_soc_handle soc,
+	void *vdev)
+{
+	if (soc->ops->host_stats_ops->tx_print_tso_stats)
+		return soc->ops->host_stats_ops->tx_print_tso_stats(vdev);
+	return;
+}
 
-void
-ol_tx_rst_tso_stats(ol_txrx_vdev_handle vdev);
+static inline void
+cdp_tx_rst_tso_stats(ol_txrx_soc_handle soc, void *vdev)
+{
+	if (soc->ops->host_stats_ops->tx_rst_tso_stats)
+		return soc->ops->host_stats_ops->tx_rst_tso_stats(vdev);
+	return;
+}
 #endif /* HOST_SW_TSO_ENABLE || HOST_SW_TSO_SG_ENABLE */
 
 #if HOST_SW_SG_ENABLE
-void
-ol_tx_print_sg_stats(
-	ol_txrx_vdev_handle vdev);
+static inline void
+cdp_tx_print_sg_stats(ol_txrx_soc_handle soc,
+	void *vdev)
+{
+	if (soc->ops->host_stats_ops->tx_print_sg_stats)
+		return soc->ops->host_stats_ops->tx_print_sg_stats(vdev);
+	return;
+}
 
-void
-ol_tx_rst_sg_stats(ol_txrx_vdev_handle vdev);
+static inline void
+cdp_tx_rst_sg_stats(ol_txrx_soc_handle soc, void *vdev)
+{
+	if (soc->ops->host_stats_ops->tx_rst_sg_stats)
+		return soc->ops->host_stats_ops->tx_rst_sg_stats(vdev);
+	return;
+}
 #endif /* HOST_SW_SG_ENABLE */
 
 #if RX_CHECKSUM_OFFLOAD
-void
-ol_print_rx_cksum_stats(
-	ol_txrx_vdev_handle vdev);
+static inline void
+cdp_print_rx_cksum_stats(ol_txrx_soc_handle soc,
+	void *vdev)
+{
+	if (soc->ops->host_stats_ops->print_rx_cksum_stats)
+		return soc->ops->host_stats_ops->print_rx_cksum_stats(vdev);
+	return;
+}
 
-void
-ol_rst_rx_cksum_stats(ol_txrx_vdev_handle vdev);
+static inline void
+cdp_rst_rx_cksum_stats(ol_txrx_soc_handle soc, void *vdev)
+{
+	if (soc->ops->host_stats_ops->rst_rx_cksum_stats)
+		return soc->ops->host_stats_ops->rst_rx_cksum_stats(vdev);
+	return;
+}
 #endif /* RX_CHECKSUM_OFFLOAD */
 
 #if (ATH_SUPPORT_IQUE && WLAN_FEATURE_FASTPATH)
-A_STATUS
-ol_txrx_host_me_stats(ol_txrx_vdev_handle vdev);
+static inline A_STATUS
+cdp_host_me_stats(ol_txrx_soc_handle soc, void *vdev)
+{
+	if (soc->ops->host_stats_ops->txrx_host_me_stats)
+		return soc->ops->host_stats_ops->txrx_host_me_stats(vdev);
+	return 0;
+}
 #endif /* WLAN_FEATURE_FASTPATH */
 #if PEER_FLOW_CONTROL
-extern void
-ol_txrx_per_peer_stats(struct ol_txrx_pdev_t *pdev, char *addr);
+static inline void cdp_per_peer_stats
+	(ol_txrx_soc_handle soc, void *pdev, char *addr)
+{
+	if (soc->ops->host_stats_ops->txrx_per_peer_stats)
+		return soc->ops->host_stats_ops->txrx_per_peer_stats
+			(pdev, addr);
+	return;
+}
+
 #endif
 #if WLAN_FEATURE_FASTPATH && PEER_FLOW_CONTROL
-int ol_txrx_host_msdu_ttl_stats(
-	ol_txrx_vdev_handle vdev,
-	struct ol_txrx_stats_req *req);
+static inline int cdp_host_msdu_ttl_stats(ol_txrx_soc_handle soc,
+	void *vdev,
+	struct ol_txrx_stats_req *req)
+{
+	if (soc->ops->host_stats_ops->txrx_host_msdu_ttl_stats)
+		return soc->ops->host_stats_ops->txrx_host_msdu_ttl_stats
+			(vdev, req);
+	return 0;
+}
 #endif
 
-#define BSS_CHAN_INFO_READ                        1
-#define BSS_CHAN_INFO_READ_AND_CLEAR              2
 
-#define TX_FRAME_TYPE_DATA 0
-#define TX_FRAME_TYPE_MGMT 1
-#define TX_FRAME_TYPE_BEACON 2
 
 #if HOST_SW_LRO_ENABLE
-void
-ol_print_lro_stats(ol_txrx_vdev_handle vdev);
+static inline void
+cdp_print_lro_stats(ol_txrx_soc_handle soc, void *vdev)
+{
+	if (soc->ops->host_stats_ops->print_lro_stats)
+		return soc->ops->host_stats_ops->print_lro_stats(vdev);
+	return;
+}
 
-void
-ol_reset_lro_stats(ol_txrx_vdev_handle vdev);
+static inline void
+cdp_reset_lro_stats(ol_txrx_soc_handle soc, void *vdev)
+{
+	if (soc->ops->host_stats_ops->reset_lro_stats)
+		return soc->ops->host_stats_ops->reset_lro_stats(vdev);
+	return;
+}
 #endif /* HOST_SW_LRO_ENABLE */
 
 
