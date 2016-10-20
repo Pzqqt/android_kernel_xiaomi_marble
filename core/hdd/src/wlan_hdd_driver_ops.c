@@ -351,15 +351,10 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 	*/
 	hdd_request_pm_qos(dev, DISABLE_KRAIT_IDLE_PS_VAL);
 
-	if (reinit) {
+	if (reinit)
 		cds_set_recovery_in_progress(true);
-	} else {
-		ret = hdd_init();
-
-		if (ret)
-			goto out;
+	else
 		cds_set_load_in_progress(true);
-	}
 
 	hdd_init_qdf_ctx(dev, bdev, bus_type, (const struct hif_bus_id *)bid);
 
@@ -390,8 +385,6 @@ err_hdd_deinit:
 		cds_set_recovery_in_progress(false);
 	else
 		cds_set_load_in_progress(false);
-	hdd_deinit();
-out:
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
 	hdd_remove_pm_qos(dev);
 	return ret;
@@ -430,8 +423,6 @@ static void wlan_hdd_remove(struct device *dev)
 	} else {
 		__hdd_wlan_exit();
 	}
-
-	hdd_deinit();
 
 	pr_info("%s: Driver De-initialized\n", WLAN_MODULE_NAME);
 }

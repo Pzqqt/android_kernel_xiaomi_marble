@@ -9050,6 +9050,12 @@ static int __hdd_module_init(void)
 
 	pld_init();
 
+	ret = hdd_init();
+	if (ret) {
+		pr_err("hdd_init failed %x\n", ret);
+		goto err_hdd_init;
+	}
+
 	qdf_wake_lock_create(&wlan_wake_lock, "wlan");
 
 	hdd_set_conparam((uint32_t) con_mode);
@@ -9066,6 +9072,8 @@ static int __hdd_module_init(void)
 	return 0;
 out:
 	qdf_wake_lock_destroy(&wlan_wake_lock);
+	hdd_deinit();
+err_hdd_init:
 	pld_deinit();
 	return ret;
 }
@@ -9108,6 +9116,7 @@ static void __hdd_module_exit(void)
 
 	qdf_wake_lock_destroy(&wlan_wake_lock);
 
+	hdd_deinit();
 	pld_deinit();
 
 	return;
@@ -9425,9 +9434,10 @@ static int hdd_register_req_mode(hdd_context_t *hdd_ctx,
 }
 
 /**
- * con_mode_handler() - Handles module param con_mode change
+ * __con_mode_handler() - Handles module param con_mode change
  * @kmessage: con mode name on which driver to be bring up
  * @kp: The associated kernel parameter
+ * @hdd_ctx: Pointer to the global HDD context
  *
  * This function is invoked when user updates con mode using sys entry,
  * to initialize and bring-up driver in that specific mode.
@@ -9441,6 +9451,10 @@ static int __con_mode_handler(const char *kmessage, struct kernel_param *kp,
 	hdd_adapter_t *adapter;
 	enum tQDF_GLOBAL_CON_MODE curr_mode;
 	enum tQDF_ADAPTER_MODE adapter_mode;
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret)
+		return ret;
 
 	cds_set_load_in_progress(true);
 
