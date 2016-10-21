@@ -650,8 +650,13 @@ static int __wlan_hdd_bus_resume(void)
 {
 	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	void *hif_ctx;
-	int status = wlan_hdd_validate_context(hdd_ctx);
+	int status;
+	QDF_STATUS qdf_status;
 
+	if (cds_is_driver_recovering())
+		return 0;
+
+	status = wlan_hdd_validate_context(hdd_ctx);
 	if (status)
 		return status;
 
@@ -665,15 +670,28 @@ static int __wlan_hdd_bus_resume(void)
 		return -EINVAL;
 
 	status = hif_bus_resume(hif_ctx);
-	QDF_BUG(!status);
+	if (status)
+		goto out;
 
 	status = wma_bus_resume();
-	QDF_BUG(!status);
+	if (status)
+		goto out;
 
-	status = ol_txrx_bus_resume();
-	QDF_BUG(!status);
+	qdf_status = ol_txrx_bus_resume();
+	status = qdf_status_to_os_return(qdf_status);
+	if (status)
+		goto out;
 
 	hdd_info("resume done");
+
+	return 0;
+
+out:
+	if (cds_is_driver_recovering())
+		return 0;
+
+	QDF_BUG(false);
+
 	return status;
 }
 
@@ -701,8 +719,12 @@ static int __wlan_hdd_bus_resume_noirq(void)
 {
 	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	void *hif_ctx;
-	int status = wlan_hdd_validate_context(hdd_ctx);
+	int status;
 
+	if (cds_is_driver_recovering())
+		return 0;
+
+	status = wlan_hdd_validate_context(hdd_ctx);
 	if (status) {
 		hdd_err("Invalid HDD context: %d", status);
 		return status;
