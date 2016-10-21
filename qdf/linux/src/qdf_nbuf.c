@@ -615,6 +615,9 @@ __qdf_nbuf_data_get_icmp_subtype(uint8_t *data)
 	subtype = (uint8_t)(*(uint8_t *)
 			(data + ICMP_SUBTYPE_OFFSET));
 
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
+		"ICMP proto type: 0x%02x", subtype);
+
 	switch (subtype) {
 	case ICMP_REQUEST:
 		proto_subtype = QDF_PROTO_ICMP_REQ;
@@ -646,6 +649,9 @@ __qdf_nbuf_data_get_icmpv6_subtype(uint8_t *data)
 
 	subtype = (uint8_t)(*(uint8_t *)
 			(data + ICMPV6_SUBTYPE_OFFSET));
+
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
+		"ICMPv6 proto type: 0x%02x", subtype);
 
 	switch (subtype) {
 	case ICMPV6_REQUEST:
