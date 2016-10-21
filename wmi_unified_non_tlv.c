@@ -1935,6 +1935,10 @@ QDF_STATUS send_scan_start_cmd_non_tlv(wmi_unified_t wmi_handle,
 	cmd->scan_ctrl_flags = (param->passive_flag) ?
 	    WMI_SCAN_FLAG_PASSIVE : 0;
 
+	if (param->is_strict_pscan_en) {
+		cmd->scan_ctrl_flags |= WMI_SCAN_FLAG_STRICT_PASSIVE_ON_PCHN;
+	}
+
 	if (param->is_promiscous_mode)
 		cmd->scan_ctrl_flags |= WMI_SCAN_PROMISCOUS_MODE;
 
