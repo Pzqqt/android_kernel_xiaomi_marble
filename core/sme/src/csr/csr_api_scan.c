@@ -6626,6 +6626,39 @@ void csr_set_cfg_scan_control_list(tpAniSirGlobal pMac, uint8_t *countryCode,
 	} /* AllocateMemory */
 }
 
+
+/**
+ * csr_scan_abort_all_scans() - Abort scan on all Sessions
+ * @mac_ctx: pointer to Global Mac structure
+ * @reason: reason for cancelling scan
+ *
+ * Abort scan on all Sessions
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS csr_scan_abort_all_scans(tpAniSirGlobal mac_ctx,
+				   eCsrAbortReason reason)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	uint8_t session_id;
+
+	mac_ctx->scan.fDropScanCmd = true;
+	for (session_id = 0; session_id < CSR_ROAM_SESSION_MAX; session_id++) {
+		if (CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
+			csr_remove_cmd_with_session_id_from_pending_list(
+				mac_ctx,
+				session_id, &mac_ctx->sme.smeScanCmdPendingList,
+				eSmeCommandScan);
+			csr_abort_scan_from_active_list(mac_ctx,
+				 &mac_ctx->sme.smeScanCmdActiveList,
+				 session_id, eSmeCommandScan, reason);
+		}
+	}
+	mac_ctx->scan.fDropScanCmd = false;
+
+	return status;
+}
+
 QDF_STATUS csr_scan_abort_mac_scan(tpAniSirGlobal pMac, uint8_t sessionId,
 				   eCsrAbortReason reason)
 {

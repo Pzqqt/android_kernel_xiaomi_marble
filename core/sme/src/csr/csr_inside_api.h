@@ -268,6 +268,8 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal pMac, uint32_t sessionId,
 bool csr_scan_remove_fresh_scan_command(tpAniSirGlobal pMac, uint8_t sessionId);
 QDF_STATUS csr_scan_abort_mac_scan(tpAniSirGlobal pMac, uint8_t sessionId,
 				   eCsrAbortReason reason);
+QDF_STATUS csr_scan_abort_all_scans(tpAniSirGlobal mac_ctx,
+				   eCsrAbortReason reason);
 void csr_remove_cmd_from_pending_list(tpAniSirGlobal pMac, tDblLinkList *pList,
 				      eSmeCommandType commandType);
 void csr_remove_cmd_with_session_id_from_pending_list(tpAniSirGlobal pMac,
