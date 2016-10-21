@@ -1372,6 +1372,8 @@ lim_handle_sme_join_result(tpAniSirGlobal mac_ctx,
 			 * to SME
 			 */
 			lim_cleanup_rx_path(mac_ctx, sta_ds, session_entry);
+			qdf_mem_free(session_entry->pLimJoinReq);
+			session_entry->pLimJoinReq = NULL;
 			/* Cleanup if add bss failed */
 			if (session_entry->add_bss_failed) {
 				dph_delete_hash_entry(mac_ctx,
@@ -1379,15 +1381,13 @@ lim_handle_sme_join_result(tpAniSirGlobal mac_ctx,
 					 &session_entry->dph.dphHashTable);
 				goto error;
 			}
-			qdf_mem_free(session_entry->pLimJoinReq);
-			session_entry->pLimJoinReq = NULL;
 			return;
 		}
+		qdf_mem_free(session_entry->pLimJoinReq);
+		session_entry->pLimJoinReq = NULL;
 	}
 error:
-	qdf_mem_free(session_entry->pLimJoinReq);
-	session_entry->pLimJoinReq = NULL;
-	/* Delete teh session if JOIN failure occurred. */
+	/* Delete the session if JOIN failure occurred. */
 	if (result_code != eSIR_SME_SUCCESS) {
 		if (lim_set_link_state
 			(mac_ctx, eSIR_LINK_DOWN_STATE,
