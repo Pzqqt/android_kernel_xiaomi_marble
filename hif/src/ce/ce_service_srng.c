@@ -612,7 +612,8 @@ void ce_srng_src_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 }
 
 void ce_srng_dest_ring_setup(struct hif_softc *scn, uint32_t ce_id,
-				struct CE_ring_state *dest_ring)
+				struct CE_ring_state *dest_ring,
+				struct CE_attr *attr)
 {
 	struct hal_srng_params ring_params = {0};
 
@@ -621,6 +622,7 @@ void ce_srng_dest_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 	ring_params.num_entries = dest_ring->nentries;
 	ring_params.intr_timer_thres_us = 0;
 	ring_params.intr_batch_cntr_thres_entries = 1;
+	ring_params.max_buffer_length = attr->src_sz_max;
 
 	/* TODO
 	 * ring_params.msi_addr = XXX;
@@ -663,7 +665,7 @@ void ce_ring_setup_srng(struct hif_softc *scn, uint8_t ring_type,
 		ce_srng_src_ring_setup(scn, ce_id, ring);
 		break;
 	case CE_RING_DEST:
-		ce_srng_dest_ring_setup(scn, ce_id, ring);
+		ce_srng_dest_ring_setup(scn, ce_id, ring, attr);
 		break;
 	case CE_RING_STATUS:
 		ce_srng_status_ring_setup(scn, ce_id, ring);

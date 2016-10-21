@@ -236,7 +236,10 @@ struct hal_srng {
 			uint32_t *tp_addr;
 
 			/* Current SW loop cnt */
-			int loop_cnt;
+			uint32_t loop_cnt;
+
+			/* max transfer size */
+			uint16_t max_buffer_length;
 		} dst_ring;
 
 		struct {

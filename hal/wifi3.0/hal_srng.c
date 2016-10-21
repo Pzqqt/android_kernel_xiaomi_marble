@@ -668,6 +668,31 @@ static inline void hal_srng_src_hw_init(struct hal_soc *hal,
 }
 
 /**
+ * hal_ce_dst_setup - Initialize CE destination ring registers
+ * @hal_soc: HAL SOC handle
+ * @srng: SRNG ring pointer
+ */
+static inline void hal_ce_dst_setup(struct hal_soc *hal, struct hal_srng *srng,
+				    int ring_num)
+{
+	uint32_t reg_val = 0;
+	uint32_t reg_addr;
+	struct hal_hw_srng_config *ring_config =
+		HAL_SRNG_CONFIG(hal, CE_DST);
+
+	/* set DEST_MAX_LENGTH according to ce assignment */
+	reg_addr = HWIO_WFSS_CE_CHANNEL_DST_R0_DEST_CTRL_ADDR(
+			ring_config->reg_start[R0_INDEX] +
+			(ring_num * ring_config->reg_size[R0_INDEX]));
+
+	reg_val = HAL_REG_READ(hal, reg_addr);
+	reg_val &= ~HWIO_WFSS_CE_CHANNEL_DST_R0_DEST_CTRL_DEST_MAX_LENGTH_BMSK;
+	reg_val |= srng->u.dst_ring.max_buffer_length &
+		HWIO_WFSS_CE_CHANNEL_DST_R0_DEST_CTRL_DEST_MAX_LENGTH_BMSK;
+	HAL_REG_WRITE(hal, reg_addr, reg_val);
+}
+
+/**
  * hal_srng_dst_hw_init - Private function to initialize SRNG
  * destination ring HW
  * @hal_soc: HAL SOC handle
@@ -889,8 +914,15 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 		}
 	}
 
-	if (!(ring_config->lmac_ring))
+
+	if (!(ring_config->lmac_ring)) {
 		hal_srng_hw_init(hal, srng);
+
+		if (ring_type == CE_DST) {
+			srng->u.dst_ring.max_buffer_length = ring_params->max_buffer_length;
+			hal_ce_dst_setup(hal, srng, ring_num);
+		}
+	}
 
 	SRNG_LOCK_INIT(&srng->lock);
 

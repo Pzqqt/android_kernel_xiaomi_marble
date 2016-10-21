@@ -109,6 +109,8 @@ struct hal_srng_params {
 	void *ring_base_vaddr;
 	/* Number of entries in ring */
 	uint32_t num_entries;
+	/* max transfer length */
+	uint16_t max_buffer_length;
 	/* MSI Address */
 	qdf_dma_addr_t msi_addr;
 	/* MSI data */
