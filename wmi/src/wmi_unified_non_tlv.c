@@ -6282,6 +6282,8 @@ QDF_STATUS extract_rtt_ev_non_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 
 		ev->chain_mask = WMI_RTT_REPORT_RX_CHAIN_GET(body->rx_chain);
 		ev->bw = WMI_RTT_REPORT_RX_BW_GET(body->rx_chain);
+		/* If report type is not WMI_RTT_REPORT_CFR */
+		ev->txrxchain_mask = 0;
 
 		ev->tod = ((u_int64_t) body->tod.time32) << 32;
 		ev->tod |= body->tod.time0; /*tmp1 is the 64 bit tod*/
