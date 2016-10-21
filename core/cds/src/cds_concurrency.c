@@ -3963,8 +3963,7 @@ QDF_STATUS cds_deinit_policy_mgr(void)
 	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
 		cds_err("Invalid CDS Context");
-		status = QDF_STATUS_E_FAILURE;
-		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_event_destroy
