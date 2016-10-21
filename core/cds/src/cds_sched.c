@@ -1392,8 +1392,9 @@ static void cds_print_external_threads(void)
 	while (i < MAX_SSR_PROTECT_LOG) {
 		if (!ssr_protect_log[i].free) {
 			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			"PID %d is stuck at %s", ssr_protect_log[i].pid,
-			ssr_protect_log[i].func);
+				  "PID %d is executing %s",
+				  ssr_protect_log[i].pid,
+				  ssr_protect_log[i].func);
 		}
 		i++;
 	}
@@ -1433,10 +1434,22 @@ void cds_ssr_protect(const char *caller_func)
 
 	spin_unlock_irqrestore(&ssr_protect_lock, irq_flags);
 
+	/*
+	 * Dump the protect log at intervals if count is consistently growing.
+	 * Long running functions should tend to dominate the protect log, so
+	 * hopefully, dumping at multiples of log size will prevent spamming the
+	 * logs while telling us which calls are taking a long time to finish.
+	 */
+	if (count >= MAX_SSR_PROTECT_LOG && count % MAX_SSR_PROTECT_LOG == 0) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "Protect Log overflow; Dumping contents:");
+		cds_print_external_threads();
+	}
+
 	if (!status)
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-		"Could not track PID %d call %s: log is full",
-		current->pid, caller_func);
+			  "%s can not be protected; PID:%d, entry_count:%d",
+			  caller_func, current->pid, count);
 }
 
 /**
@@ -1474,7 +1487,8 @@ void cds_ssr_unprotect(const char *caller_func)
 
 	if (!status)
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			"Untracked call %s", caller_func);
+			  "%s was not protected; PID:%d, entry_count:%d",
+			  caller_func, current->pid, count);
 }
 
 /**
@@ -1503,6 +1517,8 @@ bool cds_wait_for_external_threads_completion(const char *caller_func)
 	}
 	/* at least one external thread is executing */
 	if (!count) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "Timed-out waiting for active entry points:");
 		cds_print_external_threads();
 		return false;
 	}
