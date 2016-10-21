@@ -4443,13 +4443,6 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 		goto exit;
 	}
 
-	/* Check channel number is a valid channel number */
-	if (QDF_STATUS_SUCCESS !=
-		wlan_hdd_validate_operation_channel(adapter, channel)) {
-		hdd_err("Invalid Channel [%d]", channel);
-		return -EINVAL;
-	}
-
 	/*
 	 * if the target bssid is same as currently associated AP,
 	 * issue reassoc to same AP
@@ -4460,7 +4453,8 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 		hdd_info("Reassoc BSSID is same as currently associated AP bssid");
 		if (roaming_offload_enabled(hdd_ctx)) {
 			hdd_wma_send_fastreassoc_cmd((int)adapter->sessionId,
-				targetApBssid, (int)channel);
+				targetApBssid,
+				pHddStaCtx->conn_info.operationChannel);
 		} else {
 			sme_get_modify_profile_fields(hdd_ctx->hHal,
 				adapter->sessionId,
@@ -4469,6 +4463,13 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 				NULL, modProfileFields, &roamId, 1);
 		}
 		return 0;
+	}
+
+	/* Check channel number is a valid channel number */
+	if (QDF_STATUS_SUCCESS !=
+		wlan_hdd_validate_operation_channel(adapter, channel)) {
+		hdd_err("Invalid Channel [%d]", channel);
+		return -EINVAL;
 	}
 
 	if (roaming_offload_enabled(hdd_ctx)) {
