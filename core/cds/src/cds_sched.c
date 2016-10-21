@@ -73,6 +73,20 @@ struct ssr_protect {
 static spinlock_t ssr_protect_lock;
 static struct ssr_protect ssr_protect_log[MAX_SSR_PROTECT_LOG];
 
+struct shutdown_notifier {
+	struct list_head list;
+	void (*cb)(void *priv);
+	void *priv;
+};
+
+struct list_head shutdown_notifier_head;
+
+enum notifier_state {
+	NOTIFIER_STATE_NONE,
+	NOTIFIER_STATE_NOTIFYING,
+} notifier_state;
+
+
 static p_cds_sched_context gp_cds_sched_context;
 
 static int cds_mc_thread(void *Arg);
@@ -1373,6 +1387,8 @@ void cds_ssr_protect_init(void)
 		ssr_protect_log[i].pid =  0;
 		i++;
 	}
+
+	INIT_LIST_HEAD(&shutdown_notifier_head);
 }
 
 /**
@@ -1492,6 +1508,113 @@ void cds_ssr_unprotect(const char *caller_func)
 }
 
 /**
+ * cds_shutdown_notifier_register() - Register for shutdown notification
+ * @cb          : Call back to be called
+ * @priv        : Private pointer to be passed back to call back
+ *
+ * During driver remove or shutdown (recovery), external threads might be stuck
+ * waiting on some event from firmware at lower layers. Remove or shutdown can't
+ * proceed till the thread completes to avoid any race condition. Call backs can
+ * be registered here to get early notification of remove or shutdown so that
+ * waiting thread can be unblocked and hence remove or shutdown can proceed
+ * further as waiting there may not make sense when FW may already have been
+ * down.
+ *
+ * This is intended for early notification of remove() or shutdown() only so
+ * that lower layers can take care of stuffs like external waiting thread.
+ *
+ * Return: CDS status
+ */
+QDF_STATUS cds_shutdown_notifier_register(void (*cb)(void *priv), void *priv)
+{
+	struct shutdown_notifier *notifier;
+	unsigned long irq_flags;
+
+	notifier = qdf_mem_malloc(sizeof(*notifier));
+
+	if (notifier == NULL)
+		return QDF_STATUS_E_NOMEM;
+
+	/*
+	 * This logic can be simpilfied if there is separate state maintained
+	 * for shutdown and reinit. Right now there is only recovery in progress
+	 * state and it doesn't help to check against it as during reinit some
+	 * of the modules may need to register the call backs.
+	 * For now this logic added to avoid notifier registration happen while
+	 * this function is trying to call the call back with the notification.
+	 */
+	spin_lock_irqsave(&ssr_protect_lock, irq_flags);
+	if (notifier_state == NOTIFIER_STATE_NOTIFYING) {
+		spin_unlock_irqrestore(&ssr_protect_lock, irq_flags);
+		qdf_mem_free(notifier);
+		return -EINVAL;
+	}
+
+	notifier->cb = cb;
+	notifier->priv = priv;
+
+	list_add_tail(&notifier->list, &shutdown_notifier_head);
+	spin_unlock_irqrestore(&ssr_protect_lock, irq_flags);
+
+	return 0;
+}
+
+/**
+ * cds_shutdown_notifier_purge() - Purge all the notifiers
+ *
+ * Shutdown notifiers are added to provide the early notification of remove or
+ * shutdown being initiated. Adding this API to purge all the registered call
+ * backs as they are not useful any more while all the lower layers are being
+ * shutdown.
+ *
+ * Return: None
+ */
+void cds_shutdown_notifier_purge(void)
+{
+	struct shutdown_notifier *notifier, *temp;
+	unsigned long irq_flags;
+
+	spin_lock_irqsave(&ssr_protect_lock, irq_flags);
+	list_for_each_entry_safe(notifier, temp,
+				 &shutdown_notifier_head, list) {
+		list_del(&notifier->list);
+		spin_unlock_irqrestore(&ssr_protect_lock, irq_flags);
+
+		qdf_mem_free(notifier);
+
+		spin_lock_irqsave(&ssr_protect_lock, irq_flags);
+	}
+
+	spin_unlock_irqrestore(&ssr_protect_lock, irq_flags);
+}
+
+/**
+ * cds_shutdown_notifier_call() - Call shutdown notifier call back
+ *
+ * Call registered shutdown notifier call back to indicate about remove or
+ * shutdown.
+ */
+static void cds_shutdown_notifier_call(void)
+{
+	struct shutdown_notifier *notifier;
+	unsigned long irq_flags;
+
+	spin_lock_irqsave(&ssr_protect_lock, irq_flags);
+	notifier_state = NOTIFIER_STATE_NOTIFYING;
+
+	list_for_each_entry(notifier, &shutdown_notifier_head, list) {
+		spin_unlock_irqrestore(&ssr_protect_lock, irq_flags);
+
+		notifier->cb(notifier->priv);
+
+		spin_lock_irqsave(&ssr_protect_lock, irq_flags);
+	}
+
+	notifier_state = NOTIFIER_STATE_NONE;
+	spin_unlock_irqrestore(&ssr_protect_lock, irq_flags);
+}
+
+/**
  * cds_wait_for_external_threads_completion() - wait for external threads
  *					completion before proceeding further
  * @caller_func: name of calling function.
@@ -1502,19 +1625,25 @@ void cds_ssr_unprotect(const char *caller_func)
 bool cds_wait_for_external_threads_completion(const char *caller_func)
 {
 	int count = MAX_SSR_WAIT_ITERATIONS;
+	int r;
+
+	cds_shutdown_notifier_call();
 
 	while (count) {
 
-		if (!atomic_read(&ssr_protect_entry_count))
+		r = atomic_read(&ssr_protect_entry_count);
+
+		if (!r)
 			break;
 
 		if (--count) {
 			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Waiting for active entry points to exit",
-				  __func__);
+				  "%s: Waiting for %d active entry points to exit",
+				  __func__, r);
 			msleep(SSR_WAIT_SLEEP_TIME);
 		}
 	}
+
 	/* at least one external thread is executing */
 	if (!count) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,

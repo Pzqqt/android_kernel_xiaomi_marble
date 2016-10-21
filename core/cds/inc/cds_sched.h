@@ -551,4 +551,33 @@ void cds_ssr_unprotect(const char *caller_func);
 bool cds_wait_for_external_threads_completion(const char *caller_func);
 int cds_get_gfp_flags(void);
 
+/**
+ * cds_shutdown_notifier_register() - Register for shutdown notification
+ * @cb          : Call back to be called
+ * @priv        : Private pointer to be passed back to call back
+ *
+ * During driver remove or shutdown (recovery), external threads might be stuck
+ * waiting on some event from firmware at lower layers. Remove or shutdown can't
+ * proceed till the thread completes to avoid any race condition. Call backs can
+ * be registered here to get early notification of remove or shutdown so that
+ * waiting thread can be unblocked and hence remove or shutdown can proceed
+ * further as waiting there may not make sense when FW may already have been
+ * down.
+ *
+ * Return: CDS status
+ */
+QDF_STATUS cds_shutdown_notifier_register(void (*cb)(void *priv), void *priv);
+
+/**
+ * cds_shutdown_notifier_purge() - Purge all the notifiers
+ *
+ * Shutdown notifiers are added to provide the early notification of remove or
+ * shutdown being initiated. Adding this API to purge all the registered call
+ * backs as they are not useful any more while all the lower layers are being
+ * shutdown.
+ *
+ * Return: None
+ */
+void cds_shutdown_notifier_purge(void);
+
 #endif /* #if !defined __CDS_SCHED_H */

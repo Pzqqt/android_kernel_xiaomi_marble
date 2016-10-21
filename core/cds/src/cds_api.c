@@ -824,6 +824,8 @@ QDF_STATUS cds_close(v_CONTEXT_t cds_context)
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
 
+	cds_shutdown_notifier_purge();
+
 	cds_deinit_log_completion();
 	cds_deinit_ini_config();
 	qdf_timer_module_deinit();
