@@ -961,6 +961,78 @@ static void wlan_hdd_sap_pre_cac_success(void *data)
 	}
 }
 
+#ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
+/**
+ * hdd_handle_acs_scan_event() - handle acs scan event for SAP
+ * @sap_event: tpSap_Event
+ * @adapter: hdd_adapter_t for SAP
+ *
+ * The function is to handle the eSAP_ACS_SCAN_SUCCESS_EVENT event.
+ * It will update scan result to cfg80211 and start a timer to flush the
+ * cached acs scan result.
+ *
+ * Return: QDF_STATUS_SUCCESS on success,
+ *      other value on failure
+ */
+static QDF_STATUS hdd_handle_acs_scan_event(tpSap_Event sap_event,
+		hdd_adapter_t *adapter)
+{
+	hdd_context_t *hdd_ctx;
+	struct sap_acs_scan_complete_event *comp_evt;
+	QDF_STATUS qdf_status;
+	int chan_list_size;
+
+	hdd_ctx = (hdd_context_t *)(adapter->pHddCtx);
+	if (!hdd_ctx) {
+		hdd_err("HDD context is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+	comp_evt = &sap_event->sapevt.sap_acs_scan_comp;
+	hdd_ctx->skip_acs_scan_status = eSAP_SKIP_ACS_SCAN;
+	qdf_spin_lock(&hdd_ctx->acs_skip_lock);
+	qdf_mem_free(hdd_ctx->last_acs_channel_list);
+	hdd_ctx->last_acs_channel_list = NULL;
+	hdd_ctx->num_of_channels = 0;
+	/* cache the previous ACS scan channel list .
+	 * If the following OBSS scan chan list is covered by ACS chan list,
+	 * we can skip OBSS Scan to save SAP starting total time.
+	 */
+	if (comp_evt->num_of_channels && comp_evt->channellist) {
+		chan_list_size = comp_evt->num_of_channels *
+			sizeof(comp_evt->channellist[0]);
+		hdd_ctx->last_acs_channel_list = qdf_mem_malloc(
+			chan_list_size);
+		if (hdd_ctx->last_acs_channel_list) {
+			qdf_mem_copy(hdd_ctx->last_acs_channel_list,
+				comp_evt->channellist,
+				chan_list_size);
+			hdd_ctx->num_of_channels = comp_evt->num_of_channels;
+		}
+	}
+	qdf_spin_unlock(&hdd_ctx->acs_skip_lock);
+	/* Update ACS scan result to cfg80211. Then OBSS scan can reuse the
+	 * scan result.
+	 */
+	if (wlan_hdd_cfg80211_update_bss(hdd_ctx->wiphy, adapter, 0))
+		hdd_info("NO SCAN result");
+
+	hdd_info("Reusing Last ACS scan result for %d sec",
+		ACS_SCAN_EXPIRY_TIMEOUT_S);
+	qdf_mc_timer_stop(&hdd_ctx->skip_acs_scan_timer);
+	qdf_status = qdf_mc_timer_start(&hdd_ctx->skip_acs_scan_timer,
+			ACS_SCAN_EXPIRY_TIMEOUT_S * 1000);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+		hdd_err("Failed to start ACS scan expiry timer");
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS hdd_handle_acs_scan_event(tpSap_Event sap_event,
+		hdd_adapter_t *adapter)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				    void *usrDataForCallback)
 {
@@ -1880,21 +1952,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			return hdd_chan_change_notify(pHostapdAdapter, dev,
 							chan_change);
 		}
-
-#ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 	case eSAP_ACS_SCAN_SUCCESS_EVENT:
-		pHddCtx->skip_acs_scan_status = eSAP_SKIP_ACS_SCAN;
-		hdd_notice("Reusing Last ACS scan result for %d sec",
-		       ACS_SCAN_EXPIRY_TIMEOUT_S);
-		qdf_mc_timer_stop(&pHddCtx->skip_acs_scan_timer);
-		qdf_status = qdf_mc_timer_start(&pHddCtx->skip_acs_scan_timer,
-						ACS_SCAN_EXPIRY_TIMEOUT_S *
-						1000);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-			hdd_err("Failed to start ACS scan expiry timer");
-		return QDF_STATUS_SUCCESS;
-#endif
-
+		return hdd_handle_acs_scan_event(pSapEvent, pHostapdAdapter);
 	case eSAP_DFS_NOL_GET:
 		hdd_notice("Received eSAP_DFS_NOL_GET event");
 

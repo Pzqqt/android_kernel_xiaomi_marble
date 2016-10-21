@@ -210,6 +210,7 @@ typedef struct sSapContext {
 	uint32_t nStaAddIeLength;
 	uint8_t pStaAddIE[MAX_ASSOC_IND_IE_LEN];
 	uint8_t *channelList;
+	uint8_t num_of_channel;
 	tSapChannelListInfo SapChnlList;
 	uint16_t ch_width_orig;
 	struct ch_params_s ch_params;

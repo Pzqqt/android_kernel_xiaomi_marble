@@ -4839,6 +4839,11 @@ static void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 		    (qdf_mc_timer_destroy(&hdd_ctx->skip_acs_scan_timer))) {
 		hdd_err("Cannot deallocate ACS Skip timer");
 	}
+	qdf_spin_lock(&hdd_ctx->acs_skip_lock);
+	qdf_mem_free(hdd_ctx->last_acs_channel_list);
+	hdd_ctx->last_acs_channel_list = NULL;
+	hdd_ctx->num_of_channels = 0;
+	qdf_spin_unlock(&hdd_ctx->acs_skip_lock);
 #endif
 
 	mutex_lock(&hdd_ctx->iface_change_lock);
@@ -4945,12 +4950,27 @@ void __hdd_wlan_exit(void)
 }
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
+/**
+ * hdd_skip_acs_scan_timer_handler() - skip ACS scan timer timeout handler
+ * @data: pointer to hdd_context_t
+ *
+ * This function will reset acs_scan_status to eSAP_DO_NEW_ACS_SCAN.
+ * Then new ACS request will do a fresh scan without reusing the cached
+ * scan information.
+ *
+ * Return: void
+ */
 void hdd_skip_acs_scan_timer_handler(void *data)
 {
 	hdd_context_t *hdd_ctx = (hdd_context_t *) data;
 
 	hdd_notice("ACS Scan result expired. Reset ACS scan skip");
 	hdd_ctx->skip_acs_scan_status = eSAP_DO_NEW_ACS_SCAN;
+	qdf_spin_lock(&hdd_ctx->acs_skip_lock);
+	qdf_mem_free(hdd_ctx->last_acs_channel_list);
+	hdd_ctx->last_acs_channel_list = NULL;
+	hdd_ctx->num_of_channels = 0;
+	qdf_spin_unlock(&hdd_ctx->acs_skip_lock);
 
 	if (!hdd_ctx->hHal)
 		return;
@@ -8098,6 +8118,7 @@ int hdd_wlan_startup(struct device *dev)
 				   (void *)hdd_ctx);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("Failed to init ACS Skip timer");
+	qdf_spinlock_create(&hdd_ctx->acs_skip_lock);
 #endif
 
 	hdd_bus_bandwidth_init(hdd_ctx);

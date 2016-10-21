@@ -2328,7 +2328,7 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 			eCSR_SCAN_SOFTAP_CHANNEL_RANGE;
 
 		sap_context->channelList = channel_list;
-
+		sap_context->num_of_channel = num_of_channels;
 #endif
 		/* Set requestType to Full scan */
 
@@ -2382,6 +2382,7 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 				qdf_mem_free(sap_context->
 					channelList);
 				sap_context->channelList = NULL;
+				sap_context->num_of_channel = 0;
 			}
 #endif
 			if (true == sap_do_acs_pre_start_bss) {
@@ -2705,6 +2706,34 @@ static QDF_STATUS sap_goto_disconnected(ptSapContext sapContext)
 	return qdf_status;
 }
 
+#ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
+/**
+ * sap_handle_acs_scan_event() - handle acs scan event for SAP
+ * @sap_context: ptSapContext
+ * @sap_event: tSap_Event
+ * @status: status of acs scan
+ *
+ * The function is to handle the eSAP_ACS_SCAN_SUCCESS_EVENT event.
+ *
+ * Return: void
+ */
+static void sap_handle_acs_scan_event(ptSapContext sap_context,
+		tSap_Event *sap_event, eSapStatus status)
+{
+	sap_event->sapHddEventCode = eSAP_ACS_SCAN_SUCCESS_EVENT;
+	sap_event->sapevt.sap_acs_scan_comp.status = status;
+	sap_event->sapevt.sap_acs_scan_comp.num_of_channels =
+			sap_context->num_of_channel;
+	sap_event->sapevt.sap_acs_scan_comp.channellist =
+			sap_context->channelList;
+}
+#else
+static void sap_handle_acs_scan_event(ptSapContext sap_context,
+		tSap_Event *sap_event, eSapStatus status)
+{
+}
+#endif
+
 /**
  * sap_signal_hdd_event() - send event notification
  * @sap_ctx: Sap Context
@@ -2808,14 +2837,14 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 	case eSAP_DFS_RADAR_DETECT:
 	case eSAP_DFS_RADAR_DETECT_DURING_PRE_CAC:
 	case eSAP_DFS_NO_AVAILABLE_CHANNEL:
-#ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
-	case eSAP_ACS_SCAN_SUCCESS_EVENT:
-#endif
 		sap_ap_event.sapHddEventCode = sap_hddevent;
 		sap_ap_event.sapevt.sapStopBssCompleteEvent.status =
 			(eSapStatus) context;
 		break;
-
+	case eSAP_ACS_SCAN_SUCCESS_EVENT:
+		sap_handle_acs_scan_event(sap_ctx, &sap_ap_event,
+			(eSapStatus)context);
+		break;
 	case eSAP_ACS_CHANNEL_SELECTED:
 		sap_ap_event.sapHddEventCode = sap_hddevent;
 		acs_selected = &sap_ap_event.sapevt.sap_ch_selected;

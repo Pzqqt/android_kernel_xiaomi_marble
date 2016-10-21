@@ -1294,6 +1294,65 @@ allow_suspend:
 	return 0;
 }
 
+#ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
+/**
+ * wlan_hdd_sap_skip_scan_check() - The function will check OBSS
+ *         scan skip or not for SAP.
+ * @hdd_ctx: pointer to hdd context.
+ * @request: pointer to scan request.
+ *
+ * This function will check the scan request's chan list against the
+ * previous ACS scan chan list. If all the chan are covered by
+ * previous ACS scan, we can skip the scan and return scan complete
+ * to save the SAP starting time.
+ *
+ * Return: true to skip the scan,
+ *            false to continue the scan
+ */
+static bool wlan_hdd_sap_skip_scan_check(hdd_context_t *hdd_ctx,
+	struct cfg80211_scan_request *request)
+{
+	int i, j;
+	bool skip;
+
+	hdd_info("HDD_ACS_SKIP_STATUS = %d",
+		hdd_ctx->skip_acs_scan_status);
+	if (hdd_ctx->skip_acs_scan_status != eSAP_SKIP_ACS_SCAN)
+		return false;
+	qdf_spin_lock(&hdd_ctx->acs_skip_lock);
+	if (hdd_ctx->last_acs_channel_list == NULL ||
+	   hdd_ctx->num_of_channels == 0 ||
+	   request->n_channels == 0) {
+		qdf_spin_unlock(&hdd_ctx->acs_skip_lock);
+		return false;
+	}
+	skip = true;
+	for (i = 0; i < request->n_channels ; i++) {
+		bool find = false;
+		for (j = 0; j < hdd_ctx->num_of_channels; j++) {
+			if (hdd_ctx->last_acs_channel_list[j] ==
+			   request->channels[i]->hw_value) {
+				find = true;
+				break;
+			}
+		}
+		if (!find) {
+			skip = false;
+			hdd_info("Chan %d isn't in ACS chan list",
+				request->channels[i]->hw_value);
+			break;
+		}
+	}
+	qdf_spin_unlock(&hdd_ctx->acs_skip_lock);
+	return skip;
+}
+#else
+static bool wlan_hdd_sap_skip_scan_check(hdd_context_t *hdd_ctx,
+	struct cfg80211_scan_request *request)
+{
+	return false;
+}
+#endif
 
 /**
  * wlan_hdd_cfg80211_scan_block_cb() - scan block work handler
@@ -1483,6 +1542,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			 * If we return scan failure hostapd fails secondary AP
 			 * startup.
 			 */
+			hdd_err("##In DFS Master mode. Scan aborted");
 			pAdapter->request = request;
 
 			INIT_WORK(&pAdapter->scan_block_work,
@@ -1535,6 +1595,16 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	if (cds_is_connection_in_progress()) {
 		hdd_err("Scan not allowed");
 		return -EBUSY;
+	}
+	/* Check whether SAP scan can be skipped or not */
+	if (pAdapter->device_mode == QDF_SAP_MODE &&
+	   wlan_hdd_sap_skip_scan_check(pHddCtx, request)) {
+		hdd_err("sap scan skipped");
+		pAdapter->request = request;
+		INIT_WORK(&pAdapter->scan_block_work,
+			wlan_hdd_cfg80211_scan_block_cb);
+		schedule_work(&pAdapter->scan_block_work);
+		return 0;
 	}
 
 	qdf_mem_zero(&scan_req, sizeof(scan_req));

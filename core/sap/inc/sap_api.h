@@ -179,9 +179,7 @@ typedef enum {
 	eSAP_DFS_NOL_SET,
 	/* No ch available after DFS RADAR detect */
 	eSAP_DFS_NO_AVAILABLE_CHANNEL,
-#ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 	eSAP_ACS_SCAN_SUCCESS_EVENT,
-#endif
 	eSAP_ACS_CHANNEL_SELECTED,
 	eSAP_ECSA_CHANGE_CHAN_IND,
 } eSapHddEvent;
@@ -406,6 +404,18 @@ struct sap_roc_ready_ind_s {
 };
 
 /**
+ * struct sap_acs_scan_complete_event - acs scan complete event
+ * @status: status of acs scan
+ * @channellist: acs scan channels
+ * @num_of_channels: number of channels
+ */
+struct sap_acs_scan_complete_event{
+	uint8_t status;
+	uint8_t *channellist;
+	uint8_t num_of_channels;
+};
+
+/**
  * struct sap_ch_change_ind - channel change indication
  * @new_chan: channel to change
  */
@@ -454,6 +464,7 @@ typedef struct sap_Event_s {
 		struct sap_ch_selected_s sap_ch_selected;
 		struct sap_roc_ready_ind_s sap_roc_ind;
 		struct sap_ch_change_ind sap_chan_cng_ind;
+		struct sap_acs_scan_complete_event sap_acs_scan_comp;
 	} sapevt;
 } tSap_Event, *tpSap_Event;
 

@@ -1460,6 +1460,9 @@ struct hdd_context_s {
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 	qdf_mc_timer_t skip_acs_scan_timer;
 	uint8_t skip_acs_scan_status;
+	uint8_t *last_acs_channel_list;
+	uint8_t num_of_channels;
+	qdf_spinlock_t acs_skip_lock;
 #endif
 
 	qdf_wake_lock_t sap_dfs_wakelock;
