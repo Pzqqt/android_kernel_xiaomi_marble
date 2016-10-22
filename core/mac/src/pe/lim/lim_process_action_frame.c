@@ -1546,10 +1546,9 @@ static void __lim_process_sa_query_request_action_frame(tpAniSirGlobal pMac,
 		return;
 
 	/* 11w offload is enabled then firmware should not fwd this frame */
-	if (pMac->pmf_offload) {
+	if (LIM_IS_STA_ROLE(psessionEntry) && pMac->pmf_offload) {
 		lim_log(pMac, LOGE,
-			FL("11w offload is enabled, SA Query request is not expected ")
-			);
+			FL("11w offload enabled, SA Query req isn't expected"));
 		return;
 	}
 
