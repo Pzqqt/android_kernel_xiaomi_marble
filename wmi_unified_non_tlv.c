@@ -4551,13 +4551,6 @@ send_rtt_meas_req_test_cmd_non_tlv(wmi_unified_t wmi_handle,
 	WMI_RTT_SPS_SET(head->req_id, 1);
 
 	WMI_RTT_NUM_STA_SET(head->sta_num, param->req_num_req);
-	if (param->req_report_type < WMI_RTT_AGGREAGET_REPORT_NON_CFR) {
-		/* In command line, 0 - FAC, 1 - CFR, need to revert here */
-		param->req_report_type ^= 1;
-	}
-
-	if (param->num_measurements == 0)
-		param->num_measurements = 25;
 
 	body = &(head->body[0]);
 	WMI_RTT_VDEV_ID_SET(body->measure_info, 0);
