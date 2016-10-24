@@ -17541,14 +17541,14 @@ static void csr_update_driver_assoc_ies(tpAniSirGlobal mac_ctx,
 			= (uint8_t *) &mac_ctx->rrm.rrmPEContext.rrmEnabledCaps;
 	uint8_t power_cap_ie_data[DOT11F_IE_POWERCAPS_MAX_LEN]
 			= {MIN_TX_PWR_CAP, MAX_TX_PWR_CAP};
-	uint8_t max_tx_pwr_cap
-			= csr_get_cfg_max_tx_power(mac_ctx,
-				session->pConnectBssDesc->channelId);
-
+	uint8_t max_tx_pwr_cap = 0;
 	uint8_t supp_chan_ie[DOT11F_IE_SUPPCHANNELS_MAX_LEN], supp_chan_ie_len;
 	uint8_t ese_ie[DOT11F_IE_ESEVERSION_MAX_LEN]
 			= { 0x0, 0x40, 0x96, 0x3, ESE_VERSION_SUPPORTED};
 
+	if (session->pConnectBssDesc)
+		max_tx_pwr_cap = csr_get_cfg_max_tx_power(mac_ctx,
+				session->pConnectBssDesc->channelId);
 	if (max_tx_pwr_cap)
 		power_cap_ie_data[1] = max_tx_pwr_cap;
 
@@ -17661,11 +17661,13 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 	/*
 	 * The Dynamic Config Items Update may happen even if the state is in
 	 * INIT. It is important to ensure that the command is passed down to
-	 * the FW only if the Infra Station is in a connected state.A connected
-	 * station could also be in a PREAUTH or REASSOC states.So, consider not
-	 * sending the command down in INIT state. We also have to ensure that
-	 * if there is a STOP command we always have to inform Riva,
-	 * irrespective of whichever state we are in
+	 * the FW only if the Infra Station is in a connected state. A connected
+	 * station could also be in a PREAUTH or REASSOC states.
+	 * 1) Block all CMDs that are not STOP in INIT State. For STOP always
+	 *    inform firmware irrespective of state.
+	 * 2) Block update cfg CMD if its for REASON_ROAM_SET_BLACKLIST_BSSID,
+	 *    because we need to inform firmware of blacklisted AP for PNO in
+	 *    all states.
 	 */
 
 	if ((roam_info->neighborRoamState ==
