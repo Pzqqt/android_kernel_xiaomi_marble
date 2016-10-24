@@ -39,12 +39,19 @@
 #include <cdp_txrx_cmn.h>      /* ol_txrx_pdev_handle */
 #include <ol_defines.h>
 
+#ifdef CONFIG_HL_SUPPORT
+static inline uint16_t *ol_tx_msdu_id_storage(qdf_nbuf_t msdu)
+{
+	return QDF_NBUF_CB_TX_DESC_ID(msdu);
+
+}
+#else
 static inline uint16_t *ol_tx_msdu_id_storage(qdf_nbuf_t msdu)
 {
 	qdf_assert(qdf_nbuf_headroom(msdu) >= (sizeof(uint16_t) * 2 - 1));
 	return (uint16_t *) (((qdf_size_t) (qdf_nbuf_head(msdu) + 1)) & ~0x1);
 }
-
+#endif
 /**
  * @brief Tx MSDU download completion for a LL system
  * @details
