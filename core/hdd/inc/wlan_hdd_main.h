@@ -1962,4 +1962,12 @@ hdd_wlan_nla_put_u64(struct sk_buff *skb, int attrtype, u64 value)
 }
 #endif
 
+static inline int wlan_hdd_validate_session_id(u8 session_id)
+{
+	if (session_id != HDD_SESSION_ID_INVALID)
+		return 0;
+
+	return -EINVAL;
+}
+
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

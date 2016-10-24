@@ -1902,6 +1902,12 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	status = hdd_get_front_adapter(pHddCtx, &pAdapterNode);
 	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
 		pAdapter = pAdapterNode->pAdapter;
+
+		if (wlan_hdd_validate_session_id(pAdapter->sessionId)) {
+			hdd_err("invalid session id: %d", pAdapter->sessionId);
+			goto next_adapter;
+		}
+
 		if (QDF_SAP_MODE == pAdapter->device_mode) {
 			if (BSS_START ==
 			    WLAN_HDD_GET_HOSTAP_STATE_PTR(pAdapter)->bssState &&
@@ -1930,6 +1936,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 		}
 		if (pAdapter->is_roc_inprogress)
 			wlan_hdd_cleanup_remain_on_channel_ctx(pAdapter);
+next_adapter:
 		status = hdd_get_next_adapter(pHddCtx, pAdapterNode, &pNext);
 		pAdapterNode = pNext;
 	}
@@ -2147,6 +2154,11 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
+	if (wlan_hdd_validate_session_id(pAdapter->sessionId)) {
+		hdd_err("invalid session id: %d", pAdapter->sessionId);
+		return -EINVAL;
+	}
+
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SET_POWER_MGMT,
 			 pAdapter->sessionId, timeout));
@@ -2332,6 +2344,11 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
+	if (wlan_hdd_validate_session_id(adapter->sessionId)) {
+		hdd_err("invalid session id: %d", adapter->sessionId);
+		return -EINVAL;
+	}
+
 	status = wlan_hdd_validate_context(pHddCtx);
 	if (0 != status) {
 		*dbm = 0;
@@ -2344,8 +2361,8 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 	}
 
 	/* Validate adapter sessionId */
-	if (adapter->sessionId == HDD_SESSION_ID_INVALID) {
-		hdd_err("Adapter Session Invalid!");
+	if (wlan_hdd_validate_session_id(adapter->sessionId)) {
+		hdd_err("invalid session id: %d", adapter->sessionId);
 		return -ENOTSUPP;
 	}
 

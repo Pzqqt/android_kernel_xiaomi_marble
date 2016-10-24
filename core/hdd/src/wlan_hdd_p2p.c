@@ -947,6 +947,11 @@ static int __wlan_hdd_cfg80211_remain_on_channel(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
+	if (wlan_hdd_validate_session_id(pAdapter->sessionId)) {
+		hdd_err("invalid session id: %d", pAdapter->sessionId);
+		return -EINVAL;
+	}
+
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_REMAIN_ON_CHANNEL,
 			 pAdapter->sessionId, REMAIN_ON_CHANNEL_REQUEST));
@@ -1088,6 +1093,11 @@ __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
+		return -EINVAL;
+	}
+
+	if (wlan_hdd_validate_session_id(pAdapter->sessionId)) {
+		hdd_err("invalid session id: %d", pAdapter->sessionId);
 		return -EINVAL;
 	}
 
@@ -1242,6 +1252,11 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
+		return -EINVAL;
+	}
+
+	if (wlan_hdd_validate_session_id(pAdapter->sessionId)) {
+		hdd_err("invalid session id: %d", pAdapter->sessionId);
 		return -EINVAL;
 	}
 
@@ -2038,7 +2053,8 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 	wlan_hdd_tdls_disable_offchan_and_teardown_links(pHddCtx);
 
 	pAdapter = hdd_get_adapter(pHddCtx, QDF_STA_MODE);
-	if (pAdapter != NULL) {
+	if ((pAdapter != NULL) &&
+		!(wlan_hdd_validate_session_id(pAdapter->sessionId))) {
 		scan_info = &pAdapter->scan_info;
 		if (scan_info->mScanPending) {
 			hdd_abort_mac_scan(pHddCtx, pAdapter->sessionId,
@@ -2173,6 +2189,11 @@ int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
+		return -EINVAL;
+	}
+
+	if (wlan_hdd_validate_session_id(pVirtAdapter->sessionId)) {
+		hdd_err("invalid session id: %d", pVirtAdapter->sessionId);
 		return -EINVAL;
 	}
 
