@@ -137,11 +137,6 @@ static inline int pld_pcie_shadow_control(bool enable)
 	return 0;
 }
 static inline int
-pld_pcie_get_codeswap_struct(struct pld_codeswap_codeseg_info *swap_seg)
-{
-	return 0;
-}
-static inline int
 pld_pcie_set_wlan_unsafe_channel(u16 *unsafe_ch_list, u16 ch_count)
 {
 	return 0;
@@ -230,7 +225,6 @@ static inline uint8_t *pld_pcie_get_wlan_mac_address(struct device *dev,
 #else
 int pld_pcie_get_fw_files_for_target(struct pld_fw_files *pfw_files,
 				     u32 target_type, u32 target_version);
-int pld_pcie_get_codeswap_struct(struct pld_codeswap_codeseg_info *swap_seg);
 int pld_pcie_get_platform_cap(struct pld_platform_cap *cap);
 void pld_pcie_set_driver_status(enum pld_driver_status status);
 

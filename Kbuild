@@ -1454,13 +1454,6 @@ CDEFINES += -DWLAN_FEATURE_RX_FULL_REORDER_OL
 endif
 endif
 
-#enable Code swap feature
-ifeq ($(CONFIG_CNSS), y)
-ifeq ($(CONFIG_HIF_PCI), 1)
-CDEFINES += -DCONFIG_CODESWAP_FEATURE
-endif
-endif
-
 #Enable Signed firmware support for split binary format
 ifeq ($(CONFIG_QCA_SIGNED_SPLIT_BINARY_SUPPORT), 1)
 CDEFINES += -DQCA_SIGNED_SPLIT_BINARY_SUPPORT

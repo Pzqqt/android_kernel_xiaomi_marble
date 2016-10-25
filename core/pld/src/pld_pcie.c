@@ -458,31 +458,6 @@ int pld_pcie_get_fw_files_for_target(struct pld_fw_files *pfw_files,
 }
 
 /**
- * pld_pcie_get_codeswap_struct() - Get codeswap structure
- * @swap_seg: buffer to codeswap information
- *
- * Return codeswap structure information to the buffer.
- *
- * Return: 0 for success
- *         Non zero failure code for errors
- */
-int pld_pcie_get_codeswap_struct(struct pld_codeswap_codeseg_info *swap_seg)
-{
-	int ret = 0;
-	struct codeswap_codeseg_info cnss_swap_seg;
-
-	if (swap_seg == NULL)
-		return -ENODEV;
-
-	ret = cnss_get_codeswap_struct(&cnss_swap_seg);
-	if (0 != ret)
-		return ret;
-
-	memcpy(swap_seg, &cnss_swap_seg, sizeof(*swap_seg));
-	return 0;
-}
-
-/**
  * pld_pcie_get_platform_cap() - Get platform capabilities
  * @cap: buffer to the capabilities
  *

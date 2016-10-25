@@ -1204,31 +1204,6 @@ end:
 	return status;
 }
 
-/* AXI Start Address */
-#define TARGET_ADDR (0xa0000)
-
-static void ol_transfer_codeswap_struct(struct ol_context *ol_ctx)
-{
-	struct pld_codeswap_codeseg_info wlan_codeswap;
-	QDF_STATUS rv;
-	qdf_device_t qdf_dev = ol_ctx->qdf_dev;
-
-	if (pld_get_codeswap_struct(qdf_dev->dev, &wlan_codeswap)) {
-		BMI_ERR("%s: failed to get codeswap structure", __func__);
-		return;
-	}
-
-	rv = bmi_write_memory(TARGET_ADDR,
-			      (uint8_t *) &wlan_codeswap, sizeof(wlan_codeswap),
-			      ol_ctx);
-
-	if (rv != QDF_STATUS_SUCCESS) {
-		BMI_ERR("Failed to Write 0xa0000 to Target");
-		return;
-	}
-	BMI_INFO("codeswap structure is successfully downloaded");
-}
-
 QDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 {
 	struct hif_opaque_softc *scn = ol_ctx->scn;
@@ -1303,8 +1278,6 @@ QDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 		address = BMI_SEGMENTED_WRITE_ADDR;
 		BMI_INFO("%s: Using 0x%x for the remainder of init",
 				__func__, address);
-
-		ol_transfer_codeswap_struct(ol_ctx);
 
 		status = ol_transfer_bin_file(ol_ctx, ATH_OTP_FILE,
 						address, true);
