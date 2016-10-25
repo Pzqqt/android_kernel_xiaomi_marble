@@ -2245,6 +2245,9 @@ enum qca_wlan_vendor_attr_sap_conditional_chan_switch {
 #define WIFI_FEATURE_LOGGER             0x20000  /* WiFi Logger */
 #define WIFI_FEATURE_HAL_EPNO           0x40000  /* WiFi PNO enhanced */
 #define WIFI_FEATURE_RSSI_MONITOR       0x80000  /* RSSI Monitor */
+#define WIFI_FEATURE_MKEEP_ALIVE        0x100000  /* WiFi mkeep_alive */
+#define WIFI_FEATURE_CONFIG_NDO         0x200000  /* ND offload configure */
+#define WIFI_FEATURE_TX_TRANSMIT_POWER  0x400000  /* Tx transmit power levels */
 
 /**
  * enum wifi_logger_supported_features - values for supported logger features
