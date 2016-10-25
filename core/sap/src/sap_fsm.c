@@ -2733,6 +2733,11 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 
 	switch (sap_hddevent) {
 	case eSAP_STA_ASSOC_IND:
+		if (!csr_roaminfo) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				  FL("Invalid CSR Roam Info"));
+			return QDF_STATUS_E_INVAL;
+		}
 		/*  TODO - Indicate the assoc request indication to OS */
 		sap_ap_event.sapHddEventCode = eSAP_STA_ASSOC_IND;
 		assoc_ind = &sap_ap_event.sapevt.sapAssocIndication;
@@ -2812,6 +2817,12 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 
 	case eSAP_STA_ASSOC_EVENT:
 	case eSAP_STA_REASSOC_EVENT:
+
+		if (!csr_roaminfo) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				  FL("Invalid CSR Roam Info"));
+			return QDF_STATUS_E_INVAL;
+		}
 		reassoc_complete =
 		    &sap_ap_event.sapevt.sapStationAssocReassocCompleteEvent;
 
@@ -2868,6 +2879,12 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		break;
 
 	case eSAP_STA_DISASSOC_EVENT:
+
+		if (!csr_roaminfo) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				  FL("Invalid CSR Roam Info"));
+			return QDF_STATUS_E_INVAL;
+		}
 		sap_ap_event.sapHddEventCode = eSAP_STA_DISASSOC_EVENT;
 		disassoc_comp =
 			&sap_ap_event.sapevt.sapStationDisassocCompleteEvent;
@@ -2885,6 +2902,12 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		break;
 
 	case eSAP_STA_SET_KEY_EVENT:
+
+		if (!csr_roaminfo) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				  FL("Invalid CSR Roam Info"));
+			return QDF_STATUS_E_INVAL;
+		}
 		sap_ap_event.sapHddEventCode = eSAP_STA_SET_KEY_EVENT;
 		key_complete =
 			&sap_ap_event.sapevt.sapStationSetKeyCompleteEvent;
@@ -2894,6 +2917,12 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		break;
 
 	case eSAP_STA_MIC_FAILURE_EVENT:
+
+		if (!csr_roaminfo) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				  FL("Invalid CSR Roam Info"));
+			return QDF_STATUS_E_INVAL;
+		}
 		sap_ap_event.sapHddEventCode = eSAP_STA_MIC_FAILURE_EVENT;
 		mic_failure = &sap_ap_event.sapevt.sapStationMICFailureEvent;
 
@@ -2919,6 +2948,12 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		break;
 
 	case eSAP_WPS_PBC_PROBE_REQ_EVENT:
+
+		if (!csr_roaminfo) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				  FL("Invalid CSR Roam Info"));
+			return QDF_STATUS_E_INVAL;
+		}
 		sap_ap_event.sapHddEventCode = eSAP_WPS_PBC_PROBE_REQ_EVENT;
 
 		qdf_mem_copy(&sap_ap_event.sapevt.sapPBCProbeReqEvent.
@@ -2952,6 +2987,12 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		break;
 
 	case eSAP_MAX_ASSOC_EXCEEDED:
+
+		if (!csr_roaminfo) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				  FL("Invalid CSR Roam Info"));
+			return QDF_STATUS_E_INVAL;
+		}
 		sap_ap_event.sapHddEventCode = eSAP_MAX_ASSOC_EXCEEDED;
 		qdf_copy_macaddr(&sap_ap_event.sapevt.
 				 sapMaxAssocExceeded.macaddr,
@@ -3000,6 +3041,12 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 			(&mac_ctx->sap.SapDfsInfo.sapDfsChannelNolList[0]);
 		break;
 	case eSAP_ECSA_CHANGE_CHAN_IND:
+
+		if (!csr_roaminfo) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				  FL("Invalid CSR Roam Info"));
+			return QDF_STATUS_E_INVAL;
+		}
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 				"In %s, SAP event callback event = %s",
 				__func__, "eSAP_ECSA_CHANGE_CHAN_IND");
