@@ -636,6 +636,11 @@ static void __lim_process_gid_management_action_frame(tpAniSirGlobal mac_ctx,
 	}
 	sta_ptr = dph_lookup_hash_entry(mac_ctx, mac_hdr->sa, &aid,
 			&session->dph.dphHashTable);
+	if (!sta_ptr) {
+		lim_log(mac_ctx, LOGE,
+			FL("Failed to get STA entry from hash table"));
+		goto out;
+	}
 	lim_log(mac_ctx, LOGE,
 		FL("received Gid Management Action Frame , staIdx = %d"),
 		sta_ptr->staIndex);
