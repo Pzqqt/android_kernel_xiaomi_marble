@@ -655,6 +655,11 @@ static int wma_unified_radio_tx_power_level_stats_event_handler(void *handle,
 	}
 
 	link_stats_results = wma_handle->link_stats_results;
+	if (!link_stats_results) {
+		WMA_LOGA("%s: link_stats_results is NULL", __func__);
+		return -EINVAL;
+	}
+
 	rs_results = (tSirWifiRadioStat *) &link_stats_results->results[0];
 	tx_power_level_values = (uint8_t *) param_tlvs->tx_time_per_power_level;
 
@@ -704,8 +709,8 @@ post_stats:
 		link_stats_results);
 	WMA_LOGD("%s: Radio Stats event posted to HDD", __func__);
 	qdf_mem_free(rs_results->tx_time_per_power_level);
-	qdf_mem_free(wma_handle->link_stats_results);
 	rs_results->tx_time_per_power_level = NULL;
+	qdf_mem_free(wma_handle->link_stats_results);
 	wma_handle->link_stats_results = NULL;
 
 	return 0;
