@@ -36,8 +36,8 @@
 #include "wmi_unified_priv.h"
 
 #if defined(WMI_NON_TLV_SUPPORT) || defined(WMI_TLV_AND_NON_TLV_SUPPORT)
-#include "legacy/wmi.h"
-#include "legacy/wmi_unified.h"
+#include "wmi.h"
+#include "wmi_unified.h"
 /**
  * send_vdev_create_cmd_non_tlv() - send VDEV create command to fw
  * @wmi_handle: wmi handle
@@ -8108,6 +8108,8 @@ static void populate_vdev_param_non_tlv(uint32_t *vdev_param)
 	vdev_param[wmi_vdev_param_dtim_enable_cts] =
 		WMI_VDEV_PARAM_DTIM_ENABLE_CTS;
 	vdev_param[wmi_vdev_param_sta_kickout] = WMI_VDEV_PARAM_STA_KICKOUT;
+	vdev_param[wmi_vdev_param_capabilities] =
+		WMI_VDEV_PARAM_CAPABILITIES;
 }
 #endif
 

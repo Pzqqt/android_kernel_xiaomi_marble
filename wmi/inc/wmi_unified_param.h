@@ -277,6 +277,29 @@ typedef enum {
 	WMI_HOST_MODE_MAX	= 16
 } WMI_HOST_WLAN_PHY_MODE;
 
+typedef enum {
+	WMI_HOST_VDEV_START_OK = 0,
+	WMI_HOST_VDEV_START_CHAN_INVALID,
+} WMI_HOST_VDEV_START_STATUS;
+
+/*
+ * Needs to be removed and use channel_param based
+ * on how it is processed
+ */
+typedef struct {
+	/** primary 20 MHz channel frequency in mhz */
+	uint32_t mhz;
+	/** Center frequency 1 in MHz*/
+	uint32_t band_center_freq1;
+	/** Center frequency 2 in MHz - valid only for 11acvht 80plus80 mode*/
+	uint32_t band_center_freq2;
+	/** channel info described below */
+	uint32_t info;
+	/** contains min power, max power, reg power and reg class id.  */
+	uint32_t reg_info_1;
+	/** contains antennamax */
+	uint32_t reg_info_2;
+} wmi_host_channel;
 
 /**
  * enum wmi_dwelltime_adaptive_mode: dwelltime_mode
@@ -5412,6 +5435,7 @@ enum wmi_host_scan_event_type {
 	WMI_HOST_SCAN_EVENT_RESTARTED = 0x80,
 	WMI_HOST_SCAN_EVENT_FOREIGN_CHANNEL_EXIT = 0x100,
 	WMI_HOST_SCAN_EVENT_INVALID = 0x200,
+	WMI_HOST_SCAN_EVENT_GPIO_TIMEOUT = 0x400,
 	WMI_HOST_SCAN_EVENT_MAX = 0x8000
 };
 
