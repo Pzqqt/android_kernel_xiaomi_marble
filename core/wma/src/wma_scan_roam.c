@@ -755,14 +755,17 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 	struct roam_offload_scan_params *params =
 				qdf_mem_malloc(sizeof(*params));
 
+	if (!params) {
+		WMA_LOGE("%s: Failed to allocate scan params", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	int auth_mode = WMI_AUTH_NONE;
+	params->auth_mode = WMI_AUTH_NONE;
 	if (roam_req)
-		auth_mode = e_csr_auth_type_to_rsn_authmode
+		params->auth_mode = e_csr_auth_type_to_rsn_authmode
 				    (roam_req->ConnectedNetwork.authentication,
 				    roam_req->ConnectedNetwork.encryption);
-	WMA_LOGD("%s : auth mode = %d", __func__, auth_mode);
-	params->auth_mode = auth_mode;
+	WMA_LOGD("%s : auth mode = %d", __func__, params->auth_mode);
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 	params->is_roam_req_valid = 0;
