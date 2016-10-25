@@ -1,4 +1,4 @@
-/*
+				/*
  * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
@@ -1608,6 +1608,7 @@ typedef struct {
 	bool sub_20_support;
 	tp_wma_packetdump_cb wma_mgmt_tx_packetdump_cb;
 	tp_wma_packetdump_cb wma_mgmt_rx_packetdump_cb;
+	tSirLLStatsResults *link_stats_results;
 } t_wma_handle, *tp_wma_handle;
 
 /**

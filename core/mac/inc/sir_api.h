@@ -5034,6 +5034,11 @@ typedef struct {
 	 * (32 bits number accruing over time)
 	 */
 	uint32_t onTimeHs20;
+
+	/* tx time (in milliseconds) per TPC level (0.5 dBm) */
+	uint32_t total_num_tx_power_levels;
+	uint32_t *tx_time_per_power_level;
+
 	/* number of channels */
 	uint32_t numChannels;
 
