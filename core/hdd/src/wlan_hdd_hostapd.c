@@ -7822,13 +7822,18 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	status = wlan_hdd_validate_context(pHddCtx);
-
 	if (0 != status)
 		return status;
 
 	hdd_info("pAdapter = %p, Device mode %s(%d)", pAdapter,
 	       hdd_device_mode_to_string(pAdapter->device_mode),
 	       pAdapter->device_mode);
+
+
+	if (cds_is_connection_in_progress()) {
+		hdd_err("Can't start BSS: connection is in progress");
+		return -EBUSY;
+	}
 
 	channel_width = wlan_hdd_get_channel_bw(params->chandef.width);
 	channel = ieee80211_frequency_to_channel(
