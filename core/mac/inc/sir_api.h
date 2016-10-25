@@ -4995,6 +4995,7 @@ typedef struct {
 	uint32_t ccaBusyTime;
 } tSirWifiChannelStats, *tpSirWifiChannelStats;
 
+#define MAX_TPC_LEVELS 64
 /* radio statistics */
 typedef struct {
 	/* wifi radio (if multiple radio supported) */
@@ -5035,6 +5036,10 @@ typedef struct {
 	uint32_t onTimeHs20;
 	/* number of channels */
 	uint32_t numChannels;
+
+	/* tx time (in milliseconds) per TPC level (0.5 dBm) */
+	uint32_t tx_time_per_tpc[MAX_TPC_LEVELS];
+
 	/* channel statistics tSirWifiChannelStats */
 	tSirWifiChannelStats channels[0];
 } tSirWifiRadioStat, *tpSirWifiRadioStat;

@@ -883,6 +883,13 @@ static void hdd_link_layer_process_radio_stats(hdd_adapter_t *pAdapter,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_ON_TIME_HS20,
 			pWifiRadioStat->onTimeHs20) ||
 	    nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_NUM_TX_LEVELS,
+			MAX_TPC_LEVELS)    ||
+	    nla_put(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_TX_TIME_PER_LEVEL,
+			sizeof(u32) * MAX_TPC_LEVELS,
+			pWifiRadioStat->tx_time_per_tpc) ||
+	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_NUM_CHANNELS,
 			pWifiRadioStat->numChannels)) {
 		hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
