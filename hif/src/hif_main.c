@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -414,8 +414,6 @@ struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx, uint32_t mode,
 						__func__, bus_context_size);
 		return GET_HIF_OPAQUE_HDL(scn);
 	}
-
-	qdf_mem_zero(scn, bus_context_size);
 
 	scn->qdf_dev = qdf_ctx;
 	scn->hif_con_param = mode;

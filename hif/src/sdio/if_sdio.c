@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -93,7 +93,6 @@ static A_STATUS hif_sdio_probe(void *context, void *hif_handle)
 		ret = -ENOMEM;
 		goto err_alloc;
 	}
-	qdf_mem_zero(scn, sizeof(*scn));
 
 	scn->hif_handle = hif_handle;
 	hif_configure_device(hif_handle, HIF_DEVICE_GET_OS_DEVICE,

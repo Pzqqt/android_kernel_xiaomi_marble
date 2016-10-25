@@ -79,7 +79,6 @@ static HTC_PACKET *build_htc_tx_ctrl_packet(qdf_device_t osdev)
 		if (NULL == pPacket) {
 			break;
 		}
-		qdf_mem_zero(pPacket, sizeof(HTC_PACKET));
 		netbuf = qdf_nbuf_alloc(osdev, HTC_CONTROL_BUFFER_SIZE,
 					20, 4, true);
 		if (NULL == netbuf) {
@@ -261,8 +260,6 @@ HTC_HANDLE htc_create(void *ol_sc, HTC_INIT_INFO *pInfo, qdf_device_t osdev,
 		return NULL;
 	}
 
-	qdf_mem_zero(target, sizeof(HTC_TARGET));
-
 	htc_runtime_pm_init(target);
 	qdf_spinlock_create(&target->HTCLock);
 	qdf_spinlock_create(&target->HTCRxLock);
@@ -285,7 +282,6 @@ HTC_HANDLE htc_create(void *ol_sc, HTC_INIT_INFO *pInfo, qdf_device_t osdev,
 			HTC_PACKET *pPacket =
 				(HTC_PACKET *) qdf_mem_malloc(sizeof(HTC_PACKET));
 			if (pPacket != NULL) {
-				qdf_mem_zero(pPacket, sizeof(HTC_PACKET));
 				free_htc_packet_container(target, pPacket);
 			}
 		}

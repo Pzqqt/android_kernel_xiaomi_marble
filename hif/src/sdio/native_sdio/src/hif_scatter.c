@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -377,8 +377,6 @@ QDF_STATUS setup_hif_scatter_support(struct hif_sdio_dev *device,
 					struct HIF_SCATTER_REQ_PRIV));
 		if (NULL == req_priv)
 			goto end;
-		qdf_mem_zero(req_priv, sizeof(
-					struct HIF_SCATTER_REQ_PRIV));
 		/* save the device instance */
 		req_priv->device = device;
 		/* allocate the scatter request */
@@ -392,9 +390,6 @@ QDF_STATUS setup_hif_scatter_support(struct hif_sdio_dev *device,
 			qdf_mem_free(req_priv);
 			goto end;
 		}
-		/* just zero the main part of the scatter request */
-		qdf_mem_zero(req_priv->hif_scatter_req,
-			     sizeof(struct _HIF_SCATTER_REQ));
 		/* back pointer to the private struct */
 		req_priv->hif_scatter_req->hif_private[0] = req_priv;
 		/* allocate a bus request for this scatter request */

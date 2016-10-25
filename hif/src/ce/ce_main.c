@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -668,8 +668,6 @@ static struct CE_ring_state *ce_alloc_ring_state(struct CE_state *CE_state,
 	if (!ptr)
 		return NULL;
 
-	qdf_mem_zero(ptr, ce_nbytes);
-
 	ce_ring = (struct CE_ring_state *)ptr;
 	ptr += sizeof(struct CE_ring_state);
 	ce_ring->nentries = nentries;
@@ -767,7 +765,6 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 			return NULL;
 		}
 		malloc_CE_state = true;
-		qdf_mem_zero(CE_state, sizeof(*CE_state));
 		scn->ce_id_to_state[CE_id] = CE_state;
 		qdf_spinlock_create(&CE_state->ce_index_lock);
 
