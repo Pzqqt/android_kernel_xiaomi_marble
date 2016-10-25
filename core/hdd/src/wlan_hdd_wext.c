@@ -11060,8 +11060,8 @@ static const struct iw_priv_args we_private_args[] = {
 #ifdef WLAN_FEATURE_PACKET_FILTERING
 	{
 		WLAN_SET_PACKET_FILTER_PARAMS,
-		IW_PRIV_TYPE_BYTE | IW_PRIV_SIZE_FIXED |
-					sizeof(struct pkt_filter_cfg),
+		IW_PRIV_TYPE_BYTE |
+		sizeof(struct pkt_filter_cfg),
 		0,
 		"setPktFilter"
 	}
