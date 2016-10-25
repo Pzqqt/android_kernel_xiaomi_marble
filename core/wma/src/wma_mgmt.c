@@ -2564,7 +2564,7 @@ int wma_mgmt_tx_bundle_completion_handler(void *handle, uint8_t *buf,
 	int i;
 
 	param_buf = (WMI_MGMT_TX_BUNDLE_COMPLETION_EVENTID_param_tlvs *)buf;
-	if (!param_buf && !wma_handle) {
+	if (!param_buf || !wma_handle) {
 		WMA_LOGE("%s: Invalid mgmt Tx completion event", __func__);
 		return -EINVAL;
 	}
