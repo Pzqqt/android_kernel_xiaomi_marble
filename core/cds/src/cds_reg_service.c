@@ -469,8 +469,12 @@ static void cds_set_5g_channel_params(uint16_t oper_ch,
 	const struct bonded_chan *bonded_chan_ptr = NULL;
 	const struct bonded_chan *bonded_chan_ptr2 = NULL;
 
-	if (CH_WIDTH_MAX <= ch_params->ch_width)
-		ch_params->ch_width = CH_WIDTH_80P80MHZ;
+	if (CH_WIDTH_MAX <= ch_params->ch_width) {
+		if (0 != ch_params->center_freq_seg1)
+			ch_params->ch_width = CH_WIDTH_80P80MHZ;
+		else
+			ch_params->ch_width = CH_WIDTH_160MHZ;
+	}
 
 	while (ch_params->ch_width != CH_WIDTH_INVALID) {
 		bonded_chan_ptr = NULL;
