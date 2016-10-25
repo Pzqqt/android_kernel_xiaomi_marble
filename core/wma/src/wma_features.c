@@ -7546,6 +7546,7 @@ int wma_dfs_indicate_radar(struct ieee80211com *ic,
 			qdf_mem_malloc(sizeof(struct wma_dfs_radar_indication));
 		if (radar_event == NULL) {
 			WMA_LOGE(FL("Failed to allocate memory for radar_event"));
+			qdf_spin_unlock_bh(&ic->chan_lock);
 			return -ENOMEM;
 		}
 		wma->dfs_ic->last_radar_found_chan = ichan->ic_ieee;
