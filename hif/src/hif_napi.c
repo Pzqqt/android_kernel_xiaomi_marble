@@ -1011,7 +1011,7 @@ lab_err_hotplug:
 	hnc_tput_hook(0);
 	hnc_hotplug_hook(0);
 lab_err_topology:
-	memset(napid->napi_cpu, sizeof(struct qca_napi_cpu) * NR_CPUS, 0);
+	memset(napid->napi_cpu, 0, sizeof(struct qca_napi_cpu) * NR_CPUS);
 lab_rss_init:
 	NAPI_DEBUG("<-- [rc=%d]", rc);
 	return rc;
@@ -1039,7 +1039,7 @@ int hif_napi_cpu_deinit(void *ctx)
 	rc = hnc_hotplug_hook(0);
 
 	/* clear the topology table */
-	memset(napid->napi_cpu, sizeof(struct qca_napi_cpu) * NR_CPUS, 0);
+	memset(napid->napi_cpu, 0, sizeof(struct qca_napi_cpu) * NR_CPUS);
 
 	NAPI_DEBUG("<--%s[rc=%d]", __func__, rc);
 
