@@ -2246,11 +2246,17 @@ ce_send_cb_register(struct CE_handle *copyeng,
 		    void *ce_send_context, int disable_interrupts)
 {
 	struct CE_state *CE_state = (struct CE_state *)copyeng;
-	struct hif_softc *scn = CE_state->scn;
-	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+	struct hif_softc *scn;
+	struct HIF_CE_state *hif_state;
 
 	if (CE_state == NULL) {
 		HIF_ERROR("%s: Error CE state = NULL", __func__);
+		return;
+	}
+	scn = CE_state->scn;
+	hif_state = HIF_GET_CE_STATE(scn);
+	if (hif_state == NULL) {
+		HIF_ERROR("%s: Error HIF state = NULL", __func__);
 		return;
 	}
 	CE_state->send_context = ce_send_context;
@@ -2277,11 +2283,17 @@ ce_recv_cb_register(struct CE_handle *copyeng,
 		    void *CE_recv_context, int disable_interrupts)
 {
 	struct CE_state *CE_state = (struct CE_state *)copyeng;
-	struct hif_softc *scn = CE_state->scn;
-	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+	struct hif_softc *scn;
+	struct HIF_CE_state *hif_state;
 
 	if (CE_state == NULL) {
 		HIF_ERROR("%s: ERROR CE state = NULL", __func__);
+		return;
+	}
+	scn = CE_state->scn;
+	hif_state = HIF_GET_CE_STATE(scn);
+	if (hif_state == NULL) {
+		HIF_ERROR("%s: Error HIF state = NULL", __func__);
 		return;
 	}
 	CE_state->recv_context = CE_recv_context;
