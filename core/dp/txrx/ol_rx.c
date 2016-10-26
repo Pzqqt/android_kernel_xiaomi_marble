@@ -626,7 +626,7 @@ ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
 				if (status != htt_rx_status_ctrl_mgmt_null) {
 					/* Pktlog */
 					ol_rx_send_pktlog_event(pdev,
-						 peer, head_msdu, 1);
+						 peer, msdu, 1);
 				}
 #endif
 				if (status == htt_rx_status_err_inv_peer) {
