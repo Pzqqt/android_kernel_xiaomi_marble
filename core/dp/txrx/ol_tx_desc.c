@@ -171,6 +171,7 @@ struct ol_tx_desc_t *ol_tx_desc_alloc(struct ol_txrx_pdev_t *pdev,
 
 	ol_tx_desc_vdev_update(tx_desc, vdev);
 	ol_tx_desc_count_inc(vdev);
+	qdf_atomic_inc(&tx_desc->ref_cnt);
 
 	return tx_desc;
 }
@@ -225,6 +226,7 @@ struct ol_tx_desc_t *ol_tx_desc_alloc(struct ol_txrx_pdev_t *pdev,
 			ol_tx_desc_sanity_checks(pdev, tx_desc);
 			ol_tx_desc_compute_delay(tx_desc);
 			ol_tx_desc_vdev_update(tx_desc, vdev);
+			qdf_atomic_inc(&tx_desc->ref_cnt);
 		} else {
 			pool->pkt_drop_no_desc++;
 			qdf_spin_unlock_bh(&pool->flow_pool_lock);

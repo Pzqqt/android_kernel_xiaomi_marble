@@ -625,7 +625,8 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 					 * Free the descriptor, return the
 					 * packet to the caller.
 					 */
-					ol_tx_desc_free(pdev, tx_desc);
+					ol_tx_desc_frame_free_nonstd(pdev,
+								tx_desc, 1);
 					return msdu;
 				}
 				if (msdu_info.tso_info.curr_seg) {
