@@ -2430,6 +2430,7 @@ int hdd_set_qpower_config(hdd_context_t *hddctx, hdd_adapter_t *adapter,
  */
 #define CE_IRQ_COUNT 12
 #define CE_WAKE_IRQ 2
+static struct net_device *g_dev;
 static struct wiphy *g_wiphy;
 
 #define HDD_FA_SUSPENDED_BIT (0)
@@ -2439,11 +2440,13 @@ static unsigned long fake_apps_state;
  * __hdd_wlan_fake_apps_resume() - The core logic for
  *	hdd_wlan_fake_apps_resume() skipping the call to hif_fake_apps_resume(),
  *	which is only need for non-irq resume
- * @wiphy: wiphy struct from a validated hdd context
+ * @wiphy: the kernel wiphy struct for the device being resumed
+ * @dev: the kernel net_device struct for the device being resumed
  *
- * Return: Zero on success, calls QDF_BUG() on failure
+ * Return: none, calls QDF_BUG() on failure
  */
-static void __hdd_wlan_fake_apps_resume(struct wiphy *wiphy)
+static void __hdd_wlan_fake_apps_resume(struct wiphy *wiphy,
+					struct net_device *dev)
 {
 	qdf_device_t qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	int i, resume_err;
@@ -2469,6 +2472,8 @@ static void __hdd_wlan_fake_apps_resume(struct wiphy *wiphy)
 
 	resume_err = wlan_hdd_cfg80211_resume_wlan(wiphy);
 	QDF_BUG(resume_err == 0);
+
+	dev->watchdog_timeo = HDD_TX_TIMEOUT;
 }
 
 /**
@@ -2485,11 +2490,13 @@ static void hdd_wlan_fake_apps_resume_irq_callback(uint32_t val)
 	hdd_info("Trigger unit-test resume WLAN; val: 0x%x", val);
 
 	QDF_BUG(g_wiphy);
-	__hdd_wlan_fake_apps_resume(g_wiphy);
+	QDF_BUG(g_dev);
+	__hdd_wlan_fake_apps_resume(g_wiphy, g_dev);
 	g_wiphy = NULL;
+	g_dev = NULL;
 }
 
-int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy)
+int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev)
 {
 	qdf_device_t qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	struct hif_opaque_softc *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
@@ -2522,9 +2529,16 @@ int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy)
 	/* re-enable wake irq */
 	pld_enable_irq(qdf_dev->dev, CE_WAKE_IRQ);
 
-	/* pass wiphy to callback via global variable */
+	/* pass wiphy/dev to callback via global variables */
 	g_wiphy = wiphy;
+	g_dev = dev;
 	hif_fake_apps_suspend(hif_ctx, hdd_wlan_fake_apps_resume_irq_callback);
+
+	/*
+	 * Tell the kernel not to worry if TX queues aren't moving. This is
+	 * expected since we are suspending the wifi hardware, but not APPS
+	 */
+	dev->watchdog_timeo = INT_MAX;
 
 	return 0;
 
@@ -2546,12 +2560,12 @@ resume_done:
 	return suspend_err;
 }
 
-int hdd_wlan_fake_apps_resume(struct wiphy *wiphy)
+int hdd_wlan_fake_apps_resume(struct wiphy *wiphy, struct net_device *dev)
 {
 	struct hif_opaque_softc *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 
 	hif_fake_apps_resume(hif_ctx);
-	__hdd_wlan_fake_apps_resume(wiphy);
+	__hdd_wlan_fake_apps_resume(wiphy, dev);
 
 	return 0;
 }

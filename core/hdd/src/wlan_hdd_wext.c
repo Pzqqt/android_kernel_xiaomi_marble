@@ -9883,10 +9883,10 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 		ret = wlan_hdd_set_mon_chan(pAdapter, value[1], value[2]);
 		break;
 	case WE_SET_WLAN_SUSPEND:
-		ret = hdd_wlan_fake_apps_suspend(hdd_ctx->wiphy);
+		ret = hdd_wlan_fake_apps_suspend(hdd_ctx->wiphy, dev);
 		break;
 	case WE_SET_WLAN_RESUME:
-		ret = hdd_wlan_fake_apps_resume(hdd_ctx->wiphy);
+		ret = hdd_wlan_fake_apps_resume(hdd_ctx->wiphy, dev);
 		break;
 	default:
 		hdd_err("Invalid IOCTL command %d", sub_cmd);
