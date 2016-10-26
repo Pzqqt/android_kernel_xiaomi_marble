@@ -753,4 +753,6 @@ void hif_update_pipe_callback(struct hif_opaque_softc *osc,
 }
 #endif
 
+void *hif_get_dev_ba(struct hif_opaque_softc *hif_handle);
+
 #endif /* _HIF_H_ */
