@@ -1227,6 +1227,7 @@ uint32_t hif_register_ext_group_int_handler(struct hif_opaque_softc *hif_ctx,
 	hif_ext_group->handler = handler;
 	hif_ext_group->configured = true;
 	hif_ext_group->grp_id = hif_state->hif_num_extgroup;
+	hif_ext_group->hif_state = hif_state;
 
 	hif_state->hif_num_extgroup++;
 	return QDF_STATUS_SUCCESS;
