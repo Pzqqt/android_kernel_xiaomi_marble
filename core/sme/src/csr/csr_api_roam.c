@@ -9098,6 +9098,7 @@ static void csr_roam_roaming_state_stop_bss_rsp_processor(tpAniSirGlobal pMac,
 							  tSirSmeRsp *pSmeRsp)
 {
 	eCsrRoamCompleteResult result_code = eCsrNothingToJoin;
+	tCsrRoamProfile *profile;
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 	{
@@ -9116,16 +9117,16 @@ static void csr_roam_roaming_state_stop_bss_rsp_processor(tpAniSirGlobal pMac,
 	pMac->roam.roamSession[pSmeRsp->sessionId].connectState =
 		eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED;
 	if (CSR_IS_ROAM_SUBSTATE_STOP_BSS_REQ(pMac, pSmeRsp->sessionId)) {
-		if (CSR_IS_CONN_NDI(pMac->roam.roamSession[pSmeRsp->sessionId].
-							pCurRoamProfile)) {
+		profile =
+		    pMac->roam.roamSession[pSmeRsp->sessionId].pCurRoamProfile;
+		if (profile && CSR_IS_CONN_NDI(profile)) {
 			result_code = eCsrStopBssSuccess;
 			if (pSmeRsp->statusCode != eSIR_SME_SUCCESS)
 				result_code = eCsrStopBssFailure;
 		}
 		csr_roam_complete(pMac, result_code, NULL);
-	} else
-	if (CSR_IS_ROAM_SUBSTATE_DISCONNECT_CONTINUE
-		    (pMac, pSmeRsp->sessionId)) {
+	} else if (CSR_IS_ROAM_SUBSTATE_DISCONNECT_CONTINUE(pMac,
+			pSmeRsp->sessionId)) {
 		csr_roam_reissue_roam_command(pMac);
 	}
 }
