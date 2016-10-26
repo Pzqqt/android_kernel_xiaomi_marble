@@ -8353,8 +8353,8 @@ uint8_t
 cds_get_nondfs_preferred_channel(enum cds_con_mode mode,
 		bool for_existing_conn)
 {
-	uint8_t pcl_channels[NUM_CHANNELS];
-	uint8_t pcl_weight[NUM_CHANNELS];
+	uint8_t pcl_channels[QDF_MAX_NUM_CHAN];
+	uint8_t pcl_weight[QDF_MAX_NUM_CHAN];
 
 	/*
 	 * in worst case if we can't find any channel at all
