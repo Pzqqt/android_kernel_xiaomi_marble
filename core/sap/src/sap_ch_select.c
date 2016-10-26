@@ -301,9 +301,8 @@ void sap_process_avoid_ie(tHalHandle hal,
 	node = sme_scan_result_get_first(hal, scan_result);
 
 	while (node) {
-		total_ie_len = (node->BssDescriptor.length +
-			sizeof(uint16_t) + sizeof(uint32_t) -
-			sizeof(tSirBssDescription));
+		total_ie_len =
+			GET_IE_LEN_IN_BSS_DESC(node->BssDescriptor.length);
 		temp_ptr = cfg_get_vendor_ie_ptr_from_oui(mac_ctx,
 				SIR_MAC_QCOM_VENDOR_OUI,
 				SIR_MAC_QCOM_VENDOR_SIZE,
@@ -1216,10 +1215,8 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 		centerFreq = 0;
 
 		if (pScanResult->BssDescriptor.ieFields != NULL) {
-			ieLen =
-				(pScanResult->BssDescriptor.length +
-				 sizeof(uint16_t) + sizeof(uint32_t) -
-				 sizeof(tSirBssDescription));
+			ieLen = GET_IE_LEN_IN_BSS(
+					pScanResult->BssDescriptor.length);
 			qdf_mem_set((uint8_t *) pBeaconStruct,
 				    sizeof(tSirProbeRespBeacon), 0);
 

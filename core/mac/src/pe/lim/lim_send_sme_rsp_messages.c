@@ -647,10 +647,10 @@ lim_send_sme_start_bss_rsp(tpAniSirGlobal pMac,
 				     (uint32_t) psessionEntry->
 				     schBeaconOffsetEnd);
 
-			/* subtracting size of length indicator itself and size of pointer to ieFields */
-			pSirSmeRsp->bssDescription.length =
-				sizeof(tSirBssDescription) - sizeof(uint16_t) -
-				sizeof(uint32_t) + ieLen;
+			pSirSmeRsp->bssDescription.length = (uint16_t)
+				(offsetof(tSirBssDescription, ieFields[0])
+				- sizeof(pSirSmeRsp->bssDescription.length)
+				+ ieLen);
 			/* This is the size of the message, subtracting the size of the pointer to ieFields */
 			size += ieLen - sizeof(uint32_t);
 		}

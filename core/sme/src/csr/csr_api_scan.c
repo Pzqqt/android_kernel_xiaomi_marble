@@ -2528,8 +2528,7 @@ static void csr_check_n_save_wsc_ie(tpAniSirGlobal pMac,
 	if ((pNewBssDescr->fProbeRsp != pOldBssDescr->fProbeRsp) &&
 	    (0 == pNewBssDescr->WscIeLen)) {
 		idx = 0;
-		len = pOldBssDescr->length - sizeof(tSirBssDescription) +
-		      sizeof(uint16_t) + sizeof(uint32_t) -
+		len = GET_IE_LEN_IN_BSS(pOldBssDescr->length) -
 		      DOT11F_IE_WSCPROBERES_MIN_LEN - 2;
 		pbIe = (uint8_t *) pOldBssDescr->ieFields;
 		/* Save WPS IE if it exists */
@@ -6981,8 +6980,8 @@ QDF_STATUS csr_scan_save_preferred_network_found(tpAniSirGlobal pMac,
 	 * Length of BSS desription is without length of length itself and
 	 * length of pointer that holds the next BSS description
 	 */
-	pBssDescr->length = (uint16_t) (sizeof(tSirBssDescription) -
-		sizeof(uint16_t) - sizeof(uint32_t) + uLen);
+	pBssDescr->length = (uint16_t)(offsetof(tSirBssDescription, ieFields[0])
+					- sizeof(pBssDescr->length) + uLen);
 	if (parsed_frm->dsParamsPresent)
 		pBssDescr->channelId = parsed_frm->channelNumber;
 	else if (parsed_frm->HTInfo.present)
