@@ -53,15 +53,11 @@
 
 #include "sch_debug.h"
 
-/* */
-/* March 15, 2006 */
-/* Temporarily (maybe for all of Alpha-1), assuming TIM = 0 */
-/* */
-
 const uint8_t p2p_oui[] = { 0x50, 0x6F, 0x9A, 0x9 };
 
-tSirRetStatus sch_get_p2p_ie_offset(uint8_t *pExtraIe, uint32_t extraIeLen,
-				    uint16_t *pP2pIeOffset)
+static tSirRetStatus sch_get_p2p_ie_offset(uint8_t *pExtraIe,
+					   uint32_t extraIeLen,
+					   uint16_t *pP2pIeOffset)
 {
 	tSirRetStatus status = eSIR_FAILURE;
 	*pP2pIeOffset = 0;
@@ -99,7 +95,7 @@ tSirRetStatus sch_get_p2p_ie_offset(uint8_t *pExtraIe, uint32_t extraIeLen,
  *
  * Return: status of operation
  */
-tSirRetStatus
+static tSirRetStatus
 sch_append_addn_ie(tpAniSirGlobal mac_ctx, tpPESession session,
 		   uint8_t *frm, uint32_t max_bcn_size, uint32_t *num_bytes,
 		   uint8_t *addn_ie, uint16_t addn_ielen)
@@ -799,8 +795,8 @@ void set_probe_rsp_ie_bitmap(uint32_t *IeBitmap, uint32_t pos)
  * @return None
  */
 
-void write_beacon_to_memory(tpAniSirGlobal pMac, uint16_t size, uint16_t length,
-			    tpPESession psessionEntry)
+static void write_beacon_to_memory(tpAniSirGlobal pMac, uint16_t size,
+				   uint16_t length, tpPESession psessionEntry)
 {
 	uint16_t i;
 	tpAniBeaconStruct pBeacon;

@@ -339,7 +339,7 @@ void lim_process_mlm_join_cnf(tpAniSirGlobal mac_ctx,
  * Return: None
  */
 
-void lim_send_mlm_assoc_req(tpAniSirGlobal mac_ctx,
+static void lim_send_mlm_assoc_req(tpAniSirGlobal mac_ctx,
 	tpPESession session_entry)
 {
 	tLimMlmAssocReq *assoc_req;
@@ -740,7 +740,7 @@ void lim_process_mlm_assoc_cnf(tpAniSirGlobal mac_ctx,
  * Return: None
  */
 
-void
+static void
 lim_fill_assoc_ind_params(tpAniSirGlobal mac_ctx,
 	tpLimMlmAssocInd assoc_ind, tSirSmeAssocInd *sme_assoc_ind,
 	tpPESession session_entry)
@@ -3224,7 +3224,7 @@ void lim_send_beacon_ind(tpAniSirGlobal pMac, tpPESession psessionEntry)
  *
  * @return None
  */
-void lim_send_sme_scan_cache_updated_ind(uint8_t sessionId)
+static void lim_send_sme_scan_cache_updated_ind(uint8_t sessionId)
 {
 	cds_msg_t msg;
 
@@ -3241,8 +3241,8 @@ void lim_send_sme_scan_cache_updated_ind(uint8_t sessionId)
 }
 #endif
 
-void lim_send_scan_offload_complete(tpAniSirGlobal pMac,
-				    tSirScanOffloadEvent *pScanEvent)
+static void lim_send_scan_offload_complete(tpAniSirGlobal pMac,
+					   tSirScanOffloadEvent *pScanEvent)
 {
 
 	pMac->lim.gLimRspReqd = false;

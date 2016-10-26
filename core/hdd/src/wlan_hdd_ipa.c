@@ -202,6 +202,8 @@ struct hdd_ipa_rx_hdr {
 } __packed;
 
 struct hdd_ipa_pm_tx_cb {
+	bool exception;
+	hdd_adapter_t *adapter;
 	struct hdd_ipa_iface_context *iface_context;
 	struct ipa_rx_data *ipa_tx_desc;
 };
@@ -244,6 +246,7 @@ struct hdd_ipa_iface_context {
 	qdf_spinlock_t interface_lock;
 	uint32_t ifa_address;
 	struct hdd_ipa_iface_stats stats;
+	uint32_t offload_enabled;
 };
 
 struct hdd_ipa_stats {
@@ -530,9 +533,12 @@ do { \
 	pipe_in.u.ul.rdy_comp_ring_wp_va = \
 		ipa_ctxt->ipa_resource.rx2_proc_done_idx_vaddr; \
 } while (0)
+
+#define HDD_IPA_CHECK_HW() ipa_uc_reg_rdyCB(NULL)
 #else
 /* Do nothing */
 #define HDD_IPA_WDI2_SET(pipe_in, ipa_ctxt)
+#define HDD_IPA_CHECK_HW() 0
 #endif /* IPA3 */
 
 static struct hdd_ipa_adapter_2_client {
@@ -951,7 +957,7 @@ void hdd_ipa_uc_stat_query(hdd_context_t *pHddCtx,
 		(false == hdd_ipa->resource_loading)) {
 		*ipa_tx_diff = hdd_ipa->ipa_tx_packets_diff;
 		*ipa_rx_diff = hdd_ipa->ipa_rx_packets_diff;
-		HDD_IPA_LOG(LOG1, "STAT Query TX DIFF %d, RX DIFF %d",
+		HDD_IPA_LOG(LOGOFF, "STAT Query TX DIFF %d, RX DIFF %d",
 			    *ipa_tx_diff, *ipa_rx_diff);
 	}
 	qdf_mutex_release(&hdd_ipa->ipa_lock);
@@ -1353,9 +1359,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			hdd_ipa->pending_cons_req = false;
 		}
 		qdf_mutex_release(&hdd_ipa->ipa_lock);
-	}
-
-	if ((HDD_IPA_UC_OPCODE_TX_SUSPEND == msg->op_code) ||
+	} else if ((HDD_IPA_UC_OPCODE_TX_SUSPEND == msg->op_code) ||
 	    (HDD_IPA_UC_OPCODE_RX_SUSPEND == msg->op_code)) {
 		qdf_mutex_acquire(&hdd_ipa->ipa_lock);
 		hdd_ipa->activated_fw_pipe--;
@@ -1371,9 +1375,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			hdd_ipa->pending_cons_req = false;
 		}
 		qdf_mutex_release(&hdd_ipa->ipa_lock);
-	}
-
-	if ((HDD_IPA_UC_OPCODE_STATS == msg->op_code) &&
+	} else if ((HDD_IPA_UC_OPCODE_STATS == msg->op_code) &&
 		(HDD_IPA_UC_STAT_REASON_DEBUG == hdd_ipa->stat_req_reason)) {
 		struct ol_txrx_ipa_resources *res = &hdd_ipa->ipa_resource;
 		/* STATs from host */
@@ -1572,8 +1574,8 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			uc_fw_stat->rx_num_pkts_indicated);
 		qdf_mutex_release(&hdd_ipa->ipa_lock);
 	} else {
-		HDD_IPA_LOG(LOGE, "INVALID REASON %d",
-			    hdd_ipa->stat_req_reason);
+		HDD_IPA_LOG(LOGE, "Invalid message: op_code=%d, reason=%d",
+			    msg->op_code, hdd_ipa->stat_req_reason);
 	}
 	qdf_mem_free(op_msg);
 }
@@ -1591,9 +1593,21 @@ static void hdd_ipa_uc_offload_enable_disable(hdd_adapter_t *adapter,
 			uint32_t offload_type, uint32_t enable)
 {
 	struct sir_ipa_offload_enable_disable ipa_offload_enable_disable;
+	struct hdd_ipa_iface_context *iface_context = NULL;
 
 	if (!adapter)
 		return;
+
+	iface_context = adapter->ipa_context;
+
+	if (!iface_context || (enable == iface_context->offload_enabled)) {
+		/* IPA offload status is already set as desired */
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
+			    "offload_type=%d, vdev_id=%d, enable=%d",
+			    offload_type, adapter->sessionId, enable);
+		WARN_ON(1);
+		return;
+	}
 
 	/* Lower layer may send multiple START_BSS_EVENT in DFS mode or during
 	 * channel change indication. Since these indications are sent by lower
@@ -1610,7 +1624,7 @@ static void hdd_ipa_uc_offload_enable_disable(hdd_adapter_t *adapter,
 	ipa_offload_enable_disable.enable = enable;
 
 	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
-		"%s: offload_type=%d, vdev_id=%d, enable=%d", __func__,
+		"offload_type=%d, vdev_id=%d, enable=%d",
 		ipa_offload_enable_disable.offload_type,
 		ipa_offload_enable_disable.vdev_id,
 		ipa_offload_enable_disable.enable);
@@ -1624,6 +1638,10 @@ static void hdd_ipa_uc_offload_enable_disable(hdd_adapter_t *adapter,
 			ipa_offload_enable_disable.offload_type,
 			ipa_offload_enable_disable.vdev_id,
 			ipa_offload_enable_disable.enable);
+	} else {
+		/* Update the IPA offload status */
+		iface_context->offload_enabled =
+			ipa_offload_enable_disable.enable;
 	}
 }
 
@@ -2469,13 +2487,13 @@ static void hdd_ipa_send_skb_to_network(qdf_nbuf_t skb,
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO_LOW, "Invalid adapter: 0x%p",
 			    adapter);
 		HDD_IPA_INCREASE_INTERNAL_DROP_COUNT(hdd_ipa);
-		qdf_nbuf_free(skb);
+		kfree_skb(skb);
 		return;
 	}
 
 	if (cds_is_driver_unloading()) {
 		HDD_IPA_INCREASE_INTERNAL_DROP_COUNT(hdd_ipa);
-		qdf_nbuf_free(skb);
+		kfree_skb(skb);
 		return;
 	}
 
@@ -2497,6 +2515,57 @@ static void hdd_ipa_send_skb_to_network(qdf_nbuf_t skb,
 }
 
 /**
+ * hdd_ipa_forward() - handle packet forwarding to wlan tx
+ * @hdd_ipa: pointer to hdd ipa context
+ * @adapter: network adapter
+ * @skb: data pointer
+ *
+ * if exception packet has set forward bit, copied new packet should be
+ * forwarded to wlan tx. if wlan subsystem is in suspend state, packet should
+ * put into pm queue and tx procedure will be differed
+ *
+ * Return: None
+ */
+static void hdd_ipa_forward(struct hdd_ipa_priv *hdd_ipa,
+			    hdd_adapter_t *adapter, qdf_nbuf_t skb)
+{
+	qdf_nbuf_t copy;
+	struct hdd_ipa_pm_tx_cb *pm_tx_cb;
+
+	copy = qdf_nbuf_copy(skb);
+	if (!copy) {
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "copy packet alloc fail");
+		return;
+	}
+
+	qdf_spin_lock_bh(&hdd_ipa->pm_lock);
+	/* WLAN subsystem is in suspend, put int queue */
+	if (hdd_ipa->suspended) {
+		qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
+			"TX in SUSPEND PUT QUEUE");
+		qdf_mem_set(copy->cb, sizeof(copy->cb), 0);
+		pm_tx_cb = (struct hdd_ipa_pm_tx_cb *)copy->cb;
+		pm_tx_cb->exception = true;
+		pm_tx_cb->adapter = adapter;
+		qdf_spin_lock_bh(&hdd_ipa->pm_lock);
+		qdf_nbuf_queue_add(&hdd_ipa->pm_queue_head, copy);
+		qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
+		hdd_ipa->stats.num_tx_queued++;
+	} else {
+		/* Resume, put packet into WLAN TX */
+		qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
+		if (hdd_softap_hard_start_xmit(copy, adapter->dev)) {
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
+			    "packet tx fail");
+		} else {
+			hdd_ipa->stats.num_tx_bcmc++;
+			hdd_ipa->ipa_tx_forward++;
+		}
+	}
+}
+
+/**
  * hdd_ipa_w2i_cb() - WLAN to IPA callback handler
  * @priv: pointer to private data registered with IPA (we register a
  *	pointer to the global IPA context)
@@ -2505,7 +2574,7 @@ static void hdd_ipa_send_skb_to_network(qdf_nbuf_t skb,
  *
  * Return: None
  */
-static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
+static void __hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 			   unsigned long data)
 {
 	struct hdd_ipa_priv *hdd_ipa = NULL;
@@ -2514,15 +2583,28 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 	uint8_t iface_id;
 	uint8_t session_id;
 	struct hdd_ipa_iface_context *iface_context;
-	qdf_nbuf_t copy;
 	uint8_t fw_desc;
-	int ret;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	hdd_ipa = (struct hdd_ipa_priv *)priv;
 
 	switch (evt) {
 	case IPA_RECEIVE:
 		skb = (qdf_nbuf_t) data;
+
+		/*
+		 * When SSR is going on or driver is unloading,
+		 * just drop the packets.
+		 */
+		status = wlan_hdd_validate_context(hdd_ipa->hdd_ctx);
+		if (0 != status) {
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
+					"Invalid context: drop packet");
+			HDD_IPA_INCREASE_INTERNAL_DROP_COUNT(hdd_ipa);
+			kfree_skb(skb);
+			return;
+		}
+
 		if (hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx)) {
 			session_id = (uint8_t)skb->cb[0];
 			iface_id = vdev_to_iface[session_id];
@@ -2540,7 +2622,7 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 			HDD_IPA_DBG_DUMP(QDF_TRACE_LEVEL_INFO_HIGH,
 				"w2i -- skb", skb->data, 8);
 			HDD_IPA_INCREASE_INTERNAL_DROP_COUNT(hdd_ipa);
-			qdf_nbuf_free(skb);
+			kfree_skb(skb);
 			return;
 		}
 
@@ -2573,37 +2655,19 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 			 * only when DISCARD bit is not set.
 			 */
 			fw_desc = (uint8_t)skb->cb[1];
-
 			if (fw_desc & HDD_IPA_FW_RX_DESC_FORWARD_M) {
 				HDD_IPA_DP_LOG(
 					QDF_TRACE_LEVEL_DEBUG,
 					"Forward packet to Tx (fw_desc=%d)",
 					fw_desc);
-				copy = qdf_nbuf_copy(skb);
-				if (copy) {
-					hdd_ipa->ipa_tx_forward++;
-					ret = hdd_softap_hard_start_xmit(
-						(struct sk_buff *)copy,
-						adapter->dev);
-					if (ret) {
-						HDD_IPA_LOG(
-							QDF_TRACE_LEVEL_DEBUG,
-							"Forward packet tx fail");
-						hdd_ipa->stats.
-							num_tx_bcmc_err++;
-					} else {
-						hdd_ipa->stats.num_tx_bcmc++;
-					}
-				}
+				hdd_ipa_forward(hdd_ipa, adapter, skb);
 			}
-
 			if (fw_desc & HDD_IPA_FW_RX_DESC_DISCARD_M) {
 				HDD_IPA_INCREASE_INTERNAL_DROP_COUNT(hdd_ipa);
 				hdd_ipa->ipa_rx_discard++;
-				qdf_nbuf_free(skb);
+				kfree_skb(skb);
 				break;
 			}
-
 		} else {
 			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO_HIGH,
 				"Intra-BSS FWD is disabled-skip forward to Tx");
@@ -2617,6 +2681,23 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 			    "w2i cb wrong event: 0x%x", evt);
 		return;
 	}
+}
+
+/**
+ * hdd_ipa_w2i_cb() - SSR wrapper for __hdd_ipa_w2i_cb
+ * @priv: pointer to private data registered with IPA (we register a
+ *	pointer to the global IPA context)
+ * @evt: the IPA event which triggered the callback
+ * @data: data associated with the event
+ *
+ * Return: None
+ */
+static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
+			   unsigned long data)
+{
+	cds_ssr_protect(__func__);
+	__hdd_ipa_w2i_cb(priv, evt, data);
+	cds_ssr_unprotect(__func__);
 }
 
 /**
@@ -2724,7 +2805,27 @@ static void hdd_ipa_send_pkt_to_tl(
 }
 
 /**
- * hdd_ipa_pm_send_pkt_to_tl() - Send queued packets to TL
+ * hdd_ipa_is_present() - get IPA hw status
+ * @hdd_ctx: pointer to hdd context
+ *
+ * ipa_uc_reg_rdyCB is not directly designed to check
+ * ipa hw status. This is an undocumented function which
+ * has confirmed with IPA team.
+ *
+ * Return: true - ipa hw present
+ *         false - ipa hw not present
+ */
+bool hdd_ipa_is_present(hdd_context_t *hdd_ctx)
+{
+	/* Check if ipa hw is enabled */
+	if (HDD_IPA_CHECK_HW() != -EPERM)
+		return true;
+	else
+		return false;
+}
+
+/**
+ * hdd_ipa_pm_flush() - flush queued packets
  * @work: pointer to the scheduled work
  *
  * Called during PM resume to send packets to TL which were queued
@@ -2732,7 +2833,7 @@ static void hdd_ipa_send_pkt_to_tl(
  *
  * Return: None
  */
-static void hdd_ipa_pm_send_pkt_to_tl(struct work_struct *work)
+static void hdd_ipa_pm_flush(struct work_struct *work)
 {
 	struct hdd_ipa_priv *hdd_ipa = container_of(work,
 						    struct hdd_ipa_priv,
@@ -2741,23 +2842,28 @@ static void hdd_ipa_pm_send_pkt_to_tl(struct work_struct *work)
 	qdf_nbuf_t skb;
 	uint32_t dequeued = 0;
 
+	qdf_wake_lock_acquire(&hdd_ipa->wake_lock,
+			      WIFI_POWER_EVENT_WAKELOCK_IPA);
 	qdf_spin_lock_bh(&hdd_ipa->pm_lock);
-
 	while (((skb = qdf_nbuf_queue_remove(&hdd_ipa->pm_queue_head))
 								!= NULL)) {
 		qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
 
 		pm_tx_cb = (struct hdd_ipa_pm_tx_cb *)skb->cb;
-
 		dequeued++;
-
-		hdd_ipa_send_pkt_to_tl(pm_tx_cb->iface_context,
+		if (pm_tx_cb->exception) {
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
+				"FLUSH EXCEPTION");
+			hdd_softap_hard_start_xmit(skb, pm_tx_cb->adapter->dev);
+		} else {
+			hdd_ipa_send_pkt_to_tl(pm_tx_cb->iface_context,
 				       pm_tx_cb->ipa_tx_desc);
-
+		}
 		qdf_spin_lock_bh(&hdd_ipa->pm_lock);
 	}
-
 	qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
+	qdf_wake_lock_release(&hdd_ipa->wake_lock,
+			      WIFI_POWER_EVENT_WAKELOCK_IPA);
 
 	hdd_ipa->stats.num_tx_dequeued += dequeued;
 	if (dequeued > hdd_ipa->stats.num_max_pm_queue)
@@ -3455,6 +3561,7 @@ static void hdd_ipa_msg_free_fn(void *buff, uint32_t len, uint32_t type)
 	qdf_mem_free(buff);
 }
 
+#ifndef QCA_LL_TX_FLOW_CONTROL_V2
 /**
  * hdd_ipa_send_mcc_scc_msg() - send IPA WLAN_SWITCH_TO_MCC/SCC message
  * @mcc_mode: 0=MCC/1=SCC
@@ -3513,6 +3620,7 @@ int hdd_ipa_send_mcc_scc_msg(hdd_context_t *pHddCtx, bool mcc_mode)
 
 	return ret;
 }
+#endif
 
 /**
  * hdd_ipa_wlan_event_to_str() - convert IPA WLAN event to string
@@ -3995,7 +4103,12 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 {
 	enum ipa_wlan_event type = hdd_to_ipa_wlan_event(hdd_event_type);
 
-	return __hdd_ipa_wlan_evt(adapter, sta_id, type, mac_addr);
+	/* Data path offload only support for STA and SAP mode */
+	if ((QDF_STA_MODE == adapter->device_mode) ||
+	    (QDF_SAP_MODE == adapter->device_mode))
+		return __hdd_ipa_wlan_evt(adapter, sta_id, type, mac_addr);
+
+	return 0;
 }
 
 /**
@@ -4107,10 +4220,11 @@ QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
 			hdd_ipa_adapter_2_client[i].prod_client;
 		iface_context->iface_id = i;
 		iface_context->adapter = NULL;
+		iface_context->offload_enabled = 0;
 		qdf_spinlock_create(&iface_context->interface_lock);
 	}
 
-	INIT_WORK(&hdd_ipa->pm_work, hdd_ipa_pm_send_pkt_to_tl);
+	INIT_WORK(&hdd_ipa->pm_work, hdd_ipa_pm_flush);
 	qdf_spinlock_create(&hdd_ipa->pm_lock);
 	qdf_nbuf_queue_init(&hdd_ipa->pm_queue_head);
 

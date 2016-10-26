@@ -53,7 +53,7 @@
 #include <a_debug.h>
 #define FWLOG_DEBUG   ATH_DEBUG_MAKE_MODULE_MASK(0)
 
-#if defined(DEBUG)
+#ifdef WLAN_DEBUG
 
 static int get_version;
 static int gprint_limiter;

@@ -113,7 +113,8 @@ static void rrm_ll_purge_neighbor_cache(tpAniSirGlobal pMac,
  *
  * Return: void
  */
-void rrm_indicate_neighbor_report_result(tpAniSirGlobal pMac, QDF_STATUS qdf_status)
+static void rrm_indicate_neighbor_report_result(tpAniSirGlobal pMac,
+						QDF_STATUS qdf_status)
 {
 	NeighborReportRspCallback callback;
 	void *callbackContext;
@@ -646,7 +647,7 @@ static QDF_STATUS sme_rrm_scan_request_callback(tHalHandle halHandle,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
+static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 {
 	/* Issue scan request. */
 	tCsrScanRequest scan_req;
@@ -1078,8 +1079,8 @@ check_11r_assoc:
  *
  * Return: void.
  */
-void rrm_store_neighbor_rpt_by_roam_score(tpAniSirGlobal pMac,
-					  tpRrmNeighborReportDesc pNeighborReportDesc)
+static void rrm_store_neighbor_rpt_by_roam_score(tpAniSirGlobal pMac,
+				tpRrmNeighborReportDesc pNeighborReportDesc)
 {
 	tpRrmSMEContext pSmeRrmContext = &pMac->rrm.rrmSmeContext;
 	tListElem *pEntry;
@@ -1145,7 +1146,8 @@ void rrm_store_neighbor_rpt_by_roam_score(tpAniSirGlobal pMac,
  *
  * Return: QDF_STATUS_SUCCESS - Validation is successful
  */
-QDF_STATUS sme_rrm_process_neighbor_report(tpAniSirGlobal pMac, void *pMsgBuf)
+static QDF_STATUS sme_rrm_process_neighbor_report(tpAniSirGlobal pMac,
+						  void *pMsgBuf)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpSirNeighborReportInd pNeighborRpt = (tpSirNeighborReportInd) pMsgBuf;
@@ -1281,7 +1283,7 @@ QDF_STATUS sme_rrm_msg_processor(tpAniSirGlobal pMac, uint16_t msg_type,
  *
  * Return: NULL
  */
-void rrm_iter_meas_timer_handle(void *userData)
+static void rrm_iter_meas_timer_handle(void *userData)
 {
 	tpAniSirGlobal pMac = (tpAniSirGlobal) userData;
 	sms_log(pMac, LOGE,
@@ -1298,7 +1300,7 @@ void rrm_iter_meas_timer_handle(void *userData)
  *
  * Return: NULL
  */
-void rrm_neighbor_rsp_timeout_handler(void *userData)
+static void rrm_neighbor_rsp_timeout_handler(void *userData)
 {
 	tpAniSirGlobal pMac = (tpAniSirGlobal) userData;
 	sms_log(pMac, LOGE, "Neighbor Response timed out ");

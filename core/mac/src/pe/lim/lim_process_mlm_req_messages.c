@@ -714,7 +714,7 @@ end:
  *
  * Return: none
  */
-void lim_post_join_set_link_state_callback(tpAniSirGlobal mac,
+static void lim_post_join_set_link_state_callback(tpAniSirGlobal mac,
 		void *callback_arg, bool status)
 {
 	uint8_t chan_num, sec_chan_offset;

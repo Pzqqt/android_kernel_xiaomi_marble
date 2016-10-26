@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "pld_common.h"
+#include "pld_usb.h"
 #include "pld_internal.h"
 
 #include <linux/atomic.h>
@@ -30,6 +30,7 @@
 #define VENDOR_ATHR             0x0CF3
 static struct usb_device_id pld_usb_id_table[] = {
 	{USB_DEVICE_AND_INTERFACE_INFO(VENDOR_ATHR, 0x9378, 0xFF, 0xFF, 0xFF)},
+	{USB_DEVICE_AND_INTERFACE_INFO(VENDOR_ATHR, 0x9379, 0xFF, 0xFF, 0xFF)},
 	{}			/* Terminating entry */
 };
 
@@ -208,4 +209,3 @@ void pld_usb_unregister_driver(void)
 	usb_deregister(&pld_usb_ops);
 	pr_info("%s usb_deregister done!\n", __func__);
 }
-

@@ -73,10 +73,6 @@ extern QDF_STATUS pmc_prepare_command(tpAniSirGlobal pMac, uint32_t sessionId,
 				      uint32_t size, tSmeCmd **ppCmd);
 extern void pmc_release_command(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 extern void qos_release_command(tpAniSirGlobal pMac, tSmeCmd *pCommand);
-extern QDF_STATUS p2p_process_remain_on_channel_cmd(tpAniSirGlobal pMac,
-						    tSmeCmd *p2pRemainonChn);
-extern QDF_STATUS sme_remain_on_chn_rsp(tpAniSirGlobal pMac, uint8_t *pMsg);
-extern QDF_STATUS sme_remain_on_chn_ready(tHalHandle hHal, uint8_t *pMsg);
 
 static QDF_STATUS init_sme_cmd_list(tpAniSirGlobal pMac);
 static void sme_abort_command(tpAniSirGlobal pMac, tSmeCmd *pCommand,
@@ -508,7 +504,7 @@ done:
 	return status;
 }
 
-void dump_csr_command_info(tpAniSirGlobal pMac, tSmeCmd *pCmd)
+static void dump_csr_command_info(tpAniSirGlobal pMac, tSmeCmd *pCmd)
 {
 	switch (pCmd->command) {
 	case eSmeCommandScan:
@@ -702,6 +698,7 @@ static void sme_abort_command(tpAniSirGlobal pMac, tSmeCmd *pCommand,
 
 }
 
+static
 tListElem *csr_get_cmd_to_process(tpAniSirGlobal pMac, tDblLinkList *pList,
 				  uint8_t sessionId, bool fInterlocked)
 {
@@ -726,7 +723,7 @@ tListElem *csr_get_cmd_to_process(tpAniSirGlobal pMac, tDblLinkList *pList,
 	return NULL;
 }
 
-bool sme_process_scan_queue(tpAniSirGlobal pMac)
+static bool sme_process_scan_queue(tpAniSirGlobal pMac)
 {
 	tListElem *pEntry;
 	tSmeCmd *pCommand;
@@ -823,7 +820,7 @@ end:
  * Return: true indicates that caller function can proceed to next cmd
  *         false otherwise.
  */
-bool sme_process_command(tpAniSirGlobal pMac)
+static bool sme_process_command(tpAniSirGlobal pMac)
 {
 	bool fContinue = false;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -1082,7 +1079,7 @@ bool sme_command_pending(tpAniSirGlobal pMac)
  *
  * Return: returns session id
  */
-uint32_t sme_get_sessionid_from_activelist(tpAniSirGlobal mac)
+static uint32_t sme_get_sessionid_from_activelist(tpAniSirGlobal mac)
 {
 	tListElem *entry;
 	tSmeCmd *command;
@@ -1547,7 +1544,7 @@ QDF_STATUS sme_update_roam_params(tHalHandle hal,
 }
 
 #ifdef WLAN_FEATURE_GTK_OFFLOAD
-void sme_process_get_gtk_info_rsp(tHalHandle hHal,
+static void sme_process_get_gtk_info_rsp(tHalHandle hHal,
 				  tpSirGtkOffloadGetInfoRspParams
 				  pGtkOffloadGetInfoRsp)
 {
@@ -1585,8 +1582,8 @@ void sme_process_get_gtk_info_rsp(tHalHandle hHal,
    \sa
 
    --------------------------------------------------------------------------*/
-void sme_process_ready_to_suspend(tHalHandle hHal,
-				  tpSirReadyToSuspendInd pReadyToSuspend)
+static void sme_process_ready_to_suspend(tHalHandle hHal,
+					 tpSirReadyToSuspendInd pReadyToSuspend)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
@@ -1616,8 +1613,8 @@ void sme_process_ready_to_suspend(tHalHandle hHal,
  *
  * Return: None
  */
-void sme_process_ready_to_ext_wow(tHalHandle hHal,
-				   tpSirReadyToExtWoWInd pReadyToExtWoW)
+static void sme_process_ready_to_ext_wow(tHalHandle hHal,
+					 tpSirReadyToExtWoWInd pReadyToExtWoW)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
@@ -2385,9 +2382,10 @@ QDF_STATUS sme_set_ese_roam_scan_channel_list(tHalHandle hHal,
 
 #endif /* FEATURE_WLAN_ESE */
 
-QDF_STATUS sme_ibss_peer_info_response_handleer(tHalHandle hHal,
-						tpSirIbssGetPeerInfoRspParams
-						pIbssPeerInfoParams)
+static
+QDF_STATUS sme_ibss_peer_info_response_handler(tHalHandle hHal,
+					       tpSirIbssGetPeerInfoRspParams
+					       pIbssPeerInfoParams)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
@@ -2794,9 +2792,8 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 #endif /* FEATURE_WLAN_LPHB */
 	case eWNI_SME_IBSS_PEER_INFO_RSP:
 		if (pMsg->bodyptr) {
-			sme_ibss_peer_info_response_handleer(pMac,
-							     pMsg->
-							     bodyptr);
+			sme_ibss_peer_info_response_handler(pMac,
+							    pMsg->bodyptr);
 			qdf_mem_free(pMsg->bodyptr);
 		} else {
 			sms_log(pMac, LOGE, FL("Empty message for %d"),
@@ -7838,24 +7835,19 @@ sme_handle_generic_change_country_code(tpAniSirGlobal mac_ctx,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	v_REGDOMAIN_t reg_domain_id = 0;
-	bool is_11d_country = false;
 	bool supplicant_priority =
 		mac_ctx->roam.configParam.fSupplicantCountryCodeHasPriority;
 	tAniGenericChangeCountryCodeReq *msg = pMsgBuf;
 
 	sms_log(mac_ctx, LOG1, FL(" called"));
 
-	if (memcmp(msg->countryCode, mac_ctx->scan.countryCode11d,
-		   CDS_COUNTRY_CODE_LEN) == 0) {
-		is_11d_country = true;
-	}
 	/* Set the country code given by userspace when 11dOriginal is false
 	 * when 11doriginal is True,is_11d_country =0 and
 	 * fSupplicantCountryCodeHasPriority = 0, then revert the country code,
 	 * and return failure
 	 */
 	if (mac_ctx->roam.configParam.Is11dSupportEnabledOriginal == true
-	    && !is_11d_country && !supplicant_priority) {
+	    && !mac_ctx->is_11d_hint && !supplicant_priority) {
 		sms_log(mac_ctx, LOGW,
 			FL("Incorrect country req, nullify this"));
 
@@ -7879,37 +7871,14 @@ sme_handle_generic_change_country_code(tpAniSirGlobal mac_ctx,
 	}
 
 	/* if Supplicant country code has priority, disable 11d */
-	if (!is_11d_country && supplicant_priority)
+	if (supplicant_priority && !mac_ctx->is_11d_hint)
 		mac_ctx->roam.configParam.Is11dSupportEnabled = false;
+
+	qdf_mem_copy(mac_ctx->scan.countryCode11d, msg->countryCode,
+		     WNI_CFG_COUNTRY_CODE_LEN);
 	qdf_mem_copy(mac_ctx->scan.countryCodeCurrent, msg->countryCode,
 		     WNI_CFG_COUNTRY_CODE_LEN);
-	status = wma_set_reg_domain(mac_ctx, reg_domain_id);
-	if (false == is_11d_country) {
-		/* overwrite the defualt country code */
-		qdf_mem_copy(mac_ctx->scan.countryCodeDefault,
-			     mac_ctx->scan.countryCodeCurrent,
-			     WNI_CFG_COUNTRY_CODE_LEN);
-		/* set to default domain ID */
-		mac_ctx->scan.domainIdDefault = mac_ctx->scan.domainIdCurrent;
-	}
-	if (status != QDF_STATUS_SUCCESS) {
-		sms_log(mac_ctx, LOGE, FL("fail to set regId %d"),
-			reg_domain_id);
-		return status;
-	} else {
-		/* if 11d has priority, clear currentCountryBssid &
-		 * countryCode11d to get set again if we find AP with 11d info
-		 * during scan
-		 */
-		if (!supplicant_priority && (false == is_11d_country)) {
-			sms_log(mac_ctx, LOGW,
-				FL("Clearing currentCountryBssid, countryCode11d"));
-			qdf_mem_zero(&mac_ctx->scan.currentCountryBssid,
-				     sizeof(struct qdf_mac_addr));
-			qdf_mem_zero(mac_ctx->scan.countryCode11d,
-				     sizeof(mac_ctx->scan.countryCode11d));
-		}
-	}
+
 	/* get the channels based on new cc */
 	status = csr_get_channel_and_power_list(mac_ctx);
 
@@ -7929,6 +7898,8 @@ sme_handle_generic_change_country_code(tpAniSirGlobal mac_ctx,
 	 * Country IE
 	 */
 	mac_ctx->scan.curScanType = eSIR_ACTIVE_SCAN;
+	mac_ctx->is_11d_hint = false;
+
 	sme_disconnect_connected_sessions(mac_ctx);
 	sms_log(mac_ctx, LOG1, FL(" returned"));
 	return QDF_STATUS_SUCCESS;
@@ -11828,7 +11799,7 @@ void sme_get_recovery_stats(tHalHandle hHal)
  *
  * Return: None
  */
-void sme_save_active_cmd_stats(tHalHandle hHal)
+static void sme_save_active_cmd_stats(tHalHandle hHal)
 {
 	tSmeCmd *pTempCmd = NULL;
 	tListElem *pEntry;
@@ -13236,7 +13207,6 @@ QDF_STATUS sme_update_dsc_pto_up_mapping(tHalHandle hHal,
 			if ((pSession->QosMapSet.dscp_range[i][0] == 255)
 				&& (pSession->QosMapSet.dscp_range[i][1] ==
 							255)) {
-				dscpmapping[j] = 0;
 				QDF_TRACE(QDF_MODULE_ID_SME,
 					QDF_TRACE_LEVEL_ERROR,
 					FL("User Priority %d isn't used"), i);
@@ -13728,6 +13698,7 @@ QDF_STATUS sme_set_epno_list(tHalHandle hal,
 	sms_log(mac, LOG1, FL("enter"));
 	len = sizeof(*req_msg) +
 		(input->num_networks * sizeof(struct wifi_epno_network));
+
 	req_msg = qdf_mem_malloc(len);
 	if (!req_msg) {
 		sms_log(mac, LOGE, FL("qdf_mem_malloc failed"));
@@ -13738,17 +13709,28 @@ QDF_STATUS sme_set_epno_list(tHalHandle hal,
 	req_msg->num_networks = input->num_networks;
 	req_msg->request_id = input->request_id;
 	req_msg->session_id = input->session_id;
-	for (i = 0; i < req_msg->num_networks; i++) {
-		req_msg->networks[i].rssi_threshold =
-				input->networks[i].rssi_threshold;
-		req_msg->networks[i].flags = input->networks[i].flags;
-		req_msg->networks[i].auth_bit_field =
-				input->networks[i].auth_bit_field;
-		req_msg->networks[i].ssid.length =
-				input->networks[i].ssid.length;
-		qdf_mem_copy(req_msg->networks[i].ssid.ssId,
-				input->networks[i].ssid.ssId,
-				req_msg->networks[i].ssid.length);
+
+	/* Fill only when num_networks are non zero */
+	if (req_msg->num_networks) {
+		req_msg->min_5ghz_rssi = input->min_5ghz_rssi;
+		req_msg->min_24ghz_rssi = input->min_24ghz_rssi;
+		req_msg->initial_score_max = input->initial_score_max;
+		req_msg->same_network_bonus = input->same_network_bonus;
+		req_msg->secure_bonus = input->secure_bonus;
+		req_msg->band_5ghz_bonus = input->band_5ghz_bonus;
+		req_msg->current_connection_bonus =
+			input->current_connection_bonus;
+
+		for (i = 0; i < req_msg->num_networks; i++) {
+			req_msg->networks[i].flags = input->networks[i].flags;
+			req_msg->networks[i].auth_bit_field =
+					input->networks[i].auth_bit_field;
+			req_msg->networks[i].ssid.length =
+					input->networks[i].ssid.length;
+			qdf_mem_copy(req_msg->networks[i].ssid.ssId,
+					input->networks[i].ssid.ssId,
+					req_msg->networks[i].ssid.length);
+		}
 	}
 
 	status = sme_acquire_global_lock(&mac->sme);
@@ -14090,13 +14072,6 @@ QDF_STATUS sme_ll_stats_get_req(tHalHandle hHal, tSirLLStatsGetReq *pgetStatsReq
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	cds_msg_t cds_message;
 	tSirLLStatsGetReq *get_stats_req;
-
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-		  "reqId = %u", pgetStatsReq->reqId);
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-		  "staId = %u", pgetStatsReq->staId);
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-		  "Stats Type = %u", pgetStatsReq->paramIdMask);
 
 	get_stats_req = qdf_mem_malloc(sizeof(*get_stats_req));
 
@@ -16827,7 +16802,6 @@ QDF_STATUS sme_encrypt_decrypt_msg_deregister_callback(tHalHandle h_hal)
 
 QDF_STATUS sme_set_cts2self_for_p2p_go(tHalHandle hal_handle)
 {
-	cds_msg_t message;
 	void *wma_handle;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
@@ -16836,10 +16810,6 @@ QDF_STATUS sme_set_cts2self_for_p2p_go(tHalHandle hal_handle)
 				"wma_handle is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	message.bodyptr = NULL;
-	message.type = WMA_SET_CTS2SELF_FOR_STA;
-
 	if (QDF_STATUS_SUCCESS !=
 		wma_set_cts2self_for_p2p_go(wma_handle, true)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,

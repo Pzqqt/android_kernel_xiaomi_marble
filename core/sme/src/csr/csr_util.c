@@ -354,7 +354,7 @@ bool csr_is_conn_state_wds(tpAniSirGlobal pMac, uint32_t sessionId)
 	       csr_is_conn_state_disconnected_wds(pMac, sessionId);
 }
 
-bool csr_is_conn_state_ap(tpAniSirGlobal pMac, uint32_t sessionId)
+static bool csr_is_conn_state_ap(tpAniSirGlobal pMac, uint32_t sessionId)
 {
 	tCsrRoamSession *pSession;
 	pSession = CSR_GET_SESSION(pMac, sessionId);
@@ -494,8 +494,10 @@ uint8_t csr_get_concurrent_operation_channel(tpAniSirGlobal mac_ctx)
  *
  * Return: none
  */
-void csr_get_ch_from_ht_profile(tpAniSirGlobal pMac, tCsrRoamHTProfile *htp,
-				uint16_t och, uint16_t *cfreq, uint16_t *hbw)
+static void csr_get_ch_from_ht_profile(tpAniSirGlobal pMac,
+				       tCsrRoamHTProfile *htp,
+				       uint16_t och, uint16_t *cfreq,
+				       uint16_t *hbw)
 {
 	uint16_t cch, ch_bond;
 
@@ -1089,7 +1091,7 @@ bool csr_is_ibss_bss_desc(tSirBssDescription *pSirBssDesc)
 	return (bool) dot11Caps.ibss;
 }
 
-bool csr_is_qo_s_bss_desc(tSirBssDescription *pSirBssDesc)
+static bool csr_is_qos_bss_desc(tSirBssDescription *pSirBssDesc)
 {
 	tSirMacCapabilityInfo dot11Caps = csr_get_bss_capabilities(pSirBssDesc);
 
@@ -1180,8 +1182,9 @@ bool csr_is_ssid_equal(tHalHandle hHal, tSirBssDescription *pSirBssDesc1,
 }
 
 /* pIes can be passed in as NULL if the caller doesn't have one prepared */
-bool csr_is_bss_description_wme(tHalHandle hHal, tSirBssDescription *pSirBssDesc,
-				tDot11fBeaconIEs *pIes)
+static bool csr_is_bss_description_wme(tHalHandle hHal,
+				       tSirBssDescription *pSirBssDesc,
+				       tDot11fBeaconIEs *pIes)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	/* Assume that WME is found... */
@@ -1234,7 +1237,7 @@ eCsrMediaAccessType csr_get_qo_s_from_bss_desc(tHalHandle hHal,
 			qosType = eCSR_MEDIUM_ACCESS_WMM_eDCF_DSCP;
 		} else {
 			/* if the QoS bit is on, then the AP is advertising 11E QoS... */
-			if (csr_is_qo_s_bss_desc(pSirBssDesc)) {
+			if (csr_is_qos_bss_desc(pSirBssDesc)) {
 				qosType = eCSR_MEDIUM_ACCESS_11e_eDCF;
 			} else {
 				qosType = eCSR_MEDIUM_ACCESS_DCF;
@@ -1357,7 +1360,8 @@ uint32_t csr_get_rts_thresh(tHalHandle hHal)
 	return pMac->roam.configParam.RTSThreshold;
 }
 
-eCsrPhyMode csr_translate_to_phy_mode_from_bss_desc(tSirBssDescription *pSirBssDesc)
+static eCsrPhyMode csr_translate_to_phy_mode_from_bss_desc(
+						tSirBssDescription *pSirBssDesc)
 {
 	eCsrPhyMode phyMode;
 
@@ -1489,8 +1493,10 @@ QDF_STATUS csr_get_phy_mode_from_bss(tpAniSirGlobal pMac,
  *
  * Return: true or false
  */
-bool csr_get_phy_mode_in_use(eCsrPhyMode phyModeIn, eCsrPhyMode bssPhyMode,
-			     bool f5GhzBand, eCsrCfgDot11Mode *pCfgDot11ModeToUse)
+static bool csr_get_phy_mode_in_use(eCsrPhyMode phyModeIn,
+				    eCsrPhyMode bssPhyMode,
+				    bool f5GhzBand,
+				    eCsrCfgDot11Mode *pCfgDot11ModeToUse)
 {
 	bool fMatch = false;
 	eCsrCfgDot11Mode cfgDot11Mode;
@@ -1882,7 +1888,7 @@ bool csr_is_profile_rsn(tCsrRoamProfile *pProfile)
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS csr_update_mcc_p2p_beacon_interval(tpAniSirGlobal mac_ctx)
+static QDF_STATUS csr_update_mcc_p2p_beacon_interval(tpAniSirGlobal mac_ctx)
 {
 	uint32_t session_id = 0;
 	tCsrRoamSession *roam_session;
@@ -1926,8 +1932,9 @@ QDF_STATUS csr_update_mcc_p2p_beacon_interval(tpAniSirGlobal mac_ctx)
 	return QDF_STATUS_E_FAILURE;
 }
 
-uint16_t csr_calculate_mcc_beacon_interval(tpAniSirGlobal pMac, uint16_t sta_bi,
-					   uint16_t go_gbi)
+static uint16_t csr_calculate_mcc_beacon_interval(tpAniSirGlobal pMac,
+						  uint16_t sta_bi,
+						  uint16_t go_gbi)
 {
 	uint8_t num_beacons = 0;
 	uint8_t is_multiple = 0;
@@ -2560,7 +2567,7 @@ static bool csr_is_auth_wpa_psk(tpAniSirGlobal pMac,
 		(pMac, AllSuites, cAllSuites, csr_wpa_oui[02], Oui);
 }
 
-uint8_t csr_get_oui_index_from_cipher(eCsrEncryptionType enType)
+static uint8_t csr_get_oui_index_from_cipher(eCsrEncryptionType enType)
 {
 	uint8_t OUIIndex;
 
@@ -2612,14 +2619,14 @@ uint8_t csr_get_oui_index_from_cipher(eCsrEncryptionType enType)
  *
  * Return: bool
  */
-bool csr_get_rsn_information(tHalHandle hal, tCsrAuthList *auth_type,
-			     eCsrEncryptionType encr_type,
-			     tCsrEncryptionList *mc_encryption,
-			     tDot11fIERSN *rsn_ie, uint8_t *ucast_cipher,
-			     uint8_t *mcast_cipher, uint8_t *auth_suite,
-			     tCsrRSNCapabilities *capabilities,
-			     eCsrAuthType *negotiated_authtype,
-			     eCsrEncryptionType *negotiated_mccipher)
+static bool csr_get_rsn_information(tHalHandle hal, tCsrAuthList *auth_type,
+				    eCsrEncryptionType encr_type,
+				    tCsrEncryptionList *mc_encryption,
+				    tDot11fIERSN *rsn_ie, uint8_t *ucast_cipher,
+				    uint8_t *mcast_cipher, uint8_t *auth_suite,
+				    tCsrRSNCapabilities *capabilities,
+				    eCsrAuthType *negotiated_authtype,
+				    eCsrEncryptionType *negotiated_mccipher)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	bool acceptable_cipher = false;
@@ -2860,14 +2867,14 @@ csr_is_pmf_capabilities_in_rsn_match(tHalHandle hHal,
 }
 #endif
 
-bool csr_is_rsn_match(tHalHandle hHal, tCsrAuthList *pAuthType,
-		      eCsrEncryptionType enType,
-		      tCsrEncryptionList *pEnMcType,
-		      bool *pMFPEnabled, uint8_t *pMFPRequired,
-		      uint8_t *pMFPCapable,
-		      tDot11fBeaconIEs *pIes,
-		      eCsrAuthType *pNegotiatedAuthType,
-		      eCsrEncryptionType *pNegotiatedMCCipher)
+static bool csr_is_rsn_match(tHalHandle hHal, tCsrAuthList *pAuthType,
+			     eCsrEncryptionType enType,
+			     tCsrEncryptionList *pEnMcType,
+			     bool *pMFPEnabled, uint8_t *pMFPRequired,
+			     uint8_t *pMFPCapable,
+			     tDot11fBeaconIEs *pIes,
+			     eCsrAuthType *pNegotiatedAuthType,
+			     eCsrEncryptionType *pNegotiatedMCCipher)
 {
 	bool fRSNMatch = false;
 
@@ -2888,8 +2895,8 @@ bool csr_is_rsn_match(tHalHandle hHal, tCsrAuthList *pAuthType,
 	return fRSNMatch;
 }
 
-bool csr_lookup_pmkid(tpAniSirGlobal pMac, uint32_t sessionId, uint8_t *pBSSId,
-		      uint8_t *pPMKId)
+static bool csr_lookup_pmkid(tpAniSirGlobal pMac, uint32_t sessionId,
+			     uint8_t *pBSSId, uint8_t *pPMKId)
 {
 	bool fRC = false, fMatchFound = false;
 	uint32_t Index;
@@ -3099,13 +3106,14 @@ uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
  *
  * Return: bool
  */
-bool csr_get_wapi_information(tHalHandle hal, tCsrAuthList *auth_type,
-			      eCsrEncryptionType encr_type,
-			      tCsrEncryptionList *mc_encryption,
-			      tDot11fIEWAPI *wapi_ie, uint8_t *ucast_cipher,
-			      uint8_t *mcast_cipher, uint8_t *auth_suite,
-			      eCsrAuthType *negotiated_authtype,
-			      eCsrEncryptionType *negotiated_mccipher)
+static bool csr_get_wapi_information(tHalHandle hal, tCsrAuthList *auth_type,
+				     eCsrEncryptionType encr_type,
+				     tCsrEncryptionList *mc_encryption,
+				     tDot11fIEWAPI *wapi_ie,
+				     uint8_t *ucast_cipher,
+				     uint8_t *mcast_cipher, uint8_t *auth_suite,
+				     eCsrAuthType *negotiated_authtype,
+				     eCsrEncryptionType *negotiated_mccipher)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	bool acceptable_cipher = false;
@@ -3215,10 +3223,12 @@ end:
 	return acceptable_cipher;
 }
 
-bool csr_is_wapi_match(tHalHandle hHal, tCsrAuthList *pAuthType,
-		       eCsrEncryptionType enType, tCsrEncryptionList *pEnMcType,
-		       tDot11fBeaconIEs *pIes, eCsrAuthType *pNegotiatedAuthType,
-		       eCsrEncryptionType *pNegotiatedMCCipher)
+static bool csr_is_wapi_match(tHalHandle hHal, tCsrAuthList *pAuthType,
+			      eCsrEncryptionType enType,
+			      tCsrEncryptionList *pEnMcType,
+			      tDot11fBeaconIEs *pIes,
+			      eCsrAuthType *pNegotiatedAuthType,
+			      eCsrEncryptionType *pNegotiatedMCCipher)
 {
 	bool fWapiMatch = false;
 
@@ -3226,13 +3236,14 @@ bool csr_is_wapi_match(tHalHandle hHal, tCsrAuthList *pAuthType,
 	fWapiMatch =
 		csr_get_wapi_information(hHal, pAuthType, enType, pEnMcType,
 					 &pIes->WAPI, NULL, NULL, NULL,
-					 pNegotiatedAuthType, pNegotiatedMCCipher);
+					 pNegotiatedAuthType,
+					 pNegotiatedMCCipher);
 
 	return fWapiMatch;
 }
 
-bool csr_lookup_bkid(tpAniSirGlobal pMac, uint32_t sessionId, uint8_t *pBSSId,
-		     uint8_t *pBKId)
+static bool csr_lookup_bkid(tpAniSirGlobal pMac, uint32_t sessionId,
+			    uint8_t *pBSSId, uint8_t *pBKId)
 {
 	bool fRC = false, fMatchFound = false;
 	uint32_t Index;
@@ -3391,12 +3402,13 @@ uint8_t csr_construct_wapi_ie(tpAniSirGlobal pMac, uint32_t sessionId,
  *
  * Return: bool
  */
-bool csr_get_wpa_cyphers(tpAniSirGlobal mac_ctx, tCsrAuthList *auth_type,
-		eCsrEncryptionType encr_type, tCsrEncryptionList *mc_encryption,
-		tDot11fIEWPA *wpa_ie, uint8_t *ucast_cipher,
-		uint8_t *mcast_cipher, uint8_t *auth_suite,
-		eCsrAuthType *negotiated_authtype,
-		eCsrEncryptionType *negotiated_mccipher)
+static bool csr_get_wpa_cyphers(tpAniSirGlobal mac_ctx, tCsrAuthList *auth_type,
+				eCsrEncryptionType encr_type,
+				tCsrEncryptionList *mc_encryption,
+				tDot11fIEWPA *wpa_ie, uint8_t *ucast_cipher,
+				uint8_t *mcast_cipher, uint8_t *auth_suite,
+				eCsrAuthType *negotiated_authtype,
+				eCsrEncryptionType *negotiated_mccipher)
 {
 	bool acceptable_cipher = false;
 	uint8_t c_ucast_cipher = 0;
@@ -3501,12 +3513,13 @@ end:
 	return acceptable_cipher;
 }
 
-bool csr_is_wpa_encryption_match(tpAniSirGlobal pMac, tCsrAuthList *pAuthType,
-				 eCsrEncryptionType enType,
-				 tCsrEncryptionList *pEnMcType,
-				 tDot11fBeaconIEs *pIes,
-				 eCsrAuthType *pNegotiatedAuthtype,
-				 eCsrEncryptionType *pNegotiatedMCCipher)
+static bool csr_is_wpa_encryption_match(tpAniSirGlobal pMac,
+					tCsrAuthList *pAuthType,
+					eCsrEncryptionType enType,
+					tCsrEncryptionList *pEnMcType,
+					tDot11fBeaconIEs *pIes,
+					eCsrAuthType *pNegotiatedAuthtype,
+					eCsrEncryptionType *pNegotiatedMCCipher)
 {
 	bool fWpaMatch = false;
 
@@ -3814,12 +3827,14 @@ tAniEdType csr_translate_encrypt_type_to_ed_type(eCsrEncryptionType EncryptType)
  *
  * Return: bool
  */
-bool csr_validate_wep(tpAniSirGlobal mac_ctx, eCsrEncryptionType uc_encry_type,
-		      tCsrAuthList *auth_list,
-		      tCsrEncryptionList *mc_encryption_list,
-		      eCsrAuthType *negotiated_authtype,
-		      eCsrEncryptionType *negotiated_mc_encry,
-		      tSirBssDescription *bss_descr, tDot11fBeaconIEs *ie_ptr)
+static bool csr_validate_wep(tpAniSirGlobal mac_ctx,
+			     eCsrEncryptionType uc_encry_type,
+			     tCsrAuthList *auth_list,
+			     tCsrEncryptionList *mc_encryption_list,
+			     eCsrAuthType *negotiated_authtype,
+			     eCsrEncryptionType *negotiated_mc_encry,
+			     tSirBssDescription *bss_descr,
+			     tDot11fBeaconIEs *ie_ptr)
 {
 	uint32_t idx;
 	bool match = false;
@@ -4302,8 +4317,8 @@ bool csr_is_bss_type_ibss(eCsrRoamBssType bssType)
 }
 
 
-bool csr_is_bss_type_caps_match(eCsrRoamBssType bssType,
-				tSirBssDescription *pSirBssDesc)
+static bool csr_is_bss_type_caps_match(eCsrRoamBssType bssType,
+				       tSirBssDescription *pSirBssDesc)
 {
 	bool fMatch = true;
 
@@ -4359,7 +4374,7 @@ static bool csr_is_specific_channel_match(tpAniSirGlobal pMac,
 	return fMatch;
 }
 
-bool csr_is_channel_band_match(tpAniSirGlobal pMac, uint8_t channelId,
+static bool csr_is_channel_band_match(tpAniSirGlobal pMac, uint8_t channelId,
 			       tSirBssDescription *pSirBssDesc)
 {
 	bool fMatch = true;
@@ -4772,10 +4787,10 @@ end:
 	return rc;
 }
 
-bool csr_match_connected_bss_security(tpAniSirGlobal pMac,
-				      tCsrRoamConnectedProfile *pProfile,
-				      tSirBssDescription *pBssDesc,
-				      tDot11fBeaconIEs *pIes)
+static bool csr_match_connected_bss_security(tpAniSirGlobal pMac,
+					     tCsrRoamConnectedProfile *pProfile,
+					     tSirBssDescription *pBssDesc,
+					     tDot11fBeaconIEs *pIes)
 {
 	tCsrEncryptionList ucEncryptionList, mcEncryptionList;
 	tCsrAuthList authList;
@@ -4961,7 +4976,7 @@ bool csr_rates_is_dot11_rate_supported(tHalHandle hHal, uint8_t rate)
 	return csr_is_aggregate_rate_supported(pMac, n);
 }
 
-uint16_t csr_rates_mac_prop_to_dot11(uint16_t Rate)
+static uint16_t csr_rates_mac_prop_to_dot11(uint16_t Rate)
 {
 	uint16_t ConvertedRate = Rate;
 

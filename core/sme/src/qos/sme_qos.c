@@ -2072,6 +2072,14 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 	flow_info = GET_BASE_ADDR(pEntry, sme_QosFlowInfoEntry, link);
 	ac = flow_info->ac_type;
 	sessionId = flow_info->sessionId;
+
+	if (!CSR_IS_SESSION_VALID(pMac, sessionId)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			"%s: %d: Session Id: %d is invalid",
+			__func__, __LINE__, sessionId);
+		return status;
+	}
+
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
 	pACInfo = &pSession->ac_info[ac];
 	/* need to vote off powersave for the duration of this request */
@@ -2925,9 +2933,10 @@ QDF_STATUS sme_qos_process_set_key_success_ind(tpAniSirGlobal pMac,
  *
  * Return: QDF_STATUS_SUCCESS - Release is successful.
  */
-QDF_STATUS sme_qos_ese_save_tspec_response(tpAniSirGlobal pMac, uint8_t sessionId,
-					   tDot11fIEWMMTSPEC *pTspec, uint8_t ac,
-					   uint8_t tspecIndex)
+static QDF_STATUS
+sme_qos_ese_save_tspec_response(tpAniSirGlobal pMac, uint8_t sessionId,
+				tDot11fIEWMMTSPEC *pTspec, uint8_t ac,
+				uint8_t tspecIndex)
 {
 	tpSirAddtsRsp pAddtsRsp =
 		&sme_qos_cb.sessionInfo[sessionId].ac_info[ac].addTsRsp[tspecIndex];
@@ -2969,6 +2978,7 @@ QDF_STATUS sme_qos_ese_save_tspec_response(tpAniSirGlobal pMac, uint8_t sessionI
  *
  * Return: QDF_STATUS_SUCCESS - Release is successful.
  */
+static
 QDF_STATUS sme_qos_ese_process_reassoc_tspec_rsp(tpAniSirGlobal pMac,
 						 uint8_t sessionId,
 						 void *pEvent_info)
@@ -3184,7 +3194,7 @@ uint8_t sme_qos_ese_retrieve_tspec_info(tpAniSirGlobal mac_ctx,
 
 #endif
 
-
+static
 QDF_STATUS sme_qos_create_tspec_ricie(tpAniSirGlobal pMac,
 				      sme_QosWmmTspecInfo *pTspec_Info,
 				      uint8_t *pRICBuffer, uint32_t *pRICLength,
@@ -3532,7 +3542,9 @@ QDF_STATUS sme_qos_ft_aggr_qos_req(tpAniSirGlobal mac_ctx, uint8_t session_id)
 	return status;
 }
 
-QDF_STATUS sme_qos_process_ftric_response(tpAniSirGlobal pMac, uint8_t sessionId,
+static
+QDF_STATUS sme_qos_process_ftric_response(tpAniSirGlobal pMac,
+					  uint8_t sessionId,
 					  tDot11fIERICDataDesc *pRicDataDesc,
 					  uint8_t ac, uint8_t tspecIndex)
 {
@@ -3805,6 +3817,7 @@ sme_qos_next_ric:
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
+static
 QDF_STATUS sme_qos_process_ft_reassoc_rsp_ev(tpAniSirGlobal mac_ctx,
 				uint8_t sessionid, void *event_info)
 {
@@ -4502,6 +4515,7 @@ QDF_STATUS sme_qos_process_reassoc_req_ev(tpAniSirGlobal pMac, uint8_t sessionId
  *
  * Return: QDF_STATUS
  */
+static
 QDF_STATUS sme_qos_handle_handoff_state(tpAniSirGlobal mac_ctx,
 		sme_QosSessionInfo *qos_session, sme_QosACInfo *ac_info,
 		sme_QosEdcaAcType ac, uint8_t sessionid)

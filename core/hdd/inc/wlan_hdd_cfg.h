@@ -1399,7 +1399,7 @@ typedef enum {
  *          switch DTIM1 when host resumes */
 #define CFG_ENABLE_DYNAMIC_DTIM_NAME            "gEnableDynamicDTIM"
 #define CFG_ENABLE_DYNAMIC_DTIM_MIN        (0)
-#define CFG_ENABLE_DYNAMIC_DTIM_MAX        (5)
+#define CFG_ENABLE_DYNAMIC_DTIM_MAX        (9)
 #define CFG_ENABLE_DYNAMIC_DTIM_DEFAULT    (0)
 
 /*
@@ -1844,7 +1844,7 @@ typedef enum {
 #define CFG_TDLS_EXTERNAL_CONTROL                   "gTDLSExternalControl"
 #define CFG_TDLS_EXTERNAL_CONTROL_MIN               (0)
 #define CFG_TDLS_EXTERNAL_CONTROL_MAX               (1)
-#define CFG_TDLS_EXTERNAL_CONTROL_DEFAULT           (0)
+#define CFG_TDLS_EXTERNAL_CONTROL_DEFAULT           (1)
 
 #define CFG_TDLS_OFF_CHANNEL_SUPPORT_ENABLE          "gEnableTDLSOffChannel"
 #define CFG_TDLS_OFF_CHANNEL_SUPPORT_ENABLE_MIN      (0)
@@ -3541,6 +3541,15 @@ enum dot11p_mode {
 #define CFG_INDOOR_CHANNEL_SUPPORT_DEFAULT  (0)
 
 /*
+ * Force softap to 11n, when gSapForce11NFor11AC is set to 1 from ini
+ * despite of hostapd.conf request for 11ac
+ */
+#define CFG_SAP_FORCE_11N_FOR_11AC_NAME    "gSapForce11NFor11AC"
+#define CFG_SAP_FORCE_11N_FOR_11AC_MIN     (0)
+#define CFG_SAP_FORCE_11N_FOR_11AC_MAX     (1)
+#define CFG_SAP_FORCE_11N_FOR_11AC_DEFAULT (0)
+
+/*
  * Enable filtering of replayed multicast packets
  * In a typical infrastructure setup, it is quite normal to receive
  * replayed multicast packets. These packets may cause more harm than
@@ -4226,6 +4235,8 @@ struct hdd_config {
 	uint32_t tgt_gtx_usr_cfg;
 	enum cfg_sub_20_channel_width enable_sub_20_channel_width;
 	bool indoor_channel_support;
+	/* parameter to force sap into 11n */
+	bool sap_force_11n_for_11ac;
 	bool multicast_replay_filter;
 	/* parameter for indicating sifs burst duration to fw */
 	uint8_t sifs_burst_duration;

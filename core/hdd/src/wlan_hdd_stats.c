@@ -1225,7 +1225,7 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 	hdd_station_ctx_t *hddstactx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	int status;
 
-	ENTER_DEV(dev);
+	/* ENTER() intentionally not used in a frequently invoked API */
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -1272,11 +1272,6 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 			    [QCA_WLAN_VENDOR_ATTR_LL_STATS_GET_CONFIG_REQ_MASK]);
 
 	LinkLayerStatsGetReq.staId = pAdapter->sessionId;
-
-	hdd_notice("LL_STATS_GET reqId = %d, staId = %d, paramIdMask = %d",
-		LinkLayerStatsGetReq.reqId,
-		LinkLayerStatsGetReq.staId,
-		LinkLayerStatsGetReq.paramIdMask);
 
 	context = &ll_stats_context;
 	spin_lock(&context->context_lock);
@@ -1688,8 +1683,12 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	if (0 != status)
 		return status;
 
-	wlan_hdd_get_rssi(pAdapter, &sinfo->signal);
-	wlan_hdd_get_snr(pAdapter, &snr);
+	wlan_hdd_get_station_stats(pAdapter);
+	sinfo->signal = pAdapter->hdd_stats.summary_stat.rssi;
+	snr = pAdapter->hdd_stats.summary_stat.snr;
+	hdd_info("snr: %d, rssi: %d",
+		pAdapter->hdd_stats.summary_stat.snr,
+		pAdapter->hdd_stats.summary_stat.rssi);
 	pHddStaCtx->conn_info.signal = sinfo->signal;
 	pHddStaCtx->conn_info.noise =
 		pHddStaCtx->conn_info.signal - snr;
@@ -1708,7 +1707,6 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	 */
 	hdd_lpass_notify_connect(pAdapter);
 
-	wlan_hdd_get_station_stats(pAdapter);
 	rate_flags = pAdapter->hdd_stats.ClassA_stat.tx_rate_flags;
 
 	/* convert to the UI units of 100kbps */
@@ -1869,8 +1867,15 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 					maxMCSIdx = 8;
 				else if (DATA_RATE_11AC_MAX_MCS_9 ==
 					   vhtMaxMcs) {
-					/* VHT20 is supporting 0~8 */
-					if (rate_flags & eHAL_TX_RATE_VHT20)
+					/*
+					 * IEEE_P802.11ac_2013.pdf page 325, 326
+					 * - MCS9 is valid for VHT20 when
+					 *   Nss = 3 or Nss = 6
+					 * - MCS9 is not valid for VHT20 when
+					 *   Nss = 1,2,4,5,7,8
+					 */
+					if ((rate_flags & eHAL_TX_RATE_VHT20) &&
+					     (nss != 3 && nss != 6))
 						maxMCSIdx = 8;
 					else
 						maxMCSIdx = 9;
@@ -1978,6 +1983,18 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 				maxSpeedMCS = 1;
 				maxMCSIdx =
 				  pAdapter->hdd_stats.ClassA_stat.mcs_index;
+				/*
+				 * IEEE_P802.11ac_2013.pdf page 325, 326
+				 * - MCS9 is valid for VHT20 when
+				 *   Nss = 3 or Nss = 6
+				 * - MCS9 is not valid for VHT20 when
+				 *   Nss = 1,2,4,5,7,8
+				 */
+				if ((rate_flags & eHAL_TX_RATE_VHT20) &&
+				    (maxMCSIdx > 8) &&
+				    (nss != 3 && nss != 6)) {
+					maxMCSIdx = 8;
+				}
 			}
 		}
 
@@ -2098,10 +2115,10 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 		pAdapter->hdd_stats.summary_stat.tx_frm_cnt[3];
 
 	sinfo->tx_retries =
-		pAdapter->hdd_stats.summary_stat.retry_cnt[0] +
-		pAdapter->hdd_stats.summary_stat.retry_cnt[1] +
-		pAdapter->hdd_stats.summary_stat.retry_cnt[2] +
-		pAdapter->hdd_stats.summary_stat.retry_cnt[3];
+		pAdapter->hdd_stats.summary_stat.multiple_retry_cnt[0] +
+		pAdapter->hdd_stats.summary_stat.multiple_retry_cnt[1] +
+		pAdapter->hdd_stats.summary_stat.multiple_retry_cnt[2] +
+		pAdapter->hdd_stats.summary_stat.multiple_retry_cnt[3];
 
 	sinfo->tx_failed =
 		pAdapter->hdd_stats.summary_stat.fail_cnt[0] +

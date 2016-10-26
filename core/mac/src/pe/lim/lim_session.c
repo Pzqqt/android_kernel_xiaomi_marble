@@ -58,7 +58,8 @@
 
    --------------------------------------------------------------------------*/
 
-void pe_init_beacon_params(tpAniSirGlobal pMac, tpPESession psessionEntry)
+static void pe_init_beacon_params(tpAniSirGlobal pMac,
+				  tpPESession psessionEntry)
 {
 	psessionEntry->beaconParams.beaconInterval = 0;
 	psessionEntry->beaconParams.fShortPreamble = 0;
@@ -100,7 +101,7 @@ void pe_init_beacon_params(tpAniSirGlobal pMac, tpPESession psessionEntry)
  *
  * Return: void
  */
-void pe_reset_protection_callback(void *ptr)
+static void pe_reset_protection_callback(void *ptr)
 {
 	tpPESession pe_session_entry = (tpPESession)ptr;
 	tpAniSirGlobal mac_ctx = (tpAniSirGlobal)pe_session_entry->mac_ctx;
@@ -352,7 +353,7 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 
 	QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 		FL("Create a new PE session(%d), BSSID: "MAC_ADDRESS_STR" Max No. of STA %d"),
-		session_ptr->peSessionId, MAC_ADDR_ARRAY(bssid), numSta);
+		*sessionId, MAC_ADDR_ARRAY(bssid), numSta);
 
 	if (eSIR_INFRA_AP_MODE == bssType || eSIR_IBSS_MODE == bssType) {
 		session_ptr->pSchProbeRspTemplate =

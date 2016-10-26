@@ -169,7 +169,7 @@ typedef struct {
 #define QCSAP_IOCTL_GET_INI_CFG         (SIOCIWFIRSTPRIV + 25)
 #define QCSAP_IOCTL_SET_INI_CFG         (SIOCIWFIRSTPRIV + 26)
 #define QCSAP_IOCTL_SET_TWO_INT_GET_NONE (SIOCIWFIRSTPRIV + 28)
-#ifdef DEBUG
+#ifdef WLAN_DEBUG
 #define QCSAP_IOCTL_SET_FW_CRASH_INJECT 1
 #endif
 #define QCSAP_IOCTL_DUMP_DP_TRACE_LEVEL 2
@@ -246,6 +246,7 @@ enum {
 	QCASAP_PARAM_LDPC,
 	QCASAP_PARAM_TX_STBC,
 	QCASAP_PARAM_RX_STBC,
+	QCSAP_PARAM_CHAN_WIDTH,
 };
 
 int iw_get_channel_list(struct net_device *dev,

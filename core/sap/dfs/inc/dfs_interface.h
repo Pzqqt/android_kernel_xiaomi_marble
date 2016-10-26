@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -68,7 +68,7 @@
  * EXPORT_SYMBOL(dfs_init_radar_filters);
  * EXPORT_SYMBOL(dfs_getchanstate);
  */
-
+uint16_t dfs_usenol(struct ieee80211com *ic);
 uint16_t dfs_isdfsregdomain(struct ieee80211com *ic);
 int dfs_attach(struct ieee80211com *ic);
 void dfs_detach(struct ieee80211com *ic);

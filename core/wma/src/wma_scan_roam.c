@@ -100,65 +100,34 @@ enum extscan_report_events_type {
 #endif
 
 /**
- * wma_set_scan_info() - set scan info in wma handle
- * @wma_handle: wma handle
- * @scan_id: scan id
- * @vdev_id: vdev id
+ * wma_dec_pending_scans() - Decrements the number of pending scans
+ * @wma:	The WMA handle to operate on
  *
  * Return: none
  */
-static inline void wma_set_scan_info(tp_wma_handle wma_handle,
-				     uint32_t scan_id,
-				     uint32_t vdev_id)
+static void wma_dec_pending_scans(tp_wma_handle wma)
 {
-	wma_handle->interfaces[vdev_id].scan_info.scan_id = scan_id;
+	int32_t scan_cnt = qdf_atomic_read(&wma->num_pending_scans);
+
+	if (scan_cnt <= 0) {
+		WMA_LOGE("Stopping pending scan, but no scans were pending!");
+		return;
+	}
+
+	qdf_atomic_dec(&wma->num_pending_scans);
+	WMA_LOGI("Ending pending scan: %d <- %d", scan_cnt, scan_cnt - 1);
 }
 
 /**
- * wma_reset_scan_info() - reset scan info from wma handle
- * @wma_handle: wma handle
- * @vdev_id: vdev id
+ * wma_inc_pending_scans() - Increments the number of pending scans
+ * @wma:	The WMA handle to operate on
  *
  * Return: none
  */
-static inline void wma_reset_scan_info(tp_wma_handle wma_handle,
-					   uint8_t vdev_id)
+static void wma_inc_pending_scans(tp_wma_handle wma)
 {
-	qdf_mem_zero((void *)&(wma_handle->interfaces[vdev_id].scan_info),
-		     sizeof(wma_handle->interfaces[vdev_id].scan_info));
-}
-
-/**
- * wma_set_p2p_scan_info() - set p2p scan info in wma handle
- * @wma_handle: wma handle
- * @scan_id: scan id
- * @vdev_id: vdev id
- * @p2p_scan_type: p2p scan type
- *
- * Return: none
- */
-static inline void wma_set_p2p_scan_info(tp_wma_handle wma_handle,
-				     uint32_t scan_id,
-				     uint32_t vdev_id,
-				     tSirP2pScanType p2p_scan_type)
-{
-	wma_handle->interfaces[vdev_id].p2p_scan_info.scan_id = scan_id;
-	wma_handle->interfaces[vdev_id].p2p_scan_info.p2p_scan_type =
-		p2p_scan_type;
-}
-
-/**
- * wma_reset_p2p_scan_info() - reset scan info from wma handle
- * @wma_handle: wma handle
- * @vdev_id: vdev id
- *
- * Return: none
- */
-static inline void wma_reset_p2p_scan_info(tp_wma_handle wma_handle,
-				       uint8_t vdev_id)
-{
-	qdf_mem_zero((void *)&(wma_handle->interfaces[vdev_id].p2p_scan_info),
-		     sizeof(struct p2p_scan_param));
+	int32_t scan_cnt = qdf_atomic_inc_return(&wma->num_pending_scans);
+	WMA_LOGI("Starting pending scan: %d -> %d", scan_cnt - 1, scan_cnt);
 }
 
 /**
@@ -559,11 +528,8 @@ QDF_STATUS wma_start_scan(tp_wma_handle wma_handle,
 		goto error1;
 	}
 
-	wma_set_scan_info(wma_handle, cmd.scan_id, cmd.vdev_id);
+	wma_inc_pending_scans(wma_handle);
 
-	if (scan_req->p2pScanType == P2P_SCAN_TYPE_LISTEN)
-		wma_set_p2p_scan_info(wma_handle, cmd.scan_id,
-			 cmd.vdev_id, P2P_SCAN_TYPE_LISTEN);
 	WMA_LOGI("scan_id 0x%x, vdev_id %d, p2pScanType %d, msg_type 0x%x",
 		 cmd.scan_id, cmd.vdev_id, scan_req->p2pScanType, msg_type);
 
@@ -585,7 +551,7 @@ QDF_STATUS wma_start_scan(tp_wma_handle wma_handle,
 				 &cmd);
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		WMA_LOGE("wmi_unified_cmd_send returned Error %d", qdf_status);
-		goto error1;
+		goto dec_scans;
 	}
 
 	if (NULL != cmd.chan_list)
@@ -594,6 +560,9 @@ QDF_STATUS wma_start_scan(tp_wma_handle wma_handle,
 	WMA_LOGI("WMA --> WMI_START_SCAN_CMDID");
 
 	return QDF_STATUS_SUCCESS;
+
+dec_scans:
+	wma_dec_pending_scans(wma_handle);
 
 error1:
 	if (NULL != cmd.chan_list)
@@ -2362,6 +2331,8 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 		qdf_get_system_timestamp() - roam_synch_received;
 	WMA_LOGD("LFR3: roam_synch_delay:%d",
 		wma->interfaces[synch_event->vdev_id].roam_synch_delay);
+	wma->csr_roam_synch_cb((tpAniSirGlobal)wma->mac_context,
+		roam_synch_ind_ptr, bss_desc_ptr, SIR_ROAM_SYNCH_NAPI_OFF);
 cleanup_label:
 	if (roam_synch_ind_ptr->join_rsp)
 		qdf_mem_free(roam_synch_ind_ptr->join_rsp);
@@ -4252,9 +4223,9 @@ int wma_extscan_cached_results_event_handler(void *handle,
 	src_hotlist = param_buf->bssid_list;
 	src_rssi = param_buf->rssi_list;
 	numap = event->num_entries_in_page;
-	WMA_LOGI("Total_entries %u first_entry_index %u", event->total_entries,
-			event->first_entry_index);
-	WMA_LOGI("num_entries_in_page %d", numap);
+	WMA_LOGI("Total_entries: %u first_entry_index: %u num_entries_in_page: %d",
+			event->total_entries,
+			event->first_entry_index, numap);
 	if (!src_hotlist || !src_rssi || !numap) {
 		WMA_LOGW("%s: Cached results empty, send 0 results", __func__);
 		goto noresults;
@@ -4293,7 +4264,6 @@ int wma_extscan_cached_results_event_handler(void *handle,
 	pMac->sme.pExtScanIndCb(pMac->hHdd,
 				eSIR_EXTSCAN_CACHED_RESULTS_IND,
 				dest_cachelist);
-	WMA_LOGI("%s: sending cached results event", __func__);
 	dest_result = dest_cachelist->result;
 	for (i = 0; i < dest_cachelist->num_scan_ids; i++) {
 		qdf_mem_free(dest_result->ap);
@@ -4311,7 +4281,6 @@ noresults:
 	pMac->sme.pExtScanIndCb(pMac->hHdd,
 				eSIR_EXTSCAN_CACHED_RESULTS_IND,
 				&empty_cachelist);
-	WMA_LOGI("%s: sending cached results event", __func__);
 	return 0;
 }
 
@@ -4644,8 +4613,6 @@ QDF_STATUS wma_get_buf_extscan_start_cmd(tp_wma_handle wma_handle,
 		src_bucket++;
 	}
 
-	WMA_LOGD("%s: Total buckets: %d total #of channels is %d",
-		__func__, nbuckets, nchannels);
 	len += nchannels * sizeof(wmi_extscan_bucket_channel);
 	/* Allocate the memory */
 	*buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
@@ -4668,7 +4635,8 @@ QDF_STATUS wma_get_buf_extscan_start_cmd(tp_wma_handle wma_handle,
 	cmd->configuration_flags = 0;
 	if (pstart->configuration_flags & EXTSCAN_LP_EXTENDED_BATCHING)
 		cmd->configuration_flags |= WMI_EXTSCAN_EXTENDED_BATCHING_EN;
-	WMA_LOGI("%s: configuration_flags: 0x%x", __func__,
+	WMA_LOGI("%s: Total buckets: %d total #of channels is %d cfgn_flags: 0x%x",
+			 __func__, nbuckets, nchannels,
 			cmd->configuration_flags);
 
 	cmd->min_rest_time = WMA_EXTSCAN_REST_TIME;
@@ -5415,16 +5383,28 @@ QDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
 	params->request_id = req->request_id;
 	params->session_id = req->session_id;
 	params->num_networks = req->num_networks;
-	for (i = 0; i < req->num_networks; i++) {
-		params->networks[i].rssi_threshold =
-				req->networks[i].rssi_threshold;
-		params->networks[i].auth_bit_field =
-				req->networks[i].auth_bit_field;
-		params->networks[i].flags = req->networks[i].flags;
-		params->networks[i].ssid.length = req->networks[i].ssid.length;
-		qdf_mem_copy(params->networks[i].ssid.mac_ssid,
-				req->networks[i].ssid.ssId,
-				WMI_MAC_MAX_SSID_LENGTH);
+
+	/* Fill only when num_networks are non zero */
+	if (req->num_networks) {
+		params->min_5ghz_rssi = req->min_5ghz_rssi;
+		params->min_24ghz_rssi = req->min_24ghz_rssi;
+		params->initial_score_max = req->initial_score_max;
+		params->same_network_bonus = req->same_network_bonus;
+		params->secure_bonus = req->secure_bonus;
+		params->band_5ghz_bonus = req->band_5ghz_bonus;
+		params->current_connection_bonus =
+			req->current_connection_bonus;
+
+		for (i = 0; i < req->num_networks; i++) {
+			params->networks[i].flags = req->networks[i].flags;
+			params->networks[i].auth_bit_field =
+					req->networks[i].auth_bit_field;
+			params->networks[i].ssid.length =
+					req->networks[i].ssid.length;
+			qdf_mem_copy(params->networks[i].ssid.mac_ssid,
+					req->networks[i].ssid.ssId,
+					WMI_MAC_MAX_SSID_LENGTH);
+		}
 	}
 
 	status = wmi_unified_set_epno_network_list_cmd(wma->wmi_handle, params);
@@ -5662,35 +5642,16 @@ int wma_scan_event_callback(WMA_HANDLE handle, uint8_t *data,
 		return -ENOMEM;
 	}
 
-	scan_event->event = wmi_event->event;
-
 	WMA_LOGI("scan event %u, id 0x%x, requestor 0x%x, freq %u, reason %u",
 		 wmi_event->event, wmi_event->scan_id, wmi_event->requestor,
 		 wmi_event->channel_freq, wmi_event->reason);
 
+	scan_event->event = wmi_event->event;
 	scan_event->scanId = wmi_event->scan_id;
 	scan_event->requestor = wmi_event->requestor;
 	scan_event->chanFreq = wmi_event->channel_freq;
-
-	if (scan_event->scanId ==
-		wma_handle->interfaces[vdev_id].scan_info.scan_id) {
-		if (scan_event->event == SIR_SCAN_EVENT_COMPLETED)
-			wma_reset_scan_info(wma_handle, vdev_id);
-	}
-
-	if (scan_event->scanId ==
-		wma_handle->interfaces[vdev_id].p2p_scan_info.scan_id) {
-		scan_event->p2pScanType = P2P_SCAN_TYPE_LISTEN;
-		if  (scan_event->event == SIR_SCAN_EVENT_COMPLETED)
-			wma_reset_p2p_scan_info(wma_handle, vdev_id);
-	}
 	scan_event->sessionId = vdev_id;
-
-	if (wmi_event->reason == WMI_SCAN_REASON_COMPLETED ||
-	    wmi_event->reason == WMI_SCAN_REASON_TIMEDOUT)
-		scan_event->reasonCode = eSIR_SME_SUCCESS;
-	else
-		scan_event->reasonCode = eSIR_SME_SCAN_FAILED;
+	scan_event->reasonCode = eSIR_SME_SCAN_FAILED;
 
 	switch (wmi_event->event) {
 	case WMI_SCAN_EVENT_COMPLETED:
@@ -5725,9 +5686,12 @@ int wma_scan_event_callback(WMA_HANDLE handle, uint8_t *data,
 	}
 
 	wma_send_msg(wma_handle, WMA_RX_SCAN_EVENT, (void *)scan_event, 0);
+
+	if ((wmi_event->event & WMA_SCAN_END_EVENT) > 0)
+		wma_dec_pending_scans(wma_handle);
+
 	return 0;
 }
-
 
 /**
  * wma_roam_better_ap_handler() - better ap event handler

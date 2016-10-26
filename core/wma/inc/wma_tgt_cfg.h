@@ -136,6 +136,7 @@ struct wma_dfs_radar_ind {
 /**
  * struct wma_tgt_cfg - target config
  * @target_fw_version: target fw version
+ * @target_fw_vers_ext: target fw extended sub version
  * @band_cap: band capability
  * @reg_domain: reg domain
  * @eeprom_rd_ext: eeprom rd ext
@@ -151,6 +152,7 @@ struct wma_dfs_radar_ind {
  */
 struct wma_tgt_cfg {
 	uint32_t target_fw_version;
+	uint32_t target_fw_vers_ext;
 	uint8_t band_cap;
 	uint32_t reg_domain;
 	uint32_t eeprom_rd_ext;

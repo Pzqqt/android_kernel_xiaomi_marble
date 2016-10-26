@@ -51,7 +51,8 @@
  * common routine to remove TDLS cmd from SME command list..
  * commands are removed after getting reponse from PE.
  */
-QDF_STATUS csr_tdls_remove_sme_cmd(tpAniSirGlobal pMac, eSmeCommandType cmdType)
+static QDF_STATUS csr_tdls_remove_sme_cmd(tpAniSirGlobal pMac,
+					  eSmeCommandType cmdType)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tListElem *pEntry;
@@ -363,8 +364,8 @@ QDF_STATUS csr_tdls_del_peer_sta(tHalHandle hHal, uint8_t sessionId,
 /*
  * TDLS messages sent to PE .
  */
-QDF_STATUS tdls_send_message(tpAniSirGlobal pMac, uint16_t msg_type,
-			     void *msg_data, uint32_t msg_size)
+static QDF_STATUS tdls_send_message(tpAniSirGlobal pMac, uint16_t msg_type,
+				    void *msg_data, uint32_t msg_size)
 {
 
 	tSirMbMsg *pMsg = (tSirMbMsg *) msg_data;
@@ -382,7 +383,7 @@ QDF_STATUS tdls_send_message(tpAniSirGlobal pMac, uint16_t msg_type,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS csr_tdls_process_send_mgmt(tpAniSirGlobal pMac, tSmeCmd *cmd)
+static QDF_STATUS csr_tdls_process_send_mgmt(tpAniSirGlobal pMac, tSmeCmd *cmd)
 {
 	tTdlsSendMgmtCmdInfo *tdlsSendMgmtCmdInfo =
 		&cmd->u.tdlsCmd.u.tdlsSendMgmtCmdInfo;
@@ -451,7 +452,7 @@ QDF_STATUS csr_tdls_process_send_mgmt(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	return status;
 }
 
-QDF_STATUS csr_tdls_process_add_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
+static QDF_STATUS csr_tdls_process_add_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 {
 	tTdlsAddStaCmdInfo *tdlsAddStaCmdInfo =
 		&cmd->u.tdlsCmd.u.tdlsAddStaCmdInfo;
@@ -522,7 +523,7 @@ QDF_STATUS csr_tdls_process_add_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	return status;
 }
 
-QDF_STATUS csr_tdls_process_del_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
+static QDF_STATUS csr_tdls_process_del_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 {
 	tTdlsDelStaCmdInfo *tdlsDelStaCmdInfo =
 		&cmd->u.tdlsCmd.u.tdlsDelStaCmdInfo;

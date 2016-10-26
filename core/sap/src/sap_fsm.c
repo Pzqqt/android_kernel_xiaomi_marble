@@ -889,7 +889,7 @@ static inline void sap_event_init(ptWLAN_SAPEvent sapEvent)
  *
  * Return: TRUE or FALSE
  */
-bool
+static bool
 sap_find_target_channel_in_channel_matrix(ptSapContext sapContext,
 					  enum phy_ch_width ch_width,
 					  uint8_t NOL_channel,
@@ -954,7 +954,7 @@ sap_find_target_channel_in_channel_matrix(ptSapContext sapContext,
  * Return: QDF_STATUS
  */
 
-QDF_STATUS
+static QDF_STATUS
 sap_mark_leaking_ch(ptSapContext sap_ctx,
 		enum phy_ch_width ch_width,
 		tSapDfsNolInfo *nol,
@@ -1772,7 +1772,7 @@ bool sap_acs_channel_check(ptSapContext sapContext, uint8_t channelNumber)
  *
  * Return: none
  */
-void sap_mark_dfs_channels(ptSapContext sapContext, uint8_t *channels,
+static void sap_mark_dfs_channels(ptSapContext sapContext, uint8_t *channels,
 			   uint8_t numChannels, uint64_t time)
 {
 	int i, j;
@@ -1843,9 +1843,10 @@ void sap_mark_dfs_channels(ptSapContext sapContext, uint8_t *channels,
  * This Function is to get bonding channels from primary channel.
  *
  */
-uint8_t sap_get_bonding_channels(ptSapContext sapContext, uint8_t channel,
-				 uint8_t *channels, uint8_t size,
-				 ePhyChanBondState chanBondState)
+static uint8_t sap_get_bonding_channels(ptSapContext sapContext,
+					uint8_t channel,
+					uint8_t *channels, uint8_t size,
+					ePhyChanBondState chanBondState)
 {
 	tHalHandle hHal = CDS_GET_HAL_CB(sapContext->p_cds_gctx);
 	tpAniSirGlobal pMac;
@@ -2507,8 +2508,9 @@ QDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext,
 
    SIDE EFFECTS
    ============================================================================*/
-QDF_STATUS sap_goto_starting(ptSapContext sapContext, ptWLAN_SAPEvent sapEvent,
-			     eCsrRoamBssType bssType)
+static QDF_STATUS sap_goto_starting(ptSapContext sapContext,
+				    ptWLAN_SAPEvent sapEvent,
+				    eCsrRoamBssType bssType)
 {
 	/* tHalHandle */
 	tHalHandle hHal = CDS_GET_HAL_CB(sapContext->p_cds_gctx);
@@ -2568,7 +2570,7 @@ QDF_STATUS sap_goto_starting(ptSapContext sapContext, ptWLAN_SAPEvent sapEvent,
 
    SIDE EFFECTS
    ============================================================================*/
-QDF_STATUS sap_goto_disconnecting(ptSapContext sapContext)
+static QDF_STATUS sap_goto_disconnecting(ptSapContext sapContext)
 {
 	QDF_STATUS qdf_ret_status;
 	tHalHandle hHal;
@@ -2624,7 +2626,7 @@ static QDF_STATUS sap_roam_session_close_callback(void *pContext)
 
    SIDE EFFECTS
    ============================================================================*/
-QDF_STATUS sap_goto_disconnected(ptSapContext sapContext)
+static QDF_STATUS sap_goto_disconnected(ptSapContext sapContext)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	tWLAN_SAPEvent sapEvent;
@@ -2995,7 +2997,7 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
    SIDE EFFECTS
     NA
    ============================================================================*/
-ptSapContext sap_find_valid_concurrent_session(tHalHandle hHal)
+static ptSapContext sap_find_valid_concurrent_session(tHalHandle hHal)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	uint8_t intf = 0;
@@ -3020,7 +3022,7 @@ ptSapContext sap_find_valid_concurrent_session(tHalHandle hHal)
  *
  * Return: Valid SAP context on success, else NULL
  */
-ptSapContext sap_find_cac_wait_session(tHalHandle handle)
+static ptSapContext sap_find_cac_wait_session(tHalHandle handle)
 {
 	tpAniSirGlobal mac = PMAC_STRUCT(handle);
 	uint8_t i = 0;
@@ -3167,7 +3169,7 @@ void sap_cac_reset_notify(tHalHandle hHal)
 
    SIDE EFFECTS
    ============================================================================*/
-QDF_STATUS sap_cac_start_notify(tHalHandle hHal)
+static QDF_STATUS sap_cac_start_notify(tHalHandle hHal)
 {
 	uint8_t intf = 0;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -3253,7 +3255,7 @@ static QDF_STATUS wlansap_update_pre_cac_end(ptSapContext sap_context,
 
    SIDE EFFECTS
    ============================================================================*/
-QDF_STATUS sap_cac_end_notify(tHalHandle hHal, tCsrRoamInfo *roamInfo)
+static QDF_STATUS sap_cac_end_notify(tHalHandle hHal, tCsrRoamInfo *roamInfo)
 {
 	uint8_t intf;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);

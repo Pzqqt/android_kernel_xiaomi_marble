@@ -403,6 +403,12 @@ unsigned int ol_cfg_ipa_uc_tx_partition_base(ol_pdev_handle pdev)
 	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
 	return cfg->ipa_uc_rsc.tx_partition_base;
 }
+
+void ol_cfg_set_ipa_uc_tx_partition_base(ol_pdev_handle pdev, uint32_t val)
+{
+	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
+	cfg->ipa_uc_rsc.tx_partition_base = val;
+}
 #endif /* IPA_OFFLOAD */
 
 /**

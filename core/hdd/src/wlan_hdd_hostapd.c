@@ -68,7 +68,7 @@
 #include "pld_common.h"
 
 #include "wma.h"
-#ifdef DEBUG
+#ifdef WLAN_DEBUG
 #include "wma_api.h"
 #endif
 #include "wlan_hdd_trace.h"
@@ -149,14 +149,16 @@ static void hdd_hostapd_channel_allow_suspend(hdd_adapter_t *pAdapter,
 	if (pHostapdState->bssState == BSS_STOP)
 		return;
 
+	if (CHANNEL_STATE_DFS != cds_get_channel_state(channel))
+		return;
+
 	/* Release wakelock when no more DFS channels are used */
-	if (CHANNEL_STATE_DFS == cds_get_channel_state(channel)) {
-		if (atomic_dec_and_test(&pHddCtx->sap_dfs_ref_cnt)) {
-			hdd_err("DFS: allowing suspend (chan %d)",
-			       channel);
-			qdf_wake_lock_release(&pHddCtx->sap_dfs_wakelock,
-					      WIFI_POWER_EVENT_WAKELOCK_DFS);
-		}
+	if (atomic_dec_and_test(&pHddCtx->sap_dfs_ref_cnt)) {
+		hdd_err("DFS: allowing suspend (chan %d)", channel);
+		qdf_wake_lock_release(&pHddCtx->sap_dfs_wakelock,
+				      WIFI_POWER_EVENT_WAKELOCK_DFS);
+		qdf_runtime_pm_allow_suspend(pHddCtx->runtime_context.dfs);
+
 	}
 }
 
@@ -185,14 +187,15 @@ static void hdd_hostapd_channel_prevent_suspend(hdd_adapter_t *pAdapter,
 		(atomic_read(&pHddCtx->sap_dfs_ref_cnt) >= 1))
 		return;
 
+	if (CHANNEL_STATE_DFS != cds_get_channel_state(channel))
+		return;
+
 	/* Acquire wakelock if we have at least one DFS channel in use */
-	if (CHANNEL_STATE_DFS == cds_get_channel_state(channel)) {
-		if (atomic_inc_return(&pHddCtx->sap_dfs_ref_cnt) == 1) {
-			hdd_err("DFS: preventing suspend (chan %d)",
-			       channel);
-			qdf_wake_lock_acquire(&pHddCtx->sap_dfs_wakelock,
-					      WIFI_POWER_EVENT_WAKELOCK_DFS);
-		}
+	if (atomic_inc_return(&pHddCtx->sap_dfs_ref_cnt) == 1) {
+		hdd_err("DFS: preventing suspend (chan %d)", channel);
+		qdf_runtime_pm_prevent_suspend(pHddCtx->runtime_context.dfs);
+		qdf_wake_lock_acquire(&pHddCtx->sap_dfs_wakelock,
+				      WIFI_POWER_EVENT_WAKELOCK_DFS);
 	}
 }
 
@@ -1250,6 +1253,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			hdd_info("P2PGO is going down now");
 			hdd_issue_stored_joinreq(sta_adapter, pHddCtx);
 		}
+		pHddApCtx->groupKey.keyLength = 0;
+		for (i = 0; i < CSR_MAX_NUM_KEY; i++)
+			pHddApCtx->wepKey[i].keyLength = 0;
 		goto stopbss;
 
 	case eSAP_DFS_CAC_START:
@@ -1804,12 +1810,14 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 	case eSAP_CHANNEL_CHANGE_EVENT:
 		hdd_notice("Received eSAP_CHANNEL_CHANGE_EVENT event");
-		/* Prevent suspend for new channel */
-		hdd_hostapd_channel_prevent_suspend(pHostapdAdapter,
-					pSapEvent->sapevt.sap_ch_selected.pri_ch);
-		/* Allow suspend for old channel */
-		hdd_hostapd_channel_allow_suspend(pHostapdAdapter,
-					pHddApCtx->operatingChannel);
+		if (pHostapdState->bssState != BSS_STOP) {
+			/* Prevent suspend for new channel */
+			hdd_hostapd_channel_prevent_suspend(pHostapdAdapter,
+				pSapEvent->sapevt.sap_ch_selected.pri_ch);
+			/* Allow suspend for old channel */
+			hdd_hostapd_channel_allow_suspend(pHostapdAdapter,
+				pHddApCtx->operatingChannel);
+		}
 		/* SME/PE is already updated for new operation channel. So update
 		* HDD layer also here. This resolves issue in AP-AP mode where
 		* AP1 channel is changed due to RADAR then CAC is going on and
@@ -2269,6 +2277,27 @@ static iw_softap_set_ini_cfg(struct net_device *dev,
 	return ret;
 }
 
+static int hdd_sap_get_chan_width(hdd_adapter_t *adapter, int *value)
+{
+	void *cds_ctx;
+	hdd_hostapd_state_t *hostapdstate;
+
+	ENTER();
+	hostapdstate = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
+
+	if (hostapdstate->bssState != BSS_START) {
+		*value = -EINVAL;
+		return -EINVAL;
+	}
+
+	cds_ctx = WLAN_HDD_GET_SAP_CTX_PTR(adapter);
+
+	*value = wlansap_get_chan_width(cds_ctx);
+	hdd_notice("chan_width = %d", *value);
+
+	return 0;
+}
+
 int
 static __iw_softap_get_ini_cfg(struct net_device *dev,
 			       struct iw_request_info *info,
@@ -2333,7 +2362,7 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 		goto out;
 
 	switch (sub_cmd) {
-#ifdef DEBUG
+#ifdef WLAN_DEBUG
 	case QCSAP_IOCTL_SET_FW_CRASH_INJECT:
 		hdd_err("WE_SET_FW_CRASH_INJECT: %d %d",
 		       value[1], value[2]);
@@ -3363,6 +3392,11 @@ static __iw_softap_getparam(struct net_device *dev,
 	case QCASAP_PARAM_RX_STBC:
 	{
 		ret = hdd_get_rx_stbc(pHostapdAdapter, value);
+		break;
+	}
+	case QCSAP_PARAM_CHAN_WIDTH:
+	{
+		ret = hdd_sap_get_chan_width(pHostapdAdapter, value);
 		break;
 	}
 	default:
@@ -5316,6 +5350,10 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 		"get_rx_stbc"
 	}, {
+		QCSAP_PARAM_CHAN_WIDTH, 0,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+		"get_chwidth"
+	}, {
 		QCASAP_TX_CHAINMASK_CMD, 0,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 		"get_txchainmask"
@@ -5474,7 +5512,7 @@ static const struct iw_priv_args hostapd_private_args[] = {
 	}
 	,
 	/* handlers for sub-ioctl */
-#ifdef DEBUG
+#ifdef WLAN_DEBUG
 	{
 		QCSAP_IOCTL_SET_FW_CRASH_INJECT,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
@@ -6793,7 +6831,8 @@ static int wlan_hdd_setup_driver_overrides(hdd_adapter_t *ap_adapter)
 	if (hdd_ctx->config->sap_p2p_11ac_override &&
 			(sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11n ||
 			sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ac ||
-			sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ac_ONLY)) {
+			sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ac_ONLY) &&
+			!hdd_ctx->config->sap_force_11n_for_11ac) {
 		hdd_notice("** Driver force 11AC override for SAP/Go **");
 
 		/* 11n only shall not be overridden since it may be on purpose*/
@@ -6834,6 +6873,12 @@ setup_acs_overrides:
 						hdd_ctx->config->dot11Mode);
 	if (sap_cfg->SapHw_mode == eCSR_DOT11_MODE_AUTO)
 		sap_cfg->SapHw_mode = eCSR_DOT11_MODE_11ac;
+
+	if (hdd_ctx->config->sap_force_11n_for_11ac) {
+		if (sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ac ||
+		    sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ac_ONLY)
+			sap_cfg->SapHw_mode = eCSR_DOT11_MODE_11n;
+	}
 
 	if ((sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11b ||
 			sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11g ||
@@ -7309,6 +7354,12 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	}
 
 	wlan_hdd_set_sap_hwmode(pHostapdAdapter);
+	if (pHddCtx->config->sap_force_11n_for_11ac) {
+		if (pConfig->SapHw_mode == eCSR_DOT11_MODE_11ac ||
+		    pConfig->SapHw_mode == eCSR_DOT11_MODE_11ac_ONLY)
+			pConfig->SapHw_mode = eCSR_DOT11_MODE_11n;
+	}
+
 	qdf_mem_zero(&sme_config, sizeof(tSmeConfigParams));
 	sme_get_config_param(pHddCtx->hHal, &sme_config);
 	/* Override hostapd.conf wmm_enabled only for 11n and 11AC configs (IOT)
@@ -7325,25 +7376,32 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		sme_config.csrConfig.WMMSupportMode = eCsrRoamWmmNoQos;
 	sme_update_config(pHddCtx->hHal, &sme_config);
 
-	if (pConfig->ch_width_orig == NL80211_CHAN_WIDTH_80P80) {
-		if (pHddCtx->isVHT80Allowed == false)
+	if (!pHddCtx->config->sap_force_11n_for_11ac) {
+		if (pConfig->ch_width_orig == NL80211_CHAN_WIDTH_80P80) {
+			if (pHddCtx->isVHT80Allowed == false)
+				pConfig->ch_width_orig = CH_WIDTH_40MHZ;
+			else
+				pConfig->ch_width_orig = CH_WIDTH_80P80MHZ;
+		} else if (pConfig->ch_width_orig == NL80211_CHAN_WIDTH_160) {
+			if (pHddCtx->isVHT80Allowed == false)
+				pConfig->ch_width_orig = CH_WIDTH_40MHZ;
+			else
+				pConfig->ch_width_orig = CH_WIDTH_160MHZ;
+		} else if (pConfig->ch_width_orig == NL80211_CHAN_WIDTH_80) {
+			if (pHddCtx->isVHT80Allowed == false)
+				pConfig->ch_width_orig = CH_WIDTH_40MHZ;
+			else
+				pConfig->ch_width_orig = CH_WIDTH_80MHZ;
+		} else if (pConfig->ch_width_orig == NL80211_CHAN_WIDTH_40) {
 			pConfig->ch_width_orig = CH_WIDTH_40MHZ;
-		else
-			pConfig->ch_width_orig = CH_WIDTH_80P80MHZ;
-	} else if (pConfig->ch_width_orig == NL80211_CHAN_WIDTH_160) {
-		if (pHddCtx->isVHT80Allowed == false)
-			pConfig->ch_width_orig = CH_WIDTH_40MHZ;
-		else
-			pConfig->ch_width_orig = CH_WIDTH_160MHZ;
-	} else if (pConfig->ch_width_orig == NL80211_CHAN_WIDTH_80) {
-		if (pHddCtx->isVHT80Allowed == false)
-			pConfig->ch_width_orig = CH_WIDTH_40MHZ;
-		else
-			pConfig->ch_width_orig = CH_WIDTH_80MHZ;
-	} else if (pConfig->ch_width_orig == NL80211_CHAN_WIDTH_40) {
-		pConfig->ch_width_orig = CH_WIDTH_40MHZ;
+		} else {
+			pConfig->ch_width_orig = CH_WIDTH_20MHZ;
+		}
 	} else {
-		pConfig->ch_width_orig = CH_WIDTH_20MHZ;
+		if (pConfig->ch_width_orig >= NL80211_CHAN_WIDTH_40)
+			pConfig->ch_width_orig = CH_WIDTH_40MHZ;
+		else
+			pConfig->ch_width_orig = CH_WIDTH_20MHZ;
 	}
 
 	if (wlan_hdd_setup_driver_overrides(pHostapdAdapter)) {

@@ -1901,6 +1901,30 @@ enum qca_wlan_epno_type {
  *	Unsigned 8-bit value; auth bit field for matching WPA IE
  * @QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_EPNO_TYPE
  *	Unsigned 8-bit to indicate ePNO type; values from qca_wlan_epno_type
+ *@QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_EPNO_CHANNEL_LIST
+ *	Nested attribute to send the channel list
+ *@QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_EPNO_SCAN_INTERVAL
+ *	Unsigned 32-bit value; indicates the Interval between PNO scan
+ *	cycles in msec
+ *@QCA_WLAN_VENDOR_ATTR_EPNO_MIN5GHZ_RSSI
+ *	Signed 32-bit value; minimum 5GHz RSSI for a BSSID to be considered
+ *@QCA_WLAN_VENDOR_ATTR_EPNO_MIN24GHZ_RSSI
+ *	Signed 32-bit value; minimum 2.4GHz RSSI for a BSSID to be considered
+ *	This attribute is obsolete now.
+ *@QCA_WLAN_VENDOR_ATTR_EPNO_INITIAL_SCORE_MAX
+ *	Signed 32-bit value; the maximum score that a network
+ *	can have before bonuses
+ *@QCA_WLAN_VENDOR_ATTR_EPNO_CURRENT_CONNECTION_BONUS
+ *	Signed 32-bit value; only report when there is a network's
+ *	score this much higher han the current connection
+ *@QCA_WLAN_VENDOR_ATTR_EPNO_SAME_NETWORK_BONUS
+ *	Signed 32-bit value; score bonus for all networks with
+ *	the same network flag
+ *@QCA_WLAN_VENDOR_ATTR_EPNO_SECURE_BONUS
+ *	Signed 32-bit value; score bonus for networks that are not open
+ *@QCA_WLAN_VENDOR_ATTR_EPNO_BAND5GHZ_BONUS
+ *	Signed 32-bit value; 5GHz RSSI score bonus applied to all
+ *	5GHz networks
  * @QCA_WLAN_VENDOR_ATTR_PNO_AFTER_LAST: After last
  * @QCA_WLAN_VENDOR_ATTR_PNO_MAX: max
  */
@@ -1921,6 +1945,15 @@ enum qca_wlan_vendor_attr_pno_config_params {
 	QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_EPNO_NETWORK_FLAGS = 11,
 	QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_EPNO_NETWORK_AUTH_BIT = 12,
 	QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_EPNO_TYPE = 13,
+	QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_EPNO_CHANNEL_LIST = 14,
+	QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_EPNO_SCAN_INTERVAL = 15,
+	QCA_WLAN_VENDOR_ATTR_EPNO_MIN5GHZ_RSSI = 16,
+	QCA_WLAN_VENDOR_ATTR_EPNO_MIN24GHZ_RSSI = 17,
+	QCA_WLAN_VENDOR_ATTR_EPNO_INITIAL_SCORE_MAX = 18,
+	QCA_WLAN_VENDOR_ATTR_EPNO_CURRENT_CONNECTION_BONUS = 19,
+	QCA_WLAN_VENDOR_ATTR_EPNO_SAME_NETWORK_BONUS = 20,
+	QCA_WLAN_VENDOR_ATTR_EPNO_SECURE_BONUS = 21,
+	QCA_WLAN_VENDOR_ATTR_EPNO_BAND5GHZ_BONUS = 22,
 
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_PNO_AFTER_LAST,
@@ -2312,6 +2345,20 @@ enum qca_access_policy {
 };
 
 /**
+ * enum qca_ignore_assoc_disallowed - Ignore assoc disallowed values
+ *
+ * The valid values for the ignore assoc disallowed
+ *
+ * @QCA_IGNORE_ASSOC_DISALLOWED_DISABLE: Disable ignore assoc disallowed
+ * @QCA_IGNORE_ASSOC_DISALLOWED_ENABLE: Enable ignore assoc disallowed
+ *
+ */
+enum qca_ignore_assoc_disallowed {
+	QCA_IGNORE_ASSOC_DISALLOWED_DISABLE,
+	QCA_IGNORE_ASSOC_DISALLOWED_ENABLE
+};
+
+/**
  * enum qca_wlan_vendor_config: wifi config attr
  *
  * @QCA_WLAN_VENDOR_ATTR_CONFIG_INVALID: invalid config
@@ -2342,6 +2389,8 @@ enum qca_access_policy {
  *                                       parameters
  * @QCA_WLAN_VENDOR_ATTR_CONFIG_QPOWER: Unsigned 8bit length attribute to update
  *                                      power save config to turn off/on qpower
+ * @QCA_WLAN_VENDOR_ATTR_CONFIG_IGNORE_ASSOC_DISALLOWED: Ignore Assoc Disallowed
+ *                                                       [MBO]
  * @QCA_WLAN_VENDOR_ATTR_CONFIG_LAST: last config
  * @QCA_WLAN_VENDOR_ATTR_CONFIG_MAX: max config
  */
@@ -2396,6 +2445,7 @@ enum qca_wlan_vendor_config {
 	QCA_WLAN_VENDOR_ATTR_CONFIG_IFINDEX,
 	/* Unsigned 8-bit, for setting qpower dynamically */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_QPOWER = 25,
+	QCA_WLAN_VENDOR_ATTR_CONFIG_IGNORE_ASSOC_DISALLOWED = 26,
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_LAST,
 	QCA_WLAN_VENDOR_ATTR_CONFIG_MAX =

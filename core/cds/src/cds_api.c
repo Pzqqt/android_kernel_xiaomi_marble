@@ -247,7 +247,8 @@ QDF_STATUS cds_open(void)
 	}
 	/* Now Open the CDS Scheduler */
 
-	if (pHddCtx->driver_status == DRIVER_MODULES_UNINITIALIZED) {
+	if (pHddCtx->driver_status == DRIVER_MODULES_UNINITIALIZED ||
+	    cds_is_driver_recovering()) {
 		qdf_status = cds_sched_open(gp_cds_context,
 					    &gp_cds_context->qdf_sched,
 					    sizeof(cds_sched_context));
@@ -519,7 +520,14 @@ QDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context)
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "Failed to get ready event from target firmware");
-		QDF_BUG(0);
+		/*
+		 * Panic only if recovery is disabled, else return failure so
+		 * that driver load can fail gracefully. We cannot trigger self
+		 * recovery here because driver is not fully loaded yet.
+		 */
+		if (!cds_is_self_recovery_enabled())
+			QDF_BUG(0);
+
 		htc_stop(gp_cds_context->htc_ctx);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1439,98 +1447,6 @@ void cds_core_return_msg(void *pVContext, p_cds_msg_wrapper pMsgWrapper)
 	cds_mq_put(&p_cds_context->freeVosMq, pMsgWrapper);
 } /* cds_core_return_msg() */
 
-
-/**
- * cds_shutdown() - shutdown CDS
- * @cds_context: global cds context
- *
- * Return: QDF status
- */
-QDF_STATUS cds_shutdown(v_CONTEXT_t cds_context)
-{
-	QDF_STATUS qdf_status;
-	tpAniSirGlobal pmac = (((p_cds_contextType)cds_context)->pMACContext);
-
-	ol_txrx_pdev_detach(gp_cds_context->pdev_txrx_ctx, 1);
-	cds_free_context(cds_context, QDF_MODULE_ID_TXRX,
-			 gp_cds_context->pdev_txrx_ctx);
-
-	qdf_status = sme_close(((p_cds_contextType) cds_context)->pMACContext);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to close SME", __func__);
-		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-	}
-	/*
-	 * CAC timer will be initiated and started only when SAP starts on
-	 * DFS channel and it will be stopped and destroyed immediately once the
-	 * radar detected or timedout. So as per design CAC timer should be
-	 * destroyed after stop
-	 */
-	if (pmac->sap.SapDfsInfo.is_dfs_cac_timer_running) {
-		qdf_mc_timer_stop(&pmac->sap.SapDfsInfo.sap_dfs_cac_timer);
-		pmac->sap.SapDfsInfo.is_dfs_cac_timer_running = 0;
-		qdf_mc_timer_destroy(&pmac->sap.SapDfsInfo.sap_dfs_cac_timer);
-	}
-
-	qdf_status = mac_close(((p_cds_contextType) cds_context)->pMACContext);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to close MAC", __func__);
-		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-	}
-
-	((p_cds_contextType) cds_context)->pMACContext = NULL;
-
-	if (false == wma_needshutdown(cds_context)) {
-
-		qdf_status = wma_close(cds_context);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Failed to close wma!", __func__);
-			QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-		}
-	}
-
-	qdf_status = wma_wmi_work_close(cds_context);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-		"%s: Failed to close wma_wmi_work!", __func__);
-		QDF_ASSERT(0);
-	}
-
-	if (gp_cds_context->htc_ctx) {
-		htc_stop(gp_cds_context->htc_ctx);
-		htc_destroy(gp_cds_context->htc_ctx);
-		gp_cds_context->htc_ctx = NULL;
-	}
-
-	qdf_status = wma_wmi_service_close(cds_context);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to close wma_wmi_service!", __func__);
-		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-	}
-
-	cds_mq_deinit(&((p_cds_contextType) cds_context)->freeVosMq);
-
-	qdf_status = qdf_event_destroy(&gp_cds_context->wmaCompleteEvent);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to destroy wmaCompleteEvent", __func__);
-		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-	}
-
-	qdf_status = qdf_event_destroy(&gp_cds_context->ProbeEvent);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to destroy ProbeEvent", __func__);
-		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
 /**
  * cds_get_vdev_types() - get vdev type
  * @mode: mode
@@ -2341,6 +2257,27 @@ bool cds_is_sub_20_mhz_enabled(void)
 
 	if (p_cds_context->cds_cfg)
 		return p_cds_context->cds_cfg->sub_20_channel_width;
+
+	return false;
+}
+
+/**
+ * cds_is_self_recovery_enabled() - API to get self recovery enabled
+ *
+ * Return: true if self recovery enabled, false otherwise
+ */
+bool cds_is_self_recovery_enabled(void)
+{
+	p_cds_contextType p_cds_context;
+
+	p_cds_context = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!p_cds_context) {
+		cds_err("%s: cds context is invalid", __func__);
+		return false;
+	}
+
+	if (p_cds_context->cds_cfg)
+		return p_cds_context->cds_cfg->self_recovery_enabled;
 
 	return false;
 }

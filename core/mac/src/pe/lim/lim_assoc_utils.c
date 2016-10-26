@@ -3191,6 +3191,31 @@ lim_check_and_announce_join_success(tpAniSirGlobal mac_ctx,
 		session_entry->defaultAuthFailureTimeout = 0;
 	}
 
+
+	/*
+	 * Check if MBO Association disallowed subattr is present and post
+	 * failure status to LIM if present
+	 */
+	if (!session_entry->ignore_assoc_disallowed &&
+			beacon_probe_rsp->assoc_disallowed) {
+		lim_log(mac_ctx, LOGW,
+				FL("Connection fails due to assoc disallowed reason(%d):%pM PESessionID %d"),
+				beacon_probe_rsp->assoc_disallowed_reason,
+				session_entry->bssId,
+				session_entry->peSessionId);
+		mlm_join_cnf.resultCode = eSIR_SME_ASSOC_REFUSED;
+		mlm_join_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+		session_entry->limMlmState = eLIM_MLM_IDLE_STATE;
+		mlm_join_cnf.sessionId = session_entry->peSessionId;
+		if (session_entry->pLimMlmJoinReq) {
+			qdf_mem_free(session_entry->pLimMlmJoinReq);
+			session_entry->pLimMlmJoinReq = NULL;
+		}
+		lim_post_sme_message(mac_ctx, LIM_MLM_JOIN_CNF,
+				(uint32_t *) &mlm_join_cnf);
+		return;
+	}
+
 	/* Update Beacon Interval at CFG database */
 
 	if (beacon_probe_rsp->HTCaps.present)

@@ -304,9 +304,12 @@ static int hdd_fill_ipv6_uc_addr(struct inet6_dev *idev,
 	struct list_head *p;
 	uint32_t scope;
 
+	read_lock_bh(&idev->lock);
 	list_for_each(p, &idev->addr_list) {
-		if (*count >= SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA)
+		if (*count >= SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA) {
+			read_unlock_bh(&idev->lock);
 			return -EINVAL;
+		}
 		ifa = list_entry(p, struct inet6_ifaddr, if_list);
 		if (ifa->flags & IFA_F_DADFAILED)
 			continue;
@@ -326,6 +329,8 @@ static int hdd_fill_ipv6_uc_addr(struct inet6_dev *idev,
 			hdd_err("The Scope %d is not supported", scope);
 		}
 	}
+
+	read_unlock_bh(&idev->lock);
 	return 0;
 }
 
@@ -347,9 +352,12 @@ static int hdd_fill_ipv6_ac_addr(struct inet6_dev *idev,
 	struct ifacaddr6 *ifaca;
 	uint32_t scope;
 
+	read_lock_bh(&idev->lock);
 	for (ifaca = idev->ac_list; ifaca; ifaca = ifaca->aca_next) {
-		if (*count >= SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA)
+		if (*count >= SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA) {
+			read_unlock_bh(&idev->lock);
 			return -EINVAL;
+		}
 		/* For anycast addr no DAD */
 		scope = ipv6_addr_src_scope(&ifaca->aca_addr);
 		switch (scope) {
@@ -367,6 +375,8 @@ static int hdd_fill_ipv6_ac_addr(struct inet6_dev *idev,
 			hdd_err("The Scope %d is not supported", scope);
 		}
 	}
+
+	read_unlock_bh(&idev->lock);
 	return 0;
 }
 
@@ -1423,6 +1433,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	v_CONTEXT_t p_cds_context = NULL;
 	hdd_context_t *pHddCtx;
 	p_cds_sched_context cds_sched_context = NULL;
+	QDF_STATUS qdf_status;
 
 	hdd_alert("WLAN driver shutting down!");
 
@@ -1443,8 +1454,6 @@ QDF_STATUS hdd_wlan_shutdown(void)
 		hdd_alert("HDD context is Null");
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	cds_set_recovery_in_progress(true);
 
 	cds_clear_concurrent_session_count();
 	hdd_cleanup_scan_queue(pHddCtx);
@@ -1471,8 +1480,16 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	}
 #endif
 
+	qdf_status = cds_sched_close(p_cds_context);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		hdd_err("Failed to close CDS Scheduler");
+		QDF_ASSERT(false);
+	}
+
+	hdd_bus_bandwidth_destroy(pHddCtx);
+
 	wlansap_global_deinit();
-	hdd_wlan_stop_modules(pHddCtx, true);
+	hdd_wlan_stop_modules(pHddCtx);
 
 	hdd_lpass_notify_stop(pHddCtx);
 
@@ -1532,6 +1549,8 @@ QDF_STATUS hdd_wlan_re_init(void)
 	if (pHddCtx->config->enable_dp_trace)
 		qdf_dp_trace_init();
 
+	hdd_bus_bandwidth_init(pHddCtx);
+
 	ret = hdd_wlan_start_modules(pHddCtx, pAdapter, true);
 	if (ret) {
 		hdd_err("Failed to start wlan after error");
@@ -1548,7 +1567,6 @@ QDF_STATUS hdd_wlan_re_init(void)
 
 	pHddCtx->hdd_mcastbcast_filter_set = false;
 	pHddCtx->btCoexModeSet = false;
-	hdd_ssr_timer_del();
 
 	wlan_hdd_send_svc_nlink_msg(pHddCtx->radio_index,
 				WLAN_SVC_FW_CRASHED_IND, NULL, 0);
@@ -1574,7 +1592,7 @@ QDF_STATUS hdd_wlan_re_init(void)
 	goto success;
 
 err_cds_disable:
-	hdd_wlan_stop_modules(pHddCtx, true);
+	hdd_wlan_stop_modules(pHddCtx);
 
 err_wiphy_unregister:
 	if (pHddCtx) {
@@ -1599,6 +1617,7 @@ err_re_init:
 	return -EPERM;
 
 success:
+	hdd_ssr_timer_del();
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -2043,6 +2062,48 @@ int wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 }
 
 /**
+ * hdd_stop_dhcp_ind() - API to stop DHCP sequence
+ * @adapter: Adapter on which DHCP needs to be stopped
+ *
+ * Release the wakelock held for DHCP process and allow
+ * the runtime pm to continue
+ *
+ * Return: None
+ */
+static void hdd_stop_dhcp_ind(hdd_adapter_t *adapter)
+{
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	hdd_warn("DHCP stop indicated through power save");
+	sme_dhcp_stop_ind(hdd_ctx->hHal, adapter->device_mode,
+			  adapter->macAddressCurrent.bytes,
+			  adapter->sessionId);
+	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DHCP);
+	qdf_runtime_pm_allow_suspend(adapter->connect_rpm_ctx.connect);
+}
+
+/**
+ * hdd_start_dhcp_ind() - API to start DHCP sequence
+ * @adapter: Adapter on which DHCP needs to be stopped
+ *
+ * Prevent APPS suspend and the runtime suspend during
+ * DHCP sequence
+ *
+ * Return: None
+ */
+static void hdd_start_dhcp_ind(hdd_adapter_t *adapter)
+{
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	hdd_err("DHCP start indicated through power save");
+	qdf_runtime_pm_prevent_suspend(adapter->connect_rpm_ctx.connect);
+	hdd_prevent_suspend_timeout(1000, WIFI_POWER_EVENT_WAKELOCK_DHCP);
+	sme_dhcp_start_ind(hdd_ctx->hHal, adapter->device_mode,
+			   adapter->macAddressCurrent.bytes,
+			   adapter->sessionId);
+}
+
+/**
  * __wlan_hdd_cfg80211_set_power_mgmt() - set cfg80211 power management config
  * @wiphy: Pointer to wiphy
  * @dev: Pointer to network device
@@ -2108,20 +2169,8 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 
 	status = wlan_hdd_set_powersave(pAdapter, allow_power_save, timeout);
 
-	if (allow_power_save) {
-		hdd_warn("DHCP stop indicated through power save");
-		sme_dhcp_stop_ind(pHddCtx->hHal, pAdapter->device_mode,
-				  pAdapter->macAddressCurrent.bytes,
-				  pAdapter->sessionId);
-		hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DHCP);
-	} else {
-		hdd_err("DHCP start indicated through power save");
-		hdd_prevent_suspend_timeout(1000,
-					    WIFI_POWER_EVENT_WAKELOCK_DHCP);
-		sme_dhcp_start_ind(pHddCtx->hHal, pAdapter->device_mode,
-				   pAdapter->macAddressCurrent.bytes,
-				   pAdapter->sessionId);
-	}
+	allow_power_save ? hdd_stop_dhcp_ind(pAdapter) :
+		hdd_start_dhcp_ind(pAdapter);
 
 	EXIT();
 	return status;

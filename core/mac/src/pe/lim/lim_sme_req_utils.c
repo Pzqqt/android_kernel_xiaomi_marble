@@ -49,6 +49,7 @@
 #include "lim_assoc_utils.h"
 #include "lim_security_utils.h"
 #include "lim_ser_des_utils.h"
+#include "lim_sme_req_utils.h"
 
 /**
  * lim_is_rs_nie_valid_in_sme_req_message()

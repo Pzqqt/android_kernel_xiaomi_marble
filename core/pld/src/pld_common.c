@@ -176,7 +176,7 @@ void pld_del_dev(struct pld_context *pld_context,
  *
  * Return: PLD bus type
  */
-enum pld_bus_type pld_get_bus_type(struct device *dev)
+static enum pld_bus_type pld_get_bus_type(struct device *dev)
 {
 	struct pld_context *pld_context;
 	struct dev_node *dev_node;
@@ -1543,4 +1543,34 @@ unsigned int pld_socinfo_get_serial_number(struct device *dev)
 	}
 
 	return ret;
+}
+
+/*
+ * pld_common_get_wlan_mac_address() - API to query MAC address from Platform
+ * Driver
+ * @dev: Device Structure
+ * @num: Pointer to number of MAC address supported
+ *
+ * Platform Driver can have MAC address stored. This API needs to be used
+ * to get those MAC address
+ *
+ * Return: Pointer to the list of MAC address
+ */
+uint8_t *pld_common_get_wlan_mac_address(struct device *dev, uint32_t *num)
+{
+	switch (pld_get_bus_type(dev)) {
+	case PLD_BUS_TYPE_PCIE:
+		return pld_pcie_get_wlan_mac_address(dev, num);
+	case PLD_BUS_TYPE_SDIO:
+		return pld_sdio_get_wlan_mac_address(dev, num);
+	case PLD_BUS_TYPE_USB:
+	case PLD_BUS_TYPE_SNOC:
+		break;
+	default:
+		pr_err("Invalid device type\n");
+		break;
+	}
+
+	*num = 0;
+	return NULL;
 }

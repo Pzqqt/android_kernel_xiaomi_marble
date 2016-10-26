@@ -477,6 +477,10 @@ enum ds_mode {
 		WMA_HW_MODE_SBS_MODE_BITPOS)
 
 
+#define WMA_SCAN_END_EVENT	(WMI_SCAN_EVENT_COMPLETED |	\
+				WMI_SCAN_EVENT_DEQUEUED   |	\
+				WMI_SCAN_EVENT_START_FAILED)
+
 /**
  * struct probeTime_dwellTime - probe time, dwell time map
  * @dwell_time: dwell time
@@ -1010,7 +1014,6 @@ struct wma_txrx_node {
 	vdev_restart_params_t vdev_restart_params;
 	vdev_cli_config_t config;
 	struct scan_param scan_info;
-	struct p2p_scan_param p2p_scan_info;
 	uint32_t type;
 	uint32_t sub_type;
 #ifdef FEATURE_WLAN_SCAN_PNO
@@ -1288,6 +1291,7 @@ struct extended_caps {
  * @target_abi_vers: target firmware version
  * @final_abi_vers: The final ABI version to be used for communicating
  * @target_fw_version: Target f/w build version
+ * @target_fw_vers_ext: Target f/w build version sub id
  * @lpss_support: LPSS feature is supported in target or not
  * @egap_support: Enhanced Green AP support flag
  * @wmi_ready: wmi status flag
@@ -1419,6 +1423,7 @@ typedef struct {
 	wmi_abi_version target_abi_vers;
 	wmi_abi_version final_abi_vers;
 	uint32_t target_fw_version;
+	uint32_t target_fw_vers_ext;
 #ifdef WLAN_FEATURE_LPSS
 	uint8_t lpss_support;
 #endif
@@ -1536,6 +1541,7 @@ typedef struct {
 	uint32_t new_hw_mode_index;
 	struct extended_caps phy_caps;
 	qdf_atomic_t scan_id_counter;
+	qdf_atomic_t num_pending_scans;
 	wma_peer_authorized_fp peer_authorized_cb;
 	uint32_t wow_pno_match_wake_up_count;
 	uint32_t wow_pno_complete_wake_up_count;
@@ -1576,7 +1582,6 @@ typedef struct {
 	 * the serialized MC thread context with a timer.
 	 */
 	qdf_mc_timer_t service_ready_ext_timer;
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	void (*csr_roam_synch_cb)(tpAniSirGlobal mac,
 		roam_offload_synch_ind *roam_synch_data,
 		tpSirBssDescription  bss_desc_ptr,
@@ -1584,7 +1589,6 @@ typedef struct {
 	QDF_STATUS (*pe_roam_synch_cb)(tpAniSirGlobal mac,
 		roam_offload_synch_ind *roam_synch_data,
 		tpSirBssDescription  bss_desc_ptr);
-#endif
 	qdf_wake_lock_t wmi_cmd_rsp_wake_lock;
 	qdf_runtime_lock_t wmi_cmd_rsp_runtime_lock;
 	qdf_runtime_lock_t wma_runtime_resume_lock;

@@ -62,6 +62,7 @@
 #include "ol_rx_fwd.h"
 #include "cdp_txrx_flow_ctrl_legacy.h"
 #include "cdp_txrx_peer_ops.h"
+#include "wlan_hdd_napi.h"
 
 /* These are needed to recognize WPA and RSN suite types */
 #define HDD_WPA_OUI_SIZE 4
@@ -3292,7 +3293,7 @@ roam_roam_connect_status_update_handler(hdd_adapter_t *pAdapter,
 	{
 		hdd_station_ctx_t *pHddStaCtx =
 			WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-		struct station_info staInfo;
+		struct station_info *stainfo;
 
 		hdd_err("IBSS New Peer indication from SME "
 			 "with peerMac " MAC_ADDRESS_STR " BSSID: "
@@ -3322,13 +3323,18 @@ roam_roam_connect_status_update_handler(hdd_adapter_t *pAdapter,
 				qdf_status, qdf_status);
 		}
 		pHddStaCtx->ibss_sta_generation++;
-		memset(&staInfo, 0, sizeof(staInfo));
-		staInfo.filled = 0;
-		staInfo.generation = pHddStaCtx->ibss_sta_generation;
+		stainfo = qdf_mem_malloc(sizeof(*stainfo));
+		if (stainfo == NULL) {
+			hdd_err("memory allocation for station_info failed");
+			return QDF_STATUS_E_NOMEM;
+		}
+		stainfo->filled = 0;
+		stainfo->generation = pHddStaCtx->ibss_sta_generation;
 
 		cfg80211_new_sta(pAdapter->dev,
 				 (const u8 *)pRoamInfo->peerMac.bytes,
-				 &staInfo, GFP_KERNEL);
+				 stainfo, GFP_KERNEL);
+		qdf_mem_free(stainfo);
 
 		if (eCSR_ENCRYPT_TYPE_WEP40_STATICKEY ==
 		    pHddStaCtx->ibss_enc_key.encType
@@ -4596,6 +4602,8 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		 * after reassoc.
 		 */
 		hdd_info("Disabling queues");
+		hdd_info("Roam Synch Ind: NAPI Serialize ON");
+		hdd_napi_serialize(1);
 		wlan_hdd_netif_queue_control(pAdapter,
 				WLAN_NETIF_TX_DISABLE,
 				WLAN_CONTROL_PATH);
@@ -4607,6 +4615,10 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		pHddStaCtx->hdd_ReassocScenario = true;
 		hdd_info("hdd_ReassocScenario set to: %d, due to eCSR_ROAM_FT_START, session: %d",
 			 pHddStaCtx->hdd_ReassocScenario, pAdapter->sessionId);
+		break;
+	case eCSR_ROAM_NAPI_OFF:
+		hdd_info("After Roam Synch Comp: NAPI Serialize OFF");
+		hdd_napi_serialize(0);
 		break;
 	case eCSR_ROAM_SHOULD_ROAM:
 		/* notify apps that we can't pass traffic anymore */
@@ -4892,11 +4904,13 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		wlan_hdd_netif_queue_control(pAdapter,
 				WLAN_NETIF_TX_DISABLE,
 				WLAN_CONTROL_PATH);
+		hdd_napi_serialize(1);
 		cds_set_connection_in_progress(true);
 		cds_restart_opportunistic_timer(true);
 		break;
 	case eCSR_ROAM_ABORT:
 		hdd_info("Firmware aborted roaming operation, previous connection is still valid");
+		hdd_napi_serialize(0);
 		wlan_hdd_netif_queue_control(pAdapter,
 				WLAN_WAKE_ALL_NETIF_QUEUE,
 				WLAN_CONTROL_PATH);

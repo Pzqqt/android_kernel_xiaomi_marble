@@ -267,6 +267,7 @@ int hdd_napi_event(enum qca_napi_event event, void *data)
  * Return: 0 : no action taken, or action return code
  *         !0: error, or action error code
  */
+static int napi_tput_policy_delay;
 int hdd_napi_apply_throughput_policy(struct hdd_context_s *hddctx,
 				     uint64_t              tx_packets,
 				     uint64_t              rx_packets)
@@ -275,9 +276,22 @@ int hdd_napi_apply_throughput_policy(struct hdd_context_s *hddctx,
 	uint64_t packets = tx_packets + rx_packets;
 	enum qca_napi_tput_state req_state;
 	struct qca_napi_data *napid = hdd_napi_get_all();
-	int    enabled;
+	int enabled = 0;
 
 	NAPI_DEBUG("-->%s(tx=%lld, rx=%lld)", __func__, tx_packets, rx_packets);
+
+	if (unlikely(napi_tput_policy_delay < 0))
+		napi_tput_policy_delay = 0;
+	if (napi_tput_policy_delay > 0) {
+		NAPI_DEBUG("%s: delaying policy; delay-count=%d",
+			  __func__, napi_tput_policy_delay);
+		napi_tput_policy_delay--;
+
+		/* make sure the next timer call calls us */
+		hddctx->cur_vote_level = -1;
+
+		return rc;
+	}
 
 	if ((napid != NULL) &&
 	    (enabled = hdd_napi_enabled(HDD_NAPI_ANY))) {
@@ -295,7 +309,47 @@ int hdd_napi_apply_throughput_policy(struct hdd_context_s *hddctx,
 	}
 	return rc;
 }
-#endif
+
+/**
+ * hdd_napi_serialize() - serialize all NAPI activities
+ * @is_on: 1="serialize" or 0="de-serialize"
+ *
+ * Start/stop "serial-NAPI-mode".
+ * NAPI serial mode describes a state where all NAPI operations are forced to be
+ * run serially. This is achieved by ensuring all NAPI instances are run on the
+ * same CPU, so forced to be serial.
+ * NAPI life-cycle:
+ * - Interrupt is received for a given CE.
+ * - In the ISR, the interrupt is masked and corresponding NAPI instance
+ *   is scheduled, to be run as a bottom-half.
+ * - Bottom-half starts with a poll call (by the net_rx softirq). There may be
+ *   one of more subsequent calls until the work is complete.
+ * - Once the work is complete, the poll handler enables the interrupt and
+ *   the cycle re-starts.
+ *
+ * Return: <0: error-code (operation failed)
+ *         =0: success
+ *         >0: status (not used)
+ */
+int hdd_napi_serialize(int is_on)
+{
+	int rc;
+	hdd_context_t *hdd_ctx;
+#define POLICY_DELAY_FACTOR (1)
+	rc = hif_napi_serialize(cds_get_context(QDF_MODULE_ID_HIF), is_on);
+	if ((rc == 0) && (is_on == 0)) {
+		/* apply throughput policy after one timeout */
+		napi_tput_policy_delay = POLICY_DELAY_FACTOR;
+
+		/* make sure that bus_bandwidth trigger is executed */
+		hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+		if (hdd_ctx != NULL)
+			hdd_ctx->cur_vote_level = -1;
+
+	}
+	return rc;
+}
+#endif /* HELIUMPLUS */
 
 /**
  * hdd_napi_poll() - NAPI poll function

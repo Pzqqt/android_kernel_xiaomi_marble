@@ -467,7 +467,6 @@
 #define WMA_ADD_BCN_FILTER_CMDID             SIR_HAL_ADD_BCN_FILTER_CMDID
 #define WMA_REMOVE_BCN_FILTER_CMDID          SIR_HAL_REMOVE_BCN_FILTER_CMDID
 #define WMA_SET_ADAPT_DWELLTIME_CONF_PARAMS  SIR_HAL_SET_ADAPT_DWELLTIME_PARAMS
-#define WMA_SET_CTS2SELF_FOR_STA             SIR_HAL_SET_CTS2SELF_FOR_STA
 
 #define WDA_BPF_GET_CAPABILITIES_REQ         SIR_HAL_BPF_GET_CAPABILITIES_REQ
 #define WDA_BPF_SET_INSTRUCTIONS_REQ         SIR_HAL_BPF_SET_INSTRUCTIONS_REQ
@@ -710,8 +709,8 @@ QDF_STATUS wma_register_mgmt_frm_client(void *p_cds_gctx,
 				wma_mgmt_frame_rx_callback mgmt_rx_cb);
 
 QDF_STATUS wma_de_register_mgmt_frm_client(void *p_cds_gctx);
-QDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
+QDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
 		void (*csr_roam_synch_cb)(tpAniSirGlobal mac,
 			roam_offload_synch_ind *roam_synch_data,
 			tpSirBssDescription  bss_desc_ptr,

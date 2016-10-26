@@ -203,6 +203,7 @@ enum sir_roam_op_code {
 	SIR_ROAMING_START,
 	SIR_ROAMING_ABORT,
 	SIR_ROAM_SYNCH_COMPLETE,
+	SIR_ROAM_SYNCH_NAPI_OFF,
 };
 /**
  * Module ID definitions.
@@ -2506,9 +2507,11 @@ typedef struct sSirUpdateAPWPSIEsReq {
 /*
  * enum sir_update_session_param_type - session param type
  * @SIR_PARAM_SSID_HIDDEN: ssidHidden parameter
+ * @SIR_PARAM_IGNORE_ASSOC_DISALLOWED: ignore_assoc_disallowed parameter
  */
 enum sir_update_session_param_type {
 	SIR_PARAM_SSID_HIDDEN,
+	SIR_PARAM_IGNORE_ASSOC_DISALLOWED,
 };
 
 /*
@@ -4699,29 +4702,45 @@ typedef struct {
 	uint32_t   buckets_scanned;
 } tSirExtScanOnScanEventIndParams, *tpSirExtScanOnScanEventIndParams;
 
+#define MAX_EPNO_NETWORKS 64
+
 /**
  * struct wifi_epno_network - enhanced pno network block
  * @ssid: ssid
- * @rssi_threshold: threshold for considering this SSID as found, required
- *		    granularity for this threshold is 4dBm to 8dBm
  * @flags: WIFI_PNO_FLAG_XXX
  * @auth_bit_field: auth bit field for matching WPA IE
  */
 struct wifi_epno_network {
 	tSirMacSSid  ssid;
-	int8_t       rssi_threshold;
 	uint8_t      flags;
 	uint8_t      auth_bit_field;
 };
 
 /**
  * struct wifi_epno_params - enhanced pno network params
+ * @request_id: request id number
+ * @session_id: session_id number
+ * @min_5ghz_rssi: minimum 5GHz RSSI for a BSSID to be considered
+ * @min_24ghz_rssi: minimum 2.4GHz RSSI for a BSSID to be considered
+ * @initial_score_max: maximum score that a network can have before bonuses
+ * @current_connection_bonus: only report when there is a network's score this
+ *    much higher than the current connection
+ * @same_network_bonus: score bonus for all n/w with the same network flag
+ * @secure_bonus: score bonus for networks that are not open
+ * @band_5ghz_bonus: 5GHz RSSI score bonus (applied to all 5GHz networks)
  * @num_networks: number of ssids
- * @networks: PNO networks
+ * @networks: EPNO networks
  */
 struct wifi_epno_params {
 	uint32_t    request_id;
 	uint32_t    session_id;
+	uint32_t    min_5ghz_rssi;
+	uint32_t    min_24ghz_rssi;
+	uint32_t    initial_score_max;
+	uint32_t    current_connection_bonus;
+	uint32_t    same_network_bonus;
+	uint32_t    secure_bonus;
+	uint32_t    band_5ghz_bonus;
 	uint32_t    num_networks;
 	struct wifi_epno_network networks[];
 };

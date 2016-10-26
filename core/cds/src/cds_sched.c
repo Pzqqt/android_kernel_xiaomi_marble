@@ -505,9 +505,8 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 	spin_lock_bh(&pSchedContext->cds_ol_rx_pkt_freeq_lock);
 	INIT_LIST_HEAD(&pSchedContext->cds_ol_rx_pkt_freeq);
 	spin_unlock_bh(&pSchedContext->cds_ol_rx_pkt_freeq_lock);
-	if (cds_alloc_ol_rx_pkt_freeq(pSchedContext) != QDF_STATUS_SUCCESS) {
-		return QDF_STATUS_E_FAILURE;
-	}
+	if (cds_alloc_ol_rx_pkt_freeq(pSchedContext) != QDF_STATUS_SUCCESS)
+		goto pkt_freeqalloc_failure;
 	register_hotcpu_notifier(&cds_cpu_hotplug_notifier);
 	pSchedContext->cpu_hot_plug_notifier = &cds_cpu_hotplug_notifier;
 	mutex_init(&pSchedContext->affinity_lock);
@@ -572,13 +571,14 @@ OL_RX_THREAD_START_FAILURE:
 #endif
 
 MC_THREAD_START_FAILURE:
-	/* De-initialize all the message queues */
-	cds_sched_deinit_mqs(pSchedContext);
 
 #ifdef QCA_CONFIG_SMP
 	unregister_hotcpu_notifier(&cds_cpu_hotplug_notifier);
 	cds_free_ol_rx_pkt_freeq(gp_cds_sched_context);
+pkt_freeqalloc_failure:
 #endif
+	/* De-initialize all the message queues */
+	cds_sched_deinit_mqs(pSchedContext);
 
 	return QDF_STATUS_E_RESOURCES;
 

@@ -549,7 +549,7 @@ hdd_cfg80211_get_ibss_peer_info(hdd_adapter_t *adapter, uint8_t staIdx)
 }
 
 /* Function header is left blank intentionally */
-QDF_STATUS
+static QDF_STATUS
 hdd_parse_get_ibss_peer_info(uint8_t *pValue, struct qdf_mac_addr *pPeerMacAddr)
 {
 	uint8_t *inPtr = pValue;
@@ -870,12 +870,6 @@ void hdd_wma_send_fastreassoc_cmd(int sessionId, const tSirMacAddr bssid,
 		hdd_err("Not able to post ROAM_INVOKE_CMD message to WMA");
 	}
 }
-#else
-void hdd_wma_send_fastreassoc_cmd(int sessionId, const tSirMacAddr bssid,
-				  int channel)
-{
-}
-
 #endif
 
 /**
@@ -1071,16 +1065,15 @@ static int hdd_parse_reassoc(hdd_adapter_t *adapter, const char *command)
 static int
 hdd_sendactionframe(hdd_adapter_t *adapter, const uint8_t *bssid,
 		    const uint8_t channel, const uint8_t dwell_time,
-		    const uint8_t payload_len, const uint8_t *payload)
+		    const int payload_len, const uint8_t *payload)
 {
 	struct ieee80211_channel chan;
-	uint8_t frame_len;
+	int frame_len, ret = 0;
 	uint8_t *frame;
 	struct ieee80211_hdr_3addr *hdr;
 	u64 cookie;
 	hdd_station_ctx_t *pHddStaCtx;
 	hdd_context_t *hdd_ctx;
-	int ret = 0;
 	tpSirMacVendorSpecificFrameHdr pVendorSpecific =
 		(tpSirMacVendorSpecificFrameHdr) payload;
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
@@ -1259,29 +1252,42 @@ hdd_parse_sendactionframe_v1(hdd_adapter_t *adapter, const char *command)
  * Return: 0 for success non-zero for failure
  */
 static int
-hdd_parse_sendactionframe_v2(hdd_adapter_t *adapter, const char *command)
+hdd_parse_sendactionframe_v2(hdd_adapter_t *adapter,
+			     const char *command, int total_len)
 {
 	struct android_wifi_af_params *params;
 	tSirMacAddr bssid;
 	int ret;
 
-	/* params are large so keep off the stack */
-	params = kmalloc(sizeof(*params), GFP_KERNEL);
-	if (!params)
-		return -ENOMEM;
-
 	/* The params are located after "SENDACTIONFRAME " */
-	memcpy(params, command + 16, sizeof(*params));
+	total_len -= 16;
+	params = (struct android_wifi_af_params *)(command + 16);
 
-	if (!mac_pton(params->bssid, (u8 *) &bssid)) {
-		hdd_err("MAC address parsing failed");
-		ret = -EINVAL;
-	} else {
-		ret = hdd_sendactionframe(adapter, bssid, params->channel,
-					  params->dwell_time, params->len,
-					  params->data);
+	if (params->len <= 0 || params->len > ANDROID_WIFI_ACTION_FRAME_SIZE ||
+		(params->len > total_len)) {
+		hdd_err("Invalid payload length: %d", params->len);
+		return -EINVAL;
 	}
-	kfree(params);
+
+	if (!mac_pton(params->bssid, (u8 *)&bssid)) {
+		hdd_err("MAC address parsing failed");
+		return -EINVAL;
+	}
+
+	if (params->channel < 0 ||
+	    params->channel > WNI_CFG_CURRENT_CHANNEL_STAMAX) {
+		hdd_err("Invalid channel: %d", params->channel);
+		return -EINVAL;
+	}
+
+	if (params->dwell_time < 0) {
+		hdd_err("Invalid dwell_time: %d", params->dwell_time);
+		return -EINVAL;
+	}
+
+	ret = hdd_sendactionframe(adapter, bssid, params->channel,
+				params->dwell_time, params->len, params->data);
+
 	return ret;
 }
 
@@ -1300,7 +1306,8 @@ hdd_parse_sendactionframe_v2(hdd_adapter_t *adapter, const char *command)
  * Return: 0 for success non-zero for failure
  */
 static int
-hdd_parse_sendactionframe(hdd_adapter_t *adapter, const char *command)
+hdd_parse_sendactionframe(hdd_adapter_t *adapter, const char *command,
+			  int total_len)
 {
 	int ret;
 
@@ -1317,11 +1324,18 @@ hdd_parse_sendactionframe(hdd_adapter_t *adapter, const char *command)
 	 * SENDACTIONFRAME xx:xx:xx:xx:xx:xx*
 	 *           111111111122222222223333
 	 * 0123456789012345678901234567890123
+	 * For both the commands, a valid command must have atleast
+	 * first 34 length of data.
 	 */
+	if (total_len < 34) {
+		hdd_err("Invalid command (total_len=%d)", total_len);
+		return -EINVAL;
+	}
+
 	if (command[33]) {
 		ret = hdd_parse_sendactionframe_v1(adapter, command);
 	} else {
-		ret = hdd_parse_sendactionframe_v2(adapter, command);
+		ret = hdd_parse_sendactionframe_v2(adapter, command, total_len);
 	}
 
 	return ret;
@@ -1627,7 +1641,7 @@ hdd_parse_set_roam_scan_channels(hdd_adapter_t *adapter, const char *command)
  *
  * Return: 0 for success non-zero for failure
  */
-QDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
+static QDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 {
 	uint8_t *cmdPtr = NULL;
 	int count, content = 0, ret = 0;
@@ -1863,8 +1877,9 @@ QDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 		if (content < 0)
 			return QDF_STATUS_E_FAILURE;
 
+		content = QDF_MIN(content, WNI_CFG_VALID_CHANNEL_LIST_LEN);
 		pPlmRequest->plmNumCh = content;
-		hdd_debug("numch %d", pPlmRequest->plmNumCh);
+		hdd_debug("numch: %d", pPlmRequest->plmNumCh);
 
 		/* Channel numbers */
 		for (count = 0; count < pPlmRequest->plmNumCh; count++) {
@@ -1883,10 +1898,8 @@ QDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 				return QDF_STATUS_E_FAILURE;
 
 			ret = kstrtos32(buf, 10, &content);
-			if (ret < 0)
-				return QDF_STATUS_E_FAILURE;
-
-			if (content <= 0)
+			if (ret < 0 || content <= 0 ||
+			    content > WNI_CFG_CURRENT_CHANNEL_STAMAX)
 				return QDF_STATUS_E_FAILURE;
 
 			pPlmRequest->plmChList[count] = content;
@@ -3709,7 +3722,8 @@ static int drv_cmd_send_action_frame(hdd_adapter_t *adapter,
 				     uint8_t command_len,
 				     hdd_priv_data_t *priv_data)
 {
-	return hdd_parse_sendactionframe(adapter, command);
+	return hdd_parse_sendactionframe(adapter, command,
+					 priv_data->total_len);
 }
 
 static int drv_cmd_get_roam_scan_channel_min_time(hdd_adapter_t *adapter,
@@ -6435,7 +6449,7 @@ static int hdd_set_rx_filter(hdd_adapter_t *adapter, bool action,
 			uint8_t pattern)
 {
 	int ret;
-	uint8_t i;
+	uint8_t i, j;
 	tHalHandle handle;
 	tSirRcvFltMcAddrList *filter;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -6473,19 +6487,21 @@ static int hdd_set_rx_filter(hdd_adapter_t *adapter, bool action,
 			return -ENOMEM;
 		}
 		filter->action = action;
-		for (i = 0; i < adapter->mc_addr_list.mc_cnt; i++) {
+		for (i = 0, j = 0; i < adapter->mc_addr_list.mc_cnt; i++) {
 			if (!memcmp(adapter->mc_addr_list.addr[i],
 				&pattern, 1)) {
-				memcpy(filter->multicastAddr[i].bytes,
+				memcpy(filter->multicastAddr[j].bytes,
 					adapter->mc_addr_list.addr[i],
 					sizeof(adapter->mc_addr_list.addr[i]));
-				filter->ulMulticastAddrCnt++;
+
 				hdd_info("%s RX filter : addr ="
 				    MAC_ADDRESS_STR,
 				    action ? "setting" : "clearing",
-				    MAC_ADDR_ARRAY(filter->multicastAddr[i].bytes));
+				    MAC_ADDR_ARRAY(filter->multicastAddr[j].bytes));
+				j++;
 			}
 		}
+		filter->ulMulticastAddrCnt = j;
 		/* Set rx filter */
 		sme_8023_multicast_list(handle, adapter->sessionId, filter);
 		qdf_mem_free(filter);

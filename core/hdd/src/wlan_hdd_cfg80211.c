@@ -1486,6 +1486,11 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	else
 		vht_enabled = 0;
 
+	if (hdd_ctx->config->sap_force_11n_for_11ac) {
+		vht_enabled = 0;
+		hdd_log(LOG1, FL("VHT is Disabled in ACS"));
+	}
+
 	if (tb[QCA_WLAN_VENDOR_ATTR_ACS_CHWIDTH]) {
 		ch_width = nla_get_u16(tb[QCA_WLAN_VENDOR_ATTR_ACS_CHWIDTH]);
 	} else {
@@ -1494,6 +1499,15 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		else
 			ch_width = 20;
 	}
+
+	/* this may be possible, when sap_force_11n_for_11ac is set */
+	if ((ch_width == 80 || ch_width == 160) && !vht_enabled) {
+		if (ht_enabled && ht40_enabled)
+			ch_width = 40;
+		else
+			ch_width = 20;
+	}
+
 	if (ch_width == 80)
 		sap_config->acs_cfg.ch_width = CH_WIDTH_80MHZ;
 	else if (ch_width == 40)
@@ -1557,7 +1571,8 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		hdd_err("Get PCL failed");
 
 	/* ACS override for android */
-	if (hdd_ctx->config->sap_p2p_11ac_override && ht_enabled) {
+	if (hdd_ctx->config->sap_p2p_11ac_override && ht_enabled &&
+	    !hdd_ctx->config->sap_force_11n_for_11ac) {
 		hdd_notice("ACS Config override for 11AC");
 		vht_enabled = 1;
 		sap_config->acs_cfg.hw_mode = eCSR_DOT11_MODE_11ac;
@@ -1800,7 +1815,7 @@ __wlan_hdd_cfg80211_get_supported_features(struct wiphy *wiphy,
 	uint32_t fset = 0;
 	int ret;
 
-	ENTER_DEV(wdev->netdev);
+	/* ENTER_DEV() intentionally not used in a frequently invoked API */
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -1888,7 +1903,6 @@ __wlan_hdd_cfg80211_get_supported_features(struct wiphy *wiphy,
 		goto nla_put_failure;
 	}
 	ret = cfg80211_vendor_cmd_reply(skb);
-	EXIT();
 	return ret;
 nla_put_failure:
 	kfree_skb(skb);
@@ -3600,7 +3614,7 @@ __wlan_hdd_cfg80211_get_wifi_info(struct wiphy *wiphy,
 			goto error_nla_fail;
 	}
 
-	if (tb_vendor[QCA_WLAN_VENDOR_ATTR_WIFI_INFO_DRIVER_VERSION]) {
+	if (tb_vendor[QCA_WLAN_VENDOR_ATTR_WIFI_INFO_FIRMWARE_VERSION]) {
 		if (nla_put_string(reply_skb,
 			    QCA_WLAN_VENDOR_ATTR_WIFI_INFO_FIRMWARE_VERSION,
 			    firmware_version))
@@ -4058,16 +4072,16 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		if (access_policy == QCA_ACCESS_POLICY_DENY_UNLESS_LISTED) {
 			access_policy =
 				WLAN_HDD_VENDOR_IE_ACCESS_ALLOW_IF_LISTED;
-	} else {
+		} else {
 			access_policy = WLAN_HDD_VENDOR_IE_ACCESS_NONE;
-	}
+		}
 
-	hdd_info("calling sme_update_access_policy_vendor_ie");
-	status = sme_update_access_policy_vendor_ie(hdd_ctx->hHal,
-			adapter->sessionId, &vendor_ie[0],
-			access_policy);
-	if (QDF_STATUS_SUCCESS != status) {
-		hdd_info("Failed to set vendor ie and access policy.");
+		hdd_info("calling sme_update_access_policy_vendor_ie");
+		status = sme_update_access_policy_vendor_ie(hdd_ctx->hHal,
+				adapter->sessionId, &vendor_ie[0],
+				access_policy);
+		if (QDF_STATUS_SUCCESS != status) {
+			hdd_info("Failed to set vendor ie and access policy.");
 			return -EINVAL;
 		}
 	}
@@ -4139,6 +4153,26 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 				request.rx_aggregation_size);
 			ret_val = -EINVAL;
 		}
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_IGNORE_ASSOC_DISALLOWED]) {
+		uint8_t ignore_assoc_disallowed;
+
+		ignore_assoc_disallowed
+			= nla_get_u8(tb[
+			QCA_WLAN_VENDOR_ATTR_CONFIG_IGNORE_ASSOC_DISALLOWED]);
+		hdd_info("Set ignore_assoc_disallowed value - %d",
+					ignore_assoc_disallowed);
+		if ((ignore_assoc_disallowed <
+			QCA_IGNORE_ASSOC_DISALLOWED_DISABLE) ||
+			(ignore_assoc_disallowed >
+				QCA_IGNORE_ASSOC_DISALLOWED_ENABLE))
+			return -EPERM;
+
+		sme_update_session_param(hdd_ctx->hHal,
+					adapter->sessionId,
+					SIR_PARAM_IGNORE_ASSOC_DISALLOWED,
+					ignore_assoc_disallowed);
 	}
 
 	return ret_val;
@@ -7617,7 +7651,7 @@ static int wlan_hdd_cfg80211_get_wakelock_stats(struct wiphy *wiphy,
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_cfg80211_get_wakelock_stats(wiphy, wdev, data,
 								data_len);
-	cds_ssr_protect(__func__);
+	cds_ssr_unprotect(__func__);
 
 	return ret;
 }
@@ -11147,6 +11181,8 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 	tCsrRoamProfile *pRoamProfile;
 	eCsrAuthType RSNAuthType;
 	tSmeConfigParams *sme_config;
+	uint8_t channel = 0;
+	struct sir_hw_mode_params hw_mode;
 
 	ENTER();
 
@@ -11417,6 +11453,8 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 			hdd_conn_set_connection_state(pAdapter,
 			eConnectionState_Connecting);
 
+		qdf_runtime_pm_prevent_suspend(pAdapter->connect_rpm_ctx.
+					       connect);
 		status = sme_roam_connect(WLAN_HDD_GET_HAL_CTX(pAdapter),
 					  pAdapter->sessionId, pRoamProfile,
 					  &roamId);
@@ -11430,10 +11468,27 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 			/* change back to NotAssociated */
 			hdd_conn_set_connection_state(pAdapter,
 						      eConnectionState_NotConnected);
+			qdf_runtime_pm_allow_suspend(pAdapter->connect_rpm_ctx.
+						     connect);
 		}
 
 		pRoamProfile->ChannelInfo.ChannelList = NULL;
 		pRoamProfile->ChannelInfo.numOfChannels = 0;
+
+		if (!QDF_IS_STATUS_SUCCESS(
+				wma_get_current_hw_mode(&hw_mode))) {
+			hdd_err("wma_get_current_hw_mode failed");
+			return status;
+		}
+
+		if ((QDF_STA_MODE == pAdapter->device_mode)
+		    && hw_mode.dbs_cap) {
+			cds_get_channel_from_scan_result(pAdapter,
+					pRoamProfile, &channel);
+			if (channel)
+				cds_checkn_update_hw_mode_single_mac_mode
+					(channel);
+		}
 
 	} else {
 		hdd_err("No valid Roam profile");
@@ -14438,7 +14493,7 @@ __wlan_hdd_cfg80211_set_ap_channel_width(struct wiphy *wiphy,
 	hdd_context_t *pHddCtx;
 	QDF_STATUS status;
 	tSmeConfigParams sme_config;
-	bool cbModeChange;
+	bool cbModeChange = false;
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");

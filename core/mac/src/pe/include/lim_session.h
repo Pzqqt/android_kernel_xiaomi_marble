@@ -484,6 +484,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	uint8_t beacon_tx_rate;
 	uint8_t *access_policy_vendor_ie;
 	uint8_t access_policy;
+	bool ignore_assoc_disallowed;
 } tPESession, *tpPESession;
 
 /*-------------------------------------------------------------------------

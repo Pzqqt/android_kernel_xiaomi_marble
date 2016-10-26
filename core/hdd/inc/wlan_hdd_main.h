@@ -854,8 +854,29 @@ struct hdd_chan_change_params {
 	struct ch_params_s chan_params;
 };
 
-#define WLAN_HDD_ADAPTER_MAGIC 0x574c414e       /* ASCII "WLAN" */
+/**
+ * struct hdd_runtime_pm_context - context to prevent/allow runtime pm
+ * @scan: scan context to prvent/allow runtime pm
+ *
+ * Prevent Runtime PM for scan
+ */
+struct hdd_runtime_pm_context {
+	qdf_runtime_lock_t scan;
+	qdf_runtime_lock_t roc;
+	qdf_runtime_lock_t dfs;
+};
 
+/**
+ * struct hdd_connect_pm_context - Runtime PM connect context per adapter
+ * @connect: Runtime Connect Context
+ *
+ * Structure to hold runtime pm connect context for each adapter.
+ */
+struct hdd_connect_pm_context {
+	qdf_runtime_lock_t connect;
+};
+
+#define WLAN_HDD_ADAPTER_MAGIC 0x574c414e       /* ASCII "WLAN" */
 
 struct hdd_adapter_s {
 	/* Magic cookie for adapter sanity verification.  Note that this
@@ -1086,6 +1107,7 @@ struct hdd_adapter_s {
 	 * channel needs to be moved from the existing 2.4GHz channel.
 	 */
 	uint8_t pre_cac_chan;
+	struct hdd_connect_pm_context connect_rpm_ctx;
 };
 
 #define WLAN_HDD_GET_STATION_CTX_PTR(pAdapter) (&(pAdapter)->sessionCtx.station)
@@ -1395,6 +1417,7 @@ struct hdd_context_s {
 
 	/* defining the firmware version */
 	uint32_t target_fw_version;
+	uint32_t target_fw_vers_ext;
 	qdf_atomic_t dfs_radar_found;
 
 	/* defining the chip/rom version */
@@ -1527,9 +1550,9 @@ struct hdd_context_s {
 	bool update_mac_addr_to_fw;
 	struct acs_dfs_policy acs_policy;
 	uint16_t wmi_max_len;
-
 	/* counters for failed suspend reasons */
 	uint32_t suspend_fail_stats[SUSPEND_FAIL_MAX_COUNT];
+	struct hdd_runtime_pm_context runtime_context;
 };
 
 /*---------------------------------------------------------------------------
@@ -1619,6 +1642,26 @@ void hdd_checkandupdate_phymode(hdd_context_t *pHddCtx);
 #ifdef MSM_PLATFORM
 void hdd_start_bus_bw_compute_timer(hdd_adapter_t *pAdapter);
 void hdd_stop_bus_bw_compute_timer(hdd_adapter_t *pAdapter);
+
+/**
+ * hdd_bus_bandwidth_init() - Initialize bus bandwidth data structures.
+ * hdd_ctx: HDD context
+ *
+ * Initialize bus bandwidth related data structures like spinlock and timer.
+ *
+ * Return: None.
+ */
+int hdd_bus_bandwidth_init(hdd_context_t *hdd_ctx);
+
+/**
+ * hdd_bus_bandwidth_destroy() - Destroy bus bandwidth data structures.
+ * hdd_ctx: HDD context
+ *
+ * Destroy bus bandwidth related data structures like timer.
+ *
+ * Return: None.
+ */
+void hdd_bus_bandwidth_destroy(hdd_context_t *hdd_ctx);
 #else
 static inline void hdd_start_bus_bw_compute_timer(hdd_adapter_t *pAdapter)
 {
@@ -1626,6 +1669,16 @@ static inline void hdd_start_bus_bw_compute_timer(hdd_adapter_t *pAdapter)
 }
 
 static inline void hdd_stop_bus_bw_computer_timer(hdd_adapter_t *pAdapter)
+{
+	return;
+}
+
+int hdd_bus_bandwidth_init(hdd_context_t *hdd_ctx)
+{
+	return 0;
+}
+
+void hdd_bus_bandwidth_destroy(hdd_context_t *hdd_ctx)
 {
 	return;
 }
@@ -1865,7 +1918,7 @@ int hdd_start_ftm_adapter(hdd_adapter_t *adapter);
 int hdd_set_fw_params(hdd_adapter_t *adapter);
 int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			   bool reinit);
-int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx, bool shutdown);
+int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx);
 int hdd_start_adapter(hdd_adapter_t *adapter);
 void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 			tCsrRoamInfo *roam_info, const u8 *req_ie,

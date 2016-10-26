@@ -2789,9 +2789,8 @@ sir_convert_assoc_req_frame2_struct(tpAniSirGlobal pMac,
 	}
 	if (ar->ExtCap.present) {
 		struct s_ext_cap *ext_cap;
-		qdf_mem_copy(&pAssocReq->ExtCap.bytes, &ar->ExtCap.bytes,
-			     ar->ExtCap.num_bytes);
-
+		qdf_mem_copy(&pAssocReq->ExtCap, &ar->ExtCap,
+			    sizeof(tDot11fIEExtCap));
 		ext_cap = (struct s_ext_cap *)&pAssocReq->ExtCap.bytes;
 		lim_log(pMac, LOG1,
 			FL("timingMeas: %d, finetimingMeas Init: %d, Resp: %d"),
@@ -2995,9 +2994,8 @@ sir_convert_assoc_resp_frame2_struct(tpAniSirGlobal pMac,
 
 	if (ar.ExtCap.present) {
 		struct s_ext_cap *ext_cap;
-		qdf_mem_copy(&pAssocRsp->ExtCap.bytes, &ar.ExtCap.bytes,
-			     ar.ExtCap.num_bytes);
-
+		qdf_mem_copy(&pAssocRsp->ExtCap, &ar.ExtCap,
+			     sizeof(tDot11fIEExtCap));
 		ext_cap = (struct s_ext_cap *)&pAssocRsp->ExtCap.bytes;
 		lim_log(pMac, LOG1,
 			FL("timingMeas: %d, finetimingMeas Init: %d, Resp: %d"),
@@ -3207,9 +3205,8 @@ sir_convert_reassoc_req_frame2_struct(tpAniSirGlobal pMac,
 	}
 	if (ar.ExtCap.present) {
 		struct s_ext_cap *ext_cap;
-		qdf_mem_copy(&pAssocReq->ExtCap.bytes, &ar.ExtCap.bytes,
-			     ar.ExtCap.num_bytes);
-
+		qdf_mem_copy(&pAssocReq->ExtCap, &ar.ExtCap,
+			     sizeof(tDot11fIEExtCap));
 		ext_cap = (struct s_ext_cap *)&pAssocReq->ExtCap.bytes;
 		lim_log(pMac, LOG1,
 			FL("timingMeas: %d, finetimingMeas Init: %d, Resp: %d"),
@@ -3769,7 +3766,6 @@ sir_parse_beacon_ie(tpAniSirGlobal pMac,
 				sizeof(tDot11fIEVHTOperation));
 	}
 	if (pBies->ExtCap.present) {
-		pBeaconStruct->ext_cap.present = 1;
 		qdf_mem_copy(&pBeaconStruct->ext_cap, &pBies->ExtCap,
 				sizeof(tDot11fIEExtCap));
 	}

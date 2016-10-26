@@ -103,7 +103,7 @@ static inline void csr_list_insert_head(tListElem *pHead, tListElem *pEntry)
 }
 
 /* Insert pNewEntry before pEntry */
-void csr_list_insert_entry(tListElem *pEntry, tListElem *pNewEntry)
+static void csr_list_insert_entry(tListElem *pEntry, tListElem *pNewEntry)
 {
 	tListElem *pLast;
 	if (!pEntry) {

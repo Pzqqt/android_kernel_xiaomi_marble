@@ -133,7 +133,7 @@ typedef struct timer_list A_TIMER;
 	 })
 #endif /* wait_event_interruptible_timeout */
 
-#ifdef DEBUG
+#ifdef WLAN_DEBUG
 #ifdef A_SIMOS_DEVHOST
 extern unsigned int panic_on_assert;
 #define A_ASSERT(expr)	\

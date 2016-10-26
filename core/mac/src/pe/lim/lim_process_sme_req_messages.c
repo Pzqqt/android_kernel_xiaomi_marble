@@ -117,8 +117,6 @@ static void lim_process_modify_add_ies(tpAniSirGlobal pMac, uint32_t *pMsg);
 
 static void lim_process_update_add_ies(tpAniSirGlobal pMac, uint32_t *pMsg);
 
-extern void pe_register_callbacks_with_wma(tpAniSirGlobal pMac,
-		tSirSmeReadyReq *ready_req);
 static void lim_process_ext_change_channel(tpAniSirGlobal mac_ctx,
 						uint32_t *msg);
 
@@ -1278,7 +1276,6 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 	len = sizeof(tSirScanOffloadReq) +
 		(pScanReq->channelList.numChannels - 1) +
 		pScanReq->uIEFieldLen;
-
 	if (lim_11h_enable) {
 		addn_ie_len += DOT11F_IE_WFATPC_MAX_LEN + 2;
 		len += DOT11F_IE_WFATPC_MAX_LEN + 2;
@@ -1372,6 +1369,13 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 			((uint8_t *)&wfa_tpc) + 1,
 			DOT11F_IE_WFATPC_MAX_LEN - SIR_MAC_WFA_TPC_OUI_SIZE);
 		pScanOffloadReq->uIEFieldLen += DOT11F_IE_WFATPC_MAX_LEN + 2;
+		if (pScanReq->uIEFieldLen)
+			lim_strip_ie(pMac,
+				(uint8_t *) pScanReq + pScanReq->uIEFieldOffset,
+				&pScanReq->uIEFieldLen,
+				DOT11F_EID_WFATPC, ONE_BYTE,
+				SIR_MAC_WFA_TPC_OUI, SIR_MAC_WFA_TPC_OUI_SIZE,
+				NULL);
 	}
 
 	rc = wma_post_ctrl_msg(pMac, &msg);
@@ -3099,8 +3103,8 @@ end:
  * Return: None
  */
 
-void lim_process_sme_get_assoc_sta_info(tpAniSirGlobal mac_ctx,
-					uint32_t *msg_buf)
+static void lim_process_sme_get_assoc_sta_info(tpAniSirGlobal mac_ctx,
+					       uint32_t *msg_buf)
 {
 	tSirSmeGetAssocSTAsReq get_assoc_stas_req;
 	tpDphHashNode sta_ds = NULL;
@@ -3206,8 +3210,8 @@ lim_assoc_sta_end:
  *
  * Return: None
  */
-void lim_process_sme_get_wpspbc_sessions(tpAniSirGlobal mac_ctx,
-		uint32_t *msg_buf)
+static void lim_process_sme_get_wpspbc_sessions(tpAniSirGlobal mac_ctx,
+						uint32_t *msg_buf)
 {
 	tSirSmeGetWPSPBCSessionsReq get_wps_pbc_sessions_req;
 	tpPESession session_entry = NULL;
@@ -3306,7 +3310,8 @@ static void __lim_counter_measures(tpAniSirGlobal pMac, tpPESession psessionEntr
 					     mac, psessionEntry, false);
 };
 
-void lim_process_tkip_counter_measures(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
+static void lim_process_tkip_counter_measures(tpAniSirGlobal pMac,
+					      uint32_t *pMsgBuf)
 {
 	tSirSmeTkipCntrMeasReq tkipCntrMeasReq;
 	tpPESession psessionEntry;
@@ -3948,7 +3953,8 @@ end:
 			       smesessionId, smetransactionId);
 }
 
-void lim_process_sme_addts_rsp_timeout(tpAniSirGlobal pMac, uint32_t param)
+static void lim_process_sme_addts_rsp_timeout(tpAniSirGlobal pMac,
+					      uint32_t param)
 {
 	/* fetch the sessionEntry based on the sessionId */
 	tpPESession psessionEntry;
@@ -4256,6 +4262,9 @@ static void __lim_process_sme_session_update(tpAniSirGlobal mac_ctx,
 	case SIR_PARAM_SSID_HIDDEN:
 		lim_handle_update_ssid_hidden(mac_ctx, session, msg->param_val);
 		break;
+	case SIR_PARAM_IGNORE_ASSOC_DISALLOWED:
+		session->ignore_assoc_disallowed = msg->param_val;
+		break;
 	default:
 		lim_log(mac_ctx, LOGE, FL("Unknown session param"));
 		break;
@@ -4510,7 +4519,7 @@ static void __lim_process_sme_set_ht2040_mode(tpAniSirGlobal pMac,
  * @return None
  */
 
-void __lim_process_report_message(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
+static void __lim_process_report_message(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
 {
 	switch (pMsg->type) {
 	case eWNI_SME_NEIGHBOR_REPORT_REQ_IND:

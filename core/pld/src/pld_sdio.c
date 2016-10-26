@@ -380,6 +380,5 @@ int pld_sdio_get_fw_files_for_target(struct pld_fw_files *pfw_files,
 
 	return 0;
 }
-
 #endif
 #endif

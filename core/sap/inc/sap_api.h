@@ -953,6 +953,8 @@ QDF_STATUS wlansap_acs_chselect(void *pvos_gctx,
 		tpWLAN_SAPEventCB pacs_event_callback,
 		tsap_Config_t *pconfig,
 		void *pusr_context);
+uint32_t wlansap_get_chan_width(void *cds_ctx);
+
 #ifdef __cplusplus
 }
 #endif

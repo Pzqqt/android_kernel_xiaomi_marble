@@ -512,6 +512,7 @@ typedef enum {
 	eCSR_ROAM_UPDATE_SCAN_RESULT,
 	eCSR_ROAM_START,
 	eCSR_ROAM_ABORT,
+	eCSR_ROAM_NAPI_OFF,
 } eRoamCmdStatus;
 
 /* comment inside indicates what roaming callback gets */
@@ -1467,6 +1468,8 @@ typedef struct sSirSmeAssocIndToUpperLayerCnf {
 } tSirSmeAssocIndToUpperLayerCnf, *tpSirSmeAssocIndToUpperLayerCnf;
 
 typedef struct tagCsrSummaryStatsInfo {
+	uint32_t snr;
+	uint32_t rssi;
 	uint32_t retry_cnt[4];
 	uint32_t multiple_retry_cnt[4];
 	uint32_t tx_frm_cnt[4];

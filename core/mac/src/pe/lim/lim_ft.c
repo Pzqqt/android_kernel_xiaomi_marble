@@ -493,7 +493,6 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 	tSchBeaconStruct *pBeaconStruct;
 	uint32_t selfDot11Mode;
 	ePhyChanBondState cbEnabledMode;
-	QDF_STATUS status;
 
 	pBeaconStruct = qdf_mem_malloc(sizeof(tSchBeaconStruct));
 	if (NULL == pBeaconStruct) {
@@ -679,19 +678,6 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 	pftSessionEntry->encryptType = psessionEntry->encryptType;
 #ifdef WLAN_FEATURE_11W
 	pftSessionEntry->limRmfEnabled = psessionEntry->limRmfEnabled;
-
-	if (pftSessionEntry->limRmfEnabled) {
-		pftSessionEntry->pmfComebackTimerInfo.pMac = pMac;
-		pftSessionEntry->pmfComebackTimerInfo.sessionID =
-				psessionEntry->smeSessionId;
-		status = qdf_mc_timer_init(&pftSessionEntry->pmfComebackTimer,
-			QDF_TIMER_TYPE_SW, lim_pmf_comeback_timer_callback,
-			(void *)&pftSessionEntry->pmfComebackTimerInfo);
-		if (!QDF_IS_STATUS_SUCCESS(status))
-			lim_log(pMac, LOGE,
-				FL("cannot init pmf comeback timer."));
-	}
-
 #endif
 	if ((pftSessionEntry->limRFBand == SIR_BAND_2_4_GHZ) &&
 		(pftSessionEntry->htSupportedChannelWidthSet ==
@@ -861,7 +847,7 @@ bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	return true;
 }
 
-void
+static void
 lim_ft_send_aggr_qos_rsp(tpAniSirGlobal pMac, uint8_t rspReqd,
 			 tpAggrAddTsParams aggrQosRsp, uint8_t smesessionId)
 {

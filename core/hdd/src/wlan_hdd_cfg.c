@@ -3987,6 +3987,13 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_BUG_ON_REINIT_FAILURE_MIN,
 		     CFG_BUG_ON_REINIT_FAILURE_MAX),
 
+	REG_VARIABLE(CFG_SAP_FORCE_11N_FOR_11AC_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, sap_force_11n_for_11ac,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_SAP_FORCE_11N_FOR_11AC_DEFAULT,
+		     CFG_SAP_FORCE_11N_FOR_11AC_MIN,
+		     CFG_SAP_FORCE_11N_FOR_11AC_MAX),
+
 	REG_VARIABLE(CFG_INTERFACE_CHANGE_WAIT_NAME, WLAN_PARAM_Integer,
 			struct hdd_config, iface_change_wait_time,
 			VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
@@ -5698,6 +5705,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_info("Name = [%s] Value = [%s]",
 		CFG_RM_CAPABILITY_NAME,
 		pHddCtx->config->rm_capability);
+	hdd_info("Name = [%s] Value = [%d]",
+		CFG_SAP_FORCE_11N_FOR_11AC_NAME,
+		pHddCtx->config->sap_force_11n_for_11ac);
 	hdd_info("Name = [%s] Value = [%d]",
 		CFG_BPF_PACKET_FILTER_OFFLOAD,
 		pHddCtx->config->bpf_packet_filter_enable);

@@ -89,10 +89,7 @@ typedef enum hdd_wmm_classification {
  *	with QAP and acts accordingly
  * @HDD_WMM_USER_MODE_QBSS_ONLY - SME will add the extra logic to make sure
  *	STA associates with a QAP only
- * @HDD_WMM_USER_MODE_NO_QOS - SME will not join a QoS AP, unless the phy
- *	mode setting says "Auto". In that case, STA is free to join 11n AP.
- *	Although from HDD point of view, it will not be doing any packet
- *	classifications.
+ * @HDD_WMM_USER_MODE_NO_QOS - Join any AP, but uapsd is disabled
  */
 typedef enum hdd_wmm_user_mode {
 	HDD_WMM_USER_MODE_AUTO = 0,

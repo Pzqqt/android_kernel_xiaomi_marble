@@ -246,6 +246,7 @@ endif
 #Enable USB specific APIS
 ifeq ($(CONFIG_ROME_IF),usb)
 	CONFIG_HIF_USB := 1
+	CONFIG_PLD_USB_CNSS := y
 endif
 
 #Enable pci read/write config functions
@@ -970,7 +971,7 @@ endif
 ifeq ($(CONFIG_CNSS_SDIO),y)
 PLD_OBJS +=	$(PLD_SRC_DIR)/pld_sdio.o
 endif
-ifeq ($(CONFIG_USB), y)
+ifeq ($(CONFIG_PLD_USB_CNSS), y)
 PLD_OBJS +=	$(PLD_SRC_DIR)/pld_usb.o
 endif
 
@@ -1167,8 +1168,7 @@ CDEFINES +=	-DWLAN_DEBUG \
 		-DSME_TRACE_RECORD \
 		-DHDD_TRACE_RECORD \
 		-DPE_DEBUG_LOGW \
-		-DPE_DEBUG_LOGE \
-		-DDEBUG
+		-DPE_DEBUG_LOGE
 endif
 
 ifeq ($(CONFIG_SLUB_DEBUG_ON),y)
@@ -1315,7 +1315,8 @@ endif
 #Enable USB specific APIS
 ifeq ($(CONFIG_HIF_USB), 1)
 CDEFINES += -DHIF_USB \
-	    -DCONFIG_HL_SUPPORT
+            -DCONFIG_PLD_USB_CNSS \
+            -DCONFIG_HL_SUPPORT
 endif
 
 #Enable FW logs through ini

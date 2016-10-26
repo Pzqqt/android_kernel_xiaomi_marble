@@ -62,7 +62,7 @@ int epping_cookie_init(epping_context_t *pEpping_ctx)
 		pEpping_ctx->s_cookie_mem[i] =
 			qdf_mem_malloc(sizeof(struct epping_cookie) *
 				       MAX_COOKIE_SLOT_SIZE);
-		if (pEpping_ctx->s_cookie_mem == NULL) {
+		if (pEpping_ctx->s_cookie_mem[i] == NULL) {
 			EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 				   "%s: no mem for cookie (idx = %d)", __func__,
 				   i);

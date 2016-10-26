@@ -79,7 +79,7 @@
  * number will roll over.
  *
  */
-void lim_add_mgmt_seq_num(tpAniSirGlobal pMac, tpSirMacMgmtHdr pMacHdr)
+static void lim_add_mgmt_seq_num(tpAniSirGlobal pMac, tpSirMacMgmtHdr pMacHdr)
 {
 	if (pMac->mgmtSeqNum >= WLAN_HOST_SEQ_NUM_MAX) {
 		pMac->mgmtSeqNum = WLAN_HOST_SEQ_NUM_MIN - 1;
@@ -449,7 +449,7 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	return eSIR_SUCCESS;
 } /* End lim_send_probe_req_mgmt_frame. */
 
-tSirRetStatus lim_get_addn_ie_for_probe_resp(tpAniSirGlobal pMac,
+static tSirRetStatus lim_get_addn_ie_for_probe_resp(tpAniSirGlobal pMac,
 					     uint8_t *addIE, uint16_t *addnIELen,
 					     uint8_t probeReqP2pIe)
 {
@@ -2017,8 +2017,8 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
  * Return: This returns QDF_STATUS
  */
 
-QDF_STATUS lim_auth_tx_complete_cnf(tpAniSirGlobal mac_ctx,
-					uint32_t tx_complete)
+static QDF_STATUS lim_auth_tx_complete_cnf(tpAniSirGlobal mac_ctx,
+					   uint32_t tx_complete)
 {
 	lim_log(mac_ctx, LOG1,
 		 FL("tx_complete= %d"), tx_complete);

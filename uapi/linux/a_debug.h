@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -147,7 +147,7 @@ typedef struct _ATH_DEBUG_MODULE_DBG_INFO {
 #define GET_ATH_MODULE_DEBUG_VAR_MASK(s) _XGET_ATH_MODULE_NAME_DEBUG_(s).CurrentMask
 #define _XGET_ATH_MODULE_NAME_DEBUG_(s) debug_ ## s
 
-#ifdef DEBUG
+#ifdef WLAN_DEBUG
 
 /* for source files that will instantiate the debug variables */
 #define ATH_DEBUG_INSTANTIATE_MODULE_VAR(s,name,moddesc,initmask,count,descriptions) \

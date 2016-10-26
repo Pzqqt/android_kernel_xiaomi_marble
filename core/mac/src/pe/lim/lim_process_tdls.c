@@ -252,6 +252,9 @@ static uint32_t lim_prepare_tdls_frame_header(tpAniSirGlobal pMac, uint8_t *pFra
 			   ? link_iden->RespStaAddr : link_iden->InitStaAddr;
 	uint8_t *staMac = (reqType == TDLS_INITIATOR)
 			  ? link_iden->InitStaAddr : link_iden->RespStaAddr;
+	tpDphHashNode sta_ds;
+	uint16_t aid = 0;
+	uint8_t qos_mode = 0;
 
 	pMacHdr = (tpSirMacDataHdr3a) (pFrame);
 
@@ -268,9 +271,17 @@ static uint32_t lim_prepare_tdls_frame_header(tpAniSirGlobal pMac, uint8_t *pFra
 	 */
 	pMacHdr->fc.protVer = SIR_MAC_PROTOCOL_VERSION;
 	pMacHdr->fc.type = SIR_MAC_DATA_FRAME;
+
+	sta_ds = dph_lookup_hash_entry(pMac, peerMac, &aid,
+					&psessionEntry->dph.dphHashTable);
+	if (sta_ds)
+		qos_mode = sta_ds->qosMode;
+
 	pMacHdr->fc.subType =
-		IS_QOS_ENABLED(psessionEntry) ? SIR_MAC_DATA_QOS_DATA :
-		SIR_MAC_DATA_DATA;
+		((IS_QOS_ENABLED(psessionEntry) &&
+		(tdlsLinkType == TDLS_LINK_AP)) ||
+		((tdlsLinkType == TDLS_LINK_DIRECT) && qos_mode))
+		? SIR_MAC_DATA_QOS_DATA : SIR_MAC_DATA_DATA;
 
 	/*
 	 * TL is not setting up below fields, so we are doing it here
@@ -298,7 +309,7 @@ static uint32_t lim_prepare_tdls_frame_header(tpAniSirGlobal pMac, uint8_t *pFra
 		MAC_ADDR_ARRAY(pMacHdr->addr2),
 		MAC_ADDR_ARRAY(pMacHdr->addr3));
 
-	if (IS_QOS_ENABLED(psessionEntry)) {
+	if (pMacHdr->fc.subType == SIR_MAC_DATA_QOS_DATA) {
 		pMacHdr->qosControl.tid = tid;
 		header_offset += sizeof(tSirMacDataHdr3a);
 	} else
@@ -1274,6 +1285,10 @@ tSirRetStatus lim_send_tdls_teardown_frame(tpAniSirGlobal pMac,
 	uint32_t padLen = 0;
 #endif
 	uint8_t smeSessionId = 0;
+	tpDphHashNode sta_ds;
+	uint16_t aid = 0;
+	uint8_t qos_mode = 0;
+	uint8_t tdls_link_type;
 
 	if (NULL == psessionEntry) {
 		lim_log(pMac, LOGE, FL("psessionEntry is NULL"));
@@ -1320,8 +1335,15 @@ tSirRetStatus lim_send_tdls_teardown_frame(tpAniSirGlobal pMac,
 	 * 89-0d.
 	 * 8 bytes of RFC 1042 header
 	 */
-
-	nBytes = nPayload + ((IS_QOS_ENABLED(psessionEntry))
+	sta_ds = dph_lookup_hash_entry(pMac, psessionEntry->bssId, &aid,
+					&psessionEntry->dph.dphHashTable);
+	if (sta_ds)
+		qos_mode = sta_ds->qosMode;
+	tdls_link_type = (reason == eSIR_MAC_TDLS_TEARDOWN_PEER_UNREACHABLE)
+				? TDLS_LINK_AP : TDLS_LINK_DIRECT;
+	nBytes = nPayload + (((IS_QOS_ENABLED(psessionEntry) &&
+			     (tdls_link_type == TDLS_LINK_AP)) ||
+			     ((tdls_link_type == TDLS_LINK_DIRECT) && qos_mode))
 			     ? sizeof(tSirMacDataHdr3a) :
 			     sizeof(tSirMacMgmtHdr))
 		 + sizeof(eth_890d_header)
@@ -2461,7 +2483,8 @@ static void lim_tdls_update_hash_node_info(tpAniSirGlobal pMac,
 	pSessStaDs = dph_lookup_hash_entry(pMac, psessionEntry->bssId, &aid,
 					   &psessionEntry->dph.dphHashTable);
 	/* Lets enable QOS parameter */
-	pStaDs->qosMode = 1;
+	pStaDs->qosMode = (pTdlsAddStaReq->capability & CAPABILITIES_QOS_OFFSET)
+				|| pTdlsAddStaReq->htcap_present;
 	pStaDs->wmeEnabled = 1;
 	pStaDs->lleEnabled = 0;
 	/*  TDLS Dummy AddSTA does not have qosInfo , is it OK ??

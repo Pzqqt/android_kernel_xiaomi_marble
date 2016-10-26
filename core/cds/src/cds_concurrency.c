@@ -3018,36 +3018,39 @@ static void cds_dump_current_concurrency(void)
 }
 
 /**
- * cds_current_concurrency_is_scc() - To check the current
- * concurrency combination if it is doing SCC
+ * cds_current_concurrency_is_mcc() - To check the current
+ * concurrency combination if it is doing MCC
  *
- * This routine is called to check if it is doing SCC
+ * This routine is called to check if it is doing MCC
  *
- * Return: True - SCC, False - Otherwise
+ * Return: True - MCC, False - Otherwise
  */
-static bool cds_current_concurrency_is_scc(void)
+static bool cds_current_concurrency_is_mcc(void)
 {
 	uint32_t num_connections = 0;
-	bool is_scc = false;
+	bool is_mcc = false;
 
 	num_connections = cds_get_connection_count();
 
 	switch (num_connections) {
 	case 1:
-		is_scc = true;
 		break;
 	case 2:
-		if (conc_connection_list[0].chan ==
-			conc_connection_list[1].chan) {
-			is_scc = true;
+		if ((conc_connection_list[0].chan !=
+			conc_connection_list[1].chan) &&
+		    (conc_connection_list[0].mac ==
+			conc_connection_list[1].mac)) {
+			is_mcc = true;
 		}
 		break;
 	case 3:
-		if ((conc_connection_list[0].chan ==
-			conc_connection_list[1].chan) &&
-			(conc_connection_list[0].chan ==
-				conc_connection_list[2].chan)){
-				is_scc = true;
+		if ((conc_connection_list[0].chan !=
+			conc_connection_list[1].chan) ||
+		    (conc_connection_list[0].chan !=
+			conc_connection_list[2].chan) ||
+		    (conc_connection_list[1].chan !=
+			conc_connection_list[2].chan)){
+				is_mcc = true;
 		}
 		break;
 	default:
@@ -3056,7 +3059,7 @@ static bool cds_current_concurrency_is_scc(void)
 		break;
 	}
 
-	return is_scc;
+	return is_mcc;
 }
 
 /**
@@ -3342,7 +3345,7 @@ void cds_dump_concurrency_info(void)
 		adapterNode = pNext;
 	}
 	cds_dump_current_concurrency();
-	hdd_ctx->mcc_mode = !cds_current_concurrency_is_scc();
+	hdd_ctx->mcc_mode = cds_current_concurrency_is_mcc();
 }
 
 #ifdef FEATURE_WLAN_TDLS
@@ -3651,10 +3654,22 @@ enum cds_conc_next_action cds_need_opportunistic_upgrade(void)
 	uint32_t conn_index;
 	enum cds_conc_next_action upgrade = CDS_NOP;
 	uint8_t mac = 0;
+	struct sir_hw_mode_params hw_mode;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (wma_is_hw_dbs_capable() == false) {
 		cds_err("driver isn't dbs capable, no further action needed");
-		return upgrade;
+		goto done;
+	}
+
+	status = wma_get_current_hw_mode(&hw_mode);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		cds_err("wma_get_current_hw_mode failed");
+		goto done;
+	}
+	if (!hw_mode.dbs_cap) {
+		cds_info("current HW mode is non-DBS capable");
+		goto done;
 	}
 
 	/* Are both mac's still in use */
@@ -3943,23 +3958,27 @@ static void cds_dbs_opportunistic_timer_handler(void *data)
 QDF_STATUS cds_deinit_policy_mgr(void)
 {
 	cds_context_type *cds_ctx;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
 		cds_err("Invalid CDS Context");
-		return QDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
+		QDF_ASSERT(0);
 	}
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_event_destroy
 				  (&cds_ctx->connection_update_done_evt))) {
 		cds_err("Failed to destroy connection_update_done_evt");
-		return QDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
+		QDF_ASSERT(0);
 	}
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_destroy(
 					&cds_ctx->qdf_conc_list_lock))) {
 		cds_err("Failed to destroy qdf_conc_list_lock");
-		return QDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
+		QDF_ASSERT(0);
 	}
 
 	if (QDF_TIMER_STATE_RUNNING ==
@@ -3971,7 +3990,8 @@ QDF_STATUS cds_deinit_policy_mgr(void)
 	if (!QDF_IS_STATUS_SUCCESS(qdf_mc_timer_destroy(
 				      &cds_ctx->dbs_opportunistic_timer))) {
 		cds_err("Cannot deallocate dbs opportunistic timer");
-		return QDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
+		QDF_ASSERT(0);
 	}
 
 	cds_ctx->sme_get_valid_channels = NULL;
@@ -3979,10 +3999,11 @@ QDF_STATUS cds_deinit_policy_mgr(void)
 
 	if (QDF_IS_STATUS_ERROR(cds_reset_sap_mandatory_channels())) {
 		cds_err("failed to reset sap mandatory channels");
-		return QDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
+		QDF_ASSERT(0);
 	}
 
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 
 /**
@@ -4570,6 +4591,9 @@ void cds_update_with_safe_channel_list(uint8_t *pcl_channels, uint32_t *len,
 				     &unsafe_channel_count,
 				     sizeof(unsafe_channel_list));
 
+	if (unsafe_channel_count == 0)
+		cds_notice("There are no unsafe channels");
+
 	if (unsafe_channel_count) {
 		qdf_mem_copy(current_channel_list, pcl_channels,
 			current_channel_count);
@@ -4592,11 +4616,12 @@ void cds_update_with_safe_channel_list(uint8_t *pcl_channels, uint32_t *len,
 				}
 			}
 			if (!is_unsafe) {
-				pcl_channels[safe_channel_count++] =
+				pcl_channels[safe_channel_count] =
 					current_channel_list[i];
 				if (safe_channel_count < weight_len)
-					weight_list[safe_channel_count++] =
+					weight_list[safe_channel_count] =
 						org_weight_list[i];
+				safe_channel_count++;
 			}
 		}
 		*len = safe_channel_count;
@@ -9098,6 +9123,45 @@ uint8_t cds_get_mcc_operating_channel(uint8_t session_id)
 	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 
 	return chan;
+}
+
+/**
+ * cds_checkn_update_hw_mode_single_mac_mode() - Set hw_mode to SMM
+ * if required
+ * @channel: channel number for the new STA connection
+ *
+ * After the STA disconnection, if the hw_mode is in DBS and the new STA
+ * connection is coming in the band in which existing connections are
+ * present, then this function stops the dbs opportunistic timer and sets
+ * the hw_mode to Single MAC mode (SMM).
+ *
+ * Return: None
+ */
+void cds_checkn_update_hw_mode_single_mac_mode(uint8_t channel)
+{
+	uint8_t i;
+	cds_context_type *cds_ctx;
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return;
+	}
+
+	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
+		if (conc_connection_list[i].in_use)
+			if (!CDS_IS_SAME_BAND_CHANNELS(channel,
+				conc_connection_list[i].chan)) {
+				cds_info("DBS required");
+				return;
+			}
+	}
+
+	if (QDF_TIMER_STATE_RUNNING ==
+		cds_ctx->dbs_opportunistic_timer.state)
+		qdf_mc_timer_stop(&cds_ctx->dbs_opportunistic_timer);
+
+	cds_dbs_opportunistic_timer_handler((void *)cds_ctx);
 }
 
 /**

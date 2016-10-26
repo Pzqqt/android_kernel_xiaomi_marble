@@ -94,6 +94,7 @@
 #include "hif.h"
 #include "pld_common.h"
 #endif
+#include "wlan_hdd_lro.h"
 
 #define HDD_FINISH_ULA_TIME_OUT         800
 #define HDD_SET_MCBC_FILTERS_TO_FW      1
@@ -432,7 +433,7 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_TWO_INT_GET_NONE   (SIOCIWFIRSTPRIV + 28)
 #define WE_SET_SMPS_PARAM    1
-#ifdef DEBUG
+#ifdef WLAN_DEBUG
 #define WE_SET_FW_CRASH_INJECT    2
 #endif
 #define WE_DUMP_DP_TRACE_LEVEL    3
@@ -720,6 +721,9 @@ void hdd_wlan_dump_stats(hdd_adapter_t *adapter, int value)
 	case WLAN_HIF_STATS:
 		hdd_display_hif_stats();
 		break;
+	case WLAN_LRO_STATS:
+		hdd_lro_display_stats(hdd_ctx);
+		break;
 	default:
 		ol_txrx_display_stats(value);
 		break;
@@ -745,7 +749,7 @@ void hdd_wlan_get_version(hdd_context_t *hdd_ctx, union iwreq_data *wrqu,
 	tSirVersionString wcnss_sw_version;
 	const char *swversion;
 	const char *hwversion;
-	uint32_t msp_id = 0, mspid = 0, siid = 0, crmid = 0;
+	uint32_t msp_id = 0, mspid = 0, siid = 0, crmid = 0, sub_id = 0;
 
 	if (!hdd_ctx) {
 		hdd_err("Invalid context, HDD context is null");
@@ -760,19 +764,21 @@ void hdd_wlan_get_version(hdd_context_t *hdd_ctx, union iwreq_data *wrqu,
 	mspid = (hdd_ctx->target_fw_version & 0xf000000) >> 24;
 	siid = (hdd_ctx->target_fw_version & 0xf00000) >> 20;
 	crmid = hdd_ctx->target_fw_version & 0x7fff;
+	sub_id = (hdd_ctx->target_fw_vers_ext & 0xf0000000) >> 28;
 
 	hwversion = hdd_ctx->target_hw_name;
 
 	if (wrqu && extra) {
 		wrqu->data.length =
 			scnprintf(extra, WE_MAX_STR_LEN,
-				  "Host SW:%s, FW:%d.%d.%d.%d, HW:%s",
+				  "Host SW:%s, FW:%d.%d.%d.%d.%d, HW:%s",
 				  QWLAN_VERSIONSTR,
-				  msp_id, mspid, siid, crmid, hwversion);
+				  msp_id, mspid, siid, crmid,
+				  sub_id, hwversion);
 	} else {
-		pr_info("Host SW:%s, FW:%d.%d.%d.%d, HW:%s\n",
+		pr_info("Host SW:%s, FW:%d.%d.%d.%d.%d, HW:%s\n",
 			QWLAN_VERSIONSTR,
-			msp_id, mspid, siid, crmid, hwversion);
+			msp_id, mspid, siid, crmid, sub_id, hwversion);
 	}
 error:
 	return;
@@ -4576,7 +4582,7 @@ static int __iw_set_retry(struct net_device *dev, struct iw_request_info *info,
 			if (sme_cfg_set_int (hHal, WNI_CFG_SHORT_RETRY_LIMIT,
 						wrqu->retry.value) !=
 					QDF_STATUS_SUCCESS) {
-				hdd_err("failed to set ini parameter, WNI_CFG_LONG_RETRY_LIMIT");
+				hdd_err("failed to set ini parameter, WNI_CFG_SHORT_RETRY_LIMIT");
 				return -EIO;
 			}
 		}
@@ -4653,7 +4659,7 @@ static int __iw_get_retry(struct net_device *dev, struct iw_request_info *info,
 
 		if (sme_cfg_get_int(hHal, WNI_CFG_SHORT_RETRY_LIMIT, &retry) !=
 		    QDF_STATUS_SUCCESS) {
-			hdd_warn("failed to get ini parameter, WNI_CFG_LONG_RETRY_LIMIT");
+			hdd_warn("failed to get ini parameter, WNI_CFG_SHORT_RETRY_LIMIT");
 			return -EIO;
 		}
 
@@ -9818,7 +9824,7 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 					      | value[2],
 					  VDEV_CMD);
 		break;
-#ifdef DEBUG
+#ifdef WLAN_DEBUG
 	case WE_SET_FW_CRASH_INJECT:
 		hdd_err("WE_SET_FW_CRASH_INJECT: %d %d",
 		       value[1], value[2]);
@@ -11087,7 +11093,7 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_BYTE | sizeof(struct dot11p_channel_sched),
 	 0, "set_dot11p" }
 	,
-#ifdef DEBUG
+#ifdef WLAN_DEBUG
 	{WE_SET_FW_CRASH_INJECT,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
 	 0, "crash_inject"}

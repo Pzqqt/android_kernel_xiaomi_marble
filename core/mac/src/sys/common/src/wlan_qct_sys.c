@@ -74,7 +74,7 @@ QDF_STATUS sys_build_message_header(SYS_MSG_ID sysMsgId, cds_msg_t *pMsg)
  * Return: none
  */
 #ifdef QDF_ENABLE_TRACING
-void sys_stop_complete_cb(void *pUserData)
+static void sys_stop_complete_cb(void *pUserData)
 {
 	qdf_event_t *pStopEvt = (qdf_event_t *) pUserData;
 	QDF_STATUS qdf_status = qdf_event_set(pStopEvt);
@@ -83,7 +83,7 @@ void sys_stop_complete_cb(void *pUserData)
 
 }
 #else
-void sys_stop_complete_cb(void *pUserData)
+static void sys_stop_complete_cb(void *pUserData)
 {
 	return;
 }

@@ -43,7 +43,7 @@
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_post_ps_msg_to_wma(uint16_t type, void *body)
+static QDF_STATUS sme_post_ps_msg_to_wma(uint16_t type, void *body)
 {
 	cds_msg_t msg;
 
@@ -142,7 +142,7 @@ static void sme_get_ps_state(tpAniSirGlobal mac_ctx,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_ps_enable_ps_req_params(tpAniSirGlobal mac_ctx,
+static QDF_STATUS sme_ps_enable_ps_req_params(tpAniSirGlobal mac_ctx,
 		uint32_t session_id)
 {
 	struct sEnablePsParams *enable_ps_req_params;
@@ -186,7 +186,7 @@ QDF_STATUS sme_ps_enable_ps_req_params(tpAniSirGlobal mac_ctx,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_ps_disable_ps_req_params(tpAniSirGlobal mac_ctx,
+static QDF_STATUS sme_ps_disable_ps_req_params(tpAniSirGlobal mac_ctx,
 		uint32_t session_id)
 {
 	struct  sDisablePsParams *disable_ps_req_params;
@@ -218,7 +218,7 @@ QDF_STATUS sme_ps_disable_ps_req_params(tpAniSirGlobal mac_ctx,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_ps_enable_uapsd_req_params(tpAniSirGlobal mac_ctx,
+static QDF_STATUS sme_ps_enable_uapsd_req_params(tpAniSirGlobal mac_ctx,
 		uint32_t session_id)
 {
 
@@ -257,7 +257,7 @@ QDF_STATUS sme_ps_enable_uapsd_req_params(tpAniSirGlobal mac_ctx,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_ps_disable_uapsd_req_params(tpAniSirGlobal mac_ctx,
+static QDF_STATUS sme_ps_disable_uapsd_req_params(tpAniSirGlobal mac_ctx,
 		uint32_t session_id)
 {
 	struct sDisableUapsdParams *disable_uapsd_req_params;
@@ -296,7 +296,7 @@ QDF_STATUS sme_ps_disable_uapsd_req_params(tpAniSirGlobal mac_ctx,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_ps_enter_wowl_req_params(tpAniSirGlobal mac_ctx,
+static QDF_STATUS sme_ps_enter_wowl_req_params(tpAniSirGlobal mac_ctx,
 		uint32_t session_id)
 {
 	struct sSirHalWowlEnterParams *hal_wowl_params;
@@ -394,8 +394,9 @@ QDF_STATUS sme_ps_enter_wowl_req_params(tpAniSirGlobal mac_ctx,
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 			FL("Msg WMA_WOWL_ENTER_REQ Successfully sent to WMA"));
 		return QDF_STATUS_SUCCESS;
-	} else
-		goto end;
+	} else {
+		return QDF_STATUS_E_FAILURE;
+	}
 
 end:
 	if (hal_wowl_params != NULL)
@@ -410,7 +411,7 @@ end:
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_ps_exit_wowl_req_params(tpAniSirGlobal mac_ctx,
+static QDF_STATUS sme_ps_exit_wowl_req_params(tpAniSirGlobal mac_ctx,
 		uint32_t session_id)
 {
 	struct sSirHalWowlExitParams *hal_wowl_msg;
@@ -429,10 +430,9 @@ QDF_STATUS sme_ps_exit_wowl_req_params(tpAniSirGlobal mac_ctx,
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 			FL("Msg WMA_WOWL_EXIT_REQ Successfully sent to WMA"));
 		return QDF_STATUS_SUCCESS;
+	} else {
+		return QDF_STATUS_E_FAILURE;
 	}
-	if (hal_wowl_msg != NULL)
-		qdf_mem_free(hal_wowl_msg);
-	return QDF_STATUS_E_FAILURE;
 }
 
 /**

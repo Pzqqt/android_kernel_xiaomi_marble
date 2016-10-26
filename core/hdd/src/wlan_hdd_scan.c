@@ -1103,6 +1103,43 @@ nla_put_failure:
 	return;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
+/**
+ * hdd_cfg80211_scan_done() - Scan completed callback to cfg80211
+ * @adapter: Pointer to the adapter
+ * @req : Scan request
+ * @aborted : true scan aborted false scan success
+ *
+ * This function notifies scan done to cfg80211
+ *
+ * Return: none
+ */
+static void hdd_cfg80211_scan_done(hdd_adapter_t *adapter,
+				   struct cfg80211_scan_request *req,
+				   bool aborted)
+{
+	if (adapter->dev->flags & IFF_UP)
+		cfg80211_scan_done(req, aborted);
+}
+#else
+/**
+ * hdd_cfg80211_scan_done() - Scan completed callback to cfg80211
+ * @adapter: Pointer to the adapter
+ * @req : Scan request
+ * @aborted : true scan aborted false scan success
+ *
+ * This function notifies scan done to cfg80211
+ *
+ * Return: none
+ */
+static void hdd_cfg80211_scan_done(hdd_adapter_t *adapter,
+				   struct cfg80211_scan_request *req,
+				   bool aborted)
+{
+	cfg80211_scan_done(req, aborted);
+}
+#endif
+
 /**
  * hdd_cfg80211_scan_done_callback() - scan done callback function called after
  *				       scan is finished
@@ -1200,11 +1237,12 @@ static QDF_STATUS hdd_cfg80211_scan_done_callback(tHalHandle halHandle,
 	 * scan done event will be posted
 	 */
 	if (NL_SCAN == source)
-		cfg80211_scan_done(req, aborted);
+		hdd_cfg80211_scan_done(pAdapter, req, aborted);
 	else
 		hdd_vendor_scan_callback(pAdapter, req, aborted);
 
 allow_suspend:
+	qdf_runtime_pm_allow_suspend(hddctx->runtime_context.scan);
 	qdf_spin_lock(&hddctx->hdd_scan_req_q_lock);
 	size = qdf_list_size(&hddctx->hdd_scan_req_q);
 	if (!size) {
@@ -1695,6 +1733,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	if (request->flags & NL80211_SCAN_FLAG_FLUSH)
 		sme_scan_flush_result(WLAN_HDD_GET_HAL_CTX(pAdapter));
 #endif
+	qdf_runtime_pm_prevent_suspend(pHddCtx->runtime_context.scan);
 	status = sme_scan_request(WLAN_HDD_GET_HAL_CTX(pAdapter),
 				pAdapter->sessionId, &scan_req,
 				&hdd_cfg80211_scan_done_callback, dev);
@@ -1708,6 +1747,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			status = -EIO;
 		}
 
+		qdf_runtime_pm_allow_suspend(pHddCtx->runtime_context.scan);
 		hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_SCAN);
 		goto free_mem;
 	}

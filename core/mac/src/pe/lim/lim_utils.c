@@ -1167,7 +1167,7 @@ uint8_t lim_is_null_ssid(tSirMacSSid *ssid)
    \param      tHalBitVal lsigTxopSupported
    \return      None
    -------------------------------------------------------------*/
-void
+static void
 lim_update_prot_sta_params(tpAniSirGlobal pMac,
 			   tSirMacAddr peerMacAddr,
 			   tLimProtStaCacheType protStaCacheType,
@@ -6472,9 +6472,9 @@ void lim_set_stads_rtt_cap(tpDphHashNode sta_ds, struct s_ext_cap *ext_cap,
  *
  * Return: status of operation
  */
-QDF_STATUS lim_send_ie(tpAniSirGlobal mac_ctx, uint32_t sme_session_id,
-			uint8_t eid, enum cds_band_type band, uint8_t *buf,
-			uint32_t len)
+static QDF_STATUS lim_send_ie(tpAniSirGlobal mac_ctx, uint32_t sme_session_id,
+			      uint8_t eid, enum cds_band_type band,
+			      uint8_t *buf, uint32_t len)
 {
 	struct vdev_ie_info *ie_msg;
 	cds_msg_t msg = {0};
@@ -6543,9 +6543,9 @@ QDF_STATUS lim_send_ies_per_band(tpAniSirGlobal mac_ctx,
 {
 	uint8_t ht_caps[DOT11F_IE_HTCAPS_MIN_LEN + 2] = {0};
 	uint8_t vht_caps[DOT11F_IE_VHTCAPS_MAX_LEN + 2] = {0};
-	tHtCaps *p_ht_cap = (tHtCaps *)ht_caps;
+	tHtCaps *p_ht_cap = (tHtCaps *)(&ht_caps[2]);
 	tSirMacVHTCapabilityInfo *p_vht_cap =
-			(tSirMacVHTCapabilityInfo *)vht_caps;
+			(tSirMacVHTCapabilityInfo *)(&vht_caps[2]);
 
 	/*
 	 * Note: Do not use Dot11f VHT structure, since 1 byte present flag in
@@ -6558,6 +6558,14 @@ QDF_STATUS lim_send_ies_per_band(tpAniSirGlobal mac_ctx,
 			DOT11F_IE_HTCAPS_MIN_LEN + 2);
 	/* Get LDPC and over write for 2G */
 	p_ht_cap->advCodingCap = lim_get_rx_ldpc(mac_ctx, CHAN_ENUM_6);
+	/* Get self cap for HT40 support in 2G */
+	if (mac_ctx->roam.configParam.channelBondingMode24GHz) {
+		p_ht_cap->supportedChannelWidthSet = 1;
+		p_ht_cap->shortGI40MHz = 1;
+	} else {
+		p_ht_cap->supportedChannelWidthSet = 0;
+		p_ht_cap->shortGI40MHz = 0;
+	}
 	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_HTCAPS,
 		CDS_BAND_2GHZ, &ht_caps[2], DOT11F_IE_HTCAPS_MIN_LEN);
 	/*
@@ -6565,6 +6573,14 @@ QDF_STATUS lim_send_ies_per_band(tpAniSirGlobal mac_ctx,
 	 * is available in all reg domains.
 	 */
 	p_ht_cap->advCodingCap = lim_get_rx_ldpc(mac_ctx, CHAN_ENUM_64);
+	/* Get self cap for HT40 support in 5G */
+	if (mac_ctx->roam.configParam.channelBondingMode5GHz) {
+		p_ht_cap->supportedChannelWidthSet = 1;
+		p_ht_cap->shortGI40MHz = 1;
+	} else {
+		p_ht_cap->supportedChannelWidthSet = 0;
+		p_ht_cap->shortGI40MHz = 0;
+	}
 	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_HTCAPS,
 		CDS_BAND_5GHZ, &ht_caps[2], DOT11F_IE_HTCAPS_MIN_LEN);
 
@@ -6574,6 +6590,10 @@ QDF_STATUS lim_send_ies_per_band(tpAniSirGlobal mac_ctx,
 	lim_set_vht_caps(mac_ctx, session, vht_caps,
 			 DOT11F_IE_VHTCAPS_MIN_LEN + 2);
 	p_vht_cap->ldpcCodingCap = lim_get_rx_ldpc(mac_ctx, CHAN_ENUM_6);
+	/* Self VHT 80/160/80+80 channel width for 2G is 0 */
+	p_vht_cap->supportedChannelWidthSet = 0;
+	p_vht_cap->shortGI80MHz = 0;
+	p_vht_cap->shortGI160and80plus80MHz = 0;
 	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_VHTCAPS,
 			CDS_BAND_2GHZ, &vht_caps[2], DOT11F_IE_VHTCAPS_MIN_LEN);
 
@@ -6582,6 +6602,7 @@ QDF_STATUS lim_send_ies_per_band(tpAniSirGlobal mac_ctx,
 	 * is available in all reg domains.
 	 */
 	p_vht_cap->ldpcCodingCap = lim_get_rx_ldpc(mac_ctx, CHAN_ENUM_64);
+	/* Self VHT channel width for 5G is already negotiated with FW */
 	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_VHTCAPS,
 			CDS_BAND_5GHZ, &vht_caps[2], DOT11F_IE_VHTCAPS_MIN_LEN);
 
@@ -6670,25 +6691,32 @@ QDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx,
 }
 
 /**
- * lim_strip_extcap_ie() - strip extended capability IE from IE buffer
+ * lim_strip_ie() - strip requested IE from IE buffer
  * @mac_ctx: global MAC context
  * @addn_ie: Additional IE buffer
  * @addn_ielen: Length of additional IE
+ * @eid: EID of IE to strip
+ * @size_of_len_field: lenght of IE length field
+ * @oui: if present matches OUI also
+ * @oui_length: if previous present, this is length of oui
  * @extracted_ie: if not NULL, copy the stripped IE to this buffer
  *
- * This utility function is used to strip of the extended capability IE present
- * in additional IE buffer.
+ * This utility function is used to strip of the requested IE if present
+ * in IE buffer.
  *
  * Return: tSirRetStatus
  */
-tSirRetStatus lim_strip_extcap_ie(tpAniSirGlobal mac_ctx,
-		uint8_t *addn_ie, uint16_t *addn_ielen, uint8_t *extracted_ie)
+tSirRetStatus lim_strip_ie(tpAniSirGlobal mac_ctx,
+		uint8_t *addn_ie, uint16_t *addn_ielen,
+		uint8_t eid, eSizeOfLenField size_of_len_field,
+		uint8_t *oui, uint8_t oui_length, uint8_t *extracted_ie)
 {
 	uint8_t *tempbuf = NULL;
 	uint16_t templen = 0;
 	int left = *addn_ielen;
 	uint8_t *ptr = addn_ie;
-	uint8_t elem_id, elem_len;
+	uint8_t elem_id;
+	uint16_t elem_len;
 
 	if (NULL == addn_ie) {
 		lim_log(mac_ctx, LOG1, FL("NULL addn_ie pointer"));
@@ -6703,8 +6731,14 @@ tSirRetStatus lim_strip_extcap_ie(tpAniSirGlobal mac_ctx,
 
 	while (left >= 2) {
 		elem_id  = ptr[0];
-		elem_len = ptr[1];
-		left -= 2;
+		left -= 1;
+		if (size_of_len_field == TWO_BYTE) {
+			elem_len = *((uint16_t *)&ptr[1]);
+			left -= 2;
+		} else {
+			elem_len = ptr[1];
+			left -= 1;
+		}
 		if (elem_len > left) {
 			lim_log(mac_ctx, LOGE,
 				FL("Invalid IEs eid = %d elem_len=%d left=%d"),
@@ -6712,20 +6746,31 @@ tSirRetStatus lim_strip_extcap_ie(tpAniSirGlobal mac_ctx,
 			qdf_mem_free(tempbuf);
 			return eSIR_FAILURE;
 		}
-		if (!(DOT11F_EID_EXTCAP == elem_id)) {
-			qdf_mem_copy(tempbuf + templen, &ptr[0], elem_len + 2);
-			templen += (elem_len + 2);
+
+		if (eid != elem_id ||
+				(oui && qdf_mem_cmp(oui,
+						&ptr[size_of_len_field + 1],
+						oui_length))) {
+			qdf_mem_copy(tempbuf + templen, &ptr[0],
+				     elem_len + size_of_len_field + 1);
+			templen += (elem_len + size_of_len_field + 1);
 		} else {
+			/*
+			 * eid matched and if provided OUI also matched
+			 * take oui IE and store in provided buffer.
+			 */
 			if (NULL != extracted_ie) {
 				qdf_mem_set(extracted_ie,
-					DOT11F_IE_EXTCAP_MAX_LEN + 2, 0);
+					DOT11F_IE_EXTCAP_MAX_LEN +
+						size_of_len_field + 1, 0);
 				if (elem_len <= DOT11F_IE_EXTCAP_MAX_LEN)
 					qdf_mem_copy(extracted_ie, &ptr[0],
-						     elem_len + 2);
+						elem_len +
+						size_of_len_field + 1);
 			}
 		}
 		left -= elem_len;
-		ptr += (elem_len + 2);
+		ptr += (elem_len + size_of_len_field + 1);
 	}
 	qdf_mem_copy(addn_ie, tempbuf, templen);
 
@@ -6796,8 +6841,9 @@ tSirRetStatus lim_strip_extcap_update_struct(tpAniSirGlobal mac_ctx,
 
 	qdf_mem_set((uint8_t *)&extracted_buff[0], DOT11F_IE_EXTCAP_MAX_LEN + 2,
 		     0);
-	status = lim_strip_extcap_ie(mac_ctx, addn_ie, addn_ielen,
-				     extracted_buff);
+	status = lim_strip_ie(mac_ctx, addn_ie, addn_ielen,
+			      DOT11F_EID_EXTCAP, ONE_BYTE,
+			      NULL, 0, extracted_buff);
 	if (eSIR_SUCCESS != status) {
 		lim_log(mac_ctx, LOG1,
 		       FL("Failed to strip extcap IE status = (%d)."), status);

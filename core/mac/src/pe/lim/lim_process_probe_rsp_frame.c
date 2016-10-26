@@ -60,7 +60,7 @@
  *
  * Return: 0 on success, one on failure
  */
-tSirRetStatus
+static tSirRetStatus
 lim_validate_ie_information_in_probe_rsp_frame(tpAniSirGlobal mac_ctx,
 				uint8_t *pRxPacketInfo)
 {
@@ -167,15 +167,6 @@ lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
 		!probe_rsp->ssidPresent) {
 		lim_log(mac_ctx, LOG1,
 			FL("Parse error ProbeResponse, length=%d"), frame_len);
-		qdf_mem_free(probe_rsp);
-		return;
-	}
-
-	if (probe_rsp->assoc_disallowed) {
-		lim_log(mac_ctx, LOG1,
-			FL("Association disallowed by AP "MAC_ADDRESS_STR " Reason code %d"),
-				MAC_ADDR_ARRAY(header->bssId),
-				probe_rsp->assoc_disallowed_reason);
 		qdf_mem_free(probe_rsp);
 		return;
 	}
@@ -400,15 +391,6 @@ lim_process_probe_rsp_frame_no_session(tpAniSirGlobal mac_ctx,
 		lim_log(mac_ctx, LOG1,
 			FL("Parse error ProbeResponse, length=%d\n"),
 			frame_len);
-		qdf_mem_free(probe_rsp);
-		return;
-	}
-
-	if (probe_rsp->assoc_disallowed) {
-		lim_log(mac_ctx, LOG1,
-			FL("Association disallowed by AP "MAC_ADDRESS_STR " Reason code %d"),
-				MAC_ADDR_ARRAY(header->bssId),
-				probe_rsp->assoc_disallowed_reason);
 		qdf_mem_free(probe_rsp);
 		return;
 	}
