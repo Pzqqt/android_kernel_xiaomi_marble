@@ -486,13 +486,14 @@ static void cds_set_5g_channel_params(uint16_t oper_ch,
 		chan_state = cds_get_5g_bonded_channel_state(oper_ch,
 							  ch_params->ch_width);
 
-		if (CH_WIDTH_80P80MHZ == ch_params->ch_width)
+		if (CH_WIDTH_80P80MHZ == ch_params->ch_width) {
 			chan_state2 = cds_get_5g_bonded_channel_state(
 				ch_params->center_freq_seg1 - 2,
 				CH_WIDTH_80MHZ);
 
-		chan_state = cds_combine_channel_states(chan_state,
-							chan_state2);
+			chan_state = cds_combine_channel_states(chan_state,
+								chan_state2);
+		}
 
 		if ((CHANNEL_STATE_ENABLE == chan_state) ||
 		    (CHANNEL_STATE_DFS == chan_state)) {
