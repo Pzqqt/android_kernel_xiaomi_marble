@@ -1516,6 +1516,8 @@ ol_rx_offload_paddr_deliver_ind_handler(htt_pdev_handle htt_pdev,
 		peer = ol_txrx_peer_find_by_id(htt_pdev->txrx_pdev, peer_id);
 		if (peer) {
 			qdf_dp_trace_set_track(head_buf, QDF_RX);
+			QDF_NBUF_CB_TX_PACKET_TRACK(head_buf) =
+						QDF_NBUF_TX_PKT_DATA_TRACK;
 			qdf_dp_trace_log_pkt(peer->vdev->vdev_id,
 				head_buf, QDF_RX);
 			DPTRACE(qdf_dp_trace(head_buf,
