@@ -46,7 +46,7 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 	srng->hal_srng = NULL;
 	srng->alloc_size = (num_entries * entry_size) + ring_base_align - 1;
 	srng->base_vaddr_unaligned = qdf_mem_alloc_consistent(
-		soc->osdev, NULL, srng->alloc_size,
+		soc->osdev, soc->osdev->dev, srng->alloc_size,
 		&(srng->base_paddr_unaligned));
 
 	if (!srng->base_vaddr_unaligned) {
@@ -112,7 +112,7 @@ static void dp_srng_cleanup(struct dp_soc *soc, struct dp_srng *srng,
 
 	hal_srng_cleanup(soc->hal_soc, srng->hal_srng);
 
-	qdf_mem_free_consistent(soc->osdev, NULL,
+	qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
 				srng->alloc_size,
 				srng->base_vaddr_unaligned,
 				srng->base_paddr_unaligned, 0);
@@ -412,7 +412,7 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 
 	for (i = 0; i < num_link_desc_banks; i++) {
 		soc->link_desc_banks[i].base_vaddr_unaligned =
-			qdf_mem_alloc_consistent(soc->osdev, NULL,
+			qdf_mem_alloc_consistent(soc->osdev, soc->osdev->dev,
 			max_alloc_size,
 			&(soc->link_desc_banks[i].base_paddr_unaligned));
 		soc->link_desc_banks[i].size = max_alloc_size;
@@ -442,7 +442,7 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 		 * multiple of max_alloc_size
 		 */
 		soc->link_desc_banks[i].base_vaddr_unaligned =
-			qdf_mem_alloc_consistent(soc->osdev, NULL,
+			qdf_mem_alloc_consistent(soc->osdev, soc->osdev->dev,
 			last_bank_size,
 			&(soc->link_desc_banks[i].base_paddr_unaligned));
 		soc->link_desc_banks[i].size = last_bank_size;
@@ -518,7 +518,7 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 
 		for (i = 0; i < num_scatter_bufs; i++) {
 			soc->wbm_idle_scatter_buf_base_vaddr[i] =
-				qdf_mem_alloc_consistent(soc->osdev, NULL,
+				qdf_mem_alloc_consistent(soc->osdev, soc->osdev->dev,
 				soc->wbm_idle_scatter_buf_size,
 				&(soc->wbm_idle_scatter_buf_base_paddr[i]));
 			if (soc->wbm_idle_scatter_buf_base_vaddr[i] == NULL) {
@@ -589,7 +589,7 @@ fail:
 
 	for (i = 0; i < MAX_IDLE_SCATTER_BUFS; i++) {
 		if (soc->wbm_idle_scatter_buf_base_vaddr[i]) {
-			qdf_mem_free_consistent(soc->osdev, NULL,
+			qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
 				soc->wbm_idle_scatter_buf_size,
 				soc->wbm_idle_scatter_buf_base_vaddr[i],
 				soc->wbm_idle_scatter_buf_base_paddr[i], 0);
@@ -598,7 +598,7 @@ fail:
 
 	for (i = 0; i < MAX_LINK_DESC_BANKS; i++) {
 		if (soc->link_desc_banks[i].base_vaddr_unaligned) {
-			qdf_mem_free_consistent(soc->osdev, NULL,
+			qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
 				soc->link_desc_banks[i].size,
 				soc->link_desc_banks[i].base_vaddr_unaligned,
 				soc->link_desc_banks[i].base_paddr_unaligned,
@@ -622,7 +622,7 @@ void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 
 	for (i = 0; i < MAX_IDLE_SCATTER_BUFS; i++) {
 		if (soc->wbm_idle_scatter_buf_base_vaddr[i]) {
-			qdf_mem_free_consistent(soc->osdev, NULL,
+			qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
 				soc->wbm_idle_scatter_buf_size,
 				soc->wbm_idle_scatter_buf_base_vaddr[i],
 				soc->wbm_idle_scatter_buf_base_paddr[i], 0);
@@ -631,7 +631,7 @@ void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 
 	for (i = 0; i < MAX_LINK_DESC_BANKS; i++) {
 		if (soc->link_desc_banks[i].base_vaddr_unaligned) {
-			qdf_mem_free_consistent(soc->osdev, NULL,
+			qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
 				soc->link_desc_banks[i].size,
 				soc->link_desc_banks[i].base_vaddr_unaligned,
 				soc->link_desc_banks[i].base_paddr_unaligned,

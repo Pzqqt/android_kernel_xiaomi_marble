@@ -507,7 +507,7 @@ int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 	 */
 	rx_tid->hw_qdesc_alloc_size = hw_qdesc_size;
 	rx_tid->hw_qdesc_vaddr_unaligned = qdf_mem_alloc_consistent(
-		soc->osdev, NULL, rx_tid->hw_qdesc_alloc_size,
+		soc->osdev, soc->osdev->dev, rx_tid->hw_qdesc_alloc_size,
 		&(rx_tid->hw_qdesc_paddr_unaligned));
 
 	if (!rx_tid->hw_qdesc_vaddr_unaligned) {
@@ -522,7 +522,7 @@ int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 		/* Address allocated above is not alinged. Allocate extra
 		 * memory for alignment
 		 */
-		qdf_mem_free_consistent(soc->osdev, NULL,
+		qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
 				rx_tid->hw_qdesc_alloc_size,
 				rx_tid->hw_qdesc_vaddr_unaligned,
 				rx_tid->hw_qdesc_paddr_unaligned, 0);
@@ -530,7 +530,7 @@ int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 		rx_tid->hw_qdesc_alloc_size =
 			hw_qdesc_size + hw_qdesc_align - 1;
 		rx_tid->hw_qdesc_vaddr_unaligned = qdf_mem_alloc_consistent(
-			soc->osdev, NULL, rx_tid->hw_qdesc_alloc_size,
+			soc->osdev, soc->osdev->dev, rx_tid->hw_qdesc_alloc_size,
 			&(rx_tid->hw_qdesc_paddr_unaligned));
 
 		if (!rx_tid->hw_qdesc_vaddr_unaligned) {
@@ -601,7 +601,7 @@ void dp_rx_tid_delete_cb(struct dp_pdev *pdev, void *cb_ctxt, int status)
 				__func__, rx_tid->tid);
 	}
 
-	qdf_mem_free_consistent(soc->osdev, NULL,
+	qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
 				rx_tid->hw_qdesc_alloc_size,
 				rx_tid->hw_qdesc_vaddr_unaligned,
 				rx_tid->hw_qdesc_paddr_unaligned, 0);
