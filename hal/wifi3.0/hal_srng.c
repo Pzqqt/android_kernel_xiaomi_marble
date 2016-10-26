@@ -490,9 +490,6 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 	},
 };
 
-/* TODO: Need this interface from HIF layer */
-void *hif_get_dev_ba(void *hif_hanle);
-
 /**
  * hal_attach - Initalize HAL layer
  * @hif_handle: Opaque HIF handle
