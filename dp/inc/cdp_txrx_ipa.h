@@ -237,5 +237,51 @@ static inline void cdp_ipa_set_uc_tx_partition_base(ol_txrx_soc_handle soc,
 
 	return;
 }
+
+/**
+ * cdp_ipa_uc_get_share_stats() - get Tx/Rx byte stats from FW
+ * @pdev: physical device instance
+ * @value: reset stats
+ *
+ * Return: none
+ */
+static inline void cdp_ipa_uc_get_share_stats(ol_txrx_soc_handle soc,
+				struct cdp_pdev *pdev, uint8_t value)
+{
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->ipa_ops->ipa_uc_get_share_stats)
+		return soc->ops->ipa_ops->ipa_uc_get_share_stats(pdev,
+								 value);
+
+	return;
+}
+
+/**
+ * cdp_ipa_uc_set_quota() - set quota limit to FW
+ * @pdev: physical device instance
+ * @value: quota limit bytes
+ *
+ * Return: none
+ */
+static inline void cdp_ipa_uc_set_quota(ol_txrx_soc_handle soc,
+				struct cdp_pdev *pdev, uint64_t value)
+{
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->ipa_ops->ipa_uc_get_share_stats)
+		return soc->ops->ipa_ops->ipa_uc_set_quota(pdev,
+							   value);
+
+	return;
+}
 #endif /* _CDP_TXRX_IPA_H_ */
 

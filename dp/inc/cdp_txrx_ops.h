@@ -704,20 +704,24 @@ struct cdp_lflowctl_ops {
  */
 struct cdp_ipa_ops {
 	void (*ipa_get_resource)(struct cdp_pdev *pdev,
-			struct ol_txrx_ipa_resources *ipa_res);
+		struct ol_txrx_ipa_resources *ipa_res);
 	void (*ipa_set_doorbell_paddr)(struct cdp_pdev *pdev,
-		 qdf_dma_addr_t ipa_tx_uc_doorbell_paddr,
-		 qdf_dma_addr_t ipa_rx_uc_doorbell_paddr);
+		qdf_dma_addr_t ipa_tx_uc_doorbell_paddr,
+		qdf_dma_addr_t ipa_rx_uc_doorbell_paddr);
 	void (*ipa_set_active)(struct cdp_pdev *pdev,
 		bool uc_active, bool is_tx);
 	void (*ipa_op_response)(struct cdp_pdev *pdev, uint8_t *op_msg);
 	void (*ipa_register_op_cb)(struct cdp_pdev *pdev,
-		 void (*ipa_uc_op_cb_type)(uint8_t *op_msg, void *osif_ctxt),
-		 void *osif_dev);
+		void (*ipa_uc_op_cb_type)(uint8_t *op_msg, void *osif_ctxt),
+		void *osif_dev);
 	void (*ipa_get_stat)(struct cdp_pdev *pdev);
 	qdf_nbuf_t (*ipa_tx_data_frame)(struct cdp_vdev *vdev, qdf_nbuf_t skb);
 	void (*ipa_set_uc_tx_partition_base)(struct cdp_cfg *cfg_pdev,
 		uint32_t value);
+	void (*ipa_uc_get_share_stats)(struct cdp_pdev *pdev,
+		uint8_t reset_stats);
+	void (*ipa_uc_set_quota)(struct cdp_pdev *pdev,
+		uint64_t quota_bytes);
 };
 
 /**
