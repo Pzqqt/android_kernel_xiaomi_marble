@@ -1635,7 +1635,7 @@ static uint8_t sap_random_channel_sel(ptSapContext sap_ctx)
 	/* ch list after invalidating channels leaking into NOL */
 	uint8_t *leakage_adjusted_lst;
 	/* final list of channel from which random channel will be selected */
-	uint8_t final_lst[WNI_CFG_VALID_CHANNEL_LIST_LEN] = {0};
+	uint8_t final_lst[QDF_MAX_NUM_CHAN] = {0};
 	tAll5GChannelList *all_ch = &sap_ctx->SapAllChnlList;
 	tHalHandle hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
 	tpAniSirGlobal mac_ctx;
