@@ -738,6 +738,20 @@ void wlan_hdd_tdls_notify_connect(hdd_adapter_t *adapter,
  */
 void wlan_hdd_tdls_notify_disconnect(hdd_adapter_t *adapter);
 
+/**
+ * wlan_hdd_cfg80211_configure_tdls_mode() - configure tdls mode
+ * @wiphy:   pointer to wireless wiphy structure.
+ * @wdev:    pointer to wireless_dev structure.
+ * @data:    Pointer to the data to be passed via vendor interface
+ * @data_len:Length of the data to be passed
+ *
+ * Return:   Return the Success or Failure code.
+ */
+int wlan_hdd_cfg80211_configure_tdls_mode(struct wiphy *wiphy,
+					struct wireless_dev *wdev,
+					const void *data,
+					int data_len);
+
 #else
 static inline void hdd_tdls_notify_mode_change(hdd_adapter_t *adapter,
 				hdd_context_t *hddctx)
@@ -779,6 +793,15 @@ static inline void wlan_hdd_tdls_notify_connect(hdd_adapter_t *adapter,
 static inline void wlan_hdd_tdls_notify_disconnect(hdd_adapter_t *adapter)
 {
 }
+
+static inline int wlan_hdd_cfg80211_configure_tdls_mode(struct wiphy *wiphy,
+					struct wireless_dev *wdev,
+					const void *data,
+					int data_len)
+{
+	return 0;
+}
+
 #endif /* End of FEATURE_WLAN_TDLS */
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT

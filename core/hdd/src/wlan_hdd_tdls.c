@@ -55,6 +55,26 @@ int wpa_tdls_is_allowed_force_peer(tdlsCtx_t *pHddTdlsCtx, u8 *mac);
 static void wlan_hdd_tdls_pre_setup(struct work_struct *work);
 static void wlan_hdd_tdls_ct_handler(void *user_data);
 
+/**
+ * enum qca_wlan_vendor_tdls_trigger_mode_hdd_map: Maps the user space TDLS
+ *	trigger mode in the host driver.
+ * @WLAN_HDD_VENDOR_TDLS_TRIGGER_MODE_EXPLICIT: TDLS Connection and
+ *	disconnection handled by user space.
+ * @WLAN_HDD_VENDOR_TDLS_TRIGGER_MODE_IMPLICIT: TDLS connection and
+ *	disconnection controlled by host driver based on data traffic.
+ * @WLAN_HDD_VENDOR_TDLS_TRIGGER_MODE_EXTERNAL: TDLS connection and
+ *	disconnection jointly controlled by user space and host driver.
+ */
+enum qca_wlan_vendor_tdls_trigger_mode_hdd_map {
+	WLAN_HDD_VENDOR_TDLS_TRIGGER_MODE_EXPLICIT =
+		QCA_WLAN_VENDOR_TDLS_TRIGGER_MODE_EXPLICIT,
+	WLAN_HDD_VENDOR_TDLS_TRIGGER_MODE_IMPLICIT =
+		QCA_WLAN_VENDOR_TDLS_TRIGGER_MODE_IMPLICIT,
+	WLAN_HDD_VENDOR_TDLS_TRIGGER_MODE_EXTERNAL =
+		((QCA_WLAN_VENDOR_TDLS_TRIGGER_MODE_EXPLICIT |
+		  QCA_WLAN_VENDOR_TDLS_TRIGGER_MODE_IMPLICIT) << 1),
+};
+
 /*
  * wlan_hdd_tdls_determine_channel_opclass() - determine channel and opclass
  * @hddctx: pointer to hdd context
@@ -1648,11 +1668,19 @@ static void wlan_hdd_tdls_set_mode(hdd_context_t *pHddCtx,
 		pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
 		if (NULL != pHddTdlsCtx) {
 			if (eTDLS_SUPPORT_ENABLED == tdls_mode ||
-			    eTDLS_SUPPORT_EXTERNAL_CONTROL == tdls_mode)
+			    eTDLS_SUPPORT_EXTERNAL_CONTROL == tdls_mode) {
 				wlan_hdd_tdls_implicit_enable(pHddTdlsCtx);
-			else if ((eTDLS_SUPPORT_DISABLED == tdls_mode) ||
-				 (eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY == tdls_mode))
+			} else if ((eTDLS_SUPPORT_DISABLED == tdls_mode) ||
+				   (eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY ==
+				    tdls_mode)) {
 				wlan_hdd_tdls_implicit_disable(pHddTdlsCtx);
+
+				/* If tdls implicit mode is disabled, then
+				 * stop the connection tracker.
+				 */
+				pHddCtx->enable_tdls_connection_tracker =
+					false;
+			}
 		}
 		status = hdd_get_next_adapter(pHddCtx, pAdapterNode, &pNext);
 		pAdapterNode = pNext;
@@ -3299,6 +3327,29 @@ static const struct nla_policy
 							.type = NLA_U32},
 };
 
+static const struct nla_policy
+	wlan_hdd_tdls_mode_configuration_policy
+	[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_MAX + 1] = {
+		[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_TRIGGER_MODE] = {
+						.type = NLA_U32},
+		[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_TX_STATS_PERIOD] = {
+						.type = NLA_U32},
+		[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_TX_THRESHOLD] = {
+						.type = NLA_U32},
+		[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_DISCOVERY_PERIOD] = {
+						.type = NLA_U32},
+		[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_MAX_DISCOVERY_ATTEMPT] = {
+						.type = NLA_U32},
+		[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_IDLE_TIMEOUT] = {
+						.type = NLA_U32},
+		[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_IDLE_PACKET_THRESHOLD] = {
+						.type = NLA_U32},
+		[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_SETUP_RSSI_THRESHOLD] = {
+						.type = NLA_S32},
+		[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_TEARDOWN_RSSI_THRESHOLD] = {
+						.type = NLA_S32},
+};
+
 /**
  * __wlan_hdd_cfg80211_exttdls_get_status() - handle get status cfg80211 command
  * @wiphy: wiphy
@@ -3387,6 +3438,159 @@ __wlan_hdd_cfg80211_exttdls_get_status(struct wiphy *wiphy,
 nla_put_failure:
 	kfree_skb(skb);
 	return -EINVAL;
+}
+
+/**
+ * __wlan_hdd_cfg80211_configure_tdls_mode() - configure the tdls mode
+ * @wiphy: wiphy
+ * @wdev: wireless dev
+ * @data: netlink buffer
+ * @data_len: length of data in bytes
+ *
+ * Return 0 for success and error code for failure
+ */
+static int
+__wlan_hdd_cfg80211_configure_tdls_mode(struct wiphy *wiphy,
+					 struct wireless_dev *wdev,
+					 const void *data,
+					 int data_len)
+{
+	struct net_device *dev = wdev->netdev;
+	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_MAX + 1];
+	int ret;
+	eTDLSSupportMode tdls_mode;
+	uint32_t trigger_mode;
+	tdlsCtx_t *hdd_tdls_ctx;
+
+	ENTER_DEV(dev);
+
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("Command not allowed in FTM mode");
+		return -EPERM;
+	}
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return -EINVAL;
+
+	if (NULL == adapter)
+		return -EINVAL;
+
+	hdd_tdls_ctx = adapter->sessionCtx.station.pHddTdlsCtx;
+	if (NULL == hdd_tdls_ctx)
+		return -EINVAL;
+
+	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_MAX,
+		      data, data_len,
+		      wlan_hdd_tdls_mode_configuration_policy)) {
+		hdd_err("Invalid attribute");
+		return -EINVAL;
+	}
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_TRIGGER_MODE]) {
+		hdd_err("attr tdls trigger mode failed");
+		return -EINVAL;
+	}
+	trigger_mode = nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_TRIGGER_MODE]);
+	hdd_notice("TDLS trigger mode %d", trigger_mode);
+
+	switch (trigger_mode) {
+	case WLAN_HDD_VENDOR_TDLS_TRIGGER_MODE_EXPLICIT:
+		tdls_mode = eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY;
+		break;
+	case WLAN_HDD_VENDOR_TDLS_TRIGGER_MODE_EXTERNAL:
+		tdls_mode = eTDLS_SUPPORT_EXTERNAL_CONTROL;
+		break;
+	case WLAN_HDD_VENDOR_TDLS_TRIGGER_MODE_IMPLICIT:
+		tdls_mode = eTDLS_SUPPORT_ENABLED;
+		break;
+	default:
+		hdd_err("Invalid TDLS trigger mode");
+		return -EINVAL;
+	}
+	wlan_hdd_tdls_set_mode(hdd_ctx, tdls_mode, false);
+
+	mutex_lock(&hdd_ctx->tdls_lock);
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_TX_STATS_PERIOD]) {
+		hdd_tdls_ctx->threshold_config.tx_period_t = nla_get_u32(
+			tb[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_TX_STATS_PERIOD]);
+		hdd_info("attr tdls tx stats period %d",
+			hdd_tdls_ctx->threshold_config.tx_period_t);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_TX_THRESHOLD]) {
+		hdd_tdls_ctx->threshold_config.tx_packet_n = nla_get_u32(
+			tb[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_TX_THRESHOLD]);
+		hdd_info("attr tdls tx packet period %d",
+			hdd_tdls_ctx->threshold_config.tx_packet_n);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_MAX_DISCOVERY_ATTEMPT]) {
+		hdd_tdls_ctx->threshold_config.discovery_tries_n = nla_get_u32(
+			tb[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_MAX_DISCOVERY_ATTEMPT]);
+		hdd_info("attr tdls max discovery attempt %d",
+			hdd_tdls_ctx->threshold_config.discovery_tries_n);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_IDLE_TIMEOUT]) {
+		hdd_tdls_ctx->threshold_config.idle_timeout_t = nla_get_u32(
+			tb[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_IDLE_TIMEOUT]);
+		hdd_info("attr tdls idle time out period %d",
+			hdd_tdls_ctx->threshold_config.idle_timeout_t);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_IDLE_PACKET_THRESHOLD]) {
+		hdd_tdls_ctx->threshold_config.idle_packet_n = nla_get_u32(
+			tb[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_IDLE_PACKET_THRESHOLD]);
+		hdd_info("attr tdls idle pkt threshold %d",
+			hdd_tdls_ctx->threshold_config.idle_packet_n);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_SETUP_RSSI_THRESHOLD]) {
+		hdd_tdls_ctx->threshold_config.rssi_trigger_threshold = nla_get_s32(
+			tb[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_SETUP_RSSI_THRESHOLD]);
+		hdd_info("attr tdls rssi trigger threshold %d",
+			hdd_tdls_ctx->threshold_config.rssi_trigger_threshold);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_TEARDOWN_RSSI_THRESHOLD]) {
+		hdd_tdls_ctx->threshold_config.rssi_teardown_threshold = nla_get_s32(
+			tb[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_TEARDOWN_RSSI_THRESHOLD]);
+		hdd_info("attr tdls tx stats period %d",
+			hdd_tdls_ctx->threshold_config.rssi_teardown_threshold);
+	}
+
+	mutex_unlock(&hdd_ctx->tdls_lock);
+
+	EXIT();
+	return ret;
+}
+
+/**
+ * wlan_hdd_cfg80211_configure_tdls_mode() - configure tdls mode
+ * @wiphy:   pointer to wireless wiphy structure.
+ * @wdev:    pointer to wireless_dev structure.
+ * @data:    Pointer to the data to be passed via vendor interface
+ * @data_len:Length of the data to be passed
+ *
+ * Return:   Return the Success or Failure code.
+ */
+int wlan_hdd_cfg80211_configure_tdls_mode(struct wiphy *wiphy,
+					struct wireless_dev *wdev,
+					const void *data,
+					int data_len)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_configure_tdls_mode(wiphy, wdev, data,
+							data_len);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
 }
 
 /**
