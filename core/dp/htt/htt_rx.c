@@ -2058,6 +2058,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 		 */
 		qdf_nbuf_pull_head(msdu, HTT_RX_STD_DESC_RESERVATION);
 
+		QDF_NBUF_CB_DP_TRACE_PRINT(msdu) = false;
 		qdf_dp_trace_set_track(msdu, QDF_RX);
 		QDF_NBUF_CB_TX_PACKET_TRACK(msdu) = QDF_NBUF_TX_PKT_DATA_TRACK;
 		ol_rx_log_packet(pdev, peer_id, msdu);
