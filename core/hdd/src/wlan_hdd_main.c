@@ -6995,6 +6995,7 @@ static int hdd_update_cds_config(hdd_context_t *hdd_ctx)
 	cds_cfg->sub_20_channel_width = WLAN_SUB_20_CH_WIDTH_NONE;
 	cds_cfg->flow_steering_enabled = hdd_ctx->config->flow_steering_enable;
 	cds_cfg->self_recovery_enabled = hdd_ctx->config->enableSelfRecovery;
+	cds_cfg->fw_timeout_crash = hdd_ctx->config->fw_timeout_crash;
 
 	hdd_ra_populate_cds_config(cds_cfg, hdd_ctx);
 	hdd_txrx_populate_cds_config(cds_cfg, hdd_ctx);

@@ -96,6 +96,7 @@ enum cfg_sub_20_channel_width {
  * @self_gen_frm_pwr: Self gen from power
  * @sub_20_channel_width: Sub 20 MHz ch width, ini intersected with fw cap
  * @flow_steering_enabled: Receive flow steering.
+ * @is_fw_timeout: Indicate whether crash host when fw timesout or not
  * Structure for holding cds ini parameters.
  */
 
@@ -148,5 +149,6 @@ struct cds_config_info {
 	enum cfg_sub_20_channel_width sub_20_channel_width;
 	bool flow_steering_enabled;
 	bool self_recovery_enabled;
+	bool fw_timeout_crash;
 };
 #endif /* !defined( __CDS_CONFIG_H ) */

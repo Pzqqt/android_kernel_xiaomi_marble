@@ -2273,14 +2273,20 @@ void wma_hold_req_timer(void *data)
 		WMA_LOGA(FL("WMA_ADD_STA_REQ timed out"));
 		WMA_LOGD(FL("Sending add sta rsp to umac (mac:%pM, status:%d)"),
 			 params->staMac, params->status);
-		wma_send_msg(wma, WMA_ADD_STA_RSP, (void *)params, 0);
+		if (wma->fw_timeout_crash == true)
+			BUG_ON(1);
+		else
+			wma_send_msg(wma, WMA_ADD_STA_RSP, (void *)params, 0);
 	} else if (tgt_req->msg_type == WMA_ADD_BSS_REQ) {
 		tpAddBssParams  params = (tpAddBssParams) tgt_req->user_data;
 		params->status = QDF_STATUS_E_TIMEOUT;
 		WMA_LOGA(FL("WMA_ADD_BSS_REQ timed out"));
 		WMA_LOGD(FL("Sending add bss rsp to umac (mac:%pM, status:%d)"),
 			params->selfMacAddr, params->status);
-		wma_send_msg(wma, WMA_ADD_BSS_RSP, (void *)params, 0);
+		if (wma->fw_timeout_crash == true)
+			BUG_ON(1);
+		else
+			wma_send_msg(wma, WMA_ADD_BSS_RSP, (void *)params, 0);
 	} else if ((tgt_req->msg_type == WMA_DELETE_STA_REQ) &&
 		(tgt_req->type == WMA_DELETE_STA_RSP_START)) {
 		tpDeleteStaParams params =
@@ -2289,12 +2295,18 @@ void wma_hold_req_timer(void *data)
 		WMA_LOGE(FL("WMA_DEL_STA_REQ timed out"));
 		WMA_LOGP(FL("Sending del sta rsp to umac (mac:%pM, status:%d)"),
 			 params->staMac, params->status);
-		/*
-		 * Assert in development build only.
-		 * Send response in production builds.
-		 */
-		QDF_ASSERT(0);
-		wma_send_msg(wma, WMA_DELETE_STA_RSP, (void *)params, 0);
+
+		if (wma->fw_timeout_crash == true) {
+			BUG_ON(1);
+		} else {
+			/*
+			 * Assert in development build only.
+			 * Send response in production builds.
+			 */
+			QDF_ASSERT(0);
+			wma_send_msg(wma, WMA_DELETE_STA_RSP,
+				    (void *)params, 0);
+		}
 	} else if ((tgt_req->msg_type == WMA_DELETE_STA_REQ) &&
 		(tgt_req->type == WMA_DEL_P2P_SELF_STA_RSP_START)) {
 		WMA_LOGA(FL("wma delete sta p2p request timed out"));
@@ -2435,7 +2447,13 @@ void wma_vdev_resp_timer(void *data)
 			(tpSwitchChannelParams) tgt_req->user_data;
 		params->status = QDF_STATUS_E_TIMEOUT;
 		WMA_LOGA("%s: WMA_SWITCH_CHANNEL_REQ timedout", __func__);
-		wma_send_msg(wma, WMA_SWITCH_CHANNEL_RSP, (void *)params, 0);
+
+		/* Trigger host crash if the flag is set */
+		if (wma->fw_timeout_crash == true)
+			BUG_ON(1);
+		else
+			wma_send_msg(wma, WMA_SWITCH_CHANNEL_RSP,
+				    (void *)params, 0);
 		if (wma->interfaces[tgt_req->vdev_id].is_channel_switch) {
 			wma->interfaces[tgt_req->vdev_id].is_channel_switch =
 				false;
@@ -2509,7 +2527,11 @@ void wma_vdev_resp_timer(void *data)
 		}
 		params->status = QDF_STATUS_E_TIMEOUT;
 		WMA_LOGA("%s: WMA_DELETE_BSS_REQ timedout", __func__);
-		wma_send_msg(wma, WMA_DELETE_BSS_RSP, (void *)params, 0);
+		if (wma->fw_timeout_crash == true)
+			BUG_ON(1);
+		else
+			wma_send_msg(wma, WMA_DELETE_BSS_RSP,
+				    (void *)params, 0);
 		if (iface->del_staself_req) {
 			WMA_LOGA("scheduling defered deletion(vdev id %x)",
 				 tgt_req->vdev_id);
@@ -2531,14 +2553,19 @@ void wma_vdev_resp_timer(void *data)
 		params->status = QDF_STATUS_E_TIMEOUT;
 
 		WMA_LOGA("%s: WMA_DEL_STA_SELF_REQ timedout", __func__);
-		sme_msg.type = eWNI_SME_DEL_STA_SELF_RSP;
-		sme_msg.bodyptr = iface->del_staself_req;
-		sme_msg.bodyval = 0;
+		if (wma->fw_timeout_crash == true) {
+			BUG_ON(1);
+		} else {
+			sme_msg.type = eWNI_SME_DEL_STA_SELF_RSP;
+			sme_msg.bodyptr = iface->del_staself_req;
+			sme_msg.bodyval = 0;
 
-		status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			WMA_LOGE("Failed to post eWNI_SME_ADD_STA_SELF_RSP");
-			qdf_mem_free(iface->del_staself_req);
+			status = cds_mq_post_message(QDF_MODULE_ID_SME,
+						     &sme_msg);
+			if (!QDF_IS_STATUS_SUCCESS(status)) {
+				WMA_LOGE("Failed to post eWNI_SME_ADD_STA_SELF_RSP");
+				qdf_mem_free(iface->del_staself_req);
+			}
 		}
 		if (iface->addBssStaContext)
 			qdf_mem_free(iface->addBssStaContext);
@@ -2551,8 +2578,12 @@ void wma_vdev_resp_timer(void *data)
 		WMA_LOGA("%s: WMA_ADD_BSS_REQ timedout", __func__);
 		WMA_LOGI("%s: bssid %pM vdev_id %d", __func__, params->bssId,
 			 tgt_req->vdev_id);
-		wma_send_msg(wma, WMA_ADD_BSS_RSP, (void *)params, 0);
-		QDF_ASSERT(0);
+		if (wma->fw_timeout_crash == true) {
+			BUG_ON(1);
+		} else {
+			wma_send_msg(wma, WMA_ADD_BSS_RSP, (void *)params, 0);
+			QDF_ASSERT(0);
+		}
 		goto free_tgt_req;
 
 	} else if (tgt_req->msg_type == WMA_OCB_SET_CONFIG_CMD) {
@@ -3228,7 +3259,6 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 		else
 			WMA_LOGD("Sent PKT_PWR_SAVE_5G_EBT cmd to target, val = %x, status = %d",
 				pps_val, status);
-
 		wma_send_peer_assoc(wma, add_bss->nwType,
 					    &add_bss->staContext);
 		peer_assoc_sent = true;

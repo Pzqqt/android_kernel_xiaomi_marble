@@ -252,15 +252,15 @@ enum ds_mode {
 #define WMA_TARGET_REQ_TYPE_VDEV_DEL   0x3
 
 #define WMA_PEER_ASSOC_CNF_START 0x01
-#define WMA_PEER_ASSOC_TIMEOUT (3000) /* 3 seconds */
+#define WMA_PEER_ASSOC_TIMEOUT (6000) /* 6 seconds */
 
 #define WMA_DELETE_STA_RSP_START 0x02
 #define WMA_DELETE_STA_TIMEOUT (6000) /* 6 seconds */
 
 #define WMA_DEL_P2P_SELF_STA_RSP_START 0x03
 
-#define WMA_VDEV_START_REQUEST_TIMEOUT (3000)   /* 3 seconds */
-#define WMA_VDEV_STOP_REQUEST_TIMEOUT  (3000)   /* 3 seconds */
+#define WMA_VDEV_START_REQUEST_TIMEOUT (6000)   /* 6 seconds */
+#define WMA_VDEV_STOP_REQUEST_TIMEOUT  (6000)   /* 6 seconds */
 
 #define WMA_TGT_INVALID_SNR 0x127
 
@@ -1604,8 +1604,8 @@ typedef struct {
 	bool nan_datapath_enabled;
 	QDF_STATUS (*pe_ndp_event_handler)(tpAniSirGlobal mac_ctx,
 					   cds_msg_t *msg);
+	bool fw_timeout_crash;
 	bool sub_20_support;
-
 	tp_wma_packetdump_cb wma_mgmt_tx_packetdump_cb;
 	tp_wma_packetdump_cb wma_mgmt_rx_packetdump_cb;
 } t_wma_handle, *tp_wma_handle;

@@ -3591,6 +3591,13 @@ enum dot11p_mode {
 #define CFG_OPTIMIZE_CA_EVENT_ENABLE     (1)
 #define CFG_OPTIMIZE_CA_EVENT_DEFAULT    (0)
 
+/* Trigger BUG ON when firmware fails to send response */
+#define CFG_CRASH_FW_TIMEOUT_NAME       "fw_timeout_crash"
+#define CFG_CRASH_FW_TIMEOUT_DISABLE    (0)
+#define CFG_CRASH_FW_TIMEOUT_ENABLE     (1)
+#define CFG_CRASH_FW_TIMEOUT_DEFAULT    (0)
+
+
 /*---------------------------------------------------------------------------
    Type declarations
    -------------------------------------------------------------------------*/
@@ -4261,6 +4268,7 @@ struct hdd_config {
 	uint32_t rx_aggregation_size;
 	bool sta_prefer_80MHz_over_160MHz;
 	uint8_t sap_max_inactivity_override;
+	bool fw_timeout_crash;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

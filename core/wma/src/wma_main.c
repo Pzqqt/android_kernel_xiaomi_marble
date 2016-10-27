@@ -2071,6 +2071,7 @@ QDF_STATUS wma_open(void *cds_context,
 	wma_handle->old_hw_mode_index = WMA_DEFAULT_HW_MODE_INDEX;
 	wma_handle->new_hw_mode_index = WMA_DEFAULT_HW_MODE_INDEX;
 	wma_handle->saved_chan.num_channels = 0;
+	wma_handle->fw_timeout_crash = cds_cfg->fw_timeout_crash;
 
 	qdf_status = qdf_event_create(&wma_handle->wma_ready_event);
 	if (qdf_status != QDF_STATUS_SUCCESS) {
