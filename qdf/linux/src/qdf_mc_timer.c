@@ -702,3 +702,20 @@ void qdf_timer_module_deinit(void)
 	qdf_mutex_destroy(&persistent_timer_count_lock);
 }
 EXPORT_SYMBOL(qdf_timer_module_deinit);
+
+void qdf_get_time_of_the_day_in_hr_min_sec_usec(char *tbuf, int len)
+{
+	struct timeval tv;
+	struct rtc_time tm;
+	unsigned long local_time;
+
+	/* Format the Log time R#: [hr:min:sec.microsec] */
+	do_gettimeofday(&tv);
+	/* Convert rtc to local time */
+	local_time = (u32)(tv.tv_sec - (sys_tz.tz_minuteswest * 60));
+	rtc_time_to_tm(local_time, &tm);
+	scnprintf(tbuf, len,
+		"[%02d:%02d:%02d.%06lu]",
+		tm.tm_hour, tm.tm_min, tm.tm_sec, tv.tv_usec);
+}
+EXPORT_SYMBOL(qdf_get_time_of_the_day_in_hr_min_sec_usec);

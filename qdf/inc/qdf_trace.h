@@ -121,7 +121,8 @@ typedef enum {
 
 /**
  * typedef struct qdf_trace_record_s - keep trace record
- * @time: timestamp
+ * @qtime: qtimer ticks
+ * @time: user timestamp
  * @module: module name
  * @code: hold record of code
  * @session: hold record of session
@@ -129,7 +130,8 @@ typedef enum {
  * @pid: hold pid of the process
  */
 typedef struct qdf_trace_record_s {
-	uint64_t time;
+	uint64_t qtime;
+	char time[18];
 	uint8_t module;
 	uint8_t code;
 	uint16_t session;

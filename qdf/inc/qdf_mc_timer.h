@@ -267,4 +267,14 @@ void qdf_timer_module_init(void);
  */
 void qdf_timer_module_deinit(void);
 
+/**
+ * qdf_get_time_of_the_day_in_hr_min_sec_usec() - Get system time
+ * @tbuf: Pointer to time stamp buffer
+ * @len: Time buffer size
+ *
+ * This function updates the 'tbuf' with system time in hr:min:sec:msec format
+ *
+ * Return: None
+ */
+void qdf_get_time_of_the_day_in_hr_min_sec_usec(char *tbuf, int len);
 #endif /* __QDF_MC_TIMER_H */

@@ -39,6 +39,7 @@
 #include <linux/timer.h>
 #include <linux/time.h>
 #include <linux/jiffies.h>
+#include <linux/rtc.h>
 
 /* Preprocessor definitions and constants */
 

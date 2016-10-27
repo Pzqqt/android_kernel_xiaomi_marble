@@ -35,6 +35,7 @@
 #include <qdf_trace.h>
 #include <wlan_logging_sock_svc.h>
 #include "qdf_time.h"
+#include "qdf_mc_timer.h"
 /* Preprocessor definitions and constants */
 
 #define QDF_TRACE_BUFFER_SIZE (512)
@@ -528,6 +529,7 @@ void qdf_trace(uint8_t module, uint8_t code, uint16_t session, uint32_t data)
 {
 	tp_qdf_trace_record rec = NULL;
 	unsigned long flags;
+	char time[18];
 
 	if (!g_qdf_trace_data.enable)
 		return;
@@ -536,6 +538,7 @@ void qdf_trace(uint8_t module, uint8_t code, uint16_t session, uint32_t data)
 	if (NULL == qdf_trace_cb_table[module])
 		return;
 
+	qdf_get_time_of_the_day_in_hr_min_sec_usec(time, sizeof(time));
 	/* Aquire the lock so that only one thread at a time can fill the ring
 	 * buffer
 	 */
@@ -569,7 +572,8 @@ void qdf_trace(uint8_t module, uint8_t code, uint16_t session, uint32_t data)
 	rec->code = code;
 	rec->session = session;
 	rec->data = data;
-	rec->time = qdf_get_log_timestamp();
+	rec->qtime = qdf_get_log_timestamp();
+	scnprintf(rec->time, sizeof(rec->time), "%s", time);
 	rec->module = module;
 	rec->pid = (in_interrupt() ? 0 : current->pid);
 	g_qdf_trace_data.num_since_last_dump++;
