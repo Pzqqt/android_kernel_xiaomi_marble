@@ -403,9 +403,6 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 }
 #endif
 
-extern void
-dump_frag_desc(char *msg, struct ol_tx_desc_t *tx_desc);
-
 void
 dump_pkt(qdf_nbuf_t nbuf, qdf_dma_addr_t nbuf_paddr, int len)
 {
@@ -583,7 +580,7 @@ struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 	}
 
 #if defined(HELIUMPLUS_DEBUG)
-	dump_frag_desc("ol_tx_desc_ll()", tx_desc);
+	ol_txrx_dump_frag_desc("ol_tx_desc_ll()", tx_desc);
 #endif
 	return tx_desc;
 }
