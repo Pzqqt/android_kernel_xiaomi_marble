@@ -189,7 +189,7 @@ struct qdf_nbuf_cb {
 							packet_type:3,
 							/* used only for hl*/
 							htt2_frm:1,
-							reserved:1;
+							print:1;
 						uint8_t vdev_id;
 					} trace; /* 4 bytes */
 					struct {
@@ -281,6 +281,8 @@ struct qdf_nbuf_cb {
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.mcl.trace.packet_track)
 #define QDF_NBUF_CB_TX_DP_TRACE(skb) \
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.mcl.trace.dp_trace)
+#define QDF_NBUF_CB_DP_TRACE_PRINT(skb) \
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.mcl.trace.print)
 #define QDF_NBUF_CB_TX_HL_HTT2_FRM(skb) \
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.mcl.trace.htt2_frm)
 #define QDF_NBUF_CB_TX_VDEV_ID(skb) \

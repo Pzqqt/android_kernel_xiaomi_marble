@@ -803,9 +803,11 @@ void qdf_dp_trace_init(void)
 	g_qdf_dp_trace_data.tail = INVALID_QDF_DP_TRACE_ADDR;
 	g_qdf_dp_trace_data.num = 0;
 	g_qdf_dp_trace_data.proto_bitmap = QDF_NBUF_PKT_TRAC_TYPE_EAPOL |
-	    QDF_NBUF_PKT_TRAC_TYPE_DHCP | QDF_NBUF_PKT_TRAC_TYPE_MGMT_ACTION;
+					   QDF_NBUF_PKT_TRAC_TYPE_DHCP |
+					   QDF_NBUF_PKT_TRAC_TYPE_MGMT_ACTION |
+					   QDF_NBUF_PKT_TRAC_TYPE_ARP;
 	g_qdf_dp_trace_data.no_of_record = 0;
-	g_qdf_dp_trace_data.verbosity    = QDF_DP_TRACE_VERBOSITY_LOW;
+	g_qdf_dp_trace_data.verbosity    = QDF_DP_TRACE_VERBOSITY_HIGH;
 	g_qdf_dp_trace_data.enable = true;
 
 	for (i = 0; i < ARRAY_SIZE(qdf_dp_trace_cb_table); i++)
@@ -1221,6 +1223,8 @@ static bool qdf_log_eapol_pkt(uint8_t session_id, struct sk_buff *skb,
 			QDF_NBUF_CB_TX_DP_TRACE(skb) = 1;
 		else if (QDF_RX == dir)
 			QDF_NBUF_CB_RX_DP_TRACE(skb) = 1;
+
+		QDF_NBUF_CB_DP_TRACE_PRINT(skb) = true;
 		return true;
 	}
 	return false;
@@ -1253,6 +1257,8 @@ static bool qdf_log_dhcp_pkt(uint8_t session_id, struct sk_buff *skb,
 			QDF_NBUF_CB_TX_DP_TRACE(skb) = 1;
 		else if (QDF_RX == dir)
 			QDF_NBUF_CB_RX_DP_TRACE(skb) = 1;
+
+		QDF_NBUF_CB_DP_TRACE_PRINT(skb) = true;
 		return true;
 	}
 	return false;
@@ -1285,6 +1291,8 @@ static bool qdf_log_arp_pkt(uint8_t session_id, struct sk_buff *skb,
 			QDF_NBUF_CB_TX_DP_TRACE(skb) = 1;
 		else if (QDF_RX == dir)
 			QDF_NBUF_CB_RX_DP_TRACE(skb) = 1;
+
+		QDF_NBUF_CB_DP_TRACE_PRINT(skb) = true;
 		return true;
 	}
 	return false;
@@ -1526,7 +1534,8 @@ void qdf_dp_trace_ptr(qdf_nbuf_t nbuf, enum QDF_DP_TRACE_ID code,
 	qdf_mem_copy(&buf.cookie, data, size);
 	buf.msdu_id = msdu_id;
 	buf.status = status;
-	qdf_dp_add_record(code, (uint8_t *)&buf, buf_size, false);
+	qdf_dp_add_record(code, (uint8_t *)&buf, buf_size,
+				QDF_NBUF_CB_DP_TRACE_PRINT(nbuf));
 }
 EXPORT_SYMBOL(qdf_dp_trace_ptr);
 
@@ -1577,7 +1586,7 @@ void qdf_dp_trace(qdf_nbuf_t nbuf, enum QDF_DP_TRACE_ID code,
 	if (qdf_dp_enable_check(nbuf, code, dir) == false)
 		return;
 
-	qdf_dp_add_record(code, data, size, false);
+	qdf_dp_add_record(code, data, size, QDF_NBUF_CB_DP_TRACE_PRINT(nbuf));
 }
 EXPORT_SYMBOL(qdf_dp_trace);
 
