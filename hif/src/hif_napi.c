@@ -41,6 +41,7 @@
 #include <linux/interrupt.h>
 #ifdef HELIUMPLUS
 #include <soc/qcom/irq-helper.h>
+#include <linux/sched/core_ctl.h>
 #include <pld_snoc.h>
 #endif
 #include <linux/pm.h>
@@ -75,7 +76,7 @@ static int hif_napi_cpu_migrate(struct qca_napi_data *napid, int cpu,
 	return 0;
 }
 
-static int hif_napi_cpu_blacklist(bool is_on) { return 0; }
+int hif_napi_cpu_blacklist(enum qca_blacklist_op op) { return 0; }
 #endif /* HELIUMPLUS */
 
 /**
@@ -85,6 +86,7 @@ static int hif_napi_cpu_blacklist(bool is_on) { return 0; }
  * @poll   : poll function to be used for this NAPI instance
  * @budget : budget to be registered with the NAPI instance
  * @scale  : scale factor on the weight (to scaler budget to 1000)
+ * @flags  : feature flags
  *
  * Description:
  *    Creates NAPI instances. This function is called
@@ -101,7 +103,8 @@ static int hif_napi_cpu_blacklist(bool is_on) { return 0; }
 int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 		    int (*poll)(struct napi_struct *, int),
 		    int                budget,
-		    int                scale)
+		    int                scale,
+		    uint8_t            flags)
 {
 	int i;
 	struct qca_napi_data *napid;
@@ -123,6 +126,7 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 		qdf_spinlock_create(&(napid->lock));
 
 		napid->state |= HIF_NAPI_INITED;
+		napid->flags = flags;
 
 		rc = hif_napi_cpu_init(hif_ctx);
 		if (rc != 0) {
@@ -150,6 +154,7 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 		napii->id    = NAPI_PIPE2ID(i);
 		napii->hif_ctx = hif_ctx;
 		napii->irq   = hif_get_irq_for_ce(i);
+
 		if (napii->irq < 0)
 			HIF_WARN("%s: bad IRQ value for CE %d: %d",
 				 __func__, i, napii->irq);
@@ -178,7 +183,7 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 		HIF_INFO("%s: NAPI id %d created for pipe %d", __func__,
 			 napii->id, i);
 	}
-	NAPI_DEBUG("NAPI idscreated for pipe all applicable pipes");
+	NAPI_DEBUG("NAPI ids created for all applicable pipes");
 hnc_err:
 	NAPI_DEBUG("<--napi_instances_map=%x]", napid->ce_map);
 	return napid->ce_map;
@@ -527,32 +532,37 @@ int hif_napi_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 		/* in QCA_NAPI_TPUT_LO case, napis MUST == 0 */
 		break;
 	}
-	case NAPI_EVT_TPUT_STATE: {
 
+	case NAPI_EVT_TPUT_STATE: {
 		tput_mode = (enum qca_napi_tput_state)data;
 		if (tput_mode == QCA_NAPI_TPUT_LO) {
 			/* from TPUT_HI -> TPUT_LO */
 			NAPI_DEBUG("%s: Moving to napi_tput_LO state",
 				   __func__);
-
-			rc = hif_napi_cpu_migrate(napid,
-						  HNC_ANY_CPU,
-						  HNC_ACT_COLLAPSE);
 			blacklist_pending = BLACKLIST_OFF_PENDING;
+			/*
+			.*.Ideally we should "collapse" interrupts here, since
+			 * we are "dispersing" interrupts in the "else" case.
+			 * This allows the possibility that our interrupts may
+			 * still be on the perf cluster the next time we enter
+			 * high tput mode. However, the irq_balancer is free
+			 * to move our interrupts to power cluster once
+			 * blacklisting has been turned off in the "else" case.
+			 */
 		} else {
 			/* from TPUT_LO -> TPUT->HI */
 			NAPI_DEBUG("%s: Moving to napi_tput_HI state",
 				   __func__);
-
 			rc = hif_napi_cpu_migrate(napid,
 						  HNC_ANY_CPU,
 						  HNC_ACT_DISPERSE);
+
 			blacklist_pending = BLACKLIST_ON_PENDING;
 		}
 		napid->napi_mode = tput_mode;
-
 		break;
 	}
+
 	case NAPI_EVT_USR_SERIAL: {
 		unsigned long users = (unsigned long)data;
 
@@ -590,11 +600,11 @@ int hif_napi_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 	switch (blacklist_pending) {
 	case BLACKLIST_ON_PENDING:
 		/* assume the control of WLAN IRQs */
-		hif_napi_cpu_blacklist(true);
+		hif_napi_cpu_blacklist(napid->flags, BLACKLIST_ON);
 		break;
 	case BLACKLIST_OFF_PENDING:
 		/* yield the control of WLAN IRQs */
-		hif_napi_cpu_blacklist(false);
+		hif_napi_cpu_blacklist(napid->flags, BLACKLIST_OFF);
 		break;
 	default: /* nothing to do */
 		break;
@@ -693,6 +703,46 @@ int hif_napi_schedule(struct hif_opaque_softc *hif_ctx, int ce_id)
 }
 
 /**
+ * hif_napi_correct_cpu() - correct the interrupt affinity for napi if needed
+ * @napi_info: pointer to qca_napi_info for the napi instance
+ *
+ * Return: true  => interrupt already on correct cpu, no correction needed
+ *         false => interrupt on wrong cpu, correction done for cpu affinity
+ *                   of the interrupt
+ */
+static inline
+bool hif_napi_correct_cpu(struct qca_napi_info *napi_info)
+{
+	bool right_cpu = true;
+	int rc = 0;
+	cpumask_t cpumask;
+	int cpu ;
+	struct qca_napi_data *napid;
+
+	napid = hif_napi_get_all(GET_HIF_OPAQUE_HDL(napi_info->hif_ctx));
+
+	if (napid->flags & QCA_NAPI_FEATURE_CPU_CORRECTION) {
+
+		cpu = qdf_get_cpu();
+		if (unlikely((hif_napi_cpu_blacklist(napid->flags,
+						BLACKLIST_QUERY) > 0) &&
+						(cpu != napi_info->cpu))) {
+			right_cpu = false;
+
+			NAPI_DEBUG("interrupt on wrong CPU, correcting");
+			cpumask.bits[0] = (0x01 << napi_info->cpu);
+			rc = irq_set_affinity_hint(napi_info->irq,
+						   &cpumask);
+			if (rc)
+				HIF_ERROR("error setting irq affinity hint: %d", rc);
+			else
+				napi_info->stats[cpu].cpu_corrected++;
+		}
+	}
+	return right_cpu;
+}
+
+/**
  * hif_napi_poll() - NAPI poll routine
  * @napi  : pointer to NAPI struct as kernel holds it
  * @budget:
@@ -711,23 +761,32 @@ int hif_napi_schedule(struct hif_opaque_softc *hif_ctx, int ce_id)
  *  reflected in the counterpart.
  *
  * Returns:
- *  int: the amount of work done in this poll ( <= budget)
+ *  int: the amount of work done in this poll (<= budget)
  */
-int hif_napi_poll(struct hif_opaque_softc *hif_ctx, struct napi_struct *napi,
-								int budget)
+int hif_napi_poll(struct hif_opaque_softc *hif_ctx,
+		  struct napi_struct *napi,
+		  int budget)
 {
 	int    rc = 0; /* default: no work done, also takes care of error */
-	int    normalized, bucket;
+	int    normalized = 0;
+	int    bucket;
 	int    cpu = smp_processor_id();
+	bool poll_on_right_cpu;
 	struct hif_softc      *hif = HIF_GET_SOFTC(hif_ctx);
 	struct qca_napi_info *napi_info;
 	struct CE_state *ce_state = NULL;
 
-	napi_info = (struct qca_napi_info *)
-		container_of(napi, struct qca_napi_info, napi);
-
 	NAPI_DEBUG("%s -->(napi(%d, irq=%d), budget=%d)",
 		   __func__, napi_info->id, napi_info->irq, budget);
+
+	if (unlikely(NULL == hif)) {
+		HIF_ERROR("%s: hif context is NULL", __func__);
+		QDF_ASSERT(0);
+		goto out;
+	}
+
+	napi_info = (struct qca_napi_info *)
+		container_of(napi, struct qca_napi_info, napi);
 
 	napi_info->stats[cpu].napi_polls++;
 
@@ -735,19 +794,10 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx, struct napi_struct *napi,
 				 NAPI_POLL_ENTER, NULL, NULL, cpu);
 
 	qdf_spin_lock_bh(&napi_info->lro_unloading_lock);
-	if (unlikely(NULL == hif)) {
-		HIF_ERROR("%s: hif context is NULL", __func__);
-		QDF_ASSERT(0); /* emit a warning if hif NULL */
-		goto out;
-	} else {
-		rc = ce_per_engine_service(hif, NAPI_ID2PIPE(napi_info->id));
-		NAPI_DEBUG("%s: ce_per_engine_service processed %d msgs",
-			    __func__, rc);
-	}
-	napi_info->stats[cpu].napi_workdone += rc;
-	normalized = (rc / napi_info->scale);
 
-	ce_state = hif->ce_id_to_state[NAPI_ID2PIPE(napi_info->id)];
+	rc = ce_per_engine_service(hif, NAPI_ID2PIPE(napi_info->id));
+	NAPI_DEBUG("%s: ce_per_engine_service processed %d msgs",
+		    __func__, rc);
 
 	if (napi_info->lro_flush_cb)
 		napi_info->lro_flush_cb(napi_info->lro_ctx);
@@ -756,29 +806,45 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx, struct napi_struct *napi,
 	/* do not return 0, if there was some work done,
 	 * even if it is below the scale
 	 */
-	if (rc)
-		normalized++;
-	bucket = normalized / (QCA_NAPI_BUDGET / QCA_NAPI_NUM_BUCKETS);
-	if (bucket >= QCA_NAPI_NUM_BUCKETS) {
-		bucket = QCA_NAPI_NUM_BUCKETS - 1;
-		HIF_ERROR("Bad bucket#(%d) > QCA_NAPI_NUM_BUCKETS(%d)",
-			bucket, QCA_NAPI_NUM_BUCKETS);
-	}
-	napi_info->stats[cpu].napi_budget_uses[bucket]++;
-
+	if (rc) {
+		napi_info->stats[cpu].napi_workdone += rc;
+		normalized = (rc / napi_info->scale);
+		if (normalized == 0)
+			normalized++;
+		bucket = normalized / (QCA_NAPI_BUDGET / QCA_NAPI_NUM_BUCKETS);
+		if (bucket >= QCA_NAPI_NUM_BUCKETS) {
+			bucket = QCA_NAPI_NUM_BUCKETS - 1;
+			HIF_ERROR("Bad bucket#(%d) > QCA_NAPI_NUM_BUCKETS(%d)",
+				bucket, QCA_NAPI_NUM_BUCKETS);
+		}
+		napi_info->stats[cpu].napi_budget_uses[bucket]++;
+	} else {
 	/* if ce_per engine reports 0, then poll should be terminated */
-	if (0 == rc)
 		NAPI_DEBUG("%s:%d: nothing processed by CE. Completing NAPI",
 			   __func__, __LINE__);
+	}
+
+	ce_state = hif->ce_id_to_state[NAPI_ID2PIPE(napi_info->id)];
+
+	/*
+	 * Not using the API hif_napi_correct_cpu directly in the if statement
+	 * below since the API may not get evaluated if put at the end if any
+	 * prior condition would evaluate to be true. The CPU correction
+	 * check should kick in every poll.
+	 */
 #ifdef NAPI_YIELD_BUDGET_BASED
 	if (ce_state && (ce_state->force_break || 0 == rc)) {
 #else
-	if (ce_state && (!ce_check_rx_pending(ce_state) || 0 == rc)) {
+	poll_on_right_cpu = hif_napi_correct_cpu(napi_info);
+	if ((ce_state) &&
+	    (!ce_check_rx_pending(ce_state) || (0 == rc) ||
+	     !poll_on_right_cpu)) {
 #endif
 		napi_info->stats[cpu].napi_completes++;
 #ifdef NAPI_YIELD_BUDGET_BASED
 		ce_state->force_break = 0;
 #endif
+
 		hif_record_ce_desc_event(hif, ce_state->id, NAPI_COMPLETE,
 					 NULL, NULL, 0);
 		if (normalized >= budget)
@@ -786,12 +852,9 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx, struct napi_struct *napi,
 
 		/* enable interrupts */
 		napi_complete(napi);
-		if (NULL != hif) {
-			hif_napi_enable_irq(hif_ctx, napi_info->id);
-
-			/* support suspend/resume */
-			qdf_atomic_dec(&(hif->active_tasklet_cnt));
-		}
+		hif_napi_enable_irq(hif_ctx, napi_info->id);
+		/* support suspend/resume */
+		qdf_atomic_dec(&(hif->active_tasklet_cnt));
 
 		NAPI_DEBUG("%s:%d: napi_complete + enabling the interrupts",
 			   __func__, __LINE__);
@@ -1268,7 +1331,12 @@ static int hncm_migrate_to(struct qca_napi_data *napid,
 
 	cpumask.bits[0] = (1 << didx);
 	rc = irq_set_affinity_hint(napid->napis[napi_ce].irq, &cpumask);
-	napid->napi_cpu[didx].napis |= (1 << napi_ce);
+
+	/* unmark the napis bitmap in the cpu table */
+	napid->napi_cpu[napid->napis[napi_ce].cpu].napis &= ~(0x01 << napi_ce);
+	/* mark the napis bitmap for the new designated cpu */
+	napid->napi_cpu[didx].napis |= (0x01 << napi_ce);
+	napid->napis[napi_ce].cpu = didx;
 
 	NAPI_DEBUG("<--%s[%d]", __func__, rc);
 	return rc;
@@ -1421,25 +1489,57 @@ hncm_return:
 
 /**
  * hif_napi_cpu_blacklist() - calls kernel API to enable/disable blacklisting
+ * @flags: NAPI feature flags
+ * @op: blacklist operation to perform
  *
- * Return: from the API
+ * Return: -EINVAL, in case IRQ_BLACKLISTING and CORE_CTL_BOOST is not enabled
+ *         for BLACKLIST_QUERY op - blacklist refcount
+ *         for BLACKLIST_ON op    - return value from kernel blacklist API
+ *         for BLACKLIST_OFF op   - return value from kernel blacklist API
  */
-int hif_napi_cpu_blacklist(bool is_on)
+int hif_napi_cpu_blacklist(uint8_t flags, enum qca_blacklist_op op)
 {
 	int rc = 0;
 	static int ref_count; /* = 0 by the compiler */
+	bool bl_en = flags & QCA_NAPI_FEATURE_IRQ_BLACKLISTING;
+	bool ccb_en = flags & QCA_NAPI_FEATURE_CORE_CTL_BOOST;
 
-	NAPI_DEBUG("-->%s(%d)", __func__, is_on);
-	if (is_on) {
-		ref_count++;
-		rc = irq_blacklist_on();
-	} else {
-		do {
-			rc = irq_blacklist_off();
-			ref_count--;
-		} while (ref_count > 0);
+	NAPI_DEBUG("-->%s(%d %d)", __func__, flags, op);
+
+	if (!(bl_en && ccb_en)) {
+		rc = -EINVAL;
+		goto out;
 	}
 
+	switch (op) {
+	case BLACKLIST_QUERY:
+		rc = ref_count;
+		break;
+	case BLACKLIST_ON:
+		ref_count++;
+		rc = irq_blacklist_on();
+		NAPI_DEBUG("blacklist_on() returns %d", rc);
+
+		rc = core_ctl_set_boost(true);
+		NAPI_DEBUG("boost_on() returns %d - refcnt=%d", rc, ref_count);
+		break;
+
+	case BLACKLIST_OFF:
+		while (ref_count > 0) {
+			rc = irq_blacklist_off();
+			NAPI_DEBUG("blacklist_off() returns %d", rc);
+
+			rc = core_ctl_set_boost(false);
+			NAPI_DEBUG("boost_off() returns %d - refcnt=%d",
+				   rc, ref_count);
+			ref_count--;
+		}
+		break;
+	default:
+		NAPI_DEBUG("Invalid blacklist op: %d", op);
+		rc = -EINVAL;
+	} /* switch */
+out:
 	NAPI_DEBUG("<--%s[%d]", __func__, rc);
 	return rc;
 }

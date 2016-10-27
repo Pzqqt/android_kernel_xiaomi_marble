@@ -433,14 +433,14 @@ void hif_display_ce_stats(struct HIF_CE_state *hif_ce_state)
 		size = STR_SIZE;
 		pos = 0;
 		for (j = 0; j < QDF_MAX_AVAILABLE_CPU; j++) {
-			ret = snprintf(str_buffer + pos, size, "[%d]: %d",
+			ret = snprintf(str_buffer + pos, size, "[%d]:%d ",
 				j, hif_ce_state->stats.ce_per_cpu[i][j]);
 			if (ret <= 0 || ret >= size)
 				break;
 			size -= ret;
 			pos += ret;
 		}
-		qdf_print("CE id[%d] - %s", i, str_buffer);
+		qdf_print("CE id[%2d] - %s", i, str_buffer);
 	}
 #undef STR_SIZE
 }
