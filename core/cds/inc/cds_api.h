@@ -37,6 +37,7 @@
 #include <qdf_types.h>
 #include <qdf_status.h>
 #include <qdf_mem.h>
+#include <qdf_debugfs.h>
 #include <qdf_list.h>
 #include <qdf_trace.h>
 #include <qdf_event.h>
