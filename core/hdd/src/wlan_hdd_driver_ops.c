@@ -450,7 +450,10 @@ static void wlan_hdd_shutdown(void)
 		hdd_err("Host is not ready for SSR, attempting anyway");
 
 	if (!QDF_IS_EPPING_ENABLED(cds_get_conparam())) {
-		hif_disable_isr(hif_ctx);
+		if (!hif_ctx)
+			hdd_err("Invalid hif ctx!");
+		else
+			hif_disable_isr(hif_ctx);
 		hdd_wlan_shutdown();
 	}
 }
