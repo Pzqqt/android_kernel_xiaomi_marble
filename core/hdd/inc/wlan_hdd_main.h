@@ -1070,10 +1070,10 @@ struct hdd_adapter_s {
 	int temperature;
 
 	/* Time stamp for last completed RoC request */
-	uint64_t last_roc_ts;
+	unsigned long last_roc_ts;
 
 	/* Time stamp for start RoC request */
-	uint64_t start_roc_ts;
+	unsigned long start_roc_ts;
 
 	/* State for synchronous OCB requests to WMI */
 	struct sir_ocb_set_config_response ocb_set_config_resp;

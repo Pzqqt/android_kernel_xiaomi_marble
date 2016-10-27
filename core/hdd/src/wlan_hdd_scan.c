@@ -482,9 +482,9 @@ static int hdd_indicate_scan_result(hdd_scan_info_t *scanInfo,
 	/* AGE */
 	event.cmd = IWEVCUSTOM;
 	p = custom;
-	p += scnprintf(p, MAX_CUSTOM_LEN, " Age: %llu",
-		       qdf_mc_timer_get_system_time() -
-		       descriptor->received_time);
+	p += scnprintf(p, MAX_CUSTOM_LEN, " Age: %lu",
+		       qdf_mc_timer_get_system_ticks() -
+		       descriptor->nReceivedTime);
 	event.u.data.length = p - custom;
 	current_event = iwe_stream_add_point(scanInfo->info, current_event, end,
 					     &event, custom);

@@ -724,8 +724,8 @@ typedef struct sSirBssDescription {
 	/* used only in scan case. */
 	uint8_t channelIdSelf;
 	uint8_t sSirBssDescriptionRsvd[3];
-	/* Based on system time, not a relative time. */
-	uint64_t received_time;
+	/* base on a tick count. It is a time stamp, not a relative time. */
+	uint32_t nReceivedTime;
 	uint32_t parentTSF;
 	uint32_t startTSF[2];
 	uint8_t mdiePresent;

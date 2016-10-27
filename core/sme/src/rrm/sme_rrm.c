@@ -71,7 +71,7 @@
 #define RRM_ROAM_SCORE_NEIGHBOR_IAPP_LIST                       30
 #endif
 
-uint64_t rrm_scan_timer;
+unsigned long rrm_scan_timer;
 
 /**
  * rrm_ll_purge_neighbor_cache() -Purges all the entries in the neighbor cache
@@ -529,7 +529,7 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 
 	while (scan_results) {
 		next_result = sme_scan_result_get_next(mac_ctx, result_handle);
-		sms_log(mac_ctx, LOG1, "Scan res timer:%lu, rrm scan timer:%llu",
+		sms_log(mac_ctx, LOG1, "Scan res timer:%lu, rrm scan timer:%lu",
 				scan_results->timer, rrm_scan_timer);
 		if (scan_results->timer >= rrm_scan_timer) {
 			roam_info->pBssDesc = &scan_results->BssDescriptor;
@@ -651,7 +651,7 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 	tpRrmSMEContext sme_rrm_ctx = &mac_ctx->rrm.rrmSmeContext;
 	uint32_t session_id;
 	tSirScanType scan_type;
-	uint64_t current_time;
+	unsigned long current_time;
 
 	status = csr_roam_get_session_id_from_bssid(mac_ctx,
 			&sme_rrm_ctx->sessionBssId, &session_id);
@@ -720,8 +720,8 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 		 * and hence there is a check to see if the requests are atleast
 		 * 1 second apart.
 		 */
-		current_time = (uint64_t)qdf_mc_timer_get_system_time();
-		sms_log(mac_ctx, LOG1, "prev scan triggered before %llu ms, totalchannels %d",
+		current_time = qdf_mc_timer_get_system_time();
+		sms_log(mac_ctx, LOG1, "prev scan triggered before %ld ms, totalchannels %d",
 				current_time - rrm_scan_timer,
 				sme_rrm_ctx->channelList.numOfChannels);
 		if ((abs(current_time - rrm_scan_timer) > 1000) &&
@@ -731,7 +731,7 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 			scan_req.idle_time = 1;
 		}
 
-		rrm_scan_timer = (uint64_t)qdf_mc_timer_get_system_time();
+		rrm_scan_timer = qdf_mc_timer_get_system_time();
 
 		/* set BSSType to default type */
 		scan_req.BSSType = eCSR_BSS_TYPE_ANY;

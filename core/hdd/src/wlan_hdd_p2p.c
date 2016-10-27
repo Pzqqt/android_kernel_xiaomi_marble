@@ -215,8 +215,7 @@ QDF_STATUS wlan_hdd_remain_on_channel_callback(tHalHandle hHal, void *pCtx,
 			cookie,
 			&pRemainChanCtx->chan,
 			GFP_KERNEL);
-		pAdapter->last_roc_ts =
-			(uint64_t)qdf_mc_timer_get_system_time();
+		pAdapter->last_roc_ts = qdf_mc_timer_get_system_time();
 	}
 
 	/* Schedule any pending RoC: Any new roc request during this time
@@ -840,7 +839,7 @@ static int wlan_hdd_request_remain_on_channel(struct wiphy *wiphy,
 			hdd_conn_is_connected(
 				WLAN_HDD_GET_STATION_CTX_PTR(sta_adapter))) {
 			if (pAdapter->last_roc_ts != 0 &&
-				(((uint64_t)qdf_mc_timer_get_system_time() -
+				((qdf_mc_timer_get_system_time() -
 					 pAdapter->last_roc_ts) <
 				pHddCtx->config->p2p_listen_defer_interval)) {
 			if (pRemainChanCtx->duration > HDD_P2P_MAX_ROC_DURATION)
@@ -961,7 +960,7 @@ void hdd_remain_chan_ready_handler(hdd_adapter_t *pAdapter,
 	cfgState = WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
 	hdd_notice("Ready on chan ind %d", scan_id);
 
-	pAdapter->start_roc_ts = (uint64_t)qdf_mc_timer_get_system_time();
+	pAdapter->start_roc_ts = qdf_mc_timer_get_system_time();
 	mutex_lock(&cfgState->remain_on_chan_ctx_lock);
 	pRemainChanCtx = cfgState->remain_on_chan_ctx;
 	if (pRemainChanCtx != NULL) {
@@ -1270,8 +1269,7 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 		mutex_lock(&cfgState->remain_on_chan_ctx_lock);
 		if (cfgState->remain_on_chan_ctx) {
 
-			uint64_t current_time =
-				(uint64_t)qdf_mc_timer_get_system_time();
+			uint32_t current_time = qdf_mc_timer_get_system_time();
 			int remaining_roc_time =
 				((int) cfgState->remain_on_chan_ctx->duration -
 				(current_time - pAdapter->start_roc_ts));
