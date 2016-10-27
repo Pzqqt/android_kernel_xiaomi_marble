@@ -400,6 +400,8 @@ void ol_txrx_print_level_set(unsigned level);
 #define TXRX_FW_MAC_DESC_STATS                   21
 #define TXRX_FW_MAC_FETCH_MGR_STATS              22
 #define TXRX_FW_MAC_PREFETCH_MGR_STATS           23
+#define TXRX_FW_STATS_DURATION_INFO              24
+#define TXRX_FW_STATS_DURATION_INFO_RESET        25
 
 #define PER_RADIO_FW_STATS_REQUEST 0
 #define PER_VDEV_FW_STATS_REQUEST 1
