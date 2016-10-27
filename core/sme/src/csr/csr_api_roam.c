@@ -5670,6 +5670,8 @@ QDF_STATUS csr_roam_process_command(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 	sms_log(pMac, LOG1, FL("Roam Reason : %d, sessionId: %d"),
 		pCommand->u.roamCmd.roamReason, sessionId);
 
+	pSession->disconnect_reason = pCommand->u.roamCmd.disconnect_reason;
+
 	switch (pCommand->u.roamCmd.roamReason) {
 	case eCsrForcedDisassoc:
 		if (eCSR_ROAMING_STATE_IDLE == pMac->roam.curState[sessionId]) {
@@ -5678,7 +5680,6 @@ QDF_STATUS csr_roam_process_command(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 				   " %d"), eCSR_ROAMING_STATE_IDLE);
 			return QDF_STATUS_E_FAILURE;
 		}
-
 		status = csr_roam_process_disassoc_deauth(pMac, pCommand,
 				true, false);
 		csr_free_roam_profile(pMac, sessionId);
@@ -8218,6 +8219,9 @@ QDF_STATUS csr_roam_issue_disassociate_cmd(tpAniSirGlobal pMac, uint32_t session
 		case eCSR_DISCONNECT_REASON_DISASSOC:
 			pCommand->u.roamCmd.roamReason = eCsrForcedDisassoc;
 			break;
+		case eCSR_DISCONNECT_REASON_ROAM_HO_FAIL:
+			pCommand->u.roamCmd.roamReason = eCsrForcedDisassoc;
+			break;
 		case eCSR_DISCONNECT_REASON_IBSS_JOIN_FAILURE:
 			pCommand->u.roamCmd.roamReason =
 				eCsrSmeIssuedIbssJoinFailure;
@@ -8239,6 +8243,7 @@ QDF_STATUS csr_roam_issue_disassociate_cmd(tpAniSirGlobal pMac, uint32_t session
 		default:
 			break;
 		}
+		pCommand->u.roamCmd.disconnect_reason = reason;
 		status = csr_queue_sme_command(pMac, pCommand, true);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			sms_log(pMac, LOGE,
@@ -14561,6 +14566,8 @@ QDF_STATUS csr_send_mb_disassoc_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			     bssId, QDF_MAC_ADDR_SIZE);
 	}
 	pMsg->reasonCode = reasonCode;
+	pMsg->process_ho_fail = (pSession->disconnect_reason ==
+		eCSR_DISCONNECT_REASON_ROAM_HO_FAIL) ? true : false;
 	/*
 	 * The state will be DISASSOC_HANDOFF only when we are doing
 	 * handoff. Here we should not send the disassoc over the air
@@ -18877,7 +18884,8 @@ void csr_process_ho_fail_ind(tpAniSirGlobal pMac, void *pMsgBuf)
 			eCSR_REASON_ROAM_HO_FAIL);
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 		  "LFR3:Issue Disconnect on session %d", sessionId);
-	csr_roam_disconnect(pMac, sessionId, eCSR_DISCONNECT_REASON_UNSPECIFIED);
+	csr_roam_disconnect(pMac, sessionId,
+			eCSR_DISCONNECT_REASON_ROAM_HO_FAIL);
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 

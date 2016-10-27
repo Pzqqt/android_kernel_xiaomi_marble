@@ -6198,6 +6198,10 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 	case WMA_DELETE_STA_REQ:
 		wma_delete_sta(wma_handle, (tpDeleteStaParams) msg->bodyptr);
 		break;
+	case WMA_DELETE_BSS_HO_FAIL_REQ:
+		wma_delete_bss_ho_fail(wma_handle,
+			(tpDeleteBssParams) msg->bodyptr);
+		break;
 	case WMA_DELETE_BSS_REQ:
 		wma_delete_bss(wma_handle, (tpDeleteBssParams) msg->bodyptr);
 		break;

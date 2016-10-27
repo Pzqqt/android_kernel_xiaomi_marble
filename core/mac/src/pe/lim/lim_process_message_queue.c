@@ -446,6 +446,7 @@ uint8_t static def_msg_decision(tpAniSirGlobal pMac, tpSirMsgQ limMsg)
 	    && !pMac->lim.gLimSystemInScanLearnMode) {
 		if ((limMsg->type != WMA_ADD_BSS_RSP)
 		    && (limMsg->type != WMA_DELETE_BSS_RSP)
+		    && (limMsg->type != WMA_DELETE_BSS_HO_FAIL_RSP)
 		    && (limMsg->type != WMA_ADD_STA_RSP)
 		    && (limMsg->type != WMA_DELETE_STA_RSP)
 		    && (limMsg->type != WMA_SET_BSSKEY_RSP)
@@ -1763,6 +1764,7 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		lim_process_mlm_del_sta_rsp(mac_ctx, msg);
 		break;
 	case WMA_DELETE_BSS_RSP:
+	case WMA_DELETE_BSS_HO_FAIL_RSP:
 		lim_handle_delete_bss_rsp(mac_ctx, msg);
 		break;
 	case WMA_CSA_OFFLOAD_EVENT:

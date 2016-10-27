@@ -597,6 +597,8 @@ int32_t wma_find_vdev_by_type(tp_wma_handle wma, int32_t type);
 void wma_set_vdev_intrabss_fwd(tp_wma_handle wma_handle,
 				      tpDisableIntraBssFwd pdis_intra_fwd);
 
+void wma_delete_bss_ho_fail(tp_wma_handle wma, tpDeleteBssParams params);
+
 /*
  * wma_mgmt.c functions declarations
  */

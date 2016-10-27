@@ -1390,6 +1390,7 @@ typedef struct sSirSmeDisassocReq {
 	/* This flag tells LIM whether to send the disassoc OTA or not */
 	/* This will be set in while handing off from one AP to other */
 	uint8_t doNotSendOverTheAir;
+	bool process_ho_fail;
 } qdf_packed tSirSmeDisassocReq, *tpSirSmeDisassocReq;
 
 /* / Definition for Tkip countermeasures request */

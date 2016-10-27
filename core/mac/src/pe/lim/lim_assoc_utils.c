@@ -3396,7 +3396,12 @@ lim_del_bss(tpAniSirGlobal pMac, tpDphHashNode pStaDs, uint16_t bssIdx,
 	/* we need to defer the message until we get the response back from HAL. */
 	SET_LIM_PROCESS_DEFD_MESGS(pMac, false);
 
-	msgQ.type = WMA_DELETE_BSS_REQ;
+	lim_log(pMac, LOGW, FL("process_ho_fail = %d"),
+		psessionEntry->process_ho_fail);
+	if (psessionEntry->process_ho_fail)
+		msgQ.type = WMA_DELETE_BSS_HO_FAIL_REQ;
+	else
+		msgQ.type = WMA_DELETE_BSS_REQ;
 	msgQ.reserved = 0;
 	msgQ.bodyptr = pDelBssParams;
 	msgQ.bodyval = 0;

@@ -2284,6 +2284,13 @@ void lim_handle_delete_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ MsgQ)
 		qdf_mem_free(MsgQ->bodyptr);
 		return;
 	}
+	/*
+	 * During DEL BSS handling, the PE Session will be deleted, but it is
+	 * better to clear this flag if the session is hanging around due
+	 * to some error conditions so that the next DEL_BSS request does
+	 * not take the HO_FAIL path
+	 */
+	psessionEntry->process_ho_fail = false;
 	if (LIM_IS_IBSS_ROLE(psessionEntry))
 		lim_ibss_del_bss_rsp(pMac, MsgQ->bodyptr, psessionEntry);
 	else if (LIM_IS_UNKNOWN_ROLE(psessionEntry))

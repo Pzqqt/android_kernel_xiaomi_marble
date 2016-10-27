@@ -406,6 +406,7 @@ typedef struct tagRoamCmd {
 	bool fStopWds;
 	tSirMacAddr peerMac;
 	tSirMacReasonCodes reason;
+	eCsrRoamDisconnectReason disconnect_reason;
 } tRoamCmd;
 
 typedef struct tagSetKeyCmd {
@@ -1000,6 +1001,7 @@ typedef struct tagCsrRoamSession {
 	bool supported_nss_1x1;
 	bool disable_hi_rssi;
 	bool dhcp_done;
+	uint8_t disconnect_reason;
 } tCsrRoamSession;
 
 typedef struct tagCsrRoamStruct {
