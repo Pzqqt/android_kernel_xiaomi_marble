@@ -1049,11 +1049,15 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 		pHostapdState->qdf_status =
 			pSapEvent->sapevt.sapStartBssCompleteEvent.status;
-		qdf_status = qdf_event_set(&pHostapdState->qdf_event);
-
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)
-		    || pHostapdState->qdf_status) {
+		if (pHostapdState->qdf_status) {
 			hdd_err("ERROR: startbss event failed!!");
+			/*
+			 * Make sure to set the event before proceeding
+			 * for error handling otherwise caller thread will
+			 * wait till 10 secs and no other connection will
+			 * go through before that.
+			 */
+			qdf_event_set(&pHostapdState->qdf_event);
 			goto stopbss;
 		} else {
 			sme_ch_avoid_update_req(pHddCtx->hHal);
@@ -1084,6 +1088,13 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 					pHostapdAdapter->dev->dev_addr);
 			if (status) {
 				hdd_err("WLAN_AP_CONNECT event failed!!");
+				/*
+				 * Make sure to set the event before proceeding
+				 * for error handling otherwise caller thread
+				 * will wait till 10 secs and no other
+				 * connection will go through before that.
+				 */
+				qdf_event_set(&pHostapdState->qdf_event);
 				goto stopbss;
 			}
 		}
@@ -1208,6 +1219,17 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			if (QDF_IS_STATUS_ERROR(status))
 				hdd_info("set hw mode change not done");
 			cds_set_do_hw_mode_change_flag(false);
+		}
+		/*
+		 * set this event at the very end because once this events
+		 * get set, caller thread is waiting to do further processing.
+		 * so once this event gets set, current worker thread might get
+		 * pre-empted by caller thread.
+		 */
+		qdf_status = qdf_event_set(&pHostapdState->qdf_event);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			hdd_err("ERROR: startbss event set failed!!");
+			goto stopbss;
 		}
 		break;          /* Event will be sent after Switch-Case stmt */
 

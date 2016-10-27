@@ -4733,10 +4733,15 @@ static QDF_STATUS sap_get_5ghz_channel_list(ptSapContext sapContext)
 			  " Memory Allocation failed sap_get_channel_list");
 		return QDF_STATUS_E_NOMEM;
 	}
-
-	status = cds_get_pcl_for_existing_conn(CDS_SAP_MODE,
-			pcl.pcl_list, &pcl.pcl_len,
-			pcl.weight_list, QDF_ARRAY_SIZE(pcl.weight_list));
+	if (cds_mode_specific_connection_count(CDS_SAP_MODE, NULL) == 0) {
+		status = cds_get_pcl(CDS_SAP_MODE,
+				pcl.pcl_list, &pcl.pcl_len, pcl.weight_list,
+				QDF_ARRAY_SIZE(pcl.weight_list));
+	} else  {
+		status = cds_get_pcl_for_existing_conn(CDS_SAP_MODE,
+				pcl.pcl_list, &pcl.pcl_len, pcl.weight_list,
+				QDF_ARRAY_SIZE(pcl.weight_list));
+	}
 	if (status != QDF_STATUS_SUCCESS) {
 		cds_err("Get PCL failed");
 		return status;
