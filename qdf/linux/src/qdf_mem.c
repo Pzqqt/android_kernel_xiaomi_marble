@@ -30,12 +30,17 @@
  * This file provides OS dependent memory management APIs
  */
 
+#include "qdf_debugfs.h"
 #include "qdf_mem.h"
 #include "qdf_nbuf.h"
 #include "qdf_lock.h"
 #include "qdf_mc_timer.h"
 #include "qdf_module.h"
 #include <qdf_trace.h>
+#include "qdf_atomic.h"
+#include <linux/debugfs.h>
+#include <linux/seq_file.h>
+#include <linux/string.h>
 
 #ifdef CONFIG_MCL
 #include <host_diag_core_event.h>
@@ -63,11 +68,12 @@ static uint8_t WLAN_MEM_TAIL[] = { 0x80, 0x81, 0x82, 0x83, 0x84, 0x85,
 
 /**
  * struct s_qdf_mem_struct - memory object to dubug
- * @node: node to the list
- * @filename: name of file
- * @line_num: line number
- * @size: size of the file
- * @header: array that contains header
+ * @node:	node to the list
+ * @filename:	name of file
+ * @line_num:	line number
+ * @size:	size of the file
+ * @header:	array that contains header
+ * @in_use:	memory usage count
  */
 struct s_qdf_mem_struct {
 	qdf_list_node_t node;
@@ -75,8 +81,9 @@ struct s_qdf_mem_struct {
 	unsigned int line_num;
 	unsigned int size;
 	uint8_t header[8];
+	qdf_atomic_t in_use;
 };
-#endif
+#endif /* MEMORY_DEBUG */
 
 /* Preprocessor Definitions and Constants */
 #define QDF_GET_MEMORY_TIME_THRESHOLD 300
@@ -88,6 +95,398 @@ EXPORT_SYMBOL(qdf_dbg_mask);
 u_int8_t prealloc_disabled = 1;
 qdf_declare_param(prealloc_disabled, byte);
 EXPORT_SYMBOL(prealloc_disabled);
+
+#ifdef WLAN_DEBUGFS
+
+/**
+ * struct __qdf_mem_stat - qdf memory statistics
+ * @kmalloc:	total kmalloc allocations
+ * @dma:	total dma allocations
+ */
+static struct __qdf_mem_stat {
+	qdf_atomic_t kmalloc;
+	qdf_atomic_t dma;
+} qdf_mem_stat;
+
+
+/**
+ * struct __qdf_mem_info - memory statistics
+ * @file_name:	the file which allocated memory
+ * @line_num:	the line at which allocation happened
+ * @size:	the size of allocation
+ * @count:	how many allocations of same type
+ *
+ */
+struct __qdf_mem_info {
+	char *file_name;
+	unsigned int line_num;
+	unsigned int size;
+	unsigned int count;
+};
+
+/* Debugfs root directory for qdf_mem */
+static struct dentry *qdf_mem_debugfs_root;
+
+/*
+ * A table to identify duplicates in close proximity. The table depth defines
+ * the proximity scope. A deeper table takes more time. Chose any optimum value.
+ *
+ */
+#define QDF_MEM_STAT_TABLE_SIZE 4
+static struct __qdf_mem_info qdf_mem_info_table[QDF_MEM_STAT_TABLE_SIZE];
+
+static inline void qdf_mem_kmalloc_inc(qdf_size_t size)
+{
+	qdf_atomic_add(size, &qdf_mem_stat.kmalloc);
+}
+
+static inline void qdf_mem_dma_inc(qdf_size_t size)
+{
+	qdf_atomic_add(size, &qdf_mem_stat.dma);
+}
+
+static inline void qdf_mem_kmalloc_dec(qdf_size_t size)
+{
+	qdf_atomic_sub(size, &qdf_mem_stat.kmalloc);
+}
+
+static inline void qdf_mem_dma_dec(qdf_size_t size)
+{
+	qdf_atomic_sub(size, &qdf_mem_stat.dma);
+}
+
+
+/**
+ * qdf_mem_info_table_init() - initialize the stat table
+ *
+ * Return: None
+ */
+static void qdf_mem_info_table_init(void)
+{
+	memset(&qdf_mem_info_table, 0, sizeof(qdf_mem_info_table));
+}
+
+/**
+ * qdf_mem_get_node() - increase the node usage count
+ * @n:	node
+ *
+ * An increased usage count will block the memory from getting released.
+ * Initially the usage count is incremented from qdf_mem_malloc_debug().
+ * Corresponding qdf_mem_free() will decrement the reference count and frees up
+ * the memory when the usage count reaches zero. Here decrement and test is an
+ * atomic operation in qdf_mem_free() to avoid any race condition.
+ *
+ * If a caller wants to take the ownership of an allocated memory, it can call
+ * this function with the associated node.
+ *
+ * Return: None
+ *
+ */
+static void qdf_mem_get_node(qdf_list_node_t *n)
+{
+	struct s_qdf_mem_struct *m = container_of(n, typeof(*m), node);
+
+	qdf_atomic_inc(&m->in_use);
+}
+
+/**
+ * qdf_mem_put_node_free() - decrease the node usage count and free memory
+ * @n:	node
+ *
+ * Additionally it releases the memory when the usage count reaches zero. Usage
+ * count is decremented and tested against zero in qdf_mem_free(). If the count
+ * is 0, the node and associated memory gets freed.
+ *
+ * Return: None
+ *
+ */
+static void qdf_mem_put_node_free(qdf_list_node_t *n)
+{
+	struct s_qdf_mem_struct *m = container_of(n, typeof(*m), node);
+
+	/* qdf_mem_free() is expecting the same address returned by
+	 * qdf_mem_malloc_debug(), which is 'm + sizeof(s_qdf_mem_struct)' */
+	qdf_mem_free(m + 1);
+}
+
+/**
+ * qdf_mem_get_first() - get the first node.
+ *
+ * Return: node
+ */
+static qdf_list_node_t *qdf_mem_get_first(void)
+{
+	QDF_STATUS status;
+	qdf_list_node_t *node = NULL;
+
+	qdf_spin_lock_bh(&qdf_mem_list_lock);
+	status = qdf_list_peek_front(&qdf_mem_list, &node);
+	if (QDF_STATUS_SUCCESS == status)
+		qdf_mem_get_node(node);
+	qdf_spin_unlock_bh(&qdf_mem_list_lock);
+
+	return node;
+}
+
+/**
+ * qdf_mem_get_next() - get the next node
+ * @n: node
+ *
+ * Return: next node
+ */
+static qdf_list_node_t *qdf_mem_get_next(qdf_list_node_t *n)
+{
+	QDF_STATUS status;
+	qdf_list_node_t *node = NULL;
+
+	qdf_spin_lock_bh(&qdf_mem_list_lock);
+	status = qdf_list_peek_next(&qdf_mem_list, n, &node);
+	if (QDF_STATUS_SUCCESS == status)
+		qdf_mem_get_node(node);
+
+	qdf_spin_unlock_bh(&qdf_mem_list_lock);
+
+	qdf_mem_put_node_free(n);
+
+	return node;
+
+}
+
+static void qdf_mem_seq_print_header(struct seq_file *seq)
+{
+	seq_puts(seq, "\n");
+	seq_puts(seq, "filename                             line         size x    no  [ total ]\n");
+	seq_puts(seq, "\n");
+}
+
+/**
+ * qdf_mem_info_table_insert() - insert node into an array
+ * @n:	node
+ *
+ * Return:
+ *	true  - success
+ *	false - failure
+ */
+static bool qdf_mem_info_table_insert(qdf_list_node_t *n)
+{
+	int i;
+	struct __qdf_mem_info *t = qdf_mem_info_table;
+	bool dup;
+	bool consumed;
+	struct s_qdf_mem_struct *m = (struct s_qdf_mem_struct *)n;
+
+	for (i = 0; i < QDF_MEM_STAT_TABLE_SIZE; i++) {
+		if (!t[i].count) {
+			t[i].file_name = m->file_name;
+			t[i].line_num = m->line_num;
+			t[i].size = m->size;
+			t[i].count++;
+			break;
+		}
+		dup = !strcmp(t[i].file_name, m->file_name) &&
+		      (t[i].line_num == m->line_num) &&
+		      (t[i].size == m->size);
+		if (dup) {
+			t[i].count++;
+			break;
+		}
+	}
+
+	consumed = (i < QDF_MEM_STAT_TABLE_SIZE);
+
+	return consumed;
+}
+
+/**
+ * qdf_mem_seq_print() - print the table using seq_printf
+ * @seq:	seq_file handle
+ *
+ * Node table will be cleared once printed.
+ *
+ * Return: None
+ */
+static void qdf_mem_seq_print(struct seq_file *seq)
+{
+	int i;
+	struct __qdf_mem_info *t = qdf_mem_info_table;
+
+	for (i = 0; i < QDF_MEM_STAT_TABLE_SIZE && t[i].count; i++) {
+		seq_printf(seq,
+			   "%-35s%6d\t%6d x %4d\t[%7d]\n",
+			   kbasename(t[i].file_name),
+			   t[i].line_num, t[i].size,
+			   t[i].count,
+			   t[i].size * t[i].count);
+	}
+
+	qdf_mem_info_table_init();
+}
+
+/**
+ * qdf_mem_seq_start() - sequential callback to start
+ * @seq: seq_file handle
+ * @pos: The start position of the sequence
+ *
+ * Return:
+ *	SEQ_START_TOKEN - Prints header
+ *	None zero value - Node
+ *	NULL		- End of the sequence
+ */
+static void *qdf_mem_seq_start(struct seq_file *seq, loff_t *pos)
+{
+	if (*pos == 0) {
+		qdf_mem_info_table_init();
+		return SEQ_START_TOKEN;
+	} else if (seq->private) {
+		return qdf_mem_get_next(seq->private);
+	}
+
+	return NULL;
+}
+
+/**
+ * qdf_mem_seq_next() - next sequential callback
+ * @seq:	seq_file handle
+ * @v:		the current iterator
+ * @pos:	the current position [not used]
+ *
+ * Get the next node and release previous node.
+ *
+ * Return:
+ *	None zero value - Next node
+ *	NULL		- No more to process in the list
+ */
+static void *qdf_mem_seq_next(struct seq_file *seq, void *v, loff_t *pos)
+{
+	qdf_list_node_t *node;
+
+	++*pos;
+
+	if (v == SEQ_START_TOKEN)
+		node = qdf_mem_get_first();
+	else
+		node = qdf_mem_get_next(v);
+
+	return node;
+}
+
+/**
+ * qdf_mem_seq_stop() - stop sequential callback
+ * @seq:	seq_file handle
+ * @v:		current iterator
+ *
+ * Return:	None
+ */
+static void qdf_mem_seq_stop(struct seq_file *seq, void *v)
+{
+	seq->private = v;
+}
+
+/**
+ * qdf_mem_seq_show() - print sequential callback
+ * @seq:	seq_file handle
+ * @v:		current iterator
+ *
+ * Return: 0 - success
+ */
+static int qdf_mem_seq_show(struct seq_file *seq, void *v)
+{
+
+	if (v == SEQ_START_TOKEN) {
+		qdf_mem_seq_print_header(seq);
+		return 0;
+	}
+
+	while (!qdf_mem_info_table_insert(v))
+		qdf_mem_seq_print(seq);
+
+	return 0;
+}
+
+/* sequential file operation table */
+static const struct seq_operations qdf_mem_seq_ops = {
+	.start = qdf_mem_seq_start,
+	.next  = qdf_mem_seq_next,
+	.stop  = qdf_mem_seq_stop,
+	.show  = qdf_mem_seq_show,
+};
+
+
+static int qdf_mem_debugfs_open(struct inode *inode, struct file *file)
+{
+	return seq_open(file, &qdf_mem_seq_ops);
+}
+
+/* debugfs file operation table */
+static const struct file_operations fops_qdf_mem_debugfs = {
+	.owner = THIS_MODULE,
+	.open = qdf_mem_debugfs_open,
+	.read = seq_read,
+	.llseek = seq_lseek,
+	.release = seq_release,
+};
+
+/**
+ * qdf_mem_debugfs_init() - initialize routine
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS qdf_mem_debugfs_init(void)
+{
+	struct dentry *qdf_debugfs_root = qdf_debugfs_get_root();
+
+	if (!qdf_debugfs_root)
+		return QDF_STATUS_E_FAILURE;
+
+	qdf_mem_debugfs_root = debugfs_create_dir("mem", qdf_debugfs_root);
+
+	if (!qdf_mem_debugfs_root)
+		return QDF_STATUS_E_FAILURE;
+
+	debugfs_create_file("list",
+			    S_IRUSR | S_IWUSR,
+			    qdf_mem_debugfs_root,
+			    NULL,
+			    &fops_qdf_mem_debugfs);
+
+	debugfs_create_atomic_t("kmalloc",
+				S_IRUSR | S_IWUSR,
+				qdf_mem_debugfs_root,
+				&qdf_mem_stat.kmalloc);
+
+	debugfs_create_atomic_t("dma",
+				S_IRUSR | S_IWUSR,
+				qdf_mem_debugfs_root,
+				&qdf_mem_stat.dma);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+
+/**
+ * qdf_mem_debugfs_exit() - cleanup routine
+ *
+ * Return: None
+ */
+static void qdf_mem_debugfs_exit(void)
+{
+	debugfs_remove_recursive(qdf_mem_debugfs_root);
+	qdf_mem_debugfs_root = NULL;
+}
+
+#else /* WLAN_DEBUGFS */
+
+static inline void qdf_mem_kmalloc_inc(qdf_size_t size) {}
+static inline void qdf_mem_dma_inc(qdf_size_t size) {}
+static inline void qdf_mem_kmalloc_dec(qdf_size_t size) {}
+static inline void qdf_mem_dma_dec(qdf_size_t size) {}
+static QDF_STATUS qdf_mem_debugfs_init(void)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+static void qdf_mem_debugfs_exit(void) {}
+
+#endif /* WLAN_DEBUGFS */
 
 /**
  * __qdf_mempool_init() - Create and initialize memory pool
@@ -332,6 +731,7 @@ void qdf_mem_init(void)
 	qdf_list_create(&qdf_mem_list, 60000);
 	qdf_spinlock_create(&qdf_mem_list_lock);
 	qdf_net_buf_debug_init();
+	qdf_mem_debugfs_init();
 	return;
 }
 EXPORT_SYMBOL(qdf_mem_init);
@@ -414,6 +814,7 @@ EXPORT_SYMBOL(qdf_mem_clean);
  */
 void qdf_mem_exit(void)
 {
+	qdf_mem_debugfs_exit();
 	qdf_net_buf_debug_exit();
 	qdf_mem_clean();
 	qdf_list_destroy(&qdf_mem_list);
@@ -487,6 +888,8 @@ void *qdf_mem_malloc_debug(size_t size,
 		mem_struct->file_name = file_name;
 		mem_struct->line_num = line_num;
 		mem_struct->size = size;
+		qdf_atomic_inc(&mem_struct->in_use);
+		qdf_mem_kmalloc_inc(size);
 
 		qdf_mem_copy(&mem_struct->header[0],
 			     &WLAN_MEM_HEADER[0], sizeof(WLAN_MEM_HEADER));
@@ -579,6 +982,8 @@ void qdf_mem_free(void *ptr)
 	if (wcnss_prealloc_put(ptr))
 		return;
 #endif
+	if (!qdf_atomic_dec_and_test(&mem_struct->in_use))
+		return;
 
 	qdf_spin_lock_irqsave(&qdf_mem_list_lock);
 
@@ -615,6 +1020,7 @@ void qdf_mem_free(void *ptr)
 	list_del_init(&mem_struct->node);
 	qdf_mem_list.count--;
 	qdf_spin_unlock_irqrestore(&qdf_mem_list_lock);
+	qdf_mem_kmalloc_dec(mem_struct->size);
 	kfree(mem_struct);
 	return;
 
@@ -1057,6 +1463,7 @@ void *qdf_mem_alloc_consistent(qdf_device_t osdev, void *dev, qdf_size_t size,
 	if (alloc_mem == NULL)
 		qdf_print("%s Warning: unable to alloc consistent memory of size %zu!\n",
 			__func__, size);
+	qdf_mem_dma_inc(size);
 	return alloc_mem;
 }
 
@@ -1090,6 +1497,7 @@ inline void qdf_mem_free_consistent(qdf_device_t osdev, void *dev,
 				    qdf_dma_context_t memctx)
 {
 	dma_free_coherent(dev, size, vaddr, phy_addr);
+	qdf_mem_dma_dec(size);
 }
 
 #endif
