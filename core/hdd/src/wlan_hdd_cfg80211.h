@@ -2405,6 +2405,9 @@ enum qca_ignore_assoc_disallowed {
  *                                      power save config to turn off/on qpower
  * @QCA_WLAN_VENDOR_ATTR_CONFIG_IGNORE_ASSOC_DISALLOWED: Ignore Assoc Disallowed
  *                                                       [MBO]
+ * @QCA_WLAN_VENDOR_ATTR_CONFIG_TX_FAIL_COUNT: Unsigned 32-bit value to
+ * configure the number of unicast TX fail packet count.
+ * The peer is disconnected once this threshold is reached.
  * @QCA_WLAN_VENDOR_ATTR_CONFIG_LAST: last config
  * @QCA_WLAN_VENDOR_ATTR_CONFIG_MAX: max config
  */
@@ -2476,6 +2479,7 @@ enum qca_wlan_vendor_config {
 	/* Unsigned 8-bit, for setting qpower dynamically */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_QPOWER = 25,
 	QCA_WLAN_VENDOR_ATTR_CONFIG_IGNORE_ASSOC_DISALLOWED = 26,
+	QCA_WLAN_VENDOR_ATTR_CONFIG_TX_FAIL_COUNT,
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_LAST,
 	QCA_WLAN_VENDOR_ATTR_CONFIG_MAX =

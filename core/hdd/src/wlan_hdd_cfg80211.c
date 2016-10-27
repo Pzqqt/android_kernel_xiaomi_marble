@@ -3914,6 +3914,7 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_MGMT_RETRY] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_CTRL_RETRY] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_DELAY] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_FAIL_COUNT] = {.type = NLA_U32 },
 };
 
 /**
@@ -3986,6 +3987,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	QDF_STATUS qdf_status;
 	uint8_t retry, delay;
 	int param_id;
+	uint32_t tx_fail_count;
 
 	ENTER_DEV(dev);
 
@@ -4144,6 +4146,20 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		param_id = WMI_PDEV_PARAM_PROPAGATION_DELAY;
 		ret_val = wma_cli_set_command(adapter->sessionId, param_id,
 					      delay, PDEV_CMD);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_FAIL_COUNT]) {
+		tx_fail_count = nla_get_u32(
+			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_FAIL_COUNT]);
+		if (tx_fail_count) {
+			status = sme_update_tx_fail_cnt_threshold(hdd_ctx->hHal,
+					adapter->sessionId, tx_fail_count);
+			if (QDF_STATUS_SUCCESS != status) {
+				hdd_info("sme_update_tx_fail_cnt_threshold (err=%d)",
+					status);
+				return -EINVAL;
+			}
+		}
 	}
 
 	if (vendor_ie_present && access_policy_present) {
