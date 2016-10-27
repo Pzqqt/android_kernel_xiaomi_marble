@@ -387,7 +387,8 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 			continue;
 
 		for (chan_num = 0;
-		     chan_num < wiphy->bands[band_num]->n_channels;
+		     chan_num < wiphy->bands[band_num]->n_channels &&
+		     chan_enum < NUM_CHANNELS;
 		     chan_num++) {
 
 			wiphy_chan =
