@@ -437,7 +437,7 @@ QDF_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev)
 	{
 		uint32_t tmp;
 
-		tmp = (pdev->rx_ring.base_paddr >> 32);
+		tmp = qdf_get_upper_32_bits(pdev->rx_ring.base_paddr);
 		if (tmp & 0xfffffe0) {
 			qdf_print("%s:%d paddr > 37 bits!. Trimmed.",
 				  __func__, __LINE__);
