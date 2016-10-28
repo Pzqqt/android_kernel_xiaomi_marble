@@ -856,6 +856,13 @@ static void __sch_beacon_process_for_session(tpAniSirGlobal mac_ctx,
 		       beaconParams.paramChangeBitmap);)
 		lim_send_beacon_params(mac_ctx, &beaconParams, session);
 	}
+
+	if ((session->pePersona == QDF_P2P_CLIENT_MODE) &&
+		session->send_p2p_conf_frame) {
+		lim_p2p_oper_chan_change_confirm_action_frame(mac_ctx,
+				session->bssId, session);
+		session->send_p2p_conf_frame = false;
+	}
 }
 
 /**

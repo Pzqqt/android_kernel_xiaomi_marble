@@ -3548,6 +3548,162 @@ lim_send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 	return eSIR_SUCCESS;
 } /* End lim_send_extended_chan_switch_action_frame */
 
+
+/**
+ * lim_oper_chan_change_confirm_tx_complete_cnf()- Confirmation for oper_chan_change_confirm
+ * sent over the air
+ *
+ * @mac_ctx: pointer to global mac
+ * @tx_complete : Sent status
+ *
+ * Return: This returns QDF_STATUS
+ */
+
+static QDF_STATUS lim_oper_chan_change_confirm_tx_complete_cnf(
+			tpAniSirGlobal mac_ctx,
+			uint32_t tx_complete)
+{
+	lim_log(mac_ctx, LOG1,
+		 FL(" tx_complete= %d"), tx_complete);
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * lim_p2p_oper_chan_change_confirm_action_frame()- function to send
+ * p2p oper chan change confirm action frame
+ * @mac_ctx: pointer to global mac structure
+ * @peer: Destination mac.
+ * @session_entry: session entry
+ *
+ * This function is called to send p2p oper chan change confirm action frame.
+ *
+ * Return: success if frame is sent else return failure
+ */
+
+tSirRetStatus
+lim_p2p_oper_chan_change_confirm_action_frame(tpAniSirGlobal mac_ctx,
+		tSirMacAddr peer, tpPESession session_entry)
+{
+	tDot11fp2p_oper_chan_change_confirm frm;
+	uint8_t                  *frame;
+	tpSirMacMgmtHdr          mac_hdr;
+	uint32_t                 num_bytes, n_payload, status;
+	void                     *packet;
+	QDF_STATUS               qdf_status;
+	uint8_t                  tx_flag = 0;
+	uint8_t                  sme_session_id = 0;
+
+	if (session_entry == NULL) {
+		lim_log(mac_ctx, LOGE, FL("Session entry is NULL!!!"));
+		return eSIR_FAILURE;
+	}
+
+	sme_session_id = session_entry->smeSessionId;
+
+	qdf_mem_set(&frm, sizeof(frm), 0);
+
+	frm.Category.category     = SIR_MAC_ACTION_VENDOR_SPECIFIC_CATEGORY;
+
+	qdf_mem_copy(frm.p2p_action_oui.oui_data,
+		SIR_MAC_P2P_OUI, SIR_MAC_P2P_OUI_SIZE);
+	frm.p2p_action_subtype.subtype = 0x04;
+	frm.DialogToken.token = 0x0;
+
+	if (session_entry->htCapability) {
+		lim_log(mac_ctx, LOG1, FL("Populate HT Caps in Assoc Request"));
+		populate_dot11f_ht_caps(mac_ctx, session_entry, &frm.HTCaps);
+	}
+
+	if (session_entry->vhtCapability) {
+		lim_log(mac_ctx, LOG1, FL("Populate VHT Caps in Assoc Request"));
+		populate_dot11f_vht_caps(mac_ctx, session_entry, &frm.VHTCaps);
+		populate_dot11f_operating_mode(mac_ctx,
+					&frm.OperatingMode, session_entry);
+	}
+
+	status = dot11f_get_packed_p2p_oper_chan_change_confirmSize(mac_ctx,
+							    &frm, &n_payload);
+	if (DOT11F_FAILED(status)) {
+		lim_log(mac_ctx, LOGP,
+		 FL("Failed to get packed size 0x%08x."),
+				 status);
+		/* We'll fall back on the worst case scenario*/
+		n_payload = sizeof(tDot11fp2p_oper_chan_change_confirm);
+	} else if (DOT11F_WARNED(status)) {
+		lim_log(mac_ctx, LOGW,
+		 FL("There were warnings while calculating the packed size (0x%08x)."),
+		 status);
+	}
+
+	num_bytes = n_payload + sizeof(tSirMacMgmtHdr);
+
+	qdf_status = cds_packet_alloc((uint16_t)num_bytes,
+				(void **) &frame, (void **) &packet);
+
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		lim_log(mac_ctx, LOGP,
+		 FL("Failed to allocate %d bytes."),
+								 num_bytes);
+		return eSIR_FAILURE;
+	}
+
+	qdf_mem_set(frame, num_bytes, 0);
+
+	/* Next, fill out the buffer descriptor */
+	lim_populate_mac_header(mac_ctx, frame, SIR_MAC_MGMT_FRAME,
+		SIR_MAC_MGMT_ACTION, peer, session_entry->selfMacAddr);
+	mac_hdr = (tpSirMacMgmtHdr) frame;
+	qdf_mem_copy((uint8_t *) mac_hdr->bssId,
+				   (uint8_t *) session_entry->bssId,
+				   sizeof(tSirMacAddr));
+
+	status = dot11f_pack_p2p_oper_chan_change_confirm(mac_ctx, &frm,
+		frame + sizeof(tSirMacMgmtHdr), n_payload, &n_payload);
+	if (DOT11F_FAILED(status)) {
+		lim_log(mac_ctx, LOGE,
+			 FL("Failed to pack 0x%08x."),
+								 status);
+		cds_packet_free((void *)packet);
+		return eSIR_FAILURE;
+	} else if (DOT11F_WARNED(status)) {
+		lim_log(mac_ctx, LOGW,
+		 FL("There were warnings while packing 0x%08x."),
+		 status);
+	}
+
+	if ((SIR_BAND_5_GHZ ==
+		lim_get_rf_band(session_entry->currentOperChannel)) ||
+		(session_entry->pePersona == QDF_P2P_CLIENT_MODE) ||
+		(session_entry->pePersona == QDF_P2P_GO_MODE)) {
+		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
+	}
+	lim_log(mac_ctx, LOG1, FL("Send frame on channel %d to mac "
+		MAC_ADDRESS_STR), session_entry->currentOperChannel,
+		MAC_ADDR_ARRAY(peer));
+
+	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
+			session_entry->peSessionId, mac_hdr->fc.subType));
+
+	qdf_status = wma_tx_frameWithTxComplete(mac_ctx, packet,
+			(uint16_t)num_bytes,
+			TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS,
+			7, lim_tx_complete, frame,
+			lim_oper_chan_change_confirm_tx_complete_cnf,
+			tx_flag, sme_session_id, false, 0);
+
+	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
+			session_entry->peSessionId, qdf_status));
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		lim_log(mac_ctx, LOGE,
+		  FL("Failed to send status %X!"),
+					 qdf_status);
+		/* Pkt will be freed up by the callback */
+		return eSIR_FAILURE;
+	}
+		return eSIR_SUCCESS;
+}
+
+
 tSirRetStatus
 lim_send_vht_opmode_notification_frame(tpAniSirGlobal pMac,
 				       tSirMacAddr peer,

@@ -3175,6 +3175,11 @@ void lim_process_switch_channel_rsp(tpAniSirGlobal pMac, void *body)
 		 * the policy manager connection table needs to be updated.
 		 */
 		cds_update_connection_info(psessionEntry->smeSessionId);
+		if (psessionEntry->pePersona == QDF_P2P_CLIENT_MODE) {
+			lim_log(pMac, LOG1,
+				FL("Send p2p operating channel change conf action frame once first beacon is received on new channel"));
+			psessionEntry->send_p2p_conf_frame = true;
+		}
 		break;
 	case LIM_SWITCH_CHANNEL_SAP_DFS:
 	{
