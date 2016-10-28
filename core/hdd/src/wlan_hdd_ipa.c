@@ -362,7 +362,7 @@ static uint8_t vdev_to_iface[CSR_ROAM_SESSION_MAX];
  * @rx_destructor_call: IPA Rx packet destructor count
  */
 struct uc_rt_debug_info {
-	unsigned long time;
+	uint64_t time;
 	uint64_t ipa_excep_count;
 	uint64_t rx_drop_count;
 	uint64_t net_sent_count;
@@ -726,7 +726,7 @@ static void hdd_ipa_uc_rt_debug_host_fill(void *ctext)
 	dump_info = &hdd_ipa->rt_bug_buffer[
 		hdd_ipa->rt_buf_fill_index % HDD_IPA_UC_RT_DEBUG_BUF_COUNT];
 
-	dump_info->time = qdf_mc_timer_get_system_time();
+	dump_info->time = (uint64_t)qdf_mc_timer_get_system_time();
 	dump_info->ipa_excep_count = hdd_ipa->stats.num_rx_excep;
 	dump_info->rx_drop_count = hdd_ipa->ipa_rx_internel_drop_count;
 	dump_info->net_sent_count = hdd_ipa->ipa_rx_net_send_count;
@@ -779,7 +779,7 @@ void hdd_ipa_uc_rt_debug_host_dump(hdd_context_t *hdd_ctx)
 			HDD_IPA_UC_RT_DEBUG_BUF_COUNT;
 		dump_info = &hdd_ipa->rt_bug_buffer[dump_index];
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
-			"%12lu:%10llu:%10llu:%10llu:%10llu:%10llu:%10llu:%10llu\n",
+			"%12llu:%10llu:%10llu:%10llu:%10llu:%10llu:%10llu:%10llu\n",
 			dump_info->time, dump_info->ipa_excep_count,
 			dump_info->rx_drop_count, dump_info->net_sent_count,
 			dump_info->tx_mcbc_count, dump_info->tx_fwd_count,

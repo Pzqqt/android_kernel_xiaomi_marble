@@ -482,9 +482,9 @@ static int hdd_indicate_scan_result(hdd_scan_info_t *scanInfo,
 	/* AGE */
 	event.cmd = IWEVCUSTOM;
 	p = custom;
-	p += scnprintf(p, MAX_CUSTOM_LEN, " Age: %lu",
-		       qdf_mc_timer_get_system_ticks() -
-		       descriptor->nReceivedTime);
+	p += scnprintf(p, MAX_CUSTOM_LEN, " Age: %llu",
+		       qdf_mc_timer_get_system_time() -
+		       descriptor->received_time);
 	event.u.data.length = p - custom;
 	current_event = iwe_stream_add_point(scanInfo->info, current_event, end,
 					     &event, custom);
@@ -860,7 +860,7 @@ static int __iw_set_scan(struct net_device *dev, struct iw_request_info *info,
 		scanRequest.uIEFieldLen = pAdapter->scan_info.scanAddIE.length;
 		scanRequest.pIEField = pAdapter->scan_info.scanAddIE.addIEdata;
 	}
-	scanRequest.timestamp = qdf_mc_timer_get_system_ticks();
+	scanRequest.timestamp = qdf_mc_timer_get_system_time();
 	status = sme_scan_request((WLAN_HDD_GET_CTX(pAdapter))->hHal,
 				  pAdapter->sessionId, &scanRequest,
 				  &hdd_scan_request_callback, dev);
@@ -1533,7 +1533,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 
 	qdf_mem_zero(&scan_req, sizeof(scan_req));
 
-	scan_req.timestamp = qdf_mc_timer_get_system_ticks();
+	scan_req.timestamp = qdf_mc_timer_get_system_time();
 
 	/* Even though supplicant doesn't provide any SSIDs, n_ssids is
 	 * set to 1.  Because of this, driver is assuming that this is not
