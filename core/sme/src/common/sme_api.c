@@ -1017,6 +1017,15 @@ sme_process_cmd:
 			  pCommand->command);
 		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
 		status = csr_tdls_process_cmd(pMac, pCommand);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			if (csr_ll_remove_entry(&pMac->sme.smeCmdActiveList,
+						&pCommand->Link,
+						LL_ACCESS_LOCK)) {
+				qdf_mem_zero(&pCommand->u.tdlsCmd,
+					     sizeof(tTdlsCmd));
+				csr_release_command(pMac, pCommand);
+			}
+		}
 		break;
 #endif
 	case e_sme_command_set_hw_mode:
