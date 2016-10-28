@@ -920,6 +920,7 @@ typedef enum {
 	WMI_COEX_CONFIG_CMDID,
 	WMI_CHAN_AVOID_RPT_ALLOW_CMDID,
 	WMI_COEX_GET_ANTENNA_ISOLATION_CMDID,
+	WMI_SAR_LIMITS_CMDID,
 
 	/**
 	 *  OBSS scan offload enable/disable commands
@@ -12947,6 +12948,113 @@ enum {
 	WMI_MODEM_STATE_OFF = 0,
 	WMI_MODEM_STATE_ON
 };
+
+/**
+ * This command is sent from WLAN host driver to firmware to
+ * notify the updated Specific Absorption Rate (SAR) limits.
+ * A critical regulation for FCC compliance, OEMs require methods to set
+ * limits on TX power of WLAN/WWAN.
+ * Host would receive instructions on what to set the limits per
+ * band/chain/modulation to, it would then interpret and send the limits
+ * to FW using this WMI message.
+ * Since it is possible to have too many commands to fit into one message,
+ * FW will keep receiving the messages, until it finds one with
+ * commit_limits = 1, at which point it will apply all the received
+ * specifications.
+ */
+
+typedef struct {
+	/** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_sar_limits_cmd_param */
+	A_UINT32 tlv_header;
+
+	/** when set to WMI_SAR_FEATURE_ON, enable SAR feature;
+	 * if set to WMI_SAR_FEATURE_OFF, disable feature;
+	 * if set to WMI_SAR_FEATURE_NO_CHANGE, do not alter state of feature;
+	 */
+
+	A_UINT32 sar_enable;
+
+	/** number of items in sar_limits[] */
+	A_UINT32 num_limit_rows;
+	/** once received and is set to 1, FW will calculate the power limits
+	 * and send set_power command to apply them.
+	 * Otherwise just update local values stored in FW until a future msg
+	 * with commit_limits=1 arrives.
+	 */
+
+	A_UINT32 commit_limits;
+
+	/**
+	 * TLV (tag length value) parameters follow the sar_limit_cmd_row
+	 * structure. The TLV's are:
+	 * wmi_sar_limit_cmd_row sar_limits[];
+	 */
+} wmi_sar_limits_cmd_fixed_param;
+
+enum wmi_sar_feature_state_flags {
+	WMI_SAR_FEATURE_OFF = 0,
+	WMI_SAR_FEATURE_ON_SET_0,
+	WMI_SAR_FEATURE_ON_SET_1,
+	WMI_SAR_FEATURE_ON_SET_2,
+	WMI_SAR_FEATURE_ON_SET_3,
+	WMI_SAR_FEATURE_ON_SET_4,
+	WMI_SAR_FEATURE_NO_CHANGE
+};
+
+typedef struct {
+	A_UINT32    tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_sar_limit_cmd_row */
+
+	/** Current values: WMI_SAR_2G_ID, WMI_SAR_5G_ID. Can be extended by adding
+	 * new band_id values .
+	 */
+	A_UINT32 band_id;
+
+	A_UINT32 chain_id;
+
+	/** Current values: WMI_SAR_MOD_CCK, WMI_SAR_MOD_OFDM */
+	A_UINT32 mod_id;
+
+	/** actual power limit value, in steps of 0.5 dBm */
+	A_UINT32 limit_value;
+
+	/** in case the OEM doesn't care about one of the qualifiers from above,
+	 * the bit for that qualifier within the validity_bitmap can be set to 0
+	 * so that limit is applied to all possible cases of this qualifier
+	 * (i.e. if a qualifier's validity_bitmap flag is 0, the qualifier is
+	 * treated as a wildcard).
+	 * Current masks:
+	 *     WMI_SAR_BAND_ID_VALID_MASK
+	 *     WMI_SAR_CHAIN_ID_VALID_MASK
+	 *     WMI_SAR_MOD_ID_VALID_MASK
+	 * Example: if !WMI_IS_SAR_MOD_ID_VALID(bitmap),
+	 *     it means apply same limit_value to both WMI_SAR_MOD_CCK and
+	 *     WMI_SAR_MOD_OFDM cases.
+	 */
+
+	A_UINT32 validity_bitmap;
+} wmi_sar_limit_cmd_row;
+
+enum wmi_sar_band_id_flags {
+	WMI_SAR_2G_ID = 0,
+	WMI_SAR_5G_ID
+};
+
+enum wmi_sar_mod_id_flags {
+	WMI_SAR_MOD_CCK = 0,
+	WMI_SAR_MOD_OFDM
+};
+
+#define WMI_SAR_BAND_ID_VALID_MASK      (0x1)
+#define WMI_SAR_CHAIN_ID_VALID_MASK     (0x2)
+#define WMI_SAR_MOD_ID_VALID_MASK       (0x4)
+
+#define WMI_SET_SAR_BAND_ID_VALID(bitmap)    ((bitmap) |= WMI_SAR_BAND_ID_VALID_MASK)
+#define WMI_SET_SAR_CHAIN_ID_VALID(bitmap)   ((bitmap) |= WMI_SAR_CHAIN_ID_VALID_MASK)
+#define WMI_SET_SAR_MOD_ID_VALID(bitmap)     ((bitmap) |= WMI_SAR_MOD_ID_VALID_MASK)
+
+#define WMI_IS_SAR_BAND_ID_VALID(bitmap)     ((bitmap) & WMI_SAR_BAND_ID_VALID_MASK)
+#define WMI_IS_SAR_CHAIN_ID_VALID(bitmap)    ((bitmap) & WMI_SAR_CHAIN_ID_VALID_MASK)
+#define WMI_IS_SAR_MOD_ID_VALID(bitmap)      ((bitmap) & WMI_SAR_MOD_ID_VALID_MASK)
 
 #define WMI_ROAM_AUTH_STATUS_CONNECTED       0x1 /** connected, but not authenticated */
 #define WMI_ROAM_AUTH_STATUS_AUTHENTICATED   0x2 /** connected and authenticated */
