@@ -1962,7 +1962,16 @@ lim_send_sme_ibss_peer_ind(tpAniSirGlobal pMac,
 
 }
 
-void lim_process_csa_wdw_ie(tpAniSirGlobal mac_ctx,
+/**
+ * lim_process_csa_wbw_ie() - Process CSA Wide BW IE
+ * @mac_ctx:         pointer to global adapter context
+ * @csa_params:      pointer to CSA parameters
+ * @chnl_switch_info:pointer to channel switch parameters
+ * @session_entry:   session pointer
+ *
+ * Return: None
+ */
+static void lim_process_csa_wbw_ie(tpAniSirGlobal mac_ctx,
 		struct csa_offload_params *csa_params,
 		tLimWiderBWChannelSwitchInfo *chnl_switch_info,
 		tpPESession session_entry)
@@ -2117,7 +2126,7 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	if (session_entry->vhtCapability &&
 			session_entry->htSupportedChannelWidthSet) {
 		if (csa_params->ies_present_flag & lim_wbw_ie_present) {
-			lim_process_csa_wdw_ie(mac_ctx, csa_params,
+			lim_process_csa_wbw_ie(mac_ctx, csa_params,
 					chnl_switch_info, session_entry);
 			lim_ch_switch->sec_ch_offset =
 				csa_params->sec_chan_offset;
