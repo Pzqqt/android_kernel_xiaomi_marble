@@ -298,6 +298,19 @@ tSapChanMatrixInfo ht80_chan[] = {
 	  {132, SAP_TX_LEAKAGE_MIN}, {136, SAP_TX_LEAKAGE_MIN},
 	  {144, SAP_TX_LEAKAGE_MIN}
 	  } },
+
+	{144,
+	 {{36, SAP_TX_LEAKAGE_MAX}, {40, SAP_TX_LEAKAGE_MAX},
+	  {44, SAP_TX_LEAKAGE_MAX}, {48, SAP_TX_LEAKAGE_MAX},
+	  {52, SAP_TX_LEAKAGE_MAX}, {56, SAP_TX_LEAKAGE_MAX},
+	  {60, SAP_TX_LEAKAGE_MIN}, {64, SAP_TX_LEAKAGE_MIN},
+	  {100, SAP_TX_LEAKAGE_MIN}, {104, SAP_TX_LEAKAGE_MIN},
+	  {108, SAP_TX_LEAKAGE_MIN}, {112, SAP_TX_LEAKAGE_MIN},
+	  {116, SAP_TX_LEAKAGE_MIN}, {120, SAP_TX_LEAKAGE_MIN},
+	  {124, SAP_TX_LEAKAGE_MIN}, {128, SAP_TX_LEAKAGE_MIN},
+	  {132, SAP_TX_LEAKAGE_MIN}, {136, SAP_TX_LEAKAGE_MIN},
+	  {144, SAP_TX_LEAKAGE_MIN}
+	  } },
 };
 
 /* channel tx leakage table - ht40 */
@@ -512,6 +525,19 @@ tSapChanMatrixInfo ht40_chan[] = {
 	  {144, SAP_TX_LEAKAGE_MIN}
 	  } },
 
+	{144,
+	 {{36, 695}, {40, 695},
+	  {44, 684}, {48, 684},
+	  {52, 664}, {56, 664},
+	  {60, 658}, {64, 658},
+	  {100, 601}, {104, 601},
+	  {108, 545}, {112, 545},
+	  {116, SAP_TX_LEAKAGE_AUTO_MIN}, {120, SAP_TX_LEAKAGE_AUTO_MIN},
+	  {124, SAP_TX_LEAKAGE_AUTO_MIN}, {128, SAP_TX_LEAKAGE_AUTO_MIN},
+	  {132, 262}, {136, 262},
+	  {140, SAP_TX_LEAKAGE_MIN},
+	  {144, SAP_TX_LEAKAGE_MIN}
+	  } },
 };
 
 /* channel tx leakage table - ht20 */
@@ -713,6 +739,20 @@ tSapChanMatrixInfo ht20_chan[] = {
 	  } },
 
 	{140,
+	 {{36, 679}, {40, 673},
+	  {44, 667}, {48, 656},
+	  {52, 634}, {56, 663},
+	  {60, 662}, {64, 660},
+	  {100, SAP_TX_LEAKAGE_MAX}, {104, SAP_TX_LEAKAGE_MAX},
+	  {108, SAP_TX_LEAKAGE_MAX}, {112, 590},
+	  {116, 573}, {120, 553},
+	  {124, 533}, {128, 513},
+	  {132, 490}, {136, SAP_TX_LEAKAGE_MIN},
+	  {140, SAP_TX_LEAKAGE_MIN},
+	  {144, SAP_TX_LEAKAGE_MIN}
+	  } },
+
+	{144,
 	 {{36, 679}, {40, 673},
 	  {44, 667}, {48, 656},
 	  {52, 634}, {56, 663},
