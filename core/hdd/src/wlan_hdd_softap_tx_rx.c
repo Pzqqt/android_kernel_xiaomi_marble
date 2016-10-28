@@ -38,9 +38,10 @@
 #include <net/ieee80211_radiotap.h>
 #include <cds_sched.h>
 #include <wlan_hdd_napi.h>
-#include <ol_txrx.h>
+#include <cdp_txrx_cmn.h>
 #include <cdp_txrx_peer_ops.h>
 #include <cds_utils.h>
+#include <cdp_txrx_flow_ctrl_v2.h>
 
 #ifdef IPA_OFFLOAD
 #include <wlan_hdd_ipa.h>
@@ -343,7 +344,7 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 			(uint8_t *)&skb->data[QDF_DP_TRACE_RECORD_SIZE],
 			(qdf_nbuf_len(skb)-QDF_DP_TRACE_RECORD_SIZE), QDF_TX));
 
-	if (pAdapter->tx_fn(ol_txrx_get_vdev_by_sta_id(STAId),
+	if (pAdapter->tx_fn(pAdapter->txrx_vdev,
 		 (qdf_nbuf_t) skb) != NULL) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_WARN,
 			  "%s: Failed to send packet to txrx for staid:%d",
@@ -436,7 +437,7 @@ static void __hdd_softap_tx_timeout(struct net_device *dev)
 	}
 
 	wlan_hdd_display_netif_queue_history(hdd_ctx);
-	ol_tx_dump_flow_pool_info();
+	cdp_dump_flow_pool_info(cds_get_context(QDF_MODULE_ID_SOC));
 	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			"carrier state: %d", netif_carrier_ok(dev));
 }
@@ -678,10 +679,11 @@ QDF_STATUS hdd_softap_deregister_sta(hdd_adapter_t *pAdapter, uint8_t staId)
 	 * structures. This helps to block RX frames from other
 	 * station to this station.
 	 */
-	qdf_status = ol_txrx_clear_peer(staId);
+	qdf_status = cdp_peer_clear(cds_get_context(QDF_MODULE_ID_SOC),
+			cds_get_context(QDF_MODULE_ID_TXRX), staId);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
-			  "ol_txrx_clear_peer() failed to for staID %d.  "
+			  "cdp_peer_clear() failed to for staID %d.  "
 			  "Status= %d [0x%08X]", staId, qdf_status, qdf_status);
 	}
 
@@ -722,6 +724,8 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 	struct ol_txrx_desc_type staDesc = { 0 };
 	hdd_context_t *pHddCtx = pAdapter->pHddCtx;
 	struct ol_txrx_ops txrx_ops;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	/*
 	 * Clean up old entry if it is not cleaned up properly
@@ -750,15 +754,17 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 	/* Register the vdev transmit and receive functions */
 	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
 	txrx_ops.rx.rx = hdd_softap_rx_packet_cbk;
-	ol_txrx_vdev_register(
-		 ol_txrx_get_vdev_from_vdev_id(pAdapter->sessionId),
+	cdp_vdev_register(soc,
+		 cdp_get_vdev_from_vdev_id(soc, pdev, pAdapter->sessionId),
 		 pAdapter, &txrx_ops);
+	pAdapter->txrx_vdev = cdp_get_vdev_from_vdev_id(soc, pdev,
+					pAdapter->sessionId);
 	pAdapter->tx_fn = txrx_ops.tx.tx;
 
-	qdf_status = ol_txrx_register_peer(&staDesc);
+	qdf_status = cdp_peer_register(soc, pdev, &staDesc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
-			  "SOFTAP ol_txrx_register_peer() failed to register.  Status= %d [0x%08X]",
+			  "SOFTAP cdp_peer_register() failed to register.  Status= %d [0x%08X]",
 			  qdf_status, qdf_status);
 		return qdf_status;
 	}

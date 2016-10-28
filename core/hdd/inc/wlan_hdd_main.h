@@ -59,8 +59,6 @@
 #include "wlan_hdd_cfg80211.h"
 #include <qdf_defer.h>
 #include "sap_api.h"
-#include "ol_txrx_osif_api.h"
-#include "ol_txrx_ctrl_api.h"
 #include <wlan_hdd_lro.h>
 #include "cdp_txrx_flow_ctrl_legacy.h"
 #include <cdp_txrx_peer_ops.h>
@@ -888,6 +886,8 @@ struct hdd_adapter_s {
 
 	void *pHddCtx;
 
+	void *txrx_vdev;
+
 	/** Handle to the network device */
 	struct net_device *dev;
 
@@ -1672,12 +1672,12 @@ static inline void hdd_stop_bus_bw_computer_timer(hdd_adapter_t *pAdapter)
 	return;
 }
 
-int hdd_bus_bandwidth_init(hdd_context_t *hdd_ctx)
+static inline int hdd_bus_bandwidth_init(hdd_context_t *hdd_ctx)
 {
 	return 0;
 }
 
-void hdd_bus_bandwidth_destroy(hdd_context_t *hdd_ctx)
+static inline void hdd_bus_bandwidth_destroy(hdd_context_t *hdd_ctx)
 {
 	return;
 }

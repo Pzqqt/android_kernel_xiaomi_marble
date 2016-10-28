@@ -52,17 +52,16 @@
 #include "wlan_hdd_hostapd.h"
 #include <wlan_hdd_ipa.h>
 #include "wlan_hdd_lpass.h"
+#include <wlan_logging_sock_svc.h>
 #include <cds_sched.h>
 #include "cds_concurrency.h"
 #include <cds_utils.h>
 #include "sme_power_save_api.h"
-#include "ol_txrx_ctrl_api.h"
-#include "ol_txrx_types.h"
-#include "ol_txrx.h"
-#include "ol_rx_fwd.h"
-#include "cdp_txrx_flow_ctrl_legacy.h"
-#include "cdp_txrx_peer_ops.h"
 #include "wlan_hdd_napi.h"
+#include <cdp_txrx_cmn.h>
+#include <cdp_txrx_flow_ctrl_legacy.h>
+#include <cdp_txrx_peer_ops.h>
+#include <cdp_txrx_misc.h>
 
 /* These are needed to recognize WPA and RSN suite types */
 #define HDD_WPA_OUI_SIZE 4
@@ -1289,7 +1288,8 @@ static void hdd_send_association_event(struct net_device *dev,
 		spin_lock_bh(&pHddCtx->bus_bw_lock);
 		pAdapter->prev_tx_packets = pAdapter->stats.tx_packets;
 		pAdapter->prev_rx_packets = pAdapter->stats.rx_packets;
-		ol_get_intra_bss_fwd_pkts_count(pAdapter->sessionId,
+		cdp_get_intra_bss_fwd_pkts_count(
+			cds_get_context(QDF_MODULE_ID_SOC), pAdapter->sessionId,
 			&pAdapter->prev_fwd_tx_packets,
 			&pAdapter->prev_fwd_rx_packets);
 		spin_unlock_bh(&pHddCtx->bus_bw_lock);
@@ -1412,9 +1412,10 @@ QDF_STATUS hdd_roam_deregister_sta(hdd_adapter_t *pAdapter, uint8_t staId)
 		 */
 	}
 
-	qdf_status = ol_txrx_clear_peer(staId);
+	qdf_status = cdp_peer_clear(cds_get_context(QDF_MODULE_ID_SOC),
+			cds_get_context(QDF_MODULE_ID_TXRX), staId);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hdd_err("ol_txrx_clear_peer() failed for staID %d. Status(%d) [0x%08X]",
+		hdd_err("cdp_peer_clear() failed for staID %d. Status(%d) [0x%08X]",
 			staId, qdf_status, qdf_status);
 	}
 	return qdf_status;
@@ -1714,8 +1715,9 @@ QDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
 {
 	QDF_STATUS err;
 	uint8_t *peer_mac_addr;
-	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	ol_txrx_peer_handle peer;
+	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	void *peer;
 
 	if (!pdev) {
 		hdd_err("Failed to get txrx context");
@@ -1727,17 +1729,17 @@ QDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	peer = ol_txrx_peer_find_by_local_id(pdev, sta_id);
+	peer = cdp_peer_find_by_local_id(soc, pdev, sta_id);
 	if (!peer)
 		return QDF_STATUS_E_FAULT;
 
-	peer_mac_addr = ol_txrx_peer_get_peer_mac_addr(peer);
+	peer_mac_addr = cdp_peer_get_peer_mac_addr(soc, peer);
 	if (peer_mac_addr == NULL) {
 		hdd_err("peer mac addr is NULL");
 		return QDF_STATUS_E_FAULT;
 	}
 
-	err = ol_txrx_peer_state_update(pdev, peer_mac_addr, sta_state);
+	err = cdp_peer_state_update(soc, pdev, peer_mac_addr, sta_state);
 	if (err != QDF_STATUS_SUCCESS) {
 		hdd_err("peer state update failed");
 		return QDF_STATUS_E_FAULT;
@@ -1764,7 +1766,7 @@ QDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
 		if (pAdapter->device_mode == QDF_STA_MODE ||
 		    pAdapter->device_mode == QDF_P2P_CLIENT_MODE) {
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || defined(QCA_LL_TX_FLOW_CONTROL_V2)
-			ol_txrx_vdev_handle vdev;
+			void *vdev;
 			unsigned long rc;
 
 			/* wait for event from firmware to set the event */
@@ -1774,8 +1776,8 @@ QDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
 			if (!rc) {
 				hdd_notice("timeout waiting for sta_authorized_event");
 			}
-			vdev = ol_txrx_get_vdev_for_peer(peer);
-			ol_txrx_vdev_unpause(vdev,
+			vdev = cdp_peer_get_vdev(soc, peer);
+			cdp_fc_vdev_unpause(soc, vdev,
 					OL_TXQ_PAUSE_REASON_PEER_UNAUTHORIZED);
 #endif
 		}
@@ -1803,6 +1805,8 @@ QDF_STATUS hdd_roam_register_sta(hdd_adapter_t *pAdapter,
 	struct ol_txrx_desc_type staDesc = { 0 };
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	struct ol_txrx_ops txrx_ops;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (NULL == pBssDesc)
 		return QDF_STATUS_E_FAILURE;
@@ -1828,15 +1832,25 @@ QDF_STATUS hdd_roam_register_sta(hdd_adapter_t *pAdapter,
 	/* Register the vdev transmit and receive functions */
 	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
 	txrx_ops.rx.rx = hdd_rx_packet_cbk;
-	ol_txrx_vdev_register(
-		 ol_txrx_get_vdev_from_vdev_id(pAdapter->sessionId),
-		 pAdapter, &txrx_ops);
+
+	pAdapter->txrx_vdev = cdp_get_vdev_from_vdev_id(soc, pdev,
+					pAdapter->sessionId);
+	if (!pAdapter->txrx_vdev) {
+		hdd_err("%s find vdev fail", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	txrx_ops.tx.tx = NULL;
+	cdp_vdev_register(soc, pAdapter->txrx_vdev, pAdapter, &txrx_ops);
+	if (!txrx_ops.tx.tx) {
+		hdd_err("%s vdev register fail", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	pAdapter->tx_fn = txrx_ops.tx.tx;
-
-	qdf_status = ol_txrx_register_peer(&staDesc);
-
+	qdf_status = cdp_peer_register(soc, pdev, &staDesc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hdd_warn("ol_txrx_register_peer() failed to register. Status=%d [0x%08X]",
+		hdd_warn("cdp_peer_register() failed to register. Status=%d [0x%08X]",
 			 qdf_status, qdf_status);
 		return qdf_status;
 	}
@@ -3449,6 +3463,8 @@ QDF_STATUS hdd_roam_register_tdlssta(hdd_adapter_t *pAdapter,
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct ol_txrx_desc_type staDesc = { 0 };
 	struct ol_txrx_ops txrx_ops;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	/*
 	 * TDLS sta in BSS should be set as STA type TDLS and STA MAC should
@@ -3462,15 +3478,15 @@ QDF_STATUS hdd_roam_register_tdlssta(hdd_adapter_t *pAdapter,
 	/* Register the vdev transmit and receive functions */
 	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
 	txrx_ops.rx.rx = hdd_rx_packet_cbk;
-	ol_txrx_vdev_register(
-		 ol_txrx_get_vdev_from_vdev_id(pAdapter->sessionId),
+	cdp_vdev_register(soc,
+		 cdp_get_vdev_from_vdev_id(soc, pdev, pAdapter->sessionId),
 		 pAdapter, &txrx_ops);
 	pAdapter->tx_fn = txrx_ops.tx.tx;
 
 	/* Register the Station with TL...  */
-	qdf_status = ol_txrx_register_peer(&staDesc);
+	qdf_status = cdp_peer_register(soc, pdev, &staDesc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hdd_err("ol_txrx_register_peer() failed to register. Status=%d [0x%08X]",
+		hdd_err("cdp_peer_register() failed to register. Status=%d [0x%08X]",
 			qdf_status, qdf_status);
 		return qdf_status;
 	}
@@ -3489,10 +3505,11 @@ static QDF_STATUS hdd_roam_deregister_tdlssta(hdd_adapter_t *pAdapter,
 					      uint8_t staId)
 {
 	QDF_STATUS qdf_status;
-	qdf_status = ol_txrx_clear_peer(staId);
+	qdf_status = cdp_peer_clear(cds_get_context(QDF_MODULE_ID_SOC),
+				cds_get_context(QDF_MODULE_ID_TXRX), staId);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hdd_warn("ol_txrx_clear_peer() failed for staID %d. Status=%d [0x%08X]",
-			 staId, qdf_status, qdf_status);
+		hdd_warn("cdp_peer_clear() failed for staID %d. Status=%d [0x%08X]",
+			staId, qdf_status, qdf_status);
 	}
 	return qdf_status;
 }

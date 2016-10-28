@@ -38,8 +38,6 @@
 #include <wlan_hdd_lro.h>
 #include <wlan_hdd_napi.h>
 #include <wma_api.h>
-#include <ol_txrx_types.h>
-#include <ol_cfg.h>
 #include <cdp_txrx_lro.h>
 
 #include <linux/inet_lro.h>
@@ -537,7 +535,7 @@ int hdd_lro_enable(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 	}
 
 	/* Register the flush callback */
-	ol_register_lro_flush_cb(hdd_lro_flush, hdd_init_lro_mgr);
+	cdp_register_lro_flush_cb(hdd_lro_flush, hdd_init_lro_mgr);
 	adapter->dev->features |= NETIF_F_LRO;
 
 	hdd_info("LRO Enabled");
@@ -570,8 +568,7 @@ void hdd_lro_disable(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 		return;
 
 	/* Deregister the flush callback */
-	ol_deregister_lro_flush_cb(hdd_deinit_lro_mgr);
-
+	cdp_deregister_lro_flush_cb(hdd_deinit_lro_mgr);
 	return;
 }
 

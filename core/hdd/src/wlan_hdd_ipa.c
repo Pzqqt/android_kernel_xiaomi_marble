@@ -48,7 +48,6 @@
 #include <linux/inetdevice.h>
 #include <linux/ip.h>
 #include <wlan_hdd_softap_tx_rx.h>
-#include <ol_txrx_osif_api.h>
 #include <cdp_txrx_peer_ops.h>
 
 #include "cds_sched.h"
@@ -1065,6 +1064,7 @@ static int hdd_ipa_uc_enable_pipes(struct hdd_ipa_priv *hdd_ipa)
 {
 	int result;
 	p_cds_contextType cds_ctx = hdd_ipa->hdd_ctx->pcds_context;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	/* ACTIVATE TX PIPE */
 	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
@@ -1084,7 +1084,7 @@ static int hdd_ipa_uc_enable_pipes(struct hdd_ipa_priv *hdd_ipa)
 			    __func__, result);
 		return result;
 	}
-	ol_txrx_ipa_uc_set_active(cds_ctx->pdev_txrx_ctx, true, true);
+	cdp_ipa_set_active(soc, cds_ctx->pdev_txrx_ctx, true, true);
 
 	/* ACTIVATE RX PIPE */
 	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
@@ -1104,7 +1104,7 @@ static int hdd_ipa_uc_enable_pipes(struct hdd_ipa_priv *hdd_ipa)
 			    __func__, result);
 		return result;
 	}
-	ol_txrx_ipa_uc_set_active(cds_ctx->pdev_txrx_ctx, true, false);
+	cdp_ipa_set_active(soc, cds_ctx->pdev_txrx_ctx, true, false);
 	hdd_ipa->ipa_pipes_down = false;
 	return 0;
 }
@@ -1211,12 +1211,13 @@ static int hdd_ipa_uc_handle_first_con(struct hdd_ipa_priv *hdd_ipa)
 static void hdd_ipa_uc_handle_last_discon(struct hdd_ipa_priv *hdd_ipa)
 {
 	p_cds_contextType cds_ctx = hdd_ipa->hdd_ctx->pcds_context;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	hdd_ipa->resource_unloading = true;
 	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "%s: Disable FW RX PIPE", __func__);
-	ol_txrx_ipa_uc_set_active(cds_ctx->pdev_txrx_ctx, false, false);
+	cdp_ipa_set_active(soc, cds_ctx->pdev_txrx_ctx, false, false);
 	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "%s: Disable FW TX PIPE", __func__);
-	ol_txrx_ipa_uc_set_active(cds_ctx->pdev_txrx_ctx, false, true);
+	cdp_ipa_set_active(soc, cds_ctx->pdev_txrx_ctx, false, true);
 }
 
 /**
@@ -1734,6 +1735,7 @@ static QDF_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx)
 	struct hdd_ipa_priv *ipa_ctxt = (struct hdd_ipa_priv *)hdd_ctx->hdd_ipa;
 	p_cds_contextType cds_ctx = hdd_ctx->pcds_context;
 	uint8_t i;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	qdf_mem_zero(&pipe_in, sizeof(struct ipa_wdi_in_params));
 	qdf_mem_zero(&pipe_out, sizeof(struct ipa_wdi_out_params));
@@ -1828,12 +1830,12 @@ static QDF_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx)
 		    (unsigned int)pipe_in.u.ul.rdy_ring_rp_pa,
 		    (unsigned int)ipa_ctxt->rx_ready_doorbell_paddr);
 
-	ol_txrx_ipa_uc_set_doorbell_paddr(cds_ctx->pdev_txrx_ctx,
-				     ipa_ctxt->tx_comp_doorbell_paddr,
-				     ipa_ctxt->rx_ready_doorbell_paddr);
+	cdp_ipa_set_doorbell_paddr(soc, cds_ctx->pdev_txrx_ctx,
+			ipa_ctxt->tx_comp_doorbell_paddr,
+			ipa_ctxt->rx_ready_doorbell_paddr);
 
-	ol_txrx_ipa_uc_register_op_cb(cds_ctx->pdev_txrx_ctx,
-				  hdd_ipa_uc_op_event_handler, (void *)hdd_ctx);
+	cdp_ipa_register_op_cb(soc, cds_ctx->pdev_txrx_ctx,
+			hdd_ipa_uc_op_event_handler, (void *)hdd_ctx);
 
 	for (i = 0; i < HDD_IPA_UC_OPCODE_MAX; i++) {
 		hdd_ipa_init_uc_op_work(&ipa_ctxt->uc_op_work[i].work,
@@ -2872,8 +2874,8 @@ static void hdd_ipa_send_pkt_to_tl(
 
 	adapter->stats.tx_bytes += ipa_tx_desc->skb->len;
 
-	skb = ol_tx_send_ipa_data_frame(iface_context->tl_context,
-					 ipa_tx_desc->skb);
+	skb = cdp_ipa_tx_send_data_frame(cds_get_context(QDF_MODULE_ID_SOC),
+		iface_context->tl_context, ipa_tx_desc->skb);
 	if (skb) {
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "TLSHIM tx fail");
 		ipa_free_skb(ipa_tx_desc);
@@ -3596,8 +3598,8 @@ static int hdd_ipa_setup_iface(struct hdd_ipa_priv *hdd_ipa,
 	adapter->ipa_context = iface_context;
 	iface_context->adapter = adapter;
 	iface_context->sta_id = sta_id;
-	tl_context = ol_txrx_get_vdev_by_sta_id(sta_id);
-
+	tl_context = cdp_peer_get_vdev_by_sta_id(
+				cds_get_context(QDF_MODULE_ID_SOC), sta_id);
 	if (tl_context == NULL) {
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "Not able to get TL context sta_id: %d", sta_id);
@@ -4289,7 +4291,9 @@ QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
 	ghdd_ipa = hdd_ipa;
 	hdd_ipa->hdd_ctx = hdd_ctx;
 	hdd_ipa->num_iface = 0;
-	ol_txrx_ipa_uc_get_resource(pdev, &hdd_ipa->ipa_resource);
+	cdp_ipa_get_resource(cds_get_context(QDF_MODULE_ID_SOC),
+			cds_get_context(QDF_MODULE_ID_TXRX),
+			&hdd_ipa->ipa_resource);
 	if ((0 == hdd_ipa->ipa_resource.ce_sr_base_paddr) ||
 	    (0 == hdd_ipa->ipa_resource.tx_comp_ring_base_paddr) ||
 	    (0 == hdd_ipa->ipa_resource.rx_rdy_ring_base_paddr) ||

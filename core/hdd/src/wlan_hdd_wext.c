@@ -655,8 +655,8 @@ void hdd_wlan_get_stats(hdd_adapter_t *pAdapter, uint16_t *length,
 		pStats->txflow_pause_cnt,
 		pStats->txflow_unpause_cnt);
 
-	len += ol_txrx_stats(pAdapter->sessionId,
-		&buffer[len], (buf_len - len));
+	len += cdp_stats(cds_get_context(QDF_MODULE_ID_SOC),
+		pAdapter->sessionId, &buffer[len], (buf_len - len));
 
 	len += hdd_napi_stats(buffer + len, buf_len - len,
 			   NULL, hdd_napi_get_all());
@@ -725,7 +725,7 @@ void hdd_wlan_dump_stats(hdd_adapter_t *adapter, int value)
 		hdd_lro_display_stats(hdd_ctx);
 		break;
 	default:
-		ol_txrx_display_stats(value);
+		cdp_display_stats(cds_get_context(QDF_MODULE_ID_SOC), value);
 		break;
 	}
 }
@@ -5957,7 +5957,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 			hdd_clear_hif_stats();
 			break;
 		default:
-			ol_txrx_clear_stats(set_value);
+			cdp_clear_stats(cds_get_context(QDF_MODULE_ID_SOC),
+						set_value);
 		}
 		break;
 	}

@@ -221,7 +221,7 @@ static inline struct sk_buff *hdd_ipa_tx_packet_ipa(hdd_context_t *hdd_ctx,
  * Return: true - ipa hw present
  *         false - ipa hw not present
  */
-bool hdd_ipa_is_present(hdd_context_t *hdd_ctx)
+static inline bool hdd_ipa_is_present(hdd_context_t *hdd_ctx)
 {
 	return false;
 }

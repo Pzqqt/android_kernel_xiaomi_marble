@@ -36,7 +36,6 @@
 /* Include files */
 #include <sme_api.h>
 #include <wlan_defs.h>
-#include "ol_txrx_ctrl_api.h"
 #include "cdp_txrx_peer_ops.h"
 #include <net/cfg80211.h>
 #include <linux/ieee80211.h>

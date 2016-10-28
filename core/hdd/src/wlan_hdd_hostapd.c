@@ -3142,6 +3142,8 @@ static __iw_softap_setparam(struct net_device *dev,
 	{
 		hdd_context_t *hdd_ctx =
 			WLAN_HDD_GET_CTX(pHostapdAdapter);
+		void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
 		hdd_notice("QCASAP_CLEAR_STATS val %d", set_value);
 		switch (set_value) {
 		case WLAN_HDD_STATS:
@@ -3160,7 +3162,8 @@ static __iw_softap_setparam(struct net_device *dev,
 			hdd_clear_hif_stats();
 			break;
 		default:
-			ol_txrx_clear_stats(set_value);
+			if (soc)
+				cdp_clear_stats(soc, set_value);
 		}
 		break;
 	}

@@ -3700,8 +3700,9 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			hdd_wait_for_sme_close_sesion(hdd_ctx, adapter);
 		break;
 	case QDF_OCB_MODE:
-		ol_txrx_clear_peer(WLAN_HDD_GET_STATION_CTX_PTR(adapter)->
-			conn_info.staId[0]);
+		cdp_peer_clear(cds_get_context(QDF_MODULE_ID_SOC),
+			cds_get_context(QDF_MODULE_ID_TXRX),
+			WLAN_HDD_GET_STATION_CTX_PTR(adapter)->conn_info.staId[0]);
 		break;
 	default:
 		break;
@@ -7411,9 +7412,9 @@ static int hdd_pre_enable_configure(hdd_context_t *hdd_ctx)
 	int ret;
 	QDF_STATUS status;
 	tSirRetStatus hal_status;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
-	ol_txrx_register_pause_cb(wlan_hdd_txrx_pause_cb);
-
+	cdp_register_pause_cb(soc, wlan_hdd_txrx_pause_cb);
 	/*
 	 * Set 802.11p config
 	 * TODO-OCB: This has been temporarily added here to ensure this

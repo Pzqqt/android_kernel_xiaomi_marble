@@ -511,6 +511,7 @@ static int __wlan_hdd_bus_suspend(pm_message_t state)
 	void *hif_ctx;
 	int err = wlan_hdd_validate_context(hdd_ctx);
 	int status;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	hdd_info("event %d", state.event);
 
@@ -528,7 +529,8 @@ static int __wlan_hdd_bus_suspend(pm_message_t state)
 		goto done;
 	}
 
-	err = qdf_status_to_os_return(ol_txrx_bus_suspend());
+	err = qdf_status_to_os_return(
+			cdp_bus_suspend(soc));
 	if (err)
 		goto done;
 
@@ -547,7 +549,7 @@ resume_wma:
 	status = wma_bus_resume();
 	QDF_BUG(!status);
 resume_oltxrx:
-	status = ol_txrx_bus_resume();
+	status = cdp_bus_resume(soc);
 	QDF_BUG(!status);
 done:
 	hdd_err("suspend failed, status = %d", err);
@@ -680,7 +682,7 @@ static int __wlan_hdd_bus_resume(void)
 	if (status)
 		goto out;
 
-	qdf_status = ol_txrx_bus_resume();
+	qdf_status = cdp_bus_resume(cds_get_context(QDF_MODULE_ID_SOC));
 	status = qdf_status_to_os_return(qdf_status);
 	if (status)
 		goto out;
@@ -806,6 +808,7 @@ static int __wlan_hdd_runtime_suspend(struct device *dev)
 	void *txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	void *htc_ctx = cds_get_context(QDF_MODULE_ID_HTC);
 	int status = wlan_hdd_validate_context(hdd_ctx);
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (0 != status)
 		goto process_failure;
@@ -814,7 +817,7 @@ static int __wlan_hdd_runtime_suspend(struct device *dev)
 	if (status)
 		goto process_failure;
 
-	status = qdf_status_to_os_return(ol_txrx_runtime_suspend(txrx_pdev));
+	status = qdf_status_to_os_return(cdp_runtime_suspend(soc, txrx_pdev));
 	if (status)
 		goto process_failure;
 
@@ -844,7 +847,7 @@ resume_wma:
 resume_htc:
 	QDF_BUG(!htc_runtime_resume(htc_ctx));
 resume_txrx:
-	QDF_BUG(!qdf_status_to_os_return(ol_txrx_runtime_resume(txrx_pdev)));
+	QDF_BUG(!qdf_status_to_os_return(cdp_runtime_resume(soc, txrx_pdev)));
 process_failure:
 	hif_process_runtime_suspend_failure(hif_ctx);
 	return status;
@@ -883,13 +886,14 @@ static int __wlan_hdd_runtime_resume(struct device *dev)
 	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	void *htc_ctx = cds_get_context(QDF_MODULE_ID_HTC);
 	void *txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	hif_pre_runtime_resume(hif_ctx);
 	QDF_BUG(!pld_auto_resume(dev));
 	QDF_BUG(!hif_runtime_resume(hif_ctx));
 	QDF_BUG(!wma_runtime_resume());
 	QDF_BUG(!htc_runtime_resume(htc_ctx));
-	QDF_BUG(!qdf_status_to_os_return(ol_txrx_runtime_resume(txrx_pdev)));
+	QDF_BUG(!qdf_status_to_os_return(cdp_runtime_resume(soc, txrx_pdev)));
 	hif_process_runtime_resume_success(hif_ctx);
 	return 0;
 }

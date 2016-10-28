@@ -92,13 +92,15 @@
 
 #include "wlan_hdd_ocb.h"
 #include "wlan_hdd_tsf.h"
-#include "ol_txrx.h"
 
 #include "wlan_hdd_subnet_detect.h"
 #include <wlan_hdd_regulatory.h>
 #include "wlan_hdd_lpass.h"
 #include "wlan_hdd_nan_datapath.h"
 #include "wlan_hdd_disa.h"
+
+#include <cdp_txrx_cmn.h>
+#include <cdp_txrx_misc.h>
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -2869,6 +2871,8 @@ static int __wlan_hdd_cfg80211_handle_wisa_cmd(struct wiphy *wiphy,
 	int ret_val;
 	QDF_STATUS status;
 	bool wisa_mode;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	ENTER_DEV(dev);
 	ret_val = wlan_hdd_validate_context(hdd_ctx);
@@ -2902,8 +2906,10 @@ static int __wlan_hdd_cfg80211_handle_wisa_cmd(struct wiphy *wiphy,
 		ret_val = -EINVAL;
 	}
 	if (QDF_IS_STATUS_SUCCESS(status) || wisa_mode == false)
-		ol_txrx_set_wisa_mode(ol_txrx_get_vdev_from_vdev_id(
-					adapter->sessionId), wisa_mode);
+		cdp_set_wisa_mode(soc,
+			cdp_get_vdev_from_vdev_id(soc, pdev,
+				adapter->sessionId),
+			wisa_mode);
 err:
 	EXIT();
 	return ret_val;

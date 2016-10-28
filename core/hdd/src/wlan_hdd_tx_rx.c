@@ -51,8 +51,9 @@
 #include <wlan_hdd_ipa.h>
 #include "wlan_hdd_ocb.h"
 #include "wlan_hdd_lro.h"
-#include "cdp_txrx_peer_ops.h"
-#include "ol_txrx.h"
+#include <cdp_txrx_cmn.h>
+#include <cdp_txrx_peer_ops.h>
+#include <cdp_txrx_flow_ctrl_v2.h>
 #include "wlan_hdd_nan_datapath.h"
 #include "pld_common.h"
 
@@ -215,9 +216,8 @@ void hdd_register_tx_flow_control(hdd_adapter_t *adapter,
 			  adapter);
 		adapter->tx_flow_timer_initialized = true;
 	}
-	ol_txrx_register_tx_flow_control(adapter->sessionId,
-					flow_control_fp,
-					adapter);
+	cdp_fc_register(cds_get_context(QDF_MODULE_ID_SOC),
+		adapter->sessionId, flow_control_fp, adapter);
 
 }
 
@@ -229,7 +229,8 @@ void hdd_register_tx_flow_control(hdd_adapter_t *adapter,
  */
 void hdd_deregister_tx_flow_control(hdd_adapter_t *adapter)
 {
-	ol_txrx_deregister_tx_flow_control_cb(adapter->sessionId);
+	cdp_fc_deregister(cds_get_context(QDF_MODULE_ID_SOC),
+			adapter->sessionId);
 	if (adapter->tx_flow_timer_initialized == true) {
 		qdf_mc_timer_stop(&adapter->tx_flow_control_timer);
 		qdf_mc_timer_destroy(&adapter->tx_flow_control_timer);
@@ -249,7 +250,7 @@ void hdd_get_tx_resource(hdd_adapter_t *adapter,
 			uint8_t STAId, uint16_t timer_value)
 {
 	if (false ==
-	    ol_txrx_get_tx_resource(STAId,
+	    cdp_fc_get_tx_resource(cds_get_context(QDF_MODULE_ID_SOC), STAId,
 				   adapter->tx_flow_low_watermark,
 				   adapter->tx_flow_high_watermark_offset)) {
 		hdd_info("Disabling queues lwm %d hwm offset %d",
@@ -587,7 +588,7 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		goto drop_pkt;
 	}
 
-	if (pAdapter->tx_fn(ol_txrx_get_vdev_by_sta_id(STAId),
+	if (pAdapter->tx_fn(pAdapter->txrx_vdev,
 		 (qdf_nbuf_t) skb) != NULL) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_WARN,
 			  "%s: Failed to send packet to txrx for staid:%d",
@@ -707,7 +708,7 @@ static void __hdd_tx_timeout(struct net_device *dev)
 		  "carrier state: %d", netif_carrier_ok(dev));
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	wlan_hdd_display_netif_queue_history(hdd_ctx);
-	ol_tx_dump_flow_pool_info();
+	cdp_dump_flow_pool_info(cds_get_context(QDF_MODULE_ID_SOC));
 }
 
 /**
@@ -1305,6 +1306,8 @@ int hdd_set_mon_rx_cb(struct net_device *dev)
 	QDF_STATUS qdf_status;
 	struct ol_txrx_desc_type sta_desc = {0};
 	struct ol_txrx_ops txrx_ops;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
@@ -1312,13 +1315,13 @@ int hdd_set_mon_rx_cb(struct net_device *dev)
 
 	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
 	txrx_ops.rx.rx = hdd_mon_rx_packet_cbk;
-	ol_txrx_vdev_register(
-		 ol_txrx_get_vdev_from_vdev_id(adapter->sessionId),
+	cdp_vdev_register(soc,
+		 cdp_get_vdev_from_vdev_id(soc, pdev, adapter->sessionId),
 		 adapter, &txrx_ops);
 	/* peer is created wma_vdev_attach->wma_create_peer */
-	qdf_status = ol_txrx_register_peer(&sta_desc);
+	qdf_status = cdp_peer_register(soc, pdev, &sta_desc);
 	if (QDF_STATUS_SUCCESS != qdf_status) {
-		hdd_err("WLANTL_RegisterSTAClient() failed to register. Status= %d [0x%08X]",
+		hdd_err("cdp_peer_register() failed to register. Status= %d [0x%08X]",
 			qdf_status, qdf_status);
 		goto exit;
 	}

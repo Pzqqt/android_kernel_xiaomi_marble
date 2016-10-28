@@ -42,7 +42,7 @@
 #include "wlan_tgt_def_config.h"
 #include "sch_api.h"
 #include "wma_api.h"
-#include "ol_txrx.h"
+#include <cdp_txrx_cmn.h>
 #include <cdp_txrx_peer_ops.h>
 
 /* Structure definitions for WLAN_SET_DOT11P_CHANNEL_SCHED */
@@ -252,10 +252,12 @@ static int hdd_ocb_register_sta(hdd_adapter_t *adapter)
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	uint8_t peer_id;
 	struct ol_txrx_ops txrx_ops;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	qdf_status = ol_txrx_register_ocb_peer(hdd_ctx->pcds_context,
-					       adapter->macAddressCurrent.bytes,
-					       &peer_id);
+	qdf_status = cdp_peer_register_ocb_peer(soc, hdd_ctx->pcds_context,
+				adapter->macAddressCurrent.bytes,
+				&peer_id);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("Error registering OCB Self Peer!");
 		return -EINVAL;
@@ -269,12 +271,12 @@ static int hdd_ocb_register_sta(hdd_adapter_t *adapter)
 	/* Register the vdev transmit and receive functions */
 	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
 	txrx_ops.rx.rx = hdd_rx_packet_cbk;
-	ol_txrx_vdev_register(
-		 ol_txrx_get_vdev_from_vdev_id(adapter->sessionId),
+	cdp_vdev_register(soc,
+		 cdp_get_vdev_from_vdev_id(soc, pdev, adapter->sessionId),
 		 adapter, &txrx_ops);
 	adapter->tx_fn = txrx_ops.tx.tx;
 
-	qdf_status = ol_txrx_register_peer(&sta_desc);
+	qdf_status = cdp_peer_register(soc, pdev, &sta_desc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("Failed to register. Status= %d [0x%08X]",
 		       qdf_status, qdf_status);

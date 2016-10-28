@@ -76,7 +76,7 @@ static inline int hdd_napi_apply_throughput_policy(struct hdd_context_s *hddctx,
 static inline int hdd_napi_serialize(int is_on)
 {
 	return -EINVAL;
-};
+}
 #endif /* HELIUMPLUS */
 
 #else /* ! defined(FEATURE_NAPI) */
@@ -104,6 +104,10 @@ static inline int hdd_napi_apply_throughput_policy(void *hdd_ctx,
 	return 0;
 }
 
+static inline int hdd_napi_serialize(int is_on)
+{
+	return -EINVAL;
+}
 #endif /* FEATURE_NAPI */
 
 #endif /*  HDD_NAPI_H__ */
