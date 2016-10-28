@@ -3475,6 +3475,8 @@ QDF_STATUS wma_close(void *cds_ctx)
 	qdf_event_destroy(&wma_handle->wma_resume_event);
 	qdf_event_destroy(&wma_handle->runtime_suspend);
 	qdf_event_destroy(&wma_handle->recovery_event);
+	qdf_event_destroy(&wma_handle->tx_frm_download_comp_event);
+	qdf_event_destroy(&wma_handle->tx_queue_empty_event);
 	wma_cleanup_vdev_resp(wma_handle);
 	wma_cleanup_hold_req(wma_handle);
 	qdf_wake_lock_destroy(&wma_handle->wmi_cmd_rsp_wake_lock);
