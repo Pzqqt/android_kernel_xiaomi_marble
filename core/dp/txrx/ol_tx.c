@@ -142,10 +142,11 @@ static inline uint8_t ol_tx_prepare_tso(ol_txrx_vdev_handle vdev,
  *
  * Return: skb/NULL for success
  */
-qdf_nbuf_t ol_tx_data(ol_txrx_vdev_handle vdev, qdf_nbuf_t skb)
+qdf_nbuf_t ol_tx_data(void *data_vdev, qdf_nbuf_t skb)
 {
 	struct ol_txrx_pdev_t *pdev;
 	qdf_nbuf_t ret;
+	ol_txrx_vdev_handle vdev = data_vdev;
 
 	if (qdf_unlikely(!vdev)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
@@ -1650,9 +1651,11 @@ ol_tx_non_std_hl(ol_txrx_vdev_handle vdev,
  *  Return: null - success, skb - failure
  */
 qdf_nbuf_t
-ol_tx_non_std(ol_txrx_vdev_handle vdev,
+ol_tx_non_std(void *pvdev,
 	      enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list)
 {
+	ol_txrx_vdev_handle vdev = pvdev;
+
 	if (vdev->pdev->cfg.is_high_latency)
 		return ol_tx_non_std_hl(vdev, tx_spec, msdu_list);
 	else
@@ -1660,9 +1663,10 @@ ol_tx_non_std(ol_txrx_vdev_handle vdev,
 }
 
 void
-ol_txrx_data_tx_cb_set(ol_txrx_vdev_handle vdev,
+ol_txrx_data_tx_cb_set(void *pvdev,
 		       ol_txrx_data_tx_cb callback, void *ctxt)
 {
+	ol_txrx_vdev_handle vdev = pvdev;
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 	pdev->tx_data_callback.func = callback;
 	pdev->tx_data_callback.ctxt = ctxt;
@@ -1689,11 +1693,12 @@ ol_txrx_data_tx_cb_set(ol_txrx_vdev_handle vdev,
  * for a given type of management frame.
  */
 void
-ol_txrx_mgmt_tx_cb_set(ol_txrx_pdev_handle pdev,
+ol_txrx_mgmt_tx_cb_set(void *ppdev,
 		       uint8_t type,
 		       ol_txrx_mgmt_tx_cb download_cb,
 		       ol_txrx_mgmt_tx_cb ota_ack_cb, void *ctxt)
 {
+	ol_txrx_pdev_handle pdev = ppdev;
 	TXRX_ASSERT1(type < OL_TXRX_MGMT_NUM_TYPES);
 	pdev->tx_mgmt.callbacks[type].download_cb = download_cb;
 	pdev->tx_mgmt.callbacks[type].ota_ack_cb = ota_ack_cb;

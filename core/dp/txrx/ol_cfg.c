@@ -39,19 +39,18 @@ unsigned int vow_config = 0;
  *
  * Return: none
  */
-static
 void ol_tx_set_flow_control_parameters(struct txrx_pdev_cfg_t *cfg_ctx,
-	struct txrx_pdev_cfg_param_t cfg_param)
+	struct txrx_pdev_cfg_param_t *cfg_param)
 {
+	struct txrx_pdev_cfg_t *cfg_ctx = pcfg_ctx;
 	cfg_ctx->tx_flow_start_queue_offset =
-					cfg_param.tx_flow_start_queue_offset;
+					cfg_param->tx_flow_start_queue_offset;
 	cfg_ctx->tx_flow_stop_queue_th =
-					cfg_param.tx_flow_stop_queue_th;
+					cfg_param->tx_flow_stop_queue_th;
 }
 #else
-static
 void ol_tx_set_flow_control_parameters(struct txrx_pdev_cfg_t *cfg_ctx,
-	struct txrx_pdev_cfg_param_t cfg_param)
+	struct txrx_pdev_cfg_param_t *cfg_param)
 {
 	return;
 }
@@ -117,9 +116,9 @@ uint8_t ol_defrag_timeout_check(void)
  * Return: the control device object
  */
 
-ol_pdev_handle ol_pdev_cfg_attach(qdf_device_t osdev,
-				  struct txrx_pdev_cfg_param_t cfg_param)
+void *ol_pdev_cfg_attach(qdf_device_t osdev, void *pcfg_param)
 {
+	struct txrx_pdev_cfg_param_t *cfg_param = pcfg_param;
 	struct txrx_pdev_cfg_t *cfg_ctx;
 
 	cfg_ctx = qdf_mem_malloc(sizeof(*cfg_ctx));
@@ -148,21 +147,21 @@ ol_pdev_handle ol_pdev_cfg_attach(qdf_device_t osdev,
 	cfg_ctx->dutycycle_level[3] = THROTTLE_DUTY_CYCLE_LEVEL3;
 	cfg_ctx->rx_fwd_disabled = 0;
 	cfg_ctx->is_packet_log_enabled = 0;
-	cfg_ctx->is_full_reorder_offload = cfg_param.is_full_reorder_offload;
+	cfg_ctx->is_full_reorder_offload = cfg_param->is_full_reorder_offload;
 	cfg_ctx->ipa_uc_rsc.uc_offload_enabled =
-		cfg_param.is_uc_offload_enabled;
-	cfg_ctx->ipa_uc_rsc.tx_max_buf_cnt = cfg_param.uc_tx_buffer_count;
-	cfg_ctx->ipa_uc_rsc.tx_buf_size = cfg_param.uc_tx_buffer_size;
+		cfg_param->is_uc_offload_enabled;
+	cfg_ctx->ipa_uc_rsc.tx_max_buf_cnt = cfg_param->uc_tx_buffer_count;
+	cfg_ctx->ipa_uc_rsc.tx_buf_size = cfg_param->uc_tx_buffer_size;
 	cfg_ctx->ipa_uc_rsc.rx_ind_ring_size =
-		cfg_param.uc_rx_indication_ring_count;
-	cfg_ctx->ipa_uc_rsc.tx_partition_base = cfg_param.uc_tx_partition_base;
-	cfg_ctx->enable_rxthread = cfg_param.enable_rxthread;
+		cfg_param->uc_rx_indication_ring_count;
+	cfg_ctx->ipa_uc_rsc.tx_partition_base = cfg_param->uc_tx_partition_base;
+	cfg_ctx->enable_rxthread = cfg_param->enable_rxthread;
 	cfg_ctx->ip_tcp_udp_checksum_offload =
-		cfg_param.ip_tcp_udp_checksum_offload;
-	cfg_ctx->ce_classify_enabled = cfg_param.ce_classify_enabled;
+		cfg_param->ip_tcp_udp_checksum_offload;
+	cfg_ctx->ce_classify_enabled = cfg_param->ce_classify_enabled;
 
 	ol_tx_set_flow_control_parameters(cfg_ctx, cfg_param);
-	return (ol_pdev_handle) cfg_ctx;
+	return (void *)cfg_ctx;
 }
 
 int ol_cfg_is_high_latency(ol_pdev_handle pdev)
@@ -210,8 +209,9 @@ int ol_cfg_rx_fwd_check(ol_pdev_handle pdev)
  * Currently only intra-bss fwd is supported.
  *
  */
-void ol_set_cfg_rx_fwd_disabled(ol_pdev_handle pdev, uint8_t disable_rx_fwd)
+void ol_set_cfg_rx_fwd_disabled(void *ppdev, uint8_t disable_rx_fwd)
 {
+	ol_pdev_handle pdev = ppdev;
 	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
 	cfg->rx_fwd_disabled = disable_rx_fwd;
 }
@@ -223,8 +223,9 @@ void ol_set_cfg_rx_fwd_disabled(ol_pdev_handle pdev, uint8_t disable_rx_fwd)
  * @pdev - handle to the physical device
  * @val - 0 - disable, 1 - enable
  */
-void ol_set_cfg_packet_log_enabled(ol_pdev_handle pdev, uint8_t val)
+void ol_set_cfg_packet_log_enabled(void *ppdev, uint8_t val)
 {
+	ol_pdev_handle pdev = ppdev;
 	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
 	cfg->is_packet_log_enabled = val;
 }
@@ -404,9 +405,9 @@ unsigned int ol_cfg_ipa_uc_tx_partition_base(ol_pdev_handle pdev)
 	return cfg->ipa_uc_rsc.tx_partition_base;
 }
 
-void ol_cfg_set_ipa_uc_tx_partition_base(ol_pdev_handle pdev, uint32_t val)
+void ol_cfg_set_ipa_uc_tx_partition_base(void *pdev, uint32_t val)
 {
-	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
+	struct txrx_pdev_cfg_t *cfg = pdev;
 	cfg->ipa_uc_rsc.tx_partition_base = val;
 }
 #endif /* IPA_OFFLOAD */

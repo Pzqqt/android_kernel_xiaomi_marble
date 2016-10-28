@@ -116,6 +116,23 @@ ol_tx_target_credit_incr_int(struct ol_txrx_pdev_t *pdev, int delta)
 #endif
 
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL)
+/**
+ * ol_txrx_flow_control_cb() - call osif flow control callback
+ * @vdev: vdev handle
+ * @tx_resume: tx resume flag
+ *
+ * Return: none
+ */
+void ol_txrx_flow_control_cb(void *pvdev, bool tx_resume)
+{
+	struct ol_txrx_vdev_t *vdev = pvdev;
+	qdf_spin_lock_bh(&vdev->flow_control_lock);
+	if ((vdev->osif_flow_control_cb) && (vdev->osif_fc_ctx))
+		vdev->osif_flow_control_cb(vdev->osif_fc_ctx, tx_resume);
+	qdf_spin_unlock_bh(&vdev->flow_control_lock);
+
+	return;
+}
 
 /**
  * ol_tx_flow_ct_unpause_os_q() - Unpause OS Q
@@ -867,8 +884,9 @@ ol_tx_inspect_handler(ol_txrx_pdev_handle pdev,
  * @details
  * @param interval - interval for stats computation
  */
-void ol_tx_set_compute_interval(ol_txrx_pdev_handle pdev, uint32_t interval)
+void ol_tx_set_compute_interval(void *ppdev, uint32_t interval)
 {
+	ol_txrx_pdev_handle pdev = ppdev;
 	pdev->tx_delay.avg_period_ticks = qdf_system_msecs_to_ticks(interval);
 }
 
@@ -886,10 +904,11 @@ void ol_tx_set_compute_interval(ol_txrx_pdev_handle pdev, uint32_t interval)
  * @param out_packet_loss_count - number of packets lost
  */
 void
-ol_tx_packet_count(ol_txrx_pdev_handle pdev,
+ol_tx_packet_count(void *ppdev,
 		   uint16_t *out_packet_count,
 		   uint16_t *out_packet_loss_count, int category)
 {
+	ol_txrx_pdev_handle pdev = ppdev;
 	*out_packet_count = pdev->packet_count[category];
 	*out_packet_loss_count = pdev->packet_loss_count[category];
 	pdev->packet_count[category] = 0;
@@ -914,10 +933,11 @@ uint32_t ol_tx_delay_avg(uint64_t sum, uint32_t num)
 }
 
 void
-ol_tx_delay(ol_txrx_pdev_handle pdev,
+ol_tx_delay(void *ppdev,
 	    uint32_t *queue_delay_microsec,
 	    uint32_t *tx_delay_microsec, int category)
 {
+	ol_txrx_pdev_handle pdev = ppdev;
 	int index;
 	uint32_t avg_delay_ticks;
 	struct ol_tx_delay_data *data;
@@ -960,9 +980,10 @@ ol_tx_delay(ol_txrx_pdev_handle pdev,
 }
 
 void
-ol_tx_delay_hist(ol_txrx_pdev_handle pdev,
+ol_tx_delay_hist(void *ppdev,
 		 uint16_t *report_bin_values, int category)
 {
+	ol_txrx_pdev_handle pdev = ppdev;
 	int index, i, j;
 	struct ol_tx_delay_data *data;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -38,6 +38,34 @@ struct wmi_unified;
 typedef struct wmi_unified *wmi_unified_t;
 
 typedef void *ol_scn_t;
+
+ /**
+  * ol_txrx_pdev_handle - opaque handle for txrx physical device
+  * object
+  */
+struct ol_txrx_pdev_t;
+typedef struct ol_txrx_pdev_t *ol_txrx_pdev_handle;
+
+/**
+ * ol_txrx_vdev_handle - opaque handle for txrx virtual device
+ * object
+ */
+struct ol_txrx_vdev_t;
+typedef struct ol_txrx_vdev_t *ol_txrx_vdev_handle;
+
+/**
+ * ol_pdev_handle - opaque handle for the configuration
+ * associated with the physical device
+ */
+struct ol_pdev_t;
+typedef struct ol_pdev_t *ol_pdev_handle;
+
+/**
+ * ol_txrx_peer_handle - opaque handle for txrx peer object
+ */
+struct ol_txrx_peer_t;
+typedef struct ol_txrx_peer_t *ol_txrx_peer_handle;
+
 /**
  * @wmi_event_handler function prototype
  */

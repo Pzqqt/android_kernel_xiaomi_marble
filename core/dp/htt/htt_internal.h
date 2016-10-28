@@ -132,6 +132,13 @@ struct htt_host_rx_desc_base {
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.map_index)
 
 #define HTT_RX_RING_BUFF_DBG_LIST          1024
+
+#ifdef MSM_PLATFORM
+#define HTT_ADDRESS_MASK   0xfffffffffffffffe
+#else
+#define HTT_ADDRESS_MASK   0xfffffffe
+#endif /* MSM_PLATFORM */
+
 struct rx_buf_debug {
 	qdf_dma_addr_t paddr;
 	qdf_nbuf_t     nbuf;

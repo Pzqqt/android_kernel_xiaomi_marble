@@ -516,7 +516,7 @@ unsigned int ol_cfg_ipa_uc_rx_ind_ring_size(ol_pdev_handle pdev);
  * @param pdev - handle to the physical device
  */
 unsigned int ol_cfg_ipa_uc_tx_partition_base(ol_pdev_handle pdev);
-void ol_cfg_set_ipa_uc_tx_partition_base(ol_pdev_handle pdev, uint32_t value);
+void ol_cfg_set_ipa_uc_tx_partition_base(void *pdev, uint32_t value);
 #else
 static inline unsigned int ol_cfg_ipa_uc_offload_enabled(
 	ol_pdev_handle pdev)
@@ -549,7 +549,7 @@ static inline unsigned int ol_cfg_ipa_uc_tx_partition_base(
 }
 
 static inline void ol_cfg_set_ipa_uc_tx_partition_base(
-	ol_pdev_handle pdev, uint32_t value)
+	void *pdev, uint32_t value)
 {
 	return;
 }
@@ -564,8 +564,9 @@ static inline void ol_cfg_set_ipa_uc_tx_partition_base(
  *
  * Return: None
  */
-static inline void ol_set_cfg_flow_steering(ol_pdev_handle pdev, uint8_t val)
+static inline void ol_set_cfg_flow_steering(void *ppdev, uint8_t val)
 {
+	ol_pdev_handle pdev = ppdev;
 	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
 
 	cfg->flow_steering_enabled = val;

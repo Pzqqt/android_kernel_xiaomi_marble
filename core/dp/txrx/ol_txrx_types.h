@@ -60,10 +60,6 @@
  */
 #define MAX_NUM_PEER_ID_PER_PEER 16
 
-#define OL_TXRX_INVALID_NUM_PEERS (-1)
-
-#define OL_TXRX_MAC_ADDR_LEN 6
-
 /* OL_TXRX_NUM_EXT_TIDS -
  * 16 "real" TIDs + 3 pseudo-TIDs for mgmt, mcast/bcast & non-QoS data
  */
@@ -351,15 +347,6 @@ struct ol_mac_addr {
 
 struct ol_tx_sched_t;
 
-
-#ifndef OL_TXRX_NUM_LOCAL_PEER_IDS
-/*
- * Each AP will occupy one ID, so it will occupy two IDs for AP-AP mode.
- * And the remainder IDs will be assigned to other 32 clients.
- */
-#define OL_TXRX_NUM_LOCAL_PEER_IDS (2 + 32)
-#endif
-
 #ifndef ol_txrx_local_peer_id_t
 #define ol_txrx_local_peer_id_t uint8_t /* default */
 #endif
@@ -385,16 +372,6 @@ struct ol_tx_delay_data {
 #endif /* QCA_COMPUTE_TX_DELAY */
 
 /* Thermal Mitigation */
-
-enum throttle_level {
-	THROTTLE_LEVEL_0,
-	THROTTLE_LEVEL_1,
-	THROTTLE_LEVEL_2,
-	THROTTLE_LEVEL_3,
-	/* Invalid */
-	THROTTLE_LEVEL_MAX,
-};
-
 enum throttle_phase {
 	THROTTLE_PHASE_OFF,
 	THROTTLE_PHASE_ON,
@@ -954,11 +931,6 @@ struct ol_txrx_pdev_t {
 	struct ol_txrx_peer_t *self_peer;
 };
 
-struct ol_txrx_ocb_chan_info {
-	uint32_t chan_freq;
-	uint16_t disable_rx_stats_hdr:1;
-};
-
 struct ol_txrx_vdev_t {
 	struct ol_txrx_pdev_t *pdev; /* pdev - the physical device that is
 					the parent of this virtual device */
@@ -1220,53 +1192,6 @@ struct ol_txrx_peer_t {
 	qdf_time_t last_assoc_rcvd;
 	qdf_time_t last_disassoc_rcvd;
 	qdf_time_t last_deauth_rcvd;
-};
-
-enum ol_rx_err_type {
-	OL_RX_ERR_DEFRAG_MIC,
-	OL_RX_ERR_PN,
-	OL_RX_ERR_UNKNOWN_PEER,
-	OL_RX_ERR_MALFORMED,
-	OL_RX_ERR_TKIP_MIC,
-	OL_RX_ERR_DECRYPT,
-	OL_RX_ERR_MPDU_LENGTH,
-	OL_RX_ERR_ENCRYPT_REQUIRED,
-	OL_RX_ERR_DUP,
-	OL_RX_ERR_UNKNOWN,
-	OL_RX_ERR_FCS,
-	OL_RX_ERR_PRIVACY,
-	OL_RX_ERR_NONE_FRAG,
-	OL_RX_ERR_NONE = 0xFF
-};
-
-/**
- * ol_mic_error_info - carries the information associated with
- * a MIC error
- * @vdev_id: virtual device ID
- * @key_id: Key ID
- * @pn: packet number
- * @sa: source address
- * @da: destination address
- * @ta: transmitter address
- */
-struct ol_mic_error_info {
-	uint8_t vdev_id;
-	uint32_t key_id;
-	uint64_t pn;
-	uint8_t sa[OL_TXRX_MAC_ADDR_LEN];
-	uint8_t da[OL_TXRX_MAC_ADDR_LEN];
-	uint8_t ta[OL_TXRX_MAC_ADDR_LEN];
-};
-
-/**
- * ol_error_info - carries the information associated with an
- * error indicated by the firmware
- * @mic_err: MIC error information
- */
-struct ol_error_info {
-	union {
-		struct ol_mic_error_info mic_err;
-	} u;
 };
 
 struct ol_rx_remote_data {

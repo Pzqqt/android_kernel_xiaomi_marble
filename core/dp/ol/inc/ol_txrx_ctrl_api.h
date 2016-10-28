@@ -41,39 +41,9 @@
 #include <wlan_defs.h>          /* MAX_SPATIAL_STREAM */
 #include <cdp_txrx_cmn.h>       /* ol_pdev_handle, ol_vdev_handle, etc */
 #include <cdp_txrx_cfg.h>
+#include <ol_defines.h>
 
 #define OL_ATH_TX_DRAIN_WAIT_DELAY 50
-
-/* Maximum number of station supported by data path, including BC. */
-#define WLAN_MAX_STA_COUNT  (HAL_NUM_STA)
-
-/* The symbolic station ID return to HDD to specify the packet is bc/mc */
-#define WLAN_RX_BCMC_STA_ID (WLAN_MAX_STA_COUNT + 1)
-
-/* The symbolic station ID return to HDD to specify the packet is
-       to soft-AP itself */
-#define WLAN_RX_SAP_SELF_STA_ID (WLAN_MAX_STA_COUNT + 2)
-
-#define OL_TXQ_PAUSE_REASON_FW                (1 << 0)
-#define OL_TXQ_PAUSE_REASON_PEER_UNAUTHORIZED (1 << 1)
-#define OL_TXQ_PAUSE_REASON_TX_ABORT          (1 << 2)
-#define OL_TXQ_PAUSE_REASON_VDEV_STOP         (1 << 3)
-#define OL_TXQ_PAUSE_REASON_THERMAL_MITIGATION (1 << 4)
-
-/* command options for dumpStats*/
-#define WLAN_HDD_STATS        0
-#define WLAN_TXRX_STATS       1
-#define WLAN_TXRX_HIST_STATS  2
-#define WLAN_TXRX_TSO_STATS   3
-#define WLAN_HDD_NETIF_OPER_HISTORY 4
-#define WLAN_DUMP_TX_FLOW_POOL_INFO 5
-#define WLAN_TXRX_DESC_STATS  6
-#define WLAN_HIF_STATS  7
-#define WLAN_LRO_STATS  8
-#define WLAN_SCHEDULER_STATS        21
-#define WLAN_TX_QUEUE_STATS         22
-#define WLAN_BUNDLE_STATS           23
-#define WLAN_CREDIT_STATS           24
 
 /**
  * @brief Set up the data SW subsystem.
@@ -97,7 +67,7 @@
  * @return 0 for success or error code
  */
 int
-ol_txrx_pdev_post_attach(ol_txrx_pdev_handle pdev);
+ol_txrx_pdev_post_attach(void *pdev);
 
 /**
  * @brief Parameter type to be input to ol_txrx_peer_update
@@ -138,43 +108,7 @@ ol_txrx_peer_update(ol_txrx_vdev_handle data_vdev, uint8_t *peer_mac,
 		    union ol_txrx_peer_update_param_t *param,
 		    enum ol_txrx_peer_update_select_t select);
 
-enum {
-	OL_TX_WMM_AC_BE,
-	OL_TX_WMM_AC_BK,
-	OL_TX_WMM_AC_VI,
-	OL_TX_WMM_AC_VO,
-
-	OL_TX_NUM_WMM_AC
-};
-
-/**
- * @brief Parameter type to pass WMM setting to ol_txrx_set_wmm_param
- * @details
- *   The struct is used to specify informaiton to update TX WMM scheduler.
- */
-struct ol_tx_ac_param_t {
-	uint32_t aifs;
-	uint32_t cwmin;
-	uint32_t cwmax;
-};
-
-struct ol_tx_wmm_param_t {
-	struct ol_tx_ac_param_t ac[OL_TX_NUM_WMM_AC];
-};
-
 #if defined(CONFIG_HL_SUPPORT)
-/**
- * @brief Set paramters of WMM scheduler per AC settings.  .
- * @details
- *  This function applies only to HL systems.
- *
- * @param data_pdev - the physical device being paused
- * @param wmm_param - the wmm parameters
- */
-void
-ol_txrx_set_wmm_param(ol_txrx_pdev_handle data_pdev,
-		      struct ol_tx_wmm_param_t wmm_param);
-
 /**
  * @brief notify tx data SW that a peer-TID is ready to transmit to.
  * @details
@@ -251,14 +185,6 @@ void
 ol_txrx_throttle_unpause(ol_txrx_pdev_handle data_pdev);
 
 #else
-
-static inline
-void ol_txrx_set_wmm_param(ol_txrx_pdev_handle data_pdev,
-		      struct ol_tx_wmm_param_t wmm_param)
-{
-	return;
-}
-
 static inline void
 ol_txrx_peer_tid_unpause(ol_txrx_peer_handle data_peer, int tid)
 {
@@ -382,13 +308,9 @@ typedef void
  * @param ctxt - the context argument provided to the callback function
  */
 void
-ol_txrx_data_tx_cb_set(ol_txrx_vdev_handle data_vdev,
+ol_txrx_data_tx_cb_set(void *data_vdev,
 		       ol_txrx_data_tx_cb callback, void *ctxt);
 
-#ifdef FEATURE_RUNTIME_PM
-QDF_STATUS ol_txrx_runtime_suspend(ol_txrx_pdev_handle txrx_pdev);
-QDF_STATUS ol_txrx_runtime_resume(ol_txrx_pdev_handle txrx_pdev);
-#endif
 
 QDF_STATUS ol_txrx_wait_for_pending_tx(int timeout);
 
@@ -503,11 +425,9 @@ ol_txrx_peer_stats_copy(ol_txrx_pdev_handle pdev,
 #define ol_txrx_peer_stats_copy(pdev, peer, stats) A_ERROR      /* failure */
 #endif /* QCA_ENABLE_OL_TXRX_PEER_STATS */
 
-QDF_STATUS ol_txrx_get_vdevid(struct ol_txrx_peer_t *peer, uint8_t *vdev_id);
+QDF_STATUS ol_txrx_get_vdevid(void *peer, uint8_t *vdev_id);
 
 void *ol_txrx_get_vdev_by_sta_id(uint8_t sta_id);
-
-#define OL_TXRX_INVALID_LOCAL_PEER_ID 0xffff
 
 #define OL_TXRX_RSSI_INVALID 0xffff
 /**
@@ -536,17 +456,6 @@ int16_t ol_txrx_peer_rssi(ol_txrx_peer_handle peer);
 #define ol_txrx_peer_rssi(peer) OL_TXRX_RSSI_INVALID
 #endif /* QCA_SUPPORT_PEER_DATA_RX_RSSI */
 
-/*
- * Bins used for reporting delay histogram:
- * bin 0:  0 - 10  ms delay
- * bin 1: 10 - 20  ms delay
- * bin 2: 20 - 40  ms delay
- * bin 3: 40 - 80  ms delay
- * bin 4: 80 - 160 ms delay
- * bin 5: > 160 ms delay
- */
-#define QCA_TX_DELAY_HIST_REPORT_BINS 6
-
 #if defined(CONFIG_HL_SUPPORT) && defined(QCA_BAD_PEER_TX_FLOW_CL)
 
 /**
@@ -557,7 +466,7 @@ int16_t ol_txrx_peer_rssi(ol_txrx_peer_handle peer);
  */
 void
 ol_txrx_bad_peer_txctl_set_setting(
-	struct ol_txrx_pdev_t *pdev,
+	void *pdev,
 	int enable,
 	int period,
 	int txq_limit);
@@ -570,7 +479,7 @@ ol_txrx_bad_peer_txctl_set_setting(
  */
 void
 ol_txrx_bad_peer_txctl_update_threshold(
-	struct ol_txrx_pdev_t *pdev,
+	void *pdev,
 	int level,
 	int tput_thresh,
 	int tx_limit);
@@ -579,7 +488,7 @@ ol_txrx_bad_peer_txctl_update_threshold(
 
 static inline void
 ol_txrx_bad_peer_txctl_set_setting(
-	struct ol_txrx_pdev_t *pdev,
+	void *pdev,
 	int enable,
 	int period,
 	int txq_limit)
@@ -589,7 +498,7 @@ ol_txrx_bad_peer_txctl_set_setting(
 
 static inline void
 ol_txrx_bad_peer_txctl_update_threshold(
-	struct ol_txrx_pdev_t *pdev,
+	void *pdev,
 	int level,
 	int tput_thresh,
 	int tx_limit)

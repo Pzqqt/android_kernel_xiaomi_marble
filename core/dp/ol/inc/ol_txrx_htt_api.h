@@ -37,6 +37,7 @@
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 
 #include <cdp_txrx_cmn.h>      /* ol_txrx_pdev_handle */
+#include <ol_defines.h>
 
 static inline uint16_t *ol_tx_msdu_id_storage(qdf_nbuf_t msdu)
 {

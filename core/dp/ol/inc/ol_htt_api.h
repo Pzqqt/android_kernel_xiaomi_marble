@@ -41,6 +41,7 @@
 #include <htc_api.h>            /* HTC_HANDLE */
 #include "htt.h"                /* htt_dbg_stats_type, etc. */
 #include <cdp_txrx_cmn.h>       /* ol_pdev_handle */
+#include <ol_defines.h>
 
 /* TID */
 #define OL_HTT_TID_NON_QOS_UNICAST     16

@@ -448,8 +448,8 @@ void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 			     msg_start_ptr,
 			     sizeof(struct htt_wdi_ipa_op_response_t) +
 			     len);
-		ol_txrx_ipa_uc_op_response(pdev->txrx_pdev,
-					   op_msg_buffer);
+		cdp_ipa_op_response(cds_get_context(QDF_MODULE_ID_SOC),
+				pdev->txrx_pdev, op_msg_buffer);
 		break;
 	}
 
