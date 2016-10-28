@@ -4633,11 +4633,12 @@ skip_match:
 	}
 	if (match) {
 		qdf_mutex_acquire(&mac_ctx->lim.lim_frame_register_lock);
-		qdf_list_remove_node(
+		if (QDF_STATUS_SUCCESS ==
+				qdf_list_remove_node(
 				&mac_ctx->lim.gLimMgmtFrameRegistratinQueue,
-				(qdf_list_node_t *)lim_mgmt_regn);
+				(qdf_list_node_t *)lim_mgmt_regn))
+			qdf_mem_free(lim_mgmt_regn);
 		qdf_mutex_release(&mac_ctx->lim.lim_frame_register_lock);
-		qdf_mem_free(lim_mgmt_regn);
 	}
 
 	if (sme_req->registerFrame) {
