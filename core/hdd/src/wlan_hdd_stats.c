@@ -776,6 +776,180 @@ static void hdd_link_layer_process_iface_stats(hdd_adapter_t *pAdapter,
 }
 
 /**
+ * hdd_llstats_radio_fill_channels() - radio stats fill channels
+ * @adapter: Pointer to device adapter
+ * @radiostat: Pointer to stats data
+ * @vendor_event: vendor event
+ *
+ * Return: 0 on success; errno on failure
+ */
+static int hdd_llstats_radio_fill_channels(hdd_adapter_t *adapter,
+					   tSirWifiRadioStat *radiostat,
+					   struct sk_buff *vendor_event)
+{
+	tSirWifiChannelStats *channel_stats;
+	struct nlattr *chlist;
+	struct nlattr *chinfo;
+	int i;
+
+	chlist = nla_nest_start(vendor_event,
+				QCA_WLAN_VENDOR_ATTR_LL_STATS_CH_INFO);
+	if (chlist == NULL) {
+		hdd_err("nla_nest_start failed");
+		return -EINVAL;
+	}
+
+	for (i = 0; i < radiostat->numChannels; i++) {
+		channel_stats = (tSirWifiChannelStats *) ((uint8_t *)
+				     radiostat->channels +
+				     (i * sizeof(tSirWifiChannelStats)));
+
+		chinfo = nla_nest_start(vendor_event, i);
+		if (chinfo == NULL) {
+			hdd_err("nla_nest_start failed");
+			return -EINVAL;
+		}
+
+		if (nla_put_u32(vendor_event,
+				QCA_WLAN_VENDOR_ATTR_LL_STATS_CHANNEL_INFO_WIDTH,
+				channel_stats->channel.width) ||
+		    nla_put_u32(vendor_event,
+				QCA_WLAN_VENDOR_ATTR_LL_STATS_CHANNEL_INFO_CENTER_FREQ,
+				channel_stats->channel.centerFreq) ||
+		    nla_put_u32(vendor_event,
+				QCA_WLAN_VENDOR_ATTR_LL_STATS_CHANNEL_INFO_CENTER_FREQ0,
+				channel_stats->channel.centerFreq0) ||
+		    nla_put_u32(vendor_event,
+				QCA_WLAN_VENDOR_ATTR_LL_STATS_CHANNEL_INFO_CENTER_FREQ1,
+				channel_stats->channel.centerFreq1) ||
+		    nla_put_u32(vendor_event,
+				QCA_WLAN_VENDOR_ATTR_LL_STATS_CHANNEL_ON_TIME,
+				channel_stats->onTime) ||
+		    nla_put_u32(vendor_event,
+				QCA_WLAN_VENDOR_ATTR_LL_STATS_CHANNEL_CCA_BUSY_TIME,
+				channel_stats->ccaBusyTime)) {
+			hdd_err("nla_put failed");
+			return -EINVAL;
+		}
+		nla_nest_end(vendor_event, chinfo);
+	}
+	nla_nest_end(vendor_event, chlist);
+
+	return 0;
+}
+
+/**
+ * hdd_llstats_post_radio_stats() - post radio stats
+ * @adapter: Pointer to device adapter
+ * @more_data: More data
+ * @radiostat: Pointer to stats data
+ * @num_radio: Number of radios
+ *
+ * Return: 0 on success; errno on failure
+ */
+static int hdd_llstats_post_radio_stats(hdd_adapter_t *adapter,
+					u32 more_data,
+					tSirWifiRadioStat *radiostat,
+					u32 num_radio)
+{
+	struct sk_buff *vendor_event;
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	int ret;
+
+	/*
+	 * Allocate a size of 4096 for the Radio stats comprising
+	 * sizeof (tSirWifiRadioStat) + numChannels * sizeof
+	 * (tSirWifiChannelStats).Each channel data is put with an
+	 * NL attribute.The size of 4096 is considered assuming that
+	 * number of channels shall not exceed beyond  60 with the
+	 * sizeof (tSirWifiChannelStats) being 24 bytes.
+	 */
+
+	vendor_event = cfg80211_vendor_cmd_alloc_reply_skb(
+					hdd_ctx->wiphy,
+					LL_STATS_EVENT_BUF_SIZE);
+
+	if (!vendor_event) {
+		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
+		return -ENOMEM;
+	}
+
+	if (nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_TYPE,
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_TYPE_RADIO) ||
+	    nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_RESULTS_MORE_DATA,
+			more_data) ||
+	    nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_NUM_RADIOS,
+			num_radio) ||
+	    nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_ID,
+			radiostat->radio) ||
+	    nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_ON_TIME,
+			radiostat->onTime) ||
+	    nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_TX_TIME,
+			radiostat->txTime) ||
+	    nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_RX_TIME,
+			radiostat->rxTime) ||
+	    nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_ON_TIME_SCAN,
+			radiostat->onTimeScan) ||
+	    nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_ON_TIME_NBD,
+			radiostat->onTimeNbd) ||
+	    nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_ON_TIME_GSCAN,
+			radiostat->onTimeGscan) ||
+	    nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_ON_TIME_ROAM_SCAN,
+			radiostat->onTimeRoamScan) ||
+	    nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_ON_TIME_PNO_SCAN,
+			radiostat->onTimePnoScan) ||
+	    nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_ON_TIME_HS20,
+			radiostat->onTimeHs20) ||
+	    nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_NUM_TX_LEVELS,
+			radiostat->total_num_tx_power_levels)    ||
+	    nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_NUM_CHANNELS,
+			radiostat->numChannels)) {
+		hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
+		goto failure;
+	}
+
+	if (radiostat->total_num_tx_power_levels) {
+		if (nla_put(vendor_event,
+			    QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_TX_TIME_PER_LEVEL,
+			    sizeof(u32) *
+			    radiostat->total_num_tx_power_levels,
+			    radiostat->tx_time_per_power_level)) {
+			hdd_err("nla_put fail");
+			goto failure;
+		}
+	}
+
+	if (radiostat->numChannels) {
+		ret = hdd_llstats_radio_fill_channels(adapter, radiostat,
+						      vendor_event);
+		if (ret)
+			goto failure;
+	}
+
+	cfg80211_vendor_cmd_reply(vendor_event);
+	return 0;
+
+failure:
+	kfree_skb(vendor_event);
+	return -EINVAL;
+}
+
+/**
  * hdd_link_layer_process_radio_stats() - This function is called after
  * @pAdapter: Pointer to device adapter
  * @more_data: More data
@@ -793,170 +967,45 @@ static void hdd_link_layer_process_radio_stats(hdd_adapter_t *pAdapter,
 					       tpSirWifiRadioStat pData,
 					       u32 num_radio)
 {
-	int status, i;
-	tpSirWifiRadioStat pWifiRadioStat;
-	tpSirWifiChannelStats pWifiChannelStats;
-	struct sk_buff *vendor_event;
+	int status, i, nr, ret;
+	tSirWifiRadioStat *pWifiRadioStat = pData;
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 
 	ENTER();
 
-	pWifiRadioStat = pData;
 	status = wlan_hdd_validate_context(pHddCtx);
 	if (0 != status)
 		return;
 
-	hdd_notice("LL_STATS_RADIO"
-	       " number of radios: %u radio: %d onTime: %u"
-	       " txTime: %u rxTime: %u onTimeScan: %u onTimeNbd: %u"
-	       " onTimeGscan: %u onTimeRoamScan: %u"
-	       " onTimePnoScan: %u  onTimeHs20: %u"
-	       " numChannels: %u total_num_tx_power_levels: %u",
-	       num_radio, pWifiRadioStat->radio,
-	       pWifiRadioStat->onTime, pWifiRadioStat->txTime,
-	       pWifiRadioStat->rxTime, pWifiRadioStat->onTimeScan,
-	       pWifiRadioStat->onTimeNbd, pWifiRadioStat->onTimeGscan,
-	       pWifiRadioStat->onTimeRoamScan,
-	       pWifiRadioStat->onTimePnoScan,
-	       pWifiRadioStat->onTimeHs20, pWifiRadioStat->numChannels,
-	       pWifiRadioStat->total_num_tx_power_levels);
+	hdd_notice("LL_STATS_RADIO: number of radios: %u", num_radio);
 
-	/*
-	 * Allocate a size of 4096 for the Radio stats comprising
-	 * sizeof (tSirWifiRadioStat) + numChannels * sizeof
-	 * (tSirWifiChannelStats).Each channel data is put with an
-	 * NL attribute.The size of 4096 is considered assuming that
-	 * number of channels shall not exceed beyond  60 with the
-	 * sizeof (tSirWifiChannelStats) being 24 bytes.
-	 */
-
-	vendor_event = cfg80211_vendor_cmd_alloc_reply_skb(pHddCtx->wiphy,
-				LL_STATS_EVENT_BUF_SIZE);
-
-	if (!vendor_event) {
-		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
-		return;
+	for (i = 0; i < num_radio; i++) {
+		hdd_notice("LL_STATS_RADIO"
+		       " radio: %u onTime: %u txTime: %u rxTime: %u"
+		       " onTimeScan: %u onTimeNbd: %u"
+		       " onTimeGscan: %u onTimeRoamScan: %u"
+		       " onTimePnoScan: %u  onTimeHs20: %u"
+		       " numChannels: %u total_num_tx_pwr_levels: %u",
+		       pWifiRadioStat->radio, pWifiRadioStat->onTime,
+		       pWifiRadioStat->txTime, pWifiRadioStat->rxTime,
+		       pWifiRadioStat->onTimeScan, pWifiRadioStat->onTimeNbd,
+		       pWifiRadioStat->onTimeGscan,
+		       pWifiRadioStat->onTimeRoamScan,
+		       pWifiRadioStat->onTimePnoScan,
+		       pWifiRadioStat->onTimeHs20, pWifiRadioStat->numChannels,
+		       pWifiRadioStat->total_num_tx_power_levels);
+		pWifiRadioStat++;
 	}
 
-	if (nla_put_u32(vendor_event,
-			QCA_WLAN_VENDOR_ATTR_LL_STATS_TYPE,
-			QCA_WLAN_VENDOR_ATTR_LL_STATS_TYPE_RADIO) ||
-	    nla_put_u32(vendor_event,
-			QCA_WLAN_VENDOR_ATTR_LL_STATS_RESULTS_MORE_DATA,
-			more_data) ||
-	    nla_put_u32(vendor_event,
-			QCA_WLAN_VENDOR_ATTR_LL_STATS_NUM_RADIOS,
-			num_radio) ||
-	    nla_put_u32(vendor_event,
-			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_ID,
-			pWifiRadioStat->radio) ||
-	    nla_put_u32(vendor_event,
-			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_ON_TIME,
-			pWifiRadioStat->onTime) ||
-	    nla_put_u32(vendor_event,
-			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_TX_TIME,
-			pWifiRadioStat->txTime) ||
-	    nla_put_u32(vendor_event,
-			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_RX_TIME,
-			pWifiRadioStat->rxTime) ||
-	    nla_put_u32(vendor_event,
-			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_ON_TIME_SCAN,
-			pWifiRadioStat->onTimeScan) ||
-	    nla_put_u32(vendor_event,
-			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_ON_TIME_NBD,
-			pWifiRadioStat->onTimeNbd) ||
-	    nla_put_u32(vendor_event,
-			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_ON_TIME_GSCAN,
-			pWifiRadioStat->onTimeGscan) ||
-	    nla_put_u32(vendor_event,
-			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_ON_TIME_ROAM_SCAN,
-			pWifiRadioStat->onTimeRoamScan) ||
-	    nla_put_u32(vendor_event,
-			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_ON_TIME_PNO_SCAN,
-			pWifiRadioStat->onTimePnoScan) ||
-	    nla_put_u32(vendor_event,
-			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_ON_TIME_HS20,
-			pWifiRadioStat->onTimeHs20) ||
-	    nla_put_u32(vendor_event,
-			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_NUM_TX_LEVELS,
-			pWifiRadioStat->total_num_tx_power_levels)    ||
-	    nla_put_u32(vendor_event,
-			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_NUM_CHANNELS,
-			pWifiRadioStat->numChannels)) {
-		hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
-
-		kfree_skb(vendor_event);
-		return;
-	}
-
-	if (pWifiRadioStat->total_num_tx_power_levels) {
-		if (nla_put(vendor_event,
-			    QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_TX_TIME_PER_LEVEL,
-			    sizeof(u32) *
-			    pWifiRadioStat->total_num_tx_power_levels,
-			    pWifiRadioStat->tx_time_per_power_level)) {
-			hdd_err("nla_put fail");
-			kfree_skb(vendor_event);
+	pWifiRadioStat = pData;
+	for (nr = 0; nr < num_radio; nr++) {
+		ret = hdd_llstats_post_radio_stats(pAdapter, more_data,
+						   pWifiRadioStat, num_radio);
+		if (ret)
 			return;
-		}
+
+		pWifiRadioStat++;
 	}
-
-	if (pWifiRadioStat->numChannels) {
-		struct nlattr *chList;
-		struct nlattr *chInfo;
-
-		chList = nla_nest_start(vendor_event,
-					QCA_WLAN_VENDOR_ATTR_LL_STATS_CH_INFO);
-		if (chList == NULL) {
-			hdd_err("nla_nest_start failed");
-			kfree_skb(vendor_event);
-			return;
-		}
-
-		for (i = 0; i < pWifiRadioStat->numChannels; i++) {
-			pWifiChannelStats = (tpSirWifiChannelStats) ((uint8_t *)
-								     pWifiRadioStat->
-								     channels +
-								     (i *
-								      sizeof
-								      (tSirWifiChannelStats)));
-
-			chInfo = nla_nest_start(vendor_event, i);
-			if (chInfo == NULL) {
-				hdd_err("nla_nest_start failed");
-				kfree_skb(vendor_event);
-				return;
-			}
-
-			if (nla_put_u32(vendor_event,
-					QCA_WLAN_VENDOR_ATTR_LL_STATS_CHANNEL_INFO_WIDTH,
-					pWifiChannelStats->channel.width) ||
-			    nla_put_u32(vendor_event,
-					QCA_WLAN_VENDOR_ATTR_LL_STATS_CHANNEL_INFO_CENTER_FREQ,
-					pWifiChannelStats->channel.centerFreq) ||
-			    nla_put_u32(vendor_event,
-					   QCA_WLAN_VENDOR_ATTR_LL_STATS_CHANNEL_INFO_CENTER_FREQ0,
-					   pWifiChannelStats->channel.
-					   centerFreq0) ||
-			    nla_put_u32(vendor_event,
-					   QCA_WLAN_VENDOR_ATTR_LL_STATS_CHANNEL_INFO_CENTER_FREQ1,
-					   pWifiChannelStats->channel.
-					   centerFreq1) ||
-			    nla_put_u32(vendor_event,
-					   QCA_WLAN_VENDOR_ATTR_LL_STATS_CHANNEL_ON_TIME,
-					   pWifiChannelStats->onTime) ||
-			    nla_put_u32(vendor_event,
-					   QCA_WLAN_VENDOR_ATTR_LL_STATS_CHANNEL_CCA_BUSY_TIME,
-					   pWifiChannelStats->ccaBusyTime)) {
-				hdd_err("nla_put failed");
-				kfree_skb(vendor_event);
-				return;
-			}
-			nla_nest_end(vendor_event, chInfo);
-		}
-		nla_nest_end(vendor_event, chList);
-	}
-	cfg80211_vendor_cmd_reply(vendor_event);
 	EXIT();
 	return;
 }

@@ -2031,6 +2031,7 @@ QDF_STATUS wma_open(void *cds_context,
 	wma_handle->enable_mc_list = cds_cfg->enable_mc_list;
 	wma_handle->bpf_packet_filter_enable =
 		cds_cfg->bpf_packet_filter_enable;
+	wma_handle->link_stats_results = NULL;
 #ifdef FEATURE_WLAN_RA_FILTERING
 	wma_handle->IsRArateLimitEnabled = cds_cfg->is_ra_ratelimit_enabled;
 	wma_handle->RArateLimitInterval = cds_cfg->ra_ratelimit_interval;

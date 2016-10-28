@@ -5046,7 +5046,7 @@ typedef struct {
 	uint32_t tx_time_per_tpc[MAX_TPC_LEVELS];
 
 	/* channel statistics tSirWifiChannelStats */
-	tSirWifiChannelStats channels[0];
+	tSirWifiChannelStats *channels;
 } tSirWifiRadioStat, *tpSirWifiRadioStat;
 
 /* per rate statistics */
@@ -5238,6 +5238,7 @@ typedef struct {
 	uint8_t ifaceId;
 	uint32_t rspId;
 	uint32_t moreResultToFollow;
+	uint32_t nr_received;
 	union {
 		uint32_t num_peers;
 		uint32_t num_radio;
