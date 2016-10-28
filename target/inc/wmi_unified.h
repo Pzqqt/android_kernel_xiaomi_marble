@@ -3927,6 +3927,8 @@ typedef enum {
 	WMI_PDEV_PARAM_TX_MPDU_AGGR_ARRAY_LEN,
 	/** set wmi_rx_stats.rx_mpdu_aggr[] array length */
 	WMI_PDEV_PARAM_RX_MPDU_AGGR_ARRAY_LEN,
+	/** Set TX delay value in TX sch module, unit is microseconds */
+	WMI_PDEV_PARAM_TX_SCH_DELAY,
 } WMI_PDEV_PARAM;
 
 typedef enum {
