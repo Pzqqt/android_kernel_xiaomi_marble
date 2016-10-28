@@ -346,17 +346,6 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		populate_dot11f_ext_cap(mac_ctx, is_vht_enabled, &pr.ExtCap,
 			pesession);
 
-	/* That's it-- now we pack it.  First, how much space are we going to */
-	status = dot11f_get_packed_probe_request_size(mac_ctx, &pr, &payload);
-	if (DOT11F_FAILED(status)) {
-		lim_log(mac_ctx, LOGP, FL("Failed to calculate the packed size for a Probe Request (0x%08x)."), status);
-		/* We'll fall back on the worst case scenario: */
-		payload = sizeof(tDot11fProbeRequest);
-	} else if (DOT11F_WARNED(status)) {
-		lim_log(mac_ctx, LOGW,
-			FL("There were warnings while calculating the packed size for a Probe Request (0x%08x)."), status);
-	}
-
 	if (addn_ielen) {
 		qdf_mem_zero((uint8_t *)&extracted_ext_cap,
 			sizeof(tDot11fIEExtCap));
@@ -373,9 +362,34 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 					extracted_ext_cap.bytes;
 			if (p_ext_cap->interworking_service)
 				p_ext_cap->qos_map = 1;
+			extracted_ext_cap.num_bytes =
+				lim_compute_ext_cap_ie_length
+					(&extracted_ext_cap);
 			extracted_ext_cap_flag =
-				lim_is_ext_cap_ie_present(p_ext_cap);
+				(extracted_ext_cap.num_bytes > 0);
 		}
+	}
+
+	/*
+	 * Extcap IE now support variable length, merge Extcap IE from addn_ie
+	 * may change the frame size. Therefore, MUST merge ExtCap IE before
+	 * dot11f get packed payload size.
+	 */
+	if (extracted_ext_cap_flag)
+		lim_merge_extcap_struct(&pr.ExtCap, &extracted_ext_cap);
+
+	/* That's it-- now we pack it.  First, how much space are we going to */
+	status = dot11f_get_packed_probe_request_size(mac_ctx, &pr, &payload);
+	if (DOT11F_FAILED(status)) {
+		lim_log(mac_ctx, LOGE,
+			FL("Failed to calculate the packed size for a Probe Request (0x%08x)."),
+			status);
+		/* We'll fall back on the worst case scenario: */
+		payload = sizeof(tDot11fProbeRequest);
+	} else if (DOT11F_WARNED(status)) {
+		lim_log(mac_ctx, LOGW,
+			FL("There were warnings while calculating the packed size for a Probe Request (0x%08x)."),
+			status);
 	}
 
 	bytes = payload + sizeof(tSirMacMgmtHdr) + addn_ielen;
@@ -393,10 +407,6 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(mac_ctx, frame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_PROBE_REQ, bssid, self_macaddr);
-
-	/* merge the ExtCap struct*/
-	if (extracted_ext_cap_flag)
-		lim_merge_extcap_struct(&pr.ExtCap, &extracted_ext_cap);
 
 	/* That done, pack the Probe Request: */
 	status = dot11f_pack_probe_request(mac_ctx, &pr, frame +
@@ -533,7 +543,7 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 {
 	tDot11fProbeResponse *frm;
 	tSirRetStatus sir_status;
-	uint32_t cfg, payload, bytes, status;
+	uint32_t cfg, payload, bytes = 0, status;
 	tpSirMacMgmtHdr mac_hdr;
 	uint8_t *frame;
 	void *packet = NULL;
@@ -699,21 +709,6 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 			&frm->WAPI);
 #endif /* defined(FEATURE_WLAN_WAPI) */
 
-	status = dot11f_get_packed_probe_response_size(mac_ctx, frm, &payload);
-	if (DOT11F_FAILED(status)) {
-		lim_log(mac_ctx, LOGP,
-			FL("Probe Response size error (0x%08x)."),
-			status);
-		/* We'll fall back on the worst case scenario: */
-		payload = sizeof(tDot11fProbeResponse);
-	} else if (DOT11F_WARNED(status)) {
-		lim_log(mac_ctx, LOGW,
-			FL("Probe Response size warning (0x%08x)."),
-			status);
-	}
-
-	bytes = payload + sizeof(tSirMacMgmtHdr);
-
 	if (mac_ctx->lim.gpLimRemainOnChanReq)
 		bytes += (mac_ctx->lim.gpLimRemainOnChanReq->length -
 			 sizeof(tSirRemainOnChnReq));
@@ -777,6 +772,29 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 		}
 	}
 
+	/*
+	 * Extcap IE now support variable length, merge Extcap IE from addn_ie
+	 * may change the frame size. Therefore, MUST merge ExtCap IE before
+	 * dot11f get packed payload size.
+	 */
+	if (extracted_ext_cap_flag)
+		lim_merge_extcap_struct(&frm->ExtCap, &extracted_ext_cap);
+
+	status = dot11f_get_packed_probe_response_size(mac_ctx, frm, &payload);
+	if (DOT11F_FAILED(status)) {
+		lim_log(mac_ctx, LOGE,
+			FL("Probe Response size error (0x%08x)."),
+			status);
+		/* We'll fall back on the worst case scenario: */
+		payload = sizeof(tDot11fProbeResponse);
+	} else if (DOT11F_WARNED(status)) {
+		lim_log(mac_ctx, LOGW,
+			FL("Probe Response size warning (0x%08x)."),
+			status);
+	}
+
+	bytes += payload + sizeof(tSirMacMgmtHdr);
+
 	qdf_status = cds_packet_alloc((uint16_t) bytes, (void **)&frame,
 				      (void **)&packet);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -794,10 +812,6 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 	mac_hdr = (tpSirMacMgmtHdr) frame;
 
 	sir_copy_mac_addr(mac_hdr->bssId, pe_session->bssId);
-
-	/* merge ExtCap IE */
-	if (extracted_ext_cap_flag)
-		lim_merge_extcap_struct(&frm->ExtCap, &extracted_ext_cap);
 
 	/* That done, pack the Probe Response: */
 	status =
@@ -1120,7 +1134,7 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 	tSirRetStatus sir_status;
 	uint8_t lle_mode = 0, addts;
 	tHalBitVal qos_mode, wme_mode;
-	uint32_t payload, bytes, status;
+	uint32_t payload, bytes = 0, status;
 	void *packet;
 	QDF_STATUS qdf_status;
 	tUpdateBeaconParams beacon_params;
@@ -1316,20 +1330,6 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 		sch_set_fixed_beacon_fields(mac_ctx, pe_session);
 		lim_send_beacon_params(mac_ctx, &beacon_params, pe_session);
 	}
-	/* Allocate a buffer for this frame: */
-	status = dot11f_get_packed_assoc_response_size(mac_ctx, &frm, &payload);
-	if (DOT11F_FAILED(status)) {
-		lim_log(mac_ctx, LOGE,
-			FL("get Association Response size failure (0x%08x)."),
-			status);
-		return;
-	} else if (DOT11F_WARNED(status)) {
-		lim_log(mac_ctx, LOGW,
-			FL("get Association Response size warning (0x%08x)."),
-			status);
-	}
-
-	bytes = sizeof(tSirMacMgmtHdr) + payload;
 
 	if (assoc_req != NULL) {
 		addn_ie_len = pe_session->addIeParams.assocRespDataLen;
@@ -1363,6 +1363,30 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 			FL("addn_ie_len = %d for Assoc Resp : %d"),
 			addn_ie_len, assoc_req->addIEPresent);
 	}
+
+	/*
+	 * Extcap IE now support variable length, merge Extcap IE from addn_ie
+	 * may change the frame size. Therefore, MUST merge ExtCap IE before
+	 * dot11f get packed payload size.
+	 */
+	if (extracted_flag)
+		lim_merge_extcap_struct(&(frm.ExtCap), &extracted_ext_cap);
+
+	/* Allocate a buffer for this frame: */
+	status = dot11f_get_packed_assoc_response_size(mac_ctx, &frm, &payload);
+	if (DOT11F_FAILED(status)) {
+		lim_log(mac_ctx, LOGE,
+			FL("get Association Response size failure (0x%08x)."),
+			status);
+		return;
+	} else if (DOT11F_WARNED(status)) {
+		lim_log(mac_ctx, LOGW,
+			FL("get Association Response size warning (0x%08x)."),
+			status);
+	}
+
+	bytes += sizeof(tSirMacMgmtHdr) + payload;
+
 	qdf_status = cds_packet_alloc((uint16_t) bytes, (void **)&frame,
 				      (void **)&packet);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -1382,9 +1406,6 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 
 	sir_copy_mac_addr(mac_hdr->bssId, pe_session->bssId);
 
-	/* merge the ExtCap struct */
-	if (extracted_flag)
-		lim_merge_extcap_struct(&(frm.ExtCap), &extracted_ext_cap);
 	status = dot11f_pack_assoc_response(mac_ctx, &frm,
 					     frame + sizeof(tSirMacMgmtHdr),
 					     payload, &payload);
@@ -1622,7 +1643,7 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	uint8_t *frame;
 	tSirRetStatus sir_status;
 	tLimMlmAssocCnf assoc_cnf;
-	uint32_t bytes, payload, status;
+	uint32_t bytes = 0, payload, status;
 	uint8_t qos_enabled, wme_enabled, wsm_enabled;
 	void *packet;
 	QDF_STATUS qdf_status;
@@ -1657,6 +1678,7 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		lim_log(mac_ctx, LOGE, FL("Unable to allocate memory"));
 		return;
 	}
+	qdf_mem_set((uint8_t *) frm, sizeof(tDot11fAssocRequest), 0);
 
 	if (add_ie_len && pe_session->is_ext_caps_present) {
 		qdf_mem_set((uint8_t *) &extr_ext_cap, sizeof(tDot11fIEExtCap),
@@ -1673,7 +1695,9 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 
 			if (p_ext_cap->interworking_service)
 				p_ext_cap->qos_map = 1;
-			extr_ext_flag = lim_is_ext_cap_ie_present(p_ext_cap);
+			extr_ext_cap.num_bytes =
+				lim_compute_ext_cap_ie_length(&extr_ext_cap);
+			extr_ext_flag = (extr_ext_cap.num_bytes > 0);
 		}
 	} else {
 		lim_log(mac_ctx, LOG1,
@@ -1876,6 +1900,14 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	}
 #endif
 
+	/*
+	 * Extcap IE now support variable length, merge Extcap IE from addn_ie
+	 * may change the frame size. Therefore, MUST merge ExtCap IE before
+	 * dot11f get packed payload size.
+	 */
+	if (extr_ext_flag)
+		lim_merge_extcap_struct(&frm->ExtCap, &extr_ext_cap);
+
 	status = dot11f_get_packed_assoc_request_size(mac_ctx, frm, &payload);
 	if (DOT11F_FAILED(status)) {
 		lim_log(mac_ctx, LOGP,
@@ -1922,9 +1954,6 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	lim_populate_mac_header(mac_ctx, frame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_ASSOC_REQ, pe_session->bssId,
 		pe_session->selfMacAddr);
-	/* merge the ExtCap struct */
-	if (extr_ext_flag)
-		lim_merge_extcap_struct(&frm->ExtCap, &extr_ext_cap);
 	/* That done, pack the Assoc Request: */
 	status = dot11f_pack_assoc_request(mac_ctx, frm,
 			frame + sizeof(tSirMacMgmtHdr), payload, &payload);

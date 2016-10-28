@@ -1258,6 +1258,10 @@ populate_dot11f_ext_cap(tpAniSirGlobal pMac,
 #endif
 	p_ext_cap->ext_chan_switch = 1;
 
+	/* Need to calulate the num_bytes based on bits set */
+	if (pDot11f->present)
+		pDot11f->num_bytes = lim_compute_ext_cap_ie_length(pDot11f);
+
 	return eSIR_SUCCESS;
 }
 
@@ -3244,6 +3248,7 @@ sir_beacon_ie_ese_bcn_report(tpAniSirGlobal pMac,
 		lim_log(pMac, LOGE, FL("Failed to allocate memory"));
 		return eSIR_MEM_ALLOC_FAILED;
 	}
+	qdf_mem_zero(pBies, sizeof(tDot11fBeaconIEs));
 	/* delegate to the framesc-generated code, */
 	status = dot11f_unpack_beacon_i_es(pMac, pPayload, nPayload, pBies);
 
@@ -3538,6 +3543,7 @@ sir_parse_beacon_ie(tpAniSirGlobal pMac,
 		lim_log(pMac, LOGE, FL("Failed to allocate memory"));
 		return eSIR_MEM_ALLOC_FAILED;
 	}
+	qdf_mem_zero(pBies, sizeof(tDot11fBeaconIEs));
 	/* delegate to the framesc-generated code, */
 	status = dot11f_unpack_beacon_i_es(pMac, pPayload, nPayload, pBies);
 

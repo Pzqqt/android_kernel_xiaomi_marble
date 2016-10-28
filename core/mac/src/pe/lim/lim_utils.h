@@ -632,7 +632,7 @@ static inline void lim_deactivate_and_change_timer_host_roam(
 #endif
 
 bool lim_is_robust_mgmt_action_frame(uint8_t action_category);
-bool lim_is_ext_cap_ie_present (struct s_ext_cap *ext_cap);
+uint8_t lim_compute_ext_cap_ie_length(tDot11fIEExtCap *ext_cap);
 
 /**
  * lim_p2p_action_cnf() - callback to indicate Tx completion

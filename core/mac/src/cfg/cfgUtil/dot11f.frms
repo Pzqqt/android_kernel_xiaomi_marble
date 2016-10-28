@@ -2302,7 +2302,7 @@ IE ChannelSwitchWrapper (EID_CHANNEL_SWITCH_WRAPPER)
 }
 IE ExtCap (EID_EXT_CAP)
 {
-    bytes[8..9];
+    bytes[1..9];
 }
 
 IE HTCaps (EID_HT_CAPABILITIES)
