@@ -285,6 +285,7 @@ typedef struct _cds_context_type {
 	qdf_device_t qdf_ctx;
 
 	void *pdev_txrx_ctx;
+	void *dp_soc;
 
 	/* Configuration handle used to get system configuration */
 	void *cfg_ctx;
@@ -310,7 +311,7 @@ typedef struct _cds_context_type {
 	void (*sme_get_nss_for_vdev)(void*, enum tQDF_ADAPTER_MODE,
 		uint8_t *, uint8_t *);
 
-	void (*ol_txrx_update_mac_id)(uint8_t , uint8_t);
+	void (*cdp_update_mac_id)(void *soc, uint8_t , uint8_t);
 
 	/* This list is not sessionized. This mandatory channel list would be
 	 * as per OEMs preference as per the regulatory/other considerations.

@@ -2153,8 +2153,9 @@ static void cds_update_conc_list(uint32_t conn_index,
 	conc_connection_list[conn_index].in_use = in_use;
 
 	cds_dump_connection_status_info();
-	if (cds_ctx->ol_txrx_update_mac_id)
-		cds_ctx->ol_txrx_update_mac_id(vdev_id, mac);
+	if (cds_ctx->cdp_update_mac_id)
+		cds_ctx->cdp_update_mac_id(cds_get_context(QDF_MODULE_ID_SOC),
+			vdev_id, mac);
 
 }
 
@@ -3092,6 +3093,7 @@ void cds_dump_concurrency_info(void)
 	hdd_adapter_t *preAdapterContext = NULL;
 	hdd_adapter_t *adapter2_4 = NULL;
 	hdd_adapter_t *adapter5 = NULL;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
@@ -3190,7 +3192,7 @@ void cds_dump_concurrency_info(void)
 				}
 				adapter->tx_flow_high_watermark_offset =
 				   hdd_ctx->config->TxFlowHighWaterMarkOffset;
-				ol_txrx_ll_set_tx_pause_q_depth(
+				cdp_fc_ll_set_tx_pause_q_depth(soc,
 					adapter->sessionId,
 					hdd_ctx->config->TxFlowMaxQueueDepth);
 				cds_info("MODE %d,CH %d,LWM %d,HWM %d,TXQDEP %d",
@@ -3215,7 +3217,7 @@ void cds_dump_concurrency_info(void)
 					adapter->tx_flow_low_watermark = 0;
 					adapter->
 					tx_flow_high_watermark_offset = 0;
-					ol_txrx_ll_set_tx_pause_q_depth(
+					cdp_fc_ll_set_tx_pause_q_depth(soc,
 						adapter->sessionId,
 						hdd_ctx->config->
 						TxHbwFlowMaxQueueDepth);
@@ -3241,7 +3243,7 @@ void cds_dump_concurrency_info(void)
 					tx_flow_low_watermark = 0;
 					preAdapterContext->
 					tx_flow_high_watermark_offset = 0;
-					ol_txrx_ll_set_tx_pause_q_depth(
+					cdp_fc_ll_set_tx_pause_q_depth(soc,
 						preAdapterContext->sessionId,
 						hdd_ctx->config->
 						TxHbwFlowMaxQueueDepth);
@@ -3291,7 +3293,7 @@ void cds_dump_concurrency_info(void)
 					tx_flow_high_watermark_offset =
 						hdd_ctx->config->
 						TxHbwFlowHighWaterMarkOffset;
-					ol_txrx_ll_set_tx_pause_q_depth(
+					cdp_fc_ll_set_tx_pause_q_depth(soc,
 						adapter5->sessionId,
 						hdd_ctx->config->
 						TxHbwFlowMaxQueueDepth);
@@ -3319,7 +3321,7 @@ void cds_dump_concurrency_info(void)
 					tx_flow_high_watermark_offset =
 						hdd_ctx->config->
 						TxLbwFlowHighWaterMarkOffset;
-					ol_txrx_ll_set_tx_pause_q_depth(
+					cdp_fc_ll_set_tx_pause_q_depth(soc,
 						adapter2_4->sessionId,
 						hdd_ctx->config->
 						TxLbwFlowMaxQueueDepth);

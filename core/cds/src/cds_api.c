@@ -57,9 +57,12 @@
 #include "cds_utils.h"
 #include "wlan_logging_sock_svc.h"
 #include "wma.h"
-#include "ol_txrx.h"
 #include "pktlog_ac.h"
 #include "wlan_hdd_ipa.h"
+
+#include <cdp_txrx_cmn_reg.h>
+#include <cdp_txrx_cfg.h>
+#include <cdp_txrx_misc.h>
 /* Preprocessor Definitions and Constants */
 
 /* Maximum number of cds message queue get wrapper failures to cause panic */
@@ -74,6 +77,13 @@ static struct __qdf_device g_qdf_ctx;
 static atomic_t cds_wrapper_empty_count;
 
 static uint8_t cds_multicast_logging;
+
+static struct ol_if_ops  dp_ol_if_ops = {
+	.peer_set_default_routing = wma_peer_set_default_routing,
+	.peer_rx_reorder_queue_setup = wma_peer_rx_reorder_queue_setup,
+	.peer_rx_reorder_queue_remove = wma_peer_rx_reorder_queue_remove,
+    /* TODO: Add any other control path calls required to OL_IF/WMA layer */
+};
 
 void cds_sys_probe_thread_cback(void *pUserData);
 
@@ -158,6 +168,52 @@ void cds_tdls_tx_rx_mgmt_event(uint8_t event_id, uint8_t tx_rx,
 }
 #endif
 
+/**
+ * cds_cdp_cfg_attach() - attach data path config module
+ * @cds_cfg: generic platform level config instance
+ *
+ * Return: none
+ */
+static void cds_cdp_cfg_attach(struct cds_config_info *cds_cfg)
+{
+	struct txrx_pdev_cfg_param_t cdp_cfg = {0};
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	gp_cds_context->cfg_ctx = cdp_cfg_attach(soc, gp_cds_context->qdf_ctx,
+					(void *)(&cdp_cfg));
+	if (!gp_cds_context->cfg_ctx) {
+		WMA_LOGP("%s: failed to init cfg handle", __func__);
+		return;
+	}
+
+	cdp_cfg.is_uc_offload_enabled = cds_cfg->uc_offload_enabled;
+	cdp_cfg.uc_tx_buffer_count = cds_cfg->uc_txbuf_count;
+	cdp_cfg.uc_tx_buffer_size = cds_cfg->uc_txbuf_size;
+	cdp_cfg.uc_rx_indication_ring_count = cds_cfg->uc_rxind_ringcount;
+	cdp_cfg.uc_tx_partition_base = cds_cfg->uc_tx_partition_base;
+	cdp_cfg.enable_rxthread = cds_cfg->enable_rxthread;
+	cdp_cfg.ip_tcp_udp_checksum_offload =
+			cds_cfg->ip_tcp_udp_checksum_offload;
+	cdp_cfg.ce_classify_enabled = cds_cfg->ce_classify_enabled;
+
+	/* Configure Receive flow steering */
+	cdp_cfg_set_flow_steering(soc, &gp_cds_context->cfg_ctx,
+				 cds_cfg->flow_steering_enabled);
+
+	cdp_cfg_set_flow_control_parameters(soc, &gp_cds_context->cfg_ctx,
+			(void *)cds_cfg);
+
+	/* adjust the cfg_ctx default value based on setting */
+	cdp_cfg_set_rx_fwd_disabled(soc, gp_cds_context->cfg_ctx,
+		(uint8_t) cds_cfg->ap_disable_intrabss_fwd);
+
+	/*
+	 * adjust the packet log enable default value
+	 * based on CFG INI setting
+	 */
+	cdp_cfg_set_packet_log_enabled(soc, gp_cds_context->cfg_ctx,
+		(uint8_t)cds_is_packet_log_enabled());
+}
 
 /**
  * cds_open() - open the CDS Module
@@ -346,6 +402,19 @@ QDF_STATUS cds_open(void)
 	bmi_target_ready(scn, gp_cds_context->cfg_ctx);
 	/* Now proceed to open the MAC */
 
+	if (TARGET_TYPE_QCA8074 == pHddCtx->target_type)
+		gp_cds_context->dp_soc = cdp_soc_attach(LITHIUM_DP,
+			gp_cds_context->pHIFContext, scn,
+			gp_cds_context->htc_ctx, gp_cds_context->qdf_ctx,
+			&dp_ol_if_ops);
+	else
+		gp_cds_context->dp_soc = cdp_soc_attach(MOB_DRV_LEGACY_DP,
+			gp_cds_context->pHIFContext, scn,
+			gp_cds_context->htc_ctx, gp_cds_context->qdf_ctx,
+			&dp_ol_if_ops);
+
+	cds_cdp_cfg_attach(cds_cfg);
+
 	/* UMA is supported in hardware for performing the
 	 * frame translation 802.11 <-> 802.3
 	 */
@@ -372,11 +441,11 @@ QDF_STATUS cds_open(void)
 		QDF_ASSERT(0);
 		goto err_mac_close;
 	}
-
 	gp_cds_context->pdev_txrx_ctx =
-		ol_txrx_pdev_attach(gp_cds_context->cfg_ctx,
-				    gp_cds_context->htc_ctx,
-				    gp_cds_context->qdf_ctx);
+		cdp_pdev_attach(cds_get_context(QDF_MODULE_ID_SOC),
+			gp_cds_context->cfg_ctx,
+			gp_cds_context->htc_ctx,
+			gp_cds_context->qdf_ctx, 0);
 	if (!gp_cds_context->pdev_txrx_ctx) {
 		/* Critical Error ...  Cannot proceed further */
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
@@ -385,8 +454,7 @@ QDF_STATUS cds_open(void)
 		goto err_sme_close;
 	}
 
-	gp_cds_context->ol_txrx_update_mac_id = ol_txrx_update_mac_id;
-
+	gp_cds_context->cdp_update_mac_id = cdp_update_mac_id;
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: CDS successfully Opened", __func__);
 
@@ -439,8 +507,9 @@ QDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context)
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	p_cds_contextType p_cds_context = (p_cds_contextType) cds_context;
 	void *scn;
-	QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO, "cds prestart");
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
+	QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO, "cds prestart");
 	if (gp_cds_context != p_cds_context) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Context mismatch", __func__);
@@ -471,10 +540,9 @@ QDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context)
 
 	/* call Packetlog connect service */
 	if (QDF_GLOBAL_FTM_MODE != cds_get_conparam() &&
-	    QDF_GLOBAL_EPPING_MODE != cds_get_conparam()) {
-		htt_pkt_log_init(gp_cds_context->pdev_txrx_ctx, scn);
-		pktlog_htc_attach();
-	}
+	    QDF_GLOBAL_EPPING_MODE != cds_get_conparam())
+		cdp_pkt_log_con_service(soc,
+			gp_cds_context->pdev_txrx_ctx, scn);
 
 	/* Reset wma wait event */
 	qdf_event_reset(&gp_cds_context->wmaCompleteEvent);
@@ -533,7 +601,7 @@ QDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (ol_txrx_pdev_post_attach(gp_cds_context->pdev_txrx_ctx)) {
+	if (cdp_pdev_post_attach(soc, gp_cds_context->pdev_txrx_ctx)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			"Failed to attach pdev");
 		htc_stop(gp_cds_context->htc_ctx);
@@ -618,11 +686,17 @@ QDF_STATUS cds_enable(v_CONTEXT_t cds_context)
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
 		  "%s: SME correctly started", __func__);
 
-	if (ol_txrx_pdev_attach_target
-		       (p_cds_context->pdev_txrx_ctx)) {
-	   QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-				"%s: Failed attach target", __func__);
-	   goto err_sme_stop;
+	if (cdp_soc_attach_target(cds_get_context(QDF_MODULE_ID_SOC))) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
+			  "%s: Failed to attach soc target", __func__);
+		goto err_sme_stop;
+	}
+
+	if (cdp_pdev_attach_target(cds_get_context(QDF_MODULE_ID_SOC),
+		cds_get_context(QDF_MODULE_ID_TXRX))) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
+			  "%s: Failed to attach pdev target", __func__);
+		goto err_soc_target_detach;
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
@@ -631,6 +705,9 @@ QDF_STATUS cds_enable(v_CONTEXT_t cds_context)
 		  "%s: CDS Start is successful!!", __func__);
 
 	return QDF_STATUS_SUCCESS;
+
+err_soc_target_detach:
+	/* NOOP */
 
 err_sme_stop:
 	sme_stop(p_cds_context->pMACContext, HAL_STOP_TYPE_SYS_RESET);
@@ -795,7 +872,8 @@ QDF_STATUS cds_close(v_CONTEXT_t cds_context)
 		gp_cds_context->htc_ctx = NULL;
 	}
 
-	ol_txrx_pdev_detach(gp_cds_context->pdev_txrx_ctx, 1);
+	cdp_pdev_detach(cds_get_context(QDF_MODULE_ID_SOC),
+		gp_cds_context->pdev_txrx_ctx, 1);
 	cds_free_context(cds_context, QDF_MODULE_ID_TXRX,
 			 gp_cds_context->pdev_txrx_ctx);
 
@@ -862,18 +940,17 @@ QDF_STATUS cds_close(v_CONTEXT_t cds_context)
 void cds_flush_cache_rx_queue(void)
 {
 	uint8_t sta_id;
-	struct ol_txrx_peer_t *peer;
-	struct ol_txrx_pdev_t *pdev;
-
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!pdev)
-		return;
+	void *peer;
+	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++) {
-		peer = ol_txrx_peer_find_by_local_id(pdev, sta_id);
+		peer = cdp_peer_find_by_local_id(
+				cds_get_context(QDF_MODULE_ID_SOC),
+				pdev, sta_id);
 		if (!peer)
 			continue;
-		ol_txrx_flush_rx_frames(peer, 1);
+		cdp_flush_rx_frames(cds_get_context(QDF_MODULE_ID_SOC),
+				peer, 1);
 	}
 	return;
 }
@@ -964,6 +1041,12 @@ void *cds_get_context(QDF_MODULE_ID moduleId)
 	case QDF_MODULE_ID_CFG:
 	{
 		pModContext = gp_cds_context->cfg_ctx;
+		break;
+	}
+
+	case QDF_MODULE_ID_SOC:
+	{
+		pModContext = gp_cds_context->dp_soc;
 		break;
 	}
 
