@@ -3090,7 +3090,14 @@ void wlan_hdd_tdls_timer_restart(hdd_adapter_t *pAdapter,
 				 qdf_mc_timer_t *timer,
 				 uint32_t expirationTime)
 {
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	hdd_station_ctx_t *pHddStaCtx;
+
+	if (NULL == pAdapter || WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic) {
+		hdd_err("invalid pAdapter: %p", pAdapter);
+		return;
+	}
+
+	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
 	/* Check whether driver load unload is in progress */
 	if (cds_is_load_or_unload_in_progress()) {
