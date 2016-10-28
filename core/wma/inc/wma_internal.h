@@ -549,11 +549,11 @@ QDF_STATUS wma_vdev_set_param(wmi_unified_t wmi_handle, uint32_t if_id,
 				uint32_t param_id, uint32_t param_value);
 
 void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
-			    uint8_t vdev_id, ol_txrx_peer_handle peer,
+			    uint8_t vdev_id, void *peer,
 			    bool roam_synch_in_progress);
 
-QDF_STATUS wma_create_peer(tp_wma_handle wma, ol_txrx_pdev_handle pdev,
-			  ol_txrx_vdev_handle vdev,
+QDF_STATUS wma_create_peer(tp_wma_handle wma, void *pdev,
+			  void *vdev,
 			  u8 peer_addr[IEEE80211_ADDR_LEN],
 			  uint32_t peer_type, uint8_t vdev_id,
 			  bool roam_synch_in_progress);
@@ -561,7 +561,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, ol_txrx_pdev_handle pdev,
 int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 				      u32 len);
 
-ol_txrx_vdev_handle wma_vdev_attach(tp_wma_handle wma_handle,
+void *wma_vdev_attach(tp_wma_handle wma_handle,
 				struct add_sta_self_params *self_sta_req,
 				uint8_t generateRsp);
 

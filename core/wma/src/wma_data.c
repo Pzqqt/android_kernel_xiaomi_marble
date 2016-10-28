@@ -42,18 +42,15 @@
 #include "wmi_unified.h"
 #include "wni_cfg.h"
 #include "cfg_api.h"
-#include "ol_txrx_ctrl_api.h"
 #include <cdp_txrx_tx_throttle.h>
 #if defined(CONFIG_HL_SUPPORT)
 #include "wlan_tgt_def_config_hl.h"
 #else
 #include "wlan_tgt_def_config.h"
 #endif
-#include "ol_txrx.h"
 #include "qdf_nbuf.h"
 #include "qdf_types.h"
 #include "qdf_mem.h"
-#include "ol_txrx_peer_find.h"
 
 #include "wma_types.h"
 #include "lim_api.h"
@@ -77,7 +74,8 @@
 #include <cdp_txrx_peer_ops.h>
 #include <cdp_txrx_cfg.h>
 #include "cdp_txrx_stats.h"
-#include "ol_ctrl_txrx_api.h"
+#include <cdp_txrx_misc.h>
+#include "enet.h"
 
 typedef struct {
 	int32_t rate;
@@ -857,7 +855,7 @@ static void wma_data_tx_ack_work_handler(void *ack_work)
 void
 wma_data_tx_ack_comp_hdlr(void *wma_context, qdf_nbuf_t netbuf, int32_t status)
 {
-	ol_txrx_pdev_handle pdev;
+	void *pdev;
 	tp_wma_handle wma_handle = (tp_wma_handle) wma_context;
 
 	if (NULL == wma_handle) {
@@ -906,7 +904,7 @@ wma_data_tx_ack_comp_hdlr(void *wma_context, qdf_nbuf_t netbuf, int32_t status)
 
 free_nbuf:
 	/* unmap and freeing the tx buf as txrx is not taking care */
-	qdf_nbuf_unmap_single(pdev->osdev, netbuf, QDF_DMA_TO_DEVICE);
+	qdf_nbuf_unmap_single(wma_handle->qdf_dev, netbuf, QDF_DMA_TO_DEVICE);
 	qdf_nbuf_free(netbuf);
 }
 
@@ -952,7 +950,7 @@ int wma_peer_state_change_event_handler(void *handle,
 {
 	WMI_PEER_STATE_EVENTID_param_tlvs *param_buf;
 	wmi_peer_state_event_fixed_param *event;
-	ol_txrx_vdev_handle vdev;
+	void *vdev;
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 
 	if (!event_buff) {
@@ -973,8 +971,9 @@ int wma_peer_state_change_event_handler(void *handle,
 		return -EINVAL;
 	}
 
-	if (ol_txrx_get_opmode(vdev) == wlan_op_mode_sta
-	    && event->state == WMI_PEER_STATE_AUTHORIZED) {
+	if ((cdp_get_opmode(cds_get_context(QDF_MODULE_ID_SOC), vdev) ==
+			wlan_op_mode_sta) &&
+		event->state == WMI_PEER_STATE_AUTHORIZED) {
 		/*
 		 * set event so that hdd
 		 * can procced and unpause tx queue
@@ -1163,9 +1162,10 @@ QDF_STATUS wma_set_mcc_channel_time_quota
  */
 void wma_set_linkstate(tp_wma_handle wma, tpLinkStateParams params)
 {
-	ol_txrx_pdev_handle pdev;
-	ol_txrx_vdev_handle vdev;
-	ol_txrx_peer_handle peer;
+	void *pdev;
+	void *vdev;
+	void *peer;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint8_t vdev_id, peer_id;
 	bool roam_synch_in_progress = false;
 	QDF_STATUS status;
@@ -1212,14 +1212,15 @@ void wma_set_linkstate(tp_wma_handle wma, tpLinkStateParams params)
 	} else {
 		WMA_LOGD("%s, vdev_id: %d, pausing tx_ll_queue for VDEV_STOP",
 			 __func__, vdev_id);
-		ol_txrx_vdev_pause(wma->interfaces[vdev_id].handle,
+		cdp_fc_vdev_pause(soc, wma->interfaces[vdev_id].handle,
 				   OL_TXQ_PAUSE_REASON_VDEV_STOP);
 		wma->interfaces[vdev_id].pause_bitmap |= (1 << PAUSE_TYPE_HOST);
 		if (wmi_unified_vdev_stop_send(wma->wmi_handle, vdev_id)) {
 			WMA_LOGP("%s: %d Failed to send vdev stop",
 				 __func__, __LINE__);
 		}
-		peer = ol_txrx_find_peer_by_addr(pdev, params->bssid, &peer_id);
+		peer = cdp_peer_find_by_addr(soc, pdev,
+					     params->bssid, &peer_id);
 		if (peer) {
 			WMA_LOGP("%s: Deleting peer %pM vdev id %d",
 				 __func__, params->bssid, vdev_id);
@@ -1251,8 +1252,8 @@ void wma_unpause_vdev(tp_wma_handle wma)
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || defined(QCA_LL_TX_FLOW_CONTROL_V2)
 		/* When host resume, by default, unpause all active vdev */
 		if (wma->interfaces[vdev_id].pause_bitmap) {
-			ol_txrx_vdev_unpause(wma->interfaces[vdev_id].handle,
-					     0xffffffff);
+			cdp_fc_vdev_unpause(cds_get_context(QDF_MODULE_ID_SOC),
+				wma->interfaces[vdev_id].handle, 0xffffffff);
 			wma->interfaces[vdev_id].pause_bitmap = 0;
 		}
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
@@ -1507,17 +1508,17 @@ QDF_STATUS wma_tx_attach(tp_wma_handle wma_handle)
 		(p_cds_contextType) (wma_handle->cds_context);
 
 	/* Get the txRx Pdev handle */
-	ol_txrx_pdev_handle txrx_pdev =
-		(ol_txrx_pdev_handle) (cds_handle->pdev_txrx_ctx);
+	void *txrx_pdev = cds_handle->pdev_txrx_ctx;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	/* Register for Tx Management Frames */
-	ol_txrx_mgmt_tx_cb_set(txrx_pdev, GENERIC_NODOWLOAD_ACK_COMP_INDEX,
+	cdp_mgmt_tx_cb_set(soc, txrx_pdev, GENERIC_NODOWLOAD_ACK_COMP_INDEX,
 			      NULL, wma_mgmt_tx_ack_comp_hdlr, wma_handle);
 
-	ol_txrx_mgmt_tx_cb_set(txrx_pdev, GENERIC_DOWNLD_COMP_NOACK_COMP_INDEX,
+	cdp_mgmt_tx_cb_set(soc, txrx_pdev, GENERIC_DOWNLD_COMP_NOACK_COMP_INDEX,
 			      wma_mgmt_tx_dload_comp_hldr, NULL, wma_handle);
 
-	ol_txrx_mgmt_tx_cb_set(txrx_pdev, GENERIC_DOWNLD_COMP_ACK_COMP_INDEX,
+	cdp_mgmt_tx_cb_set(soc, txrx_pdev, GENERIC_DOWNLD_COMP_ACK_COMP_INDEX,
 			      wma_mgmt_tx_dload_comp_hldr,
 			      wma_mgmt_tx_ack_comp_hdlr, wma_handle);
 
@@ -1544,15 +1545,14 @@ QDF_STATUS wma_tx_detach(tp_wma_handle wma_handle)
 		(p_cds_contextType) (wma_handle->cds_context);
 
 	/* Get the txRx Pdev handle */
-	ol_txrx_pdev_handle txrx_pdev =
-		(ol_txrx_pdev_handle) (cds_handle->pdev_txrx_ctx);
+	void *txrx_pdev = cds_handle->pdev_txrx_ctx;
 
 	if (txrx_pdev) {
 		/* Deregister with TxRx for Tx Mgmt completion call back */
 		for (frame_index = 0; frame_index < FRAME_INDEX_MAX;
 							frame_index++) {
-			ol_txrx_mgmt_tx_cb_set(txrx_pdev, frame_index, NULL,
-						NULL, txrx_pdev);
+			cdp_mgmt_tx_cb_set(cds_get_context(QDF_MODULE_ID_SOC),
+				txrx_pdev, frame_index, NULL, NULL, txrx_pdev);
 		}
 	}
 
@@ -1590,6 +1590,7 @@ int wma_mcc_vdev_tx_pause_evt_handler(void *handle, uint8_t *event,
 	wmi_tx_pause_event_fixed_param *wmi_event;
 	uint8_t vdev_id;
 	A_UINT32 vdev_map;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	param_buf = (WMI_TX_PAUSE_EVENTID_param_tlvs *) event;
 	if (!param_buf) {
@@ -1626,7 +1627,7 @@ int wma_mcc_vdev_tx_pause_evt_handler(void *handle, uint8_t *event,
 				 * necessary to pause a paused queue again.
 				 */
 				if (!wma->interfaces[vdev_id].pause_bitmap)
-					ol_txrx_vdev_pause(
+					cdp_fc_vdev_pause(soc,
 						wma->interfaces[vdev_id].
 						handle,
 						OL_TXQ_PAUSE_REASON_FW);
@@ -1644,7 +1645,7 @@ int wma_mcc_vdev_tx_pause_evt_handler(void *handle, uint8_t *event,
 					    pause_bitmap) {
 						/* PAUSE BIT MAP is cleared
 						 * UNPAUSE VDEV */
-						ol_txrx_vdev_unpause(
+						cdp_fc_vdev_unpause(soc,
 							wma->interfaces[vdev_id]
 								.handle,
 							OL_TXQ_PAUSE_REASON_FW);
@@ -1730,7 +1731,8 @@ QDF_STATUS wma_process_init_bad_peer_tx_ctl_info(tp_wma_handle wma,
 					struct t_bad_peer_txtcl_config *config)
 {
 	/* Parameter sanity check */
-	ol_txrx_pdev_handle curr_pdev;
+	void *curr_pdev;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (NULL == wma || NULL == config) {
 		WMA_LOGE("%s Invalid input\n", __func__);
@@ -1753,19 +1755,19 @@ QDF_STATUS wma_process_init_bad_peer_tx_ctl_info(tp_wma_handle wma,
 	if (config->enable) {
 		int i = 0;
 
-		ol_txrx_bad_peer_txctl_set_setting(curr_pdev,
-						   config->enable,
-						   config->period,
-						   config->txq_limit);
+		cdp_bad_peer_txctl_set_setting(soc, curr_pdev,
+					config->enable,
+					config->period,
+					config->txq_limit);
 
 		for (i = 0; i < WLAN_WMA_IEEE80211_MAX_LEVEL; i++) {
 			u_int32_t threshold, limit;
 			threshold =
 				config->threshold[i].thresh[0];
 			limit =	config->threshold[i].txlimit;
-			ol_txrx_bad_peer_txctl_update_threshold(curr_pdev, i,
-								threshold,
-								limit);
+			cdp_bad_peer_txctl_update_threshold(soc, curr_pdev, i,
+							threshold,
+							limit);
 		}
 	}
 
@@ -1789,7 +1791,7 @@ QDF_STATUS wma_process_init_thermal_info(tp_wma_handle wma,
 					 t_thermal_mgmt *pThermalParams)
 {
 	t_thermal_cmd_params thermal_params;
-	ol_txrx_pdev_handle curr_pdev;
+	void *curr_pdev;
 
 	if (NULL == wma || NULL == pThermalParams) {
 		WMA_LOGE("TM Invalid input");
@@ -1850,7 +1852,8 @@ QDF_STATUS wma_process_init_thermal_info(tp_wma_handle wma,
 		 wma->thermal_mgmt_info.thermalLevels[3].maxTempThreshold);
 
 	if (wma->thermal_mgmt_info.thermalMgmtEnabled) {
-		ol_tx_throttle_init_period(curr_pdev,
+		cdp_throttle_init_period(cds_get_context(QDF_MODULE_ID_SOC),
+				curr_pdev,
 				pThermalParams->throttlePeriod,
 				&pThermalParams->throttle_duty_cycle_tbl[0]);
 
@@ -1913,7 +1916,7 @@ static void wma_set_thermal_level_ind(u_int8_t level)
 QDF_STATUS wma_process_set_thermal_level(tp_wma_handle wma,
 					 uint8_t thermal_level)
 {
-	ol_txrx_pdev_handle curr_pdev;
+	void *curr_pdev;
 
 	if (NULL == wma) {
 		WMA_LOGE("TM Invalid input");
@@ -1947,7 +1950,8 @@ QDF_STATUS wma_process_set_thermal_level(tp_wma_handle wma,
 
 	wma->thermal_mgmt_info.thermalCurrLevel = thermal_level;
 
-	ol_tx_throttle_set_level(curr_pdev, thermal_level);
+	cdp_throttle_set_level(cds_get_context(QDF_MODULE_ID_SOC),
+			curr_pdev, thermal_level);
 
 	/* Send SME SET_THERMAL_LEVEL_IND message */
 	wma_set_thermal_level_ind(thermal_level);
@@ -2038,7 +2042,7 @@ int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event,
 	uint8_t thermal_level;
 	t_thermal_cmd_params thermal_params;
 	WMI_THERMAL_MGMT_EVENTID_param_tlvs *param_buf;
-	ol_txrx_pdev_handle curr_pdev;
+	void *curr_pdev;
 
 	if (NULL == event || NULL == handle) {
 		WMA_LOGE("Invalid thermal mitigation event buffer");
@@ -2084,7 +2088,8 @@ int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event,
 	wma->thermal_mgmt_info.thermalCurrLevel = thermal_level;
 
 	/* Inform txrx */
-	ol_tx_throttle_set_level(curr_pdev, thermal_level);
+	cdp_throttle_set_level(cds_get_context(QDF_MODULE_ID_SOC),
+			curr_pdev, thermal_level);
 
 	/* Send SME SET_THERMAL_LEVEL_IND message */
 	wma_set_thermal_level_ind(thermal_level);
@@ -2122,7 +2127,7 @@ int wma_ibss_peer_info_event_handler(void *handle, uint8_t *data,
 {
 	cds_msg_t cds_msg;
 	wmi_peer_info *peer_info;
-	ol_txrx_pdev_handle pdev;
+	void *pdev;
 	tSirIbssPeerInfoParams *pSmeRsp;
 	uint32_t count, num_peers, status;
 	tSirIbssGetPeerInfoRspParams *pRsp;
@@ -2482,7 +2487,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	int32_t status;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	int32_t is_high_latency;
-	ol_txrx_vdev_handle txrx_vdev;
+	void *txrx_vdev;
 	enum frame_index tx_frm_index = GENERIC_NODOWNLD_NOACK_COMP_INDEX;
 	tpSirMacFrameCtl pFc = (tpSirMacFrameCtl) (qdf_nbuf_data(tx_frame));
 	uint8_t use_6mbps = 0;
@@ -2498,7 +2503,8 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	tpSirMacMgmtHdr mHdr;
 	struct wmi_mgmt_params mgmt_param = {0};
 	struct wmi_desc_t *wmi_desc = NULL;
-	ol_pdev_handle ctrl_pdev;
+	void *ctrl_pdev;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (NULL == wma_handle) {
 		WMA_LOGE("wma_handle is NULL");
@@ -2513,7 +2519,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	ol_txrx_hl_tdls_flag_reset(txrx_vdev, false);
+	cdp_hl_tdls_flag_reset(soc, txrx_vdev, false);
 
 	if (frmType >= TXRX_FRM_MAX) {
 		WMA_LOGE("Invalid Frame Type Fail to send Frame");
@@ -2636,8 +2642,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	if (frmType == TXRX_FRM_802_11_DATA) {
 		qdf_nbuf_t ret;
 		qdf_nbuf_t skb = (qdf_nbuf_t) tx_frame;
-		ol_txrx_pdev_handle pdev =
-			cds_get_context(QDF_MODULE_ID_TXRX);
+		void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 		struct wma_decap_info_t decap_info;
 		struct ieee80211_frame *wh =
@@ -2703,11 +2708,11 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		wma_handle->last_umac_data_nbuf = skb;
 
 		/* Send the Data frame to TxRx in Non Standard Path */
-		ol_txrx_hl_tdls_flag_reset(txrx_vdev, tdlsFlag);
+		cdp_hl_tdls_flag_reset(soc, txrx_vdev, tdlsFlag);
 
-		ret = ol_tx_non_std(txrx_vdev, OL_TX_SPEC_NO_FREE, skb);
+		ret = cdp_tx_non_std(soc, txrx_vdev, OL_TX_SPEC_NO_FREE, skb);
 
-		ol_txrx_hl_tdls_flag_reset(txrx_vdev, false);
+		cdp_hl_tdls_flag_reset(soc, txrx_vdev, false);
 
 		if (ret) {
 			WMA_LOGE("TxRx Rejected. Fail to do Tx");
@@ -2730,12 +2735,12 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	ctrl_pdev = ol_txrx_get_ctrl_pdev_from_vdev(txrx_vdev);
+	ctrl_pdev = cdp_get_ctrl_pdev_from_vdev(soc, txrx_vdev);
 	if (ctrl_pdev == NULL) {
 		WMA_LOGE("ol_pdev_handle is NULL\n");
 		return QDF_STATUS_E_FAILURE;
 	}
-	is_high_latency = ol_cfg_is_high_latency(ctrl_pdev);
+	is_high_latency = cdp_cfg_is_high_latency(soc, ctrl_pdev);
 
 	downld_comp_required = tx_frm_download_comp_cb && is_high_latency &&
 					tx_frm_ota_comp_cb;
@@ -2843,7 +2848,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		}
 	} else {
 		/* Hand over the Tx Mgmt frame to TxRx */
-		status = ol_txrx_mgmt_send_ext(txrx_vdev, tx_frame,
+		status = cdp_mgmt_send_ext(soc, txrx_vdev, tx_frame,
 				 tx_frm_index, use_6mbps, chanfreq);
 	}
 
@@ -2888,9 +2893,8 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			 * we didn't get Download Complete for almost
 			 * WMA_TX_FRAME_COMPLETE_TIMEOUT (1 sec)
 			 */
-
 			/* display scheduler stats */
-			ol_txrx_display_stats(WLAN_SCHEDULER_STATS);
+			cdp_display_stats(soc, WLAN_SCHEDULER_STATS);
 		}
 	}
 
@@ -2941,7 +2945,7 @@ QDF_STATUS wma_ds_peek_rx_packet_info(cds_pkt_t *pkt, void **pkt_meta,
  *
  * Return: none
  */
-void ol_rx_err(ol_pdev_handle pdev, uint8_t vdev_id,
+void ol_rx_err(void *pdev, uint8_t vdev_id,
 	       uint8_t *peer_mac_addr, int tid, uint32_t tsf32,
 	       enum ol_rx_err_type err_type, qdf_nbuf_t rx_frame,
 	       uint64_t *pn, uint8_t key_id)
@@ -3030,7 +3034,8 @@ void wma_tx_abort(uint8_t vdev_id)
 	}
 	WMA_LOGA("%s: vdevid %d bssid %pM", __func__, vdev_id, iface->bssid);
 	iface->pause_bitmap |= (1 << PAUSE_TYPE_HOST);
-	ol_txrx_vdev_pause(iface->handle, OL_TXQ_PAUSE_REASON_TX_ABORT);
+	cdp_fc_vdev_pause(cds_get_context(QDF_MODULE_ID_SOC),
+			iface->handle, OL_TXQ_PAUSE_REASON_TX_ABORT);
 
 	/* Flush all TIDs except MGMT TID for this peer in Target */
 	peer_tid_bitmap &= ~(0x1 << WMI_MGMT_TID);

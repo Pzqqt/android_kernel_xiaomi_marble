@@ -44,14 +44,12 @@
 #include "wmi_unified.h"
 #include "wni_cfg.h"
 #include "cfg_api.h"
-#include "ol_txrx_ctrl_api.h"
 #include <cdp_txrx_tx_delay.h>
 #include <cdp_txrx_peer_ops.h>
 
 #include "qdf_nbuf.h"
 #include "qdf_types.h"
 #include "qdf_mem.h"
-#include "ol_txrx_peer_find.h"
 
 #include "wma_types.h"
 #include "lim_api.h"
@@ -70,7 +68,6 @@
 #include "dfs.h"
 #include "radar_filters.h"
 #include "wma_internal.h"
-#include "ol_txrx.h"
 #include "wma_nan_datapath.h"
 
 #ifndef ARRAY_LENGTH
@@ -4733,7 +4730,7 @@ static QDF_STATUS wma_set_tsm_interval(tAddTsParams *req)
 	 *
 	 */
 	uint32_t interval_milliseconds;
-	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (NULL == pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
 		return QDF_STATUS_E_FAILURE;
@@ -4741,7 +4738,8 @@ static QDF_STATUS wma_set_tsm_interval(tAddTsParams *req)
 
 	interval_milliseconds = (req->tsm_interval * 1024) / 1000;
 
-	ol_tx_set_compute_interval(pdev, interval_milliseconds);
+	cdp_tx_set_compute_interval(cds_get_context(QDF_MODULE_ID_SOC),
+			pdev, interval_milliseconds);
 	return QDF_STATUS_SUCCESS;
 }
 #else
@@ -4920,8 +4918,8 @@ QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 	 * than required by TSM, hence different (6) size array used
 	 */
 	uint16_t bin_values[QCA_TX_DELAY_HIST_REPORT_BINS] = { 0, };
-
-	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (NULL == pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
@@ -4930,9 +4928,9 @@ QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 	}
 
 	/* get required values from data path APIs */
-	ol_tx_delay(pdev, &queue_delay_microsec, &tx_delay_microsec, tid);
-	ol_tx_delay_hist(pdev, bin_values, tid);
-	ol_tx_packet_count(pdev, &packet_count, &packet_loss_count, tid);
+	cdp_tx_delay(soc, pdev, &queue_delay_microsec, &tx_delay_microsec, tid);
+	cdp_tx_delay_hist(soc, pdev, bin_values, tid);
+	cdp_tx_packet_count(soc, pdev, &packet_count, &packet_loss_count, tid);
 
 	pTsmRspParams = qdf_mem_malloc(sizeof(*pTsmRspParams));
 	if (NULL == pTsmRspParams) {
@@ -5441,9 +5439,11 @@ QDF_STATUS wma_process_get_peer_info_req
 	uint16_t len;
 	wmi_buf_t buf;
 	int32_t vdev_id;
-	ol_txrx_pdev_handle pdev;
-	struct ol_txrx_peer_t *peer;
+	void *pdev;
+	void *peer;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint8_t peer_mac[IEEE80211_ADDR_LEN];
+	uint8_t *peer_mac_raw;
 	wmi_peer_info_req_cmd_fixed_param *p_get_peer_info_cmd;
 	uint8_t bcast_mac[IEEE80211_ADDR_LEN] = { 0xff, 0xff, 0xff,
 						  0xff, 0xff, 0xff };
@@ -5466,18 +5466,19 @@ QDF_STATUS wma_process_get_peer_info_req
 		qdf_mem_copy(peer_mac, bcast_mac, IEEE80211_ADDR_LEN);
 	} else {
 		/*get info for a single peer */
-		peer = ol_txrx_peer_find_by_local_id(pdev, pReq->staIdx);
+		peer = cdp_peer_find_by_local_id(soc, pdev, pReq->staIdx);
 		if (!peer) {
 			WMA_LOGE("%s: Failed to get peer handle using peer id %d",
 				__func__, pReq->staIdx);
 			return QDF_STATUS_E_FAILURE;
 		}
+		peer_mac_raw = cdp_peer_get_peer_mac_addr(soc, peer);
 		WMA_LOGE("%s: staIdx %d peer mac: 0x%2x:0x%2x:0x%2x:0x%2x:0x%2x:0x%2x",
-			__func__, pReq->staIdx, peer->mac_addr.raw[0],
-			peer->mac_addr.raw[1], peer->mac_addr.raw[2],
-			peer->mac_addr.raw[3], peer->mac_addr.raw[4],
-			peer->mac_addr.raw[5]);
-		qdf_mem_copy(peer_mac, peer->mac_addr.raw, IEEE80211_ADDR_LEN);
+			__func__, pReq->staIdx, peer_mac_raw[0],
+			peer_mac_raw[1], peer_mac_raw[2],
+			peer_mac_raw[3], peer_mac_raw[4],
+			peer_mac_raw[5]);
+		qdf_mem_copy(peer_mac, peer_mac_raw, IEEE80211_ADDR_LEN);
 	}
 
 	len = sizeof(wmi_peer_info_req_cmd_fixed_param);
@@ -7008,9 +7009,10 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	uint32_t i;
-	ol_txrx_pdev_handle pdev;
+	void *pdev;
 	uint8_t peer_id;
-	ol_txrx_peer_handle peer;
+	void *peer;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint8_t *peer_mac_addr;
 	int ret = 0;
 	uint32_t *ch_mhz = NULL;
@@ -7062,7 +7064,7 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 			goto end_tdls_peer_state;
 		}
 
-		peer = ol_txrx_find_peer_by_addr(pdev,
+		peer = cdp_peer_find_by_addr(soc, pdev,
 						 peerStateParams->peerMacAddr,
 						 &peer_id);
 		if (!peer) {
@@ -7071,8 +7073,9 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 			ret = -EIO;
 			goto end_tdls_peer_state;
 		}
-		peer_mac_addr = ol_txrx_peer_get_peer_mac_addr(peer);
-		restore_last_peer = is_vdev_restore_last_peer(peer);
+		peer_mac_addr = cdp_peer_get_peer_mac_addr(soc, peer);
+		restore_last_peer = cdp_peer_is_vdev_restore_last_peer(
+						soc, peer);
 
 		WMA_LOGD("%s: calling wma_remove_peer for peer " MAC_ADDRESS_STR
 			 " vdevId: %d", __func__,
@@ -7080,7 +7083,7 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 			 peerStateParams->vdevId);
 		wma_remove_peer(wma_handle, peer_mac_addr,
 				peerStateParams->vdevId, peer, false);
-		ol_txrx_update_last_real_peer(pdev, peer, &peer_id,
+		cdp_peer_update_last_real_peer(soc, pdev, peer, &peer_id,
 					      restore_last_peer);
 	}
 

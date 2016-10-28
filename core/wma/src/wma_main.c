@@ -52,7 +52,6 @@
 #include "qdf_nbuf.h"
 #include "qdf_types.h"
 #include "qdf_mem.h"
-#include "ol_txrx_peer_find.h"
 
 #include "wma_types.h"
 #include "lim_api.h"
@@ -78,6 +77,7 @@
 #include "cdp_txrx_flow_ctrl_legacy.h"
 #include "cdp_txrx_flow_ctrl_v2.h"
 #include "cdp_txrx_ipa.h"
+#include "cdp_txrx_misc.h"
 #include "wma_nan_datapath.h"
 
 #define WMA_LOG_COMPLETION_TIMER 10000 /* 10 seconds */
@@ -741,14 +741,14 @@ static int32_t wma_set_priv_cfg(tp_wma_handle wma_handle,
 
 	case WMA_VDEV_TXRX_GET_IPA_UC_FW_STATS_CMDID:
 	{
-		ol_txrx_pdev_handle pdev;
+		void *pdev;
 
 		pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 		if (!pdev) {
 			WMA_LOGE("pdev NULL for uc stat");
 			return -EINVAL;
 		}
-		ol_txrx_ipa_uc_get_stat(pdev);
+		cdp_ipa_get_stat(cds_get_context(QDF_MODULE_ID_SOC), pdev);
 	}
 		break;
 
@@ -854,6 +854,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 	struct qpower_params *qparams = &intr[vid].config.qpower_params;
 	struct pdev_params pdev_param;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	WMA_LOGD("wmihandle %p", wma->wmi_handle);
 
@@ -912,7 +913,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 		break;
 	case GEN_CMD:
 	{
-		ol_txrx_vdev_handle vdev = NULL;
+		void *vdev = NULL;
 		struct wma_txrx_node *intr = wma->interfaces;
 
 		vdev = wma_find_vdev_by_id(wma, privcmd->param_vdev_id);
@@ -926,18 +927,18 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 
 		switch (privcmd->param_id) {
 		case GEN_VDEV_PARAM_AMPDU:
-			ret = ol_txrx_aggr_cfg(vdev, privcmd->param_value, 0);
+			ret = cdp_aggr_cfg(soc, vdev, privcmd->param_value, 0);
 			if (ret)
-				WMA_LOGE("ol_txrx_aggr_cfg set ampdu failed ret %d",
+				WMA_LOGE("cdp_aggr_cfg set ampdu failed ret %d",
 					 ret);
 			else
 				intr[privcmd->param_vdev_id].config.ampdu =
 							 privcmd->param_value;
 			break;
 		case GEN_VDEV_PARAM_AMSDU:
-			ret = ol_txrx_aggr_cfg(vdev, 0, privcmd->param_value);
+			ret = cdp_aggr_cfg(soc, vdev, 0, privcmd->param_value);
 			if (ret)
-				WMA_LOGE("ol_txrx_aggr_cfg set amsdu failed ret %d",
+				WMA_LOGE("cdp_aggr_cfg set amsdu failed ret %d",
 					 ret);
 			else
 				intr[privcmd->param_vdev_id].config.
@@ -1614,7 +1615,6 @@ int wma_process_fw_event_handler(void *ctx, void *ev, uint8_t rx_ctx)
  *
  * Return: none
  */
-static
 void ol_cfg_set_flow_control_parameters(struct txrx_pdev_cfg_param_t *olCfg,
 					struct cds_config_info *cds_cfg)
 {
@@ -1624,7 +1624,6 @@ void ol_cfg_set_flow_control_parameters(struct txrx_pdev_cfg_param_t *olCfg,
 				cds_cfg->tx_flow_stop_queue_th;
 }
 #else
-static
 void ol_cfg_set_flow_control_parameters(struct txrx_pdev_cfg_param_t *olCfg,
 					struct cds_config_info *cds_cfg)
 {
@@ -1852,7 +1851,6 @@ QDF_STATUS wma_open(void *cds_context,
 	qdf_device_t qdf_dev;
 	void *wmi_handle;
 	QDF_STATUS qdf_status;
-	struct txrx_pdev_cfg_param_t olCfg = { 0 };
 	struct wmi_rx_ops ops;
 
 	bool use_cookie = false;
@@ -1939,58 +1937,8 @@ QDF_STATUS wma_open(void *cds_context,
 	/* initialize default target config */
 	wma_set_default_tgt_config(wma_handle);
 
-	olCfg.is_uc_offload_enabled = cds_cfg->uc_offload_enabled;
-	olCfg.uc_tx_buffer_count = cds_cfg->uc_txbuf_count;
-	olCfg.uc_tx_buffer_size = cds_cfg->uc_txbuf_size;
-	olCfg.uc_rx_indication_ring_count = cds_cfg->uc_rxind_ringcount;
-	olCfg.uc_tx_partition_base = cds_cfg->uc_tx_partition_base;
-
-
 	wma_handle->tx_chain_mask_cck = cds_cfg->tx_chain_mask_cck;
 	wma_handle->self_gen_frm_pwr = cds_cfg->self_gen_frm_pwr;
-
-	/* Allocate cfg handle */
-
-	/* RX Full reorder should enable for PCIe, ROME3.X project only now
-	 * MDM should enable later, schedule TBD
-	 * HL also sdould be enabled, schedule TBD
-	 */
-#ifdef WLAN_FEATURE_RX_FULL_REORDER_OL
-	olCfg.is_full_reorder_offload = cds_cfg->reorder_offload;
-#else
-	olCfg.is_full_reorder_offload = 0;
-#endif /* WLAN_FEATURE_RX_FULL_REORDER_OL */
-	olCfg.enable_rxthread = cds_cfg->enable_rxthread;
-	olCfg.ip_tcp_udp_checksum_offload =
-			cds_cfg->ip_tcp_udp_checksum_offload;
-	olCfg.ce_classify_enabled = cds_cfg->ce_classify_enabled;
-
-	ol_cfg_set_flow_control_parameters(&olCfg, cds_cfg);
-
-	((p_cds_contextType) cds_context)->cfg_ctx =
-		ol_pdev_cfg_attach(((p_cds_contextType) cds_context)->qdf_ctx,
-				   olCfg);
-	if (!(((p_cds_contextType) cds_context)->cfg_ctx)) {
-		WMA_LOGP("%s: failed to init cfg handle", __func__);
-		qdf_status = QDF_STATUS_E_NOMEM;
-		goto err_wmi_handle;
-	}
-
-	/* adjust the cfg_ctx default value based on setting */
-	ol_set_cfg_rx_fwd_disabled((ol_pdev_handle)
-				   ((p_cds_contextType) cds_context)->cfg_ctx,
-				   (uint8_t) cds_cfg->ap_disable_intrabss_fwd);
-
-	/* Configure Receive flow steering */
-	ol_set_cfg_flow_steering((ol_pdev_handle)
-				 ((p_cds_contextType)cds_context)->cfg_ctx,
-				 cds_cfg->flow_steering_enabled);
-
-	/* adjust the packet log enable default value based on CFG INI setting */
-	ol_set_cfg_packet_log_enabled((ol_pdev_handle)
-					((p_cds_contextType) cds_context)->
-						cfg_ctx,
-				      (uint8_t)cds_is_packet_log_enabled());
 
 	/* Allocate dfs_ic and initialize DFS */
 	wma_handle->dfs_ic = wma_dfs_attach(wma_handle->dfs_ic);
@@ -3195,7 +3143,9 @@ QDF_STATUS wma_stop(void *cds_ctx, uint8_t reason)
 	for (i = 0; i < wma_handle->max_bssid; i++) {
 		if (wma_handle->interfaces[i].handle &&
 				wma_handle->interfaces[i].vdev_up) {
-			ol_txrx_vdev_flush(wma_handle->interfaces[i].handle);
+			cdp_fc_vdev_flush(
+				cds_get_context(QDF_MODULE_ID_SOC),
+				wma_handle->interfaces[i].handle);
 		}
 	}
 	qdf_status = wma_tx_detach(wma_handle);
@@ -3751,14 +3701,16 @@ static inline void wma_update_target_services(tp_wma_handle wh,
 
 	if (WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap,
 			WMI_SERVICE_TX_MSDU_ID_NEW_PARTITION_SUPPORT)) {
-		ol_cfg_set_ipa_uc_tx_partition_base((ol_pdev_handle)
-				((p_cds_contextType) wh->cds_context)->cfg_ctx,
+		cdp_ipa_set_uc_tx_partition_base(
+				cds_get_context(QDF_MODULE_ID_SOC),
+				cds_get_context(QDF_MODULE_ID_CFG),
 				HTT_TX_IPA_NEW_MSDU_ID_SPACE_BEGIN);
 		WMA_LOGI("%s: TX_MSDU_ID_NEW_PARTITION=%d", __func__,
 				HTT_TX_IPA_NEW_MSDU_ID_SPACE_BEGIN);
 	} else {
-		ol_cfg_set_ipa_uc_tx_partition_base((ol_pdev_handle)
-				((p_cds_contextType) wh->cds_context)->cfg_ctx,
+		cdp_ipa_set_uc_tx_partition_base(
+				cds_get_context(QDF_MODULE_ID_SOC),
+				cds_get_context(QDF_MODULE_ID_CFG),
 				HTT_TX_IPA_MSDU_ID_SPACE_BEGIN);
 		WMA_LOGI("%s: TX_MSDU_ID_OLD_PARTITION=%d", __func__,
 				HTT_TX_IPA_MSDU_ID_SPACE_BEGIN);
@@ -4463,6 +4415,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	int status;
 	uint32_t *ev_wlan_dbs_hw_mode_list;
 	QDF_STATUS ret;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	WMA_LOGD("%s: Enter", __func__);
 
@@ -4548,11 +4501,10 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		     param_buf->wmi_service_bitmap,
 		     sizeof(wma_handle->wmi_service_bitmap));
 
-	ol_tx_set_is_mgmt_over_wmi_enabled(
+	cdp_cfg_tx_set_is_mgmt_over_wmi_enabled(soc,
 		WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
 				       WMI_SERVICE_MGMT_TX_WMI));
-	ol_tx_set_desc_global_pool_size(ev->num_msdu_desc);
-
+	cdp_set_desc_global_pool_size(soc, ev->num_msdu_desc);
 	/* SWBA event handler for beacon transmission */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
 						    WMI_HOST_SWBA_EVENTID,
@@ -4689,7 +4641,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		return -EINVAL;
 	}
 
-	ol_tx_mark_first_wakeup_packet(
+	cdp_mark_first_wakeup_packet(soc,
 		WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
 			WMI_SERVICE_MARK_FIRST_WAKEUP_PACKET));
 
@@ -6090,7 +6042,7 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tp_wma_handle wma_handle;
-	ol_txrx_vdev_handle txrx_vdev_handle = NULL;
+	void *txrx_vdev_handle = NULL;
 	extern uint8_t *mac_trace_get_wma_msg_string(uint16_t wmaMsg);
 
 	if (NULL == msg) {
@@ -6148,9 +6100,10 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 			WMA_LOGE("Failed to attach vdev");
 		} else {
 			/* Register with TxRx Module for Data Ack Complete Cb */
-			ol_txrx_data_tx_cb_set(txrx_vdev_handle,
-					      wma_data_tx_ack_comp_hdlr,
-					      wma_handle);
+			cdp_data_tx_cb_set(cds_get_context(QDF_MODULE_ID_SOC),
+					txrx_vdev_handle,
+					wma_data_tx_ack_comp_hdlr,
+					wma_handle);
 		}
 		break;
 	case WMA_DEL_STA_SELF_REQ:
@@ -7256,3 +7209,55 @@ int wma_lro_init(struct wma_lro_config_cmd_t *lro_config)
 	return 0;
 }
 #endif
+
+void wma_peer_set_default_routing(void *scn_handle, uint8_t *peer_macaddr,
+	uint8_t vdev_id, bool hash_based, uint8_t ring_num)
+{
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	struct peer_set_params param;
+
+
+	/* TODO: Need bit definitions for ring number and hash based routing
+	 * fields in common wmi header file
+	 */
+	param.param_id = WMI_HOST_PEER_SET_DEFAULT_ROUTING;
+	param.vdev_id = vdev_id;
+	param.param_value = ((hash_based) ? 1 : 0) | (ring_num << 1);
+	wmi_set_peer_param_send(wma->wmi_handle, peer_macaddr, &param);
+
+	return;
+}
+
+int wma_peer_rx_reorder_queue_setup(void *scn_handle,
+	uint8_t vdev_id, uint8_t *peer_macaddr, qdf_dma_addr_t hw_qdesc,
+	int tid, uint16_t queue_no)
+{
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	struct rx_reorder_queue_setup_params param;
+
+	param.tid = tid;
+	param.vdev_id = vdev_id;
+	param.peer_macaddr = peer_macaddr;
+	param.hw_qdesc_paddr_lo = hw_qdesc & 0xffffffff;
+	param.hw_qdesc_paddr_hi = (uint64_t)hw_qdesc >> 32;
+	param.queue_no = queue_no;
+
+	return wmi_unified_peer_rx_reorder_queue_setup_send(wma->wmi_handle,
+		&param);
+}
+
+int wma_peer_rx_reorder_queue_remove(void *scn_handle,
+	uint8_t vdev_id, uint8_t *peer_macaddr, uint32_t peer_tid_bitmap)
+{
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	struct rx_reorder_queue_remove_params param;
+
+	param.vdev_id = vdev_id;
+	param.peer_macaddr = peer_macaddr;
+	param.peer_tid_bitmap = peer_tid_bitmap;
+
+	return wmi_unified_peer_rx_reorder_queue_remove_send(wma->wmi_handle,
+		&param);
+}
+
+

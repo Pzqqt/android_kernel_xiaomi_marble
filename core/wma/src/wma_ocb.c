@@ -47,16 +47,18 @@ int wma_ocb_set_config_resp(tp_wma_handle wma_handle, uint8_t status)
 	struct sir_ocb_set_config_response *resp;
 	cds_msg_t msg = {0};
 	struct sir_ocb_config *req = wma_handle->ocb_config_req;
-	ol_txrx_vdev_handle vdev = (req ?
+	void *vdev = (req ?
 		wma_handle->interfaces[req->session_id].handle : NULL);
 	struct ol_txrx_ocb_set_chan ocb_set_chan;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	/*
 	 * If the command was successful, save the channel information in the
 	 * vdev.
 	 */
 	if (status == QDF_STATUS_SUCCESS && vdev && req) {
-		ocb_set_chan.ocb_channel_info = ol_txrx_get_ocb_chan_info(vdev);
+		ocb_set_chan.ocb_channel_info = cdp_get_ocb_chan_info(soc,
+								      vdev);
 		if (ocb_set_chan.ocb_channel_info)
 			qdf_mem_free(ocb_set_chan.ocb_channel_info);
 		ocb_set_chan.ocb_channel_count =
@@ -82,7 +84,7 @@ int wma_ocb_set_config_resp(tp_wma_handle wma_handle, uint8_t status)
 			ocb_set_chan.ocb_channel_info = 0;
 			ocb_set_chan.ocb_channel_count = 0;
 		}
-		ol_txrx_set_ocb_chan_info(vdev, ocb_set_chan);
+		cdp_set_ocb_chan_info(soc, vdev, ocb_set_chan);
 	}
 
 	/* Free the configuration that was saved in wma_ocb_set_config. */

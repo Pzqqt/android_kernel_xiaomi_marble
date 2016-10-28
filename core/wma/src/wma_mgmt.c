@@ -47,7 +47,6 @@
 #include "qdf_nbuf.h"
 #include "qdf_types.h"
 #include "qdf_mem.h"
-#include "ol_txrx_peer_find.h"
 
 #include "wma_types.h"
 #include "lim_api.h"
@@ -71,6 +70,7 @@
 #include <cdp_txrx_cfg.h>
 #include <cdp_txrx_cmn.h>
 #include <cdp_txrx_misc.h>
+#include <cdp_txrx_misc.h>
 
 /**
  * wma_send_bcn_buf_ll() - prepare and send beacon buffer to fw for LL
@@ -82,7 +82,7 @@
  * Return: none
  */
 static void wma_send_bcn_buf_ll(tp_wma_handle wma,
-				ol_txrx_pdev_handle pdev,
+				void *pdev,
 				uint8_t vdev_id,
 				WMI_HOST_SWBA_EVENTID_param_tlvs *param_buf)
 {
@@ -194,10 +194,10 @@ static void wma_send_bcn_buf_ll(tp_wma_handle wma,
 	}
 
 	if (bcn->dma_mapped) {
-		qdf_nbuf_unmap_single(pdev->osdev, bcn->buf, QDF_DMA_TO_DEVICE);
+		qdf_nbuf_unmap_single(wma->qdf_dev, bcn->buf, QDF_DMA_TO_DEVICE);
 		bcn->dma_mapped = 0;
 	}
-	ret = qdf_nbuf_map_single(pdev->osdev, bcn->buf, QDF_DMA_TO_DEVICE);
+	ret = qdf_nbuf_map_single(wma->qdf_dev, bcn->buf, QDF_DMA_TO_DEVICE);
 	if (ret != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: failed map beacon buf to DMA region", __func__);
 		qdf_spin_unlock_bh(&bcn->lock);
@@ -241,8 +241,9 @@ int wma_beacon_swba_handler(void *handle, uint8_t *event, uint32_t len)
 	WMI_HOST_SWBA_EVENTID_param_tlvs *param_buf;
 	wmi_host_swba_event_fixed_param *swba_event;
 	uint32_t vdev_map;
-	ol_txrx_pdev_handle pdev;
+	void *pdev;
 	uint8_t vdev_id = 0;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	param_buf = (WMI_HOST_SWBA_EVENTID_param_tlvs *) event;
 	if (!param_buf) {
@@ -261,7 +262,8 @@ int wma_beacon_swba_handler(void *handle, uint8_t *event, uint32_t len)
 	for (; vdev_map; vdev_id++, vdev_map >>= 1) {
 		if (!(vdev_map & 0x1))
 			continue;
-		if (!ol_cfg_is_high_latency(pdev->ctrl_pdev))
+		if (!cdp_cfg_is_high_latency(soc,
+				cds_get_context(QDF_MODULE_ID_CFG)))
 			wma_send_bcn_buf_ll(wma, pdev, vdev_id, param_buf);
 		break;
 	}
@@ -286,10 +288,11 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 	WMI_PEER_STA_KICKOUT_EVENTID_param_tlvs *param_buf = NULL;
 	wmi_peer_sta_kickout_event_fixed_param *kickout_event = NULL;
 	uint8_t vdev_id, peer_id, macaddr[IEEE80211_ADDR_LEN];
-	ol_txrx_peer_handle peer;
-	ol_txrx_pdev_handle pdev;
+	void *peer;
+	void *pdev;
 	tpDeleteStaContext del_sta_ctx;
 	tpSirIbssPeerInactivityInd p_inactivity;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	WMA_LOGD("%s: Enter", __func__);
 	param_buf = (WMI_PEER_STA_KICKOUT_EVENTID_param_tlvs *) event;
@@ -300,13 +303,13 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 		return -EINVAL;
 	}
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&kickout_event->peer_macaddr, macaddr);
-	peer = ol_txrx_find_peer_by_addr(pdev, macaddr, &peer_id);
+	peer = cdp_peer_find_by_addr(soc, pdev, macaddr, &peer_id);
 	if (!peer) {
 		WMA_LOGE("PEER [%pM] not found", macaddr);
 		return -EINVAL;
 	}
 
-	if (ol_txrx_get_vdevid(peer, &vdev_id) != QDF_STATUS_SUCCESS) {
+	if (cdp_peer_get_vdevid(soc, peer, &vdev_id) != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Not able to find BSSID for peer [%pM]", macaddr);
 		return -EINVAL;
 	}
@@ -769,28 +772,32 @@ static inline uint8_t wma_parse_mpdudensity(uint8_t mpdudensity)
  */
 static void
 wma_unified_peer_state_update(
-	struct ol_txrx_pdev_t *pdev,
+	void *pdev,
 	uint8_t *sta_mac,
 	uint8_t *bss_addr,
 	uint8_t sta_type)
 {
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
 	if (STA_ENTRY_TDLS_PEER == sta_type)
-		ol_txrx_peer_state_update(pdev, sta_mac,
+		cdp_peer_state_update(soc, pdev, sta_mac,
 					  OL_TXRX_PEER_STATE_AUTH);
 	else
-		ol_txrx_peer_state_update(pdev, bss_addr,
+		cdp_peer_state_update(soc, pdev, bss_addr,
 					  OL_TXRX_PEER_STATE_AUTH);
 }
 #else
 
 static inline void
 wma_unified_peer_state_update(
-	struct ol_txrx_pdev_t *pdev,
+	void *pdev,
 	uint8_t *sta_mac,
 	uint8_t *bss_addr,
 	uint8_t sta_type)
 {
-	ol_txrx_peer_state_update(pdev, bss_addr, OL_TXRX_PEER_STATE_AUTH);
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	cdp_peer_state_update(soc, pdev, bss_addr, OL_TXRX_PEER_STATE_AUTH);
 }
 #endif
 
@@ -809,7 +816,7 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 				    tSirNwType nw_type,
 				    tpAddStaParams params)
 {
-	ol_txrx_pdev_handle pdev;
+	void *pdev;
 	struct peer_assoc_params *cmd;
 	int32_t ret, max_rates, i;
 	uint8_t rx_stbc, tx_stbc;
@@ -1520,8 +1527,9 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 	uint32_t i;
 	uint32_t def_key_idx = 0;
 	uint32_t wlan_opmode;
-	ol_txrx_vdev_handle txrx_vdev;
+	void *txrx_vdev;
 	uint8_t *mac_addr;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	WMA_LOGD("BSS key setup");
 	txrx_vdev = wma_find_vdev_by_id(wma_handle, key_info->smesessionId);
@@ -1530,7 +1538,7 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 		key_info->status = QDF_STATUS_E_FAILURE;
 		goto out;
 	}
-	wlan_opmode = ol_txrx_get_opmode(txrx_vdev);
+	wlan_opmode = cdp_get_opmode(soc, txrx_vdev);
 
 	/*
 	 * For IBSS, WMI expects the BSS key to be set per peer key
@@ -1556,7 +1564,7 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 			wma_handle->interfaces[key_info->smesessionId].bssid,
 			IEEE80211_ADDR_LEN);
 	} else {
-		mac_addr = ol_txrx_get_vdev_mac_addr(txrx_vdev);
+		mac_addr = cdp_get_vdev_mac_addr(soc, txrx_vdev);
 		if (mac_addr == NULL) {
 			WMA_LOGE("%s: mac_addr is NULL for vdev with id %d",
 				 __func__, key_info->smesessionId);
@@ -1664,11 +1672,12 @@ void wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
 				      uint8_t vdev_id,
 				      int8_t peer_num_delta)
 {
-	ol_txrx_vdev_handle vdev;
+	void *vdev;
 	int16_t new_peer_num;
 	uint16_t new_timer_value_sec;
 	uint32_t new_timer_value_ms;
 	QDF_STATUS status;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (peer_num_delta != 1 && peer_num_delta != -1) {
 		WMA_LOGE("Invalid peer_num_delta value %d", peer_num_delta);
@@ -1682,8 +1691,8 @@ void wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
 	}
 
 	/* adjust peer numbers */
-	new_peer_num = ol_txrx_update_ibss_add_peer_num_of_vdev(vdev,
-								peer_num_delta);
+	new_peer_num = cdp_peer_update_ibss_add_peer_num_of_vdev(soc, vdev,
+						peer_num_delta);
 	if (OL_TXRX_INVALID_NUM_PEERS == new_peer_num) {
 		WMA_LOGE("new peer num %d out of valid boundary", new_peer_num);
 		return;
@@ -1691,7 +1700,7 @@ void wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
 
 	/* reset timer value if all peers departed */
 	if (new_peer_num == 0) {
-		ol_txrx_set_ibss_vdev_heart_beat_timer(vdev, 0);
+		cdp_set_ibss_vdev_heart_beat_timer(soc, vdev, 0);
 		return;
 	}
 
@@ -1703,7 +1712,7 @@ void wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
 		return;
 	}
 	if (new_timer_value_sec ==
-	    ol_txrx_set_ibss_vdev_heart_beat_timer(vdev, new_timer_value_sec)) {
+	    cdp_set_ibss_vdev_heart_beat_timer(soc, vdev, new_timer_value_sec)) {
 		WMA_LOGD("timer value %d stays same, no need to notify target",
 			 new_timer_value_sec);
 		return;
@@ -1740,8 +1749,9 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint32_t i;
 	uint32_t def_key_idx = 0;
-	ol_txrx_vdev_handle txrx_vdev;
+	void *txrx_vdev;
 	int opmode;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	WMA_LOGD("BSS key setup for peer");
 	txrx_vdev = wma_find_vdev_by_id(wma_handle, key_info->smesessionId);
@@ -1752,7 +1762,7 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 	}
 
 	qdf_mem_set(&key_params, sizeof(key_params), 0);
-	opmode = ol_txrx_get_opmode(txrx_vdev);
+	opmode = cdp_get_opmode(soc, txrx_vdev);
 	qdf_mem_set(&key_params, sizeof(key_params), 0);
 	key_params.vdev_id = key_info->smesessionId;
 	key_params.key_type = key_info->encType;
@@ -1823,13 +1833,14 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 {
 	int32_t i;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	ol_txrx_pdev_handle txrx_pdev;
-	ol_txrx_vdev_handle txrx_vdev;
-	ol_txrx_peer_handle peer;
+	void *txrx_pdev;
+	void *txrx_vdev;
+	void *peer;
 	uint8_t num_keys = 0, peer_id;
 	struct wma_set_key_params key_params;
 	uint32_t def_key_idx = 0;
 	int opmode;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	WMA_LOGD("STA key setup");
 
@@ -1841,7 +1852,7 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 		goto out;
 	}
 
-	peer = ol_txrx_find_peer_by_addr(txrx_pdev,
+	peer = cdp_peer_find_by_addr(soc, txrx_pdev,
 					 key_info->peer_macaddr.bytes,
 					 &peer_id);
 	if (!peer) {
@@ -1856,7 +1867,7 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 		key_info->status = QDF_STATUS_E_FAILURE;
 		goto out;
 	}
-	opmode = ol_txrx_get_opmode(txrx_vdev);
+	opmode = cdp_get_opmode(soc, txrx_vdev);
 
 	if (key_info->defWEPIdx == WMA_INVALID_KEY_IDX &&
 	    (key_info->encType == eSIR_ED_WEP40 ||
@@ -1959,11 +1970,11 @@ QDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
 	wmi_wmm_vparams wmm_param[WME_NUM_AC];
 	tSirMacEdcaParamRecord *edca_record;
 	int ac;
-	ol_txrx_pdev_handle pdev;
+	void *pdev;
 	struct ol_tx_wmm_param_t ol_tx_wmm_param;
 	uint8_t vdev_id;
 	QDF_STATUS status;
-
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	vdev_id = edca_params->bssIdx;
 
 	for (ac = 0; ac < WME_NUM_AC; ac++) {
@@ -2000,7 +2011,7 @@ QDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (pdev)
-		ol_txrx_set_wmm_param(pdev, ol_tx_wmm_param);
+		cdp_set_wmm_param(soc, pdev, ol_tx_wmm_param);
 	else
 		QDF_ASSERT(0);
 
@@ -2308,7 +2319,7 @@ static int wma_p2p_go_set_beacon_ie(t_wma_handle *wma_handle,
 void wma_send_probe_rsp_tmpl(tp_wma_handle wma,
 				    tpSendProbeRespParams probe_rsp_info)
 {
-	ol_txrx_vdev_handle vdev;
+	void *vdev;
 	uint8_t vdev_id;
 	tpAniProbeRspStruct probe_rsp;
 
@@ -2352,7 +2363,7 @@ void wma_send_probe_rsp_tmpl(tp_wma_handle wma,
  */
 void wma_send_beacon(tp_wma_handle wma, tpSendbeaconParams bcn_info)
 {
-	ol_txrx_vdev_handle vdev;
+	void *vdev;
 	uint8_t vdev_id;
 	QDF_STATUS status;
 	uint8_t *p2p_ie;
@@ -2476,7 +2487,8 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 					  uint32_t desc_id, uint32_t status)
 {
 	struct wmi_desc_t *wmi_desc;
-	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (pdev == NULL) {
 		WMA_LOGE("%s: NULL pdev pointer", __func__);
@@ -2494,7 +2506,7 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 	}
 
 	if (wmi_desc->nbuf)
-		qdf_nbuf_unmap_single(pdev->osdev, wmi_desc->nbuf,
+		qdf_nbuf_unmap_single(wma_handle->qdf_dev, wmi_desc->nbuf,
 					  QDF_DMA_TO_DEVICE);
 	if (wmi_desc->tx_cmpl_cb)
 		wmi_desc->tx_cmpl_cb(wma_handle->mac_context,
@@ -2745,6 +2757,7 @@ void wma_hidden_ssid_vdev_restart(tp_wma_handle wma_handle,
 {
 	struct wma_txrx_node *intr = wma_handle->interfaces;
 	struct wma_target_req *msg;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if ((pReq->sessionId !=
 	     intr[pReq->sessionId].vdev_restart_params.vdev_id)
@@ -2771,8 +2784,8 @@ void wma_hidden_ssid_vdev_restart(tp_wma_handle wma_handle,
 	/* vdev stop -> vdev restart -> vdev up */
 	WMA_LOGD("%s, vdev_id: %d, pausing tx_ll_queue for VDEV_STOP",
 		 __func__, pReq->sessionId);
-	ol_txrx_vdev_pause(wma_handle->interfaces[pReq->sessionId].handle,
-			   OL_TXQ_PAUSE_REASON_VDEV_STOP);
+	cdp_fc_vdev_pause(soc, wma_handle->interfaces[pReq->sessionId].handle,
+			OL_TXQ_PAUSE_REASON_VDEV_STOP);
 	wma_handle->interfaces[pReq->sessionId].pause_bitmap |=
 							(1 << PAUSE_TYPE_HOST);
 	if (wmi_unified_vdev_stop_send(wma_handle->wmi_handle, pReq->sessionId)) {
@@ -2839,13 +2852,14 @@ static bool
 wma_is_ccmp_pn_replay_attack(void *cds_ctx, struct ieee80211_frame *wh,
 			 uint8_t *ccmp_ptr)
 {
-	ol_txrx_pdev_handle pdev;
-	ol_txrx_vdev_handle vdev;
-	ol_txrx_peer_handle peer;
+	void *pdev;
+	void *vdev;
+	void *peer;
 	uint8_t vdev_id, peer_id;
 	uint8_t *last_pn_valid;
 	uint64_t *last_pn, new_pn;
 	uint32_t *rmf_pn_replays;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
@@ -2860,7 +2874,7 @@ wma_is_ccmp_pn_replay_attack(void *cds_ctx, struct ieee80211_frame *wh,
 	}
 
 	/* Retrieve the peer based on vdev and addr */
-	peer = ol_txrx_find_peer_by_addr_and_vdev(pdev, vdev, wh->i_addr2,
+	peer = cdp_peer_find_by_addr_and_vdev(soc, pdev, vdev, wh->i_addr2,
 						  &peer_id);
 
 	if (NULL == peer) {
@@ -2870,7 +2884,7 @@ wma_is_ccmp_pn_replay_attack(void *cds_ctx, struct ieee80211_frame *wh,
 	}
 
 	new_pn = wma_extract_ccmp_pn(ccmp_ptr);
-	ol_txrx_get_pn_info(peer, &last_pn_valid, &last_pn, &rmf_pn_replays);
+	cdp_get_pn_info(soc, peer, &last_pn_valid, &last_pn, &rmf_pn_replays);
 
 	if (*last_pn_valid) {
 		if (new_pn > *last_pn) {
@@ -3037,10 +3051,11 @@ int wma_process_rmf_frame(tp_wma_handle wma_handle,
 static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 				      uint8_t *peer_addr, uint8_t subtype)
 {
-	struct ol_txrx_peer_t *peer;
-	struct ol_txrx_pdev_t *pdev_ctx;
+	void *peer;
+	void *pdev_ctx;
 	uint8_t peer_id;
 	bool should_drop = false;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	/*
 	 * Currently this function handles only Disassoc,
@@ -3061,7 +3076,7 @@ static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 		goto end;
 	}
 
-	peer = ol_txrx_find_peer_by_addr(pdev_ctx, peer_addr, &peer_id);
+	peer = cdp_peer_find_by_addr(soc, pdev_ctx, peer_addr, &peer_id);
 	if (!peer) {
 		if (SIR_MAC_MGMT_ASSOC_REQ != subtype) {
 			WMA_LOGI(
@@ -3074,36 +3089,40 @@ static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 
 	switch (subtype) {
 	case SIR_MAC_MGMT_ASSOC_REQ:
-		if (peer->last_assoc_rcvd) {
-			if (qdf_get_system_timestamp() - peer->last_assoc_rcvd <
+		if (*cdp_peer_last_assoc_received(soc, peer)) {
+			if ((qdf_get_system_timestamp() -
+				*cdp_peer_last_assoc_received(soc, peer)) <
 				WMA_MGMT_FRAME_DETECT_DOS_TIMER) {
 				    WMA_LOGI(FL("Dropping Assoc Req received"));
 				    should_drop = true;
 			}
 		}
-		peer->last_assoc_rcvd = qdf_get_system_timestamp();
+		*cdp_peer_last_assoc_received(soc, peer) =
+				qdf_get_system_timestamp();
 		break;
 	case SIR_MAC_MGMT_DISASSOC:
-		if (peer->last_disassoc_rcvd) {
-			if (qdf_get_system_timestamp() -
-				peer->last_disassoc_rcvd <
+		if (*cdp_peer_last_disassoc_received(soc, peer)) {
+			if ((qdf_get_system_timestamp() -
+				*cdp_peer_last_disassoc_received(soc, peer)) <
 				WMA_MGMT_FRAME_DETECT_DOS_TIMER) {
 				    WMA_LOGI(FL("Dropping DisAssoc received"));
 				    should_drop = true;
 			}
 		}
-		peer->last_disassoc_rcvd = qdf_get_system_timestamp();
+		*cdp_peer_last_disassoc_received(soc, peer) =
+				qdf_get_system_timestamp();
 		break;
 	case SIR_MAC_MGMT_DEAUTH:
-		if (peer->last_deauth_rcvd) {
-			if (qdf_get_system_timestamp() -
-				peer->last_deauth_rcvd <
+		if (*cdp_peer_last_deauth_received(soc, peer)) {
+			if ((qdf_get_system_timestamp() -
+				*cdp_peer_last_deauth_received(soc, peer)) <
 				WMA_MGMT_FRAME_DETECT_DOS_TIMER) {
 				    WMA_LOGI(FL("Dropping Deauth received"));
 				    should_drop = true;
 			}
 		}
-		peer->last_deauth_rcvd = qdf_get_system_timestamp();
+		*cdp_peer_last_deauth_received(soc, peer) =
+				qdf_get_system_timestamp();
 		break;
 	default:
 		break;

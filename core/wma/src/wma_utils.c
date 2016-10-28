@@ -46,7 +46,6 @@
 #include "qdf_nbuf.h"
 #include "qdf_types.h"
 #include "qdf_mem.h"
-#include "ol_txrx_peer_find.h"
 
 #include "wma_types.h"
 #include "lim_api.h"
@@ -2014,7 +2013,7 @@ int32_t wma_txrx_fw_stats_reset(tp_wma_handle wma_handle,
 				uint8_t vdev_id, uint32_t value)
 {
 	struct ol_txrx_stats_req req;
-	ol_txrx_vdev_handle vdev;
+	void *vdev;
 
 	vdev = wma_find_vdev_by_id(wma_handle, vdev_id);
 	if (!vdev) {
@@ -2023,7 +2022,8 @@ int32_t wma_txrx_fw_stats_reset(tp_wma_handle wma_handle,
 	}
 	qdf_mem_zero(&req, sizeof(req));
 	req.stats_type_reset_mask = value;
-	ol_txrx_fw_stats_get(vdev, &req, false, false);
+	cdp_fw_stats_get(cds_get_context(QDF_MODULE_ID_SOC), vdev, &req,
+			false, false);
 
 	return 0;
 }
@@ -2074,7 +2074,7 @@ int32_t wma_set_txrx_fw_stats_level(tp_wma_handle wma_handle,
 				    uint8_t vdev_id, uint32_t value)
 {
 	struct ol_txrx_stats_req req;
-	ol_txrx_vdev_handle vdev;
+	void *vdev;
 	uint32_t l_up_mask;
 
 	vdev = wma_find_vdev_by_id(wma_handle, vdev_id);
@@ -2093,7 +2093,8 @@ int32_t wma_set_txrx_fw_stats_level(tp_wma_handle wma_handle,
 	l_up_mask = 1 << (value - 1);
 	req.stats_type_upload_mask = l_up_mask;
 
-	ol_txrx_fw_stats_get(vdev, &req, false, true);
+	cdp_fw_stats_get(cds_get_context(QDF_MODULE_ID_SOC), vdev, &req,
+			 false, true);
 
 	return 0;
 }

@@ -42,15 +42,13 @@
 #include "cds_sched.h"
 #include "sir_mac_prot_def.h"
 #include "wma_types.h"
-#include "ol_txrx_types.h"
 #include <linux/workqueue.h>
 #include "utils_api.h"
 #include "lim_types.h"
 #include "wmi_unified_api.h"
 #include "cdp_txrx_cmn.h"
-#include "ol_defines.h"
 #include "dbglog.h"
-
+#include "cds_ieee80211_common.h"
 /* Platform specific configuration for max. no. of fragments */
 #define QCA_OL_11AC_TX_MAX_FRAGS            2
 
@@ -2200,7 +2198,7 @@ QDF_STATUS wma_send_snr_request(tp_wma_handle wma_handle, void *pGetRssiReq);
 
 
 QDF_STATUS wma_update_vdev_tbl(tp_wma_handle wma_handle, uint8_t vdev_id,
-			       ol_txrx_vdev_handle tx_rx_vdev_handle,
+			       void *tx_rx_vdev_handle,
 			       uint8_t *mac, uint32_t vdev_type, bool add_del);
 
 void wma_send_flush_logs_to_fw(tp_wma_handle wma_handle);
@@ -2300,15 +2298,15 @@ void wma_process_set_pdev_ht_ie_req(tp_wma_handle wma,
 void wma_process_set_pdev_vht_ie_req(tp_wma_handle wma,
 		struct set_ie_param *ie_params);
 void wma_remove_peer(tp_wma_handle wma, u_int8_t *bssid,
-			u_int8_t vdev_id, ol_txrx_peer_handle peer,
+			u_int8_t vdev_id, void *peer,
 			bool roam_synch_in_progress);
 
 QDF_STATUS wma_add_wow_wakeup_event(tp_wma_handle wma,
 					uint32_t vdev_id,
 					uint32_t bitmap,
 					bool enable);
-QDF_STATUS wma_create_peer(tp_wma_handle wma, ol_txrx_pdev_handle pdev,
-			   ol_txrx_vdev_handle vdev, u8 peer_addr[6],
+QDF_STATUS wma_create_peer(tp_wma_handle wma, void *pdev,
+			   void *vdev, u8 peer_addr[6],
 			   u_int32_t peer_type, u_int8_t vdev_id,
 			   bool roam_synch_in_progress);
 
@@ -2326,3 +2324,10 @@ QDF_STATUS wma_enable_disable_caevent_ind(tp_wma_handle wma_handle,
 				uint8_t val);
 void wma_update_sta_inactivity_timeout(tp_wma_handle wma,
 		struct sme_sta_inactivity_timeout  *sta_inactivity_timer);
+void wma_peer_set_default_routing(void *scn_handle, uint8_t *peer_macaddr,
+	uint8_t vdev_id, bool hash_based, uint8_t ring_num);
+int wma_peer_rx_reorder_queue_setup(void *scn_handle,
+	uint8_t vdev_id, uint8_t *peer_macaddr, qdf_dma_addr_t hw_qdesc,
+	int tid, uint16_t queue_no);
+int wma_peer_rx_reorder_queue_remove(void *scn_handle,
+	uint8_t vdev_id, uint8_t *peer_macaddr, uint32_t peer_tid_bitmap);

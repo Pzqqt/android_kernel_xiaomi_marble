@@ -46,8 +46,6 @@
 #include "qdf_nbuf.h"
 #include "qdf_types.h"
 #include "qdf_mem.h"
-#include "ol_txrx_peer_find.h"
-
 #include "wma_types.h"
 #include "lim_api.h"
 #include "lim_session_utils.h"
@@ -981,7 +979,7 @@ static QDF_STATUS wma_set_sta_uapsd_auto_trig_cmd(wmi_unified_t wmi_handle,
 	cmd.num_ac = num_ac;
 
 	qdf_mem_copy((uint8_t *) cmd.peer_addr, (uint8_t *) peer_addr,
-		     sizeof(peer_addr));
+		     sizeof(uint8_t) * IEEE80211_ADDR_LEN);
 	ret = wmi_unified_set_sta_uapsd_auto_trig_cmd(wmi_handle,
 				   &cmd);
 	if (QDF_IS_STATUS_ERROR(ret))
