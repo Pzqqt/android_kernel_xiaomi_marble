@@ -768,14 +768,20 @@ void *dp_pdev_attach_wifi3(void *txrx_soc, void *ctrl_pdev,
 
 	}
 
-	if (dp_srng_setup(soc, &pdev->rxdma_buf_ring, RXDMA_BUF, 0, pdev_id,
+	if (dp_srng_setup(soc, &pdev->rx_refill_buf_ring, RXDMA_BUF, 0, pdev_id,
 		RXDMA_BUF_RING_SIZE)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: dp_srng_setup failed for rxdma_buf_ring\n",
-			__func__);
+			 "%s: dp_srng_setup failed rx refill ring\n", __func__);
 		goto fail0;
 	}
-
+#ifdef QCA_HOST2FW_RXBUF_RING
+	if (dp_srng_setup(soc, &pdev->rx_mac_buf_ring, RXDMA_BUF, 1, pdev_id,
+		RXDMA_BUF_RING_SIZE)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			 "%s: dp_srng_setup failed rx mac ring\n", __func__);
+		goto fail0;
+	}
+#endif
 	/* TODO: RXDMA destination ring is not planned to be used currently.
 	 * Setup the ring when required
 	 */
@@ -837,8 +843,11 @@ static void dp_pdev_detach_wifi3(void *txrx_pdev, int force)
 			REO_DST, pdev->pdev_id);
 	}
 
-	dp_srng_cleanup(soc, &pdev->rxdma_buf_ring, RXDMA_BUF, 0);
+	dp_srng_cleanup(soc, &pdev->rx_refill_buf_ring, RXDMA_BUF, 0);
 
+#ifdef QCA_HOST2FW_RXBUF_RING
+	dp_srng_cleanup(soc, &pdev->rx_mac_buf_ring, RXDMA_BUF, 1);
+#endif
 	dp_srng_cleanup(soc, &pdev->rxdma_mon_buf_ring, RXDMA_MONITOR_BUF, 0);
 
 	dp_srng_cleanup(soc, &pdev->rxdma_mon_dst_ring, RXDMA_MONITOR_DST, 0);
@@ -939,7 +948,11 @@ int dp_soc_attach_target_wifi3(void *txrx_soc)
 		struct dp_pdev *pdev = soc->pdev_list[i];
 		if (pdev) {
 			htt_srng_setup(soc->htt_handle, i,
-				pdev->rxdma_buf_ring.hal_srng, RXDMA_BUF);
+				pdev->rx_refill_buf_ring.hal_srng, RXDMA_BUF);
+#ifdef QCA_HOST2FW_RXBUF_RING
+			htt_srng_setup(soc->htt_handle, i,
+				pdev->rx_mac_buf_ring.hal_srng, RXDMA_BUF);
+#endif
 #ifdef notyet /* FW doesn't handle monitor rings yet */
 			htt_srng_setup(soc->htt_handle, i,
 				pdev->rxdma_mon_buf_ring.hal_srng,

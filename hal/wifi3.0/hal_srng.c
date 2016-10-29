@@ -426,7 +426,7 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 	},
 	{ /* RXDMA_BUF */
 		.start_ring_id = HAL_SRNG_WMAC1_SW2RXDMA0_BUF,
-		.max_rings = 1,
+		.max_rings = 2,
 		/* TODO: Check if the additional IPA buffer ring needs to be
 		 * setup here (in which case max_rings should be set to 2),
 		 * or it will be setup by IPA host driver
@@ -453,7 +453,7 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 		.reg_size = {},
 	},
 	{ /* RXDMA_MONITOR_BUF */
-		.start_ring_id = HAL_SRNG_WMAC1_SW2RXDMA1_BUF,
+		.start_ring_id = HAL_SRNG_WMAC1_SW2RXDMA2_BUF,
 		.max_rings = 1,
 		.entry_size = sizeof(struct wbm_buffer_ring) >> 2,
 		.lmac_ring = TRUE,
@@ -944,4 +944,5 @@ extern void hal_get_srng_params(void *hal_soc, void *hal_ring,
 		srng->intr_batch_cntr_thres_entries;
 	ring_params->low_threshold = srng->u.src_ring.low_threshold;
 	ring_params->flags = srng->flags;
+	ring_params->ring_id = srng->ring_id;
 }

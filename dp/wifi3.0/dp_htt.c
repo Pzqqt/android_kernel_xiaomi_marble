@@ -264,13 +264,33 @@ int htt_srng_setup(void *htt_soc, int pdev_id, void *hal_srng,
 
 	switch (hal_ring_type) {
 	case RXDMA_BUF:
-#if QCA_HOST2FW_RXBUF_RING
-		htt_ring_id = HTT_HOST1_TO_FW_RXBUF_RING;
-		htt_ring_type = HTT_SW_TO_SW_RING;
+		switch (srng_params.ring_id) {
+		case HAL_SRNG_WMAC1_SW2RXDMA0_BUF:
+#ifdef QCA_HOST2FW_RXBUF_RING
+			htt_ring_id = HTT_HOST1_TO_FW_RXBUF_RING;
+			htt_ring_type = HTT_SW_TO_SW_RING;
 #else
-		htt_ring_id = HTT_RXDMA_HOST_BUF_RING;
-		htt_ring_type = HTT_SW_TO_HW_RING;
+			htt_ring_id = HTT_RXDMA_HOST_BUF_RING;
+			htt_ring_type = HTT_SW_TO_HW_RING;
 #endif
+			break;
+		case HAL_SRNG_WMAC1_SW2RXDMA1_BUF:
+			htt_ring_id = HTT_RXDMA_HOST_BUF_RING;
+			htt_ring_type = HTT_SW_TO_HW_RING;
+			break;
+		default:
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+					   "%s: Ring %d currently not supported\n",
+					   __func__, srng_params.ring_id);
+			goto fail1;
+		}
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			 "%s: ring_type %d ring_id %d\n",
+			 __func__, hal_ring_type, srng_params.ring_id);
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			 "hp_addr 0x%x tp_addr 0x%x\n", hp_addr, tp_addr);
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			 "htt_ring_id %d\n", htt_ring_id);
 		break;
 	case RXDMA_MONITOR_BUF:
 		htt_ring_id = HTT_RXDMA_MONITOR_BUF_RING;

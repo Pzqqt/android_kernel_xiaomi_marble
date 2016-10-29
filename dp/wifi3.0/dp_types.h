@@ -291,8 +291,11 @@ struct dp_pdev {
 	/* TXRX SOC handle */
 	struct dp_soc *soc;
 
-	/* RXDMA buffer replenish ring */
-	struct dp_srng rxdma_buf_ring;
+	/* Ring used to replenish rx buffers (maybe to the firmware of MAC) */
+	struct dp_srng rx_refill_buf_ring;
+
+	/* Empty ring used by firmware to post rx buffers to the MAC */
+	struct dp_srng rx_mac_buf_ring;
 
 	/* RXDMA monitor buffer replenish ring */
 	struct dp_srng rxdma_mon_buf_ring;

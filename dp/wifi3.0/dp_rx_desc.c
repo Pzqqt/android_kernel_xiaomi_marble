@@ -32,7 +32,7 @@ QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc, uint32_t pool_id)
 {
 	uint32_t i;
 	struct dp_pdev *dp_pdev = soc->pdev_list[pool_id];
-	struct dp_srng *rxdma_srng = &dp_pdev->rxdma_buf_ring;
+	struct dp_srng *rxdma_srng = &dp_pdev->rx_refill_buf_ring;
 
 	soc->rx_desc[pool_id].array = qdf_mem_malloc(
 		((rxdma_srng->alloc_size/hal_srng_get_entrysize(soc->hal_soc,
