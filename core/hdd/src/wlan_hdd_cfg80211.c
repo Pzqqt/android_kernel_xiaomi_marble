@@ -118,7 +118,7 @@
 #define IBSS_CFG_PROTECTION_ENABLE_MASK 0x8282
 
 #define HDD2GHZCHAN(freq, chan, flag)   {     \
-		.band =  IEEE80211_BAND_2GHZ, \
+		.band =  NL80211_BAND_2GHZ, \
 		.center_freq = (freq), \
 		.hw_value = (chan), \
 		.flags = (flag), \
@@ -127,7 +127,7 @@
 }
 
 #define HDD5GHZCHAN(freq, chan, flag)   {     \
-		.band =  IEEE80211_BAND_5GHZ, \
+		.band =  NL80211_BAND_5GHZ, \
 		.center_freq = (freq), \
 		.hw_value = (chan), \
 		.flags = (flag), \
@@ -265,7 +265,7 @@ static struct ieee80211_rate a_mode_rates[] = {
 static struct ieee80211_supported_band wlan_hdd_band_2_4_ghz = {
 	.channels = NULL,
 	.n_channels = ARRAY_SIZE(hdd_channels_2_4_ghz),
-	.band = IEEE80211_BAND_2GHZ,
+	.band = NL80211_BAND_2GHZ,
 	.bitrates = g_mode_rates,
 	.n_bitrates = g_mode_rates_size,
 	.ht_cap.ht_supported = 1,
@@ -284,7 +284,7 @@ static struct ieee80211_supported_band wlan_hdd_band_2_4_ghz = {
 static struct ieee80211_supported_band wlan_hdd_band_5_ghz = {
 	.channels = NULL,
 	.n_channels = ARRAY_SIZE(hdd_channels_5_ghz),
-	.band = IEEE80211_BAND_5GHZ,
+	.band = NL80211_BAND_5GHZ,
 	.bitrates = a_mode_rates,
 	.n_bitrates = a_mode_rates_size,
 	.ht_cap.ht_supported = 1,
@@ -1621,7 +1621,7 @@ out:
 		if (temp_skbuff != NULL)
 			return cfg80211_vendor_cmd_reply(temp_skbuff);
 	}
-
+	wlan_hdd_undo_acs(adapter);
 	clear_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags);
 
 	return status;
@@ -1651,6 +1651,26 @@ static int wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	cds_ssr_unprotect(__func__);
 
 	return ret;
+}
+
+/**
+ * wlan_hdd_undo_acs : Do cleanup of DO_ACS
+ * @adapter:  Pointer to adapter struct
+ *
+ * This function handle cleanup of what was done in DO_ACS, including free
+ * memory.
+ *
+ * Return: void
+ */
+
+void wlan_hdd_undo_acs(hdd_adapter_t *adapter)
+{
+	if (adapter == NULL)
+		return;
+	if (adapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list) {
+		qdf_mem_free(adapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list);
+		adapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list = NULL;
+	}
 }
 
 /**
@@ -3889,6 +3909,11 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_CHANNEL_AVOIDANCE_IND] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_MPDU_AGGREGATION] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MPDU_AGGREGATION] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_NON_AGG_RETRY] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_AGG_RETRY] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_MGMT_RETRY] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_CTRL_RETRY] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_DELAY] = {.type = NLA_U8 },
 };
 
 /**
@@ -3959,6 +3984,8 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	uint8_t *scan_ie;
 	struct sir_set_tx_rx_aggregation_size request;
 	QDF_STATUS qdf_status;
+	uint8_t retry, delay;
+	int param_id;
 
 	ENTER_DEV(dev);
 
@@ -4066,6 +4093,57 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		access_policy_present = true;
 		hdd_info("Access policy present. access_policy %d",
 			access_policy);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_NON_AGG_RETRY]) {
+		retry = nla_get_u8(tb[
+				QCA_WLAN_VENDOR_ATTR_CONFIG_NON_AGG_RETRY]);
+		retry = retry > CFG_NON_AGG_RETRY_MAX ?
+				CFG_NON_AGG_RETRY_MAX : retry;
+		param_id = WMI_PDEV_PARAM_NON_AGG_SW_RETRY_TH;
+		ret_val = wma_cli_set_command(adapter->sessionId, param_id,
+					      retry, PDEV_CMD);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_AGG_RETRY]) {
+		retry = nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_CONFIG_AGG_RETRY]);
+		retry = retry > CFG_AGG_RETRY_MAX ?
+			CFG_AGG_RETRY_MAX : retry;
+
+		/* Value less than CFG_AGG_RETRY_MIN has side effect to t-put */
+		retry = ((retry > 0) && (retry < CFG_AGG_RETRY_MIN)) ?
+				CFG_AGG_RETRY_MIN : retry;
+		param_id = WMI_PDEV_PARAM_AGG_SW_RETRY_TH;
+		ret_val = wma_cli_set_command(adapter->sessionId, param_id,
+					      retry, PDEV_CMD);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_MGMT_RETRY]) {
+		retry = nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_CONFIG_MGMT_RETRY]);
+		retry = retry > CFG_MGMT_RETRY_MAX ?
+				CFG_MGMT_RETRY_MAX : retry;
+		param_id = WMI_PDEV_PARAM_MGMT_RETRY_LIMIT;
+		ret_val = wma_cli_set_command(adapter->sessionId, param_id,
+					      retry, PDEV_CMD);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_CTRL_RETRY]) {
+		retry = nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_CONFIG_CTRL_RETRY]);
+		retry = retry > CFG_CTRL_RETRY_MAX ?
+				CFG_CTRL_RETRY_MAX : retry;
+		param_id = WMI_PDEV_PARAM_CTRL_RETRY_LIMIT;
+		ret_val = wma_cli_set_command(adapter->sessionId, param_id,
+					      retry, PDEV_CMD);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_DELAY]) {
+		delay = nla_get_u8(tb[
+				QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_DELAY]);
+		delay = delay > CFG_PROPAGATION_DELAY_MAX ?
+				CFG_PROPAGATION_DELAY_MAX : delay;
+		param_id = WMI_PDEV_PARAM_PROPAGATION_DELAY;
+		ret_val = wma_cli_set_command(adapter->sessionId, param_id,
+					      delay, PDEV_CMD);
 	}
 
 	if (vendor_ie_present && access_policy_present) {
@@ -4286,6 +4364,9 @@ static int __wlan_hdd_cfg80211_wifi_logger_start(struct wiphy *wiphy,
 	start_log.is_iwpriv_command = nla_get_u32(
 			tb[QCA_WLAN_VENDOR_ATTR_WIFI_LOGGER_FLAGS]);
 	hdd_info("is_iwpriv_command =%d", start_log.is_iwpriv_command);
+
+	/* size is buff size which can be set using iwpriv command*/
+	start_log.size = 0;
 
 	cds_set_ring_log_level(start_log.ring_id, start_log.verbose_level);
 
@@ -5184,11 +5265,11 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 		if (pcl[i] <= ARRAY_SIZE(hdd_channels_2_4_ghz))
 			freq_list[i] =
 				ieee80211_channel_to_frequency(pcl[i],
-							IEEE80211_BAND_2GHZ);
+							NL80211_BAND_2GHZ);
 		else
 			freq_list[i] =
 				ieee80211_channel_to_frequency(pcl[i],
-							IEEE80211_BAND_5GHZ);
+							NL80211_BAND_5GHZ);
 	}
 
 	/* send the freq_list back to supplicant */
@@ -6404,7 +6485,6 @@ static int hdd_set_reset_bpf_offload(hdd_context_t *hdd_ctx,
 		hdd_err("qdf_mem_malloc failed for bpf_set_offload");
 		return -ENOMEM;
 	}
-	qdf_mem_zero(bpf_set_offload, sizeof(*bpf_set_offload));
 
 	/* Parse and fetch bpf packet size */
 	if (!tb[BPF_PACKET_SIZE]) {
@@ -8545,7 +8625,7 @@ int wlan_hdd_cfg80211_update_band(struct wiphy *wiphy, eCsrBand eBand)
 
 	ENTER();
 
-	for (i = 0; i < IEEE80211_NUM_BANDS; i++) {
+	for (i = 0; i < NUM_NL80211_BANDS; i++) {
 
 		if (NULL == wiphy->bands[i])
 			continue;
@@ -8557,7 +8637,7 @@ int wlan_hdd_cfg80211_update_band(struct wiphy *wiphy, eCsrBand eBand)
 				cds_get_channel_state(band->channels[j].
 								 hw_value);
 
-			if (IEEE80211_BAND_2GHZ == i && eCSR_BAND_5G == eBand) {
+			if (NL80211_BAND_2GHZ == i && eCSR_BAND_5G == eBand) {
 				/* 5G only */
 #ifdef WLAN_ENABLE_SOCIAL_CHANNELS_5G_ONLY
 				/* Enable Social channels for P2P */
@@ -8572,7 +8652,7 @@ int wlan_hdd_cfg80211_update_band(struct wiphy *wiphy, eCsrBand eBand)
 				band->channels[j].flags |=
 					IEEE80211_CHAN_DISABLED;
 				continue;
-			} else if (IEEE80211_BAND_5GHZ == i &&
+			} else if (NL80211_BAND_5GHZ == i &&
 					eCSR_BAND_24 == eBand) {
 				/* 2G only */
 				band->channels[j].flags |=
@@ -8732,14 +8812,14 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	 * wiphy flags don't get reset because of static memory.
 	 * It's better not to store channel in static memory.
 	 */
-	wiphy->bands[IEEE80211_BAND_2GHZ] = &wlan_hdd_band_2_4_ghz;
-	wiphy->bands[IEEE80211_BAND_2GHZ]->channels =
+	wiphy->bands[NL80211_BAND_2GHZ] = &wlan_hdd_band_2_4_ghz;
+	wiphy->bands[NL80211_BAND_2GHZ]->channels =
 		qdf_mem_malloc(sizeof(hdd_channels_2_4_ghz));
-	if (wiphy->bands[IEEE80211_BAND_2GHZ]->channels == NULL) {
+	if (wiphy->bands[NL80211_BAND_2GHZ]->channels == NULL) {
 		hdd_err("Not enough memory to allocate channels");
 		return -ENOMEM;
 	}
-	qdf_mem_copy(wiphy->bands[IEEE80211_BAND_2GHZ]->channels,
+	qdf_mem_copy(wiphy->bands[NL80211_BAND_2GHZ]->channels,
 			&hdd_channels_2_4_ghz[0],
 			sizeof(hdd_channels_2_4_ghz));
 	if ((hdd_is_5g_supported(pHddCtx)) &&
@@ -8747,22 +8827,22 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 		 (eHDD_DOT11_MODE_11g != pCfg->dot11Mode) &&
 		 (eHDD_DOT11_MODE_11b_ONLY != pCfg->dot11Mode) &&
 		 (eHDD_DOT11_MODE_11g_ONLY != pCfg->dot11Mode))) {
-		wiphy->bands[IEEE80211_BAND_5GHZ] = &wlan_hdd_band_5_ghz;
-		wiphy->bands[IEEE80211_BAND_5GHZ]->channels =
+		wiphy->bands[NL80211_BAND_5GHZ] = &wlan_hdd_band_5_ghz;
+		wiphy->bands[NL80211_BAND_5GHZ]->channels =
 			qdf_mem_malloc(sizeof(hdd_channels_5_ghz));
-		if (wiphy->bands[IEEE80211_BAND_5GHZ]->channels == NULL) {
+		if (wiphy->bands[NL80211_BAND_5GHZ]->channels == NULL) {
 			hdd_err("Not enough memory to allocate channels");
 			qdf_mem_free(wiphy->
-				bands[IEEE80211_BAND_2GHZ]->channels);
-			wiphy->bands[IEEE80211_BAND_2GHZ]->channels = NULL;
+				bands[NL80211_BAND_2GHZ]->channels);
+			wiphy->bands[NL80211_BAND_2GHZ]->channels = NULL;
 			return -ENOMEM;
 		}
-		qdf_mem_copy(wiphy->bands[IEEE80211_BAND_5GHZ]->channels,
+		qdf_mem_copy(wiphy->bands[NL80211_BAND_5GHZ]->channels,
 			&hdd_channels_5_ghz[0],
 			sizeof(hdd_channels_5_ghz));
 	}
 
-	for (i = 0; i < IEEE80211_NUM_BANDS; i++) {
+	for (i = 0; i < NUM_NL80211_BANDS; i++) {
 
 		if (NULL == wiphy->bands[i])
 			continue;
@@ -8770,7 +8850,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 		for (j = 0; j < wiphy->bands[i]->n_channels; j++) {
 			struct ieee80211_supported_band *band = wiphy->bands[i];
 
-			if (IEEE80211_BAND_2GHZ == i &&
+			if (NL80211_BAND_2GHZ == i &&
 				eCSR_BAND_5G == pCfg->nBandCapability) {
 				/* 5G only */
 #ifdef WLAN_ENABLE_SOCIAL_CHANNELS_5G_ONLY
@@ -8784,7 +8864,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 				band->channels[j].flags |=
 					IEEE80211_CHAN_DISABLED;
 				continue;
-			} else if (IEEE80211_BAND_5GHZ == i &&
+			} else if (NL80211_BAND_5GHZ == i &&
 					eCSR_BAND_24 == pCfg->nBandCapability) {
 				/* 2G only */
 				band->channels[j].flags |=
@@ -8841,7 +8921,7 @@ void wlan_hdd_cfg80211_deinit(struct wiphy *wiphy)
 {
 	int i;
 
-	for (i = 0; i < IEEE80211_NUM_BANDS; i++) {
+	for (i = 0; i < NUM_NL80211_BANDS; i++) {
 		if (NULL != wiphy->bands[i] &&
 		   (NULL != wiphy->bands[i]->channels)) {
 			qdf_mem_free(wiphy->bands[i]->channels);
@@ -9154,7 +9234,6 @@ static void wlan_hdd_set_dhcp_server_offload(hdd_adapter_t *pHostapdAdapter)
 		hdd_err("could not allocate tDhcpSrvOffloadInfo!");
 		return;
 	}
-	qdf_mem_zero(pDhcpSrvInfo, sizeof(*pDhcpSrvInfo));
 	pDhcpSrvInfo->vdev_id = pHostapdAdapter->sessionId;
 	pDhcpSrvInfo->dhcpSrvOffloadEnabled = true;
 	pDhcpSrvInfo->dhcpClientNum = pHddCtx->config->dhcpMaxNumClients;
@@ -10613,15 +10692,15 @@ struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 	}
 
 	if (chan_no <= ARRAY_SIZE(hdd_channels_2_4_ghz) &&
-	    (wiphy->bands[IEEE80211_BAND_2GHZ] != NULL)) {
+	    (wiphy->bands[NL80211_BAND_2GHZ] != NULL)) {
 		freq =
 			ieee80211_channel_to_frequency(chan_no,
-						       IEEE80211_BAND_2GHZ);
+						       NL80211_BAND_2GHZ);
 	} else if ((chan_no > ARRAY_SIZE(hdd_channels_2_4_ghz))
-		   && (wiphy->bands[IEEE80211_BAND_5GHZ] != NULL)) {
+		   && (wiphy->bands[NL80211_BAND_5GHZ] != NULL)) {
 		freq =
 			ieee80211_channel_to_frequency(chan_no,
-						       IEEE80211_BAND_5GHZ);
+						       NL80211_BAND_5GHZ);
 	} else {
 		hdd_err("Invalid chan_no %d", chan_no);
 		kfree(mgmt);
@@ -11415,7 +11494,6 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 					eConnectionState_NotConnected);
 			return -ENOMEM;
 		}
-		qdf_mem_zero(sme_config, sizeof(*sme_config));
 		sme_get_config_param(pHddCtx->hHal, sme_config);
 		/* These values are not sessionized. So, any change in these SME
 		 * configs on an older or parallel interface will affect the

@@ -352,7 +352,6 @@ static QDF_STATUS init_sme_cmd_list(tpAniSirGlobal pMac)
 	}
 
 	status = QDF_STATUS_SUCCESS;
-	qdf_mem_set(pMac->sme.pSmeCmdBufAddr, sme_cmd_ptr_ary_sz, 0);
 	for (cmd_idx = 0; cmd_idx < pMac->sme.totalSmeCmd; cmd_idx++) {
 		/*
 		 * Since total size of all commands together can be huge chunk
@@ -1018,6 +1017,15 @@ sme_process_cmd:
 			  pCommand->command);
 		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
 		status = csr_tdls_process_cmd(pMac, pCommand);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			if (csr_ll_remove_entry(&pMac->sme.smeCmdActiveList,
+						&pCommand->Link,
+						LL_ACCESS_LOCK)) {
+				qdf_mem_zero(&pCommand->u.tdlsCmd,
+					     sizeof(tTdlsCmd));
+				csr_release_command(pMac, pCommand);
+			}
+		}
 		break;
 #endif
 	case e_sme_command_set_hw_mode:
@@ -2249,7 +2257,6 @@ QDF_STATUS sme_set_ese_beacon_request(tHalHandle hHal, const uint8_t sessionId,
 	pSmeRrmContext->eseBcnReqInProgress = true;
 
 	sms_log(pMac, LOGE, "Sending Beacon Report Req to SME");
-	qdf_mem_zero(pSmeBcnReportReq, sizeof(tSirBeaconReportReqInd));
 
 	pSmeBcnReportReq->messageType = eWNI_SME_BEACON_REPORT_REQ_IND;
 	pSmeBcnReportReq->length = sizeof(tSirBeaconReportReqInd);
@@ -3507,7 +3514,6 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(tHalHandle hal_handle,
 				FL("scan_filter mem alloc failed"));
 		return QDF_STATUS_E_FAILURE;
 	} else {
-		qdf_mem_set(scan_filter, sizeof(tCsrScanResultFilter), 0);
 		qdf_mem_set(&first_ap_profile, sizeof(tSirBssDescription), 0);
 
 		if (NULL == profile) {
@@ -6662,7 +6668,6 @@ QDF_STATUS sme_register_p2p_ack_ind_callback(tHalHandle hal,
 		sme_release_global_lock(&mac_ctx->sme);
 		return QDF_STATUS_E_NOMEM;
 		}
-		qdf_mem_zero(msg, sizeof(*msg));
 		msg->message_type = eWNI_SME_REGISTER_P2P_ACK_CB;
 		msg->length = sizeof(*msg);
 
@@ -6704,7 +6709,6 @@ QDF_STATUS sme_register_mgmt_frame_ind_callback(tHalHandle hal,
 			sme_release_global_lock(&mac_ctx->sme);
 			return QDF_STATUS_E_NOMEM;
 		}
-		qdf_mem_set(msg, sizeof(*msg), 0);
 		msg->message_type = eWNI_SME_REGISTER_MGMT_FRAME_CB;
 		msg->length          = sizeof(*msg);
 
@@ -6762,7 +6766,6 @@ QDF_STATUS sme_register_mgmt_frame(tHalHandle hHal, uint8_t sessionId,
 		if (NULL == pMsg)
 			status = QDF_STATUS_E_NOMEM;
 		else {
-			qdf_mem_set(pMsg, len, 0);
 			pMsg->messageType = eWNI_SME_REGISTER_MGMT_FRAME_REQ;
 			pMsg->length = len;
 			pMsg->sessionId = sessionId;
@@ -6824,7 +6827,6 @@ QDF_STATUS sme_deregister_mgmt_frame(tHalHandle hHal, uint8_t sessionId,
 		if (NULL == pMsg)
 			status = QDF_STATUS_E_NOMEM;
 		else {
-			qdf_mem_set(pMsg, len, 0);
 			pMsg->messageType = eWNI_SME_REGISTER_MGMT_FRAME_REQ;
 			pMsg->length = len;
 			pMsg->registerFrame = false;
@@ -10407,7 +10409,6 @@ QDF_STATUS sme_update_tdls_peer_state(tHalHandle hHal,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	qdf_mem_zero(pTdlsPeerStateParams, sizeof(*pTdlsPeerStateParams));
 	qdf_mem_copy(&pTdlsPeerStateParams->peerMacAddr,
 			&peerStateParams->peerMacAddr, sizeof(tSirMacAddr));
 	pTdlsPeerStateParams->vdevId = peerStateParams->vdevId;
@@ -10551,7 +10552,6 @@ QDF_STATUS sme_send_tdls_chan_switch_req(tHalHandle hal,
 		sme_release_global_lock(&mac->sme);
 		return QDF_STATUS_E_FAILURE;
 	}
-	qdf_mem_zero(chan_switch_params, sizeof(*chan_switch_params));
 
 	switch (ch_switch_params->tdls_off_ch_mode) {
 	case ENABLE_CHANSWITCH:
@@ -11623,7 +11623,6 @@ QDF_STATUS sme_dcc_clear_stats(tHalHandle hHal, uint32_t vdev_id,
 		goto end;
 	}
 
-	qdf_mem_zero(request, sizeof(*request));
 	request->vdev_id = vdev_id;
 	request->dcc_stats_bitmap = dcc_stats_bitmap;
 
@@ -12245,7 +12244,6 @@ QDF_STATUS sme_update_access_policy_vendor_ie(tHalHandle hal,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	qdf_mem_set(msg, msg_len, 0);
 	msg->msg_type = (uint16_t)eWNI_SME_UPDATE_ACCESS_POLICY_VENDOR_IE;
 	msg->length = (uint16_t)msg_len;
 
@@ -12697,8 +12695,6 @@ QDF_STATUS sme_init_thermal_info(tHalHandle hHal, tSmeThermalParams thermalParam
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	qdf_mem_zero((void *)pWmaParam, sizeof(t_thermal_mgmt));
-
 	pWmaParam->thermalMgmtEnabled = thermalParam.smeThermalMgmtEnabled;
 	pWmaParam->throttlePeriod = thermalParam.smeThrottlePeriod;
 
@@ -12881,8 +12877,6 @@ QDF_STATUS sme_ap_disable_intra_bss_fwd(tHalHandle hHal, uint8_t sessionId,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	qdf_mem_zero(pSapDisableIntraFwd, sizeof(tDisableIntraBssFwd));
-
 	pSapDisableIntraFwd->sessionId = sessionId;
 	pSapDisableIntraFwd->disableintrabssfwd = disablefwd;
 
@@ -12967,8 +12961,6 @@ QDF_STATUS sme_stats_ext_request(uint8_t session_id, tpStatsExtRequestReq input)
 	if (data == NULL) {
 		return QDF_STATUS_E_NOMEM;
 	}
-
-	qdf_mem_zero(data, data_len);
 	data->vdev_id = session_id;
 	data->request_data_len = input->request_data_len;
 	if (input->request_data_len) {
@@ -13705,7 +13697,6 @@ QDF_STATUS sme_set_epno_list(tHalHandle hal,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	qdf_mem_zero(req_msg, len);
 	req_msg->num_networks = input->num_networks;
 	req_msg->request_id = input->request_id;
 	req_msg->session_id = input->session_id;
@@ -13785,7 +13776,6 @@ QDF_STATUS sme_set_passpoint_list(tHalHandle hal,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	qdf_mem_zero(req_msg, len);
 	req_msg->num_networks = input->num_networks;
 	req_msg->request_id = input->request_id;
 	req_msg->session_id = input->session_id;
@@ -13849,7 +13839,6 @@ QDF_STATUS sme_reset_passpoint_list(tHalHandle hal,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	qdf_mem_zero(req_msg, sizeof(*req_msg));
 	req_msg->request_id = input->request_id;
 	req_msg->session_id = input->session_id;
 
@@ -14699,7 +14688,6 @@ QDF_STATUS sme_configure_modulated_dtim(tHalHandle h_hal, uint8_t session_id,
 
 	if (QDF_STATUS_SUCCESS == status) {
 
-		qdf_mem_zero((void *)iwcmd, sizeof(*iwcmd));
 		iwcmd->param_value = modulated_dtim;
 		iwcmd->param_vdev_id = session_id;
 		iwcmd->param_id = GEN_PARAM_MODULATED_DTIM;
@@ -14753,13 +14741,12 @@ QDF_STATUS sme_wifi_start_logger(tHalHandle hal,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	qdf_mem_zero(req_msg, len);
-
 	req_msg->verbose_level = start_log.verbose_level;
 	req_msg->is_iwpriv_command = start_log.is_iwpriv_command;
 	req_msg->ring_id = start_log.ring_id;
 	req_msg->ini_triggered = start_log.ini_triggered;
 	req_msg->user_triggered = start_log.user_triggered;
+	req_msg->size = start_log.size;
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -15260,8 +15247,6 @@ QDF_STATUS sme_pdev_set_pcl(tHalHandle hal,
 		sms_log(mac, LOGE, FL("qdf_mem_malloc failed"));
 		return QDF_STATUS_E_NOMEM;
 	}
-
-	qdf_mem_zero(req_msg, len);
 
 	for (i = 0; i < msg.pcl_len; i++) {
 		req_msg->pcl_list[i] =  msg.pcl_list[i];
@@ -16061,7 +16046,6 @@ void sme_send_disassoc_req_frame(tHalHandle hal, uint8_t session_id,
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		return;
 
-	qdf_mem_set(msg, sizeof(struct sme_send_disassoc_frm_req), 0);
 	msg->msg_type = (uint16_t) eWNI_SME_SEND_DISASSOC_FRAME;
 
 	msg->length = (uint16_t) sizeof(struct sme_send_disassoc_frm_req);
@@ -16669,6 +16653,7 @@ QDF_STATUS sme_set_default_scan_ie(tHalHandle hal, uint16_t session_id,
 	return status;
 }
 
+#ifdef WLAN_FEATURE_DISA
 /**
  * sme_encrypt_decrypt_msg() - handles encrypt/decrypt mesaage
  * @hal: HAL handle
@@ -16799,6 +16784,7 @@ QDF_STATUS sme_encrypt_decrypt_msg_deregister_callback(tHalHandle h_hal)
 	}
 	return status;
 }
+#endif
 
 QDF_STATUS sme_set_cts2self_for_p2p_go(tHalHandle hal_handle)
 {

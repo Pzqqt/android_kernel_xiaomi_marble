@@ -385,10 +385,6 @@ csr_neighbor_roam_prepare_scan_profile_filter(tpAniSirGlobal pMac,
 			return QDF_STATUS_E_NOMEM;
 		}
 
-		qdf_mem_zero(pScanFilter->BSSIDs.bssid,
-			     sizeof(tSirMacAddr) *
-			     pScanFilter->BSSIDs.numOfBSSIDs);
-
 		/* Populate the BSSID from handoff info received from HDD */
 		for (i = 0; i < pScanFilter->BSSIDs.numOfBSSIDs; i++) {
 			qdf_copy_macaddr(&pScanFilter->BSSIDs.bssid[i],
@@ -1516,7 +1512,6 @@ static QDF_STATUS csr_neighbor_roam_process_handoff_req(
 		sms_log(mac_ctx, LOGE, FL("Memory alloc failed"));
 		return QDF_STATUS_E_NOMEM;
 	}
-	qdf_mem_set(profile, sizeof(tCsrRoamProfile), 0);
 	status =
 		csr_roam_copy_profile(mac_ctx, profile,
 				      session->pCurRoamProfile);
@@ -1536,10 +1531,6 @@ static QDF_STATUS csr_neighbor_roam_process_handoff_req(
 			goto end;
 		}
 	}
-
-	qdf_mem_zero(profile->BSSIDs.bssid,
-		sizeof(tSirMacAddr) *
-		profile->BSSIDs.numOfBSSIDs);
 
 	/* Populate the BSSID from handoff info received from HDD */
 	for (i = 0; i < profile->BSSIDs.numOfBSSIDs; i++) {

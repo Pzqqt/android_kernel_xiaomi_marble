@@ -2325,6 +2325,13 @@ enum qca_wlan_vendor_acs_hw_mode {
 	QCA_ACS_MODE_IEEE80211ANY,
 };
 
+#define CFG_NON_AGG_RETRY_MAX                  (31)
+#define CFG_AGG_RETRY_MAX                      (31)
+#define CFG_MGMT_RETRY_MAX                     (31)
+#define CFG_CTRL_RETRY_MAX                     (31)
+#define CFG_PROPAGATION_DELAY_MAX              (63)
+#define CFG_AGG_RETRY_MIN                      (5)
+
 /**
  * enum qca_access_policy - access control policy
  *
@@ -2370,6 +2377,13 @@ enum qca_ignore_assoc_disallowed {
  *      Tx aggregation size (8-bit unsigned value)
  * @QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MPDU_AGGREGATION:
  *       Rx aggregation size (8-bit unsigned value)
+ * @QCA_WLAN_VENDOR_ATTR_CONFIG_NON_AGG_RETRY:
+ *                                   Non aggregrate/11g sw retry threshold
+ * @QCA_WLAN_VENDOR_ATTR_CONFIG_AGG_RETRY: aggregrate sw retry threshold
+ * @QCA_WLAN_VENDOR_ATTR_CONFIG_MGMT_RETRY: management frame sw retry threshold
+ * @QCA_WLAN_VENDOR_ATTR_CONFIG_CTRL_RETRY: control frame sw retry threshold
+ * @QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_DELAY:
+ *			     propagation delay for 2G/5G band (units in us)
  * @QCA_WLAN_VENDOR_ATTR_CONFIG_SCAN_DEFAULT_IES: Update the default scan IEs
  * @QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_COMMAND:
  *                         Unsigned 32-bit value attribute for generic commands
@@ -2405,6 +2419,22 @@ enum qca_wlan_vendor_config {
 
 	QCA_WLAN_VENDOR_ATTR_CONFIG_TX_MPDU_AGGREGATION,
 	QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MPDU_AGGREGATION,
+
+	/* 8-bit unsigned value to configure the Non aggregrate/11g sw
+	 * retry threshold (0 disable, 31 max). */
+	QCA_WLAN_VENDOR_ATTR_CONFIG_NON_AGG_RETRY,
+	/* 8-bit unsigned value to configure the aggregrate sw
+	 * retry threshold (0 disable, 31 max). */
+	QCA_WLAN_VENDOR_ATTR_CONFIG_AGG_RETRY,
+	/* 8-bit unsigned value to configure the MGMT frame
+	 * retry threshold (0 disable, 31 max). */
+	QCA_WLAN_VENDOR_ATTR_CONFIG_MGMT_RETRY,
+	/* 8-bit unsigned value to configure the CTRL frame
+	 * retry threshold (0 disable, 31 max). */
+	QCA_WLAN_VENDOR_ATTR_CONFIG_CTRL_RETRY,
+	/* 8-bit unsigned value to configure the propagation delay for
+	 * 2G/5G band (0~63, units in us) */
+	QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_DELAY,
 
 	/* Attribute used to set scan default IEs to the driver.
 	*
@@ -3194,4 +3224,13 @@ static inline void wlan_hdd_cfg80211_indicate_disconnect(struct net_device *dev,
 #endif
 struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 						tSirBssDescription *bss_desc);
+
+/*
+ * As of 4.7, ieee80211_band is removed; add shims so we can reference
+ * nl80211_band instead
+  */
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 7, 0))
+#define NUM_NL80211_BANDS ((enum nl80211_band)IEEE80211_NUM_BANDS)
+#endif
+
 #endif

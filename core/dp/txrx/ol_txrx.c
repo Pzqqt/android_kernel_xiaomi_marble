@@ -975,7 +975,6 @@ ol_txrx_pdev_attach(ol_pdev_handle ctrl_pdev,
 	pdev = qdf_mem_malloc(sizeof(*pdev));
 	if (!pdev)
 		goto fail0;
-	qdf_mem_zero(pdev, sizeof(*pdev));
 
 	/* init LL/HL cfg here */
 	pdev->cfg.is_high_latency = ol_cfg_is_high_latency(ctrl_pdev);
@@ -1014,6 +1013,8 @@ ol_txrx_pdev_attach(ol_pdev_handle ctrl_pdev,
 	if (!pdev->htt_pdev)
 		goto fail3;
 
+	htt_register_rx_pkt_dump_callback(pdev->htt_pdev,
+			ol_rx_pkt_dump_call);
 	return pdev;
 
 fail3:
@@ -1632,9 +1633,8 @@ void ol_txrx_pdev_detach(ol_txrx_pdev_handle pdev, int force)
 		ol_txrx_peer_find_hash_erase(pdev);
 	}
 
-	ol_tx_deregister_flow_control(pdev);
-	/* Stop the communication between HTT and target at first */
-	htt_detach_target(pdev->htt_pdev);
+	/* to get flow pool status before freeing descs */
+	ol_tx_dump_flow_pool_info();
 
 	for (i = 0; i < pdev->tx_desc.pool_size; i++) {
 		void *htt_tx_desc;
@@ -1657,6 +1657,11 @@ void ol_txrx_pdev_detach(ol_txrx_pdev_handle pdev, int force)
 		htt_tx_desc = tx_desc->htt_tx_desc;
 		htt_tx_desc_free(pdev->htt_pdev, htt_tx_desc);
 	}
+
+	htt_deregister_rx_pkt_dump_callback(pdev->htt_pdev);
+	ol_tx_deregister_flow_control(pdev);
+	/* Stop the communication between HTT and target at first */
+	htt_detach_target(pdev->htt_pdev);
 
 	qdf_mem_multi_pages_free(pdev->osdev,
 		&pdev->tx_desc.desc_pages, 0, true);
@@ -2134,7 +2139,6 @@ ol_txrx_peer_attach(ol_txrx_vdev_handle vdev, uint8_t *peer_mac_addr)
 	peer = qdf_mem_malloc(sizeof(*peer));
 	if (!peer)
 		return NULL;    /* failure */
-	qdf_mem_zero(peer, sizeof(*peer));
 
 	/* store provided params */
 	peer->vdev = vdev;

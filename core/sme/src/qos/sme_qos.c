@@ -3493,8 +3493,6 @@ QDF_STATUS sme_qos_ft_aggr_qos_req(tpAniSirGlobal mac_ctx, uint8_t session_id)
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	qdf_mem_zero(aggr_req, sizeof(tSirAggrQosReq));
-
 	aggr_req->messageType = eWNI_SME_FT_AGGR_QOS_REQ;
 	aggr_req->length = sizeof(tSirAggrQosReq);
 	aggr_req->sessionId = session_id;
@@ -3942,7 +3940,6 @@ QDF_STATUS sme_qos_add_ts_req(tpAniSirGlobal pMac,
 			  __func__, __LINE__);
 		return QDF_STATUS_E_NOMEM;
 	}
-	qdf_mem_zero(pMsg, sizeof(tSirAddtsReq));
 	pMsg->messageType = eWNI_SME_ADDTS_REQ;
 	pMsg->length = sizeof(tSirAddtsReq);
 	pMsg->sessionId = sessionId;
@@ -4059,7 +4056,6 @@ QDF_STATUS sme_qos_del_ts_req(tpAniSirGlobal pMac,
 			  __func__, __LINE__);
 		return QDF_STATUS_E_NOMEM;
 	}
-	qdf_mem_zero(pMsg, sizeof(tSirDeltsReq));
 	/* get pointer to the TSPEC being deleted */
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
 	pACInfo = &pSession->ac_info[ac];

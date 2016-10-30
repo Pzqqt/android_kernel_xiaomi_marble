@@ -75,7 +75,6 @@ QDF_STATUS p2p_process_remain_on_channel_cmd(tpAniSirGlobal pMac,
 	else {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO, "%s call",
 			  __func__);
-		qdf_mem_set(pMsg, sizeof(tSirRemainOnChnReq), 0);
 		pMsg->messageType = eWNI_SME_REMAIN_ON_CHANNEL_REQ;
 		pMsg->length = (uint16_t) len;
 		qdf_copy_macaddr(&pMsg->selfMacAddr, &pSession->selfMacAddr);
@@ -301,7 +300,6 @@ QDF_STATUS p2p_send_action(tHalHandle hHal, uint8_t sessionId,
 	if (NULL == pMsg)
 		status = QDF_STATUS_E_NOMEM;
 	else {
-		qdf_mem_set((void *)pMsg, msgLen, 0);
 		pMsg->type = eWNI_SME_SEND_ACTION_FRAME_IND;
 		pMsg->msgLen = msgLen;
 		pMsg->sessionId = sessionId;
@@ -350,7 +348,6 @@ QDF_STATUS p2p_set_ps(tHalHandle hHal, tP2pPsConfig *pNoA)
 	if (NULL == pNoAParam)
 		status = QDF_STATUS_E_NOMEM;
 	else {
-		qdf_mem_set(pNoAParam, sizeof(tP2pPsConfig), 0);
 		qdf_mem_copy(pNoAParam, pNoA, sizeof(tP2pPsConfig));
 		msg.type = eWNI_SME_UPDATE_NOA;
 		msg.bodyval = 0;

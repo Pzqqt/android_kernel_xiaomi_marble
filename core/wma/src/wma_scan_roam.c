@@ -755,14 +755,17 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 	struct roam_offload_scan_params *params =
 				qdf_mem_malloc(sizeof(*params));
 
+	if (!params) {
+		WMA_LOGE("%s: Failed to allocate scan params", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	int auth_mode = WMI_AUTH_NONE;
+	params->auth_mode = WMI_AUTH_NONE;
 	if (roam_req)
-		auth_mode = e_csr_auth_type_to_rsn_authmode
+		params->auth_mode = e_csr_auth_type_to_rsn_authmode
 				    (roam_req->ConnectedNetwork.authentication,
 				    roam_req->ConnectedNetwork.encryption);
-	WMA_LOGD("%s : auth mode = %d", __func__, auth_mode);
-	params->auth_mode = auth_mode;
+	WMA_LOGD("%s : auth mode = %d", __func__, params->auth_mode);
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 	params->is_roam_req_valid = 0;
@@ -2273,6 +2276,9 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 		return status;
 	}
 
+	DPTRACE(qdf_dp_trace_record_event(QDF_DP_TRACE_EVENT_RECORD,
+		synch_event->vdev_id, QDF_PROTO_TYPE_EVENT, QDF_ROAM_SYNCH));
+
 	if (wma_is_roam_synch_in_progress(wma, synch_event->vdev_id)) {
 		WMA_LOGE("%s: Ignoring RSI since one is already in progress",
 				__func__);
@@ -2679,6 +2685,10 @@ void wma_process_roam_synch_complete(WMA_HANDLE handle, uint8_t vdev_id)
 				 vdev_id)) {
 		return;
 	}
+
+	DPTRACE(qdf_dp_trace_record_event(QDF_DP_TRACE_EVENT_RECORD,
+		vdev_id, QDF_PROTO_TYPE_EVENT, QDF_ROAM_COMPLETE));
+
 	WMA_LOGE("LFR3: Posting WMA_ROAM_OFFLOAD_SYNCH_CNF");
 	return;
 }
@@ -5777,6 +5787,9 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 	WMA_LOGD("%s: Reason %x, Notif %x for vdevid %x, rssi %d",
 		 __func__, wmi_event->reason, wmi_event->notif,
 		 wmi_event->vdev_id, wmi_event->rssi);
+
+	DPTRACE(qdf_dp_trace_record_event(QDF_DP_TRACE_EVENT_RECORD,
+		wmi_event->vdev_id, QDF_PROTO_TYPE_EVENT, QDF_ROAM_EVENTID));
 
 	switch (wmi_event->reason) {
 	case WMI_ROAM_REASON_BMISS:

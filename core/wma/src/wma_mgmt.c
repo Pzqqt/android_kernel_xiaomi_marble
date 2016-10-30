@@ -2496,6 +2496,11 @@ int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 	if (wmi_desc->nbuf)
 		qdf_nbuf_unmap_single(pdev->osdev, wmi_desc->nbuf,
 					  QDF_DMA_TO_DEVICE);
+
+	if (wma_handle->wma_mgmt_tx_packetdump_cb)
+		wma_handle->wma_mgmt_tx_packetdump_cb(wmi_desc->nbuf,
+			QDF_STATUS_SUCCESS, wmi_desc->vdev_id, TX_MGMT_PKT);
+
 	if (wmi_desc->tx_cmpl_cb)
 		wmi_desc->tx_cmpl_cb(wma_handle->mac_context,
 					   wmi_desc->nbuf, 1);
@@ -2559,7 +2564,7 @@ int wma_mgmt_tx_bundle_completion_handler(void *handle, uint8_t *buf,
 	int i;
 
 	param_buf = (WMI_MGMT_TX_BUNDLE_COMPLETION_EVENTID_param_tlvs *)buf;
-	if (!param_buf && !wma_handle) {
+	if (!param_buf || !wma_handle) {
 		WMA_LOGE("%s: Invalid mgmt Tx completion event", __func__);
 		return -EINVAL;
 	}
@@ -3298,6 +3303,13 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 		return -EINVAL;
 	}
 
+	if ((mgt_type == IEEE80211_FC0_TYPE_MGT &&
+			mgt_subtype != IEEE80211_FC0_SUBTYPE_BEACON) &&
+			wma_handle->wma_mgmt_rx_packetdump_cb)
+		wma_handle->wma_mgmt_rx_packetdump_cb(rx_pkt->pkt_buf,
+			QDF_STATUS_SUCCESS, rx_pkt->pkt_meta.sessionId,
+			RX_MGMT_PKT);
+
 	wma_handle->mgmt_rx(wma_handle, rx_pkt);
 	return 0;
 }
@@ -3394,4 +3406,52 @@ QDF_STATUS wma_register_mgmt_frm_client(
 	wma_handle->mgmt_rx = mgmt_frm_rx;
 
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wma_register_packetdump_callback() - stores tx and rx mgmt packet dump
+ *   callback handler
+ * @wma_mgmt_tx_packetdump_cb: tx mgmt packetdump cb
+ * @wma_mgmt_rx_packetdump_cb: rx mgmt packetdump cb
+ *
+ * This function is used to store tx and rx mgmt. packet dump callback
+ *
+ * Return: None
+ *
+ */
+void wma_register_packetdump_callback(
+	tp_wma_packetdump_cb wma_mgmt_tx_packetdump_cb,
+	tp_wma_packetdump_cb wma_mgmt_rx_packetdump_cb)
+{
+	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!wma_handle) {
+		WMA_LOGE("wma handle is NULL");
+		return;
+	}
+
+	wma_handle->wma_mgmt_tx_packetdump_cb = wma_mgmt_tx_packetdump_cb;
+	wma_handle->wma_mgmt_rx_packetdump_cb = wma_mgmt_rx_packetdump_cb;
+}
+
+/**
+ * wma_deregister_packetdump_callback() - removes tx and rx mgmt packet dump
+ *   callback handler
+ *
+ * This function is used to remove tx and rx mgmt. packet dump callback
+ *
+ * Return: None
+ *
+ */
+void wma_deregister_packetdump_callback(void)
+{
+	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!wma_handle) {
+		WMA_LOGE("wma handle is NULL");
+		return;
+	}
+
+	wma_handle->wma_mgmt_tx_packetdump_cb = NULL;
+	wma_handle->wma_mgmt_tx_packetdump_cb = NULL;
 }

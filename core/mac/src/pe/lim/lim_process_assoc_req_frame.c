@@ -1775,6 +1775,15 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			     WMA_GET_RX_MPDU_DATA(rx_pkt_info), frame_len);
 		return;
 	}
+	if (session->limMlmState == eLIM_MLM_WT_DEL_BSS_RSP_STATE) {
+		lim_log(mac_ctx, LOGE, FL("drop ASSOC REQ on sessionid: %d "
+			"role=%d from: "MAC_ADDRESS_STR" in limMlmState %d"),
+			session->peSessionId,
+			GET_LIM_SYSTEM_ROLE(session),
+			MAC_ADDR_ARRAY(hdr->sa),
+			eLIM_MLM_WT_DEL_BSS_RSP_STATE);
+		return;
+	}
 
 	/*
 	 * If a STA is already present in DPH and it is initiating a Assoc
@@ -1863,7 +1872,6 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			FL("Allocate Memory failed in assoc_req"));
 		return;
 	}
-	qdf_mem_set((void *)assoc_req, sizeof(*assoc_req), 0);
 
 	/* Parse Assoc Request frame */
 	if (false == lim_chk_assoc_req_parse_error(mac_ctx, hdr, session,
@@ -2198,7 +2206,6 @@ void lim_send_mlm_assoc_ind(tpAniSirGlobal mac_ctx,
 				FL("AllocateMemory failed for assoc_ind"));
 			return;
 		}
-		qdf_mem_set(assoc_ind, temp, 0);
 		qdf_mem_copy((uint8_t *) assoc_ind->peerMacAddr,
 			(uint8_t *) sta_ds->staAddr, sizeof(tSirMacAddr));
 		assoc_ind->aid = sta_ds->assocId;

@@ -157,8 +157,6 @@ static QDF_STATUS lim_process_set_hw_mode(tpAniSirGlobal mac, uint32_t *msg)
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	qdf_mem_zero(req_msg, len);
-
 	req_msg->hw_mode_index = buf->set_hw.hw_mode_index;
 	req_msg->reason = buf->set_hw.reason;
 	/* Other parameters are not needed for WMA */
@@ -229,8 +227,6 @@ static QDF_STATUS lim_process_set_dual_mac_cfg_req(tpAniSirGlobal mac,
 		 */
 		return QDF_STATUS_E_NOMEM;
 	}
-
-	qdf_mem_zero(req_msg, len);
 
 	req_msg->scan_config = buf->set_dual_mac.scan_config;
 	req_msg->fw_mode_config = buf->set_dual_mac.fw_mode_config;
@@ -676,7 +672,6 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			goto end;
 		}
 
-		qdf_mem_set((void *)sme_start_bss_req, size, 0);
 		qdf_mem_copy(sme_start_bss_req, msg_buf,
 			sizeof(tSirSmeStartBssReq));
 		if (!lim_is_sme_start_bss_req_valid(mac_ctx,
@@ -880,9 +875,6 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 				ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
 				goto free;
 			}
-			qdf_mem_set(session->parsedAssocReq,
-					(session->dph.dphHashTable.size *
-					sizeof(tpSirAssocReq)), 0);
 		}
 
 		if (!sme_start_bss_req->channelId &&
@@ -974,8 +966,6 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
 			goto free;
 		}
-
-		qdf_mem_set((void *)mlm_start_req, sizeof(tLimMlmStartReq), 0);
 
 		/* Copy SSID to the MLM start structure */
 		qdf_mem_copy((uint8_t *) &mlm_start_req->ssId,
@@ -1288,8 +1278,6 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	qdf_mem_set((uint8_t *) pScanOffloadReq, len, 0);
-
 	msg.type = WMA_START_SCAN_OFFLOAD_REQ;
 	msg.bodyptr = pScanOffloadReq;
 	msg.bodyval = 0;
@@ -1584,7 +1572,6 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
 			goto end;
 		}
-		(void)qdf_mem_set((void *)sme_join_req, n_size, 0);
 		(void)qdf_mem_copy((void *)sme_join_req, (void *)msg_buf,
 			n_size);
 
@@ -1872,7 +1859,6 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
 			goto end;
 		}
-		(void)qdf_mem_set((void *)mlm_join_req, val, 0);
 
 		/* PE SessionId is stored as a part of JoinReq */
 		mlm_join_req->sessionId = session->peSessionId;
@@ -2097,7 +2083,6 @@ static void __lim_process_sme_reassoc_req(tpAniSirGlobal mac_ctx,
 		ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
 		goto end;
 	}
-	(void)qdf_mem_set((void *)reassoc_req, size, 0);
 	(void)qdf_mem_copy((void *)reassoc_req, (void *)msg_buf, size);
 
 	if (!lim_is_sme_join_req_valid(mac_ctx,
@@ -4180,9 +4165,12 @@ static void __lim_process_roam_scan_offload_req(tpAniSirGlobal mac_ctx,
 	if (local_ie_len &&
 		!lim_update_ext_cap_ie(mac_ctx, req_buffer->assoc_ie.addIEdata,
 					local_ie_buf, &local_ie_len)) {
-		req_buffer->assoc_ie.length = local_ie_len;
-		qdf_mem_copy(req_buffer->assoc_ie.addIEdata, local_ie_buf,
-				local_ie_len);
+		if (local_ie_len <=
+		    QDF_ARRAY_SIZE(req_buffer->assoc_ie.addIEdata)) {
+			req_buffer->assoc_ie.length = local_ie_len;
+			qdf_mem_copy(req_buffer->assoc_ie.addIEdata,
+				     local_ie_buf, local_ie_len);
+		}
 	}
 	qdf_mem_free(local_ie_buf);
 
@@ -4648,11 +4636,12 @@ skip_match:
 	}
 	if (match) {
 		qdf_mutex_acquire(&mac_ctx->lim.lim_frame_register_lock);
-		qdf_list_remove_node(
+		if (QDF_STATUS_SUCCESS ==
+				qdf_list_remove_node(
 				&mac_ctx->lim.gLimMgmtFrameRegistratinQueue,
-				(qdf_list_node_t *)lim_mgmt_regn);
+				(qdf_list_node_t *)lim_mgmt_regn))
+			qdf_mem_free(lim_mgmt_regn);
 		qdf_mutex_release(&mac_ctx->lim.lim_frame_register_lock);
-		qdf_mem_free(lim_mgmt_regn);
 	}
 
 	if (sme_req->registerFrame) {
@@ -4660,9 +4649,6 @@ skip_match:
 			qdf_mem_malloc(sizeof(struct mgmt_frm_reg_info) +
 					sme_req->matchLen);
 		if (lim_mgmt_regn != NULL) {
-			qdf_mem_set((void *)lim_mgmt_regn,
-				    sizeof(struct mgmt_frm_reg_info) +
-				    sme_req->matchLen, 0);
 			lim_mgmt_regn->frameType = sme_req->frameType;
 			lim_mgmt_regn->matchLen = sme_req->matchLen;
 			lim_mgmt_regn->sessionId = sme_req->sessionId;

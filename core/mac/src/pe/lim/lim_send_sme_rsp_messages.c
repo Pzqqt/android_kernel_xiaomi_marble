@@ -462,7 +462,6 @@ lim_send_sme_join_reassoc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 			return;
 		}
 
-		qdf_mem_set((uint8_t *) sme_join_rsp, rsp_len, 0);
 		sme_join_rsp->beaconLength = 0;
 		sme_join_rsp->assocReqLength = 0;
 		sme_join_rsp->assocRspLength = 0;
@@ -480,7 +479,6 @@ lim_send_sme_join_reassoc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 				FL("MemAlloc fail - JOIN/REASSOC_RSP"));
 			return;
 		}
-		qdf_mem_set((uint8_t *) sme_join_rsp, rsp_len, 0);
 		if (result_code == eSIR_SME_SUCCESS) {
 			sta_ds = dph_get_hash_entry(mac_ctx,
 				DPH_STA_HASH_INDEX_PEER,
@@ -592,8 +590,6 @@ lim_send_sme_start_bss_rsp(tpAniSirGlobal pMac,
 					("call to AllocateMemory failed for eWNI_SME_START_BSS_RSP"));
 			return;
 		}
-		qdf_mem_set((uint8_t *) pSirSmeRsp, size, 0);
-
 	} else {
 		/* subtract size of beaconLength + Mac Hdr + Fixed Fields before SSID */
 		ieOffset = sizeof(tAniBeaconStruct) + SIR_MAC_B_PR_SSID_OFFSET;
@@ -611,7 +607,6 @@ lim_send_sme_start_bss_rsp(tpAniSirGlobal pMac,
 
 			return;
 		}
-		qdf_mem_set((uint8_t *) pSirSmeRsp, size, 0);
 		size = sizeof(tSirSmeStartBssRsp);
 		if (resultCode == eSIR_SME_SUCCESS) {
 
@@ -769,7 +764,6 @@ lim_post_sme_scan_rsp_message(tpAniSirGlobal pMac,
 			FL("AllocateMemory failed for eWNI_SME_SCAN_RSP"));
 		return;
 	}
-	qdf_mem_set((void *)pSirSmeScanRsp, sizeof(tSirSmeScanRsp), 0);
 
 	pSirSmeScanRsp->messageType = eWNI_SME_SCAN_RSP;
 	pSirSmeScanRsp->statusCode = resultCode;
@@ -1697,7 +1691,6 @@ lim_send_sme_addts_rsp(tpAniSirGlobal pMac, uint8_t rspReqd, uint32_t status,
 		return;
 	}
 
-	qdf_mem_set((uint8_t *) rsp, sizeof(*rsp), 0);
 	rsp->messageType = eWNI_SME_ADDTS_RSP;
 	rsp->rc = status;
 	rsp->rsp.status = (enum eSirMacStatusCodes)status;
@@ -1746,7 +1739,6 @@ lim_send_sme_delts_rsp(tpAniSirGlobal pMac, tpSirDeltsReq delts, uint32_t status
 		lim_log(pMac, LOGP, FL("AllocateMemory failed for DELTS_RSP"));
 		return;
 	}
-	qdf_mem_set((uint8_t *) rsp, sizeof(*rsp), 0);
 
 	if (psessionEntry != NULL) {
 
@@ -1797,7 +1789,6 @@ lim_send_sme_delts_ind(tpAniSirGlobal pMac, tpSirDeltsReqInfo delts, uint16_t ai
 		lim_log(pMac, LOGP, FL("AllocateMemory failed for DELTS_IND"));
 		return;
 	}
-	qdf_mem_set((uint8_t *) rsp, sizeof(*rsp), 0);
 
 	rsp->messageType = eWNI_SME_DELTS_IND;
 	rsp->rc = eSIR_SUCCESS;
@@ -1949,9 +1940,6 @@ lim_send_sme_ibss_peer_ind(tpAniSirGlobal pMac,
 		return;
 	}
 
-	qdf_mem_set((void *)pNewPeerInd, (sizeof(tSmeIbssPeerInd) + beaconLen),
-		    0);
-
 	qdf_mem_copy((uint8_t *) pNewPeerInd->peer_addr.bytes,
 		     peerMacAddr, QDF_MAC_ADDR_SIZE);
 	pNewPeerInd->staId = staIndex;
@@ -1974,6 +1962,76 @@ lim_send_sme_ibss_peer_ind(tpAniSirGlobal pMac,
 
 }
 
+/**
+ * lim_process_csa_wbw_ie() - Process CSA Wide BW IE
+ * @mac_ctx:         pointer to global adapter context
+ * @csa_params:      pointer to CSA parameters
+ * @chnl_switch_info:pointer to channel switch parameters
+ * @session_entry:   session pointer
+ *
+ * Return: None
+ */
+static void lim_process_csa_wbw_ie(tpAniSirGlobal mac_ctx,
+		struct csa_offload_params *csa_params,
+		tLimWiderBWChannelSwitchInfo *chnl_switch_info,
+		tpPESession session_entry)
+{
+	struct ch_params_s ch_params = {0};
+	uint8_t ap_new_ch_width;
+	bool new_ch_width_dfn = false;
+	uint8_t center_freq_diff;
+
+	ap_new_ch_width = csa_params->new_ch_width + 1;
+	if ((ap_new_ch_width == CH_WIDTH_80MHZ) &&
+			csa_params->new_ch_freq_seg2) {
+		new_ch_width_dfn = true;
+		if (csa_params->new_ch_freq_seg2 >
+				csa_params->new_ch_freq_seg1)
+			center_freq_diff = csa_params->new_ch_freq_seg2 -
+				csa_params->new_ch_freq_seg1;
+		else
+			center_freq_diff = csa_params->new_ch_freq_seg1 -
+				csa_params->new_ch_freq_seg2;
+		if (center_freq_diff == CENTER_FREQ_DIFF_160MHz)
+			ap_new_ch_width = CH_WIDTH_160MHZ;
+		else if (center_freq_diff > CENTER_FREQ_DIFF_80P80MHz)
+			ap_new_ch_width = CH_WIDTH_80P80MHZ;
+		else
+			ap_new_ch_width = CH_WIDTH_80MHZ;
+	}
+	session_entry->gLimChannelSwitch.state =
+		eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY;
+	if ((ap_new_ch_width == CH_WIDTH_160MHZ) &&
+			!new_ch_width_dfn) {
+		ch_params.ch_width = CH_WIDTH_160MHZ;
+		cds_set_channel_params(csa_params->channel, 0,
+				&ch_params);
+		ap_new_ch_width = ch_params.ch_width;
+		csa_params->new_ch_freq_seg1 = ch_params.center_freq_seg0;
+		csa_params->new_ch_freq_seg2 = ch_params.center_freq_seg1;
+	}
+	chnl_switch_info->newChanWidth = ap_new_ch_width;
+	chnl_switch_info->newCenterChanFreq0 = csa_params->new_ch_freq_seg1;
+	chnl_switch_info->newCenterChanFreq1 = csa_params->new_ch_freq_seg2;
+
+	if (session_entry->ch_width == ap_new_ch_width)
+		goto prnt_log;
+
+	if (session_entry->ch_width == CH_WIDTH_80MHZ) {
+		chnl_switch_info->newChanWidth = CH_WIDTH_80MHZ;
+		chnl_switch_info->newCenterChanFreq1 = 0;
+	} else {
+		session_entry->ch_width = ap_new_ch_width;
+		chnl_switch_info->newChanWidth = ap_new_ch_width;
+	}
+prnt_log:
+	lim_log(mac_ctx, LOG1,
+			FL("new channel: %d new_ch_width:%d seg0:%d seg1:%d"),
+			csa_params->channel,
+			chnl_switch_info->newChanWidth,
+			chnl_switch_info->newCenterChanFreq0,
+			chnl_switch_info->newCenterChanFreq1);
+}
 /**
  * lim_handle_csa_offload_msg() - Handle CSA offload message
  * @mac_ctx:         pointer to global adapter context
@@ -2023,182 +2081,181 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		goto err;
 	}
 
-	if (LIM_IS_STA_ROLE(session_entry)) {
-		/*
-		 * on receiving channel switch announcement from AP, delete all
-		 * TDLS peers before leaving BSS and proceed for channel switch
-		 */
-		lim_delete_tdls_peers(mac_ctx, session_entry);
+	if (!LIM_IS_STA_ROLE(session_entry)) {
+		lim_log(mac_ctx, LOG1, FL("Invalid role to handle CSA"));
+		goto err;
+	}
 
-		lim_ch_switch = &session_entry->gLimChannelSwitch;
-		session_entry->gLimChannelSwitch.switchMode =
-			csa_params->switch_mode;
-		/* timer already started by firmware, switch immediately */
-		session_entry->gLimChannelSwitch.switchCount = 0;
-		session_entry->gLimChannelSwitch.primaryChannel =
-			csa_params->channel;
-		session_entry->gLimChannelSwitch.state =
-			eLIM_CHANNEL_SWITCH_PRIMARY_ONLY;
-		session_entry->gLimChannelSwitch.ch_width = CH_WIDTH_20MHZ;
-		lim_ch_switch->sec_ch_offset =
-			session_entry->htSecondaryChannelOffset;
-		session_entry->gLimChannelSwitch.ch_center_freq_seg0 = 0;
-		session_entry->gLimChannelSwitch.ch_center_freq_seg1 = 0;
-		chnl_switch_info =
-			&session_entry->gLimWiderBWChannelSwitch;
+	/*
+	 * on receiving channel switch announcement from AP, delete all
+	 * TDLS peers before leaving BSS and proceed for channel switch
+	 */
+	lim_delete_tdls_peers(mac_ctx, session_entry);
 
-		lim_log(mac_ctx, LOG1,
-			FL("vht:%d ht:%d flag:%x chan:%d seg1:%d seg2:%d width:%d country:%s class:%d"),
+	lim_ch_switch = &session_entry->gLimChannelSwitch;
+	session_entry->gLimChannelSwitch.switchMode =
+		csa_params->switch_mode;
+	/* timer already started by firmware, switch immediately */
+	session_entry->gLimChannelSwitch.switchCount = 0;
+	session_entry->gLimChannelSwitch.primaryChannel =
+		csa_params->channel;
+	session_entry->gLimChannelSwitch.state =
+		eLIM_CHANNEL_SWITCH_PRIMARY_ONLY;
+	session_entry->gLimChannelSwitch.ch_width = CH_WIDTH_20MHZ;
+	lim_ch_switch->sec_ch_offset =
+		session_entry->htSecondaryChannelOffset;
+	session_entry->gLimChannelSwitch.ch_center_freq_seg0 = 0;
+	session_entry->gLimChannelSwitch.ch_center_freq_seg1 = 0;
+	chnl_switch_info =
+		&session_entry->gLimWiderBWChannelSwitch;
+
+	lim_log(mac_ctx, LOG1,
+			FL("vht:%d ht:%d flag:%x chan:%d"),
 			session_entry->vhtCapability,
 			session_entry->htSupportedChannelWidthSet,
 			csa_params->ies_present_flag,
-			csa_params->channel, csa_params->new_ch_freq_seg1,
+			csa_params->channel);
+	lim_log(mac_ctx, LOG1,
+			FL("seg1:%d seg2:%d width:%d country:%s class:%d"),
+			csa_params->new_ch_freq_seg1,
 			csa_params->new_ch_freq_seg2,
 			csa_params->new_ch_width,
 			mac_ctx->scan.countryCodeCurrent,
 			csa_params->new_op_class);
 
-		if (session_entry->vhtCapability &&
-				session_entry->htSupportedChannelWidthSet) {
-			if (csa_params->ies_present_flag & lim_wbw_ie_present) {
+	if (session_entry->vhtCapability &&
+			session_entry->htSupportedChannelWidthSet) {
+		if (csa_params->ies_present_flag & lim_wbw_ie_present) {
+			lim_process_csa_wbw_ie(mac_ctx, csa_params,
+					chnl_switch_info, session_entry);
+			lim_ch_switch->sec_ch_offset =
+				csa_params->sec_chan_offset;
+		} else if (csa_params->ies_present_flag
+				& lim_xcsa_ie_present) {
+			chan_space =
+				cds_reg_dmn_get_chanwidth_from_opclass(
+						mac_ctx->scan.countryCodeCurrent,
+						csa_params->channel,
+						csa_params->new_op_class);
+			session_entry->gLimChannelSwitch.state =
+				eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY;
+
+			if (chan_space == 80) {
 				chnl_switch_info->newChanWidth =
-					csa_params->new_ch_width;
-				chnl_switch_info->newCenterChanFreq0 =
-					csa_params->new_ch_freq_seg1;
-				chnl_switch_info->newCenterChanFreq1 =
-					csa_params->new_ch_freq_seg2;
-				session_entry->gLimChannelSwitch.state =
-				   eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY;
-				session_entry->gLimChannelSwitch.ch_width =
-					csa_params->new_ch_width + 1;
-			} else if (csa_params->ies_present_flag
-			    & lim_xcsa_ie_present) {
-				chan_space =
-					cds_reg_dmn_get_chanwidth_from_opclass(
-					    mac_ctx->scan.countryCodeCurrent,
-					    csa_params->channel,
-					    csa_params->new_op_class);
-				session_entry->gLimChannelSwitch.state =
-				    eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY;
-
-				if (chan_space == 80) {
-					chnl_switch_info->newChanWidth =
-								CH_WIDTH_80MHZ;
-				} else if (chan_space == 40) {
-					chnl_switch_info->newChanWidth =
-								CH_WIDTH_40MHZ;
-				} else {
-					chnl_switch_info->newChanWidth =
-								CH_WIDTH_20MHZ;
-					lim_ch_switch->state =
-					    eLIM_CHANNEL_SWITCH_PRIMARY_ONLY;
-				}
-
-				ch_params.ch_width =
-					chnl_switch_info->newChanWidth;
-				cds_set_channel_params(csa_params->channel,
-						0, &ch_params);
-				chnl_switch_info->newCenterChanFreq0 =
-					ch_params.center_freq_seg0;
-				/*
-				* This is not applicable for 20/40/80 MHz.
-				* Only used when we support 80+80 MHz operation.
-				* In case of 80+80 MHz, this parameter indicates
-				* center channel frequency index of 80 MHz
-				* channel offrequency segment 1.
-				*/
-				chnl_switch_info->newCenterChanFreq1 =
-					ch_params.center_freq_seg1;
-				lim_ch_switch->sec_ch_offset =
-					ch_params.sec_ch_offset;
-
-			}
-			session_entry->gLimChannelSwitch.ch_center_freq_seg0 =
-				chnl_switch_info->newCenterChanFreq0;
-			session_entry->gLimChannelSwitch.ch_center_freq_seg1 =
-				chnl_switch_info->newCenterChanFreq1;
-			session_entry->gLimChannelSwitch.ch_width =
-				chnl_switch_info->newChanWidth;
-
-		} else if (session_entry->htSupportedChannelWidthSet) {
-			if (csa_params->ies_present_flag
-			    & lim_xcsa_ie_present) {
-				chan_space =
-					cds_reg_dmn_get_chanwidth_from_opclass(
-					mac_ctx->scan.countryCodeCurrent,
-					csa_params->channel,
-					csa_params->new_op_class);
-				lim_ch_switch->state =
-				    eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY;
-				if (chan_space == 40) {
-					lim_ch_switch->ch_width =
-								CH_WIDTH_40MHZ;
-					chnl_switch_info->newChanWidth =
-								CH_WIDTH_40MHZ;
-					ch_params.ch_width =
-						chnl_switch_info->newChanWidth;
-					cds_set_channel_params(
-							csa_params->channel,
-							0, &ch_params);
-					lim_ch_switch->ch_center_freq_seg0 =
-						ch_params.center_freq_seg0;
-					lim_ch_switch->sec_ch_offset =
-						ch_params.sec_ch_offset;
-				} else {
-					lim_ch_switch->ch_width =
-								CH_WIDTH_20MHZ;
-					chnl_switch_info->newChanWidth =
-								CH_WIDTH_40MHZ;
-					lim_ch_switch->state =
-					    eLIM_CHANNEL_SWITCH_PRIMARY_ONLY;
-					lim_ch_switch->sec_ch_offset =
-						PHY_SINGLE_CHANNEL_CENTERED;
-				}
+					CH_WIDTH_80MHZ;
+			} else if (chan_space == 40) {
+				chnl_switch_info->newChanWidth =
+					CH_WIDTH_40MHZ;
 			} else {
+				chnl_switch_info->newChanWidth =
+					CH_WIDTH_20MHZ;
+				lim_ch_switch->state =
+					eLIM_CHANNEL_SWITCH_PRIMARY_ONLY;
+			}
+
+			ch_params.ch_width =
+				chnl_switch_info->newChanWidth;
+			cds_set_channel_params(csa_params->channel,
+					0, &ch_params);
+			chnl_switch_info->newCenterChanFreq0 =
+				ch_params.center_freq_seg0;
+			/*
+			 * This is not applicable for 20/40/80 MHz.
+			 * Only used when we support 80+80 MHz operation.
+			 * In case of 80+80 MHz, this parameter indicates
+			 * center channel frequency index of 80 MHz
+			 * channel offrequency segment 1.
+			 */
+			chnl_switch_info->newCenterChanFreq1 =
+				ch_params.center_freq_seg1;
+			lim_ch_switch->sec_ch_offset =
+				ch_params.sec_ch_offset;
+
+		}
+		session_entry->gLimChannelSwitch.ch_center_freq_seg0 =
+			chnl_switch_info->newCenterChanFreq0;
+		session_entry->gLimChannelSwitch.ch_center_freq_seg1 =
+			chnl_switch_info->newCenterChanFreq1;
+		session_entry->gLimChannelSwitch.ch_width =
+			chnl_switch_info->newChanWidth;
+
+	} else if (session_entry->htSupportedChannelWidthSet) {
+		if (csa_params->ies_present_flag
+				& lim_xcsa_ie_present) {
+			chan_space =
+				cds_reg_dmn_get_chanwidth_from_opclass(
+						mac_ctx->scan.countryCodeCurrent,
+						csa_params->channel,
+						csa_params->new_op_class);
+			lim_ch_switch->state =
+				eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY;
+			if (chan_space == 40) {
 				lim_ch_switch->ch_width =
 					CH_WIDTH_40MHZ;
-				lim_ch_switch->state =
-				     eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY;
-				ch_params.ch_width = CH_WIDTH_40MHZ;
-				cds_set_channel_params(csa_params->channel,
+				chnl_switch_info->newChanWidth =
+					CH_WIDTH_40MHZ;
+				ch_params.ch_width =
+					chnl_switch_info->newChanWidth;
+				cds_set_channel_params(
+						csa_params->channel,
 						0, &ch_params);
 				lim_ch_switch->ch_center_freq_seg0 =
 					ch_params.center_freq_seg0;
 				lim_ch_switch->sec_ch_offset =
 					ch_params.sec_ch_offset;
+			} else {
+				lim_ch_switch->ch_width =
+					CH_WIDTH_20MHZ;
+				chnl_switch_info->newChanWidth =
+					CH_WIDTH_40MHZ;
+				lim_ch_switch->state =
+					eLIM_CHANNEL_SWITCH_PRIMARY_ONLY;
+				lim_ch_switch->sec_ch_offset =
+					PHY_SINGLE_CHANNEL_CENTERED;
 			}
-
+		} else {
+			lim_ch_switch->ch_width =
+				CH_WIDTH_40MHZ;
+			lim_ch_switch->state =
+				eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY;
+			ch_params.ch_width = CH_WIDTH_40MHZ;
+			cds_set_channel_params(csa_params->channel,
+					0, &ch_params);
+			lim_ch_switch->ch_center_freq_seg0 =
+				ch_params.center_freq_seg0;
+			lim_ch_switch->sec_ch_offset =
+				ch_params.sec_ch_offset;
 		}
-		lim_log(mac_ctx, LOG1, FL("new ch width = %d space:%d"),
+
+	}
+	lim_log(mac_ctx, LOG1, FL("new ch width = %d space:%d"),
 			session_entry->gLimChannelSwitch.ch_width, chan_space);
 
-		lim_prepare_for11h_channel_switch(mac_ctx, session_entry);
-		csa_offload_ind = qdf_mem_malloc(sizeof(tSmeCsaOffloadInd));
-		if (NULL == csa_offload_ind) {
-			lim_log(mac_ctx, LOGE,
+	lim_prepare_for11h_channel_switch(mac_ctx, session_entry);
+	csa_offload_ind = qdf_mem_malloc(sizeof(tSmeCsaOffloadInd));
+	if (NULL == csa_offload_ind) {
+		lim_log(mac_ctx, LOGE,
 				FL("memalloc fail eWNI_SME_CSA_OFFLOAD_EVENT"));
-			goto err;
-		}
+		goto err;
+	}
 
-		qdf_mem_set(csa_offload_ind, sizeof(tSmeCsaOffloadInd), 0);
-		csa_offload_ind->mesgType = eWNI_SME_CSA_OFFLOAD_EVENT;
-		csa_offload_ind->mesgLen = sizeof(tSmeCsaOffloadInd);
-		qdf_mem_copy(csa_offload_ind->bssid.bytes, session_entry->bssId,
-				QDF_MAC_ADDR_SIZE);
-		mmh_msg.type = eWNI_SME_CSA_OFFLOAD_EVENT;
-		mmh_msg.bodyptr = csa_offload_ind;
-		mmh_msg.bodyval = 0;
-		lim_log(mac_ctx, LOG1,
+	csa_offload_ind->mesgType = eWNI_SME_CSA_OFFLOAD_EVENT;
+	csa_offload_ind->mesgLen = sizeof(tSmeCsaOffloadInd);
+	qdf_mem_copy(csa_offload_ind->bssid.bytes, session_entry->bssId,
+			QDF_MAC_ADDR_SIZE);
+	mmh_msg.type = eWNI_SME_CSA_OFFLOAD_EVENT;
+	mmh_msg.bodyptr = csa_offload_ind;
+	mmh_msg.bodyval = 0;
+	lim_log(mac_ctx, LOG1,
 			FL("Sending eWNI_SME_CSA_OFFLOAD_EVENT to SME."));
-		MTRACE(mac_trace_msg_tx
+	MTRACE(mac_trace_msg_tx
 			(mac_ctx, session_entry->peSessionId, mmh_msg.type));
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
-		lim_diag_event_report(mac_ctx,
+	lim_diag_event_report(mac_ctx,
 			WLAN_PE_DIAG_SWITCH_CHL_IND_EVENT, session_entry,
 			eSIR_SUCCESS, eSIR_SUCCESS);
 #endif
-		lim_sys_process_mmh_msg_api(mac_ctx, &mmh_msg, ePROT);
-	}
+	lim_sys_process_mmh_msg_api(mac_ctx, &mmh_msg, ePROT);
 
 err:
 	qdf_mem_free(csa_params);
@@ -2275,7 +2332,6 @@ void lim_send_sme_max_assoc_exceeded_ntf(tpAniSirGlobal pMac, tSirMacAddr peerMa
 		PELOGE(lim_log(pMac, LOGE, FL("Failed to allocate memory"));)
 		return;
 	}
-	qdf_mem_set((void *)pSmeMaxAssocInd, sizeof(tSmeMaxAssocInd), 0);
 	qdf_mem_copy((uint8_t *) pSmeMaxAssocInd->peer_mac.bytes,
 		     (uint8_t *) peerMacAddr, QDF_MAC_ADDR_SIZE);
 	pSmeMaxAssocInd->mesgType = eWNI_SME_MAX_ASSOC_EXCEEDED;
@@ -2377,9 +2433,6 @@ lim_send_sme_ap_channel_switch_resp(tpAniSirGlobal pMac,
 			FL("AllocateMemory failed for pSmeSwithChnlParams\n"));
 		return;
 	}
-
-	qdf_mem_set((void *)pSmeSwithChnlParams,
-		    sizeof(tSwitchChannelParams), 0);
 
 	qdf_mem_copy(pSmeSwithChnlParams, pChnlParams,
 		     sizeof(tSwitchChannelParams));
@@ -2501,7 +2554,6 @@ lim_process_beacon_tx_success_ind(tpAniSirGlobal pMac, uint16_t msgType, void *e
 				return;
 			}
 
-			qdf_mem_set((void *)pChanSwTxResponse, length, 0);
 			pChanSwTxResponse->sessionId =
 				psessionEntry->smeSessionId;
 			pChanSwTxResponse->chanSwIeTxStatus =
@@ -2526,8 +2578,6 @@ lim_process_beacon_tx_success_ind(tpAniSirGlobal pMac, uint16_t msgType, void *e
 				("AllocateMemory failed for beacon_tx_comp_rsp_ptr"));
 			return;
 		}
-		qdf_mem_set((void *)beacon_tx_comp_rsp_ptr,
-					sizeof(*beacon_tx_comp_rsp_ptr), 0);
 		beacon_tx_comp_rsp_ptr->session_id =
 			psessionEntry->smeSessionId;
 		beacon_tx_comp_rsp_ptr->tx_status = QDF_STATUS_SUCCESS;

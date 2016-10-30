@@ -595,7 +595,7 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		++pAdapter->hdd_stats.hddTxRxStats.txXmitDroppedAC[ac];
 		goto drop_pkt;
 	}
-	dev->trans_start = jiffies;
+	netif_trans_update(dev);
 
 	return NETDEV_TX_OK;
 
@@ -685,9 +685,7 @@ static void __hdd_tx_timeout(struct net_device *dev)
 	struct netdev_queue *txq;
 	int i = 0;
 
-	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
-		  "%s: Transmission timeout occurred jiffies %lu trans_start %lu",
-		  __func__, jiffies, dev->trans_start);
+	TX_TIMEOUT_TRACE(dev, QDF_MODULE_ID_HDD_DATA);
 	DPTRACE(qdf_dp_trace(NULL, QDF_DP_TRACE_HDD_TX_TIMEOUT,
 				NULL, 0, QDF_TX));
 

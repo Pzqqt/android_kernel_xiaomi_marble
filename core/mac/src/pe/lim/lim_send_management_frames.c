@@ -579,8 +579,6 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 		return;
 	}
 
-	qdf_mem_zero(&extracted_ext_cap, sizeof(extracted_ext_cap));
-
 	/*
 	 * Fill out 'frm', after which we'll just hand the struct off to
 	 * 'dot11f_pack_probe_response'.
@@ -1658,8 +1656,6 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		lim_log(mac_ctx, LOGE, FL("Unable to allocate memory"));
 		return;
 	}
-
-	qdf_mem_set((uint8_t *) frm, sizeof(tDot11fAssocRequest), 0);
 
 	if (add_ie_len && pe_session->is_ext_caps_present) {
 		qdf_mem_set((uint8_t *) &extr_ext_cap, sizeof(tDot11fIEExtCap),
@@ -4023,7 +4019,6 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 		qdf_mem_free(frm);
 		return eSIR_FAILURE;
 	}
-	qdf_mem_set((uint8_t *) frm, sizeof(*frm), 0);
 
 	frm->Category.category = SIR_MAC_ACTION_RRM;
 	frm->Action.action = SIR_MAC_RRM_RADIO_MEASURE_RPT;

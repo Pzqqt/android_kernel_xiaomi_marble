@@ -473,7 +473,7 @@ static bool put_wifi_iface_stats(tpSirWifiIfaceStat pWifiIfaceStat,
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_LEAKY_AP_GUARD_TIME,
 			pWifiIfaceStat->rx_leak_window) ||
-	    nla_put_u64(vendor_event,
+	    hdd_wlan_nla_put_u64(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_AVERAGE_TSF_OFFSET,
 			average_tsf_offset)) {
 		hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
@@ -2355,7 +2355,7 @@ static int __wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 	sme_get_operation_channel(halHandle, &channel, pAdapter->sessionId);
 	hdd_wlan_get_freq(channel, &freq);
 
-	for (i = 0; i < IEEE80211_NUM_BANDS; i++) {
+	for (i = 0; i < NUM_NL80211_BANDS; i++) {
 		if (NULL == wiphy->bands[i])
 			continue;
 

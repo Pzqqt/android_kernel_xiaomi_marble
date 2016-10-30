@@ -824,6 +824,8 @@ QDF_STATUS cds_close(v_CONTEXT_t cds_context)
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
 
+	cds_shutdown_notifier_purge();
+
 	cds_deinit_log_completion();
 	cds_deinit_ini_config();
 	qdf_timer_module_deinit();
@@ -836,7 +838,11 @@ void cds_flush_cache_rx_queue(void)
 {
 	uint8_t sta_id;
 	struct ol_txrx_peer_t *peer;
-	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	struct ol_txrx_pdev_t *pdev;
+
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	if (!pdev)
+		return;
 
 	for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++) {
 		peer = ol_txrx_peer_find_by_local_id(pdev, sta_id);
@@ -1129,9 +1135,6 @@ QDF_STATUS cds_alloc_context(void *p_cds_context, QDF_MODULE_ID moduleID,
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_NOMEM;
 	}
-
-	if (moduleID == QDF_MODULE_ID_TLSHIM)
-		qdf_mem_zero(*ppModuleContext, size);
 
 	*pGpModContext = *ppModuleContext;
 
@@ -2292,4 +2295,24 @@ bool cds_is_self_recovery_enabled(void)
 void cds_svc_fw_shutdown_ind(struct device *dev)
 {
 	hdd_svc_fw_shutdown_ind(dev);
+}
+
+/*
+ * cds_pkt_stats_to_logger_thread() - send pktstats to user
+ * @pl_hdr: Pointer to pl_hdr
+ * @pkt_dump: Pointer to pkt_dump data structure.
+ * @data: Pointer to data
+ *
+ * This function is used to send the pkt stats to SVC module.
+ *
+ * Return: None
+ */
+inline void cds_pkt_stats_to_logger_thread(void *pl_hdr, void *pkt_dump,
+						void *data)
+{
+	if (cds_get_ring_log_level(RING_ID_PER_PACKET_STATS) !=
+						WLAN_LOG_LEVEL_ACTIVE)
+		return;
+
+	wlan_pkt_stats_to_logger_thread(pl_hdr, pkt_dump, data);
 }

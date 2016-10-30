@@ -4961,8 +4961,6 @@ void lim_process_del_ts_ind(tpAniSirGlobal pMac, tpSirMsgQ limMsg)
 		goto error1;
 	}
 
-	qdf_mem_set((uint8_t *) pDelTsReq, sizeof(tSirDeltsReq), 0);
-
 	if (pSta->wmeEnabled)
 		qdf_mem_copy(&(pDelTsReq->req.tspec), &(pTspecInfo->tspec),
 			     sizeof(tSirMacTspecIE));
@@ -4993,7 +4991,6 @@ void lim_process_del_ts_ind(tpAniSirGlobal pMac, tpSirMsgQ limMsg)
 		PELOGE(lim_log(pMac, LOGE, FL("AllocateMemory() failed"));)
 		goto error3;
 	}
-	qdf_mem_set((uint8_t *) pDelTsReqInfo, sizeof(tSirDeltsReqInfo), 0);
 
 	if (pSta->wmeEnabled)
 		qdf_mem_copy(&(pDelTsReqInfo->tspec), &(pTspecInfo->tspec),
@@ -5248,7 +5245,6 @@ void lim_frame_transmission_control(tpAniSirGlobal pMac, tLimQuietTxMode type,
 		return;
 	}
 
-	qdf_mem_set((void *)pTxCtrlMsg, (sizeof(*pTxCtrlMsg) + nBytes), 0);
 	status = __lim_fill_tx_control_params(pMac, pTxCtrlMsg, type, mode);
 	if (status != QDF_STATUS_SUCCESS) {
 		qdf_mem_free(pTxCtrlMsg);

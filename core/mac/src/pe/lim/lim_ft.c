@@ -157,8 +157,6 @@ void lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 		return;
 	}
 
-	qdf_mem_set((uint8_t *) pAddBssParams, sizeof(tAddBssParams), 0);
-
 	lim_extract_ap_capabilities(pMac, (uint8_t *) bssDescription->ieFields,
 			lim_get_ielen_from_bss_description(bssDescription),
 			pBeaconStruct);
@@ -862,7 +860,6 @@ lim_ft_send_aggr_qos_rsp(tpAniSirGlobal pMac, uint8_t rspReqd,
 			FL("AllocateMemory failed for tSirAggrQosRsp"));
 		return;
 	}
-	qdf_mem_set((uint8_t *) rsp, sizeof(*rsp), 0);
 	rsp->messageType = eWNI_SME_FT_AGGR_QOS_RSP;
 	rsp->sessionId = smesessionId;
 	rsp->length = sizeof(*rsp);
@@ -991,7 +988,6 @@ tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf
 		return eSIR_FAILURE;
 	}
 
-	qdf_mem_set((uint8_t *) pAggrAddTsParam, sizeof(tAggrAddTsParams), 0);
 	pAggrAddTsParam->staIdx = psessionEntry->staId;
 	/* Fill in the sessionId specific to PE */
 	pAggrAddTsParam->sessionId = sessionId;

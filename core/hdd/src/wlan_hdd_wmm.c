@@ -2157,6 +2157,7 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(hdd_adapter_t *pAdapter,
 	pQosContext->pAdapter = pAdapter;
 	pQosContext->qosFlowId = 0;
 	pQosContext->magic = HDD_WMM_CTX_MAGIC;
+	pQosContext->is_inactivity_timer_running = false;
 
 	hdd_notice("Setting up QoS, context %p", pQosContext);
 

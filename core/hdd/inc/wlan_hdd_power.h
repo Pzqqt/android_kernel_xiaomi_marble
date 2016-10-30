@@ -224,26 +224,30 @@ void wlan_hdd_inc_suspend_stats(hdd_context_t *hdd_ctx,
 #ifdef WLAN_SUSPEND_RESUME_TEST
 /**
  * hdd_wlan_fake_apps_resume() - Resume from unit-test triggered suspend
- * @wiphy: wiphy struct from a validated hdd context
+ * @wiphy: the kernel wiphy struct for the device being resumed
+ * @dev: the kernel net_device struct for the device being resumed
  *
  * Return: Zero on success, calls QDF_BUG() on failure
  */
-int hdd_wlan_fake_apps_resume(struct wiphy *wiphy);
+int hdd_wlan_fake_apps_resume(struct wiphy *wiphy, struct net_device *dev);
 
 /**
  * hdd_wlan_fake_apps_suspend() - Initiate a unit-test triggered suspend
- * @wiphy: wiphy struct from a validated hdd context
+ * @wiphy: the kernel wiphy struct for the device being suspended
+ * @dev: the kernel net_device struct for the device being suspended
  *
  * Return: Zero on success, suspend related non-zero error code on failure
  */
-int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy);
+int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev);
 #else
-static inline int hdd_wlan_fake_apps_resume(struct wiphy *wiphy)
+static inline int
+hdd_wlan_fake_apps_resume(struct wiphy *wiphy, struct net_device *dev)
 {
 	return 0;
 }
 
-static inline int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy)
+static inline int
+hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev)
 {
 	return 0;
 }

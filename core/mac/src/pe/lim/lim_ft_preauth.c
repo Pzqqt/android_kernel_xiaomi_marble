@@ -597,7 +597,6 @@ void lim_post_ft_pre_auth_rsp(tpAniSirGlobal mac_ctx,
 		QDF_ASSERT(ft_pre_auth_rsp != NULL);
 		return;
 	}
-	qdf_mem_zero(ft_pre_auth_rsp, rsp_len);
 
 	lim_log(mac_ctx, LOG1, FL("Auth Rsp = %p"), ft_pre_auth_rsp);
 	if (session) {
@@ -678,8 +677,6 @@ QDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
 			FL("Memory allocation failed for pScanOffloadReq"));
 		return QDF_STATUS_E_NOMEM;
 	}
-
-	qdf_mem_zero(scan_offload_req, sizeof(tSirScanOffloadReq));
 
 	msg.type = WMA_START_SCAN_OFFLOAD_REQ;
 	msg.bodyptr = scan_offload_req;

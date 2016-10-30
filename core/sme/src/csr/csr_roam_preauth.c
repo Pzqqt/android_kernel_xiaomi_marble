@@ -515,7 +515,6 @@ QDF_STATUS csr_roam_issue_ft_preauth_req(tHalHandle hal, uint32_t session_id,
 	}
 	/* Save the SME Session ID. We need it while processing preauth resp */
 	csr_session->ftSmeContext.smeSessionId = session_id;
-	qdf_mem_zero(preauth_req, auth_req_len);
 
 	preauth_req->pbssDescription =
 		(tpSirBssDescription) qdf_mem_malloc(sizeof(bss_desc->length)

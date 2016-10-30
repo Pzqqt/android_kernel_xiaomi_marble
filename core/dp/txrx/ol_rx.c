@@ -58,6 +58,7 @@
 #include <ol_vowext_dbg_defs.h>
 #include <wma.h>
 #include <cds_concurrency.h>
+#include "pktlog_ac_fmt.h"
 
 #include <pld_common.h>
 
@@ -625,7 +626,7 @@ ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
 				if (status != htt_rx_status_ctrl_mgmt_null) {
 					/* Pktlog */
 					ol_rx_send_pktlog_event(pdev,
-						 peer, head_msdu, 1);
+						 peer, msdu, 1);
 				}
 #endif
 				if (status == htt_rx_status_err_inv_peer) {
@@ -851,21 +852,21 @@ ol_rx_offload_deliver_ind_handler(ol_txrx_pdev_handle pdev,
 	htt_pdev_handle htt_pdev = pdev->htt_pdev;
 
 	while (msdu_cnt) {
-		htt_rx_offload_msdu_pop(htt_pdev, msg, &vdev_id, &peer_id,
-					&tid, &fw_desc, &head_buf, &tail_buf);
-
-		peer = ol_txrx_peer_find_by_id(pdev, peer_id);
-		if (peer) {
-			ol_rx_data_process(peer, head_buf);
-		} else {
-			buf = head_buf;
-			while (1) {
-				qdf_nbuf_t next;
-				next = qdf_nbuf_next(buf);
-				htt_rx_desc_frame_free(htt_pdev, buf);
-				if (buf == tail_buf)
-					break;
-				buf = next;
+		if (!htt_rx_offload_msdu_pop(htt_pdev, msg, &vdev_id, &peer_id,
+					&tid, &fw_desc, &head_buf, &tail_buf)) {
+			peer = ol_txrx_peer_find_by_id(pdev, peer_id);
+			if (peer) {
+				ol_rx_data_process(peer, head_buf);
+			} else {
+				buf = head_buf;
+				while (1) {
+					qdf_nbuf_t next;
+					next = qdf_nbuf_next(buf);
+					htt_rx_desc_frame_free(htt_pdev, buf);
+					if (buf == tail_buf)
+						break;
+					buf = next;
+				}
 			}
 		}
 		msdu_cnt--;
@@ -1400,6 +1401,51 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 	peer->rx_opt_proc(vdev, peer, tid, head_msdu);
 }
 
+/**
+ * ol_rx_pkt_dump_call() - updates status and
+ * calls packetdump callback to log rx packet
+ *
+ * @msdu: rx packet
+ * @peer_id: peer id
+ * @status: status of rx packet
+ *
+ * This function is used to update the status of rx packet
+ * and then calls packetdump callback to log that packet.
+ *
+ * Return: None
+ *
+ */
+void ol_rx_pkt_dump_call(
+	qdf_nbuf_t msdu,
+	uint8_t peer_id,
+	uint8_t status)
+{
+	v_CONTEXT_t vos_context;
+	ol_txrx_pdev_handle pdev;
+	struct ol_txrx_peer_t *peer = NULL;
+
+	vos_context = cds_get_global_context();
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if (!pdev) {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			"%s: pdev is NULL", __func__);
+		return;
+	}
+
+	if (pdev->ol_rx_packetdump_cb) {
+		peer = ol_txrx_peer_find_by_id(pdev, peer_id);
+		if (!peer) {
+			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+				"%s: peer with peer id %d is NULL", __func__,
+				peer_id);
+			return;
+		}
+		pdev->ol_rx_packetdump_cb(msdu, status, peer->vdev->vdev_id,
+						RX_DATA_PKT);
+	}
+}
+
 /* the msdu_list passed here must be NULL terminated */
 void
 ol_rx_in_order_deliver(struct ol_txrx_vdev_t *vdev,
@@ -1469,7 +1515,10 @@ ol_rx_offload_paddr_deliver_ind_handler(htt_pdev_handle htt_pdev,
 
 		peer = ol_txrx_peer_find_by_id(htt_pdev->txrx_pdev, peer_id);
 		if (peer) {
+			QDF_NBUF_CB_DP_TRACE_PRINT(head_buf) = false;
 			qdf_dp_trace_set_track(head_buf, QDF_RX);
+			QDF_NBUF_CB_TX_PACKET_TRACK(head_buf) =
+						QDF_NBUF_TX_PKT_DATA_TRACK;
 			qdf_dp_trace_log_pkt(peer->vdev->vdev_id,
 				head_buf, QDF_RX);
 			DPTRACE(qdf_dp_trace(head_buf,

@@ -625,7 +625,8 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 					 * Free the descriptor, return the
 					 * packet to the caller.
 					 */
-					ol_tx_desc_free(pdev, tx_desc);
+					ol_tx_desc_frame_free_nonstd(pdev,
+								tx_desc, 1);
 					return msdu;
 				}
 				if (msdu_info.tso_info.curr_seg) {
@@ -1353,7 +1354,7 @@ ol_txrx_mgmt_tx_desc_alloc(
 	 * address of the initial fragment.
 	 */
 #if defined(HELIUMPLUS_PADDR64)
-	/* dump_frag_desc("ol_txrx_mgmt_send(): after ol_tx_desc_ll",
+	/* ol_txrx_dump_frag_desc("ol_txrx_mgmt_send(): after ol_tx_desc_ll",
 	   tx_desc); */
 #endif /* defined(HELIUMPLUS_PADDR64) */
 	if (tx_desc) {
@@ -1368,7 +1369,7 @@ ol_txrx_mgmt_tx_desc_alloc(
 				qdf_nbuf_get_frag_paddr(tx_mgmt_frm, 1),
 				0, 0);
 #if defined(HELIUMPLUS_PADDR64) && defined(HELIUMPLUS_DEBUG)
-		dump_frag_desc(
+		ol_txrx_dump_frag_desc(
 				"after htt_tx_desc_frags_table_set",
 				tx_desc);
 #endif /* defined(HELIUMPLUS_PADDR64) */
@@ -1700,7 +1701,7 @@ ol_txrx_mgmt_tx_cb_set(ol_txrx_pdev_handle pdev,
 }
 
 #if defined(HELIUMPLUS_PADDR64)
-void dump_frag_desc(char *msg, struct ol_tx_desc_t *tx_desc)
+void ol_txrx_dump_frag_desc(char *msg, struct ol_tx_desc_t *tx_desc)
 {
 	uint32_t                *frag_ptr_i_p;
 	int                     i;

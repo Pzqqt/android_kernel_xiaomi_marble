@@ -299,8 +299,17 @@ void wma_process_pdev_hw_mode_trans_ind(void *wma,
 	wmi_pdev_hw_mode_transition_event_fixed_param *fixed_param,
 	wmi_pdev_set_hw_mode_response_vdev_mac_entry *vdev_mac_entry,
 	struct sir_hw_mode_trans_ind *hw_mode_trans_ind);
+
+#ifdef WLAN_FEATURE_DISA
 QDF_STATUS wma_encrypt_decrypt_msg(WMA_HANDLE wma,
 		struct encrypt_decrypt_req_params *encrypt_decrypt_params);
+#else
+static inline QDF_STATUS wma_encrypt_decrypt_msg(WMA_HANDLE wma,
+		struct encrypt_decrypt_req_params *encrypt_decrypt_params)
+{
+	return 0;
+}
+#endif
 
 /**
  * wma_set_cts2self_for_p2p_go() - set CTS2SELF command for P2P GO.

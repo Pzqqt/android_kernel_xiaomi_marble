@@ -124,9 +124,6 @@ tSirRetStatus mac_open(tHalHandle *pHalHandle, tHddHandle hHdd,
 	if (NULL == p_mac)
 		return eSIR_MEM_ALLOC_FAILED;
 
-	/* Initialize the p_mac structure */
-	qdf_mem_set(p_mac, sizeof(tAniSirGlobal), 0);
-
 	/*
 	 * Set various global fields of p_mac here
 	 * (Could be platform dependant as some variables in p_mac are platform

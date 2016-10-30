@@ -1049,11 +1049,15 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 		pHostapdState->qdf_status =
 			pSapEvent->sapevt.sapStartBssCompleteEvent.status;
-		qdf_status = qdf_event_set(&pHostapdState->qdf_event);
-
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)
-		    || pHostapdState->qdf_status) {
+		if (pHostapdState->qdf_status) {
 			hdd_err("ERROR: startbss event failed!!");
+			/*
+			 * Make sure to set the event before proceeding
+			 * for error handling otherwise caller thread will
+			 * wait till 10 secs and no other connection will
+			 * go through before that.
+			 */
+			qdf_event_set(&pHostapdState->qdf_event);
 			goto stopbss;
 		} else {
 			sme_ch_avoid_update_req(pHddCtx->hHal);
@@ -1084,6 +1088,13 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 					pHostapdAdapter->dev->dev_addr);
 			if (status) {
 				hdd_err("WLAN_AP_CONNECT event failed!!");
+				/*
+				 * Make sure to set the event before proceeding
+				 * for error handling otherwise caller thread
+				 * will wait till 10 secs and no other
+				 * connection will go through before that.
+				 */
+				qdf_event_set(&pHostapdState->qdf_event);
 				goto stopbss;
 			}
 		}
@@ -1208,6 +1219,17 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			if (QDF_IS_STATUS_ERROR(status))
 				hdd_info("set hw mode change not done");
 			cds_set_do_hw_mode_change_flag(false);
+		}
+		/*
+		 * set this event at the very end because once this events
+		 * get set, caller thread is waiting to do further processing.
+		 * so once this event gets set, current worker thread might get
+		 * pre-empted by caller thread.
+		 */
+		qdf_status = qdf_event_set(&pHostapdState->qdf_event);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			hdd_err("ERROR: startbss event set failed!!");
+			goto stopbss;
 		}
 		break;          /* Event will be sent after Switch-Case stmt */
 
@@ -1532,7 +1554,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				hdd_err("Failed to allocate station info");
 				return QDF_STATUS_E_FAILURE;
 			}
-			memset(sta_info, 0, sizeof(*sta_info));
 			if (iesLen <= MAX_ASSOC_IND_IE_LEN) {
 				sta_info->assoc_req_ies =
 					(const u8 *)&pSapEvent->sapevt.
@@ -3603,8 +3624,13 @@ static __iw_softap_set_pktlog(struct net_device *dev,
 	if (NULL == value)
 		return -ENOMEM;
 
+	if (wrqu->data.length < 1 || wrqu->data.length > 2) {
+		hdd_err("pktlog: either 1 or 2 parameters are required");
+		return -EINVAL;
+	}
+
 	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
-	return hdd_process_pktlog_command(hdd_ctx, value[0]);
+	return hdd_process_pktlog_command(hdd_ctx, value[0], value[1]);
 }
 
 int
@@ -5488,7 +5514,7 @@ static const struct iw_priv_args hostapd_private_args[] = {
 	,
 	{
 		QCSAP_IOCTL_SET_PKTLOG,
-		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+		IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
 		0, "pktlog"
 	}
 	,
@@ -5817,6 +5843,11 @@ hdd_adapter_t *hdd_wlan_create_ap_dev(hdd_context_t *pHddCtx,
 		pWlanHostapdDev->watchdog_timeo = HDD_TX_TIMEOUT;
 		pWlanHostapdDev->mtu = HDD_DEFAULT_MTU;
 		pWlanHostapdDev->tx_queue_len = HDD_NETDEV_TX_QUEUE_LEN;
+
+		if (pHddCtx->config->enable_ip_tcp_udp_checksum_offload)
+			pWlanHostapdDev->features |=
+				NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
+		pWlanHostapdDev->features |= NETIF_F_RXCSUM;
 
 		qdf_mem_copy(pWlanHostapdDev->dev_addr, (void *)macAddr,
 			     sizeof(tSirMacAddr));
@@ -7594,21 +7625,8 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(pHddCtx);
-	if (0 != ret) {
-		if (cds_is_driver_unloading()) {
-			/*
-			 * Unloading the driver so free the memory for ch_list,
-			 * otherwise it will result in memory leak
-			 */
-			if (pAdapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list) {
-				qdf_mem_free(pAdapter->sessionCtx.ap.sapConfig.
-					acs_cfg.ch_list);
-				pAdapter->sessionCtx.ap.sapConfig.acs_cfg.
-					ch_list = NULL;
-			}
-		}
+	if (0 != ret)
 		return ret;
-	}
 
 	status = hdd_get_front_adapter(pHddCtx, &pAdapterNode);
 	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
@@ -7654,8 +7672,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		qdf_spin_unlock(&pHddCtx->sap_update_info_lock);
 	}
 	pAdapter->sessionCtx.ap.sapConfig.acs_cfg.acs_mode = false;
-	if (pAdapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list)
-		qdf_mem_free(pAdapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list);
+	wlan_hdd_undo_acs(pAdapter);
 	qdf_mem_zero(&pAdapter->sessionCtx.ap.sapConfig.acs_cfg,
 						sizeof(struct sap_acs_cfg));
 	hdd_hostapd_stop(dev);
@@ -7827,13 +7844,18 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	status = wlan_hdd_validate_context(pHddCtx);
-
 	if (0 != status)
 		return status;
 
 	hdd_info("pAdapter = %p, Device mode %s(%d)", pAdapter,
 	       hdd_device_mode_to_string(pAdapter->device_mode),
 	       pAdapter->device_mode);
+
+
+	if (cds_is_connection_in_progress()) {
+		hdd_err("Can't start BSS: connection is in progress");
+		return -EBUSY;
+	}
 
 	channel_width = wlan_hdd_get_channel_bw(params->chandef.width);
 	channel = ieee80211_frequency_to_channel(
@@ -7899,6 +7921,16 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("ERROR: qdf wait for event failed!!");
 			return -EINVAL;
+		}
+	}
+	if (pAdapter->device_mode == QDF_P2P_GO_MODE) {
+		hdd_adapter_t  *p2p_adapter;
+		p2p_adapter = hdd_get_adapter(pHddCtx, QDF_P2P_DEVICE_MODE);
+		if (p2p_adapter) {
+			hdd_info("cancel active p2p device ROC before GO "
+				"starting");
+			wlan_hdd_cancel_existing_remain_on_channel(
+				p2p_adapter);
 		}
 	}
 

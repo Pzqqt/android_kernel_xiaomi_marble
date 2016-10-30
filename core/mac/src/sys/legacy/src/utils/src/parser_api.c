@@ -2327,8 +2327,6 @@ tSirRetStatus sir_convert_probe_frame2_struct(tpAniSirGlobal pMac,
 		return eSIR_MEM_ALLOC_FAILED;
 	}
 
-	qdf_mem_set((uint8_t *) pr, sizeof(tDot11fProbeResponse), 0);
-
 	/* delegate to the framesc-generated code, */
 	status = dot11f_unpack_probe_response(pMac, pFrame, nFrame, pr);
 	if (DOT11F_FAILED(status)) {
@@ -2624,7 +2622,6 @@ sir_convert_assoc_req_frame2_struct(tpAniSirGlobal pMac,
 	}
 	/* Zero-init our [out] parameter, */
 	qdf_mem_set((uint8_t *) pAssocReq, sizeof(tSirAssocReq), 0);
-	qdf_mem_set((uint8_t *) ar, sizeof(tDot11fAssocRequest), 0);
 
 	/* delegate to the framesc-generated code, */
 	status = dot11f_unpack_assoc_request(pMac, pFrame, nFrame, ar);
@@ -3828,8 +3825,6 @@ sir_convert_beacon_frame2_struct(tpAniSirGlobal pMac,
 		lim_log(pMac, LOGE, FL("Failed to allocate memory"));
 		return eSIR_MEM_ALLOC_FAILED;
 	}
-
-	qdf_mem_set((uint8_t *) pBeacon, sizeof(tDot11fBeacon), 0);
 
 	/* get the MAC address out of the BD, */
 	qdf_mem_copy(pBeaconStruct->bssid, pHdr->sa, 6);

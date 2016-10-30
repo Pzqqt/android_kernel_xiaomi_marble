@@ -779,9 +779,6 @@ tSirRetStatus pe_open(tpAniSirGlobal pMac, struct cds_config_info *cds_cfg)
 		goto pe_open_psession_fail;
 	}
 
-	qdf_mem_set(pMac->lim.gpSession,
-		    sizeof(tPESession) * pMac->lim.maxBssId, 0);
-
 	pMac->lim.mgmtFrameSessionId = 0xff;
 	pMac->lim.tdls_frm_session_id = NO_SESSION;
 	pMac->lim.deferredMsgCnt = 0;
@@ -2045,7 +2042,6 @@ QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 		mac_ctx->roam.pReassocResp = NULL;
 		return QDF_STATUS_E_NOMEM;
 	}
-	qdf_mem_zero(roam_sync_ind_ptr->join_rsp, join_rsp_len);
 
 	lim_log(mac_ctx, LOG1, FL("Session RicLength = %d"),
 			ft_session_ptr->RICDataLen);

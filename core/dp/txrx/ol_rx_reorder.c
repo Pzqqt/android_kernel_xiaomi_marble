@@ -492,7 +492,6 @@ ol_rx_addba_handler(ol_txrx_pdev_handle pdev,
 		round_pwr2_win_sz * sizeof(struct ol_rx_reorder_array_elem_t);
 	rx_reorder->array = qdf_mem_malloc(array_size);
 	TXRX_ASSERT1(rx_reorder->array);
-	qdf_mem_set(rx_reorder->array, array_size, 0x0);
 
 	rx_reorder->win_sz_mask = round_pwr2_win_sz - 1;
 	rx_reorder->num_mpdus = 0;

@@ -90,8 +90,6 @@ static QDF_STATUS lim_send_hal_req_remain_on_chan_offload(tpAniSirGlobal pMac,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	qdf_mem_zero(pScanOffloadReq, sizeof(tSirScanOffloadReq));
-
 	msg.type = WMA_START_SCAN_OFFLOAD_REQ;
 	msg.bodyptr = pScanOffloadReq;
 	msg.bodyval = 0;
@@ -390,7 +388,6 @@ void lim_send_sme_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameType,
 			FL("AllocateMemory failed for eWNI_SME_LISTEN_RSP"));
 		return;
 	}
-	qdf_mem_set((void *)pSirSmeMgmtFrame, length, 0);
 
 	pSirSmeMgmtFrame->frame_len = frameLen;
 	pSirSmeMgmtFrame->sessionId = sessionId;
@@ -410,10 +407,11 @@ void lim_send_sme_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameType,
 	return;
 }
 
-QDF_STATUS lim_p2p_action_cnf(tpAniSirGlobal pMac, uint32_t txCompleteSuccess)
+QDF_STATUS lim_p2p_action_cnf(tpAniSirGlobal pMac, uint32_t tx_status)
 {
 	QDF_STATUS status;
 	uint32_t mgmt_frame_sessionId;
+	bool tx_complete_ack = (tx_status) ? false : true;
 
 	status = pe_acquire_global_lock(&pMac->lim);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -432,7 +430,7 @@ QDF_STATUS lim_p2p_action_cnf(tpAniSirGlobal pMac, uint32_t txCompleteSuccess)
 					 mgmt_frame_sessionId);
 			if (pMac->p2p_ack_ind_cb)
 				pMac->p2p_ack_ind_cb(mgmt_frame_sessionId,
-							txCompleteSuccess);
+						     tx_complete_ack);
 		}
 	}
 
@@ -754,7 +752,6 @@ tSirRetStatus __lim_process_sme_no_a_update(tpAniSirGlobal pMac, uint32_t *pMsgB
 		return eSIR_MEM_ALLOC_FAILED;
 	}
 
-	qdf_mem_set((uint8_t *) pMsgNoA, sizeof(tP2pPsConfig), 0);
 	pMsgNoA->opp_ps = pNoA->opp_ps;
 	pMsgNoA->ctWindow = pNoA->ctWindow;
 	pMsgNoA->duration = pNoA->duration;

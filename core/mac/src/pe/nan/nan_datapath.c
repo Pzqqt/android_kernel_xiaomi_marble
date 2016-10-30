@@ -286,7 +286,6 @@ static void lim_ndp_delete_peers(tpAniSirGlobal mac_ctx,
 		return;
 	}
 
-	qdf_mem_zero(deleted_peers, num_peers * sizeof(*deleted_peers));
 	for (i = 0; i < num_peers; i++) {
 		lim_log(mac_ctx, LOG1,
 			FL("ndp_map[%d]: MAC: " MAC_ADDRESS_STR " num_active %d"),

@@ -1289,8 +1289,6 @@ QDF_STATUS csr_get_parsed_bss_description_ies(tHalHandle hHal,
 	if (pBssDesc && ppIEStruct) {
 		*ppIEStruct = qdf_mem_malloc(sizeof(tDot11fBeaconIEs));
 		if ((*ppIEStruct) != NULL) {
-			qdf_mem_set((void *)*ppIEStruct,
-				    sizeof(tDot11fBeaconIEs), 0);
 			status =
 				csr_parse_bss_description_ies(hHal, pBssDesc,
 							       *ppIEStruct);

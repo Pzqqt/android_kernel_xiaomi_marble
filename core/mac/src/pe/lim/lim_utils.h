@@ -64,6 +64,9 @@ typedef enum {
 #define VHT_MCS_3x3_MASK    0x30
 #define VHT_MCS_2x2_MASK    0x0C
 
+#define CENTER_FREQ_DIFF_160MHz 8
+#define CENTER_FREQ_DIFF_80P80MHz 16
+
 #define IS_VHT_NSS_1x1(__mcs_map)	((__mcs_map & 0xFFFC) == 0xFFFC)
 
 #ifdef WLAN_FEATURE_11W

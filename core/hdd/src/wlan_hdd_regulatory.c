@@ -230,6 +230,8 @@ static void hdd_regulatory_wiphy_init(hdd_context_t *hdd_ctx,
 				     struct wiphy *wiphy)
 {
 	const struct ieee80211_regdomain *reg_rules;
+	int chan_num;
+	struct ieee80211_channel chan;
 
 	if (hdd_is_world_regdomain(reg->reg_domain)) {
 		reg_rules = hdd_get_world_regrules(reg);
@@ -247,6 +249,17 @@ static void hdd_regulatory_wiphy_init(hdd_context_t *hdd_ctx,
 	 */
 	hdd_ctx->reg.reg_flags = wiphy->regulatory_flags;
 	wiphy_apply_custom_regulatory(wiphy, reg_rules);
+
+	/*
+	 * disable 2.4 Ghz channels that dont have 20 mhz bw
+	 */
+	for (chan_num = 0;
+	     chan_num < wiphy->bands[IEEE80211_BAND_2GHZ]->n_channels;
+	     chan_num++) {
+		chan = wiphy->bands[IEEE80211_BAND_2GHZ]->channels[chan_num];
+		if (chan.flags & IEEE80211_CHAN_NO_20MHZ)
+			chan.flags |= IEEE80211_CHAN_DISABLED;
+	}
 
 	/*
 	 * restore the driver regulatory flags since
@@ -373,7 +386,7 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 	band_capability = hdd_ctx->config->nBandCapability;
 	hdd_ctx->isVHT80Allowed = 0;
 
-	for (band_num = 0; band_num < IEEE80211_NUM_BANDS; band_num++) {
+	for (band_num = 0; band_num < NUM_NL80211_BANDS; band_num++) {
 
 		if (wiphy->bands[band_num] == NULL)
 			continue;
@@ -557,7 +570,7 @@ static void hdd_restore_custom_reg_settings(struct wiphy *wiphy,
 					    bool *reset)
 {
 	struct ieee80211_supported_band *sband;
-	enum ieee80211_band band;
+	enum nl80211_band band;
 	struct ieee80211_channel *chan;
 	int i;
 
@@ -565,7 +578,7 @@ static void hdd_restore_custom_reg_settings(struct wiphy *wiphy,
 	    (country_alpha2[1] == '0') &&
 	    (wiphy->flags & WIPHY_FLAG_CUSTOM_REGULATORY)) {
 
-		for (band = 0; band < IEEE80211_NUM_BANDS; band++) {
+		for (band = 0; band < NUM_NL80211_BANDS; band++) {
 			sband = wiphy->bands[band];
 			if (!sband)
 				continue;

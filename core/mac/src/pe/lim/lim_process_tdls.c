@@ -3316,9 +3316,6 @@ tSirRetStatus lim_process_sme_tdls_link_establish_req(tpAniSirGlobal mac_ctx,
 		return eSIR_MEM_ALLOC_FAILED;
 	}
 
-	qdf_mem_set((uint8_t *) tdls_req_params,
-		    sizeof(tTdlsLinkEstablishParams), 0);
-
 	tdls_req_params->staIdx = stads->staIndex;
 	tdls_req_params->isResponder = tdls_req->isResponder;
 	tdls_req_params->uapsdQueues = tdls_req->uapsdQueues;

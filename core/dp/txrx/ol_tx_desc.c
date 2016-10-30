@@ -105,8 +105,6 @@ static inline void ol_tx_desc_reset_timestamp(struct ol_tx_desc_t *tx_desc)
 }
 #endif
 
-#ifdef CONFIG_HL_SUPPORT
-
 /**
  * ol_tx_desc_vdev_update() - vedv assign.
  * @tx_desc: tx descriptor pointer
@@ -120,15 +118,6 @@ ol_tx_desc_vdev_update(struct ol_tx_desc_t *tx_desc,
 {
 	tx_desc->vdev = vdev;
 }
-#else
-
-static inline void
-ol_tx_desc_vdev_update(struct ol_tx_desc_t *tx_desc,
-		       struct ol_txrx_vdev_t *vdev)
-{
-	return;
-}
-#endif
 
 #ifdef CONFIG_PER_VDEV_TX_DESC_POOL
 
@@ -182,6 +171,7 @@ struct ol_tx_desc_t *ol_tx_desc_alloc(struct ol_txrx_pdev_t *pdev,
 
 	ol_tx_desc_vdev_update(tx_desc, vdev);
 	ol_tx_desc_count_inc(vdev);
+	qdf_atomic_inc(&tx_desc->ref_cnt);
 
 	return tx_desc;
 }
@@ -235,6 +225,8 @@ struct ol_tx_desc_t *ol_tx_desc_alloc(struct ol_txrx_pdev_t *pdev,
 			}
 			ol_tx_desc_sanity_checks(pdev, tx_desc);
 			ol_tx_desc_compute_delay(tx_desc);
+			ol_tx_desc_vdev_update(tx_desc, vdev);
+			qdf_atomic_inc(&tx_desc->ref_cnt);
 		} else {
 			pool->pkt_drop_no_desc++;
 			qdf_spin_unlock_bh(&pool->flow_pool_lock);
@@ -410,9 +402,6 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 
 }
 #endif
-
-extern void
-dump_frag_desc(char *msg, struct ol_tx_desc_t *tx_desc);
 
 void
 dump_pkt(qdf_nbuf_t nbuf, qdf_dma_addr_t nbuf_paddr, int len)
@@ -591,7 +580,7 @@ struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 	}
 
 #if defined(HELIUMPLUS_DEBUG)
-	dump_frag_desc("ol_tx_desc_ll()", tx_desc);
+	ol_txrx_dump_frag_desc("ol_tx_desc_ll()", tx_desc);
 #endif
 	return tx_desc;
 }

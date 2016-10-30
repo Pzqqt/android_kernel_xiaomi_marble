@@ -60,6 +60,7 @@
 #include <asm/barrier.h>
 #include <wma_api.h>
 #endif
+#include <pktlog_ac_fmt.h>
 
 #ifdef HTT_DEBUG_DATA
 #define HTT_PKT_DUMP(x) x
@@ -1375,9 +1376,39 @@ htt_rx_offload_msdu_pop_hl(htt_pdev_handle pdev,
 			   qdf_nbuf_t *head_buf,
 			   qdf_nbuf_t *tail_buf)
 {
-	return 0;
-}
+	adf_nbuf_t buf;
+	u_int32_t *msdu_hdr, msdu_len;
+	int ret = 0;
 
+	*head_buf = *tail_buf = buf = offload_deliver_msg;
+	msdu_hdr = (u_int32_t *)adf_nbuf_data(buf);
+	/* First dword */
+
+	/* Second dword */
+	msdu_hdr++;
+	msdu_len = HTT_RX_OFFLOAD_DELIVER_IND_MSDU_LEN_GET(*msdu_hdr);
+	*peer_id = HTT_RX_OFFLOAD_DELIVER_IND_MSDU_PEER_ID_GET(*msdu_hdr);
+
+	/* Third dword */
+	msdu_hdr++;
+	*vdev_id = HTT_RX_OFFLOAD_DELIVER_IND_MSDU_VDEV_ID_GET(*msdu_hdr);
+	*tid = HTT_RX_OFFLOAD_DELIVER_IND_MSDU_TID_GET(*msdu_hdr);
+	*fw_desc = HTT_RX_OFFLOAD_DELIVER_IND_MSDU_DESC_GET(*msdu_hdr);
+
+	adf_nbuf_pull_head(buf, HTT_RX_OFFLOAD_DELIVER_IND_MSDU_HDR_BYTES \
+			+ HTT_RX_OFFLOAD_DELIVER_IND_HDR_BYTES);
+
+	if (msdu_len <= adf_nbuf_len(buf)) {
+		adf_nbuf_set_pktlen(buf, msdu_len);
+	} else {
+		adf_os_print("%s: drop frame with invalid msdu len %d %d\n",
+				__FUNCTION__, msdu_len, (int)adf_nbuf_len(buf));
+		adf_nbuf_free(offload_deliver_msg);
+		ret = -1;
+	}
+
+	return ret;
+}
 #endif
 
 int
@@ -1968,6 +1999,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 	uint8_t offload_ind, frag_ind;
 	struct htt_host_rx_desc_base *rx_desc;
 	uint8_t peer_id;
+	enum rx_pkt_fate status = RX_PKT_FATE_SUCCESS;
 
 	HTT_ASSERT1(htt_rx_in_order_ring_elems(pdev) != 0);
 
@@ -2026,6 +2058,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 		 */
 		qdf_nbuf_pull_head(msdu, HTT_RX_STD_DESC_RESERVATION);
 
+		QDF_NBUF_CB_DP_TRACE_PRINT(msdu) = false;
 		qdf_dp_trace_set_track(msdu, QDF_RX);
 		QDF_NBUF_CB_TX_PACKET_TRACK(msdu) = QDF_NBUF_TX_PKT_DATA_TRACK;
 		ol_rx_log_packet(pdev, peer_id, msdu);
@@ -2052,6 +2085,15 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 #undef NEXT_FIELD_OFFSET_IN32
 
 		msdu_count--;
+
+		/* calling callback function for packet logging */
+		if (pdev->rx_pkt_dump_cb) {
+			if (qdf_unlikely((*((u_int8_t *)
+				   &rx_desc->fw_desc.u.val)) &
+				   FW_RX_DESC_ANY_ERR_M))
+				status = RX_PKT_FATE_FW_DROP_INVALID;
+			pdev->rx_pkt_dump_cb(msdu, peer_id, status);
+		}
 
 		if (qdf_unlikely((*((u_int8_t *) &rx_desc->fw_desc.u.val)) &
 				    FW_RX_DESC_ANY_ERR_M)) {
@@ -3506,3 +3548,51 @@ int htt_rx_ipa_uc_detach(struct htt_pdev_t *pdev)
 	return 0;
 }
 #endif /* IPA_OFFLOAD */
+
+/**
+ * htt_register_rx_pkt_dump_callback() - registers callback to
+ *   get rx pkt status and call callback to do rx packet dump
+ *
+ * @pdev: htt pdev handle
+ * @callback: callback to get rx pkt status and
+ *     call callback to do rx packet dump
+ *
+ * This function is used to register the callback to get
+ * rx pkt status and call callback to do rx packet dump
+ *
+ * Return: None
+ *
+ */
+void htt_register_rx_pkt_dump_callback(struct htt_pdev_t *pdev,
+				tp_rx_pkt_dump_cb callback)
+{
+	if (!pdev) {
+		qdf_print("%s: htt pdev is NULL, rx packet status callback register unsuccessful\n",
+						__func__);
+		return;
+	}
+	pdev->rx_pkt_dump_cb = callback;
+}
+
+/**
+ * htt_deregister_rx_pkt_dump_callback() - deregisters callback to
+ *   get rx pkt status and call callback to do rx packet dump
+ *
+ * @pdev: htt pdev handle
+ *
+ * This function is used to deregister the callback to get
+ * rx pkt status and call callback to do rx packet dump
+ *
+ * Return: None
+ *
+ */
+void htt_deregister_rx_pkt_dump_callback(struct htt_pdev_t *pdev)
+{
+	if (!pdev) {
+		qdf_print("%s: htt pdev is NULL, rx packet status callback deregister unsuccessful\n",
+						__func__);
+		return;
+	}
+	pdev->rx_pkt_dump_cb = NULL;
+}
+

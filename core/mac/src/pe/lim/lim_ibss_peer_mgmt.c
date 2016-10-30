@@ -1123,6 +1123,8 @@ __lim_ibss_search_and_delete_peer(tpAniSirGlobal mac_ptr,
 						mac_ptr->lim.gLimIbssPeerList;
 				} else
 					prev_node->next = temp_node->next;
+				if (temp_node->beacon)
+					qdf_mem_free(temp_node->beacon);
 
 				qdf_mem_free(temp_node);
 				mac_ptr->lim.gLimNumIbssPeers--;
@@ -1667,6 +1669,8 @@ void lim_ibss_heart_beat_handle(tpAniSirGlobal mac_ctx, tpPESession session)
 				prevnode->next = tempnode->next;
 			}
 
+			if (tempnode->beacon)
+				qdf_mem_free(tempnode->beacon);
 			qdf_mem_free(tempnode);
 			mac_ctx->lim.gLimNumIbssPeers--;
 

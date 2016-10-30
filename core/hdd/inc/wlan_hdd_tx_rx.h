@@ -130,4 +130,25 @@ void hdd_event_eapol_log(struct sk_buff *skb, enum qdf_proto_dir dir)
 {}
 #endif
 
+/*
+ * As of the 4.7 kernel, net_device->trans_start is removed. Create shims to
+ * support compiling against older versions of the kernel.
+ */
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 7, 0))
+static inline void netif_trans_update(struct net_device *dev)
+{
+	dev->trans_start = jiffies;
+}
+
+#define TX_TIMEOUT_TRACE(dev, module_id) QDF_TRACE( \
+	module_id, QDF_TRACE_LEVEL_ERROR, \
+	"%s: Transmission timeout occurred jiffies %lu trans_start %lu", \
+	__func__, jiffies, dev->trans_start)
+#else
+#define TX_TIMEOUT_TRACE(dev, module_id) QDF_TRACE( \
+	module_id, QDF_TRACE_LEVEL_ERROR, \
+	"%s: Transmission timeout occurred jiffies %lu", \
+	__func__, jiffies)
+#endif
+
 #endif /* end #if !defined(WLAN_HDD_TX_RX_H) */

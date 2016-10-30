@@ -511,6 +511,9 @@ typedef void (*encrypt_decrypt_cb)(struct sir_encrypt_decrypt_rsp_params
 		*encrypt_decrypt_rsp_params);
 
 
+typedef void (*tp_wma_packetdump_cb)(qdf_nbuf_t netbuf,
+			uint8_t status, uint8_t vdev_id, uint8_t type);
+
 /**
  * enum t_wma_drv_type - wma driver type
  * @WMA_DRIVER_TYPE_PRODUCTION: production driver type
@@ -1191,6 +1194,7 @@ struct wmi_desc_t {
 	pWMAAckFnTxComp  ota_post_proc_cb;
 	qdf_nbuf_t	 nbuf;
 	uint32_t	 desc_id;
+	uint8_t vdev_id;
 };
 
 /**
@@ -1602,6 +1606,9 @@ typedef struct {
 	QDF_STATUS (*pe_ndp_event_handler)(tpAniSirGlobal mac_ctx,
 					   cds_msg_t *msg);
 	bool sub_20_support;
+
+	tp_wma_packetdump_cb wma_mgmt_tx_packetdump_cb;
+	tp_wma_packetdump_cb wma_mgmt_rx_packetdump_cb;
 } t_wma_handle, *tp_wma_handle;
 
 /**
@@ -2324,3 +2331,7 @@ QDF_STATUS wma_start_oem_data_req(tp_wma_handle wma_handle,
 
 QDF_STATUS wma_enable_disable_caevent_ind(tp_wma_handle wma_handle,
 				uint8_t val);
+void wma_register_packetdump_callback(
+		tp_wma_packetdump_cb wma_mgmt_tx_packetdump_cb,
+		tp_wma_packetdump_cb wma_mgmt_rx_packetdump_cb);
+void wma_deregister_packetdump_callback(void);

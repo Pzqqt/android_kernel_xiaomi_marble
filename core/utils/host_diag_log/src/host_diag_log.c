@@ -140,8 +140,6 @@ void host_diag_log_submit(void *plog_hdr_ptr)
 			return;
 		}
 
-		qdf_mem_zero((void *)pBuf, total_len);
-
 		wmsg = (tAniHdr *) pBuf;
 		wmsg->type = PTT_MSG_DIAG_CMDS_TYPE;
 		wmsg->length = total_len;

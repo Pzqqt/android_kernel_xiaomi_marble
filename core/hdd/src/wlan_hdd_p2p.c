@@ -822,7 +822,6 @@ static int wlan_hdd_request_remain_on_channel(struct wiphy *wiphy,
 		return -ENOMEM;
 	}
 
-	qdf_mem_zero(pRemainChanCtx, sizeof(*pRemainChanCtx));
 	qdf_mem_copy(&pRemainChanCtx->chan, chan,
 		     sizeof(struct ieee80211_channel));
 	pRemainChanCtx->duration = duration;
@@ -2308,10 +2307,10 @@ void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 	/* Indicate an action frame. */
 	if (rxChan <= MAX_NO_OF_2_4_CHANNELS)
 		freq = ieee80211_channel_to_frequency(rxChan,
-						      IEEE80211_BAND_2GHZ);
+						      NL80211_BAND_2GHZ);
 	else
 		freq = ieee80211_channel_to_frequency(rxChan,
-						      IEEE80211_BAND_5GHZ);
+						      NL80211_BAND_5GHZ);
 
 	cfgState = WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
 

@@ -585,6 +585,7 @@ lim_cleanup_rx_path(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 			 * Release our assigned AID back to the free pool
 			 */
 			if (LIM_IS_AP_ROLE(psessionEntry)) {
+				lim_del_sta(pMac, pStaDs, false, psessionEntry);
 				lim_release_peer_idx(pMac, pStaDs->assocId,
 						     psessionEntry);
 			}
@@ -2148,7 +2149,6 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 			FL("Unable to allocate memory during ADD_STA"));
 		return eSIR_MEM_ALLOC_FAILED;
 	}
-	qdf_mem_set((uint8_t *) add_sta_params, sizeof(tAddStaParams), 0);
 
 	if (LIM_IS_AP_ROLE(session_entry) || LIM_IS_IBSS_ROLE(session_entry) ||
 		LIM_IS_NDI_ROLE(session_entry))
@@ -2558,8 +2558,6 @@ lim_del_sta(tpAniSirGlobal pMac,
 		return eSIR_MEM_ALLOC_FAILED;
 	}
 
-	qdf_mem_set((uint8_t *) pDelStaParams, sizeof(tDeleteStaParams), 0);
-
 	/* */
 	/* DPH contains the STA index only for "peer" STA entries. */
 	/* LIM global contains "self" STA index */
@@ -2703,7 +2701,6 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 			FL("Unable to allocate memory during ADD_STA"));
 		return eSIR_MEM_ALLOC_FAILED;
 	}
-	qdf_mem_set((uint8_t *) pAddStaParams, sizeof(tAddStaParams), 0);
 
 	/* / Add STA context at MAC HW (BMU, RHP & TFP) */
 	qdf_mem_copy((uint8_t *) pAddStaParams->staMac,
@@ -3361,7 +3358,6 @@ lim_del_bss(tpAniSirGlobal pMac, tpDphHashNode pStaDs, uint16_t bssIdx,
 			FL("Unable to allocate memory during ADD_BSS"));
 		return eSIR_MEM_ALLOC_FAILED;
 	}
-	qdf_mem_set((uint8_t *) pDelBssParams, sizeof(tDeleteBssParams), 0);
 
 	pDelBssParams->sessionId = psessionEntry->peSessionId; /* update PE session Id */
 
@@ -3559,9 +3555,7 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 			FL("Unable to allocate memory during ADD_BSS"));
 		retCode = eSIR_MEM_ALLOC_FAILED;
 		goto returnFailure;
-	} else
-		qdf_mem_set((uint8_t *) pAddBssParams, sizeof(tAddBssParams),
-			    0);
+	}
 
 	qdf_mem_copy(pAddBssParams->bssId, bssDescription->bssId,
 		     sizeof(tSirMacAddr));
@@ -4100,8 +4094,6 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 		retCode = eSIR_MEM_ALLOC_FAILED;
 		goto returnFailure;
 	}
-
-	qdf_mem_set((uint8_t *) pAddBssParams, sizeof(tAddBssParams), 0);
 
 	lim_extract_ap_capabilities(pMac, (uint8_t *) bssDescription->ieFields,
 			lim_get_ielen_from_bss_description(bssDescription),
@@ -4804,7 +4796,6 @@ void lim_send_sme_unprotected_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameT
 				("AllocateMemory failed for tSirSmeUnprotectedMgmtFrameInd"));
 		return;
 	}
-	qdf_mem_set((void *)pSirSmeMgmtFrame, length, 0);
 
 	pSirSmeMgmtFrame->sessionId = sessionId;
 	pSirSmeMgmtFrame->frameType = frameType;
@@ -4847,7 +4838,6 @@ void lim_send_sme_tsm_ie_ind(tpAniSirGlobal pMac, tpPESession psessionEntry,
 			FL("AllocateMemory failed for tSirSmeTsmIEInd"));
 		return;
 	}
-	qdf_mem_set((void *)pSirSmeTsmIeInd, sizeof(tSirSmeTsmIEInd), 0);
 
 	pSirSmeTsmIeInd->sessionId = psessionEntry->smeSessionId;
 	pSirSmeTsmIeInd->tsmIe.tsid = tid;

@@ -298,6 +298,19 @@ tSapChanMatrixInfo ht80_chan[] = {
 	  {132, SAP_TX_LEAKAGE_MIN}, {136, SAP_TX_LEAKAGE_MIN},
 	  {144, SAP_TX_LEAKAGE_MIN}
 	  } },
+
+	{144,
+	 {{36, SAP_TX_LEAKAGE_MAX}, {40, SAP_TX_LEAKAGE_MAX},
+	  {44, SAP_TX_LEAKAGE_MAX}, {48, SAP_TX_LEAKAGE_MAX},
+	  {52, SAP_TX_LEAKAGE_MAX}, {56, SAP_TX_LEAKAGE_MAX},
+	  {60, SAP_TX_LEAKAGE_MIN}, {64, SAP_TX_LEAKAGE_MIN},
+	  {100, SAP_TX_LEAKAGE_MIN}, {104, SAP_TX_LEAKAGE_MIN},
+	  {108, SAP_TX_LEAKAGE_MIN}, {112, SAP_TX_LEAKAGE_MIN},
+	  {116, SAP_TX_LEAKAGE_MIN}, {120, SAP_TX_LEAKAGE_MIN},
+	  {124, SAP_TX_LEAKAGE_MIN}, {128, SAP_TX_LEAKAGE_MIN},
+	  {132, SAP_TX_LEAKAGE_MIN}, {136, SAP_TX_LEAKAGE_MIN},
+	  {144, SAP_TX_LEAKAGE_MIN}
+	  } },
 };
 
 /* channel tx leakage table - ht40 */
@@ -512,6 +525,19 @@ tSapChanMatrixInfo ht40_chan[] = {
 	  {144, SAP_TX_LEAKAGE_MIN}
 	  } },
 
+	{144,
+	 {{36, 695}, {40, 695},
+	  {44, 684}, {48, 684},
+	  {52, 664}, {56, 664},
+	  {60, 658}, {64, 658},
+	  {100, 601}, {104, 601},
+	  {108, 545}, {112, 545},
+	  {116, SAP_TX_LEAKAGE_AUTO_MIN}, {120, SAP_TX_LEAKAGE_AUTO_MIN},
+	  {124, SAP_TX_LEAKAGE_AUTO_MIN}, {128, SAP_TX_LEAKAGE_AUTO_MIN},
+	  {132, 262}, {136, 262},
+	  {140, SAP_TX_LEAKAGE_MIN},
+	  {144, SAP_TX_LEAKAGE_MIN}
+	  } },
 };
 
 /* channel tx leakage table - ht20 */
@@ -713,6 +739,20 @@ tSapChanMatrixInfo ht20_chan[] = {
 	  } },
 
 	{140,
+	 {{36, 679}, {40, 673},
+	  {44, 667}, {48, 656},
+	  {52, 634}, {56, 663},
+	  {60, 662}, {64, 660},
+	  {100, SAP_TX_LEAKAGE_MAX}, {104, SAP_TX_LEAKAGE_MAX},
+	  {108, SAP_TX_LEAKAGE_MAX}, {112, 590},
+	  {116, 573}, {120, 553},
+	  {124, 533}, {128, 513},
+	  {132, 490}, {136, SAP_TX_LEAKAGE_MIN},
+	  {140, SAP_TX_LEAKAGE_MIN},
+	  {144, SAP_TX_LEAKAGE_MIN}
+	  } },
+
+	{144,
 	 {{36, 679}, {40, 673},
 	  {44, 667}, {48, 656},
 	  {52, 634}, {56, 663},
@@ -1595,7 +1635,7 @@ static uint8_t sap_random_channel_sel(ptSapContext sap_ctx)
 	/* ch list after invalidating channels leaking into NOL */
 	uint8_t *leakage_adjusted_lst;
 	/* final list of channel from which random channel will be selected */
-	uint8_t final_lst[WNI_CFG_VALID_CHANNEL_LIST_LEN] = {0};
+	uint8_t final_lst[QDF_MAX_NUM_CHAN] = {0};
 	tAll5GChannelList *all_ch = &sap_ctx->SapAllChnlList;
 	tHalHandle hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
 	tpAniSirGlobal mac_ctx;
@@ -2693,6 +2733,11 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 
 	switch (sap_hddevent) {
 	case eSAP_STA_ASSOC_IND:
+		if (!csr_roaminfo) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				  FL("Invalid CSR Roam Info"));
+			return QDF_STATUS_E_INVAL;
+		}
 		/*  TODO - Indicate the assoc request indication to OS */
 		sap_ap_event.sapHddEventCode = eSAP_STA_ASSOC_IND;
 		assoc_ind = &sap_ap_event.sapevt.sapAssocIndication;
@@ -2772,6 +2817,12 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 
 	case eSAP_STA_ASSOC_EVENT:
 	case eSAP_STA_REASSOC_EVENT:
+
+		if (!csr_roaminfo) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				  FL("Invalid CSR Roam Info"));
+			return QDF_STATUS_E_INVAL;
+		}
 		reassoc_complete =
 		    &sap_ap_event.sapevt.sapStationAssocReassocCompleteEvent;
 
@@ -2828,6 +2879,12 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		break;
 
 	case eSAP_STA_DISASSOC_EVENT:
+
+		if (!csr_roaminfo) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				  FL("Invalid CSR Roam Info"));
+			return QDF_STATUS_E_INVAL;
+		}
 		sap_ap_event.sapHddEventCode = eSAP_STA_DISASSOC_EVENT;
 		disassoc_comp =
 			&sap_ap_event.sapevt.sapStationDisassocCompleteEvent;
@@ -2845,6 +2902,12 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		break;
 
 	case eSAP_STA_SET_KEY_EVENT:
+
+		if (!csr_roaminfo) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				  FL("Invalid CSR Roam Info"));
+			return QDF_STATUS_E_INVAL;
+		}
 		sap_ap_event.sapHddEventCode = eSAP_STA_SET_KEY_EVENT;
 		key_complete =
 			&sap_ap_event.sapevt.sapStationSetKeyCompleteEvent;
@@ -2854,6 +2917,12 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		break;
 
 	case eSAP_STA_MIC_FAILURE_EVENT:
+
+		if (!csr_roaminfo) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				  FL("Invalid CSR Roam Info"));
+			return QDF_STATUS_E_INVAL;
+		}
 		sap_ap_event.sapHddEventCode = eSAP_STA_MIC_FAILURE_EVENT;
 		mic_failure = &sap_ap_event.sapevt.sapStationMICFailureEvent;
 
@@ -2879,6 +2948,12 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		break;
 
 	case eSAP_WPS_PBC_PROBE_REQ_EVENT:
+
+		if (!csr_roaminfo) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				  FL("Invalid CSR Roam Info"));
+			return QDF_STATUS_E_INVAL;
+		}
 		sap_ap_event.sapHddEventCode = eSAP_WPS_PBC_PROBE_REQ_EVENT;
 
 		qdf_mem_copy(&sap_ap_event.sapevt.sapPBCProbeReqEvent.
@@ -2912,6 +2987,12 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		break;
 
 	case eSAP_MAX_ASSOC_EXCEEDED:
+
+		if (!csr_roaminfo) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				  FL("Invalid CSR Roam Info"));
+			return QDF_STATUS_E_INVAL;
+		}
 		sap_ap_event.sapHddEventCode = eSAP_MAX_ASSOC_EXCEEDED;
 		qdf_copy_macaddr(&sap_ap_event.sapevt.
 				 sapMaxAssocExceeded.macaddr,
@@ -2960,6 +3041,12 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 			(&mac_ctx->sap.SapDfsInfo.sapDfsChannelNolList[0]);
 		break;
 	case eSAP_ECSA_CHANGE_CHAN_IND:
+
+		if (!csr_roaminfo) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				  FL("Invalid CSR Roam Info"));
+			return QDF_STATUS_E_INVAL;
+		}
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 				"In %s, SAP event callback event = %s",
 				__func__, "eSAP_ECSA_CHANGE_CHAN_IND");
@@ -3970,6 +4057,12 @@ static QDF_STATUS sap_fsm_state_disconnecting(ptSapContext sap_ctx,
 
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			  FL("Sending DFS eWNI_SME_CHANNEL_CHANGE_REQ"));
+	} else if (msg == eWNI_SME_CHANNEL_CHANGE_RSP) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+			  FL("in state %s, event msg %d result %d"),
+			  "eSAP_DISCONNECTING ", msg, sap_event->u2);
+		if (sap_event->u2 == eCSR_ROAM_RESULT_CHANNEL_CHANGE_FAILURE)
+			qdf_status = sap_goto_disconnecting(sap_ctx);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("in state %s, invalid event msg %d"),
@@ -4460,7 +4553,7 @@ static QDF_STATUS sap_get_channel_list(ptSapContext sap_ctx,
 	uint8_t end_ch_num, band_end_ch;
 	uint32_t en_lte_coex;
 	tHalHandle hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
-#if defined(FEATURE_WLAN_CH_AVOID) || defined(SOFTAP_CHANNEL_RANGE)
+#ifdef FEATURE_WLAN_CH_AVOID
 	uint8_t i;
 #endif
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
@@ -4640,10 +4733,15 @@ static QDF_STATUS sap_get_5ghz_channel_list(ptSapContext sapContext)
 			  " Memory Allocation failed sap_get_channel_list");
 		return QDF_STATUS_E_NOMEM;
 	}
-
-	status = cds_get_pcl_for_existing_conn(CDS_SAP_MODE,
-			pcl.pcl_list, &pcl.pcl_len,
-			pcl.weight_list, QDF_ARRAY_SIZE(pcl.weight_list));
+	if (cds_mode_specific_connection_count(CDS_SAP_MODE, NULL) == 0) {
+		status = cds_get_pcl(CDS_SAP_MODE,
+				pcl.pcl_list, &pcl.pcl_len, pcl.weight_list,
+				QDF_ARRAY_SIZE(pcl.weight_list));
+	} else  {
+		status = cds_get_pcl_for_existing_conn(CDS_SAP_MODE,
+				pcl.pcl_list, &pcl.pcl_len, pcl.weight_list,
+				QDF_ARRAY_SIZE(pcl.weight_list));
+	}
 	if (status != QDF_STATUS_SUCCESS) {
 		cds_err("Get PCL failed");
 		return status;

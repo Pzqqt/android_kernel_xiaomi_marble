@@ -284,7 +284,6 @@ QDF_STATUS sme_ft_send_update_key_ind(tHalHandle hal, uint32_t session_id,
 	if (NULL == msg)
 		return QDF_STATUS_E_NOMEM;
 
-	qdf_mem_set(msg, msglen, 0);
 	msg->messageType = eWNI_SME_FT_UPDATE_KEY;
 	msg->length = msglen;
 

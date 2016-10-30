@@ -842,9 +842,7 @@ void lim_send_set_bss_key_req(tpAniSirGlobal pMac,
 		/* Respond to SME with error code */
 		mlmSetKeysCnf.resultCode = eSIR_SME_RESOURCES_UNAVAILABLE;
 		goto end;
-	} else
-		qdf_mem_set((void *)pSetBssKeyParams,
-			    sizeof(tSetBssKeyParams), 0);
+	}
 
 	/* Update the WMA_SET_BSSKEY_REQ parameters */
 	pSetBssKeyParams->bssIdx = psessionEntry->bssIdx;
@@ -943,9 +941,7 @@ void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 		lim_log(pMac, LOGP,
 			FL("Unable to allocate memory during SET_BSSKEY"));
 		return;
-	} else
-		qdf_mem_set((void *)pSetStaKeyParams, sizeof(tSetStaKeyParams),
-			    0);
+	}
 
 	/* Update the WMA_SET_STAKEY_REQ parameters */
 	pSetStaKeyParams->staIdx = staIdx;

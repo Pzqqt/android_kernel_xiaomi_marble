@@ -3344,7 +3344,6 @@ void cds_dump_concurrency_info(void)
 		status = hdd_get_next_adapter(hdd_ctx, adapterNode, &pNext);
 		adapterNode = pNext;
 	}
-	cds_dump_current_concurrency();
 	hdd_ctx->mcc_mode = cds_current_concurrency_is_mcc();
 }
 
@@ -3572,6 +3571,52 @@ static void cds_pdev_set_pcl(enum tQDF_ADAPTER_MODE mode)
 		cds_info("Set PCL to FW for mode:%d", mode);
 }
 
+
+/**
+ * cds_set_pcl_for_existing_combo() - Set PCL for existing connection
+ * @mode: Connection mode of type 'cds_con_mode'
+ *
+ * Set the PCL for an existing connection
+ *
+ * Return: None
+ */
+static void cds_set_pcl_for_existing_combo(enum cds_con_mode mode)
+{
+	struct cds_conc_connection_info info;
+	enum tQDF_ADAPTER_MODE pcl_mode;
+
+	switch (mode) {
+	case CDS_STA_MODE:
+		pcl_mode = QDF_STA_MODE;
+		break;
+	case CDS_SAP_MODE:
+		pcl_mode = QDF_SAP_MODE;
+		break;
+	case CDS_P2P_CLIENT_MODE:
+		pcl_mode = QDF_P2P_CLIENT_MODE;
+		break;
+	case CDS_P2P_GO_MODE:
+		pcl_mode = QDF_P2P_GO_MODE;
+		break;
+	case CDS_IBSS_MODE:
+		pcl_mode = QDF_IBSS_MODE;
+		break;
+	default:
+		cds_err("Invalid mode to set PCL");
+		return;
+	};
+
+	if (cds_mode_specific_connection_count(mode, NULL) > 0) {
+		/* Check, store and temp delete the mode's parameter */
+		cds_store_and_del_conn_info(mode, &info);
+		/* Set the PCL to the FW since connection got updated */
+		cds_pdev_set_pcl(pcl_mode);
+		cds_info("Set PCL to FW for mode:%d", mode);
+		/* Restore the connection info */
+		cds_restore_deleted_conn_info(&info);
+	}
+}
+
 /**
  * cds_incr_active_session() - increments the number of active sessions
  * @mode:	Adapter mode
@@ -3633,9 +3678,14 @@ void cds_incr_active_session(enum tQDF_ADAPTER_MODE mode,
 		cds_info("Set PCL of STA to FW");
 	}
 	cds_incr_connection_count(session_id);
+	if ((cds_mode_specific_connection_count(CDS_STA_MODE, NULL) > 0) &&
+		(mode != QDF_STA_MODE)) {
+		cds_set_pcl_for_existing_combo(CDS_STA_MODE);
+	}
 
 	/* set tdls connection tracker state */
 	cds_set_tdls_ct_mode(hdd_ctx);
+	cds_dump_current_concurrency();
 
 	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 }
@@ -3707,52 +3757,6 @@ enum cds_conc_next_action cds_need_opportunistic_upgrade(void)
 
 done:
 	return upgrade;
-}
-
-
-/**
- * cds_set_pcl_for_existing_combo() - Set PCL for existing connection
- * @mode: Connection mode of type 'cds_con_mode'
- *
- * Set the PCL for an existing connection
- *
- * Return: None
- */
-static void cds_set_pcl_for_existing_combo(enum cds_con_mode mode)
-{
-	struct cds_conc_connection_info info;
-	enum tQDF_ADAPTER_MODE pcl_mode;
-
-	switch (mode) {
-	case CDS_STA_MODE:
-		pcl_mode = QDF_STA_MODE;
-		break;
-	case CDS_SAP_MODE:
-		pcl_mode = QDF_SAP_MODE;
-		break;
-	case CDS_P2P_CLIENT_MODE:
-		pcl_mode = QDF_P2P_CLIENT_MODE;
-		break;
-	case CDS_P2P_GO_MODE:
-		pcl_mode = QDF_P2P_GO_MODE;
-		break;
-	case CDS_IBSS_MODE:
-		pcl_mode = QDF_IBSS_MODE;
-		break;
-	default:
-		cds_err("Invalid mode to set PCL");
-		return;
-	};
-
-	if (cds_mode_specific_connection_count(mode, NULL) > 0) {
-		/* Check, store and temp delete the mode's parameter */
-		cds_store_and_del_conn_info(mode, &info);
-		/* Set the PCL to the FW since connection got updated */
-		cds_pdev_set_pcl(pcl_mode);
-		cds_info("Set PCL to FW for mode:%d", mode);
-		/* Restore the connection info */
-		cds_restore_deleted_conn_info(&info);
-	}
 }
 
 /**
@@ -3908,6 +3912,8 @@ void cds_decr_active_session(enum tQDF_ADAPTER_MODE mode,
 	/* set tdls connection tracker state */
 	cds_set_tdls_ct_mode(hdd_ctx);
 
+	cds_dump_current_concurrency();
+
 	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 }
 
@@ -3963,8 +3969,7 @@ QDF_STATUS cds_deinit_policy_mgr(void)
 	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
 		cds_err("Invalid CDS Context");
-		status = QDF_STATUS_E_FAILURE;
-		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_event_destroy
@@ -5295,6 +5300,39 @@ static bool cds_vht160_conn_exist(void)
 }
 
 /**
+ * cds_is_5g_channel_allowed() - check if 5g channel is allowed
+ * @channel: channel number which needs to be validated
+ * @list: list of existing connections.
+ * @mode: mode against which channel needs to be validated
+ *
+ * This API takes the channel as input and compares with existing
+ * connection channels. If existing connection's channel is DFS channel
+ * and provided channel is 5G channel then don't allow concurrency to
+ * happen as MCC with DFS channel is not yet supported
+ *
+ * Return: true if 5G channel is allowed, false if not allowed
+ *
+ */
+static bool cds_is_5g_channel_allowed(uint8_t channel, uint32_t *list,
+				      enum cds_con_mode mode)
+{
+	uint32_t index = 0, count = 0;
+
+	count = cds_mode_specific_connection_count(mode, list);
+	while (index < count) {
+		if (CDS_IS_DFS_CH(conc_connection_list[list[index]].chan) &&
+		    CDS_IS_CHANNEL_5GHZ(channel) &&
+		    (channel != conc_connection_list[list[index]].chan)) {
+			cds_err("don't allow MCC if SAP/GO on DFS channel");
+			return false;
+		}
+		index++;
+	}
+	return true;
+
+}
+
+/**
  * cds_allow_concurrency() - Check for allowed concurrency
  * combination
  * @mode:	new connection mode
@@ -5357,59 +5395,24 @@ bool cds_allow_concurrency(enum cds_con_mode mode,
 
 	if (channel) {
 		/* don't allow 3rd home channel on same MAC */
-		if (!cds_allow_new_home_channel(channel,
-			num_connections))
-				goto done;
-
-		/*
-		 * If you already have STA connection then don't
-		 * allow any other persona to make connection on DFS channel
-		 * because STA might be on non-DFS right now but later on as
-		 * part of roaming if STA connects to DFS channel which happens
-		 * to be different than requested DFS channel then MCC DFS
-		 * scenario will be encountered
-		 */
-		count = cds_mode_specific_connection_count(CDS_STA_MODE,
-								list);
-		if ((count > 0) && CDS_IS_DFS_CH(channel)) {
-			cds_err("STA active, don't allow DFS channel for 2nd connection");
+		if (!cds_allow_new_home_channel(channel, num_connections))
 			goto done;
-		}
 
 		/*
-		 * don't allow MCC if SAP/GO on DFS channel or about to come up
-		 * on DFS channel
+		 * 1) DFS MCC is not yet supported
+		 * 2) If you already have STA connection on 5G channel then
+		 *    don't allow any other persona to make connection on DFS
+		 *    channel because STA 5G + DFS MCC is not allowed.
+		 * 3) If STA is on 2G channel and SAP is coming up on
+		 *    DFS channel then allow concurrency but make sure it is
+		 *    going to DBS and send PCL to firmware indicating that
+		 *    don't allow STA to roam to 5G channels.
 		 */
-		count = cds_mode_specific_connection_count(
-				CDS_P2P_GO_MODE, list);
-		while (index < count) {
-			if ((CDS_IS_DFS_CH(
-				conc_connection_list[list[index]].chan)) &&
-				(CDS_IS_CHANNEL_5GHZ(channel)) &&
-				(channel !=
-				conc_connection_list[list[index]].chan)) {
-				cds_err("don't allow MCC if SAP/GO on DFS channel");
-				goto done;
-			}
-			index++;
-		}
+		if (!cds_is_5g_channel_allowed(channel, list, CDS_P2P_GO_MODE))
+			goto done;
+		if (!cds_is_5g_channel_allowed(channel, list, CDS_SAP_MODE))
+			goto done;
 
-		index = 0;
-		count = cds_mode_specific_connection_count(
-				CDS_SAP_MODE, list);
-		while (index < count) {
-			if ((CDS_IS_DFS_CH(
-				conc_connection_list[list[index]].chan)) &&
-				(CDS_IS_CHANNEL_5GHZ(channel)) &&
-				(channel !=
-				conc_connection_list[list[index]].chan)) {
-				cds_err("don't allow MCC if SAP/GO on DFS channel");
-				goto done;
-			}
-			index++;
-		}
-
-		index = 0;
 		if ((CDS_P2P_GO_MODE == mode) || (CDS_SAP_MODE == mode)) {
 			if (CDS_IS_DFS_CH(channel))
 				match = cds_disallow_mcc(channel);
@@ -6662,11 +6665,11 @@ static bool cds_sta_p2pgo_concur_handle(hdd_adapter_t *sta_adapter,
 			if (p2pgo_channel_num <= 14) {
 				freq = ieee80211_channel_to_frequency(
 						p2pgo_channel_num,
-						IEEE80211_BAND_2GHZ);
+						NL80211_BAND_2GHZ);
 			} else {
 				freq = ieee80211_channel_to_frequency(
 						p2pgo_channel_num,
-						IEEE80211_BAND_5GHZ);
+						NL80211_BAND_5GHZ);
 			}
 			qdf_mem_zero(&hdd_avoid_freq_list,
 					sizeof(hdd_avoid_freq_list));

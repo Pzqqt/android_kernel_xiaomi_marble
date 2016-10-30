@@ -315,7 +315,6 @@ static QDF_STATUS hdd_green_ap_attach(struct hdd_context_s *hdd_ctx)
 		goto error;
 	}
 
-	qdf_mem_zero(green_ap, sizeof(*green_ap));
 	green_ap->ps_state = GREEN_AP_PS_OFF_STATE;
 	green_ap->ps_event = 0;
 	green_ap->num_nodes = 0;

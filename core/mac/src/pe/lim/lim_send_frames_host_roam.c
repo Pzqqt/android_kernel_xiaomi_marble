@@ -487,7 +487,6 @@ void lim_send_retry_reassoc_req_frame(tpAniSirGlobal pMac,
 		pTmpMlmReassocReq = qdf_mem_malloc(sizeof(tLimMlmReassocReq));
 		if (NULL == pTmpMlmReassocReq)
 			goto end;
-		qdf_mem_set(pTmpMlmReassocReq, sizeof(tLimMlmReassocReq), 0);
 		qdf_mem_copy(pTmpMlmReassocReq, pMlmReassocReq,
 			     sizeof(tLimMlmReassocReq));
 	}

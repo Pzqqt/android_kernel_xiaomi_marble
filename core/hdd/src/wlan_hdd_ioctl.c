@@ -1162,7 +1162,6 @@ hdd_sendactionframe(hdd_adapter_t *adapter, const uint8_t *bssid,
 		ret = -ENOMEM;
 		goto exit;
 	}
-	qdf_mem_zero(frame, frame_len);
 
 	hdr = (struct ieee80211_hdr_3addr *)frame;
 	hdr->frame_control =
@@ -2819,7 +2818,6 @@ static int hdd_parse_get_cckm_ie(uint8_t *pValue, uint8_t **pCckmIe,
 		hdd_err("qdf_mem_malloc failed");
 		return -ENOMEM;
 	}
-	qdf_mem_zero(*pCckmIe, (*pCckmIeLen + 1) / 2);
 	/*
 	 * the buffer received from the upper layer is character buffer,
 	 * we need to prepare the buffer taking 2 characters in to a U8 hex
@@ -3530,7 +3528,7 @@ static int drv_cmd_get_roam_scan_channels(hdd_adapter_t *adapter,
 	 */
 	len = scnprintf(extra, sizeof(extra), "%s %d", command,
 			numChannels);
-	for (j = 0; (j < numChannels); j++)
+	for (j = 0; (j < numChannels) && len <= sizeof(extra); j++)
 		len += scnprintf(extra + len, sizeof(extra) - len,
 				 " %d", ChannelList[j]);
 
@@ -4445,13 +4443,6 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 		goto exit;
 	}
 
-	/* Check channel number is a valid channel number */
-	if (QDF_STATUS_SUCCESS !=
-		wlan_hdd_validate_operation_channel(adapter, channel)) {
-		hdd_err("Invalid Channel [%d]", channel);
-		return -EINVAL;
-	}
-
 	/*
 	 * if the target bssid is same as currently associated AP,
 	 * issue reassoc to same AP
@@ -4462,7 +4453,8 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 		hdd_info("Reassoc BSSID is same as currently associated AP bssid");
 		if (roaming_offload_enabled(hdd_ctx)) {
 			hdd_wma_send_fastreassoc_cmd((int)adapter->sessionId,
-				targetApBssid, (int)channel);
+				targetApBssid,
+				pHddStaCtx->conn_info.operationChannel);
 		} else {
 			sme_get_modify_profile_fields(hdd_ctx->hHal,
 				adapter->sessionId,
@@ -4471,6 +4463,13 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 				NULL, modProfileFields, &roamId, 1);
 		}
 		return 0;
+	}
+
+	/* Check channel number is a valid channel number */
+	if (QDF_STATUS_SUCCESS !=
+		wlan_hdd_validate_operation_channel(adapter, channel)) {
+		hdd_err("Invalid Channel [%d]", channel);
+		return -EINVAL;
 	}
 
 	if (roaming_offload_enabled(hdd_ctx)) {
@@ -4854,7 +4853,6 @@ static int drv_cmd_set_ibss_beacon_oui_data(hdd_adapter_t *adapter,
 		ret = -ENOMEM;
 		goto exit;
 	}
-	qdf_mem_zero(ibss_ie, command_len);
 
 	ibss_ie_length = hdd_parse_set_ibss_oui_data_command(value, ibss_ie,
 							     &oui_length,

@@ -696,7 +696,6 @@ static void wma_vdev_start_rsp(tp_wma_handle wma,
 			add_bss->status = QDF_STATUS_E_NOMEM;
 			goto send_fail_resp;
 		}
-		qdf_mem_zero(bcn, sizeof(*bcn));
 		bcn->buf = qdf_nbuf_alloc(NULL, WMA_BCN_BUF_MAX_SIZE, 0,
 					  sizeof(uint32_t), 0);
 		if (!bcn->buf) {
@@ -3413,6 +3412,20 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 		WMA_LOGE("%s: Peer already exists, Deleted peer with peer_addr %pM",
 			__func__, add_sta->staMac);
 	}
+	/* The code above only checks the peer existence on its own vdev.
+	 * Need to check whether the peer exists on other vDevs because firmware
+	 * can't create the peer if the peer with same MAC address already
+	 * exists on the pDev. As this peer belongs to other vDevs, just return
+	 * here.
+	 */
+	peer = ol_txrx_find_peer_by_addr(pdev, add_sta->staMac, &peer_id);
+	if (peer) {
+		WMA_LOGE("%s: My vdev:%d, but Peer exists on other vdev with "
+				"peer_addr %pM and peer_id %d",
+			__func__, vdev->vdev_id, add_sta->staMac, peer_id);
+		add_sta->status = QDF_STATUS_E_FAILURE;
+		goto send_rsp;
+	}
 
 	status = wma_create_peer(wma, pdev, vdev, add_sta->staMac,
 				 WMI_PEER_TYPE_DEFAULT, add_sta->smesessionId,
@@ -3641,7 +3654,6 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 			goto send_rsp;
 		}
 
-		qdf_mem_zero(peerStateParams, sizeof(*peerStateParams));
 		peerStateParams->peerState = WMI_TDLS_PEER_STATE_PEERING;
 		peerStateParams->vdevId = add_sta->smesessionId;
 		qdf_mem_copy(&peerStateParams->peerMacAddr,
@@ -4050,7 +4062,6 @@ static void wma_del_tdls_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 		goto send_del_rsp;
 	}
 
-	qdf_mem_zero(peerStateParams, sizeof(*peerStateParams));
 	peerStateParams->peerState = WMA_TDLS_PEER_STATE_TEARDOWN;
 	peerStateParams->vdevId = del_sta->smesessionId;
 	qdf_mem_copy(&peerStateParams->peerMacAddr,
