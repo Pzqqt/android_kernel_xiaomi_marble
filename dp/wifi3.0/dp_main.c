@@ -833,6 +833,10 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 		goto fail1;
 	}
 
+	hal_reo_init_cmd_ring(soc->hal_soc, soc->reo_cmd_ring.hal_srng);
+	TAILQ_INIT(&soc->rx.reo_cmd_list);
+	qdf_spinlock_create(&soc->rx.reo_cmd_lock);
+
 	if (dp_srng_setup(soc, &soc->reo_status_ring, REO_STATUS, 0, 0,
 		REO_STATUS_RING_SIZE)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -1118,6 +1122,7 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 	/* REO command and status rings */
 	dp_srng_cleanup(soc, &soc->reo_cmd_ring, REO_CMD, 0);
 	dp_srng_cleanup(soc, &soc->reo_status_ring, REO_STATUS, 0);
+	qdf_spinlock_destroy(&soc->rx.reo_cmd_lock);
 
 	qdf_spinlock_destroy(&soc->peer_ref_mutex);
 	htt_soc_detach(soc->htt_handle);

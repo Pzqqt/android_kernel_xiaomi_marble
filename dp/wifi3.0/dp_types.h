@@ -32,6 +32,7 @@
 #endif
 
 #include <hal_tx.h>
+#include <hal_reo.h>
 
 #define MAX_PDEV_CNT 3
 #define MAX_LINK_DESC_BANKS 8
@@ -202,6 +203,13 @@ struct dp_rx_reorder_array_elem {
 
 #define DP_RX_BA_INACTIVE 0
 #define DP_RX_BA_ACTIVE 1
+struct dp_reo_cmd_info {
+	uint16_t cmd;
+	enum hal_reo_cmd_type cmd_type;
+	void *data;
+	void (*handler)(struct dp_soc *, void *, union hal_reo_status *);
+	TAILQ_ENTRY(dp_reo_cmd_info) reo_cmd_list_elem;
+};
 
 /* Rx TID */
 struct dp_rx_tid {
@@ -386,6 +394,8 @@ struct dp_soc {
 			int defrag_timeout_check;
 			int dup_check;
 		} flags;
+		TAILQ_HEAD(, dp_reo_cmd_info) reo_cmd_list;
+		qdf_spinlock_t reo_cmd_lock;
 	} rx;
 
 	/* optional rx processing function */
