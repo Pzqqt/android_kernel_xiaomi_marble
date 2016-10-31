@@ -575,8 +575,7 @@ static void __lim_process_operating_mode_action_frame(tpAniSirGlobal mac_ctx,
 			(operating_mode_frm->OperatingMode.rxNSS + 1)) {
 		sta_ptr->vhtSupportedRxNss =
 			operating_mode_frm->OperatingMode.rxNSS + 1;
-		lim_set_nss_change(mac_ctx, session,
-			operating_mode_frm->OperatingMode.rxNSS,
+		lim_set_nss_change(mac_ctx, session, sta_ptr->vhtSupportedRxNss,
 			sta_ptr->staIndex, mac_hdr->sa);
 	}
 
