@@ -2638,9 +2638,21 @@ static QDF_STATUS sap_goto_disconnecting(ptSapContext sapContext)
 static QDF_STATUS sap_roam_session_close_callback(void *pContext)
 {
 	ptSapContext sapContext = (ptSapContext) pContext;
-	return sap_signal_hdd_event(sapContext, NULL,
+	QDF_STATUS status;
+
+	status = wlansap_context_get(pContext);
+	if (status != QDF_STATUS_SUCCESS) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: sap context has already been freed", __func__);
+		return status;
+	}
+
+	status = sap_signal_hdd_event(sapContext, NULL,
 				 eSAP_STOP_BSS_EVENT,
 				 (void *) eSAP_STATUS_SUCCESS);
+
+	wlansap_context_put(pContext);
+	return status;
 }
 
 /*==========================================================================
