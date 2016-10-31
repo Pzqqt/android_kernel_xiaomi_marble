@@ -144,18 +144,6 @@ static void ol_rx_frag_pull_hdr(htt_pdev_handle htt_pdev,
 }
 
 /**
- * ol_rx_frag_clone() - clone the rx frag
- * @frag: rx fragment to clone from
- *
- * Return: cloned buffer
- */
-static inline qdf_nbuf_t
-ol_rx_frag_clone(qdf_nbuf_t frag)
-{
-	return qdf_nbuf_clone(frag);
-}
-
-/**
  * ol_rx_frag_desc_adjust() - adjust rx frag descriptor position
  * @pdev: pointer to txrx handle
  * @msdu: msdu
@@ -269,12 +257,6 @@ static inline void ol_rx_frag_pull_hdr(htt_pdev_handle htt_pdev,
 	qdf_nbuf_t frag, int hdrsize)
 {
 	qdf_nbuf_pull_head(frag, hdrsize);
-}
-
-static inline qdf_nbuf_t
-ol_rx_frag_clone(qdf_nbuf_t frag)
-{
-	return NULL;
 }
 
 static inline void
@@ -493,11 +475,8 @@ ol_rx_fraglist_insert(htt_pdev_handle htt_pdev,
 	struct ieee80211_frame *mac_hdr, *cmac_hdr, *next_hdr, *lmac_hdr;
 	uint8_t fragno, cur_fragno, lfragno, next_fragno;
 	uint8_t last_morefrag = 1, count = 0;
-	qdf_nbuf_t frag_clone;
 
 	qdf_assert(frag);
-	frag_clone = ol_rx_frag_clone(frag);
-	frag = frag_clone ? frag_clone : frag;
 
 	mac_hdr = (struct ieee80211_frame *)
 		ol_rx_frag_get_mac_hdr(htt_pdev, frag);
