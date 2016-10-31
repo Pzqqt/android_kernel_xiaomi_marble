@@ -414,7 +414,8 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 	prb_rsp_frm = &psessionEntry->probeRespFrame;
 	if (extcap_present)
 		lim_merge_extcap_struct(&prb_rsp_frm->ExtCap,
-					&extracted_extcap);
+					&extracted_extcap,
+					true);
 
 	nStatus = dot11f_get_packed_probe_response_size(pMac,
 			&psessionEntry->probeRespFrame, &nPayload);

@@ -493,7 +493,8 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 		if (extcap_present &&
 			session->limSystemRole != eLIM_STA_IN_IBSS_ROLE)
 			lim_merge_extcap_struct(&bcn_2->ExtCap,
-						&extracted_extcap);
+						&extracted_extcap,
+						true);
 
 	}
 

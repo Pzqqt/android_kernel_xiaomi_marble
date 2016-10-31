@@ -608,7 +608,8 @@ void lim_update_extcap_struct(tpAniSirGlobal mac_ctx, uint8_t *buf,
 			      tDot11fIEExtCap *ext_cap);
 tSirRetStatus lim_strip_extcap_update_struct(tpAniSirGlobal mac_ctx,
 		uint8_t *addn_ie, uint16_t *addn_ielen, tDot11fIEExtCap *dst);
-void lim_merge_extcap_struct(tDot11fIEExtCap *dst, tDot11fIEExtCap *src);
+void lim_merge_extcap_struct(tDot11fIEExtCap *dst, tDot11fIEExtCap *src,
+		bool add);
 
 uint8_t lim_get_80Mhz_center_channel(uint8_t primary_channel);
 void lim_update_obss_scanparams(tpPESession session,

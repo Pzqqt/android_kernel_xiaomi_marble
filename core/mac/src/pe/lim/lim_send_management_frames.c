@@ -376,7 +376,7 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	 * dot11f get packed payload size.
 	 */
 	if (extracted_ext_cap_flag)
-		lim_merge_extcap_struct(&pr.ExtCap, &extracted_ext_cap);
+		lim_merge_extcap_struct(&pr.ExtCap, &extracted_ext_cap, true);
 
 	/* That's it-- now we pack it.  First, how much space are we going to */
 	status = dot11f_get_packed_probe_request_size(mac_ctx, &pr, &payload);
@@ -778,7 +778,8 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 	 * dot11f get packed payload size.
 	 */
 	if (extracted_ext_cap_flag)
-		lim_merge_extcap_struct(&frm->ExtCap, &extracted_ext_cap);
+		lim_merge_extcap_struct(&frm->ExtCap, &extracted_ext_cap,
+					true);
 
 	status = dot11f_get_packed_probe_response_size(mac_ctx, frm, &payload);
 	if (DOT11F_FAILED(status)) {
@@ -1370,7 +1371,8 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 	 * dot11f get packed payload size.
 	 */
 	if (extracted_flag)
-		lim_merge_extcap_struct(&(frm.ExtCap), &extracted_ext_cap);
+		lim_merge_extcap_struct(&(frm.ExtCap), &extracted_ext_cap,
+					true);
 
 	/* Allocate a buffer for this frame: */
 	status = dot11f_get_packed_assoc_response_size(mac_ctx, &frm, &payload);
@@ -1657,6 +1659,11 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	tDot11fIEExtCap extr_ext_cap;
 	bool extr_ext_flag = true;
 	tpSirMacMgmtHdr mac_hdr;
+	uint32_t ie_offset = 0;
+	uint8_t *p_ext_cap = NULL;
+	tDot11fIEExtCap bcn_ext_cap;
+	uint8_t *bcn_ie = NULL;
+	uint32_t bcn_ie_len = 0;
 
 	if (NULL == pe_session) {
 		lim_log(mac_ctx, LOGE, FL("pe_session is NULL"));
@@ -1906,7 +1913,29 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	 * dot11f get packed payload size.
 	 */
 	if (extr_ext_flag)
-		lim_merge_extcap_struct(&frm->ExtCap, &extr_ext_cap);
+		lim_merge_extcap_struct(&frm->ExtCap, &extr_ext_cap, true);
+
+	/* Clear the bits in EXTCAP IE if AP not advertise it in beacon */
+	if (frm->ExtCap.present && pe_session->is_ext_caps_present) {
+		ie_offset = DOT11F_FF_TIMESTAMP_LEN +
+				DOT11F_FF_BEACONINTERVAL_LEN +
+				DOT11F_FF_CAPABILITIES_LEN;
+
+		qdf_mem_zero((uint8_t *)&bcn_ext_cap, sizeof(tDot11fIEExtCap));
+		if (pe_session->beacon && pe_session->bcnLen > ie_offset) {
+			bcn_ie = pe_session->beacon + ie_offset;
+			bcn_ie_len = pe_session->bcnLen - ie_offset;
+			p_ext_cap = lim_get_ie_ptr_new(mac_ctx,
+							bcn_ie,
+							bcn_ie_len,
+							DOT11F_EID_EXTCAP,
+							ONE_BYTE);
+			lim_update_extcap_struct(mac_ctx, p_ext_cap,
+							&bcn_ext_cap);
+			lim_merge_extcap_struct(&frm->ExtCap, &bcn_ext_cap,
+							false);
+		}
+	}
 
 	status = dot11f_get_packed_assoc_request_size(mac_ctx, frm, &payload);
 	if (DOT11F_FAILED(status)) {
