@@ -233,29 +233,31 @@ static int __wlan_hdd_ipv6_changed(struct notifier_block *nb,
 	struct net_device *ndev = ifa->idev->dev;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	hdd_context_t *pHddCtx;
+	hdd_station_ctx_t *sta_ctx;
 	int status;
 
-	ENTER();
+	ENTER_DEV(ndev);
 
 	if ((pAdapter == NULL) || (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
 		hdd_err("Adapter context is invalid %p", pAdapter);
-		return -EINVAL;
+		return NOTIFY_DONE;
 	}
 
 	if ((pAdapter->dev == ndev) &&
-		(pAdapter->device_mode == QDF_STA_MODE ||
-		pAdapter->device_mode == QDF_P2P_CLIENT_MODE ||
-		pAdapter->device_mode == QDF_NDI_MODE)) {
+	    (pAdapter->device_mode == QDF_STA_MODE ||
+	     pAdapter->device_mode == QDF_P2P_CLIENT_MODE ||
+	     pAdapter->device_mode == QDF_NDI_MODE)) {
 		pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 		status = wlan_hdd_validate_context(pHddCtx);
 		if (0 != status)
 			return NOTIFY_DONE;
+		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 		if (eConnectionState_Associated ==
-		   WLAN_HDD_GET_STATION_CTX_PTR(
-		   pAdapter)->conn_info.connState)
+						sta_ctx->conn_info.connState) {
+			hdd_info("invoking sme_dhcp_done_ind");
 			sme_dhcp_done_ind(pHddCtx->hHal,
-				pAdapter->sessionId);
-
+					  pAdapter->sessionId);
+		}
 		schedule_work(&pAdapter->ipv6NotifierWorkQueue);
 	}
 	EXIT();
@@ -751,30 +753,33 @@ static int __wlan_hdd_ipv4_changed(struct notifier_block *nb,
 	struct net_device *ndev = ifa->ifa_dev->dev;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	hdd_context_t *pHddCtx;
+	hdd_station_ctx_t *sta_ctx;
 	int status;
 
-	ENTER();
+	ENTER_DEV(ndev);
 
 	if ((pAdapter == NULL) || (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
 		hdd_err("Adapter context is invalid %p", pAdapter);
-		return -EINVAL;
+		return NOTIFY_DONE;
 	}
 
-	if ((pAdapter && pAdapter->dev == ndev) &&
-		(pAdapter->device_mode == QDF_STA_MODE ||
-		pAdapter->device_mode == QDF_P2P_CLIENT_MODE ||
-		pAdapter->device_mode == QDF_NDI_MODE)) {
+	if ((pAdapter->dev == ndev) &&
+	    (pAdapter->device_mode == QDF_STA_MODE ||
+	     pAdapter->device_mode == QDF_P2P_CLIENT_MODE ||
+	     pAdapter->device_mode == QDF_NDI_MODE)) {
 
 		pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 		status = wlan_hdd_validate_context(pHddCtx);
 		if (0 != status)
 			return NOTIFY_DONE;
 
+		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 		if (eConnectionState_Associated ==
-		   WLAN_HDD_GET_STATION_CTX_PTR(
-		   pAdapter)->conn_info.connState)
+						sta_ctx->conn_info.connState) {
+			hdd_info("invoking sme_dhcp_done_ind");
 			sme_dhcp_done_ind(pHddCtx->hHal,
-				pAdapter->sessionId);
+					  pAdapter->sessionId);
+		}
 
 		if (!pHddCtx->config->fhostArpOffload) {
 			hdd_notice("Offload not enabled ARPOffload=%d",
