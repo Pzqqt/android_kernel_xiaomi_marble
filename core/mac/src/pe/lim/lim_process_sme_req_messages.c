@@ -4156,16 +4156,17 @@ static void __lim_process_roam_scan_offload_req(tpAniSirGlobal mac_ctx,
 
 	local_ie_buf = qdf_mem_malloc(MAX_DEFAULT_SCAN_IE_LEN);
 	if (!local_ie_buf) {
-		lim_log(mac_ctx, LOGE, FL("Mem Alloc failed for local_ie_buf"));
+		lim_log(mac_ctx, LOGE,
+			FL("Mem Alloc failed for local_ie_buf"));
 		return;
 	}
 
 	local_ie_len = req_buffer->assoc_ie.length;
 	/* Update ext cap IE if present */
 	if (local_ie_len &&
-		!lim_update_ext_cap_ie(mac_ctx, req_buffer->assoc_ie.addIEdata,
-					local_ie_buf, &local_ie_len)) {
-		if (local_ie_len <=
+	    !lim_update_ext_cap_ie(mac_ctx, req_buffer->assoc_ie.addIEdata,
+				   local_ie_buf, &local_ie_len)) {
+		if (local_ie_len <
 		    QDF_ARRAY_SIZE(req_buffer->assoc_ie.addIEdata)) {
 			req_buffer->assoc_ie.length = local_ie_len;
 			qdf_mem_copy(req_buffer->assoc_ie.addIEdata,

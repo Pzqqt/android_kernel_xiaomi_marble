@@ -1331,6 +1331,8 @@ static void send_packetdump(qdf_nbuf_t netbuf, uint8_t status,
 		return;
 
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	if (!adapter)
+		return;
 
 	/* Send packet dump only for STA interface */
 	if (adapter->device_mode != QDF_STA_MODE)

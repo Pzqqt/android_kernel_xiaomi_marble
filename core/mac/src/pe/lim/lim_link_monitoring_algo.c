@@ -491,7 +491,9 @@ void lim_handle_heart_beat_failure(tpAniSirGlobal mac_ctx,
 			/* for searching AP, we don't include any more IE */
 			lim_send_probe_req_mgmt_frame(mac_ctx, &session->ssId,
 				session->bssId, curr_chan, session->selfMacAddr,
-				session->dot11mode, 0, NULL);
+				session->dot11mode,
+				session->pLimJoinReq->addIEScan.length,
+				session->pLimJoinReq->addIEScan.addIEdata);
 		} else {
 			lim_log(mac_ctx, LOGW,
 			    FL("HB missed from AP on DFS chanel moving to passive"));
