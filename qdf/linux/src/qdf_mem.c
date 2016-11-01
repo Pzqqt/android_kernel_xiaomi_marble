@@ -851,6 +851,68 @@ void qdf_mem_multi_pages_free(qdf_device_t osdev,
 EXPORT_SYMBOL(qdf_mem_multi_pages_free);
 
 /**
+ * qdf_mem_multi_page_link() - Make links for multi page elements
+ * @osdev: OS device handle pointer
+ * @pages: Multi page information storage
+ * @elem_size: Single element size
+ * @elem_count: elements count should be linked
+ * @cacheable: Coherent memory or cacheable memory
+ *
+ * This function will make links for multi page allocated structure
+ *
+ * Return: 0 success
+ */
+int qdf_mem_multi_page_link(qdf_device_t osdev,
+		struct qdf_mem_multi_page_t *pages,
+		uint32_t elem_size, uint32_t elem_count, uint8_t cacheable)
+{
+	uint16_t i, i_int;
+	void *page_info;
+	void **c_elem = NULL;
+	uint32_t num_link = 0;
+
+	for (i = 0; i < pages->num_pages; i++) {
+		if (cacheable)
+			page_info = pages->cacheable_pages[i];
+		else
+			page_info = pages->dma_pages[i].page_v_addr_start;
+
+		if (!page_info)
+			return -ENOMEM;
+
+		c_elem = (void **)page_info;
+		for (i_int = 0; i_int < pages->num_element_per_page; i_int++) {
+			if (i_int == (pages->num_element_per_page - 1)) {
+				if (cacheable)
+					*c_elem = pages->
+						cacheable_pages[i + 1];
+				else
+					*c_elem = pages->
+						dma_pages[i + 1].
+							page_v_addr_start;
+				num_link++;
+				break;
+			} else {
+				*c_elem =
+					(void *)(((char *)c_elem) + elem_size);
+			}
+			num_link++;
+			c_elem = (void **)*c_elem;
+
+			/* Last link established exit */
+			if (num_link == (elem_count - 1))
+				break;
+		}
+	}
+
+	if (c_elem)
+		*c_elem = NULL;
+
+	return 0;
+}
+EXPORT_SYMBOL(qdf_mem_multi_page_link);
+
+/**
  * qdf_mem_copy() - copy memory
  * @dst_addr: Pointer to destination memory location (to copy to)
  * @src_addr: Pointer to source memory location (to copy from)
