@@ -1586,7 +1586,8 @@ void qdf_dp_trace(qdf_nbuf_t nbuf, enum QDF_DP_TRACE_ID code,
 	if (qdf_dp_enable_check(nbuf, code, dir) == false)
 		return;
 
-	qdf_dp_add_record(code, data, size, QDF_NBUF_CB_DP_TRACE_PRINT(nbuf));
+	qdf_dp_add_record(code, data, size,
+		(nbuf != NULL) ? QDF_NBUF_CB_DP_TRACE_PRINT(nbuf) : false);
 }
 EXPORT_SYMBOL(qdf_dp_trace);
 
