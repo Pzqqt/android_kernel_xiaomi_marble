@@ -43,32 +43,19 @@
 #include <ol_txrx.h>
 
 #ifdef QCA_SUPPORT_TXDESC_SANITY_CHECKS
-extern uint32_t *g_dbg_htt_desc_end_addr, *g_dbg_htt_desc_start_addr;
-#endif
-
-#ifdef QCA_SUPPORT_TXDESC_SANITY_CHECKS
 static inline void ol_tx_desc_sanity_checks(struct ol_txrx_pdev_t *pdev,
 					struct ol_tx_desc_t *tx_desc)
 {
-	if (tx_desc->pkt_type != 0xff) {
+	if (tx_desc->pkt_type != ol_tx_frm_freed) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 				   "%s Potential tx_desc corruption pkt_type:0x%x pdev:0x%p",
 				   __func__, tx_desc->pkt_type, pdev);
 		qdf_assert(0);
 	}
-	if ((uint32_t *) tx_desc->htt_tx_desc <
-		    g_dbg_htt_desc_start_addr
-		    || (uint32_t *) tx_desc->htt_tx_desc >
-		    g_dbg_htt_desc_end_addr) {
-			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-				   "%s Potential htt_desc curruption:0x%p pdev:0x%p\n",
-				   __func__, tx_desc->htt_tx_desc, pdev);
-			qdf_assert(0);
-	}
 }
 static inline void ol_tx_desc_reset_pkt_type(struct ol_tx_desc_t *tx_desc)
 {
-	tx_desc->pkt_type = 0xff;
+	tx_desc->pkt_type = ol_tx_frm_freed;
 }
 #ifdef QCA_COMPUTE_TX_DELAY
 static inline void ol_tx_desc_compute_delay(struct ol_tx_desc_t *tx_desc)
@@ -693,7 +680,7 @@ void ol_tx_desc_frame_free_nonstd(struct ol_txrx_pdev_t *pdev,
 	qdf_nbuf_unmap(pdev->osdev, tx_desc->netbuf, QDF_DMA_TO_DEVICE);
 	/* check the frame type to see what kind of special steps are needed */
 	if ((tx_desc->pkt_type >= OL_TXRX_MGMT_TYPE_BASE) &&
-		   (tx_desc->pkt_type != 0xff)) {
+		   (tx_desc->pkt_type != ol_tx_frm_freed)) {
 		qdf_dma_addr_t frag_desc_paddr = 0;
 
 #if defined(HELIUMPLUS_PADDR64)

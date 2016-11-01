@@ -90,10 +90,6 @@ do {                                                                           \
 
 /*--- setup / tear-down functions -------------------------------------------*/
 
-#ifdef QCA_SUPPORT_TXDESC_SANITY_CHECKS
-uint32_t *g_dbg_htt_desc_end_addr, *g_dbg_htt_desc_start_addr;
-#endif
-
 static qdf_dma_addr_t htt_tx_get_paddr(htt_pdev_handle pdev,
 				char *target_vaddr);
 

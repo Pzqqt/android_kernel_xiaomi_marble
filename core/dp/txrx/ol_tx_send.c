@@ -588,7 +588,7 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 					    lcl_freelist, tx_desc_last, status);
 		}
 #ifdef QCA_SUPPORT_TXDESC_SANITY_CHECKS
-		tx_desc->pkt_type = 0xff;
+		tx_desc->pkt_type = ol_tx_frm_freed;
 #ifdef QCA_COMPUTE_TX_DELAY
 		tx_desc->entry_timestamp_ticks = 0xffffffff;
 #endif
@@ -775,7 +775,15 @@ ol_tx_single_completion_handler(ol_txrx_pdev_handle pdev,
 	struct ol_tx_desc_t *tx_desc;
 	qdf_nbuf_t netbuf;
 
-	tx_desc = ol_tx_desc_find(pdev, tx_desc_id);
+	tx_desc = ol_tx_desc_find_check(pdev, tx_desc_id);
+	if (tx_desc == NULL) {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+				"%s: invalid desc_id(%u), ignore it.\n",
+				__func__,
+				tx_desc_id);
+		return;
+	}
+
 	tx_desc->status = status;
 	netbuf = tx_desc->netbuf;
 
@@ -852,6 +860,13 @@ ol_tx_inspect_handler(ol_txrx_pdev_handle pdev,
 			ol_tx_msdu_complete(pdev, tx_desc, tx_descs, netbuf,
 					    lcl_freelist, tx_desc_last,
 					    htt_tx_status_ok);
+
+#ifdef QCA_SUPPORT_TXDESC_SANITY_CHECKS
+			tx_desc->pkt_type = ol_tx_frm_freed;
+#ifdef QCA_COMPUTE_TX_DELAY
+			tx_desc->entry_timestamp_ticks = 0xffffffff;
+#endif
+#endif
 		}
 	}
 

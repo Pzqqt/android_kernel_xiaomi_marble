@@ -131,6 +131,11 @@ ifeq ($(KERNEL_BUILD), 0)
 		CONFIG_WLAN_FEATURE_11W := y
 	endif
 
+	#Flag to enable the tx desc sanity check
+	ifeq ($(CONFIG_ROME_IF),usb)
+		CONFIG_QCA_TXDESC_SANITY_CHECKS := y
+	endif
+
 	ifneq ($(CONFIG_MOBILE_ROUTER), y)
 		#Flag to enable NAN
 		CONFIG_QCACLD_FEATURE_NAN := y
@@ -1275,6 +1280,10 @@ endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_11W),y)
 CDEFINES += -DWLAN_FEATURE_11W
+endif
+
+ifeq ($(CONFIG_QCA_TXDESC_SANITY_CHECKS), 1)
+CDEFINES += -DQCA_SUPPORT_TXDESC_SANITY_CHECKS
 endif
 
 ifeq ($(CONFIG_QCOM_LTE_COEX),y)

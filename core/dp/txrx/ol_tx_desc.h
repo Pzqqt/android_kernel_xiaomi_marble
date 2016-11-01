@@ -116,6 +116,40 @@ static inline struct ol_tx_desc_t *ol_tx_desc_find(
 }
 
 /**
+ * @brief Use a tx descriptor ID to find the corresponding desriptor object
+ *    and add sanity check.
+ *
+ * @param pdev - the data physical device sending the data
+ * @param tx_desc_id - the ID of the descriptor in question
+ * @return the descriptor object that has the specified ID,
+ *    if failure, will return NULL.
+ */
+
+#ifdef QCA_SUPPORT_TXDESC_SANITY_CHECKS
+static inline struct ol_tx_desc_t *
+ol_tx_desc_find_check(struct ol_txrx_pdev_t *pdev, u_int16_t tx_desc_id)
+{
+	struct ol_tx_desc_t *tx_desc;
+
+	tx_desc = ol_tx_desc_find(pdev, tx_desc_id);
+
+	if (tx_desc->pkt_type == ol_tx_frm_freed) {
+		return NULL;
+	}
+
+	return tx_desc;
+}
+
+#else
+
+static inline struct ol_tx_desc_t *
+ol_tx_desc_find_check(struct ol_txrx_pdev_t *pdev, u_int16_t tx_desc_id)
+{
+	return ol_tx_desc_find(pdev, tx_desc_id);
+}
+#endif
+
+/**
  * @brief Free a list of tx descriptors and the tx frames they refer to.
  * @details
  *  Free a batch of "standard" tx descriptors and their tx frames.
