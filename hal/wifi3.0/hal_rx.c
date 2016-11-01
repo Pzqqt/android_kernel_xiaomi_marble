@@ -139,18 +139,19 @@ void hal_reo_qdesc_setup(void *hal_soc, int tid, uint32_t ba_window_size,
 		pn_size);
 
 	/* TODO: Check if RX_REO_QUEUE_2_IGNORE_AMPDU_FLAG need to be set
-	 * any other cases
+	 * based on BA window size and/or AMPDU capabilities
 	 */
-	if ((ba_window_size <= 1) || (tid == HAL_NON_QOS_TID)) {
-		HAL_DESC_SET_FIELD(reo_queue_desc, RX_REO_QUEUE_2,
-			IGNORE_AMPDU_FLAG, 1);
-	}
+	HAL_DESC_SET_FIELD(reo_queue_desc, RX_REO_QUEUE_2,
+		IGNORE_AMPDU_FLAG, 1);
 
-	if (start_seq <= 0xfff) {
-		HAL_DESC_SET_FIELD(reo_queue_desc, RX_REO_QUEUE_3, SVLD, 1);
+	if (start_seq <= 0xfff)
 		HAL_DESC_SET_FIELD(reo_queue_desc, RX_REO_QUEUE_3, SSN,
 			start_seq);
-	}
+
+	/* TODO: SVLD should be set to 1 if a valid SSN is received in ADDBA,
+	 * but REO is not delivering packets if we set it to 1. Need to enable
+	 * this once the issue is resolved */
+	HAL_DESC_SET_FIELD(reo_queue_desc, RX_REO_QUEUE_3, SVLD, 0);
 
 	/* TODO: Check if we should set start PN for WAPI */
 
