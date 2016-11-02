@@ -558,7 +558,9 @@ sch_bcn_process_sta_ibss(tpAniSirGlobal mac_ctx,
 			skip_opmode_update = true;
 
 		if (!skip_opmode_update &&
-		    (operMode != bcn->OperatingMode.chanWidth)) {
+			((operMode != bcn->OperatingMode.chanWidth) ||
+			(pStaDs->vhtSupportedRxNss !=
+			(bcn->OperatingMode.rxNSS + 1)))) {
 			PELOGE(sch_log(mac_ctx, LOGE,
 			       FL("received OpMode Chanwidth %d, staIdx = %d"),
 			       bcn->OperatingMode.chanWidth, pStaDs->staIndex);)
