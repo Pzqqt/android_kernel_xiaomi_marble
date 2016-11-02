@@ -387,11 +387,10 @@ static void lim_send_mlm_assoc_req(tpAniSirGlobal mac_ctx,
 		 */
 		caps &= (~LIM_SPECTRUM_MANAGEMENT_BIT_MASK);
 
-	/*
-	 * RM capability should be independent of AP's capabilities
-	 * Refer 8.4.1.4 Capability Information field in 802.11-2012
-	 * Do not modify it.
-	 */
+	/* Clear rrm bit if AP doesn't support it */
+	if (!(session_entry->pLimJoinReq->bssDescription.capabilityInfo &
+		LIM_RRM_BIT_MASK))
+		caps &= (~LIM_RRM_BIT_MASK);
 
 	/* Clear short preamble bit if AP does not support it */
 	if (!(session_entry->pLimJoinReq->bssDescription.capabilityInfo &
