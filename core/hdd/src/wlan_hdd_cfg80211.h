@@ -1175,6 +1175,9 @@ enum qca_wlan_vendor_attr_extscan_config_params {
  *	Unsigned 32bit value, Bit mask of all buckets scanned in the
  *	current EXTSCAN CYCLE. For e.g. If fw scan is going to scan
  *	following buckets 0, 1, 2 in current cycle then it will be (0x111)
+ * @QCA_WLAN_VENDOR_ATTR_EXTSCAN_MAX_NUM_BLACKLISTED_BSSID:
+ *	Unsigned 32bit value; a EXTSCAN Capabilities attribute to send
+ *	maximum umber of blacklist bssid's that firmware can support.
  * @QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_AFTER_LAST: After last
  * @QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_MAX: Max value
  */
@@ -1296,6 +1299,8 @@ enum qca_wlan_vendor_attr_extscan_results {
 	 * to indicate number of results.
 	 */
 	QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_BUCKETS_SCANNED,
+
+	QCA_WLAN_VENDOR_ATTR_EXTSCAN_MAX_NUM_BLACKLISTED_BSSID,
 
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_AFTER_LAST,

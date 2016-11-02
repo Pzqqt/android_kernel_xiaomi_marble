@@ -4303,6 +4303,7 @@ typedef struct {
  *			which an exact match is required,
  *			or entries corresponding to hidden ssids
  * @max_number_of_white_listed_ssid: max number of white listed SSIDs
+ * @max_number_of_black_listed_bssid: max number of black listed BSSIDs
  */
 struct ext_scan_capabilities_response {
 	uint32_t requestId;
@@ -4322,6 +4323,7 @@ struct ext_scan_capabilities_response {
 	uint32_t max_number_epno_networks;
 	uint32_t max_number_epno_networks_by_ssid;
 	uint32_t max_number_of_white_listed_ssid;
+	uint32_t max_number_of_black_listed_bssid;
 };
 
 typedef struct {
