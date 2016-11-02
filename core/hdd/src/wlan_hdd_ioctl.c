@@ -5056,11 +5056,11 @@ static int drv_cmd_get_ibss_peer_info_all(hdd_adapter_t *adapter,
 		 * exceeds the size of 1024 bytes of default stack size. On
 		 * 64 bit devices, the default max stack size of 2048 bytes
 		 */
-		extra = kmalloc(WLAN_MAX_BUF_SIZE, GFP_KERNEL);
+		extra = qdf_mem_malloc(WLAN_MAX_BUF_SIZE);
 
 		if (NULL == extra) {
-			hdd_err("kmalloc failed");
-			ret = -EINVAL;
+			hdd_err("memory allocation failed");
+			ret = -ENOMEM;
 			goto exit;
 		}
 
@@ -5131,7 +5131,7 @@ static int drv_cmd_get_ibss_peer_info_all(hdd_adapter_t *adapter,
 		}
 
 		/* Free temporary buffer */
-		kfree(extra);
+		qdf_mem_free(extra);
 	} else {
 		/* Command failed, log error */
 		hdd_err("GETIBSSPEERINFOALL command failed with status code %d",
@@ -7308,7 +7308,7 @@ static int hdd_driver_command(hdd_adapter_t *adapter,
 	}
 
 	/* Allocate +1 for '\0' */
-	command = kmalloc(priv_data->total_len + 1, GFP_KERNEL);
+	command = qdf_mem_malloc(priv_data->total_len + 1);
 	if (!command) {
 		hdd_err("failed to allocate memory");
 		ret = -ENOMEM;
@@ -7328,7 +7328,7 @@ static int hdd_driver_command(hdd_adapter_t *adapter,
 
 exit:
 	if (command)
-		kfree(command);
+		qdf_mem_free(command);
 	EXIT();
 	return ret;
 }

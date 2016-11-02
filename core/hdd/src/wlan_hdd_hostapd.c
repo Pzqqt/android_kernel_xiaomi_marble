@@ -3855,7 +3855,7 @@ static __iw_softap_getassoc_stamacaddr(struct net_device *dev,
 	}
 
 	/* allocate local buffer to build the response */
-	buf = kmalloc(wrqu->data.length, GFP_KERNEL);
+	buf = qdf_mem_malloc(wrqu->data.length);
 	if (!buf) {
 		hdd_notice("failed to allocate response buffer");
 		return -ENOMEM;
@@ -3884,7 +3884,7 @@ static __iw_softap_getassoc_stamacaddr(struct net_device *dev,
 		hdd_notice("failed to copy response to user buffer");
 		ret = -EFAULT;
 	}
-	kfree(buf);
+	qdf_mem_free(buf);
 	EXIT();
 	return ret;
 }

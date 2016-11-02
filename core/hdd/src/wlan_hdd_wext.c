@@ -1074,7 +1074,7 @@ void *mem_alloc_copy_from_user_helper(const __user void *wrqu_data, size_t len)
 		return NULL;
 	}
 
-	ptr = kmalloc(len + 1, GFP_KERNEL);
+	ptr = qdf_mem_malloc(len + 1);
 	if (NULL == ptr) {
 		hdd_err("unable to allocate memory");
 		return NULL;
@@ -1082,7 +1082,7 @@ void *mem_alloc_copy_from_user_helper(const __user void *wrqu_data, size_t len)
 
 	if (copy_from_user(ptr, wrqu_data, len)) {
 		hdd_err("failed to copy data to user buffer");
-		kfree(ptr);
+		qdf_mem_free(ptr);
 		return NULL;
 	}
 	ptr[len] = '\0';
@@ -3475,7 +3475,7 @@ static int __iw_set_genie(struct net_device *dev,
 	}
 exit:
 	EXIT();
-	kfree(base_genie);
+	qdf_mem_free(base_genie);
 	return ret;
 }
 
@@ -7059,7 +7059,7 @@ static int __iw_setchar_getnone(struct net_device *dev,
 		break;
 	}
 	}
-	kfree(pBuffer);
+	qdf_mem_free(pBuffer);
 	EXIT();
 	return ret;
 }
@@ -9989,7 +9989,7 @@ static int __iw_set_packet_filter_params(struct net_device *dev,
 
 	ret = wlan_hdd_set_filter(hdd_ctx, request, adapter->sessionId);
 
-	kfree(request);
+	qdf_mem_free(request);
 	EXIT();
 	return ret;
 }

@@ -1615,7 +1615,7 @@ err_wiphy_unregister:
 		nl_srv_exit();
 
 		/* Free up dynamically allocated members inside HDD Adapter */
-		kfree(pHddCtx->config);
+		qdf_mem_free(pHddCtx->config);
 		pHddCtx->config = NULL;
 		wlan_hdd_deinit_tx_rx_histogram(pHddCtx);
 		wiphy_unregister(pHddCtx->wiphy);

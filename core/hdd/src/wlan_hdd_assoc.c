@@ -933,19 +933,18 @@ hdd_send_ft_assoc_response(struct net_device *dev,
 		   (unsigned int)pFTAssocRsp[1]);
 
 	/* We need to send the IEs to the supplicant. */
-	buff = kmalloc(IW_GENERIC_IE_MAX, GFP_ATOMIC);
+	buff = qdf_mem_malloc(IW_GENERIC_IE_MAX);
 	if (buff == NULL) {
-		hdd_err("kmalloc unable to allocate memory");
+		hdd_err("unable to allocate memory");
 		return;
 	}
 	/* Send the Assoc Resp, the supplicant needs this for initial Auth. */
 	len = pCsrRoamInfo->nAssocRspLength - FT_ASSOC_RSP_IES_OFFSET;
 	wrqu.data.length = len;
-	memset(buff, 0, IW_GENERIC_IE_MAX);
 	memcpy(buff, pFTAssocRsp, len);
 	wireless_send_event(dev, IWEVASSOCRESPIE, &wrqu, buff);
 
-	kfree(buff);
+	qdf_mem_free(buff);
 }
 
 /**
@@ -1018,12 +1017,11 @@ static void hdd_send_ft_event(hdd_adapter_t *pAdapter)
 
 #else
 	/* We need to send the IEs to the supplicant */
-	buff = kmalloc(IW_CUSTOM_MAX, GFP_ATOMIC);
+	buff = qdf_mem_malloc(IW_CUSTOM_MAX);
 	if (buff == NULL) {
-		hdd_err("kmalloc unable to allocate memory");
+		hdd_err("unable to allocate memory");
 		return;
 	}
-	qdf_mem_zero(buff, IW_CUSTOM_MAX);
 
 	/* Sme needs to send the RIC IEs first */
 	str_len = strlcpy(buff, "RIC=", IW_CUSTOM_MAX);
@@ -1045,7 +1043,7 @@ static void hdd_send_ft_event(hdd_adapter_t *pAdapter)
 				     (IW_CUSTOM_MAX - str_len), &auth_resp_len);
 
 	if (auth_resp_len == 0) {
-		kfree(buff);
+		qdf_mem_free(buff);
 		hdd_err("AuthRsp FTIES is of length 0");
 		return;
 	}
@@ -1053,7 +1051,7 @@ static void hdd_send_ft_event(hdd_adapter_t *pAdapter)
 	wrqu.data.length = str_len + auth_resp_len;
 	wireless_send_event(pAdapter->dev, IWEVCUSTOM, &wrqu, buff);
 
-	kfree(buff);
+	qdf_mem_free(buff);
 #endif
 }
 
@@ -1133,12 +1131,11 @@ hdd_send_update_beacon_ies_event(hdd_adapter_t *pAdapter,
 		   pCsrRoamInfo->nBeaconLength - BEACON_FRAME_IES_OFFSET);
 
 	/* We need to send the IEs to the supplicant. */
-	buff = kmalloc(IW_CUSTOM_MAX, GFP_ATOMIC);
+	buff = qdf_mem_malloc(IW_CUSTOM_MAX);
 	if (buff == NULL) {
-		hdd_err("kmalloc unable to allocate memory");
+		hdd_err("unable to allocate memory");
 		return;
 	}
-	qdf_mem_zero(buff, IW_CUSTOM_MAX);
 
 	strLen = strlcpy(buff, "BEACONIEs=", IW_CUSTOM_MAX);
 	currentLen = strLen + 1;
@@ -1168,7 +1165,7 @@ hdd_send_update_beacon_ies_event(hdd_adapter_t *pAdapter,
 		wireless_send_event(pAdapter->dev, IWEVCUSTOM, &wrqu, buff);
 	} while (totalIeLen > 0);
 
-	kfree(buff);
+	qdf_mem_free(buff);
 }
 
 /**
@@ -1933,8 +1930,8 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 {
 	unsigned int len = 0;
 	u8 *pFTAssocRsp = NULL;
-	uint8_t *rspRsnIe = kmalloc(IW_GENERIC_IE_MAX, GFP_KERNEL);
-	uint8_t *assoc_req_ies = kmalloc(IW_GENERIC_IE_MAX, GFP_KERNEL);
+	uint8_t *rspRsnIe = qdf_mem_malloc(IW_GENERIC_IE_MAX);
+	uint8_t *assoc_req_ies = qdf_mem_malloc(IW_GENERIC_IE_MAX);
 	uint32_t rspRsnLength = 0;
 	struct ieee80211_channel *chan;
 	uint8_t buf_ssid_ie[2 + SIR_MAC_SSID_EID_MAX]; /* 2 bytes-EID and len */
@@ -2018,7 +2015,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	hdd_notice("SSIDIE:");
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
 			   buf_ssid_ie, ssid_ie_len);
-	final_req_ie = kmalloc(IW_GENERIC_IE_MAX, GFP_KERNEL);
+	final_req_ie = qdf_mem_malloc(IW_GENERIC_IE_MAX);
 	if (final_req_ie == NULL)
 		goto done;
 	buf_ptr = final_req_ie;
@@ -2050,9 +2047,9 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 done:
 	sme_roam_free_connect_profile(&roam_profile);
 	if (final_req_ie)
-		kfree(final_req_ie);
-	kfree(rspRsnIe);
-	kfree(assoc_req_ies);
+		qdf_mem_free(final_req_ie);
+	qdf_mem_free(rspRsnIe);
+	qdf_mem_free(assoc_req_ies);
 }
 
 /**

@@ -275,7 +275,7 @@ static void hdd_wmm_free_context(hdd_wmm_qos_context_t *pQosContext)
 	mutex_unlock(&pAdapter->hddWmmStatus.wmmLock);
 
 	/* reclaim memory */
-	kfree(pQosContext);
+	qdf_mem_free(pQosContext);
 
 }
 
@@ -1042,7 +1042,7 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 	if (!pAc->wmmAcAccessNeeded) {
 		hdd_err("AC %d doesn't need service", acType);
 		pQosContext->magic = 0;
-		kfree(pQosContext);
+		qdf_mem_free(pQosContext);
 		return;
 	}
 
@@ -1752,7 +1752,7 @@ QDF_STATUS hdd_wmm_acquire_access(hdd_adapter_t *pAdapter,
 
 	pAdapter->hddWmmStatus.wmmAcStatus[acType].wmmAcAccessNeeded = true;
 
-	pQosContext = kmalloc(sizeof(*pQosContext), GFP_ATOMIC);
+	pQosContext = qdf_mem_malloc(sizeof(*pQosContext));
 	if (NULL == pQosContext) {
 		/* no memory for QoS context.  Nothing we can do but
 		 * let data flow
@@ -2138,7 +2138,7 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(hdd_adapter_t *pAdapter,
 		return status;
 	}
 
-	pQosContext = kmalloc(sizeof(*pQosContext), GFP_KERNEL);
+	pQosContext = qdf_mem_malloc(sizeof(*pQosContext));
 	if (NULL == pQosContext) {
 		/* no memory for QoS context.  Nothing we can do */
 		hdd_err("Unable to allocate QoS context");

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -215,9 +215,9 @@ bool hdd_add_wowl_ptrn(hdd_adapter_t *pAdapter, const char *ptrn)
 
 		/* All is good. Store the pattern locally */
 		g_hdd_wowl_ptrns[first_empty_slot] =
-			kmalloc(len + 1, GFP_KERNEL);
+			qdf_mem_malloc(len + 1);
 		if (g_hdd_wowl_ptrns[first_empty_slot] == NULL) {
-			hdd_err(" kmalloc failure");
+			hdd_err("memory allocation failure");
 			return false;
 		}
 
@@ -235,7 +235,7 @@ bool hdd_add_wowl_ptrn(hdd_adapter_t *pAdapter, const char *ptrn)
 			/* Add failed, so invalidate the local storage */
 			hdd_err("sme_wowl_add_bcast_pattern failed with error code (%d)",
 				  qdf_ret_status);
-			kfree(g_hdd_wowl_ptrns[first_empty_slot]);
+			qdf_mem_free(g_hdd_wowl_ptrns[first_empty_slot]);
 			g_hdd_wowl_ptrns[first_empty_slot] = NULL;
 		}
 
@@ -293,7 +293,7 @@ bool hdd_del_wowl_ptrn(hdd_adapter_t *pAdapter, const char *ptrn)
 			hdd_err("Deleted pattern with id %d [%s]", id,
 				  g_hdd_wowl_ptrns[id]);
 
-			kfree(g_hdd_wowl_ptrns[id]);
+			qdf_mem_free(g_hdd_wowl_ptrns[id]);
 			g_hdd_wowl_ptrns[id] = NULL;
 			return true;
 		}

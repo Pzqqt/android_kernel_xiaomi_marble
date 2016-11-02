@@ -11204,7 +11204,7 @@ struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 		return NULL;
 
 	cfg_param = pHddCtx->config;
-	mgmt = kzalloc((sizeof(struct ieee80211_mgmt) + ie_length), GFP_KERNEL);
+	mgmt = qdf_mem_malloc((sizeof(struct ieee80211_mgmt) + ie_length));
 	if (!mgmt) {
 		hdd_err("memory allocation failed");
 		return NULL;
@@ -11269,7 +11269,7 @@ struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 						       NL80211_BAND_5GHZ);
 	} else {
 		hdd_err("Invalid chan_no %d", chan_no);
-		kfree(mgmt);
+		qdf_mem_free(mgmt);
 		return NULL;
 	}
 
@@ -11298,7 +11298,7 @@ struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 	if (chan == NULL) {
 		hdd_err("chan pointer is NULL, chan_no: %d freq: %d",
 			chan_no, freq);
-		kfree(mgmt);
+		qdf_mem_free(mgmt);
 		return NULL;
 	}
 
@@ -11321,7 +11321,7 @@ struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 		cfg80211_inform_bss_frame(wiphy, chan, mgmt, frame_len, rssi,
 					  GFP_KERNEL);
 	pHddCtx->beacon_probe_rsp_cnt_per_scan++;
-	kfree(mgmt);
+	qdf_mem_free(mgmt);
 	return bss_status;
 }
 
