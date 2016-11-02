@@ -1221,7 +1221,10 @@ static HTC_SEND_QUEUE_RESULT htc_try_send(HTC_TARGET *target,
 
 			HTC_PACKET_QUEUE_TRANSFER_TO_HEAD(&pEndpoint->TxQueue,
 							  &sendQueue);
-			LOCK_HTC_TX(target);
+
+			if (pEndpoint->service_id != WMI_CONTROL_SVC) {
+				LOCK_HTC_TX(target);
+			}
 			break;
 		}
 
