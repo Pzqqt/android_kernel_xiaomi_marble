@@ -2038,14 +2038,17 @@ static int __wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_SCAN_SUPP_RATES]) {
 		nla_for_each_nested(attr,
-			tb[QCA_WLAN_VENDOR_ATTR_SCAN_SUPP_RATES],
-			tmp) {
+				    tb[QCA_WLAN_VENDOR_ATTR_SCAN_SUPP_RATES],
+				    tmp) {
 			band = nla_type(attr);
+			if (band >= NUM_NL80211_BANDS)
+				continue;
 			if (!wiphy->bands[band])
 				continue;
-			request->rates[band] = wlan_hdd_get_rates(wiphy,
-							band, nla_data(attr),
-							nla_len(attr));
+			request->rates[band] =
+				wlan_hdd_get_rates(wiphy,
+						   band, nla_data(attr),
+						   nla_len(attr));
 		}
 	}
 
@@ -2053,7 +2056,7 @@ static int __wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 		request->flags =
 			nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_SCAN_FLAGS]);
 		if ((request->flags & NL80211_SCAN_FLAG_LOW_PRIORITY) &&
-		!(wiphy->features & NL80211_FEATURE_LOW_PRIORITY_SCAN)) {
+		    !(wiphy->features & NL80211_FEATURE_LOW_PRIORITY_SCAN)) {
 			hdd_err("LOW PRIORITY SCAN not supported");
 			goto error;
 		}
