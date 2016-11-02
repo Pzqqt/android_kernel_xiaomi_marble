@@ -9230,7 +9230,7 @@ static ssize_t wlan_boot_cb(struct kobject *kobj,
  * This is creates the syfs entry boot_wlan. Which shall be invoked
  * when the filesystem is ready.
  *
- * Return: None
+ * Return: 0 for success, errno on failure
  */
 static int wlan_init_sysfs(void)
 {
@@ -9335,7 +9335,7 @@ static int __init hdd_module_init(void)
 	int ret = -EINVAL;
 
 	ret = wlan_init_sysfs();
-	if (!ret)
+	if (ret)
 		pr_err("Failed to create sysfs entry for loading wlan");
 
 	return ret;
