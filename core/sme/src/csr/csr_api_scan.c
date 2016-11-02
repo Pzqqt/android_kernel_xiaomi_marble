@@ -3434,9 +3434,6 @@ bool csr_elected_country_info(tpAniSirGlobal pMac)
 		qdf_mem_copy(pMac->scan.countryCodeElected,
 		       pMac->scan.votes11d[j].countryCode,
 		       WNI_CFG_COUNTRY_CODE_LEN);
-		qdf_mem_copy(pMac->scan.countryCode11d,
-		       pMac->scan.votes11d[j].countryCode,
-		       WNI_CFG_COUNTRY_CODE_LEN);
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 			  "Selected Country is %c%c With count %d\n",
 			  pMac->scan.votes11d[j].countryCode[0],
