@@ -525,6 +525,14 @@ typedef enum {
 	WMI_DFS_PHYERR_FILTER_ENA_CMDID,
 	/** enable DFS phyerr/parse filter offload */
 	WMI_DFS_PHYERR_FILTER_DIS_CMDID,
+	/** enable DFS phyerr processing offload */
+	WMI_PDEV_DFS_PHYERR_OFFLOAD_ENABLE_CMDID,
+	/** disable DFS phyerr processing offload */
+	WMI_PDEV_DFS_PHYERR_OFFLOAD_DISABLE_CMDID,
+	/** set ADFS channel config */
+	WMI_VDEV_ADFS_CH_CFG_CMDID,
+	/** abort ADFS off-channel-availability-check currently in progress */
+	WMI_VDEV_ADFS_OCAC_ABORT_CMDID,
 
 	/* Roaming specific  commands */
 	/** set roam scan mode */
@@ -1295,7 +1303,12 @@ typedef enum {
 	/*chatter query reply event */
 	WMI_CHATTER_PC_QUERY_EVENTID =
 		WMI_EVT_GRP_START_ID(WMI_GRP_CHATTER),
-
+	/** DFS related events */
+	WMI_PDEV_DFS_RADAR_DETECTION_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_DFS),
+	/** Indicate channel-availability-check completion event to host */
+	WMI_VDEV_DFS_CAC_COMPLETE_EVENTID,
+	/** Indicate off-channel-availability-check completion event to host */
+	WMI_VDEV_ADFS_OCAC_COMPLETE_EVENTID,
 	/** echo event in response to echo command */
 	WMI_ECHO_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_MISC),
 
@@ -5976,6 +5989,8 @@ typedef struct {
 	/** the DBS policy manager indicates the preferred number of receive streams. */
 	A_UINT32 preferred_rx_streams;
 	A_UINT32 he_ops; /* refer to WMI_HEOPS_xxx macros */
+	A_UINT32 cac_duration_ms;  /* in milliseconds */
+	A_UINT32 regdomain;
 	/* The TLVs follows this structure:
 	 *     wmi_channel chan;   //WMI channel
 	 *     wmi_p2p_noa_descriptor  noa_descriptors[]; //actual p2p NOA descriptor from scan entry
@@ -9383,6 +9398,10 @@ enum {
 	 * to request it.
 	 */
 	WMI_WOW_FLAG_SEND_PM_PME       = 0x00000002,
+	/* Flag to indicate unit test */
+	WMI_WOW_FLAG_UNIT_TEST_ENABLE  = 0x00000004,
+	/* Force HTC wakeup */
+	WMI_WOW_FLAG_DO_HTC_WAKEUP     = 0x00000008,
 };
 
 
@@ -10962,6 +10981,74 @@ typedef struct {
 	 */
 	A_UINT32 pdev_id;
 } wmi_dfs_phyerr_filter_dis_cmd_fixed_param;
+
+typedef struct {
+	A_UINT32 tlv_header;
+	A_UINT32 pdev_id;
+} wmi_pdev_dfs_phyerr_offload_enable_cmd_fixed_param;
+
+typedef struct {
+	A_UINT32 tlv_header;
+	A_UINT32 pdev_id;
+} wmi_pdev_dfs_phyerr_offload_disable_cmd_fixed_param;
+
+typedef enum {
+	QUICK_OCAC = 0,
+	EXTENSIVE_OCAC,
+} WMI_ADFS_OCAC_MODE;
+
+typedef struct {
+	A_UINT32  tlv_header;
+	A_UINT32  vdev_id;
+	A_UINT32  ocac_mode;  /* WMI_ADFS_OCAC_MODE */
+	A_UINT32  min_duration_ms; /* in milliseconds */
+	A_UINT32  max_duration_ms; /* in milliseconds */
+	A_UINT32  chan_freq;   /* in MHz */
+	A_UINT32  chan_width;  /* in MHz */
+	A_UINT32  center_freq; /* in MHz */
+} wmi_vdev_adfs_ch_cfg_cmd_fixed_param;
+
+typedef struct {
+	A_UINT32 tlv_header;
+	A_UINT32 vdev_id;
+} wmi_vdev_adfs_ocac_abort_cmd_fixed_param;
+
+typedef enum {
+	IN_SERVICE_MODE = 0,
+	OCAC_MODE,
+} WMI_DFS_RADAR_DETECTION_MODE;
+
+typedef struct {
+	A_UINT32 tlv_header;
+	A_UINT32 pdev_id;
+	/* In-service mode or O-CAC mode */
+	A_UINT32 detection_mode; /* WMI_DFS_RADAR_DETECTION_MODE */
+	A_UINT32 chan_freq;  /* in MHz */
+	A_UINT32 chan_width; /* in MHz */
+	A_UINT32 detector_id;
+	A_UINT32 segment_id;
+	A_UINT32 timestamp;
+	A_UINT32 is_chirp;
+} wmi_pdev_dfs_radar_detection_event_fixed_param;
+
+typedef enum {
+	OCAC_COMPLETE = 0,
+	OCAC_ABORT,
+} WMI_VDEV_OCAC_COMPLETE_STATUS;
+
+typedef struct {
+	A_UINT32 tlv_header;
+	A_UINT32 vdev_id;
+	A_UINT32 chan_freq;   /* in MHz */
+	A_UINT32 chan_width;  /* in MHz */
+	A_UINT32 center_freq; /* in MHz */
+	A_UINT32 status;   /* WMI_VDEV_OCAC_COMPLETE_STATUS */
+} wmi_vdev_adfs_ocac_complete_event_fixed_param;
+
+typedef struct {
+	A_UINT32 tlv_header;
+	A_UINT32 vdev_id;
+} wmi_vdev_dfs_cac_complete_event_fixed_param;
 
 /** TDLS COMMANDS */
 
