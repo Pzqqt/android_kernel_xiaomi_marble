@@ -17138,6 +17138,8 @@ typedef enum wmi_coex_config_type {
 	 * INQUIRY
 	 */
 	WMI_COEX_CONFIG_INQUIRY_P2P_STA_TDM = 11,
+	/* config wlan total tx power when bt coex (arg1 is wlan_tx_power_limit, in 0.5dbm units) */
+	WMI_COEX_CONFIG_TX_POWER            = 12,
 } WMI_COEX_CONFIG_TYPE;
 
 typedef struct {
