@@ -650,6 +650,7 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpRrmSMEContext sme_rrm_ctx = &mac_ctx->rrm.rrmSmeContext;
 	uint32_t session_id;
+	uint32_t max_chan_time;
 	tSirScanType scan_type;
 	uint64_t current_time;
 
@@ -709,6 +710,23 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 
 		sms_log(mac_ctx, LOG1, FL("Scan Type(%d) Max Dwell Time(%d)"),
 				scan_req.scanType, scan_req.maxChnTime);
+		/*
+		 * Use gPassive/gActiveMaxChannelTime if maxChanTime is less
+		 * than default.
+		 */
+		if (eSIR_ACTIVE_SCAN == scan_type)
+			max_chan_time =
+				mac_ctx->roam.configParam.nActiveMaxChnTime;
+		else
+			max_chan_time =
+				mac_ctx->roam.configParam.nPassiveMaxChnTime;
+
+		if (scan_req.maxChnTime < max_chan_time) {
+			scan_req.maxChnTime = max_chan_time;
+			sms_log(mac_ctx, LOG1,
+				FL("Setting default max %d ChanTime"),
+				max_chan_time);
+		}
 
 		/*
 		 * For RRM scans timing is very important especially when the
