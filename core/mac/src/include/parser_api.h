@@ -915,6 +915,8 @@ void populate_dot11f_assoc_rsp_rates(tpAniSirGlobal pMac,
 
 int find_ie_location(tpAniSirGlobal pMac, tpSirRSNie pRsnIe, uint8_t EID);
 
+void lim_log_vht_cap(tpAniSirGlobal pMac, tDot11fIEVHTCaps *pDot11f);
+
 tSirRetStatus
 populate_dot11f_vht_caps(tpAniSirGlobal pMac, tpPESession psessionEntry,
 			tDot11fIEVHTCaps *pDot11f);

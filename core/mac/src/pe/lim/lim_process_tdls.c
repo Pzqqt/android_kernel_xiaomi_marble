@@ -104,7 +104,6 @@ void populate_dot11f_tdls_offchannel_params(tpAniSirGlobal pMac,
 					    tDot11fIESuppChannels *suppChannels,
 					    tDot11fIESuppOperatingClasses *
 					    suppOperClasses);
-void lim_log_vht_cap(tpAniSirGlobal pMac, tDot11fIEVHTCaps *pDot11f);
 
 /*
  * TDLS data frames will go out/come in as non-qos data.
