@@ -736,6 +736,14 @@ QDF_STATUS sme_set_ps_preferred_network_list(tHalHandle hal_ctx,
 				"%s: session is NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	/* save some work if PNO is already disabled */
+	if (!session->pnoStarted && !request->enable) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			  "%s: PNO already disabled", __func__);
+		return QDF_STATUS_SUCCESS;
+	}
+
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 			"%s: SSID = 0x%08x%08x%08x%08x%08x%08x%08x%08x, 0x%08x%08x%08x%08x%08x%08x%08x%08x", __func__,
 			*((uint32_t *) &request->aNetworks[0].ssId.ssId[0]),

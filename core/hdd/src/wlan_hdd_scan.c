@@ -2583,41 +2583,91 @@ int wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 	return ret;
 }
 
-/**
- * __wlan_hdd_cfg80211_sched_scan_stop() - stop cfg80211 scheduled scan(pno)
- * @wiphy: Pointer to wiphy
- * @dev: Pointer network device
- *
- * Return: 0 for success, non zero for failure
- */
-static int __wlan_hdd_cfg80211_sched_scan_stop(struct wiphy *wiphy,
-					       struct net_device *dev)
+int wlan_hdd_sched_scan_stop(struct net_device *dev)
 {
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *pHddCtx;
+	QDF_STATUS status;
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	hdd_context_t *hdd_ctx;
 	tHalHandle hHal;
-	tpSirPNOScanReq pPnoRequest = NULL;
+	tSirPNOScanReq *pno_req = NULL;
 	int ret = 0;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
-		return -EINVAL;
+		ret = -EINVAL;
+		goto exit;
 	}
 
-	if (wlan_hdd_validate_session_id(pAdapter->sessionId)) {
-		hdd_err("invalid session id: %d", pAdapter->sessionId);
-		return -EINVAL;
+	if (wlan_hdd_validate_session_id(adapter->sessionId)) {
+		hdd_err("invalid session id: %d", adapter->sessionId);
+		ret = -EINVAL;
+		goto exit;
 	}
 
-	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-
-	if (NULL == pHddCtx) {
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (NULL == hdd_ctx) {
 		hdd_err("HDD context is Null");
-		return -ENODEV;
+		ret = -ENODEV;
+		goto exit;
 	}
+
+	hHal = WLAN_HDD_GET_HAL_CTX(adapter);
+	if (NULL == hHal) {
+		hdd_err(" HAL context  is Null!!!");
+		ret = -EINVAL;
+		goto exit;
+	}
+
+	pno_req = (tpSirPNOScanReq) qdf_mem_malloc(sizeof(tSirPNOScanReq));
+	if (NULL == pno_req) {
+		hdd_err("qdf_mem_malloc failed");
+		ret = -ENOMEM;
+		goto exit;
+	}
+
+	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
+			 TRACE_CODE_HDD_CFG80211_SCHED_SCAN_STOP,
+			 adapter->sessionId, adapter->device_mode));
+
+	/* Disable PNO */
+	pno_req->enable = 0;
+	pno_req->ucNetworksCount = 0;
+	status = sme_set_preferred_network_list(hHal, pno_req,
+						adapter->sessionId,
+						NULL, adapter);
+	qdf_mem_free(pno_req);
+
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_err("Failed to disabled PNO");
+		ret = -EINVAL;
+		goto exit;
+	}
+
+	hdd_notice("PNO scan disabled");
+
+exit:
+	EXIT();
+	return ret;
+}
+
+/**
+ * __wlan_hdd_cfg80211_sched_scan_stop() - stop cfg80211 scheduled scan(pno)
+ * @dev: Pointer network device
+ *
+ * This is a wrapper around wlan_hdd_sched_scan_stop() that returns success
+ * in the event that the driver is currently recovering or unloading. This
+ * prevents a race condition where we get a scan stop from kernel during
+ * a driver unload from PLD.
+ *
+ * Return: 0 for success, non zero for failure
+ */
+static int __wlan_hdd_cfg80211_sched_scan_stop(struct net_device *dev)
+{
+	int err;
+
+	ENTER_DEV(dev);
 
 	/* The return 0 is intentional when Recovery and Load/Unload in
 	 * progress. We did observe a crash due to a return of
@@ -2631,63 +2681,28 @@ static int __wlan_hdd_cfg80211_sched_scan_stop(struct wiphy *wiphy,
 	if (cds_is_driver_recovering()) {
 		hdd_err("Recovery in Progress. State: 0x%x Ignore!!!",
 			 cds_get_driver_state());
-		return ret;
+		return 0;
 	}
 
 	if (cds_is_load_or_unload_in_progress()) {
 		hdd_err("Unload/Load in Progress, state: 0x%x.  Ignore!!!",
 			cds_get_driver_state());
-		return ret;
+		return 0;
 	}
 
-	hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
-	if (NULL == hHal) {
-		hdd_err(" HAL context  is Null!!!");
-		return -EINVAL;
-	}
-
-	pPnoRequest = (tpSirPNOScanReq) qdf_mem_malloc(sizeof(tSirPNOScanReq));
-	if (NULL == pPnoRequest) {
-		hdd_err("qdf_mem_malloc failed");
-		return -ENOMEM;
-	}
-
-	pPnoRequest->enable = 0;        /* Disable PNO */
-	pPnoRequest->ucNetworksCount = 0;
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_CFG80211_SCHED_SCAN_STOP,
-			 pAdapter->sessionId, pAdapter->device_mode));
-	status = sme_set_preferred_network_list(hHal, pPnoRequest,
-						pAdapter->sessionId,
-						NULL, pAdapter);
-	if (QDF_STATUS_SUCCESS != status) {
-		hdd_err("Failed to disabled PNO");
-		ret = -EINVAL;
-	}
-
-	hdd_notice("PNO scan disabled");
-
-	qdf_mem_free(pPnoRequest);
+	err = wlan_hdd_sched_scan_stop(dev);
 
 	EXIT();
-	return ret;
+	return err;
 }
 
-/**
- * wlan_hdd_cfg80211_sched_scan_stop() - stop cfg80211 scheduled scan(pno)
- * @wiphy: Pointer to wiphy
- * @dev: Pointer network device
- *
- * Return: 0 for success, non zero for failure
- */
 int wlan_hdd_cfg80211_sched_scan_stop(struct wiphy *wiphy,
 				      struct net_device *dev)
 {
 	int ret;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_sched_scan_stop(wiphy, dev);
+	ret = __wlan_hdd_cfg80211_sched_scan_stop(dev);
 	cds_ssr_unprotect(__func__);
 
 	return ret;

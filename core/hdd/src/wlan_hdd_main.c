@@ -4439,6 +4439,45 @@ QDF_STATUS hdd_abort_mac_scan_all_adapters(hdd_context_t *hdd_ctx)
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * hdd_abort_sched_scan_all_adapters() - stops scheduled (PNO) scans for all
+ * adapters
+ * @hdd_ctx: The HDD context containing the adapters to operate on
+ *
+ * return: QDF_STATUS_SUCCESS
+ */
+static QDF_STATUS hdd_abort_sched_scan_all_adapters(hdd_context_t *hdd_ctx)
+{
+	hdd_adapter_list_node_t *adapter_node = NULL, *next_node = NULL;
+	QDF_STATUS status;
+	hdd_adapter_t *adapter;
+	int err;
+
+	ENTER();
+
+	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
+
+	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
+		adapter = adapter_node->pAdapter;
+		if ((adapter->device_mode == QDF_STA_MODE) ||
+		    (adapter->device_mode == QDF_P2P_CLIENT_MODE) ||
+		    (adapter->device_mode == QDF_IBSS_MODE) ||
+		    (adapter->device_mode == QDF_P2P_DEVICE_MODE) ||
+		    (adapter->device_mode == QDF_SAP_MODE) ||
+		    (adapter->device_mode == QDF_P2P_GO_MODE)) {
+			err = wlan_hdd_sched_scan_stop(adapter->dev);
+			if (err)
+				hdd_err("Unable to stop scheduled scan");
+		}
+		status = hdd_get_next_adapter(hdd_ctx, adapter_node, &next_node);
+		adapter_node = next_node;
+	}
+
+	EXIT();
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #ifdef WLAN_NS_OFFLOAD
 /**
  * hdd_wlan_unregister_ip6_notifier() - unregister IPv6 change notifier
@@ -4876,6 +4915,7 @@ static void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 		 * completed, all scans will be cancelled
 		 */
 		hdd_abort_mac_scan_all_adapters(hdd_ctx);
+		hdd_abort_sched_scan_all_adapters(hdd_ctx);
 		hdd_stop_all_adapters(hdd_ctx);
 	}
 

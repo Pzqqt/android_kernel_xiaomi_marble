@@ -6572,8 +6572,10 @@ QDF_STATUS sme_set_preferred_network_list(tHalHandle hHal,
 			 sessionId, request->ucNetworksCount));
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		sme_set_ps_preferred_network_list(hHal, request, sessionId,
-				callback_routine, callback_context);
+		status = sme_set_ps_preferred_network_list(hHal, request,
+							   sessionId,
+							   callback_routine,
+							   callback_context);
 		sme_release_global_lock(&pMac->sme);
 	}
 

@@ -65,8 +65,28 @@ int wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 				       struct cfg80211_sched_scan_request
 				       *request);
 
+/**
+ * wlan_hdd_cfg80211_sched_scan_stop() - stop cfg80211 scheduled (PNO) scan
+ * @wiphy: Pointer to wiphy
+ * @dev: Pointer network device
+ *
+ * Note, this returns success if the driver is recovering or unloading to
+ * prevent race conditions between PLD initiating an unload and kernel
+ * initiating a scheduled scan stop via cfg80211. Unload is expected to stop
+ * any pending scheduled scans in this case.
+ *
+ * Return: 0 for success, non zero for failure
+ */
 int wlan_hdd_cfg80211_sched_scan_stop(struct wiphy *wiphy,
 				      struct net_device *dev);
+
+/**
+ * wlan_hdd_sched_scan_stop() - stop scheduled (PNO) scans
+ * @dev: Pointer network device
+ *
+ * Return: 0 for success, non zero for failure
+ */
+int wlan_hdd_sched_scan_stop(struct net_device *dev);
 #endif /* End of FEATURE_WLAN_SCAN_PNO */
 
 int wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
