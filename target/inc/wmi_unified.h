@@ -12579,6 +12579,16 @@ typedef enum {
 #define wmi_ndp_rsp_code wmi_ndp_rsp_code_PROTOTYPE
 
 /**
+* NDP Channel configuration type
+*/
+typedef enum {
+	WMI_NDP_CHANNEL_NOT_REQUESTED = 0, /* Channel will not configured */
+	WMI_NDP_REQUEST_CHANNEL_SETUP = 1, /* Channel will be provided and is optional/hint */
+	WMI_NDP_FORCE_CHANNEL_SETUP = 2/* NDP must start on the provided channel */
+} wmi_ndp_channel_cfg_PROTOTYPE;
+
+#define wmi_ndp_channel_cfg wmi_ndp_channel_cfg_PROTOTYPE
+/**
  * NDP Initiator requesting a data session
  */
 typedef struct {
@@ -12599,6 +12609,8 @@ typedef struct {
 	A_UINT32 ndp_cfg_len;
 	/* Actual number of bytes in TLV ndp_app_info */
 	A_UINT32 ndp_app_info_len;
+	/** NDP channel configuration type defined in wmi_ndp_channel_cfg */
+	A_UINT32 ndp_channel_cfg;
 	/**
 	 * TLV (tag length value ) parameters follow the ndp_initiator_req
 	 * structure. The TLV's are:
@@ -12782,6 +12794,8 @@ typedef struct {
 	A_UINT32 ndp_instance_id;
 	/* NDI mac address of the peer */
 	wmi_mac_addr peer_ndi_mac_addr;
+	/** Host can create peer if this entry is TRUE */
+	A_UINT32 create_peer;
 } wmi_ndp_responder_rsp_event_fixed_param_PROTOTYPE;
 
 #define wmi_ndp_responder_rsp_event_fixed_param wmi_ndp_responder_rsp_event_fixed_param_PROTOTYPE
