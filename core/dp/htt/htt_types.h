@@ -35,7 +35,6 @@
 #include <qdf_atomic.h>         /* qdf_atomic_inc */
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <htc_api.h>            /* HTC_PACKET */
-#include <ol_htt_api.h>
 
 #define DEBUG_DMA_DONE
 
@@ -414,10 +413,6 @@ struct htt_pdev_t {
 	qdf_spinlock_t       rx_buff_list_lock;
 	int rx_buff_index;
 #endif
-
-	/* callback function for packetdump */
-	tp_rx_pkt_dump_cb rx_pkt_dump_cb;
-
 	struct mon_channel mon_ch_info;
 };
 
