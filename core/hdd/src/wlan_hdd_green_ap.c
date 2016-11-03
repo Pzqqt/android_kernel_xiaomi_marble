@@ -399,6 +399,11 @@ void hdd_green_ap_start_bss(struct hdd_context_s *hdd_ctx)
 {
 	struct hdd_config *cfg = hdd_ctx->config;
 
+	if (!hdd_ctx->green_ap_ctx) {
+		hdd_err("Green AP is not enabled. green_ap_ctx = NULL");
+		goto exit;
+	}
+
 	/* check if the firmware and ini are both enabled the egap,
 	 * and also the feature_flag enable, then we enable the egap
 	 */
