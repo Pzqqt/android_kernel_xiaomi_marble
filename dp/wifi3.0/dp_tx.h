@@ -20,7 +20,7 @@
 
 #include <qdf_types.h>
 #include <qdf_nbuf.h>
-#include <dp_types.h>
+#include "dp_types.h"
 
 #define DP_STATS_ADD(x, y, z)
 #define DP_STATS_SUB(x, y, z)

@@ -176,6 +176,12 @@ struct hif_softc {
 	uint32_t hif_attribute;
 };
 
+static inline void *hif_get_hal_handle(void *hif_hdl)
+{
+	struct hif_softc *sc = (struct hif_softc *)hif_hdl;
+	return sc->hal_soc;
+}
+
 #ifdef QCA_NSS_WIFI_OFFLOAD_SUPPORT
 static inline bool hif_is_nss_wifi_enabled(struct hif_softc *sc)
 {

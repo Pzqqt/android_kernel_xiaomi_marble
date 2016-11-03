@@ -23,7 +23,7 @@
 #include "hal_tx.h"
 #include "qdf_mem.h"
 #include "qdf_nbuf.h"
-#include "wlan_cfg.h"
+#include "../../wlan_cfg/wlan_cfg.h"
 
 #ifdef TX_CORE_ALIGNED_SEND
 #define DP_TX_GET_DESC_POOL_ID(vdev) qdf_get_cpu()
@@ -312,7 +312,7 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	 * descriptor.For the direct buffer pointer case, HW requirement is that
 	 * descriptor should always point to a 8-byte aligned address.
 	 */
-	align_pad = ((uint32_t) (qdf_nbuf_data(nbuf)) & 0x7);
+	align_pad = (uint8_t)((uintptr_t) (qdf_nbuf_data(nbuf)) & 0x7);
 	tx_desc->pkt_offset = align_pad;
 
 	/*
@@ -493,8 +493,8 @@ QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	hal_tx_desc_set_encap_type(hal_tx_desc_cached, tx_desc->tx_encap_type);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			"%s length:%d , type = %d, dma_addr %p, offset %d\n",
-			__func__, length, type, dma_addr, tx_desc->pkt_offset);
+			"%s length:%d , type = %d, dma_addr %llx, offset %d\n",
+			__func__, length, type, (uint64_t)dma_addr, tx_desc->pkt_offset);
 
 	if (tx_desc->flags & DP_TX_DESC_FLAG_TO_FW)
 		hal_tx_desc_set_to_fw(hal_tx_desc_cached, 1);
@@ -585,7 +585,7 @@ qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 	if (qdf_unlikely(hal_srng_access_start(soc->hal_soc, hal_srng))) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s %d : HAL RING Access Failed -- %lu\n",
+				"%s %d : HAL RING Access Failed -- %p\n",
 				__func__, __LINE__, hal_srng);
 		goto fail_return;
 	}
@@ -635,7 +635,7 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 	if (qdf_unlikely(hal_srng_access_start(soc->hal_soc, hal_srng))) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s %d : HAL RING Access Failed -- %lu\n",
+				"%s %d : HAL RING Access Failed -- %p\n",
 				__func__, __LINE__, hal_srng);
 		return nbuf;
 	}
@@ -1113,7 +1113,7 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, uint32_t ring_id,
 
 	if (qdf_unlikely(hal_srng_access_start(soc->hal_soc, hal_srng))) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s %d : HAL RING Access Failed -- %lu\n",
+				"%s %d : HAL RING Access Failed -- %p\n",
 				__func__, __LINE__, hal_srng);
 		return 0;
 	}
@@ -1330,8 +1330,8 @@ QDF_STATUS dp_tx_pdev_detach(struct dp_pdev *pdev)
 QDF_STATUS dp_tx_soc_detach(struct dp_soc *soc)
 {
 	uint8_t num_pool;
-	uint8_t num_desc;
-	uint8_t num_ext_desc;
+	uint16_t num_desc;
+	uint16_t num_ext_desc;
 	uint8_t i;
 
 	num_pool = wlan_cfg_get_num_tx_desc_pool(soc->wlan_cfg_ctx);
@@ -1361,7 +1361,7 @@ QDF_STATUS dp_tx_soc_detach(struct dp_soc *soc)
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			"%s MSDU Ext Desc Pool Free descs = %d\n",
+			"%s MSDU Ext Desc Pool %d Free descs = %d\n",
 			__func__, num_pool, num_ext_desc);
 
 	return QDF_STATUS_SUCCESS;
@@ -1414,7 +1414,7 @@ QDF_STATUS dp_tx_soc_attach(struct dp_soc *soc)
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			"%s MSDU Ext Desc Alloc , descs = %d\n",
+			"%s MSDU Ext Desc Alloc %d, descs = %d\n",
 			__func__, num_pool, num_ext_desc);
 
 	/* Initialize descriptors in TCL Rings */

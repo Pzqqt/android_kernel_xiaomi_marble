@@ -16,12 +16,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "wcss_seq_hwiobase.h"
-#include "wcss_seq_hwioreg.h"
-#include "sw_xml_headers.h"
-#include "reo_destination_ring.h"
-#include "tcl_data_cmd.h"
-#include "tlv_hdr.h"
 #include "hal_api.h"
 
 /**

@@ -415,6 +415,31 @@ dp_peer_find_detach(struct dp_soc *soc)
 }
 
 /*
+ * dp_find_peer_by_addr - find peer instance by mac address
+ * @dev: physical device instance
+ * @peer_mac_addr: peer mac address
+ * @local_id: local id for the peer
+ *
+ * Return: peer instance pointer
+ */
+void *dp_find_peer_by_addr(void *dev, uint8_t *peer_mac_addr,
+		uint8_t *local_id)
+{
+	struct dp_pdev *pdev = dev;
+	struct dp_peer *peer;
+
+	/* WAR, VDEV ID? TEMP 0 */
+	peer = dp_peer_find_hash_find(pdev->soc, peer_mac_addr, 0);
+	if (!peer)
+		return NULL;
+
+	/* Multiple peer ids? How can know peer id? */
+	*local_id = peer->local_id;
+	DP_TRACE(INFO, "%s: peer %p id %d", __func__, peer, *local_id);
+	return peer;
+}
+
+/*
  * dp_rx_tid_update_wifi3() – Update receive TID state
  * @peer: Datapath peer handle
  * @tid: TID
@@ -549,8 +574,8 @@ int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 	hal_reo_qdesc_setup(soc->hal_soc, tid, ba_window_size, start_seq,
 		hw_qdesc_vaddr, rx_tid->hw_qdesc_paddr, hal_pn_type);
 
-	if (soc->ol_ops->peer_rx_reorder_queue_setup) {
-		soc->ol_ops->peer_rx_reorder_queue_setup(soc->osif_soc,
+	if (soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup) {
+		soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup(soc->osif_soc,
 			peer->vdev->vdev_id, peer->mac_addr.raw,
 			rx_tid->hw_qdesc_paddr, tid, tid);
 	}
@@ -560,7 +585,7 @@ int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 /*
  * Rx TID deletion callback to free memory allocated for HW queue descriptor
  */
-static void dp_rx_tid_delete_cb(struct dp_pdev *pdev, void *cb_ctxt, int status)
+void dp_rx_tid_delete_cb(struct dp_pdev *pdev, void *cb_ctxt, int status)
 {
 	struct dp_soc *soc = pdev->soc;
 	struct dp_rx_tid *rx_tid = (struct dp_rx_tid *)cb_ctxt;
@@ -692,7 +717,7 @@ int dp_addba_requestprocess_wifi3(void *peer_handle, uint8_t dialogtoken,
 
 	rx_tid->ba_win_size = baparamset->buffersize;
 	rx_tid->dialogtoken = dialogtoken;
-	rx_tid->statuscode = IEEE80211_STATUS_SUCCESS;
+	rx_tid->statuscode = QDF_STATUS_SUCCESS;
 	rx_tid->ba_status = DP_RX_BA_ACTIVE;
 
 	return 0;
@@ -737,7 +762,7 @@ int dp_delba_process_wifi3(void *peer_handle,
 	struct ieee80211_delba_parameterset *delbaparamset, uint16_t reasoncode)
 {
 	struct dp_peer *peer = (struct dp_peer *)peer_handle;
-	uint16_t tid = delbaparamset->tid;
+	uint16_t tid = (uint16_t)delbaparamset->tid;
 	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
 
 	if (rx_tid->ba_status != DP_RX_BA_ACTIVE)
@@ -799,7 +824,7 @@ dp_rx_sec_ind_handler(void *soc_handle, uint16_t peer_id,
 		sec_type);
 	sec_index = is_unicast ? dp_sec_ucast : dp_sec_mcast;
 	peer->security[sec_index].sec_type = sec_type;
-#if notyet /* TODO: See if this is required for defrag support */
+#ifdef notyet /* TODO: See if this is required for defrag support */
 	/* michael key only valid for TKIP, but for simplicity,
 	 * copy it anyway
 	 */
@@ -837,5 +862,307 @@ dp_rx_sec_ind_handler(void *soc_handle, uint16_t peer_id,
 	 * all security types and last pn for WAPI) once REO command API
 	 * is available
 	 */
+}
+
+/**
+ * dp_register_peer() - Register peer into physical device
+ * @pdev - data path device instance
+ * @sta_desc - peer description
+ *
+ * Register peer into physical device
+ *
+ * Return: QDF_STATUS_SUCCESS registration success
+ *         QDF_STATUS_E_FAULT peer not found
+ */
+QDF_STATUS dp_register_peer(void *pdev_handle,
+		struct ol_txrx_desc_type *sta_desc)
+{
+	struct dp_peer *peer;
+	struct dp_pdev *pdev = pdev_handle;
+
+	peer = dp_peer_find_by_local_id(pdev, sta_desc->sta_id);
+	if (!peer)
+		return QDF_STATUS_E_FAULT;
+
+	qdf_spin_lock_bh(&peer->peer_info_lock);
+	peer->state = OL_TXRX_PEER_STATE_CONN;
+	qdf_spin_unlock_bh(&peer->peer_info_lock);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_clear_peer() - remove peer from physical device
+ * @pdev - data path device instance
+ * @sta_id - local peer id
+ *
+ * remove peer from physical device
+ *
+ * Return: QDF_STATUS_SUCCESS registration success
+ *         QDF_STATUS_E_FAULT peer not found
+ */
+QDF_STATUS dp_clear_peer(void *pdev_handle, uint8_t local_id)
+{
+	struct dp_peer *peer;
+	struct dp_pdev *pdev = pdev_handle;
+
+	peer = dp_peer_find_by_local_id(pdev, local_id);
+	if (!peer)
+		return QDF_STATUS_E_FAULT;
+
+	qdf_spin_lock_bh(&peer->peer_info_lock);
+	peer->state = OL_TXRX_PEER_STATE_DISC;
+	qdf_spin_unlock_bh(&peer->peer_info_lock);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_find_peer_by_addr_and_vdev() - Find peer by peer mac address within vdev
+ * @pdev - data path device instance
+ * @vdev - virtual interface instance
+ * @peer_addr - peer mac address
+ * @peer_id - local peer id with target mac address
+ *
+ * Find peer by peer mac address within vdev
+ *
+ * Return: peer instance void pointer
+ *         NULL cannot find target peer
+ */
+void *dp_find_peer_by_addr_and_vdev(void *pdev_handle, void *vdev,
+		uint8_t *peer_addr, uint8_t *local_id)
+{
+	struct dp_pdev *pdev = pdev_handle;
+	struct dp_peer *peer;
+
+	DP_TRACE(INFO, "vdev %p peer_addr %p", vdev, peer_addr);
+	peer = dp_peer_find_hash_find(pdev->soc, peer_addr, 0);
+	DP_TRACE(INFO, "peer %p vdev %p", peer, vdev);
+
+	if (!peer)
+		return NULL;
+
+	if (peer->vdev != vdev)
+		return NULL;
+
+	*local_id = peer->local_id;
+
+	DP_TRACE(INFO, "peer %p vdev %p lcoal id %d",
+			peer, vdev, *local_id);
+
+	return peer;
+}
+
+/**
+ * dp_local_peer_id() - Find local peer id within peer instance
+ * @peer - peer instance
+ *
+ * Find local peer id within peer instance
+ *
+ * Return: local peer id
+ */
+uint16_t dp_local_peer_id(void *peer)
+{
+	return ((struct dp_peer *)peer)->local_id;
+}
+
+/**
+ * dp_peer_find_by_local_id() - Find peer by local peer id
+ * @pdev - data path device instance
+ * @local_peer_id - local peer id want to find
+ *
+ * Find peer by local peer id within physical device
+ *
+ * Return: peer instance void pointer
+ *         NULL cannot find target peer
+ */
+void *dp_peer_find_by_local_id(void *pdev_handle, uint8_t local_id)
+{
+	struct dp_peer *peer;
+	struct dp_pdev *pdev = pdev_handle;
+
+	qdf_spin_lock_bh(&pdev->local_peer_ids.lock);
+	peer = pdev->local_peer_ids.map[local_id];
+	qdf_spin_unlock_bh(&pdev->local_peer_ids.lock);
+	DP_TRACE(INFO, "peer %p lcoal id %d",
+			peer, local_id);
+	return peer;
+}
+
+/**
+ * dp_peer_state_update() - update peer local state
+ * @pdev - data path device instance
+ * @peer_addr - peer mac address
+ * @state - new peer local state
+ *
+ * update peer local state
+ *
+ * Return: QDF_STATUS_SUCCESS registration success
+ */
+QDF_STATUS dp_peer_state_update(void *pdev_handle, uint8_t *peer_mac,
+		enum ol_txrx_peer_state state)
+{
+	struct dp_peer *peer;
+	struct dp_pdev *pdev = pdev_handle;
+
+	peer =  dp_peer_find_hash_find(pdev->soc, peer_mac, 0);
+	peer->state = state;
+	DP_TRACE(INFO, "peer %p state %d",
+			peer, peer->state);
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_get_vdevid() - Get virtaul interface id which peer registered
+ * @peer - peer instance
+ * @vdev_id - virtaul interface id which peer registered
+ *
+ * Get virtaul interface id which peer registered
+ *
+ * Return: QDF_STATUS_SUCCESS registration success
+ */
+QDF_STATUS dp_get_vdevid(void *peer_handle, uint8_t *vdev_id)
+{
+	struct dp_peer *peer = peer_handle;
+
+	DP_TRACE(INFO, "peer %p vdev %p vdev id %d",
+			peer, peer->vdev, peer->vdev->vdev_id);
+	*vdev_id = peer->vdev->vdev_id;
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_get_vdev_for_peer() - Get virtual interface instance which peer belongs
+ * @peer - peer instance
+ *
+ * Get virtual interface instance which peer belongs
+ *
+ * Return: virtual interface instance pointer
+ *         NULL in case cannot find
+ */
+void *dp_get_vdev_for_peer(void *peer_handle)
+{
+	struct dp_peer *peer = peer_handle;
+
+	DP_TRACE(INFO, "peer %p vdev %p", peer, peer->vdev);
+	return (void *)peer->vdev;
+}
+
+/**
+ * dp_peer_get_peer_mac_addr() - Get peer mac address
+ * @peer - peer instance
+ *
+ * Get peer mac address
+ *
+ * Return: peer mac address pointer
+ *         NULL in case cannot find
+ */
+uint8_t *dp_peer_get_peer_mac_addr(void *peer_handle)
+{
+	struct dp_peer *peer = peer_handle;
+	uint8_t *mac;
+
+	mac = peer->mac_addr.raw;
+	DP_TRACE(INFO, "peer %p mac 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x",
+		peer, mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	return peer->mac_addr.raw;
+}
+
+/**
+ * dp_get_peer_state() - Get local peer state
+ * @peer - peer instance
+ *
+ * Get local peer state
+ *
+ * Return: peer status
+ */
+int dp_get_peer_state(void *peer_handle)
+{
+	struct dp_peer *peer = peer_handle;
+
+	DP_TRACE(INFO, "peer %p stats %d", peer, peer->state);
+	return peer->state;
+}
+
+/**
+ * dp_local_peer_id_pool_init() - local peer id pool alloc for physical device
+ * @pdev - data path device instance
+ *
+ * local peer id pool alloc for physical device
+ *
+ * Return: none
+ */
+void dp_local_peer_id_pool_init(struct dp_pdev *pdev)
+{
+	int i;
+
+	/* point the freelist to the first ID */
+	pdev->local_peer_ids.freelist = 0;
+
+	/* link each ID to the next one */
+	for (i = 0; i < OL_TXRX_NUM_LOCAL_PEER_IDS; i++) {
+		pdev->local_peer_ids.pool[i] = i + 1;
+		pdev->local_peer_ids.map[i] = NULL;
+	}
+
+	/* link the last ID to itself, to mark the end of the list */
+	i = OL_TXRX_NUM_LOCAL_PEER_IDS;
+	pdev->local_peer_ids.pool[i] = i;
+
+	qdf_spinlock_create(&pdev->local_peer_ids.lock);
+	DP_TRACE(INFO, "Peer pool init");
+}
+
+/**
+ * dp_local_peer_id_alloc() - allocate local peer id
+ * @pdev - data path device instance
+ * @peer - new peer instance
+ *
+ * allocate local peer id
+ *
+ * Return: none
+ */
+void dp_local_peer_id_alloc(struct dp_pdev *pdev, struct dp_peer *peer)
+{
+	int i;
+
+	qdf_spin_lock_bh(&pdev->local_peer_ids.lock);
+	i = pdev->local_peer_ids.freelist;
+	if (pdev->local_peer_ids.pool[i] == i) {
+		/* the list is empty, except for the list-end marker */
+		peer->local_id = OL_TXRX_INVALID_LOCAL_PEER_ID;
+	} else {
+		/* take the head ID and advance the freelist */
+		peer->local_id = i;
+		pdev->local_peer_ids.freelist = pdev->local_peer_ids.pool[i];
+		pdev->local_peer_ids.map[i] = peer;
+	}
+	qdf_spin_unlock_bh(&pdev->local_peer_ids.lock);
+	DP_TRACE(INFO, "peer %p, local id %d", peer, peer->local_id);
+}
+
+/**
+ * dp_local_peer_id_free() - remove local peer id
+ * @pdev - data path device instance
+ * @peer - peer instance should be removed
+ *
+ * remove local peer id
+ *
+ * Return: none
+ */
+void dp_local_peer_id_free(struct dp_pdev *pdev, struct dp_peer *peer)
+{
+	int i = peer->local_id;
+	if ((i == OL_TXRX_INVALID_LOCAL_PEER_ID) ||
+	    (i >= OL_TXRX_NUM_LOCAL_PEER_IDS)) {
+		return;
+	}
+
+	/* put this ID on the head of the freelist */
+	qdf_spin_lock_bh(&pdev->local_peer_ids.lock);
+	pdev->local_peer_ids.pool[i] = pdev->local_peer_ids.freelist;
+	pdev->local_peer_ids.freelist = i;
+	pdev->local_peer_ids.map[i] = NULL;
+	qdf_spin_unlock_bh(&pdev->local_peer_ids.lock);
 }
 

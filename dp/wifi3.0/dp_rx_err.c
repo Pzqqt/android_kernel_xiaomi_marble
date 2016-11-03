@@ -252,7 +252,7 @@ dp_rx_link_desc_return(struct dp_soc *soc, void *ring_desc)
 		 */
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s %d : "
-			"HAL RING Access For WBM Release SRNG Failed -- %lu\n",
+			"HAL RING Access For WBM Release SRNG Failed -- %p\n",
 			__func__, __LINE__, wbm_rel_srng);
 		goto done;
 	}
@@ -316,7 +316,7 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		 * Ring Type / Ring Id combo
 		 */
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s %d : HAL RING Access Failed -- %lu\n",
+			"%s %d : HAL RING Access Failed -- %p\n",
 			__func__, __LINE__, hal_ring);
 		goto done;
 	}
@@ -433,7 +433,7 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		 * Ring Type / Ring Id combo
 		 */
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s %d : HAL RING Access Failed -- %lu\n",
+			"%s %d : HAL RING Access Failed -- %p\n",
 			__func__, __LINE__, hal_ring);
 		goto done;
 	}

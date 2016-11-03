@@ -23,12 +23,6 @@
   Include files
   ---------------------------------------------------------------------------*/
 #include "hal_api.h"
-#include <hal_internal.h>
-#include <qdf_types.h>
-#include "qdf_mem.h"
-#include "hw/data/datastruct/wbm_release_ring.h"
-#include "hw/data/tlv_32/tcl_data_cmd.h"
-#include "hw/data/datastruct/tx_msdu_extension.h"
 
 /*---------------------------------------------------------------------------
   Preprocessor definitions and constants

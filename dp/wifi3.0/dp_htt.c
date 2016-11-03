@@ -18,7 +18,7 @@
 
 #include <htt.h>
 #include <hal_api.h>
-#include <dp_htt.h>
+#include "dp_htt.h"
 
 #define HTT_HTC_PKT_POOL_INIT_SIZE 64
 
@@ -288,7 +288,8 @@ int htt_srng_setup(void *htt_soc, int pdev_id, void *hal_srng,
 			 "%s: ring_type %d ring_id %d\n",
 			 __func__, hal_ring_type, srng_params.ring_id);
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			 "hp_addr 0x%x tp_addr 0x%x\n", hp_addr, tp_addr);
+			 "hp_addr 0x%llx tp_addr 0x%llx\n",
+			 (uint64_t)hp_addr, (uint64_t)tp_addr);
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			 "htt_ring_id %d\n", htt_ring_id);
 		break;
@@ -358,14 +359,13 @@ int htt_srng_setup(void *htt_soc, int pdev_id, void *hal_srng,
 	HTT_SRING_SETUP_RING_SIZE_SET(*msg_word,
 		(ring_entry_size * srng_params.num_entries));
 	if (htt_ring_type == HTT_SW_TO_HW_RING)
-		HTT_SRING_SETUP_RING_MISC_CFG_LOOPCOUNT_DISABLE_SET(*msg_word,
-		1);
-
-	HTT_SRING_SETUP_RING_MISC_CFG_MSI_SWAP_SET(*msg_word,
+		HTT_SRING_SETUP_RING_MISC_CFG_FLAG_LOOPCOUNT_DISABLE_SET(
+						*msg_word, 1);
+	HTT_SRING_SETUP_RING_MISC_CFG_FLAG_MSI_SWAP_SET(*msg_word,
 		!!(srng_params.flags & HAL_SRNG_MSI_SWAP));
-	HTT_SRING_SETUP_RING_MISC_CFG_TLV_SWAP_SET(*msg_word,
+	HTT_SRING_SETUP_RING_MISC_CFG_FLAG_TLV_SWAP_SET(*msg_word,
 		!!(srng_params.flags & HAL_SRNG_DATA_TLV_SWAP));
-	HTT_SRING_SETUP_RING_MISC_CFG_HOST_FW_SWAP_SET(*msg_word,
+	HTT_SRING_SETUP_RING_MISC_CFG_FLAG_HOST_FW_SWAP_SET(*msg_word,
 		!!(srng_params.flags & HAL_SRNG_RING_PTR_SWAP));
 
 	/* word 4 */

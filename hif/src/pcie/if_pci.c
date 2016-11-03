@@ -1451,7 +1451,7 @@ QDF_STATUS hif_pci_open(struct hif_softc *hif_ctx, enum qdf_bus_type bus_type)
  *
  * Bmi phase uses different copy complete callbacks than mission mode.
  */
-static void hif_register_bmi_callbacks(struct hif_softc *hif_sc)
+void hif_register_bmi_callbacks(struct hif_softc *hif_sc)
 {
 	struct HIF_CE_pipe_info *pipe_info;
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_sc);

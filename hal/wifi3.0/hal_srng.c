@@ -27,12 +27,6 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "hw/reg_header/wcss/wcss_seq_hwiobase.h"
-#include "hw/reg_header/wcss/wcss_seq_hwioreg.h"
-#include "hw/data/common/sw_xml_headers.h"
-#include "hw/data/datastruct/reo_destination_ring.h"
-#include "hw/data/tlv_32/tcl_data_cmd.h"
-#include "hw/data/common/tlv_hdr.h"
 #include "hal_api.h"
 
 /**

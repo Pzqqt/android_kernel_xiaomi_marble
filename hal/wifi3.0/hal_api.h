@@ -33,6 +33,9 @@
 #include "qdf_types.h"
 #include "hal_internal.h"
 #include "hif_io32.h"
+#include "rx_msdu_link.h"
+#include "rx_reo_queue.h"
+#include "rx_reo_queue_ext.h"
 
 /**
  * hal_attach - Initalize HAL layer

@@ -42,8 +42,6 @@
 #define DP_MAX_IRQ_PER_CONTEXT 12
 #define DP_MAX_INTERRUPT_CONTEXTS 8
 
-#define MAX_TCL_DATA_RINGS 3
-#define MAX_TXDESC_POOLS 3
 #define MAX_TX_HW_QUEUES 3
 
 #define DP_MAX_INTERRUPT_CONTEXTS 8
@@ -73,6 +71,9 @@ union dp_rx_desc_list_elem_t;
      (_a)[5] == 0xff)
 
 
+#define DP_TRACE(LVL, fmt, args ...)                             \
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_##LVL,       \
+		"%s:%d: "fmt, __func__, __LINE__, ## args)
 /**
  * enum dp_tx_frm_type
  * @dp_tx_frm_std: Regular frame, no added header fragments
@@ -228,19 +229,6 @@ struct dp_rx_tid {
 	uint16_t statuscode;
 };
 
-struct ol_if_ops {
-	void (*peer_set_default_routing)(void *scn_handle,
-		uint8_t *peer_macaddr, uint8_t vdev_id, bool hash_based,
-		uint8_t ring_num);
-	int (*peer_rx_reorder_queue_setup)(void *ol_soc_handle,
-		uint8_t vdev_id, uint8_t *peer_mac, qdf_dma_addr_t hw_qdesc,
-		int tid, uint16_t queue_num);
-	int (*peer_rx_reorder_queue_remove)(void *ol_soc_handle,
-		uint8_t vdev_id, uint8_t *peer_macaddr, uint32_t tid_mask);
-	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
-};
-
-
 /* per interrupt context  */
 struct dp_intr {
 	uint8_t tx_ring_mask;   /* WBM Tx completion rings (0-2)
@@ -255,11 +243,7 @@ struct dp_intr {
 /* SOC level structure for data path */
 struct dp_soc {
 	/* Common base structure - Should be the first member */
-#ifdef notyet /* TODO: dp_soc_cmn should be defined in cmn headers */
-	struct dp_soc_cmn soc_cmn;
-#endif
-	/* Callbacks to OL_IF layer */
-	struct ol_if_ops *ol_ops;
+	struct cdp_soc_t cdp_soc;
 
 	/* SoC/softc handle from OSIF layer */
 	void *osif_soc;
@@ -318,6 +302,9 @@ struct dp_soc {
 		union dp_rx_desc_list_elem_t *array;
 		union dp_rx_desc_list_elem_t *freelist;
 	} rx_desc[MAX_RXDESC_POOLS];
+
+	/* DP rx desc lock */
+	DP_MUTEX_TYPE rx_desc_mutex[MAX_RXDESC_POOLS];
 
 	/* HAL SOC handle */
 	void *hal_soc;
@@ -512,6 +499,14 @@ struct dp_pdev {
 	uint32_t num_tx_outstanding;
 
 	uint32_t num_tx_exception;
+
+	/* MCL specific local peer handle */
+	struct {
+		uint8_t pool[OL_TXRX_NUM_LOCAL_PEER_IDS + 1];
+		uint8_t freelist;
+		qdf_spinlock_t lock;
+		struct dp_peer *map[OL_TXRX_NUM_LOCAL_PEER_IDS];
+	} local_peer_ids;
 	/* TBD */
 };
 
@@ -586,7 +581,7 @@ struct dp_vdev {
 
 	/* rx filter related */
 	uint32_t drop_unenc;
-#if notyet
+#ifdef notyet
 	privacy_exemption privacy_filters[MAX_PRIVACY_FILTERS];
 	uint32_t filters_num;
 #endif
@@ -661,7 +656,7 @@ struct dp_peer {
 
 	struct {
 		enum htt_sec_type sec_type;
-#if notyet /* TODO: See if this is required for defrag support */
+#ifdef notyet /* TODO: See if this is required for defrag support */
 		u_int32_t michael_key[2]; /* relevant for TKIP */
 #endif
 	} security[2]; /* 0 -> multicast, 1 -> unicast */
@@ -685,6 +680,10 @@ struct dp_peer {
 				bss_peer:1,
 				wapi:1;
 
+	/* MCL specific peer local id */
+	uint16_t local_id;
+	enum ol_txrx_peer_state state;
+	qdf_spinlock_t peer_info_lock;
 	/* TBD */
 };
 

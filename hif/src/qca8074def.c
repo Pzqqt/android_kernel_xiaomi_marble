@@ -21,7 +21,7 @@
 #undef UMAC
 #define WLAN_HEADERS 1
 
-#include <qca8074/hw/reg_header/defines/lithium_top_reg.h>
+#include <lithium_top_reg.h>
 
 #define MISSING 0
 

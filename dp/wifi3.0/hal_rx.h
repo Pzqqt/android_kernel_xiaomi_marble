@@ -19,18 +19,7 @@
 #ifndef _HAL_RX_H_
 #define _HAL_RX_H_
 
-#include "reo_destination_ring.h"
-#include "wbm_release_ring.h"
-#include "rx_msdu_desc_info.h"
-
-#include "rx_mpdu_start.h"
-#include "rx_mpdu_end.h"
-#include "rx_msdu_start.h"
-#include "rx_msdu_end.h"
-#include "rx_attention.h"
-
-#include <qdf_mem.h>
-
+#include <hal_internal.h>
 
 /**
  * enum hal_reo_error_code: Enum which encapsulates "reo_push_reason"

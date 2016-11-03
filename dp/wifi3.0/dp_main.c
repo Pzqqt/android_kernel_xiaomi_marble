@@ -27,7 +27,8 @@
 #include "dp_types.h"
 #include "dp_internal.h"
 #include "dp_tx.h"
-#include "wlan_cfg.h"
+#include "dp_rx.h"
+#include "../../wlan_cfg/wlan_cfg.h"
 
 /**
  * dp_setup_srng - Internal function to setup SRNG rings used by data path
@@ -121,71 +122,6 @@ static void dp_srng_cleanup(struct dp_soc *soc, struct dp_srng *srng,
 void *hif_get_hal_handle(void *hif_handle);
 
 /*
- * dp_soc_attach_wifi3() - Attach txrx SOC
- * @osif_soc:		Opaque SOC handle from OSIF/HDD
- * @htc_handle:	Opaque HTC handle
- * @hif_handle:	Opaque HIF handle
- * @qdf_osdev:	QDF device
- *
- * Return: DP SOC handle on success, NULL on failure
- */
-void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
-	HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
-	struct ol_if_ops *ol_ops)
-{
-	struct dp_soc *soc = qdf_mem_malloc(sizeof(*soc));
-
-	if (!soc) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: DP SOC memory allocation failed\n", __func__);
-		goto fail0;
-	}
-
-	soc->osif_soc = osif_soc;
-	soc->osdev = qdf_osdev;
-	soc->ol_ops = ol_ops;
-	soc->hif_handle = hif_handle;
-	soc->hal_soc = hif_get_hal_handle(hif_handle);
-	soc->htt_handle = htt_soc_attach(soc, osif_soc, htc_handle,
-		soc->hal_soc, qdf_osdev);
-	if (soc->htt_handle == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: HTT attach failed\n", __func__);
-		goto fail1;
-	}
-
-	soc->wlan_cfg_ctx = wlan_cfg_soc_attach();
-
-	if (!soc->wlan_cfg_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s: wlan_cfg_soc_attach failed\n", __func__);
-		goto fail2;
-	}
-
-
-#ifdef notyet
-	if (wdi_event_attach(soc)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: WDI event attach failed\n", __func__);
-		goto fail2;
-	}
-#endif
-
-	if (dp_soc_interrupt_attach(soc) != QDF_STATUS_SUCCESS) {
-		goto fail2;
-	}
-
-	return (void *)soc;
-
-fail2:
-	htt_soc_detach(soc->htt_handle);
-fail1:
-	qdf_mem_free(soc);
-fail0:
-	return NULL;
-}
-
-/*
  * dp_service_srngs() - Top level interrupt handler for DP Ring interrupts
  * @dp_ctx: DP SOC handle
  * @budget: Number of frames/descriptors that can be processed in one shot
@@ -209,6 +145,9 @@ uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 				work_done =
 					dp_tx_comp_handler(soc, ring, budget);
 				budget -= work_done;
+				if (work_done)
+					DP_TRACE(INFO, "tx mask 0x%x ring %d, budget %d\n",
+						tx_mask, ring, budget);
 				if (budget <= 0)
 					goto budget_done;
 			}
@@ -221,10 +160,12 @@ uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 			if (rx_mask & (1 << ring)) {
 				work_done =
 					dp_rx_process(soc,
-					soc->reo_dest_ring[ring].hal_srng,
-					budget);
-
+					    soc->reo_dest_ring[ring].hal_srng,
+					    budget);
 				budget -=  work_done;
+				if (work_done)
+					DP_TRACE(INFO, "rx mask 0x%x ring %d, budget %d\n",
+						tx_mask, ring, budget);
 				if (budget <= 0)
 					goto budget_done;
 			}
@@ -317,6 +258,12 @@ QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 
 
 	for (i = 0; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++) {
+		int j = 0;
+		int ret = 0;
+
+		/* Map of IRQ ids registered with one interrupt context */
+		int irq_id_map[HIF_MAX_GRP_IRQ];
+
 		int tx_mask =
 			wlan_cfg_get_tx_ring_mask(soc->wlan_cfg_ctx, i);
 		int rx_mask =
@@ -330,12 +277,6 @@ QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 		soc->intr_ctx[i].soc = soc;
 
 		num_irq = 0;
-
-		int j = 0;
-		int ret = 0;
-
-		/* Map of IRQ ids registered with one interrupt context */
-		int irq_id_map[HIF_MAX_GRP_IRQ];
 
 		for (j = 0; j < HIF_MAX_GRP_IRQ; j++) {
 
@@ -382,10 +323,13 @@ QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 void dp_soc_interrupt_detach(void *txrx_soc)
 {
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
+	int i;
 
-	soc->intr_ctx[i].tx_ring_mask = 0;
-	soc->intr_ctx[i].rx_ring_mask = 0;
-	soc->intr_ctx[i].rx_mon_ring_mask = 0;
+	for (i = 0; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++) {
+		soc->intr_ctx[i].tx_ring_mask = 0;
+		soc->intr_ctx[i].rx_ring_mask = 0;
+		soc->intr_ctx[i].rx_mon_ring_mask = 0;
+	}
 }
 #endif
 
@@ -631,8 +575,8 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 			soc->wbm_idle_scatter_buf_base_paddr,
 			soc->wbm_idle_scatter_buf_base_vaddr,
 			num_scatter_bufs, soc->wbm_idle_scatter_buf_size,
-			(uint32_t)(scatter_buf_ptr - (unsigned long)(
-			soc->wbm_idle_scatter_buf_base_vaddr[
+			(uint32_t)(scatter_buf_ptr -
+					(uint8_t *)(soc->wbm_idle_scatter_buf_base_vaddr[
 			scatter_buf_num])));
 	}
 	return 0;
@@ -667,7 +611,7 @@ fail:
 /*
  * Free link descriptor pool that was setup HW
  */
-static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
+void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 {
 	int i;
 
@@ -725,14 +669,6 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 
 	if (soc->cmn_init_done)
 		return 0;
-
-	soc->wlan_cfg_ctx = wlan_cfg_soc_attach();
-
-	if (!soc->wlan_cfg_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s: wlan_cfg_soc_attach failed\n", __func__);
-		goto fail0;
-	}
 
 	if (dp_peer_find_attach(soc))
 		goto fail0;
@@ -875,7 +811,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 		goto fail1;
 	}
 
-
+	dp_soc_interrupt_attach(soc);
 	/* Setup HW REO */
 	hal_reo_setup(soc->hal_soc);
 
@@ -902,8 +838,8 @@ static void dp_pdev_detach_wifi3(void *txrx_pdev, int force);
 *
 * Return: DP PDEV handle on success, NULL on failure
 */
-void *dp_pdev_attach_wifi3(void *txrx_soc, void *ctrl_pdev,
-	HTC_HANDLE htc_handle, qdf_device_t qdf_osdev, int pdev_id)
+void *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc, void *ctrl_pdev,
+	HTC_HANDLE htc_handle, qdf_device_t qdf_osdev, uint8_t pdev_id)
 {
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 	struct dp_pdev *pdev = qdf_mem_malloc(sizeof(*pdev));
@@ -1020,6 +956,15 @@ void *dp_pdev_attach_wifi3(void *txrx_soc, void *ctrl_pdev,
 		goto fail1;
 	}
 
+	/* Rx specific init */
+	if (dp_rx_pdev_attach(pdev)) {
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				"%s: dp_rx_pdev_attach failed \n", __func__);
+			goto fail0;
+	}
+
+	/* MCL */
+	dp_local_peer_id_pool_init(pdev);
 
 	return (void *)pdev;
 
@@ -1049,6 +994,8 @@ static void dp_pdev_detach_wifi3(void *txrx_pdev, int force)
 		dp_srng_cleanup(soc, &soc->tx_comp_ring[pdev->pdev_id],
 			WBM2SW_RELEASE, pdev->pdev_id);
 	}
+
+	dp_rx_pdev_detach(pdev);
 
 	/* Setup per PDEV REO rings if configured */
 	if (wlan_cfg_per_pdev_rx_ring(soc->wlan_cfg_ctx)) {
@@ -1145,6 +1092,7 @@ void dp_soc_detach_wifi3(void *txrx_soc)
 	dp_srng_cleanup(soc, &soc->reo_cmd_ring, REO_CMD, 0);
 	dp_srng_cleanup(soc, &soc->reo_status_ring, REO_STATUS, 0);
 
+	qdf_spinlock_destroy(&soc->peer_ref_mutex);
 	htt_soc_detach(soc->htt_handle);
 }
 
@@ -1152,9 +1100,9 @@ void dp_soc_detach_wifi3(void *txrx_soc)
  * dp_soc_attach_target_wifi3() - SOC initialization in the target
  * @txrx_soc: Datapath SOC handle
  */
-int dp_soc_attach_target_wifi3(void *txrx_soc)
+int dp_soc_attach_target_wifi3(struct cdp_soc_t *cdp_soc)
 {
-	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
+	struct dp_soc *soc = (struct dp_soc *)cdp_soc;
 	int i;
 
 	htt_soc_attach_target(soc->htt_handle);
@@ -1275,10 +1223,10 @@ void dp_vdev_register_wifi3(void *vdev_handle, void *osif_vdev,
 	vdev->osif_proxy_arp = txrx_ops->proxy_arp;
 #endif
 #endif
-#ifdef notyet
 	/* TODO: Enable the following once Tx code is integrated */
 	txrx_ops->tx.tx = dp_tx_send;
-#endif
+
+	DP_TRACE(ERROR, "DP Vdev Register success");
 }
 
 /*
@@ -1371,6 +1319,7 @@ void *dp_peer_attach_wifi3(void *vdev_handle, uint8_t *peer_mac_addr)
 		return NULL; /* failure */
 
 	qdf_mem_zero(peer, sizeof(struct dp_peer));
+	qdf_spinlock_create(&peer->peer_info_lock);
 
 	/* store provided params */
 	peer->vdev = vdev;
@@ -1400,12 +1349,10 @@ void *dp_peer_attach_wifi3(void *vdev_handle, uint8_t *peer_mac_addr)
 	/* TODO: See if hash based search is required */
 	dp_peer_find_hash_add(soc, peer);
 
-	if (soc->ol_ops->peer_set_default_routing) {
-		/* TODO: Check on the destination ring number to be passed
-		 * to FW
-		 */
-		soc->ol_ops->peer_set_default_routing(soc->osif_soc,
-			peer->mac_addr.raw, peer->vdev->vdev_id, 0, 1);
+	if (soc->cdp_soc.ol_ops->peer_set_default_routing) {
+		/* TODO: Check on the destination ring number to be passed to FW */
+		soc->cdp_soc.ol_ops->peer_set_default_routing(soc->osif_soc, peer->mac_addr.raw,
+			peer->vdev->vdev_id, 0, 1);
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -1424,6 +1371,7 @@ void *dp_peer_attach_wifi3(void *vdev_handle, uint8_t *peer_mac_addr)
 		vdev->vap_bss_peer = peer;
 	}
 
+	dp_local_peer_id_alloc(pdev, peer);
 	return (void *)peer;
 }
 
@@ -1592,4 +1540,246 @@ void dp_peer_detach_wifi3(void *peer_handle)
 	 * reference, added by the PEER_MAP message.
 	 */
 	dp_peer_unref_delete(peer_handle);
+	dp_local_peer_id_free(peer->vdev->pdev, peer);
+	qdf_spinlock_destroy(&peer->peer_info_lock);
+}
+
+/*
+ * dp_get_vdev_mac_addr_wifi3() – Detach txrx peer
+ * @peer_handle:		Datapath peer handle
+ *
+ */
+uint8 *dp_get_vdev_mac_addr_wifi3(void *pvdev)
+{
+	struct dp_vdev *vdev = pvdev;
+
+	return vdev->mac_addr.raw;
+}
+
+/*
+ * dp_get_vdev_from_vdev_id_wifi3() – Detach txrx peer
+ * @peer_handle:		Datapath peer handle
+ *
+ */
+void *dp_get_vdev_from_vdev_id_wifi3(void *dev, uint8_t vdev_id)
+{
+	struct dp_pdev *pdev = dev;
+	struct dp_vdev *vdev = NULL;
+
+	if (qdf_unlikely(!pdev))
+		return NULL;
+
+	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+		if (vdev->vdev_id == vdev_id)
+			break;
+	}
+
+	return vdev;
+}
+
+int dp_get_opmode(void *vdev_handle)
+{
+	struct dp_vdev *vdev = vdev_handle;
+
+	return vdev->opmode;
+}
+
+void *dp_get_ctrl_pdev_from_vdev_wifi3(void *pvdev)
+{
+	struct dp_vdev *vdev = pvdev;
+	struct dp_pdev *pdev = vdev->pdev;
+
+	return (void *)pdev->wlan_cfg_ctx;
+}
+
+static struct cdp_cmn_ops dp_ops_cmn = {
+	.txrx_soc_attach_target = dp_soc_attach_target_wifi3,
+	.txrx_vdev_attach = dp_vdev_attach_wifi3,
+	.txrx_vdev_detach = dp_vdev_detach_wifi3,
+	.txrx_pdev_attach = dp_pdev_attach_wifi3,
+	.txrx_pdev_detach = dp_pdev_detach_wifi3,
+	.txrx_peer_attach = dp_peer_attach_wifi3,
+	.txrx_peer_detach = dp_peer_detach_wifi3,
+	.txrx_vdev_register = dp_vdev_register_wifi3,
+	.txrx_soc_detach = dp_soc_detach_wifi3,
+	.txrx_get_vdev_mac_addr = dp_get_vdev_mac_addr_wifi3,
+	.txrx_get_vdev_from_vdev_id = dp_get_vdev_from_vdev_id_wifi3,
+	.txrx_get_ctrl_pdev_from_vdev = dp_get_ctrl_pdev_from_vdev_wifi3,
+	/* TODO: Add other functions */
+};
+
+static struct cdp_ctrl_ops dp_ops_ctrl = {
+	.txrx_peer_authorize = dp_peer_authorize,
+	/* TODO: Add other functions */
+};
+
+static struct cdp_me_ops dp_ops_me = {
+	/* TODO */
+};
+
+static struct cdp_mon_ops dp_ops_mon = {
+	/* TODO */
+};
+
+static struct cdp_host_stats_ops dp_ops_host_stats = {
+	/* TODO */
+};
+
+static struct cdp_wds_ops dp_ops_wds = {
+	/* TODO */
+};
+
+static struct cdp_raw_ops dp_ops_raw = {
+	/* TODO */
+};
+
+#ifdef CONFIG_WIN
+static struct cdp_pflow_ops dp_ops_pflow = {
+	/* TODO */
+};
+#endif /* CONFIG_WIN */
+
+static struct cdp_misc_ops dp_ops_misc = {
+	.get_opmode = dp_get_opmode,
+};
+
+static struct cdp_flowctl_ops dp_ops_flowctl = {
+	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
+};
+
+static struct cdp_lflowctl_ops dp_ops_l_flowctl = {
+	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
+};
+
+static struct cdp_ipa_ops dp_ops_ipa = {
+	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
+};
+
+static struct cdp_lro_ops dp_ops_lro = {
+	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
+};
+
+static struct cdp_bus_ops dp_ops_bus = {
+	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
+};
+
+static struct cdp_ocb_ops dp_ops_ocb = {
+	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
+};
+
+
+static struct cdp_throttle_ops dp_ops_throttle = {
+	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
+};
+
+static struct cdp_mob_stats_ops dp_ops_mob_stats = {
+	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
+};
+
+static struct cdp_cfg_ops dp_ops_cfg = {
+	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
+};
+
+static struct cdp_peer_ops dp_ops_peer = {
+	.register_peer = dp_register_peer,
+	.clear_peer = dp_clear_peer,
+	.find_peer_by_addr = dp_find_peer_by_addr,
+	.find_peer_by_addr_and_vdev = dp_find_peer_by_addr_and_vdev,
+	.local_peer_id = dp_local_peer_id,
+	.peer_find_by_local_id = dp_peer_find_by_local_id,
+	.peer_state_update = dp_peer_state_update,
+	.get_vdevid = dp_get_vdevid,
+	.peer_get_peer_mac_addr = dp_peer_get_peer_mac_addr,
+	.get_vdev_for_peer = dp_get_vdev_for_peer,
+	.get_peer_state = dp_get_peer_state,
+};
+
+static struct cdp_ops dp_txrx_ops = {
+	.cmn_drv_ops = &dp_ops_cmn,
+	.ctrl_ops = &dp_ops_ctrl,
+	.me_ops = &dp_ops_me,
+	.mon_ops = &dp_ops_mon,
+	.host_stats_ops = &dp_ops_host_stats,
+	.wds_ops = &dp_ops_wds,
+	.raw_ops = &dp_ops_raw,
+#ifdef CONFIG_WIN
+	.pflow_ops = &dp_ops_pflow,
+#endif /* CONFIG_WIN */
+	.misc_ops = &dp_ops_misc,
+	.cfg_ops = &dp_ops_cfg,
+	.flowctl_ops = &dp_ops_flowctl,
+	.l_flowctl_ops = &dp_ops_l_flowctl,
+	.ipa_ops = &dp_ops_ipa,
+	.lro_ops = &dp_ops_lro,
+	.bus_ops = &dp_ops_bus,
+	.ocb_ops = &dp_ops_ocb,
+	.peer_ops = &dp_ops_peer,
+	.throttle_ops = &dp_ops_throttle,
+	.mob_stats_ops = &dp_ops_mob_stats,
+};
+
+/*
+ * dp_soc_attach_wifi3() - Attach txrx SOC
+ * @osif_soc:		Opaque SOC handle from OSIF/HDD
+ * @htc_handle:	Opaque HTC handle
+ * @hif_handle:	Opaque HIF handle
+ * @qdf_osdev:	QDF device
+ *
+ * Return: DP SOC handle on success, NULL on failure
+ */
+void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
+	HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
+	struct ol_if_ops *ol_ops)
+{
+	struct dp_soc *soc = qdf_mem_malloc(sizeof(*soc));
+
+	if (!soc) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s: DP SOC memory allocation failed\n", __func__);
+		goto fail0;
+	}
+
+	soc->cdp_soc.ops = &dp_txrx_ops;
+	soc->cdp_soc.ol_ops = ol_ops;
+	soc->osif_soc = osif_soc;
+	soc->osdev = qdf_osdev;
+	soc->hif_handle = hif_handle;
+
+	soc->hal_soc = hif_get_hal_handle(hif_handle);
+	soc->htt_handle = htt_soc_attach(soc, osif_soc, htc_handle,
+		soc->hal_soc, qdf_osdev);
+	if (soc->htt_handle == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s: HTT attach failed\n", __func__);
+		goto fail1;
+	}
+
+	soc->wlan_cfg_ctx = wlan_cfg_soc_attach();
+	if (!soc->wlan_cfg_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				"%s: wlan_cfg_soc_attach failed\n", __func__);
+		goto fail2;
+	}
+	qdf_spinlock_create(&soc->peer_ref_mutex);
+
+#ifdef notyet
+	if (wdi_event_attach(soc)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s: WDI event attach failed\n", __func__);
+		goto fail2;
+	}
+#endif
+
+	if (dp_soc_interrupt_attach(soc) != QDF_STATUS_SUCCESS) {
+		goto fail2;
+	}
+
+	return (void *)soc;
+
+fail2:
+	htt_soc_detach(soc->htt_handle);
+fail1:
+	qdf_mem_free(soc);
+fail0:
+	return NULL;
 }

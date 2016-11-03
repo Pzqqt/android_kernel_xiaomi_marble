@@ -16,10 +16,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "wcss_seq_hwiobase.h"
-#include "wcss_seq_hwioreg.h"
-#include "sw_xml_headers.h"
-#include "tlv_hdr.h"
 #include "hal_api.h"
 
 /* TODO: See if the following definition is available in HW headers */

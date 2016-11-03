@@ -61,5 +61,22 @@ extern void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer);
 extern void dp_peer_unref_delete(void *peer_handle);
 extern void dp_rx_discard(struct dp_vdev *vdev, struct dp_peer *peer,
 	unsigned tid, qdf_nbuf_t msdu_list);
-
+extern void *dp_find_peer_by_addr(void *dev,
+	uint8_t *peer_mac_addr, uint8_t *peer_id);
+QDF_STATUS dp_register_peer(void *pdev_handle,
+		struct ol_txrx_desc_type *sta_desc);
+QDF_STATUS dp_clear_peer(void *pdev_handle, uint8_t local_id);
+void *dp_find_peer_by_addr_and_vdev(void *pdev_handle, void *vdev,
+		uint8_t *peer_addr, uint8_t *local_id);
+uint16_t dp_local_peer_id(void *peer);
+void *dp_peer_find_by_local_id(void *pdev_handle, uint8_t local_id);
+QDF_STATUS dp_peer_state_update(void *pdev_handle, uint8_t *peer_mac,
+		enum ol_txrx_peer_state state);
+QDF_STATUS dp_get_vdevid(void *peer_handle, uint8_t *vdev_id);
+void *dp_get_vdev_for_peer(void *peer);
+uint8_t *dp_peer_get_peer_mac_addr(void *peer);
+int dp_get_peer_state(void *peer_handle);
+void dp_local_peer_id_pool_init(struct dp_pdev *pdev);
+void dp_local_peer_id_alloc(struct dp_pdev *pdev, struct dp_peer *peer);
+void dp_local_peer_id_free(struct dp_pdev *pdev, struct dp_peer *peer);
 #endif /* #ifndef _DP_INTERNAL_H_ */
