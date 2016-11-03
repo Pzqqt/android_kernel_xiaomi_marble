@@ -1734,27 +1734,30 @@ enum {
  * Note that in these macros, "ru" is one-based, not zero-based, while
  * nssm1 is zero-based.
  */
-#define WMI_SET_PPET16(ppet16_ppet8_ru3_ru0, ppet, ru, nssm1) \
+#define WMI_SET_PPET16(ppet16_ppet8_ru3_ru0, ru, nssm1, ppet) \
 	do { \
-		ppet16_ppet8_ru3_ru0[nssm1] &= ~(7 << (((ru-1)%4)*6));       \
-		ppet16_ppet8_ru3_ru0[nssm1] |= ((ppet&7) << (((ru-1)%4)*6)); \
+		ppet16_ppet8_ru3_ru0[nssm1] &= ~(7 << (((ru-1)&3)*6));       \
+		ppet16_ppet8_ru3_ru0[nssm1] |= ((ppet&7) << (((ru-1)&3)*6)); \
 	} while (0)
 
 #define WMI_GET_PPET16(ppet16_ppet8_ru3_ru0, ru, nssm1) \
-	((ppet16_ppet8_ru3_ru0[nssm1] >> (((ru-1)%4)*6))&7)
+	((ppet16_ppet8_ru3_ru0[nssm1] >> (((ru-1)&3)*6))&7)
 
-#define WMI_SET_PPET8(ppet16_ppet8_ru3_ru0, ppet, ru, nssm1) \
+#define WMI_SET_PPET8(ppet16_ppet8_ru3_ru0, ru, nssm1, ppet) \
 	do { \
-		ppet16_ppet8_ru3_ru0[nssm1] &= ~(7 << (((ru-1)%4)*6+3));       \
-		ppet16_ppet8_ru3_ru0[nssm1] |= ((ppet&7) << (((ru-1)%4)*6+3)); \
+		ppet16_ppet8_ru3_ru0[nssm1] &= ~(7 << (((ru-1)&3)*6+3));       \
+		ppet16_ppet8_ru3_ru0[nssm1] |= ((ppet&7) << (((ru-1)&3)*6+3)); \
 	} while (0)
 
 #define WMI_GET_PPET8(ppet16_ppet8_ru3_ru0, ru, nssm1) \
-	((ppet16_ppet8_ru3_ru0[nssm1] >> (((ru-1)%4)*6+3))&7)
+	((ppet16_ppet8_ru3_ru0[nssm1] >> (((ru-1)&3)*6+3))&7)
 
 typedef struct _wmi_ppe_threshold {
 	A_UINT32 numss_m1; /** NSS - 1*/
-	A_UINT32 ru_count; /** Max RU count */
+	union {
+		A_UINT32 ru_count; /** RU COUNT OBSOLETE to be removed after few versions */
+		A_UINT32 ru_mask; /** RU index mask */
+	};
 	/** ppet8 and ppet16 for max num ss */
 	A_UINT32 ppet16_ppet8_ru3_ru0[WMI_MAX_NUM_SS];
 } wmi_ppe_threshold;
@@ -5814,14 +5817,14 @@ typedef struct {
 #define WMI_HEOPS_TWT_GET(he_ops) WMI_GET_BITS(he_ops, 9, 1)
 #define WMI_HEOPS_TWT_SET(he_ops, value) WMI_SET_BITS(he_ops, 9, 1, value)
 
-#define WMI_HEOPS_RTSTHLD_GET(he_ops) WMI_GET_BITS(he_ops, 10, 7)
-#define WMI_HEOPS_RTSTHLD_SET(he_ops, value) WMI_SET_BITS(he_ops, 10, 7, value)
+#define WMI_HEOPS_RTSTHLD_GET(he_ops) WMI_GET_BITS(he_ops, 10, 10)
+#define WMI_HEOPS_RTSTHLD_SET(he_ops, value) WMI_SET_BITS(he_ops, 10, 10, value)
 
-#define WMI_HEOPS_PDMIN_GET(he_ops) WMI_GET_BITS(he_ops, 17, 5)
-#define WMI_HEOPS_PDMIN_SET(he_ops, value) WMI_SET_BITS(he_ops, 17, 5, value)
+#define WMI_HEOPS_PDMIN_GET(he_ops) WMI_GET_BITS(he_ops, 20, 5)
+#define WMI_HEOPS_PDMIN_SET(he_ops, value) WMI_SET_BITS(he_ops, 20, 5, value)
 
-#define WMI_HEOPS_PDMAX_GET(he_ops) WMI_GET_BITS(he_ops, 22, 5)
-#define WMI_HEOPS_PDMAX_SET(he_ops, value) WMI_SET_BITS(he_ops, 22, 5, value)
+#define WMI_HEOPS_PDMAX_GET(he_ops) WMI_GET_BITS(he_ops, 25, 5)
+#define WMI_HEOPS_PDMAX_SET(he_ops, value) WMI_SET_BITS(he_ops, 25, 5, value)
 
 #define WMI_MAX_HECAP_PHY_SIZE                 (3)
 #define WMI_HECAP_PHY_COD_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 0, 1)
