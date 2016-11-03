@@ -434,6 +434,7 @@ void lim_handle_heart_beat_failure(tpAniSirGlobal mac_ctx,
 				   tpPESession session)
 {
 	uint8_t curr_chan;
+	tpSirAddie scan_ie = NULL;
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 	host_log_beacon_update_pkt_type *log_ptr = NULL;
@@ -489,11 +490,21 @@ void lim_handle_heart_beat_failure(tpAniSirGlobal mac_ctx,
 			lim_log(mac_ctx, LOGW,
 				FL("HB missed from AP. Sending Probe Req"));
 			/* for searching AP, we don't include any more IE */
-			lim_send_probe_req_mgmt_frame(mac_ctx, &session->ssId,
-				session->bssId, curr_chan, session->selfMacAddr,
-				session->dot11mode,
-				session->pLimJoinReq->addIEScan.length,
-				session->pLimJoinReq->addIEScan.addIEdata);
+			if (session->pLimJoinReq != NULL) {
+				scan_ie = &session->pLimJoinReq->addIEScan;
+				lim_send_probe_req_mgmt_frame(mac_ctx,
+					&session->ssId,
+					session->bssId, curr_chan,
+					session->selfMacAddr,
+					session->dot11mode,
+					scan_ie->length, scan_ie->addIEdata);
+			} else {
+				lim_send_probe_req_mgmt_frame(mac_ctx,
+					&session->ssId,
+					session->bssId, curr_chan,
+					session->selfMacAddr,
+					session->dot11mode, 0, NULL);
+			}
 		} else {
 			lim_log(mac_ctx, LOGW,
 			    FL("HB missed from AP on DFS chanel moving to passive"));
