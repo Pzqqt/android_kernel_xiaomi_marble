@@ -6087,7 +6087,7 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 	hdd_context_t *pHddCtx;
 	int status;
 
-	tSmeConfigParams smeConfig;
+	tSmeConfigParams *sme_config;
 	tsap_Config_t *sap_config;
 
 	ENTER();
@@ -6208,12 +6208,17 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 			sap_config->channel = channel;
 			sap_config->ch_params.center_freq_seg1 = channel_seg2;
 
-			qdf_mem_zero(&smeConfig, sizeof(smeConfig));
-			sme_get_config_param(pHddCtx->hHal, &smeConfig);
+			sme_config = qdf_mem_malloc(sizeof(*sme_config));
+
+			if (!sme_config) {
+				hdd_err("Unable to allocate memory for smeconfig!");
+				return -ENOMEM;
+			}
+			sme_get_config_param(pHddCtx->hHal, sme_config);
 			switch (channel_type) {
 			case NL80211_CHAN_HT20:
 			case NL80211_CHAN_NO_HT:
-				smeConfig.csrConfig.obssEnabled = false;
+				sme_config->csrConfig.obssEnabled = false;
 				sap_config->sec_ch = 0;
 				break;
 			case NL80211_CHAN_HT40MINUS:
@@ -6224,11 +6229,14 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 				break;
 			default:
 				hdd_err("Error!!! Invalid HT20/40 mode !");
+				qdf_mem_free(sme_config);
 				return -EINVAL;
 			}
-			smeConfig.csrConfig.obssEnabled = wlan_hdd_get_sap_obss(
-								pAdapter);
-			sme_update_config(pHddCtx->hHal, &smeConfig);
+			sme_config->csrConfig.obssEnabled =
+				wlan_hdd_get_sap_obss(pAdapter);
+
+			sme_update_config(pHddCtx->hHal, sme_config);
+			qdf_mem_free(sme_config);
 		}
 	} else {
 		hdd_err("Invalid device mode failed to set valid channel");
