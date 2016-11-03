@@ -4828,6 +4828,8 @@ typedef struct {
 	 * tx time per power level stats.
 	 */
 	A_UINT32 power_level_offset;
+	/* radio id for this tx time per power level statistics (if multiple radio supported) */
+	A_UINT32 radio_id;
 	/*
 	 * This TLV will be followed by a TLV containing a variable-length
 	 * array of A_UINT32 with tx time per power level data
