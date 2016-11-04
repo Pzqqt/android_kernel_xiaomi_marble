@@ -66,6 +66,7 @@
 #include "wlan_hdd_ipa.h"
 #include "cdp_txrx_flow_ctrl_legacy.h"
 #include "pld_common.h"
+#include "wlan_hdd_green_ap.h"
 
 static struct cds_conc_connection_info
 	conc_connection_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
@@ -3467,6 +3468,8 @@ void cds_set_concurrency_mode(enum tQDF_ADAPTER_MODE mode)
 	cds_info("concurrency_mode = 0x%x Number of open sessions for mode %d = %d",
 		hdd_ctx->concurrency_mode, mode,
 		hdd_ctx->no_of_open_sessions[mode]);
+
+	hdd_green_ap_start_bss(hdd_ctx);
 }
 
 /**
@@ -3507,6 +3510,8 @@ void cds_clear_concurrency_mode(enum tQDF_ADAPTER_MODE mode)
 	cds_info("concurrency_mode = 0x%x Number of open sessions for mode %d = %d",
 		hdd_ctx->concurrency_mode, mode,
 		hdd_ctx->no_of_open_sessions[mode]);
+
+	hdd_green_ap_start_bss(hdd_ctx);
 }
 
 /**

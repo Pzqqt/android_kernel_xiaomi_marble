@@ -425,8 +425,12 @@ void hdd_green_ap_start_bss(struct hdd_context_s *hdd_ctx)
 		 */
 	}
 
-	if (!(QDF_STA_MASK & hdd_ctx->concurrency_mode) &&
-	    cfg->enable2x2 && cfg->enableGreenAP) {
+	if ((hdd_ctx->concurrency_mode & QDF_SAP_MASK) &&
+			!(hdd_ctx->concurrency_mode & (QDF_SAP_MASK)) &&
+			cfg->enable2x2 && cfg->enableGreenAP) {
+		hdd_notice("Green AP enabled - sta_con: %d, 2x2: %d, GAP: %d",
+			QDF_STA_MASK & hdd_ctx->concurrency_mode,
+			cfg->enable2x2, cfg->enableGreenAP);
 		hdd_green_ap_mc(hdd_ctx, GREEN_AP_PS_START_EVENT);
 	} else {
 		hdd_green_ap_mc(hdd_ctx, GREEN_AP_PS_STOP_EVENT);
