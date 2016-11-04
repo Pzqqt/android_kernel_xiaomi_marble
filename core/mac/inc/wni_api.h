@@ -280,12 +280,16 @@ typedef enum {
  * @eWNI_TDLS_PEER_EXIT_BUF_STA: TDLS peer exit buff sta
  * @eWNI_TDLS_ENTER_BT_BUSY_MODE: Enter BT busy event
  * @eWNI_TDLS_EXIT_BT_BUSY_MODE: Exit BT busy event
+ * @eWMI_TDLS_SCAN_STARTED_EVENT: offload scan start event
+ * @eWMI_TDLS_SCAN_COMPLETED_EVENT: offload scan end event
  */
 enum ewni_tdls_connection_tracker_notification {
 	eWNI_TDLS_PEER_ENTER_BUF_STA,
 	eWNI_TDLS_PEER_EXIT_BUF_STA,
 	eWNI_TDLS_ENTER_BT_BUSY_MODE,
 	eWNI_TDLS_EXIT_BT_BUSY_MODE,
+	eWMI_TDLS_SCAN_STARTED_EVENT,
+	eWMI_TDLS_SCAN_COMPLETED_EVENT,
 };
 
 #define WNI_CFG_MSG_TYPES_BEGIN        0x1200

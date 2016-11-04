@@ -6860,6 +6860,13 @@ int wma_tdls_event_handler(void *handle, uint8_t *event, uint32_t len)
 	case WMI_TDLS_EXIT_BT_BUSY_MODE:
 		tdls_event->peer_reason = eWNI_TDLS_EXIT_BT_BUSY_MODE;
 		break;
+	case WMI_TDLS_SCAN_STARTED_EVENT:
+		tdls_event->peer_reason = eWMI_TDLS_SCAN_STARTED_EVENT;
+		break;
+	case WMI_TDLS_SCAN_COMPLETED_EVENT:
+		tdls_event->peer_reason = eWMI_TDLS_SCAN_COMPLETED_EVENT;
+		break;
+
 	default:
 		WMA_LOGE("%s: unknown reason(%d) in tdls event(%d) from target",
 			 __func__, peer_event->peer_reason,

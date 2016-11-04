@@ -3539,13 +3539,17 @@ static QDF_STATUS hdd_tdls_connection_tracker_update(hdd_adapter_t *adapter,
 		if (roam_info->reasonCode ==
 		    eWNI_TDLS_PEER_ENTER_BUF_STA ||
 		    roam_info->reasonCode ==
-		    eWNI_TDLS_ENTER_BT_BUSY_MODE)
-			hdd_ctx->enable_tdls_connection_tracker = true;
+		    eWNI_TDLS_ENTER_BT_BUSY_MODE ||
+		    roam_info->reasonCode ==
+		    eWMI_TDLS_SCAN_STARTED_EVENT)
+			hdd_ctx->enable_tdls_connection_tracker = false;
 		else if (roam_info->reasonCode ==
 			  eWNI_TDLS_PEER_EXIT_BUF_STA ||
 			  roam_info->reasonCode ==
-			  eWNI_TDLS_EXIT_BT_BUSY_MODE)
-			hdd_ctx->enable_tdls_connection_tracker = false;
+			  eWNI_TDLS_EXIT_BT_BUSY_MODE ||
+			  roam_info->reasonCode ==
+			  eWMI_TDLS_SCAN_COMPLETED_EVENT)
+			hdd_ctx->enable_tdls_connection_tracker = true;
 
 	} else {
 		hdd_err("TDLS not connected, ignore notification, reason: %d",
