@@ -73,6 +73,7 @@
 #include "lim_send_messages.h"
 #include "utils_parser.h"
 #include "lim_assoc_utils.h"
+#include "lim_prop_exts_utils.h"
 #include "dph_hash_table.h"
 #include "wma_types.h"
 #include "cds_regdomain.h"
@@ -104,12 +105,6 @@ void populate_dot11f_tdls_offchannel_params(tpAniSirGlobal pMac,
 					    tDot11fIESuppOperatingClasses *
 					    suppOperClasses);
 void lim_log_vht_cap(tpAniSirGlobal pMac, tDot11fIEVHTCaps *pDot11f);
-tSirRetStatus lim_populate_vht_mcs_set(tpAniSirGlobal pMac,
-				       tpSirSupportedRates pRates,
-				       tDot11fIEVHTCaps *pPeerVHTCaps,
-				       tpPESession psessionEntry,
-				       uint8_t nss);
-ePhyChanBondState lim_get_htcb_state(ePhyChanBondState aniCBMode);
 
 /*
  * TDLS data frames will go out/come in as non-qos data.
