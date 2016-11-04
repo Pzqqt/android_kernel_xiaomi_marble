@@ -2651,6 +2651,9 @@ typedef struct {
 #define WLAN_SCAN_PARAMS_MAX_BSSID   4
 #define WLAN_SCAN_PARAMS_MAX_IE_LEN  512
 
+/* NOTE: This constant cannot be changed without breaking WMI compatibility */
+#define WMI_IE_BITMAP_SIZE 8
+
 typedef struct {
 	A_UINT32 tlv_header;            /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_start_scan_cmd_fixed_param */
 	/** Scan ID */
@@ -2705,6 +2708,14 @@ typedef struct {
 	A_UINT32 ie_len;
 	/** Max number of probes to be sent */
 	A_UINT32 n_probes;
+	/** MAC Address to use in Probe Req as SA **/
+	wmi_mac_addr mac_addr;
+	/** Mask on which MAC has to be randomized **/
+	wmi_mac_addr mac_mask;
+	/**  ie bitmap to use in probe req **/
+	A_UINT32 ie_bitmap[WMI_IE_BITMAP_SIZE];
+	/** Number of vendor OUIs. In the TLV vendor_oui[] **/
+	A_UINT32 num_vendor_oui;
 
 	/**
 	 * TLV (tag length value ) parameters follow the scan_cmd
@@ -2713,6 +2724,7 @@ typedef struct {
 	 *     wmi_ssid ssid_list[];
 	 *     wmi_mac_addr bssid_list[];
 	 *     A_UINT8 ie_data[];
+	 *     wmi_vendor_oui vendor_oui[];
 	 */
 } wmi_start_scan_cmd_fixed_param;
 
@@ -2761,6 +2773,8 @@ typedef struct {
 #define WMI_SCAN_FLAG_HALF_RATE_SUPPORT      0x20000
 /** set Quarter (5MHz) rate support */
 #define WMI_SCAN_FLAG_QUARTER_RATE_SUPPORT   0x40000
+#define WMI_SCAN_RANDOM_SEQ_NO_IN_PROBE_REQ 0x80000
+#define WMI_SCAN_ENABLE_IE_WHTELIST_IN_PROBE_REQ 0x100000
 
 /** for adaptive scan mode using 3 bits (21 - 23 bits) */
 #define WMI_SCAN_DWELL_MODE_MASK 0x00E00000
@@ -2890,6 +2904,15 @@ typedef struct {
 	A_UINT32 max_rest_time;
 } wmi_scan_update_request_cmd_fixed_param;
 
+#define WMI_SCAN_PROBE_OUI_SPOOFED_MAC_IN_PROBE_REQ 0x1
+#define WMI_SCAN_PROBE_OUI_RANDOM_SEQ_NO_IN_PROBE_REQ 0x2
+#define WMI_SCAN_PROBE_OUI_ENABLE_IE_WHITELIST_IN_PROBE_REQ 0x4
+
+typedef struct _wmi_vendor_oui {
+	A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vendor_oui */
+	A_UINT32 oui_type_subtype; /** Vendor OUI type and subtype, lower 3 bytes is type and highest byte is subtype**/
+} wmi_vendor_oui;
+
 typedef struct {
 	A_UINT32 tlv_header;
 	/** oui to be used in probe request frame when  random mac addresss is
@@ -2897,6 +2920,15 @@ typedef struct {
 	 * host initated scans. host can request for random mac address with
 	 * WMI_SCAN_ADD_SPOOFED_MAC_IN_PROBE_REQ flag.     */
 	A_UINT32 prob_req_oui;
+	A_UINT32 vdev_id;
+	/** Control Flags **/
+	A_UINT32 flags;
+	/**  ie bitmap to use in probe req **/
+	A_UINT32 ie_bitmap[WMI_IE_BITMAP_SIZE];
+	/** Number of vendor OUIs. In the TLV vendor_oui[] **/
+	A_UINT32 num_vendor_oui;
+	/* Following this tlv, there comes an array of structure of type wmi_vendor_ouiwmi_vendor_oui vendor_oui[];*/
+
 } wmi_scan_prob_req_oui_cmd_fixed_param;
 
 enum wmi_scan_event_type {
@@ -10176,17 +10208,20 @@ typedef enum _WMI_NLO_SSID_BcastNwType {
 #define WMI_NLO_MAX_SSIDS    16
 #define WMI_NLO_MAX_CHAN     48
 
-#define WMI_NLO_CONFIG_STOP             (0x1 << 0)
-#define WMI_NLO_CONFIG_START            (0x1 << 1)
-#define WMI_NLO_CONFIG_RESET            (0x1 << 2)
-#define WMI_NLO_CONFIG_SLOW_SCAN        (0x1 << 4)
-#define WMI_NLO_CONFIG_FAST_SCAN        (0x1 << 5)
-#define WMI_NLO_CONFIG_SSID_HIDE_EN     (0x1 << 6)
+#define WMI_NLO_CONFIG_STOP                             (0x1 << 0)
+#define WMI_NLO_CONFIG_START                            (0x1 << 1)
+#define WMI_NLO_CONFIG_RESET                            (0x1 << 2)
+#define WMI_NLO_CONFIG_SLOW_SCAN                        (0x1 << 4)
+#define WMI_NLO_CONFIG_FAST_SCAN                        (0x1 << 5)
+#define WMI_NLO_CONFIG_SSID_HIDE_EN                     (0x1 << 6)
 /* This bit is used to indicate if EPNO or supplicant PNO is enabled. Only
   * one of them can be enabled at a given time */
-#define WMI_NLO_CONFIG_ENLO             (0x1 << 7)
-#define WMI_NLO_CONFIG_SCAN_PASSIVE     (0x1 << 8)
-#define WMI_NLO_CONFIG_ENLO_RESET       (0x1 << 9)
+#define WMI_NLO_CONFIG_ENLO                             (0x1 << 7)
+#define WMI_NLO_CONFIG_SCAN_PASSIVE                     (0x1 << 8)
+#define WMI_NLO_CONFIG_ENLO_RESET                       (0x1 << 9)
+#define WMI_NLO_CONFIG_SPOOFED_MAC_IN_PROBE_REQ         (0x1 << 10)
+#define WMI_NLO_CONFIG_RANDOM_SEQ_NO_IN_PROBE_REQ       (0x1 << 11)
+#define WMI_NLO_CONFIG_ENABLE_IE_WHITELIST_IN_PROBE_REQ (0x1 << 12)
 
 /* Whether directed scan needs to be performed (for hidden SSIDs) */
 #define WMI_ENLO_FLAG_DIRECTED_SCAN      1
@@ -10311,11 +10346,20 @@ typedef struct wmi_nlo_config {
 	A_UINT32 no_of_ssids;
 	A_UINT32 num_of_channels;
 	A_UINT32 delay_start_time;              /* NLO scan start delay time in milliseconds */
+	/** MAC Address to use in Probe Req as SA **/
+	wmi_mac_addr mac_addr;
+	/** Mask on which MAC has to be randomized **/
+	wmi_mac_addr mac_mask;
+	/** IE bitmap to use in Probe Req **/
+	A_UINT32 ie_bitmap[WMI_IE_BITMAP_SIZE];
+	/** Number of vendor OUIs. In the TLV vendor_oui[] **/
+	A_UINT32 num_vendor_oui;
 	/* The TLVs will follow.
 	 * nlo_configured_parameters nlo_list[];
 	 * A_UINT32 channel_list[];
 	 * nlo_channel_prediction_cfg ch_prediction_cfg;
 	 * enlo_candidate_score_params candidate_score_params;
+	 * wmi_vendor_oui vendor_oui[];
 	 */
 
 } wmi_nlo_config_cmd_fixed_param;
