@@ -4257,6 +4257,36 @@ struct rtt_keepalive_req_params {
 };
 
 /**
+ * struct rx_reorder_queue_setup_params  - Reorder queue setup params
+ * @peer_mac_addr: Peer mac address
+ * @tid: TID
+ * @vdev_id: vdev id
+ * @hw_qdesc_paddr_lo: lower 32 bits of queue desc adddress
+ * @hw_qdesc_paddr_hi: upper 32 bits of queue desc adddress
+ * @queue_no: 16-bit number assigned by host for queue
+ */
+struct rx_reorder_queue_setup_params {
+	uint8_t *peer_macaddr;
+	uint16_t tid;
+	uint16_t vdev_id;
+	uint32_t hw_qdesc_paddr_lo;
+	uint32_t hw_qdesc_paddr_hi;
+	uint16_t queue_no;
+};
+
+/**
+ * struct rx_reorder_queue_remove_params  - Reorder queue setup params
+ * @peer_mac_addr: Peer mac address
+ * @vdev_id: vdev id
+ * @peer_tid_bitmap: peer tid bitmap
+ */
+struct rx_reorder_queue_remove_params {
+	uint8_t *peer_macaddr;
+	uint16_t vdev_id;
+	uint32_t peer_tid_bitmap;
+};
+
+/**
  * struct wmi_host_stats_event - Stats event params
  * @stats_id: stats id of type wmi_host_stats_event
  * @num_pdev_stats: number of pdev stats event structures 0 or 1
