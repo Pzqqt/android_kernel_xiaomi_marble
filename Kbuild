@@ -6,6 +6,8 @@ else
 	KERNEL_BUILD := 0
 endif
 
+CONFIG_LITHIUM := y
+
 ifeq ($(CONFIG_CLD_HL_SDIO_CORE), y)
 	CONFIG_QCA_WIFI_SDIO := 1
 endif
@@ -19,6 +21,13 @@ ifdef CONFIG_ICNSS
 endif
 
 ifeq (y,$(findstring y,$(CONFIG_CNSS) $(CONFIG_CNSS2)))
+ifndef CONFIG_ROME_IF
+	#use pci as default interface
+	CONFIG_ROME_IF = pci
+endif
+endif
+
+ifneq (y, $(CONFIG_ARCH_MSM))
 ifndef CONFIG_ROME_IF
 	#use pci as default interface
 	CONFIG_ROME_IF = pci
@@ -117,6 +126,18 @@ ifeq ($(KERNEL_BUILD), 0)
 			CONFIG_WLAN_FEATURE_LPSS := y
 			endif
 		endif
+
+		ifneq (y, $(CONFIG_ARCH_MSM))
+		#Flag to enable Protected Managment Frames (11w) feature
+		CONFIG_WLAN_FEATURE_11W := y
+		#Flag to enable LTE CoEx feature
+		CONFIG_QCOM_LTE_COEX := y
+			ifneq ($(CONFIG_MOBILE_ROUTER), y)
+			#Flag to enable LPSS feature
+			CONFIG_WLAN_FEATURE_LPSS := y
+			endif
+		endif
+
 	endif
 
 	#Flag to enable Protected Managment Frames (11w) feature
@@ -166,9 +187,13 @@ ifneq ($(CONFIG_ROME_IF),sdio)
 	CONFIG_WLAN_FASTPATH := y
 
 	# Flag to enable NAPI
+ifdef CONFIG_LITHIUM
+	CONFIG_WLAN_NAPI := n
+	CONFIG_WLAN_NAPI_DEBUG := n
+else
 	CONFIG_WLAN_NAPI := y
 	CONFIG_WLAN_NAPI_DEBUG := n
-
+endif
 	# Flag to enable FW based TX Flow control
 	ifeq ($(CONFIG_CNSS_EOS),y)
 		CONFIG_WLAN_TX_FLOW_CONTROL_V2 := y
@@ -196,7 +221,11 @@ endif
 endif
 
 # If not set, assume, Common driver is with in the build tree
+ifeq (y, $(CONFIG_ARCH_MSM))
 WLAN_COMMON_ROOT ?= qca-wifi-host-cmn
+else
+WLAN_COMMON_ROOT ?= ../qca-wifi-host-cmn
+endif
 WLAN_COMMON_INC ?= $(WLAN_ROOT)/$(WLAN_COMMON_ROOT)
 
 ifneq ($(CONFIG_MOBILE_ROUTER), y)
@@ -241,6 +270,9 @@ endif
 #Enable PCI specific APIS (dma, etc)
 ifeq ($(CONFIG_ROME_IF),pci)
 	CONFIG_HIF_PCI := 1
+ifneq (y,$(CONFIG_ARCH_MSM))
+	CONFIG_HIF_AHB := 1
+endif
 endif
 
 #Enable USB specific APIS
@@ -778,6 +810,25 @@ ifeq ($(CONFIG_WLAN_TX_FLOW_CONTROL_V2), y)
 TXRX_OBJS +=     $(TXRX_DIR)/ol_txrx_flow_control.o
 endif
 
+############ DP 3.0 ############
+DP_INC := -I$(WLAN_COMMON_ROOT)/dp/inc \
+	-I$(WLAN_COMMON_ROOT)/dp/wifi3.0
+
+DP_SRC := $(WLAN_COMMON_ROOT)/dp/wifi3.0
+DP_OBJS := $(DP_SRC)/dp_main.o \
+		$(DP_SRC)/dp_tx.o \
+		$(DP_SRC)/dp_tx_desc.o \
+		$(DP_SRC)/dp_rx.o \
+		$(DP_SRC)/dp_rx_err.o \
+		$(DP_SRC)/dp_htt.o \
+		$(DP_SRC)/dp_peer.o \
+		$(DP_SRC)/dp_rx_desc.o
+
+############ CFG ############
+WCFG_DIR := $(WLAN_COMMON_ROOT)/wlan_cfg
+WCFG_INC := -I$(WCFG_DIR)
+WCFG_OBJS := $(WCFG_DIR)/wlan_cfg.o
+
 ############ OL ############
 OL_DIR :=     core/dp/ol
 OL_INC :=     -I$(WLAN_ROOT)/$(OL_DIR)/inc
@@ -864,7 +915,9 @@ HIF_CE_OBJS :=  $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_bmi.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_main.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_service.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_tasklet.o \
-                $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/regtable.o
+                $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/regtable.o \
+                $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/qca8074def.o \
+                $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_service_srng.o \
 
 HIF_USB_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_USB_DIR)/usbdrv.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_USB_DIR)/hif_usb.o \
@@ -888,6 +941,12 @@ endif
 
 HIF_PCIE_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_PCIE_DIR)/if_pci.o
 HIF_SNOC_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_SNOC_DIR)/if_snoc.o
+
+ifeq ($(CONFIG_HIF_AHB), 1)
+HIF_AHB_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_SNOC_DIR)/if_ahb.o \
+		$(WLAN_COMMON_ROOT)/$(HIF_SNOC_DIR)/if_ahb_reset.o
+endif
+
 HIF_SDIO_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/if_sdio.o
 
 HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/multibus.o
@@ -898,6 +957,13 @@ HIF_OBJS += $(HIF_PCIE_OBJS)
 HIF_OBJS += $(HIF_COMMON_OBJS)
 HIF_OBJS += $(HIF_CE_OBJS)
 HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/multibus_pci.o
+endif
+
+ifeq ($(CONFIG_HIF_AHB), 1)
+HIF_OBJS += $(HIF_AHB_OBJS)
+HIF_OBJS += $(HIF_COMMON_OBJS)
+HIF_OBJS += $(HIF_CE_OBJS)
+HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/multibus_ahb.o
 endif
 
 ifeq ($(CONFIG_HIF_SNOC), 1)
@@ -919,6 +985,15 @@ HIF_OBJS += $(HIF_USB_OBJS)
 HIF_OBJS += $(HIF_COMMON_OBJS)
 HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/multibus_usb.o
 endif
+
+############ HAL ############
+HAL_DIR :=	hal
+HAL_INC :=	-I$(WLAN_COMMON_INC)/$(HAL_DIR)/inc \
+		-I$(WLAN_COMMON_INC)/$(HAL_DIR)/wifi3.0
+
+HAL_OBJS :=	$(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/hal_srng.o \
+		$(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/hal_rx.o \
+		$(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/hal_wbm.o
 
 ############ WMA ############
 WMA_DIR :=	core/wma
@@ -975,7 +1050,8 @@ ifeq ($(CONFIG_PLD_USB_CNSS), y)
 PLD_OBJS +=	$(PLD_SRC_DIR)/pld_usb.o
 endif
 
-TARGET_INC :=	-I$(WLAN_ROOT)/target/inc
+TARGET_INC :=	-I$(WLAN_ROOT)/../fw-api/hw/qca6290/v1 \
+		-I$(WLAN_ROOT)/../fw-api/fw
 
 LINUX_INC :=	-Iinclude/linux
 
@@ -1001,10 +1077,13 @@ INCS +=		$(WMA_INC) \
 		$(PKTLOG_INC) \
 		$(HTT_INC) \
 		$(HTC_INC) \
-		$(DFS_INC)
+		$(DFS_INC) \
+		$(WCFG_INC) \
+		$(DP_INC)
 
 INCS +=		$(HIF_INC) \
-		$(BMI_INC)
+		$(BMI_INC) \
+		$(HAL_INC)
 
 INCS +=		$(TARGET_INC)
 
@@ -1041,7 +1120,8 @@ OBJS +=		$(WMA_OBJS) \
 
 OBJS +=		$(HIF_OBJS) \
 		$(BMI_OBJS) \
-		$(HTT_OBJS)
+		$(HTT_OBJS) \
+		$(HAL_OBJS)
 
 OBJS +=		$(WLAN_LOGGING_OBJS)
 OBJS +=		$(NLINK_OBJS)
@@ -1057,6 +1137,8 @@ ifeq ($(BUILD_DIAG_VERSION), 1)
 OBJS +=		$(HOST_DIAG_LOG_OBJS)
 endif
 
+OBJS +=		$(DP_OBJS) \
+		$(WCFG_OBJS)
 
 EXTRA_CFLAGS += $(INCS)
 
@@ -1146,7 +1228,9 @@ endif
 endif
 
 ifeq (y,$(findstring y,$(CONFIG_ARCH_MSM) $(CONFIG_ARCH_QCOM)))
+ifeq (y,$(CONFIG_ARCH_MSM))
 CDEFINES += -DMSM_PLATFORM
+endif
 endif
 
 CDEFINES +=	-DQCA_SUPPORT_TXRX_LOCAL_PEER_ID
@@ -1156,7 +1240,9 @@ CDEFINES +=	-DQCA_LL_TX_FLOW_CONTROL_V2
 CDEFINES +=	-DQCA_LL_TX_FLOW_GLOBAL_MGMT_POOL
 else
 ifeq ($(CONFIG_ROME_IF),pci)
+ifneq ($(CONFIG_LITHIUM),y)
 CDEFINES +=	-DQCA_LL_LEGACY_TX_FLOW_CONTROL
+endif
 endif
 endif
 
@@ -1292,6 +1378,10 @@ endif
 
 ifeq ($(CONFIG_HIF_SNOC), 1)
 CDEFINES += -DHIF_SNOC
+endif
+
+ifeq ($(CONFIG_HIF_AHB), 1)
+CDEFINES += -DHIF_AHB
 endif
 
 #Enable High Latency related Flags
@@ -1523,6 +1613,10 @@ endif
 endif
 endif
 
+ifeq (y,$(filter y,$(CONFIG_LITHIUM),$(CONFIG_64BIT_PADDR)))
+CONFIG_FEATURE_TSO := y
+endif
+
 ifeq ($(CONFIG_FEATURE_TSO),y)
 CDEFINES += -DFEATURE_TSO
 endif
@@ -1566,6 +1660,18 @@ ifeq ($(CONFIG_WLAN_FEATURE_NAN_DATAPATH), y)
 CDEFINES += -DWLAN_FEATURE_NAN_DATAPATH
 endif
 
+ifeq ($(CONFIG_LITHIUM),y)
+CDEFINES += -DQCA8074_HEADERS_DEF
+CDEFINES += -DQCA_WIFI_QCA8074
+CDEFINES += -DQCA_WIFI_QCA8074_VP
+endif
+
+# Dummy flag for WIN/MCL converged data path compilation
+CDEFINES += -DDP_PRINT_ENABLE=0
+CDEFINES += -DATH_SUPPORT_WRAP=0
+CDEFINES += -DQCA_HOST2FW_RXBUF_RING=0
+#endof dummy flags
+
 KBUILD_CPPFLAGS += $(CDEFINES)
 
 # Currently, for versions of gcc which support it, the kernel Makefile
@@ -1574,6 +1680,9 @@ KBUILD_CPPFLAGS += $(CDEFINES)
 # will override the kernel settings.
 ifeq ($(call cc-option-yn, -Wmaybe-uninitialized),y)
 EXTRA_CFLAGS += -Wmaybe-uninitialized
+ifneq (y,$(CONFIG_ARCH_MSM))
+EXTRA_CFLAGS += -Wframe-larger-than=4096
+endif
 endif
 
 # Module information used by KBuild framework
