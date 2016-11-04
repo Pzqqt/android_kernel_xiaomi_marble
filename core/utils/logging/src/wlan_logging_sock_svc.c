@@ -1221,7 +1221,7 @@ void wlan_pkt_stats_to_logger_thread(void *pl_hdr, void *pkt_dump, void *data)
 
 	spin_lock_irqsave(&gwlan_logging.pkt_stats_lock, flags);
 
-	if (!gwlan_logging.pkt_stats_pcur_node) {
+	if (!gwlan_logging.pkt_stats_pcur_node || (NULL == pkt_stats_dump)) {
 		spin_unlock_irqrestore(&gwlan_logging.pkt_stats_lock, flags);
 		return;
 	}
