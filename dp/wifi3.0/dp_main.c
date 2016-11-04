@@ -26,6 +26,8 @@
 #include "dp_htt.h"
 #include "dp_types.h"
 #include "dp_internal.h"
+#include "dp_tx.h"
+#include "wlan_cfg.h"
 
 /**
  * dp_setup_srng - Internal function to setup SRNG rings used by data path
@@ -170,43 +172,6 @@ fail1:
 	qdf_mem_free(soc);
 fail0:
 	return NULL;
-}
-
-/* Temporary definitions to be moved to wlan_cfg */
-static inline uint32_t wlan_cfg_get_max_clients(void *wlan_cfg_ctx)
-{
-	return 512;
-}
-
-static inline uint32_t wlan_cfg_max_alloc_size(void *wlan_cfg_ctx)
-{
-	/* Change this to a lower value to enforce scattered idle list mode */
-	return 32 << 20;
-}
-
-static inline int wlan_cfg_per_pdev_tx_ring(void *wlan_cfg_ctx)
-{
-	return 1;
-}
-
-static inline int wlan_cfg_num_tcl_data_rings(void *wlan_cfg_ctx)
-{
-	return 1;
-}
-
-static inline int wlan_cfg_per_pdev_rx_ring(void *wlan_cfg_ctx)
-{
-	return 1;
-}
-
-static inline int wlan_cfg_num_reo_dest_rings(void *wlan_cfg_ctx)
-{
-	return 4;
-}
-
-static inline int wlan_cfg_pkt_type(void *wlan_cfg_ctx)
-{
-	return htt_pkt_type_ethernet;
 }
 
 #define AVG_MAX_MPDUS_PER_TID 128
@@ -546,6 +511,14 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	if (soc->cmn_init_done)
 		return 0;
 
+	soc->wlan_cfg_ctx = wlan_cfg_soc_attach();
+
+	if (!soc->wlan_cfg_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				"%s: wlan_cfg_soc_attach failed\n", __func__);
+		goto fail0;
+	}
+
 	if (dp_peer_find_attach(soc))
 		goto fail0;
 
@@ -624,9 +597,6 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 		soc->num_reo_dest_rings =
 			wlan_cfg_num_reo_dest_rings(soc->wlan_cfg_ctx);
 		for (i = 0; i < soc->num_reo_dest_rings; i++) {
-			/* TODO: Get number of rings and ring sizes from
-			 * wlan_cfg
-			 */
 			if (dp_srng_setup(soc, &soc->reo_dest_ring[i], REO_DST,
 				i, 0, REO_DST_RING_SIZE)) {
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
@@ -726,6 +696,14 @@ void *dp_pdev_attach_wifi3(void *txrx_soc, void *ctrl_pdev,
 	if (!pdev) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s: DP PDEV memory allocation failed\n", __func__);
+		goto fail0;
+	}
+
+	pdev->wlan_cfg_ctx = wlan_cfg_pdev_attach();
+
+	if (!pdev->wlan_cfg_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				"%s: pdev cfg_attach failed\n", __func__);
 		goto fail0;
 	}
 
@@ -844,6 +822,8 @@ static void dp_pdev_detach_wifi3(void *txrx_pdev, int force)
 	struct dp_pdev *pdev = (struct dp_pdev *)txrx_pdev;
 	struct dp_soc *soc = pdev->soc;
 
+	dp_tx_pdev_detach(pdev);
+
 	if (wlan_cfg_per_pdev_tx_ring(soc->wlan_cfg_ctx)) {
 		dp_srng_cleanup(soc, &soc->tcl_data_ring[pdev->pdev_id],
 			TCL_DATA, pdev->pdev_id);
@@ -904,6 +884,8 @@ void dp_soc_detach_wifi3(void *txrx_soc)
 
 	/* Tx data rings */
 	if (!wlan_cfg_per_pdev_tx_ring(soc->wlan_cfg_ctx)) {
+		dp_tx_soc_detach(soc);
+
 		for (i = 0; i < soc->num_tcl_data_rings; i++) {
 			dp_srng_cleanup(soc, &soc->tcl_data_ring[i],
 				TCL_DATA, i);
@@ -1008,6 +990,7 @@ void *dp_vdev_attach_wifi3(void *txrx_pdev,
 	vdev->pdev = pdev;
 	vdev->vdev_id = vdev_id;
 	vdev->opmode = op_mode;
+	vdev->osdev = soc->osdev;
 
 	vdev->osif_rx = NULL;
 	vdev->osif_rx_mon = NULL;
