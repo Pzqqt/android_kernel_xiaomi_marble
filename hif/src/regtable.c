@@ -103,12 +103,12 @@ void hif_target_register_tbl_attach(struct hif_softc *scn, u32 target_type)
 		scn->target_ce_def = IPQ4019_CE_TARGETdef;
 		break;
 #endif
+#endif
 #if defined(QCA8074_HEADERS_DEF)
 	case TARGET_TYPE_QCA8074:
 		scn->targetdef = QCA8074_TARGETdef;
 		scn->target_ce_def = QCA8074_CE_TARGETdef;
 		break;
-#endif
 #endif
 
 	default:
@@ -173,11 +173,11 @@ void hif_register_tbl_attach(struct hif_softc *scn, u32 hif_type)
 		scn->hostdef = IPQ4019_HOSTdef;
 		break;
 #endif
+#endif
 #if defined(QCA8074_HEADERS_DEF)
 	case HIF_TYPE_QCA8074:
 		scn->hostdef = QCA8074_HOSTdef;
 		break;
-#endif
 #endif
 
 	default:
