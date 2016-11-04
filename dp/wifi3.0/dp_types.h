@@ -29,6 +29,7 @@
 #include <cdp_txrx_cmn.h>
 #include <wdi_event_api.h>    /* WDI subscriber event list */
 
+#include <hal_tx.h>
 #define MAX_PDEV_CNT 3
 #define MAX_LINK_DESC_BANKS 8
 #define MAX_TXDESC_POOLS 4
@@ -38,14 +39,149 @@
 #define DP_MAX_TX_RINGS 8
 #define DP_MAX_RX_RINGS 8
 #define MAX_IDLE_SCATTER_BUFS 16
+#define DP_MAX_IRQ_PER_CONTEXT 12
+#define DP_MAX_INTERRUPT_CONTEXTS 8
+
+#define MAX_TCL_DATA_RINGS 3
+#define MAX_TXDESC_POOLS 3
+#define MAX_TX_HW_QUEUES 3
+
+#define DP_MAX_INTERRUPT_CONTEXTS 8
 
 struct dp_soc_cmn;
 struct dp_pdev;
 struct dp_vdev;
 union dp_tx_desc_list_elem_t;
+struct dp_soc;
 union dp_rx_desc_list_elem_t;
 
 #define DP_MUTEX_TYPE qdf_spinlock_t
+
+#define DP_FRAME_IS_MULTICAST(_a)  (*(_a) & 0x01)
+#define DP_FRAME_IS_IPV4_MULTICAST(_a)  (*(_a) == 0x01)
+
+#define DP_FRAME_IS_IPV6_MULTICAST(_a)         \
+    ((_a)[0] == 0x33 &&                         \
+     (_a)[1] == 0x33)
+
+#define DP_FRAME_IS_BROADCAST(_a)              \
+    ((_a)[0] == 0xff &&                         \
+     (_a)[1] == 0xff &&                         \
+     (_a)[2] == 0xff &&                         \
+     (_a)[3] == 0xff &&                         \
+     (_a)[4] == 0xff &&                         \
+     (_a)[5] == 0xff)
+
+
+/**
+ * enum dp_tx_frm_type
+ * @dp_tx_frm_std: Regular frame, no added header fragments
+ * @dp_tx_frm_tso: TSO segment, with a modified IP header added
+ * @dp_tx_frm_sg: SG segment
+ * @dp_tx_frm_audio: Audio frames, a custom LLC/SNAP header added
+ * @dp_tx_frm_me: Multicast to Unicast Converted frame
+ * @dp_tx_frm_raw: Raw Frame
+ */
+enum dp_tx_frm_type {
+	dp_tx_frm_std = 0,
+	dp_tx_frm_tso,
+	dp_tx_frm_sg,
+	dp_tx_frm_audio,
+	dp_tx_frm_me,
+	dp_tx_frm_raw,
+};
+
+/**
+ * struct dp_tx_ext_desc_elem_s
+ * @next: next extension descriptor pointer
+ * @vaddr: hlos virtual address pointer
+ * @paddr: physical address pointer for descriptor
+ */
+struct dp_tx_ext_desc_elem_s {
+	struct dp_tx_ext_desc_elem_s *next;
+	void *vaddr;
+	qdf_dma_addr_t paddr;
+};
+
+/**
+ * struct dp_tx_ext_desc_s - Tx Extension Descriptor Pool
+ * @elem_count: Number of descriptors in the pool
+ * @elem_size: Size of each descriptor
+ * @msdu_ext_desc: MSDU extension descriptor
+ * @desc_pages: multiple page allocation information for actual descriptors
+ * @link_elem_size: size of the link descriptor in cacheable memory used for
+ * 		    chaining the extension descriptors
+ * @desc_link_pages: multiple page allocation information for link descriptors
+ */
+struct dp_tx_ext_desc_pool_s {
+	uint16_t elem_count;
+	int elem_size;
+	struct qdf_mem_multi_page_t desc_pages;
+	int link_elem_size;
+	struct qdf_mem_multi_page_t desc_link_pages;
+	struct dp_tx_ext_desc_elem_s *freelist;
+	qdf_spinlock_t lock;
+	qdf_dma_mem_context(memctx);
+};
+
+/**
+ * struct dp_tx_desc_s - Tx Descriptor
+ * @next: Next in the chain of descriptors in freelist or in the completion list
+ * @nbuf: Buffer Address
+ * @msdu_ext_desc: MSDU extension descriptor
+ * @id: Descriptor ID
+ * @vdev: vdev over which the packet was transmitted
+ * @pool_id: Pool ID - used when releasing the descripto
+ * @flags: Flags to track the state of descriptor and special frame handling
+ * @comp: Pool ID - used when releasing the descriptor
+ * @tx_encap_type: Transmit encap type (i.e. Raw, Native Wi-Fi, Ethernet).
+ * 		   This is maintained in descriptor to allow more efficient
+ * 		   processing in completion event processing code.
+ * 		    This field is filled in with the htt_pkt_type enum.
+ * @frm_type: Frame Type - ToDo check if this is redundant
+ * @pkt_offset: Offset from which the actual packet data starts
+ * @me_buffer: Pointer to ME buffer - store this so that it can be freed on
+ *		Tx completion of ME packet
+ */
+struct dp_tx_desc_s {
+	struct dp_tx_desc_s *next;
+	qdf_nbuf_t nbuf;
+	struct dp_tx_ext_desc_elem_s *msdu_ext_desc;
+	uint32_t  id;
+	struct dp_vdev *vdev;
+	uint8_t  pool_id;
+	uint8_t flags;
+	struct hal_tx_desc_comp_s comp;
+	uint16_t tx_encap_type;
+	uint8_t frm_type;
+	uint8_t pkt_offset;
+	void *me_buffer;
+};
+
+/**
+ * struct dp_tx_desc_pool_s - Tx Descriptor pool information
+ * @desc_reserved_size: Size to be reserved for housekeeping info
+ * 			in allocated memory for each descriptor
+ * @page_divider: Number of bits to shift to get page number from descriptor ID
+ * @offset_filter: Bit mask to get offset from descriptor ID
+ * @num_allocated: Number of allocated (in use) descriptors in the pool
+ * @elem_size: Size of each descriptor in the pool
+ * @elem_count: Total number of descriptors in the pool
+ * @freelist: Chain of free descriptors
+ * @desc_pages: multiple page allocation information
+ * @lock- Lock for descriptor allocation/free from/to the pool
+ */
+struct dp_tx_desc_pool_s {
+	uint16_t desc_reserved_size;
+	uint8_t page_divider;
+	uint32_t offset_filter;
+	uint32_t num_allocated;
+	uint16_t elem_size;
+	uint16_t elem_count;
+	struct dp_tx_desc_s *freelist;
+	struct qdf_mem_multi_page_t desc_pages;
+	qdf_spinlock_t lock;
+};
 
 struct dp_srng {
 	void *hal_srng;
@@ -104,6 +240,18 @@ struct ol_if_ops {
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };
 
+
+/* per interrupt context  */
+struct dp_intr {
+	uint8_t tx_ring_mask;   /* WBM Tx completion rings (0-2)
+				associated with this napi context */
+	uint8_t rx_ring_mask;   /* Rx REO rings (0-3) associated
+				with this interrupt context */
+	uint8_t rx_mon_ring_mask;  /* Rx monitor ring mask (0-2) */
+	struct dp_soc *soc;    /* Reference to SoC structure ,
+				to get DMA ring handles */
+};
+
 /* SOC level structure for data path */
 struct dp_soc {
 	/* Common base structure - Should be the first member */
@@ -156,11 +304,14 @@ struct dp_soc {
 	uint32_t wbm_idle_scatter_buf_size;
 
 	/* Tx SW descriptor pool */
-	struct {
-		uint32_t pool_size;
-		union dp_tx_desc_list_elem_t *array;
-		union dp_tx_desc_list_elem_t *freelist;
-	} tx_desc[MAX_TXDESC_POOLS];
+	/* Tx SW descriptor pool */
+	struct dp_tx_desc_pool_s tx_desc[MAX_TXDESC_POOLS];
+
+	/* Tx MSDU Extension descriptor pool */
+	struct dp_tx_ext_desc_pool_s tx_ext_desc[MAX_TXDESC_POOLS];
+
+	/* Tx H/W queues lock */
+	qdf_spinlock_t tx_queue_lock[MAX_TX_HW_QUEUES];
 
 	/* Rx SW descriptor pool */
 	struct {
@@ -171,6 +322,9 @@ struct dp_soc {
 
 	/* HAL SOC handle */
 	void *hal_soc;
+
+    /* DP Interrupts */
+	struct dp_intr intr_ctx[DP_MAX_INTERRUPT_CONTEXTS];
 
 	/* REO destination rings */
 	struct dp_srng reo_dest_ring[MAX_REO_DEST_RINGS];
@@ -277,6 +431,9 @@ struct dp_soc {
 	struct {
 		/* TBD */
 	} stats;
+
+	/* Enable processing of Tx completion status words */
+	bool process_tx_status;
 };
 
 
@@ -296,6 +453,9 @@ struct dp_pdev {
 
 	/* Empty ring used by firmware to post rx buffers to the MAC */
 	struct dp_srng rx_mac_buf_ring;
+
+	/* wlan_cfg pdev ctxt*/
+	 struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_ctx;
 
 	/* RXDMA monitor buffer replenish ring */
 	struct dp_srng rxdma_mon_buf_ring;
@@ -350,6 +510,9 @@ struct dp_pdev {
 	/* Enhanced Stats is enabled */
 	bool ap_stats_tx_cal_enable;
 
+	uint32_t num_tx_outstanding;
+
+	uint32_t num_tx_exception;
 	/* TBD */
 };
 
@@ -373,6 +536,8 @@ union dp_align_mac_addr {
 
 /* VDEV structure for data path state */
 struct dp_vdev {
+	/* OS device abstraction */
+	qdf_device_t osdev;
 	/* physical device that is the parent of this virtual device */
 	struct dp_pdev *pdev;
 
@@ -443,11 +608,22 @@ struct dp_vdev {
 
 	/* Default HTT meta data for this VDEV */
 	/* TBD: check alignment constraints */
-	uint8_t htt_metadata[MAX_HTT_METADATA_LEN];
-	uint32_t htt_metadata_size;
+	uint16_t htt_tcl_metadata;
 
 	/* Mesh mode vdev */
 	uint32_t mesh_vdev;
+
+	/* DSCP-TID mapping table ID */
+	uint8_t dscp_tid_map_id;
+
+	/* Multicast enhancement enabled */
+	uint8_t mcast_enhancement_en;
+
+	uint32_t num_tx_outstanding;
+
+	uint8_t tx_ring_id;
+	struct dp_tx_desc_pool_s *tx_desc;
+	struct dp_tx_ext_desc_pool_s *tx_ext_desc;
 
 	/* TBD */
 };
@@ -514,4 +690,3 @@ struct dp_peer {
 };
 
 #endif /* _DP_TYPES_H_ */
-
