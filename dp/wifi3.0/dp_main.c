@@ -154,6 +154,15 @@ void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
 		goto fail1;
 	}
 
+	soc->wlan_cfg_ctx = wlan_cfg_soc_attach();
+
+	if (!soc->wlan_cfg_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				"%s: wlan_cfg_soc_attach failed\n", __func__);
+		goto fail2;
+	}
+
+
 #ifdef notyet
 	if (wdi_event_attach(soc)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -162,17 +171,223 @@ void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
 	}
 #endif
 
+	if (dp_soc_interrupt_attach(soc) != QDF_STATUS_SUCCESS) {
+		goto fail2;
+	}
+
 	return (void *)soc;
 
-#ifdef notyet
 fail2:
 	htt_soc_detach(soc->htt_handle);
-#endif
 fail1:
 	qdf_mem_free(soc);
 fail0:
 	return NULL;
 }
+
+/*
+ * dp_service_srngs() - Top level interrupt handler for DP Ring interrupts
+ * @dp_ctx: DP SOC handle
+ * @budget: Number of frames/descriptors that can be processed in one shot
+ *
+ * Return: remaining budget/quota for the soc device
+ */
+uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
+{
+	struct dp_intr *int_ctx = (struct dp_intr *)dp_ctx;
+	struct dp_soc *soc = int_ctx->soc;
+	int ring = 0;
+	uint32_t work_done  = 0;
+	uint32_t budget = dp_budget;
+	uint8_t tx_mask = int_ctx->tx_ring_mask;
+	uint8_t rx_mask = int_ctx->rx_ring_mask;
+
+	/* Process Tx completion interrupts first to return back buffers */
+	if (tx_mask) {
+		for (ring = 0; ring < soc->num_tcl_data_rings; ring++) {
+			if (tx_mask & (1 << ring)) {
+				work_done =
+					dp_tx_comp_handler(soc, ring, budget);
+				budget -= work_done;
+				if (budget <= 0)
+					goto budget_done;
+			}
+		}
+	}
+
+	/* Process Rx interrupts */
+	if (rx_mask) {
+		for (ring = 0; ring < soc->num_reo_dest_rings; ring++) {
+			if (rx_mask & (1 << ring)) {
+				work_done =
+					dp_rx_process(soc,
+					soc->reo_dest_ring[ring].hal_srng,
+					budget);
+
+				budget -=  work_done;
+				if (budget <= 0)
+					goto budget_done;
+			}
+		}
+	}
+
+budget_done:
+	return dp_budget - budget;
+}
+
+/* dp_interrupt_timer()- timer poll for interrupts
+ *
+ * @arg: SoC Handle
+ *
+ * Return:
+ *
+ */
+#ifdef DP_INTR_POLL_BASED
+void dp_interrupt_timer(void *arg)
+{
+	struct dp_soc *soc = (struct dp_soc *) arg;
+	int i;
+
+	for (i = 0 ; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++)
+		dp_service_srngs(&soc->intr_ctx[i], 0xffff);
+
+	qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
+}
+
+/*
+ * dp_soc_interrupt_attach() - Register handlers for DP interrupts
+ * @txrx_soc: DP SOC handle
+ *
+ * Host driver will register for “DP_NUM_INTERRUPT_CONTEXTS” number of NAPI
+ * contexts. Each NAPI context will have a tx_ring_mask , rx_ring_mask ,and
+ * rx_monitor_ring mask to indicate the rings that are processed by the handler.
+ *
+ * Return: 0 for success. nonzero for failure.
+ */
+QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
+{
+	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
+	int i;
+
+	for (i = 0; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++) {
+		soc->intr_ctx[i].tx_ring_mask = 0xF;
+		soc->intr_ctx[i].rx_ring_mask = 0xF;
+		soc->intr_ctx[i].rx_mon_ring_mask = 0xF;
+		soc->intr_ctx[i].soc = soc;
+	}
+
+	qdf_timer_init(soc->osdev, &soc->int_timer,
+			dp_interrupt_timer, (void *)soc,
+			QDF_TIMER_TYPE_WAKE_APPS);
+	qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/*
+ * dp_soc_interrupt_detach() - Deregister any allocations done for interrupts
+ * @txrx_soc: DP SOC handle
+ *
+ * Return: void
+ */
+void dp_soc_interrupt_detach(void *txrx_soc)
+{
+	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
+
+	qdf_timer_stop(&soc->int_timer);
+	qdf_timer_detach(&soc->int_timer);
+}
+#else
+/*
+ * dp_soc_interrupt_attach() - Register handlers for DP interrupts
+ * @txrx_soc: DP SOC handle
+ *
+ * Host driver will register for “DP_NUM_INTERRUPT_CONTEXTS” number of NAPI
+ * contexts. Each NAPI context will have a tx_ring_mask , rx_ring_mask ,and
+ * rx_monitor_ring mask to indicate the rings that are processed by the handler.
+ *
+ * Return: 0 for success. nonzero for failure.
+ */
+QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
+{
+	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
+
+	int i = 0;
+	int num_irq = 0;
+
+
+	for (i = 0; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++) {
+		int tx_mask =
+			wlan_cfg_get_tx_ring_mask(soc->wlan_cfg_ctx, i);
+		int rx_mask =
+			wlan_cfg_get_rx_ring_mask(soc->wlan_cfg_ctx, i);
+		int rx_mon_mask =
+			wlan_cfg_get_rx_mon_ring_mask(soc->wlan_cfg_ctx, i);
+
+		soc->intr_ctx[i].tx_ring_mask = tx_mask;
+		soc->intr_ctx[i].rx_ring_mask = rx_mask;
+		soc->intr_ctx[i].rx_mon_ring_mask = rx_mon_mask;
+		soc->intr_ctx[i].soc = soc;
+
+		num_irq = 0;
+
+		int j = 0;
+		int ret = 0;
+
+		/* Map of IRQ ids registered with one interrupt context */
+		int irq_id_map[HIF_MAX_GRP_IRQ];
+
+		for (j = 0; j < HIF_MAX_GRP_IRQ; j++) {
+
+			if (tx_mask & (1 << j)) {
+				irq_id_map[num_irq++] =
+					(wbm2host_tx_completions_ring1 - j);
+			}
+
+			if (rx_mask & (1 << j)) {
+				irq_id_map[num_irq++] =
+					(reo2host_destination_ring1 - j);
+			}
+
+			if (rx_mon_mask & (1 << j)) {
+				irq_id_map[num_irq++] =
+					(rxdma2host_monitor_destination_mac1
+					 - j);
+			}
+		}
+
+
+		ret = hif_register_ext_group_int_handler(soc->hif_handle,
+				num_irq, irq_id_map,
+				dp_service_srngs,
+				&soc->intr_ctx[i]);
+
+		if (ret) {
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s: failed, ret = %d",	__func__, ret);
+
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/*
+ * dp_soc_interrupt_detach() - Deregister any allocations done for interrupts
+ * @txrx_soc: DP SOC handle
+ *
+ * Return: void
+ */
+void dp_soc_interrupt_detach(void *txrx_soc)
+{
+	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
+
+	soc->intr_ctx[i].tx_ring_mask = 0;
+	soc->intr_ctx[i].rx_ring_mask = 0;
+	soc->intr_ctx[i].rx_mon_ring_mask = 0;
+}
+#endif
 
 #define AVG_MAX_MPDUS_PER_TID 128
 #define AVG_TIDS_PER_CLIENT 2
@@ -704,6 +919,8 @@ void *dp_pdev_attach_wifi3(void *txrx_soc, void *ctrl_pdev,
 	if (!pdev->wlan_cfg_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 				"%s: pdev cfg_attach failed\n", __func__);
+
+		qdf_mem_free(pdev);
 		goto fail0;
 	}
 
@@ -718,7 +935,7 @@ void *dp_pdev_attach_wifi3(void *txrx_soc, void *ctrl_pdev,
 	if (dp_soc_cmn_setup(soc)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s: dp_soc_cmn_setup failed\n", __func__);
-		goto fail0;
+		goto fail1;
 	}
 
 	/* Setup per PDEV TCL rings if configured */
@@ -728,14 +945,14 @@ void *dp_pdev_attach_wifi3(void *txrx_soc, void *ctrl_pdev,
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 				"%s: dp_srng_setup failed for tcl_data_ring\n",
 				__func__);
-			goto fail0;
+			goto fail1;
 		}
 		if (dp_srng_setup(soc, &soc->tx_comp_ring[pdev_id],
 			WBM2SW_RELEASE, pdev_id, pdev_id, TCL_DATA_RING_SIZE)) {
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 				"%s: dp_srng_setup failed for tx_comp_ring\n",
 				__func__);
-			goto fail0;
+			goto fail1;
 		}
 		soc->num_tcl_data_rings++;
 	}
@@ -744,7 +961,7 @@ void *dp_pdev_attach_wifi3(void *txrx_soc, void *ctrl_pdev,
 	if (dp_tx_pdev_attach(pdev)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s: dp_tx_pdev_attach failed\n", __func__);
-		goto fail0;
+		goto fail1;
 	}
 
 	/* Setup per PDEV REO rings if configured */
@@ -754,7 +971,7 @@ void *dp_pdev_attach_wifi3(void *txrx_soc, void *ctrl_pdev,
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 				"%s: dp_srng_setup failed for reo_dest_ring\n",
 				__func__);
-			goto fail0;
+			goto fail1;
 		}
 		soc->num_reo_dest_rings++;
 
@@ -764,14 +981,14 @@ void *dp_pdev_attach_wifi3(void *txrx_soc, void *ctrl_pdev,
 		RXDMA_BUF_RING_SIZE)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			 "%s: dp_srng_setup failed rx refill ring\n", __func__);
-		goto fail0;
+		goto fail1;
 	}
 #ifdef QCA_HOST2FW_RXBUF_RING
 	if (dp_srng_setup(soc, &pdev->rx_mac_buf_ring, RXDMA_BUF, 1, pdev_id,
 		RXDMA_BUF_RING_SIZE)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			 "%s: dp_srng_setup failed rx mac ring\n", __func__);
-		goto fail0;
+		goto fail1;
 	}
 #endif
 	/* TODO: RXDMA destination ring is not planned to be used currently.
@@ -782,7 +999,7 @@ void *dp_pdev_attach_wifi3(void *txrx_soc, void *ctrl_pdev,
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s: dp_srng_setup failed for rxdma_mon_buf_ring\n",
 			__func__);
-		goto fail0;
+		goto fail1;
 	}
 
 	if (dp_srng_setup(soc, &pdev->rxdma_mon_dst_ring, RXDMA_MONITOR_DST, 0,
@@ -790,7 +1007,7 @@ void *dp_pdev_attach_wifi3(void *txrx_soc, void *ctrl_pdev,
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s: dp_srng_setup failed for rxdma_mon_dst_ring\n",
 			__func__);
-		goto fail0;
+		goto fail1;
 	}
 
 
@@ -800,14 +1017,16 @@ void *dp_pdev_attach_wifi3(void *txrx_soc, void *ctrl_pdev,
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s: dp_srng_setup failed for rxdma_mon_status_ring\n",
 			__func__);
-		goto fail0;
+		goto fail1;
 	}
 
 
 	return (void *)pdev;
 
-fail0:
+fail1:
 	dp_pdev_detach_wifi3((void *)pdev, 0);
+
+fail0:
 	return NULL;
 }
 
