@@ -42,7 +42,6 @@
  * @param val - the wds rx policy bitmask
  * @return - void
  */
-#if WDS_VENDOR_EXTENSION
 static inline void
 cdp_set_wds_rx_policy(ol_txrx_soc_handle soc,
 	void *vdev,
@@ -53,5 +52,4 @@ cdp_set_wds_rx_policy(ol_txrx_soc_handle soc,
 	return;
 }
 
-#endif
 #endif

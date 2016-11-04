@@ -91,7 +91,6 @@ struct ol_txrx_stats {
 		u_int32_t dma_map_error;
 		/* MSDUs given to the txrx layer by the management stack */
 		ol_txrx_stats_elem mgmt;
-#if (HOST_SW_TSO_ENABLE || HOST_SW_TSO_SG_ENABLE)
 		struct {
 			/* TSO applied jumbo packets received from NW Stack */
 			ol_txrx_stats_elem tso_pkts;
@@ -102,9 +101,7 @@ struct ol_txrx_stats {
 			/* TSO Descriptors */
 			u_int32_t tso_desc_cnt;
 		} tso;
-#endif /* HOST_SW_TSO_ENABLE || HOST_SW_TSO_SG_ENABLE */
 
-#if HOST_SW_SG_ENABLE
 		struct {
 			/* TSO applied jumbo packets received from NW Stack */
 			ol_txrx_stats_elem sg_pkts;
@@ -115,7 +112,6 @@ struct ol_txrx_stats {
 			/* TSO Descriptors */
 			u_int32_t sg_desc_cnt;
 		} sg;
-#endif /* HOST_SW_SG_ENABLE */
 		struct {
 			/* packets enqueued for flow control */
 			u_int32_t fl_ctrl_enqueue;
@@ -130,7 +126,6 @@ struct ol_txrx_stats {
 		ol_txrx_stats_elem delivered;
 		/* MSDUs forwarded from the rx path to the tx path */
 		ol_txrx_stats_elem forwarded;
-#if RX_CHECKSUM_OFFLOAD
 		/* MSDUs in which ipv4 chksum error detected by HW */
 		ol_txrx_stats_elem ipv4_cksum_err;
 		/* MSDUs in which tcp chksum error detected by HW */
@@ -141,7 +136,6 @@ struct ol_txrx_stats {
 		ol_txrx_stats_elem tcp_ipv6_cksum_err;
 		/* MSDUs in which UDP V6 chksum error detected by HW */
 		ol_txrx_stats_elem udp_ipv6_cksum_err;
-#endif /* RX_CHECKSUM_OFFLOAD */
 	} rx;
 	struct {
 		/* Number of mcast recieved for conversion */
@@ -391,7 +385,6 @@ typedef enum _ol_ath_param_t {
 	OL_ATH_PARAM_FW_DUMP_NO_HOST_CRASH = 210,
 	/*Consider OBSS non-erp to change to long slot*/
 	OL_ATH_PARAM_CONSIDER_OBSS_NON_ERP_LONG_SLOT = 211,
-#if PEER_FLOW_CONTROL
 	OL_ATH_PARAM_STATS_FC,
 	OL_ATH_PARAM_QFLUSHINTERVAL,
 	OL_ATH_PARAM_TOTAL_Q_SIZE,
@@ -408,7 +401,6 @@ typedef enum _ol_ath_param_t {
 	OL_ATH_PARAM_LATENCY_PROFILE,
 	OL_ATH_PARAM_HOSTQ_DUMP,
 	OL_ATH_PARAM_TIDQ_MAP,
-#endif
 	OL_ATH_PARAM_DBG_ARP_SRC_ADDR, /* ARP DEBUG source address*/
 	OL_ATH_PARAM_DBG_ARP_DST_ADDR, /* ARP DEBUG destination address*/
 	OL_ATH_PARAM_ARP_DBG_CONF,   /* ARP debug configuration */

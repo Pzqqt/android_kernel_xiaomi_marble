@@ -34,7 +34,6 @@
 
 #include <cdp_txrx_ops.h>
 /* TODO: adf need to be replaced with qdf */
-#if ATH_SUPPORT_ME_FW_BASED
 
 static inline u_int16_t
 cdp_tx_desc_alloc_and_mark_for_mcast_clone(ol_txrx_soc_handle soc,
@@ -67,7 +66,6 @@ cdp_tx_get_mcast_buf_allocated_marked(ol_txrx_soc_handle soc,
 			(pdev);
 	return 0;
 }
-#else
 
 static inline void
 cdp_tx_me_alloc_descriptor(ol_txrx_soc_handle soc, void *pdev)
@@ -94,9 +92,7 @@ cdp_tx_me_convert_ucast(ol_txrx_soc_handle soc, void *vdev,
 			(vdev, wbuf, newmac, newmaccnt);
 	return 0;
 }
-#endif
 /* Should be a function pointer in ol_txrx_osif_ops{} */
-#if ATH_MCAST_HOST_INSPECT
 /**
  * @brief notify mcast frame indication from FW.
  * @details
@@ -115,5 +111,4 @@ static inline int cdp_mcast_notify(ol_txrx_soc_handle soc, void *pdev,
 		return soc->ops->me_ops->mcast_notify(pdev, vdev_id, msdu);
 	return 0;
 }
-#endif
 #endif

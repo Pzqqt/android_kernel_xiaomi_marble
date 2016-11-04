@@ -109,7 +109,7 @@ struct cdp_cmn_ops {
 			int max_subfrms_amsdu);
 
 	int(*txrx_fw_stats_get)(void *vdev,
-			struct ol_txrx_stats_req *req, bool response_expected);
+			struct ol_txrx_stats_req *req, bool per_vdev, bool response_expected);
 
 	int(*txrx_debug)(void *vdev, int debug_specs);
 
@@ -313,9 +313,8 @@ struct cdp_ctrl_ops {
 
 struct cdp_me_ops {
 
-#if ATH_SUPPORT_ME_FW_BASED
 	u_int16_t (*tx_desc_alloc_and_mark_for_mcast_clone)
-		(void *pdev, u_int16_t buf_count)
+		(void *pdev, u_int16_t buf_count);
 
 		u_int16_t (*tx_desc_free_and_unmark_for_mcast_clone)(
 				void *pdev,
@@ -324,7 +323,6 @@ struct cdp_me_ops {
 	u_int16_t
 		(*tx_get_mcast_buf_allocated_marked)
 			(void *pdev);
-#else
 	void
 		(*tx_me_alloc_descriptor)(void *pdev);
 
@@ -335,9 +333,7 @@ struct cdp_me_ops {
 		(*tx_me_convert_ucast)(void *vdev,
 			qdf_nbuf_t wbuf, u_int8_t newmac[][6],
 			uint8_t newmaccnt);
-#endif
 	/* Should be a function pointer in ol_txrx_osif_ops{} */
-#if ATH_MCAST_HOST_INSPECT
 	/**
 	 * @brief notify mcast frame indication from FW.
 	 * @details
@@ -351,7 +347,6 @@ struct cdp_me_ops {
 
 	int (*mcast_notify)(void *pdev,
 			u_int8_t vdev_id, qdf_nbuf_t msdu);
-#endif
 };
 
 struct cdp_mon_ops {
@@ -374,7 +369,6 @@ struct cdp_mon_ops {
 };
 
 struct cdp_host_stats_ops {
-#if WLAN_FEATURE_FASTPATH
 	int (*txrx_host_stats_get)(void *vdev,
 			struct ol_txrx_stats_req *req);
 
@@ -400,7 +394,6 @@ struct cdp_host_stats_ops {
 	 */
 	void (*txrx_disable_enhanced_stats)(void *pdev);
 
-#if ENHANCED_STATS
 	/**
 	 * @brief Get the desired stats from the message.
 	 *
@@ -411,61 +404,43 @@ struct cdp_host_stats_ops {
 	 */
 	uint32_t*(*txrx_get_stats_base)(void *pdev,
 			uint32_t *stats_base, uint32_t msg_len, uint8_t type);
-#endif
-#endif /* WLAN_FEATURE_FASTPATH*/
-#if (HOST_SW_TSO_ENABLE || HOST_SW_TSO_SG_ENABLE)
 	void
 		(*tx_print_tso_stats)(void *vdev);
 
 	void
 		(*tx_rst_tso_stats)(void *vdev);
-#endif /* HOST_SW_TSO_ENABLE || HOST_SW_TSO_SG_ENABLE */
 
-#if HOST_SW_SG_ENABLE
 	void
 		(*tx_print_sg_stats)(void *vdev);
 
 	void
 		(*tx_rst_sg_stats)(void *vdev);
-#endif /* HOST_SW_SG_ENABLE */
 
-#if RX_CHECKSUM_OFFLOAD
 	void
 		(*print_rx_cksum_stats)(void *vdev);
 
 	void
 		(*rst_rx_cksum_stats)(void *vdev);
-#endif /* RX_CHECKSUM_OFFLOAD */
 
-#if (ATH_SUPPORT_IQUE && WLAN_FEATURE_FASTPATH)
 	A_STATUS
 		(*txrx_host_me_stats)(void *vdev);
-#endif /* WLAN_FEATURE_FASTPATH */
-#if PEER_FLOW_CONTROL
 	void
 		(*txrx_per_peer_stats)(void *pdev, char *addr);
-#endif
-#if WLAN_FEATURE_FASTPATH && PEER_FLOW_CONTROL
 	int (*txrx_host_msdu_ttl_stats)(void *vdev,
 			struct ol_txrx_stats_req *req);
-#endif
 
-#if HOST_SW_LRO_ENABLE
 	void
 		(*print_lro_stats)(void *vdev);
 
 	void
 		(*reset_lro_stats)(void *vdev);
-#endif /* HOST_SW_LRO_ENABLE */
 
 };
 
 struct cdp_wds_ops {
-#if WDS_VENDOR_EXTENSION
 	void
 		(*txrx_set_wds_rx_policy)(void *vdev,
 				u_int32_t val);
-#endif
 
 };
 
@@ -477,10 +452,8 @@ struct cdp_raw_ops {
 };
 
 struct cdp_pflow_ops {
-#if PEER_FLOW_CONTROL
 	uint32_t(*pflow_update_pdev_params)(void *,
 			ol_ath_param_t, uint32_t, void *);
-#endif
 };
 
 struct cdp_mob_drv_ops {
