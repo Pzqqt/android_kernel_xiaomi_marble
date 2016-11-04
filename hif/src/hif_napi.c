@@ -858,12 +858,12 @@ static int hnc_link_clusters(struct qca_napi_data *napid)
 	int i;
 	int it = 0;
 	uint32_t cl_done = 0x0;
-	int cl, curcl, curclhead;
+	int cl, curcl, curclhead = 0;
 	int more;
 	unsigned int lilfrq = INT_MAX;
 	unsigned int bigfrq = 0;
-	unsigned int clfrq;
-	int prev;
+	unsigned int clfrq = 0;
+	int prev = 0;
 	struct qca_napi_cpu *cpus = napid->napi_cpu;
 
 	napid->lilcl_head = napid->bigcl_head = -1;
