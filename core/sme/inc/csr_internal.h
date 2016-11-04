@@ -377,7 +377,7 @@ typedef struct tagScanCmd {
 		/* tCsrBGScanRequest bgScanRequest is no longer used */
 	} u;
 	/* This flag will be set while aborting the scan due to band change */
-	bool abortScanDueToBandChange;
+	eCsrAbortReason        abort_scan_indication;
 	qdf_mc_timer_t csr_scan_timer;
 } tScanCmd;
 

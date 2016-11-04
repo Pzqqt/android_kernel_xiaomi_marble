@@ -186,7 +186,7 @@ typedef enum {
  * to upper layer or not
  */
 typedef enum {
-	eCSR_SCAN_ABORT_DEFAULT,
+	eCSR_SCAN_ABORT_DEFAULT = 1,
 	eCSR_SCAN_ABORT_DUE_TO_BAND_CHANGE, /* Scan abort due to band change */
 	eCSR_SCAN_ABORT_SSID_ONLY
 } eCsrAbortReason;

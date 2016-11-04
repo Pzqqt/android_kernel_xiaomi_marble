@@ -4233,7 +4233,8 @@ bool csr_scan_complete(tpAniSirGlobal pMac, tSirSmeScanRsp *pScanRsp)
 		fSuccess = (!csr_ll_is_list_empty(&pMac->scan.tempScanResults,
 						  LL_ACCESS_LOCK));
 	}
-	if (pCommand->u.scanCmd.abortScanDueToBandChange) {
+	if (pCommand->u.scanCmd.abort_scan_indication &
+	    eCSR_SCAN_ABORT_DUE_TO_BAND_CHANGE) {
 		/*
 		 * Scan aborted due to band change
 		 * The scan results need to be flushed
@@ -4246,7 +4247,6 @@ bool csr_scan_complete(tpAniSirGlobal pMac, tSirSmeScanRsp *pScanRsp)
 			sms_log(pMac, LOG1,
 				FL("11d_scan_done, flushing the scan results"));
 		}
-		pCommand->u.scanCmd.abortScanDueToBandChange = false;
 	}
 	csr_save_scan_results(pMac, pCommand->u.scanCmd.reason, sessionId);
 
@@ -5695,6 +5695,10 @@ void csr_scan_call_callback(tpAniSirGlobal pMac, tSmeCmd *pCommand,
 			    eCsrScanStatus scanStatus)
 {
 	if (pCommand->u.scanCmd.callback) {
+		if (pCommand->u.scanCmd.abort_scan_indication) {
+			sms_log(pMac, LOG1, FL("scanDone due to abort"));
+			scanStatus = eCSR_SCAN_ABORT;
+		}
 		pCommand->u.scanCmd.callback(pMac, pCommand->u.scanCmd.pContext,
 					     pCommand->sessionId,
 					     pCommand->u.scanCmd.scanID,
@@ -6878,8 +6882,8 @@ QDF_STATUS csr_abort_scan_from_active_list(tpAniSirGlobal mac_ctx,
 				(eCsrScanForSsid != cmd->u.scanCmd.reason))
 					continue;
 			if (abort_reason == eCSR_SCAN_ABORT_DUE_TO_BAND_CHANGE)
-				cmd->u.scanCmd.abortScanDueToBandChange =
-					true;
+				cmd->u.scanCmd.abort_scan_indication =
+					eCSR_SCAN_ABORT_DUE_TO_BAND_CHANGE;
 			csr_send_scan_abort(mac_ctx, cmd->sessionId,
 						cmd->u.scanCmd.scanID);
 		}
