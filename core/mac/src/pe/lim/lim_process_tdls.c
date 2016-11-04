@@ -92,18 +92,6 @@
 
 static tSirRetStatus lim_tdls_setup_add_sta(tpAniSirGlobal pMac,
 		tSirTdlsAddStaReq * pAddStaReq, tpPESession psessionEntry);
-void populate_dot11f_link_iden(tpAniSirGlobal pMac, tpPESession psessionEntry,
-			       tDot11fIELinkIdentifier *linkIden,
-			       struct qdf_mac_addr peer_mac, uint8_t reqType);
-void populate_dot11f_tdls_ext_capability(tpAniSirGlobal pMac,
-					 tpPESession psessionEntry,
-					 tDot11fIEExtCap *extCapability);
-
-void populate_dot11f_tdls_offchannel_params(tpAniSirGlobal pMac,
-					    tpPESession psessionEntry,
-					    tDot11fIESuppChannels *suppChannels,
-					    tDot11fIESuppOperatingClasses *
-					    suppOperClasses);
 
 /*
  * TDLS data frames will go out/come in as non-qos data.
@@ -220,6 +208,195 @@ const uint8_t *lim_trace_tdls_action_string(uint8_t tdlsActionCode)
 void lim_init_tdls_data(tpAniSirGlobal pMac, tpPESession pSessionEntry)
 {
 	lim_init_peer_idxpool(pMac, pSessionEntry);
+
+	return;
+}
+
+static void populate_dot11f_tdls_offchannel_params(
+				tpAniSirGlobal pMac,
+				tpPESession psessionEntry,
+				tDot11fIESuppChannels *suppChannels,
+				tDot11fIESuppOperatingClasses *suppOperClasses)
+{
+	uint32_t numChans = WNI_CFG_VALID_CHANNEL_LIST_LEN;
+	uint8_t validChan[WNI_CFG_VALID_CHANNEL_LIST_LEN];
+	uint8_t i;
+	uint8_t valid_count = 0;
+	uint8_t chanOffset;
+	uint8_t op_class;
+	uint8_t numClasses;
+	uint8_t classes[CDS_MAX_SUPP_OPER_CLASSES];
+	uint32_t band;
+	uint8_t nss_2g;
+	uint8_t nss_5g;
+
+	if (wlan_cfg_get_str(pMac, WNI_CFG_VALID_CHANNEL_LIST,
+			     validChan, &numChans) != eSIR_SUCCESS) {
+		/**
+		 * Could not get Valid channel list from CFG.
+		 * Log error.
+		 */
+		lim_log(pMac, LOGE,
+			FL("could not retrieve Valid channel list"));
+		return;
+	}
+
+	if (IS_5G_CH(psessionEntry->currentOperChannel))
+		band = eCSR_BAND_5G;
+	else
+		band = eCSR_BAND_24;
+
+	nss_5g = QDF_MIN(pMac->vdev_type_nss_5g.tdls,
+			 pMac->user_configured_nss);
+	nss_2g = QDF_MIN(pMac->vdev_type_nss_2g.tdls,
+			 pMac->user_configured_nss);
+
+	/* validating the channel list for DFS and 2G channels */
+	for (i = 0U; i < numChans; i++) {
+		if ((band == eCSR_BAND_5G) &&
+		    (NSS_2x2_MODE == nss_5g) &&
+		    (NSS_1x1_MODE == nss_2g) &&
+		    (true == CDS_IS_DFS_CH(validChan[i]))) {
+			lim_log(pMac, LOG1,
+				FL("skipping channel %d, nss_5g: %d, nss_2g: %d"),
+				validChan[i], nss_5g, nss_2g);
+			continue;
+		} else {
+			if (true == cds_is_dsrc_channel(
+				cds_chan_to_freq(validChan[i]))) {
+				lim_log(pMac, LOG1,
+					FL("skipping channel %d from the valid channel list"),
+					validChan[i]);
+				continue;
+			}
+		}
+
+		if (valid_count >= ARRAY_SIZE(suppChannels->bands))
+			 break;
+		suppChannels->bands[valid_count][0] = validChan[i];
+		suppChannels->bands[valid_count][1] = 1;
+		valid_count++;
+	}
+
+	suppChannels->num_bands = valid_count;
+	suppChannels->present = 1;
+
+	/* find channel offset and get op class for current operating channel */
+	switch (psessionEntry->htSecondaryChannelOffset) {
+	case PHY_SINGLE_CHANNEL_CENTERED:
+		chanOffset = BW20;
+		break;
+
+	case PHY_DOUBLE_CHANNEL_LOW_PRIMARY:
+		chanOffset = BW40_LOW_PRIMARY;
+		break;
+
+	case PHY_DOUBLE_CHANNEL_HIGH_PRIMARY:
+		chanOffset = BW40_HIGH_PRIMARY;
+		break;
+
+	default:
+		chanOffset = BWALL;
+		break;
+
+	}
+
+	op_class = cds_reg_dmn_get_opclass_from_channel(
+		pMac->scan.countryCodeCurrent,
+		psessionEntry->currentOperChannel,
+		chanOffset);
+
+	if (op_class == 0) {
+		lim_log(pMac, LOGE,
+			FL(
+			   "Present Operating class is wrong, countryCodeCurrent: %s, currentOperChannel: %d, htSecondaryChannelOffset: %d, chanOffset: %d"
+			  ),
+			pMac->scan.countryCodeCurrent,
+			psessionEntry->currentOperChannel,
+			psessionEntry->htSecondaryChannelOffset,
+			chanOffset);
+	} else {
+		lim_log(pMac, LOG1,
+			FL(
+			   "Present Operating channel: %d chanOffset: %d, op class=%d"
+			  ),
+			psessionEntry->currentOperChannel, chanOffset,
+			op_class);
+	}
+	suppOperClasses->present = 1;
+	suppOperClasses->classes[0] = op_class;
+
+	cds_reg_dmn_get_curr_opclasses(&numClasses, &classes[0]);
+
+	for (i = 0; i < numClasses; i++) {
+		suppOperClasses->classes[i + 1] = classes[i];
+	}
+	/* add one for present operating class, added in the beginning */
+	suppOperClasses->num_classes = numClasses + 1;
+
+	return;
+}
+
+/*
+ * FUNCTION: Populate Link Identifier element IE
+ *
+ */
+
+static void populate_dot11f_link_iden(tpAniSirGlobal pMac,
+				      tpPESession psessionEntry,
+				      tDot11fIELinkIdentifier *linkIden,
+				      struct qdf_mac_addr peer_mac,
+				      uint8_t reqType)
+{
+	uint8_t *initStaAddr = NULL;
+	uint8_t *respStaAddr = NULL;
+
+	(reqType == TDLS_INITIATOR) ? ((initStaAddr = linkIden->InitStaAddr),
+				       (respStaAddr = linkIden->RespStaAddr))
+	: ((respStaAddr = linkIden->InitStaAddr),
+	   (initStaAddr = linkIden->RespStaAddr));
+	qdf_mem_copy((uint8_t *) linkIden->bssid,
+		     (uint8_t *) psessionEntry->bssId, QDF_MAC_ADDR_SIZE);
+
+	qdf_mem_copy((uint8_t *) initStaAddr,
+		     psessionEntry->selfMacAddr, QDF_MAC_ADDR_SIZE);
+
+	qdf_mem_copy((uint8_t *) respStaAddr, (uint8_t *) peer_mac.bytes,
+		     QDF_MAC_ADDR_SIZE);
+
+	linkIden->present = 1;
+	return;
+
+}
+
+static void populate_dot11f_tdls_ext_capability(tpAniSirGlobal pMac,
+						tpPESession psessionEntry,
+						tDot11fIEExtCap *extCapability)
+{
+	struct s_ext_cap *p_ext_cap = (struct s_ext_cap *)extCapability->bytes;
+
+	p_ext_cap->tdls_peer_psm_supp = PEER_PSM_SUPPORT;
+	p_ext_cap->tdls_peer_uapsd_buffer_sta = pMac->lim.gLimTDLSBufStaEnabled;
+
+	/*
+	 * Set TDLS channel switching bits only if offchannel is enabled
+	 * and TDLS Channel Switching is not prohibited by AP in ExtCap
+	 * IE in assoc/re-assoc response.
+	 */
+	if ((1 == pMac->lim.gLimTDLSOffChannelEnabled) &&
+	    (!psessionEntry->tdls_chan_swit_prohibited)) {
+		p_ext_cap->tdls_channel_switching = 1;
+		p_ext_cap->tdls_chan_swit_prohibited = 0;
+	} else {
+	    p_ext_cap->tdls_channel_switching = 0;
+	    p_ext_cap->tdls_chan_swit_prohibited = TDLS_CH_SWITCH_PROHIBITED;
+	}
+	p_ext_cap->tdls_support = TDLS_SUPPORT;
+	p_ext_cap->tdls_prohibited = TDLS_PROHIBITED;
+
+	extCapability->present = 1;
+	/* For STA cases we alwasy support 11mc - Allow MAX length */
+	extCapability->num_bytes = DOT11F_IE_EXTCAP_MAX_LEN;
 
 	return;
 }
@@ -2688,193 +2865,6 @@ add_sta_error:
 					       status);
 	qdf_mem_free(pAddStaParams);
 	return status;
-}
-
-void populate_dot11f_tdls_offchannel_params(tpAniSirGlobal pMac,
-					    tpPESession psessionEntry,
-					    tDot11fIESuppChannels *suppChannels,
-					    tDot11fIESuppOperatingClasses *
-					    suppOperClasses)
-{
-	uint32_t numChans = WNI_CFG_VALID_CHANNEL_LIST_LEN;
-	uint8_t validChan[WNI_CFG_VALID_CHANNEL_LIST_LEN];
-	uint8_t i;
-	uint8_t valid_count = 0;
-	uint8_t chanOffset;
-	uint8_t op_class;
-	uint8_t numClasses;
-	uint8_t classes[CDS_MAX_SUPP_OPER_CLASSES];
-	uint32_t band;
-	uint8_t nss_2g;
-	uint8_t nss_5g;
-
-	if (wlan_cfg_get_str(pMac, WNI_CFG_VALID_CHANNEL_LIST,
-			     validChan, &numChans) != eSIR_SUCCESS) {
-		/**
-		 * Could not get Valid channel list from CFG.
-		 * Log error.
-		 */
-		lim_log(pMac, LOGE,
-			FL("could not retrieve Valid channel list"));
-		return;
-	}
-
-	if (IS_5G_CH(psessionEntry->currentOperChannel))
-		band = eCSR_BAND_5G;
-	else
-		band = eCSR_BAND_24;
-
-	nss_5g = QDF_MIN(pMac->vdev_type_nss_5g.tdls,
-			 pMac->user_configured_nss);
-	nss_2g = QDF_MIN(pMac->vdev_type_nss_2g.tdls,
-			 pMac->user_configured_nss);
-
-	/* validating the channel list for DFS and 2G channels */
-	for (i = 0U; i < numChans; i++) {
-		if ((band == eCSR_BAND_5G) &&
-		    (NSS_2x2_MODE == nss_5g) &&
-		    (NSS_1x1_MODE == nss_2g) &&
-		    (true == CDS_IS_DFS_CH(validChan[i]))) {
-			lim_log(pMac, LOG1,
-				FL("skipping channel %d, nss_5g: %d, nss_2g: %d"),
-				validChan[i], nss_5g, nss_2g);
-			continue;
-		} else {
-			if (true == cds_is_dsrc_channel(
-				cds_chan_to_freq(validChan[i]))) {
-				lim_log(pMac, LOG1,
-					FL("skipping channel %d from the valid channel list"),
-					validChan[i]);
-				continue;
-			}
-		}
-
-		if (valid_count >= ARRAY_SIZE(suppChannels->bands))
-			 break;
-		suppChannels->bands[valid_count][0] = validChan[i];
-		suppChannels->bands[valid_count][1] = 1;
-		valid_count++;
-	}
-
-	suppChannels->num_bands = valid_count;
-	suppChannels->present = 1;
-
-	/* find channel offset and get op class for current operating channel */
-	switch (psessionEntry->htSecondaryChannelOffset) {
-	case PHY_SINGLE_CHANNEL_CENTERED:
-		chanOffset = BW20;
-		break;
-
-	case PHY_DOUBLE_CHANNEL_LOW_PRIMARY:
-		chanOffset = BW40_LOW_PRIMARY;
-		break;
-
-	case PHY_DOUBLE_CHANNEL_HIGH_PRIMARY:
-		chanOffset = BW40_HIGH_PRIMARY;
-		break;
-
-	default:
-		chanOffset = BWALL;
-		break;
-
-	}
-
-	op_class = cds_reg_dmn_get_opclass_from_channel(
-		pMac->scan.countryCodeCurrent,
-		psessionEntry->currentOperChannel,
-		chanOffset);
-
-	if (op_class == 0) {
-		lim_log(pMac, LOGE,
-			FL(
-			   "Present Operating class is wrong, countryCodeCurrent: %s, currentOperChannel: %d, htSecondaryChannelOffset: %d, chanOffset: %d"
-			  ),
-			pMac->scan.countryCodeCurrent,
-			psessionEntry->currentOperChannel,
-			psessionEntry->htSecondaryChannelOffset,
-			chanOffset);
-	} else {
-		lim_log(pMac, LOG1,
-			FL(
-			   "Present Operating channel: %d chanOffset: %d, op class=%d"
-			  ),
-			psessionEntry->currentOperChannel, chanOffset,
-			op_class);
-	}
-	suppOperClasses->present = 1;
-	suppOperClasses->classes[0] = op_class;
-
-	cds_reg_dmn_get_curr_opclasses(&numClasses, &classes[0]);
-
-	for (i = 0; i < numClasses; i++) {
-		suppOperClasses->classes[i + 1] = classes[i];
-	}
-	/* add one for present operating class, added in the beginning */
-	suppOperClasses->num_classes = numClasses + 1;
-
-	return;
-}
-
-/*
- * FUNCTION: Populate Link Identifier element IE
- *
- */
-
-void populate_dot11f_link_iden(tpAniSirGlobal pMac, tpPESession psessionEntry,
-			       tDot11fIELinkIdentifier *linkIden,
-			       struct qdf_mac_addr peer_mac, uint8_t reqType)
-{
-	uint8_t *initStaAddr = NULL;
-	uint8_t *respStaAddr = NULL;
-
-	(reqType == TDLS_INITIATOR) ? ((initStaAddr = linkIden->InitStaAddr),
-				       (respStaAddr = linkIden->RespStaAddr))
-	: ((respStaAddr = linkIden->InitStaAddr),
-	   (initStaAddr = linkIden->RespStaAddr));
-	qdf_mem_copy((uint8_t *) linkIden->bssid,
-		     (uint8_t *) psessionEntry->bssId, QDF_MAC_ADDR_SIZE);
-
-	qdf_mem_copy((uint8_t *) initStaAddr,
-		     psessionEntry->selfMacAddr, QDF_MAC_ADDR_SIZE);
-
-	qdf_mem_copy((uint8_t *) respStaAddr, (uint8_t *) peer_mac.bytes,
-		     QDF_MAC_ADDR_SIZE);
-
-	linkIden->present = 1;
-	return;
-
-}
-
-void populate_dot11f_tdls_ext_capability(tpAniSirGlobal pMac,
-					 tpPESession psessionEntry,
-					 tDot11fIEExtCap *extCapability)
-{
-	struct s_ext_cap *p_ext_cap = (struct s_ext_cap *)extCapability->bytes;
-
-	p_ext_cap->tdls_peer_psm_supp = PEER_PSM_SUPPORT;
-	p_ext_cap->tdls_peer_uapsd_buffer_sta = pMac->lim.gLimTDLSBufStaEnabled;
-
-	/*
-	 * Set TDLS channel switching bits only if offchannel is enabled
-	 * and TDLS Channel Switching is not prohibited by AP in ExtCap
-	 * IE in assoc/re-assoc response.
-	 */
-	if ((1 == pMac->lim.gLimTDLSOffChannelEnabled) &&
-	    (!psessionEntry->tdls_chan_swit_prohibited)) {
-		p_ext_cap->tdls_channel_switching = 1;
-		p_ext_cap->tdls_chan_swit_prohibited = 0;
-	} else {
-	    p_ext_cap->tdls_channel_switching = 0;
-	    p_ext_cap->tdls_chan_swit_prohibited = TDLS_CH_SWITCH_PROHIBITED;
-	}
-	p_ext_cap->tdls_support = TDLS_SUPPORT;
-	p_ext_cap->tdls_prohibited = TDLS_PROHIBITED;
-
-	extCapability->present = 1;
-	/* For STA cases we alwasy support 11mc - Allow MAX length */
-	extCapability->num_bytes = DOT11F_IE_EXTCAP_MAX_LEN;
-
-	return;
 }
 
 /**
