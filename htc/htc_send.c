@@ -1122,11 +1122,22 @@ static HTC_SEND_QUEUE_RESULT htc_try_send(HTC_TARGET *target,
 	LOCK_HTC_TX(target);
 
 	if (!HTC_QUEUE_EMPTY(&sendQueue)) {
-		/* transfer packets to tail */
-		HTC_PACKET_QUEUE_TRANSFER_TO_TAIL(&pEndpoint->TxQueue,
-						  &sendQueue);
-		A_ASSERT(HTC_QUEUE_EMPTY(&sendQueue));
-		INIT_HTC_PACKET_QUEUE(&sendQueue);
+		if (target->is_nodrop_pkt) {
+			/*
+			 * nodrop pkts have higher priority than normal pkts,
+			 * insert nodrop pkt to head for proper
+			 * start/termination of test.
+			 */
+			HTC_PACKET_QUEUE_TRANSFER_TO_HEAD(&pEndpoint->TxQueue,
+					&sendQueue);
+			target->is_nodrop_pkt = false;
+		} else {
+			/* transfer packets to tail */
+			HTC_PACKET_QUEUE_TRANSFER_TO_TAIL(&pEndpoint->TxQueue,
+					&sendQueue);
+			A_ASSERT(HTC_QUEUE_EMPTY(&sendQueue));
+			INIT_HTC_PACKET_QUEUE(&sendQueue);
+		}
 	}
 
 	/* increment tx processing count on entry */
@@ -2032,6 +2043,12 @@ void htc_indicate_activity_change(HTC_HANDLE HTCHandle,
 bool htc_is_endpoint_active(HTC_HANDLE HTCHandle, HTC_ENDPOINT_ID Endpoint)
 {
 	return true;
+}
+
+void htc_set_nodrop_pkt(HTC_HANDLE HTCHandle, A_BOOL isNodropPkt)
+{
+	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(HTCHandle);
+	target->is_nodrop_pkt = isNodropPkt;
 }
 
 /**
