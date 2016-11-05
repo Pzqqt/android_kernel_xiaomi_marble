@@ -1213,6 +1213,7 @@ int pld_get_soc_info(struct device *dev, struct pld_soc_info *info)
 		ret = pld_snoc_get_soc_info(info);
 		break;
 	case PLD_BUS_TYPE_PCIE:
+		ret = pld_pcie_get_soc_info(dev, info);
 		break;
 	case PLD_BUS_TYPE_SDIO:
 		break;

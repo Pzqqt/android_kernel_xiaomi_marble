@@ -199,6 +199,11 @@ static inline int pld_pcie_get_platform_cap(struct pld_platform_cap *cap)
 {
 	return 0;
 }
+static inline int pld_pcie_get_soc_info(struct device *dev,
+					struct pld_soc_info *info)
+{
+	return 0;
+}
 static inline void pld_pcie_set_driver_status(enum pld_driver_status status)
 {
 	return;
@@ -256,6 +261,7 @@ static inline void pld_pcie_get_msi_address(struct device *dev,
 int pld_pcie_get_fw_files_for_target(struct pld_fw_files *pfw_files,
 				     u32 target_type, u32 target_version);
 int pld_pcie_get_platform_cap(struct pld_platform_cap *cap);
+int pld_pcie_get_soc_info(struct device *dev, struct pld_soc_info *info);
 void pld_pcie_set_driver_status(enum pld_driver_status status);
 
 static inline void pld_pcie_link_down(void)

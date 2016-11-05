@@ -495,6 +495,32 @@ int pld_pcie_get_platform_cap(struct pld_platform_cap *cap)
 }
 
 /**
+ * pld_pcie_get_soc_info() - Get SOC information
+ * @info: buffer to SOC information
+ *
+ * Return SOC info to the buffer.
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_pcie_get_soc_info(struct device *dev, struct pld_soc_info *info)
+{
+	int ret = 0;
+	struct cnss_soc_info cnss_info;
+
+	if (info == NULL)
+		return -ENODEV;
+
+	ret = cnss_get_soc_info(dev, &cnss_info);
+	if (ret)
+		return ret;
+
+	memcpy(info, &cnss_info, sizeof(*info));
+
+	return 0;
+}
+
+/**
  * pld_pcie_set_driver_status() - Set driver status
  * @status: driver status
  *
