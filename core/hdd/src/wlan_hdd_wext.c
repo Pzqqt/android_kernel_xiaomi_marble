@@ -3789,7 +3789,7 @@ QDF_STATUS wlan_hdd_get_station_stats(hdd_adapter_t *pAdapter)
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	QDF_STATUS hstatus;
 	unsigned long rc;
-	struct statsContext context;
+	static struct statsContext context;
 
 	if (NULL == pAdapter) {
 		hdd_err("pAdapter is NULL");
