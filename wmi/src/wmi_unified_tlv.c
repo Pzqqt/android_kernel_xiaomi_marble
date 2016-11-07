@@ -1818,11 +1818,39 @@ static inline void copy_scan_notify_ev_flags(
 		WMI_SCAN_EVENT_FOREIGN_CHANNEL |
 		WMI_SCAN_EVENT_DEQUEUED
 		;
-	cmd->scan_ctrl_flags = params->scan_ctrl_flags;
-	cmd->scan_ctrl_flags |= WMI_SCAN_ADD_BCAST_PROBE_REQ;
+
+	cmd->scan_ctrl_flags = (params->passive_flag) ?
+	    WMI_SCAN_FLAG_PASSIVE : 0;
+
+	if (params->is_strict_pscan_en)
+		cmd->scan_ctrl_flags |= WMI_SCAN_FLAG_STRICT_PASSIVE_ON_PCHN;
 
 	if (params->is_phy_error)
 		cmd->scan_ctrl_flags |= WMI_SCAN_CAPTURE_PHY_ERROR;
+
+	if (params->half_rate)
+		cmd->scan_ctrl_flags |= WMI_SCAN_FLAG_HALF_RATE_SUPPORT;
+
+	if (params->quarter_rate)
+		cmd->scan_ctrl_flags |= WMI_SCAN_FLAG_QUARTER_RATE_SUPPORT;
+
+	if (params->is_phy_error)
+		cmd->scan_ctrl_flags |= WMI_SCAN_CAPTURE_PHY_ERROR;
+
+	cmd->scan_ctrl_flags |= WMI_SCAN_ADD_OFDM_RATES;
+	/* add cck rates if required */
+	if (params->add_cck_rates)
+		cmd->scan_ctrl_flags |= WMI_SCAN_ADD_CCK_RATES;
+	/** It enables the Channel stat event indication to host */
+	if (params->chan_stat_enable)
+		cmd->scan_ctrl_flags |= WMI_SCAN_CHAN_STAT_EVENT;
+	if (params->add_bcast_probe_reqd)
+		cmd->scan_ctrl_flags |= WMI_SCAN_ADD_BCAST_PROBE_REQ;
+	/* off channel TX control */
+	if (params->offchan_tx_mgmt)
+		cmd->scan_ctrl_flags |= WMI_SCAN_OFFCHAN_MGMT_TX;
+	if (params->offchan_tx_data)
+		cmd->scan_ctrl_flags |= WMI_SCAN_OFFCHAN_DATA_TX;
 }
 #endif
 /**
@@ -1858,7 +1886,8 @@ QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 
 	/* Length TLV placeholder for array of wmi_mac_addr structures */
 	len += WMI_TLV_HDR_SIZE;
-	len += sizeof(wmi_mac_addr);
+	if (params->num_bssid)
+		len += sizeof(wmi_mac_addr) * params->num_bssid;
 
 	/* Length TLV placeholder for array of bytes */
 	len += WMI_TLV_HDR_SIZE;
@@ -1930,7 +1959,17 @@ QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_FIXED_STRUC,
 		       (params->num_bssid * sizeof(wmi_mac_addr)));
 	bssid = (wmi_mac_addr *) (buf_ptr + WMI_TLV_HDR_SIZE);
+#if CONFIG_MCL
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(params->mac_add_bytes, bssid);
+#else
+	if (params->num_bssid) {
+		for (i = 0; i < params->num_bssid; ++i) {
+			WMI_CHAR_ARRAY_TO_MAC_ADDR(params->bssid_list[i],
+					bssid);
+			bssid++;
+		}
+	}
+#endif
 	buf_ptr += WMI_TLV_HDR_SIZE + (params->num_bssid * sizeof(wmi_mac_addr));
 
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, params->ie_len_with_pad);
