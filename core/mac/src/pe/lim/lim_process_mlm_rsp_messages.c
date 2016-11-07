@@ -3138,7 +3138,6 @@ void lim_process_switch_channel_rsp(tpAniSirGlobal pMac, void *body)
 	channelChangeReasonCode = psessionEntry->channelChangeReasonCode;
 	/* initialize it back to invalid id */
 	psessionEntry->chainMask = pChnlParams->chainMask;
-	psessionEntry->nss = pChnlParams->nss;
 	psessionEntry->smpsMode = pChnlParams->smpsMode;
 	psessionEntry->channelChangeReasonCode = 0xBAD;
 	lim_log(pMac, LOG1, FL("channelChangeReasonCode %d"),
