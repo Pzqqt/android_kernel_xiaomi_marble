@@ -2192,11 +2192,6 @@ int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(pVirtAdapter->sessionId)) {
-		hdd_err("invalid session id: %d", pVirtAdapter->sessionId);
-		return -EINVAL;
-	}
-
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_DEL_VIRTUAL_INTF,
 			 pVirtAdapter->sessionId, pVirtAdapter->device_mode));
