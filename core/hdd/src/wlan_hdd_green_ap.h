@@ -87,6 +87,14 @@ void hdd_green_ap_add_sta(struct hdd_context_s *hdd_ctx);
 void hdd_green_ap_del_sta(struct hdd_context_s *hdd_ctx);
 
 /**
+ * hdd_enable_egap() - Enable Enhance Green AP
+ * @hdd_ctx: HDD global context
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_enable_egap(struct hdd_context_s *hdd_ctx);
+
+/**
  * hdd_green_ap_target_config() - Handle Green AP target configuration
  * @hdd_ctx: HDD global context where Green AP information is stored
  * @target_config: Target configuration containing Green AP info
@@ -105,6 +113,10 @@ static inline void hdd_green_ap_start_bss(struct hdd_context_s *hdd_ctx) {}
 static inline void hdd_green_ap_stop_bss(struct hdd_context_s *hdd_ctx) {}
 static inline void hdd_green_ap_add_sta(struct hdd_context_s *hdd_ctx) {}
 static inline void hdd_green_ap_del_sta(struct hdd_context_s *hdd_ctx) {}
+static inline int hdd_enable_egap(struct hdd_context_s *hdd_ctx)
+{
+	return -EINVAL;
+}
 static inline void hdd_green_ap_target_config(struct hdd_context_s *hdd_ctx,
 					      struct wma_tgt_cfg *target_config)
 {

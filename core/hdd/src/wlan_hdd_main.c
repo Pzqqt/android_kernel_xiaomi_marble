@@ -8124,6 +8124,9 @@ int hdd_wlan_startup(struct device *dev)
 	memdump_init();
 	hdd_driver_memdump_init();
 
+	if (hdd_enable_egap(hdd_ctx))
+		hdd_err("enhance green ap is not enabled");
+
 	if (hdd_ctx->config->fIsImpsEnabled)
 		hdd_set_idle_ps_config(hdd_ctx, true);
 

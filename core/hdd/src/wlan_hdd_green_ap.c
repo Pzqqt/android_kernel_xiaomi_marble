@@ -161,8 +161,7 @@ static void hdd_green_ap_mc(struct hdd_context_s *hdd_ctx,
 		break;
 
 	case GREEN_AP_PS_STOP_EVENT:
-		if (!(cds_get_concurrency_mode() & QDF_SAP_MASK))
-			green_ap->ps_enable = 0;
+		green_ap->ps_enable = 0;
 		break;
 
 	case GREEN_AP_ADD_STA_EVENT:
@@ -183,18 +182,20 @@ static void hdd_green_ap_mc(struct hdd_context_s *hdd_ctx,
 		break;
 	}
 
+	adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
+	if (adapter == NULL) {
+		hdd_err("Green-AP no SAP adapter");
+		goto done;
+	}
+
 	/* Confirm that power save is enabled before doing state transitions */
 	if (!green_ap->ps_enable) {
 		hdd_notice("Green-AP is disabled");
 		hdd_green_ap_update(hdd_ctx,
-				    GREEN_AP_PS_IDLE_STATE,
+				    GREEN_AP_PS_OFF_STATE,
 				    GREEN_AP_PS_WAIT_EVENT);
-		goto done;
-	}
-
-	adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
-	if (adapter == NULL) {
-		hdd_err("Green-AP no SAP adapter");
+		if (hdd_green_ap_enable(adapter, 0))
+			hdd_err("failed to set green ap mode");
 		goto done;
 	}
 
@@ -392,38 +393,90 @@ void hdd_green_ap_deinit(struct hdd_context_s *hdd_ctx)
 }
 
 /*
+ * hdd_is_egap_enabled() - Get Enhance Green AP feature status
+ * @fw_egap_support: flag whether firmware supports egap or not
+ * @cfg: pointer to the struct hdd_config
+ *
+ * Return: true if firmware, feature_flag and ini are all enabled the egap
+ */
+static bool hdd_is_egap_enabled(bool fw_egap_support, struct hdd_config *cfg)
+{
+	/* check if the firmware and ini are both enabled the egap,
+	 * and also the feature_flag enable.
+	 */
+	if (fw_egap_support && cfg->enable_egap &&
+			cfg->egap_feature_flag)
+		return true;
+	return false;
+}
+
+/*
+ * hdd_enable_egap() - Enable Enhance Green AP
+ * @hdd_ctx: HDD global context
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_enable_egap(struct hdd_context_s *hdd_ctx)
+{
+	struct hdd_config *cfg;
+
+	if (!hdd_ctx) {
+		hdd_err("hdd context is NULL");
+		return -EINVAL;
+	}
+
+	cfg = hdd_ctx->config;
+
+	if (!cfg) {
+		hdd_err("hdd cfg is NULL");
+		return -EINVAL;
+	}
+
+	if (!hdd_ctx->green_ap_ctx) {
+		hdd_err("green ap context is NULL");
+		return -EINVAL;
+	}
+
+	if (!hdd_is_egap_enabled(hdd_ctx->green_ap_ctx->egap_support,
+			hdd_ctx->config))
+		return -ENOTSUPP;
+
+	if (QDF_STATUS_SUCCESS != sme_send_egap_conf_params(cfg->enable_egap,
+			cfg->egap_inact_time,
+			cfg->egap_wait_time,
+			cfg->egap_feature_flag))
+		return -EINVAL;
+	return 0;
+}
+
+/*
  * hdd_green_ap_start_bss() - Notify Green AP of Start BSS event
  * (public function documented in wlan_hdd_green_ap.h)
  */
 void hdd_green_ap_start_bss(struct hdd_context_s *hdd_ctx)
 {
-	struct hdd_config *cfg = hdd_ctx->config;
+	struct hdd_config *cfg;
+
+	if (!hdd_ctx) {
+		hdd_err("hdd context is NULL");
+		return;
+	}
+
+	cfg = hdd_ctx->config;
+
+	if (!cfg) {
+		hdd_err("hdd cfg is NULL");
+		return;
+	}
 
 	if (!hdd_ctx->green_ap_ctx) {
 		hdd_err("Green AP is not enabled. green_ap_ctx = NULL");
-		goto exit;
+		return;
 	}
 
-	/* check if the firmware and ini are both enabled the egap,
-	 * and also the feature_flag enable, then we enable the egap
-	 */
-	if (hdd_ctx->green_ap_ctx->egap_support && cfg->enable_egap &&
-	    cfg->egap_feature_flag) {
-		hdd_notice("Set EGAP - enabled: %d, flag: %x, inact_time: %d, wait_time: %d",
-			   cfg->enable_egap, cfg->egap_feature_flag,
-			   cfg->egap_inact_time, cfg->egap_wait_time);
-		if (!sme_send_egap_conf_params(cfg->enable_egap,
-					       cfg->egap_inact_time,
-					       cfg->egap_wait_time,
-					       cfg->egap_feature_flag)) {
-			/* EGAP is enabled, disable host GAP */
-			hdd_green_ap_mc(hdd_ctx, GREEN_AP_PS_STOP_EVENT);
-			goto exit;
-		}
-		/* fall through, if send_egap_conf_params() failed,
-		 * then check host GAP and enable it accordingly
-		 */
-	}
+	if (hdd_is_egap_enabled(hdd_ctx->green_ap_ctx->egap_support,
+			hdd_ctx->config))
+		return;
 
 	if ((hdd_ctx->concurrency_mode & QDF_SAP_MASK) &&
 			!(hdd_ctx->concurrency_mode & (QDF_SAP_MASK)) &&
@@ -438,8 +491,6 @@ void hdd_green_ap_start_bss(struct hdd_context_s *hdd_ctx)
 			   QDF_STA_MASK & hdd_ctx->concurrency_mode,
 			   cfg->enable2x2, cfg->enableGreenAP);
 	}
-exit:
-	return;
 }
 
 /*
@@ -448,7 +499,35 @@ exit:
  */
 void hdd_green_ap_stop_bss(struct hdd_context_s *hdd_ctx)
 {
-	hdd_green_ap_mc(hdd_ctx, GREEN_AP_PS_STOP_EVENT);
+	struct hdd_config *cfg;
+
+	if (!hdd_ctx) {
+		hdd_err("hdd context is NULL");
+		return;
+	}
+
+	cfg = hdd_ctx->config;
+
+	if (!cfg) {
+		hdd_err("hdd cfg is NULL");
+		return;
+	}
+
+	if (!hdd_ctx->green_ap_ctx) {
+		hdd_err("Green AP is not enabled. green_ap_ctx = NULL");
+		return;
+	}
+
+	if (hdd_is_egap_enabled(hdd_ctx->green_ap_ctx->egap_support,
+			hdd_ctx->config))
+		return;
+
+	/* For AP+AP mode, only trigger GREEN_AP_PS_STOP_EVENT, when the
+	 * last AP stops.
+	 */
+
+	if (1 == (hdd_ctx->no_of_open_sessions[QDF_SAP_MODE]))
+		hdd_green_ap_mc(hdd_ctx, GREEN_AP_PS_STOP_EVENT);
 }
 
 /*
@@ -457,6 +536,29 @@ void hdd_green_ap_stop_bss(struct hdd_context_s *hdd_ctx)
  */
 void hdd_green_ap_add_sta(struct hdd_context_s *hdd_ctx)
 {
+	struct hdd_config *cfg;
+
+	if (!hdd_ctx) {
+		hdd_err("hdd context is NULL");
+		return;
+	}
+
+	cfg = hdd_ctx->config;
+
+	if (!cfg) {
+		hdd_err("hdd cfg is NULL");
+		return;
+	}
+
+	if (!hdd_ctx->green_ap_ctx) {
+		hdd_err("Green AP is not enabled. green_ap_ctx = NULL");
+		return;
+	}
+
+	if (hdd_is_egap_enabled(hdd_ctx->green_ap_ctx->egap_support,
+			hdd_ctx->config))
+		return;
+
 	hdd_green_ap_mc(hdd_ctx, GREEN_AP_ADD_STA_EVENT);
 }
 
@@ -466,6 +568,29 @@ void hdd_green_ap_add_sta(struct hdd_context_s *hdd_ctx)
  */
 void hdd_green_ap_del_sta(struct hdd_context_s *hdd_ctx)
 {
+	struct hdd_config *cfg;
+
+	if (!hdd_ctx) {
+		hdd_err("hdd context is NULL");
+		return;
+	}
+
+	cfg = hdd_ctx->config;
+
+	if (!cfg) {
+		hdd_err("hdd cfg is NULL");
+		return;
+	}
+
+	if (!hdd_ctx->green_ap_ctx) {
+		hdd_err("Green AP is not enabled. green_ap_ctx = NULL");
+		return;
+	}
+
+	if (hdd_is_egap_enabled(hdd_ctx->green_ap_ctx->egap_support,
+			hdd_ctx->config))
+		return;
+
 	hdd_green_ap_mc(hdd_ctx, GREEN_AP_DEL_STA_EVENT);
 }
 
