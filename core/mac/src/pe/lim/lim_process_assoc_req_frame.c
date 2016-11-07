@@ -516,7 +516,7 @@ static bool lim_chk_11ac_only(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 
 	if (LIM_IS_AP_ROLE(session) &&
 		(session->dot11mode == WNI_CFG_DOT11_MODE_11AC_ONLY) &&
-		((vht_caps != NULL) && (!vht_caps->present))) {
+		((vht_caps == NULL) || ((vht_caps != NULL) && (!vht_caps->present)))) {
 		lim_send_assoc_rsp_mgmt_frame(mac_ctx,
 			eSIR_MAC_CAPABILITIES_NOT_SUPPORTED_STATUS,
 			1, hdr->sa, sub_type, 0, session);
