@@ -10701,8 +10701,7 @@ QDF_STATUS sme_ipa_offload_enable_disable(tHalHandle hal, uint8_t session_id,
 		request_buf = qdf_mem_malloc(sizeof(*request_buf));
 		if (NULL == request_buf) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-					FL("Not able to allocate memory for \
-					IPA_OFFLOAD_ENABLE_DISABLE"));
+				  FL("Not able to allocate memory for IPA_OFFLOAD_ENABLE_DISABLE"));
 			sme_release_global_lock(&pMac->sme);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -10717,8 +10716,7 @@ QDF_STATUS sme_ipa_offload_enable_disable(tHalHandle hal, uint8_t session_id,
 		if (!QDF_IS_STATUS_SUCCESS(
 				cds_mq_post_message(CDS_MQ_ID_WMA, &msg))) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-					FL("Not able to post WMA_IPA_OFFLOAD_\
-					ENABLE_DISABLE message to WMA"));
+				  FL("Not able to post WMA_IPA_OFFLOAD_ENABLE_DISABLE message to WMA"));
 			qdf_mem_free(request_buf);
 			sme_release_global_lock(&pMac->sme);
 			return QDF_STATUS_E_FAILURE;
