@@ -6195,6 +6195,8 @@ typedef struct _hp_dcs_mib_stats  {
  * @phyerr_cnt:
  * @mib_stats: wmi_host_dcs_mib_stats_t - collected mib stats as explained
  *      in mib structure
+ * @chan_nf: Channel noise floor (Units are in dBm)
+ * @my_bss_rx_cycle_count: BSS rx cycle count
  */
 typedef struct _wmi_host_dcs_im_tgt_stats {
 	uint32_t                     reg_tsf32;
@@ -6203,6 +6205,8 @@ typedef struct _wmi_host_dcs_im_tgt_stats {
 	uint32_t                     rx_time;
 	uint32_t                     phyerr_cnt;
 	wmi_host_dcs_mib_stats_t     mib_stats;
+	uint32_t		     chan_nf;
+	uint32_t		     my_bss_rx_cycle_count;
 } wmi_host_dcs_im_tgt_stats_t;
 
 /**
