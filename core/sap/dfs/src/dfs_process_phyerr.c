@@ -817,9 +817,8 @@ dfs_process_phyerr(struct ieee80211com *ic, void *buf, uint16_t datalen,
 
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					QDF_TRACE_LEVEL_INFO,
-					"%s [%d] : Rejecting: dur = %d \
-					maxpulsedur = %d, rssi = %d \
-					minrssithresh = %d", __func__, __LINE__,
+					"%s [%d] : Rejecting: dur = %d maxpulsedur = %d, rssi = %d minrssithresh = %d",
+					__func__, __LINE__,
 					e.dur, dfs->dfs_rinfo.rn_maxpulsedur,
 					e.rssi,
 					dfs->dfs_rinfo.rn_minrssithresh);
