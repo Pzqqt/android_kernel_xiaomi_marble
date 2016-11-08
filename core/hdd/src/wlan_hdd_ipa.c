@@ -4043,20 +4043,23 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 			return 0;
 		}
 		hdd_ipa->sap_num_connected_sta--;
-		/* Disable IPA UC TX PIPE when last STA disconnected */
-		if (!hdd_ipa->sap_num_connected_sta
-			&& (false == hdd_ipa->resource_unloading)
-			&& (HDD_IPA_UC_NUM_WDI_PIPE ==
-				hdd_ipa->activated_fw_pipe))
-			hdd_ipa_uc_handle_last_discon(hdd_ipa);
 
-		if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx) &&
-		    hdd_ipa->sta_connected) {
+		/* Disable IPA UC TX PIPE when last STA disconnected */
+		if (!hdd_ipa->sap_num_connected_sta) {
+			if ((false == hdd_ipa->resource_unloading)
+			    && (HDD_IPA_UC_NUM_WDI_PIPE ==
+				hdd_ipa->activated_fw_pipe)) {
+				hdd_ipa_uc_handle_last_discon(hdd_ipa);
+			}
+
 			qdf_mutex_release(&hdd_ipa->event_lock);
-			hdd_ipa_uc_offload_enable_disable(
-				hdd_get_adapter(hdd_ipa->hdd_ctx,
-						QDF_STA_MODE),
-						SIR_STA_RX_DATA_OFFLOAD, 0);
+
+			if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx) &&
+			    hdd_ipa->sta_connected)
+				hdd_ipa_uc_offload_enable_disable(
+					hdd_get_adapter(hdd_ipa->hdd_ctx,
+							QDF_STA_MODE),
+					SIR_STA_RX_DATA_OFFLOAD, 0);
 		} else {
 			qdf_mutex_release(&hdd_ipa->event_lock);
 		}
@@ -4230,6 +4233,8 @@ QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
 		iface_context->adapter = NULL;
 		iface_context->offload_enabled = 0;
 		qdf_spinlock_create(&iface_context->interface_lock);
+	}
+	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
 		vdev_to_iface[i] = CSR_ROAM_SESSION_MAX;
 	}
 
