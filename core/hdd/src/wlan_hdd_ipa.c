@@ -1603,8 +1603,7 @@ static void hdd_ipa_uc_offload_enable_disable(hdd_adapter_t *adapter,
 	if (!iface_context || (enable == iface_context->offload_enabled)) {
 		/* IPA offload status is already set as desired */
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
-			    "IPA offload status is already set: \
-			    (offload_type=%d, vdev_id=%d, enable=%d)",
+			    "IPA offload status is already set: (offload_type=%d, vdev_id=%d, enable=%d)",
 			    offload_type, adapter->sessionId, enable);
 		return;
 	}
@@ -1625,11 +1624,11 @@ static void hdd_ipa_uc_offload_enable_disable(hdd_adapter_t *adapter,
 		sme_ipa_offload_enable_disable(WLAN_HDD_GET_HAL_CTX(adapter),
 			adapter->sessionId, &ipa_offload_enable_disable)) {
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
-			"%s: Failure to enable IPA offload \
-			(offload_type=%d, vdev_id=%d, enable=%d)", __func__,
-			ipa_offload_enable_disable.offload_type,
-			ipa_offload_enable_disable.vdev_id,
-			ipa_offload_enable_disable.enable);
+			    "%s: Failure to enable IPA offload (offload_type=%d, vdev_id=%d, enable=%d)",
+			    __func__,
+			    ipa_offload_enable_disable.offload_type,
+			    ipa_offload_enable_disable.vdev_id,
+			    ipa_offload_enable_disable.enable);
 	} else {
 		/* Update the IPA offload status */
 		iface_context->offload_enabled =
