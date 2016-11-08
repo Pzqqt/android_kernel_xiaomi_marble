@@ -14845,7 +14845,14 @@ QDF_STATUS sme_wifi_start_logger(tHalHandle hal,
  */
 bool sme_neighbor_middle_of_roaming(tHalHandle hHal, uint8_t sessionId)
 {
-	return csr_neighbor_middle_of_roaming(PMAC_STRUCT(hHal), sessionId);
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hHal);
+	bool val = false;
+
+	if (CSR_IS_SESSION_VALID(mac_ctx, sessionId))
+		val = csr_neighbor_middle_of_roaming(mac_ctx, sessionId);
+	else
+		sms_log(mac_ctx, LOGE, FL("Invalid Sesion = %d"), sessionId);
+	return val;
 }
 
 /*
