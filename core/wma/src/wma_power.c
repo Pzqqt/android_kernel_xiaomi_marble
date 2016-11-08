@@ -1620,8 +1620,8 @@ void wma_process_set_mimops_req(tp_wma_handle wma_handle,
 	else if (mimops->htMIMOPSState == eSIR_HT_MIMO_PS_NO_LIMIT)
 		mimops->htMIMOPSState = WMI_PEER_MIMO_PS_NONE;
 
-	WMA_LOGD("%s: htMIMOPSState = %d, sessionId = %d \
-		 peerMac <%02x:%02x:%02x:%02x:%02x:%02x>", __func__,
+	WMA_LOGD("%s: htMIMOPSState = %d, sessionId = %d peerMac <%02x:%02x:%02x:%02x:%02x:%02x>",
+		 __func__,
 		 mimops->htMIMOPSState, mimops->sessionId, mimops->peerMac[0],
 		 mimops->peerMac[1], mimops->peerMac[2], mimops->peerMac[3],
 		 mimops->peerMac[4], mimops->peerMac[5]);

@@ -3808,9 +3808,9 @@ static inline void wma_update_target_ht_cap(tp_wma_handle wh,
 	/* RF chains */
 	cfg->num_rf_chains = wh->num_rf_chains;
 
-	WMA_LOGD("%s: ht_cap_info - %x ht_rx_stbc - %d, ht_tx_stbc - %d\n\
-		 mpdu_density - %d ht_rx_ldpc - %d ht_sgi_20 - %d\n\
-		 ht_sgi_40 - %d num_rf_chains - %d ", __func__, wh->ht_cap_info,
+	WMA_LOGD("%s: ht_cap_info - %x ht_rx_stbc - %d, ht_tx_stbc - %d\n"
+		 "mpdu_density - %d ht_rx_ldpc - %d ht_sgi_20 - %d\n"
+		 "ht_sgi_40 - %d num_rf_chains - %d", __func__, wh->ht_cap_info,
 		 cfg->ht_rx_stbc, cfg->ht_tx_stbc, cfg->mpdu_density,
 		 cfg->ht_rx_ldpc, cfg->ht_sgi_20, cfg->ht_sgi_40,
 		 cfg->num_rf_chains);
@@ -3869,9 +3869,9 @@ static inline void wma_update_target_vht_cap(tp_wma_handle wh,
 
 	cfg->vht_txop_ps = wh->vht_cap_info & WMI_VHT_CAP_TXOP_PS;
 
-	WMA_LOGD(" %s: max_mpdu %d supp_chan_width %x rx_ldpc %x\n \
-		 short_gi_80 %x tx_stbc %x rx_stbc %x txop_ps %x\n \
-		 su_bformee %x mu_bformee %x max_ampdu_len_exp %d", __func__,
+	WMA_LOGD("%s: max_mpdu %d supp_chan_width %x rx_ldpc %x\n"
+		 "short_gi_80 %x tx_stbc %x rx_stbc %x txop_ps %x\n"
+		 "su_bformee %x mu_bformee %x max_ampdu_len_exp %d", __func__,
 		 cfg->vht_max_mpdu, cfg->supp_chan_width, cfg->vht_rx_ldpc,
 		 cfg->vht_short_gi_80, cfg->vht_tx_stbc, cfg->vht_rx_stbc,
 		 cfg->vht_txop_ps, cfg->vht_su_bformee, cfg->vht_mu_bformee,
@@ -3992,9 +3992,9 @@ static void wma_update_target_ext_ht_cap(tp_wma_handle wma_handle,
 					sizeof(struct wma_tgt_ht_cap));
 	}
 
-	WMA_LOGI("%s: [ext ht cap] ht_rx_stbc - %d, ht_tx_stbc - %d\n\
-			mpdu_density - %d ht_rx_ldpc - %d ht_sgi_20 - %d\n\
-			ht_sgi_40 - %d num_rf_chains - %d ", __func__,
+	WMA_LOGI("%s: [ext ht cap] ht_rx_stbc - %d, ht_tx_stbc - %d\n"
+			"mpdu_density - %d ht_rx_ldpc - %d ht_sgi_20 - %d\n"
+			"ht_sgi_40 - %d num_rf_chains - %d", __func__,
 			ht_cap->ht_rx_stbc, ht_cap->ht_tx_stbc,
 			ht_cap->mpdu_density, ht_cap->ht_rx_ldpc,
 			ht_cap->ht_sgi_20, ht_cap->ht_sgi_40,
@@ -4163,9 +4163,9 @@ static void wma_update_target_ext_vht_cap(t_wma_handle *wma_handle,
 					sizeof(struct wma_tgt_vht_cap));
 	}
 
-	WMA_LOGI("%s: [ext vhtcap] max_mpdu %d supp_chan_width %x rx_ldpc %x\n \
-		short_gi_80 %x tx_stbc %x rx_stbc %x txop_ps %x\n \
-		su_bformee %x mu_bformee %x max_ampdu_len_exp %d", __func__,
+	WMA_LOGI("%s: [ext vhtcap] max_mpdu %d supp_chan_width %x rx_ldpc %x\n"
+		"short_gi_80 %x tx_stbc %x rx_stbc %x txop_ps %x\n"
+		"su_bformee %x mu_bformee %x max_ampdu_len_exp %d", __func__,
 		vht_cap->vht_max_mpdu, vht_cap->supp_chan_width,
 		vht_cap->vht_rx_ldpc, vht_cap->vht_short_gi_80,
 		vht_cap->vht_tx_stbc, vht_cap->vht_rx_stbc,
