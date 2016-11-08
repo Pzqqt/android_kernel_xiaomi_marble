@@ -7361,12 +7361,12 @@ static void hdd_initialize_mac_address(hdd_context_t *hdd_ctx)
 
 	hdd_warn("can't update mac config via wlan_mac.bin, using MAC from ini file or auto-gen");
 
-	if (hdd_ctx->update_mac_addr_to_fw)
+	if (hdd_ctx->update_mac_addr_to_fw) {
 		ret = hdd_update_mac_addr_to_fw(hdd_ctx);
-
-	if (ret != 0) {
-		hdd_err("MAC address out-of-sync, ret:%d", ret);
-		QDF_ASSERT(ret);
+		if (ret != 0) {
+			hdd_err("MAC address out-of-sync, ret:%d", ret);
+			QDF_ASSERT(ret);
+		}
 	}
 }
 
