@@ -227,7 +227,7 @@ static void hdd_regulatory_wiphy_init(hdd_context_t *hdd_ctx,
 {
 	const struct ieee80211_regdomain *reg_rules;
 	int chan_num;
-	struct ieee80211_channel chan;
+	struct ieee80211_channel *chan;
 
 	if (hdd_is_world_regdomain(reg->reg_domain)) {
 		reg_rules = hdd_get_world_regrules(reg);
@@ -252,9 +252,9 @@ static void hdd_regulatory_wiphy_init(hdd_context_t *hdd_ctx,
 	for (chan_num = 0;
 	     chan_num < wiphy->bands[IEEE80211_BAND_2GHZ]->n_channels;
 	     chan_num++) {
-		chan = wiphy->bands[IEEE80211_BAND_2GHZ]->channels[chan_num];
-		if (chan.flags & IEEE80211_CHAN_NO_20MHZ)
-			chan.flags |= IEEE80211_CHAN_DISABLED;
+		chan = &(wiphy->bands[IEEE80211_BAND_2GHZ]->channels[chan_num]);
+		if (chan->flags & IEEE80211_CHAN_NO_20MHZ)
+			chan->flags |= IEEE80211_CHAN_DISABLED;
 	}
 
 	/*
