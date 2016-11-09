@@ -506,4 +506,18 @@ uint32_t qdf_get_upper_32_bits(qdf_dma_addr_t addr)
 	return __qdf_get_upper_32_bits(addr);
 }
 
+/**
+ * qdf_rounddown_pow_of_two() - Round down to nearest power of two
+ * @n: number to be tested
+ *
+ * Test if the input number is power of two, and return the nearest power of two
+ *
+ * Return: number rounded down to the nearest power of two
+ */
+static inline
+unsigned long qdf_rounddown_pow_of_two(unsigned long n)
+{
+	return __qdf_rounddown_pow_of_two(n);
+}
+
 #endif /*_QDF_UTIL_H*/
