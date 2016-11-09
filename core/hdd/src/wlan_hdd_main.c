@@ -3243,7 +3243,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 		status = hdd_register_interface(adapter, rtnl_held);
 		if (QDF_STATUS_SUCCESS != status) {
 			hdd_deinit_adapter(hdd_ctx, adapter, rtnl_held);
-			goto err_lro_cleanup;
+			goto err_free_netdev;
 		}
 
 		/* Stop the Interface TX queue. */
@@ -3340,7 +3340,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 		/* Initialize the WoWL service */
 		if (!hdd_init_wowl(adapter)) {
 			hdd_alert("hdd_init_wowl failed");
-			goto err_lro_cleanup;
+			goto err_close_adapter;
 		}
 
 		/* Adapter successfully added. Increment the vdev count */
@@ -3357,11 +3357,11 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 
 	return adapter;
 
-err_lro_cleanup:
-	hdd_lro_disable(hdd_ctx, adapter);
+err_close_adapter:
+	hdd_close_adapter(hdd_ctx, adapter, rtnl_held);
 err_free_netdev:
-	free_netdev(adapter->dev);
 	wlan_hdd_release_intf_addr(hdd_ctx, adapter->macAddressCurrent.bytes);
+	free_netdev(adapter->dev);
 
 	return NULL;
 }
