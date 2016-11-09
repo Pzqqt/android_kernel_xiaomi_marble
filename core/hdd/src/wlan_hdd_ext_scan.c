@@ -2565,6 +2565,13 @@ __wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 	maxChannels =
 		nla_get_u32(tb
 		    [QCA_WLAN_VENDOR_ATTR_EXTSCAN_GET_VALID_CHANNELS_CONFIG_PARAM_MAX_CHANNELS]);
+
+	if (maxChannels > WNI_CFG_VALID_CHANNEL_LIST_LEN) {
+		hdd_err("Max channels %d exceeded Valid channel list len %d",
+			maxChannels, WNI_CFG_VALID_CHANNEL_LIST_LEN);
+		return -EINVAL;
+	}
+
 	hdd_notice("Req Id: %u Wifi band: %d Max channels: %d", requestId,
 		    wifiBand, maxChannels);
 	status = sme_get_valid_channels_by_band((tHalHandle) (pHddCtx->hHal),
