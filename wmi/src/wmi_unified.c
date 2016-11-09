@@ -3013,6 +3013,11 @@ void wmi_set_is_wow_bus_suspended(wmi_unified_t wmi_handle, A_BOOL val)
 	qdf_atomic_set(&wmi_handle->is_wow_bus_suspended, val);
 }
 
+void wmi_set_tgt_assert(wmi_unified_t wmi_handle, bool val)
+{
+	wmi_handle->tgt_force_assert_enable = val;
+}
+
 #ifndef CONFIG_MCL
 /**
  * API to flush all the previous packets  associated with the wmi endpoint
