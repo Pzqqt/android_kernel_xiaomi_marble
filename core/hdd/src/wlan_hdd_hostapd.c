@@ -7066,7 +7066,8 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 				       struct cfg80211_beacon_data *params,
 				       const u8 *ssid, size_t ssid_len,
 				       enum nl80211_hidden_ssid hidden_ssid,
-				       bool check_for_concurrency)
+				       bool check_for_concurrency,
+				       bool update_beacon)
 {
 	tsap_Config_t *pConfig;
 	beacon_data_t *pBeacon = NULL;
@@ -7093,7 +7094,7 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 
 	ENTER();
 
-	if (cds_is_connection_in_progress()) {
+	if (!update_beacon && cds_is_connection_in_progress()) {
 		hdd_err("Can't start BSS: connection is in progress");
 		return -EINVAL;
 	}
@@ -8079,7 +8080,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 			wlan_hdd_cfg80211_start_bss(pAdapter,
 				&params->beacon,
 				params->ssid, params->ssid_len,
-				params->hidden_ssid, true);
+				params->hidden_ssid, true, false);
 
 		if (pHddCtx->config->sap_max_inactivity_override) {
 			sta_inactivity_timer = qdf_mem_malloc(
@@ -8137,6 +8138,7 @@ static int __wlan_hdd_cfg80211_change_beacon(struct wiphy *wiphy,
 	hdd_context_t *pHddCtx;
 	beacon_data_t *old, *new;
 	int status;
+	bool update_beacon;
 
 	ENTER();
 
@@ -8184,8 +8186,11 @@ static int __wlan_hdd_cfg80211_change_beacon(struct wiphy *wiphy,
 	}
 
 	pAdapter->sessionCtx.ap.beacon = new;
+	update_beacon = (pAdapter->device_mode ==
+			     QDF_P2P_GO_MODE) ? true : false;
+	hdd_info("update beacon for P2P GO: %d", update_beacon);
 	status = wlan_hdd_cfg80211_start_bss(pAdapter, params, NULL,
-						0, 0, true);
+					0, 0, false, update_beacon);
 
 	EXIT();
 	return status;

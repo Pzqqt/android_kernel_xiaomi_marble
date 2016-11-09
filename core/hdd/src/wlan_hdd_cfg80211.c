@@ -7010,7 +7010,7 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 
 	status = wlan_hdd_cfg80211_start_bss(pre_cac_adapter, NULL,
 			PRE_CAC_SSID, qdf_str_len(PRE_CAC_SSID),
-			eHIDDEN_SSID_NOT_IN_USE, false);
+			eHIDDEN_SSID_NOT_IN_USE, false, false);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("start bss failed");
 		goto stop_close_pre_cac_adapter;

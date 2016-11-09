@@ -1786,7 +1786,8 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		struct cfg80211_beacon_data *params,
 		const u8 *ssid, size_t ssid_len,
 		enum nl80211_hidden_ssid hidden_ssid,
-		bool check_for_concurrency);
+		bool check_for_concurrency,
+		bool update_beacon);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 QDF_STATUS hdd_register_for_sap_restart_with_channel_switch(void);
 #else
