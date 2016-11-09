@@ -3159,13 +3159,16 @@ static ptSapContext sap_find_valid_concurrent_session(tHalHandle hHal)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	uint8_t intf = 0;
+	ptSapContext sapContext;
 
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
 		if (((QDF_SAP_MODE == pMac->sap.sapCtxList[intf].sapPersona)
 		    ||
 		    (QDF_P2P_GO_MODE == pMac->sap.sapCtxList[intf].sapPersona)) &&
 		    pMac->sap.sapCtxList[intf].pSapContext != NULL) {
-			return pMac->sap.sapCtxList[intf].pSapContext;
+			sapContext = pMac->sap.sapCtxList[intf].pSapContext;
+			if (sapContext->sapsMachine != eSAP_DISCONNECTED)
+				return sapContext;
 		}
 	}
 
