@@ -8129,6 +8129,9 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 	if (hdd_ctx->config->ssdp)
 		cds_cfg->ssdp = hdd_ctx->config->ssdp;
 
+	cds_cfg->force_target_assert_enabled =
+		hdd_ctx->config->crash_inject_enabled;
+
 	cds_cfg->enable_mc_list = hdd_ctx->config->fEnableMCAddrList;
 	cds_cfg->ap_maxoffload_peers = hdd_ctx->config->apMaxOffloadPeers;
 

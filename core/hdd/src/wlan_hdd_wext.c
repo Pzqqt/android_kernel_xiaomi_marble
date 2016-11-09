@@ -12999,6 +12999,10 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 		       value[1], value[2]);
 		pr_err("SSR is triggered by iwpriv CRASH_INJECT: %d %d\n",
 			   value[1], value[2]);
+		if (!hdd_ctx->config->crash_inject_enabled) {
+			hdd_err("Crash Inject ini disabled, Ignore Crash Inject");
+			return 0;
+		}
 		if (value[1] == 3) {
 			cds_trigger_recovery();
 			return 0;

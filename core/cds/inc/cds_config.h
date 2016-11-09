@@ -106,6 +106,7 @@ enum active_bpf_mode {
  *	active mode for MC/BC packets
  * @auto_power_save_fail_mode: auto detect power save failure mode
  * @ito_repeat_count: Indicates ito repeated count
+ * @force_target_assert_enabled: Indicate whether target assert enabled or not
  * Structure for holding cds ini parameters.
  */
 
@@ -163,6 +164,7 @@ struct cds_config_info {
 	enum active_bpf_mode active_mc_bc_bpf_mode;
 	bool auto_power_save_fail_mode;
 	uint8_t ito_repeat_count;
+	bool force_target_assert_enabled;
 };
 
 #ifdef WLAN_FEATURE_FILS_SK
