@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -356,7 +356,7 @@ int pld_wlan_enable(struct device *dev, struct pld_wlan_enable_cfg *config,
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		ret = pld_pcie_wlan_enable(config, mode, host_version);
+		ret = pld_pcie_wlan_enable(dev, config, mode, host_version);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		ret = pld_snoc_wlan_enable(config, mode, host_version);
@@ -387,7 +387,7 @@ int pld_wlan_disable(struct device *dev, enum pld_driver_mode mode)
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		ret = pld_pcie_wlan_disable(mode);
+		ret = pld_pcie_wlan_disable(dev, mode);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		ret = pld_snoc_wlan_disable(mode);

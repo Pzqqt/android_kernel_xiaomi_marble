@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -366,7 +366,6 @@ int pld_pcie_get_ce_id(int irq)
 }
 
 #ifdef CONFIG_PLD_PCIE_CNSS
-#ifdef QCA_WIFI_3_0_ADRASTEA
 /**
  * pld_pcie_wlan_enable() - Enable WLAN
  * @config: WLAN configuration data
@@ -379,7 +378,7 @@ int pld_pcie_get_ce_id(int irq)
  * Return: 0 for success
  *         Non zero failure code for errors
  */
-int pld_pcie_wlan_enable(struct pld_wlan_enable_cfg *config,
+int pld_pcie_wlan_enable(struct device *dev, struct pld_wlan_enable_cfg *config,
 			 enum pld_driver_mode mode, const char *host_version)
 {
 	struct cnss_wlan_enable_cfg cfg;
@@ -406,7 +405,7 @@ int pld_pcie_wlan_enable(struct pld_wlan_enable_cfg *config,
 		cnss_mode = CNSS_MISSION;
 		break;
 	}
-	return cnss_wlan_enable(&cfg, cnss_mode, host_version);
+	return cnss_wlan_enable(dev, &cfg, cnss_mode, host_version);
 }
 
 /**
@@ -418,11 +417,10 @@ int pld_pcie_wlan_enable(struct pld_wlan_enable_cfg *config,
  * Return: 0 for success
  *         Non zero failure code for errors
  */
-int pld_pcie_wlan_disable(enum pld_driver_mode mode)
+int pld_pcie_wlan_disable(struct device *dev, enum pld_driver_mode mode)
 {
-	return cnss_wlan_disable(CNSS_OFF);
+	return cnss_wlan_disable(dev, CNSS_OFF);
 }
-#endif
 
 /**
  * pld_pcie_get_fw_files_for_target() - Get FW file names
