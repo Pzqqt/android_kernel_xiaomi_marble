@@ -1454,6 +1454,38 @@ void *qdf_mem_alloc_consistent(qdf_device_t osdev, void *dev, qdf_size_t size,
 	return vaddr;
 }
 
+#elif defined(QCA_WIFI_QCA8074) && defined(BUILD_X86)
+#define QCA8074_RAM_BASE 0x50000000
+#define QDF_MEM_ALLOC_X86_MAX_RETRIES 10
+void *qdf_mem_alloc_consistent(qdf_device_t osdev, void *dev, qdf_size_t size,
+			       qdf_dma_addr_t *phy_addr)
+{
+	int flags = GFP_KERNEL;
+	void *alloc_mem = NULL;
+	int alloc_try_high_mem = 0;
+
+	if (in_interrupt() || irqs_disabled() || in_atomic())
+		flags = GFP_ATOMIC;
+
+	*phy_addr = 0;
+
+	while (alloc_try_high_mem++ < QDF_MEM_ALLOC_X86_MAX_RETRIES) {
+		alloc_mem = dma_alloc_coherent(dev, size, phy_addr, flags);
+
+		if (alloc_mem == NULL) {
+			qdf_print("%s failed , size: %zu!\n", __func__, size);
+			return NULL;
+		}
+
+		if (*phy_addr < QCA8074_RAM_BASE) {
+			dma_free_coherent(dev, size, alloc_mem, *phy_addr);
+			alloc_mem = NULL;
+		} else
+			break;
+	}
+
+	return alloc_mem;
+}
 #else
 void *qdf_mem_alloc_consistent(qdf_device_t osdev, void *dev, qdf_size_t size,
 			       qdf_dma_addr_t *phy_addr)
