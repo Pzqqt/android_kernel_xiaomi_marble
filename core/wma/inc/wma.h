@@ -58,7 +58,7 @@
 #define WMA_SERVICE_READY_EXT_TIMEOUT      6000
 #define WMA_TGT_SUSPEND_COMPLETE_TIMEOUT   6000
 #define WMA_WAKE_LOCK_TIMEOUT              1000
-#define WMA_RESUME_TIMEOUT                 6000
+#define WMA_RESUME_TIMEOUT                 25000
 #define MAX_MEM_CHUNKS                     32
 
 #define WMA_CRASH_INJECT_TIMEOUT           5000
