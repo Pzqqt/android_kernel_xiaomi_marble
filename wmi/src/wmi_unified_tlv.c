@@ -255,7 +255,7 @@ static inline void copy_channel_info(
 		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_QUARTER_RATE);
 
 	if (req->channel.dfs_set) {
-		WMI_SET_CHANNEL_FLAG(chan, req->flag_dfs);
+		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_DFS);
 		cmd->disable_hw_ack = req->disable_hw_ack;
 	}
 
