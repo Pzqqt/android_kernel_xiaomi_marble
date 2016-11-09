@@ -242,6 +242,8 @@ static int __wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 			return -ENOMEM;
 		}
 		hdd_ctx->dump_loc_paddr = paddr;
+	} else {
+		paddr = hdd_ctx->dump_loc_paddr;
 	}
 	mutex_unlock(&hdd_ctx->memdump_lock);
 
