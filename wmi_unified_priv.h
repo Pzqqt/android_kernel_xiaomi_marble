@@ -1438,6 +1438,7 @@ struct wmi_unified {
 #endif
 	qdf_atomic_t is_wow_bus_suspended;
 	bool tag_crash_inject;
+	bool tgt_force_assert_enable;
 	enum wmi_target_type target_type;
 	struct wmi_rx_ops rx_ops;
 	struct wmi_ops *ops;
