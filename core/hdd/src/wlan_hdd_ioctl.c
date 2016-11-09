@@ -198,7 +198,7 @@ QDF_STATUS hdd_get_tsm_stats(hdd_adapter_t *adapter,
 	QDF_STATUS hstatus;
 	QDF_STATUS vstatus = QDF_STATUS_SUCCESS;
 	unsigned long rc;
-	struct statsContext context;
+	static struct statsContext context;
 	hdd_context_t *hdd_ctx = NULL;
 
 	if (NULL == adapter) {
@@ -2422,7 +2422,7 @@ static int wlan_hdd_get_link_status(hdd_adapter_t *adapter)
 
 	hdd_station_ctx_t *pHddStaCtx =
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	struct statsContext context;
+	static struct statsContext context;
 	QDF_STATUS hstatus;
 	unsigned long rc;
 

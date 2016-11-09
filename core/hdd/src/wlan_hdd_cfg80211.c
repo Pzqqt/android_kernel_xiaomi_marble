@@ -6437,7 +6437,7 @@ nla_put_failure:
 static int hdd_get_bpf_offload(hdd_context_t *hdd_ctx)
 {
 	unsigned long rc;
-	struct hdd_bpf_context *context;
+	static struct hdd_bpf_context *context;
 	QDF_STATUS status;
 	int ret;
 

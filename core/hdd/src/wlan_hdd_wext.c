@@ -1222,7 +1222,7 @@ static void hdd_get_snr_cb(int8_t snr, uint32_t staId, void *pContext)
  */
 QDF_STATUS wlan_hdd_get_rssi(hdd_adapter_t *pAdapter, int8_t *rssi_value)
 {
-	struct statsContext context;
+	static struct statsContext context;
 	hdd_context_t *pHddCtx;
 	hdd_station_ctx_t *pHddStaCtx;
 	QDF_STATUS hstatus;
@@ -1308,7 +1308,7 @@ QDF_STATUS wlan_hdd_get_rssi(hdd_adapter_t *pAdapter, int8_t *rssi_value)
  */
 QDF_STATUS wlan_hdd_get_snr(hdd_adapter_t *pAdapter, int8_t *snr)
 {
-	struct statsContext context;
+	static struct statsContext context;
 	hdd_context_t *pHddCtx;
 	hdd_station_ctx_t *pHddStaCtx;
 	QDF_STATUS hstatus;
@@ -1455,7 +1455,7 @@ QDF_STATUS wlan_hdd_get_linkspeed_for_peermac(hdd_adapter_t *pAdapter,
 					      struct qdf_mac_addr macAddress) {
 	QDF_STATUS status;
 	unsigned long rc;
-	struct linkspeedContext context;
+	static struct linkspeedContext context;
 	tSirLinkSpeedInfo *linkspeed_req;
 
 	if (NULL == pAdapter) {
@@ -3649,7 +3649,7 @@ QDF_STATUS wlan_hdd_get_class_astats(hdd_adapter_t *pAdapter)
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	QDF_STATUS hstatus;
 	unsigned long rc;
-	struct statsContext context;
+	static struct statsContext context;
 
 	if (NULL == pAdapter) {
 		hdd_err("pAdapter is NULL");
@@ -5138,7 +5138,7 @@ static void hdd_get_temperature_cb(int temperature, void *pContext)
 int wlan_hdd_get_temperature(hdd_adapter_t *pAdapter, int *temperature)
 {
 	QDF_STATUS status;
-	struct statsContext tempContext;
+	static struct statsContext tempContext;
 	unsigned long rc;
 
 	ENTER();
