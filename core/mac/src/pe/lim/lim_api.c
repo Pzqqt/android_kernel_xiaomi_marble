@@ -2179,6 +2179,39 @@ tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(tpAniSirGlobal pMac,
 	return eMGMT_DROP_NO_DROP;
 }
 
+void lim_update_lost_link_info(tpAniSirGlobal mac, tpPESession session,
+				int32_t rssi)
+{
+	struct sir_lost_link_info *lost_link_info;
+	tSirMsgQ mmh_msg;
+
+	if ((NULL == mac) || (NULL == session)) {
+		lim_log(mac, LOGE, FL("parameter NULL"));
+		return;
+	}
+	if (!LIM_IS_STA_ROLE(session)) {
+		lim_log(mac, LOGE, FL("not STA mode, do nothing"));
+		return;
+	}
+
+	lost_link_info = qdf_mem_malloc(sizeof(*lost_link_info));
+	if (NULL == lost_link_info) {
+		lim_log(mac, LOGE, FL("lost_link_info allocation failure"));
+		return;
+	}
+
+	lost_link_info->vdev_id = session->smeSessionId;
+	lost_link_info->rssi = rssi;
+	mmh_msg.type = eWNI_SME_LOST_LINK_INFO_IND;
+	mmh_msg.bodyptr = lost_link_info;
+	mmh_msg.bodyval = 0;
+	lim_log(mac, LOG1,
+		FL("post eWNI_SME_LOST_LINK_INFO_IND, bss_idx %d, rssi %d"),
+		lost_link_info->vdev_id, lost_link_info->rssi);
+
+	lim_sys_process_mmh_msg_api(mac, &mmh_msg, ePROT);
+}
+
 QDF_STATUS pe_acquire_global_lock(tAniSirLim *psPe)
 {
 	QDF_STATUS status = QDF_STATUS_E_INVAL;

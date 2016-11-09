@@ -8278,6 +8278,12 @@ int hdd_register_cb(hdd_context_t *hdd_ctx)
 	sme_set_link_layer_stats_ind_cb(hdd_ctx->hHal,
 				wlan_hdd_cfg80211_link_layer_stats_callback);
 
+	status = sme_set_lost_link_info_cb(hdd_ctx->hHal,
+					   hdd_lost_link_info_cb);
+	/* print error and not block the startup process */
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("set lost link info callback failed");
+
 	wlan_hdd_dcc_register_for_dcc_stats_event(hdd_ctx);
 
 	EXIT();

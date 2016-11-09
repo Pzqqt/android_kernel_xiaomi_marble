@@ -222,6 +222,17 @@ static inline QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 #endif
 
 /**
+ * lim_update_lost_link_info() - update lost link information to SME
+ * @mac: global MAC handle
+ * @session: PE session
+ * @rssi: rssi value from the received frame
+ *
+ * Return: None
+ */
+void lim_update_lost_link_info(tpAniSirGlobal mac, tpPESession session,
+				int32_t rssi);
+
+/**
  * lim_mon_init_session() - create PE session for monitor mode operation
  * @mac_ptr: mac pointer
  * @msg: Pointer to struct sir_create_session type.

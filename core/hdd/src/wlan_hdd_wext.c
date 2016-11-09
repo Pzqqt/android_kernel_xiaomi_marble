@@ -1244,8 +1244,9 @@ QDF_STATUS wlan_hdd_get_rssi(hdd_adapter_t *pAdapter, int8_t *rssi_value)
 	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
 	if (eConnectionState_Associated != pHddStaCtx->conn_info.connState) {
-		hdd_err("Not associated!, return last connected AP rssi!");
-		*rssi_value = pAdapter->rssi;
+		hdd_err("Not associated!, rssi on disconnect %d",
+			pAdapter->rssi_on_disconnect);
+		*rssi_value = pAdapter->rssi_on_disconnect;
 		return QDF_STATUS_SUCCESS;
 	}
 

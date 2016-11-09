@@ -988,6 +988,7 @@ struct hdd_adapter_s {
 #endif
 
 	int8_t rssi;
+	int32_t rssi_on_disconnect;
 #ifdef WLAN_FEATURE_LPSS
 	bool rssi_send;
 #endif

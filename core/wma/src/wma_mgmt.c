@@ -380,7 +380,8 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 			 */
 			WMA_LOGW("%s: WMI_PEER_STA_KICKOUT_REASON_XRETRY event for STA",
 				__func__);
-			wma_beacon_miss_handler(wma, vdev_id);
+			wma_beacon_miss_handler(wma, vdev_id,
+						kickout_event->rssi);
 			goto exit_handler;
 		}
 		break;
@@ -406,7 +407,8 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 			 */
 			WMA_LOGW("%s: WMI_PEER_STA_KICKOUT_REASON_UNSPECIFIED event for STA",
 				__func__);
-			wma_beacon_miss_handler(wma, vdev_id);
+			wma_beacon_miss_handler(wma, vdev_id,
+						kickout_event->rssi);
 			goto exit_handler;
 		}
 		break;
@@ -441,7 +443,8 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 	del_sta_ctx->rssi = kickout_event->rssi + WMA_TGT_NOISE_FLOOR_DBM;
 	wma_send_msg(wma, SIR_LIM_DELETE_STA_CONTEXT_IND, (void *)del_sta_ctx,
 		     0);
-
+	wma_lost_link_info_handler(wma, vdev_id, kickout_event->rssi +
+						 WMA_TGT_NOISE_FLOOR_DBM);
 exit_handler:
 	WMA_LOGD("%s: Exit", __func__);
 	return 0;
@@ -2452,12 +2455,13 @@ void wma_set_keepalive_req(tp_wma_handle wma,
  * wma_beacon_miss_handler() - beacon miss event handler
  * @wma: wma handle
  * @vdev_id: vdev id
+ * @riis: rssi value
  *
  * This function send beacon miss indication to upper layers.
  *
  * Return: none
  */
-void wma_beacon_miss_handler(tp_wma_handle wma, uint32_t vdev_id)
+void wma_beacon_miss_handler(tp_wma_handle wma, uint32_t vdev_id, int32_t rssi)
 {
 	tSirSmeMissedBeaconInd *beacon_miss_ind;
 
@@ -2473,6 +2477,8 @@ void wma_beacon_miss_handler(tp_wma_handle wma, uint32_t vdev_id)
 	beacon_miss_ind->bssIdx = vdev_id;
 
 	wma_send_msg(wma, WMA_MISSED_BEACON_IND, (void *)beacon_miss_ind, 0);
+	wma_lost_link_info_handler(wma, vdev_id, rssi +
+						 WMA_TGT_NOISE_FLOOR_DBM);
 }
 
 /**

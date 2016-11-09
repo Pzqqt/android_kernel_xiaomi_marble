@@ -3068,6 +3068,12 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 	case eWNI_SME_NDP_PEER_DEPARTED_IND:
 		sme_ndp_msg_processor(pMac, pMsg);
 		break;
+	case eWNI_SME_LOST_LINK_INFO_IND:
+		if (pMac->sme.lost_link_info_cb)
+			pMac->sme.lost_link_info_cb(pMac->hHdd,
+				(struct sir_lost_link_info *)pMsg->bodyptr);
+		qdf_mem_free(pMsg->bodyptr);
+		break;
 	default:
 
 		if ((pMsg->type >= eWNI_SME_MSG_TYPES_BEGIN)
@@ -16997,6 +17003,24 @@ QDF_STATUS sme_update_tx_fail_cnt_threshold(tHalHandle hal_handle,
 				FL("Not able to post Tx fail count message to WDA"));
 		qdf_mem_free(tx_fail_cnt);
 	}
+	return status;
+}
 
+QDF_STATUS sme_set_lost_link_info_cb(tHalHandle hal,
+				void (*cb)(void *, struct sir_lost_link_info *))
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		mac->sme.lost_link_info_cb = cb;
+		sme_release_global_lock(&mac->sme);
+		sms_log(mac, LOG1, FL("set lost link info callback"));
+	} else {
+		sms_log(mac, LOGE,
+			FL("sme_acquire_global_lock error status %d"),
+			status);
+	}
 	return status;
 }

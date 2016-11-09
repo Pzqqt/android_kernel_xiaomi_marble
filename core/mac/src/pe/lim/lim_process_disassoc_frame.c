@@ -81,9 +81,12 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 #ifdef WLAN_FEATURE_11W
 	uint32_t frameLen;
 #endif
+	int32_t frame_rssi;
 
 	pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
 	pBody = WMA_GET_RX_MPDU_DATA(pRxPacketInfo);
+
+	frame_rssi = (int32_t)WMA_GET_RX_RSSI_NORMALIZED(pRxPacketInfo);
 
 	if (lim_is_group_addr(pHdr->sa)) {
 		/* Received Disassoc frame from a BC/MC address */
@@ -165,11 +168,11 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 
 	PELOG2(lim_log(pMac, LOGE,
 		       FL("Received Disassoc frame for Addr: " MAC_ADDRESS_STR
-			  "(mlm state=%s, sme state=%d),"
+			  "(mlm state=%s, sme state=%d RSSI=%d),"
 			  "with reason code %d [%s] from " MAC_ADDRESS_STR),
 		       MAC_ADDR_ARRAY(pHdr->da),
 		       lim_mlm_state_str(psessionEntry->limMlmState),
-		       psessionEntry->limSmeState, reasonCode,
+		       psessionEntry->limSmeState, frame_rssi, reasonCode,
 		       lim_dot11_reason_str(reasonCode), MAC_ADDR_ARRAY(pHdr->sa));
 	       )
 
@@ -368,6 +371,7 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		return;
 	}
 
+	lim_update_lost_link_info(pMac, psessionEntry, frame_rssi);
 	lim_post_sme_message(pMac, LIM_MLM_DISASSOC_IND,
 			     (uint32_t *) &mlmDisassocInd);
 

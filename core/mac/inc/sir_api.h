@@ -5281,6 +5281,21 @@ typedef struct {
 	uint32_t led_x1;        /* led flashing parameter1 */
 } tSirLedFlashingReq, *tpSirLedFlashingReq;
 #endif
+
+/**
+ * struct sir_lost_link_info - lost link information structure.
+ *
+ * @vdev_id: vdev_id from WMA. some modules call sessionId.
+ * @rssi: rssi at disconnection time.
+ *
+ * driver uses this structure to communicate information collected at
+ * disconnection time.
+ */
+struct sir_lost_link_info {
+	uint32_t vdev_id;
+	int32_t rssi;
+};
+
 /* find the size of given member within a structure */
 #ifndef member_size
 #define member_size(type, member) (sizeof(((type *)0)->member))

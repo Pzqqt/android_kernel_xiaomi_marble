@@ -1147,6 +1147,32 @@ void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
 	return;
 }
 
+void hdd_lost_link_info_cb(void *context,
+				  struct sir_lost_link_info *lost_link_info)
+{
+	hdd_context_t *hdd_ctx = (hdd_context_t *)context;
+	int status;
+	hdd_adapter_t *adapter;
+
+	status = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != status)
+		return;
+
+	if (NULL == lost_link_info) {
+		hdd_err("lost_link_info is NULL");
+		return;
+	}
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, lost_link_info->vdev_id);
+	if (NULL == adapter) {
+		hdd_err("invalid adapter");
+		return;
+	}
+
+	adapter->rssi_on_disconnect = lost_link_info->rssi;
+	hdd_info("rssi on disconnect %d", adapter->rssi_on_disconnect);
+}
+
 const struct
 nla_policy
 	qca_wlan_vendor_ll_set_policy[QCA_WLAN_VENDOR_ATTR_LL_STATS_SET_MAX + 1] = {

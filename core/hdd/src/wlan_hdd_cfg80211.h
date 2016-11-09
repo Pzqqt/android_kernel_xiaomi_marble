@@ -3351,4 +3351,13 @@ struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 #define NUM_NL80211_BANDS ((enum nl80211_band)IEEE80211_NUM_BANDS)
 #endif
 
+/**
+ * hdd_lost_link_info_cb() - callback function to get lost link information
+ * @context: HDD context
+ * @lost_link_info: lost link information
+ *
+ * Return: none
+ */
+void hdd_lost_link_info_cb(void *context,
+			struct sir_lost_link_info *lost_link_info);
 #endif

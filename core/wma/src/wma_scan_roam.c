@@ -1922,7 +1922,8 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 			WMA_LOGE("%s: Sending heartbeat failure after preauth failures",
 				__func__);
 			wma_beacon_miss_handler(wma_handle,
-						roam_req->sessionId);
+				roam_req->sessionId,
+				wma_handle->suitable_ap_hb_failure_rssi);
 			wma_handle->suitable_ap_hb_failure = false;
 		}
 		break;
@@ -5809,7 +5810,8 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 	switch (wmi_event->reason) {
 	case WMI_ROAM_REASON_BMISS:
 		WMA_LOGD("Beacon Miss for vdevid %x", wmi_event->vdev_id);
-		wma_beacon_miss_handler(wma_handle, wmi_event->vdev_id);
+		wma_beacon_miss_handler(wma_handle, wmi_event->vdev_id,
+					wmi_event->rssi);
 		break;
 	case WMI_ROAM_REASON_BETTER_AP:
 		WMA_LOGD("%s:Better AP found for vdevid %x, rssi %d", __func__,
@@ -5819,6 +5821,7 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		break;
 	case WMI_ROAM_REASON_SUITABLE_AP:
 		wma_handle->suitable_ap_hb_failure = true;
+		wma_handle->suitable_ap_hb_failure_rssi = wmi_event->rssi;
 		WMA_LOGD("%s:Bmiss scan AP found for vdevid %x, rssi %d",
 			 __func__, wmi_event->vdev_id, wmi_event->rssi);
 		wma_roam_better_ap_handler(wma_handle, wmi_event->vdev_id);

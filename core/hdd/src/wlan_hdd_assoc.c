@@ -1569,8 +1569,10 @@ static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 							);
 			}
 
-			hdd_info("sent disconnected event to nl80211, rssi: %d",
-				pAdapter->rssi);
+			hdd_info("sent disconnected event to nl80211, reason code %d",
+				(eCSR_ROAM_LOSTLINK == roamStatus) ?
+				pRoamInfo->reasonCode :
+				WLAN_REASON_UNSPECIFIED);
 		}
 		/*
 		 * During the WLAN uninitialization,supplicant is stopped

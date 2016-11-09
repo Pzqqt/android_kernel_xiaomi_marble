@@ -291,6 +291,85 @@ rate_found:
 }
 
 /**
+ * wma_peek_vdev_req() - peek what request message is queued for response.
+ *			 the function does not delete the node after found
+ * @wma: WMA handle
+ * @vdev_id: vdev ID
+ * @type: request message type
+ *
+ * Return: the request message found
+ */
+static struct wma_target_req *wma_peek_vdev_req(tp_wma_handle wma,
+						uint8_t vdev_id, uint8_t type)
+{
+	struct wma_target_req *req_msg = NULL;
+	bool found = false;
+	qdf_list_node_t *node1 = NULL, *node2 = NULL;
+
+	qdf_spin_lock_bh(&wma->vdev_respq_lock);
+	if (QDF_STATUS_SUCCESS != qdf_list_peek_front(&wma->vdev_resp_queue,
+							&node2)) {
+		qdf_spin_unlock_bh(&wma->vdev_respq_lock);
+		WMA_LOGE(FL("unable to get target req from vdev resp queue"));
+		return NULL;
+	}
+
+	do {
+		node1 = node2;
+		req_msg = qdf_container_of(node1, struct wma_target_req, node);
+		if (req_msg->vdev_id != vdev_id)
+			continue;
+		if (req_msg->type != type)
+			continue;
+
+		found = true;
+		break;
+	} while (QDF_STATUS_SUCCESS == qdf_list_peek_next(&wma->vdev_resp_queue,
+							  node1, &node2));
+	qdf_spin_unlock_bh(&wma->vdev_respq_lock);
+	if (!found) {
+		WMA_LOGP(FL("target request not found for vdev_id %d type %d"),
+			 vdev_id, type);
+		return NULL;
+	}
+	WMA_LOGD(FL("target request found for vdev id: %d type %d msg %d"),
+		 vdev_id, type, req_msg->msg_type);
+	return req_msg;
+}
+
+void wma_lost_link_info_handler(tp_wma_handle wma, uint32_t vdev_id,
+					int32_t rssi)
+{
+	struct sir_lost_link_info *lost_link_info;
+	QDF_STATUS qdf_status;
+	cds_msg_t sme_msg = {0};
+
+	/* report lost link information only for STA mode */
+	if (wma->interfaces[vdev_id].vdev_up &&
+	    (WMI_VDEV_TYPE_STA == wma->interfaces[vdev_id].type) &&
+	    (0 == wma->interfaces[vdev_id].sub_type)) {
+		lost_link_info = qdf_mem_malloc(sizeof(*lost_link_info));
+		if (NULL == lost_link_info) {
+			WMA_LOGE("%s: failed to allocate memory", __func__);
+			return;
+		}
+		lost_link_info->vdev_id = vdev_id;
+		lost_link_info->rssi = rssi;
+		sme_msg.type = eWNI_SME_LOST_LINK_INFO_IND;
+		sme_msg.bodyptr = lost_link_info;
+		sme_msg.bodyval = 0;
+		WMA_LOGI("%s: post msg to SME, bss_idx %d, rssi %d",  __func__,
+			 lost_link_info->vdev_id, lost_link_info->rssi);
+
+		qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			WMA_LOGE("%s: fail to post msg to SME", __func__);
+			qdf_mem_free(lost_link_info);
+		}
+	}
+}
+
+/**
  * host_map_smps_mode() - map fw smps mode to tSmpsModeValue
  * @fw_smps_mode: fw smps mode
  *
@@ -1231,6 +1310,58 @@ static void wma_update_pdev_stats(tp_wma_handle wma,
 }
 
 /**
+ * wma_vdev_stats_lost_link_helper() - helper function to extract
+ * lost link information from vdev statistics event while deleting BSS.
+ * @wma: WMA handle
+ * @vdev_stats: statistics information from firmware
+ *
+ * This is for informing HDD to collect lost link information while
+ * disconnection. Following conditions to check
+ * 1. vdev is up
+ * 2. bssid is zero. When handling DELETE_BSS request message, it sets bssid to
+ * zero, hence add the check here to indicate the event comes during deleting
+ * BSS
+ * 3. DELETE_BSS is the request message queued. Put this condition check on the
+ * last one as it consumes more resource searching entries in the  list
+ *
+ * Return: none
+ */
+static void wma_vdev_stats_lost_link_helper(tp_wma_handle wma,
+					    wmi_vdev_stats *vdev_stats)
+{
+	struct wma_txrx_node *node;
+	int32_t rssi;
+	struct wma_target_req *req_msg;
+	static const uint8_t zero_mac[QDF_MAC_ADDR_SIZE] = {0};
+
+	node = &wma->interfaces[vdev_stats->vdev_id];
+	if (node->vdev_up &&
+	    qdf_mem_cmp(node->bssid, zero_mac, QDF_MAC_ADDR_SIZE)) {
+		req_msg = wma_peek_vdev_req(wma, vdev_stats->vdev_id,
+					    WMA_TARGET_REQ_TYPE_VDEV_STOP);
+		if ((NULL == req_msg) ||
+		    (WMA_DELETE_BSS_REQ != req_msg->msg_type)) {
+			WMA_LOGD(FL("cannot find DELETE_BSS request message"));
+			return;
+		 }
+		WMA_LOGD(FL("get vdev id %d, beancon snr %d, data snr %d"),
+			vdev_stats->vdev_id,
+			vdev_stats->vdev_snr.bcn_snr,
+			vdev_stats->vdev_snr.dat_snr);
+		if (WMA_TGT_INVALID_SNR != vdev_stats->vdev_snr.bcn_snr)
+			rssi = vdev_stats->vdev_snr.bcn_snr;
+		else if (WMA_TGT_INVALID_SNR != vdev_stats->vdev_snr.dat_snr)
+			rssi = vdev_stats->vdev_snr.dat_snr;
+		else
+			rssi = WMA_TGT_INVALID_SNR;
+
+		/* Get the absolute rssi value from the current rssi value */
+		rssi = rssi + WMA_TGT_NOISE_FLOOR_DBM;
+		wma_lost_link_info_handler(wma, vdev_stats->vdev_id, rssi);
+	}
+}
+
+/**
  * wma_update_vdev_stats() - update vdev stats
  * @wma: wma handle
  * @vdev_stats: vdev stats
@@ -1357,6 +1488,7 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 
 		node->psnr_req = NULL;
 	}
+	wma_vdev_stats_lost_link_helper(wma, vdev_stats);
 }
 
 /**

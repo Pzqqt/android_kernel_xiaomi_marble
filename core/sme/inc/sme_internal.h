@@ -246,6 +246,8 @@ typedef struct tagSmeStruct {
 	sme_send_oem_data_rsp_msg oem_data_rsp_callback;
 	void (*encrypt_decrypt_cb)(void *,
 			struct sir_encrypt_decrypt_rsp_params *);
+	void (*lost_link_info_cb)(void *context,
+			struct sir_lost_link_info *lost_link_info);
 } tSmeStruct, *tpSmeStruct;
 
 #endif /* #if !defined( __SMEINTERNAL_H ) */

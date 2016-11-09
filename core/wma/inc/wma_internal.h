@@ -663,7 +663,8 @@ void wma_send_beacon(tp_wma_handle wma, tpSendbeaconParams bcn_info);
 void wma_set_keepalive_req(tp_wma_handle wma,
 				  tSirKeepAliveReq *keepalive);
 
-void wma_beacon_miss_handler(tp_wma_handle wma, uint32_t vdev_id);
+void wma_beacon_miss_handler(tp_wma_handle wma, uint32_t vdev_id,
+			     int32_t rssi);
 
 void wma_process_update_opmode(tp_wma_handle wma_handle,
 				      tUpdateVHTOpMode *update_vht_opmode);
@@ -1220,4 +1221,14 @@ static inline int wma_encrypt_decrypt_msg_handler(void *handle, uint8_t *data,
 }
 #endif
 
+/**
+ * wma_lost_link_info_handler() - collect lost link information and inform SME
+ * @wma: WMA handle
+ * @vdev_id: vdev ID
+ * @rssi: rssi at disconnection time
+ *
+ * Return: none
+ */
+void wma_lost_link_info_handler(tp_wma_handle wma, uint32_t vdev_id,
+				int32_t rssi);
 #endif
