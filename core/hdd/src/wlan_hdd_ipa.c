@@ -3921,7 +3921,7 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		if (ret) {
 			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 				"%s: Evt: %d, Interface setup failed",
-				msg_ex->name, meta.msg_type);
+				adapter->dev->name, type);
 			qdf_mutex_release(&hdd_ipa->event_lock);
 			goto end;
 		}
@@ -3946,7 +3946,7 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		if (!hdd_ipa->sta_connected) {
 			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 				"%s: Evt: %d, STA already disconnected",
-				msg_ex->name, meta.msg_type);
+				adapter->dev->name, type);
 			qdf_mutex_release(&hdd_ipa->event_lock);
 			return -EINVAL;
 		}
@@ -3985,7 +3985,7 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		if (!adapter->ipa_context) {
 			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 				"%s: Evt: %d, SAP already disconnected",
-				msg_ex->name, meta.msg_type);
+				adapter->dev->name, type);
 			qdf_mutex_release(&hdd_ipa->event_lock);
 			return -EINVAL;
 		}
@@ -4025,7 +4025,7 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		if (!hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx)) {
 			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 				"%s: Evt: %d, IPA UC OFFLOAD NOT ENABLED",
-				adapter->dev->name, meta.msg_type);
+				adapter->dev->name, type);
 			return 0;
 		}
 
@@ -4106,7 +4106,7 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 
 		if (ret) {
 			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "%s: Evt: %d : %d",
-				    msg_ex->name, meta.msg_type, ret);
+				    adapter->dev->name, type, ret);
 			qdf_mem_free(msg_ex);
 			return ret;
 		}
