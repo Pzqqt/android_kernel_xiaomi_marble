@@ -3969,15 +3969,15 @@ struct ratepwr_table_params {
 /**
  * struct ctl_table_params - Ctl table params
  * @ctl_array: pointer to ctl array
- * @ctl_len: ctl length
+ * @ctl_cmd_len: ctl command length
  * @is_acfg_ctl: is acfg_ctl table
  */
 struct ctl_table_params {
 	uint8_t *ctl_array;
-	uint16_t ctl_len;
-	bool is_acfg_ctl;
+	uint16_t ctl_cmd_len;
 	uint32_t target_type;
 	bool is_2g;
+	uint32_t ctl_band;
 };
 
 /**
