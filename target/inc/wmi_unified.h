@@ -3980,6 +3980,8 @@ typedef enum {
 	WMI_PDEV_PARAM_TX_SCH_DELAY,
 	/** Set RTS enable for SIFS bursting */
 	WMI_PDEV_PARAM_ENABLE_RTS_SIFS_BURSTING,
+	/** Set Maximum number of MPDUs in an AMPDU*/
+	WMI_PDEV_PARAM_MAX_MPDUS_IN_AMPDU,
 
 } WMI_PDEV_PARAM;
 
