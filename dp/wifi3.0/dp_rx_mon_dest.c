@@ -138,7 +138,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 		num_msdus = msdu_cnt;
 
-		hal_rx_msdu_list_get(rx_msdu_link_desc, &msdu_list, &num_msdus);
+		hal_rx_msdu_list_get(rx_msdu_link_desc, &msdu_list, num_msdus);
 
 		msdu_cnt -= num_msdus;
 

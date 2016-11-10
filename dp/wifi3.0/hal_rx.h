@@ -357,7 +357,6 @@ static inline void hal_rx_mpdu_desc_info_get(void *desc_addr,
 		HAL_RX_MPDU_DESC_PEER_META_DATA_GET(mpdu_info);
 }
 
-
 /*
  * @ hal_rx_msdu_desc_info_get: Gets the flags related to MSDU desciptor.
  * @				  Specifically flags needed are:
@@ -1081,7 +1080,7 @@ hal_rx_msdu_get_keyid(uint8_t *buf)
 	return (keyid_octet >> 6) & 0x3;
 }
 
-#define HAL_RX_MSDU_START_RSSI_GET(_rx_msdu_start) 	\
+#define HAL_RX_MSDU_START_RSSI_GET(_rx_msdu_start)	\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_start,  \
 		RX_MSDU_START_5_USER_RSSI_OFFSET)),	\
 		RX_MSDU_START_5_USER_RSSI_MASK,		\
@@ -1107,10 +1106,10 @@ hal_rx_msdu_start_get_rssi(uint8_t *buf)
 
 }
 
-#define HAL_RX_MSDU_START_FREQ_GET(_rx_msdu_start) 		\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_start,  	\
+#define HAL_RX_MSDU_START_FREQ_GET(_rx_msdu_start)		\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_start,		\
 		RX_MSDU_START_7_SW_PHY_META_DATA_OFFSET)),      \
-		RX_MSDU_START_7_SW_PHY_META_DATA_MASK,  	\
+		RX_MSDU_START_7_SW_PHY_META_DATA_MASK,		\
 		RX_MSDU_START_7_SW_PHY_META_DATA_LSB))
 
 /*
@@ -1135,10 +1134,10 @@ hal_rx_msdu_start_get_freq(uint8_t *buf)
 }
 
 
-#define HAL_RX_MSDU_START_PKT_TYPE_GET(_rx_msdu_start) 	\
+#define HAL_RX_MSDU_START_PKT_TYPE_GET(_rx_msdu_start)	\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_start,  \
 		RX_MSDU_START_5_PKT_TYPE_OFFSET)),      \
-		RX_MSDU_START_5_PKT_TYPE_MASK,  	\
+		RX_MSDU_START_5_PKT_TYPE_MASK,		\
 		RX_MSDU_START_5_PKT_TYPE_LSB))
 
 /*
@@ -1161,10 +1160,10 @@ hal_rx_msdu_start_get_pkt_type(uint8_t *buf)
 	return pkt_type;
 }
 
-#define HAL_RX_MSDU_START_NSS_GET(_rx_msdu_start)      	\
+#define HAL_RX_MSDU_START_NSS_GET(_rx_msdu_start)	\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_msdu_start),\
-	RX_MSDU_START_5_NSS_OFFSET)),          		\
-	RX_MSDU_START_5_NSS_MASK,              		\
+	RX_MSDU_START_5_NSS_OFFSET)),			\
+	RX_MSDU_START_5_NSS_MASK,			\
 	RX_MSDU_START_5_NSS_LSB))
 
 /*
@@ -1540,7 +1539,9 @@ hal_rx_mpdu_end_mic_err_get(uint8_t *buf)
 		RX_MSDU_LINK_8_RX_MSDU_DETAILS_MSDU_0_OFFSET))
 
 #define HAL_RX_NUM_MSDU_DESC 6
+#define HAL_RX_MAX_SAVED_RING_DESC 16
 
+/* TODO: rework the structure */
 struct hal_rx_msdu_list {
 	struct hal_rx_msdu_desc_info msdu_info[HAL_RX_NUM_MSDU_DESC];
 	uint32_t sw_cookie[HAL_RX_NUM_MSDU_DESC];
@@ -1552,24 +1553,28 @@ struct hal_buf_info {
 };
 
 /**
- * hal_rx_msdu_link_desc_get: API to get the MSDU information
+ * hal_rx_msdu_link_desc_get(): API to get the MSDU information
  * from the MSDU link descriptor
  *
- * @ msdu_link_desc: Opaque pointer used by HAL to get to the
+ * @msdu_link_desc: Opaque pointer used by HAL to get to the
  * MSDU link descriptor (struct rx_msdu_link)
- * @ msdu_list: Return the list of MSDUs contained in this link descriptor
+ *
+ * @msdu_list: Return the list of MSDUs contained in this link descriptor
+ *
+ * @num_msdus: Number of MSDUs in the MPDU
+ *
  * Return: void
  */
 static inline void hal_rx_msdu_list_get(void *msdu_link_desc,
-			struct hal_rx_msdu_list *msdu_list, uint8_t *num_msdus)
+			struct hal_rx_msdu_list *msdu_list, uint8_t num_msdus)
 {
 	struct rx_msdu_details *msdu_details;
 	struct rx_msdu_desc_info *msdu_desc_info;
 	struct rx_msdu_link *msdu_link = (struct rx_msdu_link *)msdu_link_desc;
 	int i;
 
-	if (*num_msdus > HAL_RX_NUM_MSDU_DESC)
-		*num_msdus = HAL_RX_NUM_MSDU_DESC;
+	if (num_msdus > HAL_RX_NUM_MSDU_DESC)
+		num_msdus = HAL_RX_NUM_MSDU_DESC;
 
 	msdu_details = HAL_RX_LINK_DESC_MSDU0_PTR(msdu_link);
 
@@ -1577,8 +1582,7 @@ static inline void hal_rx_msdu_list_get(void *msdu_link_desc,
 		"[%s][%d] msdu_link=%p msdu_details=%p\n",
 		__func__, __LINE__, msdu_link, msdu_details);
 
-
-	for (i = 0; i < *num_msdus; i++) {
+	for (i = 0; i < num_msdus; i++) {
 		msdu_desc_info = HAL_RX_MSDU_DESC_INFO_GET(&msdu_details[i]);
 		msdu_list->msdu_info[i].msdu_flags =
 			 HAL_RX_MSDU_FLAGS_GET(msdu_desc_info);
@@ -1592,7 +1596,6 @@ static inline void hal_rx_msdu_list_get(void *msdu_link_desc,
 			"[%s][%d] i=%d sw_cookie=%d\n",
 			__func__, __LINE__, i, msdu_list->sw_cookie[i]);
 	}
-
 }
 
 /**
@@ -1919,7 +1922,7 @@ enum hal_rx_wbm_rxdma_push_reason {
 
 /**
  * hal_rx_dump_rx_attention_tlv: dump RX attention TLV in structured
- * 				 humman readable format.
+ *				 humman readable format.
  * @ rx_attn: pointer the rx_attention TLV in pkt.
  * @ dbg_level: log level.
  *
@@ -2527,6 +2530,389 @@ static inline uint8_t hal_srng_ring_id_get(void *hal_ring)
 	return ((struct hal_srng *)hal_ring)->ring_id;
 }
 
+/* Rx MSDU link pointer info */
+struct hal_rx_msdu_link_ptr_info {
+	struct rx_msdu_link msdu_link;
+	struct hal_buf_info msdu_link_buf_info;
+};
+
+/**
+ * hal_rx_get_pkt_tlvs(): Function to retrieve pkt tlvs from nbuf
+ *
+ * @nbuf: Pointer to data buffer field
+ * Returns: pointer to rx_pkt_tlvs
+ */
+static inline
+struct rx_pkt_tlvs *hal_rx_get_pkt_tlvs(uint8_t *rx_buf_start)
+{
+	return (struct rx_pkt_tlvs *)rx_buf_start;
+}
+
+/**
+ * hal_rx_get_mpdu_info(): Function to retrieve mpdu info from pkt tlvs
+ *
+ * @pkt_tlvs: Pointer to pkt_tlvs
+ * Returns: pointer to rx_mpdu_info structure
+ */
+static inline
+struct rx_mpdu_info *hal_rx_get_mpdu_info(struct rx_pkt_tlvs *pkt_tlvs)
+{
+	return &pkt_tlvs->mpdu_start_tlv.rx_mpdu_start.rx_mpdu_info_details;
+}
+
+/**
+ * hal_rx_get_rx_sequence(): Function to retrieve rx sequence number
+ *
+ * @nbuf: Network buffer
+ * Returns: rx sequence number
+ */
+#define DOT11_SEQ_FRAG_MASK		0x000f
+#define DOT11_FC1_MORE_FRAG_OFFSET	0x04
+
+#define HAL_RX_MPDU_GET_SEQUENCE_NUMBER(_rx_mpdu_info)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
+		RX_MPDU_INFO_2_MPDU_SEQUENCE_NUMBER_OFFSET)),	\
+		RX_MPDU_INFO_2_MPDU_SEQUENCE_NUMBER_MASK,	\
+		RX_MPDU_INFO_2_MPDU_SEQUENCE_NUMBER_LSB))
+static inline
+uint16_t hal_rx_get_rx_sequence(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = hal_rx_get_pkt_tlvs(buf);
+	struct rx_mpdu_info *rx_mpdu_info = hal_rx_get_mpdu_info(pkt_tlvs);
+	uint16_t seq_number = 0;
+
+	seq_number =
+		HAL_RX_MPDU_GET_SEQUENCE_NUMBER(rx_mpdu_info) >> 4;
+
+	/* Skip first 4-bits for fragment number */
+	return seq_number;
+}
+
+/**
+ * hal_rx_get_rx_fragment_number(): Function to retrieve rx fragment number
+ *
+ * @nbuf: Network buffer
+ * Returns: rx fragment number
+ */
+static inline
+uint8_t hal_rx_get_rx_fragment_number(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = hal_rx_get_pkt_tlvs(buf);
+	struct rx_mpdu_info *rx_mpdu_info = hal_rx_get_mpdu_info(pkt_tlvs);
+	uint8_t frag_number = 0;
+
+	frag_number = HAL_RX_MPDU_GET_SEQUENCE_NUMBER(rx_mpdu_info) &
+		DOT11_SEQ_FRAG_MASK;
+
+	/* Return first 4 bits as fragment number */
+	return frag_number;
+}
+
+#define HAL_RX_MPDU_GET_FRAME_CONTROL_FIELD(_rx_mpdu_info)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
+		RX_MPDU_INFO_14_MPDU_FRAME_CONTROL_FIELD_OFFSET)),	\
+		RX_MPDU_INFO_14_MPDU_FRAME_CONTROL_FIELD_MASK,	\
+		RX_MPDU_INFO_14_MPDU_FRAME_CONTROL_FIELD_LSB))
+/**
+ * hal_rx_get_rx_more_frag_bit(): Function to retrieve more fragment bit
+ *
+ * @nbuf: Network buffer
+ * Returns: rx more fragment bit
+ */
+static inline
+uint8_t hal_rx_get_rx_more_frag_bit(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = hal_rx_get_pkt_tlvs(buf);
+	struct rx_mpdu_info *rx_mpdu_info = hal_rx_get_mpdu_info(pkt_tlvs);
+	uint16_t frame_ctrl = 0;
+
+	frame_ctrl = HAL_RX_MPDU_GET_FRAME_CONTROL_FIELD(rx_mpdu_info) >>
+		DOT11_FC1_MORE_FRAG_OFFSET;
+
+	/* more fragment bit if at offset bit 4 */
+	return frame_ctrl;
+}
+
+/**
+ * hal_rx_get_frame_ctrl_field(): Function to retrieve frame control field
+ *
+ * @nbuf: Network buffer
+ * Returns: rx more fragment bit
+ *
+ */
+static inline
+uint8_t hal_rx_get_frame_ctrl_field(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = hal_rx_get_pkt_tlvs(buf);
+	struct rx_mpdu_info *rx_mpdu_info = hal_rx_get_mpdu_info(pkt_tlvs);
+	uint16_t frame_ctrl = 0;
+
+	frame_ctrl = HAL_RX_MPDU_GET_FRAME_CONTROL_FIELD(rx_mpdu_info);
+
+	return frame_ctrl;
+}
+
+/*
+ * hal_rx_msdu_is_wlan_mcast(): Check if the buffer is for multicast address
+ *
+ * @nbuf: Network buffer
+ * Returns: flag to indicate whether the nbuf has MC/BC address
+ */
+static inline
+uint32_t hal_rx_msdu_is_wlan_mcast(qdf_nbuf_t nbuf)
+{
+	uint8 *buf = qdf_nbuf_data(nbuf);
+
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_attention *rx_attn = &pkt_tlvs->attn_tlv.rx_attn;
+
+	return rx_attn->mcast_bcast;
+}
+
+#define HAL_RX_MPDU_GET_SEQUENCE_CONTROL_VALID(_rx_mpdu_info)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
+		RX_MPDU_INFO_2_MPDU_SEQUENCE_CONTROL_VALID_OFFSET)),	\
+		RX_MPDU_INFO_2_MPDU_SEQUENCE_CONTROL_VALID_MASK,	\
+		RX_MPDU_INFO_2_MPDU_SEQUENCE_CONTROL_VALID_LSB))
+/*
+ * hal_rx_get_mpdu_sequence_control_valid(): Get mpdu sequence control valid
+ *
+ * @nbuf: Network buffer
+ * Returns: value of sequence control valid field
+ */
+static inline
+uint8_t hal_rx_get_mpdu_sequence_control_valid(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = hal_rx_get_pkt_tlvs(buf);
+	struct rx_mpdu_info *rx_mpdu_info = hal_rx_get_mpdu_info(pkt_tlvs);
+	uint8_t seq_ctrl_valid = 0;
+
+	seq_ctrl_valid =
+		HAL_RX_MPDU_GET_SEQUENCE_CONTROL_VALID(rx_mpdu_info);
+
+	return seq_ctrl_valid;
+}
+
+#define HAL_RX_MPDU_GET_FRAME_CONTROL_VALID(_rx_mpdu_info)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
+		RX_MPDU_INFO_2_MPDU_FRAME_CONTROL_VALID_OFFSET)),	\
+		RX_MPDU_INFO_2_MPDU_FRAME_CONTROL_VALID_MASK,	\
+		RX_MPDU_INFO_2_MPDU_FRAME_CONTROL_VALID_LSB))
+/*
+ * hal_rx_get_mpdu_frame_control_valid(): Retrieves mpdu frame control valid
+ *
+ * @nbuf: Network buffer
+ * Returns: value of frame control valid field
+ */
+static inline
+uint8_t hal_rx_get_mpdu_frame_control_valid(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = hal_rx_get_pkt_tlvs(buf);
+	struct rx_mpdu_info *rx_mpdu_info = hal_rx_get_mpdu_info(pkt_tlvs);
+	uint8_t frm_ctrl_valid = 0;
+
+	frm_ctrl_valid =
+		HAL_RX_MPDU_GET_FRAME_CONTROL_VALID(rx_mpdu_info);
+
+	return frm_ctrl_valid;
+}
+
+/*
+ * hal_rx_clear_mpdu_desc_info(): Clears mpdu_desc_info
+ *
+ * @rx_mpdu_desc_info: HAL view of rx mpdu desc info
+ * Returns: None
+ */
+static inline
+void hal_rx_clear_mpdu_desc_info(
+		struct hal_rx_mpdu_desc_info *rx_mpdu_desc_info)
+{
+	qdf_mem_zero(rx_mpdu_desc_info,
+		sizeof(*rx_mpdu_desc_info));
+}
+
+/*
+ * hal_rx_clear_msdu_link_ptr(): Clears msdu_link_ptr
+ *
+ * @msdu_link_ptr: HAL view of msdu link ptr
+ * @size: number of msdu link pointers
+ * Returns: None
+ */
+static inline
+void hal_rx_clear_msdu_link_ptr(struct hal_rx_msdu_link_ptr_info *msdu_link_ptr,
+				int size)
+{
+	qdf_mem_zero(msdu_link_ptr,
+		(sizeof(*msdu_link_ptr) * size));
+}
+
+/*
+ * hal_rx_chain_msdu_links() - Chains msdu link pointers
+ * @msdu_link_ptr: msdu link pointer
+ * @mpdu_desc_info: mpdu descriptor info
+ *
+ * Build a list of msdus using msdu link pointer. If the
+ * number of msdus are more, chain them together
+ *
+ * Returns: Number of processed msdus
+ */
+static inline
+int hal_rx_chain_msdu_links(qdf_nbuf_t msdu,
+	struct hal_rx_msdu_link_ptr_info *msdu_link_ptr_info,
+	struct hal_rx_mpdu_desc_info *mpdu_desc_info)
+{
+	int j;
+	struct rx_msdu_link *msdu_link_ptr =
+		&msdu_link_ptr_info->msdu_link;
+	struct rx_msdu_link *prev_msdu_link_ptr = NULL;
+	struct rx_msdu_details *msdu_details =
+		HAL_RX_LINK_DESC_MSDU0_PTR(msdu_link_ptr);
+	uint8_t num_msdus = mpdu_desc_info->msdu_count;
+	struct rx_msdu_desc_info *msdu_desc_info;
+	uint8_t fragno, more_frag;
+	uint8_t *rx_desc_info;
+	struct hal_rx_msdu_list msdu_list;
+
+	for (j = 0; j < num_msdus; j++) {
+		msdu_desc_info =
+			HAL_RX_MSDU_DESC_INFO_GET(&msdu_details[j]);
+		msdu_list.msdu_info[j].msdu_flags =
+			HAL_RX_MSDU_FLAGS_GET(msdu_desc_info);
+		msdu_list.msdu_info[j].msdu_len =
+			HAL_RX_MSDU_PKT_LENGTH_GET(msdu_desc_info);
+		msdu_list.sw_cookie[j] = HAL_RX_BUF_COOKIE_GET(
+				&msdu_details[j].buffer_addr_info_details);
+	}
+
+	/* Chain msdu links together */
+	if (prev_msdu_link_ptr) {
+		/* 31-0 bits of the physical address */
+		prev_msdu_link_ptr->
+			next_msdu_link_desc_addr_info.buffer_addr_31_0 =
+			msdu_link_ptr_info->msdu_link_buf_info.paddr &
+			BUFFER_ADDR_INFO_0_BUFFER_ADDR_31_0_MASK;
+		/* 39-32 bits of the physical address */
+		prev_msdu_link_ptr->
+			next_msdu_link_desc_addr_info.buffer_addr_39_32
+			= ((msdu_link_ptr_info->msdu_link_buf_info.paddr
+						>> 32) &&
+				BUFFER_ADDR_INFO_1_BUFFER_ADDR_39_32_MASK);
+		prev_msdu_link_ptr->
+			next_msdu_link_desc_addr_info.sw_buffer_cookie =
+			msdu_link_ptr_info->msdu_link_buf_info.sw_cookie;
+	}
+
+	/* There is space for only 6 MSDUs in a MSDU link descriptor */
+	if (num_msdus < HAL_RX_NUM_MSDU_DESC) {
+		/* mark first and last MSDUs */
+		rx_desc_info = qdf_nbuf_data(msdu);
+		fragno = hal_rx_get_rx_fragment_number(rx_desc_info);
+		more_frag = hal_rx_get_rx_more_frag_bit(rx_desc_info);
+
+		/* TODO: create skb->fragslist[] */
+
+		if (more_frag == 0) {
+			msdu_list.msdu_info[num_msdus].msdu_flags |=
+				RX_MSDU_DESC_INFO_0_LAST_MSDU_IN_MPDU_FLAG_MASK;
+		} else if (fragno == 1) {
+			msdu_list.msdu_info[num_msdus].msdu_flags |=
+			RX_MSDU_DESC_INFO_0_FIRST_MSDU_IN_MPDU_FLAG_MASK;
+
+			msdu_list.msdu_info[num_msdus].msdu_flags |=
+				RX_MSDU_DESC_INFO_0_MSDU_CONTINUATION_MASK;
+		}
+
+		num_msdus++;
+
+		/* Number of MSDUs per mpdu descriptor is updated */
+		mpdu_desc_info->msdu_count += num_msdus;
+	} else {
+		num_msdus = 0;
+		prev_msdu_link_ptr = msdu_link_ptr;
+	}
+
+	return num_msdus;
+}
+
+/*
+ * hal_rx_defrag_update_src_ring_desc(): updates reo src ring desc
+ *
+ * @ring_desc: HAL view of ring descriptor
+ * @mpdu_des_info: saved mpdu desc info
+ * @msdu_link_ptr: saved msdu link ptr
+ *
+ * API used explicitely for rx defrag to update ring desc with
+ * mpdu desc info and msdu link ptr before reinjecting the
+ * packet back to REO
+ *
+ * Returns: None
+ */
+static inline
+void hal_rx_defrag_update_src_ring_desc(void *ring_desc,
+	void *saved_mpdu_desc_info,
+	struct hal_rx_msdu_link_ptr_info *saved_msdu_link_ptr)
+{
+	struct reo_entrance_ring *reo_ent_ring;
+	struct rx_mpdu_desc_info *reo_ring_mpdu_desc_info;
+	struct hal_buf_info buf_info;
+
+	reo_ent_ring = (struct reo_entrance_ring *)ring_desc;
+	reo_ring_mpdu_desc_info = &reo_ent_ring->
+		reo_level_mpdu_frame_info.rx_mpdu_desc_info_details;
+
+	qdf_mem_copy(&reo_ring_mpdu_desc_info, saved_mpdu_desc_info,
+		sizeof(*reo_ring_mpdu_desc_info));
+
+	/*
+	 * TODO: Check for additional fields that need configuration in
+	 * reo_ring_mpdu_desc_info
+	 */
+
+	/* Update msdu_link_ptr in the reo entrance ring */
+	hal_rx_reo_buf_paddr_get(ring_desc, &buf_info);
+	buf_info.paddr = saved_msdu_link_ptr->msdu_link_buf_info.paddr;
+	buf_info.sw_cookie =
+		saved_msdu_link_ptr->msdu_link_buf_info.sw_cookie;
+}
+
+/*
+ * hal_rx_defrag_save_info_from_ring_desc(): Saves info from ring desc
+ *
+ * @msdu_link_desc_va: msdu link descriptor handle
+ * @msdu_link_ptr_info: HAL view of msdu link pointer info
+ *
+ * API used to save msdu link information along with physical
+ * address. The API also copues the sw cookie.
+ *
+ * Returns: None
+ */
+static inline
+void hal_rx_defrag_save_info_from_ring_desc(void *msdu_link_desc_va,
+	struct hal_rx_msdu_link_ptr_info *msdu_link_ptr_info,
+	struct hal_buf_info *hbi)
+{
+	struct rx_msdu_link *msdu_link_ptr =
+		(struct rx_msdu_link *)msdu_link_desc_va;
+
+	qdf_mem_copy(&msdu_link_ptr_info->msdu_link, msdu_link_ptr,
+		sizeof(struct rx_msdu_link));
+
+	msdu_link_ptr_info->msdu_link_buf_info.paddr = hbi->paddr;
+	msdu_link_ptr_info->msdu_link_buf_info.sw_cookie = hbi->sw_cookie;
+}
+
+/*
+ * hal_rx_get_desc_len(): Returns rx descriptor length
+ *
+ * Returns the size of rx_pkt_tlvs which follows the
+ * data in the nbuf
+ *
+ * Returns: Length of rx descriptor
+ */
+static inline
+uint16_t hal_rx_get_desc_len(void)
+{
+	return sizeof(struct rx_pkt_tlvs);
+}
+
 #endif /* _HAL_RX_H */
-
-

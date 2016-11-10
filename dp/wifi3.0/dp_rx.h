@@ -80,6 +80,114 @@ struct dp_rx_desc {
 	(((_cookie) & RX_DESC_COOKIE_INDEX_MASK) >>	\
 			RX_DESC_COOKIE_INDEX_SHIFT)
 
+/*
+ *dp_rx_xor_block() - xor block of data
+ *@b: destination data block
+ *@a: source data block
+ *@len: length of the data to process
+ *
+ *Returns: None
+ */
+static inline void dp_rx_xor_block(uint8_t *b, const uint8_t *a, qdf_size_t len)
+{
+	qdf_size_t i;
+
+	for (i = 0; i < len; i++)
+		b[i] ^= a[i];
+}
+
+/*
+ *dp_rx_rotl() - rotate the bits left
+ *@val: unsigned integer input value
+ *@bits: number of bits
+ *
+ *Returns: Integer with left rotated by number of 'bits'
+ */
+static inline uint32_t dp_rx_rotl(uint32_t val, int bits)
+{
+	return (val << bits) | (val >> (32 - bits));
+}
+
+/*
+ *dp_rx_rotr() - rotate the bits right
+ *@val: unsigned integer input value
+ *@bits: number of bits
+ *
+ *Returns: Integer with right rotated by number of 'bits'
+ */
+static inline uint32_t dp_rx_rotr(uint32_t val, int bits)
+{
+	return (val >> bits) | (val << (32 - bits));
+}
+
+/*
+ *dp_rx_xswap() - swap the bits left
+ *@val: unsigned integer input value
+ *
+ *Returns: Integer with bits swapped
+ */
+static inline uint32_t dp_rx_xswap(uint32_t val)
+{
+	return ((val & 0x00ff00ff) << 8) | ((val & 0xff00ff00) >> 8);
+}
+
+/*
+ *dp_rx_get_le32_split() - get little endian 32 bits split
+ *@b0: byte 0
+ *@b1: byte 1
+ *@b2: byte 2
+ *@b3: byte 3
+ *
+ *Returns: Integer with split little endian 32 bits
+ */
+static inline uint32_t dp_rx_get_le32_split(uint8_t b0, uint8_t b1, uint8_t b2,
+					uint8_t b3)
+{
+	return b0 | (b1 << 8) | (b2 << 16) | (b3 << 24);
+}
+
+/*
+ *dp_rx_get_le32() - get little endian 32 bits
+ *@b0: byte 0
+ *@b1: byte 1
+ *@b2: byte 2
+ *@b3: byte 3
+ *
+ *Returns: Integer with little endian 32 bits
+ */
+static inline uint32_t dp_rx_get_le32(const uint8_t *p)
+{
+	return dp_rx_get_le32_split(p[0], p[1], p[2], p[3]);
+}
+
+/*
+ * dp_rx_put_le32() - put little endian 32 bits
+ * @p: destination char array
+ * @v: source 32-bit integer
+ *
+ * Returns: None
+ */
+static inline void dp_rx_put_le32(uint8_t *p, uint32_t v)
+{
+	p[0] = (v) & 0xff;
+	p[1] = (v >> 8) & 0xff;
+	p[2] = (v >> 16) & 0xff;
+	p[3] = (v >> 24) & 0xff;
+}
+
+/* Extract michal mic block of data */
+#define dp_rx_michael_block(l, r)	\
+	do {					\
+		r ^= dp_rx_rotl(l, 17);	\
+		l += r;				\
+		r ^= dp_rx_xswap(l);		\
+		l += r;				\
+		r ^= dp_rx_rotl(l, 3);	\
+		l += r;				\
+		r ^= dp_rx_rotr(l, 2);	\
+		l += r;				\
+	} while (0)
+
 /**
  * struct dp_rx_desc_list_elem_t
  *
@@ -340,6 +448,7 @@ static inline int check_x86_paddr(struct dp_soc *dp_soc, qdf_nbuf_t *rx_netbuf,
 	return QDF_STATUS_E_FAILURE;
 }
 #endif
+
 /**
  * dp_rx_cookie_2_link_desc_va() - Converts cookie to a virtual address of
  *				   the MSDU Link Descriptor
@@ -392,9 +501,32 @@ void *dp_rx_cookie_2_mon_link_desc_va(struct dp_pdev *pdev,
 	link_desc_va = pdev->link_desc_banks[buf_info->sw_cookie].base_vaddr +
 		(buf_info->paddr -
 			pdev->link_desc_banks[buf_info->sw_cookie].base_paddr);
-
 	return link_desc_va;
 }
+
+/**
+ * dp_rx_defrag_concat() - Concatenate the fragments
+ *
+ * @dst: destination pointer to the buffer
+ * @src: source pointer from where the fragment payload is to be copied
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS dp_rx_defrag_concat(qdf_nbuf_t dst, qdf_nbuf_t src)
+{
+	/*
+	 * Inside qdf_nbuf_cat, if it is necessary to reallocate dst
+	 * to provide space for src, the headroom portion is copied from
+	 * the original dst buffer to the larger new dst buffer.
+	 * (This is needed, because the headroom of the dst buffer
+	 * contains the rx desc.)
+	 */
+	if (qdf_nbuf_cat(dst, src))
+		return QDF_STATUS_E_DEFRAG_ERROR;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 
 /*
  * dp_rx_buffers_replenish() - replenish rxdma ring with rx nbufs

@@ -30,6 +30,12 @@
 #include <htt_common.h>
 
 #include <cdp_txrx_cmn.h>
+#ifdef CONFIG_MCL
+#include <cds_ieee80211_common.h>
+#else
+#include <ieee80211.h>
+#endif
+
 #ifndef CONFIG_WIN
 #include <wdi_event_api.h>    /* WDI subscriber event list */
 #endif
@@ -40,6 +46,7 @@
 #include "hal_rx.h"
 #include <hal_api.h>
 #include <hal_api_mon.h>
+#include "hal_rx.h"
 
 #define MAX_TCL_RING 3
 #define MAX_RXDMA_ERRORS 32
@@ -305,6 +312,18 @@ struct dp_rx_tid {
 
 	/* only used for defrag right now */
 	TAILQ_ENTRY(dp_rx_tid) defrag_waitlist_elem;
+
+	/* MSDU link pointers used for reinjection */
+	struct hal_rx_msdu_link_ptr_info
+		transcap_msdu_link_ptr[HAL_RX_MAX_SAVED_RING_DESC];
+
+	struct hal_rx_mpdu_desc_info transcap_rx_mpdu_desc_info;
+	uint8_t curr_ring_desc_idx;
+
+	/* Sequence and fragments that are being processed currently */
+	uint32_t curr_seq_num;
+	uint32_t curr_frag_num;
+
 	uint32_t defrag_timeout_ms;
 	uint16_t dialogtoken;
 	uint16_t statuscode;
@@ -903,9 +922,7 @@ struct dp_peer {
 
 	struct {
 		enum htt_sec_type sec_type;
-#ifdef notyet /* TODO: See if this is required for defrag support */
 		u_int32_t michael_key[2]; /* relevant for TKIP */
-#endif
 	} security[2]; /* 0 -> multicast, 1 -> unicast */
 
 	/*
