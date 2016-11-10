@@ -193,7 +193,7 @@ QDF_STATUS send_vdev_start_cmd_non_tlv(wmi_unified_t wmi,
 	if (param->channel.dfs_set_cfreq2)
 		WMI_SET_CHANNEL_FLAG(&cmd->chan, WMI_CHAN_FLAG_DFS_CFREQ2);
 
-	if (param->channel.dfs_set_agile)
+	if (param->channel.set_agile)
 		WMI_SET_CHANNEL_FLAG(&cmd->chan, WMI_CHAN_FLAG_AGILE_MODE);
 
 	if (param->channel.half_rate)
