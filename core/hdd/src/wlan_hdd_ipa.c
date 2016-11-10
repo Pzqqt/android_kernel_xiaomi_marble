@@ -639,6 +639,27 @@ static inline bool hdd_ipa_uc_sta_is_enabled(hdd_context_t *hdd_ctx)
 }
 
 /**
+ * hdd_ipa_uc_sta_reset_sta_connected() - Reset sta_connected flag
+ * @hdd_ipa: Global HDD IPA context
+ *
+ * Return: None
+ */
+#ifdef IPA_UC_STA_OFFLOAD
+static inline void hdd_ipa_uc_sta_reset_sta_connected(
+		struct hdd_ipa_priv *hdd_ipa)
+{
+	vos_lock_acquire(&hdd_ipa->event_lock);
+	hdd_ipa->sta_connected = 0;
+	vos_lock_release(&hdd_ipa->event_lock);
+}
+#else
+static inline void hdd_ipa_uc_sta_reset_sta_connected(
+		struct hdd_ipa_priv *hdd_ipa)
+{
+}
+#endif
+
+/**
  * hdd_ipa_is_pre_filter_enabled() - Is IPA pre-filter enabled?
  * @hdd_ipa: Global HDD IPA context
  *
@@ -2016,6 +2037,9 @@ int hdd_ipa_uc_ssr_deinit(void)
 		hdd_ipa->assoc_stas_map[idx].sta_id = 0xFF;
 	}
 	qdf_mutex_release(&hdd_ipa->ipa_lock);
+
+	if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx))
+		hdd_ipa_uc_sta_reset_sta_connected(hdd_ipa);
 
 	/* Full IPA driver cleanup not required since wlan driver is now
 	 * unloaded and reloaded after SSR.
