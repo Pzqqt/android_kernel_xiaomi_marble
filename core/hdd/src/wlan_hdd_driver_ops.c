@@ -494,6 +494,7 @@ static void wlan_hdd_notify_handler(int state)
 /**
  * __wlan_hdd_bus_suspend() - handles platform supsend
  * @state: suspend message from the kernel
+ * @wow_flags: bitmap of WMI WOW flags to pass to FW
  *
  * Does precondtion validation. Ensures that a subsystem restart isn't in
  * progress.  Ensures that no load or unload is in progress.
@@ -505,7 +506,7 @@ static void wlan_hdd_notify_handler(int state)
  *     -EBUSY or -EAGAIN if another opperation is in progress and
  *     wlan will not be ready to suspend in time.
  */
-static int __wlan_hdd_bus_suspend(pm_message_t state)
+static int __wlan_hdd_bus_suspend(pm_message_t state, uint32_t wow_flags)
 {
 	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	void *hif_ctx;
@@ -534,7 +535,7 @@ static int __wlan_hdd_bus_suspend(pm_message_t state)
 	if (err)
 		goto done;
 
-	err = wma_bus_suspend();
+	err = wma_bus_suspend(wow_flags);
 	if (err)
 		goto resume_oltxrx;
 
@@ -561,11 +562,25 @@ int wlan_hdd_bus_suspend(pm_message_t state)
 	int ret;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_bus_suspend(state);
+	ret = __wlan_hdd_bus_suspend(state, 0);
 	cds_ssr_unprotect(__func__);
 
 	return ret;
 }
+
+#ifdef WLAN_SUSPEND_RESUME_TEST
+int wlan_hdd_unit_test_bus_suspend(pm_message_t state)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_bus_suspend(state, WMI_WOW_FLAG_UNIT_TEST_ENABLE |
+				     WMI_WOW_FLAG_DO_HTC_WAKEUP);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+#endif
 
 /**
  * __wlan_hdd_bus_suspend_noirq() - handle .suspend_noirq callback
@@ -825,7 +840,7 @@ static int __wlan_hdd_runtime_suspend(struct device *dev)
 	if (status)
 		goto resume_txrx;
 
-	status = wma_runtime_suspend();
+	status = wma_runtime_suspend(0);
 	if (status)
 		goto resume_htc;
 

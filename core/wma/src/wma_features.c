@@ -3827,10 +3827,11 @@ void wma_enable_disable_wakeup_event(WMA_HANDLE handle,
 /**
  * wma_enable_wow_in_fw() - wnable wow in fw
  * @wma: wma handle
+ * @wow_flags: bitmap of WMI WOW flags to pass to FW
  *
  * Return: QDF status
  */
-QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
+QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle, uint32_t wow_flags)
 {
 	tp_wma_handle wma = handle;
 	int ret;
@@ -3866,6 +3867,7 @@ QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 
 	param.enable = true;
 	param.can_suspend_link = htc_can_suspend_link(wma->htc_handle);
+	param.flags = wow_flags;
 	ret = wmi_unified_wow_enable_send(wma->wmi_handle, &param,
 				   WMA_WILDCARD_PDEV_ID);
 	if (ret) {
@@ -6406,13 +6408,14 @@ failure:
 /**
  * __wma_bus_suspend(): handles bus suspend for wma
  * @type: is this suspend part of runtime suspend or system suspend?
+ * @wow_flags: bitmap of WMI WOW flags to pass to FW
  *
  * Bails if a scan is in progress.
  * Calls the appropriate handlers based on configuration and event.
  *
  * Return: 0 for success or error code
  */
-static int __wma_bus_suspend(enum qdf_suspend_type type)
+static int __wma_bus_suspend(enum qdf_suspend_type type, uint32_t wow_flags)
 {
 	WMA_HANDLE handle = cds_get_context(QDF_MODULE_ID_WMA);
 	if (NULL == handle) {
@@ -6436,7 +6439,7 @@ static int __wma_bus_suspend(enum qdf_suspend_type type)
 				wma_is_wow_mode_selected(handle));
 
 	if (wma_is_wow_mode_selected(handle)) {
-		QDF_STATUS status = wma_enable_wow_in_fw(handle);
+		QDF_STATUS status = wma_enable_wow_in_fw(handle, wow_flags);
 		return qdf_status_to_os_return(status);
 	}
 
@@ -6445,6 +6448,7 @@ static int __wma_bus_suspend(enum qdf_suspend_type type)
 
 /**
  * wma_runtime_suspend() - handles runtime suspend request from hdd
+ * @wow_flags: bitmap of WMI WOW flags to pass to FW
  *
  * Calls the appropriate handler based on configuration and event.
  * Last busy marking should prevent race conditions between processing
@@ -6456,22 +6460,23 @@ static int __wma_bus_suspend(enum qdf_suspend_type type)
  *
  * Return: 0 for success or error code
  */
-int wma_runtime_suspend(void)
+int wma_runtime_suspend(uint32_t wow_flags)
 {
-	return __wma_bus_suspend(QDF_RUNTIME_SUSPEND);
+	return __wma_bus_suspend(QDF_RUNTIME_SUSPEND, wow_flags);
 }
 
 /**
  * wma_bus_suspend() - handles bus suspend request from hdd
+ * @wow_flags: bitmap of WMI WOW flags to pass to FW
  *
  * Calls the appropriate handler based on configuration and event
  *
  * Return: 0 for success or error code
  */
-int wma_bus_suspend(void)
+int wma_bus_suspend(uint32_t wow_flags)
 {
 
-	return __wma_bus_suspend(QDF_SYSTEM_SUSPEND);
+	return __wma_bus_suspend(QDF_SYSTEM_SUSPEND, wow_flags);
 }
 
 /**

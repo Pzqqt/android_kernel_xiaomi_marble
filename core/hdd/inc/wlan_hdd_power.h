@@ -223,6 +223,18 @@ void wlan_hdd_inc_suspend_stats(hdd_context_t *hdd_ctx,
  */
 #ifdef WLAN_SUSPEND_RESUME_TEST
 /**
+ * wlan_hdd_unit_test_bus_suspend() - suspend the wlan bus
+ * @state: state containing the suspend source event
+ *
+ * This function does the same as wlan_hdd_bus_suspend, but additionally passes
+ * the appropriate flags to FW, indicating this is a unit-test suspend and it
+ * should use an HTC wakeup method to resume.
+ *
+ * Return: 0 for success or error code
+ */
+int wlan_hdd_unit_test_bus_suspend(pm_message_t state);
+
+/**
  * hdd_wlan_fake_apps_resume() - Resume from unit-test triggered suspend
  * @wiphy: the kernel wiphy struct for the device being resumed
  * @dev: the kernel net_device struct for the device being resumed

@@ -2531,7 +2531,7 @@ int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev)
 		goto resume_done;
 
 	state.event = PM_EVENT_SUSPEND;
-	suspend_err = wlan_hdd_bus_suspend(state);
+	suspend_err = wlan_hdd_unit_test_bus_suspend(state);
 	if (suspend_err)
 		goto cfg80211_resume;
 
