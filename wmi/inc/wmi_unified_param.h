@@ -695,6 +695,7 @@ struct wow_cmd_params {
 	bool enable;
 	bool can_suspend_link;
 	uint8_t pause_iface_config;
+	uint32_t flags;
 };
 
 /**
