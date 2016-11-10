@@ -6387,20 +6387,40 @@ QDF_STATUS wmi_unified_encrypt_decrypt_send_cmd(void *wmi_hdl,
 /*
  * wmi_unified_send_btcoex_wlan_priority_cmd() - send btcoex priority commands
  * @wmi_handle: wmi handle
- * @value: Priority value
+ * @param :     wmi btcoex cfg params
  *
  * Send WMI_BTCOEX_CFG_CMDID parameters to fw.
  *
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
  */
 QDF_STATUS wmi_unified_send_btcoex_wlan_priority_cmd(void *wmi_hdl,
-				int value)
+				struct btcoex_cfg_params *param)
 {
 	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
 
 	if (wmi->ops->send_btcoex_wlan_priority_cmd)
 		return wmi->ops->send_btcoex_wlan_priority_cmd(wmi,
-				  value);
+				  param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+/**
+ *  wmi_unified_send_btcoex_duty_cycle_cmd() - send btcoex duty cycle commands
+ * @wmi_handle: wmi handle
+ * @param:      wmi btcoex cfg params
+ *
+ * Send WMI_BTCOEX_CFG_CMDID parameters to fw.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS wmi_unified_send_btcoex_duty_cycle_cmd(void *wmi_hdl,
+				struct btcoex_cfg_params *param)
+{
+	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
+
+	if (wmi->ops->send_btcoex_duty_cycle_cmd)
+		return wmi->ops->send_btcoex_duty_cycle_cmd(wmi,
+				param);
 
 	return QDF_STATUS_E_FAILURE;
 }

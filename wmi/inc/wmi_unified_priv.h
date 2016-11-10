@@ -986,7 +986,12 @@ QDF_STATUS
 			uint32_t value);
 
 QDF_STATUS
-(*send_btcoex_wlan_priority_cmd)(wmi_unified_t wmi_handle, int value);
+(*send_btcoex_wlan_priority_cmd)(wmi_unified_t wmi_handle,
+			struct btcoex_cfg_params *param);
+
+QDF_STATUS
+(*send_btcoex_duty_cycle_cmd)(wmi_unified_t wmi_handle,
+			struct btcoex_cfg_params *param);
 
 QDF_STATUS (*extract_wds_addr_event)(wmi_unified_t wmi_handle,
 	void *evt_buf, uint16_t len, wds_addr_event_t *wds_ev);

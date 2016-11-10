@@ -884,7 +884,10 @@ QDF_STATUS wmi_send_pdev_caldata_version_check_cmd(void *wmi_hdl,
 				uint32_t value);
 
 QDF_STATUS wmi_unified_send_btcoex_wlan_priority_cmd(void *wmi_hdl,
-				int value);
+				struct btcoex_cfg_params *param);
+
+QDF_STATUS wmi_unified_send_btcoex_duty_cycle_cmd(void *wmi_hdl,
+				struct btcoex_cfg_params *param);
 
 QDF_STATUS wmi_unified_set_atf_cmd_send(void *wmi_hdl,
 				struct set_atf_params *param);
