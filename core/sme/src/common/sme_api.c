@@ -5663,6 +5663,7 @@ QDF_STATUS sme_dhcp_start_ind(tHalHandle hHal,
 			sme_release_global_lock(&pMac->sme);
 			return QDF_STATUS_E_FAILURE;
 		}
+		pSession->dhcp_done = false;
 
 		pMsg = (tAniDHCPInd *) qdf_mem_malloc(sizeof(tAniDHCPInd));
 		if (NULL == pMsg) {
@@ -5734,6 +5735,7 @@ QDF_STATUS sme_dhcp_stop_ind(tHalHandle hHal,
 			sme_release_global_lock(&pMac->sme);
 			return QDF_STATUS_E_FAILURE;
 		}
+		pSession->dhcp_done = true;
 
 		pMsg = (tAniDHCPInd *) qdf_mem_malloc(sizeof(tAniDHCPInd));
 		if (NULL == pMsg) {
