@@ -4169,6 +4169,38 @@ struct gpio_output_params {
 	uint32_t set;
 };
 
+/* flags bit 0: to configure wlan priority bitmap */
+#define WMI_HOST_BTCOEX_PARAM_FLAGS_WLAN_PRIORITY_BITMAP_BIT (1<<0)
+/* flags bit 1: to configure both period and wlan duration */
+#define WMI_HOST_BTCOEX_PARAM_FLAGS_DUTY_CYCLE_BIT (1<<1)
+struct btcoex_cfg_params {
+	/* WLAN priority bitmask for different frame types */
+	uint32_t  btcoex_wlan_priority_bitmap;
+	/* This command is used to configure different btcoex params
+	 * in different situations.The host sets the appropriate bit(s)
+	 * in btcoex_param_flags to indicate which configuration parameters
+	 * are valid within a particular BT coex config message, so that one
+	 * BT configuration parameter can be configured without affecting
+	 * other BT configuration parameters.E.g. if the host wants to
+	 * configure only btcoex_wlan_priority_bitmap it sets only
+	 * WMI_BTCOEX_PARAM_FLAGS_WLAN_PRIORITY_BITMAP_BIT in
+	 * btcoex_param_flags so that firmware will not overwrite
+	 * other params with default value passed in the command.
+	 * Host can also set multiple bits in btcoex_param_flags
+	 * to configure more than one param in single message.
+	 */
+	uint32_t btcoex_param_flags;
+	/* period denotes the total time in milliseconds which WLAN and BT share
+	 * configured percentage for transmission and reception.
+	 */
+	uint32_t period;
+	/* wlan duration is the time in milliseconds given for wlan
+	 * in above period.
+	 */
+	uint32_t wlan_duration;
+};
+
+
 #define WMI_HOST_RTT_REPORT_CFR	0
 #define WMI_HOST_RTT_NO_REPORT_CFR	1
 #define WMI_HOST_RTT_AGGREGATE_REPORT_NON_CFR	2
@@ -5228,6 +5260,7 @@ typedef enum {
 	wmi_service_tx_mode_push_pull,
 	wmi_service_tx_mode_dynamic,
 	wmi_service_check_cal_version,
+	wmi_service_btcoex_duty_cycle,
 
 	wmi_services_max,
 } wmi_conv_service_ids;
