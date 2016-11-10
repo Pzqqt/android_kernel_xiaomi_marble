@@ -111,7 +111,6 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 {
 	tSirProbeRespBeacon *beacon_struct;
 	uint32_t enable_txbf_20mhz;
-	tSirRetStatus cfg_set_status = eSIR_FAILURE;
 	tSirRetStatus cfg_get_status = eSIR_FAILURE;
 	uint8_t ap_bcon_ch_width;
 	bool new_ch_width_dfn = false;
@@ -177,15 +176,6 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 		session->vhtCapabilityPresentInBeacon = 0;
 	}
 
-	if (session->vhtCapabilityPresentInBeacon == 1 &&
-			session->vht_config.su_beam_formee == 0) {
-		cfg_set_status = cfg_set_int(mac_ctx,
-				WNI_CFG_VHT_SU_BEAMFORMEE_CAP,
-				0);
-		if (cfg_set_status != eSIR_SUCCESS)
-			lim_log(mac_ctx, LOGP, FL(
-					"Set VHT_SU_BEAMFORMEE_CAP Fail"));
-	}
 	if (session->vhtCapabilityPresentInBeacon == 1 &&
 			!session->htSupportedChannelWidthSet) {
 		cfg_get_status = wlan_cfg_get_int(mac_ctx,
@@ -290,16 +280,7 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 			session->nss = 1;
 		}
 	}
-	if (session->vhtCapabilityPresentInBeacon == 1 &&
-			!session->htSupportedChannelWidthSet &&
-			session->vht_config.su_beam_formee == 0) {
-		cfg_set_status = cfg_set_int(mac_ctx,
-				WNI_CFG_VHT_SU_BEAMFORMEE_CAP,
-				0);
-		if (cfg_set_status != eSIR_SUCCESS)
-			lim_log(mac_ctx, LOGP,
-					FL("Set VHT_SU_BEAMFORMEE_CAP Fail"));
-	}
+
 	if (session->vhtCapability &&
 		session->vhtCapabilityPresentInBeacon &&
 		beacon_struct->ext_cap.present) {
