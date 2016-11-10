@@ -1120,6 +1120,7 @@ QDF_STATUS send_wow_enable_cmd_tlv(wmi_unified_t wmi_handle,
 		cmd->pause_iface_config = WOW_IFACE_PAUSE_ENABLED;
 	else
 		cmd->pause_iface_config = WOW_IFACE_PAUSE_DISABLED;
+	cmd->flags = param->flags;
 
 	WMI_LOGI("suspend type: %s",
 		cmd->pause_iface_config == WOW_IFACE_PAUSE_ENABLED ?
