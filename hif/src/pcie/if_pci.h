@@ -122,7 +122,6 @@ struct hif_pci_softc {
 	int irq_event;
 	int cacheline_sz;
 	u16 devid;
-	qdf_dma_addr_t soc_pcie_bar0;
 	struct hif_tasklet_entry tasklet_entries[HIF_MAX_TASKLET_NUM];
 	bool pci_enabled;
 	qdf_spinlock_t irq_lock;

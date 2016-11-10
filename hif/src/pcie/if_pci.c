@@ -2130,6 +2130,7 @@ void hif_pci_close(struct hif_softc *hif_sc)
 
 #define BAR_NUM 0
 
+#ifndef CONFIG_PLD_PCIE_INIT
 static int hif_enable_pci(struct hif_pci_softc *sc,
 			  struct pci_dev *pdev,
 			  const struct pci_device_id *id)
@@ -2170,6 +2171,7 @@ static int hif_enable_pci(struct hif_pci_softc *sc,
 		ret = -EIO;
 		goto err_region;
 	}
+
 #ifdef CONFIG_ARM_LPAE
 	/* if CONFIG_ARM_LPAE is enabled, we have to set 64 bits mask
 	 * for 32 bits device also. */
@@ -2230,11 +2232,8 @@ static int hif_enable_pci(struct hif_pci_softc *sc,
 			__func__, sc->mem);
 	}
 
-	sc->pdev = pdev;
-	sc->dev = &pdev->dev;
-	sc->devid = id->device;
-	sc->cacheline_sz = dma_get_cache_alignment();
 	ol_sc->mem = mem;
+	ol_sc->mem_pa = pci_resource_start(pdev, BAR_NUM);
 	sc->pci_enabled = true;
 	return ret;
 
@@ -2246,6 +2245,29 @@ err_region:
 	pci_disable_device(pdev);
 	return ret;
 }
+#else
+int hif_enable_pci(struct hif_pci_softc *sc,
+		struct pci_dev *pdev,
+		const struct pci_device_id *id)
+{
+	PCI_CFG_TO_DISABLE_L1SS_STATES(pdev, 0x188);
+	sc->pci_enabled = true;
+	return 0;
+}
+#endif
+
+
+#ifndef CONFIG_PLD_PCIE_INIT
+static inline void hif_pci_deinit(struct hif_pci_softc *sc)
+{
+	pci_iounmap(sc->pdev, sc->mem);
+	pci_clear_master(sc->pdev);
+	pci_release_region(sc->pdev, BAR_NUM);
+	pci_disable_device(sc->pdev);
+}
+#else
+static inline void hif_pci_deinit(struct hif_pci_softc *sc) {}
+#endif
 
 static void hif_disable_pci(struct hif_pci_softc *sc)
 {
@@ -2256,12 +2278,11 @@ static void hif_disable_pci(struct hif_pci_softc *sc)
 		return;
 	}
 	hif_pci_device_reset(sc);
-	pci_iounmap(sc->pdev, sc->mem);
+
+	hif_pci_deinit(sc);
+
 	sc->mem = NULL;
 	ol_sc->mem = NULL;
-	pci_clear_master(sc->pdev);
-	pci_release_region(sc->pdev, BAR_NUM);
-	pci_disable_device(sc->pdev);
 }
 
 #ifndef QCA_WIFI_NAPIER_EMULATION
@@ -2607,17 +2628,16 @@ void hif_pci_disable_bus(struct hif_softc *scn)
 #endif
 	mem = (void __iomem *)sc->mem;
 	if (mem) {
+#ifndef CONFIG_PLD_PCIE_INIT
 		pci_disable_msi(pdev);
+#endif
 		hif_dump_pipe_debug_count(scn);
 		if (scn->athdiag_procfs_inited) {
 			athdiag_procfs_remove();
 			scn->athdiag_procfs_inited = false;
 		}
-		pci_iounmap(pdev, mem);
+		hif_pci_deinit(sc);
 		scn->mem = NULL;
-		pci_release_region(pdev, BAR_NUM);
-		pci_clear_master(pdev);
-		pci_disable_device(pdev);
 	}
 	HIF_INFO("%s: X", __func__);
 }
@@ -3593,6 +3613,21 @@ static void hif_target_sync(struct hif_softc *scn)
 }
 #endif /* QCA_WIFI_QCA8074_VP */
 
+#ifdef CONFIG_PLD_PCIE_INIT
+static void hif_pci_get_soc_info(struct hif_pci_softc *sc, struct device *dev)
+{
+	struct pld_soc_info info;
+
+	pld_get_soc_info(dev, &info);
+	sc->mem = info.v_addr;
+	sc->ce_sc.ol_sc.mem    = info.v_addr;
+	sc->ce_sc.ol_sc.mem_pa = info.p_addr;
+}
+#else
+static void hif_pci_get_soc_info(struct hif_pci_softc *sc, struct device *dev)
+{}
+#endif
+
 /**
  * hif_enable_bus(): enable bus
  *
@@ -3633,6 +3668,7 @@ QDF_STATUS hif_pci_enable_bus(struct hif_softc *ol_sc,
 	sc->devid = id->device;
 	sc->cacheline_sz = dma_get_cache_alignment();
 	tgt_info = hif_get_target_info_handle(hif_hdl);
+	hif_pci_get_soc_info(sc, dev);
 again:
 	ret = hif_enable_pci(sc, pdev, id);
 	if (ret < 0) {
@@ -3681,13 +3717,11 @@ again:
 
 	tgt_info->target_type = target_type;
 
-	sc->soc_pcie_bar0 = pci_resource_start(pdev, BAR_NUM);
-	if (!sc->soc_pcie_bar0) {
-		HIF_ERROR("%s: ERROR - cannot get CE BAR0", __func__);
+	if (!ol_sc->mem_pa) {
+		HIF_ERROR("%s: ERROR - BAR0 uninitialized", __func__);
 		ret = -EIO;
 		goto err_tgtstate;
 	}
-	ol_sc->mem_pa = sc->soc_pcie_bar0;
 
 	if ((id->device != RUMIM2M_DEVICE_ID_NODE0) &&
 		(id->device != RUMIM2M_DEVICE_ID_NODE1)) {
