@@ -8787,6 +8787,8 @@ void hdd_stop_bus_bw_compute_timer(hdd_adapter_t *adapter)
 	}
 
 	if (can_stop == true) {
+		/* reset the ipa perf level */
+		hdd_ipa_set_perf_level(hdd_ctx, 0, 0);
 		qdf_mc_timer_stop(&hdd_ctx->bus_bw_timer);
 		hdd_reset_tcp_delack(hdd_ctx);
 	}
