@@ -102,21 +102,39 @@ cdp_pdev_detach(ol_txrx_soc_handle soc, void *pdev, int force)
 	return;
 }
 
-static inline void *cdp_peer_attach
+static inline void *cdp_peer_create
 	(ol_txrx_soc_handle soc, void *vdev,
 	uint8_t *peer_mac_addr)
 {
-	if (soc->ops->cmn_drv_ops->txrx_peer_attach)
-		return soc->ops->cmn_drv_ops->txrx_peer_attach(vdev,
+	if (soc->ops->cmn_drv_ops->txrx_peer_create)
+		return soc->ops->cmn_drv_ops->txrx_peer_create(vdev,
 			peer_mac_addr);
 	return NULL;
 }
 
-static inline void
-cdp_peer_detach(ol_txrx_soc_handle soc, void *peer)
+static inline void cdp_peer_setup
+	(ol_txrx_soc_handle soc, void *vdev, void *peer)
 {
-	if (soc->ops->cmn_drv_ops->txrx_peer_detach)
-		return soc->ops->cmn_drv_ops->txrx_peer_detach(peer);
+	if (soc->ops->cmn_drv_ops->txrx_peer_setup)
+		return soc->ops->cmn_drv_ops->txrx_peer_setup(vdev,
+			peer);
+	return;
+}
+
+static inline void cdp_peer_teardown
+	(ol_txrx_soc_handle soc, void *vdev, void *peer)
+{
+	if (soc->ops->cmn_drv_ops->txrx_peer_teardown)
+		return soc->ops->cmn_drv_ops->txrx_peer_teardown(vdev,
+			peer);
+	return;
+}
+
+static inline void
+cdp_peer_delete(ol_txrx_soc_handle soc, void *peer)
+{
+	if (soc->ops->cmn_drv_ops->txrx_peer_delete)
+		return soc->ops->cmn_drv_ops->txrx_peer_delete(peer);
 	return;
 }
 

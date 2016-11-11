@@ -337,6 +337,9 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		 */
 		/* Peer lookup failed */
 		if (!peer) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				 "%s %d : peer look-up failed peer id %d\n",
+				 __func__, __LINE__, peer_id);
 
 			/* Drop & free packet */
 			qdf_nbuf_free(rx_desc->nbuf);

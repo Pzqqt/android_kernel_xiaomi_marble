@@ -1292,13 +1292,13 @@ void dp_vdev_detach_wifi3(void *vdev_handle,
 }
 
 /*
- * dp_peer_attach_wifi3() - attach txrx peer
+ * dp_peer_create_wifi3() - attach txrx peer
  * @txrx_vdev: Datapath VDEV handle
  * @peer_mac_addr: Peer MAC address
  *
  * Return: DP peeer handle on success, NULL on failure
  */
-void *dp_peer_attach_wifi3(void *vdev_handle, uint8_t *peer_mac_addr)
+void *dp_peer_create_wifi3(void *vdev_handle, uint8_t *peer_mac_addr)
 {
 	struct dp_peer *peer;
 	int i;
@@ -1333,8 +1333,6 @@ void *dp_peer_attach_wifi3(void *vdev_handle, uint8_t *peer_mac_addr)
 	/* TODO: See of rx_opt_proc is really required */
 	peer->rx_opt_proc = soc->rx_opt_proc;
 
-	dp_peer_rx_init(pdev, peer);
-
 	/* initialize the peer_id */
 	for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++)
 		peer->peer_ids[i] = HTT_INVALID_PEER;
@@ -1352,12 +1350,6 @@ void *dp_peer_attach_wifi3(void *vdev_handle, uint8_t *peer_mac_addr)
 
 	/* TODO: See if hash based search is required */
 	dp_peer_find_hash_add(soc, peer);
-
-	if (soc->cdp_soc.ol_ops->peer_set_default_routing) {
-		/* TODO: Check on the destination ring number to be passed to FW */
-		soc->cdp_soc.ol_ops->peer_set_default_routing(soc->osif_soc, peer->mac_addr.raw,
-			peer->vdev->vdev_id, 0, 1);
-	}
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
 		"vdev %p created peer %p (%02x:%02x:%02x:%02x:%02x:%02x)\n",
@@ -1379,6 +1371,37 @@ void *dp_peer_attach_wifi3(void *vdev_handle, uint8_t *peer_mac_addr)
 	dp_local_peer_id_alloc(pdev, peer);
 #endif
 	return (void *)peer;
+}
+
+/*
+ * dp_peer_setup_wifi3() - initialize the peer
+ * @vdev_hdl: virtual device object
+ * @peer: Peer object
+ *
+ * Return: void
+ */
+void dp_peer_setup_wifi3(void *vdev_hdl, void *peer_hdl)
+{
+	struct dp_peer *peer = (struct dp_peer *)peer_hdl;
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_hdl;
+	struct dp_pdev *pdev;
+	struct dp_soc *soc;
+
+	/* preconditions */
+	qdf_assert(vdev);
+	qdf_assert(peer);
+
+	pdev = vdev->pdev;
+	soc = pdev->soc;
+
+	dp_peer_rx_init(pdev, peer);
+
+	if (soc->cdp_soc.ol_ops->peer_set_default_routing) {
+		/* TODO: Check the destination ring number to be passed to FW */
+		soc->cdp_soc.ol_ops->peer_set_default_routing(soc->osif_soc,
+			 peer->mac_addr.raw, peer->vdev->vdev_id, 0, 1);
+	}
+	return;
 }
 
 /*
@@ -1524,7 +1547,7 @@ void dp_peer_unref_delete(void *peer_handle)
  * @peer_handle:		Datapath peer handle
  *
  */
-void dp_peer_detach_wifi3(void *peer_handle)
+void dp_peer_delete_wifi3(void *peer_handle)
 {
 	struct dp_peer *peer = (struct dp_peer *)peer_handle;
 
@@ -1606,8 +1629,10 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_vdev_detach = dp_vdev_detach_wifi3,
 	.txrx_pdev_attach = dp_pdev_attach_wifi3,
 	.txrx_pdev_detach = dp_pdev_detach_wifi3,
-	.txrx_peer_attach = dp_peer_attach_wifi3,
-	.txrx_peer_detach = dp_peer_detach_wifi3,
+	.txrx_peer_create = dp_peer_create_wifi3,
+	.txrx_peer_setup = dp_peer_setup_wifi3,
+	.txrx_peer_teardown = NULL,
+	.txrx_peer_delete = dp_peer_delete_wifi3,
 	.txrx_vdev_register = dp_vdev_register_wifi3,
 	.txrx_soc_detach = dp_soc_detach_wifi3,
 	.txrx_get_vdev_mac_addr = dp_get_vdev_mac_addr_wifi3,

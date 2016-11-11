@@ -59,10 +59,16 @@ struct cdp_cmn_ops {
 
 	void(*txrx_pdev_detach)(void *pdev, int force);
 
-	void *(*txrx_peer_attach)
+	void *(*txrx_peer_create)
 		(void *vdev, uint8_t *peer_mac_addr);
 
-	void(*txrx_peer_detach)(void *peer);
+	void (*txrx_peer_setup)
+		(void *vdev_hdl, void *peer_hdl);
+
+	void (*txrx_peer_teardown)
+		(void *vdev_hdl, void *peer_hdl);
+
+	void(*txrx_peer_delete)(void *peer);
 
 	int(*txrx_set_monitor_mode)(void *vdev);
 
