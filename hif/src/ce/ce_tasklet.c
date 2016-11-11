@@ -121,7 +121,7 @@ void init_tasklet_workers(struct hif_opaque_softc *scn)
 	work_initialized = true;
 }
 
-#ifdef CONFIG_SLUB_DEBUG_ON
+#ifdef HIF_CONFIG_SLUB_DEBUG_ON
 /**
  * ce_schedule_tasklet() - schedule ce tasklet
  * @tasklet_entry: struct ce_tasklet_entry

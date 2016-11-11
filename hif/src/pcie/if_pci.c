@@ -863,7 +863,7 @@ static irqreturn_t ce_per_engine_handler(int irq, void *arg)
 	return IRQ_HANDLED;
 }
 
-#ifdef CONFIG_SLUB_DEBUG_ON
+#ifdef HIF_CONFIG_SLUB_DEBUG_ON
 
 /* worker thread to schedule wlan_tasklet in SLUB debug build */
 static void reschedule_tasklet_work_handler(void *arg)
@@ -899,7 +899,7 @@ static void hif_init_reschedule_tasklet_work(struct hif_pci_softc *sc)
 }
 #else
 static void hif_init_reschedule_tasklet_work(struct hif_pci_softc *sc) { }
-#endif /* CONFIG_SLUB_DEBUG_ON */
+#endif /* HIF_CONFIG_SLUB_DEBUG_ON */
 
 void wlan_tasklet(unsigned long data)
 {

@@ -97,7 +97,7 @@ void hif_ce_war_enable(void)
 	hif_ce_war1 = 1;
 }
 
-#ifdef CONFIG_SLUB_DEBUG_ON
+#ifdef HIF_CONFIG_SLUB_DEBUG_ON
 
 /**
  * struct hif_ce_event - structure for detailing a ce event
@@ -294,7 +294,7 @@ void war_ce_src_ring_write_idx_set(struct hif_softc *scn,
 	}
 }
 
-#ifdef CONFIG_SLUB_DEBUG_ON
+#ifdef HIF_CONFIG_SLUB_DEBUG_ON
 /**
  * ce_validate_nbytes() - validate nbytes for slub builds on tx descriptors
  * @nbytes: nbytes value being written into a send descriptor

@@ -148,6 +148,12 @@ struct CE_state;
 #define HIF_MAX_GROUP 8
 
 #ifdef CONFIG_SLUB_DEBUG_ON
+#ifndef CONFIG_WIN
+#define HIF_CONFIG_SLUB_DEBUG_ON
+#endif
+#endif
+
+#ifdef HIF_CONFIG_SLUB_DEBUG_ON
 #define QCA_NAPI_BUDGET    64
 #define QCA_NAPI_DEF_SCALE  2
 #else  /* PERF build */
