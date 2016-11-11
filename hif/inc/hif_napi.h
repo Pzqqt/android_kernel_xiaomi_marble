@@ -214,9 +214,6 @@ static inline int hif_napi_event(struct hif_opaque_softc     *hif,
 static inline int hif_napi_enabled(struct hif_opaque_softc *hif, int ce)
 { return 0; }
 
-static inline int hif_ext_napi_enabled(struct hif_opaque_softc *hif, int ce)
-{ return 0; }
-
 /* called from hdd (napi_poll), using napi id as a selector */
 static inline void hif_napi_enable_irq(struct hif_opaque_softc *hif, int id)
 { return; }
@@ -224,13 +221,16 @@ static inline void hif_napi_enable_irq(struct hif_opaque_softc *hif, int id)
 static inline int hif_napi_schedule(struct hif_opaque_softc *hif, int ce_id)
 { return 0; }
 
-static inline int hif_napi_schedule_grp(struct hif_opaque_softc *hif,
-		uint32_t grp_id)
-{ return 0; }
-
 static inline int hif_napi_poll(struct napi_struct *napi, int budget)
 { return -EPERM; }
 
 #endif /* FEATURE_NAPI */
+
+static inline int hif_ext_napi_enabled(struct hif_opaque_softc *hif, int ce)
+{ return 0; }
+
+static inline int hif_napi_schedule_grp(struct hif_opaque_softc *hif,
+		uint32_t grp_id)
+{ return 0; }
 
 #endif /* __HIF_NAPI_H__ */
