@@ -1037,6 +1037,8 @@ void dp_soc_detach_wifi3(void *txrx_soc)
 
 	soc->cmn_init_done = 0;
 
+	dp_soc_interrupt_detach(soc);
+
 	for (i = 0; i < MAX_PDEV_CNT; i++) {
 		if (soc->pdev_list[i])
 			dp_pdev_detach_wifi3((void *)pdev, 1);
