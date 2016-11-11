@@ -46,6 +46,13 @@
 #define LINUX_INVALID_TIMER_COOKIE 0xfeedface
 #define TMR_INVALID_ID (0)
 
+/* Flag for napier emulation */
+#ifdef QCA_WIFI_NAPIER_EMULATION
+#define QDF_TIMER_MULTIPLIER 100
+#else
+#define QDF_TIMER_MULTIPLIER 1
+#endif
+
 /* Type declarations */
 
 /* Static Variable Definitions */
@@ -561,6 +568,9 @@ QDF_STATUS qdf_mc_timer_start(qdf_mc_timer_t *timer, uint32_t expiration_time)
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_INVAL;
 	}
+
+	/* update expiration time based on if emulation platform */
+	expiration_time *= QDF_TIMER_MULTIPLIER;
 
 	/* make sure the remainer of the logic isn't interrupted */
 	qdf_spin_lock_irqsave(&timer->platform_info.spinlock);
