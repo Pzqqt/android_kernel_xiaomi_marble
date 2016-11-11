@@ -1539,10 +1539,9 @@ void dp_peer_unref_delete(void *peer_handle)
 #else
 		qdf_mem_free(peer);
 #endif
-
-#ifdef notyet /* See why this should be done in DP layer */
-		qdf_atomic_inc(&soc->peer_count);
-#endif
+		if (soc->cdp_soc.ol_ops->peer_unref_delete) {
+			soc->cdp_soc.ol_ops->peer_unref_delete(soc->osif_soc);
+		}
 	} else {
 		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 	}
