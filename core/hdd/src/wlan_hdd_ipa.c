@@ -1609,6 +1609,13 @@ static void hdd_ipa_uc_offload_enable_disable(hdd_adapter_t *adapter,
 		return;
 	}
 
+	if (wlan_hdd_validate_session_id(adapter->sessionId)) {
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
+			"invalid session id: %d, offload_type=%d, enable=%d",
+			adapter->sessionId, offload_type, enable);
+		return;
+	}
+
 	qdf_mem_zero(&ipa_offload_enable_disable,
 		sizeof(ipa_offload_enable_disable));
 	ipa_offload_enable_disable.offload_type = offload_type;
