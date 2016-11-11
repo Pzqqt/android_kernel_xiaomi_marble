@@ -40,6 +40,10 @@
 #include "wmi_unified_priv.h"
 #include "wmi_unified_param.h"
 
+#ifndef WMI_NON_TLV_SUPPORT
+#include "wmi_tlv_helper.h"
+#endif
+
 #include <linux/debugfs.h>
 
 /* This check for CONFIG_WIN temporary added due to redeclaration compilation
