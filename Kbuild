@@ -6,7 +6,9 @@ else
 	KERNEL_BUILD := 0
 endif
 
-CONFIG_LITHIUM := y
+ifeq ($(CONFIG_CNSS_QCA6290), y)
+	CONFIG_LITHIUM := y
+endif
 
 ifeq ($(CONFIG_CLD_HL_SDIO_CORE), y)
 	CONFIG_QCA_WIFI_SDIO := 1
@@ -21,13 +23,6 @@ ifdef CONFIG_ICNSS
 endif
 
 ifeq (y,$(findstring y,$(CONFIG_CNSS) $(CONFIG_CNSS2)))
-ifndef CONFIG_ROME_IF
-	#use pci as default interface
-	CONFIG_ROME_IF = pci
-endif
-endif
-
-ifneq (y, $(CONFIG_ARCH_MSM))
 ifndef CONFIG_ROME_IF
 	#use pci as default interface
 	CONFIG_ROME_IF = pci
@@ -126,18 +121,6 @@ ifeq ($(KERNEL_BUILD), 0)
 			CONFIG_WLAN_FEATURE_LPSS := y
 			endif
 		endif
-
-		ifneq (y, $(CONFIG_ARCH_MSM))
-		#Flag to enable Protected Managment Frames (11w) feature
-		CONFIG_WLAN_FEATURE_11W := y
-		#Flag to enable LTE CoEx feature
-		CONFIG_QCOM_LTE_COEX := y
-			ifneq ($(CONFIG_MOBILE_ROUTER), y)
-			#Flag to enable LPSS feature
-			CONFIG_WLAN_FEATURE_LPSS := y
-			endif
-		endif
-
 	endif
 
 	#Flag to enable Protected Managment Frames (11w) feature
@@ -187,7 +170,7 @@ ifneq ($(CONFIG_ROME_IF),sdio)
 	CONFIG_WLAN_FASTPATH := y
 
 	# Flag to enable NAPI
-ifdef CONFIG_LITHIUM
+ifeq (y,$(CONFIG_LITHIUM))
 	CONFIG_WLAN_NAPI := n
 	CONFIG_WLAN_NAPI_DEBUG := n
 else
@@ -221,11 +204,7 @@ endif
 endif
 
 # If not set, assume, Common driver is with in the build tree
-ifeq (y, $(CONFIG_ARCH_MSM))
 WLAN_COMMON_ROOT ?= qca-wifi-host-cmn
-else
-WLAN_COMMON_ROOT ?= ../qca-wifi-host-cmn
-endif
 WLAN_COMMON_INC ?= $(WLAN_ROOT)/$(WLAN_COMMON_ROOT)
 
 ifneq ($(CONFIG_MOBILE_ROUTER), y)
@@ -270,9 +249,6 @@ endif
 #Enable PCI specific APIS (dma, etc)
 ifeq ($(CONFIG_ROME_IF),pci)
 	CONFIG_HIF_PCI := 1
-ifneq (y,$(CONFIG_ARCH_MSM))
-	CONFIG_HIF_AHB := 1
-endif
 endif
 
 #Enable USB specific APIS
@@ -941,12 +917,6 @@ endif
 
 HIF_PCIE_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_PCIE_DIR)/if_pci.o
 HIF_SNOC_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_SNOC_DIR)/if_snoc.o
-
-ifeq ($(CONFIG_HIF_AHB), 1)
-HIF_AHB_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_SNOC_DIR)/if_ahb.o \
-		$(WLAN_COMMON_ROOT)/$(HIF_SNOC_DIR)/if_ahb_reset.o
-endif
-
 HIF_SDIO_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/if_sdio.o
 
 HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/multibus.o
@@ -957,13 +927,6 @@ HIF_OBJS += $(HIF_PCIE_OBJS)
 HIF_OBJS += $(HIF_COMMON_OBJS)
 HIF_OBJS += $(HIF_CE_OBJS)
 HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/multibus_pci.o
-endif
-
-ifeq ($(CONFIG_HIF_AHB), 1)
-HIF_OBJS += $(HIF_AHB_OBJS)
-HIF_OBJS += $(HIF_COMMON_OBJS)
-HIF_OBJS += $(HIF_CE_OBJS)
-HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/multibus_ahb.o
 endif
 
 ifeq ($(CONFIG_HIF_SNOC), 1)
@@ -1228,9 +1191,7 @@ endif
 endif
 
 ifeq (y,$(findstring y,$(CONFIG_ARCH_MSM) $(CONFIG_ARCH_QCOM)))
-ifeq (y,$(CONFIG_ARCH_MSM))
 CDEFINES += -DMSM_PLATFORM
-endif
 endif
 
 CDEFINES +=	-DQCA_SUPPORT_TXRX_LOCAL_PEER_ID
@@ -1378,10 +1339,6 @@ endif
 
 ifeq ($(CONFIG_HIF_SNOC), 1)
 CDEFINES += -DHIF_SNOC
-endif
-
-ifeq ($(CONFIG_HIF_AHB), 1)
-CDEFINES += -DHIF_AHB
 endif
 
 #Enable High Latency related Flags
@@ -1613,10 +1570,6 @@ endif
 endif
 endif
 
-ifeq (y,$(filter y,$(CONFIG_LITHIUM),$(CONFIG_64BIT_PADDR)))
-CONFIG_FEATURE_TSO := y
-endif
-
 ifeq ($(CONFIG_FEATURE_TSO),y)
 CDEFINES += -DFEATURE_TSO
 endif
@@ -1663,6 +1616,7 @@ endif
 ifeq ($(CONFIG_LITHIUM),y)
 CDEFINES += -DQCA6290_HEADERS_DEF
 CDEFINES += -DQCA_WIFI_QCA8074
+CDEFINES += -DQCA_WIFI_NAPIER_EMULATION
 CDEFINES += -DQCA_WIFI_QCA8074_VP
 endif
 
