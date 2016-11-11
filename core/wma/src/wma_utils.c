@@ -1695,6 +1695,10 @@ int wma_stats_event_handler(void *handle, uint8_t *cmd_param_info,
 			if (rssi_event->num_per_chain_rssi_stats > 0) {
 				temp = (uint8_t *) rssi_event;
 				temp += sizeof(*rssi_event);
+
+				/* skip past struct array tlv header */
+				temp += WMI_TLV_HDR_SIZE;
+
 				for (i = 0;
 				     i < rssi_event->num_per_chain_rssi_stats;
 				     i++) {
