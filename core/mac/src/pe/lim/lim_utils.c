@@ -7218,3 +7218,76 @@ void lim_send_set_dtim_period(tpAniSirGlobal mac_ctx, uint8_t dtim_period,
 		qdf_mem_free(dtim_params);
 	}
 }
+
+/**
+ * lim_is_valid_frame(): validate RX frame using last processed frame details
+ * to find if it is duplicate frame.
+ *
+ * @last_processed_frm: last processed frame pointer.
+ * @pRxPacketInfo: RX packet.
+ *
+ * Frame treat as duplicate:
+ * if retry bit is set and
+ * 	 if source address and seq number matches with the last processed frame
+ *
+ * Return: false if duplicate frame, else true.
+ */
+bool lim_is_valid_frame(last_processed_msg *last_processed_frm,
+		uint8_t *pRxPacketInfo)
+{
+	uint16_t seq_num;
+	tpSirMacMgmtHdr pHdr;
+
+	if (!pRxPacketInfo) {
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+			  FL("Invalid RX frame"));
+		return false;
+	}
+
+	pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
+
+	if (pHdr->fc.retry == 0)
+		return true;
+
+	seq_num = (((pHdr->seqControl.seqNumHi <<
+			HIGH_SEQ_NUM_OFFSET) |
+			pHdr->seqControl.seqNumLo));
+
+	if (last_processed_frm->seq_num == seq_num &&
+		qdf_mem_cmp(last_processed_frm->sa, pHdr->sa, ETH_ALEN) == 0) {
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+		FL("Duplicate frame from "MAC_ADDRESS_STR " Seq Number %d"),
+		MAC_ADDR_ARRAY(pHdr->sa), seq_num);
+		return false;
+	}
+	return true;
+}
+
+/**
+ * lim_update_last_processed_frame(): update new processed frame info to cache.
+ *
+ * @last_processed_frm: last processed frame pointer.
+ * @pRxPacketInfo: Successfully processed RX packet.
+ *
+ * Return: None.
+ */
+void lim_update_last_processed_frame(last_processed_msg *last_processed_frm,
+		uint8_t *pRxPacketInfo)
+{
+	uint16_t seq_num;
+	tpSirMacMgmtHdr pHdr;
+
+	if (!pRxPacketInfo) {
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+			  FL("Invalid RX frame"));
+		return;
+	}
+
+	pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
+	seq_num = (((pHdr->seqControl.seqNumHi <<
+			HIGH_SEQ_NUM_OFFSET) |
+			pHdr->seqControl.seqNumLo));
+
+	qdf_mem_copy(last_processed_frm->sa, pHdr->sa, ETH_ALEN);
+	last_processed_frm->seq_num = seq_num;
+}

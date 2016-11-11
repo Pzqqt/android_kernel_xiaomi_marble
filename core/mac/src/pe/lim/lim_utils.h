@@ -79,7 +79,16 @@ typedef union uPmfSaQueryTimerId {
 } tPmfSaQueryTimerId, *tpPmfSaQueryTimerId;
 #endif
 
+typedef struct last_processed_frame {
+	tSirMacAddr sa;
+	uint16_t seq_num;
+} last_processed_msg;
+
 /* LIM utility functions */
+bool lim_is_valid_frame(last_processed_msg *last_processed_frm,
+		uint8_t *pRxPacketInfo);
+void lim_update_last_processed_frame(last_processed_msg *last_processed_frm,
+		uint8_t *pRxPacketInfo);
 void limGetBssidFromPkt(tpAniSirGlobal, uint8_t *, uint8_t *, uint32_t *);
 char *lim_dot11_reason_str(uint16_t reasonCode);
 char *lim_mlm_state_str(tLimMlmStates state);

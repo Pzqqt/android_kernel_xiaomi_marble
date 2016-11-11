@@ -60,6 +60,8 @@
 
 #define BA_DEFAULT_TX_BUFFER_SIZE 64
 
+static last_processed_msg rrm_link_action_frm;
+
 /* Note: The test passes if the STAUT stops sending any frames, and no further
    frames are transmitted on this channel by the station when the AP has sent
    the last 6 beacons, with the channel switch information elements as seen
@@ -1406,7 +1408,7 @@ err:
 	qdf_mem_free(frm);
 }
 
-static void
+static tSirRetStatus
 __lim_process_link_measurement_req(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 				   tpPESession psessionEntry)
 {
@@ -1420,7 +1422,7 @@ __lim_process_link_measurement_req(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	frameLen = WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo);
 
 	if (psessionEntry == NULL) {
-		return;
+		return eSIR_FAILURE;
 	}
 
 	/**Unpack the received frame */
@@ -1435,7 +1437,7 @@ __lim_process_link_measurement_req(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		PELOG2(sir_dump_buf
 			       (pMac, SIR_DBG_MODULE_ID, LOG2, pBody, frameLen);
 		       )
-		return;
+		return eSIR_FAILURE;
 	} else if (DOT11F_WARNED(nStatus)) {
 		lim_log(pMac, LOGW,
 			FL
@@ -1447,7 +1449,7 @@ __lim_process_link_measurement_req(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	}
 	/* Call rrm function to handle the request. */
 
-	rrm_process_link_measurement_request(pMac, pRxPacketInfo, &frm,
+	return rrm_process_link_measurement_request(pMac, pRxPacketInfo, &frm,
 					     psessionEntry);
 
 }
@@ -1912,9 +1914,19 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 						session);
 				break;
 			case SIR_MAC_RRM_LINK_MEASUREMENT_REQ:
-				__lim_process_link_measurement_req(mac_ctx,
+				if (!lim_is_valid_frame(
+					&rrm_link_action_frm,
+					rx_pkt_info))
+					break;
+
+				if (__lim_process_link_measurement_req(
+						mac_ctx,
 						(uint8_t *)rx_pkt_info,
-						session);
+						session) == eSIR_SUCCESS)
+					lim_update_last_processed_frame(
+							&rrm_link_action_frm,
+							rx_pkt_info);
+
 				break;
 			case SIR_MAC_RRM_NEIGHBOR_RPT:
 				__lim_process_neighbor_report(mac_ctx,
