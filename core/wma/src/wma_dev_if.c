@@ -77,32 +77,6 @@
 #include "wma_nan_datapath.h"
 #include "wlan_tgt_def_config.h"
 
-#ifdef QCA_WIFI_QCA8074
-#define PEER_ATTACH_WIFI3(peer, soc, vdev, peer_addr)    \
-do {                                                       \
-	peer = cdp_peer_attach(soc, vdev, peer_addr);      \
-	if (!peer) {                                       \
-		WMA_LOGE("%s : Unable to attach peer %pM", \
-			__func__, peer_addr);              \
-		goto err;                                  \
-	}                                                  \
-} while (0)
-/* Do Nothing */
-#define PEER_ATTACH_LEGACY(peer, soc, vdev, peer_addr) {}
-#else
-/* Do Nothing */
-#define PEER_ATTACH_WIFI3(peer, soc, vdev, peer_addr) {}
-#define PEER_ATTACH_LEGACY(peer, soc, vdev, peer_addr)     \
-do {                                                       \
-	peer = cdp_peer_attach(soc, vdev, peer_addr);      \
-	if (!peer) {                                       \
-		WMA_LOGE("%s : Unable to attach peer %pM", \
-			__func__, peer_addr);              \
-		goto err;                                  \
-	}                                                  \
-} while (0)
-#endif /* CONFIG_LITHIUM */
-
 /**
  * wma_find_vdev_by_addr() - find vdev_id from mac address
  * @wma: wma handle
@@ -1111,7 +1085,7 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 		if (roam_synch_in_progress)
 			cdp_peer_detach_force_delete(soc, peer);
 		else
-			cdp_peer_detach(soc, peer);
+			cdp_peer_delete(soc, peer);
 	}
 	peer_mac_addr = cdp_peer_get_peer_mac_addr(soc, peer);
 	if (peer_mac_addr == NULL) {
@@ -1174,7 +1148,17 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, void *pdev, void *vdev,
 		goto err;
 	}
 
-	PEER_ATTACH_LEGACY(peer, soc, vdev, peer_addr);
+	/* The peer object should be created before sending the WMI peer
+	 * create command to firmware. This is to prevent a race condition
+	 * where the HTT peer map event is received before the peer object
+	 * is created in the data path
+	 */
+	peer = cdp_peer_create(soc, vdev, peer_addr);
+	if (!peer) {
+		WMA_LOGE("%s : Unable to attach peer %pM", __func__, peer_addr);
+		goto err;
+	}
+
 	if (roam_synch_in_progress) {
 		WMA_LOGE("%s: LFR3: Created peer %p with peer_addr %pM vdev_id %d,"
 			 "peer_count - %d",
@@ -1188,14 +1172,19 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, void *pdev, void *vdev,
 	if (wmi_unified_peer_create_send(wma->wmi_handle,
 					 &param) != QDF_STATUS_SUCCESS) {
 		WMA_LOGP("%s : Unable to create peer in Target", __func__);
-		cdp_peer_detach(soc, peer);
+		cdp_peer_delete(soc, peer);
 		goto err;
 	}
+
 	WMA_LOGE("%s: Created peer %p with peer_addr %pM vdev_id %d, peer_count - %d",
 		  __func__, peer, peer_addr, vdev_id,
 		  wma->interfaces[vdev_id].peer_count);
 
-	PEER_ATTACH_WIFI3(peer, soc, vdev, peer_addr);
+	cdp_peer_setup(soc, vdev, peer);
+
+	WMA_LOGE("%s: Initialized peer with peer_addr %pM vdev_id %d",
+		__func__, peer_addr, vdev_id);
+
 	mac_addr_raw = cdp_get_vdev_mac_addr(soc, vdev);
 	if (mac_addr_raw == NULL) {
 		WMA_LOGE("%s: peer mac addr is NULL", __func__);
@@ -4384,7 +4373,7 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, tpDeleteBssParams params)
 	}
 
 	if (peer)
-		cdp_peer_detach(soc, peer);
+		cdp_peer_delete(soc, peer);
 	iface->peer_count--;
 	WMA_LOGE("%s: Removed peer %p with peer_addr %pM vdevid %d peer_count %d",
 		 __func__, peer, params->bssid,  params->smesessionId,
