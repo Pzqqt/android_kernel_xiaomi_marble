@@ -1740,10 +1740,15 @@ QDF_STATUS hif_start(struct hif_opaque_softc *hif_ctx)
 	if (hif_completion_thread_startup(hif_state))
 		return QDF_STATUS_E_FAILURE;
 
-	/* Post buffers once to start things off. */
-	(void)hif_post_recv_buffers(scn);
-
+	/* enable buffer cleanup */
 	hif_state->started = true;
+
+	/* Post buffers once to start things off. */
+	if (hif_post_recv_buffers(scn)) {
+		/* cleanup is done in hif_ce_disable */
+		HIF_ERROR("%s:failed to post buffers", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
