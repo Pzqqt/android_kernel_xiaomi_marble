@@ -928,6 +928,9 @@ void qdf_dp_trace_set_track(qdf_nbuf_t nbuf, enum qdf_proto_dir dir)
 }
 EXPORT_SYMBOL(qdf_dp_trace_set_track);
 
+#define DPTRACE_PRINT(args...) \
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO, ## args)
+
 /**
  * dump_hex_trace() - Display the data in buffer
  * @buf:     buffer which contains data to be displayed
@@ -949,8 +952,7 @@ static void dump_hex_trace(char *str, uint8_t *buf, uint8_t buf_len)
 		hex_dump_to_buffer(ptr + i, linelen, ROW_SIZE, 1,
 				linebuf, sizeof(linebuf), false);
 
-		qdf_trace_msg(QDF_MODULE_ID_QDF,
-		   QDF_TRACE_LEVEL_ERROR, "DPT: %s: %s", str, linebuf);
+		DPTRACE_PRINT("DPT: %s: %s", str, linebuf);
 	}
 }
 EXPORT_SYMBOL(dump_hex_trace);
@@ -1341,10 +1343,10 @@ void qdf_dp_display_mgmt_pkt(struct qdf_dp_trace_record_s *record,
 	struct qdf_dp_trace_mgmt_buf *buf =
 		(struct qdf_dp_trace_mgmt_buf *)record->data;
 
-	qdf_print("DPT: %04d: %012llu: %s vdev_id %d", index,
+	DPTRACE_PRINT("DPT: %04d: %012llu: %s vdev_id %d", index,
 		record->time, qdf_dp_code_to_string(record->code),
 		buf->vdev_id);
-	qdf_print("DPT: Type %s Subtype %s", qdf_dp_type_to_str(buf->type),
+	DPTRACE_PRINT("DPT: Type %s Subtype %s", qdf_dp_type_to_str(buf->type),
 		qdf_dp_subtype_to_str(buf->subtype));
 }
 EXPORT_SYMBOL(qdf_dp_display_mgmt_pkt);
@@ -1390,10 +1392,10 @@ void qdf_dp_display_event_record(struct qdf_dp_trace_record_s *record,
 	struct qdf_dp_trace_event_buf *buf =
 		(struct qdf_dp_trace_event_buf *)record->data;
 
-	qdf_print("DPT: %04d: %012llu: %s vdev_id %d", index,
+	DPTRACE_PRINT("DPT: %04d: %012llu: %s vdev_id %d", index,
 		record->time, qdf_dp_code_to_string(record->code),
 		buf->vdev_id);
-	qdf_print("DPT: Type %s Subtype %s", qdf_dp_type_to_str(buf->type),
+	DPTRACE_PRINT("DPT: Type %s Subtype %s", qdf_dp_type_to_str(buf->type),
 		qdf_dp_subtype_to_str(buf->subtype));
 }
 EXPORT_SYMBOL(qdf_dp_display_event_record);
@@ -1439,10 +1441,10 @@ void qdf_dp_display_proto_pkt(struct qdf_dp_trace_record_s *record,
 	struct qdf_dp_trace_proto_buf *buf =
 		(struct qdf_dp_trace_proto_buf *)record->data;
 
-	qdf_print("DPT: %04d: %012llu: %s vdev_id %d", index,
+	DPTRACE_PRINT("DPT: %04d: %012llu: %s vdev_id %d", index,
 		record->time, qdf_dp_code_to_string(record->code),
 		buf->vdev_id);
-	qdf_print("DPT: SA: " QDF_MAC_ADDRESS_STR " %s DA: "
+	DPTRACE_PRINT("DPT: SA: " QDF_MAC_ADDRESS_STR " %s DA: "
 		  QDF_MAC_ADDRESS_STR " Type %s Subtype %s",
 		QDF_MAC_ADDR_ARRAY(buf->sa.bytes), qdf_dp_dir_to_str(buf->dir),
 		QDF_MAC_ADDR_ARRAY(buf->da.bytes),
@@ -1500,12 +1502,12 @@ void qdf_dp_display_ptr_record(struct qdf_dp_trace_record_s *record,
 		(struct qdf_dp_trace_ptr_buf *)record->data;
 
 	if (record->code == QDF_DP_TRACE_FREE_PACKET_PTR_RECORD)
-		qdf_print("DPT: %04d: %012llu: %s msdu_id: %d, status: %d",
+		DPTRACE_PRINT("DPT: %04d: %012llu: %s msdu_id: %d, status: %d",
 			 index, record->time,
 			 qdf_dp_code_to_string(record->code), buf->msdu_id,
 			 buf->status);
 	else
-		qdf_print("DPT: %04d: %012llu: %s msdu_id: %d, vdev_id: %d",
+		DPTRACE_PRINT("DPT: %04d: %012llu: %s msdu_id: %d, vdev_id: %d",
 			 index,
 			 record->time, qdf_dp_code_to_string(record->code),
 			 buf->msdu_id, buf->status);
@@ -1553,7 +1555,7 @@ EXPORT_SYMBOL(qdf_dp_trace_ptr);
 void qdf_dp_display_record(struct qdf_dp_trace_record_s *pRecord,
 				uint16_t recIndex)
 {
-	qdf_print("DPT: %04d: %012llu: %s", recIndex,
+	DPTRACE_PRINT("DPT: %04d: %012llu: %s", recIndex,
 		pRecord->time, qdf_dp_code_to_string(pRecord->code));
 	switch (pRecord->code) {
 	case  QDF_DP_TRACE_HDD_TX_TIMEOUT:
