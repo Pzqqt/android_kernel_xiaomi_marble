@@ -492,6 +492,30 @@ struct cdp_pflow_ops {
 };
 #endif /* CONFIG_WIN */
 
+#define LRO_IPV4_SEED_ARR_SZ 5
+#define LRO_IPV6_SEED_ARR_SZ 11
+
+/**
+ * struct cdp_lro_config - set LRO init parameters
+ * @lro_enable: indicates whether lro is enabled
+ * @tcp_flag: If the TCP flags from the packet do not match
+ * the values in this field after masking with TCP flags mask
+ * below, packet is not LRO eligible
+ * @tcp_flag_mask: field for comparing the TCP values provided
+ * above with the TCP flags field in the received packet
+ * @toeplitz_hash_ipv4: contains seed needed to compute the flow id
+ * 5-tuple toeplitz hash for ipv4 packets
+ * @toeplitz_hash_ipv6: contains seed needed to compute the flow id
+ * 5-tuple toeplitz hash for ipv6 packets
+ */
+struct cdp_lro_hash_config {
+	uint32_t lro_enable;
+	uint32_t tcp_flag:9,
+		tcp_flag_mask:9;
+	uint32_t toeplitz_hash_ipv4[LRO_IPV4_SEED_ARR_SZ];
+	uint32_t toeplitz_hash_ipv6[LRO_IPV6_SEED_ARR_SZ];
+};
+
 struct ol_if_ops {
 	void (*peer_set_default_routing)(void *scn_handle,
 			uint8_t *peer_macaddr, uint8_t vdev_id,
@@ -513,7 +537,8 @@ struct ol_if_ops {
 			uint32_t flags);
 	void (*peer_del_wds_entry)(void *ol_soc_handle,
 			uint8_t *wds_macaddr);
-
+	QDF_STATUS (*lro_hash_config)(void *scn_handle,
+			struct cdp_lro_hash_config *lro_hash);
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };
 

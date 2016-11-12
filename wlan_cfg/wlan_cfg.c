@@ -85,6 +85,9 @@
 #define NUM_RXDMA_RINGS_PER_PDEV 1
 #endif
 
+#define WLAN_RX_HASH_ENABLE 0
+#define WLAN_LRO_ENABLE 0
+
 static const int tx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 						WLAN_CFG_TX_RING_MASK_0,
 						WLAN_CFG_TX_RING_MASK_1,
@@ -125,6 +128,8 @@ static const int rx_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
  * @int_rx_mon_ring_mask - Bitmap of Rx monitor ring interrupts mapped to each
  *			  NAPI/Intr context
  * @int_ce_ring_mask - Bitmap of CE interrupts mapped to each NAPI/Intr context
+ * @lro_enabled - is LRO enabled
+ * @rx_hash - Enable hash based steering of rx packets
  *
  */
 struct wlan_cfg_dp_soc_ctxt {
@@ -145,6 +150,8 @@ struct wlan_cfg_dp_soc_ctxt {
 	int int_rx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int int_rx_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int int_ce_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	bool lro_enabled;
+	bool rx_hash;
 };
 
 /**
@@ -195,6 +202,9 @@ struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach(void)
 		wlan_cfg_ctx->int_rx_ring_mask[i] = rx_ring_mask[i];
 		wlan_cfg_ctx->int_rx_mon_ring_mask[i] = rx_mon_ring_mask[i];
 	}
+
+	wlan_cfg_ctx->rx_hash = WLAN_RX_HASH_ENABLE;
+	wlan_cfg_ctx->lro_enabled = WLAN_LRO_ENABLE;
 
 	return wlan_cfg_ctx;
 }
@@ -370,4 +380,14 @@ int wlan_cfg_get_rx_dma_buf_ring_size(struct wlan_cfg_dp_pdev_ctxt *cfg)
 int wlan_cfg_get_num_mac_rings(struct wlan_cfg_dp_pdev_ctxt *cfg)
 {
 	return  cfg->num_mac_rings;
+}
+
+bool wlan_cfg_is_lro_enabled(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return  cfg->lro_enabled;
+}
+
+bool wlan_cfg_is_rx_hash_enabled(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return  cfg->rx_hash;
 }

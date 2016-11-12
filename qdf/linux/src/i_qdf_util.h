@@ -397,5 +397,16 @@ int __qdf_set_dma_coherent_mask(struct device *dev, uint8_t addr_bits)
 	return dma_set_coherent_mask(dev, DMA_BIT_MASK(addr_bits));
 }
 #endif
+/**
+ * qdf_get_random_bytes() - returns nbytes bytes of random
+ * data
+ *
+ * Return: random bytes of data
+ */
+static inline
+void __qdf_get_random_bytes(void *buf, int nbytes)
+{
+	return get_random_bytes(buf, nbytes);
+}
 
 #endif /*_I_QDF_UTIL_H*/

@@ -312,4 +312,21 @@ int wlan_cfg_get_rx_dma_buf_ring_size(
  * Return: number of mac DMA rings per pdev
  */
 int wlan_cfg_get_num_mac_rings(struct wlan_cfg_dp_pdev_ctxt *cfg);
+
+/*
+ * wlan_cfg_is_lro_enabled - Return LRO enabled/disabled
+ * @wlan_cfg_pdev_ctx
+ *
+ * Return: true - LRO enabled false - LRO disabled
+ */
+bool wlan_cfg_is_lro_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_is_lro_enabled - Return RX hash enabled/disabled
+ * @wlan_cfg_pdev_ctx
+ *
+ * Return: true - enabled false - disabled
+ */
+bool wlan_cfg_is_rx_hash_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
+
 #endif

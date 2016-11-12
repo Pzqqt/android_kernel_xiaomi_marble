@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -36,6 +36,7 @@
 #include <qdf_types.h>          /* uint8_t, etc. */
 #include <asm/checksum.h>
 #include <net/ip6_checksum.h>
+#include <net/tcp.h>
 
 typedef struct in6_addr __in6_addr_t;
 typedef __wsum __wsum_t;
@@ -49,4 +50,12 @@ static inline  int32_t __qdf_csum_ipv6(const struct in6_addr *saddr,
 			       (struct in6_addr *)daddr, len, proto, sum);
 }
 
+#define __QDF_TCPHDR_FIN TCPHDR_FIN
+#define __QDF_TCPHDR_SYN TCPHDR_SYN
+#define __QDF_TCPHDR_RST TCPHDR_RST
+#define __QDF_TCPHDR_PSH TCPHDR_PSH
+#define __QDF_TCPHDR_ACK TCPHDR_ACK
+#define __QDF_TCPHDR_URG TCPHDR_URG
+#define __QDF_TCPHDR_ECE TCPHDR_ECE
+#define __QDF_TCPHDR_CWR TCPHDR_CWR
 #endif /* _I_QDF_NET_TYPES_H */

@@ -639,6 +639,10 @@ done:
 			 * the buffer beginning where the L2 header
 			 * begins.
 			 */
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+				FL("rxhash: flow id toeplitz: 0x%x\n"),
+				hal_rx_msdu_start_toeplitz_get(rx_tlv_hdr));
+
 			l2_hdr_offset =
 				hal_rx_msdu_end_l3_hdr_padding_get(rx_tlv_hdr);
 

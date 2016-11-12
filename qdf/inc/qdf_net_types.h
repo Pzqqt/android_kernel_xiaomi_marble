@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -70,6 +70,14 @@ typedef struct qdf_net_ethaddr {
 	uint8_t addr[QDF_NET_ETH_LEN];
 } qdf_net_ethaddr_t;
 
+#define QDF_TCPHDR_FIN __QDF_TCPHDR_FIN
+#define QDF_TCPHDR_SYN __QDF_TCPHDR_SYN
+#define QDF_TCPHDR_RST __QDF_TCPHDR_RST
+#define QDF_TCPHDR_PSH __QDF_TCPHDR_PSH
+#define QDF_TCPHDR_ACK __QDF_TCPHDR_ACK
+#define QDF_TCPHDR_URG __QDF_TCPHDR_URG
+#define QDF_TCPHDR_ECE __QDF_TCPHDR_ECE
+#define QDF_TCPHDR_CWR __QDF_TCPHDR_CWR
 
 typedef struct {
 	uint16_t  source;

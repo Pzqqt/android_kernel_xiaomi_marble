@@ -728,12 +728,19 @@ extern void hal_setup_link_idle_list(void *hal_soc,
 	void *scatter_bufs_base_vaddr[], uint32_t num_scatter_bufs,
 	uint32_t scatter_buf_size, uint32_t last_buf_end_offset);
 
+/* REO parameters to be passed to hal_reo_setup */
+struct hal_reo_params {
+	bool rx_hash_enabled;
+};
+
 /**
  * hal_reo_setup - Initialize HW REO block
  *
  * @hal_soc: Opaque HAL SOC handle
+ * @reo_params: parameters needed by HAL for REO config
  */
-extern void hal_reo_setup(void *hal_soc);
+extern void hal_reo_setup(void *hal_soc,
+	 struct hal_reo_params *reo_params);
 
 enum hal_pn_type {
 	HAL_PN_NONE,

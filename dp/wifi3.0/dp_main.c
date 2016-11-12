@@ -18,6 +18,7 @@
 
 #include <qdf_types.h>
 #include <qdf_lock.h>
+#include <qdf_net_types.h>
 #include <hal_api.h>
 #include <hif.h>
 #include <htt.h>
@@ -31,6 +32,7 @@
 #include <cdp_txrx_handle.h>
 #include <wlan_cfg.h>
 #include "cdp_txrx_cmn_struct.h"
+#include <qdf_util.h>
 
 #define DP_INTR_POLL_TIMER_MS	100
 #define DP_MCS_LENGTH (6*MAX_MCS)
@@ -723,6 +725,7 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 static int dp_soc_cmn_setup(struct dp_soc *soc)
 {
 	int i;
+	struct hal_reo_params reo_params;
 
 	if (qdf_atomic_read(&soc->cmn_init_done))
 		return 0;
@@ -799,6 +802,9 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	if (!wlan_cfg_per_pdev_rx_ring(soc->wlan_cfg_ctx)) {
 		soc->num_reo_dest_rings =
 			wlan_cfg_num_reo_dest_rings(soc->wlan_cfg_ctx);
+		QDF_TRACE(QDF_MODULE_ID_DP,
+			QDF_TRACE_LEVEL_ERROR,
+			FL("num_reo_dest_rings %d\n"), soc->num_reo_dest_rings);
 		for (i = 0; i < soc->num_reo_dest_rings; i++) {
 			if (dp_srng_setup(soc, &soc->reo_dest_ring[i], REO_DST,
 				i, 0, REO_DST_RING_SIZE)) {
@@ -862,8 +868,14 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	}
 
 	dp_soc_interrupt_attach(soc);
+
 	/* Setup HW REO */
-	hal_reo_setup(soc->hal_soc);
+	qdf_mem_zero(&reo_params, sizeof(reo_params));
+
+	if (wlan_cfg_is_rx_hash_enabled(soc->wlan_cfg_ctx))
+		reo_params.rx_hash_enabled = true;
+
+	hal_reo_setup(soc->hal_soc, &reo_params);
 
 	qdf_atomic_set(&soc->cmn_init_done, 1);
 	return 0;
@@ -877,6 +889,65 @@ fail0:
 }
 
 static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force);
+
+static void dp_lro_hash_setup(struct dp_soc *soc)
+{
+	struct cdp_lro_hash_config lro_hash;
+
+	if (!wlan_cfg_is_lro_enabled(soc->wlan_cfg_ctx) &&
+		!wlan_cfg_is_rx_hash_enabled(soc->wlan_cfg_ctx)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			 FL("LRO disabled RX hash disabled"));
+		return;
+	}
+
+	qdf_mem_zero(&lro_hash, sizeof(lro_hash));
+
+	if (wlan_cfg_is_lro_enabled(soc->wlan_cfg_ctx)) {
+		lro_hash.lro_enable = 1;
+		lro_hash.tcp_flag = QDF_TCPHDR_ACK;
+		lro_hash.tcp_flag_mask = QDF_TCPHDR_FIN | QDF_TCPHDR_SYN |
+				 QDF_TCPHDR_RST | QDF_TCPHDR_ACK | QDF_TCPHDR_URG |
+				 QDF_TCPHDR_ECE | QDF_TCPHDR_CWR;
+	}
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR, FL("enabled"));
+		qdf_get_random_bytes(lro_hash.toeplitz_hash_ipv4,
+		 (sizeof(lro_hash.toeplitz_hash_ipv4[0]) *
+		 LRO_IPV4_SEED_ARR_SZ));
+
+	qdf_get_random_bytes(lro_hash.toeplitz_hash_ipv6,
+		 (sizeof(lro_hash.toeplitz_hash_ipv6[0]) *
+		 LRO_IPV6_SEED_ARR_SZ));
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+		 "lro_hash: lro_enable: 0x%x"
+		 "lro_hash: tcp_flag 0x%x tcp_flag_mask 0x%x",
+		 lro_hash.lro_enable, lro_hash.tcp_flag,
+		 lro_hash.tcp_flag_mask);
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+		FL("lro_hash: toeplitz_hash_ipv4:"));
+	qdf_trace_hex_dump(QDF_MODULE_ID_DP,
+		 QDF_TRACE_LEVEL_ERROR,
+		 (void *)lro_hash.toeplitz_hash_ipv4,
+		 (sizeof(lro_hash.toeplitz_hash_ipv4[0]) *
+		 LRO_IPV4_SEED_ARR_SZ));
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+		FL("lro_hash: toeplitz_hash_ipv6:"));
+	qdf_trace_hex_dump(QDF_MODULE_ID_DP,
+		 QDF_TRACE_LEVEL_ERROR,
+		 (void *)lro_hash.toeplitz_hash_ipv6,
+		 (sizeof(lro_hash.toeplitz_hash_ipv6[0]) *
+		 LRO_IPV6_SEED_ARR_SZ));
+
+	qdf_assert(soc->cdp_soc.ol_ops->lro_hash_config);
+
+	if (soc->cdp_soc.ol_ops->lro_hash_config)
+		(void)soc->cdp_soc.ol_ops->lro_hash_config
+			(soc->osif_soc, &lro_hash);
+}
 
 /*
 * dp_rxdma_ring_setup() - configure the RX DMA rings
@@ -1046,6 +1117,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	/* MCL */
 	dp_local_peer_id_pool_init(pdev);
 #endif
+	dp_lro_hash_setup(soc);
 
 	return (struct cdp_pdev *)pdev;
 
@@ -1578,6 +1650,7 @@ static void dp_peer_setup_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_hdl;
 	struct dp_pdev *pdev;
 	struct dp_soc *soc;
+	bool hash_based = 0;
 
 	/* preconditions */
 	qdf_assert(vdev);
@@ -1592,10 +1665,15 @@ static void dp_peer_setup_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 	peer->last_disassoc_rcvd = 0;
 	peer->last_deauth_rcvd = 0;
 
+	hash_based = wlan_cfg_is_rx_hash_enabled(soc->wlan_cfg_ctx);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+		FL("hash based steering %d\n"), hash_based);
+
 	if (soc->cdp_soc.ol_ops->peer_set_default_routing) {
 		/* TODO: Check the destination ring number to be passed to FW */
-		soc->cdp_soc.ol_ops->peer_set_default_routing(pdev->osif_pdev,
-			 peer->mac_addr.raw, peer->vdev->vdev_id, 0, 1);
+		soc->cdp_soc.ol_ops->peer_set_default_routing(
+			pdev->osif_pdev, peer->mac_addr.raw,
+			 peer->vdev->vdev_id, hash_based, 1);
 	}
 	return;
 }

@@ -739,6 +739,29 @@ hal_rx_msdu_start_reception_type_get(uint8_t *buf)
 	return reception_type;
 }
 
+#define HAL_RX_MSDU_START_FLOWID_TOEPLITZ_GET(_rx_msdu_start)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_start,		\
+		RX_MSDU_START_4_FLOW_ID_TOEPLITZ_OFFSET)),	\
+		RX_MSDU_START_4_FLOW_ID_TOEPLITZ_MASK,		\
+		RX_MSDU_START_4_FLOW_ID_TOEPLITZ_LSB))
+
+ /**
+ * hal_rx_msdu_start_toeplitz_get: API to get the toeplitz hash
+ * from rx_msdu_start TLV
+ *
+ * @ buf: pointer to the start of RX PKT TLV headers
+ * Return: toeplitz hash
+ */
+static inline uint32_t
+hal_rx_msdu_start_toeplitz_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_start *msdu_start =
+			&pkt_tlvs->msdu_start_tlv.rx_msdu_start;
+
+	return HAL_RX_MSDU_START_FLOWID_TOEPLITZ_GET(msdu_start);
+}
+
 /*
  * Get qos_control_valid from RX_MPDU_START
  */
