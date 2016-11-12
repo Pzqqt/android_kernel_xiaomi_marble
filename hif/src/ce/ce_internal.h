@@ -139,7 +139,8 @@ struct CE_state {
 	bool force_break;	/* Flag to indicate whether to
 				 * break out the DPC context */
 
-	qdf_time_t ce_service_yield_time;
+	/* time in nanoseconds to yield control of napi poll */
+	unsigned long long ce_service_yield_time;
 	unsigned int receive_count;	/* count Num Of Receive Buffers
 					 * handled for one interrupt
 					 * DPC routine */
