@@ -3785,11 +3785,19 @@ static int hdd_extscan_epno_fill_network_list(
 	struct nlattr *networks;
 	int rem1, ssid_len;
 	uint8_t index, *ssid;
+	uint32_t expected_networks;
 
+	expected_networks = req_msg->num_networks;
 	index = 0;
 	nla_for_each_nested(networks,
 			    tb[QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_EPNO_NETWORKS_LIST],
 			    rem1) {
+
+		if (index == expected_networks) {
+			hdd_warn("ignoring excess networks");
+			break;
+		}
+
 		if (nla_parse(network, QCA_WLAN_VENDOR_ATTR_PNO_MAX,
 			      nla_data(networks), nla_len(networks),
 			      wlan_hdd_pno_config_policy)) {
@@ -3844,6 +3852,7 @@ static int hdd_extscan_epno_fill_network_list(
 
 		index++;
 	}
+	req_msg->num_networks = index;
 	return 0;
 }
 
