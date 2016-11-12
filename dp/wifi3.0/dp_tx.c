@@ -35,7 +35,11 @@
 
 /* TODO Add support in TSO */
 #define DP_DESC_NUM_FRAG(x) 0
-
+#ifdef QCA_WIFI_NAPIER_EMULATION
+#define TQM_BYPASS_WAR 1
+#else
+#define TQM_BYPASS_WAR 0
+#endif
 /*
  * default_dscp_tid_map - Default DSCP-TID mapping
  *
@@ -271,6 +275,7 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 {
 	QDF_STATUS status;
 	uint8_t align_pad;
+	uint8_t is_exception = 0;
 	uint8_t htt_hdr_size;
 	struct ether_header *eh;
 	struct dp_tx_desc_s *tx_desc;
@@ -303,7 +308,6 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	tx_desc->frm_type = dp_tx_frm_std;
 	tx_desc->tx_encap_type = vdev->tx_encap_type;
 	tx_desc->vdev = vdev;
-	tx_desc->flags = 0;
 	tx_desc->msdu_ext_desc = NULL;
 
 	/*
@@ -328,6 +332,7 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 		tx_desc->pkt_offset += htt_hdr_size;
 		tx_desc->flags |= DP_TX_DESC_FLAG_TO_FW;
 		pdev->num_tx_exception++;
+		is_exception = 1;
 	}
 
 	if (qdf_unlikely(vdev->nawds_enabled)) {
@@ -335,7 +340,17 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 		if (DP_FRAME_IS_MULTICAST((eh)->ether_dhost)) {
 			tx_desc->flags |= DP_TX_DESC_FLAG_TO_FW;
 			pdev->num_tx_exception++;
+			is_exception = 1;
 		}
+	}
+
+#if !TQM_BYPASS_WAR
+	if (is_exception)
+#endif
+	{
+		/* Temporary WAR due to TQM VP issues */
+		tx_desc->flags |= DP_TX_DESC_FLAG_TO_FW;
+		pdev->num_tx_exception++;
 	}
 
 	if (qdf_nbuf_map_nbytes_single(soc->osdev, nbuf,
@@ -413,6 +428,12 @@ struct dp_tx_desc_s *dp_tx_prepare_desc(struct dp_vdev *vdev,
 				__func__);
 		goto failure;
 	}
+
+#if TQM_BYPASS_WAR
+	/* Temporary WAR due to TQM VP issues */
+	tx_desc->flags |= DP_TX_DESC_FLAG_TO_FW;
+	pdev->num_tx_exception++;
+#endif
 
 	tx_desc->msdu_ext_desc = msdu_ext_desc;
 	tx_desc->flags |= DP_TX_DESC_FLAG_FRAG;
