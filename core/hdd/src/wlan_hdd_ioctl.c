@@ -874,9 +874,9 @@ void hdd_wma_send_fastreassoc_cmd(int sessionId, const tSirMacAddr bssid,
 
 /**
  * hdd_reassoc() - perform a userspace-directed reassoc
- * @adapter:	Adapter upon which the command was received
- * @bssid:	BSSID with which to reassociate
- * @channel:	channel upon which to reassociate
+ * @adapter:    Adapter upon which the command was received
+ * @bssid:      BSSID with which to reassociate
+ * @channel:    channel upon which to reassociate
  * @src:        The source for the trigger of this action
  *
  * This function performs a userspace-directed reassoc operation
@@ -884,7 +884,7 @@ void hdd_wma_send_fastreassoc_cmd(int sessionId, const tSirMacAddr bssid,
  * Return: 0 for success non-zero for failure
  */
 int hdd_reassoc(hdd_adapter_t *adapter, const uint8_t *bssid,
-		const uint8_t channel, const handoff_src src)
+		uint8_t channel, const handoff_src src)
 {
 	hdd_station_ctx_t *pHddStaCtx;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -913,13 +913,12 @@ int hdd_reassoc(hdd_adapter_t *adapter, const uint8_t *bssid,
 
 	/*
 	 * if the target bssid is same as currently associated AP,
-	 * then no need to proceed with reassoc
+	 * use the current connections's channel.
 	 */
 	if (!memcmp(bssid, pHddStaCtx->conn_info.bssId.bytes,
 			QDF_MAC_ADDR_SIZE)) {
 		hdd_info("Reassoc BSSID is same as currently associated AP bssid");
-		ret = -EINVAL;
-		goto exit;
+		channel = pHddStaCtx->conn_info.operationChannel;
 	}
 
 	/* Check channel number is a valid channel number */
