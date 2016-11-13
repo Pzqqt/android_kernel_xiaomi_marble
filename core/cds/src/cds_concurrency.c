@@ -2138,13 +2138,6 @@ QDF_STATUS cds_deinit_policy_mgr(void)
 		QDF_ASSERT(0);
 	}
 
-	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_destroy(
-					&cds_ctx->qdf_conc_list_lock))) {
-		cds_err("Failed to destroy qdf_conc_list_lock");
-		status = QDF_STATUS_E_FAILURE;
-		QDF_ASSERT(0);
-	}
-
 	if (QDF_TIMER_STATE_RUNNING ==
 			qdf_mc_timer_get_current_state(
 				&cds_ctx->dbs_opportunistic_timer)) {
@@ -2200,13 +2193,6 @@ QDF_STATUS cds_init_policy_mgr(struct cds_sme_cbacks *sme_cbacks)
 
 	/* init conc_connection_list */
 	qdf_mem_zero(conc_connection_list, sizeof(conc_connection_list));
-
-	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_create(
-					&cds_ctx->qdf_conc_list_lock))) {
-		cds_err("Failed to init qdf_conc_list_lock");
-		/* Lets us not proceed further */
-		return QDF_STATUS_E_FAILURE;
-	}
 
 	sme_register_hw_mode_trans_cb(hdd_ctx->hHal,
 				cds_hw_mode_transition_cb);

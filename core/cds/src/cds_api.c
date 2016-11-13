@@ -303,6 +303,14 @@ QDF_STATUS cds_open(void)
 		QDF_ASSERT(0);
 		goto err_msg_queue;
 	}
+
+	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_create(
+				&cds_ctx->qdf_conc_list_lock))) {
+		cds_err("Failed to init qdf_conc_list_lock");
+		QDF_ASSERT(0);
+		goto err_msg_queue;
+	}
+
 	/* Now Open the CDS Scheduler */
 
 	if (pHddCtx->driver_status == DRIVER_MODULES_UNINITIALIZED ||
@@ -316,7 +324,7 @@ QDF_STATUS cds_open(void)
 			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 				  "%s: Failed to open CDS Scheduler", __func__);
 			QDF_ASSERT(0);
-			goto err_msg_queue;
+			goto err_concurrency_lock;
 		}
 	}
 
@@ -492,6 +500,9 @@ err_bmi_close:
 err_sched_close:
 	cds_sched_close(gp_cds_context);
 	cds_shutdown_notifier_purge();
+
+err_concurrency_lock:
+	qdf_mutex_destroy(&cds_ctx->qdf_conc_list_lock);
 
 err_msg_queue:
 	cds_mq_deinit(&gp_cds_context->freeVosMq);
@@ -944,6 +955,12 @@ QDF_STATUS cds_close(v_CONTEXT_t cds_context)
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: failed to destroy ProbeEvent", __func__);
+		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
+	}
+
+	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_destroy(
+				   &gp_cds_context->qdf_conc_list_lock))) {
+		cds_err("Failed to destroy qdf_conc_list_lock");
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
 
