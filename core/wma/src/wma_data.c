@@ -3011,7 +3011,6 @@ void wma_tx_abort(uint8_t vdev_id)
 					 &param);
 }
 
-#if defined(FEATURE_LRO)
 /**
  * wma_lro_config_cmd() - process the LRO config command
  * @wma: Pointer to WMA handle
@@ -3023,12 +3022,13 @@ void wma_tx_abort(uint8_t vdev_id)
  *
  * Return: QDF_STATUS_SUCCESS for success otherwise failure
  */
-QDF_STATUS wma_lro_config_cmd(tp_wma_handle wma_handle,
-	 struct wma_lro_config_cmd_t *wma_lro_cmd)
+QDF_STATUS wma_lro_config_cmd(void *handle,
+	 struct cdp_lro_hash_config *wma_lro_cmd)
 {
 	struct wmi_lro_config_cmd_t wmi_lro_cmd = {0};
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (NULL == wma_handle || NULL == wma_lro_cmd) {
+	if (NULL == wma || NULL == wma_lro_cmd) {
 		WMA_LOGE("wma_lro_config_cmd': invalid input!");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3043,10 +3043,9 @@ QDF_STATUS wma_lro_config_cmd(tp_wma_handle wma_handle,
 			wma_lro_cmd->toeplitz_hash_ipv6,
 			LRO_IPV6_SEED_ARR_SZ * sizeof(uint32_t));
 
-	return wmi_unified_lro_config_cmd(wma_handle->wmi_handle,
+	return wmi_unified_lro_config_cmd(wma->wmi_handle,
 						&wmi_lro_cmd);
 }
-#endif
 
 /**
  * wma_indicate_err() - indicate an error to the protocol stack

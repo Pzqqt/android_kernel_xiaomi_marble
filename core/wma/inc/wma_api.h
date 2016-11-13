@@ -207,32 +207,8 @@ QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
 		enum hw_mode_dbs_capab hw_mode, enum cds_band_type band);
 bool wma_is_rx_ldpc_supported_for_channel(uint32_t channel);
 
-#define LRO_IPV4_SEED_ARR_SZ 5
-#define LRO_IPV6_SEED_ARR_SZ 11
-
-/**
- * struct wma_lro_init_cmd_t - set LRO init parameters
- * @lro_enable: indicates whether lro is enabled
- * @tcp_flag: If the TCP flags from the packet do not match
- * the values in this field after masking with TCP flags mask
- * below, packet is not LRO eligible
- * @tcp_flag_mask: field for comparing the TCP values provided
- * above with the TCP flags field in the received packet
- * @toeplitz_hash_ipv4: contains seed needed to compute the flow id
- * 5-tuple toeplitz hash for ipv4 packets
- * @toeplitz_hash_ipv6: contains seed needed to compute the flow id
- * 5-tuple toeplitz hash for ipv6 packets
- */
-struct wma_lro_config_cmd_t {
-	uint32_t lro_enable;
-	uint32_t tcp_flag:9,
-		tcp_flag_mask:9;
-	uint32_t toeplitz_hash_ipv4[LRO_IPV4_SEED_ARR_SZ];
-	uint32_t toeplitz_hash_ipv6[LRO_IPV6_SEED_ARR_SZ];
-};
-
 #if defined(FEATURE_LRO)
-int wma_lro_init(struct wma_lro_config_cmd_t *lro_config);
+int wma_lro_init(struct cdp_lro_hash_config *lro_config);
 #endif
 bool wma_is_scan_simultaneous_capable(void);
 

@@ -2220,16 +2220,9 @@ static inline QDF_STATUS wma_set_gateway_params(tp_wma_handle wma,
 }
 #endif /* FEATURE_LFR_SUBNET_DETECTION */
 
-#if defined(FEATURE_LRO)
-QDF_STATUS wma_lro_config_cmd(tp_wma_handle wma_handle,
-	 struct wma_lro_config_cmd_t *wma_lro_cmd);
-#else
-static inline QDF_STATUS wma_lro_config_cmd(tp_wma_handle wma_handle,
-	 struct wma_lro_config_cmd_t *wma_lro_cmd)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
+QDF_STATUS wma_lro_config_cmd(void *handle,
+	 struct cdp_lro_hash_config *wma_lro_cmd);
+
 bool wma_is_current_hwmode_dbs(void);
 void
 wma_indicate_err(enum ol_rx_err_type err_type,

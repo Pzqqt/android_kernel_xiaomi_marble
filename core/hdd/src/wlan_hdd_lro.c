@@ -411,7 +411,7 @@ static void hdd_lro_flush(void *data)
  */
 int hdd_lro_init(hdd_context_t *hdd_ctx)
 {
-	struct wma_lro_config_cmd_t lro_config;
+	struct cdp_lro_hash_config lro_config;
 
 	if ((!hdd_ctx->config->lro_enable) &&
 	    (hdd_napi_enabled(HDD_NAPI_ANY) == 0)) {

@@ -7007,7 +7007,7 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, struct scheduler_msg *msg)
 		break;
 	case WMA_LRO_CONFIG_CMD:
 		wma_lro_config_cmd(wma_handle,
-			(struct wma_lro_config_cmd_t *)msg->bodyptr);
+			(struct cdp_lro_hash_config *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_GW_PARAM_UPDATE_REQ:
@@ -7427,10 +7427,10 @@ QDF_STATUS wma_crash_inject(tp_wma_handle wma_handle, uint32_t type,
  *
  * Return: 0 for success or reasons for failure
  */
-int wma_lro_init(struct wma_lro_config_cmd_t *lro_config)
+int wma_lro_init(struct cdp_lro_hash_config *lro_config)
 {
 	struct scheduler_msg msg = {0};
-	struct wma_lro_config_cmd_t *iwcmd;
+	struct cdp_lro_hash_config *iwcmd;
 
 	iwcmd = qdf_mem_malloc(sizeof(*iwcmd));
 	if (!iwcmd) {
@@ -7473,6 +7473,7 @@ void wma_peer_set_default_routing(void *scn_handle, uint8_t *peer_macaddr,
 	param.param_id = WMI_HOST_PEER_SET_DEFAULT_ROUTING;
 	param.vdev_id = vdev_id;
 	param.param_value = ((hash_based) ? 1 : 0) | (ring_num << 1);
+	WMA_LOGD("%s: param_value 0x%d", __func__, param.param_value);
 	wmi_set_peer_param_send(wma->wmi_handle, peer_macaddr, &param);
 
 	return;
