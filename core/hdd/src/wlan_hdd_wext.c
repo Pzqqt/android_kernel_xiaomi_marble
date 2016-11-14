@@ -10158,6 +10158,7 @@ static int wlan_hdd_set_mon_chan(hdd_adapter_t *adapter, uint32_t chan,
 	}
 
 	hdd_info("Set monitor mode Channel %d", chan);
+	qdf_mem_zero(&roam_profile, sizeof(roam_profile));
 	roam_profile.ChannelInfo.ChannelList = &ch_info->channel;
 	roam_profile.ChannelInfo.numOfChannels = 1;
 	roam_profile.phyMode = ch_info->phy_mode;
