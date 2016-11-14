@@ -1559,12 +1559,10 @@ void qdf_dp_display_record(struct qdf_dp_trace_record_s *pRecord,
 		pRecord->time, qdf_dp_code_to_string(pRecord->code));
 	switch (pRecord->code) {
 	case  QDF_DP_TRACE_HDD_TX_TIMEOUT:
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-						"HDD TX Timeout\n");
+		DPTRACE_PRINT("DPT: HDD TX Timeout\n");
 		break;
 	case  QDF_DP_TRACE_HDD_SOFTAP_TX_TIMEOUT:
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-						"HDD SoftAP TX Timeout\n");
+		DPTRACE_PRINT("DPT: HDD SoftAP TX Timeout\n");
 		break;
 	case QDF_DP_TRACE_HDD_TX_PACKET_RECORD:
 		dump_hex_trace("DATA", pRecord->data, pRecord->size);
