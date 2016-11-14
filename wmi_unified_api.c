@@ -5072,6 +5072,82 @@ wmi_send_set_atf_grouping_cmd(void *wmi_hdl,
 
 }
 
+/**
+ * wmi_send_get_user_position_cmd() - send get user position command to fw
+ * @wmi_handle: wmi handle
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_send_get_user_position_cmd(void *wmi_hdl, uint32_t value)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_get_user_position_cmd)
+		return wmi_handle->ops->send_get_user_position_cmd(wmi_handle,
+								value);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_send_get_peer_mumimo_tx_count_cmd() - send get mumio tx count
+ * 					     command to fw
+ * @wmi_handle: wmi handle
+ * @value: user pos value
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_send_get_peer_mumimo_tx_count_cmd(void *wmi_hdl, uint32_t value)
+{
+	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
+
+	if (wmi->ops->send_get_peer_mumimo_tx_count_cmd)
+		return wmi->ops->send_get_peer_mumimo_tx_count_cmd(wmi, value);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_send_reset_peer_mumimo_tx_count_cmd() - send reset peer mumimo
+ * 					       tx count to fw
+ * @wmi_handle: wmi handle
+ * @value:	reset tx count value
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_send_reset_peer_mumimo_tx_count_cmd(void *wmi_hdl, uint32_t value)
+{
+	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
+
+	if (wmi->ops->send_reset_peer_mumimo_tx_count_cmd)
+		return wmi->ops->send_reset_peer_mumimo_tx_count_cmd(wmi,
+								value);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_send_pdev_caldata_version_check_cmd() - send reset peer mumimo
+ * 					       tx count to fw
+ * @wmi_handle: wmi handle
+ * @value: value
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_send_pdev_caldata_version_check_cmd(void *wmi_hdl, uint32_t value)
+{
+	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
+
+	if (wmi->ops->send_pdev_caldata_version_check_cmd)
+		return wmi->ops->send_pdev_caldata_version_check_cmd(wmi,
+								value);
+
+	return QDF_STATUS_E_FAILURE;
+}
 
 /* Extract - APIs */
 /**
@@ -5334,6 +5410,90 @@ QDF_STATUS wmi_extract_mu_ev_param(void *wmi_hdl, void *evt_buf,
 	if (wmi_handle->ops->extract_mu_ev_param)
 		return wmi_handle->ops->extract_mu_ev_param(wmi_handle, evt_buf,
 			param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_extract_mu_db_entry() - extract mu db entry from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold mu db entry
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_mu_db_entry(void *wmi_hdl, void *evt_buf,
+	uint8_t idx, wmi_host_mu_db_entry *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->extract_mu_db_entry)
+		return wmi_handle->ops->extract_mu_db_entry(wmi_handle, evt_buf,
+			idx, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_extract_mumimo_tx_count_ev_param() - extract mumimo tx count from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold mumimo tx count
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_mumimo_tx_count_ev_param(void *wmi_hdl, void *evt_buf,
+	wmi_host_peer_txmu_cnt_event *param)
+{
+	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
+
+	if (wmi->ops->extract_mumimo_tx_count_ev_param)
+		return wmi->ops->extract_mumimo_tx_count_ev_param(wmi,
+			 evt_buf, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_extract_peer_gid_userpos_list_ev_param() - extract peer userpos list
+ * 						  from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold peer gid userposition list
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_peer_gid_userpos_list_ev_param(void *wmi_hdl,
+	void *evt_buf,
+	wmi_host_peer_gid_userpos_list_event *param)
+{
+	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
+
+	if (wmi->ops->extract_peer_gid_userpos_list_ev_param)
+		return wmi->ops->extract_peer_gid_userpos_list_ev_param(wmi,
+			 evt_buf, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_extract_pdev_caldata_version_check_ev_param() - extract caldata
+ * 						       from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold caldata version data
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_pdev_caldata_version_check_ev_param(void *wmi_hdl,
+	void *evt_buf,
+	wmi_host_pdev_check_cal_version_event *param)
+{
+	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
+
+	if (wmi->ops->extract_pdev_caldata_version_check_ev_param)
+		return wmi->ops->extract_pdev_caldata_version_check_ev_param(
+			wmi, evt_buf, param);
 
 	return QDF_STATUS_E_FAILURE;
 }
@@ -6084,7 +6244,6 @@ QDF_STATUS wmi_extract_inst_rssi_stats_event(void *wmi_hdl, void *evt_buf,
  * from event
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
- * @param index: Index into chan stats
  * @param ev: Pointer to hold data traffic control
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
@@ -6097,6 +6256,49 @@ QDF_STATUS wmi_extract_tx_data_traffic_ctrl_ev(void *wmi_hdl, void *evt_buf,
 	if (wmi->ops->extract_tx_data_traffic_ctrl_ev)
 		return wmi->ops->extract_tx_data_traffic_ctrl_ev(wmi,
 				evt_buf, ev);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_extract_atf_peer_stats_ev() - extract atf peer stats
+ * from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param ev: Pointer to hold atf peer stats
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_atf_peer_stats_ev(void *wmi_hdl, void *evt_buf,
+			wmi_host_atf_peer_stats_event *ev)
+{
+	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
+
+	if (wmi->ops->extract_atf_peer_stats_ev)
+		return wmi->ops->extract_atf_peer_stats_ev(wmi,
+				evt_buf, ev);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_extract_atf_token_info_ev() - extract atf token info
+ * from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param idx: Index indicating the peer number
+ * @param ev: Pointer to hold atf token info
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_atf_token_info_ev(void *wmi_hdl, void *evt_buf,
+			uint8_t idx, wmi_host_atf_peer_stats_info *ev)
+{
+	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
+
+	if (wmi->ops->extract_atf_token_info_ev)
+		return wmi->ops->extract_atf_token_info_ev(wmi,
+				evt_buf, idx, ev);
 
 	return QDF_STATUS_E_FAILURE;
 }
@@ -6179,6 +6381,26 @@ QDF_STATUS wmi_unified_encrypt_decrypt_send_cmd(void *wmi_hdl,
 		return wmi_handle->ops->send_encrypt_decrypt_send_cmd(
 						wmi_handle,
 						params);
+	return QDF_STATUS_E_FAILURE;
+}
+
+/*
+ * wmi_unified_send_btcoex_wlan_priority_cmd() - send btcoex priority commands
+ * @wmi_handle: wmi handle
+ * @value: Priority value
+ *
+ * Send WMI_BTCOEX_CFG_CMDID parameters to fw.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS wmi_unified_send_btcoex_wlan_priority_cmd(void *wmi_hdl,
+				int value)
+{
+	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
+
+	if (wmi->ops->send_btcoex_wlan_priority_cmd)
+		return wmi->ops->send_btcoex_wlan_priority_cmd(wmi,
+				  value);
 
 	return QDF_STATUS_E_FAILURE;
 }
