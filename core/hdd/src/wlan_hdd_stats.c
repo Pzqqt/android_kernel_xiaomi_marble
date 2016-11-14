@@ -1707,6 +1707,20 @@ void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
 }
 #endif /* End of WLAN_FEATURE_STATS_EXT */
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
+static inline void wlan_hdd_fill_station_info_signal(struct station_info
+						     *sinfo)
+{
+	sinfo->filled |= STATION_INFO_SIGNAL;
+}
+#else
+static inline void wlan_hdd_fill_station_info_signal(struct station_info
+						     *sinfo)
+{
+	sinfo->filled |= BIT(NL80211_STA_INFO_SIGNAL);
+}
+#endif
+
 /**
  * __wlan_hdd_cfg80211_get_station() - get station statistics
  * @wiphy: Pointer to wiphy
@@ -1783,6 +1797,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 		 * send the cached rssi when get_station
 		 */
 		sinfo->signal = pAdapter->rssi;
+		wlan_hdd_fill_station_info_signal(sinfo);
 		return 0;
 	}
 
@@ -1801,11 +1816,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	pHddStaCtx->conn_info.noise =
 		pHddStaCtx->conn_info.signal - snr;
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
-	sinfo->filled |= STATION_INFO_SIGNAL;
-#else
-	sinfo->filled |= BIT(NL80211_STA_INFO_SIGNAL);
-#endif
+	wlan_hdd_fill_station_info_signal(sinfo);
 
 	/*
 	 * we notify connect to lpass here instead of during actual
