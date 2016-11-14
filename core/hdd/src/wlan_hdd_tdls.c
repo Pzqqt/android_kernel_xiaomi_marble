@@ -4032,20 +4032,20 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 		return -EAGAIN;
 	}
 
-	if (!cds_check_is_tdls_allowed(pAdapter->device_mode)) {
-		hdd_err("TDLS not allowed, reject TDLS MGMT, action_code=%d",
-			action_code);
-		return -EPERM;
-	}
-
 	/* other than teardown frame, mgmt frames are not sent if disabled */
 	if (SIR_MAC_TDLS_TEARDOWN != action_code) {
-		/* if tdls_mode is disabled to respond to peer's request */
+		if (!cds_check_is_tdls_allowed(pAdapter->device_mode)) {
+			hdd_err("TDLS not allowed, reject TDLS MGMT, action_code=%d",
+				action_code);
+			return -EPERM;
+		}
+		/* if tdls_mode is disabled, then decline the peer's request */
 		if (eTDLS_SUPPORT_DISABLED == pHddCtx->tdls_mode) {
 			hdd_notice(MAC_ADDRESS_STR " TDLS mode is disabled. action %d declined.",
 				   MAC_ADDR_ARRAY(peer), action_code);
 			return -ENOTSUPP;
-		} else if (pHddCtx->tdls_nss_switch_in_progress) {
+		}
+		if (pHddCtx->tdls_nss_switch_in_progress) {
 			hdd_err("TDLS antenna switch in progress, action %d declined for "
 				MAC_ADDRESS_STR, action_code, MAC_ADDR_ARRAY(peer));
 			return -EAGAIN;
