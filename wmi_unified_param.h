@@ -127,6 +127,9 @@
 #define MAX_SUPPORTED_RATES 128
 #define WMI_HOST_MAX_BUFFER_SIZE	1712
 #define WMI_HAL_MAX_SANTENNA 4
+#define WMI_HOST_PDEV_VI_PRIORITY_BIT     (1<<2)
+#define WMI_HOST_PDEV_BEACON_PRIORITY_BIT (1<<4)
+#define WMI_HOST_PDEV_MGMT_PRIORITY_BIT   (1<<5)
 
 #ifdef CONFIG_WIN
 #if ATH_SUPPORT_FIPS
@@ -144,6 +147,17 @@
 		(_var) &= ~(_f);	\
 		(_var) |= (((_v) << (_f##_S)) & (_f));	\
 	} while (0)
+
+/* vdev capabilities bit mask */
+#define WMI_HOST_VDEV_BEACON_SUPPORT  0x1
+#define WMI_HOST_VDEV_WDS_LRN_ENABLED 0x2
+#define WMI_HOST_VDEV_VOW_ENABLED     0x4
+#define WMI_HOST_VDEV_IS_BEACON_SUPPORTED(param) \
+	((param) & WMI_HOST_VDEV_BEACON_SUPPORT)
+#define WMI_HOST_VDEV_IS_WDS_LRN_ENABLED(param) \
+	((param) & WMI_HOST_VDEV_WDS_LRN_ENABLED)
+#define WMI_HOST_VDEV_IS_VOW_ENABLED(param) \
+	((param) & WMI_HOST_VDEV_VOW_ENABLED)
 
 /* TXBF capabilities masks */
 #define WMI_HOST_TXBF_CONF_SU_TX_BFEE_S 0
@@ -1051,6 +1065,8 @@ struct scan_start_params {
 	uint16_t uie_fieldOffset;
 	uint8_t  mac_add_bytes[IEEE80211_ADDR_LEN];
 #ifndef CONFIG_MCL
+	bool half_rate;
+	bool quarter_rate;
 	bool is_strict_pscan_en;
 	bool is_promiscous_mode;
 	bool is_phy_error;
@@ -3353,6 +3369,18 @@ typedef struct {
 	*/
 	uint32_t fw_feature_bitmap;
 
+	/* WLAN priority GPIO number
+	 * The target uses a GPIO pin to indicate when it is transmitting
+	 * high-priority traffic (e.g. beacon, management, or AC_VI) or
+	 * low-priority traffic (e.g. AC_BE, AC_BK).  The HW uses this
+	 * WLAN GPIO pin to determine whether to abort WLAN tx in favor of
+	 * BT activity.
+	 * Which GPIO is used for this WLAN tx traffic priority specification
+	 * varies between platforms, so the host needs to indicate to the
+	 * target which GPIO to use.
+	 */
+	uint32_t wlan_priority_gpio;
+
 	/* add new members here */
 } wmi_host_ext_resource_config;
 
@@ -3733,6 +3761,11 @@ struct mu_scan_params {
 	uint8_t type;
 	uint32_t duration;
 	uint32_t lteu_tx_power;
+	uint32_t rssi_thr_bssid;
+	uint32_t rssi_thr_sta;
+	uint32_t rssi_thr_sc;
+	uint32_t plmn_id;
+	uint32_t alpha_num_bssid;
 };
 
 /**
@@ -3757,6 +3790,7 @@ struct lteu_config_params {
 	uint32_t lteu_scan_timeout;
 	uint32_t alpha_num_bssid;
 	uint32_t wifi_tx_power;
+	uint32_t allow_err_packets;
 };
 
 struct wmi_macaddr_t {
@@ -4831,6 +4865,10 @@ typedef enum {
 	wmi_soc_hw_mode_transition_event_id,
 	wmi_soc_set_dual_mac_config_resp_event_id,
 	wmi_tx_data_traffic_ctrl_event_id,
+	wmi_peer_tx_mu_txmit_count_event_id,
+	wmi_peer_gid_userpos_list_event_id,
+	wmi_pdev_check_cal_version_event_id,
+	wmi_atf_peer_stats_event_id,
 
 	wmi_events_max,
 } wmi_conv_event_id;
@@ -4969,6 +5007,8 @@ typedef enum {
 	wmi_pdev_param_rx_chain_mask_5g,
 	wmi_pdev_param_tx_chain_mask_cck,
 	wmi_pdev_param_tx_chain_mask_1ss,
+	wmi_pdev_param_enable_btcoex,
+	wmi_pdev_param_atf_peer_stats,
 
 	wmi_pdev_param_max,
 } wmi_conv_pdev_params_id;
@@ -5073,6 +5113,9 @@ typedef enum {
 	wmi_vdev_param_mcc_rtscts_protection_enable,
 	wmi_vdev_param_mcc_broadcast_probe_enable,
 	wmi_vdev_param_capabilities,
+	wmi_vdev_param_mgmt_tx_power,
+	wmi_vdev_param_atf_ssid_sched_policy,
+	wmi_vdev_param_disable_dyn_bw_rts,
 
 	wmi_vdev_param_max,
 } wmi_conv_vdev_param_id;
@@ -5182,6 +5225,7 @@ typedef enum {
 	wmi_service_tx_mode_push_only,
 	wmi_service_tx_mode_push_pull,
 	wmi_service_tx_mode_dynamic,
+	wmi_service_check_cal_version,
 
 	wmi_services_max,
 } wmi_conv_service_ids;
@@ -5650,17 +5694,39 @@ typedef enum {
 #define WMI_HOST_MU_MAX_ALGO_TYPE 3
 
 /**
+ * struct wmi_host_mu_db_entry
+ * @event_type: 0=AP, 1=STA, 2=Small Cell(SC)
+ * @bssid_mac_addr: Transmitter MAC if entry is WiFi node. PLMNID if SC
+ * @tx_addr: Transmitter MAC if entry is WiFi node. PLMNID if SC
+ * @avg_duration_us: Avg. duration for which node was transmitting
+ * @avg_rssi: Avg. RSSI of all TX packets by node. Unit dBm
+ * @mu_percent: % medium utilization by node
+ */
+typedef struct {
+	uint32_t     entry_type;
+	wmi_host_mac_addr bssid_mac_addr;
+	wmi_host_mac_addr tx_addr;
+	uint32_t     avg_duration_us;
+	uint32_t     avg_rssi;
+	uint32_t     mu_percent;
+} wmi_host_mu_db_entry;
+
+/**
  * struct wmi_host_mu_report_event - WMI_MU_REPORT_EVENTID
  * @mu_request_id: request id
  * @status_reason: MU_STATUS_REASON
  * @total_mu: MU_ALG_TYPE combinations
  * @num_active_bssid: number of active bssid
+ * @hidden_node_mu : hidden node algo MU per bin
+ * @num_TA_entries : No. of entries found in MU db report
  */
 typedef struct {
 	uint32_t mu_request_id;
 	uint32_t status_reason;
 	uint32_t total_mu[WMI_HOST_MU_MAX_ALGO_TYPE];
 	uint32_t num_active_bssid;
+	uint32_t hidden_node_mu[LTEU_MAX_BINS];
+	uint32_t num_TA_entries;
 } wmi_host_mu_report_event;
 
 /**
@@ -6572,6 +6638,65 @@ typedef struct {
 	uint32_t ctrl_cmd;
 } wmi_host_tx_data_traffic_ctrl_event;
 
+enum {
+	WMI_HOST_ATF_PEER_STATS_DISABLED = 0,
+	WMI_HOST_ATF_PEER_STATS_ENABLED  = 1,
+};
+
+#define WMI_HOST_ATF_PEER_STATS_GET_PEER_AST_IDX(token_info) \
+	(token_info.field1 & 0xffff)
+
+#define WMI_HOST_ATF_PEER_STATS_GET_USED_TOKENS(token_info) \
+	((token_info.field2 & 0xffff0000) >> 16)
+
+#define WMI_HOST_ATF_PEER_STATS_GET_UNUSED_TOKENS(token_info) \
+	(token_info.field2 & 0xffff)
+
+#define WMI_HOST_ATF_PEER_STATS_SET_PEER_AST_IDX(token_info, peer_ast_idx) \
+	do { \
+		token_info.field1 &= 0xffff0000; \
+		token_info.field1 |= ((peer_ast_idx) & 0xffff); \
+	} while (0)
+
+#define WMI_HOST_ATF_PEER_STATS_SET_USED_TOKENS(token_info, used_token) \
+	do { \
+		token_info.field2 &= 0x0000ffff; \
+		token_info.field2 |= (((used_token) & 0xffff) << 16); \
+	} while (0)
+
+#define WMI_HOST_ATF_PEER_STATS_SET_UNUSED_TOKENS(token_info, unused_token) \
+	do { \
+		token_info.field2 &= 0xffff0000; \
+		token_info.field2 |= ((unused_token) & 0xffff); \
+	} while (0)
+
+typedef struct {
+	/**
+	 * field1 contains:
+	 *     bits 15:0   peer_ast_index  WMI_ATF_PEER_STATS_GET_PEER_AST_IDX
+	 *                                 WMI_ATF_PEER_STATS_SET_PEER_AST_IDX
+	 *     bits 31:16  reserved
+	 *
+	 * field2 contains:
+	 *     bits 15:0   used tokens     WMI_ATF_PEER_STATS_GET_USED_TOKENS
+	 *                                 WMI_ATF_PEER_STATS_SET_USED_TOKENS
+	 *     bits 31:16  unused tokens   WMI_ATF_PEER_STATS_GET_UNUSED_TOKENS
+	 *                                 WMI_ATF_PEER_STATS_SET_UNUSED_TOKENS
+	 *
+	 * field3 for future use
+	 */
+	uint32_t    field1;
+	uint32_t    field2;
+	uint32_t    field3;
+} wmi_host_atf_peer_stats_info;
+
+typedef struct {
+	uint32_t num_atf_peers;       /** number of peers in token_info_list */
+	uint32_t comp_usable_airtime; /** computed usable airtime in tokens */
+	uint32_t reserved[4];         /** reserved for future use */
+	wmi_host_atf_peer_stats_info token_info_list[1/*num_atf_peers*/];
+} wmi_host_atf_peer_stats_event;
+
 /**
  * struct wmi_host_ath_dcs_cw_int
  * @channel: either number or freq in mhz
@@ -6841,5 +6966,43 @@ struct WMI_HOST_HAL_REG_CAPABILITIES_EXT {
 	uint32_t low_5ghz_chan;
 	uint32_t high_5ghz_chan;
 };
-#endif /* _WMI_UNIFIED_PARAM_H_ */
 
+/*
+ * struct wmi_host_peer_txmu_cnt_event
+ * @tx_mu_transmitted - MU-MIMO tx count
+ */
+typedef struct {
+	uint32_t tx_mu_transmitted;
+} wmi_host_peer_txmu_cnt_event;
+
+/*
+ * struct wmi_peer_gid_userpos_list_event
+ * @usr_list - User list
+ */
+#define GID_OVERLOAD_GROUP_COUNT  15
+typedef struct {
+	uint32_t usr_list[GID_OVERLOAD_GROUP_COUNT];
+} wmi_host_peer_gid_userpos_list_event;
+
+#define WMI_HOST_BOARD_MCN_STRING_MAX_SIZE 19
+#define WMI_HOST_BOARD_MCN_STRING_BUF_SIZE \
+	(WMI_HOST_BOARD_MCN_STRING_MAX_SIZE+1) /* null-terminator */
+
+typedef struct {
+	uint32_t software_cal_version;
+	uint32_t board_cal_version;
+	/* board_mcn_detail:
+	 * Provide a calibration message string for the host to display.
+	 * Note: on a big-endian host, the 4 bytes within each A_UINT32 portion
+	 * of a WMI message will be automatically byteswapped by the copy engine
+	 * as the messages are transferred between host and target, to convert
+	 * between the target's little-endianness and the host's big-endianness.
+	 * Consequently, a big-endian host should manually unswap the bytes
+	 * within the board_mcn_detail string buffer to get the bytes back into
+	 * the desired natural order.
+	 */
+	uint8_t board_mcn_detail[WMI_HOST_BOARD_MCN_STRING_BUF_SIZE];
+	uint32_t cal_ok; /* filled with CALIBRATION_STATUS enum value */
+} wmi_host_pdev_check_cal_version_event;
+
+#endif /* _WMI_UNIFIED_PARAM_H_ */
