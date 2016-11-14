@@ -287,7 +287,6 @@ void hdd_tdls_notify_mode_change(hdd_adapter_t *adapter, hdd_context_t *hddctx)
 	wlan_hdd_tdls_disable_offchan_and_teardown_links(hddctx);
 }
 
-
 /**
  * wlan_hdd_tdls_discovery_sent_cnt() - get value of discovery counter sent
  * @pHddCtx: HDD context
@@ -625,6 +624,8 @@ static void wlan_hdd_tdls_del_non_forced_peers(tdlsCtx_t *hdd_tdls_ctx)
  */
 void hdd_tdls_context_init(hdd_context_t *hdd_ctx)
 {
+	uint8_t sta_idx;
+
 	mutex_init(&hdd_ctx->tdls_lock);
 	qdf_spinlock_create(&hdd_ctx->tdls_ct_spinlock);
 
@@ -641,6 +642,22 @@ void hdd_tdls_context_init(hdd_context_t *hdd_ctx)
 	hdd_ctx->set_state_info.vdev_id = 0;
 	hdd_ctx->tdls_nss_teardown_complete = false;
 	hdd_ctx->tdls_nss_transition_mode = TDLS_NSS_TRANSITION_UNKNOWN;
+
+	if (hdd_ctx->config->fEnableTDLSSleepSta ||
+	    hdd_ctx->config->fEnableTDLSBufferSta ||
+	    hdd_ctx->config->fEnableTDLSOffChannel)
+		hdd_ctx->max_num_tdls_sta = HDD_MAX_NUM_TDLS_STA_P_UAPSD_OFFCHAN;
+	else
+		hdd_ctx->max_num_tdls_sta = HDD_MAX_NUM_TDLS_STA;
+
+	hdd_notice("max_num_tdls_sta: %d", hdd_ctx->max_num_tdls_sta);
+
+	for (sta_idx = 0; sta_idx < hdd_ctx->max_num_tdls_sta; sta_idx++) {
+		hdd_ctx->tdlsConnInfo[sta_idx].staId = 0;
+		hdd_ctx->tdlsConnInfo[sta_idx].sessionId = 255;
+		qdf_mem_zero(&hdd_ctx->tdlsConnInfo[sta_idx].peerMac,
+			     QDF_MAC_ADDR_SIZE);
+	}
 
 	/* This flag will set  be true, only when device operates in
 	 * standalone STA mode
@@ -677,7 +694,6 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	tdlsCtx_t *pHddTdlsCtx;
 	int i;
-	uint8_t staIdx;
 
 	if (NULL == pHddCtx)
 		return -EINVAL;
@@ -749,23 +765,6 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 
 	sme_set_tdls_power_save_prohibited(WLAN_HDD_GET_HAL_CTX(pAdapter),
 					   pAdapter->sessionId, 0);
-
-
-	if (pHddCtx->config->fEnableTDLSSleepSta ||
-	    pHddCtx->config->fEnableTDLSBufferSta ||
-	    pHddCtx->config->fEnableTDLSOffChannel)
-		pHddCtx->max_num_tdls_sta = HDD_MAX_NUM_TDLS_STA_P_UAPSD_OFFCHAN;
-	else
-		pHddCtx->max_num_tdls_sta = HDD_MAX_NUM_TDLS_STA;
-
-	hdd_notice("max_num_tdls_sta: %d", pHddCtx->max_num_tdls_sta);
-
-	for (staIdx = 0; staIdx < pHddCtx->max_num_tdls_sta; staIdx++) {
-		pHddCtx->tdlsConnInfo[staIdx].staId = 0;
-		pHddCtx->tdlsConnInfo[staIdx].sessionId = 255;
-		qdf_mem_zero(&pHddCtx->tdlsConnInfo[staIdx].peerMac,
-			     QDF_MAC_ADDR_SIZE);
-	}
 
 	pHddTdlsCtx->pAdapter = pAdapter;
 
