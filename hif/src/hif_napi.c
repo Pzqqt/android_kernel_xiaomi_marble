@@ -473,25 +473,25 @@ int hif_napi_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 	prev_state = napid->state;
 	switch (event) {
 	case NAPI_EVT_INI_FILE:
-	case NAPI_EVT_CMD_STATE: {
+	case NAPI_EVT_CMD_STATE:
+	case NAPI_EVT_INT_STATE: {
 		int on = (data != ((void *)0));
 
-		HIF_INFO("%s: received evnt: CONF %s; v = %d (state=0x%0x)",
-			 __func__,
-			 (event == NAPI_EVT_INI_FILE)?".ini file":"cmd",
+		HIF_INFO("%s: recved evnt: STATE_CMD %d; v = %d (state=0x%0x)",
+			 __func__, event,
 			 on, prev_state);
 		if (on)
 			if (prev_state & HIF_NAPI_CONF_UP) {
 				HIF_INFO("%s: duplicate NAPI conf ON msg",
 					 __func__);
 			} else {
-				HIF_INFO("%s: setting configuration to ON",
+				HIF_INFO("%s: setting state to ON",
 					 __func__);
 				napid->state |= HIF_NAPI_CONF_UP;
 			}
 		else /* off request */
 			if (prev_state & HIF_NAPI_CONF_UP) {
-				HIF_INFO("%s: setting configuration to OFF",
+				HIF_INFO("%s: setting state to OFF",
 				 __func__);
 				napid->state &= ~HIF_NAPI_CONF_UP;
 			} else {
@@ -596,12 +596,12 @@ int hif_napi_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 		break;
 	} /* switch blacklist_pending */
 
-	if (prev_state != hif->napi_data.state) {
-		if (hif->napi_data.state == ENABLE_NAPI_MASK) {
+	if (prev_state != napid->state) {
+		if (napid->state == ENABLE_NAPI_MASK) {
 			rc = 1;
 			for (i = 0; i < CE_COUNT_MAX; i++)
-				if ((hif->napi_data.ce_map & (0x01 << i))) {
-					napi = &(hif->napi_data.napis[i].napi);
+				if ((napid->ce_map & (0x01 << i))) {
+					napi = &(napid->napis[i].napi);
 					NAPI_DEBUG("%s: enabling NAPI %d",
 						   __func__, i);
 					napi_enable(napi);
@@ -609,11 +609,15 @@ int hif_napi_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 		} else {
 			rc = 0;
 			for (i = 0; i < CE_COUNT_MAX; i++)
-				if (hif->napi_data.ce_map & (0x01 << i)) {
-					napi = &(hif->napi_data.napis[i].napi);
+				if (napid->ce_map & (0x01 << i)) {
+					napi = &(napid->napis[i].napi);
 					NAPI_DEBUG("%s: disabling NAPI %d",
 						   __func__, i);
 					napi_disable(napi);
+					/* in case it is affined, remove it */
+					irq_set_affinity_hint(
+							napid->napis[i].irq,
+							NULL);
 				}
 		}
 	} else {
