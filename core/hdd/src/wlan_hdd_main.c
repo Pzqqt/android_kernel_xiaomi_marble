@@ -2664,6 +2664,7 @@ QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
 	if (!rc) {
 		hdd_alert("Session is not opened within timeout period code %ld",
 			rc);
+		adapter->sessionId = HDD_SESSION_ID_INVALID;
 		status = QDF_STATUS_E_FAILURE;
 		goto error_sme_open;
 	}

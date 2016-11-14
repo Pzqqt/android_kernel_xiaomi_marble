@@ -1522,9 +1522,7 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 				     0);
 		}
 
-		if ((iface->del_staself_req != NULL) &&
-			(iface->type == WMI_VDEV_TYPE_AP) &&
-			(iface->sub_type == WMI_UNIFIED_VDEV_SUBTYPE_P2P_GO)) {
+		if (iface->del_staself_req != NULL) {
 			WMA_LOGA("scheduling defered deletion (vdev id %x)",
 				 resp_event->vdev_id);
 			wma_vdev_detach(wma, iface->del_staself_req, 1);
