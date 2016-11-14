@@ -124,3 +124,16 @@ QDF_STATUS send_scan_stop_cmd_non_tlv(wmi_unified_t wmi_handle,
 QDF_STATUS send_scan_chan_list_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct scan_chan_list_params *param);
 
+QDF_STATUS send_get_user_position_cmd_non_tlv(wmi_unified_t wmi_handle,
+				uint32_t value);
+
+QDF_STATUS send_reset_peer_mumimo_tx_count_cmd_non_tlv(wmi_unified_t wmi_handle,
+				uint32_t value);
+
+QDF_STATUS send_get_peer_mumimo_tx_count_cmd_non_tlv(wmi_unified_t wmi_handle);
+
+QDF_STATUS send_pdev_caldata_version_check_cmd_non_tlv(wmi_unified_t wmi_handle,
+				uint32_t value);
+
+QDF_STATUS send_btcoex_wlan_priority_cmd_non_tlv(wmi_unified_t wmi_handle,
+				int value);
