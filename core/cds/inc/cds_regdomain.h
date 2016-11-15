@@ -360,6 +360,8 @@ enum reg_domain {
 	APL12_WORLD = 0x51,
 	APL13_WORLD = 0x5A,
 	APL14_WORLD = 0x57,
+	APL15_WORLD = 0x59,
+	APL16_WORLD = 0x70,
 
 	WOR0_WORLD = 0x60,
 	WOR1_WORLD = 0x61,
@@ -445,6 +447,8 @@ enum reg_domain {
 	APL12 = 0x1160,
 	APL13 = 0x1170,
 	APL14 = 0x1180,
+	APL15 = 0x1190,
+	APL16 = 0x1200,
 
 	NULL1 = 0x0198,
 	MKK3 = 0x0340,
