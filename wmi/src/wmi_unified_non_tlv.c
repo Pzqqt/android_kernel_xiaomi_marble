@@ -777,7 +777,7 @@ QDF_STATUS send_green_ap_ps_cmd_non_tlv(wmi_unified_t wmi_handle,
 	qdf_print("%s: Sent WMI_PDEV_GREEN_AP_PS_ENABLE_CMDID.\n"
 				 "enable=%u status=%d\n",
 				 __func__,
-				 cmd->enable,
+				 value,
 				 ret);
 #endif /* OL_GREEN_AP_DEBUG_CONFIG_INTERACTIONS */
 	return ret;
@@ -2324,19 +2324,23 @@ QDF_STATUS send_smart_ant_enable_cmd_non_tlv(wmi_unified_t wmi_handle,
 
 	if (ret != 0) {
 		qdf_print(" %s :WMI Failed\n", __func__);
-		qdf_print("%s: Sent WMI_PDEV_SMART_ANT_ENABLE_CMDID.\n"
-			"enable:%d mode:%d  rx_antenna: 0x%08x PINS: "
-			"[%d %d %d %d] Func[%d %d %d %d] cmdstatus=%d\n",
-			__func__,
-			cmd->enable,
-			cmd->mode,
-			cmd->rx_antenna,
-			cmd->gpio_pin[0], cmd->gpio_pin[1],
-				cmd->gpio_pin[2], cmd->gpio_pin[3],
-			cmd->gpio_func[0], cmd->gpio_func[1],
-				cmd->gpio_func[2], cmd->gpio_func[3],
-			ret);
-
+		qdf_print("%s: Failed to send WMI_PDEV_SMART_ANT_ENABLE_CMDID.\n"
+			  "enable:%d mode:%d  rx_antenna: 0x%08x PINS: "
+			  "[%d %d %d %d] Func[%d %d %d %d] cmdstatus=%d\n",
+			  __func__,
+			  cmd->enable,
+			  cmd->mode,
+			  cmd->rx_antenna,
+			  cmd->gpio_pin[0],
+			  cmd->gpio_pin[1],
+			  cmd->gpio_pin[2],
+			  cmd->gpio_pin[3],
+			  cmd->gpio_func[0],
+			  cmd->gpio_func[1],
+			  cmd->gpio_func[2],
+			  cmd->gpio_func[3],
+			  ret);
+		wmi_buf_free(buf);
 	}
 	return ret;
 }
@@ -2371,11 +2375,12 @@ QDF_STATUS send_smart_ant_set_rx_ant_cmd_non_tlv(wmi_unified_t wmi_handle,
 
 	if (ret != 0) {
 		qdf_print(" %s :WMI Failed\n", __func__);
-		qdf_print("%s: Sent WMI_PDEV_SMART_ANT_SET_RX_ANTENNA_CMDID.\n"
-				" rx_antenna: 0x%08x cmdstatus=%d\n",
-				__func__,
-				cmd->rx_antenna,
-				ret);
+		qdf_print("%s: Failed to send WMI_PDEV_SMART_ANT_SET_RX_ANTENNA_CMDID.\n"
+			  " rx_antenna: 0x%08x cmdstatus=%d\n",
+			  __func__,
+			  cmd->rx_antenna,
+			  ret);
+		wmi_buf_free(buf);
 	}
 	return ret;
 }
@@ -2416,13 +2421,14 @@ QDF_STATUS send_smart_ant_set_tx_ant_cmd_non_tlv(wmi_unified_t wmi_handle,
 
 	if (ret != 0) {
 		qdf_print(" %s :WMI Failed\n", __func__);
-		qdf_print("%s: Sent WMI_PEER_SMART_ANT_SET_TX_ANTENNA_CMDID.\n"
+		qdf_print("%s: Failed to send WMI_PEER_SMART_ANT_SET_TX_ANTENNA_CMDID.\n"
 			" Node: %s tx_antennas: [0x%08x 0x%08x] cmdstatus=%d\n",
 				__func__,
 				ether_sprintf(macaddr),
 				cmd->antenna_series[0],
 				cmd->antenna_series[1],
 				ret);
+		wmi_buf_free(buf);
 	}
 	return ret;
 }
@@ -2467,15 +2473,17 @@ QDF_STATUS send_smart_ant_set_training_info_cmd_non_tlv(
 
 	if (ret != 0) {
 		qdf_print(" %s :WMI Failed\n", __func__);
-		qdf_print("%s: Sent WMI_PEER_SMART_ANT_SET_TRAIN_INFO_CMDID.\n"
+		qdf_print("%s: Failed to Send WMI_PEER_SMART_ANT_SET_TRAIN_INFO_CMDID.\n"
 			" Train Node: %s rate_array[0x%02x 0x%02x] "
 			"tx_antennas: [0x%08x 0x%08x] cmdstatus=%d\n",
 			__func__,
 			ether_sprintf(macaddr),
-			cmd->train_rate_series[0], cmd->train_rate_series[1],
+			cmd->train_rate_series[0],
+			cmd->train_rate_series[1],
 			cmd->train_antenna_series[0],
-				cmd->train_antenna_series[1],
-				ret);
+			cmd->train_antenna_series[1],
+			ret);
+		wmi_buf_free(buf);
 	}
 	return ret;
 }
@@ -2656,25 +2664,25 @@ QDF_STATUS send_vdev_spectral_configure_cmd_non_tlv(wmi_unified_t wmi_handle,
 			 "spectral_scan_bin_scale = %u\n"
 			 "spectral_scan_dBm_adj = %u\n"
 			 "spectral_scan_chn_mask = %u\n",
-			 cmd->vdev_id,
-			 cmd->spectral_scan_count,
-			 cmd->spectral_scan_period,
-			 cmd->spectral_scan_priority,
-			 cmd->spectral_scan_fft_size,
-			 cmd->spectral_scan_gc_ena,
-			 cmd->spectral_scan_restart_ena,
-			 cmd->spectral_scan_noise_floor_ref,
-			 cmd->spectral_scan_init_delay,
-			 cmd->spectral_scan_nb_tone_thr,
-			 cmd->spectral_scan_str_bin_thr,
-			 cmd->spectral_scan_wb_rpt_mode,
-			 cmd->spectral_scan_rssi_rpt_mode,
-			 cmd->spectral_scan_rssi_thr,
-			 cmd->spectral_scan_pwr_format,
-			 cmd->spectral_scan_rpt_mode,
-			 cmd->spectral_scan_bin_scale,
-			 cmd->spectral_scan_dBm_adj,
-			 cmd->spectral_scan_chn_mask);
+			 param->vdev_id,
+			 param->count,
+			 param->period,
+			 param->spectral_pri,
+			 param->fft_size,
+			 param->gc_enable,
+			 param->restart_enable,
+			 param->noise_floor_ref,
+			 param->init_delay,
+			 param->nb_tone_thr,
+			 param->str_bin_thr,
+			 param->wb_rpt_mode,
+			 param->rssi_rpt_mode,
+			 param->rssi_thr,
+			 param->pwr_format,
+			 param->rpt_mode,
+			 param->bin_scale,
+			 param->dBm_adj,
+			 param->chn_mask);
 	qdf_print("%s: Status: %d\n\n", __func__, ret);
 #endif  /* OL_SPECTRAL_DEBUG_CONFIG_INTERACTIONS */
 
