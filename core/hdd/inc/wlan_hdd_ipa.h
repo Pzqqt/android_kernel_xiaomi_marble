@@ -115,6 +115,7 @@ void hdd_ipa_uc_force_pipe_shutdown(hdd_context_t *hdd_ctx);
 struct sk_buff *hdd_ipa_tx_packet_ipa(hdd_context_t *hdd_ctx,
 	struct sk_buff *skb, uint8_t session_id);
 bool hdd_ipa_is_present(hdd_context_t *hdd_ctx);
+void hdd_ipa_dump_info(hdd_context_t *hdd_ctx);
 #else
 static inline QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
 {
@@ -190,6 +191,12 @@ static inline bool hdd_ipa_uc_is_enabled(hdd_context_t *pHddCtx)
 {
 	return false;
 }
+
+static inline void hdd_ipa_dump_info(hdd_context_t *hdd_ctx)
+{
+	return;
+}
+
 static inline int hdd_ipa_uc_ssr_reinit(void)
 {
 	return false;

@@ -3147,12 +3147,14 @@ static __iw_softap_setparam(struct net_device *dev,
 			hdd_ipa_uc_stat_request(pHostapdAdapter, set_value);
 			break;
 		case 3:
-			hdd_ipa_uc_rt_debug_host_dump(
-					WLAN_HDD_GET_CTX(pHostapdAdapter));
+			hdd_ipa_uc_rt_debug_host_dump(hdd_ctx);
+			break;
+		case 4:
+			hdd_ipa_dump_info(hdd_ctx);
 			break;
 		default:
 			/* place holder for stats clean up
-			 * Stats clean not implemented yet on firmware and ipa
+			 * Stats clean not implemented yet on FW and IPA
 			 */
 			break;
 		}
