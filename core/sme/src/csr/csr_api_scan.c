@@ -422,7 +422,7 @@ csr_issue_11d_scan(tpAniSirGlobal mac_ctx, tSmeCmd *scan_cmd,
 
 	status = qdf_mc_timer_init(&scan_cmd->u.scanCmd.csr_scan_timer,
 			QDF_TIMER_TYPE_SW,
-			csr_scan_active_list_timeout_handle, &scan_11d_cmd);
+			csr_scan_active_list_timeout_handle, scan_11d_cmd);
 
 	if (csr_is11d_supported(mac_ctx)) {
 		tmp_rq.bcnRptReqScan = scan_req->bcnRptReqScan;
@@ -809,7 +809,7 @@ csr_update_lost_link1_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 	wma_get_scan_id(&cmd->u.scanCmd.scanID);
 	status = qdf_mc_timer_init(&cmd->u.scanCmd.csr_scan_timer,
 			QDF_TIMER_TYPE_SW,
-			csr_scan_active_list_timeout_handle, &cmd);
+			csr_scan_active_list_timeout_handle, cmd);
 	cmd->u.scanCmd.u.scanRequest.scan_id =
 		cmd->u.scanCmd.scanID;
 
@@ -981,7 +981,7 @@ csr_update_lost_link2_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 		return QDF_STATUS_SUCCESS;
 	status = qdf_mc_timer_init(&cmd->u.scanCmd.csr_scan_timer,
 			QDF_TIMER_TYPE_SW,
-			csr_scan_active_list_timeout_handle, &cmd);
+			csr_scan_active_list_timeout_handle, cmd);
 	scan_fltr = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
 	if (NULL == scan_fltr)
 		return QDF_STATUS_E_NOMEM;
@@ -1116,7 +1116,7 @@ csr_scan_request_lost_link3(tpAniSirGlobal mac_ctx, uint32_t session_id)
 		wma_get_scan_id(&cmd->u.scanCmd.scanID);
 		status = qdf_mc_timer_init(&cmd->u.scanCmd.csr_scan_timer,
 			QDF_TIMER_TYPE_SW,
-			csr_scan_active_list_timeout_handle, &cmd);
+			csr_scan_active_list_timeout_handle, cmd);
 		cmd->u.scanCmd.u.scanRequest.scan_id =
 			cmd->u.scanCmd.scanID;
 		qdf_set_macaddr_broadcast(&cmd->u.scanCmd.u.scanRequest.bssid);
@@ -6247,7 +6247,7 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 			sizeof(tCsrScanRequest), 0);
 	status = qdf_mc_timer_init(&scan_cmd->u.scanCmd.csr_scan_timer,
 			QDF_TIMER_TYPE_SW,
-			csr_scan_active_list_timeout_handle, &scan_cmd);
+			csr_scan_active_list_timeout_handle, scan_cmd);
 	scan_req = &scan_cmd->u.scanCmd.u.scanRequest;
 	scan_req->scanType = eSIR_ACTIVE_SCAN;
 	scan_req->BSSType = profile->BSSType;
