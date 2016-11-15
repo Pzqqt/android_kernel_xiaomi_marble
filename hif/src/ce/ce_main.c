@@ -1891,6 +1891,11 @@ void hif_ce_stop(struct hif_softc *scn)
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	int pipe_num;
 
+	/*
+	 * before cleaning up any memory, ensure irq &
+	 * bottom half contexts will not be re-entered
+	 */
+	hif_nointrs(scn);
 	scn->hif_init_done = false;
 
 	/*
