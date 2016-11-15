@@ -2472,8 +2472,9 @@ static void hdd_remove_dsrc_channels(struct wiphy *wiphy, uint32_t *chan_list,
  *
  * Return: none
  */
-void hdd_remove_passive_channels(struct wiphy *wiphy, uint32_t *chan_list,
-				 uint8_t *num_channels)
+static void hdd_remove_passive_channels(struct wiphy *wiphy,
+					uint32_t *chan_list,
+					uint8_t *num_channels)
 {
 	uint8_t num_chan_temp = 0;
 	int i, j, k;
