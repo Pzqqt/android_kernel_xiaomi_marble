@@ -916,7 +916,7 @@ HIF_CE_OBJS :=  $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_bmi.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_service.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_tasklet.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/regtable.o \
-                $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/qca8074def.o \
+                $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/qca6290def.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_service_srng.o \
 
 HIF_USB_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_USB_DIR)/usbdrv.o \
@@ -1661,7 +1661,7 @@ CDEFINES += -DWLAN_FEATURE_NAN_DATAPATH
 endif
 
 ifeq ($(CONFIG_LITHIUM),y)
-CDEFINES += -DQCA8074_HEADERS_DEF
+CDEFINES += -DQCA6290_HEADERS_DEF
 CDEFINES += -DQCA_WIFI_QCA8074
 CDEFINES += -DQCA_WIFI_QCA8074_VP
 endif
