@@ -2626,7 +2626,6 @@ void lim_process_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 		return;
 	}
 
-	session_entry->nss = add_bss_param->nss;
 	bss_type = session_entry->bssType;
 	/* update PE session Id */
 	mlm_start_cnf.sessionId = session_entry->peSessionId;
