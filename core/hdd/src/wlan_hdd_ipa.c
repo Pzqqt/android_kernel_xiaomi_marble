@@ -54,6 +54,7 @@
 
 #include "wma.h"
 #include "wma_api.h"
+#include "wal_rx_desc.h"
 
 #include "cdp_txrx_ipa.h"
 
@@ -484,9 +485,6 @@ static uint32_t wlan_hdd_stub_addr_to_priv(void *ptr)
 #define HDD_IPA_UC_WLAN_RX_HDR_LEN      sizeof(struct hdd_ipa_uc_rx_hdr)
 #define HDD_IPA_UC_WLAN_HDR_DES_MAC_OFFSET \
 	(HDD_IPA_WLAN_FRAG_HEADER + HDD_IPA_WLAN_IPA_HEADER)
-
-#define HDD_IPA_FW_RX_DESC_DISCARD_M 0x1
-#define HDD_IPA_FW_RX_DESC_FORWARD_M 0x2
 
 #define HDD_IPA_GET_IFACE_ID(_data) \
 	(((struct hdd_ipa_cld_hdr *) (_data))->iface_id)
@@ -2647,14 +2645,7 @@ static void hdd_ipa_send_skb_to_network(qdf_nbuf_t skb,
 static void hdd_ipa_forward(struct hdd_ipa_priv *hdd_ipa,
 			    hdd_adapter_t *adapter, qdf_nbuf_t skb)
 {
-	qdf_nbuf_t copy;
 	struct hdd_ipa_pm_tx_cb *pm_tx_cb;
-
-	copy = qdf_nbuf_copy(skb);
-	if (!copy) {
-		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "copy packet alloc fail");
-		return;
-	}
 
 	qdf_spin_lock_bh(&hdd_ipa->pm_lock);
 	/* WLAN subsystem is in suspend, put int queue */
@@ -2662,25 +2653,73 @@ static void hdd_ipa_forward(struct hdd_ipa_priv *hdd_ipa,
 		qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			"TX in SUSPEND PUT QUEUE");
-		qdf_mem_set(copy->cb, sizeof(copy->cb), 0);
-		pm_tx_cb = (struct hdd_ipa_pm_tx_cb *)copy->cb;
+		qdf_mem_set(skb->cb, sizeof(skb->cb), 0);
+		pm_tx_cb = (struct hdd_ipa_pm_tx_cb *)skb->cb;
 		pm_tx_cb->exception = true;
 		pm_tx_cb->adapter = adapter;
 		qdf_spin_lock_bh(&hdd_ipa->pm_lock);
-		qdf_nbuf_queue_add(&hdd_ipa->pm_queue_head, copy);
+		qdf_nbuf_queue_add(&hdd_ipa->pm_queue_head, skb);
 		qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
 		hdd_ipa->stats.num_tx_queued++;
 	} else {
 		/* Resume, put packet into WLAN TX */
 		qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
-		if (hdd_softap_hard_start_xmit(copy, adapter->dev)) {
+		if (hdd_softap_hard_start_xmit(skb, adapter->dev)) {
 			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "packet tx fail");
+			hdd_ipa->stats.num_tx_bcmc_err++;
 		} else {
 			hdd_ipa->stats.num_tx_bcmc++;
 			hdd_ipa->ipa_tx_forward++;
 		}
 	}
+}
+
+/**
+ * hdd_ipa_intrabss_forward() - Forward intra bss packets.
+ * @hdd_ipa: pointer to HDD IPA struct
+ * @adapter: hdd adapter pointer
+ * @desc: Firmware descriptor
+ * @skb: Data buffer
+ *
+ * Return:
+ *      HDD_IPA_FORWARD_PKT_NONE
+ *      HDD_IPA_FORWARD_PKT_DISCARD
+ *      HDD_IPA_FORWARD_PKT_LOCAL_STACK
+ *
+ */
+
+static enum hdd_ipa_forward_type hdd_ipa_intrabss_forward(
+		struct hdd_ipa_priv *hdd_ipa,
+		hdd_adapter_t *adapter,
+		uint8_t desc,
+		qdf_nbuf_t skb)
+{
+	int ret = HDD_IPA_FORWARD_PKT_NONE;
+
+	if ((desc & FW_RX_DESC_FORWARD_M)) {
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG,
+				"Forward packet to Tx (fw_desc=%d)", desc);
+		hdd_ipa->ipa_tx_forward++;
+
+		if ((desc & FW_RX_DESC_DISCARD_M)) {
+			hdd_ipa_forward(hdd_ipa, adapter, skb);
+			hdd_ipa->ipa_rx_internel_drop_count++;
+			hdd_ipa->ipa_rx_discard++;
+			ret = HDD_IPA_FORWARD_PKT_DISCARD;
+		} else {
+			struct sk_buff *cloned_skb = skb_clone(skb, GFP_ATOMIC);
+			if (cloned_skb)
+				hdd_ipa_forward(hdd_ipa, adapter, cloned_skb);
+			else
+				HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
+						"%s: tx skb alloc failed",
+						__func__);
+			ret = HDD_IPA_FORWARD_PKT_LOCAL_STACK;
+		}
+	}
+
+	return ret;
 }
 
 /**
@@ -2773,19 +2812,10 @@ static void __hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 			 * only when DISCARD bit is not set.
 			 */
 			fw_desc = (uint8_t)skb->cb[1];
-			if (fw_desc & HDD_IPA_FW_RX_DESC_FORWARD_M) {
-				HDD_IPA_DP_LOG(
-					QDF_TRACE_LEVEL_DEBUG,
-					"Forward packet to Tx (fw_desc=%d)",
-					fw_desc);
-				hdd_ipa_forward(hdd_ipa, adapter, skb);
-			}
-			if (fw_desc & HDD_IPA_FW_RX_DESC_DISCARD_M) {
-				HDD_IPA_INCREASE_INTERNAL_DROP_COUNT(hdd_ipa);
-				hdd_ipa->ipa_rx_discard++;
-				kfree_skb(skb);
+			if (HDD_IPA_FORWARD_PKT_DISCARD ==
+			    hdd_ipa_intrabss_forward(hdd_ipa, adapter,
+						     fw_desc, skb))
 				break;
-			}
 		} else {
 			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO_HIGH,
 				"Intra-BSS FWD is disabled-skip forward to Tx");
@@ -3008,16 +3038,15 @@ static void hdd_ipa_i2w_cb(void *priv, enum ipa_dp_evt_type evt,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	iface_context = (struct hdd_ipa_iface_context *)priv;
+	ipa_tx_desc = (struct ipa_rx_data *)data;
+	hdd_ipa = iface_context->hdd_ipa;
+
 	if (evt != IPA_RECEIVE) {
-		skb = (qdf_nbuf_t) data;
-		dev_kfree_skb_any(skb);
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "Event is not IPA_RECEIVE");
+		ipa_free_skb(ipa_tx_desc);
 		iface_context->stats.num_tx_drop++;
 		return;
 	}
-
-	ipa_tx_desc = (struct ipa_rx_data *)data;
-
-	hdd_ipa = iface_context->hdd_ipa;
 
 	/*
 	 * When SSR is going on or driver is unloading, just drop the packets.

@@ -62,6 +62,18 @@ enum hdd_ipa_wlan_event {
 #include <wlan_hdd_assoc.h> /* hdd_context_t */
 
 /**
+ * enum hdd_ipa_forward_type: Type of forward packet received from IPA
+ * @HDD_IPA_FORWARD_PKT_NONE: No forward packet
+ * @HDD_IPA_FORWARD_PKT_LOCAL_STACK: Packet forwarded to kernel network stack
+ * @HDD_IPA_FORWARD_PKT_DISCARD: Discarded packet before sending to kernel stack
+ */
+enum hdd_ipa_forward_type {
+	HDD_IPA_FORWARD_PKT_NONE = 0,
+	HDD_IPA_FORWARD_PKT_LOCAL_STACK = 1,
+	HDD_IPA_FORWARD_PKT_DISCARD = 2
+};
+
+/**
  * FIXME: Temporary hack - until IPA functionality gets restored
  *
  */
