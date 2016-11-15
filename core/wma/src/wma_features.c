@@ -5518,7 +5518,7 @@ QDF_STATUS wma_process_get_peer_info_req
 
 	WMA_LOGE("IBSS get peer info cmd sent len: %d, vdev %d"
 		 " command id: %d, status: %d", len,
-		 p_get_peer_info_cmd->vdev_id, WMI_PEER_INFO_REQ_CMDID, ret);
+		 vdev_id, WMI_PEER_INFO_REQ_CMDID, ret);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -5608,8 +5608,7 @@ QDF_STATUS wma_process_rmc_enable_ind(tp_wma_handle wma)
 				   WMI_RMC_SET_MODE_CMDID);
 
 	WMA_LOGE("Enable RMC cmd sent len: %d, vdev %d" " command id: %d,"
-		 " status: %d", len, p_rmc_enable_cmd->vdev_id,
-		 WMI_RMC_SET_MODE_CMDID, ret);
+		 " status: %d", len, vdev_id, WMI_RMC_SET_MODE_CMDID, ret);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -5659,8 +5658,7 @@ QDF_STATUS wma_process_rmc_disable_ind(tp_wma_handle wma)
 				   WMI_RMC_SET_MODE_CMDID);
 
 	WMA_LOGE("Disable RMC cmd sent len: %d, vdev %d" " command id: %d,"
-		 " status: %d", len, p_rmc_disable_cmd->vdev_id,
-		 WMI_RMC_SET_MODE_CMDID, ret);
+		 " status: %d", len, vdev_id, WMI_RMC_SET_MODE_CMDID, ret);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -5676,7 +5674,7 @@ QDF_STATUS wma_process_rmc_action_period_ind(tp_wma_handle wma)
 	int ret;
 	uint8_t *p;
 	uint16_t len;
-	uint32_t val;
+	uint32_t periodicity_msec;
 	wmi_buf_t buf;
 	int32_t vdev_id;
 	wmi_rmc_set_action_period_cmd_fixed_param *p_rmc_cmd;
@@ -5710,21 +5708,21 @@ QDF_STATUS wma_process_rmc_action_period_ind(tp_wma_handle wma)
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_rmc_set_action_period_cmd_fixed_param));
 
-	if (wlan_cfg_get_int(mac, WNI_CFG_RMC_ACTION_PERIOD_FREQUENCY, &val)
-	    != eSIR_SUCCESS) {
+	if (wlan_cfg_get_int(mac, WNI_CFG_RMC_ACTION_PERIOD_FREQUENCY,
+			     &periodicity_msec) != eSIR_SUCCESS) {
 		WMA_LOGE("Failed to get value for RMC action period using default");
-		val = WNI_CFG_RMC_ACTION_PERIOD_FREQUENCY_STADEF;
+		periodicity_msec = WNI_CFG_RMC_ACTION_PERIOD_FREQUENCY_STADEF;
 	}
 
 	p_rmc_cmd->vdev_id = vdev_id;
-	p_rmc_cmd->periodicity_msec = val;
+	p_rmc_cmd->periodicity_msec = periodicity_msec;
 
 	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
 				   WMI_RMC_SET_ACTION_PERIOD_CMDID);
 
 	WMA_LOGE("RMC action period %d cmd sent len: %d, vdev %d"
-		 " command id: %d, status: %d", p_rmc_cmd->periodicity_msec,
-		 len, p_rmc_cmd->vdev_id, WMI_RMC_SET_ACTION_PERIOD_CMDID, ret);
+		 " command id: %d, status: %d", periodicity_msec,
+		 len, vdev_id, WMI_RMC_SET_ACTION_PERIOD_CMDID, ret);
 
 	return QDF_STATUS_SUCCESS;
 }
