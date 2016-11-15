@@ -268,6 +268,7 @@ typedef enum {
  * @QCA_NL80211_VENDOR_SUBCMD_SETBAND: vendor setband command
  * @QCA_NL80211_VENDOR_SUBCMD_TRIGGER_SCAN: venodr scan command
  * @QCA_NL80211_VENDOR_SUBCMD_SCAN_DONE: vendor scan complete
+ * @QCA_NL80211_VENDOR_SUBCMD_ABORT_SCAN: vendor abort scan
  * @QCA_NL80211_VENDOR_SUBCMD_OTA_TEST: enable OTA test
  * @QCA_NL80211_VENDOR_SUBCMD_SET_TXPOWER_SCALE: set tx power by percentage
  * @QCA_NL80211_VENDOR_SUBCMD_SET_TXPOWER_SCALE_DECR_DB: reduce tx power by DB
@@ -448,6 +449,9 @@ enum qca_nl80211_vendor_subcmds {
 
 	/* Configure the TDLS mode from user space */
 	QCA_NL80211_VENDOR_SUBCMD_CONFIGURE_TDLS = 143,
+
+	/* Vendor abort scan command */
+	QCA_NL80211_VENDOR_SUBCMD_ABORT_SCAN = 145,
 
 	/* Set Specific Absorption Rate(SAR) Power Limits */
 	QCA_NL80211_VENDOR_SUBCMD_SET_SAR_LIMITS = 146,

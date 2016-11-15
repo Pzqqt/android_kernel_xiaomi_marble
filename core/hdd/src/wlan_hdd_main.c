@@ -107,6 +107,7 @@
 #include "wlan_hdd_disa.h"
 #include <dispatcher_init_deinit.h>
 #include "wlan_hdd_object_manager.h"
+#include "cds_utils.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -415,6 +416,7 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 					abortscan_event_var);
 			hdd_abort_mac_scan(adapter->pHddCtx,
 					   adapter->sessionId,
+					   INVALID_SCAN_ID,
 					   eCSR_SCAN_ABORT_DEFAULT);
 			rc = wait_for_completion_timeout(
 				&adapter->scan_info.abortscan_event_var,
@@ -4403,6 +4405,7 @@ QDF_STATUS hdd_abort_mac_scan_all_adapters(hdd_context_t *hdd_ctx)
 		    (adapter->device_mode == QDF_SAP_MODE) ||
 		    (adapter->device_mode == QDF_P2P_GO_MODE)) {
 			hdd_abort_mac_scan(hdd_ctx, adapter->sessionId,
+					   INVALID_SCAN_ID,
 					   eCSR_SCAN_ABORT_DEFAULT);
 		}
 		status = hdd_get_next_adapter(hdd_ctx, adapterNode, &pNext);

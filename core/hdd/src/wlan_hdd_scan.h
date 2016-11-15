@@ -93,6 +93,22 @@ int wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 		struct wireless_dev *wdev, const void *data,
 		int data_len);
 
+/**
+ * wlan_hdd_vendor_abort_scan() - API to process vendor command for
+ * abort scan
+ * @wiphy: Pointer to wiphy
+ * @wdev: Pointer to net device
+ * @data : Pointer to the data
+ * @data_len : length of the data
+ *
+ * This is called from supplicant to abort scan
+ *
+ * Return: zero for success and non zero for failure.
+ */
+int wlan_hdd_vendor_abort_scan(
+	struct wiphy *wiphy, struct wireless_dev *wdev,
+	const void *data, int data_len);
+
 void hdd_cleanup_scan_queue(hdd_context_t *hdd_ctx);
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)) || \

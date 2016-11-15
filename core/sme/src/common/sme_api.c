@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -6563,18 +6563,8 @@ QDF_STATUS sme_set_preferred_network_list(tHalHandle hHal,
 
 #endif /* FEATURE_WLAN_SCAN_PNO */
 
-/* ---------------------------------------------------------------------------
-    \fn sme_abort_mac_scan
-    \brief  API to cancel MAC scan.
-    \param  hHal - The handle returned by mac_open.
-    \param  sessionId - sessionId on which we need to abort scan.
-    \param  reason - Reason to abort the scan.
-    \return QDF_STATUS
-	    QDF_STATUS_E_FAILURE - failure
-	    QDF_STATUS_SUCCESS  success
-   ---------------------------------------------------------------------------*/
 QDF_STATUS sme_abort_mac_scan(tHalHandle hHal, uint8_t sessionId,
-			      eCsrAbortReason reason)
+			      uint32_t scan_id, eCsrAbortReason reason)
 {
 	QDF_STATUS status;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -6583,7 +6573,8 @@ QDF_STATUS sme_abort_mac_scan(tHalHandle hHal, uint8_t sessionId,
 			 TRACE_CODE_SME_RX_HDD_ABORT_MACSCAN, NO_SESSION, 0));
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_scan_abort_mac_scan(pMac, sessionId, reason);
+		status = csr_scan_abort_mac_scan(pMac, sessionId,
+						 scan_id, reason);
 
 		sme_release_global_lock(&pMac->sme);
 	}

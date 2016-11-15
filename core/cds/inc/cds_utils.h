@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -65,6 +65,8 @@
 #define CDS_CHAN_14_FREQ       (2484)
 #define CDS_CHAN_15_FREQ       (2512)
 #define CDS_CHAN_170_FREQ      (5852)
+
+#define INVALID_SCAN_ID        0xFFFFFFFF
 
 #define cds_log(level, args...) QDF_TRACE(QDF_MODULE_ID_QDF, level, ## args)
 #define cds_logfl(level, format, args...) cds_log(level, FL(format), ## args)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -266,13 +266,27 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal pMac, uint32_t sessionId,
 /* To remove fresh scan commands from the pending queue */
 bool csr_scan_remove_fresh_scan_command(tpAniSirGlobal pMac, uint8_t sessionId);
 QDF_STATUS csr_scan_abort_mac_scan(tpAniSirGlobal pMac, uint8_t sessionId,
-				   eCsrAbortReason reason);
+				   uint32_t scan_id, eCsrAbortReason reason);
 QDF_STATUS csr_scan_abort_all_scans(tpAniSirGlobal mac_ctx,
 				   eCsrAbortReason reason);
-void csr_remove_cmd_from_pending_list(tpAniSirGlobal pMac, tDblLinkList *pList,
-				      eSmeCommandType commandType);
-void csr_remove_cmd_with_session_id_from_pending_list(tpAniSirGlobal pMac,
+/**
+ * csr_remove_cmd_from_pending_list() - Remove command from
+ * pending list
+ * @pMac: Pointer to Global MAC structure
+ * @sessionId: session id
+ * @scan_id: scan id
+ * @pList: pointer to pending command list
+ * @commandType: sme command type
+ *
+ * Remove command from pending list by matching either
+ * scan id or session id.
+ *
+ * Return: QDF_STATUS_SUCCESS for success, QDF_STATUS_E_FAILURE
+ * for failure
+ */
+QDF_STATUS csr_remove_cmd_from_pending_list(tpAniSirGlobal pMac,
 						      uint8_t sessionId,
+						      uint32_t scan_id,
 						      tDblLinkList *pList,
 						      eSmeCommandType commandType);
 QDF_STATUS csr_scan_abort_mac_scan_not_for_connect(tpAniSirGlobal pMac,
@@ -283,7 +297,7 @@ void csr_remove_scan_for_ssid_from_pending_list(tpAniSirGlobal pMac,
 						uint32_t sessionId);
 
 QDF_STATUS csr_abort_scan_from_active_list(tpAniSirGlobal pMac,
-		tDblLinkList *pList, uint32_t sessionId,
+		tDblLinkList *pList, uint32_t sessionId, uint32_t scan_id,
 		eSmeCommandType scan_cmd_type, eCsrAbortReason abort_reason);
 
 /* To age out scan results base. tSmeGetScanChnRsp is a pointer returned by LIM that */

@@ -92,6 +92,7 @@
 #include "pld_common.h"
 #endif
 #include "wlan_hdd_lro.h"
+#include "cds_utils.h"
 
 #define HDD_FINISH_ULA_TIME_OUT         800
 #define HDD_SET_MCBC_FILTERS_TO_FW      1
@@ -10128,6 +10129,7 @@ int hdd_set_band(struct net_device *dev, u8 ui_band)
 			pAdapter = pAdapterNode->pAdapter;
 			hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 			hdd_abort_mac_scan(pHddCtx, pAdapter->sessionId,
+					   INVALID_SCAN_ID,
 					   eCSR_SCAN_ABORT_DUE_TO_BAND_CHANGE);
 			connectedBand =
 				hdd_conn_get_connected_band

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -511,8 +511,20 @@ uint16_t sme_check_concurrent_channel_overlap(tHalHandle hHal, uint16_t sap_ch,
 		eCsrPhyMode sapPhyMode,
 		uint8_t cc_switch_mode);
 #endif
+/**
+ * sme_abort_mac_scan() - API to cancel MAC scan
+ * @hHal: The handle returned by mac_open
+ * @sessionId: sessionId on which we need to abort scan
+ * @scan_id: scan id on which we need to abort scan
+ * @reason: Reason to abort the scan
+ *
+ * This function aborts MAC scan.
+ *
+ * Return: QDF_STATUS_E_FAILURE for failure, QDF_STATUS_SUCCESS for
+ * success
+ */
 QDF_STATUS sme_abort_mac_scan(tHalHandle hHal, uint8_t sessionId,
-		eCsrAbortReason reason);
+		uint32_t scan_id, eCsrAbortReason reason);
 QDF_STATUS sme_get_cfg_valid_channels(tHalHandle hHal, uint8_t *aValidChannels,
 		uint32_t *len);
 #ifdef FEATURE_WLAN_SCAN_PNO

@@ -79,6 +79,7 @@
 #include "wlan_hdd_driver_ops.h"
 #include <wlan_logging_sock_svc.h>
 #include "scheduler_api.h"
+#include "cds_utils.h"
 
 /* Preprocessor definitions and constants */
 #define HDD_SSR_BRING_UP_TIME 30000
@@ -1986,6 +1987,7 @@ next_adapter:
 		if (pScanInfo->mScanPending) {
 			INIT_COMPLETION(pScanInfo->abortscan_event_var);
 			hdd_abort_mac_scan(pHddCtx, pAdapter->sessionId,
+					   INVALID_SCAN_ID,
 					   eCSR_SCAN_ABORT_DEFAULT);
 
 			status =

@@ -6643,13 +6643,15 @@ QDF_STATUS csr_scan_abort_all_scans(tpAniSirGlobal mac_ctx,
 	mac_ctx->scan.fDropScanCmd = true;
 	for (session_id = 0; session_id < CSR_ROAM_SESSION_MAX; session_id++) {
 		if (CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
-			csr_remove_cmd_with_session_id_from_pending_list(
+			csr_remove_cmd_from_pending_list(
 				mac_ctx,
-				session_id, &mac_ctx->sme.smeScanCmdPendingList,
+				session_id, INVALID_SCAN_ID,
+				&mac_ctx->sme.smeScanCmdPendingList,
 				eSmeCommandScan);
 			csr_abort_scan_from_active_list(mac_ctx,
 				 &mac_ctx->sme.smeScanCmdActiveList,
-				 session_id, eSmeCommandScan, reason);
+				 session_id, INVALID_SCAN_ID, eSmeCommandScan,
+				 reason);
 		}
 	}
 	mac_ctx->scan.fDropScanCmd = false;
@@ -6658,24 +6660,34 @@ QDF_STATUS csr_scan_abort_all_scans(tpAniSirGlobal mac_ctx,
 }
 
 QDF_STATUS csr_scan_abort_mac_scan(tpAniSirGlobal pMac, uint8_t sessionId,
-				   eCsrAbortReason reason)
+				   uint32_t scan_id, eCsrAbortReason reason)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	QDF_STATUS ret;
 
 	pMac->scan.fDropScanCmd = true;
-	csr_remove_cmd_with_session_id_from_pending_list(pMac,
-			sessionId, &pMac->sme.smeScanCmdPendingList,
+	ret = csr_remove_cmd_from_pending_list(pMac,
+			sessionId, scan_id, &pMac->sme.smeScanCmdPendingList,
 			eSmeCommandScan);
 	pMac->scan.fDropScanCmd = false;
-	csr_abort_scan_from_active_list(pMac,
-			 &pMac->sme.smeScanCmdActiveList, sessionId,
-			eSmeCommandScan, reason);
 
+	/*
+	 * If we are not able to find command for scan id in
+	 * pending list, check active list. Also if the session
+	 * id is valid then we have to check below active list.
+	 */
+	if (ret != QDF_STATUS_SUCCESS ||
+			sessionId != CSR_SESSION_ID_INVALID) {
+		status = csr_abort_scan_from_active_list(pMac,
+			&pMac->sme.smeScanCmdActiveList, sessionId, scan_id,
+			eSmeCommandScan, reason);
+	}
 	return status;
 }
 
-void csr_remove_cmd_with_session_id_from_pending_list(tpAniSirGlobal pMac,
+QDF_STATUS csr_remove_cmd_from_pending_list(tpAniSirGlobal pMac,
 						uint8_t sessionId,
+						uint32_t scan_id,
 						tDblLinkList *pList,
 						eSmeCommandType commandType)
 {
@@ -6683,33 +6695,36 @@ void csr_remove_cmd_with_session_id_from_pending_list(tpAniSirGlobal pMac,
 	tListElem *pEntry;
 	tSmeCmd *pCommand;
 	tListElem *pEntryToRemove;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	qdf_mem_zero(&localList, sizeof(tDblLinkList));
 	if (!QDF_IS_STATUS_SUCCESS(csr_ll_open(pMac->hHdd, &localList))) {
 		sms_log(pMac, LOGE, FL("failed to open list"));
-		return;
+		return status;
 	}
 
 	csr_ll_lock(pList);
 	pEntry = csr_ll_peek_head(pList, LL_ACCESS_NOLOCK);
-	if (pEntry) {
-		/*
-		 * Have to make sure we don't loop back to the head of the list,
-		 * which will happen if the entry is NOT on the list
-		 */
-		while (pEntry) {
-			pEntryToRemove = pEntry;
-			pEntry = csr_ll_next(pList, pEntry, LL_ACCESS_NOLOCK);
-			pCommand = GET_BASE_ADDR(pEntryToRemove, tSmeCmd, Link);
 
-			if (!((pCommand->command == commandType) &&
-			    (pCommand->sessionId == sessionId)))
-				continue;
+	/*
+	 * Have to make sure we don't loop back to the head of the list,
+	 * which will happen if the entry is NOT on the list
+	 */
+	while (pEntry) {
+		pEntryToRemove = pEntry;
+		pEntry = csr_ll_next(pList, pEntry, LL_ACCESS_NOLOCK);
+		pCommand = GET_BASE_ADDR(pEntryToRemove, tSmeCmd, Link);
+
+		if ((pCommand->command == commandType) &&
+		    (((commandType == eSmeCommandScan) &&
+		    (pCommand->u.scanCmd.scanID == scan_id)) ||
+		    (pCommand->sessionId == sessionId))) {
 			/* Remove that entry only */
 			if (csr_ll_remove_entry(pList, pEntryToRemove,
-						LL_ACCESS_NOLOCK)) {
+			    LL_ACCESS_NOLOCK)) {
 				csr_ll_insert_tail(&localList, pEntryToRemove,
 						   LL_ACCESS_NOLOCK);
+				status = QDF_STATUS_SUCCESS;
 			}
 		}
 	}
@@ -6717,57 +6732,14 @@ void csr_remove_cmd_with_session_id_from_pending_list(tpAniSirGlobal pMac,
 
 	while ((pEntry = csr_ll_remove_head(&localList, LL_ACCESS_NOLOCK))) {
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-		sms_log(pMac, LOG1, FL("Sending abort for scan command ID %d"),
-			pCommand->u.scanCmd.scanID);
+		sms_log(pMac, LOG1, FL("Sending abort for command ID %d"),
+			(commandType == eSmeCommandScan) ? pCommand->u.
+			scanCmd.scanID : sessionId);
 		csr_abort_command(pMac, pCommand, false);
 	}
 
 	csr_ll_close(&localList);
-}
-
-void csr_remove_cmd_from_pending_list(tpAniSirGlobal pMac,
-				      tDblLinkList *pList,
-				      eSmeCommandType commandType)
-{
-	tDblLinkList localList;
-	tListElem *pEntry;
-	tSmeCmd *pCommand;
-	tListElem *pEntryToRemove;
-
-	qdf_mem_zero(&localList, sizeof(tDblLinkList));
-	if (!QDF_IS_STATUS_SUCCESS(csr_ll_open(pMac->hHdd, &localList))) {
-		sms_log(pMac, LOGE, FL(" failed to open list"));
-		return;
-	}
-
-	csr_ll_lock(pList);
-	if (!csr_ll_is_list_empty(pList, LL_ACCESS_NOLOCK)) {
-		pEntry = csr_ll_peek_head(pList, LL_ACCESS_NOLOCK);
-		/*
-		 * Have to make sure we don't loop back to the head of the list,
-		 * which will happen if the entry is NOT on the list...
-		 */
-		while (pEntry) {
-			pEntryToRemove = pEntry;
-			pEntry = csr_ll_next(pList, pEntry, LL_ACCESS_NOLOCK);
-			pCommand = GET_BASE_ADDR(pEntryToRemove, tSmeCmd, Link);
-			/* Remove that entry only that matches cmd type */
-			if (pCommand->command == commandType &&
-			    csr_ll_remove_entry(pList, pEntryToRemove,
-						LL_ACCESS_NOLOCK)) {
-				csr_ll_insert_tail(&localList, pEntryToRemove,
-						   LL_ACCESS_NOLOCK);
-			}
-		}
-	}
-	csr_ll_unlock(pList);
-
-	while ((pEntry = csr_ll_remove_head(&localList, LL_ACCESS_NOLOCK))) {
-		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-		csr_abort_command(pMac, pCommand, false);
-	}
-	csr_ll_close(&localList);
-
+	return status;
 }
 
 QDF_STATUS csr_scan_abort_scan_for_ssid(tpAniSirGlobal pMac, uint32_t sessionId)
@@ -6779,7 +6751,8 @@ QDF_STATUS csr_scan_abort_scan_for_ssid(tpAniSirGlobal pMac, uint32_t sessionId)
 			&pMac->sme.smeScanCmdPendingList, sessionId);
 	pMac->scan.fDropScanCmd = false;
 	csr_abort_scan_from_active_list(pMac, &pMac->sme.smeScanCmdActiveList,
-		sessionId, eSmeCommandScan, eCSR_SCAN_ABORT_SSID_ONLY);
+			sessionId, INVALID_SCAN_ID, eSmeCommandScan,
+			eCSR_SCAN_ABORT_SSID_ONLY);
 	return status;
 }
 
@@ -6876,15 +6849,17 @@ static void csr_send_scan_abort(tpAniSirGlobal mac_ctx,
  * @mac_ctx: Pointer to Global Mac structure
  * @list: pointer to scan active list
  * @session_id: CSR session identification
+ * @scan_id: scan id
  * @scan_cmd_type: scan command type
  * @abort_reason: abort reason
  *
- * .Remove Scan command from active scan list
+ * Remove Scan command from active scan list by matching either the scan id
+ * or session id.
  *
  * Return: Success - QDF_STATUS_SUCCESS, Failure - error number
  */
 QDF_STATUS csr_abort_scan_from_active_list(tpAniSirGlobal mac_ctx,
-		tDblLinkList *list, uint32_t session_id,
+		tDblLinkList *list, uint32_t session_id, uint32_t scan_id,
 		eSmeCommandType scan_cmd_type, eCsrAbortReason abort_reason)
 {
 	tListElem *entry;
@@ -6900,19 +6875,26 @@ QDF_STATUS csr_abort_scan_from_active_list(tpAniSirGlobal mac_ctx,
 			entry = csr_ll_next(list, entry, LL_ACCESS_NOLOCK);
 			cmd = GET_BASE_ADDR(entry_remove, tSmeCmd, Link);
 
-			/* Skip if command and session id not matched */
-			if (!((scan_cmd_type == cmd->command) &&
-				(session_id == cmd->sessionId)))
-				continue;
 			/*skip if abort reason is for SSID*/
 			if ((abort_reason == eCSR_SCAN_ABORT_SSID_ONLY) &&
 				(eCsrScanForSsid != cmd->u.scanCmd.reason))
 					continue;
-			if (abort_reason == eCSR_SCAN_ABORT_DUE_TO_BAND_CHANGE)
-				cmd->u.scanCmd.abort_scan_indication =
+			/*
+			 * Do not skip if command and either session id
+			 * or scan id is matched
+			 */
+			if ((cmd->command == scan_cmd_type) &&
+			    ((cmd->u.scanCmd.scanID == scan_id) ||
+			    (cmd->sessionId == session_id))) {
+				if (abort_reason ==
+				    eCSR_SCAN_ABORT_DUE_TO_BAND_CHANGE)
+					cmd->u.scanCmd.abort_scan_indication =
 					eCSR_SCAN_ABORT_DUE_TO_BAND_CHANGE;
-			csr_send_scan_abort(mac_ctx, cmd->sessionId,
-						cmd->u.scanCmd.scanID);
+
+				csr_send_scan_abort(mac_ctx, cmd->sessionId,
+						    cmd->u.scanCmd.scanID);
+
+			}
 		}
 	}
 	csr_ll_unlock(list);
@@ -6931,7 +6913,7 @@ QDF_STATUS csr_scan_abort_mac_scan_not_for_connect(tpAniSirGlobal pMac,
 		 * purpose
 		 */
 		status = csr_scan_abort_mac_scan(pMac, sessionId,
-						 eCSR_SCAN_ABORT_DEFAULT);
+				INVALID_SCAN_ID, eCSR_SCAN_ABORT_DEFAULT);
 	}
 	return status;
 }

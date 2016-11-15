@@ -9503,12 +9503,14 @@ void csr_roaming_state_msg_processor(tpAniSirGlobal pMac, void *pMsgBuf)
 	case eWNI_SME_DEAUTH_RSP:
 		/* or the Deauthentication response message... */
 		if (CSR_IS_ROAM_SUBSTATE_DEAUTH_REQ(pMac, pSmeRsp->sessionId)) {
-			csr_remove_cmd_with_session_id_from_pending_list(pMac,
+			csr_remove_cmd_from_pending_list(pMac,
 					pSmeRsp->sessionId,
+					INVALID_SCAN_ID,
 					&pMac->sme.smeCmdPendingList,
 					eSmeCommandWmStatusChange);
-			csr_remove_cmd_with_session_id_from_pending_list(pMac,
+			csr_remove_cmd_from_pending_list(pMac,
 					pSmeRsp->sessionId,
+					INVALID_SCAN_ID,
 					&pMac->roam.roamCmdPendingList,
 					eSmeCommandWmStatusChange);
 			csr_roam_roaming_state_deauth_rsp_processor(pMac,
@@ -11548,7 +11550,7 @@ void csr_roam_cancel_roaming(tpAniSirGlobal pMac, uint32_t sessionId)
 						  roamResult);
 			/* Since CSR may be in lostlink roaming situation, abort all roaming related activities */
 			csr_scan_abort_mac_scan(pMac, sessionId,
-						eCSR_SCAN_ABORT_DEFAULT);
+				INVALID_SCAN_ID, eCSR_SCAN_ABORT_DEFAULT);
 			csr_roam_stop_roaming_timer(pMac, sessionId);
 		}
 	}

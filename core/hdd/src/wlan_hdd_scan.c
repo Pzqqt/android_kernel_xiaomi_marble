@@ -1009,6 +1009,7 @@ int iw_get_scan(struct net_device *dev,
  * hdd_abort_mac_scan() - aborts ongoing mac scan
  * @pHddCtx: Pointer to hdd context
  * @sessionId: session id
+ * @scan_id: scan id
  * @reason: abort reason
  *
  * Abort any MAC scan if in progress
@@ -1016,9 +1017,9 @@ int iw_get_scan(struct net_device *dev,
  * Return: none
  */
 void hdd_abort_mac_scan(hdd_context_t *pHddCtx, uint8_t sessionId,
-			eCsrAbortReason reason)
+			uint32_t scan_id, eCsrAbortReason reason)
 {
-	sme_abort_mac_scan(pHddCtx->hHal, sessionId, reason);
+	sme_abort_mac_scan(pHddCtx->hHal, sessionId, scan_id, reason);
 }
 
 /**
@@ -2226,6 +2227,140 @@ int wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 
 	return ret;
 }
+/**
+ * wlan_hdd_get_scanid() - API to get the scan id
+ * from the scan cookie attribute.
+ * @hdd_ctx: Pointer to HDD context
+ * @scan_id: Pointer to scan id
+ * @cookie : Scan cookie attribute
+ *
+ * API to get the scan id from the scan cookie attribute
+ * sent from supplicant by matching scan request.
+ *
+ * Return: 0 for success, non zero for failure
+ */
+static int wlan_hdd_get_scanid(hdd_context_t *hdd_ctx,
+			       uint32_t *scan_id, uint64_t cookie)
+{
+	struct hdd_scan_req *scan_req;
+	qdf_list_node_t *node = NULL;
+	qdf_list_node_t *ptr_node = NULL;
+	int ret = -EINVAL;
+
+	qdf_spin_lock(&hdd_ctx->hdd_scan_req_q_lock);
+	if (qdf_list_empty(&hdd_ctx->hdd_scan_req_q)) {
+		qdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
+		return ret;
+	}
+
+	if (QDF_STATUS_SUCCESS !=
+	    qdf_list_peek_front(&hdd_ctx->hdd_scan_req_q,
+	    &ptr_node)) {
+		qdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
+		return ret;
+	}
+
+	do {
+		node = ptr_node;
+		scan_req = container_of(node, struct hdd_scan_req, node);
+
+		if (cookie ==
+		    (uintptr_t)(scan_req->scan_request)) {
+			*scan_id = scan_req->scan_id;
+			ret = 0;
+			break;
+		}
+	} while (QDF_STATUS_SUCCESS ==
+		 qdf_list_peek_next(&hdd_ctx->hdd_scan_req_q,
+		 node, &ptr_node));
+
+	qdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
+
+	return ret;
+
+}
+/**
+ * __wlan_hdd_vendor_abort_scan() - API to process vendor command for
+ * abort scan
+ * @wiphy: Pointer to wiphy
+ * @wdev: Pointer to net device
+ * @data : Pointer to the data
+ * @data_len : length of the data
+ *
+ * API to process vendor abort scan
+ *
+ * Return: zero for success and non zero for failure
+ */
+static int __wlan_hdd_vendor_abort_scan(
+		struct wiphy *wiphy, const void *data,
+		int data_len)
+{
+	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_SCAN_MAX + 1];
+	uint32_t scan_id;
+	uint64_t cookie;
+	int ret;
+
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("Command not allowed in FTM mode");
+		return -EINVAL;
+	}
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = -EINVAL;
+	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_SCAN_MAX, data,
+	    data_len, NULL)) {
+		hdd_err("Invalid ATTR");
+		return ret;
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_SCAN_COOKIE]) {
+		cookie = nla_get_u64(
+			    tb[QCA_WLAN_VENDOR_ATTR_SCAN_COOKIE]);
+		ret = wlan_hdd_get_scanid(hdd_ctx,
+					  &scan_id,
+					  cookie);
+		if (ret != 0)
+			return ret;
+		hdd_abort_mac_scan(hdd_ctx,
+				   HDD_SESSION_ID_INVALID,
+				   scan_id,
+				   eCSR_SCAN_ABORT_DEFAULT);
+	}
+
+	return ret;
+}
+
+
+/**
+ * wlan_hdd_vendor_abort_scan() - API to process vendor command for
+ * abort scan
+ * @wiphy: Pointer to wiphy
+ * @wdev: Pointer to net device
+ * @data : Pointer to the data
+ * @data_len : length of the data
+ *
+ * This is called from supplicant to abort scan
+ *
+ * Return: zero for success and non zero for failure
+ */
+int wlan_hdd_vendor_abort_scan(
+	struct wiphy *wiphy, struct wireless_dev *wdev,
+	const void *data, int data_len)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_vendor_abort_scan(wiphy,
+					   data,
+					   data_len);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
 
 /**
  * wlan_hdd_scan_abort() - abort ongoing scan
@@ -2244,7 +2379,7 @@ int wlan_hdd_scan_abort(hdd_adapter_t *pAdapter)
 	if (pScanInfo->mScanPending) {
 		INIT_COMPLETION(pScanInfo->abortscan_event_var);
 		hdd_abort_mac_scan(pHddCtx, pAdapter->sessionId,
-				   eCSR_SCAN_ABORT_DEFAULT);
+				   INVALID_SCAN_ID, eCSR_SCAN_ABORT_DEFAULT);
 
 		rc = wait_for_completion_timeout(
 			&pScanInfo->abortscan_event_var,

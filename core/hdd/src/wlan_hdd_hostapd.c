@@ -1663,6 +1663,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		/* Lets do abort scan to ensure smooth authentication for client */
 		if ((pScanInfo != NULL) && pScanInfo->mScanPending) {
 			hdd_abort_mac_scan(pHddCtx, pHostapdAdapter->sessionId,
+					   INVALID_SCAN_ID,
 					   eCSR_SCAN_ABORT_DEFAULT);
 		}
 		if (pHostapdAdapter->device_mode == QDF_P2P_GO_MODE) {
@@ -7811,6 +7812,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 				INIT_COMPLETION(pScanInfo->abortscan_event_var);
 				hdd_abort_mac_scan(staAdapter->pHddCtx,
 						   staAdapter->sessionId,
+						   INVALID_SCAN_ID,
 						   eCSR_SCAN_ABORT_DEFAULT);
 				rc = wait_for_completion_timeout(
 					&pScanInfo->abortscan_event_var,

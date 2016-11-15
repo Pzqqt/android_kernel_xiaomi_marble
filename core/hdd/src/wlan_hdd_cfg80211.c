@@ -8747,6 +8747,16 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.doit = wlan_hdd_cfg80211_vendor_scan
 	},
 
+	/* Vendor abort scan */
+	{
+		.info.vendor_id = QCA_NL80211_VENDOR_ID,
+		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_ABORT_SCAN,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+			WIPHY_VENDOR_CMD_NEED_NETDEV |
+			WIPHY_VENDOR_CMD_NEED_RUNNING,
+		.doit = wlan_hdd_vendor_abort_scan
+	},
+
 	/* OCB commands */
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
@@ -13276,6 +13286,7 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 		if (pScanInfo->mScanPending) {
 			hdd_notice("Disconnect is in progress, Aborting Scan");
 			hdd_abort_mac_scan(pHddCtx, pAdapter->sessionId,
+					   INVALID_SCAN_ID,
 					   eCSR_SCAN_ABORT_DEFAULT);
 		}
 		wlan_hdd_cleanup_remain_on_channel_ctx(pAdapter);
