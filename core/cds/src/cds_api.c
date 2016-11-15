@@ -414,6 +414,7 @@ err_bmi_close:
 
 err_sched_close:
 	cds_sched_close(gp_cds_context);
+	cds_shutdown_notifier_purge();
 
 err_msg_queue:
 	cds_mq_deinit(&gp_cds_context->freeVosMq);
