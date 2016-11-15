@@ -899,8 +899,6 @@ static void hdd_ipa_uc_rt_debug_init(hdd_context_t *hdd_ctx)
 	struct hdd_ipa_priv *hdd_ipa = (struct hdd_ipa_priv *)hdd_ctx->hdd_ipa;
 
 	qdf_mutex_create(&hdd_ipa->rt_debug_lock);
-	qdf_mc_timer_init(&hdd_ipa->rt_debug_fill_timer, QDF_TIMER_TYPE_SW,
-		hdd_ipa_uc_rt_debug_host_fill, (void *)hdd_ctx);
 	hdd_ipa->rt_buf_fill_index = 0;
 	qdf_mem_zero(hdd_ipa->rt_bug_buffer,
 		sizeof(struct uc_rt_debug_info) *
@@ -911,15 +909,18 @@ static void hdd_ipa_uc_rt_debug_init(hdd_context_t *hdd_ctx)
 	hdd_ipa->ipa_rx_internel_drop_count = 0;
 	hdd_ipa->ipa_rx_destructor_count = 0;
 
-	qdf_mc_timer_start(&hdd_ipa->rt_debug_fill_timer,
-		HDD_IPA_UC_RT_DEBUG_FILL_INTERVAL);
-
 	/* Reatime debug enable on feature enable */
 	if (!hdd_ipa_is_rt_debugging_enabled(hdd_ctx)) {
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 			"%s: IPA RT debug is not enabled", __func__);
 		return;
 	}
+
+	qdf_mc_timer_init(&hdd_ipa->rt_debug_fill_timer, QDF_TIMER_TYPE_SW,
+		hdd_ipa_uc_rt_debug_host_fill, (void *)hdd_ctx);
+	qdf_mc_timer_start(&hdd_ipa->rt_debug_fill_timer,
+		HDD_IPA_UC_RT_DEBUG_FILL_INTERVAL);
+
 	qdf_mc_timer_init(&hdd_ipa->rt_debug_timer, QDF_TIMER_TYPE_SW,
 		hdd_ipa_uc_rt_debug_handler, (void *)hdd_ctx);
 	qdf_mc_timer_start(&hdd_ipa->rt_debug_timer,
