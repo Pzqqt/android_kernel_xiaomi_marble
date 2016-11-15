@@ -157,19 +157,21 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx,
  */
 /* fw-declare to make compiler happy */
 struct qca_napi_data;
-static inline int hif_napi_cpu_init(void *ctx) { return 0; }
-static inline int hif_napi_cpu_deinit(void *ctx) { return 0; }
+static inline int hif_napi_cpu_init(struct hif_opaque_softc *hif)
+{ return 0; }
+
+static inline int hif_napi_cpu_deinit(struct hif_opaque_softc *hif)
+{ return 0; }
+
 static inline int hif_napi_serialize(struct hif_opaque_softc *hif, int is_on)
-{
-	return -EPERM;
-}
+{ return -EPERM; }
 #else /* HELIUMPLUS - NAPI CPU symbols are valid */
 
 /*
  * prototype signatures
  */
-int hif_napi_cpu_init(void *);
-int hif_napi_cpu_deinit(void *);
+int hif_napi_cpu_init(struct hif_opaque_softc *hif);
+int hif_napi_cpu_deinit(struct hif_opaque_softc *hif);
 
 int hif_napi_cpu_migrate(struct qca_napi_data *napid, int cpu, int action);
 int hif_napi_cpu_blacklist(bool is_on);

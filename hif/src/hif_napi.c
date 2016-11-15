@@ -46,7 +46,6 @@
 #include <linux/pm.h>
 
 /* Driver headers */
-#include <cds_api.h>
 #include <hif_napi.h>
 #include <hif_debug.h>
 #include <hif_io32.h>
@@ -125,7 +124,7 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 
 		napid->state |= HIF_NAPI_INITED;
 
-		rc = hif_napi_cpu_init(napid);
+		rc = hif_napi_cpu_init(hif_ctx);
 		if (rc != 0) {
 			HIF_ERROR("NAPI_initialization failed,. %d", rc);
 			goto hnc_err;
@@ -261,7 +260,7 @@ int hif_napi_destroy(struct hif_opaque_softc *hif_ctx,
 			 * set the whole structure to uninitialized state
 			 */
 			if (napid->ce_map == 0) {
-				rc = hif_napi_cpu_deinit(napid);
+				rc = hif_napi_cpu_deinit(hif_ctx);
 				/* caller is tolerant to receiving !=0 rc */
 
 				memset(napid,
@@ -966,14 +965,9 @@ static int hnc_cpu_notify_cb(struct notifier_block *nb,
 
 	NAPI_DEBUG("-->%s(act=%ld, cpu=%ld)", __func__, action, cpu);
 
-	hif = (struct hif_opaque_softc *)cds_get_context(QDF_MODULE_ID_HIF);
-	if (qdf_likely(hif != NULL))
-		napid = hif_napi_get_all(hif);
-	if (qdf_unlikely(napid == NULL)) {
-		NAPI_DEBUG("%s: hif/napid NULL (%p/%p)",
-			   __func__, hif, napid);
-		goto lab_hnc_notify;
-	}
+	napid = qdf_container_of(nb, struct qca_napi_data, hnc_cpu_notifier);
+	hif = &qdf_container_of(napid, struct hif_softc, napi_data)->osc;
+
 	switch (action) {
 	case CPU_ONLINE:
 		napid->napi_cpu[cpu].state = QCA_NAPI_CPU_UP;
@@ -1007,14 +1001,19 @@ static int hnc_cpu_notify_cb(struct notifier_block *nb,
 		NAPI_DEBUG("%s: ignored. action: %ld", __func__, action);
 		break;
 	} /* switch */
-lab_hnc_notify:
 	NAPI_DEBUG("<--%s [%d]", __func__, rc);
 	return rc;
 }
 
 /**
  * hnc_hotplug_hook() - installs a hotplug notifier
+ * @hif_sc: hif_sc context
  * @register: !0 => register , =0 => deregister
+ *
+ * Because the callback relies on the data layout of
+ * struct hif_softc & its napi_data member, this callback
+ * registration requires that the hif_softc is passed in.
+ *
  * Note that this is different from the cpu notifier used by
  * rx_thread (cds_schedule.c).
  * We may consider combining these modifiers in the future.
@@ -1022,19 +1021,21 @@ lab_hnc_notify:
  * Return: 0: success
  *        <0: error
  */
-static struct notifier_block hnc_cpu_notifier = {
-	.notifier_call = hnc_cpu_notify_cb,
-};
-static int hnc_hotplug_hook(int install)
+static int hnc_hotplug_hook(struct hif_softc *hif_sc, int install)
 {
 	int rc = 0;
 
 	NAPI_DEBUG("-->%s(%d)", __func__, install);
 
-	if (install)
-		rc = register_hotcpu_notifier(&hnc_cpu_notifier);
-	else
-		unregister_hotcpu_notifier(&hnc_cpu_notifier);
+	if (install) {
+		hif_sc->napi_data.hnc_cpu_notifier.notifier_call
+			= hnc_cpu_notify_cb;
+		rc = register_hotcpu_notifier(
+			&hif_sc->napi_data.hnc_cpu_notifier);
+	} else {
+		unregister_hotcpu_notifier(
+			&hif_sc->napi_data.hnc_cpu_notifier);
+	}
 
 	NAPI_DEBUG("<--%s()[%d]", __func__, rc);
 	return rc;
@@ -1081,11 +1082,11 @@ static int hnc_tput_hook(int install)
  * Return: 0: OK
  *         <0: error code
  */
-int hif_napi_cpu_init(void *ctx)
+int hif_napi_cpu_init(struct hif_opaque_softc *hif)
 {
 	int rc = 0;
 	int i;
-	struct qca_napi_data *napid = (struct qca_napi_data *)ctx;
+	struct qca_napi_data *napid = &HIF_GET_SOFTC(hif)->napi_data;
 	struct qca_napi_cpu *cpus = napid->napi_cpu;
 
 	NAPI_DEBUG("--> ");
@@ -1118,7 +1119,7 @@ int hif_napi_cpu_init(void *ctx)
 		goto lab_err_topology;
 
 	/* install hotplug notifier */
-	rc = hnc_hotplug_hook(1);
+	rc = hnc_hotplug_hook(HIF_GET_SOFTC(hif), 1);
 	if (0 != rc)
 		goto lab_err_hotplug;
 
@@ -1129,7 +1130,7 @@ int hif_napi_cpu_init(void *ctx)
 
 lab_err_hotplug:
 	hnc_tput_hook(0);
-	hnc_hotplug_hook(0);
+	hnc_hotplug_hook(HIF_GET_SOFTC(hif), 0);
 lab_err_topology:
 	memset(napid->napi_cpu, 0, sizeof(struct qca_napi_cpu) * NR_CPUS);
 lab_rss_init:
@@ -1145,10 +1146,10 @@ lab_rss_init:
  * - clears cpu topology table
  * Return: 0: OK
  */
-int hif_napi_cpu_deinit(void *ctx)
+int hif_napi_cpu_deinit(struct hif_opaque_softc *hif)
 {
 	int rc = 0;
-	struct qca_napi_data *napid = (struct qca_napi_data *)ctx;
+	struct qca_napi_data *napid = &HIF_GET_SOFTC(hif)->napi_data;
 
 	NAPI_DEBUG("-->%s(...)", __func__);
 
@@ -1156,7 +1157,7 @@ int hif_napi_cpu_deinit(void *ctx)
 	rc = hnc_tput_hook(0);
 
 	/* uninstall hotplug notifier */
-	rc = hnc_hotplug_hook(0);
+	rc = hnc_hotplug_hook(HIF_GET_SOFTC(hif), 0);
 
 	/* clear the topology table */
 	memset(napid->napi_cpu, 0, sizeof(struct qca_napi_cpu) * NR_CPUS);
