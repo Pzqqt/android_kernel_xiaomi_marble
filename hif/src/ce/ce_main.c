@@ -1055,8 +1055,12 @@ void ce_t2h_msg_ce_cleanup(struct CE_handle *ce_hdl)
 	qdf_nbuf_t nbuf;
 	int i;
 
-	if (!ce_state->fastpath_handler)
+	if (ce_state->scn->fastpath_mode_on == false)
 		return;
+
+	if (!ce_state->htt_rx_data)
+		return;
+
 	/*
 	 * when fastpath_mode is on and for datapath CEs. Unlike other CE's,
 	 * this CE is completely full: does not leave one blank space, to
