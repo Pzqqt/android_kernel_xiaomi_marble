@@ -1738,6 +1738,8 @@ static bool wmi_is_pm_resume_cmd(uint32_t cmd_id)
  * @len: wmi buffer length
  * @cmd_id: wmi command id
  *
+ * Note, it is NOT safe to access buf after calling this function!
+ *
  * Return: 0 on success
  */
 QDF_STATUS wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf,

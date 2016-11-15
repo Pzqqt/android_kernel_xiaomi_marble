@@ -8319,6 +8319,10 @@ QDF_STATUS send_add_clear_mcbc_filter_cmd_tlv(wmi_unified_t wmi_handle,
 		(clearList ? WMI_MCAST_FILTER_DELETE : WMI_MCAST_FILTER_SET);
 	cmd->vdev_id = vdev_id;
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(multicast_addr.bytes, &cmd->mcastbdcastaddr);
+
+	WMI_LOGD("Action:%d; vdev_id:%d; clearList:%d; MCBC MAC Addr: %pM",
+		 cmd->action, vdev_id, clearList, multicast_addr.bytes);
+
 	err = wmi_unified_cmd_send(wmi_handle, buf,
 				   sizeof(*cmd),
 				   WMI_SET_MCASTBCAST_FILTER_CMDID);
@@ -8327,11 +8331,8 @@ QDF_STATUS send_add_clear_mcbc_filter_cmd_tlv(wmi_unified_t wmi_handle,
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
-	WMI_LOGD("Action:%d; vdev_id:%d; clearList:%d",
-		 cmd->action, vdev_id, clearList);
-	WMI_LOGD("MCBC MAC Addr: %pM", multicast_addr.bytes);
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -8385,6 +8386,8 @@ QDF_STATUS send_gtk_offload_cmd_tlv(wmi_unified_t wmi_handle, uint8_t vdev_id,
 		cmd->flags = gtk_offload_opcode;
 	}
 
+	WMI_LOGD("VDEVID: %d, GTK_FLAGS: x%x", vdev_id, cmd->flags);
+
 	/* send the wmi command */
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_GTK_OFFLOAD_CMDID)) {
@@ -8393,7 +8396,6 @@ QDF_STATUS send_gtk_offload_cmd_tlv(wmi_unified_t wmi_handle, uint8_t vdev_id,
 		status = QDF_STATUS_E_FAILURE;
 	}
 
-	WMI_LOGD("VDEVID: %d, GTK_FLAGS: x%x", vdev_id, cmd->flags);
 out:
 	WMI_LOGD("%s Exit", __func__);
 	return status;
