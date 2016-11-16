@@ -48,7 +48,8 @@ typedef __qdf_mutex_t qdf_mutex_t;
  * =0 success
  * else fail status
  */
-QDF_STATUS qdf_mutex_create(qdf_mutex_t *lock)
+#undef qdf_mutex_create
+QDF_STATUS qdf_mutex_create(qdf_mutex_t *lock, const char *func, int line)
 {
 	/* check for invalid pointer */
 	if (lock == NULL) {
@@ -69,6 +70,8 @@ QDF_STATUS qdf_mutex_create(qdf_mutex_t *lock)
 			  __func__);
 		return QDF_STATUS_E_FAULT;
 	}
+
+	qdf_lock_stats_create(&lock->stats, func, line);
 
 	/* initialize new lock */
 	mutex_init(&lock->m_lock);
@@ -128,8 +131,11 @@ QDF_STATUS qdf_mutex_acquire(qdf_mutex_t *lock)
 #endif
 		return QDF_STATUS_SUCCESS;
 	}
+
+	BEFORE_LOCK(lock, mutex_is_locked(&lock->m_lock));
 	/* acquire a Lock */
 	mutex_lock(&lock->m_lock);
+	AFTER_LOCK(lock);
 	rc = mutex_is_locked(&lock->m_lock);
 	if (rc == 0) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
@@ -227,6 +233,7 @@ QDF_STATUS qdf_mutex_release(qdf_mutex_t *lock)
 	lock->refcount = 0;
 	lock->state = LOCK_RELEASED;
 	/* release a Lock */
+	BEFORE_UNLOCK(lock, 0);
 	mutex_unlock(&lock->m_lock);
 #ifdef QDF_NESTED_LOCK_DEBUG
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR, "%s: Freeing lock %x %d %d", lock, lock->process_id,
@@ -555,7 +562,7 @@ EXPORT_SYMBOL(qdf_runtime_lock_deinit);
  */
 QDF_STATUS qdf_spinlock_acquire(qdf_spinlock_t *lock)
 {
-	spin_lock(&lock->spinlock);
+	spin_lock(&lock->lock.spinlock);
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(qdf_spinlock_acquire);
@@ -570,7 +577,7 @@ EXPORT_SYMBOL(qdf_spinlock_acquire);
  */
 QDF_STATUS qdf_spinlock_release(qdf_spinlock_t *lock)
 {
-	spin_unlock(&lock->spinlock);
+	spin_unlock(&lock->lock.spinlock);
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(qdf_spinlock_release);
@@ -627,6 +634,7 @@ QDF_STATUS qdf_mutex_destroy(qdf_mutex_t *lock)
 	lock->process_id = 0;
 	lock->refcount = 0;
 
+	qdf_lock_stats_destroy(&lock->stats);
 	mutex_unlock(&lock->m_lock);
 
 	return QDF_STATUS_SUCCESS;

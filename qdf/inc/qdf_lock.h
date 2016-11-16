@@ -34,6 +34,122 @@
 #define _QDF_LOCK_H
 
 #include <qdf_types.h>
+#include <qdf_mem.h>
+#include <qdf_time.h>
+#include <i_qdf_trace.h>
+
+#define QDF_LOCK_STATS 0
+
+#define QDF_MAX_HOLD_TIME_ALOWED_SPINLOCK_IRQ 1000
+#define QDF_MAX_HOLD_TIME_ALOWED_SPINLOCK_BH  5000
+#define QDF_MAX_HOLD_TIME_ALOWED_SPINLOCK     5000
+
+#if !QDF_LOCK_STATS
+struct lock_stats {};
+#define BEFORE_LOCK(x...) do {} while (0)
+#define AFTER_LOCK(x...) do {} while (0)
+#define BEFORE_UNLOCK(x...) do {} while (0)
+#define qdf_lock_stats_create(x...) do {} while (0)
+#define qdf_lock_stats_destroy(x...) do {} while (0)
+#else
+struct lock_stats {
+	const char *initialization_fn;
+	int line;
+	int acquired;
+	int contended;
+	uint64_t contention_time;
+	uint64_t non_contention_time;
+	uint64_t held_time;
+	uint64_t last_acquired;
+	uint64_t max_contention_wait;
+	uint64_t max_held_time;
+	int num_large_contentions;
+	int num_large_holds;
+};
+#define LARGE_CONTENTION QDF_LOG_TIMESTAMP_CYCLES_PER_10_US
+
+#define BEFORE_LOCK(lock, was_locked) \
+{ \
+	uint64_t BEFORE_LOCK_time; \
+	uint64_t AFTER_LOCK_time;  \
+	bool BEFORE_LOCK_is_locked = was_locked; \
+	BEFORE_LOCK_time = qdf_get_log_timestamp(); \
+	do {} while (0)
+
+
+#define AFTER_LOCK(lock) \
+	AFTER_LOCK_time = qdf_get_log_timestamp(); \
+	lock->stats.acquired++; \
+	lock->stats.last_acquired = AFTER_LOCK_time; \
+	if (BEFORE_LOCK_is_locked) { \
+		lock->stats.contended++; \
+		lock->stats.contention_time += \
+			(AFTER_LOCK_time - BEFORE_LOCK_time); \
+	} else { \
+		lock->stats.non_contention_time += \
+			(AFTER_LOCK_time - BEFORE_LOCK_time); \
+	} \
+\
+	if (AFTER_LOCK_time - BEFORE_LOCK_time > LARGE_CONTENTION) \
+		lock->stats.num_large_contentions++; \
+\
+	if (AFTER_LOCK_time - BEFORE_LOCK_time > \
+	    lock->stats.max_contention_wait) \
+		lock->stats.max_contention_wait = \
+			AFTER_LOCK_time - BEFORE_LOCK_time; \
+}
+
+/* max_hold_time in US */
+#define BEFORE_UNLOCK(lock, max_hold_time) \
+do {\
+	uint64_t held_time = qdf_get_log_timestamp() - \
+		lock->stats.last_acquired; \
+	lock->stats.held_time += held_time; \
+\
+	if (held_time > lock->stats.max_held_time) \
+		lock->stats.max_held_time = held_time; \
+\
+	if (held_time > LARGE_CONTENTION) \
+		lock->stats.num_large_holds++; \
+	if (max_hold_time && \
+	    held_time > qdf_usecs_to_log_timestamp(max_hold_time)) { \
+		qdf_print("BEFORE_UNLOCK: lock held too long (%lluus)\n", \
+		       qdf_log_timestamp_to_usecs(held_time)); \
+		QDF_BUG(0); \
+	} \
+} while (0)
+
+
+
+static inline void qdf_lock_stats_destroy(struct lock_stats *stats)
+{
+	qdf_print("%s: lock: %s %d \t"
+		  "acquired:\t%d\tcontended:\t%d\t"
+		  "contention_time\t%llu\tmax_contention_wait:\t%llu\t"
+		  "non_contention_time\t%llu\t"
+		  "held_time\t%llu\tmax_held:\t%llu\t\n"
+		  , __func__,
+		  stats->initialization_fn,
+		  stats->line,
+		  stats->acquired,
+		  stats->contended,
+		  qdf_log_timestamp_to_usecs(stats->contention_time),
+		  qdf_log_timestamp_to_usecs(stats->max_contention_wait),
+		  qdf_log_timestamp_to_usecs(stats->non_contention_time),
+		  qdf_log_timestamp_to_usecs(stats->held_time),
+		  qdf_log_timestamp_to_usecs(stats->max_held_time)
+	      );
+}
+
+static inline void qdf_lock_stats_create(struct lock_stats *stats,
+					 const char *func, int line)
+{
+	qdf_mem_zero(stats, sizeof(*stats));
+	stats->initialization_fn = func;
+	stats->line = line;
+}
+#endif
+
 #include <i_qdf_lock.h>
 
 #define WIFI_POWER_EVENT_DEFAULT_WAKELOCK_TIMEOUT 0
@@ -52,10 +168,16 @@ static inline int qdf_semaphore_acquire_timeout(struct semaphore *m,
 	return __qdf_semaphore_acquire_timeout(m, timeout);
 }
 
+struct qdf_spinlock {
+	__qdf_spinlock_t lock;
+	struct lock_stats stats;
+};
+
 /**
  * @brief Platform spinlock object
  */
-typedef __qdf_spinlock_t qdf_spinlock_t;
+typedef struct qdf_spinlock qdf_spinlock_t;
+
 
 /**
  * @brief Platform mutex object
@@ -64,7 +186,8 @@ typedef __qdf_semaphore_t qdf_semaphore_t;
 typedef __qdf_mutex_t qdf_mutex_t;
 
 /* function Declaration */
-QDF_STATUS qdf_mutex_create(qdf_mutex_t *m);
+QDF_STATUS qdf_mutex_create(qdf_mutex_t *m, const char *func, int line);
+#define qdf_mutex_create(m) qdf_mutex_create(m, __func__, __LINE__)
 
 QDF_STATUS qdf_mutex_acquire(qdf_mutex_t *m);
 
@@ -77,10 +200,14 @@ QDF_STATUS qdf_mutex_destroy(qdf_mutex_t *lock);
  * @lock: spinlock object pointer
  * Return: none
  */
-static inline void qdf_spinlock_create(qdf_spinlock_t *lock)
+static inline void qdf_spinlock_create(qdf_spinlock_t *lock, const char *func,
+				       int line)
 {
-	__qdf_spinlock_create(lock);
+	__qdf_spinlock_create(&lock->lock);
+	qdf_lock_stats_create(&lock->stats, func, line);
 }
+
+#define qdf_spinlock_create(x) qdf_spinlock_create(x, __func__, __LINE__)
 
 /**
  * qdf_spinlock_destroy - Delete a spinlock
@@ -89,7 +216,8 @@ static inline void qdf_spinlock_create(qdf_spinlock_t *lock)
  */
 static inline void qdf_spinlock_destroy(qdf_spinlock_t *lock)
 {
-	__qdf_spinlock_destroy(lock);
+	qdf_lock_stats_destroy(&lock->stats);
+	__qdf_spinlock_destroy(&lock->lock);
 }
 
 /**
@@ -111,7 +239,7 @@ static inline int qdf_spin_is_locked(qdf_spinlock_t *lock)
  */
 static inline int qdf_spin_trylock_bh(qdf_spinlock_t *lock)
 {
-	return __qdf_spin_trylock_bh(lock);
+	return __qdf_spin_trylock_bh(&lock->lock);
 }
 
 int qdf_spin_trylock_bh_outline(qdf_spinlock_t *lock);
@@ -123,7 +251,9 @@ int qdf_spin_trylock_bh_outline(qdf_spinlock_t *lock);
  */
 static inline void qdf_spin_lock_bh(qdf_spinlock_t *lock)
 {
-	__qdf_spin_lock_bh(lock);
+	BEFORE_LOCK(lock, qdf_spin_is_locked(lock));
+	__qdf_spin_lock_bh(&lock->lock);
+	AFTER_LOCK(lock);
 }
 
 void qdf_spin_lock_bh_outline(qdf_spinlock_t *lock);
@@ -135,7 +265,8 @@ void qdf_spin_lock_bh_outline(qdf_spinlock_t *lock);
  */
 static inline void qdf_spin_unlock_bh(qdf_spinlock_t *lock)
 {
-	__qdf_spin_unlock_bh(lock);
+	BEFORE_UNLOCK(lock, QDF_MAX_HOLD_TIME_ALOWED_SPINLOCK_BH);
+	__qdf_spin_unlock_bh(&lock->lock);
 }
 
 void qdf_spin_unlock_bh_outline(qdf_spinlock_t *lock);
@@ -153,7 +284,7 @@ static inline bool qdf_spinlock_irq_exec(qdf_handle_t hdl,
 					 qdf_spinlock_t *lock,
 					 qdf_irqlocked_func_t func, void *arg)
 {
-	return __qdf_spinlock_irq_exec(hdl, lock, func, arg);
+	return __qdf_spinlock_irq_exec(hdl, &lock->lock, func, arg);
 }
 
 /**
@@ -164,7 +295,9 @@ static inline bool qdf_spinlock_irq_exec(qdf_handle_t hdl,
  */
 static inline void qdf_spin_lock(qdf_spinlock_t *lock)
 {
-	__qdf_spin_lock(lock);
+	BEFORE_LOCK(lock, qdf_spin_is_locked(lock));
+	__qdf_spin_lock(&lock->lock);
+	AFTER_LOCK(lock);
 }
 
 /**
@@ -175,7 +308,8 @@ static inline void qdf_spin_lock(qdf_spinlock_t *lock)
  */
 static inline void qdf_spin_unlock(qdf_spinlock_t *lock)
 {
-	__qdf_spin_unlock(lock);
+	BEFORE_UNLOCK(lock, QDF_MAX_HOLD_TIME_ALOWED_SPINLOCK);
+	__qdf_spin_unlock(&lock->lock);
 }
 
 /**
@@ -187,7 +321,9 @@ static inline void qdf_spin_unlock(qdf_spinlock_t *lock)
  */
 static inline void qdf_spin_lock_irq(qdf_spinlock_t *lock, unsigned long flags)
 {
-	__qdf_spin_lock_irq(&lock->spinlock, flags);
+	BEFORE_LOCK(lock, qdf_spin_is_locked(lock));
+	__qdf_spin_lock_irq(&lock->lock.spinlock, flags);
+	AFTER_LOCK(lock);
 }
 
 /**
@@ -199,7 +335,9 @@ static inline void qdf_spin_lock_irq(qdf_spinlock_t *lock, unsigned long flags)
  */
 static inline void qdf_spin_lock_irqsave(qdf_spinlock_t *lock)
 {
-	__qdf_spin_lock_irqsave(lock);
+	BEFORE_LOCK(lock, qdf_spin_is_locked(lock));
+	__qdf_spin_lock_irqsave(&lock->lock);
+	AFTER_LOCK(lock);
 }
 
 /**
@@ -211,7 +349,8 @@ static inline void qdf_spin_lock_irqsave(qdf_spinlock_t *lock)
  */
 static inline void qdf_spin_unlock_irqrestore(qdf_spinlock_t *lock)
 {
-	__qdf_spin_unlock_irqrestore(lock);
+	BEFORE_UNLOCK(lock, QDF_MAX_HOLD_TIME_ALOWED_SPINLOCK_IRQ);
+	__qdf_spin_unlock_irqrestore(&lock->lock);
 }
 
 /**
@@ -224,7 +363,8 @@ static inline void qdf_spin_unlock_irqrestore(qdf_spinlock_t *lock)
 static inline void qdf_spin_unlock_irq(qdf_spinlock_t *lock,
 				       unsigned long flags)
 {
-	__qdf_spin_unlock_irq(&lock->spinlock, flags);
+	BEFORE_UNLOCK(lock, QDF_MAX_HOLD_TIME_ALOWED_SPINLOCK_IRQ);
+	__qdf_spin_unlock_irq(&lock->lock.spinlock, flags);
 }
 
 /**

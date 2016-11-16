@@ -68,6 +68,7 @@ enum {
  * @process_id: Process ID to track lock
  * @state: Lock status
  * @refcount: Reference count for recursive lock
+ * @stats: a structure that contains usage statistics
  */
 struct qdf_lock_s {
 	struct mutex m_lock;
@@ -75,6 +76,7 @@ struct qdf_lock_s {
 	int process_id;
 	uint32_t state;
 	uint8_t refcount;
+	struct lock_stats stats;
 };
 
 typedef struct qdf_lock_s __qdf_mutex_t;
