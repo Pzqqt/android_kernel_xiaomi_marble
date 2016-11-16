@@ -17913,6 +17913,7 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 			req_buf->hi_rssi_scan_rssi_ub);
 
 	if (command != ROAM_SCAN_OFFLOAD_STOP) {
+		req_buf->assoc_ie.length = session->nAddIEAssocLength;
 		qdf_mem_copy(req_buf->assoc_ie.addIEdata,
 				session->pAddIEAssoc,
 				session->nAddIEAssocLength);
