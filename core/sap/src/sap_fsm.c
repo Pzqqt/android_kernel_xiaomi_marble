@@ -3814,13 +3814,13 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(ptSapContext sap_ctx,
 
 		for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
 			ptSapContext t_sap_ctx;
+			t_sap_ctx = mac_ctx->sap.sapCtxList[intf].pSapContext;
 			if (((QDF_SAP_MODE ==
 				 mac_ctx->sap.sapCtxList[intf].sapPersona) ||
 			     (QDF_P2P_GO_MODE ==
 				mac_ctx->sap.sapCtxList[intf].sapPersona)) &&
-			    mac_ctx->sap.sapCtxList[intf].pSapContext != NULL) {
-				t_sap_ctx =
-				    mac_ctx->sap.sapCtxList[intf].pSapContext;
+			    t_sap_ctx != NULL &&
+			    t_sap_ctx->sapsMachine != eSAP_DISCONNECTED) {
 				/* SAP to be moved to DISCONNECTING state */
 				sap_ctx->sapsMachine = eSAP_DISCONNECTING;
 				/*
