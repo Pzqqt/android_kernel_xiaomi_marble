@@ -25,9 +25,85 @@
 #define _CDP_TXRX_CMN_STRUCT_H_
 
 #include "htc_api.h"
-#include "htt.h"
 #include "qdf_types.h"
 #include "qdf_nbuf.h"
+
+
+/*
+ * htt_dbg_stats_type -
+ * bit positions for each stats type within a stats type bitmask
+ * The bitmask contains 24 bits.
+ */
+enum htt_cmn_dbg_stats_type {
+    HTT_DBG_CMN_STATS_WAL_PDEV_TXRX      = 0,  /* bit 0 -> 0x1 */
+    HTT_DBG_CMN_STATS_RX_REORDER         = 1,  /* bit 1 -> 0x2 */
+    HTT_DBG_CMN_STATS_RX_RATE_INFO       = 2,  /* bit 2 -> 0x4 */
+    HTT_DBG_CMN_STATS_TX_PPDU_LOG        = 3,  /* bit 3 -> 0x8 */
+    HTT_DBG_CMN_STATS_TX_RATE_INFO       = 4,  /* bit 4 -> 0x10 */
+    HTT_DBG_CMN_STATS_TIDQ               = 5,  /* bit 5 -> 0x20 */
+    HTT_DBG_CMN_STATS_TXBF_INFO          = 6,  /* bit 6 -> 0x40 */
+    HTT_DBG_CMN_STATS_SND_INFO           = 7,  /* bit 7 -> 0x80 */
+    HTT_DBG_CMN_STATS_ERROR_INFO         = 8,  /* bit 8  -> 0x100 */
+    HTT_DBG_CMN_STATS_TX_SELFGEN_INFO    = 9,  /* bit 9  -> 0x200 */
+    HTT_DBG_CMN_STATS_TX_MU_INFO         = 10, /* bit 10 -> 0x400 */
+    HTT_DBG_CMN_STATS_SIFS_RESP_INFO     = 11, /* bit 11 -> 0x800 */
+    HTT_DBG_CMN_STATS_RESET_INFO         = 12, /* bit 12 -> 0x1000 */
+    HTT_DBG_CMN_STATS_MAC_WDOG_INFO      = 13, /* bit 13 -> 0x2000 */
+    HTT_DBG_CMN_STATS_TX_DESC_INFO       = 14, /* bit 14 -> 0x4000 */
+    HTT_DBG_CMN_STATS_TX_FETCH_MGR_INFO  = 15, /* bit 15 -> 0x8000 */
+    HTT_DBG_CMN_STATS_TX_PFSCHED_INFO    = 16, /* bit 16 -> 0x10000 */
+    HTT_DBG_CMN_STATS_TX_PATH_STATS_INFO = 17, /* bit 17 -> 0x20000 */
+    /* bits 18-23 currently reserved */
+
+    /* keep this last */
+    HTT_DBG_CMN_NUM_STATS
+};
+
+
+/**
+ * @brief General specification of the tx frame contents
+ *
+ * @details
+ * for efficiency, the HTT packet type values correspond
+ * to the bit positions of the WAL packet type values, so the
+ * translation is a simple shift operation.
+ */
+enum htt_cmn_pkt_type {
+    htt_cmn_pkt_type_raw = 0,
+    htt_cmn_pkt_type_native_wifi = 1,
+    htt_cmn_pkt_type_ethernet = 2,
+
+    /* keep this last */
+    htt_cmn_pkt_num_types
+};
+
+enum htt_cmn_t2h_en_stats_type {
+    /* keep this alwyas first */
+    HTT_CMN_T2H_EN_STATS_TYPE_START     = 0,
+
+    /** ppdu_common_stats is the payload */
+    HTT_CMN_T2H_EN_STATS_TYPE_COMMON    = 1,
+    /** ppdu_sant_stats is the payload */
+    HTT_CMN_T2H_EN_STATS_TYPE_SANT      = 2,
+    /** ppdu_common_stats_v2 is the payload */
+    HTT_CMN_T2H_EN_STATS_TYPE_COMMON_V2 = 3,
+
+    /* Keep this last */
+    HTT_CMN_T2H_EN_STATS_TYPE_END       = 0x1f,
+};
+
+enum htt_cmn_t2h_en_stats_status {
+    /* Keep this first always */
+    HTT_CMN_T2H_EN_STATS_STATUS_PARTIAL     = 0,
+    HTT_CMN_T2H_EN_STATS_STATUS_PRESENT     = 1,
+    HTT_CMN_T2H_EN_STATS_STATUS_ERROR       = 2,
+    HTT_CMN_T2H_EN_STATS_STATUS_INVALID     = 3,
+
+
+    /* keep this always last */
+    HTT_CMN_T2H_EN_STATS_STATUS_SERIES_DONE         = 7,
+};
+
 typedef struct cdp_soc_t *ol_txrx_soc_handle;
 
 /**
@@ -124,7 +200,7 @@ typedef int (*ol_txrx_proxy_arp_fp)(ol_osif_vdev_handle vdev,
  * ol_txrx_stats_callback - statistics notify callback
  */
 typedef void (*ol_txrx_stats_callback)(void *ctxt,
-				       enum htt_dbg_stats_type type,
+				       enum htt_cmn_dbg_stats_type type,
 				       uint8_t *buf, int bytes);
 
 /**

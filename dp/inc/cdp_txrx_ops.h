@@ -214,7 +214,7 @@ struct cdp_ctrl_ops {
 	void
 		(*txrx_set_tx_encap_type)(
 				void *vdev,
-				enum htt_pkt_type val);
+				enum htt_cmn_pkt_type val);
 	/**
 	 * @brief set the Rx decapsulation type of the VDEV
 	 * @details
@@ -228,7 +228,7 @@ struct cdp_ctrl_ops {
 	void
 		(*txrx_set_vdev_rx_decap_type)(
 				void *vdev,
-				enum htt_pkt_type val);
+				enum htt_cmn_pkt_type val);
 
 	/**
 	 * @brief get the Rx decapsulation type of the VDEV

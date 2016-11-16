@@ -112,7 +112,7 @@ cdp_set_drop_unenc(ol_txrx_soc_handle soc,
  */
 static inline void
 cdp_set_tx_encap_type(ol_txrx_soc_handle soc,
-	void *vdev, enum htt_pkt_type val)
+	void *vdev, enum htt_cmn_pkt_type val)
 {
 	if (soc->ops->ctrl_ops->txrx_set_tx_encap_type)
 		return soc->ops->ctrl_ops->txrx_set_tx_encap_type(vdev, val);
@@ -131,7 +131,7 @@ cdp_set_tx_encap_type(ol_txrx_soc_handle soc,
  */
 static inline void
 cdp_set_vdev_rx_decap_type(ol_txrx_soc_handle soc,
-	void *vdev, enum htt_pkt_type val)
+	void *vdev, enum htt_cmn_pkt_type val)
 {
 	if (soc->ops->ctrl_ops->txrx_set_vdev_rx_decap_type)
 		return soc->ops->ctrl_ops->txrx_set_vdev_rx_decap_type
