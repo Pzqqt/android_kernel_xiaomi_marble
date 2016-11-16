@@ -967,83 +967,6 @@ void htt_set_checksum_result_hl(qdf_nbuf_t msdu,
 #endif
 
 #ifdef DEBUG_DMA_DONE
-void htt_rx_print_rx_indication(qdf_nbuf_t rx_ind_msg, htt_pdev_handle pdev)
-{
-	uint32_t *msg_word;
-	int byte_offset;
-	int mpdu_range, num_mpdu_range;
-
-	msg_word = (uint32_t *) qdf_nbuf_data(rx_ind_msg);
-
-	qdf_print
-		("------------------HTT RX IND-----------------------------\n");
-	qdf_print("alloc idx paddr %llx (*vaddr) %d\n",
-		  (unsigned long long)pdev->rx_ring.alloc_idx.paddr,
-		  *pdev->rx_ring.alloc_idx.vaddr);
-
-	qdf_print("sw_rd_idx msdu_payld %d msdu_desc %d\n",
-		  pdev->rx_ring.sw_rd_idx.msdu_payld,
-		  pdev->rx_ring.sw_rd_idx.msdu_desc);
-
-	qdf_print("dbg_ring_idx %d\n", pdev->rx_ring.dbg_ring_idx);
-
-	qdf_print("fill_level %d fill_cnt %d\n", pdev->rx_ring.fill_level,
-		  pdev->rx_ring.fill_cnt);
-
-	qdf_print("initial msdu_payld %d curr mpdu range %d curr mpdu cnt %d\n",
-		  pdev->rx_ring.dbg_initial_msdu_payld,
-		  pdev->rx_ring.dbg_mpdu_range, pdev->rx_ring.dbg_mpdu_count);
-
-	/* Print the RX_IND contents */
-
-	qdf_print("peer id %x RV %x FV %x ext_tid %x msg_type %x\n",
-		  HTT_RX_IND_PEER_ID_GET(*msg_word),
-		  HTT_RX_IND_REL_VALID_GET(*msg_word),
-		  HTT_RX_IND_FLUSH_VALID_GET(*msg_word),
-		  HTT_RX_IND_EXT_TID_GET(*msg_word),
-		  HTT_T2H_MSG_TYPE_GET(*msg_word));
-
-	qdf_print("num_mpdu_ranges %x rel_seq_num_end %x rel_seq_num_start %x\n"
-		  " flush_seq_num_end %x flush_seq_num_start %x\n",
-		  HTT_RX_IND_NUM_MPDU_RANGES_GET(*(msg_word + 1)),
-		  HTT_RX_IND_REL_SEQ_NUM_END_GET(*(msg_word + 1)),
-		  HTT_RX_IND_REL_SEQ_NUM_START_GET(*(msg_word + 1)),
-		  HTT_RX_IND_FLUSH_SEQ_NUM_END_GET(*(msg_word + 1)),
-		  HTT_RX_IND_FLUSH_SEQ_NUM_START_GET(*(msg_word + 1)));
-
-	qdf_print("fw_rx_desc_bytes %x\n",
-		  HTT_RX_IND_FW_RX_DESC_BYTES_GET(*
-						  (msg_word + 2 +
-						   HTT_RX_PPDU_DESC_SIZE32)));
-
-	/* receive MSDU desc for current frame */
-	byte_offset =
-		HTT_ENDIAN_BYTE_IDX_SWAP(HTT_RX_IND_FW_RX_DESC_BYTE_OFFSET +
-					 pdev->rx_ind_msdu_byte_idx);
-
-	qdf_print("msdu byte idx %x msdu desc %x\n", pdev->rx_ind_msdu_byte_idx,
-		  HTT_RX_IND_FW_RX_DESC_BYTES_GET(*
-						  (msg_word + 2 +
-						   HTT_RX_PPDU_DESC_SIZE32)));
-
-	num_mpdu_range = HTT_RX_IND_NUM_MPDU_RANGES_GET(*(msg_word + 1));
-
-	for (mpdu_range = 0; mpdu_range < num_mpdu_range; mpdu_range++) {
-		enum htt_rx_status status;
-		int num_mpdus;
-
-		htt_rx_ind_mpdu_range_info(pdev, rx_ind_msg, mpdu_range,
-					   &status, &num_mpdus);
-
-		qdf_print("mpdu_range %x status %x num_mpdus %x\n",
-			  pdev->rx_ind_msdu_byte_idx, status, num_mpdus);
-	}
-	qdf_print
-		("---------------------------------------------------------\n");
-}
-#endif
-
-#ifdef DEBUG_DMA_DONE
 #define MAX_DONE_BIT_CHECK_ITER 5
 #endif
 
@@ -3139,25 +3062,6 @@ hi_end:
 	qdf_spin_unlock_bh(&(pdev->rx_ring.rx_hash_lock));
 
 	return rc;
-}
-
-void htt_rx_hash_dump_table(struct htt_pdev_t *pdev)
-{
-	uint32_t i;
-	struct htt_rx_hash_entry *hash_entry;
-	struct htt_list_node *list_iter = NULL;
-
-	for (i = 0; i < RX_NUM_HASH_BUCKETS; i++) {
-		HTT_LIST_ITER_FWD(list_iter,
-				  &pdev->rx_ring.hash_table[i]->listhead) {
-			hash_entry =
-				(struct htt_rx_hash_entry *)((char *)list_iter -
-							     pdev->rx_ring.
-							     listnode_offset);
-			qdf_print("hash_table[%d]: netbuf %p paddr 0x%x\n", i,
-				  hash_entry->netbuf, hash_entry->paddr);
-		}
-	}
 }
 
 /*--- RX In Order Hash Code --------------------------------------------------*/
