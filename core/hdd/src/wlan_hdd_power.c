@@ -1947,7 +1947,7 @@ next_adapter:
 		pAdapter = pAdapterNode->pAdapter;
 		pScanInfo = &pAdapter->scan_info;
 
-		if (sme_sta_in_middle_of_roaming
+		if (sme_neighbor_middle_of_roaming
 			    (pHddCtx->hHal, pAdapter->sessionId)) {
 			hdd_err("Roaming in progress, do not allow suspend");
 			wlan_hdd_inc_suspend_stats(pHddCtx,

@@ -826,7 +826,6 @@ QDF_STATUS sme_update_dfs_scan_mode(tHalHandle hHal,
 		uint8_t sessionId,
 		uint8_t allowDFSChannelRoam);
 uint8_t sme_get_dfs_scan_mode(tHalHandle hHal);
-bool sme_sta_in_middle_of_roaming(tHalHandle hHal, uint8_t sessionId);
 
 #ifdef FEATURE_WLAN_EXTSCAN
 QDF_STATUS sme_get_valid_channels_by_band(tHalHandle hHal, uint8_t wifiBand,

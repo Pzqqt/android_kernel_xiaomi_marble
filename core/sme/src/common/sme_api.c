@@ -13286,28 +13286,6 @@ QDF_STATUS sme_update_add_ie(tHalHandle hHal,
 	return status;
 }
 
-/* ---------------------------------------------------------------------------
-    \fn sme_sta_in_middle_of_roaming
-    \brief  This function returns true if STA is in the middle of roaming state
-    \param  hHal - HAL handle for device
-    \param  sessionId - Session Identifier
-   \- return true or false
-    -------------------------------------------------------------------------*/
-bool sme_sta_in_middle_of_roaming(tHalHandle hHal, uint8_t sessionId)
-{
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	bool ret = false;
-
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		ret = csr_neighbor_middle_of_roaming(hHal, sessionId);
-		sme_release_global_lock(&pMac->sme);
-	}
-	return ret;
-}
-
-
 /**
  * sme_update_dsc_pto_up_mapping()
  * @hHal: HAL context
