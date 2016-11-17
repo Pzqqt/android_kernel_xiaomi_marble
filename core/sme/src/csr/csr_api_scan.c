@@ -377,14 +377,20 @@ csr_issue_11d_scan(tpAniSirGlobal mac_ctx, tSmeCmd *scan_cmd,
 	QDF_STATUS status;
 	tSmeCmd *scan_11d_cmd = NULL;
 	tCsrScanRequest tmp_rq;
-	tCsrChannelInfo *pChnInfo = &tmp_rq.ChannelInfo;
-	uint32_t numChn = mac_ctx->scan.base_channels.numChannels;
+	tCsrChannelInfo *chn_info = &tmp_rq.ChannelInfo;
+	uint32_t num_chn = mac_ctx->scan.base_channels.numChannels;
 	tCsrRoamSession *csr_session = CSR_GET_SESSION(mac_ctx, session_id);
 
 	if (csr_session == NULL) {
 		sms_log(mac_ctx, LOGE, FL("session %d not found"),
 			session_id);
 		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (num_chn > WNI_CFG_VALID_CHANNEL_LIST_LEN) {
+		sms_log(mac_ctx, LOGE, FL("invalid number of channels: %d"),
+			num_chn);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -404,15 +410,15 @@ csr_issue_11d_scan(tpAniSirGlobal mac_ctx, tSmeCmd *scan_cmd,
 	}
 
 	qdf_mem_set(&scan_11d_cmd->u.scanCmd, sizeof(tScanCmd), 0);
-	pChnInfo->ChannelList = qdf_mem_malloc(numChn);
-	if (NULL == pChnInfo->ChannelList) {
+	chn_info->ChannelList = qdf_mem_malloc(num_chn);
+	if (NULL == chn_info->ChannelList) {
 		sms_log(mac_ctx, LOGE, FL("Failed to allocate memory"));
 		return QDF_STATUS_E_NOMEM;
 	}
-	qdf_mem_copy(pChnInfo->ChannelList,
-		     mac_ctx->scan.base_channels.channelList, numChn);
+	qdf_mem_copy(chn_info->ChannelList,
+		     mac_ctx->scan.base_channels.channelList, num_chn);
 
-	pChnInfo->numOfChannels = (uint8_t) numChn;
+	chn_info->numOfChannels = (uint8_t) num_chn;
 	scan_11d_cmd->command = eSmeCommandScan;
 	scan_11d_cmd->u.scanCmd.callback = mac_ctx->scan.callback11dScanDone;
 	scan_11d_cmd->u.scanCmd.pContext = NULL;
@@ -457,8 +463,8 @@ csr_issue_11d_scan(tpAniSirGlobal mac_ctx, tSmeCmd *scan_cmd,
 	status = csr_scan_copy_request(mac_ctx,
 			&scan_11d_cmd->u.scanCmd.u.scanRequest, &tmp_rq);
 	/* Free the channel list */
-	qdf_mem_free(pChnInfo->ChannelList);
-	pChnInfo->ChannelList = NULL;
+	qdf_mem_free(chn_info->ChannelList);
+	chn_info->ChannelList = NULL;
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac_ctx, LOGE, FL("csr_scan_copy_request failed"));
 		return QDF_STATUS_E_FAILURE;
