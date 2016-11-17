@@ -221,7 +221,6 @@ QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 	qdf_timer_init(soc->osdev, &soc->int_timer,
 			dp_interrupt_timer, (void *)soc,
 			QDF_TIMER_TYPE_WAKE_APPS);
-	qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -238,7 +237,7 @@ void dp_soc_interrupt_detach(void *txrx_soc)
 
 	qdf_timer_stop(&soc->int_timer);
 
-	/* TODO -- call timer detach? */
+	qdf_timer_free(&soc->int_timer);
 }
 #else
 /*
@@ -1193,6 +1192,11 @@ void *dp_vdev_attach_wifi3(void *txrx_pdev,
 	pdev->vdev_count++;
 
 	dp_tx_vdev_attach(vdev);
+
+#ifdef DP_INTR_POLL_BASED
+	if (pdev->vdev_count == 1)
+		qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
+#endif
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 		"Created vdev %p (%02x:%02x:%02x:%02x:%02x:%02x)\n", vdev,
