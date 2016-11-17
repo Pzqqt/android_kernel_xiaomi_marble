@@ -806,6 +806,10 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 						roam_req->assoc_ie.length);
 	}
 
+	WMA_LOGE(FL("my_dbg: qos_caps: %d, qos_enabled: %d"),
+		params->roam_offload_params.qos_caps,
+		params->roam_offload_params.qos_enabled);
+
 	status = wmi_unified_roam_scan_offload_mode_cmd(wma_handle->wmi_handle,
 				scan_cmd_fp, params);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -2532,6 +2536,8 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	 * populate_dot11f_wmm_caps for more details
 	 */
 	roam_offload_params->qos_caps = (*pCfgValue8) & 0xFF;
+	if (roam_offload_params->qos_caps)
+		roam_offload_params->qos_enabled = true;
 	roam_offload_params->wmm_caps = 0x4 & 0xFF;
 	return QDF_STATUS_SUCCESS;
 }
