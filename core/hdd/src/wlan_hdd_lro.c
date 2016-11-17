@@ -544,7 +544,7 @@ int hdd_lro_enable(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 	return 0;
 }
 
-void hdd_deinit_lro_mgr(void *lro_info)
+static void hdd_deinit_lro_mgr(void *lro_info)
 {
 	if (lro_info) {
 		hdd_err("LRO instance %p is being freed", lro_info);
