@@ -11241,6 +11241,10 @@ csr_roam_chk_lnk_set_ctx_rsp(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 			tpSirSetActiveModeSetBncFilterReq pMsg;
 			pMsg = qdf_mem_malloc(
 				    sizeof(tSirSetActiveModeSetBncFilterReq));
+			if (NULL == pMsg) {
+				sms_log(mac_ctx, LOGE, FL("Malloc failed"));
+				goto remove_entry_n_process_pending;
+			}
 			pMsg->messageType = eWNI_SME_SET_BCN_FILTER_REQ;
 			pMsg->length = sizeof(tSirSetActiveModeSetBncFilterReq);
 			pMsg->seesionId = sessionId;
@@ -11264,6 +11268,11 @@ csr_roam_chk_lnk_set_ctx_rsp(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 				struct sme_obss_ht40_scanind_msg *msg;
 				msg = qdf_mem_malloc(sizeof(
 					struct sme_obss_ht40_scanind_msg));
+				if (NULL == msg) {
+					sms_log(mac_ctx, LOGE,
+						FL("Malloc failed"));
+					goto remove_entry_n_process_pending;
+				}
 				msg->msg_type = eWNI_SME_HT40_OBSS_SCAN_IND;
 				msg->length =
 				      sizeof(struct sme_obss_ht40_scanind_msg);
@@ -11301,6 +11310,7 @@ csr_roam_chk_lnk_set_ctx_rsp(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 		session->isPrevApInfoValid = false;
 	}
 #endif
+remove_entry_n_process_pending:
 	if (csr_ll_remove_entry(&mac_ctx->sme.smeCmdActiveList, entry,
 				LL_ACCESS_LOCK))
 		csr_release_command_set_key(mac_ctx, cmd);
