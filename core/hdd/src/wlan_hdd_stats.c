@@ -242,6 +242,23 @@ static bool put_wifi_rate_stat(tpSirWifiRateStat stats,
 	return true;
 }
 
+static tSirWifiPeerType wmi_to_sir_peer_type(enum wmi_peer_type type)
+{
+	switch (type) {
+	case WMI_PEER_TYPE_DEFAULT:
+		return WIFI_PEER_STA;
+	case WMI_PEER_TYPE_BSS:
+		return WIFI_PEER_AP;
+	case WMI_PEER_TYPE_TDLS:
+		return WIFI_PEER_TDLS;
+	case WMI_PEER_TYPE_NAN_DATA:
+		return WMI_PEER_TYPE_NAN_DATA;
+	default:
+		hdd_err("Cannot map wmi_peer_type %d to HAL peer type", type);
+		return WIFI_PEER_INVALID;
+	}
+}
+
 /**
  * put_wifi_peer_info() - put wifi peer info
  * @stats: Pointer to stats context
@@ -257,7 +274,7 @@ static bool put_wifi_peer_info(tpSirWifiPeerInfo stats,
 
 	if (nla_put_u32
 		    (vendor_event, QCA_WLAN_VENDOR_ATTR_LL_STATS_PEER_INFO_TYPE,
-		    stats->type) ||
+		    wmi_to_sir_peer_type(stats->type)) ||
 	    nla_put(vendor_event,
 		       QCA_WLAN_VENDOR_ATTR_LL_STATS_PEER_INFO_MAC_ADDRESS,
 		       QDF_MAC_ADDR_SIZE, &stats->peerMacAddress.bytes[0]) ||

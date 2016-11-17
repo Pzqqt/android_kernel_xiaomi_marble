@@ -53,6 +53,7 @@ typedef struct sAniSirGlobal *tpAniSirGlobal;
 #include "ani_system_defs.h"
 #include "sir_params.h"
 #include "cds_regdomain.h"
+#include "wmi_unified.h"
 #include "wmi_unified_param.h"
 #include <dot11f.h>
 
@@ -5090,7 +5091,7 @@ typedef enum {
 /* per peer statistics */
 typedef struct {
 	/* peer type (AP, TDLS, GO etc.) */
-	tSirWifiPeerType type;
+	enum wmi_peer_type type;
 	/* mac address */
 	struct qdf_mac_addr peerMacAddress;
 	/* peer WIFI_CAPABILITY_XXX */
