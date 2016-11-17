@@ -1893,7 +1893,13 @@ tSirRetStatus lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx,
 		temp_rate_set2.numRates = 0;
 	}
 
-	if ((temp_rate_set.numRates + temp_rate_set2.numRates) > 12) {
+	/*
+	 * absolute sum of both num_rates should be less than 12. following
+	 * 16-bit sum avoids false codition where 8-bit arthematic overflow
+	 * might have caused total sum to be less than 12
+	 */
+	if (((uint16_t)temp_rate_set.numRates +
+		(uint16_t)temp_rate_set2.numRates) > 12) {
 		lim_log(mac_ctx, LOGE, FL("more than 12 rates in CFG"));
 		return eSIR_FAILURE;
 	}
