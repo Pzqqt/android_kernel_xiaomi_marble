@@ -3624,8 +3624,8 @@ uint8_t csr_retrieve_wpa_ie(tHalHandle hHal, tCsrRoamProfile *pProfile,
 		if (!csr_is_profile_wpa(pProfile))
 			break;
 		if (pProfile->nWPAReqIELength && pProfile->pWPAReqIE) {
-			if (SIR_MAC_WPA_IE_MAX_LENGTH >=
-			    pProfile->nWPAReqIELength) {
+			if (pProfile->nWPAReqIELength <=
+					DOT11F_IE_RSN_MAX_LEN) {
 				cbWpaIe = (uint8_t) pProfile->nWPAReqIELength;
 				qdf_mem_copy(pWpaIe, pProfile->pWPAReqIE,
 					     cbWpaIe);
@@ -3665,8 +3665,8 @@ uint8_t csr_retrieve_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 						     pSirBssDesc, pIes, pRsnIe);
 		} else if (pProfile->nRSNReqIELength && pProfile->pRSNReqIE) {
 			/* If you have one started away, re-use it. */
-			if (SIR_MAC_WPA_IE_MAX_LENGTH >=
-			    pProfile->nRSNReqIELength) {
+			if (pProfile->nRSNReqIELength <=
+					DOT11F_IE_RSN_MAX_LEN) {
 				cbRsnIe = (uint8_t) pProfile->nRSNReqIELength;
 				qdf_mem_copy(pRsnIe, pProfile->pRSNReqIE,
 					     cbRsnIe);

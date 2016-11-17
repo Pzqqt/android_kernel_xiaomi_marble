@@ -422,7 +422,6 @@
 
 /* / Maximum length of each IE */
 #define SIR_MAC_RSN_IE_MAX_LENGTH   255
-#define SIR_MAC_WPA_IE_MAX_LENGTH   255
 /* / Minimum length of each IE */
 #define SIR_MAC_RSN_IE_MIN_LENGTH   2
 #define SIR_MAC_WPA_IE_MIN_LENGTH   6
