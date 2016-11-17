@@ -9022,8 +9022,8 @@ QDF_STATUS sme_config_fast_roaming(tHalHandle hal, uint8_t session_id,
 		return  QDF_STATUS_E_FAILURE;
 	}
 
-	if (is_fast_roam_enabled && session && session->pCurRoamProfile)
-		session->pCurRoamProfile->do_not_roam = false;
+	if (session && session->pCurRoamProfile)
+		session->pCurRoamProfile->do_not_roam = !is_fast_roam_enabled;
 
 	status = csr_neighbor_roam_update_fast_roaming_enabled(mac_ctx,
 					 session_id, is_fast_roam_enabled);

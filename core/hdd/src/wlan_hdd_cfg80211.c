@@ -8049,11 +8049,18 @@ static int __wlan_hdd_cfg80211_set_fast_roaming(struct wiphy *wiphy,
 
 	is_fast_roam_enabled = nla_get_u32(
 				tb[QCA_WLAN_VENDOR_ATTR_ROAMING_POLICY]);
-	hdd_notice("isFastRoamEnabled %d", is_fast_roam_enabled);
+	hdd_notice("isFastRoamEnabled %d fast_roaming_allowed %d",
+		   is_fast_roam_enabled, adapter->fast_roaming_allowed);
 
+	if (!adapter->fast_roaming_allowed) {
+		hdd_err("fast roaming not allowed on %s interface",
+			adapter->dev->name);
+		return -EINVAL;
+	}
 	/* Update roaming */
 	ret = sme_config_fast_roaming(hdd_ctx->hHal, adapter->sessionId,
-					is_fast_roam_enabled);
+				      (is_fast_roam_enabled &&
+				       adapter->fast_roaming_allowed));
 	if (ret)
 		hdd_err("sme_config_fast_roaming failed");
 	EXIT();
@@ -11551,7 +11558,7 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 		qdf_mem_copy((void *)(pRoamProfile->SSIDs.SSIDList->SSID.ssId),
 			     ssid, ssid_len);
 
-		pRoamProfile->do_not_roam = false;
+		pRoamProfile->do_not_roam = !pAdapter->fast_roaming_allowed;
 		if (bssid) {
 			pRoamProfile->BSSIDs.numOfBSSIDs = 1;
 			pRoamProfile->do_not_roam = true;
@@ -12675,8 +12682,6 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 
 	if (true == wlan_hdd_reassoc_bssid_hint(pAdapter, req, &status))
 		return status;
-
-	wlan_hdd_disable_roaming(pAdapter);
 
 	/* Try disconnecting if already in connected state */
 	status = wlan_hdd_try_disconnect(pAdapter);

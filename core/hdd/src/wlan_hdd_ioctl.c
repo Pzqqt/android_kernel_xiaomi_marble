@@ -3281,6 +3281,11 @@ static int drv_cmd_set_roam_mode(hdd_adapter_t *adapter,
 	uint8_t *value = command;
 	uint8_t roamMode = CFG_LFR_FEATURE_ENABLED_DEFAULT;
 
+	if (!adapter->fast_roaming_allowed) {
+		hdd_err("Roaming is always disabled on this interface");
+		goto exit;
+	}
+
 	/* Move pointer to ahead of SETROAMMODE<delimiter> */
 	value = value + SIZE_OF_SETROAMMODE + 1;
 
@@ -4314,6 +4319,11 @@ static int drv_cmd_set_fast_roam(hdd_adapter_t *adapter,
 	int ret = 0;
 	uint8_t *value = command;
 	uint8_t lfrMode = CFG_LFR_FEATURE_ENABLED_DEFAULT;
+
+	if (!adapter->fast_roaming_allowed) {
+		hdd_err("Roaming is always disabled on this interface");
+		goto exit;
+	}
 
 	/* Move pointer to ahead of SETFASTROAM<delimiter> */
 	value = value + command_len + 1;
@@ -5640,6 +5650,12 @@ static int drv_cmd_set_ccx_mode(hdd_adapter_t *adapter,
 	    hdd_is_okc_mode_enabled(hdd_ctx) &&
 	    sme_get_is_ft_feature_enabled(hdd_ctx->hHal)) {
 		hdd_warn("OKC/ESE/11R are supported simultaneously hence this operation is not permitted!");
+		ret = -EPERM;
+		goto exit;
+	}
+
+	if (!adapter->fast_roaming_allowed) {
+		hdd_warn("Fast roaming is not allowed on this device hence this operation is not permitted!");
 		ret = -EPERM;
 		goto exit;
 	}

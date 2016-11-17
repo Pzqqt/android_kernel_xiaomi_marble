@@ -1003,6 +1003,7 @@ typedef struct tagCsrRoamSession {
 	bool dhcp_done;
 	uint8_t disconnect_reason;
 	uint8_t uapsd_mask;
+	bool fast_roam_enabled;
 } tCsrRoamSession;
 
 typedef struct tagCsrRoamStruct {

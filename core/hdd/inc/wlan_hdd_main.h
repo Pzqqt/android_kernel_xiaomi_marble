@@ -1138,6 +1138,8 @@ struct hdd_adapter_s {
 	uint8_t pre_cac_chan;
 	struct hdd_connect_pm_context connect_rpm_ctx;
 	struct power_stats_response *chip_power_stats;
+
+	bool fast_roaming_allowed;
 };
 
 #define WLAN_HDD_GET_STATION_CTX_PTR(pAdapter) (&(pAdapter)->sessionCtx.station)

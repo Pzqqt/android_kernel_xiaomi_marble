@@ -2701,6 +2701,9 @@ QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
 	hdd_notice("Set HDD connState to eConnectionState_NotConnected");
 	pHddStaCtx->conn_info.connState = eConnectionState_NotConnected;
 
+	/* set fast roaming capability in sme session */
+	status = sme_config_fast_roaming(hdd_ctx->hHal, adapter->sessionId,
+					 adapter->fast_roaming_allowed);
 	/* Set the default operation channel */
 	pHddStaCtx->conn_info.operationChannel =
 		hdd_ctx->config->OperatingChannel;
@@ -6859,6 +6862,9 @@ static hdd_adapter_t *hdd_open_interfaces(hdd_context_t *hdd_ctx,
 
 	if (adapter == NULL)
 		return ERR_PTR(-ENOSPC);
+	/* fast roaming is allowed only on first STA, i.e. wlan adapter */
+	adapter->fast_roaming_allowed = true;
+
 	ret = hdd_open_p2p_interface(hdd_ctx, rtnl_held);
 	if (ret)
 		goto err_close_adapter;
