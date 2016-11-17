@@ -90,7 +90,7 @@ int pld_pcie_wlan_enable(struct pld_wlan_enable_cfg *config,
 int pld_pcie_wlan_disable(enum pld_driver_mode mode);
 static inline int pld_pcie_set_fw_debug_mode(bool enablefwlog)
 {
-	return cnss_set_fw_debug_mode(mode);
+	return cnss_set_fw_debug_mode(enablefwlog);
 }
 static inline void pld_pcie_intr_notify_q6(void)
 {
