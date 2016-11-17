@@ -1699,6 +1699,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	int ssidlen = pHddStaCtx->conn_info.SSID.SSID.length;
 	uint8_t rate_flags;
+	uint8_t mcs_index;
 
 	hdd_context_t *pHddCtx = (hdd_context_t *) wiphy_priv(wiphy);
 	struct hdd_config *pCfg = pHddCtx->config;
@@ -1789,6 +1790,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	hdd_lpass_notify_connect(pAdapter);
 
 	rate_flags = pAdapter->hdd_stats.ClassA_stat.tx_rate_flags;
+	mcs_index = pAdapter->hdd_stats.ClassA_stat.mcs_index;
 
 	/* convert to the UI units of 100kbps */
 	myRate = pAdapter->hdd_stats.ClassA_stat.tx_rate * 5;
@@ -1802,18 +1804,14 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 				promiscuous_rx_frag_cnt;
 		}
 
-		if (pAdapter->hdd_stats.ClassA_stat.mcs_index ==
-		    INVALID_MCS_IDX) {
-			rate_flags = eHAL_TX_RATE_LEGACY;
-			pAdapter->hdd_stats.ClassA_stat.mcs_index = 0;
-		}
+		if (mcs_index == INVALID_MCS_IDX)
+			mcs_index = 0;
 	}
 
 	hdd_info("RSSI %d, RLMS %u, rate %d, rssi high %d, rssi mid %d, rssi low %d, rate_flags 0x%x, MCS %d",
 		 sinfo->signal, pCfg->reportMaxLinkSpeed, myRate,
 		 (int)pCfg->linkSpeedRssiHigh, (int)pCfg->linkSpeedRssiMid,
-		 (int)pCfg->linkSpeedRssiLow, (int)rate_flags,
-		 (int)pAdapter->hdd_stats.ClassA_stat.mcs_index);
+		 (int)pCfg->linkSpeedRssiLow, (int)rate_flags, (int)mcs_index);
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 0, 0)) || defined(WITH_BACKPORTS)
 	/* assume basic BW. anything else will override this later */
@@ -1974,24 +1972,21 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 
 				if (rate_flags & eHAL_TX_RATE_VHT80) {
 					currentRate =
-					  supported_vht_mcs_rate[pAdapter->
-					  hdd_stats.ClassA_stat.mcs_index].
+					  supported_vht_mcs_rate[mcs_index].
 					  supported_VHT80_rate[rateFlag];
 					maxRate =
 					  supported_vht_mcs_rate[maxMCSIdx].
 						supported_VHT80_rate[rateFlag];
 				} else if (rate_flags & eHAL_TX_RATE_VHT40) {
 					currentRate =
-					  supported_vht_mcs_rate[pAdapter->
-					  hdd_stats.ClassA_stat.mcs_index].
+					  supported_vht_mcs_rate[mcs_index].
 					  supported_VHT40_rate[rateFlag];
 					maxRate =
 					  supported_vht_mcs_rate[maxMCSIdx].
 						supported_VHT40_rate[rateFlag];
 				} else if (rate_flags & eHAL_TX_RATE_VHT20) {
 					currentRate =
-					  supported_vht_mcs_rate[pAdapter->
-					  hdd_stats.ClassA_stat.mcs_index].
+					  supported_vht_mcs_rate[mcs_index].
 					  supported_VHT20_rate[rateFlag];
 					maxRate =
 					  supported_vht_mcs_rate[maxMCSIdx].
@@ -2053,7 +2048,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 		else if (!(rate_flags & eHAL_TX_RATE_LEGACY)) {
 			maxRate = myRate;
 			maxSpeedMCS = 1;
-			maxMCSIdx = pAdapter->hdd_stats.ClassA_stat.mcs_index;
+			maxMCSIdx = mcs_index;
 		}
 		/* report a value at least as big as current rate */
 		if ((maxRate < myRate) || (0 == maxRate)) {
@@ -2062,8 +2057,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 				maxSpeedMCS = 0;
 			} else {
 				maxSpeedMCS = 1;
-				maxMCSIdx =
-				  pAdapter->hdd_stats.ClassA_stat.mcs_index;
+				maxMCSIdx = mcs_index;
 				/*
 				 * IEEE_P802.11ac_2013.pdf page 325, 326
 				 * - MCS9 is valid for VHT20 when
@@ -2145,8 +2139,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 #endif /* LINKSPEED_DEBUG_ENABLED */
 		} else {
 			/* must be MCS */
-			sinfo->txrate.mcs =
-				pAdapter->hdd_stats.ClassA_stat.mcs_index;
+			sinfo->txrate.mcs = mcs_index;
 			sinfo->txrate.nss = nss;
 			sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
 			if (rate_flags & eHAL_TX_RATE_VHT80) {
