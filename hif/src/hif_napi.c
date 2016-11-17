@@ -758,7 +758,12 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx, struct napi_struct *napi,
 	 */
 	if (rc)
 		normalized++;
-	bucket   = (normalized / QCA_NAPI_DEF_SCALE);
+	bucket = normalized / (QCA_NAPI_BUDGET / QCA_NAPI_NUM_BUCKETS);
+	if (bucket >= QCA_NAPI_NUM_BUCKETS) {
+		bucket = QCA_NAPI_NUM_BUCKETS - 1;
+		HIF_ERROR("Bad bucket#(%d) > QCA_NAPI_NUM_BUCKETS(%d)",
+			bucket, QCA_NAPI_NUM_BUCKETS);
+	}
 	napi_info->stats[cpu].napi_budget_uses[bucket]++;
 
 	/* if ce_per engine reports 0, then poll should be terminated */
