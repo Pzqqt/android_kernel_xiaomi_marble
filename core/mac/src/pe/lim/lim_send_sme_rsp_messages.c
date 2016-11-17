@@ -1463,6 +1463,7 @@ lim_send_sme_wm_status_change_ntf(tpAniSirGlobal mac_ctx,
 {
 	tSirMsgQ msg;
 	tSirSmeWmStatusChangeNtf *wm_status_change_ntf;
+	uint32_t max_info_len;
 
 	wm_status_change_ntf = qdf_mem_malloc(sizeof(tSirSmeWmStatusChangeNtf));
 	if (NULL == wm_status_change_ntf) {
@@ -1476,6 +1477,18 @@ lim_send_sme_wm_status_change_ntf(tpAniSirGlobal mac_ctx,
 	msg.bodyptr = wm_status_change_ntf;
 
 	switch (status_change_code) {
+	case eSIR_SME_AP_CAPS_CHANGED:
+		max_info_len = sizeof(tSirSmeApNewCaps);
+		break;
+	case eSIR_SME_JOINED_NEW_BSS:
+		max_info_len = sizeof(tSirSmeNewBssInfo);
+		break;
+	default:
+		max_info_len = sizeof(wm_status_change_ntf->statusChangeInfo);
+		break;
+	}
+
+	switch (status_change_code) {
 	case eSIR_SME_RADAR_DETECTED:
 		break;
 	default:
@@ -1484,8 +1497,7 @@ lim_send_sme_wm_status_change_ntf(tpAniSirGlobal mac_ctx,
 		wm_status_change_ntf->statusChangeCode = status_change_code;
 		wm_status_change_ntf->length = sizeof(tSirSmeWmStatusChangeNtf);
 		wm_status_change_ntf->sessionId = session_id;
-		if (sizeof(wm_status_change_ntf->statusChangeInfo) >=
-			info_len) {
+		if (info_len <= max_info_len && status_change_info) {
 			qdf_mem_copy(
 			    (uint8_t *) &wm_status_change_ntf->statusChangeInfo,
 			    (uint8_t *) status_change_info, info_len);
