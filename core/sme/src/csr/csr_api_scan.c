@@ -2912,7 +2912,7 @@ csr_remove_from_tmp_list(tpAniSirGlobal mac_ctx,
 		local_ie = (tDot11fBeaconIEs *)(bss_dscp->Result.pvIes);
 		status = csr_get_parsed_bss_description_ies(mac_ctx,
 				&bss_dscp->Result.BssDescriptor, &local_ie);
-		if (!(local_ie || QDF_IS_STATUS_SUCCESS(status))) {
+		if (!local_ie || !QDF_IS_STATUS_SUCCESS(status)) {
 			sms_log(mac_ctx, LOGE, FL("Cannot pared IEs"));
 			csr_free_scan_result_entry(mac_ctx, bss_dscp);
 			continue;
