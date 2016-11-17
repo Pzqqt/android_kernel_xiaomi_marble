@@ -1914,12 +1914,6 @@ void ol_txrx_pdev_unpause(struct ol_txrx_pdev_t *pdev, uint32_t reason)
 
 /*--- LL tx throttle queue code --------------------------------------------*/
 #if defined(QCA_SUPPORT_TX_THROTTLE)
-uint8_t ol_tx_pdev_is_target_empty(void)
-{
-	/* TM TODO */
-	return 1;
-}
-
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 /**
  * ol_txrx_thermal_pause() - pause due to thermal mitigation
