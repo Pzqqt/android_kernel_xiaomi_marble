@@ -330,8 +330,6 @@ extern spinlock_t hdd_context_lock;
  *				received over 100ms intervals
  * @interval_rx:	# of rx packets received in the last 100ms interval
  * @interval_tx:	# of tx packets received in the last 100ms interval
- * @total_rx:		# of total rx packets received on interface
- * @total_tx:		# of total tx packets received on interface
  * @next_vote_level:	pld_bus_width_type voting level (high or low)
  *			determined on the basis of total tx and rx packets
  *			received in the last 100ms interval
@@ -341,18 +339,19 @@ extern spinlock_t hdd_context_lock;
  * @next_tx_level:	pld_bus_width_type voting level (high or low)
  *			determined on the basis of tx packets received in the
  *			last 100ms interval
+ * @qtime		timestamp when the record is added
  *
- * The structure keeps track of throughput requirements of wlan driver in 100ms
- * intervals for later analysis.
+ * The structure keeps track of throughput requirements of wlan driver.
+ * An entry is added if either of next_vote_level, next_rx_level or
+ * next_tx_level changes. An entry is not added for every 100ms interval.
  */
 struct hdd_tx_rx_histogram {
 	uint64_t interval_rx;
 	uint64_t interval_tx;
-	uint64_t total_rx;
-	uint64_t total_tx;
 	uint32_t next_vote_level;
 	uint32_t next_rx_level;
 	uint32_t next_tx_level;
+	uint64_t qtime;
 };
 
 typedef struct hdd_tx_rx_stats_s {

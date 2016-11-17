@@ -106,6 +106,7 @@ int hdd_napi_create(void)
 	struct  hif_opaque_softc *hif_ctx;
 	int     rc = 0;
 	hdd_context_t *hdd_ctx;
+	uint8_t feature_flags = 0;
 
 	NAPI_DEBUG("-->");
 
@@ -114,9 +115,15 @@ int hdd_napi_create(void)
 		QDF_ASSERT(NULL != hif_ctx);
 		rc = -EFAULT;
 	} else {
+
+		feature_flags = QCA_NAPI_FEATURE_CPU_CORRECTION |
+				QCA_NAPI_FEATURE_IRQ_BLACKLISTING |
+				QCA_NAPI_FEATURE_CORE_CTL_BOOST;
+
 		rc = hif_napi_create(hif_ctx, hdd_napi_poll,
 				     QCA_NAPI_BUDGET,
-				     QCA_NAPI_DEF_SCALE);
+				     QCA_NAPI_DEF_SCALE,
+				     feature_flags);
 		if (rc < 0) {
 			hdd_err("ERR(%d) creating NAPI instances",
 				rc);
@@ -399,7 +406,10 @@ int hdd_display_napi_stats(void)
 		hdd_err("%s unable to retrieve napi structure", __func__);
 		return -EFAULT;
 	}
-	qdf_print("[NAPI -- STATS]:  scheds   polls   comps    done time-lim pkt-lim napi-buckets(%d)", QCA_NAPI_NUM_BUCKETS);
+	qdf_print("[NAPI %u][BL %d]:  scheds   polls   comps    done t-lim p-lim  corr napi-buckets(%d)",
+		  napid->napi_mode,
+		  hif_napi_cpu_blacklist(napid->flags, BLACKLIST_QUERY),
+		  QCA_NAPI_NUM_BUCKETS);
 
 	for (i = 0; i < CE_COUNT_MAX; i++)
 		if (napid->ce_map & (0x01 << i)) {
@@ -416,7 +426,7 @@ int hdd_display_napi_stats(void)
 				}
 
 				if (napis->napi_schedules != 0)
-					qdf_print("NAPI[%2d]CPU[%2d]: %7d %7d %7d %7d %8d %7d %s",
+					qdf_print("NAPI[%2d]CPU[%d]: %7d %7d %7d %7d %5d %5d %5d %s",
 						  i, j,
 						  napis->napi_schedules,
 						  napis->napi_polls,
@@ -424,6 +434,7 @@ int hdd_display_napi_stats(void)
 						  napis->napi_workdone,
 						  napis->time_limit_reached,
 						  napis->rxpkt_thresh_reached,
+						  napis->cpu_corrected,
 						  buf);
 			}
 		}

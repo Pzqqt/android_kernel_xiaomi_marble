@@ -5799,6 +5799,10 @@ static void hdd_pld_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 	enum wlan_tp_level next_rx_level = WLAN_SVC_TP_NONE;
 	enum wlan_tp_level next_tx_level = WLAN_SVC_TP_NONE;
 	uint32_t delack_timer_cnt = hdd_ctx->config->tcp_delack_timer_count;
+	uint16_t index = 0;
+	bool vote_level_change = false;
+	bool rx_level_change = false;
+	bool tx_level_change = false;
 
 	if (total > hdd_ctx->config->busBandwidthHighThreshold)
 		next_vote_level = PLD_BUS_WIDTH_HIGH;
@@ -5809,13 +5813,11 @@ static void hdd_pld_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 	else
 		next_vote_level = PLD_BUS_WIDTH_NONE;
 
-	hdd_ctx->hdd_txrx_hist[hdd_ctx->hdd_txrx_hist_idx].next_vote_level =
-							next_vote_level;
-
 	if (hdd_ctx->cur_vote_level != next_vote_level) {
 		hdd_debug("trigger level %d, tx_packets: %lld, rx_packets: %lld",
 			 next_vote_level, tx_packets, rx_packets);
 		hdd_ctx->cur_vote_level = next_vote_level;
+		vote_level_change = true;
 		pld_request_bus_bandwidth(hdd_ctx->parent_dev, next_vote_level);
 		if (next_vote_level == PLD_BUS_WIDTH_LOW) {
 			if (hdd_ctx->hbw_requested) {
@@ -5850,13 +5852,11 @@ static void hdd_pld_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 		hdd_ctx->rx_high_ind_cnt = 0;
 	}
 
-	hdd_ctx->hdd_txrx_hist[hdd_ctx->hdd_txrx_hist_idx].next_rx_level =
-								next_rx_level;
-
 	if (hdd_ctx->cur_rx_level != next_rx_level) {
 		hdd_debug("TCP DELACK trigger level %d, average_rx: %llu",
 		       next_rx_level, temp_rx);
 		hdd_ctx->cur_rx_level = next_rx_level;
+		rx_level_change = true;
 		/* Send throughput indication only if it is enabled.
 		 * Disabling tcp_del_ack will revert the tcp stack behavior
 		 * to default delayed ack. Note that this will disable the
@@ -5881,16 +5881,25 @@ static void hdd_pld_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 		hdd_debug("change TCP TX trigger level %d, average_tx: %llu",
 				next_tx_level, temp_tx);
 		hdd_ctx->cur_tx_level = next_tx_level;
+		tx_level_change = true;
 		wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
 				WLAN_SVC_WLAN_TP_TX_IND,
 				&next_tx_level,
 				sizeof(next_tx_level));
 	}
 
-	hdd_ctx->hdd_txrx_hist[hdd_ctx->hdd_txrx_hist_idx].next_tx_level =
-								next_tx_level;
-	hdd_ctx->hdd_txrx_hist_idx++;
-	hdd_ctx->hdd_txrx_hist_idx &= NUM_TX_RX_HISTOGRAM_MASK;
+	index = hdd_ctx->hdd_txrx_hist_idx;
+
+	if (vote_level_change || tx_level_change || rx_level_change) {
+		hdd_ctx->hdd_txrx_hist[index].next_tx_level = next_tx_level;
+		hdd_ctx->hdd_txrx_hist[index].next_rx_level = next_rx_level;
+		hdd_ctx->hdd_txrx_hist[index].next_vote_level = next_vote_level;
+		hdd_ctx->hdd_txrx_hist[index].interval_rx = rx_packets;
+		hdd_ctx->hdd_txrx_hist[index].interval_tx = tx_packets;
+		hdd_ctx->hdd_txrx_hist[index].qtime = qdf_get_log_timestamp();
+		hdd_ctx->hdd_txrx_hist_idx++;
+		hdd_ctx->hdd_txrx_hist_idx &= NUM_TX_RX_HISTOGRAM_MASK;
+	}
 }
 
 #define HDD_BW_GET_DIFF(_x, _y) (unsigned long)((ULONG_MAX - (_y)) + (_x) + 1)
@@ -5976,13 +5985,6 @@ static void hdd_bus_bw_work_handler(struct work_struct *work)
 		spin_unlock_bh(&hdd_ctx->bus_bw_lock);
 		connected = true;
 	}
-
-	hdd_ctx->hdd_txrx_hist[hdd_ctx->hdd_txrx_hist_idx].total_rx = total_rx;
-	hdd_ctx->hdd_txrx_hist[hdd_ctx->hdd_txrx_hist_idx].total_tx = total_tx;
-	hdd_ctx->hdd_txrx_hist[hdd_ctx->hdd_txrx_hist_idx].interval_rx =
-								rx_packets;
-	hdd_ctx->hdd_txrx_hist[hdd_ctx->hdd_txrx_hist_idx].interval_tx =
-								tx_packets;
 
 	/* add intra bss forwarded tx and rx packets */
 	tx_packets += fwd_tx_packets_diff;
@@ -6147,17 +6149,15 @@ void wlan_hdd_display_tx_rx_histogram(hdd_context_t *hdd_ctx)
 	hdd_err("Total entries: %d Current index: %d",
 		NUM_TX_RX_HISTOGRAM, hdd_ctx->hdd_txrx_hist_idx);
 
-	hdd_err("index, total_rx, interval_rx, total_tx, interval_tx, bus_bw_level, RX TP Level, TX TP Level");
+	hdd_err("[index][timestamp]: interval_rx, interval_tx, bus_bw_level, RX TP Level, TX TP Level");
 
 	for (i = 0; i < NUM_TX_RX_HISTOGRAM; i++) {
 		/* using hdd_log to avoid printing function name */
-		if (hdd_ctx->hdd_txrx_hist[i].total_rx != 0 ||
-			hdd_ctx->hdd_txrx_hist[i].total_tx != 0)
+		if (hdd_ctx->hdd_txrx_hist[i].qtime > 0)
 			hdd_log(QDF_TRACE_LEVEL_ERROR,
-				"%d: %llu, %llu, %llu, %llu, %s, %s, %s",
-				i, hdd_ctx->hdd_txrx_hist[i].total_rx,
+				"[%3d][%15llu]: %6llu, %6llu, %s, %s, %s",
+				i, hdd_ctx->hdd_txrx_hist[i].qtime,
 				hdd_ctx->hdd_txrx_hist[i].interval_rx,
-				hdd_ctx->hdd_txrx_hist[i].total_tx,
 				hdd_ctx->hdd_txrx_hist[i].interval_tx,
 				convert_level_to_string(
 					hdd_ctx->hdd_txrx_hist[i].
