@@ -127,6 +127,7 @@ struct ps_params {
  */
 struct ps_global_info {
 	bool ps_enabled;
+	uint32_t auto_bmps_timer_val;
 	struct ps_params ps_params[MAX_SME_SESSIONS];
 	/* Remain in Power active till DHCP completes */
 	bool remain_in_power_active_till_dhcp;

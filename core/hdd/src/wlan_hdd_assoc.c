@@ -2067,10 +2067,11 @@ static int hdd_change_sta_state_authenticated(hdd_adapter_t *adapter,
 	int ret;
 	uint32_t timeout;
 	hdd_station_ctx_t *hddstactx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	timeout = hddstactx->hdd_ReassocScenario ?
 		AUTO_PS_ENTRY_TIMER_DEFAULT_VALUE :
-		AUTO_DEFERRED_PS_ENTRY_TIMER_DEFAULT_VALUE;
+		hdd_ctx->config->auto_bmps_timer_val * 1000;
 
 	hdd_info("Changing TL state to AUTHENTICATED for StaId= %d",
 		 hddstactx->conn_info.staId[0]);

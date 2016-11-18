@@ -123,6 +123,12 @@
 #define CFG_ENABLE_PS_MAX                      (1)
 #define CFG_ENABLE_PS_DEFAULT                  (1)
 
+/* Auto BMPS timer value in sec */
+#define CFG_AUTO_PS_ENABLE_TIMER_NAME          "gAutoBmpsTimerValue"
+#define CFG_AUTO_PS_ENABLE_TIMER_MIN           (0)
+#define CFG_AUTO_PS_ENABLE_TIMER_MAX           (120)
+#define CFG_AUTO_PS_ENABLE_TIMER_DEFAULT       (0)
+
 #define CFG_BMPS_MINIMUM_LI_NAME               "gBmpsMinListenInterval"
 #define CFG_BMPS_MINIMUM_LI_MIN                (1)
 #define CFG_BMPS_MINIMUM_LI_MAX                (65535)
@@ -3641,6 +3647,7 @@ struct hdd_config {
 	char PowerUsageControl[4];
 	bool fIsImpsEnabled;
 	bool is_ps_enabled;
+	uint32_t auto_bmps_timer_val;
 	uint32_t nBmpsModListenInterval;
 	uint32_t nBmpsMaxListenInterval;
 	uint32_t nBmpsMinListenInterval;
