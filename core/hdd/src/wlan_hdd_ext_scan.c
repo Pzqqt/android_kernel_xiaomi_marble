@@ -4096,11 +4096,19 @@ static int hdd_extscan_passpoint_fill_network_list(
 	struct nlattr *networks;
 	int rem1, len;
 	uint8_t index;
+	uint32_t expected_networks;
 
+	expected_networks = req_msg->num_networks;
 	index = 0;
 	nla_for_each_nested(networks,
 		tb[QCA_WLAN_VENDOR_ATTR_PNO_PASSPOINT_LIST_PARAM_NETWORK_ARRAY],
 		rem1) {
+
+		if (index == expected_networks) {
+			hdd_warn("ignoring excess networks");
+			break;
+		}
+
 		if (nla_parse(network,
 			QCA_WLAN_VENDOR_ATTR_PNO_MAX,
 			nla_data(networks), nla_len(networks), NULL)) {
@@ -4159,6 +4167,7 @@ static int hdd_extscan_passpoint_fill_network_list(
 
 		index++;
 	}
+	req_msg->num_networks = index;
 	return 0;
 }
 
