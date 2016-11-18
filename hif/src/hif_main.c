@@ -438,6 +438,7 @@ void hif_close(struct hif_opaque_softc *hif_ctx)
 	qdf_mem_free(scn);
 }
 
+#ifdef QCA_WIFI_QCA8074
 static QDF_STATUS hif_hal_attach(struct hif_softc *scn)
 {
 	if (ce_srng_based(scn)) {
@@ -448,6 +449,13 @@ static QDF_STATUS hif_hal_attach(struct hif_softc *scn)
 
 	return QDF_STATUS_SUCCESS;
 }
+#else
+static QDF_STATUS hif_hal_attach(struct hif_softc *scn)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * hif_enable(): hif_enable
  * @hif_ctx: hif_ctx
