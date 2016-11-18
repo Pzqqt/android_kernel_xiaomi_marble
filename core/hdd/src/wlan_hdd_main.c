@@ -589,6 +589,11 @@ int wlan_hdd_validate_context(hdd_context_t *hdd_ctx)
 		return -EAGAIN;
 	}
 
+	if (hdd_is_roaming_in_progress()) {
+		hdd_err("Roaming In Progress. Ignore!!!");
+		return -EAGAIN;
+	}
+
 	return 0;
 }
 
@@ -9822,6 +9827,46 @@ int hdd_enable_disable_ca_event(hdd_context_t *hddctx, uint8_t set_value)
 		return -EINVAL;
 	}
 	return 0;
+}
+
+/**
+ * hdd_set_roaming_in_progress() - to set the roaming in progress flag
+ * @value: value to set
+ *
+ * This function will set the passed value to roaming in progress flag.
+ *
+ * Return: None
+ */
+void hdd_set_roaming_in_progress(bool value)
+{
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("HDD context is NULL");
+		return;
+	}
+
+	hdd_ctx->roaming_in_progress = value;
+	hdd_info("Roaming in Progress set to %d", value);
+}
+
+/**
+ * hdd_is_roaming_in_progress() - check if roaming is in progress
+ * @hdd_ctx - HDD context
+ *
+ * Return: true if roaming is in progress else false
+ */
+bool hdd_is_roaming_in_progress(void)
+{
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("HDD context is NULL");
+		return false;
+	}
+	return hdd_ctx->roaming_in_progress;
 }
 
 /* Register the module init/exit functions */

@@ -1570,6 +1570,7 @@ struct hdd_context_s {
 	struct hdd_runtime_pm_context runtime_context;
 	/* bit map to set/reset TDLS by different sources */
 	unsigned long tdls_source_bitmap;
+	bool roaming_in_progress;
 };
 
 /*---------------------------------------------------------------------------
@@ -1987,5 +1988,8 @@ static inline int wlan_hdd_validate_session_id(u8 session_id)
 
 	return -EINVAL;
 }
+
+bool hdd_is_roaming_in_progress(void);
+void hdd_set_roaming_in_progress(bool value);
 
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */
