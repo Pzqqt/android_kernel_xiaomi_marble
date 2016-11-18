@@ -1693,7 +1693,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		hdd_notice(" disassociated " MAC_ADDRESS_STR,
 		       MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 
-		qdf_status = qdf_event_set(&pHostapdState->qdf_event);
+		qdf_status = qdf_event_set(&pHostapdState->qdf_sta_disassoc_event);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			hdd_err("ERR: Station Deauth event Set failed");
 
@@ -5843,6 +5843,14 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("ERROR: Hostapd HDD stop bss event init failed!!");
 		goto error_init_ap_mode;
+	}
+
+	status = qdf_event_create(&phostapdBuf->qdf_sta_disassoc_event);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("ERROR: Hostapd HDD sta disassoc event init failed!!");
+		wlansap_close(sapContext);
+		pAdapter->sessionCtx.ap.sapContext = NULL;
+		return status;
 	}
 
 	init_completion(&pAdapter->session_close_comp_var);

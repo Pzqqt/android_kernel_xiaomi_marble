@@ -704,6 +704,7 @@ typedef struct hdd_hostapd_state_s {
 	int bssState;
 	qdf_event_t qdf_event;
 	qdf_event_t qdf_stop_bss_event;
+	qdf_event_t qdf_sta_disassoc_event;
 	QDF_STATUS qdf_status;
 	bool bCommit;
 

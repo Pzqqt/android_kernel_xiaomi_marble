@@ -9008,6 +9008,7 @@ void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter)
 		goto end;
 	}
 
+	qdf_event_reset(&hostapd_state->qdf_event);
 	if (wlansap_start_bss(hdd_ap_ctx->sapContext, hdd_hostapd_sap_event_cb,
 			      &hdd_ap_ctx->sapConfig,
 			      ap_adapter->dev)
