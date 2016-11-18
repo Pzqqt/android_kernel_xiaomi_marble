@@ -4211,6 +4211,12 @@ static int __wlan_hdd_cfg80211_set_passpoint_list(struct wiphy *wiphy,
 	}
 	num_networks = nla_get_u32(
 		tb[QCA_WLAN_VENDOR_ATTR_PNO_PASSPOINT_LIST_PARAM_NUM]);
+	if (num_networks > SIR_PASSPOINT_LIST_MAX_NETWORKS) {
+		hdd_err("num networks %u exceeds max %u",
+			num_networks, SIR_PASSPOINT_LIST_MAX_NETWORKS);
+		return -EINVAL;
+	}
+
 	hdd_notice("num networks %u", num_networks);
 
 	req_msg = qdf_mem_malloc(sizeof(*req_msg) +
