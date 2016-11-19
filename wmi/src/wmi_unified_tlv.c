@@ -4702,6 +4702,8 @@ QDF_STATUS send_roam_scan_offload_mode_cmd_tlv(wmi_unified_t wmi_handle,
 				roam_req->roam_offload_params.asel_cap;
 		roam_offload_params->qos_caps =
 				roam_req->roam_offload_params.qos_caps;
+		roam_offload_params->qos_enabled =
+				roam_req->roam_offload_params.qos_enabled;
 		roam_offload_params->wmm_caps =
 				roam_req->roam_offload_params.wmm_caps;
 		qdf_mem_copy((uint8_t *)roam_offload_params->mcsset,
