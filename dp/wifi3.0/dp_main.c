@@ -963,8 +963,10 @@ void *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc, void *ctrl_pdev,
 			goto fail0;
 	}
 
+#ifndef CONFIG_WIN
 	/* MCL */
 	dp_local_peer_id_pool_init(pdev);
+#endif
 
 	return (void *)pdev;
 
@@ -1371,7 +1373,9 @@ void *dp_peer_attach_wifi3(void *vdev_handle, uint8_t *peer_mac_addr)
 		vdev->vap_bss_peer = peer;
 	}
 
+#ifndef CONFIG_WIN
 	dp_local_peer_id_alloc(pdev, peer);
+#endif
 	return (void *)peer;
 }
 
@@ -1540,7 +1544,9 @@ void dp_peer_detach_wifi3(void *peer_handle)
 	 * reference, added by the PEER_MAP message.
 	 */
 	dp_peer_unref_delete(peer_handle);
+#ifndef CONFIG_WIN
 	dp_local_peer_id_free(peer->vdev->pdev, peer);
+#endif
 	qdf_spinlock_destroy(&peer->peer_info_lock);
 }
 
@@ -1639,6 +1645,7 @@ static struct cdp_pflow_ops dp_ops_pflow = {
 };
 #endif /* CONFIG_WIN */
 
+#ifndef CONFIG_WIN
 static struct cdp_misc_ops dp_ops_misc = {
 	.get_opmode = dp_get_opmode,
 };
@@ -1693,6 +1700,7 @@ static struct cdp_peer_ops dp_ops_peer = {
 	.get_vdev_for_peer = dp_get_vdev_for_peer,
 	.get_peer_state = dp_get_peer_state,
 };
+#endif
 
 static struct cdp_ops dp_txrx_ops = {
 	.cmn_drv_ops = &dp_ops_cmn,
@@ -1705,6 +1713,7 @@ static struct cdp_ops dp_txrx_ops = {
 #ifdef CONFIG_WIN
 	.pflow_ops = &dp_ops_pflow,
 #endif /* CONFIG_WIN */
+#ifndef CONFIG_WIN
 	.misc_ops = &dp_ops_misc,
 	.cfg_ops = &dp_ops_cfg,
 	.flowctl_ops = &dp_ops_flowctl,
@@ -1716,6 +1725,7 @@ static struct cdp_ops dp_txrx_ops = {
 	.peer_ops = &dp_ops_peer,
 	.throttle_ops = &dp_ops_throttle,
 	.mob_stats_ops = &dp_ops_mob_stats,
+#endif
 };
 
 /*

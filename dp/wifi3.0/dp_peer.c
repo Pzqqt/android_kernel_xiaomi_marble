@@ -428,8 +428,12 @@ void *dp_find_peer_by_addr(void *dev, uint8_t *peer_mac_addr,
 	struct dp_pdev *pdev = dev;
 	struct dp_peer *peer;
 
+#if ATH_SUPPORT_WRAP
+	peer = dp_peer_find_hash_find(pdev->soc, peer_mac_addr, 0, 0);
 	/* WAR, VDEV ID? TEMP 0 */
+#else
 	peer = dp_peer_find_hash_find(pdev->soc, peer_mac_addr, 0);
+#endif
 	if (!peer)
 		return NULL;
 
@@ -864,6 +868,7 @@ dp_rx_sec_ind_handler(void *soc_handle, uint16_t peer_id,
 	 */
 }
 
+#ifndef CONFIG_WIN
 /**
  * dp_register_peer() - Register peer into physical device
  * @pdev - data path device instance
@@ -1165,4 +1170,4 @@ void dp_local_peer_id_free(struct dp_pdev *pdev, struct dp_peer *peer)
 	pdev->local_peer_ids.map[i] = NULL;
 	qdf_spin_unlock_bh(&pdev->local_peer_ids.lock);
 }
-
+#endif

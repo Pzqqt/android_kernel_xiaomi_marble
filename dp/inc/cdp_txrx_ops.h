@@ -27,6 +27,9 @@
 
 
 #include <cdp_txrx_cmn_struct.h>
+#ifdef CONFIG_WIN
+#include <cdp_txrx_stats_struct.h>
+#endif
 
 /******************************************************************************
  *

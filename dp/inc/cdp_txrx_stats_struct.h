@@ -31,7 +31,9 @@
  */
 #ifndef _CDP_TXRX_STATS_STRUCT_H_
 #define _CDP_TXRX_STATS_STRUCT_H_
+#ifndef CONFIG_WIN
 #include <wlan_defs.h>
+#endif
 
 #define TXRX_STATS_LEVEL_OFF   0
 #define TXRX_STATS_LEVEL_BASIC 1
@@ -213,6 +215,7 @@ struct ol_ath_radiostats {
 	A_INT16     chan_nf_sec80;
 };
 
+#ifndef CONFIG_WIN
 /*
 ** structure to hold all stats information
 ** for offload device interface
@@ -225,6 +228,7 @@ struct ol_stats {
 	struct wlan_dbg_tidq_stats tidq_stats;
 };
 
+#endif
 /*
 ** Enumeration of PDEV Configuration parameter
 */

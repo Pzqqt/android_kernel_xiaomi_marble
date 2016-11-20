@@ -27,7 +27,9 @@
 #include <queue.h>
 
 #include <cdp_txrx_cmn.h>
+#ifndef CONFIG_WIN
 #include <wdi_event_api.h>    /* WDI subscriber event list */
+#endif
 
 #include <hal_tx.h>
 #define MAX_PDEV_CNT 3
@@ -357,8 +359,10 @@ struct dp_soc {
 	/* Rx ring map for interrupt processing */
 	struct dp_srng *rx_ring_map[DP_MAX_RX_RINGS];
 
+#ifndef CONFIG_WIN
 	/* WDI event handlers */
 	struct wdi_event_subscribe_t **wdi_event_list;
+#endif
 
 	/* peer ID to peer object map (array of pointers to peer objects) */
 	struct dp_peer **peer_id_to_obj_map;
