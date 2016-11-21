@@ -135,6 +135,7 @@ typedef struct _HTC_ENDPOINT {
 	HTC_ENDPOINT_STATS endpoint_stats;     /* endpoint statistics */
 #endif
 	bool TxCreditFlowEnabled;
+	bool async_update;  /* packets can be queued asynchronously */
 } HTC_ENDPOINT;
 
 #ifdef HTC_EP_STAT_PROFILING

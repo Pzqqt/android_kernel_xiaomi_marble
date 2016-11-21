@@ -770,4 +770,18 @@ int htc_pm_runtime_put(HTC_HANDLE htc_handle);
 static inline int htc_pm_runtime_get(HTC_HANDLE htc_handle) { return 0; }
 static inline int htc_pm_runtime_put(HTC_HANDLE htc_handle) { return 0; }
 #endif
+
+/**
+  * htc_set_async_ep() - set async HTC end point
+  *           user should call this function after htc_connect_service before
+  *           queing any packets to end point
+  * @HTCHandle: htc handle
+  * @HTC_ENDPOINT_ID: end point id
+  * @value: true or false
+  *
+  * Return: None
+  */
+
+void htc_set_async_ep(HTC_HANDLE HTCHandle,
+			HTC_ENDPOINT_ID htc_ep_id, bool value);
 #endif /* _HTC_API_H_ */

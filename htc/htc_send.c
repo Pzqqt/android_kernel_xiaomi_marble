@@ -616,14 +616,14 @@ static A_STATUS htc_issue_packets(HTC_TARGET *target,
 			}
 		}
 
-		if (pEndpoint->service_id != WMI_CONTROL_SVC) {
+		if (!pEndpoint->async_update) {
 			LOCK_HTC_TX(target);
 		}
 		/* store in look up queue to match completions */
 		HTC_PACKET_ENQUEUE(&pEndpoint->TxLookupQueue, pPacket);
 		INC_HTC_EP_STAT(pEndpoint, TxIssued, 1);
 		pEndpoint->ul_outstanding_cnt++;
-		if (pEndpoint->service_id != WMI_CONTROL_SVC) {
+		if (!pEndpoint->async_update) {
 			UNLOCK_HTC_TX(target);
 			hif_send_complete_check(target->hif_dev,
 					pEndpoint->UL_PipeID, false);
@@ -651,7 +651,7 @@ static A_STATUS htc_issue_packets(HTC_TARGET *target,
 						("hif_send Failed status:%d \n",
 						 status));
 			}
-			if (pEndpoint->service_id != WMI_CONTROL_SVC) {
+			if (!pEndpoint->async_update) {
 				LOCK_HTC_TX(target);
 			}
 			target->ce_send_cnt--;
@@ -662,7 +662,7 @@ static A_STATUS htc_issue_packets(HTC_TARGET *target,
 					pPacket->PktInfo.AsTx.CreditsUsed;
 			/* put it back into the callers queue */
 			HTC_PACKET_ENQUEUE_TO_HEAD(pPktQueue, pPacket);
-			if (pEndpoint->service_id != WMI_CONTROL_SVC) {
+			if (!pEndpoint->async_update) {
 				UNLOCK_HTC_TX(target);
 			}
 			break;
@@ -1156,9 +1156,12 @@ static HTC_SEND_QUEUE_RESULT htc_try_send(HTC_TARGET *target,
 	 * transmit resources */
 	while (true) {
 
-		if ((HTC_PACKET_QUEUE_DEPTH(&pEndpoint->TxQueue) == 0) ||
-			((!tx_resources) &&
-			(pEndpoint->service_id == WMI_CONTROL_SVC))) {
+		if (HTC_PACKET_QUEUE_DEPTH(&pEndpoint->TxQueue) == 0)
+			break;
+
+		if (pEndpoint->async_update &&
+			(!IS_TX_CREDIT_FLOW_ENABLED(pEndpoint)) &&
+			(!tx_resources)) {
 			break;
 		}
 
@@ -1211,7 +1214,7 @@ static HTC_SEND_QUEUE_RESULT htc_try_send(HTC_TARGET *target,
 			break;
 		}
 
-		if (pEndpoint->service_id != WMI_CONTROL_SVC) {
+		if (!pEndpoint->async_update) {
 			UNLOCK_HTC_TX(target);
 		}
 
@@ -1229,7 +1232,7 @@ static HTC_SEND_QUEUE_RESULT htc_try_send(HTC_TARGET *target,
 			HTC_PACKET_QUEUE_TRANSFER_TO_HEAD(&pEndpoint->TxQueue,
 							  &sendQueue);
 
-			if (pEndpoint->service_id != WMI_CONTROL_SVC) {
+			if (!pEndpoint->async_update) {
 				LOCK_HTC_TX(target);
 			}
 			break;
@@ -1241,7 +1244,7 @@ static HTC_SEND_QUEUE_RESULT htc_try_send(HTC_TARGET *target,
 							  pEndpoint->UL_PipeID);
 		}
 
-		if (pEndpoint->service_id != WMI_CONTROL_SVC) {
+		if (!pEndpoint->async_update) {
 			LOCK_HTC_TX(target);
 		}
 
@@ -1920,7 +1923,7 @@ QDF_STATUS htc_tx_completion_handler(void *Context,
 		* when credits flow back from the target.
 		* in the non-TX credit case, we recheck after the packet completes */
 		if ((qdf_atomic_read(&pEndpoint->TxProcessCount) == 0) ||
-				(pEndpoint->service_id != WMI_CONTROL_SVC)) {
+				(!pEndpoint->async_update)) {
 			htc_try_send(target, pEndpoint, NULL);
 		}
 	}

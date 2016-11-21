@@ -357,6 +357,7 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 
 		/* copy all the callbacks */
 		pEndpoint->EpCallBacks = pConnectReq->EpCallbacks;
+		pEndpoint->async_update = 0;
 
 		status = hif_map_service_to_pipe(target->hif_dev,
 						 pEndpoint->service_id,
@@ -424,3 +425,16 @@ void htc_fw_event_handler(void *context, QDF_STATUS status)
 		initInfo->TargetFailure(initInfo->pContext, status);
 	}
 }
+
+
+void htc_set_async_ep(HTC_HANDLE HTCHandle,
+			HTC_ENDPOINT_ID htc_ep_id, bool value)
+{
+	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(HTCHandle);
+	HTC_ENDPOINT *pEndpoint = &target->endpoint[htc_ep_id];
+
+	pEndpoint->async_update = value;
+	qdf_print("%s: htc_handle %p, ep %d, value %d\n", __func__,
+					HTCHandle, htc_ep_id, value);
+}
+
