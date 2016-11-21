@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -36,6 +36,7 @@
 #include <qdf_defer.h>
 #include <qdf_atomic.h>
 #include <qdf_nbuf.h>
+#include <qdf_threads.h>
 #include <athdefs.h>
 #include <qdf_net_types.h>
 #include <a_types.h>
@@ -47,6 +48,8 @@
 #include <htc_internal.h>
 #include "regtable_sdio.h"
 #include "if_sdio.h"
+
+#define NBUF_ALLOC_FAIL_WAIT_TIME 100
 
 static void hif_dev_dump_registers(struct hif_sdio_device *pdev,
 				struct MBOX_IRQ_PROC_REGISTERS *irq_proc_regs,
@@ -710,6 +713,12 @@ static QDF_STATUS hif_dev_issue_recv_packet_bundle(struct hif_sdio_device *pdev,
 	bundleSpaceRemaining =
 		HTC_MAX_MSG_PER_BUNDLE * target->TargetCreditSize;
 	packet_rx_bundle = allocate_htc_bundle_packet(target);
+	if (!packet_rx_bundle) {
+		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
+				("%s: packet_rx_bundle is NULL\n", __func__));
+		qdf_sleep(NBUF_ALLOC_FAIL_WAIT_TIME);  /* 100 msec sleep */
+		return QDF_STATUS_E_NOMEM;
+	}
 	bundle_buffer = packet_rx_bundle->pBuffer;
 
 	for (i = 0;
@@ -864,8 +873,22 @@ QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 						  mail_box_index,
 						  &pkts_fetched,
 						  partial_bundle);
-				if (QDF_IS_STATUS_ERROR(status))
+				if (QDF_IS_STATUS_ERROR(status)) {
+					while (!HTC_QUEUE_EMPTY(
+							&recv_pkt_queue)) {
+						qdf_nbuf_t netbuf;
+
+						packet = htc_packet_dequeue(
+							 &recv_pkt_queue);
+						if (packet == NULL)
+							break;
+						netbuf = (qdf_nbuf_t) packet->
+								pNetBufContext;
+						if (netbuf)
+							qdf_nbuf_free(netbuf);
+					}
 					break;
+				}
 
 				if (HTC_PACKET_QUEUE_DEPTH(&recv_pkt_queue) !=
 					0) {

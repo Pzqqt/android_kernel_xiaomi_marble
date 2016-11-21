@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -30,6 +30,8 @@
 #include <hif.h>
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <qdf_types.h>          /* qdf_print */
+
+#define MAX_HTC_RX_BUNDLE  2
 
 #if defined(WLAN_DEBUG) || defined(DEBUG)
 static ATH_DEBUG_MASK_DESCRIPTION g_htc_debug_description[] = {
@@ -499,9 +501,11 @@ A_STATUS htc_wait_target(HTC_HANDLE HTCHandle)
 	HTC_SERVICE_CONNECT_RESP resp;
 	HTC_READY_MSG *rdy_msg;
 	uint16_t htc_rdy_msg_id;
+	uint8_t i = 0;
+	HTC_PACKET *rx_bundle_packet, *temp_bundle_packet;
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRC,
-			("htc_wait_target - Enter (target:0x%p) \n", HTCHandle));
+			("htc_wait_target - Enter (target:0x%p)\n", HTCHandle));
 	AR_DEBUG_PRINTF(ATH_DEBUG_ANY, ("+HWT\n"));
 
 	do {
@@ -561,6 +565,24 @@ A_STATUS htc_wait_target(HTC_HANDLE HTCHandle)
 			status = A_ECOMM;
 			break;
 		}
+
+		/* Allocate expected number of RX bundle buffer allocation */
+		if (HTC_RX_BUNDLE_ENABLED(target)) {
+			temp_bundle_packet = NULL;
+			for (i = 0; i < MAX_HTC_RX_BUNDLE; i++) {
+				rx_bundle_packet =
+					allocate_htc_bundle_packet(target);
+				if (rx_bundle_packet != NULL)
+					rx_bundle_packet->ListLink.pNext =
+						(DL_LIST *)temp_bundle_packet;
+				else
+					break;
+
+				temp_bundle_packet = rx_bundle_packet;
+			}
+			target->pBundleFreeList = temp_bundle_packet;
+		}
+
 		/* done processing */
 		target->CtrlResponseProcessing = false;
 
