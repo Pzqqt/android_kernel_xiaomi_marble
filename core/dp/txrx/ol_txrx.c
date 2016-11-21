@@ -2214,8 +2214,17 @@ ol_txrx_peer_attach(void *pvdev, uint8_t *peer_mac_addr)
 	/* keep one reference for attach */
 	qdf_atomic_inc(&peer->ref_cnt);
 
-	/* keep one reference for ol_rx_peer_map_handler */
+	/*
+	 * Set a flag to indicate peer create is pending in firmware and
+	 * increment ref_cnt so that peer will not get deleted while
+	 * peer create command is pending in firmware.
+	 * First peer_map event from firmware signifies successful
+	 * peer creation and it will be decremented in peer_map handling.
+	 */
+	qdf_atomic_init(&peer->fw_create_pending);
+	qdf_atomic_set(&peer->fw_create_pending, 1);
 	qdf_atomic_inc(&peer->ref_cnt);
+
 
 	peer->valid = 1;
 

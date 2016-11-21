@@ -329,6 +329,10 @@ static void ol_txrx_peer_find_map_detach(struct ol_txrx_pdev_t *pdev)
  * its array of peer_id's and update the peer_id_to_obj map entry
  * for that peer_id. Increment corresponding reference counts.
  *
+ * Riva/Pronto has one peer id for each peer.
+ * Peregrine/Rome has two peer id for each peer.
+ * iHelium has upto three peer id for each peer.
+ *
  * Return: None
  */
 static inline void ol_txrx_peer_find_add_id(struct ol_txrx_pdev_t *pdev,
@@ -336,9 +340,7 @@ static inline void ol_txrx_peer_find_add_id(struct ol_txrx_pdev_t *pdev,
 {
 	struct ol_txrx_peer_t *peer;
 	int status;
-	int del_peer_ref = 0;
 	int i;
-	bool found = false;
 
 	/* check if there's already a peer object with this MAC address */
 	peer =
@@ -370,15 +372,6 @@ static inline void ol_txrx_peer_find_add_id(struct ol_txrx_pdev_t *pdev,
 	qdf_atomic_inc
 		(&pdev->peer_id_to_obj_map[peer_id].peer_id_ref_cnt);
 
-	/* Check if entire peer_id array is empty */
-	for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++) {
-		if (peer->peer_ids[i] != HTT_INVALID_PEER) {
-			found = true;
-			break;
-		}
-	}
-	if (!found)
-		del_peer_ref = 1;
 	status = 1;
 
 	/* find a place in peer_id array and insert peer_id */
@@ -390,15 +383,16 @@ static inline void ol_txrx_peer_find_add_id(struct ol_txrx_pdev_t *pdev,
 		}
 	}
 
-	/*
-	 * remove the reference added in ol_txrx_peer_find_hash_find.
-	 * the reference for the first peer id is already added in
-	 * ol_txrx_peer_attach.
-	 * Riva/Pronto has one peer id for each peer.
-	 * Peregrine/Rome has two peer id for each peer.
-	 */
-	if (del_peer_ref)
+	if (qdf_atomic_read(&peer->fw_create_pending) == 1) {
+		/*
+		 * First peer map event signifies successful peer
+		 * creation in firmware. Decrement the ref count
+		 * which was incremented when peer create command
+		 * was sent to firmware.
+		 */
+		qdf_atomic_set(&peer->fw_create_pending, 0);
 		ol_txrx_peer_unref_delete(peer);
+	}
 
 	qdf_spin_unlock(&pdev->peer_map_unmap_lock);
 
