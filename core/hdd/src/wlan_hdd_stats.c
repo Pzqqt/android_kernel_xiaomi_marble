@@ -252,7 +252,7 @@ static tSirWifiPeerType wmi_to_sir_peer_type(enum wmi_peer_type type)
 	case WMI_PEER_TYPE_TDLS:
 		return WIFI_PEER_TDLS;
 	case WMI_PEER_TYPE_NAN_DATA:
-		return WMI_PEER_TYPE_NAN_DATA;
+		return WIFI_PEER_NAN;
 	default:
 		hdd_err("Cannot map wmi_peer_type %d to HAL peer type", type);
 		return WIFI_PEER_INVALID;
