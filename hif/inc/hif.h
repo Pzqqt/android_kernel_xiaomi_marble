@@ -283,6 +283,7 @@ struct hif_target_info {
 	uint32_t target_type;
 	uint32_t target_revision;
 	uint32_t soc_version;
+	char *hw_name;
 };
 
 struct hif_opaque_softc {
