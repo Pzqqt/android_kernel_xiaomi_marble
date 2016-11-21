@@ -6576,17 +6576,8 @@ QDF_STATUS lim_send_ies_per_band(tpAniSirGlobal mac_ctx,
 
 	vht_caps[0] = DOT11F_EID_VHTCAPS;
 	vht_caps[1] = DOT11F_IE_VHTCAPS_MAX_LEN;
-	/* Get LDPC and over write for 2G */
 	lim_set_vht_caps(mac_ctx, session, vht_caps,
 			 DOT11F_IE_VHTCAPS_MIN_LEN + 2);
-	p_vht_cap->ldpcCodingCap = lim_get_rx_ldpc(mac_ctx, CHAN_ENUM_6);
-	/* Self VHT 80/160/80+80 channel width for 2G is 0 */
-	p_vht_cap->supportedChannelWidthSet = 0;
-	p_vht_cap->shortGI80MHz = 0;
-	p_vht_cap->shortGI160and80plus80MHz = 0;
-	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_VHTCAPS,
-			CDS_BAND_2GHZ, &vht_caps[2], DOT11F_IE_VHTCAPS_MIN_LEN);
-
 	/*
 	 * Get LDPC and over write for 5G - using channel 64 because it
 	 * is available in all reg domains.
@@ -6595,6 +6586,15 @@ QDF_STATUS lim_send_ies_per_band(tpAniSirGlobal mac_ctx,
 	/* Self VHT channel width for 5G is already negotiated with FW */
 	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_VHTCAPS,
 			CDS_BAND_5GHZ, &vht_caps[2], DOT11F_IE_VHTCAPS_MIN_LEN);
+
+	/* Get LDPC and over write for 2G */
+	p_vht_cap->ldpcCodingCap = lim_get_rx_ldpc(mac_ctx, CHAN_ENUM_6);
+	/* Self VHT 80/160/80+80 channel width for 2G is 0 */
+	p_vht_cap->supportedChannelWidthSet = 0;
+	p_vht_cap->shortGI80MHz = 0;
+	p_vht_cap->shortGI160and80plus80MHz = 0;
+	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_VHTCAPS,
+			CDS_BAND_2GHZ, &vht_caps[2], DOT11F_IE_VHTCAPS_MIN_LEN);
 
 	return QDF_STATUS_SUCCESS;
 }
