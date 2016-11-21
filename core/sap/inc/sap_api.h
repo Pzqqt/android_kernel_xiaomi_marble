@@ -970,6 +970,9 @@ uint32_t wlansap_get_chan_width(void *cds_ctx);
 
 QDF_STATUS wlansap_set_tx_leakage_threshold(tHalHandle hal,
 			uint16_t tx_leakage_threshold);
+
+QDF_STATUS wlansap_set_invalid_session(void *cds_ctx);
+
 #ifdef __cplusplus
 }
 #endif

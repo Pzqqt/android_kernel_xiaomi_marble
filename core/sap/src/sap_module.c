@@ -3665,3 +3665,29 @@ QDF_STATUS wlansap_set_tx_leakage_threshold(tHalHandle hal,
 			mac->sap.SapDfsInfo.tx_leakage_threshold);
 	return QDF_STATUS_SUCCESS;
 }
+
+/*
+ * wlansap_set_invalid_session() - set session ID to invalid
+ * @cds_ctx: pointer of global context
+ *
+ * This function sets session ID to invalid
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlansap_set_invalid_session(void *cds_ctx)
+{
+	ptSapContext psapctx;
+
+	psapctx = CDS_GET_SAP_CB(cds_ctx);
+	if (NULL == psapctx) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			FL("Invalid SAP pointer from pctx"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	psapctx->sessionId = CSR_SESSION_ID_INVALID;
+	psapctx->isSapSessionOpen = eSAP_FALSE;
+
+	return QDF_STATUS_SUCCESS;
+}

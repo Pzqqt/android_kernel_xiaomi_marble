@@ -3834,6 +3834,14 @@ QDF_STATUS hdd_reset_all_adapters(hdd_context_t *hdd_ctx)
 			clear_bit(WMM_INIT_DONE, &adapter->event_flags);
 		}
 
+		/*
+		 * If adapter is SAP, set session ID to invalid since SAP
+		 * session will be cleanup during SSR.
+		 */
+		if (adapter->device_mode == QDF_SAP_MODE)
+			wlansap_set_invalid_session(
+				WLAN_HDD_GET_SAP_CTX_PTR(adapter));
+
 		status = hdd_get_next_adapter(hdd_ctx, adapterNode, &pNext);
 		adapterNode = pNext;
 	}

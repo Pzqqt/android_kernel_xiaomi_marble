@@ -1573,14 +1573,14 @@ QDF_STATUS hdd_wlan_re_init(void)
 
 	hdd_wlan_get_version(pHddCtx, NULL, NULL);
 
+	wlan_hdd_send_svc_nlink_msg(pHddCtx->radio_index,
+				WLAN_SVC_FW_CRASHED_IND, NULL, 0);
+
 	/* Restart all adapters */
 	hdd_start_all_adapters(pHddCtx);
 
 	pHddCtx->hdd_mcastbcast_filter_set = false;
 	pHddCtx->btCoexModeSet = false;
-
-	wlan_hdd_send_svc_nlink_msg(pHddCtx->radio_index,
-				WLAN_SVC_FW_CRASHED_IND, NULL, 0);
 
 	/* Allow the phone to go to sleep */
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_REINIT);
