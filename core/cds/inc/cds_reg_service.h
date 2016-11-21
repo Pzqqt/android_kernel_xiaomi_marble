@@ -283,6 +283,7 @@ struct channel_power {
  * @SOURCE_11D: source 11D
  */
 enum country_src {
+	SOURCE_UNKNOWN,
 	SOURCE_QUERY,
 	SOURCE_CORE,
 	SOURCE_DRIVER,

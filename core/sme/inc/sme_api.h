@@ -1363,4 +1363,5 @@ QDF_STATUS sme_power_debug_stats_req(tHalHandle hal, void (*callback_fn)
 				(struct  power_stats_response *response,
 				void *context), void *power_stats_context);
 #endif
+void sme_set_cc_src(tHalHandle hal_handle, enum country_src);
 #endif /* #if !defined( __SME_API_H ) */

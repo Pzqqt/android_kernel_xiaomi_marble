@@ -672,9 +672,10 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 			hdd_ctx->reg.cc_src = SOURCE_CORE;
 			if (is_wiphy_custom_regulatory(wiphy))
 				reset = true;
-		} else if (NL80211_REGDOM_SET_BY_DRIVER == request->initiator)
+		} else if (NL80211_REGDOM_SET_BY_DRIVER == request->initiator) {
 			hdd_ctx->reg.cc_src = SOURCE_DRIVER;
-		else {
+			sme_set_cc_src(hdd_ctx->hHal, SOURCE_DRIVER);
+		} else {
 			hdd_ctx->reg.cc_src = SOURCE_USERSPACE;
 			hdd_restore_custom_reg_settings(wiphy,
 							request->alpha2,
