@@ -1551,6 +1551,28 @@ QDF_STATUS wmi_unified_roam_send_hlp_cmd(void *wmi_hdl,
 					struct hlp_params *req_buf);
 #endif
 
+/**
+ * wmi_unified_send_request_get_rcpi_cmd() - command to request rcpi value
+ * @wmi_hdl: wma handle
+ * @get_rcpi_param: rcpi params
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_send_request_get_rcpi_cmd(void *wmi_hdl,
+					struct rcpi_req *get_rcpi_param);
+
+/**
+ * wmi_extract_rcpi_response_event - api to extract RCPI event params
+ * @wmi_handle: wma handle
+ * @evt_buf: pointer to event buffer
+ * @res: pointer to hold rcpi response from firmware
+ *
+ * Return: QDF_STATUS_SUCCESS for successful event parse
+ *         else QDF_STATUS_E_INVAL or QDF_STATUS_E_FAILURE
+ */
+QDF_STATUS wmi_extract_rcpi_response_event(void *wmi_hdl, void *evt_buf,
+					   struct rcpi_res *res);
+
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 void wmi_print_cmd_log(wmi_unified_t wmi, uint32_t count,
 		       qdf_abstract_print *print, void *print_priv);
