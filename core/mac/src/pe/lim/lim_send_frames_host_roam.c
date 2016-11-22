@@ -161,7 +161,8 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	}
 
 	if (qos_enabled)
-		populate_dot11f_qos_caps_station(mac_ctx, &frm.QOSCapsStation);
+		populate_dot11f_qos_caps_station(mac_ctx, pe_session,
+						&frm.QOSCapsStation);
 
 	populate_dot11f_ext_supp_rates(mac_ctx,
 		POPULATE_DOT11F_RATES_OPERATIONAL, &frm.ExtSuppRates,
@@ -624,7 +625,8 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 	}
 
 	if (fQosEnabled)
-		populate_dot11f_qos_caps_station(pMac, &frm.QOSCapsStation);
+		populate_dot11f_qos_caps_station(pMac, psessionEntry,
+						&frm.QOSCapsStation);
 
 	populate_dot11f_ext_supp_rates(pMac, POPULATE_DOT11F_RATES_OPERATIONAL,
 				       &frm.ExtSuppRates, psessionEntry);

@@ -1732,7 +1732,8 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		}
 	}
 	if (qos_enabled)
-		populate_dot11f_qos_caps_station(mac_ctx, &frm->QOSCapsStation);
+		populate_dot11f_qos_caps_station(mac_ctx, pe_session,
+						&frm->QOSCapsStation);
 
 	populate_dot11f_ext_supp_rates(mac_ctx,
 		POPULATE_DOT11F_RATES_OPERATIONAL, &frm->ExtSuppRates,

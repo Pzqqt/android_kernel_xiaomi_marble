@@ -806,7 +806,7 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 						roam_req->assoc_ie.length);
 	}
 
-	WMA_LOGE(FL("my_dbg: qos_caps: %d, qos_enabled: %d"),
+	WMA_LOGD(FL("qos_caps: %d, qos_enabled: %d"),
 		params->roam_offload_params.qos_caps,
 		params->roam_offload_params.qos_enabled);
 

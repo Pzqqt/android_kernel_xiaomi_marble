@@ -1516,7 +1516,7 @@ populate_dot11f_qos_caps_ap(tpAniSirGlobal pMac,
 } /* End PopulatedDot11fQOSCaps. */
 
 void
-populate_dot11f_qos_caps_station(tpAniSirGlobal pMac,
+populate_dot11f_qos_caps_station(tpAniSirGlobal pMac, tpPESession pe_session,
 				 tDot11fIEQOSCapsStation *pDot11f)
 {
 	uint32_t val = 0;
@@ -1531,13 +1531,13 @@ populate_dot11f_qos_caps_station(tpAniSirGlobal pMac,
 
 	if (pMac->lim.gUapsdEnable) {
 		pDot11f->acbe_uapsd =
-			LIM_UAPSD_GET(ACBE, pMac->lim.gUapsdPerAcBitmask);
+			LIM_UAPSD_GET(ACBE, pe_session->gUapsdPerAcBitmask);
 		pDot11f->acbk_uapsd =
-			LIM_UAPSD_GET(ACBK, pMac->lim.gUapsdPerAcBitmask);
+			LIM_UAPSD_GET(ACBK, pe_session->gUapsdPerAcBitmask);
 		pDot11f->acvi_uapsd =
-			LIM_UAPSD_GET(ACVI, pMac->lim.gUapsdPerAcBitmask);
+			LIM_UAPSD_GET(ACVI, pe_session->gUapsdPerAcBitmask);
 		pDot11f->acvo_uapsd =
-			LIM_UAPSD_GET(ACVO, pMac->lim.gUapsdPerAcBitmask);
+			LIM_UAPSD_GET(ACVO, pe_session->gUapsdPerAcBitmask);
 	}
 	pDot11f->present = 1;
 } /* End PopulatedDot11fQOSCaps. */

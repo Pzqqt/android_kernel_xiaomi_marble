@@ -234,7 +234,6 @@ static void __lim_init_vars(tpAniSirGlobal pMac)
 
 	/* WMM Related Flag */
 	pMac->lim.gUapsdEnable = 0;
-	pMac->lim.gUapsdPerAcBitmask = 0;
 
 	/* QoS-AC Downgrade: Initially, no AC is admitted */
 	pMac->lim.gAcAdmitMask[SIR_MAC_DIRECTION_UPLINK] = 0;

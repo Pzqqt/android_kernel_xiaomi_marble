@@ -13928,6 +13928,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			  FL("CSR PERSONA=%d CSR CbMode %d"),
 			  pProfile->csrPersona, pSession->bssParams.cbMode);
 		csr_join_req->uapsdPerAcBitmask = pProfile->uapsd_mask;
+		pSession->uapsd_mask = pProfile->uapsd_mask;
 		status =
 			csr_get_rate_set(pMac, pProfile,
 					 (eCsrPhyMode) pProfile->phyMode,
@@ -16919,14 +16920,10 @@ csr_update_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 			     SIR_BTK_KEY_LEN);
 	}
 #endif
-	req_buf->AcUapsd.acbe_uapsd =
-		SIR_UAPSD_GET(ACBE, mac_ctx->lim.gUapsdPerAcBitmask);
-	req_buf->AcUapsd.acbk_uapsd =
-		SIR_UAPSD_GET(ACBK, mac_ctx->lim.gUapsdPerAcBitmask);
-	req_buf->AcUapsd.acvi_uapsd =
-		SIR_UAPSD_GET(ACVI, mac_ctx->lim.gUapsdPerAcBitmask);
-	req_buf->AcUapsd.acvo_uapsd =
-		SIR_UAPSD_GET(ACVO, mac_ctx->lim.gUapsdPerAcBitmask);
+	req_buf->AcUapsd.acbe_uapsd = SIR_UAPSD_GET(ACBE, session->uapsd_mask);
+	req_buf->AcUapsd.acbk_uapsd = SIR_UAPSD_GET(ACBK, session->uapsd_mask);
+	req_buf->AcUapsd.acvi_uapsd = SIR_UAPSD_GET(ACVI, session->uapsd_mask);
+	req_buf->AcUapsd.acvo_uapsd = SIR_UAPSD_GET(ACVO, session->uapsd_mask);
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 

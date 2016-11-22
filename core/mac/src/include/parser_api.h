@@ -680,7 +680,7 @@ populate_dot11f_qos_caps_ap(tpAniSirGlobal pMac,
 			tpPESession psessionEntry);
 
 void
-populate_dot11f_qos_caps_station(tpAniSirGlobal pMac,
+populate_dot11f_qos_caps_station(tpAniSirGlobal pMac, tpPESession session,
 				tDot11fIEQOSCapsStation *pDot11f);
 
 tSirRetStatus
