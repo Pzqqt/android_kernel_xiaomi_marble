@@ -234,6 +234,24 @@ static inline uint8_t *pld_pcie_get_wlan_mac_address(struct device *dev,
 	*num = 0;
 	return NULL;
 }
+static inline int pld_pcie_get_user_msi_assignment(struct device *dev,
+						   char *user_name,
+						   int *num_vectors,
+						   uint32_t *user_base_data,
+						   uint32_t *base_vector)
+{
+	return 0;
+}
+static inline int pld_pcie_get_msi_irq(struct device *dev, unsigned int vector)
+{
+	return 0;
+}
+static inline void pld_pcie_get_msi_address(struct device *dev,
+					    uint32_t *msi_addr_low,
+					    uint32_t *msi_addr_high)
+{
+	return;
+}
 #else
 int pld_pcie_get_fw_files_for_target(struct pld_fw_files *pfw_files,
 				     u32 target_type, u32 target_version);
@@ -323,6 +341,25 @@ static inline uint8_t *pld_pcie_get_wlan_mac_address(struct device *dev,
 						     uint32_t *num)
 {
 	return cnss_common_get_wlan_mac_address(dev, num);
+}
+static inline int pld_pcie_get_user_msi_assignment(struct device *dev,
+						   char *user_name,
+						   int *num_vectors,
+						   uint32_t *user_base_data,
+						   uint32_t *base_vector)
+{
+	return cnss_get_user_msi_assignment(dev, user_name, num_vectors,
+					    user_base_data, base_vector);
+}
+static inline int pld_pcie_get_msi_irq(struct device *dev, unsigned int vector)
+{
+	return cnss_get_msi_irq(dev, vector);
+}
+static inline void pld_pcie_get_msi_address(struct device *dev,
+					    uint32_t *msi_addr_low,
+					    uint32_t *msi_addr_high)
+{
+	cnss_get_msi_address(dev, msi_addr_low, msi_addr_high);
 }
 #endif
 #endif

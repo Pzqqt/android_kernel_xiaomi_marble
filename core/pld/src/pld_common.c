@@ -1502,6 +1502,107 @@ int pld_smmu_map(struct device *dev, phys_addr_t paddr,
 }
 
 /**
+ * pld_get_user_msi_assignment() - Get MSI assignment information
+ * @dev: device structure
+ * @user_name: name of the user who requests the MSI assignment
+ * @num_vectors: number of the MSI vectors assigned for the user
+ * @user_base_data: MSI base data assigned for the user, this equals to
+ *                  endpoint base data from config space plus base vector
+ * @base_vector: base MSI vector (offset) number assigned for the user
+ *
+ * Return: 0 for success
+ *         Negative failure code for errors
+ */
+int pld_get_user_msi_assignment(struct device *dev, char *user_name,
+				int *num_vectors, uint32_t *user_base_data,
+				uint32_t *base_vector)
+{
+	int ret = 0;
+	enum pld_bus_type type = pld_get_bus_type(dev);
+
+	switch (type) {
+	case PLD_BUS_TYPE_PCIE:
+		ret = pld_pcie_get_user_msi_assignment(dev, user_name,
+						       num_vectors,
+						       user_base_data,
+						       base_vector);
+		break;
+	case PLD_BUS_TYPE_SNOC:
+	case PLD_BUS_TYPE_SDIO:
+	case PLD_BUS_TYPE_USB:
+		pr_err("Not supported on type %d\n", type);
+		ret = -ENODEV;
+		break;
+	default:
+		pr_err("Invalid device type %d\n", type);
+		ret = -EINVAL;
+		break;
+	}
+
+	return ret;
+}
+
+/**
+ * pld_get_msi_irq() - Get MSI IRQ number used for request_irq()
+ * @dev: device structure
+ * @vector: MSI vector (offset) number
+ *
+ * Return: Positive IRQ number for success
+ *         Negative failure code for errors
+ */
+int pld_get_msi_irq(struct device *dev, unsigned int vector)
+{
+	int ret = 0;
+	enum pld_bus_type type = pld_get_bus_type(dev);
+
+	switch (type) {
+	case PLD_BUS_TYPE_PCIE:
+		ret = pld_pcie_get_msi_irq(dev, vector);
+		break;
+	case PLD_BUS_TYPE_SNOC:
+	case PLD_BUS_TYPE_SDIO:
+	case PLD_BUS_TYPE_USB:
+		pr_err("Not supported on type %d\n", type);
+		ret = -ENODEV;
+		break;
+	default:
+		pr_err("Invalid device type %d\n", type);
+		ret = -EINVAL;
+		break;
+	}
+
+	return ret;
+}
+
+/**
+ * pld_get_msi_address() - Get the MSI address
+ * @dev: device structure
+ * @msi_addr_low: lower 32-bit of the address
+ * @msi_addr_high: higher 32-bit of the address
+ *
+ * Return: Void
+ */
+void pld_get_msi_address(struct device *dev, uint32_t *msi_addr_low,
+			 uint32_t *msi_addr_high)
+{
+	enum pld_bus_type type = pld_get_bus_type(dev);
+
+	switch (type) {
+	case PLD_BUS_TYPE_PCIE:
+		pld_pcie_get_msi_address(dev, msi_addr_low, msi_addr_high);
+		break;
+	case PLD_BUS_TYPE_SNOC:
+	case PLD_BUS_TYPE_SDIO:
+	case PLD_BUS_TYPE_USB:
+		pr_err("Not supported on type %d\n", type);
+		break;
+	default:
+		pr_err("Invalid device type %d\n", type);
+		break;
+	}
+}
+
+/**
  * pld_socinfo_get_serial_number() - Get SOC serial number
  * @dev: device
  *
