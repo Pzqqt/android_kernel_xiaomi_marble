@@ -23,6 +23,7 @@
 #include "dp_internal.h"
 #include "dp_peer.h"
 #include <hal_api.h>
+#include <hal_reo.h>
 
 /* Temporary definitions to be moved to wlan_cfg */
 static inline uint32_t wlan_cfg_max_peer_id(void *wlan_cfg_ctx)
@@ -401,6 +402,91 @@ dp_peer_find_detach(struct dp_soc *soc)
 	dp_peer_find_hash_detach(soc);
 }
 
+static void dp_rx_tid_stats_cb(struct dp_soc *soc, void *cb_ctxt,
+	union hal_reo_status *reo_status)
+{
+	struct dp_rx_tid *rx_tid = (struct dp_rx_tid *)cb_ctxt;
+	struct hal_reo_queue_status *queue_status = &(reo_status->queue_status);
+
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		"%s: rx_tid: %d status: %d\n", __func__,
+		rx_tid->tid, queue_status->header.status);
+
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		"REO queue stats: \n"
+		"ssn: %d\n"
+		"curr_idx  : %d\n"
+		"pn_31_0   : %08x\n"
+		"pn_63_32  : %08x\n"
+		"pn_95_64  : %08x\n"
+		"pn_127_96 : %08x\n"
+		"last_rx_enq_tstamp : %08x\n"
+		"last_rx_deq_tstamp : %08x\n"
+		"rx_bitmap_31_0     : %08x\n"
+		"rx_bitmap_63_32    : %08x\n"
+		"rx_bitmap_95_64    : %08x\n"
+		"rx_bitmap_127_96   : %08x\n"
+		"rx_bitmap_159_128  : %08x\n"
+		"rx_bitmap_191_160  : %08x\n"
+		"rx_bitmap_223_192  : %08x\n"
+		"rx_bitmap_255_224  : %08x\n"
+		"curr_mpdu_cnt      : %d\n"
+		"curr_msdu_cnt      : %d\n"
+		"fwd_timeout_cnt    : %d\n"
+		"fwd_bar_cnt        : %d\n"
+		"dup_cnt            : %d\n"
+		"frms_in_order_cnt  : %d\n"
+		"bar_rcvd_cnt       : %d\n"
+		"mpdu_frms_cnt      : %d\n"
+		"msdu_frms_cnt      : %d\n"
+		"total_cnt          : %d\n"
+		"late_recv_mpdu_cnt : %d\n"
+		"win_jump_2k 	    : %d\n"
+		"hole_cnt 	    : %d\n",
+		queue_status->ssn, queue_status->curr_idx,
+		queue_status->pn_31_0, queue_status->pn_63_32,
+		queue_status->pn_95_64, queue_status->pn_127_96,
+		queue_status->last_rx_enq_tstamp,
+		queue_status->last_rx_deq_tstamp,
+		queue_status->rx_bitmap_31_0, queue_status->rx_bitmap_63_32,
+		queue_status->rx_bitmap_95_64, queue_status->rx_bitmap_127_96,
+		queue_status->rx_bitmap_159_128,
+		queue_status->rx_bitmap_191_160,
+		queue_status->rx_bitmap_223_192,
+		queue_status->rx_bitmap_255_224,
+		queue_status->curr_mpdu_cnt, queue_status->curr_msdu_cnt,
+		queue_status->fwd_timeout_cnt, queue_status->fwd_bar_cnt,
+		queue_status->dup_cnt, queue_status->frms_in_order_cnt,
+		queue_status->bar_rcvd_cnt, queue_status->mpdu_frms_cnt,
+		queue_status->msdu_frms_cnt, queue_status->total_cnt,
+		queue_status->late_recv_mpdu_cnt, queue_status->win_jump_2k,
+		queue_status->hole_cnt);
+}
+
+static void dp_rx_tid_update_cb(struct dp_soc *soc, void *cb_ctxt,
+	union hal_reo_status *reo_status)
+{
+	struct dp_rx_tid *rx_tid = (struct dp_rx_tid *)cb_ctxt;
+	struct hal_reo_cmd_params params;
+
+	if (reo_status->queue_status.header.status) {
+		/* Should not happen normally. Just print error for now */
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s: Rx tid HW desc update failed(%d): tid %d\n",
+			__func__,
+			reo_status->rx_queue_status.header.status,
+			rx_tid->tid);
+	}
+
+	qdf_mem_zero(&params, sizeof(params));
+
+	params.std.need_status = 1;
+	params.std.addr_lo = rx_tid->hw_qdesc_paddr & 0xffffffff;
+	params.std.addr_hi = (uint64_t)(rx_tid->hw_qdesc_paddr) >> 32;
+
+	dp_reo_send_cmd(soc, CMD_GET_QUEUE_STATS, &params, dp_rx_tid_stats_cb, rx_tid);
+}
+
 /*
  * dp_find_peer_by_addr - find peer instance by mac address
  * @dev: physical device instance
@@ -442,7 +528,24 @@ void *dp_find_peer_by_addr(void *dev, uint8_t *peer_mac_addr,
 static int dp_rx_tid_update_wifi3(struct dp_peer *peer, int tid, uint32_t
 				  ba_window_size, uint32_t start_seq)
 {
-	/* TODO: Implement this once REO command API is available */
+	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
+	struct dp_soc *soc = peer->vdev->pdev->soc;
+	struct hal_reo_cmd_params params;
+
+	qdf_mem_zero(&params, sizeof(params));
+
+	params.std.need_status = 1;
+	params.std.addr_lo = rx_tid->hw_qdesc_paddr & 0xffffffff;
+	params.std.addr_hi = (uint64_t)(rx_tid->hw_qdesc_paddr) >> 32;
+	params.u.upd_queue_params.update_ba_window_size = 1;
+	params.u.upd_queue_params.ba_window_size = ba_window_size;
+
+	if (start_seq < IEEE80211_SEQ_MAX) {
+		params.u.upd_queue_params.update_ssn = 1;
+		params.u.upd_queue_params.ssn = start_seq;
+	}
+
+	dp_reo_send_cmd(soc, CMD_UPDATE_RX_REO_QUEUE, &params, dp_rx_tid_update_cb, rx_tid);
 	return 0;
 }
 
@@ -455,7 +558,7 @@ static int dp_rx_tid_update_wifi3(struct dp_peer *peer, int tid, uint32_t
  *
  * Return: 0 on success, error code on failure
  */
-static int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
+int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 				 uint32_t ba_window_size, uint32_t start_seq)
 {
 	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
@@ -570,42 +673,34 @@ static int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 			peer->vdev->vdev_id, peer->mac_addr.raw,
 			rx_tid->hw_qdesc_paddr, tid, tid);
 
-		if (tid == DP_NON_QOS_TID) {
-			/* TODO: Setting up default queue - currently using
-			 * same queue for BE and non-qos traffic till BA
-			 * session is setup. Check if there are any HW
-			 * restrictions and also if this can be done for
-			 * all other TIDs
-			 */
-			soc->cdp_soc.ol_ops->
-				peer_rx_reorder_queue_setup(soc->osif_soc,
-					peer->vdev->vdev_id, peer->mac_addr.raw,
-					rx_tid->hw_qdesc_paddr, 0, tid);
-		}
 	}
 	return 0;
 }
 
-#ifdef notyet /* TBD: Enable this once REO command interface is available */
 /*
  * Rx TID deletion callback to free memory allocated for HW queue descriptor
  */
-static void dp_rx_tid_delete_cb(struct dp_pdev *pdev, void *cb_ctxt, int status)
+static void dp_rx_tid_delete_cb(struct dp_soc *soc, void *cb_ctxt,
+	union hal_reo_status *reo_status)
 {
-	struct dp_soc *soc = pdev->soc;
 	struct dp_rx_tid *rx_tid = (struct dp_rx_tid *)cb_ctxt;
 
-	if (status) {
+	if (reo_status->rx_queue_status.header.status) {
 		/* Should not happen normally. Just print error for now */
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: Rx tid HW desc deletion failed: tid %d\n",
-				__func__, rx_tid->tid);
+			"%s: Rx tid HW desc deletion failed(%d): tid %d\n",
+			__func__,
+			reo_status->rx_queue_status.header.status,
+			rx_tid->tid);
 	}
 
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		"%s: rx_tid: %d status: %d\n", __func__,
+		rx_tid->tid, reo_status->rx_queue_status.header.status);
 	qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
-				rx_tid->hw_qdesc_alloc_size,
-				rx_tid->hw_qdesc_vaddr_unaligned,
-				rx_tid->hw_qdesc_paddr_unaligned, 0);
+		rx_tid->hw_qdesc_alloc_size,
+		rx_tid->hw_qdesc_vaddr_unaligned,
+		rx_tid->hw_qdesc_paddr_unaligned, 0);
 
 	rx_tid->hw_qdesc_vaddr_unaligned = NULL;
 	rx_tid->hw_qdesc_alloc_size = 0;
@@ -620,17 +715,22 @@ static void dp_rx_tid_delete_cb(struct dp_pdev *pdev, void *cb_ctxt, int status)
  */
 static int dp_rx_tid_delete_wifi3(struct dp_peer *peer, int tid)
 {
-	struct dp_rx_tid *rx_tid = peer->rx_tid[tid];
-	dp_rx_tid_hw_update_valid(rx_tid->hw_qdesc_paddr, 0,
+	struct dp_rx_tid *rx_tid = &(peer->rx_tid[tid]);
+	struct dp_soc *soc = peer->vdev->pdev->soc;
+	struct hal_reo_cmd_params params;
+
+	qdf_mem_zero(&params, sizeof(params));
+
+	params.std.need_status = 1;
+	params.std.addr_lo = rx_tid->hw_qdesc_paddr & 0xffffffff;
+	params.std.addr_hi = (uint64_t)(rx_tid->hw_qdesc_paddr) >> 32;
+	params.u.upd_queue_params.update_vld = 1;
+	params.u.upd_queue_params.vld = 0;
+
+	dp_reo_send_cmd(soc, CMD_UPDATE_RX_REO_QUEUE, &params,
 		dp_rx_tid_delete_cb, (void *)rx_tid);
 	return 0;
 }
-#else
-static int dp_rx_tid_delete_wifi3(struct dp_peer *peer, int tid)
-{
-	return 0;
-}
-#endif
 
 /*
  * dp_peer_rx_init() – Initialize receive TID state
@@ -663,6 +763,12 @@ void dp_peer_rx_init(struct dp_pdev *pdev, struct dp_peer *peer)
 	/* Setup default (non-qos) rx tid queue */
 	dp_rx_tid_setup_wifi3(peer, DP_NON_QOS_TID, 1, 0);
 
+	/* Setup rx tid queue for TID 0.
+	 * Other queues will be setup on receiving first packet, which will cause
+	 * NULL REO queue error
+	 */
+	dp_rx_tid_setup_wifi3(peer, 0, 1, 0);
+
 	/*
 	 * Set security defaults: no PN check, no security. The target may
 	 * send a HTT SEC_IND message to overwrite these defaults.
@@ -680,10 +786,9 @@ void dp_peer_rx_init(struct dp_pdev *pdev, struct dp_peer *peer)
 void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
 {
 	int tid;
-	struct dp_rx_tid *rx_tid;
 	uint32_t tid_delete_mask = 0;
 	for (tid = 0; tid < DP_MAX_TIDS; tid++) {
-		if (rx_tid->hw_qdesc_vaddr_unaligned != NULL) {
+		if (peer->rx_tid[tid].hw_qdesc_vaddr_unaligned != NULL) {
 			dp_rx_tid_delete_wifi3(peer, tid);
 			tid_delete_mask |= (1 << tid);
 		}

@@ -19,9 +19,11 @@
 #include "dp_types.h"
 #include "dp_rx.h"
 #include "dp_peer.h"
+#include "dp_internal.h"
 #include "hal_api.h"
 #include "qdf_trace.h"
 #include "qdf_nbuf.h"
+#include <ieee80211.h>
 
 /**
  * dp_rx_cookie_2_link_desc_va() - Converts cookie to a virtual address of
@@ -254,6 +256,9 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, void *ring_desc,
 	qdf_nbuf_t nbuf;
 	struct dp_pdev *pdev0;
 	struct dp_vdev *vdev0;
+	uint32_t tid = 0;
+	uint16_t peer_id;
+	struct dp_peer *peer = NULL;
 
 	rx_buf_cookie = HAL_RX_WBM_BUF_COOKIE_GET(ring_desc);
 
@@ -299,6 +304,22 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, void *ring_desc,
 
 	if (l2_hdr_offset)
 		qdf_nbuf_pull_head(nbuf, l2_hdr_offset);
+
+	if (hal_rx_mpdu_start_mpdu_qos_control_valid_get(
+		rx_desc->rx_buf_start)) {
+		/* TODO: Assuming that qos_control_valid also indicates
+		 * unicast. Should we check this?
+		 */
+		tid = hal_rx_mpdu_start_tid_get(rx_desc->rx_buf_start);
+		peer_id = hal_rx_mpdu_start_sw_peer_id_get(
+			rx_desc->rx_buf_start);
+		peer = dp_peer_find_by_id(soc, peer_id);
+		if (peer &&
+			peer->rx_tid[tid].hw_qdesc_vaddr_unaligned == NULL) {
+			/* IEEE80211_SEQ_MAX indicates invalid start_seq */
+			dp_rx_tid_setup_wifi3(peer, tid, 1, IEEE80211_SEQ_MAX);
+		}
+	}
 
 	pdev0 = soc->pdev_list[0];/* Hard code 0th elem */
 

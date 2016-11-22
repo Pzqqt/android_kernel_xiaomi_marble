@@ -140,6 +140,7 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 	uint8_t rx_mask = int_ctx->rx_ring_mask;
 	uint8_t rx_err_mask = int_ctx->rx_err_ring_mask;
 	uint8_t rx_wbm_rel_mask = int_ctx->rx_wbm_rel_ring_mask;
+	uint8_t reo_status_mask = int_ctx->reo_status_ring_mask;
 
 	/* Process Tx completion interrupts first to return back buffers */
 	if (tx_mask) {
@@ -211,6 +212,9 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 		}
 	}
 
+	if (reo_status_mask)
+		dp_reo_status_ring_handler(soc);
+
 budget_done:
 	return dp_budget - budget;
 }
@@ -255,6 +259,7 @@ static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 		soc->intr_ctx[i].rx_mon_ring_mask = 0xF;
 		soc->intr_ctx[i].rx_err_ring_mask = 0x1;
 		soc->intr_ctx[i].rx_wbm_rel_ring_mask = 0x1;
+		soc->intr_ctx[i].reo_status_ring_mask = 0x1;
 		soc->intr_ctx[i].soc = soc;
 	}
 

@@ -249,6 +249,7 @@ struct dp_intr {
 	uint8_t rx_mon_ring_mask;  /* Rx monitor ring mask (0-2) */
 	uint8_t rx_err_ring_mask; /* REO Exception Ring */
 	uint8_t rx_wbm_rel_ring_mask; /* WBM2SW Rx Release Ring */
+	uint8_t reo_status_ring_mask; /* REO command response ring */
 	struct dp_soc *soc;    /* Reference to SoC structure ,
 				to get DMA ring handles */
 };

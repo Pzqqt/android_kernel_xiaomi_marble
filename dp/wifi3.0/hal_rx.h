@@ -631,6 +631,75 @@ hal_rx_msdu_start_msdu_len_get(uint8_t *buf)
 	return msdu_len;
 }
 
+/*
+ * Get qos_control_valid from RX_MPDU_START
+ */
+#define HAL_RX_MPDU_INFO_QOS_CONTROL_VALID_GET(_rx_mpdu_info) \
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_mpdu_info),		\
+		RX_MPDU_INFO_2_MPDU_SEQUENCE_CONTROL_VALID_OFFSET)),		\
+		RX_MPDU_INFO_2_MPDU_SEQUENCE_CONTROL_VALID_MASK,		\
+		RX_MPDU_INFO_2_MPDU_SEQUENCE_CONTROL_VALID_LSB))
+
+static inline uint32_t
+hal_rx_mpdu_start_mpdu_qos_control_valid_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_start *mpdu_start =
+			&pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+	uint32_t qos_control_valid;
+
+	qos_control_valid = HAL_RX_MPDU_INFO_QOS_CONTROL_VALID_GET(
+		&(mpdu_start->rx_mpdu_info_details));
+
+	return qos_control_valid;
+}
+
+/*
+ * Get tid from RX_MPDU_START
+ */
+#define HAL_RX_MPDU_INFO_TID_GET(_rx_mpdu_info) \
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_mpdu_info),	\
+		RX_MPDU_INFO_3_TID_OFFSET)),		\
+		RX_MPDU_INFO_3_TID_MASK,		\
+		RX_MPDU_INFO_3_TID_LSB))
+
+static inline uint32_t
+hal_rx_mpdu_start_tid_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_start *mpdu_start =
+			&pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+	uint32_t tid;
+
+	tid = HAL_RX_MPDU_INFO_TID_GET(
+		&(mpdu_start->rx_mpdu_info_details));
+
+	return tid;
+}
+
+/*
+ * Get SW peer id from RX_MPDU_START
+ */
+#define HAL_RX_MPDU_INFO_SW_PEER_ID_GET(_rx_mpdu_info) \
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_mpdu_info),	\
+		RX_MPDU_INFO_1_SW_PEER_ID_OFFSET)),	\
+		RX_MPDU_INFO_1_SW_PEER_ID_MASK,		\
+		RX_MPDU_INFO_1_SW_PEER_ID_LSB))
+
+static inline uint32_t
+hal_rx_mpdu_start_sw_peer_id_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_start *mpdu_start =
+			&pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+	uint32_t sw_peer_id;
+
+	sw_peer_id = HAL_RX_MPDU_INFO_SW_PEER_ID_GET(
+		&(mpdu_start->rx_mpdu_info_details));
+
+	return sw_peer_id;
+}
+
 /*******************************************************************************
  * RX ERROR APIS
  ******************************************************************************/

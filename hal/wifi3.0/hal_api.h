@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -210,15 +210,22 @@ static inline int hal_srng_access_start(void *hal_soc, void *hal_ring)
 static inline void *hal_srng_dst_get_next(void *hal_soc, void *hal_ring)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring;
-	uint32_t *desc = &(srng->ring_base_vaddr[srng->u.dst_ring.tp]);
+	volatile uint32_t *desc = &(srng->ring_base_vaddr[srng->u.dst_ring.tp]);
 	uint32_t desc_loop_cnt;
 
 	desc_loop_cnt = (desc[srng->entry_size - 1] & SRNG_LOOP_CNT_MASK)
 		>> SRNG_LOOP_CNT_LSB;
 
 	if (srng->u.dst_ring.loop_cnt == desc_loop_cnt) {
-		srng->u.dst_ring.tp = (srng->u.dst_ring.tp + srng->entry_size) &
-			srng->ring_size_mask;
+		/* TODO: Using % is expensive, but we have to do this since
+		 * size of some SRNG rings is not power of 2 (due to descriptor
+		 * sizes). Need to create separate API for rings used
+		 * per-packet, with sizes power of 2 (TCL2SW, REO2SW,
+		 * SW2RXDMA and CE rings)
+		 */
+		srng->u.dst_ring.tp = (srng->u.dst_ring.tp + srng->entry_size) %
+			srng->ring_size;
+
 		srng->u.dst_ring.loop_cnt = (srng->u.dst_ring.loop_cnt +
 			!srng->u.dst_ring.tp) &
 			(SRNG_LOOP_CNT_MASK >> SRNG_LOOP_CNT_LSB);
@@ -298,8 +305,15 @@ static inline void *hal_srng_src_reap_next(void *hal_soc, void *hal_ring)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring;
 	uint32_t *desc;
-	uint32_t next_reap_hp = (srng->u.src_ring.reap_hp + srng->entry_size) &
-		srng->ring_size_mask;
+
+	/* TODO: Using % is expensive, but we have to do this since
+	 * size of some SRNG rings is not power of 2 (due to descriptor
+	 * sizes). Need to create separate API for rings used
+	 * per-packet, with sizes power of 2 (TCL2SW, REO2SW,
+	 * SW2RXDMA and CE rings)
+	 */
+	uint32_t next_reap_hp = (srng->u.src_ring.reap_hp + srng->entry_size) %
+		srng->ring_size;
 
 	if (next_reap_hp != srng->u.src_ring.cached_tp) {
 		desc = &(srng->ring_base_vaddr[next_reap_hp]);
@@ -327,8 +341,9 @@ static inline void *hal_srng_src_get_next_reaped(void *hal_soc, void *hal_ring)
 
 	if (srng->u.src_ring.hp != srng->u.src_ring.reap_hp) {
 		desc = &(srng->ring_base_vaddr[srng->u.src_ring.hp]);
-		srng->u.src_ring.hp = (srng->u.src_ring.hp + srng->entry_size) &
-			srng->ring_size_mask;
+		srng->u.src_ring.hp = (srng->u.src_ring.hp + srng->entry_size) %
+			srng->ring_size;
+
 		return (void *)desc;
 	}
 
@@ -346,8 +361,14 @@ static inline void *hal_srng_src_get_next_reaped(void *hal_soc, void *hal_ring)
 static inline uint32_t hal_srng_src_done_val(void *hal_soc, void *hal_ring)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring;
-	uint32_t next_reap_hp = (srng->u.src_ring.reap_hp + srng->entry_size) &
-		srng->ring_size_mask;
+	/* TODO: Using % is expensive, but we have to do this since
+	 * size of some SRNG rings is not power of 2 (due to descriptor
+	 * sizes). Need to create separate API for rings used
+	 * per-packet, with sizes power of 2 (TCL2SW, REO2SW,
+	 * SW2RXDMA and CE rings)
+	 */
+	uint32_t next_reap_hp = (srng->u.src_ring.reap_hp + srng->entry_size) %
+		srng->ring_size;
 
 	if (next_reap_hp == srng->u.src_ring.cached_tp)
 		return 0;
@@ -371,8 +392,14 @@ static inline void *hal_srng_src_get_next(void *hal_soc, void *hal_ring)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring;
 	uint32_t *desc;
-	uint32_t next_hp = (srng->u.src_ring.hp + srng->entry_size) &
-		srng->ring_size_mask;
+	/* TODO: Using % is expensive, but we have to do this since
+	 * size of some SRNG rings is not power of 2 (due to descriptor
+	 * sizes). Need to create separate API for rings used
+	 * per-packet, with sizes power of 2 (TCL2SW, REO2SW,
+	 * SW2RXDMA and CE rings)
+	 */
+	uint32_t next_hp = (srng->u.src_ring.hp + srng->entry_size) %
+		srng->ring_size;
 
 	if (next_hp != srng->u.src_ring.cached_tp) {
 		desc = &(srng->ring_base_vaddr[srng->u.src_ring.hp]);
@@ -403,8 +430,14 @@ static inline void *hal_srng_src_peek(void *hal_soc, void *hal_ring)
 	struct hal_srng *srng = (struct hal_srng *)hal_ring;
 	uint32_t *desc;
 
-	if (((srng->u.src_ring.hp + srng->entry_size) &
-		srng->ring_size_mask) != srng->u.src_ring.cached_tp) {
+	/* TODO: Using % is expensive, but we have to do this since
+	 * size of some SRNG rings is not power of 2 (due to descriptor
+	 * sizes). Need to create separate API for rings used
+	 * per-packet, with sizes power of 2 (TCL2SW, REO2SW,
+	 * SW2RXDMA and CE rings)
+	 */
+	if (((srng->u.src_ring.hp + srng->entry_size) %
+		srng->ring_size) != srng->u.src_ring.cached_tp) {
 		desc = &(srng->ring_base_vaddr[srng->u.src_ring.hp]);
 		return (void *)desc;
 	}
