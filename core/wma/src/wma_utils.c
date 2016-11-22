@@ -4569,6 +4569,123 @@ QDF_STATUS wma_send_vdev_stop_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 	return status;
 }
 
+QDF_STATUS wma_get_rcpi_req(WMA_HANDLE handle,
+			    struct sme_rcpi_req *rcpi_request)
+{
+	tp_wma_handle wma_handle = (tp_wma_handle) handle;
+	struct rcpi_req  cmd = {0};
+	struct wma_txrx_node *iface;
+	struct sme_rcpi_req *node_rcpi_req;
+
+	WMA_LOGD("%s: Enter", __func__);
+	iface = &wma_handle->interfaces[rcpi_request->session_id];
+	/* command is in progress */
+	if (iface->rcpi_req != NULL) {
+		WMA_LOGE("%s : previous rcpi request is pending", __func__);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	node_rcpi_req = qdf_mem_malloc(sizeof(*node_rcpi_req));
+	if (!node_rcpi_req) {
+		WMA_LOGE("Failed to allocate memory for rcpi_request");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	*node_rcpi_req = *rcpi_request;
+	iface->rcpi_req = node_rcpi_req;
+
+	cmd.vdev_id = rcpi_request->session_id;
+	qdf_mem_copy(cmd.mac_addr, &rcpi_request->mac_addr, QDF_MAC_ADDR_SIZE);
+
+	switch (rcpi_request->measurement_type) {
+
+	case RCPI_MEASUREMENT_TYPE_AVG_MGMT:
+		cmd.measurement_type = WMI_RCPI_MEASUREMENT_TYPE_AVG_MGMT;
+		break;
+
+	case RCPI_MEASUREMENT_TYPE_AVG_DATA:
+		cmd.measurement_type = WMI_RCPI_MEASUREMENT_TYPE_AVG_DATA;
+		break;
+
+	case RCPI_MEASUREMENT_TYPE_LAST_MGMT:
+		cmd.measurement_type = WMI_RCPI_MEASUREMENT_TYPE_LAST_MGMT;
+		break;
+
+	case RCPI_MEASUREMENT_TYPE_LAST_DATA:
+		cmd.measurement_type = WMI_RCPI_MEASUREMENT_TYPE_LAST_DATA;
+		break;
+
+	default:
+		/*
+		 * invalid rcpi measurement type, fall back to
+		 * RCPI_MEASUREMENT_TYPE_AVG_MGMT
+		 */
+		cmd.measurement_type = WMI_RCPI_MEASUREMENT_TYPE_AVG_MGMT;
+		break;
+	}
+
+	if (wmi_unified_send_request_get_rcpi_cmd(wma_handle->wmi_handle,
+						  &cmd)) {
+		WMA_LOGE("%s: Failed to send WMI_REQUEST_RCPI_CMDID",
+			 __func__);
+		iface->rcpi_req = NULL;
+		qdf_mem_free(node_rcpi_req);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	WMA_LOGD("%s: Exit", __func__);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+int wma_rcpi_event_handler(void *handle, uint8_t *cmd_param_info,
+			    uint32_t len)
+{
+	struct rcpi_res res = {0};
+	struct sme_rcpi_req *rcpi_req;
+	struct qdf_mac_addr qdf_mac;
+	struct wma_txrx_node *iface;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tp_wma_handle wma_handle = (tp_wma_handle)handle;
+
+	status = wmi_extract_rcpi_response_event(wma_handle->wmi_handle,
+						 cmd_param_info, &res);
+	if (status == QDF_STATUS_E_INVAL)
+		return -EINVAL;
+
+	iface = &wma_handle->interfaces[res.vdev_id];
+	if (!iface->rcpi_req) {
+		WMI_LOGE("rcpi_req buffer not available");
+		return 0;
+	}
+
+	rcpi_req = iface->rcpi_req;
+	if (!rcpi_req->rcpi_callback) {
+		iface->rcpi_req = NULL;
+		qdf_mem_free(rcpi_req);
+		return 0;
+	}
+
+	if ((res.measurement_type == RCPI_MEASUREMENT_TYPE_INVALID) ||
+	    (res.vdev_id != rcpi_req->session_id) ||
+	    (res.measurement_type != rcpi_req->measurement_type) ||
+	    (qdf_mem_cmp(res.mac_addr, &rcpi_req->mac_addr,
+			 QDF_MAC_ADDR_SIZE))) {
+		WMI_LOGE("invalid rcpi_response");
+		iface->rcpi_req = NULL;
+		qdf_mem_free(rcpi_req);
+		return 0;
+	}
+
+	qdf_mem_copy(&qdf_mac, res.mac_addr, QDF_MAC_ADDR_SIZE);
+	(rcpi_req->rcpi_callback)(rcpi_req->rcpi_context, qdf_mac,
+				  res.rcpi_value, status);
+	iface->rcpi_req = NULL;
+	qdf_mem_free(rcpi_req);
+
+	return 0;
+}
+
 bool wma_is_service_enabled(WMI_SERVICE service_type)
 {
 	tp_wma_handle wma;

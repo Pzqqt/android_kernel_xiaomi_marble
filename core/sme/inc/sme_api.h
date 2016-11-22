@@ -1603,6 +1603,17 @@ QDF_STATUS sme_set_reorder_timeout(tHalHandle hal,
 QDF_STATUS sme_set_rx_set_blocksize(tHalHandle hal,
 		struct sir_peer_set_rx_blocksize *req);
 
+/**
+ * sme_get_rcpi() - gets the rcpi value for peer mac addr
+ * @hal: handle returned by mac_open
+ * @rcpi: rcpi request containing peer mac addr, callback and related info
+ *
+ * This function posts the rcpi measurement request message to wma queue
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_get_rcpi(tHalHandle hal, struct sme_rcpi_req *rcpi);
+
 /*
  * sme_set_chip_pwr_save_fail_cb() - set chip power save failure callback
  * @hal: global hal handle

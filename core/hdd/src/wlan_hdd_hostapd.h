@@ -147,6 +147,19 @@ int wlan_hdd_cfg80211_change_beacon(struct wiphy *wiphy,
 				    struct net_device *dev,
 				    struct cfg80211_beacon_data *params);
 
+/**
+ * hdd_is_peer_associated - is peer connected to softap
+ * @adapter: pointer to softap adapter
+ * @mac_addr: address to check in peer list
+ *
+ * This function has to be invoked only when bss is started and is used
+ * to check whether station with specified addr is peer or not
+ *
+ * Return: true if peer mac, else false
+ */
+bool hdd_is_peer_associated(struct hdd_adapter *adapter,
+			    struct qdf_mac_addr *mac_addr);
+
 int hdd_destroy_acs_timer(struct hdd_adapter *adapter);
 
 QDF_STATUS wlan_hdd_config_acs(struct hdd_context *hdd_ctx,

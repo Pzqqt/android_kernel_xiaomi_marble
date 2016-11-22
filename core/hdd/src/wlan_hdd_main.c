@@ -1793,6 +1793,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 
 	hdd_ctx->bpf_enabled = (cfg->bpf_enabled &&
 				hdd_ctx->config->bpf_packet_filter_enable);
+	hdd_ctx->rcpi_enabled = cfg->rcpi_enabled;
 	hdd_update_ra_rate_limit(hdd_ctx, cfg);
 
 	if ((hdd_ctx->config->txBFCsnValue >
@@ -3503,6 +3504,10 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 		hdd_err("WMI_PDEV_PARAM_BURST_ENABLE set failed %d", ret_val);
 
 	adapter->dev->features |= NETIF_F_LRO;
+
+	/* rcpi info initialization */
+	qdf_mem_zero(&adapter->rcpi, sizeof(adapter->rcpi));
+
 	return QDF_STATUS_SUCCESS;
 
 error_wmm_init:

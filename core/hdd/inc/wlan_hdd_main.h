@@ -204,6 +204,9 @@
 /* Maximum time(ms) to wait for RSO CMD status event */
 #define WAIT_TIME_RSO_CMD_STATUS 2000
 
+/* rcpi request timeout in milli seconds */
+#define WLAN_WAIT_TIME_RCPI 500
+
 #define MAX_NUMBER_OF_ADAPTERS 4
 
 #define MAX_CFG_STRING_LEN  255
@@ -961,6 +964,16 @@ struct hdd_connect_pm_context {
 #endif
 #endif
 
+/**
+ * struct rcpi_info - rcpi info
+ * @rcpi: computed value in dB
+ * @mac_addr: peer mac addr for which rcpi is computed
+ */
+struct rcpi_info {
+	int32_t rcpi;
+	struct qdf_mac_addr mac_addr;
+};
+
 struct hdd_context;
 
 struct hdd_adapter {
@@ -1204,6 +1217,9 @@ struct hdd_adapter {
 	uint8_t active_ac;
 	uint32_t mon_chan;
 	uint32_t mon_bandwidth;
+
+	/* rcpi information */
+	struct rcpi_info rcpi;
 };
 
 #define WLAN_HDD_GET_STATION_CTX_PTR(adapter) (&(adapter)->sessionCtx.station)
@@ -1681,6 +1697,7 @@ struct hdd_context {
 	uint8_t scan_reject_cnt;
 	bool dfs_cac_offload;
 	bool reg_offload;
+	bool rcpi_enabled;
 #ifdef FEATURE_WLAN_CH_AVOID
 	struct ch_avoid_ind_type coex_avoid_freq_list;
 	struct ch_avoid_ind_type dnbs_avoid_freq_list;

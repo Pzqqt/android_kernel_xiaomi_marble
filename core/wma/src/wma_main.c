@@ -3845,6 +3845,12 @@ QDF_STATUS wma_wmi_service_close(void)
 			wma_handle->interfaces[i].psnr_req = NULL;
 		}
 
+		if (wma_handle->interfaces[i].rcpi_req) {
+			qdf_mem_free(wma_handle->
+				     interfaces[i].rcpi_req);
+			wma_handle->interfaces[i].rcpi_req = NULL;
+		}
+
 		wma_vdev_deinit(&wma_handle->interfaces[i]);
 	}
 
@@ -4840,6 +4846,7 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	tgt_cfg.ap_arpns_support = wma_handle->ap_arpns_support;
 	tgt_cfg.bpf_enabled = wma_handle->bpf_enabled;
 	tgt_cfg.dfs_cac_offload = wma_handle->dfs_cac_offload;
+	tgt_cfg.rcpi_enabled = wma_handle->rcpi_enabled;
 	wma_update_ra_rate_limit(wma_handle, &tgt_cfg);
 	wma_update_hdd_band_cap(wma_handle->phy_capability, &tgt_cfg);
 	tgt_cfg.fine_time_measurement_cap =
@@ -5223,6 +5230,21 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	if (status) {
 		WMA_LOGE("Failed to register WMI_TBTTOFFSET_UPDATE_EVENTID callback");
 		return -EINVAL;
+	}
+
+	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
+				   WMI_SERVICE_RCPI_SUPPORT)) {
+		/* register for rcpi response event */
+		status = wmi_unified_register_event_handler(
+							wma_handle->wmi_handle,
+							WMI_UPDATE_RCPI_EVENTID,
+							wma_rcpi_event_handler,
+							WMA_RX_SERIALIZER_CTX);
+		if (status) {
+			WMA_LOGE("Failed to register RCPI event handler");
+			return -EINVAL;
+		}
+		wma_handle->rcpi_enabled = true;
 	}
 
 	/* mac_id is replaced with pdev_id in converged firmware to have
@@ -7933,6 +7955,11 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		break;
 	case SIR_HAL_POWER_DEBUG_STATS_REQ:
 		wma_process_power_debug_stats_req(wma_handle);
+		break;
+	case WMA_GET_RCPI_REQ:
+		wma_get_rcpi_req(wma_handle,
+				 (struct sme_rcpi_req *)msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_SET_WOW_PULSE_CMD:
 		wma_send_wow_pulse_cmd(wma_handle,

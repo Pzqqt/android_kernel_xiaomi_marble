@@ -15831,6 +15831,43 @@ QDF_STATUS sme_set_dbs_scan_selection_config(tHalHandle hal,
 	return status;
 }
 
+QDF_STATUS sme_get_rcpi(tHalHandle hal, struct sme_rcpi_req *rcpi)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	tpAniSirGlobal pMac = PMAC_STRUCT(hal);
+	struct scheduler_msg msg;
+	struct sme_rcpi_req *rcpi_req;
+
+	rcpi_req = qdf_mem_malloc(sizeof(*rcpi_req));
+	if (rcpi_req == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Not able to allocate memory for rcpi req",
+			  __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	qdf_mem_copy(rcpi_req, rcpi, sizeof(*rcpi_req));
+
+	status = sme_acquire_global_lock(&pMac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		msg.bodyptr = rcpi_req;
+		msg.type = WMA_GET_RCPI_REQ;
+		status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
+		sme_release_global_lock(&pMac->sme);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				  FL("post get rcpi req failed"));
+			status = QDF_STATUS_E_FAILURE;
+			qdf_mem_free(rcpi_req);
+		}
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  FL("sme_acquire_global_lock failed"));
+		qdf_mem_free(rcpi_req);
+	}
+
+	return status;
+}
+
 void sme_store_pdev(tHalHandle hal, struct wlan_objmgr_pdev *pdev)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);

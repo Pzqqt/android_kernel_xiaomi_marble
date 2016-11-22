@@ -6264,6 +6264,9 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 			     sizeof(struct sap_acs_cfg));
 	}
 
+	/* rcpi info initialization */
+	qdf_mem_zero(&adapter->rcpi, sizeof(adapter->rcpi));
+
 	EXIT();
 
 	return status;
@@ -8949,3 +8952,28 @@ void hdd_sap_destroy_events(struct hdd_adapter *adapter)
 	EXIT();
 }
 
+bool hdd_is_peer_associated(struct hdd_adapter *adapter,
+			    struct qdf_mac_addr *mac_addr)
+{
+	uint32_t cnt;
+	struct hdd_station_info *sta_info;
+
+	if (!adapter || !mac_addr) {
+		hdd_err("Invalid adapter or mac_addr");
+		return false;
+	}
+
+	sta_info = adapter->sta_info;
+	spin_lock_bh(&adapter->sta_info_lock);
+	for (cnt = 0; cnt < WLAN_MAX_STA_COUNT; cnt++) {
+		if ((sta_info[cnt].in_use) &&
+		    !qdf_mem_cmp(&(sta_info[cnt].sta_mac), mac_addr,
+		    QDF_MAC_ADDR_SIZE))
+			break;
+	}
+	spin_unlock_bh(&adapter->sta_info_lock);
+	if (cnt != WLAN_MAX_STA_COUNT)
+		return true;
+
+	return false;
+}

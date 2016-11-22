@@ -1232,6 +1232,27 @@ static inline void wma_sta_kickout_event(uint32_t kickout_reason,
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
 /**
+ * wma_get_rcpi_req() - get rcpi request
+ * @handle: wma handle
+ * @rcpi_request: rcpi params
+ *
+ * Return: none
+ */
+QDF_STATUS wma_get_rcpi_req(WMA_HANDLE handle,
+			    struct sme_rcpi_req *rcpi_request);
+
+/**
+ * wma_rcpi_event_handler() - rcpi event handler
+ * @handle: wma handle
+ * @cmd_param_info: data from event
+ * @len: length
+ *
+ * Return: 0 for success or error code
+ */
+int wma_rcpi_event_handler(void *handle, uint8_t *cmd_param_info,
+			   uint32_t len);
+
+/**
  * wma_acquire_wakelock() - acquire the given wakelock
  * @wl: the wakelock to acquire
  * @msec: the wakelock duration in milliseconds

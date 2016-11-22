@@ -300,5 +300,22 @@ void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
  */
 void wlan_hdd_cfg80211_link_layer_stats_ext_callback(tHddHandle ctx,
 						     tSirLLStatsResults *rsp);
+
+/**
+ * wlan_hdd_get_rcpi() - Wrapper to get current RCPI
+ * @adapter: adapter upon which the measurement is requested
+ * @mac: peer addr for which measurement is requested
+ * @rcpi_value: pointer to where the RCPI should be returned
+ * @measurement_type: type of rcpi measurement
+ *
+ * This is a wrapper function for getting RCPI, invoke this function only
+ * when rcpi support is enabled in firmware
+ *
+ * Return: 0 for success, non-zero for failure
+ */
+int wlan_hdd_get_rcpi(struct hdd_adapter *adapter, uint8_t *mac,
+		      int32_t *rcpi_value,
+		      enum rcpi_measurement_type measurement_type);
+
 #endif /* end #if !defined(WLAN_HDD_STATS_H) */
 

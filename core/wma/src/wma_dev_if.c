@@ -4949,6 +4949,14 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, tpDeleteBssParams params)
 		qdf_mem_free(iface->psnr_req);
 		iface->psnr_req = NULL;
 	}
+
+	if (iface->rcpi_req) {
+		struct sme_rcpi_req *rcpi_req = iface->rcpi_req;
+
+		iface->rcpi_req = NULL;
+		qdf_mem_free(rcpi_req);
+	}
+
 	qdf_mem_zero(&iface->ns_offload_req,
 			sizeof(iface->ns_offload_req));
 	qdf_mem_zero(&iface->arp_offload_req,
@@ -5107,6 +5115,13 @@ void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
 	if (iface->psnr_req) {
 		qdf_mem_free(iface->psnr_req);
 		iface->psnr_req = NULL;
+	}
+
+	if (iface->rcpi_req) {
+		struct sme_rcpi_req *rcpi_req = iface->rcpi_req;
+
+		iface->rcpi_req = NULL;
+		qdf_mem_free(rcpi_req);
 	}
 
 	if (wlan_op_mode_ibss == cdp_get_opmode(soc, txrx_vdev))

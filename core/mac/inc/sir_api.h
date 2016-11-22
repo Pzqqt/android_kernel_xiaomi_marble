@@ -7659,6 +7659,24 @@ struct get_arp_stats_params {
 	uint32_t vdev_id;
 };
 
+typedef void (*sme_rcpi_callback)(void *context, struct qdf_mac_addr mac_addr,
+				  int32_t rcpi, QDF_STATUS status);
+/**
+ * struct sme_rcpi_req - structure for querying rcpi info
+ * @session_id: session for which rcpi is required
+ * @measurement_type: type of measurement from enum rcpi_measurement_type
+ * @rcpi_callback: callback function to be invoked for rcpi response
+ * @rcpi_context: context info for rcpi callback
+ * @mac_addr: peer addr for which rcpi is required
+ */
+struct sme_rcpi_req {
+	uint32_t session_id;
+	enum rcpi_measurement_type measurement_type;
+	sme_rcpi_callback rcpi_callback;
+	void *rcpi_context;
+	struct qdf_mac_addr mac_addr;
+};
+
 /*
  * @SCAN_REJECT_DEFAULT: default value
  * @CONNECTION_IN_PROGRESS: connection is in progress
