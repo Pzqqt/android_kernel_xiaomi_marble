@@ -6718,6 +6718,31 @@ QDF_STATUS wmi_unified_send_coex_config_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS wmi_unified_send_request_get_rcpi_cmd(void *wmi_hdl,
+					struct rcpi_req *get_rcpi_param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_get_rcpi_cmd)
+		return wmi_handle->ops->send_get_rcpi_cmd(wmi_handle,
+			   get_rcpi_param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_extract_rcpi_response_event(void *wmi_hdl, void *evt_buf,
+					   struct rcpi_res *res)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+	struct wmi_ops *ops = wmi_handle->ops;
+
+	if (ops->extract_rcpi_response_event)
+		return ops->extract_rcpi_response_event(wmi_handle, evt_buf,
+							res);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 /**
  * wmi_extract_peer_delete_response_event() -
  *       extract vdev id and peer mac addresse from peer delete response event

@@ -19079,6 +19079,105 @@ static QDF_STATUS extract_dfs_radar_detection_event_tlv(
 #endif
 
 /**
+ * send_get_rcpi_cmd_tlv() - send request for rcpi value
+ * @wmi_handle: wmi handle
+ * @get_rcpi_param: rcpi params
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS send_get_rcpi_cmd_tlv(wmi_unified_t wmi_handle,
+					struct rcpi_req  *get_rcpi_param)
+{
+	wmi_buf_t buf;
+	wmi_request_rcpi_cmd_fixed_param *cmd;
+	uint8_t len = sizeof(wmi_request_rcpi_cmd_fixed_param);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: Failed to allocate wmi buffer", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_request_rcpi_cmd_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_request_rcpi_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_request_rcpi_cmd_fixed_param));
+
+	cmd->vdev_id = get_rcpi_param->vdev_id;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(get_rcpi_param->mac_addr,
+				   &cmd->peer_macaddr);
+	cmd->measurement_type = get_rcpi_param->measurement_type;
+	WMI_LOGD("RCPI REQ VDEV_ID:%d-->", cmd->vdev_id);
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_REQUEST_RCPI_CMDID)) {
+
+		WMI_LOGE("%s: Failed to send WMI_REQUEST_RCPI_CMDID",
+			 __func__);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_rcpi_response_event_tlv() - Extract RCPI event params
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @res: pointer to hold rcpi response from firmware
+ *
+ * Return: QDF_STATUS_SUCCESS for successful event parse
+ *         else QDF_STATUS_E_INVAL or QDF_STATUS_E_FAILURE
+ */
+static QDF_STATUS
+extract_rcpi_response_event_tlv(wmi_unified_t wmi_handle,
+				void *evt_buf, struct rcpi_res *res)
+{
+	WMI_UPDATE_RCPI_EVENTID_param_tlvs *param_buf;
+	wmi_update_rcpi_event_fixed_param *event;
+
+	param_buf = (WMI_UPDATE_RCPI_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		WMI_LOGE(FL("Invalid rcpi event"));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	event = param_buf->fixed_param;
+	res->vdev_id = event->vdev_id;
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&event->peer_macaddr, res->mac_addr);
+
+	switch (event->measurement_type) {
+
+	case WMI_RCPI_MEASUREMENT_TYPE_AVG_MGMT:
+		res->measurement_type = RCPI_MEASUREMENT_TYPE_AVG_MGMT;
+		break;
+
+	case WMI_RCPI_MEASUREMENT_TYPE_AVG_DATA:
+		res->measurement_type = RCPI_MEASUREMENT_TYPE_AVG_DATA;
+		break;
+
+	case WMI_RCPI_MEASUREMENT_TYPE_LAST_MGMT:
+		res->measurement_type = RCPI_MEASUREMENT_TYPE_LAST_MGMT;
+		break;
+
+	case WMI_RCPI_MEASUREMENT_TYPE_LAST_DATA:
+		res->measurement_type = RCPI_MEASUREMENT_TYPE_LAST_DATA;
+		break;
+
+	default:
+		WMI_LOGE(FL("Invalid rcpi measurement type from firmware"));
+		res->measurement_type = RCPI_MEASUREMENT_TYPE_INVALID;
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (event->status)
+		return QDF_STATUS_E_FAILURE;
+	else
+		return QDF_STATUS_SUCCESS;
+}
+
+/**
  * convert_host_pdev_id_to_target_pdev_id_legacy() - Convert pdev_id from
  *           host to target defines. For legacy there is not conversion
  *           required. Just return pdev_id as it is.
@@ -19825,6 +19924,8 @@ struct wmi_ops tlv_ops =  {
 		extract_chainmask_tables_tlv,
 	.extract_thermal_stats = extract_thermal_stats_tlv,
 	.extract_thermal_level_stats = extract_thermal_level_stats_tlv,
+	.send_get_rcpi_cmd = send_get_rcpi_cmd_tlv,
+	.extract_rcpi_response_event = extract_rcpi_response_event_tlv,
 #ifdef DFS_COMPONENT_ENABLE
 	.extract_dfs_cac_complete_event = extract_dfs_cac_complete_event_tlv,
 	.extract_dfs_radar_detection_event =
@@ -20084,6 +20185,7 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_get_arp_stats_req_id] = WMI_VDEV_GET_ARP_STAT_EVENTID;
 	event_ids[wmi_service_available_event_id] =
 						WMI_SERVICE_AVAILABLE_EVENTID;
+	event_ids[wmi_update_rcpi_event_id] = WMI_UPDATE_RCPI_EVENTID;
 }
 
 #ifndef CONFIG_MCL
