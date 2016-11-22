@@ -117,7 +117,7 @@ end:
 	return;
 }
 
-void epping_tx_queue_timeout(struct net_device *dev)
+static void epping_tx_queue_timeout(struct net_device *dev)
 {
 	epping_adapter_t *pAdapter;
 
@@ -144,7 +144,7 @@ end:
 
 }
 
-int epping_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
+static int epping_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 {
 	epping_adapter_t *pAdapter;
 	int ret = 0;
@@ -161,7 +161,7 @@ end:
 	return ret;
 }
 
-struct net_device_stats *epping_get_stats(struct net_device *dev)
+static struct net_device_stats *epping_get_stats(struct net_device *dev)
 {
 	epping_adapter_t *pAdapter = netdev_priv(dev);
 
@@ -174,7 +174,7 @@ struct net_device_stats *epping_get_stats(struct net_device *dev)
 	return &pAdapter->stats;
 }
 
-int epping_ndev_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
+static int epping_ndev_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 {
 	epping_adapter_t *pAdapter;
 	int ret = 0;
