@@ -7883,7 +7883,7 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx)
 
 	ol_cds_free();
 
-	if (!cds_is_driver_recovering()) {
+	if (!cds_is_driver_recovering() && !cds_is_driver_unloading()) {
 		ret = pld_power_off(qdf_ctx->dev);
 		if (ret)
 			hdd_err("CNSS power down failed put device into Low power mode:%d",
