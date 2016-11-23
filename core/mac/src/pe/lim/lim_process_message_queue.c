@@ -1138,7 +1138,7 @@ end:
  * @param  pMac      Pointer to Global MAC structure
  * @return QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE
  */
-QDF_STATUS lim_send_stop_scan_offload_req(tpAniSirGlobal pMac,
+static QDF_STATUS lim_send_stop_scan_offload_req(tpAniSirGlobal pMac,
 	uint8_t SessionId, uint32_t scan_id, uint32_t scan_requestor_id)
 {
 	tSirMsgQ msg;
