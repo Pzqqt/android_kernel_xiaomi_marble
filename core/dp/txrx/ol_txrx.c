@@ -4858,6 +4858,15 @@ void ol_deregister_lro_flush_cb(void (lro_deinit_cb)(void *))
 }
 #endif /* FEATURE_LRO */
 
+void
+ol_txrx_dump_pkt(qdf_nbuf_t nbuf, uint32_t nbuf_paddr, int len)
+{
+	qdf_print("%s: Pkt: VA 0x%p PA 0x%llx len %d\n", __func__,
+		  qdf_nbuf_data(nbuf), (unsigned long long int)nbuf_paddr, len);
+	print_hex_dump(KERN_DEBUG, "Pkt:   ", DUMP_PREFIX_ADDRESS, 16, 4,
+		       qdf_nbuf_data(nbuf), len, true);
+}
+
 /**
  * ol_txrx_get_vdev_from_vdev_id() - get vdev from vdev_id
  * @vdev_id: vdev_id

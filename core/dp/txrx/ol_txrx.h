@@ -122,6 +122,18 @@ ol_txrx_update_last_real_peer(void *ppdev, void *ppeer,
 }
 #endif
 
+/**
+ * ol_txrx_dump_pkt() - display the data in buffer and buffer's address
+ * @nbuf: buffer which contains data to be displayed
+ * @nbuf_paddr: physical address of the buffer
+ * @len: defines the size of the data to be displayed
+ *
+ * Return: None
+ */
+void
+ol_txrx_dump_pkt(qdf_nbuf_t nbuf, uint32_t nbuf_paddr, int len);
+
+
 void *ol_txrx_get_vdev_from_vdev_id(uint8_t vdev_id);
 
 void htt_pkt_log_init(void *handle, void *scn);

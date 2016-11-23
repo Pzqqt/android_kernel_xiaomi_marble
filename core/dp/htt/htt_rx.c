@@ -1974,9 +1974,6 @@ void htt_rx_mon_note_capture_channel(htt_pdev_handle pdev, int mon_ch)
 	ch_info->ch_freq = cds_chan_to_freq(mon_ch);
 }
 
-extern void
-dump_pkt(qdf_nbuf_t nbuf, uint32_t nbuf_paddr, int len);
-
 uint32_t htt_rx_amsdu_rx_in_order_get_pktlog(qdf_nbuf_t rx_ind_msg)
 {
 	uint32_t *msg_word;
@@ -2079,7 +2076,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 				    HTT_RX_IN_ORD_PADDR_IND_MSDU_LEN_GET(
 					    *(msg_word + NEXT_FIELD_OFFSET_IN32))));
 #if defined(HELIUMPLUS_DEBUG)
-		dump_pkt(msdu, 0, 64);
+		ol_txrx_dump_pkt(msdu, 0, 64);
 #endif
 		*((uint8_t *) &rx_desc->fw_desc.u.val) =
 			HTT_RX_IN_ORD_PADDR_IND_FW_DESC_GET(*(msg_word + NEXT_FIELD_OFFSET_IN32));

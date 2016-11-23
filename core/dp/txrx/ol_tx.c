@@ -464,7 +464,7 @@ ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
 			qdf_print("%s:%d: htt_fdesc=%p frag=%d frag_paddr=0x%0llx len=%zu",
 				  __func__, __LINE__, tx_desc->htt_frag_desc,
 				  i-1, frag_paddr, frag_len);
-			dump_pkt(netbuf, frag_paddr, 64);
+			ol_txrx_dump_pkt(netbuf, frag_paddr, 64);
 #endif /* HELIUMPLUS_DEBUG */
 #else /* ! defined(HELIUMPLUSPADDR64) */
 			htt_tx_desc_frag(pdev->htt_pdev, tx_desc->htt_tx_desc,
