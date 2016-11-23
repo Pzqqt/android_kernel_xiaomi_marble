@@ -535,6 +535,7 @@ static struct CE_pipe_config target_ce_config_wlan_qca8074[] = {
 	{ /* CE11 */ 11, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
 };
 
+#define QCA_6290_CE_COUNT 9
 static struct CE_attr host_ce_config_wlan_qca6290[] = {
 	/* host->target HTC control and raw streams */
 	{ /* CE0 */ CE_ATTR_FLAGS, 0, 16, 2048, 0, NULL,},
@@ -555,14 +556,9 @@ static struct CE_attr host_ce_config_wlan_qca6290[] = {
 	/* ce_diag, the Diagnostic Window */
 	{ /* CE7 */ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,
 		2, DIAG_TRANSFER_LIMIT, 2, NULL,},
-	/* Target to uMC */
+	/* Reserved for target */
 	{ /* CE8 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
-	/* target->host HTT */
-	{ /* CE9 */ CE_ATTR_FLAGS, 0, 0,  2048, 512, NULL,},
-	/* target->host HTT */
-	{ /* CE10 */ CE_ATTR_FLAGS, 0, 0,  2048, 512, NULL,},
-	/* target -> host PKTLOG */
-	{ /* CE11 */ CE_ATTR_FLAGS, 0, 0, 2048, 512, NULL,},
+	/* CE 9, 10, 11 belong to CoreBsp & MHI driver */
 };
 
 static struct CE_pipe_config target_ce_config_wlan_qca6290[] = {
@@ -586,14 +582,8 @@ static struct CE_pipe_config target_ce_config_wlan_qca6290[] = {
 	/* CE7 used only by Host */
 	{ /* CE7 */ 7, PIPEDIR_INOUT_H2H, 0, 0,
 		(CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,},
-	/* CE8 used only by IPA */
-	{ /* CE8 */ 8, PIPEDIR_IN, 32, 2048, CE_ATTR_FLAGS, 0,},
-	/* CE9 target->host HTT */
-	{ /* CE9 */ 9, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
-	/* CE10 target->host HTT */
-	{ /* CE10 */ 10, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
-	/* Target -> host PKTLOG */
-	{ /* CE11 */ 11, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
+	/* Reserved for target */
+	{ /* CE8 */ 8, PIPEDIR_INOUT, 32, 16384, CE_ATTR_FLAGS, 0,},
+	/* CE 9, 10, 11 belong to CoreBsp & MHI driver */
 };
-;
 #endif /* __HIF_PCI_INTERNAL_H__ */

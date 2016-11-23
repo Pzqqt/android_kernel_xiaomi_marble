@@ -2021,6 +2021,7 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 
+	scn->ce_count = HOST_CE_COUNT;
 	/* if epping is enabled we need to use the epping configuration. */
 	if (QDF_IS_EPPING_ENABLED(mode)) {
 		if (CE_EPPING_USES_IRQ)
@@ -2094,6 +2095,7 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 		hif_state->target_ce_config = target_ce_config_wlan_qca6290;
 		hif_state->target_ce_config_sz =
 					sizeof(target_ce_config_wlan_qca6290);
+		scn->ce_count = QCA_6290_CE_COUNT;
 		break;
 	}
 }
@@ -2226,8 +2228,7 @@ int hif_config_ce(struct hif_softc *scn)
 	hif_config_rri_on_ddr(scn);
 
 	hif_state->ce_services = ce_services_attach(scn);
-	/* During CE initializtion */
-	scn->ce_count = HOST_CE_COUNT;
+
 	for (pipe_num = 0; pipe_num < scn->ce_count; pipe_num++) {
 		struct CE_attr *attr;
 		pipe_info = &hif_state->pipe_info[pipe_num];
