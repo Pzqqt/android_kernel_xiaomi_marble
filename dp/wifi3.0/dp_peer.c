@@ -582,6 +582,19 @@ int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 		soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup(soc->osif_soc,
 			peer->vdev->vdev_id, peer->mac_addr.raw,
 			rx_tid->hw_qdesc_paddr, tid, tid);
+
+		if (tid == DP_NON_QOS_TID) {
+			/* TODO: Setting up default queue - currently using
+			 * same queue for BE and non-qos traffic till BA
+			 * session is setup. Check if there are any HW
+			 * restrictions and also if this can be done for
+			 * all other TIDs
+			 */
+			soc->cdp_soc.ol_ops->
+				peer_rx_reorder_queue_setup(soc->osif_soc,
+					peer->vdev->vdev_id, peer->mac_addr.raw,
+					rx_tid->hw_qdesc_paddr, 0, tid);
+		}
 	}
 	return 0;
 }
