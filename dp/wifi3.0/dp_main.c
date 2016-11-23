@@ -30,6 +30,7 @@
 #include "dp_rx.h"
 #include "../../wlan_cfg/wlan_cfg.h"
 
+#define DP_INTR_POLL_TIMER_MS	100
 /**
  * dp_setup_srng - Internal function to setup SRNG rings used by data path
  */
@@ -236,7 +237,8 @@ void dp_soc_interrupt_detach(void *txrx_soc)
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 
 	qdf_timer_stop(&soc->int_timer);
-	qdf_timer_detach(&soc->int_timer);
+
+	/* TODO -- call timer detach? */
 }
 #else
 /*

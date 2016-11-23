@@ -32,6 +32,7 @@
 #endif
 
 #include <hal_tx.h>
+
 #define MAX_PDEV_CNT 3
 #define MAX_LINK_DESC_BANKS 8
 #define MAX_TXDESC_POOLS 4
@@ -424,6 +425,11 @@ struct dp_soc {
 
 	/* Enable processing of Tx completion status words */
 	bool process_tx_status;
+
+#ifdef DP_INTR_POLL_BASED
+	/*interrupt timer*/
+	qdf_timer_t int_timer;
+#endif
 };
 
 
