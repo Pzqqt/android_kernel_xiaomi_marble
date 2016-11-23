@@ -2032,14 +2032,11 @@ int hif_pci_bus_configure(struct hif_softc *hif_sc)
 			       QDF_TIMER_TYPE_WAKE_APPS);
 	hif_state->sleep_timer_init = true;
 
-	if (ADRASTEA_BU) {
-		status = hif_wlan_enable(hif_sc);
-
-		if (status) {
-			HIF_ERROR("%s: hif_wlan_enable error = %d",
-					__func__, status);
-			goto timer_free;
-		}
+	status = hif_wlan_enable(hif_sc);
+	if (status) {
+		HIF_ERROR("%s: hif_wlan_enable error = %d",
+			  __func__, status);
+		goto timer_free;
 	}
 
 	A_TARGET_ACCESS_LIKELY(hif_sc);
@@ -2104,8 +2101,7 @@ unconfig_ce:
 	hif_unconfig_ce(hif_sc);
 disable_wlan:
 	A_TARGET_ACCESS_UNLIKELY(hif_sc);
-	if (ADRASTEA_BU)
-		hif_wlan_disable(hif_sc);
+	hif_wlan_disable(hif_sc);
 
 timer_free:
 	qdf_timer_stop(&hif_state->sleep_timer);
