@@ -2865,43 +2865,16 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 						GFP_KERNEL,
 						connect_timeout);
 			} else {
-				if (pRoamInfo) {
-					eCsrAuthType authType =
-						pWextState->roamProfile.AuthType.
-						authType[0];
-					eCsrEncryptionType encryption_type =
-						pWextState->roamProfile.
-						EncryptionType.encryptionType[0];
-					bool isWep =
-						(((authType ==
-						eCSR_AUTH_TYPE_OPEN_SYSTEM) ||
-						(authType ==
-						eCSR_AUTH_TYPE_SHARED_KEY)) &&
-						((encryption_type ==
-						eCSR_ENCRYPT_TYPE_WEP40) ||
-						(encryption_type ==
-						eCSR_ENCRYPT_TYPE_WEP104) ||
-						(encryption_type ==
-						eCSR_ENCRYPT_TYPE_WEP40_STATICKEY) ||
-						(encryption_type ==
-						eCSR_ENCRYPT_TYPE_WEP104_STATICKEY)));
-					/*
-					 * In case of OPEN-WEP or SHARED-WEP
-					 * authentication, send exact protocol
-					 * reason code. This enables user
-					 * applications to reconnect the station
-					 * with correct configuration.
-					 */
+				if (pRoamInfo)
 					hdd_connect_result(dev,
 						pRoamInfo->bssid.bytes,
 						NULL, NULL, 0, NULL, 0,
-						(isWep &&
-						 pRoamInfo->reasonCode) ?
+						pRoamInfo->reasonCode ?
 						pRoamInfo->reasonCode :
 						WLAN_STATUS_UNSPECIFIED_FAILURE,
 						GFP_KERNEL,
 						connect_timeout);
-				} else
+				else
 					hdd_connect_result(dev,
 						pWextState->req_bssId.bytes,
 						NULL, NULL, 0, NULL, 0,
