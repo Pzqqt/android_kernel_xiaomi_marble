@@ -185,7 +185,7 @@ enum tdls_peer_capability {
 #define TID_AC_VI                  4
 #define TID_AC_BK                  1
 
-const uint8_t *lim_trace_tdls_action_string(uint8_t tdlsActionCode)
+static const uint8_t *lim_trace_tdls_action_string(uint8_t tdlsActionCode)
 {
 	switch (tdlsActionCode) {
 		CASE_RETURN_STRING(SIR_MAC_TDLS_SETUP_REQ);
@@ -509,8 +509,8 @@ static uint32_t lim_prepare_tdls_frame_header(tpAniSirGlobal pMac, uint8_t *pFra
  *
  * return: success: eHAL_STATUS_SUCCESS failure: eHAL_STATUS_FAILURE
  */
-QDF_STATUS lim_mgmt_tdls_tx_complete(tpAniSirGlobal mac_ctx,
-				     uint32_t tx_complete)
+static QDF_STATUS lim_mgmt_tdls_tx_complete(tpAniSirGlobal mac_ctx,
+					    uint32_t tx_complete)
 {
 	tpPESession session_entry = NULL;
 
@@ -536,10 +536,10 @@ QDF_STATUS lim_mgmt_tdls_tx_complete(tpAniSirGlobal mac_ctx,
  * This function can be used for bacst or unicast discovery request
  * We are not differentiating it here, it will all depnds on peer MAC address,
  */
-tSirRetStatus lim_send_tdls_dis_req_frame(tpAniSirGlobal pMac,
-					  struct qdf_mac_addr peer_mac,
-					  uint8_t dialog,
-					  tpPESession psessionEntry)
+static tSirRetStatus lim_send_tdls_dis_req_frame(tpAniSirGlobal pMac,
+						 struct qdf_mac_addr peer_mac,
+						 uint8_t dialog,
+						 tpPESession psessionEntry)
 {
 	tDot11fTDLSDisReq tdlsDisReq;
 	uint32_t status = 0;
@@ -1157,6 +1157,7 @@ void lim_set_tdls_flags(roam_offload_synch_ind *roam_sync_ind_ptr,
 /*
  * TDLS setup Request frame on AP link
  */
+static
 tSirRetStatus lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
 						 struct qdf_mac_addr peer_mac,
 						 uint8_t dialog,
@@ -1436,7 +1437,7 @@ tSirRetStatus lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
 /*
  * Send TDLS Teardown frame on Direct link or AP link, depends on reason code.
  */
-
+static
 tSirRetStatus lim_send_tdls_teardown_frame(tpAniSirGlobal pMac,
 					   struct qdf_mac_addr peer_mac,
 					   uint16_t reason,
@@ -1923,7 +1924,7 @@ static tSirRetStatus lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
 /*
  * Send TDLS setup CNF frame on AP link
  */
-
+static
 tSirRetStatus lim_send_tdls_link_setup_cnf_frame(tpAniSirGlobal pMac,
 						 struct qdf_mac_addr peer_mac,
 						 uint8_t dialog,
@@ -2279,7 +2280,7 @@ static tSirRetStatus lim_tdls_populate_dot11f_ht_caps(tpAniSirGlobal pMac,
 
 }
 
-tSirRetStatus
+static tSirRetStatus
 lim_tdls_populate_dot11f_vht_caps(tpAniSirGlobal pMac,
 				  tSirTdlsAddStaReq *pTdlsAddStaReq,
 				  tDot11fIEVHTCaps *pDot11f)
