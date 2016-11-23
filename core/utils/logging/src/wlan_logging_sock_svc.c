@@ -740,7 +740,7 @@ void wlan_report_log_completion(uint32_t is_fatal,
  *
  * Return: None
  */
-void send_flush_completion_to_user(void)
+static void send_flush_completion_to_user(void)
 {
 	uint32_t is_fatal, indicator, reason_code;
 	bool recovery_needed;

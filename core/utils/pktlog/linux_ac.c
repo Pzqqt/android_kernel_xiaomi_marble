@@ -193,7 +193,7 @@ void pktlog_release_buf(struct hif_opaque_softc *scn)
 	pl_info->buf = NULL;
 }
 
-void pktlog_cleanup(struct ath_pktlog_info *pl_info)
+static void pktlog_cleanup(struct ath_pktlog_info *pl_info)
 {
 	pl_info->log_state = 0;
 	PKTLOG_LOCK_DESTROY(pl_info);
@@ -840,7 +840,7 @@ static void pktlog_vclose(struct vm_area_struct *vma)
 	PKTLOG_MOD_DEC_USE_COUNT;
 }
 
-int pktlog_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
+static int pktlog_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 {
 	unsigned long address = (unsigned long)vmf->virtual_address;
 

@@ -559,6 +559,7 @@ void pktlog_process_fw_msg(uint32_t *buff)
 
 }
 
+#if defined(QCA_WIFI_3_0_ADRASTEA)
 /**
  * pktlog_t2h_msg_handler() - Target to host message handler
  * @context: pdev context
@@ -566,7 +567,7 @@ void pktlog_process_fw_msg(uint32_t *buff)
  *
  * Return: None
  */
-void pktlog_t2h_msg_handler(void *context, HTC_PACKET *pkt)
+static void pktlog_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 {
 	struct ol_pktlog_dev_t *pdev = (struct ol_pktlog_dev_t *)context;
 	qdf_nbuf_t pktlog_t2h_msg = (qdf_nbuf_t) pkt->pPktContext;
@@ -595,7 +596,7 @@ void pktlog_t2h_msg_handler(void *context, HTC_PACKET *pkt)
  *
  * Return: None
  */
-void pktlog_tx_resume_handler(void *context)
+static void pktlog_tx_resume_handler(void *context)
 {
 	qdf_print("%s: Not expected", __func__);
 	qdf_assert(0);
@@ -608,7 +609,7 @@ void pktlog_tx_resume_handler(void *context)
  *
  * Return: None
  */
-void pktlog_h2t_send_complete(void *context, HTC_PACKET *htc_pkt)
+static void pktlog_h2t_send_complete(void *context, HTC_PACKET *htc_pkt)
 {
 	qdf_print("%s: Not expected", __func__);
 	qdf_assert(0);
@@ -621,7 +622,7 @@ void pktlog_h2t_send_complete(void *context, HTC_PACKET *htc_pkt)
  *
  * Return: HTC action
  */
-HTC_SEND_FULL_ACTION pktlog_h2t_full(void *context, HTC_PACKET *pkt)
+static HTC_SEND_FULL_ACTION pktlog_h2t_full(void *context, HTC_PACKET *pkt)
 {
 	return HTC_SEND_FULL_KEEP;
 }
@@ -632,7 +633,7 @@ HTC_SEND_FULL_ACTION pktlog_h2t_full(void *context, HTC_PACKET *pkt)
  *
  * Return: 0 for success/failure
  */
-int pktlog_htc_connect_service(struct ol_pktlog_dev_t *pdev)
+static int pktlog_htc_connect_service(struct ol_pktlog_dev_t *pdev)
 {
 	HTC_SERVICE_CONNECT_REQ connect;
 	HTC_SERVICE_CONNECT_RESP response;
@@ -680,7 +681,6 @@ int pktlog_htc_connect_service(struct ol_pktlog_dev_t *pdev)
 	return 0;               /* success */
 }
 
-#if defined(QCA_WIFI_3_0_ADRASTEA)
 /**
  * pktlog_htc_attach() - attach pktlog HTC service
  *

@@ -253,7 +253,7 @@ static void process_ieee_hdr(void *data)
  *
  * Return: none
  */
-void
+static void
 fill_ieee80211_hdr_data(struct ol_txrx_pdev_t *txrx_pdev,
 	struct ath_pktlog_msdu_info *pl_msdu_info, void *data)
 {
