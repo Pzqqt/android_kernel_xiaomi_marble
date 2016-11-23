@@ -717,6 +717,16 @@ QDF_OBJS := 	$(QDF_OBJ_DIR)/qdf_defer.o \
 		$(QDF_OBJ_DIR)/qdf_threads.o \
 		$(QDF_OBJ_DIR)/qdf_trace.o
 
+############ UMAC_DISP ############
+UMAC_DISP_DIR := umac/global_umac_dispatcher/lmac_if
+UMAC_DISP_INC_DIR := $(UMAC_DISP_DIR)/inc
+UMAC_DISP_SRC_DIR := $(UMAC_DISP_DIR)/src
+UMAC_DISP_OBJ_DIR := $(WLAN_COMMON_ROOT)/$(UMAC_DISP_SRC_DIR)
+
+UMAC_DISP_INC := -I$(WLAN_COMMON_INC)/$(UMAC_DISP_INC_DIR)
+
+UMAC_DISP_OBJS := $(UMAC_DISP_OBJ_DIR)/wlan_lmac_if.o
+
 ############ CDS (Connectivity driver services) ############
 CDS_DIR :=	core/cds
 CDS_INC_DIR :=	$(CDS_DIR)/inc
@@ -1096,6 +1106,10 @@ ifeq ($(BUILD_DIAG_VERSION), 1)
 INCS +=		$(HOST_DIAG_LOG_INC)
 endif
 
+ifeq ($(CONFIG_WLAN_CONVERGED_INTERFACE), y)
+INCS +=		$(UMAC_DISP_INC)
+endif
+
 OBJS :=		$(HDD_OBJS) \
 		$(EPPING_OBJS) \
 		$(MAC_OBJS) \
@@ -1132,6 +1146,10 @@ endif
 
 ifeq ($(BUILD_DIAG_VERSION), 1)
 OBJS +=		$(HOST_DIAG_LOG_OBJS)
+endif
+
+ifeq ($(CONFIG_WLAN_CONVERGED_INTERFACE), y)
+OBJS +=		$(UMAC_DISP_OBJS)
 endif
 
 OBJS +=		$(DP_OBJS) \
@@ -1405,6 +1423,10 @@ endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
 CDEFINES += -DWLAN_FEATURE_DSRC
+endif
+
+ifeq ($(CONFIG_WLAN_CONVERGED_INTERFACE), y)
+CDEFINES += -DWLAN_CONVERGED_INTERFACE
 endif
 
 #Enable USB specific APIS

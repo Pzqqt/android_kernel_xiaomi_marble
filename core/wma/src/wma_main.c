@@ -80,6 +80,11 @@
 #include "cdp_txrx_misc.h"
 #include "wma_nan_datapath.h"
 
+#ifdef WLAN_CONVERGED_INTERFACE
+#include "wlan_lmac_if_def.h"
+#include "wlan_lmac_if_api.h"
+#endif
+
 #define WMA_LOG_COMPLETION_TIMER 10000 /* 10 seconds */
 
 #define WMI_TLV_HEADROOM 128
@@ -1844,6 +1849,75 @@ static void wma_register_debug_callback(void)
 	qdf_register_debug_callback(QDF_MODULE_ID_WMA, &wma_state_info_dump);
 }
 
+#ifdef WLAN_CONVERGED_INTERFACE
+/**
+ * wma_register_tx_ops_handler() - register tx_ops of southbound
+ * @tx_ops:  tx_ops pointer in southbound
+ *
+ * Return: 0 on success, errno on failure
+ */
+static QDF_STATUS
+wma_register_tx_ops_handler(struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	/*
+	 * Assign tx_ops, it's up to UMAC modules to declare and define these
+	 * functions which are used to send wmi command to target.
+	 */
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wma_target_if_open() - Attach UMAC modules' interface with wmi layer
+ * @wma_handle: wma handle
+ *
+ * Separate module defines below functions:
+ * 1. tgt_wmi_<module>_<action> api sends wmi command, assigned to south bound
+ *    tx_ops function pointers;
+ * 2. module's south dispatcher handles information from lower layer, assigned
+ *    to south bound rx_ops function pointers;
+ * 3. wmi event handler deals with wmi event, extracts umac needed information,
+ *    and call rx_ops(module's dispatcher). It executes in tasklet context and
+ *    is up to dispatcher to decide the context to reside in tasklet or in
+ *    thread context.
+ *
+ * Return: None
+ */
+static void wma_target_if_open(tp_wma_handle wma_handle)
+{
+	struct wlan_objmgr_psoc *psoc = cds_get_psoc_by_id(0);
+
+	if (!psoc)
+		return;
+
+	wlan_lmac_if_assign_tx_registration_cb(WLAN_DEV_OL,
+					       wma_register_tx_ops_handler);
+
+	wlan_lmac_if_open(psoc);
+
+	/* Register WMI event handler */
+}
+
+/**
+ * wma_target_if_close() - Detach UMAC modules' interface with wmi layer
+ * @wma_handle: wma handle
+ *
+ * Return: None
+ */
+static void wma_target_if_close(tp_wma_handle wma_handle)
+{
+	struct wlan_objmgr_psoc *psoc = cds_get_psoc_by_id(0);
+
+	if (!psoc)
+		return;
+
+	wlan_lmac_if_close(psoc);
+}
+#else
+static void wma_target_if_open(tp_wma_handle wma_handle) {};
+static void wma_target_if_close(tp_wma_handle wma_handle) {};
+#endif
+
 /**
  * wma_open() - Allocate wma context and initialize it.
  * @cds_context:  cds context
@@ -2289,6 +2363,8 @@ QDF_STATUS wma_open(void *cds_context,
 				wma_encrypt_decrypt_msg_handler,
 				WMA_RX_SERIALIZER_CTX);
 	wma_ndp_register_all_event_handlers(wma_handle);
+	wma_target_if_open(wma_handle);
+
 	wma_register_debug_callback();
 
 	return QDF_STATUS_SUCCESS;
@@ -3497,6 +3573,8 @@ QDF_STATUS wma_close(void *cds_ctx)
 				   WMI_SERVICE_MGMT_TX_WMI)) {
 		wmi_desc_pool_deinit(wma_handle);
 	}
+
+	wma_target_if_close(wma_handle);
 
 	WMA_LOGD("%s: Exit", __func__);
 	return QDF_STATUS_SUCCESS;

@@ -132,4 +132,8 @@ config WLAN_FEATURE_DISA
 	bool "Enable DISA certification feature"
 	default n
 
+config WLAN_CONVERGED_INTERFACE
+	bool "Enable WLAN UMAC converged interface"
+	default n
+
 endif # QCA_CLD_WLAN
