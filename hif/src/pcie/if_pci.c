@@ -3551,7 +3551,27 @@ irqreturn_t hif_ce_interrupt_handler(int irq, void *context)
 }
 extern const char *ce_name[];
 
-static int hif_ce_srng_msi_request_irq(struct hif_softc *scn)
+/* hif_srng_msi_irq_disable() - disable the irq for msi
+ * @hif_sc: hif context
+ * @ce_id: which ce to disable copy complete interrupts for
+ *
+ * since MSI interrupts are not level based, the system can function
+ * without disabling these interrupts.  Interrupt mitigation can be
+ * added here for better system performance.
+ */
+static void hif_ce_srng_msi_irq_disable(struct hif_softc *hif_sc, int ce_id)
+{}
+
+static void hif_ce_srng_msi_irq_enable(struct hif_softc *hif_sc, int ce_id)
+{}
+
+static void hif_ce_legacy_msi_irq_disable(struct hif_softc *hif_sc, int ce_id)
+{}
+
+static void hif_ce_legacy_msi_irq_enable(struct hif_softc *hif_sc, int ce_id)
+{}
+
+static int hif_ce_msi_configure_irq(struct hif_softc *scn)
 {
 	int ret;
 	int ce_id, irq;
@@ -3586,6 +3606,20 @@ static int hif_ce_srng_msi_request_irq(struct hif_softc *scn)
 			goto free_irq;
 	}
 
+	if (ce_srng_based(scn)) {
+		scn->bus_ops.hif_irq_disable =
+			&hif_ce_srng_msi_irq_disable;
+		scn->bus_ops.hif_irq_enable =
+			&hif_ce_srng_msi_irq_enable;
+	} else {
+		scn->bus_ops.hif_irq_disable =
+			&hif_ce_legacy_msi_irq_disable;
+		scn->bus_ops.hif_irq_enable =
+			&hif_ce_legacy_msi_irq_enable;
+	}
+
+
+
 	return ret;
 
 free_irq:
@@ -3600,6 +3634,7 @@ free_irq:
 	}
 	return ret;
 }
+
 
 /**
  * hif_configure_irq() - configure interrupt
@@ -3620,7 +3655,7 @@ int hif_configure_irq(struct hif_softc *scn)
 
 	hif_init_reschedule_tasklet_work(sc);
 
-	ret = hif_ce_srng_msi_request_irq(scn);
+	ret = hif_ce_msi_configure_irq(scn);
 	if (ret == 0) {
 		goto end;
 	}
