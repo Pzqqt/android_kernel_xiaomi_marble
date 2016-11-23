@@ -402,7 +402,12 @@ QDF_STATUS cds_open(void)
 	bmi_target_ready(scn, gp_cds_context->cfg_ctx);
 	/* Now proceed to open the MAC */
 
-	if (TARGET_TYPE_QCA8074 == pHddCtx->target_type)
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
+		"%s: target_type %d 8074:%d 6290:%d",
+		__func__, pHddCtx->target_type,
+		TARGET_TYPE_QCA8074, TARGET_TYPE_QCA6290);
+
+	if (TARGET_TYPE_QCA6290 == pHddCtx->target_type)
 		gp_cds_context->dp_soc = cdp_soc_attach(LITHIUM_DP,
 			gp_cds_context->pHIFContext, scn,
 			gp_cds_context->htc_ctx, gp_cds_context->qdf_ctx,
