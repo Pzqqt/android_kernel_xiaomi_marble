@@ -1479,10 +1479,6 @@ ifeq ($(CONFIG_SMP),y)
 CDEFINES += -DQCA_CONFIG_SMP
 endif
 
-ifeq ($(CONFIG_WLAN_FEATURE_RX_WAKELOCK), y)
-CDEFINES += -DWLAN_FEATURE_HOLD_RX_WAKELOCK
-endif
-
 #Enable Channel Matrix restriction for all Rome only targets
 ifneq (y,$(filter y,$(CONFIG_CNSS_EOS) $(CONFIG_ICNSS)))
 CDEFINES += -DWLAN_ENABLE_CHNL_MATRIX_RESTRICTION

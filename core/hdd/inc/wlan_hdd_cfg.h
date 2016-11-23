@@ -3597,6 +3597,29 @@ enum dot11p_mode {
 #define CFG_CRASH_FW_TIMEOUT_ENABLE     (1)
 #define CFG_CRASH_FW_TIMEOUT_DEFAULT    (0)
 
+/*
+ * <ini>
+ * rx_wakelock_timeout - Amount of time to hold wakelock for RX unicast packets
+ * @Min: 0
+ * @Max: 100
+ * @Default: 50
+ *
+ * This ini item configures the amount of time, in milliseconds, that the driver
+ * should prevent system power collapse after receiving an RX unicast packet.
+ * A conigured value of 0 disables the RX Wakelock feature completely.
+ *
+ * Related: None.
+ *
+ * Supported Feature: RX Wakelock
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_RX_WAKELOCK_TIMEOUT_NAME     "rx_wakelock_timeout"
+#define CFG_RX_WAKELOCK_TIMEOUT_DEFAULT  (50)
+#define CFG_RX_WAKELOCK_TIMEOUT_MIN      (0)
+#define CFG_RX_WAKELOCK_TIMEOUT_MAX      (100)
 
 /*---------------------------------------------------------------------------
    Type declarations
@@ -4269,6 +4292,7 @@ struct hdd_config {
 	bool sta_prefer_80MHz_over_160MHz;
 	uint8_t sap_max_inactivity_override;
 	bool fw_timeout_crash;
+	uint32_t rx_wakelock_timeout;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
