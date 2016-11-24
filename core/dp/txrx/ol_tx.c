@@ -57,7 +57,7 @@
 #include <htt_types.h>        /* htc_endpoint */
 #include <cdp_txrx_peer_ops.h>
 #include <cdp_txrx_ipa.h>
-
+#include <cdp_txrx_handle.h>
 int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t msdu,
 		 unsigned int transfer_id, uint32_t download_len);
 #endif  /* WLAN_FEATURE_FASTPATH */
@@ -203,9 +203,10 @@ qdf_nbuf_t ol_tx_data(void *data_vdev, qdf_nbuf_t skb)
 }
 
 #ifdef IPA_OFFLOAD
-qdf_nbuf_t ol_tx_send_ipa_data_frame(void *vdev, qdf_nbuf_t skb)
+qdf_nbuf_t ol_tx_send_ipa_data_frame(struct cdp_vdev *vdev,
+			qdf_nbuf_t skb)
 {
-	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	qdf_nbuf_t ret;
 
 	if (qdf_unlikely(!pdev)) {
@@ -1137,7 +1138,7 @@ static inline uint8_t ol_txrx_tx_raw_subtype(enum ol_tx_spec tx_spec)
 }
 
 static qdf_nbuf_t
-ol_tx_non_std_ll(ol_txrx_vdev_handle vdev,
+ol_tx_non_std_ll(struct ol_txrx_vdev_t *vdev,
 		 enum ol_tx_spec tx_spec,
 		 qdf_nbuf_t msdu_list)
 {
@@ -1682,7 +1683,7 @@ ol_tx_hl(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 }
 
 static qdf_nbuf_t
-ol_tx_non_std_hl(ol_txrx_vdev_handle vdev,
+ol_tx_non_std_hl(struct ol_txrx_vdev_t *vdev,
 		 enum ol_tx_spec tx_spec,
 		 qdf_nbuf_t msdu_list)
 {
@@ -1698,10 +1699,10 @@ ol_tx_non_std_hl(ol_txrx_vdev_handle vdev,
 }
 
 qdf_nbuf_t
-ol_tx_non_std(void *pvdev,
+ol_tx_non_std(struct cdp_vdev *pvdev,
 	      enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 
 	if (vdev->pdev->cfg.is_high_latency)
 		return ol_tx_non_std_hl(vdev, tx_spec, msdu_list);
@@ -1710,22 +1711,22 @@ ol_tx_non_std(void *pvdev,
 }
 
 void
-ol_txrx_data_tx_cb_set(void *pvdev,
+ol_txrx_data_tx_cb_set(struct cdp_vdev *pvdev,
 		       ol_txrx_data_tx_cb callback, void *ctxt)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 	pdev->tx_data_callback.func = callback;
 	pdev->tx_data_callback.ctxt = ctxt;
 }
 
 void
-ol_txrx_mgmt_tx_cb_set(void *ppdev,
+ol_txrx_mgmt_tx_cb_set(struct cdp_pdev *ppdev,
 		       uint8_t type,
 		       ol_txrx_mgmt_tx_cb download_cb,
 		       ol_txrx_mgmt_tx_cb ota_ack_cb, void *ctxt)
 {
-	ol_txrx_pdev_handle pdev = ppdev;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	TXRX_ASSERT1(type < OL_TXRX_MGMT_NUM_TYPES);
 	pdev->tx_mgmt.callbacks[type].download_cb = download_cb;
 	pdev->tx_mgmt.callbacks[type].ota_ack_cb = ota_ack_cb;
@@ -1773,11 +1774,12 @@ void ol_txrx_dump_frag_desc(char *msg, struct ol_tx_desc_t *tx_desc)
 #endif /* HELIUMPLUS_PADDR64 */
 
 int
-ol_txrx_mgmt_send_ext(void *pvdev,
-		      qdf_nbuf_t tx_mgmt_frm,
-		      uint8_t type, uint8_t use_6mbps, uint16_t chanfreq)
+ol_txrx_mgmt_send_ext(struct cdp_vdev *pvdev,
+		  qdf_nbuf_t tx_mgmt_frm,
+		  uint8_t type, uint8_t use_6mbps, uint16_t chanfreq)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev =
+				(struct ol_txrx_vdev_t *)pvdev;
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 	struct ol_tx_desc_t *tx_desc;
 	struct ol_txrx_msdu_info_t tx_msdu_info;

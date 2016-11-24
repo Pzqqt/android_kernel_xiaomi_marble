@@ -204,11 +204,11 @@ typedef struct _cds_context_type {
 	 */
 	qdf_device_t qdf_ctx;
 
-	void *pdev_txrx_ctx;
+	struct cdp_pdev *pdev_txrx_ctx;
 	void *dp_soc;
 
 	/* Configuration handle used to get system configuration */
-	void *cfg_ctx;
+	struct cdp_cfg *cfg_ctx;
 
 	/* radio index per driver */
 	int radio_index;

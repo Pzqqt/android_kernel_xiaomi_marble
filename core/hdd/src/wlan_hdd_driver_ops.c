@@ -865,7 +865,8 @@ static int __wlan_hdd_runtime_suspend(struct device *dev)
 	if (status)
 		goto process_failure;
 
-	status = qdf_status_to_os_return(cdp_runtime_suspend(soc, txrx_pdev));
+	status = qdf_status_to_os_return(cdp_runtime_suspend(soc,
+				(struct cdp_pdev *)txrx_pdev));
 	if (status)
 		goto process_failure;
 
@@ -895,7 +896,8 @@ resume_wma:
 resume_htc:
 	QDF_BUG(!htc_runtime_resume(htc_ctx));
 resume_txrx:
-	QDF_BUG(!qdf_status_to_os_return(cdp_runtime_resume(soc, txrx_pdev)));
+	QDF_BUG(!qdf_status_to_os_return(cdp_runtime_resume(soc,
+				(struct cdp_pdev *)txrx_pdev)));
 process_failure:
 	hif_process_runtime_suspend_failure(hif_ctx);
 	return status;
@@ -941,7 +943,8 @@ static int __wlan_hdd_runtime_resume(struct device *dev)
 	QDF_BUG(!hif_runtime_resume(hif_ctx));
 	QDF_BUG(!wma_runtime_resume());
 	QDF_BUG(!htc_runtime_resume(htc_ctx));
-	QDF_BUG(!qdf_status_to_os_return(cdp_runtime_resume(soc, txrx_pdev)));
+	QDF_BUG(!qdf_status_to_os_return(cdp_runtime_resume(soc,
+				(struct cdp_pdev *)txrx_pdev)));
 	hif_process_runtime_resume_success(hif_ctx);
 	return 0;
 }

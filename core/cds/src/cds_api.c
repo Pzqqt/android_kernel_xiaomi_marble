@@ -63,6 +63,8 @@
 #include <cdp_txrx_cfg.h>
 #include <cdp_txrx_misc.h>
 #include <dispatcher_init_deinit.h>
+#include <cdp_txrx_handle.h>
+
 /* Preprocessor Definitions and Constants */
 
 /* Data definitions */
@@ -197,11 +199,11 @@ static void cds_cdp_cfg_attach(struct cds_config_info *cds_cfg)
 	}
 
 	/* Configure Receive flow steering */
-	cdp_cfg_set_flow_steering(soc, &gp_cds_context->cfg_ctx,
+	cdp_cfg_set_flow_steering(soc, gp_cds_context->cfg_ctx,
 				 cds_cfg->flow_steering_enabled);
 
-	cdp_cfg_set_flow_control_parameters(soc, &gp_cds_context->cfg_ctx,
-			(void *)cds_cfg);
+	cdp_cfg_set_flow_control_parameters(soc, gp_cds_context->cfg_ctx,
+			(void *)&cdp_cfg);
 
 	/* adjust the cfg_ctx default value based on setting */
 	cdp_cfg_set_rx_fwd_disabled(soc, gp_cds_context->cfg_ctx,
@@ -573,7 +575,8 @@ QDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context)
 	if (QDF_GLOBAL_FTM_MODE != cds_get_conparam() &&
 	    QDF_GLOBAL_EPPING_MODE != cds_get_conparam())
 		cdp_pkt_log_con_service(soc,
-			gp_cds_context->pdev_txrx_ctx, scn);
+			gp_cds_context->pdev_txrx_ctx,
+			scn);
 
 	/* Reset wma wait event */
 	qdf_event_reset(&gp_cds_context->wmaCompleteEvent);
@@ -725,7 +728,7 @@ QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
 	}
 
 	if (cdp_pdev_attach_target(cds_get_context(QDF_MODULE_ID_SOC),
-		cds_get_context(QDF_MODULE_ID_TXRX))) {
+		(struct cdp_pdev *)cds_get_context(QDF_MODULE_ID_TXRX))) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to attach pdev target", __func__);
 		goto err_soc_target_detach;
@@ -919,7 +922,8 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
 
 	ctx = cds_get_context(QDF_MODULE_ID_TXRX);
 	cds_set_context(QDF_MODULE_ID_TXRX, NULL);
-	cdp_pdev_detach(cds_get_context(QDF_MODULE_ID_SOC), ctx, 1);
+	cdp_pdev_detach(cds_get_context(QDF_MODULE_ID_SOC),
+		       (struct cdp_pdev *)ctx, 1);
 
 	qdf_status = sme_close(((p_cds_contextType) cds_context)->pMACContext);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -1068,7 +1072,7 @@ void *cds_get_context(QDF_MODULE_ID moduleId)
 
 	case QDF_MODULE_ID_TXRX:
 	{
-		pModContext = gp_cds_context->pdev_txrx_ctx;
+		pModContext = (void *)gp_cds_context->pdev_txrx_ctx;
 		break;
 	}
 
@@ -1359,7 +1363,7 @@ QDF_STATUS cds_free_context(void *p_cds_context, QDF_MODULE_ID moduleID,
 
 	case QDF_MODULE_ID_TXRX:
 	{
-		pGpModContext = &(gp_cds_context->pdev_txrx_ctx);
+		pGpModContext = (void **)&(gp_cds_context->pdev_txrx_ctx);
 		break;
 	}
 

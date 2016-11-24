@@ -101,7 +101,7 @@ ol_tx_send_nonstd(struct ol_txrx_pdev_t *pdev,
  *
  * Return: NONE
  */
-void ol_tx_set_compute_interval(void *ppdev, uint32_t interval);
+void ol_tx_set_compute_interval(struct cdp_pdev *ppdev, uint32_t interval);
 
 /**
  * ol_tx_packet_count() - Return the uplink (transmitted) packet counts
@@ -119,7 +119,7 @@ void ol_tx_set_compute_interval(void *ppdev, uint32_t interval);
  * Return: NONE
  */
 void
-ol_tx_packet_count(void *ppdev,
+ol_tx_packet_count(struct cdp_pdev *ppdev,
 		   uint16_t *out_packet_count,
 		   uint16_t *out_packet_loss_count, int category);
 
@@ -133,7 +133,7 @@ ol_tx_packet_count(void *ppdev,
  * Return: NONE
  */
 void
-ol_tx_delay(void *ppdev,
+ol_tx_delay(struct cdp_pdev *ppdev,
 	    uint32_t *queue_delay_microsec,
 	    uint32_t *tx_delay_microsec, int category);
 
@@ -146,7 +146,7 @@ ol_tx_delay(void *ppdev,
  * Return: NONE
  */
 void
-ol_tx_delay_hist(void *ppdev,
+ol_tx_delay_hist(struct cdp_pdev *ppdev,
 		 uint16_t *report_bin_values, int category);
 #endif /* QCA_COMPUTE_TX_DELAY */
 
@@ -157,6 +157,6 @@ ol_tx_delay_hist(void *ppdev,
  *
  * Return: none
  */
-void ol_txrx_flow_control_cb(void *vdev, bool tx_resume);
+void ol_txrx_flow_control_cb(struct cdp_vdev *vdev, bool tx_resume);
 
 #endif /* _OL_TX_SEND__H_ */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -47,7 +47,7 @@
 #include <ol_txrx_encap.h>      /* OL_TX_ENCAP, etc */
 #include <ol_tx.h>
 #include <ol_cfg.h>
-
+#include <cdp_txrx_handle.h>
 #define INVALID_FLOW_ID 0xFF
 #define MAX_INVALID_BIN 3
 
@@ -560,9 +560,9 @@ static struct ol_tx_flow_pool_t *ol_tx_get_flow_pool(uint8_t flow_pool_id)
 static void ol_tx_flow_pool_vdev_map(struct ol_tx_flow_pool_t *pool,
 				     uint8_t vdev_id)
 {
-	ol_txrx_vdev_handle vdev;
+	struct ol_txrx_vdev_t *vdev;
 
-	vdev = ol_txrx_get_vdev_from_vdev_id(vdev_id);
+	vdev = (struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
 	if (!vdev) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 		   "%s: invalid vdev_id %d\n",
@@ -588,9 +588,9 @@ static void ol_tx_flow_pool_vdev_map(struct ol_tx_flow_pool_t *pool,
 static void ol_tx_flow_pool_vdev_unmap(struct ol_tx_flow_pool_t *pool,
 				       uint8_t vdev_id)
 {
-	ol_txrx_vdev_handle vdev;
+	struct ol_txrx_vdev_t *vdev;
 
-	vdev = ol_txrx_get_vdev_from_vdev_id(vdev_id);
+	vdev = (struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
 	if (!vdev) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 		   "%s: invalid vdev_id %d\n",

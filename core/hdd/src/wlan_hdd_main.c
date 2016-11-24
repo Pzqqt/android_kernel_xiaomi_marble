@@ -108,6 +108,7 @@
 #include <dispatcher_init_deinit.h>
 #include "wlan_hdd_object_manager.h"
 #include "cds_utils.h"
+#include <cdp_txrx_handle.h>
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -3753,7 +3754,7 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 		break;
 	case QDF_OCB_MODE:
 		cdp_clear_peer(cds_get_context(QDF_MODULE_ID_SOC),
-			cds_get_context(QDF_MODULE_ID_TXRX),
+			(struct cdp_pdev *)cds_get_context(QDF_MODULE_ID_TXRX),
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter)->conn_info.staId[0]);
 		break;
 	default:

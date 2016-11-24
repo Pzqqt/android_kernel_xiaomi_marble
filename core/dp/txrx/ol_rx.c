@@ -60,7 +60,7 @@
 #include <wma.h>
 #include <cds_concurrency.h>
 #include "pktlog_ac_fmt.h"
-
+#include <cdp_txrx_handle.h>
 #include <pld_common.h>
 
 void ol_rx_data_process(struct ol_txrx_peer_t *peer,
@@ -779,7 +779,7 @@ static void transcap_nwifi_to_8023(qdf_nbuf_t msdu)
 }
 #endif
 
-void ol_rx_notify(ol_pdev_handle pdev,
+void ol_rx_notify(struct cdp_cfg *cfg_pdev,
 		  uint8_t vdev_id,
 		  uint8_t *peer_mac_addr,
 		  int tid,
@@ -1571,8 +1571,9 @@ ol_rx_offload_paddr_deliver_ind_handler(htt_pdev_handle htt_pdev,
  *
  * Return: None
  */
-void ol_htt_mon_note_chan(ol_txrx_pdev_handle pdev, int mon_ch)
+void ol_htt_mon_note_chan(struct cdp_pdev *ppdev, int mon_ch)
 {
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	htt_rx_mon_note_capture_channel(pdev->htt_pdev, mon_ch);
 }
 

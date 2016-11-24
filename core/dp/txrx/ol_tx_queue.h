@@ -241,13 +241,13 @@ ol_tx_queue_discard(
 }
 #endif /* defined(CONFIG_HL_SUPPORT) */
 
-void ol_txrx_vdev_flush(void *pvdev);
+void ol_txrx_vdev_flush(struct cdp_vdev *pvdev);
 
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || \
    (defined(QCA_LL_TX_FLOW_CONTROL_V2) && !defined(CONFIG_ICNSS)) || \
    defined(CONFIG_HL_SUPPORT)
-void ol_txrx_vdev_pause(void *pvdev, uint32_t reason);
-void ol_txrx_vdev_unpause(void *pvdev, uint32_t reason);
+void ol_txrx_vdev_pause(struct cdp_vdev *pvdev, uint32_t reason);
+void ol_txrx_vdev_unpause(struct cdp_vdev *pvdev, uint32_t reason);
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
 #if defined(CONFIG_HL_SUPPORT) && defined(QCA_BAD_PEER_TX_FLOW_CL)
@@ -451,8 +451,8 @@ ol_tx_queues_display(struct ol_txrx_pdev_t *pdev)
 #define ol_tx_queue_decs_reinit(peer, peer_id)  /* no-op */
 
 #ifdef QCA_SUPPORT_TX_THROTTLE
-void ol_tx_throttle_set_level(void *ppdev, int level);
-void ol_tx_throttle_init_period(void *ppdev, int period,
+void ol_tx_throttle_set_level(struct cdp_pdev *ppdev, int level);
+void ol_tx_throttle_init_period(struct cdp_pdev *ppdev, int period,
 				uint8_t *dutycycle_level);
 
 /**

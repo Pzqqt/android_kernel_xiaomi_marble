@@ -85,20 +85,21 @@
 #include <cds_concurrency.h>
 #include "epping_main.h"
 #include <a_types.h>
-
+#include <cdp_txrx_handle.h>
 #ifdef QCA_SUPPORT_TXRX_LOCAL_PEER_ID
 ol_txrx_peer_handle
-ol_txrx_peer_find_by_local_id(struct ol_txrx_pdev_t *pdev,
+ol_txrx_peer_find_by_local_id(struct cdp_pdev *pdev,
 			      uint8_t local_peer_id);
 
 #endif /* QCA_SUPPORT_TXRX_LOCAL_PEER_ID */
-QDF_STATUS ol_txrx_peer_state_update(struct ol_txrx_pdev_t *pdev,
+QDF_STATUS ol_txrx_peer_state_update(struct cdp_pdev *pdev,
 				     uint8_t *peer_mac,
 				     enum ol_txrx_peer_state state);
-static void ol_vdev_rx_set_intrabss_fwd(void *vdev, bool val);
-int ol_txrx_get_tx_pending(void *pdev_handle);
+static void ol_vdev_rx_set_intrabss_fwd(struct cdp_vdev *vdev,
+		bool val);
+int ol_txrx_get_tx_pending(struct cdp_pdev *pdev_handle);
 extern void
-ol_txrx_set_wmm_param(void *data_pdev,
+ol_txrx_set_wmm_param(struct cdp_pdev *data_pdev,
 		      struct ol_tx_wmm_param_t wmm_param);
 
 extern void ol_txrx_get_pn_info(void *ppeer, uint8_t **last_pn_valid,
@@ -114,9 +115,9 @@ extern void ol_txrx_get_pn_info(void *ppeer, uint8_t **last_pn_valid,
  * Return: None
  */
 static void
-ol_txrx_copy_mac_addr_raw(void *pvdev, uint8_t *bss_addr)
+ol_txrx_copy_mac_addr_raw(struct cdp_vdev *pvdev, uint8_t *bss_addr)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t  *)pvdev;
 	if (bss_addr && vdev->last_real_peer &&
 	    !qdf_mem_cmp((u8 *)bss_addr,
 			     vdev->last_real_peer->mac_addr.raw,
@@ -135,14 +136,16 @@ ol_txrx_copy_mac_addr_raw(void *pvdev, uint8_t *bss_addr)
  * Return: None
  */
 static void
-ol_txrx_add_last_real_peer(void *ppdev, void *pvdev, uint8_t *peer_id)
+ol_txrx_add_last_real_peer(struct cdp_pdev *ppdev,
+			   struct cdp_vdev *pvdev, uint8_t *peer_id)
 {
-	ol_txrx_pdev_handle pdev = ppdev;
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	ol_txrx_peer_handle peer;
 	if (vdev->last_real_peer == NULL) {
 				peer = NULL;
-				peer = ol_txrx_find_peer_by_addr(pdev,
+				peer = ol_txrx_find_peer_by_addr(
+						(struct cdp_pdev *)pdev,
 						vdev->hl_tdls_ap_mac_addr.raw,
 						peer_id);
 				if (peer && (peer->peer_ids[0] !=
@@ -176,16 +179,16 @@ is_vdev_restore_last_peer(void *ppeer)
  * Return: None
  */
 static void
-ol_txrx_update_last_real_peer(void *ppdev, void *ppeer,
+ol_txrx_update_last_real_peer(struct cdp_pdev *ppdev, void *ppeer,
 	uint8_t *peer_id, bool restore_last_peer)
 {
-	ol_txrx_pdev_handle pdev = ppdev;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	struct ol_txrx_peer_t *peer = ppeer;
 	struct ol_txrx_vdev_t *vdev;
 	vdev = peer->vdev;
 	if (restore_last_peer && (vdev->last_real_peer == NULL)) {
 		peer = NULL;
-		peer = ol_txrx_find_peer_by_addr(pdev,
+		peer = ol_txrx_find_peer_by_addr((struct cdp_pdev *)pdev,
 				vdev->hl_tdls_ap_mac_addr.raw, peer_id);
 		if (peer && (peer->peer_ids[0] != HTT_INVALID_PEER_ID))
 			vdev->last_real_peer = peer;
@@ -214,7 +217,7 @@ static void ol_tx_mark_first_wakeup_packet(uint8_t value)
 }
 
 u_int16_t
-ol_tx_desc_pool_size_hl(ol_pdev_handle ctrl_pdev)
+ol_tx_desc_pool_size_hl(struct cdp_cfg *ctrl_pdev)
 {
 	u_int16_t desc_pool_size;
 	u_int16_t steady_state_tx_lifetime_ms;
@@ -291,11 +294,11 @@ uint8_t ol_tx_get_is_mgmt_over_wmi_enabled(void)
 
 #ifdef QCA_SUPPORT_TXRX_LOCAL_PEER_ID
 static void *
-ol_txrx_find_peer_by_addr_and_vdev(void *ppdev, void *pvdev,
-			uint8_t *peer_addr, uint8_t *peer_id)
+ol_txrx_find_peer_by_addr_and_vdev(struct cdp_pdev *ppdev,
+	struct cdp_vdev *pvdev, uint8_t *peer_addr, uint8_t *peer_id)
 {
-	ol_txrx_pdev_handle pdev = ppdev;
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	struct ol_txrx_peer_t *peer;
 
 	peer = ol_txrx_peer_vdev_find_hash(pdev, vdev, peer_addr, 0, 1);
@@ -322,7 +325,7 @@ static QDF_STATUS ol_txrx_get_vdevid(void *ppeer, uint8_t *vdev_id)
 	return QDF_STATUS_SUCCESS;
 }
 
-static void *ol_txrx_get_vdev_by_sta_id(uint8_t sta_id)
+static struct cdp_vdev *ol_txrx_get_vdev_by_sta_id(uint8_t sta_id)
 {
 	struct ol_txrx_peer_t *peer = NULL;
 	ol_txrx_pdev_handle pdev = NULL;
@@ -340,21 +343,22 @@ static void *ol_txrx_get_vdev_by_sta_id(uint8_t sta_id)
 		return NULL;
 	}
 
-	peer = ol_txrx_peer_find_by_local_id(pdev, sta_id);
+	peer = ol_txrx_peer_find_by_local_id((struct cdp_pdev *)pdev, sta_id);
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "PEER [%d] not found", sta_id);
 		return NULL;
 	}
 
-	return peer->vdev;
+	return (struct cdp_vdev *)peer->vdev;
 }
 
-void *ol_txrx_find_peer_by_addr(ol_txrx_pdev_handle pdev,
+void *ol_txrx_find_peer_by_addr(struct cdp_pdev *ppdev,
 					      uint8_t *peer_addr,
 					      uint8_t *peer_id)
 {
 	struct ol_txrx_peer_t *peer;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 
 	peer = ol_txrx_peer_find_hash_find(pdev, peer_addr, 0, 1);
 	if (!peer)
@@ -387,10 +391,11 @@ static uint16_t ol_txrx_local_peer_id(void *ppeer)
  * @return handle to the txrx peer object
  */
 ol_txrx_peer_handle
-ol_txrx_peer_find_by_local_id(struct ol_txrx_pdev_t *pdev,
+ol_txrx_peer_find_by_local_id(struct cdp_pdev *ppdev,
 			      uint8_t local_peer_id)
 {
 	struct ol_txrx_peer_t *peer;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	if ((local_peer_id == OL_TXRX_INVALID_LOCAL_PEER_ID) ||
 	    (local_peer_id >= OL_TXRX_NUM_LOCAL_PEER_IDS)) {
 		return NULL;
@@ -850,9 +855,9 @@ ol_txrx_pdev_grp_stat_destroy(struct ol_txrx_pdev_t *pdev)
  * Return: None
  */
 void
-ol_txrx_hl_tdls_flag_reset(void *pvdev, bool flag)
+ol_txrx_hl_tdls_flag_reset(struct cdp_vdev *pvdev, bool flag)
 {
-	struct ol_txrx_vdev_t *vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	vdev->hlTdlsFlag = flag;
 }
 #endif
@@ -1098,11 +1103,10 @@ static void ol_txrx_tso_stats_deinit(ol_txrx_pdev_handle pdev)
  * Return: txrx pdev handle
  *		  NULL for failure
  */
-static void *
-ol_txrx_pdev_attach(ol_txrx_soc_handle soc, void *pctrl_pdev,
+static struct cdp_pdev *
+ol_txrx_pdev_attach(ol_txrx_soc_handle soc, struct cdp_cfg *ctrl_pdev,
 		    HTC_HANDLE htc_pdev, qdf_device_t osdev, uint8_t pdev_id)
 {
-	ol_pdev_handle ctrl_pdev = pctrl_pdev;
 	struct ol_txrx_pdev_t *pdev;
 	int i;
 
@@ -1150,7 +1154,7 @@ ol_txrx_pdev_attach(ol_txrx_soc_handle soc, void *pctrl_pdev,
 
 	htt_register_rx_pkt_dump_callback(pdev->htt_pdev,
 			ol_rx_pkt_dump_call);
-	return pdev;
+	return (struct cdp_pdev *)pdev;
 
 fail3:
 	ol_txrx_peer_find_detach(pdev);
@@ -1175,9 +1179,9 @@ fail0:
  *
  * Return: void
  */
-void htt_pkt_log_init(void *ppdev, void *scn)
+void htt_pkt_log_init(struct cdp_pdev *ppdev, void *scn)
 {
-	struct ol_txrx_pdev_t *handle = ppdev;
+	struct ol_txrx_pdev_t *handle = (struct ol_txrx_pdev_t *)ppdev;
 	if (handle->pkt_log_init)
 		return;
 
@@ -1207,8 +1211,9 @@ static void htt_pktlogmod_exit(struct ol_txrx_pdev_t *handle)
 		handle->pkt_log_init = false;
 	}
 }
+
 #else
-void htt_pkt_log_init(void *handle, void *ol_sc) { }
+void htt_pkt_log_init(struct cdp_pdev *pdev_handle, void *ol_sc) { }
 static void htt_pktlogmod_exit(ol_txrx_pdev_handle handle)  { }
 #endif
 
@@ -1219,9 +1224,9 @@ static void htt_pktlogmod_exit(ol_txrx_pdev_handle handle)  { }
  * Return: 0 for success
  */
 int
-ol_txrx_pdev_post_attach(void *ppdev)
+ol_txrx_pdev_post_attach(struct cdp_pdev *ppdev)
 {
-	ol_txrx_pdev_handle pdev = ppdev;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	uint16_t i;
 	uint16_t fail_idx = 0;
 	int ret = 0;
@@ -1702,9 +1707,9 @@ ol_attach_fail:
  *
  * Return: 0 - success 1 - failure
  */
-static A_STATUS ol_txrx_pdev_attach_target(void *ppdev)
+static A_STATUS ol_txrx_pdev_attach_target(struct cdp_pdev *ppdev)
 {
-	ol_txrx_pdev_handle pdev = ppdev;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	return htt_attach_target(pdev->htt_pdev) == A_OK ? 0:1;
 }
 
@@ -1722,9 +1727,9 @@ static A_STATUS ol_txrx_pdev_attach_target(void *ppdev)
  * (ol_txrx_vdev_detach) before the physical device itself is deleted.
  *
  */
-static void ol_txrx_pdev_detach(void *ppdev, int force)
+static void ol_txrx_pdev_detach(struct cdp_pdev *ppdev, int force)
 {
-	ol_txrx_pdev_handle pdev = ppdev;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	int i;
 
 	/*checking to ensure txrx pdev structure is not NULL */
@@ -1888,12 +1893,12 @@ ol_txrx_vdev_tx_desc_cnt_init(struct ol_txrx_vdev_t *vdev)
  *
  * Return: success: handle to new data vdev object, failure: NULL
  */
-static void *
-ol_txrx_vdev_attach(void *ppdev,
+static struct cdp_vdev *
+ol_txrx_vdev_attach(struct cdp_pdev *ppdev,
 		    uint8_t *vdev_mac_addr,
 		    uint8_t vdev_id, enum wlan_op_mode op_mode)
 {
-	ol_txrx_pdev_handle pdev = ppdev;
+	struct ol_txrx_pdev_t  *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	struct ol_txrx_vdev_t *vdev;
 	QDF_STATUS qdf_status;
 
@@ -1925,7 +1930,7 @@ ol_txrx_vdev_attach(void *ppdev,
 	TAILQ_INIT(&vdev->peer_list);
 	vdev->last_real_peer = NULL;
 
-	ol_txrx_hl_tdls_flag_reset(vdev, false);
+	ol_txrx_hl_tdls_flag_reset((struct cdp_vdev *)vdev, false);
 
 #ifdef QCA_IBSS_SUPPORT
 	vdev->ibss_peer_num = 0;
@@ -1972,7 +1977,7 @@ ol_txrx_vdev_attach(void *ppdev,
 	 */
 	htt_vdev_attach(pdev->htt_pdev, vdev_id, op_mode);
 
-	return (void *)vdev;
+	return (struct cdp_vdev *)vdev;
 }
 
 /**
@@ -1994,11 +1999,11 @@ ol_txrx_vdev_attach(void *ppdev,
  *  vdev objects, so the data SW can use the OS shim vdev handle
  *  when passing rx data received by a vdev up to the OS shim.
  */
-static void ol_txrx_vdev_register(void *pvdev,
-				  void *osif_vdev,
-				  struct ol_txrx_ops *txrx_ops)
+static void ol_txrx_vdev_register(struct cdp_vdev *pvdev,
+				void *osif_vdev,
+				struct ol_txrx_ops *txrx_ops)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	if (qdf_unlikely(!vdev) || qdf_unlikely(!txrx_ops)) {
 		qdf_print("%s: vdev/txrx_ops is NULL!\n", __func__);
 		qdf_assert(0);
@@ -2080,10 +2085,10 @@ void ol_txrx_set_drop_unenc(ol_txrx_vdev_handle vdev, uint32_t val)
  * deletions have completed.
  */
 static void
-ol_txrx_vdev_detach(void *pvdev,
+ol_txrx_vdev_detach(struct cdp_vdev *pvdev,
 		    ol_txrx_vdev_delete_cb callback, void *context)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 
 	/* preconditions */
@@ -2221,7 +2226,8 @@ void ol_txrx_flush_cache_rx_queue(void)
 		return;
 
 	for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++) {
-		peer = ol_txrx_peer_find_by_local_id(pdev, sta_id);
+		peer = ol_txrx_peer_find_by_local_id((struct cdp_pdev *)pdev,
+						    sta_id);
 		if (!peer)
 			continue;
 		ol_txrx_flush_rx_frames(peer, 1);
@@ -2252,9 +2258,9 @@ void ol_txrx_flush_cache_rx_queue(void)
  * fails
  */
 static void *
-ol_txrx_peer_attach(void *pvdev, uint8_t *peer_mac_addr)
+ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	struct ol_txrx_peer_t *peer;
 	struct ol_txrx_peer_t *temp_peer;
 	uint8_t i;
@@ -2383,7 +2389,7 @@ ol_txrx_peer_attach(void *pvdev, uint8_t *peer_mac_addr)
 	 * progress to "auth" state once the authentication completes.
 	 */
 	peer->state = OL_TXRX_PEER_STATE_INVALID;
-	ol_txrx_peer_state_update(pdev, peer->mac_addr.raw,
+	ol_txrx_peer_state_update((struct cdp_pdev *)pdev, peer->mac_addr.raw,
 				  OL_TXRX_PEER_STATE_DISC);
 
 #ifdef QCA_SUPPORT_PEER_DATA_RX_RSSI
@@ -2396,7 +2402,7 @@ ol_txrx_peer_attach(void *pvdev, uint8_t *peer_mac_addr)
 		 * No Tx in monitor mode, otherwise results in target assert.
 		 * Setting disable_intrabss_fwd to true
 		 */
-		ol_vdev_rx_set_intrabss_fwd(vdev, true);
+		ol_vdev_rx_set_intrabss_fwd((struct cdp_vdev *)vdev, true);
 	}
 
 	ol_txrx_local_peer_id_alloc(pdev, peer);
@@ -2476,9 +2482,9 @@ ol_txrx_get_pn_info(void *ppeer, uint8_t **last_pn_valid,
  *
  * Return: operation mode.
  */
-static int ol_txrx_get_opmode(void *pvdev)
+static int ol_txrx_get_opmode(struct cdp_vdev *pvdev)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	return vdev->opmode;
 }
 
@@ -2500,10 +2506,10 @@ static int ol_txrx_get_peer_state(void *ppeer)
  *
  * Return: vdev handle from peer
  */
-static void *ol_txrx_get_vdev_for_peer(void *ppeer)
+static struct cdp_vdev *ol_txrx_get_vdev_for_peer(void *ppeer)
 {
 	ol_txrx_peer_handle peer = ppeer;
-	return (void *)peer->vdev;
+	return (struct cdp_vdev *)peer->vdev;
 }
 
 /**
@@ -2513,9 +2519,9 @@ static void *ol_txrx_get_vdev_for_peer(void *ppeer)
  * Return: vdev mac address
  */
 static uint8_t *
-ol_txrx_get_vdev_mac_addr(void *pvdev)
+ol_txrx_get_vdev_mac_addr(struct cdp_vdev *pvdev)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	if (!vdev)
 		return NULL;
 
@@ -2556,11 +2562,11 @@ ol_txrx_pdev_handle ol_txrx_get_pdev_from_vdev(ol_txrx_vdev_handle vdev)
  *
  * Return: Handle to control pdev
  */
-static void *
-ol_txrx_get_ctrl_pdev_from_vdev(void *pvdev)
+static struct cdp_cfg *
+ol_txrx_get_ctrl_pdev_from_vdev(struct cdp_vdev *pvdev)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
-	return (void *)vdev->pdev->ctrl_pdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
+	return vdev->pdev->ctrl_pdev;
 }
 
 /**
@@ -2570,9 +2576,9 @@ ol_txrx_get_ctrl_pdev_from_vdev(void *pvdev)
  * Return: Rx Fwd disabled status
  */
 static uint8_t
-ol_txrx_is_rx_fwd_disabled(void *pvdev)
+ol_txrx_is_rx_fwd_disabled(struct cdp_vdev *pvdev)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)
 					vdev->pdev->ctrl_pdev;
 	return cfg->rx_fwd_disabled;
@@ -2587,10 +2593,10 @@ ol_txrx_is_rx_fwd_disabled(void *pvdev)
  * Return: -1 for failure or total peer nums after adjustment.
  */
 static int16_t
-ol_txrx_update_ibss_add_peer_num_of_vdev(void *pvdev,
+ol_txrx_update_ibss_add_peer_num_of_vdev(struct cdp_vdev *pvdev,
 					 int16_t peer_num_delta)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	int16_t new_peer_num;
 
 	new_peer_num = vdev->ibss_peer_num + peer_num_delta;
@@ -2610,10 +2616,10 @@ ol_txrx_update_ibss_add_peer_num_of_vdev(void *pvdev,
  *
  * Return: Old timer value set in vdev.
  */
-static uint16_t ol_txrx_set_ibss_vdev_heart_beat_timer(void *pvdev,
-						       uint16_t timer_value_sec)
+static uint16_t ol_txrx_set_ibss_vdev_heart_beat_timer(struct cdp_vdev *pvdev,
+						uint16_t timer_value_sec)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	uint16_t old_timer_value = vdev->ibss_peer_heart_beat_timer;
 
 	vdev->ibss_peer_heart_beat_timer = timer_value_sec;
@@ -2632,11 +2638,11 @@ static uint16_t ol_txrx_set_ibss_vdev_heart_beat_timer(void *pvdev,
  * Return: NONE
  */
 static void
-ol_txrx_remove_peers_for_vdev(void *pvdev,
+ol_txrx_remove_peers_for_vdev(struct cdp_vdev *pvdev,
 			      ol_txrx_vdev_peer_remove_cb callback,
 			      void *callback_context, bool remove_last_peer)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	ol_txrx_peer_handle peer, temp;
 	/* remove all remote peers for vdev */
 	qdf_spin_lock_bh(&vdev->pdev->peer_ref_mutex);
@@ -2681,11 +2687,11 @@ ol_txrx_remove_peers_for_vdev(void *pvdev,
  * Return: NONE
  */
 static void
-ol_txrx_remove_peers_for_vdev_no_lock(void *pvdev,
+ol_txrx_remove_peers_for_vdev_no_lock(struct cdp_vdev *pvdev,
 			      ol_txrx_vdev_peer_remove_cb callback,
 			      void *callback_context)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	ol_txrx_peer_handle peer = NULL;
 
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
@@ -2704,10 +2710,10 @@ ol_txrx_remove_peers_for_vdev_no_lock(void *pvdev,
  *
  * Return: NONE
  */
-static void ol_txrx_set_ocb_chan_info(void *pvdev,
+static void ol_txrx_set_ocb_chan_info(struct cdp_vdev *pvdev,
 			  struct ol_txrx_ocb_set_chan ocb_set_chan)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	vdev->ocb_channel_info = ocb_set_chan.ocb_channel_info;
 	vdev->ocb_channel_count = ocb_set_chan.ocb_channel_count;
 }
@@ -2719,9 +2725,9 @@ static void ol_txrx_set_ocb_chan_info(void *pvdev,
  * Return: handle to struct ol_txrx_ocb_chan_info
  */
 static struct ol_txrx_ocb_chan_info *
-ol_txrx_get_ocb_chan_info(void *pvdev)
+ol_txrx_get_ocb_chan_info(struct cdp_vdev *pvdev)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	return vdev->ocb_channel_info;
 }
 
@@ -2741,10 +2747,11 @@ ol_txrx_get_ocb_chan_info(void *pvdev)
  *
  * Return: QDF Status
  */
-QDF_STATUS ol_txrx_peer_state_update(struct ol_txrx_pdev_t *pdev,
+QDF_STATUS ol_txrx_peer_state_update(struct cdp_pdev *ppdev,
 				     uint8_t *peer_mac,
 				     enum ol_txrx_peer_state state)
 {
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	struct ol_txrx_peer_t *peer;
 
 	if (qdf_unlikely(!pdev)) {
@@ -3118,10 +3125,10 @@ ol_txrx_clear_peer_internal(struct ol_txrx_peer_t *peer)
  *
  * Return: QDF Status
  */
-static QDF_STATUS ol_txrx_clear_peer(void *ppdev, uint8_t sta_id)
+static QDF_STATUS ol_txrx_clear_peer(struct cdp_pdev *ppdev, uint8_t sta_id)
 {
 	struct ol_txrx_peer_t *peer;
-	struct ol_txrx_pdev_t *pdev = ppdev;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 
 	if (!pdev) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "%s: Unable to find pdev!",
@@ -3135,7 +3142,7 @@ static QDF_STATUS ol_txrx_clear_peer(void *ppdev, uint8_t sta_id)
 	}
 
 
-	peer = ol_txrx_peer_find_by_local_id(pdev, sta_id);
+	peer = ol_txrx_peer_find_by_local_id((struct cdp_pdev *)pdev, sta_id);
 	if (!peer)
 		return QDF_STATUS_E_FAULT;
 
@@ -3290,7 +3297,7 @@ static void ol_txrx_dump_tx_desc(ol_txrx_pdev_handle pdev_handle)
  */
 static QDF_STATUS ol_txrx_wait_for_pending_tx(int timeout)
 {
-	ol_txrx_pdev_handle txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	struct ol_txrx_pdev_t *txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (txrx_pdev == NULL) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
@@ -3298,7 +3305,7 @@ static QDF_STATUS ol_txrx_wait_for_pending_tx(int timeout)
 		return QDF_STATUS_E_FAULT;
 	}
 
-	while (ol_txrx_get_tx_pending(txrx_pdev)) {
+	while (ol_txrx_get_tx_pending((struct cdp_pdev *)txrx_pdev)) {
 		qdf_sleep(OL_ATH_TX_DRAIN_WAIT_DELAY);
 		if (timeout <= 0) {
 			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
@@ -3327,11 +3334,11 @@ static QDF_STATUS ol_txrx_wait_for_pending_tx(int timeout)
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS ol_txrx_runtime_suspend(void *ppdev)
+static QDF_STATUS ol_txrx_runtime_suspend(struct cdp_pdev *ppdev)
 {
-	ol_txrx_pdev_handle txrx_pdev = ppdev;
+	struct ol_txrx_pdev_t *txrx_pdev = (struct ol_txrx_pdev_t *)ppdev;
 
-	if (ol_txrx_get_tx_pending(txrx_pdev))
+	if (ol_txrx_get_tx_pending((struct cdp_pdev *)txrx_pdev))
 		return QDF_STATUS_E_BUSY;
 	else
 		return QDF_STATUS_SUCCESS;
@@ -3345,7 +3352,7 @@ static QDF_STATUS ol_txrx_runtime_suspend(void *ppdev)
  *
  * Return: QDF_STATUS_SUCCESS
  */
-static QDF_STATUS ol_txrx_runtime_resume(void *ppdev)
+static QDF_STATUS ol_txrx_runtime_resume(struct cdp_pdev *ppdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -3384,10 +3391,9 @@ static QDF_STATUS ol_txrx_bus_resume(void)
  *
  * Return: count of pending frames
  */
-int ol_txrx_get_tx_pending(void *ppdev)
+int ol_txrx_get_tx_pending(struct cdp_pdev *ppdev)
 {
-	ol_txrx_pdev_handle pdev_handle = ppdev;
-	struct ol_txrx_pdev_t *pdev = (ol_txrx_pdev_handle) pdev_handle;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	uint32_t total;
 
 	if (ol_cfg_is_high_latency(pdev->ctrl_pdev))
@@ -3465,10 +3471,10 @@ ol_txrx_fw_stats_cfg(ol_txrx_vdev_handle vdev,
 #endif
 
 static A_STATUS
-ol_txrx_fw_stats_get(void *pvdev, struct ol_txrx_stats_req *req,
+ol_txrx_fw_stats_get(struct cdp_vdev *pvdev, struct ol_txrx_stats_req *req,
 			bool per_vdev, bool response_expected)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 	uint64_t cookie;
 	struct ol_txrx_stats_req_internal *non_volatile_req;
@@ -3820,7 +3826,9 @@ ol_txrx_stats(uint8_t vdev_id, char *buffer, unsigned buf_len)
 {
 	uint32_t len = 0;
 
-	ol_txrx_vdev_handle vdev = ol_txrx_get_vdev_from_vdev_id(vdev_id);
+	struct ol_txrx_vdev_t *vdev =
+			(struct ol_txrx_vdev_t *)
+			ol_txrx_get_vdev_from_vdev_id(vdev_id);
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s: vdev is NULL", __func__);
@@ -3969,9 +3977,9 @@ ol_txrx_peer_stats_copy(ol_txrx_pdev_handle pdev,
 }
 #endif /* QCA_ENABLE_OL_TXRX_PEER_STATS */
 
-static void ol_vdev_rx_set_intrabss_fwd(void *pvdev, bool val)
+static void ol_vdev_rx_set_intrabss_fwd(struct cdp_vdev *pvdev, bool val)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	if (NULL == vdev)
 		return;
 
@@ -3987,7 +3995,9 @@ static void ol_vdev_rx_set_intrabss_fwd(void *pvdev, bool val)
  */
 static void ol_txrx_update_mac_id(uint8_t vdev_id, uint8_t mac_id)
 {
-	ol_txrx_vdev_handle vdev = ol_txrx_get_vdev_from_vdev_id(vdev_id);
+	struct ol_txrx_vdev_t *vdev =
+			(struct ol_txrx_vdev_t *)
+			ol_txrx_get_vdev_from_vdev_id(vdev_id);
 
 	if (NULL == vdev) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -4024,7 +4034,7 @@ static ol_txrx_vdev_handle ol_txrx_get_vdev_from_sta_id(uint8_t sta_id)
 		return NULL;
 	}
 
-	peer = ol_txrx_peer_find_by_local_id(pdev, sta_id);
+	peer = ol_txrx_peer_find_by_local_id((struct cdp_pdev *)pdev, sta_id);
 
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -4047,7 +4057,8 @@ static int ol_txrx_register_tx_flow_control(uint8_t vdev_id,
 				      ol_txrx_tx_flow_control_fp flowControl,
 				      void *osif_fc_ctx)
 {
-	ol_txrx_vdev_handle vdev = ol_txrx_get_vdev_from_vdev_id(vdev_id);
+	struct ol_txrx_vdev_t *vdev =
+		(struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
 	if (NULL == vdev) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid vdev_id %d", __func__, vdev_id);
@@ -4069,7 +4080,8 @@ static int ol_txrx_register_tx_flow_control(uint8_t vdev_id,
  */
 static int ol_txrx_deregister_tx_flow_control_cb(uint8_t vdev_id)
 {
-	ol_txrx_vdev_handle vdev = ol_txrx_get_vdev_from_vdev_id(vdev_id);
+	struct ol_txrx_vdev_t *vdev =
+		(struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
 	if (NULL == vdev) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid vdev_id", __func__);
@@ -4134,7 +4146,8 @@ ol_txrx_get_tx_resource(uint8_t sta_id,
 static int
 ol_txrx_ll_set_tx_pause_q_depth(uint8_t vdev_id, int pause_q_depth)
 {
-	ol_txrx_vdev_handle vdev = ol_txrx_get_vdev_from_vdev_id(vdev_id);
+	struct ol_txrx_vdev_t *vdev =
+		(struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
 	if (NULL == vdev) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid vdev_id %d", __func__, vdev_id);
@@ -4175,10 +4188,10 @@ ol_txrx_ll_set_tx_pause_q_depth(uint8_t vdev_id, int pause_q_depth)
  * Return: none
  */
 static void
-ol_txrx_ipa_uc_get_resource(void *ppdev,
+ol_txrx_ipa_uc_get_resource(struct cdp_pdev *ppdev,
 		struct ol_txrx_ipa_resources *ipa_res)
 {
-	ol_txrx_pdev_handle pdev = ppdev;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 
 	htt_ipa_uc_get_resource(pdev->htt_pdev,
 				&ipa_res->ce_sr_base_paddr,
@@ -4209,11 +4222,11 @@ ol_txrx_ipa_uc_get_resource(void *ppdev,
  * Return: none
  */
 static void
-ol_txrx_ipa_uc_set_doorbell_paddr(void *ppdev,
+ol_txrx_ipa_uc_set_doorbell_paddr(struct cdp_pdev *ppdev,
 				  qdf_dma_addr_t ipa_tx_uc_doorbell_paddr,
 				  qdf_dma_addr_t ipa_rx_uc_doorbell_paddr)
 {
-	ol_txrx_pdev_handle pdev = ppdev;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	htt_ipa_uc_set_doorbell_paddr(pdev->htt_pdev,
 				      ipa_tx_uc_doorbell_paddr,
 				      ipa_rx_uc_doorbell_paddr);
@@ -4231,9 +4244,9 @@ ol_txrx_ipa_uc_set_doorbell_paddr(void *ppdev,
  * Return: none
  */
 static void
-ol_txrx_ipa_uc_set_active(void *ppdev, bool uc_active, bool is_tx)
+ol_txrx_ipa_uc_set_active(struct cdp_pdev *ppdev, bool uc_active, bool is_tx)
 {
-	ol_txrx_pdev_handle pdev = ppdev;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	htt_h2t_ipa_uc_set_active(pdev->htt_pdev, uc_active, is_tx);
 }
 
@@ -4244,9 +4257,9 @@ ol_txrx_ipa_uc_set_active(void *ppdev, bool uc_active, bool is_tx)
  *
  * Return: none
  */
-static void ol_txrx_ipa_uc_op_response(void *ppdev, uint8_t *op_msg)
+static void ol_txrx_ipa_uc_op_response(struct cdp_pdev *ppdev, uint8_t *op_msg)
 {
-	ol_txrx_pdev_handle pdev = ppdev;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	if (pdev->ipa_uc_op_cb) {
 		pdev->ipa_uc_op_cb(op_msg, pdev->osif_dev);
 	} else {
@@ -4266,10 +4279,10 @@ static void ol_txrx_ipa_uc_op_response(void *ppdev, uint8_t *op_msg)
  * Return: none
  */
 static void
-ol_txrx_ipa_uc_register_op_cb(void *ppdev,
-			      ipa_uc_op_cb_type op_cb, void *osif_dev)
+ol_txrx_ipa_uc_register_op_cb(struct cdp_pdev *ppdev,
+				   ipa_uc_op_cb_type op_cb, void *osif_dev)
 {
-	ol_txrx_pdev_handle pdev = ppdev;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	pdev->ipa_uc_op_cb = op_cb;
 	pdev->osif_dev = osif_dev;
 }
@@ -4280,9 +4293,9 @@ ol_txrx_ipa_uc_register_op_cb(void *ppdev,
  *
  * Return: none
  */
-static void ol_txrx_ipa_uc_get_stat(void *ppdev)
+static void ol_txrx_ipa_uc_get_stat(struct cdp_pdev *ppdev)
 {
-	ol_txrx_pdev_handle pdev = ppdev;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	htt_h2t_ipa_uc_get_stats(pdev->htt_pdev);
 }
 #endif /* IPA_UC_OFFLOAD */
@@ -4434,7 +4447,7 @@ static void ol_rx_data_cb(struct ol_txrx_pdev_t *pdev,
 	/* Do not use peer directly. Derive peer from staid to
 	 * make sure that peer is valid.
 	 */
-	peer = ol_txrx_peer_find_by_local_id(pdev, staid);
+	peer = ol_txrx_peer_find_by_local_id((struct cdp_pdev *)pdev, staid);
 	if (!peer)
 		goto free_buf;
 
@@ -4616,7 +4629,8 @@ static QDF_STATUS ol_txrx_register_peer(struct ol_txrx_desc_type *sta_desc)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	peer = ol_txrx_peer_find_by_local_id(pdev, sta_desc->sta_id);
+	peer = ol_txrx_peer_find_by_local_id((struct cdp_pdev *)pdev,
+					     sta_desc->sta_id);
 	if (!peer)
 		return QDF_STATUS_E_FAULT;
 
@@ -4667,7 +4681,8 @@ static QDF_STATUS ol_txrx_register_ocb_peer(void *cds_ctx, uint8_t *mac_addr,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	peer = ol_txrx_find_peer_by_addr(pdev, mac_addr, peer_id);
+	peer = ol_txrx_find_peer_by_addr((struct cdp_pdev *)pdev,
+					 mac_addr, peer_id);
 	if (!peer) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "%s: Unable to find OCB peer!",
 			   __func__);
@@ -4677,7 +4692,7 @@ static QDF_STATUS ol_txrx_register_ocb_peer(void *cds_ctx, uint8_t *mac_addr,
 	ol_txrx_set_ocb_peer(pdev, peer);
 
 	/* Set peer state to connected */
-	ol_txrx_peer_state_update(pdev, peer->mac_addr.raw,
+	ol_txrx_peer_state_update((struct cdp_pdev *)pdev, peer->mac_addr.raw,
 				  OL_TXRX_PEER_STATE_AUTH);
 
 	return QDF_STATUS_SUCCESS;
@@ -4947,7 +4962,7 @@ bool ol_txrx_fwd_desc_thresh_check(struct ol_txrx_vdev_t *vdev)
  * Return: vdev handle
  *            NULL if not found.
  */
-void *ol_txrx_get_vdev_from_vdev_id(uint8_t vdev_id)
+struct cdp_vdev *ol_txrx_get_vdev_from_vdev_id(uint8_t vdev_id)
 {
 	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	ol_txrx_vdev_handle vdev = NULL;
@@ -4960,7 +4975,7 @@ void *ol_txrx_get_vdev_from_vdev_id(uint8_t vdev_id)
 			break;
 	}
 
-	return (void *)vdev;
+	return (struct cdp_vdev *)vdev;
 }
 
 /**
@@ -4970,9 +4985,9 @@ void *ol_txrx_get_vdev_from_vdev_id(uint8_t vdev_id)
  *
  * Return: QDF STATUS
  */
-static QDF_STATUS ol_txrx_set_wisa_mode(void *pvdev, bool enable)
+static QDF_STATUS ol_txrx_set_wisa_mode(struct cdp_vdev *pvdev, bool enable)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 
 	if (!vdev)
 		return QDF_STATUS_E_INVAL;
@@ -4987,9 +5002,9 @@ static QDF_STATUS ol_txrx_set_wisa_mode(void *pvdev, bool enable)
  *
  * Return: virtual interface id
  */
-static uint16_t ol_txrx_get_vdev_id(void *pvdev)
+static uint16_t ol_txrx_get_vdev_id(struct cdp_vdev *pvdev)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	return vdev->vdev_id;
 }
 
@@ -5067,11 +5082,11 @@ static void ol_txrx_soc_detach(void *soc)
  *
  * Return: noe
  */
-static void ol_txrx_pkt_log_con_service(void *ppdev, void *scn)
+static void ol_txrx_pkt_log_con_service(struct cdp_pdev *ppdev, void *scn)
 {
-	ol_txrx_pdev_handle pdev = ppdev;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 
-	htt_pkt_log_init(pdev, scn);
+	htt_pkt_log_init((struct cdp_pdev *)pdev, scn);
 	pktlog_htc_attach();
 }
 
@@ -5095,8 +5110,9 @@ static void ol_txrx_wrapper_flush_rx_frames(void *peer, bool drop)
  *
  * Return: virtual interface instance
  */
-static void *ol_txrx_wrapper_get_vdev_from_vdev_id(void *ppdev,
-						   uint8_t vdev_id)
+static
+struct cdp_vdev *ol_txrx_wrapper_get_vdev_from_vdev_id(struct cdp_pdev *ppdev,
+		uint8_t vdev_id)
 {
 	return ol_txrx_get_vdev_from_vdev_id(vdev_id);
 }
@@ -5108,7 +5124,7 @@ static void *ol_txrx_wrapper_get_vdev_from_vdev_id(void *ppdev,
  *
  * Return: QDF STATUS
  */
-static QDF_STATUS ol_txrx_wrapper_register_peer(void *pdev,
+static QDF_STATUS ol_txrx_wrapper_register_peer(struct cdp_pdev *pdev,
 		struct ol_txrx_desc_type *sta_desc)
 {
 	return ol_txrx_register_peer(sta_desc);
@@ -5128,10 +5144,11 @@ static QDF_STATUS ol_txrx_wrapper_register_peer(void *pdev,
  * @return handle to the txrx peer object
  */
 static void *
-ol_txrx_wrapper_peer_find_by_local_id(void *pdev, uint8_t local_peer_id)
+ol_txrx_wrapper_peer_find_by_local_id(struct cdp_pdev *pdev,
+				      uint8_t local_peer_id)
 {
 	return (void *)ol_txrx_peer_find_by_local_id(
-		(struct ol_txrx_pdev_t *)pdev, local_peer_id);
+		pdev, local_peer_id);
 }
 
 /**
@@ -5141,9 +5158,9 @@ ol_txrx_wrapper_peer_find_by_local_id(void *pdev, uint8_t local_peer_id)
  * Return: 1 high latency bus
  *         0 low latency bus
  */
-static int ol_txrx_wrapper_cfg_is_high_latency(void *pdev)
+static int ol_txrx_wrapper_cfg_is_high_latency(struct cdp_cfg *cfg_pdev)
 {
-	return ol_cfg_is_high_latency((ol_pdev_handle)pdev);
+	return ol_cfg_is_high_latency(cfg_pdev);
 }
 
 /**
@@ -5161,10 +5178,10 @@ static int ol_txrx_wrapper_cfg_is_high_latency(void *pdev)
  *
  * Return: QDF Status
  */
-static QDF_STATUS ol_txrx_wrapper_peer_state_update(void *pdev,
+static QDF_STATUS ol_txrx_wrapper_peer_state_update(struct cdp_pdev *pdev,
 		uint8_t *peer_mac, enum ol_txrx_peer_state state)
 {
-	return ol_txrx_peer_state_update((struct ol_txrx_pdev_t *)pdev,
+	return ol_txrx_peer_state_update(pdev,
 			peer_mac, state);
 }
 
@@ -5176,10 +5193,10 @@ static QDF_STATUS ol_txrx_wrapper_peer_state_update(void *pdev,
  *
  * Return: peer instance pointer
  */
-static void *ol_txrx_wrapper_find_peer_by_addr(void *pdev,
+static void *ol_txrx_wrapper_find_peer_by_addr(struct cdp_pdev *pdev,
 		uint8_t *peer_addr, uint8_t *peer_id)
 {
-	return ol_txrx_find_peer_by_addr((ol_txrx_pdev_handle)pdev,
+	return ol_txrx_find_peer_by_addr(pdev,
 				peer_addr, peer_id);
 }
 
@@ -5191,10 +5208,11 @@ static void *ol_txrx_wrapper_find_peer_by_addr(void *pdev,
  * Return: none
  */
 static void
-ol_txrx_wrapper_set_flow_control_parameters(void *cfg_ctx, void *cfg_param)
+ol_txrx_wrapper_set_flow_control_parameters(struct cdp_cfg *cfg_pdev,
+		void *cfg_param)
 {
 	return ol_tx_set_flow_control_parameters(
-		(struct txrx_pdev_cfg_t *)cfg_ctx,
+		cfg_pdev,
 		(struct txrx_pdev_cfg_param_t *)cfg_param);
 }
 

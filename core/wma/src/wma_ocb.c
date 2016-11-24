@@ -35,6 +35,7 @@
 #include "wmi_unified_api.h"
 #include "cds_utils.h"
 #include <cdp_txrx_ocb.h>
+#include <cdp_txrx_handle.h>
 
 /**
  * wma_ocb_resp() - send the OCB set config response via callback
@@ -58,7 +59,7 @@ int wma_ocb_set_config_resp(tp_wma_handle wma_handle, uint8_t status)
 	 */
 	if (status == QDF_STATUS_SUCCESS && vdev && req) {
 		ocb_set_chan.ocb_channel_info = cdp_get_ocb_chan_info(soc,
-								      vdev);
+						(struct cdp_vdev *)vdev);
 		if (ocb_set_chan.ocb_channel_info)
 			qdf_mem_free(ocb_set_chan.ocb_channel_info);
 		ocb_set_chan.ocb_channel_count =
@@ -84,7 +85,9 @@ int wma_ocb_set_config_resp(tp_wma_handle wma_handle, uint8_t status)
 			ocb_set_chan.ocb_channel_info = 0;
 			ocb_set_chan.ocb_channel_count = 0;
 		}
-		cdp_set_ocb_chan_info(soc, vdev, ocb_set_chan);
+		cdp_set_ocb_chan_info(soc,
+			(struct cdp_vdev *)vdev,
+			ocb_set_chan);
 	}
 
 	/* Free the configuration that was saved in wma_ocb_set_config. */

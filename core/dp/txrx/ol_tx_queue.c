@@ -44,7 +44,7 @@
 #include <qdf_types.h>          /* bool */
 #include "cdp_txrx_flow_ctrl_legacy.h"
 #include <ol_txrx_peer_find.h>
-
+#include <cdp_txrx_handle.h>
 #if defined(CONFIG_HL_SUPPORT)
 
 #ifndef offsetof
@@ -577,9 +577,9 @@ ol_txrx_throttle_unpause(ol_txrx_pdev_handle pdev)
 }
 
 void
-ol_txrx_vdev_pause(void *pvdev, uint32_t reason)
+ol_txrx_vdev_pause(struct cdp_vdev *pvdev, uint32_t reason)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 	struct ol_txrx_peer_t *peer;
 	/* TO DO: log the queue pause */
@@ -600,9 +600,9 @@ ol_txrx_vdev_pause(void *pvdev, uint32_t reason)
 }
 
 
-void ol_txrx_vdev_unpause(void *pvdev, uint32_t reason)
+void ol_txrx_vdev_unpause(struct cdp_vdev *pvdev, uint32_t reason)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 	struct ol_txrx_peer_t *peer;
 	/* TO DO: log the queue unpause */
@@ -626,9 +626,9 @@ void ol_txrx_vdev_unpause(void *pvdev, uint32_t reason)
 	TX_SCHED_DEBUG_PRINT("Leave %s\n", __func__);
 }
 
-void ol_txrx_vdev_flush(void *pvdev)
+void ol_txrx_vdev_flush(struct cdp_vdev *pvdev)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 
 	ol_tx_queue_vdev_flush(vdev->pdev, vdev);
 }
@@ -818,10 +818,10 @@ ol_tx_bad_peer_update_tx_limit(struct ol_txrx_pdev_t *pdev,
 }
 
 void
-ol_txrx_bad_peer_txctl_set_setting(void *ppdev,
+ol_txrx_bad_peer_txctl_set_setting(struct cdp_pdev *ppdev,
 				   int enable, int period, int txq_limit)
 {
-	struct ol_txrx_pdev_t *pdev = ppdev;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	if (enable)
 		pdev->tx_peer_bal.enabled = ol_tx_peer_bal_enable;
 	else
@@ -833,11 +833,11 @@ ol_txrx_bad_peer_txctl_set_setting(void *ppdev,
 }
 
 void
-ol_txrx_bad_peer_txctl_update_threshold(void *ppdev,
+ol_txrx_bad_peer_txctl_update_threshold(struct cdp_pdev *ppdev,
 					int level, int tput_thresh,
 					int tx_limit)
 {
-	struct ol_txrx_pdev_t *pdev = ppdev;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 
 	/* Set the current settingl */
 	pdev->tx_peer_bal.ctl_thresh[level].tput_thresh =
@@ -1692,9 +1692,9 @@ ol_tx_queues_display(struct ol_txrx_pdev_t *pdev)
  * will be paused.
  *
  */
-void ol_txrx_vdev_pause(void *pvdev, uint32_t reason)
+void ol_txrx_vdev_pause(struct cdp_vdev *pvdev, uint32_t reason)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 
 	/* TO DO: log the queue pause */
 	/* acquire the mutex lock, since we'll be modifying the queues */
@@ -1719,9 +1719,9 @@ void ol_txrx_vdev_pause(void *pvdev, uint32_t reason)
  * LL systems that use per-vdev tx queues for MCC or thermal throttling.
  *
  */
-void ol_txrx_vdev_unpause(void *pvdev, uint32_t reason)
+void ol_txrx_vdev_unpause(struct cdp_vdev *pvdev, uint32_t reason)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	/* TO DO: log the queue unpause */
 	/* acquire the mutex lock, since we'll be modifying the queues */
 	TX_SCHED_DEBUG_PRINT("Enter %s\n", __func__);
@@ -1756,9 +1756,9 @@ void ol_txrx_vdev_unpause(void *pvdev, uint32_t reason)
  *  stale, and would need to be discarded.
  *
  */
-void ol_txrx_vdev_flush(void *pvdev)
+void ol_txrx_vdev_flush(struct cdp_vdev *pvdev)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	qdf_spin_lock_bh(&vdev->ll_pause.mutex);
 	qdf_timer_stop(&vdev->ll_pause.timer);
 	vdev->ll_pause.is_q_timer_on = false;
@@ -1780,7 +1780,7 @@ void ol_txrx_vdev_flush(void *pvdev)
 #endif /* defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) */
 
 #if (!defined(QCA_LL_LEGACY_TX_FLOW_CONTROL)) && (!defined(CONFIG_HL_SUPPORT))
-void ol_txrx_vdev_flush(void *data_vdev)
+void ol_txrx_vdev_flush(struct cdp_vdev *data_vdev)
 {
 	return;
 }
@@ -1824,9 +1824,9 @@ ol_txrx_map_to_netif_reason_type(uint32_t reason)
  *
  * Return: none
  */
-void ol_txrx_vdev_pause(void *pvdev, uint32_t reason)
+void ol_txrx_vdev_pause(struct cdp_vdev *pvdev, uint32_t reason)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 	enum netif_reason_type netif_reason;
 
@@ -1850,9 +1850,9 @@ void ol_txrx_vdev_pause(void *pvdev, uint32_t reason)
  *
  * Return: none
  */
-void ol_txrx_vdev_unpause(void *pvdev, uint32_t reason)
+void ol_txrx_vdev_unpause(struct cdp_vdev *pvdev, uint32_t reason)
 {
-	ol_txrx_vdev_handle vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 	enum netif_reason_type netif_reason;
 
@@ -1888,7 +1888,8 @@ void ol_txrx_pdev_pause(struct ol_txrx_pdev_t *pdev, uint32_t reason)
 
 	TAILQ_FOREACH_SAFE(vdev, &pdev->vdev_list, vdev_list_elem, tmp) {
 		cdp_fc_vdev_pause(
-			cds_get_context(QDF_MODULE_ID_SOC), vdev, reason);
+			cds_get_context(QDF_MODULE_ID_SOC),
+			(struct cdp_vdev *)vdev, reason);
 	}
 
 }
@@ -1906,7 +1907,7 @@ void ol_txrx_pdev_unpause(struct ol_txrx_pdev_t *pdev, uint32_t reason)
 
 	TAILQ_FOREACH_SAFE(vdev, &pdev->vdev_list, vdev_list_elem, tmp) {
 		cdp_fc_vdev_unpause(cds_get_context(QDF_MODULE_ID_SOC),
-				    vdev, reason);
+				    (struct cdp_vdev *)vdev, reason);
 	}
 
 }
@@ -2071,9 +2072,9 @@ ol_tx_set_throttle_phase_time(struct ol_txrx_pdev_t *pdev, int level, int *ms)
 }
 #endif
 
-void ol_tx_throttle_set_level(void *ppdev, int level)
+void ol_tx_throttle_set_level(struct cdp_pdev *ppdev, int level)
 {
-	struct ol_txrx_pdev_t *pdev = ppdev;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	int ms = 0;
 
 	if (level >= THROTTLE_LEVEL_MAX) {
@@ -2094,10 +2095,10 @@ void ol_tx_throttle_set_level(void *ppdev, int level)
 		qdf_timer_start(&pdev->tx_throttle.phase_timer, ms);
 }
 
-void ol_tx_throttle_init_period(void *ppdev, int period,
+void ol_tx_throttle_init_period(struct cdp_pdev *ppdev, int period,
 				uint8_t *dutycycle_level)
 {
-	struct ol_txrx_pdev_t *pdev = ppdev;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	int i;
 
 	/* Set the current throttle level */
@@ -2138,7 +2139,8 @@ void ol_tx_throttle_init(struct ol_txrx_pdev_t *pdev)
 		dutycycle_level[i] =
 			ol_cfg_throttle_duty_cycle_level(pdev->ctrl_pdev, i);
 
-	ol_tx_throttle_init_period(pdev, throttle_period, &dutycycle_level[0]);
+	ol_tx_throttle_init_period((struct cdp_pdev *)pdev,
+			throttle_period, &dutycycle_level[0]);
 
 	qdf_timer_init(pdev->osdev,
 			       &pdev->tx_throttle.phase_timer,

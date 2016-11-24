@@ -43,7 +43,7 @@
 #include <ip_prot.h>
 #include <enet.h>             /* ETHERTYPE_VLAN, etc. */
 #include <cds_ieee80211_common.h>        /* ieee80211_frame */
-
+#include <cdp_txrx_handle.h>
 /*
  * In theory, this tx classify code could be used on the host or in the target.
  * Thus, this code uses generic OS primitives, that can be aliased to either
@@ -350,7 +350,7 @@ struct ol_txrx_peer_t *ol_tx_tdls_peer_find(struct ol_txrx_pdev_t *pdev,
 	struct ol_txrx_peer_t *peer = NULL;
 
 	if (vdev->hlTdlsFlag) {
-		peer = ol_txrx_find_peer_by_addr(pdev,
+		peer = ol_txrx_find_peer_by_addr((struct cdp_pdev *)pdev,
 						vdev->hl_tdls_ap_mac_addr.raw,
 						peer_id);
 		if (peer &&  (peer->peer_ids[0] == HTT_INVALID_PEER_ID)) {

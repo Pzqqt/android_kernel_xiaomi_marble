@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -39,7 +39,7 @@
 #include <ol_txrx.h>
 #include <qdf_types.h>
 #include <qdf_mem.h>         /* qdf_os_mem_alloc_consistent et al */
-
+#include <cdp_txrx_handle.h>
 #if defined(CONFIG_HL_SUPPORT)
 
 #if defined(DEBUG_HL_LOGGING)
@@ -438,7 +438,7 @@ ol_tx_sched_init_rr(
 }
 
 void
-ol_txrx_set_wmm_param(void *data_pdev,
+ol_txrx_set_wmm_param(struct cdp_pdev *data_pdev,
 		      struct ol_tx_wmm_param_t wmm_param)
 {
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
@@ -1057,10 +1057,10 @@ ol_tx_sched_init_wrr_adv(
  * settings of the scheduler, ie. VO, VI, BE, or BK.
  */
 void
-ol_txrx_set_wmm_param(void *data_pdev,
+ol_txrx_set_wmm_param(struct cdp_pdev *pdev,
 		      struct ol_tx_wmm_param_t wmm_param)
 {
-	ol_txrx_pdev_handle data_pdev = pdata_pdev;
+	struct ol_txrx_pdev_t *data_pdev = (struct ol_txrx_pdev_t *)pdev;
 	struct ol_tx_sched_wrr_adv_t def_cfg;
 	struct ol_tx_sched_wrr_adv_t *scheduler =
 					data_pdev->tx_sched.scheduler;

@@ -58,7 +58,7 @@
 #include "wal_rx_desc.h"
 
 #include "cdp_txrx_ipa.h"
-
+#include <cdp_txrx_handle.h>
 #define HDD_IPA_DESC_BUFFER_RATIO          4
 #define HDD_IPA_IPV4_NAME_EXT              "_ipv4"
 #define HDD_IPA_IPV6_NAME_EXT              "_ipv6"
@@ -1413,7 +1413,9 @@ static int hdd_ipa_uc_enable_pipes(struct hdd_ipa_priv *hdd_ipa)
 			    __func__, result);
 		return result;
 	}
-	cdp_ipa_set_active(soc, cds_ctx->pdev_txrx_ctx, true, true);
+	cdp_ipa_set_active(soc,
+			(struct cdp_pdev *)cds_ctx->pdev_txrx_ctx,
+			true, true);
 
 	/* ACTIVATE RX PIPE */
 	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
@@ -1433,7 +1435,9 @@ static int hdd_ipa_uc_enable_pipes(struct hdd_ipa_priv *hdd_ipa)
 			    __func__, result);
 		return result;
 	}
-	cdp_ipa_set_active(soc, cds_ctx->pdev_txrx_ctx, true, false);
+	cdp_ipa_set_active(soc,
+		(struct cdp_pdev *)cds_ctx->pdev_txrx_ctx,
+		true, false);
 	hdd_ipa->ipa_pipes_down = false;
 	return 0;
 }
@@ -1551,9 +1555,13 @@ static void hdd_ipa_uc_handle_last_discon(struct hdd_ipa_priv *hdd_ipa)
 
 	hdd_ipa->resource_unloading = true;
 	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "%s: Disable FW RX PIPE", __func__);
-	cdp_ipa_set_active(soc, cds_ctx->pdev_txrx_ctx, false, false);
+	cdp_ipa_set_active(soc,
+		(struct cdp_pdev *)cds_ctx->pdev_txrx_ctx,
+		false, false);
 	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "%s: Disable FW TX PIPE", __func__);
-	cdp_ipa_set_active(soc, cds_ctx->pdev_txrx_ctx, false, true);
+	cdp_ipa_set_active(soc,
+		(struct cdp_pdev *)cds_ctx->pdev_txrx_ctx,
+		false, true);
 }
 
 /**
@@ -2188,12 +2196,14 @@ static QDF_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx)
 		    (unsigned int)pipe_in.u.ul.rdy_ring_rp_pa,
 		    (unsigned int)ipa_ctxt->rx_ready_doorbell_paddr);
 
-	cdp_ipa_set_doorbell_paddr(soc, cds_ctx->pdev_txrx_ctx,
+	cdp_ipa_set_doorbell_paddr(soc,
+			(struct cdp_pdev *)cds_ctx->pdev_txrx_ctx,
 			ipa_ctxt->tx_comp_doorbell_paddr,
 			ipa_ctxt->rx_ready_doorbell_paddr);
 
-	cdp_ipa_register_op_cb(soc, cds_ctx->pdev_txrx_ctx,
-			hdd_ipa_uc_op_event_handler, (void *)hdd_ctx);
+	cdp_ipa_register_op_cb(soc,
+		(struct cdp_pdev *)cds_ctx->pdev_txrx_ctx,
+		hdd_ipa_uc_op_event_handler, (void *)hdd_ctx);
 
 	for (i = 0; i < HDD_IPA_UC_OPCODE_MAX; i++) {
 		hdd_ipa_init_uc_op_work(&ipa_ctxt->uc_op_work[i].work,
@@ -3223,7 +3233,8 @@ static enum hdd_ipa_forward_type hdd_ipa_intrabss_forward(
 
 	if ((desc & FW_RX_DESC_FORWARD_M)) {
 		if (!ol_txrx_fwd_desc_thresh_check(
-			ol_txrx_get_vdev_from_vdev_id(adapter->sessionId))) {
+			(struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(
+							adapter->sessionId))) {
 			/* Drop the packet*/
 			hdd_ipa->stats.num_tx_fwd_err++;
 			kfree_skb(skb);
@@ -3473,7 +3484,8 @@ static void hdd_ipa_send_pkt_to_tl(
 	adapter->stats.tx_bytes += ipa_tx_desc->skb->len;
 
 	skb = cdp_ipa_tx_send_data_frame(cds_get_context(QDF_MODULE_ID_SOC),
-		iface_context->tl_context, ipa_tx_desc->skb);
+		(struct cdp_vdev *)iface_context->tl_context,
+		ipa_tx_desc->skb);
 	if (skb) {
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "TLSHIM tx fail");
 		ipa_free_skb(ipa_tx_desc);
@@ -4296,7 +4308,7 @@ static int hdd_ipa_setup_iface(struct hdd_ipa_priv *hdd_ipa,
 	adapter->ipa_context = iface_context;
 	iface_context->adapter = adapter;
 	iface_context->sta_id = sta_id;
-	tl_context = cdp_peer_get_vdev_by_sta_id(
+	tl_context = (void *)cdp_peer_get_vdev_by_sta_id(
 				cds_get_context(QDF_MODULE_ID_SOC), sta_id);
 	if (tl_context == NULL) {
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
@@ -5019,8 +5031,8 @@ static QDF_STATUS __hdd_ipa_init(hdd_context_t *hdd_ctx)
 	hdd_ipa->hdd_ctx = hdd_ctx;
 	hdd_ipa->num_iface = 0;
 	cdp_ipa_get_resource(cds_get_context(QDF_MODULE_ID_SOC),
-			cds_get_context(QDF_MODULE_ID_TXRX),
-			&hdd_ipa->ipa_resource);
+		(struct cdp_pdev *)cds_get_context(QDF_MODULE_ID_TXRX),
+		&hdd_ipa->ipa_resource);
 	if ((0 == hdd_ipa->ipa_resource.ce_sr_base_paddr) ||
 	    (0 == hdd_ipa->ipa_resource.tx_comp_ring_base_paddr) ||
 	    (0 == hdd_ipa->ipa_resource.rx_rdy_ring_base_paddr) ||

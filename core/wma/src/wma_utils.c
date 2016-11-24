@@ -66,7 +66,7 @@
 #include "cds_concurrency.h"
 #include "wmi_unified_param.h"
 #include "linux/ieee80211.h"
-
+#include <cdp_txrx_handle.h>
 /* MCS Based rate table */
 /* HT MCS parameters with Nss = 1 */
 static struct index_data_rate_type mcs_nss1[] = {
@@ -2149,7 +2149,7 @@ int32_t wma_txrx_fw_stats_reset(tp_wma_handle wma_handle,
 				uint8_t vdev_id, uint32_t value)
 {
 	struct ol_txrx_stats_req req;
-	void *vdev;
+	struct cdp_vdev *vdev;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (!soc) {
@@ -2164,8 +2164,7 @@ int32_t wma_txrx_fw_stats_reset(tp_wma_handle wma_handle,
 	}
 	qdf_mem_zero(&req, sizeof(req));
 	req.stats_type_reset_mask = value;
-	cdp_fw_stats_get(soc, vdev, &req,
-			false, false);
+	cdp_fw_stats_get(soc, vdev, &req, false, false);
 
 	return 0;
 }
@@ -2216,7 +2215,7 @@ int32_t wma_set_txrx_fw_stats_level(tp_wma_handle wma_handle,
 				    uint8_t vdev_id, uint32_t value)
 {
 	struct ol_txrx_stats_req req;
-	void *vdev;
+	struct cdp_vdev *vdev;
 	uint32_t l_up_mask;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
@@ -2241,8 +2240,7 @@ int32_t wma_set_txrx_fw_stats_level(tp_wma_handle wma_handle,
 	l_up_mask = 1 << (value - 1);
 	req.stats_type_upload_mask = l_up_mask;
 
-	cdp_fw_stats_get(soc, vdev, &req,
-			 false, true);
+	cdp_fw_stats_get(soc, vdev, &req, false, true);
 
 	return 0;
 }

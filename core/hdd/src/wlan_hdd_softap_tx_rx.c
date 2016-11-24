@@ -45,6 +45,7 @@
 #include <cdp_txrx_peer_ops.h>
 #include <cds_utils.h>
 #include <cdp_txrx_flow_ctrl_v2.h>
+#include <cdp_txrx_handle.h>
 
 #ifdef IPA_OFFLOAD
 #include <wlan_hdd_ipa.h>
@@ -741,7 +742,8 @@ QDF_STATUS hdd_softap_deregister_sta(hdd_adapter_t *pAdapter, uint8_t staId)
 	 * station to this station.
 	 */
 	qdf_status = cdp_clear_peer(cds_get_context(QDF_MODULE_ID_SOC),
-			cds_get_context(QDF_MODULE_ID_TXRX), staId);
+			(struct cdp_pdev *)cds_get_context(QDF_MODULE_ID_TXRX),
+			staId);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("cdp_clear_peer failed for staID %d, Status=%d [0x%08X]",
 			staId, qdf_status, qdf_status);
@@ -814,13 +816,16 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
 	txrx_ops.rx.rx = hdd_softap_rx_packet_cbk;
 	cdp_vdev_register(soc,
-		 cdp_get_vdev_from_vdev_id(soc, pdev, pAdapter->sessionId),
-		 pAdapter, &txrx_ops);
-	pAdapter->txrx_vdev = cdp_get_vdev_from_vdev_id(soc, pdev,
+		(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
+		(struct cdp_pdev *)pdev, pAdapter->sessionId),
+		pAdapter, &txrx_ops);
+	pAdapter->txrx_vdev = (void *)cdp_get_vdev_from_vdev_id(soc,
+					(struct cdp_pdev *)pdev,
 					pAdapter->sessionId);
 	pAdapter->tx_fn = txrx_ops.tx.tx;
 
-	qdf_status = cdp_peer_register(soc, pdev, &staDesc);
+	qdf_status = cdp_peer_register(soc,
+			(struct cdp_pdev *)pdev, &staDesc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("cdp_peer_register() failed to register.  Status = %d [0x%08X]",
 			qdf_status, qdf_status);

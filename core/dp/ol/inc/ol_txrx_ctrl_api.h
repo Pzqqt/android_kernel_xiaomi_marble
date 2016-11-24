@@ -42,7 +42,7 @@
 #include <cdp_txrx_cmn.h>       /* ol_pdev_handle, ol_vdev_handle, etc */
 #include <cdp_txrx_cfg.h>
 #include <ol_defines.h>
-
+#include <cdp_txrx_handle.h>
 #define OL_ATH_TX_DRAIN_WAIT_DELAY 50
 
 /**
@@ -67,7 +67,7 @@
  * @return 0 for success or error code
  */
 int
-ol_txrx_pdev_post_attach(void *pdev);
+ol_txrx_pdev_post_attach(struct cdp_pdev *pdev);
 
 /**
  * @brief Parameter type to be input to ol_txrx_peer_update
@@ -308,7 +308,7 @@ typedef void
  * @param ctxt - the context argument provided to the callback function
  */
 void
-ol_txrx_data_tx_cb_set(void *data_vdev,
+ol_txrx_data_tx_cb_set(struct cdp_vdev *data_vdev,
 		       ol_txrx_data_tx_cb callback, void *ctxt);
 
 /**
@@ -460,7 +460,7 @@ int16_t ol_txrx_peer_rssi(ol_txrx_peer_handle peer);
  */
 void
 ol_txrx_bad_peer_txctl_set_setting(
-	void *pdev,
+	struct cdp_pdev *pdev,
 	int enable,
 	int period,
 	int txq_limit);
@@ -473,7 +473,7 @@ ol_txrx_bad_peer_txctl_set_setting(
  */
 void
 ol_txrx_bad_peer_txctl_update_threshold(
-	void *pdev,
+	struct cdp_pdev *pdev,
 	int level,
 	int tput_thresh,
 	int tx_limit);
@@ -482,7 +482,7 @@ ol_txrx_bad_peer_txctl_update_threshold(
 
 static inline void
 ol_txrx_bad_peer_txctl_set_setting(
-	void *pdev,
+	struct cdp_pdev *pdev,
 	int enable,
 	int period,
 	int txq_limit)
@@ -492,7 +492,7 @@ ol_txrx_bad_peer_txctl_set_setting(
 
 static inline void
 ol_txrx_bad_peer_txctl_update_threshold(
-	void *pdev,
+	struct cdp_pdev *pdev,
 	int level,
 	int tput_thresh,
 	int tx_limit)

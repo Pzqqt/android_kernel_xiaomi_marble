@@ -74,10 +74,10 @@
 #include "sap_api.h"
 #include "csr_api.h"
 #include "pld_common.h"
-
 #ifdef WLAN_UMAC_CONVERGENCE
 #include "wlan_cfg80211.h"
 #endif
+#include <cdp_txrx_handle.h>
 
 #ifdef FEATURE_WLAN_EXTSCAN
 #include "wlan_hdd_ext_scan.h"
@@ -3388,7 +3388,8 @@ static int __wlan_hdd_cfg80211_handle_wisa_cmd(struct wiphy *wiphy,
 	}
 	if (QDF_IS_STATUS_SUCCESS(status) || wisa_mode == false)
 		cdp_set_wisa_mode(soc,
-			cdp_get_vdev_from_vdev_id(soc, pdev,
+			(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
+				(struct cdp_pdev *)pdev,
 				adapter->sessionId),
 			wisa_mode);
 err:

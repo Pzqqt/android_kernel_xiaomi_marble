@@ -209,7 +209,7 @@ ol_tx_desc_id(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
  * @return void pointer to the beacon header for the given vdev
  */
 
-void *ol_ath_get_bcn_header(ol_pdev_handle pdev, A_UINT32 vdev_id);
+void *ol_ath_get_bcn_header(struct cdp_cfg *cfg_pdev, A_UINT32 vdev_id);
 
 /*
  * @brief Free a tx descriptor, without freeing the matching frame.

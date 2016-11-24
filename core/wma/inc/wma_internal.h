@@ -27,7 +27,7 @@
 
 #ifndef WMA_INTERNAL_H
 #define WMA_INTERNAL_H
-
+#include <cdp_txrx_handle.h>
 #if !defined(REMOVE_PKT_LOG)
 #include "pktlog_ac.h"
 #endif
@@ -446,7 +446,7 @@ static inline uint32_t wma_roam_scan_get_cckm_mode(
  * wma_dev_if.c functions declarations
  */
 
-void *wma_find_vdev_by_addr(tp_wma_handle wma, uint8_t *addr,
+struct cdp_vdev *wma_find_vdev_by_addr(tp_wma_handle wma, uint8_t *addr,
 				   uint8_t *vdev_id);
 
 /**
@@ -457,7 +457,8 @@ void *wma_find_vdev_by_addr(tp_wma_handle wma, uint8_t *addr,
  * Return: Returns vdev handle if given vdev id is valid.
  *         Otherwise returns NULL.
  */
-static inline void *wma_find_vdev_by_id(tp_wma_handle wma, uint8_t vdev_id)
+static inline
+struct cdp_vdev *wma_find_vdev_by_id(tp_wma_handle wma, uint8_t vdev_id)
 {
 	if (vdev_id > wma->max_bssid)
 		return NULL;
@@ -535,7 +536,7 @@ static inline uint8_t *wma_find_bssid_by_vdev_id(tp_wma_handle wma,
 	return wma->interfaces[vdev_id].bssid;
 }
 
-void *wma_find_vdev_by_bssid(tp_wma_handle wma, uint8_t *bssid,
+struct cdp_vdev *wma_find_vdev_by_bssid(tp_wma_handle wma, uint8_t *bssid,
 				    uint8_t *vdev_id);
 
 QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
@@ -552,8 +553,8 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 			    uint8_t vdev_id, void *peer,
 			    bool roam_synch_in_progress);
 
-QDF_STATUS wma_create_peer(tp_wma_handle wma, void *pdev,
-			  void *vdev,
+QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
+			  struct cdp_vdev *vdev,
 			  u8 peer_addr[IEEE80211_ADDR_LEN],
 			  uint32_t peer_type, uint8_t vdev_id,
 			  bool roam_synch_in_progress);
@@ -561,7 +562,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, void *pdev,
 int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 				      u32 len);
 
-void *wma_vdev_attach(tp_wma_handle wma_handle,
+struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 				struct add_sta_self_params *self_sta_req,
 				uint8_t generateRsp);
 

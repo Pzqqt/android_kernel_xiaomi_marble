@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -46,6 +46,7 @@
 #include <ol_htt_tx_api.h>
 #include <cds_api.h>
 #include "hif.h"
+#include <cdp_txrx_handle.h>
 
 #define HTT_HTC_PKT_POOL_INIT_SIZE 100  /* enough for a large A-MPDU */
 
@@ -276,7 +277,7 @@ void htt_clear_bundle_stats(htt_pdev_handle pdev)
  */
 htt_pdev_handle
 htt_pdev_alloc(ol_txrx_pdev_handle txrx_pdev,
-	   ol_pdev_handle ctrl_pdev,
+	   struct cdp_cfg *ctrl_pdev,
 	   HTC_HANDLE htc_pdev, qdf_device_t osdev)
 {
 	struct htt_pdev_t *pdev;

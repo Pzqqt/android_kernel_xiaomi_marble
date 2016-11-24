@@ -71,7 +71,7 @@
 #include "wlan_tgt_def_config.h"
 /* This is temporary, should be removed */
 #include "ol_htt_api.h"
-
+#include <cdp_txrx_handle.h>
 #define WMA_MCC_MIRACAST_REST_TIME 400
 #define WMA_SCAN_ID_MASK 0x0fff
 
@@ -2847,7 +2847,7 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint8_t vdev_id, peer_id;
 	void *peer;
-	void *pdev;
+	struct cdp_pdev *pdev;
 	struct wma_txrx_node *intr = wma->interfaces;
 	struct sir_hw_mode_params hw_mode = {0};
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -2866,7 +2866,9 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 		goto send_resp;
 	}
 
-	peer = cdp_peer_find_by_addr(soc, pdev, intr[vdev_id].bssid, &peer_id);
+	peer = cdp_peer_find_by_addr(soc,
+			pdev,
+			intr[vdev_id].bssid, &peer_id);
 
 	qdf_mem_zero(&req, sizeof(req));
 	req.vdev_id = vdev_id;
@@ -5316,7 +5318,7 @@ QDF_STATUS wma_extscan_get_capabilities(tp_wma_handle wma,
 QDF_STATUS  wma_ipa_offload_enable_disable(tp_wma_handle wma,
 		struct sir_ipa_offload_enable_disable *ipa_offload)
 {
-	void *vdev;
+	struct cdp_vdev *vdev;
 	int32_t intra_bss_fwd = 0;
 	struct ipa_offload_control_params params = {0};
 	QDF_STATUS status;

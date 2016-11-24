@@ -62,6 +62,7 @@
 #include <ol_tx_queue.h>
 #include <ol_txrx.h>
 #include <pktlog_ac_fmt.h>
+#include <cdp_txrx_handle.h>
 
 #ifdef TX_CREDIT_RECLAIM_SUPPORT
 
@@ -117,9 +118,9 @@ ol_tx_target_credit_incr_int(struct ol_txrx_pdev_t *pdev, int delta)
 #endif
 
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL)
-void ol_txrx_flow_control_cb(void *pvdev, bool tx_resume)
+void ol_txrx_flow_control_cb(struct cdp_vdev *pvdev, bool tx_resume)
 {
-	struct ol_txrx_vdev_t *vdev = pvdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	qdf_spin_lock_bh(&vdev->flow_control_lock);
 	if ((vdev->osif_flow_control_cb) && (vdev->osif_fc_ctx))
 		vdev->osif_flow_control_cb(vdev->osif_fc_ctx, tx_resume);
@@ -145,7 +146,8 @@ static void ol_tx_flow_ct_unpause_os_q(ol_txrx_pdev_handle pdev)
 			if (pdev->tx_desc.num_free > vdev->tx_fl_hwm) {
 				qdf_atomic_set(&vdev->os_q_paused, 0);
 				qdf_spin_unlock(&pdev->tx_mutex);
-				ol_txrx_flow_control_cb(vdev, true);
+				ol_txrx_flow_control_cb((struct cdp_vdev *)vdev,
+						true);
 			} else {
 				qdf_spin_unlock(&pdev->tx_mutex);
 			}
@@ -910,9 +912,9 @@ ol_tx_inspect_handler(ol_txrx_pdev_handle pdev,
  * @details
  * @param interval - interval for stats computation
  */
-void ol_tx_set_compute_interval(void *ppdev, uint32_t interval)
+void ol_tx_set_compute_interval(struct cdp_pdev *ppdev, uint32_t interval)
 {
-	ol_txrx_pdev_handle pdev = ppdev;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	pdev->tx_delay.avg_period_ticks = qdf_system_msecs_to_ticks(interval);
 }
 
@@ -930,11 +932,11 @@ void ol_tx_set_compute_interval(void *ppdev, uint32_t interval)
  * @param out_packet_loss_count - number of packets lost
  */
 void
-ol_tx_packet_count(void *ppdev,
+ol_tx_packet_count(struct cdp_pdev *ppdev,
 		   uint16_t *out_packet_count,
 		   uint16_t *out_packet_loss_count, int category)
 {
-	ol_txrx_pdev_handle pdev = ppdev;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	*out_packet_count = pdev->packet_count[category];
 	*out_packet_loss_count = pdev->packet_loss_count[category];
 	pdev->packet_count[category] = 0;
@@ -959,11 +961,11 @@ static uint32_t ol_tx_delay_avg(uint64_t sum, uint32_t num)
 }
 
 void
-ol_tx_delay(void *ppdev,
+ol_tx_delay(struct cdp_pdev *ppdev,
 	    uint32_t *queue_delay_microsec,
 	    uint32_t *tx_delay_microsec, int category)
 {
-	ol_txrx_pdev_handle pdev = ppdev;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	int index;
 	uint32_t avg_delay_ticks;
 	struct ol_tx_delay_data *data;
@@ -1006,10 +1008,10 @@ ol_tx_delay(void *ppdev,
 }
 
 void
-ol_tx_delay_hist(void *ppdev,
+ol_tx_delay_hist(struct cdp_pdev *ppdev,
 		 uint16_t *report_bin_values, int category)
 {
-	ol_txrx_pdev_handle pdev = ppdev;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	int index, i, j;
 	struct ol_tx_delay_data *data;
 

@@ -349,19 +349,19 @@ void wma_set_tx_power(WMA_HANDLE handle,
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	uint8_t vdev_id;
 	QDF_STATUS ret = QDF_STATUS_E_FAILURE;
-	void *pdev;
+	struct cdp_vdev *vdev;
 
 	if (tx_pwr_params->dev_mode == QDF_SAP_MODE ||
 	    tx_pwr_params->dev_mode == QDF_P2P_GO_MODE) {
-		pdev = wma_find_vdev_by_addr(wma_handle,
+		vdev = wma_find_vdev_by_addr(wma_handle,
 					     tx_pwr_params->bssId.bytes,
 					     &vdev_id);
 	} else {
-		pdev = wma_find_vdev_by_bssid(wma_handle,
+		vdev = wma_find_vdev_by_bssid(wma_handle,
 					      tx_pwr_params->bssId.bytes,
 					      &vdev_id);
 	}
-	if (!pdev) {
+	if (!vdev) {
 		WMA_LOGE("vdev handle is invalid for %pM",
 			 tx_pwr_params->bssId.bytes);
 		qdf_mem_free(tx_pwr_params);
@@ -425,18 +425,18 @@ void wma_set_max_tx_power(WMA_HANDLE handle,
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	uint8_t vdev_id;
 	QDF_STATUS ret = QDF_STATUS_E_FAILURE;
-	void *pdev;
+	struct cdp_vdev *vdev;
 	int8_t prev_max_power;
 
-	pdev = wma_find_vdev_by_addr(wma_handle, tx_pwr_params->bssId.bytes,
+	vdev = wma_find_vdev_by_addr(wma_handle, tx_pwr_params->bssId.bytes,
 				     &vdev_id);
-	if (pdev == NULL) {
+	if (vdev == NULL) {
 		/* not in SAP array. Try the station/p2p array */
-		pdev = wma_find_vdev_by_bssid(wma_handle,
+		vdev = wma_find_vdev_by_bssid(wma_handle,
 					      tx_pwr_params->bssId.bytes,
 					      &vdev_id);
 	}
-	if (!pdev) {
+	if (!vdev) {
 		WMA_LOGE("vdev handle is invalid for %pM",
 			 tx_pwr_params->bssId.bytes);
 		qdf_mem_free(tx_pwr_params);

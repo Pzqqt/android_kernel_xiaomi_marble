@@ -36,7 +36,7 @@
 #include <qdf_lock.h>
 #include <cdp_txrx_cmn.h>       /* ol_txrx_vdev_t, etc. */
 #include <cdp_txrx_misc.h>      /* ol_tx_spec */
-
+#include <cdp_txrx_handle.h>
 #include <ol_txrx_types.h>      /* ol_tx_desc_t, ol_txrx_msdu_info_t */
 
 #ifdef IPA_OFFLOAD
@@ -47,7 +47,7 @@
  *
  * Return: skb/ NULL is for success
  */
-qdf_nbuf_t ol_tx_send_ipa_data_frame(void *vdev, qdf_nbuf_t skb);
+qdf_nbuf_t ol_tx_send_ipa_data_frame(struct cdp_vdev *vdev, qdf_nbuf_t skb);
 #endif
 
 qdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list);
@@ -117,7 +117,7 @@ ol_tx_hl(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list);
  *  Return: null - success, skb - failure
  */
 qdf_nbuf_t
-ol_tx_non_std(void *pvdev,
+ol_tx_non_std(struct cdp_vdev *pvdev,
 	      enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list);
 
 void ol_txrx_mgmt_tx_complete(void *ctxt, qdf_nbuf_t netbuf, int err);
@@ -142,7 +142,7 @@ void ol_txrx_mgmt_tx_complete(void *ctxt, qdf_nbuf_t netbuf, int err);
  * for a given type of management frame.
  */
 void
-ol_txrx_mgmt_tx_cb_set(void *ppdev,
+ol_txrx_mgmt_tx_cb_set(struct cdp_pdev *ppdev,
 		       uint8_t type,
 		       ol_txrx_mgmt_tx_cb download_cb,
 		       ol_txrx_mgmt_tx_cb ota_ack_cb, void *ctxt);
@@ -165,7 +165,7 @@ ol_txrx_mgmt_tx_cb_set(void *ppdev,
  *         1 - the frame was not accepted
  */
 int
-ol_txrx_mgmt_send_ext(void *pvdev,
+ol_txrx_mgmt_send_ext(struct cdp_vdev *pvdev,
 		      qdf_nbuf_t tx_mgmt_frm,
 		      uint8_t type, uint8_t use_6mbps, uint16_t chanfreq);
 

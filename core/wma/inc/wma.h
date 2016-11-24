@@ -50,6 +50,7 @@
 #include "dbglog.h"
 #include "cds_ieee80211_common.h"
 #include "wlan_objmgr_psoc_obj.h"
+#include <cdp_txrx_handle.h>
 /* Platform specific configuration for max. no. of fragments */
 #define QCA_OL_11AC_TX_MAX_FRAGS            2
 
@@ -1010,7 +1011,7 @@ typedef struct {
 struct wma_txrx_node {
 	uint8_t addr[IEEE80211_ADDR_LEN];
 	uint8_t bssid[IEEE80211_ADDR_LEN];
-	void *handle;
+	struct cdp_vdev *handle;
 	struct beacon_info *beacon;
 	vdev_restart_params_t vdev_restart_params;
 	vdev_cli_config_t config;
@@ -2300,8 +2301,8 @@ QDF_STATUS wma_add_wow_wakeup_event(tp_wma_handle wma,
 					uint32_t vdev_id,
 					uint32_t bitmap,
 					bool enable);
-QDF_STATUS wma_create_peer(tp_wma_handle wma, void *pdev,
-			   void *vdev, u8 peer_addr[6],
+QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
+			   struct cdp_vdev *vdev, u8 peer_addr[6],
 			   u_int32_t peer_type, u_int8_t vdev_id,
 			   bool roam_synch_in_progress);
 

@@ -41,7 +41,7 @@
 #include "wma_api.h"
 #include <cdp_txrx_cmn.h>
 #include <cdp_txrx_peer_ops.h>
-
+#include <cdp_txrx_handle.h>
 /* Structure definitions for WLAN_SET_DOT11P_CHANNEL_SCHED */
 #define AIFSN_MIN		(2)
 #define AIFSN_MAX		(15)
@@ -269,11 +269,13 @@ static int hdd_ocb_register_sta(hdd_adapter_t *adapter)
 	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
 	txrx_ops.rx.rx = hdd_rx_packet_cbk;
 	cdp_vdev_register(soc,
-		 cdp_get_vdev_from_vdev_id(soc, pdev, adapter->sessionId),
-		 adapter, &txrx_ops);
+		(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
+		(struct cdp_pdev *)pdev, adapter->sessionId),
+		adapter, &txrx_ops);
 	adapter->tx_fn = txrx_ops.tx.tx;
 
-	qdf_status = cdp_peer_register(soc, pdev, &sta_desc);
+	qdf_status = cdp_peer_register(soc,
+			(struct cdp_pdev *)pdev, &sta_desc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("Failed to register. Status= %d [0x%08X]",
 		       qdf_status, qdf_status);

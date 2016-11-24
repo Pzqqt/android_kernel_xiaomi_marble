@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -36,7 +36,7 @@
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <htc_api.h>            /* HTC_PACKET */
 #include <ol_htt_api.h>
-
+#include <cdp_txrx_handle.h>
 #define DEBUG_DMA_DONE
 
 #define HTT_TX_MUTEX_TYPE qdf_spinlock_t
@@ -229,7 +229,7 @@ struct mon_channel {
 };
 
 struct htt_pdev_t {
-	ol_pdev_handle ctrl_pdev;
+	struct cdp_cfg *ctrl_pdev;
 	ol_txrx_pdev_handle txrx_pdev;
 	HTC_HANDLE htc_pdev;
 	qdf_device_t osdev;

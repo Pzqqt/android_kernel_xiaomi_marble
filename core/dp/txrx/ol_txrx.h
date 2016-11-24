@@ -31,6 +31,7 @@
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <cdp_txrx_cmn.h>       /* ol_txrx_vdev_t, etc. */
 #include "cds_sched.h"
+#include <cdp_txrx_handle.h>
 #include <ol_txrx_types.h>
 /*
  * Pool of tx descriptors reserved for
@@ -38,7 +39,6 @@
  * only for forwarding path.
  */
 #define OL_TX_NON_FWD_RESERVE	100
-
 
 void ol_txrx_peer_unref_delete(struct ol_txrx_peer_t *peer);
 
@@ -49,7 +49,7 @@ void ol_txrx_peer_unref_delete(struct ol_txrx_peer_t *peer);
  * Return: allocated pool size
  */
 u_int16_t
-ol_tx_desc_pool_size_hl(ol_pdev_handle ctrl_pdev);
+ol_tx_desc_pool_size_hl(struct cdp_cfg *ctrl_pdev);
 
 #ifndef OL_TX_AVG_FRM_BYTES
 #define OL_TX_AVG_FRM_BYTES 1000
@@ -76,18 +76,17 @@ ol_tx_desc_pool_size_hl(ol_pdev_handle ctrl_pdev);
 #if defined(CONFIG_HL_SUPPORT) && defined(FEATURE_WLAN_TDLS)
 
 void
-ol_txrx_hl_tdls_flag_reset(void *vdev, bool flag);
+ol_txrx_hl_tdls_flag_reset(struct cdp_vdev *vdev, bool flag);
 #else
 
 static inline void
-ol_txrx_hl_tdls_flag_reset(void *vdev, bool flag)
+ol_txrx_hl_tdls_flag_reset(struct cdp_vdev *vdev, bool flag)
 {
 	return;
 }
 #endif
 
-/**
- * ol_txrx_dump_pkt() - display the data in buffer and buffer's address
+/*
  * @nbuf: buffer which contains data to be displayed
  * @nbuf_paddr: physical address of the buffer
  * @len: defines the size of the data to be displayed
@@ -118,11 +117,11 @@ ol_txrx_dump_pkt(qdf_nbuf_t nbuf, uint32_t nbuf_paddr, int len);
  */
 bool ol_txrx_fwd_desc_thresh_check(struct ol_txrx_vdev_t *vdev);
 
-void *ol_txrx_get_vdev_from_vdev_id(uint8_t vdev_id);
+struct cdp_vdev *ol_txrx_get_vdev_from_vdev_id(uint8_t vdev_id);
 
-void htt_pkt_log_init(void *handle, void *scn);
-void *ol_txrx_find_peer_by_addr(ol_txrx_pdev_handle pdev,
+void *ol_txrx_find_peer_by_addr(struct cdp_pdev *pdev,
 				uint8_t *peer_addr,
 				uint8_t *peer_id);
 
+void htt_pkt_log_init(struct cdp_pdev *pdev_handle, void *scn);
 #endif /* _OL_TXRX__H_ */

@@ -84,6 +84,7 @@
 #include "target_if.h"
 
 
+#include <cdp_txrx_handle.h>
 #define WMA_LOG_COMPLETION_TIMER 10000 /* 10 seconds */
 
 #define WMI_TLV_HEADROOM 128
@@ -745,14 +746,15 @@ static int32_t wma_set_priv_cfg(tp_wma_handle wma_handle,
 
 	case WMA_VDEV_TXRX_GET_IPA_UC_FW_STATS_CMDID:
 	{
-		void *pdev;
+		struct cdp_pdev *pdev;
 
 		pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 		if (!pdev) {
 			WMA_LOGE("pdev NULL for uc stat");
 			return -EINVAL;
 		}
-		cdp_ipa_get_stat(cds_get_context(QDF_MODULE_ID_SOC), pdev);
+		cdp_ipa_get_stat(cds_get_context(QDF_MODULE_ID_SOC),
+			pdev);
 	}
 		break;
 
@@ -917,7 +919,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 		break;
 	case GEN_CMD:
 	{
-		void *vdev = NULL;
+		struct cdp_vdev *vdev = NULL;
 		struct wma_txrx_node *intr = wma->interfaces;
 
 		vdev = wma_find_vdev_by_id(wma, privcmd->param_vdev_id);
@@ -3218,7 +3220,8 @@ QDF_STATUS wma_stop(void *cds_ctx, uint8_t reason)
 				wma_handle->interfaces[i].vdev_up) {
 			cdp_fc_vdev_flush(
 				cds_get_context(QDF_MODULE_ID_SOC),
-				wma_handle->interfaces[i].handle);
+				wma_handle->
+				interfaces[i].handle);
 		}
 	}
 	qdf_status = wma_tx_detach(wma_handle);
@@ -3785,16 +3788,16 @@ static inline void wma_update_target_services(tp_wma_handle wh,
 	if (WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap,
 			WMI_SERVICE_TX_MSDU_ID_NEW_PARTITION_SUPPORT)) {
 		cdp_ipa_set_uc_tx_partition_base(
-				cds_get_context(QDF_MODULE_ID_SOC),
-				cds_get_context(QDF_MODULE_ID_CFG),
-				HTT_TX_IPA_NEW_MSDU_ID_SPACE_BEGIN);
+			cds_get_context(QDF_MODULE_ID_SOC),
+			(struct cdp_cfg *)cds_get_context(QDF_MODULE_ID_CFG),
+			HTT_TX_IPA_NEW_MSDU_ID_SPACE_BEGIN);
 		WMA_LOGI("%s: TX_MSDU_ID_NEW_PARTITION=%d", __func__,
 				HTT_TX_IPA_NEW_MSDU_ID_SPACE_BEGIN);
 	} else {
 		cdp_ipa_set_uc_tx_partition_base(
-				cds_get_context(QDF_MODULE_ID_SOC),
-				cds_get_context(QDF_MODULE_ID_CFG),
-				HTT_TX_IPA_MSDU_ID_SPACE_BEGIN);
+			cds_get_context(QDF_MODULE_ID_SOC),
+			(struct cdp_cfg *)cds_get_context(QDF_MODULE_ID_CFG),
+			HTT_TX_IPA_MSDU_ID_SPACE_BEGIN);
 		WMA_LOGI("%s: TX_MSDU_ID_OLD_PARTITION=%d", __func__,
 				HTT_TX_IPA_MSDU_ID_SPACE_BEGIN);
 	}
@@ -6251,7 +6254,7 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, struct scheduler_msg *msg)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tp_wma_handle wma_handle;
-	void *txrx_vdev_handle = NULL;
+	struct cdp_vdev *txrx_vdev_handle = NULL;
 	extern uint8_t *mac_trace_get_wma_msg_string(uint16_t wmaMsg);
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 

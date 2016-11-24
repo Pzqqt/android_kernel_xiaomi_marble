@@ -537,7 +537,7 @@ struct ol_txrx_peer_id_map {
  */
 struct ol_txrx_pdev_t {
 	/* ctrl_pdev - handle for querying config info */
-	ol_pdev_handle ctrl_pdev;
+	struct cdp_cfg *ctrl_pdev;
 
 	/* osdev - handle for mem alloc / free, map / unmap */
 	qdf_device_t osdev;

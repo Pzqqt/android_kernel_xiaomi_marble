@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -51,7 +51,7 @@
 #include <ol_txrx_peer_find.h>
 #include <cdp_txrx_ipa.h>
 #include "pktlog_ac.h"
-
+#include <cdp_txrx_handle.h>
 /*--- target->host HTT message dispatch function ----------------------------*/
 
 #ifndef DEBUG_CREDIT
@@ -449,7 +449,8 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 			     sizeof(struct htt_wdi_ipa_op_response_t) +
 			     len);
 		cdp_ipa_op_response(cds_get_context(QDF_MODULE_ID_SOC),
-				pdev->txrx_pdev, op_msg_buffer);
+				(struct cdp_pdev *)pdev->txrx_pdev,
+				op_msg_buffer);
 		break;
 	}
 

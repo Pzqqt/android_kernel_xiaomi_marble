@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -42,7 +42,7 @@
 #include "htt.h"                /* htt_dbg_stats_type, etc. */
 #include <cdp_txrx_cmn.h>       /* ol_pdev_handle */
 #include <ol_defines.h>
-
+#include <cdp_txrx_handle.h>
 /* TID */
 #define OL_HTT_TID_NON_QOS_UNICAST     16
 #define OL_HTT_TID_NON_QOS_MCAST_BCAST 18
@@ -52,7 +52,7 @@ typedef struct htt_pdev_t *htt_pdev_handle;
 
 htt_pdev_handle
 htt_pdev_alloc(ol_txrx_pdev_handle txrx_pdev,
-	ol_pdev_handle ctrl_pdev,
+	struct cdp_cfg *ctrl_pdev,
 	HTC_HANDLE htc_pdev, qdf_device_t osdev);
 
 /**
@@ -365,7 +365,7 @@ static inline void htt_ipa_uc_detach(struct htt_pdev_t *pdev)
 
 void htt_rx_mon_note_capture_channel(htt_pdev_handle pdev, int mon_ch);
 
-void ol_htt_mon_note_chan(ol_txrx_pdev_handle pdev, int mon_ch);
+void ol_htt_mon_note_chan(struct cdp_pdev *ppdev, int mon_ch);
 
 #if defined(DEBUG_HL_LOGGING) && defined(CONFIG_HL_SUPPORT)
 

@@ -59,7 +59,7 @@
 #include <cdp_txrx_flow_ctrl_v2.h>
 #include "wlan_hdd_nan_datapath.h"
 #include "pld_common.h"
-
+#include <cdp_txrx_handle.h>
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 /*
  * Mapping Linux AC interpretation to SME AC.
@@ -1414,10 +1414,12 @@ int hdd_set_mon_rx_cb(struct net_device *dev)
 	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
 	txrx_ops.rx.rx = hdd_mon_rx_packet_cbk;
 	cdp_vdev_register(soc,
-		 cdp_get_vdev_from_vdev_id(soc, pdev, adapter->sessionId),
-		 adapter, &txrx_ops);
+		(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
+		(struct cdp_pdev *)pdev, adapter->sessionId),
+		adapter, &txrx_ops);
 	/* peer is created wma_vdev_attach->wma_create_peer */
-	qdf_status = cdp_peer_register(soc, pdev, &sta_desc);
+	qdf_status = cdp_peer_register(soc,
+			(struct cdp_pdev *)pdev, &sta_desc);
 	if (QDF_STATUS_SUCCESS != qdf_status) {
 		hdd_err("cdp_peer_register() failed to register. Status= %d [0x%08X]",
 			qdf_status, qdf_status);
