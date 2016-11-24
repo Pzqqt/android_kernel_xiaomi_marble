@@ -42,7 +42,6 @@ unsigned int vow_config = 0;
 void ol_tx_set_flow_control_parameters(struct txrx_pdev_cfg_t *cfg_ctx,
 	struct txrx_pdev_cfg_param_t *cfg_param)
 {
-	struct txrx_pdev_cfg_t *cfg_ctx = pcfg_ctx;
 	cfg_ctx->tx_flow_start_queue_offset =
 					cfg_param->tx_flow_start_queue_offset;
 	cfg_ctx->tx_flow_stop_queue_th =

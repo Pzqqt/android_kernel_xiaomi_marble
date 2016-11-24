@@ -527,6 +527,7 @@ static void *hdd_init_lro_mgr(void)
  */
 int hdd_lro_enable(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 {
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (!hdd_ctx->config->lro_enable ||
 		 QDF_STA_MODE != adapter->device_mode) {
@@ -535,7 +536,7 @@ int hdd_lro_enable(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 	}
 
 	/* Register the flush callback */
-	cdp_register_lro_flush_cb(hdd_lro_flush, hdd_init_lro_mgr);
+	cdp_register_lro_flush_cb(soc, hdd_lro_flush, hdd_init_lro_mgr);
 	adapter->dev->features |= NETIF_F_LRO;
 
 	hdd_info("LRO Enabled");
@@ -563,12 +564,14 @@ void hdd_deinit_lro_mgr(void *lro_info)
  */
 void hdd_lro_disable(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 {
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
 	if (!hdd_ctx->config->lro_enable ||
 		 QDF_STA_MODE != adapter->device_mode)
 		return;
 
 	/* Deregister the flush callback */
-	cdp_deregister_lro_flush_cb(hdd_deinit_lro_mgr);
+	cdp_deregister_lro_flush_cb(soc, hdd_deinit_lro_mgr);
 	return;
 }
 

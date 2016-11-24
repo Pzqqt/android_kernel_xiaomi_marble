@@ -179,13 +179,6 @@ static void cds_cdp_cfg_attach(struct cds_config_info *cds_cfg)
 	struct txrx_pdev_cfg_param_t cdp_cfg = {0};
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
-	gp_cds_context->cfg_ctx = cdp_cfg_attach(soc, gp_cds_context->qdf_ctx,
-					(void *)(&cdp_cfg));
-	if (!gp_cds_context->cfg_ctx) {
-		WMA_LOGP("%s: failed to init cfg handle", __func__);
-		return;
-	}
-
 	cdp_cfg.is_uc_offload_enabled = cds_cfg->uc_offload_enabled;
 	cdp_cfg.uc_tx_buffer_count = cds_cfg->uc_txbuf_count;
 	cdp_cfg.uc_tx_buffer_size = cds_cfg->uc_txbuf_size;
@@ -195,6 +188,13 @@ static void cds_cdp_cfg_attach(struct cds_config_info *cds_cfg)
 	cdp_cfg.ip_tcp_udp_checksum_offload =
 			cds_cfg->ip_tcp_udp_checksum_offload;
 	cdp_cfg.ce_classify_enabled = cds_cfg->ce_classify_enabled;
+
+	gp_cds_context->cfg_ctx = cdp_cfg_attach(soc, gp_cds_context->qdf_ctx,
+					(void *)(&cdp_cfg));
+	if (!gp_cds_context->cfg_ctx) {
+		WMA_LOGP("%s: failed to init cfg handle", __func__);
+		return;
+	}
 
 	/* Configure Receive flow steering */
 	cdp_cfg_set_flow_steering(soc, &gp_cds_context->cfg_ctx,
