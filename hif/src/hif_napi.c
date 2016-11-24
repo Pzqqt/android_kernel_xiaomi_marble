@@ -761,8 +761,11 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx, struct napi_struct *napi,
 	if (0 == rc)
 		NAPI_DEBUG("%s:%d: nothing processed by CE. Completing NAPI",
 			   __func__, __LINE__);
-
+#ifdef NAPI_YIELD_BUDGET_BASED
+	if (ce_state && (ce_state->force_break || 0 == rc)) {
+#else
 	if (ce_state && (!ce_check_rx_pending(ce_state) || 0 == rc)) {
+#endif
 		napi_info->stats[cpu].napi_completes++;
 
 		hif_record_ce_desc_event(hif, ce_state->id, NAPI_COMPLETE,

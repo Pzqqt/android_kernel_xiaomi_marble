@@ -198,6 +198,14 @@ inline void ce_init_ce_desc_event_log(int ce_id, int size)
 }
 #endif
 
+#ifdef NAPI_YIELD_BUDGET_BASED
+bool hif_ce_service_should_yield(struct hif_softc *scn,
+				 struct CE_state *ce_state)
+{
+	bool yield =  hif_max_num_receives_reached(scn, ce_state->receive_count);
+	return yield;
+}
+#else
 /**
  * hif_ce_service_should_yield() - return true if the service is hogging the cpu
  * @scn: hif context
@@ -213,7 +221,7 @@ bool hif_ce_service_should_yield(struct hif_softc *scn,
 		     hif_max_num_receives_reached(scn, ce_state->receive_count);
 	return yield;
 }
-
+#endif
 /*
  * Support for Copy Engine hardware, which is mainly used for
  * communication between Host and Target over a PCIe interconnect.
