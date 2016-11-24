@@ -4799,6 +4799,8 @@ static void hdd_context_destroy(hdd_context_t *hdd_ctx)
 	if (QDF_GLOBAL_FTM_MODE != hdd_get_conparam())
 		hdd_logging_sock_deactivate_svc(hdd_ctx);
 
+	wlan_hdd_deinit_tx_rx_histogram(hdd_ctx);
+
 	hdd_context_deinit(hdd_ctx);
 
 	qdf_mem_free(hdd_ctx->config);
@@ -4926,7 +4928,6 @@ static void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 	cds_flush_work(&hdd_ctx->roc_req_work);
 
 	wlansap_global_deinit();
-	wlan_hdd_deinit_tx_rx_histogram(hdd_ctx);
 	wiphy_unregister(wiphy);
 	wlan_hdd_cfg80211_deinit(wiphy);
 
@@ -8324,7 +8325,6 @@ err_exit_nl_srv:
 
 	cds_deinit_ini_config();
 err_hdd_free_context:
-	wlan_hdd_deinit_tx_rx_histogram(hdd_ctx);
 	qdf_mc_timer_destroy(&hdd_ctx->iface_change_timer);
 	mutex_destroy(&hdd_ctx->iface_change_lock);
 	hdd_context_destroy(hdd_ctx);
