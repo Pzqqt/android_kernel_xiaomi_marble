@@ -63,7 +63,7 @@ static inline void cdp_register_lro_flush_cb(ol_txrx_soc_handle soc,
  *
  * return none
  */
-static inline void cdp_deregister_lro_flush_cb(ol_txrx_soc_handle soc
+static inline void cdp_deregister_lro_flush_cb(ol_txrx_soc_handle soc,
 		void (lro_deinit_cb)(void *))
 {
 	if (!soc || !soc->ops || !soc->ops->lro_ops) {
