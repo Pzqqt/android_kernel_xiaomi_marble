@@ -154,6 +154,18 @@ hdd_tx_resume_false(hdd_adapter_t *pAdapter, bool tx_resume)
 }
 #endif
 
+static inline struct sk_buff *hdd_skb_orphan(hdd_adapter_t *pAdapter,
+		struct sk_buff *skb)
+{
+	if (pAdapter->tx_flow_low_watermark > 0)
+		skb_orphan(skb);
+	else {
+		skb = skb_unshare(skb, GFP_ATOMIC);
+	}
+
+	return skb;
+}
+
 /**
  * hdd_tx_resume_cb() - Resume OS TX Q.
  * @adapter_context: pointer to vdev apdapter
@@ -269,6 +281,14 @@ void hdd_get_tx_resource(hdd_adapter_t *adapter,
 			adapter->hdd_stats.hddTxRxStats.is_txflow_paused = true;
 		}
 	}
+}
+
+#else
+
+static inline struct sk_buff *hdd_skb_orphan(hdd_adapter_t *pAdapter,
+		struct sk_buff *skb)
+{
+	return skb_unshare(skb, GFP_ATOMIC);
 }
 
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
@@ -448,8 +468,26 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	ac = hdd_qdisc_ac_to_tl_ac[skb->queue_mapping];
 
 	if (!qdf_nbuf_ipa_owned_get(skb)) {
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(3, 19, 0))
+		/*
+		* The TCP TX throttling logic is changed a little after
+		* 3.19-rc1 kernel, the TCP sending limit will be smaller,
+		* which will throttle the TCP packets to the host driver.
+		* The TCP UP LINK throughput will drop heavily. In order to
+		* fix this issue, need to orphan the socket buffer asap, which
+		* will call skb's destructor to notify the TCP stack that the
+		* SKB buffer is unowned. And then the TCP stack will pump more
+		* packets to host driver.
+		*
+		* The TX packets might be dropped for UDP case in the iperf
+		* testing. So need to be protected by follow control.
+		*/
+		skb = hdd_skb_orphan(pAdapter, skb);
+#else
 		/* Check if the buffer has enough header room */
 		skb = skb_unshare(skb, GFP_ATOMIC);
+#endif
+
 		if (!skb)
 			goto drop_pkt_accounting;
 	}
