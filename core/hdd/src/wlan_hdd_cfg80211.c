@@ -12897,6 +12897,11 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 
 	status = wlan_hdd_validate_context(pHddCtx);
 
+	if (hdd_is_roaming_in_progress()) {
+		hdd_err("Roaming In Progress. Ignore!!!");
+		return -EAGAIN;
+	}
+
 	if (0 != status)
 		return status;
 

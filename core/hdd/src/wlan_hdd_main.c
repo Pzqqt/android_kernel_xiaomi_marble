@@ -595,11 +595,6 @@ int wlan_hdd_validate_context(hdd_context_t *hdd_ctx)
 		return -EAGAIN;
 	}
 
-	if (hdd_is_roaming_in_progress()) {
-		hdd_err("Roaming In Progress. Ignore!!!");
-		return -EAGAIN;
-	}
-
 	return 0;
 }
 
