@@ -350,7 +350,6 @@ struct tdls_set_state_info {
  * @discovery_sent_cnt: discovery sent count
  * @ap_rssi: ap rssi
  * @curr_candidate: current candidate
- * @implicit_setup: implicit setup work queue
  * @ct_peer_mac_table: linear mac address table for counting the packets
  * @valid_mac_entries: number of valid mac entry in @ct_peer_mac_table
  * @magic: magic
@@ -366,7 +365,6 @@ typedef struct {
 	uint32_t discovery_sent_cnt;
 	int8_t ap_rssi;
 	struct _hddTdlsPeer_t *curr_candidate;
-	struct work_struct implicit_setup;
 	struct tdls_ct_mac_table ct_peer_mac_table[TDLS_CT_MAC_MAX_TABLE_SIZE];
 	uint8_t valid_mac_entries;
 	uint32_t magic;
@@ -591,8 +589,7 @@ void wlan_hdd_tdls_indicate_teardown(hdd_adapter_t *pAdapter,
 				     hddTdlsPeer_t *curr_peer,
 				     uint16_t reason);
 
-void wlan_hdd_tdls_pre_setup_init_work(tdlsCtx_t *pHddTdlsCtx,
-				       hddTdlsPeer_t *curr_candidate);
+void wlan_hdd_tdls_implicit_send_discovery_request(tdlsCtx_t *hdd_tdls_ctx);
 
 int wlan_hdd_tdls_set_extctrl_param(hdd_adapter_t *pAdapter,
 				    const uint8_t *mac,

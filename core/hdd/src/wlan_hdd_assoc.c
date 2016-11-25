@@ -3925,8 +3925,9 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 						curr_peer->isForcedPeer,
 						pRoamInfo->reasonCode);
 				}
-				wlan_hdd_tdls_pre_setup_init_work
-					(pHddTdlsCtx, curr_peer);
+				pHddTdlsCtx->curr_candidate = curr_peer;
+				wlan_hdd_tdls_implicit_send_discovery_request(
+								pHddTdlsCtx);
 			}
 			status = QDF_STATUS_SUCCESS;
 		}
