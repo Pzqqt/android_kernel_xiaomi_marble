@@ -586,6 +586,9 @@ static QDF_STATUS convert_host_peer_id_to_target_id_tlv(
 	case WMI_HOST_PEER_SET_MIN_TX_RATE:
 		*targ_paramid = WMI_PEER_SET_MIN_TX_RATE;
 		break;
+	case WMI_HOST_PEER_SET_DEFAULT_ROUTING:
+		*targ_paramid = WMI_PEER_SET_DEFAULT_ROUTING;
+		break;
 	default:
 		return QDF_STATUS_E_NOSUPPORT;
 	}
@@ -1663,6 +1666,24 @@ static inline void copy_peer_flags_tlv(
 		cmd->peer_flags &= ~WMI_PEER_HT;
 }
 #endif
+
+#ifdef CONFIG_MCL
+static inline void copy_peer_mac_addr_tlv(
+		wmi_peer_assoc_complete_cmd_fixed_param * cmd,
+		struct peer_assoc_params *param)
+{
+	qdf_mem_copy(&cmd->peer_macaddr, &param->peer_macaddr,
+			sizeof(param->peer_macaddr));
+}
+#else
+static inline void copy_peer_mac_addr_tlv(
+		wmi_peer_assoc_complete_cmd_fixed_param * cmd,
+		struct peer_assoc_params *param)
+{
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(param->peer_mac, &cmd->peer_macaddr);
+}
+#endif
+
 /**
  *  send_peer_assoc_cmd_tlv() - WMI peer assoc function
  *  @param wmi_handle      : handle to WMI.
@@ -1706,11 +1727,13 @@ QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 			       (wmi_peer_assoc_complete_cmd_fixed_param));
 
 	cmd->vdev_id = param->vdev_id;
-	qdf_mem_copy(&cmd->peer_macaddr, &param->peer_macaddr,
-				 sizeof(param->peer_macaddr));
+
 	cmd->peer_new_assoc = param->peer_new_assoc;
 	cmd->peer_associd = param->peer_associd;
+
 	copy_peer_flags_tlv(cmd, param);
+	copy_peer_mac_addr_tlv(cmd, param);
+
 	cmd->peer_rate_caps = param->peer_rate_caps;
 	cmd->peer_caps = param->peer_caps;
 	cmd->peer_listen_intval = param->peer_listen_intval;
