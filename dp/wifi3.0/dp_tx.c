@@ -25,12 +25,12 @@
 #include "qdf_nbuf.h"
 #include "../../wlan_cfg/wlan_cfg.h"
 
-#ifdef TX_CORE_ALIGNED_SEND
-#define DP_TX_GET_DESC_POOL_ID(vdev) qdf_get_cpu()
-#define DP_TX_GET_RING_ID(vdev) qdf_get_cpu()
-#else
+#ifdef TX_PER_VDEV_DESC_POOL
 #define DP_TX_GET_DESC_POOL_ID(vdev) (vdev->vdev_id)
 #define DP_TX_GET_RING_ID(vdev) (vdev->pdev->pdev_id)
+#else
+#define DP_TX_GET_DESC_POOL_ID(vdev) qdf_get_cpu()
+#define DP_TX_GET_RING_ID(vdev) qdf_get_cpu()
 #endif /* TX_CORE_ALIGNED_SEND */
 
 /* TODO Add support in TSO */
@@ -229,6 +229,7 @@ struct dp_tx_ext_desc_elem_s *dp_tx_prepare_ext_desc(struct dp_vdev *vdev,
 
 	/* Allocate an extension descriptor */
 	msdu_ext_desc = dp_tx_ext_desc_alloc(soc, desc_pool_id);
+	qdf_mem_zero(&cached_ext_desc[0], HAL_TX_EXTENSION_DESC_LEN_BYTES);
 	if (!msdu_ext_desc)
 		return NULL;
 
@@ -310,13 +311,16 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	tx_desc->vdev = vdev;
 	tx_desc->msdu_ext_desc = NULL;
 
-	/*
-	 * For non-scatter regular frames, buffer pointer is directly
-	 * programmed in TCL input descriptor instead of using an MSDU extension
-	 * descriptor.For the direct buffer pointer case, HW requirement is that
-	 * descriptor should always point to a 8-byte aligned address.
-	 */
-	align_pad = (uint8_t)((uintptr_t) (qdf_nbuf_data(nbuf)) & 0x7);
+	if (qdf_nbuf_map_nbytes_single(soc->osdev, nbuf,
+				QDF_DMA_TO_DEVICE, qdf_nbuf_len(nbuf)
+				!= QDF_STATUS_SUCCESS)) {
+		/* Handle failure */
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"qdf_nbuf_map_nbytes_single failed\n");
+		goto failure;
+	}
+
+	align_pad = ((unsigned long) qdf_nbuf_mapped_paddr_get(nbuf)) & 0x7;
 	tx_desc->pkt_offset = align_pad;
 
 	/*
@@ -326,7 +330,8 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	 * These are filled in HTT MSDU descriptor and sent in frame pre-header.
 	 * These frames are sent as exception packets to firmware.
 	 */
-	if (qdf_unlikely(vdev->mesh_vdev || (vdev->opmode == wlan_op_mode_ocb))) {
+	if (qdf_unlikely(vdev->mesh_vdev ||
+				(vdev->opmode == wlan_op_mode_ocb))) {
 		htt_hdr_size = dp_tx_prepare_htt_metadata(vdev, nbuf,
 				align_pad);
 		tx_desc->pkt_offset += htt_hdr_size;
@@ -351,15 +356,6 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 		/* Temporary WAR due to TQM VP issues */
 		tx_desc->flags |= DP_TX_DESC_FLAG_TO_FW;
 		pdev->num_tx_exception++;
-	}
-
-	if (qdf_nbuf_map_nbytes_single(soc->osdev, nbuf,
-				QDF_DMA_TO_DEVICE, qdf_nbuf_len(nbuf)
-				!= QDF_STATUS_SUCCESS)) {
-		/* Handle failure */
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				"qdf_nbuf_map_nbytes_single failed\n");
-		goto failure;
 	}
 
 	return tx_desc;
@@ -497,14 +493,20 @@ QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	} else {
 		length = qdf_nbuf_len(tx_desc->nbuf);
 		type = HAL_TX_BUF_TYPE_BUFFER;
-		dma_addr = qdf_nbuf_mapped_paddr_get(tx_desc->nbuf);
+
+		/**
+		 * For non-scatter regular frames, buffer pointer is directly
+		 * programmed in TCL input descriptor instead of using an MSDU
+		 * extension descriptor.For the direct buffer pointer case, HW
+		 * requirement is that descriptor should always point to a
+		 * 8-byte aligned address.
+		 * Alignment padding is already accounted in pkt_offset
+		 *
+		 */
+		dma_addr = (qdf_nbuf_mapped_paddr_get(tx_desc->nbuf) -
+				tx_desc->pkt_offset);
 	}
 
-	/*
-	 * Address given to TCL should always be 8-byte aligned.
-	 * Alignment bytes are already accounted in length as pkt_offset
-	 */
-	dma_addr -= ((uint32_t) dma_addr & 0x7);
 
 	hal_tx_desc_set_fw_metadata(hal_tx_desc_cached, fw_metadata);
 	hal_tx_desc_set_buf_addr(hal_tx_desc_cached,
@@ -515,7 +517,8 @@ QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 			"%s length:%d , type = %d, dma_addr %llx, offset %d\n",
-			__func__, length, type, (uint64_t)dma_addr, tx_desc->pkt_offset);
+			__func__, length, type, (uint64_t)dma_addr,
+			tx_desc->pkt_offset);
 
 	if (tx_desc->flags & DP_TX_DESC_FLAG_TO_FW)
 		hal_tx_desc_set_to_fw(hal_tx_desc_cached, 1);
@@ -840,6 +843,12 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 	 *  to minimize lock contention for these resources.
 	 */
 	dp_tx_get_queue(vdev, nbuf, &msdu_info.tx_queue);
+
+	/*
+	 * Set Default Host TID value to invalid TID
+	 * (TID override disabled)
+	 */
+	msdu_info.tid = HTT_TX_EXT_TID_INVALID;
 
 	/*
 	 * TCL H/W supports 2 DSCP-TID mapping tables.
@@ -1226,17 +1235,18 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, uint32_t ring_id,
 			/* First ring descriptor on the cycle */
 			if (!head_desc) {
 				head_desc = tx_desc;
-				tail_desc = tx_desc;
+			} else {
+				tail_desc->next = tx_desc;
 			}
 
-			tail_desc->next = tx_desc;
+			tail_desc = tx_desc;
 
 			/* Collect hw completion contents */
 			hal_tx_comp_desc_sync(tx_comp_hal_desc,
 					&tx_desc->comp, soc->process_tx_status);
+
 		}
 
-		tail_desc = tx_desc;
 		num_processed++;
 
 		/*

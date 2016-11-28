@@ -72,7 +72,7 @@ do {                                            \
 #define HAL_TX_COMP_HTT_STATUS_LEN 8
 
 #define HAL_TX_BUF_TYPE_BUFFER 0
-#define HAL_TX_BUF_TYPE_EXT_DESC 2
+#define HAL_TX_BUF_TYPE_EXT_DESC 1
 
 #define HAL_TX_EXT_DESC_BUF_OFFSET TX_MSDU_EXTENSION_6_BUF0_PTR_31_0_OFFSET
 #define HAL_TX_EXT_BUF_LOW_MASK TX_MSDU_EXTENSION_6_BUF0_PTR_31_0_MASK
@@ -277,8 +277,8 @@ static inline void hal_tx_desc_set_buf_addr(void *desc,
 		HAL_TX_SM(BUFFER_ADDR_INFO_1, SW_BUFFER_COOKIE, desc_id);
 
 	/* Set  Buffer or Ext Descriptor Type */
-	HAL_SET_FLD(desc, TCL_DATA_CMD_1,
-			 BUFFER_ADDR_INFO_BUF_ADDR_INFO) |=
+	HAL_SET_FLD(desc, TCL_DATA_CMD_2,
+			BUF_OR_EXT_DESC_TYPE) |=
 		HAL_TX_SM(TCL_DATA_CMD_2, BUF_OR_EXT_DESC_TYPE, type);
 }
 
