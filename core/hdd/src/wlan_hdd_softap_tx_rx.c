@@ -295,7 +295,7 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 			goto drop_pkt;
 		}
 
-		if (STAId == HDD_WLAN_INVALID_STA_ID) {
+		if (STAId >= WLAN_MAX_STA_COUNT) {
 			QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA,
 				  QDF_TRACE_LEVEL_WARN,
 				  "%s: Failed to find right station", __func__);
