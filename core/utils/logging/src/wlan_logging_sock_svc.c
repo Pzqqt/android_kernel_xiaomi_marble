@@ -313,7 +313,8 @@ static int wlan_queue_logmsg_for_app(void)
 
 #ifdef QCA_WIFI_3_0_ADRASTEA
 /**
- * wlan_add_user_log_radio_time_stamp() - add radio and time stamp in log buffer
+ * wlan_add_user_log_radio_time_stamp() - add radio, firmware timestamp and
+ * time stamp in log buffer
  * @tbuf: Pointer to time stamp buffer
  * @tbuf_sz: Time buffer size
  * @ts: Time stamp value
@@ -323,6 +324,8 @@ static int wlan_queue_logmsg_for_app(void)
  * to convert it into user visible time stamp. In adrstea FW also uses QTIMER
  * raw ticks which is needed to synchronize host and fw log time stamps
  *
+ * Also add logcat timestamp so that driver logs and
+ * logcat logs can be co-related
  *
  * For discrete solution e.g rome use system tick and convert it into
  * seconds.milli seconds
@@ -334,11 +337,14 @@ static int wlan_add_user_log_radio_time_stamp(char *tbuf, size_t tbuf_sz,
 					      uint64_t ts, int radio)
 {
 	int tlen;
+	char time_buf[20];
 
-	tlen = scnprintf(tbuf, tbuf_sz, "R%d: [%s][%llu] ", radio,
+	qdf_get_time_of_the_day_in_hr_min_sec_usec(time_buf, sizeof(time_buf));
+
+	tlen = scnprintf(tbuf, tbuf_sz, "R%d: [%.6s][%llu] %s ", radio,
 			((in_irq() ? "irq" : in_softirq() ?  "soft_irq" :
 			current->comm)),
-			ts);
+			ts, time_buf);
 	return tlen;
 }
 #else
