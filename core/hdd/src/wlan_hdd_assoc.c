@@ -1936,7 +1936,6 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	uint8_t *assoc_req_ies = kmalloc(IW_GENERIC_IE_MAX, GFP_KERNEL);
 	uint32_t rspRsnLength = 0;
 	struct ieee80211_channel *chan;
-	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	uint8_t buf_ssid_ie[2 + SIR_MAC_SSID_EID_MAX]; /* 2 bytes-EID and len */
 	uint8_t *buf_ptr, ssid_ie_len;
 	struct cfg80211_bss *bss = NULL;
@@ -2046,7 +2045,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
 		assoc_req_ies, pCsrRoamInfo->nAssocReqLength);
 
-	wlan_hdd_send_roam_auth_event(pHddCtx, pCsrRoamInfo->bssid.bytes,
+	wlan_hdd_send_roam_auth_event(pAdapter, pCsrRoamInfo->bssid.bytes,
 			assoc_req_ies, pCsrRoamInfo->nAssocReqLength,
 			rspRsnIe, rspRsnLength,
 			pCsrRoamInfo);
@@ -2583,7 +2582,7 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 								assocRsplen,
 								GFP_KERNEL);
 						wlan_hdd_send_roam_auth_event(
-								pHddCtx,
+								pAdapter,
 								pRoamInfo->bssid.bytes,
 								pFTAssocReq,
 								assocReqlen,

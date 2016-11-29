@@ -3782,7 +3782,7 @@ wlan_hdd_cfg80211_get_logger_supp_feature(struct wiphy *wiphy,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * wlan_hdd_send_roam_auth_event() - Send the roamed and authorized event
- * @hdd_ctx_ptr: pointer to HDD Context.
+ * @adapter: Pointer to adapter struct
  * @bssid: pointer to bssid of roamed AP.
  * @req_rsn_ie: Pointer to request RSN IE
  * @req_rsn_len: Length of the request RSN IE
@@ -3807,10 +3807,11 @@ wlan_hdd_cfg80211_get_logger_supp_feature(struct wiphy *wiphy,
  *
  * Return: Return the Success or Failure code.
  */
-int wlan_hdd_send_roam_auth_event(hdd_context_t *hdd_ctx_ptr, uint8_t *bssid,
+int wlan_hdd_send_roam_auth_event(hdd_adapter_t *adapter, uint8_t *bssid,
 		uint8_t *req_rsn_ie, uint32_t req_rsn_len, uint8_t *rsp_rsn_ie,
 		uint32_t rsp_rsn_len, tCsrRoamInfo *roam_info_ptr)
 {
+	hdd_context_t *hdd_ctx_ptr = WLAN_HDD_GET_CTX(adapter);
 	struct sk_buff *skb = NULL;
 	eCsrAuthType auth_type;
 	ENTER();
@@ -3823,7 +3824,7 @@ int wlan_hdd_send_roam_auth_event(hdd_context_t *hdd_ctx_ptr, uint8_t *bssid,
 		return 0;
 
 	skb = cfg80211_vendor_event_alloc(hdd_ctx_ptr->wiphy,
-			NULL,
+			&(adapter->wdev),
 			ETH_ALEN + req_rsn_len + rsp_rsn_len +
 			sizeof(uint8_t) + SIR_REPLAY_CTR_LEN +
 			SIR_KCK_KEY_LEN + SIR_KCK_KEY_LEN +
