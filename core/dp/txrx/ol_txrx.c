@@ -4879,6 +4879,32 @@ ol_txrx_dump_pkt(qdf_nbuf_t nbuf, uint32_t nbuf_paddr, int len)
 		       qdf_nbuf_data(nbuf), len, true);
 }
 
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+bool
+ol_txrx_fwd_desc_thresh_check(struct ol_txrx_vdev_t *vdev)
+{
+	struct ol_tx_flow_pool_t *pool = vdev->pool;
+	bool enough_desc_flag;
+
+	if (!vdev)
+		return true;
+
+	pool = vdev->pool;
+
+	qdf_spin_lock_bh(&pool->flow_pool_lock);
+	enough_desc_flag = (pool->avail_desc < (pool->stop_th +
+						OL_TX_NON_FWD_RESERVE))
+			   ? false : true;
+	qdf_spin_unlock_bh(&pool->flow_pool_lock);
+	return enough_desc_flag;
+}
+#else
+bool ol_txrx_fwd_desc_thresh_check(struct ol_txrx_vdev_t *vdev)
+{
+	return true;
+}
+#endif
+
 /**
  * ol_txrx_get_vdev_from_vdev_id() - get vdev from vdev_id
  * @vdev_id: vdev_id

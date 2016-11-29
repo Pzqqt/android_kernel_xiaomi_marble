@@ -48,6 +48,7 @@
 #include <linux/inetdevice.h>
 #include <linux/ip.h>
 #include <wlan_hdd_softap_tx_rx.h>
+#include <ol_txrx.h>
 #include <cdp_txrx_peer_ops.h>
 
 #include "cds_sched.h"
@@ -3221,6 +3222,14 @@ static enum hdd_ipa_forward_type hdd_ipa_intrabss_forward(
 	int ret = HDD_IPA_FORWARD_PKT_NONE;
 
 	if ((desc & FW_RX_DESC_FORWARD_M)) {
+		if (!ol_txrx_fwd_desc_thresh_check(
+			ol_txrx_get_vdev_from_vdev_id(adapter->sessionId))) {
+			/* Drop the packet*/
+			hdd_ipa->stats.num_tx_fwd_err++;
+			kfree_skb(skb);
+			ret = HDD_IPA_FORWARD_PKT_DISCARD;
+			return ret;
+		}
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG,
 				"Forward packet to Tx (fw_desc=%d)", desc);
 		hdd_ipa->ipa_tx_forward++;

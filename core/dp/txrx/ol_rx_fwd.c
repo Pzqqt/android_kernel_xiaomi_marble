@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -202,6 +202,21 @@ ol_rx_fwd_check(struct ol_txrx_vdev_t *vdev,
 				qdf_nbuf_set_tid(msdu,
 						 QDF_NBUF_TX_EXT_TID_INVALID);
 			}
+
+			if (!ol_txrx_fwd_desc_thresh_check(vdev)) {
+				/* Drop the packet*/
+				htt_rx_msdu_desc_free(pdev->htt_pdev, msdu);
+				qdf_net_buf_debug_release_skb(msdu);
+				TXRX_STATS_MSDU_LIST_INCR(
+					pdev, tx.dropped.host_reject, msdu);
+				/* add NULL terminator */
+				qdf_nbuf_set_next(msdu, NULL);
+				qdf_nbuf_tx_free(msdu,
+						 QDF_NBUF_PKT_ERROR);
+				msdu = msdu_list;
+				continue;
+			}
+
 			/*
 			 * This MSDU needs to be forwarded to the tx path.
 			 * Check whether it also needs to be sent to the OS
@@ -219,6 +234,7 @@ ol_rx_fwd_check(struct ol_txrx_vdev_t *vdev,
 					 pub.rx.intra_bss_fwd.packets_fwd, 1);
 			} else {
 				qdf_nbuf_t copy;
+
 				copy = qdf_nbuf_copy(msdu);
 				if (copy) {
 					ol_rx_fwd_to_tx(tx_vdev, copy);
