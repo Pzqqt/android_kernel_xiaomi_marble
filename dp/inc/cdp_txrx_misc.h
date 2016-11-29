@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -32,6 +32,7 @@
 #ifndef _CDP_TXRX_MISC_H_
 #define _CDP_TXRX_MISC_H_
 
+#include "cdp_txrx_handle.h"
 /**
  * cdp_tx_non_std() - Allow the control-path SW to send data frames
  *
@@ -56,7 +57,7 @@
  *  Return: null - success, skb - failure
  */
 static inline qdf_nbuf_t
-cdp_tx_non_std(ol_txrx_soc_handle soc, void *vdev,
+cdp_tx_non_std(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 		enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list)
 {
 	if (!soc || !soc->ops || !soc->ops->misc_ops) {
@@ -81,8 +82,8 @@ cdp_tx_non_std(ol_txrx_soc_handle soc, void *vdev,
  * Return: Old timer value set in vdev.
  */
 static inline uint16_t
-cdp_set_ibss_vdev_heart_beat_timer(ol_txrx_soc_handle soc, void *vdev,
-		uint16_t timer_value_sec)
+cdp_set_ibss_vdev_heart_beat_timer(ol_txrx_soc_handle soc,
+		struct cdp_vdev *vdev, uint16_t timer_value_sec)
 {
 	if (!soc || !soc->ops || !soc->ops->misc_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -106,7 +107,7 @@ cdp_set_ibss_vdev_heart_beat_timer(ol_txrx_soc_handle soc, void *vdev,
  * Return: QDF_STATUS_SUCCESS mode enable success
  */
 static inline QDF_STATUS
-cdp_set_wisa_mode(ol_txrx_soc_handle soc, void *vdev, bool enable)
+cdp_set_wisa_mode(ol_txrx_soc_handle soc, struct cdp_vdev *vdev, bool enable)
 {
 	if (!soc || !soc->ops || !soc->ops->misc_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -128,7 +129,7 @@ cdp_set_wisa_mode(ol_txrx_soc_handle soc, void *vdev, bool enable)
  * Return: none
  */
 static inline void
-cdp_set_wmm_param(ol_txrx_soc_handle soc, void *pdev,
+cdp_set_wmm_param(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 		      struct ol_tx_wmm_param_t wmm_param)
 {
 	if (!soc || !soc->ops || !soc->ops->misc_ops) {
@@ -152,7 +153,7 @@ cdp_set_wmm_param(ol_txrx_soc_handle soc, void *pdev,
  * Return: QDF_STATUS_SUCCESS suspend success
  */
 static inline QDF_STATUS cdp_runtime_suspend(ol_txrx_soc_handle soc,
-		void *pdev)
+		struct cdp_pdev *pdev)
 {
 	if (!soc || !soc->ops || !soc->ops->misc_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -174,7 +175,7 @@ static inline QDF_STATUS cdp_runtime_suspend(ol_txrx_soc_handle soc,
  * Return: QDF_STATUS_SUCCESS suspend success
  */
 static inline QDF_STATUS cdp_runtime_resume(ol_txrx_soc_handle soc,
-		void *pdev)
+		struct cdp_pdev *pdev)
 {
 	if (!soc || !soc->ops || !soc->ops->misc_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -197,7 +198,7 @@ static inline QDF_STATUS cdp_runtime_resume(ol_txrx_soc_handle soc,
  * Return: none
  */
 static inline void
-cdp_hl_tdls_flag_reset(ol_txrx_soc_handle soc, void *vdev, bool flag)
+cdp_hl_tdls_flag_reset(ol_txrx_soc_handle soc, struct cdp_vdev *vdev, bool flag)
 {
 	if (!soc || !soc->ops || !soc->ops->misc_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -227,7 +228,7 @@ cdp_hl_tdls_flag_reset(ol_txrx_soc_handle soc, void *vdev, bool flag)
  *        0 unknown interface
  */
 static inline int
-cdp_get_opmode(ol_txrx_soc_handle soc, void *vdev)
+cdp_get_opmode(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
 	if (!soc || !soc->ops || !soc->ops->misc_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -251,7 +252,7 @@ cdp_get_opmode(ol_txrx_soc_handle soc, void *vdev)
  *        0 unknown interface
  */
 static inline uint16_t
-cdp_get_vdev_id(ol_txrx_soc_handle soc, void *vdev)
+cdp_get_vdev_id(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
 	if (!soc || !soc->ops || !soc->ops->misc_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -277,7 +278,7 @@ cdp_get_vdev_id(ol_txrx_soc_handle soc, void *vdev)
  * Return: none
  */
 static inline void
-cdp_bad_peer_txctl_set_setting(ol_txrx_soc_handle soc, void *pdev,
+cdp_bad_peer_txctl_set_setting(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 		int enable, int period, int txq_limit)
 {
 	if (!soc || !soc->ops || !soc->ops->misc_ops) {
@@ -305,7 +306,8 @@ cdp_bad_peer_txctl_set_setting(ol_txrx_soc_handle soc, void *pdev,
  * Return: none
  */
 static inline void
-cdp_bad_peer_txctl_update_threshold(ol_txrx_soc_handle soc, void *pdev,
+cdp_bad_peer_txctl_update_threshold(ol_txrx_soc_handle soc,
+		struct cdp_pdev *pdev,
 		int level, int tput_thresh, int tx_limit)
 {
 	if (!soc || !soc->ops || !soc->ops->misc_ops) {
@@ -422,8 +424,8 @@ static inline A_STATUS cdp_get_intra_bss_fwd_pkts_count(
  *
  * Return: void
  */
-static inline void cdp_pkt_log_init(ol_txrx_soc_handle soc, void *pdev,
-				void *scn)
+static inline void cdp_pkt_log_init(ol_txrx_soc_handle soc,
+		struct cdp_pdev *pdev, void *scn)
 {
 	if (!soc || !soc->ops || !soc->ops->misc_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -445,7 +447,7 @@ static inline void cdp_pkt_log_init(ol_txrx_soc_handle soc, void *pdev,
  * Return: void
  */
 static inline void cdp_pkt_log_con_service(ol_txrx_soc_handle soc,
-		void *pdev, void *scn)
+		struct cdp_pdev *pdev, void *scn)
 {
 	if (!soc || !soc->ops || !soc->ops->misc_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,

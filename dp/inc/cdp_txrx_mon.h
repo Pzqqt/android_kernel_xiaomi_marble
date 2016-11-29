@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -32,9 +32,9 @@
 
 #ifndef _CDP_TXRX_MON_H_
 #define _CDP_TXRX_MON_H_
-
+#include "cdp_txrx_handle.h"
 static inline void cdp_monitor_set_filter_ucast_data
-	(ol_txrx_soc_handle soc, void *pdev, u_int8_t val)
+	(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, u_int8_t val)
 {
 	if (soc->ops->mon_ops->txrx_monitor_set_filter_ucast_data)
 		return soc->ops->mon_ops->txrx_monitor_set_filter_ucast_data
@@ -42,7 +42,7 @@ static inline void cdp_monitor_set_filter_ucast_data
 	return;
 }
 static inline void cdp_monitor_set_filter_mcast_data
-	(ol_txrx_soc_handle soc, void *pdev, u_int8_t val)
+	(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, u_int8_t val)
 {
 	if (soc->ops->mon_ops->txrx_monitor_set_filter_mcast_data)
 		return soc->ops->mon_ops->txrx_monitor_set_filter_mcast_data
@@ -50,7 +50,7 @@ static inline void cdp_monitor_set_filter_mcast_data
 	return;
 }
 static inline void cdp_monitor_set_filter_non_data
-	(ol_txrx_soc_handle soc, void *pdev, u_int8_t val)
+	(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, u_int8_t val)
 {
 	if (soc->ops->mon_ops->txrx_monitor_set_filter_non_data)
 		return soc->ops->mon_ops->txrx_monitor_set_filter_non_data
@@ -59,7 +59,7 @@ static inline void cdp_monitor_set_filter_non_data
 }
 
 static inline u_int8_t cdp_monitor_get_filter_ucast_data(ol_txrx_soc_handle soc,
-				void *vdev_txrx_handle)
+			struct cdp_vdev *vdev_txrx_handle)
 {
 	if (soc->ops->mon_ops->txrx_monitor_get_filter_ucast_data)
 		return soc->ops->mon_ops->txrx_monitor_get_filter_ucast_data
@@ -67,7 +67,7 @@ static inline u_int8_t cdp_monitor_get_filter_ucast_data(ol_txrx_soc_handle soc,
 	return 0;
 }
 static inline u_int8_t cdp_monitor_get_filter_mcast_data(ol_txrx_soc_handle soc,
-				void *vdev_txrx_handle)
+				struct cdp_vdev *vdev_txrx_handle)
 {
 	if (soc->ops->mon_ops->txrx_monitor_get_filter_mcast_data)
 		return soc->ops->mon_ops->txrx_monitor_get_filter_mcast_data
@@ -75,7 +75,7 @@ static inline u_int8_t cdp_monitor_get_filter_mcast_data(ol_txrx_soc_handle soc,
 	return 0;
 }
 static inline u_int8_t cdp_monitor_get_filter_non_data(ol_txrx_soc_handle soc,
-				void *vdev_txrx_handle)
+				struct cdp_vdev *vdev_txrx_handle)
 {
 	if (soc->ops->mon_ops->txrx_monitor_get_filter_non_data)
 		return soc->ops->mon_ops->txrx_monitor_get_filter_non_data
@@ -83,7 +83,7 @@ static inline u_int8_t cdp_monitor_get_filter_non_data(ol_txrx_soc_handle soc,
 	return 0;
 }
 static inline int cdp_reset_monitor_mode
-(ol_txrx_soc_handle soc, void *pdev)
+(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
 {
 	if (soc->ops->mon_ops->txrx_reset_monitor_mode)
 		return soc->ops->mon_ops->txrx_reset_monitor_mode(pdev);

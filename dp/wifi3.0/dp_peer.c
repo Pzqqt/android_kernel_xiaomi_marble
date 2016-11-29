@@ -27,6 +27,7 @@
 #ifdef CONFIG_MCL
 #include <cds_ieee80211_common.h>
 #endif
+#include <cdp_txrx_handle.h>
 /* Temporary definitions to be moved to wlan_cfg */
 static inline uint32_t wlan_cfg_max_peer_id(void *wlan_cfg_ctx)
 {
@@ -430,10 +431,10 @@ static void dp_rx_tid_update_cb(struct dp_soc *soc, void *cb_ctxt,
  *
  * Return: peer instance pointer
  */
-void *dp_find_peer_by_addr(void *dev, uint8_t *peer_mac_addr,
+void *dp_find_peer_by_addr(struct cdp_pdev *dev, uint8_t *peer_mac_addr,
 		uint8_t *local_id)
 {
-	struct dp_pdev *pdev = dev;
+	struct dp_pdev *pdev = (struct dp_pdev *)dev;
 	struct dp_peer *peer;
 
 #if ATH_SUPPORT_WRAP
@@ -961,13 +962,14 @@ dp_rx_sec_ind_handler(void *soc_handle, uint16_t peer_id,
  * Return: QDF_STATUS_SUCCESS registration success
  *         QDF_STATUS_E_FAULT peer not found
  */
-QDF_STATUS dp_register_peer(void *pdev_handle,
+QDF_STATUS dp_register_peer(struct cdp_pdev *pdev_handle,
 		struct ol_txrx_desc_type *sta_desc)
 {
 	struct dp_peer *peer;
-	struct dp_pdev *pdev = pdev_handle;
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 
-	peer = dp_peer_find_by_local_id(pdev, sta_desc->sta_id);
+	peer = dp_peer_find_by_local_id((struct cdp_pdev *)pdev,
+			sta_desc->sta_id);
 	if (!peer)
 		return QDF_STATUS_E_FAULT;
 
@@ -988,12 +990,12 @@ QDF_STATUS dp_register_peer(void *pdev_handle,
  * Return: QDF_STATUS_SUCCESS registration success
  *         QDF_STATUS_E_FAULT peer not found
  */
-QDF_STATUS dp_clear_peer(void *pdev_handle, uint8_t local_id)
+QDF_STATUS dp_clear_peer(struct cdp_pdev *pdev_handle, uint8_t local_id)
 {
 	struct dp_peer *peer;
-	struct dp_pdev *pdev = pdev_handle;
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 
-	peer = dp_peer_find_by_local_id(pdev, local_id);
+	peer = dp_peer_find_by_local_id((struct cdp_pdev *)pdev, local_id);
 	if (!peer)
 		return QDF_STATUS_E_FAULT;
 
@@ -1016,10 +1018,12 @@ QDF_STATUS dp_clear_peer(void *pdev_handle, uint8_t local_id)
  * Return: peer instance void pointer
  *         NULL cannot find target peer
  */
-void *dp_find_peer_by_addr_and_vdev(void *pdev_handle, void *vdev,
+void *dp_find_peer_by_addr_and_vdev(struct cdp_pdev *pdev_handle,
+		struct cdp_vdev *vdev_handle,
 		uint8_t *peer_addr, uint8_t *local_id)
 {
-	struct dp_pdev *pdev = pdev_handle;
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 	struct dp_peer *peer;
 
 	DP_TRACE(INFO, "vdev %p peer_addr %p", vdev, peer_addr);
@@ -1066,10 +1070,10 @@ uint16_t dp_local_peer_id(void *peer)
  * Return: peer instance void pointer
  *         NULL cannot find target peer
  */
-void *dp_peer_find_by_local_id(void *pdev_handle, uint8_t local_id)
+void *dp_peer_find_by_local_id(struct cdp_pdev *pdev_handle, uint8_t local_id)
 {
 	struct dp_peer *peer;
-	struct dp_pdev *pdev = pdev_handle;
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 
 	qdf_spin_lock_bh(&pdev->local_peer_ids.lock);
 	peer = pdev->local_peer_ids.map[local_id];
@@ -1089,11 +1093,11 @@ void *dp_peer_find_by_local_id(void *pdev_handle, uint8_t local_id)
  *
  * Return: QDF_STATUS_SUCCESS registration success
  */
-QDF_STATUS dp_peer_state_update(void *pdev_handle, uint8_t *peer_mac,
+QDF_STATUS dp_peer_state_update(struct cdp_pdev *pdev_handle, uint8_t *peer_mac,
 		enum ol_txrx_peer_state state)
 {
 	struct dp_peer *peer;
-	struct dp_pdev *pdev = pdev_handle;
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 
 	peer =  dp_peer_find_hash_find(pdev->soc, peer_mac, 0);
 	if (NULL == peer) {
@@ -1140,12 +1144,12 @@ QDF_STATUS dp_get_vdevid(void *peer_handle, uint8_t *vdev_id)
  * Return: virtual interface instance pointer
  *         NULL in case cannot find
  */
-void *dp_get_vdev_for_peer(void *peer_handle)
+struct cdp_vdev *dp_get_vdev_for_peer(void *peer_handle)
 {
 	struct dp_peer *peer = peer_handle;
 
 	DP_TRACE(INFO, "peer %p vdev %p", peer, peer->vdev);
-	return (void *)peer->vdev;
+	return (struct cdp_vdev *)peer->vdev;
 }
 
 /**

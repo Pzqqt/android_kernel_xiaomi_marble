@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -35,6 +35,7 @@
 #include "qdf_types.h"
 #include "qdf_nbuf.h"
 #include "cdp_txrx_ops.h"
+#include "cdp_txrx_handle.h"
 /******************************************************************************
  *
  * Common Data Path Header File
@@ -49,8 +50,8 @@ cdp_soc_attach_target(ol_txrx_soc_handle soc)
 	return 0;
 }
 
-static inline void *
-cdp_vdev_attach(ol_txrx_soc_handle soc, void *pdev,
+static inline struct cdp_vdev *
+cdp_vdev_attach(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 	uint8_t *vdev_mac_addr, uint8_t vdev_id, enum wlan_op_mode op_mode)
 {
 	if (soc->ops->cmn_drv_ops->txrx_vdev_attach)
@@ -60,7 +61,7 @@ cdp_vdev_attach(ol_txrx_soc_handle soc, void *pdev,
 }
 
 static inline void
-cdp_vdev_detach(ol_txrx_soc_handle soc, void *vdev,
+cdp_vdev_detach(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 	 ol_txrx_vdev_delete_cb callback, void *cb_context)
 {
 	if (soc->ops->cmn_drv_ops->txrx_vdev_detach)
@@ -70,15 +71,15 @@ cdp_vdev_detach(ol_txrx_soc_handle soc, void *vdev,
 }
 
 static inline int
-cdp_pdev_attach_target(ol_txrx_soc_handle soc, void *pdev)
+cdp_pdev_attach_target(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
 {
 	if (soc->ops->cmn_drv_ops->txrx_pdev_attach_target)
 		return soc->ops->cmn_drv_ops->txrx_pdev_attach_target(pdev);
 	return 0;
 }
 
-static inline void *cdp_pdev_attach
-	(ol_txrx_soc_handle soc, void *ctrl_pdev,
+static inline struct cdp_pdev *cdp_pdev_attach
+	(ol_txrx_soc_handle soc, struct cdp_cfg *ctrl_pdev,
 	HTC_HANDLE htc_pdev, qdf_device_t osdev, uint8_t pdev_id)
 {
 	if (soc->ops->cmn_drv_ops->txrx_pdev_attach)
@@ -87,7 +88,8 @@ static inline void *cdp_pdev_attach
 	return NULL;
 }
 
-static inline int cdp_pdev_post_attach(ol_txrx_soc_handle soc, void *pdev)
+static inline int cdp_pdev_post_attach(ol_txrx_soc_handle soc,
+	struct cdp_pdev *pdev)
 {
 	if (soc->ops->cmn_drv_ops->txrx_pdev_post_attach)
 		return soc->ops->cmn_drv_ops->txrx_pdev_post_attach(pdev);
@@ -95,7 +97,7 @@ static inline int cdp_pdev_post_attach(ol_txrx_soc_handle soc, void *pdev)
 }
 
 static inline void
-cdp_pdev_detach(ol_txrx_soc_handle soc, void *pdev, int force)
+cdp_pdev_detach(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, int force)
 {
 	if (soc->ops->cmn_drv_ops->txrx_pdev_detach)
 		return soc->ops->cmn_drv_ops->txrx_pdev_detach(pdev, force);
@@ -103,7 +105,7 @@ cdp_pdev_detach(ol_txrx_soc_handle soc, void *pdev, int force)
 }
 
 static inline void *cdp_peer_create
-	(ol_txrx_soc_handle soc, void *vdev,
+	(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 	uint8_t *peer_mac_addr)
 {
 	if (soc->ops->cmn_drv_ops->txrx_peer_create)
@@ -113,7 +115,7 @@ static inline void *cdp_peer_create
 }
 
 static inline void cdp_peer_setup
-	(ol_txrx_soc_handle soc, void *vdev, void *peer)
+	(ol_txrx_soc_handle soc, struct cdp_vdev *vdev, void *peer)
 {
 	if (soc->ops->cmn_drv_ops->txrx_peer_setup)
 		return soc->ops->cmn_drv_ops->txrx_peer_setup(vdev,
@@ -122,7 +124,7 @@ static inline void cdp_peer_setup
 }
 
 static inline void cdp_peer_teardown
-	(ol_txrx_soc_handle soc, void *vdev, void *peer)
+	(ol_txrx_soc_handle soc, struct cdp_vdev *vdev, void *peer)
 {
 	if (soc->ops->cmn_drv_ops->txrx_peer_teardown)
 		return soc->ops->cmn_drv_ops->txrx_peer_teardown(vdev,
@@ -139,7 +141,7 @@ cdp_peer_delete(ol_txrx_soc_handle soc, void *peer)
 }
 
 static inline int
-cdp_set_monitor_mode(ol_txrx_soc_handle soc, void *vdev)
+cdp_set_monitor_mode(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
 	if (soc->ops->cmn_drv_ops->txrx_set_monitor_mode)
 		return soc->ops->cmn_drv_ops->txrx_set_monitor_mode(vdev);
@@ -148,7 +150,7 @@ cdp_set_monitor_mode(ol_txrx_soc_handle soc, void *vdev)
 
 static inline void
 cdp_set_curchan(ol_txrx_soc_handle soc,
-	void *pdev,
+	struct cdp_pdev *pdev,
 	uint32_t chan_mhz)
 {
 	if (soc->ops->cmn_drv_ops->txrx_set_curchan)
@@ -157,7 +159,7 @@ cdp_set_curchan(ol_txrx_soc_handle soc,
 }
 
 static inline void
-cdp_set_privacy_filters(ol_txrx_soc_handle soc, void *vdev,
+cdp_set_privacy_filters(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 			 void *filter, uint32_t num)
 {
 	if (soc->ops->cmn_drv_ops->txrx_set_privacy_filters)
@@ -170,7 +172,7 @@ cdp_set_privacy_filters(ol_txrx_soc_handle soc, void *vdev,
  * Data Interface (B Interface)
  *****************************************************************************/
 static inline void
-cdp_vdev_register(ol_txrx_soc_handle soc, void *vdev,
+cdp_vdev_register(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 	 void *osif_vdev, struct ol_txrx_ops *txrx_ops)
 {
 	if (soc->ops->cmn_drv_ops->txrx_vdev_register)
@@ -180,7 +182,7 @@ cdp_vdev_register(ol_txrx_soc_handle soc, void *vdev,
 }
 
 static inline int
-cdp_mgmt_send(ol_txrx_soc_handle soc, void *vdev,
+cdp_mgmt_send(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 	qdf_nbuf_t tx_mgmt_frm,	uint8_t type)
 {
 	if (soc->ops->cmn_drv_ops->txrx_mgmt_send)
@@ -190,7 +192,7 @@ cdp_mgmt_send(ol_txrx_soc_handle soc, void *vdev,
 }
 
 static inline int
-cdp_mgmt_send_ext(ol_txrx_soc_handle soc, void *vdev,
+cdp_mgmt_send_ext(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 	 qdf_nbuf_t tx_mgmt_frm, uint8_t type,
 	 uint8_t use_6mbps, uint16_t chanfreq)
 {
@@ -202,7 +204,7 @@ cdp_mgmt_send_ext(ol_txrx_soc_handle soc, void *vdev,
 
 
 static inline void
-cdp_mgmt_tx_cb_set(ol_txrx_soc_handle soc, void *pdev,
+cdp_mgmt_tx_cb_set(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 			 uint8_t type,
 			 ol_txrx_mgmt_tx_cb download_cb,
 			 ol_txrx_mgmt_tx_cb ota_ack_cb, void *ctxt)
@@ -214,7 +216,7 @@ cdp_mgmt_tx_cb_set(ol_txrx_soc_handle soc, void *pdev,
 }
 
 static inline int cdp_get_tx_pending(ol_txrx_soc_handle soc,
-void *pdev)
+struct cdp_pdev *pdev)
 {
 	if (soc->ops->cmn_drv_ops->txrx_get_tx_pending)
 		return soc->ops->cmn_drv_ops->txrx_get_tx_pending(pdev);
@@ -222,7 +224,7 @@ void *pdev)
 }
 
 static inline void
-cdp_data_tx_cb_set(ol_txrx_soc_handle soc, void *data_vdev,
+cdp_data_tx_cb_set(ol_txrx_soc_handle soc, struct cdp_vdev *data_vdev,
 		 ol_txrx_data_tx_cb callback, void *ctxt)
 {
 	if (soc->ops->cmn_drv_ops->txrx_data_tx_cb_set)
@@ -236,7 +238,7 @@ cdp_data_tx_cb_set(ol_txrx_soc_handle soc, void *data_vdev,
  *****************************************************************************/
 
 static inline int
-cdp_aggr_cfg(ol_txrx_soc_handle soc, void *vdev,
+cdp_aggr_cfg(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 			 int max_subfrms_ampdu,
 			 int max_subfrms_amsdu)
 {
@@ -247,7 +249,7 @@ cdp_aggr_cfg(ol_txrx_soc_handle soc, void *vdev,
 }
 
 static inline int
-cdp_fw_stats_get(ol_txrx_soc_handle soc, void *vdev,
+cdp_fw_stats_get(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 	struct ol_txrx_stats_req *req, bool per_vdev,
 	bool response_expected)
 {
@@ -258,7 +260,7 @@ cdp_fw_stats_get(ol_txrx_soc_handle soc, void *vdev,
 }
 
 static inline int
-cdp_debug(ol_txrx_soc_handle soc, void *vdev, int debug_specs)
+cdp_debug(ol_txrx_soc_handle soc, struct cdp_vdev *vdev, int debug_specs)
 {
 	if (soc->ops->cmn_drv_ops->txrx_debug)
 		return soc->ops->cmn_drv_ops->txrx_debug(vdev, debug_specs);
@@ -266,7 +268,7 @@ cdp_debug(ol_txrx_soc_handle soc, void *vdev, int debug_specs)
 }
 
 static inline void cdp_fw_stats_cfg(ol_txrx_soc_handle soc,
-	 void *vdev, uint8_t cfg_stats_type, uint32_t cfg_val)
+	 struct cdp_vdev *vdev, uint8_t cfg_stats_type, uint32_t cfg_val)
 {
 	if (soc->ops->cmn_drv_ops->txrx_fw_stats_cfg)
 		return soc->ops->cmn_drv_ops->txrx_fw_stats_cfg(vdev,
@@ -282,7 +284,7 @@ static inline void cdp_print_level_set(ol_txrx_soc_handle soc, unsigned level)
 }
 
 static inline uint8_t *
-cdp_get_vdev_mac_addr(ol_txrx_soc_handle soc, void *vdev)
+cdp_get_vdev_mac_addr(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
 	if (soc->ops->cmn_drv_ops->txrx_get_vdev_mac_addr)
 		return soc->ops->cmn_drv_ops->txrx_get_vdev_mac_addr(vdev);
@@ -297,7 +299,7 @@ cdp_get_vdev_mac_addr(ol_txrx_soc_handle soc, void *vdev)
  * Return: Handle to struct qdf_mac_addr
  */
 static inline struct qdf_mac_addr *cdp_get_vdev_struct_mac_addr
-	(ol_txrx_soc_handle soc, void *vdev)
+	(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
 	if (soc->ops->cmn_drv_ops->txrx_get_vdev_struct_mac_addr)
 		return soc->ops->cmn_drv_ops->txrx_get_vdev_struct_mac_addr
@@ -311,8 +313,8 @@ static inline struct qdf_mac_addr *cdp_get_vdev_struct_mac_addr
  *
  * Return: Handle to pdev
  */
-static inline void *cdp_get_pdev_from_vdev
-	(ol_txrx_soc_handle soc, void *vdev)
+static inline struct cdp_pdev *cdp_get_pdev_from_vdev
+	(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
 	if (soc->ops->cmn_drv_ops->txrx_get_pdev_from_vdev)
 		return soc->ops->cmn_drv_ops->txrx_get_pdev_from_vdev(vdev);
@@ -325,8 +327,8 @@ static inline void *cdp_get_pdev_from_vdev
  *
  * Return: Handle to control pdev
  */
-static inline void *
-cdp_get_ctrl_pdev_from_vdev(ol_txrx_soc_handle soc, void *vdev)
+static inline struct cdp_cfg *
+cdp_get_ctrl_pdev_from_vdev(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
 	if (soc->ops->cmn_drv_ops->txrx_get_ctrl_pdev_from_vdev)
 		return soc->ops->cmn_drv_ops->txrx_get_ctrl_pdev_from_vdev
@@ -334,8 +336,8 @@ cdp_get_ctrl_pdev_from_vdev(ol_txrx_soc_handle soc, void *vdev)
 	return NULL;
 }
 
-static inline void *
-cdp_get_vdev_from_vdev_id(ol_txrx_soc_handle soc, void *pdev,
+static inline struct cdp_vdev *
+cdp_get_vdev_from_vdev_id(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 		uint8_t vdev_id)
 {
 	if (soc->ops->cmn_drv_ops->txrx_get_vdev_from_vdev_id)

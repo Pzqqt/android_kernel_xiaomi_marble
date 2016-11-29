@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -31,7 +31,7 @@
 #ifndef _CDP_TXRX_IPA_H_
 #define _CDP_TXRX_IPA_H_
 #include <cdp_txrx_mob_def.h>
-
+#include "cdp_txrx_handle.h"
 /**
  * cdp_ipa_get_resource() - Get allocated wlan resources for ipa data path
  * @soc - data path soc handle
@@ -43,7 +43,7 @@
  * return none
  */
 static inline void
-cdp_ipa_get_resource(ol_txrx_soc_handle soc, void *pdev,
+cdp_ipa_get_resource(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 		 struct ol_txrx_ipa_resources *ipa_res)
 {
 	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
@@ -70,7 +70,7 @@ cdp_ipa_get_resource(ol_txrx_soc_handle soc, void *pdev,
  * return none
  */
 static inline void
-cdp_ipa_set_doorbell_paddr(ol_txrx_soc_handle soc, void *pdev,
+cdp_ipa_set_doorbell_paddr(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 		 qdf_dma_addr_t ipa_tx_uc_doorbell_paddr,
 		 qdf_dma_addr_t ipa_rx_uc_doorbell_paddr)
 {
@@ -99,7 +99,7 @@ cdp_ipa_set_doorbell_paddr(ol_txrx_soc_handle soc, void *pdev,
  * return none
  */
 static inline void
-cdp_ipa_set_active(ol_txrx_soc_handle soc, void *pdev,
+cdp_ipa_set_active(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 		 bool uc_active, bool is_tx)
 {
 	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
@@ -126,7 +126,7 @@ cdp_ipa_set_active(ol_txrx_soc_handle soc, void *pdev,
  * return none
  */
 static inline void
-cdp_ipa_op_response(ol_txrx_soc_handle soc, void *pdev,
+cdp_ipa_op_response(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 		uint8_t *op_msg)
 {
 	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
@@ -153,7 +153,7 @@ cdp_ipa_op_response(ol_txrx_soc_handle soc, void *pdev,
  * return none
  */
 static inline void
-cdp_ipa_register_op_cb(ol_txrx_soc_handle soc, void *pdev,
+cdp_ipa_register_op_cb(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 		 ipa_op_cb_type op_cb, void *osif_dev)
 {
 	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
@@ -179,7 +179,7 @@ cdp_ipa_register_op_cb(ol_txrx_soc_handle soc, void *pdev,
  * return none
  */
 static inline void
-cdp_ipa_get_stat(ol_txrx_soc_handle soc, void *pdev)
+cdp_ipa_get_stat(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
 {
 	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -201,7 +201,7 @@ cdp_ipa_get_stat(ol_txrx_soc_handle soc, void *pdev)
  * Return: skb/ NULL is for success
  */
 static inline qdf_nbuf_t cdp_ipa_tx_send_data_frame(ol_txrx_soc_handle soc,
-						void *vdev, qdf_nbuf_t skb)
+				struct cdp_vdev *vdev, qdf_nbuf_t skb)
 {
 	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -223,7 +223,7 @@ static inline qdf_nbuf_t cdp_ipa_tx_send_data_frame(ol_txrx_soc_handle soc,
  * Return: none
  */
 static inline void cdp_ipa_set_uc_tx_partition_base(ol_txrx_soc_handle soc,
-						void *pdev, uint32_t value)
+				struct cdp_cfg *cfg_pdev, uint32_t value)
 {
 	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -232,7 +232,7 @@ static inline void cdp_ipa_set_uc_tx_partition_base(ol_txrx_soc_handle soc,
 	}
 
 	if (soc->ops->ipa_ops->ipa_set_uc_tx_partition_base)
-		return soc->ops->ipa_ops->ipa_set_uc_tx_partition_base(pdev,
+		return soc->ops->ipa_ops->ipa_set_uc_tx_partition_base(cfg_pdev,
 								       value);
 
 	return;

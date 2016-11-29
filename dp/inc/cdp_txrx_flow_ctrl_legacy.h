@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -32,6 +32,7 @@
 #ifndef _CDP_TXRX_FC_LEG_H_
 #define _CDP_TXRX_FC_LEG_H_
 #include <cdp_txrx_mob_def.h>
+#include "cdp_txrx_handle.h"
 
 /**
  * cdp_fc_register() - Register flow control callback function pointer
@@ -152,7 +153,7 @@ cdp_fc_ll_set_tx_pause_q_depth(ol_txrx_soc_handle soc,
  * return None
  */
 static inline void
-cdp_fc_vdev_flush(ol_txrx_soc_handle soc, void *vdev)
+cdp_fc_vdev_flush(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
 	if (!soc || !soc->ops || !soc->ops->l_flowctl_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -177,7 +178,7 @@ cdp_fc_vdev_flush(ol_txrx_soc_handle soc, void *vdev)
  * return None
  */
 static inline void
-cdp_fc_vdev_pause(ol_txrx_soc_handle soc, void *vdev,
+cdp_fc_vdev_pause(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 		uint32_t reason)
 {
 	if (!soc || !soc->ops || !soc->ops->l_flowctl_ops) {
@@ -203,7 +204,7 @@ cdp_fc_vdev_pause(ol_txrx_soc_handle soc, void *vdev,
  * return None
  */
 static inline void
-cdp_fc_vdev_unpause(ol_txrx_soc_handle soc, void *vdev,
+cdp_fc_vdev_unpause(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 		uint32_t reason)
 {
 	if (!soc || !soc->ops || !soc->ops->l_flowctl_ops) {

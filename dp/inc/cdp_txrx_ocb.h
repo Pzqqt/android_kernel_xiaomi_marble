@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -28,7 +28,7 @@
 #ifndef _CDP_TXRX_OCB_H_
 #define _CDP_TXRX_OCB_H_
 #include <cdp_txrx_mob_def.h>
-
+#include "cdp_txrx_handle.h"
 /**
  * cdp_set_ocb_chan_info() - set OCB channel info to vdev.
  * @soc - data path soc handle
@@ -38,7 +38,7 @@
  * Return: NONE
  */
 static inline void
-cdp_set_ocb_chan_info(ol_txrx_soc_handle soc, void *vdev,
+cdp_set_ocb_chan_info(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 		struct ol_txrx_ocb_set_chan ocb_set_chan)
 {
 	if (!soc || !soc->ops || !soc->ops->ocb_ops) {
@@ -61,7 +61,7 @@ cdp_set_ocb_chan_info(ol_txrx_soc_handle soc, void *vdev,
  * Return: handle to struct ol_txrx_ocb_chan_info
  */
 static inline struct ol_txrx_ocb_chan_info *
-cdp_get_ocb_chan_info(ol_txrx_soc_handle soc, void *vdev)
+cdp_get_ocb_chan_info(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
 	if (!soc || !soc->ops || !soc->ops->ocb_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,

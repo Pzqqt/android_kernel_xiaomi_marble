@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -33,7 +33,7 @@
 #ifndef _CDP_TXRX_TX_THROTTLE_H_
 #define _CDP_TXRX_TX_THROTTLE_H_
 #include <cdp_txrx_ops.h>
-
+#include "cdp_txrx_handle.h"
 /**
  * cdp_throttle_init_period() - init tx throttle period
  * @soc: data path soc handle
@@ -44,8 +44,8 @@
  * Return: NONE
  */
 static inline void
-cdp_throttle_init_period(ol_txrx_soc_handle soc, void *pdev, int period,
-		uint8_t *dutycycle_level)
+cdp_throttle_init_period(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
+		int period, uint8_t *dutycycle_level)
 {
 	if (!soc || !soc->ops || !soc->ops->throttle_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -68,7 +68,7 @@ cdp_throttle_init_period(ol_txrx_soc_handle soc, void *pdev, int period,
  * Return: NONE
  */
 static inline void
-cdp_throttle_set_level(ol_txrx_soc_handle soc, void *pdev, int level)
+cdp_throttle_set_level(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, int level)
 {
 	if (!soc || !soc->ops || !soc->ops->throttle_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,

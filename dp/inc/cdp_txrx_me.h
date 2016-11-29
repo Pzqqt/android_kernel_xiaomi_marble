@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -34,10 +34,11 @@
 
 #include <cdp_txrx_ops.h>
 /* TODO: adf need to be replaced with qdf */
+#include "cdp_txrx_handle.h"
 
 static inline u_int16_t
 cdp_tx_desc_alloc_and_mark_for_mcast_clone(ol_txrx_soc_handle soc,
-	void *pdev, u_int16_t buf_count)
+	struct cdp_pdev *pdev, u_int16_t buf_count)
 {
 	if (soc->ops->me_ops->tx_desc_alloc_and_mark_for_mcast_clone)
 		return soc->ops->me_ops->
@@ -48,7 +49,7 @@ cdp_tx_desc_alloc_and_mark_for_mcast_clone(ol_txrx_soc_handle soc,
 
 static inline u_int16_t
 cdp_tx_desc_free_and_unmark_for_mcast_clone(ol_txrx_soc_handle soc,
-	void *pdev, u_int16_t buf_count)
+	struct cdp_pdev *pdev, u_int16_t buf_count)
 {
 	if (soc->ops->me_ops->tx_desc_free_and_unmark_for_mcast_clone)
 		return soc->ops->me_ops->
@@ -59,7 +60,7 @@ cdp_tx_desc_free_and_unmark_for_mcast_clone(ol_txrx_soc_handle soc,
 
 static inline u_int16_t
 cdp_tx_get_mcast_buf_allocated_marked(ol_txrx_soc_handle soc,
-	void *pdev)
+	struct cdp_pdev *pdev)
 {
 	if (soc->ops->me_ops->tx_get_mcast_buf_allocated_marked)
 		return soc->ops->me_ops->tx_get_mcast_buf_allocated_marked
@@ -68,7 +69,7 @@ cdp_tx_get_mcast_buf_allocated_marked(ol_txrx_soc_handle soc,
 }
 
 static inline void
-cdp_tx_me_alloc_descriptor(ol_txrx_soc_handle soc, void *pdev)
+cdp_tx_me_alloc_descriptor(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
 {
 	if (soc->ops->me_ops->tx_me_alloc_descriptor)
 		return soc->ops->me_ops->tx_me_alloc_descriptor(pdev);
@@ -76,7 +77,7 @@ cdp_tx_me_alloc_descriptor(ol_txrx_soc_handle soc, void *pdev)
 }
 
 static inline void
-cdp_tx_me_free_descriptor(ol_txrx_soc_handle soc, void *pdev)
+cdp_tx_me_free_descriptor(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
 {
 	if (soc->ops->me_ops->tx_me_free_descriptor)
 		return soc->ops->me_ops->tx_me_free_descriptor(pdev);
@@ -84,7 +85,7 @@ cdp_tx_me_free_descriptor(ol_txrx_soc_handle soc, void *pdev)
 }
 
 static inline uint16_t
-cdp_tx_me_convert_ucast(ol_txrx_soc_handle soc, void *vdev,
+cdp_tx_me_convert_ucast(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 	qdf_nbuf_t wbuf, u_int8_t newmac[][6], uint8_t newmaccnt)
 {
 	if (soc->ops->me_ops->tx_me_convert_ucast)
@@ -104,8 +105,8 @@ cdp_tx_me_convert_ucast(ol_txrx_soc_handle soc, void *vdev,
  * @param msdu - the multicast msdu returned by FW for host inspect
  */
 
-static inline int cdp_mcast_notify(ol_txrx_soc_handle soc, void *pdev,
-	u_int8_t vdev_id, qdf_nbuf_t msdu)
+static inline int cdp_mcast_notify(ol_txrx_soc_handle soc,
+		struct cdp_pdev *pdev, u_int8_t vdev_id, qdf_nbuf_t msdu)
 {
 	if (soc->ops->me_ops->mcast_notify)
 		return soc->ops->me_ops->mcast_notify(pdev, vdev_id, msdu);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -31,13 +31,14 @@
  */
 #ifndef _CDP_TXRX_HOST_STATS_H_
 #define _CDP_TXRX_HOST_STATS_H_
+#include "cdp_txrx_handle.h"
 /* WIN */
 /* Need to remove the "req" parameter */
 /* Need to rename the function to reflect the functionality "show" / "display"
  * WIN -- to figure out whether to change OSIF to converge (not an immediate AI)
  * */
 static inline int cdp_host_stats_get(ol_txrx_soc_handle soc,
-	void *vdev,
+	struct cdp_vdev *vdev,
 	struct ol_txrx_stats_req *req)
 {
 	if (soc->ops->host_stats_ops->txrx_host_stats_get)
@@ -47,7 +48,7 @@ static inline int cdp_host_stats_get(ol_txrx_soc_handle soc,
 
 
 static inline void
-cdp_host_stats_clr(ol_txrx_soc_handle soc, void *vdev)
+cdp_host_stats_clr(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
 	if (soc->ops->host_stats_ops->txrx_host_stats_clr)
 		return soc->ops->host_stats_ops->txrx_host_stats_clr(vdev);
@@ -55,7 +56,7 @@ cdp_host_stats_clr(ol_txrx_soc_handle soc, void *vdev)
 }
 
 static inline void
-cdp_host_ce_stats(ol_txrx_soc_handle soc, void *vdev)
+cdp_host_ce_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
 	if (soc->ops->host_stats_ops->txrx_host_ce_stats)
 		return soc->ops->host_stats_ops->txrx_host_ce_stats(vdev);
@@ -63,7 +64,7 @@ cdp_host_ce_stats(ol_txrx_soc_handle soc, void *vdev)
 }
 
 static inline int cdp_stats_publish
-	(ol_txrx_soc_handle soc, void *pdev,
+	(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 	struct ol_txrx_stats *buf)
 {
 	if (soc->ops->host_stats_ops->txrx_stats_publish)
@@ -77,7 +78,7 @@ static inline int cdp_stats_publish
  * @return - void
  */
 static inline void
-cdp_enable_enhanced_stats(ol_txrx_soc_handle soc, void *pdev)
+cdp_enable_enhanced_stats(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
 {
 	if (soc->ops->host_stats_ops->txrx_enable_enhanced_stats)
 		return soc->ops->host_stats_ops->txrx_enable_enhanced_stats
@@ -92,7 +93,7 @@ cdp_enable_enhanced_stats(ol_txrx_soc_handle soc, void *pdev)
  * @return - void
  */
 static inline void
-cdp_disable_enhanced_stats(ol_txrx_soc_handle soc, void *pdev)
+cdp_disable_enhanced_stats(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
 {
 	if (soc->ops->host_stats_ops->txrx_disable_enhanced_stats)
 		return soc->ops->host_stats_ops->txrx_disable_enhanced_stats
@@ -109,7 +110,7 @@ cdp_disable_enhanced_stats(ol_txrx_soc_handle soc, void *pdev)
  * @return - pointer to requested stat identified by type
  */
 static inline uint32_t *cdp_get_stats_base
-	(ol_txrx_soc_handle soc, void *pdev,
+	(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 	uint32_t *stats_base, uint32_t msg_len, uint8_t type)
 {
 	if (soc->ops->host_stats_ops->txrx_get_stats_base)
@@ -119,7 +120,7 @@ static inline uint32_t *cdp_get_stats_base
 }
 static inline void
 cdp_tx_print_tso_stats(ol_txrx_soc_handle soc,
-	void *vdev)
+	struct cdp_vdev *vdev)
 {
 	if (soc->ops->host_stats_ops->tx_print_tso_stats)
 		return soc->ops->host_stats_ops->tx_print_tso_stats(vdev);
@@ -127,7 +128,7 @@ cdp_tx_print_tso_stats(ol_txrx_soc_handle soc,
 }
 
 static inline void
-cdp_tx_rst_tso_stats(ol_txrx_soc_handle soc, void *vdev)
+cdp_tx_rst_tso_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
 	if (soc->ops->host_stats_ops->tx_rst_tso_stats)
 		return soc->ops->host_stats_ops->tx_rst_tso_stats(vdev);
@@ -136,7 +137,7 @@ cdp_tx_rst_tso_stats(ol_txrx_soc_handle soc, void *vdev)
 
 static inline void
 cdp_tx_print_sg_stats(ol_txrx_soc_handle soc,
-	void *vdev)
+	struct cdp_vdev *vdev)
 {
 	if (soc->ops->host_stats_ops->tx_print_sg_stats)
 		return soc->ops->host_stats_ops->tx_print_sg_stats(vdev);
@@ -144,7 +145,7 @@ cdp_tx_print_sg_stats(ol_txrx_soc_handle soc,
 }
 
 static inline void
-cdp_tx_rst_sg_stats(ol_txrx_soc_handle soc, void *vdev)
+cdp_tx_rst_sg_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
 	if (soc->ops->host_stats_ops->tx_rst_sg_stats)
 		return soc->ops->host_stats_ops->tx_rst_sg_stats(vdev);
@@ -153,7 +154,7 @@ cdp_tx_rst_sg_stats(ol_txrx_soc_handle soc, void *vdev)
 
 static inline void
 cdp_print_rx_cksum_stats(ol_txrx_soc_handle soc,
-	void *vdev)
+	struct cdp_vdev *vdev)
 {
 	if (soc->ops->host_stats_ops->print_rx_cksum_stats)
 		return soc->ops->host_stats_ops->print_rx_cksum_stats(vdev);
@@ -161,7 +162,7 @@ cdp_print_rx_cksum_stats(ol_txrx_soc_handle soc,
 }
 
 static inline void
-cdp_rst_rx_cksum_stats(ol_txrx_soc_handle soc, void *vdev)
+cdp_rst_rx_cksum_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
 	if (soc->ops->host_stats_ops->rst_rx_cksum_stats)
 		return soc->ops->host_stats_ops->rst_rx_cksum_stats(vdev);
@@ -169,14 +170,14 @@ cdp_rst_rx_cksum_stats(ol_txrx_soc_handle soc, void *vdev)
 }
 
 static inline A_STATUS
-cdp_host_me_stats(ol_txrx_soc_handle soc, void *vdev)
+cdp_host_me_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
 	if (soc->ops->host_stats_ops->txrx_host_me_stats)
 		return soc->ops->host_stats_ops->txrx_host_me_stats(vdev);
 	return 0;
 }
 static inline void cdp_per_peer_stats
-	(ol_txrx_soc_handle soc, void *pdev, char *addr)
+	(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, char *addr)
 {
 	if (soc->ops->host_stats_ops->txrx_per_peer_stats)
 		return soc->ops->host_stats_ops->txrx_per_peer_stats
@@ -185,7 +186,7 @@ static inline void cdp_per_peer_stats
 }
 
 static inline int cdp_host_msdu_ttl_stats(ol_txrx_soc_handle soc,
-	void *vdev,
+	struct cdp_vdev *vdev,
 	struct ol_txrx_stats_req *req)
 {
 	if (soc->ops->host_stats_ops->txrx_host_msdu_ttl_stats)
@@ -197,7 +198,7 @@ static inline int cdp_host_msdu_ttl_stats(ol_txrx_soc_handle soc,
 
 
 static inline void
-cdp_print_lro_stats(ol_txrx_soc_handle soc, void *vdev)
+cdp_print_lro_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
 	if (soc->ops->host_stats_ops->print_lro_stats)
 		return soc->ops->host_stats_ops->print_lro_stats(vdev);
@@ -205,7 +206,7 @@ cdp_print_lro_stats(ol_txrx_soc_handle soc, void *vdev)
 }
 
 static inline void
-cdp_reset_lro_stats(ol_txrx_soc_handle soc, void *vdev)
+cdp_reset_lro_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
 	if (soc->ops->host_stats_ops->reset_lro_stats)
 		return soc->ops->host_stats_ops->reset_lro_stats(vdev);

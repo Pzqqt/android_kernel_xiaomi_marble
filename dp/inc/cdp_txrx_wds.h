@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -31,7 +31,7 @@
  */
 #ifndef _CDP_TXRX_WDS_H_
 #define _CDP_TXRX_WDS_H_
-
+#include "cdp_txrx_handle.h"
 /**
  * @brief set the wds rx filter policy of the device
  * @details
@@ -44,7 +44,7 @@
  */
 static inline void
 cdp_set_wds_rx_policy(ol_txrx_soc_handle soc,
-	void *vdev,
+	struct cdp_vdev *vdev,
 	u_int32_t val)
 {
 	if (!soc || !soc->ops || !soc->ops->wds_ops) {

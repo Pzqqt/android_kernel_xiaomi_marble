@@ -32,9 +32,10 @@
 
 #ifndef _CDP_TXRX_CTRL_H_
 #define _CDP_TXRX_CTRL_H_
+#include "cdp_txrx_handle.h"
 
 static inline int cdp_is_target_ar900b
-	(ol_txrx_soc_handle soc, void *vdev)
+	(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
 	if (soc->ops->ctrl_ops->txrx_is_target_ar900b)
 		return soc->ops->ctrl_ops->txrx_is_target_ar900b(vdev);
@@ -53,7 +54,7 @@ cdp_mempools_attach(ol_txrx_soc_handle soc, void *ctrl_pdev)
 
 static inline int
 cdp_set_filter_neighbour_peers(ol_txrx_soc_handle soc,
-	void *pdev, u_int32_t val)
+	struct cdp_pdev *pdev, u_int32_t val)
 {
 	if (soc->ops->ctrl_ops->txrx_set_filter_neighbour_peers)
 		return soc->ops->ctrl_ops->txrx_set_filter_neighbour_peers
@@ -75,7 +76,7 @@ cdp_set_filter_neighbour_peers(ol_txrx_soc_handle soc,
 
 static inline void
 cdp_set_safemode(ol_txrx_soc_handle soc,
-	void *vdev, u_int32_t val)
+	struct cdp_vdev *vdev, u_int32_t val)
 {
 	if (soc->ops->ctrl_ops->txrx_set_safemode)
 		return soc->ops->ctrl_ops->txrx_set_safemode(vdev, val);
@@ -93,7 +94,7 @@ cdp_set_safemode(ol_txrx_soc_handle soc,
  */
 static inline void
 cdp_set_drop_unenc(ol_txrx_soc_handle soc,
-	void *vdev, u_int32_t val)
+	struct cdp_vdev *vdev, u_int32_t val)
 {
 	if (soc->ops->ctrl_ops->txrx_set_drop_unenc)
 		return soc->ops->ctrl_ops->txrx_set_drop_unenc(vdev, val);
@@ -112,7 +113,7 @@ cdp_set_drop_unenc(ol_txrx_soc_handle soc,
  */
 static inline void
 cdp_set_tx_encap_type(ol_txrx_soc_handle soc,
-	void *vdev, enum htt_cmn_pkt_type val)
+	struct cdp_vdev *vdev, enum htt_cmn_pkt_type val)
 {
 	if (soc->ops->ctrl_ops->txrx_set_tx_encap_type)
 		return soc->ops->ctrl_ops->txrx_set_tx_encap_type(vdev, val);
@@ -131,7 +132,7 @@ cdp_set_tx_encap_type(ol_txrx_soc_handle soc,
  */
 static inline void
 cdp_set_vdev_rx_decap_type(ol_txrx_soc_handle soc,
-	void *vdev, enum htt_cmn_pkt_type val)
+	struct cdp_vdev *vdev, enum htt_cmn_pkt_type val)
 {
 	if (soc->ops->ctrl_ops->txrx_set_vdev_rx_decap_type)
 		return soc->ops->ctrl_ops->txrx_set_vdev_rx_decap_type
@@ -146,7 +147,7 @@ cdp_set_vdev_rx_decap_type(ol_txrx_soc_handle soc,
  * @return - the Rx decap type (htt_cmn_pkt_type)
  */
 static inline enum htt_cmn_pkt_type
-cdp_get_vdev_rx_decap_type(ol_txrx_soc_handle soc, void *vdev)
+cdp_get_vdev_rx_decap_type(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
 	if (soc->ops->ctrl_ops->txrx_get_vdev_rx_decap_type)
 		return soc->ops->ctrl_ops->txrx_get_vdev_rx_decap_type(vdev);
@@ -177,7 +178,7 @@ cdp_peer_authorize(ol_txrx_soc_handle soc,
 }
 
 static inline bool
-cdp_set_inact_params(ol_txrx_soc_handle soc, void *pdev,
+cdp_set_inact_params(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 			u_int16_t inact_check_interval,
 			u_int16_t inact_normal,
 			u_int16_t inact_overload)
@@ -190,7 +191,7 @@ cdp_set_inact_params(ol_txrx_soc_handle soc, void *pdev,
 }
 static inline bool
 cdp_start_inact_timer(ol_txrx_soc_handle soc,
-	void *pdev,
+	struct cdp_pdev *pdev,
 	bool enable)
 {
 	if (soc->ops->ctrl_ops->txrx_start_inact_timer)
@@ -209,7 +210,7 @@ cdp_start_inact_timer(ol_txrx_soc_handle soc,
  * @param overload - whether the radio is overloaded or not
  */
 static inline void
-cdp_set_overload(ol_txrx_soc_handle soc, void *pdev,
+cdp_set_overload(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 	bool overload)
 {
 	if (soc->ops->ctrl_ops->txrx_set_overload)
@@ -254,7 +255,7 @@ cdp_mark_peer_inact(ol_txrx_soc_handle soc,
 
 /* Should be ol_txrx_ctrl_api.h */
 static inline void cdp_set_mesh_mode
-(ol_txrx_soc_handle soc, void *vdev, u_int32_t val)
+(ol_txrx_soc_handle soc, struct cdp_vdev *vdev, u_int32_t val)
 {
 	if (soc->ops->ctrl_ops->txrx_set_mesh_mode)
 		return soc->ops->ctrl_ops->txrx_set_mesh_mode(vdev, val);
@@ -262,7 +263,7 @@ static inline void cdp_set_mesh_mode
 }
 
 static inline void cdp_tx_flush_buffers
-(ol_txrx_soc_handle soc, void *vdev)
+(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
 	if (soc->ops->ctrl_ops->tx_flush_buffers)
 		return soc->ops->ctrl_ops->tx_flush_buffers(vdev);

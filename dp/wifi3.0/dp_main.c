@@ -29,7 +29,7 @@
 #include "dp_tx.h"
 #include "dp_rx.h"
 #include "../../wlan_cfg/wlan_cfg.h"
-
+#include <cdp_txrx_handle.h>
 #define DP_INTR_POLL_TIMER_MS	100
 /**
  * dp_setup_srng - Internal function to setup SRNG rings used by data path
@@ -865,7 +865,7 @@ fail0:
 	return QDF_STATUS_E_FAILURE;
 }
 
-static void dp_pdev_detach_wifi3(void *txrx_pdev, int force);
+static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force);
 
 /*
 * dp_rxdma_ring_setup() - configure the RX DMA rings
@@ -914,7 +914,8 @@ static int dp_rxdma_ring_setup(struct dp_soc *soc,
 *
 * Return: DP PDEV handle on success, NULL on failure
 */
-static void *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc, void *ctrl_pdev,
+static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
+	struct cdp_cfg *ctrl_pdev,
 	HTC_HANDLE htc_handle, qdf_device_t qdf_osdev, uint8_t pdev_id)
 {
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
@@ -1034,10 +1035,10 @@ static void *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc, void *ctrl_pdev,
 	dp_local_peer_id_pool_init(pdev);
 #endif
 
-	return (void *)pdev;
+	return (struct cdp_pdev *)pdev;
 
 fail1:
-	dp_pdev_detach_wifi3((void *)pdev, 0);
+	dp_pdev_detach_wifi3((struct cdp_pdev *)pdev, 0);
 
 fail0:
 	return NULL;
@@ -1076,7 +1077,7 @@ static void dp_rxdma_ring_cleanup(struct dp_soc *soc,
 * @force: Force detach
 *
 */
-static void dp_pdev_detach_wifi3(void *txrx_pdev, int force)
+static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)txrx_pdev;
 	struct dp_soc *soc = pdev->soc;
@@ -1131,7 +1132,7 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 
 	for (i = 0; i < MAX_PDEV_CNT; i++) {
 		if (soc->pdev_list[i])
-			dp_pdev_detach_wifi3((void *)pdev, 1);
+			dp_pdev_detach_wifi3((struct cdp_pdev *)pdev, 1);
 	}
 
 	dp_peer_find_detach(soc);
@@ -1296,7 +1297,7 @@ static int dp_soc_attach_target_wifi3(struct cdp_soc_t *cdp_soc)
 *
 * Return: DP VDEV handle on success, NULL on failure
 */
-static void *dp_vdev_attach_wifi3(void *txrx_pdev,
+static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 	uint8_t *vdev_mac_addr, uint8_t vdev_id, enum wlan_op_mode op_mode)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)txrx_pdev;
@@ -1352,7 +1353,7 @@ static void *dp_vdev_attach_wifi3(void *txrx_pdev,
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 		"Created vdev %p (%pM)", vdev, vdev->mac_addr.raw);
 
-	return (void *)vdev;
+	return (struct cdp_vdev *)vdev;
 
 fail0:
 	return NULL;
@@ -1366,7 +1367,8 @@ fail0:
  *
  * Return: DP VDEV handle on success, NULL on failure
  */
-static void dp_vdev_register_wifi3(void *vdev_handle, void *osif_vdev,
+static void dp_vdev_register_wifi3(struct cdp_vdev *vdev_handle,
+	void *osif_vdev,
 	struct ol_txrx_ops *txrx_ops)
 {
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
@@ -1396,7 +1398,7 @@ static void dp_vdev_register_wifi3(void *vdev_handle, void *osif_vdev,
  * @cb_context:	Callback context
  *
  */
-static void dp_vdev_detach_wifi3(void *vdev_handle,
+static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 	ol_txrx_vdev_delete_cb callback, void *cb_context)
 {
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
@@ -1447,7 +1449,8 @@ static void dp_vdev_detach_wifi3(void *vdev_handle,
  *
  * Return: DP peeer handle on success, NULL on failure
  */
-static void *dp_peer_create_wifi3(void *vdev_handle, uint8_t *peer_mac_addr)
+static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
+		uint8_t *peer_mac_addr)
 {
 	struct dp_peer *peer;
 	int i;
@@ -1527,7 +1530,7 @@ static void *dp_peer_create_wifi3(void *vdev_handle, uint8_t *peer_mac_addr)
  *
  * Return: void
  */
-static void dp_peer_setup_wifi3(void *vdev_hdl, void *peer_hdl)
+static void dp_peer_setup_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 {
 	struct dp_peer *peer = (struct dp_peer *)peer_hdl;
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_hdl;
@@ -1723,9 +1726,9 @@ static void dp_peer_delete_wifi3(void *peer_handle)
  * @peer_handle:		Datapath peer handle
  *
  */
-static uint8 *dp_get_vdev_mac_addr_wifi3(void *pvdev)
+static uint8 *dp_get_vdev_mac_addr_wifi3(struct cdp_vdev *pvdev)
 {
-	struct dp_vdev *vdev = pvdev;
+	struct dp_vdev *vdev = (struct dp_vdev *)pvdev;
 
 	return vdev->mac_addr.raw;
 }
@@ -1735,9 +1738,10 @@ static uint8 *dp_get_vdev_mac_addr_wifi3(void *pvdev)
  * @peer_handle:		Datapath peer handle
  *
  */
-static void *dp_get_vdev_from_vdev_id_wifi3(void *dev, uint8_t vdev_id)
+static struct cdp_vdev *dp_get_vdev_from_vdev_id_wifi3(struct cdp_pdev *dev,
+						uint8_t vdev_id)
 {
-	struct dp_pdev *pdev = dev;
+	struct dp_pdev *pdev = (struct dp_pdev *)dev;
 	struct dp_vdev *vdev = NULL;
 
 	if (qdf_unlikely(!pdev))
@@ -1748,22 +1752,22 @@ static void *dp_get_vdev_from_vdev_id_wifi3(void *dev, uint8_t vdev_id)
 			break;
 	}
 
-	return vdev;
+	return (struct cdp_vdev *)vdev;
 }
 
-static int dp_get_opmode(void *vdev_handle)
+static int dp_get_opmode(struct cdp_vdev *vdev_handle)
 {
-	struct dp_vdev *vdev = vdev_handle;
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 
 	return vdev->opmode;
 }
 
-static void *dp_get_ctrl_pdev_from_vdev_wifi3(void *pvdev)
+static struct cdp_cfg *dp_get_ctrl_pdev_from_vdev_wifi3(struct cdp_vdev *pvdev)
 {
-	struct dp_vdev *vdev = pvdev;
+	struct dp_vdev *vdev = (struct dp_vdev *)pvdev;
 	struct dp_pdev *pdev = vdev->pdev;
 
-	return (void *)pdev->wlan_cfg_ctx;
+	return (struct cdp_cfg *)pdev->wlan_cfg_ctx;
 }
 
 static struct cdp_cmn_ops dp_ops_cmn = {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -30,7 +30,7 @@
  */
 #ifndef _CDP_TXRX_CFG_H_
 #define _CDP_TXRX_CFG_H_
-
+#include "cdp_txrx_handle.h"
 /**
  * cdp_cfg_set_rx_fwd_disabled() - enable/disable rx forwarding
  * @soc - data path soc handle
@@ -42,7 +42,7 @@
  * return NONE
  */
 static inline void
-cdp_cfg_set_rx_fwd_disabled(ol_txrx_soc_handle soc, void *pdev,
+cdp_cfg_set_rx_fwd_disabled(ol_txrx_soc_handle soc, struct cdp_cfg *cfg_pdev,
 		uint8_t disable_rx_fwd)
 {
 	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
@@ -52,7 +52,7 @@ cdp_cfg_set_rx_fwd_disabled(ol_txrx_soc_handle soc, void *pdev,
 	}
 
 	if (soc->ops->cfg_ops->set_cfg_rx_fwd_disabled)
-		return soc->ops->cfg_ops->set_cfg_rx_fwd_disabled(pdev,
+		return soc->ops->cfg_ops->set_cfg_rx_fwd_disabled(cfg_pdev,
 			disable_rx_fwd);
 }
 
@@ -68,7 +68,7 @@ cdp_cfg_set_rx_fwd_disabled(ol_txrx_soc_handle soc, void *pdev,
  */
 static inline void
 cdp_cfg_set_packet_log_enabled(ol_txrx_soc_handle soc,
-		void *pdev, uint8_t val)
+		struct cdp_cfg *cfg_pdev, uint8_t val)
 {
 	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -77,7 +77,7 @@ cdp_cfg_set_packet_log_enabled(ol_txrx_soc_handle soc,
 	}
 
 	if (soc->ops->cfg_ops->set_cfg_packet_log_enabled)
-		return soc->ops->cfg_ops->set_cfg_packet_log_enabled(pdev,
+		return soc->ops->cfg_ops->set_cfg_packet_log_enabled(cfg_pdev,
 				val);
 }
 
@@ -91,7 +91,7 @@ cdp_cfg_set_packet_log_enabled(ol_txrx_soc_handle soc,
  *
  * return soc configuration module instance
  */
-static inline void
+static inline struct cdp_cfg
 *cdp_cfg_attach(ol_txrx_soc_handle soc,
 		qdf_device_t osdev, void *cfg_param)
 {
@@ -118,7 +118,8 @@ static inline void
  * return NONE
  */
 static inline void
-cdp_cfg_vdev_rx_set_intrabss_fwd(ol_txrx_soc_handle soc, void *vdev, bool val)
+cdp_cfg_vdev_rx_set_intrabss_fwd(ol_txrx_soc_handle soc,
+		struct cdp_vdev *vdev, bool val)
 {
 	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -141,7 +142,7 @@ cdp_cfg_vdev_rx_set_intrabss_fwd(ol_txrx_soc_handle soc, void *vdev, bool val)
  *        0 disabled
  */
 static inline uint8_t
-cdp_cfg_is_rx_fwd_disabled(ol_txrx_soc_handle soc, void *vdev)
+cdp_cfg_is_rx_fwd_disabled(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
 	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -189,7 +190,7 @@ cdp_cfg_tx_set_is_mgmt_over_wmi_enabled(ol_txrx_soc_handle soc,
  *        0 low latency data path
  */
 static inline int
-cdp_cfg_is_high_latency(ol_txrx_soc_handle soc, void *pdev)
+cdp_cfg_is_high_latency(ol_txrx_soc_handle soc, struct cdp_cfg *cfg_pdev)
 {
 	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -198,7 +199,7 @@ cdp_cfg_is_high_latency(ol_txrx_soc_handle soc, void *pdev)
 	}
 
 	if (soc->ops->cfg_ops->is_high_latency)
-		return soc->ops->cfg_ops->is_high_latency(pdev);
+		return soc->ops->cfg_ops->is_high_latency(cfg_pdev);
 
 	return 0;
 }
@@ -215,7 +216,7 @@ cdp_cfg_is_high_latency(ol_txrx_soc_handle soc, void *pdev)
  */
 static inline void
 cdp_cfg_set_flow_control_parameters(ol_txrx_soc_handle soc,
-		void *cfg, void *param)
+		struct cdp_cfg *cfg_pdev, void *param)
 {
 	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -224,7 +225,7 @@ cdp_cfg_set_flow_control_parameters(ol_txrx_soc_handle soc,
 	}
 
 	if (soc->ops->cfg_ops->set_flow_control_parameters)
-		return soc->ops->cfg_ops->set_flow_control_parameters(cfg,
+		return soc->ops->cfg_ops->set_flow_control_parameters(cfg_pdev,
 				param);
 
 	return;
@@ -240,7 +241,7 @@ cdp_cfg_set_flow_control_parameters(ol_txrx_soc_handle soc,
  * Return: None
  */
 static inline void cdp_cfg_set_flow_steering(ol_txrx_soc_handle soc,
-		void *pdev, uint8_t val)
+		struct cdp_cfg *cfg_pdev, uint8_t val)
 {
 	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -249,7 +250,7 @@ static inline void cdp_cfg_set_flow_steering(ol_txrx_soc_handle soc,
 	}
 
 	if (soc->ops->cfg_ops->set_flow_steering)
-		return soc->ops->cfg_ops->set_flow_steering(pdev, val);
+		return soc->ops->cfg_ops->set_flow_steering(cfg_pdev, val);
 
 	return;
 }

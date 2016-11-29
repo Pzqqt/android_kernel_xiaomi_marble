@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -32,11 +32,11 @@
 #ifndef _CDP_TXRX_RAW_H_
 #define _CDP_TXRX_RAW_H_
 
-
+#include "cdp_txrx_handle.h"
 #include "cdp_txrx_ops.h"
 /* TODO: adf need to be replaced with qdf */
 static inline int cdp_get_nwifi_mode(ol_txrx_soc_handle soc,
-	void *vdev)
+	struct cdp_vdev *vdev)
 {
 	if (soc->ops->raw_ops->txrx_get_nwifi_mode)
 		return soc->ops->raw_ops->txrx_get_nwifi_mode(vdev);
@@ -65,7 +65,7 @@ static inline int cdp_get_nwifi_mode(ol_txrx_soc_handle soc,
 
 static inline int
 cdp_rsim_tx_encap(ol_txrx_soc_handle soc,
-	void *vdev, qdf_nbuf_t *pnbuf)
+	struct cdp_vdev *vdev, qdf_nbuf_t *pnbuf)
 {
 	if (soc->ops->raw_ops->rsim_tx_encap)
 		return soc->ops->raw_ops->rsim_tx_encap(vdev, pnbuf);
