@@ -131,20 +131,44 @@ struct htt_host_rx_desc_base {
 #define NBUF_MAP_ID(skb) \
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.map_index)
 
-#define HTT_RX_RING_BUFF_DBG_LIST          1024
-
 #ifdef MSM_PLATFORM
 #define HTT_ADDRESS_MASK   0xfffffffffffffffe
 #else
 #define HTT_ADDRESS_MASK   0xfffffffe
 #endif /* MSM_PLATFORM */
 
+/**
+ * rx_buf_debug: rx_ring history
+ *
+ * There are three types of entries in history:
+ * 1) rx-descriptors posted (and received)
+ *    Both of these events are stored on the same entry
+ *    @paddr : physical address posted on the ring
+ *    @nbuf  : virtual address of nbuf containing data
+ *    @ndata : virual address of data (corresponds to physical address)
+ *    @posted: time-stamp when the buffer is posted to the ring
+ *    @recved: time-stamp when the buffer is received (rx_in_order_ind)
+ *           : or 0, if the buffer has not been received yet
+ * 2) ring alloc-index (fill-index) updates
+ *    @paddr : = 0
+ *    @nbuf  : = 0
+ *    @ndata : = 0
+ *    posted : time-stamp when alloc index was updated
+ *    recved : value of alloc index
+ * 3) htt_rx_in_order_indication reception
+ *    @paddr : = 0
+ *    @nbuf  : = 0
+ *    @ndata : = 0
+ *    @posted: time-stamp when HTT message is recived
+ *    @recvd : 0x48545452584D5367 ('HTTRXMSG')
+*/
+#define HTT_RX_RING_BUFF_DBG_LIST          2048
 struct rx_buf_debug {
 	qdf_dma_addr_t paddr;
 	qdf_nbuf_t     nbuf;
-	void     *nbuf_data; /* lsb of this field is used for "in_use" */
-			     /* bool     in_use; */
-	uint64_t  ts;        /* timestamp */
+	void          *nbuf_data;
+	uint64_t       posted; /* timetamp */
+	uint64_t       recved; /* timestamp */
 
 };
 #endif
@@ -647,21 +671,17 @@ static inline
 void htt_rx_dbg_rxbuf_set(struct htt_pdev_t *pdev, qdf_dma_addr_t paddr,
 			  qdf_nbuf_t rx_netbuf)
 {
-	void *tmp;
 	if (pdev->rx_buff_list) {
 		qdf_spin_lock_bh(&(pdev->rx_buff_list_lock));
 		pdev->rx_buff_list[pdev->rx_buff_index].paddr = paddr;
+		pdev->rx_buff_list[pdev->rx_buff_index].nbuf  = rx_netbuf;
 		pdev->rx_buff_list[pdev->rx_buff_index].nbuf_data =
 							rx_netbuf->data;
-		/* pdev->rx_buff_list[pdev->rx_buff_index].in_use = true; */
-		tmp = pdev->rx_buff_list[pdev->rx_buff_index].nbuf_data;
-		tmp = (void *)((uintptr_t) tmp | 0x01);
-		pdev->rx_buff_list[pdev->rx_buff_index].nbuf_data = tmp;
-		pdev->rx_buff_list[pdev->rx_buff_index].nbuf = rx_netbuf;
-		pdev->rx_buff_list[pdev->rx_buff_index].ts =
+		pdev->rx_buff_list[pdev->rx_buff_index].posted =
 						qdf_get_log_timestamp();
+		pdev->rx_buff_list[pdev->rx_buff_index].recved = 0;
 		NBUF_MAP_ID(rx_netbuf) = pdev->rx_buff_index;
-		if (++pdev->rx_buff_index ==
+		if (++pdev->rx_buff_index >=
 				HTT_RX_RING_BUFF_DBG_LIST)
 			pdev->rx_buff_index = 0;
 		qdf_spin_unlock_bh(&(pdev->rx_buff_list_lock));
@@ -679,22 +699,67 @@ void htt_rx_dbg_rxbuf_reset(struct htt_pdev_t *pdev,
 				qdf_nbuf_t netbuf)
 {
 	uint32_t index;
-	void *tmp;
 
 	if (pdev->rx_buff_list) {
 		qdf_spin_lock_bh(&(pdev->rx_buff_list_lock));
 		index = NBUF_MAP_ID(netbuf);
 		if (index < HTT_RX_RING_BUFF_DBG_LIST) {
-			/* in_use = false */
-			tmp = pdev->rx_buff_list[index].nbuf_data;
-			tmp = (void *)((uintptr_t)tmp & ~((uintptr_t)0x1));
-			pdev->rx_buff_list[index].nbuf_data = tmp;
-			pdev->rx_buff_list[index].ts     =
+			pdev->rx_buff_list[index].recved =
 				qdf_get_log_timestamp();
 		}
 		qdf_spin_unlock_bh(&(pdev->rx_buff_list_lock));
 	}
 }
+/**
+ * htt_rx_dbg_rxbuf_indupd() - add a record for alloc index update
+ * @pdev: pdev handle
+ * @idx : value of the index
+ *
+ * Return: none
+ */
+static inline
+void htt_rx_dbg_rxbuf_indupd(struct htt_pdev_t *pdev, int alloc_index)
+{
+	if (pdev->rx_buff_list) {
+		qdf_spin_lock_bh(&(pdev->rx_buff_list_lock));
+		pdev->rx_buff_list[pdev->rx_buff_index].paddr = 0;
+		pdev->rx_buff_list[pdev->rx_buff_index].nbuf  = 0;
+		pdev->rx_buff_list[pdev->rx_buff_index].nbuf_data = 0;
+		pdev->rx_buff_list[pdev->rx_buff_index].posted =
+						qdf_get_log_timestamp();
+		pdev->rx_buff_list[pdev->rx_buff_index].recved =
+			(uint64_t)alloc_index;
+		if (++pdev->rx_buff_index >=
+				HTT_RX_RING_BUFF_DBG_LIST)
+			pdev->rx_buff_index = 0;
+		qdf_spin_unlock_bh(&(pdev->rx_buff_list_lock));
+	}
+}
+/**
+ * htt_rx_dbg_rxbuf_httrxind() - add a record for recipt of htt rx_ind msg
+ * @pdev: pdev handle
+ *
+ * Return: none
+ */
+static inline
+void htt_rx_dbg_rxbuf_httrxind(struct htt_pdev_t *pdev)
+{
+	if (pdev->rx_buff_list) {
+		qdf_spin_lock_bh(&(pdev->rx_buff_list_lock));
+		pdev->rx_buff_list[pdev->rx_buff_index].paddr = 0;
+		pdev->rx_buff_list[pdev->rx_buff_index].nbuf  = 0;
+		pdev->rx_buff_list[pdev->rx_buff_index].nbuf_data = 0;
+		pdev->rx_buff_list[pdev->rx_buff_index].posted =
+						qdf_get_log_timestamp();
+		pdev->rx_buff_list[pdev->rx_buff_index].recved =
+			(uint64_t)0x48545452584D5347; /* 'HTTRXMSG' */
+		if (++pdev->rx_buff_index >=
+				HTT_RX_RING_BUFF_DBG_LIST)
+			pdev->rx_buff_index = 0;
+		qdf_spin_unlock_bh(&(pdev->rx_buff_list_lock));
+	}
+}
+
 /**
  * htt_rx_dbg_rxbuf_deinit() - deinit debug rx buff list
  * @pdev: pdev handle
@@ -724,6 +789,17 @@ void htt_rx_dbg_rxbuf_set(struct htt_pdev_t *pdev,
 static inline
 void htt_rx_dbg_rxbuf_reset(struct htt_pdev_t *pdev,
 				qdf_nbuf_t netbuf)
+{
+	return;
+}
+static inline
+void htt_rx_dbg_rxbuf_indupt(struct htt_pdev_t *pdev,
+			     int    alloc_index)
+{
+	return;
+}
+static inline
+void htt_rx_dbg_rxbuf_httrxind(struct htt_pdev_t *pdev)
 {
 	return;
 }

@@ -509,6 +509,8 @@ static void htt_rx_ring_fill_n(struct htt_pdev_t *pdev, int num)
 
 fail:
 	*(pdev->rx_ring.alloc_idx.vaddr) = idx;
+	htt_rx_dbg_rxbuf_indupd(pdev, idx);
+
 	return;
 }
 
@@ -1938,6 +1940,8 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 	enum rx_pkt_fate status = RX_PKT_FATE_SUCCESS;
 
 	HTT_ASSERT1(htt_rx_in_order_ring_elems(pdev) != 0);
+
+	htt_rx_dbg_rxbuf_httrxind(pdev);
 
 	rx_ind_data = qdf_nbuf_data(rx_ind_msg);
 	rx_ctx_id = QDF_NBUF_CB_RX_CTX_ID(rx_ind_msg);
