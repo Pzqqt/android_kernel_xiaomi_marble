@@ -2347,6 +2347,7 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 	struct nlattr *tb2[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_MAX + 1];
 	int rem, i;
 	uint32_t buf_len = 0;
+	uint32_t count;
 	int ret;
 
 	ENTER_DEV(dev);
@@ -2517,14 +2518,24 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 			hdd_err("attr num of preferred bssid failed");
 			goto fail;
 		}
-		roam_params.num_bssid_favored = nla_get_u32(
+		count = nla_get_u32(
 			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_NUM_BSSID]);
-		hdd_debug("Num of Preferred BSSID (%d)",
-			roam_params.num_bssid_favored);
+		if (count > MAX_BSSID_FAVORED) {
+			hdd_err("Preferred BSSID count %u exceeds max %u",
+				count, MAX_BSSID_FAVORED);
+			goto fail;
+		}
+		hdd_debug("Num of Preferred BSSID (%d)", count);
 		i = 0;
 		nla_for_each_nested(curr_attr,
 			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_BSSID_PREFS],
 			rem) {
+
+			if (i == count) {
+				hdd_warn("Ignoring excess Preferred BSSID");
+				break;
+			}
+
 			if (nla_parse(tb2,
 				QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_MAX,
 				nla_data(curr_attr), nla_len(curr_attr),
@@ -2553,6 +2564,10 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 				roam_params.bssid_favored_factor[i]);
 			i++;
 		}
+		if (i < count)
+			hdd_warn("Num Preferred BSSID %u less than expected %u",
+				 i, count);
+		roam_params.num_bssid_favored = i;
 		sme_update_roam_params(pHddCtx->hHal, session_id,
 			roam_params, REASON_ROAM_SET_FAVORED_BSSID);
 		break;
@@ -2562,14 +2577,24 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 			hdd_err("attr num of blacklist bssid failed");
 			goto fail;
 		}
-		roam_params.num_bssid_avoid_list = nla_get_u32(
+		count = nla_get_u32(
 			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_BSSID_PARAMS_NUM_BSSID]);
-		hdd_debug("Num of blacklist BSSID (%d)",
-			roam_params.num_bssid_avoid_list);
+		if (count > MAX_BSSID_AVOID_LIST) {
+			hdd_err("Blacklist BSSID count %u exceeds max %u",
+				count, MAX_BSSID_AVOID_LIST);
+			goto fail;
+		}
+		hdd_debug("Num of blacklist BSSID (%d)", count);
 		i = 0;
 		nla_for_each_nested(curr_attr,
 			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_BSSID_PARAMS],
 			rem) {
+
+			if (i == count) {
+				hdd_warn("Ignoring excess Blacklist BSSID");
+				break;
+			}
+
 			if (nla_parse(tb2,
 				QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_MAX,
 				nla_data(curr_attr), nla_len(curr_attr),
@@ -2590,6 +2615,10 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 				roam_params.bssid_avoid_list[i].bytes));
 			i++;
 		}
+		if (i < count)
+			hdd_warn("Num Blacklist BSSID %u less than expected %u",
+				 i, count);
+		roam_params.num_bssid_avoid_list = i;
 		sme_update_roam_params(pHddCtx->hHal, session_id,
 			roam_params, REASON_ROAM_SET_BLACKLIST_BSSID);
 		break;
