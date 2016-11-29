@@ -157,6 +157,7 @@ struct CE_state;
 #endif
 #endif
 
+#ifndef NAPI_YIELD_BUDGET_BASED
 #ifdef HIF_CONFIG_SLUB_DEBUG_ON
 #define QCA_NAPI_BUDGET    64
 #define QCA_NAPI_DEF_SCALE  2
@@ -164,6 +165,11 @@ struct CE_state;
 #define QCA_NAPI_BUDGET    64
 #define QCA_NAPI_DEF_SCALE 16
 #endif /* SLUB_DEBUG_ON */
+#else /* NAPI_YIELD_BUDGET_BASED */
+#define QCA_NAPI_BUDGET    64
+#define QCA_NAPI_DEF_SCALE 4
+#endif
+
 #define HIF_NAPI_MAX_RECEIVES (QCA_NAPI_BUDGET * QCA_NAPI_DEF_SCALE)
 
 /* NOTE: "napi->scale" can be changed,

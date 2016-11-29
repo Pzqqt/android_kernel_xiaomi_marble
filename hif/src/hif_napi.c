@@ -766,7 +766,9 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx, struct napi_struct *napi,
 	if (ce_state && (!ce_check_rx_pending(ce_state) || 0 == rc)) {
 #endif
 		napi_info->stats[cpu].napi_completes++;
-
+#ifdef NAPI_YIELD_BUDGET_BASED
+		ce_state->force_break = 0;
+#endif
 		hif_record_ce_desc_event(hif, ce_state->id, NAPI_COMPLETE,
 					 NULL, NULL, 0);
 		if (normalized >= budget)

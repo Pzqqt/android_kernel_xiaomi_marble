@@ -196,15 +196,6 @@ uint32_t hif_hia_item_address(uint32_t target_type, uint32_t item_offset)
 	}
 }
 
-#ifdef NAPI_YIELD_BUDGET_BASED
-bool hif_max_num_receives_reached(struct hif_softc *scn, unsigned int count)
-{
-	if (QDF_IS_EPPING_ENABLED(hif_get_conparam(scn)))
-		return count > 120;
-	else
-		return count > MAX_REAP_COUNT_PER_NAPI_POLL;
-}
-#else
 /**
  * hif_max_num_receives_reached() - check max receive is reached
  * @scn: HIF Context
@@ -221,7 +212,6 @@ bool hif_max_num_receives_reached(struct hif_softc *scn, unsigned int count)
 	else
 		return count > MAX_NUM_OF_RECEIVES;
 }
-#endif
 
 /**
  * init_buffer_count() - initial buffer count

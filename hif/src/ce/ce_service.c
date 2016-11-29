@@ -1876,6 +1876,12 @@ more_data:
 				  CE_DEST_RING_READ_IDX_GET(scn, ctrl_addr));
 		}
 	}
+#ifdef NAPI_YIELD_BUDGET_BASED
+	/* Caution : Before you modify this code, please refer hif_napi_poll function
+	to understand how napi_complete gets called and make the necessary changes
+	Force break has to be done till WIN disables the interrupt at source */
+	ce_state->force_break = 1;
+#endif
 }
 
 #else
