@@ -2615,6 +2615,13 @@ wlansap_channel_change_request(void *pSapCtx, uint8_t target_channel)
 	}
 	mac_ctx = PMAC_STRUCT(hHal);
 	phy_mode = sapContext->csr_roamProfile.phyMode;
+
+	if (sapContext->csr_roamProfile.ChannelInfo.numOfChannels == 0 ||
+	    sapContext->csr_roamProfile.ChannelInfo.ChannelList == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			FL("Invalid channel list"));
+		return QDF_STATUS_E_FAULT;
+	}
 	sapContext->csr_roamProfile.ChannelInfo.ChannelList[0] = target_channel;
 	/*
 	 * We are getting channel bonding mode from sapDfsInfor structure
