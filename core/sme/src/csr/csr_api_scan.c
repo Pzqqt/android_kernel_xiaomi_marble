@@ -5388,7 +5388,19 @@ static void csr_scan_copy_request_valid_channels_only(tpAniSirGlobal mac_ctx,
 						break;
 					}
 				}
-				if (is_unsafe_chan) {
+				if (is_unsafe_chan &&
+					((CSR_IS_CHANNEL_24GHZ(
+						src_req->ChannelInfo.
+						ChannelList[index]) &&
+					mac_ctx->roam.configParam.
+					sta_roam_policy.sap_operating_band ==
+						eCSR_BAND_24) ||
+						(CDS_IS_CHANNEL_5GHZ(
+							src_req->ChannelInfo.
+							ChannelList[index]) &&
+					mac_ctx->roam.configParam.
+					sta_roam_policy.sap_operating_band ==
+						eCSR_BAND_5G))) {
 					QDF_TRACE(QDF_MODULE_ID_SME,
 						QDF_TRACE_LEVEL_INFO,
 					      FL("ignoring unsafe channel %d"),

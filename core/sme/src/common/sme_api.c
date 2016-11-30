@@ -16790,6 +16790,7 @@ void sme_get_vdev_type_nss(tHalHandle hal, enum tQDF_ADAPTER_MODE dev_mode,
  * @skip_unsafe_channels: Param to tell if driver needs to
  * skip unsafe channels or not.
  * @param session_id: sme_session_id
+ * @sap_operating_band: Band on which SAP is operating
  *
  * sme_update_sta_roam_policy update sta rome policies to csr
  * this function will call csrUpdateChannelList as well
@@ -16800,7 +16801,7 @@ void sme_get_vdev_type_nss(tHalHandle hal, enum tQDF_ADAPTER_MODE dev_mode,
 QDF_STATUS sme_update_sta_roam_policy(tHalHandle hal_handle,
 		enum sta_roam_policy_dfs_mode dfs_mode,
 		bool skip_unsafe_channels,
-		uint8_t session_id)
+		uint8_t session_id, uint8_t sap_operating_band)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -16818,6 +16819,8 @@ QDF_STATUS sme_update_sta_roam_policy(tHalHandle hal_handle,
 		dfs_mode;
 	sme_config.csrConfig.sta_roam_policy_params.skip_unsafe_channels =
 		skip_unsafe_channels;
+	sme_config.csrConfig.sta_roam_policy_params.sap_operating_band =
+		sap_operating_band;
 
 	sme_update_config(hal_handle, &sme_config);
 

@@ -3526,4 +3526,12 @@ struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
  */
 void hdd_lost_link_info_cb(void *context,
 			struct sir_lost_link_info *lost_link_info);
+/*
+ * hdd_get_sap_operating_band:  Get current operating channel
+ * for sap.
+ * @hdd_ctx: hdd context
+ *
+ * Return : Corresponding band for SAP operating channel
+ */
+uint8_t hdd_get_sap_operating_band(hdd_context_t *hdd_ctx);
 #endif
