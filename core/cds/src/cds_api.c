@@ -63,6 +63,7 @@
 #include <cdp_txrx_cmn_reg.h>
 #include <cdp_txrx_cfg.h>
 #include <cdp_txrx_misc.h>
+#include <dispatcher_init_deinit.h>
 /* Preprocessor Definitions and Constants */
 
 /* Maximum number of cds message queue get wrapper failures to cause panic */
@@ -463,6 +464,8 @@ QDF_STATUS cds_open(void)
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: CDS successfully Opened", __func__);
 
+	dispatcher_psoc_open();
+
 	return QDF_STATUS_SUCCESS;
 
 err_sme_close:
@@ -709,6 +712,8 @@ QDF_STATUS cds_enable(v_CONTEXT_t cds_context)
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
 		  "%s: CDS Start is successful!!", __func__);
 
+	dispatcher_psoc_enable();
+
 	return QDF_STATUS_SUCCESS;
 
 err_soc_target_detach:
@@ -762,6 +767,14 @@ QDF_STATUS cds_disable(v_CONTEXT_t cds_context)
 {
 	QDF_STATUS qdf_status;
 	void *handle;
+
+	/* PSOC disable for all new components. It needs to happen before
+	 * target is PDEV suspended such that a component can abort all its
+	 * ongoing transaction with FW. Always keep it before wma_stop() as
+	 * wma_stop() does target PDEV suspend.
+	 */
+	dispatcher_psoc_disable();
+
 
 	qdf_status = wma_stop(cds_context, HAL_STOP_TYPE_RF_KILL);
 
@@ -938,6 +951,8 @@ QDF_STATUS cds_close(v_CONTEXT_t cds_context)
 	cds_deinit_log_completion();
 	cds_deinit_ini_config();
 	qdf_timer_module_deinit();
+
+	dispatcher_psoc_close();
 
 	return QDF_STATUS_SUCCESS;
 }

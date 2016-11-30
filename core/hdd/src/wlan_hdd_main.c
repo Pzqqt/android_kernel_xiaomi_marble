@@ -108,6 +108,7 @@
 #include "nan_api.h"
 #include <wlan_hdd_napi.h>
 #include "wlan_hdd_disa.h"
+#include <dispatcher_init_deinit.h>
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -9121,6 +9122,8 @@ static int __hdd_module_init(void)
 		goto err_hdd_init;
 	}
 
+	dispatcher_init();
+
 	qdf_wake_lock_create(&wlan_wake_lock, "wlan");
 
 	hdd_set_conparam((uint32_t) con_mode);
@@ -9137,9 +9140,12 @@ static int __hdd_module_init(void)
 	return 0;
 out:
 	qdf_wake_lock_destroy(&wlan_wake_lock);
+	dispatcher_deinit();
 	hdd_deinit();
+
 err_hdd_init:
 	pld_deinit();
+
 	return ret;
 }
 
@@ -9181,6 +9187,7 @@ static void __hdd_module_exit(void)
 
 	qdf_wake_lock_destroy(&wlan_wake_lock);
 
+	dispatcher_deinit();
 	hdd_deinit();
 	pld_deinit();
 

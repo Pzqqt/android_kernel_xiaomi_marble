@@ -842,6 +842,16 @@ HTT_OBJS := $(HTT_DIR)/htt_tx.o \
             $(HTT_DIR)/htt_fw_stats.o \
             $(HTT_DIR)/htt_rx.o
 
+
+############## INIT-DEINIT ###########
+INIT_DEINIT_DIR := init_deinit/dispatcher
+INIT_DEINIT_INC_DIR := $(INIT_DEINIT_DIR)/inc
+INIT_DEINIT_SRC_DIR := $(INIT_DEINIT_DIR)/src
+INIT_DEINIT_OBJ_DIR := $(WLAN_COMMON_ROOT)/$(INIT_DEINIT_SRC_DIR)
+INIT_DEINIT_INC := -I$(WLAN_COMMON_INC)/$(INIT_DEINIT_INC_DIR)
+INIT_DEINIT_OBJS := $(INIT_DEINIT_OBJ_DIR)/dispatcher_init_deinit.o
+
+
 ############## HTC ##########
 HTC_DIR := htc
 HTC_INC := -I$(WLAN_COMMON_INC)/$(HTC_DIR)
@@ -1051,6 +1061,7 @@ INCS +=		$(WMA_INC) \
 		$(CDP_INC) \
 		$(PKTLOG_INC) \
 		$(HTT_INC) \
+		$(INIT_DEINIT_INC) \
 		$(HTC_INC) \
 		$(DFS_INC) \
 		$(WCFG_INC) \
@@ -1091,6 +1102,7 @@ OBJS +=		$(WMA_OBJS) \
 		$(WMI_OBJS) \
 		$(FWLOG_OBJS) \
 		$(HTC_OBJS) \
+		$(INIT_DEINIT_OBJS) \
 		$(DFS_OBJS)
 
 OBJS +=		$(HIF_OBJS) \
