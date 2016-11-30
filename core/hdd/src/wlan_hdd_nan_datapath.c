@@ -59,6 +59,11 @@ qca_wlan_vendor_ndp_policy[QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID_ARRAY] = { .type = NLA_BINARY,
 					.len = NDP_NUM_INSTANCE_ID },
 	[QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL_CONFIG] = { .type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE] = { .type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_NDP_PMK] = { .type = NLA_BINARY,
+					.len = NDP_PMK_LEN },
+	[QCA_WLAN_VENDOR_ATTR_NDP_SCID] = { .type = NLA_BINARY,
+					.len = NDP_SCID_BUF_LEN },
 };
 
 /**
@@ -452,6 +457,18 @@ static int hdd_ndi_delete_req_handler(hdd_context_t *hdd_ctx,
  * @hdd_ctx: hdd context
  * @tb: parsed NL attribute list
  *
+ * tb will contain following vendor attributes:
+ * QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR
+ * QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID
+ * QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL - optional
+ * QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL_CONFIG
+ * QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_INSTANCE_ID
+ * QCA_WLAN_VENDOR_ATTR_NDP_PEER_DISCOVERY_MAC_ADDR
+ * QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO - optional
+ * QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS - optional
+ * QCA_WLAN_VENDOR_ATTR_NDP_PMK - optional
+ * QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE - optional
+ *
  * Return:  0 on success or error code on failure
  */
 static int hdd_ndp_initiator_req_handler(hdd_context_t *hdd_ctx,
@@ -509,9 +526,13 @@ static int hdd_ndp_initiator_req_handler(hdd_context_t *hdd_ctx,
 		req.channel =
 			nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL]);
 
-	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL_CONFIG])
+	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL_CONFIG]) {
 		req.channel_cfg =
 		    nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL_CONFIG]);
+	} else {
+		hdd_err("Channel config is unavailable");
+		return -EINVAL;
+	}
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_INSTANCE_ID]) {
 		hdd_err("NDP service instance ID is unavailable");
@@ -546,10 +567,30 @@ static int hdd_ndp_initiator_req_handler(hdd_context_t *hdd_ctx,
 			nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS]);
 	}
 
-	hdd_info("vdev_id: %d, transaction_id: %d, channel: %d, service_instance_id: %d, ndp_app_info_len: %d, peer_discovery_mac_addr: %pM",
+	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE] &&
+		!tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]) {
+		hdd_err("PMK cannot be absent when CSID is present.");
+		return -EINVAL;
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]) {
+		req.pmk.pmk = nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]);
+		req.pmk.pmk_len = nla_len(tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]);
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD,
+				QDF_TRACE_LEVEL_DEBUG,
+				req.pmk.pmk, req.pmk.pmk_len);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE]) {
+		req.ncs_sk_type =
+			nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE]);
+
+	}
+
+	hdd_info("vdev_id: %d, transaction_id: %d, channel: %d, service_instance_id: %d, ndp_app_info_len: %d, csid: %d, peer_discovery_mac_addr: %pM",
 		req.vdev_id, req.transaction_id, req.channel,
 		req.service_instance_id, req.ndp_info.ndp_app_info_len,
-		req.peer_discovery_mac_addr.bytes);
+		req.ncs_sk_type, req.peer_discovery_mac_addr.bytes);
 	status = sme_ndp_initiator_req_handler(hal, &req);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("sme_ndp_initiator_req_handler failed, status: %d",
@@ -564,6 +605,16 @@ static int hdd_ndp_initiator_req_handler(hdd_context_t *hdd_ctx,
  * hdd_ndp_responder_req_handler() - NDP responder request handler
  * @hdd_ctx: hdd context
  * @tb: parsed NL attribute list
+ *
+ * tb includes following vendor attributes:
+ * QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR
+ * QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID
+ * QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID
+ * QCA_WLAN_VENDOR_ATTR_NDP_RESPONSE_CODE
+ * QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO - optional
+ * QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS - optional
+ * QCA_WLAN_VENDOR_ATTR_NDP_PMK - optional
+ * QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE - optional
  *
  * Return: 0 on success or error code on failure
  */
@@ -656,9 +707,30 @@ static int hdd_ndp_responder_req_handler(hdd_context_t *hdd_ctx,
 		hdd_info("NDP config data is unavailable");
 	}
 
-	hdd_info("vdev_id: %d, transaction_id: %d, ndp_rsp %d, ndp_instance_id: %d, ndp_app_info_len: %d",
+	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE] &&
+		!tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]) {
+		hdd_err("PMK cannot be absent when CSID is present.");
+		return -EINVAL;
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]) {
+		req.pmk.pmk = nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]);
+		req.pmk.pmk_len = nla_len(tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]);
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD,
+				QDF_TRACE_LEVEL_DEBUG,
+				req.pmk.pmk, req.pmk.pmk_len);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE]) {
+		req.ncs_sk_type =
+			nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE]);
+
+	}
+
+	hdd_info("vdev_id: %d, transaction_id: %d, ndp_rsp %d, ndp_instance_id: %d, ndp_app_info_len: %d, csid: %d",
 		req.vdev_id, req.transaction_id, req.ndp_rsp,
-		req.ndp_instance_id, req.ndp_info.ndp_app_info_len);
+		req.ndp_instance_id, req.ndp_info.ndp_app_info_len,
+		req.ncs_sk_type);
 
 	status = sme_ndp_responder_req_handler(hdd_ctx->hHal, &req);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -1307,6 +1379,8 @@ ndp_confirm_nla_failed:
  * QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID (4 bytes)
  * QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO (ndp_app_info_len size)
  * QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS (4 bytes)
+ * QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE(4 bytes)
+ * QCA_WLAN_VENDOR_ATTR_NDP_SCID(scid_len in size)
  *
  * Return: none
  */
@@ -1360,9 +1434,9 @@ static void hdd_ndp_indication_handler(hdd_adapter_t *adapter,
 		return;
 	}
 
-	data_len = (4 * sizeof(uint32_t)) + (2 * QDF_MAC_ADDR_SIZE) + IFNAMSIZ +
-		event->ndp_info.ndp_app_info_len + (8 * NLA_HDRLEN) +
-		NLMSG_HDRLEN;
+	data_len = (5 * sizeof(uint32_t)) + (2 * QDF_MAC_ADDR_SIZE) + IFNAMSIZ +
+		event->ndp_info.ndp_app_info_len + event->scid.scid_len +
+		(10 * NLA_HDRLEN) + NLMSG_HDRLEN;
 
 	/* notify response to the upper layer */
 	vendor_event = cfg80211_vendor_event_alloc(hdd_ctx->wiphy,
@@ -1414,6 +1488,24 @@ static void hdd_ndp_indication_handler(hdd_adapter_t *adapter,
 		   QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS,
 		   ndp_qos_config))
 			goto ndp_indication_nla_failed;
+	}
+
+	if (event->scid.scid_len) {
+		if (nla_put_u32(vendor_event,
+				QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE,
+				event->ncs_sk_type))
+			goto ndp_indication_nla_failed;
+
+		if (nla_put(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_SCID,
+				event->scid.scid_len,
+				event->scid.scid))
+			goto ndp_indication_nla_failed;
+
+		hdd_info("csid: %d, scid_len: %d",
+			event->ncs_sk_type, event->scid.scid_len);
+
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
+				event->scid.scid, event->scid.scid_len);
 	}
 
 	cfg80211_vendor_event(vendor_event, GFP_KERNEL);

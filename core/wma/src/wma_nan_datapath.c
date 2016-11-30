@@ -47,15 +47,15 @@ QDF_STATUS wma_handle_ndp_initiator_req(tp_wma_handle wma_handle, void *req)
 	QDF_STATUS status;
 	int ret;
 	uint16_t len;
-	uint32_t vdev_id, ndp_cfg_len, ndp_app_info_len;
+	uint32_t vdev_id, ndp_cfg_len, ndp_app_info_len, pmk_len;
 	struct ndp_initiator_rsp ndp_rsp = {0};
-	uint8_t *cfg_info, *app_info;
 	void *vdev;
 	wmi_buf_t buf;
 	wmi_ndp_initiator_req_fixed_param *cmd;
 	cds_msg_t pe_msg = {0};
 	struct ndp_initiator_req *ndp_req = req;
 	wmi_channel *ch_tlv;
+	uint8_t *tlv_ptr;
 
 	if (NULL == ndp_req) {
 		WMA_LOGE(FL("Invalid ndp_req."));
@@ -79,9 +79,11 @@ QDF_STATUS wma_handle_ndp_initiator_req(tp_wma_handle wma_handle, void *req)
 	 */
 	ndp_cfg_len = qdf_roundup(ndp_req->ndp_config.ndp_cfg_len, 4);
 	ndp_app_info_len = qdf_roundup(ndp_req->ndp_info.ndp_app_info_len, 4);
+	pmk_len = qdf_roundup(ndp_req->pmk.pmk_len, 4);
 	/* allocated memory for fixed params as well as variable size data */
-	len = sizeof(*cmd) + ndp_cfg_len + ndp_app_info_len +
-		(2 * WMI_TLV_HDR_SIZE) + sizeof(*ch_tlv);
+	len = sizeof(*cmd) + sizeof(*ch_tlv) + (3 * WMI_TLV_HDR_SIZE)
+		+ ndp_cfg_len + ndp_app_info_len + pmk_len;
+
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
 	if (!buf) {
 		WMA_LOGE(FL("wmi_buf_alloc failed"));
@@ -101,6 +103,8 @@ QDF_STATUS wma_handle_ndp_initiator_req(tp_wma_handle wma_handle, void *req)
 	cmd->ndp_cfg_len = ndp_req->ndp_config.ndp_cfg_len;
 	cmd->ndp_app_info_len = ndp_req->ndp_info.ndp_app_info_len;
 	cmd->ndp_channel_cfg = ndp_req->channel_cfg;
+	cmd->nan_pmk_len = ndp_req->pmk.pmk_len;
+	cmd->nan_csid = ndp_req->ncs_sk_type;
 
 	ch_tlv = (wmi_channel *)&cmd[1];
 	WMITLV_SET_HDR(ch_tlv, WMITLV_TAG_STRUC_wmi_channel,
@@ -108,21 +112,26 @@ QDF_STATUS wma_handle_ndp_initiator_req(tp_wma_handle wma_handle, void *req)
 	ch_tlv->mhz = ndp_req->channel;
 	ch_tlv->band_center_freq1 =
 		cds_chan_to_freq(cds_freq_to_chan(ndp_req->channel));
+	tlv_ptr = (uint8_t *)&ch_tlv[1];
 
-	cfg_info = (uint8_t *)&ch_tlv[1];
-	WMITLV_SET_HDR(cfg_info, WMITLV_TAG_ARRAY_BYTE, ndp_cfg_len);
-	qdf_mem_copy(&cfg_info[WMI_TLV_HDR_SIZE], ndp_req->ndp_config.ndp_cfg,
-		     cmd->ndp_cfg_len);
+	WMITLV_SET_HDR(tlv_ptr, WMITLV_TAG_ARRAY_BYTE, ndp_cfg_len);
+	qdf_mem_copy(&tlv_ptr[WMI_TLV_HDR_SIZE],
+		     ndp_req->ndp_config.ndp_cfg, cmd->ndp_cfg_len);
+	tlv_ptr = tlv_ptr + WMI_TLV_HDR_SIZE + ndp_cfg_len;
 
-	app_info = &cfg_info[WMI_TLV_HDR_SIZE + ndp_cfg_len];
-	WMITLV_SET_HDR(app_info, WMITLV_TAG_ARRAY_BYTE, ndp_app_info_len);
-	qdf_mem_copy(&app_info[WMI_TLV_HDR_SIZE],
-		     ndp_req->ndp_info.ndp_app_info,
-		     cmd->ndp_app_info_len);
+	WMITLV_SET_HDR(tlv_ptr, WMITLV_TAG_ARRAY_BYTE, ndp_app_info_len);
+	qdf_mem_copy(&tlv_ptr[WMI_TLV_HDR_SIZE],
+		     ndp_req->ndp_info.ndp_app_info, cmd->ndp_app_info_len);
+	tlv_ptr = tlv_ptr + WMI_TLV_HDR_SIZE + ndp_app_info_len;
 
-	WMA_LOGE(FL("vdev_id = %d, transaction_id: %d, service_instance_id, %d channel: %d"),
+	WMITLV_SET_HDR(tlv_ptr, WMITLV_TAG_ARRAY_BYTE, pmk_len);
+	qdf_mem_copy(&tlv_ptr[WMI_TLV_HDR_SIZE], ndp_req->pmk.pmk,
+		     cmd->nan_pmk_len);
+	tlv_ptr = tlv_ptr + WMI_TLV_HDR_SIZE + pmk_len;
+
+	WMA_LOGE(FL("vdev_id = %d, transaction_id: %d, service_instance_id: %d, ch: %d, ch_cfg: %d, csid: %d"),
 		cmd->vdev_id, cmd->transaction_id, cmd->service_instance_id,
-		ch_tlv->mhz);
+		ch_tlv->mhz, cmd->ndp_channel_cfg, cmd->nan_csid);
 	WMA_LOGE(FL("peer mac addr: mac_addr31to0: 0x%x, mac_addr47to32: 0x%x"),
 		cmd->peer_discovery_mac_addr.mac_addr31to0,
 		cmd->peer_discovery_mac_addr.mac_addr47to32);
@@ -137,8 +146,12 @@ QDF_STATUS wma_handle_ndp_initiator_req(tp_wma_handle wma_handle, void *req)
 			   ndp_req->ndp_info.ndp_app_info,
 			   ndp_req->ndp_info.ndp_app_info_len);
 
+	WMA_LOGE(FL("pmk len: %d"), cmd->nan_pmk_len);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+			   ndp_req->pmk.pmk, cmd->nan_pmk_len);
 	WMA_LOGE(FL("sending WMI_NDP_INITIATOR_REQ_CMDID(0x%X)"),
 		WMI_NDP_INITIATOR_REQ_CMDID);
+
 	ret = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
 				   WMI_NDP_INITIATOR_REQ_CMDID);
 	if (ret < 0) {
@@ -180,8 +193,8 @@ QDF_STATUS wma_handle_ndp_responder_req(tp_wma_handle wma_handle,
 {
 	wmi_buf_t buf;
 	void *vdev;
-	uint32_t vdev_id = 0, ndp_cfg_len, ndp_app_info_len;
-	uint8_t *cfg_info, *app_info;
+	uint32_t vdev_id = 0, ndp_cfg_len, ndp_app_info_len, pmk_len;
+	uint8_t *tlv_ptr;
 	int ret;
 	wmi_ndp_responder_req_fixed_param *cmd;
 	uint16_t len;
@@ -215,11 +228,12 @@ QDF_STATUS wma_handle_ndp_responder_req(tp_wma_handle wma_handle,
 	 * round up ndp_cfg_len and ndp_app_info_len to 4 bytes
 	 */
 	ndp_cfg_len = qdf_roundup(req_params->ndp_config.ndp_cfg_len, 4);
-	ndp_app_info_len =
-		qdf_roundup(req_params->ndp_info.ndp_app_info_len, 4);
+	ndp_app_info_len = qdf_roundup(req_params->ndp_info.ndp_app_info_len, 4);
+	pmk_len = qdf_roundup(req_params->pmk.pmk_len, 4);
 	/* allocated memory for fixed params as well as variable size data */
-	len = sizeof(*cmd) + ndp_cfg_len + ndp_app_info_len +
-		(2 * WMI_TLV_HDR_SIZE);
+	len = sizeof(*cmd) + 3*WMI_TLV_HDR_SIZE + ndp_cfg_len + ndp_app_info_len
+		+ pmk_len;
+
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
 	if (!buf) {
 		WMA_LOGE(FL("wmi_buf_alloc failed"));
@@ -237,19 +251,29 @@ QDF_STATUS wma_handle_ndp_responder_req(tp_wma_handle wma_handle,
 
 	cmd->ndp_cfg_len = req_params->ndp_config.ndp_cfg_len;
 	cmd->ndp_app_info_len = req_params->ndp_info.ndp_app_info_len;
+	cmd->nan_pmk_len = req_params->pmk.pmk_len;
+	cmd->nan_csid = req_params->ncs_sk_type;
 
-	cfg_info = (uint8_t *)&cmd[1];
-	/* WMI command expects 4 byte alligned len */
-	WMITLV_SET_HDR(cfg_info, WMITLV_TAG_ARRAY_BYTE, ndp_cfg_len);
-	qdf_mem_copy(&cfg_info[WMI_TLV_HDR_SIZE],
-		     req_params->ndp_config.ndp_cfg, cmd->ndp_cfg_len);
+	tlv_ptr = (uint8_t *)&cmd[1];
 
-	app_info = &cfg_info[WMI_TLV_HDR_SIZE + ndp_cfg_len];
-	/* WMI command expects 4 byte alligned len */
-	WMITLV_SET_HDR(app_info, WMITLV_TAG_ARRAY_BYTE, ndp_app_info_len);
-	qdf_mem_copy(&app_info[WMI_TLV_HDR_SIZE],
+	WMITLV_SET_HDR(tlv_ptr, WMITLV_TAG_ARRAY_BYTE, ndp_cfg_len);
+	qdf_mem_copy(&tlv_ptr[WMI_TLV_HDR_SIZE],
+		req_params->ndp_config.ndp_cfg, cmd->ndp_cfg_len);
+	tlv_ptr = tlv_ptr + WMI_TLV_HDR_SIZE + ndp_cfg_len;
+
+	WMITLV_SET_HDR(tlv_ptr, WMITLV_TAG_ARRAY_BYTE, ndp_app_info_len);
+	qdf_mem_copy(&tlv_ptr[WMI_TLV_HDR_SIZE],
 		     req_params->ndp_info.ndp_app_info,
 		     req_params->ndp_info.ndp_app_info_len);
+	tlv_ptr = tlv_ptr + WMI_TLV_HDR_SIZE + ndp_app_info_len;
+
+	WMITLV_SET_HDR(tlv_ptr, WMITLV_TAG_ARRAY_BYTE, pmk_len);
+	qdf_mem_copy(&tlv_ptr[WMI_TLV_HDR_SIZE], req_params->pmk.pmk,
+		     cmd->nan_pmk_len);
+	tlv_ptr = tlv_ptr + WMI_TLV_HDR_SIZE + pmk_len;
+
+	WMA_LOGE(FL("vdev_id = %d, transaction_id: %d, csid: %d"),
+		cmd->vdev_id, cmd->transaction_id, cmd->nan_csid);
 
 	WMA_LOGD(FL("ndp_config len: %d"),
 		req_params->ndp_config.ndp_cfg_len);
@@ -263,6 +287,12 @@ QDF_STATUS wma_handle_ndp_responder_req(tp_wma_handle wma_handle,
 			req_params->ndp_info.ndp_app_info,
 			req_params->ndp_info.ndp_app_info_len);
 
+	WMA_LOGE(FL("pmk len: %d"), cmd->nan_pmk_len);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+			   req_params->pmk.pmk, cmd->nan_pmk_len);
+
+	WMA_LOGE(FL("sending WMI_NDP_RESPONDER_REQ_CMDID(0x%X)"),
+		WMI_NDP_RESPONDER_REQ_CMDID);
 	ret = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
 				   WMI_NDP_RESPONDER_REQ_CMDID);
 	if (ret < 0) {
@@ -398,11 +428,14 @@ static int wma_ndp_indication_event_handler(void *handle, uint8_t *event_info,
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&fixed_params->peer_discovery_mac_addr,
 				ind_event.peer_discovery_mac_addr.bytes);
 
-	WMA_LOGD(FL("WMI_NDP_INDICATION_EVENTID(0x%X) received. vdev %d, service_instance %d, ndp_instance %d, role %d, policy %d, peer_mac_addr: %pM, peer_disc_mac_addr: %pM"),
+	WMA_LOGD(FL("WMI_NDP_INDICATION_EVENTID(0x%X) received. vdev %d, \n"
+		"service_instance %d, ndp_instance %d, role %d, policy %d, \n"
+		"csid: %d, scid_len: %d, peer_mac_addr: %pM, peer_disc_mac_addr: %pM"),
 		 WMI_NDP_INDICATION_EVENTID, fixed_params->vdev_id,
 		 fixed_params->service_instance_id,
 		 fixed_params->ndp_instance_id, fixed_params->self_ndp_role,
 		 fixed_params->accept_policy,
+		 fixed_params->nan_csid, fixed_params->nan_scid_len,
 		 ind_event.peer_mac_addr.bytes,
 		 ind_event.peer_discovery_mac_addr.bytes);
 
@@ -416,6 +449,8 @@ static int wma_ndp_indication_event_handler(void *handle, uint8_t *event_info,
 
 	ind_event.ndp_config.ndp_cfg_len = fixed_params->ndp_cfg_len;
 	ind_event.ndp_info.ndp_app_info_len = fixed_params->ndp_app_info_len;
+	ind_event.ncs_sk_type = fixed_params->nan_csid;
+	ind_event.scid.scid_len = fixed_params->nan_scid_len;
 
 	if (ind_event.ndp_config.ndp_cfg_len) {
 		ind_event.ndp_config.ndp_cfg =
@@ -439,6 +474,22 @@ static int wma_ndp_indication_event_handler(void *handle, uint8_t *event_info,
 		qdf_mem_copy(ind_event.ndp_info.ndp_app_info,
 			     event->ndp_app_info,
 			     ind_event.ndp_info.ndp_app_info_len);
+	}
+
+	if (ind_event.scid.scid_len) {
+		ind_event.scid.scid =
+			qdf_mem_malloc(ind_event.scid.scid_len);
+		if (NULL == ind_event.scid.scid) {
+			WMA_LOGE(FL("malloc failed"));
+			qdf_mem_free(ind_event.ndp_config.ndp_cfg);
+			qdf_mem_free(ind_event.ndp_info.ndp_app_info);
+			return QDF_STATUS_E_NOMEM;
+		}
+		qdf_mem_copy(ind_event.scid.scid,
+			     event->ndp_scid, ind_event.scid.scid_len);
+		WMA_LOGD(FL("scid hex dump:"));
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+			ind_event.scid.scid, ind_event.scid.scid_len);
 	}
 
 	pe_msg.type = SIR_HAL_NDP_INDICATION;
