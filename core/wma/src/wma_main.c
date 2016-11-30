@@ -6822,6 +6822,7 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 	case WMA_SET_RSSI_MONITOR_REQ:
 		wma_set_rssi_monitoring(wma_handle,
 			(struct rssi_monitor_req *)msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_FW_MEM_DUMP_REQ:
 		wma_process_fw_mem_dump_req(wma_handle,
