@@ -62,17 +62,9 @@
 #include "sme_nan_datapath.h"
 #include "csr_api.h"
 
-extern tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb);
-
 #define LOG_SIZE 256
 
 static tSelfRecoveryStats g_self_recovery_stats;
-/* TxMB Functions */
-extern QDF_STATUS pmc_prepare_command(tpAniSirGlobal pMac, uint32_t sessionId,
-				      eSmeCommandType cmdType, void *pvParam,
-				      uint32_t size, tSmeCmd **ppCmd);
-extern void pmc_release_command(tpAniSirGlobal pMac, tSmeCmd *pCommand);
-extern void qos_release_command(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 
 static QDF_STATUS init_sme_cmd_list(tpAniSirGlobal pMac);
 static void sme_abort_command(tpAniSirGlobal pMac, tSmeCmd *pCommand,

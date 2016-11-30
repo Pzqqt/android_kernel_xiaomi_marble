@@ -203,8 +203,8 @@ void sme_release_command(tpAniSirGlobal pMac, tSmeCmd *pCmd);
 void purge_sme_session_cmd_list(tpAniSirGlobal pMac, uint32_t sessionId,
 		tDblLinkList *pList);
 bool sme_command_pending(tpAniSirGlobal pMac);
-bool pmc_process_command(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 bool qos_process_command(tpAniSirGlobal pMac, tSmeCmd *pCommand);
+void qos_release_command(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 QDF_STATUS csr_process_scan_command(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 QDF_STATUS csr_roam_process_command(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 void csr_roam_process_wm_status_change_command(tpAniSirGlobal pMac,
