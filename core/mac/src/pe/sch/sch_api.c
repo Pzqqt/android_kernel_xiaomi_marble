@@ -67,50 +67,6 @@
 
 /* -------------------------------------------------------------------- */
 /**
- * sch_get_cfp_count
- *
- * FUNCTION:
- * Function used by other Sirius modules to read CFPcount
- *
- * LOGIC:
- *
- * ASSUMPTIONS:
- *
- * NOTE:
- *
- * @param None
- * @return None
- */
-
-uint8_t sch_get_cfp_count(tpAniSirGlobal pMac)
-{
-	return pMac->sch.schObject.gSchCFPCount;
-}
-
-/* -------------------------------------------------------------------- */
-/**
- * sch_get_cfp_dur_remaining
- *
- * FUNCTION:
- * Function used by other Sirius modules to read CFPDuration remaining
- *
- * LOGIC:
- *
- * ASSUMPTIONS:
- *
- * NOTE:
- *
- * @param None
- * @return None
- */
-
-uint16_t sch_get_cfp_dur_remaining(tpAniSirGlobal pMac)
-{
-	return pMac->sch.schObject.gSchCFPDurRemaining;
-}
-
-/* -------------------------------------------------------------------- */
-/**
  * sch_init_globals
  *
  * FUNCTION:
@@ -331,10 +287,10 @@ tSirRetStatus sch_send_beacon_req(tpAniSirGlobal pMac, uint8_t *beaconPayload,
 	return retCode;
 }
 
-uint32_t lim_remove_p2p_ie_from_add_ie(tpAniSirGlobal pMac,
-					tpPESession psessionEntry,
-					uint8_t *addIeWoP2pIe,
-					uint32_t *addnIELenWoP2pIe)
+static uint32_t lim_remove_p2p_ie_from_add_ie(tpAniSirGlobal pMac,
+					      tpPESession psessionEntry,
+					      uint8_t *addIeWoP2pIe,
+					      uint32_t *addnIELenWoP2pIe)
 {
 	uint32_t left = psessionEntry->addIeParams.probeRespDataLen;
 	uint8_t *ptr = psessionEntry->addIeParams.probeRespData_buff;
