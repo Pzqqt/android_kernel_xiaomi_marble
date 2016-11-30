@@ -886,11 +886,6 @@ static void hdd_ipa_uc_rt_debug_deinit(hdd_context_t *hdd_ctx)
 {
 	struct hdd_ipa_priv *hdd_ipa = (struct hdd_ipa_priv *)hdd_ctx->hdd_ipa;
 
-	if (QDF_TIMER_STATE_STOPPED !=
-		qdf_mc_timer_get_current_state(&hdd_ipa->rt_debug_fill_timer)) {
-		qdf_mc_timer_stop(&hdd_ipa->rt_debug_fill_timer);
-	}
-	qdf_mc_timer_destroy(&hdd_ipa->rt_debug_fill_timer);
 	qdf_mutex_destroy(&hdd_ipa->rt_debug_lock);
 
 	if (!hdd_ipa_is_rt_debugging_enabled(hdd_ctx)) {
@@ -898,6 +893,12 @@ static void hdd_ipa_uc_rt_debug_deinit(hdd_context_t *hdd_ctx)
 			"%s: IPA RT debug is not enabled", __func__);
 		return;
 	}
+
+	if (QDF_TIMER_STATE_STOPPED !=
+		qdf_mc_timer_get_current_state(&hdd_ipa->rt_debug_fill_timer)) {
+		qdf_mc_timer_stop(&hdd_ipa->rt_debug_fill_timer);
+	}
+	qdf_mc_timer_destroy(&hdd_ipa->rt_debug_fill_timer);
 
 	if (QDF_TIMER_STATE_STOPPED !=
 		qdf_mc_timer_get_current_state(&hdd_ipa->rt_debug_timer)) {
