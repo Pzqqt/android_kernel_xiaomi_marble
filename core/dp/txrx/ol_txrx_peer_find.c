@@ -550,12 +550,12 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 		/* This peer_id belongs to a peer already deleted */
 		qdf_atomic_dec(&pdev->peer_id_to_obj_map[peer_id].
 					del_peer_id_ref_cnt);
+		qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 			   "%s: Remove the ID %d reference to deleted peer. del_peer_id_ref_cnt %d",
 			   __func__, peer_id,
 			   qdf_atomic_read(&pdev->peer_id_to_obj_map[peer_id].
 							del_peer_id_ref_cnt));
-		qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
 		return;
 	}
 	peer = pdev->peer_id_to_obj_map[peer_id].peer;
@@ -566,10 +566,10 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 		 * If the peer ID is for a vdev, then the peer pointer stored
 		 * in peer_id_to_obj_map will be NULL.
 		 */
+		qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 			   "%s: peer not found for peer_id %d",
 			   __func__, peer_id);
-		qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
 		return;
 	}
 
