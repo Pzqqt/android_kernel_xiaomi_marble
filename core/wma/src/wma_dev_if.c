@@ -2962,6 +2962,7 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	if (add_bss->rmfEnabled)
 		wma_set_mgmt_frame_protection(wma);
 
+	req.dot11_mode = add_bss->dot11_mode;
 	req.beacon_intval = add_bss->beaconInterval;
 	req.dtim_period = add_bss->dtimPeriod;
 	req.hidden_ssid = add_bss->bHiddenSSIDEn;
