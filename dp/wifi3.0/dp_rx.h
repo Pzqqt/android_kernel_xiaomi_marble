@@ -119,8 +119,12 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 				   union dp_rx_desc_list_elem_t **desc_list,
 				   union dp_rx_desc_list_elem_t **tail,
 				   uint8_t owner);
+uint32_t dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota);
+
+uint32_t dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota);
+
 uint32_t
-dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota);
+dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota);
 
 /**
  * dp_rx_add_to_free_desc_list() - Adds to a local free descriptor list

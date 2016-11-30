@@ -170,8 +170,7 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 		   bool *is_term)
 {
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		"%s %d : Intra-BSS forwarding not implemented",
-			__func__, __LINE__);
+		FL("Intra-BSS forwarding not implemented"));
 	return false;
 }
 
@@ -222,8 +221,7 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		 * Ring Type / Ring Id combo
 		 */
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s %d : HAL RING Access Failed -- %p\n",
-			__func__, __LINE__, hal_ring);
+			FL("HAL RING Access Failed -- %p"), hal_ring);
 		hal_srng_access_end(hal_soc, hal_ring);
 		goto done;
 	}
@@ -238,8 +236,7 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 
 		if (qdf_unlikely(error == HAL_REO_ERROR_DETECTED)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"%s %d : HAL RING 0x%p:error %d\n",
-			__func__, __LINE__, hal_ring, error);
+			FL("HAL RING 0x%p:error %d"), hal_ring, error);
 			/* Don't know how to deal with this -- assert */
 			qdf_assert(0);
 		}
@@ -288,8 +285,7 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		if (!hal_rx_attn_msdu_done_get(rx_desc->rx_buf_start)) {
 
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"%s %d : HAL RING 0x%p\n",
-			__func__, __LINE__, hal_ring);
+			FL("HAL RING 0x%p"), hal_ring);
 
 			print_hex_dump(KERN_ERR,
 			       "\t Pkt Desc:", DUMP_PREFIX_NONE, 32, 4,
@@ -338,8 +334,7 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		/* Peer lookup failed */
 		if (!peer) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				 "%s %d : peer look-up failed peer id %d\n",
-				 __func__, __LINE__, peer_id);
+				 FL("peer look-up failed peer id %d"), peer_id);
 
 			/* Drop & free packet */
 			qdf_nbuf_free(rx_desc->nbuf);

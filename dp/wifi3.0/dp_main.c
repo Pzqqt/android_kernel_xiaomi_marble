@@ -51,9 +51,9 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 		&(srng->base_paddr_unaligned));
 
 	if (!srng->base_vaddr_unaligned) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: alloc failed - ring_type: %d, ring_num %d\n",
-			__func__, ring_type, ring_num);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("alloc failed - ring_type: %d, ring_num %d"),
+			ring_type, ring_num);
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -105,9 +105,9 @@ static void dp_srng_cleanup(struct dp_soc *soc, struct dp_srng *srng,
 	int ring_type, int ring_num)
 {
 	if (!srng->hal_srng) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: Ring type: %d, num:%d not setup\n",
-			__func__, ring_type, ring_num);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("Ring type: %d, num:%d not setup"),
+			ring_type, ring_num);
 		return;
 	}
 
@@ -138,6 +138,8 @@ uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 	uint32_t budget = dp_budget;
 	uint8_t tx_mask = int_ctx->tx_ring_mask;
 	uint8_t rx_mask = int_ctx->rx_ring_mask;
+	uint8_t rx_err_mask = int_ctx->rx_err_ring_mask;
+	uint8_t rx_wbm_rel_mask = int_ctx->rx_wbm_rel_ring_mask;
 
 	/* Process Tx completion interrupts first to return back buffers */
 	if (tx_mask) {
@@ -147,11 +149,44 @@ uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 					dp_tx_comp_handler(soc, ring, budget);
 				budget -= work_done;
 				if (work_done)
-					DP_TRACE(INFO, "tx mask 0x%x ring %d, budget %d\n",
+					QDF_TRACE(QDF_MODULE_ID_DP,
+						QDF_TRACE_LEVEL_INFO,
+						"tx mask 0x%x ring %d,"
+						"budget %d",
 						tx_mask, ring, budget);
 				if (budget <= 0)
 					goto budget_done;
 			}
+		}
+	}
+
+	/* Process REO Exception ring interrupt */
+	if (rx_err_mask) {
+		work_done = dp_rx_err_process(soc,
+				soc->reo_exception_ring.hal_srng, budget);
+		budget -=  work_done;
+
+		if (work_done)
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+				"REO Exception Ring: work_done %d budget %d",
+				work_done, budget);
+		if (budget <= 0) {
+			goto budget_done;
+		}
+	}
+
+	/* Process Rx WBM release ring interrupt */
+	if (rx_wbm_rel_mask) {
+		work_done = dp_rx_wbm_err_process(soc,
+				soc->rx_rel_ring.hal_srng, budget);
+		budget -=  work_done;
+
+		if (work_done)
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+				"WBM Release Ring: work_done %d budget %d",
+				work_done, budget);
+		if (budget <= 0) {
+			goto budget_done;
 		}
 	}
 
@@ -165,7 +200,10 @@ uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 					    budget);
 				budget -=  work_done;
 				if (work_done)
-					DP_TRACE(INFO, "rx mask 0x%x ring %d, budget %d\n",
+					QDF_TRACE(QDF_MODULE_ID_DP,
+						QDF_TRACE_LEVEL_INFO,
+						"rx mask 0x%x ring %d,"
+						"budget %d",
 						tx_mask, ring, budget);
 				if (budget <= 0)
 					goto budget_done;
@@ -215,6 +253,8 @@ QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 		soc->intr_ctx[i].tx_ring_mask = 0xF;
 		soc->intr_ctx[i].rx_ring_mask = 0xF;
 		soc->intr_ctx[i].rx_mon_ring_mask = 0xF;
+		soc->intr_ctx[i].rx_err_ring_mask = 0x1;
+		soc->intr_ctx[i].rx_wbm_rel_ring_mask = 0x1;
 		soc->intr_ctx[i].soc = soc;
 	}
 
@@ -305,8 +345,8 @@ QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 				&soc->intr_ctx[i]);
 
 		if (ret) {
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: failed, ret = %d",	__func__, ret);
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("failed, ret = %d"), ret);
 
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -390,9 +430,9 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 	while (total_link_descs < num_entries)
 		total_link_descs <<= 1;
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-		"%s: total_link_descs: %u, link_desc_size: %d\n",
-		__func__, total_link_descs, link_desc_size);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+		FL("total_link_descs: %u, link_desc_size: %d"),
+		total_link_descs, link_desc_size);
 	total_mem_size =  total_link_descs * link_desc_size;
 
 	total_mem_size += link_desc_align;
@@ -407,9 +447,9 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 			(max_alloc_size - link_desc_align);
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-		"%s: total_mem_size: %d, num_link_desc_banks: %u\n",
-		__func__, total_mem_size, num_link_desc_banks);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+		FL("total_mem_size: %d, num_link_desc_banks: %u"),
+		total_mem_size, num_link_desc_banks);
 
 	for (i = 0; i < num_link_desc_banks; i++) {
 		soc->link_desc_banks[i].base_vaddr_unaligned =
@@ -431,9 +471,8 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 			soc->link_desc_banks[i].base_vaddr_unaligned));
 
 		if (!soc->link_desc_banks[i].base_vaddr_unaligned) {
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s: Link descriptor memory alloc failed\n",
-				__func__);
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("Link descriptor memory alloc failed"));
 			goto fail;
 		}
 	}
@@ -472,9 +511,8 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 
 		if (dp_srng_setup(soc, &soc->wbm_idle_link_ring,
 			WBM_IDLE_LINK, 0, 0, total_link_descs)) {
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s: Link desc idle ring setup failed\n",
-				__func__);
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("Link desc idle ring setup failed"));
 			goto fail;
 		}
 
@@ -523,10 +561,9 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 				soc->wbm_idle_scatter_buf_size,
 				&(soc->wbm_idle_scatter_buf_base_paddr[i]));
 			if (soc->wbm_idle_scatter_buf_base_vaddr[i] == NULL) {
-				QDF_TRACE(QDF_MODULE_ID_TXRX,
+				QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_ERROR,
-					"%s:Scatter list memory alloc failed\n",
-					__func__);
+					FL("Scatter list memory alloc failed"));
 				goto fail;
 			}
 		}
@@ -681,9 +718,8 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	/* Common rings */
 	if (dp_srng_setup(soc, &soc->wbm_desc_rel_ring, SW2WBM_RELEASE, 0, 0,
 		WBM_RELEASE_RING_SIZE)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: dp_srng_setup failed for wbm_desc_rel_ring\n",
-			__func__);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("dp_srng_setup failed for wbm_desc_rel_ring"));
 		goto fail1;
 	}
 
@@ -696,18 +732,16 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 		for (i = 0; i < soc->num_tcl_data_rings; i++) {
 			if (dp_srng_setup(soc, &soc->tcl_data_ring[i],
 				TCL_DATA, i, 0, TCL_DATA_RING_SIZE)) {
-				QDF_TRACE(QDF_MODULE_ID_TXRX,
+				QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_ERROR,
-					"%s: dp_srng_setup failed for tcl_data_ring[%d]\n",
-					__func__, i);
+					FL("dp_srng_setup failed for tcl_data_ring[%d]"), i);
 				goto fail1;
 			}
 			if (dp_srng_setup(soc, &soc->tx_comp_ring[i],
 				WBM2SW_RELEASE, i, 0, TCL_DATA_RING_SIZE)) {
-				QDF_TRACE(QDF_MODULE_ID_TXRX,
+				QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_ERROR,
-					"%s: dp_srng_setup failed for tx_comp_ring[%d]\n",
-					__func__, i);
+					FL("dp_srng_setup failed for tx_comp_ring[%d]"), i);
 				goto fail1;
 			}
 		}
@@ -717,25 +751,23 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	}
 
 	if (dp_tx_soc_attach(soc)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s: dp_tx_soc_attach failed\n", __func__);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("dp_tx_soc_attach failed"));
 		goto fail1;
 	}
 
 	/* TCL command and status rings */
 	if (dp_srng_setup(soc, &soc->tcl_cmd_ring, TCL_CMD, 0, 0,
 		TCL_CMD_RING_SIZE)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: dp_srng_setup failed for tcl_cmd_ring\n",
-			__func__);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("dp_srng_setup failed for tcl_cmd_ring"));
 		goto fail1;
 	}
 
 	if (dp_srng_setup(soc, &soc->tcl_status_ring, TCL_STATUS, 0, 0,
 		TCL_STATUS_RING_SIZE)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: dp_srng_setup failed for tcl_status_ring\n",
-			__func__);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("dp_srng_setup failed for tcl_status_ring"));
 		goto fail1;
 	}
 
@@ -751,10 +783,9 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 		for (i = 0; i < soc->num_reo_dest_rings; i++) {
 			if (dp_srng_setup(soc, &soc->reo_dest_ring[i], REO_DST,
 				i, 0, REO_DST_RING_SIZE)) {
-				QDF_TRACE(QDF_MODULE_ID_TXRX,
+				QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_ERROR,
-					"%s: dp_srng_setup failed for reo_dest_ring[%d]\n",
-					__func__, i);
+					FL("dp_srng_setup failed for reo_dest_ring[%d]"), i);
 				goto fail1;
 			}
 		}
@@ -768,9 +799,8 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	/* REO reinjection ring */
 	if (dp_srng_setup(soc, &soc->reo_reinject_ring, REO_REINJECT, 0, 0,
 		REO_REINJECT_RING_SIZE)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: dp_srng_setup failed for reo_reinject_ring\n",
-			__func__);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("dp_srng_setup failed for reo_reinject_ring"));
 		goto fail1;
 	}
 
@@ -778,9 +808,8 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	/* Rx release ring */
 	if (dp_srng_setup(soc, &soc->rx_rel_ring, WBM2SW_RELEASE, 3, 0,
 		RX_RELEASE_RING_SIZE)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: dp_srng_setup failed for rx_rel_ring\n",
-			__func__);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("dp_srng_setup failed for rx_rel_ring"));
 		goto fail1;
 	}
 
@@ -788,9 +817,8 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	/* Rx exception ring */
 	if (dp_srng_setup(soc, &soc->reo_exception_ring, REO_EXCEPTION, 0,
 		MAX_REO_DEST_RINGS, REO_EXCEPTION_RING_SIZE)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: dp_srng_setup failed for reo_exception_ring\n",
-			__func__);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("dp_srng_setup failed for reo_exception_ring"));
 		goto fail1;
 	}
 
@@ -798,17 +826,15 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	/* REO command and status rings */
 	if (dp_srng_setup(soc, &soc->reo_cmd_ring, REO_CMD, 0, 0,
 		REO_CMD_RING_SIZE)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: dp_srng_setup failed for reo_cmd_ring\n",
-			__func__);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("dp_srng_setup failed for reo_cmd_ring"));
 		goto fail1;
 	}
 
 	if (dp_srng_setup(soc, &soc->reo_status_ring, REO_STATUS, 0, 0,
 		REO_STATUS_RING_SIZE)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: dp_srng_setup failed for reo_status_ring\n",
-			__func__);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("dp_srng_setup failed for reo_status_ring"));
 		goto fail1;
 	}
 
@@ -846,16 +872,16 @@ void *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc, void *ctrl_pdev,
 	struct dp_pdev *pdev = qdf_mem_malloc(sizeof(*pdev));
 
 	if (!pdev) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: DP PDEV memory allocation failed\n", __func__);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("DP PDEV memory allocation failed"));
 		goto fail0;
 	}
 
 	pdev->wlan_cfg_ctx = wlan_cfg_pdev_attach();
 
 	if (!pdev->wlan_cfg_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s: pdev cfg_attach failed\n", __func__);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("pdev cfg_attach failed"));
 
 		qdf_mem_free(pdev);
 		goto fail0;
@@ -870,8 +896,8 @@ void *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc, void *ctrl_pdev,
 	pdev->vdev_count = 0;
 
 	if (dp_soc_cmn_setup(soc)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: dp_soc_cmn_setup failed\n", __func__);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("dp_soc_cmn_setup failed"));
 		goto fail1;
 	}
 
@@ -879,16 +905,14 @@ void *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc, void *ctrl_pdev,
 	if (wlan_cfg_per_pdev_tx_ring(soc->wlan_cfg_ctx)) {
 		if (dp_srng_setup(soc, &soc->tcl_data_ring[pdev_id], TCL_DATA,
 			pdev_id, pdev_id, TCL_DATA_RING_SIZE)) {
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s: dp_srng_setup failed for tcl_data_ring\n",
-				__func__);
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("dp_srng_setup failed for tcl_data_ring"));
 			goto fail1;
 		}
 		if (dp_srng_setup(soc, &soc->tx_comp_ring[pdev_id],
 			WBM2SW_RELEASE, pdev_id, pdev_id, TCL_DATA_RING_SIZE)) {
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s: dp_srng_setup failed for tx_comp_ring\n",
-				__func__);
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("dp_srng_setup failed for tx_comp_ring"));
 			goto fail1;
 		}
 		soc->num_tcl_data_rings++;
@@ -896,8 +920,8 @@ void *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc, void *ctrl_pdev,
 
 	/* Tx specific init */
 	if (dp_tx_pdev_attach(pdev)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: dp_tx_pdev_attach failed\n", __func__);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("dp_tx_pdev_attach failed"));
 		goto fail1;
 	}
 
@@ -905,9 +929,8 @@ void *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc, void *ctrl_pdev,
 	if (wlan_cfg_per_pdev_rx_ring(soc->wlan_cfg_ctx)) {
 		if (dp_srng_setup(soc, &soc->reo_dest_ring[pdev_id], REO_DST,
 			pdev_id, pdev_id, REO_DST_RING_SIZE)) {
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s: dp_srng_setup failed for reo_dest_ring\n",
-				__func__);
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("dp_srng_setup failed for reo_dest_ringn"));
 			goto fail1;
 		}
 		soc->num_reo_dest_rings++;
@@ -916,15 +939,15 @@ void *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc, void *ctrl_pdev,
 
 	if (dp_srng_setup(soc, &pdev->rx_refill_buf_ring, RXDMA_BUF, 0, pdev_id,
 		RXDMA_BUF_RING_SIZE)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			 "%s: dp_srng_setup failed rx refill ring\n", __func__);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			 FL("dp_srng_setup failed rx refill ring"));
 		goto fail1;
 	}
 #ifdef QCA_HOST2FW_RXBUF_RING
 	if (dp_srng_setup(soc, &pdev->rx_mac_buf_ring, RXDMA_BUF, 1, pdev_id,
 		RXDMA_BUF_RING_SIZE)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			 "%s: dp_srng_setup failed rx mac ring\n", __func__);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			 FL("dp_srng_setup failed rx mac ring"));
 		goto fail1;
 	}
 #endif
@@ -933,17 +956,15 @@ void *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc, void *ctrl_pdev,
 	 */
 	if (dp_srng_setup(soc, &pdev->rxdma_mon_buf_ring, RXDMA_MONITOR_BUF, 0,
 		pdev_id, RXDMA_MONITOR_BUF_RING_SIZE)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: dp_srng_setup failed for rxdma_mon_buf_ring\n",
-			__func__);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("dp_srng_setup failed for rxdma_mon_buf_ring"));
 		goto fail1;
 	}
 
 	if (dp_srng_setup(soc, &pdev->rxdma_mon_dst_ring, RXDMA_MONITOR_DST, 0,
 		pdev_id, RXDMA_MONITOR_DST_RING_SIZE)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: dp_srng_setup failed for rxdma_mon_dst_ring\n",
-			__func__);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("dp_srng_setup failed for rxdma_mon_dst_ring"));
 		goto fail1;
 	}
 
@@ -951,16 +972,15 @@ void *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc, void *ctrl_pdev,
 	if (dp_srng_setup(soc, &pdev->rxdma_mon_status_ring,
 		RXDMA_MONITOR_STATUS, 0, pdev_id,
 		RXDMA_MONITOR_STATUS_RING_SIZE)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: dp_srng_setup failed for rxdma_mon_status_ring\n",
-			__func__);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("dp_srng_setup failed for rxdma_mon_status_ring"));
 		goto fail1;
 	}
 
 	/* Rx specific init */
 	if (dp_rx_pdev_attach(pdev)) {
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s: dp_rx_pdev_attach failed \n", __func__);
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("dp_rx_pdev_attach failed "));
 			goto fail0;
 	}
 
@@ -1154,8 +1174,8 @@ void *dp_vdev_attach_wifi3(void *txrx_pdev,
 	struct dp_vdev *vdev = qdf_mem_malloc(sizeof(*vdev));
 
 	if (!vdev) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: DP VDEV memory allocation failed\n", __func__);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("DP VDEV memory allocation failed"));
 		goto fail0;
 	}
 
@@ -1198,11 +1218,8 @@ void *dp_vdev_attach_wifi3(void *txrx_pdev,
 		qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
 #endif
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		"Created vdev %p (%02x:%02x:%02x:%02x:%02x:%02x)\n", vdev,
-		vdev->mac_addr.raw[0], vdev->mac_addr.raw[1],
-		vdev->mac_addr.raw[2], vdev->mac_addr.raw[3],
-		vdev->mac_addr.raw[4], vdev->mac_addr.raw[5]);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+		"Created vdev %p (%pM)", vdev, vdev->mac_addr.raw);
 
 	return (void *)vdev;
 
@@ -1236,7 +1253,8 @@ void dp_vdev_register_wifi3(void *vdev_handle, void *osif_vdev,
 	/* TODO: Enable the following once Tx code is integrated */
 	txrx_ops->tx.tx = dp_tx_send;
 
-	DP_TRACE(ERROR, "DP Vdev Register success");
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		"DP Vdev Register success");
 }
 
 /*
@@ -1267,13 +1285,10 @@ void dp_vdev_detach_wifi3(void *vdev_handle,
 	/* check that the vdev has no peers allocated */
 	if (!TAILQ_EMPTY(&vdev->peer_list)) {
 		/* debug print - will be removed later */
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
-			"%s: not deleting vdev object %p (%02x:%02x:%02x:%02x:%02x:%02x)"
-			"until deletion finishes for all its peers\n",
-			__func__, vdev,
-			vdev->mac_addr.raw[0], vdev->mac_addr.raw[1],
-			vdev->mac_addr.raw[2], vdev->mac_addr.raw[3],
-			vdev->mac_addr.raw[4], vdev->mac_addr.raw[5]);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_WARN,
+			FL("not deleting vdev object %p (%pM)"
+			"until deletion finishes for all its peers"),
+			vdev, vdev->mac_addr.raw);
 		/* indicate that the vdev needs to be deleted */
 		vdev->delete.pending = 1;
 		vdev->delete.callback = callback;
@@ -1284,12 +1299,8 @@ void dp_vdev_detach_wifi3(void *vdev_handle,
 	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 
 	dp_tx_vdev_detach(vdev);
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-		"%s: deleting vdev object %p (%02x:%02x:%02x:%02x:%02x:%02x)\n",
-		__func__, vdev,
-		vdev->mac_addr.raw[0], vdev->mac_addr.raw[1],
-		vdev->mac_addr.raw[2], vdev->mac_addr.raw[3],
-		vdev->mac_addr.raw[4], vdev->mac_addr.raw[5]);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+		FL("deleting vdev object %p (%pM)"), vdev, vdev->mac_addr.raw);
 
 	qdf_mem_free(vdev);
 
@@ -1357,18 +1368,15 @@ void *dp_peer_create_wifi3(void *vdev_handle, uint8_t *peer_mac_addr)
 	/* TODO: See if hash based search is required */
 	dp_peer_find_hash_add(soc, peer);
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-		"vdev %p created peer %p (%02x:%02x:%02x:%02x:%02x:%02x)\n",
-		vdev, peer,
-		peer->mac_addr.raw[0], peer->mac_addr.raw[1],
-		peer->mac_addr.raw[2], peer->mac_addr.raw[3],
-		peer->mac_addr.raw[4], peer->mac_addr.raw[5]);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+		"vdev %p created peer %p (%pM)",
+		vdev, peer, peer->mac_addr.raw);
 	/*
 	 * For every peer MAp message search and set if bss_peer
 	 */
 	if (memcmp(peer->mac_addr.raw, vdev->mac_addr.raw, 6) == 0) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-			"vdev bss_peer!!!!\n");
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+			"vdev bss_peer!!!!");
 		peer->bss_peer = 1;
 		vdev->vap_bss_peer = peer;
 	}
@@ -1469,11 +1477,8 @@ void dp_peer_unref_delete(void *peer_handle)
 		if (peer_id != HTT_INVALID_PEER)
 			soc->peer_id_to_obj_map[peer_id] = NULL;
 
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-			"Deleting peer %p (%02x:%02x:%02x:%02x:%02x:%02x)\n",
-			peer, peer->mac_addr.raw[0], peer->mac_addr.raw[1],
-			peer->mac_addr.raw[2], peer->mac_addr.raw[3],
-			peer->mac_addr.raw[4], peer->mac_addr.raw[5]);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+			"Deleting peer %p (%pM)", peer, peer->mac_addr.raw);
 
 		/* remove the reference to the peer from the hash table */
 		dp_peer_find_hash_remove(soc, peer);
@@ -1489,8 +1494,8 @@ void dp_peer_unref_delete(void *peer_handle)
 				peer_list_elem);
 		} else {
 			/*Ignoring the remove operation as peer not found*/
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
-				"WARN peer %p not found in vdev (%p)->peer_list:%p\n",
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_WARN,
+				"peer %p not found in vdev (%p)->peer_list:%p",
 				peer, vdev, &peer->vdev->peer_list);
 		}
 
@@ -1514,18 +1519,11 @@ void dp_peer_unref_delete(void *peer_handle)
 				void *vdev_delete_context =
 					vdev->delete.context;
 
-				QDF_TRACE(QDF_MODULE_ID_TXRX,
+				QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_INFO_HIGH,
-					"%s: deleting vdev object %p "
-					"(%02x:%02x:%02x:%02x:%02x:%02x)"
-					" - its last peer is done\n",
-					__func__, vdev,
-					vdev->mac_addr.raw[0],
-					vdev->mac_addr.raw[1],
-					vdev->mac_addr.raw[2],
-					vdev->mac_addr.raw[3],
-					vdev->mac_addr.raw[4],
-					vdev->mac_addr.raw[5]);
+					FL("deleting vdev object %p (%pM)"
+					" - its last peer is done"),
+					vdev, vdev->mac_addr.raw);
 				/* all peers are gone, go ahead and delete it */
 				qdf_mem_free(vdev);
 				if (vdev_delete_cb)
@@ -1561,11 +1559,8 @@ void dp_peer_delete_wifi3(void *peer_handle)
 	 */
 	peer->rx_opt_proc = dp_rx_discard;
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-		"%s:peer %p (%02x:%02x:%02x:%02x:%02x:%02x)\n", __func__, peer,
-		  peer->mac_addr.raw[0], peer->mac_addr.raw[1],
-		  peer->mac_addr.raw[2], peer->mac_addr.raw[3],
-		  peer->mac_addr.raw[4], peer->mac_addr.raw[5]);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+		FL("peer %p (%pM)"),  peer, peer->mac_addr.raw);
 
 	/*
 	 * Remove the reference added during peer_attach.
@@ -1805,8 +1800,8 @@ void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
 	struct dp_soc *soc = qdf_mem_malloc(sizeof(*soc));
 
 	if (!soc) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: DP SOC memory allocation failed\n", __func__);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("DP SOC memory allocation failed"));
 		goto fail0;
 	}
 
@@ -1819,27 +1814,19 @@ void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
 	soc->hal_soc = hif_get_hal_handle(hif_handle);
 	soc->htt_handle = htt_soc_attach(soc, osif_soc, htc_handle,
 		soc->hal_soc, qdf_osdev);
-	if (soc->htt_handle == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: HTT attach failed\n", __func__);
+	if (!soc->htt_handle) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("HTT attach failed"));
 		goto fail1;
 	}
 
 	soc->wlan_cfg_ctx = wlan_cfg_soc_attach();
 	if (!soc->wlan_cfg_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s: wlan_cfg_soc_attach failed\n", __func__);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("wlan_cfg_soc_attach failed"));
 		goto fail2;
 	}
 	qdf_spinlock_create(&soc->peer_ref_mutex);
-
-#ifdef notyet
-	if (wdi_event_attach(soc)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: WDI event attach failed\n", __func__);
-		goto fail2;
-	}
-#endif
 
 	if (dp_soc_interrupt_attach(soc) != QDF_STATUS_SUCCESS) {
 		goto fail2;

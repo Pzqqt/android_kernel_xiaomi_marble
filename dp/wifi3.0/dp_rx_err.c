@@ -220,6 +220,111 @@ dp_rx_2k_jump_handle(struct dp_soc *soc, void *ring_desc,
 }
 
 /**
+* dp_rx_null_q_desc_handle() - Function to handle NULL Queue
+*                              descriptor violation on either a
+*                              REO or WBM ring
+*
+* @soc: core DP main context
+* @ring_desc: opaque pointer to the REO error ring descriptor
+* @head: pointer to head of rx descriptors to be added to free list
+* @tail: pointer to tail of rx descriptors to be added to free list
+* quota: upper limit of descriptors that can be reaped
+*
+* This function handles NULL queue descriptor violations arising out
+* a missing REO queue for a given peer or a given TID. This typically
+* may happen if a packet is received on a QOS enabled TID before the
+* ADDBA negotiation for that TID, when the TID queue is setup. Or
+* it may also happen for MC/BC frames if they are not routed to the
+* non-QOS TID queue, in the absence of any other default TID queue.
+* This error can show up both in a REO destination or WBM release ring.
+*
+* Return: uint32_t: No. of Rx buffers reaped
+*/
+uint32_t
+dp_rx_null_q_desc_handle(struct dp_soc *soc, void *ring_desc,
+			union dp_rx_desc_list_elem_t **head,
+			union dp_rx_desc_list_elem_t **tail,
+			uint32_t quota)
+{
+	uint32_t rx_buf_cookie;
+	struct dp_rx_desc *rx_desc;
+	uint32_t rx_bufs_used = 0;
+	uint32_t pkt_len, l2_hdr_offset;
+	uint16_t msdu_len;
+	qdf_nbuf_t nbuf;
+	struct dp_pdev *pdev0;
+	struct dp_vdev *vdev0;
+
+	rx_buf_cookie = HAL_RX_WBM_BUF_COOKIE_GET(ring_desc);
+
+	rx_desc = dp_rx_cookie_2_va(soc, rx_buf_cookie);
+
+	qdf_assert(rx_desc);
+
+	rx_bufs_used++;
+
+	nbuf = rx_desc->nbuf;
+
+	qdf_nbuf_unmap_single(soc->osdev, nbuf,
+				QDF_DMA_BIDIRECTIONAL);
+
+	rx_desc->rx_buf_start = qdf_nbuf_data(nbuf);
+
+	l2_hdr_offset =
+		hal_rx_msdu_end_l3_hdr_padding_get(rx_desc->rx_buf_start);
+
+	msdu_len = hal_rx_msdu_start_msdu_len_get(rx_desc->rx_buf_start);
+	pkt_len = msdu_len + l2_hdr_offset + RX_PKT_TLVS_LEN;
+
+	/* Set length in nbuf */
+	qdf_nbuf_set_pktlen(nbuf, pkt_len);
+
+	/*
+	 * Check if DMA completed -- msdu_done is the last bit
+	 * to be written
+	 */
+	if (!hal_rx_attn_msdu_done_get(rx_desc->rx_buf_start)) {
+
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+		FL("nbuf->data 0x%p"), rx_desc->rx_buf_start);
+
+		qdf_assert(0);
+	}
+
+	/*
+	 * Advance the packet start pointer by total size of
+	 * pre-header TLV's
+	 */
+	qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN);
+
+	if (l2_hdr_offset)
+		qdf_nbuf_pull_head(nbuf, l2_hdr_offset);
+
+	pdev0 = soc->pdev_list[0];/* Hard code 0th elem */
+
+	if (pdev0) {
+		vdev0 = (struct dp_vdev *)TAILQ_FIRST(&pdev0->vdev_list);
+		if (vdev0 && vdev0->osif_rx) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+				FL("pdev0 %p vdev0 %p osif_rx %p"), pdev0, vdev0,
+				vdev0->osif_rx);
+
+			vdev0->osif_rx(vdev0->osif_vdev, nbuf);
+		} else {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("INVALID vdev0 %p OR osif_rx"), vdev0);
+		}
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("INVALID pdev %p"), pdev0);
+	}
+
+	dp_rx_add_to_free_desc_list(head, tail, rx_desc);
+
+	return rx_bufs_used;
+}
+
+/**
  * dp_rx_link_desc_return() - Return a MPDU link descriptor to HW
  *			      (WBM), following error handling
  *
@@ -239,7 +344,8 @@ dp_rx_link_desc_return(struct dp_soc *soc, void *ring_desc)
 	void *src_srng_desc;
 
 	if (!wbm_rel_srng) {
-		qdf_print("WBM RELEASE RING not initialized\n");
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			"WBM RELEASE RING not initialized");
 		return status;
 	}
 
@@ -250,10 +356,9 @@ dp_rx_link_desc_return(struct dp_soc *soc, void *ring_desc)
 		 * Need API to convert from hal_ring pointer to
 		 * Ring Type / Ring Id combo
 		 */
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s %d : "
-			"HAL RING Access For WBM Release SRNG Failed -- %p\n",
-			__func__, __LINE__, wbm_rel_srng);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("HAL RING Access For WBM Release SRNG Failed - %p"),
+			wbm_rel_srng);
 		goto done;
 	}
 	src_srng_desc = hal_srng_src_get_next(hal_soc, wbm_rel_srng);
@@ -264,9 +369,10 @@ dp_rx_link_desc_return(struct dp_soc *soc, void *ring_desc)
 		status = QDF_STATUS_SUCCESS;
 	} else {
 		struct hal_srng *srng = (struct hal_srng *)wbm_rel_srng;
-		qdf_print("%s %d -- WBM Release Ring (Id %d) Full\n",
-			__func__, __LINE__, srng->ring_id);
-		qdf_print("HP 0x%x Reap HP 0x%x TP 0x%x Cached TP 0x%x\n",
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("WBM Release Ring (Id %d) Full"), srng->ring_id);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			"HP 0x%x Reap HP 0x%x TP 0x%x Cached TP 0x%x",
 			*srng->u.src_ring.hp_addr, srng->u.src_ring.reap_hp,
 			*srng->u.src_ring.tp_addr, srng->u.src_ring.cached_tp);
 	}
@@ -315,9 +421,8 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		 * Need API to convert from hal_ring pointer to
 		 * Ring Type / Ring Id combo
 		 */
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s %d : HAL RING Access Failed -- %p\n",
-			__func__, __LINE__, hal_ring);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("HAL RING Access Failed -- %p"), hal_ring);
 		goto done;
 	}
 
@@ -338,8 +443,8 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 			/* TODO */
 			/* Call appropriate handler */
 
-			qdf_print("%s %d: Invalid RBM %d\n",
-				__func__, __LINE__, rbm);
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("Invalid RBM %d"), rbm);
 			continue;
 		}
 
@@ -386,7 +491,8 @@ done:
 	hal_srng_access_end(hal_soc, hal_ring);
 
 	/* Assume MAC id = 0, owner = 0 */
-	dp_rx_buffers_replenish(soc, 0, rx_bufs_used, &head, &tail,
+	if (rx_bufs_used)
+		dp_rx_buffers_replenish(soc, 0, rx_bufs_used, &head, &tail,
 					HAL_RX_BUF_RBM_SW3_BM);
 
 	return rx_bufs_used; /* Assume no scale factor for now */
@@ -432,9 +538,8 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		 * Need API to convert from hal_ring pointer to
 		 * Ring Type / Ring Id combo
 		 */
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s %d : HAL RING Access Failed -- %p\n",
-			__func__, __LINE__, hal_ring);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("HAL RING Access Failed -- %p"), hal_ring);
 		goto done;
 	}
 
@@ -457,8 +562,8 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 			/* TODO */
 			/* Call appropriate handler */
 
-			qdf_print("%s %d: Invalid RBM %d\n",
-				__func__, __LINE__, rbm);
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("Invalid RBM %d"), rbm);
 			continue;
 		}
 
@@ -480,14 +585,30 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 				   HAL_RX_WBM_REO_ERROR_CODE_GET(ring_desc);
 
 				switch (reo_error_code) {
+				/*
+				 * Handling for packets which have NULL REO
+				 * queue descriptor
+				 */
+				case HAL_REO_ERR_QUEUE_DESC_ADDR_0:
+				case HAL_REO_ERR_REGULAR_FRAME_2K_JUMP:
+				case HAL_REO_ERR_2K_ERROR_HANDLING_FLAG_SET:
+					QDF_TRACE(QDF_MODULE_ID_DP,
+						QDF_TRACE_LEVEL_WARN,
+						"Got pkt with REO ERROR: %d",
+						reo_error_code);
 
+					rx_bufs_used +=
+						dp_rx_null_q_desc_handle(soc,
+						ring_desc, &head, &tail, quota);
+					continue;
 				/* TODO */
 				/* Add per error code accounting */
 
 				default:
-					qdf_print(
-					"%s %d: REO error %d detected\n",
-					__func__, __LINE__, reo_error_code);
+					QDF_TRACE(QDF_MODULE_ID_DP,
+						QDF_TRACE_LEVEL_ERROR,
+						"REO error %d detected",
+						reo_error_code);
 				}
 			}
 		} else if (wbm_err_src == HAL_RX_WBM_ERR_SRC_RXDMA) {
@@ -505,9 +626,10 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 				/* Add per error code accounting */
 
 				default:
-					qdf_print(
-					"%s %d: RXDMA error %d detected\n",
-					__func__, __LINE__, rxdma_error_code);
+					QDF_TRACE(QDF_MODULE_ID_DP,
+						QDF_TRACE_LEVEL_ERROR,
+						"RXDMA error %d detected",
+						rxdma_error_code);
 				}
 			}
 		} else {
@@ -534,7 +656,8 @@ done:
 	hal_srng_access_end(hal_soc, hal_ring);
 
 	/* Assume MAC id = 0, owner = 0 */
-	dp_rx_buffers_replenish(soc, 0, rx_bufs_used, &head, &tail,
+	if (rx_bufs_used)
+		dp_rx_buffers_replenish(soc, 0, rx_bufs_used, &head, &tail,
 					HAL_RX_BUF_RBM_SW3_BM);
 
 	return rx_bufs_used; /* Assume no scale factor for now */

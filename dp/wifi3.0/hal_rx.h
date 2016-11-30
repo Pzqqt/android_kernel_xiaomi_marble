@@ -498,14 +498,20 @@ struct rx_pkt_hdr_tlv {
  * 2) TLV's don't span across 128 byte lines
  * 3) Rx Buffer is nicely aligned on the 128 byte boundary
  */
-#define RX_PADDING_BYTES	16
+#if defined(WCSS_VERSION) && (WCSS_VERSION >= 96)
+#define RX_PADDING0_BYTES	4
+#endif
+#define RX_PADDING1_BYTES	16
 struct rx_pkt_tlvs {
 	struct rx_msdu_end_tlv   msdu_end_tlv;	/*  72 bytes */
 	struct rx_attention_tlv  attn_tlv;	/*  16 bytes */
 	struct rx_msdu_start_tlv msdu_start_tlv;/*  40 bytes */
+#if defined(WCSS_VERSION) && (WCSS_VERSION >= 96)
+	uint8_t rx_padding0[RX_PADDING0_BYTES];	/*   4 bytes */
+#endif
 	struct rx_mpdu_start_tlv mpdu_start_tlv;/*  96 bytes */
 	struct rx_mpdu_end_tlv   mpdu_end_tlv;	/*  12 bytes */
-	uint8_t rx_padding[RX_PADDING_BYTES];	/*  20 bytes */
+	uint8_t rx_padding1[RX_PADDING1_BYTES];	/*  16 bytes */
 	struct rx_pkt_hdr_tlv	 pkt_hdr_tlv;	/* 128 bytes */
 };
 #else /* RXDMA_OPTIMIZATION */
@@ -542,15 +548,27 @@ hal_rx_attn_msdu_done_get(uint8_t *buf)
 	return msdu_done;
 }
 
-/*
- * Get l3_header_padding from RX_MSDU_END
- */
+#if defined(WCSS_VERSION) && (WCSS_VERSION > 81)
+#define HAL_RX_MSDU_END_L3_HEADER_PADDING_GET(_rx_msdu_end)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,		\
+		RX_MSDU_END_5_L3_HEADER_PADDING_OFFSET)),	\
+		RX_MSDU_END_5_L3_HEADER_PADDING_MASK,		\
+		RX_MSDU_END_5_L3_HEADER_PADDING_LSB))
+#else
 #define HAL_RX_MSDU_END_L3_HEADER_PADDING_GET(_rx_msdu_end)	\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,		\
 		RX_MSDU_END_9_L3_HEADER_PADDING_OFFSET)),	\
 		RX_MSDU_END_9_L3_HEADER_PADDING_MASK,		\
 		RX_MSDU_END_9_L3_HEADER_PADDING_LSB))
+#endif
 
+ /**
+ * hal_rx_msdu_end_l3_hdr_padding_get: API to get the
+ * l3_header padding from rx_msdu_end TLV
+ *
+ * @ buf: pointer to the start of RX PKT TLV headers
+ * Return: number of l3 header padding bytes
+ */
 static inline uint32_t
 hal_rx_msdu_end_l3_hdr_padding_get(uint8_t *buf)
 {
@@ -562,6 +580,33 @@ hal_rx_msdu_end_l3_hdr_padding_get(uint8_t *buf)
 
 	return l3_header_padding;
 }
+
+#define HAL_RX_MSDU_START_MSDU_LEN_GET(_rx_msdu_start)		\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_start,		\
+		RX_MSDU_START_1_MSDU_LENGTH_OFFSET)),		\
+		RX_MSDU_START_1_MSDU_LENGTH_MASK,		\
+		RX_MSDU_START_1_MSDU_LENGTH_LSB))
+
+ /**
+ * hal_rx_msdu_start_msdu_len_get: API to get the MSDU length
+ * from rx_msdu_start TLV
+ *
+ * @ buf: pointer to the start of RX PKT TLV headers
+ * Return: msdu length
+ */
+static inline uint32_t
+hal_rx_msdu_start_msdu_len_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_start *msdu_start =
+			&pkt_tlvs->msdu_start_tlv.rx_msdu_start;
+	uint32_t msdu_len;
+
+	msdu_len = HAL_RX_MSDU_START_MSDU_LEN_GET(msdu_start);
+
+	return msdu_len;
+}
+
 /*******************************************************************************
  * RX ERROR APIS
  ******************************************************************************/
