@@ -1626,7 +1626,7 @@ bool cds_is_packet_log_enabled(void)
  * Return: none
  */
 
-void cds_config_recovery_work(qdf_device_t qdf_ctx)
+static void cds_config_recovery_work(qdf_device_t qdf_ctx)
 {
 	if (cds_is_driver_recovering()) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
