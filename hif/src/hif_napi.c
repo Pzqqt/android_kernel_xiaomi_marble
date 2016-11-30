@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -468,6 +468,11 @@ int hif_napi_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 
 	NAPI_DEBUG("%s: -->(event=%d, aux=%p)", __func__, event, data);
 
+	if ((napid->state & HIF_NAPI_INITED) == 0) {
+		NAPI_DEBUG("%s: got event when NAPI not initialized",
+			   __func__);
+		return -EINVAL;
+	}
 	spin_lock_bh(&(napid->lock));
 	prev_state = napid->state;
 	switch (event) {
