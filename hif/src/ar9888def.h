@@ -26,7 +26,7 @@
  */
 
 #ifndef _AR9888DEF_H_
-#define AR9888__AR9888DEF_H_
+#define _AR9888DEF_H_
 
 /* Base Addresses */
 #define AR9888_RTC_SOC_BASE_ADDRESS                     0x00004000
