@@ -1539,6 +1539,7 @@ QDF_STATUS wma_tx_attach(tp_wma_handle wma_handle)
 QDF_STATUS wma_tx_detach(tp_wma_handle wma_handle)
 {
 	uint32_t frame_index = 0;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	/* Get the Vos Context */
 	p_cds_contextType cds_handle =
@@ -1547,12 +1548,17 @@ QDF_STATUS wma_tx_detach(tp_wma_handle wma_handle)
 	/* Get the txRx Pdev handle */
 	void *txrx_pdev = cds_handle->pdev_txrx_ctx;
 
+	if (!soc) {
+		WMA_LOGE("%s:SOC context is NULL", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	if (txrx_pdev) {
 		/* Deregister with TxRx for Tx Mgmt completion call back */
 		for (frame_index = 0; frame_index < FRAME_INDEX_MAX;
 							frame_index++) {
-			cdp_mgmt_tx_cb_set(cds_get_context(QDF_MODULE_ID_SOC),
-				txrx_pdev, frame_index, NULL, NULL, txrx_pdev);
+			cdp_mgmt_tx_cb_set(soc, txrx_pdev, frame_index, NULL,
+						NULL, txrx_pdev);
 		}
 	}
 
@@ -1601,6 +1607,11 @@ int wma_mcc_vdev_tx_pause_evt_handler(void *handle, uint8_t *event,
 	if (wma_get_wow_bus_suspend(wma)) {
 		WMA_LOGD(" Suspend is in progress: Pause/Unpause Tx is NoOp");
 		return 0;
+	}
+
+	if (!soc) {
+		WMA_LOGE("%s:SOC context is NULL", __func__);
+		return -EINVAL;
 	}
 
 	wmi_event = param_buf->fixed_param;
@@ -2516,6 +2527,11 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 
 	if (!txrx_vdev) {
 		WMA_LOGE("TxRx Vdev Handle is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc) {
+		WMA_LOGE("%s:SOC context is NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 

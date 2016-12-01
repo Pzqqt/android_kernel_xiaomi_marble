@@ -5450,6 +5450,11 @@ QDF_STATUS wma_process_get_peer_info_req
 	uint8_t bcast_mac[IEEE80211_ADDR_LEN] = { 0xff, 0xff, 0xff,
 						  0xff, 0xff, 0xff };
 
+	if (NULL == soc) {
+		WMA_LOGE("%s: SOC context is NULL", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	vdev_id = wma_find_vdev_by_type(wma, WMI_VDEV_TYPE_IBSS);
 	if (vdev_id < 0) {
 		WMA_LOGE("%s: IBSS vdev does not exist could not get peer info",
@@ -5475,6 +5480,11 @@ QDF_STATUS wma_process_get_peer_info_req
 			return QDF_STATUS_E_FAILURE;
 		}
 		peer_mac_raw = cdp_peer_get_peer_mac_addr(soc, peer);
+		if (peer_mac_raw == NULL) {
+			WMA_LOGE("peer_mac_raw is NULL");
+			return QDF_STATUS_E_FAILURE;
+		}
+
 		WMA_LOGE("%s: staIdx %d peer mac: 0x%2x:0x%2x:0x%2x:0x%2x:0x%2x:0x%2x",
 			__func__, pReq->staIdx, peer_mac_raw[0],
 			peer_mac_raw[1], peer_mac_raw[2],
@@ -7029,6 +7039,12 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 		goto end_tdls_peer_state;
 	}
 
+	if (!soc) {
+		WMA_LOGE("%s: SOC context is NULL", __func__);
+		ret = -EINVAL;
+		goto end_tdls_peer_state;
+	}
+
 	/* peer capability info is valid only when peer state is connected */
 	if (WMA_TDLS_PEER_STATE_CONNECTED != peerStateParams->peerState) {
 		qdf_mem_zero(&peerStateParams->peerCap,
@@ -7079,6 +7095,12 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 			goto end_tdls_peer_state;
 		}
 		peer_mac_addr = cdp_peer_get_peer_mac_addr(soc, peer);
+		if (peer_mac_addr == NULL) {
+			WMA_LOGE("peer_mac_addr is NULL");
+			ret = -EIO;
+			goto end_tdls_peer_state;
+		}
+
 		restore_last_peer = cdp_peer_is_vdev_restore_last_peer(
 						soc, peer);
 

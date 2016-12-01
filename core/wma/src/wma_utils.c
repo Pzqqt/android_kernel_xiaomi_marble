@@ -2014,6 +2014,12 @@ int32_t wma_txrx_fw_stats_reset(tp_wma_handle wma_handle,
 {
 	struct ol_txrx_stats_req req;
 	void *vdev;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	if (!soc) {
+		WMA_LOGE("%s:SOC context is NULL", __func__);
+		return -EINVAL;
+	}
 
 	vdev = wma_find_vdev_by_id(wma_handle, vdev_id);
 	if (!vdev) {
@@ -2022,7 +2028,7 @@ int32_t wma_txrx_fw_stats_reset(tp_wma_handle wma_handle,
 	}
 	qdf_mem_zero(&req, sizeof(req));
 	req.stats_type_reset_mask = value;
-	cdp_fw_stats_get(cds_get_context(QDF_MODULE_ID_SOC), vdev, &req,
+	cdp_fw_stats_get(soc, vdev, &req,
 			false, false);
 
 	return 0;
@@ -2076,6 +2082,12 @@ int32_t wma_set_txrx_fw_stats_level(tp_wma_handle wma_handle,
 	struct ol_txrx_stats_req req;
 	void *vdev;
 	uint32_t l_up_mask;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	if (!soc) {
+		WMA_LOGE("%s:SOC context is NULL", __func__);
+		return -EINVAL;
+	}
 
 	vdev = wma_find_vdev_by_id(wma_handle, vdev_id);
 	if (!vdev) {
@@ -2093,7 +2105,7 @@ int32_t wma_set_txrx_fw_stats_level(tp_wma_handle wma_handle,
 	l_up_mask = 1 << (value - 1);
 	req.stats_type_upload_mask = l_up_mask;
 
-	cdp_fw_stats_get(cds_get_context(QDF_MODULE_ID_SOC), vdev, &req,
+	cdp_fw_stats_get(soc, vdev, &req,
 			 false, true);
 
 	return 0;

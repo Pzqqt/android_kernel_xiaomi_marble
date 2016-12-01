@@ -537,6 +537,12 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 	cds_msg_t sme_msg = { 0 };
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
+	if (!soc) {
+		WMA_LOGE("%s:SOC context is NULL", __func__);
+		status = QDF_STATUS_E_FAILURE;
+		goto out;
+	}
+
 	status = wmi_unified_vdev_delete_send(wma_handle->wmi_handle, vdev_id);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("Unable to remove an interface");
@@ -1081,6 +1087,11 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 		return;
 	}
 
+	if (!soc) {
+		WMA_LOGE("%s:SOC context is NULL", __func__);
+		return;
+	}
+
 	if (peer) {
 		if (roam_synch_in_progress)
 			cdp_peer_detach_force_delete(soc, peer);
@@ -1145,6 +1156,11 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, void *pdev, void *vdev,
 	    wma->wlan_resource_config.num_peers) {
 		WMA_LOGP("%s, the peer count exceeds the limit %d", __func__,
 			 wma->interfaces[vdev_id].peer_count - 1);
+		goto err;
+	}
+
+	if (!soc) {
+		WMA_LOGE("%s:SOC context is NULL", __func__);
 		goto err;
 	}
 

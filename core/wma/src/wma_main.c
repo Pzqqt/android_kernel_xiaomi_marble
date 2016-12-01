@@ -927,22 +927,34 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 
 		switch (privcmd->param_id) {
 		case GEN_VDEV_PARAM_AMPDU:
-			ret = cdp_aggr_cfg(soc, vdev, privcmd->param_value, 0);
-			if (ret)
-				WMA_LOGE("cdp_aggr_cfg set ampdu failed ret %d",
-					 ret);
-			else
-				intr[privcmd->param_vdev_id].config.ampdu =
-							 privcmd->param_value;
+			if (soc) {
+				ret = cdp_aggr_cfg(soc, vdev,
+						privcmd->param_value, 0);
+				if (ret)
+					WMA_LOGE("cdp_aggr_cfg set ampdu failed ret %d",
+						ret);
+				else
+					intr[privcmd->param_vdev_id].config.
+						ampdu = privcmd->param_value;
+			} else {
+				WMA_LOGE("%s:SOC context is NULL", __func__);
+				return;
+			}
 			break;
 		case GEN_VDEV_PARAM_AMSDU:
-			ret = cdp_aggr_cfg(soc, vdev, 0, privcmd->param_value);
-			if (ret)
-				WMA_LOGE("cdp_aggr_cfg set amsdu failed ret %d",
-					 ret);
-			else
-				intr[privcmd->param_vdev_id].config.
-				amsdu = privcmd->param_value;
+			if (soc) {
+				ret = cdp_aggr_cfg(soc, vdev, 0,
+							privcmd->param_value);
+				if (ret)
+					WMA_LOGE("cdp_aggr_cfg set amsdu failed ret %d",
+						ret);
+				else
+					intr[privcmd->param_vdev_id].config.
+					amsdu = privcmd->param_value;
+			} else {
+				WMA_LOGE("%s:SOC context is NULL", __func__);
+				return;
+			}
 			break;
 		case GEN_PARAM_DUMP_AGC_START:
 			htc_dump(wma->htc_handle, AGC_DUMP, true);
@@ -6044,6 +6056,7 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 	tp_wma_handle wma_handle;
 	void *txrx_vdev_handle = NULL;
 	extern uint8_t *mac_trace_get_wma_msg_string(uint16_t wmaMsg);
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (NULL == msg) {
 		WMA_LOGE("msg is NULL");
@@ -6100,10 +6113,15 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 			WMA_LOGE("Failed to attach vdev");
 		} else {
 			/* Register with TxRx Module for Data Ack Complete Cb */
-			cdp_data_tx_cb_set(cds_get_context(QDF_MODULE_ID_SOC),
-					txrx_vdev_handle,
-					wma_data_tx_ack_comp_hdlr,
-					wma_handle);
+			if (soc) {
+				cdp_data_tx_cb_set(soc, txrx_vdev_handle,
+						wma_data_tx_ack_comp_hdlr,
+						wma_handle);
+			} else {
+				WMA_LOGE("%s: SOC context is NULL", __func__);
+				qdf_status = QDF_STATUS_E_FAILURE;
+				goto end;
+			}
 		}
 		break;
 	case WMA_DEL_STA_SELF_REQ:
@@ -7216,6 +7234,10 @@ void wma_peer_set_default_routing(void *scn_handle, uint8_t *peer_macaddr,
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	struct peer_set_params param;
 
+	if (!wma) {
+		WMA_LOGE("%s:wma_handle is NULL", __func__);
+		return;
+	}
 
 	/* TODO: Need bit definitions for ring number and hash based routing
 	 * fields in common wmi header file
@@ -7235,6 +7257,11 @@ int wma_peer_rx_reorder_queue_setup(void *scn_handle,
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	struct rx_reorder_queue_setup_params param;
 
+	if (!wma) {
+		WMA_LOGE("%s:wma_handle is NULL", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	param.tid = tid;
 	param.vdev_id = vdev_id;
 	param.peer_macaddr = peer_macaddr;
@@ -7251,6 +7278,11 @@ int wma_peer_rx_reorder_queue_remove(void *scn_handle,
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	struct rx_reorder_queue_remove_params param;
+
+	if (!wma) {
+		WMA_LOGE("%s:wma_handle is NULL", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	param.vdev_id = vdev_id;
 	param.peer_macaddr = peer_macaddr;

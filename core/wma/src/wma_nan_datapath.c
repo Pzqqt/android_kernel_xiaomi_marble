@@ -1010,6 +1010,11 @@ void wma_delete_all_nan_remote_peers(tp_wma_handle wma, uint32_t vdev_id)
 	uint8_t *self_mac = NULL;
 	uint8_t peer_id;
 
+	if (!pdev) {
+		WMA_LOGE("%s:pdev is NULL", __func__);
+		return;
+	}
+
 	if (vdev_id > wma->max_bssid) {
 		WMA_LOGE("%s: invalid vdev_id = %d", __func__, vdev_id);
 		return;
@@ -1019,6 +1024,11 @@ void wma_delete_all_nan_remote_peers(tp_wma_handle wma, uint32_t vdev_id)
 	if (!vdev) {
 		WMA_LOGE("%s: vdev is NULL for vdev_id = %d",
 			 __func__, vdev_id);
+		return;
+	}
+
+	if (!soc) {
+		WMA_LOGE("%s:SOC context is NULL", __func__);
 		return;
 	}
 
