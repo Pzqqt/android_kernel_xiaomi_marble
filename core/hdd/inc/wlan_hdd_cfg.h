@@ -4646,9 +4646,24 @@ enum dot11p_mode {
 #define CFG_ADAPTIVE_PNOSCAN_DWELL_MODE_DEFAULT  (0)
 
 /*
+ * <ini>
+ * gSub20ChannelWidth - Control sub 20 channel width (5/10 Mhz)
+ * @Min: 0
+ * @Max: 2
+ * @Default: 0
+ *
+ * This ini is used to set the sub 20 channel width.
  * gSub20ChannelWidth=0: indicates do not use Sub 20 MHz bandwidth
  * gSub20ChannelWidth=1: Bring up SAP/STA in 5 MHz bandwidth
  * gSub20ChannelWidth=2: Bring up SAP/STA in 10 MHz bandwidth
+ *
+ * Related: None
+ *
+ * Supported Feature: 5/10 Mhz channel width support
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
 #define CFG_SUB_20_CHANNEL_WIDTH_NAME              "gSub20ChannelWidth"
 #define CFG_SUB_20_CHANNEL_WIDTH_MIN               (WLAN_SUB_20_CH_WIDTH_NONE)
