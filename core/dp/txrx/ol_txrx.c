@@ -4786,6 +4786,13 @@ void ol_register_lro_flush_cb(void (lro_flush_cb)(void *),
 	hif_device = (struct hif_opaque_softc *)
 				cds_get_context(QDF_MODULE_ID_HIF);
 
+	if (qdf_unlikely(hif_device == NULL)) {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			"%s: hif_device NULL!", __func__);
+		qdf_assert(0);
+		goto out;
+	}
+
 	hif_lro_flush_cb_register(hif_device, ol_txrx_lro_flush, lro_init_cb);
 	qdf_atomic_inc(&pdev->lro_info.lro_dev_cnt);
 
@@ -4818,6 +4825,13 @@ void ol_deregister_lro_flush_cb(void (lro_deinit_cb)(void *))
 	}
 	hif_device =
 		(struct hif_opaque_softc *)cds_get_context(QDF_MODULE_ID_HIF);
+
+	if (qdf_unlikely(hif_device == NULL)) {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			"%s: hif_device NULL!", __func__);
+		qdf_assert(0);
+		return;
+	}
 
 	hif_lro_flush_cb_deregister(hif_device, lro_deinit_cb);
 
