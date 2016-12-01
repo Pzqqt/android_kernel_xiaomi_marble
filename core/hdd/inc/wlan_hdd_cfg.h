@@ -281,10 +281,314 @@ typedef enum {
 #define CFG_SHORT_PREAMBLE_MAX                 WNI_CFG_SHORT_PREAMBLE_STAMAX
 #define CFG_SHORT_PREAMBLE_DEFAULT             WNI_CFG_SHORT_PREAMBLE_STADEF
 
+/*
+ * <ini>
+ * gIbssBssid - Default IBSS BSSID if BSSID is not provided by supplicant
+ * @Min: "000000000000"
+ * @Max: "ffffffffffff"
+ * @Default: "000AF5040506"
+ *
+ * This ini is used to set Default IBSS BSSID if BSSID
+ * is not provided by supplicant and Coalesing is disabled
+ *
+ * Related: Only applicable if gCoalesingInIBSS is 0
+ *
+ * Supported Feature: IBSS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_IBSS_BSSID_NAME                    "gIbssBssid"
 #define CFG_IBSS_BSSID_MIN                     "000000000000"
 #define CFG_IBSS_BSSID_MAX                     "ffffffffffff"
 #define CFG_IBSS_BSSID_DEFAULT                 "000AF5040506"
+
+/*
+ * <ini>
+ * gAdHocChannel5G - Default 5Ghz IBSS channel if channel is not
+ * provided by supplicant.
+ * @Min: 36
+ * @Max: 165
+ * @Default: 44
+ *
+ * This ini is used to set default 5Ghz IBSS channel
+ * if channel is not provided by supplicant and band is 5Ghz
+ *
+ * Related: None
+ *
+ * Supported Feature: IBSS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_IBSS_ADHOC_CHANNEL_5GHZ_NAME          "gAdHocChannel5G"
+#define CFG_IBSS_ADHOC_CHANNEL_5GHZ_MIN           (36)
+#define CFG_IBSS_ADHOC_CHANNEL_5GHZ_MAX           (165)
+#define CFG_IBSS_ADHOC_CHANNEL_5GHZ_DEFAULT       (44)
+
+/*
+ * <ini>
+ * gAdHocChannel24G - Default 2.4Ghz IBSS channel if channel is not
+ * provided by supplicant.
+ * @Min: 1
+ * @Max: 14
+ * @Default: 6
+ *
+ * This ini is used to set default 2.4Ghz IBSS channel
+ * if channel is not provided by supplicant and band is 2.4Ghz
+ *
+ * Related: None
+ *
+ * Supported Feature: IBSS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_IBSS_ADHOC_CHANNEL_24GHZ_NAME         "gAdHocChannel24G"
+#define CFG_IBSS_ADHOC_CHANNEL_24GHZ_MIN          (1)
+#define CFG_IBSS_ADHOC_CHANNEL_24GHZ_MAX          (14)
+#define CFG_IBSS_ADHOC_CHANNEL_24GHZ_DEFAULT      (6)
+
+/*
+ * <ini>
+ * gCoalesingInIBSS - If IBSS coalesing is enabled.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set IBSS coalesing
+ *
+ * Related: None
+ *
+ * Supported Feature: IBSS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_COALESING_IN_IBSS_NAME                "gCoalesingInIBSS"
+#define CFG_COALESING_IN_IBSS_MIN                 (0)
+#define CFG_COALESING_IN_IBSS_MAX                 (1)
+#define CFG_COALESING_IN_IBSS_DEFAULT             (0)   /* disabled */
+
+/*
+ * <ini>
+ * gIbssATIMWinSize - Set IBSS ATIM window size
+ * @Min: 0
+ * @Max: 50
+ * @Default: 0
+ *
+ * This ini is used to set IBSS ATIM window size
+ *
+ * Related: None
+ *
+ * Supported Feature: IBSS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_IBSS_ATIM_WIN_SIZE_NAME                "gIbssATIMWinSize"
+#define CFG_IBSS_ATIM_WIN_SIZE_MIN                 (0)
+#define CFG_IBSS_ATIM_WIN_SIZE_MAX                 (50)
+#define CFG_IBSS_ATIM_WIN_SIZE_DEFAULT             (0)
+
+
+/*
+ * <ini>
+ * gIbssIsPowerSaveAllowed - Indicates if IBSS Power Save is
+ * supported or not
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to Indicates if IBSS Power Save is
+ * supported or not. When not allowed,IBSS station has
+ * to stay awake all the time and should never set PM=1
+ * in its transmitted frames.
+ *
+ * Related: valid only when gIbssATIMWinSize is non-zero
+ *
+ * Supported Feature: IBSS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_IBSS_IS_POWER_SAVE_ALLOWED_NAME        "gIbssIsPowerSaveAllowed"
+#define CFG_IBSS_IS_POWER_SAVE_ALLOWED_MIN         (0)
+#define CFG_IBSS_IS_POWER_SAVE_ALLOWED_MAX         (1)
+#define CFG_IBSS_IS_POWER_SAVE_ALLOWED_DEFAULT     (1)
+
+/*
+ * <ini>
+ * gIbssIsPowerCollapseAllowed - Indicates if IBSS Power Collapse
+ * is allowed
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to indicates if IBSS Power Collapse
+ * is allowed
+ *
+ * Related: None
+ *
+ * Supported Feature: IBSS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_IBSS_IS_POWER_COLLAPSE_ALLOWED_NAME    "gIbssIsPowerCollapseAllowed"
+#define CFG_IBSS_IS_POWER_COLLAPSE_ALLOWED_MIN     (0)
+#define CFG_IBSS_IS_POWER_COLLAPSE_ALLOWED_MAX     (1)
+#define CFG_IBSS_IS_POWER_COLLAPSE_ALLOWED_DEFAULT (1)
+
+/*
+ * <ini>
+ * gIbssAwakeOnTxRx - Indicates whether IBSS station
+ * can exit power save mode and enter power active
+ * state whenever there is a TX/RX activity.
+ *
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to ndicates whether IBSS station
+ * can exit power save mode and enter power active
+ * state whenever there is a TX/RX activity.
+ *
+ * Related: None
+ *
+ * Supported Feature: IBSS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_IBSS_AWAKE_ON_TX_RX_NAME               "gIbssAwakeOnTxRx"
+#define CFG_IBSS_AWAKE_ON_TX_RX_MIN                (0)
+#define CFG_IBSS_AWAKE_ON_TX_RX_MAX                (1)
+#define CFG_IBSS_AWAKE_ON_TX_RX_DEFAULT            (0)
+
+/*
+ * <ini>
+ * gIbssInactivityTime - Indicates the data
+ * inactivity time in number of beacon intervals
+ * after which IBSS station re-inters power save
+ *
+ * @Min: 1
+ * @Max: 10
+ * @Default: 1
+ *
+ * In IBSS mode if Awake on TX/RX activity is enabled
+ * Ibss Inactivity parameter indicates the data
+ * inactivity time in number of beacon intervals
+ * after which IBSS station re-inters power save
+ * by sending Null frame with PM=1
+ *
+ * Related: Aplicable if gIbssAwakeOnTxRx is enabled
+ *
+ * Supported Feature: IBSS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_IBSS_INACTIVITY_TIME_NAME              "gIbssInactivityTime"
+#define CFG_IBSS_INACTIVITY_TIME_MIN               (1)
+#define CFG_IBSS_INACTIVITY_TIME_MAX               (10)
+#define CFG_IBSS_INACTIVITY_TIME_DEFAULT           (1)
+
+/*
+ * <ini>
+ * gIbssTxSpEndInactivityTime - Indicates the time after
+ * which TX Service Period is terminated by
+ * sending a Qos Null frame with EOSP.
+ *
+ * @Min: 0
+ * @Max: 100
+ * @Default: 0
+ *
+ * In IBSS mode Tx Service Period Inactivity
+ * time in msecs indicates the time after
+ * which TX Service Period is terminated by
+ * sending a Qos Null frame with EOSP.
+ * If value is 0, TX SP is terminated with the
+ * last buffered packet itself instead of waiting
+ * for the inactivity.
+ *
+ * Related: None
+ *
+ * Supported Feature: IBSS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_IBSS_TXSP_END_INACTIVITY_NAME          "gIbssTxSpEndInactivityTime"
+#define CFG_IBSS_TXSP_END_INACTIVITY_MIN           (0)
+#define CFG_IBSS_TXSP_END_INACTIVITY_MAX           (100)
+#define CFG_IBSS_TXSP_END_INACTIVITY_DEFAULT       (0)
+
+/*
+ * <ini>
+ * gIbssPsWarmupTime - PS-supporting device
+ * does not enter protocol sleep state during first
+ * gIbssPsWarmupTime seconds.
+ *
+ * @Min: 0
+ * @Max: 65535
+ * @Default: 0
+ *
+ * When IBSS network is initialized, PS-supporting device
+ * does not enter protocol sleep state during first
+ * gIbssPsWarmupTime seconds.
+ *
+ * Related: valid if gIbssIsPowerSaveAllowed is set
+ *
+ * Supported Feature: IBSS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_IBSS_PS_WARMUP_TIME_NAME               "gIbssPsWarmupTime"
+#define CFG_IBSS_PS_WARMUP_TIME_MIN                (0)
+/* Allow unsigned Int Max for now */
+#define CFG_IBSS_PS_WARMUP_TIME_MAX                (65535)
+#define CFG_IBSS_PS_WARMUP_TIME_DEFAULT            (0)
+
+/*
+ * <ini>
+ * gIbssPsWarmupTime - IBSS Power Save Enable/Disable 1 RX
+ * chain usage during the ATIM window
+ *
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * IBSS Power Save Enable/Disable 1 RX
+ * chain usage during the ATIM window
+ *
+ * Related: Depend on gIbssIsPowerSaveAllowed
+ *
+ * Supported Feature: IBSS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_NAME    "gIbssPs1RxChainInAtim"
+#define CFG_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_MIN     (0)
+#define CFG_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_MAX     (1)
+#define CFG_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_DEFAULT (0)
+
+
+
 
 #define CFG_INTF0_MAC_ADDR_NAME                  "Intf0MacAddress"
 #define CFG_INTF0_MAC_ADDR_MIN                   "000000000000"
@@ -2697,19 +3001,6 @@ typedef enum {
 #define CFG_DISABLE_LDPC_WITH_TXBF_AP_MAX         (1)
 #define CFG_DISABLE_LDPC_WITH_TXBF_AP_DEFAULT     (0)
 
-/*
- * IBSS Operating Channels for 2.4G and 5GHz channels
- */
-#define CFG_IBSS_ADHOC_CHANNEL_5GHZ_NAME          "gAdHocChannel5G"
-#define CFG_IBSS_ADHOC_CHANNEL_5GHZ_MIN           (36)
-#define CFG_IBSS_ADHOC_CHANNEL_5GHZ_MAX           (165)
-#define CFG_IBSS_ADHOC_CHANNEL_5GHZ_DEFAULT       (44)
-
-#define CFG_IBSS_ADHOC_CHANNEL_24GHZ_NAME         "gAdHocChannel24G"
-#define CFG_IBSS_ADHOC_CHANNEL_24GHZ_MIN          (1)
-#define CFG_IBSS_ADHOC_CHANNEL_24GHZ_MAX          (14)
-#define CFG_IBSS_ADHOC_CHANNEL_24GHZ_DEFAULT      (6)
-
 /* Parameter to control VHT support in 2.4 GHz band */
 #define CFG_ENABLE_VHT_FOR_24GHZ_NAME             "gEnableVhtFor24GHzBand"
 #define CFG_ENABLE_VHT_FOR_24GHZ_MIN              (0)
@@ -2927,95 +3218,6 @@ typedef enum {
 #define CFG_WOW_ENABLE_MIN                            (0)
 #define CFG_WOW_ENABLE_MAX                            (3)
 #define CFG_WOW_STATUS_DEFAULT                        (3)
-
-#define CFG_COALESING_IN_IBSS_NAME                "gCoalesingInIBSS"
-#define CFG_COALESING_IN_IBSS_MIN                 (0)
-#define CFG_COALESING_IN_IBSS_MAX                 (1)
-#define CFG_COALESING_IN_IBSS_DEFAULT             (0)   /* disabled */
-
-#define CFG_IBSS_ATIM_WIN_SIZE_NAME                "gIbssATIMWinSize"
-#define CFG_IBSS_ATIM_WIN_SIZE_MIN                 (0)
-#define CFG_IBSS_ATIM_WIN_SIZE_MAX                 (50)
-#define CFG_IBSS_ATIM_WIN_SIZE_DEFAULT             (0)
-
-/*
- * Indicates if IBSS Power Save is
- * supported or not. When not allowed,
- * IBSS station has to stay awake all
- * the time and should never set PM=1
- * in its transmitted frames. This
- * parameter is meaningful/valid only
- * when gIbssATIMWinSize is non-zero
- */
-#define CFG_IBSS_IS_POWER_SAVE_ALLOWED_NAME        "gIbssIsPowerSaveAllowed"
-#define CFG_IBSS_IS_POWER_SAVE_ALLOWED_MIN         (0)
-#define CFG_IBSS_IS_POWER_SAVE_ALLOWED_MAX         (1)
-#define CFG_IBSS_IS_POWER_SAVE_ALLOWED_DEFAULT     (1)
-
-/*
- * Indicates if IBSS Power Collapse
- * is allowed or not.
- */
-#define CFG_IBSS_IS_POWER_COLLAPSE_ALLOWED_NAME    "gIbssIsPowerCollapseAllowed"
-#define CFG_IBSS_IS_POWER_COLLAPSE_ALLOWED_MIN     (0)
-#define CFG_IBSS_IS_POWER_COLLAPSE_ALLOWED_MAX     (1)
-#define CFG_IBSS_IS_POWER_COLLAPSE_ALLOWED_DEFAULT (1)
-
-/*
- * This parameter indicates whether IBSS station
- * can exit power save mode and enter power active
- * state whenever there is a TX/RX activity.
- */
-#define CFG_IBSS_AWAKE_ON_TX_RX_NAME               "gIbssAwakeOnTxRx"
-#define CFG_IBSS_AWAKE_ON_TX_RX_MIN                (0)
-#define CFG_IBSS_AWAKE_ON_TX_RX_MAX                (1)
-#define CFG_IBSS_AWAKE_ON_TX_RX_DEFAULT            (0)
-
-/*
- * In IBSS mode if Awake on TX/RX activity is enabled
- * Ibss Inactivity parameter indicates the data
- * inactivity time in number of beacon intervals
- * after which IBSS station re-inters power save
- * by sending Null frame with PM=1
- */
-#define CFG_IBSS_INACTIVITY_TIME_NAME              "gIbssInactivityTime"
-#define CFG_IBSS_INACTIVITY_TIME_MIN               (1)
-#define CFG_IBSS_INACTIVITY_TIME_MAX               (10)
-#define CFG_IBSS_INACTIVITY_TIME_DEFAULT           (1)
-
-/*
- * In IBSS mode Tx Service Period Inactivity
- * time in msecs indicates the time after
- * which TX Service Period is terminated by
- * sending a Qos Null frame with EOSP.
- * If value is 0, TX SP is terminated with the
- * last buffered packet itself instead of waiting
- * for the inactivity
- */
-#define CFG_IBSS_TXSP_END_INACTIVITY_NAME          "gIbssTxSpEndInactivityTime"
-#define CFG_IBSS_TXSP_END_INACTIVITY_MIN           (0)
-#define CFG_IBSS_TXSP_END_INACTIVITY_MAX           (100)
-#define CFG_IBSS_TXSP_END_INACTIVITY_DEFAULT       (0)
-
-/*
- * When IBSS network is initialized, PS-supporting device
- * does not enter protocol sleep state during first
- * gIbssPsWarmupTime seconds.
- */
-#define CFG_IBSS_PS_WARMUP_TIME_NAME               "gIbssPsWarmupTime"
-#define CFG_IBSS_PS_WARMUP_TIME_MIN                (0)
-/* Allow unsigned Int Max for now */
-#define CFG_IBSS_PS_WARMUP_TIME_MAX                (65535)
-#define CFG_IBSS_PS_WARMUP_TIME_DEFAULT            (0)
-
-/*
- * IBSS Power Save Enable/Disable 1 RX
- * chain usage during the ATIM window
- */
-#define CFG_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_NAME    "gIbssPs1RxChainInAtim"
-#define CFG_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_MIN     (0)
-#define CFG_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_MAX     (1)
-#define CFG_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_DEFAULT (0)
 
 #define CFG_SAP_MAX_NO_PEERS                       "gSoftApMaxPeers"
 #define CFG_SAP_MAX_NO_PEERS_MIN                   (1)

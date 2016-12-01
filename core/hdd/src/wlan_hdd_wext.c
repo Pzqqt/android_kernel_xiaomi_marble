@@ -303,7 +303,6 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_NONE_GET_INT    (SIOCIWFIRSTPRIV + 1)
 #define WE_GET_11D_STATE     1
-#define WE_IBSS_STATUS       2
 #define WE_SET_SAP_CHANNELS  3
 #define WE_GET_WLAN_DBG      4
 #define WE_GET_MAX_ASSOC     6
@@ -486,6 +485,26 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_GET_11W_INFO      9
 #endif
 #define WE_GET_STATES        10
+/*
+ * <ioctl>
+ * getIbssSTAs - get ibss sta info
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: Give the MAC of the IBSS STA
+ *  wlan0     getIbssSTAs:
+ *  1 .8c:fd:f0:01:9c:bf
+ *
+ * This IOCTL is used to get ibss sta info
+ *
+ * @E.g: iwpriv wlan0 getIbssSTAs
+ *
+ * Supported Feature: IBSS
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_IBSS_STA_INFO 11
 #define WE_GET_PHYMODE       12
 #ifdef FEATURE_OEM_DATA_SUPPORT
@@ -497,6 +516,27 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_NONE_GET_NONE   (SIOCIWFIRSTPRIV + 6)
 #define WE_SET_REASSOC_TRIGGER     8
+/*
+ * <ioctl>
+ * ibssPeerInfoAll - Print the ibss peers's MAC, rate and RSSI
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: print ibss peer in info logs
+ *  pPeerInfo->numIBSSPeers = 1
+ *  PEER ADDR : 8c:fd:f0:01:9c:bf TxRate: 1 Mbps RSSI: -35
+ *
+ * This IOCTL is used to rint the ibss peers's MAC, rate and RSSI
+ * in info logs
+ *
+ * @E.g: iwpriv wlan0 ibssPeerInfoAll
+ *
+ * Supported Feature: IBSS
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_IBSS_GET_PEER_INFO_ALL 10
 /* Sub ioctls 11 to 16 are not used */
 #define WE_GET_RECOVERY_STAT       17
@@ -549,6 +589,27 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 
 #define WE_TDLS_CONFIG_PARAMS   5
 #endif
+/*
+ * <ioctl>
+ * ibssPeerInfo - Print the ibss peers's MAC, rate and RSSI
+ *
+ * @INPUT: staid
+ *
+ * @OUTPUT: print ibss peer corresponding to staid in info logs
+ *  PEER ADDR : 8c:fd:f0:01:9c:bf TxRate: 1 Mbps RSSI: -35
+ *
+ * This IOCTL is used to print the specific ibss peers's MAC,
+ * rate and RSSI in info logs
+ *
+ * @E.g: iwpriv wlan0 ibssPeerInfo <sta_id>
+ *  iwpriv wlan0 ibssPeerInfo 0
+ *
+ * Supported Feature: IBSS
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_IBSS_GET_PEER_INFO   6
 #define WE_UNIT_TEST_CMD   7
 
@@ -7098,10 +7159,6 @@ static int __iw_setnone_getint(struct net_device *dev,
 		break;
 	}
 
-	case WE_IBSS_STATUS:
-		hdd_notice("****Return IBSS Status*****");
-		break;
-
 	case WE_GET_WLAN_DBG:
 	{
 		qdf_trace_display();
@@ -11014,11 +11071,6 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 "get11Dstate"},
-
-	{WE_IBSS_STATUS,
-	 0,
-	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
-	 "getAdhocStatus"},
 
 	{WE_GET_WLAN_DBG,
 	 0,
