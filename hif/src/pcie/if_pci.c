@@ -2264,6 +2264,7 @@ static void hif_disable_pci(struct hif_pci_softc *sc)
 	pci_disable_device(sc->pdev);
 }
 
+#ifndef QCA_WIFI_NAPIER_EMULATION
 static int hif_pci_probe_tgt_wakeup(struct hif_pci_softc *sc)
 {
 	int ret = 0;
@@ -2331,6 +2332,7 @@ static int hif_pci_probe_tgt_wakeup(struct hif_pci_softc *sc)
 end:
 	return ret;
 }
+#endif
 
 static void wlan_tasklet_msi(unsigned long data)
 {
