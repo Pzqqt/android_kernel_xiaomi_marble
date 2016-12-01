@@ -228,7 +228,7 @@ static inline void copy_channel_info(
 	else if (req->is_quarter_rate)
 		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_QUARTER_RATE);
 
-	if (req->is_dfs) {
+	if (req->is_dfs && req->flag_dfs) {
 		WMI_SET_CHANNEL_FLAG(chan, req->flag_dfs);
 		cmd->disable_hw_ack = req->dis_hw_ack;
 	}
@@ -335,11 +335,11 @@ QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
 		       cmd->num_noa_descriptors *
 		       sizeof(wmi_p2p_noa_descriptor));
-	WMI_LOGA("\n%s: vdev_id %d freq %d chanmode %d is_dfs %d "
+	WMI_LOGA("%s: vdev_id %d freq %d chanmode %d ch_info: 0x%x is_dfs %d "
 		"beacon interval %d dtim %d center_chan %d center_freq2 %d "
 		"reg_info_1: 0x%x reg_info_2: 0x%x, req->max_txpow: 0x%x "
 		"Tx SS %d, Rx SS %d",
-		__func__, req->vdev_id, chan->mhz, req->chan_mode,
+		__func__, req->vdev_id, chan->mhz, req->chan_mode, chan->info,
 		req->is_dfs, req->beacon_intval, cmd->dtim_period,
 		chan->band_center_freq1, chan->band_center_freq2,
 		chan->reg_info_1, chan->reg_info_2, req->max_txpow,
