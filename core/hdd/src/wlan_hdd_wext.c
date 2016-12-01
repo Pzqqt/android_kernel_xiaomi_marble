@@ -273,6 +273,30 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_CLEAR_STATS                        86
 /* Private sub ioctl for starting/stopping the profiling */
 #define WE_START_FW_PROFILE                      87
+/*
+ * <ioctl>
+ * setChanChange - Initiate channel change
+ *
+ * @INPUT: channel number to switch to.
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL is used to initiate a channel change.
+ * If called on STA/CLI interface it will send the
+ * ECSA action frame to the connected SAP/GO asking to
+ * initiate the ECSA, if supported.
+ * If called on SAP/GO interface it will initiate
+ * ECSA and ask connected peers to move to new channel.
+ *
+ * @E.g: iwpriv wlan0 setChanChange <channel>
+ * iwpriv wlan0 setChanChange 1
+ *
+ * Supported Feature: ECSA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_CHANNEL                        88
 #define WE_SET_CONC_SYSTEM_PREF               89
 
