@@ -363,7 +363,7 @@ int pld_get_msi_irq(struct device *dev, unsigned int vector);
 void pld_get_msi_address(struct device *dev, uint32_t *msi_addr_low,
 			 uint32_t *msi_addr_high);
 unsigned int pld_socinfo_get_serial_number(struct device *dev);
-uint8_t *pld_common_get_wlan_mac_address(struct device *dev, uint32_t *num);
+uint8_t *pld_get_wlan_mac_address(struct device *dev, uint32_t *num);
 int pld_is_qmi_disable(struct device *dev);
 
 #endif

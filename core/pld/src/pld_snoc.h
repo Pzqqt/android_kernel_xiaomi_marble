@@ -139,6 +139,12 @@ static inline int pld_snoc_is_qmi_disable(void)
 {
 	return 0;
 }
+static inline uint8_t *pld_snoc_get_wlan_mac_address(struct device *dev,
+						     uint32_t *num)
+{
+	*num = 0;
+	return NULL;
+}
 #else
 int pld_snoc_register_driver(void);
 void pld_snoc_unregister_driver(void);
@@ -230,6 +236,11 @@ unsigned int pld_snoc_socinfo_get_serial_number(struct device *dev)
 static inline int pld_snoc_is_qmi_disable(void)
 {
 	return icnss_is_qmi_disable();
+}
+static inline uint8_t *pld_snoc_get_wlan_mac_address(struct device *dev,
+						      uint32_t *num)
+{
+	return icnss_get_wlan_mac_address(dev, num);
 }
 #endif
 #endif

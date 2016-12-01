@@ -7220,15 +7220,17 @@ QDF_STATUS hdd_register_for_sap_restart_with_channel_switch(void)
 #endif
 
 /**
- * hdd_get_cnss_wlan_mac_buff() - API to query platform driver for MAC address
+ * hdd_get_platform_wlan_mac_buff() - API to query platform driver
+ *                                    for MAC address
  * @dev: Device Pointer
  * @num: Number of Valid Mac address
  *
  * Return: Pointer to MAC address buffer
  */
-static uint8_t *hdd_get_cnss_wlan_mac_buff(struct device *dev, uint32_t *num)
+static uint8_t *hdd_get_platform_wlan_mac_buff(struct device *dev,
+					       uint32_t *num)
 {
-	return pld_common_get_wlan_mac_address(dev, num);
+	return pld_get_wlan_mac_address(dev, num);
 }
 
 /**
@@ -7264,14 +7266,14 @@ static void hdd_populate_random_mac_addr(hdd_context_t *hdd_ctx, uint32_t num)
 }
 
 /**
- * hdd_cnss_wlan_mac() - API to get mac addresses from cnss platform driver
+ * hdd_platform_wlan_mac() - API to get mac addresses from platform driver
  * @hdd_ctx: HDD Context
  *
  * API to get mac addresses from platform driver and update the driver
  * structures and configure FW with the base mac address.
  * Return: int
  */
-static int hdd_cnss_wlan_mac(hdd_context_t *hdd_ctx)
+static int hdd_platform_wlan_mac(hdd_context_t *hdd_ctx)
 {
 	uint32_t no_of_mac_addr, iter;
 	uint32_t max_mac_addr = QDF_MAX_CONCURRENCY_PERSONA;
@@ -7282,7 +7284,7 @@ static int hdd_cnss_wlan_mac(hdd_context_t *hdd_ctx)
 	tSirMacAddr mac_addr;
 	QDF_STATUS status;
 
-	addr = hdd_get_cnss_wlan_mac_buff(dev, &no_of_mac_addr);
+	addr = hdd_get_platform_wlan_mac_buff(dev, &no_of_mac_addr);
 
 	if (no_of_mac_addr == 0 || !addr) {
 		hdd_warn("Platform Driver Doesn't have wlan mac addresses");
@@ -7349,7 +7351,7 @@ static void hdd_initialize_mac_address(hdd_context_t *hdd_ctx)
 	QDF_STATUS status;
 	int ret;
 
-	ret = hdd_cnss_wlan_mac(hdd_ctx);
+	ret = hdd_platform_wlan_mac(hdd_ctx);
 	if (ret == 0)
 		return;
 

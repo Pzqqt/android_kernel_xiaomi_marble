@@ -1630,7 +1630,7 @@ unsigned int pld_socinfo_get_serial_number(struct device *dev)
 }
 
 /*
- * pld_common_get_wlan_mac_address() - API to query MAC address from Platform
+ * pld_get_wlan_mac_address() - API to query MAC address from Platform
  * Driver
  * @dev: Device Structure
  * @num: Pointer to number of MAC address supported
@@ -1640,15 +1640,19 @@ unsigned int pld_socinfo_get_serial_number(struct device *dev)
  *
  * Return: Pointer to the list of MAC address
  */
-uint8_t *pld_common_get_wlan_mac_address(struct device *dev, uint32_t *num)
+uint8_t *pld_get_wlan_mac_address(struct device *dev, uint32_t *num)
 {
-	switch (pld_get_bus_type(dev)) {
+	enum pld_bus_type type = pld_get_bus_type(dev);
+
+	switch (type) {
 	case PLD_BUS_TYPE_PCIE:
 		return pld_pcie_get_wlan_mac_address(dev, num);
 	case PLD_BUS_TYPE_SDIO:
 		return pld_sdio_get_wlan_mac_address(dev, num);
-	case PLD_BUS_TYPE_USB:
 	case PLD_BUS_TYPE_SNOC:
+		return pld_snoc_get_wlan_mac_address(dev, num);
+	case PLD_BUS_TYPE_USB:
+		pr_err("Not supported on type %d\n", type);
 		break;
 	default:
 		pr_err("Invalid device type\n");
