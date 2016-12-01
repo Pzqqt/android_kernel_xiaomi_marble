@@ -3055,6 +3055,7 @@ static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 	void *pdev_ctx;
 	uint8_t peer_id;
 	bool should_drop = false;
+	qdf_time_t *ptr;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	/*
@@ -3089,7 +3090,12 @@ static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 
 	switch (subtype) {
 	case SIR_MAC_MGMT_ASSOC_REQ:
-		if (*cdp_peer_last_assoc_received(soc, peer)) {
+		ptr = cdp_peer_last_assoc_received(soc, peer);
+		if (ptr == NULL) {
+			WMA_LOGE(FL("cdp_peer_last_assoc_received Failed"));
+			should_drop = true;
+			goto end;
+		} else {
 			if ((qdf_get_system_timestamp() -
 				*cdp_peer_last_assoc_received(soc, peer)) <
 				WMA_MGMT_FRAME_DETECT_DOS_TIMER) {
