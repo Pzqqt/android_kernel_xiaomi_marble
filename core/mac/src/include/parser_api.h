@@ -66,6 +66,9 @@
 #define RSNIE_CAPABILITY_LEN 2
 #define DEFAULT_RSNIE_CAP_VAL 0x00
 
+#define SIZE_MASK 0x7FFF
+#define FIXED_MASK 0x8000
+
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 #define QCOM_VENDOR_IE_MCC_AVOID_CH 0x01
 
@@ -803,6 +806,19 @@ tSirRetStatus
 sir_beacon_ie_ese_bcn_report(tpAniSirGlobal pMac,
 		uint8_t *pPayload, const uint32_t payloadLength,
 		uint8_t **outIeBuf, uint32_t *pOutIeLen);
+
+/**
+ * ese_populate_wmm_tspec() - Populates TSPEC info for
+ * reassoc
+ * @source: source structure
+ * @dest: destination structure
+ *
+ * This function copies TSPEC parameters from source
+ * structure to destination structure.
+ *
+ * Return: None
+ */
+void ese_populate_wmm_tspec(tSirMacTspecIE *source, ese_wmm_tspec_ie *dest);
 
 #endif
 

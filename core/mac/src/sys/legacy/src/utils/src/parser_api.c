@@ -1955,6 +1955,40 @@ void populate_dot11f_re_assoc_tspec(tpAniSirGlobal pMac,
 		}
 	}
 }
+
+void ese_populate_wmm_tspec(tSirMacTspecIE *source,
+	ese_wmm_tspec_ie *dest)
+{
+	dest->traffic_type = source->tsinfo.traffic.trafficType;
+	dest->tsid = source->tsinfo.traffic.tsid;
+	dest->direction = source->tsinfo.traffic.direction;
+	dest->access_policy = source->tsinfo.traffic.accessPolicy;
+	dest->aggregation = source->tsinfo.traffic.aggregation;
+	dest->psb = source->tsinfo.traffic.psb;
+	dest->user_priority = source->tsinfo.traffic.userPrio;
+	dest->tsinfo_ack_pol = source->tsinfo.traffic.ackPolicy;
+	dest->burst_size_defn = source->tsinfo.traffic.burstSizeDefn;
+	/* As defined in IEEE 802.11-2007, section 7.3.2.30
+	 * Nominal MSDU size: Bit[0:14]=Size, Bit[15]=Fixed
+	 */
+	dest->size = (source->nomMsduSz & SIZE_MASK);
+	dest->fixed = (source->nomMsduSz & FIXED_MASK) ? 1 : 0;
+	dest->max_msdu_size = source->maxMsduSz;
+	dest->min_service_int = source->minSvcInterval;
+	dest->max_service_int = source->maxSvcInterval;
+	dest->inactivity_int = source->inactInterval;
+	dest->suspension_int = source->suspendInterval;
+	dest->service_start_time = source->svcStartTime;
+	dest->min_data_rate = source->minDataRate;
+	dest->mean_data_rate = source->meanDataRate;
+	dest->peak_data_rate = source->peakDataRate;
+	dest->burst_size = source->maxBurstSz;
+	dest->delay_bound = source->delayBound;
+	dest->min_phy_rate = source->minPhyRate;
+	dest->surplus_bw_allowance = source->surplusBw;
+	dest->medium_time = source->mediumTime;
+}
+
 #endif
 
 void populate_dot11f_wmm_info_ap(tpAniSirGlobal pMac, tDot11fIEWMMInfoAp *pInfo,

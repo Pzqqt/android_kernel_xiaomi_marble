@@ -950,6 +950,35 @@ struct oem_data_rsp {
 #endif /* FEATURE_OEM_DATA_SUPPORT */
 
 #ifdef FEATURE_WLAN_ESE
+typedef struct ese_wmm_tspec_ie {
+	uint16_t         traffic_type:1;
+	uint16_t                 tsid:4;
+	uint16_t            direction:2;
+	uint16_t        access_policy:2;
+	uint16_t          aggregation:1;
+	uint16_t                  psb:1;
+	uint16_t        user_priority:3;
+	uint16_t       tsinfo_ack_pol:2;
+	uint8_t          tsinfo_rsvd:7;
+	uint8_t      burst_size_defn:1;
+	uint16_t                 size:15;
+	uint16_t                fixed:1;
+	uint16_t            max_msdu_size;
+	uint32_t            min_service_int;
+	uint32_t            max_service_int;
+	uint32_t            inactivity_int;
+	uint32_t            suspension_int;
+	uint32_t            service_start_time;
+	uint32_t            min_data_rate;
+	uint32_t            mean_data_rate;
+	uint32_t            peak_data_rate;
+	uint32_t            burst_size;
+	uint32_t            delay_bound;
+	uint32_t            min_phy_rate;
+	uint16_t            surplus_bw_allowance;
+	uint16_t            medium_time;
+} qdf_packed ese_wmm_tspec_ie;
+
 typedef struct sTspecInfo {
 	uint8_t valid;
 	tSirMacTspecIE tspec;

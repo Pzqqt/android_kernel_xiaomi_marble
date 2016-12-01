@@ -17615,6 +17615,54 @@ static void csr_append_assoc_ies(tpAniSirGlobal mac_ctx,
 	assoc_ie->length += (ie_len + 2);
 }
 
+#ifdef FEATURE_WLAN_ESE
+/**
+ * ese_populate_addtional_ies() - add IEs to reassoc frame
+ * @mac_ctx: Pointer to global mac structure
+ * @session: pointer to CSR session
+ * @req_buf: Pointer to Roam offload scan request
+ *
+ * This function populates the TSPEC ie and appends the info
+ * to assoc buffer.
+ *
+ * Return: None
+ */
+static void ese_populate_addtional_ies(tpAniSirGlobal mac_ctx,
+				tCsrRoamSession *session,
+				tSirRoamOffloadScanReq *req_buf) {
+
+	uint8_t tspec_ie_hdr[SIR_MAC_OUI_WME_HDR_MIN]
+			= { 0x00, 0x50, 0xf2, 0x02, 0x02, 0x01 };
+	uint8_t tspec_ie_buf[DOT11F_IE_WMMTSPEC_MAX_LEN], j;
+	ese_wmm_tspec_ie *tspec_ie;
+	tESETspecInfo ese_tspec;
+
+	tspec_ie = (ese_wmm_tspec_ie *)(tspec_ie_buf + SIR_MAC_OUI_WME_HDR_MIN);
+	if (csr_is_wmm_supported(mac_ctx) &&
+		mac_ctx->roam.configParam.isEseIniFeatureEnabled &&
+		csr_roam_is_ese_assoc(mac_ctx, session->sessionId)) {
+		ese_tspec.numTspecs = sme_qos_ese_retrieve_tspec_info(mac_ctx,
+					session->sessionId,
+					(tTspecInfo *) &ese_tspec.tspec[0]);
+		qdf_mem_copy(tspec_ie_buf, tspec_ie_hdr,
+			SIR_MAC_OUI_WME_HDR_MIN);
+		for (j = 0; j < ese_tspec.numTspecs; j++) {
+			/* Populate the tspec_ie */
+			ese_populate_wmm_tspec(&ese_tspec.tspec[j].tspec,
+				tspec_ie);
+			csr_append_assoc_ies(mac_ctx, req_buf,
+					IEEE80211_ELEMID_VENDOR,
+					DOT11F_IE_WMMTSPEC_MAX_LEN,
+					tspec_ie_buf);
+		}
+	}
+
+}
+#else
+static inline void ese_populate_addtional_ies(tpAniSirGlobal mac_ctx,
+		tCsrRoamSession *session, tSirRoamOffloadScanReq *req_buf) {
+}
+#endif
 /**
  * csr_update_driver_assoc_ies() - Append driver built IE's to assoc IE's
  * @mac_ctx: Pointer to global mac structure
@@ -17680,6 +17728,8 @@ static void csr_update_driver_assoc_ies(tpAniSirGlobal mac_ctx,
 					DOT11F_IE_POWERCAPS_MAX_LEN,
 					power_cap_ie_data);
 	}
+	ese_populate_addtional_ies(mac_ctx, session, req_buf);
+
 }
 
 /**

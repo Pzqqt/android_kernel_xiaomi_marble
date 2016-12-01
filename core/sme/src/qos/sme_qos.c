@@ -5402,6 +5402,7 @@ QDF_STATUS sme_qos_process_add_ts_success_rsp(tpAniSirGlobal pMac,
 	sme_QosEdcaAcType ac, ac_index;
 	sme_QosSearchInfo search_key;
 	sme_QosSearchInfo search_key1;
+	tCsrRoamSession *csr_session;
 	uint8_t tspec_pending;
 	tListElem *pEntry = NULL;
 	sme_QosFlowInfoEntry *flow_info = NULL;
@@ -5621,6 +5622,15 @@ QDF_STATUS sme_qos_process_add_ts_success_rsp(tpAniSirGlobal pMac,
 	pACInfo->tspec_pending = 0;
 
 	sme_qos_state_transition(sessionId, ac, SME_QOS_QOS_ON);
+
+	/* Inform this TSPEC IE change to FW */
+	csr_session = CSR_GET_SESSION(pMac, sessionId);
+	if (csr_session != NULL &&
+		csr_session->pCurRoamProfile->csrPersona == QDF_STA_MODE) {
+		csr_roam_offload_scan(pMac, sessionId,
+				      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
+				      REASON_CONNECT_IES_CHANGED);
+	}
 
 	(void)sme_qos_process_buffered_cmd(sessionId);
 	return QDF_STATUS_SUCCESS;
