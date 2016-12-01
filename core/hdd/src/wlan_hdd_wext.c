@@ -436,6 +436,29 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_GET_TDLS_PEERS    8
 #endif
 #ifdef WLAN_FEATURE_11W
+/*
+ * <ioctl>
+ * getPMFInfo - get the PMF info of the connected session
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT:
+ *  wlan0     getPMFInfo:
+ *  BSSID E4:F4:C6:0A:E0:36, Is PMF Assoc? 0
+ *  Number of Unprotected Disassocs 0
+ *  Number of Unprotected Deauths 0
+ *
+ * This IOCTL is used to get the PMF stats/status of the current
+ * connection.
+ *
+ * @e.g:iwpriv wlan0 getPMFInfo
+ *
+ * Supported Feature: PMF
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_11W_INFO      9
 #endif
 #define WE_GET_STATES        10
