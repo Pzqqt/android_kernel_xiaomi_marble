@@ -5501,6 +5501,9 @@ QDF_STATUS sme_qos_process_add_ts_success_rsp(tpAniSirGlobal pMac,
 	pACInfo->curr_QoSInfo[tspec_pending - 1].medium_time =
 		pRsp->tspec.mediumTime;
 
+	sme_set_tspec_uapsd_mask_per_session(pMac,
+			&pRsp->tspec.tsinfo, sessionId);
+
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: On session %d AddTspec Medium Time %d",
 		  __func__, __LINE__, sessionId, pRsp->tspec.mediumTime);
@@ -5619,12 +5622,8 @@ QDF_STATUS sme_qos_process_add_ts_success_rsp(tpAniSirGlobal pMac,
 
 	sme_qos_state_transition(sessionId, ac, SME_QOS_QOS_ON);
 
-	sme_set_tspec_uapsd_mask_per_session(pMac,
-			&pRsp->tspec.tsinfo, sessionId);
-
 	(void)sme_qos_process_buffered_cmd(sessionId);
 	return QDF_STATUS_SUCCESS;
-
 }
 
 /*--------------------------------------------------------------------------
