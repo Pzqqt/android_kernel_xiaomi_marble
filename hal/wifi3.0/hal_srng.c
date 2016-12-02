@@ -28,6 +28,9 @@
  */
 
 #include "hal_api.h"
+#ifdef CONFIG_WIN
+#include "wcss_version.h"
+#endif
 
 /**
  * Common SRNG register access macros:
@@ -612,8 +615,12 @@ static inline void hal_srng_src_hw_init(struct hal_soc *hal,
 		srng->entry_size * srng->num_entries);
 	SRNG_SRC_REG_WRITE(srng, BASE_MSB, reg_val);
 
+#if defined(WCSS_VERSION) && (WCSS_VERSION > 81)
+	reg_val = SRNG_SM(SRNG_SRC_FLD(ID, ENTRY_SIZE), srng->entry_size);
+#else
 	reg_val = SRNG_SM(SRNG_SRC_FLD(ID, RING_ID), srng->ring_id) |
 		SRNG_SM(SRNG_SRC_FLD(ID, ENTRY_SIZE), srng->entry_size);
+#endif
 	SRNG_SRC_REG_WRITE(srng, ID, reg_val);
 
 	reg_val = ((srng->flags & HAL_SRNG_DATA_TLV_SWAP) ?
