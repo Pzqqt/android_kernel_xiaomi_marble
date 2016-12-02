@@ -14353,14 +14353,16 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		if (value) {
 			txBFCsnValue = (uint8_t)value1;
 			if (IS_BSS_VHT_CAPABLE(pIes->VHTCaps) &&
-					pIes->VHTCaps.numSoundingDim)
+			    pIes->VHTCaps.csnofBeamformerAntSup)
 				txBFCsnValue = QDF_MIN(txBFCsnValue,
-						pIes->VHTCaps.numSoundingDim);
-			else if (IS_BSS_VHT_CAPABLE(pIes->vendor_vht_ie.VHTCaps)
-				&& pIes->vendor_vht_ie.VHTCaps.numSoundingDim)
+					pIes->VHTCaps.csnofBeamformerAntSup);
+			else if (IS_BSS_VHT_CAPABLE(
+				 pIes->vendor_vht_ie.VHTCaps)
+				 && pIes->vendor_vht_ie.VHTCaps.
+				 csnofBeamformerAntSup)
 				txBFCsnValue = QDF_MIN(txBFCsnValue,
 					pIes->vendor_vht_ie.
-					VHTCaps.numSoundingDim);
+					VHTCaps.csnofBeamformerAntSup);
 		}
 		csr_join_req->vht_config.csnof_beamformer_antSup = txBFCsnValue;
 
