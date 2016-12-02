@@ -13814,6 +13814,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 	uint32_t dwTmp, ucDot11Mode = 0;
 	/* RSN MAX is bigger than WPA MAX */
 	uint8_t wpaRsnIE[DOT11F_IE_RSN_MAX_LEN];
+	uint8_t txBFCsnValue = 0;
 	tSirSmeJoinReq *csr_join_req;
 	tSirMacCapabilityInfo *pAP_capabilityInfo;
 	tAniBool fTmp;
@@ -14323,10 +14324,19 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 				FL("Failed to get CSN beamformee capability"));
 
 		csr_join_req->vht_config.su_beam_formee = value;
-
-		if (value)
-			csr_join_req->vht_config.csnof_beamformer_antSup =
-				(uint8_t)value1;
+		if (value) {
+			txBFCsnValue = (uint8_t)value1;
+			if (IS_BSS_VHT_CAPABLE(pIes->VHTCaps) &&
+					pIes->VHTCaps.numSoundingDim)
+				txBFCsnValue = QDF_MIN(txBFCsnValue,
+						pIes->VHTCaps.numSoundingDim);
+			else if (IS_BSS_VHT_CAPABLE(pIes->vendor_vht_ie.VHTCaps)
+				&& pIes->vendor_vht_ie.VHTCaps.numSoundingDim)
+				txBFCsnValue = QDF_MIN(txBFCsnValue,
+					pIes->vendor_vht_ie.
+					VHTCaps.numSoundingDim);
+		}
+		csr_join_req->vht_config.csnof_beamformer_antSup = txBFCsnValue;
 
 		if (wlan_cfg_get_int(pMac,
 				WNI_CFG_VHT_MU_BEAMFORMEE_CAP, &value)
