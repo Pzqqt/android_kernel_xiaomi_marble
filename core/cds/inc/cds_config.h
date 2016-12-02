@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -55,7 +55,6 @@ enum cfg_sub_20_channel_width {
  * struct cds_config_info - Place Holder for cds configuration
  * @max_station: Max station supported
  * @max_bssid: Max Bssid Supported
- * @frame_xln_reqd: frame transmission required
  * @powersave_offload_enabled: Indicate if powersave offload is enabled
  * @sta_maxlimod_dtim: station max listen interval
  * @sta_mod_dtim: station mode DTIM
@@ -103,7 +102,6 @@ enum cfg_sub_20_channel_width {
 struct cds_config_info {
 	uint16_t max_station;
 	uint16_t max_bssid;
-	uint32_t frame_xln_reqd;
 	uint8_t powersave_offload_enabled;
 	uint8_t sta_maxlimod_dtim;
 	uint8_t sta_mod_dtim;

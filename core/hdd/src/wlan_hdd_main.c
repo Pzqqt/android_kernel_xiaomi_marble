@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -6900,10 +6900,6 @@ static int hdd_update_cds_config(hdd_context_t *hdd_ctx)
 		return -ENOMEM;
 	}
 
-	/* UMA is supported in hardware for performing the
-	 * frame translation 802.11 <-> 802.3
-	 */
-	cds_cfg->frame_xln_reqd = 1;
 	cds_cfg->driver_type = DRIVER_TYPE_PRODUCTION;
 	cds_cfg->powersave_offload_enabled =
 		hdd_ctx->config->enablePowersaveOffload;

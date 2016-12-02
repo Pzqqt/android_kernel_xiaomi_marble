@@ -1996,7 +1996,6 @@ QDF_STATUS wma_open(void *cds_context,
 	cds_cfg->max_station = wma_get_number_of_peers_supported(wma_handle);
 
 	cds_cfg->max_bssid = WMA_MAX_SUPPORTED_BSS;
-	cds_cfg->frame_xln_reqd = 0;
 
 	wma_handle->wlan_resource_config.num_wow_filters =
 		cds_cfg->max_wow_filters;
@@ -2015,7 +2014,6 @@ QDF_STATUS wma_open(void *cds_context,
 	wma_handle->ol_ini_info = cds_cfg->ol_ini_info;
 	wma_handle->max_station = cds_cfg->max_station;
 	wma_handle->max_bssid = cds_cfg->max_bssid;
-	wma_handle->frame_xln_reqd = cds_cfg->frame_xln_reqd;
 	wma_handle->driver_type = cds_cfg->driver_type;
 	wma_handle->ssdp = cds_cfg->ssdp;
 	wma_handle->enable_mc_list = cds_cfg->enable_mc_list;

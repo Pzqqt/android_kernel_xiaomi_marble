@@ -422,7 +422,6 @@ QDF_STATUS cds_open(void)
 		goto err_wma_close;
 	}
 	bmi_target_ready(scn, gp_cds_context->cfg_ctx);
-	/* Now proceed to open the MAC */
 
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
 		"%s: target_type %d 8074:%d 6290:%d",
@@ -442,11 +441,7 @@ QDF_STATUS cds_open(void)
 
 	cds_cdp_cfg_attach(cds_cfg);
 
-	/* UMA is supported in hardware for performing the
-	 * frame translation 802.11 <-> 802.3
-	 */
-	cds_cfg->frame_xln_reqd = 1;
-
+	/* Now proceed to open the MAC */
 	sirStatus =
 		mac_open(&(gp_cds_context->pMACContext),
 			gp_cds_context->pHDDContext, cds_cfg);
