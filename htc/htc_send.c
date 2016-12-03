@@ -58,6 +58,23 @@ uint32_t g_htc_credit_history_idx;
 uint32_t g_htc_credit_history_length;
 struct HTC_CREDIT_HISTORY htc_credit_history_buffer[HTC_CREDIT_HISTORY_MAX];
 
+#ifdef QCA_WIFI_NAPIER_EMULATION
+#define HTC_EMULATION_DELAY_IN_MS 20
+/**
+ * htc_add_delay(): Adds a delay in before proceeding, only for emulation
+ *
+ * Return: None
+ */
+static inline void htc_add_emulation_delay(void)
+{
+	qdf_mdelay(HTC_EMULATION_DELAY_IN_MS);
+}
+#else
+static inline void htc_add_emulation_delay(void)
+{
+}
+#endif
+
 /**
  * htc_credit_record() - records tx que state & credit transactions
  * @type:		type of echange can be HTC_REQUEST_CREDIT
@@ -89,6 +106,7 @@ void htc_credit_record(enum htc_credit_exchange_type type, uint32_t tx_credit,
 
 	g_htc_credit_history_idx++;
 	g_htc_credit_history_length++;
+	htc_add_emulation_delay();
 }
 
 #ifdef WMI_INTERFACE_EVENT_LOGGING
