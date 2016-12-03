@@ -1243,11 +1243,10 @@ static QDF_STATUS hdd_wlan_get_ibss_peer_info(hdd_adapter_t *pAdapter,
 	hdd_station_ctx_t *pStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	tSirPeerInfoRspParams *pPeerInfo = &pStaCtx->ibss_peer_info;
 
-	status =
-		sme_request_ibss_peer_info(hHal, pAdapter, hdd_get_ibss_peer_info_cb,
-					   false, staIdx);
-
 	INIT_COMPLETION(pAdapter->ibss_peer_info_comp);
+	status = sme_request_ibss_peer_info(hHal, pAdapter,
+					    hdd_get_ibss_peer_info_cb,
+					    false, staIdx);
 
 	if (QDF_STATUS_SUCCESS == status) {
 		unsigned long rc;
@@ -1293,10 +1292,10 @@ static QDF_STATUS hdd_wlan_get_ibss_peer_info_all(hdd_adapter_t *pAdapter)
 	tSirPeerInfoRspParams *pPeerInfo = &pStaCtx->ibss_peer_info;
 	int i;
 
-	status =
-		sme_request_ibss_peer_info(hHal, pAdapter, hdd_get_ibss_peer_info_cb,
-					   true, 0xFF);
 	INIT_COMPLETION(pAdapter->ibss_peer_info_comp);
+	status = sme_request_ibss_peer_info(hHal, pAdapter,
+					    hdd_get_ibss_peer_info_cb,
+					    true, 0xFF);
 
 	if (QDF_STATUS_SUCCESS == status) {
 		unsigned long rc;
