@@ -1367,6 +1367,15 @@ QDF_STATUS sme_power_debug_stats_req(tHalHandle hal, void (*callback_fn)
 				(struct  power_stats_response *response,
 				void *context), void *power_stats_context);
 #endif
+/**
+ * sme_set_sar_power_limits() - set sar limits
+ * @hal: HAL handle
+ * @sar_limit_cmd: struct to send sar limit cmd.
+ *
+ * Return: QDF_STATUS enumeration.
+ */
+QDF_STATUS sme_set_sar_power_limits(tHalHandle hal,
+		struct sar_limit_cmd_params *sar_limit_cmd);
 void sme_set_cc_src(tHalHandle hal_handle, enum country_src);
 
 

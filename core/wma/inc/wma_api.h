@@ -323,7 +323,17 @@ QDF_STATUS wma_set_cts2self_for_p2p_go(void *wma_handle,
 		uint32_t cts2self_for_p2p_go);
 QDF_STATUS wma_set_tx_rx_aggregation_size
 	(struct sir_set_tx_rx_aggregation_size *tx_rx_aggregation_size);
-
+/**
+ * wma_set_sar_limit() - set sar limits in the target
+ * @handle: wma handle
+ * @sar_limit_cmd_params: sar limit cmd params
+ *
+ *  This function sends WMI command to set SAR limits.
+ *
+ *  Return: QDF_STATUS enumeration
+ */
+QDF_STATUS wma_set_sar_limit(WMA_HANDLE handle,
+		struct sar_limit_cmd_params *sar_limit_params);
 /**
  * wma_set_qpower_config() - update qpower config in wma
  * @vdev_id:	the Id of the vdev to configure

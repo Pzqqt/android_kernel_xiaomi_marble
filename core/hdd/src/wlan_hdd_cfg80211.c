@@ -7994,6 +7994,276 @@ static int wlan_hdd_cfg80211_setband(struct wiphy *wiphy,
 	return ret;
 }
 
+/**
+ * wlan_hdd_cfg80211_sar_convert_limit_set() - Convert limit set value
+ * @nl80211_value:    Vendor command attribute value
+ * @wmi_value:        Pointer to return converted WMI return value
+ *
+ * Convert NL80211 vendor command value for SAR limit set to WMI value
+ * Return: 0 on success, -1 on invalid value
+ */
+static int wlan_hdd_cfg80211_sar_convert_limit_set(u32 nl80211_value,
+						   u32 *wmi_value)
+{
+	int ret = 0;
+
+	switch (nl80211_value) {
+	case QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_NONE:
+		*wmi_value = WMI_SAR_FEATURE_OFF;
+		break;
+	case QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_BDF0:
+		*wmi_value = WMI_SAR_FEATURE_ON_SET_0;
+		break;
+	case QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_BDF1:
+		*wmi_value = WMI_SAR_FEATURE_ON_SET_1;
+		break;
+	case QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_BDF2:
+		*wmi_value = WMI_SAR_FEATURE_ON_SET_2;
+		break;
+	case QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_BDF3:
+		*wmi_value = WMI_SAR_FEATURE_ON_SET_3;
+		break;
+	case QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_BDF4:
+		*wmi_value = WMI_SAR_FEATURE_ON_SET_4;
+		break;
+	case QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_USER:
+		*wmi_value = WMI_SAR_FEATURE_ON_USER_DEFINED;
+		break;
+	default:
+		ret = -1;
+	}
+	return ret;
+}
+
+/**
+ * wlan_hdd_cfg80211_sar_convert_band() - Convert WLAN band value
+ * @nl80211_value:    Vendor command attribute value
+ * @wmi_value:        Pointer to return converted WMI return value
+ *
+ * Convert NL80211 vendor command value for SAR BAND to WMI value
+ * Return: 0 on success, -1 on invalid value
+ */
+static int wlan_hdd_cfg80211_sar_convert_band(u32 nl80211_value, u32 *wmi_value)
+{
+	int ret = 0;
+
+	switch (nl80211_value) {
+	case NL80211_BAND_2GHZ:
+		*wmi_value = WMI_SAR_2G_ID;
+		break;
+	case NL80211_BAND_5GHZ:
+		*wmi_value = WMI_SAR_5G_ID;
+		break;
+	default:
+		ret = -1;
+	}
+	return ret;
+}
+
+/**
+ * wlan_hdd_cfg80211_sar_convert_modulation() - Convert WLAN modulation value
+ * @nl80211_value:    Vendor command attribute value
+ * @wmi_value:        Pointer to return converted WMI return value
+ *
+ * Convert NL80211 vendor command value for SAR Modulation to WMI value
+ * Return: 0 on success, -1 on invalid value
+ */
+static int wlan_hdd_cfg80211_sar_convert_modulation(u32 nl80211_value,
+						    u32 *wmi_value)
+{
+	int ret = 0;
+
+	switch (nl80211_value) {
+	case QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_MODULATION_CCK:
+		*wmi_value = WMI_SAR_MOD_CCK;
+		break;
+	case QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_MODULATION_OFDM:
+		*wmi_value = WMI_SAR_MOD_OFDM;
+		break;
+	default:
+		ret = -1;
+	}
+	return ret;
+}
+
+
+/**
+ * __wlan_hdd_set_sar_power_limits() - Set SAR power limits
+ * @wiphy: Pointer to wireless phy
+ * @wdev: Pointer to wireless device
+ * @data: Pointer to data
+ * @data_len: Length of @data
+ *
+ * This function is used to setup Specific Absorption Rate limit specs.
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int __wlan_hdd_set_sar_power_limits(struct wiphy *wiphy,
+					   struct wireless_dev *wdev,
+					   const void *data, int data_len)
+{
+	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct nlattr *sar_spec[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_MAX + 1],
+		      *tb[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_MAX + 1],
+		      *sar_spec_list;
+	struct sar_limit_cmd_params sar_limit_cmd = {0};
+	int ret = -EINVAL, i = 0, rem = 0;
+
+	ENTER();
+
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("Command not allowed in FTM mode");
+		return -EPERM;
+	}
+
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return -EINVAL;
+
+	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_MAX,
+		      data, data_len, NULL)) {
+		hdd_err("Invalid SAR attributes");
+		return -EINVAL;
+	}
+
+	/* Vendor command manadates all SAR Specs in single call */
+	sar_limit_cmd.commit_limits = 1;
+	sar_limit_cmd.sar_enable = WMI_SAR_FEATURE_NO_CHANGE;
+	if (tb[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SAR_ENABLE]) {
+		if (wlan_hdd_cfg80211_sar_convert_limit_set(nla_get_u32(
+				tb[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SAR_ENABLE]),
+				&sar_limit_cmd.sar_enable) < 0) {
+			hdd_err("Invalid SAR Enable attr");
+			goto fail;
+		}
+	}
+	hdd_info("attr sar sar_enable %d", sar_limit_cmd.sar_enable);
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_NUM_SPECS]) {
+		sar_limit_cmd.num_limit_rows = nla_get_u32(
+			tb[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_NUM_SPECS]);
+		hdd_info("attr sar num_limit_rows %d",
+			sar_limit_cmd.num_limit_rows);
+	}
+	if (sar_limit_cmd.num_limit_rows > MAX_SAR_LIMIT_ROWS_SUPPORTED) {
+		hdd_err("SAR Spec list exceed supported size");
+		goto fail;
+	}
+	if (sar_limit_cmd.num_limit_rows == 0)
+		goto send_sar_limits;
+	sar_limit_cmd.sar_limit_row_list = qdf_mem_malloc(sizeof(
+						struct sar_limit_cmd_row) *
+						sar_limit_cmd.num_limit_rows);
+	if (!sar_limit_cmd.sar_limit_row_list) {
+		ret = -ENOMEM;
+		goto fail;
+	}
+	if (!tb[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC]) {
+		hdd_err("Invalid SAR SPECs list");
+		goto fail;
+	}
+
+	nla_for_each_nested(sar_spec_list,
+			    tb[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC], rem) {
+		if (i == sar_limit_cmd.num_limit_rows) {
+			hdd_warn("SAR Cmd has excess SPECs in list");
+			break;
+		}
+
+		if (nla_parse(sar_spec, QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_MAX,
+			      nla_data(sar_spec_list), nla_len(sar_spec_list),
+			      NULL)) {
+			hdd_err("nla_parse failed for SAR Spec list");
+			goto fail;
+		}
+		sar_limit_cmd.sar_limit_row_list[i].validity_bitmap = 0;
+		if (sar_spec[
+			    QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_POWER_LIMIT]) {
+			sar_limit_cmd.sar_limit_row_list[i].limit_value =
+				nla_get_u32(sar_spec[
+				QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_POWER_LIMIT]);
+		} else {
+			hdd_err("SAR Spec does not have power limit value");
+			goto fail;
+		}
+
+		if (sar_spec[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_BAND]) {
+			if (wlan_hdd_cfg80211_sar_convert_band(nla_get_u32(
+					sar_spec[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_BAND]),
+					&sar_limit_cmd.sar_limit_row_list[i].band_id)
+					< 0) {
+				hdd_err("Invalid SAR Band attr");
+				goto fail;
+			}
+			sar_limit_cmd.sar_limit_row_list[i].validity_bitmap |=
+						WMI_SAR_BAND_ID_VALID_MASK;
+		}
+		if (sar_spec[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_CHAIN]) {
+			sar_limit_cmd.sar_limit_row_list[i].chain_id =
+				nla_get_u32(sar_spec[
+				QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_CHAIN]);
+			sar_limit_cmd.sar_limit_row_list[i].validity_bitmap |=
+						WMI_SAR_CHAIN_ID_VALID_MASK;
+		}
+		if (sar_spec[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_MODULATION]) {
+			if (wlan_hdd_cfg80211_sar_convert_modulation(nla_get_u32(
+					sar_spec[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_MODULATION]),
+					&sar_limit_cmd.sar_limit_row_list[i].mod_id)
+					< 0) {
+				hdd_err("Invalid SAR Modulation attr");
+				goto fail;
+			}
+			sar_limit_cmd.sar_limit_row_list[i].validity_bitmap |=
+						WMI_SAR_MOD_ID_VALID_MASK;
+		}
+		hdd_info("Spec_ID: %d, Band: %d Chain: %d Mod: %d POW_Limit: %d Validity_Bitmap: %d",
+			 i, sar_limit_cmd.sar_limit_row_list[i].band_id,
+			 sar_limit_cmd.sar_limit_row_list[i].chain_id,
+			 sar_limit_cmd.sar_limit_row_list[i].mod_id,
+			 sar_limit_cmd.sar_limit_row_list[i].limit_value,
+			 sar_limit_cmd.sar_limit_row_list[i].validity_bitmap);
+		i++;
+	}
+
+	if (i < sar_limit_cmd.num_limit_rows) {
+		hdd_warn("SAR Cmd has less SPECs in list");
+		sar_limit_cmd.num_limit_rows = i;
+	}
+
+send_sar_limits:
+	if (sme_set_sar_power_limits(hdd_ctx->hHal, &sar_limit_cmd) ==
+							QDF_STATUS_SUCCESS)
+		ret = 0;
+fail:
+	qdf_mem_free(sar_limit_cmd.sar_limit_row_list);
+	return ret;
+}
+
+/**
+ * wlan_hdd_cfg80211_set_sar_power_limits() - Set SAR power limits
+ * @wiphy: Pointer to wireless phy
+ * @wdev: Pointer to wireless device
+ * @data: Pointer to data
+ * @data_len: Length of @data
+ *
+ * Wrapper function of __wlan_hdd_cfg80211_set_sar_power_limits()
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int wlan_hdd_cfg80211_set_sar_power_limits(struct wiphy *wiphy,
+						  struct wireless_dev *wdev,
+						  const void *data,
+						  int data_len)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_set_sar_power_limits(wiphy, wdev, data,
+					      data_len);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
 static const struct
 nla_policy qca_wlan_vendor_attr[QCA_WLAN_VENDOR_ATTR_MAX+1] = {
 	[QCA_WLAN_VENDOR_ATTR_ROAMING_POLICY] = {.type = NLA_U32},
@@ -8711,8 +8981,15 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 			 WIPHY_VENDOR_CMD_NEED_NETDEV |
 			 WIPHY_VENDOR_CMD_NEED_RUNNING,
 		.doit = wlan_hdd_cfg80211_configure_tdls_mode
-	}
+	},
 #endif
+	{
+		.info.vendor_id = QCA_NL80211_VENDOR_ID,
+		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_SET_SAR_LIMITS,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+			 WIPHY_VENDOR_CMD_NEED_RUNNING,
+		.doit = wlan_hdd_cfg80211_set_sar_power_limits
+	},
 #ifdef WLAN_UMAC_CONVERGENCE
 	COMMON_VENDOR_COMMANDS
 #endif

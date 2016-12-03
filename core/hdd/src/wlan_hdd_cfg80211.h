@@ -298,6 +298,10 @@ typedef enum {
  * @QCA_NL80211_VENDOR_SUBCMD_CONFIGURE_TDLS: Configure the TDLS behavior
  *	in the host driver. The different TDLS configurations are defined
  *	by the attributes in enum qca_wlan_vendor_attr_tdls_configuration.
+ * @QCA_NL80211_VENDOR_SUBCMD_SET_SAR_LIMITS:Set the Specific Absorption Rate
+ *	(SAR) power limits. A critical regulation for FCC compliance, OEMs
+ *	require methods to set SAR limits on TX power of WLAN/WWAN.
+ *	enum qca_vendor_attr_sar_limits attributes are used with this command.
  */
 
 enum qca_nl80211_vendor_subcmds {
@@ -444,6 +448,9 @@ enum qca_nl80211_vendor_subcmds {
 
 	/* Configure the TDLS mode from user space */
 	QCA_NL80211_VENDOR_SUBCMD_CONFIGURE_TDLS = 143,
+
+	/* Set Specific Absorption Rate(SAR) Power Limits */
+	QCA_NL80211_VENDOR_SUBCMD_SET_SAR_LIMITS = 146,
 };
 
 /**
@@ -3161,6 +3168,124 @@ enum qca_wlan_vendor_tdls_trigger_mode {
 	QCA_WLAN_VENDOR_TDLS_TRIGGER_MODE_EXPLICIT = 1 << 0,
 	QCA_WLAN_VENDOR_TDLS_TRIGGER_MODE_IMPLICIT = 1 << 1,
 	QCA_WLAN_VENDOR_TDLS_TRIGGER_MODE_EXTERNAL = 1 << 2,
+};
+
+/**
+ * enum qca_vendor_attr_sar_limits_selections - Source of SAR power limits
+ * @QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_BDF0: Select SAR profile #0
+ *	that is hard-coded in the Board Data File (BDF).
+ * @QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_BDF1: Select SAR profile #1
+ *	that is hard-coded in the Board Data File (BDF).
+ * @QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_BDF2: Select SAR profile #2
+ *	that is hard-coded in the Board Data File (BDF).
+ * @QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_BDF3: Select SAR profile #3
+ *	that is hard-coded in the Board Data File (BDF).
+ * @QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_BDF4: Select SAR profile #4
+ *	that is hard-coded in the Board Data File (BDF).
+ * @QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_NONE: Do not select any
+ *	source of SAR power limits, thereby disabling the SAR power
+ *	limit feature.
+ * @QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_USER: Select the SAR power
+ *	limits configured by %QCA_NL80211_VENDOR_SUBCMD_SET_SAR.
+ *
+ * This enumerates the valid set of values that may be supplied for
+ * attribute %QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT in an instance of
+ * the %QCA_NL80211_VENDOR_SUBCMD_SET_SAR_LIMITS vendor command.
+ */
+enum qca_vendor_attr_sar_limits_selections {
+	QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_BDF0 = 0,
+	QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_BDF1 = 1,
+	QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_BDF2 = 2,
+	QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_BDF3 = 3,
+	QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_BDF4 = 4,
+	QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_NONE = 5,
+	QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_USER = 6,
+};
+
+/**
+ * enum qca_vendor_attr_sar_limits_spec_modulations -
+ *	SAR limits specification modulation
+ * @QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_MODULATION_CCK -
+ *	CCK modulation
+ * @QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_MODULATION_OFDM -
+ *	OFDM modulation
+ *
+ * This enumerates the valid set of values that may be supplied for
+ * attribute %QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_MODULATION in an
+ * instance of attribute %QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC in an
+ * instance of the %QCA_NL80211_VENDOR_SUBCMD_SET_SAR_LIMITS vendor
+ * command.
+ */
+enum qca_vendor_attr_sar_limits_spec_modulations {
+	QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_MODULATION_CCK = 0,
+	QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_MODULATION_OFDM = 1,
+};
+
+/**
+ * enum qca_vendor_attr_sar_limits - Attributes for SAR power limits
+ *
+ * @QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SAR_ENABLE: Optional (u32) value to
+ *	select which SAR power limit table should be used.  Valid
+ *	values are enumerated in enum
+ *	%qca_vendor_attr_sar_limits_selections.  The existing SAR
+ *	power limit selection is unchanged if this attribute is not
+ *	present.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_NUM_SPECS: Optional (u32) value
+ *	which specifies the number of SAR power limit specifications
+ *	which will follow.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC: Nested array of SAR power
+ *	limit specifications. The number of specifications is
+ *	specified by @QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_NUM_SPECS. Each
+ *	specification contains a set of
+ *	QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_* attributes. A
+ *	specification is uniquely identified by the attributes
+ *	%QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_BAND,
+ *	%QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_CHAIN, and
+ *	%QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_MODULATION and always
+ *	contains as a payload the attribute
+ *	%QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_POWER_LIMIT.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_BAND: Optional (u32) value to
+ *	indicate for which band this specification applies. Valid
+ *	values are enumerated in enum %nl80211_band (although not all
+ *	bands may be supported by a given device). If the attribute is
+ *	not supplied then the specification will be applied to all
+ *	supported bands.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_CHAIN: Optional (u32) value
+ *	to indicate for which antenna chain this specification
+ *	applies, i.e. 1 for chain 1, 2 for chain 2, etc. If the
+ *	attribute is not supplied then the specification will be
+ *	applied to all chains.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_MODULATION: Optional (u32)
+ *	value to indicate for which modulation scheme this
+ *	specification applies. Valid values are enumerated in enum
+ *	%qca_vendor_attr_sar_limits_spec_modulations. If the attribute
+ *	is not supplied then the specification will be applied to all
+ *	modulation schemes.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_POWER_LIMIT: Required (u32)
+ *	value to specify the actual power limit value in steps of 0.5
+ *	dbm.
+ *
+ * These attributes are used with %QCA_NL80211_VENDOR_SUBCMD_SET_SAR_LIMITS.
+ */
+enum qca_vendor_attr_sar_limits {
+	QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_INVALID = 0,
+	QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SAR_ENABLE = 1,
+	QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_NUM_SPECS = 2,
+	QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC = 3,
+	QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_BAND = 4,
+	QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_CHAIN = 5,
+	QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_MODULATION = 6,
+	QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_POWER_LIMIT = 7,
+
+	QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_MAX =
+		QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_AFTER_LAST - 1
 };
 
 struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_db(hdd_adapter_t *pAdapter,

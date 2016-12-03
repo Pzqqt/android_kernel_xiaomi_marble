@@ -8410,6 +8410,30 @@ QDF_STATUS wma_enable_disable_caevent_ind(tp_wma_handle wma, uint8_t val)
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS wma_set_sar_limit(WMA_HANDLE handle,
+		struct sar_limit_cmd_params *sar_limit_params)
+{
+	int ret;
+	tp_wma_handle wma = (tp_wma_handle) handle;
+
+	if (!wma || !wma->wmi_handle) {
+		WMA_LOGE("%s: WMA is closed, can not issue set sar limit msg",
+			__func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (sar_limit_params == NULL) {
+		WMA_LOGE("%s: set sar limit ptr NULL",
+			__func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	ret = wmi_unified_send_sar_limit_cmd(wma->wmi_handle,
+				sar_limit_params);
+
+	return ret;
+}
+
 #ifdef WLAN_FEATURE_DISA
 /**
  * wma_encrypt_decrypt_msg() -
