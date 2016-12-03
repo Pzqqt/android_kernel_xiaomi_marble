@@ -2537,6 +2537,12 @@ void wma_vdev_resp_timer(void *data)
 			qdf_mc_timer_stop(&tgt_req->event_timeout);
 			goto free_tgt_req;
 		}
+		/* Trigger host crash when vdev response timesout */
+		if (wma->fw_timeout_crash == true) {
+			BUG_ON(1);
+			return;
+		}
+
 		if (wma_is_vdev_in_ibss_mode(wma, tgt_req->vdev_id))
 			wma_delete_all_ibss_peers(wma, tgt_req->vdev_id);
 		else {
@@ -2586,10 +2592,7 @@ void wma_vdev_resp_timer(void *data)
 		}
 		params->status = QDF_STATUS_E_TIMEOUT;
 		WMA_LOGA("%s: WMA_DELETE_BSS_REQ timedout", __func__);
-		if (wma->fw_timeout_crash == true)
-			BUG_ON(1);
-		else
-			wma_send_msg(wma, WMA_DELETE_BSS_RSP,
+		wma_send_msg(wma, WMA_DELETE_BSS_RSP,
 				    (void *)params, 0);
 		if (iface->del_staself_req) {
 			WMA_LOGA("scheduling defered deletion(vdev id %x)",
