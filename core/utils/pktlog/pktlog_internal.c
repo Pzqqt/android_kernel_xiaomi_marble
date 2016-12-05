@@ -362,6 +362,7 @@ A_STATUS process_tx_info(struct ol_txrx_pdev_t *txrx_pdev, void *data)
 	pl_hdr.flags = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_FLAGS_OFFSET) &
 			ATH_PKTLOG_HDR_FLAGS_MASK) >>
 		       ATH_PKTLOG_HDR_FLAGS_SHIFT;
+	pl_hdr.flags |= PKTLOG_HDR_SIZE_16;
 	pl_hdr.missed_cnt = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_MISSED_CNT_OFFSET) &
 			     ATH_PKTLOG_HDR_MISSED_CNT_MASK) >>
 			    ATH_PKTLOG_HDR_MISSED_CNT_SHIFT;
@@ -595,6 +596,7 @@ A_STATUS process_rx_info_remote(void *pdev, void *data)
 #if defined(HELIUMPLUS)
 		pl_hdr.macId = r_data->mac_id;
 		pl_hdr.log_type = PKTLOG_TYPE_RX_STAT;
+		pl_hdr.flags |= PKTLOG_HDR_SIZE_16;
 #else
 		pl_hdr.log_type = PKTLOG_TYPE_RX_STAT;
 #endif
@@ -647,6 +649,7 @@ A_STATUS process_rx_info(void *pdev, void *data)
 	pl_hdr.macId = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_MAC_ID_OFFSET) &
 			   ATH_PKTLOG_HDR_MAC_ID_MASK) >>
 			  ATH_PKTLOG_HDR_MAC_ID_SHIFT;
+	pl_hdr.flags |= PKTLOG_HDR_SIZE_16;
 #else
 	pl_hdr.log_type = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_LOG_TYPE_OFFSET) &
 				   ATH_PKTLOG_HDR_LOG_TYPE_MASK) >>
@@ -709,6 +712,7 @@ A_STATUS process_rate_find(void *pdev, void *data)
 	pl_hdr.macId = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_MAC_ID_OFFSET) &
 			   ATH_PKTLOG_HDR_MAC_ID_MASK) >>
 			  ATH_PKTLOG_HDR_MAC_ID_SHIFT;
+	pl_hdr.flags |= PKTLOG_HDR_SIZE_16;
 #else
 	pl_hdr.log_type = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_LOG_TYPE_OFFSET) &
 			   ATH_PKTLOG_HDR_LOG_TYPE_MASK) >>
@@ -837,6 +841,7 @@ A_STATUS process_rate_update(void *pdev, void *data)
 	pl_hdr.macId = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_MAC_ID_OFFSET) &
 			   ATH_PKTLOG_HDR_MAC_ID_MASK) >>
 			  ATH_PKTLOG_HDR_MAC_ID_SHIFT;
+	pl_hdr.flags |= PKTLOG_HDR_SIZE_16;
 #else
 	pl_hdr.log_type = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_LOG_TYPE_OFFSET) &
 				   ATH_PKTLOG_HDR_LOG_TYPE_MASK) >>

@@ -164,6 +164,7 @@ enum {
 #define PKTLOG_MAX_TXSTATUS_WORDS 32
 #define PKTLOG_MAX_PROTO_WORDS  16
 #define PKTLOG_MAX_RXDESC_WORDS 62
+#define PKTLOG_HDR_SIZE_16      0x8000
 
 struct txctl_frm_hdr {
 	uint16_t framectrl;     /* frame control field from header */

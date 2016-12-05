@@ -1345,6 +1345,10 @@ static void send_packetdump(qdf_nbuf_t netbuf, uint8_t status,
 	if (adapter->device_mode != QDF_STA_MODE)
 		return;
 
+#if defined(HELIUMPLUS)
+	pktlog_hdr.flags |= PKTLOG_HDR_SIZE_16;
+#endif
+
 	pktlog_hdr.log_type = PKTLOG_TYPE_PKT_DUMP;
 	pktlog_hdr.size = sizeof(pd_hdr) + netbuf->len;
 
@@ -1375,6 +1379,10 @@ static void send_packetdump_monitor(uint8_t type)
 {
 	struct ath_pktlog_hdr pktlog_hdr = {0};
 	struct packet_dump pd_hdr = {0};
+
+#if defined(HELIUMPLUS)
+	pktlog_hdr.flags |= PKTLOG_HDR_SIZE_16;
+#endif
 
 	pktlog_hdr.log_type = PKTLOG_TYPE_PKT_DUMP;
 	pktlog_hdr.size = sizeof(pd_hdr);
