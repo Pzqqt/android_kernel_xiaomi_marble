@@ -34,6 +34,9 @@
 
 #ifdef IPA_OFFLOAD
 
+/* denote that this file does not allow legacy hddLog */
+#define HDD_DISALLOW_LEGACY_HDDLOG 1
+
 /* Include Files */
 #include <linux/ipa.h>
 #include <wlan_hdd_includes.h>
@@ -3977,10 +3980,9 @@ static int __hdd_ipa_send_mcc_scc_msg(hdd_context_t *hdd_ctx, bool mcc_mode)
 		while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
 			pAdapter = adapter_node->pAdapter;
 			if (pAdapter->device_mode == QDF_STA_MODE ||
-				pAdapter->device_mode == QDF_SAP_MODE) {
-				hddLog(QDF_TRACE_LEVEL_INFO,
-					"MCC->SCC: Flush TxRx queue(d_mode=%d)",
-					pAdapter->device_mode);
+			    pAdapter->device_mode == QDF_SAP_MODE) {
+				hdd_info("MCC->SCC: Flush TxRx queue(d_mode=%d)",
+					 pAdapter->device_mode);
 				hdd_deinit_tx_rx(pAdapter);
 			}
 			status = hdd_get_next_adapter(
@@ -3993,18 +3995,18 @@ static int __hdd_ipa_send_mcc_scc_msg(hdd_context_t *hdd_ctx, bool mcc_mode)
 	meta.msg_len = sizeof(*msg);
 	msg = qdf_mem_malloc(meta.msg_len);
 	if (msg == NULL) {
-		hddLog(LOGE, "msg allocation failed");
+		hdd_err("msg allocation failed");
 		return -ENOMEM;
 	}
 
 	meta.msg_type = mcc_mode ?
 			WLAN_SWITCH_TO_MCC : WLAN_SWITCH_TO_SCC;
-	hddLog(LOG1, "ipa_send_msg(Evt:%d)", meta.msg_type);
+	hdd_info("ipa_send_msg(Evt:%d)", meta.msg_type);
 
 	ret = ipa_send_msg(&meta, msg, hdd_ipa_msg_free_fn);
 
 	if (ret) {
-		hddLog(LOGE, "ipa_send_msg(Evt:%d) - fail=%d",
+		hdd_err("ipa_send_msg(Evt:%d) - fail=%d",
 			meta.msg_type,  ret);
 		qdf_mem_free(msg);
 	}
