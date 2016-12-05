@@ -1011,6 +1011,26 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_SET_CONC_SYSTEM_PREF               89
 #define WE_SET_TXRX_STATS                     90
 
+/*
+ * <ioctl>
+ * set_11ax_rate - set 11ax rates to FW
+ *
+ * @INPUT: rate code
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL fixes the Tx data rate of 11AX.
+ *
+ * @E.g: iwpriv wlan0 set_11ax_rate <rate code>
+ *
+ * Supported Feature: STA/SAP
+ *
+ * Usage: Internal
+ *
+ * </ioctl>
+ */
+#define WE_SET_11AX_RATE                      91
+
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_NONE_GET_INT    (SIOCIWFIRSTPRIV + 1)
 #define WE_GET_11D_STATE     1
@@ -3948,6 +3968,54 @@ int hdd_set_rx_stbc(hdd_adapter_t *adapter, int value)
 				   value);
 	if (ret)
 		hdd_alert("Failed to set RX STBC value");
+
+	return ret;
+}
+
+int hdd_assemble_rate_code(uint8_t preamble, uint8_t nss, uint8_t rate)
+{
+	int set_value;
+
+	if (sme_is_feature_supported_by_fw(DOT11AX))
+		set_value = WMI_ASSEMBLE_RATECODE_V1(rate, nss, preamble);
+	else
+		set_value = (preamble << 6) | (nss << 4) | rate;
+
+	return set_value;
+}
+
+int hdd_set_11ax_rate(hdd_adapter_t *adapter, int set_value,
+		      struct sap_Config *sap_config)
+{
+	uint8_t preamble = 0, nss = 0, rix = 0;
+	int ret;
+
+	if (!sap_config) {
+		if (!sme_is_feature_supported_by_fw(DOT11AX)) {
+			hdd_err("Target does not support 11ax");
+			return -EIO;
+		}
+	} else if (sap_config->SapHw_mode != eCSR_DOT11_MODE_11ax &&
+		   sap_config->SapHw_mode != eCSR_DOT11_MODE_11ax_ONLY) {
+			hdd_err("Invalid hw mode, SAP hw_mode= 0x%x, ch = %d",
+				sap_config->SapHw_mode, sap_config->channel);
+			return -EIO;
+	}
+
+	if (set_value != 0xff) {
+		rix = RC_2_RATE_IDX_11AX(set_value);
+		preamble = WMI_RATE_PREAMBLE_HE;
+		nss = HT_RC_2_STREAMS_11AX(set_value);
+
+		set_value = hdd_assemble_rate_code(preamble, nss, rix);
+	}
+
+	hdd_notice("SET_11AX_RATE val %d rix %d preamble %x nss %d",
+	       set_value, rix, preamble, nss);
+
+	ret = wma_cli_set_command(adapter->sessionId,
+				  WMI_VDEV_PARAM_FIXED_RATE,
+				  set_value, VDEV_CMD);
 
 	return ret;
 }
@@ -7863,7 +7931,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 						WMI_RATE_PREAMBLE_OFDM;
 				}
 			}
-			set_value = (preamble << 6) | (nss << 4) | rix;
+			set_value = hdd_assemble_rate_code(preamble, nss, rix);
 		}
 		hdd_info("WMI_VDEV_PARAM_FIXED_RATE val %d rix %d preamble %x nss %d",
 			 set_value, rix, preamble, nss);
@@ -7883,7 +7951,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 			preamble = WMI_RATE_PREAMBLE_VHT;
 			nss = HT_RC_2_STREAMS_11AC(set_value) - 1;
 
-			set_value = (preamble << 6) | (nss << 4) | rix;
+			set_value = hdd_assemble_rate_code(preamble, nss, rix);
 		}
 		hdd_info("WMI_VDEV_PARAM_FIXED_RATE val %d rix %d preamble %x nss %d",
 			 set_value, rix, preamble, nss);
@@ -8438,6 +8506,9 @@ static int __iw_setint_getnone(struct net_device *dev,
 		hdd_ctx->config->conc_system_pref = set_value;
 		break;
 	}
+	case WE_SET_11AX_RATE:
+		ret = hdd_set_11ax_rate(pAdapter, set_value, NULL);
+		break;
 	default:
 	{
 		hdd_err("Invalid sub command %d",
@@ -13452,6 +13523,11 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 "hostroamdelay"}
+	,
+	{WE_SET_11AX_RATE,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	 0,
+	 "set_11ax_rate"}
 	,
 };
 

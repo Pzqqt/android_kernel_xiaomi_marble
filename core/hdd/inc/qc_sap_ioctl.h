@@ -191,6 +191,9 @@ typedef struct {
 #define RC_2_RATE_IDX_11AC(_rc)         ((_rc) & 0xf)
 #define HT_RC_2_STREAMS_11AC(_rc)       ((((_rc) & 0x30) >> 4) + 1)
 
+#define RC_2_RATE_IDX_11AX(_rc)         ((_rc) & 0x1f)
+#define HT_RC_2_STREAMS_11AX(_rc)       (((_rc) >> 5) & 0x7)
+
 enum {
 	QCSAP_PARAM_MAX_ASSOC = 1,
 	QCSAP_PARAM_GET_WLAN_DBG,
@@ -252,6 +255,7 @@ enum {
 	QCASAP_PARAM_RX_STBC,
 	QCSAP_PARAM_CHAN_WIDTH,
 	QCSAP_PARAM_SET_TXRX_STATS,
+	QCASAP_SET_11AX_RATE,
 };
 
 int iw_get_channel_list(struct net_device *dev,

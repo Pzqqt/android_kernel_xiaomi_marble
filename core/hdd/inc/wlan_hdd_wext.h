@@ -36,6 +36,8 @@
 #include <linux/timer.h>
 #include "qdf_event.h"
 
+struct sap_Config;
+
 /*
  * order of parameters in addTs private ioctl
  */
@@ -383,6 +385,31 @@ int hdd_get_tx_stbc(hdd_adapter_t *adapter, int *value);
 int hdd_set_tx_stbc(hdd_adapter_t *adapter, int value);
 int hdd_get_rx_stbc(hdd_adapter_t *adapter, int *value);
 int hdd_set_rx_stbc(hdd_adapter_t *adapter, int value);
+
+/**
+ * hdd_assemble_rate_code() - assemble rate code to be sent to FW
+ * @preamble: rate preamble
+ * @nss: number of streams
+ * @rate: rate index
+ *
+ * Rate code assembling is different for targets which are 11ax capable.
+ * Check for the target support and assemble the rate code accordingly.
+ *
+ * Return: assembled rate code
+ */
+int hdd_assemble_rate_code(uint8_t preamble, uint8_t nss, uint8_t rate);
+
+/**
+ * hdd_set_11ax_rate() - set 11ax rate
+ * @adapter: adapter being modified
+ * @value: new 11ax rate code
+ * @sap_config: pointer to SAP config to check HW mode
+ *              this will be NULL for call from STA persona
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_set_11ax_rate(hdd_adapter_t *adapter, int value,
+		      struct sap_Config *sap_config);
 
 void wlan_hdd_change_country_code_callback(void *pAdapter);
 

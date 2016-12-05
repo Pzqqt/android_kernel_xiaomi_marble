@@ -2990,7 +2990,7 @@ static __iw_softap_setparam(struct net_device *dev,
 				}
 				preamble = WMI_RATE_PREAMBLE_OFDM;
 			}
-			set_value = (preamble << 6) | (nss << 4) | rix;
+			set_value = hdd_assemble_rate_code(preamble, nss, rix);
 		}
 		hdd_notice("SET_HT_RATE val %d rix %d preamble %x nss %d",
 		       set_value, rix, preamble, nss);
@@ -3015,11 +3015,11 @@ static __iw_softap_setparam(struct net_device *dev,
 		}
 
 		if (set_value != 0xff) {
-		rix = RC_2_RATE_IDX_11AC(set_value);
-		preamble = WMI_RATE_PREAMBLE_VHT;
-		nss = HT_RC_2_STREAMS_11AC(set_value) - 1;
+			rix = RC_2_RATE_IDX_11AC(set_value);
+			preamble = WMI_RATE_PREAMBLE_VHT;
+			nss = HT_RC_2_STREAMS_11AC(set_value) - 1;
 
-			set_value = (preamble << 6) | (nss << 4) | rix;
+			set_value = hdd_assemble_rate_code(preamble, nss, rix);
 		}
 		hdd_notice("SET_VHT_RATE val %d rix %d preamble %x nss %d",
 		       set_value, rix, preamble, nss);
@@ -3033,7 +3033,6 @@ static __iw_softap_setparam(struct net_device *dev,
 	case QCASAP_SHORT_GI:
 	{
 		hdd_notice("QCASAP_SET_SHORT_GI val %d", set_value);
-
 		/* same as 40MHZ */
 		ret = sme_update_ht_config(hHal, pHostapdAdapter->sessionId,
 					   WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ,
@@ -3302,7 +3301,11 @@ static __iw_softap_setparam(struct net_device *dev,
 	case QCASAP_PARAM_RX_STBC:
 		ret = hdd_set_rx_stbc(pHostapdAdapter, set_value);
 		break;
-
+	case QCASAP_SET_11AX_RATE:
+		ret = hdd_set_11ax_rate(pHostapdAdapter, set_value,
+					&pHostapdAdapter->sessionCtx.ap.
+					sapConfig);
+		break;
 	default:
 		hdd_err("Invalid setparam command %d value %d",
 		       sub_cmd, set_value);
@@ -3452,8 +3455,7 @@ static __iw_softap_getparam(struct net_device *dev,
 	case QCASAP_SHORT_GI:
 	{
 		*value = (int)sme_get_ht_config(hHal,
-						pHostapdAdapter->
-						sessionId,
+						pHostapdAdapter->sessionId,
 						WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ);
 		break;
 	}
@@ -5764,7 +5766,12 @@ static const struct iw_priv_args hostapd_private_args[] = {
 	}
 	,
 #endif
-
+	{
+		QCASAP_SET_11AX_RATE,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+		0, "set_11ax_rate"
+	}
+	,
 };
 
 static const iw_handler hostapd_private[] = {
