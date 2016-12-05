@@ -249,7 +249,7 @@ void host_diag_event_report_payload(uint16_t event_Id, uint16_t length,
 
 		if (ptt_sock_send_msg_to_app
 			    (wmsg, 0, ANI_NL_MSG_PUMAC, INVALID_PID) < 0) {
-			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_WARN,
 				  "Ptt Socket error sending message to the app!!");
 			qdf_mem_free((void *)wmsg);
 			return;
