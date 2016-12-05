@@ -1087,6 +1087,8 @@ ol_txrx_pdev_attach(ol_txrx_soc_handle soc, void *pctrl_pdev,
 	if (!pdev->htt_pdev)
 		goto fail3;
 
+	htt_register_rx_pkt_dump_callback(pdev->htt_pdev,
+			ol_rx_pkt_dump_call);
 	return pdev;
 
 fail3:
@@ -1734,6 +1736,7 @@ void ol_txrx_pdev_detach(void *ppdev, int force)
 		htt_tx_desc_free(pdev->htt_pdev, htt_tx_desc);
 	}
 
+	htt_deregister_rx_pkt_dump_callback(pdev->htt_pdev);
 	ol_tx_deregister_flow_control(pdev);
 	/* Stop the communication between HTT and target at first */
 	htt_detach_target(pdev->htt_pdev);

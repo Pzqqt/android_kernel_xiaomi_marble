@@ -70,6 +70,26 @@ struct ath_pktlog_hdr {
 #endif
 } __ATTRIB_PACK;
 
+/**
+ * enum pkt_type - packet type
+ * @START_MONITOR: indicates parser to start packetdump parsing
+ * @STOP_MONITOR: indicates parser to stop packetdump parsing
+ * @TX_MGMT_PKT: TX management Packet
+ * @TX_DATA_PKT: TX data Packet
+ * @RX_MGMT_PKT: RX management Packet
+ * @RX_DATA_PKT: RX data Packet
+ *
+ * This enum has packet types
+ */
+enum pkt_type {
+	START_MONITOR = 1,
+	STOP_MONITOR,
+	TX_MGMT_PKT,
+	TX_DATA_PKT,
+	RX_MGMT_PKT,
+	RX_DATA_PKT,
+};
+
 #define ATH_PKTLOG_HDR_FLAGS_MASK 0xffff
 #define ATH_PKTLOG_HDR_FLAGS_SHIFT 0
 #define ATH_PKTLOG_HDR_FLAGS_OFFSET 0
@@ -127,17 +147,18 @@ enum {
 
 
 /* Types of packet log events */
-#define PKTLOG_TYPE_TX_CTRL     1
-#define PKTLOG_TYPE_TX_STAT     2
-#define PKTLOG_TYPE_TX_MSDU_ID  3
-#define PKTLOG_TYPE_TX_FRM_HDR  4
-#define PKTLOG_TYPE_RX_STAT     5
-#define PKTLOG_TYPE_RC_FIND     6
-#define PKTLOG_TYPE_RC_UPDATE   7
+#define PKTLOG_TYPE_TX_CTRL      1
+#define PKTLOG_TYPE_TX_STAT      2
+#define PKTLOG_TYPE_TX_MSDU_ID   3
+#define PKTLOG_TYPE_TX_FRM_HDR   4
+#define PKTLOG_TYPE_RX_STAT      5
+#define PKTLOG_TYPE_RC_FIND      6
+#define PKTLOG_TYPE_RC_UPDATE    7
 #define PKTLOG_TYPE_TX_VIRT_ADDR 8
 #define PKTLOG_TYPE_SMART_ANTENNA 9
 #define PKTLOG_TYPE_SW_EVENT     10
-#define PKTLOG_TYPE_MAX          11
+#define PKTLOG_TYPE_PKT_DUMP     11
+#define PKTLOG_TYPE_MAX          12
 
 #define PKTLOG_MAX_TXCTL_WORDS 57       /* +2 words for bitmap */
 #define PKTLOG_MAX_TXSTATUS_WORDS 32
@@ -286,6 +307,83 @@ struct ath_pktlog_buf {
 		(_rd_offset) = (((_log_size) - (_rd_offset)) >=	\
 				sizeof(struct ath_pktlog_hdr)) ? _rd_offset : 0; \
 	} while(0)
+
+/**
+ * enum tx_pkt_fate - tx packet fate
+ * @TX_PKT_FATE_ACKED: Sent over air and ACKed
+ * @TX_PKT_FATE_SENT: Sent over air but not ACKed.
+ * @TX_PKT_FATE_FW_QUEUED: Queued within firmware,
+ * but not yet sent over air
+ * @TX_PKT_FATE_FW_DROP_INVALID: Dropped by firmware as invalid.
+ * E.g. bad source address, bad checksum, or invalid for current state.
+ * @TX_PKT_FATE_FW_DROP_NOBUFS: Dropped by firmware due
+ * to lack of buffer space
+ * @TX_PKT_FATE_FW_DROP_OTHER: Dropped by firmware for any other
+ * reason. Includes frames that were sent by driver to firmware, but
+ * unaccounted for by firmware.
+ * @TX_PKT_FATE_DRV_QUEUED: Queued within driver, not yet sent to firmware.
+ * @TX_PKT_FATE_DRV_DROP_INVALID: Dropped by driver as invalid.
+ * E.g. bad source address, or invalid for current state.
+ * @TX_PKT_FATE_DRV_DROP_NOBUFS: Dropped by driver due to lack of buffer space
+ * @TX_PKT_FATE_DRV_DROP_OTHER: Dropped by driver for any other reason.
+ * E.g. out of buffers.
+ *
+ * This enum has packet fate types
+ */
+
+enum tx_pkt_fate {
+	TX_PKT_FATE_ACKED,
+	TX_PKT_FATE_SENT,
+	TX_PKT_FATE_FW_QUEUED,
+	TX_PKT_FATE_FW_DROP_INVALID,
+	TX_PKT_FATE_FW_DROP_NOBUFS,
+	TX_PKT_FATE_FW_DROP_OTHER,
+	TX_PKT_FATE_DRV_QUEUED,
+	TX_PKT_FATE_DRV_DROP_INVALID,
+	TX_PKT_FATE_DRV_DROP_NOBUFS,
+	TX_PKT_FATE_DRV_DROP_OTHER,
+};
+
+/**
+ * enum rx_pkt_fate - rx packet fate
+ * @RX_PKT_FATE_SUCCESS: Valid and delivered to
+ * network stack (e.g., netif_rx()).
+ * @RX_PKT_FATE_FW_QUEUED: Queued within firmware,
+ * but not yet sent to driver.
+ * @RX_PKT_FATE_FW_DROP_FILTER: Dropped by firmware
+ * due to host-programmable filters.
+ * @RX_PKT_FATE_FW_DROP_INVALID: Dropped by firmware
+ * as invalid. E.g. bad checksum, decrypt failed, or invalid for current state.
+ * @RX_PKT_FATE_FW_DROP_NOBUFS: Dropped by firmware
+ * due to lack of buffer space.
+ * @RX_PKT_FATE_FW_DROP_OTHER: Dropped by firmware
+ * for any other reason.
+ * @RX_PKT_FATE_DRV_QUEUED: Queued within driver,
+ * not yet delivered to network stack.
+ * @RX_PKT_FATE_DRV_DROP_FILTER: Dropped by driver
+ * due to filter rules.
+ * @RX_PKT_FATE_DRV_DROP_INVALID: Dropped by driver as invalid.
+ * E.g. not permitted in current state.
+ * @RX_PKT_FATE_DRV_DROP_NOBUFS: Dropped by driver
+ * due to lack of buffer space.
+ * @RX_PKT_FATE_DRV_DROP_OTHER: Dropped by driver for any other reason.
+ *
+ * This enum has packet fate types
+ */
+
+enum rx_pkt_fate {
+	RX_PKT_FATE_SUCCESS,
+	RX_PKT_FATE_FW_QUEUED,
+	RX_PKT_FATE_FW_DROP_FILTER,
+	RX_PKT_FATE_FW_DROP_INVALID,
+	RX_PKT_FATE_FW_DROP_NOBUFS,
+	RX_PKT_FATE_FW_DROP_OTHER,
+	RX_PKT_FATE_DRV_QUEUED,
+	RX_PKT_FATE_DRV_DROP_FILTER,
+	RX_PKT_FATE_DRV_DROP_INVALID,
+	RX_PKT_FATE_DRV_DROP_NOBUFS,
+	RX_PKT_FATE_DRV_DROP_OTHER,
+};
 
 #endif /* _PKTLOG_FMT_H_ */
 #endif /* REMOVE_PKT_LOG */
