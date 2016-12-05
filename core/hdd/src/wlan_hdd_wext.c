@@ -7794,6 +7794,11 @@ static int __iw_setint_getnone(struct net_device *dev,
 	case WE_SET_SHORT_GI:
 	{
 		hdd_notice("WMI_VDEV_PARAM_SGI val %d", set_value);
+		/*
+		 * wma_cli_set_command should be called instead of
+		 * sme_update_ht_config since SGI is used for HT/HE.
+		 * This should be refactored.
+		 */
 		ret = sme_update_ht_config(hHal, pAdapter->sessionId,
 					   WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ,
 					   set_value);
@@ -8968,8 +8973,9 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_SHORT_GI:
 	{
 		hdd_notice("GET WMI_VDEV_PARAM_SGI");
-		*value = sme_get_ht_config(hHal, pAdapter->sessionId,
-					   WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ);
+		*value = wma_cli_get_command(pAdapter->sessionId,
+					     WMI_VDEV_PARAM_SGI,
+					     VDEV_CMD);
 		break;
 	}
 

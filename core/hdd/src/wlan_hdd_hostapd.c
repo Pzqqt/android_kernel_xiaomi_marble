@@ -3033,7 +3033,13 @@ static __iw_softap_setparam(struct net_device *dev,
 	case QCASAP_SHORT_GI:
 	{
 		hdd_notice("QCASAP_SET_SHORT_GI val %d", set_value);
-		/* same as 40MHZ */
+		/*
+		 * wma_cli_set_command should be called instead of
+		 * sme_update_ht_config since SGI is used for HT/HE.
+		 * This should be refactored.
+		 *
+		 * SGI is same for 20MHZ and 40MHZ.
+		 */
 		ret = sme_update_ht_config(hHal, pHostapdAdapter->sessionId,
 					   WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ,
 					   set_value);
@@ -3457,9 +3463,9 @@ static __iw_softap_getparam(struct net_device *dev,
 
 	case QCASAP_SHORT_GI:
 	{
-		*value = (int)sme_get_ht_config(hHal,
-						pHostapdAdapter->sessionId,
-						WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ);
+		*value = wma_cli_get_command(pHostapdAdapter->sessionId,
+					     WMI_VDEV_PARAM_SGI,
+					     VDEV_CMD);
 		break;
 	}
 

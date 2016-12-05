@@ -11468,9 +11468,11 @@ int sme_update_ht_config(tHalHandle hHal, uint8_t sessionId, uint16_t htCapab,
 		pSession->htConfig.ht_rx_stbc = value;
 		break;
 	case WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ:
+		value = value ? 1 : 0; /* HT SGI can be only 1 or 0 */
 		pSession->htConfig.ht_sgi20 = value;
 		break;
 	case WNI_CFG_HT_CAP_INFO_SHORT_GI_40MHZ:
+		value = value ? 1 : 0; /* HT SGI can be only 1 or 0 */
 		pSession->htConfig.ht_sgi40 = value;
 		break;
 	}
