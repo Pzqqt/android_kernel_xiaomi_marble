@@ -6908,7 +6908,7 @@ static inline void hdd_txrx_populate_cds_config(struct cds_config_info
  *
  * Return: none
  */
-inline void hdd_ra_populate_cds_config(struct cds_config_info *cds_cfg,
+static inline void hdd_ra_populate_cds_config(struct cds_config_info *cds_cfg,
 			      hdd_context_t *hdd_ctx)
 {
 	cds_cfg->ra_ratelimit_interval =
@@ -6917,7 +6917,7 @@ inline void hdd_ra_populate_cds_config(struct cds_config_info *cds_cfg,
 		hdd_ctx->config->IsRArateLimitEnabled;
 }
 #else
-inline void hdd_ra_populate_cds_config(struct cds_config_info *cds_cfg,
+static inline void hdd_ra_populate_cds_config(struct cds_config_info *cds_cfg,
 			     hdd_context_t *hdd_ctx)
 {
 }
