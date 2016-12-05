@@ -31,6 +31,9 @@
  * Linux HDD Tx/RX APIs
  */
 
+/* denote that this file does not allow legacy hddLog */
+#define HDD_DISALLOW_LEGACY_HDDLOG 1
+
 #include <wlan_hdd_tx_rx.h>
 #include <wlan_hdd_softap_tx_rx.h>
 #include <wlan_hdd_napi.h>
@@ -101,9 +104,9 @@ void hdd_tx_resume_timer_expired_handler(void *adapter_context)
 		return;
 	}
 
-	hddLog(LOG1, FL("Enabling queues"));
+	hdd_notice("Enabling queues");
 	wlan_hdd_netif_queue_control(pAdapter, WLAN_WAKE_ALL_NETIF_QUEUE,
-				   WLAN_CONTROL_PATH);
+				     WLAN_CONTROL_PATH);
 	return;
 }
 #if defined(CONFIG_PER_VDEV_TX_DESC_POOL)
@@ -194,10 +197,10 @@ void hdd_tx_resume_cb(void *adapter_context, bool tx_resume)
 						   tx_flow_control_timer)) {
 			qdf_mc_timer_stop(&pAdapter->tx_flow_control_timer);
 		}
-		hddLog(LOG1, FL("Enabling queues"));
+		hdd_notice("Enabling queues");
 		wlan_hdd_netif_queue_control(pAdapter,
-					 WLAN_WAKE_ALL_NETIF_QUEUE,
-					 WLAN_DATA_FLOW_CONTROL);
+					     WLAN_WAKE_ALL_NETIF_QUEUE,
+					     WLAN_DATA_FLOW_CONTROL);
 	}
 	hdd_tx_resume_false(pAdapter, tx_resume);
 
@@ -261,8 +264,8 @@ void hdd_get_tx_resource(hdd_adapter_t *adapter,
 				   adapter->tx_flow_low_watermark,
 				   adapter->tx_flow_high_watermark_offset)) {
 		hdd_info("Disabling queues lwm %d hwm offset %d",
-			adapter->tx_flow_low_watermark,
-			adapter->tx_flow_high_watermark_offset);
+			 adapter->tx_flow_low_watermark,
+			 adapter->tx_flow_high_watermark_offset);
 		wlan_hdd_netif_queue_control(adapter, WLAN_STOP_ALL_NETIF_QUEUE,
 					     WLAN_DATA_FLOW_CONTROL);
 		if ((adapter->tx_flow_timer_initialized == true) &&
@@ -452,7 +455,8 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	hdd_get_transmit_sta_id(pAdapter, skb, &STAId);
 	if (STAId >= WLAN_MAX_STA_COUNT) {
-		hddLog(LOGE, "Invalid station id, transmit operation suspended");
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, LOGE,
+			  "Invalid station id, transmit operation suspended");
 		goto drop_pkt;
 	}
 
@@ -773,8 +777,7 @@ QDF_STATUS hdd_init_tx_rx(hdd_adapter_t *pAdapter)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (NULL == pAdapter) {
-		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
-			  FL("pAdapter is NULL"));
+		hdd_err("pAdapter is NULL");
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -794,8 +797,7 @@ QDF_STATUS hdd_deinit_tx_rx(hdd_adapter_t *pAdapter)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (NULL == pAdapter) {
-		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
-			  FL("pAdapter is NULL"));
+		hdd_err("pAdapter is NULL");
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
