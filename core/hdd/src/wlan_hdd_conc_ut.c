@@ -25,6 +25,9 @@
  * to the Linux Foundation.
  */
 
+/* denote that this file does not allow legacy hddLog */
+#define HDD_DISALLOW_LEGACY_HDDLOG 1
+
 /* Include files */
 
 #include <wlan_hdd_includes.h>
@@ -646,8 +649,7 @@ void wlan_hdd_one_connection_scenario(hdd_context_t *hdd_ctx)
 	for (sub_type = 0; sub_type < CDS_MAX_NUM_OF_MODE; sub_type++) {
 		/* validate one connection is created or no */
 		if (cds_get_connection_count() != 0) {
-			hddLog(LOGE,
-				FL("Test failed - No. of connection is not 0"));
+			hdd_err("Test failed - No. of connection is not 0");
 			return;
 		}
 		qdf_mem_zero(pcl, sizeof(pcl));
@@ -711,8 +713,7 @@ void wlan_hdd_two_connections_scenario(hdd_context_t *hdd_ctx,
 				channel_id, mac_id);
 		/* validate one connection is created or no */
 		if (cds_get_connection_count() != 1) {
-			hddLog(LOGE,
-				FL("Test failed - No. of connection is not 1"));
+			hdd_err("Test failed - No. of connection is not 1");
 			return;
 		}
 		next_sub_type = CDS_STA_MODE;
@@ -722,7 +723,7 @@ void wlan_hdd_two_connections_scenario(hdd_context_t *hdd_ctx,
 				cds_get_second_connection_pcl_table_index();
 			if (CDS_MAX_ONE_CONNECTION_MODE == second_index) {
 				/* not valid combination*/
-				hddLog(LOGE, FL("couldn't find index for 2nd connection pcl table"));
+				hdd_err("couldn't find index for 2nd connection pcl table");
 				next_sub_type++;
 				continue;
 			}
@@ -814,8 +815,7 @@ void wlan_hdd_three_connections_scenario(hdd_context_t *hdd_ctx,
 			dummy_type_1, channel_id_1, mac_id_1);
 		/* validate one connection is created or no */
 		if (cds_get_connection_count() != 1) {
-			hddLog(LOGE,
-				FL("Test fail - No. of connection not 1"));
+			hdd_err("Test fail - No. of connection not 1");
 			return;
 		}
 		for (sub_type_2 = CDS_STA_MODE;
@@ -830,8 +830,7 @@ void wlan_hdd_three_connections_scenario(hdd_context_t *hdd_ctx,
 				dummy_type_2, channel_id_2, mac_id_2);
 			/* validate two connections are created or no */
 			if (cds_get_connection_count() != 2) {
-				hddLog(LOGE,
-					FL("Test fail - No. connection not 2"));
+				hdd_err("Test fail - No. connection not 2");
 				return;
 			}
 			next_sub_type = CDS_STA_MODE;
