@@ -13198,6 +13198,7 @@ typedef struct {
 	A_UINT32 tlv_header;
 
 	/** when set to WMI_SAR_FEATURE_ON, enable SAR feature;
+	 * with BDF (SET_0 to 4) or WMI
 	 * if set to WMI_SAR_FEATURE_OFF, disable feature;
 	 * if set to WMI_SAR_FEATURE_NO_CHANGE, do not alter state of feature;
 	 */
@@ -13228,7 +13229,8 @@ enum wmi_sar_feature_state_flags {
 	WMI_SAR_FEATURE_ON_SET_2,
 	WMI_SAR_FEATURE_ON_SET_3,
 	WMI_SAR_FEATURE_ON_SET_4,
-	WMI_SAR_FEATURE_NO_CHANGE
+	WMI_SAR_FEATURE_NO_CHANGE,
+	WMI_SAR_FEATURE_ON_USER_DEFINED,
 };
 
 typedef struct {
