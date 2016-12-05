@@ -27,9 +27,6 @@
 
 /* Include Files */
 
-/* denote that this file does not allow legacy hddLog */
-#define HDD_DISALLOW_LEGACY_HDDLOG 1
-
 #include <wlan_hdd_includes.h>
 #include <wlan_hdd_wowl.h>
 #include "wlan_hdd_trace.h"

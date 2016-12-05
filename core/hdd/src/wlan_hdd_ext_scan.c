@@ -28,9 +28,6 @@
 
 #ifdef FEATURE_WLAN_EXTSCAN
 
-/* denote that this file does not allow legacy hddLog */
-#define HDD_DISALLOW_LEGACY_HDDLOG 1
-
 #include "wlan_hdd_ext_scan.h"
 #include "wlan_hdd_regulatory.h"
 #include "cds_utils.h"

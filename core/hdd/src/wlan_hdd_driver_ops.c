@@ -25,9 +25,6 @@
  * to the Linux Foundation.
  */
 
-/* denote that this file does not allow legacy hddLog */
-#define HDD_DISALLOW_LEGACY_HDDLOG 1
-
 #include <linux/platform_device.h>
 #include <linux/pci.h>
 #include "cds_api.h"

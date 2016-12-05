@@ -31,9 +31,6 @@
  * WLAN Host Device Driver 802.11p OCB implementation
  */
 
-/* denote that this file does not allow legacy hddLog */
-#define HDD_DISALLOW_LEGACY_HDDLOG 1
-
 #include "cds_sched.h"
 #include "wlan_hdd_assoc.h"
 #include "wlan_hdd_main.h"

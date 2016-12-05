@@ -31,9 +31,6 @@
  * WLAN Host Device Driver scan implementation
  */
 
-/* denote that this file does not allow legacy hddLog */
-#define HDD_DISALLOW_LEGACY_HDDLOG 1
-
 #include <linux/wireless.h>
 #include <net/cfg80211.h>
 

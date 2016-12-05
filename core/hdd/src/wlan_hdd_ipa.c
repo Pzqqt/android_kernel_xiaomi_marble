@@ -34,9 +34,6 @@
 
 #ifdef IPA_OFFLOAD
 
-/* denote that this file does not allow legacy hddLog */
-#define HDD_DISALLOW_LEGACY_HDDLOG 1
-
 /* Include Files */
 #include <linux/ipa.h>
 #include <wlan_hdd_includes.h>

@@ -31,9 +31,6 @@
  * This file contains the WLAN factory test mode implementation
  */
 
-/* denote that this file does not allow legacy hddLog */
-#define HDD_DISALLOW_LEGACY_HDDLOG 1
-
 #include <cds_mq.h>
 #include "cds_sched.h"
 #include <cds_api.h>

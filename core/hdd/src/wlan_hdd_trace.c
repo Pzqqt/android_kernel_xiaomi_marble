@@ -34,9 +34,6 @@
  *
  */
 
-/* denote that this file does not allow legacy hddLog */
-#define HDD_DISALLOW_LEGACY_HDDLOG 1
-
 #include "qdf_trace.h"
 #include "qdf_types.h"
 #include "wlan_hdd_trace.h"
