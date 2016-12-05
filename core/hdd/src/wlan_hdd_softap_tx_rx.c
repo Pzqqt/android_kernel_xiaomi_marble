@@ -25,6 +25,9 @@
  * to the Linux Foundation.
  */
 
+/* denote that this file does not allow legacy hddLog */
+#define HDD_DISALLOW_LEGACY_HDDLOG 1
+
 /* Include files */
 #include <linux/semaphore.h>
 #include <wlan_hdd_tx_rx.h>
@@ -107,15 +110,13 @@ void hdd_softap_tx_resume_timer_expired_handler(void *adapter_context)
 	hdd_adapter_t *pAdapter = (hdd_adapter_t *) adapter_context;
 
 	if (!pAdapter) {
-		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
-			  "%s: INV ARG", __func__);
-		/* INVALID ARG */
+		hdd_err("NULL adapter");
 		return;
 	}
 
-	hddLog(LOG1, FL("Enabling queues"));
+	hdd_notice("Enabling queues");
 	wlan_hdd_netif_queue_control(pAdapter, WLAN_WAKE_ALL_NETIF_QUEUE,
-				   WLAN_CONTROL_PATH);
+				     WLAN_CONTROL_PATH);
 	return;
 }
 
@@ -176,9 +177,7 @@ void hdd_softap_tx_resume_cb(void *adapter_context, bool tx_resume)
 	hdd_adapter_t *pAdapter = (hdd_adapter_t *) adapter_context;
 
 	if (!pAdapter) {
-		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
-			  "%s: INV ARG", __func__);
-		/* INVALID ARG */
+		hdd_err("NULL adapter");
 		return;
 	}
 
@@ -190,7 +189,7 @@ void hdd_softap_tx_resume_cb(void *adapter_context, bool tx_resume)
 			qdf_mc_timer_stop(&pAdapter->tx_flow_control_timer);
 		}
 
-		hddLog(LOG1, FL("Enabling queues"));
+		hdd_notice("Enabling queues");
 		wlan_hdd_netif_queue_control(pAdapter,
 					WLAN_WAKE_ALL_NETIF_QUEUE,
 					WLAN_DATA_FLOW_CONTROL);
@@ -548,9 +547,8 @@ QDF_STATUS hdd_softap_init_tx_rx_sta(hdd_adapter_t *pAdapter, uint8_t STAId,
 {
 	spin_lock_bh(&pAdapter->staInfo_lock);
 	if (pAdapter->aStaInfo[STAId].isUsed) {
-		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Reinit station %d", __func__, STAId);
 		spin_unlock_bh(&pAdapter->staInfo_lock);
+		hdd_err("Reinit of in use station %d", STAId);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -583,8 +581,7 @@ QDF_STATUS hdd_softap_deinit_tx_rx_sta(hdd_adapter_t *pAdapter, uint8_t STAId)
 
 	if (false == pAdapter->aStaInfo[STAId].isUsed) {
 		spin_unlock_bh(&pAdapter->staInfo_lock);
-		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Deinit station not inited %d", __func__, STAId);
+		hdd_err("Deinit station not inited %d", STAId);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -708,14 +705,12 @@ QDF_STATUS hdd_softap_deregister_sta(hdd_adapter_t *pAdapter, uint8_t staId)
 	hdd_context_t *pHddCtx;
 
 	if (NULL == pAdapter) {
-		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
-			  "%s: pAdapter is NULL", __func__);
+		hdd_err("NULL adapter");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic) {
-		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid pAdapter magic", __func__);
+		hdd_err("Invalid adapter magic");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -727,9 +722,8 @@ QDF_STATUS hdd_softap_deregister_sta(hdd_adapter_t *pAdapter, uint8_t staId)
 	qdf_status = cdp_peer_clear(cds_get_context(QDF_MODULE_ID_SOC),
 			cds_get_context(QDF_MODULE_ID_TXRX), staId);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
-			  "cdp_peer_clear() failed to for staID %d.  "
-			  "Status= %d [0x%08X]", staId, qdf_status, qdf_status);
+		hdd_err("cdp_peer_clear failed for staID %d, Status=%d [0x%08X]",
+			staId, qdf_status, qdf_status);
 	}
 
 	if (pAdapter->aStaInfo[staId].isUsed) {
@@ -772,19 +766,21 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
+	hdd_info("STA:%u, Auth:%u, Priv:%u, WMM:%u",
+		 staId, fAuthRequired, fPrivacyBit, fWmmEnabled);
+
 	/*
 	 * Clean up old entry if it is not cleaned up properly
 	 */
 	if (pAdapter->aStaInfo[staId].isUsed) {
-		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_INFO,
-			  "clean up old entry for STA %d", staId);
+		hdd_info("clean up old entry for STA %d", staId);
 		hdd_softap_deregister_sta(pAdapter, staId);
 	}
-	/* Get the Station ID from the one saved during the assocation. */
 
+	/* Get the Station ID from the one saved during the assocation. */
 	staDesc.sta_id = staId;
 
-	/*Save the pAdapter Pointer for this staId */
+	/* Save the pAdapter Pointer for this staId */
 	pHddCtx->sta_to_adapter[staId] = pAdapter;
 
 	qdf_status =
@@ -792,9 +788,6 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 					  pPeerMacAddress);
 
 	staDesc.is_qos_enabled = fWmmEnabled;
-	QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_INFO,
-		  "HDD SOFTAP register TL QoS_enabled=%d",
-		  staDesc.is_qos_enabled);
 
 	/* Register the vdev transmit and receive functions */
 	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
@@ -808,9 +801,8 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 
 	qdf_status = cdp_peer_register(soc, pdev, &staDesc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
-			  "SOFTAP cdp_peer_register() failed to register.  Status= %d [0x%08X]",
-			  qdf_status, qdf_status);
+		hdd_err("cdp_peer_register() failed to register.  Status = %d [0x%08X]",
+			qdf_status, qdf_status);
 		return qdf_status;
 	}
 
@@ -824,9 +816,8 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 	pAdapter->aStaInfo[staId].isQosEnabled = fWmmEnabled;
 
 	if (!fAuthRequired) {
-		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_INFO,
-			  "open/shared auth StaId= %d.  Changing TL state to AUTHENTICATED at Join time",
-			  pAdapter->aStaInfo[staId].ucSTAId);
+		hdd_info("open/shared auth StaId= %d.  Changing TL state to AUTHENTICATED at Join time",
+			 pAdapter->aStaInfo[staId].ucSTAId);
 
 		/* Connections that do not need Upper layer auth,
 		 * transition TL directly to 'Authenticated' state.
@@ -838,9 +829,8 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 		pAdapter->sessionCtx.ap.uIsAuthenticated = true;
 	} else {
 
-		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_INFO,
-			  "ULA auth StaId= %d.  Changing TL state to CONNECTED at Join time",
-			  pAdapter->aStaInfo[staId].ucSTAId);
+		hdd_info("ULA auth StaId= %d.  Changing TL state to CONNECTED at Join time",
+			 pAdapter->aStaInfo[staId].ucSTAId);
 
 		qdf_status = hdd_change_peer_state(pAdapter, staDesc.sta_id,
 						OL_TXRX_PEER_STATE_CONN, false);
@@ -851,7 +841,7 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 	}
 
 	/* Enable Tx queue */
-	hddLog(LOG1, FL("Enabling queues"));
+	hdd_notice("Enabling queues");
 	wlan_hdd_netif_queue_control(pAdapter,
 				   WLAN_START_ALL_NETIF_QUEUE_N_CARRIER,
 				   WLAN_CONTROL_PATH);
@@ -917,18 +907,16 @@ QDF_STATUS hdd_softap_stop_bss(hdd_adapter_t *pAdapter)
 	 * unloading
 	 */
 	if (cds_is_load_or_unload_in_progress()) {
-		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Loading_unloading in Progress, state: 0x%x. Ignore!!!",
-			  __func__, cds_get_driver_state());
+		hdd_err("Loading_unloading in Progress, state: 0x%x. Ignore!!!",
+			cds_get_driver_state());
 		return QDF_STATUS_E_PERM;
 	}
 
 	qdf_status = hdd_softap_deregister_bc_sta(pAdapter);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to deregister BC sta Id %d", __func__,
-			  (WLAN_HDD_GET_AP_CTX_PTR(pAdapter))->uBCStaId);
+		hdd_err("Failed to deregister BC sta Id %d",
+			(WLAN_HDD_GET_AP_CTX_PTR(pAdapter))->uBCStaId);
 	}
 
 	for (staId = 0; staId < WLAN_MAX_STA_COUNT; staId++) {
@@ -936,10 +924,8 @@ QDF_STATUS hdd_softap_stop_bss(hdd_adapter_t *pAdapter)
 		if (pAdapter->aStaInfo[staId].isUsed) {
 			qdf_status = hdd_softap_deregister_sta(pAdapter, staId);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-				QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA,
-					  QDF_TRACE_LEVEL_ERROR,
-					  "%s: Failed to deregister sta Id %d",
-					  __func__, staId);
+				hdd_err("Failed to deregister sta Id %d",
+					staId);
 			}
 		}
 	}
@@ -959,41 +945,33 @@ QDF_STATUS hdd_softap_change_sta_state(hdd_adapter_t *pAdapter,
 				       enum ol_txrx_peer_state state)
 {
 	uint8_t ucSTAId = WLAN_MAX_STA_COUNT;
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status;
 
-	QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_INFO,
-		  "%s: enter", __func__);
+	ENTER_DEV(pAdapter->dev);
 
-	if (QDF_STATUS_SUCCESS !=
-		 hdd_softap_get_sta_id(pAdapter,
-			 pDestMacAddress, &ucSTAId)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to find right station", __func__);
-		return QDF_STATUS_E_FAILURE;
+	qdf_status = hdd_softap_get_sta_id(pAdapter, pDestMacAddress, &ucSTAId);
+	if (QDF_STATUS_SUCCESS != qdf_status) {
+		hdd_err("Failed to find right station");
+		return qdf_status;
 	}
 
 	if (false ==
 	    qdf_is_macaddr_equal(&pAdapter->aStaInfo[ucSTAId].macAddrSTA,
 				 pDestMacAddress)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Station MAC address does not matching",
-			  __func__);
+		hdd_err("Station %u MAC address not matching", ucSTAId);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	qdf_status =
 		hdd_change_peer_state(pAdapter, ucSTAId, state, false);
-	QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_INFO,
-		  "%s: change station to state %d succeed", __func__, state);
+	hdd_info("Station %u changed to state %d", ucSTAId, state);
 
 	if (QDF_STATUS_SUCCESS == qdf_status) {
 		pAdapter->aStaInfo[ucSTAId].tlSTAState =
 			OL_TXRX_PEER_STATE_AUTH;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_INFO,
-		  "%s exit", __func__);
-
+	EXIT();
 	return qdf_status;
 }
 
