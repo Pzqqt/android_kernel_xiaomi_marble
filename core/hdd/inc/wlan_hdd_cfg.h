@@ -3902,9 +3902,23 @@ typedef enum {
 #define CFG_MULTICAST_HOST_FW_MSGS_DEFAULT  (1)
 
 /*
- * wlan system preference option to help policy manager decide
- * on Preferred Channel List for a new connection. For possible
- * values refer to enum hdd_conc_priority_mode
+ * <ini>
+ * gSystemPref - Configure wlan system preference for PCL.
+ * @Min: 0
+ * @Max: 2
+ * @Default: 0
+ *
+ * This ini is used to configure wlan system preference option to help
+ * policy manager decide on Preferred Channel List for a new connection.
+ * For possible values refer to enum hdd_conc_priority_mode
+ *
+ * Related: None.
+ *
+ * Supported Feature: DBS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
 #define CFG_CONC_SYSTEM_PREF               "gSystemPref"
 #define CFG_CONC_SYSTEM_PREF_MIN           (0)
