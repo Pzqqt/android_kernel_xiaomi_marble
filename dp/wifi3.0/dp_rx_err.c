@@ -522,6 +522,9 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 
 		rx_bufs_used++;
 
+		qdf_nbuf_unmap_single(soc->osdev, rx_desc->nbuf,
+				QDF_DMA_BIDIRECTIONAL);
+
 		qdf_nbuf_free(rx_desc->nbuf);
 
 		dp_rx_add_to_free_desc_list(&head, &tail, rx_desc);
