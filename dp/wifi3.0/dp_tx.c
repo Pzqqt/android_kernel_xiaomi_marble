@@ -35,11 +35,10 @@
 
 /* TODO Add support in TSO */
 #define DP_DESC_NUM_FRAG(x) 0
-#ifdef QCA_WIFI_NAPIER_EMULATION
-#define TQM_BYPASS_WAR 1
-#else
+
+/* disable TQM_BYPASS */
 #define TQM_BYPASS_WAR 0
-#endif
+
 /*
  * default_dscp_tid_map - Default DSCP-TID mapping
  *
