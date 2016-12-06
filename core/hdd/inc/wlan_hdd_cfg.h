@@ -3136,9 +3136,20 @@ typedef enum {
 #define CFG_TSO_ENABLED_DEFAULT        (0)
 
 /*
- * Configuration option to enable or disable LRO (Large Receive Offload)
- *  in the WLAN driver
- *  Set 1 - enable, 0 - disable
+ * <ini>
+ * LROEnable - Control to enable lro feature
+ *
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable LRO feature
+ *
+ * Supported Feature: LRO
+ *
+ * Usage: Internal
+ *
+ * </ini>
  */
 #define CFG_LRO_ENABLED_NAME           "LROEnable"
 #define CFG_LRO_ENABLED_MIN            (0)
@@ -3848,11 +3859,22 @@ enum dot11p_mode {
 #define CFG_SAP_MAX_INACTIVITY_OVERRIDE_DEFAULT  (0)
 
 /*
- * This parameter determines that which defered method will be use in rx path
- * If no bits are set then rx path processing will happen in tasklet context.
- * Bit 0: rx_thread enable
- * Bit 1: RPS enable
- * Bit 2: NAPI enable
+ * <ini>
+ * rx_mode - Control to decide rx mode
+ *
+ * @Min: 0
+ * @Max: (CFG_ENABLE_RX_THREAD | CFG_ENABLE_RPS | CFG_ENABLE_NAPI)
+ * @Default: MDM_PLATFORM   -  0
+ *           HELIUMPLUS     -  CFG_ENABLE_NAPI
+ *           Other cases    -  (CFG_ENABLE_RX_THREAD | CFG_ENABLE_NAPI)
+ *
+ * This ini is used to decide mode for the rx path
+ *
+ * Supported Feature: NAPI
+ *
+ * Usage: Internal
+ *
+ * </ini>
  */
 #define CFG_RX_MODE_NAME     "rx_mode"
 #define CFG_RX_MODE_MIN      (0)
