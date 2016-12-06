@@ -235,16 +235,25 @@ void hdd_sap_context_destroy(hdd_context_t *hdd_ctx)
 static int __hdd_hostapd_open(struct net_device *dev)
 {
 	hdd_adapter_t *pAdapter = netdev_priv(dev);
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	int ret;
 
 	ENTER_DEV(dev);
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_HOSTAPD_OPEN_REQUEST, NO_SESSION, 0));
 
-	if (cds_is_load_or_unload_in_progress()) {
-		hdd_err("Driver load/unload in progress, ignore, state: 0x%x",
-			cds_get_driver_state());
-		goto done;
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret)
+		return ret;
+	/*
+	 * Check statemachine state and also stop iface change timer if running
+	 */
+	ret = hdd_wlan_start_modules(hdd_ctx, pAdapter, false);
+
+	if (ret) {
+		hdd_err("Failed to start WLAN modules return");
+		return ret;
 	}
 
 	set_bit(DEVICE_IFACE_OPENED, &pAdapter->event_flags);
@@ -253,7 +262,6 @@ static int __hdd_hostapd_open(struct net_device *dev)
 	wlan_hdd_netif_queue_control(pAdapter,
 				   WLAN_START_ALL_NETIF_QUEUE_N_CARRIER,
 				   WLAN_CONTROL_PATH);
-done:
 	EXIT();
 	return 0;
 }
