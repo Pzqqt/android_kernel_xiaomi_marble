@@ -180,9 +180,7 @@ QDF_STATUS sys_stop(v_CONTEXT_t p_cds_context);
 
    --------------------------------------------------------------------------*/
 QDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, cds_msg_t *pMsg);
-#ifdef NAPIER_CODE
 QDF_STATUS sys_mc_process_handler(struct scheduler_msg *msg);
-#endif
 
 void wlan_sys_probe(void);
 

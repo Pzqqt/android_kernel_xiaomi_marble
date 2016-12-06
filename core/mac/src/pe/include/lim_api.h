@@ -276,9 +276,7 @@ static inline void lim_get_rf_band_new(tpAniSirGlobal pMac, tSirRFBand *band,
 
    --------------------------------------------------------------------------*/
 tSirRetStatus pe_process_messages(tpAniSirGlobal pMac, tSirMsgQ *pMsg);
-#ifdef NAPIER_CODE
 QDF_STATUS pe_mc_process_handler(struct scheduler_msg *msg);
-#endif
 
 /** -------------------------------------------------------------
    \fn pe_free_msg

@@ -108,9 +108,7 @@ QDF_STATUS wma_pre_start(void *cds_context);
 
 QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg);
 
-#ifdef NAPIER_CODE
 QDF_STATUS wma_mc_process_handler(struct scheduler_msg *msg);
-#endif
 
 QDF_STATUS wma_start(void *cds_context);
 

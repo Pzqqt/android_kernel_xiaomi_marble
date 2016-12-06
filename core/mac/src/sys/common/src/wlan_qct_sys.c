@@ -250,7 +250,6 @@ QDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, cds_msg_t *pMsg)
 	return qdf_status;
 }
 
-#ifdef NAPIER_CODE
 QDF_STATUS sys_mc_process_handler(struct scheduler_msg *msg)
 {
 	void *cds_ctx = cds_get_global_context();
@@ -262,7 +261,6 @@ QDF_STATUS sys_mc_process_handler(struct scheduler_msg *msg)
 	}
 	return sys_mc_process_msg(cds_ctx, (cds_msg_t *)msg);
 }
-#endif
 
 /**
  * sys_process_mmh_msg() - this api to process mmh message

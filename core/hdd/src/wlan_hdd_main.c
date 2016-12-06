@@ -7871,12 +7871,6 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx)
 		QDF_ASSERT(0);
 	}
 
-#ifndef NAPIER_CODE
-	/* Clean up message queues of TX, RX and MC thread */
-	if (!cds_is_driver_recovering())
-		cds_sched_flush_mc_mqs(cds_sched_context);
-#endif
-
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!hif_ctx) {
 		hdd_err("Hif context is Null");

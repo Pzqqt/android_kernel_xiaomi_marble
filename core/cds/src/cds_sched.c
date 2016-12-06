@@ -88,9 +88,6 @@ enum notifier_state {
 
 
 static p_cds_sched_context gp_cds_sched_context;
-#ifndef NAPIER_CODE
-static int cds_mc_thread(void *Arg);
-#endif
 #ifdef QCA_CONFIG_SMP
 static int cds_ol_rx_thread(void *arg);
 static unsigned long affine_cpu;
@@ -470,10 +467,6 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 		p_cds_sched_context pSchedContext,
 		uint32_t SchedCtxSize)
 {
-#ifndef NAPIER_CODE
-	QDF_STATUS vStatus = QDF_STATUS_SUCCESS;
-#endif
-
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: Opening the CDS Scheduler", __func__);
 	/* Sanity checks */
@@ -490,23 +483,6 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 	}
 	qdf_mem_zero(pSchedContext, sizeof(cds_sched_context));
 	pSchedContext->pVContext = p_cds_context;
-#ifndef NAPIER_CODE
-	vStatus = cds_sched_init_mqs(pSchedContext);
-	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to initialize CDS Scheduler MQs",
-			  __func__);
-		return vStatus;
-	}
-	/* Initialize the helper events and event queues */
-	init_completion(&pSchedContext->McStartEvent);
-	init_completion(&pSchedContext->McShutdown);
-	init_completion(&pSchedContext->ResumeMcEvent);
-
-	spin_lock_init(&pSchedContext->McThreadLock);
-	init_waitqueue_head(&pSchedContext->mcWaitQueue);
-	pSchedContext->mcEventFlag = 0;
-#endif
 #ifdef QCA_CONFIG_SMP
 	spin_lock_init(&pSchedContext->ol_rx_thread_lock);
 	init_waitqueue_head(&pSchedContext->ol_rx_wait_queue);
@@ -530,27 +506,6 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 #endif
 	gp_cds_sched_context = pSchedContext;
 
-#ifndef NAPIER_CODE
-	/* Create the CDS Main Controller thread */
-	pSchedContext->McThread = kthread_create(cds_mc_thread, pSchedContext,
-						 "cds_mc_thread");
-	if (IS_ERR(pSchedContext->McThread)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			  "%s: Could not Create CDS Main Thread Controller",
-			  __func__);
-		goto MC_THREAD_START_FAILURE;
-	}
-	wake_up_process(pSchedContext->McThread);
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s: CDS Main Controller thread Created", __func__);
-	/*
-	 * Now make sure all threads have started before we exit.
-	 * Each thread should normally ACK back when it starts.
-	 */
-	wait_for_completion_interruptible(&pSchedContext->McStartEvent);
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s: CDS MC Thread has started", __func__);
-#endif
 #ifdef QCA_CONFIG_SMP
 	pSchedContext->ol_rx_thread = kthread_create(cds_ol_rx_thread,
 						       pSchedContext,
@@ -577,20 +532,6 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 
 #ifdef QCA_CONFIG_SMP
 OL_RX_THREAD_START_FAILURE:
-#ifndef NAPIER_CODE
-	/* Try and force the Main thread controller to exit */
-	set_bit(MC_SHUTDOWN_EVENT_MASK, &pSchedContext->mcEventFlag);
-	set_bit(MC_POST_EVENT_MASK, &pSchedContext->mcEventFlag);
-	wake_up_interruptible(&pSchedContext->mcWaitQueue);
-	/* Wait for MC to exit */
-	wait_for_completion_interruptible(&pSchedContext->McShutdown);
-#endif
-#endif
-
-#ifndef NAPIER_CODE
-MC_THREAD_START_FAILURE:
-	/* De-initialize all the message queues */
-	cds_sched_deinit_mqs(pSchedContext);
 #endif
 
 #ifdef QCA_CONFIG_SMP
@@ -598,264 +539,10 @@ MC_THREAD_START_FAILURE:
 	cds_free_ol_rx_pkt_freeq(gp_cds_sched_context);
 pkt_freeqalloc_failure:
 #endif
-#ifndef NAPIER_CODE
-	/* De-initialize all the message queues */
-	cds_sched_deinit_mqs(pSchedContext);
-#endif
 
 	return QDF_STATUS_E_RESOURCES;
 
 } /* cds_sched_open() */
-
-#ifndef NAPIER_CODE
-/**
- * cds_mc_thread() - cds main controller thread execution handler
- * @Arg: Pointer to the global CDS Sched Context
- *
- * Return: thread exit code
- */
-static int cds_mc_thread(void *Arg)
-{
-	p_cds_sched_context pSchedContext = (p_cds_sched_context) Arg;
-	p_cds_msg_wrapper pMsgWrapper = NULL;
-	tpAniSirGlobal pMacContext = NULL;
-	tSirRetStatus macStatus = eSIR_SUCCESS;
-	QDF_STATUS vStatus = QDF_STATUS_SUCCESS;
-	int retWaitStatus = 0;
-	bool shutdown = false;
-	hdd_context_t *pHddCtx = NULL;
-	v_CONTEXT_t p_cds_context = NULL;
-
-	if (Arg == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Bad Args passed", __func__);
-		return 0;
-	}
-	set_user_nice(current, -2);
-
-	/* Ack back to the context from which the main controller thread
-	 * has been created
-	 */
-	complete(&pSchedContext->McStartEvent);
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
-		  "%s: MC Thread %d (%s) starting up", __func__, current->pid,
-		  current->comm);
-
-	/* Get the Global CDS Context */
-	p_cds_context = cds_get_global_context();
-	if (!p_cds_context) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			  "%s: Global CDS context is Null", __func__);
-		return 0;
-	}
-
-	pHddCtx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!pHddCtx) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			  "%s: HDD context is Null", __func__);
-		return 0;
-	}
-
-	while (!shutdown) {
-		/* This implements the execution model algorithm */
-		retWaitStatus =
-			wait_event_interruptible(pSchedContext->mcWaitQueue,
-						 test_bit(MC_POST_EVENT_MASK,
-							  &pSchedContext->mcEventFlag)
-						 || test_bit(MC_SUSPEND_EVENT_MASK,
-							     &pSchedContext->mcEventFlag));
-
-		if (retWaitStatus == -ERESTARTSYS) {
-			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-				  "%s: wait_event_interruptible returned -ERESTARTSYS",
-				  __func__);
-			QDF_BUG(0);
-		}
-		clear_bit(MC_POST_EVENT_MASK, &pSchedContext->mcEventFlag);
-
-		while (1) {
-			/* Check if MC needs to shutdown */
-			if (test_bit
-				    (MC_SHUTDOWN_EVENT_MASK,
-				    &pSchedContext->mcEventFlag)) {
-				QDF_TRACE(QDF_MODULE_ID_QDF,
-					  QDF_TRACE_LEVEL_INFO,
-					  "%s: MC thread signaled to shutdown",
-					  __func__);
-				shutdown = true;
-				/* Check for any Suspend Indication */
-				if (test_bit
-					    (MC_SUSPEND_EVENT_MASK,
-					    &pSchedContext->mcEventFlag)) {
-					clear_bit(MC_SUSPEND_EVENT_MASK,
-						  &pSchedContext->mcEventFlag);
-
-					/* Unblock anyone waiting on suspend */
-					complete(&pHddCtx->mc_sus_event_var);
-				}
-				break;
-			}
-			/* Check the SYS queue first */
-			if (!cds_is_mq_empty(&pSchedContext->sysMcMq)) {
-				/* Service the SYS message queue */
-				pMsgWrapper =
-					cds_mq_get(&pSchedContext->sysMcMq);
-				if (pMsgWrapper == NULL) {
-					QDF_TRACE(QDF_MODULE_ID_QDF,
-						  QDF_TRACE_LEVEL_ERROR,
-						  "%s: pMsgWrapper is NULL",
-						  __func__);
-					QDF_ASSERT(0);
-					break;
-				}
-				vStatus =
-					sys_mc_process_msg(pSchedContext->pVContext,
-							   pMsgWrapper->pVosMsg);
-				if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
-					QDF_TRACE(QDF_MODULE_ID_QDF,
-						  QDF_TRACE_LEVEL_ERROR,
-						  "%s: Issue Processing SYS message",
-						  __func__);
-				}
-				/* return message to the Core */
-				cds_core_return_msg(pSchedContext->pVContext,
-						    pMsgWrapper);
-				continue;
-			}
-			/* Check the WMA queue */
-			if (!cds_is_mq_empty(&pSchedContext->wmaMcMq)) {
-				/* Service the WMA message queue */
-				pMsgWrapper =
-					cds_mq_get(&pSchedContext->wmaMcMq);
-				if (pMsgWrapper == NULL) {
-					QDF_TRACE(QDF_MODULE_ID_QDF,
-						  QDF_TRACE_LEVEL_ERROR,
-						  "%s: pMsgWrapper is NULL",
-						  __func__);
-					QDF_ASSERT(0);
-					break;
-				}
-				vStatus =
-					wma_mc_process_msg(pSchedContext->pVContext,
-							 pMsgWrapper->pVosMsg);
-				if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
-					QDF_TRACE(QDF_MODULE_ID_QDF,
-						  QDF_TRACE_LEVEL_ERROR,
-						  "%s: Issue Processing WMA message",
-						  __func__);
-				}
-				/* return message to the Core */
-				cds_core_return_msg(pSchedContext->pVContext,
-						    pMsgWrapper);
-				continue;
-			}
-			/* Check the PE queue */
-			if (!cds_is_mq_empty(&pSchedContext->peMcMq)) {
-				/* Service the PE message queue */
-				pMsgWrapper =
-					cds_mq_get(&pSchedContext->peMcMq);
-				if (NULL == pMsgWrapper) {
-					QDF_TRACE(QDF_MODULE_ID_QDF,
-						  QDF_TRACE_LEVEL_ERROR,
-						  "%s: pMsgWrapper is NULL",
-						  __func__);
-					QDF_ASSERT(0);
-					break;
-				}
-				/* Need some optimization */
-				pMacContext =
-					cds_get_context(QDF_MODULE_ID_PE);
-				if (NULL == pMacContext) {
-					QDF_TRACE(QDF_MODULE_ID_QDF,
-						  QDF_TRACE_LEVEL_INFO,
-						  "MAC Context not ready yet");
-					cds_core_return_msg
-						(pSchedContext->pVContext,
-						pMsgWrapper);
-					continue;
-				}
-
-				macStatus =
-					pe_process_messages(pMacContext,
-							    (tSirMsgQ *)
-							    pMsgWrapper->pVosMsg);
-				if (eSIR_SUCCESS != macStatus) {
-					QDF_TRACE(QDF_MODULE_ID_QDF,
-						  QDF_TRACE_LEVEL_ERROR,
-						  "%s: Issue Processing PE message",
-						  __func__);
-				}
-				/* return message to the Core */
-				cds_core_return_msg(pSchedContext->pVContext,
-						    pMsgWrapper);
-				continue;
-			}
-			/** Check the SME queue **/
-			if (!cds_is_mq_empty(&pSchedContext->smeMcMq)) {
-				/* Service the SME message queue */
-				pMsgWrapper =
-					cds_mq_get(&pSchedContext->smeMcMq);
-				if (NULL == pMsgWrapper) {
-					QDF_TRACE(QDF_MODULE_ID_QDF,
-						  QDF_TRACE_LEVEL_ERROR,
-						  "%s: pMsgWrapper is NULL",
-						  __func__);
-					QDF_ASSERT(0);
-					break;
-				}
-				/* Need some optimization */
-				pMacContext =
-					cds_get_context(QDF_MODULE_ID_SME);
-				if (NULL == pMacContext) {
-					QDF_TRACE(QDF_MODULE_ID_QDF,
-						  QDF_TRACE_LEVEL_INFO,
-						  "MAC Context not ready yet");
-					cds_core_return_msg
-						(pSchedContext->pVContext,
-						pMsgWrapper);
-					continue;
-				}
-
-				vStatus =
-					sme_process_msg((tHalHandle) pMacContext,
-							pMsgWrapper->pVosMsg);
-				if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
-					QDF_TRACE(QDF_MODULE_ID_QDF,
-						  QDF_TRACE_LEVEL_ERROR,
-						  "%s: Issue Processing SME message",
-						  __func__);
-				}
-				/* return message to the Core */
-				cds_core_return_msg(pSchedContext->pVContext,
-						    pMsgWrapper);
-				continue;
-			}
-			/* Check for any Suspend Indication */
-			if (test_bit
-				    (MC_SUSPEND_EVENT_MASK,
-				    &pSchedContext->mcEventFlag)) {
-				clear_bit(MC_SUSPEND_EVENT_MASK,
-					  &pSchedContext->mcEventFlag);
-				spin_lock(&pSchedContext->McThreadLock);
-				INIT_COMPLETION(pSchedContext->ResumeMcEvent);
-				/* Mc Thread Suspended */
-				complete(&pHddCtx->mc_sus_event_var);
-
-				spin_unlock(&pSchedContext->McThreadLock);
-
-				/* Wait foe Resume Indication */
-				wait_for_completion_interruptible
-					(&pSchedContext->ResumeMcEvent);
-			}
-			break;  /* All queues are empty now */
-		} /* while message loop processing */
-	} /* while true */
-	/* If we get here the MC thread must exit */
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
-		  "%s: MC Thread exiting!!!!", __func__);
-	complete_and_exit(&pSchedContext->McShutdown, 0);
-} /* cds_mc_thread() */
-#endif
 
 #ifdef QCA_CONFIG_SMP
 /**
@@ -1176,24 +863,6 @@ QDF_STATUS cds_sched_close(void *p_cds_context)
 			  "%s: gp_cds_sched_context == NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-
-#ifndef NAPIER_CODE
-
-	/* shut down MC Thread */
-	set_bit(MC_SHUTDOWN_EVENT_MASK, &gp_cds_sched_context->mcEventFlag);
-	set_bit(MC_POST_EVENT_MASK, &gp_cds_sched_context->mcEventFlag);
-	wake_up_interruptible(&gp_cds_sched_context->mcWaitQueue);
-	/* Wait for MC to exit */
-	wait_for_completion(&gp_cds_sched_context->McShutdown);
-	gp_cds_sched_context->McThread = 0;
-
-	/* Clean up message queues of MC thread */
-	cds_sched_flush_mc_mqs(gp_cds_sched_context);
-
-	/* Deinit all the queues */
-	cds_sched_deinit_mqs(gp_cds_sched_context);
-#endif
-
 #ifdef QCA_CONFIG_SMP
 	/* Shut down Tlshim Rx thread */
 	set_bit(RX_SHUTDOWN_EVENT_MASK, &gp_cds_sched_context->ol_rx_event_flag);
@@ -1208,170 +877,6 @@ QDF_STATUS cds_sched_close(void *p_cds_context)
 #endif
 	return QDF_STATUS_SUCCESS;
 } /* cds_sched_close() */
-
-#ifndef NAPIER_CODE
-
-/**
- * cds_sched_init_mqs() - initialize the cds scheduler message queues
- * @p_cds_sched_context: Pointer to the Scheduler Context.
- *
- * This api initializes the cds scheduler message queues.
- *
- * Return: QDF status
- */
-QDF_STATUS cds_sched_init_mqs(p_cds_sched_context pSchedContext)
-{
-	QDF_STATUS vStatus = QDF_STATUS_SUCCESS;
-	/* Now intialize all the message queues */
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s: Initializing the WMA MC Message queue", __func__);
-	vStatus = cds_mq_init(&pSchedContext->wmaMcMq);
-	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to init WMA MC Message queue", __func__);
-		QDF_ASSERT(0);
-		return vStatus;
-	}
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s: Initializing the PE MC Message queue", __func__);
-	vStatus = cds_mq_init(&pSchedContext->peMcMq);
-	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to init PE MC Message queue", __func__);
-		QDF_ASSERT(0);
-		return vStatus;
-	}
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s: Initializing the SME MC Message queue", __func__);
-	vStatus = cds_mq_init(&pSchedContext->smeMcMq);
-	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to init SME MC Message queue", __func__);
-		QDF_ASSERT(0);
-		return vStatus;
-	}
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s: Initializing the SYS MC Message queue", __func__);
-	vStatus = cds_mq_init(&pSchedContext->sysMcMq);
-	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to init SYS MC Message queue", __func__);
-		QDF_ASSERT(0);
-		return vStatus;
-	}
-
-	return QDF_STATUS_SUCCESS;
-} /* cds_sched_init_mqs() */
-
-/**
- * cds_sched_deinit_mqs() - Deinitialize the cds scheduler message queues
- * @p_cds_sched_context: Pointer to the Scheduler Context.
- *
- * Return: none
- */
-void cds_sched_deinit_mqs(p_cds_sched_context pSchedContext)
-{
-	/* Now de-intialize all message queues */
-
-	/* MC WMA */
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s De-Initializing the WMA MC Message queue", __func__);
-	cds_mq_deinit(&pSchedContext->wmaMcMq);
-	/* MC PE */
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s De-Initializing the PE MC Message queue", __func__);
-	cds_mq_deinit(&pSchedContext->peMcMq);
-	/* MC SME */
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s De-Initializing the SME MC Message queue", __func__);
-	cds_mq_deinit(&pSchedContext->smeMcMq);
-	/* MC SYS */
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s De-Initializing the SYS MC Message queue", __func__);
-	cds_mq_deinit(&pSchedContext->sysMcMq);
-
-} /* cds_sched_deinit_mqs() */
-
-/**
- * cds_sched_flush_mc_mqs() - flush all the MC thread message queues
- * @pSchedContext: Pointer to global cds context
- *
- * Return: none
- */
-void cds_sched_flush_mc_mqs(p_cds_sched_context pSchedContext)
-{
-	p_cds_msg_wrapper pMsgWrapper = NULL;
-	p_cds_contextType cds_ctx;
-
-	/* Here each of the MC thread MQ shall be drained and returned to the
-	 * Core. Before returning a wrapper to the Core, the CDS message shall
-	 * be freed first
-	 */
-	QDF_TRACE(QDF_MODULE_ID_QDF,
-		  QDF_TRACE_LEVEL_INFO,
-		  ("Flushing the MC Thread message queue"));
-
-	if (NULL == pSchedContext) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: pSchedContext is NULL", __func__);
-		return;
-	}
-
-	cds_ctx = (p_cds_contextType) (pSchedContext->pVContext);
-	if (NULL == cds_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: cds_ctx is NULL", __func__);
-		return;
-	}
-
-	/* Flush the SYS Mq */
-	while (NULL != (pMsgWrapper = cds_mq_get(&pSchedContext->sysMcMq))) {
-		QDF_TRACE(QDF_MODULE_ID_QDF,
-			  QDF_TRACE_LEVEL_INFO,
-			  "%s: Freeing MC SYS message type %d ", __func__,
-			  pMsgWrapper->pVosMsg->type);
-		cds_core_return_msg(pSchedContext->pVContext, pMsgWrapper);
-	}
-	/* Flush the WMA Mq */
-	while (NULL != (pMsgWrapper = cds_mq_get(&pSchedContext->wmaMcMq))) {
-		if (pMsgWrapper->pVosMsg != NULL) {
-			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
-				  "%s: Freeing MC WMA MSG message type %d",
-				  __func__, pMsgWrapper->pVosMsg->type);
-			if (pMsgWrapper->pVosMsg->bodyptr) {
-				qdf_mem_free((void *)pMsgWrapper->
-					     pVosMsg->bodyptr);
-			}
-
-			pMsgWrapper->pVosMsg->bodyptr = NULL;
-			pMsgWrapper->pVosMsg->bodyval = 0;
-			pMsgWrapper->pVosMsg->type = 0;
-		}
-		cds_core_return_msg(pSchedContext->pVContext, pMsgWrapper);
-	}
-
-	/* Flush the PE Mq */
-	while (NULL != (pMsgWrapper = cds_mq_get(&pSchedContext->peMcMq))) {
-		QDF_TRACE(QDF_MODULE_ID_QDF,
-			  QDF_TRACE_LEVEL_INFO,
-			  "%s: Freeing MC PE MSG message type %d", __func__,
-			  pMsgWrapper->pVosMsg->type);
-		pe_free_msg(cds_ctx->pMACContext,
-			    (tSirMsgQ *) pMsgWrapper->pVosMsg);
-		cds_core_return_msg(pSchedContext->pVContext, pMsgWrapper);
-	}
-	/* Flush the SME Mq */
-	while (NULL != (pMsgWrapper = cds_mq_get(&pSchedContext->smeMcMq))) {
-		QDF_TRACE(QDF_MODULE_ID_QDF,
-			  QDF_TRACE_LEVEL_INFO,
-			  "%s: Freeing MC SME MSG message type %d", __func__,
-			  pMsgWrapper->pVosMsg->type);
-		sme_free_msg(cds_ctx->pMACContext, pMsgWrapper->pVosMsg);
-		cds_core_return_msg(pSchedContext->pVContext, pMsgWrapper);
-	}
-} /* cds_sched_flush_mc_mqs() */
-
-#endif
 
 /**
  * get_cds_sched_ctxt() - get cds scheduler context

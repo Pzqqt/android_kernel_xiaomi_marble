@@ -988,7 +988,6 @@ tSirRetStatus pe_process_messages(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
 	return eSIR_SUCCESS;
 }
 
-#ifdef NAPIER_CODE
 QDF_STATUS pe_mc_process_handler(struct scheduler_msg *msg)
 {
 	tSirRetStatus status;
@@ -1003,7 +1002,6 @@ QDF_STATUS pe_mc_process_handler(struct scheduler_msg *msg)
 
 	return QDF_STATUS_E_FAILURE;
 }
-#endif
 
 /* --------------------------------------------------------------------------- */
 /**

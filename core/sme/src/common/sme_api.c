@@ -3098,7 +3098,6 @@ release_lock:
 	return status;
 }
 
-#ifdef NAPIER_CODE
 QDF_STATUS sme_mc_process_handler(struct scheduler_msg *msg)
 {
 	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_SME);
@@ -3110,7 +3109,6 @@ QDF_STATUS sme_mc_process_handler(struct scheduler_msg *msg)
 
 	return sme_process_msg((tHalHandle)mac_ctx, (cds_msg_t *)msg);
 }
-#endif
 
 /**
  * sme_process_nss_update_resp() - Process nss update response

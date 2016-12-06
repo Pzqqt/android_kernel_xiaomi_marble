@@ -88,39 +88,10 @@ typedef struct cds_msg_s {
 #define HIGH_PRIORITY 1
 #define LOW_PRIORITY 0
 
-#ifndef NAPIER_CODE
-QDF_STATUS cds_mq_post_message_by_priority(CDS_MQ_ID msg_queue_id,
-					   cds_msg_t *message,
-					   int is_high_priority);
-
-/**
- * cds_mq_post_message() - posts a message to a message queue
- * @msg_queue_id: Identifies the message queue upon which the message
- *    will be posted.
- * @message: A pointer to a message buffer. Memory for this message
- *    buffer is allocated by the caller and free'd by the QDF after the
- *    message is posted to the message queue.  If the consumer of the
- *    message needs anything in this message, it needs to copy the contents
- *    before returning from the message queue handler.
- *
- * Return: QDF_STATUS_SUCCESS for successful posting
- *             QDF_STATUS_E_INVAL for invalid message queue id
- *             QDF_STATUS_E_FAULT for invalid message pointer
- *             QDF_STATUS_E_FAILURE for unknown failure reported by
- *             message queue handler
- */
-static inline QDF_STATUS cds_mq_post_message(CDS_MQ_ID msg_queue_id,
-					     cds_msg_t *message)
-{
-	return cds_mq_post_message_by_priority(msg_queue_id, message,
-						LOW_PRIORITY);
-}
-#else
 #define cds_mq_post_message_by_priority(_x, _y, _z) \
 	scheduler_post_msg_by_priority((_x), ((struct scheduler_msg *)_y), (_z))
 #define cds_mq_post_message(_x, _y) \
 	scheduler_post_msg((_x), ((struct scheduler_msg *)_y))
-#endif
 
 /**---------------------------------------------------------------------------
 

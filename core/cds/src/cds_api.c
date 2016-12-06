@@ -74,11 +74,6 @@ static cds_context_type g_cds_context;
 static p_cds_contextType gp_cds_context;
 static struct __qdf_device g_qdf_ctx;
 
-#ifndef NAPIER_CODE
-/* Debug variable to detect MC thread stuck */
-static atomic_t cds_wrapper_empty_count;
-#endif
-
 static uint8_t cds_multicast_logging;
 
 static struct ol_if_ops  dp_ol_if_ops = {
@@ -218,7 +213,6 @@ static void cds_cdp_cfg_attach(struct cds_config_info *cds_cfg)
 	cdp_cfg_set_packet_log_enabled(soc, gp_cds_context->cfg_ctx,
 		(uint8_t)cds_is_packet_log_enabled());
 }
-#ifdef NAPIER_CODE
 static QDF_STATUS cds_register_all_modules(void)
 {
 	QDF_STATUS status;
@@ -257,16 +251,6 @@ static QDF_STATUS cds_deregister_all_modules(void)
 	status = scheduler_deregister_module(QDF_MODULE_ID_OS_IF);
 	return status;
 }
-#else
-static QDF_STATUS cds_register_all_modules(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-static QDF_STATUS cds_deregister_all_modules(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 /**
  * cds_open() - open the CDS Module
@@ -1461,118 +1445,6 @@ QDF_STATUS cds_free_context(void *p_cds_context, QDF_MODULE_ID moduleID,
 
 	return QDF_STATUS_SUCCESS;
 } /* cds_free_context() */
-
-#ifndef NAPIER_CODE
-/**
- * cds_mq_post_message_by_priority() - posts message using priority
- * to message queue
- * @msgQueueId: message queue id
- * @pMsg: message to be posted
- * @is_high_priority: wheather message is high priority
- *
- * This function is used to post high priority message to message queue
- *
- * Return: QDF_STATUS_SUCCESS on success
- *         QDF_STATUS_E_FAILURE on failure
- *         QDF_STATUS_E_RESOURCES on resource allocation failure
- */
-QDF_STATUS cds_mq_post_message_by_priority(CDS_MQ_ID msgQueueId,
-					   cds_msg_t *pMsg,
-					   int is_high_priority)
-{
-	p_cds_mq_type pTargetMq = NULL;
-	p_cds_msg_wrapper pMsgWrapper = NULL;
-	uint32_t debug_count = 0;
-
-	if ((gp_cds_context == NULL) || (pMsg == NULL)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Null params or global cds context is null",
-			  __func__);
-		QDF_ASSERT(0);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	switch (msgQueueId) {
-	/* Message Queue ID for messages bound for SME */
-	case CDS_MQ_ID_SME:
-	{
-		pTargetMq = &(gp_cds_context->qdf_sched.smeMcMq);
-		break;
-	}
-
-	/* Message Queue ID for messages bound for PE */
-	case CDS_MQ_ID_PE:
-	{
-		pTargetMq = &(gp_cds_context->qdf_sched.peMcMq);
-		break;
-	}
-
-	/* Message Queue ID for messages bound for wma */
-	case CDS_MQ_ID_WMA:
-	{
-		pTargetMq = &(gp_cds_context->qdf_sched.wmaMcMq);
-		break;
-	}
-
-	/* Message Queue ID for messages bound for the SYS module */
-	case CDS_MQ_ID_SYS:
-	{
-		pTargetMq = &(gp_cds_context->qdf_sched.sysMcMq);
-		break;
-	}
-
-	default:
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  ("%s: Trying to queue msg into unknown MC Msg queue ID %d"),
-			  __func__, msgQueueId);
-
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	QDF_ASSERT(NULL != pTargetMq);
-	if (pTargetMq == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: pTargetMq == NULL", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	/* Try and get a free Msg wrapper */
-	pMsgWrapper = cds_mq_get(&gp_cds_context->freeVosMq);
-
-	if (NULL == pMsgWrapper) {
-		debug_count = atomic_inc_return(&cds_wrapper_empty_count);
-		if (1 == debug_count) {
-			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-				"%s: CDS Core run out of message wrapper %d",
-				__func__, debug_count);
-			cds_flush_logs(WLAN_LOG_TYPE_FATAL,
-				WLAN_LOG_INDICATOR_HOST_ONLY,
-				WLAN_LOG_REASON_VOS_MSG_UNDER_RUN,
-				true, false);
-		}
-		if (CDS_WRAPPER_MAX_FAIL_COUNT == debug_count)
-			QDF_BUG(0);
-
-		return QDF_STATUS_E_RESOURCES;
-	}
-
-	atomic_set(&cds_wrapper_empty_count, 0);
-
-	/* Copy the message now */
-	qdf_mem_copy((void *)pMsgWrapper->pVosMsg,
-		     (void *)pMsg, sizeof(cds_msg_t));
-
-	if (is_high_priority)
-		cds_mq_put_front(pTargetMq, pMsgWrapper);
-	else
-		cds_mq_put(pTargetMq, pMsgWrapper);
-
-	set_bit(MC_POST_EVENT_MASK, &gp_cds_context->qdf_sched.mcEventFlag);
-	wake_up_interruptible(&gp_cds_context->qdf_sched.mcWaitQueue);
-
-	return QDF_STATUS_SUCCESS;
-} /* cds_mq_post_message() */
-#endif
 
 /**
  * cds_sys_probe_thread_cback() -  probe mc thread callback
