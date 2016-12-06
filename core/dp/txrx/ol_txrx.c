@@ -149,6 +149,10 @@ extern void ol_tx_set_compute_interval(void *ppdev, uint32_t interval);
 extern void ol_txrx_get_pn_info(void *ppeer, uint8_t **last_pn_valid,
 		    uint64_t **last_pn, uint32_t **rmf_pn_replays);
 
+extern int ol_txrx_mgmt_send_ext(void *vdev,
+		qdf_nbuf_t tx_mgmt_frm, uint8_t type, uint8_t use_6mbps,
+		uint16_t chanfreq);
+
 #ifdef CONFIG_HL_SUPPORT
 
 /**
@@ -5147,6 +5151,7 @@ static struct cdp_cmn_ops ol_ops_cmn = {
 	.txrx_get_vdev_mac_addr = ol_txrx_get_vdev_mac_addr,
 	.txrx_get_vdev_from_vdev_id = ol_txrx_wrapper_get_vdev_from_vdev_id,
 	.txrx_get_ctrl_pdev_from_vdev = ol_txrx_get_ctrl_pdev_from_vdev,
+	.txrx_mgmt_send_ext = ol_txrx_mgmt_send_ext,
 	.txrx_mgmt_tx_cb_set = ol_txrx_mgmt_tx_cb_set,
 	.txrx_data_tx_cb_set = ol_txrx_data_tx_cb_set,
 	.txrx_get_tx_pending = ol_txrx_get_tx_pending,
