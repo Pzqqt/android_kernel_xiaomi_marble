@@ -180,6 +180,7 @@ static void cds_cdp_cfg_attach(struct cds_config_info *cds_cfg)
 	struct txrx_pdev_cfg_param_t cdp_cfg = {0};
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
+	cdp_cfg.is_full_reorder_offload = cds_cfg->reorder_offload;
 	cdp_cfg.is_uc_offload_enabled = cds_cfg->uc_offload_enabled;
 	cdp_cfg.uc_tx_buffer_count = cds_cfg->uc_txbuf_count;
 	cdp_cfg.uc_tx_buffer_size = cds_cfg->uc_txbuf_size;
