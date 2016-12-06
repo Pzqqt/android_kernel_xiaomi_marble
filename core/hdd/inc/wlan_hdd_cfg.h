@@ -357,6 +357,27 @@ typedef enum {
 #endif
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
+/*
+ * <ini>
+ * gWlanMccToSccSwitchMode - Control SAP channel.
+ * @Min: 0
+ * @Max: 2
+ * @Default: 0
+ *
+ * This ini is used to override SAP channel.
+ * If gWlanMccToSccSwitchMode = 0: disabled.
+ * If gWlanMccToSccSwitchMode = 1: override to SCC if channel overlap in
+ * same band.
+ * If gWlanMccToSccSwitchMode = 2: force to SCC in same band.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_WLAN_MCC_TO_SCC_SWITCH_MODE          "gWlanMccToSccSwitchMode"
 #define CFG_WLAN_MCC_TO_SCC_SWITCH_MODE_MIN      (QDF_MCC_TO_SCC_SWITCH_DISABLE)
 #define CFG_WLAN_MCC_TO_SCC_SWITCH_MODE_MAX \
@@ -448,44 +469,165 @@ typedef enum {
 #define CFG_RETRY_LIMIT_TWO_DEFAULT    (15)
 
 #ifdef WLAN_AP_STA_CONCURRENCY
-
+/*
+ * <ini>
+ * gPassiveMaxChannelTimeConc - Maximum passive scan time in milliseconds.
+ * @Min: 0
+ * @Max: 10000
+ * @Default: 110
+ *
+ * This ini is used to set maximum passive scan time in STA+SAP concurrent
+ * mode.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_PASSIVE_MAX_CHANNEL_TIME_CONC_NAME      "gPassiveMaxChannelTimeConc"
 #define CFG_PASSIVE_MAX_CHANNEL_TIME_CONC_MIN       (0)
 #define CFG_PASSIVE_MAX_CHANNEL_TIME_CONC_MAX       (10000)
 #define CFG_PASSIVE_MAX_CHANNEL_TIME_CONC_DEFAULT   (110)
 
+/*
+ * <ini>
+ * gPassiveMinChannelTimeConc - Minimum passive scan time in milliseconds.
+ * @Min: 0
+ * @Max: 10000
+ * @Default: 60
+ *
+ * This ini is used to set minimum passive scan time in STA+SAP concurrent
+ * mode.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_PASSIVE_MIN_CHANNEL_TIME_CONC_NAME      "gPassiveMinChannelTimeConc"
 #define CFG_PASSIVE_MIN_CHANNEL_TIME_CONC_MIN       (0)
 #define CFG_PASSIVE_MIN_CHANNEL_TIME_CONC_MAX       (10000)
 #define CFG_PASSIVE_MIN_CHANNEL_TIME_CONC_DEFAULT   (60)
 
+/*
+ * <ini>
+ * gActiveMaxChannelTimeConc - Maximum active scan time in milliseconds.
+ * @Min: 0
+ * @Max: 10000
+ * @Default: 40
+ *
+ * This ini is used to set maximum active scan time in STA+SAP concurrent
+ * mode.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_ACTIVE_MAX_CHANNEL_TIME_CONC_NAME       "gActiveMaxChannelTimeConc"
 #define CFG_ACTIVE_MAX_CHANNEL_TIME_CONC_MIN        (0)
 #define CFG_ACTIVE_MAX_CHANNEL_TIME_CONC_MAX        (10000)
 #define CFG_ACTIVE_MAX_CHANNEL_TIME_CONC_DEFAULT    (40)
 
+/*
+ * <ini>
+ * gActiveMinChannelTimeConc - Minimum active scan time in milliseconds..
+ * @Min: 0
+ * @Max: 10000
+ * @Default: 20
+ *
+ * This ini is used to set minimum active scan time in STA+SAP concurrent
+ * mode.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_ACTIVE_MIN_CHANNEL_TIME_CONC_NAME       "gActiveMinChannelTimeConc"
 #define CFG_ACTIVE_MIN_CHANNEL_TIME_CONC_MIN        (0)
 #define CFG_ACTIVE_MIN_CHANNEL_TIME_CONC_MAX        (10000)
 #define CFG_ACTIVE_MIN_CHANNEL_TIME_CONC_DEFAULT    (20)
 
+/*
+ * <ini>
+ * gRestTimeConc - Rest time before moving to a new channel to scan.
+ * @Min: 0
+ * @Max: 10000
+ * @Default: 100
+ *
+ * This ini is used to configure rest time.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_REST_TIME_CONC_NAME                     "gRestTimeConc"
 #define CFG_REST_TIME_CONC_MIN                      (0)
 #define CFG_REST_TIME_CONC_MAX                      (10000)
 #define CFG_REST_TIME_CONC_DEFAULT                  (100)
 
-/* Mininum time spent on home channel before moving to a new channel to scan */
+/*
+ * <ini>
+ * gMinRestTimeConc - Mininum time spent on home channel before moving to a
+ * new channel to scan.
+ * @Min: 0
+ * @Max: 50
+ * @Default: 50
+ *
+ * This ini is used to configure minimum time spent on home channel before
+ * moving to a new channel to scan.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_MIN_REST_TIME_NAME                      "gMinRestTimeConc"
 #define CFG_MIN_REST_TIME_MIN                       (0)
 #define CFG_MIN_REST_TIME_MAX                       (50)
 #define CFG_MIN_REST_TIME_DEFAULT                   (50)
 
-/* Data inactivity time in msec on bss channel that will be used
- * by scan engine in firmware.
- * for example if this value is 25ms then firmware will check for
- * data inactivity every 25ms till gRestTimeConc is reached.
- * If inactive then scan engine will move from home channel to
- * scan the next frequency.
+/*
+ * <ini>
+ * gIdleTimeConc - Data inactivity time in msec.
+ * @Min: 0
+ * @Max: 25
+ * @Default: 25
+ *
+ * This ini is used to configure data inactivity time in msec on bss channel
+ * that will be used by scan engine in firmware.
+ * For example if this value is 25ms then firmware will check for data
+ * inactivity every 25ms till gRestTimeConc is reached.
+ * If inactive then scan engine will move from home channel to scan the next
+ * frequency.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
 #define CFG_IDLE_TIME_NAME                          "gIdleTimeConc"
 #define CFG_IDLE_TIME_MIN                           (0)
@@ -493,11 +635,49 @@ typedef enum {
 #define CFG_IDLE_TIME_DEFAULT                       (25)
 
 
+/*
+ * <ini>
+ * gNumStaChanCombinedConc - Number of channels combined for STA in each
+ * split scan operation.
+ * @Min: 1
+ * @Max: 255
+ * @Default: 3
+ *
+ * This ini is used to configure the number of channels combined for STA in
+ * each split scan operation.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_NUM_STA_CHAN_COMBINED_CONC_NAME             "gNumStaChanCombinedConc"
 #define CFG_NUM_STA_CHAN_COMBINED_CONC_MIN              (1)
 #define CFG_NUM_STA_CHAN_COMBINED_CONC_MAX              (255)
 #define CFG_NUM_STA_CHAN_COMBINED_CONC_DEFAULT          (3)
 
+/*
+ * <ini>
+ * gNumP2PChanCombinedConc - Number of channels combined for P2P in each
+ * split scan operation.
+ * @Min: 1
+ * @Max: 255
+ * @Default: 1
+ *
+ * This ini is used to configure the number of channels combined for P2P in
+ * each split scan operation.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_NUM_P2P_CHAN_COMBINED_CONC_NAME             "gNumP2PChanCombinedConc"
 #define CFG_NUM_P2P_CHAN_COMBINED_CONC_MIN              (1)
 #define CFG_NUM_P2P_CHAN_COMBINED_CONC_MAX              (255)
@@ -559,16 +739,46 @@ typedef enum {
 #define CFG_FW_RSSI_MONITORING_MAX             (1)
 #define CFG_FW_RSSI_MONITORING_DEFAULT         (1)
 
-/* enable use of long duration RTS-CTS protection when SAP goes off channel
- * in MCC mode
+/*
+ * <ini>
+ * gFWMccRtsCtsProtection - RTS-CTS protection in MCC.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable use of long duration RTS-CTS protection
+ * when SAP goes off channel in MCC mode.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
 #define CFG_FW_MCC_RTS_CTS_PROT_NAME           "gFWMccRtsCtsProtection"
 #define CFG_FW_MCC_RTS_CTS_PROT_MIN            (0)
 #define CFG_FW_MCC_RTS_CTS_PROT_MAX            (1)
 #define CFG_FW_MCC_RTS_CTS_PROT_DEFAULT        (0)
 
-/* Enable use of broadcast probe response to increase the detectability of
- * SAP in MCC mode
+/*
+ * <ini>
+ * gFWMccBCastProbeResponse - Broadcast Probe Response in MCC.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable use of broadcast probe response to
+ * increase the detectability of SAP in MCC mode.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
 #define CFG_FW_MCC_BCAST_PROB_RESP_NAME        "gFWMccBCastProbeResponse"
 #define CFG_FW_MCC_BCAST_PROB_RESP_MIN         (0)
@@ -1339,6 +1549,24 @@ typedef enum {
 #endif
 
 #ifdef FEATURE_WLAN_FORCE_SAP_SCC
+/*
+ * <ini>
+ * gSapSccChanAvoidance - Channel avoidance for SAP in SCC.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable channel avoidance for SAP in SCC
+ * scenario.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_SAP_SCC_CHAN_AVOIDANCE         "gSapSccChanAvoidance"
 #define CFG_SAP_SCC_CHAN_AVOIDANCE_MIN     (0)
 #define CFG_SAP_SCC_CHAN_AVOIDANCE_MAX     (1)
@@ -1471,8 +1699,21 @@ typedef enum {
 #define CFG_SHORT_GI_40MHZ_DEFAULT             1
 
 /*
- * Enable / Disable MCC feature
- * Default: Enable
+ * <ini>
+ * gEnableMCCMode - Enable/Disable MCC feature.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable MCC feature.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
 #define CFG_ENABLE_MCC_ENABLED_NAME             "gEnableMCCMode"
 #define CFG_ENABLE_MCC_ENABLED_MIN              (0)
@@ -1480,21 +1721,36 @@ typedef enum {
 #define CFG_ENABLE_MCC_ENABLED_DEFAULT          (1)
 
 /*
- * Allow GO in MCC mode to accept different beacon interval than STA's.
+ * <ini>
+ * gAllowMCCGODiffBI - Allow GO in MCC mode to accept different beacon interval
+ * than STA's.
+ * @Min: 0
+ * @Max: 4
+ * @Default: 4
+ *
+ * This ini is used to allow GO in MCC mode to accept different beacon interval
+ * than STA's.
  * Added for Wi-Fi Cert. 5.1.12
- * Default: gAllowMCCGODiffBI = 2
- * If gAllowMCCGODiffBI = 1  // Set to 1 for WFA certification. GO Beacon
- *                              interval is not changed. MCC GO
- *                              doesn't work well in optimized way.
- *                              In worst scenario, it may invite STA
- *                              disconnection.
- * gAllowMCCGODiffBI = 2     //If set to 2 workaround 1 disassoc all the clients
- *                             and update beacon Interval
- * gAllowMCCGODiffBI = 3     //If set to 3 tear down the P2P link in auto/
- *                             Non-autonomous -GO case
- * gAllowMCCGODiffBI = 4     //If set to 4 don't disconnect the P2P client
- *                             in autonomous/Non-autonomous -GO case update
- *                             the BI dynamically
+ * If gAllowMCCGODiffBI = 1
+ *	Set to 1 for WFA certification. GO Beacon interval is not changed.
+ *	MCC GO doesn't work well in optimized way. In worst scenario, it may
+ *	invite STA disconnection.
+ * If gAllowMCCGODiffBI = 2
+ *	If set to 2 workaround 1 disassoc all the clients and update beacon
+ *	Interval.
+ * If gAllowMCCGODiffBI = 3
+ *	If set to 3 tear down the P2P link in auto/Non-autonomous -GO case.
+ * If gAllowMCCGODiffBI = 4
+ *	If set to 4 don't disconnect the P2P client in autonomous/Non-auto-
+ *	nomous -GO case update the BI dynamically
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
 #define CFG_ALLOW_MCC_GO_DIFF_BI_NAME           "gAllowMCCGODiffBI"
 #define CFG_ALLOW_MCC_GO_DIFF_BI_MIN            (0)
@@ -2369,8 +2625,21 @@ typedef enum {
 #define CFG_TX_LDPC_ENABLE_FEATURE_DEFAULT (3)
 
 /*
- * Enable / Disable MCC Adaptive Scheduler feature
- * Default: Enable
+ * <ini>
+ * gEnableMCCAdaptiveScheduler - MCC Adaptive Scheduler feature.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable MCC Adaptive Scheduler feature.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
 #define CFG_ENABLE_MCC_ADATIVE_SCHEDULER_ENABLED_NAME             "gEnableMCCAdaptiveScheduler"
 #define CFG_ENABLE_MCC_ADATIVE_SCHEDULER_ENABLED_MIN              (0)
@@ -3292,6 +3561,23 @@ typedef enum {
 #define CFG_PMF_SA_QUERY_RETRY_INTERVAL_MAX        (2000)
 #endif
 
+/*
+ * <ini>
+ * gMaxConcurrentActiveSessions - Maximum number of concurrent connections.
+ * @Min: 1
+ * @Max: 4
+ * @Default: 3
+ *
+ * This ini is used to configure the maximum number of concurrent connections.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_MAX_CONCURRENT_CONNECTIONS_NAME        "gMaxConcurrentActiveSessions"
 #define CFG_MAX_CONCURRENT_CONNECTIONS_DEFAULT     (3)
 #define CFG_MAX_CONCURRENT_CONNECTIONS_MIN         (1)
@@ -3484,15 +3770,50 @@ typedef enum {
 #define CFG_ENABLE_DEAUTH_BEFORE_CONNECTION_DEFAULT          (0)
 
 /*
- * Custom concurrency rule1:
- * If SAP comes up first and STA comes up later then SAP
- * needs to follow STA's channel.
+ * <ini>
+ * gEnableCustomConcRule1 - Enable custom concurrency rule1.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable custom concurrency rule1.
+ * If SAP comes up first and STA comes up later then SAP needs to follow STA's
+ * channel.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
 #define CFG_ENABLE_CUSTOM_CONC_RULE1_NAME         "gEnableCustomConcRule1"
 #define CFG_ENABLE_CUSTOM_CONC_RULE1_NAME_MIN     (0)
 #define CFG_ENABLE_CUSTOM_CONC_RULE1_NAME_MAX     (1)
 #define CFG_ENABLE_CUSTOM_CONC_RULE1_NAME_DEFAULT (0)
 
+/*
+ * <ini>
+ * gEnableCustomConcRule2 - Enable custom concurrency rule2.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable custom concurrency rule2.
+ * If P2PGO comes up first and STA comes up later then P2PGO need to follow
+ * STA's channel in 5Ghz. In following if condition we are just adding sanity
+ * check to make sure that by this time P2PGO's channel is same as STA's
+ * channel.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_ENABLE_CUSTOM_CONC_RULE2_NAME         "gEnableCustomConcRule2"
 #define CFG_ENABLE_CUSTOM_CONC_RULE2_NAME_MIN     (0)
 #define CFG_ENABLE_CUSTOM_CONC_RULE2_NAME_MAX     (1)
@@ -3513,12 +3834,47 @@ typedef enum {
 #define CFG_P2P_LISTEN_DEFER_INTERVAL_MAX         (200)
 #define CFG_P2P_LISTEN_DEFER_INTERVAL_DEFAULT     (100)
 
+/*
+ * <ini>
+ * gStaMiracastMccRestTimeVal - Rest time when Miracast is running.
+ * @Min: 100
+ * @Max: 500
+ * @Default: 400
+ *
+ * This ini is used to set rest time for home channel for Miracast before
+ * going for scan.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_STA_MIRACAST_MCC_REST_TIME_VAL          "gStaMiracastMccRestTimeVal"
 #define CFG_STA_MIRACAST_MCC_REST_TIME_VAL_MIN     (100)
 #define CFG_STA_MIRACAST_MCC_REST_TIME_VAL_MAX     (500)
 #define CFG_STA_MIRACAST_MCC_REST_TIME_VAL_DEFAULT (400)
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
+/*
+ * <ini>
+ * gSapChannelAvoidance - SAP MCC channel avoidance.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to sets sap mcc channel avoidance.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_SAP_MCC_CHANNEL_AVOIDANCE_NAME         "gSapChannelAvoidance"
 #define CFG_SAP_MCC_CHANNEL_AVOIDANCE_MIN          (0)
 #define CFG_SAP_MCC_CHANNEL_AVOIDANCE_MAX          (1)
