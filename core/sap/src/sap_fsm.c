@@ -2538,7 +2538,8 @@ QDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext,
 				       SAP_OPEN_SESSION_TIMEOUT);
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		cds_err("wait for sap open session event timed out");
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			"wait for sap open session event timed out");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -4817,7 +4818,8 @@ static QDF_STATUS sap_get_5ghz_channel_list(ptSapContext sapContext)
 				QDF_ARRAY_SIZE(pcl.weight_list));
 	}
 	if (status != QDF_STATUS_SUCCESS) {
-		cds_err("Get PCL failed");
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				"Get PCL failed");
 		return status;
 	}
 	for (i = 0; i <= pcl.pcl_len; i++) {
