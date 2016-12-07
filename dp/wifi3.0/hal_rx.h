@@ -146,7 +146,7 @@ enum hal_rx_ret_buf_manager {
  */
 #define HAL_RXDMA_PADDR_LO_SET(buff_addr_info, paddr_lo) \
 		((*(((unsigned int *) buff_addr_info) + \
-		(BUFFER_ADDR_INFO_0_BUFFER_ADDR_31_0_OFFSET >> 2))) |= \
+		(BUFFER_ADDR_INFO_0_BUFFER_ADDR_31_0_OFFSET >> 2))) = \
 		(paddr_lo << BUFFER_ADDR_INFO_0_BUFFER_ADDR_31_0_LSB) & \
 		BUFFER_ADDR_INFO_0_BUFFER_ADDR_31_0_MASK)
 
@@ -156,7 +156,7 @@ enum hal_rx_ret_buf_manager {
  */
 #define HAL_RXDMA_PADDR_HI_SET(buff_addr_info, paddr_hi) \
 		((*(((unsigned int *) buff_addr_info) + \
-		(BUFFER_ADDR_INFO_1_BUFFER_ADDR_39_32_OFFSET >> 2))) |= \
+		(BUFFER_ADDR_INFO_1_BUFFER_ADDR_39_32_OFFSET >> 2))) = \
 		(paddr_hi << BUFFER_ADDR_INFO_1_BUFFER_ADDR_39_32_LSB) & \
 		BUFFER_ADDR_INFO_1_BUFFER_ADDR_39_32_MASK)
 
@@ -164,6 +164,10 @@ enum hal_rx_ret_buf_manager {
  * macro to set the cookie into the rxdma ring entry
  */
 #define HAL_RXDMA_COOKIE_SET(buff_addr_info, cookie) \
+		((*(((unsigned int *) buff_addr_info) + \
+		(BUFFER_ADDR_INFO_1_SW_BUFFER_COOKIE_OFFSET >> 2))) &= \
+		~((cookie << BUFFER_ADDR_INFO_1_SW_BUFFER_COOKIE_LSB) & \
+		BUFFER_ADDR_INFO_1_SW_BUFFER_COOKIE_MASK)); \
 		((*(((unsigned int *) buff_addr_info) + \
 		(BUFFER_ADDR_INFO_1_SW_BUFFER_COOKIE_OFFSET >> 2))) |= \
 		(cookie << BUFFER_ADDR_INFO_1_SW_BUFFER_COOKIE_LSB) & \
@@ -173,6 +177,10 @@ enum hal_rx_ret_buf_manager {
  * macro to set the manager into the rxdma ring entry
  */
 #define HAL_RXDMA_MANAGER_SET(buff_addr_info, manager) \
+		((*(((unsigned int *) buff_addr_info) + \
+		(BUFFER_ADDR_INFO_1_RETURN_BUFFER_MANAGER_OFFSET >> 2))) &= \
+		~((manager << BUFFER_ADDR_INFO_1_RETURN_BUFFER_MANAGER_LSB) & \
+		BUFFER_ADDR_INFO_1_RETURN_BUFFER_MANAGER_MASK)); \
 		((*(((unsigned int *) buff_addr_info) + \
 		(BUFFER_ADDR_INFO_1_RETURN_BUFFER_MANAGER_OFFSET >> 2))) |= \
 		(manager << BUFFER_ADDR_INFO_1_RETURN_BUFFER_MANAGER_LSB) & \
