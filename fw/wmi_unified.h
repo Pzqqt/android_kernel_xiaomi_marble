@@ -5817,6 +5817,16 @@ typedef struct {
 /* NAN Data Interface */
 #define WMI_VDEV_TYPE_NDI        0x7
 
+/*
+ * Param values to be sent for WMI_VDEV_PARAM_SGI command
+ * which are used in 11ax systems
+ */
+#define WMI_SGI_LEGACY         0x1 /* for HT and VHT   */
+#define WMI_SGI_HE_400_NS      0x2 /* for HE 400 nsec  */
+#define WMI_SGI_HE_800_NS      0x4 /* for HE 800 nsec  */
+#define WMI_SGI_HE_1600_NS     0x8 /* for HE 1600 nsec */
+#define WMI_SGI_HE_3200_NS    0x10 /* for HE 3200 nsec */
+
 /** values for vdev_subtype */
 #define WMI_UNIFIED_VDEV_SUBTYPE_P2P_DEVICE 0x1
 #define WMI_UNIFIED_VDEV_SUBTYPE_P2P_CLIENT 0x2
@@ -6000,6 +6010,12 @@ typedef struct {
 #define WMI_HECAP_MAC_OFDMARA_GET(he_cap) WMI_GET_BITS(he_cap, 29, 1)
 #define WMI_HECAP_MAC_OFDMARA_SET(he_cap, value) WMI_SET_BITS(he_cap, 29, 1, value)
 
+#define WMI_GET_HW_RATECODE_PREAM_V1(_rcode)     (((_rcode) >> 8) & 0x7)
+#define WMI_GET_HW_RATECODE_NSS_V1(_rcode)       (((_rcode) >> 5) & 0x7)
+#define WMI_GET_HW_RATECODE_RATE_V1(_rcode)      (((_rcode) >> 0) & 0x1F)
+#define WMI_ASSEMBLE_RATECODE_V1(_rate, _nss, _pream) \
+	(((1) << 28) | ((_pream) << 8) | ((_nss) << 5) | (_rate))
+
 typedef struct {
 	A_UINT32 tlv_header;
 	/** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_start_request_cmd_fixed_param */
@@ -6154,6 +6170,7 @@ typedef enum {
 	WMI_RATE_PREAMBLE_CCK,
 	WMI_RATE_PREAMBLE_HT,
 	WMI_RATE_PREAMBLE_VHT,
+	WMI_RATE_PREAMBLE_HE,
 } WMI_RATE_PREAMBLE;
 
 /** Value to disable fixed rate setting */
@@ -6213,7 +6230,18 @@ typedef enum {
 	WMI_VDEV_PARAM_MGMT_RATE,
 	/** Protection Mode */
 	WMI_VDEV_PARAM_PROTECTION_MODE,
-	/** Fixed rate setting */
+	/** Fixed rate setting
+	 * The top nibble is used to select which format to use for encoding
+	 * the rate specification: 0xVXXXXXXX
+	 * If V == 0b0000: format is same as before: 0x000000RR
+	 * If V == 0b0001: format is: 0x1000RRRR.
+	 *                 This will be output of WMI_ASSEMBLE_RATECODE_V1
+	 * The host shall use the new V1 format (and set V = 0x1) if the target
+	 * indicates 802.11ax support via the WMI_SERVICE_11AX flag, or if the
+	 * system is configured with Nss > 4 (either at compile time within the
+	 * host driver, or through WMI_SERVICE_READY PHY capabilities provided
+	 * by the target).
+	 */
 	WMI_VDEV_PARAM_FIXED_RATE,
 	/** Short GI Enable/Disable */
 	WMI_VDEV_PARAM_SGI,
@@ -6525,6 +6553,15 @@ typedef enum {
 	 * WMI_ATF_SSID_STRICT_SCHED
 	 */
 	WMI_VDEV_PARAM_ATF_SSID_SCHED_POLICY,
+	/** Enable or disable Dual carrier modulation
+	 *  valid values: 0-Disable DCM, 1-Enable DCM.
+	 */
+	WMI_VDEV_PARAM_HE_DCM,
+
+	/** Enable or disable Extended range
+	 *  valid values: 0-Disable ER, 1-Enable ER.
+	 */
+	WMI_VDEV_PARAM_HE_RANGE_EXT,
 
 	/*
 	 * === ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
@@ -7767,7 +7804,18 @@ typedef struct {
 #define WMI_PEER_PHYMODE 0xD
 /** Use FIXED Pwr */
 #define WMI_PEER_USE_FIXED_PWR                          0xE
-/** Set peer fixed rate */
+/** Set peer fixed rate
+ * The top nibble is used to select which format to use for encoding
+ * the rate specification: 0xVXXXXXXX
+ * If V == 0b0000: format is same as before: 0x000000RR
+ * If V == 0b0001: format is: 0x1000RRRR.
+ *                 This will be output of WMI_ASSEMBLE_RATECODE_V1
+ * The host shall use the new V1 format (and set V = 0x1) if the target
+ * indicates 802.11ax support via the WMI_SERVICE_11AX flag, or if the
+ * system is configured with Nss > 4 (either at compile time within the
+ * host driver, or through WMI_SERVICE_READY PHY capabilities provided
+ * by the target).
+ */
 #define WMI_PEER_PARAM_FIXED_RATE                       0xF
 /** Whitelist peer TIDs */
 #define WMI_PEER_SET_MU_WHITELIST                       0x10
