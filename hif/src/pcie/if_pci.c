@@ -2727,143 +2727,48 @@ void hif_pci_prevent_linkdown(struct hif_softc *scn, bool flag)
 #endif
 
 /**
- * hif_bus_suspend_link_up() - suspend the bus
+ * hif_pci_bus_enable_wake_irq() - enable pci bus wake irq
  *
  * Configures the pci irq line as a wakeup source.
  *
  * Return: 0 for success and non-zero for failure
  */
-static int hif_bus_suspend_link_up(struct hif_softc *scn)
+static int hif_pci_bus_enable_wake_irq(struct hif_softc *scn)
 {
-	struct pci_dev *pdev;
-	int status;
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 
-	if (!sc)
+	if (!sc) {
+		HIF_ERROR("%s: sc is null", __func__);
 		return -EFAULT;
+	}
 
-	pdev = sc->pdev;
+	if (!sc->pdev) {
+		HIF_ERROR("%s: pdev is null", __func__);
+		return -EFAULT;
+	}
 
-	status = hif_drain_tasklets(scn);
-	if (status != 0)
-		return status;
-
-	if (unlikely(enable_irq_wake(pdev->irq))) {
-		HIF_ERROR("%s: Fail to enable wake IRQ!", __func__);
+	if (unlikely(enable_irq_wake(sc->pdev->irq))) {
+		HIF_ERROR("%s: Failed to enable wake IRQ", __func__);
 		return -EINVAL;
 	}
 
-	hif_cancel_deferred_target_sleep(scn);
-
 	return 0;
 }
 
 /**
- * hif_bus_resume_link_up() - hif bus resume API
+ * hif_pci_bus_suspend(): prepare hif for suspend
  *
- * This function disables the wakeup source.
- *
- * Return: 0 for success and non-zero for failure
- */
-static int hif_bus_resume_link_up(struct hif_softc *scn)
-{
-	struct pci_dev *pdev;
-	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
-
-	if (!sc)
-		return -EFAULT;
-
-	pdev = sc->pdev;
-
-	if (!pdev) {
-		HIF_ERROR("%s: pci_dev is null", __func__);
-		return -EFAULT;
-	}
-
-	if (unlikely(disable_irq_wake(pdev->irq))) {
-		HIF_ERROR("%s: Fail to disable wake IRQ!", __func__);
-		return -EFAULT;
-	}
-
-	return 0;
-}
-
-/**
- * hif_bus_suspend_link_down() - suspend the bus
- *
- * Suspends the hif layer taking care of draining recieve queues and
- * shutting down copy engines if needed. Ensures opy engine interrupts
- * are disabled when it returns.  Prevents register access after it
- * returns.
- *
- * Return: 0 for success and non-zero for failure
- */
-static int hif_bus_suspend_link_down(struct hif_softc *scn)
-{
-	struct pci_dev *pdev;
-	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
-	int status = 0;
-
-	pdev = sc->pdev;
-
-	disable_irq(pdev->irq);
-
-	status = hif_drain_tasklets(scn);
-	if (status != 0) {
-		enable_irq(pdev->irq);
-		return status;
-	}
-
-	/* Stop the HIF Sleep Timer */
-	hif_cancel_deferred_target_sleep(scn);
-
-	qdf_atomic_set(&scn->link_suspended, 1);
-
-	return 0;
-}
-
-/**
- * hif_bus_resume_link_down() - hif bus resume API
- *
- * This function resumes the bus reenabling interupts.
- *
- * Return: 0 for success and non-zero for failure
- */
-static int hif_bus_resume_link_down(struct hif_softc *scn)
-{
-	struct pci_dev *pdev;
-	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
-
-	if (!sc)
-		return -EFAULT;
-
-	pdev = sc->pdev;
-
-	if (!pdev) {
-		HIF_ERROR("%s: pci_dev is null", __func__);
-		return -EFAULT;
-	}
-
-	qdf_atomic_set(&scn->link_suspended, 0);
-
-	enable_irq(pdev->irq);
-
-	return 0;
-}
-
-/**
- * hif_pci_suspend(): prepare hif for suspend
- *
- * chose suspend type based on link suspend voting.
+ * Enables pci bus wake irq based on link suspend voting.
  *
  * Return: 0 for success and non-zero error code for failure
  */
 int hif_pci_bus_suspend(struct hif_softc *scn)
 {
 	if (hif_can_suspend_link(GET_HIF_OPAQUE_HDL(scn)))
-		return hif_bus_suspend_link_down(scn);
-	else
-		return hif_bus_suspend_link_up(scn);
+		return 0;
+
+	/* pci link is staying up; enable wake irq */
+	return hif_pci_bus_enable_wake_irq(scn);
 }
 
 /**
@@ -2906,9 +2811,38 @@ static int __hif_check_link_status(struct hif_softc *scn)
 }
 
 /**
- * hif_bus_resume(): prepare hif for resume
+ * hif_pci_bus_disable_wake_irq() - disable pci bus wake irq
  *
- * chose suspend type based on link suspend voting.
+ * Deconfigures the pci irq line as a wakeup source.
+ *
+ * Return: 0 for success and non-zero for failure
+ */
+static int hif_pci_bus_disable_wake_irq(struct hif_softc *scn)
+{
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
+
+	if (!sc) {
+		HIF_ERROR("%s: sc is null", __func__);
+		return -EFAULT;
+	}
+
+	if (!sc->pdev) {
+		HIF_ERROR("%s: pdev is null", __func__);
+		return -EFAULT;
+	}
+
+	if (unlikely(disable_irq_wake(sc->pdev->irq))) {
+		HIF_ERROR("%s: Failed to disable wake IRQ", __func__);
+		return -EFAULT;
+	}
+
+	return 0;
+}
+
+/**
+ * hif_pci_bus_resume(): prepare hif for resume
+ *
+ * Disables pci bus wake irq based on link suspend voting.
  *
  * Return: 0 for success and non-zero error code for failure
  */
@@ -2921,9 +2855,50 @@ int hif_pci_bus_resume(struct hif_softc *scn)
 		return ret;
 
 	if (hif_can_suspend_link(GET_HIF_OPAQUE_HDL(scn)))
-		return hif_bus_resume_link_down(scn);
-	else
-		return hif_bus_resume_link_up(scn);
+		return 0;
+
+	/* pci link is up; disable wake irq */
+	return hif_pci_bus_disable_wake_irq(scn);
+}
+
+/**
+ * hif_pci_bus_suspend_noirq() - ensure there are no pending transactions
+ * @scn: hif context
+ *
+ * Ensure that if we recieved the wakeup message before the irq
+ * was disabled that the message is pocessed before suspending.
+ *
+ * Return: -EBUSY if we fail to flush the tasklets.
+ */
+int hif_pci_bus_suspend_noirq(struct hif_softc *scn)
+{
+	if (hif_drain_tasklets(scn) != 0)
+		return -EBUSY;
+
+	/* Stop the HIF Sleep Timer */
+	hif_cancel_deferred_target_sleep(scn);
+
+	if (hif_can_suspend_link(GET_HIF_OPAQUE_HDL(scn)))
+		qdf_atomic_set(&scn->link_suspended, 1);
+
+	return 0;
+}
+
+/**
+ * hif_pci_bus_resume_noirq() - ensure there are no pending transactions
+ * @scn: hif context
+ *
+ * Ensure that if we recieved the wakeup message before the irq
+ * was disabled that the message is pocessed before suspending.
+ *
+ * Return: -EBUSY if we fail to flush the tasklets.
+ */
+int hif_pci_bus_resume_noirq(struct hif_softc *scn)
+{
+	if (hif_can_suspend_link(GET_HIF_OPAQUE_HDL(scn)))
+		qdf_atomic_set(&scn->link_suspended, 0);
+
+	return 0;
 }
 
 #ifdef FEATURE_RUNTIME_PM
@@ -3112,7 +3087,33 @@ void hif_process_runtime_resume_success(struct hif_opaque_softc *hif_ctx)
  */
 int hif_runtime_suspend(struct hif_opaque_softc *hif_ctx)
 {
-	return hif_pci_bus_suspend(HIF_GET_SOFTC(hif_ctx));
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn)
+	int err;
+
+	err = hif_pci_bus_suspend(scn);
+	if (err)
+		goto exit_with_error;
+
+	/*
+	 * normal 3-stage suspend from CNSS disables irqs before calling
+	 * noirq stage
+	 */
+	disable_irq(sc->pdev->irq);
+
+	err = hif_pci_bus_suspend_noirq(scn);
+	if (err)
+		goto bus_resume;
+
+	return 0;
+
+bus_resume:
+	enable_irq(sc->pdev->irq);
+	err = hif_pci_bus_resume(scn);
+	QDF_BUG(err == 0);
+
+exit_with_error:
+	return err;
 }
 
 #ifdef WLAN_FEATURE_FASTPATH
@@ -3157,11 +3158,35 @@ static void hif_fastpath_resume(struct hif_opaque_softc *hif_ctx) {}
  */
 int hif_runtime_resume(struct hif_opaque_softc *hif_ctx)
 {
-	int status = hif_pci_bus_resume(HIF_GET_SOFTC(hif_ctx));
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn)
+	int err;
+
+	err = hif_pci_bus_resume_noirq(scn);
+	if (err)
+		goto exit_with_error;
+
+	/*
+	 * normal 3-stage resume from CNSS enables irqs after calling
+	 * noirq stage
+	 */
+	enable_irq(sc->pdev->irq);
+
+	err = hif_pci_bus_resume(scn);
+	if (err)
+		goto bus_suspend_noirq;
 
 	hif_fastpath_resume(hif_ctx);
 
-	return status;
+	return 0;
+
+bus_suspend_noirq:
+	disable_irq(sc->pdev->irq);
+	err = hif_pci_bus_suspend_noirq(scn);
+	QDF_BUG(err == 0);
+
+exit_with_error:
+	return err;
 }
 #endif /* #ifdef FEATURE_RUNTIME_PM */
 

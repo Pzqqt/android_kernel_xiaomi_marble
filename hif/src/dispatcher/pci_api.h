@@ -32,7 +32,9 @@ void hif_pci_close(struct hif_softc *hif_ctx);
 void hif_pci_prevent_linkdown(struct hif_softc *scn, bool flag);
 void hif_pci_reset_soc(struct hif_softc *ol_sc);
 int hif_pci_bus_suspend(struct hif_softc *scn);
+int hif_pci_bus_suspend_noirq(struct hif_softc *scn);
 int hif_pci_bus_resume(struct hif_softc *scn);
+int hif_pci_bus_resume_noirq(struct hif_softc *scn);
 int hif_pci_target_sleep_state_adjust(struct hif_softc *scn,
 			bool sleep_ok, bool wait_for_it);
 
