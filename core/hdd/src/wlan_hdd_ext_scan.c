@@ -2074,6 +2074,11 @@ __wlan_hdd_cfg80211_extscan_set_bssid_hotlist(struct wiphy *wiphy,
 	pReqMsg->numAp =
 		nla_get_u32(tb
 		    [QCA_WLAN_VENDOR_ATTR_EXTSCAN_BSSID_HOTLIST_PARAMS_NUM_AP]);
+	if (pReqMsg->numAp > WLAN_EXTSCAN_MAX_HOTLIST_APS) {
+		hdd_err("Number of AP: %u exceeds max: %u",
+			pReqMsg->numAp, WLAN_EXTSCAN_MAX_HOTLIST_APS);
+		goto fail;
+	}
 	pReqMsg->sessionId = pAdapter->sessionId;
 	hdd_notice("Number of AP %d Session Id %d",
 		pReqMsg->numAp, pReqMsg->sessionId);
@@ -2093,6 +2098,11 @@ __wlan_hdd_cfg80211_extscan_set_bssid_hotlist(struct wiphy *wiphy,
 	nla_for_each_nested(apTh,
 			    tb[QCA_WLAN_VENDOR_ATTR_EXTSCAN_AP_THRESHOLD_PARAM],
 			    rem) {
+		if (i == pReqMsg->numAp) {
+			hdd_warn("Ignoring excess AP");
+			break;
+		}
+
 		if (nla_parse
 		    (tb2, QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX,
 		    nla_data(apTh), nla_len(apTh),
@@ -2136,6 +2146,12 @@ __wlan_hdd_cfg80211_extscan_set_bssid_hotlist(struct wiphy *wiphy,
 		hdd_notice("RSSI High %d", pReqMsg->ap[i].high);
 
 		i++;
+	}
+
+	if (i < pReqMsg->numAp) {
+		hdd_warn("Number of AP %u less than expected %u",
+			 i, pReqMsg->numAp);
+		pReqMsg->numAp = i;
 	}
 
 	context = &ext_scan_context;
