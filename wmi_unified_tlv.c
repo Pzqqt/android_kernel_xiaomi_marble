@@ -5564,10 +5564,10 @@ static QDF_STATUS wmi_get_buf_extscan_change_monitor_cmd(wmi_unified_t wmi_handl
 	uint8_t *buf_ptr;
 	int j;
 	int len = sizeof(*cmd);
-	int numap = psigchange->num_ap;
+	uint32_t numap = psigchange->num_ap;
 	struct ap_threshold_params *src_ap = psigchange->ap;
 
-	if (!numap) {
+	if (!numap || (numap > WMI_WLAN_EXTSCAN_MAX_SIGNIFICANT_CHANGE_APS)) {
 		WMI_LOGE("%s: Invalid number of bssid's", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -11279,7 +11279,7 @@ QDF_STATUS send_get_buf_extscan_hotlist_cmd_tlv(wmi_unified_t wmi_handle,
 	int cmd_len = 0;
 	int num_entries;
 	int min_entries = 0;
-	int numap = photlist->numAp;
+	uint32_t numap = photlist->numAp;
 	int len = sizeof(*cmd);
 
 	len += WMI_TLV_HDR_SIZE;
@@ -11291,7 +11291,7 @@ QDF_STATUS send_get_buf_extscan_hotlist_cmd_tlv(wmi_unified_t wmi_handle,
 	/* setbssid hotlist expects the bssid list
 	 * to be non zero value
 	 */
-	if ((numap <= 0) || (numap > WMI_WLAN_EXTSCAN_MAX_HOTLIST_APS)) {
+	if (!numap || (numap > WMI_WLAN_EXTSCAN_MAX_HOTLIST_APS)) {
 		WMI_LOGE("Invalid number of APs: %d", numap);
 		return QDF_STATUS_E_INVAL;
 	}
