@@ -765,7 +765,8 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_vdev_adfs_ocac_complete_event_fixed_param,
 	WMITLV_TAG_STRUC_wmi_vdev_dfs_cac_complete_event_fixed_param,
 	WMITLV_TAG_STRUC_wmi_vendor_oui,
-
+	WMITLV_TAG_STRUC_wmi_request_rcpi_cmd_fixed_param,
+	WMITLV_TAG_STRUC_wmi_update_rcpi_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1075,6 +1076,7 @@ typedef enum {
 	OP(WMI_PDEV_DFS_PHYERR_OFFLOAD_DISABLE_CMDID) \
 	OP(WMI_VDEV_ADFS_CH_CFG_CMDID) \
 	OP(WMI_VDEV_ADFS_OCAC_ABORT_CMDID) \
+	OP(WMI_REQUEST_RCPI_CMDID) \
 	/* add new CMD_LIST elements above this line */
 
 /*
@@ -1240,6 +1242,7 @@ typedef enum {
 	OP(WMI_PDEV_DFS_RADAR_DETECTION_EVENTID) \
 	OP(WMI_VDEV_DFS_CAC_COMPLETE_EVENTID) \
 	OP(WMI_VDEV_ADFS_OCAC_COMPLETE_EVENTID) \
+	OP(WMI_UPDATE_RCPI_EVENTID) \
 	/* add new EVT_LIST elements above this line */
 
 /* TLV definitions of WMI commands */
@@ -2570,6 +2573,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_NDP_RESPONDER_REQ_CMDID);
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_STRUC, wmi_ndp_end_req_PROTOTYPE, ndp_end_req_list, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_NDP_END_REQ_CMDID);
 
+/* RCPI Info Request Cmd */
+#define WMITLV_TABLE_WMI_REQUEST_RCPI_CMDID(id,op,buf,len) \
+	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_request_rcpi_cmd_fixed_param, wmi_request_rcpi_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_REQUEST_RCPI_CMDID);
+
 /* Modem power state cmd */
 #define WMITLV_TABLE_WMI_MODEM_POWER_STATE_CMDID(id,op,buf,len)	\
 	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_modem_power_state_cmd_param, wmi_modem_power_state_cmd_param, fixed_param, WMITLV_SIZE_FIX)
@@ -3728,6 +3736,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_NDP_CONFIRM_EVENTID);
 #define WMITLV_TABLE_WMI_NDP_END_INDICATION_EVENTID(id, op, buf, len) \
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_STRUC, wmi_ndp_end_indication_PROTOTYPE, ndp_end_indication_list, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_NDP_END_INDICATION_EVENTID);
+
+/* Update RCPI Info Event */
+#define WMITLV_TABLE_WMI_UPDATE_RCPI_EVENTID(id,op,buf,len) \
+	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_update_rcpi_event_fixed_param, wmi_update_rcpi_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_UPDATE_RCPI_EVENTID);
 
 /* L1SS track Event */
 #define WMITLV_TABLE_WMI_PDEV_L1SS_TRACK_EVENTID(id,op,buf,len)	\

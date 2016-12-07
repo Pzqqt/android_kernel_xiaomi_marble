@@ -718,6 +718,9 @@ typedef enum {
 	/** One time request for wlan stats */
 	WMI_REQUEST_WLAN_STATS_CMDID,
 
+	/** Request for getting RCPI of peer */
+	WMI_REQUEST_RCPI_CMDID,
+
 	/** ARP OFFLOAD REQUEST*/
 	WMI_SET_ARP_NS_OFFLOAD_CMDID =
 		WMI_CMD_GRP_START_ID(WMI_GRP_ARP_NS_OFL),
@@ -1276,6 +1279,10 @@ typedef enum {
 	 *  But if it is triggered by condition c, stats counters won't be cleared.
 	 */
 	WMI_REPORT_STATS_EVENTID,
+
+	/** Event indicating RCPI of the peer requested by host in the
+	 * WMI_REQUEST_RCPI_CMDID */
+	WMI_UPDATE_RCPI_EVENTID,
 
 	/** NLO specific events */
 	/** NLO match event after the first match */
@@ -17814,6 +17821,42 @@ typedef struct {
 		isolation_chain2:8, /* [23:16], isolation value for chain 2 */
 		isolation_chain3:8; /* [31:24], isolation value for chain 3 */
 } wmi_coex_report_isolation_event_fixed_param;
+
+typedef enum {
+	WMI_RCPI_MEASUREMENT_TYPE_AVG_MGMT  = 1,
+	WMI_RCPI_MEASUREMENT_TYPE_AVG_DATA  = 2,
+	WMI_RCPI_MEASUREMENT_TYPE_LAST_MGMT = 3,
+	WMI_RCPI_MEASUREMENT_TYPE_LAST_DATA = 4,
+} wmi_rcpi_measurement_type;
+
+typedef struct {
+	/** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_request_rcpi_cmd_fixed_param */
+	A_UINT32 tlv_header;
+	/* VDEV identifier */
+	A_UINT32 vdev_id;
+	/* peer MAC address */
+	wmi_mac_addr peer_macaddr;
+	/* measurement type - defined in enum wmi_rcpi_measurement_type */
+	A_UINT32 measurement_type;
+} wmi_request_rcpi_cmd_fixed_param;
+
+typedef struct {
+	/** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_update_rcpi_event_fixed_param */
+	A_UINT32 tlv_header;
+	/* VDEV identifier */
+	A_UINT32 vdev_id;
+	/* peer MAC address */
+	wmi_mac_addr peer_macaddr;
+	/* measurement type - defined in enum wmi_rcpi_measurement_type */
+	A_UINT32 measurement_type;
+	/* Measured RCPI in dBm of the peer requested by host */
+	A_INT32 rcpi;
+	/** status
+	 *  0 - Requested peer RCPI available
+	 *  1 - Requested peer RCPI not available
+	 */
+	A_UINT32 status;
+} wmi_update_rcpi_event_fixed_param;
 
 /* ADD NEW DEFS HERE */
 
