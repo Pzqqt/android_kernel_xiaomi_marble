@@ -2840,6 +2840,7 @@ typedef struct {
 	A_UINT32 num_scan_chans;
 	/** no of elements in chan_info[] */
 	A_UINT32 flags;         /* Flags used to control the behavior of channel list update on target side */
+	A_UINT32 pdev_id; /* pdev_id for identifying the MAC. See macros starting with WMI_PDEV_ID_ for values */
 	/** Followed by the variable length TLV chan_info:
 	 *  wmi_channel chan_info[] */
 } wmi_scan_chan_list_cmd_fixed_param;
