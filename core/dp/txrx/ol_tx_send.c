@@ -457,20 +457,25 @@ ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
 #ifdef QCA_TX_STD_PATH_ONLY
 #define ol_tx_msdu_complete(_pdev, _tx_desc, _tx_descs,			\
 			    _netbuf, _lcl_freelist,			\
-			    _tx_desc_last, _status)			\
-	ol_tx_msdu_complete_single((_pdev), (_tx_desc),			\
-				   (_netbuf), (_lcl_freelist),		\
-				   _tx_desc_last)
+			    _tx_desc_last, _status, is_tx_desc_freed)	\
+	do {								\
+		is_tx_desc_freed = 0;					\
+		ol_tx_msdu_complete_single((_pdev), (_tx_desc),		\
+					   (_netbuf), (_lcl_freelist),	\
+					   _tx_desc_last)		\
+	} while (0)
 #else                           /* !QCA_TX_STD_PATH_ONLY */
 #define ol_tx_msdu_complete(_pdev, _tx_desc, _tx_descs,			\
 			    _netbuf, _lcl_freelist,			\
-			    _tx_desc_last, _status)			\
+			    _tx_desc_last, _status, is_tx_desc_freed)	\
 	do {								\
 		if (qdf_likely((_tx_desc)->pkt_type == OL_TX_FRM_STD)) { \
+			is_tx_desc_freed = 0;				\
 			ol_tx_msdu_complete_single((_pdev), (_tx_desc),\
 						   (_netbuf), (_lcl_freelist), \
 						   (_tx_desc_last));	\
 		} else {						\
+			is_tx_desc_freed = 1;				\
 			ol_tx_desc_frame_free_nonstd(			\
 				(_pdev), (_tx_desc),			\
 				(_status) != htt_tx_status_ok);		\
@@ -481,17 +486,23 @@ ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
 #ifdef QCA_TX_STD_PATH_ONLY
 #define ol_tx_msdu_complete(_pdev, _tx_desc, _tx_descs,			\
 			    _netbuf, _lcl_freelist,			\
-			    _tx_desc_last, _status)			\
-	ol_tx_msdus_complete_batch((_pdev), (_tx_desc), (_tx_descs), (_status))
+			    _tx_desc_last, _status, is_tx_desc_freed)	\
+	do {								\
+		is_tx_desc_freed = 0;					\
+		ol_tx_msdu_complete_batch((_pdev), (_tx_desc),		\
+					(_tx_descs), (_status))		\
+	} while (0)
 #else                           /* !QCA_TX_STD_PATH_ONLY */
 #define ol_tx_msdu_complete(_pdev, _tx_desc, _tx_descs,			\
 			    _netbuf, _lcl_freelist,			\
-			    _tx_desc_last, _status)			\
+			    _tx_desc_last, _status, is_tx_desc_freed)	\
 	do {								\
 		if (qdf_likely((_tx_desc)->pkt_type == OL_TX_FRM_STD)) { \
+			is_tx_desc_freed = 0;				\
 			ol_tx_msdu_complete_batch((_pdev), (_tx_desc),	\
 						  (_tx_descs), (_status)); \
 		} else {						\
+			is_tx_desc_freed = 1;				\
 			ol_tx_desc_frame_free_nonstd((_pdev), (_tx_desc), \
 						     (_status) !=	\
 						     htt_tx_status_ok); \
@@ -554,6 +565,7 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 	uint32_t byte_cnt = 0;
 	qdf_nbuf_t netbuf;
 	tp_ol_packetdump_cb packetdump_cb;
+	uint32_t is_tx_desc_freed = 0;
 
 	union ol_tx_desc_list_elem_t *lcl_freelist = NULL;
 	union ol_tx_desc_list_elem_t *tx_desc_last = NULL;
@@ -592,14 +604,18 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 							   htt_tx_desc))),
 				status != htt_tx_status_ok);
 			ol_tx_msdu_complete(pdev, tx_desc, tx_descs, netbuf,
-					    lcl_freelist, tx_desc_last, status);
-		}
+					    lcl_freelist, tx_desc_last, status,
+					    is_tx_desc_freed);
+
 #ifdef QCA_SUPPORT_TXDESC_SANITY_CHECKS
-		tx_desc->pkt_type = ol_tx_frm_freed;
+			if (!is_tx_desc_freed) {
+				tx_desc->pkt_type = ol_tx_frm_freed;
 #ifdef QCA_COMPUTE_TX_DELAY
-		tx_desc->entry_timestamp_ticks = 0xffffffff;
+				tx_desc->entry_timestamp_ticks = 0xffffffff;
 #endif
+			}
 #endif
+		}
 	}
 
 	/* One shot protected access to pdev freelist, when setup */
@@ -844,6 +860,8 @@ ol_tx_inspect_handler(ol_txrx_pdev_handle pdev,
 	union ol_tx_desc_list_elem_t *tx_desc_last = NULL;
 	qdf_nbuf_t netbuf;
 	ol_tx_desc_list tx_descs;
+	uint32_t is_tx_desc_freed = 0;
+
 	TAILQ_INIT(&tx_descs);
 
 	for (i = 0; i < num_msdus; i++) {
@@ -872,13 +890,16 @@ ol_tx_inspect_handler(ol_txrx_pdev_handle pdev,
 			 */
 			ol_tx_msdu_complete(pdev, tx_desc, tx_descs, netbuf,
 					    lcl_freelist, tx_desc_last,
-					    htt_tx_status_ok);
+					    htt_tx_status_ok,
+					    is_tx_desc_freed);
 
 #ifdef QCA_SUPPORT_TXDESC_SANITY_CHECKS
-			tx_desc->pkt_type = ol_tx_frm_freed;
+			if (!is_tx_desc_freed) {
+				tx_desc->pkt_type = ol_tx_frm_freed;
 #ifdef QCA_COMPUTE_TX_DELAY
-			tx_desc->entry_timestamp_ticks = 0xffffffff;
+				tx_desc->entry_timestamp_ticks = 0xffffffff;
 #endif
+			}
 #endif
 		}
 	}
