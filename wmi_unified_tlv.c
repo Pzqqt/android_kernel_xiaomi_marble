@@ -11291,8 +11291,8 @@ QDF_STATUS send_get_buf_extscan_hotlist_cmd_tlv(wmi_unified_t wmi_handle,
 	/* setbssid hotlist expects the bssid list
 	 * to be non zero value
 	 */
-	if (!numap) {
-		WMI_LOGE("%s: Invalid number of bssid's", __func__);
+	if ((numap <= 0) || (numap > WMI_WLAN_EXTSCAN_MAX_HOTLIST_APS)) {
+		WMI_LOGE("Invalid number of APs: %d", numap);
 		return QDF_STATUS_E_INVAL;
 	}
 
