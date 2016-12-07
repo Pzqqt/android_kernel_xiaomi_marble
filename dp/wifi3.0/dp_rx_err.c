@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -457,7 +457,7 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		hal_rx_reo_buf_paddr_get(ring_desc, &hbi);
 
 		/* Get the MPDU DESC info */
-		hal_rx_mpdu_info_get(ring_desc, &mpdu_desc_info);
+		hal_rx_mpdu_desc_info_get(ring_desc, &mpdu_desc_info);
 
 		if (mpdu_desc_info.mpdu_flags & HAL_MPDU_F_FRAGMENT) {
 			/* TODO */

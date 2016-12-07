@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -626,6 +626,9 @@ struct dp_vdev {
 	uint8_t mcast_enhancement_en;
 
 	uint32_t num_tx_outstanding;
+
+	/* per vdev rx nbuf queue */
+	qdf_nbuf_queue_t rxq;
 
 	uint8_t tx_ring_id;
 	struct dp_tx_desc_pool_s *tx_desc;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -154,20 +154,17 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
  * dp_rx_intrabss_fwd() - Implements the Intra-BSS forwarding logic
  *
  * @soc: core txrx main context
- * @rx_desc	: Rx descriptor
- * @msdu_ifno	: place holder to store Rx MSDU Details from Rx desc
- * @osdu_ifno	: place holder to store Rx MPDU Details from Rx desc
- * @is_term: Value filled in by this function, if logic determines this
- *	     to be a terminating packet
+ * @sa_peer	: source peer entry
+ * @rx_tlv_hdr	: start address of rx tlvs
+ * @nbuf	: nbuf that has to be intrabss forwarded
  *
  * Return: bool: true if it is forwarded else false
  */
 static bool
 dp_rx_intrabss_fwd(struct dp_soc *soc,
-		   struct dp_rx_desc *rx_desc,
-		   struct hal_rx_msdu_desc_info *msdu_info,
-		   struct hal_rx_mpdu_desc_info *mpdu_info,
-		   bool *is_term)
+			struct dp_peer *sa_peer,
+			uint8_t *rx_tlv_hdr,
+			qdf_nbuf_t nbuf)
 {
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 		FL("Intra-BSS forwarding not implemented"));
@@ -194,17 +191,22 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 	void *ring_desc;
 	struct dp_rx_desc *rx_desc;
 	qdf_nbuf_t nbuf;
+	qdf_nbuf_t deliver_list_head = NULL;
+	qdf_nbuf_t deliver_list_tail = NULL;
 	union dp_rx_desc_list_elem_t *head = NULL;
 	union dp_rx_desc_list_elem_t *tail = NULL;
-	bool is_term;
 	uint32_t rx_bufs_used = 0, rx_buf_cookie, l2_hdr_offset;
+	uint16_t msdu_len;
 	uint16_t peer_id;
 	struct dp_peer *peer = NULL;
-	struct hal_rx_msdu_desc_info msdu_desc_info;
+	struct dp_vdev *vdev = NULL;
 	struct hal_rx_mpdu_desc_info mpdu_desc_info;
-	qdf_nbuf_t head_msdu, tail_msdu;
 	enum hal_reo_error_status error;
 	uint32_t pkt_len;
+	uint32_t peer_mdata;
+	uint8_t *rx_tlv_hdr;
+	uint32_t rx_bufs_reaped = 0;
+	struct dp_pdev *pdev;
 
 	/* Debug -- Remove later */
 	qdf_assert(soc && hal_ring);
@@ -226,8 +228,11 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		goto done;
 	}
 
-	head_msdu = tail_msdu = NULL;
-
+	/*
+	 * start reaping the buffers from reo ring and queue
+	 * them in per vdev queue.
+	 * Process the received pkts in a different per vdev loop.
+	 */
 	while (qdf_likely((ring_desc =
 				hal_srng_dst_get_next(hal_soc, hal_ring))
 				&& quota--)) {
@@ -246,139 +251,147 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		rx_desc = dp_rx_cookie_2_va(soc, rx_buf_cookie);
 
 		qdf_assert(rx_desc);
+		rx_bufs_reaped++;
 
-		rx_bufs_used++;
-
-		/* Get MSDU DESC info */
-		hal_rx_msdu_desc_info_get(ring_desc, &msdu_desc_info);
-
-		nbuf = rx_desc->nbuf;
 		/* TODO */
 		/*
 		 * Need a separate API for unmapping based on
 		 * phyiscal address
 		 */
-		qdf_nbuf_unmap_single(soc->osdev, nbuf,
+		qdf_nbuf_unmap_single(soc->osdev, rx_desc->nbuf,
 					QDF_DMA_BIDIRECTIONAL);
 
-		rx_desc->rx_buf_start = qdf_nbuf_data(nbuf);
-
-		/*
-		 * HW structures call this L3 header padding -- even though
-		 * this is actually the offset from the buffer beginning
-		 * where the L2 header begins.
-		 */
-		l2_hdr_offset =
-			hal_rx_msdu_end_l3_hdr_padding_get(
-						rx_desc->rx_buf_start);
-
-		pkt_len = msdu_desc_info.msdu_len +
-				l2_hdr_offset + RX_PKT_TLVS_LEN;
-
-		/* Set length in nbuf */
-		qdf_nbuf_set_pktlen(nbuf, pkt_len);
-
-		/*
-		 * Check if DMA completed -- msdu_done is the last bit
-		 * to be written
-		 */
-		if (!hal_rx_attn_msdu_done_get(rx_desc->rx_buf_start)) {
-
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("HAL RING 0x%p"), hal_ring);
-
-			print_hex_dump(KERN_ERR,
-			       "\t Pkt Desc:", DUMP_PREFIX_NONE, 32, 4,
-				rx_desc->rx_buf_start, 128, false);
-
-			qdf_assert(0);
-		}
-
-		/*
-		 * Advance the packet start pointer by total size of
-		 * pre-header TLV's
-		 */
-		qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN);
-
-		if (l2_hdr_offset)
-			qdf_nbuf_pull_head(nbuf, l2_hdr_offset);
-
-		/* TODO -- Remove --  Just for initial debug */
-
-		print_hex_dump(KERN_ERR, "\t Pkt Buf:",
-			DUMP_PREFIX_NONE, 32, 4,
-			qdf_nbuf_data(nbuf), 128, false);
-
-		/* Get the MPDU DESC info */
-		hal_rx_mpdu_info_get(ring_desc, &mpdu_desc_info);
-
-		/* TODO */
-		/* WDS Source Port Learning */
-
-		/* Intrabss-fwd */
-		if (dp_rx_intrabss_fwd(soc, rx_desc,
-			&msdu_desc_info, &mpdu_desc_info, &is_term))
-			continue; /* Get next descriptor */
-
+		/* Get MPDU DESC info */
+		hal_rx_mpdu_desc_info_get(ring_desc, &mpdu_desc_info);
 		peer_id = DP_PEER_METADATA_PEER_ID_GET(
 				mpdu_desc_info.peer_meta_data);
 
 		peer = dp_peer_find_by_id(soc, peer_id);
-
-		/* TODO */
-		/*
-		 * In case of roaming peer object may not be
-		 * immediately available -- need to handle this
-		 * Cannot drop these packets right away.
-		 */
-		/* Peer lookup failed */
 		if (!peer) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				 FL("peer look-up failed peer id %d"), peer_id);
 
 			/* Drop & free packet */
 			qdf_nbuf_free(rx_desc->nbuf);
-
-			/* Statistics */
-
-			/* Add free rx_desc to a free list */
-			dp_rx_add_to_free_desc_list(&head, &tail, rx_desc);
-
-			continue;
+			goto fail;
 		}
 
-		if (qdf_unlikely(!head_msdu))
-			head_msdu = rx_desc->nbuf;
-		else
-			qdf_nbuf_set_next(tail_msdu, rx_desc->nbuf);
+		vdev = peer->vdev;
+		if (!vdev) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("vdev is NULL"));
+			qdf_nbuf_free(rx_desc->nbuf);
+			goto fail;
+		}
 
-		tail_msdu = rx_desc->nbuf;
-
+		qdf_nbuf_queue_add(&vdev->rxq, rx_desc->nbuf);
+fail:
 		dp_rx_add_to_free_desc_list(&head, &tail, rx_desc);
 	}
-
+done:
 	hal_srng_access_end(hal_soc, hal_ring);
 
-	if (!head_msdu)
+	if (!rx_bufs_reaped)
 		return 0;
+	else
+		/* Replenish buffers */
+		/* Assume MAC id = 0, owner = 0 */
+		dp_rx_buffers_replenish(soc, 0, rx_bufs_reaped, &head, &tail,
+					HAL_RX_BUF_RBM_SW3_BM);
 
-	/* Replenish buffers */
-	/* Assume MAC id = 0, owner = 0 */
-	dp_rx_buffers_replenish(soc, 0, rx_bufs_used, &head, &tail,
-				HAL_RX_BUF_RBM_SW3_BM);
+	pdev = soc->pdev_list[0];
 
-	qdf_nbuf_set_next(tail_msdu, NULL);
+	if (qdf_unlikely(!pdev)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("pdev is NULL"));
+		goto fail1;
+	}
 
+	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
 
-	/*
-	 * TODO - this assumes all packets reaped belong to one peer/vdev, which
-	 * may not be true, call this inside while loop for each change in vdev
-	 */
-	if (qdf_likely(peer->vdev->osif_rx))
-		peer->vdev->osif_rx(peer->vdev->osif_vdev, head_msdu);
+		while ((nbuf = qdf_nbuf_queue_remove(&vdev->rxq))) {
+			rx_tlv_hdr = qdf_nbuf_data(nbuf);
 
-done:
+			/*
+			 * Check if DMA completed -- msdu_done is the last bit
+			 * to be written
+			 */
+			if (!hal_rx_attn_msdu_done_get(rx_tlv_hdr)) {
+
+				QDF_TRACE(QDF_MODULE_ID_DP,
+						QDF_TRACE_LEVEL_ERROR,
+						FL("HAL RING 0x%p"), hal_ring);
+
+				print_hex_dump(KERN_ERR,
+				       "\t Pkt Desc:", DUMP_PREFIX_NONE, 32, 4,
+					rx_tlv_hdr, 128, false);
+
+				qdf_assert(0);
+			}
+
+			peer_mdata = hal_rx_mpdu_peer_meta_data_get(rx_tlv_hdr);
+			peer_id = DP_PEER_METADATA_PEER_ID_GET(peer_mdata);
+			peer = dp_peer_find_by_id(soc, peer_id);
+
+			/* TODO */
+			/*
+			 * In case of roaming peer object may not be
+			 * immediately available -- need to handle this
+			 * Cannot drop these packets right away.
+			 */
+			/* Peer lookup failed */
+			if (!peer) {
+
+				/* Drop & free packet */
+				qdf_nbuf_free(nbuf);
+
+				/* Statistics */
+				continue;
+			}
+
+			/*
+			 * HW structures call this L3 header padding --
+			 * even though this is actually the offset from
+			 * the buffer beginning where the L2 header
+			 * begins.
+			 */
+			l2_hdr_offset =
+				hal_rx_msdu_end_l3_hdr_padding_get(rx_tlv_hdr);
+
+			msdu_len = hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr);
+			pkt_len = msdu_len + l2_hdr_offset + RX_PKT_TLVS_LEN;
+
+			/* Set length in nbuf */
+			qdf_nbuf_set_pktlen(nbuf, pkt_len);
+
+			/*
+			 * Advance the packet start pointer by total size of
+			 * pre-header TLV's
+			 */
+			qdf_nbuf_pull_head(nbuf,
+					   RX_PKT_TLVS_LEN + l2_hdr_offset);
+
+			/* TODO */
+			/* WDS Source Port Learning */
+
+			/* Intrabss-fwd */
+			if (dp_rx_intrabss_fwd(soc, peer, rx_tlv_hdr, nbuf))
+				continue; /* Get next descriptor */
+
+			rx_bufs_used++;
+			DP_RX_LIST_APPEND(deliver_list_head,
+						deliver_list_tail,
+						nbuf);
+		}
+
+		if (qdf_likely(vdev->osif_rx) && deliver_list_head)
+			vdev->osif_rx(vdev->osif_vdev, deliver_list_head);
+
+	}
 	return rx_bufs_used; /* Assume no scale factor for now */
+fail1:
+	qdf_assert(0);
+	return 0;
 }
 
 /**
@@ -398,6 +411,8 @@ dp_rx_pdev_detach(struct dp_pdev *pdev)
 
 	dp_rx_desc_pool_free(soc, pdev_id);
 	qdf_spinlock_destroy(&soc->rx_desc_mutex[pdev_id]);
+
+	return;
 }
 
 /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -239,7 +239,7 @@ enum hal_rx_ret_buf_manager {
 	RX_MPDU_DESC_INFO_0_MPDU_SEQUENCE_NUMBER_MASK) >> \
 	RX_MPDU_DESC_INFO_0_MPDU_SEQUENCE_NUMBER_LSB)
 
-#define HAL_RX_MPDU_PEER_META_DATA_GET(mpdu_info_ptr)	\
+#define HAL_RX_MPDU_DESC_PEER_META_DATA_GET(mpdu_info_ptr)	\
 	((mpdu_info_ptr					\
 	[RX_MPDU_DESC_INFO_1_PEER_META_DATA_OFFSET >> 2] & \
 	RX_MPDU_DESC_INFO_1_PEER_META_DATA_MASK) >> \
@@ -340,7 +340,7 @@ enum hal_rx_ret_buf_manager {
 	_OFFSET_TO_BYTE_PTR(msdu_details_ptr,		\
 RX_MSDU_DETAILS_2_RX_MSDU_DESC_INFO_RX_MSDU_DESC_INFO_DETAILS_OFFSET))
 
-static inline void hal_rx_mpdu_info_get(void *desc_addr,
+static inline void hal_rx_mpdu_desc_info_get(void *desc_addr,
 				struct hal_rx_mpdu_desc_info *mpdu_desc_info)
 {
 	struct reo_destination_ring *reo_dst_ring;
@@ -356,7 +356,7 @@ static inline void hal_rx_mpdu_info_get(void *desc_addr,
 	mpdu_desc_info->mpdu_seq = HAL_RX_MPDU_SEQUENCE_NUMBER_GET(mpdu_info);
 	mpdu_desc_info->mpdu_flags = HAL_RX_MPDU_FLAGS_GET(mpdu_info);
 	mpdu_desc_info->peer_meta_data =
-		HAL_RX_MPDU_PEER_META_DATA_GET(mpdu_info);
+		HAL_RX_MPDU_DESC_PEER_META_DATA_GET(mpdu_info);
 }
 
 
@@ -546,6 +546,30 @@ hal_rx_attn_msdu_done_get(uint8_t *buf)
 	msdu_done = HAL_RX_ATTN_MSDU_DONE_GET(rx_attn);
 
 	return msdu_done;
+}
+
+/*
+ * Get peer_meta_data from RX_MPDU_INFO within RX_MPDU_START
+ */
+#define HAL_RX_MPDU_PEER_META_DATA_GET(_rx_mpdu_info)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
+		RX_MPDU_INFO_8_PEER_META_DATA_OFFSET)),	\
+		RX_MPDU_INFO_8_PEER_META_DATA_MASK,	\
+		RX_MPDU_INFO_8_PEER_META_DATA_LSB))
+
+static inline uint32_t
+hal_rx_mpdu_peer_meta_data_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_start *mpdu_start =
+				 &pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+
+	struct rx_mpdu_info *mpdu_info = &mpdu_start->rx_mpdu_info_details;
+	uint32_t peer_meta_data;
+
+	peer_meta_data = HAL_RX_MPDU_PEER_META_DATA_GET(mpdu_info);
+
+	return peer_meta_data;
 }
 
 #if defined(WCSS_VERSION) && (WCSS_VERSION > 81)

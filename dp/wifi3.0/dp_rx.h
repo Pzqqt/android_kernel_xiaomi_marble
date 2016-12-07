@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -20,6 +20,7 @@
 #define _DP_RX_H
 
 #include "hal_rx.h"
+#include "dp_tx.h"
 
 #define DP_PEER_METADATA_PEER_ID_MASK	0x0000ffff
 #define DP_PEER_METADATA_PEER_ID_SHIFT	0
@@ -150,4 +151,15 @@ void dp_rx_add_to_free_desc_list(union dp_rx_desc_list_elem_t **head,
 		*tail = *head;
 
 }
+
+#define DP_RX_LIST_APPEND(head, tail, elem) \
+do {                                                \
+	if (!(head)) {                              \
+		(head) = (elem);                    \
+	} else {                                    \
+		qdf_nbuf_set_next((tail), (elem));  \
+	}                                           \
+	(tail) = (elem);                            \
+} while (0)
+
 #endif /* _DP_RX_H */
