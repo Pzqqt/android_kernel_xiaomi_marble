@@ -813,6 +813,9 @@ void qdf_dp_trace_init(void)
 	g_qdf_dp_trace_data.no_of_record = 0;
 	g_qdf_dp_trace_data.verbosity    = QDF_DP_TRACE_VERBOSITY_HIGH;
 	g_qdf_dp_trace_data.enable = true;
+	g_qdf_dp_trace_data.tx_count = 0;
+	g_qdf_dp_trace_data.rx_count = 0;
+	g_qdf_dp_trace_data.live_mode = 0;
 
 	for (i = 0; i < ARRAY_SIZE(qdf_dp_trace_cb_table); i++)
 		qdf_dp_trace_cb_table[i] = qdf_dp_display_record;
@@ -1193,7 +1196,8 @@ static void qdf_dp_add_record(enum QDF_DP_TRACE_ID code,
 		rec->size = size;
 		qdf_mem_copy(rec->data, data, size);
 	}
-	rec->time = qdf_get_log_timestamp();
+	qdf_get_time_of_the_day_in_hr_min_sec_usec(rec->time,
+						   sizeof(rec->time));
 	rec->pid = (in_interrupt() ? 0 : current->pid);
 	spin_unlock_bh(&l_dp_trace_lock);
 
@@ -1343,7 +1347,7 @@ void qdf_dp_display_mgmt_pkt(struct qdf_dp_trace_record_s *record,
 	struct qdf_dp_trace_mgmt_buf *buf =
 		(struct qdf_dp_trace_mgmt_buf *)record->data;
 
-	DPTRACE_PRINT("DPT: %04d: %012llu: %s vdev_id %d", index,
+	DPTRACE_PRINT("DPT: %04d: %s: %s vdev_id %d", index,
 		record->time, qdf_dp_code_to_string(record->code),
 		buf->vdev_id);
 	DPTRACE_PRINT("DPT: Type %s Subtype %s", qdf_dp_type_to_str(buf->type),
@@ -1392,7 +1396,7 @@ void qdf_dp_display_event_record(struct qdf_dp_trace_record_s *record,
 	struct qdf_dp_trace_event_buf *buf =
 		(struct qdf_dp_trace_event_buf *)record->data;
 
-	DPTRACE_PRINT("DPT: %04d: %012llu: %s vdev_id %d", index,
+	DPTRACE_PRINT("DPT: %04d: %s: %s vdev_id %d", index,
 		record->time, qdf_dp_code_to_string(record->code),
 		buf->vdev_id);
 	DPTRACE_PRINT("DPT: Type %s Subtype %s", qdf_dp_type_to_str(buf->type),
@@ -1441,7 +1445,7 @@ void qdf_dp_display_proto_pkt(struct qdf_dp_trace_record_s *record,
 	struct qdf_dp_trace_proto_buf *buf =
 		(struct qdf_dp_trace_proto_buf *)record->data;
 
-	DPTRACE_PRINT("DPT: %04d: %012llu: %s vdev_id %d", index,
+	DPTRACE_PRINT("DPT: %04d: %s: %s vdev_id %d", index,
 		record->time, qdf_dp_code_to_string(record->code),
 		buf->vdev_id);
 	DPTRACE_PRINT("DPT: SA: " QDF_MAC_ADDRESS_STR " %s DA: "
@@ -1502,12 +1506,12 @@ void qdf_dp_display_ptr_record(struct qdf_dp_trace_record_s *record,
 		(struct qdf_dp_trace_ptr_buf *)record->data;
 
 	if (record->code == QDF_DP_TRACE_FREE_PACKET_PTR_RECORD)
-		DPTRACE_PRINT("DPT: %04d: %012llu: %s msdu_id: %d, status: %d",
+		DPTRACE_PRINT("DPT: %04d: %s: %s msdu_id: %d, status: %d",
 			 index, record->time,
 			 qdf_dp_code_to_string(record->code), buf->msdu_id,
 			 buf->status);
 	else
-		DPTRACE_PRINT("DPT: %04d: %012llu: %s msdu_id: %d, vdev_id: %d",
+		DPTRACE_PRINT("DPT: %04d: %s: %s msdu_id: %d, vdev_id: %d",
 			 index,
 			 record->time, qdf_dp_code_to_string(record->code),
 			 buf->msdu_id, buf->status);
@@ -1555,7 +1559,7 @@ EXPORT_SYMBOL(qdf_dp_trace_ptr);
 void qdf_dp_display_record(struct qdf_dp_trace_record_s *pRecord,
 				uint16_t recIndex)
 {
-	DPTRACE_PRINT("DPT: %04d: %012llu: %s", recIndex,
+	DPTRACE_PRINT("DPT: %04d: %s: %s", recIndex,
 		pRecord->time, qdf_dp_code_to_string(pRecord->code));
 	switch (pRecord->code) {
 	case  QDF_DP_TRACE_HDD_TX_TIMEOUT:
@@ -1632,10 +1636,15 @@ void qdf_dp_trace_clear_buffer(void)
 	g_qdf_dp_trace_data.tail = INVALID_QDF_DP_TRACE_ADDR;
 	g_qdf_dp_trace_data.num = 0;
 	g_qdf_dp_trace_data.proto_bitmap = QDF_NBUF_PKT_TRAC_TYPE_EAPOL |
-	    QDF_NBUF_PKT_TRAC_TYPE_DHCP | QDF_NBUF_PKT_TRAC_TYPE_MGMT_ACTION;
+					   QDF_NBUF_PKT_TRAC_TYPE_DHCP |
+					   QDF_NBUF_PKT_TRAC_TYPE_MGMT_ACTION |
+					   QDF_NBUF_PKT_TRAC_TYPE_ARP;
 	g_qdf_dp_trace_data.no_of_record = 0;
-	g_qdf_dp_trace_data.verbosity    = QDF_DP_TRACE_VERBOSITY_LOW;
+	g_qdf_dp_trace_data.verbosity    = QDF_DP_TRACE_VERBOSITY_HIGH;
 	g_qdf_dp_trace_data.enable = true;
+	g_qdf_dp_trace_data.tx_count = 0;
+	g_qdf_dp_trace_data.rx_count = 0;
+	g_qdf_dp_trace_data.live_mode = 0;
 
 	memset(g_qdf_dp_trace_tbl, 0,
 	   MAX_QDF_DP_TRACE_RECORDS * sizeof(struct qdf_dp_trace_record_s));
