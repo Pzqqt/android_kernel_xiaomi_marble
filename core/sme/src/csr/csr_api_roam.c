@@ -19667,6 +19667,7 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			FL("LFR3: Mem Alloc failed for roam info"));
 		session->roam_synch_in_progress = false;
+		qdf_mem_free(ies_local);
 		sme_release_global_lock(&mac_ctx->sme);
 		return;
 	}
@@ -19737,6 +19738,7 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 		session->roam_synch_in_progress = false;
 		if (roam_info)
 			qdf_mem_free(roam_info);
+		qdf_mem_free(ies_local);
 		sme_release_global_lock(&mac_ctx->sme);
 		return;
 	}
@@ -19854,6 +19856,7 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	session->roam_synch_in_progress = false;
 	qdf_mem_free(roam_info->pbFrames);
 	qdf_mem_free(roam_info);
+	qdf_mem_free(ies_local);
 	sme_release_global_lock(&mac_ctx->sme);
 }
 #endif
