@@ -1758,37 +1758,149 @@ typedef enum {
 #endif
 
 #ifdef FEATURE_WLAN_TDLS
+/*
+ * <ini>
+ * gEnableTDLSSupport - Enable support for TDLS.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable TDLS support.
+ *
+ * Related: None.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_TDLS_SUPPORT_ENABLE                     "gEnableTDLSSupport"
 #define CFG_TDLS_SUPPORT_ENABLE_MIN                 (0)
 #define CFG_TDLS_SUPPORT_ENABLE_MAX                 (1)
 #define CFG_TDLS_SUPPORT_ENABLE_DEFAULT             (0)
 
+/*
+ * <ini>
+ * gEnableTDLSImplicitTrigger - Enable Implicit TDLS.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable implicit TDLS.
+ * CLD driver initiates TDLS Discovery towards a peer whenever TDLS Setup
+ * criteria (throughput and RSSI thresholds) is met and then it tears down
+ * TDLS when teardown criteria (idle packet count and RSSI) is met.
+ *
+ * Related: gEnableTDLSSupport.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_TDLS_IMPLICIT_TRIGGER                   "gEnableTDLSImplicitTrigger"
 #define CFG_TDLS_IMPLICIT_TRIGGER_MIN               (0)
 #define CFG_TDLS_IMPLICIT_TRIGGER_MAX               (1)
 #define CFG_TDLS_IMPLICIT_TRIGGER_DEFAULT           (0)
 
+/*
+ * <ini>
+ * gTDLSTxStatsPeriod - TDLS TX statistics time period.
+ * @Min: 1000
+ * @Max: 4294967295
+ * @Default: 2000
+ *
+ * This ini is used to configure the time period (in ms) to evaluate whether
+ * the number of Tx/Rx packets exceeds TDLSTxPacketThreshold and triggers a
+ * TDLS Discovery request.
+ *
+ * Related: gEnableTDLSSupport.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_TDLS_TX_STATS_PERIOD                    "gTDLSTxStatsPeriod"
 #define CFG_TDLS_TX_STATS_PERIOD_MIN                (1000)
 #define CFG_TDLS_TX_STATS_PERIOD_MAX                (4294967295UL)
 #define CFG_TDLS_TX_STATS_PERIOD_DEFAULT            (2000)
 
+/*
+ * <ini>
+ * gTDLSTxPacketThreshold - Tx/Rx Packet threshold for initiating TDLS.
+ * @Min: 0
+ * @Max: 4294967295
+ * @Default: 40
+ *
+ * This ini is used to configure the number of Tx/Rx packets during the
+ * period of gTDLSTxStatsPeriod when exceeded, a TDLS Discovery request
+ * is triggered.
+ * Related: gEnableTDLSSupport.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_TDLS_TX_PACKET_THRESHOLD                "gTDLSTxPacketThreshold"
 #define CFG_TDLS_TX_PACKET_THRESHOLD_MIN            (0)
 #define CFG_TDLS_TX_PACKET_THRESHOLD_MAX            (4294967295UL)
 #define CFG_TDLS_TX_PACKET_THRESHOLD_DEFAULT        (40)
 
+/*
+ * <ini>
+ * gTDLSMaxDiscoveryAttempt - Attempts for sending TDLS discovery requests.
+ * @Min: 1
+ * @Max: 100
+ * @Default: 5
+ *
+ * This ini is used to configure the number of failures of discover request,
+ * when exceeded, the peer is assumed to be not TDLS capable and no further
+ * TDLS Discovery request is made.
+ *
+ * Related: gEnableTDLSSupport.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_TDLS_MAX_DISCOVERY_ATTEMPT              "gTDLSMaxDiscoveryAttempt"
 #define CFG_TDLS_MAX_DISCOVERY_ATTEMPT_MIN          (1)
 #define CFG_TDLS_MAX_DISCOVERY_ATTEMPT_MAX          (100)
 #define CFG_TDLS_MAX_DISCOVERY_ATTEMPT_DEFAULT      (5)
 
-/*  teardown notification interval (gTDLSIdleTimeout) should be multiple of
- *  setup notification (gTDLSTxStatsPeriod) interval.
- *  e.g.
- *       if setup notification (gTDLSTxStatsPeriod) interval = 500, then
- *       teardown notification (gTDLSIdleTimeout) interval should be 1000,
- *       1500, 2000, 2500...
+/*
+ * <ini>
+ * gTDLSIdleTimeout - Duration within which number of TX / RX frames meet the
+ * criteria for TDLS teardown.
+ * @Min: 500
+ * @Max: 40000
+ * @Default: 5000
+ *
+ * This ini is used to configure the time period (in ms) to evaluate whether
+ * the number of Tx/Rx packets exceeds gTDLSIdlePacketThreshold and thus meets
+ * criteria for TDLS teardown.
+ * Teardown notification interval (gTDLSIdleTimeout) should be multiple of
+ * setup notification (gTDLSTxStatsPeriod) interval.
+ * e.g.
+ *      if setup notification (gTDLSTxStatsPeriod) interval = 500, then
+ *      teardown notification (gTDLSIdleTimeout) interval should be 1000,
+ *      1500, 2000, 2500...
+ *
+ * Related: gEnableTDLSSupport.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
 #define CFG_TDLS_IDLE_TIMEOUT                       "gTDLSIdleTimeout"
 #define CFG_TDLS_IDLE_TIMEOUT_MIN                   (500)
@@ -1796,83 +1908,366 @@ typedef enum {
 #define CFG_TDLS_IDLE_TIMEOUT_DEFAULT               (5000)
 
 
+/*
+ * <ini>
+ * gTDLSIdlePacketThreshold - Number of idle packet.
+ * @Min: 0
+ * @Max: 40000
+ * @Default: 3
+ *
+ * This ini is used to configure the number of Tx/Rx packet, below which
+ * within last gTDLSTxStatsPeriod period is considered as idle condition.
+ *
+ * Related: gEnableTDLSSupport.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_TDLS_IDLE_PACKET_THRESHOLD              "gTDLSIdlePacketThreshold"
 #define CFG_TDLS_IDLE_PACKET_THRESHOLD_MIN          (0)
 #define CFG_TDLS_IDLE_PACKET_THRESHOLD_MAX          (40000)
 #define CFG_TDLS_IDLE_PACKET_THRESHOLD_DEFAULT      (3)
 
+/*
+ * <ini>
+ * gTDLSRSSITriggerThreshold - RSSI threshold for TDLS connection.
+ * @Min: -120
+ * @Max: 0
+ * @Default: -75
+ *
+ * This ini is used to configure the absolute value (in dB) of the peer RSSI,
+ * below which a TDLS setup request is triggered.
+ *
+ * Related: gEnableTDLSSupport.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_TDLS_RSSI_TRIGGER_THRESHOLD             "gTDLSRSSITriggerThreshold"
 #define CFG_TDLS_RSSI_TRIGGER_THRESHOLD_MIN         (-120)
 #define CFG_TDLS_RSSI_TRIGGER_THRESHOLD_MAX         (0)
 #define CFG_TDLS_RSSI_TRIGGER_THRESHOLD_DEFAULT     (-75)
 
+/*
+ * <ini>
+ * gTDLSRSSITeardownThreshold - RSSI threshold for TDLS teardown.
+ * @Min: -120
+ * @Max: 0
+ * @Default: -75
+ *
+ * This ini is used to configure the absolute value (in dB) of the peer RSSI,
+ * when exceed, a TDLS teardown is triggered.
+ *
+ * Related: gEnableTDLSSupport.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_TDLS_RSSI_TEARDOWN_THRESHOLD            "gTDLSRSSITeardownThreshold"
 #define CFG_TDLS_RSSI_TEARDOWN_THRESHOLD_MIN        (-120)
 #define CFG_TDLS_RSSI_TEARDOWN_THRESHOLD_MAX        (0)
 #define CFG_TDLS_RSSI_TEARDOWN_THRESHOLD_DEFAULT    (-75)
 
+/*
+ * <ini>
+ * gTDLSRSSIDelta - Delta value for the peer RSSI that can trigger teardown.
+ * @Min: -30
+ * @Max: 0
+ * @Default: -20
+ *
+ * This ini is used to .
+ * This ini is used to configure delta for peer RSSI such that if Peer RSSI
+ * is less than AP RSSI plus delta will trigger a teardown.
+ *
+ * Related: gEnableTDLSSupport.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_TDLS_RSSI_DELTA                         "gTDLSRSSIDelta"
 #define CFG_TDLS_RSSI_DELTA_MIN                     (-30)
 #define CFG_TDLS_RSSI_DELTA_MAX                     (0)
 #define CFG_TDLS_RSSI_DELTA_DEFAULT                 (-20)
 
-#define CFG_TDLS_QOS_WMM_UAPSD_MASK_NAME            "gTDLSUapsdMask"    /* ACs to setup U-APSD for TDLS Sta */
+/*
+ * <ini>
+ * gTDLSUapsdMask - ACs to setup U-APSD for TDLS Sta.
+ * @Min: 0
+ * @Max: 0x0F
+ * @Default: 0x0F
+ *
+ * This ini is used to configure the ACs for which mask needs to be enabled.
+ * 0x1: Background	0x2: Best effort
+ * 0x4: Video		0x8:Voice
+ *
+ * Related: gEnableTDLSSupport.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_TDLS_QOS_WMM_UAPSD_MASK_NAME            "gTDLSUapsdMask"
 #define CFG_TDLS_QOS_WMM_UAPSD_MASK_MIN             (0)
 #define CFG_TDLS_QOS_WMM_UAPSD_MASK_MAX             (0x0F)
 #define CFG_TDLS_QOS_WMM_UAPSD_MASK_DEFAULT         (0x0F)
 
+/*
+ * <ini>
+ * gEnableTDLSBufferSta - Controls the TDLS buffer.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to control the TDLS buffer.
+ * Buffer STA is not enabled in CLD 2.0 yet.
+ *
+ * Related: gEnableTDLSSupport.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_TDLS_BUFFER_STA_SUPPORT_ENABLE          "gEnableTDLSBufferSta"
 #define CFG_TDLS_BUFFER_STA_SUPPORT_ENABLE_MIN      (0)
 #define CFG_TDLS_BUFFER_STA_SUPPORT_ENABLE_MAX      (1)
-/* Buffer STA is not enabled in CLD 2.0 yet */
 #define CFG_TDLS_BUFFER_STA_SUPPORT_ENABLE_DEFAULT  (1)
 
+/*
+ * <ini>
+ * gTDLSPuapsdInactivityTime - Peer UAPSD Inactivity time.
+ * @Min: 0
+ * @Max: 10
+ * @Default: 0
+ *
+ * This ini is used to configure peer uapsd inactivity time.
+ *
+ * Related: gEnableTDLSSupport.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_TDLS_PUAPSD_INACTIVITY_TIME             "gTDLSPuapsdInactivityTime"
 #define CFG_TDLS_PUAPSD_INACTIVITY_TIME_MIN         (0)
 #define CFG_TDLS_PUAPSD_INACTIVITY_TIME_MAX         (10)
 #define CFG_TDLS_PUAPSD_INACTIVITY_TIME_DEFAULT     (0)
 
+/*
+ * <ini>
+ * gTDLSPuapsdRxFrameThreshold - Peer UAPSD Rx frame threshold.
+ * @Min: 10
+ * @Max: 20
+ * @Default: 10
+ *
+ * This ini is used to configure maximum Rx frame during SP.
+ *
+ * Related: gEnableTDLSSupport.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_TDLS_PUAPSD_RX_FRAME_THRESHOLD          "gTDLSPuapsdRxFrameThreshold"
 #define CFG_TDLS_PUAPSD_RX_FRAME_THRESHOLD_MIN      (10)
 #define CFG_TDLS_PUAPSD_RX_FRAME_THRESHOLD_MAX      (20)
 #define CFG_TDLS_PUAPSD_RX_FRAME_THRESHOLD_DEFAULT  (10)
 
+/*
+ * <ini>
+ * gTDLSPuapsdPTIWindow - This ini is used to configure peer traffic indication
+ * window.
+ * @Min: 1
+ * @Max: 5
+ * @Default: 2
+ *
+ * This ini is used to configure buffering time in number of beacon intervals.
+ *
+ * Related: gEnableTDLSSupport.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_TDLS_PUAPSD_PEER_TRAFFIC_IND_WINDOW          "gTDLSPuapsdPTIWindow"
 #define CFG_TDLS_PUAPSD_PEER_TRAFFIC_IND_WINDOW_MIN      (1)
 #define CFG_TDLS_PUAPSD_PEER_TRAFFIC_IND_WINDOW_MAX      (5)
 #define CFG_TDLS_PUAPSD_PEER_TRAFFIC_IND_WINDOW_DEFAULT  (2)
 
+/*
+ * <ini>
+ * gTDLSPuapsdPTRTimeout - Peer Traffic Response timer duration in ms.
+ * @Min: 0
+ * @Max: 10000
+ * @Default: 5000
+ *
+ * This ini is used to configure the peer traffic response timer duration
+ * in ms.
+ *
+ * Related: gEnableTDLSSupport.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_TDLS_PUAPSD_PEER_TRAFFIC_RSP_TIMEOUT         "gTDLSPuapsdPTRTimeout"
 #define CFG_TDLS_PUAPSD_PEER_TRAFFIC_RSP_TIMEOUT_MIN     (0)
 #define CFG_TDLS_PUAPSD_PEER_TRAFFIC_RSP_TIMEOUT_MAX     (10000)
 #define CFG_TDLS_PUAPSD_PEER_TRAFFIC_RSP_TIMEOUT_DEFAULT (5000)
 
+/*
+ * <ini>
+ * gTDLSExternalControl - Enable external TDLS control.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable external TDLS control.
+ * TDLS external control works with TDLS implicit trigger. TDLS external
+ * control allows a user to add a MAC address of potential TDLS peers so
+ * that the CLD driver can initiate implicit TDLS setup to only those peers
+ * when criteria for TDLS setup (throughput and RSSI threshold) is met.
+ *
+ * Related: gEnableTDLSSupport, gEnableTDLSImplicitTrigger.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_TDLS_EXTERNAL_CONTROL                   "gTDLSExternalControl"
 #define CFG_TDLS_EXTERNAL_CONTROL_MIN               (0)
 #define CFG_TDLS_EXTERNAL_CONTROL_MAX               (1)
 #define CFG_TDLS_EXTERNAL_CONTROL_DEFAULT           (1)
 
+/*
+ * <ini>
+ * gEnableTDLSOffChannel - Enables off-channel support for TDLS link.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable off-channel support for TDLS link.
+ *
+ * Related: gEnableTDLSSupport.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_TDLS_OFF_CHANNEL_SUPPORT_ENABLE          "gEnableTDLSOffChannel"
 #define CFG_TDLS_OFF_CHANNEL_SUPPORT_ENABLE_MIN      (0)
 #define CFG_TDLS_OFF_CHANNEL_SUPPORT_ENABLE_MAX      (1)
 #define CFG_TDLS_OFF_CHANNEL_SUPPORT_ENABLE_DEFAULT  (0)
 
+/*
+ * <ini>
+ * gEnableTDLSWmmMode - Enables WMM support over TDLS link.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable WMM support over TDLS link.
+ * This is required to be set to 1 for any TDLS and uAPSD functionality.
+ *
+ * Related: gEnableTDLSSupport.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_TDLS_WMM_MODE_ENABLE                     "gEnableTDLSWmmMode"
 #define CFG_TDLS_WMM_MODE_ENABLE_MIN                 (0)
 #define CFG_TDLS_WMM_MODE_ENABLE_MAX                 (1)
 #define CFG_TDLS_WMM_MODE_ENABLE_DEFAULT             (1)
 
+/*
+ * <ini>
+ * gTDLSPrefOffChanNum - Preferred TDLS channel number when off-channel support
+ * is enabled.
+ * @Min: 1
+ * @Max: 165
+ * @Default: 36
+ *
+ * This ini is used to configure preferred TDLS channel number when off-channel
+ * support is enabled.
+ *
+ * Related: gEnableTDLSSupport, gEnableTDLSOffChannel.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_TDLS_PREFERRED_OFF_CHANNEL_NUM          "gTDLSPrefOffChanNum"
 #define CFG_TDLS_PREFERRED_OFF_CHANNEL_NUM_MIN      (1)
 #define CFG_TDLS_PREFERRED_OFF_CHANNEL_NUM_MAX      (165)
 #define CFG_TDLS_PREFERRED_OFF_CHANNEL_NUM_DEFAULT  (36)
 
+/*
+ * <ini>
+ * gTDLSPrefOffChanBandwidth - Preferred TDLS channel bandwidth when
+ * off-channel support is enabled.
+ * @Min: 0
+ * @Max: 0x0F
+ * @Default: 0x07
+ *
+ * This ini is used to configure preferred TDLS channel bandwidth when
+ * off-channel support is enabled.
+ * 0x1: 20 MHz	0x2: 40 MHz	0x4: 80 MHz	0x8: 160 MHz
+ * When more than one bits are set then firmware starts from the highest and
+ * selects one based on capability of peer.
+ *
+ * Related: gEnableTDLSSupport, gEnableTDLSOffChannel.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_TDLS_PREFERRED_OFF_CHANNEL_BW           "gTDLSPrefOffChanBandwidth"
 #define CFG_TDLS_PREFERRED_OFF_CHANNEL_BW_MIN      (0)
 #define CFG_TDLS_PREFERRED_OFF_CHANNEL_BW_MAX      (0x0F)
 #define CFG_TDLS_PREFERRED_OFF_CHANNEL_BW_DEFAULT  (0x07)
 
-/* Enable TDLS Scan: Allow scan and maintain TDLS link.
+/*
+ * <ini>
+ * gEnableTDLSScan - Allow scan and maintain TDLS link.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable TDLS scan.
  *  0: If peer is not buffer STA capable and device is not sleep STA
  *     capable, then teardown TDLS link when scan is initiated. If peer
  *     is buffer STA and we can be sleep STA then TDLS link is maintained
@@ -1882,19 +2277,42 @@ typedef enum {
  *     Rx pkts since peer would not know when device moves away from tdls
  *     channel. Tx on TDLS link would stop when device moves away from tdls
  *     channel.
+ *
+ * Related: gEnableTDLSSupport.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
 #define CFG_TDLS_SCAN_ENABLE                       "gEnableTDLSScan"
 #define CFG_TDLS_SCAN_ENABLE_MIN                   (0)
 #define CFG_TDLS_SCAN_ENABLE_MAX                   (1)
 #define CFG_TDLS_SCAN_ENABLE_DEFAULT               (0)
 
-/* TDLS peer kickout threshold to fw
+/*
+ * <ini>
+ * gTDLSPeerKickoutThreshold - TDLS peer kickout threshold to firmware.
+ * @Min: 10
+ * @Max: 5000
+ * @Default: 96
+ *
+ * This ini is used to configure TDLS peer kickout threshold to firmware.
  *     Firmware will use this value to determine, when to send TDLS
  *     peer kick out event to host.
  *     E.g.
  *        if peer kick out threshold is 10, then firmware will wait for 10
  *        consecutive packet failures and then send TDLS kickout
  *        notification to host driver
+ *
+ * Related: gEnableTDLSSupport.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
 #define CFG_TDLS_PEER_KICKOUT_THRESHOLD            "gTDLSPeerKickoutThreshold"
 #define CFG_TDLS_PEER_KICKOUT_THRESHOLD_MIN        (10)
