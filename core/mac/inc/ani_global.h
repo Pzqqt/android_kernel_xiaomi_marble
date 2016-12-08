@@ -824,6 +824,7 @@ typedef struct sAniSirLim {
 		uint32_t scan_id, uint32_t flags);
 	uint8_t retry_packet_cnt;
 	uint8_t scan_disabled;
+	uint8_t beacon_probe_rsp_cnt_per_scan;
 } tAniSirLim, *tpAniSirLim;
 
 struct mgmt_frm_reg_info {

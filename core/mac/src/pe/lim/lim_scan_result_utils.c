@@ -228,6 +228,7 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 	lim_log(pMac, LOG3,
 		FL("Collected BSS Description for Channel(%1d), length(%u), IE Fields(%u)"),
 		pBssDescr->channelId, pBssDescr->length, ieLen);
+	pMac->lim.beacon_probe_rsp_cnt_per_scan++;
 
 	return;
 } /*** end lim_collect_bss_description() ***/

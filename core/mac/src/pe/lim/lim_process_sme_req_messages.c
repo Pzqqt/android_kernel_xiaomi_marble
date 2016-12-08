@@ -1359,6 +1359,7 @@ static void __lim_process_sme_scan_req(tpAniSirGlobal mac_ctx,
 	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_SCAN_REQ_EVENT, NULL,
 			      eSIR_SUCCESS, eSIR_SUCCESS);
 #endif
+	mac_ctx->lim.beacon_probe_rsp_cnt_per_scan = 0;
 
 	scan_req = (tpSirSmeScanReq) msg_buf;
 	lim_log(mac_ctx, LOG1,

@@ -3294,8 +3294,19 @@ void lim_process_rx_scan_event(tpAniSirGlobal pMac, void *buf)
 	switch (pScanEvent->event) {
 	case SIR_SCAN_EVENT_STARTED:
 		break;
-	case SIR_SCAN_EVENT_START_FAILED:
 	case SIR_SCAN_EVENT_COMPLETED:
+	lim_log(pMac, LOG1, FL("No.of beacons and probe response received per scan %d"),
+		pMac->lim.beacon_probe_rsp_cnt_per_scan);
+#ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
+	lim_diag_event_report(pMac, WLAN_PE_DIAG_SCAN_COMPLETE_EVENT, NULL,
+			      eSIR_SUCCESS, eSIR_SUCCESS);
+	if (pMac->lim.beacon_probe_rsp_cnt_per_scan)
+		lim_diag_event_report(pMac,
+				      WLAN_PE_DIAG_SCAN_RESULT_FOUND_EVENT,
+				      NULL, eSIR_SUCCESS, eSIR_SUCCESS);
+#endif
+	/* Fall through */
+	case SIR_SCAN_EVENT_START_FAILED:
 		if (ROC_SCAN_REQUESTOR_ID == pScanEvent->requestor) {
 			lim_send_sme_roc_rsp(pMac, eWNI_SME_REMAIN_ON_CHN_RSP,
 					 QDF_STATUS_SUCCESS,
