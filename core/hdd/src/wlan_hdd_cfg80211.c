@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -78,6 +78,9 @@
 #include "csr_api.h"
 #include "pld_common.h"
 
+#ifdef WLAN_UMAC_CONVERGENCE
+#include "wlan_cfg80211.h"
+#endif
 
 #ifdef FEATURE_WLAN_EXTSCAN
 #include "wlan_hdd_ext_scan.h"
@@ -1100,6 +1103,9 @@ static const struct nl80211_vendor_cmd_info wlan_hdd_cfg80211_vendor_events[] = 
 		.vendor_id = QCA_NL80211_VENDOR_ID,
 		.subcmd = QCA_NL80211_VENDOR_SUBCMD_SAP_CONDITIONAL_CHAN_SWITCH
 	},
+#ifdef WLAN_UMAC_CONVERGENCE
+	COMMON_VENDOR_EVENTS
+#endif
 };
 
 /**
@@ -8279,6 +8285,7 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 			 WIPHY_VENDOR_CMD_NEED_NETDEV,
 		.doit = wlan_hdd_cfg80211_get_wifi_info
 	},
+#ifndef WLAN_UMAC_CONVERGENCE
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
 		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_SET_WIFI_CONFIGURATION,
@@ -8287,6 +8294,7 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 			WIPHY_VENDOR_CMD_NEED_RUNNING,
 		.doit = wlan_hdd_cfg80211_wifi_configuration_set
 	},
+#endif
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
 		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_ROAM,
@@ -8639,6 +8647,9 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 			 WIPHY_VENDOR_CMD_NEED_RUNNING,
 		.doit = wlan_hdd_cfg80211_configure_tdls_mode
 	}
+#endif
+#ifdef WLAN_UMAC_CONVERGENCE
+	COMMON_VENDOR_COMMANDS
 #endif
 };
 

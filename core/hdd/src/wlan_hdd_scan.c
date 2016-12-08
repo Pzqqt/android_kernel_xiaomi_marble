@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -49,6 +49,10 @@
 #include "cds_concurrency.h"
 #include "wma_api.h"
 #include "cds_utils.h"
+
+#ifdef WLAN_UMAC_CONVERGENCE
+#include "wlan_cfg80211.h"
+#endif
 
 #define MAX_RATES                       12
 #define HDD_WAKE_LOCK_SCAN_DURATION (5 * 1000) /* in msec */
@@ -1470,6 +1474,14 @@ static int wlan_hdd_update_scan_ies(hdd_adapter_t *adapter,
  *
  * Return: 0 for success, non zero for failure
  */
+#ifdef WLAN_UMAC_CONVERGENCE
+static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
+				    struct cfg80211_scan_request *request,
+				    uint8_t source)
+{
+	return wlan_cfg80211_scan(wiphy, request);
+}
+#else
 static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 				    struct cfg80211_scan_request *request,
 				    uint8_t source)
@@ -1863,6 +1875,7 @@ free_mem:
 	EXIT();
 	return status;
 }
+#endif
 
 /**
  * wlan_hdd_cfg80211_scan() - API to process cfg80211 scan request
