@@ -1648,6 +1648,7 @@ void cds_set_tdls_ct_mode(hdd_context_t *hdd_ctx)
 	}
 
 	if (eTDLS_SUPPORT_DISABLED == hdd_ctx->tdls_mode ||
+	    eTDLS_SUPPORT_NOT_ENABLED == hdd_ctx->tdls_mode ||
 	    (!hdd_ctx->config->fEnableTDLSImplicitTrigger)) {
 		state = false;
 		goto set_state;
