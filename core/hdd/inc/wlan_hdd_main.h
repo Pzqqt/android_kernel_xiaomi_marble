@@ -1328,7 +1328,7 @@ struct hdd_context_s {
 	/* Completion  variable to indicate Mc Thread Suspended */
 	struct completion mc_sus_event_var;
 
-	bool isMcThreadSuspended;
+	bool is_scheduler_suspended;
 
 #ifdef QCA_CONFIG_SMP
 	bool is_ol_rx_thread_suspended;

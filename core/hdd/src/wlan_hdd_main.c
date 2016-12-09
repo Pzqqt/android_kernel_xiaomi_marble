@@ -7954,8 +7954,8 @@ static void hdd_state_info_dump(char **buf_ptr, uint16_t *size)
 	len += scnprintf(buf + len, *size - len,
 		"\n isWiphySuspended %d", hdd_ctx->isWiphySuspended);
 	len += scnprintf(buf + len, *size - len,
-		"\n isMcThreadSuspended %d",
-		hdd_ctx->isMcThreadSuspended);
+		"\n is_scheduler_suspended %d",
+		hdd_ctx->is_scheduler_suspended);
 
 	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
 

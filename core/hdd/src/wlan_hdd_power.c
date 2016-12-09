@@ -1478,10 +1478,9 @@ QDF_STATUS hdd_wlan_shutdown(void)
 
 	cds_sched_context = get_cds_sched_ctxt();
 
-	/* Wakeup all driver threads */
-	if (true == pHddCtx->isMcThreadSuspended) {
+	if (pHddCtx->is_scheduler_suspended) {
 		scheduler_resume_complete();
-		pHddCtx->isMcThreadSuspended = false;
+		pHddCtx->is_scheduler_suspended = false;
 	}
 #ifdef QCA_CONFIG_SMP
 	if (true == pHddCtx->is_ol_rx_thread_suspended) {
@@ -1756,10 +1755,10 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 	mutex_unlock(&pHddCtx->iface_change_lock);
 	pld_request_bus_bandwidth(pHddCtx->parent_dev, PLD_BUS_WIDTH_MEDIUM);
 
-	/* Resume MC thread */
-	if (pHddCtx->isMcThreadSuspended) {
+	/* Resume control path scheduler */
+	if (pHddCtx->is_scheduler_suspended) {
 		scheduler_resume_complete();
-		pHddCtx->isMcThreadSuspended = false;
+		pHddCtx->is_scheduler_suspended = false;
 	}
 #ifdef QCA_CONFIG_SMP
 	/* Resume tlshim Rx thread */
@@ -2017,12 +2016,12 @@ next_adapter:
 		goto resume_tx;
 	}
 
-	/* Suspend MC thread */
+	/* Suspend control path scheduler */
 	scheduler_register_hdd_suspend_callback(hdd_suspend_cb);
 	scheduler_set_event_mask(MC_SUSPEND_EVENT_MASK);
 	scheduler_wake_up_controller_thread();
 
-	/* Wait for suspend confirmation from MC thread */
+	/* Wait for suspend confirmation from scheduler */
 	rc = wait_for_completion_timeout(&pHddCtx->mc_sus_event_var,
 		msecs_to_jiffies(WLAN_WAIT_TIME_MCTHREAD_SUSPEND));
 	if (!rc) {
@@ -2031,7 +2030,7 @@ next_adapter:
 		goto resume_tx;
 	}
 
-	pHddCtx->isMcThreadSuspended = true;
+	pHddCtx->is_scheduler_suspended = true;
 
 #ifdef QCA_CONFIG_SMP
 	/* Suspend tlshim rx thread */
@@ -2063,7 +2062,7 @@ next_adapter:
 resume_all:
 
 	scheduler_resume_complete();
-	pHddCtx->isMcThreadSuspended = false;
+	pHddCtx->is_scheduler_suspended = false;
 #endif
 
 resume_tx:
