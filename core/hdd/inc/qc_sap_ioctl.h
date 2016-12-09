@@ -176,6 +176,10 @@ typedef struct {
 #define QCSAP_ENABLE_FW_PROFILE          3
 #define QCSAP_SET_FW_PROFILE_HIST_INTVL  4
 
+/* Private sub-ioctl for initiating WoW suspend without Apps suspend */
+#define QCSAP_SET_WLAN_SUSPEND  5
+#define QCSAP_SET_WLAN_RESUME   6
+
 #define MAX_VAR_ARGS         7
 #define QCSAP_IOCTL_PRIV_GET_SOFTAP_LINK_SPEED (SIOCIWFIRSTPRIV + 31)
 

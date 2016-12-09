@@ -79,6 +79,7 @@
 #include "wlan_hdd_tsf.h"
 #include "wlan_hdd_green_ap.h"
 #include "ol_rx_fwd.h"
+#include "wlan_hdd_power.h"
 
 #define    IS_UP(_dev) \
 	(((_dev)->flags & (IFF_RUNNING|IFF_UP)) == (IFF_RUNNING|IFF_UP))
@@ -2472,6 +2473,12 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 		ret = wma_cli_set2_command(adapter->sessionId,
 					WMI_WLAN_PROFILE_SET_HIST_INTVL_CMDID,
 					value[1], value[2], DBG_CMD);
+	case QCSAP_SET_WLAN_SUSPEND:
+		ret = hdd_wlan_fake_apps_suspend(hdd_ctx->wiphy, dev);
+		break;
+	case QCSAP_SET_WLAN_RESUME:
+		ret = hdd_wlan_fake_apps_resume(hdd_ctx->wiphy, dev);
+		break;
 	default:
 		hdd_err("Invalid IOCTL command %d", sub_cmd);
 		break;
@@ -5629,6 +5636,22 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
 		0, "set_hist_intvl"
 	}
+	,
+#ifdef WLAN_SUSPEND_RESUME_TEST
+	{
+		QCSAP_SET_WLAN_SUSPEND,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
+		0, "wlan_suspend"
+	}
+	,
+	{
+		QCSAP_SET_WLAN_RESUME,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
+		0, "wlan_resume"
+	}
+	,
+#endif
+
 };
 
 static const iw_handler hostapd_private[] = {
