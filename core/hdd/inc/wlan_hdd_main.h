@@ -1869,7 +1869,12 @@ static inline int hdd_process_pktlog_command(hdd_context_t *hdd_ctx,
 static inline void hdd_set_tso_flags(hdd_context_t *hdd_ctx,
 	 struct net_device *wlan_dev)
 {
-	if (hdd_ctx->config->tso_enable) {
+	if (hdd_ctx->config->tso_enable &&
+	    hdd_ctx->config->enable_ip_tcp_udp_checksum_offload) {
+	    /*
+	     * We want to enable TSO only if IP/UDP/TCP TX checksum flag is
+	     * enabled.
+	     */
 		hdd_info("TSO Enabled");
 		wlan_dev->features |=
 			 NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM |
