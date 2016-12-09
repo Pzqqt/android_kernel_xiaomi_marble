@@ -2841,6 +2841,7 @@ QDF_STATUS ol_txrx_peer_state_update(struct cdp_pdev *ppdev,
 {
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	struct ol_txrx_peer_t *peer;
+	int    peer_ref_cnt;
 
 	if (qdf_unlikely(!pdev)) {
 		ol_txrx_err("Pdev is NULL");
@@ -2866,10 +2867,11 @@ QDF_STATUS ol_txrx_peer_state_update(struct cdp_pdev *ppdev,
 			   "%s: no state change, returns directly\n",
 			   __func__);
 #endif
-		qdf_atomic_dec(&peer->ref_cnt);
+		peer_ref_cnt = ol_txrx_peer_unref_delete(peer);
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-			 "%s: peer %p peer->ref_cnt %d", __func__, peer,
-			 qdf_atomic_read(&peer->ref_cnt));
+			  "%s: peer %p peer->ref_cnt %d",
+			  __func__, peer, peer_ref_cnt);
+
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -2899,13 +2901,20 @@ QDF_STATUS ol_txrx_peer_state_update(struct cdp_pdev *ppdev,
 				ol_txrx_peer_tid_unpause(peer, tid);
 		}
 	}
-	qdf_atomic_dec(&peer->ref_cnt);
+	peer_ref_cnt = ol_txrx_peer_unref_delete(peer);
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-		 "%s: peer %p peer->ref_cnt %d", __func__, peer,
-		 qdf_atomic_read(&peer->ref_cnt));
-	/* Set the state after the Pause to avoid the race condiction
-	   with ADDBA check in tx path */
-	peer->state = state;
+		 "%s: peer %p peer->ref_cnt %d",
+		 __func__, peer, peer_ref_cnt);
+	/*
+	 * after ol_txrx_peer_unref_delete, peer object cannot be accessed
+	 * if the return code was 0
+	 */
+	if (peer_ref_cnt)
+		/*
+		 * Set the state after the Pause to avoid the race condiction
+		 * with ADDBA check in tx path
+		 */
+		peer->state = state;
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -2922,6 +2931,7 @@ ol_txrx_peer_update(ol_txrx_vdev_handle vdev,
 		    enum ol_txrx_peer_update_select_t select)
 {
 	struct ol_txrx_peer_t *peer;
+	int    peer_ref_cnt;
 
 	peer = ol_txrx_peer_find_hash_find(vdev->pdev, peer_mac, 0, 1);
 	if (!peer) {
@@ -3003,11 +3013,11 @@ ol_txrx_peer_update(ol_txrx_vdev_handle vdev,
 			  __func__);
 		break;
 	}
-	}
-	qdf_atomic_dec(&peer->ref_cnt);
+	} /* switch */
+	peer_ref_cnt = ol_txrx_peer_unref_delete(peer);
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-		 "%s: peer %p peer->ref_cnt %d", __func__, peer,
-		 qdf_atomic_read(&peer->ref_cnt));
+		 "%s: peer %p peer->ref_cnt %d",
+		 __func__, peer, peer_ref_cnt);
 }
 
 uint8_t
@@ -3032,8 +3042,9 @@ ol_txrx_peer_qoscapable_get(struct ol_txrx_pdev_t *txrx_pdev, uint16_t peer_id)
 	return 0;
 }
 
-void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
+int ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 {
+	int    rc;
 	struct ol_txrx_vdev_t *vdev;
 	struct ol_txrx_pdev_t *pdev;
 	int i;
@@ -3045,29 +3056,16 @@ void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 	if (NULL == vdev) {
 		ol_txrx_dbg(
 			   "The vdev is not present anymore\n");
-		return;
+		return -EINVAL;
 	}
 
 	pdev = vdev->pdev;
 	if (NULL == pdev) {
 		ol_txrx_dbg(
 			   "The pdev is not present anymore\n");
-		return;
+		return -EINVAL;
 	}
 
-	/*
-	 * Check for the reference count before deleting the peer
-	 * as we noticed that sometimes we are re-entering this
-	 * function again which is leading to dead-lock.
-	 * (A double-free should never happen, so assert if it does.)
-	 */
-
-	if (0 == qdf_atomic_read(&(peer->ref_cnt))) {
-		ol_txrx_err(
-			   "The Peer is not present anymore\n");
-		qdf_assert(0);
-		return;
-	}
 
 	/*
 	 * Hold the lock all the way from checking if the peer ref count
@@ -3080,6 +3078,28 @@ void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 	 * concurrently with the empty check.
 	 */
 	qdf_spin_lock_bh(&pdev->peer_ref_mutex);
+
+	/*
+	 * Check for the reference count before deleting the peer
+	 * as we noticed that sometimes we are re-entering this
+	 * function again which is leading to dead-lock.
+	 * (A double-free should never happen, so assert if it does.)
+	 */
+	rc = qdf_atomic_read(&(peer->ref_cnt));
+
+	if (rc == 0) {
+		qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
+		ol_txrx_err("The Peer is not present anymore\n");
+		qdf_assert(0);
+		return -EACCES;
+	}
+	/*
+	 * now decrement rc; this will be the return code.
+	 * 0 : peer deleted
+	 * >0: peer ref removed, but still has other references
+	 * <0: sanity failed - no changes to the state of the peer
+	 */
+	rc--;
 
 	if (qdf_atomic_dec_and_test(&peer->ref_cnt)) {
 		u_int16_t peer_id;
@@ -3186,11 +3206,13 @@ void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 
 		qdf_mem_free(peer);
 	} else {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-			 "%s: peer %p peer->ref_cnt = %d", __func__, peer,
-			 qdf_atomic_read(&peer->ref_cnt));
 		qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
+			  "%s: peer %p peer->ref_cnt = %d",
+			  __func__, peer, rc);
 	}
+
+	return rc;
 }
 
 /**
