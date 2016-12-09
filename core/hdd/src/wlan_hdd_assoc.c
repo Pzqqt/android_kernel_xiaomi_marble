@@ -4548,6 +4548,51 @@ static inline bool hdd_is_8021x_sha256_auth_type(hdd_station_ctx_t *pHddStaCtx)
 }
 #endif
 
+/*
+ * hdd_roam_channel_switch_handler() - hdd channel switch handler
+ * @adapter: Pointer to adapter context
+ * @roam_info: Pointer to roam info
+ *
+ * Return: None
+ */
+static void hdd_roam_channel_switch_handler(hdd_adapter_t *adapter,
+				tCsrRoamInfo *roam_info)
+{
+	struct hdd_chan_change_params chan_change;
+	struct cfg80211_bss *bss;
+	struct net_device *dev = adapter->dev;
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct wiphy *wiphy = wdev->wiphy;
+	QDF_STATUS status;
+
+	hdd_info("channel switch for session:%d to channel:%d",
+		adapter->sessionId, roam_info->chan_info.chan_id);
+
+	chan_change.chan = roam_info->chan_info.chan_id;
+	chan_change.chan_params.ch_width =
+		roam_info->chan_info.ch_width;
+	chan_change.chan_params.sec_ch_offset =
+		roam_info->chan_info.sec_ch_offset;
+	chan_change.chan_params.center_freq_seg0 =
+		roam_info->chan_info.band_center_freq1;
+	chan_change.chan_params.center_freq_seg1 =
+		roam_info->chan_info.band_center_freq2;
+
+	bss = wlan_hdd_cfg80211_update_bss_db(adapter, roam_info);
+	if (NULL == bss)
+		hdd_err("%s: unable to create BSS entry", adapter->dev->name);
+	else
+		cfg80211_put_bss(wiphy, bss);
+
+	status = hdd_chan_change_notify(adapter, adapter->dev, chan_change);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("channel change notification failed");
+
+	status = cds_set_hw_mode_on_channel_switch(adapter->sessionId);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_info("set hw mode change not done");
+}
+
 /**
  * hdd_sme_roam_callback() - hdd sme roam callback
  * @pContext: pointer to adapter context
@@ -4568,7 +4613,6 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 	hdd_station_ctx_t *pHddStaCtx = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	hdd_context_t *pHddCtx = NULL;
-	struct hdd_chan_change_params chan_change;
 	struct cfg80211_bss *bss_status;
 
 	hdd_info("CSR Callback: status= %d result= %d roamID=%d",
@@ -4889,28 +4933,9 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 	}
 #endif /* FEATURE_WLAN_ESE */
 	case eCSR_ROAM_STA_CHANNEL_SWITCH:
-		hdd_info("channel switch for session:%d to channel:%d",
-			pAdapter->sessionId, pRoamInfo->chan_info.chan_id);
-
-		chan_change.chan = pRoamInfo->chan_info.chan_id;
-		chan_change.chan_params.ch_width =
-					pRoamInfo->chan_info.ch_width;
-		chan_change.chan_params.sec_ch_offset =
-					pRoamInfo->chan_info.sec_ch_offset;
-		chan_change.chan_params.center_freq_seg0 =
-					pRoamInfo->chan_info.band_center_freq1;
-		chan_change.chan_params.center_freq_seg1 =
-					pRoamInfo->chan_info.band_center_freq2;
-
-		status = hdd_chan_change_notify(pAdapter, pAdapter->dev,
-					chan_change);
-		if (QDF_IS_STATUS_ERROR(status))
-			hdd_err("channel change notification failed");
-
-		status = cds_set_hw_mode_on_channel_switch(pAdapter->sessionId);
-		if (QDF_IS_STATUS_ERROR(status))
-			hdd_info("set hw mode change not done");
+		hdd_roam_channel_switch_handler(pAdapter, pRoamInfo);
 		break;
+
 	case eCSR_ROAM_UPDATE_SCAN_RESULT:
 		if ((NULL != pRoamInfo) && (NULL != pRoamInfo->pBssDesc)) {
 			bss_status = wlan_hdd_cfg80211_inform_bss_frame(
