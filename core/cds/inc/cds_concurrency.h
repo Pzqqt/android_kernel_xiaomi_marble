@@ -62,6 +62,8 @@
 		(WEIGHT_OF_GROUP1_PCL_CHANNELS - PCL_GROUPS_WEIGHT_DIFFERENCE)
 #define WEIGHT_OF_GROUP3_PCL_CHANNELS \
 		(WEIGHT_OF_GROUP2_PCL_CHANNELS - PCL_GROUPS_WEIGHT_DIFFERENCE)
+#define WEIGHT_OF_GROUP4_PCL_CHANNELS \
+		(WEIGHT_OF_GROUP3_PCL_CHANNELS - PCL_GROUPS_WEIGHT_DIFFERENCE)
 
 #define WEIGHT_OF_NON_PCL_CHANNELS 1
 #define WEIGHT_OF_DISALLOWED_CHANNELS 0
@@ -120,7 +122,8 @@ enum hw_mode_sbs_capab {
 /**
  * enum cds_pcl_group_id - Identifies the pcl groups to be used
  * @CDS_PCL_GROUP_ID1_ID2: Use weights of group1 and group2
- * @CDS_PCL_GROUP_ID2_ID2: Use weights of group2 and group3
+ * @CDS_PCL_GROUP_ID2_ID3: Use weights of group2 and group3
+ * @CDS_PCL_GROUP_ID3_ID4: Use weights of group3 and group4
  *
  * Since maximum of three groups are possible, this will indicate which
  * PCL group needs to be used.
@@ -128,6 +131,7 @@ enum hw_mode_sbs_capab {
 enum cds_pcl_group_id {
 	CDS_PCL_GROUP_ID1_ID2,
 	CDS_PCL_GROUP_ID2_ID3,
+	CDS_PCL_GROUP_ID3_ID4,
 };
 
 /**
@@ -242,6 +246,7 @@ enum cds_mac_use {
  * @CDS_5G: 5 Ghz channels only
  * @CDS_SCC_CH: SCC channel only
  * @CDS_MCC_CH: MCC channels only
+ * @CDS_SBS_CH: SBS channels only
  * @CDS_SCC_CH_24G: SCC channel & 2.4 Ghz channels
  * @CDS_SCC_CH_5G: SCC channel & 5 Ghz channels
  * @CDS_24G_SCC_CH: 2.4 Ghz channels & SCC channel
@@ -262,6 +267,11 @@ enum cds_mac_use {
  * @CDS_MCC_CH_5G:  MCC channels & 5 Ghz channels
  * @CDS_24G_MCC_CH: 2.4 Ghz channels & MCC channels
  * @CDS_5G_MCC_CH: 5 Ghz channels & MCC channels
+ * @CDS_SBS_CH_5G: SBS channels & rest of 5 Ghz channels
+ * @CDS_24G_SCC_CH_SBS_CH: 2.4 Ghz channels, SCC channel & SBS channels
+ * @CDS_24G_SCC_CH_SBS_CH_5G: 2.4 Ghz channels, SCC channel,
+ *      SBS channels & rest of the 5G channels
+ * @CDS_24G_SBS_CH_MCC_CH: 2.4 Ghz channels, SBS channels & MCC channels
  * @CDS_MAX_PCL_TYPE: Max place holder
  *
  * These are generic IDs that identify the various roles
@@ -273,6 +283,7 @@ enum cds_pcl_type {
 	CDS_5G,
 	CDS_SCC_CH,
 	CDS_MCC_CH,
+	CDS_SBS_CH,
 	CDS_SCC_CH_24G,
 	CDS_SCC_CH_5G,
 	CDS_24G_SCC_CH,
@@ -287,6 +298,10 @@ enum cds_pcl_type {
 	CDS_MCC_CH_5G,
 	CDS_24G_MCC_CH,
 	CDS_5G_MCC_CH,
+	CDS_SBS_CH_5G,
+	CDS_24G_SCC_CH_SBS_CH,
+	CDS_24G_SCC_CH_SBS_CH_5G,
+	CDS_24G_SBS_CH_MCC_CH,
 
 	CDS_MAX_PCL_TYPE
 };
@@ -366,7 +381,9 @@ enum cds_one_connection_mode {
  *			1x1@5 Ghz
  * @CDS_STA_SAP_MCC_5_2x2: STA & SAP connection on MCC using
  *			2x2@5 Ghz
- * @CDS_STA_SAP_DBS_1x1,: STA & SAP connection on DBS using 1x1
+ * @CDS_STA_SAP_DBS_1x1: STA & SAP connection on DBS using 1x1
+ * @CDS_STA_SAP_DBS_2x2: STA & SAP connection on DBS using 2x2
+ * @CDS_STA_SAP_SBS_5_1x1: STA & SAP connection on 5G SBS using 1x1
  * @CDS_STA_P2P_GO_SCC_24_1x1: STA & P2P GO connection on SCC
  *			using 1x1@2.4 Ghz
  * @CDS_STA_P2P_GO_SCC_24_2x2: STA & P2P GO connection on SCC
@@ -385,6 +402,10 @@ enum cds_one_connection_mode {
  *			using 2x2@5 Ghz
  * @CDS_STA_P2P_GO_DBS_1x1: STA & P2P GO connection on DBS using
  *			1x1
+ * @CDS_STA_P2P_GO_DBS_2x2: STA & P2P GO connection on DBS using
+ *			2x2
+ * @CDS_STA_P2P_GO_SBS_5_1x1: STA & P2P GO connection on 5G SBS
+ *			using 1x1
  * @CDS_STA_P2P_CLI_SCC_24_1x1: STA & P2P CLI connection on SCC
  *			using 1x1@2.4 Ghz
  * @CDS_STA_P2P_CLI_SCC_24_2x2: STA & P2P CLI connection on SCC
@@ -403,6 +424,10 @@ enum cds_one_connection_mode {
  *			using 2x2@5 Ghz
  * @CDS_STA_P2P_CLI_DBS_1x1: STA & P2P CLI connection on DBS
  *			using 1x1
+ * @CDS_STA_P2P_CLI_DBS_2x2: STA & P2P CLI connection on DBS
+ *			using 2x2
+ * @CDS_STA_P2P_CLI_SBS_5_1x1: STA & P2P CLI connection on 5G
+ *			SBS using 1x1
  * @CDS_P2P_GO_P2P_CLI_SCC_24_1x1: P2P GO & CLI connection on
  *			SCC using 1x1@2.4 Ghz
  * @CDS_P2P_GO_P2P_CLI_SCC_24_2x2: P2P GO & CLI connection on
@@ -421,6 +446,10 @@ enum cds_one_connection_mode {
  *			MCC using 2x2@5 Ghz
  * @CDS_P2P_GO_P2P_CLI_DBS_1x1: P2P GO & CLI connection on DBS
  *			using 1x1
+ * @CDS_P2P_GO_P2P_CLI_DBS_2x2: P2P GO & P2P CLI connection
+ *			on DBS using 2x2
+ * @CDS_P2P_GO_P2P_CLI_SBS_5_1x1: P2P GO & P2P CLI connection
+ *			on 5G SBS using 1x1
  * @CDS_P2P_GO_SAP_SCC_24_1x1: P2P GO & SAP connection on
  *			SCC using 1x1@2.4 Ghz
  * @CDS_P2P_GO_SAP_SCC_24_2x2: P2P GO & SAP connection on
@@ -439,6 +468,10 @@ enum cds_one_connection_mode {
  *			MCC using 2x2@5 Ghz
  * @CDS_P2P_GO_SAP_DBS_1x1: P2P GO & SAP connection on DBS using
  *			1x1
+ * @CDS_P2P_GO_SAP_DBS_2x2: P2P GO & SAP connection on DBS using
+ *			2x2
+ * @CDS_P2P_GO_SAP_SBS_5_1x1: P2P GO & SAP connection on 5G SBS
+ *			using 1x1
  * @CDS_P2P_CLI_SAP_SCC_24_1x1: CLI & SAP connection on SCC using
  *			1x1@2.4 Ghz
  * @CDS_P2P_CLI_SAP_SCC_24_2x2: CLI & SAP connection on SCC using
@@ -458,12 +491,33 @@ enum cds_one_connection_mode {
  * @CDS_P2P_STA_SAP_MCC_24_5_1x1: CLI and SAP connecting on MCC
  *			in 2.4 and 5GHz 1x1
  * @CDS_P2P_STA_SAP_MCC_24_5_2x2: CLI and SAP connecting on MCC
-			in 2.4 and 5GHz 2x2
+ *			in 2.4 and 5GHz 2x2
  * @CDS_P2P_CLI_SAP_DBS_1x1,: CLI & SAP connection on DBS using 1x1
+ * @CDS_P2P_CLI_SAP_DBS_2x2: P2P CLI & SAP connection on DBS using
+ *			2x2
+ * @CDS_P2P_CLI_SAP_SBS_5_1x1: P2P CLI & SAP connection on 5G SBS
+ *			using 1x1
+ * @CDS_SAP_SAP_SCC_24_1x1: SAP & SAP connection on
+ *			SCC using 1x1@2.4 Ghz
+ * @CDS_SAP_SAP_SCC_24_2x2: SAP & SAP connection on
+ *			SCC using 2x2@2.4 Ghz
+ * @CDS_SAP_SAP_MCC_24_1x1: SAP & SAP connection on
+ *			MCC using 1x1@2.4 Ghz
+ * @CDS_SAP_SAP_MCC_24_2x2: SAP & SAP connection on
+ *			MCC using 2x2@2.4 Ghz
+ * @CDS_SAP_SAP_SCC_5_1x1: SAP & SAP connection on
+ *			SCC using 1x1@5 Ghz
+ * @CDS_SAP_SAP_SCC_5_2x2: SAP & SAP connection on
+ *			SCC using 2x2@5 Ghz
+ * @CDS_SAP_SAP_MCC_5_1x1: SAP & SAP connection on
+ *			MCC using 1x1@5 Ghz
+ * @CDS_SAP_SAP_MCC_5_2x2: SAP & SAP connection on
+ *			MCC using 2x2@5 Ghz
+ * @CDS_SAP_SAP_DBS_1x1: SAP & SAP connection on DBS using
+ *			1x1
+ * @CDS_SAP_SAP_DBS_2x2: SAP & SAP connection on DBS using 2x2
+ * @CDS_SAP_SAP_SBS_5_1x1: SAP & SAP connection on 5G SBS using 1x1
 
- * @CDS_MAX_TWO_CONNECTION_MODE: Max place holder
- *
- * These are generic IDs that identify the various roles
  * in the software system
  */
 enum cds_two_connection_mode {
@@ -478,6 +532,8 @@ enum cds_two_connection_mode {
 	CDS_STA_SAP_MCC_24_5_1x1,
 	CDS_STA_SAP_MCC_24_5_2x2,
 	CDS_STA_SAP_DBS_1x1,
+	CDS_STA_SAP_DBS_2x2,
+	CDS_STA_SAP_SBS_5_1x1,
 	CDS_STA_P2P_GO_SCC_24_1x1,
 	CDS_STA_P2P_GO_SCC_24_2x2,
 	CDS_STA_P2P_GO_MCC_24_1x1,
@@ -489,6 +545,8 @@ enum cds_two_connection_mode {
 	CDS_STA_P2P_GO_MCC_24_5_1x1,
 	CDS_STA_P2P_GO_MCC_24_5_2x2,
 	CDS_STA_P2P_GO_DBS_1x1,
+	CDS_STA_P2P_GO_DBS_2x2,
+	CDS_STA_P2P_GO_SBS_5_1x1,
 	CDS_STA_P2P_CLI_SCC_24_1x1,
 	CDS_STA_P2P_CLI_SCC_24_2x2,
 	CDS_STA_P2P_CLI_MCC_24_1x1,
@@ -500,6 +558,8 @@ enum cds_two_connection_mode {
 	CDS_STA_P2P_CLI_MCC_24_5_1x1,
 	CDS_STA_P2P_CLI_MCC_24_5_2x2,
 	CDS_STA_P2P_CLI_DBS_1x1,
+	CDS_STA_P2P_CLI_DBS_2x2,
+	CDS_STA_P2P_CLI_SBS_5_1x1,
 	CDS_P2P_GO_P2P_CLI_SCC_24_1x1,
 	CDS_P2P_GO_P2P_CLI_SCC_24_2x2,
 	CDS_P2P_GO_P2P_CLI_MCC_24_1x1,
@@ -511,6 +571,8 @@ enum cds_two_connection_mode {
 	CDS_P2P_GO_P2P_CLI_MCC_24_5_1x1,
 	CDS_P2P_GO_P2P_CLI_MCC_24_5_2x2,
 	CDS_P2P_GO_P2P_CLI_DBS_1x1,
+	CDS_P2P_GO_P2P_CLI_DBS_2x2,
+	CDS_P2P_GO_P2P_CLI_SBS_5_1x1,
 	CDS_P2P_GO_SAP_SCC_24_1x1,
 	CDS_P2P_GO_SAP_SCC_24_2x2,
 	CDS_P2P_GO_SAP_MCC_24_1x1,
@@ -522,6 +584,8 @@ enum cds_two_connection_mode {
 	CDS_P2P_GO_SAP_MCC_24_5_1x1,
 	CDS_P2P_GO_SAP_MCC_24_5_2x2,
 	CDS_P2P_GO_SAP_DBS_1x1,
+	CDS_P2P_GO_SAP_DBS_2x2,
+	CDS_P2P_GO_SAP_SBS_5_1x1,
 	CDS_P2P_CLI_SAP_SCC_24_1x1,
 	CDS_P2P_CLI_SAP_SCC_24_2x2,
 	CDS_P2P_CLI_SAP_MCC_24_1x1,
@@ -533,6 +597,21 @@ enum cds_two_connection_mode {
 	CDS_P2P_CLI_SAP_MCC_24_5_1x1,
 	CDS_P2P_CLI_SAP_MCC_24_5_2x2,
 	CDS_P2P_CLI_SAP_DBS_1x1,
+	CDS_P2P_CLI_SAP_DBS_2x2,
+	CDS_P2P_CLI_SAP_SBS_5_1x1,
+	CDS_SAP_SAP_SCC_24_1x1,
+	CDS_SAP_SAP_SCC_24_2x2,
+	CDS_SAP_SAP_MCC_24_1x1,
+	CDS_SAP_SAP_MCC_24_2x2,
+	CDS_SAP_SAP_SCC_5_1x1,
+	CDS_SAP_SAP_SCC_5_2x2,
+	CDS_SAP_SAP_MCC_5_1x1,
+	CDS_SAP_SAP_MCC_5_2x2,
+	CDS_SAP_SAP_MCC_24_5_1x1,
+	CDS_SAP_SAP_MCC_24_5_2x2,
+	CDS_SAP_SAP_DBS_1x1,
+	CDS_SAP_SAP_DBS_2x2,
+	CDS_SAP_SAP_SBS_5_1x1,
 
 	CDS_MAX_TWO_CONNECTION_MODE
 };
@@ -544,8 +623,11 @@ enum cds_two_connection_mode {
  * @CDS_NOP: No action
  * @CDS_DBS: switch to DBS mode
  * @CDS_DBS_DOWNGRADE: switch to DBS mode & downgrade to 1x1
+ * @CDS_DBS_UPGRADE: switch to DBS mode & upgrade to 2x2
  * @CDS_SINGLE_MAC: switch to MCC/SCC mode
  * @CDS_SINGLE_MAC_UPGRADE: switch to MCC/SCC mode & upgrade to 2x2
+ * @CDS_SBS: switch to SBS mode
+ * @CDS_SBS_DOWNGRADE: switch to SBS mode & downgrade to 1x1
  * @CDS_MAX_CONC_PRIORITY_MODE: Max place holder
  *
  * These are generic IDs that identify the various roles
@@ -555,8 +637,12 @@ enum cds_conc_next_action {
 	CDS_NOP = 0,
 	CDS_DBS,
 	CDS_DBS_DOWNGRADE,
+	CDS_DBS_UPGRADE,
 	CDS_SINGLE_MAC,
 	CDS_SINGLE_MAC_UPGRADE,
+	CDS_SBS,
+	CDS_SBS_DOWNGRADE,
+
 	CDS_MAX_CONC_NEXT_ACTION
 };
 
@@ -599,6 +685,18 @@ struct cds_conc_connection_info {
 	uint32_t      vdev_id;
 	bool          in_use;
 };
+
+typedef const enum cds_pcl_type dbs_pcl_second_connection_table_type
+[CDS_MAX_ONE_CONNECTION_MODE][CDS_MAX_NUM_OF_MODE][CDS_MAX_CONC_PRIORITY_MODE];
+
+typedef const enum cds_pcl_type dbs_pcl_third_connection_table_type
+[CDS_MAX_TWO_CONNECTION_MODE][CDS_MAX_NUM_OF_MODE][CDS_MAX_CONC_PRIORITY_MODE];
+
+typedef const enum cds_conc_next_action next_action_two_connection_table_type
+[CDS_MAX_ONE_CONNECTION_MODE][CDS_MAX_BAND];
+
+typedef const enum cds_conc_next_action next_action_three_connection_table_type
+[CDS_MAX_TWO_CONNECTION_MODE][CDS_MAX_BAND];
 
 bool cds_is_connection_in_progress(void);
 void cds_dump_concurrency_info(void);

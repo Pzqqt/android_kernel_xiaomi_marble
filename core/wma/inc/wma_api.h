@@ -193,6 +193,8 @@ QDF_STATUS wma_get_hw_mode_from_idx(uint32_t idx,
 		struct sir_hw_mode_params *hw_mode);
 int8_t wma_get_num_dbs_hw_modes(void);
 bool wma_is_hw_dbs_capable(void);
+bool wma_is_hw_sbs_capable(void);
+bool wma_is_hw_dbs_2x2_capable(void);
 int8_t wma_get_mac_id_of_vdev(uint32_t vdev_id);
 void wma_update_intf_hw_mode_params(uint32_t vdev_id, uint32_t mac_id,
 				uint32_t cfgd_hw_mode_index);

@@ -2915,6 +2915,52 @@ bool wma_is_hw_dbs_capable(void)
 }
 
 /**
+ * wma_is_hw_sbs_capable() - Check if HW is SBS capable
+ *
+ * Checks if the HW is SBS capable
+ *
+ * Return: true if the HW is SBS capable
+ */
+bool wma_is_hw_sbs_capable(void)
+{
+	tp_wma_handle wma;
+	uint32_t param, i, found = 0;
+
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma) {
+		WMA_LOGE("%s: Invalid WMA handle", __func__);
+		return false;
+	}
+
+	WMA_LOGI("%s: SBS service bit map: %d", __func__,
+		WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
+		WMI_SERVICE_DUAL_BAND_SIMULTANEOUS_SUPPORT));
+
+	/* The agreement with FW is that: To know if the target is SBS
+	 * capable, SBS needs to be supported both in the HW mode list
+	 * and DBS needs to be supported in the service ready event
+	 */
+	if (!(WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
+			WMI_SERVICE_DUAL_BAND_SIMULTANEOUS_SUPPORT)))
+		return false;
+
+	for (i = 0; i < wma->num_dbs_hw_modes; i++) {
+		param = wma->hw_mode.hw_mode_list[i];
+		WMA_LOGI("%s: HW param: %x", __func__, param);
+		if (WMA_HW_MODE_SBS_MODE_GET(param)) {
+			WMA_LOGI("%s: HW (%d) is SBS capable", __func__, i);
+			found = 1;
+			break;
+		}
+	}
+
+	if (found)
+		return true;
+
+	return true;
+}
+
+/**
  * wma_get_mac_id_of_vdev() - Get MAC id corresponding to a vdev
  * @vdev_id: VDEV whose MAC ID is required
  *
@@ -3642,4 +3688,63 @@ bool wma_is_p2p_lo_capable(void)
 		return true;
 
 	return false;
+}
+
+/**
+ * wma_is_hw_dbs_2x2_capable() - if hardware is capable of dbs 2x2
+ *
+ * This function checks if hw_modes supported are always capable of
+ * DBS 2x2.
+ *    true: DBS 2x2 can always be supported
+ *    false: hw_modes support DBS 1x1 as well
+ *
+ * Return: true - DBS2x2, false - DBS1x1
+ */
+bool wma_is_hw_dbs_2x2_capable(void)
+{
+	tp_wma_handle wma;
+	int i, j = 0, max_mac;
+	uint32_t ht_2g, ht_5g;
+	struct extended_caps *phy_caps;
+	WMI_MAC_PHY_CAPABILITIES *mac_cap;
+	uint32_t tx_chain, rx_chain, final_min_rf_chains = 0;
+	uint32_t min_rf_chains, min_2g_rf_chains, min_5g_rf_chains;
+
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma) {
+		WMA_LOGE("%s: Invalid WMA handle", __func__);
+		return false;
+	}
+
+	phy_caps = &wma->phy_caps;
+	for (i = 0; i < phy_caps->num_hw_modes.num_hw_modes; i++) {
+		if (phy_caps->each_hw_mode_cap[i].phy_id_map == PHY1_PHY2)
+			max_mac = j + 2;
+		else
+			max_mac = j + 1;
+		for ( ; j < max_mac; j++) {
+			mac_cap = &phy_caps->each_phy_cap_per_hwmode[j];
+			ht_2g = mac_cap->ht_cap_info_2G;
+			ht_5g = mac_cap->ht_cap_info_5G;
+			if (ht_5g && ht_2g) {
+				tx_chain = mac_cap->tx_chain_mask_2G;
+				rx_chain = mac_cap->rx_chain_mask_2G;
+				min_2g_rf_chains = QDF_MIN(
+				wma_get_num_of_setbits_from_bitmask(tx_chain),
+				wma_get_num_of_setbits_from_bitmask(rx_chain));
+				tx_chain = mac_cap->tx_chain_mask_5G;
+				rx_chain = mac_cap->rx_chain_mask_5G;
+				min_5g_rf_chains = QDF_MIN(
+				wma_get_num_of_setbits_from_bitmask(tx_chain),
+				wma_get_num_of_setbits_from_bitmask(rx_chain));
+				min_rf_chains = QDF_MIN(min_2g_rf_chains,
+							min_5g_rf_chains);
+			} else {
+				continue;
+			}
+			final_min_rf_chains = QDF_MIN(final_min_rf_chains,
+						min_rf_chains);
+		}
+	}
+	return (final_min_rf_chains == 2) ? true : false;
 }

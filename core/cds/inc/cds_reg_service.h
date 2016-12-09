@@ -40,6 +40,7 @@
 
 #define CDS_COUNTRY_CODE_LEN  2
 #define CDS_MAC_ADDRESS_LEN 6
+#define CDS_SBS_SEPARATION_THRESHOLD 100
 
 #define CDS_CHANNEL_STATE(chan_enum) reg_channels[chan_enum].state
 #define CDS_CHANNEL_NUM(chan_enum) chan_mapping[chan_enum].chan_num
@@ -74,6 +75,16 @@
 	(CDS_IS_CHANNEL_5GHZ(chan_num1) == CDS_IS_CHANNEL_5GHZ(chan_num2)))
 
 #define CDS_MIN_11P_CHANNEL chan_mapping[MIN_59GHZ_CHANNEL].chan_num
+
+/* assumption is the 2 channels passed are 5G channels */
+#define CDS_IS_CHANNEL_VALID_5G_SBS(curchan, newchan) \
+	(curchan > newchan ? \
+	CDS_CHANNEL_FREQ(cds_get_channel_enum(curchan)) \
+	- CDS_CHANNEL_FREQ(cds_get_channel_enum(newchan)) \
+	 > CDS_SBS_SEPARATION_THRESHOLD : \
+	CDS_CHANNEL_FREQ(cds_get_channel_enum(newchan)) \
+	- CDS_CHANNEL_FREQ(cds_get_channel_enum(curchan)) \
+	 > CDS_SBS_SEPARATION_THRESHOLD)
 
 typedef enum {
 	REGDOMAIN_FCC,
@@ -375,6 +386,8 @@ QDF_STATUS cds_read_default_country(uint8_t *default_country);
 QDF_STATUS cds_get_channel_list_with_power(struct channel_power
 					   *base_channels,
 					   uint8_t *num_base_channels);
+
+enum channel_enum cds_get_channel_enum(uint32_t chan_num);
 
 enum channel_state cds_get_channel_state(uint32_t chan_num);
 QDF_STATUS cds_get_dfs_region(enum dfs_region *dfs_reg);
