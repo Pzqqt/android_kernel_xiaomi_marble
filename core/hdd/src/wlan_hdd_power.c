@@ -1479,7 +1479,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	cds_sched_context = get_cds_sched_ctxt();
 
 	if (pHddCtx->is_scheduler_suspended) {
-		scheduler_resume_complete();
+		scheduler_resume();
 		pHddCtx->is_scheduler_suspended = false;
 	}
 #ifdef QCA_CONFIG_SMP
@@ -1757,7 +1757,7 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 
 	/* Resume control path scheduler */
 	if (pHddCtx->is_scheduler_suspended) {
-		scheduler_resume_complete();
+		scheduler_resume();
 		pHddCtx->is_scheduler_suspended = false;
 	}
 #ifdef QCA_CONFIG_SMP
@@ -2061,7 +2061,7 @@ next_adapter:
 #ifdef QCA_CONFIG_SMP
 resume_all:
 
-	scheduler_resume_complete();
+	scheduler_resume();
 	pHddCtx->is_scheduler_suspended = false;
 #endif
 
