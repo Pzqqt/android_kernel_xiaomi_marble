@@ -296,7 +296,7 @@ QDF_STATUS scheduler_deregister_module(QDF_MODULE_ID qid)
 	return QDF_STATUS_SUCCESS;
 }
 
-void scheduler_resume_complete(void)
+void scheduler_resume(void)
 {
 	struct scheduler_ctx *sched_ctx = scheduler_get_context();
 

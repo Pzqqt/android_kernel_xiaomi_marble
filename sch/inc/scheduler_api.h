@@ -195,14 +195,14 @@ static inline QDF_STATUS scheduler_post_msg(CDS_MQ_ID qid,
 }
 
 /**
- * scheduler_resume_complete() - resume scheduler thread
+ * scheduler_resume() - resume scheduler thread
  *
  * Complete scheduler thread resume wait event such that scheduler
  * thread can wake up and process message queues
  *
  * Return: none
  */
-void scheduler_resume_complete(void);
+void scheduler_resume(void);
 
 /**
  * scheduler_register_hdd_suspend_callback() - suspend callback to hdd
