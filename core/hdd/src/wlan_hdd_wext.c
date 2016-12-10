@@ -388,6 +388,29 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_GET_CHANNEL_LIST  5
 #define WE_GET_RSSI          6
 #ifdef FEATURE_WLAN_TDLS
+/*
+ * <ioctl>
+ * getTdlsPeers - Get all TDLS peers.
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: Returns the MAC address of all the TDLS peers
+ * wlan0     getTdlsPeers:
+ * MAC               Id cap up RSSI
+ * ---------------------------------
+ * 00:0a:f5:0e:bd:18  2   Y  Y  -44
+ * 00:0a:f5:bf:0e:12  0   N  N    0
+ *
+ * This IOCTL is used to get all TDLS peers.
+ *
+ * @E.g: iwpriv wlan0 getTdlsPeers
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_TDLS_PEERS    8
 #endif
 #ifdef WLAN_FEATURE_11W
@@ -427,6 +450,41 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_MAC_PWR_DEBUG_CMD 4
 
 #ifdef FEATURE_WLAN_TDLS
+/*
+ * <ioctl>
+ * setTdlsConfig - Set TDLS configuration parameters.
+ *
+ * @INPUT: 11 TDLS configuration parameters
+ *	@args[0]: tdls: [0..2]
+ *	@args[1]: tx_period_t: [1000..4294967295UL]
+ *	@args[2]: tx_packet_n: [0..4294967295UL]
+ *	@args[3]: [discovery_period is not used anymore]
+ *	@args[4]: discovery_tries_n: [1..100]
+ *	@args[5]: [idle_timeout is not used anymore]
+ *	@args[6]: idle_packet_n: [0..40000]
+ *	@args[7]: [rssi_hysteresis is not used anymore]
+ *	@args[8]: rssi_trigger_threshold: [-120..0]
+ *	@args[9]: rssi_teardown_threshold: [-120..0]
+ *	@args[10]: rssi_delta: [-30..0]
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL is used to set the TDLS configuration parameters.
+ *
+ * @E.g: iwpriv wlan0 setTdlsConfig tdls tx_period_t tx_packet_n
+ *		discovery_period discovery_tries_n idle_timeout
+ *		idle_packet_n rssi_hysteresis rssi_trigger_threshold
+ *		rssi_teardown_threshold rssi_delta
+ * iwpriv wlan0 setTdlsConfig 1 1500 40 1 5 1 5 0 -70 -70 -10
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
+
+
 #define WE_TDLS_CONFIG_PARAMS   5
 #endif
 #define WE_IBSS_GET_PEER_INFO   6
