@@ -414,8 +414,7 @@ int hdd_lro_init(hdd_context_t *hdd_ctx)
 	struct wma_lro_config_cmd_t lro_config;
 
 	if ((!hdd_ctx->config->lro_enable) &&
-	    (hdd_napi_enabled(HDD_NAPI_ANY) == 0))
-	{
+	    (hdd_napi_enabled(HDD_NAPI_ANY) == 0)) {
 		hdd_err("LRO and NAPI are both disabled.");
 		return 0;
 	}

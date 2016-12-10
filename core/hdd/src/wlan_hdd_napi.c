@@ -124,7 +124,7 @@ int hdd_napi_create(void)
 			hdd_info("napi instances were created. Map=0x%x", rc);
 			hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 			if (unlikely(NULL == hdd_ctx)) {
-				QDF_ASSERT( 0 );
+				QDF_ASSERT(0);
 				rc = -EFAULT;
 			} else {
 				rc = hdd_napi_event(NAPI_EVT_INI_FILE,
@@ -276,7 +276,7 @@ int hdd_napi_apply_throughput_policy(struct hdd_context_s *hddctx,
 	uint64_t packets = tx_packets + rx_packets;
 	enum qca_napi_tput_state req_state;
 	struct qca_napi_data *napid = hdd_napi_get_all();
-	int enabled = 0;
+	int enabled;
 
 	NAPI_DEBUG("-->%s(tx=%lld, rx=%lld)", __func__, tx_packets, rx_packets);
 
@@ -293,20 +293,24 @@ int hdd_napi_apply_throughput_policy(struct hdd_context_s *hddctx,
 		return rc;
 	}
 
-	if ((napid != NULL) &&
-	    (enabled = hdd_napi_enabled(HDD_NAPI_ANY))) {
-		if (packets > hddctx->config->busBandwidthHighThreshold)
-			req_state = QCA_NAPI_TPUT_HI;
-		else
-			req_state = QCA_NAPI_TPUT_LO;
-
-		if (req_state != napid->napi_mode)
-			rc = hdd_napi_event(NAPI_EVT_TPUT_STATE,
-					    (void *)req_state);
-	} else {
-		hdd_err("ERR: napid (%p) NULL or napi_enabled (%d) FALSE",
-			napid, enabled);
+	if (!napid) {
+		hdd_err("ERR: napid NULL");
+		return rc;
 	}
+
+	enabled = hdd_napi_enabled(HDD_NAPI_ANY);
+	if (!enabled) {
+		hdd_err("ERR: napi not enabled");
+		return rc;
+	}
+
+	if (packets > hddctx->config->busBandwidthHighThreshold)
+		req_state = QCA_NAPI_TPUT_HI;
+	else
+		req_state = QCA_NAPI_TPUT_LO;
+
+	if (req_state != napid->napi_mode)
+		rc = hdd_napi_event(NAPI_EVT_TPUT_STATE, (void *)req_state);
 	return rc;
 }
 

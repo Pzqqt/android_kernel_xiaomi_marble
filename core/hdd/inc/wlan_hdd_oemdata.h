@@ -178,7 +178,7 @@ void hdd_send_peer_status_ind_to_oem_app(struct qdf_mac_addr *peerMac,
 					 uint8_t peerStatus,
 					 uint8_t peerTimingMeasCap,
 					 uint8_t sessionId,
-					 tSirSmeChanInfo * chan_info,
+					 struct sSirSmeChanInfo *chan_info,
 					 enum tQDF_ADAPTER_MODE dev_mode);
 
 int iw_get_oem_data_cap(struct net_device *dev, struct iw_request_info *info,

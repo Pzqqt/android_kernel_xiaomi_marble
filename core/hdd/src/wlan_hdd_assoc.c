@@ -2831,14 +2831,13 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 					pRoamInfo->reasonCode);
 				pHddStaCtx->conn_info.assoc_status_code =
 					pRoamInfo->statusCode;
-			}
-			else
+			} else {
 				hdd_err("connect failed: for bssid "
 				       MAC_ADDRESS_STR
 				       " result:%d and Status:%d ",
 				       MAC_ADDR_ARRAY(pWextState->req_bssId.bytes),
 				       roamResult, roamStatus);
-
+			}
 			hdd_err("Invoking packetdump deregistration API");
 			wlan_deregister_txrx_packetdump();
 

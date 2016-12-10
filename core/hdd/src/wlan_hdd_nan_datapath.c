@@ -1390,7 +1390,7 @@ static void hdd_ndp_indication_handler(hdd_adapter_t *adapter,
 		goto ndp_indication_nla_failed;
 
 	if (nla_put(vendor_event,
-	   QCA_WLAN_VENDOR_ATTR_NDP_PEER_DISCOVERY_MAC_ADDR ,
+	   QCA_WLAN_VENDOR_ATTR_NDP_PEER_DISCOVERY_MAC_ADDR,
 	   QDF_MAC_ADDR_SIZE, event->peer_discovery_mac_addr.bytes))
 		goto ndp_indication_nla_failed;
 

@@ -486,7 +486,7 @@ REG_TABLE_ENTRY g_registry_table[] = {
 
 	REG_VARIABLE(CFG_HT_MPDU_DENSITY_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, ht_mpdu_density,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK ,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
 		     CFG_HT_MPDU_DENSITY_DEFAULT,
 		     CFG_HT_MPDU_DENSITY_MIN,
 		     CFG_HT_MPDU_DENSITY_MAX),
@@ -800,12 +800,12 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		      CFG_MIN_REST_TIME_MIN,
 		      CFG_MIN_REST_TIME_MAX),
 
-	REG_VARIABLE(CFG_IDLE_TIME_NAME , WLAN_PARAM_Integer,
+	REG_VARIABLE(CFG_IDLE_TIME_NAME, WLAN_PARAM_Integer,
 		      struct hdd_config, idle_time_conc,
 		      VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
 		      CFG_IDLE_TIME_DEFAULT,
 		      CFG_IDLE_TIME_MIN,
-		      CFG_IDLE_TIME_MAX) ,
+		      CFG_IDLE_TIME_MAX),
 
 	REG_VARIABLE(CFG_NUM_STA_CHAN_COMBINED_CONC_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, nNumStaChanCombinedConc,
