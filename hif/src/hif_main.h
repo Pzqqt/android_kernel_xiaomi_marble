@@ -92,7 +92,9 @@
 #define AR900B_DEVICE_ID    (0x0040)
 #define QCA9984_DEVICE_ID   (0x0046)
 #define QCA9888_DEVICE_ID   (0x0056)
+#ifndef IPQ4019_DEVICE_ID
 #define IPQ4019_DEVICE_ID   (0x12ef)
+#endif
 #define QCA8074_DEVICE_ID   (0xffff) /* Todo: replace this with
 					actual number once available.
 					currently defining this to 0xffff for

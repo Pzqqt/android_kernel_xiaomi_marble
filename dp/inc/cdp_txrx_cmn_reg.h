@@ -24,9 +24,8 @@
 #ifndef _CDP_TXRX_CMN_REG_H_
 #define _CDP_TXRX_CMN_REG_H_
 
-#define AR900B_DEVICE_ID	0x0040
-#define QCA9984_DEVICE_ID	0x0046
-#define QCA9888_DEVICE_ID	0x0056
+#include "hif_main.h"
+
 #define MOB_DRV_LEGACY_DP	0xffff/*FIXME Add MCL device IDs */
 #define LITHIUM_DP		0xfffe/*FIXME Add Litium device ID */
 /* Use these device IDs for attach in future */
@@ -61,6 +60,9 @@ static inline ol_txrx_soc_handle cdp_soc_attach(u_int16_t devid,
 {
 	switch (devid) {
 	case LITHIUM_DP: /*FIXME Add lithium devide IDs */
+	case QCA8074_DEVICE_ID: /* Hawekeye */
+	case RUMIM2M_DEVICE_ID_NODE0: /*lithium emulation */
+	case RUMIM2M_DEVICE_ID_NODE1: /*lithium emulation */
 		return dp_soc_attach_wifi3(scn, hif_handle, htc_handle,
 			qdf_dev, dp_ol_if_ops);
 	break;
