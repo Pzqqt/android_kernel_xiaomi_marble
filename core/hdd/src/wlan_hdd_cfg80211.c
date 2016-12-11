@@ -1390,6 +1390,29 @@ static int wlan_hdd_cfg80211_start_acs(hdd_adapter_t *adapter)
 }
 
 /**
+ * wlan_hdd_sap_get_nol() - Get SAPs NOL
+ * @ap_adapter: AP adapter
+ * @nol: Non-occupancy list
+ * @nol_len: Length of NOL
+ *
+ * Get the NOL for SAP
+ *
+ * Return: Zero on success, non-zero on failure
+ */
+static int wlan_hdd_sap_get_nol(hdd_adapter_t *ap_adapter, uint8_t *nol,
+				uint32_t *nol_len)
+{
+	QDF_STATUS ret;
+
+	ret = wlansap_get_dfs_nol(WLAN_HDD_GET_SAP_CTX_PTR(ap_adapter),
+				nol, nol_len);
+	if (QDF_IS_STATUS_ERROR(ret))
+		return -EINVAL;
+
+	return 0;
+}
+
+/**
  * hdd_update_reg_chan_info : This API contructs channel info
  * for all the given channel
  * @adapter: pointer to SAP adapter struct
@@ -6927,24 +6950,83 @@ static int wlan_hdd_set_chan_before_pre_cac(hdd_adapter_t *ap_adapter,
 }
 
 /**
- * wlan_hdd_sap_get_nol() - Get SAPs NOL
- * @ap_adapter: AP adapter
- * @nol: Non-occupancy list
- * @nol_len: Length of NOL
+ * wlan_hdd_get_chanlist_without_nol() - This API removes the channels which
+ * are in nol list from provided channel list
+ * @adapter: AP adapter
+ * @channel_count: channel count
+ * @channel_list: channel list
  *
- * Get the NOL for SAP
- *
- * Return: Zero on success, non-zero on failure
+ * Return: None
  */
-static int wlan_hdd_sap_get_nol(hdd_adapter_t *ap_adapter, uint8_t *nol,
-				uint32_t *nol_len)
+static void wlan_hdd_get_chanlist_without_nol(hdd_adapter_t *adapter,
+				      uint32_t *channel_count,
+				      uint8_t *channel_list)
 {
-	QDF_STATUS ret;
+	uint8_t i, j;
+	uint32_t nol_len = 0;
+	uint8_t nol[QDF_MAX_NUM_CHAN] = {0};
+	uint8_t tmp_chan_list[QDF_MAX_NUM_CHAN] = {0};
+	uint32_t chan_count;
+	bool found;
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	ret = wlansap_get_dfs_nol(WLAN_HDD_GET_SAP_CTX_PTR(ap_adapter),
-				nol, nol_len);
-	if (QDF_IS_STATUS_ERROR(ret))
+	if (!hdd_ctx) {
+		hdd_err("hdd ctx not found");
+		*channel_count = 0;
+		return;
+	}
+
+	if ((*channel_count == 0) || (*channel_count > QDF_MAX_NUM_CHAN)) {
+		hdd_err("invalid channel count %d", *channel_count);
+		return;
+	}
+
+	wlan_hdd_sap_get_nol(adapter, nol, &nol_len);
+	if (nol_len == 0)
+		return;
+
+	qdf_mem_copy(tmp_chan_list, channel_list, *channel_count);
+	chan_count = *channel_count;
+	qdf_mem_zero(channel_list, chan_count);
+	*channel_count = 0;
+
+	for (i = 0 ; i < chan_count; i++) {
+		if ((hdd_ctx->config->force_sap_acs_st_ch > tmp_chan_list[i]) ||
+		    (hdd_ctx->config->force_sap_acs_end_ch < tmp_chan_list[i]))
+			continue;
+		found = false;
+		for (j = 0; j < nol_len; j++) {
+			if (tmp_chan_list[i] == nol[j]) {
+				found = true;
+				hdd_notice("skipped channel %d due to nol",
+						nol[j]);
+				break;
+			}
+		}
+		if (!found) {
+			channel_list[*channel_count] = tmp_chan_list[i];
+			*channel_count = *channel_count + 1;
+		}
+	}
+}
+
+int wlan_hdd_sap_get_valid_channellist(hdd_adapter_t *adapter,
+				       uint32_t *channel_count,
+				       uint8_t *channel_list)
+{
+	tsap_Config_t *sap_config;
+
+	sap_config = &adapter->sessionCtx.ap.sapConfig;
+
+	qdf_mem_copy(channel_list, sap_config->acs_cfg.ch_list,
+		     sap_config->acs_cfg.ch_list_count);
+	*channel_count = sap_config->acs_cfg.ch_list_count;
+	wlan_hdd_get_chanlist_without_nol(adapter, channel_count, channel_list);
+
+	if (*channel_count == 0) {
+		hdd_err("no valid channel found");
 		return -EINVAL;
+	}
 
 	return 0;
 }
@@ -8187,6 +8269,38 @@ static int __wlan_hdd_cfg80211_setband(struct wiphy *wiphy,
 	EXIT();
 	return ret;
 }
+
+/**
+ *wlan_hdd_validate_acs_channel() - validate channel provided by ACS
+ * @adapter: hdd adapter
+ * @channel: channel number
+ *
+ * return: QDF status based on success or failure
+ */
+static QDF_STATUS wlan_hdd_validate_acs_channel(hdd_adapter_t *adapter,
+						int channel, int chan_bw)
+{
+	if (QDF_STATUS_SUCCESS !=
+	    wlan_hdd_validate_operation_channel(adapter, channel))
+		return QDF_STATUS_E_FAILURE;
+	if ((wlansap_is_channel_in_nol_list(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
+				channel,
+				PHY_SINGLE_CHANNEL_CENTERED))) {
+		hdd_notice("channel %d is in nol", channel);
+		return -EINVAL;
+	}
+
+	if ((wlansap_is_channel_leaking_in_nol(
+				WLAN_HDD_GET_SAP_CTX_PTR(adapter),
+				channel, chan_bw))) {
+		hdd_notice("channel %d is leaking in nol", channel);
+		return -EINVAL;
+	}
+
+	return 0;
+
+}
+
 
 /**
  * wlan_hdd_cfg80211_setband() - Wrapper to setband

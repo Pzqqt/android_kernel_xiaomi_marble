@@ -994,7 +994,7 @@ sap_find_target_channel_in_channel_matrix(ptSapContext sapContext,
  * Return: QDF_STATUS
  */
 
-static QDF_STATUS
+QDF_STATUS
 sap_mark_leaking_ch(ptSapContext sap_ctx,
 		enum phy_ch_width ch_width,
 		tSapDfsNolInfo *nol,

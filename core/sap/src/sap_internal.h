@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -433,6 +433,27 @@ QDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext,
 QDF_STATUS sap_close_session(tHalHandle hHal,
 			     ptSapContext sapContext,
 			     csr_roamSessionCloseCallback callback, bool valid);
+/**
+ * sap_mark_leaking_ch() - to mark channel leaking in to nol
+ * @sap_ctx: pointer to SAP context
+ * @ch_width: channel width
+ * @nol: nol info
+ * @temp_ch_lst_sz: the target channel list
+ * @temp_ch_lst: the target channel list
+ *
+ * This function removes the channels from temp channel list that
+ * (if selected as target channel) will cause leakage in one of
+ * the NOL channels
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+sap_mark_leaking_ch(ptSapContext sap_ctx,
+		enum phy_ch_width ch_width,
+		tSapDfsNolInfo *nol,
+		uint8_t temp_ch_lst_sz,
+		uint8_t *temp_ch_lst);
+
 #ifdef __cplusplus
 }
 #endif

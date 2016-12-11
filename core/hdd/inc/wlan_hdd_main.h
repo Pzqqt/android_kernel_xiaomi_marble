@@ -2059,9 +2059,6 @@ int hdd_enable_disable_ca_event(hdd_context_t *hddctx,
 				uint8_t set_value);
 void wlan_hdd_undo_acs(hdd_adapter_t *adapter);
 
-int hdd_update_reg_chan_info(hdd_adapter_t *adapter,
-			uint32_t channel_count,
-			uint8_t *channel_list);
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 7, 0))
 static inline int
 hdd_wlan_nla_put_u64(struct sk_buff *skb, int attrtype, u64 value)
@@ -2086,5 +2083,20 @@ static inline int wlan_hdd_validate_session_id(u8 session_id)
 
 bool hdd_is_roaming_in_progress(void);
 void hdd_set_roaming_in_progress(bool value);
+
+/**
+ * wlan_hdd_sap_get_valid_channellist() - Get SAPs valid channel list
+ * @ap_adapter: adapter
+ * @channel_count: valid channel count
+ * @channel_list: valid channel list
+ *
+ * This API returns valid channel list for SAP after removing nol and
+ * channel which lies outside of configuration.
+ *
+ * Return: Zero on success, non-zero on failure
+ */
+int wlan_hdd_sap_get_valid_channellist(hdd_adapter_t *adapter,
+				       uint32_t *channel_count,
+				       uint8_t *channel_list);
 
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

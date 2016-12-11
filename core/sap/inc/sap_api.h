@@ -878,6 +878,29 @@ typedef QDF_STATUS (*tpWLAN_SAPEventCB)(tpSap_Event pSapEvent,
 					void *pUsrContext);
 uint8_t wlansap_get_state(void *p_cds_gctx);
 
+/**
+ * wlansap_is_channel_in_nol_list() - This API checks if channel is
+ * in nol list
+ * @ctx: context pointer
+ * @channel: channel
+ * @chanBondState: channel bonding state
+ *
+ * Return: True/False
+ */
+bool wlansap_is_channel_in_nol_list(void *p_cds_gctx, uint8_t channel_no,
+				    ePhyChanBondState chanBondState);
+/**
+ * wlansap_is_channel_leaking_in_nol() - This API checks if channel is leaking
+ * in nol list
+ * @ctx: context pointer
+ * @channel: channel
+ * @chan_bw: channel bandwidth
+ *
+ * Return: True/False
+ */
+bool wlansap_is_channel_leaking_in_nol(void *ctx, uint8_t channel,
+				       uint8_t chan_bw);
+
 QDF_STATUS wlansap_start_bss(void *p_cds_gctx,
 	 tpWLAN_SAPEventCB pSapEventCallback,
 	 tsap_Config_t *pConfig, void *pUsrContext);

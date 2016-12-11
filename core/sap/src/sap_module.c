@@ -581,6 +581,73 @@ uint8_t wlansap_get_state(void *pCtx)
 	return pSapCtx->sapsMachine;
 }
 
+bool wlansap_is_channel_in_nol_list(void *p_cds_gctx,
+				    uint8_t channelNumber,
+				    ePhyChanBondState chanBondState)
+{
+	ptSapContext pSapCtx = NULL;
+
+	pSapCtx = CDS_GET_SAP_CB(p_cds_gctx);
+
+	if (!pSapCtx) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+			  "%s: Invalid SAP pointer from pCtx", __func__);
+		return QDF_STATUS_E_FAULT;
+	}
+
+	return sap_dfs_is_channel_in_nol_list(pSapCtx, channelNumber,
+					      chanBondState);
+}
+
+#ifdef WLAN_ENABLE_CHNL_MATRIX_RESTRICTION
+static QDF_STATUS wlansap_mark_leaking_channel(ptSapContext sap_ctx,
+		tSapDfsNolInfo *nol,
+		uint8_t *leakage_adjusted_lst,
+		uint8_t chan_bw)
+{
+
+	return sap_mark_leaking_ch(sap_ctx, chan_bw, nol, 1,
+			leakage_adjusted_lst);
+}
+#else
+static QDF_STATUS wlansap_mark_leaking_channel(ptSapContext sap_ctx,
+		tSapDfsNolInfo *nol,
+		uint8_t *leakage_adjusted_lst,
+		uint8_t chan_bw)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+bool wlansap_is_channel_leaking_in_nol(void *ctx, uint8_t channel,
+		uint8_t chan_bw)
+{
+	ptSapContext sap_ctx = CDS_GET_SAP_CB(ctx);
+	tpAniSirGlobal mac_ctx;
+	uint8_t leakage_adjusted_lst[1];
+	void *handle = NULL;
+	tSapDfsNolInfo *nol;
+
+	leakage_adjusted_lst[0] = channel;
+	handle = CDS_GET_HAL_CB(sapContext->p_cds_gctx);
+	mac_ctx = PMAC_STRUCT(handle);
+	if (!mac_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				"%s: Invalid mac pointer", __func__);
+		return QDF_STATUS_E_FAULT;
+	}
+	nol = mac_ctx->sap.SapDfsInfo.sapDfsChannelNolList;
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			FL("sapdfs: Processing current chan against NOL."));
+	if (wlansap_mark_leaking_channel(sap_ctx, nol,
+			leakage_adjusted_lst, chan_bw) != QDF_STATUS_SUCCESS) {
+		return true;
+	}
+	if (leakage_adjusted_lst[0] == 0)
+		return true;
+	return false;
+}
+
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 /*==========================================================================
    FUNCTION    wlansap_check_cc_intf
