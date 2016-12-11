@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -101,12 +101,14 @@ void hal_reo_qdesc_setup(void *hal_soc, int tid, uint32_t ba_window_size,
 	reg_val = TID_TO_WME_AC(tid);
 	HAL_DESC_SET_FIELD(reo_queue_desc, RX_REO_QUEUE_2, AC, reg_val);
 
-	/* Check the purpose of RTY field.
-	 * HW documentation says "Retry bit is checked if this bit is set"
+	/* Set RTY bit for non-BA case. Duplicate detection is currently not
+	 * done by HW in non-BA case if RTY bit is not set.
+	 * TODO: This is a temporary War and should be removed once HW fix is
+	 * made to check and discard duplicates even if RTY bit is not set.
 	 */
+	if (ba_window_size == 1)
+		HAL_DESC_SET_FIELD(reo_queue_desc, RX_REO_QUEUE_2, RTY, 1);
 
-	HAL_DESC_SET_FIELD(reo_queue_desc, RX_REO_QUEUE_2, CHK_2K_MODE, 1);
-	HAL_DESC_SET_FIELD(reo_queue_desc, RX_REO_QUEUE_2, OOR_MODE, 1);
 	HAL_DESC_SET_FIELD(reo_queue_desc, RX_REO_QUEUE_2, BA_WINDOW_SIZE,
 		ba_window_size - 1);
 

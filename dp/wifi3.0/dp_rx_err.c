@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -615,13 +615,10 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 				 * queue descriptor
 				 */
 				case HAL_REO_ERR_QUEUE_DESC_ADDR_0:
-				case HAL_REO_ERR_REGULAR_FRAME_2K_JUMP:
-				case HAL_REO_ERR_2K_ERROR_HANDLING_FLAG_SET:
 					QDF_TRACE(QDF_MODULE_ID_DP,
 						QDF_TRACE_LEVEL_WARN,
 						"Got pkt with REO ERROR: %d",
 						reo_error_code);
-
 					rx_bufs_used +=
 						dp_rx_null_q_desc_handle(soc,
 						ring_desc, &head, &tail, quota);
