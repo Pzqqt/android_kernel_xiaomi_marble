@@ -498,6 +498,8 @@ struct sap_acs_cfg {
 	uint16_t   ch_width;
 	uint8_t    pcl_channels[QDF_MAX_NUM_CHAN];
 	uint32_t   pcl_ch_count;
+	uint8_t    is_ht_enabled;
+	uint8_t    is_vht_enabled;
 	/* ACS Algo Output */
 	uint8_t    pri_ch;
 	uint8_t    ht_sec_ch;
@@ -603,6 +605,7 @@ typedef struct sap_Config {
 	tSirMacRateSet supported_rates;
 	tSirMacRateSet extended_rates;
 	enum sap_acs_dfs_mode acs_dfs_mode;
+	struct hdd_channel_info *channel_info;
 } tsap_Config_t;
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE

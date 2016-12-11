@@ -1390,6 +1390,178 @@ static int wlan_hdd_cfg80211_start_acs(hdd_adapter_t *adapter)
 }
 
 /**
+ * hdd_update_reg_chan_info : This API contructs channel info
+ * for all the given channel
+ * @adapter: pointer to SAP adapter struct
+ * @channel_count: channel count
+ * @channel_list: channel list
+ *
+ * Return: Status of of channel information updation
+ */
+int hdd_update_reg_chan_info(hdd_adapter_t *adapter,
+			uint32_t channel_count,
+			uint8_t *channel_list)
+{
+	int i;
+	struct hdd_channel_info *icv;
+	struct ch_params_s ch_params;
+	uint8_t bw_offset = 0, chan = 0;
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	tsap_Config_t *sap_config = &adapter->sessionCtx.ap.sapConfig;
+
+	/* memory allocation */
+	sap_config->channel_info = qdf_mem_malloc(
+					sizeof(struct hdd_channel_info) *
+					channel_count);
+	if (!sap_config->channel_info) {
+		hdd_err("memory allocation failed");
+		return -ENOMEM;
+
+	}
+	for (i = 0; i < channel_count; i++) {
+		icv = &sap_config->channel_info[i];
+		chan = channel_list[i];
+
+		if (chan == 0)
+			continue;
+
+		if (sap_config->acs_cfg.ch_width == CH_WIDTH_40MHZ)
+			bw_offset = 1 << BW_40_OFFSET_BIT;
+		else if (sap_config->acs_cfg.ch_width == CH_WIDTH_20MHZ)
+			bw_offset = 1 << BW_20_OFFSET_BIT;
+		icv->freq = cds_get_channel_freq(chan);
+		icv->ieee_chan_number = chan;
+		icv->max_reg_power = cds_get_channel_reg_power(chan);
+
+		/* filling demo values */
+		icv->max_radio_power = HDD_MAX_TX_POWER;
+		icv->min_radio_power = HDD_MIN_TX_POWER;
+		/* not supported in current driver */
+		icv->max_antenna_gain = 0;
+
+		icv->reg_class_id = wlan_hdd_find_opclass(
+					WLAN_HDD_GET_HAL_CTX(adapter),
+					chan, bw_offset);
+
+		if (CDS_IS_CHANNEL_5GHZ(chan)) {
+			ch_params.ch_width = sap_config->acs_cfg.ch_width;
+			cds_set_channel_params(chan, 0, &ch_params);
+			icv->vht_center_freq_seg0 = ch_params.center_freq_seg0;
+			icv->vht_center_freq_seg1 = ch_params.center_freq_seg1;
+		}
+		icv->flags = 0;
+		icv->flags = cds_get_vendor_reg_flags(chan,
+				sap_config->acs_cfg.ch_width,
+				sap_config->acs_cfg.is_ht_enabled,
+				sap_config->acs_cfg.is_vht_enabled,
+				hdd_ctx->config->enable_sub_20_channel_width);
+
+		hdd_info("freq %d flags %d flagext %d ieee %d maxreg %d maxpw %d minpw %d regClass %d antenna %d seg0 %d seg1 %d",
+			icv->freq, icv->flags,
+			icv->flagext, icv->ieee_chan_number,
+			icv->max_reg_power, icv->max_radio_power,
+			icv->min_radio_power, icv->reg_class_id,
+			icv->max_antenna_gain, icv->vht_center_freq_seg0,
+			icv->vht_center_freq_seg1);
+	}
+	return 0;
+}
+
+/* Short name for QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_CHAN_INFO event */
+#define CHAN_INFO_ATTR_FLAGS \
+	QCA_WLAN_VENDOR_EXTERNAL_ACS_EVENT_CHAN_INFO_ATTR_FLAGS
+#define CHAN_INFO_ATTR_FLAG_EXT \
+	QCA_WLAN_VENDOR_EXTERNAL_ACS_EVENT_CHAN_INFO_ATTR_FLAG_EXT
+#define CHAN_INFO_ATTR_FREQ \
+	QCA_WLAN_VENDOR_EXTERNAL_ACS_EVENT_CHAN_INFO_ATTR_FREQ
+#define CHAN_INFO_ATTR_MAX_REG_POWER \
+	QCA_WLAN_VENDOR_EXTERNAL_ACS_EVENT_CHAN_INFO_ATTR_MAX_REG_POWER
+#define CHAN_INFO_ATTR_MAX_POWER \
+	QCA_WLAN_VENDOR_EXTERNAL_ACS_EVENT_CHAN_INFO_ATTR_MAX_POWER
+#define CHAN_INFO_ATTR_MIN_POWER \
+	QCA_WLAN_VENDOR_EXTERNAL_ACS_EVENT_CHAN_INFO_ATTR_MIN_POWER
+#define CHAN_INFO_ATTR_REG_CLASS_ID \
+	QCA_WLAN_VENDOR_EXTERNAL_ACS_EVENT_CHAN_INFO_ATTR_REG_CLASS_ID
+#define CHAN_INFO_ATTR_ANTENNA_GAIN \
+	QCA_WLAN_VENDOR_EXTERNAL_ACS_EVENT_CHAN_INFO_ATTR_ANTENNA_GAIN
+#define CHAN_INFO_ATTR_VHT_SEG_0 \
+	QCA_WLAN_VENDOR_EXTERNAL_ACS_EVENT_CHAN_INFO_ATTR_VHT_SEG_0
+#define CHAN_INFO_ATTR_VHT_SEG_1 \
+	QCA_WLAN_VENDOR_EXTERNAL_ACS_EVENT_CHAN_INFO_ATTR_VHT_SEG_1
+
+/**
+ * hdd_cfg80211_update_channel_info() - add channel info attributes
+ * @skb: pointer to sk buff
+ * @hdd_ctx: pointer to hdd station context
+ * @idx: attribute index
+ *
+ * Return: Success(0) or reason code for failure
+ */
+int32_t
+hdd_cfg80211_update_channel_info(struct sk_buff *skb,
+			   tsap_Config_t *sap_config, int idx)
+{
+	struct nlattr *nla_attr, *channel;
+	struct hdd_channel_info *icv;
+	int i;
+
+	nla_attr = nla_nest_start(skb, idx);
+	if (!nla_attr)
+		goto fail;
+
+	for (i = 0; i < sap_config->acs_cfg.ch_list_count; i++) {
+		channel = nla_nest_start(skb, i);
+		if (!channel)
+			goto fail;
+
+		icv = &sap_config->channel_info[i];
+		if (!icv) {
+			hdd_err("channel info not found");
+			goto fail;
+		}
+		if (nla_put_u16(skb, CHAN_INFO_ATTR_FREQ,
+				icv->freq) ||
+		    nla_put_u32(skb, CHAN_INFO_ATTR_FLAGS,
+				icv->flags) ||
+		    nla_put_u16(skb, CHAN_INFO_ATTR_FLAG_EXT,
+				icv->flagext) ||
+		    nla_put_u8(skb, CHAN_INFO_ATTR_MAX_REG_POWER,
+				icv->max_reg_power) ||
+		    nla_put_u8(skb, CHAN_INFO_ATTR_MAX_POWER,
+				icv->max_radio_power) ||
+		    nla_put_u8(skb, CHAN_INFO_ATTR_MIN_POWER,
+				icv->min_radio_power) ||
+		    nla_put_u8(skb, CHAN_INFO_ATTR_REG_CLASS_ID,
+				icv->reg_class_id) ||
+		    nla_put_u8(skb, CHAN_INFO_ATTR_ANTENNA_GAIN,
+				icv->max_antenna_gain) ||
+		    nla_put_u8(skb, CHAN_INFO_ATTR_VHT_SEG_0,
+				icv->vht_center_freq_seg0) ||
+		    nla_put_u8(skb, CHAN_INFO_ATTR_VHT_SEG_1,
+				icv->vht_center_freq_seg1)) {
+			hdd_err("put fail");
+			goto fail;
+		}
+		nla_nest_end(skb, channel);
+	}
+	nla_nest_end(skb, nla_attr);
+	return 0;
+fail:
+	hdd_err("nl channel update failed");
+	return -EINVAL;
+}
+#undef CHAN_INFO_ATTR_FLAGS
+#undef CHAN_INFO_ATTR_FLAG_EXT
+#undef CHAN_INFO_ATTR_FREQ
+#undef CHAN_INFO_ATTR_MAX_REG_POWER
+#undef CHAN_INFO_ATTR_MAX_POWER
+#undef CHAN_INFO_ATTR_MIN_POWER
+#undef CHAN_INFO_ATTR_REG_CLASS_ID
+#undef CHAN_INFO_ATTR_ANTENNA_GAIN
+#undef CHAN_INFO_ATTR_VHT_SEG_0
+#undef CHAN_INFO_ATTR_VHT_SEG_1
+
+/**
  * __wlan_hdd_cfg80211_do_acs : CFG80211 handler function for DO_ACS Vendor CMD
  * @wiphy:  Linux wiphy struct pointer
  * @wdev:   Linux wireless device struct pointer

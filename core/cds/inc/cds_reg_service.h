@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -391,6 +391,41 @@ QDF_STATUS cds_get_channel_list_with_power(struct channel_power
 enum channel_enum cds_get_channel_enum(uint32_t chan_num);
 
 enum channel_state cds_get_channel_state(uint32_t chan_num);
+
+/**
+ * cds_get_channel_reg_power() - get max power based on regulatory
+ * @chan_num: channel number
+ *
+ * Return: tx power
+ */
+int8_t cds_get_channel_reg_power(uint32_t chan_num);
+
+/**
+ * cds_get_channel_flags() - This API returns regulatory channel flags
+ * @chan_num: channel number
+ *
+ * Return: channel flags
+ */
+uint32_t cds_get_channel_flags(uint32_t chan_num);
+
+/**
+ * cds_get_vendor_reg_flags() - This API returns vendor specific regulatory
+ * channel flags
+ * @chan_num: channel number
+ *
+ * Return: channel flags
+ */
+uint32_t cds_get_vendor_reg_flags(uint32_t chan, uint16_t bandwidth,
+				bool is_ht_enabled, bool is_vht_enabled,
+				uint8_t is_sub_20_channel_width);
+
+/**
+ * cds_get_channel_freq() - This API returns frequency for channel
+ * @chan_num: channel number
+ *
+ * Return: frequency
+ */
+uint32_t cds_get_channel_freq(uint32_t chan_num);
 QDF_STATUS cds_get_dfs_region(enum dfs_region *dfs_reg);
 QDF_STATUS cds_put_dfs_region(enum dfs_region dfs_reg);
 
@@ -401,7 +436,17 @@ enum channel_state cds_get_5g_bonded_channel_state(uint16_t chan_num,
 enum channel_state cds_get_2g_bonded_channel_state(uint16_t chan_num,
 						   enum phy_ch_width chan_width,
 						   uint16_t sec_ch);
-
+/**
+ * cds_get_2g_bonded_channel_state() - get the channel bonded channel state
+ * @oper_ch: operating channel
+ * @ch_width: channel width
+ * @sec_ch: secondary channel
+ *
+ * Return: channel state
+ */
+enum channel_state cds_get_bonded_channel_state(uint16_t oper_ch,
+						enum phy_ch_width ch_width,
+						uint16_t sec_ch);
 void cds_set_channel_params(uint16_t oper_ch, uint16_t ht_offset_2g,
 			    struct ch_params_s *ch_params);
 

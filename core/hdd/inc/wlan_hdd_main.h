@@ -1611,6 +1611,34 @@ struct hdd_context_s {
 	uint8_t beacon_probe_rsp_cnt_per_scan;
 };
 
+/**
+ * struct  hdd_channel_info - standard channel info
+ * @freq: Freq in Mhz
+ * @flags: channel info flags
+ * @flagext: extended channel info flags
+ * @ieee_chan_number: channel number
+ * @max_reg_power: max tx power according to regulatory
+ * @max_radio_power: max radio power
+ * @min_radio_power: min radio power
+ * @reg_class_id: regulatory class
+ * @max_antenna_gain: max antenna gain allowed on channel
+ * @vht_center_freq_seg0: vht center freq segment 0
+ * @vht_center_freq_seg1: vht center freq segment 1
+ */
+struct hdd_channel_info {
+	u_int16_t freq;
+	u_int32_t flags;
+	u_int16_t flagext;
+	u_int8_t ieee_chan_number;
+	int8_t max_reg_power;
+	int8_t max_radio_power;
+	int8_t min_radio_power;
+	u_int8_t reg_class_id;
+	u_int8_t max_antenna_gain;
+	u_int8_t vht_center_freq_seg0;
+	u_int8_t vht_center_freq_seg1;
+};
+
 /*
  * Function declarations and documentation
  */
@@ -2031,6 +2059,9 @@ int hdd_enable_disable_ca_event(hdd_context_t *hddctx,
 				uint8_t set_value);
 void wlan_hdd_undo_acs(hdd_adapter_t *adapter);
 
+int hdd_update_reg_chan_info(hdd_adapter_t *adapter,
+			uint32_t channel_count,
+			uint8_t *channel_list);
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 7, 0))
 static inline int
 hdd_wlan_nla_put_u64(struct sk_buff *skb, int attrtype, u64 value)

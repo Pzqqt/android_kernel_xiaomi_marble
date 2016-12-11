@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -37,6 +37,7 @@
 #include "cds_api.h"
 #include "cds_reg_service.h"
 #include "cds_regdomain.h"
+#include "cds_ieee80211_common_i.h"
 #include "sme_api.h"
 
 const struct chan_map chan_mapping[NUM_CHANNELS] = {
@@ -241,6 +242,141 @@ enum channel_state cds_get_channel_state(uint32_t chan_num)
 		return reg_channels[chan_enum].state;
 }
 
+int8_t cds_get_channel_reg_power(uint32_t chan_num)
+{
+	enum channel_enum chan_enum;
+
+	chan_enum = cds_get_channel_enum(chan_num);
+	if (chan_enum == INVALID_CHANNEL)
+		return CHANNEL_STATE_INVALID;
+	else
+		return reg_channels[chan_enum].pwr_limit;
+}
+
+uint32_t cds_get_channel_flags(uint32_t chan_num)
+{
+	enum channel_enum chan_enum;
+
+	chan_enum = cds_get_channel_enum(chan_num);
+	if (chan_enum == INVALID_CHANNEL)
+		return CHANNEL_STATE_INVALID;
+	else
+		return reg_channels[chan_enum].flags;
+}
+
+uint32_t cds_get_vendor_reg_flags(uint32_t chan, uint16_t bandwidth,
+				bool is_ht_enabled, bool is_vht_enabled,
+				uint8_t sub_20_channel_width)
+{
+	uint32_t flags = 0;
+	enum channel_state state;
+	struct ch_params_s ch_params;
+
+	state = cds_get_channel_state(chan);
+	if (state == CHANNEL_STATE_INVALID)
+		return flags;
+	if (state == CHANNEL_STATE_DFS) {
+		flags |= IEEE80211_CHAN_PASSIVE;
+		flags |= IEEE80211_CHAN_DFS;
+	}
+	if (state == CHANNEL_STATE_DISABLE)
+		flags |= IEEE80211_CHAN_BLOCKED;
+
+	if (CDS_IS_CHANNEL_24GHZ(chan)) {
+		if ((bandwidth == CH_WIDTH_80P80MHZ) ||
+			(bandwidth == CH_WIDTH_160MHZ) ||
+			(bandwidth == CH_WIDTH_80MHZ)) {
+			bandwidth = CH_WIDTH_40MHZ;
+		}
+	}
+
+	switch (bandwidth) {
+
+	case CH_WIDTH_80P80MHZ:
+		if (cds_get_5g_bonded_channel_state(chan,
+				  bandwidth) != CHANNEL_STATE_INVALID) {
+			if (is_vht_enabled)
+				flags |= IEEE80211_CHAN_VHT80_80;
+		}
+		bandwidth = CH_WIDTH_160MHZ;
+		/* FALLTHROUGH */
+	case CH_WIDTH_160MHZ:
+		if (cds_get_5g_bonded_channel_state(chan,
+				  bandwidth) != CHANNEL_STATE_INVALID) {
+			if (is_vht_enabled)
+				flags |= IEEE80211_CHAN_VHT160;
+		}
+		bandwidth = CH_WIDTH_80MHZ;
+		/* FALLTHROUGH */
+	case CH_WIDTH_80MHZ:
+		if (cds_get_5g_bonded_channel_state(chan,
+				  bandwidth) != CHANNEL_STATE_INVALID) {
+			if (is_vht_enabled)
+				flags |= IEEE80211_CHAN_VHT80;
+		}
+		bandwidth = CH_WIDTH_40MHZ;
+		/* FALLTHROUGH */
+	case CH_WIDTH_40MHZ:
+		qdf_mem_zero(&ch_params, sizeof(ch_params));
+		ch_params.ch_width = bandwidth;
+		cds_set_channel_params(chan, 0, &ch_params);
+
+		if (cds_get_bonded_channel_state(chan, bandwidth,
+		    ch_params.sec_ch_offset) != CHANNEL_STATE_INVALID) {
+			if (ch_params.sec_ch_offset ==
+			    PHY_DOUBLE_CHANNEL_LOW_PRIMARY) {
+				flags |= IEEE80211_CHAN_HT40PLUS;
+				if (is_vht_enabled)
+					flags |= IEEE80211_CHAN_VHT40PLUS;
+			} else if (ch_params.sec_ch_offset ==
+				   PHY_DOUBLE_CHANNEL_HIGH_PRIMARY) {
+				flags |= IEEE80211_CHAN_HT40MINUS;
+				if (is_vht_enabled)
+					flags |= IEEE80211_CHAN_VHT40MINUS;
+			}
+		}
+
+		bandwidth = CH_WIDTH_20MHZ;
+		/* FALLTHROUGH */
+	case CH_WIDTH_20MHZ:
+		if (is_vht_enabled)
+			flags |= IEEE80211_CHAN_VHT20;
+		if (is_ht_enabled)
+			flags |= IEEE80211_CHAN_HT20;
+		bandwidth = CH_WIDTH_10MHZ;
+		/* FALLTHROUGH */
+	case CH_WIDTH_10MHZ:
+		if ((cds_get_bonded_channel_state(chan,
+			bandwidth, 0) != CHANNEL_STATE_INVALID) &&
+			(sub_20_channel_width ==
+				WLAN_SUB_20_CH_WIDTH_10))
+			flags |= IEEE80211_CHAN_HALF;
+		/* FALLTHROUGH */
+	case CH_WIDTH_5MHZ:
+		if ((cds_get_bonded_channel_state(chan,
+			bandwidth, 0) != CHANNEL_STATE_INVALID) &&
+			(sub_20_channel_width ==
+				WLAN_SUB_20_CH_WIDTH_5))
+			flags |= IEEE80211_CHAN_QUARTER;
+		break;
+	default:
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
+		"invalid channel width value %d", bandwidth);
+	}
+
+	return flags;
+}
+
+uint32_t cds_get_channel_freq(uint32_t chan_num)
+{
+	enum channel_enum chan_enum;
+
+	chan_enum = cds_get_channel_enum(chan_num);
+	if (chan_enum == INVALID_CHANNEL)
+		return CHANNEL_STATE_INVALID;
+	else
+		return chan_mapping[chan_enum].center_freq;
+}
 
 /**
  * cds_search_5g_bonded_chan_array() - get ptr to bonded channel
@@ -322,6 +458,18 @@ static enum channel_state cds_search_5g_bonded_channel(uint32_t chan_num,
 						       bonded_chan_ptr_ptr);
 	else
 		return cds_get_channel_state(chan_num);
+}
+
+enum channel_state cds_get_bonded_channel_state(uint16_t oper_ch,
+						enum phy_ch_width ch_width,
+						uint16_t sec_ch)
+{
+	if (CDS_IS_CHANNEL_5GHZ(oper_ch))
+		return cds_get_5g_bonded_channel_state(oper_ch,
+							ch_width);
+	else
+		return cds_get_2g_bonded_channel_state(oper_ch,
+							ch_width, sec_ch);
 }
 
 /**

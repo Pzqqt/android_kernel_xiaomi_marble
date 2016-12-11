@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -226,6 +226,14 @@ enum ieee80211_scanmode {
 #define IEEE80211_CHAN_VHT40PLUS        0x00200000      /* VHT 40 with extension channel above */
 #define IEEE80211_CHAN_VHT40MINUS       0x00400000      /* VHT 40 with extension channel below */
 #define IEEE80211_CHAN_VHT80            0x00800000      /* VHT 80 channel */
+/* HT 40 Intolerant mark bit for ACS use */
+#define IEEE80211_CHAN_HT40INTOLMARK    0x01000000
+/* channel temporarily blocked due to noise */
+#define IEEE80211_CHAN_BLOCKED          0x02000000
+/* VHT 160 channel */
+#define IEEE80211_CHAN_VHT160           0x04000000
+/* VHT 80_80 channel */
+#define IEEE80211_CHAN_VHT80_80         0x08000000
 
 /* flagext */
 #define IEEE80211_CHAN_RADAR_FOUND    0x01
