@@ -37,11 +37,6 @@
 #include "qdf_list.h"
 #include "qdf_mem.h"
 #include <linux/export.h>
-#ifndef NAPIER_CODE
-#ifdef CONFIG_MCL
-#include <cds_mc_timer.h>
-#endif
-#endif
 
 /* Preprocessor definitions and constants */
 #define LINUX_TIMER_COOKIE 0x12341234
@@ -298,8 +293,6 @@ QDF_STATUS qdf_mc_timer_init_debug(qdf_mc_timer_t *timer,
 		init_timer(&(timer->platform_info.timer));
 #ifdef NAPIER_CODE
 	timer->platform_info.timer.function = scheduler_timer_callback;
-#elif CONFIG_MCL
-	timer->platform_info.timer.function = cds_linux_timer_callback;
 #else
 	timer->platform_info.timer.function = NULL;
 #endif
@@ -336,8 +329,6 @@ QDF_STATUS qdf_mc_timer_init(qdf_mc_timer_t *timer, QDF_TIMER_TYPE timer_type,
 		init_timer(&(timer->platform_info.timer));
 #ifdef NAPIER_CODE
 	timer->platform_info.timer.function = scheduler_timer_callback;
-#elif CONFIG_MCL
-	timer->platform_info.timer.function = cds_linux_timer_callback;
 #else
 	timer->platform_info.timer.function = NULL;
 #endif
