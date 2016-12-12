@@ -9261,10 +9261,10 @@ int hdd_init(void)
 	v_CONTEXT_t p_cds_context = NULL;
 	int ret = 0;
 
+	p_cds_context = cds_init();
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
 	wlan_logging_sock_init_svc();
 #endif
-	p_cds_context = cds_init();
 
 	if (p_cds_context == NULL) {
 		hdd_alert("Failed to allocate CDS context");

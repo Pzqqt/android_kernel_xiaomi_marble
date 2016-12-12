@@ -92,8 +92,8 @@ void cds_sys_probe_thread_cback(void *pUserData);
  */
 v_CONTEXT_t cds_init(void)
 {
-	qdf_mc_timer_manager_init();
 	qdf_mem_init();
+	qdf_mc_timer_manager_init();
 
 	gp_cds_context = &g_cds_context;
 
