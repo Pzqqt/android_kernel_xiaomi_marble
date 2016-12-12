@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -248,7 +248,7 @@ struct qca_napi_cpu {
  * A variable of this type will be stored in hif module context.
  */
 struct qca_napi_data {
-	spinlock_t           lock;
+	qdf_spinlock_t           lock;
 	uint32_t             state;
 	uint32_t             ce_map; /* bitmap of created/registered NAPI
 					instances, indexed by pipe_id,

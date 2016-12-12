@@ -120,7 +120,7 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 	napid = &(hif->napi_data);
 	if (0 == (napid->state &  HIF_NAPI_INITED)) {
 		memset(napid, 0, sizeof(struct qca_napi_data));
-		spin_lock_init(&(napid->lock));
+		qdf_spinlock_create(&(napid->lock));
 
 		napid->state |= HIF_NAPI_INITED;
 
@@ -263,6 +263,7 @@ int hif_napi_destroy(struct hif_opaque_softc *hif_ctx,
 				rc = hif_napi_cpu_deinit(hif_ctx);
 				/* caller is tolerant to receiving !=0 rc */
 
+				qdf_spinlock_destroy(&(napid->lock));
 				memset(napid,
 				       0, sizeof(struct qca_napi_data));
 				HIF_INFO("%s: no NAPI instances. Zapped.",
@@ -473,7 +474,7 @@ int hif_napi_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 			   __func__);
 		return -EINVAL;
 	}
-	spin_lock_bh(&(napid->lock));
+	qdf_spin_lock_bh(&(napid->lock));
 	prev_state = napid->state;
 	switch (event) {
 	case NAPI_EVT_INI_FILE:
@@ -584,7 +585,7 @@ int hif_napi_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 	}; /* switch */
 
 
-	spin_unlock_bh(&(napid->lock));
+	qdf_spin_unlock_bh(&(napid->lock));
 
 	/* Call this API without spin_locks hif_napi_cpu_blacklist */
 	switch (blacklist_pending) {
