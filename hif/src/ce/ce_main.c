@@ -1181,6 +1181,9 @@ void ce_fini(struct CE_handle *copyeng)
 
 	CE_state->state = CE_UNUSED;
 	scn->ce_id_to_state[CE_id] = NULL;
+
+	qdf_spinlock_destroy(&CE_state->lro_unloading_lock);
+
 	if (CE_state->src_ring) {
 		/* Cleanup the datapath Tx ring */
 		ce_h2t_tx_ce_cleanup(copyeng);
@@ -1241,6 +1244,8 @@ void ce_fini(struct CE_handle *copyeng)
 					    base_addr_CE_space, 0);
 		qdf_mem_free(CE_state->status_ring);
 	}
+
+	qdf_spinlock_destroy(&CE_state->ce_index_lock);
 	qdf_mem_free(CE_state);
 }
 
@@ -2222,6 +2227,7 @@ void hif_unconfig_ce(struct hif_softc *hif_sc)
 			ce_fini(pipe_info->ce_hdl);
 			pipe_info->ce_hdl = NULL;
 			pipe_info->buf_sz = 0;
+			qdf_spinlock_destroy(&pipe_info->recv_bufs_needed_lock);
 		}
 	}
 	if (hif_sc->athdiag_procfs_inited) {
@@ -2312,6 +2318,7 @@ int hif_config_ce(struct hif_softc *scn)
 
 		pipe_info->ce_hdl = ce_init(scn, pipe_num, attr);
 		ce_state = scn->ce_id_to_state[pipe_num];
+		qdf_spinlock_create(&pipe_info->recv_bufs_needed_lock);
 		QDF_ASSERT(pipe_info->ce_hdl != NULL);
 		if (pipe_info->ce_hdl == NULL) {
 			rv = QDF_STATUS_E_FAILURE;
@@ -2331,7 +2338,6 @@ int hif_config_ce(struct hif_softc *scn)
 			continue;
 
 		pipe_info->buf_sz = (qdf_size_t) (attr->src_sz_max);
-		qdf_spinlock_create(&pipe_info->recv_bufs_needed_lock);
 		if (attr->dest_nentries > 0) {
 			atomic_set(&pipe_info->recv_bufs_needed,
 				   init_buffer_count(attr->dest_nentries - 1));
