@@ -4528,7 +4528,7 @@ enum dot11p_mode {
 #define CFG_ADAPTIVE_DWELL_MODE_ENABLED_NAME      "adaptive_dwell_mode_enabled"
 #define CFG_ADAPTIVE_DWELL_MODE_ENABLED_MIN       (0)
 #define CFG_ADAPTIVE_DWELL_MODE_ENABLED_MAX       (1)
-#define CFG_ADAPTIVE_DWELL_MODE_ENABLED_DEFAULT   (0)
+#define CFG_ADAPTIVE_DWELL_MODE_ENABLED_DEFAULT   (1)
 
 /*
  * This parameter will set default adaptive mode, will be used if any of the
@@ -4538,7 +4538,7 @@ enum dot11p_mode {
 #define CFG_GLOBAL_ADAPTIVE_DWELL_MODE_NAME       "global_adapt_dwelltime_mode"
 #define CFG_GLOBAL_ADAPTIVE_DWELL_MODE_MIN        (0)
 #define CFG_GLOBAL_ADAPTIVE_DWELL_MODE_MAX        (4)
-#define CFG_GLOBAL_ADAPTIVE_DWELL_MODE_DEFAULT    (0)
+#define CFG_GLOBAL_ADAPTIVE_DWELL_MODE_DEFAULT    (1)
 
 /*
  * This parameter will set the weight to calculate the average low pass
