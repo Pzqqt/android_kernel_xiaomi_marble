@@ -55,11 +55,71 @@ typedef enum {
 	EVENT_WLAN_BEACON_RECEIVED = 0xAA6, /* FW event: 2726 */
 	EVENT_WLAN_LOG_COMPLETE = 0xAA7, /* 16 bytes payload */
 	EVENT_WLAN_STATUS_V2 = 0xAB3,
+
+	/*
+	 * <diag_event>
+	 * EVENT_WLAN_TDLS_TEARDOWN
+	 * @ reason: reason for tear down.
+	 * @peer_mac: Peer mac address
+	 *
+	 *
+	 * This event is sent when TDLS tear down happens.
+	 *
+	 * Supported Feature: TDLS
+	 *
+	 * </diag_event>
+	 */
 	EVENT_WLAN_TDLS_TEARDOWN = 0xAB5,
+
+	/*
+	 * <diag_event>
+	 * EVENT_WLAN_TDLS_ENABLE_LINK
+	 * @peer_mac: peer mac
+	 * @is_off_chan_supported: If peer supports off channel
+	 * @is_off_chan_configured: If off channel is configured
+	 * @is_off_chan_established: If off channel is established
+	 *
+	 *
+	 * This event is sent when TDLS enable link happens.
+	 *
+	 * Supported Feature: TDLS
+	 *
+	 * </diag_event>
+	 */
 	EVENT_WLAN_TDLS_ENABLE_LINK = 0XAB6,
 	EVENT_WLAN_SUSPEND_RESUME = 0xAB7,
 	EVENT_WLAN_OFFLOAD_REQ = 0xAB8,
+
+	/*
+	 * <diag_event>
+	 * EVENT_TDLS_SCAN_BLOCK
+	 * @status: rejected status
+	 *
+	 *
+	 * This event is sent when scan is rejected due to TDLS.
+	 *
+	 * Supported Feature: TDLS
+	 *
+	 * </diag_event>
+	 */
 	EVENT_TDLS_SCAN_BLOCK = 0xAB9,
+
+	/*
+	 * <diag_event>
+	 * EVENT_WLAN_TDLS_TX_RX_MGMT
+	 * @event_id: event id
+	 * @tx_rx: tx or rx
+	 * @type: type of frame
+	 * @action_sub_type: action frame type
+	 * @peer_mac: peer mac
+	 *
+	 *
+	 * This event is sent when TDLS mgmt rx tx happens.
+	 *
+	 * Supported Feature: TDLS
+	 *
+	 * </diag_event>
+	 */
 	EVENT_WLAN_TDLS_TX_RX_MGMT = 0xABA,
 	EVENT_WLAN_LOW_RESOURCE_FAILURE = 0xABB,
 
