@@ -426,6 +426,7 @@ QDF_STATUS qdf_mc_timer_destroy(qdf_mc_timer_t *timer)
 		timer->platform_info.cookie = LINUX_INVALID_TIMER_COOKIE;
 		timer->state = QDF_TIMER_STATE_UNUSED;
 		qdf_spin_unlock_irqrestore(&timer->platform_info.spinlock);
+		qdf_spinlock_destroy(&timer->platform_info.spinlock);
 		return v_status;
 	}
 
