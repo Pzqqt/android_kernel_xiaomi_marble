@@ -630,6 +630,7 @@ void lim_cleanup(tpAniSirGlobal pMac)
 		}
 		qdf_mutex_release(&pMac->lim.lim_frame_register_lock);
 		qdf_list_destroy(&pMac->lim.gLimMgmtFrameRegistratinQueue);
+		qdf_mutex_destroy(&pMac->lim.lim_frame_register_lock);
 	}
 
 	lim_cleanup_mlm(pMac);
