@@ -1977,6 +1977,31 @@ static int wlan_hdd_send_scan_start_event(struct wiphy *wiphy,
 
 	return ret;
 }
+
+/**
+ * wlan_hdd_copy_bssid() - API to copy the bssid to vendor Scan request
+ * @request: Pointer to vendor scan request
+ * @bssid: Pointer to BSSID
+ *
+ * This API copies the specific BSSID received from Supplicant and copies it to
+ * the vendor Scan request
+ *
+ * Return: None
+ */
+#if defined(CFG80211_SCAN_BSSID) || \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0))
+static inline void wlan_hdd_copy_bssid(struct cfg80211_scan_request *request,
+					uint8_t *bssid)
+{
+	qdf_mem_copy(request->bssid, bssid, QDF_MAC_ADDR_SIZE);
+}
+#else
+static inline void wlan_hdd_copy_bssid(struct cfg80211_scan_request *request,
+					uint8_t *bssid)
+{
+}
+#endif
+
 /**
  * __wlan_hdd_cfg80211_vendor_scan() - API to process venor scan request
  * @wiphy: Pointer to wiphy
@@ -2146,6 +2171,16 @@ static int __wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 			hdd_err("LOW PRIORITY SCAN not supported");
 			goto error;
 		}
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_SCAN_BSSID]) {
+		if (nla_len(tb[QCA_WLAN_VENDOR_ATTR_SCAN_BSSID]) <
+		    QDF_MAC_ADDR_SIZE) {
+			hdd_err("invalid bssid length");
+			goto error;
+		}
+		wlan_hdd_copy_bssid(request,
+			nla_data(tb[QCA_WLAN_VENDOR_ATTR_SCAN_BSSID]));
 	}
 	request->no_cck =
 		nla_get_flag(tb[QCA_WLAN_VENDOR_ATTR_SCAN_TX_NO_CCK_RATE]);

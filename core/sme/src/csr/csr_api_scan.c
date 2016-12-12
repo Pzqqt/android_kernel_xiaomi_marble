@@ -622,12 +622,13 @@ QDF_STATUS csr_scan_request(tpAniSirGlobal pMac, uint16_t sessionId,
 				QDF_TIMER_TYPE_SW,
 				csr_scan_active_list_timeout_handle, scan_cmd);
 	sms_log(pMac, LOG1,
-		FL("SId=%d scanId=%d Scan reason=%u numSSIDs=%d numChan=%d P2P search=%d minCT=%d maxCT=%d uIEFieldLen=%d"),
+		FL("SId=%d scanId=%d Scan reason=%u numSSIDs=%d numChan=%d P2P search=%d minCT=%d maxCT=%d uIEFieldLen=%d BSSID: " MAC_ADDRESS_STR),
 		sessionId, scan_cmd->u.scanCmd.scanID,
 		scan_cmd->u.scanCmd.reason, pTempScanReq->SSIDs.numOfSSIDs,
 		pTempScanReq->ChannelInfo.numOfChannels,
 		pTempScanReq->p2pSearch, pTempScanReq->minChnTime,
-		pTempScanReq->maxChnTime, pTempScanReq->uIEFieldLen);
+		pTempScanReq->maxChnTime, pTempScanReq->uIEFieldLen,
+		MAC_ADDR_ARRAY(scan_cmd->u.scanCmd.u.scanRequest.bssid.bytes));
 
 	status = csr_queue_sme_command(pMac, scan_cmd, false);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -5660,6 +5661,8 @@ QDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
 			goto complete;
 		}
 	} /* Allocate memory for SSID List */
+	qdf_mem_copy(&dst_req->bssid, &src_req->bssid,
+		sizeof(struct qdf_mac_addr));
 	dst_req->p2pSearch = src_req->p2pSearch;
 	dst_req->skipDfsChnlInP2pSearch =
 		src_req->skipDfsChnlInP2pSearch;
