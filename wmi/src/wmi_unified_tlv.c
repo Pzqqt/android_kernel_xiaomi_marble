@@ -13647,7 +13647,8 @@ static void populate_pdev_param_tlv(uint32_t *pdev_param)
 	pdev_param[wmi_pdev_param_set_msdu_ttl_cmdid] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_txbf_sound_period_cmdid] =
 						WMI_UNAVAILABLE_PARAM;
-	pdev_param[wmi_pdev_param_set_burst_mode_cmdid] = WMI_UNAVAILABLE_PARAM;
+	pdev_param[wmi_pdev_param_set_burst_mode_cmdid] =
+					WMI_PDEV_PARAM_SET_BURST_MODE_CMDID;
 	pdev_param[wmi_pdev_param_en_stats] = WMI_UNAVAILABLE_PARAM;
 }
 
@@ -13784,6 +13785,8 @@ static void populate_vdev_param_tlv(uint32_t *vdev_param)
 				WMI_VDEV_PARAM_MCC_RTSCTS_PROTECTION_ENABLE;
 	vdev_param[wmi_vdev_param_mcc_broadcast_probe_enable] =
 				WMI_VDEV_PARAM_MCC_BROADCAST_PROBE_ENABLE;
+	vdev_param[wmi_vdev_param_mgmt_tx_power] = WMI_VDEV_PARAM_MGMT_TX_POWER;
+	vdev_param[wmi_vdev_param_beacon_rate] = WMI_VDEV_PARAM_BEACON_RATE;
 }
 #endif
 
