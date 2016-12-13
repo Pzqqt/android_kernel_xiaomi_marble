@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -493,7 +493,7 @@ static struct CE_attr host_ce_config_wlan_qca8074[] = {
 	{ /* CE6 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
 	/* ce_diag, the Diagnostic Window */
 	{ /* CE7 */ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,
-		2, DIAG_TRANSFER_LIMIT, 2, NULL,},
+		8, DIAG_TRANSFER_LIMIT, 8, NULL,},
 	/* Target to uMC */
 	{ /* CE8 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
 	/* target->host HTT */
