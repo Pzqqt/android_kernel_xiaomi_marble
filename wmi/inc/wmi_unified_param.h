@@ -7010,6 +7010,37 @@ typedef struct {
 	uint32_t tx_mu_transmitted;
 } wmi_host_peer_txmu_cnt_event;
 
+#define MAX_SAR_LIMIT_ROWS_SUPPORTED 64
+/**
+ * struct sar_limit_cmd_row - sar limts row
+ * @band_id: Optional param for frequency band
+ * @chain_id: Optional param for antenna chain id
+ * @mod_id: Optional param for modulation scheme
+ * @limit_value: Mandatory param providing power limits in steps of 0.5 dbm
+ * @validity_bitmap: bitmap of valid optional params in sar_limit_cmd_row struct
+ */
+struct sar_limit_cmd_row {
+	uint32_t band_id;
+	uint32_t chain_id;
+	uint32_t mod_id;
+	uint32_t limit_value;
+	uint32_t validity_bitmap;
+};
+
+/**
+ * struct sar_limit_cmd_params - sar limts params
+ * @sar_enable: flag to enable SAR
+ * @num_limit_rows: number of items in sar_limits
+ * @commit_limits: indicates firmware to start apply new SAR values
+ * @sar_limit_row_list: pointer to array of sar limit rows
+ */
+struct sar_limit_cmd_params {
+	uint32_t sar_enable;
+	uint32_t num_limit_rows;
+	uint32_t commit_limits;
+	struct sar_limit_cmd_row *sar_limit_row_list;
+};
+
 /*
  * struct wmi_peer_gid_userpos_list_event
  * @usr_list - User list

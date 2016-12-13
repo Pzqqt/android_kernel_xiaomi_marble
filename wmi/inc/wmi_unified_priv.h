@@ -1180,6 +1180,9 @@ QDF_STATUS (*send_fw_test_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_encrypt_decrypt_send_cmd)(wmi_unified_t wmi_handle,
 				struct encrypt_decrypt_req_params *params);
 
+QDF_STATUS (*send_sar_limit_cmd)(wmi_unified_t wmi_handle,
+				struct sar_limit_cmd_params *params);
+
 QDF_STATUS (*send_peer_rx_reorder_queue_setup_cmd)(wmi_unified_t wmi_handle,
 		struct rx_reorder_queue_setup_params *param);
 
