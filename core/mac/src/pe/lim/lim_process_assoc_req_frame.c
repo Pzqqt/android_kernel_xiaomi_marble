@@ -1213,10 +1213,9 @@ static bool lim_chk_wmm(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
  * @mac_ctx: pointer to Global MAC structure
  * @hdr: pointer to the MAC head
  * @session: pointer to pe session entry
- * @assoc_req: pointer to ASSOC/REASSOC Request frame
+ * @assoc_req: pointer to ASSOC/REASSOC Request frame pointer
  * @sub_type: Assoc(=0) or Reassoc(=1) Requestframe
  * @sta_ds: station dph entry
- * @tmp_assoc_req: pointer to tmp ASSOC/REASSOC Request frame
  * @auth_type: indicates security type
  * @assoc_req_copied: boolean to indicate if assoc req was copied to tmp above
  * @peer_idx: peer index
@@ -1228,9 +1227,8 @@ static bool lim_chk_wmm(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
  * Return: true of no error, false otherwise
  */
 static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
-			      tpPESession session, tpSirAssocReq assoc_req,
+			      tpPESession session, tpSirAssocReq *sir_assoc_req,
 			      uint8_t sub_type, tpDphHashNode sta_ds,
-			      tpSirAssocReq tmp_assoc_req,
 			      tAniAuthType auth_type,
 			      bool *assoc_req_copied, uint16_t peer_idx,
 			      tHalBitVal qos_mode, bool pmf_connection)
@@ -1242,6 +1240,8 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 	uint32_t retry_interval;
 #endif
 	tDot11fIEVHTCaps *vht_caps;
+	tpSirAssocReq tmp_assoc_req;
+	tpSirAssocReq assoc_req = *sir_assoc_req;
 
 	if (assoc_req->VHTCaps.present)
 		vht_caps = &assoc_req->VHTCaps;
@@ -1438,7 +1438,8 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 			session);
 
 		if (session->parsedAssocReq)
-			assoc_req = session->parsedAssocReq[sta_ds->assocId];
+			*sir_assoc_req =
+				session->parsedAssocReq[sta_ds->assocId];
 		return false;
 	}
 	if (assoc_req->operMode.present) {
@@ -1685,9 +1686,10 @@ static void lim_process_assoc_cleanup(tpAniSirGlobal mac_ctx,
 				      tpPESession session,
 				      tpSirAssocReq assoc_req,
 				      tpDphHashNode sta_ds,
-				      tpSirAssocReq tmp_assoc_req,
 				      bool *assoc_req_copied)
 {
+	tpSirAssocReq tmp_assoc_req;
+
 	if (assoc_req != NULL) {
 		if (assoc_req->assocReqFrame) {
 			qdf_mem_free(assoc_req->assocReqFrame);
@@ -1747,7 +1749,7 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	tAniAuthType auth_type;
 	tSirMacCapabilityInfo local_cap;
 	tpDphHashNode sta_ds = NULL;
-	tpSirAssocReq assoc_req, tmp_assoc_req;
+	tpSirAssocReq assoc_req;
 	bool dup_entry = false;
 
 	lim_get_phy_mode(mac_ctx, &phy_mode, session);
@@ -2008,11 +2010,12 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	}
 
 sendIndToSme:
-	if (false == lim_update_sta_ds(mac_ctx, hdr, session, assoc_req,
-				sub_type, sta_ds, tmp_assoc_req, auth_type,
+	if (false == lim_update_sta_ds(mac_ctx, hdr, session, &assoc_req,
+				sub_type, sta_ds, auth_type,
 				&assoc_req_copied, peer_idx, qos_mode,
 				pmf_connection))
 		goto error;
+
 
 	/* BTAMP: Storing the parsed assoc request in the session array */
 	if (session->parsedAssocReq)
@@ -2041,9 +2044,8 @@ sendIndToSme:
 	return;
 
 error:
-
 	lim_process_assoc_cleanup(mac_ctx, session, assoc_req, sta_ds,
-				  tmp_assoc_req, &assoc_req_copied);
+				  &assoc_req_copied);
 	return;
 }
 
