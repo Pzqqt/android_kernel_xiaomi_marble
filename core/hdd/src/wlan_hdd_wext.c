@@ -197,8 +197,60 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_SET_GTX_STEP                 67
 #define WE_SET_GTX_MINTPC               68
 #define WE_SET_GTX_BWMASK               69
-/* Private ioctl to configure MCC home channels time quota and latency */
+
+/*
+ * <ioctl>
+ * setMccLatency - Sets the MCC latency value during STA-P2P concurrency
+ *
+ * @INPUT: set_value
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL is used to set the MCC latency value in milliseconds
+ * during STA-P2P concurrency.
+ *
+ * If 0ms latency is provided, then FW will set to a default.
+ * Otherwise, latency must be at least 30ms.
+ *
+ * @E.g: iwpriv wlan0 setMccLatency 40
+ *
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_MCC_CONFIG_LATENCY           70
+
+/*
+ * <ioctl>
+ * setMccQuota- Set the quota for P2P cases
+ *
+ * @INPUT: set_value [0,100]
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL is used to set the quota in milliseconds for P2P_GO/STA.
+ *
+ * Currently used to set time quota for 2 MCC vdevs/adapters using
+ * (operating channel, quota) for each mode.
+ * The info is provided run time using iwpriv command:
+ * iwpriv <wlan0 | p2p0> setMccQuota <quota in ms>.
+ * Note: the quota provided in command is for the same mode in cmd.
+ * HDD checks if MCC mode is active, gets the second mode and its
+ * operating chan.
+ * Quota for the 2nd role is calculated as 100 - quota of first mode.
+ *
+ * @E.g: iwpriv wlan0 setMccQuota 50
+ *       iwpriv p2p0 setMccQuota 50
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_MCC_CONFIG_QUOTA             71
 /* Private IOCTL for debug connection issues */
 #define WE_SET_DEBUG_LOG                72
@@ -234,6 +286,30 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_GET_MAX_ASSOC     6
 /* 7 is unused */
 #define WE_GET_SAP_AUTO_CHANNEL_SELECTION 8
+
+/*
+ * <ioctl>
+ * getconcurrency - Get concurrency mode
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: It shows concurrency value
+ * Bit 0:STA   1:SAP     2:P2P_Client  3:P2P_GO
+ *     4:FTM   5:IBSS    6:Monitor     7:P2P_Device
+ *     8:OCB   9:EPPING  10:QVIT       11:NDI
+ *
+ * This IOCTL is used to retrieve concurrency mode.
+ *
+ * @E.g: iwpriv wlan0 getconcurrency
+ * wlan0     getconcurrency:5
+ * Above value shows STA+P2P_Client
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_CONCURRENCY_MODE 9
 #define WE_GET_NSS           11
 #define WE_GET_LDPC          12
