@@ -147,12 +147,14 @@ struct qdf_nbuf_cb {
 			uint32_t tcp_ack_num;
 			uint32_t flow_id_toeplitz;
 			uint32_t map_index;
+			void *lro_desc;
+			void *lro_ctx;
 			union {
 				uint8_t packet_state;
 				uint8_t dp_trace:1,
 						rsrvd:7;
 			} trace;
-		} rx; /* 20 bytes */
+		} rx; /* 36 bytes */
 
 		/* Note: MAX: 40 bytes */
 		struct {
@@ -220,6 +222,10 @@ struct qdf_nbuf_cb {
 
 #define QDF_NBUF_CB_RX_LRO_ELIGIBLE(skb) \
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.lro_eligible)
+#define QDF_NBUF_CB_RX_LRO_DESC(skb) \
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.lro_desc)
+#define QDF_NBUF_CB_RX_LRO_CTX(skb) \
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.lro_ctx)
 #define QDF_NBUF_CB_RX_CTX_ID(skb) \
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.rx_ctx_id)
 #define QDF_NBUF_CB_RX_TCP_PROTO(skb) \
