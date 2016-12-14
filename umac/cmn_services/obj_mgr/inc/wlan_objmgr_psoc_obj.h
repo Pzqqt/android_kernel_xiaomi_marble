@@ -23,6 +23,7 @@
 #define _WLAN_OBJMGR_PSOC_OBJ_H_
 
 #include "wlan_objmgr_cmn.h"
+#include "wlan_lmac_if_def.h"
 
 #define REG_DMN_CH144        0x0001
 #define REG_DMN_ENTREPRISE   0x0002
@@ -205,10 +206,13 @@ struct wlan_objmgr_psoc_objmgr {
 };
 
 /**
- * struct wlan_soc_southbound_cb - structure for south bound callbacks
- *
+ * struct wlan_soc_southbound_cb - Southbound callbacks
+ * @tx_ops: contains southbound tx callbacks
+ * @rx_ops: contains southbound rx callbacks
  */
 struct wlan_soc_southbound_cb {
+	struct wlan_lmac_if_tx_ops tx_ops;
+	struct wlan_lmac_if_rx_ops rx_ops;
 };
 
 /**
