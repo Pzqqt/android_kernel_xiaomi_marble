@@ -13749,8 +13749,9 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 						isDeauthInProgress = true;
 						qdf_status =
 							qdf_wait_single_event(
-								&hapd_state->qdf_sta_disassoc_event,
-								1000);
+							 &hapd_state->
+							 qdf_sta_disassoc_event,
+							 SME_CMD_TIMEOUT_VALUE);
 						if (!QDF_IS_STATUS_SUCCESS(
 								qdf_status))
 							hdd_err("Deauth wait time expired");
@@ -13813,8 +13814,9 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 				return -ENOENT;
 			} else {
 				qdf_status = qdf_wait_single_event(
-							&hapd_state->qdf_sta_disassoc_event,
-							1000);
+						&hapd_state->
+						qdf_sta_disassoc_event,
+						SME_CMD_TIMEOUT_VALUE);
 				if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 					hdd_err("Deauth wait time expired");
 			}

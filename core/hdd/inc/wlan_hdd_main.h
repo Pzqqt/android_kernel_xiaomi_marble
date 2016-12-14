@@ -264,8 +264,6 @@
 #define NET_NAME_UNKNOWN	0
 #endif
 
-#define BSS_WAIT_TIMEOUT 10000
-
 #define PRE_CAC_SSID "pre_cac_ssid"
 
 /* session ID invalid */

@@ -385,7 +385,7 @@ static QDF_STATUS init_sme_cmd_list(tpAniSirGlobal pMac)
 			pMac->sme.smeCmdActiveList.cmdTimeoutTimer = NULL;
 		} else {
 			pMac->sme.smeCmdActiveList.cmdTimeoutDuration =
-				CSR_ACTIVE_LIST_CMD_TIMEOUT_VALUE;
+				SME_ACTIVE_LIST_CMD_TIMEOUT_VALUE;
 		}
 	}
 

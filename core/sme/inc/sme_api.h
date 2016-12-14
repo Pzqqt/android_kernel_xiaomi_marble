@@ -82,6 +82,9 @@
 #define ROAM_CONFIG_TO_SME_CONFIG 2
 
 #define NUM_OF_BANDS 2
+
+#define SME_ACTIVE_LIST_CMD_TIMEOUT_VALUE (30*1000)
+#define SME_CMD_TIMEOUT_VALUE (SME_ACTIVE_LIST_CMD_TIMEOUT_VALUE + 1000)
 /*--------------------------------------------------------------------------
   Type declarations
   ------------------------------------------------------------------------*/

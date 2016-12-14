@@ -6521,8 +6521,8 @@ void cds_restart_sap(hdd_adapter_t *ap_adapter)
 		if (QDF_STATUS_SUCCESS == wlansap_stop_bss(sap_ctx)) {
 			qdf_status =
 				qdf_wait_single_event(&hostapd_state->
-						qdf_stop_bss_event,
-						BSS_WAIT_TIMEOUT);
+					qdf_stop_bss_event,
+					SME_CMD_TIMEOUT_VALUE);
 
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				cds_err("SAP Stop Failed");
@@ -6554,7 +6554,7 @@ void cds_restart_sap(hdd_adapter_t *ap_adapter)
 		cds_info("Waiting for SAP to start");
 		qdf_status =
 			qdf_wait_single_event(&hostapd_state->qdf_event,
-					BSS_WAIT_TIMEOUT);
+					SME_CMD_TIMEOUT_VALUE);
 		wlansap_reset_sap_config_add_ie(sap_config,
 				eUPDATE_IE_ALL);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
