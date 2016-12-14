@@ -124,17 +124,21 @@ static void htt_rx_hash_deinit(struct htt_pdev_t *pdev)
 
 	uint32_t i;
 	struct htt_rx_hash_entry *hash_entry;
+	struct htt_rx_hash_bucket **hash_table;
 	struct htt_list_node *list_iter = NULL;
 
 	if (NULL == pdev->rx_ring.hash_table)
 		return;
 
 	qdf_spin_lock_bh(&(pdev->rx_ring.rx_hash_lock));
+	hash_table = pdev->rx_ring.hash_table;
+	pdev->rx_ring.hash_table = NULL;
+	qdf_spin_unlock_bh(&(pdev->rx_ring.rx_hash_lock));
 
 	for (i = 0; i < RX_NUM_HASH_BUCKETS; i++) {
 		/* Free the hash entries in hash bucket i */
-		list_iter = pdev->rx_ring.hash_table[i]->listhead.next;
-		while (list_iter != &pdev->rx_ring.hash_table[i]->listhead) {
+		list_iter = hash_table[i]->listhead.next;
+		while (list_iter != &hash_table[i]->listhead) {
 			hash_entry =
 				(struct htt_rx_hash_entry *)((char *)list_iter -
 							     pdev->rx_ring.
@@ -156,13 +160,11 @@ static void htt_rx_hash_deinit(struct htt_pdev_t *pdev)
 				qdf_mem_free(hash_entry);
 		}
 
-		qdf_mem_free(pdev->rx_ring.hash_table[i]);
+		qdf_mem_free(hash_table[i]);
 
 	}
-	qdf_mem_free(pdev->rx_ring.hash_table);
-	pdev->rx_ring.hash_table = NULL;
+	qdf_mem_free(hash_table);
 
-	qdf_spin_unlock_bh(&(pdev->rx_ring.rx_hash_lock));
 	qdf_spinlock_destroy(&(pdev->rx_ring.rx_hash_lock));
 
 }
