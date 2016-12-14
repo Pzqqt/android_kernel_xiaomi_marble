@@ -3012,6 +3012,7 @@ static int htt_rx_hash_init(struct htt_pdev_t *pdev)
 {
 	int i, j;
 	int rc = 0;
+	void *allocation;
 
 	HTT_ASSERT2(QDF_IS_PWR2(RX_NUM_HASH_BUCKETS));
 
@@ -3030,10 +3031,13 @@ static int htt_rx_hash_init(struct htt_pdev_t *pdev)
 
 	for (i = 0; i < RX_NUM_HASH_BUCKETS; i++) {
 
+		qdf_spin_unlock_bh(&(pdev->rx_ring.rx_hash_lock));
 		/* pre-allocate bucket and pool of entries for this bucket */
-		pdev->rx_ring.hash_table[i] = qdf_mem_malloc(
-			(sizeof(struct htt_rx_hash_bucket) +
+		allocation = qdf_mem_malloc((sizeof(struct htt_rx_hash_bucket) +
 			(RX_ENTRIES_SIZE * sizeof(struct htt_rx_hash_entry))));
+		qdf_spin_lock_bh(&(pdev->rx_ring.rx_hash_lock));
+		pdev->rx_ring.hash_table[i] = allocation;
+
 
 		HTT_RX_HASH_COUNT_RESET(pdev->rx_ring.hash_table[i]);
 
