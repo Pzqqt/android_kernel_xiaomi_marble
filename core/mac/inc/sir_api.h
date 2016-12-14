@@ -3083,6 +3083,7 @@ typedef struct sSirRoamOffloadScanRsp {
    Packet Filtering Parameters
    ---------------------------------------------------------------------------*/
 #define    SIR_MAX_FILTER_TEST_DATA_LEN       8
+#define    SIR_MAX_FILTER_TEST_DATA_OFFSET  200
 #define    SIR_MAX_NUM_MULTICAST_ADDRESS    240
 #define    SIR_MAX_NUM_FILTERS               20
 #define    SIR_MAX_NUM_TESTS_PER_FILTER      10

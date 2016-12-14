@@ -8967,6 +8967,15 @@ static int wlan_hdd_set_filter(hdd_context_t *hdd_ctx,
 				request->params_data[i].data_length;
 			packetFilterSetReq.paramsData[i].reserved = 0;
 
+			if (request->params_data[i].data_offset >
+			    SIR_MAX_FILTER_TEST_DATA_OFFSET) {
+				hdd_err("Invalid data offset %u for param %d (max = %d)",
+					request->params_data[i].data_offset,
+					i,
+					SIR_MAX_FILTER_TEST_DATA_OFFSET);
+				return -EINVAL;
+			}
+
 			if (request->params_data[i].data_length >
 				SIR_MAX_FILTER_TEST_DATA_LEN) {
 				hdd_err("Error invalid data length %d",
