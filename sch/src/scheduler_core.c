@@ -411,7 +411,9 @@ int scheduler_thread(void *arg)
 	/* If we get here the MC thread must exit */
 	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
 		  "%s: Scheduler thread exiting!!!!", __func__);
-	qdf_event_complete_and_exit(&sch_ctx->sch_shutdown, 0);
+	qdf_event_set(&sch_ctx->sch_shutdown);
+	qdf_exit_thread(QDF_STATUS_SUCCESS);
+
 	return 0;
 }
 
