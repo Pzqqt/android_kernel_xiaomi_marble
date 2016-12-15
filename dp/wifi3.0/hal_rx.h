@@ -593,7 +593,7 @@ hal_rx_mpdu_peer_meta_data_get(uint8_t *buf)
 #endif
 
  /**
- * hal_rx_msdu_end_l3_hdr_padding_get: API to get the
+ * hal_rx_msdu_end_l3_hdr_padding_get(): API to get the
  * l3_header padding from rx_msdu_end TLV
  *
  * @ buf: pointer to the start of RX PKT TLV headers
@@ -618,7 +618,7 @@ hal_rx_msdu_end_l3_hdr_padding_get(uint8_t *buf)
 		RX_MSDU_START_1_MSDU_LENGTH_LSB))
 
  /**
- * hal_rx_msdu_start_msdu_len_get: API to get the MSDU length
+ * hal_rx_msdu_start_msdu_len_get(): API to get the MSDU length
  * from rx_msdu_start TLV
  *
  * @ buf: pointer to the start of RX PKT TLV headers
@@ -705,6 +705,77 @@ hal_rx_mpdu_start_sw_peer_id_get(uint8_t *buf)
 
 	return sw_peer_id;
 }
+
+#if defined(WCSS_VERSION) && \
+	((defined(CONFIG_WIN) && (WCSS_VERSION > 81)) || \
+	 (defined(CONFIG_MCL) && (WCSS_VERSION >= 72)))
+#define HAL_RX_MSDU_START_SGI_GET(_rx_msdu_start)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_msdu_start),\
+		RX_MSDU_START_5_SGI_OFFSET)),		\
+		RX_MSDU_START_5_SGI_MASK,		\
+		RX_MSDU_START_5_SGI_LSB))
+#else
+#define HAL_RX_MSDU_START_SGI_GET(_rx_msdu_start)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_msdu_start),\
+		RX_MSDU_START_6_SGI_OFFSET)),		\
+		RX_MSDU_START_6_SGI_MASK,		\
+		RX_MSDU_START_6_SGI_LSB))
+#endif
+/**
+ * hal_rx_msdu_start_msdu_sgi_get(): API to get the Short Gaurd
+ * Interval from rx_msdu_start TLV
+ *
+ * @buf: pointer to the start of RX PKT TLV headers
+ * Return: uint32_t(sgi)
+ */
+static inline uint32_t
+hal_rx_msdu_start_sgi_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_start *msdu_start =
+		&pkt_tlvs->msdu_start_tlv.rx_msdu_start;
+	uint32_t sgi;
+
+	sgi = HAL_RX_MSDU_START_SGI_GET(msdu_start);
+
+	return sgi;
+}
+
+#if defined(WCSS_VERSION) && \
+	((defined(CONFIG_WIN) && (WCSS_VERSION > 81)) || \
+	 (defined(CONFIG_MCL) && (WCSS_VERSION >= 72)))
+#define HAL_RX_MSDU_START_RATE_MCS_GET(_rx_msdu_start)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_msdu_start),\
+		RX_MSDU_START_5_RATE_MCS_OFFSET)),	\
+		RX_MSDU_START_5_RATE_MCS_MASK,		\
+		RX_MSDU_START_5_RATE_MCS_LSB))
+#else
+#define HAL_RX_MSDU_START_RATE_MCS_GET(_rx_msdu_start)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_msdu_start),\
+		RX_MSDU_START_6_RATE_MCS_OFFSET)),	\
+		RX_MSDU_START_6_RATE_MCS_MASK,		\
+		RX_MSDU_START_6_RATE_MCS_LSB))
+#endif
+/**
+ * hal_rx_msdu_start_msdu_rate_mcs_get(): API to get the MCS rate
+ * from rx_msdu_start TLV
+ *
+ * @buf: pointer to the start of RX PKT TLV headers
+ * Return: uint32_t(rate_mcs)
+ */
+static inline uint32_t
+hal_rx_msdu_start_rate_mcs_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_start *msdu_start =
+		&pkt_tlvs->msdu_start_tlv.rx_msdu_start;
+	uint32_t rate_mcs;
+
+	rate_mcs = HAL_RX_MSDU_START_RATE_MCS_GET(msdu_start);
+
+	return rate_mcs;
+}
+
 
 /*******************************************************************************
  * RX ERROR APIS

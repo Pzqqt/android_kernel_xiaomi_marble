@@ -260,9 +260,9 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, void *ring_desc,
 	qdf_nbuf_t nbuf;
 	struct dp_pdev *pdev0;
 	struct dp_vdev *vdev0;
-	uint32_t tid = 0;
 	uint16_t peer_id = 0xFFFF;
 	struct dp_peer *peer = NULL;
+	uint32_t sgi, rate_mcs, tid;
 
 	rx_buf_cookie = HAL_RX_WBM_BUF_COOKIE_GET(ring_desc);
 
@@ -299,6 +299,14 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, void *ring_desc,
 
 		qdf_assert(0);
 	}
+
+	sgi = hal_rx_msdu_start_sgi_get(rx_desc->rx_buf_start);
+	rate_mcs = hal_rx_msdu_start_rate_mcs_get(rx_desc->rx_buf_start);
+	tid = hal_rx_mpdu_start_tid_get(rx_desc->rx_buf_start);
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		"%s: %d, SGI: %d, rate_mcs: %d, tid: %d",
+		__func__, __LINE__, sgi, rate_mcs, tid);
 
 	/*
 	 * Advance the packet start pointer by total size of

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -214,6 +214,7 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 	uint8_t *rx_tlv_hdr;
 	uint32_t rx_bufs_reaped = 0;
 	struct dp_pdev *pdev;
+	uint32_t sgi, rate_mcs, tid;
 
 	/* Debug -- Remove later */
 	qdf_assert(soc && hal_ring);
@@ -370,6 +371,15 @@ done:
 				/* Statistics */
 				continue;
 			}
+
+			sgi = hal_rx_msdu_start_sgi_get(rx_tlv_hdr);
+			rate_mcs = hal_rx_msdu_start_rate_mcs_get(rx_tlv_hdr);
+			tid = hal_rx_mpdu_start_tid_get(rx_tlv_hdr);
+
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+				"%s: %d, SGI: %d, rate_mcs: %d, tid: %d",
+				__func__, __LINE__, sgi, rate_mcs, tid);
+
 			/*
 			 * HW structures call this L3 header padding --
 			 * even though this is actually the offset from
