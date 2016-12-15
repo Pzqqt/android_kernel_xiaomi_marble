@@ -86,6 +86,7 @@
 #include "epping_main.h"
 #include <a_types.h>
 #include <cdp_txrx_handle.h>
+#include <htt_internal.h>
 #ifdef QCA_SUPPORT_TXRX_LOCAL_PEER_ID
 ol_txrx_peer_handle
 ol_txrx_peer_find_by_local_id(struct cdp_pdev *pdev,
@@ -4447,6 +4448,9 @@ static QDF_STATUS ol_txrx_display_stats(void *soc, uint16_t value)
 		break;
 	case CDP_TXRX_DESC_STATS:
 		qdf_nbuf_tx_desc_count_display();
+		break;
+	case CDP_WLAN_RX_BUF_DEBUG_STATS:
+		htt_display_rx_buf_debug(pdev->htt_pdev);
 		break;
 #ifdef CONFIG_HL_SUPPORT
 	case CDP_SCHEDULER_STATS:

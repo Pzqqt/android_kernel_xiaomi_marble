@@ -158,17 +158,18 @@ struct htt_host_rx_desc_base {
  * 3) htt_rx_in_order_indication reception
  *    @paddr : = 0
  *    @nbuf  : = 0
- *    @ndata : = 0
+ *    @ndata : msdu_cnt
  *    @posted: time-stamp when HTT message is recived
  *    @recvd : 0x48545452584D5367 ('HTTRXMSG')
 */
-#define HTT_RX_RING_BUFF_DBG_LIST          2048
+#define HTT_RX_RING_BUFF_DBG_LIST          (2 * 1024)
 struct rx_buf_debug {
 	qdf_dma_addr_t paddr;
 	qdf_nbuf_t     nbuf;
 	void          *nbuf_data;
 	uint64_t       posted; /* timetamp */
 	uint64_t       recved; /* timestamp */
+	int            cpu;
 
 };
 #endif
@@ -656,7 +657,49 @@ void htt_rx_dbg_rxbuf_init(struct htt_pdev_t *pdev)
 		QDF_ASSERT(0);
 	} else {
 		qdf_spinlock_create(&(pdev->rx_buff_list_lock));
+		pdev->rx_buff_index = 0;
+		pdev->rx_buff_posted_cum = 0;
+		pdev->rx_buff_recvd_cum  = 0;
+		pdev->rx_buff_recvd_err  = 0;
+		pdev->refill_retry_timer_starts = 0;
+		pdev->refill_retry_timer_calls = 0;
+
 	}
+}
+
+static inline int htt_display_rx_buf_debug(struct htt_pdev_t *pdev)
+{
+	int i;
+	struct rx_buf_debug *buf;
+
+	if ((pdev != NULL) &&
+	    (pdev->rx_buff_list != NULL)) {
+		buf = pdev->rx_buff_list;
+		for (i = 0; i < HTT_RX_RING_BUFF_DBG_LIST; i++) {
+			if (buf[i].posted != 0)
+				QDF_TRACE(QDF_MODULE_ID_TXRX,
+					  QDF_TRACE_LEVEL_ERROR,
+					  "[%d][0x%x] %p %lu %p %llu %llu",
+					  i, buf[i].cpu,
+					  buf[i].nbuf_data,
+					  (unsigned long)buf[i].paddr,
+					  buf[i].nbuf,
+					  buf[i].posted,
+					  buf[i].recved);
+		}
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		"rxbuf_idx %d all_posted: %d all_recvd: %d recv_err: %d timer_starts :%d timer_calls :%d",
+		pdev->rx_buff_index,
+		pdev->rx_buff_posted_cum,
+		pdev->rx_buff_recvd_cum,
+		pdev->rx_buff_recvd_err,
+		pdev->refill_retry_timer_starts,
+		pdev->refill_retry_timer_calls);
+
+
+	} else
+		return -EINVAL;
+	return 0;
 }
 
 /**
@@ -679,7 +722,10 @@ void htt_rx_dbg_rxbuf_set(struct htt_pdev_t *pdev, qdf_dma_addr_t paddr,
 							rx_netbuf->data;
 		pdev->rx_buff_list[pdev->rx_buff_index].posted =
 						qdf_get_log_timestamp();
+		pdev->rx_buff_posted_cum++;
 		pdev->rx_buff_list[pdev->rx_buff_index].recved = 0;
+		pdev->rx_buff_list[pdev->rx_buff_index].cpu =
+				(1 << qdf_get_cpu());
 		NBUF_MAP_ID(rx_netbuf) = pdev->rx_buff_index;
 		if (++pdev->rx_buff_index >=
 				HTT_RX_RING_BUFF_DBG_LIST)
@@ -706,7 +752,12 @@ void htt_rx_dbg_rxbuf_reset(struct htt_pdev_t *pdev,
 		if (index < HTT_RX_RING_BUFF_DBG_LIST) {
 			pdev->rx_buff_list[index].recved =
 				qdf_get_log_timestamp();
+			pdev->rx_buff_recvd_cum++;
+		} else {
+			pdev->rx_buff_recvd_err++;
 		}
+		pdev->rx_buff_list[pdev->rx_buff_index].cpu |=
+				(1 << qdf_get_cpu());
 		qdf_spin_unlock_bh(&(pdev->rx_buff_list_lock));
 	}
 }
@@ -729,6 +780,8 @@ void htt_rx_dbg_rxbuf_indupd(struct htt_pdev_t *pdev, int alloc_index)
 						qdf_get_log_timestamp();
 		pdev->rx_buff_list[pdev->rx_buff_index].recved =
 			(uint64_t)alloc_index;
+		pdev->rx_buff_list[pdev->rx_buff_index].cpu =
+				(1 << qdf_get_cpu());
 		if (++pdev->rx_buff_index >=
 				HTT_RX_RING_BUFF_DBG_LIST)
 			pdev->rx_buff_index = 0;
@@ -742,17 +795,19 @@ void htt_rx_dbg_rxbuf_indupd(struct htt_pdev_t *pdev, int alloc_index)
  * Return: none
  */
 static inline
-void htt_rx_dbg_rxbuf_httrxind(struct htt_pdev_t *pdev)
+void htt_rx_dbg_rxbuf_httrxind(struct htt_pdev_t *pdev, unsigned int msdu_cnt)
 {
 	if (pdev->rx_buff_list) {
 		qdf_spin_lock_bh(&(pdev->rx_buff_list_lock));
-		pdev->rx_buff_list[pdev->rx_buff_index].paddr = 0;
+		pdev->rx_buff_list[pdev->rx_buff_index].paddr = msdu_cnt;
 		pdev->rx_buff_list[pdev->rx_buff_index].nbuf  = 0;
 		pdev->rx_buff_list[pdev->rx_buff_index].nbuf_data = 0;
 		pdev->rx_buff_list[pdev->rx_buff_index].posted =
 						qdf_get_log_timestamp();
 		pdev->rx_buff_list[pdev->rx_buff_index].recved =
 			(uint64_t)0x48545452584D5347; /* 'HTTRXMSG' */
+		pdev->rx_buff_list[pdev->rx_buff_index].cpu =
+				(1 << qdf_get_cpu());
 		if (++pdev->rx_buff_index >=
 				HTT_RX_RING_BUFF_DBG_LIST)
 			pdev->rx_buff_index = 0;
@@ -799,7 +854,8 @@ void htt_rx_dbg_rxbuf_indupd(struct htt_pdev_t *pdev,
 	return;
 }
 static inline
-void htt_rx_dbg_rxbuf_httrxind(struct htt_pdev_t *pdev)
+void htt_rx_dbg_rxbuf_httrxind(struct htt_pdev_t *pdev,
+			       unsigned int msdu_cnt)
 {
 	return;
 }

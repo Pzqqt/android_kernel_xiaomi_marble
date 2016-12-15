@@ -404,6 +404,8 @@ static int htt_rx_ring_fill_level(struct htt_pdev_t *pdev)
 static void htt_rx_ring_refill_retry(void *arg)
 {
 	htt_pdev_handle pdev = (htt_pdev_handle) arg;
+
+	pdev->refill_retry_timer_calls++;
 	htt_rx_msdu_buff_replenish(pdev);
 }
 #endif
@@ -439,6 +441,7 @@ moretofill:
 #ifdef DEBUG_DMA_DONE
 			pdev->rx_ring.dbg_refill_cnt++;
 #endif
+			pdev->refill_retry_timer_starts++;
 			qdf_timer_start(
 				&pdev->rx_ring.refill_retry_timer,
 				HTT_RX_RING_REFILL_RETRY_TIME_MS);
@@ -1955,8 +1958,6 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 
 	HTT_ASSERT1(htt_rx_in_order_ring_elems(pdev) != 0);
 
-	htt_rx_dbg_rxbuf_httrxind(pdev);
-
 	rx_ind_data = qdf_nbuf_data(rx_ind_msg);
 	rx_ctx_id = QDF_NBUF_CB_RX_CTX_ID(rx_ind_msg);
 	msg_word = (uint32_t *) rx_ind_data;
@@ -1970,6 +1971,8 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 	msdu_count = HTT_RX_IN_ORD_PADDR_IND_MSDU_CNT_GET(*(msg_word + 1));
 	HTT_RX_CHECK_MSDU_COUNT(msdu_count);
 	ol_rx_update_histogram_stats(msdu_count, frag_ind, offload_ind);
+	htt_rx_dbg_rxbuf_httrxind(pdev, msdu_count);
+
 
 	msg_word =
 		(uint32_t *) (rx_ind_data + HTT_RX_IN_ORD_PADDR_IND_HDR_BYTES);

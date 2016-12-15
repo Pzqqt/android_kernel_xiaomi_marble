@@ -420,6 +420,11 @@ struct htt_pdev_t {
 	struct rx_buf_debug *rx_buff_list;
 	qdf_spinlock_t       rx_buff_list_lock;
 	int rx_buff_index;
+	int rx_buff_posted_cum;
+	int rx_buff_recvd_cum;
+	int rx_buff_recvd_err;
+	int refill_retry_timer_starts;
+	int refill_retry_timer_calls;
 #endif
 
 	/* callback function for packetdump */
