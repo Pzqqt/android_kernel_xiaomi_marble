@@ -1125,6 +1125,13 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 								  rx_wakelock_timeout);
 		}
 
+	if (HDD_LRO_NO_RX == hdd_lro_rx(pHddCtx, pAdapter, skb)) {
+		if (hdd_napi_enabled(HDD_NAPI_ANY) &&
+		    !pHddCtx->enableRxThread)
+			rxstat = netif_receive_skb(skb);
+		else
+			rxstat = netif_rx_ni(skb);
+	}
 		/* Remove SKB from internal tracking table before submitting
 		 * it to stack
 		 */

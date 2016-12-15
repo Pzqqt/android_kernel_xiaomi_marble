@@ -156,7 +156,7 @@ static inline struct htt_host_rx_desc_base *htt_rx_desc(qdf_nbuf_t msdu)
 		~HTT_RX_DESC_ALIGN_MASK);
 }
 
-#if defined(FEATURE_LRO)
+#if defined(FEATURE_LRO) && defined(HELIUMPLUS_PADDR64)
 /**
  * htt_print_rx_desc_lro() - print LRO information in the rx
  * descriptor

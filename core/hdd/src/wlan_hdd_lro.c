@@ -32,6 +32,7 @@
 
 #include <wlan_hdd_includes.h>
 #include <qdf_types.h>
+#include <qdf_lro.h>
 #include <wlan_hdd_lro.h>
 #include <wlan_hdd_napi.h>
 #include <wma_api.h>
@@ -42,11 +43,108 @@
 #include <linux/random.h>
 #include <net/tcp.h>
 
-#define LRO_MAX_AGGR_SIZE 100
-
 #define LRO_VALID_FIELDS \
 	(LRO_DESC | LRO_ELIGIBILITY_CHECKED | LRO_TCP_ACK_NUM | \
 	 LRO_TCP_DATA_CSUM | LRO_TCP_SEQ_NUM | LRO_TCP_WIN)
+
+#if defined(QCA_WIFI_NAPIER_EMULATION)
+/**
+ * hdd_lro_init() - initialization for LRO
+ * @hdd_ctx: HDD context
+ *
+ * This function sends the LRO configuration to the firmware
+ * via WMA
+ * Make sure that this function gets called after NAPI
+ * instances have been created.
+ *
+ * Return: 0 - success, < 0 - failure
+ */
+int hdd_lro_init(hdd_context_t *hdd_ctx)
+{
+	return 0;
+}
+
+/**
+ * hdd_lro_enable() - enable LRO
+ * @hdd_ctx: HDD context
+ * @adapter: HDD adapter
+ *
+ * This function enables LRO in the network device attached to
+ * the HDD adapter. It also allocates the HDD LRO instance for
+ * that network device
+ *
+ * Return: 0 - success, < 0 - failure
+ */
+int hdd_lro_enable(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * hdd_lro_rx() - LRO receive function
+ * @hdd_ctx: HDD context
+ * @adapter: HDD adapter
+ * @skb: network buffer
+ *
+ * Delivers LRO eligible frames to the LRO manager
+ *
+ * Return: HDD_LRO_RX - frame delivered to LRO manager
+ * HDD_LRO_NO_RX - frame not delivered
+ */
+enum hdd_lro_rx_status hdd_lro_rx(hdd_context_t *hdd_ctx,
+	 hdd_adapter_t *adapter, struct sk_buff *skb)
+{
+	struct net_lro_mgr *lro_mgr;
+	qdf_lro_ctx_t ctx = (qdf_lro_ctx_t)QDF_NBUF_CB_RX_LRO_CTX(skb);
+	/* LRO is not supported or non-TCP packet */
+	if (!ctx)
+		return HDD_LRO_NO_RX;
+
+	lro_mgr = ctx->lro_mgr;
+
+	if (QDF_NBUF_CB_RX_LRO_ELIGIBLE(skb)) {
+		struct net_lro_info hdd_lro_info;
+
+		hdd_lro_info.valid_fields = LRO_VALID_FIELDS;
+
+		hdd_lro_info.lro_desc = QDF_NBUF_CB_RX_LRO_DESC(skb);
+		hdd_lro_info.lro_eligible = 1;
+		hdd_lro_info.tcp_ack_num = QDF_NBUF_CB_RX_TCP_ACK_NUM(skb);
+		hdd_lro_info.tcp_data_csum =
+			 csum_unfold(QDF_NBUF_CB_RX_TCP_CHKSUM(skb));
+		hdd_lro_info.tcp_seq_num = QDF_NBUF_CB_RX_TCP_SEQ_NUM(skb);
+		hdd_lro_info.tcp_win = QDF_NBUF_CB_RX_TCP_WIN(skb);
+
+		lro_receive_skb_ext(lro_mgr, skb,
+			 (void *)adapter, &hdd_lro_info);
+
+		if (!hdd_lro_info.lro_desc->active)
+			qdf_lro_flow_free(skb);
+
+		return HDD_LRO_RX;
+	} else {
+		lro_flush_desc(lro_mgr, QDF_NBUF_CB_RX_LRO_DESC(skb));
+		return HDD_LRO_NO_RX;
+	}
+}
+/**
+ * hdd_lro_disable() - disable LRO
+ * @hdd_ctx: HDD context
+ * @adapter: HDD adapter
+ *
+ * This function frees the HDD LRO instance for the network
+ * device attached to the HDD adapter
+ *
+ * Return: none
+ */
+void hdd_lro_disable(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
+{
+	return;
+}
+
+#else
+
+#define LRO_MAX_AGGR_SIZE 100
 
 /**
  * hdd_lro_get_skb_header() - LRO callback function
@@ -638,6 +736,8 @@ enum hdd_lro_rx_status hdd_lro_rx(hdd_context_t *hdd_ctx,
 	}
 	return status;
 }
+
+#endif
 
 /**
  * wlan_hdd_display_lro_stats() - display LRO statistics
