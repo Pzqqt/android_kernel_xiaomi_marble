@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -167,10 +167,23 @@ enum qdf_timestamp_unit {
 
 #ifdef QCA_WIFI_3_0_ADRASTEA
 #define QDF_LOG_TIMESTAMP_UNIT QTIMER
+#define QDF_LOG_TIMESTAMP_CYCLES_PER_10_US 192
 #else
 #define QDF_LOG_TIMESTAMP_UNIT KERNEL_LOG
+#define QDF_LOG_TIMESTAMP_CYCLES_PER_10_US 10
 #endif
 
+static inline unsigned long long qdf_log_timestamp_to_usecs(uint64_t time)
+{
+	if ((time * 10) < time)
+		return (time / QDF_LOG_TIMESTAMP_CYCLES_PER_10_US) * 10;
+	return (time * 10) / QDF_LOG_TIMESTAMP_CYCLES_PER_10_US;
+}
+
+static inline uint64_t qdf_usecs_to_log_timestamp(uint64_t usecs)
+{
+	return (usecs * QDF_LOG_TIMESTAMP_CYCLES_PER_10_US) / 10;
+}
 
 /**
  * qdf_get_log_timestamp - get time stamp for logging
