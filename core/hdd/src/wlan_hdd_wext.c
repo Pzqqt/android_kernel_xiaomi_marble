@@ -440,18 +440,310 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_LED_FLASHING_PARAM    10
 #endif
 
+/*
+ * <ioctl>
+ * pm_clist - Increments the index value of the concurrent connection list
+ * and update with the input parameters provided.
+ *
+ * @INPUT: Following 8 arguments:
+ * @vdev_id: vdev id
+ * @tx_streams: TX streams
+ * @rx_streams: RX streams
+ * @chain_mask: Chain mask
+ * @type: vdev_type
+ *    AP:1    STA:2    IBSS:3    Monitor:4    NAN:5    OCB:6    NDI:7
+ * @sub_type: vdev_subtype
+ *    P2P_Device:1    P2P_Client:2     P2P_GO:3
+ *    Proxy_STA:4     Mesh:5           Mesh_11s:6
+ * @channel: Channel
+ * @mac: Mac id
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL is used to increments the index value of the concurrent connection
+ * list and update with the input parameters provided.
+ *
+ * @E.g: iwpriv wlan0 pm_clist vdev_id tx_streams rx_streams chain_mask type
+ *                    sub_type channel mac
+ * iwpriv wlan0 pm_clist 1 2 2 1 2 3 10 1
+ *
+ * Supported Feature: DBS
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_POLICY_MANAGER_CLIST_CMD    11
+
+/*
+ * <ioctl>
+ * pm_dlist - Delete the index from the concurrent connection list that is
+ * present in the given vdev_id.
+ *
+ * @INPUT: delete_all, vdev_id
+ * @delete_all: delete all indices
+ * @vdev_id: vdev id
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL is used to delete the index from the concurrent connection list
+ * that is present in the given vdev_id.
+ *
+ * @E.g: iwpriv wlan0 pm_dlist delete_all vdev_id
+ * iwpriv wlan0 pm_dlist 0 1
+ *
+ * Supported Feature: DBS
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_POLICY_MANAGER_DLIST_CMD    12
+
+/*
+ * <ioctl>
+ * pm_dbs - Set dbs capability and system preference
+ *
+ * @INPUT: dbs, system_pref
+ * @dbs: Value of DBS capability to be set
+ * @system_pref: System preference
+ *     0:CDS_THROUGHPUT 1: CDS_POWERSAVE 2: CDS_LATENCY
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL is used to set dbs capability and system preference.
+ *
+ * @E.g: iwpriv wlan0 pm_dbs dbs system_pref
+ * iwpriv wlan0 pm_dbs 1 0
+ *
+ * Supported Feature: DBS
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_POLICY_MANAGER_DBS_CMD      13
+
+/*
+ * <ioctl>
+ * pm_pcl - Set pcl for concurrency mode.
+ *
+ * @INPUT: cds_con_mode
+ * @cds_con_mode: concurrency mode for PCL table
+ *     0:STA  1:SAP  2:P2P_Client  3:P2P_GO  4:IBSS
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL is used to set pcl for concurrency mode.
+ *
+ * @E.g: iwpriv wlan0 pm_pcl cds_con_mode
+ * iwpriv wlan0 pm_pcl 0
+ *
+ * Supported Feature: DBS
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_POLICY_MANAGER_PCL_CMD      14
+
+/*
+ * <ioctl>
+ * pm_cinfo - Shows the concurrent connection list.
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL is used to show the concurrent connection list.
+ *
+ * @E.g: iwpriv wlan0 pm_cinfo
+ *
+ * Supported Feature: DBS
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_POLICY_MANAGER_CINFO_CMD    15
+
+/*
+ * <ioctl>
+ * pm_ulist - Updates the index value of the concurrent connection list
+ * with the input parameters provided.
+ *
+ * @INPUT: Following 8 arguments:
+ * @vdev_id: vdev id
+ * @tx_streams: TX streams
+ * @rx_streams: RX streams
+ * @chain_mask: Chain mask
+ * @type: vdev_type
+ *    AP:1    STA:2    IBSS:3    Monitor:4    NAN:5    OCB:6    NDI:7
+ * @sub_type: vdev_subtype
+ *    P2P_Device:1    P2P_Client:2     P2P_GO:3
+ *    Proxy_STA:4     Mesh:5           Mesh_11s:6
+ * @channel: Channel
+ * @mac: Mac id
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL is used to updates the index value of the concurrent
+ * connection list with the input parameters provided.
+ *
+ * @E.g: iwpriv wlan0 pm_ulist vdev_id tx_streams rx_streams chain_mask type
+ *                    sub_type channel mac
+ * iwpriv wlan0 pm_ulist 1 2 2 1 2 3 10 1
+ *
+ * Supported Feature: DBS
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_POLICY_MANAGER_ULIST_CMD    16
+
+/*
+ * <ioctl>
+ * pm_query_action - Initiate actions needed on current connections as
+ * per the channel provided.
+ *
+ * @INPUT: channel
+ * @channel: Channel on which new connection will be.
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL is used to initiate actions needed on current connections
+ * as per the channel provided.
+ *
+ * @E.g: iwpriv wlan0 pm_query_action channel
+ * iwpriv wlan0 pm_query_action 6
+ *
+ * Supported Feature: DBS
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_POLICY_MANAGER_QUERY_ACTION_CMD    17
+
+/*
+ * <ioctl>
+ * pm_query_allow - Checks for allowed concurrency combination
+ *
+ * @INPUT: mode, channel, bandwidth
+ * @mode:	new connection mode
+ *     0:STA  1:SAP  2:P2P_Client  3:P2P_GO  4:IBSS
+ * @channel: channel on which new connection is coming up
+ * @bandwidth: Bandwidth requested by the connection
+ *     0:None    1:5MHz    2:10MHz      3:20MHz
+ *     4:40MHz   5:80MHz   6:80+80MHz   7:160MHz
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL is used to checks for allowed concurrency combination.
+ *
+ * @E.g: iwpriv wlan0 pm_query_allow mode channel bandwidth
+ * iwpriv wlan0 pm_query_allow 0 6 4
+ *
+ * Supported Feature: DBS
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_POLICY_MANAGER_QUERY_ALLOW_CMD    18
+
+/*
+ * <ioctl>
+ * pm_run_scenario - Create scenario with number of connections provided.
+ *
+ * @INPUT: num_of_conn
+ * @num_of_conn: the number of connections (values: 1~3)
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL is used to create scenario with the number of connections
+ * provided.
+ *
+ * @E.g: iwpriv wlan0 pm_run_scenario num_of_conn
+ * iwpriv wlan0 pm_run_scenario 1
+ *
+ * Supported Feature: DBS
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_POLICY_MANAGER_SCENARIO_CMD 19
+
+/*
+ * <ioctl>
+ * pm_set_hw_mode - Set hardware for single/dual mac.
+ *
+ * @INPUT: hw_mode
+ *     0:single mac     1:dual mac
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL is used to set hardware for single/dual mac.
+ *
+ * @E.g: iwpriv wlan0 pm_set_hw_mode hw_mode
+ * iwpriv wlan0 pm_set_hw_mode 1
+ *
+ * Supported Feature: DBS
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_POLICY_SET_HW_MODE_CMD 20
 
+/*
+ * <ioctl>
+ * set_scan_cfg - Set dual MAC scan config parameters.
+ *
+ * @INPUT: dbs, dbs_plus_agile_scan, single_mac_scan_with_dbs
+ * @dbs: Value of DBS bit
+ * @dbs_plus_agile_scan: Value of DBS plus agile scan bit
+ * @single_mac_scan_with_dbs: Value of Single MAC scan with DBS
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL is used to set the dual MAC scan config.
+ *
+ * @E.g: iwpriv wlan0 set_scan_cfg dbs dbs_plus_agile_scan
+ *                    single_mac_scan_with_dbs
+ * iwpriv wlan0 set_scan_cfg 1 0 1
+ *
+ * Supported Feature: DBS
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_DUAL_MAC_SCAN_CONFIG    21
+
+/*
+ * <ioctl>
+ * set_fw_mode_cfg - Sets the dual mac FW mode config
+ *
+ * @INPUT: dbs, dfs
+ * @dbs: DBS bit
+ * @dfs: Agile DFS bit
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL is used to set the dual mac FW mode config.
+ *
+ * @E.g: iwpriv wlan0 set_fw_mode_cfg dbs dfs
+ * iwpriv wlan0 set_fw_mode_cfg 1 1
+ *
+ * Supported Feature: DBS
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_DUAL_MAC_FW_MODE_CONFIG 22
 #define WE_SET_MON_MODE_CHAN 23
 
