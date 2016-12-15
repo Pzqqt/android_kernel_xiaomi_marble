@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,7 +30,7 @@
 #define LITHIUM_DP		0xfffe/*FIXME Add Litium device ID */
 /* Use these device IDs for attach in future */
 
-ol_txrx_soc_handle ol_txrx_soc_attach(struct ol_if_ops *dp_ol_if_ops);
+ol_txrx_soc_handle ol_txrx_soc_attach(void *scn_handle, struct ol_if_ops *dp_ol_if_ops);
 
 #ifdef QCA_WIFI_QCA8074
 void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
@@ -67,7 +67,7 @@ static inline ol_txrx_soc_handle cdp_soc_attach(u_int16_t devid,
 			qdf_dev, dp_ol_if_ops);
 	break;
 	default:
-		return ol_txrx_soc_attach(dp_ol_if_ops);
+		return ol_txrx_soc_attach(scn, dp_ol_if_ops);
 	}
 	return NULL;
 }
