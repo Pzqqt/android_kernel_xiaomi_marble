@@ -11793,7 +11793,6 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 	eCsrAuthType RSNAuthType;
 	tSmeConfigParams *sme_config;
 	uint8_t channel = 0;
-	struct sir_hw_mode_params hw_mode;
 
 	ENTER();
 
@@ -12085,14 +12084,8 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 		pRoamProfile->ChannelInfo.ChannelList = NULL;
 		pRoamProfile->ChannelInfo.numOfChannels = 0;
 
-		if (!QDF_IS_STATUS_SUCCESS(
-				wma_get_current_hw_mode(&hw_mode))) {
-			hdd_err("wma_get_current_hw_mode failed");
-			return status;
-		}
-
 		if ((QDF_STA_MODE == pAdapter->device_mode)
-		    && hw_mode.dbs_cap) {
+		    && wma_is_current_hwmode_dbs()) {
 			cds_get_channel_from_scan_result(pAdapter,
 					pRoamProfile, &channel);
 			if (channel)

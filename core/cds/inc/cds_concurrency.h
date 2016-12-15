@@ -834,6 +834,7 @@ void cds_update_with_safe_channel_list(uint8_t *pcl_channels, uint32_t *len,
 uint8_t cds_get_nondfs_preferred_channel(enum cds_con_mode mode,
 					bool for_existing_conn);
 bool cds_is_any_nondfs_chnl_present(uint8_t *channel);
+bool cds_is_any_dfs_beaconing_session_present(uint8_t *channel);
 bool cds_allow_concurrency(enum cds_con_mode mode,
 				uint8_t channel, enum hw_mode_bandwidth bw);
 enum cds_conc_priority_mode cds_get_first_connection_pcl_table_index(void);

@@ -3348,6 +3348,26 @@ QDF_STATUS wma_get_current_hw_mode(struct sir_hw_mode_params *hw_mode)
 }
 
 /**
+ * wma_is_current_hwmode_dbs() - Check if current hw mode is DBS
+ *
+ * Checks if current hardware mode of the system is DBS or no
+ *
+ * Return: true or false
+ */
+bool wma_is_current_hwmode_dbs(void)
+{
+	struct sir_hw_mode_params hw_mode;
+
+	if (!wma_is_hw_dbs_capable())
+		return false;
+	if (QDF_STATUS_SUCCESS != wma_get_current_hw_mode(&hw_mode))
+		return false;
+	if (hw_mode.dbs_cap)
+		return true;
+	return false;
+}
+
+/**
  * wma_is_dbs_enable() - Check if master DBS control is enabled
  *
  * Checks if the master DBS control is enabled. This will be used

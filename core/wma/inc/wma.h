@@ -1,4 +1,4 @@
-				/*
+/*
  * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
@@ -2279,6 +2279,7 @@ static inline QDF_STATUS wma_lro_config_cmd(tp_wma_handle wma_handle,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+bool wma_is_current_hwmode_dbs(void);
 void
 wma_indicate_err(enum ol_rx_err_type err_type,
 	 struct ol_error_info *err_info);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -5407,25 +5407,25 @@ static void csr_scan_copy_request_valid_channels_only(tpAniSirGlobal mac_ctx,
 }
 
 /**
- * csr_scan_filter_ibss_chnl_band() - filter all channels which matches IBSS
+ * csr_scan_filter_given_chnl_band() - filter all channels which matches given
  *                                    channel's band
  * @mac_ctx: pointer to mac context
- * @ibss_channel: Given IBSS channel
+ * @channel: Given channel
  * @dst_req: destination scan request
  *
- * when ever IBSS connection already exist, STA should not scan the channels
- * which fall under same band as IBSS channel's band. this routine will filter
- * out those channels
+ * when ever particular connection already exist, STA should not scan the
+ * channels which fall under same band as given channel's band.
+ * this routine will filter out those channels
  *
  * Return: true if success otherwise false for any failure
  */
-static bool csr_scan_filter_ibss_chnl_band(tpAniSirGlobal mac_ctx,
-			uint8_t ibss_channel, tCsrScanRequest *dst_req) {
+static bool csr_scan_filter_given_chnl_band(tpAniSirGlobal mac_ctx,
+			uint8_t channel, tCsrScanRequest *dst_req) {
 	uint8_t valid_chnl_list[WNI_CFG_VALID_CHANNEL_LIST_LEN] = {0};
 	uint32_t filter_chnl_len = 0, i = 0;
 	uint32_t valid_chnl_len = WNI_CFG_VALID_CHANNEL_LIST_LEN;
 
-	if (ibss_channel == 0) {
+	if (!channel) {
 		sms_log(mac_ctx, LOG1,
 			FL("Nothing to filter as no IBSS session"));
 		return true;
@@ -5455,17 +5455,17 @@ static bool csr_scan_filter_ibss_chnl_band(tpAniSirGlobal mac_ctx,
 	}
 	for (i = 0; i < valid_chnl_len; i++) {
 		/*
-		 * Don't allow DSRC channel when IBSS concurrent connection
-		 * is up
+		 * Don't allow DSRC channel when IBSS or SAP DFS concurrent
+		 * connection is up
 		 */
 		if (valid_chnl_list[i] >= CDS_MIN_11P_CHANNEL)
 			continue;
-		if (CDS_IS_CHANNEL_5GHZ(ibss_channel) &&
+		if (CDS_IS_CHANNEL_5GHZ(channel) &&
 			CDS_IS_CHANNEL_24GHZ(valid_chnl_list[i])) {
 			valid_chnl_list[filter_chnl_len] =
 					valid_chnl_list[i];
 			filter_chnl_len++;
-		} else if (CDS_IS_CHANNEL_24GHZ(ibss_channel) &&
+		} else if (CDS_IS_CHANNEL_24GHZ(channel) &&
 			CDS_IS_CHANNEL_5GHZ(valid_chnl_list[i])) {
 			valid_chnl_list[filter_chnl_len] =
 					valid_chnl_list[i];
@@ -5517,7 +5517,7 @@ QDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
 	uint32_t index = 0;
 	uint32_t new_index = 0;
 	enum channel_state channel_state;
-	uint8_t ibss_channel = 0;
+	uint8_t channel = 0;
 
 	bool skip_dfs_chnl =
 			mac_ctx->roam.configParam.initial_scan_no_dfs_chnl ||
@@ -5622,17 +5622,36 @@ QDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
 	 * request comes from STA adapter then we need to filter
 	 * out IBSS channel's band otherwise it will cause issue
 	 * in IBSS+STA concurrency
+	 *
+	 * If DFS SAP/GO concurrent connection exist, and if the scan
+	 * request comes from STA adapter then we need to filter
+	 * out SAP/GO channel's band otherwise it will cause issue in
+	 * SAP+STA concurrency
 	 */
-	if (true == cds_is_ibss_conn_exist(&ibss_channel)) {
+	if (cds_is_ibss_conn_exist(&channel)) {
 		sms_log(mac_ctx, LOG1,
 			FL("Conc IBSS exist, channel list will be modified"));
+	} else if (cds_is_any_dfs_beaconing_session_present(&channel)) {
+		/*
+		 * 1) if agile & DFS scans are supported
+		 * 2) if hardware is DBS capable
+		 * 3) if current hw mode is non-dbs
+		 * if all above 3 conditions are true then don't skip any
+		 * channel from scan list
+		 */
+		if (true != wma_is_current_hwmode_dbs() &&
+		    wma_get_dbs_plus_agile_scan_config() &&
+		    wma_get_single_mac_scan_with_dfs_config())
+			channel = 0;
+		else
+			sms_log(mac_ctx, LOG1,
+				FL("Conc DFS SAP/GO exist, channel list will be modified"));
 	}
 
-	if ((ibss_channel > 0) &&
-		(false == csr_scan_filter_ibss_chnl_band(mac_ctx,
-				ibss_channel, dst_req))) {
+	if ((channel > 0) &&
+	    (!csr_scan_filter_given_chnl_band(mac_ctx, channel, dst_req))) {
 		sms_log(mac_ctx, LOGE,
-			FL("Can't filter channels due to IBSS"));
+			FL("Can't filter channels due to IBSS/SAP DFS"));
 		goto complete;
 	}
 
