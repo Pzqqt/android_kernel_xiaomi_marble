@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -38,7 +38,8 @@
 
 #ifdef WLAN_FEATURE_PACKET_FILTERING
 
-#define HDD_MAX_CMP_PER_PACKET_FILTER     5
+#define HDD_MAX_CMP_PER_PACKET_FILTER	5
+#define HDD_MC_FILTER_MAX_MC_ADDRS	16
 
 /**
  * enum pkt_filter_protocol_layer - packet filter protocol layer
@@ -125,6 +126,18 @@ struct pkt_filter_cfg {
 };
 
 #endif
+
+/**
+ * struct pkt_filter_mc_addr_list - dynamic mc/bc filter config from user space
+ * @mcbc_filter_setting: The type of filter being configured
+ * @mc_addr_cnt: The number of mc addresses to configure
+ * @mc_addrs: The mc mac addresses to configure
+ */
+struct pkt_filter_mc_addr_list {
+	uint8_t mcbc_filter_setting;
+	uint8_t mc_addr_cnt;
+	uint8_t mc_addrs[HDD_MC_FILTER_MAX_MC_ADDRS][QDF_MAC_ADDR_SIZE];
+};
 
 /**
  * enum suspend_resume_state - Suspend resume state
