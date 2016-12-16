@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1603,30 +1603,6 @@ int wma_process_fw_event_handler(void *ctx, void *ev, uint8_t rx_ctx)
 
 	return err;
 }
-
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
-/**
- * ol_cfg_set_flow_control_parameters() - set flow control parameters
- * @olCfg: cfg parameters
- * @cds_cfg: CDS Configuration
- *
- * Return: none
- */
-void ol_cfg_set_flow_control_parameters(struct txrx_pdev_cfg_param_t *olCfg,
-					struct cds_config_info *cds_cfg)
-{
-	olCfg->tx_flow_start_queue_offset =
-				cds_cfg->tx_flow_start_queue_offset;
-	olCfg->tx_flow_stop_queue_th =
-				cds_cfg->tx_flow_stop_queue_th;
-}
-#else
-void ol_cfg_set_flow_control_parameters(struct txrx_pdev_cfg_param_t *olCfg,
-					struct cds_config_info *cds_cfg)
-{
-	return;
-}
-#endif
 
 #ifdef WLAN_FEATURE_NAN
 /**
