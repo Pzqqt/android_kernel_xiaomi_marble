@@ -216,6 +216,186 @@ typedef void (*qdf_timer_func_t)(void *);
 #define qdf_offsetof(type, field) offsetof(type, field)
 
 /**
+ * typedef enum QDF_MODULE_ID  - Debug category level
+ * @QDF_MODULE_ID_TDLS  : TDLS
+ * @QDF_MODULE_ID_ACS   : auto channel selection
+ * @QDF_MODULE_ID_SCAN_SM       : scan state machine
+ * @QDF_MODULE_ID_SCANENTRY     : scan entry
+ * @QDF_MODULE_ID_WDS   : WDS handling
+ * @QDF_MODULE_ID_ACTION: action management frames
+ * @QDF_MODULE_ID_ROAM  : sta mode roaming
+ * @QDF_MODULE_ID_INACT : inactivity handling
+ * @QDF_MODULE_ID_DOTH  : 11.h
+ * @QDF_MODULE_ID_IQUE  : IQUE features
+ * @QDF_MODULE_ID_WME   : WME protocol
+ * @QDF_MODULE_ID_ACL   : ACL handling
+ * @QDF_MODULE_ID_WPA   : WPA/RSN protocol
+ * @QDF_MODULE_ID_RADKEYS       : dump 802.1x keys
+ * @QDF_MODULE_ID_RADDUMP       : dump 802.1x radius packets
+ * @QDF_MODULE_ID_RADIUS: 802.1x radius client
+ * @QDF_MODULE_ID_DOT1XSM       : 802.1x state machine
+ * @QDF_MODULE_ID_DOT1X : 802.1x authenticator
+ * @QDF_MODULE_ID_POWER : power save handling
+ * @QDF_MODULE_ID_STATS : state machine
+ * @QDF_MODULE_ID_OUTPUT: output handling
+ * @QDF_MODULE_ID_SCAN  : scanning
+ * @QDF_MODULE_ID_AUTH  : authentication handling
+ * @QDF_MODULE_ID_ASSOC : association handling
+ * @QDF_MODULE_ID_NODE  : node handling
+ * @QDF_MODULE_ID_ELEMID: element id parsing
+ * @QDF_MODULE_ID_XRATE : rate set handling
+ * @QDF_MODULE_ID_INPUT : input handling
+ * @QDF_MODULE_ID_CRYPTO: crypto work
+ * @QDF_MODULE_ID_DUMPPKTS      : IFF_LINK2 equivalant
+ * @QDF_MODULE_ID_DEBUG : IFF_DEBUG equivalent
+ * @QDF_MODULE_ID_MLME  : MLME
+ * @QDF_MODULE_ID_RRM   : Radio resource measurement
+ * @QDF_MODULE_ID_WNM   : Wireless Network Management
+ * @QDF_MODULE_ID_P2P_PROT      : P2P Protocol driver
+ * @QDF_MODULE_ID_PROXYARP      : 11v Proxy ARP
+ * @QDF_MODULE_ID_L2TIF : Hotspot 2.0 L2 TIF
+ * @QDF_MODULE_ID_WIFIPOS       : WifiPositioning Feature
+ * @QDF_MODULE_ID_WRAP  : WRAP or Wireless ProxySTA
+ * @QDF_MODULE_ID_DFS   : DFS debug mesg
+ * @QDF_MODULE_ID_TLSHIM: TLSHIM module ID
+ * @QDF_MODULE_ID_WMI   : WMI module ID
+ * @QDF_MODULE_ID_HTT   : HTT module ID
+ * @QDF_MODULE_ID_HDD   : HDD module ID
+ * @QDF_MODULE_ID_SME   : SME module ID
+ * @QDF_MODULE_ID_PE    : PE module ID
+ * @QDF_MODULE_ID_WMA   : WMA module ID
+ * @QDF_MODULE_ID_SYS   : SYS module ID
+ * @QDF_MODULE_ID_QDF   : QDF module ID
+ * @QDF_MODULE_ID_SAP   : SAP module ID
+ * @QDF_MODULE_ID_HDD_SOFTAP    : HDD SAP module ID
+ * @QDF_MODULE_ID_HDD_DATA      : HDD DATA module ID
+ * @QDF_MODULE_ID_HDD_SAP_DATA  : HDD SAP DATA module ID
+ * @QDF_MODULE_ID_HIF   : HIF module ID
+ * @QDF_MODULE_ID_HTC   : HTC module ID
+ * @QDF_MODULE_ID_TXRX  : TXRX module ID
+ * @QDF_MODULE_ID_QDF_DEVICE    : QDF DEVICE module ID
+ * @QDF_MODULE_ID_CFG   : CFG module ID
+ * @QDF_MODULE_ID_BMI   : BMI module ID
+ * @QDF_MODULE_ID_EPPING: EPPING module ID
+ * @QDF_MODULE_ID_QVIT  : QVIT module ID
+ * @QDF_MODULE_ID_ANY   : anything
+ * @QDF_MODULE_ID_MAX   : Max place holder module ID
+ */
+typedef enum {
+	QDF_MODULE_ID_TDLS      = 0,
+	QDF_MODULE_ID_ACS,
+	QDF_MODULE_ID_SCAN_SM,
+	QDF_MODULE_ID_SCANENTRY,
+	QDF_MODULE_ID_WDS,
+	QDF_MODULE_ID_ACTION,
+	QDF_MODULE_ID_ROAM,
+	QDF_MODULE_ID_INACT,
+	QDF_MODULE_ID_DOTH      = 8,
+	QDF_MODULE_ID_IQUE,
+	QDF_MODULE_ID_WME,
+	QDF_MODULE_ID_ACL,
+	QDF_MODULE_ID_WPA,
+	QDF_MODULE_ID_RADKEYS,
+	QDF_MODULE_ID_RADDUMP,
+	QDF_MODULE_ID_RADIUS,
+	QDF_MODULE_ID_DOT1XSM   = 16,
+	QDF_MODULE_ID_DOT1X,
+	QDF_MODULE_ID_POWER,
+	QDF_MODULE_ID_STATE,
+	QDF_MODULE_ID_OUTPUT,
+	QDF_MODULE_ID_SCAN,
+	QDF_MODULE_ID_AUTH,
+	QDF_MODULE_ID_ASSOC,
+	QDF_MODULE_ID_NODE      = 24,
+	QDF_MODULE_ID_ELEMID,
+	QDF_MODULE_ID_XRATE,
+	QDF_MODULE_ID_INPUT,
+	QDF_MODULE_ID_CRYPTO,
+	QDF_MODULE_ID_DUMPPKTS,
+	QDF_MODULE_ID_DEBUG,
+	QDF_MODULE_ID_MLME,
+	QDF_MODULE_ID_RRM       = 32,
+	QDF_MODULE_ID_WNM,
+	QDF_MODULE_ID_P2P_PROT,
+	QDF_MODULE_ID_PROXYARP,
+	QDF_MODULE_ID_L2TIF,
+	QDF_MODULE_ID_WIFIPOS,
+	QDF_MODULE_ID_WRAP,
+	QDF_MODULE_ID_DFS,
+	QDF_MODULE_ID_ATF       = 40,
+	QDF_MODULE_ID_SPLITMAC,
+	QDF_MODULE_ID_IOCTL,
+	QDF_MODULE_ID_NAC,
+	QDF_MODULE_ID_MESH,
+	QDF_MODULE_ID_MBO,
+	QDF_MODULE_ID_EXTIOCTL_CHANSWITCH,
+	QDF_MODULE_ID_EXTIOCTL_CHANSSCAN,
+	QDF_MODULE_ID_TLSHIM    = 48,
+	QDF_MODULE_ID_WMI,
+	QDF_MODULE_ID_HTT,
+	QDF_MODULE_ID_HDD,
+	QDF_MODULE_ID_SME,
+	QDF_MODULE_ID_PE,
+	QDF_MODULE_ID_WMA,
+	QDF_MODULE_ID_SYS,
+	QDF_MODULE_ID_QDF       = 56,
+	QDF_MODULE_ID_SAP,
+	QDF_MODULE_ID_HDD_SOFTAP,
+	QDF_MODULE_ID_HDD_DATA,
+	QDF_MODULE_ID_HDD_SAP_DATA,
+	QDF_MODULE_ID_HIF,
+	QDF_MODULE_ID_HTC,
+	QDF_MODULE_ID_TXRX,
+	QDF_MODULE_ID_QDF_DEVICE = 64,
+	QDF_MODULE_ID_CFG,
+	QDF_MODULE_ID_BMI,
+	QDF_MODULE_ID_EPPING,
+	QDF_MODULE_ID_QVIT,
+	QDF_MODULE_ID_DP,
+	QDF_MODULE_ID_SOC,
+	QDF_MODULE_ID_OS_IF,
+	QDF_MODULE_ID_TARGET_IF,
+	QDF_MODULE_ID_SCHEDULER,
+	QDF_MODULE_ID_MGMT_TXRX,
+	QDF_MODULE_ID_ANY,
+	QDF_MODULE_ID_MAX,
+} QDF_MODULE_ID;
+
+/**
+ * typedef enum QDF_TRACE_LEVEL - Debug verbose level
+ * @QDF_TRACE_LEVEL_NONE: no trace will be logged. This value is in place
+ *			  for the qdf_trace_setlevel() to allow the user
+ *			  to turn off all traces
+ * @QDF_TRACE_LEVEL_FATAL: Indicates fatal error conditions
+ * @QDF_TRACE_LEVEL_ERROR: Indicates error conditions
+ * @QDF_TRACE_LEVEL_WARN: May indicate that an error will occur if action
+ *			  is not taken
+ * @QDF_TRACE_LEVEL_INFO: Normal operational messages that require no action
+ * @QDF_TRACE_LEVEL_INFO_HIGH: High level operational messages that require
+ *			       no action
+ * @QDF_TRACE_LEVEL_INFO_MED: Middle level operational messages that require
+ *			      no action
+ * @QDF_TRACE_LEVEL_INFO_LOW: Low level operational messages that require
+ *			      no action
+ * @QDF_TRACE_LEVEL_DEBUG: Information useful to developers for debugging
+ * @QDF_TRACE_LEVEL_ALL: All trace levels
+ * @QDF_TRACE_LEVEL_MAX: Max trace level
+ */
+typedef enum {
+	QDF_TRACE_LEVEL_NONE,
+	QDF_TRACE_LEVEL_FATAL,
+	QDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE_LEVEL_WARN,
+	QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE_LEVEL_INFO_HIGH,
+	QDF_TRACE_LEVEL_INFO_MED,
+	QDF_TRACE_LEVEL_INFO_LOW,
+	QDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE_LEVEL_ALL,
+	QDF_TRACE_LEVEL_MAX
+} QDF_TRACE_LEVEL;
+
+/**
  * enum tQDF_ADAPTER_MODE - Concurrency role.
  * @QDF_STA_MODE: STA mode
  * @QDF_SAP_MODE: SAP mode
