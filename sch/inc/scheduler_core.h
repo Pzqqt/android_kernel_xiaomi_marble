@@ -35,7 +35,10 @@
 #define SCHEDULER_NUMBER_OF_MSG_QUEUE 5
 
 /**
- * QDF Message queue definition.
+ * struct scheduler_mq_type -  scheduler message queue
+ * @mq_lock: message queue lock
+ * @mq_list: message queue list
+ * @qid: queue id
  */
 struct scheduler_mq_type {
 	qdf_spinlock_t mq_lock;
@@ -43,15 +46,26 @@ struct scheduler_mq_type {
 	QDF_MODULE_ID qid;
 };
 
+/**
+ * struct scheduler_msg_wrapper - scheduler message wrapper
+ * @msg_node: message node
+ * @msg_buf: message buffer pointer
+ */
 struct scheduler_msg_wrapper {
-	/* Message node */
 	qdf_list_node_t msg_node;
-	/* message it is associated to */
 	struct scheduler_msg *msg_buf;
 };
 
+/**
+ * struct scheduler_mq_ctx - scheduler message queue context
+ * @msg_buffers: array of message buffers
+ * @msg_wrappers: array of message wrappers
+ * @free_msg_q: free message queue
+ * @sch_msg_q: scheduler message queue
+ * @scheduler_msg_qid_to_qidx: message qid to qidx mapping
+ * @scheduler_msg_process_fn: array of message queue handler function pointers
+ */
 struct scheduler_mq_ctx {
-	/* Messages buffers */
 	struct scheduler_msg msg_buffers[SCHEDULER_CORE_MAX_MESSAGES];
 	struct scheduler_msg_wrapper msg_wrappers[SCHEDULER_CORE_MAX_MESSAGES];
 	struct scheduler_mq_type free_msg_q;
@@ -61,19 +75,29 @@ struct scheduler_mq_ctx {
 					(struct scheduler_msg *msg);
 };
 
+/**
+ * struct scheduler_ctx - scheduler context
+ * @queue_ctx: message queue context
+ * @sch_start_event: scheduler thread start wait event
+ * @sch_thread: scheduler thread
+ * @sch_shutdown: scheduler thread shutdown wait event
+ * @sch_wait_queue: scheduler wait queue
+ * @sch_event_flag: scheduler events flag
+ * @resume_sch_event: scheduler resume wait event
+ * @sch_thread_lock: scheduler thread lock
+ * @sch_last_qidx: scheduler last qidx allocation
+ * @hdd_callback: os if suspend callback
+ * @legacy_wma_handler: legacy wma message handler
+ * @legacy_sys_handler: legacy sys message handler
+ */
 struct scheduler_ctx {
 	struct scheduler_mq_ctx queue_ctx;
-	/* Handle of Event for MC thread to signal startup */
 	qdf_event_t sch_start_event;
 	qdf_thread_t *sch_thread;
-	/* completion object for MC thread shutdown */
 	qdf_event_t sch_shutdown;
-	/* Wait queue for MC thread */
 	qdf_wait_queue_head_t sch_wait_queue;
 	unsigned long sch_event_flag;
-	/* Completion object to resume Mc thread */
 	qdf_event_t resume_sch_event;
-	/* lock to make sure that McThread suspend/resume mechanism is insync */
 	qdf_spinlock_t sch_thread_lock;
 	uint8_t sch_last_qidx;
 	hdd_suspend_callback hdd_callback;
