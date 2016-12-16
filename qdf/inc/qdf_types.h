@@ -460,7 +460,30 @@ enum tQDF_GLOBAL_CON_MODE {
 
 #define  QDF_IS_EPPING_ENABLED(mode) (mode == QDF_GLOBAL_EPPING_MODE)
 
+
 #ifdef CONFIG_MCL
+/**
+ * qdf_trace_msg()- logging API
+ * @module: Module identifier. A member of the QDF_MODULE_ID enumeration that
+ *	    identifies the module issuing the trace message.
+ * @level: Trace level. A member of the QDF_TRACE_LEVEL enumeration indicating
+ *	   the severity of the condition causing the trace message to be issued.
+ *	   More severe conditions are more likely to be logged.
+ * @str_format: Format string. The message to be logged. This format string
+ *	       contains printf-like replacement parameters, which follow this
+ *	       parameter in the variable argument list.
+ *
+ * Users wishing to add tracing information to their code should use
+ * QDF_TRACE.  QDF_TRACE() will compile into a call to qdf_trace_msg() when
+ * tracing is enabled.
+ *
+ * Return: nothing
+ *
+ * implemented in qdf_trace.c
+ */
+void __printf(3, 4) qdf_trace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
+		   char *str_format, ...);
+
 #define qdf_print(args...) \
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR, ## args)
 
