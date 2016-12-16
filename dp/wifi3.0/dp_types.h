@@ -575,6 +575,7 @@ struct dp_vdev {
 
 	/* callback to hand rx frames to the OS shim */
 	ol_txrx_rx_fp osif_rx;
+	ol_txrx_rsim_rx_decap_fp osif_rsim_rx_decap;
 
 #ifdef notyet
 	/* callback to check if the msdu is an WAI (WAPI) frame */

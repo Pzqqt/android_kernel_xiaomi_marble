@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -202,6 +202,17 @@ typedef void (*ol_txrx_tx_flow_control_fp)(void *osif_dev,
 typedef QDF_STATUS(*ol_txrx_rx_fp)(void *osif_dev, qdf_nbuf_t msdu_list);
 
 /**
+ * ol_txrx_rsim_rx_decap_fp - raw mode simulation function to decap the
+ * packets in receive path.
+ * @osif_dev  - the virtual device's OS shim object
+ * @list_head - poniter to head of receive packet queue to decap
+ * @list_tail - poniter to tail of receive packet queue to decap
+ */
+typedef QDF_STATUS(*ol_txrx_rsim_rx_decap_fp)(void *osif_dev,
+						qdf_nbuf_t *list_head,
+						qdf_nbuf_t *list_tail);
+
+/**
  * ol_txrx_rx_check_wai_fp - OSIF WAPI receive function
 */
 typedef bool (*ol_txrx_rx_check_wai_fp)(ol_osif_vdev_handle vdev,
@@ -287,6 +298,7 @@ struct ol_txrx_ops {
 		ol_txrx_rx_fp           rx;
 		ol_txrx_rx_check_wai_fp wai_check;
 		ol_txrx_rx_mon_fp       mon;
+		ol_txrx_rsim_rx_decap_fp rsim_rx_decap;
 	} rx;
 
 	/* proxy arp function pointer - specified by OS shim, stored by txrx */

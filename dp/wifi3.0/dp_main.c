@@ -1197,6 +1197,7 @@ static void *dp_vdev_attach_wifi3(void *txrx_pdev,
 	vdev->osdev = soc->osdev;
 
 	vdev->osif_rx = NULL;
+	vdev->osif_rsim_rx_decap = NULL;
 	vdev->osif_rx_mon = NULL;
 	vdev->osif_vdev = NULL;
 
@@ -1253,6 +1254,7 @@ static void dp_vdev_register_wifi3(void *vdev_handle, void *osif_vdev,
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 	vdev->osif_vdev = osif_vdev;
 	vdev->osif_rx = txrx_ops->rx.rx;
+	vdev->osif_rsim_rx_decap = txrx_ops->rx.rsim_rx_decap;
 	vdev->osif_rx_mon = txrx_ops->rx.mon;
 #ifdef notyet
 #if ATH_SUPPORT_WAPI
