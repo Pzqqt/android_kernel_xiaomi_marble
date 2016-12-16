@@ -39,6 +39,8 @@
 #include <i_qdf_trace.h>
 
 #define QDF_LOCK_STATS 0
+#define QDF_LOCK_STATS_DESTROY_PRINT 0
+#define QDF_LOCK_STATS_BUG_ON 0
 
 #define QDF_MAX_HOLD_TIME_ALOWED_SPINLOCK_IRQ 1000
 #define QDF_MAX_HOLD_TIME_ALOWED_SPINLOCK_BH  5000
@@ -111,7 +113,7 @@ do {\
 \
 	if (held_time > LARGE_CONTENTION) \
 		lock->stats.num_large_holds++; \
-	if (max_hold_time && \
+	if (QDF_LOCK_STATS_BUG_ON && max_hold_time && \
 	    held_time > qdf_usecs_to_log_timestamp(max_hold_time)) { \
 		qdf_print("BEFORE_UNLOCK: lock held too long (%lluus)\n", \
 		       qdf_log_timestamp_to_usecs(held_time)); \
@@ -123,22 +125,20 @@ do {\
 
 static inline void qdf_lock_stats_destroy(struct lock_stats *stats)
 {
-	qdf_print("%s: lock: %s %d \t"
-		  "acquired:\t%d\tcontended:\t%d\t"
-		  "contention_time\t%llu\tmax_contention_wait:\t%llu\t"
-		  "non_contention_time\t%llu\t"
-		  "held_time\t%llu\tmax_held:\t%llu\t\n"
-		  , __func__,
-		  stats->initialization_fn,
-		  stats->line,
-		  stats->acquired,
-		  stats->contended,
-		  qdf_log_timestamp_to_usecs(stats->contention_time),
-		  qdf_log_timestamp_to_usecs(stats->max_contention_wait),
-		  qdf_log_timestamp_to_usecs(stats->non_contention_time),
-		  qdf_log_timestamp_to_usecs(stats->held_time),
-		  qdf_log_timestamp_to_usecs(stats->max_held_time)
-	      );
+	if (QDF_LOCK_STATS_DESTROY_PRINT) {
+		qdf_print("%s: lock: %s %d \t"
+			"acquired:\t%d\tcontended:\t%d\t"
+			"contention_time\t%llu\tmax_contention_wait:\t%llu\t"
+			"non_contention_time\t%llu\t"
+			"held_time\t%llu\tmax_held:\t%llu\t\n"
+			, __func__, stats->initialization_fn, stats->line,
+			stats->acquired, stats->contended,
+			qdf_log_timestamp_to_usecs(stats->contention_time),
+			qdf_log_timestamp_to_usecs(stats->max_contention_wait),
+			qdf_log_timestamp_to_usecs(stats->non_contention_time),
+			qdf_log_timestamp_to_usecs(stats->held_time),
+			qdf_log_timestamp_to_usecs(stats->max_held_time));
+	}
 }
 
 static inline void qdf_lock_stats_create(struct lock_stats *stats,
