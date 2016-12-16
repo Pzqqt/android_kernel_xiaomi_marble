@@ -255,7 +255,7 @@ QDF_STATUS scheduler_register_module(QDF_MODULE_ID qid,
 	struct scheduler_mq_ctx *ctx;
 	struct scheduler_ctx *sched_ctx = scheduler_get_context();
 
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_INFO,
 		FL("Enter"));
 	if (!sched_ctx) {
 		QDF_ASSERT(0);
@@ -263,12 +263,21 @@ QDF_STATUS scheduler_register_module(QDF_MODULE_ID qid,
 			FL("sched_ctx is NULL"));
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	if (sched_ctx->sch_last_qidx >= SCHEDULER_NUMBER_OF_MSG_QUEUE) {
+		QDF_TRACE(QDF_MODULE_ID_SCHEDULER,
+			QDF_TRACE_LEVEL_ERROR,
+			FL("Already registered max %d no of message queues"),
+				SCHEDULER_NUMBER_OF_MSG_QUEUE);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	ctx = &sched_ctx->queue_ctx;
 	ctx->scheduler_msg_qid_to_qidx[qid] = sched_ctx->sch_last_qidx;
 	ctx->sch_msg_q[sched_ctx->sch_last_qidx].qid = qid;
 	ctx->scheduler_msg_process_fn[sched_ctx->sch_last_qidx] = callback;
 	sched_ctx->sch_last_qidx++;
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_INFO,
 		FL("Exit"));
 	return QDF_STATUS_SUCCESS;
 }
