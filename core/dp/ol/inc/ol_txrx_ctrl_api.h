@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -311,9 +311,6 @@ void
 ol_txrx_data_tx_cb_set(void *data_vdev,
 		       ol_txrx_data_tx_cb callback, void *ctxt);
 
-
-QDF_STATUS ol_txrx_wait_for_pending_tx(int timeout);
-
 /**
  * @brief Discard all tx frames that are pending in txrx.
  * @details
@@ -425,9 +422,6 @@ ol_txrx_peer_stats_copy(ol_txrx_pdev_handle pdev,
 #define ol_txrx_peer_stats_copy(pdev, peer, stats) A_ERROR      /* failure */
 #endif /* QCA_ENABLE_OL_TXRX_PEER_STATS */
 
-QDF_STATUS ol_txrx_get_vdevid(void *peer, uint8_t *vdev_id);
-
-void *ol_txrx_get_vdev_by_sta_id(uint8_t sta_id);
 
 #define OL_TXRX_RSSI_INVALID 0xffff
 /**
@@ -577,7 +571,5 @@ static inline int ol_tx_delete_flow_pool(struct ol_tx_flow_pool_t *pool,
 	return 0;
 }
 #endif
-
-void ol_tx_mark_first_wakeup_packet(uint8_t value);
 
 #endif /* _OL_TXRX_CTRL_API__H_ */

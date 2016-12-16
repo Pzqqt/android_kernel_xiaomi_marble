@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -78,50 +78,6 @@ ol_txrx_hl_tdls_flag_reset(void *vdev, bool flag)
 }
 #endif
 
-#ifdef CONFIG_HL_SUPPORT
-
-void
-ol_txrx_copy_mac_addr_raw(ol_txrx_vdev_handle vdev, uint8_t *bss_addr);
-
-void
-ol_txrx_add_last_real_peer(void *pdev, void *vdev,
-			   uint8_t *peer_id);
-
-bool
-is_vdev_restore_last_peer(struct ol_txrx_peer_t *peer);
-
-void
-ol_txrx_update_last_real_peer(void *ppdev, void *ppeer,
-	uint8_t *peer_id, bool restore_last_peer);
-#else
-
-static inline void
-ol_txrx_copy_mac_addr_raw(void *vdev, uint8_t *bss_addr)
-{
-	return;
-}
-
-static inline void
-ol_txrx_add_last_real_peer(void *pdev, void *vdev, uint8_t *peer_id)
-{
-	return;
-}
-
-static inline bool
-is_vdev_restore_last_peer(void *peer)
-{
-	return  false;
-}
-
-static inline void
-ol_txrx_update_last_real_peer(void *ppdev, void *ppeer,
-	uint8_t *peer_id, bool restore_last_peer)
-
-{
-	return;
-}
-#endif
-
 /**
  * ol_txrx_dump_pkt() - display the data in buffer and buffer's address
  * @nbuf: buffer which contains data to be displayed
@@ -137,7 +93,8 @@ ol_txrx_dump_pkt(qdf_nbuf_t nbuf, uint32_t nbuf_paddr, int len);
 void *ol_txrx_get_vdev_from_vdev_id(uint8_t vdev_id);
 
 void htt_pkt_log_init(void *handle, void *scn);
-QDF_STATUS ol_txrx_set_wisa_mode(void *vdev,
-			bool enable);
-void ol_txrx_update_mac_id(uint8_t vdev_id, uint8_t mac_id);
+void *ol_txrx_find_peer_by_addr(ol_txrx_pdev_handle pdev,
+				uint8_t *peer_addr,
+				uint8_t *peer_id);
+
 #endif /* _OL_TXRX__H_ */
