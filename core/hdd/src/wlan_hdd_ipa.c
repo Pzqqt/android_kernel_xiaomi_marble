@@ -1838,8 +1838,7 @@ void hdd_ipa_uc_sharing_stats_request(hdd_adapter_t *adapter,
 
 	HDD_IPA_LOG(LOG1, "SHARING_STATS: reset_stats=%d", reset_stats);
 	qdf_mutex_acquire(&hdd_ipa->ipa_lock);
-	if ((HDD_IPA_UC_NUM_WDI_PIPE == hdd_ipa->activated_fw_pipe) &&
-		(false == hdd_ipa->resource_loading)) {
+	if (false == hdd_ipa->resource_loading) {
 		qdf_mutex_release(&hdd_ipa->ipa_lock);
 		wma_cli_set_command(
 			(int)adapter->sessionId,
@@ -1878,8 +1877,7 @@ void hdd_ipa_uc_set_quota(hdd_adapter_t *adapter, uint8_t set_quota,
 		    set_quota, quota_bytes);
 
 	qdf_mutex_acquire(&hdd_ipa->ipa_lock);
-	if ((HDD_IPA_UC_NUM_WDI_PIPE == hdd_ipa->activated_fw_pipe) &&
-		(false == hdd_ipa->resource_loading)) {
+	if (false == hdd_ipa->resource_loading) {
 		qdf_mutex_release(&hdd_ipa->ipa_lock);
 		wma_cli_set2_command(
 			(int)adapter->sessionId,
