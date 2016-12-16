@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -4827,6 +4827,52 @@ enum dot11p_mode {
 #define CFG_RX_WAKELOCK_TIMEOUT_MIN      (0)
 #define CFG_RX_WAKELOCK_TIMEOUT_MAX      (100)
 
+/*
+ * <ini>
+ * g_max_sched_scan_plan_int - pno sched max scan plan interval.
+ * @Min: 1
+ * @Max: 7200
+ * @Default: 3600
+ *
+ * This ini is used to set max sched scan plan interval for pno scan
+ * (value in seconds).
+ *
+ * Related: gPNOScanSupport
+ *
+ * Supported Feature: PNO scan
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_MAX_SCHED_SCAN_PLAN_INT_NAME       "g_max_sched_scan_plan_int"
+#define CFG_MAX_SCHED_SCAN_PLAN_INT_MIN        (1)
+#define CFG_MAX_SCHED_SCAN_PLAN_INT_MAX        (7200)
+#define CFG_MAX_SCHED_SCAN_PLAN_INT_DEFAULT    (3600)
+
+/*
+ * <ini>
+ * g_max_sched_scan_plan_iterations - pno sched max scan plan iterations.
+ * @Min: 1
+ * @Max: 100
+ * @Default: 10
+ *
+ * This ini is used to set max sched scan plan iterations for pno scan
+ * (value in seconds).
+ *
+ * Related: gPNOScanSupport
+ *
+ * Supported Feature: PNO scan
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_MAX_SCHED_SCAN_PLAN_ITRNS_NAME   "g_max_sched_scan_plan_iterations"
+#define CFG_MAX_SCHED_SCAN_PLAN_ITRNS_MIN     (1)
+#define CFG_MAX_SCHED_SCAN_PLAN_ITRNS_MAX     (100)
+#define CFG_MAX_SCHED_SCAN_PLAN_ITRNS_DEFAULT (10)
+
 /*---------------------------------------------------------------------------
    Type declarations
    -------------------------------------------------------------------------*/
@@ -5503,6 +5549,8 @@ struct hdd_config {
 	uint8_t sap_max_inactivity_override;
 	bool fw_timeout_crash;
 	uint32_t rx_wakelock_timeout;
+	uint32_t max_sched_scan_plan_interval;
+	uint32_t max_sched_scan_plan_iterations;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

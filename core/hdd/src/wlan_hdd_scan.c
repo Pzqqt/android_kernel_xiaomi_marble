@@ -2298,6 +2298,70 @@ static QDF_STATUS wlan_hdd_is_pno_allowed(hdd_adapter_t *adapter)
 
 }
 
+#if ((LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)) || \
+	defined(CFG80211_MULTI_SCAN_PLAN_BACKPORT)) && \
+	defined(FEATURE_WLAN_SCAN_PNO)
+/**
+ * hdd_config_sched_scan_plan() - configures the sched scan plans
+ *   from the framework.
+ * @pno_req: pointer to PNO scan request
+ * @request: pointer to scan request from framework
+ *
+ * Return: None
+ */
+static void hdd_config_sched_scan_plan(tpSirPNOScanReq pno_req,
+			       struct cfg80211_sched_scan_request *request,
+			       hdd_context_t *hdd_ctx)
+{
+	/*
+	 * As of now max 2 scan plans were supported by firmware
+	 * if number of scan plan supported by firmware increased below logic
+	 * must change.
+	 */
+	if (request->n_scan_plans == SIR_PNO_MAX_PLAN_REQUEST) {
+		pno_req->fast_scan_period =
+			request->scan_plans[0].interval * MSEC_PER_SEC;
+		pno_req->fast_scan_max_cycles =
+			request->scan_plans[0].iterations;
+		pno_req->slow_scan_period =
+			request->scan_plans[1].interval * MSEC_PER_SEC;
+		hdd_notice("Base scan interval: %d sec, scan cycles: %d, slow scan interval %d",
+			   request->scan_plans[0].interval,
+			   request->scan_plans[0].iterations,
+			   request->scan_plans[1].interval);
+	} else if (request->n_scan_plans == 1) {
+		pno_req->fast_scan_period =
+			request->scan_plans[0].interval * MSEC_PER_SEC;
+		/*
+		 * if only one scan plan is configured from framework
+		 * then both fast and slow scan should be configured with the
+		 * same value that is why fast scan cycles are hardcoded to one
+		 */
+		pno_req->fast_scan_max_cycles = 1;
+		pno_req->slow_scan_period =
+			request->scan_plans[0].interval * MSEC_PER_SEC;
+	} else {
+		hdd_err("Invalid number of scan plans %d !!",
+			request->n_scan_plans);
+	}
+}
+#else
+static void hdd_config_sched_scan_plan(tpSirPNOScanReq pno_req,
+			       struct cfg80211_sched_scan_request *request,
+			       hdd_context_t *hdd_ctx)
+{
+	pno_req->fast_scan_period = request->interval;
+	pno_req->fast_scan_max_cycles =
+		hdd_ctx->config->configPNOScanTimerRepeatValue;
+	pno_req->slow_scan_period =
+		hdd_ctx->config->pno_slow_scan_multiplier *
+		pno_req->fast_scan_period;
+	hdd_notice("Base scan interval: %d sec PNOScanTimerRepeatValue: %d",
+		   (request->interval / 1000),
+		   hdd_ctx->config->configPNOScanTimerRepeatValue);
+}
+#endif
+
 /**
  * __wlan_hdd_cfg80211_sched_scan_start() - cfg80211 scheduled scan(pno) start
  * @wiphy: Pointer to wiphy
@@ -2524,27 +2588,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 	 *   switches slow_scan_period. This is less frequent scans and firmware
 	 *   shall be in slow_scan_period mode until next PNO Start.
 	 */
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)) || defined(WITH_BACKPORTS)
-	if (WARN_ON(request->n_scan_plans > SIR_PNO_MAX_PLAN_REQUEST)) {
-		ret = -EINVAL;
-		goto error;
-	}
-
-	/* TBD: only one sched_scan plan we can support now, so we only
-	 * retrieve the first plan and ignore the rest of them.
-	 * If there are more than 1 sched_pan request we can support, the
-	 * PnoRequet structure will also need to be revised.
-	 */
-	pPnoRequest->fast_scan_period = request->scan_plans[0].interval *
-						MSEC_PER_SEC;
-#else
-	pPnoRequest->fast_scan_period = request->interval;
-#endif
-	pPnoRequest->fast_scan_max_cycles =
-				config->configPNOScanTimerRepeatValue;
-	pPnoRequest->slow_scan_period =
-			config->pno_slow_scan_multiplier *
-				pPnoRequest->fast_scan_period;
+	hdd_config_sched_scan_plan(pPnoRequest, request, pHddCtx);
 
 	hdd_info("Base scan interval: %d sec PNOScanTimerRepeatValue: %d",
 			(pPnoRequest->fast_scan_period / 1000),
