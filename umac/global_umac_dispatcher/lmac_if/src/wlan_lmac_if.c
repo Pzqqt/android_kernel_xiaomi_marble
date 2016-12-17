@@ -20,6 +20,7 @@
 #include "qdf_mem.h"
 #include "wlan_lmac_if_def.h"
 #include "wlan_lmac_if_api.h"
+#include "wlan_mgmt_txrx_tgt_api.h"
 
 /* Function pointer to call DA/OL specific tx_ops registration function */
 QDF_STATUS (*wlan_lmac_if_tx_ops_create_handler[MAX_DEV_TYPE])
@@ -40,6 +41,26 @@ wlan_lmac_if_register_rx_handlers(struct wlan_lmac_if_rx_ops *rx_ops)
 	 * respective callbacks
 	 * Ex: rx_ops->fp = function;
 	 */
+	struct wlan_lmac_if_mgmt_txrx_rx_ops *mgmt_txrx_rx_ops;
+
+	if (!rx_ops) {
+		qdf_print("%s: lmac if rx ops pointer is NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	/* mgmt txrx rx ops */
+	mgmt_txrx_rx_ops = &rx_ops->mgmt_txrx_rx_ops;
+
+	mgmt_txrx_rx_ops->mgmt_tx_completion_handler =
+			tgt_mgmt_txrx_tx_completion_handler;
+	mgmt_txrx_rx_ops->mgmt_rx_frame_handler =
+			tgt_mgmt_txrx_rx_frame_handler;
+	mgmt_txrx_rx_ops->mgmt_txrx_get_nbuf_from_desc_id =
+			tgt_mgmt_txrx_get_nbuf_from_desc_id;
+	mgmt_txrx_rx_ops->mgmt_txrx_get_peer_from_desc_id =
+			tgt_mgmt_txrx_get_peer_from_desc_id;
+	mgmt_txrx_rx_ops->mgmt_txrx_get_vdev_id_from_desc_id =
+			tgt_mgmt_txrx_get_vdev_id_from_desc_id;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -67,7 +88,7 @@ struct wlan_objmgr_psoc *wlan_lmac_if_open(struct wlan_objmgr_psoc *psoc)
 					(&psoc->soc_cb.tx_ops);
 	} else {
 		/* Control should ideally not reach here */
-		qdf_print("Invalid device type\n");
+		qdf_print("Invalid device type");
 		return psoc;
 	}
 
