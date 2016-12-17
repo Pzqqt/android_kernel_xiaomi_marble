@@ -1630,11 +1630,7 @@ QDF_STATUS send_beacon_send_cmd_non_tlv(wmi_unified_t wmi_handle,
 		cmd->frame_ctrl = param->frame_ctrl;
 		cmd->dtim_flag = dtim_flag;
 		cmd->frag_ptr = qdf_nbuf_get_frag_paddr(param->wbuf, 0);
-#if SUPPORT_64BIT_CHANGES
 		cmd->virt_addr = (uintptr_t)param->wbuf;
-#else
-		cmd->virt_addr = (A_UINT32)param->wbuf;
-#endif
 		cmd->bcn_antenna = param->bcn_txant;
 		wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
 				WMI_PDEV_SEND_BCN_CMDID);
