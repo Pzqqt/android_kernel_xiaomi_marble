@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -77,7 +77,7 @@
 			(uint32_t)(((dma_addr) >> 32) & 0xFF);\
 	} while (0)
 
-int
+static int
 ce_send_nolock_srng(struct CE_handle *copyeng,
 			   void *per_transfer_context,
 			   qdf_dma_addr_t buffer,
@@ -154,7 +154,7 @@ ce_send_nolock_srng(struct CE_handle *copyeng,
 	return status;
 }
 
-int
+static int
 ce_sendlist_send_srng(struct CE_handle *copyeng,
 		 void *per_transfer_context,
 		 struct ce_sendlist *sendlist, unsigned int transfer_id)
@@ -234,7 +234,7 @@ ce_sendlist_send_srng(struct CE_handle *copyeng,
  *
  * Return: 0 if the buffer is enqueued
  */
-int
+static int
 ce_recv_buf_enqueue_srng(struct CE_handle *copyeng,
 		    void *per_recv_context, qdf_dma_addr_t buffer)
 {
@@ -295,7 +295,7 @@ ce_recv_buf_enqueue_srng(struct CE_handle *copyeng,
  * Guts of ce_recv_entries_done.
  * The caller takes responsibility for any necessary locking.
  */
-unsigned int
+static unsigned int
 ce_recv_entries_done_nolock_srng(struct hif_softc *scn,
 			    struct CE_state *CE_state)
 {
@@ -309,7 +309,7 @@ ce_recv_entries_done_nolock_srng(struct hif_softc *scn,
  * Guts of ce_send_entries_done.
  * The caller takes responsibility for any necessary locking.
  */
-unsigned int
+static unsigned int
 ce_send_entries_done_nolock_srng(struct hif_softc *scn,
 					struct CE_state *CE_state)
 {
@@ -335,7 +335,7 @@ void *ce_debug_cmplsn_context_srng;  /* completed send next context */
  * Guts of ce_completed_recv_next.
  * The caller takes responsibility for any necessary locking.
  */
-int
+static int
 ce_completed_recv_next_nolock_srng(struct CE_state *CE_state,
 			      void **per_CE_contextp,
 			      void **per_transfer_contextp,
@@ -415,7 +415,7 @@ done:
 	return status;
 }
 
-QDF_STATUS
+static QDF_STATUS
 ce_revoke_recv_next_srng(struct CE_handle *copyeng,
 		    void **per_CE_contextp,
 		    void **per_transfer_contextp, qdf_dma_addr_t *bufferp)
@@ -429,7 +429,7 @@ ce_revoke_recv_next_srng(struct CE_handle *copyeng,
  * Guts of ce_completed_send_next.
  * The caller takes responsibility for any necessary locking.
  */
-int
+static int
 ce_completed_send_next_nolock_srng(struct CE_state *CE_state,
 			      void **per_CE_contextp,
 			      void **per_transfer_contextp,
@@ -486,7 +486,7 @@ ce_completed_send_next_nolock_srng(struct CE_state *CE_state,
 }
 
 /* NB: Modelled after ce_completed_send_next */
-QDF_STATUS
+static QDF_STATUS
 ce_cancel_send_next_srng(struct CE_handle *copyeng,
 		void **per_CE_contextp,
 		void **per_transfer_contextp,
@@ -524,13 +524,14 @@ ce_per_engine_handler_adjust_srng(struct CE_state *CE_state,
 {
 }
 
-bool ce_check_int_watermark_srng(struct CE_state *CE_state, unsigned int *flags)
+static bool ce_check_int_watermark_srng(struct CE_state *CE_state,
+					unsigned int *flags)
 {
 	/*TODO*/
 	return false;
 }
 
-uint32_t ce_get_desc_size_srng(uint8_t ring_type)
+static uint32_t ce_get_desc_size_srng(uint8_t ring_type)
 {
 	switch (ring_type) {
 	case CE_RING_SRC:
@@ -577,7 +578,7 @@ static void ce_srng_msi_ring_params_setup(struct hif_softc *scn, uint32_t ce_id,
 		  (void *)ring_params->msi_addr, ring_params->msi_data);
 }
 
-void ce_srng_src_ring_setup(struct hif_softc *scn, uint32_t ce_id,
+static void ce_srng_src_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 			struct CE_ring_state *src_ring)
 {
 	struct hal_srng_params ring_params = {0};
@@ -608,7 +609,7 @@ void ce_srng_src_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 			&ring_params);
 }
 
-void ce_srng_dest_ring_setup(struct hif_softc *scn, uint32_t ce_id,
+static void ce_srng_dest_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 				struct CE_ring_state *dest_ring,
 				struct CE_attr *attr)
 {
@@ -636,7 +637,7 @@ void ce_srng_dest_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 			&ring_params);
 }
 
-void ce_srng_status_ring_setup(struct hif_softc *scn, uint32_t ce_id,
+static void ce_srng_status_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 				struct CE_ring_state *status_ring)
 {
 	struct hal_srng_params ring_params = {0};
@@ -661,7 +662,7 @@ void ce_srng_status_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 			ce_id, 0, &ring_params);
 }
 
-void ce_ring_setup_srng(struct hif_softc *scn, uint8_t ring_type,
+static void ce_ring_setup_srng(struct hif_softc *scn, uint8_t ring_type,
 		uint32_t ce_id, struct CE_ring_state *ring,
 		struct CE_attr *attr)
 {
@@ -680,7 +681,8 @@ void ce_ring_setup_srng(struct hif_softc *scn, uint8_t ring_type,
 		break;
 	}
 }
-struct ce_ops ce_service_srng = {
+
+static struct ce_ops ce_service_srng = {
 	.ce_get_desc_size = ce_get_desc_size_srng,
 	.ce_ring_setup = ce_ring_setup_srng,
 	.ce_sendlist_send = ce_sendlist_send_srng,
