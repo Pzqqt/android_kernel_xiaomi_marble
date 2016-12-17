@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -15,6 +15,8 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+#ifndef _DP_PEER_H_
+#define _DP_PEER_H_
 
 #include <qdf_types.h>
 #include <qdf_lock.h>
@@ -42,3 +44,12 @@ dp_peer_find_by_id(struct dp_soc *soc,
 
 	return peer;
 }
+
+void dp_rx_peer_map_handler(void *soc_handle, uint16_t peer_id,
+	uint8_t vdev_id, uint8_t *peer_mac_addr);
+void dp_rx_peer_unmap_handler(void *soc_handle, uint16_t peer_id);
+void dp_rx_sec_ind_handler(void *soc_handle, uint16_t peer_id,
+	enum htt_sec_type sec_type, int is_unicast,
+	u_int32_t *michael_key, u_int32_t *rx_pn);
+
+#endif /* _DP_PEER_H_ */

@@ -21,6 +21,7 @@
 #include "dp_htt.h"
 #include "dp_types.h"
 #include "dp_internal.h"
+#include "dp_peer.h"
 #include <hal_api.h>
 
 /* Temporary definitions to be moved to wlan_cfg */
@@ -45,20 +46,6 @@ static inline int dp_peer_find_mac_addr_cmp(
 		 */
 		&
 		(mac_addr1->align4.bytes_ef == mac_addr2->align4.bytes_ef));
-}
-
-static inline struct dp_peer *dp_peer_find_by_id(
-	struct dp_soc *soc, uint16_t peer_id)
-{
-	struct dp_peer *peer;
-	peer = (peer_id == HTT_INVALID_PEER) ? NULL :
-		soc->peer_id_to_obj_map[peer_id];
-	/*
-	 * Currently, peer IDs are assigned to vdevs as well as peers.
-	 * If the peer ID is for a vdev, the peer_id_to_obj_map entry
-	 * will hold NULL rather than a valid peer pointer.
-	 */
-	return peer;
 }
 
 static int dp_peer_find_map_attach(struct dp_soc *soc)

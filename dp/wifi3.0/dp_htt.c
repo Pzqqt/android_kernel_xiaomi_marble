@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -19,18 +19,12 @@
 #include <htt.h>
 #include <hal_api.h>
 #include "dp_htt.h"
+#include "dp_peer.h"
 
 #define HTT_HTC_PKT_POOL_INIT_SIZE 64
 
 #define HTT_MSG_BUF_SIZE(msg_bytes) \
 	((msg_bytes) + HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING)
-
-void dp_rx_peer_map_handler(void *soc_handle, uint16_t peer_id,
-	uint8_t vdev_id, uint8_t *peer_mac_addr);
-void dp_rx_peer_unmap_handler(void *soc_handle, uint16_t peer_id);
-void dp_rx_sec_ind_handler(void *soc_handle, uint16_t peer_id,
-	enum htt_sec_type sec_type, int is_unicast,
-	u_int32_t *michael_key, u_int32_t *rx_pn);
 
 /*
  * htt_htc_pkt_alloc() - Allocate HTC packet buffer
