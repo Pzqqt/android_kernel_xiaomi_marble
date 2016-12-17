@@ -2234,6 +2234,10 @@ QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	if (mac_ctx->roam.pReassocResp)
 		qdf_mem_free(mac_ctx->roam.pReassocResp);
 	mac_ctx->roam.pReassocResp = NULL;
+
+	if (roam_sync_ind_ptr->authStatus == CSR_ROAM_AUTH_STATUS_AUTHENTICATED)
+		ft_session_ptr->is_key_installed = true;
+
 	return QDF_STATUS_SUCCESS;
 }
 #endif
