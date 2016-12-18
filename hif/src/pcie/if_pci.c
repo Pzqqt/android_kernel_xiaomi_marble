@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1475,7 +1475,7 @@ QDF_STATUS hif_pci_open(struct hif_softc *hif_ctx, enum qdf_bus_type bus_type)
  *
  * Bmi phase uses different copy complete callbacks than mission mode.
  */
-void hif_register_bmi_callbacks(struct hif_softc *hif_sc)
+static void hif_register_bmi_callbacks(struct hif_softc *hif_sc)
 {
 	struct HIF_CE_pipe_info *pipe_info;
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_sc);
@@ -2242,9 +2242,9 @@ err_region:
 	return ret;
 }
 #else
-int hif_enable_pci(struct hif_pci_softc *sc,
-		struct pci_dev *pdev,
-		const struct pci_device_id *id)
+static int hif_enable_pci(struct hif_pci_softc *sc,
+			  struct pci_dev *pdev,
+			  const struct pci_device_id *id)
 {
 	PCI_CFG_TO_DISABLE_L1SS_STATES(pdev, 0x188);
 	sc->pci_enabled = true;
@@ -3571,7 +3571,7 @@ int hif_ahb_configure_irq(struct hif_pci_softc *sc)
 }
 #endif
 
-irqreturn_t hif_ce_interrupt_handler(int irq, void *context)
+static irqreturn_t hif_ce_interrupt_handler(int irq, void *context)
 {
 	struct ce_tasklet_entry *tasklet_entry = context;
 	return ce_dispatch_interrupt(tasklet_entry->ce_id, tasklet_entry);
