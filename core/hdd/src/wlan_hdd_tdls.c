@@ -1525,6 +1525,14 @@ static int wlan_hdd_tdls_check_config(tdls_config_params_t *config)
 			CFG_TDLS_RSSI_TEARDOWN_THRESHOLD_MAX);
 		return -EINVAL;
 	}
+	if (config->rssi_delta < CFG_TDLS_RSSI_DELTA_MIN
+	    || config->rssi_delta > CFG_TDLS_RSSI_DELTA_MAX) {
+		hdd_err("Invalid 11th argument %d. <%d...%d>",
+			config->rssi_delta,
+			CFG_TDLS_RSSI_DELTA_MIN,
+			CFG_TDLS_RSSI_DELTA_MAX);
+		return -EINVAL;
+	}
 	return 0;
 }
 
