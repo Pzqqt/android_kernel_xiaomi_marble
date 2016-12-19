@@ -23,11 +23,11 @@
 #ifndef _WLAN_SCAN_TGT_API_H_
 #define _WLAN_SCAN_TGT_API_H_
 
-#include <wlan_scan_structs.h>
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_peer_obj.h>
+#include <wlan_scan_public_structs.h>
 #include <wlan_mgmt_txrx_utils_api.h>
 
 /**

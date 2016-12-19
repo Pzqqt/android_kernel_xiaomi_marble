@@ -24,10 +24,10 @@
 #define _WLAN_SCAN_UCFG_API_H_
 
 #include <scheduler_api.h>
-#include <wlan_scan_public_structs.h>
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_vdev_obj.h>
+#include <wlan_scan_public_structs.h>
 
 /**
  * ucfg_scan_register_requester() - assigns requester ID to caller and

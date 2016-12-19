@@ -24,6 +24,8 @@
 #define _WLAN_SCAN_MAIN_API_H_
 
 #include <qdf_atomic.h>
+#include <wlan_objmgr_psoc_obj.h>
+#include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_scan_public_structs.h>
 #include "wlan_scan_cache_db.h"

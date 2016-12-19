@@ -23,6 +23,7 @@
 #include "qdf_status.h"
 #include "wlan_objmgr_cmn.h"
 #include "wlan_mgmt_txrx_utils_api.h"
+#include "wlan_scan_public_structs.h"
 
 /* Number of dev type: Direct attach and Offload */
 #define MAX_DEV_TYPE 2
@@ -42,10 +43,46 @@ struct wlan_lmac_if_mgmt_txrx_tx_ops {
 			qdf_nbuf_t nbuf);
 };
 
+
+/**
+ * struct wlan_lmac_if_scan_tx_ops - south bound tx function pointers for scan
+ * @scan_start: function to start scan
+ * @scan_cancel: function to cancel scan
+ * @scan_reg_ev_handler: function to register for scan events
+ * @scan_unreg_ev_handler: function to unregister for scan events
+ *
+ * scan module uses these functions to avail ol/da lmac services
+ */
+struct wlan_lmac_if_scan_tx_ops {
+	QDF_STATUS (*scan_start)(struct wlan_objmgr_psoc *psoc,
+			struct scan_start_request *req);
+	QDF_STATUS (*scan_cancel)(struct wlan_objmgr_psoc *psoc,
+			struct scan_cancel_param *req);
+	QDF_STATUS (*scan_reg_ev_handler)(struct wlan_objmgr_psoc *psoc,
+			void *arg);
+	QDF_STATUS (*scan_unreg_ev_handler)(struct wlan_objmgr_psoc *psoc,
+			void *arg);
+	QDF_STATUS (*set_chan_list)(struct wlan_objmgr_pdev *pdev, void *arg);
+};
+
+
+/**
+ * struct wlan_lmac_if_scan_rx_ops  - south bound rx function pointers for scan
+ * @scan_ev_handler: scan event handler
+ *
+ * lmac modules uses this API to post scan events to scan module
+ */
+struct wlan_lmac_if_scan_rx_ops {
+	QDF_STATUS (*scan_ev_handler)(struct wlan_objmgr_psoc *psoc,
+		struct scan_event_info *event_info);
+};
+
+
 /**
  * struct wlan_lmac_if_tx_ops - south bound tx function pointers
- * @arg1
- * @arg2
+ * @mgmt_txrx_tx_ops: mgmt txrx tx ops
+ * @scan: scan tx ops
+ * @set_chan_list: tx func for configuring scan channel
  *
  * Callback function tabled to be registered with umac.
  * umac will use the functional table to send events/frames to lmac/wmi
@@ -54,16 +91,11 @@ struct wlan_lmac_if_mgmt_txrx_tx_ops {
 struct wlan_lmac_if_tx_ops {
 	/* Components to declare function pointers required by the module
 	 * in component specific structure.
-	 * Ex : scan module
-	 * struct wlan_lmac_if_scan_tx_ops scan_tx_ops;
 	 * The component specific ops structure can be declared in this file
 	 * only
-	 * struct wlan_lmac_if_scan_tx_ops {
-	 *	int (*fp1)();
-	 *	void (*fp2)();
-	 * }
 	 */
 	 struct wlan_lmac_if_mgmt_txrx_tx_ops mgmt_txrx_tx_ops;
+	 struct wlan_lmac_if_scan_tx_ops scan;
 };
 
 /**
@@ -107,16 +139,11 @@ struct wlan_lmac_if_mgmt_txrx_rx_ops {
 struct wlan_lmac_if_rx_ops {
 	/* Components to declare function pointers required by the module
 	 * in component specific structure.
-	 * Ex : scan module
-	 * struct wlan_lmac_if_scan_rx_ops scan_rx_ops;
 	 * The component specific ops structure can be declared in this file
 	 * only
-	 * struct wlan_lmac_if_scan_rx_ops {
-	 *	int (*fp1)();
-	 *	void (*fp2)();
-	 * }
 	 */
 	 struct wlan_lmac_if_mgmt_txrx_rx_ops mgmt_txrx_rx_ops;
+	 struct wlan_lmac_if_scan_rx_ops scan;
 };
 
 /* Function pointer to call legacy tx_ops registration in OL/WMA.
