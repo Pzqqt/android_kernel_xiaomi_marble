@@ -1741,10 +1741,10 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			  "NUM EXCP PKT : %llu\n"
 			  "NUM TX FWD OK : %llu\n"
 			  "NUM TX FWD ERR : %llu",
-			  res->rx_rdy_ring_base_paddr,
+			  (unsigned long long)res->rx_rdy_ring_base_paddr,
 			  res->rx_rdy_ring_size,
-			  hdd_ipa->rx_ready_doorbell_paddr,
-			  res->rx_proc_done_idx_paddr,
+			  (unsigned long long)hdd_ipa->rx_ready_doorbell_paddr,
+			  (unsigned long long)res->rx_proc_done_idx_paddr,
 			  hdd_ipa->stats.num_rx_excep,
 			  hdd_ipa->stats.num_tx_fwd_ok,
 			  hdd_ipa->stats.num_tx_fwd_err);
