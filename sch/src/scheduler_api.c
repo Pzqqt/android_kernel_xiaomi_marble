@@ -288,7 +288,7 @@ QDF_STATUS scheduler_deregister_module(QDF_MODULE_ID qid)
 	struct scheduler_ctx *sched_ctx = scheduler_get_context();
 	uint8_t qidx;
 
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_INFO,
 		FL("Enter"));
 	if (!sched_ctx) {
 		QDF_ASSERT(0);
@@ -300,7 +300,7 @@ QDF_STATUS scheduler_deregister_module(QDF_MODULE_ID qid)
 	qidx = ctx->scheduler_msg_qid_to_qidx[qid];
 	ctx->scheduler_msg_process_fn[qidx] = NULL;
 	ctx->scheduler_msg_qid_to_qidx[qidx] = SCHEDULER_NUMBER_OF_MSG_QUEUE;
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_INFO,
 		FL("Exit"));
 	return QDF_STATUS_SUCCESS;
 }
