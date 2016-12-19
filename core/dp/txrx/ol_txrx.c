@@ -114,10 +114,6 @@ extern void ol_set_cfg_packet_log_enabled(void *ppdev, uint8_t val);
 
 extern void *ol_pdev_cfg_attach(qdf_device_t osdev, void *cfg_param);
 
-extern void ol_tx_set_flow_control_parameters(
-		struct txrx_pdev_cfg_t *cfg_ctx,
-		struct txrx_pdev_cfg_param_t *cfg_param);
-
 extern qdf_nbuf_t ol_tx_send_ipa_data_frame(void *vdev,
 			qdf_nbuf_t skb);
 
@@ -5129,8 +5125,8 @@ void *ol_txrx_wrapper_find_peer_by_addr(void *pdev,
  *
  * Return: none
  */
-void ol_txrx_wrapper_set_flow_control_parameters(void *cfg_ctx,
-		void *cfg_param)
+static void
+ol_txrx_wrapper_set_flow_control_parameters(void *cfg_ctx, void *cfg_param)
 {
 	return ol_tx_set_flow_control_parameters(
 		(struct txrx_pdev_cfg_t *)cfg_ctx,

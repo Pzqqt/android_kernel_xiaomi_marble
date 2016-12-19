@@ -47,12 +47,6 @@ void ol_tx_set_flow_control_parameters(struct txrx_pdev_cfg_t *cfg_ctx,
 	cfg_ctx->tx_flow_stop_queue_th =
 					cfg_param->tx_flow_stop_queue_th;
 }
-#else
-void ol_tx_set_flow_control_parameters(struct txrx_pdev_cfg_t *cfg_ctx,
-	struct txrx_pdev_cfg_param_t *cfg_param)
-{
-	return;
-}
 #endif
 
 #ifdef CONFIG_HL_SUPPORT

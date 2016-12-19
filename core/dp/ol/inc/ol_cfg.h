@@ -97,6 +97,24 @@ struct txrx_pdev_cfg_t {
 };
 
 /**
+ * ol_tx_set_flow_control_parameters() - set flow control parameters
+ * @cfg_ctx: cfg context
+ * @cfg_param: cfg parameters
+ *
+ * Return: none
+ */
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+void ol_tx_set_flow_control_parameters(struct txrx_pdev_cfg_t *cfg_ctx,
+				       struct txrx_pdev_cfg_param_t *cfg_param);
+#else
+static inline
+void ol_tx_set_flow_control_parameters(struct txrx_pdev_cfg_t *cfg_ctx,
+				       struct txrx_pdev_cfg_param_t *cfg_param)
+{
+}
+#endif
+
+/**
  * @brief Specify whether the system is high-latency or low-latency.
  * @details
  *  Indicate whether the system is operating in high-latency (message
