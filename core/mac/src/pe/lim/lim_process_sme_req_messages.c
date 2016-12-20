@@ -637,8 +637,8 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	uint32_t auto_gen_bssid = false;
 	uint8_t session_id;
 	tpPESession session = NULL;
-	uint8_t sme_session_id = 0;
-	uint16_t sme_transaction_id = 0;
+	uint8_t sme_session_id = 0xFF;
+	uint16_t sme_transaction_id = 0xFF;
 	uint32_t chanwidth;
 	struct vdev_type_nss *vdev_type_nss;
 	tSirRetStatus cfg_get_wmi_dfs_master_param = eSIR_SUCCESS;
@@ -654,26 +654,21 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
 	lim_log(mac_ctx, LOG1, FL("Received START_BSS_REQ"));
+	size = sizeof(tSirSmeStartBssReq);
+	sme_start_bss_req = qdf_mem_malloc(size);
+	if (NULL == sme_start_bss_req) {
+		lim_log(mac_ctx, LOGE,
+			FL("Allocate Memory fail for LimStartBssReq"));
+		/* Send failure response to host */
+		ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
+		goto free;
+	}
+	qdf_mem_copy(sme_start_bss_req, msg_buf, sizeof(tSirSmeStartBssReq));
+	sme_session_id = sme_start_bss_req->sessionId;
+	sme_transaction_id = sme_start_bss_req->transactionId;
 
-	/*
-	 * Global Sme state and mlm states are not defined yet,
-	 * for BT-AMP Suppoprt . TO BE DONE
-	 */
 	if ((mac_ctx->lim.gLimSmeState == eLIM_SME_OFFLINE_STATE) ||
 	    (mac_ctx->lim.gLimSmeState == eLIM_SME_IDLE_STATE)) {
-		size = sizeof(tSirSmeStartBssReq);
-
-		sme_start_bss_req = qdf_mem_malloc(size);
-		if (NULL == sme_start_bss_req) {
-			lim_log(mac_ctx, LOGE,
-				FL("Allocate Memory fail for LimStartBssReq"));
-			/* Send failure response to host */
-			ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
-			goto end;
-		}
-
-		qdf_mem_copy(sme_start_bss_req, msg_buf,
-			sizeof(tSirSmeStartBssReq));
 		if (!lim_is_sme_start_bss_req_valid(mac_ctx,
 					sme_start_bss_req)) {
 			lim_log(mac_ctx, LOGW,
@@ -1141,22 +1136,18 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			FL("Received unexpected START_BSS_REQ, in state %X"),
 			mac_ctx->lim.gLimSmeState);
 		ret_code = eSIR_SME_BSS_ALREADY_STARTED_OR_JOINED;
-		goto end;
+		goto free;
 	} /* if (mac_ctx->lim.gLimSmeState == eLIM_SME_OFFLINE_STATE) */
 
 free:
 	if ((session != NULL) &&
-		(session->pLimStartBssReq == sme_start_bss_req)) {
+	    (session->pLimStartBssReq == sme_start_bss_req)) {
 		session->pLimStartBssReq = NULL;
 	}
-	qdf_mem_free(sme_start_bss_req);
-	qdf_mem_free(mlm_start_req);
-
-end:
-	if (sme_start_bss_req != NULL) {
-		sme_session_id = sme_start_bss_req->sessionId;
-		sme_transaction_id = sme_start_bss_req->transactionId;
-	}
+	if (NULL != sme_start_bss_req)
+		qdf_mem_free(sme_start_bss_req);
+	if (NULL != mlm_start_req)
+		qdf_mem_free(mlm_start_req);
 	if (NULL != session) {
 		pe_delete_session(mac_ctx, session);
 		session = NULL;

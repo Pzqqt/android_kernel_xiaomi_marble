@@ -6491,8 +6491,9 @@ void cds_restart_sap(hdd_adapter_t *ap_adapter)
 		}
 		cds_err("SAP Start Success");
 		set_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags);
-		cds_incr_active_session(ap_adapter->device_mode,
-					 ap_adapter->sessionId);
+		if (hostapd_state->bssState == BSS_START)
+			cds_incr_active_session(ap_adapter->device_mode,
+						ap_adapter->sessionId);
 		hostapd_state->bCommit = true;
 	}
 end:

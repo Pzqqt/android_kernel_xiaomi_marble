@@ -901,6 +901,8 @@ void wlan_hdd_sap_pre_cac_failure(void *data)
 	}
 
 	cds_ssr_protect(__func__);
+	wlan_hdd_release_intf_addr(hdd_ctx,
+				   pHostapdAdapter->macAddressCurrent.bytes);
 	hdd_stop_adapter(hdd_ctx, pHostapdAdapter, true);
 	hdd_close_adapter(hdd_ctx, pHostapdAdapter, false);
 	cds_ssr_unprotect(__func__);
@@ -1130,6 +1132,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			 * wait till 10 secs and no other connection will
 			 * go through before that.
 			 */
+			pHostapdState->bssState = BSS_STOP;
 			qdf_event_set(&pHostapdState->qdf_event);
 			goto stopbss;
 		} else {
@@ -2088,6 +2091,8 @@ stopbss:
 		we_custom_event_generic = we_custom_event;
 		wireless_send_event(dev, we_event, &wrqu,
 				    (char *)we_custom_event_generic);
+		cds_decr_session_set_pcl(pHostapdAdapter->device_mode,
+					 pHostapdAdapter->sessionId);
 		cds_dump_concurrency_info();
 		/* Send SCC/MCC Switching event to IPA */
 		hdd_ipa_send_mcc_scc_msg(pHddCtx, pHddCtx->mcc_mode);
@@ -7648,8 +7653,9 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	set_bit(SOFTAP_BSS_STARTED, &pHostapdAdapter->event_flags);
 	/* Initialize WMM configuation */
 	hdd_wmm_init(pHostapdAdapter);
-	cds_incr_active_session(pHostapdAdapter->device_mode,
-					 pHostapdAdapter->sessionId);
+	if (pHostapdState->bssState == BSS_START)
+		cds_incr_active_session(pHostapdAdapter->device_mode,
+					pHostapdAdapter->sessionId);
 #ifdef DHCP_SERVER_OFFLOAD
 	if (iniConfig->enableDHCPServerOffload)
 		wlan_hdd_set_dhcp_server_offload(pHostapdAdapter);

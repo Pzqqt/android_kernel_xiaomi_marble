@@ -8984,7 +8984,8 @@ void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter)
 	}
 	hdd_info("SAP Start Success");
 	set_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags);
-	cds_incr_active_session(ap_adapter->device_mode,
+	if (hostapd_state->bssState == BSS_START)
+		cds_incr_active_session(ap_adapter->device_mode,
 					ap_adapter->sessionId);
 	hostapd_state->bCommit = true;
 

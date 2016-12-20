@@ -6830,7 +6830,7 @@ static int wlan_hdd_validate_and_get_pre_cac_ch(hdd_context_t *hdd_ctx,
  */
 int wlan_hdd_request_pre_cac(uint8_t channel)
 {
-	uint8_t pre_cac_chan = 0;
+	uint8_t pre_cac_chan = 0, *mac_addr;
 	hdd_context_t *hdd_ctx;
 	int ret;
 	hdd_adapter_t *ap_adapter, *pre_cac_adapter;
@@ -6890,23 +6890,19 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 		return -EINVAL;
 	}
 
+	mac_addr = wlan_hdd_get_intf_addr(hdd_ctx);
+	if (!mac_addr) {
+		hdd_err("can't add virtual intf: Not getting valid mac addr");
+		return -EINVAL;
+	}
+
 	hdd_info("channel:%d", channel);
 
 	ret = wlan_hdd_validate_and_get_pre_cac_ch(hdd_ctx, ap_adapter, channel,
 							&pre_cac_chan);
-	if (ret != 0)
-		return ret;
-
-	/* Since current SAP is in 2.4GHz and pre CAC channel is in 5GHz, this
-	 * connection update should result in DBS mode
-	 */
-	status = cds_update_and_wait_for_connection_update(
-						ap_adapter->sessionId,
-						pre_cac_chan,
-						SIR_UPDATE_REASON_PRE_CAC);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("error in moving to DBS mode");
-		return -EINVAL;
+	if (ret != 0) {
+		hdd_err("can't validate pre-cac channel");
+		goto release_intf_addr_and_return_failure;
 	}
 
 	hdd_debug("starting pre cac SAP  adapter");
@@ -6929,11 +6925,10 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 	 * from user space.
 	 */
 	pre_cac_adapter = hdd_open_adapter(hdd_ctx, QDF_SAP_MODE, "precac%d",
-			wlan_hdd_get_intf_addr(hdd_ctx),
-			NET_NAME_UNKNOWN, true);
+					   mac_addr, NET_NAME_UNKNOWN, true);
 	if (!pre_cac_adapter) {
 		hdd_err("error opening the pre cac adapter");
-		return -EINVAL;
+		goto release_intf_addr_and_return_failure;
 	}
 
 	/*
@@ -7001,6 +6996,22 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 	hdd_debug("orig width:%d channel_type:%d freq:%d",
 		ap_adapter->sessionCtx.ap.sapConfig.ch_width_orig,
 		channel_type, freq);
+	/*
+	 * Doing update after opening and starting pre-cac adapter will make
+	 * sure that driver won't do hardware mode change if there are any
+	 * initial hick-ups or issues in pre-cac adapter's configuration.
+	 * Since current SAP is in 2.4GHz and pre CAC channel is in 5GHz, this
+	 * connection update should result in DBS mode
+	 */
+	status = cds_update_and_wait_for_connection_update(
+						ap_adapter->sessionId,
+						pre_cac_chan,
+						SIR_UPDATE_REASON_PRE_CAC);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("error in moving to DBS mode");
+		goto stop_close_pre_cac_adapter;
+	}
+
 
 	ret = wlan_hdd_set_channel(wiphy, dev, &chandef, channel_type);
 	if (0 != ret) {
@@ -7044,6 +7055,14 @@ stop_close_pre_cac_adapter:
 	pre_cac_adapter->sessionCtx.ap.beacon = NULL;
 close_pre_cac_adapter:
 	hdd_close_adapter(hdd_ctx, pre_cac_adapter, false);
+release_intf_addr_and_return_failure:
+	/*
+	 * Release the interface address as the adapter
+	 * failed to start, if you don't release then next
+	 * adapter which is trying to come wouldn't get valid
+	 * mac address. Remember we have limited pool of mac addresses
+	 */
+	wlan_hdd_release_intf_addr(hdd_ctx, mac_addr);
 	return -EINVAL;
 }
 
