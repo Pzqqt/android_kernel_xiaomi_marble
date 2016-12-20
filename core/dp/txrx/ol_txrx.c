@@ -108,12 +108,6 @@ extern void ol_tx_throttle_init_period(void *ppdev, int period,
 
 extern void ol_tx_throttle_set_level(void *ppdev, int level);
 
-extern void ol_set_cfg_rx_fwd_disabled(void *ppdev, uint8_t disable_rx_fwd);
-
-extern void ol_set_cfg_packet_log_enabled(void *ppdev, uint8_t val);
-
-extern void *ol_pdev_cfg_attach(qdf_device_t osdev, void *cfg_param);
-
 extern qdf_nbuf_t ol_tx_send_ipa_data_frame(void *vdev,
 			qdf_nbuf_t skb);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -98,17 +98,6 @@ uint8_t ol_defrag_timeout_check(void)
  * Many of these should actually be determined dynamically instead.
  */
 
-/**
- * ol_pdev_cfg_attach - setup configuration parameters
- *
- *@osdev - OS handle needed as an argument for some OS primitives
- *@cfg_param - configuration parameters
- *
- * Allocation configuration context that will be used across data path
- *
- * Return: the control device object
- */
-
 void *ol_pdev_cfg_attach(qdf_device_t osdev, void *pcfg_param)
 {
 	struct txrx_pdev_cfg_param_t *cfg_param = pcfg_param;
@@ -191,17 +180,6 @@ int ol_cfg_rx_fwd_check(ol_pdev_handle pdev)
 	return cfg->pn_rx_fwd_check;
 }
 
-/**
- * ol_set_cfg_rx_fwd_disabled - set rx fwd disable/enable
- *
- * @pdev - handle to the physical device
- * @disable_rx_fwd 1 -> no rx->tx forward -> rx->tx forward
- *
- * Choose whether to forward rx frames to tx (where applicable) within the
- * WLAN driver, or to leave all forwarding up to the operating system.
- * Currently only intra-bss fwd is supported.
- *
- */
 void ol_set_cfg_rx_fwd_disabled(void *ppdev, uint8_t disable_rx_fwd)
 {
 	ol_pdev_handle pdev = ppdev;
@@ -209,13 +187,6 @@ void ol_set_cfg_rx_fwd_disabled(void *ppdev, uint8_t disable_rx_fwd)
 	cfg->rx_fwd_disabled = disable_rx_fwd;
 }
 
-/**
- * ol_set_cfg_packet_log_enabled - Set packet log config in HTT
- * config based on CFG ini configuration
- *
- * @pdev - handle to the physical device
- * @val - 0 - disable, 1 - enable
- */
 void ol_set_cfg_packet_log_enabled(void *ppdev, uint8_t val)
 {
 	ol_pdev_handle pdev = ppdev;
