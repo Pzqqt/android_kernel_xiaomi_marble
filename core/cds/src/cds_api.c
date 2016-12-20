@@ -959,6 +959,8 @@ QDF_STATUS cds_close(v_CONTEXT_t cds_context)
 
 	((p_cds_contextType) cds_context)->pMACContext = NULL;
 
+	cdp_soc_detach(gp_cds_context->dp_soc);
+
 	if (true == wma_needshutdown(cds_context)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Failed to shutdown wma", __func__);
