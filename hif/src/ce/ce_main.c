@@ -2178,7 +2178,6 @@ void hif_unconfig_ce(struct hif_softc *hif_sc)
 		pipe_info = &hif_state->pipe_info[pipe_num];
 		if (pipe_info->ce_hdl) {
 			ce_unregister_irq(hif_state, (1 << pipe_num));
-			hif_sc->request_irq_done = false;
 			ce_fini(pipe_info->ce_hdl);
 			pipe_info->ce_hdl = NULL;
 			pipe_info->buf_sz = 0;
@@ -2305,7 +2304,6 @@ int hif_config_ce(struct hif_softc *scn)
 		}
 		ce_tasklet_init(hif_state, (1 << pipe_num));
 		ce_register_irq(hif_state, (1 << pipe_num));
-		scn->request_irq_done = true;
 	}
 
 	if (athdiag_procfs_init(scn) != 0) {

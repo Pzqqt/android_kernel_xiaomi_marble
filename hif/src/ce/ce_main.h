@@ -144,6 +144,7 @@ struct HIF_CE_state {
 	qdf_timer_t sleep_timer;
 	bool sleep_timer_init;
 	qdf_time_t sleep_ticks;
+	uint32_t ce_register_irq_done;
 
 	struct CE_pipe_config *target_ce_config;
 	struct CE_attr *host_ce_config;

@@ -557,6 +557,8 @@ void hif_ahb_nointrs(struct hif_softc *scn)
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 
+	ce_unregister_irq(hif_state, CE_ALL_BITMAP);
+
 	if (scn->request_irq_done == false)
 		return;
 
@@ -576,8 +578,8 @@ void hif_ahb_nointrs(struct hif_softc *scn)
 			}
 		}
 	}
-	ce_unregister_irq(hif_state, CE_ALL_BITMAP);
 	scn->request_irq_done = false;
+
 }
 
 /**

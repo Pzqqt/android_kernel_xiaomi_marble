@@ -557,6 +557,8 @@ QDF_STATUS ce_unregister_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 			  __func__, ret);
 	/* this is not fatal, continue */
 
+	/* filter mask to free only for ce's with irq registered */
+	mask &= hif_ce_state->ce_register_irq_done;
 	for (id = 0; id < ce_count; id++) {
 		if ((mask & (1 << id)) && hif_ce_state->tasklets[id].inited) {
 			ret = pld_ce_free_irq(scn->qdf_dev->dev, id,
@@ -567,6 +569,8 @@ QDF_STATUS ce_unregister_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 					__func__, id, ret);
 		}
 	}
+	hif_ce_state->ce_register_irq_done &= ~mask;
+
 	return QDF_STATUS_SUCCESS;
 }
 /**
@@ -607,6 +611,7 @@ QDF_STATUS ce_register_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 			}
 		}
 	}
+	hif_ce_state->ce_register_irq_done |= done_mask;
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -309,10 +309,8 @@ void hif_snoc_disable_bus(struct hif_softc *scn)
 void hif_snoc_nointrs(struct hif_softc *scn)
 {
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
-	if (scn->request_irq_done) {
-		ce_unregister_irq(hif_state, 0xfff);
-		scn->request_irq_done = false;
-	}
+
+	ce_unregister_irq(hif_state, CE_ALL_BITMAP);
 }
 
 /**
