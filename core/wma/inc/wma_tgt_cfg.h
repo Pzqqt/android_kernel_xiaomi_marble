@@ -155,6 +155,7 @@ struct wma_dfs_radar_ind {
  * @he_cap: HE capability received from FW
  * @dfs_cac_offload: dfs and cac timer offloaded
  * @tx_bfee_8ss_enabled: Tx Beamformee support for 8x8
+ * @fw_mem_dump_enabled: Fw memory dump support
  */
 struct wma_tgt_cfg {
 	uint32_t target_fw_version;
@@ -189,5 +190,6 @@ struct wma_tgt_cfg {
 #endif
 	bool dfs_cac_offload;
 	bool tx_bfee_8ss_enabled;
+	bool fw_mem_dump_enabled;
 };
 #endif /* WMA_TGT_CFG_H */

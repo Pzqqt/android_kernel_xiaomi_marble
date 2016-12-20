@@ -1748,6 +1748,9 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	 * Update txBFCsnValue and NumSoundingDim values to vhtcap in wiphy
 	 */
 	hdd_update_wiphy_vhtcap(hdd_ctx);
+
+	hdd_ctx->fw_mem_dump_enabled = cfg->fw_mem_dump_enabled;
+
 	/*
 	 * If BPF is enabled, maxWowFilters set to WMA_STA_WOW_DEFAULT_PTRN_MAX
 	 * because we need atleast WMA_STA_WOW_DEFAULT_PTRN_MAX free slots to

@@ -4671,6 +4671,7 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 			      - WMI_TLV_HEADROOM;
 	wma_setup_egap_support(&tgt_cfg, wma_handle);
 	tgt_cfg.tx_bfee_8ss_enabled = wma_handle->tx_bfee_8ss_enabled;
+	tgt_cfg.fw_mem_dump_enabled = wma_handle->fw_mem_dump_enabled;
 	wma_update_hdd_cfg_ndp(wma_handle, &tgt_cfg);
 	wma_handle->tgt_cfg_update_cb(hdd_ctx, &tgt_cfg);
 }
@@ -5026,6 +5027,12 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 #endif /* WLAN_FEATURE_GTK_OFFLOAD */
 
 #ifndef CONVERGED_P2P_ENABLE
+	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
+				   WMI_SERVICE_FW_MEM_DUMP_SUPPORT))
+		wma_handle->fw_mem_dump_enabled = true;
+	else
+		wma_handle->fw_mem_dump_enabled = false;
+
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
 						    WMI_P2P_NOA_EVENTID,
 						    wma_p2p_noa_event_handler,
