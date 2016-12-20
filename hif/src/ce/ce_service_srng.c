@@ -535,7 +535,7 @@ ce_cancel_send_next_srng(struct CE_handle *copyeng,
 		unsigned int *transfer_idp,
 		uint32_t *toeplitz_hash_result)
 {
-	return 0;
+	return QDF_STATUS_E_INVAL;
 }
 
 /* Shift bits to convert IS_*_RING_*_WATERMARK_MASK to CE_WM_FLAG_*_* */
