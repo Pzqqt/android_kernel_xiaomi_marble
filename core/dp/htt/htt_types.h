@@ -352,7 +352,9 @@ struct htt_pdev_t {
 		 * variable is used to guarantee that only one thread tries
 		 * to replenish Rx ring.
 		 */
-		qdf_atomic_t refill_ref_cnt;
+		qdf_atomic_t   refill_ref_cnt;
+		qdf_spinlock_t refill_lock;
+		qdf_atomic_t   refill_debt;
 #ifdef DEBUG_DMA_DONE
 		uint32_t dbg_initial_msdu_payld;
 		uint32_t dbg_mpdu_range;

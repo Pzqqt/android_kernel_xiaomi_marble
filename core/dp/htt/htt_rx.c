@@ -408,13 +408,17 @@ static void htt_rx_ring_refill_retry(void *arg)
 }
 #endif
 
-static void htt_rx_ring_fill_n(struct htt_pdev_t *pdev, int num)
+/* full_reorder_offload case: this function is called with lock held */
+static int htt_rx_ring_fill_n(struct htt_pdev_t *pdev, int num)
 {
 	int idx;
 	QDF_STATUS status;
 	struct htt_host_rx_desc_base *rx_desc;
+	int filled = 0;
 
 	idx = *(pdev->rx_ring.alloc_idx.vaddr);
+
+moretofill:
 	while (num > 0) {
 		qdf_dma_addr_t paddr;
 		qdf_nbuf_t rx_netbuf;
@@ -504,14 +508,21 @@ static void htt_rx_ring_fill_n(struct htt_pdev_t *pdev, int num)
 
 		num--;
 		idx++;
+		filled++;
 		idx &= pdev->rx_ring.size_mask;
+	}
+	if (qdf_atomic_read(&pdev->rx_ring.refill_debt) > 0) {
+		num = qdf_atomic_read(&pdev->rx_ring.refill_debt);
+		/* Ideally the following gives 0, but sub is safer */
+		qdf_atomic_sub(num, &pdev->rx_ring.refill_debt);
+		goto moretofill;
 	}
 
 fail:
 	*(pdev->rx_ring.alloc_idx.vaddr) = idx;
 	htt_rx_dbg_rxbuf_indupd(pdev, idx);
 
-	return;
+	return filled;
 }
 
 static inline unsigned htt_rx_ring_elems(struct htt_pdev_t *pdev)
@@ -583,6 +594,9 @@ void htt_rx_detach(struct htt_pdev_t *pdev)
 				   pdev->rx_ring.base_paddr,
 				   qdf_get_dma_mem_context((&pdev->rx_ring.buf),
 							   memctx));
+
+	/* destroy the rx-parallelization refill spinlock */
+	qdf_spinlock_destroy(&(pdev->rx_ring.refill_lock));
 }
 #endif
 
@@ -2836,6 +2850,31 @@ void htt_rx_msdu_buff_replenish(htt_pdev_handle pdev)
 	qdf_atomic_inc(&pdev->rx_ring.refill_ref_cnt);
 }
 
+#define RX_RING_REFILL_DEBT_MAX 128
+int htt_rx_msdu_buff_in_order_replenish(htt_pdev_handle pdev, uint32_t num)
+{
+	int filled = 0;
+
+	if (!qdf_spin_trylock_bh(&(pdev->rx_ring.refill_lock))) {
+		if (qdf_atomic_read(&pdev->rx_ring.refill_debt)
+			 < RX_RING_REFILL_DEBT_MAX) {
+			qdf_atomic_add(num, &pdev->rx_ring.refill_debt);
+			return filled; /* 0 */
+		}
+		/*
+		 * else:
+		 * If we have quite a debt, then it is better for the lock
+		 * holder to finish its work and then acquire the lock and
+		 * fill our own part.
+		 */
+		qdf_spin_lock_bh(&(pdev->rx_ring.refill_lock));
+	}
+	filled = htt_rx_ring_fill_n(pdev, num);
+	qdf_spin_unlock_bh(&(pdev->rx_ring.refill_lock));
+
+	return filled;
+}
+
 #define AR600P_ASSEMBLE_HW_RATECODE(_rate, _nss, _pream)     \
 	(((_pream) << 6) | ((_nss) << 4) | (_rate))
 
@@ -3226,6 +3265,11 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 	*/
 	qdf_atomic_init(&pdev->rx_ring.refill_ref_cnt);
 	qdf_atomic_inc(&pdev->rx_ring.refill_ref_cnt);
+
+	/* Initialize the refill_lock and debt (for rx-parallelization) */
+	qdf_spinlock_create(&(pdev->rx_ring.refill_lock));
+	qdf_atomic_init(&pdev->rx_ring.refill_debt);
+
 
 	/* Initialize the Rx refill retry timer */
 	qdf_timer_init(pdev->osdev,

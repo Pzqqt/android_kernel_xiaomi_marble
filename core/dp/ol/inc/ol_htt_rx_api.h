@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -786,6 +786,23 @@ void htt_rx_msdu_desc_free(htt_pdev_handle htt_pdev, qdf_nbuf_t msdu);
  * @param pdev - the HTT instance the rx data will be received on
  */
 void htt_rx_msdu_buff_replenish(htt_pdev_handle pdev);
+
+/**
+ * @brief Add new MSDU buffers for the target to fill.
+ * @details
+ *  This is full_reorder_offload version of the replenish function.
+ *  In full_reorder, FW sends HTT_T2H_MSG_TYPE_RX_IN_ORD_PADDR_IND
+ *  msg to host. It includes the number of MSDUs. Thgis will be fed
+ *  into htt_rx_msdu_buff_in_order_replenish function.
+ *  The reason for creating yet another function is to avoid checks
+ *  in real-time.
+ *
+ * @param pdev - the HTT instance the rx data will be received on
+ * @num        - number of buffers to replenish
+ *
+ * Return: number of buffers actually replenished
+ */
+int htt_rx_msdu_buff_in_order_replenish(htt_pdev_handle pdev, uint32_t num);
 
 /**
  * @brief Links list of MSDUs into an single MPDU. Updates RX stats

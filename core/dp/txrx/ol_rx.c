@@ -1343,6 +1343,9 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 	htt_pdev_handle htt_pdev = NULL;
 	int status;
 	qdf_nbuf_t head_msdu, tail_msdu = NULL;
+	uint8_t *rx_ind_data;
+	uint32_t *msg_word;
+	uint32_t msdu_count;
 #ifdef WDI_EVENT_ENABLE
 	uint8_t pktlog_bit;
 #endif
@@ -1368,6 +1371,11 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 	pktlog_bit = (htt_rx_amsdu_rx_in_order_get_pktlog(rx_ind_msg) == 0x01);
 #endif
 
+	rx_ind_data = qdf_nbuf_data(rx_ind_msg);
+	msg_word = (uint32_t *)rx_ind_data;
+	/* Get the total number of MSDUs */
+	msdu_count = HTT_RX_IN_ORD_PADDR_IND_MSDU_CNT_GET(*(msg_word + 1));
+
 	/*
 	 * Get a linked list of the MSDUs in the rx in order indication.
 	 * This also attaches each rx MSDU descriptor to the
@@ -1382,7 +1390,7 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 	/* Replenish the rx buffer ring first to provide buffers to the target
 	   rather than waiting for the indeterminate time taken by the OS
 	   to consume the rx frames */
-	htt_rx_msdu_buff_replenish(htt_pdev);
+	htt_rx_msdu_buff_in_order_replenish(htt_pdev, msdu_count);
 
 	/* Send the chain of MSDUs to the OS */
 	/* rx_opt_proc takes a NULL-terminated list of msdu netbufs */
