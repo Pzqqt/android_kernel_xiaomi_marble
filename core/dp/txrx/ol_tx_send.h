@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -92,4 +92,63 @@ void
 ol_tx_send_nonstd(struct ol_txrx_pdev_t *pdev,
 		  struct ol_tx_desc_t *tx_desc,
 		  qdf_nbuf_t msdu, enum htt_pkt_type pkt_type);
+
+#ifdef QCA_COMPUTE_TX_DELAY
+/**
+ * ol_tx_set_compute_interval() - update compute interval period for TSM stats
+ * @ppdev: physical device instance
+ * @interval: interval for stats computation
+ *
+ * Return: NONE
+ */
+void ol_tx_set_compute_interval(void *ppdev, uint32_t interval);
+
+/**
+ * ol_tx_packet_count() - Return the uplink (transmitted) packet counts
+ * @ppdev: physical device instance
+ * @out_packet_count: number of packets transmitted
+ * @out_packet_loss_count: number of packets lost
+ * @category: access category of interest
+ *
+ * This function will be called for getting uplink packet count and
+ * loss count for given stream (access category) a regular interval.
+ * This also resets the counters hence, the value returned is packets
+ * counted in last 5(default) second interval. These counter are
+ * incremented per access category in ol_tx_completion_handler()
+ *
+ * Return: NONE
+ */
+void
+ol_tx_packet_count(void *ppdev,
+		   uint16_t *out_packet_count,
+		   uint16_t *out_packet_loss_count, int category);
+
+/**
+ * ol_tx_delay() - get tx packet delay
+ * @ppdev: physical device instance
+ * @queue_delay_microsec: tx packet delay within queue, usec
+ * @tx_delay_microsec: tx packet delay, usec
+ * @category: packet catagory
+ *
+ * Return: NONE
+ */
+void
+ol_tx_delay(void *ppdev,
+	    uint32_t *queue_delay_microsec,
+	    uint32_t *tx_delay_microsec, int category);
+
+/**
+ * ol_tx_delay_hist() - get tx packet delay histogram
+ * @ppdev: physical device instance
+ * @report_bin_values: bin
+ * @category: packet catagory
+ *
+ * Return: NONE
+ */
+void
+ol_tx_delay_hist(void *ppdev,
+		 uint16_t *report_bin_values, int category);
+#endif /* QCA_COMPUTE_TX_DELAY */
+
+
 #endif /* _OL_TX_SEND__H_ */

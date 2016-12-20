@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -129,21 +129,6 @@ extern void ol_txrx_vdev_flush(void *pvdev);
 extern void ol_txrx_vdev_pause(void *pvdev, uint32_t reason);
 extern void ol_txrx_vdev_unpause(void *pvdev, uint32_t reason);
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
-
-#ifdef QCA_COMPUTE_TX_DELAY
-extern void ol_tx_delay(void *ppdev,
-	    uint32_t *queue_delay_microsec,
-	    uint32_t *tx_delay_microsec, int category);
-
-extern void ol_tx_delay_hist(void *ppdev,
-		 uint16_t *report_bin_values, int category);
-
-extern void ol_tx_packet_count(void *ppdev,
-		   uint16_t *out_packet_count,
-		   uint16_t *out_packet_loss_count, int category);
-
-extern void ol_tx_set_compute_interval(void *ppdev, uint32_t interval);
-#endif /* QCA_COMPUTE_TX_DELAY */
 
 extern void ol_txrx_get_pn_info(void *ppeer, uint8_t **last_pn_valid,
 		    uint64_t **last_pn, uint32_t **rmf_pn_replays);
