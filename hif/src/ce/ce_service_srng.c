@@ -291,46 +291,6 @@ ce_recv_buf_enqueue_srng(struct CE_handle *copyeng,
 	return status;
 }
 
-/**
- * ce_send_watermarks_set_srng
- */
-void
-ce_send_watermarks_set_srng(struct CE_handle *copyeng,
-		       unsigned int low_alert_nentries,
-		       unsigned int high_alert_nentries)
-{
-	/*TODO*/
-}
-/*
- * ce_recv_watermarks_set_srng
- */
-void
-ce_recv_watermarks_set_srng(struct CE_handle *copyeng,
-		       unsigned int low_alert_nentries,
-		       unsigned int high_alert_nentries)
-{
-	/*TODO*/
-}
-
-unsigned int ce_send_entries_avail_srng(struct CE_handle *copyeng)
-{
-	struct CE_state *CE_state = (struct CE_state *)copyeng;
-	struct CE_ring_state *src_ring = CE_state->src_ring;
-	struct hif_softc *scn = CE_state->scn;
-
-	return hal_srng_src_num_avail(scn->hal_soc, src_ring->srng_ctx, false);
-}
-
-unsigned int ce_recv_entries_avail_srng(struct CE_handle *copyeng)
-{
-	struct CE_state *CE_state = (struct CE_state *)copyeng;
-	struct CE_ring_state *dest_ring = CE_state->dest_ring;
-	struct hif_softc *scn = CE_state->scn;
-
-
-	return hal_srng_src_num_avail(scn->hal_soc, dest_ring->srng_ctx, false);
-}
-
 /*
  * Guts of ce_recv_entries_done.
  * The caller takes responsibility for any necessary locking.
