@@ -5300,7 +5300,7 @@ static struct cdp_ops ol_txrx_ops = {
 	.pmf_ops = &ol_ops_pmf
 };
 
-struct cdp_soc_t *ol_txrx_soc_attach(struct ol_if_ops *dp_ol_if_ops)
+struct cdp_soc_t *ol_txrx_soc_attach(void *scn_handle, struct ol_if_ops *dp_ol_if_ops)
 {
 	struct cdp_soc_t *soc = qdf_mem_malloc(sizeof(struct cdp_soc_t));
 	if (!soc) {
