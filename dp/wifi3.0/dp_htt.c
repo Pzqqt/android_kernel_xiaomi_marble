@@ -716,7 +716,7 @@ fail1:
 void
 htt_soc_detach(void *htt_soc)
 {
-	struct htt_soc *soc = (struct htt_soc *)soc;
+	struct htt_soc *soc = (struct htt_soc *)htt_soc;
 
 	htt_htc_pkt_pool_free(soc);
 	HTT_TX_MUTEX_DESTROY(&soc->htt_tx_mutex);
