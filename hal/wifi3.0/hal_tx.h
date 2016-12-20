@@ -23,6 +23,9 @@
   Include files
   ---------------------------------------------------------------------------*/
 #include "hal_api.h"
+#ifdef CONFIG_WIN
+#include "wcss_version.h"
+#endif
 
 /*---------------------------------------------------------------------------
   Preprocessor definitions and constants
@@ -47,6 +50,19 @@ do {                                            \
 #define HAL_TX_SM(block, field, value) \
 	((value << (block ## _ ## field ## _LSB)) & \
 	 (block ## _ ## field ## _MASK))
+
+#define HAL_TX_MS(block, field, value) \
+	(((value) & (block ## _ ## field ## _MASK)) >> \
+	 (block ## _ ## field ## _LSB))
+
+#define HAL_TX_DESC_GET(desc, block, field) \
+	HAL_TX_MS(block, field, HAL_SET_FLD(desc, block, field))
+
+#define HAL_TX_DESC_SUBBLOCK_GET(desc, block, sub, field) \
+	HAL_TX_MS(sub, field, HAL_SET_FLD(desc, block, sub))
+
+#define HAL_TX_BUF_TYPE_BUFFER 0
+#define HAL_TX_BUF_TYPE_EXT_DESC 1
 
 #define HAL_TX_DESC_LEN_DWORDS (NUM_OF_DWORDS_TCL_DATA_CMD)
 #define HAL_TX_DESC_LEN_BYTES  (NUM_OF_DWORDS_TCL_DATA_CMD * 4)
@@ -799,6 +815,79 @@ static inline uint8_t hal_tx_comp_get_release_reason(void *hal_desc)
 	return (comp_desc & WBM_RELEASE_RING_2_TQM_RELEASE_REASON_MASK) >>
 		WBM_RELEASE_RING_2_TQM_RELEASE_REASON_LSB;
 }
+
+/**
+ * hal_tx_comp_get_status() - TQM Release reason
+ * @hal_desc: completion ring Tx status
+ *
+ * This function will parse the WBM completion descriptor and populate in
+ * HAL structure
+ *
+ * Return: none
+ */
+#if defined(WCSS_VERSION) && (WCSS_VERSION > 81)
+static inline void hal_tx_comp_get_status(void *desc,
+		struct hal_tx_completion_status *ts)
+{
+
+	uint8_t rate_stats_valid = 0;
+	uint32_t rate_stats = 0;
+
+	ts->ppdu_id = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_3,
+			TQM_STATUS_NUMBER);
+	ts->ack_frame_rssi = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_4,
+			ACK_FRAME_RSSI);
+	ts->first_msdu = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_4, FIRST_MSDU);
+	ts->last_msdu = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_4, LAST_MSDU);
+	ts->msdu_part_of_amsdu = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_4,
+			MSDU_PART_OF_AMSDU);
+
+	ts->peer_id = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_7, SW_PEER_ID);
+	ts->tid = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_7, TID);
+
+	rate_stats = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_6,
+			TX_RATE_STATS_INFO_TX_RATE_STATS);
+
+	rate_stats_valid = HAL_TX_MS(TX_RATE_STATS_INFO_0,
+			TX_RATE_STATS_INFO_VALID, rate_stats);
+
+	if (rate_stats_valid) {
+		ts->bw = HAL_TX_MS(TX_RATE_STATS_INFO_0, TRANSMIT_BW,
+				rate_stats);
+		ts->pkt_type = HAL_TX_MS(TX_RATE_STATS_INFO_0,
+				TRANSMIT_PKT_TYPE, rate_stats);
+		ts->stbc = HAL_TX_MS(TX_RATE_STATS_INFO_0,
+				TRANSMIT_STBC, rate_stats);
+		ts->ldpc = HAL_TX_MS(TX_RATE_STATS_INFO_0, TRANSMIT_LDPC,
+				rate_stats);
+		ts->sgi = HAL_TX_MS(TX_RATE_STATS_INFO_0, TRANSMIT_SGI,
+				rate_stats);
+		ts->mcs = HAL_TX_MS(TX_RATE_STATS_INFO_0, TRANSMIT_MCS,
+				rate_stats);
+		ts->ofdma = HAL_TX_MS(TX_RATE_STATS_INFO_0, OFDMA_TRANSMISSION,
+				rate_stats);
+		ts->tones_in_ru = HAL_TX_MS(TX_RATE_STATS_INFO_0, TONES_IN_RU,
+				rate_stats);
+	}
+
+	ts->tsf = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_6,
+			TX_RATE_STATS_INFO_TX_RATE_STATS);
+}
+#else
+static inline void hal_tx_comp_get_status(void *desc,
+		struct hal_tx_completion_status *ts)
+{
+
+	ts->ppdu_id = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_3,
+			TQM_STATUS_NUMBER);
+	ts->ack_frame_rssi = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_4,
+			ACK_FRAME_RSSI);
+	ts->first_msdu = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_4, FIRST_MSDU);
+	ts->last_msdu = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_4, LAST_MSDU);
+	ts->msdu_part_of_amsdu = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_4,
+			MSDU_PART_OF_AMSDU);
+}
+#endif
 
 /**
  * hal_tx_comp_desc_sync() - collect hardware descriptor contents

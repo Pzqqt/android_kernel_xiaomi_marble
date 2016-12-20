@@ -178,10 +178,6 @@ static inline void dp_tx_comp_process_exception(struct dp_tx_desc_s *tx_desc)
 {
 	return;
 }
-static inline void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc)
-{
-	return;
-}
 static inline QDF_STATUS dp_tx_flow_control(struct dp_vdev *vdev)
 {
 	return  QDF_STATUS_SUCCESS;

@@ -310,9 +310,9 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	tx_desc->vdev = vdev;
 	tx_desc->msdu_ext_desc = NULL;
 
-	if (qdf_nbuf_map_nbytes_single(soc->osdev, nbuf,
-				QDF_DMA_TO_DEVICE, qdf_nbuf_len(nbuf)
-				!= QDF_STATUS_SUCCESS)) {
+	if (qdf_unlikely(QDF_STATUS_SUCCESS !=
+				qdf_nbuf_map_nbytes_single(soc->osdev, nbuf,
+				QDF_DMA_TO_DEVICE, qdf_nbuf_len(nbuf)))) {
 		/* Handle failure */
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"qdf_nbuf_map_nbytes_single failed\n");
@@ -716,7 +716,7 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				msdu_info->u.tso_info.curr_seg =
 					msdu_info->u.tso_info.curr_seg->next;
 				/* Check with MCL if this is needed */
-				/* nbuf = msdu_info->u.tso_info.curr_seg->nbuf; */
+			/* nbuf = msdu_info->u.tso_info.curr_seg->nbuf; */
 			}
 		}
 
@@ -829,9 +829,9 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 	struct dp_vdev *vdev = (struct dp_vdev *) vap_dev;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"Entering %s , skb %0x:%0x:%0x:%0x:%0x:%0x\n",
+			"%s , skb %0x:%0x:%0x:%0x:%0x:%0x\n",
 			__func__, nbuf->data[0], nbuf->data[1], nbuf->data[2],
-			nbuf->data[1], nbuf->data[2], nbuf->data[3]);
+			nbuf->data[3], nbuf->data[4], nbuf->data[5]);
 
 	/*
 	 * Get HW Queue to use for this frame.
@@ -1047,6 +1047,48 @@ void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 				__func__, tx_status);
 		break;
 	}
+}
+
+/**
+ * dp_tx_comp_process_tx_status() - Parse and Dump Tx completion status info
+ * @tx_desc: software descriptor head pointer
+ *
+ *
+ * Return: none
+ */
+static inline void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc)
+{
+	struct hal_tx_completion_status ts;
+	qdf_mem_zero(&ts, sizeof(struct hal_tx_completion_status));
+	hal_tx_comp_get_status(&tx_desc->comp, &ts);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+				"--------------------\n"
+				"Tx Completion Stats:\n"
+				"--------------------\n"
+				"ack_frame_rssi = %d\n"
+				"first_msdu = %d\n"
+				"last_msdu = %d\n"
+				"msdu_part_of_amsdu = %d\n"
+				"bw = %d\n"
+				"pkt_type = %d\n"
+				"stbc = %d\n"
+				"ldpc = %d\n"
+				"sgi = %d\n"
+				"mcs = %d\n"
+				"ofdma = %d\n"
+				"tones_in_ru = %d\n"
+				"tsf = %d\n"
+				"ppdu_id = %d\n"
+				"transmit_cnt = %d\n"
+				"tid = %d\n"
+				"peer_id = %d\n",
+				ts.ack_frame_rssi, ts.first_msdu, ts.last_msdu,
+				ts.msdu_part_of_amsdu,	ts.bw,	ts.pkt_type,
+				ts.stbc, ts.ldpc, ts.sgi,
+				ts.mcs, ts.ofdma, ts.tones_in_ru,
+				ts.tsf, ts.ppdu_id, ts.transmit_cnt, ts.tid,
+				ts.peer_id);
+
 }
 
 /**
@@ -1454,6 +1496,12 @@ QDF_STATUS dp_tx_soc_attach(struct dp_soc *soc)
 					soc->tcl_data_ring[i].hal_srng);
 		}
 	}
+
+	/*
+	 * Keep the processing of completion stats disabled by default.
+	 * todo - Add a runtime config option to enable this.
+	 */
+	soc->process_tx_status = 0;
 
 	/* Initialize Default DSCP-TID mapping table in TCL */
 	hal_tx_set_dscp_tid_map(soc->hal_soc, default_dscp_tid_map,
