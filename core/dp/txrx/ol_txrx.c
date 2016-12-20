@@ -100,21 +100,10 @@ int ol_txrx_get_tx_pending(void *pdev_handle);
 extern void
 ol_txrx_set_wmm_param(void *data_pdev,
 		      struct ol_tx_wmm_param_t wmm_param);
-extern qdf_nbuf_t
-ol_tx_non_std(void *pvdev,
-	      enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list);
 extern void ol_tx_throttle_init_period(void *ppdev, int period,
 				uint8_t *dutycycle_level);
 
 extern void ol_tx_throttle_set_level(void *ppdev, int level);
-
-extern qdf_nbuf_t ol_tx_send_ipa_data_frame(void *vdev,
-			qdf_nbuf_t skb);
-
-extern void ol_txrx_mgmt_tx_cb_set(void *ppdev,
-		       uint8_t type,
-		       ol_txrx_mgmt_tx_cb download_cb,
-		       ol_txrx_mgmt_tx_cb ota_ack_cb, void *ctxt);
 
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 extern void ol_txrx_flow_control_cb(void *vdev,
@@ -126,10 +115,6 @@ extern void ol_txrx_vdev_unpause(void *pvdev, uint32_t reason);
 
 extern void ol_txrx_get_pn_info(void *ppeer, uint8_t **last_pn_valid,
 		    uint64_t **last_pn, uint32_t **rmf_pn_replays);
-
-extern int ol_txrx_mgmt_send_ext(void *vdev,
-		qdf_nbuf_t tx_mgmt_frm, uint8_t type, uint8_t use_6mbps,
-		uint16_t chanfreq);
 
 #ifdef CONFIG_HL_SUPPORT
 
