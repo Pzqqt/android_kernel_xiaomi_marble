@@ -65,6 +65,11 @@ typedef qdf_nbuf_t wmi_buf_t;
 #define WMI_LOGA(args ...)
 #endif
 
+/* wrapper to keep WMI agnostic of event handler execution context */
+#define wmi_unified_register_event(wmi_handle, event_id, handler_func) \
+		wmi_unified_register_event_handler(wmi_handle, \
+		 event_id, handler_func, WMI_RX_UMAC_CTX)
+
 /**
  * struct wmi_ops - service callbacks to upper layer
  * @service_ready_cbk: service ready callback
