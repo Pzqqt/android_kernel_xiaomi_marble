@@ -31,6 +31,32 @@
 #include "qdf_list.h"
 
 
+#define IEEE80211_ADDR_LEN  6  /* size of 802.11 address */
+#define IEEE80211_FC0_TYPE_MASK             0x0c
+#define IEEE80211_FC0_SUBTYPE_MASK          0xf0
+#define IEEE80211_FC0_TYPE_MGT              0x00
+
+
+/*
+ * generic definitions for IEEE 802.11 frames
+ */
+struct ieee80211_frame {
+	uint8_t i_fc[2];
+	uint8_t i_dur[2];
+	union {
+		struct {
+			uint8_t i_addr1[IEEE80211_ADDR_LEN];
+			uint8_t i_addr2[IEEE80211_ADDR_LEN];
+			uint8_t i_addr3[IEEE80211_ADDR_LEN];
+		};
+		uint8_t i_addr_all[3 * IEEE80211_ADDR_LEN];
+	};
+	uint8_t i_seq[2];
+	/* possibly followed by addr4[IEEE80211_ADDR_LEN]; */
+	/* see below */
+} __packed;
+
+
 /**
  * struct mgmt_txrx_desc_elem_t - element in mgmt desc pool linked list
  * @entry:             list entry
