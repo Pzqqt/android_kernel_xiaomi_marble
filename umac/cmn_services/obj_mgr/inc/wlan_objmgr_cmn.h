@@ -48,6 +48,9 @@
 /* Max no. of peers for STA vap */
 #define WLAN_UMAC_MAX_STA_PEERS 2
 
+/* Max vdev_id */
+#define WLAN_UMAC_VDEV_ID_MAX 0xFF
+
 /* 802.11 cap info */
 #define WLAN_CAPINFO_ESS               0x0001
 #define WLAN_CAPINFO_IBSS              0x0002

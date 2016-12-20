@@ -110,7 +110,8 @@ struct mgmt_txrx_desc_elem_t *wlan_mgmt_txrx_desc_get(
 			!= QDF_STATUS_SUCCESS) {
 		qdf_spin_unlock_bh(
 			&mgmt_txrx_ctx->mgmt_desc_pool.desc_pool_lock);
-		mgmt_txrx_err("mgmt descriptor freelist is empty");
+		mgmt_txrx_err("Descriptor freelist empty for mgmt_txrx_ctx %p",
+				mgmt_txrx_ctx);
 		return NULL;
 	}
 
@@ -119,8 +120,8 @@ struct mgmt_txrx_desc_elem_t *wlan_mgmt_txrx_desc_get(
 	if (status != QDF_STATUS_SUCCESS) {
 		qdf_spin_unlock_bh(
 			&mgmt_txrx_ctx->mgmt_desc_pool.desc_pool_lock);
-		mgmt_txrx_err("Failed to get mgmt descriptor from freelist with status %d",
-				status);
+		mgmt_txrx_err("Failed to get descriptor from list: status %d",
+					status);
 		qdf_assert_always(0);
 		return NULL;
 	}

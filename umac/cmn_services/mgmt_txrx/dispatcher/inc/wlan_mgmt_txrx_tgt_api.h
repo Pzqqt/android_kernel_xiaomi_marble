@@ -54,7 +54,8 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
  * @tx_compl_params: tx completion params
  *
  * This function handles tx completions of mgmt. frames and is registered to
- * LMAC_if layer through lmac_if cbs.
+ * LMAC_if layer through lmac_if cbs.The cb needs to free the nbuf. In case no
+ * callback is registered, this function will free the nbuf.
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
@@ -100,7 +101,7 @@ tgt_mgmt_txrx_get_peer_from_desc_id(
  * This function extracts vdev id from mgmt desc extracted from desc id.
  *
  * Return: vdev_id - in case of success
- *         0 - in case of failure
+ *         WLAN_UMAC_VDEV_ID_MAX - in case of failure
  */
 uint8_t tgt_mgmt_txrx_get_vdev_id_from_desc_id(
 			struct wlan_objmgr_psoc *psoc,

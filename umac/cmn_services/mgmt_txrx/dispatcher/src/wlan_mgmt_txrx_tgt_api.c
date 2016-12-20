@@ -884,6 +884,64 @@ QDF_STATUS tgt_mgmt_txrx_tx_completion_handler(
 			uint32_t desc_id, uint32_t status,
 			void *tx_compl_params)
 {
+	struct mgmt_txrx_priv_context *mgmt_txrx_ctx;
+	struct mgmt_txrx_desc_elem_t *mgmt_desc;
+	void *cb_context;
+	mgmt_tx_download_comp_cb tx_compl_cb;
+	mgmt_ota_comp_cb  ota_comp_cb;
+	qdf_nbuf_t nbuf;
+
+	mgmt_txrx_ctx = (struct mgmt_txrx_priv_context *)
+			wlan_objmgr_psoc_get_comp_private_obj(psoc,
+				WLAN_UMAC_COMP_MGMT_TXRX);
+	if (!mgmt_txrx_ctx) {
+		mgmt_txrx_err("Mgmt txrx context empty for psoc %p", psoc);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	mgmt_desc = &mgmt_txrx_ctx->mgmt_desc_pool.pool[desc_id];
+	if (!mgmt_desc) {
+		mgmt_txrx_err("Mgmt desc empty for id %d psoc %p ",
+				desc_id, psoc);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	tx_compl_cb = mgmt_desc->tx_dwnld_cmpl_cb;
+	ota_comp_cb = mgmt_desc->tx_ota_cmpl_cb;
+	nbuf = mgmt_desc->nbuf;
+
+	/*
+	 *      TO DO
+	 * Make the API more generic to handle tx download completion as well
+	 * as OTA completion separately.
+	 */
+
+	/*
+	 * 1. If the tx frame is sent by any UMAC converged component then it
+	 *    passes the context as NULL while calling mgmt txrx API for
+	 *    sending mgmt frame. If context is NULL, peer will be passed as
+	 *    cb_context in completion callbacks.
+	 * 2. If the tx frame is sent by legacy MLME then it passes the context
+	 *    as its specific context (for ex- mac context in case of MCL) while
+	 *    calling mgmt txrx API for sending mgmt frame. This caller specific
+	 *    context is passed as cb_context in completion callbacks.
+	 */
+	if (mgmt_desc->context)
+		cb_context = mgmt_desc->context;
+	else
+		cb_context = (void *)mgmt_desc->peer;
+
+	if (!tx_compl_cb && !ota_comp_cb) {
+		qdf_nbuf_free(nbuf);
+		goto no_registered_cb;
+	}
+
+	if (tx_compl_cb)
+		tx_compl_cb(cb_context, nbuf, status);
+
+	if (ota_comp_cb)
+		ota_comp_cb(cb_context, nbuf, status, tx_compl_params);
+
+no_registered_cb:
+	wlan_mgmt_txrx_desc_put(mgmt_txrx_ctx, desc_id);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -891,6 +949,27 @@ qdf_nbuf_t tgt_mgmt_txrx_get_nbuf_from_desc_id(
 			struct wlan_objmgr_psoc *psoc,
 			uint32_t desc_id)
 {
+	struct mgmt_txrx_priv_context *mgmt_txrx_ctx;
+	struct mgmt_txrx_desc_elem_t *mgmt_desc;
+	qdf_nbuf_t buf;
+
+	mgmt_txrx_ctx = (struct mgmt_txrx_priv_context *)
+			wlan_objmgr_psoc_get_comp_private_obj(psoc,
+				WLAN_UMAC_COMP_MGMT_TXRX);
+	if (!mgmt_txrx_ctx) {
+		mgmt_txrx_err("Mgmt txrx context empty for psoc %p", psoc);
+		goto fail;
+	}
+	mgmt_desc = &mgmt_txrx_ctx->mgmt_desc_pool.pool[desc_id];
+	if (!mgmt_desc) {
+		mgmt_txrx_err("Mgmt descriptor unavailable for id %d psoc %p",
+				desc_id, psoc);
+		goto fail;
+	}
+	buf = mgmt_desc->nbuf;
+	return buf;
+
+fail:
 	return NULL;
 }
 
@@ -899,6 +978,29 @@ tgt_mgmt_txrx_get_peer_from_desc_id(
 			struct wlan_objmgr_psoc *psoc,
 			uint32_t desc_id)
 {
+	struct mgmt_txrx_priv_context *mgmt_txrx_ctx;
+	struct mgmt_txrx_desc_elem_t *mgmt_desc;
+	struct wlan_objmgr_peer *peer;
+
+	mgmt_txrx_ctx = (struct mgmt_txrx_priv_context *)
+			wlan_objmgr_psoc_get_comp_private_obj(psoc,
+				WLAN_UMAC_COMP_MGMT_TXRX);
+	if (!mgmt_txrx_ctx) {
+		mgmt_txrx_err("Mgmt txrx context empty for psoc %p", psoc);
+		goto fail;
+	}
+
+	mgmt_desc = &mgmt_txrx_ctx->mgmt_desc_pool.pool[desc_id];
+	if (!mgmt_desc) {
+		mgmt_txrx_err("Mgmt descriptor unavailable for id %d psoc %p",
+				desc_id, psoc);
+		goto fail;
+	}
+
+	peer = mgmt_desc->peer;
+	return peer;
+
+fail:
 	return NULL;
 }
 
@@ -906,5 +1008,28 @@ uint8_t tgt_mgmt_txrx_get_vdev_id_from_desc_id(
 			struct wlan_objmgr_psoc *psoc,
 			uint32_t desc_id)
 {
-	return 0;
+	struct mgmt_txrx_priv_context *mgmt_txrx_ctx;
+	struct mgmt_txrx_desc_elem_t *mgmt_desc;
+	uint8_t vdev_id;
+
+	mgmt_txrx_ctx = (struct mgmt_txrx_priv_context *)
+			wlan_objmgr_psoc_get_comp_private_obj(psoc,
+				WLAN_UMAC_COMP_MGMT_TXRX);
+	if (!mgmt_txrx_ctx) {
+		mgmt_txrx_err("Mgmt txrx context empty for psoc %p", psoc);
+		goto fail;
+	}
+
+	mgmt_desc = &mgmt_txrx_ctx->mgmt_desc_pool.pool[desc_id];
+	if (!mgmt_desc) {
+		mgmt_txrx_err("Mgmt descriptor unavailable for id %d psoc %p",
+				desc_id, psoc);
+		goto fail;
+	}
+
+	vdev_id = mgmt_desc->vdev_id;
+	return vdev_id;
+
+fail:
+	return WLAN_UMAC_VDEV_ID_MAX;
 }
