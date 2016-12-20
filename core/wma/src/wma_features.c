@@ -1306,8 +1306,7 @@ int wma_csa_offload_handler(void *handle, uint8_t *event, uint32_t len)
 	 * basic sanity check: requested channel should not be 0
 	 * and equal to home channel
 	 */
-	if ((0 == csa_offload_event->channel) ||
-	    (cur_chan == csa_offload_event->channel)) {
+	if (0 == csa_offload_event->channel) {
 		WMA_LOGE("CSA Event with channel %d. Ignore !!",
 			 csa_offload_event->channel);
 		qdf_mem_free(csa_offload_event);
