@@ -546,8 +546,10 @@ tSirRetStatus lim_process_sme_tdls_del_sta_req(tpAniSirGlobal pMac,
 					       uint32_t *pMsgBuf);
 void lim_send_sme_tdls_delete_all_peer_ind(tpAniSirGlobal pMac,
 					   tpPESession psessionEntry);
-void lim_send_sme_mgmt_tx_completion(tpAniSirGlobal pMac, tpPESession psessionEntry,
-				     uint32_t txCompleteStatus);
+void lim_send_sme_mgmt_tx_completion(
+		tpAniSirGlobal pMac,
+		uint32_t sme_session_id,
+		uint32_t txCompleteStatus);
 tSirRetStatus lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
 				    tpPESession session_entry);
 QDF_STATUS lim_process_tdls_add_sta_rsp(tpAniSirGlobal pMac, void *msg, tpPESession);
