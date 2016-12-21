@@ -3585,10 +3585,18 @@ extern const char *ce_name[];
  * added here for better system performance.
  */
 static void hif_ce_srng_msi_irq_disable(struct hif_softc *hif_sc, int ce_id)
-{}
+{
+	struct hif_pci_softc *pci_sc = HIF_GET_PCI_SOFTC(hif_sc);
+
+	disable_irq_nosync(pci_sc->ce_msi_irq_num[ce_id]);
+}
 
 static void hif_ce_srng_msi_irq_enable(struct hif_softc *hif_sc, int ce_id)
-{}
+{
+	struct hif_pci_softc *pci_sc = HIF_GET_PCI_SOFTC(hif_sc);
+
+	enable_irq(pci_sc->ce_msi_irq_num[ce_id]);
+}
 
 static void hif_ce_legacy_msi_irq_disable(struct hif_softc *hif_sc, int ce_id)
 {}
@@ -3604,32 +3612,13 @@ static int hif_ce_msi_configure_irq(struct hif_softc *scn)
 	uint32_t msi_data_count;
 	uint32_t msi_irq_start;
 	struct HIF_CE_state *ce_sc = HIF_GET_CE_STATE(scn);
+	struct hif_pci_softc *pci_sc = HIF_GET_PCI_SOFTC(scn);
 
 	ret = pld_get_user_msi_assignment(scn->qdf_dev->dev, "CE",
 					    &msi_data_count, &msi_data_start,
 					    &msi_irq_start);
-
 	if (ret)
 		return ret;
-
-	/* needs to match the ce_id -> irq data mapping
-	 * used in the srng parameter configuration
-	 */
-	for (ce_id = 0; ce_id < scn->ce_count; ce_id++) {
-		unsigned int msi_data = (ce_id % msi_data_count) +
-			msi_irq_start;
-		irq = pld_get_msi_irq(scn->qdf_dev->dev, msi_data);
-
-		HIF_INFO("%s: (ce_id %d, msi_data %d, irq %d tasklet %p)",
-			 __func__, ce_id, msi_data, irq,
-			 &ce_sc->tasklets[ce_id]);
-		ret = request_irq(irq, hif_ce_interrupt_handler,
-				  IRQF_SHARED,
-				  ce_name[ce_id],
-				  &ce_sc->tasklets[ce_id]);
-		if (ret)
-			goto free_irq;
-	}
 
 	if (ce_srng_based(scn)) {
 		scn->bus_ops.hif_irq_disable =
@@ -3643,7 +3632,26 @@ static int hif_ce_msi_configure_irq(struct hif_softc *scn)
 			&hif_ce_legacy_msi_irq_enable;
 	}
 
+	/* needs to match the ce_id -> irq data mapping
+	 * used in the srng parameter configuration
+	 */
+	for (ce_id = 0; ce_id < scn->ce_count; ce_id++) {
+		unsigned int msi_data = (ce_id % msi_data_count) +
+			msi_irq_start;
+		irq = pld_get_msi_irq(scn->qdf_dev->dev, msi_data);
 
+		HIF_INFO("%s: (ce_id %d, msi_data %d, irq %d tasklet %p)",
+			 __func__, ce_id, msi_data, irq,
+			 &ce_sc->tasklets[ce_id]);
+
+		pci_sc->ce_msi_irq_num[ce_id] = irq;
+		ret = request_irq(irq, hif_ce_interrupt_handler,
+				  IRQF_SHARED,
+				  ce_name[ce_id],
+				  &ce_sc->tasklets[ce_id]);
+		if (ret)
+			goto free_irq;
+	}
 
 	return ret;
 

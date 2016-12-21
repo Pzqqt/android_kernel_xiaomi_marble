@@ -116,8 +116,8 @@ struct hif_pci_softc {
 	int num_msi_intrs;      /* number of MSI interrupts granted */
 	/* 0 --> using legacy PCI line interrupts */
 	struct tasklet_struct intr_tq;  /* tasklet */
-
 	struct hif_msi_info msi_info;
+	int ce_msi_irq_num[CE_COUNT_MAX];
 	int irq;
 	int irq_event;
 	int cacheline_sz;
