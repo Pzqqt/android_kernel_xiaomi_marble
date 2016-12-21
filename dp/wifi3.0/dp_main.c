@@ -1698,8 +1698,34 @@ static struct cdp_lro_ops dp_ops_lro = {
 	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
 };
 
+/**
+ * dp_dummy_bus_suspend() - dummy bus suspend op
+ *
+ * FIXME - This is a placeholder for the actual logic!
+ *
+ * Return: QDF_STATUS_SUCCESS
+ */
+inline QDF_STATUS dp_dummy_bus_suspend(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_dummy_bus_resume() - dummy bus resume
+ *
+ * FIXME - This is a placeholder for the actual logic!
+ *
+ * Return: QDF_STATUS_SUCCESS
+ */
+inline QDF_STATUS dp_dummy_bus_resume(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
 static struct cdp_bus_ops dp_ops_bus = {
 	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
+	.bus_suspend = dp_dummy_bus_suspend,
+	.bus_resume = dp_dummy_bus_resume
 };
 
 static struct cdp_ocb_ops dp_ops_ocb = {
