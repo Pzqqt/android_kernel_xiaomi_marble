@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -852,7 +852,7 @@ ol_txrx_bad_peer_txctl_update_threshold(void *ppdev,
  *
  * Return: None
  */
-void
+static void
 ol_tx_pdev_peer_bal_timer(void *context)
 {
 	int i;
@@ -1186,7 +1186,7 @@ ol_tx_queue_log_oldest_update(struct ol_txrx_pdev_t *pdev, int offset)
  *
  * Return: log element
  */
-void*
+static void *
 ol_tx_queue_log_alloc(
 	struct ol_txrx_pdev_t *pdev,
 	u_int8_t type /* ol_tx_log_entry_type */,
@@ -1626,7 +1626,7 @@ ol_tx_queue_log_clear(struct ol_txrx_pdev_t *pdev)
  *
  * Return: None
  */
-void
+static void
 ol_tx_queue_display(struct ol_tx_frms_queue_t *txq, int indent)
 {
 	char *state;
@@ -1870,8 +1870,8 @@ void ol_txrx_vdev_unpause(void *pvdev, uint32_t reason)
 			netif_reason);
 
 }
-#endif
-#endif
+#endif /* ifndef CONFIG_ICNSS */
+#endif /* ifdef QCA_LL_TX_FLOW_CONTROL_V2 */
 
 #if defined(QCA_LL_TX_FLOW_CONTROL_V2) || defined(CONFIG_HL_SUPPORT)
 
@@ -2325,6 +2325,6 @@ u_int32_t ol_tx_get_max_tx_groups_supported(struct ol_txrx_pdev_t *pdev)
 		return 0;
 #endif
 }
-#endif
+#endif /* FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL */
 
 /*--- End of LL tx throttle queue code ---------------------------------------*/

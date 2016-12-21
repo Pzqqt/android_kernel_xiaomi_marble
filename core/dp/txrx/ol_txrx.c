@@ -100,18 +100,6 @@ int ol_txrx_get_tx_pending(void *pdev_handle);
 extern void
 ol_txrx_set_wmm_param(void *data_pdev,
 		      struct ol_tx_wmm_param_t wmm_param);
-extern void ol_tx_throttle_init_period(void *ppdev, int period,
-				uint8_t *dutycycle_level);
-
-extern void ol_tx_throttle_set_level(void *ppdev, int level);
-
-#ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
-extern void ol_txrx_flow_control_cb(void *vdev,
-				    bool tx_resume);
-extern void ol_txrx_vdev_flush(void *pvdev);
-extern void ol_txrx_vdev_pause(void *pvdev, uint32_t reason);
-extern void ol_txrx_vdev_unpause(void *pvdev, uint32_t reason);
-#endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
 extern void ol_txrx_get_pn_info(void *ppeer, uint8_t **last_pn_valid,
 		    uint64_t **last_pn, uint32_t **rmf_pn_replays);
@@ -5200,8 +5188,10 @@ static struct cdp_ocb_ops ol_ops_ocb = {
 };
 
 static struct cdp_throttle_ops ol_ops_throttle = {
+#ifdef QCA_SUPPORT_TX_THROTTLE
 	.throttle_init_period = ol_tx_throttle_init_period,
 	.throttle_set_level = ol_tx_throttle_set_level
+#endif /* QCA_SUPPORT_TX_THROTTLE */
 };
 
 static struct cdp_mob_stats_ops ol_ops_mob_stats = {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -241,6 +241,15 @@ ol_tx_queue_discard(
 }
 #endif /* defined(CONFIG_HL_SUPPORT) */
 
+void ol_txrx_vdev_flush(void *pvdev);
+
+#if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || \
+   (defined(QCA_LL_TX_FLOW_CONTROL_V2) && !defined(CONFIG_ICNSS)) || \
+   defined(CONFIG_HL_SUPPORT)
+void ol_txrx_vdev_pause(void *pvdev, uint32_t reason);
+void ol_txrx_vdev_unpause(void *pvdev, uint32_t reason);
+#endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
+
 #if defined(CONFIG_HL_SUPPORT) && defined(QCA_BAD_PEER_TX_FLOW_CL)
 
 void
@@ -442,13 +451,17 @@ ol_tx_queues_display(struct ol_txrx_pdev_t *pdev)
 #define ol_tx_queue_decs_reinit(peer, peer_id)  /* no-op */
 
 #ifdef QCA_SUPPORT_TX_THROTTLE
+void ol_tx_throttle_set_level(void *ppdev, int level);
+void ol_tx_throttle_init_period(void *ppdev, int period,
+				uint8_t *dutycycle_level);
+
 /**
  * @brief - initialize the throttle context
  * @param pdev - the physical device object, which stores the txqs
  */
 void ol_tx_throttle_init(struct ol_txrx_pdev_t *pdev);
 #else
-#define ol_tx_throttle_init(pdev)       /*no op */
+static inline void ol_tx_throttle_init(struct ol_txrx_pdev_t *pdev) {}
 #endif
 
 #ifdef FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL
