@@ -26,7 +26,6 @@
  */
 
 #include <scheduler_core.h>
-#include <osdep.h>
 
 static struct scheduler_ctx *gp_sched_ctx;
 

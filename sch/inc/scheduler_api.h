@@ -33,7 +33,6 @@
 #include <qdf_lock.h>
 #include <qdf_mc_timer.h>
 #include <qdf_status.h>
-#include <osdep.h>
 
 
 /* Controller thread various event masks
