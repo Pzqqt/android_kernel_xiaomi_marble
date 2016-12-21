@@ -172,7 +172,7 @@ QDF_STATUS scheduler_deinit(void)
 }
 
 
-QDF_STATUS scheduler_post_msg_by_priority(CDS_MQ_ID qid,
+QDF_STATUS scheduler_post_msg_by_priority(QDF_MODULE_ID qid,
 		struct scheduler_msg *pMsg, bool is_high_priority)
 {
 	uint8_t qidx;
@@ -199,10 +199,10 @@ QDF_STATUS scheduler_post_msg_by_priority(CDS_MQ_ID qid,
 	 * legacy WMA message queue id to target_if queue such that its  always
 	 * handled in right order.
 	 */
-	if (CDS_MQ_ID_WMA == qid) {
+	if (QDF_MODULE_ID_WMA == qid) {
 		pMsg->callback = NULL;
 		/* change legacy WMA message id to new target_if mq id */
-		qid = CDS_MQ_ID_TARGET_IF;
+		qid = QDF_MODULE_ID_TARGET_IF;
 	}
 
 	qidx = sched_ctx->queue_ctx.scheduler_msg_qid_to_qidx[qid];
@@ -550,7 +550,7 @@ void scheduler_mc_timer_callback(unsigned long data)
 	msg.bodyptr = user_data;
 	msg.bodyval = 0;
 
-	if (scheduler_post_msg(CDS_MQ_ID_SYS, &msg) == QDF_STATUS_SUCCESS)
+	if (scheduler_post_msg(QDF_MODULE_ID_SYS, &msg) == QDF_STATUS_SUCCESS)
 		return;
 	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
 		  "%s: Could not enqueue timer to timer queue", __func__);

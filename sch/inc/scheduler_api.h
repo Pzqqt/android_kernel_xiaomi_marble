@@ -52,26 +52,6 @@
  */
 #define SYS_MSG_COOKIE      0xFACE
 
-
-/**
- * enum CDS_MQ_ID - message queues enum
- * @CDS_MQ_ID_SME: Legacy SME message queue ID
- * @CDS_MQ_ID_PE: Legacy PE message queue ID
- * @CDS_MQ_ID_WMA: Legacy WMA message queue ID
- * @CDS_MQ_ID_SYS: Legacy SYS message queue ID
- * @CDS_MQ_ID_OS_IF: OS IF(north interface) message queue ID
- * @CDS_MQ_ID_TARGET_IF: Target IF(south interface) message queue ID
- */
-typedef enum {
-	CDS_MQ_ID_SME = QDF_MODULE_ID_SME,
-	CDS_MQ_ID_PE = QDF_MODULE_ID_PE,
-	CDS_MQ_ID_WMA = QDF_MODULE_ID_WMA,
-	CDS_MQ_ID_SYS = QDF_MODULE_ID_SYS,
-	CDS_MQ_ID_OS_IF = QDF_MODULE_ID_OS_IF,
-	CDS_MQ_ID_TARGET_IF = QDF_MODULE_ID_TARGET_IF,
-} CDS_MQ_ID;
-
-
 typedef enum {
 	SYS_MSG_ID_MC_START,
 	SYS_MSG_ID_MC_THR_PROBE,
@@ -148,23 +128,9 @@ QDF_STATUS scheduler_deregister_module(QDF_MODULE_ID qid);
  * @msg: mesage pointer
  * @is_high_priority: set to true for high priority message else false
  *
- * IMPORTANT NOTE:
- * 1) Legacy MCL modules continue posting messages to following legacy
- *    message queue IDs:
- *    a) CDS_MQ_ID_SME : SME module message queue
- *    b) CDS_MQ_ID_PE : PE module message queue
- *    c) CDS_MQ_ID_WMA : WMA module message queue
- *    d) CDS_MQ_ID_SYS : SYS module message queue
- * 2) All new components like SCM, P2P, TDLS, etc. needs to post messages
- *    to following new message queue ids:
- *    a) CDS_MQ_ID_OS_IF : North interface message queue for request comign
- *       from operating systems
- *    b) CDS_MQ_ID_TARGET_IF : South interface message queue for messages
- *       and events coming from target(firmware)
- *
  * Return: QDF status
  */
-QDF_STATUS scheduler_post_msg_by_priority(CDS_MQ_ID qid,
+QDF_STATUS scheduler_post_msg_by_priority(QDF_MODULE_ID qid,
 		struct scheduler_msg *msg, bool is_high_priority);
 
 /**
@@ -172,23 +138,9 @@ QDF_STATUS scheduler_post_msg_by_priority(CDS_MQ_ID qid,
  * @qid: queue id to to post message
  * @msg: mesage pointer
  *
- * IMPORTANT NOTE:
- * 1) Legacy MCL modules continue posting messages to following legacy
- *    message queue IDs:
- *    a) CDS_MQ_ID_SME : SME module message queue
- *    b) CDS_MQ_ID_PE : PE module message queue
- *    c) CDS_MQ_ID_WMA : WMA module message queue
- *    d) CDS_MQ_ID_SYS : SYS module message queue
- * 2) All new components like SCM, P2P, TDLS, etc. needs to post messages
- *    to following new message queue ids:
- *    a) CDS_MQ_ID_OS_IF : North interface message queue for request comign
- *       from operating systems
- *    b) CDS_MQ_ID_TARGET_IF : South interface message queue for messages
- *       and events coming from target(firmware)
- *
  * Return: QDF status
  */
-static inline QDF_STATUS scheduler_post_msg(CDS_MQ_ID qid,
+static inline QDF_STATUS scheduler_post_msg(QDF_MODULE_ID qid,
 		struct scheduler_msg *msg)
 {
 	return scheduler_post_msg_by_priority(qid, msg, false);
