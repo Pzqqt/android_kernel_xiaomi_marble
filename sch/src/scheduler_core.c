@@ -28,7 +28,7 @@
 #include <scheduler_core.h>
 #include <osdep.h>
 
-struct scheduler_ctx *gp_sched_ctx = NULL;
+static struct scheduler_ctx *gp_sched_ctx;
 
 QDF_STATUS scheduler_create_ctx(void)
 {
