@@ -3910,15 +3910,6 @@ QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle, uint32_t wow_flags)
 	WMA_LOGD("Credits:%d; Pending_Cmds: %d",
 		 host_credits, wmi_pending_cmds);
 
-	if (host_credits < WMI_WOW_REQUIRED_CREDITS) {
-		WMA_LOGE("%s: Host Doesn't have enough credits to Post WMI_WOW_ENABLE_CMDID! "
-			"Credits:%d, pending_cmds:%d\n", __func__, host_credits,
-			wmi_pending_cmds);
-#ifndef QCA_WIFI_3_0_EMU
-		goto error;
-#endif
-	}
-
 	param.enable = true;
 	param.can_suspend_link = htc_can_suspend_link(wma->htc_handle);
 	param.flags = wow_flags;
