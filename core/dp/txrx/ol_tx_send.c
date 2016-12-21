@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -117,13 +117,6 @@ ol_tx_target_credit_incr_int(struct ol_txrx_pdev_t *pdev, int delta)
 #endif
 
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL)
-/**
- * ol_txrx_flow_control_cb() - call osif flow control callback
- * @vdev: vdev handle
- * @tx_resume: tx resume flag
- *
- * Return: none
- */
 void ol_txrx_flow_control_cb(void *pvdev, bool tx_resume)
 {
 	struct ol_txrx_vdev_t *vdev = pvdev;

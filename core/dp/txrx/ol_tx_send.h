@@ -150,5 +150,13 @@ ol_tx_delay_hist(void *ppdev,
 		 uint16_t *report_bin_values, int category);
 #endif /* QCA_COMPUTE_TX_DELAY */
 
+/**
+ * ol_txrx_flow_control_cb() - call osif flow control callback
+ * @vdev: vdev handle
+ * @tx_resume: tx resume flag
+ *
+ * Return: none
+ */
+void ol_txrx_flow_control_cb(void *vdev, bool tx_resume);
 
 #endif /* _OL_TX_SEND__H_ */
