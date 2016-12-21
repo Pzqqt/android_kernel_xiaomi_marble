@@ -1817,6 +1817,14 @@ wma_register_tx_ops_handler(struct wlan_lmac_if_tx_ops *tx_ops)
 	 * functions which are used to send wmi command to target.
 	 */
 
+	if (!tx_ops) {
+		WMA_LOGE("%s: pointer to lmac if tx ops is NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	/* mgmt_txrx component's tx ops */
+	tx_ops->mgmt_txrx_tx_ops.mgmt_tx_send = wma_mgmt_unified_cmd_send;
+
 	return QDF_STATUS_SUCCESS;
 }
 
