@@ -4152,6 +4152,10 @@ QDF_STATUS send_setup_install_key_cmd_tlv(wmi_unified_t wmi_handle,
 			       (wmi_vdev_install_key_cmd_fixed_param));
 	cmd->vdev_id = key_params->vdev_id;
 	cmd->key_ix = key_params->key_idx;
+
+	if (key_params->key_idx >= (IEEE80211_WEP_NKID + 1))
+		cmd->key_ix = 0;
+
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(key_params->peer_mac, &cmd->peer_macaddr);
 	cmd->key_flags |= key_params->key_flags;
 	cmd->key_cipher = key_params->key_cipher;
