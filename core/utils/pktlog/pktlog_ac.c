@@ -95,7 +95,7 @@ static A_STATUS pktlog_wma_post_msg(WMI_PKTLOG_EVENT event_types,
 	msg.bodyptr = param;
 	msg.bodyval = 0;
 
-	status = cds_mq_post_message(CDS_MQ_ID_WMA, &msg);
+	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
 
 	if (status != QDF_STATUS_SUCCESS) {
 		qdf_mem_free(param);

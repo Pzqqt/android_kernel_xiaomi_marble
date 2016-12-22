@@ -1588,7 +1588,7 @@ static int wma_process_fw_event_mc_thread_ctx(void *ctx, void *ev)
 	cds_msg.bodyval = 0;
 
 	if (QDF_STATUS_SUCCESS !=
-		cds_mq_post_message(CDS_MQ_ID_WMA, &cds_msg)) {
+		cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_msg)) {
 		WMA_LOGP("%s: Failed to post WMA_PROCESS_FW_EVENT msg",
 			 __func__);
 		qdf_nbuf_free(ev);
@@ -2446,7 +2446,7 @@ QDF_STATUS wma_pre_start(void *cds_ctx)
 	wma_msg.bodyptr = NULL;
 	wma_msg.bodyval = 0;
 
-	qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &wma_msg);
+	qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA, &wma_msg);
 	if (QDF_STATUS_SUCCESS != qdf_status) {
 		WMA_LOGP("%s: Failed to post WNI_CFG_DNLD_REQ msg", __func__);
 		QDF_ASSERT(0);

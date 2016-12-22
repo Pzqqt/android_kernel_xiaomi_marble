@@ -118,7 +118,8 @@ QDF_STATUS sme_nan_request(tpNanRequestReq input)
 	msg.reserved = 0;
 	msg.bodyptr = data;
 
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
+	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA,
+						      &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL
 				  ("Not able to post WMA_NAN_REQUEST message to WMA"));

@@ -868,7 +868,8 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 	pChanList->numChan = num_channel;
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
 			 NO_SESSION, msg.type));
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
+	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA,
+						      &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to post msg to WMA", __func__);
 		qdf_mem_free(pChanList);
@@ -16523,7 +16524,8 @@ QDF_STATUS csr_get_rssi(tpAniSirGlobal pMac,
 	msg.type = eWNI_SME_GET_RSSI_REQ;
 	msg.bodyptr = pMsg;
 	msg.reserved = 0;
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(CDS_MQ_ID_SME, &msg)) {
+	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_SME,
+						      &msg)) {
 		sms_log(pMac, LOGE, " csr_get_rssi failed to post msg to self ");
 		qdf_mem_free((void *)pMsg);
 		status = QDF_STATUS_E_FAILURE;
@@ -16563,7 +16565,8 @@ QDF_STATUS csr_get_snr(tpAniSirGlobal pMac,
 	msg.bodyptr = pMsg;
 	msg.reserved = 0;
 
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(CDS_MQ_ID_SME, &msg)) {
+	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_SME,
+						      &msg)) {
 		sms_log(pMac, LOGE, "%s failed to post msg to self", __func__);
 		qdf_mem_free((void *)pMsg);
 		status = QDF_STATUS_E_FAILURE;
@@ -18508,7 +18511,8 @@ QDF_STATUS csr_handoff_request(tpAniSirGlobal pMac,
 	msg.type = eWNI_SME_HANDOFF_REQ;
 	msg.bodyptr = pMsg;
 	msg.reserved = 0;
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(CDS_MQ_ID_SME, &msg)) {
+	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_SME,
+						      &msg)) {
 		sms_log(pMac, LOGE,
 			" csr_handoff_request failed to post msg to self ");
 		qdf_mem_free((void *)pMsg);

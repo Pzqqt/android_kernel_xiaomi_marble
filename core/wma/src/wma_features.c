@@ -318,7 +318,7 @@ int wma_vdev_tsf_handler(void *handle, uint8_t *data, uint32_t data_len)
 	tsf_msg.bodyval = 0;
 
 	if (QDF_STATUS_SUCCESS !=
-		cds_mq_post_message(CDS_MQ_ID_SME, &tsf_msg)) {
+		cds_mq_post_message(QDF_MODULE_ID_SME, &tsf_msg)) {
 
 		WMA_LOGP("%s: Failed to post eWNI_SME_TSF_EVENT", __func__);
 		qdf_mem_free(ptsf);
@@ -1518,7 +1518,7 @@ int wma_nan_rsp_event_handler(void *handle, uint8_t *event_buf,
 	cds_msg.bodyptr = (void *)nan_rsp_event;
 	cds_msg.bodyval = 0;
 
-	status = cds_mq_post_message(CDS_MQ_ID_SME, &cds_msg);
+	status = cds_mq_post_message(QDF_MODULE_ID_SME, &cds_msg);
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: Failed to post NaN response event to SME",
 			 __func__);
@@ -2263,7 +2263,7 @@ static void wma_send_status_to_suspend_ind(tp_wma_handle wma, bool suspended)
 	cds_msg.bodyptr = (void *)ready_to_suspend;
 	cds_msg.bodyval = 0;
 
-	status = cds_mq_post_message(CDS_MQ_ID_SME, &cds_msg);
+	status = cds_mq_post_message(QDF_MODULE_ID_SME, &cds_msg);
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to post ready to suspend");
 		qdf_mem_free(ready_to_suspend);
@@ -5207,7 +5207,7 @@ int wma_gtk_offload_status_event(void *handle, uint8_t *event,
 	cds_msg.bodyptr = (void *)resp;
 	cds_msg.bodyval = 0;
 
-	if (cds_mq_post_message(CDS_MQ_ID_SME, (cds_msg_t *) &cds_msg)
+	if (cds_mq_post_message(QDF_MODULE_ID_SME, (cds_msg_t *) &cds_msg)
 	    != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to post GTK response to SME");
 		qdf_mem_free(resp);
@@ -5954,7 +5954,7 @@ static void wma_send_status_of_ext_wow(tp_wma_handle wma, bool status)
 	cds_msg.bodyptr = (void *)ready_to_extwow;
 	cds_msg.bodyval = 0;
 
-	vstatus = cds_mq_post_message(CDS_MQ_ID_SME, &cds_msg);
+	vstatus = cds_mq_post_message(QDF_MODULE_ID_SME, &cds_msg);
 	if (vstatus != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to post ready to suspend");
 		qdf_mem_free(ready_to_extwow);

@@ -471,7 +471,7 @@ int wma_stats_ext_event_handler(void *handle, uint8_t *event_buf,
 	cds_msg.bodyptr = (void *)stats_ext_event;
 	cds_msg.bodyval = 0;
 
-	status = cds_mq_post_message(CDS_MQ_ID_SME, &cds_msg);
+	status = cds_mq_post_message(QDF_MODULE_ID_SME, &cds_msg);
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: Failed to post stats ext event to SME", __func__);
 		qdf_mem_free(stats_ext_event);
@@ -2556,7 +2556,7 @@ static void wma_post_ftm_response(tp_wma_handle wma_handle)
 	msg.bodyptr = payload;
 	msg.bodyval = 0;
 
-	status = cds_mq_post_message(CDS_MQ_ID_SYS, &msg);
+	status = cds_mq_post_message(QDF_MODULE_ID_SYS, &msg);
 
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("failed to post ftm response to SYS");

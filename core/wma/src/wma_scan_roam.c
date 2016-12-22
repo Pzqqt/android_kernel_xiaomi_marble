@@ -1891,7 +1891,7 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 			 * SME with proper reason code.
 			 */
 			if (QDF_STATUS_SUCCESS !=
-			    cds_mq_post_message(CDS_MQ_ID_SME,
+			    cds_mq_post_message(QDF_MODULE_ID_SME,
 						(cds_msg_t *) &cds_msg)) {
 				qdf_mem_free(scan_offload_rsp);
 				QDF_TRACE(QDF_MODULE_ID_WMA,
@@ -3326,7 +3326,7 @@ void wma_scan_cache_updated_ind(tp_wma_handle wma, uint8_t sessionId)
 	cds_msg.bodyptr = (void *)nw_found_ind;
 	cds_msg.bodyval = 0;
 
-	status = cds_mq_post_message(CDS_MQ_ID_SME, &cds_msg);
+	status = cds_mq_post_message(QDF_MODULE_ID_SME, &cds_msg);
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: Failed to post PNO completion match event to SME",
 			 __func__);
@@ -5770,7 +5770,7 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 	QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_INFO,
 		  FL("posting candidate ind to SME"));
 
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(CDS_MQ_ID_SME,
+	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_SME,
 						(cds_msg_t *) &cds_msg)) {
 		qdf_mem_free(candidate_ind);
 		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,

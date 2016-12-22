@@ -165,7 +165,7 @@ static QDF_STATUS lim_process_set_hw_mode(tpAniSirGlobal mac, uint32_t *msg)
 	cds_message.type    = SIR_HAL_PDEV_SET_HW_MODE;
 
 	lim_log(mac, LOG1, FL("Posting SIR_HAL_SOC_SET_HW_MOD to WMA"));
-	status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
+	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		lim_log(mac, LOGE,
 			FL("cds_mq_post_message failed!(err=%d)"),
@@ -238,7 +238,7 @@ static QDF_STATUS lim_process_set_dual_mac_cfg_req(tpAniSirGlobal mac,
 	lim_log(mac, LOG1,
 		FL("Post SIR_HAL_PDEV_DUAL_MAC_CFG_REQ to WMA: %x %x"),
 		req_msg->scan_config, req_msg->fw_mode_config);
-	status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
+	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		lim_log(mac, LOGE,
 				FL("cds_mq_post_message failed!(err=%d)"),
@@ -304,7 +304,7 @@ static QDF_STATUS lim_process_set_antenna_mode_req(tpAniSirGlobal mac,
 		FL("Post SIR_HAL_SOC_ANTENNA_MODE_REQ to WMA: %d %d"),
 		req_msg->num_rx_chains,
 		req_msg->num_tx_chains);
-	status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
+	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		lim_log(mac, LOGE,
 				FL("cds_mq_post_message failed!(err=%d)"),
@@ -4448,8 +4448,9 @@ static void __lim_process_sme_set_ht2040_mode(tpAniSirGlobal pMac,
 			msg.type = WMA_UPDATE_OP_MODE;
 			msg.reserved = 0;
 			msg.bodyptr = pHtOpMode;
-			if (!QDF_IS_STATUS_SUCCESS
-				    (cds_mq_post_message(QDF_MODULE_ID_WMA, &msg))) {
+			if (!QDF_IS_STATUS_SUCCESS(
+					cds_mq_post_message(QDF_MODULE_ID_WMA,
+							    &msg))) {
 				lim_log(pMac, LOGE,
 					FL
 						("%s: Not able to post WMA_UPDATE_OP_MODE message to WMA"),

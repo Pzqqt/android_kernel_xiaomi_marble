@@ -974,7 +974,7 @@ QDF_STATUS sme_set_ps_ns_offload(tHalHandle hal_ctx,
 tSirRetStatus sme_post_pe_message(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 {
 	QDF_STATUS qdf_status;
-	qdf_status = cds_mq_post_message(CDS_MQ_ID_PE, (cds_msg_t *) msg);
+	qdf_status = cds_mq_post_message(QDF_MODULE_ID_PE, (cds_msg_t *) msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		sms_log(mac_ctx, LOGP,
 			FL("cds_mq_post_message failed with status code %d"),

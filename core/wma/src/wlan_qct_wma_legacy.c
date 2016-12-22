@@ -57,7 +57,7 @@
 tSirRetStatus wma_post_ctrl_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
 {
 	if (QDF_STATUS_SUCCESS !=
-	    cds_mq_post_message(CDS_MQ_ID_WMA, (cds_msg_t *) pMsg))
+	    cds_mq_post_message(QDF_MODULE_ID_WMA, (cds_msg_t *) pMsg))
 		return eSIR_FAILURE;
 	else
 		return eSIR_SUCCESS;
