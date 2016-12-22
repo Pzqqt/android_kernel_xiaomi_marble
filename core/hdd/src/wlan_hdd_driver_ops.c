@@ -511,40 +511,50 @@ static int __wlan_hdd_bus_suspend(pm_message_t state, uint32_t wow_flags)
 {
 	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	void *hif_ctx;
-	int err = wlan_hdd_validate_context(hdd_ctx);
+	int err;
 	int status;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
-	hdd_info("event %d", state.event);
+	hdd_info("starting bus suspend; event:%d, flags:%u",
+		 state.event, wow_flags);
 
-	if (err)
+	err = wlan_hdd_validate_context(hdd_ctx);
+	if (err) {
+		hdd_err("Invalid hdd context");
 		goto done;
+	}
 
 	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
-		hdd_info("Driver Module closed return success");
+		hdd_info("Driver Module closed; return success");
 		return 0;
 	}
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	if (NULL == hif_ctx) {
+		hdd_err("Failed to get hif context");
 		err = -EINVAL;
 		goto done;
 	}
 
-	err = qdf_status_to_os_return(
-			cdp_bus_suspend(soc));
-	if (err)
+	err = qdf_status_to_os_return(cdp_bus_suspend(soc));
+	if (err) {
+		hdd_err("Failed cdp bus suspend");
 		goto done;
+	}
 
 	err = wma_bus_suspend(wow_flags);
-	if (err)
+	if (err) {
+		hdd_err("Failed wma bus suspend");
 		goto resume_oltxrx;
+	}
 
 	err = hif_bus_suspend(hif_ctx);
-	if (err)
+	if (err) {
+		hdd_err("Failed hif bus suspend");
 		goto resume_wma;
+	}
 
-	hdd_info("suspend done");
+	hdd_info("bus suspend succeeded");
 	return 0;
 
 resume_wma:
@@ -677,34 +687,45 @@ static int __wlan_hdd_bus_resume(void)
 	if (cds_is_driver_recovering())
 		return 0;
 
+	hdd_info("starting bus resume");
+
 	status = wlan_hdd_validate_context(hdd_ctx);
-	if (status)
+	if (status) {
+		hdd_err("Invalid hdd context");
 		return status;
+	}
 
 	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
-		hdd_info("Driver Module closed return success");
+		hdd_info("Driver Module closed; return success");
 		return 0;
 	}
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-	if (NULL == hif_ctx)
+	if (NULL == hif_ctx) {
+		hdd_err("Failed to get hif context");
 		return -EINVAL;
+	}
 
 	status = hif_bus_resume(hif_ctx);
-	if (status)
+	if (status) {
+		hdd_err("Failed hif bus resume");
 		goto out;
+	}
 
 	status = wma_bus_resume();
-	if (status)
+	if (status) {
+		hdd_err("Failed wma bus resume");
 		goto out;
+	}
 
 	qdf_status = cdp_bus_resume(cds_get_context(QDF_MODULE_ID_SOC));
 	status = qdf_status_to_os_return(qdf_status);
-	if (status)
+	if (status) {
+		hdd_err("Failed cdp bus resume");
 		goto out;
+	}
 
-	hdd_info("resume done");
-
+	hdd_info("bus resume succeeded");
 	return 0;
 
 out:

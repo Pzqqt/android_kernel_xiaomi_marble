@@ -2511,6 +2511,8 @@ static void __hdd_wlan_fake_apps_resume(struct wiphy *wiphy,
 	QDF_BUG(resume_err == 0);
 
 	dev->watchdog_timeo = HDD_TX_TIMEOUT;
+
+	hdd_info("Unit-test resume succeeded");
 }
 
 /**
@@ -2577,6 +2579,7 @@ int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev)
 	 */
 	dev->watchdog_timeo = INT_MAX;
 
+	hdd_info("Unit-test suspend succeeded");
 	return 0;
 
 enable_irqs_and_bus_resume:
