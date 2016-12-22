@@ -1017,6 +1017,165 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 	return 0;
 }
 
+#ifdef WLAN_PEER_PS_NOTIFICATION
+/**
+ * wma_peer_ps_evt_handler() - handler for PEER power state change.
+ * @handle: wma handle
+ * @event: FW event
+ * @len: length of FW event
+ *
+ * Once peer STA power state changes, an event will be indicated by
+ * FW. This function send a link layer state change msg to HDD. HDD
+ * link layer callback will converts the event to NL msg.
+ *
+ * Return: 0 Success. Others fail.
+ */
+static int wma_peer_ps_evt_handler(void *handle, u_int8_t *event,
+				   u_int32_t len)
+{
+	WMI_PEER_STA_PS_STATECHG_EVENTID_param_tlvs *param_buf;
+	wmi_peer_sta_ps_statechange_event_fixed_param *fixed_param;
+	tSirWifiPeerStat *peer_stat;
+	tSirWifiPeerInfo *peer_info;
+	tSirLLStatsResults *link_stats_results;
+	tSirMacAddr mac_address;
+	uint32_t result_len;
+	cds_msg_t sme_msg = { 0 };
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+
+	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
+
+	if (!mac) {
+		WMA_LOGD("%s: NULL mac ptr. Exiting", __func__);
+		return -EINVAL;
+	}
+
+	if (!mac->sme.link_layer_stats_ext_cb) {
+		WMA_LOGD("%s: HDD callback is null", __func__);
+		return -EINVAL;
+	}
+
+	WMA_LOGD("%s: Posting Peer Stats PS event to HDD", __func__);
+
+	param_buf = (WMI_PEER_STA_PS_STATECHG_EVENTID_param_tlvs *)event;
+	fixed_param = param_buf->fixed_param;
+
+	result_len = sizeof(tSirLLStatsResults) +
+			sizeof(tSirWifiPeerStat) +
+			sizeof(tSirWifiPeerInfo);
+	link_stats_results = qdf_mem_malloc(result_len);
+	if (link_stats_results == NULL) {
+		WMA_LOGE("%s: Cannot allocate link layer stats.", __func__);
+		return -EINVAL;
+	}
+
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&fixed_param->peer_macaddr, &mac_address[0]);
+	WMA_LOGD("Peer power state change event from FW");
+	WMA_LOGD("Fixed Param:");
+	WMA_LOGD("MAC address: %2x:%2x:%2x:%2x:%2x:%2x, Power state: %d",
+		 mac_address[0], mac_address[1], mac_address[2],
+		 mac_address[3], mac_address[4], mac_address[5],
+		 fixed_param->peer_ps_state);
+
+	link_stats_results->paramId            = WMI_LL_STATS_EXT_PS_CHG;
+	link_stats_results->num_peers          = 1;
+	link_stats_results->peer_event_number  = 1;
+	link_stats_results->moreResultToFollow = 0;
+
+	peer_stat = (tSirWifiPeerStat *)link_stats_results->results;
+	peer_stat->numPeers = 1;
+	peer_info = (tSirWifiPeerInfo *)peer_stat->peerInfo;
+	qdf_mem_copy(&peer_info->peerMacAddress,
+		     &mac_address,
+		     sizeof(tSirMacAddr));
+	peer_info->power_saving = fixed_param->peer_ps_state;
+
+	sme_msg.type = eWMI_SME_LL_STATS_IND;
+	sme_msg.bodyptr = link_stats_results;
+	sme_msg.bodyval = 0;
+
+	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		WMA_LOGE("%s: Fail to post ps change ind msg", __func__);
+		qdf_mem_free(link_stats_results);
+	}
+
+	return 0;
+}
+#else
+/**
+ * wma_peer_ps_evt_handler() - handler for PEER power state change.
+ * @handle: wma handle
+ * @event: FW event
+ * @len: length of FW event
+ *
+ * Once peer STA power state changes, an event will be indicated by
+ * FW. This function send a link layer state change msg to HDD. HDD
+ * link layer callback will converts the event to NL msg.
+ *
+ * Return: 0 Success. Others fail.
+ */
+static inline int wma_peer_ps_evt_handler(void *handle, u_int8_t *event,
+					  u_int32_t len)
+{
+	return 0;
+}
+#endif
+
+/**
+ * wma_tx_failure_cb() - TX failure callback
+ * @ctx: txrx context
+ * @num_msdu: number of msdu with the same status
+ * @tid: TID number
+ * @status: failure status
+ */
+void wma_tx_failure_cb(void *ctx, uint32_t num_msdu,
+		       uint8_t tid, enum htt_tx_status status)
+{
+	tSirLLStatsResults *results;
+	struct sir_wifi_iface_tx_fail *tx_fail;
+	struct scheduler_msg sme_msg = { 0 };
+	QDF_STATUS qdf_status;
+	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
+
+	if (!mac) {
+		WMA_LOGD("%s: NULL mac ptr. Exiting", __func__);
+		return;
+	}
+
+	if (!mac->sme.link_layer_stats_ext_cb) {
+		WMA_LOGD("%s: HDD callback is null", __func__);
+		return;
+	}
+
+	results = qdf_mem_malloc(sizeof(tSirLLStatsResults) +
+				 sizeof(struct sir_wifi_iface_tx_fail));
+	if (results == NULL) {
+		WMA_LOGE("%s: Cannot allocate link layer stats.", __func__);
+		return;
+	}
+
+	results->paramId            = WMI_LL_STATS_EXT_TX_FAIL;
+	results->num_peers          = 1;
+	results->peer_event_number  = 1;
+	results->moreResultToFollow = 0;
+
+	tx_fail = (struct sir_wifi_iface_tx_fail *)results->results;
+	tx_fail->tid = tid;
+	tx_fail->msdu_num = num_msdu;
+	tx_fail->status = status;
+
+	sme_msg.type = eWMI_SME_LL_STATS_IND;
+	sme_msg.bodyptr = results;
+	sme_msg.bodyval = 0;
+
+	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		WMA_LOGE("%s: Fail to post TX failure ind msg", __func__);
+		qdf_mem_free(results);
+	}
+}
+
 /**
  * wma_register_ll_stats_event_handler() - register link layer stats related
  *                                         event handler
@@ -1047,6 +1206,10 @@ void wma_register_ll_stats_event_handler(tp_wma_handle wma_handle)
 			WMI_RADIO_TX_POWER_LEVEL_STATS_EVENTID,
 			wma_unified_radio_tx_power_level_stats_event_handler,
 			WMA_RX_SERIALIZER_CTX);
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+					   WMI_PEER_STA_PS_STATECHG_EVENTID,
+					   wma_peer_ps_evt_handler,
+					   WMA_RX_SERIALIZER_CTX);
 
 	return;
 }

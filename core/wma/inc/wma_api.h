@@ -270,4 +270,21 @@ QDF_STATUS wma_set_sar_limit(WMA_HANDLE handle,
 QDF_STATUS wma_set_qpower_config(uint8_t vdev_id, uint8_t qpower);
 
 bool wma_is_service_enabled(WMI_SERVICE service_type);
+
+#ifdef WLAN_FEATURE_LINK_LAYER_STATS
+/**
+ * wma_tx_failure_cb() - TX failure callback
+ * @ctx: txrx context
+ * @num_msdu: number of msdu with the same status
+ * @tid: TID number
+ * @status: failure status
+ */
+void wma_tx_failure_cb(void *ctx, uint32_t num_msdu,
+		       uint8_t tid, enum htt_tx_status status);
+#else
+static inline void wma_tx_failure_cb(void *ctx, uint32_t num_msdu,
+				     uint8_t tid, enum htt_tx_status status)
+{
+}
+#endif
 #endif

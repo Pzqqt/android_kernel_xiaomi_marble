@@ -2633,6 +2633,10 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 	case eWNI_SME_RSO_CMD_STATUS_IND:
 		if (pMac->sme.rso_cmd_status_cb)
 			pMac->sme.rso_cmd_status_cb(pMac->hHdd, pMsg->bodyptr);
+	case eWMI_SME_LL_STATS_IND:
+		if (pMac->sme.link_layer_stats_ext_cb)
+			pMac->sme.link_layer_stats_ext_cb(pMac->hHdd,
+							  pMsg->bodyptr);
 		qdf_mem_free(pMsg->bodyptr);
 		break;
 	default:
@@ -13178,6 +13182,32 @@ QDF_STATUS sme_set_link_layer_stats_ind_cb
 			  "sme_acquire_global_lock error", __func__);
 	}
 
+	return status;
+}
+
+/**
+ * sme_set_link_layer_ext_cb() - Register callback for link layer statistics
+ * @hal: Mac global handle
+ * @ll_stats_ext_cb: HDD callback which needs to be invoked after getting
+ *                   status notification from FW
+ *
+ * Return: eHalStatus
+ */
+QDF_STATUS sme_set_link_layer_ext_cb(tHalHandle hal,
+		     void (*ll_stats_ext_cb)(tHddHandle callback_ctx,
+					     tSirLLStatsResults *rsp))
+{
+	QDF_STATUS status;
+	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (status == QDF_STATUS_SUCCESS) {
+		mac->sme.link_layer_stats_ext_cb = ll_stats_ext_cb;
+		sme_release_global_lock(&mac->sme);
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  "%s: sme_qcquire_global_lock error", __func__);
+	}
 	return status;
 }
 

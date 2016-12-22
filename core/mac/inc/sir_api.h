@@ -55,6 +55,7 @@ typedef struct sAniSirGlobal *tpAniSirGlobal;
 #include "cds_regdomain.h"
 #include "wmi_unified.h"
 #include "wmi_unified_param.h"
+#include "ol_txrx_htt_api.h"
 #include <dot11f.h>
 #include "wlan_policy_mgr_api.h"
 
@@ -4906,8 +4907,12 @@ typedef struct {
 	struct qdf_mac_addr peerMacAddress;
 	/* peer WIFI_CAPABILITY_XXX */
 	uint32_t capabilities;
-	/* number of rates */
-	uint32_t numRate;
+	union {
+		/* peer power saving mode */
+		uint32_t power_saving;
+		/* number of rates */
+		uint32_t numRate;
+	};
 	/* per rate statistics, number of entries  = num_rate */
 	tSirWifiRateStat rateStats[0];
 } tSirWifiPeerInfo, *tpSirWifiPeerInfo;
@@ -5052,6 +5057,19 @@ typedef struct {
 /* Clear particular peer stats depending on the peer_mac */
 #define WIFI_STATS_IFACE_PER_PEER      0x00000200
 
+/**
+ * struct sir_wifi_iface_tx_fail - TX failure event
+ * @tid: TX TID
+ * @msdu_num: TX MSDU failed counter
+ * @status: TX status from HTT message.
+ *          Only failure status will be involved.
+ */
+struct sir_wifi_iface_tx_fail {
+	uint8_t  tid;
+	uint16_t msdu_num;
+	enum htt_tx_status status;
+};
+
 typedef struct {
 	uint32_t paramId;
 	uint8_t ifaceId;
@@ -5068,6 +5086,10 @@ typedef struct {
 	uint8_t results[0];
 } tSirLLStatsResults, *tpSirLLStatsResults;
 
+/* Result ID for LL stats extension */
+#define WMI_LL_STATS_EXT_PS_CHG             0x00000100
+#define WMI_LL_STATS_EXT_TX_FAIL            0x00000200
+#define WMI_LL_STATS_EXT_MAC_COUNTER        0x00000400
 #endif /* WLAN_FEATURE_LINK_LAYER_STATS */
 
 typedef struct sAniGetLinkStatus {

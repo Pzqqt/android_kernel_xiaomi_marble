@@ -886,6 +886,9 @@ QDF_STATUS sme_ll_stats_get_req(tHalHandle hHal,
 QDF_STATUS sme_set_link_layer_stats_ind_cb(tHalHandle hHal,
 		void (*callbackRoutine)(void *callbackCtx,
 				int indType, void *pRsp));
+QDF_STATUS sme_set_link_layer_ext_cb(tHalHandle hal,
+		     void (*ll_stats_ext_cb)(tHddHandle callback_ctx,
+					     tSirLLStatsResults * rsp));
 QDF_STATUS sme_reset_link_layer_stats_ind_cb(tHalHandle hhal);
 #endif /* WLAN_FEATURE_LINK_LAYER_STATS */
 
