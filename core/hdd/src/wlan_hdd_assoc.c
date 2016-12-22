@@ -1199,9 +1199,12 @@ static void hdd_send_association_event(struct net_device *dev,
 	we_event = SIOCGIWAP;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	if (NULL != pCsrRoamInfo)
-		if (pCsrRoamInfo->roamSynchInProgress)
+		if (pCsrRoamInfo->roamSynchInProgress) {
 			/* change logging before release */
 			hdd_info("LFR3:hdd_send_association_event");
+			/* Update tdls module about the disconnection event */
+			wlan_hdd_tdls_notify_disconnect(pAdapter);
+		}
 #endif
 	if (eConnectionState_Associated == pHddStaCtx->conn_info.connState) {
 		tSirSmeChanInfo chan_info;
