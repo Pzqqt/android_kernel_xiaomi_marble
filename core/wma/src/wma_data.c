@@ -2476,7 +2476,6 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		WMA_LOGE("No Support to send other frames except 802.11 Mgmt/Data");
 		return QDF_STATUS_E_FAILURE;
 	}
-	mHdr = (tpSirMacMgmtHdr)qdf_nbuf_data(tx_frame);
 #ifdef WLAN_FEATURE_11W
 	if ((iface && iface->rmfEnabled) &&
 	    (frmType == TXRX_FRM_802_11_MGMT) &&
@@ -2521,6 +2520,8 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 				tx_frame = pPacket;
 				pData = pFrame;
 				frmLen = newFrmLen;
+				pFc = (tpSirMacFrameCtl)
+						(qdf_nbuf_data(tx_frame));
 			}
 		} else {
 			/* Allocate extra bytes for MMIE */
@@ -2561,10 +2562,11 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			tx_frame = pPacket;
 			pData = pFrame;
 			frmLen = newFrmLen;
+			pFc = (tpSirMacFrameCtl) (qdf_nbuf_data(tx_frame));
 		}
 	}
 #endif /* WLAN_FEATURE_11W */
-
+	mHdr = (tpSirMacMgmtHdr)qdf_nbuf_data(tx_frame);
 	if ((frmType == TXRX_FRM_802_11_MGMT) &&
 	    (pFc->subType == SIR_MAC_MGMT_PROBE_RSP)) {
 		uint64_t adjusted_tsf_le;
