@@ -79,11 +79,9 @@
 #include "cdp_txrx_ipa.h"
 #include "cdp_txrx_misc.h"
 #include "wma_nan_datapath.h"
-
-#ifdef WLAN_CONVERGED_INTERFACE
 #include "wlan_lmac_if_def.h"
 #include "wlan_lmac_if_api.h"
-#endif
+
 
 #define WMA_LOG_COMPLETION_TIMER 10000 /* 10 seconds */
 
@@ -1805,7 +1803,6 @@ static void wma_register_debug_callback(void)
 	qdf_register_debug_callback(QDF_MODULE_ID_WMA, &wma_state_info_dump);
 }
 
-#ifdef WLAN_CONVERGED_INTERFACE
 /**
  * wma_register_tx_ops_handler() - register tx_ops of southbound
  * @tx_ops:  tx_ops pointer in southbound
@@ -1869,10 +1866,6 @@ static void wma_target_if_close(tp_wma_handle wma_handle)
 
 	wlan_lmac_if_close(psoc);
 }
-#else
-static void wma_target_if_open(tp_wma_handle wma_handle) {};
-static void wma_target_if_close(tp_wma_handle wma_handle) {};
-#endif
 
 /**
  * wma_open() - Allocate wma context and initialize it.
