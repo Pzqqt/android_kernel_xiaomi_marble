@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -238,10 +238,21 @@ static inline void __qdf_spin_unlock_irqrestore(__qdf_spinlock_t *lock)
 	spin_unlock_irqrestore(_p_lock, _flags)
 
 /**
+ * __qdf_spin_is_locked(__qdf_spinlock_t *lock)
+ * @lock: spinlock object
+ *
+ * Return: nonzero if lock is held.
+ */
+static inline int __qdf_spin_is_locked(__qdf_spinlock_t *lock)
+{
+	return spin_is_locked(&lock->spinlock);
+}
+
+/**
  * __qdf_spin_trylock_bh() - spin trylock bottomhalf
  * @lock: spinlock object
  *
- * Retrun: int
+ * Return: nonzero if lock is acquired
  */
 static inline int __qdf_spin_trylock_bh(__qdf_spinlock_t *lock)
 {

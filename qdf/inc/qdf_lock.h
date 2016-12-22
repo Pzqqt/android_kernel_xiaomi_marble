@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -75,7 +75,7 @@ QDF_STATUS qdf_mutex_destroy(qdf_mutex_t *lock);
 /**
  * qdf_spinlock_create - Initialize a spinlock
  * @lock: spinlock object pointer
- * Retrun: none
+ * Return: none
  */
 static inline void qdf_spinlock_create(qdf_spinlock_t *lock)
 {
@@ -93,9 +93,21 @@ static inline void qdf_spinlock_destroy(qdf_spinlock_t *lock)
 }
 
 /**
+ * qdf_spin_is_locked() - check if the spinlock is locked
+ * @lock: spinlock object
+ *
+ * Return: nonzero if lock is held.
+ */
+static inline int qdf_spin_is_locked(qdf_spinlock_t *lock)
+{
+	return __qdf_spin_is_locked(&lock->lock);
+}
+
+/**
  * qdf_spin_trylock_bh() - spin trylock bottomhalf
  * @lock: spinlock object
- * Return: int
+ *
+ * Return: nonzero if lock is acquired
  */
 static inline int qdf_spin_trylock_bh(qdf_spinlock_t *lock)
 {
