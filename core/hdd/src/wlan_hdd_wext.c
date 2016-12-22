@@ -429,14 +429,7 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WLAN_PRIV_SET_NONE_GET_NONE   (SIOCIWFIRSTPRIV + 6)
 #define WE_SET_REASSOC_TRIGGER     8
 #define WE_IBSS_GET_PEER_INFO_ALL 10
-#define WE_DUMP_AGC_START          11
-#define WE_DUMP_AGC                12
-#define WE_DUMP_CHANINFO_START     13
-#define WE_DUMP_CHANINFO           14
-#define WE_DUMP_WATCHDOG           15
-#ifdef CONFIG_ATH_PCIE_ACCESS_DEBUG
-#define WE_DUMP_PCIE_LOG           16
-#endif
+/* Sub ioctls 11 to 16 are not used */
 #define WE_GET_RECOVERY_STAT       17
 #define WE_GET_FW_PROFILE_DATA     18
 #define WE_STOP_OBSS_SCAN          19
@@ -8201,57 +8194,6 @@ static int __iw_setnone_getnone(struct net_device *dev,
 		return 0;
 	}
 
-	case WE_DUMP_AGC_START:
-	{
-		hdd_notice("WE_DUMP_AGC_START");
-		ret = wma_cli_set_command(adapter->sessionId,
-					  GEN_PARAM_DUMP_AGC_START,
-					  0, GEN_CMD);
-		break;
-	}
-	case WE_DUMP_AGC:
-	{
-		hdd_notice("WE_DUMP_AGC");
-		ret = wma_cli_set_command(adapter->sessionId,
-					  GEN_PARAM_DUMP_AGC,
-					  0, GEN_CMD);
-		break;
-	}
-
-	case WE_DUMP_CHANINFO_START:
-	{
-		hdd_notice("WE_DUMP_CHANINFO_START");
-		ret = wma_cli_set_command(adapter->sessionId,
-					  GEN_PARAM_DUMP_CHANINFO_START,
-					  0, GEN_CMD);
-		break;
-	}
-	case WE_DUMP_CHANINFO:
-	{
-		hdd_notice("WE_DUMP_CHANINFO_START");
-		ret = wma_cli_set_command(adapter->sessionId,
-					  GEN_PARAM_DUMP_CHANINFO,
-					  0, GEN_CMD);
-		break;
-	}
-	case WE_DUMP_WATCHDOG:
-	{
-		hdd_notice("WE_DUMP_WATCHDOG");
-		ret = wma_cli_set_command(adapter->sessionId,
-					  GEN_PARAM_DUMP_WATCHDOG,
-					  0, GEN_CMD);
-		break;
-	}
-#ifdef CONFIG_ATH_PCIE_ACCESS_DEBUG
-	case WE_DUMP_PCIE_LOG:
-	{
-		hdd_err("WE_DUMP_PCIE_LOG");
-		ret = wma_cli_set_command(adapter->sessionId,
-					  GEN_PARAM_DUMP_PCIE_ACCESS_LOG,
-					  0, GEN_CMD);
-		break;
-	}
-#endif
 	case WE_STOP_OBSS_SCAN:
 	{
 		/*
@@ -11306,36 +11248,6 @@ static const struct iw_priv_args we_private_args[] = {
 	0,
 	"reassoc"},
 
-	{WE_DUMP_AGC_START,
-	 0,
-	 0,
-	 "dump_agc_start"},
-
-	{WE_DUMP_AGC,
-	 0,
-	 0,
-	 "dump_agc"},
-
-	{WE_DUMP_CHANINFO_START,
-	 0,
-	 0,
-	 "dump_chninfo_en"},
-
-	{WE_DUMP_CHANINFO,
-	 0,
-	 0,
-	 "dump_chninfo"},
-
-	{WE_DUMP_WATCHDOG,
-	 0,
-	 0,
-	 "dump_watchdog"},
-#ifdef CONFIG_ATH_PCIE_ACCESS_DEBUG
-	{WE_DUMP_PCIE_LOG,
-	 0,
-	 0,
-	 "dump_pcie_log"},
-#endif
 	{WE_STOP_OBSS_SCAN,
 	 0,
 	 0,

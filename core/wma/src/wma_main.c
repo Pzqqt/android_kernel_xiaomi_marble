@@ -961,21 +961,6 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 				return;
 			}
 			break;
-		case GEN_PARAM_DUMP_AGC_START:
-			htc_dump(wma->htc_handle, AGC_DUMP, true);
-			break;
-		case GEN_PARAM_DUMP_AGC:
-			htc_dump(wma->htc_handle, AGC_DUMP, false);
-			break;
-		case GEN_PARAM_DUMP_CHANINFO_START:
-			htc_dump(wma->htc_handle, CHAN_DUMP, true);
-			break;
-		case GEN_PARAM_DUMP_CHANINFO:
-			htc_dump(wma->htc_handle, CHAN_DUMP, false);
-			break;
-		case GEN_PARAM_DUMP_WATCHDOG:
-			htc_dump(wma->htc_handle, WD_DUMP, false);
-			break;
 		case GEN_PARAM_CRASH_INJECT:
 			if (QDF_GLOBAL_FTM_MODE  == cds_get_conparam())
 				WMA_LOGE("Crash inject not allowed in FTM mode");
@@ -990,11 +975,6 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 		case GEN_PARAM_RESET_TSF_GPIO:
 			ret = wma_reset_tsf_gpio(wma, privcmd->param_value);
 			break;
-#ifdef CONFIG_ATH_PCIE_ACCESS_DEBUG
-		case GEN_PARAM_DUMP_PCIE_ACCESS_LOG:
-			htc_dump(wma->htc_handle, PCIE_DUMP, false);
-			break;
-#endif /* CONFIG_ATH_PCIE_ACCESS_DEBUG */
 		case GEN_PARAM_MODULATED_DTIM:
 			wma_set_modulated_dtim(wma, privcmd);
 			break;
