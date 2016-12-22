@@ -793,7 +793,7 @@ void htt_rx_dbg_rxbuf_reset(struct htt_pdev_t *pdev,
 	return;
 }
 static inline
-void htt_rx_dbg_rxbuf_indupt(struct htt_pdev_t *pdev,
+void htt_rx_dbg_rxbuf_indupd(struct htt_pdev_t *pdev,
 			     int    alloc_index)
 {
 	return;
