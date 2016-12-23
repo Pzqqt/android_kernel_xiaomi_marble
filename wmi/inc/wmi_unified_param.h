@@ -7090,6 +7090,7 @@ struct wmi_host_ppe_threshold {
  *                        to be communicated separately.
  * @WMI_HOST_HW_MODE_DBS_SBS: 3 PHYs, with 2 on the same band doing SBS
  *                           as in WMI_HW_MODE_SBS, and 3rd on the other band
+ * @WMI_HOST_HW_MODE_MAX: Max hw_mode_id. Used to indicate invalid mode.
  */
 enum wmi_host_hw_mode_config_type {
 	WMI_HOST_HW_MODE_SINGLE       = 0,
@@ -7097,6 +7098,7 @@ enum wmi_host_hw_mode_config_type {
 	WMI_HOST_HW_MODE_SBS_PASSIVE  = 2,
 	WMI_HOST_HW_MODE_SBS          = 3,
 	WMI_HOST_HW_MODE_DBS_SBS      = 4,
+	WMI_HOST_HW_MODE_MAX,
 };
 
 /**
@@ -7392,5 +7394,36 @@ struct wmi_host_fips_event_param {
 struct wmi_host_proxy_ast_reserve_param {
 	uint32_t pdev_id;
 	uint32_t result;
+};
+
+/**
+ * struct wmi_host_pdev_band_to_mac - freq range for mac
+ * @pdev_id: PDEV ID to identifiy mac
+ * @start_freq: start frequency value
+ * @end_freq: end frequency value
+ */
+struct wmi_host_pdev_band_to_mac {
+	uint32_t pdev_id;
+	uint32_t start_freq;
+	uint32_t end_freq;
+};
+#define WMI_HOST_MAX_PDEV 3
+
+/**
+ * struct wmi_init_cmd_param - INIT command params
+ * @target_resource_config: pointer to resource config
+ * @num_mem_chunks: number of memory chunks
+ * @struct wmi_host_mem_chunk: pointer to memory chunks
+ * @hw_mode_index: HW mode index chosen
+ * @num_band_to_mac: Number of band to mac setting
+ * @struct wmi_host_pdev_band_to_mac: band to mac setting
+ */
+struct wmi_init_cmd_param {
+	target_resource_config *res_cfg;
+	uint8_t num_mem_chunks;
+	struct wmi_host_mem_chunk *mem_chunks;
+	uint32_t hw_mode_id;
+	uint32_t num_band_to_mac;
+	struct wmi_host_pdev_band_to_mac band_to_mac[WMI_HOST_MAX_PDEV];
 };
 #endif /* _WMI_UNIFIED_PARAM_H_ */

@@ -11880,18 +11880,73 @@ error:
 	return status;
 }
 
+/* copy_hw_mode_id_in_init_cmd() - Helper routine to copy hw_mode in init cmd
+ * @buf_ptr: pointer to current position in init command buffer
+ * @len: pointer to length. This will be updated with current lenght of cmd
+ * @param: point host parameters for init command
+ *
+ * Return: Updated pointer of buf_ptr.
+ */
+static inline uint8_t *copy_hw_mode_in_init_cmd(uint8_t *buf_ptr,
+			int *len, struct wmi_init_cmd_param *param)
+{
+	uint16_t idx;
+
+	if (param->hw_mode_id != WMI_HOST_HW_MODE_MAX) {
+		wmi_pdev_set_hw_mode_cmd_fixed_param *hw_mode;
+		wmi_pdev_band_to_mac *band_to_mac;
+
+		hw_mode = (wmi_pdev_set_hw_mode_cmd_fixed_param *)
+			(buf_ptr + sizeof(wmi_init_cmd_fixed_param) +
+			 sizeof(wmi_resource_config) +
+			 WMI_TLV_HDR_SIZE + (param->num_mem_chunks *
+				 sizeof(wlan_host_memory_chunk)));
+
+		WMITLV_SET_HDR(&hw_mode->tlv_header,
+			WMITLV_TAG_STRUC_wmi_pdev_set_hw_mode_cmd_fixed_param,
+			(WMITLV_GET_STRUCT_TLVLEN
+			 (wmi_pdev_set_hw_mode_cmd_fixed_param)));
+
+		hw_mode->hw_mode_index = param->hw_mode_id;
+		hw_mode->num_band_to_mac = param->num_band_to_mac;
+
+		buf_ptr = (uint8_t *) (hw_mode + 1);
+		band_to_mac = (wmi_pdev_band_to_mac *) (buf_ptr +
+				WMI_TLV_HDR_SIZE);
+		for (idx = 0; idx < param->num_band_to_mac; idx++) {
+			WMITLV_SET_HDR(&band_to_mac[idx].tlv_header,
+					WMITLV_TAG_STRUC_wmi_pdev_band_to_mac,
+					WMITLV_GET_STRUCT_TLVLEN
+					(wmi_pdev_band_to_mac));
+			band_to_mac[idx].pdev_id =
+				param->band_to_mac[idx].pdev_id;
+			band_to_mac[idx].start_freq =
+				param->band_to_mac[idx].start_freq;
+			band_to_mac[idx].end_freq =
+				param->band_to_mac[idx].end_freq;
+		}
+		*len += sizeof(wmi_pdev_set_hw_mode_cmd_fixed_param) +
+			(param->num_band_to_mac *
+			 sizeof(wmi_pdev_band_to_mac)) +
+			WMI_TLV_HDR_SIZE;
+
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+				(param->num_band_to_mac *
+				 sizeof(wmi_pdev_band_to_mac)));
+	}
+
+	return buf_ptr;
+}
+
 /**
  * init_cmd_send_tlv() - send initialization cmd to fw
  * @wmi_handle: wmi handle
- * @param tgt_res_cfg: pointer to target resource configuration
- * @param num_mem_chunks: Number of memory chunks
- * @param mem_chunks: pointer to target memory chunks
+ * @param param: pointer to wmi init param
  *
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
 static QDF_STATUS init_cmd_send_tlv(wmi_unified_t wmi_handle,
-		target_resource_config *tgt_res_cfg, uint8_t num_mem_chunks,
-		struct wmi_host_mem_chunk *mem_chunks)
+				struct wmi_init_cmd_param *param)
 {
 	wmi_buf_t buf;
 	wmi_init_cmd_fixed_param *cmd;
@@ -11900,14 +11955,21 @@ static QDF_STATUS init_cmd_send_tlv(wmi_unified_t wmi_handle,
 	uint8_t *buf_ptr;
 	wmi_resource_config *resource_cfg;
 	wlan_host_memory_chunk *host_mem_chunks;
-	uint32_t mem_chunk_len = 0;
+	uint32_t mem_chunk_len = 0, hw_mode_len = 0;
 	uint16_t idx;
 	int len;
 	QDF_STATUS ret;
 
-	len = sizeof(*cmd) + sizeof(wmi_resource_config) + WMI_TLV_HDR_SIZE;
+	len = sizeof(*cmd) + sizeof(wmi_resource_config) +
+		WMI_TLV_HDR_SIZE;
 	mem_chunk_len = (sizeof(wlan_host_memory_chunk) * MAX_MEM_CHUNKS);
-	buf = wmi_buf_alloc(wmi_handle, len + mem_chunk_len);
+
+	if (param->hw_mode_id != WMI_HOST_HW_MODE_MAX)
+		hw_mode_len = sizeof(wmi_pdev_set_hw_mode_cmd_fixed_param) +
+			WMI_TLV_HDR_SIZE +
+			(param->num_band_to_mac * sizeof(wmi_pdev_band_to_mac));
+
+	buf = wmi_buf_alloc(wmi_handle, len + mem_chunk_len + hw_mode_len);
 	if (!buf) {
 		qdf_print("%s: wmi_buf_alloc failed\n", __func__);
 		return QDF_STATUS_E_FAILURE;
@@ -11925,29 +11987,33 @@ static QDF_STATUS init_cmd_send_tlv(wmi_unified_t wmi_handle,
 			WMITLV_TAG_STRUC_wmi_init_cmd_fixed_param,
 			WMITLV_GET_STRUCT_TLVLEN(wmi_init_cmd_fixed_param));
 
-	wmi_copy_resource_config(resource_cfg, tgt_res_cfg);
+	wmi_copy_resource_config(resource_cfg, param->res_cfg);
 	WMITLV_SET_HDR(&resource_cfg->tlv_header,
 			WMITLV_TAG_STRUC_wmi_resource_config,
 			WMITLV_GET_STRUCT_TLVLEN(wmi_resource_config));
 
-	for (idx = 0; idx < num_mem_chunks; ++idx) {
+	for (idx = 0; idx < param->num_mem_chunks; ++idx) {
 		WMITLV_SET_HDR(&(host_mem_chunks[idx].tlv_header),
 				WMITLV_TAG_STRUC_wlan_host_memory_chunk,
 				WMITLV_GET_STRUCT_TLVLEN
 				(wlan_host_memory_chunk));
-		host_mem_chunks[idx].ptr = mem_chunks[idx].paddr;
-		host_mem_chunks[idx].size = mem_chunks[idx].len;
-		host_mem_chunks[idx].req_id = mem_chunks[idx].req_id;
+		host_mem_chunks[idx].ptr = param->mem_chunks[idx].paddr;
+		host_mem_chunks[idx].size = param->mem_chunks[idx].len;
+		host_mem_chunks[idx].req_id = param->mem_chunks[idx].req_id;
 		qdf_print("chunk %d len %d requested ,ptr  0x%x ",
 				idx, host_mem_chunks[idx].size,
 				host_mem_chunks[idx].ptr);
 	}
-	cmd->num_host_mem_chunks = num_mem_chunks;
-	len += (num_mem_chunks * sizeof(wlan_host_memory_chunk));
+	cmd->num_host_mem_chunks = param->num_mem_chunks;
+	len += (param->num_mem_chunks * sizeof(wlan_host_memory_chunk));
+
 	WMITLV_SET_HDR((buf_ptr + sizeof(*cmd) + sizeof(wmi_resource_config)),
 			WMITLV_TAG_ARRAY_STRUC,
 			(sizeof(wlan_host_memory_chunk) *
-			 num_mem_chunks));
+			 param->num_mem_chunks));
+
+	/* Fill hw mode id config */
+	buf_ptr = copy_hw_mode_in_init_cmd(buf_ptr, &len, param);
 
 	num_whitelist = sizeof(version_whitelist) /
 		sizeof(wmi_whitelist_version_info);

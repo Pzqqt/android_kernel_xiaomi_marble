@@ -5323,15 +5323,12 @@ static void wmi_copy_resource_config_non_tlv(wmi_resource_config *resource_cfg,
 /**
  * init_cmd_send_non_tlv() - send initialization cmd to fw
  * @wmi_handle: wmi handle
- * @param tgt_res_cfg: pointer to target resource configuration
- * @param num_mem_chunks: Number of memory chunks
- * @param mem_chunks: pointer to target memory chunks
+ * @param param: pointer to wmi init param
  *
  * Return: 0 for success or error code
  */
 static QDF_STATUS init_cmd_send_non_tlv(wmi_unified_t wmi_handle,
-		target_resource_config *tgt_res_cfg,
-		uint8_t num_mem_chunks, struct wmi_host_mem_chunk *mem_chunks)
+				struct wmi_init_cmd_param *param)
 {
 	wmi_buf_t buf;
 	wmi_init_cmd *cmd;
@@ -5350,20 +5347,21 @@ static QDF_STATUS init_cmd_send_non_tlv(wmi_unified_t wmi_handle,
 
 	cmd = (wmi_init_cmd *) wmi_buf_data(buf);
 
-	wmi_copy_resource_config_non_tlv(&cmd->resource_config, tgt_res_cfg);
+	wmi_copy_resource_config_non_tlv(&cmd->resource_config, param->res_cfg);
 
 	host_mem_chunks = cmd->host_mem_chunks;
-	for (idx = 0; idx < num_mem_chunks; ++idx) {
-		host_mem_chunks[idx].ptr = mem_chunks[idx].paddr;
-		host_mem_chunks[idx].size = mem_chunks[idx].len;
-		host_mem_chunks[idx].req_id = mem_chunks[idx].req_id;
+	for (idx = 0; idx < param->num_mem_chunks; ++idx) {
+		host_mem_chunks[idx].ptr = param->mem_chunks[idx].paddr;
+		host_mem_chunks[idx].size = param->mem_chunks[idx].len;
+		host_mem_chunks[idx].req_id = param->mem_chunks[idx].req_id;
 		qdf_print("chunk %d len %d requested , ptr  0x%x\n",
 				idx, cmd->host_mem_chunks[idx].size,
 				cmd->host_mem_chunks[idx].ptr);
 	}
-	cmd->num_host_mem_chunks = num_mem_chunks;
-	if (num_mem_chunks > 1)
-		len += ((num_mem_chunks-1) * sizeof(wlan_host_memory_chunk));
+	cmd->num_host_mem_chunks = param->num_mem_chunks;
+	if (param->num_mem_chunks > 1)
+		len += ((param->num_mem_chunks-1) *
+				sizeof(wlan_host_memory_chunk));
 
 	if (wmi_unified_cmd_send(wmi_handle, buf, len, WMI_INIT_CMDID) < 0) {
 		wmi_buf_free(buf);

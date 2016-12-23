@@ -1101,9 +1101,7 @@ QDF_STATUS wmi_unified_set_psmode_cmd_send(void *wmi_hdl,
 				struct set_ps_mode_params *param);
 
 QDF_STATUS wmi_unified_init_cmd_send(void *wmi_hdl,
-				target_resource_config *res_cfg,
-				uint8_t num_mem_chunks,
-				struct wmi_host_mem_chunk *mem_chunk);
+				struct wmi_init_cmd_param *param);
 
 bool wmi_service_enabled(void *wmi_hdl, uint32_t service_id);
 

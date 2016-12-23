@@ -923,9 +923,7 @@ host_mem_req * (*extract_host_mem_req)(wmi_unified_t wmi_handle,
 	void *evt_buf, uint8_t *num_entries);
 
 QDF_STATUS (*init_cmd_send)(wmi_unified_t wmi_handle,
-		target_resource_config *res_cfg,
-		uint8_t num_mem_chunks,
-		struct wmi_host_mem_chunk *mem_chunk);
+				struct wmi_init_cmd_param *param);
 
 QDF_STATUS (*save_fw_version)(wmi_unified_t wmi_handle, void *evt_buf);
 uint32_t (*ready_extract_init_status)(wmi_unified_t wmi_hdl, void *ev);

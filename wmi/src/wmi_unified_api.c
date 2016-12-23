@@ -4578,21 +4578,17 @@ QDF_STATUS wmi_unified_set_psmode_cmd_send(void *wmi_hdl,
 /**
  * wmi_unified_init_cmd_send() - send initialization cmd to fw
  * @wmi_handle: wmi handle
- * @param tgt_res_cfg: pointer to target resource configuration
- * @param num_mem_chunks: Number of memory chunks
- * @param mem_chunks: pointer to target memory chunks
+ * @param param: pointer to wmi init param
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_unified_init_cmd_send(void *wmi_hdl,
-		target_resource_config *res_cfg, uint8_t num_mem_chunks,
-		struct wmi_host_mem_chunk *mem_chunk)
+				struct wmi_init_cmd_param *param)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
 	if (wmi_handle->ops->init_cmd_send)
-		return wmi_handle->ops->init_cmd_send(wmi_handle, res_cfg,
-				num_mem_chunks,	mem_chunk);
+		return wmi_handle->ops->init_cmd_send(wmi_handle, param);
 
 	return QDF_STATUS_E_FAILURE;
 }
