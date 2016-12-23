@@ -978,6 +978,12 @@ static const struct nl80211_vendor_cmd_info wlan_hdd_cfg80211_vendor_events[] = 
 		.subcmd =
 			QCA_NL80211_VENDOR_SUBCMD_LL_STATS_PEERS_RESULTS
 	},
+	[QCA_NL80211_VENDOR_SUBCMD_LL_STATS_EXT_INDEX] = {
+		.vendor_id =
+			QCA_NL80211_VENDOR_ID,
+		.subcmd =
+			QCA_NL80211_VENDOR_SUBCMD_LL_STATS_EXT
+	},
 #endif /* WLAN_FEATURE_LINK_LAYER_STATS */
 	[QCA_NL80211_VENDOR_SUBCMD_TDLS_STATE_CHANGE_INDEX] = {
 		.vendor_id =

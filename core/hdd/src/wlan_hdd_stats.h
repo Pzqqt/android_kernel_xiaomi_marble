@@ -220,5 +220,19 @@ void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
 
 void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
 						 int indType, void *pRsp);
+/**
+ * wlan_hdd_cfg80211_link_layer_stats_ext_callback() - Callback for LL ext
+ * @ctx: HDD context
+ * @rsp: msg from FW
+ *
+ * This function is an extension of
+ * wlan_hdd_cfg80211_link_layer_stats_callback. It converts
+ * monitoring parameters offloaded to NL data and send the same to the
+ * kernel/upper layers.
+ *
+ * Return: None.
+ */
+void wlan_hdd_cfg80211_link_layer_stats_ext_callback(tHddHandle ctx,
+						     tSirLLStatsResults *rsp);
 #endif /* end #if !defined(WLAN_HDD_STATS_H) */
 
