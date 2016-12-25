@@ -861,13 +861,13 @@ INIT_DEINIT_INC := -I$(WLAN_COMMON_INC)/$(INIT_DEINIT_INC_DIR)
 INIT_DEINIT_OBJS := $(INIT_DEINIT_OBJ_DIR)/dispatcher_init_deinit.o
 
 ############## Control path common scheduler ##########
-SCH_DIR := sch
-SCH_INC_DIR := $(SCH_DIR)/inc
-SCH_SRC_DIR := $(SCH_DIR)/src
-SCH_OBJ_DIR := $(WLAN_COMMON_ROOT)/$(SCH_SRC_DIR)
-SCH_INC := -I$(WLAN_COMMON_INC)/$(SCH_INC_DIR)
-SCH_OBJS := $(SCH_OBJ_DIR)/scheduler_api.o \
-            $(SCH_OBJ_DIR)/scheduler_core.o
+SCHEDULER_DIR := scheduler
+SCHEDULER_INC_DIR := $(SCHEDULER_DIR)/inc
+SCHEDULER_SRC_DIR := $(SCHEDULER_DIR)/src
+SCHEDULER_OBJ_DIR := $(WLAN_COMMON_ROOT)/$(SCHEDULER_SRC_DIR)
+SCHEDULER_INC := -I$(WLAN_COMMON_INC)/$(SCHEDULER_INC_DIR)
+SCHEDULER_OBJS := $(SCHEDULER_OBJ_DIR)/scheduler_api.o \
+                  $(SCHEDULER_OBJ_DIR)/scheduler_core.o
 
 
 ############## HTC ##########
@@ -1080,7 +1080,7 @@ INCS +=		$(WMA_INC) \
 		$(PKTLOG_INC) \
 		$(HTT_INC) \
 		$(INIT_DEINIT_INC) \
-		$(SCH_INC) \
+		$(SCHEDULER_INC) \
 		$(HTC_INC) \
 		$(DFS_INC) \
 		$(WCFG_INC) \
@@ -1126,7 +1126,7 @@ OBJS +=		$(WMA_OBJS) \
 		$(FWLOG_OBJS) \
 		$(HTC_OBJS) \
 		$(INIT_DEINIT_OBJS) \
-		$(SCH_OBJS) \
+		$(SCHEDULER_OBJS) \
 		$(DFS_OBJS)
 
 OBJS +=		$(HIF_OBJS) \
