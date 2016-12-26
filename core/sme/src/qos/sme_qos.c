@@ -3679,6 +3679,9 @@ static QDF_STATUS sme_qos_find_matching_tspec(tpAniSirGlobal mac_ctx,
 	uint8_t tspec_flow_index;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			FL("invoked on session %d"), sessionid);
+
 	for (tspec_flow_index = 0;
 	     tspec_flow_index < SME_QOS_TSPEC_INDEX_MAX; tspec_flow_index++) {
 		/*
@@ -3762,6 +3765,9 @@ static QDF_STATUS sme_qos_find_matching_tspec_lfr3(tpAniSirGlobal mac_ctx,
 	tDot11fIERICDataDesc *ric_data = NULL;
 	uint32_t ric_len;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			FL("invoked on session %d"), sessionid);
 
 	ric_data = ric_data_desc;
 	ric_len = ric_rsplen;
@@ -6411,7 +6417,7 @@ static QDF_STATUS sme_qos_process_buffered_cmd(uint8_t session_id)
 	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 	sme_QosCmdInfo *qos_cmd = NULL;
 
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 		  FL("Invoked on session %d"), session_id);
 	qos_session = &sme_qos_cb.sessionInfo[session_id];
 	if (!csr_ll_is_list_empty(&qos_session->bufferedCommandList, false)) {
@@ -6426,6 +6432,9 @@ static QDF_STATUS sme_qos_process_buffered_cmd(uint8_t session_id)
 		}
 		pcmd = GET_BASE_ADDR(list_elt, sme_QosCmdInfoEntry, link);
 		qos_cmd = &pcmd->cmdInfo;
+
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH,
+			  FL("Qos cmd %d"), qos_cmd->command);
 		switch (qos_cmd->command) {
 		case SME_QOS_SETUP_REQ:
 			hdd_status = sme_qos_internal_setup_req(
@@ -6697,6 +6706,9 @@ QDF_STATUS sme_qos_modify_fnp(tpAniSirGlobal pMac, tListElem *pEntry)
 		return QDF_STATUS_E_FAILURE;
 	}
 	flow_info = GET_BASE_ADDR(pEntry, sme_QosFlowInfoEntry, link);
+
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		  FL("reason %d"), flow_info->reason);
 	switch (flow_info->reason) {
 	case SME_QOS_REASON_MODIFY_PENDING:
 		/* set the proper reason code for the new (with modified params) entry */
@@ -7353,6 +7365,10 @@ void sme_qos_cleanup_ctrl_blk_for_handoff(tpAniSirGlobal pMac, uint8_t sessionId
 	sme_QosACInfo *pACInfo;
 	sme_QosEdcaAcType ac;
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
+
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		  FL("invoked on session %d"), sessionId);
+
 	for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
 		pACInfo = &pSession->ac_info[ac];
 		qdf_mem_zero(pACInfo->curr_QoSInfo,
@@ -7765,6 +7781,9 @@ static uint8_t sme_qos_assign_dialog_token(void)
 	} else {
 		sme_qos_cb.nextDialogToken++;
 	}
+
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		  FL("token %d"), token);
 	return token;
 }
 #endif /* WLAN_MDM_CODE_REDUCTION_OPT */
