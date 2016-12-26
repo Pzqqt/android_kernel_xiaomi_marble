@@ -6954,6 +6954,30 @@ struct wmi_host_ppe_threshold {
 	uint32_t ppet16_ppet8_ru3_ru0[WMI_HOST_MAX_NUM_SS];
 };
 
+/*
+ * HW mode config type replicated from FW header
+ * @WMI_HOST_HW_MODE_SINGLE: Only one PHY is active.
+ * @WMI_HOST_HW_MODE_DBS: Both PHYs are active in different bands,
+ *                        one in 2G and another in 5G.
+ * @WMI_HOST_HW_MODE_SBS_PASSIVE: Both PHYs are in passive mode (only rx) in
+ *                        same band; no tx allowed.
+ * @WMI_HOST_HW_MODE_SBS: Both PHYs are active in the same band.
+ *                        Support for both PHYs within one band is planned
+ *                        for 5G only(as indicated in WMI_MAC_PHY_CAPABILITIES),
+ *                        but could be extended to other bands in the future.
+ *                        The separation of the band between the two PHYs needs
+ *                        to be communicated separately.
+ * @WMI_HOST_HW_MODE_DBS_SBS: 3 PHYs, with 2 on the same band doing SBS
+ *                           as in WMI_HW_MODE_SBS, and 3rd on the other band
+ */
+enum wmi_host_hw_mode_config_type {
+	WMI_HOST_HW_MODE_SINGLE       = 0,
+	WMI_HOST_HW_MODE_DBS          = 1,
+	WMI_HOST_HW_MODE_SBS_PASSIVE  = 2,
+	WMI_HOST_HW_MODE_SBS          = 3,
+	WMI_HOST_HW_MODE_DBS_SBS      = 4,
+};
+
 /**
  * struct wmi_host_service_ext_param - EXT service base params in event
  * @default_conc_scan_config_bits: Default concurrenct scan config
@@ -6982,10 +7006,12 @@ struct wmi_host_service_ext_param {
  * @hw_mode_id: identify a particular set of HW characteristics,
  *              as specified by the subsequent fields
  * @phy_id_map: BIT0 represents phy_id 0, BIT1 represent phy_id 1 and so on
+ * @hw_mode_config_type: HW mode config type
  */
 struct wmi_host_hw_mode_caps {
 	uint32_t hw_mode_id;
 	uint32_t phy_id_map;
+	uint32_t hw_mode_config_type;
 };
 
 /**
@@ -6999,7 +7025,7 @@ struct wmi_host_hw_mode_caps {
  *        by hw_mode_id.
  * @pdev_id: pdev_id starts with 1. pdev_id 1 => phy_id 0, pdev_id 2 => phy_id 1
  * @phy_id: Starts with 0
- * @union of supported modulations
+ * @bitmap of supported modulations
  * @supported_bands: supported bands, enum WLAN_BAND_CAPABILITY
  * @ampdu_density: ampdu density 0 for no restriction, 1 for 1/4 us,
  *        2 for 1/2 us, 3 for 1 us,4 for 2 us, 5 for 4 us,
@@ -7037,15 +7063,12 @@ struct wmi_host_mac_phy_caps {
 	uint32_t hw_mode_id;
 	uint32_t pdev_id;
 	uint32_t phy_id;
-	union {
-		uint32_t supports_11b:1,
-			 supports_11g:1,
-			 supports_11a:1,
-			 supports_11n:1,
-			 supports_11ac:1,
-			 supports_11ax:1;
-		uint32_t supported_flags;
-	};
+	uint32_t supports_11b:1,
+		 supports_11g:1,
+		 supports_11a:1,
+		 supports_11n:1,
+		 supports_11ac:1,
+		 supports_11ax:1;
 	uint32_t supported_bands;
 	uint32_t ampdu_density;
 	uint32_t max_bw_supported_2G;

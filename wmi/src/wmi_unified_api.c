@@ -6514,14 +6514,17 @@ QDF_STATUS wmi_extract_hw_mode_cap_service_ready_ext(
  *       extract MAC phy cap from service ready event
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
- * @param param: Pointer to hold evt buf
- * @param hw_mode_idx: hw mode idx should be less than num_mode
+ * @param hw_mode_id: hw mode id of hw_mode_caps
+ * @param phy_id: phy_id within hw_mode_cap
+ * @param param: pointer to mac phy caps structure to hold the values from event
  *
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
 QDF_STATUS wmi_extract_mac_phy_cap_service_ready_ext(
 			void *wmi_hdl,
-			uint8_t *evt_buf, uint8_t hw_mode_idx,
+			uint8_t *evt_buf,
+			uint8_t hw_mode_id,
+			uint8_t phy_id,
 			struct wmi_host_mac_phy_caps *param)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
@@ -6529,7 +6532,7 @@ QDF_STATUS wmi_extract_mac_phy_cap_service_ready_ext(
 	if (wmi_handle->ops->extract_mac_phy_cap_service_ready_ext)
 		return wmi_handle->ops->extract_mac_phy_cap_service_ready_ext(
 				wmi_handle,
-				evt_buf, hw_mode_idx, param);
+				evt_buf, hw_mode_id, phy_id, param);
 
 	return QDF_STATUS_E_FAILURE;
 }

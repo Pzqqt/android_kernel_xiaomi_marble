@@ -12861,6 +12861,9 @@ static QDF_STATUS extract_hw_mode_cap_service_ready_ext_tlv(
 	param->hw_mode_id = param_buf->hw_mode_caps[hw_mode_idx].hw_mode_id;
 	param->phy_id_map = param_buf->hw_mode_caps[hw_mode_idx].phy_id_map;
 
+	param->hw_mode_config_type =
+		param_buf->hw_mode_caps[hw_mode_idx].hw_mode_config_type;
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -12871,37 +12874,61 @@ static QDF_STATUS extract_hw_mode_cap_service_ready_ext_tlv(
  * @param evt_buf: pointer to event buffer
  * @param param: Pointer to hold evt buf
  * @param hw_mode_idx: hw mode idx should be less than num_mode
+ * @param phy_id: phy id within hw_mode
  *
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
 static QDF_STATUS extract_mac_phy_cap_service_ready_ext_tlv(
 			wmi_unified_t wmi_handle,
-			uint8_t *event, uint8_t hw_mode_idx,
+			uint8_t *event, uint8_t hw_mode_id, uint8_t phy_id,
 			struct wmi_host_mac_phy_caps *param)
 {
 	WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *param_buf;
-	WMI_SOC_MAC_PHY_HW_MODE_CAPS *hw_caps;
 	WMI_MAC_PHY_CAPABILITIES *mac_phy_caps;
+	WMI_SOC_MAC_PHY_HW_MODE_CAPS *hw_caps;
+	uint32_t phy_map;
+	uint8_t hw_idx, phy_idx = 0;
 
 	param_buf = (WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *) event;
 	if (!param_buf)
 		return -EINVAL;
 
 	hw_caps = param_buf->soc_hw_mode_caps;
-	if (hw_mode_idx >= hw_caps->num_hw_modes)
+	for (hw_idx = 0; hw_idx < hw_caps->num_hw_modes; hw_idx++) {
+		if (hw_mode_id == param_buf->hw_mode_caps[hw_idx].hw_mode_id)
+			break;
+
+		phy_map = param_buf->hw_mode_caps[hw_idx].phy_id_map;
+		while (phy_map) {
+			phy_map >>= 1;
+			phy_idx++;
+		}
+	}
+
+	if (hw_idx == hw_caps->num_hw_modes)
 		return -EINVAL;
 
-	mac_phy_caps = &param_buf->mac_phy_caps[hw_mode_idx];
+	phy_idx += phy_id;
+	if (phy_idx >= param_buf->num_mac_phy_caps)
+		return -EINVAL;
+
+	mac_phy_caps = &param_buf->mac_phy_caps[phy_idx];
 
 	param->hw_mode_id = mac_phy_caps->hw_mode_id;
 	param->pdev_id = mac_phy_caps->pdev_id;
 	param->phy_id = mac_phy_caps->phy_id;
-	param->supports_11b = mac_phy_caps->supports_11b;
-	param->supports_11g = mac_phy_caps->supports_11g;
-	param->supports_11a = mac_phy_caps->supports_11a;
-	param->supports_11n = mac_phy_caps->supports_11n;
-	param->supports_11ac = mac_phy_caps->supports_11ac;
-	param->supports_11ax = mac_phy_caps->supports_11ax;
+	param->supports_11b =
+			WMI_SUPPORT_11B_GET(mac_phy_caps->supported_flags);
+	param->supports_11g =
+			WMI_SUPPORT_11G_GET(mac_phy_caps->supported_flags);
+	param->supports_11a =
+			WMI_SUPPORT_11A_GET(mac_phy_caps->supported_flags);
+	param->supports_11n =
+			WMI_SUPPORT_11N_GET(mac_phy_caps->supported_flags);
+	param->supports_11ac =
+			WMI_SUPPORT_11AC_GET(mac_phy_caps->supported_flags);
+	param->supports_11ax =
+			WMI_SUPPORT_11AX_GET(mac_phy_caps->supported_flags);
 
 	param->supported_bands = mac_phy_caps->supported_bands;
 	param->ampdu_density = mac_phy_caps->ampdu_density;
