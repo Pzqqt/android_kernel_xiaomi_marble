@@ -916,6 +916,11 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac, void *pMsg
 		     (uint8_t *) &pBeaconReq->measurementDuration,
 		     SIR_ESE_MAX_MEAS_IE_REQS);
 
+	sms_log(pMac, LOG1,
+		FL("token %d regClass %d randnIntvl %d msgSource %d"),
+		pSmeRrmContext->token, pSmeRrmContext->regClass,
+		pSmeRrmContext->randnIntvl, pSmeRrmContext->msgSource);
+
 	status = sme_rrm_issue_scan_req(pMac);
 
 	return status;

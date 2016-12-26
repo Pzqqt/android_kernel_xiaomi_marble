@@ -4271,6 +4271,9 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 		return eSIR_FAILURE;
 	}
 
+	lim_log(pMac, LOG1, FL("dialog_token %d num_report %d"),
+			dialog_token, num_report);
+
 	frm->Category.category = SIR_MAC_ACTION_RRM;
 	frm->Action.action = SIR_MAC_RRM_RADIO_MEASURE_RPT;
 	frm->DialogToken.token = dialog_token;
