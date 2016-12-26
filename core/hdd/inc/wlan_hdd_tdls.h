@@ -380,8 +380,6 @@ struct tdls_set_state_info {
  * @discovery_sent_cnt: discovery sent count
  * @ap_rssi: ap rssi
  * @curr_candidate: current candidate
- * @ct_peer_mac_table: linear mac address table for counting the packets
- * @valid_mac_entries: number of valid mac entry in @ct_peer_mac_table
  * @magic: magic
  * @last_flush_ts: last timestamp when flush logs was displayed.
  *
@@ -396,8 +394,6 @@ typedef struct {
 	uint32_t discovery_sent_cnt;
 	int8_t ap_rssi;
 	struct _hddTdlsPeer_t *curr_candidate;
-	struct tdls_ct_mac_table ct_peer_mac_table[TDLS_CT_MAC_MAX_TABLE_SIZE];
-	uint8_t valid_mac_entries;
 	uint32_t magic;
 	uint64_t last_flush_ts;
 } tdlsCtx_t;

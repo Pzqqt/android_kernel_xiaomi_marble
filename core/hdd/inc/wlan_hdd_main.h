@@ -1392,6 +1392,10 @@ struct hdd_context_s {
 	tdls_scan_context_t tdls_scan_ctxt;
 	/* Lock to avoid race condition during TDLS operations */
 	qdf_spinlock_t tdls_ct_spinlock;
+	/* linear mac address table for counting the packets */
+	struct tdls_ct_mac_table ct_peer_mac_table[TDLS_CT_MAC_MAX_TABLE_SIZE];
+	/* number of valid mac entry in @ct_peer_mac_table */
+	uint8_t valid_mac_entries;
 	struct mutex tdls_lock;
 	uint8_t tdls_off_channel;
 	uint16_t tdls_channel_offset;
