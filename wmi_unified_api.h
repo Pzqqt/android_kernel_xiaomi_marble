@@ -1354,7 +1354,9 @@ QDF_STATUS wmi_extract_hw_mode_cap_service_ready_ext(
 			struct wmi_host_hw_mode_caps *param);
 QDF_STATUS wmi_extract_mac_phy_cap_service_ready_ext(
 			void *wmi_hdl,
-			uint8_t *evt_buf, uint8_t hw_mode_idx,
+			uint8_t *evt_buf,
+			uint8_t hw_mode_id,
+			uint8_t phy_id,
 			struct wmi_host_mac_phy_caps *param);
 QDF_STATUS wmi_extract_reg_cap_service_ready_ext(
 			void *wmi_hdl,

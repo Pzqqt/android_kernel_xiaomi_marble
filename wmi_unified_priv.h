@@ -1203,7 +1203,9 @@ QDF_STATUS (*extract_hw_mode_cap_service_ready_ext)(
 
 QDF_STATUS (*extract_mac_phy_cap_service_ready_ext)(
 			wmi_unified_t wmi_handle,
-			uint8_t *evt_buf, uint8_t hw_mode_idx,
+			uint8_t *evt_buf,
+			uint8_t hw_mode_id,
+			uint8_t phy_id,
 			struct wmi_host_mac_phy_caps *param);
 
 QDF_STATUS (*extract_reg_cap_service_ready_ext)(
