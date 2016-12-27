@@ -620,6 +620,24 @@ static const struct ccp_freq_chan_map freq_chan_map[] = {
  * </ioctl>
  */
 #define  WE_PPS_RSSI_CHECK              53
+/*
+ * <ioctl>
+ * setAutoChannel - set ACS enable/disable
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT:  None
+ *
+ * This IOCTL is used to set SAP ACS eanble/disable
+ *
+ * @E.g: iwpriv wlan0 setAutoChannel 0
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_SAP_AUTO_CHANNEL_SELECTION     54
 /*
  * <ioctl>
