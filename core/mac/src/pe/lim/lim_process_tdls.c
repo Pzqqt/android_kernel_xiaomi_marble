@@ -3014,6 +3014,7 @@ void lim_send_sme_tdls_link_establish_req_rsp(tpAniSirGlobal pMac,
 		lim_log(pMac, LOGE, FL("Failed to allocate memory"));
 		return;
 	}
+	lim_log(pMac, LOG1, FL("Send Resp to TDL Link Establish Req to SME"));
 	pTdlsLinkEstablishReqRsp->statusCode = status;
 	if (peermac)
 		qdf_copy_macaddr(&pTdlsLinkEstablishReqRsp->peermac, peermac);
@@ -3258,7 +3259,7 @@ tSirRetStatus lim_process_sme_tdls_link_establish_req(tpAniSirGlobal mac_ctx,
 	uint8_t self_supp_chan[WNI_CFG_VALID_CHANNEL_LIST_LEN];
 
 	QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
-		  FL("Send Mgmt Recieved"));
+		  FL("Process TDLS Link Establishment Request from SME"));
 
 	session_entry = pe_find_session_by_bssid(mac_ctx, tdls_req->bssid.bytes,
 						 &session_id);
@@ -3397,6 +3398,7 @@ tSirRetStatus lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
 	 * (with that aid) entry from the hash table and add the aid
 	 * in free pool
 	 */
+	lim_log(mac_ctx, LOGE, FL("Delete all the TDLS peer connected."));
 	for (i = 0; i < aid_bitmap_size / sizeof(uint32_t); i++) {
 		for (aid = 0; aid < (sizeof(uint32_t) << 3); aid++) {
 			if (!CHECK_BIT(session_entry->peerAIDBitmap[i], aid))

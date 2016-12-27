@@ -106,6 +106,7 @@ static void wlan_hdd_tdls_determine_channel_opclass(hdd_context_t *hddctx,
 		*channel = curr_peer->pref_off_chan_num;
 		*opclass = curr_peer->op_class_for_pref_off_chan;
 	}
+	hdd_info("channel:%d opclass:%d", *channel, *opclass);
 }
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
@@ -1096,6 +1097,7 @@ void wlan_hdd_tdls_set_peer_link_status(hddTdlsPeer_t *curr_peer,
 		hdd_adapter_t *adapter = curr_peer->pHddTdlsCtx->pAdapter;
 		curr_peer->reason = reason;
 
+		hdd_info("Peer is forced and the reason:%d", reason);
 		wlan_hdd_tdls_determine_channel_opclass(pHddCtx, adapter,
 					curr_peer, &channel, &opclass);
 
@@ -1544,6 +1546,7 @@ static void wlan_tdd_tdls_reset_tx_rx(tdlsCtx_t *pHddTdlsCtx)
  */
 static void wlan_hdd_tdls_implicit_disable(tdlsCtx_t *pHddTdlsCtx)
 {
+	hdd_info("Disable Implicit TDLS");
 	wlan_hdd_tdls_timers_stop(pHddTdlsCtx);
 }
 
@@ -1555,6 +1558,7 @@ static void wlan_hdd_tdls_implicit_disable(tdlsCtx_t *pHddTdlsCtx)
  */
 static void wlan_hdd_tdls_implicit_enable(tdlsCtx_t *pHddTdlsCtx)
 {
+	hdd_info("Enable Implicit TDLS");
 	wlan_hdd_tdls_peer_reset_discovery_processed(pHddTdlsCtx);
 	pHddTdlsCtx->discovery_sent_cnt = 0;
 	wlan_tdd_tdls_reset_tx_rx(pHddTdlsCtx);
@@ -2558,11 +2562,10 @@ void wlan_hdd_tdls_decrement_peer_count(hdd_adapter_t *pAdapter)
 		pHddCtx->connected_peer_count--;
 	wlan_hdd_tdls_check_power_save_prohibited(pAdapter);
 
-	hdd_notice("Connected peer count %d", pHddCtx->connected_peer_count);
-
 	connected_peer_count = pHddCtx->connected_peer_count;
-
 	mutex_unlock(&pHddCtx->tdls_lock);
+
+	hdd_notice("Connected peer count %d", connected_peer_count);
 
 	if (connected_peer_count == 0 &&
 	    pHddCtx->concurrency_marked) {
@@ -4576,6 +4579,7 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 		if (eTDLS_LINK_CONNECTED != pTdlsPeer->link_status) {
 			if (IS_ADVANCE_TDLS_ENABLE) {
 
+				hdd_info("Advance TDLS is enabled");
 				if (0 !=
 				    wlan_hdd_tdls_get_link_establish_params
 					    (pAdapter, peer,
@@ -4776,6 +4780,7 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 						    SME_AC_BK,
 						    SME_AC_BE};
 				uint8_t tlTid[4] = { 7, 5, 2, 3 };
+				hdd_info("Update TL about UAPSD masks");
 				for (ac = 0; ac < 4; ac++) {
 					status = sme_enable_uapsd_for_ac(
 						 (WLAN_HDD_GET_CTX(pAdapter))->pcds_context,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1171,6 +1171,9 @@ lim_send_sme_tdls_del_sta_ind(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 				("AllocateMemory failed for eWNI_SME_TDLS_DEL_STA_IND "));
 		return;
 	}
+	lim_log(pMac, LOG1, FL("Delete TDLS Peer "MAC_ADDRESS_STR
+				  "with reason code %d"),
+			MAC_ADDR_ARRAY(pStaDs->staAddr), reasonCode);
 	/* messageType */
 	pSirTdlsDelStaInd->messageType = eWNI_SME_TDLS_DEL_STA_IND;
 	pSirTdlsDelStaInd->length = sizeof(tSirTdlsDelStaInd);
