@@ -374,12 +374,6 @@ int hdd_set_tx_stbc(hdd_adapter_t *adapter, int value);
 int hdd_get_rx_stbc(hdd_adapter_t *adapter, int *value);
 int hdd_set_rx_stbc(hdd_adapter_t *adapter, int value);
 
-#ifdef FEATURE_WLAN_TDLS
-QDF_STATUS iw_set_tdls_params(struct net_device *dev,
-			      struct iw_request_info *info,
-			      union iwreq_data *wrqu, char *extra, int nOffset);
-#endif
-
 void wlan_hdd_change_country_code_callback(void *pAdapter);
 
 int hdd_set_band(struct net_device *dev, u8 ui_band);

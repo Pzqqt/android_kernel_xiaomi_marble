@@ -511,12 +511,7 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter);
 
 void wlan_hdd_tdls_exit(hdd_adapter_t *pAdapter);
 
-void wlan_hdd_tdls_extract_da(struct sk_buff *skb, uint8_t *mac);
-
 void wlan_hdd_tdls_extract_sa(struct sk_buff *skb, uint8_t *mac);
-
-int wlan_hdd_tdls_increment_pkt_count(hdd_adapter_t *pAdapter,
-				      const uint8_t *mac, uint8_t tx);
 
 int wlan_hdd_tdls_set_sta_id(hdd_adapter_t *pAdapter, const uint8_t *mac,
 			     uint8_t staId);

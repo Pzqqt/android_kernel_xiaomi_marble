@@ -1437,38 +1437,6 @@ void wlan_hdd_tdls_extract_sa(struct sk_buff *skb, uint8_t *mac)
 }
 
 /**
- * wlan_hdd_tdls_increment_pkt_count() - update statistics counter on tdls peer
- * @pAdapter: HDD adapter
- * @mac: MAC address of the TDLS peer
- * @tx: If 1, increment tx packet counter, if 0, increment rx packet counter
- *
- * Return: 0 for success or negative errno otherwise
- */
-int wlan_hdd_tdls_increment_pkt_count(hdd_adapter_t *pAdapter,
-				      const uint8_t *mac, uint8_t tx)
-{
-	hddTdlsPeer_t *curr_peer;
-	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-
-	if (eTDLS_SUPPORT_ENABLED != pHddCtx->tdls_mode &&
-	    eTDLS_SUPPORT_EXTERNAL_CONTROL != pHddCtx->tdls_mode)
-		return -EINVAL;
-
-	curr_peer = wlan_hdd_tdls_get_peer(pAdapter, mac, true);
-	if (curr_peer == NULL) {
-		hdd_err("curr_peer is NULL");
-		return -EINVAL;
-	}
-
-	if (tx)
-		curr_peer->tx_pkt++;
-	else
-		curr_peer->rx_pkt++;
-
-	return 0;
-}
-
-/**
  * wlan_hdd_tdls_check_config() - validate tdls configuration parameters
  * @config: tdls configuration parameter structure
  *
