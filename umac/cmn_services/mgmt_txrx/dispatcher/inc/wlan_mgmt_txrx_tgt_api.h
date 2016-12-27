@@ -1,0 +1,109 @@
+/*
+ * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for
+ * any purpose with or without fee is hereby granted, provided that the
+ * above copyright notice and this permission notice appear in all
+ * copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+ * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#ifndef _WLAN_MGMT_TXRX_TGT_API_H_
+#define _WLAN_MGMT_TXRX_TGT_API_H_
+
+/**
+ * DOC:  wlan_mgmt_txrx_tgt_api.h
+ *
+ * management tx/rx layer public API and structures for
+ * umac southbound interface.
+ *
+ */
+
+#include "wlan_objmgr_cmn.h"
+#include "qdf_nbuf.h"
+
+
+/**
+ * tgt_mgmt_txrx_rx_frame_handler() - handles rx mgmt. frames
+ * @psoc: psoc context
+ * @buf: buffer
+ * @params: rx event params
+ *
+ * This function handles mgmt. rx frames and is registered to southbound
+ * interface through rx ops.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
+			struct wlan_objmgr_psoc *psoc,
+			qdf_nbuf_t buf, void *params);
+
+/**
+ * tgt_mgmt_txrx_tx_completion_handler() - handles mgmt. tx completions
+ * @psoc: psoc context
+ * @desc_id: mgmt desc. id
+ * @status: status of download of tx packet
+ * @tx_compl_params: tx completion params
+ *
+ * This function handles tx completions of mgmt. frames and is registered to
+ * LMAC_if layer through lmac_if cbs.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS tgt_mgmt_txrx_tx_completion_handler(
+			struct wlan_objmgr_psoc *psoc,
+			uint32_t desc_id, uint32_t status,
+			void *tx_compl_params);
+
+/**
+ * tgt_mgmt_txrx_get_nbuf_from_desc_id() - extracts nbuf from mgmt desc
+ * @psoc: psoc context
+ * @desc_id: desc_id
+ *
+ * This function extracts nbuf from mgmt desc extracted from desc id.
+ *
+ * Return: nbuf - in case of success
+ *         NULL - in case of failure
+ */
+qdf_nbuf_t tgt_mgmt_txrx_get_nbuf_from_desc_id(
+			struct wlan_objmgr_psoc *psoc,
+			uint32_t desc_id);
+
+/**
+ * tgt_mgmt_txrx_get_peer_from_desc_id() - extracts peer from mgmt desc
+ * @psoc: psoc context
+ * @desc_id: desc_id
+ *
+ * This function extracts peer from mgmt desc extracted from desc id.
+ *
+ * Return: peer - in case of success
+ *         NULL - in case of failure
+ */
+struct wlan_objmgr_peer *
+tgt_mgmt_txrx_get_peer_from_desc_id(
+			struct wlan_objmgr_psoc *psoc,
+			uint32_t desc_id);
+
+/**
+ * tgt_mgmt_txrx_get_vdev_id_from_desc_id() - extracts vdev id from mgmt desc
+ * @psoc: psoc context
+ * @desc_id: desc_id
+ *
+ * This function extracts vdev id from mgmt desc extracted from desc id.
+ *
+ * Return: vdev_id - in case of success
+ *         0 - in case of failure
+ */
+uint8_t tgt_mgmt_txrx_get_vdev_id_from_desc_id(
+			struct wlan_objmgr_psoc *psoc,
+			uint32_t desc_id);
+
+#endif
