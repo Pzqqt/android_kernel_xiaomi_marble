@@ -443,17 +443,51 @@ failure:
 }
 
 /**
- * dp_tx_prepare_send_raw() - Prepare RAW packet TX
+ * dp_tx_prepare_raw() - Prepare RAW packet TX
  * @vdev: DP vdev handle
  * @nbuf: buffer pointer
+ * @seg_info: Pointer to Segment info Descriptor to be prepared
  * @msdu_info: MSDU info to be setup in MSDU descriptor and MSDU extension
  *     descriptor
  *
  * Return:
  */
 static qdf_nbuf_t dp_tx_prepare_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
-				    struct dp_tx_msdu_info_s *msdu_info)
+	struct dp_tx_seg_info_s *seg_info, struct dp_tx_msdu_info_s *msdu_info)
 {
+	qdf_nbuf_t curr_nbuf = NULL;
+	uint16_t total_len = 0;
+	int32_t i;
+
+	struct dp_tx_sg_info_s *sg_info = &msdu_info->u.sg_info;
+
+	if (QDF_STATUS_SUCCESS != qdf_nbuf_map_nbytes_single(vdev->osdev, nbuf,
+				QDF_DMA_TO_DEVICE,
+				qdf_nbuf_len(nbuf))) {
+		qdf_print("dma map error\n");
+		qdf_nbuf_free(nbuf);
+		return NULL;
+	}
+
+	for (curr_nbuf = nbuf, i = 0; curr_nbuf;
+				curr_nbuf = qdf_nbuf_next(nbuf), i++) {
+		seg_info->frags[i].paddr_lo =
+			qdf_nbuf_get_frag_paddr(curr_nbuf, 0);
+		seg_info->frags[i].paddr_hi = 0x0;
+		seg_info->frags[i].len = qdf_nbuf_len(curr_nbuf);
+		seg_info->frags[i].vaddr = (void *) curr_nbuf;
+		total_len += qdf_nbuf_len(curr_nbuf);
+	}
+
+	seg_info->frag_cnt = i;
+	seg_info->total_len = total_len;
+	seg_info->next = NULL;
+
+	sg_info->curr_seg = seg_info;
+
+	msdu_info->frm_type = dp_tx_frm_raw;
+	msdu_info->num_seg = 1;
+
 	return nbuf;
 }
 
@@ -913,7 +947,9 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 
 	/* RAW */
 	if (qdf_unlikely(vdev->tx_encap_type == htt_pkt_type_raw)) {
-		nbuf = dp_tx_prepare_raw(vdev, nbuf, &msdu_info);
+		nbuf = dp_tx_prepare_raw(vdev, nbuf, &seg_info, &msdu_info);
+		if (nbuf == NULL)
+			return NULL;
 
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s Raw frame %p\n", __func__, vdev);
