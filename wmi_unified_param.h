@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -7070,5 +7070,18 @@ typedef struct {
 	uint8_t board_mcn_detail[WMI_HOST_BOARD_MCN_STRING_BUF_SIZE];
 	uint32_t cal_ok; /* filled with CALIBRATION_STATUS enum value */
 } wmi_host_pdev_check_cal_version_event;
+
+/**
+ * enum WMI_HOST_CALIBRATION_STATUS - Host defined Enums for cal status
+ * @WMI_HOST_NO_FEATURE: The board was calibrated with a meta
+ *                       which did not have this feature
+ * @WMI_HOST_CALIBRATION_OK: The calibration status is OK
+ * @WMI_HOST_CALIBRATION_NOT_OK: The calibration status is NOT OK
+ */
+enum WMI_HOST_CALIBRATION_STATUS {
+	WMI_HOST_NO_FEATURE = 0,
+	WMI_HOST_CALIBRATION_OK,
+	WMI_HOST_CALIBRATION_NOT_OK,
+};
 
 #endif /* _WMI_UNIFIED_PARAM_H_ */
