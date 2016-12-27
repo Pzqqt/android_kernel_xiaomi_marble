@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -198,9 +198,20 @@ tSirRetStatus sch_send_beacon_req(tpAniSirGlobal pMac, uint8_t *beaconPayload,
 	tSirRetStatus retCode;
 
 	sch_log(pMac, LOG2,
-		FL
-			("Indicating HAL to copy the beacon template [%d bytes] to memory"),
+		FL("Indicating HAL to copy the beacon template [%d bytes] to memory"),
 		size);
+
+	if (LIM_IS_AP_ROLE(psessionEntry) &&
+	   (pMac->sch.schObject.fBeaconChanged)) {
+		retCode = lim_send_probe_rsp_template_to_hal(pMac,
+				psessionEntry,
+				&psessionEntry->DefProbeRspIeBitmap[0]);
+		if (eSIR_SUCCESS != retCode) {
+			sch_log(pMac, LOGE,
+				FL("FAILED to send probe response template with retCode %d"),
+				retCode);
+		}
+	}
 
 	beaconParams = qdf_mem_malloc(sizeof(tSendbeaconParams));
 	if (NULL == beaconParams)
@@ -266,22 +277,6 @@ tSirRetStatus sch_send_beacon_req(tpAniSirGlobal pMac, uint8_t *beaconPayload,
 	} else {
 		sch_log(pMac, LOG2,
 			FL("Successfully posted WMA_SEND_BEACON_REQ to HAL"));
-
-		if (LIM_IS_AP_ROLE(psessionEntry) &&
-		   (pMac->sch.schObject.fBeaconChanged)) {
-			retCode = lim_send_probe_rsp_template_to_hal(pMac,
-								     psessionEntry,
-								     &psessionEntry->
-								     DefProbeRspIeBitmap
-								     [0]);
-			if (eSIR_SUCCESS != retCode) {
-				/* check whether we have to free any memory */
-				sch_log(pMac, LOGE,
-					FL
-						("FAILED to send probe response template with retCode %d"),
-					retCode);
-			}
-		}
 	}
 
 	return retCode;
