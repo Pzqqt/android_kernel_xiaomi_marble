@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -6144,8 +6144,11 @@ QDF_STATUS extract_pdev_caldata_version_check_ev_param_non_tlv(
 	param->board_cal_version = event->board_cal_version;
 	param->cal_ok = event->cal_ok;
 
-	qdf_mem_copy(param->board_mcn_detail, event->board_mcn_detail,
-				sizeof(param->board_mcn_detail));
+	if (event->board_mcn_detail[WMI_BOARD_MCN_STRING_MAX_SIZE] != '\0')
+		event->board_mcn_detail[WMI_BOARD_MCN_STRING_MAX_SIZE] = '\0';
+
+	WMI_HOST_IF_MSG_COPY_CHAR_ARRAY(param->board_mcn_detail,
+		event->board_mcn_detail, WMI_BOARD_MCN_STRING_BUF_SIZE);
 
 	return QDF_STATUS_SUCCESS;
 }
