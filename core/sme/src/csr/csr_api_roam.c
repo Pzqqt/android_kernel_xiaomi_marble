@@ -4812,6 +4812,8 @@ QDF_STATUS csr_roam_stop_network(tpAniSirGlobal pMac, uint32_t sessionId,
 	if (NULL == pBssConfig)
 		return QDF_STATUS_E_NOMEM;
 
+	sms_log(pMac, LOG1, FL("session id %d "), sessionId);
+
 	status = csr_roam_prepare_bss_config(pMac, pProfile, pBssDesc,
 			pBssConfig, pIes);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -6009,6 +6011,7 @@ static QDF_STATUS csr_roam_save_security_rsp_ie(tpAniSirGlobal pMac,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	sms_log(pMac, LOG1, FL("authType %d session %d"), authType, sessionId);
 	if ((eCSR_AUTH_TYPE_WPA == authType) ||
 		(eCSR_AUTH_TYPE_WPA_PSK == authType) ||
 		(eCSR_AUTH_TYPE_RSN == authType) ||
@@ -8298,6 +8301,8 @@ QDF_STATUS csr_roam_save_connected_infomation(tpAniSirGlobal pMac,
 			  FL("session %d not found"), sessionId);
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	sms_log(pMac, LOG1, FL("session id %d"), sessionId);
 	pConnectProfile = &pSession->connectedProfile;
 	if (pConnectProfile->pAddIEAssoc) {
 		qdf_mem_free(pConnectProfile->pAddIEAssoc);
@@ -9597,6 +9602,9 @@ QDF_STATUS csr_roam_issue_set_context_req(tpAniSirGlobal pMac,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tAniEdType edType;
+
+	sms_log(pMac, LOG1,
+		FL("sessionId %d EncryptType %d"), sessionId, EncryptType);
 
 	if (eCSR_ENCRYPT_TYPE_UNKNOWN == EncryptType) {
 		EncryptType = eCSR_ENCRYPT_TYPE_NONE;
@@ -19832,6 +19840,8 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 		sme_release_global_lock(&mac_ctx->sme);
 		return;
 	}
+
+	sms_log(mac_ctx, LOG1, FL("LFR3: reason: %d"), reason);
 	switch (reason) {
 	case SIR_ROAMING_DEREGISTER_STA:
 		csr_roam_call_callback(mac_ctx, session_id, NULL, 0,
@@ -20076,6 +20086,14 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	}
 	conn_profile->dot11Mode = session->bssParams.uCfgDot11Mode;
 	roam_info->u.pConnectedProfile = conn_profile;
+
+	sms_log(mac_ctx, LOG1,
+		FL("vht ch width %d staId %d nss %d rate_flag %d dot11Mode %d"),
+		conn_profile->vht_channel_width,
+		roam_info->staId,
+		roam_info->chan_info.nss,
+		roam_info->chan_info.rate_flags,
+		conn_profile->dot11Mode);
 
 	if (!IS_FEATURE_SUPPORTED_BY_FW
 			(SLM_SESSIONIZATION) &&

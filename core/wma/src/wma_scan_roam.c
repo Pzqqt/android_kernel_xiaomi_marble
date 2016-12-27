@@ -2130,6 +2130,15 @@ static void wma_fill_roam_synch_buffer(tp_wma_handle wma,
 	roam_synch_ind_ptr->isBeacon = synch_event->is_beacon;
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&synch_event->bssid,
 				   roam_synch_ind_ptr->bssid.bytes);
+	WMA_LOGI("%s: roamedVdevId %d authStatus %d roamReason %d rssi %d"
+		 "isBeacon %d",
+		__func__,
+		roam_synch_ind_ptr->roamedVdevId,
+		roam_synch_ind_ptr->authStatus,
+		roam_synch_ind_ptr->roamReason,
+		roam_synch_ind_ptr->rssi,
+		roam_synch_ind_ptr->isBeacon);
+
 	wma->csr_roam_synch_cb((tpAniSirGlobal)wma->mac_context,
 		roam_synch_ind_ptr, NULL, SIR_ROAMING_DEREGISTER_STA);
 	/* Beacon/Probe Rsp data */
