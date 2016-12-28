@@ -22,6 +22,8 @@
 #ifndef _WLAN_CMN_H_
 #define _WLAN_CMN_H_
 
+#include <qdf_types.h>
+
 /* Max no of UMAC components */
 #define WLAN_UMAC_MAX_COMPONENTS 25
 /* Max no. of radios, a pSoc/Device can support */
@@ -75,9 +77,11 @@
 /**
  * enum wlan_umac_comp_id - UMAC component id
  * @WLAN_UMAC_COMP_MLME:     MLME
- * @WLAN_UMAC_COMP_SCAN:     SCAN MGR
  * @WLAN_UMAC_COMP_MGMT_TXRX:   MGMT Tx/Rx
  * @WLAN_UMAC_COMP_SERIALIZATION: Serialization
+ * @WLAN_UMAC_COMP_SCAN: SCAN - as scan module uses services provided by
+ *                       MLME, MGMT_TXRX and SERIALIZATION, SCAN module
+ *                       must be initializes after above modules.
  * @WLAN_UMAC_COMP_PMO:         PMO component
  * @WLAN_UMAC_COMP_P2P:      P2P
  * @WLAN_UMAC_COMP_ID_MAX: Maximum components in UMAC
@@ -87,9 +91,9 @@
  */
 enum wlan_umac_comp_id {
 	WLAN_UMAC_COMP_MLME           = 0,
-	WLAN_UMAC_COMP_SCAN           = 1,
-	WLAN_UMAC_COMP_MGMT_TXRX      = 2,
-	WLAN_UMAC_COMP_SERIALIZATION  = 3,
+	WLAN_UMAC_COMP_MGMT_TXRX      = 1,
+	WLAN_UMAC_COMP_SERIALIZATION  = 2,
+	WLAN_UMAC_COMP_SCAN           = 3,
 	WLAN_UMAC_COMP_PMO            = 4,
 	WLAN_UMAC_COMP_P2P            = 5,
 	WLAN_UMAC_COMP_ID_MAX,
@@ -171,6 +175,126 @@ enum wlan_peer_type {
 	WLAN_PEER_NAWDS    = 5,
 	WLAN_PEER_STA_TEMP = 6,
 	WLAN_PEER_IBSS     = 7,
+};
+
+/**
+ * enum wlan_band - specifies operating channel band
+ * @WLAN_BAND_ALL: Any band
+ * @WLAN_BAND_2_4_GHZ: 2.4 GHz band
+ * @WLAN_BAND_5_GHZ: 5 GHz band
+ * @WLAN_BAND_4_9_GHZ: 4.9 GHz band
+ */
+enum wlan_band {
+	WLAN_BAND_ALL,
+	WLAN_BAND_2_4_GHZ,
+	WLAN_BAND_5_GHZ,
+	WLAN_BAND_4_9_GHZ,
+};
+
+/**
+ * enum wlan_bss_type - type of network
+ * @WLAN_TYPE_ANY: Default value
+ * @WLAN_TYPE_BSS: Type BSS
+ * @WLAN_TYPE_IBSS: Type IBSS
+ */
+enum wlan_bss_type {
+	WLAN_TYPE_ANY,
+	WLAN_TYPE_BSS,
+	WLAN_TYPE_IBSS,
+};
+
+/**
+ * enum wlan_pmf_cap: pmf capability
+ * @PMF_DISABLED: PMF is disabled
+ * @PMF_CAPABLE: PMF is supported
+ * @PMF_REQUIRED: PMF is mandatory
+ */
+enum wlan_pmf_cap {
+	WLAN_PMF_DISABLED,
+	WLAN_PMF_CAPABLE,
+	WLAN_PMF_REQUIRED,
+};
+
+/**
+ * enum wlan_auth_type - Enumeration of the various Auth types
+ * @WLAN_AUTH_TYPE_OPEN_SYSTEM: Open auth type
+ * @WLAN_AUTH_TYPE_SHARED_KEY: Shared Key Auth type
+ * @WLAN_AUTH_TYPE_AUTOSWITCH: Auto switch Open/Shared
+ * @WLAN_AUTH_TYPE_WPA: WPA Enterprise
+ * @WLAN_AUTH_TYPE_WPA_PSK: WPA PSK
+ * @WLAN_AUTH_TYPE_WPA_NONE: WPA None
+ * @WLAN_AUTH_TYPE_RSN: RSN Enterprise
+ * @WLAN_AUTH_TYPE_RSN_PSK: RSN PSK
+ * @WLAN_AUTH_TYPE_FT_RSN: FT RSN Enterprise
+ * @WLAN_AUTH_TYPE_FT_RSN_PSK: FT RSN PSK
+ * @WLAN_AUTH_TYPE_WAPI_WAI_CERTIFICATE: WAPI certificate
+ * @WLAN_AUTH_TYPE_WAPI_WAI_PSK: WAPI PSK
+ * @WLAN_AUTH_TYPE_CCKM_WPA: CCKM WPA
+ * @WLAN_AUTH_TYPE_CCKM_RSN: CCKM RSN
+ * @WLAN_AUTH_TYPE_RSN_PSK_SHA256: SHA256 PSK
+ * @WLAN_AUTH_TYPE_RSN_8021X_SHA256: SHA256 Enterprise
+ * @WLAN_NUM_OF_SUPPORT_AUTH_TYPE: Max no of Auth type
+ */
+enum wlan_auth_type {
+	WLAN_AUTH_TYPE_OPEN_SYSTEM,
+	WLAN_AUTH_TYPE_SHARED_KEY,
+	WLAN_AUTH_TYPE_AUTOSWITCH,
+	WLAN_AUTH_TYPE_WPA,
+	WLAN_AUTH_TYPE_WPA_PSK,
+	WLAN_AUTH_TYPE_WPA_NONE,
+	WLAN_AUTH_TYPE_RSN,
+	WLAN_AUTH_TYPE_RSN_PSK,
+	WLAN_AUTH_TYPE_FT_RSN,
+	WLAN_AUTH_TYPE_FT_RSN_PSK,
+	WLAN_AUTH_TYPE_WAPI_WAI_CERTIFICATE,
+	WLAN_AUTH_TYPE_WAPI_WAI_PSK,
+	WLAN_AUTH_TYPE_CCKM_WPA,
+	WLAN_AUTH_TYPE_CCKM_RSN,
+	WLAN_AUTH_TYPE_RSN_PSK_SHA256,
+	WLAN_AUTH_TYPE_RSN_8021X_SHA256,
+	WLAN_NUM_OF_SUPPORT_AUTH_TYPE,
+};
+
+/**
+ * enum wlan_enc_type - Enumeration of the various Enc types
+ * @WLAN_ENCRYPT_TYPE_NONE: No encryption
+ * @WLAN_ENCRYPT_TYPE_WEP40_STATICKEY: WEP 40 Static key
+ * @WLAN_ENCRYPT_TYPE_WEP104_STATICKEY: WEP 104 Static key
+ * @WLAN_ENCRYPT_TYPE_WEP40: WEP 40
+ * @WLAN_ENCRYPT_TYPE_WEP104: WEP 104
+ * @WLAN_ENCRYPT_TYPE_TKIP: TKIP
+ * @WLAN_ENCRYPT_TYPE_AES: AES
+ * @WLAN_ENCRYPT_TYPE_WPI: WAPI
+ * @WLAN_ENCRYPT_TYPE_KRK: KRK
+ * @WLAN_ENCRYPT_TYPE_BTK: BTK
+ * @WLAN_ENCRYPT_TYPE_AES_CMAC: 11W BIP
+ * @WLAN_ENCRYPT_TYPE_ANY: Any
+ * @WLAN_NUM_OF_ENCRYPT_TYPE: Max value
+ */
+enum wlan_enc_type {
+	WLAN_ENCRYPT_TYPE_NONE,
+	WLAN_ENCRYPT_TYPE_WEP40_STATICKEY,
+	WLAN_ENCRYPT_TYPE_WEP104_STATICKEY,
+	WLAN_ENCRYPT_TYPE_WEP40,
+	WLAN_ENCRYPT_TYPE_WEP104,
+	WLAN_ENCRYPT_TYPE_TKIP,
+	WLAN_ENCRYPT_TYPE_AES,
+	WLAN_ENCRYPT_TYPE_WPI,
+	WLAN_ENCRYPT_TYPE_KRK,
+	WLAN_ENCRYPT_TYPE_BTK,
+	WLAN_ENCRYPT_TYPE_AES_CMAC,
+	WLAN_ENCRYPT_TYPE_ANY,
+	WLAN_NUM_OF_ENCRYPT_TYPE = WLAN_ENCRYPT_TYPE_ANY,
+};
+
+/**
+ * struct wlan_ssid - SSID info
+ * @length: ssid length of bss excluding null
+ * @ssid: ssid character array potentially non null terminated
+ */
+struct wlan_ssid {
+	uint8_t length;
+	uint8_t ssid[WLAN_SSID_MAX_LEN];
 };
 
 /* MAC address length */

@@ -721,4 +721,20 @@ QDF_STATUS wlan_objmgr_pdev_try_get_ref(struct wlan_objmgr_pdev *pdev,
 void wlan_objmgr_pdev_release_ref(struct wlan_objmgr_pdev *pdev,
 						wlan_objmgr_ref_dbgid id);
 
+/**
+ * wlan_objmgr_pdev_get_pdev_id() - get pdev id
+ * @pdev: PDEV object
+ *
+ * API to get pdev id from pdev object
+ *
+ * Caller need to acquire lock with wlan_pdev_obj_lock()
+ *
+ * Return: @pdev id
+ */
+static inline
+uint8_t wlan_objmgr_pdev_get_pdev_id(struct wlan_objmgr_pdev *pdev)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	return pdev->pdev_objmgr.wlan_pdev_id;
+}
 #endif /* _WLAN_OBJMGR_PDEV_H_*/
