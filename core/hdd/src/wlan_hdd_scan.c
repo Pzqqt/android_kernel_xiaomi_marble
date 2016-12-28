@@ -1718,8 +1718,13 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		else
 			scan_req.scanType = pHddCtx->ioctl_scan_mode;
 	}
-	scan_req.minChnTime = cfg_param->nActiveMinChnTime;
-	scan_req.maxChnTime = cfg_param->nActiveMaxChnTime;
+	if (scan_req.scanType == eSIR_PASSIVE_SCAN) {
+		scan_req.minChnTime = cfg_param->nPassiveMinChnTime;
+		scan_req.maxChnTime = cfg_param->nPassiveMaxChnTime;
+	} else {
+		scan_req.minChnTime = cfg_param->nActiveMinChnTime;
+		scan_req.maxChnTime = cfg_param->nActiveMaxChnTime;
+	}
 
 	wlan_hdd_copy_bssid_scan_request(&scan_req, request);
 
