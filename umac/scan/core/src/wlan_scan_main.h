@@ -24,7 +24,8 @@
 #define _WLAN_SCAN_MAIN_API_H_
 
 #include <qdf_atomic.h>
-#include <wlan_scan_structs.h>
+#include <wlan_objmgr_vdev_obj.h>
+#include <wlan_scan_public_structs.h>
 #include "wlan_scan_cache_db.h"
 
 #define scm_log(level, args...) \
@@ -402,6 +403,6 @@ QDF_STATUS wlan_scan_psoc_created_notification(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_scan_psoc_deleted_notification(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS wlan_scan_psoc_destroyed_notification(struct wlan_objmgr_psoc *psoc,
 	void *arg_list);
 #endif

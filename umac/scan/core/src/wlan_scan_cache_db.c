@@ -19,4 +19,17 @@
 /*
  * DOC: contains scan cache api and functionality
  */
+#include <wlan_scan_ucfg_api.h>
+#include "wlan_scan_cache_db.h"
+#include <qdf_types.h>
+#include <qdf_status.h>
 
+QDF_STATUS scm_db_init(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS scm_db_deinit(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}

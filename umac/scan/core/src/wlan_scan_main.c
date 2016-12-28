@@ -19,4 +19,54 @@
 /*
  * DOC: contains core scan function definitions
  */
+#include <wlan_scan_ucfg_api.h>
+#include <wlan_scan_utils_api.h>
+#include "wlan_scan_main.h"
 
+QDF_STATUS wlan_scan_psoc_created_notification(struct wlan_objmgr_psoc *psoc,
+						void *arg_list)
+{
+	struct wlan_scan_obj *scan_obj;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	scan_obj = qdf_mem_malloc(sizeof(struct wlan_scan_obj));
+	if (scan_obj == NULL) {
+		scm_err("Failed to allocate memory");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	/* Attach scan private date to psoc */
+	status = wlan_objmgr_psoc_component_obj_attach(psoc,
+		WLAN_UMAC_COMP_SCAN, (void *)scan_obj,
+		QDF_STATUS_SUCCESS);
+	if (QDF_IS_STATUS_ERROR(status))
+		scm_err("Failed to attach psoc scan component");
+	else
+		scm_info("Scan object attach to psoc successful");
+
+	return status;
+}
+
+QDF_STATUS wlan_scan_psoc_destroyed_notification(
+				struct wlan_objmgr_psoc *psoc,
+				void *arg_list)
+{
+	void *scan_obj = NULL;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	scan_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+		WLAN_UMAC_COMP_SCAN);
+	if (!scan_obj) {
+		scm_err("Failed to detach scan in psoc ctx");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = wlan_objmgr_psoc_component_obj_detach(psoc,
+		WLAN_UMAC_COMP_SCAN, scan_obj);
+	if (QDF_IS_STATUS_ERROR(status))
+		scm_err("Failed to detach psoc scan component");
+
+	qdf_mem_free(scan_obj);
+
+	return status;
+}
