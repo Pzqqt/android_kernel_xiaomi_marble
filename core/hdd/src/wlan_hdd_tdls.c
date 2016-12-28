@@ -773,6 +773,7 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 	pHddTdlsCtx->curr_candidate = NULL;
 	pHddTdlsCtx->magic = 0;
 	pHddTdlsCtx->valid_mac_entries = 0;
+	pHddTdlsCtx->last_flush_ts = 0;
 
 	/* remember configuration even if it is not used right now. it could be used later */
 	pHddTdlsCtx->threshold_config.tx_period_t =
@@ -3971,6 +3972,7 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
 	hdd_station_ctx_t *hdd_sta_ctx;
+	tdlsCtx_t *hdd_tdls_ctx;
 	u8 peerMac[QDF_MAC_ADDR_SIZE];
 	QDF_STATUS status;
 	int max_sta_failed = 0;
@@ -4217,11 +4219,27 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 				cds_get_driver_state());
 			return -EAGAIN;
 		}
-		if (rc <= 0)
-			cds_flush_logs(WLAN_LOG_TYPE_FATAL,
-				WLAN_LOG_INDICATOR_HOST_DRIVER,
-				WLAN_LOG_REASON_HDD_TIME_OUT,
-				true, false);
+
+		mutex_lock(&pHddCtx->tdls_lock);
+		hdd_tdls_ctx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
+		if (hdd_tdls_ctx) {
+			if (rc <= 0 &&
+			    (((qdf_get_monotonic_boottime() -
+			       hdd_tdls_ctx->last_flush_ts) >
+			      TDLS_ENABLE_CDS_FLUSH_INTERVAL)
+			     || !(hdd_tdls_ctx->last_flush_ts))) {
+				hdd_tdls_ctx->last_flush_ts =
+					qdf_get_monotonic_boottime();
+				mutex_unlock(&pHddCtx->tdls_lock);
+				cds_flush_logs(WLAN_LOG_TYPE_FATAL,
+					       WLAN_LOG_INDICATOR_HOST_DRIVER,
+					       WLAN_LOG_REASON_HDD_TIME_OUT,
+					       true, false);
+			} else
+				mutex_unlock(&pHddCtx->tdls_lock);
+		} else
+			mutex_unlock(&pHddCtx->tdls_lock);
+
 		pAdapter->mgmtTxCompletionStatus = false;
 		return -EINVAL;
 	}
