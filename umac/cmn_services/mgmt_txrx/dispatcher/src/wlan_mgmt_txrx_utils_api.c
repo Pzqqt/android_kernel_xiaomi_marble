@@ -217,12 +217,10 @@ QDF_STATUS wlan_mgmt_txrx_mgmt_frame_tx(struct wlan_objmgr_peer *peer,
 	struct wlan_objmgr_psoc *psoc;
 	struct mgmt_txrx_priv_context *txrx_ctx;
 	struct wlan_objmgr_vdev *vdev;
-	struct wlan_objmgr_vdev_objmgr *vdev_obj;
 
 	vdev = wlan_peer_get_vdev(peer);
 	if (!vdev) {
-		mgmt_txrx_err("vdev unavailable for peer %p psoc %p",
-				peer, psoc);
+		mgmt_txrx_err("vdev unavailable for peer %p", peer);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
@@ -250,7 +248,7 @@ QDF_STATUS wlan_mgmt_txrx_mgmt_frame_tx(struct wlan_objmgr_peer *peer,
 	desc->tx_ota_cmpl_cb = tx_ota_comp_cb;
 	desc->tx_dwnld_cmpl_cb = tx_comp_cb;
 	desc->peer = peer;
-	desc->vdev_id = vdev_obj->vdev_id;
+	desc->vdev_id = wlan_vdev_get_id(vdev);
 	desc->context = context;
 
 	if (!psoc->soc_cb.tx_ops.mgmt_txrx_tx_ops.mgmt_tx_send) {
