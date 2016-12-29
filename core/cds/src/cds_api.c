@@ -983,25 +983,6 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
 	return QDF_STATUS_SUCCESS;
 }
 
-void cds_flush_cache_rx_queue(void)
-{
-	uint8_t sta_id;
-	void *peer;
-	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-
-	for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++) {
-		peer = cdp_peer_find_by_local_id(
-				cds_get_context(QDF_MODULE_ID_SOC),
-				pdev, sta_id);
-		if (!peer)
-			continue;
-		cdp_flush_rx_frames(cds_get_context(QDF_MODULE_ID_SOC),
-				peer, 1);
-	}
-	return;
-}
-
-
 /**
  * cds_get_context() - get context data area
  *

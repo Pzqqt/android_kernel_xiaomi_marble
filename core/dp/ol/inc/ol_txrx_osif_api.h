@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -89,5 +89,11 @@ void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 
 void ol_txrx_flush_rx_frames(struct ol_txrx_peer_t *peer,
 			     bool drop);
+/**
+ * ol_txrx_flush_cache_rx_queue() - flush cache rx queue frame
+ *
+ * Return: None
+ */
+void ol_txrx_flush_cache_rx_queue(void);
 
 #endif /* _OL_TXRX_OSIF_API__H_ */

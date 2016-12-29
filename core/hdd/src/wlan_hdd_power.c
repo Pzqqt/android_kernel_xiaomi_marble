@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -70,6 +70,7 @@
 #include <wlan_hdd_lpass.h>
 
 #include <wma_types.h>
+#include <ol_txrx_osif_api.h>
 #include "hif.h"
 #include "sme_power_save_api.h"
 #include "cds_concurrency.h"
@@ -1471,7 +1472,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	hdd_reset_all_adapters(pHddCtx);
 
 	/* Flush cached rx frame queue */
-	cds_flush_cache_rx_queue();
+	ol_txrx_flush_cache_rx_queue();
 
 	/* De-register the HDD callbacks */
 	hdd_deregister_cb(pHddCtx);
