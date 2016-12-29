@@ -1008,11 +1008,9 @@ QDF_STATUS (*extract_dcs_cw_int)(wmi_unified_t wmi_handle, void *evt_buf,
 QDF_STATUS (*extract_dcs_im_tgt_stats)(wmi_unified_t wmi_handle, void *evt_buf,
 	wmi_host_dcs_im_tgt_stats_t *wlan_stat);
 
-QDF_STATUS (*extract_fips_event_error_status)(wmi_unified_t wmi_handle,
-	void *evt_buf, uint32_t *err_status);
-
 QDF_STATUS (*extract_fips_event_data)(wmi_unified_t wmi_handle,
-	void *evt_buf, uint32_t *data_len, uint32_t **data);
+	void *evt_buf, struct wmi_host_fips_event_param *param);
+
 QDF_STATUS (*extract_vdev_start_resp)(wmi_unified_t wmi_handle, void *evt_buf,
 	wmi_host_vdev_start_resp *vdev_rsp);
 
