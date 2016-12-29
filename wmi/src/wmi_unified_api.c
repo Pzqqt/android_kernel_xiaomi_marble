@@ -5196,18 +5196,18 @@ QDF_STATUS wmi_extract_wds_addr_event(void *wmi_hdl, void *evt_buf,
  * wmi_extract_dcs_interference_type() - extract dcs interference type
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
- * @param interference_type: Pointer to hold interference type
+ * @param param: Pointer to hold dcs interference param
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_extract_dcs_interference_type(void *wmi_hdl,
-	void *evt_buf, uint32_t *interference_type)
+	void *evt_buf, struct wmi_host_dcs_interference_param *param)
 {
 	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
 
 	if (wmi->ops->extract_dcs_interference_type) {
 		return wmi->ops->extract_dcs_interference_type(wmi,
-			evt_buf, interference_type);
+			evt_buf, param);
 	}
 	return QDF_STATUS_E_FAILURE;
 }

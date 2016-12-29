@@ -1000,7 +1000,7 @@ QDF_STATUS (*extract_wds_addr_event)(wmi_unified_t wmi_handle,
 	void *evt_buf, uint16_t len, wds_addr_event_t *wds_ev);
 
 QDF_STATUS (*extract_dcs_interference_type)(wmi_unified_t wmi_handle,
-	void *evt_buf, uint32_t *interference_type);
+	void *evt_buf, struct wmi_host_dcs_interference_param *param);
 
 QDF_STATUS (*extract_dcs_cw_int)(wmi_unified_t wmi_handle, void *evt_buf,
 	wmi_host_ath_dcs_cw_int *cw_int);

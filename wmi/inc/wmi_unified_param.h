@@ -7225,4 +7225,14 @@ struct wmi_host_pdev_utf_event {
 	uint16_t datalen;
 };
 
+/**
+ * @struct wmi_host_dcs_interference_param
+ * @interference_type: Type of DCS Interference
+ * @uint32_t pdev_id: pdev id
+ */
+struct wmi_host_dcs_interference_param {
+	uint32_t interference_type;
+	uint32_t pdev_id;
+};
+
 #endif /* _WMI_UNIFIED_PARAM_H_ */
