@@ -5837,35 +5837,16 @@ static QDF_STATUS extract_dcs_im_tgt_stats_non_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
- * extract_fips_event_error_status_non_tlv() - extract fips event error status
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param err_status: Pointer to hold error status
- *
- * Return: 0 for success or error code
- */
-static QDF_STATUS extract_fips_event_error_status_non_tlv(
-		wmi_unified_t wmi_handle, void *evt_buf,
-		uint32_t *err_status)
-{
-	wmi_pdev_fips_event *event = (wmi_pdev_fips_event *)evt_buf;
-
-	*err_status = event->error_status;
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * extract_fips_event_data_non_tlv() - extract fips event data
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
- * @param data_len: Pointer to hold fips data length
- * @param data: Double pointer to hold fips data
+ * @param param: pointer FIPS event params
  *
  * Return: 0 for success or error code
  */
 static QDF_STATUS extract_fips_event_data_non_tlv(wmi_unified_t wmi_handle,
 		void *evt_buf,
-		uint32_t *data_len, uint32_t **data)
+		struct wmi_host_fips_event_param *param)
 {
 	wmi_pdev_fips_event *event = (wmi_pdev_fips_event *)evt_buf;
 #ifdef BIG_ENDIAN_HOST
@@ -5912,8 +5893,10 @@ static QDF_STATUS extract_fips_event_data_non_tlv(wmi_unified_t wmi_handle,
 		/*************************************************************/
 	}
 #endif
-	*data = event->data;
-	*data_len = event->data_len;
+	param->data = event->data;
+	param->data_len = event->data_len;
+	param->error_status = event->error_status;
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -8096,8 +8079,6 @@ struct wmi_ops non_tlv_ops =  {
 				extract_tx_data_traffic_ctrl_ev_non_tlv,
 	.extract_vdev_extd_stats = extract_vdev_extd_stats_non_tlv,
 	.extract_fips_event_data = extract_fips_event_data_non_tlv,
-	.extract_fips_event_error_status =
-				extract_fips_event_error_status_non_tlv,
 	.extract_mumimo_tx_count_ev_param =
 				extract_mumimo_tx_count_ev_param_non_tlv,
 	.extract_peer_gid_userpos_list_ev_param =

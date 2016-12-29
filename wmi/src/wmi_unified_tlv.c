@@ -13105,6 +13105,97 @@ static QDF_STATUS extract_dcs_im_tgt_stats_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef BIG_ENDIAN_HOST
+/**
+ * fips_conv_data_be() - LE to BE conversion of FIPS ev data
+ * @param data_len - data length
+ * @param data - pointer to data
+ *
+ * Return: QDF_STATUS - success or error status
+ */
+static QDF_STATUS fips_conv_data_be(uint32_t data_len, uint8_t *data)
+{
+	uint8_t *data_aligned = NULL;
+	int c;
+	unsigned char *data_unaligned;
+
+	data_unaligned = qdf_mem_malloc(((sizeof(uint8_t) * data_len) +
+					FIPS_ALIGN));
+	/* Assigning unaligned space to copy the data */
+	/* Checking if kmalloc does succesful allocation */
+	if (data_unaligned == NULL)
+		return QDF_STATUS_E_FAILURE;
+
+	/* Checking if space is alligned */
+	if (!FIPS_IS_ALIGNED(data_unaligned, FIPS_ALIGN)) {
+		/* align the data space */
+		data_aligned =
+			(uint8_t *)FIPS_ALIGNTO(data_unaligned, FIPS_ALIGN);
+	} else {
+		data_aligned = (u_int8_t *)data_unaligned;
+	}
+
+	/* memset and copy content from data to data aligned */
+	OS_MEMSET(data_aligned, 0, data_len);
+	OS_MEMCPY(data_aligned, data, data_len);
+	/* Endianness to LE */
+	for (c = 0; c < data_len/4; c++) {
+		*((u_int32_t *)data_aligned + c) =
+			qdf_os_le32_to_cpu(*((u_int32_t *)data_aligned + c));
+	}
+
+	/* Copy content to event->data */
+	OS_MEMCPY(data, data_aligned, data_len);
+
+	/* clean up allocated space */
+	qdf_mem_free(data_unaligned);
+	data_aligned = NULL;
+	data_unaligned = NULL;
+
+	/*************************************************************/
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+/**
+ * fips_conv_data_be() - DUMMY for LE platform
+ *
+ * Return: QDF_STATUS - success
+ */
+static QDF_STATUS fips_conv_data_be(uint32_t data_len, uint8_t *data)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
+ * extract_fips_event_data_tlv() - extract fips event data
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: pointer FIPS event params
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS extract_fips_event_data_tlv(wmi_unified_t wmi_handle,
+		void *evt_buf, struct wmi_host_fips_event_param *param)
+{
+	WMI_PDEV_FIPS_EVENTID_param_tlvs *param_buf;
+	wmi_pdev_fips_event_fixed_param *event;
+
+	param_buf = (WMI_PDEV_FIPS_EVENTID_param_tlvs *) evt_buf;
+	event = (wmi_pdev_fips_event_fixed_param *) param_buf->fixed_param;
+
+	if (fips_conv_data_be(event->data_len, param_buf->data) !=
+							QDF_STATUS_SUCCESS)
+		return QDF_STATUS_E_FAILURE;
+
+	param->data = (uint32_t *)param_buf->data;
+	param->data_len = event->data_len;
+	param->error_status = event->error_status;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 static bool is_management_record_tlv(uint32_t cmd_id)
 {
@@ -13497,6 +13588,7 @@ struct wmi_ops tlv_ops =  {
 	.extract_dcs_interference_type = extract_dcs_interference_type_tlv,
 	.extract_dcs_cw_int = extract_dcs_cw_int_tlv,
 	.extract_dcs_im_tgt_stats = extract_dcs_im_tgt_stats_tlv,
+	.extract_fips_event_data = extract_fips_event_data_tlv,
 };
 
 #ifndef CONFIG_MCL

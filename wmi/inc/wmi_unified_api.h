@@ -1170,11 +1170,9 @@ QDF_STATUS wmi_extract_dcs_cw_int(void *wmi_hdl, void *evt_buf,
 QDF_STATUS wmi_extract_dcs_im_tgt_stats(void *wmi_hdl, void *evt_buf,
 		wmi_host_dcs_im_tgt_stats_t *wlan_stat);
 
-QDF_STATUS wmi_extract_fips_event_error_status(void *wmi_hdl, void *evt_buf,
-		uint32_t *err_status);
-
 QDF_STATUS wmi_extract_fips_event_data(void *wmi_hdl, void *evt_buf,
-		uint32_t *data_len, uint32_t **data);
+		struct wmi_host_fips_event_param *param);
+
 QDF_STATUS wmi_extract_vdev_start_resp(void *wmi_hdl, void *evt_buf,
 		wmi_host_vdev_start_resp *vdev_rsp);
 QDF_STATUS wmi_extract_tbttoffset_update_params(void *wmi_hdl, void *evt_buf,

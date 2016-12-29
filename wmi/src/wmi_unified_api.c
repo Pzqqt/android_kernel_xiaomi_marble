@@ -5253,42 +5253,21 @@ QDF_STATUS wmi_extract_dcs_im_tgt_stats(void *wmi_hdl, void *evt_buf,
 }
 
 /**
- * wmi_extract_fips_event_error_status() - extract fips event error status
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param err_status: Pointer to hold error status
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_fips_event_error_status(void *wmi_hdl, void *evt_buf,
-	uint32_t *err_status)
-{
-	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
-
-	if (wmi->ops->extract_fips_event_error_status) {
-		return wmi->ops->extract_fips_event_error_status(wmi,
-			evt_buf, err_status);
-	}
-	return QDF_STATUS_E_FAILURE;
-}
-
-/**
  * wmi_extract_fips_event_data() - extract fips event data
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
- * @param data_len: Pointer to hold fips data length
- * @param data: Double pointer to hold fips data
+ * @param param: pointer to FIPS event param
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_extract_fips_event_data(void *wmi_hdl, void *evt_buf,
-	uint32_t *data_len, uint32_t **data)
+		struct wmi_host_fips_event_param *param)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
 	if (wmi_handle->ops->extract_fips_event_data) {
 		return wmi_handle->ops->extract_fips_event_data(wmi_handle,
-			evt_buf, data_len, data);
+			evt_buf, param);
 	}
 	return QDF_STATUS_E_FAILURE;
 }

@@ -131,13 +131,11 @@
 #define WMI_HOST_PDEV_BEACON_PRIORITY_BIT (1<<4)
 #define WMI_HOST_PDEV_MGMT_PRIORITY_BIT   (1<<5)
 
-#ifdef CONFIG_WIN
-#if ATH_SUPPORT_FIPS
 #define FIPS_ALIGN 4
-#define FIPS_ALIGNTO(__addr, __to) ((((unsigned long int)(__addr)) + (__to) -  1) & ~((__to) - 1))
-#define FIPS_IS_ALIGNED(__addr, __to) (!(((unsigned long int)(__addr)) & ((__to)-1)))
-#endif
-#endif
+#define FIPS_ALIGNTO(__addr, __to) \
+		((((unsigned long int)(__addr)) + (__to) -  1) & ~((__to) - 1))
+#define FIPS_IS_ALIGNED(__addr, __to) \
+		(!(((unsigned long int)(__addr)) & ((__to)-1)))
 
 #define WMI_HOST_F_MS(_v, _f)	\
 	(((_v) & (_f)) >> (_f##_S))
@@ -7233,6 +7231,20 @@ struct wmi_host_pdev_utf_event {
 struct wmi_host_dcs_interference_param {
 	uint32_t interference_type;
 	uint32_t pdev_id;
+};
+
+/*
+ * struct wmi_host_fips_event_param: FIPS event param
+ * @pdev_id: pdev id
+ * @error_status: Error status: 0 (no err), 1, or OPER_TIMEOUR
+ * @data_len: FIPS data lenght
+ * @data: pointer to data
+ */
+struct wmi_host_fips_event_param {
+	uint32_t pdev_id;
+	uint32_t error_status;
+	uint32_t data_len;
+	uint32_t *data;
 };
 
 #endif /* _WMI_UNIFIED_PARAM_H_ */
