@@ -5780,18 +5780,20 @@ static QDF_STATUS extract_wds_addr_event_non_tlv(wmi_unified_t wmi_handle,
  * from event
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
- * @param interference_type: Pointer to hold interference type
+ * @param param: Pointer to hold dcs interference param
  *
  * Return: 0 for success or error code
  */
 static QDF_STATUS extract_dcs_interference_type_non_tlv(
 		wmi_unified_t wmi_handle,
-		void *evt_buf, uint32_t *interference_type)
+		void *evt_buf, struct wmi_host_dcs_interference_param *param)
 {
 	wmi_dcs_interference_event_t *ev =
 	    (wmi_dcs_interference_event_t *) evt_buf;
 
-	*interference_type = ev->interference_type;
+	param->interference_type = ev->interference_type;
+	param->pdev_id = 1;
+
 	return QDF_STATUS_SUCCESS;
 }
 

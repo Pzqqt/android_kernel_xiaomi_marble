@@ -13015,6 +13015,96 @@ static QDF_STATUS extract_reg_cap_service_ready_ext_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * extract_dcs_interference_type_tlv() - extract dcs interference type
+ * from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold dcs interference param
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS extract_dcs_interference_type_tlv(
+		wmi_unified_t wmi_handle,
+		void *evt_buf, struct wmi_host_dcs_interference_param *param)
+{
+	WMI_DCS_INTERFERENCE_EVENTID_param_tlvs *param_buf;
+
+	param_buf = (WMI_DCS_INTERFERENCE_EVENTID_param_tlvs *) evt_buf;
+	if (!param_buf)
+		return -EINVAL;
+
+	param->interference_type = param_buf->fixed_param->interference_type;
+	param->pdev_id = param_buf->fixed_param->pdev_id;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/*
+ * extract_dcs_cw_int_tlv() - extract dcs cw interference from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param cw_int: Pointer to hold cw interference
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS extract_dcs_cw_int_tlv(wmi_unified_t wmi_handle,
+		void *evt_buf,
+		wmi_host_ath_dcs_cw_int *cw_int)
+{
+	WMI_DCS_INTERFERENCE_EVENTID_param_tlvs *param_buf;
+	wlan_dcs_cw_int *ev;
+
+	param_buf = (WMI_DCS_INTERFERENCE_EVENTID_param_tlvs *) evt_buf;
+	if (!param_buf)
+		return -EINVAL;
+
+	ev = param_buf->cw_int;
+
+	cw_int->channel = ev->channel;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_dcs_im_tgt_stats_tlv() - extract dcs im target stats from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param wlan_stat: Pointer to hold wlan stats
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS extract_dcs_im_tgt_stats_tlv(wmi_unified_t wmi_handle,
+		void *evt_buf,
+		wmi_host_dcs_im_tgt_stats_t *wlan_stat)
+{
+	WMI_DCS_INTERFERENCE_EVENTID_param_tlvs *param_buf;
+	wlan_dcs_im_tgt_stats_t *ev;
+
+	param_buf = (WMI_DCS_INTERFERENCE_EVENTID_param_tlvs *) evt_buf;
+	if (!param_buf)
+		return -EINVAL;
+
+	ev = param_buf->wlan_stat;
+	wlan_stat->reg_tsf32 = ev->reg_tsf32;
+	wlan_stat->last_ack_rssi = ev->last_ack_rssi;
+	wlan_stat->tx_waste_time = ev->tx_waste_time;
+	wlan_stat->rx_time = ev->rx_time;
+	wlan_stat->phyerr_cnt = ev->phyerr_cnt;
+	wlan_stat->mib_stats.listen_time = ev->listen_time;
+	wlan_stat->mib_stats.reg_tx_frame_cnt = ev->reg_tx_frame_cnt;
+	wlan_stat->mib_stats.reg_rx_frame_cnt = ev->reg_rx_frame_cnt;
+	wlan_stat->mib_stats.reg_rxclr_cnt = ev->reg_rxclr_cnt;
+	wlan_stat->mib_stats.reg_cycle_cnt = ev->reg_cycle_cnt;
+	wlan_stat->mib_stats.reg_rxclr_ext_cnt = ev->reg_rxclr_ext_cnt;
+	wlan_stat->mib_stats.reg_ofdm_phyerr_cnt = ev->reg_ofdm_phyerr_cnt;
+	wlan_stat->mib_stats.reg_cck_phyerr_cnt = ev->reg_cck_phyerr_cnt;
+	wlan_stat->chan_nf = ev->chan_nf;
+	wlan_stat->my_bss_rx_cycle_count = ev->my_bss_rx_cycle_count;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 static bool is_management_record_tlv(uint32_t cmd_id)
 {
@@ -13404,6 +13494,9 @@ struct wmi_ops tlv_ops =  {
 				extract_reg_cap_service_ready_ext_tlv,
 	.extract_pdev_utf_event = extract_pdev_utf_event_tlv,
 	.wmi_set_htc_tx_tag = wmi_set_htc_tx_tag_tlv,
+	.extract_dcs_interference_type = extract_dcs_interference_type_tlv,
+	.extract_dcs_cw_int = extract_dcs_cw_int_tlv,
+	.extract_dcs_im_tgt_stats = extract_dcs_im_tgt_stats_tlv,
 };
 
 #ifndef CONFIG_MCL
