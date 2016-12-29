@@ -158,7 +158,7 @@ struct wlan_peer_activity {  /*TODO */
  * @peer_mlme:	      Peer MLME common structure
  * @peer_activity:    peer activity
  * @peer_objmgr:      Peer Object manager common structure
- * @peer_comp_obj[]:  Component object pointers
+ * @peer_comp_priv_obj[]:  Component's private object pointers
  * @obj_status[]:     status of each component object
  * @obj_state:        Status of Peer object
  * @peer_lock:        Lock for access/update peer contents
@@ -170,7 +170,7 @@ struct wlan_objmgr_peer {
 	struct wlan_objmgr_peer_mlme peer_mlme;
 	struct wlan_peer_activity peer_activity;
 	struct wlan_objmgr_peer_objmgr peer_objmgr;
-	void *peer_comp_obj[WLAN_UMAC_MAX_COMPONENTS];
+	void *peer_comp_priv_obj[WLAN_UMAC_MAX_COMPONENTS];
 	QDF_STATUS obj_status[WLAN_UMAC_MAX_COMPONENTS];
 	WLAN_OBJ_STATE obj_state;
 	qdf_spinlock_t peer_lock;
@@ -216,7 +216,7 @@ QDF_STATUS wlan_objmgr_peer_obj_delete(struct wlan_objmgr_peer *peer);
  * wlan_objmgr_peer_component_obj_attach() - attach comp object to peer
  * @peer: PEER object
  * @id: Component id
- * @comp_objptr: component's private object pointer
+ * @comp_priv_obj: component's private object pointer
  * @status: Component's private object creation status
  *
  * API to be used for attaching component object with PEER common object
@@ -227,14 +227,14 @@ QDF_STATUS wlan_objmgr_peer_obj_delete(struct wlan_objmgr_peer *peer);
 QDF_STATUS wlan_objmgr_peer_component_obj_attach(
 		struct wlan_objmgr_peer *peer,
 		enum wlan_umac_comp_id id,
-		void *comp_objptr,
+		void *comp_priv_obj,
 		QDF_STATUS status);
 
 /**
  * wlan_objmgr_peer_component_obj_detach() - detach comp object from peer
  * @peer: PEER object
  * @id: Component id
- * @comp_objptr: component's private object pointer
+ * @comp_priv_obj: component's private object pointer
  *
  * API to be used for detaching component object with PEER common object
  *
@@ -245,39 +245,41 @@ QDF_STATUS wlan_objmgr_peer_component_obj_attach(
 QDF_STATUS wlan_objmgr_peer_component_obj_detach(
 		struct wlan_objmgr_peer *peer,
 		enum wlan_umac_comp_id id,
-		void *comp_objptr);
+		void *comp_priv_obj);
 
 /**
  ** APIs to operations on peer objects
  */
 
 /**
- * wlan_objmgr_trigger_peer_comp_object_creation() - create peer comp object
+ * wlan_objmgr_trigger_peer_comp_priv_object_creation() - create
+ * peer comp object
  * @peer: PEER object
  * @id: Component id
  *
- * API to create component object in run time, this would be used for features
- * which gets enabled in run time
+ * API to create component private object in run time, this would
+ * be used for features which gets enabled in run time
  *
  * Return: SUCCESS on successful creation
  *         On FAILURE (appropriate failure codes are returned)
  */
-QDF_STATUS wlan_objmgr_trigger_peer_comp_object_creation(
+QDF_STATUS wlan_objmgr_trigger_peer_comp_priv_object_creation(
 		struct wlan_objmgr_peer *peer,
 		enum wlan_umac_comp_id id);
 
 /**
- * wlan_objmgr_trigger_peer_comp_object_deletion() - delete peer comp object
+ * wlan_objmgr_trigger_peer_comp_priv_object_deletion() - delete
+ * peer comp object
  * @peer: PEER object
  * @id: Component id
  *
- * API to delete component object in run time, this would be used for features
- * which gets disabled in run time
+ * API to delete component private object in run time, this would
+ * be used for features which gets disabled in run time
  *
  * Return: SUCCESS on successful deletion
  *         On FAILURE (appropriate failure codes are returned)
  */
-QDF_STATUS wlan_objmgr_trigger_peer_comp_object_deletion(
+QDF_STATUS wlan_objmgr_trigger_peer_comp_priv_object_deletion(
 		struct wlan_objmgr_peer *peer,
 		enum wlan_umac_comp_id id);
 

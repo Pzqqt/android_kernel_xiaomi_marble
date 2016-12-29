@@ -49,7 +49,7 @@ static QDF_STATUS wlan_objmgr_peer_object_status(
 		/* If component operates in Async, status is Partially created,
 			break */
 		else if (peer->obj_status[id] == QDF_STATUS_COMP_ASYNC) {
-			if (peer->peer_comp_obj[id] == NULL) {
+			if (peer->peer_comp_priv_obj[id] == NULL) {
 				status = QDF_STATUS_COMP_ASYNC;
 				break;
 			}
@@ -234,7 +234,7 @@ QDF_STATUS wlan_objmgr_peer_obj_delete(struct wlan_objmgr_peer *peer)
 QDF_STATUS wlan_objmgr_peer_component_obj_attach(
 		struct wlan_objmgr_peer *peer,
 		enum wlan_umac_comp_id id,
-		void *comp_objptr,
+		void *comp_priv_obj,
 		QDF_STATUS status)
 {
 	wlan_objmgr_peer_status_handler s_hler;
@@ -249,12 +249,12 @@ QDF_STATUS wlan_objmgr_peer_component_obj_attach(
 	wlan_peer_obj_lock(peer);
 	/* If there is a valid entry, return failure,
 	valid object needs to be freed first */
-	if (peer->peer_comp_obj[id] != NULL) {
+	if (peer->peer_comp_priv_obj[id] != NULL) {
 		wlan_peer_obj_unlock(peer);
 		return QDF_STATUS_E_FAILURE;
 	}
-	/* Assign component object pointer(can be NULL also), status */
-	peer->peer_comp_obj[id] = comp_objptr;
+	/* Assign component object private pointer(can be NULL also), status */
+	peer->peer_comp_priv_obj[id] = comp_priv_obj;
 	peer->obj_status[id] = status;
 	wlan_peer_obj_unlock(peer);
 
@@ -290,7 +290,7 @@ QDF_STATUS wlan_objmgr_peer_component_obj_attach(
 QDF_STATUS wlan_objmgr_peer_component_obj_detach(
 		struct wlan_objmgr_peer *peer,
 		enum wlan_umac_comp_id id,
-		void *comp_objptr)
+		void *comp_priv_obj)
 {
 	QDF_STATUS obj_status;
 	struct wlan_objmgr_psoc *psoc;
@@ -316,13 +316,13 @@ QDF_STATUS wlan_objmgr_peer_component_obj_detach(
 
 	wlan_peer_obj_lock(peer);
 	/* If there is a invalid entry, return failure */
-	if (peer->peer_comp_obj[id] != comp_objptr) {
+	if (peer->peer_comp_priv_obj[id] != comp_priv_obj) {
 		peer->obj_status[id] = QDF_STATUS_E_FAILURE;
 		wlan_peer_obj_unlock(peer);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Reset the pointer to NULL */
-	peer->peer_comp_obj[id] = NULL;
+	peer->peer_comp_priv_obj[id] = NULL;
 	peer->obj_status[id] = QDF_STATUS_SUCCESS;
 	wlan_peer_obj_unlock(peer);
 
@@ -379,7 +379,7 @@ QDF_STATUS wlan_objmgr_peer_component_obj_detach(
 }
 
 
-QDF_STATUS wlan_objmgr_trigger_peer_comp_object_creation(
+QDF_STATUS wlan_objmgr_trigger_peer_comp_priv_object_creation(
 		struct wlan_objmgr_peer *peer,
 		enum wlan_umac_comp_id id)
 {
@@ -394,7 +394,7 @@ QDF_STATUS wlan_objmgr_trigger_peer_comp_object_creation(
 	wlan_peer_obj_lock(peer);
 	/* If component object is already created, delete old
 		component object, then invoke creation */
-	if (peer->peer_comp_obj[id] != NULL) {
+	if (peer->peer_comp_priv_obj[id] != NULL) {
 		wlan_peer_obj_unlock(peer);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -423,7 +423,7 @@ QDF_STATUS wlan_objmgr_trigger_peer_comp_object_creation(
 }
 
 
-QDF_STATUS wlan_objmgr_trigger_peer_comp_object_deletion(
+QDF_STATUS wlan_objmgr_trigger_peer_comp_priv_object_deletion(
 		struct wlan_objmgr_peer *peer,
 		enum wlan_umac_comp_id id)
 {
@@ -437,7 +437,7 @@ QDF_STATUS wlan_objmgr_trigger_peer_comp_object_deletion(
 
 	wlan_peer_obj_lock(peer);
 	/* Component object was never created, invalid operation */
-	if (peer->peer_comp_obj[id] == NULL) {
+	if (peer->peer_comp_priv_obj[id] == NULL) {
 		wlan_peer_obj_unlock(peer);
 		return QDF_STATUS_E_FAILURE;
 	}

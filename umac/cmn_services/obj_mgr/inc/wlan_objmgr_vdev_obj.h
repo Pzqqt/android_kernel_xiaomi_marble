@@ -317,7 +317,7 @@ struct wlan_objmgr_vdev_objmgr {
  * @vdev_mlme:      VDEV MLME substructure
  * @vdev_objmgr:    VDEV Object Mgr substructure
  * @vdev_nif:       VDEV HDD substructure
- * @vdev_comp_obj[]:Component objects list
+ * @vdev_comp_priv_obj[]:Component's private objects list
  * @obj_status[]:   Component object status
  * @obj_state:      VDEV object state
  * @vdev_lock:      VDEV lock
@@ -327,7 +327,7 @@ struct wlan_objmgr_vdev {
 	struct wlan_objmgr_vdev_mlme vdev_mlme;
 	struct wlan_objmgr_vdev_objmgr vdev_objmgr;
 	struct wlan_objmgr_vdev_nif vdev_nif;
-	void *vdev_comp_obj[WLAN_UMAC_MAX_COMPONENTS];
+	void *vdev_comp_priv_obj[WLAN_UMAC_MAX_COMPONENTS];
 	QDF_STATUS obj_status[WLAN_UMAC_MAX_COMPONENTS];
 	WLAN_OBJ_STATE obj_state;
 	qdf_spinlock_t vdev_lock;
@@ -371,7 +371,7 @@ QDF_STATUS wlan_objmgr_vdev_obj_delete(struct wlan_objmgr_vdev *vdev);
  * wlan_objmgr_vdev_component_obj_attach() - vdev comp object attach
  * @vdev: VDEV object
  * @id: Component id
- * @comp_objptr: component's private object pointer
+ * @comp_priv_obj: component's private object pointer
  * @status: Component's private object creation status
  *
  * API to be used for attaching component object with VDEV common object
@@ -382,14 +382,14 @@ QDF_STATUS wlan_objmgr_vdev_obj_delete(struct wlan_objmgr_vdev *vdev);
 QDF_STATUS wlan_objmgr_vdev_component_obj_attach(
 		struct wlan_objmgr_vdev *vdev,
 		enum wlan_umac_comp_id id,
-		void *comp_objptr,
+		void *comp_priv_obj,
 		QDF_STATUS status);
 
 /**
  * wlan_objmgr_vdev_component_obj_detach() - vdev comp object detach
  * @vdev: VDEV object
  * @id: Component id
- * @comp_objptr: component's private object pointer
+ * @comp_priv_obj: component's private object pointer
  *
  * API to be used for detaching component object with VDEV common object
  *
@@ -400,7 +400,7 @@ QDF_STATUS wlan_objmgr_vdev_component_obj_attach(
 QDF_STATUS wlan_objmgr_vdev_component_obj_detach(
 		struct wlan_objmgr_vdev *vdev,
 		enum wlan_umac_comp_id id,
-		void *comp_objptr);
+		void *comp_priv_obj);
 /*
  ** APIs to operations on vdev objects
 */
@@ -427,32 +427,34 @@ QDF_STATUS wlan_objmgr_iterate_peerobj_list(
 		void *arg);
 
 /**
- * wlan_objmgr_trigger_vdev_comp_object_creation() - vdev comp object creation
+ * wlan_objmgr_trigger_vdev_comp_priv_object_creation() - vdev
+ * comp object creation
  * @vdev: VDEV object
  * @id: Component id
  *
- * API to create component object in run time, this would be used for features
- * which gets enabled in run time
+ * API to create component private object in run time, this would
+ * be used for features which gets enabled in run time
  *
  * Return: SUCCESS on successful creation
  *         On FAILURE (appropriate failure codes are returned)
  */
-QDF_STATUS wlan_objmgr_trigger_vdev_comp_object_creation(
+QDF_STATUS wlan_objmgr_trigger_vdev_comp_priv_object_creation(
 		struct wlan_objmgr_vdev *vdev,
 		enum wlan_umac_comp_id id);
 
 /**
- * wlan_objmgr_trigger_vdev_comp_object_deletion() - vdev comp object deletion
+ * wlan_objmgr_trigger_vdev_comp_priv_object_deletion() - vdev
+ * comp object deletion
  * @vdev: VDEV object
  * @id: Component id
  *
- * API to delete component object in run time, this would be used for features
- * which gets disabled in run time
+ * API to delete component private object in run time, this would
+ * be used for features which gets disabled in run time
  *
  * Return: SUCCESS on successful deletion
  *         On FAILURE (appropriate failure codes are returned)
  */
-QDF_STATUS wlan_objmgr_trigger_vdev_comp_object_deletion(
+QDF_STATUS wlan_objmgr_trigger_vdev_comp_priv_object_deletion(
 		struct wlan_objmgr_vdev *vdev,
 		enum wlan_umac_comp_id id);
 

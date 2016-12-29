@@ -48,7 +48,7 @@ static QDF_STATUS wlan_objmgr_psoc_object_status(
 		/* If component operates in Async, status is Partially created,
 			break */
 		else if (psoc->obj_status[id] == QDF_STATUS_COMP_ASYNC) {
-			if (psoc->soc_comp_obj[id] == NULL) {
+			if (psoc->soc_comp_priv_obj[id] == NULL) {
 				status = QDF_STATUS_COMP_ASYNC;
 				break;
 			}
@@ -224,7 +224,7 @@ EXPORT_SYMBOL(wlan_objmgr_psoc_obj_delete);
 QDF_STATUS wlan_objmgr_psoc_component_obj_attach(
 		struct wlan_objmgr_psoc *psoc,
 		enum wlan_umac_comp_id id,
-		void *comp_objptr,
+		void *comp_priv_obj,
 		QDF_STATUS status)
 {
 	wlan_objmgr_psoc_status_handler stat_handler;
@@ -238,12 +238,12 @@ QDF_STATUS wlan_objmgr_psoc_component_obj_attach(
 
 	wlan_psoc_obj_lock(psoc);
 	/* If there is a valid entry, return failure */
-	if (psoc->soc_comp_obj[id] != NULL) {
+	if (psoc->soc_comp_priv_obj[id] != NULL) {
 		wlan_psoc_obj_unlock(psoc);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Save component's pointer and status */
-	psoc->soc_comp_obj[id] = comp_objptr;
+	psoc->soc_comp_priv_obj[id] = comp_priv_obj;
 	psoc->obj_status[id] = status;
 	wlan_psoc_obj_unlock(psoc);
 
@@ -281,7 +281,7 @@ QDF_STATUS wlan_objmgr_psoc_component_obj_attach(
 QDF_STATUS wlan_objmgr_psoc_component_obj_detach(
 		struct wlan_objmgr_psoc *psoc,
 		enum wlan_umac_comp_id id,
-		void *comp_objptr)
+		void *comp_priv_obj)
 {
 	QDF_STATUS obj_status;
 
@@ -291,13 +291,13 @@ QDF_STATUS wlan_objmgr_psoc_component_obj_detach(
 
 	wlan_psoc_obj_lock(psoc);
 	/* If there is a valid entry, return failure */
-	if (psoc->soc_comp_obj[id] != comp_objptr) {
+	if (psoc->soc_comp_priv_obj[id] != comp_priv_obj) {
 		psoc->obj_status[id] = QDF_STATUS_E_FAILURE;
 		wlan_psoc_obj_unlock(psoc);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Reset pointers to NULL, update the status*/
-	psoc->soc_comp_obj[id] = NULL;
+	psoc->soc_comp_priv_obj[id] = NULL;
 	psoc->obj_status[id] = QDF_STATUS_SUCCESS;
 	wlan_psoc_obj_unlock(psoc);
 
@@ -479,7 +479,7 @@ QDF_STATUS wlan_objmgr_free_all_objects_per_psoc(
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wlan_objmgr_trigger_psoc_comp_object_creation(
+QDF_STATUS wlan_objmgr_trigger_psoc_comp_priv_object_creation(
 		struct wlan_objmgr_psoc *psoc,
 		enum wlan_umac_comp_id id)
 {
@@ -495,7 +495,7 @@ QDF_STATUS wlan_objmgr_trigger_psoc_comp_object_creation(
 	/* If component object is already created, delete old
 	 * component object, then invoke creation
 	 */
-	if (psoc->soc_comp_obj[id] != NULL) {
+	if (psoc->soc_comp_priv_obj[id] != NULL) {
 		wlan_psoc_obj_unlock(psoc);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -521,7 +521,7 @@ QDF_STATUS wlan_objmgr_trigger_psoc_comp_object_creation(
 	return obj_status;
 }
 
-QDF_STATUS wlan_objmgr_trigger_psoc_comp_object_deletion(
+QDF_STATUS wlan_objmgr_trigger_psoc_comp_priv_object_deletion(
 		struct wlan_objmgr_psoc *psoc,
 		enum wlan_umac_comp_id id)
 {
@@ -535,7 +535,7 @@ QDF_STATUS wlan_objmgr_trigger_psoc_comp_object_deletion(
 
 	wlan_psoc_obj_lock(psoc);
 	/* Component object was never created, invalid operation */
-	if (psoc->soc_comp_obj[id] == NULL) {
+	if (psoc->soc_comp_priv_obj[id] == NULL) {
 		wlan_psoc_obj_unlock(psoc);
 		return QDF_STATUS_E_FAILURE;
 	}

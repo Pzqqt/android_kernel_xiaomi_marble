@@ -238,7 +238,7 @@ struct wlan_soc_timer {
  * @soc_timer:             soc timer for inactivity
  * @soc_concurrency:       concurrency info
  * @wlan_active_vdevs[]:   List of active VDEVs
- * @soc_comp_obj[]:        component object pointers
+ * @soc_comp_priv_obj[]:   component private object pointers
  * @obj_status[]:          component object status
  * @obj_state:             object state
  * @psoc_lock:             psoc lock
@@ -251,7 +251,7 @@ struct wlan_objmgr_psoc {
 	struct wlan_soc_timer soc_timer;
 	struct wlan_concurrency_info soc_concurrency; /*TODO */
 	uint8_t wlan_active_vdevs[WLAN_UMAC_PSOC_MAX_VDEVS];
-	void *soc_comp_obj[WLAN_UMAC_MAX_COMPONENTS];
+	void *soc_comp_priv_obj[WLAN_UMAC_MAX_COMPONENTS];
 	QDF_STATUS obj_status[WLAN_UMAC_MAX_COMPONENTS];
 	WLAN_OBJ_STATE obj_state;
 	qdf_spinlock_t psoc_lock;
@@ -294,7 +294,7 @@ QDF_STATUS wlan_objmgr_psoc_obj_delete(struct wlan_objmgr_psoc *psoc);
  * wlan_objmgr_psoc_component_obj_attach() - psoc comp object attach
  * @psoc: PSOC object
  * @id: Component id
- * @comp_objptr: component's private object pointer
+ * @comp_priv_obj: component's private object pointer
  * @status: Component's private object creation status
  *
  * API to be used for attaching component object with PSOC common object
@@ -305,14 +305,14 @@ QDF_STATUS wlan_objmgr_psoc_obj_delete(struct wlan_objmgr_psoc *psoc);
 QDF_STATUS wlan_objmgr_psoc_component_obj_attach(
 		struct wlan_objmgr_psoc *psoc,
 		enum wlan_umac_comp_id id,
-		void *comp_objptr,
+		void *comp_priv_obj,
 		QDF_STATUS status);
 
 /**
  * wlan_objmgr_psoc_component_obj_detach() - psoc comp object detach
  * @psoc: PSOC object
  * @id: Component id
- * @comp_objptr: component's private object pointer
+ * @comp_priv_obj: component's private object pointer
  *
  * API to be used for detaching component object with PSOC common object
  *
@@ -323,7 +323,7 @@ QDF_STATUS wlan_objmgr_psoc_component_obj_attach(
 QDF_STATUS wlan_objmgr_psoc_component_obj_detach(
 		struct wlan_objmgr_psoc *psoc,
 		enum wlan_umac_comp_id id,
-		void *comp_objptr);
+		void *comp_priv_obj);
 
 /**
  ** APIs to operations on psoc objects
@@ -366,32 +366,34 @@ QDF_STATUS wlan_objmgr_free_all_objects_per_psoc(
 		struct wlan_objmgr_psoc *psoc);
 
 /**
- * wlan_objmgr_trigger_psoc_comp_object_creation() - create psoc comp object
+ * wlan_objmgr_trigger_psoc_comp_priv_object_creation() - create
+ * psoc comp object
  * @psoc: PSOC object
  * @id: Component id
  *
- * API to create component object in run time, this would be used for features
- * which gets enabled in run time
+ * API to create component private object in run time, this would
+ * be used for features which gets enabled in run time
  *
  * Return: SUCCESS on successful creation
  *         On FAILURE (appropriate failure codes are returned)
  */
-QDF_STATUS wlan_objmgr_trigger_psoc_comp_object_creation(
+QDF_STATUS wlan_objmgr_trigger_psoc_comp_priv_object_creation(
 		struct wlan_objmgr_psoc *psoc,
 		enum wlan_umac_comp_id id);
 
 /**
- * wlan_objmgr_trigger_psoc_comp_object_deletion() - delete psoc comp object
+ * wlan_objmgr_trigger_psoc_comp_priv_object_deletion() - delete
+ * psoc comp object
  * @psoc: PSOC object
  * @id: Component id
  *
- * API to delete component object in run time, this would be used for features
- * which gets disabled in run time
+ * API to delete component private object in run time, this would
+ * be used for features which gets disabled in run time
  *
  * Return: SUCCESS on successful deletion
  *         On FAILURE (appropriate failure codes are returned)
  */
-QDF_STATUS wlan_objmgr_trigger_psoc_comp_object_deletion(
+QDF_STATUS wlan_objmgr_trigger_psoc_comp_priv_object_deletion(
 		struct wlan_objmgr_psoc *psoc,
 		enum wlan_umac_comp_id id);
 

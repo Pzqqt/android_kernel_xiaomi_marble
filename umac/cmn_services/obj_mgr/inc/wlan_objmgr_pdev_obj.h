@@ -153,7 +153,7 @@ struct wlan_objmgr_pdev_objmgr {
  * @pdev_nif:          pdev nif structure
  * @pdev_objmgr:       pdev object manager structure
  * @pdev_mlme:         pdev MLME structure
- * @pdev_comp_obj[]:   component objects array
+ * @pdev_comp_priv_obj[]:   component's private object array
  * @obj_status[]:      object status of each component object
  * @obj_state:         object state
  * @pdev_lock:         lock to protect object
@@ -163,7 +163,7 @@ struct wlan_objmgr_pdev {
 	struct wlan_objmgr_pdev_nif  pdev_nif;
 	struct wlan_objmgr_pdev_objmgr pdev_objmgr;
 	struct wlan_objmgr_pdev_mlme   pdev_mlme;
-	void *pdev_comp_obj[WLAN_UMAC_MAX_COMPONENTS];
+	void *pdev_comp_priv_obj[WLAN_UMAC_MAX_COMPONENTS];
 	QDF_STATUS obj_status[WLAN_UMAC_MAX_COMPONENTS];
 	WLAN_OBJ_STATE obj_state;
 	qdf_spinlock_t pdev_lock;
@@ -206,7 +206,7 @@ QDF_STATUS wlan_objmgr_pdev_obj_delete(struct wlan_objmgr_pdev *pdev);
  * wlan_objmgr_pdev_component_obj_attach() - pdev comp object attach
  * @psoc: PDEV object
  * @id: Component id
- * @comp_objptr: component's private object pointer
+ * @comp_priv_obj: component's private object pointer
  * @status: Component's private object creation status
  *
  * API to be used for attaching component object with PDEV common object
@@ -217,14 +217,14 @@ QDF_STATUS wlan_objmgr_pdev_obj_delete(struct wlan_objmgr_pdev *pdev);
 QDF_STATUS wlan_objmgr_pdev_component_obj_attach(
 		struct wlan_objmgr_pdev *pdev,
 		enum wlan_umac_comp_id id,
-		void *comp_objptr,
+		void *comp_priv_obj,
 		QDF_STATUS status);
 
 /**
  * wlan_objmgr_pdev_component_obj_detach() - pdev comp object detach
  * @psoc: PDEV object
  * @id: Component id
- * @comp_objptr: component's private object pointer
+ * @comp_priv_obj: component's private object pointer
  *
  * API to be used for detaching component object with PDEV common object
  *
@@ -235,7 +235,7 @@ QDF_STATUS wlan_objmgr_pdev_component_obj_attach(
 QDF_STATUS wlan_objmgr_pdev_component_obj_detach(
 		struct wlan_objmgr_pdev *pdev,
 		enum wlan_umac_comp_id id,
-		void *comp_objptr);
+		void *comp_priv_obj);
 
 /**
  ** APIs to operations on pdev objects
@@ -269,32 +269,34 @@ QDF_STATUS wlan_objmgr_pdev_iterate_obj_list(
 		void *arg, uint8_t lock_free_op);
 
 /**
- * wlan_objmgr_trigger_pdev_comp_object_creation() - create comp object of pdev
+ * wlan_objmgr_trigger_pdev_comp_priv_object_creation() - create
+ * comp object of pdev
  * @pdev: PDEV object
  * @id: Component id
  *
- * API to create component object in run time, this would be used for features
- * which gets enabled in run time
+ * API to create component private object in run time, this would be
+ * used for features which gets enabled in run time
  *
  * Return: SUCCESS on successful creation
  *         On FAILURE (appropriate failure codes are returned)
  */
-QDF_STATUS wlan_objmgr_trigger_pdev_comp_object_creation(
+QDF_STATUS wlan_objmgr_trigger_pdev_comp_priv_object_creation(
 		struct wlan_objmgr_pdev *pdev,
 		enum wlan_umac_comp_id id);
 
 /**
- * wlan_objmgr_trigger_pdev_comp_object_deletion() - delete comp object of pdev
+ * wlan_objmgr_trigger_pdev_comp_priv_object_deletion() - delete
+ * comp object of pdev
  * @pdev: PDEV object
  * @id: Component id
  *
- * API to delete component object in run time, this would be used for features
- * which gets disabled in run time
+ * API to delete component private object in run time, this would
+ * be used for features which gets disabled in run time
  *
  * Return: SUCCESS on successful deletion
  *         On FAILURE (appropriate failure codes are returned)
  */
-QDF_STATUS wlan_objmgr_trigger_pdev_comp_object_deletion(
+QDF_STATUS wlan_objmgr_trigger_pdev_comp_priv_object_deletion(
 		struct wlan_objmgr_pdev *pdev,
 		enum wlan_umac_comp_id id);
 
