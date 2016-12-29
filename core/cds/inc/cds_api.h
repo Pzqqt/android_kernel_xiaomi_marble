@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -216,8 +216,6 @@ void cds_flush_cache_rx_queue(void);
 QDF_STATUS cds_post_disable(v_CONTEXT_t cds_context);
 
 QDF_STATUS cds_close(v_CONTEXT_t cds_context);
-
-void cds_core_return_msg(void *pVContext, p_cds_msg_wrapper pMsgWrapper);
 
 void *cds_get_context(QDF_MODULE_ID moduleId);
 

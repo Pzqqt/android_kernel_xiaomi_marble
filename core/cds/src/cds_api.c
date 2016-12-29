@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1490,40 +1490,6 @@ void cds_wma_complete_cback(void *pUserData)
 		return;
 	}
 } /* cds_wma_complete_cback() */
-
-/**
- * cds_core_return_msg() - return core message
- * @pVContext: pointer to cds context
- * @pMsgWrapper: pointer to message wrapper
- *
- * Return: none
- */
-void cds_core_return_msg(void *pVContext, p_cds_msg_wrapper pMsgWrapper)
-{
-	p_cds_contextType p_cds_context = (p_cds_contextType) pVContext;
-
-	QDF_ASSERT(gp_cds_context == p_cds_context);
-
-	if (gp_cds_context != p_cds_context) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: gp_cds_context != p_cds_context", __func__);
-		return;
-	}
-
-	QDF_ASSERT(NULL != pMsgWrapper);
-
-	if (pMsgWrapper == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: pMsgWrapper == NULL in function", __func__);
-		return;
-	}
-
-	/*
-	** Return the message on the free message queue
-	*/
-	INIT_LIST_HEAD(&pMsgWrapper->msgNode);
-	cds_mq_put(&p_cds_context->freeVosMq, pMsgWrapper);
-} /* cds_core_return_msg() */
 
 /**
  * cds_get_vdev_types() - get vdev type
