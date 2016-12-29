@@ -615,6 +615,10 @@ typedef struct sSirMbMsgP2p {
 
 #define SIR_HAL_SET_WOW_PULSE_CMD           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 369)
 
+#define SIR_HAL_SET_UDP_RESP_OFFLOAD        (SIR_HAL_ITC_MSG_TYPES_BEGIN + 370)
+
+#define SIR_HAL_SET_PER_ROAM_CONFIG_CMD     (SIR_HAL_ITC_MSG_TYPES_BEGIN + 371)
+
 #define SIR_HAL_MSG_TYPES_END                (SIR_HAL_MSG_TYPES_BEGIN + 0x1FF)
 
 /* CFG message types */

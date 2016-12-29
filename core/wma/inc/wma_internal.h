@@ -186,6 +186,16 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 					uint32_t len);
 #endif
 
+/**
+ * wma_update_per_roam_config() -per roam config parameter updation to FW
+ * @handle: wma handle
+ * @req_buf: per roam config parameters
+ *
+ * Return: none
+ */
+void wma_update_per_roam_config(WMA_HANDLE handle,
+				 struct wmi_per_roam_config_req *req_buf);
+
 QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 				      tSirScanOffloadReq *scan_req,
 				      struct scan_start_params *cmd);

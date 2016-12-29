@@ -6789,6 +6789,11 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, struct scheduler_msg *msg)
 			(struct wifi_epno_params *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
+	case WMA_SET_PER_ROAM_CONFIG_CMD:
+		wma_update_per_roam_config(wma_handle,
+			(struct wmi_per_roam_config_req *)msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
 	case WMA_SET_PASSPOINT_LIST_REQ:
 		/* Issue reset passpoint network list first and clear
 		 * the entries */

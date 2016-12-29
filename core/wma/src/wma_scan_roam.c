@@ -2039,6 +2039,25 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 	return qdf_status;
 }
 
+void wma_update_per_roam_config(WMA_HANDLE handle,
+				 struct wmi_per_roam_config_req *req_buf)
+{
+	int status;
+	tp_wma_handle wma_handle = (tp_wma_handle) handle;
+
+	if (!wma_handle || !wma_handle->wmi_handle) {
+		WMA_LOGE("%s: WMA is closed, cannot send per roam config",
+			__func__);
+		return;
+	}
+
+	status = wmi_unified_set_per_roam_config(wma_handle->wmi_handle,
+						req_buf);
+	if (status != EOK)
+		WMA_LOGE("%s: failed to set per roam config to FW",
+			__func__);
+}
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 
 /**

@@ -4188,6 +4188,7 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		CFG_MAX_SCHED_SCAN_PLAN_ITRNS_DEFAULT,
 		CFG_MAX_SCHED_SCAN_PLAN_ITRNS_MIN,
 		CFG_MAX_SCHED_SCAN_PLAN_ITRNS_MAX),
+
 	REG_VARIABLE(CFG_STANDARD_WEXT_CONTROL_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, standard_wext_control,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -4200,12 +4201,48 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_PRIVATE_WEXT_CONTROL_DEFAULT,
 		     CFG_PRIVATE_WEXT_CONTROL_MIN,
 		     CFG_PRIVATE_WEXT_CONTROL_MAX),
+
 	REG_VARIABLE(CFG_SAP_INTERNAL_RESTART_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, sap_internal_restart,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
 		CFG_SAP_INTERNAL_RESTART_DEFAULT,
 		CFG_SAP_INTERNAL_RESTART_MIN,
 		CFG_SAP_INTERNAL_RESTART_MAX),
+
+	REG_VARIABLE(CFG_PER_ROAM_ENABLE_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, is_per_roam_enabled,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_PER_ROAM_ENABLE_DEFAULT,
+		CFG_PER_ROAM_ENABLE_MIN,
+		CFG_PER_ROAM_ENABLE_MAX),
+
+	REG_VARIABLE(CFG_PER_ROAM_CONFIG_HIGH_RATE_TH_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, per_roam_high_rate_threshold,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_PER_ROAM_CONFIG_HIGH_RATE_TH_DEFAULT,
+		CFG_PER_ROAM_CONFIG_HIGH_RATE_TH_MIN,
+		CFG_PER_ROAM_CONFIG_HIGH_RATE_TH_MAX),
+
+	REG_VARIABLE(CFG_PER_ROAM_CONFIG_LOW_RATE_TH_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, per_roam_low_rate_threshold,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_PER_ROAM_CONFIG_LOW_RATE_TH_DEFAULT,
+		CFG_PER_ROAM_CONFIG_LOW_RATE_TH_MIN,
+		CFG_PER_ROAM_CONFIG_LOW_RATE_TH_MAX),
+
+	REG_VARIABLE(CFG_PER_ROAM_CONFIG_RATE_TH_PERCENT_NAME,
+		WLAN_PARAM_Integer, struct hdd_config, per_roam_th_percent,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_PER_ROAM_CONFIG_RATE_TH_PERCENT_DEFAULT,
+		CFG_PER_ROAM_CONFIG_RATE_TH_PERCENT_MIN,
+		CFG_PER_ROAM_CONFIG_RATE_TH_PERCENT_MAX),
+
+	REG_VARIABLE(CFG_PER_ROAM_REST_TIME_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, per_roam_rest_time,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_PER_ROAM_REST_TIME_DEFAULT,
+		CFG_PER_ROAM_REST_TIME_MIN,
+		CFG_PER_ROAM_REST_TIME_MAX),
 };
 
 /**
@@ -4981,6 +5018,31 @@ static void hdd_cfg_print_runtime_pm(hdd_context_t *hdd_ctx)
 #endif
 
 /**
+ * hdd_per_roam_print_ini_config()- Print PER roam specific INI configuration
+ * @hdd_ctx: handle to hdd context
+ *
+ * Return: None
+ */
+static void hdd_per_roam_print_ini_config(hdd_context_t *hdd_ctx)
+{
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_PER_ROAM_ENABLE_NAME,
+		hdd_ctx->config->is_per_roam_enabled);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_PER_ROAM_CONFIG_HIGH_RATE_TH_NAME,
+		hdd_ctx->config->per_roam_high_rate_threshold);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_PER_ROAM_CONFIG_LOW_RATE_TH_NAME,
+		hdd_ctx->config->per_roam_low_rate_threshold);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_PER_ROAM_CONFIG_RATE_TH_PERCENT_NAME,
+		hdd_ctx->config->per_roam_th_percent);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_PER_ROAM_REST_TIME_NAME,
+		hdd_ctx->config->per_roam_rest_time);
+}
+
+/**
  * hdd_cfg_print() - print the hdd configuration
  * @iniTable: pointer to hdd context
  *
@@ -5655,6 +5717,7 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_info("Name = [%s] Value = [%d]",
 		CFG_SAP_INTERNAL_RESTART_NAME,
 		pHddCtx->config->sap_internal_restart);
+	hdd_per_roam_print_ini_config(pHddCtx);
 }
 
 
@@ -6810,6 +6873,43 @@ void hdd_set_pno_channel_prediction_config(
 		hdd_ctx->config->pnoscan_adaptive_dwell_mode;
 }
 #endif
+
+/**
+ * hdd_update_per_config_to_sme() -initializes the sme config for PER roam
+ *
+ * @hdd_ctx: the pointer to hdd context
+ * @sme_config: sme configuation pointer
+ *
+ * Return: None
+ */
+static void hdd_update_per_config_to_sme(hdd_context_t *hdd_ctx,
+					 tSmeConfigParams *sme_config)
+{
+	sme_config->csrConfig.per_roam_config.enable =
+			hdd_ctx->config->is_per_roam_enabled;
+
+	/* Assigning Tx and Rx for same value */
+	sme_config->csrConfig.per_roam_config.tx_high_rate_thresh =
+			hdd_ctx->config->per_roam_high_rate_threshold;
+	sme_config->csrConfig.per_roam_config.rx_high_rate_thresh =
+			hdd_ctx->config->per_roam_high_rate_threshold;
+
+	/* Assigning Tx and Rx for same value */
+	sme_config->csrConfig.per_roam_config.tx_low_rate_thresh =
+			hdd_ctx->config->per_roam_low_rate_threshold;
+	sme_config->csrConfig.per_roam_config.rx_low_rate_thresh =
+			hdd_ctx->config->per_roam_low_rate_threshold;
+
+	/* Assigning Tx and Rx for same value */
+	sme_config->csrConfig.per_roam_config.tx_rate_thresh_percnt =
+			hdd_ctx->config->per_roam_th_percent;
+	sme_config->csrConfig.per_roam_config.rx_rate_thresh_percnt =
+			hdd_ctx->config->per_roam_th_percent;
+
+	sme_config->csrConfig.per_roam_config.per_rest_time =
+			hdd_ctx->config->per_roam_rest_time;
+}
+
 /**
  * hdd_set_sme_config() -initializes the sme configuration parameters
  *
@@ -7134,6 +7234,8 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 			pHddCtx->config->scan_adaptive_dwell_mode;
 	smeConfig->csrConfig.roamscan_adaptive_dwell_mode =
 			pHddCtx->config->roamscan_adaptive_dwell_mode;
+
+	hdd_update_per_config_to_sme(pHddCtx, smeConfig);
 
 	smeConfig->csrConfig.enable_edca_params =
 			pConfig->enable_edca_params;
