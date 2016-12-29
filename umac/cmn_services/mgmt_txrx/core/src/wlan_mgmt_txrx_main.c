@@ -48,7 +48,7 @@ QDF_STATUS wlan_mgmt_txrx_desc_pool_init(
 	}
 	qdf_list_create(&mgmt_txrx_ctx->mgmt_desc_pool.free_list, pool_size);
 
-	for (i = 0; i < (pool_size - 1); i++) {
+	for (i = 0; i < pool_size; i++) {
 		mgmt_txrx_ctx->mgmt_desc_pool.pool[i].desc_id = i;
 		mgmt_txrx_ctx->mgmt_desc_pool.pool[i].in_use = false;
 		qdf_list_insert_front(&mgmt_txrx_ctx->mgmt_desc_pool.free_list,
@@ -68,17 +68,14 @@ void wlan_mgmt_txrx_desc_pool_deinit(
 	uint32_t pool_size;
 	QDF_STATUS status;
 
-	qdf_spin_lock_bh(&mgmt_txrx_ctx->mgmt_desc_pool.desc_pool_lock);
 	if (!mgmt_txrx_ctx->mgmt_desc_pool.pool) {
-		qdf_spin_unlock_bh(
-			&mgmt_txrx_ctx->mgmt_desc_pool.desc_pool_lock);
 		mgmt_txrx_err("Empty mgmt descriptor pool");
 		qdf_assert_always(0);
 		return;
 	}
 
 	pool_size = mgmt_txrx_ctx->mgmt_desc_pool.free_list.max_size;
-	for (i = 0; i < (pool_size - 1); i++) {
+	for (i = 0; i < pool_size; i++) {
 		status = qdf_list_remove_node(
 				&mgmt_txrx_ctx->mgmt_desc_pool.free_list,
 				&mgmt_txrx_ctx->mgmt_desc_pool.pool[i].entry);
@@ -91,8 +88,6 @@ void wlan_mgmt_txrx_desc_pool_deinit(
 	qdf_mem_free(mgmt_txrx_ctx->mgmt_desc_pool.pool);
 	mgmt_txrx_ctx->mgmt_desc_pool.pool = NULL;
 
-	qdf_spin_unlock_bh(
-		&mgmt_txrx_ctx->mgmt_desc_pool.desc_pool_lock);
 	qdf_spinlock_destroy(
 		&mgmt_txrx_ctx->mgmt_desc_pool.desc_pool_lock);
 }

@@ -26,6 +26,7 @@
 #include "wlan_mgmt_txrx_utils_api.h"
 #include "wlan_mgmt_txrx_main_i.h"
 #include "wlan_objmgr_psoc_obj.h"
+#include "wlan_objmgr_peer_obj.h"
 
 
 /**
@@ -806,7 +807,8 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 		mgmt_txrx_err("Rx event doesn't conatin a mgmt. packet, %d",
 			mgmt_type);
 		qdf_nbuf_free(buf);
-		return QDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
+		goto dec_peer_ref_cnt;
 	}
 
 	/* mpdu_data_ptr is pointer to action header */
@@ -816,7 +818,8 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 	if (frm_type == MGMT_FRM_UNSPECIFIED) {
 		mgmt_txrx_err("Unspecified mgmt frame type");
 		qdf_nbuf_free(buf);
-		return QDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
+		goto dec_peer_ref_cnt;
 	}
 
 	mgmt_txrx_info("Rcvd mgmt frame, mgmt txrx frm type: %u, seq. no.: %u, peer: %p",
@@ -832,7 +835,8 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 		mgmt_txrx_info("No rx callback registered for frm_type: %d",
 			frm_type);
 		qdf_nbuf_free(buf);
-		return QDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
+		goto dec_peer_ref_cnt;
 	}
 
 	while (rx_handler) {
@@ -876,6 +880,10 @@ rx_handler_mem_free:
 		rx_handler_head = rx_handler_head->next;
 		qdf_mem_free(rx_handler);
 	}
+dec_peer_ref_cnt:
+	if (peer)
+		wlan_objmgr_peer_unref_peer(peer);
+
 	return status;
 }
 
@@ -941,6 +949,12 @@ QDF_STATUS tgt_mgmt_txrx_tx_completion_handler(
 		ota_comp_cb(cb_context, nbuf, status, tx_compl_params);
 
 no_registered_cb:
+	/**
+	 * decremneting the peer ref count that has been incremented while
+	 * passing peer in wlan_mgmt_txrx_mgmt_frame_tx or
+	 * wlan_mgmt_txrx_beacon_frame_tx APIs.
+	 */
+	wlan_objmgr_peer_unref_peer(mgmt_desc->peer);
 	wlan_mgmt_txrx_desc_put(mgmt_txrx_ctx, desc_id);
 	return QDF_STATUS_SUCCESS;
 }
