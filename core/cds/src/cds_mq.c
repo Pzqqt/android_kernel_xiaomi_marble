@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -177,31 +177,6 @@ inline p_cds_msg_wrapper cds_mq_get(p_cds_mq_type pMq)
 
 	return pMsgWrapper;
 
-} /* cds_mq_get() */
-
-/**
- * cds_is_mq_empty() - check if the message queue is empty
- * @pMq: Pointer to the message queue
- *
- * Return: true if message queue is emtpy
- *	   false otherwise
- */
-inline bool cds_is_mq_empty(p_cds_mq_type pMq)
-{
-	bool state = false;
-	unsigned long flags;
-
-	if (pMq == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: NULL pointer passed", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	spin_lock_irqsave(&pMq->mqLock, flags);
-	state = list_empty(&pMq->mqList) ? true : false;
-	spin_unlock_irqrestore(&pMq->mqLock, flags);
-
-	return state;
 } /* cds_mq_get() */
 
 /**

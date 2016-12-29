@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -503,7 +503,6 @@ void cds_mq_deinit(p_cds_mq_type pMq);
 void cds_mq_put(p_cds_mq_type pMq, p_cds_msg_wrapper pMsgWrapper);
 void cds_mq_put_front(p_cds_mq_type mq, p_cds_msg_wrapper msg_wrapper);
 p_cds_msg_wrapper cds_mq_get(p_cds_mq_type pMq);
-bool cds_is_mq_empty(p_cds_mq_type pMq);
 p_cds_sched_context get_cds_sched_ctxt(void);
 QDF_STATUS cds_sched_init_mqs(p_cds_sched_context pSchedContext);
 void cds_sched_deinit_mqs(p_cds_sched_context pSchedContext);
