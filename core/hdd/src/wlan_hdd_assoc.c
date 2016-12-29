@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1190,6 +1190,7 @@ static void hdd_send_association_event(struct net_device *dev,
 	int we_event;
 	char *msg;
 	struct qdf_mac_addr peerMacAddr;
+	QDF_STATUS qdf_status;
 
 	/* Added to find the auth type on the fly at run time */
 	/* rather than with cfg to see if FT is enabled */
@@ -1272,6 +1273,14 @@ static void hdd_send_association_event(struct net_device *dev,
 			pCsrRoamInfo->chan_info.reg_info_1;
 		chan_info.reg_info_2 =
 			pCsrRoamInfo->chan_info.reg_info_2;
+
+		qdf_status = hdd_add_peer_object(pAdapter->hdd_vdev,
+						pAdapter->device_mode,
+						peerMacAddr.bytes);
+		if (QDF_IS_STATUS_ERROR(qdf_status))
+			hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
+					MAC_ADDR_ARRAY(peerMacAddr.bytes));
+
 		/* send peer status indication to oem app */
 		hdd_send_peer_status_ind_to_oem_app(&peerMacAddr,
 							ePeerConnected,
@@ -1304,6 +1313,13 @@ static void hdd_send_association_event(struct net_device *dev,
 		       ETH_ALEN);
 		hdd_err("wlan: new IBSS connection to " MAC_ADDRESS_STR,
 			 MAC_ADDR_ARRAY(pHddStaCtx->conn_info.bssId.bytes));
+
+		qdf_status = hdd_add_peer_object(pAdapter->hdd_vdev,
+						QDF_IBSS_MODE,
+						pCsrRoamInfo->bssid.bytes);
+		if (QDF_IS_STATUS_ERROR(qdf_status))
+			hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
+				MAC_ADDR_ARRAY(pCsrRoamInfo->bssid.bytes));
 	} else {                /* Not Associated */
 		hdd_err("wlan: disconnected");
 		memset(wrqu.ap_addr.sa_data, '\0', ETH_ALEN);
@@ -1327,6 +1343,13 @@ static void hdd_send_association_event(struct net_device *dev,
 							NULL,
 							pAdapter->device_mode);
 		}
+
+		qdf_status = hdd_remove_peer_object(pAdapter->hdd_vdev,
+							peerMacAddr.bytes);
+		if (QDF_IS_STATUS_ERROR(qdf_status))
+			hdd_err("Peer obj "MAC_ADDRESS_STR" delete fails",
+					MAC_ADDR_ARRAY(peerMacAddr.bytes));
+
 		hdd_lpass_notify_disconnect(pAdapter);
 		/* Update tdls module about the disconnection event */
 		wlan_hdd_tdls_notify_disconnect(pAdapter);
@@ -3310,8 +3333,8 @@ roam_roam_connect_status_update_handler(hdd_adapter_t *pAdapter,
 					eCsrRoamResult roamResult)
 {
 	QDF_STATUS qdf_status;
-
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+
 	switch (roamResult) {
 	case eCSR_ROAM_RESULT_IBSS_NEW_PEER:
 	{
@@ -3422,6 +3445,12 @@ roam_roam_connect_status_update_handler(hdd_adapter_t *pAdapter,
 
 		pHddCtx->sta_to_adapter[pRoamInfo->staId] = NULL;
 		pHddStaCtx->ibss_sta_generation++;
+
+		qdf_status = hdd_remove_peer_object(pAdapter->hdd_vdev,
+					pRoamInfo->peerMac.bytes);
+		if (QDF_IS_STATUS_ERROR(qdf_status))
+			hdd_err("Peer obj "MAC_ADDRESS_STR" delete fails",
+				MAC_ADDR_ARRAY(pRoamInfo->peerMac.bytes));
 
 		cfg80211_del_sta(pAdapter->dev,
 				 (const u8 *)&pRoamInfo->peerMac.bytes,

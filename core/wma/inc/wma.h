@@ -49,6 +49,7 @@
 #include "cdp_txrx_cmn.h"
 #include "dbglog.h"
 #include "cds_ieee80211_common.h"
+#include "wlan_objmgr_psoc_obj.h"
 /* Platform specific configuration for max. no. of fragments */
 #define QCA_OL_11AC_TX_MAX_FRAGS            2
 
@@ -1279,6 +1280,7 @@ struct extended_caps {
  * @htc_handle: htc handle
  * @cds_context: cds handle
  * @mac_context: mac context
+ * @psoc: psoc context
  * @wma_ready_event: wma rx ready event
  * @wma_resume_event: wma resume event
  * @target_suspend: target suspend event
@@ -1411,6 +1413,7 @@ typedef struct {
 	void *htc_handle;
 	void *cds_context;
 	void *mac_context;
+	struct wlan_objmgr_psoc *psoc;
 	qdf_event_t wma_ready_event;
 	qdf_event_t wma_resume_event;
 	qdf_event_t target_suspend;

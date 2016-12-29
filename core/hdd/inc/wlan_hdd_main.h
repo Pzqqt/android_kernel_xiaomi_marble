@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -64,6 +64,12 @@
 #include <cdp_txrx_peer_ops.h>
 #include "wlan_hdd_nan_datapath.h"
 #include "wlan_tgt_def_config.h"
+#include <wlan_objmgr_cmn.h>
+#include <wlan_objmgr_global_obj.h>
+#include <wlan_objmgr_psoc_obj.h>
+#include <wlan_objmgr_pdev_obj.h>
+#include <wlan_objmgr_vdev_obj.h>
+#include <wlan_objmgr_peer_obj.h>
 
 /*---------------------------------------------------------------------------
    Preprocessor definitions and constants
@@ -266,6 +272,9 @@
 
 /* session ID invalid */
 #define HDD_SESSION_ID_INVALID    0xFF
+
+/* Default Psoc id */
+#define DEFAULT_PSOC_ID 1
 
 /*
  * Generic asynchronous request/response support
@@ -903,6 +912,7 @@ struct hdd_adapter_s {
 	uint32_t magic;
 
 	void *pHddCtx;
+	struct wlan_objmgr_vdev *hdd_vdev;
 
 	void *txrx_vdev;
 
@@ -1298,6 +1308,9 @@ enum suspend_fail_reason {
 struct hdd_context_s {
 	/** Global CDS context  */
 	v_CONTEXT_t pcds_context;
+
+	struct wlan_objmgr_psoc *hdd_psoc;
+	struct wlan_objmgr_pdev *hdd_pdev;
 
 	/** HAL handle...*/
 	tHalHandle hHal;
@@ -1994,4 +2007,98 @@ static inline int wlan_hdd_validate_session_id(u8 session_id)
 bool hdd_is_roaming_in_progress(void);
 void hdd_set_roaming_in_progress(bool value);
 
+/**
+ * hdd_create_and_store_psoc() - Create psoc object and store in hdd context
+ * @hdd_ctx: Hdd context
+ * @psoc_id: Psoc Id
+ *
+ * This API creates Psoc object with given @psoc_id and store the psoc reference
+ * to hdd context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_create_and_store_psoc(hdd_context_t *hdd_ctx, uint8_t psoc_id);
+
+/**
+ * hdd_destroy_and_release_psoc() - Deletes the psoc object
+ * @hdd_ctx: Hdd context
+ *
+ * This API deletes psoc object and release its reference from hdd context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_destroy_and_release_psoc(hdd_context_t *hdd_ctx);
+
+/**
+ * hdd_create_and_store_pdev() - Create pdev object and store in hdd context
+ * @hdd_ctx: Hdd context
+ *
+ * This API creates the pdev object and store the pdev reference to hdd context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_create_and_store_pdev(hdd_context_t *hdd_ctx);
+
+/**
+ * hdd_destroy_and_release_pdev() - Deletes the pdev object
+ * @hdd_ctx: Hdd context
+ *
+ * This API deletes pdev object and release its reference from hdd context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_destroy_and_release_pdev(hdd_context_t *hdd_ctx);
+
+/**
+ * hdd_create_and_store_vdev() - Create vdev object and store in hdd adapter
+ * @pdev: pdev pointer
+ * @adapter: hdd adapter
+ *
+ * This API creates the vdev object and store the vdev reference to the
+ * given @adapter. Also, creates a self peer for the vdev. If the adapter
+ * session id and vdev id of the new vdev object doesnot match, destroys the
+ * created vdev object and returns failure
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
+					hdd_adapter_t *adapter);
+
+/**
+ * hdd_destroy_and_release_vdev() - Delete the vdev object
+ * @hdd_ctx: Hdd context
+ *
+ * This API deletes vdev object and release its reference from hdd adapter
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_destroy_and_release_vdev(hdd_adapter_t *adapter);
+
+/**
+ * hdd_add_peer_object() - Create and add the peer object to the vdev
+ * @vdev: vdev pointer
+ * @adapter_mode: adapter mode
+ * @mac_addr: Peer mac address
+ *
+ * This API creates and adds the peer object to the given @vdev. The peer type
+ * (STA, AP or IBSS) is assigned based on adapter mode. For example, if adapter
+ * mode is STA, peer is AP.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_add_peer_object(struct wlan_objmgr_vdev *vdev,
+				enum tQDF_ADAPTER_MODE adapter_mode,
+				uint8_t *mac_addr);
+
+/**
+ * hdd_remove_peer_object() - Delete and remove the peer from vdev
+ * @vdev: vdev pointer
+ * @mac_addr: Peer Mac address
+ *
+ * This API finds the peer object from given @mac_addr and deletes the same.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_remove_peer_object(struct wlan_objmgr_vdev *vdev,
+						uint8_t *mac_addr);
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

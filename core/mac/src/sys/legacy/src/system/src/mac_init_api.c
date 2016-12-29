@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -103,8 +103,8 @@ tSirRetStatus mac_stop(tHalHandle hHal, tHalStopType stopType)
    \return tSirRetStatus
    -------------------------------------------------------------*/
 
-tSirRetStatus mac_open(tHalHandle *pHalHandle, tHddHandle hHdd,
-		       struct cds_config_info *cds_cfg)
+tSirRetStatus mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
+			tHddHandle hHdd, struct cds_config_info *cds_cfg)
 {
 	tpAniSirGlobal p_mac = NULL;
 	tSirRetStatus status = eSIR_SUCCESS;
@@ -130,6 +130,9 @@ tSirRetStatus mac_open(tHalHandle *pHalHandle, tHddHandle hHdd,
 	 * dependant)
 	 */
 	p_mac->hHdd = hHdd;
+
+	/* Increase psoc ref count once APIs are available in object manager */
+	p_mac->psoc = psoc;
 	*pHalHandle = (tHalHandle) p_mac;
 
 	{
@@ -184,6 +187,8 @@ tSirRetStatus mac_close(tHalHandle hHal)
 
 	log_deinit(pMac);
 
+	/* Decrease psoc ref count once APIs are available in object manager */
+	pMac->psoc = NULL;
 	/* Finally, de-allocate the global MAC datastructure: */
 	qdf_mem_free(pMac);
 

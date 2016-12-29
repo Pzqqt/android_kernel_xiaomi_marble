@@ -745,6 +745,20 @@ CDS_OBJS :=	$(CDS_SRC_DIR)/cds_api.o \
 		$(CDS_SRC_DIR)/cds_utils.o
 
 
+###### UMAC OBJMGR ########
+UMAC_OBJMGR_DIR := $(WLAN_COMMON_ROOT)/umac/cmn_services/obj_mgr
+
+UMAC_OBJMGR_INC := -I$(WLAN_COMMON_INC)/umac/cmn_services/obj_mgr/inc \
+		-I$(WLAN_COMMON_INC)/umac/cmn_services/obj_mgr/src \
+		-I$(WLAN_COMMON_INC)/umac/cmn_services/inc \
+		-I$(WLAN_COMMON_INC)/umac/global_umac_dispatcher/lmac_if/inc
+
+UMAC_OBJMGR_OBJS := $(UMAC_OBJMGR_DIR)/src/wlan_objmgr_global_obj.o \
+		$(UMAC_OBJMGR_DIR)/src/wlan_objmgr_pdev_obj.o \
+		$(UMAC_OBJMGR_DIR)/src/wlan_objmgr_peer_obj.o \
+		$(UMAC_OBJMGR_DIR)/src/wlan_objmgr_psoc_obj.o \
+		$(UMAC_OBJMGR_DIR)/src/wlan_objmgr_vdev_obj.o
+
 ########### BMI ###########
 BMI_DIR := core/bmi
 
@@ -1090,6 +1104,7 @@ INCS +=		$(HIF_INC) \
 		$(BMI_INC) \
 		$(HAL_INC)
 
+INCS +=		$(UMAC_OBJMGR_INC)
 INCS +=		$(TARGET_INC)
 
 INCS +=		$(NLINK_INC) \
@@ -1134,6 +1149,7 @@ OBJS +=		$(HIF_OBJS) \
 		$(HTT_OBJS) \
 		$(HAL_OBJS)
 
+OBJS +=		$(UMAC_OBJMGR_OBJS)
 OBJS +=		$(WLAN_LOGGING_OBJS)
 OBJS +=		$(NLINK_OBJS)
 OBJS +=		$(PTT_OBJS)

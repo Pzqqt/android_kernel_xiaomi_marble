@@ -109,6 +109,12 @@
 #include <wlan_hdd_napi.h>
 #include "wlan_hdd_disa.h"
 #include <dispatcher_init_deinit.h>
+#include <wlan_objmgr_cmn.h>
+#include <wlan_objmgr_global_obj.h>
+#include <wlan_objmgr_psoc_obj.h>
+#include <wlan_objmgr_pdev_obj.h>
+#include <wlan_objmgr_vdev_obj.h>
+#include <wlan_objmgr_peer_obj.h>
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -1322,6 +1328,13 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	struct wma_tgt_cfg *cfg = param;
 	uint8_t temp_band_cap;
 	struct cds_config_info *cds_cfg = cds_get_ini_config();
+	QDF_STATUS qdf_status;
+
+	qdf_status = hdd_create_and_store_pdev(hdd_ctx);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		hdd_err("Pdev creation fails!");
+		QDF_BUG(0);
+	}
 
 	if (cds_cfg) {
 		if (hdd_ctx->config->enable_sub_20_channel_width !=
@@ -1775,7 +1788,13 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			goto ol_cds_free;
 		}
 
-		status = cds_open();
+		status = hdd_create_and_store_psoc(hdd_ctx, DEFAULT_PSOC_ID);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("Psoc creation fails!");
+			goto ol_cds_free;
+		}
+
+		status = cds_open(hdd_ctx->hdd_psoc);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("Failed to Open CDS: %d", status);
 			goto ol_cds_free;
@@ -1832,7 +1851,7 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 	return 0;
 
 close:
-	cds_close(p_cds_context);
+	cds_close(hdd_ctx->hdd_psoc, p_cds_context);
 
 ol_cds_free:
 	ol_cds_free();
@@ -2670,9 +2689,12 @@ QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
 		hdd_alert("Session is not opened within timeout period code %ld",
 			rc);
 		adapter->sessionId = HDD_SESSION_ID_INVALID;
-		status = QDF_STATUS_E_FAILURE;
-		goto error_sme_open;
+		return QDF_STATUS_E_FAILURE;
 	}
+
+	status = hdd_create_and_store_vdev(hdd_ctx->hdd_pdev, adapter);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto error_vdev_create;
 
 	sme_set_vdev_ies_per_band(hdd_ctx->hHal, adapter->sessionId);
 	/* Register wireless extensions */
@@ -2742,6 +2764,10 @@ error_wmm_init:
 error_init_txrx:
 	hdd_unregister_wext(pWlanDev);
 error_register_wext:
+	status = hdd_destroy_and_release_vdev(adapter);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("vdev delete failed");
+error_vdev_create:
 	if (test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
 		INIT_COMPLETION(adapter->session_close_comp_var);
 		if (QDF_STATUS_SUCCESS == sme_close_session(hdd_ctx->hHal,
@@ -2894,6 +2920,7 @@ static void hdd_cleanup_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 				bool rtnl_held)
 {
 	struct net_device *pWlanDev = NULL;
+	QDF_STATUS qdf_status;
 
 	if (adapter)
 		pWlanDev = adapter->dev;
@@ -2901,6 +2928,10 @@ static void hdd_cleanup_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 		hdd_err("adapter is Null");
 		return;
 	}
+
+	qdf_status = hdd_destroy_and_release_vdev(adapter);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		hdd_err("vdev delete failed");
 
 	hdd_debugfs_exit(adapter);
 
@@ -3506,6 +3537,7 @@ static void hdd_wait_for_sme_close_sesion(hdd_context_t *hdd_ctx,
 					hdd_adapter_t *adapter)
 {
 	unsigned long rc;
+	QDF_STATUS qdf_status;
 
 	if (!test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
 		hdd_err("session is not opened:%d", adapter->sessionId);
@@ -3532,6 +3564,10 @@ static void hdd_wait_for_sme_close_sesion(hdd_context_t *hdd_ctx,
 			clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
 			return;
 		}
+		qdf_status = hdd_destroy_and_release_vdev(adapter);
+		if (QDF_IS_STATUS_ERROR(qdf_status))
+			hdd_err("vdev delete failed");
+
 		adapter->sessionId = HDD_SESSION_ID_INVALID;
 	}
 }
@@ -7716,7 +7752,7 @@ int hdd_configure_cds(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 	 * Start CDS which starts up the SME/MAC/HAL modules and everything
 	 * else
 	 */
-	status = cds_enable(hdd_ctx->pcds_context);
+	status = cds_enable(hdd_ctx->hdd_psoc, hdd_ctx->pcds_context);
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_alert("cds_enable failed");
@@ -7747,7 +7783,7 @@ hdd_features_deinit:
 	hdd_deregister_cb(hdd_ctx);
 	wlan_hdd_cfg80211_deregister_frames(adapter);
 cds_disable:
-	cds_disable(hdd_ctx->pcds_context);
+	cds_disable(hdd_ctx->hdd_psoc, hdd_ctx->pcds_context);
 
 out:
 	return -EINVAL;
@@ -7778,7 +7814,7 @@ static int hdd_deconfigure_cds(hdd_context_t *hdd_ctx)
 		ret = -EINVAL;
 	}
 
-	qdf_status = cds_disable(hdd_ctx->pcds_context);
+	qdf_status = cds_disable(hdd_ctx->hdd_psoc, hdd_ctx->pcds_context);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("Failed to Disable the CDS Modules! :%d",
 			qdf_status);
@@ -7809,7 +7845,6 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx)
 	p_cds_sched_context cds_sched_context = NULL;
 
 	ENTER();
-
 
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	if (!qdf_ctx) {
@@ -7862,12 +7897,20 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx)
 		ret = -EINVAL;
 		QDF_ASSERT(0);
 	}
-	qdf_status = cds_close(hdd_ctx->pcds_context);
+	qdf_status = cds_close(hdd_ctx->hdd_psoc, hdd_ctx->pcds_context);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_warn("Failed to stop CDS:%d", qdf_status);
 		ret = -EINVAL;
 		QDF_ASSERT(0);
 	}
+
+	qdf_status = hdd_destroy_and_release_pdev(hdd_ctx);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		hdd_err("Pdev delete failed");
+
+	qdf_status = hdd_destroy_and_release_psoc(hdd_ctx);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		hdd_err("Psoc delete failed");
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!hif_ctx) {
@@ -9868,6 +9911,191 @@ bool hdd_is_roaming_in_progress(void)
 		return false;
 	}
 	return hdd_ctx->roaming_in_progress;
+}
+
+QDF_STATUS hdd_create_and_store_psoc(hdd_context_t *hdd_ctx, uint8_t psoc_id)
+{
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_objmgr_psoc_obj_create(psoc_id, WLAN_DEV_OL);
+	if (!psoc)
+		return QDF_STATUS_E_FAILURE;
+
+	hdd_ctx->hdd_psoc = psoc;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS hdd_destroy_and_release_psoc(hdd_context_t *hdd_ctx)
+{
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
+
+	hdd_ctx->hdd_psoc = NULL;
+	if (psoc) {
+		wlan_objmgr_psoc_obj_delete(psoc);
+		return QDF_STATUS_SUCCESS;
+	} else
+		return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS hdd_create_and_store_pdev(hdd_context_t *hdd_ctx)
+{
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
+	struct wlan_objmgr_pdev *pdev;
+
+	if (!psoc) {
+		hdd_err("Psoc NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pdev = wlan_objmgr_pdev_obj_create(psoc, NULL);
+	if (!pdev) {
+		hdd_err("pdev obj create failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+	hdd_ctx->hdd_pdev = pdev;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS hdd_destroy_and_release_pdev(hdd_context_t *hdd_ctx)
+{
+	struct wlan_objmgr_pdev *pdev = hdd_ctx->hdd_pdev;
+
+	hdd_ctx->hdd_pdev = NULL;
+	if (pdev) {
+		wlan_objmgr_pdev_obj_delete(pdev);
+		return QDF_STATUS_SUCCESS;
+	} else
+		return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS hdd_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
+				hdd_adapter_t *adapter)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_peer *peer;
+	struct wlan_vdev_create_params vdev_params;
+
+	vdev_params.opmode = adapter->device_mode;
+	qdf_mem_copy(vdev_params.macaddr, adapter->macAddressCurrent.bytes,
+						QDF_NET_MAC_ADDR_MAX_LEN);
+	if (!pdev) {
+		hdd_err("pdev NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	vdev = wlan_objmgr_vdev_obj_create(pdev, &vdev_params);
+	if (!vdev) {
+		hdd_err("vdev obj create fails");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (adapter->sessionId != wlan_vdev_get_id(vdev)) {
+		hdd_err("session id and vdev id mismatch");
+		wlan_objmgr_vdev_obj_delete(vdev);
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	peer = wlan_objmgr_peer_obj_create(vdev, WLAN_PEER_SELF,
+					vdev_params.macaddr);
+	if (!peer) {
+		hdd_err("obj manager self peer create fails for adapter %d",
+					adapter->device_mode);
+		wlan_objmgr_vdev_obj_delete(vdev);
+		return QDF_STATUS_E_FAILURE;
+	}
+	adapter->hdd_vdev = vdev;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS hdd_destroy_and_release_vdev(hdd_adapter_t *adapter)
+{
+	struct wlan_objmgr_vdev *vdev = adapter->hdd_vdev;
+
+	adapter->hdd_vdev = NULL;
+	if (vdev) {
+		if (hdd_remove_peer_object(vdev,
+				wlan_vdev_mlme_get_macaddr(vdev))) {
+			hdd_err("Self peer delete fails");
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		wlan_objmgr_vdev_obj_delete(vdev);
+		return QDF_STATUS_SUCCESS;
+	} else
+		return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS hdd_add_peer_object(struct wlan_objmgr_vdev *vdev,
+					enum tQDF_ADAPTER_MODE adapter_mode,
+					uint8_t *mac_addr)
+{
+	enum wlan_peer_type peer_type;
+
+	if ((adapter_mode == QDF_STA_MODE) ||
+		(adapter_mode == QDF_P2P_CLIENT_MODE))
+		peer_type = WLAN_PEER_AP;
+	else if ((adapter_mode == QDF_SAP_MODE) ||
+		(adapter_mode == QDF_P2P_GO_MODE))
+		peer_type = WLAN_PEER_STA;
+	else if (adapter_mode == QDF_IBSS_MODE)
+		peer_type = WLAN_PEER_IBSS;
+	else {
+		hdd_err("Unsupported device mode %d", adapter_mode);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!vdev) {
+		hdd_err("vdev NULL");
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!wlan_objmgr_peer_obj_create(vdev, peer_type, mac_addr))
+		return QDF_STATUS_E_FAILURE;
+
+	hdd_info("Peer object "MAC_ADDRESS_STR" add success!",
+					MAC_ADDR_ARRAY(mac_addr));
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS hdd_remove_peer_object(struct wlan_objmgr_vdev *vdev,
+						uint8_t *mac_addr)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_peer *peer;
+
+	if (!vdev) {
+		hdd_err("vdev NULL");
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		hdd_err("Psoc NUll");
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	peer = wlan_objmgr_find_peer(psoc, mac_addr);
+	if (peer) {
+		if (wlan_objmgr_peer_obj_delete(peer))
+			return QDF_STATUS_E_FAILURE;
+
+		hdd_info("Peer obj "MAC_ADDRESS_STR" deleted",
+				MAC_ADDR_ARRAY(mac_addr));
+		return QDF_STATUS_SUCCESS;
+	}
+
+	hdd_err("Peer obj "MAC_ADDRESS_STR" not found",
+				MAC_ADDR_ARRAY(mac_addr));
+
+	return QDF_STATUS_E_FAILURE;
 }
 
 /* Register the module init/exit functions */

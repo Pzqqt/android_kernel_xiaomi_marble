@@ -263,7 +263,7 @@ static QDF_STATUS cds_deregister_all_modules(void)
  *
  * Return: QDF status
  */
-QDF_STATUS cds_open(void)
+QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tSirRetStatus sirStatus = eSIR_SUCCESS;
@@ -386,7 +386,7 @@ QDF_STATUS cds_open(void)
 	}
 
 	/*Open the WMA module */
-	qdf_status = wma_open(gp_cds_context,
+	qdf_status = wma_open(psoc, gp_cds_context,
 			      hdd_update_tgt_cfg,
 			      hdd_dfs_indicate_radar, cds_cfg);
 
@@ -443,7 +443,7 @@ QDF_STATUS cds_open(void)
 
 	/* Now proceed to open the MAC */
 	sirStatus =
-		mac_open(&(gp_cds_context->pMACContext),
+		mac_open(psoc, &(gp_cds_context->pMACContext),
 			gp_cds_context->pHDDContext, cds_cfg);
 
 	if (eSIR_SUCCESS != sirStatus) {
@@ -481,8 +481,7 @@ QDF_STATUS cds_open(void)
 		  "%s: CDS successfully Opened", __func__);
 	cds_register_all_modules();
 
-	dispatcher_psoc_open();
-
+	dispatcher_psoc_open(psoc);
 	return QDF_STATUS_SUCCESS;
 
 err_sme_close:
@@ -639,11 +638,12 @@ QDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context)
 
 /**
  * cds_enable() - start/enable cds module
+ * @psoc: Psoc pointer
  * @cds_context: CDS context
  *
  * Return: QDF status
  */
-QDF_STATUS cds_enable(v_CONTEXT_t cds_context)
+QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tSirRetStatus sirStatus = eSIR_SUCCESS;
@@ -729,7 +729,7 @@ QDF_STATUS cds_enable(v_CONTEXT_t cds_context)
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
 		  "%s: CDS Start is successful!!", __func__);
 
-	dispatcher_psoc_enable();
+	dispatcher_psoc_enable(psoc);
 
 	return QDF_STATUS_SUCCESS;
 
@@ -776,11 +776,12 @@ err_wma_stop:
 
 /**
  * cds_disable() - stop/disable cds module
+ * @psoc: Psoc pointer
  * @cds_context: CDS context
  *
  * Return: QDF status
  */
-QDF_STATUS cds_disable(v_CONTEXT_t cds_context)
+QDF_STATUS cds_disable(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
 {
 	QDF_STATUS qdf_status;
 	void *handle;
@@ -790,8 +791,8 @@ QDF_STATUS cds_disable(v_CONTEXT_t cds_context)
 	 * ongoing transaction with FW. Always keep it before wma_stop() as
 	 * wma_stop() does target PDEV suspend.
 	 */
-	dispatcher_psoc_disable();
 
+	dispatcher_psoc_disable(psoc);
 
 	qdf_status = wma_stop(cds_context, HAL_STOP_TYPE_RF_KILL);
 
@@ -883,6 +884,7 @@ QDF_STATUS cds_post_disable(v_CONTEXT_t cds_context)
 
 /**
  * cds_close() - close cds module
+ * @psoc: Psoc pointer
  * @cds_context: CDS context
  *
  * This API allows user to close modules registered
@@ -890,7 +892,7 @@ QDF_STATUS cds_post_disable(v_CONTEXT_t cds_context)
  *
  * Return: QDF status
  */
-QDF_STATUS cds_close(v_CONTEXT_t cds_context)
+QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
 {
 	QDF_STATUS qdf_status;
 
@@ -977,7 +979,7 @@ QDF_STATUS cds_close(v_CONTEXT_t cds_context)
 
 	cds_deregister_all_modules();
 
-	dispatcher_psoc_close();
+	dispatcher_psoc_close(psoc);
 	return QDF_STATUS_SUCCESS;
 }
 

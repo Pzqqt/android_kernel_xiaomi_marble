@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -52,6 +52,7 @@
 #include "p2p_api.h"
 
 #include <lim_ft_defs.h>
+#include "wlan_objmgr_psoc_obj.h"
 
 /* Check if this definition can actually move here from halInternal.h even for Volans. In that case */
 /* this featurization can be removed. */
@@ -973,6 +974,7 @@ typedef struct sAniSirGlobal {
 	uint8_t user_configured_nss;
 	bool sta_prefer_80MHz_over_160MHz;
 	bool is_11d_hint;
+	struct wlan_objmgr_psoc *psoc;
 } tAniSirGlobal;
 
 typedef enum {

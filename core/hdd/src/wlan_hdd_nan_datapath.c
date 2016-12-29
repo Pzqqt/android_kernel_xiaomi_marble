@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -105,6 +105,7 @@ static int hdd_close_ndi(hdd_adapter_t *adapter)
 	int rc;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	uint32_t timeout = WLAN_WAIT_TIME_SESSIONOPENCLOSE;
+	QDF_STATUS qdf_status;
 
 	ENTER();
 
@@ -139,6 +140,10 @@ static int hdd_close_ndi(hdd_adapter_t *adapter)
 				msecs_to_jiffies(timeout));
 			if (!rc)
 				hdd_err("session close timeout");
+
+			qdf_status = hdd_destroy_and_release_vdev(adapter);
+			if (QDF_IS_STATUS_ERROR(qdf_status))
+				hdd_err("vdev delete failed");
 		}
 	}
 
@@ -1885,6 +1890,12 @@ int hdd_init_nan_data_mode(struct hdd_adapter_s *adapter)
 		goto error_sme_open;
 	}
 
+	status = hdd_create_and_store_vdev(hdd_ctx->hdd_pdev, adapter);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		ret_val = -EAGAIN;
+		goto error_vdev_create;
+	}
+
 	/* Register wireless extensions */
 	ret_val = hdd_register_wext(wlan_dev);
 	if (0 > ret_val) {
@@ -1931,6 +1942,10 @@ error_init_txrx:
 	hdd_unregister_wext(wlan_dev);
 
 error_register_wext:
+	status = hdd_destroy_and_release_vdev(adapter);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("vdev delete failed");
+error_vdev_create:
 	if (test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
 		INIT_COMPLETION(adapter->session_close_comp_var);
 		if (QDF_STATUS_SUCCESS ==

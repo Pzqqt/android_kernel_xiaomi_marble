@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1671,6 +1671,18 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 					chan_info,
 					pHostapdAdapter->device_mode);
 		}
+
+		qdf_status = hdd_add_peer_object(pHostapdAdapter->hdd_vdev,
+					pHostapdAdapter->device_mode,
+					pSapEvent->sapevt.
+					sapStationAssocReassocCompleteEvent.
+					staMac.bytes);
+		if (QDF_IS_STATUS_ERROR(qdf_status))
+			hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
+					MAC_ADDR_ARRAY(pSapEvent->sapevt.
+					sapStationAssocReassocCompleteEvent.
+					staMac.bytes));
+
 		hdd_green_ap_add_sta(pHddCtx);
 		break;
 
@@ -1783,6 +1795,15 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 						NULL,
 						pHostapdAdapter->device_mode);
 		}
+		qdf_status = hdd_remove_peer_object(pHostapdAdapter->hdd_vdev,
+					pSapEvent->sapevt.
+					sapStationDisassocCompleteEvent.
+					staMac.bytes);
+		if (QDF_IS_STATUS_ERROR(qdf_status))
+			hdd_err("Peer obj "MAC_ADDRESS_STR" delete fails",
+					MAC_ADDR_ARRAY(pSapEvent->sapevt.
+					sapStationDisassocCompleteEvent.
+					staMac.bytes));
 #ifdef MSM_PLATFORM
 		/*stop timer in sap/p2p_go */
 		if (pHddApCtx->bApActive == false) {
@@ -5751,7 +5772,6 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 	struct net_device *dev = pAdapter->dev;
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	QDF_STATUS status;
-	QDF_STATUS qdf_status;
 	v_CONTEXT_t p_cds_context = (WLAN_HDD_GET_CTX(pAdapter))->pcds_context;
 	v_CONTEXT_t sapContext = NULL;
 	int ret;
@@ -5788,11 +5808,14 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 			&session_id);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("ERROR: wlansap_start failed!!");
-		wlansap_close(sapContext);
 		pAdapter->sessionCtx.ap.sapContext = NULL;
 		return status;
 	}
 	pAdapter->sessionId = session_id;
+
+	status = hdd_create_and_store_vdev(pHddCtx->hdd_pdev, pAdapter);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto error_vdev_create;
 
 	/* Allocate the Wireless Extensions state structure */
 	phostapdBuf = WLAN_HDD_GET_HOSTAP_STATE_PTR(pAdapter);
@@ -5807,25 +5830,19 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 	status = hdd_set_hostapd(pAdapter);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("ERROR: hdd_set_hostapd failed!!");
-		wlansap_close(sapContext);
-		pAdapter->sessionCtx.ap.sapContext = NULL;
-		return status;
+		goto error_init_ap_mode;
 	}
 
-	qdf_status = qdf_event_create(&phostapdBuf->qdf_event);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+	status = qdf_event_create(&phostapdBuf->qdf_event);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("ERROR: Hostapd HDD qdf event init failed!!");
-		wlansap_close(sapContext);
-		pAdapter->sessionCtx.ap.sapContext = NULL;
-		return qdf_status;
+		goto error_init_ap_mode;
 	}
 
-	qdf_status = qdf_event_create(&phostapdBuf->qdf_stop_bss_event);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+	status = qdf_event_create(&phostapdBuf->qdf_stop_bss_event);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("ERROR: Hostapd HDD stop bss event init failed!!");
-		wlansap_close(sapContext);
-		pAdapter->sessionCtx.ap.sapContext = NULL;
-		return qdf_status;
+		goto error_init_ap_mode;
 	}
 
 	init_completion(&pAdapter->session_close_comp_var);
@@ -5867,6 +5884,11 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 
 error_wmm_init:
 	hdd_softap_deinit_tx_rx(pAdapter);
+error_init_ap_mode:
+	status = hdd_destroy_and_release_vdev(pAdapter);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("vdev delete failed");
+error_vdev_create:
 	wlansap_close(sapContext);
 	pAdapter->sessionCtx.ap.sapContext = NULL;
 	EXIT();
@@ -6039,6 +6061,10 @@ QDF_STATUS hdd_unregister_hostapd(hdd_adapter_t *pAdapter, bool rtnl_held)
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("Failed:WLANSAP_close");
 	pAdapter->sessionCtx.ap.sapContext = NULL;
+
+	status = hdd_destroy_and_release_vdev(pAdapter);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("vdev delete failed");
 
 	EXIT();
 	return 0;

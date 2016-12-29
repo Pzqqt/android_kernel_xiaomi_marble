@@ -48,6 +48,7 @@
 #include <qdf_threads.h>
 #include <qdf_mc_timer.h>
 #include <cds_pack_align.h>
+#include <wlan_objmgr_psoc_obj.h>
 
 /* Amount of time to wait for WMA to perform an asynchronous activity.
  * This value should be larger than the timeout used by WMI to wait for
@@ -200,11 +201,11 @@ void cds_deinit(void);
 
 QDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context);
 
-QDF_STATUS cds_open(void);
+QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc);
 
-QDF_STATUS cds_enable(v_CONTEXT_t cds_context);
+QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context);
 
-QDF_STATUS cds_disable(v_CONTEXT_t cds_context);
+QDF_STATUS cds_disable(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context);
 
 /**
  * cds_flush_cache_rx_queue() - flush cache rx queue frame
@@ -215,7 +216,7 @@ void cds_flush_cache_rx_queue(void);
 
 QDF_STATUS cds_post_disable(v_CONTEXT_t cds_context);
 
-QDF_STATUS cds_close(v_CONTEXT_t cds_context);
+QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context);
 
 void *cds_get_context(QDF_MODULE_ID moduleId);
 

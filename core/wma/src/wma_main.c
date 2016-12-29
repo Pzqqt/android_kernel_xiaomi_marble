@@ -1841,7 +1841,7 @@ wma_register_tx_ops_handler(struct wlan_lmac_if_tx_ops *tx_ops)
  */
 static void wma_target_if_open(tp_wma_handle wma_handle)
 {
-	struct wlan_objmgr_psoc *psoc = cds_get_psoc_by_id(0);
+	struct wlan_objmgr_psoc *psoc = wma_handle->psoc;
 
 	if (!psoc)
 		return;
@@ -1862,7 +1862,7 @@ static void wma_target_if_open(tp_wma_handle wma_handle)
  */
 static void wma_target_if_close(tp_wma_handle wma_handle)
 {
-	struct wlan_objmgr_psoc *psoc = cds_get_psoc_by_id(0);
+	struct wlan_objmgr_psoc *psoc = wma_handle->psoc;
 
 	if (!psoc)
 		return;
@@ -1876,6 +1876,7 @@ static void wma_target_if_close(tp_wma_handle wma_handle) {};
 
 /**
  * wma_open() - Allocate wma context and initialize it.
+ * @psoc: Psoc pointer
  * @cds_context:  cds context
  * @wma_tgt_cfg_cb: tgt config callback fun
  * @radar_ind_cb: dfs radar indication callback
@@ -1883,7 +1884,7 @@ static void wma_target_if_close(tp_wma_handle wma_handle) {};
  *
  * Return: 0 on success, errno on failure
  */
-QDF_STATUS wma_open(void *cds_context,
+QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 		    wma_tgt_cfg_cb tgt_cfg_cb,
 		    wma_dfs_radar_indication_cb radar_ind_cb,
 		    struct cds_config_info *cds_cfg)
@@ -1934,6 +1935,9 @@ QDF_STATUS wma_open(void *cds_context,
 #endif /* FEATURE_WLAN_EXTSCAN */
 		qdf_wake_lock_create(&wma_handle->wow_wake_lock, "wlan_wow_wl");
 	}
+
+	/* Increase psoc ref count once APIs are available in object manager */
+	wma_handle->psoc = psoc;
 
 	/* Attach mc_thread context processing function */
 	ops.wma_process_fw_event_handler_cbk = wma_process_fw_event_handler;
@@ -3528,6 +3532,8 @@ QDF_STATUS wma_close(void *cds_ctx)
 		wmi_desc_pool_deinit(wma_handle);
 	}
 
+	/* Decrease psoc ref count once APIs are available in object manager */
+	wma_handle->psoc = NULL;
 	wma_target_if_close(wma_handle);
 
 	WMA_LOGD("%s: Exit", __func__);
