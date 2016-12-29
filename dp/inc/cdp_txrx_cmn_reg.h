@@ -26,7 +26,7 @@
 
 #include "hif_main.h"
 
-#define MOB_DRV_LEGACY_DP	0xffff/*FIXME Add MCL device IDs */
+#define MOB_DRV_LEGACY_DP	0xdeed/*FIXME Add MCL device IDs */
 #define LITHIUM_DP		0xfffe/*FIXME Add Litium device ID */
 /* Use these device IDs for attach in future */
 
