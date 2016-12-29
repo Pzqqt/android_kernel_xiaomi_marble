@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -502,17 +502,22 @@ static uint32_t lim_prepare_tdls_frame_header(tpAniSirGlobal pMac, uint8_t *pFra
 
 /**
  * lim_mgmt_tdls_tx_complete - callback to indicate Tx completion
- * @mac_ctx: pointer to mac structure
+ * @context: pointer to mac structure
+ * @buf: buffer
  * @tx_complete: indicates tx sucess/failure
+ * @params: tx completion params
  *
  * function will be invoked on receiving tx completion indication
  *
  * return: success: eHAL_STATUS_SUCCESS failure: eHAL_STATUS_FAILURE
  */
-static QDF_STATUS lim_mgmt_tdls_tx_complete(tpAniSirGlobal mac_ctx,
-					    uint32_t tx_complete)
+static QDF_STATUS lim_mgmt_tdls_tx_complete(void *context,
+					    qdf_nbuf_t buf,
+					    uint32_t tx_complete,
+					    void *params)
 {
 	tpPESession session_entry = NULL;
+	tpAniSirGlobal mac_ctx = (tpAniSirGlobal)context;
 
 	lim_log(mac_ctx, LOG1, FL("tdls_frm_session_id %x tx_complete %x"),
 		mac_ctx->lim.tdls_frm_session_id, tx_complete);

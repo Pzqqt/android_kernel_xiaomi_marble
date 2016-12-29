@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -2007,16 +2007,21 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 
 /**
  * lim_auth_tx_complete_cnf()- Confirmation for auth sent over the air
- *
- * @mac_ctx: pointer to global mac
+ * @context: pointer to global mac
+ * @buf: buffer
  * @tx_complete : Sent status
+ * @params; tx completion params
  *
  * Return: This returns QDF_STATUS
  */
 
-static QDF_STATUS lim_auth_tx_complete_cnf(tpAniSirGlobal mac_ctx,
-					   uint32_t tx_complete)
+static QDF_STATUS lim_auth_tx_complete_cnf(void *context,
+					   qdf_nbuf_t buf,
+					   uint32_t tx_complete,
+					   void *params)
 {
+	tpAniSirGlobal mac_ctx = (tpAniSirGlobal)context;
+
 	lim_log(mac_ctx, LOG1,
 		 FL("tx_complete= %d"), tx_complete);
 	if (tx_complete) {
@@ -2542,17 +2547,25 @@ end:
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS lim_disassoc_tx_complete_cnf(tpAniSirGlobal pMac,
-					uint32_t txCompleteSuccess)
+QDF_STATUS lim_disassoc_tx_complete_cnf(void *context,
+					qdf_nbuf_t buf,
+					uint32_t txCompleteSuccess,
+					void *params)
 {
+	tpAniSirGlobal pMac = (tpAniSirGlobal)context;
+
 	lim_log(pMac, LOG1,
 		FL("txCompleteSuccess: %d"), txCompleteSuccess);
 	return lim_send_disassoc_cnf(pMac);
 }
 
-QDF_STATUS lim_deauth_tx_complete_cnf(tpAniSirGlobal pMac,
-				      uint32_t txCompleteSuccess)
+QDF_STATUS lim_deauth_tx_complete_cnf(void *context,
+				      qdf_nbuf_t buf,
+				      uint32_t txCompleteSuccess,
+				      void *params)
 {
+	tpAniSirGlobal pMac = (tpAniSirGlobal)context;
+
 	lim_log(pMac, LOG1,
 		FL("txCompleteSuccess: %d"), txCompleteSuccess);
 	return lim_send_deauth_cnf(pMac);
@@ -3554,16 +3567,22 @@ lim_send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
  * lim_oper_chan_change_confirm_tx_complete_cnf()- Confirmation for oper_chan_change_confirm
  * sent over the air
  *
- * @mac_ctx: pointer to global mac
+ * @context: pointer to global mac
+ * @buf: buffer
  * @tx_complete : Sent status
+ * @params: tx completion params
  *
  * Return: This returns QDF_STATUS
  */
 
 static QDF_STATUS lim_oper_chan_change_confirm_tx_complete_cnf(
-			tpAniSirGlobal mac_ctx,
-			uint32_t tx_complete)
+			void *context,
+			qdf_nbuf_t buf,
+			uint32_t tx_complete,
+			void *params)
 {
+	tpAniSirGlobal mac_ctx = (tpAniSirGlobal)context;
+
 	lim_log(mac_ctx, LOG1,
 		 FL(" tx_complete= %d"), tx_complete);
 	return QDF_STATUS_SUCCESS;

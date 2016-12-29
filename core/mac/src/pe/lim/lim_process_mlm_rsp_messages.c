@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -3309,7 +3309,7 @@ void lim_process_rx_scan_event(tpAniSirGlobal pMac, void *buf)
 			 * failure.
 			 */
 			if (pMac->lim.mgmtFrameSessionId != 0xff) {
-				lim_p2p_action_cnf(pMac, false);
+				lim_p2p_action_cnf(pMac, NULL, false, NULL);
 				pMac->lim.mgmtFrameSessionId = 0xff;
 			}
 		} else if (PREAUTH_REQUESTOR_ID == pScanEvent->requestor) {

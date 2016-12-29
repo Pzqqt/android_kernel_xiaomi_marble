@@ -1188,8 +1188,8 @@ struct mac_ss_bw_info {
  */
 
 struct wmi_desc_t {
-	pWMATxRxCompFunc tx_cmpl_cb;
-	pWMAAckFnTxComp  ota_post_proc_cb;
+	wma_tx_dwnld_comp_callback tx_cmpl_cb;
+	wma_tx_ota_comp_callback  ota_post_proc_cb;
 	qdf_nbuf_t	 nbuf;
 	uint32_t	 desc_id;
 	uint8_t vdev_id;
@@ -1372,7 +1372,6 @@ struct extended_caps {
  * @in_d0wow: D0WOW is enable/disable
  * @miracast_value: miracast value
  * @log_completion_timer: log completion timer
- * @mgmt_rx: management rx callback
  * @num_dbs_hw_modes: Number of HW modes supported by the FW
  * @dbs_mode: DBS HW mode list
  * @old_hw_mode_index: Previous configured HW mode index
@@ -1444,7 +1443,7 @@ typedef struct {
 	wmi_resource_config wlan_resource_config;
 	uint32_t frameTransRequired;
 	tBssSystemRole wmaGlobalSystemRole;
-	pWMATxRxCompFunc tx_frm_download_comp_cb;
+	wma_tx_dwnld_comp_callback tx_frm_download_comp_cb;
 	qdf_event_t tx_frm_download_comp_event;
 	/*
 	 * Dummy event to wait for draining MSDUs left in hardware tx
@@ -1453,8 +1452,8 @@ typedef struct {
 	 * descriptors number to be zero.
 	 */
 	qdf_event_t tx_queue_empty_event;
-	pWMAAckFnTxComp umac_ota_ack_cb[SIR_MAC_MGMT_RESERVED15];
-	pWMAAckFnTxComp umac_data_ota_ack_cb;
+	wma_tx_ota_comp_callback umac_ota_ack_cb[SIR_MAC_MGMT_RESERVED15];
+	wma_tx_ota_comp_callback umac_data_ota_ack_cb;
 	unsigned long last_umac_data_ota_timestamp;
 	qdf_nbuf_t last_umac_data_nbuf;
 	bool needShutdown;
@@ -1539,7 +1538,6 @@ typedef struct {
 	uint32_t hw_bd_info[HW_BD_INFO_SIZE];
 	uint32_t miracast_value;
 	qdf_mc_timer_t log_completion_timer;
-	wma_mgmt_frame_rx_callback mgmt_rx;
 	uint32_t num_dbs_hw_modes;
 	struct dbs_hw_mode_info hw_mode;
 	uint32_t old_hw_mode_index;
@@ -2320,7 +2318,6 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, void *pdev,
 			   u_int32_t peer_type, u_int8_t vdev_id,
 			   bool roam_synch_in_progress);
 
-#endif
 struct wma_ini_config *wma_get_ini_handle(tp_wma_handle wma_handle);
 WLAN_PHY_MODE wma_chan_phy_mode(u8 chan, enum phy_ch_width chan_width,
 	u8 dot11_mode);
@@ -2345,3 +2342,33 @@ int wma_peer_rx_reorder_queue_setup(void *scn_handle,
 	int tid, uint16_t queue_no);
 int wma_peer_rx_reorder_queue_remove(void *scn_handle,
 	uint8_t vdev_id, uint8_t *peer_macaddr, uint32_t peer_tid_bitmap);
+
+/**
+ * wma_form_rx_packet() - form rx cds packet
+ * @buf: buffer
+ * @mgmt_rx_params: mgmt rx params
+ * @rx_pkt: cds packet
+ *
+ * This functions forms a cds packet from the rx mgmt frame received.
+ *
+ * Return: 0 for success or error code
+ */
+int wma_form_rx_packet(qdf_nbuf_t buf,
+			void *mgmt_rx_params,
+			cds_pkt_t *rx_pkt);
+
+/**
+ * wma_mgmt_unified_cmd_send() - send the mgmt tx packet
+ * @vdev: objmgr vdev
+ * @buf: buffer
+ * @desc_id: desc id
+ * @mgmt_tx_params: mgmt rx params
+ *
+ * This functions sends mgmt tx packet to WMI layer.
+ *
+ * Return: 0 for success or error code
+ */
+QDF_STATUS wma_mgmt_unified_cmd_send(struct wlan_objmgr_vdev *vdev,
+				qdf_nbuf_t buf, uint32_t desc_id,
+				void *mgmt_tx_params);
+#endif

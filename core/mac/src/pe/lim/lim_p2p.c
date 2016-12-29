@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014,2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014,2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -359,9 +359,8 @@ void lim_remain_on_chn_rsp(tpAniSirGlobal pMac, QDF_STATUS status, uint32_t *dat
 
 	/* If remain on channel timer expired and action frame is pending then
 	 * indicaiton confirmation with status failure */
-	if (pMac->lim.mgmtFrameSessionId != 0xff) {
-		lim_p2p_action_cnf(pMac, false);
-	}
+	if (pMac->lim.mgmtFrameSessionId != 0xff)
+		lim_p2p_action_cnf(pMac, NULL, false, NULL);
 
 	return;
 }
@@ -407,11 +406,13 @@ void lim_send_sme_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameType,
 	return;
 }
 
-QDF_STATUS lim_p2p_action_cnf(tpAniSirGlobal pMac, uint32_t tx_status)
+QDF_STATUS lim_p2p_action_cnf(void *context, qdf_nbuf_t buf,
+			      uint32_t tx_status, void *params)
 {
 	QDF_STATUS status;
 	uint32_t mgmt_frame_sessionId;
 	bool tx_complete_ack = (tx_status) ? false : true;
+	tpAniSirGlobal pMac = (tpAniSirGlobal)context;
 
 	status = pe_acquire_global_lock(&pMac->lim);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -477,9 +478,9 @@ static void lim_tx_action_frame(tpAniSirGlobal mac_ctx,
 			channel_freq);
 
 		if (!mb_msg->noack)
-			lim_p2p_action_cnf(mac_ctx,
+			lim_p2p_action_cnf(mac_ctx, packet,
 				(QDF_IS_STATUS_SUCCESS(qdf_status)) ?
-				true : false);
+				true : false, NULL);
 		mac_ctx->lim.mgmtFrameSessionId = 0xff;
 	} else {
 		qdf_status =
@@ -494,7 +495,7 @@ static void lim_tx_action_frame(tpAniSirGlobal mac_ctx,
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			lim_log(mac_ctx, LOGE,
 				FL("couldn't send action frame"));
-			lim_p2p_action_cnf(mac_ctx, false);
+			lim_p2p_action_cnf(mac_ctx, packet, false, NULL);
 			mac_ctx->lim.mgmtFrameSessionId = 0xff;
 		} else {
 			mac_ctx->lim.mgmtFrameSessionId = mb_msg->sessionId;
@@ -549,7 +550,7 @@ void lim_send_p2p_action_frame(tpAniSirGlobal mac_ctx,
 		lim_log(mac_ctx, LOGE,
 			FL("RemainOnChannel is not running"));
 		mac_ctx->lim.mgmtFrameSessionId = mb_msg->sessionId;
-		lim_p2p_action_cnf(mac_ctx, false);
+		lim_p2p_action_cnf(mac_ctx, NULL, false, NULL);
 		mac_ctx->lim.mgmtFrameSessionId = 0xff;
 		return;
 	}

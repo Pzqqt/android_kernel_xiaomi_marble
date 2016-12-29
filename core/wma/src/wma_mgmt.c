@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -71,6 +71,11 @@
 #include <cdp_txrx_cmn.h>
 #include <cdp_txrx_misc.h>
 #include <cdp_txrx_misc.h>
+#include "wlan_mgmt_txrx_tgt_api.h"
+#include "wlan_objmgr_psoc_obj.h"
+#include "wlan_objmgr_pdev_obj.h"
+#include "wlan_objmgr_vdev_obj.h"
+
 
 /**
  * wma_send_bcn_buf_ll() - prepare and send beacon buffer to fw for LL
@@ -2492,43 +2497,56 @@ void wma_beacon_miss_handler(tp_wma_handle wma, uint32_t vdev_id, int32_t rssi)
 static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 					  uint32_t desc_id, uint32_t status)
 {
-	struct wmi_desc_t *wmi_desc;
+	struct wlan_objmgr_psoc *psoc;
+	qdf_nbuf_t buf = NULL;
+	uint8_t vdev_id = 0;
+	QDF_STATUS ret;
+	struct wlan_lmac_if_mgmt_txrx_rx_ops *mgmt_txrx_rx_ops;
 
-	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-
-	if (pdev == NULL) {
-		WMA_LOGE("%s: NULL pdev pointer", __func__);
+	if (wma_handle == NULL) {
+		WMA_LOGE("%s: wma handle is NULL", __func__);
 		return -EINVAL;
 	}
 
-	WMA_LOGI("%s: status:%d wmi_desc_id:%d", __func__, status, desc_id);
+	WMA_LOGI("%s: status:%d desc id:%d", __func__, status, desc_id);
 
-	wmi_desc = (struct wmi_desc_t *)
-			(&wma_handle->wmi_desc_pool.array[desc_id]);
 
-	if (!wmi_desc) {
-		WMA_LOGE("%s: Invalid wmi desc", __func__);
+	psoc = wma_handle->psoc;
+	if (psoc == NULL) {
+		WMA_LOGE("%s: psoc ptr is NULL", __func__);
 		return -EINVAL;
 	}
 
-	if (wmi_desc->nbuf)
-		qdf_nbuf_unmap_single(wma_handle->qdf_dev, wmi_desc->nbuf,
+	mgmt_txrx_rx_ops = &psoc->soc_cb.rx_ops.mgmt_txrx_rx_ops;
+
+	if (mgmt_txrx_rx_ops->mgmt_txrx_get_nbuf_from_desc_id)
+		buf = mgmt_txrx_rx_ops->mgmt_txrx_get_nbuf_from_desc_id(
+					psoc, desc_id);
+
+	if (mgmt_txrx_rx_ops->mgmt_txrx_get_vdev_id_from_desc_id)
+		vdev_id = mgmt_txrx_rx_ops->mgmt_txrx_get_vdev_id_from_desc_id(
+					psoc, desc_id);
+	if (buf)
+		qdf_nbuf_unmap_single(wma_handle->qdf_dev, buf,
 					  QDF_DMA_TO_DEVICE);
 
 	if (wma_handle->wma_mgmt_tx_packetdump_cb)
-		wma_handle->wma_mgmt_tx_packetdump_cb(wmi_desc->nbuf,
-			QDF_STATUS_SUCCESS, wmi_desc->vdev_id, TX_MGMT_PKT);
+		wma_handle->wma_mgmt_tx_packetdump_cb(buf,
+			QDF_STATUS_SUCCESS, vdev_id, TX_MGMT_PKT);
 
-	if (wmi_desc->tx_cmpl_cb)
-		wmi_desc->tx_cmpl_cb(wma_handle->mac_context,
-					   wmi_desc->nbuf, 1);
+	if (!mgmt_txrx_rx_ops->mgmt_tx_completion_handler) {
+		WMA_LOGE("%s: tx completion callback to mgmt txrx layer is NULL",
+			__func__);
+		return -EINVAL;
+	}
+	ret = mgmt_txrx_rx_ops->mgmt_tx_completion_handler(psoc, desc_id,
+							   status, NULL);
 
-	if (wmi_desc->ota_post_proc_cb)
-		wmi_desc->ota_post_proc_cb((tpAniSirGlobal)
-						 wma_handle->mac_context,
-						 status);
+	if (ret != QDF_STATUS_SUCCESS) {
+		WMA_LOGE("%s: Failed to process mgmt tx completion", __func__);
+		return -EINVAL;
+	}
 
-	wmi_desc_put(wma_handle, wmi_desc);
 	return 0;
 }
 
@@ -3149,85 +3167,66 @@ end:
 	return should_drop;
 }
 
-/**
- * wma_mgmt_rx_process() - process management rx frame.
- * @handle: wma handle
- * @data: rx data
- * @data_len: data length
- *
- * Return: 0 for success or error code
- */
-static int wma_mgmt_rx_process(void *handle, uint8_t *data,
-				  uint32_t data_len)
+int wma_form_rx_packet(qdf_nbuf_t buf,
+			void *params,
+			cds_pkt_t *rx_pkt)
 {
-	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	WMI_MGMT_RX_EVENTID_param_tlvs *param_tlvs = NULL;
-	wmi_mgmt_rx_hdr *hdr = NULL;
+	wmi_host_mgmt_rx_hdr *mgmt_rx_params =
+				(wmi_host_mgmt_rx_hdr *)params;
 	struct wma_txrx_node *iface = NULL;
 	uint8_t vdev_id = WMA_INVALID_VDEV_ID;
-	cds_pkt_t *rx_pkt;
-	qdf_nbuf_t wbuf;
 	struct ieee80211_frame *wh;
 	uint8_t mgt_type, mgt_subtype;
 	int status;
+	tp_wma_handle wma_handle = (tp_wma_handle)
+				cds_get_context(QDF_MODULE_ID_WMA);
 
 	if (!wma_handle) {
-		WMA_LOGE("%s: Failed to get WMA  context", __func__);
+		WMA_LOGE(FL("wma handle is NULL"));
+		qdf_nbuf_free(buf);
+		qdf_mem_free(rx_pkt);
 		return -EINVAL;
 	}
 
-	param_tlvs = (WMI_MGMT_RX_EVENTID_param_tlvs *) data;
-	if (!param_tlvs) {
-		WMA_LOGE("Get NULL point message from FW");
+	if (!mgmt_rx_params) {
+		WMA_LOGE(FL("mgmt rx params is NULL"));
+		qdf_nbuf_free(buf);
+		qdf_mem_free(rx_pkt);
 		return -EINVAL;
-	}
-
-	hdr = param_tlvs->hdr;
-	if (!hdr) {
-		WMA_LOGE("Rx event is NULL");
-		return -EINVAL;
-	}
-
-	if (hdr->buf_len < sizeof(struct ieee80211_frame)) {
-		WMA_LOGE("Invalid rx mgmt packet");
-		return -EINVAL;
-	}
-
-	rx_pkt = qdf_mem_malloc(sizeof(*rx_pkt));
-	if (!rx_pkt) {
-		WMA_LOGE("Failed to allocate rx packet");
-		return -ENOMEM;
 	}
 
 	if (cds_is_load_or_unload_in_progress()) {
 		WMA_LOGW(FL("Load/Unload in progress"));
+		qdf_nbuf_free(buf);
+		qdf_mem_free(rx_pkt);
 		return -EINVAL;
 	}
 
 	if (cds_is_driver_recovering()) {
 		WMA_LOGW(FL("Recovery in progress"));
+		qdf_nbuf_free(buf);
+		qdf_mem_free(rx_pkt);
 		return -EINVAL;
 	}
-
-	qdf_mem_zero(rx_pkt, sizeof(*rx_pkt));
 
 	/*
 	 * Fill in meta information needed by pe/lim
 	 * TODO: Try to maintain rx metainfo as part of skb->data.
 	 */
-	rx_pkt->pkt_meta.channel = hdr->channel;
-	rx_pkt->pkt_meta.scan_src = hdr->flags;
+	rx_pkt->pkt_meta.channel = mgmt_rx_params->channel;
+	rx_pkt->pkt_meta.scan_src = mgmt_rx_params->flags;
 
 	/*
 	 * Get the rssi value from the current snr value
 	 * using standard noise floor of -96.
 	 */
-	rx_pkt->pkt_meta.rssi = hdr->snr + WMA_NOISE_FLOOR_DBM_DEFAULT;
-	rx_pkt->pkt_meta.snr = hdr->snr;
+	rx_pkt->pkt_meta.rssi = mgmt_rx_params->snr +
+				WMA_NOISE_FLOOR_DBM_DEFAULT;
+	rx_pkt->pkt_meta.snr = mgmt_rx_params->snr;
 
 	/* If absolute rssi is available from firmware, use it */
-	if (hdr->rssi != 0)
-		rx_pkt->pkt_meta.rssi_raw = hdr->rssi;
+	if (mgmt_rx_params->rssi != 0)
+		rx_pkt->pkt_meta.rssi_raw = mgmt_rx_params->rssi;
 	else
 		rx_pkt->pkt_meta.rssi_raw = rx_pkt->pkt_meta.rssi;
 
@@ -3238,66 +3237,26 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 	 */
 	rx_pkt->pkt_meta.timestamp = (uint32_t) jiffies;
 	rx_pkt->pkt_meta.mpdu_hdr_len = sizeof(struct ieee80211_frame);
-	rx_pkt->pkt_meta.mpdu_len = hdr->buf_len;
-	rx_pkt->pkt_meta.mpdu_data_len = hdr->buf_len -
+	rx_pkt->pkt_meta.mpdu_len = mgmt_rx_params->buf_len;
+	rx_pkt->pkt_meta.mpdu_data_len = mgmt_rx_params->buf_len -
 					 rx_pkt->pkt_meta.mpdu_hdr_len;
 
 	rx_pkt->pkt_meta.roamCandidateInd = 0;
 
-	/* Why not just use rx_event->hdr.buf_len? */
-	wbuf = qdf_nbuf_alloc(NULL, roundup(hdr->buf_len, 4), 0, 4, false);
-	if (!wbuf) {
-		WMA_LOGE("%s: Failed to allocate wbuf for mgmt rx len(%u)",
-			    __func__, hdr->buf_len);
-		qdf_mem_free(rx_pkt);
-		return -ENOMEM;
-	}
+	wh = (struct ieee80211_frame *)qdf_nbuf_data(buf);
 
-	qdf_nbuf_put_tail(wbuf, hdr->buf_len);
-	qdf_nbuf_set_protocol(wbuf, ETH_P_CONTROL);
-	wh = (struct ieee80211_frame *)qdf_nbuf_data(wbuf);
-
-	rx_pkt->pkt_meta.mpdu_hdr_ptr = qdf_nbuf_data(wbuf);
+	rx_pkt->pkt_meta.mpdu_hdr_ptr = qdf_nbuf_data(buf);
 	rx_pkt->pkt_meta.mpdu_data_ptr = rx_pkt->pkt_meta.mpdu_hdr_ptr +
 					 rx_pkt->pkt_meta.mpdu_hdr_len;
-	rx_pkt->pkt_meta.tsf_delta = hdr->tsf_delta;
-	rx_pkt->pkt_buf = wbuf;
-
-#ifdef BIG_ENDIAN_HOST
-	{
-		/*
-		 * for big endian host, copy engine byte_swap is enabled
-		 * But the rx mgmt frame buffer content is in network byte order
-		 * Need to byte swap the mgmt frame buffer content - so when
-		 * copy engine does byte_swap - host gets buffer content in the
-		 * correct byte order.
-		 */
-		int i;
-		uint32_t *destp, *srcp;
-		destp = (uint32_t *) wh;
-		srcp = (uint32_t *) param_tlvs->bufp;
-		for (i = 0;
-		     i < (roundup(hdr->buf_len, sizeof(uint32_t)) / 4); i++) {
-			*destp = cpu_to_le32(*srcp);
-			destp++;
-			srcp++;
-		}
-	}
-#else
-	qdf_mem_copy(wh, param_tlvs->bufp, hdr->buf_len);
-#endif
+	rx_pkt->pkt_meta.tsf_delta = mgmt_rx_params->tsf_delta;
+	rx_pkt->pkt_buf = buf;
 
 	WMA_LOGD(
 		FL("BSSID: "MAC_ADDRESS_STR" snr = %d, rssi = %d, rssi_raw = %d tsf_delta: %u"),
 			MAC_ADDR_ARRAY(wh->i_addr3),
-			hdr->snr, rx_pkt->pkt_meta.rssi,
+			mgmt_rx_params->snr, rx_pkt->pkt_meta.rssi,
 			rx_pkt->pkt_meta.rssi_raw,
-			hdr->tsf_delta);
-	if (!wma_handle->mgmt_rx) {
-		WMA_LOGE("Not registered for Mgmt rx, dropping the frame");
-		cds_pkt_return_packet(rx_pkt);
-		return -EINVAL;
-	}
+			mgmt_rx_params->tsf_delta);
 
 	/* If it is a beacon/probe response, save it for future use */
 	mgt_type = (wh)->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
@@ -3313,19 +3272,20 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 			iface = &(wma_handle->interfaces[vdev_id]);
 			if (iface->rmfEnabled) {
 				status = wma_process_rmf_frame(wma_handle,
-					iface, wh, rx_pkt, wbuf);
+					iface, wh, rx_pkt, buf);
+				if (status != 0)
+					return status;
 				/*
 				 * CCMP header might have been pulled off
 				 * reinitialize the start pointer of mac header
 				 */
 				wh = (struct ieee80211_frame *)
-						qdf_nbuf_data(wbuf);
-				if (status != 0)
-					return status;
+						qdf_nbuf_data(buf);
 			}
 		}
 	}
 #endif /* WLAN_FEATURE_11W */
+
 	rx_pkt->pkt_meta.sessionId =
 		(vdev_id == WMA_INVALID_VDEV_ID ? 0 : vdev_id);
 
@@ -3341,37 +3301,160 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 			QDF_STATUS_SUCCESS, rx_pkt->pkt_meta.sessionId,
 			RX_MGMT_PKT);
 
-	wma_handle->mgmt_rx(wma_handle, rx_pkt);
+	return 0;
+}
+
+/**
+ * wma_mem_endianness_based_copy() - does memory copy from src to dst
+ * @dst: destination address
+ * @src: source address
+ * @size: size to be copied
+ *
+ * This function copies the memory of size passed from source
+ * address to destination address.
+ *
+ * Return: Nothing
+ */
+#ifdef BIG_ENDIAN_HOST
+static void wma_mem_endianness_based_copy(
+			uint8_t *dst, uint8_t *src, uint32_t size)
+{
+	/*
+	 * For big endian host, copy engine byte_swap is enabled
+	 * But the rx mgmt frame buffer content is in network byte order
+	 * Need to byte swap the mgmt frame buffer content - so when
+	 * copy engine does byte_swap - host gets buffer content in the
+	 * correct byte order.
+	 */
+
+	uint32_t i;
+	uint32_t *destp, *srcp;
+
+	destp = (uint32_t *) dst;
+	srcp = (uint32_t *) src;
+	for (i = 0; i < (roundup(size, sizeof(uint32_t)) / 4); i++) {
+		*destp = cpu_to_le32(*srcp);
+		destp++;
+		srcp++;
+	}
+}
+#else
+static void wma_mem_endianness_based_copy(
+			uint8_t *dst, uint8_t *src, uint32_t size)
+{
+	qdf_mem_copy(dst, src, size);
+}
+#endif
+
+/**
+ * wma_mgmt_rx_process() - process management rx frame.
+ * @handle: wma handle
+ * @data: rx data
+ * @data_len: data length
+ *
+ * Return: 0 for success or error code
+ */
+static int wma_mgmt_rx_process(void *handle, uint8_t *data,
+				  uint32_t data_len)
+{
+	tp_wma_handle wma_handle = (tp_wma_handle) handle;
+	wmi_host_mgmt_rx_hdr *mgmt_rx_params;
+	struct wlan_objmgr_psoc *psoc;
+	uint8_t *bufp;
+	qdf_nbuf_t wbuf;
+	QDF_STATUS status;
+
+	if (!wma_handle) {
+		WMA_LOGE("%s: Failed to get WMA  context", __func__);
+		return -EINVAL;
+	}
+
+	mgmt_rx_params = qdf_mem_malloc(sizeof(*mgmt_rx_params));
+	if (!mgmt_rx_params) {
+		WMA_LOGE("%s: memory allocation failed", __func__);
+		return -ENOMEM;
+	}
+
+	if (wmi_extract_mgmt_rx_params(wma_handle->wmi_handle,
+			data, mgmt_rx_params, &bufp) != QDF_STATUS_SUCCESS) {
+		WMA_LOGE("%s: Extraction of mgmt rx params failed", __func__);
+		qdf_mem_free(mgmt_rx_params);
+		return -EINVAL;
+	}
+
+	wbuf = qdf_nbuf_alloc(NULL, roundup(mgmt_rx_params->buf_len, 4),
+				0, 4, false);
+	if (!wbuf) {
+		WMA_LOGE("%s: Failed to allocate wbuf for mgmt rx len(%u)",
+			    __func__, mgmt_rx_params->buf_len);
+		qdf_mem_free(mgmt_rx_params);
+		return -ENOMEM;
+	}
+
+	qdf_nbuf_put_tail(wbuf, mgmt_rx_params->buf_len);
+	qdf_nbuf_set_protocol(wbuf, ETH_P_CONTROL);
+
+	wma_mem_endianness_based_copy(qdf_nbuf_data(wbuf),
+			bufp, mgmt_rx_params->buf_len);
+
+	psoc = (struct wlan_objmgr_psoc *)
+				wma_handle->psoc;
+	if (!psoc) {
+		WMA_LOGE("%s: psoc ctx is NULL", __func__);
+		qdf_nbuf_free(wbuf);
+		qdf_mem_free(mgmt_rx_params);
+		return -EINVAL;
+	}
+
+	if (!psoc->soc_cb.rx_ops.mgmt_txrx_rx_ops.mgmt_rx_frame_handler) {
+		WMA_LOGE("%s: rx callback to mgmt txrx layer is NULL",
+			__func__);
+		qdf_nbuf_free(wbuf);
+		qdf_mem_free(mgmt_rx_params);
+		return -EINVAL;
+	}
+
+	status = psoc->soc_cb.rx_ops.mgmt_txrx_rx_ops.mgmt_rx_frame_handler(
+				psoc, wbuf, mgmt_rx_params);
+
+	if (status != QDF_STATUS_SUCCESS) {
+		WMA_LOGE("%s: Failed to process mgmt rx frame", __func__);
+		qdf_mem_free(mgmt_rx_params);
+		return -EINVAL;
+	}
+
+	qdf_mem_free(mgmt_rx_params);
 	return 0;
 }
 
 /**
  * wma_de_register_mgmt_frm_client() - deregister management frame
- * @cds_ctx: cds context
+ *
+ * This function deregisters the event handler registered for
+ * WMI_MGMT_RX_EVENTID.
  *
  * Return: QDF status
  */
-QDF_STATUS wma_de_register_mgmt_frm_client(void *cds_ctx)
+QDF_STATUS wma_de_register_mgmt_frm_client(void)
 {
-	tp_wma_handle wma_handle;
+	tp_wma_handle wma_handle = (tp_wma_handle)
+				cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!wma_handle) {
+		WMA_LOGE("%s: Failed to get WMA context", __func__);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
 
 #ifdef QCA_WIFI_FTM
 	if (cds_get_conparam() == QDF_GLOBAL_FTM_MODE)
 		return QDF_STATUS_SUCCESS;
 #endif
 
-	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		WMA_LOGE("%s: Failed to get WMA context", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
 	if (wmi_unified_unregister_event_handler(wma_handle->wmi_handle,
 						 WMI_MGMT_RX_EVENTID) != 0) {
 		WMA_LOGE("Failed to Unregister rx mgmt handler with wmi");
 		return QDF_STATUS_E_FAILURE;
 	}
-	wma_handle->mgmt_rx = NULL;
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -3412,19 +3495,19 @@ QDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
 
 /**
  * wma_register_mgmt_frm_client() - register management frame callback
- * @cds_ctx: cds context
- * @mgmt_frm_rx: management frame
+ *
+ * This function registers event handler for WMI_MGMT_RX_EVENTID.
  *
  * Return: QDF status
  */
-QDF_STATUS wma_register_mgmt_frm_client(
-	void *cds_ctx, wma_mgmt_frame_rx_callback mgmt_frm_rx)
+QDF_STATUS wma_register_mgmt_frm_client(void)
 {
-	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	tp_wma_handle wma_handle = (tp_wma_handle)
+				cds_get_context(QDF_MODULE_ID_WMA);
 
 	if (!wma_handle) {
 		WMA_LOGE("%s: Failed to get WMA context", __func__);
-		return QDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_NULL_VALUE;
 	}
 
 	if (wmi_unified_register_event_handler(wma_handle->wmi_handle,
@@ -3434,7 +3517,6 @@ QDF_STATUS wma_register_mgmt_frm_client(
 		WMA_LOGE("Failed to register rx mgmt handler with wmi");
 		return QDF_STATUS_E_FAILURE;
 	}
-	wma_handle->mgmt_rx = mgmt_frm_rx;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -3486,3 +3568,40 @@ void wma_deregister_packetdump_callback(void)
 	wma_handle->wma_mgmt_tx_packetdump_cb = NULL;
 	wma_handle->wma_mgmt_rx_packetdump_cb = NULL;
 }
+
+QDF_STATUS wma_mgmt_unified_cmd_send(struct wlan_objmgr_vdev *vdev,
+				qdf_nbuf_t buf, uint32_t desc_id,
+				void *mgmt_tx_params)
+{
+	tp_wma_handle wma_handle;
+	QDF_STATUS status;
+	struct wmi_mgmt_params *mgmt_params =
+			(struct wmi_mgmt_params *)mgmt_tx_params;
+
+	if (!mgmt_params) {
+		WMA_LOGE("%s: mgmt_params ptr passed is NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+	mgmt_params->desc_id = desc_id;
+
+	if (!vdev) {
+		WMA_LOGE("%s: vdev ptr passed is NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		WMA_LOGE("%s: wma handle is NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_mgmt_unified_cmd_send(wma_handle->wmi_handle,
+				mgmt_params);
+	if (status != QDF_STATUS_SUCCESS) {
+		WMA_LOGE("%s: mgmt tx failed", __func__);
+		return status;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+

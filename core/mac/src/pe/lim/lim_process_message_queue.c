@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1821,10 +1821,10 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		msg->bodyptr = NULL;
 		break;
 	case WMA_DISASSOC_TX_COMP:
-		lim_disassoc_tx_complete_cnf(mac_ctx, msg->bodyval);
+		lim_disassoc_tx_complete_cnf(mac_ctx, NULL, msg->bodyval, NULL);
 		break;
 	case WMA_DEAUTH_TX_COMP:
-		lim_deauth_tx_complete_cnf(mac_ctx, msg->bodyval);
+		lim_deauth_tx_complete_cnf(mac_ctx, NULL, msg->bodyval, NULL);
 		break;
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	case WMA_UPDATE_Q2Q_IE_IND:

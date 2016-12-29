@@ -10010,6 +10010,7 @@ QDF_STATUS hdd_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 		wlan_objmgr_vdev_obj_delete(vdev);
 		return QDF_STATUS_E_FAILURE;
 	}
+	wlan_objmgr_peer_ref_peer(peer);
 	adapter->hdd_vdev = vdev;
 
 	return QDF_STATUS_SUCCESS;

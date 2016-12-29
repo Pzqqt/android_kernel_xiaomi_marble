@@ -601,13 +601,32 @@ typedef struct sDisableUapsdParams {
 	uint32_t status;
 } tDisableUapsdParams, *tpDisableUapsdParams;
 
-typedef void (*pWMATxRxCompFunc)(void *pContext, void *pData,
+/**
+ * wma_tx_dwnld_comp_callback - callback function for TX dwnld complete
+ * @context: global pMac pointer
+ * @buf: buffer
+ * @bFreeData: to free/not free the buffer
+ *
+ * callback function for mgmt tx download completion.
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success
+ */
+typedef QDF_STATUS (*wma_tx_dwnld_comp_callback)(void *context, qdf_nbuf_t buf,
 				 bool bFreeData);
 
-/* callback function for TX complete */
-/* parameter 1 - global pMac pointer */
-/* parameter 2 - txComplete status : 1- success, 0 - failure. */
-typedef QDF_STATUS (*pWMAAckFnTxComp)(tpAniSirGlobal, uint32_t);
+/**
+ * wma_tx_ota_comp_callback - callback function for TX complete
+ * @context: global pMac pointer
+ * @buf: buffer
+ * @status: tx completion status
+ * @params: tx completion params
+ *
+ * callback function for mgmt tx ota completion.
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success
+ */
+typedef QDF_STATUS (*wma_tx_ota_comp_callback)(void *context, qdf_nbuf_t buf,
+				      uint32_t status, void *params);
 
 typedef void (*wma_txFailIndCallback)(uint8_t *, uint8_t);
 
@@ -694,9 +713,9 @@ QDF_STATUS wma_tx_packet(void *pWMA,
 			 eFrameType frmType,
 			 eFrameTxDir txDir,
 			 uint8_t tid,
-			 pWMATxRxCompFunc pCompFunc,
+			 wma_tx_dwnld_comp_callback pCompFunc,
 			 void *pData,
-			 pWMAAckFnTxComp pAckTxComp,
+			 wma_tx_ota_comp_callback pAckTxComp,
 			 uint8_t txFlag, uint8_t sessionId, bool tdlsflag,
 			 uint16_t channel_freq);
 
@@ -705,13 +724,9 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *p_cds_context,
 		    wma_dfs_radar_indication_cb radar_ind_cb,
 		    struct cds_config_info *cds_cfg);
 
-typedef QDF_STATUS (*wma_mgmt_frame_rx_callback)(void *p_cds_gctx,
-					     void *cds_buff);
+QDF_STATUS wma_register_mgmt_frm_client(void);
 
-QDF_STATUS wma_register_mgmt_frm_client(void *p_cds_gctx,
-				wma_mgmt_frame_rx_callback mgmt_rx_cb);
-
-QDF_STATUS wma_de_register_mgmt_frm_client(void *p_cds_gctx);
+QDF_STATUS wma_de_register_mgmt_frm_client(void);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
 		void (*csr_roam_synch_cb)(tpAniSirGlobal mac,

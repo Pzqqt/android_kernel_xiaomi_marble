@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -123,6 +123,31 @@ tSirRetStatus pe_start(tpAniSirGlobal pMac);
 void pe_stop(tpAniSirGlobal pMac);
 tSirRetStatus pe_post_msg_api(tpAniSirGlobal pMac, tSirMsgQ *pMsg);
 tSirRetStatus peProcessMsg(tpAniSirGlobal pMac, tSirMsgQ *limMsg);
+
+/**
+ * pe_register_mgmt_rx_frm_callback() - registers callback for receiving
+ *                                      mgmt rx frames
+ * @mac_ctx: mac global ctx
+ *
+ * This function registers a PE function to mgmt txrx component and a WMA
+ * function to WMI layer as event handler for receiving mgmt frames.
+ *
+ * Return: None
+ */
+void pe_register_mgmt_rx_frm_callback(tpAniSirGlobal mac_ctx);
+
+/**
+ * pe_deregister_mgmt_rx_frm_callback() - degisters callback for receiving
+ *                                        mgmt rx frames
+ * @mac_ctx: mac global ctx
+ *
+ * This function deregisters the PE function registered to mgmt txrx component
+ * and the WMA function registered to WMI layer as event handler for receiving
+ * mgmt frames.
+ *
+ * Return: None
+ */
+void pe_deregister_mgmt_rx_frm_callback(tpAniSirGlobal mac_ctx);
 
 /**
  * pe_register_callbacks_with_wma() - register SME and PE callback functions to

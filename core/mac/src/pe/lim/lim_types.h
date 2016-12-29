@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -851,10 +851,38 @@ void lim_process_disassoc_ack_timeout(tpAniSirGlobal pMac);
 void lim_process_deauth_ack_timeout(tpAniSirGlobal pMac);
 QDF_STATUS lim_send_disassoc_cnf(tpAniSirGlobal pMac);
 QDF_STATUS lim_send_deauth_cnf(tpAniSirGlobal pMac);
-QDF_STATUS lim_disassoc_tx_complete_cnf(tpAniSirGlobal pMac,
-					uint32_t txCompleteSuccess);
-QDF_STATUS lim_deauth_tx_complete_cnf(tpAniSirGlobal pMac,
-				      uint32_t txCompleteSuccess);
+
+/**
+ * lim_disassoc_tx_complete_cnf() - callback to indicate Tx completion
+ * @context: pointer to mac structure
+ * @buf: buffer
+ * @txCompleteSuccess: indicates tx success/failure
+ * @params: tx completion params
+ *
+ * function will be invoked on receiving tx completion indication
+ *
+ * return: success: QDF_STATUS_SUCCESS failure: QDF_STATUS_E_FAILURE
+ */
+QDF_STATUS lim_disassoc_tx_complete_cnf(void *context,
+					qdf_nbuf_t buf,
+					uint32_t txCompleteSuccess,
+					void *params);
+
+/**
+ * lim_deauth_tx_complete_cnf() - callback to indicate Tx completion
+ * @context: pointer to mac structure
+ * @buf: buffer
+ * @txCompleteSuccess: indicates tx success/failure
+ * @params: tx completion params
+ *
+ * function will be invoked on receiving tx completion indication
+ *
+ * return: success: QDF_STATUS_SUCCESS failure: QDF_STATUS_E_FAILURE
+ */
+QDF_STATUS lim_deauth_tx_complete_cnf(void *context,
+				      qdf_nbuf_t buf,
+				      uint32_t txCompleteSuccess,
+				      void *params);
 
 typedef struct sSetLinkCbackParams {
 	void *cbackDataPtr;

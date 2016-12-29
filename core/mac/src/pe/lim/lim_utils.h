@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -348,7 +348,7 @@ void lim_util_count_sta_del(tpAniSirGlobal pMac, tpDphHashNode pSta,
 		tpPESession psessionEntry);
 
 uint8_t lim_get_ht_capability(tpAniSirGlobal, uint32_t, tpPESession);
-void lim_tx_complete(tHalHandle hHal, void *pData, bool free);
+QDF_STATUS lim_tx_complete(tHalHandle hHal, qdf_nbuf_t buf, bool free);
 
 /**
  * This function will be registered with HAL for callback when TSPEC inactivity
@@ -628,8 +628,20 @@ static inline void lim_deactivate_and_change_timer_host_roam(
 
 bool lim_is_robust_mgmt_action_frame(uint8_t action_category);
 bool lim_is_ext_cap_ie_present (struct s_ext_cap *ext_cap);
-QDF_STATUS lim_p2p_action_cnf(tpAniSirGlobal mac_ctx,
-			uint32_t tx_complete_success);
+
+/**
+ * lim_p2p_action_cnf() - callback to indicate Tx completion
+ * @mac_ctx: pointer to mac structure
+ * @buf: buffer
+ * @tx_complete_success: indicates tx success/failure
+ * @params: tx completion params
+ *
+ * function will be invoked on receiving tx completion indication
+ *
+ * return: success: eHAL_STATUS_SUCCESS failure: eHAL_STATUS_FAILURE
+ */
+QDF_STATUS lim_p2p_action_cnf(void *mac_ctx, qdf_nbuf_t buf,
+			uint32_t tx_complete_success, void *params);
 void lim_update_caps_info_for_bss(tpAniSirGlobal mac_ctx,
 			uint16_t *caps, uint16_t bss_caps);
 void lim_send_set_dtim_period(tpAniSirGlobal mac_ctx, uint8_t dtim_period,

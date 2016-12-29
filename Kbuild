@@ -764,6 +764,18 @@ UMAC_OBJMGR_OBJS := $(UMAC_OBJMGR_DIR)/src/wlan_objmgr_global_obj.o \
 		$(UMAC_OBJMGR_DIR)/src/wlan_objmgr_psoc_obj.o \
 		$(UMAC_OBJMGR_DIR)/src/wlan_objmgr_vdev_obj.o
 
+
+###########  UMAC MGMT TXRX ##########
+UMAC_MGMT_TXRX_DIR := $(WLAN_COMMON_ROOT)/umac/cmn_services/mgmt_txrx
+
+UMAC_MGMT_TXRX_INC := -I$(WLAN_COMMON_INC)/umac/cmn_services/mgmt_txrx/core/src \
+	-I$(WLAN_COMMON_INC)/umac/cmn_services/mgmt_txrx/dispatcher/inc \
+	-I$(WLAN_COMMON_INC)/umac/cmn_services/mgmt_txrx/dispatcher/src
+
+UMAC_MGMT_TXRX_OBJS := $(UMAC_MGMT_TXRX_DIR)/core/src/wlan_mgmt_txrx_main.o \
+	$(UMAC_MGMT_TXRX_DIR)/dispatcher/src/wlan_mgmt_txrx_utils_api.o \
+	$(UMAC_MGMT_TXRX_DIR)/dispatcher/src/wlan_mgmt_txrx_tgt_api.o
+
 ########### BMI ###########
 BMI_DIR := core/bmi
 
@@ -1110,6 +1122,7 @@ INCS +=		$(HIF_INC) \
 		$(HAL_INC)
 
 INCS +=		$(UMAC_OBJMGR_INC)
+INCS +=		$(UMAC_MGMT_TXRX_INC)
 INCS +=		$(TARGET_INC)
 
 INCS +=		$(NLINK_INC) \
@@ -1153,6 +1166,7 @@ OBJS +=		$(HIF_OBJS) \
 		$(HAL_OBJS)
 
 OBJS +=		$(UMAC_OBJMGR_OBJS)
+OBJS +=		$(UMAC_MGMT_TXRX_OBJS)
 OBJS +=		$(WLAN_LOGGING_OBJS)
 OBJS +=		$(NLINK_OBJS)
 OBJS +=		$(PTT_OBJS)

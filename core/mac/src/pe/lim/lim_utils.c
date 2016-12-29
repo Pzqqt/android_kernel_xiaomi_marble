@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -4457,12 +4457,14 @@ lim_enable_short_preamble(tpAniSirGlobal pMac, uint8_t enable,
  *
  * @param void A pointer to pData. Shouldn't it be pPacket?!
  *
- * @return none
+ * @return QDF_STATUS_SUCCESS - in case of success
  */
-void lim_tx_complete(tHalHandle hHal, void *data, bool free)
+QDF_STATUS lim_tx_complete(tHalHandle hHal, qdf_nbuf_t buf, bool free)
 {
 	if (free)
-		cds_packet_free((void *)data);
+		cds_packet_free((void *)buf);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

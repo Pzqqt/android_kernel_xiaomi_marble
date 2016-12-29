@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -76,6 +76,11 @@
 #include "cdp_txrx_stats.h"
 #include <cdp_txrx_misc.h>
 #include "enet.h"
+#include "wlan_mgmt_txrx_utils_api.h"
+#include "wlan_objmgr_psoc_obj.h"
+#include "wlan_objmgr_pdev_obj.h"
+#include "wlan_objmgr_vdev_obj.h"
+#include "wlan_objmgr_peer_obj.h"
 
 typedef struct {
 	int32_t rate;
@@ -811,7 +816,7 @@ static void wma_data_tx_ack_work_handler(void *ack_work)
 {
 	struct wma_tx_ack_work_ctx *work;
 	tp_wma_handle wma_handle;
-	pWMAAckFnTxComp ack_cb;
+	wma_tx_ota_comp_callback ack_cb;
 
 	if (cds_is_load_or_unload_in_progress()) {
 		WMA_LOGE("%s: Driver load/unload in progress", __func__);
@@ -830,8 +835,8 @@ static void wma_data_tx_ack_work_handler(void *ack_work)
 
 	/* Call the Ack Cb registered by UMAC */
 	if (ack_cb)
-		ack_cb((tpAniSirGlobal) (wma_handle->mac_context),
-			work->status ? 0 : 1);
+		ack_cb((tpAniSirGlobal) (wma_handle->mac_context), NULL,
+			work->status ? 0 : 1, NULL);
 	else
 		WMA_LOGE("Data Tx Ack Cb is NULL");
 
@@ -1361,7 +1366,7 @@ static void wma_mgmt_tx_ack_work_handler(void *ack_work)
 {
 	struct wma_tx_ack_work_ctx *work;
 	tp_wma_handle wma_handle;
-	pWMAAckFnTxComp ack_cb;
+	wma_tx_ota_comp_callback ack_cb;
 
 	if (cds_is_load_or_unload_in_progress()) {
 		WMA_LOGE("%s: Driver load/unload in progress", __func__);
@@ -1377,8 +1382,8 @@ static void wma_mgmt_tx_ack_work_handler(void *ack_work)
 		 work->sub_type, work->status);
 
 	/* Call the Ack Cb registered by UMAC */
-	ack_cb((tpAniSirGlobal) (wma_handle->mac_context),
-	       work->status ? 0 : 1);
+	ack_cb((tpAniSirGlobal) (wma_handle->mac_context), NULL,
+	       work->status ? 0 : 1, NULL);
 
 	qdf_mem_free(work);
 	wma_handle->ack_work_ctx = NULL;
@@ -2490,9 +2495,11 @@ void wmi_desc_put(tp_wma_handle wma_handle, struct wmi_desc_t *wmi_desc)
  */
 QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			 eFrameType frmType, eFrameTxDir txDir, uint8_t tid,
-			 pWMATxRxCompFunc tx_frm_download_comp_cb, void *pData,
-			 pWMAAckFnTxComp tx_frm_ota_comp_cb, uint8_t tx_flag,
-			 uint8_t vdev_id, bool tdlsFlag, uint16_t channel_freq)
+			 wma_tx_dwnld_comp_callback tx_frm_download_comp_cb,
+			 void *pData,
+			 wma_tx_ota_comp_callback tx_frm_ota_comp_cb,
+			 uint8_t tx_flag, uint8_t vdev_id, bool tdlsFlag,
+			 uint16_t channel_freq)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) (wma_context);
 	int32_t status;
@@ -2513,9 +2520,12 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	tpAniSirGlobal pMac;
 	tpSirMacMgmtHdr mHdr;
 	struct wmi_mgmt_params mgmt_param = {0};
-	struct wmi_desc_t *wmi_desc = NULL;
 	void *ctrl_pdev;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct ieee80211_frame *wh;
+	struct wlan_objmgr_peer *peer = NULL;
+	struct wlan_objmgr_psoc *psoc;
+	void *mac_addr;
 
 	if (NULL == wma_handle) {
 		WMA_LOGE("wma_handle is NULL");
@@ -2845,23 +2855,29 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		mgmt_param.pdata = pData;
 		mgmt_param.chanfreq = chanfreq;
 		mgmt_param.qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-		wmi_desc = wmi_desc_get(wma_handle);
-		if (!wmi_desc) {
-			WMA_LOGE("%s: Failed to get wmi_desc", __func__);
-			status = QDF_STATUS_E_FAILURE;
-		} else {
-			mgmt_param.desc_id = wmi_desc->desc_id;
-			wmi_desc->vdev_id = vdev_id;
-			status = wmi_mgmt_unified_cmd_send(
-					wma_handle->wmi_handle,
-					&mgmt_param);
-			if (status) {
-				wmi_desc_put(wma_handle, wmi_desc);
-			} else {
-				wmi_desc->nbuf = tx_frame;
-				wmi_desc->tx_cmpl_cb = tx_frm_download_comp_cb;
-				wmi_desc->ota_post_proc_cb = tx_frm_ota_comp_cb;
-			}
+
+		psoc = wma_handle->psoc;
+		if (!psoc) {
+			WMA_LOGE("%s: psoc ctx is NULL", __func__);
+			goto error;
+		}
+
+		wh = (struct ieee80211_frame *)(qdf_nbuf_data(tx_frame));
+		mac_addr = wh->i_addr1;
+		peer = wlan_objmgr_find_peer(psoc, mac_addr);
+		if (!peer) {
+			mac_addr = wh->i_addr2;
+			peer = wlan_objmgr_find_peer(psoc, mac_addr);
+		}
+
+		status = wlan_mgmt_txrx_mgmt_frame_tx(peer,
+				(tpAniSirGlobal)wma_handle->mac_context,
+				(qdf_nbuf_t)tx_frame,
+				tx_frm_download_comp_cb, tx_frm_ota_comp_cb,
+				WLAN_UMAC_COMP_MLME, &mgmt_param);
+		if (status != QDF_STATUS_SUCCESS) {
+			WMA_LOGE("%s: mgmt tx failed", __func__);
+			goto error;
 		}
 	} else {
 		/* Hand over the Tx Mgmt frame to TxRx */

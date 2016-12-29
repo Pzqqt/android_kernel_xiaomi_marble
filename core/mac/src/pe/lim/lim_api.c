@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -70,6 +70,9 @@
 #include "sys_startup.h"
 #include "cds_concurrency.h"
 #include "nan_datapath.h"
+#include "wma.h"
+#include "wlan_mgmt_txrx_utils_api.h"
+#include "wlan_objmgr_psoc_obj.h"
 
 static void __lim_init_scan_vars(tpAniSirGlobal pMac)
 {
@@ -613,6 +616,8 @@ void lim_cleanup(tpAniSirGlobal pMac)
 
 	struct mgmt_frm_reg_info *pLimMgmtRegistration = NULL;
 
+	pe_deregister_mgmt_rx_frm_callback(pMac);
+
 	if (QDF_GLOBAL_FTM_MODE != cds_get_conparam()) {
 		qdf_mutex_acquire(&pMac->lim.lim_frame_register_lock);
 		while (qdf_list_remove_front(
@@ -1004,23 +1009,22 @@ QDF_STATUS pe_mc_process_handler(struct scheduler_msg *msg)
 
 /* --------------------------------------------------------------------------- */
 /**
- * pe_handle_mgmt_frame
+ * pe_handle_mgmt_frame() - Process the Management frames from TXRX
+ * @psoc: psoc context
+ * @peer: peer
+ * @buf: buffer
+ * @mgmt_rx_params; rx event params
+ * @frm_type: frame type
  *
- * FUNCTION:
- *    Process the Management frames from TL
+ * This function handles the mgmt rx frame from mgmt txrx component and forms
+ * a cds packet and schedule it in controller thread for further processing.
  *
- * LOGIC:
- *
- * ASSUMPTIONS: TL sends the packet along with the CDS GlobalContext
- *
- * NOTE:
- *
- * @param p_cds_gctx  Global Vos Context
- * @param cds_buff  Packet
- * @return None
+ * Return: QDF_STATUS_SUCCESS - in case of success
  */
-
-static QDF_STATUS pe_handle_mgmt_frame(void *p_cds_gctx, void *cds_buff)
+static QDF_STATUS pe_handle_mgmt_frame(struct wlan_objmgr_psoc *psoc,
+			struct wlan_objmgr_peer *peer, qdf_nbuf_t buf,
+			void *mgmt_rx_params,
+			uint32_t frm_type)
 {
 	tpAniSirGlobal pMac;
 	tpSirMacMgmtHdr mHdr;
@@ -1028,17 +1032,27 @@ static QDF_STATUS pe_handle_mgmt_frame(void *p_cds_gctx, void *cds_buff)
 	cds_pkt_t *pVosPkt;
 	QDF_STATUS qdf_status;
 	uint8_t *pRxPacketInfo;
-
-	pVosPkt = (cds_pkt_t *) cds_buff;
-	if (NULL == pVosPkt) {
-		return QDF_STATUS_E_FAILURE;
-	}
+	int ret;
 
 	pMac = cds_get_context(QDF_MODULE_ID_PE);
 	if (NULL == pMac) {
 		/* cannot log a failure without a valid pMac */
-		cds_pkt_return_packet(pVosPkt);
-		pVosPkt = NULL;
+		qdf_nbuf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pVosPkt = qdf_mem_malloc(sizeof(*pVosPkt));
+	if (!pVosPkt) {
+		lim_log(pMac, LOGP,
+			FL("Failed to allocate rx packet"));
+		qdf_nbuf_free(buf);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	ret = wma_form_rx_packet(buf, mgmt_rx_params, pVosPkt);
+	if (ret) {
+		lim_log(pMac, LOGP,
+			FL("Failed to fill cds packet from event buffer"));
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1079,7 +1093,7 @@ static QDF_STATUS pe_handle_mgmt_frame(void *p_cds_gctx, void *cds_buff)
 
 	/* Forward to MAC via mesg = SIR_BB_XPORT_MGMT_MSG */
 	msg.type = SIR_BB_XPORT_MGMT_MSG;
-	msg.bodyptr = cds_buff;
+	msg.bodyptr = pVosPkt;
 	msg.bodyval = 0;
 
 	if (eSIR_SUCCESS != sys_bbt_process_message_core(pMac,
@@ -1094,6 +1108,43 @@ static QDF_STATUS pe_handle_mgmt_frame(void *p_cds_gctx, void *cds_buff)
 	return QDF_STATUS_SUCCESS;
 }
 
+void pe_register_mgmt_rx_frm_callback(tpAniSirGlobal mac_ctx)
+{
+	QDF_STATUS status;
+	struct mgmt_txrx_mgmt_frame_cb_info frm_cb_info;
+
+	frm_cb_info.frm_type = MGMT_FRAME_TYPE_ALL;
+	frm_cb_info.mgmt_rx_cb = (mgmt_frame_rx_callback)
+				pe_handle_mgmt_frame;
+
+	status = wlan_mgmt_txrx_register_rx_cb(mac_ctx->psoc,
+					 WLAN_UMAC_COMP_MLME, &frm_cb_info, 1);
+	if (status != QDF_STATUS_SUCCESS)
+		lim_log(mac_ctx, LOGP,
+			FL("Registering the PE Handle with MGMT TXRX layer has failed"));
+
+	wma_register_mgmt_frm_client();
+}
+
+void pe_deregister_mgmt_rx_frm_callback(tpAniSirGlobal mac_ctx)
+{
+	QDF_STATUS status;
+	struct mgmt_txrx_mgmt_frame_cb_info frm_cb_info;
+
+	frm_cb_info.frm_type = MGMT_FRAME_TYPE_ALL;
+	frm_cb_info.mgmt_rx_cb = (mgmt_frame_rx_callback)
+				pe_handle_mgmt_frame;
+
+	status = wlan_mgmt_txrx_deregister_rx_cb(mac_ctx->psoc,
+					 WLAN_UMAC_COMP_MLME, &frm_cb_info, 1);
+	if (status != QDF_STATUS_SUCCESS)
+		lim_log(mac_ctx, LOGP,
+			FL("Deregistering the PE Handle with MGMT TXRX layer has failed"));
+
+	wma_de_register_mgmt_frm_client();
+}
+
+
 /**
  * pe_register_callbacks_with_wma() - register SME and PE callback functions to
  * WMA.
@@ -1106,12 +1157,6 @@ void pe_register_callbacks_with_wma(tpAniSirGlobal pMac,
 	QDF_STATUS retStatus;
 
 	p_cds_gctx = cds_get_global_context();
-
-	retStatus = wma_register_mgmt_frm_client(p_cds_gctx,
-				 pe_handle_mgmt_frame);
-	if (retStatus != QDF_STATUS_SUCCESS)
-		lim_log(pMac, LOGP,
-			FL("Registering the PE Handle with WMA has failed"));
 
 	retStatus = wma_register_roaming_callbacks(p_cds_gctx,
 			ready_req->csr_roam_synch_cb,
