@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -750,6 +750,48 @@ mgmt_txrx_get_frm_type(uint8_t mgmt_subtype, uint8_t *mpdu_data_ptr)
 	return frm_type;
 }
 
+/**
+ * wlan_mgmt_txrx_rx_handler_list_copy() - copies rx handler list
+ * @rx_handler: pointer to rx handler list
+ * @rx_handler_head: pointer to head of the copies list
+ * @rx_handler_tail: pointer to tail of the copies list
+ *
+ * This function copies the rx handler linked list into a local
+ * linked list.
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success
+ */
+static QDF_STATUS wlan_mgmt_txrx_rx_handler_list_copy(
+			struct mgmt_rx_handler *rx_handler,
+			struct mgmt_rx_handler **rx_handler_head,
+			struct mgmt_rx_handler **rx_handler_tail)
+{
+	struct mgmt_rx_handler *rx_handler_node;
+
+	while (rx_handler) {
+		rx_handler_node = qdf_mem_malloc(sizeof(*rx_handler_node));
+		if (!rx_handler_node) {
+			mgmt_txrx_err("Couldn't allocate memory for rx handler node");
+			return QDF_STATUS_E_NOMEM;
+		}
+
+		rx_handler_node->comp_id = rx_handler->comp_id;
+		rx_handler_node->rx_cb = rx_handler->rx_cb;
+		rx_handler_node->next = NULL;
+
+		if (!(*rx_handler_head)) {
+			*rx_handler_head = rx_handler_node;
+			*rx_handler_tail = *rx_handler_head;
+		} else {
+			(*rx_handler_tail)->next = rx_handler_node;
+			*rx_handler_tail = (*rx_handler_tail)->next;
+		}
+		rx_handler = rx_handler->next;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 			struct wlan_objmgr_psoc *psoc,
 			qdf_nbuf_t buf, void *params)
@@ -761,7 +803,7 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 	uint8_t mgmt_type, mgmt_subtype;
 	uint8_t *mac_addr, *mpdu_data_ptr;
 	enum mgmt_frame_type frm_type;
-	struct mgmt_rx_handler *rx_handler, *rx_handler_node;
+	struct mgmt_rx_handler *rx_handler;
 	struct mgmt_rx_handler *rx_handler_head = NULL, *rx_handler_tail = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
@@ -828,39 +870,37 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 	mgmt_txrx_ctx = (struct mgmt_txrx_priv_context *)
 			wlan_objmgr_psoc_get_comp_private_obj(psoc,
 				WLAN_UMAC_COMP_MGMT_TXRX);
+
 	qdf_spin_lock_bh(&mgmt_txrx_ctx->mgmt_txrx_ctx_lock);
 	rx_handler = mgmt_txrx_ctx->mgmt_rx_comp_cb[frm_type];
-	if (!rx_handler) {
+	if (rx_handler) {
+		status = wlan_mgmt_txrx_rx_handler_list_copy(rx_handler,
+				&rx_handler_head, &rx_handler_tail);
+		if (status != QDF_STATUS_SUCCESS) {
+			qdf_spin_unlock_bh(&mgmt_txrx_ctx->mgmt_txrx_ctx_lock);
+			qdf_nbuf_free(buf);
+			goto rx_handler_mem_free;
+		}
+	}
+
+	rx_handler = mgmt_txrx_ctx->mgmt_rx_comp_cb[MGMT_FRAME_TYPE_ALL];
+	if (rx_handler) {
+		status = wlan_mgmt_txrx_rx_handler_list_copy(rx_handler,
+				&rx_handler_head, &rx_handler_tail);
+		if (status != QDF_STATUS_SUCCESS) {
+			qdf_spin_unlock_bh(&mgmt_txrx_ctx->mgmt_txrx_ctx_lock);
+			qdf_nbuf_free(buf);
+			goto rx_handler_mem_free;
+		}
+	}
+
+	if (!rx_handler_head) {
 		qdf_spin_unlock_bh(&mgmt_txrx_ctx->mgmt_txrx_ctx_lock);
 		mgmt_txrx_info("No rx callback registered for frm_type: %d",
 			frm_type);
 		qdf_nbuf_free(buf);
 		status = QDF_STATUS_E_FAILURE;
 		goto dec_peer_ref_cnt;
-	}
-
-	while (rx_handler) {
-		rx_handler_node = qdf_mem_malloc(sizeof(*rx_handler_node));
-		if (!rx_handler_node) {
-			qdf_spin_unlock_bh(&mgmt_txrx_ctx->mgmt_txrx_ctx_lock);
-			mgmt_txrx_err("Couldn't allocate memory for rx handler node");
-			qdf_nbuf_free(buf);
-			status = QDF_STATUS_E_NOMEM;
-			goto rx_handler_mem_free;
-		}
-
-		rx_handler_node->comp_id = rx_handler->comp_id;
-		rx_handler_node->rx_cb = rx_handler->rx_cb;
-		rx_handler_node->next = NULL;
-
-		if (!rx_handler_head) {
-			rx_handler_head = rx_handler_node;
-			rx_handler_tail = rx_handler_head;
-		} else {
-			rx_handler_tail->next = rx_handler_node;
-			rx_handler_tail = rx_handler_tail->next;
-		}
-		rx_handler = rx_handler->next;
 	}
 	qdf_spin_unlock_bh(&mgmt_txrx_ctx->mgmt_txrx_ctx_lock);
 

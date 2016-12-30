@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -495,10 +495,11 @@ struct action_frm_hdr {
  * @MGMT_ACTION_VHT_COMPRESSED_BF: vht compressed bf action frame
  * @MGMT_ACTION_VHT_GID_NOTIF:   vht gid notification action frame
  * @MGMT_ACTION_VHT_OPMODE_NOTIF: vht opmode notification action frame
+ * @MGMT_FRAME_TYPE_ALL:         mgmt frame type for all type of frames
  * @MGMT_MAX_FRAME_TYPE:         max. mgmt frame types
  */
 enum mgmt_frame_type {
-	MGMT_FRM_UNSPECIFIED,
+	MGMT_FRM_UNSPECIFIED = -1,
 	MGMT_ASSOC_REQ,
 	MGMT_ASSOC_RESP,
 	MGMT_REASSOC_REQ,
@@ -589,6 +590,7 @@ enum mgmt_frame_type {
 	MGMT_ACTION_VHT_COMPRESSED_BF,
 	MGMT_ACTION_VHT_GID_NOTIF,
 	MGMT_ACTION_VHT_OPMODE_NOTIF,
+	MGMT_FRAME_TYPE_ALL,
 	MGMT_MAX_FRAME_TYPE,
 };
 
@@ -637,6 +639,17 @@ typedef QDF_STATUS (*mgmt_frame_rx_callback)(struct wlan_objmgr_psoc *psoc,
 					     struct wlan_objmgr_peer *peer,
 					     qdf_nbuf_t buf, void *params,
 					     enum mgmt_frame_type frm_type);
+
+
+/**
+ * struct mgmt_txrx_mgmt_frame_cb_info - frm and corresponding rx cb info
+ * @frm_type:    mgmt frm type
+ * @mgmt_rx_cb:  corresponding rx callback
+ */
+struct mgmt_txrx_mgmt_frame_cb_info {
+	enum mgmt_frame_type frm_type;
+	mgmt_frame_rx_callback mgmt_rx_cb;
+};
 
 
 /**
@@ -698,25 +711,27 @@ QDF_STATUS wlan_mgmt_txrx_beacon_frame_tx(struct wlan_objmgr_peer *peer,
 /**
  * wlan_mgmt_txrx_register_rx_cb() - registers the rx cb for mgmt. frames
  * @psoc: psoc context
- * @mgmt_rx_cb: mgmt rx callback to be registered
  * @comp_id: umac component id
- * @frm_type: mgmt. frame for which cb to be registered.
+ * @frm_cb_info: pointer to array of structure containing frm type and callback
+ * @num_entries: num of frames for which cb to be registered
  *
  * This function registers rx callback for mgmt. frames for
  * the corresponding umac component passed in the func.
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
-QDF_STATUS wlan_mgmt_txrx_register_rx_cb(struct wlan_objmgr_psoc *psoc,
-					 mgmt_frame_rx_callback mgmt_rx_cb,
-					 enum wlan_umac_comp_id comp_id,
-					 enum mgmt_frame_type frm_type);
+QDF_STATUS wlan_mgmt_txrx_register_rx_cb(
+			struct wlan_objmgr_psoc *psoc,
+			enum wlan_umac_comp_id comp_id,
+			struct mgmt_txrx_mgmt_frame_cb_info *frm_cb_info,
+			uint8_t num_entries);
 
 /**
  * wlan_mgmt_txrx_deregister_rx_cb() - deregisters the rx cb for mgmt. frames
  * @psoc: psoc context
  * @comp_id: umac component id
- * @frm_type: mgmt. frame for which cb to be registered.
+ * @frm_cb_info: pointer to array of structure containing frm type and callback
+ * @num_entries: num of frames for which cb to be deregistered
  *
  * This function deregisters rx callback for mgmt. frames for
  * the corresponding umac component passed in the func.
@@ -726,6 +741,7 @@ QDF_STATUS wlan_mgmt_txrx_register_rx_cb(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS wlan_mgmt_txrx_deregister_rx_cb(
 			struct wlan_objmgr_psoc *psoc,
 			enum wlan_umac_comp_id comp_id,
-			enum mgmt_frame_type frm_type);
+			struct mgmt_txrx_mgmt_frame_cb_info *frm_cb_info,
+			uint8_t num_entries);
 
 #endif

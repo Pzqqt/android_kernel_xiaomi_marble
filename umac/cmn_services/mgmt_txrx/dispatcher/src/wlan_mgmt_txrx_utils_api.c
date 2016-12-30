@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -343,6 +343,7 @@ static QDF_STATUS wlan_mgmt_txrx_create_rx_handler(
 /**
  * wlan_mgmt_txrx_delete_rx_handler() - deletes rx handler node for umac comp.
  * @mgmt_txrx_ctx: mgmt txrx context
+ * @mgmt_rx_cb: mgmt rx callback to be deregistered
  * @comp_id: umac component id
  * @frm_type: mgmt. frame for which cb to be registered.
  *
@@ -353,6 +354,7 @@ static QDF_STATUS wlan_mgmt_txrx_create_rx_handler(
  */
 static QDF_STATUS wlan_mgmt_txrx_delete_rx_handler(
 				struct mgmt_txrx_priv_context *mgmt_txrx_ctx,
+				mgmt_frame_rx_callback mgmt_rx_cb,
 				enum wlan_umac_comp_id comp_id,
 				enum mgmt_frame_type frm_type)
 {
@@ -362,7 +364,8 @@ static QDF_STATUS wlan_mgmt_txrx_delete_rx_handler(
 	qdf_spin_lock_bh(&mgmt_txrx_ctx->mgmt_txrx_ctx_lock);
 	rx_handler = mgmt_txrx_ctx->mgmt_rx_comp_cb[frm_type];
 	while (rx_handler) {
-		if (rx_handler->comp_id == comp_id) {
+		if (rx_handler->comp_id == comp_id &&
+				rx_handler->rx_cb == mgmt_rx_cb) {
 			if (rx_handler_prev)
 				rx_handler_prev->next =
 					rx_handler->next;
@@ -391,10 +394,11 @@ static QDF_STATUS wlan_mgmt_txrx_delete_rx_handler(
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wlan_mgmt_txrx_register_rx_cb(struct wlan_objmgr_psoc *psoc,
-					 mgmt_frame_rx_callback mgmt_rx_cb,
-					 enum wlan_umac_comp_id comp_id,
-					 enum mgmt_frame_type frm_type)
+QDF_STATUS wlan_mgmt_txrx_register_rx_cb(
+			struct wlan_objmgr_psoc *psoc,
+			enum wlan_umac_comp_id comp_id,
+			struct mgmt_txrx_mgmt_frame_cb_info *frm_cb_info,
+			uint8_t num_entries)
 {
 	struct mgmt_txrx_priv_context *mgmt_txrx_ctx;
 	QDF_STATUS status;
@@ -410,13 +414,14 @@ QDF_STATUS wlan_mgmt_txrx_register_rx_cb(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (frm_type >= MGMT_MAX_FRAME_TYPE) {
-		mgmt_txrx_err("Invalid frame type %d passed", frm_type);
+	if (!num_entries || num_entries >= MGMT_MAX_FRAME_TYPE) {
+		mgmt_txrx_err("Invalid value for num_entries: %d passed",
+				num_entries);
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (!mgmt_rx_cb) {
-		mgmt_txrx_err("NULL rx cb passed for registration");
+	if (!frm_cb_info) {
+		mgmt_txrx_err("frame cb info pointer is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -428,23 +433,19 @@ QDF_STATUS wlan_mgmt_txrx_register_rx_cb(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (comp_id == WLAN_UMAC_COMP_MLME) {
-		for (i = 0; i < MGMT_MAX_FRAME_TYPE; i++) {
-			status = wlan_mgmt_txrx_create_rx_handler(mgmt_txrx_ctx,
-						mgmt_rx_cb, comp_id, i);
-			if (status != QDF_STATUS_SUCCESS) {
-				for (j = 0; j < i; j++) {
-					wlan_mgmt_txrx_delete_rx_handler(
-						mgmt_txrx_ctx, comp_id, j);
-				}
-				return status;
-			}
-		}
-	} else {
+	for (i = 0; i < num_entries; i++) {
 		status = wlan_mgmt_txrx_create_rx_handler(mgmt_txrx_ctx,
-					mgmt_rx_cb, comp_id, frm_type);
-		if (status != QDF_STATUS_SUCCESS)
+				frm_cb_info[i].mgmt_rx_cb, comp_id,
+				frm_cb_info[i].frm_type);
+		if (status != QDF_STATUS_SUCCESS) {
+			for (j = 0; j < i; j++) {
+				wlan_mgmt_txrx_delete_rx_handler(
+					mgmt_txrx_ctx,
+					frm_cb_info[j].mgmt_rx_cb,
+					comp_id, frm_cb_info[j].frm_type);
+			}
 			return status;
+		}
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -453,10 +454,10 @@ QDF_STATUS wlan_mgmt_txrx_register_rx_cb(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS wlan_mgmt_txrx_deregister_rx_cb(
 			struct wlan_objmgr_psoc *psoc,
 			enum wlan_umac_comp_id comp_id,
-			enum mgmt_frame_type frm_type)
+			struct mgmt_txrx_mgmt_frame_cb_info *frm_cb_info,
+			uint8_t num_entries)
 {
 	struct mgmt_txrx_priv_context *mgmt_txrx_ctx;
-	QDF_STATUS status;
 	uint8_t i;
 
 	if (!psoc) {
@@ -469,10 +470,17 @@ QDF_STATUS wlan_mgmt_txrx_deregister_rx_cb(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (frm_type >= MGMT_MAX_FRAME_TYPE) {
-		mgmt_txrx_err("Invalid frame type %d passed", frm_type);
+	if (!num_entries || num_entries >= MGMT_MAX_FRAME_TYPE) {
+		mgmt_txrx_err("Invalid value for num_entries: %d passed",
+				num_entries);
 		return QDF_STATUS_E_INVAL;
 	}
+
+	if (!frm_cb_info) {
+		mgmt_txrx_err("frame cb info pointer is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	mgmt_txrx_ctx = (struct mgmt_txrx_priv_context *)
 			wlan_objmgr_psoc_get_comp_private_obj(psoc,
 				WLAN_UMAC_COMP_MGMT_TXRX);
@@ -481,16 +489,10 @@ QDF_STATUS wlan_mgmt_txrx_deregister_rx_cb(
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (comp_id == WLAN_UMAC_COMP_MLME) {
-		for (i = 0; i < MGMT_MAX_FRAME_TYPE; i++) {
-			wlan_mgmt_txrx_delete_rx_handler(mgmt_txrx_ctx,
-					comp_id, i);
-		}
-	} else {
-		status = wlan_mgmt_txrx_delete_rx_handler(mgmt_txrx_ctx,
-				comp_id, frm_type);
-		if (status != QDF_STATUS_SUCCESS)
-			return status;
+	for (i = 0; i < num_entries; i++) {
+		wlan_mgmt_txrx_delete_rx_handler(mgmt_txrx_ctx,
+				frm_cb_info[i].mgmt_rx_cb, comp_id,
+				frm_cb_info[i].frm_type);
 	}
 
 	return QDF_STATUS_SUCCESS;
