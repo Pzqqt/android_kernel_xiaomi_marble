@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -113,23 +113,43 @@ tso_enable
 
 ipv4_checksum_en
 			
+			FIELD NOT USED IN HAWKEYE 1.0
+			
+			
+			
 			Enable IPv4 checksum replacement
 
 udp_over_ipv4_checksum_en
+			
+			FIELD NOT USED IN HAWKEYE 1.0
+			
+			
 			
 			Enable UDP over IPv4 checksum replacement.  UDP checksum
 			over IPv4 is optional for TCP/IP stacks.
 
 udp_over_ipv6_checksum_en
 			
+			FIELD NOT USED IN HAWKEYE 1.0
+			
+			
+			
 			Enable UDP over IPv6 checksum replacement.  UDP checksum
 			over IPv6 is mandatory for TCP/IP stacks.
 
 tcp_over_ipv4_checksum_en
 			
+			FIELD NOT USED IN HAWKEYE 1.0
+			
+			
+			
 			Enable TCP checksum over IPv4 replacement
 
 tcp_over_ipv6_checksum_en
+			
+			FIELD NOT USED IN HAWKEYE 1.0
+			
+			
 			
 			Enable TCP checksum over IPv6 eplacement
 
@@ -380,6 +400,10 @@ buf5_len
 
 /* Description		TX_MSDU_EXTENSION_0_IPV4_CHECKSUM_EN
 			
+			FIELD NOT USED IN HAWKEYE 1.0
+			
+			
+			
 			Enable IPv4 checksum replacement
 */
 #define TX_MSDU_EXTENSION_0_IPV4_CHECKSUM_EN_OFFSET                  0x00000000
@@ -387,6 +411,10 @@ buf5_len
 #define TX_MSDU_EXTENSION_0_IPV4_CHECKSUM_EN_MASK                    0x00000002
 
 /* Description		TX_MSDU_EXTENSION_0_UDP_OVER_IPV4_CHECKSUM_EN
+			
+			FIELD NOT USED IN HAWKEYE 1.0
+			
+			
 			
 			Enable UDP over IPv4 checksum replacement.  UDP checksum
 			over IPv4 is optional for TCP/IP stacks.
@@ -397,6 +425,10 @@ buf5_len
 
 /* Description		TX_MSDU_EXTENSION_0_UDP_OVER_IPV6_CHECKSUM_EN
 			
+			FIELD NOT USED IN HAWKEYE 1.0
+			
+			
+			
 			Enable UDP over IPv6 checksum replacement.  UDP checksum
 			over IPv6 is mandatory for TCP/IP stacks.
 */
@@ -406,6 +438,10 @@ buf5_len
 
 /* Description		TX_MSDU_EXTENSION_0_TCP_OVER_IPV4_CHECKSUM_EN
 			
+			FIELD NOT USED IN HAWKEYE 1.0
+			
+			
+			
 			Enable TCP checksum over IPv4 replacement
 */
 #define TX_MSDU_EXTENSION_0_TCP_OVER_IPV4_CHECKSUM_EN_OFFSET         0x00000000
@@ -413,6 +449,10 @@ buf5_len
 #define TX_MSDU_EXTENSION_0_TCP_OVER_IPV4_CHECKSUM_EN_MASK           0x00000010
 
 /* Description		TX_MSDU_EXTENSION_0_TCP_OVER_IPV6_CHECKSUM_EN
+			
+			FIELD NOT USED IN HAWKEYE 1.0
+			
+			
 			
 			Enable TCP checksum over IPv6 eplacement
 */

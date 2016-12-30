@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -33,17 +33,16 @@
 //	Dword	Fields
 //	0	rxpcu_mpdu_filter_in_category[1:0], sw_frame_group_id[8:2], reserved_0[15:9], phy_ppdu_id[31:16]
 //	1	msdu_length[13:0], reserved_1a[14], ipsec_esp[15], l3_offset[22:16], ipsec_ah[23], l4_offset[31:24]
-//	2	msdu_number[7:0], decap_format[9:8], ipv4_proto[10], ipv6_proto[11], tcp_proto[12], udp_proto[13], ip_frag[14], tcp_only_ack[15], reserved_2a[31:16]
-//	3	reserved_3a[10:0], da_is_bcast_mcast[11], reserved_3b[15:12], ip4_protocol_ip6_next_header[23:16], reserved_3c[30:24], toeplitz_hash[31]
-//	4	toeplitz_hash_2_or_4[31:0]
-//	5	flow_id_toeplitz[31:0]
-//	6	user_rssi[7:0], pkt_type[11:8], stbc[12], sgi[14:13], rate_mcs[18:15], receive_bandwidth[20:19], reception_type[22:21], nss[25:23], reserved_6[31:26]
-//	7	ppdu_start_timestamp[31:0]
-//	8	sw_phy_meta_data[31:0]
+//	2	msdu_number[7:0], decap_format[9:8], ipv4_proto[10], ipv6_proto[11], tcp_proto[12], udp_proto[13], ip_frag[14], tcp_only_ack[15], da_is_bcast_mcast[16], toeplitz_hash[17], reserved_2a[23:18], ip4_protocol_ip6_next_header[31:24]
+//	3	toeplitz_hash_2_or_4[31:0]
+//	4	flow_id_toeplitz[31:0]
+//	5	user_rssi[7:0], pkt_type[11:8], stbc[12], sgi[14:13], rate_mcs[18:15], receive_bandwidth[20:19], reception_type[22:21], nss[25:23], reserved_5[31:26]
+//	6	ppdu_start_timestamp[31:0]
+//	7	sw_phy_meta_data[31:0]
 //
 // ################ END SUMMARY #################
 
-#define NUM_OF_DWORDS_RX_MSDU_START 9
+#define NUM_OF_DWORDS_RX_MSDU_START 8
 
 struct rx_msdu_start {
              uint32_t rxpcu_mpdu_filter_in_category   :  2, //[1:0]
@@ -64,13 +63,10 @@ struct rx_msdu_start {
                       udp_proto                       :  1, //[13]
                       ip_frag                         :  1, //[14]
                       tcp_only_ack                    :  1, //[15]
-                      reserved_2a                     : 16; //[31:16]
-             uint32_t reserved_3a                     : 11, //[10:0]
-                      da_is_bcast_mcast               :  1, //[11]
-                      reserved_3b                     :  4, //[15:12]
-                      ip4_protocol_ip6_next_header    :  8, //[23:16]
-                      reserved_3c                     :  7, //[30:24]
-                      toeplitz_hash                   :  1; //[31]
+                      da_is_bcast_mcast               :  1, //[16]
+                      toeplitz_hash                   :  1, //[17]
+                      reserved_2a                     :  6, //[23:18]
+                      ip4_protocol_ip6_next_header    :  8; //[31:24]
              uint32_t toeplitz_hash_2_or_4            : 32; //[31:0]
              uint32_t flow_id_toeplitz                : 32; //[31:0]
              uint32_t user_rssi                       :  8, //[7:0]
@@ -81,7 +77,7 @@ struct rx_msdu_start {
                       receive_bandwidth               :  2, //[20:19]
                       reception_type                  :  2, //[22:21]
                       nss                             :  3, //[25:23]
-                      reserved_6                      :  6; //[31:26]
+                      reserved_5                      :  6; //[31:26]
              uint32_t ppdu_start_timestamp            : 32; //[31:0]
              uint32_t sw_phy_meta_data                : 32; //[31:0]
 };
@@ -274,9 +270,10 @@ decap_format
 			
 			<enum 1 Native_WiFi>
 			
-			<enum 2 Ethernet> Ethernet 2 (DIX)  
+			<enum 2 Ethernet> Ethernet 2 (DIX)  or 802.3 (uses
+			SNAP/LLC)
 			
-			<enum 3 802_3> 802.3 (uses SNAP/LLC)
+			<enum 3 802_3> DO NOT USE. Indicate Ethernet
 			
 			<legal all>
 
@@ -309,31 +306,9 @@ tcp_only_ack
 			Set if only the TCP Ack bit is set in the TCP flags and
 			if the TCP payload is 0.
 
-reserved_2a
-			
-			<legal 0>
-
-reserved_3a
-			
-			<legal 0>
-
 da_is_bcast_mcast
 			
 			The destination address is broadcast or multicast.
-
-reserved_3b
-			
-			<legal 0>
-
-ip4_protocol_ip6_next_header
-			
-			For IPv4 this is the 8 bit protocol field (when
-			ipv4_proto is set).  For IPv6 this is the 8 bit next_header
-			field (when ipv6_proto is set).
-
-reserved_3c
-			
-			<legal 0>
 
 toeplitz_hash
 			
@@ -345,6 +320,16 @@ toeplitz_hash
 			destination address)1 -> Toeplitz hash of 4-tuple (IP source
 			address, IP destination address, L4 (TCP/UDP) source port,
 			L4 (TCP/UDP) destination port)
+
+reserved_2a
+			
+			<legal 0>
+
+ip4_protocol_ip6_next_header
+			
+			For IPv4 this is the 8 bit protocol field (when
+			ipv4_proto is set).  For IPv6 this is the 8 bit next_header
+			field (when ipv6_proto is set).
 
 toeplitz_hash_2_or_4
 			
@@ -406,9 +391,11 @@ sgi
 			
 			
 			
-			<enum 0     0_8_us_sgi > Legacy normal GI
+			<enum 0     0_8_us_sgi > Legacy normal GI. Can also be
+			used for HE
 			
-			<enum 1     0_4_us_sgi > Legacy short GI
+			<enum 1     0_4_us_sgi > Legacy short GI. Can also be
+			used for HE
 			
 			<enum 2     1_6_us_sgi > HE related GI
 			
@@ -481,7 +468,7 @@ nss
 			
 			<enum 7 8_spatial_streams>8 spatial streams
 
-reserved_6
+reserved_5
 			
 			<legal 0>
 
@@ -735,21 +722,17 @@ sw_phy_meta_data
 			
 			<enum 1 Native_WiFi>
 			
-			<enum 2 Ethernet> Ethernet 2 (DIX)  
+			<enum 2 Ethernet> Ethernet 2 (DIX)  or 802.3 (uses
+			SNAP/LLC)
 			
-			<enum 3 802_3> 802.3 (uses SNAP/LLC)
+			<enum 3 802_3> DO NOT USE. Indicate Ethernet
 			
 			<legal all>
 */
-#ifndef RX_MSDU_START_2_DECAP_FORMAT_OFFSET
 #define RX_MSDU_START_2_DECAP_FORMAT_OFFSET                          0x00000008
-#endif
-#ifndef RX_MSDU_START_2_DECAP_FORMAT_LSB
 #define RX_MSDU_START_2_DECAP_FORMAT_LSB                             8
-#endif
-#ifndef RX_MSDU_START_2_DECAP_FORMAT_MASK
 #define RX_MSDU_START_2_DECAP_FORMAT_MASK                            0x00000300
-#endif
+
 /* Description		RX_MSDU_START_2_IPV4_PROTO
 			
 			Set if L2 layer indicates IPv4 protocol.
@@ -803,57 +786,15 @@ sw_phy_meta_data
 #define RX_MSDU_START_2_TCP_ONLY_ACK_LSB                             15
 #define RX_MSDU_START_2_TCP_ONLY_ACK_MASK                            0x00008000
 
-/* Description		RX_MSDU_START_2_RESERVED_2A
-			
-			<legal 0>
-*/
-#define RX_MSDU_START_2_RESERVED_2A_OFFSET                           0x00000008
-#define RX_MSDU_START_2_RESERVED_2A_LSB                              16
-#define RX_MSDU_START_2_RESERVED_2A_MASK                             0xffff0000
-
-/* Description		RX_MSDU_START_3_RESERVED_3A
-			
-			<legal 0>
-*/
-#define RX_MSDU_START_3_RESERVED_3A_OFFSET                           0x0000000c
-#define RX_MSDU_START_3_RESERVED_3A_LSB                              0
-#define RX_MSDU_START_3_RESERVED_3A_MASK                             0x000007ff
-
-/* Description		RX_MSDU_START_3_DA_IS_BCAST_MCAST
+/* Description		RX_MSDU_START_2_DA_IS_BCAST_MCAST
 			
 			The destination address is broadcast or multicast.
 */
-#define RX_MSDU_START_3_DA_IS_BCAST_MCAST_OFFSET                     0x0000000c
-#define RX_MSDU_START_3_DA_IS_BCAST_MCAST_LSB                        11
-#define RX_MSDU_START_3_DA_IS_BCAST_MCAST_MASK                       0x00000800
+#define RX_MSDU_START_2_DA_IS_BCAST_MCAST_OFFSET                     0x00000008
+#define RX_MSDU_START_2_DA_IS_BCAST_MCAST_LSB                        16
+#define RX_MSDU_START_2_DA_IS_BCAST_MCAST_MASK                       0x00010000
 
-/* Description		RX_MSDU_START_3_RESERVED_3B
-			
-			<legal 0>
-*/
-#define RX_MSDU_START_3_RESERVED_3B_OFFSET                           0x0000000c
-#define RX_MSDU_START_3_RESERVED_3B_LSB                              12
-#define RX_MSDU_START_3_RESERVED_3B_MASK                             0x0000f000
-
-/* Description		RX_MSDU_START_3_IP4_PROTOCOL_IP6_NEXT_HEADER
-			
-			For IPv4 this is the 8 bit protocol field (when
-			ipv4_proto is set).  For IPv6 this is the 8 bit next_header
-			field (when ipv6_proto is set).
-*/
-#define RX_MSDU_START_3_IP4_PROTOCOL_IP6_NEXT_HEADER_OFFSET          0x0000000c
-#define RX_MSDU_START_3_IP4_PROTOCOL_IP6_NEXT_HEADER_LSB             16
-#define RX_MSDU_START_3_IP4_PROTOCOL_IP6_NEXT_HEADER_MASK            0x00ff0000
-
-/* Description		RX_MSDU_START_3_RESERVED_3C
-			
-			<legal 0>
-*/
-#define RX_MSDU_START_3_RESERVED_3C_OFFSET                           0x0000000c
-#define RX_MSDU_START_3_RESERVED_3C_LSB                              24
-#define RX_MSDU_START_3_RESERVED_3C_MASK                             0x7f000000
-
-/* Description		RX_MSDU_START_3_TOEPLITZ_HASH
+/* Description		RX_MSDU_START_2_TOEPLITZ_HASH
 			
 			Actual choosen Hash.
 			
@@ -864,22 +805,40 @@ sw_phy_meta_data
 			address, IP destination address, L4 (TCP/UDP) source port,
 			L4 (TCP/UDP) destination port)
 */
-#define RX_MSDU_START_3_TOEPLITZ_HASH_OFFSET                         0x0000000c
-#define RX_MSDU_START_3_TOEPLITZ_HASH_LSB                            31
-#define RX_MSDU_START_3_TOEPLITZ_HASH_MASK                           0x80000000
+#define RX_MSDU_START_2_TOEPLITZ_HASH_OFFSET                         0x00000008
+#define RX_MSDU_START_2_TOEPLITZ_HASH_LSB                            17
+#define RX_MSDU_START_2_TOEPLITZ_HASH_MASK                           0x00020000
 
-/* Description		RX_MSDU_START_4_TOEPLITZ_HASH_2_OR_4
+/* Description		RX_MSDU_START_2_RESERVED_2A
+			
+			<legal 0>
+*/
+#define RX_MSDU_START_2_RESERVED_2A_OFFSET                           0x00000008
+#define RX_MSDU_START_2_RESERVED_2A_LSB                              18
+#define RX_MSDU_START_2_RESERVED_2A_MASK                             0x00fc0000
+
+/* Description		RX_MSDU_START_2_IP4_PROTOCOL_IP6_NEXT_HEADER
+			
+			For IPv4 this is the 8 bit protocol field (when
+			ipv4_proto is set).  For IPv6 this is the 8 bit next_header
+			field (when ipv6_proto is set).
+*/
+#define RX_MSDU_START_2_IP4_PROTOCOL_IP6_NEXT_HEADER_OFFSET          0x00000008
+#define RX_MSDU_START_2_IP4_PROTOCOL_IP6_NEXT_HEADER_LSB             24
+#define RX_MSDU_START_2_IP4_PROTOCOL_IP6_NEXT_HEADER_MASK            0xff000000
+
+/* Description		RX_MSDU_START_3_TOEPLITZ_HASH_2_OR_4
 			
 			Controlled by RxOLE register - If register bit set to 0,
 			Toeplitz hash is computed over 2-tuple IPv4 or IPv6 src/dest
 			addresses; otherwise, toeplitz hash is computed over 4-tuple
 			IPv4 or IPv6 src/dest addresses and src/dest ports
 */
-#define RX_MSDU_START_4_TOEPLITZ_HASH_2_OR_4_OFFSET                  0x00000010
-#define RX_MSDU_START_4_TOEPLITZ_HASH_2_OR_4_LSB                     0
-#define RX_MSDU_START_4_TOEPLITZ_HASH_2_OR_4_MASK                    0xffffffff
+#define RX_MSDU_START_3_TOEPLITZ_HASH_2_OR_4_OFFSET                  0x0000000c
+#define RX_MSDU_START_3_TOEPLITZ_HASH_2_OR_4_LSB                     0
+#define RX_MSDU_START_3_TOEPLITZ_HASH_2_OR_4_MASK                    0xffffffff
 
-/* Description		RX_MSDU_START_5_FLOW_ID_TOEPLITZ
+/* Description		RX_MSDU_START_4_FLOW_ID_TOEPLITZ
 			
 			Toeplitz hash of 5-tuple 
 			
@@ -902,21 +861,21 @@ sw_phy_meta_data
 			
 			<legal all>
 */
-#define RX_MSDU_START_5_FLOW_ID_TOEPLITZ_OFFSET                      0x00000014
-#define RX_MSDU_START_5_FLOW_ID_TOEPLITZ_LSB                         0
-#define RX_MSDU_START_5_FLOW_ID_TOEPLITZ_MASK                        0xffffffff
+#define RX_MSDU_START_4_FLOW_ID_TOEPLITZ_OFFSET                      0x00000010
+#define RX_MSDU_START_4_FLOW_ID_TOEPLITZ_LSB                         0
+#define RX_MSDU_START_4_FLOW_ID_TOEPLITZ_MASK                        0xffffffff
 
-/* Description		RX_MSDU_START_6_USER_RSSI
+/* Description		RX_MSDU_START_5_USER_RSSI
 			
 			RSSI for this user
 			
 			<legal all>
 */
-#define RX_MSDU_START_6_USER_RSSI_OFFSET                             0x00000018
-#define RX_MSDU_START_6_USER_RSSI_LSB                                0
-#define RX_MSDU_START_6_USER_RSSI_MASK                               0x000000ff
+#define RX_MSDU_START_5_USER_RSSI_OFFSET                             0x00000014
+#define RX_MSDU_START_5_USER_RSSI_LSB                                0
+#define RX_MSDU_START_5_USER_RSSI_MASK                               0x000000ff
 
-/* Description		RX_MSDU_START_6_PKT_TYPE
+/* Description		RX_MSDU_START_5_PKT_TYPE
 			
 			Packet type:
 			
@@ -930,27 +889,29 @@ sw_phy_meta_data
 			
 			<enum 4 dot11ax>802.11ax PPDU type
 */
-#define RX_MSDU_START_6_PKT_TYPE_OFFSET                              0x00000018
-#define RX_MSDU_START_6_PKT_TYPE_LSB                                 8
-#define RX_MSDU_START_6_PKT_TYPE_MASK                                0x00000f00
+#define RX_MSDU_START_5_PKT_TYPE_OFFSET                              0x00000014
+#define RX_MSDU_START_5_PKT_TYPE_LSB                                 8
+#define RX_MSDU_START_5_PKT_TYPE_MASK                                0x00000f00
 
-/* Description		RX_MSDU_START_6_STBC
+/* Description		RX_MSDU_START_5_STBC
 			
 			When set, use STBC transmission rates
 */
-#define RX_MSDU_START_6_STBC_OFFSET                                  0x00000018
-#define RX_MSDU_START_6_STBC_LSB                                     12
-#define RX_MSDU_START_6_STBC_MASK                                    0x00001000
+#define RX_MSDU_START_5_STBC_OFFSET                                  0x00000014
+#define RX_MSDU_START_5_STBC_LSB                                     12
+#define RX_MSDU_START_5_STBC_MASK                                    0x00001000
 
-/* Description		RX_MSDU_START_6_SGI
+/* Description		RX_MSDU_START_5_SGI
 			
 			Field only valid when pkt type is HT, VHT or HE.
 			
 			
 			
-			<enum 0     0_8_us_sgi > Legacy normal GI
+			<enum 0     0_8_us_sgi > Legacy normal GI. Can also be
+			used for HE
 			
-			<enum 1     0_4_us_sgi > Legacy short GI
+			<enum 1     0_4_us_sgi > Legacy short GI. Can also be
+			used for HE
 			
 			<enum 2     1_6_us_sgi > HE related GI
 			
@@ -958,21 +919,21 @@ sw_phy_meta_data
 			
 			<legal 0 - 3>
 */
-#define RX_MSDU_START_6_SGI_OFFSET                                   0x00000018
-#define RX_MSDU_START_6_SGI_LSB                                      13
-#define RX_MSDU_START_6_SGI_MASK                                     0x00006000
+#define RX_MSDU_START_5_SGI_OFFSET                                   0x00000014
+#define RX_MSDU_START_5_SGI_LSB                                      13
+#define RX_MSDU_START_5_SGI_MASK                                     0x00006000
 
-/* Description		RX_MSDU_START_6_RATE_MCS
+/* Description		RX_MSDU_START_5_RATE_MCS
 			
 			For details, refer to  MCS_TYPE description
 			
 			<legal all>
 */
-#define RX_MSDU_START_6_RATE_MCS_OFFSET                              0x00000018
-#define RX_MSDU_START_6_RATE_MCS_LSB                                 15
-#define RX_MSDU_START_6_RATE_MCS_MASK                                0x00078000
+#define RX_MSDU_START_5_RATE_MCS_OFFSET                              0x00000014
+#define RX_MSDU_START_5_RATE_MCS_LSB                                 15
+#define RX_MSDU_START_5_RATE_MCS_MASK                                0x00078000
 
-/* Description		RX_MSDU_START_6_RECEIVE_BANDWIDTH
+/* Description		RX_MSDU_START_5_RECEIVE_BANDWIDTH
 			
 			Full receive Bandwidth
 			
@@ -990,11 +951,11 @@ sw_phy_meta_data
 			
 			<legal 0-3>
 */
-#define RX_MSDU_START_6_RECEIVE_BANDWIDTH_OFFSET                     0x00000018
-#define RX_MSDU_START_6_RECEIVE_BANDWIDTH_LSB                        19
-#define RX_MSDU_START_6_RECEIVE_BANDWIDTH_MASK                       0x00180000
+#define RX_MSDU_START_5_RECEIVE_BANDWIDTH_OFFSET                     0x00000014
+#define RX_MSDU_START_5_RECEIVE_BANDWIDTH_LSB                        19
+#define RX_MSDU_START_5_RECEIVE_BANDWIDTH_MASK                       0x00180000
 
-/* Description		RX_MSDU_START_6_RECEPTION_TYPE
+/* Description		RX_MSDU_START_5_RECEPTION_TYPE
 			
 			Indicates what type of reception this is.
 			
@@ -1008,11 +969,11 @@ sw_phy_meta_data
 			
 			<legal all>
 */
-#define RX_MSDU_START_6_RECEPTION_TYPE_OFFSET                        0x00000018
-#define RX_MSDU_START_6_RECEPTION_TYPE_LSB                           21
-#define RX_MSDU_START_6_RECEPTION_TYPE_MASK                          0x00600000
+#define RX_MSDU_START_5_RECEPTION_TYPE_OFFSET                        0x00000014
+#define RX_MSDU_START_5_RECEPTION_TYPE_LSB                           21
+#define RX_MSDU_START_5_RECEPTION_TYPE_MASK                          0x00600000
 
-/* Description		RX_MSDU_START_6_NSS
+/* Description		RX_MSDU_START_5_NSS
 			
 			Field only valid when Reception_type =
 			reception_type_MU_MIMO or reception_type_MU_OFDMA_MIMO
@@ -1039,30 +1000,30 @@ sw_phy_meta_data
 			
 			<enum 7 8_spatial_streams>8 spatial streams
 */
-#define RX_MSDU_START_6_NSS_OFFSET                                   0x00000018
-#define RX_MSDU_START_6_NSS_LSB                                      23
-#define RX_MSDU_START_6_NSS_MASK                                     0x03800000
+#define RX_MSDU_START_5_NSS_OFFSET                                   0x00000014
+#define RX_MSDU_START_5_NSS_LSB                                      23
+#define RX_MSDU_START_5_NSS_MASK                                     0x03800000
 
-/* Description		RX_MSDU_START_6_RESERVED_6
+/* Description		RX_MSDU_START_5_RESERVED_5
 			
 			<legal 0>
 */
-#define RX_MSDU_START_6_RESERVED_6_OFFSET                            0x00000018
-#define RX_MSDU_START_6_RESERVED_6_LSB                               26
-#define RX_MSDU_START_6_RESERVED_6_MASK                              0xfc000000
+#define RX_MSDU_START_5_RESERVED_5_OFFSET                            0x00000014
+#define RX_MSDU_START_5_RESERVED_5_LSB                               26
+#define RX_MSDU_START_5_RESERVED_5_MASK                              0xfc000000
 
-/* Description		RX_MSDU_START_7_PPDU_START_TIMESTAMP
+/* Description		RX_MSDU_START_6_PPDU_START_TIMESTAMP
 			
 			Timestamp that indicates when the PPDU that contained
 			this MPDU started on the medium.
 			
 			<legal all>
 */
-#define RX_MSDU_START_7_PPDU_START_TIMESTAMP_OFFSET                  0x0000001c
-#define RX_MSDU_START_7_PPDU_START_TIMESTAMP_LSB                     0
-#define RX_MSDU_START_7_PPDU_START_TIMESTAMP_MASK                    0xffffffff
+#define RX_MSDU_START_6_PPDU_START_TIMESTAMP_OFFSET                  0x00000018
+#define RX_MSDU_START_6_PPDU_START_TIMESTAMP_LSB                     0
+#define RX_MSDU_START_6_PPDU_START_TIMESTAMP_MASK                    0xffffffff
 
-/* Description		RX_MSDU_START_8_SW_PHY_META_DATA
+/* Description		RX_MSDU_START_7_SW_PHY_META_DATA
 			
 			SW programmed Meta data provided by the PHY.
 			
@@ -1073,9 +1034,9 @@ sw_phy_meta_data
 			
 			<legal all>
 */
-#define RX_MSDU_START_8_SW_PHY_META_DATA_OFFSET                      0x00000020
-#define RX_MSDU_START_8_SW_PHY_META_DATA_LSB                         0
-#define RX_MSDU_START_8_SW_PHY_META_DATA_MASK                        0xffffffff
+#define RX_MSDU_START_7_SW_PHY_META_DATA_OFFSET                      0x0000001c
+#define RX_MSDU_START_7_SW_PHY_META_DATA_LSB                         0
+#define RX_MSDU_START_7_SW_PHY_META_DATA_MASK                        0xffffffff
 
 
 #endif // _RX_MSDU_START_H_

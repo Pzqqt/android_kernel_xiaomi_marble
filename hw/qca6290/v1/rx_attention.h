@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -411,6 +411,8 @@ tkip_mic_err
 decrypt_err
 			
 			Indicates that the MPDU decrypt integrity check failed
+			or CRYPTO received an encrypted frame, but did not get a
+			valid corresponding key id in the peer entry.
 
 unencrypted_frame_err
 			
@@ -979,6 +981,8 @@ msdu_done
 /* Description		RX_ATTENTION_1_DECRYPT_ERR
 			
 			Indicates that the MPDU decrypt integrity check failed
+			or CRYPTO received an encrypted frame, but did not get a
+			valid corresponding key id in the peer entry.
 */
 #define RX_ATTENTION_1_DECRYPT_ERR_OFFSET                            0x00000004
 #define RX_ATTENTION_1_DECRYPT_ERR_LSB                               29

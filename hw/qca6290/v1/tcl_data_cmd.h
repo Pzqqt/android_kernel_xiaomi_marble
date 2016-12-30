@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -118,9 +118,10 @@ encap_type
 			
 			<enum 1 Native_WiFi>
 			
-			<enum 2 Ethernet> Ethernet 2 (DIX)  
+			<enum 2 Ethernet> Ethernet 2 (DIX)  or 802.3 (uses
+			SNAP/LLC)
 			
-			<enum 3 802_3> 802.3 (uses SNAP/LLC)
+			<enum 3 802_3> DO NOT USE. Indicate Ethernet
 			
 			Used by the OLE during encapsulation.
 			
@@ -235,21 +236,11 @@ data_length
 
 ipv4_checksum_en
 			
-			Field only valid when msdu_buffer_type is set to
-			MSDU_buffer.
-			
-			
-			
 			OLE related control
 			
 			Enable IPv4 checksum replacement
 
 udp_over_ipv4_checksum_en
-			
-			Field only valid when msdu_buffer_type is set to
-			MSDU_buffer.
-			
-			
 			
 			OLE related control
 			
@@ -258,11 +249,6 @@ udp_over_ipv4_checksum_en
 
 udp_over_ipv6_checksum_en
 			
-			Field only valid when msdu_buffer_type is set to
-			MSDU_buffer.
-			
-			
-			
 			OLE related control
 			
 			Enable UDP over IPv6 checksum replacement.  UDP checksum
@@ -270,21 +256,11 @@ udp_over_ipv6_checksum_en
 
 tcp_over_ipv4_checksum_en
 			
-			Field only valid when msdu_buffer_type is set to
-			MSDU_buffer.
-			
-			
-			
 			OLE related control
 			
 			Enable TCP checksum over IPv4 replacement
 
 tcp_over_ipv6_checksum_en
-			
-			Field only valid when msdu_buffer_type is set to
-			MSDU_buffer.
-			
-			
 			
 			OLE related control
 			
@@ -468,9 +444,10 @@ looping_count
 			
 			<enum 1 Native_WiFi>
 			
-			<enum 2 Ethernet> Ethernet 2 (DIX)  
+			<enum 2 Ethernet> Ethernet 2 (DIX)  or 802.3 (uses
+			SNAP/LLC)
 			
-			<enum 3 802_3> 802.3 (uses SNAP/LLC)
+			<enum 3 802_3> DO NOT USE. Indicate Ethernet
 			
 			Used by the OLE during encapsulation.
 			
@@ -621,11 +598,6 @@ looping_count
 
 /* Description		TCL_DATA_CMD_3_IPV4_CHECKSUM_EN
 			
-			Field only valid when msdu_buffer_type is set to
-			MSDU_buffer.
-			
-			
-			
 			OLE related control
 			
 			Enable IPv4 checksum replacement
@@ -635,11 +607,6 @@ looping_count
 #define TCL_DATA_CMD_3_IPV4_CHECKSUM_EN_MASK                         0x00010000
 
 /* Description		TCL_DATA_CMD_3_UDP_OVER_IPV4_CHECKSUM_EN
-			
-			Field only valid when msdu_buffer_type is set to
-			MSDU_buffer.
-			
-			
 			
 			OLE related control
 			
@@ -652,11 +619,6 @@ looping_count
 
 /* Description		TCL_DATA_CMD_3_UDP_OVER_IPV6_CHECKSUM_EN
 			
-			Field only valid when msdu_buffer_type is set to
-			MSDU_buffer.
-			
-			
-			
 			OLE related control
 			
 			Enable UDP over IPv6 checksum replacement.  UDP checksum
@@ -668,11 +630,6 @@ looping_count
 
 /* Description		TCL_DATA_CMD_3_TCP_OVER_IPV4_CHECKSUM_EN
 			
-			Field only valid when msdu_buffer_type is set to
-			MSDU_buffer.
-			
-			
-			
 			OLE related control
 			
 			Enable TCP checksum over IPv4 replacement
@@ -682,11 +639,6 @@ looping_count
 #define TCL_DATA_CMD_3_TCP_OVER_IPV4_CHECKSUM_EN_MASK                0x00080000
 
 /* Description		TCL_DATA_CMD_3_TCP_OVER_IPV6_CHECKSUM_EN
-			
-			Field only valid when msdu_buffer_type is set to
-			MSDU_buffer.
-			
-			
 			
 			OLE related control
 			

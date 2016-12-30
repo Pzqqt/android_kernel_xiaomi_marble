@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -50,7 +50,6 @@ DESCRIPTION
   T_WINNT  Software is hosted on an NT platforn, triggers macro and
            type definitions, unlike definition above which triggers
            actual OS calls
-
 ===========================================================================*/
 
 
@@ -61,7 +60,7 @@ DESCRIPTION
 This section contains comments describing changes made to this file.
 Notice that changes are listed in reverse chronological order.
 
-$Header: /prj/iceng/SCALe/repository/cvs/scale/source/data/com_dtypes.h,v 1.1.1.1 2012/09/19 22:33:30 rjindal Exp $
+$Header: //depot/prj/qca/lithium/wcss/verif/native/register/include/com_dtypes.h#5 $
 
 when       who     what, where, why
 --------   ---     ----------------------------------------------------------

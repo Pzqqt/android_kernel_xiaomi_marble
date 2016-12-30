@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,7 +32,7 @@
 #ifndef LITHIUM_TOP_REG_H
 #define LITHIUM_TOP_REG_H
 
-#define UMAC_CE_COMMON_CE_HOST_IE_0               (0x00A18034)
-#define UMAC_CE_COMMON_CE_HOST_IE_1               (0x00A18038)
-
+#define UMAC_CE_COMMON_WFSS_CE_COMMON_R0_CE_HOST_IE_0 (0x00A18034)
+#define UMAC_CE_COMMON_WFSS_CE_COMMON_R0_CE_HOST_IE_1 (0x00A18038)
+////////////////////////////////////////////////////////////////////////// END
 #endif

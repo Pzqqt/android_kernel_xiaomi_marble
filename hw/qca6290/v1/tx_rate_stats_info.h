@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -151,9 +151,11 @@ transmit_sgi
 			
 			
 			
-			<enum 0     0_8_us_sgi > Legacy normal GI
+			<enum 0     0_8_us_sgi > Legacy normal GI. Can also be
+			used for HE
 			
-			<enum 1     0_4_us_sgi > Legacy short GI
+			<enum 1     0_4_us_sgi > Legacy short GI. Can also be
+			used for HE
 			
 			<enum 2     1_6_us_sgi > HE related GI
 			
@@ -205,14 +207,6 @@ tones_in_ru
 			
 			
 			The number of tones in the RU used.
-			
-			
-			
-			TODO: not clear yet what the number of tones is for RUs
-			of 160 or 80 + 80 ???
-			
-			For now assumption is that this value for this scenario
-			will indicate: 0x7FF
 			
 			<legal all>
 
@@ -350,9 +344,11 @@ tsf_directly_after_ppdu_transmission
 			
 			
 			
-			<enum 0     0_8_us_sgi > Legacy normal GI
+			<enum 0     0_8_us_sgi > Legacy normal GI. Can also be
+			used for HE
 			
-			<enum 1     0_4_us_sgi > Legacy short GI
+			<enum 1     0_4_us_sgi > Legacy short GI. Can also be
+			used for HE
 			
 			<enum 2     1_6_us_sgi > HE related GI
 			
@@ -416,14 +412,6 @@ tsf_directly_after_ppdu_transmission
 			
 			
 			The number of tones in the RU used.
-			
-			
-			
-			TODO: not clear yet what the number of tones is for RUs
-			of 160 or 80 + 80 ???
-			
-			For now assumption is that this value for this scenario
-			will indicate: 0x7FF
 			
 			<legal all>
 */

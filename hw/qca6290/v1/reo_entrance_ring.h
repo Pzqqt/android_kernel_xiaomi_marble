@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -269,7 +269,8 @@ rxdma_error_code
 			
 			
 			<enum 3 rxdma_decrypt_err>CRYPTO reported a decryption
-			error
+			error or CRYPTO received an encrypted frame, but did not get
+			a valid corresponding key id in the peer entry.
 			
 			<enum 4 rxdma_tkip_mic_err>CRYPTO reported a TKIP MIC
 			error
@@ -604,7 +605,8 @@ looping_count
 			
 			
 			<enum 3 rxdma_decrypt_err>CRYPTO reported a decryption
-			error
+			error or CRYPTO received an encrypted frame, but did not get
+			a valid corresponding key id in the peer entry.
 			
 			<enum 4 rxdma_tkip_mic_err>CRYPTO reported a TKIP MIC
 			error
