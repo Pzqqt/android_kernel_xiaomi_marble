@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -91,6 +91,7 @@ void csr_neighbor_roam_tranistion_preauth_done_to_disconnected(
 	csr_neighbor_roam_state_transition(mac_ctx,
 		eCSR_NEIGHBOR_ROAM_STATE_INIT, session_id);
 	pNeighborRoamInfo->roamChannelInfo.IAPPNeighborListReceived = false;
+	pNeighborRoamInfo->uOsRequestedHandoff = 0;
 }
 
 /**

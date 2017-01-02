@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -909,6 +909,7 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(tpAniSirGlobal pMac,
 				eCSR_NEIGHBOR_ROAM_STATE_INIT, sessionId);
 			pNeighborRoamInfo->roamChannelInfo.
 				IAPPNeighborListReceived = false;
+			pNeighborRoamInfo->uOsRequestedHandoff = 0;
 		}
 		break;
 
@@ -949,6 +950,7 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(tpAniSirGlobal pMac,
 				eCSR_NEIGHBOR_ROAM_STATE_INIT, sessionId);
 			pNeighborRoamInfo->roamChannelInfo.
 			IAPPNeighborListReceived = false;
+			pNeighborRoamInfo->uOsRequestedHandoff = 0;
 		break;
 	}
 	/*Inform the Firmware to STOP Scanning as the host has a disconnect. */
@@ -1173,6 +1175,7 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
 				eCSR_NEIGHBOR_ROAM_STATE_INIT, session_id);
 			ngbr_roam_info->roamChannelInfo.IAPPNeighborListReceived =
 				false;
+			ngbr_roam_info->uOsRequestedHandoff = 0;
 			break;
 		}
 	/* Fall through if the status is SUCCESS */
@@ -1379,6 +1382,7 @@ QDF_STATUS csr_neighbor_roam_init(tpAniSirGlobal pMac, uint8_t sessionId)
 	csr_neighbor_roam_state_transition(pMac,
 			eCSR_NEIGHBOR_ROAM_STATE_INIT, sessionId);
 	pNeighborRoamInfo->roamChannelInfo.IAPPNeighborListReceived = false;
+	pNeighborRoamInfo->uOsRequestedHandoff = 0;
 	/* Set the Last Sent Cmd as RSO_STOP */
 	pNeighborRoamInfo->last_sent_cmd = ROAM_SCAN_OFFLOAD_STOP;
 	return QDF_STATUS_SUCCESS;
