@@ -3864,10 +3864,8 @@ static bool hdd_is_interface_up(hdd_adapter_t *adapter)
 		return false;
 }
 
-#if defined CFG80211_CONNECT_BSS
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)) \
-	&& !defined(WITH_BACKPORTS) && !defined(IEEE80211_PRIVACY)
-static
+	&& !defined(WITH_BACKPORTS)
 struct cfg80211_bss *hdd_cfg80211_get_bss(struct wiphy *wiphy,
 					  struct ieee80211_channel *channel,
 					  const u8 *bssid, const u8 *ssid,
@@ -3879,7 +3877,6 @@ struct cfg80211_bss *hdd_cfg80211_get_bss(struct wiphy *wiphy,
 				WLAN_CAPABILITY_ESS);
 }
 #else
-static
 struct cfg80211_bss *hdd_cfg80211_get_bss(struct wiphy *wiphy,
 					  struct ieee80211_channel *channel,
 					  const u8 *bssid, const u8 *ssid,
@@ -3890,7 +3887,6 @@ struct cfg80211_bss *hdd_cfg80211_get_bss(struct wiphy *wiphy,
 				IEEE80211_BSS_TYPE_ESS,
 				IEEE80211_PRIVACY_ANY);
 }
-#endif
 #endif
 
 #if defined CFG80211_CONNECT_BSS

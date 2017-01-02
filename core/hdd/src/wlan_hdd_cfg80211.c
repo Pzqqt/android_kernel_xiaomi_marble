@@ -11123,43 +11123,6 @@ static int wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 }
 
 /*
- * wlan_hdd_cfg80211_get_bss :to get the bss from kernel cache.
- * @wiphy: wiphy pointer
- * @channel: channel of the BSS
- * @bssid: Bssid of BSS
- * @ssid: Ssid of the BSS
- * @ssid_len: ssid length
- *
- * Return: bss found in kernel cache
- */
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)) && !defined(WITH_BACKPORTS)
-static
-struct cfg80211_bss *wlan_hdd_cfg80211_get_bss(struct wiphy *wiphy,
-	struct ieee80211_channel *channel, const u8 *bssid,
-	const u8 *ssid, size_t ssid_len)
-{
-	return cfg80211_get_bss(wiphy, channel, bssid,
-			ssid,
-			ssid_len,
-			WLAN_CAPABILITY_ESS,
-			WLAN_CAPABILITY_ESS);
-}
-#else
-static
-struct cfg80211_bss *wlan_hdd_cfg80211_get_bss(struct wiphy *wiphy,
-	struct ieee80211_channel *channel, const u8 *bssid,
-	const u8 *ssid, size_t ssid_len)
-{
-	return cfg80211_get_bss(wiphy, channel, bssid,
-				ssid,
-				ssid_len,
-				IEEE80211_BSS_TYPE_ESS,
-				IEEE80211_PRIVACY_ANY);
-}
-#endif
-
-
-/*
  * wlan_hdd_cfg80211_update_bss_list :to inform nl80211
  * interface that BSS might have been lost.
  * @pAdapter: adaptor
@@ -11175,7 +11138,7 @@ struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_list(
 	struct wiphy *wiphy = wdev->wiphy;
 	struct cfg80211_bss *bss = NULL;
 
-	bss = wlan_hdd_cfg80211_get_bss(wiphy, NULL, bssid,
+	bss = hdd_cfg80211_get_bss(wiphy, NULL, bssid,
 			NULL, 0);
 	if (bss == NULL) {
 		hdd_err("BSS not present");

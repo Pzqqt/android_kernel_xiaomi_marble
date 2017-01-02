@@ -1996,17 +1996,14 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	qdf_mem_zero(rspRsnIe + len, IW_GENERIC_IE_MAX - len);
 
 	chan = ieee80211_get_channel(pAdapter->wdev.wiphy,
-				     (int)pCsrRoamInfo->pBssDesc->channelId);
+			(int)pCsrRoamInfo->pBssDesc->channelId);
 	sme_roam_get_connect_profile(hal_handle, pAdapter->sessionId,
 		&roam_profile);
-	bss = cfg80211_get_bss(pAdapter->wdev.wiphy, chan,
-			pCsrRoamInfo->bssid.bytes,
-			&roam_profile.SSID.ssId[0], roam_profile.SSID.length,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)) && !defined(WITH_BACKPORTS)
-			WLAN_CAPABILITY_ESS, WLAN_CAPABILITY_ESS);
-#else
-			IEEE80211_BSS_TYPE_ESS, IEEE80211_PRIVACY_ANY);
-#endif
+
+	bss = hdd_cfg80211_get_bss(pAdapter->wdev.wiphy,
+			chan, pCsrRoamInfo->bssid.bytes,
+			&roam_profile.SSID.ssId[0],
+			roam_profile.SSID.length);
 
 	if (bss == NULL)
 		hdd_err("Get BSS returned NULL");
@@ -2584,6 +2581,8 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 
 				if (ft_carrier_on) {
 					if (!hddDisconInProgress) {
+						struct cfg80211_bss *roam_bss;
+
 						/*
 						 * After roaming is completed,
 						 * active session count is
@@ -2620,10 +2619,17 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 							QDF_TRACE_LEVEL_DEBUG,
 							pFTAssocReq,
 							assocReqlen);
-
-						cfg80211_roamed(dev, chan,
-								pRoamInfo->
-								bssid.bytes,
+						roam_bss =
+							hdd_cfg80211_get_bss(
+								pAdapter->wdev.wiphy,
+								chan,
+								pRoamInfo->bssid.bytes,
+								pRoamInfo->u.
+								pConnectedProfile->SSID.ssId,
+								pRoamInfo->u.
+								pConnectedProfile->SSID.length);
+						cfg80211_roamed_bss(dev,
+								roam_bss,
 								pFTAssocReq,
 								assocReqlen,
 								pFTAssocRsp,
