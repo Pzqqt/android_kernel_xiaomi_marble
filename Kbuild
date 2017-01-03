@@ -939,7 +939,19 @@ SCHEDULER_INC := -I$(WLAN_COMMON_INC)/$(SCHEDULER_INC_DIR)
 SCHEDULER_OBJS := $(SCHEDULER_OBJ_DIR)/scheduler_api.o \
                   $(SCHEDULER_OBJ_DIR)/scheduler_core.o
 
+###### UMAC SERIALIZATION ########
+UMAC_SER_DIR := umac/cmn_services/serialization
+UMAC_SER_INC_DIR := $(UMAC_SER_DIR)/inc
+UMAC_SER_SRC_DIR := $(UMAC_SER_DIR)/src
+UMAC_SER_OBJ_DIR := $(WLAN_COMMON_ROOT)/$(UMAC_SER_SRC_DIR)
 
+UMAC_SER_INC := -I$(WLAN_COMMON_INC)/$(UMAC_SER_INC_DIR)
+UMAC_SER_OBJS := $(UMAC_SER_OBJ_DIR)/wlan_serialization_dequeue.o \
+		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_enqueue.o \
+		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_main.o \
+		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_api.o \
+		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_utils.o \
+		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_rules.o
 ############## HTC ##########
 HTC_DIR := htc
 HTC_INC := -I$(WLAN_COMMON_INC)/$(HTC_DIR)
@@ -1170,7 +1182,7 @@ endif
 INCS +=		$(UMAC_OBJMGR_INC)
 INCS +=		$(UMAC_MGMT_TXRX_INC)
 INCS +=		$(TARGET_INC)
-
+INCS +=		$(UMAC_SER_INC)
 INCS +=		$(NLINK_INC) \
 		$(PTT_INC) \
 		$(WLAN_LOGGING_INC)
@@ -1220,7 +1232,7 @@ OBJS +=		$(UMAC_MGMT_TXRX_OBJS)
 OBJS +=		$(WLAN_LOGGING_OBJS)
 OBJS +=		$(NLINK_OBJS)
 OBJS +=		$(PTT_OBJS)
-
+OBJS +=		$(UMAC_SER_OBJS)
 OBJS +=		$(PLD_OBJS)
 
 ifeq ($(CONFIG_REMOVE_PKT_LOG), 0)
