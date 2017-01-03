@@ -711,7 +711,7 @@ typedef struct sSirBssDescription {
 	/* offset of the ieFields from bssId. */
 	uint16_t length;
 	tSirMacAddr bssId;
-	unsigned long scanSysTimeMsec;
+	unsigned long scansystimensec;
 	uint32_t timeStamp[2];
 	uint16_t beaconInterval;
 	uint16_t capabilityInfo;

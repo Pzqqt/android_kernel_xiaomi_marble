@@ -67,6 +67,7 @@
 #define CSR_MAX_BSS_SUPPORT            512
 #define SYSTEM_TIME_MSEC_TO_USEC      1000
 #define SYSTEM_TIME_SEC_TO_MSEC       1000
+#define SYSTEM_TIME_NSEC_TO_USEC      1000
 
 /* This number minus 1 means the number of times a channel is scanned before a BSS is remvoed from */
 /* cache scan result */
@@ -996,7 +997,7 @@ static inline void csr_release_command_preauth(tpAniSirGlobal mac_ctx,
 
 #if defined(FEATURE_WLAN_ESE)
 void update_cckmtsf(uint32_t *timeStamp0, uint32_t *timeStamp1,
-		    uint32_t *incr);
+		    uint64_t *incr);
 #endif
 
 QDF_STATUS csr_roam_enqueue_preauth(tpAniSirGlobal pMac, uint32_t sessionId,

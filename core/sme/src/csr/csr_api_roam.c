@@ -1971,16 +1971,16 @@ QDF_STATUS csr_roam_read_tsf(tpAniSirGlobal pMac, uint8_t *pTimestamp,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tCsrNeighborRoamBSSInfo handoffNode = {{0} };
-	uint32_t timer_diff = 0;
+	uint64_t timer_diff = 0;
 	uint32_t timeStamp[2];
 	tpSirBssDescription pBssDescription = NULL;
 	csr_neighbor_roam_get_handoff_ap_info(pMac, &handoffNode, sessionId);
 	pBssDescription = handoffNode.pBssDescription;
-	/* Get the time diff in milli seconds */
-	timer_diff = qdf_mc_timer_get_system_time() -
-				pBssDescription->scanSysTimeMsec;
+	/* Get the time diff in nano seconds */
+	timer_diff = (qdf_get_monotonic_boottime_ns()  -
+				pBssDescription->scansystimensec);
 	/* Convert msec to micro sec timer */
-	timer_diff = (uint32_t) (timer_diff * SYSTEM_TIME_MSEC_TO_USEC);
+	timer_diff = (timer_diff / SYSTEM_TIME_NSEC_TO_USEC);
 	timeStamp[0] = pBssDescription->timeStamp[0];
 	timeStamp[1] = pBssDescription->timeStamp[1];
 	update_cckmtsf(&(timeStamp[0]), &(timeStamp[1]), &timer_diff);
