@@ -7476,11 +7476,13 @@ static QDF_STATUS extract_peer_extd_stats_non_tlv(wmi_unified_t wmi_handle,
 	void *evt_buf, uint32_t index,
 	wmi_host_peer_extd_stats *peer_extd_stats)
 {
+	uint8_t *pdata = ((wmi_stats_event *)evt_buf)->data;
+
 	if (WMI_REQUEST_PEER_EXTD_STAT &
 		((wmi_stats_event *)evt_buf)->stats_id) {
 		if (index < ((wmi_stats_event *)evt_buf)->num_peer_stats) {
 			wmi_peer_extd_stats *ev = (wmi_peer_extd_stats *)
-			((((wmi_stats_event *)evt_buf)->data) +
+			((pdata) +
 			((((wmi_stats_event *)evt_buf)->num_pdev_stats)	*
 						sizeof(wmi_pdev_stats)) +
 			((((wmi_stats_event *)evt_buf)->num_pdev_ext_stats) *
@@ -7511,13 +7513,15 @@ static QDF_STATUS extract_vdev_extd_stats_non_tlv(wmi_unified_t wmi_handle,
 	void *evt_buf, uint32_t index,
 	wmi_host_vdev_extd_stats *vdev_extd_stats)
 {
+	uint8_t *pdata = ((wmi_stats_event *)evt_buf)->data;
+
 	if (WMI_REQUEST_PEER_EXTD_STAT &
 		((wmi_stats_event *)evt_buf)->stats_id) {
 
 		if (index < ((wmi_stats_event *)evt_buf)->num_vdev_stats) {
 
 			wmi_vdev_extd_stats *ev = (wmi_vdev_extd_stats *)
-			((((wmi_stats_event *)evt_buf)->data) +
+			((pdata) +
 			((((wmi_stats_event *)evt_buf)->num_pdev_stats) *
 						 sizeof(wmi_pdev_stats)) +
 			((((wmi_stats_event *)evt_buf)->num_pdev_ext_stats) *
