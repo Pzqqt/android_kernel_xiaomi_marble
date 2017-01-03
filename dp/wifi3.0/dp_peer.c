@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1021,6 +1021,11 @@ QDF_STATUS dp_peer_state_update(void *pdev_handle, uint8_t *peer_mac,
 	struct dp_pdev *pdev = pdev_handle;
 
 	peer =  dp_peer_find_hash_find(pdev->soc, peer_mac, 0);
+	if (NULL == peer) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		"Failed to find peer for: [%pM]", peer_mac);
+		return QDF_STATUS_E_FAILURE;
+	}
 	peer->state = state;
 	DP_TRACE(INFO, "peer %p state %d",
 			peer, peer->state);
