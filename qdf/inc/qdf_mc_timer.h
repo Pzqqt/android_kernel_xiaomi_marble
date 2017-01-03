@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -248,6 +248,13 @@ unsigned long qdf_mc_timer_get_system_ticks(void);
  * The current system time in milliseconds
  */
 unsigned long qdf_mc_timer_get_system_time(void);
+
+/**
+  * qdf_get_monotonic_boottime_ns() - Get kernel boottime in ns
+  *
+  * Return: kernel boottime in nano sec
+  */
+s64 qdf_get_monotonic_boottime_ns(void);
 
 /**
  * qdf_timer_module_init() - initializes a QDF timer module.

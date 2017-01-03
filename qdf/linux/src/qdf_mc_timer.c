@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -702,6 +702,15 @@ unsigned long qdf_mc_timer_get_system_time(void)
 	return tv.tv_sec * 1000 + tv.tv_usec / 1000;
 }
 EXPORT_SYMBOL(qdf_mc_timer_get_system_time);
+
+s64 qdf_get_monotonic_boottime_ns(void)
+{
+	struct timespec ts;
+
+	ktime_get_ts(&ts);
+	return timespec_to_ns(&ts);
+}
+EXPORT_SYMBOL(qdf_get_monotonic_boottime_ns);
 
 /**
  * qdf_timer_module_deinit() - Deinitializes a QDF timer module.
