@@ -6059,9 +6059,11 @@ void hdd_restart_tdls_source_timer(hdd_context_t *pHddCtx,
 {
 	qdf_mc_timer_stop(&pHddCtx->tdls_source_timer);
 
-	if (tdls_mode == eTDLS_SUPPORT_DISABLED)
+	if (tdls_mode == eTDLS_SUPPORT_DISABLED) {
 		wlan_hdd_tdls_set_mode(pHddCtx, tdls_mode, false,
 				HDD_SET_TDLS_MODE_SOURCE_OFFCHANNEL);
+		wlan_hdd_tdls_disable_offchan_and_teardown_links(pHddCtx);
+	}
 
 	qdf_mc_timer_start(&pHddCtx->tdls_source_timer,
 			   pHddCtx->config->tdls_enable_defer_time);
