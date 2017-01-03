@@ -194,6 +194,45 @@ typedef struct {
 #define RC_2_RATE_IDX_11AX(_rc)         ((_rc) & 0x1f)
 #define HT_RC_2_STREAMS_11AX(_rc)       (((_rc) >> 5) & 0x7)
 
+/*
+ * <ioctl>
+ * setRadar - simulate a radar event
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL is used to simulate a radar event, state machines for
+ * SAP will behave as same way in which a radar event is reported by WMA
+ *
+ * @E.g: iwpriv wlan0 setRadar
+ *
+ * Supported Feature: DFS
+ *
+ * Usage: Internal
+ *
+ * </ioctl>
+ */
+
+/*
+ * <ioctl>
+ * setRadarDbg - enable/disable radar specific logs
+ *
+ * @INPUT: 1/0
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL is enable radar phyerror info in wma
+ *
+ * @E.g: iwpriv wlan0 setRadarDbg <enable>
+ *  iwpriv wlan0 setRadarDbg 1
+ *
+ * Supported Feature: DFS
+ *
+ * Usage: Internal
+ *
+ * </ioctl>
+ */
 enum {
 	QCSAP_PARAM_MAX_ASSOC = 1,
 	QCSAP_PARAM_GET_WLAN_DBG,

@@ -3733,6 +3733,50 @@ enum station_keepalive_method {
 #define CFG_ENABLE_BYPASS_11D_DEFAULT              (1)
 
 /*
+ * gEnableDFSChnlScan - enable dfs channel scan.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable dfs channels in scan, enabling this
+ * will enable driver to include dfs channels in its scan list.
+ * Related: NA
+ *
+ * Supported Feature: DFS, Scan
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_DFS_CHNL_SCAN_NAME              "gEnableDFSChnlScan"
+#define CFG_ENABLE_DFS_CHNL_SCAN_MIN               (0)
+#define CFG_ENABLE_DFS_CHNL_SCAN_MAX               (1)
+#define CFG_ENABLE_DFS_CHNL_SCAN_DEFAULT           (1)
+
+/*
+ * <ini>
+ * gEnableDFSPnoChnlScan - enable dfs channels in PNO scan
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable dfs channels in PNO scan request,
+ * enabling this ini enables driver to include dfs channels in its
+ * PNO scan request
+ * Related: NA
+ *
+ * Supported Feature: DFS, PNO
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_DFS_PNO_CHNL_SCAN_NAME              "gEnableDFSPnoChnlScan"
+#define CFG_ENABLE_DFS_PNO_CHNL_SCAN_MIN               (0)
+#define CFG_ENABLE_DFS_PNO_CHNL_SCAN_MAX               (1)
+#define CFG_ENABLE_DFS_PNO_CHNL_SCAN_DEFAULT           (1)
+
+/*
  * <ini>
  * gEnableDumpCollect - It will use for collect the dumps
  * @Min: 0
@@ -4162,26 +4206,115 @@ typedef enum {
 #define CFG_HT_SMPS_CAP_FEATURE_MAX             (3)
 #define CFG_HT_SMPS_CAP_FEATURE_DEFAULT         (3)
 
+/*
+ * <ini>
+ * gDisableDFSChSwitch - Disable channel switch if radar is found
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to disable channel switch if radar is found
+ * on that channel.
+ * Related: NA.
+ *
+ * Supported Feature: DFS
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
 #define CFG_DISABLE_DFS_CH_SWITCH                 "gDisableDFSChSwitch"
 #define CFG_DISABLE_DFS_CH_SWITCH_MIN             (0)
 #define CFG_DISABLE_DFS_CH_SWITCH_MAX             (1)
 #define CFG_DISABLE_DFS_CH_SWITCH_DEFAULT         (0)
 
+/*
+ * <ini>
+ * gEnableDFSMasterCap - Enable DFS master capability
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable the DFS master capability.
+ * Disabling it will cause driver to not advertise the spectrum
+ * management capability
+ * Related: NA.
+ *
+ * Supported Feature: DFS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_ENABLE_DFS_MASTER_CAPABILITY               "gEnableDFSMasterCap"
 #define CFG_ENABLE_DFS_MASTER_CAPABILITY_MIN           (0)
 #define CFG_ENABLE_DFS_MASTER_CAPABILITY_MAX           (1)
 #define CFG_ENABLE_DFS_MASTER_CAPABILITY_DEFAULT       (0)
 
+/*
+ * <ini>
+ * gSapPreferredChanLocation - Restrict channel switches between ondoor and
+ * outdoor.
+ * @Min: 0
+ * @Max: 2
+ * @Default: 0
+ *
+ * This ini is used for restricting channel switches between Indoor and outdoor
+ * channels after radar detection.
+ * 0- No preferred channel location
+ * 1- Use indoor channels only
+ * 2- Use outdoor channels only
+ * Related: NA.
+ *
+ * Supported Feature: DFS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_SAP_PREFERRED_CHANNEL_LOCATION          "gSapPreferredChanLocation"
 #define CFG_SAP_PREFERRED_CHANNEL_LOCATION_MIN      (0)
 #define CFG_SAP_PREFERRED_CHANNEL_LOCATION_MAX      (2)
 #define CFG_SAP_PREFERRED_CHANNEL_LOCATION_DEFAULT  (0)
 
+/*
+ * <ini>
+ * gDisableDfsJapanW53 - Block W53 channels in random channel selection
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to block W53 Japan channel in random channel selection
+ * Related: NA.
+ *
+ * Supported Feature: DFS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_DISABLE_DFS_JAPAN_W53                      "gDisableDfsJapanW53"
 #define CFG_DISABLE_DFS_JAPAN_W53_MIN                  (0)
 #define CFG_DISABLE_DFS_JAPAN_W53_MAX                  (1)
 #define CFG_DISABLE_DFS_JAPAN_W53_DEFAULT              (0)
 
+/*
+ * <ini>
+ * gDisableDfsJapanW53 - Enable dfs phyerror filtering offload in FW
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to to enable dfs phyerror filtering offload to firmware
+ * Enabling it will cause basic phy error to be discarding in firmware.
+ * Related: NA.
+ *
+ * Supported Feature: DFS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_ENABLE_DFS_PHYERR_FILTEROFFLOAD_NAME       "dfsPhyerrFilterOffload"
 #define CFG_ENABLE_DFS_PHYERR_FILTEROFFLOAD_MIN        (0)
 #define CFG_ENABLE_DFS_PHYERR_FILTEROFFLOAD_MAX        (1)
@@ -4568,6 +4701,22 @@ typedef enum {
  * Options
  * 0 - Don't Skip DFS Channel in case of P2P Search
  * 1 - Skip DFS Channel in case of P2P Search
+ */
+/*
+ * <ini>
+ * gSkipDfsChannelInP2pSearch - Skip DFS Channel in case of P2P Search
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to to disable(skip) dfs channel in p2p search.
+ * Related: NA.
+ *
+ * Supported Feature: DFS P2P
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
 #define CFG_ENABLE_SKIP_DFS_IN_P2P_SEARCH_NAME       "gSkipDfsChannelInP2pSearch"
 #define CFG_ENABLE_SKIP_DFS_IN_P2P_SEARCH_MIN        (0)
