@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -23,9 +23,7 @@
   Include files
   ---------------------------------------------------------------------------*/
 #include "hal_api.h"
-#ifdef CONFIG_WIN
 #include "wcss_version.h"
-#endif
 
 /*---------------------------------------------------------------------------
   Preprocessor definitions and constants
@@ -825,7 +823,9 @@ static inline uint8_t hal_tx_comp_get_release_reason(void *hal_desc)
  *
  * Return: none
  */
-#if defined(WCSS_VERSION) && (WCSS_VERSION > 81)
+#if defined(WCSS_VERSION) && \
+	((defined(CONFIG_WIN) && (WCSS_VERSION > 81)) || \
+	 (defined(CONFIG_MCL) && (WCSS_VERSION >= 72)))
 static inline void hal_tx_comp_get_status(void *desc,
 		struct hal_tx_completion_status *ts)
 {

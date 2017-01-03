@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -498,7 +498,9 @@ struct rx_pkt_hdr_tlv {
  * 2) TLV's don't span across 128 byte lines
  * 3) Rx Buffer is nicely aligned on the 128 byte boundary
  */
-#if defined(WCSS_VERSION) && (WCSS_VERSION >= 96)
+#if defined(WCSS_VERSION) && \
+	((defined(CONFIG_WIN) && (WCSS_VERSION >= 96)) || \
+	 (defined(CONFIG_MCL) && (WCSS_VERSION >= 72)))
 #define RX_PADDING0_BYTES	4
 #endif
 #define RX_PADDING1_BYTES	16
@@ -506,7 +508,9 @@ struct rx_pkt_tlvs {
 	struct rx_msdu_end_tlv   msdu_end_tlv;	/*  72 bytes */
 	struct rx_attention_tlv  attn_tlv;	/*  16 bytes */
 	struct rx_msdu_start_tlv msdu_start_tlv;/*  40 bytes */
-#if defined(WCSS_VERSION) && (WCSS_VERSION >= 96)
+#if defined(WCSS_VERSION) && \
+	((defined(CONFIG_WIN) && (WCSS_VERSION >= 96)) || \
+	 (defined(CONFIG_MCL) && (WCSS_VERSION >= 72)))
 	uint8_t rx_padding0[RX_PADDING0_BYTES];	/*   4 bytes */
 #endif
 	struct rx_mpdu_start_tlv mpdu_start_tlv;/*  96 bytes */
@@ -572,7 +576,9 @@ hal_rx_mpdu_peer_meta_data_get(uint8_t *buf)
 	return peer_meta_data;
 }
 
-#if defined(WCSS_VERSION) && (WCSS_VERSION > 81)
+#if defined(WCSS_VERSION) && \
+	((defined(CONFIG_WIN) && (WCSS_VERSION > 81)) || \
+	 (defined(CONFIG_MCL) && (WCSS_VERSION >= 72)))
 #define HAL_RX_MSDU_END_L3_HEADER_PADDING_GET(_rx_msdu_end)	\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,		\
 		RX_MSDU_END_5_L3_HEADER_PADDING_OFFSET)),	\

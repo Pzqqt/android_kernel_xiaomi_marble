@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -22,6 +22,7 @@
 #define WLAN_HEADERS 1
 
 #include "lithium_top_reg.h"
+#include "wcss_version.h"
 
 #define MISSING 0
 
@@ -150,8 +151,17 @@
 #define CE_WRAPPER_INTERRUPT_SUMMARY_ADDRESS MISSING
 #define CE_DDR_ADDRESS_FOR_RRI_LOW MISSING
 #define CE_DDR_ADDRESS_FOR_RRI_HIGH MISSING
+
+#if defined(WCSS_VERSION) && \
+	((defined(CONFIG_WIN) && (WCSS_VERSION > 81)) || \
+	 (defined(CONFIG_MCL) && (WCSS_VERSION >= 72)))
+#define HOST_IE_ADDRESS UMAC_CE_COMMON_WFSS_CE_COMMON_R0_CE_HOST_IE_0
+#define HOST_IE_ADDRESS_2 UMAC_CE_COMMON_WFSS_CE_COMMON_R0_CE_HOST_IE_1
+#else /* WCSS_VERSION < 72 */
 #define HOST_IE_ADDRESS UMAC_CE_COMMON_CE_HOST_IE_0
 #define HOST_IE_ADDRESS_2 UMAC_CE_COMMON_CE_HOST_IE_1
+#endif /* WCSS_VERSION */
+
 #define HOST_IE_COPY_COMPLETE_MASK MISSING
 #define SR_BA_ADDRESS MISSING
 #define SR_BA_ADDRESS_HIGH MISSING

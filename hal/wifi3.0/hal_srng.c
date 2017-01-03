@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -28,9 +28,7 @@
  */
 
 #include "hal_api.h"
-#ifdef CONFIG_WIN
 #include "wcss_version.h"
-#endif
 
 /**
  * Common SRNG register access macros:
@@ -615,7 +613,9 @@ static inline void hal_srng_src_hw_init(struct hal_soc *hal,
 		srng->entry_size * srng->num_entries);
 	SRNG_SRC_REG_WRITE(srng, BASE_MSB, reg_val);
 
-#if defined(WCSS_VERSION) && (WCSS_VERSION > 81)
+#if defined(WCSS_VERSION) && \
+	((defined(CONFIG_WIN) && (WCSS_VERSION > 81)) || \
+	 (defined(CONFIG_MCL) && (WCSS_VERSION >= 72)))
 	reg_val = SRNG_SM(SRNG_SRC_FLD(ID, ENTRY_SIZE), srng->entry_size);
 #else
 	reg_val = SRNG_SM(SRNG_SRC_FLD(ID, RING_ID), srng->ring_id) |

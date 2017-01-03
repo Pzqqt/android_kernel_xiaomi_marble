@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -209,7 +209,7 @@
 #define SOC_POWER_REG_OFFSET    (scn->targetdef->d_SOC_POWER_REG_OFFSET)
 /* end */
 
-#ifndef CONFIG_WIN
+#if !defined(CONFIG_WIN)
 /* htt_rx.c */
 #define RX_MSDU_END_4_FIRST_MSDU_MASK \
 	(pdev->targetdef->d_RX_MSDU_END_4_FIRST_MSDU_MASK)
@@ -261,18 +261,6 @@
 	(pdev->targetdef->d_RX_MSDU_START_0_MSDU_LENGTH_MASK)
 #define RX_MSDU_START_0_MSDU_LENGTH_LSB \
 	(pdev->targetdef->d_RX_MSDU_START_0_MSDU_LENGTH_LSB)
-#ifndef RX_MSDU_START_2_DECAP_FORMAT_OFFSET
-#define RX_MSDU_START_2_DECAP_FORMAT_OFFSET \
-	(pdev->targetdef->d_RX_MSDU_START_2_DECAP_FORMAT_OFFSET)
-#endif
-#ifndef RX_MSDU_START_2_DECAP_FORMAT_MASK
-#define RX_MSDU_START_2_DECAP_FORMAT_MASK \
-	(pdev->targetdef->d_RX_MSDU_START_2_DECAP_FORMAT_MASK)
-#endif
-#ifndef RX_MSDU_START_2_DECAP_FORMAT_LSB
-#define RX_MSDU_START_2_DECAP_FORMAT_LSB \
-	(pdev->targetdef->d_RX_MSDU_START_2_DECAP_FORMAT_LSB)
-#endif
 #define RX_MPDU_START_0_ENCRYPTED_MASK \
 	(pdev->targetdef->d_RX_MPDU_START_0_ENCRYPTED_MASK)
 #define RX_MPDU_START_0_ENCRYPTED_LSB \
@@ -283,6 +271,20 @@
 	(pdev->targetdef->d_RX_ATTENTION_0_MSDU_DONE_MASK)
 #define RX_ATTENTION_0_TCP_UDP_CHKSUM_FAIL_MASK \
 	(pdev->targetdef->d_RX_ATTENTION_0_TCP_UDP_CHKSUM_FAIL_MASK)
+#if !defined(QCA6290_HEADERS_DEF)
+#ifndef RX_MSDU_START_2_DECAP_FORMAT_OFFSET
+#define RX_MSDU_START_2_DECAP_FORMAT_OFFSET \
+	(pdev->targetdef->d_RX_MSDU_START_2_DECAP_FORMAT_OFFSET)
+#endif
+#ifndef RX_MSDU_START_2_DECAP_FORMAT_LSB
+#define RX_MSDU_START_2_DECAP_FORMAT_LSB \
+	(pdev->targetdef->d_RX_MSDU_START_2_DECAP_FORMAT_LSB)
+#endif
+#ifndef RX_MSDU_START_2_DECAP_FORMAT_MASK
+#define RX_MSDU_START_2_DECAP_FORMAT_MASK \
+	(pdev->targetdef->d_RX_MSDU_START_2_DECAP_FORMAT_MASK)
+#endif
+#endif /*!QCA6290_HEADERS_DEF*/
 /* end */
 #endif
 
