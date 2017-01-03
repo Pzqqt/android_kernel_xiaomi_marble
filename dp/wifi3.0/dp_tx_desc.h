@@ -21,6 +21,7 @@
 
 #include "dp_types.h"
 #include "dp_tx.h"
+#include "dp_internal.h"
 
 /**
  * 21 bits cookie
@@ -74,7 +75,8 @@ static inline struct dp_tx_desc_s *dp_tx_desc_alloc(struct dp_soc *soc,
 			soc->tx_desc[desc_pool_id].freelist->next;
 		soc->tx_desc[desc_pool_id].num_allocated++;
 	}
-	DP_STATS_ADD(pdev, pub.tx.desc_in_use, 1);
+
+	DP_STATS_INC(soc, tx.desc_in_use, 1);
 	tx_desc->flags = DP_TX_DESC_FLAG_ALLOCATED;
 	TX_DESC_LOCK_UNLOCK(&soc->tx_desc[desc_pool_id].lock);
 
@@ -98,7 +100,7 @@ dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 	tx_desc->flags = 0;
 	tx_desc->next = soc->tx_desc[desc_pool_id].freelist;
 	soc->tx_desc[desc_pool_id].freelist = tx_desc;
-	DP_STATS_SUB(pdev, pub.tx.desc_in_use, 1);
+	DP_STATS_DEC(soc, tx.desc_in_use, 1);
 
 	TX_DESC_LOCK_UNLOCK(&soc->tx_desc[desc_pool_id].lock);
 }

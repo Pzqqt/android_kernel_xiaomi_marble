@@ -375,9 +375,11 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 
 		qdf_nbuf_set_next(nbuf, NULL);
 		vdev->osif_rx(vdev->osif_vdev, nbuf);
+		DP_STATS_INC(vdev->pdev, rx.to_stack.num, 1);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			FL("INVALID vdev %p OR osif_rx"), vdev);
+		DP_STATS_INC(soc, rx.err.invalid_vdev, 1);
 	}
 
 fail:
@@ -421,6 +423,7 @@ dp_rx_link_desc_return(struct dp_soc *soc, void *ring_desc)
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			FL("HAL RING Access For WBM Release SRNG Failed - %p"),
 			wbm_rel_srng);
+		DP_STATS_INC(soc, rx.err.hal_ring_access_fail, 1);
 		goto done;
 	}
 	src_srng_desc = hal_srng_src_get_next(hal_soc, wbm_rel_srng);

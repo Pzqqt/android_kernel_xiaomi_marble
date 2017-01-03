@@ -687,6 +687,58 @@ hal_rx_msdu_start_msdu_len_get(uint8_t *buf)
 	return msdu_len;
 }
 
+#define HAL_RX_MSDU_START_BW_GET(_rx_msdu_start)     \
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_msdu_start),\
+	RX_MSDU_START_5_RECEIVE_BANDWIDTH_OFFSET)), \
+	RX_MSDU_START_5_RECEIVE_BANDWIDTH_MASK,     \
+	RX_MSDU_START_5_RECEIVE_BANDWIDTH_LSB))
+
+/*
+ * hal_rx_msdu_start_bw_get(): API to get the Bandwidth
+ * Interval from rx_msdu_start
+ *
+ * @buf: pointer to the start of RX PKT TLV header
+ * Return: uint32_t(bw)
+ */
+static inline uint32_t
+hal_rx_msdu_start_bw_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_start *msdu_start =
+		&pkt_tlvs->msdu_start_tlv.rx_msdu_start;
+	uint32_t bw;
+
+	bw = HAL_RX_MSDU_START_BW_GET(msdu_start);
+
+	return bw;
+}
+
+#define HAL_RX_MSDU_START_RECEPTION_TYPE_GET(_rx_msdu_start) \
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_msdu_start),	\
+	RX_MSDU_START_5_RECEPTION_TYPE_OFFSET)),	\
+	RX_MSDU_START_5_RECEPTION_TYPE_MASK,		\
+	RX_MSDU_START_5_RECEPTION_TYPE_LSB))
+
+/*
+ * hal_rx_msdu_start_reception_type_get(): API to get the reception type
+ * Interval from rx_msdu_start
+ *
+ * @buf: pointer to the start of RX PKT TLV header
+ * Return: uint32_t(reception_type)
+ */
+static inline uint32_t
+hal_rx_msdu_start_reception_type_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_start *msdu_start =
+		&pkt_tlvs->msdu_start_tlv.rx_msdu_start;
+	uint32_t reception_type;
+
+	reception_type = HAL_RX_MSDU_START_RECEPTION_TYPE_GET(msdu_start);
+
+	return reception_type;
+}
+
 /*
  * Get qos_control_valid from RX_MPDU_START
  */

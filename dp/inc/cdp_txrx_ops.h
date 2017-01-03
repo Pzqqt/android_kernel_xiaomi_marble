@@ -404,9 +404,8 @@ struct cdp_mon_ops {
 
 struct cdp_host_stats_ops {
 	int (*txrx_host_stats_get)(struct cdp_vdev *vdev,
-			struct ol_txrx_stats_req *req);
-
-	void (*txrx_host_stats_clr)(struct cdp_vdev *vdev);
+			struct ol_txrx_stats_req *req,
+			enum cdp_host_txrx_stats type);
 
 	void (*txrx_host_ce_stats)(struct cdp_vdev *vdev);
 

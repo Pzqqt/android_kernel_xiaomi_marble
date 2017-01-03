@@ -73,6 +73,21 @@ enum htt_cmn_dbg_stats_type {
     HTT_DBG_CMN_NUM_STATS
 };
 
+/*
+ * cdp_host_txrx_stats: Different types of host stats
+ * @TXRX_RX_RATE_STATS: Rx rate info
+ * @TXRX_TX_RATE_STATS: Tx rate info
+ * @TXRX_TX_HOST_STATS: Print Tx stats
+ * @TXRX_RX_HOST_STATS: Print host Rx stats
+ * @TXRX_CLEAR_STATS: clear all host stats
+ */
+enum cdp_host_txrx_stats {
+	TXRX_RX_RATE_STATS  = 0,
+	TXRX_TX_RATE_STATS  = 1,
+	TXRX_TX_HOST_STATS  = 2,
+	TXRX_RX_HOST_STATS  = 3,
+	TXRX_CLEAR_STATS    = 4,
+};
 
 /**
  * @brief General specification of the tx frame contents
@@ -384,6 +399,7 @@ struct cdp_soc_t {
 #define TXRX_FW_MAC_PREFETCH_MGR_STATS           23
 #define TXRX_FW_STATS_DURATION_INFO              24
 #define TXRX_FW_STATS_DURATION_INFO_RESET        25
+#define TXRX_FW_STATS_HOST_RX_STATS              27
 
 #define PER_RADIO_FW_STATS_REQUEST 0
 #define PER_VDEV_FW_STATS_REQUEST 1

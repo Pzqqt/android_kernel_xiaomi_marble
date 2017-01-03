@@ -120,6 +120,8 @@ dp_tx_desc_release(struct dp_tx_desc_s *tx_desc, uint8_t desc_pool_id)
 	qdf_assert(pdev);
 
 	soc = pdev->soc;
+
+	DP_STATS_INC(pdev, tx.freed.num, 1);
 	if (tx_desc->flags & DP_TX_DESC_FLAG_FRAG)
 		dp_tx_ext_desc_free(soc, tx_desc->msdu_ext_desc, desc_pool_id);
 
@@ -351,6 +353,8 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	return tx_desc;
 
 failure:
+	DP_STATS_INC_PKT(pdev, tx.dropped.dropped_pkt, 1,
+			qdf_nbuf_len(nbuf));
 	dp_tx_desc_release(tx_desc, desc_pool_id);
 	return NULL;
 }
@@ -426,6 +430,8 @@ static struct dp_tx_desc_s *dp_tx_prepare_desc(struct dp_vdev *vdev,
 
 	return tx_desc;
 failure:
+	DP_STATS_INC_PKT(pdev, tx.dropped.dropped_pkt, 1,
+			qdf_nbuf_len(nbuf));
 	dp_tx_desc_release(tx_desc, desc_pool_id);
 	return NULL;
 }
@@ -502,6 +508,7 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	void *hal_tx_desc, *hal_tx_desc_cached;
 	qdf_dma_addr_t dma_addr;
 	uint8_t cached_desc[HAL_TX_DESC_LEN_BYTES];
+	struct dp_pdev *pdev = (struct dp_pdev *)vdev->pdev;
 
 	/* Return Buffer Manager ID */
 	uint8_t bm_id = ring_id;
@@ -571,7 +578,9 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	if (!hal_tx_desc) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s TCL ring full ring_id:%d\n", __func__, ring_id);
-		DP_STATS_ADD(soc, tx.tcl_ring_full[ring_id], 1);
+		DP_STATS_INC(soc, tx.tcl_ring_full[ring_id], 1);
+		DP_STATS_INC_PKT(pdev, tx.dropped.dropped_pkt, 1,
+				length);
 		hal_srng_access_end(soc->hal_soc,
 				soc->tcl_data_ring[ring_id].hal_srng);
 		return QDF_STATUS_E_RESOURCES;
@@ -580,6 +589,7 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	tx_desc->flags |= DP_TX_DESC_FLAG_QUEUED_TX;
 
 	hal_tx_desc_sync(hal_tx_desc_cached, hal_tx_desc);
+	DP_STATS_INC_PKT(pdev, tx.processed, 1, length);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -656,6 +666,8 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	return NULL;
 
 fail_return:
+	DP_STATS_INC_PKT(pdev, tx.dropped.dropped_pkt, 1,
+			qdf_nbuf_len(nbuf));
 	return nbuf;
 }
 
@@ -727,6 +739,9 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				  "%s Tx_hw_enqueue Fail tx_desc %p queue %d\n",
 				  __func__, tx_desc, tx_q->ring_id);
 
+			DP_STATS_INC_PKT(pdev,
+					tx.dropped.dropped_pkt, 1,
+					qdf_nbuf_len(tx_desc->nbuf));
 			dp_tx_desc_release(tx_desc, tx_q->desc_pool_id);
 			goto done;
 		}
@@ -946,6 +961,7 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 	 * (TID override disabled)
 	 */
 	msdu_info.tid = HTT_TX_EXT_TID_INVALID;
+	DP_STATS_INC_PKT(vdev->pdev, tx.rcvd, 1, qdf_nbuf_len(nbuf));
 
 	if (qdf_unlikely(vdev->mesh_vdev))
 		dp_tx_extract_mesh_meta_data(vdev, nbuf, &msdu_info);
@@ -991,7 +1007,8 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 		/* dp_tx_prepare_tso(vdev, nbuf, &seg_info, &msdu_info); */
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s TSO frame %p\n", __func__, vdev);
-		DP_STATS_MSDU_INCR(soc, tx.tso.tso_pkts, nbuf);
+		DP_STATS_INC_PKT(vdev->pdev, tx.tso.tso_pkt, 1,
+				qdf_nbuf_len(nbuf));
 
 		goto send_multiple;
 	}
@@ -1001,9 +1018,10 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 		nbuf = dp_tx_prepare_sg(vdev, nbuf, &seg_info, &msdu_info);
 
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s non-TSO SG frame %p\n", __func__, vdev);
+			 "%s non-TSO SG frame %p\n", __func__, vdev);
 
-		DP_STATS_MSDU_INCR(soc, tx.sg.sg_pkts, nbuf);
+		DP_STATS_INC_PKT(vdev->pdev, tx.sg.sg_pkt, 1,
+				qdf_nbuf_len(nbuf));
 
 		goto send_multiple;
 	}
@@ -1016,7 +1034,9 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 				  "%s Mcast frm for ME %p\n", __func__, vdev);
 
-			DP_STATS_MSDU_INCR(soc, tx.mcast.pkts, nbuf);
+			DP_STATS_INC_PKT(vdev->pdev,
+					tx.mcast_en.mcast_pkt, 1,
+					qdf_nbuf_len(nbuf));
 
 			goto send_multiple;
 		}
@@ -1031,7 +1051,9 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s Raw frame %p\n", __func__, vdev);
 
-		DP_STATS_MSDU_INCR(soc, tx.raw.pkts, nbuf);
+		DP_STATS_INC_PKT(vdev->pdev,
+				tx.raw_pkt, 1,
+				qdf_nbuf_len(nbuf));
 
 		goto send_multiple;
 
@@ -1076,7 +1098,8 @@ void dp_tx_reinject_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 			"%s Tx reinject path\n", __func__);
 
-	DP_STATS_MSDU_INCR(soc, tx.reinject.pkts, tx_desc->nbuf);
+	DP_STATS_INC_PKT(vdev->pdev, tx.reinject_pkts, 1,
+			qdf_nbuf_len(tx_desc->nbuf));
 
 	if (qdf_unlikely(vdev->mesh_vdev)) {
 		DP_TX_FREE_SINGLE_BUF(vdev->pdev->soc, tx_desc->nbuf);
@@ -1110,7 +1133,8 @@ static void dp_tx_inspect_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 
 	soc = pdev->soc;
 
-	DP_STATS_MSDU_INCR(soc, tx.inspect.pkts, tx_desc->nbuf);
+	DP_STATS_INC_PKT(pdev, tx.inspect_pkts, 1,
+			qdf_nbuf_len(tx_desc->nbuf));
 
 	DP_TX_FREE_SINGLE_BUF(soc, tx_desc->nbuf);
 }
@@ -1150,8 +1174,9 @@ void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 	case HTT_TX_FW2WBM_TX_STATUS_TTL:
 	{
 		qdf_atomic_dec(&pdev->num_tx_exception);
+		DP_STATS_INC_PKT(pdev, tx.dropped.dropped_pkt,
+				1, qdf_nbuf_len(tx_desc->nbuf));
 		DP_TX_FREE_SINGLE_BUF(soc, tx_desc->nbuf);
-		DP_STATS_MSDU_INCR(soc, tx.dropped.pkts, tx_desc->nbuf);
 		break;
 	}
 	case HTT_TX_FW2WBM_TX_STATUS_REINJECT:
@@ -1266,11 +1291,15 @@ static void dp_tx_comp_process_desc(struct dp_soc *soc,
 {
 	struct dp_tx_desc_s *desc;
 	struct dp_tx_desc_s *next;
+	struct hal_tx_completion_status ts = {0};
+	uint32_t length;
 
 	desc = comp_head;
 
 	while (desc) {
 
+		hal_tx_comp_get_status(&desc->comp, &ts);
+		length = qdf_nbuf_len(desc->nbuf);
 		/* Error Handling */
 		if (hal_tx_comp_get_buffer_source(&desc->comp) ==
 				HAL_TX_COMP_RELEASE_SOURCE_FW) {
@@ -1306,6 +1335,13 @@ static void dp_tx_comp_process_desc(struct dp_soc *soc,
 			/* Free buffer */
 			DP_TX_FREE_DMA_TO_DEVICE(soc, desc->vdev, desc->nbuf);
 		}
+
+		DP_STATS_INC_PKT(desc->pdev, tx.comp.comp_pkt, 1,
+				length);
+		DP_STATS_INCC(desc->pdev, tx.comp.mcs_count[MAX_MCS], 1,
+				ts.mcs >= MAX_MCS);
+		DP_STATS_INCC(desc->pdev, tx.comp.mcs_count[ts.mcs], 1,
+				ts.mcs <= MAX_MCS);
 
 		next = desc->next;
 		dp_tx_desc_release(desc, desc->pool_id);

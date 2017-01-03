@@ -26,6 +26,7 @@
 #ifdef MESH_MODE_SUPPORT
 #include "if_meta_hdr.h"
 #endif
+#include "dp_internal.h"
 
 /*
  * dp_rx_buffers_replenish() - replenish rxdma ring with rx nbufs
@@ -63,6 +64,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 	if (!rxdma_srng) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			"rxdma srng not initialized");
+		DP_STATS_INC(dp_pdev, rx.err.rxdma_unitialized, 1);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -81,6 +83,8 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 		if (!num_alloc_desc) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"no free rx_descs in freelist");
+			DP_STATS_INC(dp_pdev, rx.err.desc_alloc_fail,
+					num_alloc_desc);
 			return QDF_STATUS_E_NOMEM;
 		}
 
@@ -138,6 +142,8 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 		next = (*desc_list)->next;
 
 		(*desc_list)->rx_desc.nbuf = rx_netbuf;
+		DP_STATS_INC_PKT(dp_pdev, rx.replenished, 1,
+				qdf_nbuf_len(rx_netbuf));
 		hal_rxdma_buff_addr_info_set(rxdma_ring_entry, paddr,
 						(*desc_list)->rx_desc.cookie,
 						owner);
@@ -151,6 +157,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 		"successfully replenished %d buffers", num_req_buffers);
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 		"%d rx desc added back to free list", num_desc_to_free);
+	DP_STATS_INC(dp_pdev, rx.buf_freelist, num_desc_to_free);
 
 	/*
 	 * add any available free desc back to the free list
@@ -392,17 +399,18 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 	struct dp_peer *peer = NULL;
 	struct dp_vdev *vdev = NULL;
 	struct dp_vdev *vdev_list[WLAN_UMAC_PSOC_MAX_VDEVS] = { NULL };
+	uint32_t pkt_len;
 	struct hal_rx_mpdu_desc_info mpdu_desc_info;
 	struct hal_rx_msdu_desc_info msdu_desc_info;
 	enum hal_reo_error_status error;
-	uint32_t pkt_len;
 	static uint32_t peer_mdata;
 	uint8_t *rx_tlv_hdr;
 	uint32_t rx_bufs_reaped[MAX_PDEV_CNT] = { 0 };
-	uint32_t sgi, rate_mcs, tid;
+	uint32_t sgi, rate_mcs, tid, nss, bw, reception_type;
 	uint64_t vdev_map = 0;
 	uint8_t mac_id;
 	uint16_t i, vdev_cnt = 0;
+	uint32_t ampdu_flag, amsdu_flag;
 
 	/* Debug -- Remove later */
 	qdf_assert(soc && hal_ring);
@@ -469,6 +477,7 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 
 			/* Drop & free packet */
 			qdf_nbuf_free(rx_desc->nbuf);
+			/* Statistics */
 			goto fail;
 		}
 
@@ -502,6 +511,25 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 
 		if (msdu_desc_info.msdu_flags & HAL_MSDU_F_LAST_MSDU_IN_MPDU)
 			qdf_nbuf_set_chfrag_end(rx_desc->nbuf, 1);
+
+		DP_STATS_INC_PKT(vdev->pdev, rx.rcvd_reo, 1,
+				qdf_nbuf_len(rx_desc->nbuf));
+
+		ampdu_flag = (mpdu_desc_info.mpdu_flags &
+				HAL_MPDU_F_AMPDU_FLAG);
+		DP_STATS_INCC(vdev->pdev, rx.ampdu_cnt, 1, ampdu_flag);
+		DP_STATS_INCC(vdev->pdev, rx.non_ampdu_cnt, 1, !(ampdu_flag));
+
+		hal_rx_msdu_desc_info_get(ring_desc, &msdu_desc_info);
+		amsdu_flag = ((msdu_desc_info.msdu_flags &
+				HAL_MSDU_F_FIRST_MSDU_IN_MPDU) &&
+				(msdu_desc_info.msdu_flags &
+					HAL_MSDU_F_LAST_MSDU_IN_MPDU));
+
+		DP_STATS_INCC(vdev->pdev, rx.non_amsdu_cnt, 1,
+				amsdu_flag);
+		DP_STATS_INCC(vdev->pdev, rx.amsdu_cnt, 1,
+				!(amsdu_flag));
 
 		qdf_nbuf_queue_add(&vdev->rxq, rx_desc->nbuf);
 fail:
@@ -591,6 +619,20 @@ done:
 				"%s: %d, SGI: %d, rate_mcs: %d, tid: %d",
 				__func__, __LINE__, sgi, rate_mcs, tid);
 
+			bw = hal_rx_msdu_start_bw_get(rx_tlv_hdr);
+			reception_type = hal_rx_msdu_start_reception_type_get(
+					rx_tlv_hdr);
+			nss = hal_rx_msdu_start_nss_get(rx_tlv_hdr);
+
+			DP_STATS_INC(vdev->pdev, rx.bw[bw], 1);
+			DP_STATS_INC(vdev->pdev,
+					rx.reception_type[reception_type], 1);
+			DP_STATS_INCC(vdev->pdev, rx.nss[nss], 1,
+					((reception_type ==
+					  RECEPTION_TYPE_MU_MIMO) ||
+					 (reception_type ==
+					  RECEPTION_TYPE_MU_OFDMA_MIMO)));
+
 			/*
 			 * HW structures call this L3 header padding --
 			 * even though this is actually the offset from
@@ -647,6 +689,7 @@ done:
 			DP_RX_LIST_APPEND(deliver_list_head,
 						deliver_list_tail,
 						nbuf);
+			DP_STATS_INC(vdev->pdev, rx.to_stack.num, 1);
 		}
 
 		if (qdf_unlikely(vdev->rx_decap_type == htt_pkt_type_raw))

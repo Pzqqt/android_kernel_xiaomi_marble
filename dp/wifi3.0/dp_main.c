@@ -30,8 +30,13 @@
 #include "dp_rx.h"
 #include <cdp_txrx_handle.h>
 #include <wlan_cfg.h>
+#include "cdp_txrx_cmn_struct.h"
 
 #define DP_INTR_POLL_TIMER_MS	100
+#define DP_MCS_LENGTH (6*MAX_MCS)
+#define DP_NSS_LENGTH (6*SS_COUNT)
+#define DP_RXDMA_ERR_LENGTH (6*MAX_RXDMA_ERRORS)
+#define DP_REO_ERR_LENGTH (6*HAL_REO_ERR_QUEUE_DESC_BLOCKED_SET)
 /**
  * dp_setup_srng - Internal function to setup SRNG rings used by data path
  */
@@ -1035,6 +1040,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 				FL("dp_rx_pdev_attach failed "));
 			goto fail0;
 	}
+	DP_STATS_INIT(pdev);
 
 #ifndef CONFIG_WIN
 	/* MCL */
@@ -1318,6 +1324,7 @@ static int dp_soc_attach_target_wifi3(struct cdp_soc_t *cdp_soc)
 
 	dp_rxdma_ring_config(soc);
 
+	DP_STATS_INIT(soc);
 	return 0;
 }
 
@@ -1901,6 +1908,7 @@ static struct cdp_mon_ops dp_ops_mon = {
 };
 
 static struct cdp_host_stats_ops dp_ops_host_stats = {
+	.txrx_host_stats_get = dp_print_host_stats,
 	/* TODO */
 };
 
@@ -2097,4 +2105,397 @@ fail1:
 	qdf_mem_free(soc);
 fail0:
 	return NULL;
+}
+
+/*
+ * dp_print_host_stats()- Function to print the stats aggregated at host
+ * @vdev_handle: DP_VDEV handle
+ * @req: ol_txrx_stats_req
+ * @type: host stats type
+ *
+ * Available Stat types
+ * TXRX_RX_RATE_STATS: Print Rx Rate Info
+ * TXRX_TX_RATE_STATS: Print Tx Rate Info
+ * TXRX_TX_HOST_STATS: Print Tx Stats
+ * TXRX_RX_HOST_STATS: Print Rx Stats
+ * TXRX_CLEAR_STATS:   Clear the stats
+ *
+ * Return: 0 on success
+ */
+int
+dp_print_host_stats(struct cdp_vdev *vdev_handle, struct ol_txrx_stats_req *req,
+		enum cdp_host_txrx_stats type)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+	struct dp_pdev *pdev = (struct dp_pdev *)vdev->pdev;
+
+	switch (type) {
+	case TXRX_RX_RATE_STATS:
+		dp_print_rx_rates(vdev);
+		break;
+	case TXRX_TX_RATE_STATS:
+		dp_print_tx_rates(vdev);
+		break;
+	case TXRX_TX_HOST_STATS:
+		dp_print_pdev_tx_stats(pdev);
+		dp_print_soc_tx_stats(pdev->soc);
+		break;
+	case TXRX_RX_HOST_STATS:
+		dp_print_pdev_rx_stats(pdev);
+		dp_print_soc_rx_stats(pdev->soc);
+		break;
+	case TXRX_CLEAR_STATS:
+		dp_txrx_host_stats_clr(vdev);
+		break;
+	default:
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+				"Wrong Input For TxRx Host Stats");
+		break;
+	}
+	return 0;
+}
+
+/*
+ * dp_print_pdev_tx_stats(): Print Pdev level TX stats
+ * @pdev: DP_PDEV Handle
+ *
+ * Return:void
+ */
+void
+dp_print_pdev_tx_stats(struct dp_pdev *pdev)
+{
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			"\n WLAN Tx Stats\n");
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Received From Stack\n");
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Total Packets Received: %d ",
+			pdev->stats.tx.rcvd.num);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Bytes Sent: %d ",
+			pdev->stats.tx.rcvd.bytes);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Processed\n");
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Msdu Processed: %d ", pdev->stats.tx.processed.num);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Bytes Processed: %d ",
+			pdev->stats.tx.processed.bytes);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Completions\n");
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Msdu Sent: %d ", pdev->stats.tx.comp.comp_pkt.num);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Bytes Sent: %d ",
+			pdev->stats.tx.comp.comp_pkt.bytes);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Freed\n");
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Msdus Freed: %d ", pdev->stats.tx.freed.num);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Bytes Freed: %d ", pdev->stats.tx.freed.bytes);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Dropped\n");
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Total Packets Dropped: %d ",
+			pdev->stats.tx.dropped.dropped_pkt.num);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Bytes Dropped: %d ",
+			pdev->stats.tx.dropped.dropped_pkt.bytes);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Dma_map_error: %d ",
+			pdev->stats.tx.dropped.dma_map_error);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Ring Full: %d ", pdev->stats.tx.dropped.ring_full);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Fw Discard: %d ",
+			pdev->stats.tx.dropped.fw_discard);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Fw Discard Retired: %d ",
+			pdev->stats.tx.dropped.fw_discard_retired);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Firmware Discard Untransmitted: %d ",
+			pdev->stats.tx.dropped.firmware_discard_untransmitted);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Mpdu Age Out: %d ",
+			pdev->stats.tx.dropped.mpdu_age_out);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Firmware Discard Reason1: %d ",
+			pdev->stats.tx.dropped.firmware_discard_reason1);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Firmware Discard Reason2: %d ",
+			pdev->stats.tx.dropped.firmware_discard_reason2);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Firmware Discard Reason3: %d ",
+			pdev->stats.tx.dropped.firmware_discard_reason3);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Scatter Gather\n");
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Total Packets: %d ", pdev->stats.tx.sg.sg_pkt.num);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Total Bytes: %d ", pdev->stats.tx.sg.sg_pkt.bytes);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Dropped By Host: %d ",
+			pdev->stats.tx.sg.dropped_host);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Dropped By Target: %d ",
+			pdev->stats.tx.sg.dropped_target);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Tso\n");
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Number of Segments: %d ",
+			pdev->stats.tx.tso.num_seg);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Number Packets: %d ",
+			pdev->stats.tx.tso.tso_pkt.num);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Total Bytes: %d ",
+			pdev->stats.tx.tso.tso_pkt.bytes);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Dropped By Host: %d ",
+			pdev->stats.tx.tso.dropped_host);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Mcast Enhancement\n");
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Dropped: Map Errors: %d ",
+			pdev->stats.tx.mcast_en.dropped_map_error);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Dropped: Self Mac: %d ",
+			pdev->stats.tx.mcast_en.dropped_self_mac);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Dropped: Send Fail: %d ",
+			pdev->stats.tx.mcast_en.dropped_send_fail);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Total Unicast sent: %d ",
+			pdev->stats.tx.mcast_en.ucast);
+}
+
+/*
+ * dp_print_pdev_rx_stats(): Print Pdev level RX stats
+ * @pdev: DP_PDEV Handle
+ *
+ * Return: void
+ */
+void
+dp_print_pdev_rx_stats(struct dp_pdev *pdev)
+{
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			"\n WLAN Rx Stats\n");
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Received From HW (Reo Dest Ring)\n");
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Total Packets Received: %d ",
+			pdev->stats.rx.rcvd_reo.num);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Bytes Sent: %d ", pdev->stats.rx.rcvd_reo.bytes);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Replenished\n");
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Total Packets Replenished: %d ",
+			pdev->stats.rx.replenished.num);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Bytes Sent: %d ", pdev->stats.rx.replenished.bytes);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Buffers Added To Freelist: %d ",
+			pdev->stats.rx.buf_freelist);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Dropped\n");
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Total Packets With No Peer: %d ",
+			pdev->stats.rx.dropped.no_peer.num);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Bytes Sent With No Peer: %d ",
+			pdev->stats.rx.dropped.no_peer.bytes);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Total Packets With Msdu Not Done: %d ",
+			pdev->stats.rx.dropped.msdu_not_done.num);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Bytes Sent With Msdu Not Done: %d ",
+			pdev->stats.rx.dropped.msdu_not_done.bytes);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Sent To Stack\n");
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Packets Sent To Stack: %d ",
+			pdev->stats.rx.to_stack.num);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Bytes Sent To Stack: %d ",
+			pdev->stats.rx.to_stack.bytes);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Errors\n");
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Rxdma Ring Unititalized: %d",
+			pdev->stats.rx.err.rxdma_unitialized);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Desc Alloc Failed: %d",
+			pdev->stats.rx.err.desc_alloc_fail);
+}
+
+/*
+ * dp_print_soc_tx_stats(): Print SOC level  stats
+ * @soc DP_SOC Handle
+ *
+ * Return: void
+ */
+void
+dp_print_soc_tx_stats(struct dp_soc *soc)
+{
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			"\n SOC Tx Stats\n");
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Tx Descriptors In Use: %d ",
+			soc->stats.tx.desc_in_use);
+}
+
+
+/*
+ * dp_print_soc_rx_stats: Print SOC level Rx stats
+ * @soc: DP_SOC Handle
+ *
+ * Return:void
+ */
+void
+dp_print_soc_rx_stats(struct dp_soc *soc)
+{
+	uint32_t i;
+	char reo_error[DP_REO_ERR_LENGTH];
+	char rxdma_error[DP_RXDMA_ERR_LENGTH];
+	uint8_t index = 0;
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			"\n SOC Rx Stats\n");
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Errors\n");
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Invalid RBM: %d ", soc->stats.rx.err.invalid_rbm);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Invalid Vdev: %d ", soc->stats.rx.err.invalid_vdev);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Invalid Pdev: %d ", soc->stats.rx.err.invalid_pdev);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" HAL Ring Access Fail: %d ",
+			soc->stats.rx.err.hal_ring_access_fail);
+	for (i = 0; i < MAX_RXDMA_ERRORS; i++) {
+		index += qdf_snprint(&rxdma_error[index],
+				DP_RXDMA_ERR_LENGTH - index,
+				" %d,", soc->stats.rx.err.rxdma_error[i]);
+	}
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" RXDMA Error (0-31):%s", rxdma_error);
+	index = 0;
+	for (i = 0; i <= HAL_REO_ERR_QUEUE_DESC_BLOCKED_SET; i++) {
+		index += qdf_snprint(&reo_error[index],
+				DP_REO_ERR_LENGTH - index,
+				" %d,", soc->stats.rx.err.reo_error[i]);
+	}
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" REO Error(0-14):%s", reo_error);
+}
+
+/*
+ * dp_txrx_host_stats_clr(): Reinitialize the txrx stats
+ * @vdev: DP_VDEV handle
+ *
+ * Return:void
+ */
+void
+dp_txrx_host_stats_clr(struct dp_vdev *vdev)
+{
+	DP_STATS_CLR(vdev->pdev);
+	DP_STATS_CLR(vdev->pdev->soc);
+}
+
+/*
+ * dp_print_rx_rates(): Print Rx rate stats
+ * @vdev: DP_VDEV handle
+ *
+ * Return:void
+ */
+void
+dp_print_rx_rates(struct dp_vdev *vdev)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)vdev->pdev;
+	uint8_t i;
+	uint8_t index = 0;
+	char mcs[DP_MCS_LENGTH];
+	char nss[DP_NSS_LENGTH];
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			"\n Rx Rate Info\n");
+	for (i = 0; i < MAX_MCS; i++) {
+		index += qdf_snprint(&mcs[index], DP_MCS_LENGTH - index,
+				" %d,", pdev->stats.rx.mcs_count[i]);
+	}
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" MCS(0-11):%s", mcs);
+	index = 0;
+	for (i = 0; i < SS_COUNT; i++) {
+		index += qdf_snprint(&nss[index], DP_NSS_LENGTH - index,
+				" %d,", pdev->stats.rx.nss[i]);
+	}
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" NSS(0-7):%s", nss);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			"SGI: 0.8us:%d, 0.4us:%d, 1.6us:%d, 3.2us:%d,",
+			pdev->stats.rx.sgi_count[0],
+			pdev->stats.rx.sgi_count[1],
+			pdev->stats.rx.sgi_count[2],
+			pdev->stats.rx.sgi_count[3]);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			"BW Counts: 20MHZ %d, 40MHZ %d, 80MHZ %d, 160MHZ %d",
+			pdev->stats.rx.bw[0], pdev->stats.rx.bw[1],
+			pdev->stats.rx.bw[2], pdev->stats.rx.bw[3]);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			"Reception Type:"
+			" SU:%d,"
+			" MU_MIMO:%d,"
+			" MU_OFDMA:%d,"
+			" MU_OFDMA_MIMO:%d",
+			pdev->stats.rx.reception_type[0],
+			pdev->stats.rx.reception_type[1],
+			pdev->stats.rx.reception_type[2],
+			pdev->stats.rx.reception_type[3]);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Aggregation\n");
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Number of Msdu's Part of Ampdu: %d ",
+			pdev->stats.rx.ampdu_cnt);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Number of Msdu's With No Mpdu Level Aggregation : %d",
+			pdev->stats.rx.non_ampdu_cnt);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Number of Msdu's Part of Amsdu: %d",
+			pdev->stats.rx.amsdu_cnt);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" Number of Msdu's With No Msdu Level Aggregation: %d",
+			pdev->stats.rx.non_amsdu_cnt);
+}
+
+/*
+ * dp_print_tx_rates(): Print tx rates
+ * @vdev: DP_VDEV handle
+ *
+ * Return:void
+ */
+void
+dp_print_tx_rates(struct dp_vdev *vdev)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)vdev->pdev;
+	uint8_t i;
+	char mcs[DP_MCS_LENGTH];
+	uint8_t index = 0;
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			"\n Tx Rate Info\n");
+
+	for (i = 0; i < MAX_MCS; i++) {
+		index += qdf_snprint(&mcs[index], DP_MCS_LENGTH - index,
+				" %d ", pdev->stats.tx.comp.mcs_count[i]);
+	}
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" MCS(0-11):%s", mcs);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE,
+			" MCS Invalid: %d ",
+			pdev->stats.tx.comp.mcs_count[MAX_MCS]);
 }

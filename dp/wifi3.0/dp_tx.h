@@ -22,9 +22,6 @@
 #include <qdf_nbuf.h>
 #include "dp_types.h"
 
-#define DP_STATS_ADD(x, y, z)
-#define DP_STATS_SUB(x, y, z)
-#define DP_STATS_MSDU_INCR(x, y, z)
 
 #define DP_TX_MAX_NUM_FRAGS 6
 

@@ -36,6 +36,16 @@
 #include <hal_tx.h>
 #include <hal_reo.h>
 #include "wlan_cfg.h"
+#include "hal_rx.h"
+
+#define MAX_TCL_RING 3
+#define MAX_MCS 12    /* MCS rate varies from 0-11 */
+#define SS_COUNT 8
+#define MAX_RXDMA_ERRORS 32
+#define SUPPORTED_BW 4
+#define SUPPORTED_RECEPTION_TYPES 4
+#define RECEPTION_TYPE_MU_MIMO 1
+#define RECEPTION_TYPE_MU_OFDMA_MIMO 3
 
 struct dp_soc_cmn;
 struct dp_pdev;
@@ -60,11 +70,6 @@ union dp_rx_desc_list_elem_t;
      (_a)[3] == 0xff &&                         \
      (_a)[4] == 0xff &&                         \
      (_a)[5] == 0xff)
-
-
-#define DP_TRACE(LVL, fmt, args ...)                             \
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_##LVL,       \
-		"%s:%d: "fmt, __func__, __LINE__, ## args)
 
 /**
  * macros to convert hw mac id to sw mac id:
@@ -263,6 +268,116 @@ struct reo_desc_list_node {
 	struct dp_rx_tid rx_tid;
 };
 
+/* TODO: Proper comments have been added in the subsequesnt gerrit */
+/* packet info */
+struct dp_pkt_info {
+	uint32_t num; /*no of packets*/
+	uint32_t bytes; /* total no of bytes */
+};
+
+/* per pdev tx stats*/
+struct dp_tx_pdev_stats {
+
+	struct dp_pkt_info rcvd; /*total packets received for transmission */
+	struct {
+		/* Pkt Info for which completions were received */
+		struct dp_pkt_info comp_pkt;
+		uint32_t mcs_count[MAX_MCS + 1]; /* MCS Count */
+	} comp; /* Tx completions received*/
+
+	struct dp_pkt_info freed; /* Tx packets freed*/
+
+	struct dp_pkt_info processed; /* Tx packets processed*/
+	struct dp_pkt_info outstanding; /* Tx packets remaining for processing*/
+
+	struct {
+		struct dp_pkt_info dropped_pkt; /* Total packets dropped */
+		uint32_t desc_total;  /* total descriptors dropped */
+		uint32_t dma_map_error; /* Dropped due to Dma Error */
+		uint32_t ring_full;    /* dropped due to ring full */
+		uint32_t fw_discard;   /* Discarded bu firmware */
+		uint32_t fw_discard_retired; /* fw_discard_retired */
+		/* firmware_discard_untransmitted */
+		uint32_t firmware_discard_untransmitted;
+		uint32_t mpdu_age_out; /* mpdu_age_out */
+		uint32_t firmware_discard_reason1; /*firmware_discard_reason1*/
+		uint32_t firmware_discard_reason2; /*firmware_discard_reason2*/
+		uint32_t firmware_discard_reason3; /*firmware_discard_reason3*/
+	} dropped; /* Packets dropped on the Tx side */
+
+	struct {
+		struct dp_pkt_info sg_pkt; /* total scatter gather packets */
+		uint32_t dropped_host; /* SG packets dropped by host */
+		uint32_t dropped_target; /* SG packets dropped by target */
+	} sg; /* Scatter Gather packet info */
+
+	struct {
+		uint32_t num_seg;  /* No of segments in TSO packets */
+		struct dp_pkt_info tso_pkt; /* total no of TSO packets */
+		uint32_t dropped_host; /* TSO packets dropped by host */
+		uint32_t dropped_target; /* TSO packets dropped by target */
+	} tso; /* TSO packets info */
+
+	struct {
+		/* total no of multicast conversion packets */
+		struct dp_pkt_info mcast_pkt;
+		/* packets dropped due to map error */
+		uint32_t dropped_map_error;
+		/* packets dropped due to self Mac address */
+		uint32_t dropped_self_mac;
+		/* Packets dropped due to send fail */
+		uint32_t dropped_send_fail;
+		/* total unicast packets transmitted */
+		uint32_t ucast;
+	} mcast_en; /* Multicast Enhancement packets info */
+
+	/* Total packets passed Reinject handler */
+	struct dp_pkt_info reinject_pkts;
+	/*  Total packets passed to inspect handler */
+	struct dp_pkt_info inspect_pkts;
+	/* Total Raw packets */
+	struct dp_pkt_info raw_pkt;
+};
+
+/* Per pdev RX stats */
+struct dp_rx_pdev_stats {
+	struct dp_pkt_info rcvd_reo; /* packets received on the reo ring */
+	struct {
+		/* packets dropped because of no peer */
+		struct dp_pkt_info no_peer;
+		/* packets dropped because nsdu_done bit not set */
+		struct dp_pkt_info msdu_not_done;
+	} dropped; /* packets dropped on rx */
+	struct dp_pkt_info replenished; /* total packets replnished */
+	struct dp_pkt_info to_stack;    /* total packets sent up the stack */
+	struct dp_pkt_info intra_bss;   /* Intra BSS packets received */
+	struct dp_pkt_info wds;         /* WDS packets received */
+	struct dp_pkt_info desc;
+	struct dp_pkt_info buff;
+	struct dp_pkt_info raw;         /* Raw Pakets received */
+	struct {
+		uint32_t rxdma_unitialized; /* rxdma_unitialized errors */
+		uint32_t desc_alloc_fail; /* desc alloc failed errors */
+	} err;                          /* Rx errors */
+	uint32_t buf_freelist;         /* buffers added back in freelist */
+	uint32_t mcs_count[MAX_MCS + 1]; /* packets in different MCS rates */
+	uint32_t sgi_count[MAX_MCS + 1]; /* SGI count */
+	/*  Number of MSDUs with no MPDU level aggregation */
+	uint32_t non_ampdu_cnt;
+	/* Number of MSDUs part of AMSPU */
+	uint32_t ampdu_cnt;
+	/* Number of MSDUs with no MSDU level aggregation */
+	uint32_t non_amsdu_cnt;
+	/* Number of MSDUs part of AMSDU*/
+	uint32_t amsdu_cnt;
+	/* Packet count in spatiel Streams */
+	uint32_t nss[SS_COUNT];
+	/* Packet count in different Bandwidths */
+	uint32_t bw[SUPPORTED_BW];
+	/* reception type os packets */
+	uint32_t reception_type[SUPPORTED_RECEPTION_TYPES];
+};
+
 /* SOC level structure for data path */
 struct dp_soc {
 	/* Common base structure - Should be the first member */
@@ -442,8 +557,31 @@ struct dp_soc {
 
 	/* SoC level data path statistics */
 	struct {
+		struct {
+			/* descriptors in each tcl ring */
+			uint32_t tcl_ring_full[MAX_TCL_RING];
+			/* Descriptors in use at soc */
+			uint32_t desc_in_use;
+		} tx;  /* SOC level TX stats */
+		struct {
+			struct {
+				/* Invalid RBM error count */
+				uint32_t invalid_rbm;
+				/* Invalid VDEV Error count */
+				uint32_t invalid_vdev;
+				/* Invalid PDEV error count */
+				uint32_t invalid_pdev;
+				/* HAL ring access Fail error count */
+				uint32_t hal_ring_access_fail;
+				/* RX DMA error count */
+				uint32_t rxdma_error[MAX_RXDMA_ERRORS];
+				/* REO Error count */
+				uint32_t reo_error[
+					HAL_REO_ERR_QUEUE_DESC_BLOCKED_SET+1];
+			} err; /* Rx eerors */
+		} rx;  /* SOC level RX stats */
 		/* TBD */
-	} stats;
+	} stats; /* TxRx SOC level stats */
 
 	/* Enable processing of Tx completion status words */
 	bool process_tx_status;
@@ -520,6 +658,8 @@ struct dp_pdev {
 
 	/* PDEV level data path statistics */
 	struct {
+		struct dp_tx_pdev_stats tx; /* per pdev tx stats */
+		struct dp_rx_pdev_stats rx; /* per pdev rx stats */
 		/* TBD */
 	} stats;
 

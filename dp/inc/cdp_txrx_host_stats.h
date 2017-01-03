@@ -37,22 +37,22 @@
 /* Need to rename the function to reflect the functionality "show" / "display"
  * WIN -- to figure out whether to change OSIF to converge (not an immediate AI)
  * */
+/**
+ * cdp_host_stats_get: cdp call to get host stats
+ * @soc: SOC handle
+ * @req: Requirement type
+ * @type: Host stat type
+ *
+ * return: 0 for Success, Failure returns error message
+ */
 static inline int cdp_host_stats_get(ol_txrx_soc_handle soc,
 	struct cdp_vdev *vdev,
-	struct ol_txrx_stats_req *req)
+	struct ol_txrx_stats_req *req, enum cdp_host_txrx_stats type)
 {
 	if (soc->ops->host_stats_ops->txrx_host_stats_get)
-		return soc->ops->host_stats_ops->txrx_host_stats_get(vdev, req);
+		return soc->ops->host_stats_ops->txrx_host_stats_get(vdev, req,
+				type);
 	return 0;
-}
-
-
-static inline void
-cdp_host_stats_clr(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
-{
-	if (soc->ops->host_stats_ops->txrx_host_stats_clr)
-		return soc->ops->host_stats_ops->txrx_host_stats_clr(vdev);
-	return;
 }
 
 static inline void
@@ -212,7 +212,6 @@ cdp_reset_lro_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 		return soc->ops->host_stats_ops->reset_lro_stats(vdev);
 	return;
 }
-
 
 /**
  * @brief Parse the stats header and get the payload from the message.
