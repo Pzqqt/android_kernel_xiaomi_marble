@@ -66,9 +66,6 @@
 #include <dispatcher_init_deinit.h>
 /* Preprocessor Definitions and Constants */
 
-/* Maximum number of cds message queue get wrapper failures to cause panic */
-#define CDS_WRAPPER_MAX_FAIL_COUNT (CDS_CORE_MAX_MESSAGES * 3)
-
 /* Data definitions */
 static cds_context_type g_cds_context;
 static p_cds_contextType gp_cds_context;
@@ -269,7 +266,6 @@ static QDF_STATUS cds_deregister_all_modules(void)
 QDF_STATUS cds_open(void)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	int iter = 0;
 	tSirRetStatus sirStatus = eSIR_SUCCESS;
 	struct cds_config_info *cds_cfg;
 	qdf_device_t qdf_ctx;
@@ -312,38 +308,19 @@ QDF_STATUS cds_open(void)
 		goto err_probe_event;
 	}
 
-	/* Initialize the free message queue */
-	qdf_status = cds_mq_init(&gp_cds_context->freeVosMq);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		/* Critical Error ...  Cannot proceed further */
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			  "%s: Failed to initialize CDS free message queue",
-			  __func__);
-		QDF_ASSERT(0);
-		goto err_wma_complete_event;
-	}
-
-	for (iter = 0; iter < CDS_CORE_MAX_MESSAGES; iter++) {
-		(gp_cds_context->aMsgWrappers[iter]).pVosMsg =
-			&(gp_cds_context->aMsgBuffers[iter]);
-		INIT_LIST_HEAD(&gp_cds_context->aMsgWrappers[iter].msgNode);
-		cds_mq_put(&gp_cds_context->freeVosMq,
-			   &(gp_cds_context->aMsgWrappers[iter]));
-	}
-
 	pHddCtx = (hdd_context_t *) (gp_cds_context->pHDDContext);
 	if ((NULL == pHddCtx) || (NULL == pHddCtx->config)) {
 		/* Critical Error ...  Cannot proceed further */
 		cds_err("Hdd Context is Null");
 		QDF_ASSERT(0);
-		goto err_msg_queue;
+		goto err_wma_complete_event;
 	}
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_create(
 				&cds_ctx->qdf_conc_list_lock))) {
 		cds_err("Failed to init qdf_conc_list_lock");
 		QDF_ASSERT(0);
-		goto err_msg_queue;
+		goto err_wma_complete_event;
 	}
 
 	/* Now Open the CDS Scheduler */
@@ -539,9 +516,6 @@ err_sched_close:
 
 err_concurrency_lock:
 	qdf_mutex_destroy(&cds_ctx->qdf_conc_list_lock);
-
-err_msg_queue:
-	cds_mq_deinit(&gp_cds_context->freeVosMq);
 
 err_wma_complete_event:
 	qdf_event_destroy(&gp_cds_context->wmaCompleteEvent);
@@ -979,8 +953,6 @@ QDF_STATUS cds_close(v_CONTEXT_t cds_context)
 			  "%s: Failed to close wma_wmi_service", __func__);
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
-
-	cds_mq_deinit(&((p_cds_contextType) cds_context)->freeVosMq);
 
 	qdf_status = qdf_event_destroy(&gp_cds_context->wmaCompleteEvent);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {

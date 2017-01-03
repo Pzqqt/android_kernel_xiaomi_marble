@@ -63,18 +63,6 @@
 #define WD_WLAN_SHUTDOWN_EVENT_MASK      0x008
 #define WD_WLAN_REINIT_EVENT_MASK        0x010
 
-/*
- * Maximum number of messages in the system
- * These are buffers to account for all current messages
- * with some accounting of what we think is a
- * worst-case scenario.  Must be able to handle all
- * incoming frames, as well as overhead for internal
- * messaging
- *
- * Increased to 8000 to handle more RX frames
- */
-#define CDS_CORE_MAX_MESSAGES 8000
-
 #ifdef QCA_CONFIG_SMP
 /*
 ** Maximum number of cds messages to be allocated for
@@ -213,14 +201,6 @@ typedef struct _cds_msg_wrapper {
 } cds_msg_wrapper, *p_cds_msg_wrapper;
 
 typedef struct _cds_context_type {
-	/* Messages buffers */
-	cds_msg_t aMsgBuffers[CDS_CORE_MAX_MESSAGES];
-
-	cds_msg_wrapper aMsgWrappers[CDS_CORE_MAX_MESSAGES];
-
-	/* Free Message queue */
-	cds_mq_type freeVosMq;
-
 	/* Scheduler Context */
 	cds_sched_context qdf_sched;
 
