@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -745,4 +745,17 @@ static inline uint8_t *wlan_psoc_get_hw_macaddr(struct wlan_objmgr_psoc *psoc)
 		return NULL;
 	return psoc->soc_nif.soc_hw_macaddr;
 }
+
+/**
+ * wlan_objmgr_psoc_get_comp_private_obj(): API to retrieve component object
+ * @psoc: Psoc pointer
+ * @id: component id
+ *
+ * This API is used to get the component private object pointer tied to the
+ * corresponding psoc object
+ *
+ * Return: Component private object
+ */
+void *wlan_objmgr_psoc_get_comp_private_obj(struct wlan_objmgr_psoc *psoc,
+					enum wlan_umac_comp_id id);
 #endif /* _WLAN_OBJMGR_PSOC_OBJ_H_*/

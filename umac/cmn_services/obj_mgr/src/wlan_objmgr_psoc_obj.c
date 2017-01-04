@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -440,24 +440,24 @@ QDF_STATUS wlan_objmgr_iterate_obj_list(
 	return QDF_STATUS_SUCCESS;
 }
 
-void wlan_objmgr_psoc_peer_delete(struct wlan_objmgr_psoc *psoc, void *obj,
-						 void *args)
+static void wlan_objmgr_psoc_peer_delete(struct wlan_objmgr_psoc *psoc,
+					 void *obj, void *args)
 {
 	struct wlan_objmgr_peer *peer = (struct wlan_objmgr_peer *)obj;
 
 	wlan_objmgr_peer_obj_delete(peer);
 }
 
-void wlan_objmgr_psoc_vdev_delete(struct wlan_objmgr_psoc *psoc, void *obj,
-							void *args)
+static void wlan_objmgr_psoc_vdev_delete(struct wlan_objmgr_psoc *psoc,
+					 void *obj, void *args)
 {
 	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)obj;
 
 	wlan_objmgr_vdev_obj_delete(vdev);
 }
 
-void wlan_objmgr_psoc_pdev_delete(struct wlan_objmgr_psoc *psoc, void *obj,
-							void *args)
+static void wlan_objmgr_psoc_pdev_delete(struct wlan_objmgr_psoc *psoc,
+					 void *obj, void *args)
 {
 	struct wlan_objmgr_pdev *pdev = (struct wlan_objmgr_pdev *)obj;
 
@@ -773,7 +773,7 @@ static QDF_STATUS wlan_obj_psoc_peerlist_remove_peer(
 	return QDF_STATUS_SUCCESS;
 }
 
-struct wlan_objmgr_peer *wlan_obj_psoc_peerlist_get_peer(
+static struct wlan_objmgr_peer *wlan_obj_psoc_peerlist_get_peer(
 				qdf_list_t *obj_list,
 				uint8_t *macaddr)
 {
@@ -878,3 +878,19 @@ struct wlan_objmgr_peer *wlan_objmgr_find_peer(
 	wlan_psoc_obj_unlock(psoc);
 	return peer;
 }
+
+void *wlan_objmgr_psoc_get_comp_private_obj(struct wlan_objmgr_psoc *psoc,
+					enum wlan_umac_comp_id id)
+{
+	void *comp_private_obj;
+
+	if (!psoc)
+		return NULL;
+
+	wlan_psoc_obj_lock(psoc);
+	comp_private_obj = psoc->soc_comp_priv_obj[id];
+	wlan_psoc_obj_unlock(psoc);
+
+	return comp_private_obj;
+}
+

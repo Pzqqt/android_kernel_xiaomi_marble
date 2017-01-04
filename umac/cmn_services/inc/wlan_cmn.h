@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -40,6 +40,8 @@
 #define WLAN_UMAC_MAX_AP_PEERS WLAN_UMAC_PSOC_MAX_PEERS
 /* Max no. of peers for STA vap */
 #define WLAN_UMAC_MAX_STA_PEERS 2
+/* Max vdev_id */
+#define WLAN_UMAC_VDEV_ID_MAX 0xFF
 
 /* 802.11 cap info */
 #define WLAN_CAPINFO_ESS               0x0001
@@ -60,15 +62,15 @@
 /* Allowed time to wait for Object creation  */
 #define WLAN_VDEV_CREATE_TIMEOUT_CNT 300
  /* 25 msec */
-#define WLAN_VDEV_CREATE_TIMEOUT ((CONVERT_SEC_TO_SYSTEM_TIME(1)/40) + 1)
+#define WLAN_VDEV_CREATE_TIMEOUT 25
 
 #define WLAN_PDEV_CREATE_TIMEOUT_CNT 300
  /* 25 msec */
-#define WLAN_PDEV_CREATE_TIMEOUT ((CONVERT_SEC_TO_SYSTEM_TIME(1)/40) + 1)
+#define WLAN_PDEV_CREATE_TIMEOUT 25
 
 #define WLAN_PSOC_CREATE_TIMEOUT_CNT 300
 /* 25 msec */
-#define WLAN_PSOC_CREATE_TIMEOUT ((CONVERT_SEC_TO_SYSTEM_TIME(1)/40) + 1)
+#define WLAN_PSOC_CREATE_TIMEOUT 25
 
 /**
  * enum wlan_umac_comp_id - UMAC component id
@@ -153,6 +155,7 @@ enum wlan_phymode {
  * @WLAN_PEER_TDLS:     TDLS Peer
  * @WLAN_PEER_NAWDS:    NAWDS Peer
  * @WLAN_PEER_STA_TEMP: STA Peer Temp (its host only node)
+ * @WLAN_PEER_IBSS:     IBSS Peer
  */
 enum wlan_peer_type {
 	WLAN_PEER_SELF     = 1,
@@ -161,6 +164,7 @@ enum wlan_peer_type {
 	WLAN_PEER_TDLS     = 4,
 	WLAN_PEER_NAWDS    = 5,
 	WLAN_PEER_STA_TEMP = 6,
+	WLAN_PEER_IBSS     = 7,
 };
 
 /* MAC address length */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -22,7 +22,7 @@
 #define _WLAN_OBJMGR_GLOBAL_OBJ_H_
 
 /**
- * wlan_objmgr_global_obj_create() - Creates global object
+ * wlan_objmgr_global_obj_init() - global object initialization
  *
  * Creates global object, intializes with default values
  *
@@ -30,10 +30,10 @@
  *         FAILURE  on Mem alloc failure or allocated already
  *
  */
-QDF_STATUS wlan_objmgr_global_obj_create(void);
+QDF_STATUS wlan_objmgr_global_obj_init(void);
 
 /**
- * wlan_objmgr_global_obj_delete() - Deletes global object
+ * wlan_objmgr_global_obj_deinit() - global object deinitialization
  *
  * Deletes global object
  *
@@ -41,7 +41,7 @@ QDF_STATUS wlan_objmgr_global_obj_create(void);
  *         FAILURE  on object is not found
  *
  */
-QDF_STATUS wlan_objmgr_global_obj_delete(void);
+QDF_STATUS wlan_objmgr_global_obj_deinit(void);
 
 /**
  * wlan_objmgr_global_obj_can_deleted() - Checks whether global object

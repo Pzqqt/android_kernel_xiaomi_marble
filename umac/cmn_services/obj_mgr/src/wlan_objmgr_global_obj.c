@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -36,7 +36,7 @@ const char *wlan_umac_component_name[] = {
 /*
 ** APIs to Create/Delete Global object APIs
 */
-QDF_STATUS wlan_objmgr_global_obj_create(void)
+QDF_STATUS wlan_objmgr_global_obj_init(void)
 {
 	struct wlan_objmgr_global *umac_global_obj;
 
@@ -60,9 +60,9 @@ QDF_STATUS wlan_objmgr_global_obj_create(void)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_objmgr_global_obj_create);
+EXPORT_SYMBOL(wlan_objmgr_global_obj_init);
 
-QDF_STATUS wlan_objmgr_global_obj_delete(void)
+QDF_STATUS wlan_objmgr_global_obj_deinit(void)
 {
 	/* If it is already deleted */
 	if (g_umac_glb_obj == NULL) {
@@ -80,7 +80,7 @@ QDF_STATUS wlan_objmgr_global_obj_delete(void)
 	g_umac_glb_obj = NULL;
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_objmgr_global_obj_delete);
+EXPORT_SYMBOL(wlan_objmgr_global_obj_deinit);
 
 /**
  ** APIs to register/unregister handlers
