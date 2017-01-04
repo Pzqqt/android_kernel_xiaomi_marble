@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -33,6 +33,10 @@
 
 /* Include Files */
 #include <qdf_trace.h>
+#include <linux/export.h>
+
+#ifdef CONFIG_MCL
+
 #include <wlan_logging_sock_svc.h>
 #include "qdf_time.h"
 #include "qdf_mc_timer.h"
@@ -1718,3 +1722,22 @@ void qdf_dp_trace_dump_all(uint32_t count)
 }
 EXPORT_SYMBOL(qdf_dp_trace_dump_all);
 #endif
+
+#endif /* CONFIG_MCL */
+
+void QDF_PRINT_INFO(unsigned int idx, QDF_MODULE_ID module,
+		    QDF_TRACE_LEVEL level,
+		    char *str_format, ...)
+{
+	va_list args;
+
+	/* Generic wrapper API will compile qdf_vprint in order to
+	 * log the message. Once QDF converged debug framework is in
+	 * place, this will be changed to adapt to the framework, compiling
+	 * call to converged tracing API
+	 */
+	va_start(args, str_format);
+	qdf_vprint(str_format, args);
+	va_end(args);
+}
+EXPORT_SYMBOL(QDF_PRINT_INFO);

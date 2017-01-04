@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -85,6 +85,34 @@ typedef enum {
 #define QDF_DEBUG_ERROR         0x20
 #define QDF_DEBUG_CFG           0x40
 
+/*
+ * Shared print control index
+ * for converged debug framework
+ */
+#define QDF_PRINT_IDX_SHARED -1
+
+/**
+ * QDF_PRINT_INFO() - Generic wrapper API for logging
+ * @idx: Index of print control object
+ * @module: Module identifier. A member of QDF_MODULE_ID enumeration that
+ *           identifies the module issuing the trace message
+ * @level: Trace level. A member of QDF_TRACE_LEVEL enumeration indicating
+ *          the severity of the condition causing the trace message to be
+ *          issued.
+ * @str_format: Format string that contains the message to be logged.
+ * @...:.
+ *
+ *
+ * This wrapper will be used for any generic logging messages. Wrapper will
+ * compile a call to converged QDF trace message API.
+ *
+ * Return: Nothing
+ *
+ */
+void QDF_PRINT_INFO(unsigned int idx, QDF_MODULE_ID module,
+		    QDF_TRACE_LEVEL level,
+		    char *str_format, ...);
+
 #ifdef CONFIG_MCL
 /* By default Data Path module will have all log levels enabled, except debug
  * log level. Debug level will be left up to the framework or user space modules
@@ -102,8 +130,6 @@ typedef enum {
 #define MAX_QDF_TRACE_RECORDS 4000
 #define INVALID_QDF_TRACE_ADDR 0xffffffff
 #define DEFAULT_QDF_TRACE_DUMP_COUNT 0
-
-#include  <i_qdf_trace.h>
 
 #define DUMP_DP_TRACE       0
 #define ENABLE_DP_TRACE_LIVE_MODE	1
