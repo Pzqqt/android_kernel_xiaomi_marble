@@ -381,6 +381,9 @@ int pld_pcie_wlan_enable(struct device *dev, struct pld_wlan_enable_cfg *config,
 	cfg.num_shadow_reg_cfg = config->num_shadow_reg_cfg;
 	cfg.shadow_reg_cfg = (struct cnss_shadow_reg_cfg *)
 		config->shadow_reg_cfg;
+	cfg.num_shadow_reg_v2_cfg = config->num_shadow_reg_v2_cfg;
+	cfg.shadow_reg_v2_cfg = (struct cnss_shadow_reg_v2_cfg *)
+		config->shadow_reg_v2_cfg;
 
 	switch (mode) {
 	case PLD_FTM:
