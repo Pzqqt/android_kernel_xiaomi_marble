@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1810,6 +1810,9 @@ void *wma_vdev_attach(tp_wma_handle wma_handle,
 	wma_register_wow_wakeup_events(wma_handle, self_sta_req->session_id,
 					self_sta_req->type,
 					self_sta_req->sub_type);
+
+	wma_register_action_frame_patterns(wma_handle,
+					self_sta_req->session_id);
 	wma_register_wow_default_patterns(wma_handle, self_sta_req->session_id);
 
 end:

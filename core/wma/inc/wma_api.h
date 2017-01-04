@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -175,6 +175,9 @@ void wma_enable_disable_wakeup_event(WMA_HANDLE handle,
 void wma_register_wow_wakeup_events(WMA_HANDLE handle, uint8_t vdev_id,
 					uint8_t vdev_type, uint8_t sub_type);
 void wma_register_wow_default_patterns(WMA_HANDLE handle, uint8_t vdev_id);
+QDF_STATUS wma_register_action_frame_patterns(WMA_HANDLE handle,
+					uint8_t vdev_id);
+
 int8_t wma_get_hw_mode_idx_from_dbs_hw_list(enum hw_mode_ss_config mac0_ss,
 		enum hw_mode_bandwidth mac0_bw,
 		enum hw_mode_ss_config mac1_ss,
