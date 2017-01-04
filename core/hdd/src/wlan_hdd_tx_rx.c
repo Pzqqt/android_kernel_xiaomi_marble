@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -193,11 +193,6 @@ void hdd_tx_resume_cb(void *adapter_context, bool tx_resume)
 		    qdf_mc_timer_get_current_state(&pAdapter->
 						   tx_flow_control_timer)) {
 			qdf_mc_timer_stop(&pAdapter->tx_flow_control_timer);
-		}
-		if (qdf_unlikely(hdd_sta_ctx->hdd_ReassocScenario)) {
-			hddLog(LOGW,
-			       FL("flow control, tx queues un-pause avoided as we are in REASSOCIATING state"));
-			       return;
 		}
 		hddLog(LOG1, FL("Enabling queues"));
 		wlan_hdd_netif_queue_control(pAdapter,
