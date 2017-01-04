@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -536,6 +536,7 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 {
 	struct ol_txrx_peer_t *peer;
 	int i = 0;
+	int32_t ref_cnt;
 
 	if (peer_id == HTT_INVALID_PEER) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
@@ -550,12 +551,12 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 		/* This peer_id belongs to a peer already deleted */
 		qdf_atomic_dec(&pdev->peer_id_to_obj_map[peer_id].
 					del_peer_id_ref_cnt);
+		ref_cnt = qdf_atomic_read(&pdev->peer_id_to_obj_map[peer_id].
+							del_peer_id_ref_cnt);
 		qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 			   "%s: Remove the ID %d reference to deleted peer. del_peer_id_ref_cnt %d",
-			   __func__, peer_id,
-			   qdf_atomic_read(&pdev->peer_id_to_obj_map[peer_id].
-							del_peer_id_ref_cnt));
+			   __func__, peer_id, ref_cnt);
 		return;
 	}
 	peer = pdev->peer_id_to_obj_map[peer_id].peer;
@@ -583,11 +584,11 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 			}
 		}
 	}
-	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-		   "%s: Remove the ID %d reference to peer %p peer_id_ref_cnt %d",
-		   __func__, peer_id, peer,
-		   qdf_atomic_read
-			(&pdev->peer_id_to_obj_map[peer_id].peer_id_ref_cnt));
+
+	ref_cnt = qdf_atomic_read
+		(&pdev->peer_id_to_obj_map[peer_id].peer_id_ref_cnt);
+
+	qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
 
 	/*
 	 * Remove a reference to the peer.
@@ -595,7 +596,9 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 	 */
 	ol_txrx_peer_unref_delete(peer);
 
-	qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
+	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+	   "%s: Remove the ID %d reference to peer %p peer_id_ref_cnt %d",
+	   __func__, peer_id, peer, ref_cnt);
 }
 
 /**
