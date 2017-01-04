@@ -41,6 +41,7 @@
 #include <linux/skbuff.h>
 #include <linux/etherdevice.h>
 #include <linux/if_ether.h>
+#include <linux/inetdevice.h>
 #include <cds_sched.h>
 #include <cds_utils.h>
 
@@ -1017,6 +1018,62 @@ static bool hdd_is_mcast_replay(struct sk_buff *skb)
 }
 
 /**
+* hdd_is_arp_local() - check if local or non local arp
+* @skb: pointer to sk_buff
+*
+* Return: true if local arp or false otherwise.
+*/
+static bool hdd_is_arp_local(struct sk_buff *skb)
+{
+	struct arphdr *arp;
+	struct in_ifaddr **ifap = NULL;
+	struct in_ifaddr *ifa = NULL;
+	struct in_device *in_dev;
+	unsigned char *arp_ptr;
+	__be32 tip;
+
+	arp = (struct arphdr *)skb->data;
+	if (arp->ar_op == htons(ARPOP_REQUEST)) {
+		in_dev = __in_dev_get_rtnl(skb->dev);
+		if (in_dev) {
+			for (ifap = &in_dev->ifa_list; (ifa = *ifap) != NULL;
+				ifap = &ifa->ifa_next) {
+				if (!strcmp(skb->dev->name, ifa->ifa_label))
+					break;
+			}
+		}
+
+		if (ifa && ifa->ifa_local) {
+			arp_ptr = (unsigned char *)(arp + 1);
+			arp_ptr += (skb->dev->addr_len + 4 +
+					skb->dev->addr_len);
+			memcpy(&tip, arp_ptr, 4);
+			hdd_info("ARP packet: local IP: %x dest IP: %x",
+				ifa->ifa_local, tip);
+			if (ifa->ifa_local != tip)
+				return false;
+		}
+	}
+
+	return true;
+}
+
+/**
+* hdd_is_rx_wake_lock_needed() - check if wake lock is needed
+* @skb: pointer to sk_buff
+*
+* Return: true if wake lock is needed or false otherwise.
+*/
+static bool hdd_is_rx_wake_lock_needed(struct sk_buff *skb)
+{
+	if ((skb->pkt_type != PACKET_BROADCAST &&
+	     skb->pkt_type != PACKET_MULTICAST) || hdd_is_arp_local(skb))
+		return true;
+
+	return false;
+}
+
+/**
  * hdd_rx_packet_cbk() - Receive packet handler
  * @context: pointer to HDD context
  * @rxBuf: pointer to rx qdf_nbuf
@@ -1038,7 +1095,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 	hdd_station_ctx_t *pHddStaCtx = NULL;
 	unsigned int cpu_index;
 	struct qdf_mac_addr *mac_addr;
-
+	bool wake_lock = false;
 
 	/* Sanity check on inputs */
 	if (unlikely((NULL == context) || (NULL == rxBuf))) {
@@ -1127,9 +1184,10 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		}
 
 		/* hold configurable wakelock for unicast traffic */
-		if (pHddCtx->config->rx_wakelock_timeout &&
-			skb->pkt_type != PACKET_BROADCAST &&
-			skb->pkt_type != PACKET_MULTICAST) {
+		if (pHddCtx->config->rx_wakelock_timeout)
+			wake_lock = hdd_is_rx_wake_lock_needed(skb);
+
+		if (wake_lock) {
 			cds_host_diag_log_work(&pHddCtx->rx_wake_lock,
 						   pHddCtx->config->rx_wakelock_timeout,
 						   WIFI_POWER_EVENT_WAKELOCK_HOLD_RX);
