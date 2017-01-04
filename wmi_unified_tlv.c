@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -7369,6 +7369,50 @@ QDF_STATUS send_egap_conf_params_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * send_action_frame_patterns_cmd_tlv() - send wmi cmd of action filter params
+ * @wmi_handle: wmi handler
+ * @action_params: pointer to action_params
+ *
+ * Return: 0 for success, otherwise appropriate error code
+ */
+QDF_STATUS send_action_frame_patterns_cmd_tlv(wmi_unified_t wmi_handle,
+				struct action_wakeup_set_param *action_params)
+{
+	WMI_WOW_SET_ACTION_WAKE_UP_CMD_fixed_param *cmd;
+	wmi_buf_t buf;
+	int i;
+	int32_t err;
+
+	buf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
+	if (!buf) {
+		WMI_LOGE("Failed to allocate buffer to send action filter cmd");
+		return QDF_STATUS_E_NOMEM;
+	}
+	cmd = (WMI_WOW_SET_ACTION_WAKE_UP_CMD_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_wow_set_action_wake_up_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+				WMI_WOW_SET_ACTION_WAKE_UP_CMD_fixed_param));
+
+	cmd->vdev_id = action_params->vdev_id;
+	cmd->operation = action_params->operation;
+
+	for (i = 0; i < MAX_SUPPORTED_ACTION_CATEGORY_ELE_LIST; i++)
+		cmd->action_category_map[i] =
+				action_params->action_category_map[i];
+
+	err = wmi_unified_cmd_send(wmi_handle, buf,
+			sizeof(*cmd), WMI_WOW_SET_ACTION_WAKE_UP_CMDID);
+	if (err) {
+		WMI_LOGE("Failed to send ap_ps_egap cmd");
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * send_fw_profiling_cmd_tlv() - send FW profiling cmd to WLAN FW
  * @wmi_handl: wmi handle
  * @cmd: Profiling command index
@@ -12981,6 +13025,7 @@ struct wmi_ops tlv_ops =  {
 	.send_process_dhcp_ind_cmd = send_process_dhcp_ind_cmd_tlv,
 	.send_get_link_speed_cmd = send_get_link_speed_cmd_tlv,
 	.send_egap_conf_params_cmd = send_egap_conf_params_cmd_tlv,
+	.send_action_frame_patterns_cmd = send_action_frame_patterns_cmd_tlv,
 	.send_bcn_buf_ll_cmd = send_bcn_buf_ll_cmd_tlv,
 	.send_process_update_edca_param_cmd =
 				 send_process_update_edca_param_cmd_tlv,

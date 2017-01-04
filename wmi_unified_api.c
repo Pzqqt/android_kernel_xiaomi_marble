@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -2213,7 +2213,28 @@ QDF_STATUS wmi_unified_egap_conf_params_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
 #endif
+
+/**
+ * wmi_unified_action_frame_patterns_cmd() - send wmi cmd of action filter params
+ * @wmi_handle: wmi handler
+ * @action_params: pointer to action_params
+ *
+ * Return: 0 for success, otherwise appropriate error code
+ */
+QDF_STATUS wmi_unified_action_frame_patterns_cmd(void *wmi_hdl,
+				struct action_wakeup_set_param *action_params)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_action_frame_patterns_cmd)
+		return wmi_handle->ops->send_action_frame_patterns_cmd(
+				wmi_handle,
+				action_params);
+
+	return QDF_STATUS_E_FAILURE;
+}
 
 /**
  * wmi_unified_fw_profiling_data_cmd() - send FW profiling cmd to WLAN FW
