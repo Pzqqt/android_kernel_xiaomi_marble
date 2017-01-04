@@ -884,13 +884,21 @@ void *wlan_objmgr_psoc_get_comp_private_obj(struct wlan_objmgr_psoc *psoc,
 {
 	void *comp_private_obj;
 
-	if (!psoc)
-		return NULL;
+	/* This API is invoked with lock acquired, don't add any debug prints */
 
-	wlan_psoc_obj_lock(psoc);
+	/* component id is invalid */
+	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
+		QDF_BUG(0);
+		return NULL;
+	}
+
+	if (psoc == NULL) {
+		QDF_BUG(0);
+		return NULL;
+	}
+
 	comp_private_obj = psoc->soc_comp_priv_obj[id];
-	wlan_psoc_obj_unlock(psoc);
 
 	return comp_private_obj;
 }
-
+EXPORT_SYMBOL(wlan_objmgr_psoc_get_comp_private_obj);

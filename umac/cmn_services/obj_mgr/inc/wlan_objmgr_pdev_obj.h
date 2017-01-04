@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -325,6 +325,22 @@ struct wlan_objmgr_vdev *wlan_objmgr_find_vdev_by_id_from_pdev(
  */
 struct wlan_objmgr_vdev *wlan_objmgr_find_vdev_by_macaddr_from_pdev(
 		struct wlan_objmgr_pdev *pdev, uint8_t *macaddr);
+
+/**
+ * wlan_objmgr_pdev_get_comp_private_obj() - get pdev component private object
+ * @pdev: PDEV object
+ * @id: Component id
+ *
+ * API to get component private object
+ *
+ * Caller need to acquire lock with wlan_pdev_obj_lock()
+ *
+ * Return: void *ptr on SUCCESS
+ *         NULL on Failure
+ */
+void *wlan_objmgr_pdev_get_comp_private_obj(
+		struct wlan_objmgr_pdev *pdev,
+		enum wlan_umac_comp_id id);
 
 /**
  * wlan_pdev_obj_lock() - Acquire PDEV spinlock

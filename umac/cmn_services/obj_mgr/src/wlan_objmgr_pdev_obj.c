@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -626,3 +626,27 @@ struct wlan_objmgr_vdev *wlan_objmgr_find_vdev_by_macaddr_from_pdev(
 	wlan_pdev_obj_unlock(pdev);
 	return NULL;
 }
+
+void *wlan_objmgr_pdev_get_comp_private_obj(
+		struct wlan_objmgr_pdev *pdev,
+		enum wlan_umac_comp_id id)
+{
+	void *comp_priv_obj;
+
+	/* This API is invoked with lock acquired, don't add any debug prints */
+
+	/* component id is invalid */
+	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
+		QDF_BUG(0);
+		return NULL;
+	}
+
+	if (pdev == NULL) {
+		QDF_BUG(0);
+		return NULL;
+	}
+
+	comp_priv_obj = pdev->pdev_comp_priv_obj[id];
+	return comp_priv_obj;
+}
+EXPORT_SYMBOL(wlan_objmgr_pdev_get_comp_private_obj);

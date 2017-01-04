@@ -592,3 +592,27 @@ QDF_STATUS wlan_objmgr_vdev_peer_detach(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+void *wlan_objmgr_vdev_get_comp_private_obj(
+		struct wlan_objmgr_vdev *vdev,
+		enum wlan_umac_comp_id id)
+{
+	void *comp_priv_obj;
+
+	/* This API is invoked with lock acquired, don't add any debug prints */
+
+	/* component id is invalid */
+	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
+		QDF_BUG(0);
+		return NULL;
+	}
+
+	if (vdev == NULL) {
+		QDF_BUG(0);
+		return NULL;
+	}
+
+	comp_priv_obj = vdev->vdev_comp_priv_obj[id];
+
+	return comp_priv_obj;
+}
+EXPORT_SYMBOL(wlan_objmgr_vdev_get_comp_private_obj);

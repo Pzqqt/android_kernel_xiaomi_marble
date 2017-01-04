@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -455,6 +455,22 @@ QDF_STATUS wlan_objmgr_trigger_vdev_comp_priv_object_creation(
  *         On FAILURE (appropriate failure codes are returned)
  */
 QDF_STATUS wlan_objmgr_trigger_vdev_comp_priv_object_deletion(
+		struct wlan_objmgr_vdev *vdev,
+		enum wlan_umac_comp_id id);
+
+/**
+ * wlan_objmgr_vdev_get_comp_private_obj() - get vdev component private object
+ * @vdev: VDEV object
+ * @id: Component id
+ *
+ * API to get component private object
+ *
+ * Caller need to acquire lock with wlan_vdev_obj_lock()
+ *
+ * Return: void *ptr on SUCCESS
+ *         NULL on Failure
+ */
+void *wlan_objmgr_vdev_get_comp_private_obj(
 		struct wlan_objmgr_vdev *vdev,
 		enum wlan_umac_comp_id id);
 
