@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -356,6 +356,9 @@ QDF_STATUS send_get_link_speed_cmd_tlv(wmi_unified_t wmi_handle,
 
 QDF_STATUS send_egap_conf_params_cmd_tlv(wmi_unified_t wmi_handle,
 				     wmi_ap_ps_egap_param_cmd_fixed_param *egap_params);
+
+QDF_STATUS send_action_frame_patterns_cmd_tlv(wmi_unified_t wmi_handle,
+		struct action_wakeup_set_param *action_params);
 
 QDF_STATUS send_fw_profiling_cmd_tlv(wmi_unified_t wmi_handle,
 			uint32_t cmd, uint32_t value1, uint32_t value2);
