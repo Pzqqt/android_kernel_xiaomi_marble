@@ -197,7 +197,8 @@ static QDF_STATUS lim_ndp_responder_rsp_handler(tpAniSirGlobal mac_ctx,
 		goto responder_rsp;
 	}
 
-	if (QDF_STATUS_SUCCESS == rsp_ind->status) {
+	if (QDF_STATUS_SUCCESS == rsp_ind->status &&
+		rsp_ind->create_peer == true) {
 		ret_val = lim_add_ndi_peer(mac_ctx, rsp_ind->vdev_id,
 				rsp_ind->peer_mac_addr);
 		if (QDF_STATUS_SUCCESS != ret_val) {

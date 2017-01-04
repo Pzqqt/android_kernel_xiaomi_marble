@@ -6580,7 +6580,7 @@ struct ndp_responder_req {
  * @status: command status
  * @reason: reason for failure if any
  * @peer_mac_addr: Peer's mac address
- *
+ * @create_peer: Flag to indicate to create peer
  */
 struct ndp_responder_rsp_event {
 	uint32_t transaction_id;
@@ -6588,6 +6588,7 @@ struct ndp_responder_rsp_event {
 	uint32_t status;
 	uint32_t reason;
 	struct qdf_mac_addr peer_mac_addr;
+	bool create_peer;
 };
 
 /**

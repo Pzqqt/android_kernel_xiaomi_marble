@@ -523,8 +523,15 @@ static int wma_ndp_responder_rsp_event_handler(void *handle,
 	rsp.transaction_id = fixed_params->transaction_id;
 	rsp.reason = fixed_params->reason_code;
 	rsp.status = fixed_params->rsp_status;
+	rsp.create_peer = fixed_params->create_peer;
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&fixed_params->peer_ndi_mac_addr,
 				rsp.peer_mac_addr.bytes);
+
+	WMA_LOGD(FL("WMI_NDP_RESPONDER_RSP_EVENTID(0x%X) received. vdev_id: %d, peer_mac_addr: %pM,transaction_id: %d, status_code %d, reason_code: %d, create_peer: %d"),
+			WMI_NDP_RESPONDER_RSP_EVENTID, rsp.vdev_id,
+			rsp.peer_mac_addr.bytes, rsp.transaction_id,
+			rsp.status, rsp.reason, rsp.create_peer);
+
 	pe_msg.bodyptr = &rsp;
 	pe_msg.type = SIR_HAL_NDP_RESPONDER_RSP;
 	return wma_handle->pe_ndp_event_handler(wma_handle->mac_context,
