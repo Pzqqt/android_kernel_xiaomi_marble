@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -4770,6 +4770,76 @@ enum cds_two_connection_mode cds_get_third_connection_pcl_table_index(void)
 				index = CDS_P2P_GO_SAP_DBS_1x1;
 			} else {
 				index = CDS_P2P_GO_SAP_DBS_2x2;
+			}
+		}
+	} else    /* STA + STA */
+	if (((CDS_STA_MODE == conc_connection_list[0].mode) &&
+		(CDS_STA_MODE == conc_connection_list[1].mode)) ||
+		((CDS_STA_MODE == conc_connection_list[0].mode) &&
+		(CDS_STA_MODE == conc_connection_list[1].mode))) {
+		/* SCC */
+		if (conc_connection_list[0].chan ==
+		conc_connection_list[1].chan) {
+			if (CDS_IS_CHANNEL_24GHZ
+				(conc_connection_list[0].chan)) {
+				if (CDS_ONE_ONE ==
+				conc_connection_list[0].chain_mask)
+					index = CDS_STA_STA_SCC_24_1x1;
+				else
+					index = CDS_STA_STA_SCC_24_2x2;
+			} else {
+				if (CDS_ONE_ONE ==
+				conc_connection_list[0].chain_mask)
+					index = CDS_STA_STA_SCC_5_1x1;
+				else
+					index = CDS_STA_STA_SCC_5_2x2;
+			}
+		/* MCC */
+		} else if (conc_connection_list[0].mac ==
+			conc_connection_list[1].mac) {
+			if ((CDS_IS_CHANNEL_24GHZ(
+				conc_connection_list[0].chan)) &&
+				(CDS_IS_CHANNEL_24GHZ(
+				conc_connection_list[1].chan))) {
+				if (CDS_ONE_ONE ==
+					conc_connection_list[0].chain_mask)
+					index = CDS_STA_STA_MCC_24_1x1;
+				else
+					index = CDS_STA_STA_MCC_24_2x2;
+			} else if ((CDS_IS_CHANNEL_5GHZ(
+				conc_connection_list[0].chan)) &&
+				(CDS_IS_CHANNEL_5GHZ(
+				conc_connection_list[1].chan))) {
+				if (CDS_ONE_ONE ==
+					conc_connection_list[0].chain_mask)
+					index = CDS_STA_STA_MCC_5_1x1;
+				else
+					index = CDS_STA_STA_MCC_5_2x2;
+			} else {
+				if (CDS_ONE_ONE ==
+					conc_connection_list[0].chain_mask)
+					index = CDS_STA_STA_MCC_24_5_1x1;
+				else
+					index = CDS_STA_STA_MCC_24_5_2x2;
+			}
+			/* SBS */
+		} else if (conc_connection_list[0].mac !=
+				conc_connection_list[1].mac) {
+			if ((CDS_IS_CHANNEL_5GHZ(
+				conc_connection_list[0].chan)) &&
+				(CDS_IS_CHANNEL_5GHZ(
+				conc_connection_list[1].chan))) {
+				if (CDS_ONE_ONE ==
+					conc_connection_list[0].chain_mask)
+					index = CDS_STA_STA_SBS_5_1x1;
+			}
+		/* DBS */
+		} else {
+			if (CDS_ONE_ONE ==
+				conc_connection_list[0].chain_mask) {
+				index = CDS_STA_STA_DBS_1x1;
+			} else {
+				index = CDS_STA_STA_DBS_2x2;
 			}
 		}
 	}

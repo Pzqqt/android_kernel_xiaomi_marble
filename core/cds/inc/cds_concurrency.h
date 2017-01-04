@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -612,6 +612,19 @@ enum cds_two_connection_mode {
 	CDS_SAP_SAP_DBS_1x1,
 	CDS_SAP_SAP_DBS_2x2,
 	CDS_SAP_SAP_SBS_5_1x1,
+	CDS_STA_STA_SCC_24_1x1,
+	CDS_STA_STA_SCC_24_2x2,
+	CDS_STA_STA_MCC_24_1x1,
+	CDS_STA_STA_MCC_24_2x2,
+	CDS_STA_STA_SCC_5_1x1,
+	CDS_STA_STA_SCC_5_2x2,
+	CDS_STA_STA_MCC_5_1x1,
+	CDS_STA_STA_MCC_5_2x2,
+	CDS_STA_STA_MCC_24_5_1x1,
+	CDS_STA_STA_MCC_24_5_2x2,
+	CDS_STA_STA_DBS_1x1,
+	CDS_STA_STA_DBS_2x2,
+	CDS_STA_STA_SBS_5_1x1,
 
 	CDS_MAX_TWO_CONNECTION_MODE
 };
