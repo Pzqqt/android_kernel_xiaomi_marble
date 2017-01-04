@@ -848,7 +848,8 @@ DP_OBJS := $(DP_SRC)/dp_main.o \
 		$(DP_SRC)/dp_rx_err.o \
 		$(DP_SRC)/dp_htt.o \
 		$(DP_SRC)/dp_peer.o \
-		$(DP_SRC)/dp_rx_desc.o
+		$(DP_SRC)/dp_rx_desc.o \
+		$(DP_SRC)/dp_reo.o
 
 ############ CFG ############
 WCFG_DIR := $(WLAN_COMMON_ROOT)/wlan_cfg
@@ -1028,7 +1029,8 @@ HAL_INC :=	-I$(WLAN_COMMON_INC)/$(HAL_DIR)/inc \
 
 HAL_OBJS :=	$(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/hal_srng.o \
 		$(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/hal_rx.o \
-		$(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/hal_wbm.o
+		$(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/hal_wbm.o \
+		$(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/hal_reo.o
 
 ############ WMA ############
 WMA_DIR :=	core/wma
