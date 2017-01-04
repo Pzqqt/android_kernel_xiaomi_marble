@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -25,6 +25,9 @@
 #define __DISPATCHER_INIT_H
 
 #include <qdf_types.h>
+#include <wlan_objmgr_cmn.h>
+#include <wlan_objmgr_psoc_obj.h>
+#include <wlan_objmgr_global_obj.h>
 
 /**
  * dispatcher_init(): API to init all new components
@@ -60,6 +63,7 @@ QDF_STATUS dispatcher_deinit(void);
 
 /**
  * dispatcher_psoc_open(): API to trigger PSOC open for all new components
+ * @psoc: psoc context
  *
  * This API calls all new components PSOC OPEN APIs. This is invoked from
  * HDD/OS_If layer during:
@@ -73,10 +77,11 @@ QDF_STATUS dispatcher_deinit(void);
  *
  * Return: none
  */
-QDF_STATUS dispatcher_psoc_open(void);
+QDF_STATUS dispatcher_psoc_open(struct wlan_objmgr_psoc *psoc);
 
 /**
  * dispatcher_psoc_close(): API to trigger PSOC close for all new components
+ * @psoc: psoc context
  *
  * This API calls all new components PSOC CLOSE APIs. This is invoked from
  * HDD/OS_If layer during:
@@ -89,11 +94,12 @@ QDF_STATUS dispatcher_psoc_open(void);
  *
  * Return: none
  */
-QDF_STATUS dispatcher_psoc_close(void);
+QDF_STATUS dispatcher_psoc_close(struct wlan_objmgr_psoc *psoc);
 
 /**
  * dispatcher_psoc_enable(): API to trigger PSOC enable(start) for all new
- *	components
+ *                           components
+ * @psoc: psoc context
  *
  * This API calls all new components PSOC enable(start) APIs. This is invoked
  * from HDD/OS_If layer during:
@@ -107,11 +113,12 @@ QDF_STATUS dispatcher_psoc_close(void);
  *
  * Return: none
  */
-QDF_STATUS dispatcher_psoc_enable(void);
+QDF_STATUS dispatcher_psoc_enable(struct wlan_objmgr_psoc *psoc);
 
 /**
  * dispatcher_psoc_disable(): API to trigger PSOC disable(stop) for all new
- *	components
+ *                            components
+ * @psoc: psoc context
  *
  * This API calls all new components PSOC disable(stop) APIs. This is invoked
  * from HDD/OS_If layer during:
@@ -126,6 +133,6 @@ QDF_STATUS dispatcher_psoc_enable(void);
  *
  * Return: none
  */
-QDF_STATUS dispatcher_psoc_disable(void);
+QDF_STATUS dispatcher_psoc_disable(struct wlan_objmgr_psoc *psoc);
 
 #endif /* End of  !defined(__DISPATCHER_INIT_H) */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -18,6 +18,7 @@
 
 #include <qdf_types.h>
 #include <qdf_trace.h>
+#include <qdf_threads.h>
 #include <dispatcher_init_deinit.h>
 #ifdef NAPIER_CODE
 #include <scheduler_api.h>
@@ -32,16 +33,6 @@
  * psoc_open, psco_close, psoc_enable and psoc_disable APIs once
  * thier actual handlers are ready
  */
-
-static QDF_STATUS obj_manager_init(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS obj_manager_deinit(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
 
 static QDF_STATUS scm_init(void)
 {
@@ -74,65 +65,65 @@ static QDF_STATUS tdls_deinit(void)
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS scm_psoc_open(void)
+static QDF_STATUS scm_psoc_open(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS scm_psoc_close(void)
+static QDF_STATUS scm_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS p2p_psoc_open(void)
+static QDF_STATUS p2p_psoc_open(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS p2p_psoc_close(void)
+static QDF_STATUS p2p_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS tdls_psoc_open(void)
+static QDF_STATUS tdls_psoc_open(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS tdls_psoc_close(void)
+static QDF_STATUS tdls_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS scm_psoc_enable(void)
+static QDF_STATUS scm_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS scm_psoc_disable(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-
-static QDF_STATUS p2p_psoc_enable(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS p2p_psoc_disable(void)
+static QDF_STATUS scm_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
 
-static QDF_STATUS tdls_psoc_enable(void)
+static QDF_STATUS p2p_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS p2p_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
 
-static QDF_STATUS tdls_psoc_disable(void)
+static QDF_STATUS tdls_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+
+static QDF_STATUS tdls_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -151,7 +142,7 @@ static QDF_STATUS scheduler_deinit(void)
 
 QDF_STATUS dispatcher_init(void)
 {
-	if (QDF_STATUS_SUCCESS != obj_manager_init())
+	if (QDF_STATUS_SUCCESS != wlan_objmgr_global_obj_init())
 		goto out;
 
 	if (QDF_STATUS_SUCCESS != scm_init())
@@ -175,7 +166,7 @@ tdls_init_fail:
 p2p_init_fail:
 	scm_deinit();
 scm_init_fail:
-	obj_manager_deinit();
+	wlan_objmgr_global_obj_deinit();
 
 out:
 	return QDF_STATUS_E_FAILURE;
@@ -191,73 +182,73 @@ QDF_STATUS dispatcher_deinit(void)
 
 	QDF_BUG(QDF_STATUS_SUCCESS == scm_deinit());
 
-	QDF_BUG(QDF_STATUS_SUCCESS == obj_manager_deinit());
+	QDF_BUG(QDF_STATUS_SUCCESS == wlan_objmgr_global_obj_deinit());
 
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS dispatcher_psoc_open(void)
+QDF_STATUS dispatcher_psoc_open(struct wlan_objmgr_psoc *psoc)
 {
-	if (QDF_STATUS_SUCCESS != scm_psoc_open())
+	if (QDF_STATUS_SUCCESS != scm_psoc_open(psoc))
 		goto out;
 
-	if (QDF_STATUS_SUCCESS != p2p_psoc_open())
+	if (QDF_STATUS_SUCCESS != p2p_psoc_open(psoc))
 		goto p2p_psoc_open_fail;
 
-	if (QDF_STATUS_SUCCESS != tdls_psoc_open())
+	if (QDF_STATUS_SUCCESS != tdls_psoc_open(psoc))
 		goto tdls_psoc_open_fail;
 
 	return QDF_STATUS_SUCCESS;
 
 tdls_psoc_open_fail:
-	p2p_psoc_close();
+	p2p_psoc_close(psoc);
 p2p_psoc_open_fail:
-	scm_psoc_close();
+	scm_psoc_close(psoc);
 
 out:
 	return QDF_STATUS_E_FAILURE;
 }
 
-QDF_STATUS dispatcher_psoc_close(void)
+QDF_STATUS dispatcher_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
-	QDF_BUG(QDF_STATUS_SUCCESS == tdls_psoc_close());
+	QDF_BUG(QDF_STATUS_SUCCESS == tdls_psoc_close(psoc));
 
-	QDF_BUG(QDF_STATUS_SUCCESS == p2p_psoc_close());
+	QDF_BUG(QDF_STATUS_SUCCESS == p2p_psoc_close(psoc));
 
-	QDF_BUG(QDF_STATUS_SUCCESS == scm_psoc_close());
+	QDF_BUG(QDF_STATUS_SUCCESS == scm_psoc_close(psoc));
 
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS dispatcher_psoc_enable(void)
+QDF_STATUS dispatcher_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
-	if (QDF_STATUS_SUCCESS != scm_psoc_enable())
+	if (QDF_STATUS_SUCCESS != scm_psoc_enable(psoc))
 		goto out;
 
-	if (QDF_STATUS_SUCCESS != p2p_psoc_enable())
+	if (QDF_STATUS_SUCCESS != p2p_psoc_enable(psoc))
 		goto p2p_psoc_enable_fail;
 
-	if (QDF_STATUS_SUCCESS != tdls_psoc_enable())
+	if (QDF_STATUS_SUCCESS != tdls_psoc_enable(psoc))
 		goto tdls_psoc_enable_fail;
 
 	return QDF_STATUS_SUCCESS;
 
 tdls_psoc_enable_fail:
-	p2p_psoc_disable();
+	p2p_psoc_disable(psoc);
 p2p_psoc_enable_fail:
-	scm_psoc_disable();
+	scm_psoc_disable(psoc);
 
 out:
 	return QDF_STATUS_E_FAILURE;
 }
 
-QDF_STATUS dispatcher_psoc_disable(void)
+QDF_STATUS dispatcher_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
-	QDF_BUG(QDF_STATUS_SUCCESS == tdls_psoc_disable());
+	QDF_BUG(QDF_STATUS_SUCCESS == tdls_psoc_disable(psoc));
 
-	QDF_BUG(QDF_STATUS_SUCCESS == p2p_psoc_disable());
+	QDF_BUG(QDF_STATUS_SUCCESS == p2p_psoc_disable(psoc));
 
-	QDF_BUG(QDF_STATUS_SUCCESS == scm_psoc_disable());
+	QDF_BUG(QDF_STATUS_SUCCESS == scm_psoc_disable(psoc));
 
 	return QDF_STATUS_SUCCESS;
 }
