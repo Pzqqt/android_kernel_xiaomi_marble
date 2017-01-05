@@ -5204,6 +5204,9 @@ static QDF_STATUS __hdd_ipa_cleanup(hdd_context_t *hdd_ctx)
 			    : "leak", i);
 	}
 	if (hdd_ipa_uc_is_enabled(hdd_ctx)) {
+		if (ipa_uc_dereg_rdyCB())
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
+					"UC Ready CB deregister fail");
 		hdd_ipa_uc_rt_debug_deinit(hdd_ctx);
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 			    "%s: Disconnect TX PIPE tx_pipe_handle=0x%x",
