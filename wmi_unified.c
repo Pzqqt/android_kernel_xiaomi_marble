@@ -1686,33 +1686,7 @@ static uint8_t *wmi_id_to_name(uint32_t wmi_command)
 }
 #endif
 
-
-/**
- * wmi_is_runtime_pm_cmd() - check if a cmd is from suspend resume sequence
- * @cmd: command to check
- *
- * Return: true if the command is part of the suspend resume sequence.
- */
 #ifdef CONFIG_MCL
-static bool wmi_is_runtime_pm_cmd(uint32_t cmd_id)
-{
-	switch (cmd_id) {
-	case WMI_WOW_ENABLE_CMDID:
-	case WMI_PDEV_SUSPEND_CMDID:
-	case WMI_WOW_ENABLE_DISABLE_WAKE_EVENT_CMDID:
-	case WMI_WOW_ADD_WAKE_PATTERN_CMDID:
-	case WMI_WOW_HOSTWAKEUP_FROM_SLEEP_CMDID:
-	case WMI_PDEV_RESUME_CMDID:
-	case WMI_WOW_DEL_WAKE_PATTERN_CMDID:
-	case WMI_WOW_SET_ACTION_WAKE_UP_CMDID:
-	case WMI_D0_WOW_ENABLE_DISABLE_CMDID:
-		return true;
-
-	default:
-		return false;
-	}
-}
-
 /**
  * wmi_is_pm_resume_cmd() - check if a cmd is part of the resume sequence
  * @cmd_id: command to check
@@ -1731,10 +1705,6 @@ static bool wmi_is_pm_resume_cmd(uint32_t cmd_id)
 	}
 }
 #else
-static bool wmi_is_runtime_pm_cmd(uint32_t cmd_id)
-{
-	return false;
-}
 static bool wmi_is_pm_resume_cmd(uint32_t cmd_id)
 {
 	return false;
@@ -1760,8 +1730,9 @@ QDF_STATUS wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf,
 	uint16_t htc_tag = 0;
 
 	if (wmi_get_runtime_pm_inprogress(wmi_handle)) {
-		if (wmi_is_runtime_pm_cmd(cmd_id))
-			htc_tag = HTC_TX_PACKET_TAG_AUTO_PM;
+		htc_tag =
+			(A_UINT16)wmi_handle->ops->wmi_set_htc_tx_tag(
+						wmi_handle, buf, cmd_id);
 	} else if (qdf_atomic_read(&wmi_handle->is_target_suspended) &&
 		(!wmi_is_pm_resume_cmd(cmd_id))) {
 		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
@@ -2504,6 +2475,26 @@ int wmi_get_pending_cmds(wmi_unified_t wmi_handle)
 void wmi_set_target_suspend(wmi_unified_t wmi_handle, A_BOOL val)
 {
 	qdf_atomic_set(&wmi_handle->is_target_suspended, val);
+}
+
+/**
+ * WMI API to set crash injection state
+ * @param wmi_handle:	handle to WMI.
+ * @param val:		crash injection state boolean.
+ */
+void wmi_tag_crash_inject(wmi_unified_t wmi_handle, A_BOOL flag)
+{
+	wmi_handle->tag_crash_inject = flag;
+}
+
+/**
+ * WMI API to set bus suspend state
+ * @param wmi_handle:	handle to WMI.
+ * @param val:		suspend state boolean.
+ */
+void wmi_set_is_wow_bus_suspended(wmi_unified_t wmi_handle, A_BOOL val)
+{
+	qdf_atomic_set(&wmi_handle->is_wow_bus_suspended, val);
 }
 
 #ifndef CONFIG_MCL
