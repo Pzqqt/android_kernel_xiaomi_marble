@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -27,6 +27,10 @@
 
 #include <scheduler_api.h>
 #include <scheduler_core.h>
+#include <qdf_atomic.h>
+
+/* Debug variable to detect if controller thread is stuck */
+static qdf_atomic_t scheduler_msg_post_fail_count;
 
 static void scheduler_flush_mqs(struct scheduler_ctx *sched_ctx)
 {
@@ -176,6 +180,7 @@ QDF_STATUS scheduler_post_msg_by_priority(QDF_MODULE_ID qid,
 		struct scheduler_msg *pMsg, bool is_high_priority)
 {
 	uint8_t qidx;
+	uint32_t msg_wrapper_fail_count;
 	struct scheduler_mq_type *target_mq = NULL;
 	struct scheduler_msg_wrapper *msg_wrapper = NULL;
 	struct scheduler_ctx *sched_ctx = scheduler_get_context();
@@ -227,12 +232,21 @@ QDF_STATUS scheduler_post_msg_by_priority(QDF_MODULE_ID qid,
 
 	/* Try and get a free Msg wrapper */
 	msg_wrapper = scheduler_mq_get(&sched_ctx->queue_ctx.free_msg_q);
-
 	if (NULL == msg_wrapper) {
-		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
-			  FL("message wrapper empty"));
+		msg_wrapper_fail_count =
+			qdf_atomic_inc_return(&scheduler_msg_post_fail_count);
+		/* log only 1st failure to avoid over running log buffer */
+		if (1 == msg_wrapper_fail_count) {
+			QDF_TRACE(QDF_MODULE_ID_SCHEDULER,
+				QDF_TRACE_LEVEL_ERROR,
+				FL("Scheduler message wrapper empty"));
+		}
+		if (SCHEDULER_WRAPPER_MAX_FAIL_COUNT == msg_wrapper_fail_count)
+			QDF_BUG(0);
+
 		return QDF_STATUS_E_RESOURCES;
 	}
+	qdf_atomic_set(&scheduler_msg_post_fail_count, 0);
 
 	/* Copy the message now */
 	qdf_mem_copy((void *)msg_wrapper->msg_buf,

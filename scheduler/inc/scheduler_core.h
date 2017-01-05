@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -33,6 +33,7 @@
 
 #define SCHEDULER_CORE_MAX_MESSAGES 8000
 #define SCHEDULER_NUMBER_OF_MSG_QUEUE 5
+#define SCHEDULER_WRAPPER_MAX_FAIL_COUNT (SCHEDULER_CORE_MAX_MESSAGES * 3)
 
 /**
  * struct scheduler_mq_type -  scheduler message queue
