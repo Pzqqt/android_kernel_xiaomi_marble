@@ -247,6 +247,20 @@ int wmi_get_pending_cmds(wmi_unified_t wmi_handle);
 void wmi_set_target_suspend(wmi_unified_t wmi_handle, bool val);
 
 /**
+ * WMI API to set bus suspend state
+ * @param wmi_handle:	handle to WMI.
+ * @param val:		suspend state boolean
+ */
+void wmi_set_is_wow_bus_suspended(wmi_unified_t wmi_handle, A_BOOL val);
+
+/**
+ * WMI API to set crash injection state
+ * @param wmi_handle:	handle to WMI.
+ * @param val:		crash injection state boolean
+ */
+void wmi_tag_crash_inject(wmi_unified_t wmi_handle, A_BOOL flag);
+
+/**
  * generic function to block unified WMI command
  * @param wmi_handle      : handle to WMI.
  * @return 0  on success and -ve on failure.
@@ -285,7 +299,6 @@ static inline bool wmi_get_runtime_pm_inprogress(wmi_unified_t wmi_handle)
 	return false;
 }
 #endif
-
 
 /**
  * UMAC Callback to process fw event.
