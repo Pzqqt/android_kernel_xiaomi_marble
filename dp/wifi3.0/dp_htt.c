@@ -134,7 +134,7 @@ dp_htt_h2t_send_complete_free_netbuf(
  * @context:	Opaque context (HTT SOC handle)
  * @htc_pkt:	HTC packet
  */
-void
+static void
 dp_htt_h2t_send_complete(void *context, HTC_PACKET *htc_pkt)
 {
 	void (*send_complete_part2)(
