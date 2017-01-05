@@ -7863,6 +7863,7 @@ int wma_fw_mem_dump_event_handler(void *handle, u_int8_t *cmd_param_info,
 QDF_STATUS wma_process_set_ie_info(tp_wma_handle wma,
 				   struct vdev_ie_info *ie_info)
 {
+	struct wma_txrx_node *interface;
 	struct vdev_ie_info_param cmd = {0};
 	int ret;
 
@@ -7874,6 +7875,17 @@ QDF_STATUS wma_process_set_ie_info(tp_wma_handle wma,
 	/* Validate the input */
 	if (ie_info->length  <= 0) {
 		WMA_LOGE(FL("Invalid IE length"));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (ie_info->vdev_id >= wma->max_bssid) {
+		WMA_LOGE(FL("Invalid vdev_id: %d"), ie_info->vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	interface = &wma->interfaces[ie_info->vdev_id];
+	if (!interface->is_vdev_valid) {
+		WMA_LOGE(FL("vdev_id: %d is not active"), ie_info->vdev_id);
 		return QDF_STATUS_E_INVAL;
 	}
 
