@@ -7030,7 +7030,13 @@ static int wlan_hdd_setup_driver_overrides(hdd_adapter_t *ap_adapter)
 	 *
 	 * Default override enabled (for android). MDM shall disable this in ini
 	 */
-	if (hdd_ctx->config->sap_p2p_11ac_override &&
+	/*
+	 * sub_20 MHz channel width is incompatible with 11AC rates, hence do
+	 * not allow 11AC rates or more than 20 MHz channel width when
+	 * enable_sub_20_channel_width is non zero
+	 */
+	if (!hdd_ctx->config->enable_sub_20_channel_width &&
+			hdd_ctx->config->sap_p2p_11ac_override &&
 			(sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11n ||
 			sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ac ||
 			sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ac_ONLY) &&
