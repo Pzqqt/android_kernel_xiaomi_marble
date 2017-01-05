@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -428,7 +428,7 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 	}
 
 	if (0 == (hdd_ctx->reg.eeprom_rd_ext &
-		  (1 << WHAL_REG_EXT_FCC_CH_144))) {
+		  (1 << WMI_REG_EXT_FCC_CH_144))) {
 		cds_chan = &(reg_channels[CHAN_ENUM_144]);
 		cds_chan->state = CHANNEL_STATE_DISABLE;
 		if (NULL != wiphy_chan_144)
