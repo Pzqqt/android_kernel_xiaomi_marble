@@ -111,6 +111,7 @@
 #include "cds_utils.h"
 #include <cdp_txrx_handle.h>
 #include <qca_vendor.h>
+#include "wlan_pmo_ucfg_api.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -1833,6 +1834,14 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("Failed to Open CDS: %d", status);
 			goto destroy_psoc_object;
+		}
+
+		/* initalize components configurations  after psoc open */
+		ret = hdd_update_components_config(hdd_ctx);
+		if (ret) {
+			hdd_err("Failed to update components configs :%d",
+				ret);
+			goto close;
 		}
 
 		hdd_ctx->driver_status = DRIVER_MODULES_OPENED;
@@ -10151,6 +10160,86 @@ int hdd_update_config(hdd_context_t *hdd_ctx)
 		ret = hdd_update_cds_config_ftm(hdd_ctx);
 	else
 		ret = hdd_update_cds_config(hdd_ctx);
+
+	return ret;
+}
+
+#ifdef FEATURE_WLAN_RA_FILTERING
+/**
+ * hdd_ra_populate_cds_config() - Populate RA filtering cds configuration
+ * @psoc_cfg: pmo psoc Configuration
+ * @hdd_ctx: Pointer to hdd context
+ *
+ * Return: none
+ */
+static inline void hdd_ra_populate_pmo_config(
+			struct pmo_psoc_cfg *psoc_cfg,
+			hdd_context_t *hdd_ctx)
+{
+	psoc_cfg->ra_ratelimit_interval =
+		hdd_ctx->config->RArateLimitInterval;
+	psoc_cfg->ra_ratelimit_enable =
+		hdd_ctx->config->IsRArateLimitEnabled;
+}
+#else
+static inline void hdd_ra_populate_pmo_config(
+			struct cds_config_info *cds_cfg,
+			hdd_context_t *hdd_ctx)
+{
+}
+#endif
+/**
+ * hdd_update_pmo_config - API to update pmo configuration parameters
+ * @hdd_ctx: HDD context
+ *
+ * Return: void
+ */
+static int hdd_update_pmo_config(hdd_context_t *hdd_ctx)
+{
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
+	struct pmo_psoc_cfg psoc_cfg;
+	QDF_STATUS status;
+
+	/*
+	 * Value of hdd_ctx->wowEnable can be,
+	 * 0 - Disable both magic pattern match and pattern byte match.
+	 * 1 - Enable magic pattern match on all interfaces.
+	 * 2 - Enable pattern byte match on all interfaces.
+	 * 3 - Enable both magic patter and pattern byte match on
+	 *     all interfaces.
+	 */
+	psoc_cfg.magic_ptrn_enable =
+		(hdd_ctx->config->wowEnable & 0x01) ? true : false;
+	psoc_cfg.ptrn_match_enable_all_vdev =
+		(hdd_ctx->config->wowEnable & 0x02) ? true : false;
+	psoc_cfg.bpf_enable =
+		hdd_ctx->config->bpf_packet_filter_enable;
+	psoc_cfg.arp_offload_enable = hdd_ctx->config->fhostArpOffload;
+	psoc_cfg.ns_offload_enable_static = hdd_ctx->config->fhostNSOffload;
+	if (hdd_ctx->config->fhostNSOffload)
+		psoc_cfg.ns_offload_enable_dynamic = true;
+	psoc_cfg.ssdp = hdd_ctx->config->ssdp;
+	psoc_cfg.enable_mc_list = hdd_ctx->config->fEnableMCAddrList;
+	psoc_cfg.active_mode_offload =
+		hdd_ctx->config->active_mode_offload;
+	psoc_cfg.ap_arpns_support = hdd_ctx->ap_arpns_support;
+	psoc_cfg.max_wow_filters = hdd_ctx->config->maxWoWFilters;
+
+	hdd_ra_populate_pmo_config(&psoc_cfg, hdd_ctx);
+	status = pmo_ucfg_update_psoc_config(psoc, &psoc_cfg);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("failed pmo psoc configuration");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+int hdd_update_components_config(hdd_context_t *hdd_ctx)
+{
+	int ret;
+
+	ret = hdd_update_pmo_config(hdd_ctx);
 
 	return ret;
 }

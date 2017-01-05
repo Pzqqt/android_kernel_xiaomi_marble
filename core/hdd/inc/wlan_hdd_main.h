@@ -68,6 +68,7 @@
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_peer_obj.h>
+#include "wlan_pmo_ucfg_api.h"
 
 /*
  * Preprocessor definitions and constants
@@ -1916,6 +1917,15 @@ enum phy_ch_width hdd_map_nl_chan_width(enum nl80211_chan_width ch_width);
 uint8_t wlan_hdd_find_opclass(tHalHandle hal, uint8_t channel,
 			uint8_t bw_offset);
 int hdd_update_config(hdd_context_t *hdd_ctx);
+
+/**
+ * hdd_update_components_config() - Initialize driver per module ini parameters
+ * @hdd_ctx: HDD Context
+ *
+ * API is used to initialize components configuration parameters
+ * Return: 0 for success, errno for failure
+ */
+int hdd_update_components_config(hdd_context_t *hdd_ctx);
 
 QDF_STATUS hdd_chan_change_notify(hdd_adapter_t *adapter,
 		struct net_device *dev,
