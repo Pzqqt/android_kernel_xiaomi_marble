@@ -411,6 +411,22 @@ struct wlan_objmgr_peer *wlan_objmgr_find_peer(
 			struct wlan_objmgr_psoc *psoc, uint8_t *macaddr);
 
 /**
+ * wlan_objmgr_find_peer_by_mac_n_vdev() - find peer from psoc's peer list
+ *                                          using mac address and bssid
+ * @psoc: PSOC object
+ * @macaddr: MAC address
+ * @bssid: MAC address of AP its associated
+ *
+ * API to find peer object pointer by MAC addr and vdev self mac address
+ *
+ * Return: peer pointer
+ *         NULL on FAILURE
+ */
+struct wlan_objmgr_peer *wlan_objmgr_find_peer_by_mac_n_vdev(
+			struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
+			uint8_t *bssid);
+
+/**
  * wlan_objmgr_find_pdev_by_id() - retrieve pdev by id
  * @psoc: PSOC object
  * @id: pdev id
