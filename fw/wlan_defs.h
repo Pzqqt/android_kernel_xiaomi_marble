@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -257,7 +257,7 @@ typedef struct {
     A_UINT32 high_5ghz_chan;
 } HAL_REG_CAPABILITIES;
 
-
+#ifdef NUM_SPATIAL_STREAM
 /*
  * The rate control definitions below are only used in the target.
  * (Host-based rate control is no longer applicable.)
@@ -337,6 +337,7 @@ typedef struct {
     } while (0)
 
 #endif /* !((NUM_SPATIAL_STREAM > 4) || SUPPORT_11AX) */ /* above N/A for Lithium */
+#endif
 
 /* NOTE: NUM_DYN_BW and NUM_SCHED_ENTRIES cannot be changed without breaking WMI Compatibility */
 #define NUM_SCHED_ENTRIES           2
@@ -358,6 +359,7 @@ typedef struct {
 
 #define MAX_IBSS_PEERS 32
 
+#ifdef NUM_SPATIAL_STREAM
 /*
  * RC_TX_RATE_SCHEDULE and RC_TX_RATE_INFO defs are used only in the target.
  * (Host-based rate control is no longer applicable.)
@@ -439,6 +441,7 @@ typedef struct {
       A_UINT8     dd_profile;
   } RC_TX_RATE_INFO;
 #endif /* !((NUM_SPATIAL_STREAM > 4) || SUPPORT_11AX) */
+#endif
 
 /*
  * Temporarily continue to provide the WHAL_RC_INIT_RC_MASKS def in wlan_defs.h
