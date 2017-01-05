@@ -489,6 +489,7 @@ void *wlan_objmgr_vdev_get_comp_private_obj(
 static inline struct wlan_objmgr_pdev *wlan_vdev_get_pdev(
 				struct wlan_objmgr_vdev *vdev)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	return vdev->vdev_objmgr.wlan_pdev;
 }
 
@@ -509,6 +510,7 @@ static inline struct wlan_objmgr_vdev *wlan_pdev_vdev_list_peek_head(
 	struct wlan_objmgr_vdev *vdev;
 	qdf_list_node_t *vdev_node = NULL;
 
+	/* This API is invoked with lock acquired, do not add log prints */
 	if (qdf_list_peek_front(vdev_list, &vdev_node) != QDF_STATUS_SUCCESS)
 		return NULL;
 
@@ -535,6 +537,7 @@ static inline struct wlan_objmgr_vdev *wlan_vdev_get_next_vdev_of_pdev(
 	qdf_list_node_t *node = &vdev->vdev_node;
 	qdf_list_node_t *next_node = NULL;
 
+	/* This API is invoked with lock acquired, do not add log prints */
 	if (node == NULL)
 		return NULL;
 
@@ -561,6 +564,7 @@ static inline struct wlan_objmgr_vdev *wlan_vdev_get_next_vdev_of_pdev(
 static inline void wlan_vdev_set_pdev(struct wlan_objmgr_vdev *vdev,
 					struct wlan_objmgr_pdev *pdev)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	vdev->vdev_objmgr.wlan_pdev = pdev;
 }
 
@@ -579,6 +583,7 @@ static inline struct wlan_objmgr_psoc *wlan_vdev_get_psoc(
 {
 	struct wlan_objmgr_pdev *pdev;
 
+	/* This API is invoked with lock acquired, do not add log prints */
 	pdev = wlan_vdev_get_pdev(vdev);
 	if (pdev == NULL)
 		return NULL;
@@ -600,6 +605,7 @@ static inline struct wlan_objmgr_psoc *wlan_vdev_get_psoc(
 static inline void wlan_vdev_mlme_set_opmode(struct wlan_objmgr_vdev *vdev,
 				enum tQDF_ADAPTER_MODE mode)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	vdev->vdev_mlme.vdev_opmode = mode;
 }
 
@@ -617,6 +623,7 @@ static inline void wlan_vdev_mlme_set_opmode(struct wlan_objmgr_vdev *vdev,
 static inline enum tQDF_ADAPTER_MODE wlan_vdev_mlme_get_opmode(
 					struct wlan_objmgr_vdev *vdev)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	return vdev->vdev_mlme.vdev_opmode;
 }
 
@@ -634,6 +641,7 @@ static inline enum tQDF_ADAPTER_MODE wlan_vdev_mlme_get_opmode(
 static inline void wlan_vdev_mlme_set_macaddr(struct wlan_objmgr_vdev *vdev,
 					 uint8_t *macaddr)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	WLAN_ADDR_COPY(vdev->vdev_mlme.macaddr, macaddr);
 }
 
@@ -650,6 +658,7 @@ static inline void wlan_vdev_mlme_set_macaddr(struct wlan_objmgr_vdev *vdev,
  */
 static inline uint8_t *wlan_vdev_mlme_get_macaddr(struct wlan_objmgr_vdev *vdev)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	return vdev->vdev_mlme.macaddr;
 }
 
@@ -667,6 +676,7 @@ static inline uint8_t *wlan_vdev_mlme_get_macaddr(struct wlan_objmgr_vdev *vdev)
 static inline void wlan_vdev_mlme_set_mataddr(struct wlan_objmgr_vdev *vdev,
 					uint8_t *mataddr)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	WLAN_ADDR_COPY(vdev->vdev_mlme.mataddr, mataddr);
 }
 
@@ -683,6 +693,7 @@ static inline void wlan_vdev_mlme_set_mataddr(struct wlan_objmgr_vdev *vdev,
  */
 static inline uint8_t *wlan_vdev_mlme_get_mataddr(struct wlan_objmgr_vdev *vdev)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	return vdev->vdev_mlme.mataddr;
 }
 
@@ -699,6 +710,7 @@ static inline uint8_t *wlan_vdev_mlme_get_mataddr(struct wlan_objmgr_vdev *vdev)
  */
 static inline uint8_t wlan_vdev_get_id(struct wlan_objmgr_vdev *vdev)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	return vdev->vdev_objmgr.vdev_id;
 }
 
@@ -717,6 +729,7 @@ static inline uint8_t *wlan_vdev_get_hw_macaddr(struct wlan_objmgr_vdev *vdev)
 {
 	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
 
+	/* This API is invoked with lock acquired, do not add log prints */
 	if (pdev != NULL) {
 		return wlan_pdev_get_hw_macaddr(pdev);
 	} else {
@@ -742,6 +755,7 @@ static inline QDF_STATUS wlan_vdev_mlme_set_ssid(
 				struct wlan_objmgr_vdev *vdev,
 				const uint8_t *ssid, uint8_t ssid_len)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	if (ssid_len < WLAN_SSID_MAX_LEN) {
 		qdf_mem_copy(vdev->vdev_mlme.ssid, ssid, ssid_len);
 		vdev->vdev_mlme.ssid_len = ssid_len;
@@ -770,6 +784,7 @@ static inline QDF_STATUS wlan_vdev_mlme_get_ssid(
 				struct wlan_objmgr_vdev *vdev,
 				 uint8_t *ssid, uint8_t *ssid_len)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	if (vdev->vdev_mlme.ssid_len > 0) {
 		*ssid_len = vdev->vdev_mlme.ssid_len;
 		qdf_mem_copy(ssid, vdev->vdev_mlme.ssid, *ssid_len);
@@ -820,6 +835,7 @@ static inline void wlan_vdev_obj_unlock(struct wlan_objmgr_vdev *vdev)
 static inline void wlan_vdev_mlme_set_bss_chan(struct wlan_objmgr_vdev *vdev,
 			struct wlan_channel *bss_chan)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	vdev->vdev_mlme.bss_chan = bss_chan;
 }
 
@@ -837,6 +853,7 @@ static inline void wlan_vdev_mlme_set_bss_chan(struct wlan_objmgr_vdev *vdev,
 static inline struct wlan_channel *wlan_vdev_mlme_get_bss_chan(
 				struct wlan_objmgr_vdev *vdev)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	return vdev->vdev_mlme.bss_chan;
 }
 
@@ -854,6 +871,7 @@ static inline struct wlan_channel *wlan_vdev_mlme_get_bss_chan(
 static inline void wlan_vdev_mlme_set_des_chan(struct wlan_objmgr_vdev *vdev,
 			struct wlan_channel *des_chan)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	vdev->vdev_mlme.des_chan = des_chan;
 }
 
@@ -871,6 +889,7 @@ static inline void wlan_vdev_mlme_set_des_chan(struct wlan_objmgr_vdev *vdev,
 static inline struct wlan_channel *wlan_vdev_mlme_get_des_chan(
 				struct wlan_objmgr_vdev *vdev)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	return vdev->vdev_mlme.des_chan;
 }
 
@@ -888,6 +907,7 @@ static inline struct wlan_channel *wlan_vdev_mlme_get_des_chan(
 static inline void wlan_vdev_mlme_set_nss(struct wlan_objmgr_vdev *vdev,
 			uint8_t nss)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	vdev->vdev_mlme.nss = nss;
 }
 
@@ -905,6 +925,7 @@ static inline void wlan_vdev_mlme_set_nss(struct wlan_objmgr_vdev *vdev,
 static inline uint8_t wlan_vdev_mlme_get_nss(
 				struct wlan_objmgr_vdev *vdev)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	return vdev->vdev_mlme.nss;
 }
 
@@ -922,6 +943,7 @@ static inline uint8_t wlan_vdev_mlme_get_nss(
 static inline void wlan_vdev_mlme_set_chainmask(struct wlan_objmgr_vdev *vdev,
 			uint8_t chainmask)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	vdev->vdev_mlme.chainmask = chainmask;
 }
 
@@ -939,6 +961,7 @@ static inline void wlan_vdev_mlme_set_chainmask(struct wlan_objmgr_vdev *vdev,
 static inline uint8_t wlan_vdev_mlme_get_chainmask(
 				struct wlan_objmgr_vdev *vdev)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	return vdev->vdev_mlme.chainmask;
 }
 
@@ -956,6 +979,7 @@ static inline uint8_t wlan_vdev_mlme_get_chainmask(
 static inline void wlan_vdev_mlme_set_txpower(struct wlan_objmgr_vdev *vdev,
 			uint8_t txpow)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	vdev->vdev_mlme.tx_power = txpow;
 }
 
@@ -973,6 +997,7 @@ static inline void wlan_vdev_mlme_set_txpower(struct wlan_objmgr_vdev *vdev,
 static inline uint8_t wlan_vdev_mlme_get_txpower(
 				struct wlan_objmgr_vdev *vdev)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	return vdev->vdev_mlme.tx_power;
 }
 
@@ -990,6 +1015,7 @@ static inline uint8_t wlan_vdev_mlme_get_txpower(
 static inline void wlan_vdev_mlme_set_maxrate(struct wlan_objmgr_vdev *vdev,
 			uint32_t maxrate)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	vdev->vdev_mlme.max_rate = maxrate;
 }
 
@@ -1007,6 +1033,7 @@ static inline void wlan_vdev_mlme_set_maxrate(struct wlan_objmgr_vdev *vdev,
 static inline uint32_t wlan_vdev_mlme_get_maxrate(
 				struct wlan_objmgr_vdev *vdev)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	return vdev->vdev_mlme.max_rate;
 }
 
@@ -1024,6 +1051,7 @@ static inline uint32_t wlan_vdev_mlme_get_maxrate(
 static inline void wlan_vdev_mlme_set_txmgmtrate(struct wlan_objmgr_vdev *vdev,
 			uint32_t txmgmtrate)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	vdev->vdev_mlme.tx_mgmt_rate = txmgmtrate;
 }
 
@@ -1041,6 +1069,7 @@ static inline void wlan_vdev_mlme_set_txmgmtrate(struct wlan_objmgr_vdev *vdev,
 static inline uint32_t wlan_vdev_mlme_get_txmgmtrate(
 				struct wlan_objmgr_vdev *vdev)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	return vdev->vdev_mlme.tx_mgmt_rate;
 }
 
@@ -1058,6 +1087,7 @@ static inline uint32_t wlan_vdev_mlme_get_txmgmtrate(
 static inline void wlan_vdev_mlme_feat_cap_set(struct wlan_objmgr_vdev *vdev,
 				uint32_t cap)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	vdev->vdev_mlme.vdev_feat_caps |= cap;
 }
 
@@ -1075,6 +1105,7 @@ static inline void wlan_vdev_mlme_feat_cap_set(struct wlan_objmgr_vdev *vdev,
 static inline void wlan_vdev_mlme_feat_cap_clear(struct wlan_objmgr_vdev *vdev,
 				uint32_t cap)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	vdev->vdev_mlme.vdev_feat_caps &= ~cap;
 }
 
@@ -1093,6 +1124,7 @@ static inline void wlan_vdev_mlme_feat_cap_clear(struct wlan_objmgr_vdev *vdev,
 static inline uint8_t wlan_vdev_mlme_feat_cap_get(struct wlan_objmgr_vdev *vdev,
 				uint32_t cap)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	return (vdev->vdev_mlme.vdev_feat_caps & cap) ? 1 : 0;
 }
 
@@ -1111,6 +1143,7 @@ static inline void wlan_vdev_mlme_feat_ext_cap_set(
 				struct wlan_objmgr_vdev *vdev,
 				uint32_t cap)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	vdev->vdev_mlme.vdev_feat_ext_caps |= cap;
 }
 
@@ -1129,6 +1162,7 @@ static inline void wlan_vdev_mlme_feat_ext_cap_clear(
 				struct wlan_objmgr_vdev *vdev,
 				uint32_t cap)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	vdev->vdev_mlme.vdev_feat_ext_caps &= ~cap;
 }
 
@@ -1148,6 +1182,7 @@ static inline uint8_t wlan_vdev_mlme_feat_ext_cap_get(
 				struct wlan_objmgr_vdev *vdev,
 				uint32_t cap)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	return (vdev->vdev_mlme.vdev_feat_ext_caps & cap) ? 1 : 0;
 }
 
@@ -1165,6 +1200,7 @@ static inline uint8_t wlan_vdev_mlme_feat_ext_cap_get(
 static inline void wlan_vdev_mlme_cap_set(struct wlan_objmgr_vdev *vdev,
 				uint32_t cap)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	vdev->vdev_mlme.vdev_caps |= cap;
 }
 
@@ -1182,6 +1218,7 @@ static inline void wlan_vdev_mlme_cap_set(struct wlan_objmgr_vdev *vdev,
 static inline void wlan_vdev_mlme_cap_clear(struct wlan_objmgr_vdev *vdev,
 				uint32_t cap)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	vdev->vdev_mlme.vdev_caps &= ~cap;
 }
 
@@ -1200,6 +1237,7 @@ static inline void wlan_vdev_mlme_cap_clear(struct wlan_objmgr_vdev *vdev,
 static inline uint8_t wlan_vdev_mlme_cap_get(struct wlan_objmgr_vdev *vdev,
 				uint32_t cap)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	return (vdev->vdev_mlme.vdev_caps & cap) ? 1 : 0;
 }
 
@@ -1216,6 +1254,7 @@ static inline uint8_t wlan_vdev_mlme_cap_get(struct wlan_objmgr_vdev *vdev,
 static inline enum wlan_vdev_state wlan_vdev_mlme_get_state(
 				struct wlan_objmgr_vdev *vdev)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	return vdev->vdev_mlme.mlme_state;
 }
 
@@ -1233,6 +1272,7 @@ static inline enum wlan_vdev_state wlan_vdev_mlme_get_state(
 static inline void wlan_vdev_mlme_set_state(struct wlan_objmgr_vdev *vdev,
 					enum wlan_vdev_state state)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	if (state < WLAN_VDEV_S_MAX)
 		vdev->vdev_mlme.mlme_state = state;
 }
@@ -1251,6 +1291,7 @@ static inline void wlan_vdev_mlme_set_state(struct wlan_objmgr_vdev *vdev,
 static inline void wlan_vdev_set_selfpeer(struct wlan_objmgr_vdev *vdev,
 						struct wlan_objmgr_peer *peer)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	vdev->vdev_objmgr.self_peer = peer;
 }
 
@@ -1268,6 +1309,7 @@ static inline void wlan_vdev_set_selfpeer(struct wlan_objmgr_vdev *vdev,
 static inline struct wlan_objmgr_peer *wlan_vdev_get_selfpeer(
 					struct wlan_objmgr_vdev *vdev)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	return vdev->vdev_objmgr.self_peer;
 }
 
@@ -1285,6 +1327,7 @@ static inline struct wlan_objmgr_peer *wlan_vdev_get_selfpeer(
 static inline void wlan_vdev_set_bsspeer(struct wlan_objmgr_vdev *vdev,
 						 struct wlan_objmgr_peer *peer)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	vdev->vdev_objmgr.bss_peer = peer;
 }
 
@@ -1302,6 +1345,23 @@ static inline void wlan_vdev_set_bsspeer(struct wlan_objmgr_vdev *vdev,
 static inline struct wlan_objmgr_peer *wlan_vdev_get_bsspeer(
 					struct wlan_objmgr_vdev *vdev)
 {
+	/* This API is invoked with lock acquired, do not add log prints */
 	return vdev->vdev_objmgr.bss_peer;
+}
+
+/**
+ * wlan_vdev_get_ospriv() - get os priv pointer
+ * @vdev: VDEV object
+ *
+ * API to get OS private pointer from VDEV
+ *
+ * Caller need to acquire lock with wlan_vdev_obj_lock()
+ *
+ * Return: ospriv - private pointer
+ */
+static inline void *wlan_vdev_get_ospriv(struct wlan_objmgr_vdev *vdev)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	return vdev->vdev_nif.osdev;
 }
 #endif /* _WLAN_OBJMGR_VDEV_OBJ_H_*/

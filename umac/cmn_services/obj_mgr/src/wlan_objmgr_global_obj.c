@@ -19,7 +19,7 @@
   * DOC: Public APIs to perform operations on Global objects
   */
 
-#include <wlan_objmgr_global_obj_i.h>
+#include "wlan_objmgr_global_obj_i.h"
 #include <wlan_objmgr_global_obj.h>
 #include "qdf_mem.h"
 

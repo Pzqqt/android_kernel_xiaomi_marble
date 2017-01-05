@@ -21,14 +21,14 @@
 
 #include <wlan_objmgr_cmn.h>
 #include <wlan_objmgr_global_obj.h>
-#include <wlan_objmgr_global_obj_i.h>
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_peer_obj.h>
-#include <wlan_objmgr_psoc_obj_i.h>
-#include <wlan_objmgr_pdev_obj_i.h>
 #include <qdf_mem.h>
+#include "wlan_objmgr_global_obj_i.h"
+#include "wlan_objmgr_psoc_obj_i.h"
+#include "wlan_objmgr_pdev_obj_i.h"
 
 /**
  ** APIs to Create/Delete Global object APIs
@@ -446,6 +446,7 @@ QDF_STATUS wlan_objmgr_iterate_obj_list(
 
 	return QDF_STATUS_SUCCESS;
 }
+EXPORT_SYMBOL(wlan_objmgr_iterate_obj_list);
 
 static void wlan_objmgr_psoc_peer_delete(struct wlan_objmgr_psoc *psoc,
 					 void *obj, void *args)

@@ -20,15 +20,15 @@
  */
 #include <wlan_objmgr_cmn.h>
 #include <wlan_objmgr_global_obj.h>
-#include <wlan_objmgr_global_obj_i.h>
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_peer_obj.h>
-#include <wlan_objmgr_psoc_obj_i.h>
-#include <wlan_objmgr_pdev_obj_i.h>
-#include <wlan_objmgr_vdev_obj_i.h>
 #include <qdf_mem.h>
+#include "wlan_objmgr_global_obj_i.h"
+#include "wlan_objmgr_psoc_obj_i.h"
+#include "wlan_objmgr_pdev_obj_i.h"
+#include "wlan_objmgr_vdev_obj_i.h"
 
 
 /**
@@ -100,6 +100,8 @@ struct wlan_objmgr_peer *wlan_objmgr_peer_obj_create(
 	wlan_peer_set_peer_type(peer, type);
 	/* set mac address of peer */
 	wlan_peer_set_macaddr(peer, macaddr);
+	/* initialize peer state */
+	wlan_peer_mlme_set_state(peer, WLAN_INIT_STATE);
 	/* Attach peer to psoc, psoc maintains the node table for the device */
 	if (wlan_objmgr_psoc_peer_attach(psoc, peer) !=
 					QDF_STATUS_SUCCESS) {
