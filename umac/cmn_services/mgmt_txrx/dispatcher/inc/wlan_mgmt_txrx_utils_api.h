@@ -594,6 +594,39 @@ enum mgmt_frame_type {
 	MGMT_MAX_FRAME_TYPE,
 };
 
+#define WLAN_MGMT_TXRX_HOST_MAX_ANTENNA 4
+
+/**
+ * struct mgmt_rx_event_params - host mgmt header params
+ * @channel: channel on which this frame is received
+ * @snr: snr information used to call rssi
+ * @rssi_ctl[WLAN_MGMT_TXRX_HOST_MAX_ANTENNA]: RSSI of PRI 20MHz for each chain
+ * @rate: Rate kbps
+ * @phy_mode: rx phy mode
+ * @buf_len: length of the frame
+ * @status: rx status
+ * @flags: information about the management frame e.g. can give a
+ *         scan source for a scan result mgmt frame
+ * @rssi: combined RSSI, i.e. the sum of the snr + noise floor (dBm units)
+ * @tsf_delta: tsf delta
+ * @pdev_id: pdev id
+ * @rx_params: pointer to other rx params
+ *             (win specific, will be removed in phase 4)
+ */
+struct mgmt_rx_event_params {
+	uint32_t    channel;
+	uint32_t    snr;
+	uint8_t     rssi_ctl[WLAN_MGMT_TXRX_HOST_MAX_ANTENNA];
+	uint32_t    rate;
+	enum wlan_phymode    phy_mode;
+	uint32_t    buf_len;
+	QDF_STATUS  status;
+	uint32_t    flags;
+	int32_t     rssi;
+	uint32_t    tsf_delta;
+	uint8_t     pdev_id;
+	void        *rx_params;
+};
 
 /**
  * mgmt_tx_download_comp_cb - function pointer for tx download completions.
@@ -628,17 +661,19 @@ typedef QDF_STATUS (*mgmt_ota_comp_cb)(void *context, qdf_nbuf_t buf,
  * @psoc: psoc context
  * @peer: peer
  * @buf: buffer
- * @params: rx params
+ * @mgmt_rx_params: rx params
  * @frm_type: mgmt rx frame type
  *
  * This is the function pointer to be called on receiving mgmt rx frames.
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
-typedef QDF_STATUS (*mgmt_frame_rx_callback)(struct wlan_objmgr_psoc *psoc,
-					     struct wlan_objmgr_peer *peer,
-					     qdf_nbuf_t buf, void *params,
-					     enum mgmt_frame_type frm_type);
+typedef QDF_STATUS (*mgmt_frame_rx_callback)(
+			struct wlan_objmgr_psoc *psoc,
+			struct wlan_objmgr_peer *peer,
+			qdf_nbuf_t buf,
+			struct mgmt_rx_event_params *mgmt_rx_params,
+			enum mgmt_frame_type frm_type);
 
 
 /**

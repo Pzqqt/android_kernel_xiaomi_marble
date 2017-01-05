@@ -219,6 +219,11 @@ QDF_STATUS wlan_mgmt_txrx_mgmt_frame_tx(struct wlan_objmgr_peer *peer,
 	struct mgmt_txrx_priv_context *txrx_ctx;
 	struct wlan_objmgr_vdev *vdev;
 
+	if (!peer) {
+		mgmt_txrx_err("peer passed is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
 	vdev = wlan_peer_get_vdev(peer);
 	if (!vdev) {
 		mgmt_txrx_err("vdev unavailable for peer %p", peer);

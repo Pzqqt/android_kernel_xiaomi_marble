@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -22,6 +22,7 @@
 
 #include "qdf_status.h"
 #include "wlan_objmgr_cmn.h"
+#include "wlan_mgmt_txrx_utils_api.h"
 
 /* Number of dev type: Direct attach and Offload */
 #define MAX_DEV_TYPE 2
@@ -83,7 +84,8 @@ struct wlan_lmac_if_mgmt_txrx_rx_ops {
 			void *tx_compl_params);
 	QDF_STATUS (*mgmt_rx_frame_handler)(
 			struct wlan_objmgr_psoc *psoc,
-			qdf_nbuf_t buf, void *params);
+			qdf_nbuf_t buf,
+			struct mgmt_rx_event_params *mgmt_rx_params);
 	qdf_nbuf_t (*mgmt_txrx_get_nbuf_from_desc_id)(
 			struct wlan_objmgr_psoc *psoc,
 			uint32_t desc_id);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,6 +28,7 @@
  */
 
 #include "wlan_objmgr_cmn.h"
+#include "wlan_mgmt_txrx_utils_api.h"
 #include "qdf_nbuf.h"
 
 
@@ -35,7 +36,7 @@
  * tgt_mgmt_txrx_rx_frame_handler() - handles rx mgmt. frames
  * @psoc: psoc context
  * @buf: buffer
- * @params: rx event params
+ * @mgmt_rx_params: rx event params
  *
  * This function handles mgmt. rx frames and is registered to southbound
  * interface through rx ops.
@@ -44,7 +45,8 @@
  */
 QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 			struct wlan_objmgr_psoc *psoc,
-			qdf_nbuf_t buf, void *params);
+			qdf_nbuf_t buf,
+			struct mgmt_rx_event_params *mgmt_rx_params);
 
 /**
  * tgt_mgmt_txrx_tx_completion_handler() - handles mgmt. tx completions

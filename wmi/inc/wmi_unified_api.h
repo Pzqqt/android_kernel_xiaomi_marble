@@ -42,6 +42,7 @@
 #include "htc_api.h"
 #include "wmi_unified_param.h"
 #include "wlan_objmgr_psoc_obj.h"
+#include "wlan_mgmt_txrx_utils_api.h"
 
 typedef qdf_nbuf_t wmi_buf_t;
 #define wmi_buf_data(_buf) qdf_nbuf_data(_buf)
@@ -1197,7 +1198,7 @@ QDF_STATUS wmi_extract_tbttoffset_update_params(void *wmi_hdl, void *evt_buf,
 		uint32_t *vdev_map, uint32_t **tbttoffset_list);
 
 QDF_STATUS wmi_extract_mgmt_rx_params(void *wmi_hdl, void *evt_buf,
-		wmi_host_mgmt_rx_hdr *hdr, uint8_t **bufp);
+		struct mgmt_rx_event_params *hdr, uint8_t **bufp);
 
 QDF_STATUS wmi_extract_vdev_stopped_param(void *wmi_hdl, void *evt_buf,
 		uint32_t *vdev_id);

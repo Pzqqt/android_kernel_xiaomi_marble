@@ -1021,7 +1021,7 @@ QDF_STATUS (*extract_tbttoffset_update_params)(void *wmi_hdl, void *evt_buf,
 	uint32_t *vdev_map, uint32_t **tbttoffset_list);
 
 QDF_STATUS (*extract_mgmt_rx_params)(wmi_unified_t wmi_handle, void *evt_buf,
-	wmi_host_mgmt_rx_hdr *hdr, uint8_t **bufp);
+	struct mgmt_rx_event_params *hdr, uint8_t **bufp);
 
 QDF_STATUS (*extract_vdev_stopped_param)(wmi_unified_t wmi_handle,
 		void *evt_buf, uint32_t *vdev_id);

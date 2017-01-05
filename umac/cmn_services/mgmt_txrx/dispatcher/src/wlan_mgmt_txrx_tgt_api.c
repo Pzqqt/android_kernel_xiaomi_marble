@@ -794,7 +794,8 @@ static QDF_STATUS wlan_mgmt_txrx_rx_handler_list_copy(
 
 QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 			struct wlan_objmgr_psoc *psoc,
-			qdf_nbuf_t buf, void *params)
+			qdf_nbuf_t buf,
+			struct mgmt_rx_event_params *mgmt_rx_params)
 {
 	struct mgmt_txrx_priv_context *mgmt_txrx_ctx;
 	struct ieee80211_frame *wh;
@@ -908,11 +909,11 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 	while (rx_handler->next) {
 		copy_buf = qdf_nbuf_clone(buf);
 		rx_handler->rx_cb(psoc, peer, copy_buf,
-					params, frm_type);
+					mgmt_rx_params, frm_type);
 		rx_handler = rx_handler->next;
 	}
 	rx_handler->rx_cb(psoc, peer, buf,
-				params, frm_type);
+				mgmt_rx_params, frm_type);
 
 rx_handler_mem_free:
 	while (rx_handler_head) {

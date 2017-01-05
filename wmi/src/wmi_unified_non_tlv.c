@@ -5939,7 +5939,7 @@ QDF_STATUS extract_tbttoffset_update_params_non_tlv(void *wmi_hdl,
  */
 static QDF_STATUS extract_mgmt_rx_params_non_tlv(wmi_unified_t wmi_handle,
 		void *evt_buf,
-		wmi_host_mgmt_rx_hdr *hdr, uint8_t **bufp)
+		struct mgmt_rx_event_params *hdr, uint8_t **bufp)
 {
 	wmi_mgmt_rx_event *ev = (wmi_mgmt_rx_event *)evt_buf;
 
