@@ -816,7 +816,6 @@ UMAC_OBJMGR_OBJS := $(UMAC_OBJMGR_DIR)/src/wlan_objmgr_global_obj.o \
 		$(UMAC_OBJMGR_DIR)/src/wlan_objmgr_psoc_service_ready_api.o \
 		$(UMAC_OBJMGR_DIR)/src/wlan_objmgr_vdev_obj.o
 
-
 ###########  UMAC MGMT TXRX ##########
 UMAC_MGMT_TXRX_DIR := $(WLAN_COMMON_ROOT)/umac/cmn_services/mgmt_txrx
 
@@ -825,6 +824,29 @@ UMAC_MGMT_TXRX_INC := -I$(WLAN_COMMON_INC)/umac/cmn_services/mgmt_txrx/dispatche
 UMAC_MGMT_TXRX_OBJS := $(UMAC_MGMT_TXRX_DIR)/core/src/wlan_mgmt_txrx_main.o \
 	$(UMAC_MGMT_TXRX_DIR)/dispatcher/src/wlan_mgmt_txrx_utils_api.o \
 	$(UMAC_MGMT_TXRX_DIR)/dispatcher/src/wlan_mgmt_txrx_tgt_api.o
+
+########## POWER MANAGEMENT OFFLOADS (PMO) ##########
+PMO_DIR := $(WLAN_COMMON_ROOT)/power_management_offloads
+PMO_INC :=      -I$(WLAN_COMMON_INC)/power_management_offloads/core/inc \
+		-I$(WLAN_COMMON_INC)/power_management_offloads/dispatcher/inc \
+		-I$(WLAN_COMMON_INC)/power_management_offloads/core/src \
+		-I$(WLAN_COMMON_INC)/power_management_offloads/dispatcher/src
+
+PMO_OBJS :=     $(PMO_DIR)/core/src/wlan_pmo_main.o \
+		$(PMO_DIR)/core/src/wlan_pmo_arp.o \
+		$(PMO_DIR)/core/src/wlan_pmo_ns.o \
+		$(PMO_DIR)/core/src/wlan_pmo_gtk.o \
+		$(PMO_DIR)/core/src/wlan_pmo_mc_addr_filtering.o \
+		$(PMO_DIR)/core/src/wlan_pmo_static_config.o \
+		$(PMO_DIR)/core/src/wlan_pmo_wow.o \
+		$(PMO_DIR)/dispatcher/src/wlan_pmo_obj_mgmt_api.o \
+		$(PMO_DIR)/dispatcher/src/wlan_pmo_ucfg_api.o \
+		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_arp.o \
+		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_ns.o \
+		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_gtk.o \
+		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_wow.o \
+		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_static_config.o \
+		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_mc_addr_filtering.o
 
 ########### BMI ###########
 BMI_DIR := core/bmi
@@ -1216,6 +1238,7 @@ endif
 
 INCS +=		$(UMAC_OBJMGR_INC)
 INCS +=		$(UMAC_MGMT_TXRX_INC)
+INCS +=		$(PMO_INC)
 INCS +=		$(TARGET_INC)
 INCS +=		$(UMAC_SER_INC)
 INCS +=		$(NLINK_INC) \
@@ -1267,6 +1290,7 @@ endif
 
 OBJS +=		$(UMAC_OBJMGR_OBJS)
 OBJS +=		$(UMAC_MGMT_TXRX_OBJS)
+OBJS +=		$(PMO_OBJS)
 OBJS +=		$(WLAN_LOGGING_OBJS)
 OBJS +=		$(NLINK_OBJS)
 OBJS +=		$(PTT_OBJS)
