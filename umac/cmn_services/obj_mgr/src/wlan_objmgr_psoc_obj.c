@@ -612,7 +612,7 @@ QDF_STATUS wlan_objmgr_psoc_pdev_detach(struct wlan_objmgr_psoc *psoc,
 	pdev->pdev_objmgr.wlan_pdev_id = 0xff;
 	wlan_psoc_obj_unlock(psoc);
 
-	return QDF_STATUS_E_FAILURE;
+	return QDF_STATUS_SUCCESS;
 }
 
 struct wlan_objmgr_pdev *wlan_objmgr_find_pdev_by_id(
