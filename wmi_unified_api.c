@@ -5314,7 +5314,7 @@ QDF_STATUS wmi_extract_tbttoffset_update_params(void *wmi_hdl, void *evt_buf,
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_extract_mgmt_rx_params(void *wmi_hdl, void *evt_buf,
-	wmi_host_mgmt_rx_hdr *hdr, uint8_t **bufp)
+	struct mgmt_rx_event_params *hdr, uint8_t **bufp)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 

@@ -12365,7 +12365,8 @@ static QDF_STATUS extract_tbttoffset_update_params_tlv(void *wmi_hdl,
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
 static QDF_STATUS extract_mgmt_rx_params_tlv(wmi_unified_t wmi_handle,
-	void *evt_buf, wmi_host_mgmt_rx_hdr *hdr, uint8_t **bufp)
+	void *evt_buf, struct mgmt_rx_event_params *hdr,
+	uint8_t **bufp)
 {
 	WMI_MGMT_RX_EVENTID_param_tlvs *param_tlvs = NULL;
 	wmi_mgmt_rx_hdr *ev_hdr = NULL;
