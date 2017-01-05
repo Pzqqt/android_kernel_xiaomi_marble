@@ -3498,11 +3498,9 @@ int wma_pdev_resume_event_handler(void *handle, uint8_t *event, uint32_t len)
  */
 static inline void wma_set_wow_bus_suspend(tp_wma_handle wma, int val)
 {
-
 	qdf_atomic_set(&wma->is_wow_bus_suspended, val);
+	wmi_set_is_wow_bus_suspended(wma->wmi_handle, val);
 }
-
-
 
 /**
  * wma_add_wow_wakeup_event() -  Configures wow wakeup events.
@@ -4740,6 +4738,7 @@ static QDF_STATUS wma_send_host_wakeup_ind_to_fw(tp_wma_handle wma)
 			 wmi_get_host_credits(wma->wmi_handle));
 		if (!cds_is_driver_recovering()) {
 			if (pMac->sme.enableSelfRecovery) {
+				wmi_tag_crash_inject(wma->wmi_handle, true);
 				cds_trigger_recovery(false);
 			} else {
 				QDF_BUG(0);
