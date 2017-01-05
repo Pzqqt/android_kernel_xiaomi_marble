@@ -3202,8 +3202,6 @@ QDF_STATUS ol_txrx_runtime_suspend(void *ppdev)
  */
 QDF_STATUS ol_txrx_runtime_resume(void *ppdev)
 {
-	ol_txrx_pdev_handle txrx_pdev = ppdev;
-
 	return QDF_STATUS_SUCCESS;
 }
 #endif

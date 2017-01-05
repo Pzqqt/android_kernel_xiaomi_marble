@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -47,6 +47,7 @@
 #include "qwlan_version.h"
 #include "bmi.h"
 #include "cdp_txrx_bus.h"
+#include "cdp_txrx_misc.h"
 #include "pld_common.h"
 #include "wlan_hdd_driver_ops.h"
 
