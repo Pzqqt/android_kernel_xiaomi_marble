@@ -812,16 +812,18 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 			else
 				pChanList->chanParam[num_channel].dfsSet =
 					true;
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-				"channel:%d, pwr=%d, DFS=%d\n",
-				pChanList->chanParam[num_channel].chanId,
-				pChanList->chanParam[num_channel].pwr,
-				pChanList->chanParam[num_channel].dfsSet);
 			if (cds_is_5_mhz_enabled())
 				pChanList->chanParam[num_channel].quarter_rate
 					= 1;
 			else if (cds_is_10_mhz_enabled())
 				pChanList->chanParam[num_channel].half_rate = 1;
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+				"channel:%d, pwr=%d, DFS=%d qrate %d hrate %d ",
+				pChanList->chanParam[num_channel].chanId,
+				pChanList->chanParam[num_channel].pwr,
+				pChanList->chanParam[num_channel].dfsSet,
+				pChanList->chanParam[num_channel].quarter_rate,
+				pChanList->chanParam[num_channel].half_rate);
 			num_channel++;
 		}
 	}

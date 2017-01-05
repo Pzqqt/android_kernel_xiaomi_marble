@@ -8030,9 +8030,9 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	if (0 != status)
 		return status;
 
-	hdd_info("pAdapter = %p, Device mode %s(%d)", pAdapter,
-	       hdd_device_mode_to_string(pAdapter->device_mode),
-	       pAdapter->device_mode);
+	hdd_info("pAdapter = %p, Device mode %s(%d) sub20 %d",
+		pAdapter, hdd_device_mode_to_string(pAdapter->device_mode),
+		pAdapter->device_mode, cds_is_sub_20_mhz_enabled());
 
 
 	if (cds_is_connection_in_progress()) {
