@@ -5376,6 +5376,28 @@ typedef struct {
 } target_capability_info;
 
 /**
+ * enum WMI_DBG_PARAM - Debug params
+ * @WMI_DBGLOG_LOG_LEVEL: Set the loglevel
+ * @WMI_DBGLOG_VAP_ENABLE:  Enable VAP level debug
+ * @WMI_DBGLOG_VAP_DISABLE: Disable VAP level debug
+ * @WMI_DBGLOG_MODULE_ENABLE: Enable MODULE level debug
+ * @WMI_DBGLOG_MODULE_DISABLE: Disable MODULE level debug
+ * @WMI_DBGLOG_MOD_LOG_LEVEL: Enable MODULE level debug
+ * @WMI_DBGLOG_TYPE: set type of the debug output
+ * @WMI_DBGLOG_REPORT_ENABLE: Enable Disable debug
+ */
+typedef enum {
+	WMI_DBGLOG_LOG_LEVEL = 0x1,
+	WMI_DBGLOG_VAP_ENABLE,
+	WMI_DBGLOG_VAP_DISABLE,
+	WMI_DBGLOG_MODULE_ENABLE,
+	WMI_DBGLOG_MODULE_DISABLE,
+	WMI_DBGLOG_MOD_LOG_LEVEL,
+	WMI_DBGLOG_TYPE,
+	WMI_DBGLOG_REPORT_ENABLE
+} WMI_DBG_PARAM;
+
+/**
  * struct wmi_host_fw_ver - FW version in non-tlv target
  * @sw_version: Versin info
  * @sw_version_1: Second dword of version
