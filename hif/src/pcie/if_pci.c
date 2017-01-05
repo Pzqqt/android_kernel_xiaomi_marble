@@ -3090,7 +3090,7 @@ void hif_process_runtime_resume_success(struct hif_opaque_softc *hif_ctx)
 int hif_runtime_suspend(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn)
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 	int err;
 
 	err = hif_pci_bus_suspend(scn);
@@ -3161,7 +3161,7 @@ static void hif_fastpath_resume(struct hif_opaque_softc *hif_ctx) {}
 int hif_runtime_resume(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn)
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 	int err;
 
 	err = hif_pci_bus_resume_noirq(scn);
