@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -129,6 +129,39 @@ struct hal_srng_params {
 	uint8_t ring_id;
 };
 
+/* hal_construct_shadow_config() - initialize the shadow registers for dp rings
+ * @hal_soc: hal handle
+ *
+ * Return: QDF_STATUS_OK on success
+ */
+extern QDF_STATUS hal_construct_shadow_config(void *hal_soc);
+
+/* hal_set_one_shadow_config() - add a config for the specified ring
+ * @hal_soc: hal handle
+ * @ring_type: ring type
+ * @ring_num: ring num
+ *
+ * The ring type and ring num uniquely specify the ring.  After this call,
+ * the hp/tp will be added as the next entry int the shadow register
+ * configuration table.  The hal code will use the shadow register address
+ * in place of the hp/tp address.
+ *
+ * This function is exposed, so that the CE module can skip configuring shadow
+ * registers for unused ring and rings assigned to the firmware.
+ *
+ * Return: QDF_STATUS_OK on success
+ */
+extern QDF_STATUS hal_set_one_shadow_config(void *hal_soc, int ring_type,
+					    int ring_num);
+/**
+ * hal_get_shadow_config() - retrieve the config table
+ * @hal_soc: hal handle
+ * @shadow_config: will point to the table after
+ * @num_shadow_registers_configured: will contain the number of valid entries
+ */
+extern void hal_get_shadow_config(void *hal_soc,
+				  struct pld_shadow_reg_v2_cfg **shadow_config,
+				  int *num_shadow_registers_configured);
 /**
  * hal_srng_setup - Initalize HW SRNG ring.
  *

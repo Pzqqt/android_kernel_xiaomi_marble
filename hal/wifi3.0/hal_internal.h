@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -60,6 +60,7 @@
 #include "rx_attention.h"
 #include "tx_msdu_extension.h"
 #include "wcss_version.h"
+#include "pld_common.h"
 
 /* TBD: This should be movded to shared HW header file */
 enum hal_srng_ring_id {
@@ -278,6 +279,10 @@ struct hal_hw_srng_config {
 	enum hal_srng_dir ring_dir;
 };
 
+/* calculate the register address offset from bar0 of shadow register x */
+#define SHADOW_REGISTER(x) (0x00003024 + (4*x))
+#define MAX_SHADOW_REGISTERS 36
+
 /**
  * HAL context to be used to access SRNG APIs (currently used by data path
  * and transport (CE) modules)
@@ -308,6 +313,10 @@ struct hal_soc {
 	/* REO blocking resource index */
 	uint8_t reo_res_bitmap;
 	uint8_t index;
+
+	/* shadow register configuration */
+	struct pld_shadow_reg_v2_cfg shadow_config[MAX_SHADOW_REGISTERS];
+	int num_shadow_registers_configured;
 };
 
 /* TODO: Check if the following can be provided directly by HW headers */

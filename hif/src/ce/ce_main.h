@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -185,6 +185,10 @@ struct shadow_reg_cfg {
 	uint16_t reg_offset;
 };
 
+struct shadow_reg_v2_cfg {
+	uint32_t reg_value;
+};
+
 void hif_ce_stop(struct hif_softc *scn);
 int hif_dump_ce_registers(struct hif_softc *scn);
 void
@@ -214,6 +218,7 @@ void hif_get_target_ce_config(struct hif_softc *scn,
 		int *target_ce_config_sz_ret,
 		struct service_to_pipe **target_service_to_ce_map_ret,
 		int *target_service_to_ce_map_sz_ret,
-		struct shadow_reg_cfg **target_shadow_reg_cfg_ret,
-		int *shadow_cfg_sz_ret);
+		struct shadow_reg_cfg **target_shadow_reg_cfg_v1_ret,
+		int *shadow_cfg_v1_sz_ret);
+
 #endif /* __CE_H__ */

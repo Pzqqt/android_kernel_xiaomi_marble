@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,6 +27,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "pld_common.h"
 #include "hal_api.h"
 #include "wcss_version.h"
 
@@ -166,7 +167,6 @@
  * and hence need to be attached with hal_soc based on HW type
  */
 #define HAL_SRNG_CONFIG(_hal_soc, _ring_type) (&hw_srng_table[_ring_type])
-
 static struct hal_hw_srng_config hw_srng_table[] = {
 	/* TODO: max_rings can populated by querying HW capabilities */
 	{ /* REO_DST */
@@ -486,6 +486,146 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 };
 
 /**
+ * hal_get_srng_ring_id() - get the ring id of a descriped ring
+ * @hal: hal_soc data structure
+ * @ring_type: type enum describing the ring
+ * @ring_num: which ring of the ring type
+ * @mac_id: which mac does the ring belong to (or 0 for non-lmac rings)
+ *
+ * Return: the ring id or -EINVAL if the ring does not exist.
+ */
+static int hal_get_srng_ring_id(struct hal_soc *hal, int ring_type,
+				int ring_num, int mac_id)
+{
+	struct hal_hw_srng_config *ring_config =
+		HAL_SRNG_CONFIG(hal, ring_type);
+	int ring_id;
+
+	if (ring_num >= ring_config->max_rings) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s: ring_num exceeded maximum no. of supported rings\n",
+			__func__);
+		return -EINVAL;
+	}
+
+	if (ring_config->lmac_ring) {
+		ring_id = ring_config->start_ring_id + ring_num +
+			(mac_id * HAL_MAX_RINGS_PER_LMAC);
+	} else {
+		ring_id = ring_config->start_ring_id + ring_num;
+	}
+
+	return ring_id;
+}
+
+static struct hal_srng *hal_get_srng(struct hal_soc *hal, int ring_id)
+{
+	/* TODO: Should we allocate srng structures dynamically? */
+	return &(hal->srng_list[ring_id]);
+}
+
+#define HP_OFFSET_IN_REG_START 1
+#define OFFSET_FROM_HP_TO_TP 4
+static void hal_update_srng_hp_tp_address(void *hal_soc,
+					  int shadow_config_index,
+					  int ring_type,
+					  int ring_num)
+{
+	struct hal_srng *srng;
+	struct hal_soc *hal = (struct hal_soc *)hal_soc;
+	int ring_id;
+
+	ring_id = hal_get_srng_ring_id(hal_soc, ring_type, ring_num, 0);
+	if (ring_id < 0)
+		return;
+
+	srng = hal_get_srng(hal_soc, ring_id);
+
+	if (srng->ring_dir == HAL_SRNG_DST_RING)
+		srng->u.dst_ring.tp_addr = SHADOW_REGISTER(shadow_config_index)
+			+ hal->dev_base_addr;
+	else
+		srng->u.src_ring.hp_addr = SHADOW_REGISTER(shadow_config_index)
+			+ hal->dev_base_addr;
+}
+
+QDF_STATUS hal_set_one_shadow_config(void *hal_soc,
+				      int ring_type,
+				      int ring_num)
+{
+	uint32_t target_register;
+	struct hal_soc *hal = (struct hal_soc *)hal_soc;
+	struct hal_hw_srng_config *srng_config = &hw_srng_table[ring_type];
+	int shadow_config_index = hal->num_shadow_registers_configured;
+
+	if (shadow_config_index >= MAX_SHADOW_REGISTERS) {
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_RESOURCES;
+	}
+
+	hal->num_shadow_registers_configured++;
+
+	target_register = srng_config->reg_start[HP_OFFSET_IN_REG_START];
+	target_register += (srng_config->reg_size[HP_OFFSET_IN_REG_START]
+			    *ring_num);
+
+	/* if the ring is a dst ring, we need to shadow the tail pointer */
+	if (srng_config->ring_dir == HAL_SRNG_DST_RING)
+		target_register += OFFSET_FROM_HP_TO_TP;
+
+	hal->shadow_config[shadow_config_index].addr = target_register;
+
+	/* update hp/tp addr in the hal_soc structure*/
+	hal_update_srng_hp_tp_address(hal_soc, shadow_config_index, ring_type,
+				      ring_num);
+
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+			"%s: target_reg %x, shadow_index %x, ring_type %d, ring num %d\n",
+		       __func__, target_register, shadow_config_index,
+		       ring_type, ring_num);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS hal_construct_shadow_config(void *hal_soc)
+{
+	int ring_type, ring_num;
+
+	for (ring_type = 0; ring_type < MAX_RING_TYPES; ring_type++) {
+		struct hal_hw_srng_config *srng_config =
+			&hw_srng_table[ring_type];
+
+		if (ring_type == CE_SRC ||
+		    ring_type == CE_DST ||
+		    ring_type == CE_DST_STATUS)
+			continue;
+
+		if (srng_config->lmac_ring)
+			continue;
+
+		for (ring_num = 0; ring_num < srng_config->max_rings;
+		     ring_num++)
+			hal_set_one_shadow_config(hal_soc, ring_type, ring_num);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void hal_get_shadow_config(void *hal_soc,
+	struct pld_shadow_reg_v2_cfg **shadow_config,
+	int *num_shadow_registers_configured)
+{
+	struct hal_soc *hal = (struct hal_soc *)hal_soc;
+
+	*shadow_config = hal->shadow_config;
+	*num_shadow_registers_configured =
+		hal->num_shadow_registers_configured;
+
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s\n", __func__);
+}
+
+/**
  * hal_attach - Initalize HAL layer
  * @hif_handle: Opaque HIF handle
  * @qdf_dev: QDF device
@@ -792,6 +932,7 @@ static inline void hal_srng_hw_init(struct hal_soc *hal,
 		hal_srng_dst_hw_init(hal, srng);
 }
 
+#define CHECK_SHADOW_REGISTERS true
 /**
  * hal_srng_setup - Initalize HW SRNG ring.
  * @hal_soc: Opaque HAL SOC handle
@@ -822,22 +963,11 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 	void *dev_base_addr;
 	int i;
 
-	if (ring_num >= ring_config->max_rings) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: ring_num exceeded maximum no. of supported rings\n",
-			__func__);
+	ring_id = hal_get_srng_ring_id(hal_soc, ring_type, ring_num, 0);
+	if (ring_id < 0)
 		return NULL;
-	}
 
-	if (ring_config->lmac_ring) {
-		ring_id = ring_config->start_ring_id + ring_num +
-			(mac_id * HAL_MAX_RINGS_PER_LMAC);
-	} else {
-		ring_id = ring_config->start_ring_id + ring_num;
-	}
-
-	/* TODO: Should we allocate srng structures dynamically? */
-	srng = &(hal->srng_list[ring_id]);
+	srng = hal_get_srng(hal_soc, ring_id);
 
 	if (srng->initialized) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -877,6 +1007,8 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 	srng->flags |= HAL_SRNG_MSI_SWAP;
 	srng->flags |= HAL_SRNG_RING_PTR_SWAP;
 #endif
+
+#define ignore_shadow false
 	if (srng->ring_dir == HAL_SRNG_SRC_RING) {
 		srng->u.src_ring.hp = 0;
 		srng->u.src_ring.reap_hp = srng->ring_size -
@@ -892,8 +1024,18 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 				&(hal->shadow_wrptr_mem_vaddr[ring_id -
 					HAL_SRNG_LMAC1_ID_START]);
 			srng->flags |= HAL_SRNG_LMAC_RING;
-		} else {
+		} else if (ignore_shadow || (srng->u.src_ring.hp_addr == 0)) {
 			srng->u.src_ring.hp_addr = SRNG_SRC_ADDR(srng, HP);
+
+			if (CHECK_SHADOW_REGISTERS) {
+				QDF_TRACE(QDF_MODULE_ID_TXRX,
+					  QDF_TRACE_LEVEL_ERROR,
+					  "%s: Ring (%d, %d) missing shadow config\n",
+					  __func__, ring_type, ring_num);
+			}
+		} else {
+			/* todo validate that the shadow register is pointing to
+			 * the correct address */
 		}
 	} else {
 		/* During initialization loop count in all the descriptors
@@ -916,11 +1058,20 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 				&(hal->shadow_wrptr_mem_vaddr[ring_id -
 				HAL_SRNG_LMAC1_ID_START]);
 			srng->flags |= HAL_SRNG_LMAC_RING;
-		} else {
+		} else if (ignore_shadow || srng->u.dst_ring.tp_addr == 0) {
 			srng->u.dst_ring.tp_addr = SRNG_DST_ADDR(srng, TP);
+
+			if (CHECK_SHADOW_REGISTERS) {
+				QDF_TRACE(QDF_MODULE_ID_TXRX,
+					  QDF_TRACE_LEVEL_ERROR,
+					  "%s: Ring (%d, %d) missing shadow config\n",
+					  __func__, ring_type, ring_num);
+			}
+		} else {
+			/* todo validate that the shadow register is pointing to
+			 * the correct address */
 		}
 	}
-
 
 	if (!(ring_config->lmac_ring)) {
 		hal_srng_hw_init(hal, srng);
