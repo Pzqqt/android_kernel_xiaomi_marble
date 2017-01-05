@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -70,6 +70,17 @@ struct pld_shadow_reg_cfg {
 };
 
 /**
+ * struct pld_shadow_reg_v2_cfg - shadow register version 2 configuration
+ * @addr: shadow register physical address
+ *
+ * pld_shadow_reg_v2_cfg is used to store shadow register version 2
+ * configuration.
+ */
+struct pld_shadow_reg_v2_cfg {
+	u32 addr;
+};
+
+/**
  * struct pld_wlan_enable_cfg - WLAN FW configuration
  * @num_ce_tgt_cfg: number of CE target configuration
  * @ce_tgt_cfg: CE target configuration
@@ -77,6 +88,8 @@ struct pld_shadow_reg_cfg {
  * @ce_svc_cfg: CE service configuration
  * @num_shadow_reg_cfg: number of shadow register configuration
  * @shadow_reg_cfg: shadow register configuration
+ * @num_shadow_reg_v2_cfg: number of shadow register version 2 configuration
+ * @shadow_reg_v2_cfg: shadow register version 2 configuration
  *
  * pld_wlan_enable_cfg stores WLAN FW configurations. It will be
  * passed to WLAN FW when WLAN host driver calls wlan_enable.
@@ -88,6 +101,8 @@ struct pld_wlan_enable_cfg {
 	struct pld_ce_svc_pipe_cfg *ce_svc_cfg;
 	u32 num_shadow_reg_cfg;
 	struct pld_shadow_reg_cfg *shadow_reg_cfg;
+	u32 num_shadow_reg_v2_cfg;
+	struct pld_shadow_reg_v2_cfg *shadow_reg_v2_cfg;
 };
 
 /**
