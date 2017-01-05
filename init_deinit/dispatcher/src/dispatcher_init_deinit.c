@@ -23,6 +23,7 @@
 #ifdef NAPIER_CODE
 #include <scheduler_api.h>
 #endif
+#include <wlan_mgmt_txrx_utils_api.h>
 
 /**
  * DOC: This file provides various init/deinit trigger point for new
@@ -145,6 +146,9 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != wlan_objmgr_global_obj_init())
 		goto out;
 
+	if (QDF_STATUS_SUCCESS != wlan_mgmt_txrx_init())
+		goto mgmt_txrx_init_fail;
+
 	if (QDF_STATUS_SUCCESS != scm_init())
 		goto scm_init_fail;
 
@@ -166,6 +170,8 @@ tdls_init_fail:
 p2p_init_fail:
 	scm_deinit();
 scm_init_fail:
+	wlan_mgmt_txrx_deinit();
+mgmt_txrx_init_fail:
 	wlan_objmgr_global_obj_deinit();
 
 out:
@@ -181,6 +187,8 @@ QDF_STATUS dispatcher_deinit(void)
 	QDF_BUG(QDF_STATUS_SUCCESS == p2p_deinit());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == scm_deinit());
+
+	QDF_BUG(QDF_STATUS_SUCCESS == wlan_mgmt_txrx_deinit());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == wlan_objmgr_global_obj_deinit());
 
