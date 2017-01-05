@@ -1590,7 +1590,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	 * (return -EBUSY)
 	 */
 	status = wlan_hdd_tdls_scan_callback(pAdapter, wiphy,
-					request);
+					request, source);
 	if (status <= 0) {
 		if (!status)
 			hdd_err("TDLS in progress.scan rejected %d",
@@ -1895,6 +1895,30 @@ int wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_cfg80211_scan(wiphy,
 				request, NL_SCAN);
+	cds_ssr_unprotect(__func__);
+	return ret;
+}
+
+/**
+ * wlan_hdd_cfg80211_tdls_scan() - API to process cfg80211 scan request
+ * @wiphy: Pointer to wiphy
+ * @request: Pointer to scan request
+ * @source: scan request source(NL/Vendor scan)
+ *
+ * This API responds to scan trigger and update cfg80211 scan database
+ * later, scan dump command can be used to recieve scan results. This
+ * function gets called when tdls module queues the scan request.
+ *
+ * Return: 0 for success, non zero for failure.
+ */
+int wlan_hdd_cfg80211_tdls_scan(struct wiphy *wiphy,
+				struct cfg80211_scan_request *request,
+				uint8_t source)
+{
+	int ret;
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_scan(wiphy,
+				request, source);
 	cds_ssr_unprotect(__func__);
 	return ret;
 }
