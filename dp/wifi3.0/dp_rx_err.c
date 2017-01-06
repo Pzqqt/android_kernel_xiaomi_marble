@@ -70,7 +70,7 @@ void *dp_rx_cookie_2_link_desc_va(struct dp_soc *soc,
  *
  * Return: uint32_t: No. of elements processed
  */
-uint32_t
+static uint32_t
 dp_rx_frag_handle(struct dp_soc *soc, void *ring_desc,
 		  struct hal_rx_mpdu_desc_info *mpdu_desc_info,
 		  union dp_rx_desc_list_elem_t **head,
@@ -155,7 +155,7 @@ dp_rx_msdus_drop(struct dp_soc *soc, void *ring_desc,
  *
  * Return: uint32_t: No. of elements processed
  */
-uint32_t
+static uint32_t
 dp_rx_pn_error_handle(struct dp_soc *soc, void *ring_desc,
 		      struct hal_rx_mpdu_desc_info *mpdu_desc_info,
 		      union dp_rx_desc_list_elem_t **head,
@@ -208,7 +208,7 @@ dp_rx_pn_error_handle(struct dp_soc *soc, void *ring_desc,
  *
  * Return: uint32_t: No. of elements processed
  */
-uint32_t
+static uint32_t
 dp_rx_2k_jump_handle(struct dp_soc *soc, void *ring_desc,
 		     struct hal_rx_mpdu_desc_info *mpdu_desc_info,
 		     union dp_rx_desc_list_elem_t **head,
@@ -240,7 +240,7 @@ dp_rx_2k_jump_handle(struct dp_soc *soc, void *ring_desc,
 *
 * Return: uint32_t: No. of Rx buffers reaped
 */
-uint32_t
+static uint32_t
 dp_rx_null_q_desc_handle(struct dp_soc *soc, void *ring_desc,
 			union dp_rx_desc_list_elem_t **head,
 			union dp_rx_desc_list_elem_t **tail,
