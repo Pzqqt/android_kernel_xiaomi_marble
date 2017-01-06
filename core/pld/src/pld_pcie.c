@@ -32,19 +32,7 @@
 #include <linux/slab.h>
 
 #ifdef CONFIG_PLD_PCIE_CNSS
-/*
- * This is a hack to make sure this change can be merged before the
- * kernel defconfig change (switching to CNSS2 platform driver) merged,
- * otherwise the kernel change has to depend on this change to be merged.
- * Once the kernel change is merged, these CNSS flags can be removed
- * so that only cnss2.h is needed.
- */
-#ifdef CONFIG_CNSS
-#include <net/cnss.h>
-#endif
-#ifdef CONFIG_CNSS2
 #include <net/cnss2.h>
-#endif
 #endif
 
 #include "pld_internal.h"
