@@ -169,6 +169,9 @@ typedef enum {
 #define WIFI_FEATURE_MKEEP_ALIVE        0x100000  /* WiFi mkeep_alive */
 #define WIFI_FEATURE_CONFIG_NDO         0x200000  /* ND offload configure */
 #define WIFI_FEATURE_TX_TRANSMIT_POWER  0x400000  /* Tx transmit power levels */
+#define WIFI_FEATURE_CONTROL_ROAMING    0x800000  /* Enable/Disable roaming */
+#define WIFI_FEATURE_IE_WHITELIST       0x1000000 /* Support Probe IE white listing */
+#define WIFI_FEATURE_SCAN_RAND          0x2000000 /* Support MAC & Probe Sequence Number randomization */
 
 /* Support Tx Power Limit setting */
 #define WIFI_FEATURE_SET_TX_POWER_LIMIT 0x4000000
