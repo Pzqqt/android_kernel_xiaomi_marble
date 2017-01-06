@@ -5895,7 +5895,7 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 error_wmm_init:
 	hdd_softap_deinit_tx_rx(pAdapter);
 error_init_ap_mode:
-	status = hdd_destroy_and_release_vdev(pAdapter);
+	status = hdd_release_and_destroy_vdev(pAdapter);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("vdev delete failed");
 error_vdev_create:
@@ -6072,7 +6072,7 @@ QDF_STATUS hdd_unregister_hostapd(hdd_adapter_t *pAdapter, bool rtnl_held)
 		hdd_err("Failed:WLANSAP_close");
 	pAdapter->sessionCtx.ap.sapContext = NULL;
 
-	status = hdd_destroy_and_release_vdev(pAdapter);
+	status = hdd_release_and_destroy_vdev(pAdapter);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("vdev delete failed");
 

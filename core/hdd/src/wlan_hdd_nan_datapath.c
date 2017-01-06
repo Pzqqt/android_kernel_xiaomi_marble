@@ -141,7 +141,7 @@ static int hdd_close_ndi(hdd_adapter_t *adapter)
 			if (!rc)
 				hdd_err("session close timeout");
 
-			qdf_status = hdd_destroy_and_release_vdev(adapter);
+			qdf_status = hdd_release_and_destroy_vdev(adapter);
 			if (QDF_IS_STATUS_ERROR(qdf_status))
 				hdd_err("vdev delete failed");
 		}
@@ -1942,7 +1942,7 @@ error_init_txrx:
 	hdd_unregister_wext(wlan_dev);
 
 error_register_wext:
-	status = hdd_destroy_and_release_vdev(adapter);
+	status = hdd_release_and_destroy_vdev(adapter);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("vdev delete failed");
 error_vdev_create:

@@ -2759,7 +2759,7 @@ error_wmm_init:
 error_init_txrx:
 	hdd_unregister_wext(pWlanDev);
 error_register_wext:
-	status = hdd_destroy_and_release_vdev(adapter);
+	status = hdd_release_and_destroy_vdev(adapter);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("vdev delete failed");
 error_vdev_create:
@@ -2924,7 +2924,7 @@ static void hdd_cleanup_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 		return;
 	}
 
-	qdf_status = hdd_destroy_and_release_vdev(adapter);
+	qdf_status = hdd_release_and_destroy_vdev(adapter);
 	if (QDF_IS_STATUS_ERROR(qdf_status))
 		hdd_err("vdev delete failed");
 
@@ -3559,7 +3559,7 @@ static void hdd_wait_for_sme_close_sesion(hdd_context_t *hdd_ctx,
 			clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
 			return;
 		}
-		qdf_status = hdd_destroy_and_release_vdev(adapter);
+		qdf_status = hdd_release_and_destroy_vdev(adapter);
 		if (QDF_IS_STATUS_ERROR(qdf_status))
 			hdd_err("vdev delete failed");
 
@@ -10015,7 +10015,7 @@ QDF_STATUS hdd_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS hdd_destroy_and_release_vdev(hdd_adapter_t *adapter)
+QDF_STATUS hdd_release_and_destroy_vdev(hdd_adapter_t *adapter)
 {
 	struct wlan_objmgr_vdev *vdev = adapter->hdd_vdev;
 

@@ -2069,14 +2069,14 @@ QDF_STATUS hdd_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 					hdd_adapter_t *adapter);
 
 /**
- * hdd_destroy_and_release_vdev() - Delete the vdev object
+ * hdd_release_and_destroy_vdev() - Delete the vdev object
  * @hdd_ctx: Hdd context
  *
  * This API deletes vdev object and release its reference from hdd adapter
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS hdd_destroy_and_release_vdev(hdd_adapter_t *adapter);
+QDF_STATUS hdd_release_and_destroy_vdev(hdd_adapter_t *adapter);
 
 /**
  * hdd_add_peer_object() - Create and add the peer object to the vdev
