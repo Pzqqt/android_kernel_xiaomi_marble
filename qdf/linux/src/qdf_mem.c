@@ -96,7 +96,7 @@ u_int8_t prealloc_disabled = 1;
 qdf_declare_param(prealloc_disabled, byte);
 EXPORT_SYMBOL(prealloc_disabled);
 
-#ifdef WLAN_DEBUGFS
+#if defined WLAN_DEBUGFS && defined MEMORY_DEBUG
 
 /**
  * struct __qdf_mem_stat - qdf memory statistics
@@ -474,19 +474,24 @@ static void qdf_mem_debugfs_exit(void)
 	qdf_mem_debugfs_root = NULL;
 }
 
-#else /* WLAN_DEBUGFS */
+#else /* WLAN_DEBUGFS && MEMORY_DEBUG */
 
 static inline void qdf_mem_kmalloc_inc(qdf_size_t size) {}
 static inline void qdf_mem_dma_inc(qdf_size_t size) {}
 static inline void qdf_mem_kmalloc_dec(qdf_size_t size) {}
 static inline void qdf_mem_dma_dec(qdf_size_t size) {}
+
+#ifdef MEMORY_DEBUG
+
 static QDF_STATUS qdf_mem_debugfs_init(void)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
 static void qdf_mem_debugfs_exit(void) {}
 
-#endif /* WLAN_DEBUGFS */
+#endif
+
+#endif /* WLAN_DEBUGFS && MEMORY_DEBUG */
 
 /**
  * __qdf_mempool_init() - Create and initialize memory pool
