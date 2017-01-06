@@ -939,6 +939,8 @@ static void wlan_hdd_sap_pre_cac_success(void *data)
 	}
 
 	cds_ssr_protect(__func__);
+	wlan_hdd_release_intf_addr(hdd_ctx,
+				   pHostapdAdapter->macAddressCurrent.bytes);
 	hdd_stop_adapter(hdd_ctx, pHostapdAdapter, true);
 	hdd_close_adapter(hdd_ctx, pHostapdAdapter, false);
 	cds_ssr_unprotect(__func__);
