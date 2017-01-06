@@ -13323,50 +13323,6 @@ QDF_STATUS sme_reset_passpoint_list(tHalHandle hal,
 	return status;
 }
 
-/**
- * sme_set_ssid_hotlist() - Set the SSID hotlist
- * @hal: SME handle
- * @request: set ssid hotlist request
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-sme_set_ssid_hotlist(tHalHandle hal,
-		     struct sir_set_ssid_hotlist_request *request)
-{
-	QDF_STATUS status   = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal mac = PMAC_STRUCT(hal);
-	struct scheduler_msg message;
-	struct sir_set_ssid_hotlist_request *set_req;
-
-	set_req = qdf_mem_malloc(sizeof(*set_req));
-	if (!set_req) {
-		sms_log(mac, LOGE, FL("qdf_mem_malloc failed"));
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	*set_req = *request;
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_STATUS_SUCCESS == status) {
-		/* Serialize the req through MC thread */
-		message.bodyptr = set_req;
-		message.type    = WMA_EXTSCAN_SET_SSID_HOTLIST_REQ;
-		status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
-		sme_release_global_lock(&mac->sme);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			qdf_mem_free(set_req);
-			status = QDF_STATUS_E_FAILURE;
-		}
-	} else {
-		sms_log(mac, LOGE,
-			FL("sme_acquire_global_lock failed!(status=%d)"),
-			status);
-		qdf_mem_free(set_req);
-		status = QDF_STATUS_E_FAILURE;
-	}
-	return status;
-}
-
 QDF_STATUS sme_ext_scan_register_callback(tHalHandle hHal,
 					  void (*pExtScanIndCb)(void *,
 								const uint16_t,

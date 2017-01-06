@@ -6836,11 +6836,6 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, struct scheduler_msg *msg)
 		wma_reset_passpoint_network_list(wma_handle,
 			(struct wifi_passpoint_req *)msg->bodyptr);
 		break;
-	case WMA_EXTSCAN_SET_SSID_HOTLIST_REQ:
-		wma_set_ssid_hotlist(wma_handle,
-			(struct sir_set_ssid_hotlist_request *)msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
 #endif /* FEATURE_WLAN_EXTSCAN */
 	case WMA_SET_SCAN_MAC_OUI_REQ:
 		wma_scan_probe_setoui(wma_handle, msg->bodyptr);

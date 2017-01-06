@@ -104,7 +104,6 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
 #define WLAN_EXTSCAN_MAX_BUCKETS                  16
 #define WLAN_EXTSCAN_MAX_HOTLIST_APS              128
 #define WLAN_EXTSCAN_MAX_SIGNIFICANT_CHANGE_APS   64
-#define WLAN_EXTSCAN_MAX_HOTLIST_SSIDS            8
 
 /* This should not be greater than MAX_NUMBER_OF_CONC_CONNECTIONS */
 #define MAX_VDEV_SUPPORTED                        4
@@ -164,7 +163,6 @@ typedef enum {
 	eSIR_PASSPOINT_NETWORK_FOUND_IND,
 	eSIR_EXTSCAN_SET_SSID_HOTLIST_RSP,
 	eSIR_EXTSCAN_RESET_SSID_HOTLIST_RSP,
-	eSIR_EXTSCAN_HOTLIST_SSID_MATCH_IND,
 
 	/* Keep this last */
 	eSIR_EXTSCAN_CALLBACK_TYPE_MAX,
@@ -4514,36 +4512,6 @@ typedef struct {
 struct sir_wisa_params {
 	bool mode;
 	uint8_t vdev_id;
-};
-/**
- * struct sir_ssid_hotlist_param - param for SSID Hotlist
- * @ssid: SSID which is being hotlisted
- * @band: Band in which the given SSID should be scanned
- * @rssi_low: Low bound on RSSI
- * @rssi_high: High bound on RSSI
- */
-struct sir_ssid_hotlist_param {
-	tSirMacSSid ssid;
-	uint8_t band;
-	int32_t rssi_low;
-	int32_t rssi_high;
-};
-
-/**
- * struct sir_set_ssid_hotlist_request - set SSID hotlist request struct
- * @request_id: ID of the request
- * @session_id: ID of the session
- * @lost_ssid_sample_size: Number of consecutive scans in which the SSID
- *	must not be seen in order to consider the SSID "lost"
- * @ssid_count: Number of valid entries in the @ssids array
- * @ssids: Array that defines the SSIDs that are in the hotlist
- */
-struct sir_set_ssid_hotlist_request {
-	uint32_t request_id;
-	uint8_t session_id;
-	uint32_t lost_ssid_sample_size;
-	uint32_t ssid_count;
-	struct sir_ssid_hotlist_param ssids[WLAN_EXTSCAN_MAX_HOTLIST_SSIDS];
 };
 
 typedef struct {

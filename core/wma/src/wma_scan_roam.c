@@ -3406,11 +3406,6 @@ void wma_extscan_wow_event_callback(void *handle, void *event, uint32_t len)
 		wma_extscan_capabilities_event_handler(handle, event, len);
 		break;
 
-	case WMITLV_TAG_STRUC_wmi_extscan_hotlist_ssid_match_event_fixed_param:
-		wma_extscan_hotlist_ssid_match_event_handler(handle,
-							     event, len);
-		break;
-
 	default:
 		WMA_LOGE(FL("Unknown tag: %d"), tag);
 		break;
@@ -3637,12 +3632,6 @@ void wma_register_extscan_event_handler(tp_wma_handle wma_handle)
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 			WMI_PASSPOINT_MATCH_EVENTID,
 			wma_passpoint_match_event_handler,
-			WMA_RX_SERIALIZER_CTX);
-
-
-	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-			WMI_EXTSCAN_HOTLIST_SSID_MATCH_EVENTID,
-			wma_extscan_hotlist_ssid_match_event_handler,
 			WMA_RX_SERIALIZER_CTX);
 
 	return;
@@ -4563,102 +4552,6 @@ int wma_passpoint_match_event_handler(void *handle,
 				dest_match);
 	WMA_LOGI("%s: sending passpoint match event to hdd", __func__);
 	qdf_mem_free(dest_match);
-	return 0;
-}
-
-/**
- * wma_extscan_hotlist_ssid_match_event_handler() -
- *	Handler for SSID hotlist match event from firmware
- * @handle: WMA handle
- * @cmd_param_info: WMI command buffer
- * @len: length of @cmd_param_info
- *
- * Return: 0 on success, non-zero on failure
- */
-int
-wma_extscan_hotlist_ssid_match_event_handler(void *handle,
-					     uint8_t *cmd_param_info,
-					     uint32_t len)
-{
-	WMI_EXTSCAN_HOTLIST_SSID_MATCH_EVENTID_param_tlvs *param_buf;
-	wmi_extscan_hotlist_ssid_match_event_fixed_param  *event;
-	tSirWifiScanResultEvent  *dest_hotlist;
-	tSirWifiScanResult      *dest_ap;
-	wmi_extscan_wlan_descriptor    *src_hotlist;
-	int numap, j;
-	bool ssid_found = false;
-	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
-
-	if (!mac) {
-		WMA_LOGE("%s: Invalid mac", __func__);
-		return -EINVAL;
-	}
-
-	if (!mac->sme.pExtScanIndCb) {
-		WMA_LOGE("%s: Callback not registered", __func__);
-		return -EINVAL;
-	}
-
-	param_buf = (WMI_EXTSCAN_HOTLIST_SSID_MATCH_EVENTID_param_tlvs *)
-					cmd_param_info;
-	if (!param_buf) {
-		WMA_LOGE("%s: Invalid hotlist match event", __func__);
-		return -EINVAL;
-	}
-
-	event = param_buf->fixed_param;
-	src_hotlist = param_buf->hotlist_ssid_match;
-	numap = event->total_entries;
-	if (!src_hotlist || !numap) {
-		WMA_LOGE("%s: Hotlist AP's list invalid", __func__);
-		return -EINVAL;
-	}
-
-	dest_hotlist = qdf_mem_malloc(sizeof(*dest_hotlist) +
-					sizeof(*dest_ap) * numap);
-	if (!dest_hotlist) {
-		WMA_LOGE("%s: Allocation failed for hotlist buffer",
-			__func__);
-		return -EINVAL;
-	}
-
-	dest_ap = &dest_hotlist->ap[0];
-	dest_hotlist->numOfAps = event->total_entries;
-	dest_hotlist->requestId = event->config_request_id;
-
-	if (event->first_entry_index +
-		event->num_entries_in_page < event->total_entries)
-		dest_hotlist->moreData = 1;
-	else
-		dest_hotlist->moreData = 0;
-
-	WMA_LOGD("%s: Hotlist match: requestId: %u,numOfAps: %d", __func__,
-		 dest_hotlist->requestId, dest_hotlist->numOfAps);
-
-	for (j = 0; j < numap; j++) {
-		dest_ap->channel = src_hotlist->channel;
-		dest_ap->ts = src_hotlist->tstamp;
-		ssid_found = src_hotlist->flags & WMI_HOTLIST_FLAG_PRESENCE;
-		dest_ap->rtt = src_hotlist->rtt;
-		dest_ap->rtt_sd = src_hotlist->rtt_sd;
-		dest_ap->beaconPeriod = src_hotlist->beacon_interval;
-		dest_ap->capability = src_hotlist->capabilities;
-		dest_ap->ieLength = src_hotlist->ie_length;
-		WMI_MAC_ADDR_TO_CHAR_ARRAY(&src_hotlist->bssid,
-					   dest_ap->bssid.bytes);
-		qdf_mem_copy(dest_ap->ssid, src_hotlist->ssid.ssid,
-					src_hotlist->ssid.ssid_len);
-		dest_ap->ssid[src_hotlist->ssid.ssid_len] = '\0';
-		dest_ap++;
-		src_hotlist++;
-	}
-
-	dest_hotlist->ap_found = ssid_found;
-	mac->sme.pExtScanIndCb(mac->hHdd,
-			       eSIR_EXTSCAN_HOTLIST_SSID_MATCH_IND,
-			       dest_hotlist);
-	WMA_LOGI("%s: sending hotlist ssid match event", __func__);
-	qdf_mem_free(dest_hotlist);
 	return 0;
 }
 
@@ -5649,41 +5542,6 @@ QDF_STATUS wma_reset_passpoint_network_list(tp_wma_handle wma,
 	return status;
 }
 
-/**
- * wma_set_ssid_hotlist() - Handle an SSID hotlist set request
- * @wma: WMA handle
- * @request: SSID hotlist set request from SME
- *
- * Return: QDF_STATUS enumeration
- */
-QDF_STATUS
-wma_set_ssid_hotlist(tp_wma_handle wma,
-		     struct sir_set_ssid_hotlist_request *request)
-{
-
-	if (!wma || !wma->wmi_handle) {
-		WMA_LOGE("%s: WMA is closed, can not issue hotlist cmd",
-			 __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (!request) {
-		WMA_LOGE("%s: Invalid request buffer", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-				    WMI_SERVICE_EXTSCAN)) {
-		WMA_LOGE("%s: extscan not enabled",
-			__func__);
-		return QDF_STATUS_E_NOSUPPORT;
-	}
-
-	if (wmi_unified_set_ssid_hotlist_cmd(wma->wmi_handle,
-		 (struct ssid_hotlist_request_params *)request)) {
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
 #endif
 
 /**

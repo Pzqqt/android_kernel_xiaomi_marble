@@ -2117,10 +2117,6 @@ static int wma_extscan_get_eventid_from_tlvtag(uint32_t tag)
 		event_id = WMI_EXTSCAN_CAPABILITIES_EVENTID;
 		break;
 
-	case WMITLV_TAG_STRUC_wmi_extscan_hotlist_ssid_match_event_fixed_param:
-		event_id = WMI_EXTSCAN_HOTLIST_SSID_MATCH_EVENTID;
-		break;
-
 	default:
 		event_id = 0;
 		WMA_LOGE("%s: Unknown tag: %d", __func__, tag);

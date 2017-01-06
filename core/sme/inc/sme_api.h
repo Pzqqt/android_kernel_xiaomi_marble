@@ -867,9 +867,6 @@ QDF_STATUS sme_set_passpoint_list(tHalHandle hal,
 					struct wifi_passpoint_req *req_msg);
 QDF_STATUS sme_reset_passpoint_list(tHalHandle hal,
 					struct wifi_passpoint_req *req_msg);
-QDF_STATUS
-sme_set_ssid_hotlist(tHalHandle hal,
-		     struct sir_set_ssid_hotlist_request *request);
 
 QDF_STATUS sme_ext_scan_register_callback(tHalHandle hHal,
 		void (*pExtScanIndCb)(void *, const uint16_t, void *));
