@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -47,7 +47,6 @@ static inline void ce_enable_irq_in_individual_register(struct hif_softc *scn,
 	uint32_t offset;
 	offset = HOST_IE_ADDRESS + CE_BASE_ADDRESS(ce_id);
 	hif_write32_mb(scn->mem + offset, 1);
-	hif_read32_mb(scn->mem + offset);
 }
 
 static inline void ce_disable_irq_in_individual_register(struct hif_softc *scn,
