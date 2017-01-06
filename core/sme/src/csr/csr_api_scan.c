@@ -1956,10 +1956,28 @@ csr_save_scan_entry(tpAniSirGlobal pMac,
 		(*count)++;
 		return status;
 	}
+	if (pFilter &&
+	   !qdf_mem_cmp(pResult->Result.BssDescriptor.bssId,
+	   pFilter->bssid_hint.bytes, QDF_MAC_ADDR_SIZE)) {
+		/* bssid hint AP should be on head */
+		csr_ll_insert_head(&pRetList->List,
+			&pResult->Link, LL_ACCESS_NOLOCK);
+		(*count)++;
+		return status;
+	}
 
 	pTmpEntry = csr_ll_peek_head(&pRetList->List, LL_ACCESS_NOLOCK);
 	while (pTmpEntry) {
 		pTmpResult = GET_BASE_ADDR(pTmpEntry, tCsrScanResult, Link);
+
+		/* Skip the bssid hint AP, as it should be on head */
+		if (pFilter &&
+		   !qdf_mem_cmp(pTmpResult->Result.BssDescriptor.bssId,
+		   pFilter->bssid_hint.bytes, QDF_MAC_ADDR_SIZE)) {
+			pTmpEntry = csr_ll_next(&pRetList->List,
+					pTmpEntry, LL_ACCESS_NOLOCK);
+			continue;
+		}
 		if (csr_is_better_bss(pMac, pResult, pTmpResult)) {
 			csr_ll_insert_entry(&pRetList->List, pTmpEntry,
 					    &pResult->Link, LL_ACCESS_NOLOCK);

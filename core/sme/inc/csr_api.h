@@ -392,6 +392,7 @@ typedef struct tagCsrScanResultFilter {
 	 */
 	uint8_t scan_filter_for_roam;
 	struct sCsrChannel_ pcl_channels;
+	struct qdf_mac_addr bssid_hint;
 	enum tQDF_ADAPTER_MODE csrPersona;
 } tCsrScanResultFilter;
 
@@ -970,6 +971,7 @@ typedef struct tagCsrRoamProfile {
 	uint8_t beacon_tx_rate;
 	tSirMacRateSet  supported_rates;
 	tSirMacRateSet  extended_rates;
+	struct qdf_mac_addr bssid_hint;
 	bool do_not_roam;
 
 } tCsrRoamProfile;

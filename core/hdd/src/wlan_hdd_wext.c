@@ -2175,6 +2175,9 @@ void hdd_clear_roam_profile_ie(hdd_adapter_t *pAdapter)
 	pWextState->roamProfile.AuthType.authType[0] =
 		eCSR_AUTH_TYPE_OPEN_SYSTEM;
 
+	qdf_mem_zero(pWextState->roamProfile.bssid_hint.bytes,
+		QDF_MAC_ADDR_SIZE);
+
 #ifdef WLAN_FEATURE_11W
 	pWextState->roamProfile.MFPEnabled = false;
 	pWextState->roamProfile.MFPRequired = 0;

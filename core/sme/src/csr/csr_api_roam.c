@@ -10217,6 +10217,8 @@ csr_roam_prepare_filter_from_profile(tpAniSirGlobal mac_ctx,
 		scan_fltr->MDID.mdiePresent = 1;
 		scan_fltr->MDID.mobilityDomain = profile->MDID.mobilityDomain;
 	}
+	qdf_mem_copy(scan_fltr->bssid_hint.bytes,
+		profile->bssid_hint.bytes, QDF_MAC_ADDR_SIZE);
 
 #ifdef WLAN_FEATURE_11W
 	/* Management Frame Protection */

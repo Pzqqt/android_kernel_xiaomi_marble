@@ -11910,6 +11910,12 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 			     ssid, ssid_len);
 
 		pRoamProfile->do_not_roam = !pAdapter->fast_roaming_allowed;
+		/* cleanup bssid hint */
+		qdf_mem_zero(pRoamProfile->bssid_hint.bytes,
+			QDF_MAC_ADDR_SIZE);
+		qdf_mem_zero((void *)(pRoamProfile->BSSIDs.bssid),
+			QDF_MAC_ADDR_SIZE);
+
 		if (bssid) {
 			pRoamProfile->BSSIDs.numOfBSSIDs = 1;
 			pRoamProfile->do_not_roam = true;
@@ -11925,9 +11931,8 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 					bssid, QDF_MAC_ADDR_SIZE);
 			hdd_info("bssid is given by upper layer %pM", bssid);
 		} else if (bssid_hint) {
-			pRoamProfile->BSSIDs.numOfBSSIDs = 1;
-			qdf_mem_copy((void *)(pRoamProfile->BSSIDs.bssid),
-						bssid_hint, QDF_MAC_ADDR_SIZE);
+			qdf_mem_copy(pRoamProfile->bssid_hint.bytes,
+				bssid_hint, QDF_MAC_ADDR_SIZE);
 			/*
 			 * Save BSSID in a separate variable as
 			 * pRoamProfile's BSSID is getting zeroed out in the
@@ -11938,10 +11943,6 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 					bssid_hint, QDF_MAC_ADDR_SIZE);
 			hdd_info("bssid_hint is given by upper layer %pM",
 					bssid_hint);
-		} else {
-			qdf_mem_zero((void *)(pRoamProfile->BSSIDs.bssid),
-				     QDF_MAC_ADDR_SIZE);
-			hdd_info("no bssid given by upper layer");
 		}
 
 		hdd_notice("Connect to SSID: %.*s operating Channel: %u",
