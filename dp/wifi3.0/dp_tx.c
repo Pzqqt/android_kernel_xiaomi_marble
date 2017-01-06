@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -103,8 +103,9 @@ static inline void dp_tx_get_queue(struct dp_vdev *vdev,
  *
  * Return:
  */
-void dp_tx_desc_release(struct dp_vdev *vdev, struct dp_tx_desc_s *tx_desc,
-		uint8_t desc_pool_id)
+static void
+dp_tx_desc_release(struct dp_vdev *vdev, struct dp_tx_desc_s *tx_desc,
+		   uint8_t desc_pool_id)
 {
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
@@ -141,8 +142,8 @@ void dp_tx_desc_release(struct dp_vdev *vdev, struct dp_tx_desc_s *tx_desc,
  * Return: HTT metadata size
  *
  */
-uint8_t dp_tx_prepare_htt_metadata(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
-		uint8_t align_pad)
+static uint8_t dp_tx_prepare_htt_metadata(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
+					  uint8_t align_pad)
 {
 	uint8_t htt_desc_size  = 0;
 	struct htt_tx_msdu_desc_ext2_t desc_ext;
@@ -217,6 +218,7 @@ uint8_t dp_tx_prepare_htt_metadata(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
  *
  * Return:
  */
+static
 struct dp_tx_ext_desc_elem_s *dp_tx_prepare_ext_desc(struct dp_vdev *vdev,
 		struct dp_tx_msdu_info_s *msdu_info, uint8_t desc_pool_id)
 {
@@ -270,6 +272,7 @@ struct dp_tx_ext_desc_elem_s *dp_tx_prepare_ext_desc(struct dp_vdev *vdev,
  * Return: Pointer to Tx Descriptor on success,
  *         NULL on failure
  */
+static
 struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 		qdf_nbuf_t nbuf, uint8_t desc_pool_id)
 {
@@ -378,7 +381,7 @@ failure:
  * Return: Pointer to Tx Descriptor on success,
  *         NULL on failure
  */
-struct dp_tx_desc_s *dp_tx_prepare_desc(struct dp_vdev *vdev,
+static struct dp_tx_desc_s *dp_tx_prepare_desc(struct dp_vdev *vdev,
 		qdf_nbuf_t nbuf, struct dp_tx_msdu_info_s *msdu_info,
 		uint8_t desc_pool_id)
 {
@@ -448,8 +451,8 @@ failure:
  *
  * Return:
  */
-qdf_nbuf_t dp_tx_prepare_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
-		struct dp_tx_msdu_info_s *msdu_info)
+static qdf_nbuf_t dp_tx_prepare_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
+				    struct dp_tx_msdu_info_s *msdu_info)
 {
 	return nbuf;
 }
@@ -468,9 +471,9 @@ qdf_nbuf_t dp_tx_prepare_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
  *
  * Return:
  */
-QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
-		struct dp_tx_desc_s *tx_desc, uint8_t tid,
-		uint16_t fw_metadata, uint8_t ring_id)
+static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
+				   struct dp_tx_desc_s *tx_desc, uint8_t tid,
+				   uint16_t fw_metadata, uint8_t ring_id)
 {
 	uint8_t type;
 	uint16_t length;
@@ -571,8 +574,8 @@ QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
  *
  * Return:
  */
-int dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
-		struct dp_tx_msdu_info_s *msdu_info)
+static int dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
+			      struct dp_tx_msdu_info_s *msdu_info)
 {
 	/* TODO */
 	return 0;
@@ -588,8 +591,8 @@ int dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
  * Return: NULL on success,
  *         nbuf when it fails to send
  */
-qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
-		uint8_t tid, struct dp_tx_queue *tx_q)
+static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
+					 uint8_t tid, struct dp_tx_queue *tx_q)
 {
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
@@ -644,8 +647,9 @@ fail_return:
  * Return: NULL on success,
  *         nbuf when it fails to send
  */
+static
 qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
-		struct dp_tx_msdu_info_s *msdu_info)
+				    struct dp_tx_msdu_info_s *msdu_info)
 {
 	uint8_t i;
 	struct dp_pdev *pdev = vdev->pdev;
@@ -755,7 +759,7 @@ done:
  * Return: NULL on success,
  *         nbuf when it fails to send
  */
-qdf_nbuf_t dp_tx_prepare_sg(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
+static qdf_nbuf_t dp_tx_prepare_sg(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	struct dp_tx_seg_info_s *seg_info, struct dp_tx_msdu_info_s *msdu_info)
 {
 	uint32_t cur_frag, nr_frags;
@@ -947,6 +951,7 @@ send_multiple:
  *
  * Return: none
  */
+static
 void dp_tx_reinject_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 {
 	struct dp_vdev *vdev;
@@ -973,7 +978,7 @@ void dp_tx_reinject_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
  *
  * Return: none
  */
-void dp_tx_inspect_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
+static void dp_tx_inspect_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 {
 
 	struct dp_soc *soc;
@@ -1000,6 +1005,7 @@ void dp_tx_inspect_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
  *
  * Return: none
  */
+static
 void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 {
 	uint8_t tx_status;
@@ -1101,8 +1107,8 @@ static inline void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc)
  *
  * Return: none
  */
-void dp_tx_comp_process_desc(struct dp_soc *soc,
-		struct dp_tx_desc_s *comp_head)
+static void dp_tx_comp_process_desc(struct dp_soc *soc,
+				    struct dp_tx_desc_s *comp_head)
 {
 	struct dp_tx_desc_s *desc;
 	struct dp_tx_desc_s *next;
