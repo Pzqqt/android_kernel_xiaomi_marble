@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -30,9 +30,9 @@
  * Opens up lmac_if southbound layer. This function calls OL,DA and UMAC
  * modules to register respective tx and rx callbacks.
  *
- * Return: Pointer to global psoc object
+ * Return: QDF_STATUS
  */
-struct wlan_objmgr_psoc *wlan_lmac_if_open(struct wlan_objmgr_psoc *psoc);
+QDF_STATUS wlan_lmac_if_open(struct wlan_objmgr_psoc *psoc);
 
 /**
  * wlan_lmac_if_register_rx_handlers() - UMAC rx handler register

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -72,9 +72,9 @@ wlan_lmac_if_register_rx_handlers(struct wlan_lmac_if_rx_ops *rx_ops)
  * Opens up lmac_if southbound layer. This function calls OL,DA and UMAC
  * modules to register respective tx and rx callbacks.
  *
- * Return: Pointer to global psoc object
+ * Return: QDF_STATUS
  */
-struct wlan_objmgr_psoc *wlan_lmac_if_open(struct wlan_objmgr_psoc *psoc)
+QDF_STATUS wlan_lmac_if_open(struct wlan_objmgr_psoc *psoc)
 {
 	WLAN_DEV_TYPE dev_type;
 
@@ -89,13 +89,13 @@ struct wlan_objmgr_psoc *wlan_lmac_if_open(struct wlan_objmgr_psoc *psoc)
 	} else {
 		/* Control should ideally not reach here */
 		qdf_print("Invalid device type");
-		return psoc;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	/* Function call into umac to register rx-ops handlers */
 	wlan_lmac_if_register_rx_handlers(&psoc->soc_cb.rx_ops);
 
-	return psoc;
+	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(wlan_lmac_if_open);
 
