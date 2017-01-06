@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -56,6 +56,7 @@ extern int dp_peer_find_attach(struct dp_soc *soc);
 extern void dp_peer_find_detach(struct dp_soc *soc);
 extern void dp_peer_find_hash_add(struct dp_soc *soc, struct dp_peer *peer);
 extern void dp_peer_find_hash_remove(struct dp_soc *soc, struct dp_peer *peer);
+extern void dp_peer_find_hash_erase(struct dp_soc *soc);
 extern void dp_peer_rx_init(struct dp_pdev *pdev, struct dp_peer *peer);
 extern void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer);
 extern void dp_peer_unref_delete(void *peer_handle);

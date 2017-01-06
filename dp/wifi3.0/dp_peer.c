@@ -176,10 +176,10 @@ void dp_peer_find_hash_add(struct dp_soc *soc, struct dp_peer *peer)
 }
 
 #if ATH_SUPPORT_WRAP
-struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
+static struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
 	uint8_t *peer_mac_addr, int mac_addr_is_aligned, uint8_t vdev_id)
 #else
-struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
+static struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
 	uint8_t *peer_mac_addr, int mac_addr_is_aligned)
 #endif
 {
@@ -439,8 +439,8 @@ void *dp_find_peer_by_addr(void *dev, uint8_t *peer_mac_addr,
  *
  * Return: 0 on success, error code on failure
  */
-int dp_rx_tid_update_wifi3(struct dp_peer *peer, int tid, uint32_t
-ba_window_size, uint32_t start_seq)
+static int dp_rx_tid_update_wifi3(struct dp_peer *peer, int tid, uint32_t
+				  ba_window_size, uint32_t start_seq)
 {
 	/* TODO: Implement this once REO command API is available */
 	return 0;
@@ -455,8 +455,8 @@ ba_window_size, uint32_t start_seq)
  *
  * Return: 0 on success, error code on failure
  */
-int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
-	uint32_t ba_window_size, uint32_t start_seq)
+static int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
+				 uint32_t ba_window_size, uint32_t start_seq)
 {
 	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
 	struct dp_vdev *vdev = peer->vdev;
@@ -586,10 +586,11 @@ int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 	return 0;
 }
 
+#ifdef notyet /* TBD: Enable this once REO command interface is available */
 /*
  * Rx TID deletion callback to free memory allocated for HW queue descriptor
  */
-void dp_rx_tid_delete_cb(struct dp_pdev *pdev, void *cb_ctxt, int status)
+static void dp_rx_tid_delete_cb(struct dp_pdev *pdev, void *cb_ctxt, int status)
 {
 	struct dp_soc *soc = pdev->soc;
 	struct dp_rx_tid *rx_tid = (struct dp_rx_tid *)cb_ctxt;
@@ -617,15 +618,19 @@ void dp_rx_tid_delete_cb(struct dp_pdev *pdev, void *cb_ctxt, int status)
  *
  * Return: 0 on success, error code on failure
  */
-int dp_rx_tid_delete_wifi3(struct dp_peer *peer, int tid)
+static int dp_rx_tid_delete_wifi3(struct dp_peer *peer, int tid)
 {
-#ifdef notyet /* TBD: Enable this once REO command interface is available */
 	struct dp_rx_tid *rx_tid = peer->rx_tid[tid];
 	dp_rx_tid_hw_update_valid(rx_tid->hw_qdesc_paddr, 0,
 		dp_rx_tid_delete_cb, (void *)rx_tid);
-#endif
 	return 0;
 }
+#else
+static int dp_rx_tid_delete_wifi3(struct dp_peer *peer, int tid)
+{
+	return 0;
+}
+#endif
 
 /*
  * dp_peer_rx_init() – Initialize receive TID state
