@@ -7907,7 +7907,7 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx)
 		QDF_ASSERT(0);
 	}
 
-	qdf_status = hdd_destroy_and_release_pdev(hdd_ctx);
+	qdf_status = hdd_release_and_destroy_pdev(hdd_ctx);
 	if (QDF_IS_STATUS_ERROR(qdf_status))
 		hdd_err("Pdev delete failed");
 
@@ -9962,7 +9962,7 @@ QDF_STATUS hdd_create_and_store_pdev(hdd_context_t *hdd_ctx)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS hdd_destroy_and_release_pdev(hdd_context_t *hdd_ctx)
+QDF_STATUS hdd_release_and_destroy_pdev(hdd_context_t *hdd_ctx)
 {
 	struct wlan_objmgr_pdev *pdev = hdd_ctx->hdd_pdev;
 

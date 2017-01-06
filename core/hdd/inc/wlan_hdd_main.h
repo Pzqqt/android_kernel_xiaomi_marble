@@ -2044,14 +2044,14 @@ QDF_STATUS hdd_release_and_destroy_psoc(hdd_context_t *hdd_ctx);
 QDF_STATUS hdd_create_and_store_pdev(hdd_context_t *hdd_ctx);
 
 /**
- * hdd_destroy_and_release_pdev() - Deletes the pdev object
+ * hdd_release_and_destroy_pdev() - Deletes the pdev object
  * @hdd_ctx: Hdd context
  *
  * This API deletes pdev object and release its reference from hdd context
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS hdd_destroy_and_release_pdev(hdd_context_t *hdd_ctx);
+QDF_STATUS hdd_release_and_destroy_pdev(hdd_context_t *hdd_ctx);
 
 /**
  * hdd_create_and_store_vdev() - Create vdev object and store in hdd adapter
