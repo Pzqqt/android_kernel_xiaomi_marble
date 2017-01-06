@@ -5246,6 +5246,13 @@ static int __iw_set_genie(struct net_device *dev,
 
 		hdd_debug("IE[0x%X], LEN[%d]", elementId, eLen);
 
+		if (remLen < eLen) {
+			hdd_err("Remaining len: %u less than ie len: %u",
+				remLen, eLen);
+			ret = -EINVAL;
+			goto exit;
+		}
+
 		switch (elementId) {
 		case IE_EID_VENDOR:
 			/* should have at least OUI */
@@ -5334,8 +5341,11 @@ static int __iw_set_genie(struct net_device *dev,
 			hdd_err("Set UNKNOWN IE %X", elementId);
 			goto exit;
 		}
-		genie += eLen;
 		remLen -= eLen;
+
+		/* Move genie only if next element is present */
+		if (remLen >= 2)
+			genie += eLen;
 	}
 exit:
 	EXIT();
