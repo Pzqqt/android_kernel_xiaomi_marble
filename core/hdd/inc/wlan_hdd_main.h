@@ -2024,14 +2024,14 @@ void hdd_set_roaming_in_progress(bool value);
 QDF_STATUS hdd_create_and_store_psoc(hdd_context_t *hdd_ctx, uint8_t psoc_id);
 
 /**
- * hdd_destroy_and_release_psoc() - Deletes the psoc object
+ * hdd_release_and_destroy_psoc() - Deletes the psoc object
  * @hdd_ctx: Hdd context
  *
  * This API deletes psoc object and release its reference from hdd context
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS hdd_destroy_and_release_psoc(hdd_context_t *hdd_ctx);
+QDF_STATUS hdd_release_and_destroy_psoc(hdd_context_t *hdd_ctx);
 
 /**
  * hdd_create_and_store_pdev() - Create pdev object and store in hdd context
