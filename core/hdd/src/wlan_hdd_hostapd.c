@@ -77,6 +77,7 @@
 #include "wlan_hdd_green_ap.h"
 #include "ol_rx_fwd.h"
 #include "wlan_hdd_power.h"
+#include "wlan_hdd_object_manager.h"
 
 #define    IS_UP(_dev) \
 	(((_dev)->flags & (IFF_RUNNING|IFF_UP)) == (IFF_RUNNING|IFF_UP))
