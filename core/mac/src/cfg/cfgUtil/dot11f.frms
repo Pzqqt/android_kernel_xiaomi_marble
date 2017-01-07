@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2007, 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2006-2007, 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -409,6 +409,38 @@ FF ext_chan_switch_ann_action(4)
      new_channel: 8;
      switch_count: 8;
    }
+}
+
+FF addba_param_set(2)
+{
+   {
+     amsdu_supp: 1;
+     policy: 1;
+     tid: 4;
+     buff_size: 10;
+   }
+}
+
+FF ba_timeout(2)
+{
+    timeout, 2;
+}
+
+FF ba_start_seq_ctrl(2)
+{
+    {
+      frag_number: 4;
+      ssn: 12;
+    }
+}
+
+FF delba_param_set(2)
+{
+    {
+      reserved: 11;
+      initiator: 1;
+      tid: 4;
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -3756,6 +3788,34 @@ FRAME p2p_oper_chan_change_confirm
     OPTIE HTCaps;
     OPTIE VHTCaps;
     OPTIE OperatingMode;
+}
+
+FRAME addba_req
+{
+    FF    Category;
+    FF    Action;
+    FF    DialogToken;
+    FF    addba_param_set;
+    FF    ba_timeout;
+    FF    ba_start_seq_ctrl;
+}
+
+FRAME addba_rsp
+{
+    FF    Category;
+    FF    Action;
+    FF    DialogToken;
+    FF    Status;
+    FF    addba_param_set;
+    FF    ba_timeout;
+}
+
+FRAME delba_req
+{
+    FF    Category;
+    FF    Action;
+    FF    delba_param_set;
+    FF    Reason;
 }
 
 // Local Variables:

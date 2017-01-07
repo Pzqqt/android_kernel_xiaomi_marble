@@ -61,6 +61,7 @@
 #include "rrm_api.h"
 
 #include "wma_types.h"
+#include <cdp_txrx_cmn.h>
 
 /**
  *
@@ -4620,3 +4621,151 @@ returnAfterError:
 	return nSirStatus;
 } /* End lim_send_sa_query_response_frame */
 #endif
+
+/**
+ * lim_send_addba_response_frame(): Send ADDBA response action frame to peer
+ * @mac_ctx: mac context
+ * @peer_mac: Peer MAC address
+ * @tid: TID for which addba response is being sent
+ * @session: PE session entry
+ *
+ * This function is called when ADDBA request is successful. ADDBA response is
+ * setup by calling addba_response_setup API and frame is then sent out OTA.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
+			tSirMacAddr peer_mac, uint16_t tid, tpPESession session)
+{
+
+	tDot11faddba_rsp frm;
+	uint8_t *frame_ptr;
+	tpSirMacMgmtHdr mgmt_hdr;
+	uint32_t num_bytes, payload_size, status;
+	void *pkt_ptr;
+	QDF_STATUS qdf_status;
+	uint8_t tx_flag = 0;
+	uint8_t sme_sessionid = 0;
+	uint16_t buff_size, status_code, batimeout;
+	uint8_t peer_id, dialog_token;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	void *peer, *pdev;
+
+	sme_sessionid = session->smeSessionId;
+
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	if (!pdev) {
+		lim_log(mac_ctx, LOGE, FL("pdev is NULL"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	peer = cdp_peer_find_by_addr(soc, pdev, peer_mac, &peer_id);
+	if (!peer) {
+		lim_log(mac_ctx, LOGE, FL("PEER [%pM] not found"), peer_mac);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cdp_addba_responsesetup(soc, peer, tid, &dialog_token,
+		&status_code, &buff_size, &batimeout);
+
+	qdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
+	frm.Category.category = SIR_MAC_ACTION_BLKACK;
+	frm.Action.action = SIR_MAC_ADDBA_RSP;
+
+	frm.DialogToken.token = dialog_token;
+	frm.Status.status = status_code;
+	frm.addba_param_set.tid = tid;
+	frm.addba_param_set.buff_size = buff_size;
+	frm.addba_param_set.amsdu_supp = SIR_MAC_BA_POLICY_IMMEDIATE;
+	frm.addba_param_set.policy = SIR_MAC_BA_AMSDU_SUPPORTED;
+	frm.ba_timeout.timeout = batimeout;
+
+	lim_log(mac_ctx, LOG1, FL("Sending a ADDBA Response from %pM to %pM"),
+		session->selfMacAddr, peer_mac);
+	lim_log(mac_ctx, LOG1, FL("tid: %d, dialog_token: %d, status: %d, buff_size: %d"),
+		tid, frm.DialogToken.token, frm.Status.status,
+		frm.addba_param_set.buff_size);
+
+	status = dot11f_get_packed_addba_rsp_size(mac_ctx, &frm, &payload_size);
+	if (DOT11F_FAILED(status)) {
+		lim_log(mac_ctx, LOGP, FL("Failed to calculate the packed size for a ADDBA Response (0x%08x)."),
+			status);
+		/* We'll fall back on the worst case scenario: */
+		payload_size = sizeof(tDot11faddba_rsp);
+	} else if (DOT11F_WARNED(status)) {
+		lim_log(mac_ctx, LOGW, FL("There were warnings while calculating the packed size for a ADDBA Response (0x%08x)."), status);
+	}
+
+	num_bytes = payload_size + sizeof(*mgmt_hdr);
+	qdf_status = cds_packet_alloc(num_bytes, (void **)&frame_ptr,
+				      (void **)&pkt_ptr);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		lim_log(mac_ctx, LOGP,
+			FL("Failed to allocate %d bytes for a ADDBA response action frame"), num_bytes);
+		return QDF_STATUS_E_FAILURE;
+	}
+	qdf_mem_set(frame_ptr, num_bytes, 0);
+
+	lim_populate_mac_header(mac_ctx, frame_ptr, SIR_MAC_MGMT_FRAME,
+		SIR_MAC_MGMT_ACTION, peer_mac, session->selfMacAddr);
+
+	/* Update A3 with the BSSID */
+	mgmt_hdr = (tpSirMacMgmtHdr) frame_ptr;
+	sir_copy_mac_addr(mgmt_hdr->bssId, session->bssId);
+
+	/* ADDBA Response is a robust mgmt action frame,
+	 * set the "protect" (aka WEP) bit in the FC
+	 */
+	lim_set_protected_bit(mac_ctx, session, peer_mac, mgmt_hdr);
+
+	status = dot11f_pack_addba_rsp(mac_ctx, &frm,
+			frame_ptr + sizeof(tSirMacMgmtHdr), payload_size,
+			&payload_size);
+
+	if (DOT11F_FAILED(status)) {
+		lim_log(mac_ctx, LOGE,
+			FL("Failed to pack a ADDBA Response (0x%08x)."),
+			status);
+		qdf_status = QDF_STATUS_E_FAILURE;
+		goto error_addba_rsp;
+	} else if (DOT11F_WARNED(status)) {
+		lim_log(mac_ctx, LOGW, FL("There were warnings while packing ADDBA Response (0x%08x)."),
+			status);
+	}
+
+
+	if ((SIR_BAND_5_GHZ == lim_get_rf_band(session->currentOperChannel))
+#ifdef WLAN_FEATURE_P2P
+	    || (session->pePersona == QDF_P2P_CLIENT_MODE) ||
+	    (session->pePersona == QDF_P2P_GO_MODE)
+#endif
+	    ) {
+		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
+	}
+
+	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
+			 session->peSessionId, mgmt_hdr->fc.subType));
+	qdf_status = wma_tx_frame(mac_ctx, pkt_ptr, (uint16_t) num_bytes,
+			TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS, 7,
+			lim_tx_complete, frame_ptr, tx_flag, sme_sessionid, 0);
+	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
+			 session->peSessionId, qdf_status));
+	if (QDF_STATUS_SUCCESS != qdf_status) {
+		lim_log(mac_ctx, LOGE, FL("wma_tx_frame FAILED! Status [%d]"),
+			qdf_status);
+		qdf_status = QDF_STATUS_E_FAILURE;
+		/*
+		 * wma_tx_frame free memory in certain cases, free pkt_ptr
+		 * only if not freed already.
+		 */
+		if (pkt_ptr)
+			cds_packet_free((void *)pkt_ptr);
+		return qdf_status;
+	} else {
+		return eSIR_SUCCESS;
+	}
+
+error_addba_rsp:
+	cds_packet_free((void *)pkt_ptr);
+	return qdf_status;
+}

@@ -908,4 +908,6 @@ enum {
 	eDBG
 };
 
+QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
+		tSirMacAddr peer_mac, uint16_t tid, tpPESession session);
 #endif /* __LIM_TYPES_H */

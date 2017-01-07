@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -57,6 +57,7 @@
 #include "cds_concurrency.h"
 #include "wma_types.h"
 #include "wma.h"
+#include <cdp_txrx_cmn.h>
 
 #define BA_DEFAULT_TX_BUFFER_SIZE 64
 
@@ -1717,6 +1718,160 @@ lim_drop_unprotected_action_frame(tpAniSirGlobal pMac, tpPESession psessionEntry
 #endif
 
 /**
+ * lim_process_addba_req() - process ADDBA Request
+ * @mac_ctx: Pointer to Global MAC structure
+ * @rx_pkt_info: A pointer to packet info structure
+ * @session: PE session pointer
+ *
+ * This routine will be called to process ADDBA request action frame
+ *
+ * Return: None
+ */
+static void lim_process_addba_req(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
+				  tpPESession session)
+{
+	tpSirMacMgmtHdr mac_hdr;
+	uint8_t *body_ptr;
+	tDot11faddba_req *addba_req;
+	uint32_t frame_len, status;
+	QDF_STATUS qdf_status;
+	uint8_t peer_id;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	void *peer, *pdev;
+
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	if (!pdev) {
+		lim_log(mac_ctx, LOGE, FL("pdev is NULL"));
+		return;
+	}
+
+	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
+	body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
+	frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
+
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
+			   body_ptr, frame_len);
+
+	addba_req = qdf_mem_malloc(sizeof(*addba_req));
+	if (NULL == addba_req) {
+		lim_log(mac_ctx, LOGE, FL("memory allocation failed"));
+		return;
+	}
+
+	/* Unpack ADDBA request frame */
+	status = dot11f_unpack_addba_req(mac_ctx, body_ptr, frame_len,
+					 addba_req);
+
+	if (DOT11F_FAILED(status)) {
+		lim_log(mac_ctx, LOGE,
+			FL("Failed to unpack and parse (0x%08x, %d bytes)"),
+			status, frame_len);
+		goto error;
+	} else if (DOT11F_WARNED(status)) {
+		lim_log(mac_ctx, LOGW,
+			FL("warning: unpack addba Req(0x%08x, %d bytes)"),
+			status, frame_len);
+	}
+
+	peer = cdp_peer_find_by_addr(soc, pdev, mac_hdr->sa, &peer_id);
+	if (!peer) {
+		lim_log(mac_ctx, LOGE, FL("PEER [%pM] not found"), mac_hdr->sa);
+		goto error;
+	}
+
+	qdf_status = cdp_addba_requestprocess(soc, peer,
+			addba_req->DialogToken.token,
+			addba_req->addba_param_set.tid,
+			addba_req->ba_timeout.timeout,
+			addba_req->addba_param_set.buff_size,
+			addba_req->ba_start_seq_ctrl.ssn);
+
+	if (QDF_STATUS_SUCCESS == qdf_status) {
+		lim_send_addba_response_frame(mac_ctx, mac_hdr->sa,
+			addba_req->addba_param_set.tid, session);
+	} else {
+		lim_log(mac_ctx, LOGE, FL("Failed to process addba request"));
+	}
+
+error:
+	qdf_mem_free(addba_req);
+	return;
+}
+
+/**
+ * lim_process_delba_req() - process DELBA Request
+ * @mac_ctx: Pointer to Global MAC structure
+ * @rx_pkt_info: A pointer to packet info structure
+ * @session: PE session pointer
+ *
+ * This routine will be called to process ADDBA request action frame
+ *
+ * Return: None
+ */
+static void lim_process_delba_req(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
+				  tpPESession session)
+{
+	tpSirMacMgmtHdr mac_hdr;
+	uint8_t *body_ptr;
+	tDot11fdelba_req *delba_req;
+	uint32_t frame_len, status;
+	QDF_STATUS qdf_status;
+	uint8_t peer_id;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	void *peer, *pdev;
+
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	if (!pdev) {
+		lim_log(mac_ctx, LOGE, FL("pdev is NULL"));
+		return;
+	}
+
+	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
+	body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
+	frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
+
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
+			   body_ptr, frame_len);
+
+	delba_req = qdf_mem_malloc(sizeof(*delba_req));
+	if (NULL == delba_req) {
+		lim_log(mac_ctx, LOGE, FL("memory allocation failed"));
+		return;
+	}
+
+	/* Unpack DELBA request frame */
+	status = dot11f_unpack_delba_req(mac_ctx, body_ptr, frame_len,
+					 delba_req);
+
+	if (DOT11F_FAILED(status)) {
+		lim_log(mac_ctx, LOGE,
+			FL("Failed to unpack and parse (0x%08x, %d bytes)"),
+			status, frame_len);
+		goto error;
+	} else if (DOT11F_WARNED(status)) {
+		lim_log(mac_ctx, LOGW,
+			FL("warning: unpack addba Req(0x%08x, %d bytes)"),
+			status, frame_len);
+	}
+
+	peer = cdp_peer_find_by_addr(soc, pdev, mac_hdr->sa, &peer_id);
+	if (!peer) {
+		lim_log(mac_ctx, LOGE, FL("PEER [%pM] not found"), mac_hdr->sa);
+		goto error;
+	}
+
+	qdf_status = cdp_delba_process(soc, peer,
+			delba_req->delba_param_set.tid, delba_req->Reason.code);
+
+	if (QDF_STATUS_SUCCESS != qdf_status)
+		lim_log(mac_ctx, LOGE, FL("Failed to process delba request"));
+
+error:
+	qdf_mem_free(delba_req);
+	return;
+}
+
+/**
  * lim_process_action_frame() - to process action frames
  * @mac_ctx: Pointer to Global MAC structure
  * @rx_pkt_info: A pointer to packet info structure
@@ -2167,6 +2322,21 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 		default:
 			lim_log(mac_ctx, LOG1,
 				FL("Unhandled - Protected Dual Public Action"));
+			break;
+		}
+		break;
+	case SIR_MAC_ACTION_BLKACK:
+		lim_log(mac_ctx, LOG1, FL("Rcvd Block Ack for %pM; action: %d"),
+			session->selfMacAddr, action_hdr->actionID);
+		switch (action_hdr->actionID) {
+		case SIR_MAC_ADDBA_REQ:
+			lim_process_addba_req(mac_ctx, rx_pkt_info, session);
+			break;
+		case SIR_MAC_DELBA_REQ:
+			lim_process_delba_req(mac_ctx, rx_pkt_info, session);
+			break;
+		default:
+			lim_log(mac_ctx, LOGE, FL("Unhandle BA action frame"));
 			break;
 		}
 		break;
