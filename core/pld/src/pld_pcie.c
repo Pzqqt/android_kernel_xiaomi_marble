@@ -278,6 +278,58 @@ static int pld_pcie_resume(struct pci_dev *pdev)
 	pld_context = pld_get_global_context();
 	return pld_context->ops->resume(&pdev->dev, PLD_BUS_TYPE_PCIE);
 }
+
+/**
+ * pld_pcie_suspend_noirq() - Complete the actions started by suspend()
+ * @pdev: PCI device
+ *
+ * Complete the actions started by suspend().  Carry out any additional
+ * operations required for suspending the device that might be racing
+ * with its driver's interrupt handler, which is guaranteed not to run
+ * while suspend_noirq() is being executed.
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+static int pld_pcie_suspend_noirq(struct pci_dev *pdev)
+{
+	struct pld_context *pld_context;
+
+	pld_context = pld_get_global_context();
+	if (!pld_context)
+		return -EINVAL;
+
+	if (pld_context->ops->suspend_noirq)
+		return pld_context->ops->
+			suspend_noirq(&pdev->dev, PLD_BUS_TYPE_PCIE);
+	return 0;
+}
+
+/**
+ * pld_pcie_resume_noirq() - Prepare for the execution of resume()
+ * @pdev: PCI device
+ *
+ * Prepare for the execution of resume() by carrying out any additional
+ * operations required for resuming the device that might be racing with
+ * its driver's interrupt handler, which is guaranteed not to run while
+ * resume_noirq() is being executed.
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+static int pld_pcie_resume_noirq(struct pci_dev *pdev)
+{
+	struct pld_context *pld_context;
+
+	pld_context = pld_get_global_context();
+	if (!pld_context)
+		return -EINVAL;
+
+	if (pld_context->ops->resume_noirq)
+		return pld_context->ops->
+			resume_noirq(&pdev->dev, PLD_BUS_TYPE_PCIE);
+	return 0;
+}
 #endif
 
 static struct pci_device_id pld_pcie_id_table[] = {
@@ -310,6 +362,8 @@ struct cnss_wlan_driver pld_pcie_ops = {
 #ifdef CONFIG_PM
 	.suspend    = pld_pcie_suspend,
 	.resume     = pld_pcie_resume,
+	.suspend_noirq = pld_pcie_suspend_noirq,
+	.resume_noirq  = pld_pcie_resume_noirq,
 #endif
 #ifdef FEATURE_RUNTIME_PM
 	.runtime_ops = &runtime_pm_ops,
