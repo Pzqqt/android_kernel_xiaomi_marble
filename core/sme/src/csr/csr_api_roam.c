@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -15791,6 +15791,8 @@ QDF_STATUS csr_roam_close_session(tpAniSirGlobal pMac, uint32_t sessionId,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	if (CSR_IS_SESSION_VALID(pMac, sessionId)) {
 		tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
+		/* Vdev going down stop roaming */
+		pSession->fCancelRoaming = true;
 		if (fSync) {
 			csr_cleanup_session(pMac, sessionId);
 		} else {
