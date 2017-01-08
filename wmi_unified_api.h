@@ -1375,4 +1375,24 @@ QDF_STATUS wmi_extract_pdev_qvit_event(void *wmi_hdl,
 QDF_STATUS wmi_extract_peer_delete_response_event(void *wmi_hdl,
 		uint8_t *evt_buf,
 		struct wmi_host_peer_delete_response_event *param);
+
+/**
+ * wmi_unified_dfs_phyerr_offload_en_cmd() - enable dfs phyerr offload
+ * @wmi_handle: wmi handle
+ * @pdev_id: pdev id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wmi_unified_dfs_phyerr_offload_en_cmd(void *wmi_hdl,
+		uint32_t pdev_id);
+
+/**
+ * wmi_unified_dfs_phyerr_offload_dis_cmd() - disable dfs phyerr offload
+ * @wmi_handle: wmi handle
+ * @pdev_id: pdev id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wmi_unified_dfs_phyerr_offload_dis_cmd(void *wmi_hdl,
+		uint32_t pdev_id);
 #endif /* _WMI_UNIFIED_API_H_ */
