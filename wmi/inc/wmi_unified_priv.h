@@ -1251,6 +1251,10 @@ QDF_STATUS (*extract_peer_delete_response_event)(
 
 bool (*is_management_record)(uint32_t cmd_id);
 uint8_t *(*wmi_id_to_name)(uint32_t cmd_id);
+QDF_STATUS (*send_dfs_phyerr_offload_en_cmd)(wmi_unified_t wmi_handle,
+		uint32_t pdev_id);
+QDF_STATUS (*send_dfs_phyerr_offload_dis_cmd)(wmi_unified_t wmi_handle,
+		uint32_t pdev_id);
 };
 
 struct target_abi_version {

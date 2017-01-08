@@ -13678,6 +13678,102 @@ end:
 }
 
 /**
+ * send_dfs_phyerr_offload_en_cmd_tlv() - send dfs phyerr offload enable cmd
+ * @wmi_handle: wmi handle
+ * @pdev_id: pdev id
+ *
+ * Send WMI_PDEV_DFS_PHYERR_OFFLOAD_ENABLE_CMDID command to firmware.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+static QDF_STATUS send_dfs_phyerr_offload_en_cmd_tlv(wmi_unified_t wmi_handle,
+		uint32_t pdev_id)
+{
+	wmi_pdev_dfs_phyerr_offload_enable_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint16_t len;
+	QDF_STATUS ret;
+
+	len = sizeof(*cmd);
+	buf = wmi_buf_alloc(wmi_handle, len);
+
+	WMI_LOGI("%s: pdev_id=%d", __func__, pdev_id);
+
+	if (!buf) {
+		WMI_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_pdev_dfs_phyerr_offload_enable_cmd_fixed_param *)
+		wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+	WMITLV_TAG_STRUC_wmi_pdev_dfs_phyerr_offload_enable_cmd_fixed_param,
+	WMITLV_GET_STRUCT_TLVLEN(
+		wmi_pdev_dfs_phyerr_offload_enable_cmd_fixed_param));
+
+	cmd->pdev_id = pdev_id;
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+			WMI_PDEV_DFS_PHYERR_OFFLOAD_ENABLE_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		WMI_LOGE("%s: Failed to send cmd to fw, ret=%d, pdev_id=%d",
+			__func__, ret, pdev_id);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_dfs_phyerr_offload_dis_cmd_tlv() - send dfs phyerr offload disable cmd
+ * @wmi_handle: wmi handle
+ * @pdev_id: pdev id
+ *
+ * Send WMI_PDEV_DFS_PHYERR_OFFLOAD_DISABLE_CMDID command to firmware.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+static QDF_STATUS send_dfs_phyerr_offload_dis_cmd_tlv(wmi_unified_t wmi_handle,
+		uint32_t pdev_id)
+{
+	wmi_pdev_dfs_phyerr_offload_disable_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint16_t len;
+	QDF_STATUS ret;
+
+	len = sizeof(*cmd);
+	buf = wmi_buf_alloc(wmi_handle, len);
+
+	WMI_LOGI("%s: pdev_id=%d", __func__, pdev_id);
+
+	if (!buf) {
+		WMI_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_pdev_dfs_phyerr_offload_disable_cmd_fixed_param *)
+		wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+	WMITLV_TAG_STRUC_wmi_pdev_dfs_phyerr_offload_disable_cmd_fixed_param,
+	WMITLV_GET_STRUCT_TLVLEN(
+		wmi_pdev_dfs_phyerr_offload_disable_cmd_fixed_param));
+
+	cmd->pdev_id = pdev_id;
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+			WMI_PDEV_DFS_PHYERR_OFFLOAD_DISABLE_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		WMI_LOGE("%s: Failed to send cmd to fw, ret=%d, pdev_id=%d",
+			__func__, ret, pdev_id);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * init_cmd_send_tlv() - send initialization cmd to fw
  * @wmi_handle: wmi handle
  * @param param: pointer to wmi init param
@@ -15988,6 +16084,8 @@ struct wmi_ops tlv_ops =  {
 		extract_peer_sta_ps_statechange_ev_tlv,
 	.extract_inst_rssi_stats_event = extract_inst_rssi_stats_event_tlv,
 	.send_per_roam_config_cmd = send_per_roam_config_cmd_tlv,
+	.send_dfs_phyerr_offload_en_cmd = send_dfs_phyerr_offload_en_cmd_tlv,
+	.send_dfs_phyerr_offload_dis_cmd = send_dfs_phyerr_offload_dis_cmd_tlv,
 };
 
 #ifndef CONFIG_MCL

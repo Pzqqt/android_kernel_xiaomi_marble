@@ -6404,3 +6404,29 @@ QDF_STATUS wmi_extract_peer_delete_response_event(
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS
+wmi_unified_dfs_phyerr_offload_en_cmd(void *wmi_hdl,
+				      uint32_t pdev_id)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_dfs_phyerr_offload_en_cmd)
+		return wmi_handle->ops->send_dfs_phyerr_offload_en_cmd(
+				wmi_handle, pdev_id);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wmi_unified_dfs_phyerr_offload_dis_cmd(void *wmi_hdl,
+				       uint32_t pdev_id)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_dfs_phyerr_offload_dis_cmd)
+		return wmi_handle->ops->send_dfs_phyerr_offload_dis_cmd(
+				wmi_handle, pdev_id);
+
+	return QDF_STATUS_E_FAILURE;
+}

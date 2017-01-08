@@ -7886,6 +7886,38 @@ static uint16_t wmi_set_htc_tx_tag_non_tlv(wmi_unified_t wmi_handle,
 	return 0;
 }
 
+/**
+ * send_dfs_phyerr_offload_en_cmd_non_tlv() - send dfs phyerr offload en cmd
+ * @wmi_handle: wmi handle
+ * @pdev_id: pdev id
+ *
+ * Send WMI_PDEV_DFS_PHYERR_OFFLOAD_ENABLE_CMDID command to firmware.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+static QDF_STATUS send_dfs_phyerr_offload_en_cmd_non_tlv(
+		wmi_unified_t wmi_handle,
+		uint32_t pdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_dfs_phyerr_offload_dis_cmd_non_tlv() - send dfs phyerr offload dis cmd
+ * @wmi_handle: wmi handle
+ * @pdev_id: pdev id
+ *
+ * Send WMI_PDEV_DFS_PHYERR_OFFLOAD_DISABLE_CMDID command to firmware.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+static QDF_STATUS send_dfs_phyerr_offload_dis_cmd_non_tlv(
+		wmi_unified_t wmi_handle,
+		uint32_t pdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
 struct wmi_ops non_tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_non_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_non_tlv,
@@ -8101,6 +8133,10 @@ struct wmi_ops non_tlv_ops =  {
 	.extract_pdev_utf_event = extract_pdev_utf_event_non_tlv,
 	.wmi_set_htc_tx_tag = wmi_set_htc_tx_tag_non_tlv,
 	.is_management_record = is_management_record_non_tlv,
+	.send_dfs_phyerr_offload_en_cmd =
+		send_dfs_phyerr_offload_en_cmd_non_tlv,
+	.send_dfs_phyerr_offload_dis_cmd =
+		send_dfs_phyerr_offload_dis_cmd_non_tlv,
 };
 
 /**
