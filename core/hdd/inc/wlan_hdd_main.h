@@ -1305,6 +1305,18 @@ enum suspend_fail_reason {
 	SUSPEND_FAIL_MAX_COUNT
 };
 
+/**
+ * suspend_resume_stats - Collection of counters for suspend/resume events
+ * @suspends: number of suspends completed
+ * @resumes: number of resumes completed
+ * @suspend_fail: counters for failed suspend reasons
+ */
+struct suspend_resume_stats {
+	uint32_t suspends;
+	uint32_t resumes;
+	uint32_t suspend_fail[SUSPEND_FAIL_MAX_COUNT];
+};
+
 /** Adapter structure definition */
 struct hdd_context_s {
 	/** Global CDS context  */
@@ -1581,8 +1593,7 @@ struct hdd_context_s {
 	bool update_mac_addr_to_fw;
 	struct acs_dfs_policy acs_policy;
 	uint16_t wmi_max_len;
-	/* counters for failed suspend reasons */
-	uint32_t suspend_fail_stats[SUSPEND_FAIL_MAX_COUNT];
+	struct suspend_resume_stats suspend_resume_stats;
 	struct hdd_runtime_pm_context runtime_context;
 	bool roaming_in_progress;
 	/* bit map to set/reset TDLS by different sources */

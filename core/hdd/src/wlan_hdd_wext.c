@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -384,6 +384,29 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_GET_WMM_STATUS    4
 #define WE_GET_CHANNEL_LIST  5
 #define WE_GET_RSSI          6
+
+/*
+ * <ioctl>
+ * getSuspendStats - Get suspend/resume stats
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: character string containing formatted suspend/resume stats
+ *
+ * This ioctl is used to get suspend/resume stats formatted for display.
+ * Currently it includes suspend/resume counts, wow wake up reasons, and
+ * suspend fail reasons.
+ *
+ * @E.g: iwpriv wlan0 getSuspendStats
+ * iwpriv wlan0 getSuspendStats
+ *
+ * Supported Feature: suspend/resume
+ *
+ * Usage: Internal
+ *
+ * </ioctl>
+ */
+#define WE_GET_SUSPEND_RESUME_STATS 7
 #ifdef FEATURE_WLAN_TDLS
 /*
  * <ioctl>
@@ -1078,6 +1101,81 @@ void hdd_wlan_get_stats(hdd_adapter_t *pAdapter, uint16_t *length,
 			   NULL, hdd_napi_get_all());
 
 	*length = len + 1;
+}
+
+/**
+ * wlan_hdd_write_suspend_resume_stats() - Writes suspend/resume stats to buffer
+ * @hdd_ctx: The Hdd context owning the stats to be written
+ * @buffer: The char buffer to write to
+ * @max_len: The maximum number of chars to write
+ *
+ * This assumes hdd_ctx has already been validated, and buffer is not NULL.
+ *
+ * Return - length of written content, negative number on error
+ */
+static int wlan_hdd_write_suspend_resume_stats(hdd_context_t *hdd_ctx,
+					       char *buffer, uint16_t max_len)
+{
+	QDF_STATUS status;
+	struct suspend_resume_stats *sr_stats;
+	struct sir_wake_lock_stats wow_stats;
+
+	sr_stats = &hdd_ctx->suspend_resume_stats;
+
+	status = wma_get_wakelock_stats(&wow_stats);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to get WoW stats");
+		return qdf_status_to_os_return(status);
+	}
+
+	return scnprintf(buffer, max_len,
+			"\n"
+			"Suspends: %u\n"
+			"Resumes: %u\n"
+			"\n"
+			"Suspend Fail Reasons\n"
+			"\tIPA: %u\n"
+			"\tRadar: %u\n"
+			"\tRoam: %u\n"
+			"\tScan: %u\n"
+			"\tInitial Wakeup: %u\n"
+			"\n"
+			"WoW Wake Reasons\n"
+			"\tunicast: %u\n"
+			"\tbroadcast: %u\n"
+			"\tIPv4 multicast: %u\n"
+			"\tIPv6 multicast: %u\n"
+			"\tIPv6 multicast RA: %u\n"
+			"\tIPv6 multicast NS: %u\n"
+			"\tIPv6 multicast NA: %u\n"
+			"\tICMPv4: %u\n"
+			"\tICMPv6: %u\n"
+			"\tRSSI Breach: %u\n"
+			"\tLow RSSI: %u\n"
+			"\tG-Scan: %u\n"
+			"\tPNO Complete: %u\n"
+			"\tPNO Match: %u\n",
+			sr_stats->suspends,
+			sr_stats->resumes,
+			sr_stats->suspend_fail[SUSPEND_FAIL_IPA],
+			sr_stats->suspend_fail[SUSPEND_FAIL_RADAR],
+			sr_stats->suspend_fail[SUSPEND_FAIL_ROAM],
+			sr_stats->suspend_fail[SUSPEND_FAIL_SCAN],
+			sr_stats->suspend_fail[SUSPEND_FAIL_INITIAL_WAKEUP],
+			wow_stats.wow_ucast_wake_up_count,
+			wow_stats.wow_bcast_wake_up_count,
+			wow_stats.wow_ipv4_mcast_wake_up_count,
+			wow_stats.wow_ipv6_mcast_wake_up_count,
+			wow_stats.wow_ipv6_mcast_ra_stats,
+			wow_stats.wow_ipv6_mcast_ns_stats,
+			wow_stats.wow_ipv6_mcast_na_stats,
+			wow_stats.wow_icmpv4_count,
+			wow_stats.wow_icmpv6_count,
+			wow_stats.wow_rssi_breach_wake_up_count,
+			wow_stats.wow_low_rssi_wake_up_count,
+			wow_stats.wow_gscan_wake_up_count,
+			wow_stats.wow_pno_complete_wake_up_count,
+			wow_stats.wow_pno_match_wake_up_count);
 }
 
 /**
@@ -7616,6 +7714,18 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		break;
 	}
 
+	case WE_GET_SUSPEND_RESUME_STATS:
+	{
+		ret = wlan_hdd_write_suspend_resume_stats(hdd_ctx, extra,
+							  WE_MAX_STR_LEN);
+		if (ret >= 0) {
+			wrqu->data.length = ret;
+			ret = 0;
+		}
+
+		break;
+	}
+
 	case WE_LIST_FW_PROFILE:
 		hdd_wlan_list_fw_profile(&(wrqu->data.length),
 					extra, WE_MAX_STR_LEN);
@@ -8083,8 +8193,9 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		break;
 	}
 	}
+
 	EXIT();
-	return 0;
+	return ret;
 }
 
 static int iw_get_char_setnone(struct net_device *dev,
@@ -11154,6 +11265,10 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
 	 "getStats"},
+	{WE_GET_SUSPEND_RESUME_STATS,
+	 0,
+	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
+	 "getSuspendStats"},
 	{WE_LIST_FW_PROFILE,
 	 0,
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,

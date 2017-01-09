@@ -637,6 +637,8 @@ static int __wlan_hdd_bus_suspend_noirq(void)
 	if (err)
 		goto resume_hif_noirq;
 
+	hdd_ctx->suspend_resume_stats.suspends++;
+
 	hdd_info("suspend_noirq done");
 	return 0;
 
