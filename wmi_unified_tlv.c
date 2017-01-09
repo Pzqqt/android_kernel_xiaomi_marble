@@ -10513,6 +10513,211 @@ QDF_STATUS send_pdev_set_dual_mac_config_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef BIG_ENDIAN_HOST
+/**
+* fips_conv_data_be() - LE to BE conversion of FIPS ev data
+* @param data_len - data length
+* @param data - pointer to data
+*
+* Return: QDF_STATUS - success or error status
+*/
+static QDF_STATUS fips_align_data_be(wmi_unified_t wmi_handle,
+			struct fips_params *param)
+{
+	unsigned char *key_unaligned, *data_unaligned;
+	int c;
+	u_int8_t *key_aligned = NULL;
+	u_int8_t *data_aligned = NULL;
+
+	/* Assigning unaligned space to copy the key */
+	key_unaligned = qdf_mem_malloc(
+		sizeof(u_int8_t)*param->key_len + FIPS_ALIGN);
+	data_unaligned = qdf_mem_malloc(
+		sizeof(u_int8_t)*param->data_len + FIPS_ALIGN);
+
+	/* Checking if kmalloc is succesful to allocate space */
+	if (key_unaligned == NULL)
+		return QDF_STATUS_SUCCESS;
+	/* Checking if space is aligned */
+	if (!FIPS_IS_ALIGNED(key_unaligned, FIPS_ALIGN)) {
+		/* align to 4 */
+		key_aligned =
+		(u_int8_t *)FIPS_ALIGNTO(key_unaligned,
+			FIPS_ALIGN);
+	} else {
+		key_aligned = (u_int8_t *)key_unaligned;
+	}
+
+	/* memset and copy content from key to key aligned */
+	OS_MEMSET(key_aligned, 0, param->key_len);
+	OS_MEMCPY(key_aligned, param->key, param->key_len);
+
+	/* print a hexdump for host debug */
+	print_hex_dump(KERN_DEBUG,
+		"\t Aligned and Copied Key:@@@@ ",
+		DUMP_PREFIX_NONE,
+		16, 1, key_aligned, param->key_len, true);
+
+	/* Checking if kmalloc is succesful to allocate space */
+	if (data_unaligned == NULL)
+		return QDF_STATUS_SUCCESS;
+	/* Checking of space is aligned */
+	if (!FIPS_IS_ALIGNED(data_unaligned, FIPS_ALIGN)) {
+		/* align to 4 */
+		data_aligned =
+		(u_int8_t *)FIPS_ALIGNTO(data_unaligned,
+				FIPS_ALIGN);
+	} else {
+		data_aligned = (u_int8_t *)data_unaligned;
+	}
+
+	/* memset and copy content from data to data aligned */
+	OS_MEMSET(data_aligned, 0, param->data_len);
+	OS_MEMCPY(data_aligned, param->data, param->data_len);
+
+	/* print a hexdump for host debug */
+	print_hex_dump(KERN_DEBUG,
+		"\t Properly Aligned and Copied Data:@@@@ ",
+	DUMP_PREFIX_NONE,
+	16, 1, data_aligned, param->data_len, true);
+
+	/* converting to little Endian both key_aligned and
+	* data_aligned*/
+	for (c = 0; c < param->key_len/4; c++) {
+		*((u_int32_t *)key_aligned+c) =
+		qdf_cpu_to_le32(*((u_int32_t *)key_aligned+c));
+	}
+	for (c = 0; c < param->data_len/4; c++) {
+		*((u_int32_t *)data_aligned+c) =
+		qdf_cpu_to_le32(*((u_int32_t *)data_aligned+c));
+	}
+
+	/* update endian data to key and data vectors */
+	OS_MEMCPY(param->key, key_aligned, param->key_len);
+	OS_MEMCPY(param->data, data_aligned, param->data_len);
+
+	/* clean up allocated spaces */
+	qdf_mem_free(key_unaligned);
+	key_unaligned = NULL;
+	key_aligned = NULL;
+
+	qdf_mem_free(data_unaligned);
+	data_unaligned = NULL;
+	data_aligned = NULL;
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+/**
+* fips_align_data_be() - DUMMY for LE platform
+*
+* Return: QDF_STATUS - success
+*/
+static QDF_STATUS fips_align_data_be(wmi_unified_t wmi_handle,
+		struct fips_params *param)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+
+/**
+ * send_pdev_fips_cmd_tlv() - send pdev fips cmd to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to hold pdev fips param
+ *
+ * Return: 0 for success or error code
+ */
+QDF_STATUS
+send_pdev_fips_cmd_tlv(wmi_unified_t wmi_handle,
+		struct fips_params *param)
+{
+	wmi_pdev_fips_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+	uint32_t len = sizeof(wmi_pdev_fips_cmd_fixed_param);
+	QDF_STATUS retval = QDF_STATUS_SUCCESS;
+
+	/* Length TLV placeholder for array of bytes */
+	len += WMI_TLV_HDR_SIZE;
+	if (param->data_len)
+		len += (param->data_len*sizeof(uint8_t));
+
+	/*
+	* Data length must be multiples of 16 bytes - checked against 0xF -
+	* and must be less than WMI_SVC_MSG_SIZE - static size of
+	* wmi_pdev_fips_cmd structure
+	*/
+
+	/* do sanity on the input */
+	if (!(((param->data_len & 0xF) == 0) &&
+			((param->data_len > 0) &&
+			(param->data_len < (WMI_HOST_MAX_BUFFER_SIZE -
+		sizeof(wmi_pdev_fips_cmd_fixed_param)))))) {
+		return QDF_STATUS_E_INVAL;
+	}
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		qdf_print("%s:wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	cmd = (wmi_pdev_fips_cmd_fixed_param *)buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_pdev_fips_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN
+		(wmi_pdev_fips_cmd_fixed_param));
+
+	cmd->pdev_id = param->pdev_id;
+	if (param->key != NULL && param->data != NULL) {
+		cmd->key_len = param->key_len;
+		cmd->data_len = param->data_len;
+		cmd->fips_cmd = !!(param->op);
+
+		if (fips_align_data_be(wmi_handle, param) != QDF_STATUS_SUCCESS)
+			return QDF_STATUS_E_FAILURE;
+
+		qdf_mem_copy(cmd->key, param->key, param->key_len);
+
+		if (param->mode == FIPS_ENGINE_AES_CTR ||
+			param->mode == FIPS_ENGINE_AES_MIC) {
+			cmd->mode = param->mode;
+		} else {
+			cmd->mode = FIPS_ENGINE_AES_CTR;
+		}
+		qdf_print(KERN_ERR "Key len = %d, Data len = %d\n",
+			cmd->key_len, cmd->data_len);
+
+		print_hex_dump(KERN_DEBUG, "Key: ", DUMP_PREFIX_NONE, 16, 1,
+				cmd->key, cmd->key_len, true);
+		buf_ptr += sizeof(*cmd);
+
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, param->data_len);
+
+		buf_ptr += WMI_TLV_HDR_SIZE;
+		if (param->data_len)
+			qdf_mem_copy(buf_ptr,
+				(uint8_t *) param->data, param->data_len);
+
+		print_hex_dump(KERN_DEBUG, "Plain text: ", DUMP_PREFIX_NONE,
+			16, 1, buf_ptr, cmd->data_len, true);
+
+		buf_ptr += param->data_len;
+
+		retval = wmi_unified_cmd_send(wmi_handle, buf, len,
+			WMI_PDEV_FIPS_CMDID);
+		qdf_print("%s return value %d\n", __func__, retval);
+	} else {
+		qdf_print("\n%s:%d Key or Data is NULL\n", __func__, __LINE__);
+		wmi_buf_free(buf);
+		retval = -QDF_STATUS_E_BADMSG;
+	}
+
+	return retval;
+}
+
 /**
  * fill_arp_offload_params_tlv() - Fill ARP offload data
  * @wmi_handle: wmi handle
@@ -13634,6 +13839,7 @@ struct wmi_ops tlv_ops =  {
 	.extract_dcs_cw_int = extract_dcs_cw_int_tlv,
 	.extract_dcs_im_tgt_stats = extract_dcs_im_tgt_stats_tlv,
 	.extract_fips_event_data = extract_fips_event_data_tlv,
+	.send_pdev_fips_cmd = send_pdev_fips_cmd_tlv,
 };
 
 #ifndef CONFIG_MCL
@@ -13979,6 +14185,7 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 				WMI_SOC_HW_MODE_TRANSITION_EVENTID;
 	event_ids[wmi_soc_set_dual_mac_config_resp_event_id] =
 				WMI_SOC_SET_DUAL_MAC_CONFIG_RESP_EVENTID;
+	event_ids[wmi_pdev_fips_event_id] = WMI_PDEV_FIPS_EVENTID;
 }
 
 /**
