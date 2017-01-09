@@ -9411,6 +9411,11 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter)
 	sme_cli_set_command(0, WMI_PDEV_AUTO_DETECT_POWER_FAILURE,
 			    hdd_ctx->config->auto_pwr_save_fail_mode, PDEV_CMD);
 
+
+	if (hdd_ctx->config->enable_phy_reg_retention)
+		wma_cli_set_command(0, WMI_PDEV_PARAM_FAST_PWR_TRANSITION,
+			hdd_ctx->config->enable_phy_reg_retention, PDEV_CMD);
+
 	return 0;
 
 cds_disable:

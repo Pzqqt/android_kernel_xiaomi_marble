@@ -12284,6 +12284,27 @@ enum hdd_external_acs_freq_band {
  * Usage: External
  *
  * </ini>
+ * gEnableFastPwrTransition - Configuration for fast power transition
+ * @Min: 0
+ * @Max: 2
+ * @Default: 0
+ *
+ * This ini supported values:
+ * 0x0: Phy register retention disabled (Higher timeline, Good for power)
+ * 0x1: Phy register retention statically enabled
+ * 0x2: Phy register retention enabled/disabled dynamically
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_PHY_REG  "gEnableFastPwrTransition"
+#define CFG_PHY_REG_DEFAULT (0x0)
+#define CFG_PHY_REG_MIN     (0x0)
+#define CFG_PHY_REG_MAX     (0x2)
+
+/*
+ * Type declarations
  */
 #define CFG_CHAN_BAND_WEIGHTAGE_NAME    "chan_band_weightage"
 #define CFG_CHAN_BAND_WEIGHTAGE_DEFAULT (2)
@@ -14038,6 +14059,7 @@ struct hdd_config {
 	int8_t mbo_current_rssi_mcc_thres;
 	int8_t mbo_candidate_rssi_btc_thres;
 	uint8_t packet_filters_bitmap;
+	uint8_t enable_phy_reg_retention;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

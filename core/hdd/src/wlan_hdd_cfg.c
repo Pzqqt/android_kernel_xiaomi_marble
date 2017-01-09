@@ -4338,6 +4338,14 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_SIFS_BURST_DURATION_DEFAULT,
 		     CFG_SIFS_BURST_DURATION_MIN,
 		     CFG_SIFS_BURST_DURATION_MAX),
+
+	REG_VARIABLE(CFG_ENABLE_PHY_REG, WLAN_PARAM_HexInteger,
+		     struct hdd_config, enable_phy_reg_retention,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_PHY_REG_DEFAULT,
+		     CFG_PHY_REG_MIN,
+		     CFG_PHY_REG_MAX),
+
 	REG_VARIABLE(CFG_OPTIMIZE_CA_EVENT_NAME, WLAN_PARAM_Integer,
 			struct hdd_config, goptimize_chan_avoid_event,
 			VAR_FLAGS_OPTIONAL |
@@ -6958,6 +6966,9 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 		hdd_ctx->config->oce_wan_score_slots15_to_12);
 	hdd_debug("Name = [%s] value = [0x%x]", CFG_VC_MODE_BITMAP,
 		hdd_ctx->config->vc_mode_cfg_bitmap);
+	hdd_debug("Name = [%s] Value = [%u]",
+		CFG_ENABLE_PHY_REG,
+		hdd_ctx->config->enable_phy_reg_retention);
 }
 
 
@@ -9068,6 +9079,5 @@ QDF_STATUS hdd_update_nss(struct hdd_context *hdd_ctx, uint8_t nss)
 		status = false;
 
 	hdd_set_policy_mgr_user_cfg(hdd_ctx);
-
 	return (status == false) ? QDF_STATUS_E_FAILURE : QDF_STATUS_SUCCESS;
 }
