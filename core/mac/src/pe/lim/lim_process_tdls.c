@@ -3392,6 +3392,7 @@ tSirRetStatus lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
 	tpDphHashNode stads = NULL;
 	int i, aid;
 	size_t aid_bitmap_size = sizeof(session_entry->peerAIDBitmap);
+	struct qdf_mac_addr mac_addr;
 
 	if (NULL == session_entry) {
 		lim_log(mac_ctx, LOGE, FL("NULL session_entry"));
@@ -3420,6 +3421,14 @@ tSirRetStatus lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
 				lim_send_deauth_mgmt_frame(mac_ctx,
 					eSIR_MAC_DEAUTH_LEAVING_BSS_REASON,
 					stads->staAddr, session_entry, false);
+
+				/* Delete TDLS peer */
+				qdf_mem_copy(mac_addr.bytes, stads->staAddr,
+						QDF_MAC_ADDR_SIZE);
+
+				lim_tdls_del_sta(mac_ctx, mac_addr,
+						session_entry);
+
 				dph_delete_hash_entry(mac_ctx,
 					stads->staAddr, stads->assocId,
 					&session_entry->dph.dphHashTable);
