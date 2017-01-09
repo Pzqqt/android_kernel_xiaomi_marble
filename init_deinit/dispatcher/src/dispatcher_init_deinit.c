@@ -177,6 +177,7 @@ mgmt_txrx_init_fail:
 out:
 	return QDF_STATUS_E_FAILURE;
 }
+EXPORT_SYMBOL(dispatcher_init);
 
 QDF_STATUS dispatcher_deinit(void)
 {
@@ -194,6 +195,7 @@ QDF_STATUS dispatcher_deinit(void)
 
 	return QDF_STATUS_SUCCESS;
 }
+EXPORT_SYMBOL(dispatcher_deinit);
 
 QDF_STATUS dispatcher_psoc_open(struct wlan_objmgr_psoc *psoc)
 {
@@ -216,6 +218,7 @@ p2p_psoc_open_fail:
 out:
 	return QDF_STATUS_E_FAILURE;
 }
+EXPORT_SYMBOL(dispatcher_psoc_open);
 
 QDF_STATUS dispatcher_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
@@ -227,6 +230,7 @@ QDF_STATUS dispatcher_psoc_close(struct wlan_objmgr_psoc *psoc)
 
 	return QDF_STATUS_SUCCESS;
 }
+EXPORT_SYMBOL(dispatcher_psoc_close);
 
 QDF_STATUS dispatcher_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
@@ -249,6 +253,7 @@ p2p_psoc_enable_fail:
 out:
 	return QDF_STATUS_E_FAILURE;
 }
+EXPORT_SYMBOL(dispatcher_psoc_enable);
 
 QDF_STATUS dispatcher_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
@@ -260,3 +265,4 @@ QDF_STATUS dispatcher_psoc_disable(struct wlan_objmgr_psoc *psoc)
 
 	return QDF_STATUS_SUCCESS;
 }
+EXPORT_SYMBOL(dispatcher_psoc_disable);
