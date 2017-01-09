@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1227,7 +1227,7 @@ static bool lim_chk_wmm(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
  * Return: true of no error, false otherwise
  */
 static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
-			      tpPESession session, tpSirAssocReq *sir_assoc_req,
+			      tpPESession session, tpSirAssocReq assoc_req,
 			      uint8_t sub_type, tpDphHashNode sta_ds,
 			      tAniAuthType auth_type,
 			      bool *assoc_req_copied, uint16_t peer_idx,
@@ -1241,7 +1241,6 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 #endif
 	tDot11fIEVHTCaps *vht_caps;
 	tpSirAssocReq tmp_assoc_req;
-	tpSirAssocReq assoc_req = *sir_assoc_req;
 
 	if (assoc_req->VHTCaps.present)
 		vht_caps = &assoc_req->VHTCaps;
@@ -1433,13 +1432,14 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 		lim_release_peer_idx(mac_ctx, peer_idx, session);
 
 		lim_reject_association(mac_ctx, hdr->sa,
-			sub_type, true, auth_type, peer_idx, true,
+			sub_type, true, auth_type, peer_idx, false,
 			(tSirResultCodes)eSIR_MAC_UNSPEC_FAILURE_STATUS,
 			session);
-
-		if (session->parsedAssocReq)
-			*sir_assoc_req =
-				session->parsedAssocReq[sta_ds->assocId];
+		lim_log(mac_ctx, LOGE,
+				FL(" Delete dph hash entry"));
+		if (dph_delete_hash_entry(mac_ctx, hdr->sa, sta_ds->assocId,
+			 &session->dph.dphHashTable) != eSIR_SUCCESS)
+			lim_log(mac_ctx, LOGE, FL("error deleting hash entry"));
 		return false;
 	}
 	if (assoc_req->operMode.present) {
@@ -2010,7 +2010,7 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	}
 
 sendIndToSme:
-	if (false == lim_update_sta_ds(mac_ctx, hdr, session, &assoc_req,
+	if (false == lim_update_sta_ds(mac_ctx, hdr, session, assoc_req,
 				sub_type, sta_ds, auth_type,
 				&assoc_req_copied, peer_idx, qos_mode,
 				pmf_connection))
