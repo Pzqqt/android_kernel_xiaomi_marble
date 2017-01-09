@@ -1382,7 +1382,8 @@ static int wlan_hdd_cfg80211_start_acs(hdd_adapter_t *adapter)
 		hdd_err("ACS channel select failed");
 		return -EINVAL;
 	}
-	sap_config->acs_cfg.acs_mode = true;
+	if (sap_is_auto_channel_select(WLAN_HDD_GET_SAP_CTX_PTR(adapter)))
+		sap_config->acs_cfg.acs_mode = true;
 	set_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags);
 
 	return 0;

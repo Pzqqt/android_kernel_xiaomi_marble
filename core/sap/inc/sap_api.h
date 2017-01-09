@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -851,6 +851,15 @@ typedef struct {
 #endif /* FEATURE_WLAN_CH_AVOID */
 void sap_cleanup_channel_list(void *sapContext);
 void sapCleanupAllChannelList(void);
+
+/**
+ * sap_is_auto_channel_select() - is channel AUTO_CHANNEL_SELECT
+ * @pvos_gctx: Pointer to vos global context structure
+ *
+ * Return: true on AUTO_CHANNEL_SELECT, false otherwise
+ */
+bool sap_is_auto_channel_select(void *pvos_gctx);
+
 QDF_STATUS wlansap_set_wps_ie(void *p_cds_gctx, tSap_WPSIE *pWPSIe);
 QDF_STATUS wlansap_update_wps_ie(void *p_cds_gctx);
 QDF_STATUS wlansap_stop_Wps(void *p_cds_gctx);
