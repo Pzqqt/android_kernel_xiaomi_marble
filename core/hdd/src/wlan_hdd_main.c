@@ -3421,6 +3421,8 @@ QDF_STATUS hdd_close_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 	}
 	adapterNode = pCurrent;
 	if (QDF_STATUS_SUCCESS == status) {
+		hdd_info("wait for bus bw work to flush");
+		cancel_work_sync(&hdd_ctx->bus_bw_work);
 		cds_clear_concurrency_mode(adapter->device_mode);
 		hdd_cleanup_adapter(hdd_ctx, adapterNode->pAdapter, rtnl_held);
 
@@ -5417,9 +5419,10 @@ static void hdd_pld_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 }
 
 #define HDD_BW_GET_DIFF(_x, _y) (unsigned long)((ULONG_MAX - (_y)) + (_x) + 1)
-static void hdd_bus_bw_compute_cbk(void *priv)
+static void hdd_bus_bw_work_handler(struct work_struct *work)
 {
-	hdd_context_t *hdd_ctx = (hdd_context_t *) priv;
+	hdd_context_t *hdd_ctx = container_of(work, hdd_context_t,
+					bus_bw_work);
 	hdd_adapter_t *adapter = NULL;
 	uint64_t tx_packets = 0, rx_packets = 0;
 	uint64_t fwd_tx_packets = 0, fwd_rx_packets = 0;
@@ -5523,28 +5526,62 @@ static void hdd_bus_bw_compute_cbk(void *priv)
 	hdd_ipa_set_perf_level(hdd_ctx, tx_packets, rx_packets);
 	hdd_ipa_uc_stat_request(adapter, 2);
 
-	qdf_mc_timer_start(&hdd_ctx->bus_bw_timer,
+	qdf_timer_start(&hdd_ctx->bus_bw_timer,
 			   hdd_ctx->config->busBandwidthComputeInterval);
+}
+
+/**
+ * __hdd_bus_bw_cbk() - Bus bandwidth data structure callback.
+ * @arg: Argument of timer function
+ *
+ * Schedule a workqueue in this function where all the processing is done.
+ *
+ * Return: None.
+ */
+static void __hdd_bus_bw_cbk(void *arg)
+{
+	hdd_context_t *hdd_ctx = (hdd_context_t *) arg;
+
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return;
+
+	schedule_work(&hdd_ctx->bus_bw_work);
+}
+
+/**
+ * hdd_bus_bw_cbk() - Wrapper for bus bw callback for SSR protection.
+ * @arg: Argument of timer function
+ *
+ * Return: None.
+ */
+static void hdd_bus_bw_cbk(void *arg)
+{
+	cds_ssr_protect(__func__);
+	__hdd_bus_bw_cbk(arg);
+	cds_ssr_unprotect(__func__);
 }
 
 int hdd_bus_bandwidth_init(hdd_context_t *hdd_ctx)
 {
 	spin_lock_init(&hdd_ctx->bus_bw_lock);
-
-	qdf_mc_timer_init(&hdd_ctx->bus_bw_timer,
-			  QDF_TIMER_TYPE_SW,
-			  hdd_bus_bw_compute_cbk, (void *)hdd_ctx);
+	INIT_WORK(&hdd_ctx->bus_bw_work,
+			hdd_bus_bw_work_handler);
+	qdf_timer_init(NULL,
+		 &hdd_ctx->bus_bw_timer,
+		 hdd_bus_bw_cbk, (void *)hdd_ctx,
+		 QDF_TIMER_TYPE_SW);
 
 	return 0;
 }
 
 void hdd_bus_bandwidth_destroy(hdd_context_t *hdd_ctx)
 {
-	if (qdf_mc_timer_get_current_state(&hdd_ctx->bus_bw_timer) ==
-	    QDF_TIMER_STATE_RUNNING)
+	if (hdd_ctx->bus_bw_timer_started)
 		hdd_reset_tcp_delack(hdd_ctx);
 
-	qdf_mc_timer_destroy(&hdd_ctx->bus_bw_timer);
+	hdd_info("wait for bus bw work to flush");
+	cancel_work_sync(&hdd_ctx->bus_bw_work);
+	qdf_timer_free(&hdd_ctx->bus_bw_timer);
 }
 #endif
 
@@ -8881,11 +8918,11 @@ void hdd_start_bus_bw_compute_timer(hdd_adapter_t *adapter)
 {
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	if (QDF_TIMER_STATE_RUNNING ==
-	    qdf_mc_timer_get_current_state(&hdd_ctx->bus_bw_timer))
+	if (hdd_ctx->bus_bw_timer_started)
 		return;
 
-	qdf_mc_timer_start(&hdd_ctx->bus_bw_timer,
+	hdd_ctx->bus_bw_timer_started = true;
+	qdf_timer_start(&hdd_ctx->bus_bw_timer,
 			   hdd_ctx->config->busBandwidthComputeInterval);
 }
 
@@ -8896,8 +8933,7 @@ void hdd_stop_bus_bw_compute_timer(hdd_adapter_t *adapter)
 	bool can_stop = true;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	if (QDF_TIMER_STATE_RUNNING !=
-	    qdf_mc_timer_get_current_state(&hdd_ctx->bus_bw_timer)) {
+	if (!hdd_ctx->bus_bw_timer_started) {
 		/* trying to stop timer, when not running is not good */
 		hdd_info("bus band width compute timer is not running");
 		return;
@@ -8935,7 +8971,8 @@ void hdd_stop_bus_bw_compute_timer(hdd_adapter_t *adapter)
 	if (can_stop == true) {
 		/* reset the ipa perf level */
 		hdd_ipa_set_perf_level(hdd_ctx, 0, 0);
-		qdf_mc_timer_stop(&hdd_ctx->bus_bw_timer);
+		qdf_timer_stop(&hdd_ctx->bus_bw_timer);
+		hdd_ctx->bus_bw_timer_started = false;
 		hdd_reset_tcp_delack(hdd_ctx);
 	}
 }
