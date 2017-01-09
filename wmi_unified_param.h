@@ -4114,9 +4114,10 @@ struct proxy_ast_reserve_params {
  * @key: pointer to key
  * @key_len: length of key
  * @data: pointer data buf
- * @data_len: lenght of sata buf
+ * @data_len: lenght of data buf
  * @mode: mode
  * @op: operation
+ * @pdev_id: pdev_id for identifying the MAC
  */
 struct fips_params {
 	uint8_t *key;
@@ -4125,6 +4126,7 @@ struct fips_params {
 	uint32_t data_len;
 	uint32_t mode;
 	uint32_t op;
+	uint32_t pdev_id;
 };
 
 /**

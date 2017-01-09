@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -71,6 +71,9 @@ QDF_STATUS
 send_pdev_utf_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct pdev_utf_params *param,
 				uint8_t mac_id);
+
+QDF_STATUS send_pdev_fips_cmd_non_tlv(wmi_unified_t wmi_handle,
+				struct fips_params *param);
 
 QDF_STATUS
 send_pdev_param_cmd_non_tlv(wmi_unified_t wmi_handle,

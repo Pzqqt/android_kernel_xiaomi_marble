@@ -511,6 +511,9 @@ QDF_STATUS send_pdev_set_pcl_cmd_tlv(wmi_unified_t wmi_handle,
 QDF_STATUS send_pdev_set_hw_mode_cmd_tlv(wmi_unified_t wmi_handle,
 				uint32_t hw_mode_index);
 
+QDF_STATUS send_pdev_fips_cmd_tlv(wmi_unified_t wmi_handle,
+				struct fips_params *param);
+
 QDF_STATUS send_soc_set_dual_mac_config_cmd_tlv(wmi_unified_t wmi_handle,
 		struct wmi_dual_mac_config *msg);
 
