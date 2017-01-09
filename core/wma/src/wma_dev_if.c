@@ -1092,12 +1092,6 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 		return;
 	}
 
-	if (peer) {
-		if (roam_synch_in_progress)
-			cdp_peer_detach_force_delete(soc, peer);
-		else
-			cdp_peer_delete(soc, peer);
-	}
 	peer_mac_addr = cdp_peer_get_peer_mac_addr(soc, peer);
 	if (peer_mac_addr == NULL) {
 		WMA_LOGE("%s: peer mac addr is NULL, Can't remove peer with peer_addr %pM vdevid %d peer_count %d",
@@ -1106,12 +1100,8 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 		return;
 	}
 
-	wma->interfaces[vdev_id].peer_count--;
-	WMA_LOGE("%s: Removed peer %p with peer_addr %pM vdevid %d peer_count %d",
-		 __func__, peer, bssid, vdev_id,
-		 wma->interfaces[vdev_id].peer_count);
 	if (roam_synch_in_progress)
-		return;
+		goto peer_detach;
 	/* Flush all TIDs except MGMT TID for this peer in Target */
 	peer_tid_bitmap &= ~(0x1 << WMI_MGMT_TID);
 	param.peer_tid_bitmap = peer_tid_bitmap;
@@ -1127,6 +1117,19 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 
 	wmi_unified_peer_delete_send(wma->wmi_handle, peer_addr,
 						vdev_id);
+
+peer_detach:
+	if (peer) {
+		if (roam_synch_in_progress)
+			cdp_peer_detach_force_delete(soc, peer);
+		else
+			cdp_peer_delete(soc, peer);
+	}
+
+	wma->interfaces[vdev_id].peer_count--;
+	WMA_LOGE("%s: Removed peer %p with peer_addr %pM vdevid %d peer_count %d",
+		 __func__, peer, bssid, vdev_id,
+		 wma->interfaces[vdev_id].peer_count);
 #undef PEER_ALL_TID_BITMASK
 }
 
