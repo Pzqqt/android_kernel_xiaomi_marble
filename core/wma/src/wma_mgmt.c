@@ -3171,11 +3171,9 @@ end:
 }
 
 int wma_form_rx_packet(qdf_nbuf_t buf,
-			void *params,
+			struct mgmt_rx_event_params *mgmt_rx_params,
 			cds_pkt_t *rx_pkt)
 {
-	wmi_host_mgmt_rx_hdr *mgmt_rx_params =
-				(wmi_host_mgmt_rx_hdr *)params;
 	struct wma_txrx_node *iface = NULL;
 	uint8_t vdev_id = WMA_INVALID_VDEV_ID;
 	struct ieee80211_frame *wh;
@@ -3362,7 +3360,7 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 				  uint32_t data_len)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	wmi_host_mgmt_rx_hdr *mgmt_rx_params;
+	struct mgmt_rx_event_params *mgmt_rx_params;
 	struct wlan_objmgr_psoc *psoc;
 	uint8_t *bufp;
 	qdf_nbuf_t wbuf;
@@ -3385,6 +3383,9 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 		qdf_mem_free(mgmt_rx_params);
 		return -EINVAL;
 	}
+
+	mgmt_rx_params->pdev_id = 0;
+	mgmt_rx_params->rx_params = NULL;
 
 	wbuf = qdf_nbuf_alloc(NULL, roundup(mgmt_rx_params->buf_len, 4),
 				0, 4, false);

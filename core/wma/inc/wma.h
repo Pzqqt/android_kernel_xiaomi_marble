@@ -2342,7 +2342,7 @@ int wma_peer_rx_reorder_queue_remove(void *scn_handle,
  * Return: 0 for success or error code
  */
 int wma_form_rx_packet(qdf_nbuf_t buf,
-			void *mgmt_rx_params,
+			struct mgmt_rx_event_params *mgmt_rx_params,
 			cds_pkt_t *rx_pkt);
 
 /**

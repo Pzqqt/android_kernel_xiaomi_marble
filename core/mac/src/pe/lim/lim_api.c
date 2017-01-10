@@ -1026,7 +1026,7 @@ QDF_STATUS pe_mc_process_handler(struct scheduler_msg *msg)
  */
 static QDF_STATUS pe_handle_mgmt_frame(struct wlan_objmgr_psoc *psoc,
 			struct wlan_objmgr_peer *peer, qdf_nbuf_t buf,
-			void *mgmt_rx_params,
+			struct mgmt_rx_event_params *mgmt_rx_params,
 			uint32_t frm_type)
 {
 	tpAniSirGlobal pMac;
