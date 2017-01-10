@@ -499,12 +499,12 @@ QDF_STATUS send_peer_delete_cmd_tlv(wmi_unified_t wmi,
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(peer_addr, &cmd->peer_macaddr);
 	cmd->vdev_id = vdev_id;
 
+	WMI_LOGD("%s: peer_addr %pM vdev_id %d", __func__, peer_addr, vdev_id);
 	if (wmi_unified_cmd_send(wmi, buf, len, WMI_PEER_DELETE_CMDID)) {
 		WMI_LOGP("%s: Failed to send peer delete command", __func__);
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
-	WMI_LOGD("%s: peer_addr %pM vdev_id %d", __func__, peer_addr, vdev_id);
 
 	return 0;
 }
