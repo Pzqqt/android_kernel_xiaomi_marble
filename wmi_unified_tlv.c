@@ -4083,7 +4083,7 @@ QDF_STATUS send_probe_rsp_tmpl_send_cmd_tlv(wmi_unified_t wmi_handle,
 	return ret;
 }
 
-#ifdef FEATURE_WLAN_WAPI
+#if defined(ATH_SUPPORT_WAPI) || defined(FEATURE_WLAN_WAPI)
 #define WPI_IV_LEN 16
 
 /**
@@ -4153,8 +4153,6 @@ QDF_STATUS send_setup_install_key_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->vdev_id = key_params->vdev_id;
 	cmd->key_ix = key_params->key_idx;
 
-	if (key_params->key_idx >= (IEEE80211_WEP_NKID + 1))
-		cmd->key_ix = 0;
 
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(key_params->peer_mac, &cmd->peer_macaddr);
 	cmd->key_flags |= key_params->key_flags;
@@ -4164,7 +4162,7 @@ QDF_STATUS send_setup_install_key_cmd_tlv(wmi_unified_t wmi_handle,
 		cmd->key_txmic_len = key_params->key_txmic_len;
 		cmd->key_rxmic_len = key_params->key_rxmic_len;
 	}
-#ifdef FEATURE_WLAN_WAPI
+#if defined(ATH_SUPPORT_WAPI) || defined(FEATURE_WLAN_WAPI)
 	wmi_update_wpi_key_counter(cmd->wpi_key_tsc_counter,
 				   key_params->tx_iv,
 				   cmd->wpi_key_rsc_counter,
