@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -129,7 +129,7 @@ void *hif_get_hal_handle(void *hif_handle);
  *
  * Return: remaining budget/quota for the soc device
  */
-uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
+static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 {
 	struct dp_intr *int_ctx = (struct dp_intr *)dp_ctx;
 	struct dp_soc *soc = int_ctx->soc;
@@ -223,7 +223,7 @@ budget_done:
  *
  */
 #ifdef DP_INTR_POLL_BASED
-void dp_interrupt_timer(void *arg)
+static void dp_interrupt_timer(void *arg)
 {
 	struct dp_soc *soc = (struct dp_soc *) arg;
 	int i;
@@ -244,7 +244,7 @@ void dp_interrupt_timer(void *arg)
  *
  * Return: 0 for success. nonzero for failure.
  */
-QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
+static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 {
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 	int i;
@@ -271,7 +271,7 @@ QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
  *
  * Return: void
  */
-void dp_soc_interrupt_detach(void *txrx_soc)
+static void dp_soc_interrupt_detach(void *txrx_soc)
 {
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 
@@ -290,7 +290,7 @@ void dp_soc_interrupt_detach(void *txrx_soc)
  *
  * Return: 0 for success. nonzero for failure.
  */
-QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
+static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 {
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 
@@ -361,7 +361,7 @@ QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
  *
  * Return: void
  */
-void dp_soc_interrupt_detach(void *txrx_soc)
+static void dp_soc_interrupt_detach(void *txrx_soc)
 {
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 	int i;
@@ -646,10 +646,11 @@ fail:
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef notused
 /*
  * Free link descriptor pool that was setup HW
  */
-void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
+static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 {
 	int i;
 
@@ -677,6 +678,7 @@ void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 		}
 	}
 }
+#endif /* notused */
 
 /* TODO: Following should be configurable */
 #define WBM_RELEASE_RING_SIZE 64
@@ -865,7 +867,7 @@ static void dp_pdev_detach_wifi3(void *txrx_pdev, int force);
 *
 * Return: DP PDEV handle on success, NULL on failure
 */
-void *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc, void *ctrl_pdev,
+static void *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc, void *ctrl_pdev,
 	HTC_HANDLE htc_handle, qdf_device_t qdf_osdev, uint8_t pdev_id)
 {
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
@@ -1048,7 +1050,7 @@ static void dp_pdev_detach_wifi3(void *txrx_pdev, int force)
  * @txrx_soc: DP SOC handle
  *
  */
-void dp_soc_detach_wifi3(void *txrx_soc)
+static void dp_soc_detach_wifi3(void *txrx_soc)
 {
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 	struct dp_pdev *pdev = qdf_mem_malloc(sizeof(*pdev));
@@ -1125,7 +1127,7 @@ void dp_soc_detach_wifi3(void *txrx_soc)
  * dp_soc_attach_target_wifi3() - SOC initialization in the target
  * @txrx_soc: Datapath SOC handle
  */
-int dp_soc_attach_target_wifi3(struct cdp_soc_t *cdp_soc)
+static int dp_soc_attach_target_wifi3(struct cdp_soc_t *cdp_soc)
 {
 	struct dp_soc *soc = (struct dp_soc *)cdp_soc;
 	int i;
@@ -1166,7 +1168,7 @@ int dp_soc_attach_target_wifi3(struct cdp_soc_t *cdp_soc)
 *
 * Return: DP VDEV handle on success, NULL on failure
 */
-void *dp_vdev_attach_wifi3(void *txrx_pdev,
+static void *dp_vdev_attach_wifi3(void *txrx_pdev,
 	uint8_t *vdev_mac_addr, uint8_t vdev_id, enum wlan_op_mode op_mode)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)txrx_pdev;
@@ -1235,7 +1237,7 @@ fail0:
  *
  * Return: DP VDEV handle on success, NULL on failure
  */
-void dp_vdev_register_wifi3(void *vdev_handle, void *osif_vdev,
+static void dp_vdev_register_wifi3(void *vdev_handle, void *osif_vdev,
 	struct ol_txrx_ops *txrx_ops)
 {
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
@@ -1264,7 +1266,7 @@ void dp_vdev_register_wifi3(void *vdev_handle, void *osif_vdev,
  * @cb_context:	Callback context
  *
  */
-void dp_vdev_detach_wifi3(void *vdev_handle,
+static void dp_vdev_detach_wifi3(void *vdev_handle,
 	ol_txrx_vdev_delete_cb callback, void *cb_context)
 {
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
@@ -1315,7 +1317,7 @@ void dp_vdev_detach_wifi3(void *vdev_handle,
  *
  * Return: DP peeer handle on success, NULL on failure
  */
-void *dp_peer_create_wifi3(void *vdev_handle, uint8_t *peer_mac_addr)
+static void *dp_peer_create_wifi3(void *vdev_handle, uint8_t *peer_mac_addr)
 {
 	struct dp_peer *peer;
 	int i;
@@ -1394,7 +1396,7 @@ void *dp_peer_create_wifi3(void *vdev_handle, uint8_t *peer_mac_addr)
  *
  * Return: void
  */
-void dp_peer_setup_wifi3(void *vdev_hdl, void *peer_hdl)
+static void dp_peer_setup_wifi3(void *vdev_hdl, void *peer_hdl)
 {
 	struct dp_peer *peer = (struct dp_peer *)peer_hdl;
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_hdl;
@@ -1424,7 +1426,7 @@ void dp_peer_setup_wifi3(void *vdev_hdl, void *peer_hdl)
  * @authorize
  *
  */
-void dp_peer_authorize(void *peer_handle, uint32_t authorize)
+static void dp_peer_authorize(void *peer_handle, uint32_t authorize)
 {
 	struct dp_peer *peer = (struct dp_peer *)peer_handle;
 	struct dp_soc *soc;
@@ -1550,7 +1552,7 @@ void dp_peer_unref_delete(void *peer_handle)
  * @peer_handle:		Datapath peer handle
  *
  */
-void dp_peer_delete_wifi3(void *peer_handle)
+static void dp_peer_delete_wifi3(void *peer_handle)
 {
 	struct dp_peer *peer = (struct dp_peer *)peer_handle;
 
@@ -1580,7 +1582,7 @@ void dp_peer_delete_wifi3(void *peer_handle)
  * @peer_handle:		Datapath peer handle
  *
  */
-uint8 *dp_get_vdev_mac_addr_wifi3(void *pvdev)
+static uint8 *dp_get_vdev_mac_addr_wifi3(void *pvdev)
 {
 	struct dp_vdev *vdev = pvdev;
 
@@ -1592,7 +1594,7 @@ uint8 *dp_get_vdev_mac_addr_wifi3(void *pvdev)
  * @peer_handle:		Datapath peer handle
  *
  */
-void *dp_get_vdev_from_vdev_id_wifi3(void *dev, uint8_t vdev_id)
+static void *dp_get_vdev_from_vdev_id_wifi3(void *dev, uint8_t vdev_id)
 {
 	struct dp_pdev *pdev = dev;
 	struct dp_vdev *vdev = NULL;
@@ -1608,14 +1610,14 @@ void *dp_get_vdev_from_vdev_id_wifi3(void *dev, uint8_t vdev_id)
 	return vdev;
 }
 
-int dp_get_opmode(void *vdev_handle)
+static int dp_get_opmode(void *vdev_handle)
 {
 	struct dp_vdev *vdev = vdev_handle;
 
 	return vdev->opmode;
 }
 
-void *dp_get_ctrl_pdev_from_vdev_wifi3(void *pvdev)
+static void *dp_get_ctrl_pdev_from_vdev_wifi3(void *pvdev)
 {
 	struct dp_vdev *vdev = pvdev;
 	struct dp_pdev *pdev = vdev->pdev;
