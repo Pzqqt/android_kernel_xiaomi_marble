@@ -35,6 +35,9 @@
 #include <qdf_trace.h>
 #include <linux/export.h>
 
+/* macro to map qdf trace levels into the bitmask */
+#define QDF_TRACE_LEVEL_TO_MODULE_BITMASK(_level) ((1 << (_level)))
+
 #ifdef CONFIG_MCL
 
 #include <wlan_logging_sock_svc.h>
@@ -42,12 +45,7 @@
 #include "qdf_mc_timer.h"
 /* Preprocessor definitions and constants */
 
-#define QDF_TRACE_BUFFER_SIZE (512)
-
 enum qdf_timestamp_unit qdf_log_timestamp_type = QDF_LOG_TIMESTAMP_UNIT;
-
-/* macro to map qdf trace levels into the bitmask */
-#define QDF_TRACE_LEVEL_TO_MODULE_BITMASK(_level) ((1 << (_level)))
 
 /**
  * typedef struct module_trace_info - Trace level for a module, as a bitmask.
@@ -63,9 +61,6 @@ typedef struct {
 	uint16_t module_trace_level;
 	unsigned char module_name_str[4];
 } module_trace_info;
-
-#define QDF_DEFAULT_TRACE_LEVEL	\
-	((1 << QDF_TRACE_LEVEL_FATAL) | (1 << QDF_TRACE_LEVEL_ERROR))
 
 /* Array of static data that contains all of the per module trace
  * information.  This includes the trace level for the module and
@@ -310,7 +305,8 @@ void qdf_trace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 	int n;
 
 	/* Print the trace message when the desired level bit is set in
-	   the module tracel level mask */
+	 * the module tracel level mask
+	 */
 	if (g_qdf_trace_info[module].module_trace_level &
 	    QDF_TRACE_LEVEL_TO_MODULE_BITMASK(level)) {
 		/* the trace level strings in an array.  these are ordered in
@@ -1721,9 +1717,466 @@ void qdf_dp_trace_dump_all(uint32_t count)
 	}
 }
 EXPORT_SYMBOL(qdf_dp_trace_dump_all);
+
 #endif
 
 #endif /* CONFIG_MCL */
+
+struct qdf_print_ctrl print_ctrl_obj[MAX_PRINT_CONFIG_SUPPORTED];
+
+struct category_name_info g_qdf_category_name[MAX_SUPPORTED_CATEGORY] = {
+	[QDF_MODULE_ID_TDLS] = {"tdls"},
+	[QDF_MODULE_ID_ACS] = {"ACS"},
+	[QDF_MODULE_ID_SCAN_SM] = {"scan state machine"},
+	[QDF_MODULE_ID_SCANENTRY] = {"scan entry"},
+	[QDF_MODULE_ID_WDS] = {"WDS"},
+	[QDF_MODULE_ID_ACTION] = {"action"},
+	[QDF_MODULE_ID_ROAM] = {"STA roaming"},
+	[QDF_MODULE_ID_INACT] = {"inactivity"},
+	[QDF_MODULE_ID_DOTH] = {"11h"},
+	[QDF_MODULE_ID_IQUE] = {"IQUE"},
+	[QDF_MODULE_ID_WME] = {"WME"},
+	[QDF_MODULE_ID_ACL] = {"ACL"},
+	[QDF_MODULE_ID_WPA] = {"WPA/RSN"},
+	[QDF_MODULE_ID_RADKEYS] = {"dump 802.1x keys"},
+	[QDF_MODULE_ID_RADDUMP] = {"dump radius packet"},
+	[QDF_MODULE_ID_RADIUS] = {"802.1x radius client"},
+	[QDF_MODULE_ID_DOT1XSM] = {"802.1x state machine"},
+	[QDF_MODULE_ID_DOT1X] = {"802.1x authenticator"},
+	[QDF_MODULE_ID_POWER] = {"power save"},
+	[QDF_MODULE_ID_STATE] = {"state"},
+	[QDF_MODULE_ID_OUTPUT] = {"output"},
+	[QDF_MODULE_ID_SCAN] = {"scan"},
+	[QDF_MODULE_ID_AUTH] = {"authentication"},
+	[QDF_MODULE_ID_ASSOC] = {"association"},
+	[QDF_MODULE_ID_NODE] = {"node"},
+	[QDF_MODULE_ID_ELEMID] = {"element ID"},
+	[QDF_MODULE_ID_XRATE] = {"rate"},
+	[QDF_MODULE_ID_INPUT] = {"input"},
+	[QDF_MODULE_ID_CRYPTO] = {"crypto"},
+	[QDF_MODULE_ID_DUMPPKTS] = {"dump packet"},
+	[QDF_MODULE_ID_DEBUG] = {"debug"},
+	[QDF_MODULE_ID_MLME] = {"mlme"},
+	[QDF_MODULE_ID_RRM] = {"rrm"},
+	[QDF_MODULE_ID_WNM] = {"wnm"},
+	[QDF_MODULE_ID_P2P_PROT] = {"p2p_prot"},
+	[QDF_MODULE_ID_PROXYARP] = {"proxyarp"},
+	[QDF_MODULE_ID_L2TIF] = {"l2tif"},
+	[QDF_MODULE_ID_WIFIPOS] = {"wifipos"},
+	[QDF_MODULE_ID_WRAP] = {"wrap"},
+	[QDF_MODULE_ID_DFS] = {"dfs"},
+	[QDF_MODULE_ID_ATF] = {"atf"},
+	[QDF_MODULE_ID_SPLITMAC] = {"splitmac"},
+	[QDF_MODULE_ID_IOCTL] = {"ioctl"},
+	[QDF_MODULE_ID_NAC] = {"nac"},
+	[QDF_MODULE_ID_MESH] = {"mesh"},
+	[QDF_MODULE_ID_MBO] = {"mbo"},
+	[QDF_MODULE_ID_EXTIOCTL_CHANSWITCH] = {"extchanswitch"},
+	[QDF_MODULE_ID_EXTIOCTL_CHANSSCAN] = {"extchanscan"},
+	[QDF_MODULE_ID_TLSHIM] = {"tlshim"},
+	[QDF_MODULE_ID_WMI] = {"WMI"},
+	[QDF_MODULE_ID_HTT] = {"HTT"},
+	[QDF_MODULE_ID_HDD] = {"HDD"},
+	[QDF_MODULE_ID_SME] = {"SME"},
+	[QDF_MODULE_ID_PE] = {"PE"},
+	[QDF_MODULE_ID_WMA] = {"WMA"},
+	[QDF_MODULE_ID_SYS] = {"SYS"},
+	[QDF_MODULE_ID_QDF] = {"QDF"},
+	[QDF_MODULE_ID_SAP] = {"SAP"},
+	[QDF_MODULE_ID_HDD_SOFTAP] = {"HDD_SAP"},
+	[QDF_MODULE_ID_HDD_DATA] = {"DATA"},
+	[QDF_MODULE_ID_HDD_SAP_DATA] = {"SAP_DATA"},
+	[QDF_MODULE_ID_HIF] = {"HIF"},
+	[QDF_MODULE_ID_HTC] = {"HTC"},
+	[QDF_MODULE_ID_TXRX] = {"TXRX"},
+	[QDF_MODULE_ID_QDF_DEVICE] = {"QDF_DEV"},
+	[QDF_MODULE_ID_CFG] = {"CFG"},
+	[QDF_MODULE_ID_BMI] = {"BMI"},
+	[QDF_MODULE_ID_EPPING] = {"EPPING"},
+	[QDF_MODULE_ID_QVIT] = {"QVIT"},
+	[QDF_MODULE_ID_ANY] = {"ANY"},
+};
+
+void qdf_trace_msg_cmn(unsigned int idx,
+			QDF_MODULE_ID category,
+			QDF_TRACE_LEVEL verbose,
+			const char *str_format, va_list val)
+{
+	char str_buffer[QDF_TRACE_BUFFER_SIZE];
+	int n;
+
+	/* Check if index passed is valid */
+	if (idx < 0 || idx >= MAX_PRINT_CONFIG_SUPPORTED) {
+		pr_info("%s: Invalid index - %d\n", __func__, idx);
+		return;
+	}
+
+	/* Check if print control object is in use */
+	if (!print_ctrl_obj[idx].in_use) {
+		pr_info("%s: Invalid print control object\n", __func__);
+		return;
+	}
+
+	/* Check if category passed is valid */
+	if (category < 0 || category >= MAX_SUPPORTED_CATEGORY) {
+		pr_info("%s: Invalid category: %d\n", __func__, category);
+		return;
+	}
+
+	/* Check if verbose mask is valid */
+	if (verbose < 0 || verbose >= QDF_TRACE_LEVEL_MAX) {
+		pr_info("%s: Invalid verbose level %d\n", __func__, verbose);
+		return;
+	}
+
+	/*
+	 * Print the trace message when the desired verbose level is set in
+	 * the desired category for the print control object
+	 */
+	if (print_ctrl_obj[idx].cat_info[category].category_verbose_mask &
+	    QDF_TRACE_LEVEL_TO_MODULE_BITMASK(verbose)) {
+		/*
+		 * The verbose strings are in an array. These are ordered in
+		 * the same order as the verbose levels are defined in the enum
+		 * (see QDF_TRACE_LEVEL) so we can index into this array with
+		 * the level and get the right string. The qdf verbose
+		 * are... Off, Fatal, Error, Warning, Info, Info_high,
+		 * Info_med, Info_low, Debug
+		 */
+		static const char * const VERBOSE_STR[] = { "  ", "F", "E", "W",
+							"I", "IH", "IM", "IL",
+							"D" };
+
+		/* print the prefix string into the string buffer... */
+		n = scnprintf(str_buffer, QDF_TRACE_BUFFER_SIZE,
+			     "wlan: [%d:%2s:%s] ",
+			     in_interrupt() ? 0 : current->pid,
+			     VERBOSE_STR[verbose],
+			     g_qdf_category_name[category].category_name_str);
+
+		/* print the formatted log message after the prefix string */
+		vscnprintf(str_buffer + n, QDF_TRACE_BUFFER_SIZE - n,
+			   str_format, val);
+#if defined(WLAN_LOGGING_SOCK_SVC_ENABLE)
+		wlan_log_to_user(verbose, (char *)str_buffer,
+				 strlen(str_buffer));
+#else
+		pr_err("%s\n", str_buffer);
+#endif
+		va_end(val);
+	}
+}
+EXPORT_SYMBOL(qdf_trace_msg_cmn);
+
+QDF_STATUS qdf_print_setup(void)
+{
+	int i;
+
+	/* Loop through all print ctrl objects */
+	for (i = 0; i < MAX_PRINT_CONFIG_SUPPORTED; i++) {
+		if (qdf_print_ctrl_cleanup(i))
+			return QDF_STATUS_E_FAILURE;
+	}
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(qdf_print_setup);
+
+QDF_STATUS qdf_print_ctrl_cleanup(unsigned int idx)
+{
+	int i = 0;
+
+	if (idx < 0 || idx >= MAX_PRINT_CONFIG_SUPPORTED) {
+		pr_info("%s: Invalid index - %d\n", __func__, idx);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Clean up the print control object corresponding to that index
+	 * If success, callee to change print control index to -1
+	 */
+
+	for (i = 0; i < MAX_SUPPORTED_CATEGORY; i++) {
+		print_ctrl_obj[idx].cat_info[i].category_verbose_mask =
+							QDF_TRACE_LEVEL_NONE;
+	}
+	print_ctrl_obj[idx].custom_print = NULL;
+	print_ctrl_obj[idx].custom_ctxt = NULL;
+	qdf_print_clean_node_flag(idx);
+	print_ctrl_obj[idx].in_use = false;
+
+	pr_info("%s: Print control object %d cleaned up\n", __func__, idx);
+
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(qdf_print_ctrl_cleanup);
+
+int qdf_print_ctrl_register(const struct category_info *cinfo,
+			    void *custom_print_handler,
+			    void *custom_ctx,
+			    const char *pctrl_name)
+{
+	int idx = -1;
+	int i = 0;
+
+	for (i = 0; i < MAX_PRINT_CONFIG_SUPPORTED; i++) {
+		if (!print_ctrl_obj[i].in_use) {
+			idx = i;
+			break;
+		}
+	}
+
+	/* Callee to handle idx -1 appropriately */
+	if (idx == -1) {
+		pr_info("%s: Allocation failed! No print control object free\n",
+			__func__);
+		return idx;
+	}
+
+	print_ctrl_obj[idx].in_use = true;
+
+	/*
+	 * In case callee does not pass category info,
+	 * custom print handler, custom context and print control name,
+	 * we do not set any value here. Clean up for the print control
+	 * getting allocated would have taken care of initializing
+	 * default values.
+	 *
+	 * We need to only set in_use to 1 in such a case
+	 */
+
+	if (pctrl_name) {
+		qdf_str_lcopy(print_ctrl_obj[idx].name, pctrl_name,
+			      qdf_str_len(pctrl_name) + 1);
+	}
+
+	if (custom_print_handler)
+		print_ctrl_obj[idx].custom_print = custom_print_handler;
+
+	if (custom_ctx)
+		print_ctrl_obj[idx].custom_ctxt = custom_ctx;
+
+	if (cinfo) {
+		for (i = 0; i < MAX_SUPPORTED_CATEGORY; i++) {
+			if (cinfo[i].category_verbose_mask ==
+			    QDF_TRACE_LEVEL_ALL) {
+				print_ctrl_obj[idx].cat_info[i]
+				.category_verbose_mask = 0xFFFF;
+			} else {
+				print_ctrl_obj[idx].cat_info[i]
+				.category_verbose_mask =
+				cinfo[i].category_verbose_mask;
+			}
+		}
+	}
+
+	pr_info("%s: Allocated print control object %d\n",
+		__func__, idx);
+	return idx;
+}
+EXPORT_SYMBOL(qdf_print_ctrl_register);
+
+QDF_STATUS qdf_print_set_category_verbose(unsigned int idx,
+						QDF_MODULE_ID category,
+						QDF_TRACE_LEVEL verbose,
+						bool is_set)
+{
+	/* Check if index passed is valid */
+	if (idx < 0 || idx >= MAX_PRINT_CONFIG_SUPPORTED) {
+		pr_info("%s: Invalid index - %d\n", __func__, idx);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Check if print control object is in use */
+	if (!print_ctrl_obj[idx].in_use) {
+		pr_info("%s: Invalid print control object\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Check if category passed is valid */
+	if (category < 0 || category >= MAX_SUPPORTED_CATEGORY) {
+		pr_info("%s: Invalid category: %d\n", __func__, category);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Check if verbose mask is valid */
+	if (verbose < 0 || verbose >= QDF_TRACE_LEVEL_MAX) {
+		pr_info("%s: Invalid verbose level %d\n", __func__, verbose);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (verbose == QDF_TRACE_LEVEL_ALL) {
+		print_ctrl_obj[idx].cat_info[category].category_verbose_mask =
+				0xFFFF;
+		return QDF_STATUS_SUCCESS;
+	}
+
+	if (verbose == QDF_TRACE_LEVEL_NONE) {
+		print_ctrl_obj[idx].cat_info[category].category_verbose_mask =
+				QDF_TRACE_LEVEL_NONE;
+		return QDF_STATUS_SUCCESS;
+	}
+
+	if (!is_set) {
+		if (print_ctrl_obj[idx].cat_info[category].category_verbose_mask
+		    & QDF_TRACE_LEVEL_TO_MODULE_BITMASK(verbose)) {
+			print_ctrl_obj[idx].cat_info[category]
+				.category_verbose_mask &=
+				~QDF_TRACE_LEVEL_TO_MODULE_BITMASK(verbose);
+		}
+	} else {
+		print_ctrl_obj[idx].cat_info[category].category_verbose_mask |=
+				QDF_TRACE_LEVEL_TO_MODULE_BITMASK(verbose);
+	}
+
+	pr_info("%s: Print control object %d, Category %d, Verbose level %d\n",
+		__func__,
+		idx,
+		category,
+		print_ctrl_obj[idx].cat_info[category].category_verbose_mask);
+
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(qdf_print_set_category_verbose);
+
+bool qdf_print_is_category_enabled(unsigned int idx, QDF_MODULE_ID category)
+{
+	QDF_TRACE_LEVEL verbose_mask;
+
+	/* Check if index passed is valid */
+	if (idx < 0 || idx >= MAX_PRINT_CONFIG_SUPPORTED) {
+		pr_info("%s: Invalid index - %d\n", __func__, idx);
+		return false;
+	}
+
+	/* Check if print control object is in use */
+	if (!print_ctrl_obj[idx].in_use) {
+		pr_info("%s: Invalid print control object\n", __func__);
+		return false;
+	}
+
+	/* Check if category passed is valid */
+	if (category < 0 || category >= MAX_SUPPORTED_CATEGORY) {
+		pr_info("%s: Invalid category: %d\n", __func__, category);
+		return false;
+	}
+
+	verbose_mask =
+		print_ctrl_obj[idx].cat_info[category].category_verbose_mask;
+
+	if (verbose_mask == QDF_TRACE_LEVEL_NONE)
+		return false;
+	else
+		return true;
+}
+EXPORT_SYMBOL(qdf_print_is_category_enabled);
+
+bool qdf_print_is_verbose_enabled(unsigned int idx, QDF_MODULE_ID category,
+				  QDF_TRACE_LEVEL verbose)
+{
+	bool verbose_enabled = false;
+
+	/* Check if index passed is valid */
+	if (idx < 0 || idx >= MAX_PRINT_CONFIG_SUPPORTED) {
+		pr_info("%s: Invalid index - %d\n", __func__, idx);
+		return verbose_enabled;
+	}
+
+	/* Check if print control object is in use */
+	if (!print_ctrl_obj[idx].in_use) {
+		pr_info("%s: Invalid print control object\n", __func__);
+		return verbose_enabled;
+	}
+
+	/* Check if category passed is valid */
+	if (category < 0 || category >= MAX_SUPPORTED_CATEGORY) {
+		pr_info("%s: Invalid category: %d\n", __func__, category);
+		return verbose_enabled;
+	}
+
+	if ((verbose == QDF_TRACE_LEVEL_NONE) ||
+	    (verbose >= QDF_TRACE_LEVEL_MAX)) {
+		verbose_enabled = false;
+	} else if (verbose == QDF_TRACE_LEVEL_ALL) {
+		if (print_ctrl_obj[idx].cat_info[category]
+					.category_verbose_mask == 0xFFFF)
+			verbose_enabled = true;
+	} else {
+		verbose_enabled =
+		(print_ctrl_obj[idx].cat_info[category].category_verbose_mask &
+		 QDF_TRACE_LEVEL_TO_MODULE_BITMASK(verbose)) ? true : false;
+	}
+
+	return verbose_enabled;
+}
+EXPORT_SYMBOL(qdf_print_is_verbose_enabled);
+
+#ifdef DBG_LVL_MAC_FILTERING
+
+QDF_STATUS qdf_print_set_node_flag(unsigned int idx, uint8_t enable)
+{
+	/* Check if index passed is valid */
+	if (idx < 0 || idx >= MAX_PRINT_CONFIG_SUPPORTED) {
+		pr_info("%s: Invalid index - %d\n", __func__, idx);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Check if print control object is in use */
+	if (!print_ctrl_obj[idx].in_use) {
+		pr_info("%s: Invalid print control object\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (enable > 1) {
+		pr_info("%s: Incorrect input: Use 1 or 0 to enable or disable\n",
+			__func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	print_ctrl_obj[idx].dbglvlmac_on = enable;
+	pr_info("%s: DbgLVLmac feature %s\n",
+		__func__,
+		((enable) ? "enabled" : "disabled"));
+
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(qdf_print_set_node_flag);
+
+bool qdf_print_get_node_flag(unsigned int idx)
+{
+	bool node_flag = false;
+
+	/* Check if index passed is valid */
+	if (idx < 0 || idx >= MAX_PRINT_CONFIG_SUPPORTED) {
+		pr_info("%s: Invalid index - %d\n", __func__, idx);
+		return node_flag;
+	}
+
+	/* Check if print control object is in use */
+	if (!print_ctrl_obj[idx].in_use) {
+		pr_info("%s: Invalid print control object\n", __func__);
+		return node_flag;
+	}
+
+	if (print_ctrl_obj[idx].dbglvlmac_on)
+		node_flag = true;
+
+	return node_flag;
+}
+EXPORT_SYMBOL(qdf_print_get_node_flag);
+
+void qdf_print_clean_node_flag(unsigned int idx)
+{
+	/* Disable dbglvlmac_on during cleanup */
+	print_ctrl_obj[idx].dbglvlmac_on = 0;
+}
+
+#else
+
+void qdf_print_clean_node_flag(unsigned int idx)
+{
+	/* No operation in case of no support for DBG_LVL_MAC_FILTERING */
+	return;
+}
+#endif
 
 void QDF_PRINT_INFO(unsigned int idx, QDF_MODULE_ID module,
 		    QDF_TRACE_LEVEL level,
