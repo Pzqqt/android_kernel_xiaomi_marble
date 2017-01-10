@@ -1694,3 +1694,34 @@ int pld_is_qmi_disable(struct device *dev)
 
 	return ret;
 }
+
+/**
+ * pld_force_assert_target() - Send a force assert to FW.
+ * This can use various sideband requests available at platform to
+ * initiate a FW assert.
+ * @dev: device
+ *
+ *  Return: 0 if force assert of target was triggered successfully
+ *          Non zero failure code for errors
+ */
+int pld_force_assert_target(struct device *dev)
+{
+	int ret = 0;
+	enum pld_bus_type type = pld_get_bus_type(dev);
+
+	switch (type) {
+	case PLD_BUS_TYPE_SNOC:
+		ret = pld_snoc_force_assert_target(dev);
+		break;
+
+	case PLD_BUS_TYPE_PCIE:
+	case PLD_BUS_TYPE_SDIO:
+		ret = -EINVAL;
+		break;
+	default:
+		pr_err("Invalid device type %d\n", type);
+		ret = -EINVAL;
+		break;
+	}
+	return ret;
+}

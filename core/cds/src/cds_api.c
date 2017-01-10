@@ -1763,6 +1763,20 @@ void cds_trigger_recovery(bool skip_crash_inject)
 
 	qdf_runtime_pm_prevent_suspend(recovery_lock);
 
+	/*
+	 * If force assert thru platform is available, trigger that interface.
+	 * That should generate recovery by going thru the normal FW
+	 * assert recovery model.
+	 */
+	if (!pld_force_assert_target(qdf_ctx->dev)) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
+			"Force assert triggered");
+		goto out;
+	}
+
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
+			"Force assert not available at platform");
+
 	if (!skip_crash_inject) {
 
 		wma_crash_inject(wma_handle, RECOVERY_SIM_SELF_RECOVERY, 0);
@@ -1778,6 +1792,7 @@ void cds_trigger_recovery(bool skip_crash_inject)
 		cds_config_recovery_work(qdf_ctx);
 	}
 
+out:
 	qdf_runtime_pm_allow_suspend(recovery_lock);
 	qdf_runtime_lock_deinit(recovery_lock);
 }
