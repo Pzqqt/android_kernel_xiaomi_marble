@@ -1795,6 +1795,14 @@ static struct cdp_ops dp_txrx_ops = {
  *
  * Return: DP SOC handle on success, NULL on failure
  */
+/*
+ * Local prototype added to temporarily address warning caused by
+ * -Wmissing-prototypes. A more correct solution, namely to expose
+ * a prototype in an appropriate header file, will come later.
+ */
+void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
+	HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
+	struct ol_if_ops *ol_ops);
 void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
 	HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
 	struct ol_if_ops *ol_ops)
