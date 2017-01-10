@@ -23,7 +23,7 @@
  */
 
 #include "wlan_mgmt_txrx_utils_api.h"
-#include "wlan_mgmt_txrx_main_i.h"
+#include "../../core/src/wlan_mgmt_txrx_main_i.h"
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_objmgr_global_obj.h"
 #include "wlan_objmgr_pdev_obj.h"
