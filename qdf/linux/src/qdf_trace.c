@@ -43,6 +43,10 @@
 #include <wlan_logging_sock_svc.h>
 #include "qdf_time.h"
 #include "qdf_mc_timer.h"
+
+/* Global qdf print id */
+static int qdf_pidx = -1;
+
 /* Preprocessor definitions and constants */
 
 enum qdf_timestamp_unit qdf_log_timestamp_type = QDF_LOG_TIMESTAMP_UNIT;
@@ -121,6 +125,19 @@ static struct s_qdf_dp_trace_data g_qdf_dp_trace_data;
  */
 static tp_qdf_dp_trace_cb qdf_dp_trace_cb_table[QDF_DP_TRACE_MAX+1];
 #endif
+
+void qdf_set_pidx(int pidx)
+{
+	qdf_pidx = pidx;
+}
+EXPORT_SYMBOL(qdf_set_pidx);
+
+int qdf_get_pidx(void)
+{
+	return qdf_pidx;
+}
+EXPORT_SYMBOL(qdf_get_pidx);
+
 /**
  * qdf_trace_set_level() - Set the trace level for a particular module
  * @module: Module id
@@ -301,46 +318,11 @@ EXPORT_SYMBOL(qdf_snprintf);
 void qdf_trace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 		   char *str_format, ...)
 {
-	char str_buffer[QDF_TRACE_BUFFER_SIZE];
-	int n;
+	va_list val;
 
-	/* Print the trace message when the desired level bit is set in
-	 * the module tracel level mask
-	 */
-	if (g_qdf_trace_info[module].module_trace_level &
-	    QDF_TRACE_LEVEL_TO_MODULE_BITMASK(level)) {
-		/* the trace level strings in an array.  these are ordered in
-		 * the same order as the trace levels are defined in the enum
-		 * (see QDF_TRACE_LEVEL) so we can index into this array with
-		 * the level and get the right string. The qdf trace levels
-		 * are... none, Fatal, Error, Warning, Info, info_high, info_med,
-		 * info_low, Debug
-		 */
-		static const char *TRACE_LEVEL_STR[] = { "  ", "F ", "E ", "W ",
-						"I ", "IH", "IM", "IL", "D" };
-		va_list val;
-		va_start(val, str_format);
-
-		/* print the prefix string into the string buffer... */
-		n = snprintf(str_buffer, QDF_TRACE_BUFFER_SIZE,
-			     "wlan: [%d:%2s:%3s] ",
-			     in_interrupt() ? 0 : current->pid,
-			     (char *)TRACE_LEVEL_STR[level],
-			     (char *)g_qdf_trace_info[module].module_name_str);
-
-		/* print the formatted log message after the prefix string */
-		if ((n >= 0) && (n < QDF_TRACE_BUFFER_SIZE)) {
-			vsnprintf(str_buffer + n, QDF_TRACE_BUFFER_SIZE - n,
-				  str_format, val);
-#if defined(WLAN_LOGGING_SOCK_SVC_ENABLE)
-			wlan_log_to_user(level, (char *)str_buffer,
-					 strlen(str_buffer));
-#else
-			pr_err("%s\n", str_buffer);
-#endif
-		}
-		va_end(val);
-	}
+	va_start(val, str_format);
+	qdf_trace_msg_cmn(qdf_pidx, module, level, str_format, val);
+	va_end(val);
 }
 EXPORT_SYMBOL(qdf_trace_msg);
 

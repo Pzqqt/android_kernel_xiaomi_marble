@@ -143,7 +143,6 @@ typedef enum {
  * @QDF_MODULE_ID_TLSHIM        : TLSHIM module ID
  * @QDF_MODULE_ID_WMI           : WMI module ID
  * @QDF_MODULE_ID_HTT           : HTT module ID
- * @QDF_MODULE_ID_RSV4          : Reserved
  * @QDF_MODULE_ID_HDD           : HDD module ID
  * @QDF_MODULE_ID_SME           : SME module ID
  * @QDF_MODULE_ID_PE            : PE module ID
@@ -241,12 +240,25 @@ typedef enum {
 	QDF_MODULE_ID_TARGET_IF,
 	QDF_MODULE_ID_SCHEDULER,
 	QDF_MODULE_ID_MGMT_TXRX,
-	QDF_MODULE_ID_RSV4,
 	QDF_MODULE_ID_ANY,
 	QDF_MODULE_ID_MAX,
 } QDF_MODULE_ID;
 
 #ifdef CONFIG_MCL
+/**
+ * qdf_set_pidx() - Sets the global qdf_pidx.
+ * @pidx : Index of print control object assigned to the module
+ *
+ */
+void qdf_set_pidx(int pidx);
+
+/**
+ * qdf_get_pidx() - Returns the global qdf_pidx.
+ *
+ * Return : Current qdf print index.
+ */
+int qdf_get_pidx(void);
+
 /* By default Data Path module will have all log levels enabled, except debug
  * log level. Debug level will be left up to the framework or user space modules
  * to be enabled when issue is detected
