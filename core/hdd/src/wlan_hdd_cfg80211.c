@@ -6171,7 +6171,7 @@ static int __wlan_hdd_cfg80211_p2p_lo_start(struct wiphy *wiphy,
 
 	params.count = nla_get_u32(tb
 		[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_COUNT]);
-	if (!((params.count > 0) && (params.count < UINT_MAX))) {
+	if (!((params.count >= 0) && (params.count < UINT_MAX))) {
 		hdd_err("Invalid count: %d", params.count);
 		return -EINVAL;
 	}
