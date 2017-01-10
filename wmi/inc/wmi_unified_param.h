@@ -626,43 +626,6 @@ struct vdev_set_params {
 	uint32_t param_value;
 };
 
-/**
- * struct vdev_install_key_params - vdev key set cmd parameter
- * @wk_keylen: key length
- * @wk_flags: key flags
- * @ic_cipher: cipher
- * @if_id: vdev id
- * @is_group_key: Group key
- * @wk_keyix: key index
- * @def_keyid: default key index
- * @wk_keytsc: Key TSC
- * @wk_keyrsc: key RSC
- * @key_data: pounter to key data
- * @force_none: force
- * @is_host_based_crypt: Host based encrypt
- * @is_xmit_or_recv_key: xmit or recieve key
- * @wk_recviv: WAPI recv IV
- * @wk_txiv: WAPI TX IV
- */
-struct vdev_install_key_params {
-	uint8_t wk_keylen;
-	uint16_t wk_flags;
-	uint8_t  ic_cipher;
-	uint8_t if_id;
-	bool is_group_key;
-	uint16_t wk_keyix;
-	uint8_t def_keyid;
-	uint64_t wk_keytsc;
-	uint64_t *wk_keyrsc;
-	uint8_t *key_data;
-	uint8_t force_none;
-	bool is_host_based_crypt;
-	bool is_xmit_or_recv_key;
-#if ATH_SUPPORT_WAPI
-	uint8_t *wk_recviv;
-	uint32_t *wk_txiv;
-#endif
-};
 
 /**
  * struct peer_delete_params - peer delete cmd parameter
@@ -1636,6 +1599,8 @@ struct wmi_probe_resp_params {
  * @key_cipher: key cipher based on security mode
  * @key_txmic_len: tx mic length
  * @key_rxmic_len: rx mic length
+ * @key_tsc_counter:  key tx sc counter
+ * @key_rsc_counter:  key rx sc counter
  * @rx_iv: receive IV, applicable only in case of WAPI
  * @tx_iv: transmit IV, applicable only in case of WAPI
  * @key_data: key data
@@ -1649,7 +1614,9 @@ struct set_key_params {
 	uint32_t key_cipher;
 	uint32_t key_txmic_len;
 	uint32_t key_rxmic_len;
-#ifdef FEATURE_WLAN_WAPI
+	uint64_t key_tsc_counter;
+	uint64_t *key_rsc_counter;
+#if defined(ATH_SUPPORT_WAPI) || defined(FEATURE_WLAN_WAPI)
 	uint8_t rx_iv[16];
 	uint8_t tx_iv[16];
 #endif

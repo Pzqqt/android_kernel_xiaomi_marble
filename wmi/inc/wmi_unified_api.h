@@ -1046,9 +1046,6 @@ QDF_STATUS wmi_unified_vdev_set_fwtest_param_cmd_send(void *wmi_hdl,
 QDF_STATUS wmi_unified_vdev_config_ratemask_cmd_send(void *wmi_hdl,
 				struct config_ratemask_params *param);
 
-QDF_STATUS wmi_unified_vdev_install_key_cmd_send(void *wmi_hdl,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
-				struct vdev_install_key_params *param);
 
 QDF_STATUS wmi_unified_pdev_set_regdomain_cmd_send(void *wmi_hdl,
 				struct pdev_set_regdomain_params *param);

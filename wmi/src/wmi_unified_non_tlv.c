@@ -313,55 +313,24 @@ QDF_STATUS send_vdev_config_ratemask_cmd_non_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
- * send_vdev_install_key_cmd_non_tlv() - config security key in fw
+ * send_setup_install_key_cmd_non_tlv() - config security key in fw
  * @wmi_handle: wmi handle
  * @param: pointer to hold key params
  * @macaddr: vdev mac address
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS send_vdev_install_key_cmd_non_tlv(wmi_unified_t wmi_handle,
-					uint8_t macaddr[IEEE80211_ADDR_LEN],
-					struct vdev_install_key_params *param)
+QDF_STATUS send_setup_install_key_cmd_non_tlv(wmi_unified_t wmi_handle,
+					struct set_key_params  *param)
 {
 	wmi_vdev_install_key_cmd *cmd;
 	wmi_buf_t buf;
 	/* length depends on ieee key length */
-	int len = sizeof(wmi_vdev_install_key_cmd) + param->wk_keylen;
+	int len = sizeof(wmi_vdev_install_key_cmd) + param->key_len;
 	uint8_t	wmi_cipher_type;
 	int i;
 
-	/* Cipher MAP has to be in the same order as ieee80211_cipher_type */
-	static const u_int8_t wmi_ciphermap[] = {
-		WMI_CIPHER_WEP,		/* IEEE80211_CIPHER_WEP	 */
-		WMI_CIPHER_TKIP,	/* IEEE80211_CIPHER_TKIP */
-		WMI_CIPHER_AES_OCB,	/* IEEE80211_CIPHER_AES_OCB */
-		WMI_CIPHER_AES_CCM,	/* IEEE80211_CIPHER_AES_CCM */
-#if ATH_SUPPORT_WAPI
-		WMI_CIPHER_WAPI,	/* IEEE80211_CIPHER_WAPI */
-#else
-		(u_int8_t) 0xff,	/* IEEE80211_CIPHER_WAPI */
-#endif
-		WMI_CIPHER_CKIP,	/* IEEE80211_CIPHER_CKIP */
-		WMI_CIPHER_AES_CMAC,
-		WMI_CIPHER_AES_CCM,	/* IEEE80211_CIPHER_AES_CCM 256 */
-		WMI_CIPHER_AES_CMAC,
-		WMI_CIPHER_AES_GCM,	/* IEEE80211_CIPHER_AES_GCM */
-		WMI_CIPHER_AES_GCM,	/* IEEE80211_CIPHER_AES_GCM 256 */
-		WMI_CIPHER_AES_GMAC,
-		WMI_CIPHER_AES_GMAC,
-		WMI_CIPHER_NONE,	/* IEEE80211_CIPHER_NONE */
-	};
-
-	if (param->force_none == 1) {
-		wmi_cipher_type = WMI_CIPHER_NONE;
-	} else if ((!param->is_host_based_crypt)) {
-		KASSERT(param->ic_cipher <
-			(sizeof(wmi_ciphermap)/sizeof(wmi_ciphermap[0])),
-			("invalid cipher type %u", param->ic_cipher));
-		wmi_cipher_type = wmi_ciphermap[param->ic_cipher];
-	} else
-		wmi_cipher_type = WMI_CIPHER_NONE;
+	wmi_cipher_type = param->key_cipher;
 
 	/* ieee_key length does not have mic keylen */
 	if ((wmi_cipher_type == WMI_CIPHER_TKIP) ||
@@ -376,45 +345,28 @@ QDF_STATUS send_vdev_install_key_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 	cmd = (wmi_vdev_install_key_cmd *)wmi_buf_data(buf);
 
-	cmd->vdev_id = param->if_id;
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(macaddr, &cmd->peer_macaddr);
+	cmd->vdev_id = param->vdev_id;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(param->peer_mac, &cmd->peer_macaddr);
 
-	/* Mapping ieee key flags to WMI key flags */
-	if (param->is_group_key) {
-		cmd->key_flags |= GROUP_USAGE;
-		/* send the ieee keyix for multicast */
-		cmd->key_ix = param->wk_keyix;
-	} else if (param->is_xmit_or_recv_key) {
-		cmd->key_flags |= PAIRWISE_USAGE;
-		/* Target expects keyix 0 for unicast
-		   other than static wep cipher */
-		if (param->wk_keyix >= (IEEE80211_WEP_NKID + 1))
-			cmd->key_ix = 0;
-		else
-			cmd->key_ix = param->wk_keyix;
-	}
+	cmd->key_ix = param->key_idx;
+
 	/* If this WEP key is the default xmit key, TX_USAGE flag is enabled */
-	if (param->def_keyid == 1)
-		cmd->key_flags |= TX_USAGE;
+		cmd->key_flags  = param->key_flags;
 
-		cmd->key_len = param->wk_keylen;
+		cmd->key_len = param->key_len;
 		cmd->key_cipher = wmi_cipher_type;
-	/* setting the mic lengths. Just Added for TKIP alone */
-	if ((wmi_cipher_type == WMI_CIPHER_TKIP) ||
-			(wmi_cipher_type == WMI_CIPHER_WAPI)) {
-		cmd->key_txmic_len = 8;
-		cmd->key_rxmic_len = 8;
-	}
+		cmd->key_txmic_len = param->key_txmic_len;
+		cmd->key_rxmic_len = param->key_rxmic_len;
 
 	/* target will use the same rsc counter for
 	   various tids from from ieee key rsc */
 	if ((wmi_cipher_type == WMI_CIPHER_TKIP) ||
 			(wmi_cipher_type == WMI_CIPHER_AES_OCB)
 		|| (wmi_cipher_type == WMI_CIPHER_AES_CCM)) {
-		qdf_mem_copy(&cmd->key_rsc_counter, &param->wk_keyrsc[0],
-			sizeof(param->wk_keyrsc[0]));
-		qdf_mem_copy(&cmd->key_tsc_counter, &param->wk_keytsc,
-				sizeof(param->wk_keytsc));
+		qdf_mem_copy(&cmd->key_rsc_counter, &param->key_rsc_counter[0],
+			sizeof(param->key_rsc_counter[0]));
+		qdf_mem_copy(&cmd->key_tsc_counter, &param->key_tsc_counter,
+				sizeof(param->key_tsc_counter));
 	}
 
 #ifdef ATH_SUPPORT_WAPI
@@ -429,11 +381,11 @@ QDF_STATUS send_vdev_install_key_cmd_non_tlv(wmi_unified_t wmi_handle,
 		 */
 		for (i = (WPI_IV_LEN-1), j = 0; i >= 0; i--, j++)
 			*(((uint8_t *)&cmd->wpi_key_rsc_counter)+j) =
-			    param->wk_recviv[i];
+			    param->rx_iv[i];
 
 		for (i = (WPI_IV_LEN/4-1), j = 0; i >= 0; i--, j++)
 			*(((uint32_t *)&cmd->wpi_key_tsc_counter)+j) =
-			    param->wk_txiv[i];
+			    param->tx_iv[i];
 
 		qdf_print("RSC:");
 		for (i = 0; i < 16; i++)
@@ -449,13 +401,8 @@ QDF_STATUS send_vdev_install_key_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 #endif
 
-	/* for big endian host, copy engine byte_swap is enabled
-	 * But the key data content is in network byte order
-	 * Need to byte swap the key data content - so when copy engine
-	 * does byte_swap - target gets key_data content in the correct order
-	 */
-	WMI_HOST_IF_MSG_COPY_CHAR_ARRAY(cmd->key_data, param->key_data,
-					cmd->key_len);
+	qdf_mem_copy(cmd->key_data, param->key_data,
+			cmd->key_len);
 
 	return wmi_unified_cmd_send(wmi_handle, buf, len,
 			WMI_VDEV_INSTALL_KEY_CMDID);
@@ -7962,7 +7909,8 @@ struct wmi_ops non_tlv_ops =  {
 	.send_vdev_set_fwtest_param_cmd =
 			send_vdev_set_fwtest_param_cmd_non_tlv,
 	.send_vdev_config_ratemask_cmd = send_vdev_config_ratemask_cmd_non_tlv,
-	.send_vdev_install_key_cmd = send_vdev_install_key_cmd_non_tlv,
+	.send_setup_install_key_cmd =
+				send_setup_install_key_cmd_non_tlv,
 	.send_wow_wakeup_cmd = send_wow_wakeup_cmd_non_tlv,
 	.send_wow_add_wakeup_event_cmd = send_wow_add_wakeup_event_cmd_non_tlv,
 	.send_wow_add_wakeup_pattern_cmd =
