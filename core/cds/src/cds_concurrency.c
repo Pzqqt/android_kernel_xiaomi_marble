@@ -485,6 +485,11 @@ static void cds_update_hw_mode_conn_info(uint32_t num_vdev_mac_entries,
 			cds_info("vdev:%d, mac:%d",
 			  conc_connection_list[conn_index].vdev_id,
 			  conc_connection_list[conn_index].mac);
+			if (cds_ctx->cdp_update_mac_id)
+				cds_ctx->cdp_update_mac_id(
+					cds_get_context(QDF_MODULE_ID_SOC),
+					vdev_mac_map[i].vdev_id,
+					vdev_mac_map[i].mac_id);
 		}
 	}
 	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
