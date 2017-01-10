@@ -1736,6 +1736,7 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 
 	if (NULL == pMac) {
 		WMA_LOGE("%s: pMac is NULL", __func__);
+		qdf_mem_free(roam_req);
 		return QDF_STATUS_E_FAILURE;
 	}
 
