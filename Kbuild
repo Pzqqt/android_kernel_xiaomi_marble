@@ -922,7 +922,8 @@ TARGET_IF_INC := -I$(WLAN_COMMON_INC)/target_if/core/inc \
 		 -I$(WLAN_COMMON_INC)/target_if/init_deinit/inc \
 		 -I$(WLAN_COMMON_INC)/target_if/pmo/inc \
 		 -I$(WLAN_COMMON_INC)/target_if/pmo/src \
-		 -I$(WLAN_COMMON_INC)/target_if/p2p/inc
+		 -I$(WLAN_COMMON_INC)/target_if/p2p/inc \
+		 -I$(WLAN_COMMON_INC)/target_if/regulatory/inc
 
 TARGET_IF_OBJ := $(TARGET_IF_DIR)/core/src/target_if_main.o \
 		$(TARGET_IF_DIR)/init_deinit/src/service_ready_event_handler.o \
@@ -935,7 +936,8 @@ TARGET_IF_OBJ := $(TARGET_IF_DIR)/core/src/target_if_main.o \
 		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_static_config.o \
 		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_lphb.o \
 		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_suspend_resume.o \
-		$(TARGET_IF_DIR)/p2p/src/target_if_p2p.o
+		$(TARGET_IF_DIR)/p2p/src/target_if_p2p.o \
+		$(TARGET_IF_DIR)/regulatory/src/target_if_reg.o
 
 ########### GLOBAL_LMAC_IF ##########
 GLOBAL_LMAC_IF_DIR := $(WLAN_COMMON_ROOT)/global_lmac_if
@@ -959,6 +961,7 @@ WMI_OBJS := $(WMI_OBJ_DIR)/wmi_unified.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_tlv.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_api.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_pmo_api.o \
+	    $(WMI_OBJ_DIR)/wmi_unified_reg_api.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_non_tlv.o
 
 ########### FWLOG ###########
@@ -1054,6 +1057,22 @@ INIT_DEINIT_SRC_DIR := $(INIT_DEINIT_DIR)/src
 INIT_DEINIT_OBJ_DIR := $(WLAN_COMMON_ROOT)/$(INIT_DEINIT_SRC_DIR)
 INIT_DEINIT_INC := -I$(WLAN_COMMON_INC)/$(INIT_DEINIT_INC_DIR)
 INIT_DEINIT_OBJS := $(INIT_DEINIT_OBJ_DIR)/dispatcher_init_deinit.o
+
+############## REGULATORY ###########
+REGULATORY_DIR := umac/regulatory
+REGULATORY_CORE_INC_DIR := $(REGULATORY_DIR)/core/inc
+REGULATORY_CORE_SRC_DIR := $(REGULATORY_DIR)/core/src
+REG_DISPATCHER_INC_DIR := $(REGULATORY_DIR)/dispatcher/inc
+REG_DISPATCHER_SRC_DIR := $(REGULATORY_DIR)/dispatcher/src
+REG_CORE_OBJ_DIR := $(WLAN_COMMON_ROOT)/$(REGULATORY_CORE_SRC_DIR)
+REG_DISPATCHER_OBJ_DIR := $(WLAN_COMMON_ROOT)/$(REG_DISPATCHER_SRC_DIR)
+REGULATORY_INC := -I$(WLAN_COMMON_INC)/$(REGULATORY_CORE_INC_DIR)
+REGULATORY_INC += -I$(WLAN_COMMON_INC)/$(REG_DISPATCHER_INC_DIR)
+REGULATORY_OBJS := $(REG_CORE_OBJ_DIR)/reg_db.o \
+                   $(REG_CORE_OBJ_DIR)/reg_services.o \
+                   $(REG_DISPATCHER_OBJ_DIR)/wlan_reg_services_api.o \
+                   $(REG_DISPATCHER_OBJ_DIR)/wlan_reg_tgt_api.o \
+                   $(REG_DISPATCHER_OBJ_DIR)/wlan_reg_ucfg_api.o
 
 ############## Control path common scheduler ##########
 SCHEDULER_DIR := scheduler
@@ -1319,6 +1338,7 @@ INCS +=		$(WMA_INC) \
 		$(HTT_INC) \
 		$(INIT_DEINIT_INC) \
 		$(SCHEDULER_INC) \
+		$(REGULATORY_INC) \
 		$(HTC_INC) \
 		$(DFS_INC) \
 		$(WCFG_INC)
@@ -1380,6 +1400,7 @@ OBJS +=		$(WMA_OBJS) \
 		$(HTC_OBJS) \
 		$(INIT_DEINIT_OBJS) \
 		$(SCHEDULER_OBJS) \
+		$(REGULATORY_OBJS) \
 		$(DFS_OBJS)
 
 OBJS +=		$(HIF_OBJS) \
