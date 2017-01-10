@@ -50,6 +50,8 @@
 struct lock_stats {};
 #define BEFORE_LOCK(x...) do {} while (0)
 #define AFTER_LOCK(x...) do {} while (0)
+#define BEFORE_TRYLOCK(x...) do {} while (0)
+#define AFTER_TRYLOCK(x...) do {} while (0)
 #define BEFORE_UNLOCK(x...) do {} while (0)
 #define qdf_lock_stats_create(x...) do {} while (0)
 #define qdf_lock_stats_destroy(x...) do {} while (0)
@@ -71,7 +73,7 @@ struct lock_stats {
 #define LARGE_CONTENTION QDF_LOG_TIMESTAMP_CYCLES_PER_10_US
 
 #define BEFORE_LOCK(lock, was_locked) \
-{ \
+do { \
 	uint64_t BEFORE_LOCK_time; \
 	uint64_t AFTER_LOCK_time;  \
 	bool BEFORE_LOCK_is_locked = was_locked; \
@@ -99,7 +101,24 @@ struct lock_stats {
 	    lock->stats.max_contention_wait) \
 		lock->stats.max_contention_wait = \
 			AFTER_LOCK_time - BEFORE_LOCK_time; \
-}
+} while (0)
+
+#define BEFORE_TRYLOCK(lock) \
+do { \
+	uint64_t BEFORE_LOCK_time; \
+	uint64_t AFTER_LOCK_time;  \
+	BEFORE_LOCK_time = qdf_get_log_timestamp(); \
+	do {} while (0)
+
+#define AFTER_TRYLOCK(lock, trylock_return) \
+	AFTER_LOCK_time = qdf_get_log_timestamp(); \
+	if (trylock_return) { \
+		lock->stats.acquired++; \
+		lock->stats.last_acquired = AFTER_LOCK_time; \
+		lock->stats.non_contention_time += \
+			(AFTER_LOCK_time - BEFORE_LOCK_time); \
+	} \
+} while (0)
 
 /* max_hold_time in US */
 #define BEFORE_UNLOCK(lock, max_hold_time) \
@@ -120,8 +139,6 @@ do {\
 		QDF_BUG(0); \
 	} \
 } while (0)
-
-
 
 static inline void qdf_lock_stats_destroy(struct lock_stats *stats)
 {
@@ -239,7 +256,12 @@ static inline int qdf_spin_is_locked(qdf_spinlock_t *lock)
  */
 static inline int qdf_spin_trylock_bh(qdf_spinlock_t *lock)
 {
-	return __qdf_spin_trylock_bh(&lock->lock);
+	int trylock_return;
+	BEFORE_TRYLOCK(lock);
+	trylock_return = __qdf_spin_trylock_bh(&lock->lock);
+	AFTER_TRYLOCK(lock, trylock_return);
+
+	return trylock_return;
 }
 
 int qdf_spin_trylock_bh_outline(qdf_spinlock_t *lock);
