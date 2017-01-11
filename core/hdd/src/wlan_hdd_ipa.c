@@ -4860,13 +4860,10 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 			unsigned int pending_event_count;
 			struct ipa_uc_pending_event *pending_event = NULL;
 
-			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "IPA resource %s inprogress",
-					hdd_ipa->resource_loading ? "load":"unload");
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
+				    "IPA resource load in progress");
 
-			hdd_err("IPA resource %s inprogress",
-					hdd_ipa->resource_loading ? "load":"unload");
-
-			qdf_mutex_acquire(&hdd_ipa->event_lock);
+			qdf_mutex_acquire(&hdd_ipa->ipa_lock);
 
 			pending_event_count = qdf_list_size(&hdd_ipa->pending_event);
 			if (pending_event_count >= HDD_IPA_MAX_PENDING_EVENT_COUNT) {
@@ -4880,9 +4877,9 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 			}
 
 			if (!pending_event) {
+				qdf_mutex_release(&hdd_ipa->ipa_lock);
 				HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 				    "Pending event memory alloc fail");
-				qdf_mutex_release(&hdd_ipa->event_lock);
 				return -ENOMEM;
 			}
 
@@ -4895,10 +4892,11 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 			qdf_list_insert_back(&hdd_ipa->pending_event,
 					&pending_event->node);
 
-			qdf_mutex_release(&hdd_ipa->event_lock);
+			qdf_mutex_release(&hdd_ipa->ipa_lock);
 			return 0;
 		} else if (hdd_ipa->resource_unloading) {
-			hdd_err("%s: IPA resource unload inprogress", __func__);
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
+				    "IPA resource unload in progress");
 			return 0;
 		}
 	}
@@ -4956,9 +4954,9 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 
 		ret = hdd_ipa_setup_iface(hdd_ipa, adapter, sta_id);
 		if (ret) {
+			qdf_mutex_release(&hdd_ipa->event_lock);
 			hdd_err("%s: Evt: %d, Interface setup failed",
 				msg_ex->name, meta.msg_type);
-			qdf_mutex_release(&hdd_ipa->event_lock);
 			goto end;
 		}
 
@@ -4980,9 +4978,9 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		qdf_mutex_acquire(&hdd_ipa->event_lock);
 
 		if (!hdd_ipa->sta_connected) {
+			qdf_mutex_release(&hdd_ipa->event_lock);
 			hdd_err("%s: Evt: %d, STA already disconnected",
 				msg_ex->name, meta.msg_type);
-			qdf_mutex_release(&hdd_ipa->event_lock);
 			return -EINVAL;
 		}
 
@@ -5018,9 +5016,9 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		qdf_mutex_acquire(&hdd_ipa->event_lock);
 
 		if (!adapter->ipa_context) {
+			qdf_mutex_release(&hdd_ipa->event_lock);
 			hdd_err("%s: Evt: %d, SAP already disconnected",
 				msg_ex->name, meta.msg_type);
-			qdf_mutex_release(&hdd_ipa->event_lock);
 			return -EINVAL;
 		}
 
@@ -5159,10 +5157,10 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 
 		qdf_mutex_acquire(&hdd_ipa->event_lock);
 		if (!hdd_ipa_uc_find_add_assoc_sta(hdd_ipa, false, sta_id)) {
+			qdf_mutex_release(&hdd_ipa->event_lock);
 			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 				    "%s: STA ID %d NOT found, not valid",
 				    msg_ex->name, sta_id);
-			qdf_mutex_release(&hdd_ipa->event_lock);
 			return 0;
 		}
 		hdd_ipa->sap_num_connected_sta--;
