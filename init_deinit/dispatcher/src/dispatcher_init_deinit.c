@@ -23,7 +23,9 @@
 #include <scheduler_api.h>
 #include <wlan_mgmt_txrx_utils_api.h>
 #include <wlan_serialization_api.h>
-
+#ifdef WLAN_PMO_ENABLE
+#include "wlan_pmo_obj_mgmt_api.h"
+#endif
 /**
  * DOC: This file provides various init/deinit trigger point for new
  * components.
@@ -128,6 +130,28 @@ static QDF_STATUS tdls_psoc_disable(struct wlan_objmgr_psoc *psoc)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_PMO_ENABLE
+static QDF_STATUS dispatcher_init_pmo(void)
+{
+	return pmo_init();
+}
+
+static QDF_STATUS dispatcher_deinit_pmo(void)
+{
+	return pmo_deinit();
+}
+#else
+static QDF_STATUS dispatcher_init_pmo(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dispatcher_deinit_pmo(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* END of WLAN_PMO_ENABLE */
+
 QDF_STATUS dispatcher_init(void)
 {
 	if (QDF_STATUS_SUCCESS != wlan_objmgr_global_obj_init())
@@ -151,8 +175,13 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != scheduler_init())
 		goto scheduler_init_fail;
 
+	if (QDF_STATUS_SUCCESS != dispatcher_init_pmo())
+		goto pmo_init_fail;
+
 	return QDF_STATUS_SUCCESS;
 
+pmo_init_fail:
+	scheduler_deinit();
 scheduler_init_fail:
 	wlan_serialization_deinit();
 serialization_init_fail:
@@ -184,6 +213,8 @@ QDF_STATUS dispatcher_deinit(void)
 	QDF_BUG(QDF_STATUS_SUCCESS == scm_deinit());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == wlan_mgmt_txrx_deinit());
+
+	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_deinit_pmo());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == wlan_objmgr_global_obj_deinit());
 
