@@ -2609,6 +2609,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 
 				cds_packet_free((void *)tx_frame);
 				tx_frame = pPacket;
+				pData = pFrame;
 				frmLen = newFrmLen;
 			}
 		} else {
@@ -2648,6 +2649,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			}
 			cds_packet_free((void *)tx_frame);
 			tx_frame = pPacket;
+			pData = pFrame;
 			frmLen = newFrmLen;
 		}
 	}
