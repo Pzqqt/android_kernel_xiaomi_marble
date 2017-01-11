@@ -2124,6 +2124,14 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			     CFG_DISABLE_DFS_JAPAN_W53_MIN,
 			     CFG_DISABLE_DFS_JAPAN_W53_MAX,
 			     ch_notify_set_g_disable_dfs_japan_w53, 0),
+
+	REG_VARIABLE(CFG_MAX_HT_MCS_FOR_TX_DATA, WLAN_PARAM_HexInteger,
+		     struct hdd_config, max_ht_mcs_txdata,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_MAX_HT_MCS_FOR_TX_DATA_DEFAULT,
+		     CFG_MAX_HT_MCS_FOR_TX_DATA_MIN,
+		     CFG_MAX_HT_MCS_FOR_TX_DATA_MAX),
+
 	REG_VARIABLE(CFG_ENABLE_FIRST_SCAN_2G_ONLY_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, enableFirstScan2GOnly,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -6675,6 +6683,13 @@ bool hdd_update_config_cfg(hdd_context_t *hdd_ctx)
 	    config->tgt_gtx_usr_cfg) == QDF_STATUS_E_FAILURE) {
 		status = false;
 		hdd_err("Couldn't pass on WNI_CFG_TGT_GTX_USR_CFG to CCM");
+	}
+
+	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_MAX_HT_MCS_TX_DATA,
+			    config->max_ht_mcs_txdata) ==
+			    QDF_STATUS_E_FAILURE) {
+		status = false;
+		hdd_err("Couldn't pass on WNI_CFG_MAX_HT_MCS_TX_DATA to CCM");
 	}
 	return status;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -315,4 +315,13 @@ unsigned char *g_cfg_param_name[] = {
 	(unsigned char *)"DFS_MASTER_ENABLED",
 	(unsigned char *)"VHT_ENABLE_TXBF_20MHZ",
 	(unsigned char *)"TDLS_WMM_MODE_ENABLED",
+	(unsigned char *)"OBSS_HT40_SCAN_PASSIVE_DWELL_TIME",
+	(unsigned char *)"OBSS_HT40_SCAN_ACTIVE_DWELL_TIME",
+	(unsigned char *)"OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL",
+	(unsigned char *)"OBSS_HT40_SCAN_PASSIVE_TOTAL_PER_CHANNEL",
+	(unsigned char *)"OBSS_HT40_SCAN_ACTIVE_TOTAL_PER_CHANNEL",
+	(unsigned char *)"OBSS_HT40_WIDTH_CH_TRANSITION_DELAY",
+	(unsigned char *)"OBSS_HT40_SCAN_ACTIVITY_THRESHOLD",
+	(unsigned char *)"TGT_GTX_USR_CFG",
+	(unsigned char *)"MAX_HT_MCS_TX_DATA",
 };

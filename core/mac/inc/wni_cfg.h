@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -251,6 +251,7 @@ enum {
 	WNI_CFG_OBSS_HT40_WIDTH_CH_TRANSITION_DELAY,
 	WNI_CFG_OBSS_HT40_SCAN_ACTIVITY_THRESHOLD,
 	WNI_CFG_TGT_GTX_USR_CFG,
+	WNI_CFG_MAX_HT_MCS_TX_DATA,
 	/* Any new items to be added should be above this strictly */
 	CFG_PARAM_MAX_NUM
 };
@@ -1259,6 +1260,10 @@ enum {
 #define WNI_CFG_TGT_GTX_USR_CFG_STAMIN 0
 #define WNI_CFG_TGT_GTX_USR_CFG_STAMAX 32
 #define WNI_CFG_TGT_GTX_USR_CFG_STADEF 32
+
+#define WNI_CFG_MAX_HT_MCS_TX_DATA_STAMIN  0x0
+#define WNI_CFG_MAX_HT_MCS_TX_DATA_STAMAX  0x17f
+#define WNI_CFG_MAX_HT_MCS_TX_DATA_STADEF  0x0
 
 #define CFG_STA_MAGIC_DWORD    0xbeefbeef
 
