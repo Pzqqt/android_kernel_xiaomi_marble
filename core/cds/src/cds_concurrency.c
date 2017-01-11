@@ -5220,7 +5220,17 @@ QDF_STATUS cds_next_actions(uint32_t session_id,
 						session_id);
 		break;
 	case CDS_DBS:
-		status = cds_pdev_set_hw_mode(session_id,
+		if (wma_is_hw_dbs_2x2_capable())
+			status = cds_pdev_set_hw_mode(session_id,
+						HW_MODE_SS_2x2,
+						HW_MODE_80_MHZ,
+						HW_MODE_SS_2x2, HW_MODE_40_MHZ,
+						HW_MODE_DBS,
+						HW_MODE_AGILE_DFS_NONE,
+						HW_MODE_SBS_NONE,
+						reason);
+		else
+			status = cds_pdev_set_hw_mode(session_id,
 						HW_MODE_SS_1x1,
 						HW_MODE_80_MHZ,
 						HW_MODE_SS_1x1, HW_MODE_40_MHZ,

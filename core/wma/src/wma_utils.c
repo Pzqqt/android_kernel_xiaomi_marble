@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -3855,7 +3855,7 @@ bool wma_is_hw_dbs_2x2_capable(void)
 	uint32_t ht_2g, ht_5g;
 	struct extended_caps *phy_caps;
 	WMI_MAC_PHY_CAPABILITIES *mac_cap;
-	uint32_t tx_chain, rx_chain, final_min_rf_chains = 0;
+	uint32_t tx_chain, rx_chain, final_min_rf_chains = 2;
 	uint32_t min_rf_chains, min_2g_rf_chains, min_5g_rf_chains;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
