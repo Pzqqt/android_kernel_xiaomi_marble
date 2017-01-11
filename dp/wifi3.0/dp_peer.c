@@ -469,7 +469,6 @@ static void dp_rx_tid_update_cb(struct dp_soc *soc, void *cb_ctxt,
 	union hal_reo_status *reo_status)
 {
 	struct dp_rx_tid *rx_tid = (struct dp_rx_tid *)cb_ctxt;
-	struct hal_reo_cmd_params params;
 
 	if (reo_status->queue_status.header.status) {
 		/* Should not happen normally. Just print error for now */
@@ -479,14 +478,6 @@ static void dp_rx_tid_update_cb(struct dp_soc *soc, void *cb_ctxt,
 			reo_status->rx_queue_status.header.status,
 			rx_tid->tid);
 	}
-
-	qdf_mem_zero(&params, sizeof(params));
-
-	params.std.need_status = 1;
-	params.std.addr_lo = rx_tid->hw_qdesc_paddr & 0xffffffff;
-	params.std.addr_hi = (uint64_t)(rx_tid->hw_qdesc_paddr) >> 32;
-
-	dp_reo_send_cmd(soc, CMD_GET_QUEUE_STATS, &params, dp_rx_tid_stats_cb, rx_tid);
 }
 
 /*
@@ -704,8 +695,7 @@ static void dp_rx_tid_delete_cb(struct dp_soc *soc, void *cb_ctxt,
 		rx_tid->hw_qdesc_vaddr_unaligned,
 		rx_tid->hw_qdesc_paddr_unaligned, 0);
 
-	rx_tid->hw_qdesc_vaddr_unaligned = NULL;
-	rx_tid->hw_qdesc_alloc_size = 0;
+	qdf_mem_free(rx_tid);
 }
 
 /*
@@ -720,6 +710,15 @@ static int dp_rx_tid_delete_wifi3(struct dp_peer *peer, int tid)
 	struct dp_rx_tid *rx_tid = &(peer->rx_tid[tid]);
 	struct dp_soc *soc = peer->vdev->pdev->soc;
 	struct hal_reo_cmd_params params;
+	struct dp_rx_tid *rx_tid_copy = qdf_mem_malloc(sizeof(*rx_tid_copy));
+	if (!rx_tid_copy) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s: malloc failed for rx_tid_copy: tid %d\n",
+			__func__, rx_tid->tid);
+		return -ENOMEM;
+	}
+
+	*rx_tid_copy = *rx_tid;
 
 	qdf_mem_zero(&params, sizeof(params));
 
@@ -729,8 +728,11 @@ static int dp_rx_tid_delete_wifi3(struct dp_peer *peer, int tid)
 	params.u.upd_queue_params.update_vld = 1;
 	params.u.upd_queue_params.vld = 0;
 
+	rx_tid->hw_qdesc_vaddr_unaligned = NULL;
+	rx_tid->hw_qdesc_alloc_size = 0;
+
 	dp_reo_send_cmd(soc, CMD_UPDATE_RX_REO_QUEUE, &params,
-		dp_rx_tid_delete_cb, (void *)rx_tid);
+		dp_rx_tid_delete_cb, (void *)rx_tid_copy);
 	return 0;
 }
 

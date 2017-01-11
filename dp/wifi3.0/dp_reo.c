@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -58,7 +58,7 @@ QDF_STATUS dp_reo_send_cmd(struct dp_soc *soc, enum hal_reo_cmd_type type,
 		return QDF_STATUS_E_FAILURE;
 	};
 
-	if (num ==  QDF_STATUS_E_FAILURE) {
+	if (num < 0) {
 		qdf_print("%s: Error with sending REO command\n", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
