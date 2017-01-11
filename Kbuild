@@ -486,7 +486,7 @@ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_nan_datapath.o
 endif
 
 ########### HOST DIAG LOG ###########
-HOST_DIAG_LOG_DIR :=	core/utils/host_diag_log
+HOST_DIAG_LOG_DIR :=	$(WLAN_COMMON_ROOT)/utils/host_diag_log
 
 HOST_DIAG_LOG_INC_DIR :=	$(HOST_DIAG_LOG_DIR)/inc
 HOST_DIAG_LOG_SRC_DIR :=	$(HOST_DIAG_LOG_DIR)/src
@@ -497,7 +497,7 @@ HOST_DIAG_LOG_INC :=	-I$(WLAN_ROOT)/$(HOST_DIAG_LOG_INC_DIR) \
 HOST_DIAG_LOG_OBJS +=	$(HOST_DIAG_LOG_SRC_DIR)/host_diag_log.o
 
 ############ EPPING ############
-EPPING_DIR :=	core/utils/epping
+EPPING_DIR :=	$(WLAN_COMMON_ROOT)/utils/epping
 EPPING_INC_DIR :=	$(EPPING_DIR)/inc
 EPPING_SRC_DIR :=	$(EPPING_DIR)/src
 
@@ -686,7 +686,7 @@ SME_OBJS :=	$(SME_CMN_OBJS) \
 		$(SME_NDP_OBJS)
 
 ############ NLINK ############
-NLINK_DIR     :=	core/utils/nlink
+NLINK_DIR     :=	$(WLAN_COMMON_ROOT)/utils/nlink
 NLINK_INC_DIR :=	$(NLINK_DIR)/inc
 NLINK_SRC_DIR :=	$(NLINK_DIR)/src
 
@@ -694,7 +694,7 @@ NLINK_INC     := 	-I$(WLAN_ROOT)/$(NLINK_INC_DIR)
 NLINK_OBJS    :=	$(NLINK_SRC_DIR)/wlan_nlink_srv.o
 
 ############ PTT ############
-PTT_DIR     :=	core/utils/ptt
+PTT_DIR     :=	$(WLAN_COMMON_ROOT)/utils/ptt
 PTT_INC_DIR :=	$(PTT_DIR)/inc
 PTT_SRC_DIR :=	$(PTT_DIR)/src
 
@@ -702,7 +702,7 @@ PTT_INC     := 	-I$(WLAN_ROOT)/$(PTT_INC_DIR)
 PTT_OBJS    :=	$(PTT_SRC_DIR)/wlan_ptt_sock_svc.o
 
 ############ WLAN_LOGGING ############
-WLAN_LOGGING_DIR     :=	core/utils/logging
+WLAN_LOGGING_DIR     :=	$(WLAN_COMMON_ROOT)/utils/logging
 WLAN_LOGGING_INC_DIR :=	$(WLAN_LOGGING_DIR)/inc
 WLAN_LOGGING_SRC_DIR :=	$(WLAN_LOGGING_DIR)/src
 
@@ -838,7 +838,7 @@ WMI_OBJS := $(WMI_OBJ_DIR)/wmi_unified.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_non_tlv.o
 
 ########### FWLOG ###########
-FWLOG_DIR := core/utils/fwlog
+FWLOG_DIR := $(WLAN_COMMON_ROOT)/utils/fwlog
 
 FWLOG_INC := -I$(WLAN_ROOT)/$(FWLOG_DIR)
 
@@ -903,7 +903,7 @@ CDP_INC_DIR := $(CDP_ROOT_DIR)/inc
 CDP_INC := -I$(WLAN_COMMON_INC)/$(CDP_INC_DIR)
 
 ############ PKTLOG ############
-PKTLOG_DIR :=      core/utils/pktlog
+PKTLOG_DIR :=      $(WLAN_COMMON_ROOT)/utils/pktlog
 PKTLOG_INC :=      -I$(WLAN_ROOT)/$(PKTLOG_DIR)/include
 
 PKTLOG_OBJS :=	$(PKTLOG_DIR)/pktlog_ac.o \
