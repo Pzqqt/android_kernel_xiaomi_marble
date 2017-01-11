@@ -42,6 +42,7 @@
 #include "wni_api.h"
 #include "ani_global.h"
 #include "wmi_unified.h"
+#include "service_ready_event_handler.h"
 #include "wni_cfg.h"
 #include "cfg_api.h"
 #if defined(CONFIG_HL_SUPPORT)
@@ -1878,6 +1879,30 @@ static struct wlan_objmgr_psoc *wma_get_psoc_from_scn_handle(void *scn_handle)
 
 	return wma_handle->psoc;
 }
+/**
+ * wma_legacy_service_ready_event_handler() - legacy (ext)service ready handler
+ * @event_id: event_id
+ * @handle: wma handle
+ * @event_data: event data
+ * @length: event length
+ *
+ * Return: 0 for success, negative error code for failure
+ */
+static int wma_legacy_service_ready_event_handler(uint32_t event_id,
+						  void *handle,
+						  uint8_t *event_data,
+						  uint32_t length)
+{
+	if (wmi_service_ready_event_id == event_id)
+		return wma_rx_service_ready_event(handle, event_data, length);
+	else if (wmi_service_ready_ext_event_id == event_id)
+		return wma_rx_service_ready_ext_event(handle, event_data,
+						      length);
+	else
+		QDF_BUG(0);
+
+	return 0;
+}
 
 /**
  * wma_flush_complete_evt_handler() - FW log flush complete event handler
@@ -2013,6 +2038,10 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 	}
 	wma_handle->psoc = psoc;
 
+	/* Open target_if layer and register wma callback */
+	wma_target_if_open(wma_handle);
+	target_if_open(wma_get_psoc_from_scn_handle);
+
 	/* Attach mc_thread context processing function */
 	ops.wma_process_fw_event_handler_cbk = wma_process_fw_event_handler;
 	/* attach the wmi */
@@ -2024,6 +2053,9 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 		goto err_wma_handle;
 	}
 
+	target_if_register_legacy_service_ready_cb(
+					wma_legacy_service_ready_event_handler);
+
 	WMA_LOGA("WMA --> wmi_unified_attach - success");
 
 	/* set the wmi handle (as tgt_if_handle) in psoc */
@@ -2033,11 +2065,11 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 
 	wmi_unified_register_event_handler(wmi_handle,
 					   WMI_SERVICE_READY_EVENTID,
-					   wma_rx_service_ready_event,
+					   init_deinit_service_ready_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wmi_handle,
 					   WMI_SERVICE_READY_EXT_EVENTID,
-					   wma_rx_service_ready_ext_event,
+					   init_deinit_service_ext_ready_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wmi_handle,
 					   WMI_READY_EVENTID,
@@ -2419,8 +2451,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 				WMA_RX_WORK_CTX);
 
 	wma_ndp_register_all_event_handlers(wma_handle);
-	wma_target_if_open(wma_handle);
-	target_if_open(wma_get_psoc_from_scn_handle);
 
 	wma_register_debug_callback();
 

@@ -818,9 +818,11 @@ BMI_OBJS += $(BMI_DIR)/src/bmi_1.o
 TARGET_IF_DIR := $(WLAN_COMMON_ROOT)/target_if
 
 TARGET_IF_INC := -I$(WLAN_COMMON_INC)/target_if/core/inc \
-		 -I$(WLAN_COMMON_INC)/target_if/core/src
+		 -I$(WLAN_COMMON_INC)/target_if/core/src \
+		 -I$(WLAN_COMMON_INC)/target_if/init_deinit/inc
 
-TARGET_IF_OBJ := $(TARGET_IF_DIR)/core/src/target_if_main.o
+TARGET_IF_OBJ := $(TARGET_IF_DIR)/core/src/target_if_main.o \
+		$(TARGET_IF_DIR)/init_deinit/src/service_ready_event_handler.o
 
 ########### WMI ###########
 WMI_ROOT_DIR := wmi
