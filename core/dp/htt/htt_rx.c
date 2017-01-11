@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -2099,14 +2099,6 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 	return 1;
 }
 
-/* Util fake function that has same prototype as qdf_nbuf_clone that just
- * retures the same nbuf
- */
-static qdf_nbuf_t htt_rx_qdf_noclone_buf(qdf_nbuf_t buf)
-{
-	return buf;
-}
-
 /* FIXME: This is a HW definition not provded by HW, where does it go ? */
 enum {
 	HW_RX_DECAP_FORMAT_RAW = 0,
@@ -2117,6 +2109,7 @@ enum {
 
 #define HTT_FCS_LEN (4)
 
+#if !defined(QCA6290_HEADERS_DEF)
 static void
 htt_rx_parse_ppdu_start_status(struct htt_host_rx_desc_base *rx_desc,
 			       struct ieee80211_rx_status *rs)
@@ -2166,6 +2159,13 @@ htt_rx_parse_ppdu_start_status(struct htt_host_rx_desc_base *rx_desc,
 	return;
 }
 
+/* Util fake function that has same prototype as qdf_nbuf_clone that just
+ * returns the same nbuf
+ */
+static qdf_nbuf_t htt_rx_qdf_noclone_buf(qdf_nbuf_t buf)
+{
+	return buf;
+}
 /* This function is used by montior mode code to restitch an MSDU list
  * corresponding to an MPDU back into an MPDU by linking up the skbs.
  */
@@ -2458,7 +2458,16 @@ mpdu_stitch_fail:
 
 	return NULL;
 }
-
+#else
+qdf_nbuf_t
+htt_rx_restitch_mpdu_from_msdus(htt_pdev_handle pdev,
+				qdf_nbuf_t head_msdu,
+				struct ieee80211_rx_status *rx_status,
+				unsigned clone_not_reqd)
+{
+	return NULL;
+}
+#endif
 int16_t htt_rx_mpdu_desc_rssi_dbm(htt_pdev_handle pdev, void *mpdu_desc)
 {
 	/*
