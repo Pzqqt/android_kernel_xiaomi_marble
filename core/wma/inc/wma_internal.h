@@ -1031,10 +1031,6 @@ QDF_STATUS wma_process_gtk_offload_getinfo_req(tp_wma_handle wma,
 					       params);
 #endif
 
-QDF_STATUS wma_enable_arp_ns_offload(tp_wma_handle wma,
-				     tpSirHostOffloadReq pHostOffloadParams,
-				     bool bArpOnly);
-
 QDF_STATUS wma_process_cesium_enable_ind(tp_wma_handle wma);
 
 QDF_STATUS wma_process_get_peer_info_req

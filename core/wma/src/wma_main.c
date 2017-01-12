@@ -6573,18 +6573,6 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, struct scheduler_msg *msg)
 				(tpSirGtkOffloadGetInfoRspParams)msg->bodyptr);
 		break;
 #endif /* WLAN_FEATURE_GTK_OFFLOAD */
-	case WMA_SET_HOST_OFFLOAD:
-		wma_enable_arp_ns_offload(wma_handle,
-					  (tpSirHostOffloadReq) msg->bodyptr,
-					  true);
-		break;
-#ifdef WLAN_NS_OFFLOAD
-	case WMA_SET_NS_OFFLOAD:
-		wma_enable_arp_ns_offload(wma_handle,
-					  (tpSirHostOffloadReq) msg->bodyptr,
-					  false);
-		break;
-#endif /*WLAN_NS_OFFLOAD */
 	case WMA_ROAM_SCAN_OFFLOAD_REQ:
 		/*
 		 * Main entry point or roaming directives from CSR.

@@ -80,6 +80,7 @@
 #include <wlan_logging_sock_svc.h>
 #include "scheduler_api.h"
 #include "cds_utils.h"
+#include "wlan_pmo_ucfg_api.h"
 
 /* Preprocessor definitions and constants */
 #define HDD_SSR_BRING_UP_TIME 30000
@@ -215,7 +216,7 @@ static void hdd_conf_gtk_offload(hdd_adapter_t *pAdapter, bool fenable)
 }
 #endif /*WLAN_FEATURE_GTK_OFFLOAD */
 
-#ifdef WLAN_NS_OFFLOAD
+
 /**
  * __wlan_hdd_ipv6_changed() - IPv6 notifier callback function
  * @nb: notifier block that was registered with the kernel
@@ -312,7 +313,7 @@ static int hdd_fill_ipv6_uc_addr(struct inet6_dev *idev,
 
 	read_lock_bh(&idev->lock);
 	list_for_each(p, &idev->addr_list) {
-		if (*count >= SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA) {
+		if (*count >= PMO_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA) {
 			read_unlock_bh(&idev->lock);
 			return -EINVAL;
 		}
@@ -325,7 +326,7 @@ static int hdd_fill_ipv6_uc_addr(struct inet6_dev *idev,
 		case IPV6_ADDR_SCOPE_LINKLOCAL:
 			qdf_mem_copy(ipv6_uc_addr[*count], &ifa->addr.s6_addr,
 				sizeof(ifa->addr.s6_addr));
-			ipv6addr_type[*count] = SIR_IPV6_ADDR_UC_TYPE;
+			ipv6addr_type[*count] = PMO_IPV6_ADDR_UC_TYPE;
 			hdd_info("Index %d scope = %s UC-Address: %pI6",
 				*count, (scope == IPV6_ADDR_SCOPE_LINKLOCAL) ?
 				"LINK LOCAL" : "GLOBAL", ipv6_uc_addr[*count]);
@@ -360,7 +361,7 @@ static int hdd_fill_ipv6_ac_addr(struct inet6_dev *idev,
 
 	read_lock_bh(&idev->lock);
 	for (ifaca = idev->ac_list; ifaca; ifaca = ifaca->aca_next) {
-		if (*count >= SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA) {
+		if (*count >= PMO_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA) {
 			read_unlock_bh(&idev->lock);
 			return -EINVAL;
 		}
@@ -371,7 +372,7 @@ static int hdd_fill_ipv6_ac_addr(struct inet6_dev *idev,
 		case IPV6_ADDR_SCOPE_LINKLOCAL:
 			qdf_mem_copy(ipv6_ac_addr[*count], &ifaca->aca_addr,
 				sizeof(ifaca->aca_addr));
-			ipv6addr_type[*count] = SIR_IPV6_ADDR_AC_TYPE;
+			ipv6addr_type[*count] = PMO_IPV6_ADDR_AC_TYPE;
 			hdd_info("Index %d scope = %s AC-Address: %pI6",
 				*count, (scope == IPV6_ADDR_SCOPE_LINKLOCAL) ?
 				"LINK LOCAL" : "GLOBAL", ipv6_ac_addr[*count]);
@@ -386,165 +387,101 @@ static int hdd_fill_ipv6_ac_addr(struct inet6_dev *idev,
 	return 0;
 }
 
-/**
- * hdd_disable_ns_offload() - Disables IPv6 NS offload
- * @adapter:	ponter to the adapter
- *
- * Return:	nothing
- */
-static void hdd_disable_ns_offload(hdd_adapter_t *adapter)
-{
-	tSirHostOffloadReq offloadReq;
-	QDF_STATUS status;
-
-	qdf_mem_zero((void *)&offloadReq, sizeof(tSirHostOffloadReq));
-	hdd_wlan_offload_event(SIR_IPV6_NS_OFFLOAD, SIR_OFFLOAD_DISABLE);
-	offloadReq.enableOrDisable = SIR_OFFLOAD_DISABLE;
-	offloadReq.offloadType =  SIR_IPV6_NS_OFFLOAD;
-	status = sme_set_host_offload(
-		WLAN_HDD_GET_HAL_CTX(adapter),
-		adapter->sessionId, &offloadReq);
-
-	if (QDF_STATUS_SUCCESS != status)
-		hdd_err("Failed to disable NS Offload");
-}
-
-/**
- * hdd_enable_ns_offload() - Enables IPv6 NS offload
- * @adapter:	ponter to the adapter
- *
- * Return:	nothing
- */
-static void hdd_enable_ns_offload(hdd_adapter_t *adapter)
+void hdd_enable_ns_offload(hdd_adapter_t *adapter,
+	enum pmo_offload_trigger trigger)
 {
 	struct inet6_dev *in6_dev;
-	uint8_t ipv6_addr[SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA]
-					[SIR_MAC_IPV6_ADDR_LEN] = { {0,} };
-	uint8_t ipv6_addr_type[SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA] = { 0 };
-	tSirHostOffloadReq offloadReq;
 	QDF_STATUS status;
-	uint32_t count = 0;
-	int err, i;
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
+	struct pmo_ns_req *ns_req = NULL;
+	int err;
+
+	ENTER();
+	if (!psoc) {
+		hdd_err("psoc is NULL");
+		goto out;
+	}
 
 	in6_dev = __in6_dev_get(adapter->dev);
 	if (NULL == in6_dev) {
 		hdd_err("IPv6 dev does not exist. Failed to request NSOffload");
-		return;
+		goto out;
 	}
 
+	ns_req = qdf_mem_malloc(sizeof(*ns_req));
+	if (!ns_req) {
+		hdd_err("fail to allocate ns_req");
+		goto out;
+	}
+
+	ns_req->psoc = psoc;
+	ns_req->vdev_id = adapter->sessionId;
+	ns_req->trigger = trigger;
+	ns_req->count = 0;
+
 	/* Unicast Addresses */
-	err = hdd_fill_ipv6_uc_addr(in6_dev, ipv6_addr, ipv6_addr_type, &count);
+	err = hdd_fill_ipv6_uc_addr(in6_dev, ns_req->ipv6_addr,
+		ns_req->ipv6_addr_type, &ns_req->count);
 	if (err) {
-		hdd_disable_ns_offload(adapter);
+		hdd_disable_ns_offload(adapter, trigger);
 		hdd_notice("Reached max supported addresses and not enabling "
 			"NS offload");
-		return;
+		goto out;
 	}
 
 	/* Anycast Addresses */
-	err = hdd_fill_ipv6_ac_addr(in6_dev, ipv6_addr, ipv6_addr_type, &count);
+	err = hdd_fill_ipv6_ac_addr(in6_dev, ns_req->ipv6_addr,
+		ns_req->ipv6_addr_type, &ns_req->count);
 	if (err) {
-		hdd_disable_ns_offload(adapter);
+		hdd_disable_ns_offload(adapter, trigger);
 		hdd_notice("Reached max supported addresses and not enabling "
 			"NS offload");
-		return;
+		goto out;
 	}
 
-	qdf_mem_zero(&offloadReq, sizeof(offloadReq));
-	for (i = 0; i < count; i++) {
-		/* Filling up the request structure
-		 * Filling the selfIPv6Addr with solicited address
-		 * A Solicited-Node multicast address is created by
-		 * taking the last 24 bits of a unicast or anycast
-		 * address and appending them to the prefix
-		 *
-		 * FF02:0000:0000:0000:0000:0001:FFXX:XXXX
-		 *
-		 * here XX is the unicast/anycast bits
-		 */
-		offloadReq.nsOffloadInfo.selfIPv6Addr[i][0] = 0xFF;
-		offloadReq.nsOffloadInfo.selfIPv6Addr[i][1] = 0x02;
-		offloadReq.nsOffloadInfo.selfIPv6Addr[i][11] = 0x01;
-		offloadReq.nsOffloadInfo.selfIPv6Addr[i][12] = 0xFF;
-		offloadReq.nsOffloadInfo.selfIPv6Addr[i][13] =
-					ipv6_addr[i][13];
-		offloadReq.nsOffloadInfo.selfIPv6Addr[i][14] =
-					ipv6_addr[i][14];
-		offloadReq.nsOffloadInfo.selfIPv6Addr[i][15] =
-					ipv6_addr[i][15];
-		offloadReq.nsOffloadInfo.slotIdx = i;
-		qdf_mem_copy(&offloadReq.nsOffloadInfo.targetIPv6Addr[i],
-			&ipv6_addr[i][0], SIR_MAC_IPV6_ADDR_LEN);
-
-		offloadReq.nsOffloadInfo.targetIPv6AddrValid[i] =
-			SIR_IPV6_ADDR_VALID;
-		offloadReq.nsOffloadInfo.target_ipv6_addr_ac_type[i] =
-			ipv6_addr_type[i];
-
-		qdf_mem_copy(&offloadReq.params.hostIpv6Addr,
-			&offloadReq.nsOffloadInfo.targetIPv6Addr[i],
-			SIR_MAC_IPV6_ADDR_LEN);
-
-		hdd_info("Setting NSOffload with solicitedIp: "
-			"%pI6, targetIp: %pI6, Index %d",
-			&offloadReq.nsOffloadInfo.selfIPv6Addr[i],
-			&offloadReq.nsOffloadInfo.targetIPv6Addr[i], i);
+	/* cache ns request */
+	status = pmo_ucfg_cache_ns_offload_req(ns_req);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("Failed to cache ns request status: %d", status);
+		goto out;
 	}
 
-	hdd_wlan_offload_event(SIR_IPV6_NS_OFFLOAD, SIR_OFFLOAD_ENABLE);
-	offloadReq.offloadType =  SIR_IPV6_NS_OFFLOAD;
-	offloadReq.enableOrDisable = SIR_OFFLOAD_ENABLE;
-	qdf_copy_macaddr(&offloadReq.nsOffloadInfo.self_macaddr,
-			 &adapter->macAddressCurrent);
-
-	/* set number of ns offload address count */
-	offloadReq.num_ns_offload_count = count;
-
-	/* Configure the Firmware with this */
-	status = sme_set_host_offload(WLAN_HDD_GET_HAL_CTX(adapter),
-		adapter->sessionId, &offloadReq);
-	if (QDF_STATUS_SUCCESS != status) {
+	/* enable ns request */
+	status = pmo_ucfg_enable_ns_offload_in_fwr(adapter->hdd_vdev, trigger);
+	if (status != QDF_STATUS_SUCCESS)
 		hdd_err("Failed to enable HostOffload feature with status: %d",
 			status);
-	}
+	else
+		hdd_wlan_offload_event(SIR_IPV6_NS_OFFLOAD, SIR_OFFLOAD_ENABLE);
+out:
+	if (ns_req)
+		qdf_mem_free(ns_req);
+	EXIT();
+
 }
 
-/**
- * hdd_conf_ns_offload() - Configure NS offload
- * @adapter:   pointer to the adapter
- * @fenable:    flag to enable or disable
- *              0 - disable
- *              1 - enable
- *
- * Return: nothing
- */
-void hdd_conf_ns_offload(hdd_adapter_t *adapter, bool fenable)
+void hdd_disable_ns_offload(hdd_adapter_t *adapter,
+		enum pmo_offload_trigger trigger)
 {
-	hdd_context_t *hdd_ctx;
+	QDF_STATUS status;
 
 	ENTER();
-	hdd_notice(" fenable = %d", fenable);
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-
-	/* In SAP/P2PGo mode, ARP/NS offload feature capability
-	 * is controlled by one bit.
-	 */
-
-	if ((QDF_SAP_MODE == adapter->device_mode ||
-		QDF_P2P_GO_MODE == adapter->device_mode) &&
-		!hdd_ctx->ap_arpns_support) {
-		hdd_notice("NS Offload is not supported in SAP/P2PGO mode");
-		return;
+	status = pmo_ucfg_flush_ns_offload_req(adapter->hdd_vdev);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("Failed to flush NS Offload");
+		goto out;
 	}
 
-	if (fenable)
-		hdd_enable_ns_offload(adapter);
+	status = pmo_ucfg_disable_ns_offload_in_fwr(adapter->hdd_vdev, trigger);
+	if (status != QDF_STATUS_SUCCESS)
+		hdd_err("Failed to disable NS Offload");
 	else
-		hdd_disable_ns_offload(adapter);
-
+		hdd_wlan_offload_event(SIR_IPV6_NS_OFFLOAD,
+			SIR_OFFLOAD_DISABLE);
+out:
 	EXIT();
-	return;
+
 }
 
 /**
@@ -564,7 +501,6 @@ static void __hdd_ipv6_notifier_work_queue(struct work_struct *work)
 		container_of(work, hdd_adapter_t, ipv6NotifierWorkQueue);
 	hdd_context_t *pHddCtx;
 	int status;
-	bool ndi_connected = false;
 
 	ENTER();
 
@@ -573,21 +509,7 @@ static void __hdd_ipv6_notifier_work_queue(struct work_struct *work)
 	if (0 != status)
 		return;
 
-	if (!pHddCtx->config->active_mode_offload) {
-		hdd_err("Active mode offload is disabled");
-		return;
-	}
-
-	/* check if the device is in NAN data mode */
-	if (WLAN_HDD_IS_NDI(pAdapter))
-		ndi_connected = WLAN_HDD_IS_NDI_CONNECTED(pAdapter);
-
-	if (eConnectionState_Associated ==
-	     (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->conn_info.connState ||
-		ndi_connected)
-		if (pHddCtx->config->fhostNSOffload &&
-		    pHddCtx->ns_offload_enable)
-			hdd_conf_ns_offload(pAdapter, true);
+	hdd_enable_ns_offload(pAdapter, pmo_ipv6_change_notify);
 	EXIT();
 }
 
@@ -604,62 +526,57 @@ void hdd_ipv6_notifier_work_queue(struct work_struct *work)
 	cds_ssr_unprotect(__func__);
 }
 
-/**
- * hdd_conf_hostoffload() - Central function to configure the supported offloads
- * @pAdapter:   pointer to the adapter
- * @fenable:    flag set to enable (1) or disable (0)
- *
- * Central function to configure the supported offloads either
- * enable or disable them.
- *
- * Return: nothing
- */
-void hdd_conf_hostoffload(hdd_adapter_t *pAdapter, bool fenable)
+void hdd_enable_host_offloads(hdd_adapter_t *adapter,
+	enum pmo_offload_trigger trigger)
 {
-	hdd_context_t *pHddCtx;
-
 	ENTER();
 
-	hdd_info("Configuring offloads with flag: %d", fenable);
-
-	/* Get the HDD context. */
-	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-
-	if (((QDF_STA_MODE != pAdapter->device_mode) &&
-	     (QDF_P2P_CLIENT_MODE != pAdapter->device_mode))) {
-		hdd_info("Offloads not supported in mode %d",
-			pAdapter->device_mode);
-		return;
+	if (!pmo_ucfg_is_vdev_supports_offload(adapter->hdd_vdev)) {
+		hdd_info("offload is not supported on this vdev opmode: %d",
+			 adapter->device_mode);
+		goto out;
 	}
 
-	if (eConnectionState_Associated !=
-	       (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->conn_info.connState) {
-		hdd_info("Offloads not supported in state %d",
-			(WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->
-							conn_info.connState);
-		return;
+	if (!pmo_ucfg_is_vdev_connected(adapter->hdd_vdev)) {
+		hdd_info("vdev is not connected");
+		goto out;
 	}
 
-	hdd_conf_gtk_offload(pAdapter, fenable);
-
-	/* Configure ARP/NS offload during cfg80211 suspend/resume and
-	 * Enable MC address filtering during cfg80211 suspend
-	 * only if active mode offload is disabled
-	 */
-	if (!pHddCtx->config->active_mode_offload) {
-		hdd_info("configuring unconfigured active mode offloads");
-		hdd_conf_arp_offload(pAdapter, fenable);
-		wlan_hdd_set_mc_addr_list(pAdapter, fenable);
-
-		if (pHddCtx->config->fhostNSOffload &&
-		    pHddCtx->ns_offload_enable)
-			hdd_conf_ns_offload(pAdapter, fenable);
-	}
-
+	hdd_info("enable offloads");
+	hdd_conf_gtk_offload(adapter, true);
+	hdd_enable_arp_offload(adapter, trigger);
+	hdd_enable_ns_offload(adapter, trigger);
+	wlan_hdd_set_mc_addr_list(adapter, true);
+out:
 	EXIT();
-	return;
+
 }
-#endif
+
+void hdd_disable_host_offloads(hdd_adapter_t *adapter,
+	enum pmo_offload_trigger trigger)
+{
+	ENTER();
+
+	if (!pmo_ucfg_is_vdev_supports_offload(adapter->hdd_vdev)) {
+		hdd_info("offload is not supported on this vdev opmode: %d",
+				adapter->device_mode);
+			goto out;
+	}
+
+	if (!pmo_ucfg_is_vdev_connected(adapter->hdd_vdev)) {
+		hdd_info("vdev is not connected");
+		goto out;
+	}
+
+	hdd_info("disable offloads");
+	hdd_conf_gtk_offload(adapter, false);
+	hdd_disable_arp_offload(adapter, trigger);
+	hdd_disable_ns_offload(adapter, trigger);
+	wlan_hdd_set_mc_addr_list(adapter, false);
+out:
+	EXIT();
+
+}
 
 /**
  * hdd_lookup_ifaddr() - Lookup interface address data by name
@@ -806,42 +723,10 @@ static void __hdd_ipv4_notifier_work_queue(struct work_struct *work)
 {
 	hdd_adapter_t *pAdapter =
 		container_of(work, hdd_adapter_t, ipv4NotifierWorkQueue);
-	hdd_context_t *pHddCtx;
-	hdd_station_ctx_t *sta_ctx;
-	int status;
-	bool ndi_connected;
-	bool sta_associated;
-
-	hdd_info("Configuring ARP Offload");
-
-	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-	status = wlan_hdd_validate_context(pHddCtx);
-	if (status)
-		return;
-
-	if (!pHddCtx->config->active_mode_offload) {
-		hdd_err("Active mode offload is disabled");
-		return;
-	}
-
-	ndi_connected = WLAN_HDD_IS_NDI(pAdapter) &&
-		WLAN_HDD_IS_NDI_CONNECTED(pAdapter);
-
-	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-	sta_associated = sta_ctx->conn_info.connState ==
-		eConnectionState_Associated;
-
-	if (!ndi_connected && !sta_associated)
-		return;
-
-	/*
-	 * This invocation being part of the IPv4 registration callback,
-	 * we are passing second parameter as 2 to avoid registration
-	 * of IPv4 notifier again.
-	 */
-	hdd_conf_arp_offload(pAdapter, true);
-
+	ENTER();
+	hdd_enable_arp_offload(pAdapter, pmo_ipv4_change_notify);
 	hdd_set_grat_arp_keepalive(pAdapter);
+	EXIT();
 }
 
 /**
@@ -944,84 +829,102 @@ int wlan_hdd_ipv4_changed(struct notifier_block *nb,
 }
 
 /**
- * hdd_conf_arp_offload() - Configure ARP offload
+ * hdd_get_ipv4_local_interface() - get ipv4 local interafce from iface list
  * @pAdapter: Adapter context for which ARP offload is to be configured
- * @fenable: true : enable ARP offload false : disable arp offload
  *
  * Return:
- *	QDF_STATUS_SUCCESS - on successful operation,
- *	QDF_STATUS_E_FAILURE - on failure of operation
+ *	ifa - on successful operation,
+ *	NULL - on failure of operation
  */
-QDF_STATUS hdd_conf_arp_offload(hdd_adapter_t *pAdapter, bool fenable)
+static struct in_ifaddr *hdd_get_ipv4_local_interface(
+				hdd_adapter_t *pAdapter)
 {
-	struct in_ifaddr *ifa;
-	int i = 0;
-	tSirHostOffloadReq offLoadRequest;
-	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	struct in_ifaddr **ifap = NULL;
+	struct in_ifaddr *ifa = NULL;
+	struct in_device *in_dev;
 
-	hdd_info("fenable = %d", fenable);
-
-	/* In SAP/P2P Go mode, ARP/NS Offload feature capability
-	 * is controlled by one bit.
-	 */
-	if ((QDF_SAP_MODE == pAdapter->device_mode ||
-	     QDF_P2P_GO_MODE == pAdapter->device_mode) &&
-	    !pHddCtx->ap_arpns_support) {
-		hdd_notice("ARP Offload is not supported in SAP/P2PGO mode");
-		return QDF_STATUS_SUCCESS;
-	}
-
-	if (fenable) {
-		ifa = hdd_lookup_ifaddr(pAdapter);
-		if (ifa && ifa->ifa_local) {
-			offLoadRequest.offloadType = SIR_IPV4_ARP_REPLY_OFFLOAD;
-			offLoadRequest.enableOrDisable = SIR_OFFLOAD_ENABLE;
-			hdd_wlan_offload_event(SIR_IPV4_ARP_REPLY_OFFLOAD,
-					       SIR_OFFLOAD_ENABLE);
-
-			hdd_notice("Enable ARP offload: filter programmed = %d",
-			       offLoadRequest.enableOrDisable);
-
-			/* converting u32 to IPV4 address */
-			for (i = 0; i < 4; i++) {
-				offLoadRequest.params.hostIpv4Addr[i] =
-					(ifa->ifa_local >> (i * 8)) & 0xFF;
+	in_dev = __in_dev_get_rtnl(pAdapter->dev);
+	if (in_dev) {
+		for (ifap = &in_dev->ifa_list; (ifa = *ifap) != NULL;
+			     ifap = &ifa->ifa_next) {
+			if (!strcmp(pAdapter->dev->name, ifa->ifa_label)) {
+				/* if match break */
+				return ifa;
 			}
-			hdd_notice(" Enable SME HostOffload: %d.%d.%d.%d",
-			       offLoadRequest.params.hostIpv4Addr[0],
-			       offLoadRequest.params.hostIpv4Addr[1],
-			       offLoadRequest.params.hostIpv4Addr[2],
-			       offLoadRequest.params.hostIpv4Addr[3]);
-
-			if (QDF_STATUS_SUCCESS !=
-			    sme_set_host_offload(WLAN_HDD_GET_HAL_CTX(pAdapter),
-						 pAdapter->sessionId,
-						 &offLoadRequest)) {
-				hdd_err("Failed to enable HostOffload feature");
-				return QDF_STATUS_E_FAILURE;
-			}
-		} else {
-			hdd_notice("IP Address is not assigned");
 		}
+	}
+	ifa = NULL;
 
-		return QDF_STATUS_SUCCESS;
+	return ifa;
+}
+
+void hdd_enable_arp_offload(hdd_adapter_t *adapter,
+		enum pmo_offload_trigger trigger)
+{
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
+	QDF_STATUS status;
+	struct pmo_arp_req *arp_req = NULL;
+	struct in_ifaddr *ifa = NULL;
+
+	ENTER();
+	arp_req = qdf_mem_malloc(sizeof(*arp_req));
+	if (!arp_req) {
+		hdd_err("cannot allocate arp_req");
+		goto out;
 	}
 
-	hdd_wlan_offload_event(SIR_IPV4_ARP_REPLY_OFFLOAD,
-			       SIR_OFFLOAD_DISABLE);
-	qdf_mem_zero((void *)&offLoadRequest,
-		     sizeof(tSirHostOffloadReq));
-	offLoadRequest.enableOrDisable = SIR_OFFLOAD_DISABLE;
-	offLoadRequest.offloadType = SIR_IPV4_ARP_REPLY_OFFLOAD;
+	arp_req->psoc = psoc;
+	arp_req->vdev_id = adapter->sessionId;
+	arp_req->trigger = trigger;
 
-	if (QDF_STATUS_SUCCESS !=
-	    sme_set_host_offload(WLAN_HDD_GET_HAL_CTX(pAdapter),
-				 pAdapter->sessionId, &offLoadRequest)) {
-		hdd_err("Failure to disable host offload feature");
-		return QDF_STATUS_E_FAILURE;
+	ifa = hdd_get_ipv4_local_interface(adapter);
+	if (ifa && ifa->ifa_local) {
+		arp_req->ipv4_addr = (uint32_t)ifa->ifa_local;
+	status = pmo_ucfg_cache_arp_offload_req(arp_req);
+	if (status == QDF_STATUS_SUCCESS) {
+		status = pmo_ucfg_enable_arp_offload_in_fwr(
+				adapter->hdd_vdev, trigger);
+		if (status == QDF_STATUS_SUCCESS)
+			hdd_wlan_offload_event(
+				PMO_IPV4_ARP_REPLY_OFFLOAD,
+				PMO_OFFLOAD_ENABLE);
+		else
+			hdd_info("fail to enable arp offload in fwr");
+	} else
+		hdd_info("fail to cache arp offload request");
+	} else {
+		hdd_notice("IP Address is not assigned");
+		status = QDF_STATUS_NOT_INITIALIZED;
+	}
+out:
+	if (arp_req)
+		qdf_mem_free(arp_req);
+	EXIT();
+
+}
+
+void hdd_disable_arp_offload(hdd_adapter_t *adapter,
+		enum pmo_offload_trigger trigger)
+{
+	QDF_STATUS status;
+
+	ENTER();
+	status = pmo_ucfg_flush_arp_offload_req(adapter->hdd_vdev);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("Failed to flush arp Offload");
+		goto out;
 	}
 
-	return QDF_STATUS_SUCCESS;
+	status = pmo_ucfg_disable_arp_offload_in_fwr(adapter->hdd_vdev, trigger);
+	if (status == QDF_STATUS_SUCCESS)
+		hdd_wlan_offload_event(PMO_IPV4_ARP_REPLY_OFFLOAD,
+			PMO_OFFLOAD_DISABLE);
+	else
+		hdd_info("fail to disable arp offload");
+out:
+	EXIT();
+
 }
 
 #ifdef WLAN_FEATURE_PACKET_FILTERING
@@ -1175,7 +1078,7 @@ static void hdd_conf_resume_ind(hdd_adapter_t *pAdapter)
 
 	hdd_notice("send wlan resume indication");
 	/* Disable supported OffLoads */
-	hdd_conf_hostoffload(pAdapter, false);
+	hdd_disable_host_offloads(pAdapter, pmo_apps_resume);
 }
 
 /**
@@ -1216,7 +1119,6 @@ hdd_suspend_wlan(void (*callback)(void *callbackContext, bool suspended),
 	hdd_adapter_t *pAdapter = NULL;
 	hdd_adapter_list_node_t *pAdapterNode = NULL, *pNext = NULL;
 	uint32_t conn_state_mask = 0;
-
 	hdd_info("WLAN being suspended by OS");
 
 	pHddCtx = cds_get_context(QDF_MODULE_ID_HDD);
@@ -1241,8 +1143,7 @@ hdd_suspend_wlan(void (*callback)(void *callbackContext, bool suspended),
 					   WLAN_CONTROL_PATH);
 
 		/* Configure supported OffLoads */
-		hdd_conf_hostoffload(pAdapter, true);
-
+		hdd_enable_host_offloads(pAdapter, pmo_apps_suspend);
 		hdd_update_conn_state_mask(pAdapter, &conn_state_mask);
 
 		status = hdd_get_next_adapter(pHddCtx, pAdapterNode, &pNext);
@@ -2130,7 +2031,6 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *pHddCtx;
-	QDF_STATUS qdf_status;
 	int status;
 
 	ENTER();
@@ -2168,20 +2068,6 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 		return 0;
 	}
 	mutex_unlock(&pHddCtx->iface_change_lock);
-
-	if (allow_power_save &&
-	    pHddCtx->hdd_wlan_suspended &&
-	    pHddCtx->config->fhostArpOffload &&
-	    (eConnectionState_Associated ==
-	     (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->conn_info.connState)) {
-		hdd_notice("offload: in cfg80211_set_power_mgmt, "
-			"calling arp offload");
-		qdf_status = hdd_conf_arp_offload(pAdapter, true);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			hdd_notice("Failed to enable ARPOFFLOAD Feature %d",
-				qdf_status);
-		}
-	}
 
 	status = wlan_hdd_set_powersave(pAdapter, allow_power_save, timeout);
 

@@ -5720,7 +5720,10 @@ __wlan_hdd_cfg80211_set_ns_offload(struct wiphy *wiphy,
 		nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_ND_OFFLOAD_FLAG]);
 
 	/* update ns offload in case it is already enabled/disabled */
-	hdd_conf_ns_offload(adapter, pHddCtx->ns_offload_enable);
+	if (pHddCtx->ns_offload_enable)
+		hdd_enable_ns_offload(adapter, pmo_ns_offload_dynamic_update);
+	else
+		hdd_disable_ns_offload(adapter, pmo_ns_offload_dynamic_update);
 
 	return 0;
 }

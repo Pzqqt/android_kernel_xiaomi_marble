@@ -10836,8 +10836,7 @@ static int iw_set_dynamic_mcbc_filter(struct net_device *dev,
 		"Configure broadcast filtering via ini item, 'g_enable_non_arp_bc_hw_filter.'\n"
 		"\tg_enable_non_arp_bc_hw_filter=1 # drop all non-ARP broadcast traffic\n"
 		"\tg_enable_non_arp_bc_hw_filter=0 # allow all broadcast traffic");
-
-	return -EINVAL;
+	 return -EINVAL;
 }
 
 /**

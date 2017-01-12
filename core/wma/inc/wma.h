@@ -2254,6 +2254,7 @@ void wma_process_set_pdev_ht_ie_req(tp_wma_handle wma,
 		struct set_ie_param *ie_params);
 void wma_process_set_pdev_vht_ie_req(tp_wma_handle wma,
 		struct set_ie_param *ie_params);
+
 void wma_remove_peer(tp_wma_handle wma, u_int8_t *bssid,
 			u_int8_t vdev_id, void *peer,
 			bool roam_synch_in_progress);

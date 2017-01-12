@@ -147,9 +147,57 @@ enum suspend_resume_state {
 QDF_STATUS hdd_wlan_shutdown(void);
 QDF_STATUS hdd_wlan_re_init(void);
 
-QDF_STATUS hdd_conf_arp_offload(hdd_adapter_t *pAdapter, bool fenable);
-void hdd_conf_hostoffload(hdd_adapter_t *pAdapter, bool fenable);
+/**
+ * hdd_enable_arp_offload() - API to enable ARP offload
+ * @adapter: Adapter context for which ARP offload is to be configured
+ * @trigger: trigger reason for request
+ *
+ * Return: None
+ */
+void hdd_enable_arp_offload(hdd_adapter_t *adapter,
+		enum pmo_offload_trigger trigger);
 
+/**
+ * hdd_disable_arp_offload() - API to disable ARP offload
+ * @adapter: Adapter context for which ARP offload is to be configured
+ * @trigger: trigger reason for request
+ *
+ * Return: None
+ */
+void hdd_disable_arp_offload(hdd_adapter_t *adapter,
+		enum pmo_offload_trigger trigger);
+
+/**
+ * hdd_enable_host_offloads() - Central API to enable the supported offloads
+ * @adapter:   pointer to the adapter
+ * @trigger: trigger reason for request
+ *
+ * Central function to enable the supported offloads
+ *
+ * Return: nothing
+ */
+void hdd_enable_host_offloads(hdd_adapter_t *adapter,
+	enum pmo_offload_trigger trigger);
+
+/**
+ * hdd_disable_host_offloads() - Central API to disable the supported offloads
+ * @adapter:   pointer to the adapter
+ * @trigger: trigger reason for request
+ *
+ * Central function to disable the supported offloads
+ *
+ * Return: nothing
+ */
+void hdd_disable_host_offloads(hdd_adapter_t *adapter,
+	enum pmo_offload_trigger trigger);
+
+/**
+ * hdd_conf_mc_addr_filtering_enable() - enable MC address list in FW
+ * @pAdapter: adapter whose MC list is being set
+ * @trigger: trigger reason for request
+ *
+ * Return: nothing
+ */
 #ifdef WLAN_FEATURE_PACKET_FILTERING
 void wlan_hdd_set_mc_addr_list(hdd_adapter_t *pAdapter, uint8_t set);
 #else
@@ -165,10 +213,28 @@ int wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 int wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy);
 
 void hdd_ipv4_notifier_work_queue(struct work_struct *work);
-#ifdef WLAN_NS_OFFLOAD
-void hdd_conf_ns_offload(hdd_adapter_t *adapter, bool fenable);
+
+
+/**
+ * hdd_enable_ns_offload() - enable NS offload
+ * @adapter:   pointer to the adapter
+ *
+ * Return: nothing
+ */
+void hdd_enable_ns_offload(hdd_adapter_t *adapter,
+	enum pmo_offload_trigger trigger);
+
+/**
+ * hdd_disable_ns_offload() - disable NS offload
+ * @adapter:   pointer to the adapter
+ *
+ * Return: nothing
+ */
+void hdd_disable_ns_offload(hdd_adapter_t *adapter,
+	enum pmo_offload_trigger trigger);
+
 void hdd_ipv6_notifier_work_queue(struct work_struct *work);
-#endif
+
 
 int wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 				  struct wireless_dev *wdev,
