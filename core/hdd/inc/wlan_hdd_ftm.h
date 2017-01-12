@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -35,7 +35,7 @@
  */
 
 #include "qdf_status.h"
-#include "cds_mq.h"
+#include "scheduler_api.h"
 #include "cds_api.h"
 #include "msg.h"
 #include "qdf_types.h"

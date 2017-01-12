@@ -39,6 +39,7 @@
 #include <mac_trace.h>
 #include <wlan_hdd_includes.h>
 #include <cds_api.h>
+#include "scheduler_api.h"
 #include <net/arp.h>
 #include <cdp_txrx_stats.h>
 #include "sir_params.h"
@@ -8659,7 +8660,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	case WE_UNIT_TEST_CMD:
 	{
 		t_wma_unit_test_cmd *unitTestArgs;
-		cds_msg_t msg = { 0 };
+		struct scheduler_msg msg = { 0 };
 		int i, j;
 		if ((apps_args[0] < WLAN_MODULE_ID_MIN) ||
 		    (apps_args[0] >= WLAN_MODULE_ID_MAX)) {
@@ -8688,7 +8689,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		msg.reserved = 0;
 		msg.bodyptr = unitTestArgs;
 		if (QDF_STATUS_SUCCESS !=
-		    cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
+		    scheduler_post_msg(QDF_MODULE_ID_WMA, &msg)) {
 			qdf_mem_free(unitTestArgs);
 			hdd_err("Not able to post UNIT_TEST_CMD message to WMA");
 			return -EINVAL;

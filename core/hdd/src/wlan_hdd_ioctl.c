@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -35,6 +35,7 @@
 #include "wlan_hdd_driver_ops.h"
 #include "cds_concurrency.h"
 #include "wlan_hdd_hostapd.h"
+#include "scheduler_api.h"
 
 #include "wlan_hdd_p2p.h"
 #include <linux/ctype.h>
@@ -842,7 +843,7 @@ void hdd_wma_send_fastreassoc_cmd(int sessionId, const tSirMacAddr bssid,
 				  int channel)
 {
 	struct wma_roam_invoke_cmd *fastreassoc;
-	cds_msg_t msg = {0};
+	struct scheduler_msg msg = {0};
 
 	fastreassoc = qdf_mem_malloc(sizeof(*fastreassoc));
 	if (NULL == fastreassoc) {
@@ -861,7 +862,7 @@ void hdd_wma_send_fastreassoc_cmd(int sessionId, const tSirMacAddr bssid,
 	msg.type = SIR_HAL_ROAM_INVOKE;
 	msg.reserved = 0;
 	msg.bodyptr = fastreassoc;
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA,
+	if (QDF_STATUS_SUCCESS != scheduler_post_msg(QDF_MODULE_ID_WMA,
 								&msg)) {
 		qdf_mem_free(fastreassoc);
 		hdd_err("Not able to post ROAM_INVOKE_CMD message to WMA");

@@ -31,7 +31,6 @@
  * This file contains the WLAN factory test mode implementation
  */
 
-#include <cds_mq.h>
 #include "cds_sched.h"
 #include <cds_api.h>
 #include "sir_types.h"
@@ -91,7 +90,7 @@ static void wlanqcmbr_mc_process_msg(void *message);
  */
 static uint32_t wlan_ftm_postmsg(uint8_t *cmd_ptr, uint16_t cmd_len)
 {
-	cds_msg_t ftmMsg;
+	struct scheduler_msg ftmMsg;
 
 	ENTER();
 
@@ -100,7 +99,7 @@ static uint32_t wlan_ftm_postmsg(uint8_t *cmd_ptr, uint16_t cmd_len)
 	ftmMsg.bodyptr = (uint8_t *) cmd_ptr;
 	ftmMsg.bodyval = 0;
 
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA,
+	if (QDF_STATUS_SUCCESS != scheduler_post_msg(QDF_MODULE_ID_WMA,
 						      &ftmMsg)) {
 		hdd_err("Failed to post Msg to HAL");
 
