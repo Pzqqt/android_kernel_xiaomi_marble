@@ -5002,8 +5002,9 @@ int wma_process_receive_filter_clear_filter_req(tp_wma_handle wma,
 	uint8_t vdev_id;
 
 	/* Get the vdev id */
-	if (!wma_find_vdev_by_bssid(wma,
-				rcv_clear_param->bssid.bytes, &vdev_id)) {
+	if (!wma_find_vdev_by_addr(wma,
+				rcv_clear_param->self_macaddr.bytes,
+				&vdev_id)) {
 		WMA_LOGE("vdev handle is invalid for %pM",
 			 rcv_clear_param->bssid.bytes);
 		return -EINVAL;
