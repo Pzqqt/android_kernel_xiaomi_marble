@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -34,7 +34,7 @@
  * DOC: wlan_hdd_driver_ops.h
  *
  * Functions to register the wlan driver.
-*/
+ */
 int wlan_hdd_register_driver(void);
 void wlan_hdd_unregister_driver(void);
 
