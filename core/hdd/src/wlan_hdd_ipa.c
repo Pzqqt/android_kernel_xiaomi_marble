@@ -1497,7 +1497,8 @@ static int hdd_ipa_uc_handle_first_con(struct hdd_ipa_priv *hdd_ipa)
 
 	/* If RM feature enabled
 	 * Request PROD Resource first
-	 * PROD resource may return sync or async manners */
+	 * PROD resource may return sync or async manners
+	 */
 	if (hdd_ipa_is_rm_enabled(hdd_ipa->hdd_ctx)) {
 		if (!ipa_rm_request_resource(IPA_RM_RESOURCE_WLAN_PROD)) {
 			/* RM PROD request sync return
@@ -1703,8 +1704,10 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			if (hdd_ipa_is_rm_enabled(hdd_ipa->hdd_ctx))
 				ipa_rm_release_resource(
 					IPA_RM_RESOURCE_WLAN_PROD);
-			/* Sync return success from IPA
-			* Enable/resume all the PIPEs */
+			/*
+			 * Sync return success from IPA
+			 * Enable/resume all the PIPEs
+			 */
 			hdd_ipa->resource_unloading = false;
 			hdd_ipa_uc_proc_pending_event(hdd_ipa);
 			hdd_ipa->pending_cons_req = false;
@@ -3443,7 +3446,8 @@ static void hdd_ipa_send_pkt_to_tl(
 	qdf_mem_set(skb->cb, sizeof(skb->cb), 0);
 	qdf_nbuf_ipa_owned_set(skb);
 	/* FIXME: This is broken. No such field in cb any more:
-	   NBUF_CALLBACK_FN(skb) = hdd_ipa_nbuf_cb; */
+	 * NBUF_CALLBACK_FN(skb) = hdd_ipa_nbuf_cb;
+	 */
 	if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx)) {
 		qdf_nbuf_mapped_paddr_set(skb,
 					  ipa_tx_desc->dma_addr
