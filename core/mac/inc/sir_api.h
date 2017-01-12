@@ -6172,6 +6172,7 @@ struct sir_bpf_get_offload {
 
 /**
  * struct sir_wake_lock_stats - wake lock stats structure
+ * @wow_unspecified_wake_up_count: number of non-wow related wake ups
  * @wow_ucast_wake_up_count: Unicast wakeup count
  * @wow_bcast_wake_up_count: Broadcast wakeup count
  * @wow_ipv4_mcast_wake_up_count: ipv4 multicast wakeup count
@@ -6186,8 +6187,10 @@ struct sir_bpf_get_offload {
  * @wow_gscan_wake_up_count: gscan wakeup count
  * @wow_pno_complete_wake_up_count: pno complete wakeup count
  * @wow_pno_match_wake_up_count: pno match wakeup count
+ * @wow_oem_response_wake_up_count: oem response wakeup count
  */
 struct sir_wake_lock_stats {
+	uint32_t wow_unspecified_wake_up_count;
 	uint32_t wow_ucast_wake_up_count;
 	uint32_t wow_bcast_wake_up_count;
 	uint32_t wow_ipv4_mcast_wake_up_count;
@@ -6202,6 +6205,43 @@ struct sir_wake_lock_stats {
 	uint32_t wow_gscan_wake_up_count;
 	uint32_t wow_pno_complete_wake_up_count;
 	uint32_t wow_pno_match_wake_up_count;
+	uint32_t wow_oem_response_wake_up_count;
+};
+
+/**
+ * struct sir_vdev_wow_stats - container for per vdev wow related stat counters
+ * @ucast: Unicast wakeup count
+ * @bcast: Broadcast wakeup count
+ * @ipv4_mcast: ipv4 multicast wakeup count
+ * @ipv6_mcast: ipv6 multicast wakeup count
+ * @ipv6_mcast_ra: ipv6 multicast ra stats
+ * @ipv6_mcast_ns: ipv6 multicast ns stats
+ * @ipv6_mcast_na: ipv6 multicast na stats
+ * @icmpv4: ipv4 icmp packet count
+ * @icmpv6: ipv6 icmp packet count
+ * @rssi_breach: rssi breach wakeup count
+ * @low_rssi: low rssi wakeup count
+ * @gscan: gscan wakeup count
+ * @pno_complete: pno complete wakeup count
+ * @pno_match: pno match wakeup count
+ * @oem_response: oem response wakeup count
+ */
+struct sir_vdev_wow_stats {
+	uint32_t ucast;
+	uint32_t bcast;
+	uint32_t ipv4_mcast;
+	uint32_t ipv6_mcast;
+	uint32_t ipv6_mcast_ra;
+	uint32_t ipv6_mcast_ns;
+	uint32_t ipv6_mcast_na;
+	uint32_t icmpv4;
+	uint32_t icmpv6;
+	uint32_t rssi_breach;
+	uint32_t low_rssi;
+	uint32_t gscan;
+	uint32_t pno_complete;
+	uint32_t pno_match;
+	uint32_t oem_response;
 };
 
 /**

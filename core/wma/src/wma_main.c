@@ -1674,119 +1674,99 @@ struct wma_version_info g_wmi_version_info;
  */
 static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 {
-	tp_wma_handle wma_handle;
+	t_wma_handle *wma;
+	struct sir_vdev_wow_stats *stats;
 	uint16_t len = 0;
 	char *buf = *buf_ptr;
 	struct wma_txrx_node *iface;
 	uint8_t vdev_id;
 
-	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma) {
 		WMA_LOGE("%s: WMA context is invald!", __func__);
 		return;
 	}
 
 	WMA_LOGI("%s: size of buffer: %d", __func__, *size);
 
-	len += qdf_scnprintf(buf + len, *size - len,
-		"\n wow_pno_match_wake_up_count %d",
-		wma_handle->wow_pno_match_wake_up_count);
-	len += qdf_scnprintf(buf + len, *size - len,
-		"\n wow_pno_complete_wake_up_count %d",
-		wma_handle->wow_pno_complete_wake_up_count);
-	len += qdf_scnprintf(buf + len, *size - len,
-		"\n wow_gscan_wake_up_count %d",
-		wma_handle->wow_gscan_wake_up_count);
-	len += qdf_scnprintf(buf + len, *size - len,
-		"\n wow_low_rssi_wake_up_count %d",
-		wma_handle->wow_low_rssi_wake_up_count);
-	len += qdf_scnprintf(buf + len, *size - len,
-		"\n wow_rssi_breach_wake_up_count %d",
-		wma_handle->wow_rssi_breach_wake_up_count);
-	len += qdf_scnprintf(buf + len, *size - len,
-		"\n wow_ucast_wake_up_count %d",
-		wma_handle->wow_ucast_wake_up_count);
-	len += qdf_scnprintf(buf + len, *size - len,
-		"\n wow_bcast_wake_up_count %d",
-		wma_handle->wow_bcast_wake_up_count);
-	len += qdf_scnprintf(buf + len, *size - len,
-		"\n wow_ipv4_mcast_wake_up_count %d",
-		wma_handle->wow_ipv4_mcast_wake_up_count);
-	len += qdf_scnprintf(buf + len, *size - len,
-		"\n wow_ipv6_mcast_ra_stats %d",
-		wma_handle->wow_ipv6_mcast_ra_stats);
-	len += qdf_scnprintf(buf + len, *size - len,
-		"\n wow_ipv6_mcast_ns_stats %d",
-		wma_handle->wow_ipv6_mcast_ns_stats);
-	len += qdf_scnprintf(buf + len, *size - len,
-		"\n wow_ipv6_mcast_na_stats %d",
-		wma_handle->wow_ipv6_mcast_na_stats);
-
-	for (vdev_id = 0; vdev_id < wma_handle->max_bssid; vdev_id++) {
-		if (!wma_handle->interfaces[vdev_id].handle)
+	for (vdev_id = 0; vdev_id < wma->max_bssid; vdev_id++) {
+		iface = &wma->interfaces[vdev_id];
+		if (!iface->handle)
 			continue;
 
-		iface = &wma_handle->interfaces[vdev_id];
-
+		stats = &iface->wow_stats;
 		len += qdf_scnprintf(buf + len, *size - len,
-			"\n vdev_id %d",
-			vdev_id);
-		len += qdf_scnprintf(buf + len, *size - len,
-			"\n conn_state %d",
-			iface->conn_state);
-		len += qdf_scnprintf(buf + len, *size - len,
-			"\n dtimPeriod %d",
-			iface->dtimPeriod);
-		len += qdf_scnprintf(buf + len, *size - len,
-			"\n chanmode %d",
-			iface->chanmode);
-		len += qdf_scnprintf(buf + len, *size - len,
-			"\n vht_capable %d",
-			iface->vht_capable);
-		len += qdf_scnprintf(buf + len, *size - len,
-			"\n ht_capable %d",
-			iface->ht_capable);
-		len += qdf_scnprintf(buf + len, *size - len,
-			"\n chan_width %d",
-			iface->chan_width);
-		len += qdf_scnprintf(buf + len, *size - len,
-			"\n vdev_active %d",
-			iface->vdev_active);
-		len += qdf_scnprintf(buf + len, *size - len,
-			"\n vdev_up %d",
-			iface->vdev_up);
-		len += qdf_scnprintf(buf + len, *size - len,
-			"\n aid %d",
-			iface->aid);
-		len += qdf_scnprintf(buf + len, *size - len,
-			"\n rate_flags %d",
-			iface->rate_flags);
-		len += qdf_scnprintf(buf + len, *size - len,
-			"\n nss %d",
-			iface->nss);
-		len += qdf_scnprintf(buf + len, *size - len,
-			"\n tx_power %d",
-			iface->tx_power);
-		len += qdf_scnprintf(buf + len, *size - len,
-			"\n max_tx_power %d",
-			iface->max_tx_power);
-		len += qdf_scnprintf(buf + len, *size - len,
-			"\n nwType %d",
-			iface->nwType);
-		len += qdf_scnprintf(buf + len, *size - len,
-			"\n tx_streams %d",
-			iface->tx_streams);
-		len += qdf_scnprintf(buf + len, *size - len,
-			"\n rx_streams %d",
-			iface->rx_streams);
-		len += qdf_scnprintf(buf + len, *size - len,
-			"\n chain_mask %d",
-			iface->chain_mask);
-		len += qdf_scnprintf(buf + len, *size - len,
-			"\n nss_2g %d",
-			iface->nss_2g);
-		len += qdf_scnprintf(buf + len, *size - len,
-			"\n nss_5g %d",
+			"\n"
+			"vdev_id %d\n"
+			"WoW Stats\n"
+			"\tpno_match %u\n"
+			"\tpno_complete %u\n"
+			"\tgscan %u\n"
+			"\tlow_rssi %u\n"
+			"\trssi_breach %u\n"
+			"\tucast %u\n"
+			"\tbcast %u\n"
+			"\ticmpv4 %u\n"
+			"\ticmpv6 %u\n"
+			"\tipv4_mcast %u\n"
+			"\tipv6_mcast %u\n"
+			"\tipv6_mcast_ra %u\n"
+			"\tipv6_mcast_ns %u\n"
+			"\tipv6_mcast_na %u\n"
+			"\toem_response %u\n"
+			"conn_state %d\n"
+			"dtimPeriod %d\n"
+			"chanmode %d\n"
+			"vht_capable %d\n"
+			"ht_capable %d\n"
+			"chan_width %d\n"
+			"vdev_active %d\n"
+			"vdev_up %d\n"
+			"aid %d\n"
+			"rate_flags %d\n"
+			"nss %d\n"
+			"tx_power %d\n"
+			"max_tx_power %d\n"
+			"nwType %d\n"
+			"tx_streams %d\n"
+			"rx_streams %d\n"
+			"chain_mask %d\n"
+			"nss_2g %d\n"
+			"nss_5g %d",
+			vdev_id,
+			stats->pno_match,
+			stats->pno_complete,
+			stats->gscan,
+			stats->low_rssi,
+			stats->rssi_breach,
+			stats->ucast,
+			stats->bcast,
+			stats->icmpv4,
+			stats->icmpv6,
+			stats->ipv4_mcast,
+			stats->ipv6_mcast,
+			stats->ipv6_mcast_ra,
+			stats->ipv6_mcast_ns,
+			stats->ipv6_mcast_na,
+			stats->oem_response,
+			iface->conn_state,
+			iface->dtimPeriod,
+			iface->chanmode,
+			iface->vht_capable,
+			iface->ht_capable,
+			iface->chan_width,
+			iface->vdev_active,
+			iface->vdev_up,
+			iface->aid,
+			iface->rate_flags,
+			iface->nss,
+			iface->tx_power,
+			iface->max_tx_power,
+			iface->nwType,
+			iface->tx_streams,
+			iface->rx_streams,
+			iface->chain_mask,
+			iface->nss_2g,
 			iface->nss_5g);
 	}
 
