@@ -342,11 +342,11 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 	hdd_prevent_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
 
 	/*
-	* The Krait is going to Idle/Stand Alone Power Save
-	* more aggressively which is resulting in the longer driver load time.
-	* The Fix is to not allow Krait to enter Idle Power Save during driver
-	* load.
-	*/
+	 * The Krait is going to Idle/Stand Alone Power Save more
+	 * aggressively which is resulting in the longer driver load
+	 * time. The Fix is to not allow Krait to enter Idle Power
+	 * Save during driver load.
+	 */
 	hdd_request_pm_qos(dev, DISABLE_KRAIT_IDLE_PS_VAL);
 
 	if (reinit)
