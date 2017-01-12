@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1298,7 +1298,8 @@ nla_policy
 	[QCA_WLAN_VENDOR_ATTR_LL_STATS_GET_CONFIG_REQ_ID] = {.type = NLA_U32},
 
 	/* Unsigned 32bit value . bit mask to identify what statistics are
-	   requested for retrieval */
+	 * requested for retrieval
+	 */
 	[QCA_WLAN_VENDOR_ATTR_LL_STATS_GET_CONFIG_REQ_MASK] = {.type = NLA_U32}
 };
 
@@ -1938,9 +1939,11 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 			maxRate =
 				(currentRate > maxRate) ? currentRate : maxRate;
 		}
-		/* Get MCS Rate Set --
-		   Only if we are connected in non legacy mode and not reporting
-		   actual speed */
+		/*
+		 * Get MCS Rate Set --
+		 * Only if we are connected in non legacy mode and not
+		 * reporting actual speed
+		 */
 		if ((3 != rssidx) && !(rate_flags & eHAL_TX_RATE_LEGACY)) {
 			if (0 !=
 			    sme_cfg_get_str(WLAN_HDD_GET_HAL_CTX(pAdapter),
