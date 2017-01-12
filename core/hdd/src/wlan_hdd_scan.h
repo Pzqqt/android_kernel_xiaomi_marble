@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -41,7 +41,7 @@
  *
  * @NL_SCAN: Scan initiated from NL
  * @VENDOR_SCAN: Scan intiated from vendor command
-*/
+ */
 enum scan_source {
 	NL_SCAN,
 	VENDOR_SCAN,
