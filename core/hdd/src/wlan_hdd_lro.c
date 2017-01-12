@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -455,9 +455,9 @@ static void *hdd_init_lro_mgr(void)
 		return NULL;
 	}
 	/*
-	* Allocate all the LRO data structures at once and then carve
-	* them up as needed
-	*/
+	 * Allocate all the LRO data structures at once and then carve
+	 * them up as needed
+	 */
 	lro_info_sz = sizeof(struct hdd_lro_s);
 	lro_mgr_sz = sizeof(struct net_lro_mgr);
 	desc_arr_sz = (LRO_DESC_POOL_SZ * sizeof(struct net_lro_desc));
