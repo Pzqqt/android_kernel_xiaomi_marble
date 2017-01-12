@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -264,8 +264,8 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 	}
 
 	/*
-	* If a transmit function is not registered, drop packet
-	*/
+	 * If a transmit function is not registered, drop packet
+	 */
 	if (!pAdapter->tx_fn) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
 			 "%s: TX function not registered by the data path",
@@ -340,18 +340,18 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(3, 19, 0))
 		/*
-		* The TCP TX throttling logic is changed a little after
-		* 3.19-rc1 kernel, the TCP sending limit will be smaller,
-		* which will throttle the TCP packets to the host driver.
-		* The TCP UP LINK throughput will drop heavily. In order to
-		* fix this issue, need to orphan the socket buffer asap, which
-		* will call skb's destructor to notify the TCP stack that the
-		* SKB buffer is unowned. And then the TCP stack will pump more
-		* packets to host driver.
-		*
-		* The TX packets might be dropped for UDP case in the iperf
-		* testing. So need to be protected by follow control.
-		*/
+		 * The TCP TX throttling logic is changed a little after
+		 * 3.19-rc1 kernel, the TCP sending limit will be smaller,
+		 * which will throttle the TCP packets to the host driver.
+		 * The TCP UP LINK throughput will drop heavily. In order to
+		 * fix this issue, need to orphan the socket buffer asap, which
+		 * will call skb's destructor to notify the TCP stack that the
+		 * SKB buffer is unowned. And then the TCP stack will pump more
+		 * packets to host driver.
+		 *
+		 * The TX packets might be dropped for UDP case in the iperf
+		 * testing. So need to be protected by follow control.
+		 */
 		skb = hdd_skb_orphan(pAdapter, skb);
 #else
 		/* Check if the buffer has enough header room */
