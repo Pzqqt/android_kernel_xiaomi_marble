@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -714,7 +714,8 @@ static QDF_STATUS hdd_wmm_sme_callback(tHalHandle hHal,
 			 * failed.  Since the OTA part of the request
 			 * was successful, we don't mark this as a
 			 * failure.  the packets will flow.  Note that
-			 * the MAC will "do the right thing" */
+			 * the MAC will "do the right thing"
+			 */
 			pAc->wmmAcAccessGranted = true;
 			pAc->wmmAcAccessAllowed = true;
 			pAc->wmmAcAccessFailed = false;
