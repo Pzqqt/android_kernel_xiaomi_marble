@@ -27,17 +27,15 @@
 
 #if !defined(WLAN_HDD_MAIN_H)
 #define WLAN_HDD_MAIN_H
-/**===========================================================================
+/**
+ * DOC: wlan_hdd_main.h
+ *
+ * Linux HDD Adapter Type
+ */
 
-   \file  WLAN_HDD_MAIN_H.h
-
-   \brief Linux HDD Adapter Type
-
-   ==========================================================================*/
-
-/*---------------------------------------------------------------------------
-   Include files
-   -------------------------------------------------------------------------*/
+/*
+ * Include files
+ */
 
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
@@ -71,9 +69,10 @@
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_peer_obj.h>
 
-/*---------------------------------------------------------------------------
-   Preprocessor definitions and constants
-   -------------------------------------------------------------------------*/
+/*
+ * Preprocessor definitions and constants
+ */
+
 /** Number of Tx Queues */
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 #define NUM_TX_QUEUES 5
@@ -124,8 +123,9 @@
 #define WLAN_WAIT_TIME_LINK_STATUS 800
 #define WLAN_WAIT_TIME_POWER_STATS 800
 /* Amount of time to wait for sme close session callback.
-   This value should be larger than the timeout used by WDI to wait for
-   a response from WCNSS */
+ *  This value should be larger than the timeout used by WDI to wait for
+ * a response from WCNSS
+ */
 #define WLAN_WAIT_TIME_SESSIONOPENCLOSE  15000
 #define WLAN_WAIT_TIME_ABORTSCAN         2000
 
@@ -329,7 +329,8 @@ extern spinlock_t hdd_context_lock;
 #define POWER_STATS_MAGIC 0x14111990
 
 /* MAX OS Q block time value in msec
- * Prevent from permanent stall, resume OS Q if timer expired */
+ * Prevent from permanent stall, resume OS Q if timer expired
+ */
 #define WLAN_HDD_TX_FLOW_CONTROL_OS_Q_BLOCK_TIME 1000
 #define WLAN_SAP_HDD_TX_FLOW_CONTROL_OS_Q_BLOCK_TIME 100
 #define WLAN_HDD_TX_FLOW_CONTROL_MAX_24BAND_CH   14
@@ -634,9 +635,9 @@ typedef struct hdd_cfg80211_state_s {
 	struct mutex remain_on_chan_ctx_lock;
 	eP2PActionFrameState actionFrmState;
 	/* is_go_neg_ack_received flag is set to 1 when
-	* the pending ack for GO negotiation req is
-	* received.
-	*/
+	 * the pending ack for GO negotiation req is
+	 * received.
+	 */
 	bool is_go_neg_ack_received;
 } hdd_cfg80211_state_t;
 
@@ -715,14 +716,16 @@ typedef struct {
 	bool isUsed;
 
 	/** Station ID reported back from HAL (through SAP). Broadcast
-	 *  uses station ID zero by default in both libra and volans. */
+	 *  uses station ID zero by default in both libra and volans.
+	 */
 	uint8_t ucSTAId;
 
 	/** MAC address of the station */
 	struct qdf_mac_addr macAddrSTA;
 
 	/** Current Station state so HDD knows how to deal with packet
-	 *  queue. Most recent states used to change TLSHIM STA state */
+	 *  queue. Most recent states used to change TLSHIM STA state
+	 */
 	enum ol_txrx_peer_state tlSTAState;
 
 	/** Track QoS status of station */
@@ -793,7 +796,8 @@ typedef struct hdd_scaninfo_s {
 	uint32_t mScanPending;
 
 	/* Counter for mScanPending so that the scan pending
-	   error log is not printed for more than 5 times    */
+	 * error log is not printed for more than 5 times
+	 */
 	uint32_t mScanPendingCounter;
 
 	/* Additional IE for scan */
@@ -1419,7 +1423,7 @@ struct hdd_context_s {
 	/* MC/BC Filter state variable
 	 * This always contains the value that is currently
 	 * configured
-	 * */
+	 */
 	uint8_t configuredMcastBcastFilter;
 
 	uint8_t sus_res_mcastbcast_filter;
@@ -1602,9 +1606,9 @@ struct hdd_context_s {
 	qdf_mc_timer_t tdls_source_timer;
 };
 
-/*---------------------------------------------------------------------------
-   Function declarations and documentation
-   -------------------------------------------------------------------------*/
+/*
+ * Function declarations and documentation
+ */
 int hdd_validate_channel_and_bandwidth(hdd_adapter_t *adapter,
 				uint32_t chan_number,
 				enum phy_ch_width chan_bw);
