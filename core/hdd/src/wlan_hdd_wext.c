@@ -10144,8 +10144,10 @@ int hdd_set_band(struct net_device *dev, u8 ui_band)
 				QDF_STATUS status = QDF_STATUS_SUCCESS;
 				long lrc;
 
-				/* STA already connected on current band, So issue disconnect
-				 * first, then change the band*/
+				/* STA already connected on current
+				 * band, So issue disconnect first,
+				 * then change the band
+				 */
 
 				hdd_notice("STA (Device mode %s(%d)) connected in band %u, Changing band to %u, Issuing Disconnect",
 					hdd_device_mode_to_string(pAdapter->device_mode),
@@ -10559,14 +10561,16 @@ static const struct iw_priv_args we_private_args[] = {
 
 	/* SAP has TxMax whereas STA has MaxTx, adding TxMax for STA
 	 * as well to keep same syntax as in SAP. Now onwards, STA
-	 * will support both */
+	 * will support both
+	 */
 	{WE_SET_MAX_TX_POWER,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0,
 	 "setTxMaxPower"},
 
 	/* set Higher DTIM Transition (DTIM1 to DTIM3)
-	 * 1 = enable and 0 = disable */
+	 * 1 = enable and 0 = disable
+	 */
 	{
 		WE_SET_HIGHER_DTIM_TRANSITION,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
