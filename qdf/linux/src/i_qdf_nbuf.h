@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1056,6 +1056,10 @@ void __qdf_dmaaddr_to_32s(qdf_dma_addr_t dmaaddr,
 
 uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 	struct qdf_tso_info_t *tso_info);
+
+void __qdf_nbuf_unmap_tso_segment(qdf_device_t osdev,
+			  struct qdf_tso_seg_elem_t *tso_seg,
+			  bool is_last_seg);
 
 uint32_t __qdf_nbuf_get_tso_num_seg(struct sk_buff *skb);
 

@@ -467,11 +467,33 @@ struct qdf_tso_seg_elem_t {
 };
 
 /**
+ * struct qdf_tso_num_seg_t - single element to count for num of seg
+ * @tso_cmn_num_seg: num of seg in a jumbo skb
+ *
+ * This structure holds the information of num of segments of a jumbo
+ * TSO network buffer.
+ */
+struct qdf_tso_num_seg_t {
+	uint32_t tso_cmn_num_seg;
+};
+
+/**
+ * qdf_tso_num_seg_elem_t - num of tso segment element for jumbo skb
+ * @num_seg: instance of num of seg
+ * @next: pointer to the next segment
+ */
+struct qdf_tso_num_seg_elem_t {
+	struct qdf_tso_num_seg_t num_seg;
+	struct qdf_tso_num_seg_elem_t *next;
+};
+
+/**
  * struct qdf_tso_info_t - TSO information extracted
  * @is_tso: is this is a TSO frame
  * @num_segs: number of segments
  * @tso_seg_list: list of TSO segments for this jumbo packet
  * @curr_seg: segment that is currently being processed
+ * @tso_num_seg_list: num of tso seg for this jumbo packet
  *
  * This structure holds the TSO information extracted after parsing the TSO
  * jumbo network buffer. It contains a chain of the TSO segments belonging to
@@ -482,6 +504,7 @@ struct qdf_tso_info_t {
 	uint32_t num_segs;
 	struct qdf_tso_seg_elem_t *tso_seg_list;
 	struct qdf_tso_seg_elem_t *curr_seg;
+	struct qdf_tso_num_seg_elem_t *tso_num_seg_list;
 };
 
 /**

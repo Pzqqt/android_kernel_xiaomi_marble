@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1832,6 +1832,22 @@ static inline uint32_t qdf_nbuf_get_tso_info(qdf_device_t osdev,
 		 qdf_nbuf_t nbuf, struct qdf_tso_info_t *tso_info)
 {
 	return __qdf_nbuf_get_tso_info(osdev, nbuf, tso_info);
+}
+
+/**
+ * qdf_nbuf_unmap_tso_segment() - function to dma unmap TSO segment element
+ *
+ * @osdev: qdf device handle
+ * @tso_seg: TSO segment element to be unmapped
+ * @is_last_seg: whether this is last tso seg or not
+ *
+ * Return: none
+ */
+static inline void qdf_nbuf_unmap_tso_segment(qdf_device_t osdev,
+			  struct qdf_tso_seg_elem_t *tso_seg,
+			  bool is_last_seg)
+{
+	return __qdf_nbuf_unmap_tso_segment(osdev, tso_seg, is_last_seg);
 }
 
 /**
