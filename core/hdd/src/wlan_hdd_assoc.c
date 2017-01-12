@@ -1366,8 +1366,9 @@ static void hdd_send_association_event(struct net_device *dev,
 	hdd_ipa_send_mcc_scc_msg(pHddCtx, pHddCtx->mcc_mode);
 
 	msg = NULL;
-	/*During the WLAN uninitialization,supplicant is stopped before the
-	   driver so not sending the status of the connection to supplicant */
+	/* During the WLAN uninitialization,supplicant is stopped before the
+	 * driver so not sending the status of the connection to supplicant
+	 */
 	if (cds_is_load_or_unload_in_progress()) {
 		wireless_send_event(dev, we_event, &wrqu, msg);
 #ifdef FEATURE_WLAN_ESE
@@ -2183,7 +2184,7 @@ static QDF_STATUS hdd_roam_set_key_complete_handler(hdd_adapter_t *pAdapter,
 			 * statement will be TRUE when setting GTK.
 			 * At this time we don't handle the state in detail.
 			 * Related CR: 174048 - TL not in authenticated state
-			*/
+			 */
 			if (eCSR_ROAM_RESULT_AUTHENTICATED == roamResult) {
 				pHddStaCtx->conn_info.gtk_installed = true;
 				/*
@@ -4357,7 +4358,8 @@ hdd_indicate_ese_bcn_report_ind(const hdd_adapter_t *pAdapter,
 	    && (!pRoamInfo->pEseBcnReportRsp->numBss)) {
 		hdd_info("Measurement Done but no scan results");
 		/* If the measurement is none and no scan results found,
-		   indicate the supplicant about measurement done */
+		 * indicate the supplicant about measurement done
+		 */
 		hdd_indicate_ese_bcn_report_no_results(
 				pAdapter,
 				pRoamInfo->pEseBcnReportRsp->
@@ -4869,7 +4871,8 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		break;
 	case eCSR_ROAM_HANDOVER_SUCCESS:
 		/* This event is to notify handover success.
-		   It will be only invoked on success */
+		 * It will be only invoked on success
+		 */
 		if (QDF_STATUS_SUCCESS !=
 		    wlan_hdd_cfg80211_roam_metrics_handover(pAdapter,
 							    pRoamInfo)) {
@@ -5160,8 +5163,6 @@ static int32_t hdd_process_genie(hdd_adapter_t *pAdapter,
 			 dot11RSNIE.pwise_cipher_suite_count);
 		hdd_info("authentication suite count: %d",
 			 dot11RSNIE.akm_suite_count);
-		/*Here we have followed the apple base code,
-		   but probably I suspect we can do something different */
 		/* dot11RSNIE.akm_suite_count */
 		/* Just translate the FIRST one */
 		*pAuthType =
@@ -5899,8 +5900,9 @@ static int __iw_set_auth(struct net_device *dev, struct iw_request_info *info,
 
 	case IW_AUTH_80211_AUTH_ALG:
 	{
-		/* Save the auth algo here and set auth type to SME Roam profile
-		   in the iw_set_ap_address */
+		/* Save the auth algo here and set auth type to SME
+		 * Roam profile in the iw_set_ap_address
+		 */
 		if (wrqu->param.value & IW_AUTH_ALG_OPEN_SYSTEM)
 			pHddStaCtx->conn_info.authType =
 				eCSR_AUTH_TYPE_OPEN_SYSTEM;
