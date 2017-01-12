@@ -1941,13 +1941,14 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			hdd_hostapd_channel_allow_suspend(pHostapdAdapter,
 				pHddApCtx->operatingChannel);
 		}
-		/* SME/PE is already updated for new operation channel. So update
-		* HDD layer also here. This resolves issue in AP-AP mode where
-		* AP1 channel is changed due to RADAR then CAC is going on and
-		* START_BSS on new channel has not come to HDD. At this case if
-		* AP2 is start it needs current operation channel for MCC DFS
-		* restiction
-		*/
+		/* SME/PE is already updated for new operation
+		 * channel. So update HDD layer also here. This
+		 * resolves issue in AP-AP mode where AP1 channel is
+		 * changed due to RADAR then CAC is going on and
+		 * START_BSS on new channel has not come to HDD. At
+		 * this case if AP2 is started it needs current
+		 * operation channel for MCC DFS restriction
+		 */
 		pHddApCtx->operatingChannel =
 			pSapEvent->sapevt.sap_ch_selected.pri_ch;
 		pHddApCtx->sapConfig.acs_cfg.pri_ch =
@@ -2067,8 +2068,10 @@ stopbss:
 		       pSapEvent->sapevt.sapStopBssCompleteEvent.status ?
 		       "eSAP_STATUS_FAILURE" : "eSAP_STATUS_SUCCESS");
 
-		/* Change the BSS state now since, as we are shutting things down,
-		 * we don't want interfaces to become re-enabled */
+		/* Change the BSS state now since, as we are shutting
+		 * things down, we don't want interfaces to become
+		 * re-enabled
+		 */
 		pHostapdState->bssState = BSS_STOP;
 
 		if (0 !=
@@ -2095,7 +2098,8 @@ stopbss:
 #endif
 
 		/* Stop the pkts from n/w stack as we are going to free all of
-		 * the TX WMM queues for all STAID's */
+		 * the TX WMM queues for all STAID's
+		 */
 		hdd_hostapd_stop(dev);
 
 		/* reclaim all resources allocated to the BSS */
@@ -2107,7 +2111,8 @@ stopbss:
 
 		/* once the event is set, structure dev/pHostapdAdapter should
 		 * not be touched since they are now subject to being deleted
-		 * by another thread */
+		 * by another thread
+		 */
 		if (eSAP_STOP_BSS_EVENT == sapEvent)
 			qdf_event_set(&pHostapdState->qdf_stop_bss_event);
 
@@ -2171,10 +2176,10 @@ int hdd_softap_unpack_ie(tHalHandle halHandle,
 		       dot11RSNIE.pwise_cipher_suite_count);
 		hdd_notice("authentication suite count: %d",
 		       dot11RSNIE.akm_suite_count);
-		/*Here we have followed the apple base code,
-		   but probably I suspect we can do something different */
-		/* dot11RSNIE.akm_suite_count */
-		/* Just translate the FIRST one */
+		/*
+		 * dot11RSNIE.akm_suite_count
+		 * Just translate the FIRST one
+		 */
 		*pAuthType =
 			hdd_translate_rsn_to_csr_auth_type(dot11RSNIE.akm_suites[0]);
 		/* dot11RSNIE.pwise_cipher_suite_count */
@@ -3547,24 +3552,24 @@ static iw_softap_getparam(struct net_device *dev,
 }
 
 /* Usage:
-    BLACK_LIST  = 0
-    WHITE_LIST  = 1
-    ADD MAC = 0
-    REMOVE MAC  = 1
-
-    mac addr will be accepted as a 6 octet mac address with each octet inputted in hex
-    for e.g. 00:0a:f5:11:22:33 will be represented as 0x00 0x0a 0xf5 0x11 0x22 0x33
-    while using this ioctl
-
-    Syntax:
-    iwpriv softap.0 modify_acl
-    <6 octet mac addr> <list type> <cmd type>
-
-    Examples:
-    eg 1. to add a mac addr 00:0a:f5:89:89:90 to the black list
-    iwpriv softap.0 modify_acl 0x00 0x0a 0xf5 0x89 0x89 0x90 0 0
-    eg 2. to delete a mac addr 00:0a:f5:89:89:90 from white list
-    iwpriv softap.0 modify_acl 0x00 0x0a 0xf5 0x89 0x89 0x90 1 1
+ *  BLACK_LIST  = 0
+ *  WHITE_LIST  = 1
+ *  ADD MAC = 0
+ *  REMOVE MAC  = 1
+ *
+ *  mac addr will be accepted as a 6 octet mac address with each octet
+ *  inputted in hex for e.g. 00:0a:f5:11:22:33 will be represented as
+ *  0x00 0x0a 0xf5 0x11 0x22 0x33 while using this ioctl
+ *
+ *  Syntax:
+ *  iwpriv softap.0 modify_acl
+ *  <6 octet mac addr> <list type> <cmd type>
+ *
+ *  Examples:
+ *  eg 1. to add a mac addr 00:0a:f5:89:89:90 to the black list
+ *  iwpriv softap.0 modify_acl 0x00 0x0a 0xf5 0x89 0x89 0x90 0 0
+ *  eg 2. to delete a mac addr 00:0a:f5:89:89:90 from white list
+ *  iwpriv softap.0 modify_acl 0x00 0x0a 0xf5 0x89 0x89 0x90 1 1
  */
 static
 int __iw_softap_modify_acl(struct net_device *dev,
@@ -3895,16 +3900,16 @@ static iw_softap_getassoc_stamacaddr(struct net_device *dev,
 }
 
 /* Usage:
-    mac addr will be accepted as a 6 octet mac address with each octet inputted in hex
-    for e.g. 00:0a:f5:11:22:33 will be represented as 0x00 0x0a 0xf5 0x11 0x22 0x33
-    while using this ioctl
-
-    Syntax:
-    iwpriv softap.0 disassoc_sta <6 octet mac address>
-
-    e.g.
-    disassociate sta with mac addr 00:0a:f5:11:22:33 from softap
-    iwpriv softap.0 disassoc_sta 0x00 0x0a 0xf5 0x11 0x22 0x33
+ *  mac addr will be accepted as a 6 octet mac address with each octet
+ *  inputted in hex for e.g. 00:0a:f5:11:22:33 will be represented as
+ *  0x00 0x0a 0xf5 0x11 0x22 0x33 while using this ioctl
+ *
+ *  Syntax:
+ *  iwpriv softap.0 disassoc_sta <6 octet mac address>
+ *
+ *  e.g.
+ *  disassociate sta with mac addr 00:0a:f5:11:22:33 from softap
+ *  iwpriv softap.0 disassoc_sta 0x00 0x0a 0xf5 0x11 0x22 0x33
  */
 
 int
@@ -4426,20 +4431,20 @@ static int __iw_set_ap_encodeext(struct net_device *dev,
 
 		qdf_mem_zero(pKey, CSR_MAX_KEY_LEN);
 
-		/*Supplicant sends the 32bytes key in this order
-
-		   |--------------|----------|----------|
-		 |   Tk1        |TX-MIC    |  RX Mic  |
-		 |||--------------|----------|----------|
-		   <---16bytes---><--8bytes--><--8bytes-->
-
-		 */
-		/*Sme expects the 32 bytes key to be in the below order
-
-		   |--------------|----------|----------|
-		 |   Tk1        |RX-MIC    |  TX Mic  |
-		 |||--------------|----------|----------|
-		   <---16bytes---><--8bytes--><--8bytes-->
+		/*
+		 * Supplicant sends the 32 byte key in this order
+		 *
+		 * |--------------|----------|----------|
+		 * |   Tk1        |TX-MIC    |  RX Mic  |
+		 * |--------------|----------|----------|
+		 * <---16bytes---><--8bytes--><--8bytes-->
+		 *
+		 * Sme expects the 32 byte key to be in the below order
+		 *
+		 * |--------------|----------|----------|
+		 * |   Tk1        |RX-MIC    |  TX Mic  |
+		 * |--------------|----------|----------|
+		 * <---16bytes---><--8bytes--><--8bytes-->
 		 */
 		/* Copy the Temporal Key 1 (TK1) */
 		qdf_mem_copy(pKey, ext->key, 16);
@@ -4698,7 +4703,8 @@ static int __iw_get_ap_freq(struct net_device *dev,
 		if (true == status) {
 			/* Set Exponent parameter as 6 (MHZ) in struct iw_freq
 			 * iwlist & iwconfig command shows frequency into proper
-			 * format (2.412 GHz instead of 246.2 MHz)*/
+			 * format (2.412 GHz instead of 246.2 MHz)
+			 */
 			fwrq->m = freq;
 			fwrq->e = MHZ;
 		}
@@ -7337,9 +7343,9 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 			hdd_err("RSNWPA IE MAX Length exceeded; length =%d",
 			       pConfig->RSNWPAReqIELength);
 		/* The actual processing may eventually be more extensive than
-		 * this. Right now, just consume any PMKIDs that are  sent in
+		 * this. Right now, just consume any PMKIDs that are sent in
 		 * by the app.
-		 * */
+		 */
 		status =
 			hdd_softap_unpack_ie(cds_get_context
 						     (QDF_MODULE_ID_SME),
@@ -7591,8 +7597,9 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		goto error;
 	}
 
-	/* ht_capab is not what the name conveys,this is used for protection
-	 * bitmap */
+	/* ht_capab is not what the name conveys, this is used for protection
+	 * bitmap
+	 */
 	pConfig->ht_capab = iniConfig->apProtection;
 
 	if (0 != wlan_hdd_cfg80211_update_apies(pHostapdAdapter)) {
