@@ -80,6 +80,7 @@ enum hal_ring_type {
 	RXDMA_MONITOR_BUF,
 	RXDMA_MONITOR_STATUS,
 	RXDMA_MONITOR_DST,
+	RXDMA_MONITOR_DESC,
 	MAX_RING_TYPES
 };
 
@@ -535,10 +536,11 @@ static inline void hal_srng_access_end_unlocked(void *hal_soc, void *hal_ring)
 		/* For LMAC rings, ring pointer updates are done through FW and
 		 * hence written to a shared memory location that is read by FW
 		 */
-		if (srng->ring_dir == HAL_SRNG_SRC_RING)
+		if (srng->ring_dir == HAL_SRNG_SRC_RING) {
 			*(srng->u.src_ring.hp_addr) = srng->u.src_ring.hp;
-		else
-			*(srng->u.src_ring.tp_addr) = srng->u.dst_ring.tp;
+		} else {
+			*(srng->u.dst_ring.tp_addr) = srng->u.dst_ring.tp;
+		}
 	} else {
 		if (srng->ring_dir == HAL_SRNG_SRC_RING)
 			hif_write32_mb(srng->u.src_ring.hp_addr,

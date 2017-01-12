@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -92,50 +92,93 @@ union dp_rx_desc_list_elem_t {
 };
 
 /**
- * dp_rx_cookie_2_va() - Converts cookie to a virtual address of
- *			 the Rx descriptor.
+ * dp_rx_cookie_2_va_rxdma_buf() - Converts cookie to a virtual address of
+ *			 the Rx descriptor on Rx DMA source ring buffer
  * @soc: core txrx main context
  * @cookie: cookie used to lookup virtual address
  *
  * Return: void *: Virtual Address of the Rx descriptor
  */
 static inline
-void *dp_rx_cookie_2_va(struct dp_soc *soc, uint32_t cookie)
+void *dp_rx_cookie_2_va_rxdma_buf(struct dp_soc *soc, uint32_t cookie)
 {
 	uint8_t pool_id = DP_RX_DESC_COOKIE_POOL_ID_GET(cookie);
 	uint16_t index = DP_RX_DESC_COOKIE_INDEX_GET(cookie);
 	/* TODO */
 	/* Add sanity for pool_id & index */
-	return &(soc->rx_desc[pool_id].array[index].rx_desc);
+	return &(soc->rx_desc_buf[pool_id].array[index].rx_desc);
+}
+
+/**
+ * dp_rx_cookie_2_va_mon_buf() - Converts cookie to a virtual address of
+ *			 the Rx descriptor on monitor ring buffer
+ * @soc: core txrx main context
+ * @cookie: cookie used to lookup virtual address
+ *
+ * Return: void *: Virtual Address of the Rx descriptor
+ */
+static inline
+void *dp_rx_cookie_2_va_mon_buf(struct dp_soc *soc, uint32_t cookie)
+{
+	uint8_t pool_id = DP_RX_DESC_COOKIE_POOL_ID_GET(cookie);
+	uint16_t index = DP_RX_DESC_COOKIE_INDEX_GET(cookie);
+	/* TODO */
+	/* Add sanity for pool_id & index */
+	return &(soc->rx_desc_mon[pool_id].array[index].rx_desc);
+}
+
+/**
+ * dp_rx_cookie_2_va_mon_status() - Converts cookie to a virtual address of
+ *			 the Rx descriptor on monitor status ring buffer
+ * @soc: core txrx main context
+ * @cookie: cookie used to lookup virtual address
+ *
+ * Return: void *: Virtual Address of the Rx descriptor
+ */
+static inline
+void *dp_rx_cookie_2_va_mon_status(struct dp_soc *soc, uint32_t cookie)
+{
+	uint8_t pool_id = DP_RX_DESC_COOKIE_POOL_ID_GET(cookie);
+	uint16_t index = DP_RX_DESC_COOKIE_INDEX_GET(cookie);
+	/* TODO */
+	/* Add sanity for pool_id & index */
+	return &(soc->rx_desc_status[pool_id].array[index].rx_desc);
 }
 
 void dp_rx_add_desc_list_to_free_list(struct dp_soc *soc,
 				union dp_rx_desc_list_elem_t **local_desc_list,
 				union dp_rx_desc_list_elem_t **tail,
-				uint16_t pool_id);
+				uint16_t pool_id,
+				struct rx_desc_pool *rx_desc_pool);
 
 uint16_t dp_rx_get_free_desc_list(struct dp_soc *soc, uint32_t pool_id,
+				struct rx_desc_pool *rx_desc_pool,
 				uint16_t num_descs,
 				union dp_rx_desc_list_elem_t **desc_list,
 				union dp_rx_desc_list_elem_t **tail);
 
-QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc, uint32_t pool_id);
-void dp_rx_desc_pool_free(struct dp_soc *soc, uint32_t pool_id);
 
 QDF_STATUS dp_rx_pdev_attach(struct dp_pdev *pdev);
+
 void dp_rx_pdev_detach(struct dp_pdev *pdev);
 
-QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
-				   uint32_t num_req_buffers,
-				   union dp_rx_desc_list_elem_t **desc_list,
-				   union dp_rx_desc_list_elem_t **tail,
-				   uint8_t owner);
+
 uint32_t dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota);
+
 
 uint32_t dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota);
 
 uint32_t
 dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota);
+
+QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc,
+				uint32_t pool_id,
+				uint32_t pool_size,
+				struct rx_desc_pool *rx_desc_pool);
+
+void dp_rx_desc_pool_free(struct dp_soc *soc,
+				uint32_t pool_id,
+				struct rx_desc_pool *rx_desc_pool);
 
 /**
  * dp_rx_add_to_free_desc_list() - Adds to a local free descriptor list
@@ -294,5 +337,97 @@ static inline int check_x86_paddr(struct dp_soc *dp_soc, qdf_nbuf_t *rx_netbuf,
 	return QDF_STATUS_E_FAILURE;
 }
 #endif
+/**
+ * dp_rx_cookie_2_link_desc_va() - Converts cookie to a virtual address of
+ *				   the MSDU Link Descriptor
+ * @soc: core txrx main context
+ * @buf_info: buf_info include cookie that used to lookup virtual address of
+ * link descriptor Normally this is just an index into a per SOC array.
+ *
+ * This is the VA of the link descriptor, that HAL layer later uses to
+ * retrieve the list of MSDU's for a given MPDU.
+ *
+ * Return: void *: Virtual Address of the Rx descriptor
+ */
+static inline
+void *dp_rx_cookie_2_link_desc_va(struct dp_soc *soc,
+				  struct hal_buf_info *buf_info)
+{
+	void *link_desc_va;
 
+	/* TODO */
+	/* Add sanity for  cookie */
+
+	link_desc_va = soc->link_desc_banks[buf_info->sw_cookie].base_vaddr +
+		(buf_info->paddr -
+			soc->link_desc_banks[buf_info->sw_cookie].base_paddr);
+
+	return link_desc_va;
+}
+
+/**
+ * dp_rx_cookie_2_mon_link_desc_va() - Converts cookie to a virtual address of
+ *				   the MSDU Link Descriptor
+ * @pdev: core txrx pdev context
+ * @buf_info: buf_info includes cookie that used to lookup virtual address of
+ * link descriptor. Normally this is just an index into a per pdev array.
+ *
+ * This is the VA of the link descriptor in monitor mode destination ring,
+ * that HAL layer later uses to retrieve the list of MSDU's for a given MPDU.
+ *
+ * Return: void *: Virtual Address of the Rx descriptor
+ */
+static inline
+void *dp_rx_cookie_2_mon_link_desc_va(struct dp_pdev *pdev,
+				  struct hal_buf_info *buf_info)
+{
+	void *link_desc_va;
+
+	/* TODO */
+	/* Add sanity for  cookie */
+
+	link_desc_va = pdev->link_desc_banks[buf_info->sw_cookie].base_vaddr +
+		(buf_info->paddr -
+			pdev->link_desc_banks[buf_info->sw_cookie].base_paddr);
+
+	return link_desc_va;
+}
+
+/*
+ * dp_rx_buffers_replenish() - replenish rxdma ring with rx nbufs
+ *			       called during dp rx initialization
+ *			       and at the end of dp_rx_process.
+ *
+ * @soc: core txrx main context
+ * @mac_id: mac_id which is one of 3 mac_ids
+ * @dp_rxdma_srng: dp rxdma circular ring
+ * @rx_desc_pool: Poiter to free Rx descriptor pool
+ * @num_req_buffers: number of buffer to be replenished
+ * @desc_list: list of descs if called from dp_rx_process
+ *	       or NULL during dp rx initialization or out of buffer
+ *	       interrupt.
+ * @tail: tail of descs list
+ * @owner: who owns the nbuf (host, NSS etc...)
+ * Return: return success or failure
+ */
+QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
+				 struct dp_srng *dp_rxdma_srng,
+				 struct rx_desc_pool *rx_desc_pool,
+				 uint32_t num_req_buffers,
+				 union dp_rx_desc_list_elem_t **desc_list,
+				 union dp_rx_desc_list_elem_t **tail,
+				 uint8_t owner);
+
+/**
+ * dp_rx_link_desc_return() - Return a MPDU link descriptor to HW
+ *			      (WBM), following error handling
+ *
+ * @soc: core DP main context
+ * @buf_addr_info: opaque pointer to the REO error ring descriptor
+ * @buf_addr_info: void pointer to the buffer_addr_info
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+dp_rx_link_desc_buf_return(struct dp_soc *soc, struct dp_srng *dp_rxdma_srng,
+				void *buf_addr_info);
 #endif /* _DP_RX_H */

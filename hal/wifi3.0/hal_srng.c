@@ -485,6 +485,18 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 		.reg_start = {},
 		.reg_size = {},
 	},
+	{ /* RXDMA_MONITOR_DESC */
+		.start_ring_id = HAL_SRNG_WMAC1_SW2RXDMA1_DESC,
+		.max_rings = 1,
+		.entry_size = sizeof(struct wbm_buffer_ring) >> 2,
+		.lmac_ring = TRUE,
+		.ring_dir = HAL_SRNG_SRC_RING,
+		/* reg_start is not set because LMAC rings are not accessed
+		 * from host
+		 */
+		.reg_start = {},
+		.reg_size = {},
+	},
 };
 
 /**

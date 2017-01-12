@@ -34,6 +34,7 @@
 #include "cdp_txrx_cmn_struct.h"
 #include <qdf_util.h>
 #include "dp_peer.h"
+#include "dp_rx_mon.h"
 
 #define DP_INTR_POLL_TIMER_MS	100
 #define DP_MCS_LENGTH (6*MAX_MCS)
@@ -302,6 +303,15 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 	if (reo_status_mask)
 		dp_reo_status_ring_handler(soc);
 
+	/* Process Rx monitor interrupts */
+	for  (ring = 0 ; ring < MAX_PDEV_CNT; ring++) {
+		if (int_ctx->rx_mon_ring_mask & (1 << ring)) {
+			work_done =
+				dp_mon_process(soc, ring, budget);
+			budget -=  work_done;
+		}
+	}
+
 budget_done:
 	return dp_budget - budget;
 }
@@ -346,7 +356,7 @@ static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 	for (i = 0; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++) {
 		soc->intr_ctx[i].tx_ring_mask = 0xF;
 		soc->intr_ctx[i].rx_ring_mask = 0xF;
-		soc->intr_ctx[i].rx_mon_ring_mask = 0xF;
+		soc->intr_ctx[i].rx_mon_ring_mask = 0x1;
 		soc->intr_ctx[i].rx_err_ring_mask = 0x1;
 		soc->intr_ctx[i].rx_wbm_rel_ring_mask = 0x1;
 		soc->intr_ctx[i].reo_status_ring_mask = 0x1;
@@ -789,9 +799,10 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 #define REO_STATUS_RING_SIZE 32
 #define RXDMA_BUF_RING_SIZE 1024
 #define RXDMA_REFILL_RING_SIZE 2048
-#define RXDMA_MONITOR_BUF_RING_SIZE 2048
-#define RXDMA_MONITOR_DST_RING_SIZE 2048
-#define RXDMA_MONITOR_STATUS_RING_SIZE 2048
+#define RXDMA_MONITOR_BUF_RING_SIZE 1024
+#define RXDMA_MONITOR_DST_RING_SIZE 1024
+#define RXDMA_MONITOR_STATUS_RING_SIZE 1024
+#define RXDMA_MONITOR_DESC_RING_SIZE 1024
 
 /*
  * dp_soc_cmn_setup() - Common SoC level initializion
@@ -1205,6 +1216,13 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 		goto fail1;
 	}
 
+	if (dp_srng_setup(soc, &pdev->rxdma_mon_desc_ring,
+		RXDMA_MONITOR_DESC, 0, pdev_id, RXDMA_MONITOR_DESC_RING_SIZE)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"dp_srng_setup failed for rxdma_mon_desc_ring\n");
+		goto fail1;
+	}
+
 	/* Rx specific init */
 	if (dp_rx_pdev_attach(pdev)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -1219,6 +1237,13 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 #endif
 	dp_lro_hash_setup(soc);
 	dp_dscp_tid_map_setup(pdev);
+
+	/* Rx monitor mode specific init */
+	if (dp_rx_pdev_mon_attach(pdev)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		"dp_rx_pdev_attach failed\n");
+		goto fail0;
+	}
 
 	return (struct cdp_pdev *)pdev;
 
@@ -1278,6 +1303,8 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 
 	dp_rx_pdev_detach(pdev);
 
+	dp_rx_pdev_mon_detach(pdev);
+
 	/* Setup per PDEV REO rings if configured */
 	if (wlan_cfg_per_pdev_rx_ring(soc->wlan_cfg_ctx)) {
 		dp_srng_cleanup(soc, &soc->reo_dest_ring[pdev->pdev_id],
@@ -1294,6 +1321,9 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 
 	dp_srng_cleanup(soc, &pdev->rxdma_mon_status_ring,
 		RXDMA_MONITOR_STATUS, 0);
+
+	dp_srng_cleanup(soc, &pdev->rxdma_mon_desc_ring,
+		RXDMA_MONITOR_DESC, 0);
 
 	soc->pdev_list[pdev->pdev_id] = NULL;
 
@@ -1481,6 +1511,19 @@ static void dp_rxdma_ring_config(struct dp_soc *soc)
 		if (pdev) {
 			htt_srng_setup(soc->htt_handle, i,
 				pdev->rx_refill_buf_ring.hal_srng, RXDMA_BUF);
+
+			htt_srng_setup(soc->htt_handle, i,
+					pdev->rxdma_mon_buf_ring.hal_srng,
+					RXDMA_MONITOR_BUF);
+			htt_srng_setup(soc->htt_handle, i,
+					pdev->rxdma_mon_dst_ring.hal_srng,
+					RXDMA_MONITOR_DST);
+			htt_srng_setup(soc->htt_handle, i,
+				pdev->rxdma_mon_status_ring.hal_srng,
+				RXDMA_MONITOR_STATUS);
+			htt_srng_setup(soc->htt_handle, i,
+				pdev->rxdma_mon_desc_ring.hal_srng,
+				RXDMA_MONITOR_DESC);
 		}
 	}
 }
@@ -2042,6 +2085,85 @@ static struct cdp_cfg *dp_get_ctrl_pdev_from_vdev_wifi3(struct cdp_vdev *pvdev)
 	struct dp_pdev *pdev = vdev->pdev;
 
 	return (struct cdp_cfg *)pdev->wlan_cfg_ctx;
+}
+/**
+ * dp_vdev_set_monitor_mode() - Set DP VDEV to monitor mode
+ * @vdev_handle: Datapath VDEV handle
+ *
+ * Return: 0 on success, not 0 on failure
+ */
+static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle)
+{
+	/* Many monitor VAPs can exists in a system but only one can be up at
+	 * anytime
+	 */
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+	struct dp_pdev *pdev;
+	struct htt_rx_ring_tlv_filter htt_tlv_filter;
+	struct dp_soc *soc;
+	uint8_t pdev_id;
+
+	qdf_assert(vdev);
+
+	pdev = vdev->pdev;
+	pdev_id = pdev->pdev_id;
+	soc = pdev->soc;
+
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
+		"pdev=%p, pdev_id=%d, soc=%p vdev=%p\n",
+		pdev, pdev_id, soc, vdev);
+
+	/*Check if current pdev's monitor_vdev exists */
+	if (pdev->monitor_vdev) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"vdev=%p\n", vdev);
+		qdf_assert(vdev);
+	}
+
+	pdev->monitor_vdev = vdev;
+
+	htt_tlv_filter.mpdu_start = 1;
+	htt_tlv_filter.msdu_start = 1;
+	htt_tlv_filter.packet = 1;
+	htt_tlv_filter.msdu_end = 1;
+	htt_tlv_filter.mpdu_end = 1;
+	htt_tlv_filter.packet_header = 1;
+	htt_tlv_filter.attention = 1;
+	htt_tlv_filter.ppdu_start = 0;
+	htt_tlv_filter.ppdu_end = 0;
+	htt_tlv_filter.ppdu_end_user_stats = 0;
+	htt_tlv_filter.ppdu_end_user_stats_ext = 0;
+	htt_tlv_filter.ppdu_end_status_done = 0;
+	htt_tlv_filter.enable_fp = 1;
+	htt_tlv_filter.enable_md = 0;
+	htt_tlv_filter.enable_mo = 1;
+
+	htt_h2t_rx_ring_cfg(soc->htt_handle, pdev_id,
+		pdev->rxdma_mon_dst_ring.hal_srng,
+		RXDMA_MONITOR_BUF,  RX_BUFFER_SIZE, &htt_tlv_filter);
+
+	htt_tlv_filter.mpdu_start = 1;
+	htt_tlv_filter.msdu_start = 1;
+	htt_tlv_filter.packet = 0;
+	htt_tlv_filter.msdu_end = 1;
+	htt_tlv_filter.mpdu_end = 1;
+	htt_tlv_filter.packet_header = 1;
+	htt_tlv_filter.attention = 1;
+	htt_tlv_filter.ppdu_start = 1;
+	htt_tlv_filter.ppdu_end = 1;
+	htt_tlv_filter.ppdu_end_user_stats = 1;
+	htt_tlv_filter.ppdu_end_user_stats_ext = 1;
+	htt_tlv_filter.ppdu_end_status_done = 1;
+	htt_tlv_filter.enable_fp = 1;
+	htt_tlv_filter.enable_md = 1;
+	htt_tlv_filter.enable_mo = 1;
+
+	/*
+	 * htt_h2t_rx_ring_cfg(soc->htt_handle, pdev_id,
+	 * pdev->rxdma_mon_status_ring.hal_srng,
+	 * RXDMA_MONITOR_STATUS, RX_BUFFER_SIZE, &htt_tlv_filter);
+	 */
+	return QDF_STATUS_SUCCESS;
 }
 
 #ifdef MESH_MODE_SUPPORT
@@ -2923,6 +3045,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.set_vdev_dscp_tid_map = dp_set_vdev_dscp_tid_map_wifi3,
 	.set_pdev_dscp_tid_map = dp_set_pdev_dscp_tid_map_wifi3,
 	.txrx_stats = dp_txrx_stats,
+	.txrx_set_monitor_mode = dp_vdev_set_monitor_mode,
 	/* TODO: Add other functions */
 };
 
@@ -2942,7 +3065,13 @@ static struct cdp_me_ops dp_ops_me = {
 };
 
 static struct cdp_mon_ops dp_ops_mon = {
-	/* TODO */
+	.txrx_monitor_set_filter_ucast_data = NULL,
+	.txrx_monitor_set_filter_mcast_data = NULL,
+	.txrx_monitor_set_filter_non_data = NULL,
+	.txrx_monitor_get_filter_ucast_data = NULL,
+	.txrx_monitor_get_filter_mcast_data = NULL,
+	.txrx_monitor_get_filter_non_data = NULL,
+	.txrx_reset_monitor_mode = NULL,
 };
 
 static struct cdp_host_stats_ops dp_ops_host_stats = {

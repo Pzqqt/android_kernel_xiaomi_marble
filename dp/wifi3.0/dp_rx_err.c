@@ -29,33 +29,6 @@
 #include <ieee80211.h>
 #endif
 
-/**
- * dp_rx_cookie_2_link_desc_va() - Converts cookie to a virtual address of
- *				   the MSDU Link Descriptor
- * @soc: core txrx main context
- * @cookie: cookie used to lookup virtual address of link descriptor
- *          Normally this is just an index into a per SOC array.
- *
- * This is the VA of the link descriptor, that HAL layer later uses to
- * retrieve the list of MSDU's for a given .
- *
- * Return: void *: Virtual Address of the Rx descriptor
- */
-static inline
-void *dp_rx_cookie_2_link_desc_va(struct dp_soc *soc,
-				  struct hal_buf_info *buf_info)
-{
-	void *link_desc_va;
-
-	/* TODO */
-	/* Add sanity for  cookie */
-
-	link_desc_va = soc->link_desc_banks[buf_info->sw_cookie].base_vaddr +
-		(buf_info->paddr -
-			soc->link_desc_banks[buf_info->sw_cookie].base_paddr);
-
-	return link_desc_va;
-}
 
 /**
  * dp_rx_frag_handle() - Handles fragmented Rx frames
@@ -128,7 +101,8 @@ dp_rx_msdus_drop(struct dp_soc *soc, void *ring_desc,
 
 	for (i = 0; (i < HAL_RX_NUM_MSDU_DESC) && quota--; i++) {
 		struct dp_rx_desc *rx_desc =
-			dp_rx_cookie_2_va(soc, msdu_list.sw_cookie[i]);
+			dp_rx_cookie_2_va_rxdma_buf(soc,
+			msdu_list.sw_cookie[i]);
 
 		qdf_assert(rx_desc);
 
@@ -470,6 +444,9 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 	uint8_t error, rbm;
 	struct hal_rx_mpdu_desc_info mpdu_desc_info;
 	struct hal_buf_info hbi;
+	struct dp_pdev *dp_pdev;
+	struct dp_srng *dp_rxdma_srng;
+	struct rx_desc_pool *rx_desc_pool;
 
 	/* Debug -- Remove later */
 	qdf_assert(soc && hal_ring);
@@ -547,7 +524,6 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 					&head, &tail, quota);
 			continue;
 		}
-
 		/* Return link descriptor through WBM ring (SW2WBM)*/
 		dp_rx_link_desc_return(soc, ring_desc);
 	}
@@ -555,10 +531,16 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 done:
 	hal_srng_access_end(hal_soc, hal_ring);
 
+
 	/* Assume MAC id = 0, owner = 0 */
-	if (rx_bufs_used)
-		dp_rx_buffers_replenish(soc, 0, rx_bufs_used, &head, &tail,
-				HAL_RX_BUF_RBM_SW3_BM);
+	if (rx_bufs_used) {
+		dp_pdev = soc->pdev_list[0];
+		dp_rxdma_srng = &dp_pdev->rx_refill_buf_ring;
+		rx_desc_pool = &soc->rx_desc_buf[0];
+
+		dp_rx_buffers_replenish(soc, 0, dp_rxdma_srng, rx_desc_pool,
+			rx_bufs_used, &head, &tail, HAL_RX_BUF_RBM_SW3_BM);
+	}
 
 	return rx_bufs_used; /* Assume no scale factor for now */
 }
@@ -589,6 +571,9 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 	uint8_t wbm_err_src;
 	uint32_t rx_buf_cookie;
 	uint8_t mac_id;
+	struct dp_pdev *dp_pdev;
+	struct dp_srng *dp_rxdma_srng;
+	struct rx_desc_pool *rx_desc_pool;
 
 	/* Debug -- Remove later */
 	qdf_assert(soc && hal_ring);
@@ -636,7 +621,7 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 
 		rx_buf_cookie =	HAL_RX_WBM_BUF_COOKIE_GET(ring_desc);
 
-		rx_desc = dp_rx_cookie_2_va(soc, rx_buf_cookie);
+		rx_desc = dp_rx_cookie_2_va_rxdma_buf(soc, rx_buf_cookie);
 		qdf_assert(rx_desc);
 
 		/* XXX */
@@ -707,7 +692,7 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		} else {
 			/* Should not come here */
 			rx_buf_cookie = HAL_RX_WBM_BUF_COOKIE_GET(ring_desc);
-			rx_desc = dp_rx_cookie_2_va(soc, rx_buf_cookie);
+			rx_desc = dp_rx_cookie_2_va_rxdma_buf(soc, rx_buf_cookie);
 
 			qdf_assert(rx_desc);
 
@@ -739,13 +724,16 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 done:
 	hal_srng_access_end(hal_soc, hal_ring);
 
-	/* Assume MAC id = 0, owner = 0 */
 	for (mac_id = 0; mac_id < MAX_PDEV_CNT; mac_id++) {
 		if (rx_bufs_used[mac_id]) {
-			dp_rx_buffers_replenish(soc, mac_id,
-						rx_bufs_used[mac_id],
-						&head[mac_id], &tail[mac_id],
-						HAL_RX_BUF_RBM_SW3_BM);
+			dp_pdev = soc->pdev_list[mac_id];
+			dp_rxdma_srng = &dp_pdev->rx_refill_buf_ring;
+			rx_desc_pool = &soc->rx_desc_buf[mac_id];
+
+			dp_rx_buffers_replenish(soc, mac_id, dp_rxdma_srng,
+					rx_desc_pool, rx_bufs_used[mac_id],
+					&head[mac_id], &tail[mac_id],
+					HAL_RX_BUF_RBM_SW3_BM);
 			rx_bufs_reaped += rx_bufs_used[mac_id];
 		}
 	}

@@ -35,17 +35,23 @@
  *
  * @soc: core txrx main context
  * @mac_id: mac_id which is one of 3 mac_ids
+ * @dp_rxdma_srng: dp rxdma circular ring
+ * @rx_desc_pool: Poiter to free Rx descriptor pool
+ * @num_req_buffers: number of buffer to be replenished
  * @desc_list: list of descs if called from dp_rx_process
  *	       or NULL during dp rx initialization or out of buffer
  *	       interrupt.
+ * @tail: tail of descs list
  * @owner: who owns the nbuf (host, NSS etc...)
  * Return: return success or failure
  */
 QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
-				 uint32_t num_req_buffers,
-				 union dp_rx_desc_list_elem_t **desc_list,
-				 union dp_rx_desc_list_elem_t **tail,
-				 uint8_t owner)
+				struct dp_srng *dp_rxdma_srng,
+				struct rx_desc_pool *rx_desc_pool,
+				uint32_t num_req_buffers,
+				union dp_rx_desc_list_elem_t **desc_list,
+				union dp_rx_desc_list_elem_t **tail,
+				uint8_t owner)
 {
 	uint32_t num_alloc_desc;
 	uint16_t num_desc_to_free = 0;
@@ -57,9 +63,11 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 	qdf_nbuf_t rx_netbuf;
 	void *rxdma_ring_entry;
 	union dp_rx_desc_list_elem_t *next;
-	struct dp_srng *dp_rxdma_srng = &dp_pdev->rx_refill_buf_ring;
-	void *rxdma_srng = dp_rxdma_srng->hal_srng;
-	int32_t ret;
+	QDF_STATUS ret;
+
+	void *rxdma_srng;
+
+	rxdma_srng = dp_rxdma_srng->hal_srng;
 
 	if (!rxdma_srng) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -68,14 +76,16 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 		"requested %d buffers for replenish", num_req_buffers);
 
 	/*
 	 * if desc_list is NULL, allocate the descs from freelist
 	 */
 	if (!(*desc_list)) {
+
 		num_alloc_desc = dp_rx_get_free_desc_list(dp_soc, mac_id,
+							  rx_desc_pool,
 							  num_req_buffers,
 							  desc_list,
 							  tail);
@@ -98,7 +108,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 						   rxdma_srng,
 						   sync_hw_ptr);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 			"no of availble entries in rxdma ring: %d",
 			num_entries_avail);
 
@@ -144,6 +154,12 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 		(*desc_list)->rx_desc.nbuf = rx_netbuf;
 		DP_STATS_INC_PKT(dp_pdev, replenished, 1,
 				qdf_nbuf_len(rx_netbuf));
+
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+				"rx_netbuf=%p, buf=%p, paddr=0x%llx, cookie=%d\n",
+			rx_netbuf, qdf_nbuf_data(rx_netbuf),
+			(unsigned long long)paddr, (*desc_list)->rx_desc.cookie);
+
 		hal_rxdma_buff_addr_info_set(rxdma_ring_entry, paddr,
 						(*desc_list)->rx_desc.cookie,
 						owner);
@@ -153,18 +169,19 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 
 	hal_srng_access_end(dp_soc->hal_soc, rxdma_srng);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 		"successfully replenished %d buffers", num_req_buffers);
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 		"%d rx desc added back to free list", num_desc_to_free);
 	DP_STATS_INC(dp_pdev, buf_freelist, num_desc_to_free);
 
 	/*
 	 * add any available free desc back to the free list
 	 */
+
 	if (*desc_list)
-		dp_rx_add_desc_list_to_free_list(dp_soc, desc_list,
-						 tail, mac_id);
+		dp_rx_add_desc_list_to_free_list(dp_soc, desc_list, tail,
+			mac_id, rx_desc_pool);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -518,6 +535,9 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 	uint16_t i, vdev_cnt = 0;
 	uint32_t ampdu_flag, amsdu_flag;
 	struct ether_header *eh;
+	struct dp_pdev *pdev;
+	struct dp_srng *dp_rxdma_srng;
+	struct rx_desc_pool *rx_desc_pool;
 
 	/* Debug -- Remove later */
 	qdf_assert(soc && hal_ring);
@@ -559,7 +579,7 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 
 		rx_buf_cookie = HAL_RX_REO_BUF_COOKIE_GET(ring_desc);
 
-		rx_desc = dp_rx_cookie_2_va(soc, rx_buf_cookie);
+		rx_desc = dp_rx_cookie_2_va_rxdma_buf(soc, rx_buf_cookie);
 
 		qdf_assert(rx_desc);
 		rx_bufs_reaped[rx_desc->pool_id]++;
@@ -648,10 +668,13 @@ done:
 		if (!rx_bufs_reaped[mac_id])
 			continue;
 
-		dp_rx_buffers_replenish(soc, mac_id,
-					rx_bufs_reaped[mac_id],
-					&head[mac_id],
-					&tail[mac_id],
+		pdev = soc->pdev_list[mac_id];
+		dp_rxdma_srng = &pdev->rx_refill_buf_ring;
+		rx_desc_pool = &soc->rx_desc_buf[mac_id];
+
+		dp_rx_buffers_replenish(soc, mac_id, dp_rxdma_srng,
+					rx_desc_pool, rx_bufs_reaped[mac_id],
+					&head[mac_id], &tail[mac_id],
 					HAL_RX_BUF_RBM_SW3_BM);
 	}
 
@@ -849,7 +872,7 @@ done:
 
 /**
  * dp_rx_detach() - detach dp rx
- * @soc: core txrx main context
+ * @pdev: core txrx pdev context
  *
  * This function will detach DP RX into main device context
  * will free DP Rx resources.
@@ -861,8 +884,11 @@ dp_rx_pdev_detach(struct dp_pdev *pdev)
 {
 	uint8_t pdev_id = pdev->pdev_id;
 	struct dp_soc *soc = pdev->soc;
+	struct rx_desc_pool *rx_desc_pool;
 
-	dp_rx_desc_pool_free(soc, pdev_id);
+	rx_desc_pool = &soc->rx_desc_buf[pdev_id];
+
+	dp_rx_desc_pool_free(soc, pdev_id, rx_desc_pool);
 	qdf_spinlock_destroy(&soc->rx_desc_mutex[pdev_id]);
 
 	return;
@@ -870,7 +896,7 @@ dp_rx_pdev_detach(struct dp_pdev *pdev)
 
 /**
  * dp_rx_attach() - attach DP RX
- * @soc: core txrx main context
+ * @pdev: core txrx pdev context
  *
  * This function will attach a DP RX instance into the main
  * device (SOC) context. Will allocate dp rx resource and
@@ -888,6 +914,8 @@ dp_rx_pdev_attach(struct dp_pdev *pdev)
 	uint32_t rxdma_entries;
 	union dp_rx_desc_list_elem_t *desc_list = NULL;
 	union dp_rx_desc_list_elem_t *tail = NULL;
+	struct dp_srng *dp_rxdma_srng;
+	struct rx_desc_pool *rx_desc_pool;
 
 	qdf_spinlock_create(&soc->rx_desc_mutex[pdev_id]);
 	pdev = soc->pdev_list[pdev_id];
@@ -895,11 +923,14 @@ dp_rx_pdev_attach(struct dp_pdev *pdev)
 
 	rxdma_entries = rxdma_srng.alloc_size/hal_srng_get_entrysize(
 						     soc->hal_soc, RXDMA_BUF);
-	dp_rx_desc_pool_alloc(soc, pdev_id);
 
+	rx_desc_pool = &soc->rx_desc_buf[pdev_id];
+
+	dp_rx_desc_pool_alloc(soc, pdev_id, rxdma_entries*3, rx_desc_pool);
 	/* For Rx buffers, WBM release ring is SW RING 3,for all pdev's */
-	dp_rx_buffers_replenish(soc, pdev_id, rxdma_entries,
-				&desc_list, &tail, HAL_RX_BUF_RBM_SW3_BM);
+	dp_rxdma_srng = &pdev->rx_refill_buf_ring;
+	dp_rx_buffers_replenish(soc, pdev_id, dp_rxdma_srng, rx_desc_pool,
+		rxdma_entries, &desc_list, &tail, HAL_RX_BUF_RBM_SW3_BM);
 
 	return QDF_STATUS_SUCCESS;
 }

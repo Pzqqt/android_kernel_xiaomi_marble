@@ -58,6 +58,10 @@
 #include "rx_msdu_start.h"
 #include "rx_msdu_end.h"
 #include "rx_attention.h"
+#include "rx_ppdu_start.h"
+#include "rx_ppdu_start_user_info.h"
+#include "rx_ppdu_end_user_stats.h"
+#include "rx_ppdu_end_user_stats_ext.h"
 #include "tx_msdu_extension.h"
 #include "wcss_version.h"
 #include "pld_common.h"
@@ -139,7 +143,8 @@ enum hal_srng_ring_id {
 	HAL_SRNG_WMAC1_SW2RXDMA1_STATBUF = 132,
 	HAL_SRNG_WMAC1_RXDMA2SW0 = 133,
 	HAL_SRNG_WMAC1_RXDMA2SW1 = 134,
-	/* 135-142 unused */
+	HAL_SRNG_WMAC1_SW2RXDMA1_DESC = 135,
+	/* 136-142 unused */
 	HAL_SRNG_LMAC1_ID_END = 143
 };
 

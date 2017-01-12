@@ -37,6 +37,8 @@
 #include <hal_reo.h>
 #include "wlan_cfg.h"
 #include "hal_rx.h"
+#include <hal_api.h>
+#include <hal_api_mon.h>
 
 #define MAX_TCL_RING 3
 #define MAX_RXDMA_ERRORS 32
@@ -55,6 +57,7 @@
 #define DP_FC0_SUBTYPE_QOS 0x80
 #define DP_QOS_TID 0x0f
 #define DP_IPV6_PRIORITY_SHIFT 20
+#define MAX_MON_LINK_DESC_BANKS 2
 
 #if defined(CONFIG_MCL)
 #define MAX_PDEV_CNT 1
@@ -130,6 +133,18 @@ enum dp_tx_frm_type {
 	dp_tx_frm_audio,
 	dp_tx_frm_me,
 	dp_tx_frm_raw,
+};
+
+/**
+ * struct rx_desc_pool
+ * @pool_size: number of RX descriptor in the pool
+ * @array: pointer to array of RX descriptor
+ * @freelist: pointer to free RX descriptor link list
+ */
+struct rx_desc_pool {
+	uint32_t pool_size;
+	union dp_rx_desc_list_elem_t *array;
+	union dp_rx_desc_list_elem_t *freelist;
 };
 
 /**
@@ -489,12 +504,14 @@ struct dp_soc {
 	/* Tx H/W queues lock */
 	qdf_spinlock_t tx_queue_lock[MAX_TX_HW_QUEUES];
 
-	/* Rx SW descriptor pool */
-	struct {
-		uint32_t pool_size;
-		union dp_rx_desc_list_elem_t *array;
-		union dp_rx_desc_list_elem_t *freelist;
-	} rx_desc[MAX_RXDESC_POOLS];
+	/* Rx SW descriptor pool for RXDMA buffer */
+	struct rx_desc_pool rx_desc_buf[MAX_RXDESC_POOLS];
+
+	/* Rx SW descriptor pool for RXDMA monitor buffer */
+	struct rx_desc_pool rx_desc_mon[MAX_RXDESC_POOLS];
+
+	/* Rx SW descriptor pool for RXDMA status buffer */
+	struct rx_desc_pool rx_desc_status[MAX_RXDESC_POOLS];
 
 	/* DP rx desc lock */
 	DP_MUTEX_TYPE rx_desc_mutex[MAX_RXDESC_POOLS];
@@ -681,6 +698,18 @@ struct dp_pdev {
 	/* RXDMA monitor status ring. TBD: Check format of this ring */
 	struct dp_srng rxdma_mon_status_ring;
 
+	struct dp_srng rxdma_mon_desc_ring;
+
+	/* Link descriptor memory banks */
+	struct {
+		void *base_vaddr_unaligned;
+		void *base_vaddr;
+		qdf_dma_addr_t base_paddr_unaligned;
+		qdf_dma_addr_t base_paddr;
+		uint32_t size;
+	} link_desc_banks[MAX_MON_LINK_DESC_BANKS];
+
+
 	/**
 	 * TODO: See if we need a ring map here for LMAC rings.
 	 * 1. Monitor rings are currently planning to be processed on receiving
@@ -737,6 +766,13 @@ struct dp_pdev {
 
 	/* dscp_tid_map_*/
 	uint8_t dscp_tid_map[DP_MAX_TID_MAPS][DSCP_TID_MAP_MAX];
+
+	struct hal_rx_ppdu_info ppdu_info;
+
+	qdf_nbuf_queue_t rx_status_q;
+	uint32_t mon_ppdu_id;
+	uint32_t mon_ppdu_status;
+	struct cdp_mon_status rx_mon_recv_status;
 
 	/* TBD */
 };

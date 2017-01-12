@@ -22,6 +22,7 @@
 #include "dp_peer.h"
 #include "dp_types.h"
 #include "dp_internal.h"
+#include "dp_rx_mon.h"
 
 #define HTT_HTC_PKT_POOL_INIT_SIZE 64
 
@@ -305,7 +306,11 @@ int htt_srng_setup(void *htt_soc, int mac_id, void *hal_srng,
 		htt_ring_id = HTT_RXDMA_MONITOR_DEST_RING;
 		htt_ring_type = HTT_HW_TO_SW_RING;
 		break;
-	case RXDMA_DST:
+	case RXDMA_MONITOR_DESC:
+		htt_ring_id = HTT_RXDMA_MONITOR_DESC_RING;
+		htt_ring_type = HTT_SW_TO_HW_RING;
+		break;
+
 	default:
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s: Ring currently not supported\n", __func__);
@@ -465,7 +470,382 @@ int htt_srng_setup(void *htt_soc, int mac_id, void *hal_srng,
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, htt_msg);
 	htc_send_pkt(soc->htc_soc, &pkt->htc_pkt);
-	return 0;
+
+	return QDF_STATUS_SUCCESS;
+
+fail1:
+	qdf_nbuf_free(htt_msg);
+fail0:
+	return QDF_STATUS_E_FAILURE;
+}
+
+/*
+ * htt_h2t_rx_ring_cfg() - Send SRNG packet and TLV filter
+ * config message to target
+ * @htt_soc:	HTT SOC handle
+ * @pdev_id:	PDEV Id
+ * @hal_srng:	Opaque HAL SRNG pointer
+ * @hal_ring_type:	SRNG ring type
+ * @ring_buf_size:	SRNG buffer size
+ * @htt_tlv_filter:	Rx SRNG TLV and filter setting
+ * Return: 0 on success; error code on failure
+ */
+int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id, void *hal_srng,
+	int hal_ring_type, int ring_buf_size,
+	struct htt_rx_ring_tlv_filter *htt_tlv_filter)
+{
+	struct htt_soc *soc = (struct htt_soc *)htt_soc;
+	struct dp_htt_htc_pkt *pkt;
+	qdf_nbuf_t htt_msg;
+	uint32_t *msg_word;
+	struct hal_srng_params srng_params;
+	uint32_t htt_ring_type, htt_ring_id;
+	uint32_t tlv_filter;
+
+	htt_msg = qdf_nbuf_alloc(soc->osdev,
+		HTT_MSG_BUF_SIZE(HTT_RX_RING_SELECTION_CFG_SZ),
+	/* reserve room for the HTC header */
+	HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING, 4, TRUE);
+	if (!htt_msg)
+		goto fail0;
+
+	hal_get_srng_params(soc->hal_soc, hal_srng, &srng_params);
+
+	switch (hal_ring_type) {
+	case RXDMA_BUF:
+#if QCA_HOST2FW_RXBUF_RING
+		htt_ring_id = HTT_HOST1_TO_FW_RXBUF_RING;
+		htt_ring_type = HTT_SW_TO_SW_RING;
+#else
+		htt_ring_id = HTT_RXDMA_HOST_BUF_RING;
+		htt_ring_type = HTT_SW_TO_HW_RING;
+#endif
+		break;
+	case RXDMA_MONITOR_BUF:
+		htt_ring_id = HTT_RXDMA_MONITOR_BUF_RING;
+		htt_ring_type = HTT_SW_TO_HW_RING;
+		break;
+	case RXDMA_MONITOR_STATUS:
+		htt_ring_id = HTT_RXDMA_MONITOR_STATUS_RING;
+		htt_ring_type = HTT_SW_TO_HW_RING;
+		break;
+	case RXDMA_MONITOR_DST:
+		htt_ring_id = HTT_RXDMA_MONITOR_DEST_RING;
+		htt_ring_type = HTT_HW_TO_SW_RING;
+		break;
+	case RXDMA_MONITOR_DESC:
+		htt_ring_id = HTT_RXDMA_MONITOR_DESC_RING;
+		htt_ring_type = HTT_SW_TO_HW_RING;
+		break;
+
+	default:
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s: Ring currently not supported\n", __func__);
+		goto fail1;
+	}
+
+	/*
+	 * Set the length of the message.
+	 * The contribution from the HTC_HDR_ALIGNMENT_PADDING is added
+	 * separately during the below call to qdf_nbuf_push_head.
+	 * The contribution from the HTC header is added separately inside HTC.
+	 */
+	if (qdf_nbuf_put_tail(htt_msg, HTT_RX_RING_SELECTION_CFG_SZ) == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s: Failed to expand head for RX Ring Cfg msg\n",
+			__func__);
+		goto fail1; /* failure */
+	}
+
+	msg_word = (uint32_t *)qdf_nbuf_data(htt_msg);
+
+	/* rewind beyond alignment pad to get to the HTC header reserved area */
+	qdf_nbuf_push_head(htt_msg, HTC_HDR_ALIGNMENT_PADDING);
+
+	/* word 0 */
+	*msg_word = 0;
+	HTT_H2T_MSG_TYPE_SET(*msg_word, HTT_H2T_MSG_TYPE_RX_RING_SELECTION_CFG);
+	HTT_RX_RING_SELECTION_CFG_PDEV_ID_SET(*msg_word, pdev_id);
+	/* TODO: Discuss with FW on changing this to unique ID and using
+	 * htt_ring_type to send the type of ring
+	 */
+	HTT_RX_RING_SELECTION_CFG_RING_ID_SET(*msg_word, htt_ring_id);
+
+	HTT_RX_RING_SELECTION_CFG_STATUS_TLV_SET(*msg_word,
+		!!(srng_params.flags & HAL_SRNG_MSI_SWAP));
+
+	HTT_RX_RING_SELECTION_CFG_PKT_TLV_SET(*msg_word,
+		!!(srng_params.flags & HAL_SRNG_DATA_TLV_SWAP));
+
+	/* word 1 */
+	msg_word++;
+	*msg_word = 0;
+	HTT_RX_RING_SELECTION_CFG_RING_BUFFER_SIZE_SET(*msg_word,
+		ring_buf_size);
+
+	/* word 2 */
+	msg_word++;
+	*msg_word = 0;
+
+	if (htt_tlv_filter->enable_fp) {
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
+			MGMT, 0000, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
+			MGMT, 0001, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
+			MGMT, 0010, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
+			MGMT, 0011, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
+			MGMT, 0100, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
+			MGMT, 0101, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
+			MGMT, 0110, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
+			MGMT, 1000, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
+			MGMT, 1001, 1);
+	}
+
+	if (htt_tlv_filter->enable_md) {
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MD,
+			MGMT, 0000, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MD,
+			MGMT, 0001, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MD,
+			MGMT, 0010, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MD,
+			MGMT, 0011, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MD,
+			MGMT, 0100, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MD,
+			MGMT, 0101, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MD,
+			MGMT, 0110, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MD,
+			MGMT, 1000, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MD,
+			MGMT, 1001, 1);
+	}
+
+	if (htt_tlv_filter->enable_mo) {
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
+			MGMT, 0000, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
+			MGMT, 0001, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
+			MGMT, 0010, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
+			MGMT, 0011, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
+			MGMT, 0100, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
+			MGMT, 0101, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
+			MGMT, 0110, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
+			MGMT, 1000, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
+			MGMT, 1001, 1);
+	}
+	/* word 3 */
+	msg_word++;
+	*msg_word = 0;
+
+	if (htt_tlv_filter->enable_fp) {
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, FP,
+			MGMT, 1010, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, FP,
+			MGMT, 1011, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, FP,
+			MGMT, 1100, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, FP,
+			MGMT, 1101, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, FP,
+			MGMT,	1110, 1);
+	}
+
+	if (htt_tlv_filter->enable_md) {
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MD,
+			MGMT, 1010, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MD,
+			MGMT, 1011, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MD,
+			MGMT, 1100, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MD,
+			MGMT, 1101, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MD,
+			MGMT, 1110, 1);
+	}
+
+	if (htt_tlv_filter->enable_mo) {
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MO,
+			MGMT, 1010, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MO,
+			MGMT, 1011, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MO,
+			MGMT, 1100, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MO,
+			MGMT, 1101, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MO,
+			MGMT, 1110, 1);
+	}
+
+	/* word 4 */
+	msg_word++;
+	*msg_word = 0;
+
+	if (htt_tlv_filter->enable_fp) {
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, FP,
+			CTRL, 0111, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, FP,
+			CTRL, 1000, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, FP,
+			CTRL, 1001, 1);
+	}
+
+	if (htt_tlv_filter->enable_md) {
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MD,
+			CTRL, 0111, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MD,
+			CTRL, 1000, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MD,
+			CTRL, 1001, 1);
+	}
+
+	if (htt_tlv_filter->enable_mo) {
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+			CTRL, 0111, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+			CTRL, 1000, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+			CTRL, 1001, 1);
+	}
+
+	/* word 5 */
+	msg_word++;
+	*msg_word = 0;
+	if (htt_tlv_filter->enable_fp) {
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
+			CTRL, 1010, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
+			CTRL, 1011, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
+			CTRL, 1100, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
+			CTRL, 1101, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
+			CTRL, 1110, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
+			CTRL, 1111, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
+			CTRL, 1111, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
+			DATA, MCAST, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
+			DATA, UCAST, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
+			DATA, NULL, 1);
+	}
+
+	if (htt_tlv_filter->enable_md) {
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MD,
+			CTRL, 1010, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MD,
+			CTRL, 1011, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MD,
+			CTRL, 1100, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MD,
+			CTRL, 1101, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MD,
+			CTRL, 1110, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MD,
+			CTRL, 1111, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MD,
+			CTRL, 1111, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MD,
+			DATA, MCAST, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MD,
+			DATA, UCAST, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MD,
+			DATA, NULL, 1);
+	}
+	if (htt_tlv_filter->enable_mo) {
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
+			CTRL, 1010, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
+			CTRL, 1011, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
+			CTRL, 1100, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
+			CTRL, 1101, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
+			CTRL, 1110, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
+			CTRL, 1111, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
+			CTRL, 1111, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
+			DATA, MCAST, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
+			DATA, UCAST, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
+			DATA, NULL, 1);
+	}
+
+	/* word 6 */
+	msg_word++;
+	*msg_word = 0;
+	tlv_filter = 0;
+	htt_rx_ring_tlv_filter_in_enable_set(tlv_filter, MPDU_START,
+		htt_tlv_filter->mpdu_start);
+	htt_rx_ring_tlv_filter_in_enable_set(tlv_filter, MSDU_START,
+		htt_tlv_filter->msdu_start);
+	htt_rx_ring_tlv_filter_in_enable_set(tlv_filter, PACKET,
+		htt_tlv_filter->packet);
+	htt_rx_ring_tlv_filter_in_enable_set(tlv_filter, MSDU_END,
+		htt_tlv_filter->msdu_end);
+	htt_rx_ring_tlv_filter_in_enable_set(tlv_filter, MPDU_END,
+		htt_tlv_filter->mpdu_end);
+	htt_rx_ring_tlv_filter_in_enable_set(tlv_filter, PACKET_HEADER,
+		htt_tlv_filter->packet_header);
+	htt_rx_ring_tlv_filter_in_enable_set(tlv_filter, ATTENTION,
+		htt_tlv_filter->ppdu_end_status_done);
+	htt_rx_ring_tlv_filter_in_enable_set(tlv_filter, PPDU_START,
+		htt_tlv_filter->ppdu_start);
+	htt_rx_ring_tlv_filter_in_enable_set(tlv_filter, PPDU_END,
+		htt_tlv_filter->ppdu_end);
+	htt_rx_ring_tlv_filter_in_enable_set(tlv_filter, PPDU_END_USER_STATS,
+		htt_tlv_filter->ppdu_end_user_stats);
+	htt_rx_ring_tlv_filter_in_enable_set(tlv_filter,
+		PPDU_END_USER_STATS_EXT,
+		htt_tlv_filter->ppdu_end_user_stats_ext);
+	htt_rx_ring_tlv_filter_in_enable_set(tlv_filter, PPDU_END_STATUS_DONE,
+		htt_tlv_filter->ppdu_end_status_done);
+
+	HTT_RX_RING_SELECTION_CFG_TLV_FILTER_IN_FLAG_SET(*msg_word, tlv_filter);
+
+	/* "response_required" field should be set if a HTT response message is
+	 * required after setting up the ring.
+	 */
+	pkt = htt_htc_pkt_alloc(soc);
+	if (!pkt)
+		goto fail1;
+
+	pkt->soc_ctxt = NULL; /* not used during send-done callback */
+
+	SET_HTC_PACKET_INFO_TX(
+		&pkt->htc_pkt,
+		dp_htt_h2t_send_complete_free_netbuf,
+		qdf_nbuf_data(htt_msg),
+		qdf_nbuf_len(htt_msg),
+		soc->htc_endpoint,
+		1); /* tag - not relevant here */
+
+	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, htt_msg);
+	htc_send_pkt(soc->htc_soc, &pkt->htc_pkt);
+	return QDF_STATUS_SUCCESS;
 
 fail1:
 	qdf_nbuf_free(htt_msg);

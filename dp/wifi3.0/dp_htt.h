@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -81,6 +81,43 @@ struct htt_soc {
 	HTT_TX_MUTEX_TYPE htt_tx_mutex;
 };
 
+/**
+ * struct htt_rx_ring_tlv_filter - Rx ring TLV filter
+ * enable/disable.
+ * @mpdu_start: enable/disable MPDU start TLV
+ * @msdu_start: enable/disable MSDU start TLV
+ * @packet: enable/disable PACKET TLV
+ * @msdu_end: enable/disable MSDU end TLV
+ * @mpdu_end: enable/disable MPDU end TLV
+ * @packet_header: enable/disable PACKET header TLV
+ * @attention: enable/disable ATTENTION TLV
+ * @ppdu_start: enable/disable PPDU start TLV
+ * @ppdu_end: enable/disable PPDU end TLV
+ * @ppdu_end_user_stats: enable/disable PPDU user stats TLV
+ * @ppdu_end_user_stats_ext: enable/disable PPDU user stats ext TLV
+ * @ppdu_end_status_done: enable/disable PPDU end status done TLV
+ * @enable_fp: enable/disable FP packet
+ * @enable_md: enable/disable MD packet
+ * @enable_mo: enable/disable MO packet
+ */
+struct htt_rx_ring_tlv_filter {
+	u_int32_t mpdu_start:1,
+		msdu_start:1,
+		packet:1,
+		msdu_end:1,
+		mpdu_end:1,
+		packet_header:1,
+		attention:1,
+		ppdu_start:1,
+		ppdu_end:1,
+		ppdu_end_user_stats:1,
+		ppdu_end_user_stats_ext:1,
+		ppdu_end_status_done:1,
+		enable_fp:1,
+		enable_md:1,
+		enable_mo:1;
+};
+
 void *
 htt_soc_attach(void *txrx_soc, void *osif_soc, HTC_HANDLE htc_soc,
 	void *hal_soc, qdf_device_t osdev);
@@ -91,5 +128,21 @@ int htt_srng_setup(void *htt_soc, int pdev_id, void *hal_srng,
 	int hal_ring_type);
 
 int htt_soc_attach_target(void *htt_soc);
+
+/*
+ * htt_h2t_rx_ring_cfg() - Send SRNG packet and TLV filter
+ * config message to target
+ * @htt_soc:	HTT SOC handle
+ * @pdev_id:	PDEV Id
+ * @hal_srng:	Opaque HAL SRNG pointer
+ * @hal_ring_type:	SRNG ring type
+ * @ring_buf_size:	SRNG buffer size
+ * @htt_tlv_filter:	Rx SRNG TLV and filter setting
+ *
+ * Return: 0 on success; error code on failure
+ */
+int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id, void *hal_srng,
+	int hal_ring_type, int ring_buf_size,
+	struct htt_rx_ring_tlv_filter *htt_tlv_filter);
 
 #endif /* _DP_HTT_H_ */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -31,6 +31,7 @@
 #include <cdp_txrx_stats_struct.h>
 #endif
 #include "cdp_txrx_handle.h"
+#include <cdp_txrx_mon_struct.h>
 
 /******************************************************************************
  *

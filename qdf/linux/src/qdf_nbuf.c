@@ -2436,7 +2436,6 @@ __qdf_nbuf_dmamap_set_cb(__qdf_dma_map_t dmap, void *cb, void *arg)
 EXPORT_SYMBOL(__qdf_nbuf_dmamap_set_cb);
 
 
-#ifndef REMOVE_INIT_DEBUG_CODE
 /**
  * __qdf_nbuf_sync_single_for_cpu() - nbuf sync
  * @osdev: os device
@@ -2485,7 +2484,6 @@ __qdf_nbuf_sync_for_cpu(qdf_device_t osdev,
 	__qdf_nbuf_sync_single_for_cpu(osdev, skb, dir);
 }
 EXPORT_SYMBOL(__qdf_nbuf_sync_for_cpu);
-#endif
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0))
 /**

@@ -523,10 +523,10 @@ QDF_STATUS __qdf_nbuf_map_nbytes(qdf_device_t osdev, struct sk_buff *skb,
 	qdf_dma_dir_t dir, int nbytes);
 void __qdf_nbuf_unmap_nbytes(qdf_device_t osdev, struct sk_buff *skb,
 	qdf_dma_dir_t dir, int nbytes);
-#ifndef REMOVE_INIT_DEBUG_CODE
+
 void __qdf_nbuf_sync_for_cpu(qdf_device_t osdev, struct sk_buff *skb,
 	qdf_dma_dir_t dir);
-#endif
+
 QDF_STATUS __qdf_nbuf_map_nbytes_single(
 	qdf_device_t osdev, struct sk_buff *buf, qdf_dma_dir_t dir, int nbytes);
 void __qdf_nbuf_unmap_nbytes_single(

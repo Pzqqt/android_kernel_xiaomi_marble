@@ -362,13 +362,11 @@ qdf_nbuf_unmap_nbytes(qdf_device_t osdev,
 	__qdf_nbuf_unmap_nbytes(osdev, buf, dir, nbytes);
 }
 
-#ifndef REMOVE_INIT_DEBUG_CODE
 static inline void
 qdf_nbuf_sync_for_cpu(qdf_device_t osdev, qdf_nbuf_t buf, qdf_dma_dir_t dir)
 {
 	__qdf_nbuf_sync_for_cpu(osdev, buf, dir);
 }
-#endif
 
 static inline QDF_STATUS
 qdf_nbuf_map_single(qdf_device_t osdev, qdf_nbuf_t buf, qdf_dma_dir_t dir)

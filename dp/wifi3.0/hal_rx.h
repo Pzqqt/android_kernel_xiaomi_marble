@@ -1421,10 +1421,17 @@ static inline void hal_rx_msdu_list_get(void *msdu_link_desc,
 	struct rx_msdu_link *msdu_link = (struct rx_msdu_link *)msdu_link_desc;
 	int i;
 
-	*num_msdus = 0;
+	if (*num_msdus > HAL_RX_NUM_MSDU_DESC)
+		*num_msdus = HAL_RX_NUM_MSDU_DESC;
+
 	msdu_details = HAL_RX_LINK_DESC_MSDU0_PTR(msdu_link);
 
-	for (i = 0; i < HAL_RX_NUM_MSDU_DESC; i++) {
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+		"[%s][%d] msdu_link=%p msdu_details=%p\n",
+		__func__, __LINE__, msdu_link, msdu_details);
+
+
+	for (i = 0; i < *num_msdus; i++) {
 		msdu_desc_info = HAL_RX_MSDU_DESC_INFO_GET(&msdu_details[i]);
 		msdu_list->msdu_info[i].msdu_flags =
 			 HAL_RX_MSDU_FLAGS_GET(msdu_desc_info);
@@ -1433,8 +1440,12 @@ static inline void hal_rx_msdu_list_get(void *msdu_link_desc,
 		msdu_list->sw_cookie[i] =
 			 HAL_RX_BUF_COOKIE_GET(
 				&msdu_details[i].buffer_addr_info_details);
+
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			"[%s][%d] i=%d sw_cookie=%d\n",
+			__func__, __LINE__, i, msdu_list->sw_cookie[i]);
 	}
-	*num_msdus = i;
+
 }
 
 /**
@@ -1498,9 +1509,9 @@ enum hal_rx_reo_buf_type {
  * @ HAL_REO_ERR_BAR_FRAME_SN_EQUALS_SSN : A bar received with SSN equal to SN
  * @ HAL_REO_ERR_PN_CHECK_FAILED : PN Check Failed packet
  * @ HAL_REO_ERR_2K_ERROR_HANDLING_FLAG_SET : Frame is forwarded as a result
- * of the ‘Seq_2k_error_detected_flag’ been set in the REO Queue descriptor
+ * of the Seq_2k_error_detected_flag been set in the REO Queue descriptor
  * @ HAL_REO_ERR_PN_ERROR_HANDLING_FLAG_SET : Frame is forwarded as a result
- * of the ‘pn_error_detected_flag’ been set in the REO Queue descriptor
+ * of the pn_error_detected_flag been set in the REO Queue descriptor
  * @ HAL_REO_ERR_QUEUE_DESC_BLOCKED_SET : Frame is forwarded as a result of
  * the queue descriptor(address) being blocked as SW/FW seems to be currently
  * in the process of making updates to this descriptor
