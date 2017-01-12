@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -864,8 +864,10 @@ void wlan_hdd_tdls_exit(hdd_adapter_t *pAdapter)
 		goto done;
 	}
 
-	/* must stop timer here before freeing peer list, because peerIdleTimer is
-	   part of peer list structure. */
+	/*
+	 * must stop timer here before freeing peer list, because
+	 * peerIdleTimer is part of peer list structure.
+	 */
 	wlan_hdd_tdls_timers_destroy(pHddTdlsCtx);
 	wlan_hdd_tdls_free_list(pHddTdlsCtx);
 
@@ -1209,8 +1211,10 @@ int wlan_hdd_tdls_recv_discovery_resp(hdd_adapter_t *pAdapter,
 		   MAC_ADDR_ARRAY(curr_peer->peerMac), curr_peer->link_status);
 
 	if (eTDLS_LINK_DISCOVERING == curr_peer->link_status) {
-		/* Since we are here, it means Throughput threshold is alredy met. Make sure RSSI
-		   threshold is also met before setting up TDLS link */
+		/* Since we are here, it means Throughput threshold is
+		 * already met. Make sure RSSI threshold is also met
+		 * before setting up TDLS link.
+		 */
 		if ((int32_t) curr_peer->rssi >
 		    (int32_t) pHddTdlsCtx->threshold_config.
 		    rssi_trigger_threshold) {
@@ -3815,8 +3819,9 @@ int wlan_hdd_tdls_add_station(struct wiphy *wiphy,
 	}
 
 	/* first to check if we reached to maximum supported TDLS peer.
-	   TODO: for now, return -EPERM looks working fine,
-	   but need to check if any other errno fit into this category. */
+	 * TODO: for now, return -EPERM looks working fine,
+	 * but need to check if any other errno fit into this category.
+	 */
 	numCurrTdlsPeers = wlan_hdd_tdls_connected_peers(pAdapter);
 	if (pHddCtx->max_num_tdls_sta <= numCurrTdlsPeers) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
@@ -4074,10 +4079,12 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 	    SIR_MAC_TDLS_SETUP_RSP == action_code) {
 		numCurrTdlsPeers = wlan_hdd_tdls_connected_peers(pAdapter);
 		if (pHddCtx->max_num_tdls_sta <= numCurrTdlsPeers) {
-			/* supplicant still sends tdls_mgmt(SETUP_REQ) even after
-			   we return error code at 'add_station()'. Hence we have this
-			   check again in addtion to add_station().
-			   Anyway, there is no hard to double-check. */
+			/* supplicant still sends tdls_mgmt(SETUP_REQ)
+			 * even after we return error code at
+			 * 'add_station()'. Hence we have this check
+			 * again in addtion to add_station().  Anyway,
+			 * there is no harm to double-check.
+			 */
 			if (SIR_MAC_TDLS_SETUP_REQ == action_code) {
 				QDF_TRACE(QDF_MODULE_ID_HDD,
 					  QDF_TRACE_LEVEL_ERROR,
@@ -4088,8 +4095,10 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 					  pHddCtx->max_num_tdls_sta);
 				return -EINVAL;
 			} else {
-				/* maximum reached. tweak to send error code to peer and return
-				   error code to supplicant */
+				/* maximum reached. tweak to send
+				 * error code to peer and return error
+				 * code to supplicant
+				 */
 				status_code = eSIR_MAC_UNSPEC_FAILURE_STATUS;
 				QDF_TRACE(QDF_MODULE_ID_HDD,
 					  QDF_TRACE_LEVEL_ERROR,
@@ -4099,8 +4108,9 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 					  status_code, numCurrTdlsPeers,
 					  pHddCtx->max_num_tdls_sta);
 				max_sta_failed = -EPERM;
-				/* fall through to send setup resp with failure status
-				   code */
+				/* fall through to send setup resp
+				 * with failure status code
+				 */
 			}
 		} else {
 			hddTdlsPeer_t *pTdlsPeer;
@@ -4145,7 +4155,8 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 	}
 
 	/* For explicit trigger of DIS_REQ come out of BMPS for
-	   successfully receiving DIS_RSP from peer. */
+	 * successfully receiving DIS_RSP from peer.
+	 */
 	if ((SIR_MAC_TDLS_SETUP_RSP == action_code) ||
 	    (SIR_MAC_TDLS_SETUP_CNF == action_code) ||
 	    (SIR_MAC_TDLS_DIS_RSP == action_code) ||
