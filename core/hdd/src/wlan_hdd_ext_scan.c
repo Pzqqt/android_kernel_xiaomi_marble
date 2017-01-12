@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -814,8 +814,10 @@ wlan_hdd_cfg80211_extscan_full_scan_result_event(void *ctx,
 
 	pData->ap.channel = cds_chan_to_freq(pData->ap.channel);
 
-	/* Android does not want the time stamp from the frame.
-	   Instead it wants a monotonic increasing value since boot */
+	/*
+	 * Android does not want the time stamp from the frame.
+	 * Instead it wants a monotonic increasing value since boot
+	 */
 	get_monotonic_boottime(&ts);
 	pData->ap.ts = ((u64)ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
 
@@ -1499,8 +1501,10 @@ void wlan_hdd_cfg80211_extscan_callback(void *ctx, const uint16_t evType,
 
 	switch (evType) {
 	case eSIR_EXTSCAN_CACHED_RESULTS_RSP:
-		/* There is no need to send this response to upper layer
-		   Just log the message */
+		/*
+		 * There is no need to send this response to upper layer
+		 * Just log the message
+		 */
 		hdd_notice("Rcvd eSIR_EXTSCAN_CACHED_RESULTS_RSP");
 		break;
 
@@ -4072,7 +4076,7 @@ fail:
 	return -EINVAL;
 }
 
- /**
+/**
  * wlan_hdd_cfg80211_set_epno_list() - epno set network list
  * @wiphy: wiphy
  * @wdev: pointer to wireless dev
