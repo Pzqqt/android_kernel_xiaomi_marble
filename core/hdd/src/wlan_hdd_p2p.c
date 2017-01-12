@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1156,8 +1156,10 @@ __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 	}
 	mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
 
-	/* wait until remain on channel ready event received
-	 * for already issued remain on channel request */
+	/*
+	 * wait until remain on channel ready event received
+	 * for already issued remain on channel request
+	 */
 	rc = wait_for_completion_timeout(&pAdapter->rem_on_chan_ready_event,
 					 msecs_to_jiffies(WAIT_REM_CHAN_READY));
 	if (!rc) {
@@ -1330,33 +1332,42 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 	}
 
 	if ((QDF_STA_MODE == pAdapter->device_mode) &&
-		(type == SIR_MAC_MGMT_FRAME &&
-		subType == SIR_MAC_MGMT_PROBE_RSP)) {
-			/* Drop Probe response received
-			 * from supplicant in sta mode
-			 */
-			goto err_rem_channel;
+	    (type == SIR_MAC_MGMT_FRAME &&
+	     subType == SIR_MAC_MGMT_PROBE_RSP)) {
+		/*
+		 * Drop Probe response received
+		 * from supplicant in sta mode
+		 */
+		goto err_rem_channel;
 	}
 
-	/* Call sme API to send out a action frame. */
-	/* OR can we send it directly through data path?? */
-	/* After tx completion send tx status back. */
+	/*
+	 * Call sme API to send out a action frame.
+	 * OR can we send it directly through data path??
+	 * After tx completion send tx status back.
+	 */
 	if ((QDF_SAP_MODE == pAdapter->device_mode) ||
 	    (QDF_P2P_GO_MODE == pAdapter->device_mode)
 	    ) {
 		if (type == SIR_MAC_MGMT_FRAME) {
 			if (subType == SIR_MAC_MGMT_PROBE_RSP) {
-				/* Drop Probe response recieved from supplicant, as for GO and
-				   SAP PE itself sends probe response
+				/*
+				 * Drop Probe response received from
+				 * supplicant, as for GO and SAP PE
+				 * itself sends probe response
 				 */
 				goto err_rem_channel;
 			} else if ((subType == SIR_MAC_MGMT_DISASSOC) ||
 				   (subType == SIR_MAC_MGMT_DEAUTH)) {
-				/* During EAP failure or P2P Group Remove supplicant
-				 * is sending del_station command to driver. From
-				 * del_station function, Driver will send deauth frame to
-				 * p2p client. No need to send disassoc frame from here.
-				 * so Drop the frame here and send tx indication back to
+				/*
+				 * During EAP failure or P2P Group
+				 * Remove supplicant is sending
+				 * del_station command to driver. From
+				 * del_station function, Driver will
+				 * send deauth frame to p2p client. No
+				 * need to send disassoc frame from
+				 * here.  so Drop the frame here and
+				 * send tx indication back to
 				 * supplicant.
 				 */
 				uint8_t dstMac[ETH_ALEN] = { 0 };
@@ -1534,8 +1545,10 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 			goto err_rem_channel;
 		}
 	} else if (offchan) {
-		/* Check before sending action frame
-		   whether we already remain on channel */
+		/*
+		 * Check before sending action frame
+		 * whether we already remain on channel
+		 */
 		if (NULL == cfgState->remain_on_chan_ctx) {
 			goto err_rem_channel;
 		}
@@ -1718,7 +1731,7 @@ void hdd_send_action_cnf(hdd_adapter_t *pAdapter, bool actionSendSuccess)
 	 * it through control path, we use different buffers.
 	 * In case of mac80211, they just push it to the skb and pass the same
 	 * data while sending tx ack status.
-	 * */
+	 */
 	cfg80211_mgmt_tx_status(
 		pAdapter->dev->ieee80211_ptr,
 		cfgState->action_cookie,
@@ -2342,18 +2355,20 @@ void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 						 [WLAN_HDD_80211_FRM_DA_OFFSET]));
 			hdd_alert("Frame Type = %d Frame Length = %d subType = %d",
 				frameType, nFrameLength, subType);
-			/* We will receive broadcast management frames
-			* in OCB mode */
+			/*
+			 * We will receive broadcast management frames
+			 * in OCB mode
+			 */
 			pAdapter = hdd_get_adapter(pHddCtx, QDF_OCB_MODE);
 			if (NULL == pAdapter || !qdf_is_macaddr_broadcast(
 				(struct qdf_mac_addr *)&pbFrames
 				[WLAN_HDD_80211_FRM_DA_OFFSET])) {
 				/*
-				* Under assumtion that we don't
-				*receive any action
-				* frame with BCST as destination,
-				* we are dropping action frame
-				*/
+				 * Under assumtion that we don't
+				 * receive any action frame with BCST
+				 * as destination, we are dropping
+				 * action frame
+				 */
 			return;
 			}
 
