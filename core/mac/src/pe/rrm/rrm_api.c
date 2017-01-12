@@ -52,6 +52,8 @@
 #include "rrm_global.h"
 #include "rrm_api.h"
 
+#define MAX_RRM_TX_PWR_CAP 22
+
 uint8_t
 rrm_get_min_of_max_tx_power(tpAniSirGlobal pMac,
 			    int8_t regMax, int8_t apTxPower)
@@ -282,7 +284,7 @@ rrm_process_link_measurement_request(tpAniSirGlobal pMac,
 	pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
 
 	LinkReport.txPower = lim_get_max_tx_power(pLinkReq->MaxTxPower.maxTxPower,
-						  pLinkReq->MaxTxPower.maxTxPower,
+						  MAX_RRM_TX_PWR_CAP,
 						  pMac->roam.configParam.
 						  nTxPowerCap);
 
