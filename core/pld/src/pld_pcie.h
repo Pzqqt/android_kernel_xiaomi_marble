@@ -135,7 +135,7 @@ pld_pcie_get_fw_files_for_target(struct pld_fw_files *pfw_files,
 	pld_get_default_fw_files(pfw_files);
 	return 0;
 }
-static inline void pld_pcie_link_down(void)
+static inline void pld_pcie_link_down(struct device *dev)
 {
 	return;
 }
@@ -162,7 +162,8 @@ static inline int pld_pcie_wlan_get_dfs_nol(void *info, u16 info_len)
 {
 	return 0;
 }
-static inline void pld_pcie_schedule_recovery_work(void)
+static inline void pld_pcie_schedule_recovery_work(struct device *dev,
+					   enum pld_recovery_reason reason)
 {
 	return;
 }
@@ -174,7 +175,8 @@ static inline void pld_pcie_device_crashed(void)
 {
 	return;
 }
-static inline void pld_pcie_device_self_recovery(void)
+static inline void pld_pcie_device_self_recovery(struct device *dev,
+					 enum pld_recovery_reason reason)
 {
 	return;
 }
@@ -258,10 +260,14 @@ int pld_pcie_get_fw_files_for_target(struct pld_fw_files *pfw_files,
 int pld_pcie_get_platform_cap(struct pld_platform_cap *cap);
 int pld_pcie_get_soc_info(struct device *dev, struct pld_soc_info *info);
 void pld_pcie_set_driver_status(enum pld_driver_status status);
+void pld_pcie_schedule_recovery_work(struct device *dev,
+				     enum pld_recovery_reason reason);
+void pld_pcie_device_self_recovery(struct device *dev,
+				   enum pld_recovery_reason reason);
 
-static inline void pld_pcie_link_down(void)
+static inline void pld_pcie_link_down(struct device *dev)
 {
-	cnss_wlan_pci_link_down();
+	cnss_pci_link_down(dev);
 }
 static inline int pld_pcie_shadow_control(bool enable)
 {
@@ -285,10 +291,6 @@ static inline int pld_pcie_wlan_get_dfs_nol(void *info, u16 info_len)
 {
 	return cnss_wlan_get_dfs_nol(info, info_len);
 }
-static inline void pld_pcie_schedule_recovery_work(void)
-{
-	cnss_schedule_recovery_work();
-}
 static inline void *pld_pcie_get_virt_ramdump_mem(unsigned long *size)
 {
 	return cnss_get_virt_ramdump_mem(size);
@@ -296,10 +298,6 @@ static inline void *pld_pcie_get_virt_ramdump_mem(unsigned long *size)
 static inline void pld_pcie_device_crashed(void)
 {
 	cnss_device_crashed();
-}
-static inline void pld_pcie_device_self_recovery(void)
-{
-	cnss_device_self_recovery();
 }
 static inline void pld_pcie_request_pm_qos(u32 qos_val)
 {

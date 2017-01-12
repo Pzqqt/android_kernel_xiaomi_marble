@@ -501,7 +501,7 @@ void pld_is_pci_link_down(struct device *dev)
 {
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		pld_pcie_link_down();
+		pld_pcie_link_down(dev);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -678,16 +678,18 @@ int pld_wlan_get_dfs_nol(struct device *dev, void *info, u16 info_len)
 /**
  * pld_schedule_recovery_work() - Schedule recovery work
  * @dev: device
+ * @reason: recovery reason
  *
  * Schedule a system self recovery work.
  *
  * Return: void
  */
-void pld_schedule_recovery_work(struct device *dev)
+void pld_schedule_recovery_work(struct device *dev,
+				enum pld_recovery_reason reason)
 {
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		pld_pcie_schedule_recovery_work();
+		pld_pcie_schedule_recovery_work(dev, reason);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -784,14 +786,16 @@ void pld_device_crashed(struct device *dev)
 /**
  * pld_device_self_recovery() - Device self recovery
  * @dev: device
+ * @reason: recovery reason
  *
  * Return: void
  */
-void pld_device_self_recovery(struct device *dev)
+void pld_device_self_recovery(struct device *dev,
+			      enum pld_recovery_reason reason)
 {
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		pld_pcie_device_self_recovery();
+		pld_pcie_device_self_recovery(dev, reason);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;

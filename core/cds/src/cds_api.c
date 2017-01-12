@@ -1552,7 +1552,8 @@ static void cds_config_recovery_work(qdf_device_t qdf_ctx)
 		cds_set_recovery_in_progress(true);
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			"schedule recovery work!");
-		pld_schedule_recovery_work(qdf_ctx->dev);
+		pld_schedule_recovery_work(qdf_ctx->dev,
+					   PLD_REASON_DEFAULT);
 	}
 }
 

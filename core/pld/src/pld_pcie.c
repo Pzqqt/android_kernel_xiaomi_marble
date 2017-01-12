@@ -552,5 +552,51 @@ void pld_pcie_set_driver_status(enum pld_driver_status status)
 	}
 	cnss_set_driver_status(cnss_status);
 }
+
+/**
+ * pld_pcie_schedule_recovery_work() - schedule recovery work
+ * @dev: device
+ * @reason: recovery reason
+ *
+ * Return: void
+ */
+void pld_pcie_schedule_recovery_work(struct device *dev,
+				     enum pld_recovery_reason reason)
+{
+	enum cnss_recovery_reason cnss_reason;
+
+	switch (reason) {
+	case PLD_REASON_LINK_DOWN:
+		cnss_reason = CNSS_REASON_LINK_DOWN;
+		break;
+	default:
+		cnss_reason = CNSS_REASON_DEFAULT;
+		break;
+	}
+	cnss_schedule_recovery(dev, cnss_reason);
+}
+
+/**
+ * pld_pcie_device_self_recovery() - device self recovery
+ * @dev: device
+ * @reason: recovery reason
+ *
+ * Return: void
+ */
+void pld_pcie_device_self_recovery(struct device *dev,
+				   enum pld_recovery_reason reason)
+{
+	enum cnss_recovery_reason cnss_reason;
+
+	switch (reason) {
+	case PLD_REASON_LINK_DOWN:
+		cnss_reason = CNSS_REASON_LINK_DOWN;
+		break;
+	default:
+		cnss_reason = CNSS_REASON_DEFAULT;
+		break;
+	}
+	cnss_self_recovery(dev, cnss_reason);
+}
 #endif
 #endif

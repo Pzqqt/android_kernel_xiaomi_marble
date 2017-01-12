@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -580,7 +580,8 @@ void ramdump_work_handler(void *data)
 out_fail:
 	/* Silent SSR on dump failure */
 	if (ini_cfg->enable_self_recovery)
-		pld_device_self_recovery(qdf_dev->dev);
+		pld_device_self_recovery(qdf_dev->dev,
+					 PLD_REASON_DEFAULT);
 	else
 		pld_device_crashed(qdf_dev->dev);
 	return;
@@ -591,7 +592,8 @@ void fw_indication_work_handler(void *data)
 	struct ol_context *ol_ctx = data;
 	qdf_device_t qdf_dev = ol_ctx->qdf_dev;
 
-	pld_device_self_recovery(qdf_dev->dev);
+	pld_device_self_recovery(qdf_dev->dev,
+				 PLD_REASON_DEFAULT);
 }
 
 void ol_target_failure(void *instance, QDF_STATUS status)
