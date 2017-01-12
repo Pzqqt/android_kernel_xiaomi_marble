@@ -268,8 +268,8 @@ typedef enum {
 #define CFG_INTERFACE_CHANGE_WAIT_DEFAULT (50)
 
 /*
-    To enable, set gRoamIntraBand=1 (Roaming within band)
-    To disable, set gRoamIntraBand=0 (Roaming across band)
+ * To enable, set gRoamIntraBand=1 (Roaming within band)
+ * To disable, set gRoamIntraBand=0 (Roaming across band)
  */
 #define CFG_ROAM_INTRA_BAND                   "gRoamIntraBand"
 #define CFG_ROAM_INTRA_BAND_MIN               (0)
@@ -889,12 +889,13 @@ typedef enum {
 #define CFG_FAST_TRANSITION_ENABLED_NAME_MAX                (1)
 #define CFG_FAST_TRANSITION_ENABLED_NAME_DEFAULT            (1) /* Enabled */
 
-/* This parameter is used to decide whether to Roam or not.
- * AP1 is the currently associated AP and AP2 is chosen for roaming.
- * The Roaming will happen only if AP2 has better Signal Quality and it has a RSSI better than AP1
- * in terms of RoamRssiDiff,and RoamRssiDiff is the number of units (typically measured in dB) AP2
- * is better than AP1.
- * This check is not done if the value is Zero */
+/* This parameter is used to decide whether to Roam or not.  AP1 is
+ * the currently associated AP and AP2 is chosen for roaming.  The
+ * Roaming will happen only if AP2 has better Signal Quality and it
+ * has a RSSI better than AP1 in terms of RoamRssiDiff,and
+ * RoamRssiDiff is the number of units (typically measured in dB) AP2
+ * is better than AP1.  This check is not done if the value is Zero
+ */
 #define CFG_ROAM_RSSI_DIFF_NAME                             "RoamRssiDiff"
 #define CFG_ROAM_RSSI_DIFF_MIN                              (0)
 #define CFG_ROAM_RSSI_DIFF_MAX                              (30)
@@ -1630,7 +1631,8 @@ typedef enum {
  * Options
  * 0 -Disable DynamicDTIM
  * 1 to 5 - SLM will switch to DTIM specified here when host suspends and
- *          switch DTIM1 when host resumes */
+ *          switch DTIM1 when host resumes
+ */
 #define CFG_ENABLE_DYNAMIC_DTIM_NAME            "gEnableDynamicDTIM"
 #define CFG_ENABLE_DYNAMIC_DTIM_MIN        (0)
 #define CFG_ENABLE_DYNAMIC_DTIM_MAX        (9)
@@ -2618,7 +2620,8 @@ typedef enum {
  * 0 - disable
  * 1 - HT LDPC enable
  * 2 - VHT LDPC enable
- * 3 - HT & VHT LDPC enable */
+ * 3 - HT & VHT LDPC enable
+ */
 #define CFG_TX_LDPC_ENABLE_FEATURE         "gTxLdpcEnable"
 #define CFG_TX_LDPC_ENABLE_FEATURE_MIN     (0)
 #define CFG_TX_LDPC_ENABLE_FEATURE_MAX     (3)
@@ -2777,8 +2780,9 @@ typedef enum {
 #define CFG_AMSDU_SUPPORT_IN_AMPDU_DEFAULT             (0)      /* disabled */
 
 /* Prefer connecting to 5G AP even if its RSSI is lower by
-   gSelect5GHzMargin dBm than 2.4G AP.
-   This feature requires the dependent cfg.ini "gRoamPrefer5GHz" set to 1 */
+ * gSelect5GHzMargin dBm than 2.4G AP.
+ * This feature requires the dependent cfg.ini "gRoamPrefer5GHz" set to 1
+ */
 #define CFG_STRICT_5GHZ_PREF_BY_MARGIN                 "gSelect5GHzMargin"
 #define CFG_STRICT_5GHZ_PREF_BY_MARGIN_MIN             (0)
 #define CFG_STRICT_5GHZ_PREF_BY_MARGIN_MAX             (60)
@@ -4916,9 +4920,9 @@ enum dot11p_mode {
 #define CFG_MAX_SCHED_SCAN_PLAN_ITRNS_MAX     (100)
 #define CFG_MAX_SCHED_SCAN_PLAN_ITRNS_DEFAULT (10)
 
-/*---------------------------------------------------------------------------
-   Type declarations
-   -------------------------------------------------------------------------*/
+/*
+ * Type declarations
+ */
 
 struct hdd_config {
 	/* Bitmap to track what is explicitly configured */
@@ -5102,8 +5106,9 @@ struct hdd_config {
 	/* Wowl pattern */
 	char wowlPattern[1024];
 
-	/* Control for Replay counetr. value 1 means
-	   single replay counter for all TID */
+	/* Control for Replay counter. value 1 means single replay
+	 * counter for all TID
+	 */
 	bool bSingleTidRc;
 	uint8_t mcastBcastFilterSetting;
 	bool fhostArpOffload;
