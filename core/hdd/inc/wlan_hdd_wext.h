@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -150,10 +150,9 @@ typedef enum {
 #define DISABLE_11D 0
 
 /*
-   refer wpa.h in wpa supplicant code for REASON_MICHAEL_MIC_FAILURE
-
-   supplicant sets REASON_MICHAEL_MIC_FAILURE as the reason code when it sends the MLME deauth IOCTL
-   for TKIP counter measures
+ * refer wpa.h in wpa supplicant code for REASON_MICHAEL_MIC_FAILURE.
+ * supplicant sets REASON_MICHAEL_MIC_FAILURE as the reason code when
+ * it sends the MLME deauth IOCTL for TKIP counter measures
  */
 #define HDD_REASON_MICHAEL_MIC_FAILURE 14
 
