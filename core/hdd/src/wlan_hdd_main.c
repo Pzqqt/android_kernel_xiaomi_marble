@@ -1340,8 +1340,10 @@ void hdd_update_tgt_cfg(void *context, void *param)
 
 	hdd_ctx->config->nBandCapability = cfg->band_cap;
 
-	/* now overwrite the target band capability with INI
-	   setting if INI setting is a subset */
+	/*
+	 * now overwrite the target band capability with INI
+	 * setting if INI setting is a subset
+	 */
 
 	if ((hdd_ctx->config->nBandCapability == eCSR_BAND_ALL) &&
 	    (temp_band_cap != eCSR_BAND_ALL))
@@ -6148,11 +6150,13 @@ void hdd_unsafe_channel_restart_sap(hdd_context_t *hdd_ctxt)
 		if (!restart_chan) {
 			hdd_alert("fail to restart SAP");
 		} else {
-			/* SAP restart due to unsafe channel. While restarting
-			 * the SAP, make sure to clear acs_channel, channel to
-			 * reset to 0. Otherwise these settings will override
+			/*
+			 * SAP restart due to unsafe channel. While
+			 * restarting the SAP, make sure to clear
+			 * acs_channel, channel to reset to
+			 * 0. Otherwise these settings will override
 			 * the ACS while restart.
-			*/
+			 */
 			hdd_ctxt->acs_policy.acs_channel = AUTO_CHANNEL_SELECT;
 			adapter_temp->sessionCtx.ap.sapConfig.channel =
 							AUTO_CHANNEL_SELECT;
@@ -8761,9 +8765,10 @@ void wlan_hdd_send_svc_nlink_msg(int radio, int type, void *data, int len)
 	}
 
 	/*
-	 * Add radio index at the end of the svc event in TLV format to maintain
-	 * the backward compatibility with userspace applications.
-	*/
+	 * Add radio index at the end of the svc event in TLV format
+	 * to maintain the backward compatibility with userspace
+	 * applications.
+	 */
 
 	tlv_len = 0;
 
