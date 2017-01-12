@@ -78,7 +78,8 @@ cb_notify_set_roam_intra_band(hdd_context_t *pHddCtx, unsigned long notifyId)
 static void cb_notify_set_wes_mode(hdd_context_t *pHddCtx, unsigned long notifyId)
 {
 	/* At the point this routine is called, the value in the hdd config
-	   table has already been updated */
+	 * table has already been updated
+	 */
 	sme_update_wes_mode(pHddCtx->hHal, pHddCtx->config->isWESModeEnabled, 0);
 }
 
@@ -101,7 +102,8 @@ notify_is_fast_roam_ini_feature_enabled(hdd_context_t *pHddCtx,
 					unsigned long notifyId)
 {
 	/* At the point this routine is called, the value in the hdd config
-	   table has already been updated */
+	 * table has already been updated
+	 */
 	sme_update_is_fast_roam_ini_feature_enabled(pHddCtx->hHal, 0,
 						    pHddCtx->config->
 						    isFastRoamIniFeatureEnabled);
@@ -111,7 +113,8 @@ static void
 notify_is_mawc_ini_feature_enabled(hdd_context_t *pHddCtx, unsigned long notifyId)
 {
 	/* At the point this routine is called, the value in the hdd config
-	   table has already been updated */
+	 * table has already been updated
+	 */
 	sme_update_is_mawc_ini_feature_enabled(pHddCtx->hHal,
 					       pHddCtx->config->MAWCEnabled);
 }
@@ -121,7 +124,8 @@ static void
 cb_notify_set_ese_feature_enabled(hdd_context_t *pHddCtx, unsigned long notifyId)
 {
 	/* At the point this routine is called, the value in the hdd config
-	   table has already been updated */
+	 * table has already been updated
+	 */
 	sme_update_is_ese_feature_enabled(pHddCtx->hHal, 0,
 					  pHddCtx->config->isEseIniFeatureEnabled);
 }
@@ -131,7 +135,8 @@ static void
 cb_notify_set_fw_rssi_monitoring(hdd_context_t *pHddCtx, unsigned long notifyId)
 {
 	/* At the point this routine is called, the value in the hdd config
-	   table has already been updated */
+	 * table has already been updated
+	 */
 	sme_update_config_fw_rssi_monitoring(pHddCtx->hHal,
 					     pHddCtx->config->
 					     fEnableFwRssiMonitoring);
@@ -141,7 +146,8 @@ static void cb_notify_set_opportunistic_scan_threshold_diff(hdd_context_t *pHddC
 							    unsigned long notifyId)
 {
 	/* At the point this routine is called, the value in the hdd config
-	   table has already been updated */
+	 * table has already been updated
+	 */
 	sme_set_roam_opportunistic_scan_threshold_diff(pHddCtx->hHal, 0,
 						       pHddCtx->config->
 						       nOpportunisticThresholdDiff);
@@ -151,7 +157,8 @@ static void cb_notify_set_roam_rescan_rssi_diff(hdd_context_t *pHddCtx,
 						unsigned long notifyId)
 {
 	/* At the point this routine is called, the value in the hdd config
-	   table has already been updated */
+	 * table has already been updated
+	 */
 	sme_set_roam_rescan_rssi_diff(pHddCtx->hHal,
 				      0, pHddCtx->config->nRoamRescanRssiDiff);
 }
@@ -161,7 +168,8 @@ cb_notify_set_neighbor_lookup_rssi_threshold(hdd_context_t *pHddCtx,
 					     unsigned long notifyId)
 {
 	/* At the point this routine is called, the value in the hdd config
-	   table has already been updated */
+	 * table has already been updated
+	 */
 	sme_set_neighbor_lookup_rssi_threshold(pHddCtx->hHal, 0,
 					       pHddCtx->config->
 					       nNeighborLookupRssiThreshold);
@@ -183,7 +191,8 @@ static void
 cb_notify_set_neighbor_scan_period(hdd_context_t *pHddCtx, unsigned long notifyId)
 {
 	/* At the point this routine is called, the value in the hdd config
-	   table has already been updated */
+	 * table has already been updated
+	 */
 	sme_set_neighbor_scan_period(pHddCtx->hHal, 0,
 				     pHddCtx->config->nNeighborScanPeriod);
 }
@@ -193,7 +202,8 @@ cb_notify_set_neighbor_results_refresh_period(hdd_context_t *pHddCtx,
 					      unsigned long notifyId)
 {
 	/* At the point this routine is called, the value in the hdd config
-	   table has already been updated */
+	 * table has already been updated
+	 */
 	sme_set_neighbor_scan_refresh_period(pHddCtx->hHal, 0,
 					     pHddCtx->config->
 					     nNeighborResultsRefreshPeriod);
@@ -204,7 +214,8 @@ cb_notify_set_empty_scan_refresh_period(hdd_context_t *pHddCtx,
 					unsigned long notifyId)
 {
 	/* At the point this routine is called, the value in the hdd config
-	   table has already been updated */
+	 * table has already been updated
+	 */
 	sme_update_empty_scan_refresh_period(pHddCtx->hHal, 0,
 					     pHddCtx->config->
 					     nEmptyScanRefreshPeriod);
@@ -215,7 +226,8 @@ cb_notify_set_neighbor_scan_min_chan_time(hdd_context_t *pHddCtx,
 					  unsigned long notifyId)
 {
 	/* At the point this routine is called, the value in the hdd config
-	   table has already been updated */
+	 * table has already been updated
+	 */
 	sme_set_neighbor_scan_min_chan_time(pHddCtx->hHal,
 					    pHddCtx->config->
 					    nNeighborScanMinChanTime, 0);
@@ -234,7 +246,8 @@ static void cb_notify_set_roam_bmiss_first_bcnt(hdd_context_t *pHddCtx,
 						unsigned long notifyId)
 {
 	/* At the point this routine is called, the value in the hdd config
-	   table has already been updated */
+	 * table has already been updated
+	 */
 	sme_set_roam_bmiss_first_bcnt(pHddCtx->hHal,
 				      0, pHddCtx->config->nRoamBmissFirstBcnt);
 }
@@ -257,7 +270,8 @@ static void
 cb_notify_set_dfs_scan_mode(hdd_context_t *pHddCtx, unsigned long notifyId)
 {
 	/* At the point this routine is called, the value in the hdd config
-	   table has already been updated */
+	 * table has already been updated
+	 */
 	sme_update_dfs_scan_mode(pHddCtx->hHal, 0,
 				 pHddCtx->config->allowDFSChannelRoam);
 }
@@ -1051,8 +1065,9 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			     CFG_FAST_TRANSITION_ENABLED_NAME_MAX,
 			     cb_notify_set_fast_transition_enabled, 0),
 
-	/* Variable to specify the delta/difference between the RSSI of current AP
-	 * and roamable AP while roaming */
+	/* Variable to specify the delta/difference between the RSSI
+	 * of current AP and roamable AP while roaming
+	 */
 	REG_DYNAMIC_VARIABLE(CFG_ROAM_RSSI_DIFF_NAME, WLAN_PARAM_Integer,
 			     struct hdd_config, RoamRssiDiff,
 			     VAR_FLAGS_OPTIONAL |
@@ -5962,7 +5977,8 @@ static QDF_STATUS hdd_convert_string_to_array(char *str, uint8_t *array,
 		int val;
 		/* Increment length only if sscanf successfully extracted
 		 * one element. Any other return value means error.
-		 * Ignore it. */
+		 * Ignore it.
+		 */
 		if (sscanf(s, format, &val) == 1) {
 			array[*len] = (uint8_t) val;
 			*len += 1;
@@ -6137,8 +6153,7 @@ static bool hdd_update_vht_cap_in_cfg(hdd_context_t *hdd_ctx)
 			status = false;
 			hdd_err("Couldn't pass WNI_VHT_SHORT_GI_80MHZ to CFG");
 		}
-		/* Hardware is capable of doing
-		 * 128K AMPDU in 11AC mode */
+		/* Hardware is capable of doing 128K AMPDU in 11AC mode */
 		if (sme_cfg_set_int(hdd_ctx->hHal,
 			     WNI_CFG_VHT_AMPDU_LEN_EXPONENT,
 			     config->fVhtAmpduLenExponent) ==
