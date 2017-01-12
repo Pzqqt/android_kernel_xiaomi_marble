@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014, 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -28,21 +28,17 @@
 #if !defined(HDD_INCLUDES_H__)
 #define HDD_INCLUDES_H__
 
-/**===========================================================================
+/**
+ * DOC: wlan_hdd_includes.h
+ *
+ * Internal includes for the Linux HDD
+ */
 
-   \file  wlan_hdd_includes.h
-
-   \brief Internal includes for the Linux HDD
-
-   ==========================================================================*/
-
-/* $HEADER$ */
-
-/*---------------------------------------------------------------------------
-   Include files
-   -------------------------------------------------------------------------*/
-
-/* throw all the includes in here f to get the .c files  in the HDD to compile. */
+/*
+ * Include files
+ *
+ * throw all the includes in here to get the .c files in the HDD to compile.
+ */
 
 #include <linux/version.h>
 #include <linux/module.h>
