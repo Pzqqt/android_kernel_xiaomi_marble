@@ -304,7 +304,8 @@ static struct ieee80211_supported_band wlan_hdd_band_5_ghz = {
 };
 
 /* This structure contain information what kind of frame are expected in
-     TX/RX direction for each kind of interface */
+ * TX/RX direction for each kind of interface
+ */
 static const struct ieee80211_txrx_stypes
 	wlan_hdd_txrx_stypes[NUM_NL80211_IFTYPES] = {
 	[NL80211_IFTYPE_STATION] = {
@@ -1632,7 +1633,7 @@ out:
 	return status;
 }
 
- /**
+/**
  * wlan_hdd_cfg80211_do_acs : CFG80211 handler function for DO_ACS Vendor CMD
  * @wiphy:  Linux wiphy struct pointer
  * @wdev:   Linux wireless device struct pointer
@@ -9183,10 +9184,11 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 #endif
 
 	/* even with WIPHY_FLAG_CUSTOM_REGULATORY,
-	   driver can still register regulatory callback and
-	   it will get regulatory settings in wiphy->band[], but
-	   driver need to determine what to do with both
-	   regulatory settings */
+	 * driver can still register regulatory callback and
+	 * it will get regulatory settings in wiphy->band[], but
+	 * driver need to determine what to do with both
+	 * regulatory settings
+	 */
 
 	wiphy->reg_notifier = hdd_reg_notifier;
 
@@ -9225,7 +9227,8 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	}
 
 	/* Before registering we need to update the ht capabilitied based
-	 * on ini values*/
+	 * on ini values
+	 */
 	if (!pCfg->ShortGI20MhzEnable) {
 		wlan_hdd_band_2_4_ghz.ht_cap.cap &= ~IEEE80211_HT_CAP_SGI_20;
 		wlan_hdd_band_5_ghz.ht_cap.cap &= ~IEEE80211_HT_CAP_SGI_20;
@@ -9459,14 +9462,14 @@ int wlan_hdd_cfg80211_register(struct wiphy *wiphy)
 }
 
 /*
-   HDD function to update wiphy capability based on target offload status.
-
-   wlan_hdd_cfg80211_init() does initialization of all wiphy related
-   capability even before downloading firmware to the target. In discrete
-   case, host will get know certain offload capability (say sched_scan
-   caps) only after downloading firmware to the target and target boots up.
-   This function is used to override setting done in wlan_hdd_cfg80211_init()
-   based on target capability.
+ * HDD function to update wiphy capability based on target offload status.
+ *
+ * wlan_hdd_cfg80211_init() does initialization of all wiphy related
+ * capability even before downloading firmware to the target. In discrete
+ * case, host will get know certain offload capability (say sched_scan
+ * caps) only after downloading firmware to the target and target boots up.
+ * This function is used to override setting done in wlan_hdd_cfg80211_init()
+ * based on target capability.
  */
 void wlan_hdd_cfg80211_update_wiphy_caps(struct wiphy *wiphy)
 {
@@ -9476,7 +9479,8 @@ void wlan_hdd_cfg80211_update_wiphy_caps(struct wiphy *wiphy)
 
 	/* wlan_hdd_cfg80211_init() sets sched_scan caps already in wiphy before
 	 * control comes here. Here just we need to clear it if firmware doesn't
-	 * have PNO support. */
+	 * have PNO support.
+	 */
 	if (!pCfg->PnoOffload) {
 		wiphy->flags &= ~WIPHY_FLAG_SUPPORTS_SCHED_SCAN;
 		wiphy->max_sched_scan_ssids = 0;
@@ -9502,8 +9506,10 @@ void wlan_hdd_cfg80211_register_frames(hdd_adapter_t *pAdapter)
 	sme_register_p2p_ack_ind_callback(hHal, hdd_send_action_cnf_cb);
 
 	/* Right now we are registering these frame when driver is getting
-	   initialized. Once we will move to 2.6.37 kernel, in which we have
-	   frame register ops, we will move this code as a part of that */
+	 * initialized. Once we will move to 2.6.37 kernel, in which we have
+	 * frame register ops, we will move this code as a part of that
+	 */
+
 	/* GAS Initial Request */
 	sme_register_mgmt_frame(hHal, SME_SESSION_ID_ANY, type,
 				(uint8_t *) GAS_INITIAL_REQ,
@@ -9554,8 +9560,10 @@ void wlan_hdd_cfg80211_deregister_frames(hdd_adapter_t *pAdapter)
 	ENTER();
 
 	/* Right now we are registering these frame when driver is getting
-	   initialized. Once we will move to 2.6.37 kernel, in which we have
-	   frame register ops, we will move this code as a part of that */
+	 * initialized. Once we will move to 2.6.37 kernel, in which we have
+	 * frame register ops, we will move this code as a part of that
+	 */
+
 	/* GAS Initial Request */
 
 	sme_deregister_mgmt_frame(hHal, SME_SESSION_ID_ANY, type,
@@ -9807,7 +9815,8 @@ static int __wlan_hdd_cfg80211_change_bss(struct wiphy *wiphy,
 	}
 
 	/* ap_isolate == -1 means that in change bss, upper layer doesn't
-	 * want to update this parameter */
+	 * want to update this parameter
+	 */
 	if (-1 != params->ap_isolate) {
 		pAdapter->sessionCtx.ap.apDisableIntraBssFwd =
 			!!params->ap_isolate;
@@ -10032,8 +10041,10 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 
 			if ((QDF_SAP_MODE == pAdapter->device_mode)
 			    && (pConfig->apRandomBssidEnabled)) {
-				/* To meet Android requirements create a randomized
-				   MAC address of the form 02:1A:11:Fx:xx:xx */
+				/* To meet Android requirements create
+				 * a randomized MAC address of the
+				 * form 02:1A:11:Fx:xx:xx
+				 */
 				get_random_bytes(&ndev->dev_addr[3], 3);
 				ndev->dev_addr[0] = 0x02;
 				ndev->dev_addr[1] = 0x1A;
@@ -10523,20 +10534,19 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 
 		qdf_mem_zero(pKey, CSR_MAX_KEY_LEN);
 
-		/*Supplicant sends the 32bytes key in this order
-
-		   |--------------|----------|----------|
-		 |   Tk1        |TX-MIC    |  RX Mic  |
-		 |||--------------|----------|----------|
-		   <---16bytes---><--8bytes--><--8bytes-->
-
-		 */
-		/*Sme expects the 32 bytes key to be in the below order
-
-		   |--------------|----------|----------|
-		 |   Tk1        |RX-MIC    |  TX Mic  |
-		 |||--------------|----------|----------|
-		   <---16bytes---><--8bytes--><--8bytes-->
+		/* Supplicant sends the 32bytes key in this order
+		 *
+		 * |--------------|----------|----------|
+		 * |   Tk1        |TX-MIC    |  RX Mic  |
+		 * |--------------|----------|----------|
+		 * <---16bytes---><--8bytes--><--8bytes-->
+		 *
+		 * Sme expects the 32 bytes key to be in the below order
+		 *
+		 * |--------------|----------|----------|
+		 * |   Tk1        |RX-MIC    |  TX Mic  |
+		 * |--------------|----------|----------|
+		 * <---16bytes---><--8bytes--><--8bytes-->
 		 */
 		/* Copy the Temporal Key 1 (TK1) */
 		qdf_mem_copy(pKey, params->key, 16);
@@ -10616,8 +10626,9 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 			hdd_err("sme_roam_set_key failed, returned %d", status);
 			return -EINVAL;
 		}
-		/*Save the keys here and call sme_roam_set_key for setting
-		   the PTK after peer joins the IBSS network */
+		/* Save the keys here and call sme_roam_set_key for setting
+		 * the PTK after peer joins the IBSS network
+		 */
 		qdf_mem_copy(&pAdapter->sessionCtx.station.ibss_enc_key,
 			     &setKey, sizeof(tCsrRoamSetKey));
 
@@ -10677,9 +10688,10 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		       MAC_ADDR_ARRAY(setKey.peerMac.bytes),
 		       setKey.keyDirection);
 
-		/* The supplicant may attempt to set the PTK once pre-authentication
-		   is done. Save the key in the UMAC and include it in the ADD BSS
-		   request */
+		/* The supplicant may attempt to set the PTK once
+		 * pre-authentication is done. Save the key in the
+		 * UMAC and include it in the ADD BSS request
+		 */
 		qdf_ret_status = sme_ft_update_key(WLAN_HDD_GET_HAL_CTX(pAdapter),
 						   pAdapter->sessionId, &setKey);
 		if (qdf_ret_status == QDF_STATUS_FT_PREAUTH_KEY_SUCCESS) {
@@ -10701,9 +10713,11 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 			return -EINVAL;
 		}
 
-		/* in case of IBSS as there was no information available about WEP keys during
-		 * IBSS join, group key intialized with NULL key, so re-initialize group key
-		 * with correct value*/
+		/* in case of IBSS as there was no information
+		 * available about WEP keys during IBSS join, group
+		 * key intialized with NULL key, so re-initialize
+		 * group key with correct value
+		 */
 		if ((eCSR_BSS_TYPE_START_IBSS ==
 		     pWextState->roamProfile.BSSType)
 		    &&
@@ -10961,7 +10975,8 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 		    (eCSR_ENCRYPT_TYPE_AES !=
 		     pHddStaCtx->conn_info.ucEncryptionType)) {
 			/* If default key index is not same as previous one,
-			 * then update the default key index */
+			 * then update the default key index
+			 */
 
 			tCsrRoamSetKey setKey;
 			uint32_t roamId = 0xFF;
@@ -10986,11 +11001,16 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 			if (Keys->KeyLength[key_index] == CSR_WEP40_KEY_LEN &&
 			    pWextState->roamProfile.EncryptionType.
 			    encryptionType[0] == eCSR_ENCRYPT_TYPE_WEP104) {
-				/* In the case of dynamic wep supplicant hardcodes DWEP type
-				* to eCSR_ENCRYPT_TYPE_WEP104 even though ap is configured for
-				* WEP-40 encryption. In this canse the key length is 5 but the
-				* encryption type is 104 hence checking the key langht(5) and
-				* encryption type(104) and switching encryption type to 40*/
+				/* In the case of dynamic wep
+				 * supplicant hardcodes DWEP type to
+				 * eCSR_ENCRYPT_TYPE_WEP104 even
+				 * though ap is configured for WEP-40
+				 * encryption. In this canse the key
+				 * length is 5 but the encryption type
+				 * is 104 hence checking the key
+				 * lenght(5) and encryption type(104)
+				 * and switching encryption type to 40
+				 */
 				pWextState->roamProfile.EncryptionType.
 				encryptionType[0] = eCSR_ENCRYPT_TYPE_WEP40;
 				pWextState->roamProfile.mcEncryptionType.
@@ -11175,7 +11195,8 @@ struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 	memcpy(mgmt->bssid, bss_desc->bssId, ETH_ALEN);
 
 	/* Android does not want the timestamp from the frame.
-	   Instead it wants a monotonic increasing value */
+	 * Instead it wants a monotonic increasing value
+	 */
 	get_monotonic_boottime(&ts);
 	mgmt->u.probe_resp.timestamp =
 		((u64) ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
@@ -12431,7 +12452,8 @@ static int wlan_hdd_cfg80211_set_ie(hdd_adapter_t *pAdapter, const uint8_t *ie,
 				}
 				/* WFD IE is saved to Additional IE ; it should
 				 * be accumulated to handle WPS IE + P2P IE +
-				 * WFD IE */
+				 * WFD IE
+				 */
 				memcpy(pWextState->assocAddIE.addIEdata +
 				       curAddIELen, genie - 2, eLen + 2);
 				pWextState->assocAddIE.length += eLen + 2;
@@ -12599,9 +12621,9 @@ static int wlan_hdd_cfg80211_set_ie(hdd_adapter_t *pAdapter, const uint8_t *ie,
 			}
 		default:
 			hdd_err("Set UNKNOWN IE %X", elementId);
-			/* when Unknown IE is received we should break and continue
-			 * to the next IE in the buffer instead we were returning
-			 * so changing this to break */
+			/* when Unknown IE is received we break
+			 * and continue to the next IE in the buffer
+			 */
 			break;
 		}
 		genie += eLen;
@@ -13350,13 +13372,17 @@ static int wlan_hdd_cfg80211_set_privacy_ibss(hdd_adapter_t *pAdapter,
 			if (NULL != ie) {
 				pWextState->wpaVersion =
 					IW_AUTH_WPA_VERSION_WPA;
-				/* Unpack the WPA IE */
-				/* Skip past the EID byte and length byte - and four byte WiFi OUI */
+				/* Unpack the WPA IE
+				 * Skip past the EID byte and length byte
+				 * and four byte WiFi OUI
+				 */
 				dot11f_unpack_ie_wpa((tpAniSirGlobal) halHandle,
 						     &ie[2 + 4],
 						     ie[1] - 4, &dot11WPAIE);
-				/*Extract the multicast cipher, the encType for unicast
-				   cipher for wpa-none is none */
+				/* Extract the multicast cipher, the
+				 * encType for unicast cipher for
+				 * wpa-none is none
+				 */
 				encryptionType =
 					hdd_translate_wpa_to_csr_encryption_type
 						(dot11WPAIE.multicast_cipher);
