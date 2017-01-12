@@ -2248,19 +2248,23 @@ enum qca_wlan_vendor_attr_sap_conditional_chan_switch {
 #define WIFI_FEATURE_SOFT_AP            0x0010  /* Soft AP */
 #define WIFI_FEATURE_EXTSCAN            0x0020  /* Extended Scan APIs */
 #define WIFI_FEATURE_NAN                0x0040  /* Neighbor Awareness
-						   Networking */
+						 * Networking
+						 */
 #define WIFI_FEATURE_D2D_RTT		0x0080  /* Device-to-device RTT */
 #define WIFI_FEATURE_D2AP_RTT           0x0100  /* Device-to-AP RTT */
 #define WIFI_FEATURE_BATCH_SCAN         0x0200  /* Batched Scan (legacy) */
 #define WIFI_FEATURE_PNO                0x0400  /* Preferred network offload */
 #define WIFI_FEATURE_ADDITIONAL_STA     0x0800  /* Support for two STAs */
 #define WIFI_FEATURE_TDLS               0x1000  /* Tunnel directed link
-						   setup */
+						 * setup
+						 */
 #define WIFI_FEATURE_TDLS_OFFCHANNEL	0x2000  /* Support for TDLS off
-						   channel */
+						 * channel
+						 */
 #define WIFI_FEATURE_EPR                0x4000  /* Enhanced power reporting */
 #define WIFI_FEATURE_AP_STA             0x8000  /* Support for AP STA
-						   Concurrency */
+						 * Concurrency
+						 */
 #define WIFI_FEATURE_LINK_LAYER_STATS   0x10000  /* Link layer stats */
 #define WIFI_FEATURE_LOGGER             0x20000  /* WiFi Logger */
 #define WIFI_FEATURE_HAL_EPNO           0x40000  /* WiFi PNO enhanced */
@@ -2461,31 +2465,37 @@ enum qca_wlan_vendor_config {
 	QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MPDU_AGGREGATION,
 
 	/* 8-bit unsigned value to configure the Non aggregrate/11g sw
-	 * retry threshold (0 disable, 31 max). */
+	 * retry threshold (0 disable, 31 max).
+	 */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_NON_AGG_RETRY,
 	/* 8-bit unsigned value to configure the aggregrate sw
-	 * retry threshold (0 disable, 31 max). */
+	 * retry threshold (0 disable, 31 max).
+	 */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_AGG_RETRY,
 	/* 8-bit unsigned value to configure the MGMT frame
-	 * retry threshold (0 disable, 31 max). */
+	 * retry threshold (0 disable, 31 max).
+	 */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_MGMT_RETRY,
 	/* 8-bit unsigned value to configure the CTRL frame
-	 * retry threshold (0 disable, 31 max). */
+	 * retry threshold (0 disable, 31 max).
+	 */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_CTRL_RETRY,
 	/* 8-bit unsigned value to configure the propagation delay for
-	 * 2G/5G band (0~63, units in us) */
+	 * 2G/5G band (0~63, units in us)
+	 */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_DELAY,
 
 	/* Attribute used to set scan default IEs to the driver.
-	*
-	* These IEs can be used by scan operations that will be initiated by
-	* the driver/firmware.
-	*
-	* For further scan requests coming to the driver, these IEs should be
-	* merged with the IEs received along with scan request coming to the
-	* driver. If a particular IE is present in the scan default IEs but not
-	* present in the scan request, then that IE should be added to the IEs
-	* sent in the Probe Request frames for that scan request. */
+	 *
+	 * These IEs can be used by scan operations that will be initiated by
+	 * the driver/firmware.
+	 *
+	 * For further scan requests coming to the driver, these IEs should be
+	 * merged with the IEs received along with scan request coming to the
+	 * driver. If a particular IE is present in the scan default IEs but not
+	 * present in the scan request, then that IE should be added to the IEs
+	 * sent in the Probe Request frames for that scan request.
+	 */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_SCAN_DEFAULT_IES,
 	/* Unsigned 32-bit attribute for generic commands */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_COMMAND,
@@ -2494,24 +2504,29 @@ enum qca_wlan_vendor_config {
 	/* Unsigned 32-bit data attribute for generic command response */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_DATA,
 	/* Unsigned 32-bit length attribute for
-	* QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_DATA */
+	 * QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_DATA
+	 */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_LENGTH,
 	/* Unsigned 32-bit flags attribute for
-	* QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_DATA */
+	 * QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_DATA
+	 */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_FLAGS,
 	/* Unsigned 32-bit, defining the access policy.
-	* See enum qca_access_policy. Used with
-	* QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY_IE_LIST. */
+	 * See enum qca_access_policy. Used with
+	 * QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY_IE_LIST.
+	 */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY,
 	/* Sets the list of full set of IEs for which a specific access policy
-	* has to be applied. Used along with
-	* QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY to control the access.
-	* Zero length payload can be used to clear this access constraint. */
+	 * has to be applied. Used along with
+	 * QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY to control the access.
+	 * Zero length payload can be used to clear this access constraint.
+	 */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY_IE_LIST,
 	/* Unsigned 32-bit, specifies the interface index (netdev) for which the
-	* corresponding configurations are applied. If the interface index is
-	* not specified, the configurations are attributed to the respective
-	* wiphy. */
+	 * corresponding configurations are applied. If the interface index is
+	 * not specified, the configurations are attributed to the respective
+	 * wiphy.
+	 */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_IFINDEX,
 	/* Unsigned 8-bit, for setting qpower dynamically */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_QPOWER = 25,
@@ -2820,8 +2835,8 @@ enum qca_vendor_attr_get_preferred_freq_list {
 enum qca_vendor_attr_probable_oper_channel {
 	QCA_WLAN_VENDOR_ATTR_PROBABLE_OPER_CHANNEL_INVALID,
 	/* 32-bit unsigned value; indicates the connection/iface type likely to
-	  * come on this channel (see enum qca_iface_type).
-	  */
+	 * come on this channel (see enum qca_iface_type).
+	 */
 	QCA_WLAN_VENDOR_ATTR_PROBABLE_OPER_CHANNEL_IFACE_TYPE,
 	/* 32-bit unsigned value; the frequency (MHz) of the probable channel */
 	QCA_WLAN_VENDOR_ATTR_PROBABLE_OPER_CHANNEL_FREQ,
@@ -3493,7 +3508,7 @@ struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 /*
  * As of 4.7, ieee80211_band is removed; add shims so we can reference
  * nl80211_band instead
-  */
+ */
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 7, 0))
 #define NUM_NL80211_BANDS ((enum nl80211_band)IEEE80211_NUM_BANDS)
 #endif
