@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -321,6 +321,7 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 			qdf_assert(0);
 		} else {
 			ol_tso_free_segment(pdev, tx_desc->tso_desc);
+			tx_desc->tso_desc = NULL;
 		}
 	}
 	ol_tx_desc_dup_detect_reset(pdev, tx_desc);
@@ -350,8 +351,10 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 		if (qdf_unlikely(tx_desc->tso_desc == NULL))
 			qdf_print("%s %d TSO desc is NULL!\n",
 				 __func__, __LINE__);
-		else
+		else {
 			ol_tso_free_segment(pdev, tx_desc->tso_desc);
+			tx_desc->tso_desc = NULL;
+		}
 	}
 #endif
 	ol_tx_desc_reset_pkt_type(tx_desc);
@@ -728,6 +731,19 @@ struct qdf_tso_seg_elem_t *ol_tso_alloc_segment(struct ol_txrx_pdev_t *pdev)
 	if (pdev->tso_seg_pool.freelist) {
 		pdev->tso_seg_pool.num_free--;
 		tso_seg = pdev->tso_seg_pool.freelist;
+		if (tso_seg->on_freelist != 1) {
+			qdf_print("Do not alloc tso seg as this seg is not in freelist\n");
+			qdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
+			QDF_BUG(0);
+			return NULL;
+		} else if (tso_seg->cookie != TSO_SEG_MAGIC_COOKIE) {
+			qdf_print("Do not alloc tso seg as cookie is not good\n");
+			qdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
+			QDF_BUG(0);
+			return NULL;
+		}
+		/*this tso seg is not a part of freelist now.*/
+		tso_seg->on_freelist = 0;
 		pdev->tso_seg_pool.freelist = pdev->tso_seg_pool.freelist->next;
 	}
 	qdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
@@ -751,7 +767,20 @@ void ol_tso_free_segment(struct ol_txrx_pdev_t *pdev,
 	 struct qdf_tso_seg_elem_t *tso_seg)
 {
 	qdf_spin_lock_bh(&pdev->tso_seg_pool.tso_mutex);
+	if (tso_seg->on_freelist != 0) {
+		qdf_print("Do not free the tso seg as this seg is already freed");
+		qdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
+		QDF_BUG(0);
+		return;
+	} else if (tso_seg->cookie != TSO_SEG_MAGIC_COOKIE) {
+		qdf_print("Do not free the tso seg as cookie is not good. Looks like memory corruption");
+		qdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
+		QDF_BUG(0);
+		return;
+	}
+	/*this tso seg is now a part of freelist*/
 	tso_seg->next = pdev->tso_seg_pool.freelist;
+	tso_seg->on_freelist = 1;
 	pdev->tso_seg_pool.freelist = tso_seg;
 	pdev->tso_seg_pool.num_free++;
 	qdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);

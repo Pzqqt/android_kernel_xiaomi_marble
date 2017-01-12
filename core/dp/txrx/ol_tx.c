@@ -1811,7 +1811,9 @@ void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 			qdf_spinlock_create(&pdev->tso_seg_pool.tso_mutex);
 			return;
 		}
-
+		/* set the freelist bit and magic cookie*/
+		c_element->on_freelist = 1;
+		c_element->cookie = TSO_SEG_MAGIC_COOKIE;
 		c_element->next =
 			qdf_mem_malloc(sizeof(struct qdf_tso_seg_elem_t));
 		c_element = c_element->next;
@@ -1840,6 +1842,17 @@ void ol_tso_seg_list_deinit(struct ol_txrx_pdev_t *pdev)
 
 	while (i-- > 0 && c_element) {
 		temp = c_element->next;
+		if (c_element->on_freelist != 1) {
+			qdf_print("this seg memory is already freed (double free?)");
+			QDF_BUG(0);
+			return;
+		} else if (c_element->cookie != TSO_SEG_MAGIC_COOKIE) {
+			qdf_print("this seg cookie is bad (memory corruption?)");
+			QDF_BUG(0);
+			return;
+		}
+		/* free this seg, so reset the cookie value*/
+		c_element->cookie = 0;
 		qdf_mem_free(c_element);
 		c_element = temp;
 	}
