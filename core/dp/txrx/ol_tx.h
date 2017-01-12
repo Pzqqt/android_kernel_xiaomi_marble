@@ -175,6 +175,8 @@ ol_tx_reinject(struct ol_txrx_vdev_t *vdev, qdf_nbuf_t msdu, uint16_t peer_id);
 #if defined(FEATURE_TSO)
 void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg);
 void ol_tso_seg_list_deinit(struct ol_txrx_pdev_t *pdev);
+void ol_tso_num_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg);
+void ol_tso_num_seg_list_deinit(struct ol_txrx_pdev_t *pdev);
 #else
 static inline void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev,
 	uint32_t num_seg)
@@ -184,6 +186,13 @@ static inline void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev,
 static inline void ol_tso_seg_list_deinit(struct ol_txrx_pdev_t *pdev)
 {
 	return;
+}
+static inline void ol_tso_num_seg_list_init(struct ol_txrx_pdev_t *pdev,
+	uint32_t num_seg)
+{
+}
+static inline void ol_tso_num_seg_list_deinit(struct ol_txrx_pdev_t *pdev)
+{
 }
 #endif
 

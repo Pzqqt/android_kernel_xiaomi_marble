@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -199,6 +199,7 @@ struct ol_tx_desc_t {
 	struct ol_tx_flow_pool_t *pool;
 #endif
 	void *tso_desc;
+	void *tso_num_desc;
 };
 
 typedef TAILQ_HEAD(some_struct_name, ol_tx_desc_t) ol_tx_desc_list;
@@ -895,6 +896,13 @@ struct ol_txrx_pdev_t {
 		/* tso mutex */
 		OL_TX_MUTEX_TYPE tso_mutex;
 	} tso_seg_pool;
+	struct {
+		uint16_t num_seg_pool_size;
+		uint16_t num_free;
+		struct qdf_tso_num_seg_elem_t *freelist;
+		/* tso mutex */
+		OL_TX_MUTEX_TYPE tso_num_seg_mutex;
+	} tso_num_seg_pool;
 #endif
 
 #if defined(CONFIG_HL_SUPPORT) && defined(QCA_BAD_PEER_TX_FLOW_CL)

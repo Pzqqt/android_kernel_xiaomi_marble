@@ -98,6 +98,9 @@ static inline uint8_t ol_tx_prepare_tso(ol_txrx_vdev_handle vdev,
 	msdu_info->tso_info.curr_seg = NULL;
 	if (qdf_nbuf_is_tso(msdu)) {
 		int num_seg = qdf_nbuf_get_tso_num_seg(msdu);
+		struct qdf_tso_num_seg_elem_t *tso_num_seg;
+
+		msdu_info->tso_info.tso_num_seg_list = NULL;
 		msdu_info->tso_info.tso_seg_list = NULL;
 		msdu_info->tso_info.num_segs = num_seg;
 		while (num_seg) {
@@ -122,6 +125,25 @@ static inline uint8_t ol_tx_prepare_tso(ol_txrx_vdev_handle vdev,
 				}
 				return 1;
 			}
+		}
+		tso_num_seg = ol_tso_num_seg_alloc(vdev->pdev);
+		if (tso_num_seg) {
+			tso_num_seg->next = msdu_info->tso_info.
+						tso_num_seg_list;
+			msdu_info->tso_info.tso_num_seg_list = tso_num_seg;
+		} else {
+			/* Free the already allocated num of segments */
+			struct qdf_tso_seg_elem_t *next_seg;
+			struct qdf_tso_seg_elem_t *free_seg =
+					msdu_info->tso_info.tso_seg_list;
+			qdf_print("TSO num of seg alloc for one jumbo skb failed!\n");
+			while (free_seg) {
+				next_seg = free_seg->next;
+				ol_tso_free_segment(vdev->pdev,
+					 free_seg);
+				free_seg = next_seg;
+			}
+			return 1;
 		}
 		qdf_nbuf_get_tso_info(vdev->pdev->osdev,
 			msdu, &(msdu_info->tso_info));
@@ -387,6 +409,7 @@ ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
 	tx_desc->netbuf = msdu;
 	if (msdu_info->tso_info.is_tso) {
 		tx_desc->tso_desc = msdu_info->tso_info.curr_seg;
+		tx_desc->tso_num_desc = msdu_info->tso_info.tso_num_seg_list;
 		tx_desc->pkt_type = OL_TX_FRM_TSO;
 		TXRX_STATS_MSDU_INCR(pdev, tx.tso.tso_pkts, msdu);
 	} else {
@@ -1794,6 +1817,13 @@ qdf_nbuf_t ol_tx_reinject(struct ol_txrx_vdev_t *vdev,
 }
 
 #if defined(FEATURE_TSO)
+/**
+ * ol_tso_seg_list_init() - function to initialise the tso seg freelist
+ * @pdev: the data physical device sending the data
+ * @num_seg: number of segments needs to be intialised
+ *
+ * Return: none
+ */
 void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 {
 	int i;
@@ -1825,6 +1855,12 @@ void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 	qdf_spinlock_create(&pdev->tso_seg_pool.tso_mutex);
 }
 
+/**
+ * ol_tso_seg_list_deinit() - function to de-initialise the tso seg freelist
+ * @pdev: the data physical device sending the data
+ *
+ * Return: none
+ */
 void ol_tso_seg_list_deinit(struct ol_txrx_pdev_t *pdev)
 {
 	int i;
@@ -1855,6 +1891,75 @@ void ol_tso_seg_list_deinit(struct ol_txrx_pdev_t *pdev)
 		}
 		/* free this seg, so reset the cookie value*/
 		c_element->cookie = 0;
+		qdf_mem_free(c_element);
+		c_element = temp;
+	}
+}
+
+/**
+ * ol_tso_num_seg_list_init() - function to initialise the freelist of elements
+ *				use to count the num of tso segments in jumbo
+ *				skb packet freelist
+ * @pdev: the data physical device sending the data
+ * @num_seg: number of elements needs to be intialised
+ *
+ * Return: none
+ */
+void ol_tso_num_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
+{
+	int i;
+	struct qdf_tso_num_seg_elem_t *c_element;
+
+	c_element = qdf_mem_malloc(sizeof(struct qdf_tso_num_seg_elem_t));
+	pdev->tso_num_seg_pool.freelist = c_element;
+	for (i = 0; i < (num_seg - 1); i++) {
+		if (qdf_unlikely(!c_element)) {
+			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+				"%s: ERROR: c_element NULL for num of seg %d",
+				__func__, i);
+			QDF_BUG(0);
+			pdev->tso_num_seg_pool.num_seg_pool_size = i;
+			qdf_spinlock_create(&pdev->tso_num_seg_pool.
+							tso_num_seg_mutex);
+			return;
+		}
+
+		c_element->next =
+			qdf_mem_malloc(sizeof(struct qdf_tso_num_seg_elem_t));
+		c_element = c_element->next;
+		c_element->next = NULL;
+	}
+	pdev->tso_num_seg_pool.num_seg_pool_size = num_seg;
+	qdf_spinlock_create(&pdev->tso_num_seg_pool.tso_num_seg_mutex);
+}
+
+/**
+ * ol_tso_num_seg_list_deinit() - function to de-initialise the freelist of
+ *				  elements use to count the num of tso segment
+ *				  in a jumbo skb packet freelist
+ * @pdev: the data physical device sending the data
+ *
+ * Return: none
+ */
+void ol_tso_num_seg_list_deinit(struct ol_txrx_pdev_t *pdev)
+{
+	int i;
+	struct qdf_tso_num_seg_elem_t *c_element;
+	struct qdf_tso_num_seg_elem_t *temp;
+
+	qdf_spin_lock_bh(&pdev->tso_num_seg_pool.tso_num_seg_mutex);
+	c_element = pdev->tso_num_seg_pool.freelist;
+	i = pdev->tso_num_seg_pool.num_seg_pool_size;
+
+	pdev->tso_num_seg_pool.freelist = NULL;
+	pdev->tso_num_seg_pool.num_free = 0;
+	pdev->tso_num_seg_pool.num_seg_pool_size = 0;
+
+	qdf_spin_unlock_bh(&pdev->tso_num_seg_pool.tso_num_seg_mutex);
+	qdf_spinlock_destroy(&pdev->tso_num_seg_pool.tso_num_seg_mutex);
+
+	while (i-- > 0 && c_element) {
+		temp = c_element->next;
 		qdf_mem_free(c_element);
 		c_element = temp;
 	}

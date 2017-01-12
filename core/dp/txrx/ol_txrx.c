@@ -1549,6 +1549,8 @@ ol_txrx_pdev_post_attach(void *ppdev)
 
 	ol_tso_seg_list_init(pdev, desc_pool_size);
 
+	ol_tso_num_seg_list_init(pdev, desc_pool_size);
+
 	ol_tx_register_flow_control(pdev);
 
 	return 0;            /* success */
@@ -1647,6 +1649,7 @@ static void ol_txrx_pdev_detach(void *ppdev, int force)
 #endif
 #endif
 	ol_tso_seg_list_deinit(pdev);
+	ol_tso_num_seg_list_deinit(pdev);
 
 	if (force) {
 		/*
