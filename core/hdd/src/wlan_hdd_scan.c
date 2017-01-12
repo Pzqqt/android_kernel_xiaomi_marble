@@ -319,10 +319,12 @@ static int hdd_indicate_scan_result(hdd_scan_info_t *scanInfo,
 	ie_length = GET_IE_LEN_IN_BSS(descriptor->length);
 
 	if (ie_length > 0) {
-		/* dot11BeaconIEs is a large struct, so we make it static to
-		   avoid stack overflow.  This API is only invoked via ioctl,
-		   so it is serialized by the kernel rtnl_lock and hence does
-		   not need to be reentrant */
+		/*
+		 * dot11BeaconIEs is a large struct, so we make it static to
+		 * avoid stack overflow.  This API is only invoked via ioctl,
+		 * so it is serialized by the kernel rtnl_lock and hence does
+		 * not need to be reentrant
+		 */
 		static tDot11fBeaconIEs dot11BeaconIEs;
 		tDot11fIESSID *pDot11SSID;
 		tDot11fIESuppRates *pDot11SuppRates;
@@ -2504,8 +2506,10 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 		goto error;
 	}
 
-	/* Framework provides one set of channels(all)
-	 * common for all saved profile */
+	/*
+	 * Framework provides one set of channels(all)
+	 * common for all saved profile
+	 */
 	if (0 != sme_cfg_get_str(hHal, WNI_CFG_VALID_CHANNEL_LIST,
 				 channels_allowed, &num_channels_allowed)) {
 		hdd_err("failed to get valid channel list");
