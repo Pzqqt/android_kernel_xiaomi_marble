@@ -8342,6 +8342,176 @@ static int iw_setnone_getnone(struct net_device *dev,
 	return ret;
 }
 
+#ifdef MPC_UT_FRAMEWORK
+static int iw_get_policy_manager_ut_ops(hdd_context_t *hdd_ctx,
+			hdd_adapter_t *adapter, int sub_cmd, int *apps_args)
+{
+	switch(sub_cmd) {
+	case WE_POLICY_MANAGER_CLIST_CMD:
+	{
+		hdd_err("<iwpriv wlan0 pm_clist> is called");
+		cds_incr_connection_count_utfw(apps_args[0],
+			apps_args[1], apps_args[2], apps_args[3],
+			apps_args[4], apps_args[5], apps_args[6],
+			apps_args[7]);
+	}
+	break;
+
+	case WE_POLICY_MANAGER_DLIST_CMD:
+	{
+		hdd_err("<iwpriv wlan0 pm_dlist> is called");
+		cds_decr_connection_count_utfw(apps_args[0],
+			apps_args[1]);
+	}
+	break;
+
+	case WE_POLICY_MANAGER_ULIST_CMD:
+	{
+		hdd_err("<iwpriv wlan0 pm_ulist> is called");
+		cds_update_connection_info_utfw(apps_args[0],
+			apps_args[1], apps_args[2], apps_args[3],
+			apps_args[4], apps_args[5], apps_args[6],
+			apps_args[7]);
+	}
+	break;
+
+	case WE_POLICY_MANAGER_DBS_CMD:
+	{
+		hdd_err("<iwpriv wlan0 pm_dbs> is called");
+		if (apps_args[0] == 0)
+			wma_set_dbs_capability_ut(0);
+		else
+			wma_set_dbs_capability_ut(1);
+
+		if (apps_args[1] >= CDS_THROUGHPUT &&
+			apps_args[1] <= CDS_LATENCY) {
+			pr_info("setting system pref to [%d]\n", apps_args[1]);
+			hdd_ctx->config->conc_system_pref = apps_args[1];
+		}
+	}
+	break;
+
+	case WE_POLICY_MANAGER_PCL_CMD:
+	{
+		uint8_t pcl[QDF_MAX_NUM_CHAN] = {0};
+		uint8_t weight_list[QDF_MAX_NUM_CHAN] = {0};
+		uint32_t pcl_len = 0, i = 0;
+
+		hdd_err("<iwpriv wlan0 pm_pcl> is called");
+
+		cds_get_pcl(apps_args[0],
+				pcl, &pcl_len,
+				weight_list, QDF_ARRAY_SIZE(weight_list));
+		pr_info("PCL list for role[%d] is {", apps_args[0]);
+		for (i = 0 ; i < pcl_len; i++)
+			pr_info(" %d, ", pcl[i]);
+		pr_info("}--------->\n");
+	}
+	break;
+
+	case WE_POLICY_SET_HW_MODE_CMD:
+	{
+		if (apps_args[0] == 0) {
+			hdd_err("set hw mode for single mac");
+			cds_pdev_set_hw_mode(
+					adapter->sessionId,
+					HW_MODE_SS_2x2,
+					HW_MODE_80_MHZ,
+					HW_MODE_SS_0x0, HW_MODE_BW_NONE,
+					HW_MODE_DBS_NONE,
+					HW_MODE_AGILE_DFS_NONE,
+					HW_MODE_SBS_NONE,
+					SIR_UPDATE_REASON_UT);
+		} else if (apps_args[0] == 1) {
+			hdd_err("set hw mode for dual mac");
+			cds_pdev_set_hw_mode(
+					adapter->sessionId,
+					HW_MODE_SS_1x1,
+					HW_MODE_80_MHZ,
+					HW_MODE_SS_1x1, HW_MODE_40_MHZ,
+					HW_MODE_DBS,
+					HW_MODE_AGILE_DFS_NONE,
+					HW_MODE_SBS_NONE,
+					SIR_UPDATE_REASON_UT);
+		}
+	}
+	break;
+
+	case WE_POLICY_MANAGER_QUERY_ACTION_CMD:
+	{
+		enum cds_conc_next_action action;
+		hdd_notice("<iwpriv wlan0 pm_query_action> is called");
+		action = cds_current_connections_update(adapter->sessionId,
+						apps_args[0],
+						SIR_UPDATE_REASON_UT);
+		pr_info("next action is %d {HDD_NOP = 0, HDD_DBS, HDD_DBS_DOWNGRADE, HDD_MCC, HDD_MCC_UPGRADE}", action);
+	}
+	break;
+
+	case WE_POLICY_MANAGER_QUERY_ALLOW_CMD:
+	{
+		bool allow;
+		hdd_err("<iwpriv wlan0 pm_query_allow> is called");
+		allow = cds_allow_concurrency(
+				apps_args[0], apps_args[1], apps_args[2]);
+		pr_info("allow %d {0 = don't allow, 1 = allow}", allow);
+	}
+	break;
+
+	case WE_POLICY_MANAGER_SCENARIO_CMD:
+	{
+		clean_report(hdd_ctx);
+		if (apps_args[0] == 1) {
+			wlan_hdd_one_connection_scenario(hdd_ctx);
+		} else if (apps_args[0] == 2) {
+			wlan_hdd_two_connections_scenario(hdd_ctx,
+				6, CDS_TWO_TWO);
+			wlan_hdd_two_connections_scenario(hdd_ctx,
+				36, CDS_TWO_TWO);
+			wlan_hdd_two_connections_scenario(hdd_ctx,
+				6, CDS_ONE_ONE);
+			wlan_hdd_two_connections_scenario(hdd_ctx,
+				36, CDS_ONE_ONE);
+		} else if (apps_args[0] == 3) {
+			/* MCC on same band with 2x2 same mac*/
+			wlan_hdd_three_connections_scenario(hdd_ctx,
+				6, 11, CDS_TWO_TWO, 0);
+			/* MCC on diff band with 2x2 same mac*/
+			wlan_hdd_three_connections_scenario(hdd_ctx,
+				6, 36, CDS_TWO_TWO, 0);
+			/* MCC on diff band with 1x1 diff mac */
+			wlan_hdd_three_connections_scenario(hdd_ctx,
+				36, 6, CDS_ONE_ONE, 0);
+			/* MCC on diff band with 1x1 same mac */
+			wlan_hdd_three_connections_scenario(hdd_ctx,
+				36, 6, CDS_ONE_ONE, 1);
+			/* SCC on same band with 2x2 same mac */
+			wlan_hdd_three_connections_scenario(hdd_ctx,
+				36, 36, CDS_TWO_TWO, 0);
+			/* SCC on same band with 1x1 same mac */
+			wlan_hdd_three_connections_scenario(hdd_ctx,
+				36, 36, CDS_ONE_ONE, 1);
+			/* MCC on same band with 2x2 same mac */
+			wlan_hdd_three_connections_scenario(hdd_ctx,
+				36, 149, CDS_TWO_TWO, 0);
+			/* MCC on same band with 1x1 same mac */
+			wlan_hdd_three_connections_scenario(hdd_ctx,
+				36, 149, CDS_ONE_ONE, 1);
+		}
+		print_report(hdd_ctx);
+	}
+	break;
+	}
+	return 0;
+}
+#else
+static int iw_get_policy_manager_ut_ops(hdd_context_t *hdd_ctx,
+			hdd_adapter_t *adapter, int sub_cmd, int *apps_args)
+{
+	return 0;
+}
+#endif
+
 /**
  * __iw_set_var_ints_getnone - Generic "set many" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -8442,181 +8612,28 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	}
 	break;
 
-	case WE_POLICY_MANAGER_CLIST_CMD:
-	{
-		hdd_err("<iwpriv wlan0 pm_clist> is called");
-		cds_incr_connection_count_utfw(apps_args[0],
-			apps_args[1], apps_args[2], apps_args[3],
-			apps_args[4], apps_args[5], apps_args[6],
-			apps_args[7]);
-	}
-	break;
-
-	case WE_POLICY_MANAGER_DLIST_CMD:
-	{
-		hdd_err("<iwpriv wlan0 pm_dlist> is called");
-		cds_decr_connection_count_utfw(apps_args[0],
-			apps_args[1]);
-	}
-	break;
-
-	case WE_POLICY_MANAGER_ULIST_CMD:
-	{
-		hdd_err("<iwpriv wlan0 pm_ulist> is called");
-		cds_update_connection_info_utfw(apps_args[0],
-			apps_args[1], apps_args[2], apps_args[3],
-			apps_args[4], apps_args[5], apps_args[6],
-			apps_args[7]);
-	}
-	break;
-
-	case WE_POLICY_MANAGER_DBS_CMD:
-	{
-		hdd_err("<iwpriv wlan0 pm_dbs> is called");
-		if (apps_args[0] == 0)
-			wma_set_dbs_capability_ut(0);
-		else
-			wma_set_dbs_capability_ut(1);
-
-		if (apps_args[1] >= CDS_THROUGHPUT &&
-			apps_args[1] <= CDS_LATENCY) {
-			pr_info("setting system pref to [%d]\n", apps_args[1]);
-			hdd_ctx->config->conc_system_pref = apps_args[1];
-		}
-	}
-	break;
-
-	case WE_POLICY_MANAGER_PCL_CMD:
-	{
-		uint8_t pcl[QDF_MAX_NUM_CHAN] = {0};
-		uint8_t weight_list[QDF_MAX_NUM_CHAN] = {0};
-		uint32_t pcl_len = 0, i = 0;
-
-		hdd_err("<iwpriv wlan0 pm_pcl> is called");
-
-		cds_get_pcl(apps_args[0],
-				pcl, &pcl_len,
-				weight_list, QDF_ARRAY_SIZE(weight_list));
-		pr_info("PCL list for role[%d] is {", apps_args[0]);
-		for (i = 0 ; i < pcl_len; i++)
-			pr_info(" %d, ", pcl[i]);
-		pr_info("}--------->\n");
-	}
-	break;
-
 	case WE_POLICY_MANAGER_CINFO_CMD:
 	{
 		struct cds_conc_connection_info *conn_info;
 		uint32_t i = 0, len = 0;
 
-		hdd_err("<iwpriv wlan0 pm_cinfo> is called");
+		hdd_info("<iwpriv wlan0 pm_cinfo> is called");
 		conn_info = cds_get_conn_info(&len);
-		pr_info("+-----------------------------+\n");
+		pr_info("+--------------------------+\n");
 		for (i = 0; i < len; i++) {
-			pr_info("|table_index[%d]\t\t|\n", i);
-			pr_info("|\t|vdev_id - %d\t\t|\n", conn_info->vdev_id);
-			pr_info("|\t|chan - %d\t\t|\n", conn_info->chan);
-			pr_info("|\t|bw - %d\t\t|\n", conn_info->bw);
-			pr_info("|\t|mode - %d\t\t|\n", conn_info->mode);
-			pr_info("|\t|mac - %d\t\t|\n", conn_info->mac);
-			pr_info("|\t|in_use - %d\t\t|\n", conn_info->in_use);
-			pr_info("+-----------------------------+\n");
-			conn_info++;
+		     pr_info("|table_index[%d]\t\t\n", i);
+		     pr_info("|\t|vdev_id - %-10d|\n", conn_info->vdev_id);
+		     pr_info("|\t|chan    - %-10d|\n", conn_info->chan);
+		     pr_info("|\t|bw      - %-10d|\n", conn_info->bw);
+		     pr_info("|\t|mode    - %-10d|\n", conn_info->mode);
+		     pr_info("|\t|mac     - %-10d|\n", conn_info->mac);
+		     pr_info("|\t|in_use  - %-10d|\n", conn_info->in_use);
+		     pr_info("+--------------------------+\n");
+		     conn_info++;
 		}
 	}
 	break;
 
-	case WE_POLICY_SET_HW_MODE_CMD:
-	{
-		if (apps_args[0] == 0) {
-			hdd_err("set hw mode for single mac");
-			cds_pdev_set_hw_mode(
-					pAdapter->sessionId,
-					HW_MODE_SS_2x2,
-					HW_MODE_80_MHZ,
-					HW_MODE_SS_0x0, HW_MODE_BW_NONE,
-					HW_MODE_DBS_NONE,
-					HW_MODE_AGILE_DFS_NONE,
-					HW_MODE_SBS_NONE,
-					SIR_UPDATE_REASON_UT);
-		} else if (apps_args[0] == 1) {
-			hdd_err("set hw mode for dual mac");
-			cds_pdev_set_hw_mode(
-					pAdapter->sessionId,
-					HW_MODE_SS_1x1,
-					HW_MODE_80_MHZ,
-					HW_MODE_SS_1x1, HW_MODE_40_MHZ,
-					HW_MODE_DBS,
-					HW_MODE_AGILE_DFS_NONE,
-					HW_MODE_SBS_NONE,
-					SIR_UPDATE_REASON_UT);
-		}
-	}
-	break;
-
-	case WE_POLICY_MANAGER_QUERY_ACTION_CMD:
-	{
-		enum cds_conc_next_action action;
-		hdd_err("<iwpriv wlan0 pm_query_action> is called");
-		action = cds_current_connections_update(pAdapter->sessionId,
-						apps_args[0],
-						SIR_UPDATE_REASON_UT);
-		pr_info("next action is %d {HDD_NOP = 0, HDD_DBS, HDD_DBS_DOWNGRADE, HDD_MCC, HDD_MCC_UPGRADE}", action);
-	}
-	break;
-	case WE_POLICY_MANAGER_QUERY_ALLOW_CMD:
-	{
-		bool allow;
-		hdd_err("<iwpriv wlan0 pm_query_allow> is called");
-		allow = cds_allow_concurrency(
-				apps_args[0], apps_args[1], apps_args[2]);
-		pr_info("allow %d {0 = don't allow, 1 = allow}", allow);
-	}
-	break;
-
-	case WE_POLICY_MANAGER_SCENARIO_CMD:
-	{
-		clean_report(hdd_ctx);
-		if (apps_args[0] == 1) {
-			wlan_hdd_one_connection_scenario(hdd_ctx);
-		} else if (apps_args[0] == 2) {
-			wlan_hdd_two_connections_scenario(hdd_ctx,
-				6, CDS_TWO_TWO);
-			wlan_hdd_two_connections_scenario(hdd_ctx,
-				36, CDS_TWO_TWO);
-			wlan_hdd_two_connections_scenario(hdd_ctx,
-				6, CDS_ONE_ONE);
-			wlan_hdd_two_connections_scenario(hdd_ctx,
-				36, CDS_ONE_ONE);
-		} else if (apps_args[0] == 3) {
-			/* MCC on same band with 2x2 same mac*/
-			wlan_hdd_three_connections_scenario(hdd_ctx,
-				6, 11, CDS_TWO_TWO, 0);
-			/* MCC on diff band with 2x2 same mac*/
-			wlan_hdd_three_connections_scenario(hdd_ctx,
-				6, 36, CDS_TWO_TWO, 0);
-			/* MCC on diff band with 1x1 diff mac */
-			wlan_hdd_three_connections_scenario(hdd_ctx,
-				36, 6, CDS_ONE_ONE, 0);
-			/* MCC on diff band with 1x1 same mac */
-			wlan_hdd_three_connections_scenario(hdd_ctx,
-				36, 6, CDS_ONE_ONE, 1);
-			/* SCC on same band with 2x2 same mac */
-			wlan_hdd_three_connections_scenario(hdd_ctx,
-				36, 36, CDS_TWO_TWO, 0);
-			/* SCC on same band with 1x1 same mac */
-			wlan_hdd_three_connections_scenario(hdd_ctx,
-				36, 36, CDS_ONE_ONE, 1);
-			/* MCC on same band with 2x2 same mac */
-			wlan_hdd_three_connections_scenario(hdd_ctx,
-				36, 149, CDS_TWO_TWO, 0);
-			/* MCC on same band with 1x1 same mac */
-			wlan_hdd_three_connections_scenario(hdd_ctx,
-				36, 149, CDS_ONE_ONE, 1);
-		}
-		print_report(hdd_ctx);
-	}
-	break;
 
 #ifdef FEATURE_WLAN_TDLS
 	case WE_TDLS_CONFIG_PARAMS:
@@ -8752,6 +8769,20 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 						    &mac_pwr_dbg_args)) {
 			return -EINVAL;
 		}
+	}
+	break;
+	case WE_POLICY_MANAGER_CLIST_CMD:
+	case WE_POLICY_MANAGER_DLIST_CMD:
+	case WE_POLICY_MANAGER_ULIST_CMD:
+	case WE_POLICY_MANAGER_DBS_CMD:
+	case WE_POLICY_MANAGER_PCL_CMD:
+	case WE_POLICY_SET_HW_MODE_CMD:
+	case WE_POLICY_MANAGER_QUERY_ACTION_CMD:
+	case WE_POLICY_MANAGER_QUERY_ALLOW_CMD:
+	case WE_POLICY_MANAGER_SCENARIO_CMD:
+	{
+		iw_get_policy_manager_ut_ops(hdd_ctx, pAdapter,
+					     sub_cmd, apps_args);
 	}
 	break;
 	default:
@@ -11392,6 +11423,12 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
 	 0,
 	 "dumplog"},
+
+	{WE_POLICY_MANAGER_CINFO_CMD,
+	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
+	 0,
+	 "pm_cinfo"},
+
 #ifdef MPC_UT_FRAMEWORK
 	{WE_POLICY_MANAGER_CLIST_CMD,
 	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
@@ -11412,11 +11449,6 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
 	 0,
 	 "pm_pcl"},
-
-	{WE_POLICY_MANAGER_CINFO_CMD,
-	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
-	 0,
-	 "pm_cinfo"},
 
 	{WE_POLICY_MANAGER_ULIST_CMD,
 	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,

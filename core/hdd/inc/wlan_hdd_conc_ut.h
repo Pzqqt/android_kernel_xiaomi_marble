@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -53,7 +53,7 @@ static inline void clean_report(hdd_context_t *hdd_ctx)
 static inline void fill_report(hdd_context_t *hdd_ctx, char *title,
 	uint32_t first_persona, uint32_t second_persona, uint32_t third_persona,
 	uint32_t chnl_1st_conn, uint32_t chnl_2nd_conn, uint32_t chnl_3rd_conn,
-	bool status, enum hdd_pcl_type pcl_type, char *reason, uint8_t *pcl)
+	bool status, enum cds_pcl_type pcl_type, char *reason, uint8_t *pcl)
 {
 }
 
@@ -66,13 +66,13 @@ static inline void wlan_hdd_one_connection_scenario(hdd_context_t *hdd_ctx)
 }
 
 static inline void wlan_hdd_two_connections_scenario(hdd_context_t *hdd_ctx,
-		uint8_t first_chnl, enum hdd_chain_mode first_chain_mask)
+		uint8_t first_chnl, enum cds_chain_mode first_chain_mask)
 {
 }
 
 static inline void wlan_hdd_three_connections_scenario(hdd_context_t *hdd_ctx,
 		uint8_t first_chnl, uint8_t second_chnl,
-		enum hdd_chain_mode chain_mask, uint8_t use_same_mac)
+		enum cds_chain_mode chain_mask, uint8_t use_same_mac)
 {
 }
 #endif

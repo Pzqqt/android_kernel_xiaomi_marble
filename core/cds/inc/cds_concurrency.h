@@ -847,6 +847,7 @@ QDF_STATUS cds_current_connections_update(uint32_t session_id,
 				uint8_t channel,
 				enum sir_conn_update_reason);
 bool cds_is_ibss_conn_exist(uint8_t *ibss_channel);
+struct cds_conc_connection_info *cds_get_conn_info(uint32_t *len);
 #ifdef MPC_UT_FRAMEWORK
 QDF_STATUS cds_incr_connection_count_utfw(
 		uint32_t vdev_id, uint32_t tx_streams, uint32_t rx_streams,
@@ -858,7 +859,6 @@ QDF_STATUS cds_update_connection_info_utfw(
 		uint32_t channelid, uint32_t mac_id);
 QDF_STATUS cds_decr_connection_count_utfw(
 		uint32_t del_all, uint32_t vdev_id);
-struct cds_conc_connection_info *cds_get_conn_info(uint32_t *len);
 enum cds_pcl_type get_pcl_from_first_conn_table(enum cds_con_mode type,
 		enum cds_conc_priority_mode sys_pref);
 enum cds_pcl_type get_pcl_from_second_conn_table(
@@ -886,10 +886,6 @@ static inline QDF_STATUS cds_decr_connection_count_utfw(uint32_t del_all,
 		uint32_t vdev_id)
 {
 	return QDF_STATUS_SUCCESS;
-}
-static inline struct cds_conc_connection_info *cds_get_conn_info(uint32_t *len)
-{
-	return NULL;
 }
 #endif
 

@@ -6632,6 +6632,15 @@ void cds_check_and_restart_sap_with_non_dfs_acs(void)
 	}
 }
 #endif
+
+struct cds_conc_connection_info *cds_get_conn_info(uint32_t *len)
+{
+	struct cds_conc_connection_info *conn_ptr = &conc_connection_list[0];
+	*len = MAX_NUMBER_OF_CONC_CONNECTIONS;
+
+	return conn_ptr;
+}
+
 #ifdef MPC_UT_FRAMEWORK
 QDF_STATUS cds_update_connection_info_utfw(
 		uint32_t vdev_id, uint32_t tx_streams, uint32_t rx_streams,
@@ -6739,14 +6748,6 @@ QDF_STATUS cds_decr_connection_count_utfw(uint32_t del_all,
 	}
 
 	return QDF_STATUS_SUCCESS;
-}
-
-struct cds_conc_connection_info *cds_get_conn_info(uint32_t *len)
-{
-	struct cds_conc_connection_info *conn_ptr = &conc_connection_list[0];
-	*len = MAX_NUMBER_OF_CONC_CONNECTIONS;
-
-	return conn_ptr;
 }
 
 enum cds_pcl_type get_pcl_from_first_conn_table(enum cds_con_mode type,
