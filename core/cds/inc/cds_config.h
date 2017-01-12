@@ -55,6 +55,20 @@ enum cfg_sub_20_channel_width {
 };
 
 /**
+ * enum active_bpf_mode - the modes active BPF can operate in
+ * @ACTIVE_BPF_DISABLED: BPF is disabled in active mode
+ * @ACTIVE_BPF_ENABLED: BPF is enabled for all packets
+ * @ACTIVE_BPF_ADAPTIVE: BPF is enabled for packets up to some threshold
+ * @ACTIVE_BPF_MODE_COUNT: The number of active BPF modes
+ */
+enum active_bpf_mode {
+	ACTIVE_BPF_DISABLED = 0,
+	ACTIVE_BPF_ENABLED,
+	ACTIVE_BPF_ADAPTIVE,
+	ACTIVE_BPF_MODE_COUNT
+};
+
+/**
  * struct cds_config_info - Place Holder for cds configuration
  * @max_station: Max station supported
  * @max_bssid: Max Bssid Supported
@@ -99,6 +113,7 @@ enum cfg_sub_20_channel_width {
  * @sub_20_channel_width: Sub 20 MHz ch width, ini intersected with fw cap
  * @flow_steering_enabled: Receive flow steering.
  * @is_fw_timeout: Indicate whether crash host when fw timesout or not
+ * @active_bpf_mode: Setting that determines how BPF is applied in active mode
  * Structure for holding cds ini parameters.
  */
 
@@ -151,7 +166,7 @@ struct cds_config_info {
 	bool flow_steering_enabled;
 	bool self_recovery_enabled;
 	bool fw_timeout_crash;
-
 	struct ol_tx_sched_wrr_ac_specs_t ac_specs[TX_WMM_AC_NUM];
+	enum active_bpf_mode active_bpf_mode;
 };
 #endif /* !defined( __CDS_CONFIG_H ) */

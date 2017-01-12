@@ -59,7 +59,6 @@
 #endif /* REMOVE_PKT_LOG */
 
 #include "dbglog_host.h"
-/* FIXME: Inclusion of .c looks odd but this is how it is in internal codebase */
 #include "csr_api.h"
 
 #include "dfs.h"
@@ -1357,6 +1356,44 @@ static int wma_remove_bss_peer(tp_wma_handle wma, void *pdev,
 }
 
 /**
+ * wma_config_active_bpf_mode() - Config active BPF mode in FW
+ * @wma: the WMA handle
+ * @vdev_id: the Id of the vdev for which the configuration should be applied
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS wma_config_active_bpf_mode(t_wma_handle *wma, uint8_t vdev_id)
+{
+	/* for now, hard code mc/bc mode to enabled */
+	const enum wmi_host_active_bpf_mode mcbc_mode =
+		WMI_HOST_ACTIVE_BPF_ENABLED;
+	enum wmi_host_active_bpf_mode uc_mode;
+
+	WMA_LOGI("Configuring Active BPF Mode %d for vdev %u",
+		 wma->active_bpf_mode, vdev_id);
+
+	switch (wma->active_bpf_mode) {
+	case ACTIVE_BPF_DISABLED:
+		uc_mode = FW_ACTIVE_BPF_MODE_DISABLE;
+		break;
+	case ACTIVE_BPF_ENABLED:
+		uc_mode = FW_ACTIVE_BPF_MODE_FORCE_ENABLE;
+		break;
+	case ACTIVE_BPF_ADAPTIVE:
+		uc_mode = FW_ACTIVE_BPF_MODE_ADAPTIVE_ENABLE;
+		break;
+	default:
+		WMA_LOGE("Invalid Active BPF Mode %d; Using 'disabled'",
+			 wma->active_bpf_mode);
+		uc_mode = FW_ACTIVE_BPF_MODE_DISABLE;
+		break;
+	}
+
+	return wmi_unified_set_active_bpf_mode_cmd(wma->wmi_handle, vdev_id,
+						   uc_mode, mcbc_mode);
+}
+
+/**
  * wma_vdev_stop_resp_handler() - vdev stop response handler
  * @handle: wma handle
  * @cmd_param_info: event buffer
@@ -1784,6 +1821,14 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 	} else {
 		WMA_LOGE("Failed to get value for WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED, leaving unchanged");
 	}
+
+	if (self_sta_req->type == WMI_VDEV_TYPE_STA) {
+		status = wma_config_active_bpf_mode(wma_handle,
+						    self_sta_req->session_id);
+		if (QDF_IS_STATUS_ERROR(status))
+			WMA_LOGE("Failed to configure active BPF mode");
+	}
+
 end:
 	self_sta_req->status = status;
 
