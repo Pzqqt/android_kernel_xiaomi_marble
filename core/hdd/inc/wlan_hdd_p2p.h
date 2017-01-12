@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -27,13 +27,13 @@
 
 #ifndef __P2P_H
 #define __P2P_H
-/**===========================================================================
 
-   \file         wlan_hdd_p2p.h
+/**
+ * DOC: wlan_hdd_p2p.h
+ *
+ * Linux HDD P2P include file
+ */
 
-   \brief       Linux HDD P2P include file
-
-   ==========================================================================*/
 #define ACTION_FRAME_TX_TIMEOUT 2000
 #define WAIT_CANCEL_REM_CHAN    1000
 #define WAIT_REM_CHAN_READY     1000
