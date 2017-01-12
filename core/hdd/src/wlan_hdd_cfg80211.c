@@ -8293,6 +8293,7 @@ static int __wlan_hdd_cfg80211_set_fast_roaming(struct wiphy *wiphy,
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_MAX + 1];
 	uint32_t is_fast_roam_enabled;
 	int ret;
+	QDF_STATUS qdf_status;
 
 	ENTER_DEV(dev);
 
@@ -8329,11 +8330,14 @@ static int __wlan_hdd_cfg80211_set_fast_roaming(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 	/* Update roaming */
-	ret = sme_config_fast_roaming(hdd_ctx->hHal, adapter->sessionId,
+	qdf_status = sme_config_fast_roaming(hdd_ctx->hHal, adapter->sessionId,
 				      (is_fast_roam_enabled &&
 				       adapter->fast_roaming_allowed));
-	if (ret)
-		hdd_err("sme_config_fast_roaming failed");
+	if (qdf_status != QDF_STATUS_SUCCESS)
+		hdd_err("sme_config_fast_roaming failed with status=%d",
+				qdf_status);
+	ret = qdf_status_to_os_return(qdf_status);
+
 	EXIT();
 	return ret;
 }
