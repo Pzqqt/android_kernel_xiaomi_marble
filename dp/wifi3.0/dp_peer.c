@@ -24,7 +24,9 @@
 #include "dp_peer.h"
 #include <hal_api.h>
 #include <hal_reo.h>
-
+#ifdef CONFIG_MCL
+#include <cds_ieee80211_common.h>
+#endif
 /* Temporary definitions to be moved to wlan_cfg */
 static inline uint32_t wlan_cfg_max_peer_id(void *wlan_cfg_ctx)
 {

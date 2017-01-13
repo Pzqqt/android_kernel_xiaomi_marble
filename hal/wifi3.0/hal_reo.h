@@ -19,6 +19,7 @@
 #ifndef _HAL_REO_H_
 #define _HAL_REO_H_
 
+#include <qdf_types.h>
 /* HW headers */
 #include <reo_descriptor_threshold_reached_status.h>
 #include <reo_flush_queue.h>

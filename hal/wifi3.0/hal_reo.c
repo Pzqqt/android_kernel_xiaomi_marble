@@ -217,7 +217,7 @@ inline int hal_reo_cmd_unblock_cache(void *reo_ring, struct hal_soc *soc,
 
 {
 	uint32_t *reo_desc, val;
-	uint8_t index;
+	uint8_t index = 0;
 
 	hal_srng_access_start(soc, reo_ring);
 
@@ -709,7 +709,7 @@ inline void hal_reo_flush_cache_status(uint32_t *reo_desc, struct hal_soc *soc,
 					BLOCK_ERROR_DETAILS,
 					val);
 	if (!st->block_error)
-		qdf_set_bit(soc->index, &soc->reo_res_bitmap);
+		qdf_set_bit(soc->index, (unsigned long *)&soc->reo_res_bitmap);
 
 	/* cache flush status */
 	val = reo_desc[HAL_OFFSET_DW(REO_FLUSH_CACHE_STATUS_2,
@@ -764,7 +764,8 @@ inline void hal_reo_unblock_cache_status(uint32_t *reo_desc,
 					 val);
 
 	if (!st->error && (st->unblock_type == UNBLOCK_RES_INDEX))
-		qdf_clear_bit(soc->index, &soc->reo_res_bitmap);
+		qdf_clear_bit(soc->index,
+			     (unsigned long *)&soc->reo_res_bitmap);
 }
 
 inline void hal_reo_flush_timeout_list_status(

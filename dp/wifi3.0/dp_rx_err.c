@@ -23,7 +23,11 @@
 #include "hal_api.h"
 #include "qdf_trace.h"
 #include "qdf_nbuf.h"
+#ifdef CONFIG_MCL
+#include <cds_ieee80211_common.h>
+#else
 #include <ieee80211.h>
+#endif
 
 /**
  * dp_rx_cookie_2_link_desc_va() - Converts cookie to a virtual address of
