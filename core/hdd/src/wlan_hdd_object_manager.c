@@ -56,24 +56,24 @@ int hdd_release_and_destroy_psoc(hdd_context_t *hdd_ctx)
 	return qdf_status_to_os_return(wlan_objmgr_psoc_obj_delete(psoc));
 }
 
-QDF_STATUS hdd_create_and_store_pdev(hdd_context_t *hdd_ctx)
+int hdd_create_and_store_pdev(hdd_context_t *hdd_ctx)
 {
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
 	struct wlan_objmgr_pdev *pdev;
 
 	if (!psoc) {
 		hdd_err("Psoc NULL");
-		return QDF_STATUS_E_FAILURE;
+		return -EINVAL;
 	}
 
 	pdev = wlan_objmgr_pdev_obj_create(psoc, NULL);
 	if (!pdev) {
 		hdd_err("pdev obj create failed");
-		return QDF_STATUS_E_FAILURE;
+		return -ENOMEM;
 	}
 	hdd_ctx->hdd_pdev = pdev;
 
-	return QDF_STATUS_SUCCESS;
+	return 0;
 }
 
 QDF_STATUS hdd_release_and_destroy_pdev(hdd_context_t *hdd_ctx)

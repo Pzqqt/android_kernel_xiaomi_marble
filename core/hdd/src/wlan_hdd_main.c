@@ -1313,15 +1313,15 @@ static void hdd_update_ra_rate_limit(hdd_context_t *hdd_ctx,
 
 void hdd_update_tgt_cfg(void *context, void *param)
 {
+	int ret;
 	hdd_context_t *hdd_ctx = (hdd_context_t *) context;
 	struct wma_tgt_cfg *cfg = param;
 	uint8_t temp_band_cap;
 	struct cds_config_info *cds_cfg = cds_get_ini_config();
-	QDF_STATUS qdf_status;
 
-	qdf_status = hdd_create_and_store_pdev(hdd_ctx);
-	if (QDF_IS_STATUS_ERROR(qdf_status)) {
-		hdd_err("Pdev creation fails!");
+	ret = hdd_create_and_store_pdev(hdd_ctx);
+	if (ret) {
+		hdd_err("pdev creation fails!");
 		QDF_BUG(0);
 	}
 

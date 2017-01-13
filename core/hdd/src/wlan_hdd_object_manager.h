@@ -91,9 +91,9 @@ int hdd_release_and_destroy_psoc(hdd_context_t *hdd_ctx);
  *
  * This API creates the pdev object and store the pdev reference to hdd context
  *
- * Return: QDF_STATUS
+ * Return: 0 for success, negative error code for failure
  */
-QDF_STATUS hdd_create_and_store_pdev(hdd_context_t *hdd_ctx);
+int hdd_create_and_store_pdev(hdd_context_t *hdd_ctx);
 
 /**
  * hdd_release_and_destroy_pdev() - Deletes the pdev object
