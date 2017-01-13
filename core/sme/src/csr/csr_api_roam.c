@@ -6580,22 +6580,35 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 	 * WDS_AP. But since the encryption.
 	 * is WPA2-PSK so it won't matter.
 	 */
-	if (CSR_IS_ENC_TYPE_STATIC(profile->negotiatedUCEncryptionType)
-			&& session->pCurRoamProfile
-			&& !CSR_IS_INFRA_AP(session->pCurRoamProfile)) {
-		/*
-		 * Issue the set Context request to LIM to establish
-		 * the Broadcast STA context for the Ibss. In Rome IBSS
-		 * case, dummy key installation will break proper BSS
-		 * key installation, so skip it.
-		 */
-		if (!CSR_IS_IBSS(session->pCurRoamProfile)) {
-			/* NO keys. these key parameters don't matter */
-			csr_roam_issue_set_context_req(mac_ctx,
-				session_id,
-				profile->negotiatedMCEncryptionType,
-				bss_desc, &bcast_mac, false,
-				false, eSIR_TX_RX, 0, 0, NULL, 0);
+	if (session->pCurRoamProfile &&
+	    !CSR_IS_INFRA_AP(session->pCurRoamProfile)) {
+		if (CSR_IS_ENC_TYPE_STATIC(
+				profile->negotiatedUCEncryptionType)) {
+			/*
+			 * Issue the set Context request to LIM to establish
+			 * the Broadcast STA context for the Ibss. In Rome IBSS
+			 * case, dummy key installation will break proper BSS
+			 * key installation, so skip it.
+			 */
+			if (!CSR_IS_IBSS(session->pCurRoamProfile)) {
+				/* NO keys. these key parameters don't matter */
+				csr_roam_issue_set_context_req(mac_ctx,
+					session_id,
+					profile->negotiatedMCEncryptionType,
+					bss_desc, &bcast_mac, false,
+					false, eSIR_TX_RX, 0, 0, NULL, 0);
+			}
+		}
+		if (CSR_IS_IBSS(session->pCurRoamProfile) &&
+		    (eCSR_ENCRYPT_TYPE_WEP40_STATICKEY ==
+				profile->negotiatedUCEncryptionType ||
+		    eCSR_ENCRYPT_TYPE_WEP104_STATICKEY ==
+				profile->negotiatedUCEncryptionType ||
+		    eCSR_ENCRYPT_TYPE_TKIP ==
+				profile->negotiatedUCEncryptionType ||
+		    eCSR_ENCRYPT_TYPE_AES ==
+				profile->negotiatedUCEncryptionType)) {
+			roam_info.fAuthRequired = true;
 		}
 	}
 	/*
