@@ -313,6 +313,7 @@ QDF_STATUS scheduler_deregister_module(QDF_MODULE_ID qid)
 	ctx = &sched_ctx->queue_ctx;
 	qidx = ctx->scheduler_msg_qid_to_qidx[qid];
 	ctx->scheduler_msg_process_fn[qidx] = NULL;
+	sched_ctx->sch_last_qidx--;
 	ctx->scheduler_msg_qid_to_qidx[qidx] = SCHEDULER_NUMBER_OF_MSG_QUEUE;
 	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_INFO,
 		FL("Exit"));
