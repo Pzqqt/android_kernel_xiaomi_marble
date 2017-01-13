@@ -127,7 +127,8 @@ struct pld_platform_cap {
 enum pld_driver_status {
 	PLD_UNINITIALIZED,
 	PLD_INITIALIZED,
-	PLD_LOAD_UNLOAD
+	PLD_LOAD_UNLOAD,
+	PLD_RECOVERY,
 };
 
 /**
@@ -270,6 +271,8 @@ struct pld_soc_info {
  *          is enabled
  * @modem_status: optional operation, will be called when platform driver
  *                sending modem power status to WLAN FW
+ * @update_status: optional operation, will be called when platform driver
+ *                 updating driver status
  * @runtime_suspend: optional operation, prepare the device for a condition
  *                   in which it won't be able to communicate with the CPU(s)
  *                   and RAM due to power management.
@@ -302,6 +305,7 @@ struct pld_driver_ops {
 	void (*modem_status)(struct device *dev,
 			     enum pld_bus_type bus_type,
 			     int state);
+	void (*update_status)(struct device *dev, uint32_t status);
 	int (*runtime_suspend)(struct device *dev,
 			       enum pld_bus_type bus_type);
 	int (*runtime_resume)(struct device *dev,
