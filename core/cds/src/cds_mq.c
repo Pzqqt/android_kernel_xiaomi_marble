@@ -48,51 +48,6 @@
 tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, void *pMb);
 
 /**
- * cds_mq_init() - initialize cds message queue
- * @pMq: Pointer to the message queue
- *
- * This function initializes the Message queue.
- *
- * Return: qdf status
- */
-inline QDF_STATUS cds_mq_init(p_cds_mq_type pMq)
-{
-
-	if (pMq == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: NULL pointer passed", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	/* Now initialize the lock */
-	spin_lock_init(&pMq->mqLock);
-
-	/* Now initialize the List data structure */
-	INIT_LIST_HEAD(&pMq->mqList);
-
-	return QDF_STATUS_SUCCESS;
-} /* cds_mq_init() */
-
-/**
- * cds_mq_deinit() - de-initialize cds message queue
- * @pMq: Pointer to the message queue
- *
- * This function de-initializes cds message queue
- *
- * Return: none
- */
-inline void cds_mq_deinit(p_cds_mq_type pMq)
-{
-	if (pMq == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: NULL pointer passed", __func__);
-		return;
-	}
-
-	/* we don't have to do anything with the embedded list or spinlock */
-} /* cds_mq_deinit() */
-
-/**
  * cds_mq_put() - add a message to the message queue
  * @pMq: Pointer to the message queue
  * @pMsgWrapper: Msg wrapper containing the message

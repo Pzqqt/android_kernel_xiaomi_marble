@@ -478,8 +478,6 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 QDF_STATUS cds_sched_close(void *p_cds_context);
 
 /* Helper routines provided to other CDS API's */
-QDF_STATUS cds_mq_init(p_cds_mq_type pMq);
-void cds_mq_deinit(p_cds_mq_type pMq);
 void cds_mq_put(p_cds_mq_type pMq, p_cds_msg_wrapper pMsgWrapper);
 void cds_mq_put_front(p_cds_mq_type mq, p_cds_msg_wrapper msg_wrapper);
 p_cds_msg_wrapper cds_mq_get(p_cds_mq_type pMq);
