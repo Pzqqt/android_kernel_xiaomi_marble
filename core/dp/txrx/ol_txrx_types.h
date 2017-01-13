@@ -1117,6 +1117,9 @@ typedef A_STATUS (*ol_tx_filter_func)(struct ol_txrx_msdu_info_t *
 #define OL_TXRX_PEER_SECURITY_UNICAST    1
 #define OL_TXRX_PEER_SECURITY_MAX        2
 
+/* Allow 6000 ms to receive peer unmap events after peer is deleted */
+#define OL_TXRX_PEER_UNMAP_TIMEOUT (6000)
+
 struct ol_txrx_peer_t {
 	struct ol_txrx_vdev_t *vdev;
 
@@ -1226,6 +1229,7 @@ struct ol_txrx_peer_t {
 	qdf_time_t last_disassoc_rcvd;
 	qdf_time_t last_deauth_rcvd;
 	qdf_atomic_t fw_create_pending;
+	qdf_mc_timer_t peer_unmap_timer;
 };
 
 struct ol_rx_remote_data {
