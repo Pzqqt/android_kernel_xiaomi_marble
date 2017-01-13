@@ -2493,10 +2493,18 @@ static unsigned long fake_apps_state;
 static void __hdd_wlan_fake_apps_resume(struct wiphy *wiphy,
 					struct net_device *dev)
 {
-	qdf_device_t qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	qdf_device_t qdf_dev;
 	int i, resume_err;
 
 	hdd_info("Unit-test resume WLAN");
+
+	qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	if (!qdf_dev) {
+		hdd_err("Failed to get QDF device context");
+		QDF_BUG(0);
+		return;
+	}
+
 	if (!test_and_clear_bit(HDD_FA_SUSPENDED_BIT, &fake_apps_state)) {
 		hdd_info("Not unit-test suspended; Nothing to do");
 		return;
@@ -2545,12 +2553,25 @@ static void hdd_wlan_fake_apps_resume_irq_callback(uint32_t val)
 
 int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev)
 {
-	qdf_device_t qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-	struct hif_opaque_softc *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	qdf_device_t qdf_dev;
+	struct hif_opaque_softc *hif_ctx;
 	pm_message_t state;
 	int i, resume_err, suspend_err;
 
 	hdd_info("Unit-test suspend WLAN");
+
+	qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	if (!qdf_dev) {
+		hdd_err("Failed to get QDF device context");
+		return -EINVAL;
+	}
+
+	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	if (!hif_ctx) {
+		hdd_err("Failed to get HIF context");
+		return -EINVAL;
+	}
+
 	if (test_and_set_bit(HDD_FA_SUSPENDED_BIT, &fake_apps_state)) {
 		hdd_info("Already unit-test suspended; Nothing to do");
 		return 0;
@@ -2610,7 +2631,13 @@ resume_done:
 
 int hdd_wlan_fake_apps_resume(struct wiphy *wiphy, struct net_device *dev)
 {
-	struct hif_opaque_softc *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	struct hif_opaque_softc *hif_ctx;
+
+	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	if (!hif_ctx) {
+		hdd_err("Failed to get HIF context");
+		return -EINVAL;
+	}
 
 	hif_fake_apps_resume(hif_ctx);
 	__hdd_wlan_fake_apps_resume(wiphy, dev);
