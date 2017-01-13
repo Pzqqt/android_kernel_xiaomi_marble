@@ -87,8 +87,8 @@ int hdd_release_and_destroy_pdev(hdd_context_t *hdd_ctx)
 	return qdf_status_to_os_return(wlan_objmgr_pdev_obj_delete(pdev));
 }
 
-QDF_STATUS hdd_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
-				hdd_adapter_t *adapter)
+int hdd_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
+			      hdd_adapter_t *adapter)
 {
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_peer *peer;
@@ -99,20 +99,20 @@ QDF_STATUS hdd_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 						QDF_NET_MAC_ADDR_MAX_LEN);
 	if (!pdev) {
 		hdd_err("pdev NULL");
-		return QDF_STATUS_E_FAILURE;
+		return -EINVAL;
 	}
 
 	vdev = wlan_objmgr_vdev_obj_create(pdev, &vdev_params);
 	if (!vdev) {
 		hdd_err("vdev obj create fails");
-		return QDF_STATUS_E_FAILURE;
+		return -ENOMEM;
 	}
 
 	if (adapter->sessionId != wlan_vdev_get_id(vdev)) {
 		hdd_err("session id and vdev id mismatch");
 		wlan_objmgr_vdev_obj_delete(vdev);
 		QDF_ASSERT(0);
-		return QDF_STATUS_E_FAILURE;
+		return -EINVAL;
 	}
 
 	peer = wlan_objmgr_peer_obj_create(vdev, WLAN_PEER_SELF,
@@ -121,13 +121,13 @@ QDF_STATUS hdd_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 		hdd_err("obj manager self peer create fails for adapter %d",
 					adapter->device_mode);
 		wlan_objmgr_vdev_obj_delete(vdev);
-		return QDF_STATUS_E_FAILURE;
+		return -ENOMEM;
 	}
 	adapter->hdd_vdev = vdev;
 
 	wlan_objmgr_peer_ref_peer(peer);
 
-	return QDF_STATUS_SUCCESS;
+	return 0;
 }
 
 QDF_STATUS hdd_release_and_destroy_vdev(hdd_adapter_t *adapter)

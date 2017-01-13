@@ -5830,8 +5830,8 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 	}
 	pAdapter->sessionId = session_id;
 
-	status = hdd_create_and_store_vdev(pHddCtx->hdd_pdev, pAdapter);
-	if (QDF_IS_STATUS_ERROR(status))
+	ret = hdd_create_and_store_vdev(pHddCtx->hdd_pdev, pAdapter);
+	if (ret)
 		goto error_vdev_create;
 
 	/* Allocate the Wireless Extensions state structure */

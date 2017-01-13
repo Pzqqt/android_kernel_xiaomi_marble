@@ -115,10 +115,10 @@ int hdd_release_and_destroy_pdev(hdd_context_t *hdd_ctx);
  * session id and vdev id of the new vdev object doesnot match, destroys the
  * created vdev object and returns failure
  *
- * Return: QDF_STATUS
+ * Return: 0 for success, negative error code for failure
  */
-QDF_STATUS hdd_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
-					hdd_adapter_t *adapter);
+int hdd_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
+			      hdd_adapter_t *adapter);
 
 /**
  * hdd_release_and_destroy_vdev() - Delete the vdev object

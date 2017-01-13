@@ -1985,11 +1985,9 @@ int hdd_init_nan_data_mode(struct hdd_adapter_s *adapter)
 		goto error_sme_open;
 	}
 
-	status = hdd_create_and_store_vdev(hdd_ctx->hdd_pdev, adapter);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		ret_val = -EAGAIN;
+	ret_val = hdd_create_and_store_vdev(hdd_ctx->hdd_pdev, adapter);
+	if (ret_val)
 		goto error_vdev_create;
-	}
 
 	/* Register wireless extensions */
 	ret_val = hdd_register_wext(wlan_dev);

@@ -2683,8 +2683,8 @@ QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	status = hdd_create_and_store_vdev(hdd_ctx->hdd_pdev, adapter);
-	if (QDF_IS_STATUS_ERROR(status))
+	ret_val = hdd_create_and_store_vdev(hdd_ctx->hdd_pdev, adapter);
+	if (ret_val)
 		goto error_vdev_create;
 
 	sme_set_vdev_ies_per_band(hdd_ctx->hHal, adapter->sessionId);
