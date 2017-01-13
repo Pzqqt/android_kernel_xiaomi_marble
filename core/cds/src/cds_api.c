@@ -93,6 +93,7 @@ void cds_sys_probe_thread_cback(void *pUserData);
 v_CONTEXT_t cds_init(void)
 {
 	qdf_debugfs_init();
+	qdf_lock_stats_init();
 	qdf_mem_init();
 	qdf_mc_timer_manager_init();
 
@@ -125,6 +126,7 @@ void cds_deinit(void)
 
 	qdf_mc_timer_manager_exit();
 	qdf_mem_exit();
+	qdf_lock_stats_deinit();
 	qdf_debugfs_exit();
 
 	gp_cds_context->qdf_ctx = NULL;
