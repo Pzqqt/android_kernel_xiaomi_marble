@@ -76,17 +76,15 @@ int hdd_create_and_store_pdev(hdd_context_t *hdd_ctx)
 	return 0;
 }
 
-QDF_STATUS hdd_release_and_destroy_pdev(hdd_context_t *hdd_ctx)
+int hdd_release_and_destroy_pdev(hdd_context_t *hdd_ctx)
 {
 	struct wlan_objmgr_pdev *pdev = hdd_ctx->hdd_pdev;
 
 	hdd_ctx->hdd_pdev = NULL;
 	if (!pdev)
-		return QDF_STATUS_E_FAILURE;
+		return -EINVAL;
 
-	wlan_objmgr_pdev_obj_delete(pdev);
-
-	return QDF_STATUS_SUCCESS;
+	return qdf_status_to_os_return(wlan_objmgr_pdev_obj_delete(pdev));
 }
 
 QDF_STATUS hdd_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
