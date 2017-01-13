@@ -473,8 +473,7 @@ QDF_STATUS csr_process_ndp_initiator_request(tpAniSirGlobal mac_ctx,
 
 	if (NULL == cmd) {
 		sms_log(mac_ctx, LOGE, FL("Invalid req_params"));
-		status = QDF_STATUS_E_INVAL;
-		goto sme_initiator_req_failed;
+		return QDF_STATUS_E_INVAL;
 	}
 	req = &cmd->u.initiator_req;
 

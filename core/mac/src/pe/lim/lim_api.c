@@ -2245,7 +2245,8 @@ void lim_update_lost_link_info(tpAniSirGlobal mac, tpPESession session,
 	tSirMsgQ mmh_msg;
 
 	if ((NULL == mac) || (NULL == session)) {
-		lim_log(mac, LOGE, FL("parameter NULL"));
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+			FL("parameter NULL"));
 		return;
 	}
 	if (!LIM_IS_STA_ROLE(session)) {
