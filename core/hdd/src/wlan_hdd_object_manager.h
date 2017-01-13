@@ -81,9 +81,9 @@ int hdd_create_and_store_psoc(hdd_context_t *hdd_ctx, uint8_t psoc_id);
  *
  * This API deletes psoc object and release its reference from hdd context
  *
- * Return: QDF_STATUS
+ * Return: 0 for success, negative error code for failure
  */
-QDF_STATUS hdd_release_and_destroy_psoc(hdd_context_t *hdd_ctx);
+int hdd_release_and_destroy_psoc(hdd_context_t *hdd_ctx);
 
 /**
  * hdd_create_and_store_pdev() - Create pdev object and store in hdd context

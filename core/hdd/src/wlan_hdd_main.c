@@ -8037,8 +8037,8 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx)
 	if (QDF_IS_STATUS_ERROR(qdf_status))
 		hdd_err("Pdev delete failed");
 
-	qdf_status = hdd_release_and_destroy_psoc(hdd_ctx);
-	if (QDF_IS_STATUS_ERROR(qdf_status))
+	ret = hdd_release_and_destroy_psoc(hdd_ctx);
+	if (ret)
 		hdd_err("Psoc delete failed");
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
