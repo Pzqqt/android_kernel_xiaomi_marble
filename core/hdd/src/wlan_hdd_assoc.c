@@ -60,6 +60,7 @@
 #include <cdp_txrx_peer_ops.h>
 #include <cdp_txrx_misc.h>
 #include <wlan_logging_sock_svc.h>
+#include <wlan_hdd_object_manager.h>
 
 /* These are needed to recognize WPA and RSN suite types */
 #define HDD_WPA_OUI_SIZE 4
