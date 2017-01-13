@@ -1779,8 +1779,8 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			goto ol_cds_free;
 		}
 
-		status = hdd_create_and_store_psoc(hdd_ctx, DEFAULT_PSOC_ID);
-		if (QDF_IS_STATUS_ERROR(status)) {
+		ret = hdd_create_and_store_psoc(hdd_ctx, DEFAULT_PSOC_ID);
+		if (ret) {
 			hdd_err("Psoc creation fails!");
 			goto ol_cds_free;
 		}

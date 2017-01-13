@@ -32,17 +32,17 @@
 
 #include <wlan_hdd_object_manager.h>
 
-QDF_STATUS hdd_create_and_store_psoc(hdd_context_t *hdd_ctx, uint8_t psoc_id)
+int hdd_create_and_store_psoc(hdd_context_t *hdd_ctx, uint8_t psoc_id)
 {
 	struct wlan_objmgr_psoc *psoc;
 
 	psoc = wlan_objmgr_psoc_obj_create(psoc_id, WLAN_DEV_OL);
 	if (!psoc)
-		return QDF_STATUS_E_FAILURE;
+		return -ENOMEM;
 
 	hdd_ctx->hdd_psoc = psoc;
 
-	return QDF_STATUS_SUCCESS;
+	return 0;
 }
 
 QDF_STATUS hdd_release_and_destroy_psoc(hdd_context_t *hdd_ctx)

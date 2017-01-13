@@ -71,9 +71,9 @@
  * This API creates Psoc object with given @psoc_id and store the psoc reference
  * to hdd context
  *
- * Return: QDF_STATUS
+ * Return: 0 for success, negative error code for failure
  */
-QDF_STATUS hdd_create_and_store_psoc(hdd_context_t *hdd_ctx, uint8_t psoc_id);
+int hdd_create_and_store_psoc(hdd_context_t *hdd_ctx, uint8_t psoc_id);
 
 /**
  * hdd_release_and_destroy_psoc() - Deletes the psoc object
