@@ -2625,8 +2625,6 @@ void *hif_ce_get_lro_ctx(struct hif_opaque_softc *hif_hdl, int ctx_id)
 	struct CE_state *ce_state;
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
 
-	QDF_ASSERT(scn != NULL);
-
 	ce_state = scn->ce_id_to_state[ctx_id];
 
 	return ce_state->lro_data;
