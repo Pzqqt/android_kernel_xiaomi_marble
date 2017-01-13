@@ -7245,4 +7245,17 @@ struct pdev_csa_switch_count_status {
 	uint32_t *vdev_ids;
 };
 
+/**
+ * enum wmi_host_active-bpf_mode - FW_ACTIVE_BPF_MODE, replicated from FW header
+ * @WMI_HOST_ACTIVE_BPF_DISABLED: BPF is disabled for all packets in active mode
+ * @WMI_HOST_ACTIVE_BPF_ENABLED: BPF is enabled for all packets in active mode
+ * @WMI_HOST_ACTIVE_BPF_ADAPTIVE: BPF is enabled for packets up to some
+ *	threshold in active mode
+ */
+enum wmi_host_active_bpf_mode {
+	WMI_HOST_ACTIVE_BPF_DISABLED =	(1 << 1),
+	WMI_HOST_ACTIVE_BPF_ENABLED =	(1 << 2),
+	WMI_HOST_ACTIVE_BPF_ADAPTIVE =	(1 << 3)
+};
+
 #endif /* _WMI_UNIFIED_PARAM_H_ */
