@@ -3871,12 +3871,11 @@ bool wma_is_p2p_lo_capable(void)
 bool wma_is_hw_dbs_2x2_capable(void)
 {
 	tp_wma_handle wma;
-	int i, j = 0, max_mac;
-	uint32_t ht_2g, ht_5g;
-	struct extended_caps *phy_caps;
-	WMI_MAC_PHY_CAPABILITIES *mac_cap;
-	uint32_t tx_chain, rx_chain, final_min_rf_chains = 2;
-	uint32_t min_rf_chains, min_2g_rf_chains, min_5g_rf_chains;
+	int i, param;
+	uint32_t dbs, tx_chain0, rx_chain0, tx_chain1, rx_chain1;
+	uint32_t final_min_rf_chains = 2;
+	uint32_t min_rf_chains, min_mac0_rf_chains, min_mac1_rf_chains;
+	bool is_dbs_found = false;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
@@ -3884,35 +3883,28 @@ bool wma_is_hw_dbs_2x2_capable(void)
 		return false;
 	}
 
-	phy_caps = &wma->phy_caps;
-	for (i = 0; i < phy_caps->num_hw_modes.num_hw_modes; i++) {
-		if (phy_caps->each_hw_mode_cap[i].phy_id_map == PHY1_PHY2)
-			max_mac = j + 2;
-		else
-			max_mac = j + 1;
-		for ( ; j < max_mac; j++) {
-			mac_cap = &phy_caps->each_phy_cap_per_hwmode[j];
-			ht_2g = mac_cap->ht_cap_info_2G;
-			ht_5g = mac_cap->ht_cap_info_5G;
-			if (ht_5g && ht_2g) {
-				tx_chain = mac_cap->tx_chain_mask_2G;
-				rx_chain = mac_cap->rx_chain_mask_2G;
-				min_2g_rf_chains = QDF_MIN(
-				wma_get_num_of_setbits_from_bitmask(tx_chain),
-				wma_get_num_of_setbits_from_bitmask(rx_chain));
-				tx_chain = mac_cap->tx_chain_mask_5G;
-				rx_chain = mac_cap->rx_chain_mask_5G;
-				min_5g_rf_chains = QDF_MIN(
-				wma_get_num_of_setbits_from_bitmask(tx_chain),
-				wma_get_num_of_setbits_from_bitmask(rx_chain));
-				min_rf_chains = QDF_MIN(min_2g_rf_chains,
-							min_5g_rf_chains);
-			} else {
-				continue;
-			}
-			final_min_rf_chains = QDF_MIN(final_min_rf_chains,
-						min_rf_chains);
+	for (i = 0; i < wma->num_dbs_hw_modes; i++) {
+		param = wma->hw_mode.hw_mode_list[i];
+		tx_chain0 = WMA_HW_MODE_MAC0_TX_STREAMS_GET(param);
+		rx_chain0 = WMA_HW_MODE_MAC0_RX_STREAMS_GET(param);
+		dbs = WMA_HW_MODE_DBS_MODE_GET(param);
+		tx_chain1 = WMA_HW_MODE_MAC1_TX_STREAMS_GET(param);
+		rx_chain1 = WMA_HW_MODE_MAC1_RX_STREAMS_GET(param);
+
+		if (dbs) {
+			min_mac0_rf_chains = QDF_MIN(tx_chain0, rx_chain0);
+			min_mac1_rf_chains = QDF_MIN(tx_chain1, rx_chain1);
+			min_rf_chains = QDF_MIN(min_mac0_rf_chains,
+						min_mac1_rf_chains);
+			is_dbs_found = true;
+		} else {
+			continue;
 		}
+		final_min_rf_chains = QDF_MIN(final_min_rf_chains,
+					min_rf_chains);
 	}
+	if (false == is_dbs_found)
+		final_min_rf_chains = 0;
+
 	return (final_min_rf_chains == 2) ? true : false;
 }
