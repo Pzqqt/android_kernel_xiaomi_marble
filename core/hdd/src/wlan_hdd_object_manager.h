@@ -153,8 +153,8 @@ int hdd_add_peer_object(struct wlan_objmgr_vdev *vdev,
  *
  * This API finds the peer object from given @mac_addr and deletes the same.
  *
- * Return: QDF_STATUS
+ * Return: 0 for success, negative error code for failure
  */
-QDF_STATUS hdd_remove_peer_object(struct wlan_objmgr_vdev *vdev,
-						uint8_t *mac_addr);
+int hdd_remove_peer_object(struct wlan_objmgr_vdev *vdev,
+			   uint8_t *mac_addr);
 #endif /* end #if !defined(WLAN_HDD_OBJECT_MANAGER_H) */

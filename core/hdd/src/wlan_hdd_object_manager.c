@@ -181,8 +181,8 @@ int hdd_add_peer_object(struct wlan_objmgr_vdev *vdev,
 	return 0;
 }
 
-QDF_STATUS hdd_remove_peer_object(struct wlan_objmgr_vdev *vdev,
-						uint8_t *mac_addr)
+int hdd_remove_peer_object(struct wlan_objmgr_vdev *vdev,
+			   uint8_t *mac_addr)
 {
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_peer *peer;
@@ -190,28 +190,28 @@ QDF_STATUS hdd_remove_peer_object(struct wlan_objmgr_vdev *vdev,
 	if (!vdev) {
 		hdd_err("vdev NULL");
 		QDF_ASSERT(0);
-		return QDF_STATUS_E_FAILURE;
+		return -EINVAL;
 	}
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {
 		hdd_err("Psoc NUll");
 		QDF_ASSERT(0);
-		return QDF_STATUS_E_FAILURE;
+		return -EINVAL;
 	}
 
 	peer = wlan_objmgr_find_peer(psoc, mac_addr);
 	if (peer) {
-		if (wlan_objmgr_peer_obj_delete(peer))
-			return QDF_STATUS_E_FAILURE;
+		if (QDF_IS_STATUS_ERROR(wlan_objmgr_peer_obj_delete(peer)))
+			return -EFAULT;
 
 		hdd_info("Peer obj "MAC_ADDRESS_STR" deleted",
 				MAC_ADDR_ARRAY(mac_addr));
-		return QDF_STATUS_SUCCESS;
+		return 0;
 	}
 
 	hdd_err("Peer obj "MAC_ADDRESS_STR" not found",
 				MAC_ADDR_ARRAY(mac_addr));
 
-	return QDF_STATUS_E_FAILURE;
+	return -EINVAL;
 }

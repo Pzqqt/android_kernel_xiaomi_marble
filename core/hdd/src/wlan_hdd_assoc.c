@@ -1189,7 +1189,6 @@ static void hdd_send_association_event(struct net_device *dev,
 	int we_event;
 	char *msg;
 	struct qdf_mac_addr peerMacAddr;
-	QDF_STATUS qdf_status;
 
 	/* Added to find the auth type on the fly at run time */
 	/* rather than with cfg to see if FT is enabled */
@@ -1345,9 +1344,9 @@ static void hdd_send_association_event(struct net_device *dev,
 							pAdapter->device_mode);
 		}
 
-		qdf_status = hdd_remove_peer_object(pAdapter->hdd_vdev,
-							peerMacAddr.bytes);
-		if (QDF_IS_STATUS_ERROR(qdf_status))
+		ret = hdd_remove_peer_object(pAdapter->hdd_vdev,
+					     peerMacAddr.bytes);
+		if (ret)
 			hdd_err("Peer obj "MAC_ADDRESS_STR" delete fails",
 					MAC_ADDR_ARRAY(peerMacAddr.bytes));
 
@@ -3305,8 +3304,9 @@ roam_roam_connect_status_update_handler(hdd_adapter_t *pAdapter,
 					eRoamCmdStatus roamStatus,
 					eCsrRoamResult roamResult)
 {
-	QDF_STATUS qdf_status;
+	int ret;
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	QDF_STATUS qdf_status;
 
 	switch (roamResult) {
 	case eCSR_ROAM_RESULT_IBSS_NEW_PEER:
@@ -3419,9 +3419,9 @@ roam_roam_connect_status_update_handler(hdd_adapter_t *pAdapter,
 		pHddCtx->sta_to_adapter[pRoamInfo->staId] = NULL;
 		pHddStaCtx->ibss_sta_generation++;
 
-		qdf_status = hdd_remove_peer_object(pAdapter->hdd_vdev,
-					pRoamInfo->peerMac.bytes);
-		if (QDF_IS_STATUS_ERROR(qdf_status))
+		ret = hdd_remove_peer_object(pAdapter->hdd_vdev,
+					     pRoamInfo->peerMac.bytes);
+		if (ret)
 			hdd_err("Peer obj "MAC_ADDRESS_STR" delete fails",
 				MAC_ADDR_ARRAY(pRoamInfo->peerMac.bytes));
 
