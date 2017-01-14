@@ -5910,8 +5910,8 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 error_wmm_init:
 	hdd_softap_deinit_tx_rx(pAdapter);
 error_init_ap_mode:
-	status = hdd_release_and_destroy_vdev(pAdapter);
-	if (QDF_IS_STATUS_ERROR(status))
+	ret = hdd_release_and_destroy_vdev(pAdapter);
+	if (ret)
 		hdd_err("vdev delete failed");
 error_vdev_create:
 	wlansap_close(sapContext);
@@ -6056,6 +6056,7 @@ QDF_STATUS hdd_register_hostapd(hdd_adapter_t *pAdapter,
  */
 QDF_STATUS hdd_unregister_hostapd(hdd_adapter_t *pAdapter, bool rtnl_held)
 {
+	int ret;
 	QDF_STATUS status;
 	void *sapContext = WLAN_HDD_GET_SAP_CTX_PTR(pAdapter);
 
@@ -6087,8 +6088,8 @@ QDF_STATUS hdd_unregister_hostapd(hdd_adapter_t *pAdapter, bool rtnl_held)
 		hdd_err("Failed:WLANSAP_close");
 	pAdapter->sessionCtx.ap.sapContext = NULL;
 
-	status = hdd_release_and_destroy_vdev(pAdapter);
-	if (QDF_IS_STATUS_ERROR(status))
+	ret = hdd_release_and_destroy_vdev(pAdapter);
+	if (ret)
 		hdd_err("vdev delete failed");
 
 	EXIT();

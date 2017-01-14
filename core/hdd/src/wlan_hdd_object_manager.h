@@ -126,9 +126,9 @@ int hdd_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
  *
  * This API deletes vdev object and release its reference from hdd adapter
  *
- * Return: QDF_STATUS
+ * Return: 0 for success, negative error code for failure
  */
-QDF_STATUS hdd_release_and_destroy_vdev(hdd_adapter_t *adapter);
+int hdd_release_and_destroy_vdev(hdd_adapter_t *adapter);
 
 /**
  * hdd_add_peer_object() - Create and add the peer object to the vdev

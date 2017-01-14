@@ -130,23 +130,21 @@ int hdd_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 	return 0;
 }
 
-QDF_STATUS hdd_release_and_destroy_vdev(hdd_adapter_t *adapter)
+int hdd_release_and_destroy_vdev(hdd_adapter_t *adapter)
 {
 	struct wlan_objmgr_vdev *vdev = adapter->hdd_vdev;
 
 	adapter->hdd_vdev = NULL;
 	if (!vdev)
-		return QDF_STATUS_E_FAILURE;
+		return -EFAULT;
 
 	if (hdd_remove_peer_object(vdev,
 			wlan_vdev_mlme_get_macaddr(vdev))) {
 		hdd_err("Self peer delete fails");
-		return QDF_STATUS_E_FAILURE;
+		return -EINVAL;
 	}
 
-	wlan_objmgr_vdev_obj_delete(vdev);
-
-	return QDF_STATUS_SUCCESS;
+	return qdf_status_to_os_return(wlan_objmgr_vdev_obj_delete(vdev));
 }
 
 QDF_STATUS hdd_add_peer_object(struct wlan_objmgr_vdev *vdev,

@@ -112,7 +112,6 @@ static int hdd_close_ndi(hdd_adapter_t *adapter)
 	int rc;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	uint32_t timeout = WLAN_WAIT_TIME_SESSIONOPENCLOSE;
-	QDF_STATUS qdf_status;
 
 	ENTER();
 
@@ -148,8 +147,8 @@ static int hdd_close_ndi(hdd_adapter_t *adapter)
 			if (!rc)
 				hdd_err("session close timeout");
 
-			qdf_status = hdd_release_and_destroy_vdev(adapter);
-			if (QDF_IS_STATUS_ERROR(qdf_status))
+			rc = hdd_release_and_destroy_vdev(adapter);
+			if (rc)
 				hdd_err("vdev delete failed");
 		}
 	}

@@ -2758,8 +2758,8 @@ error_wmm_init:
 error_init_txrx:
 	hdd_unregister_wext(pWlanDev);
 error_register_wext:
-	status = hdd_release_and_destroy_vdev(adapter);
-	if (QDF_IS_STATUS_ERROR(status))
+	ret_val = hdd_release_and_destroy_vdev(adapter);
+	if (ret_val)
 		hdd_err("vdev delete failed");
 error_vdev_create:
 	if (test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
@@ -2913,8 +2913,8 @@ void hdd_deinit_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 static void hdd_cleanup_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 				bool rtnl_held)
 {
+	int ret;
 	struct net_device *pWlanDev = NULL;
-	QDF_STATUS qdf_status;
 
 	if (adapter)
 		pWlanDev = adapter->dev;
@@ -2923,8 +2923,8 @@ static void hdd_cleanup_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 		return;
 	}
 
-	qdf_status = hdd_release_and_destroy_vdev(adapter);
-	if (QDF_IS_STATUS_ERROR(qdf_status))
+	ret = hdd_release_and_destroy_vdev(adapter);
+	if (ret)
 		hdd_err("vdev delete failed");
 
 	hdd_debugfs_exit(adapter);
@@ -3532,8 +3532,8 @@ void wlan_hdd_reset_prob_rspies(hdd_adapter_t *pHostapdAdapter)
 static void hdd_wait_for_sme_close_sesion(hdd_context_t *hdd_ctx,
 					hdd_adapter_t *adapter)
 {
+	int ret;
 	unsigned long rc;
-	QDF_STATUS qdf_status;
 
 	if (!test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
 		hdd_err("session is not opened:%d", adapter->sessionId);
@@ -3560,8 +3560,8 @@ static void hdd_wait_for_sme_close_sesion(hdd_context_t *hdd_ctx,
 			clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
 			return;
 		}
-		qdf_status = hdd_release_and_destroy_vdev(adapter);
-		if (QDF_IS_STATUS_ERROR(qdf_status))
+		ret = hdd_release_and_destroy_vdev(adapter);
+		if (ret)
 			hdd_err("vdev delete failed");
 
 		adapter->sessionId = HDD_SESSION_ID_INVALID;
