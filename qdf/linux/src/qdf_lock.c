@@ -135,7 +135,7 @@ QDF_STATUS qdf_mutex_acquire(qdf_mutex_t *lock)
 	BEFORE_LOCK(lock, mutex_is_locked(&lock->m_lock));
 	/* acquire a Lock */
 	mutex_lock(&lock->m_lock);
-	AFTER_LOCK(lock);
+	AFTER_LOCK(lock, __func__);
 	rc = mutex_is_locked(&lock->m_lock);
 	if (rc == 0) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
