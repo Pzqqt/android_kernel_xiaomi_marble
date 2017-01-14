@@ -1181,6 +1181,7 @@ hdd_send_update_beacon_ies_event(hdd_adapter_t *pAdapter,
 static void hdd_send_association_event(struct net_device *dev,
 				       tCsrRoamInfo *pCsrRoamInfo)
 {
+	int ret;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
@@ -1275,10 +1276,10 @@ static void hdd_send_association_event(struct net_device *dev,
 		chan_info.reg_info_2 =
 			pCsrRoamInfo->chan_info.reg_info_2;
 
-		qdf_status = hdd_add_peer_object(pAdapter->hdd_vdev,
-						pAdapter->device_mode,
-						peerMacAddr.bytes);
-		if (QDF_IS_STATUS_ERROR(qdf_status))
+		ret = hdd_add_peer_object(pAdapter->hdd_vdev,
+					  pAdapter->device_mode,
+					  peerMacAddr.bytes);
+		if (ret)
 			hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
 					MAC_ADDR_ARRAY(peerMacAddr.bytes));
 
@@ -1315,10 +1316,10 @@ static void hdd_send_association_event(struct net_device *dev,
 		hdd_err("wlan: new IBSS connection to " MAC_ADDRESS_STR,
 			 MAC_ADDR_ARRAY(pHddStaCtx->conn_info.bssId.bytes));
 
-		qdf_status = hdd_add_peer_object(pAdapter->hdd_vdev,
-						QDF_IBSS_MODE,
-						pCsrRoamInfo->bssid.bytes);
-		if (QDF_IS_STATUS_ERROR(qdf_status))
+		ret = hdd_add_peer_object(pAdapter->hdd_vdev,
+					  QDF_IBSS_MODE,
+					  pCsrRoamInfo->bssid.bytes);
+		if (ret)
 			hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
 				MAC_ADDR_ARRAY(pCsrRoamInfo->bssid.bytes));
 	} else {                /* Not Associated */

@@ -147,9 +147,9 @@ int hdd_release_and_destroy_vdev(hdd_adapter_t *adapter)
 	return qdf_status_to_os_return(wlan_objmgr_vdev_obj_delete(vdev));
 }
 
-QDF_STATUS hdd_add_peer_object(struct wlan_objmgr_vdev *vdev,
-					enum tQDF_ADAPTER_MODE adapter_mode,
-					uint8_t *mac_addr)
+int hdd_add_peer_object(struct wlan_objmgr_vdev *vdev,
+			enum tQDF_ADAPTER_MODE adapter_mode,
+			uint8_t *mac_addr)
 {
 	enum wlan_peer_type peer_type;
 
@@ -163,22 +163,22 @@ QDF_STATUS hdd_add_peer_object(struct wlan_objmgr_vdev *vdev,
 		peer_type = WLAN_PEER_IBSS;
 	} else {
 		hdd_err("Unsupported device mode %d", adapter_mode);
-		return QDF_STATUS_E_FAILURE;
+		return -EINVAL;
 	}
 
 	if (!vdev) {
 		hdd_err("vdev NULL");
 		QDF_ASSERT(0);
-		return QDF_STATUS_E_FAILURE;
+		return -EFAULT;
 	}
 
 	if (!wlan_objmgr_peer_obj_create(vdev, peer_type, mac_addr))
-		return QDF_STATUS_E_FAILURE;
+		return -ENOMEM;
 
 	hdd_info("Peer object "MAC_ADDRESS_STR" add success!",
 					MAC_ADDR_ARRAY(mac_addr));
 
-	return QDF_STATUS_SUCCESS;
+	return 0;
 }
 
 QDF_STATUS hdd_remove_peer_object(struct wlan_objmgr_vdev *vdev,

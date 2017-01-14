@@ -1681,12 +1681,12 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 					pHostapdAdapter->device_mode);
 		}
 
-		qdf_status = hdd_add_peer_object(pHostapdAdapter->hdd_vdev,
-					pHostapdAdapter->device_mode,
-					pSapEvent->sapevt.
-					sapStationAssocReassocCompleteEvent.
-					staMac.bytes);
-		if (QDF_IS_STATUS_ERROR(qdf_status))
+		ret = hdd_add_peer_object(pHostapdAdapter->hdd_vdev,
+					  pHostapdAdapter->device_mode,
+					  pSapEvent->sapevt.
+					  sapStationAssocReassocCompleteEvent.
+					  staMac.bytes);
+		if (ret)
 			hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
 					MAC_ADDR_ARRAY(pSapEvent->sapevt.
 					sapStationAssocReassocCompleteEvent.
