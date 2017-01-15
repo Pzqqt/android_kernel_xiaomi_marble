@@ -6476,6 +6476,11 @@ static int hdd_set_rx_filter(hdd_adapter_t *adapter, bool action,
 		return -EINVAL;
 	}
 
+	if (!hdd_ctx->config->fEnableMCAddrList) {
+		hdd_notice("mc addr ini is disabled");
+		return -EINVAL;
+	}
+
 	/*
 	 * If action is false it means start dropping packets
 	 * Set addr_filter_pattern which will be used when sending
