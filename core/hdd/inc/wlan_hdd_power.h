@@ -192,20 +192,42 @@ void hdd_disable_host_offloads(hdd_adapter_t *adapter,
 	enum pmo_offload_trigger trigger);
 
 /**
- * hdd_conf_mc_addr_filtering_enable() - enable MC address list in FW
- * @pAdapter: adapter whose MC list is being set
+ * hdd_enable_mc_addr_filtering() - enable MC address list in FW
+ * @adapter: adapter whose MC list is being set
  * @trigger: trigger reason for request
  *
  * Return: nothing
  */
-#ifdef WLAN_FEATURE_PACKET_FILTERING
-void wlan_hdd_set_mc_addr_list(hdd_adapter_t *pAdapter, uint8_t set);
-#else
-static inline void
-wlan_hdd_set_mc_addr_list(hdd_adapter_t *pAdapter, uint8_t set)
-{
-}
-#endif
+void hdd_enable_mc_addr_filtering(hdd_adapter_t *adapter,
+	enum pmo_offload_trigger trigger);
+
+/**
+ * hdd_disable_mc_addr_filtering() - disable MC address list in FW
+ * @adapter: adapter whose MC list is being set
+ * @trigger: trigger reason for request
+ *
+ * Return: nothing
+ */
+void hdd_disable_mc_addr_filtering(hdd_adapter_t *adapter,
+	enum pmo_offload_trigger trigger);
+
+/**
+ * hdd_cache_mc_addr_list() - API to cache MC address list
+ * @mc_list_config: set of mc address list configurations
+ *
+ * Return: 0 on success else error code
+ */
+int hdd_cache_mc_addr_list(struct pmo_mc_addr_list_params *mc_list_config);
+
+/**
+ * hdd_disable_and_flush_mc_addr_list() - API to Disable & Flush cached MC list
+ * @adapter: adapter whose MC list is being set
+ * @trigger: trigger reason for request
+ *
+ * Return: nothing
+ */
+void hdd_disable_and_flush_mc_addr_list(hdd_adapter_t *adapter,
+	enum pmo_offload_trigger trigger);
 
 int wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 				   struct cfg80211_wowlan *wow);

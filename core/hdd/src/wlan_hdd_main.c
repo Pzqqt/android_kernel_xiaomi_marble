@@ -2309,80 +2309,72 @@ void wlan_hdd_release_intf_addr(hdd_context_t *hdd_ctx, uint8_t *releaseAddr)
 static void __hdd_set_multicast_list(struct net_device *dev)
 {
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	int mc_count;
 	int i = 0, status;
 	struct netdev_hw_addr *ha;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	static const uint8_t ipv6_router_solicitation[]
-			= {0x33, 0x33, 0x00, 0x00, 0x00, 0x02};
+	struct pmo_mc_addr_list_params *mc_list_request = NULL;
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
+	int mc_count = 0;
 
 	ENTER_DEV(dev);
-
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam())
-		return;
+		goto out;
 
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != status)
-		return;
+		goto out;
+
+	mc_list_request = qdf_mem_malloc(sizeof(*mc_list_request));
+	if (!mc_list_request) {
+		hdd_notice("Cannot allocate mc_list_request");
+		goto out;
+	}
 
 	if (dev->flags & IFF_ALLMULTI) {
 		hdd_notice("allow all multicast frames");
-		adapter->mc_addr_list.mc_cnt = 0;
+		hdd_disable_and_flush_mc_addr_list(adapter,
+			pmo_mc_list_change_notify);
 	} else {
 		mc_count = netdev_mc_count(dev);
-		hdd_notice("mc_count : %u", mc_count);
-
-		if (mc_count > WLAN_HDD_MAX_MC_ADDR_LIST) {
+		if (mc_count > pmo_ucfg_max_mc_addr_supported(psoc)) {
 			hdd_notice("Exceeded max MC filter addresses (%d). Allowing all MC frames by disabling MC address filtering",
-				   WLAN_HDD_MAX_MC_ADDR_LIST);
-			wlan_hdd_set_mc_addr_list(adapter, false);
-			adapter->mc_addr_list.mc_cnt = 0;
-			return;
+				   pmo_ucfg_max_mc_addr_supported(psoc));
+			hdd_disable_and_flush_mc_addr_list(adapter,
+				pmo_mc_list_change_notify);
+			goto out;
 		}
-
-		adapter->mc_addr_list.mc_cnt = mc_count;
-
 		netdev_for_each_mc_addr(ha, dev) {
 			hdd_notice("ha_addr[%d] "MAC_ADDRESS_STR,
 				i, MAC_ADDR_ARRAY(ha->addr));
-
 			if (i == mc_count)
 				break;
-			/*
-			 * Skip following addresses:
-			 * 1)IPv6 router solicitation address
-			 * 2)Any other address pattern if its set during
-			 *  RXFILTER REMOVE driver command based on
-			 *  addr_filter_pattern
-			 */
-			if ((!memcmp(ha->addr, ipv6_router_solicitation,
-			   ETH_ALEN)) ||
-			   (adapter->addr_filter_pattern && (!memcmp(ha->addr,
-			    &adapter->addr_filter_pattern, 1)))) {
-				hdd_info("MC/BC filtering Skip addr ="MAC_ADDRESS_STR,
-					MAC_ADDR_ARRAY(ha->addr));
-				adapter->mc_addr_list.mc_cnt--;
-				continue;
-			}
-
-			memset(&(adapter->mc_addr_list.addr[i][0]), 0,
-			       ETH_ALEN);
-			memcpy(&(adapter->mc_addr_list.addr[i][0]), ha->addr,
-			       ETH_ALEN);
-			hdd_notice("mlist[%d] = " MAC_ADDRESS_STR, i,
-			       MAC_ADDR_ARRAY(adapter->mc_addr_list.addr[i]));
+			memset(&(mc_list_request->mc_addr[i].bytes),
+				0, ETH_ALEN);
+			memcpy(&(mc_list_request->mc_addr[i].bytes),
+				ha->addr, ETH_ALEN);
+			hdd_info("mlist[%d] = %pM", i,
+				mc_list_request->mc_addr[i].bytes);
 			i++;
 		}
 	}
-	if (hdd_ctx->config->active_mode_offload) {
-		hdd_info("enable mc filtering");
-		wlan_hdd_set_mc_addr_list(adapter, true);
+
+	mc_list_request->psoc = psoc;
+	mc_list_request->vdev_id = adapter->sessionId;
+	mc_list_request->count = mc_count;
+	status = hdd_cache_mc_addr_list(mc_list_request);
+	if (status == 0) {
+		hdd_enable_mc_addr_filtering(adapter,
+			pmo_mc_list_change_notify);
 	} else {
-		hdd_info("skip mc filtering enable it during cfg80211 suspend");
+		hdd_err("error while caching mc list");
 	}
+out:
+	if (mc_list_request)
+		qdf_mem_free(mc_list_request);
 	EXIT();
-	return;
+
 }
+
 
 /**
  * hdd_set_multicast_list() - SSR wrapper function for __hdd_set_multicast_list

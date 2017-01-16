@@ -4771,13 +4771,14 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 	case eCSR_ROAM_DISASSOCIATED:
 	{
 		hdd_info("****eCSR_ROAM_DISASSOCIATED****");
-		qdf_ret_status =
-			hdd_dis_connect_handler(pAdapter, pRoamInfo, roamId,
-						roamStatus, roamResult);
 		/* Call to clear any MC Addr List filter applied after
 		 * successful connection.
 		 */
-		wlan_hdd_set_mc_addr_list(pAdapter, false);
+		hdd_disable_and_flush_mc_addr_list(pAdapter,
+			pmo_peer_disconnect);
+		qdf_ret_status =
+			hdd_dis_connect_handler(pAdapter, pRoamInfo, roamId,
+						roamStatus, roamResult);
 	}
 	break;
 	case eCSR_ROAM_IBSS_LEAVE:

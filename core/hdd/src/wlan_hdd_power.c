@@ -546,7 +546,7 @@ void hdd_enable_host_offloads(hdd_adapter_t *adapter,
 	hdd_conf_gtk_offload(adapter, true);
 	hdd_enable_arp_offload(adapter, trigger);
 	hdd_enable_ns_offload(adapter, trigger);
-	wlan_hdd_set_mc_addr_list(adapter, true);
+	hdd_enable_mc_addr_filtering(adapter, trigger);
 out:
 	EXIT();
 
@@ -572,7 +572,7 @@ void hdd_disable_host_offloads(hdd_adapter_t *adapter,
 	hdd_conf_gtk_offload(adapter, false);
 	hdd_disable_arp_offload(adapter, trigger);
 	hdd_disable_ns_offload(adapter, trigger);
-	wlan_hdd_set_mc_addr_list(adapter, false);
+	hdd_disable_mc_addr_filtering(adapter, trigger);
 out:
 	EXIT();
 
@@ -927,108 +927,86 @@ out:
 
 }
 
-#ifdef WLAN_FEATURE_PACKET_FILTERING
-/**
- * wlan_hdd_set_mc_addr_list() - set MC address list in FW
- * @pAdapter: adapter whose MC list is being set
- * @set: flag which indicates if addresses are being set or cleared
- */
-void wlan_hdd_set_mc_addr_list(hdd_adapter_t *pAdapter, uint8_t set)
+void hdd_enable_mc_addr_filtering(hdd_adapter_t *adapter,
+		enum pmo_offload_trigger trigger)
 {
-	uint8_t i;
-	tpSirRcvFltMcAddrList pMulticastAddrs = NULL;
-	tHalHandle hHal = NULL;
-	hdd_context_t *pHddCtx = (hdd_context_t *) pAdapter->pHddCtx;
-	hdd_station_ctx_t *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	hdd_context_t *hdd_ctx = (hdd_context_t *)adapter->pHddCtx;
+	QDF_STATUS status;
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
 
 	ENTER();
+	if (wlan_hdd_validate_context(hdd_ctx))
+		goto out;
 
-	if (wlan_hdd_validate_context(pHddCtx))
-		return;
-
-	hHal = pHddCtx->hHal;
-
-	if (NULL == hHal) {
-		hdd_err("HAL Handle is NULL");
-		return;
-	}
-
-	if (!sta_ctx) {
-		hdd_err("sta_ctx is NULL");
-		return;
-	}
-
-	/* Check if INI is enabled or not, other wise just return */
-	if (!pHddCtx->config->fEnableMCAddrList) {
-		hdd_notice("gMCAddrListEnable is not enabled in INI");
-		return;
-	}
-	pMulticastAddrs = qdf_mem_malloc(sizeof(tSirRcvFltMcAddrList));
-	if (NULL == pMulticastAddrs) {
-		hdd_err("Could not allocate Memory");
-		return;
-	}
-	pMulticastAddrs->action = set;
-
-	if (set) {
-		/*
-		 * Following pre-conditions should be satisfied before we
-		 * configure the MC address list.
-		 */
-		if (pAdapter->mc_addr_list.mc_cnt &&
-				(((pAdapter->device_mode == QDF_STA_MODE ||
-				pAdapter->device_mode == QDF_P2P_CLIENT_MODE) &&
-				hdd_conn_is_connected(sta_ctx)) ||
-				(WLAN_HDD_IS_NDI(pAdapter) &&
-				WLAN_HDD_IS_NDI_CONNECTED(pAdapter)))) {
-
-			pMulticastAddrs->ulMulticastAddrCnt =
-				pAdapter->mc_addr_list.mc_cnt;
-
-			for (i = 0; i < pAdapter->mc_addr_list.mc_cnt; i++) {
-				memcpy(pMulticastAddrs->multicastAddr[i].bytes,
-				       pAdapter->mc_addr_list.addr[i],
-				       sizeof(pAdapter->mc_addr_list.addr[i]));
-				hdd_info("%s multicast filter: addr ="
-				       MAC_ADDRESS_STR,
-				       set ? "setting" : "clearing",
-				       MAC_ADDR_ARRAY(pMulticastAddrs->
-						      multicastAddr[i].bytes));
-			}
-			/* Set multicast filter */
-			sme_8023_multicast_list(hHal, pAdapter->sessionId,
-						pMulticastAddrs);
-		} else {
-			hdd_info("MC address list not sent to FW, cnt: %d",
-					pAdapter->mc_addr_list.mc_cnt);
-		}
-	} else {
-		/* Need to clear only if it was previously configured */
-		if (pAdapter->mc_addr_list.isFilterApplied) {
-			pMulticastAddrs->ulMulticastAddrCnt =
-				pAdapter->mc_addr_list.mc_cnt;
-			for (i = 0; i < pAdapter->mc_addr_list.mc_cnt; i++) {
-				memcpy(pMulticastAddrs->multicastAddr[i].bytes,
-				       pAdapter->mc_addr_list.addr[i],
-				       sizeof(pAdapter->mc_addr_list.addr[i]));
-			}
-			sme_8023_multicast_list(hHal, pAdapter->sessionId,
-						pMulticastAddrs);
-		}
-
-	}
-	/* MAddrCnt is MulticastAddrCnt */
-	hdd_notice("smeSessionId:%d; set:%d; MCAdddrCnt :%d",
-	       pAdapter->sessionId, set,
-	       pMulticastAddrs->ulMulticastAddrCnt);
-
-	pAdapter->mc_addr_list.isFilterApplied = set ? true : false;
-	qdf_mem_free(pMulticastAddrs);
-
+	status = pmo_ucfg_enable_mc_addr_filtering_in_fwr(psoc,
+				adapter->sessionId, trigger);
+	if (status != QDF_STATUS_SUCCESS)
+		hdd_info("failed to enable mc list status %d", status);
+out:
 	EXIT();
-	return;
+
 }
-#endif
+
+void hdd_disable_mc_addr_filtering(hdd_adapter_t *adapter,
+		enum pmo_offload_trigger trigger)
+{
+	hdd_context_t *hdd_ctx = (hdd_context_t *)adapter->pHddCtx;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
+
+	ENTER();
+	if (wlan_hdd_validate_context(hdd_ctx))
+		goto out;
+
+	status = pmo_ucfg_disable_mc_addr_filtering_in_fwr(psoc,
+				adapter->sessionId, trigger);
+	if (status != QDF_STATUS_SUCCESS)
+		hdd_info("failed to disable mc list status %d", status);
+out:
+	EXIT();
+
+}
+
+int hdd_cache_mc_addr_list(struct pmo_mc_addr_list_params *mc_list_config)
+{
+	QDF_STATUS status;
+	int ret = 0;
+
+	ENTER();
+	/* cache mc addr list */
+	status = pmo_ucfg_cache_mc_addr_list(mc_list_config);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_info("fail to cache mc list status %d", status);
+		ret = -EINVAL;
+	}
+	EXIT();
+
+	return ret;
+}
+
+void hdd_disable_and_flush_mc_addr_list(hdd_adapter_t *adapter,
+	enum pmo_offload_trigger trigger)
+{
+	hdd_context_t *hdd_ctx = (hdd_context_t *)adapter->pHddCtx;
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	ENTER();
+	/* disable mc list first */
+	status = pmo_ucfg_disable_mc_addr_filtering_in_fwr(psoc,
+			adapter->sessionId, trigger);
+	if (status != QDF_STATUS_SUCCESS)
+		hdd_info("fail to disable mc list");
+
+	/* flush mc list */
+	status = pmo_ucfg_flush_mc_addr_list(psoc, adapter->sessionId);
+	if (status != QDF_STATUS_SUCCESS)
+		hdd_info("fail to flush mc list status %d", status);
+	EXIT();
+
+	return;
+
+}
 
 /**
  * hdd_conf_suspend_ind() - Send Suspend notification
