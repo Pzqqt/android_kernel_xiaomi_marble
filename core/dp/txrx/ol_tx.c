@@ -1800,6 +1800,8 @@ void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 	struct qdf_tso_seg_elem_t *c_element;
 
 	c_element = qdf_mem_malloc(sizeof(struct qdf_tso_seg_elem_t));
+	c_element->on_freelist = 1;
+	c_element->cookie = TSO_SEG_MAGIC_COOKIE;
 	pdev->tso_seg_pool.freelist = c_element;
 	for (i = 0; i < (num_seg - 1); i++) {
 		if (qdf_unlikely(!c_element)) {
@@ -1812,11 +1814,11 @@ void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 			return;
 		}
 		/* set the freelist bit and magic cookie*/
-		c_element->on_freelist = 1;
-		c_element->cookie = TSO_SEG_MAGIC_COOKIE;
 		c_element->next =
 			qdf_mem_malloc(sizeof(struct qdf_tso_seg_elem_t));
 		c_element = c_element->next;
+		c_element->on_freelist = 1;
+		c_element->cookie = TSO_SEG_MAGIC_COOKIE;
 		c_element->next = NULL;
 	}
 	pdev->tso_seg_pool.pool_size = num_seg;
