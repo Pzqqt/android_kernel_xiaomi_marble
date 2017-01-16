@@ -1203,7 +1203,7 @@ static void hdd_send_association_event(struct net_device *dev,
 			/* change logging before release */
 			hdd_info("LFR3:hdd_send_association_event");
 			/* Update tdls module about the disconnection event */
-			wlan_hdd_tdls_notify_disconnect(pAdapter);
+			wlan_hdd_tdls_notify_disconnect(pAdapter, true);
 		}
 #endif
 	if (eConnectionState_Associated == pHddStaCtx->conn_info.connState) {
@@ -1351,7 +1351,7 @@ static void hdd_send_association_event(struct net_device *dev,
 
 		hdd_lpass_notify_disconnect(pAdapter);
 		/* Update tdls module about the disconnection event */
-		wlan_hdd_tdls_notify_disconnect(pAdapter);
+		wlan_hdd_tdls_notify_disconnect(pAdapter, false);
 
 #ifdef MSM_PLATFORM
 		/* stop timer in sta/p2p_cli */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -741,6 +741,7 @@ void wlan_hdd_tdls_notify_connect(hdd_adapter_t *adapter,
  * wlan_hdd_tdls_notify_disconnect() - Update tdls state for every
  * disconnect event.
  * @adapter: hdd adapter
+ * @lfr_roam: roaming case
  *
  * After every disconnect event in the system, check whether TDLS
  * can be disabled/enabled in the system and update the
@@ -748,7 +749,7 @@ void wlan_hdd_tdls_notify_connect(hdd_adapter_t *adapter,
  *
  * Return: None
  */
-void wlan_hdd_tdls_notify_disconnect(hdd_adapter_t *adapter);
+void wlan_hdd_tdls_notify_disconnect(hdd_adapter_t *adapter, bool lfr_roam);
 void wlan_hdd_change_tdls_mode(void *hdd_ctx);
 void hdd_restart_tdls_source_timer(hdd_context_t *pHddCtx,
 				      eTDLSSupportMode tdls_mode);
@@ -805,7 +806,8 @@ static inline void wlan_hdd_tdls_notify_connect(hdd_adapter_t *adapter,
 				  tCsrRoamInfo *csr_roam_info)
 {
 }
-static inline void wlan_hdd_tdls_notify_disconnect(hdd_adapter_t *adapter)
+static inline void wlan_hdd_tdls_notify_disconnect(hdd_adapter_t *adapter,
+						   bool lfr_roam)
 {
 }
 

@@ -2038,6 +2038,7 @@ void wlan_hdd_tdls_notify_connect(hdd_adapter_t *adapter,
  * wlan_hdd_tdls_notify_disconnect() - Update tdls state for every
  * disconnect event.
  * @adapter: hdd adapter
+ * @lfr_roam: roaming case
  *
  * After every disconnect event in the system, check whether TDLS
  * can be disabled/enabled in the system and update the
@@ -2045,7 +2046,7 @@ void wlan_hdd_tdls_notify_connect(hdd_adapter_t *adapter,
  *
  * Return: None
  */
-void wlan_hdd_tdls_notify_disconnect(hdd_adapter_t *adapter)
+void wlan_hdd_tdls_notify_disconnect(hdd_adapter_t *adapter, bool lfr_roam)
 {
 	hdd_adapter_t *temp_adapter;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -2063,7 +2064,7 @@ void wlan_hdd_tdls_notify_disconnect(hdd_adapter_t *adapter)
 	 * check, whether TDLS could be enabled in the
 	 * system after this disassoc event.
 	 */
-	if (!hdd_ctx->concurrency_marked) {
+	if (!lfr_roam && !hdd_ctx->concurrency_marked) {
 		temp_adapter = wlan_hdd_tdls_get_adapter(
 					hdd_ctx);
 		if (NULL != temp_adapter)
