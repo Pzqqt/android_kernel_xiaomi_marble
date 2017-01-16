@@ -22,6 +22,7 @@
 #include <dispatcher_init_deinit.h>
 #include <scheduler_api.h>
 #include <wlan_mgmt_txrx_utils_api.h>
+#include <wlan_serialization_api.h>
 
 /**
  * DOC: This file provides various init/deinit trigger point for new
@@ -144,12 +145,17 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != tdls_init())
 		goto tdls_init_fail;
 
+	if (QDF_STATUS_SUCCESS != wlan_serialization_init())
+		goto serialization_init_fail;
+
 	if (QDF_STATUS_SUCCESS != scheduler_init())
 		goto scheduler_init_fail;
 
 	return QDF_STATUS_SUCCESS;
 
 scheduler_init_fail:
+	wlan_serialization_deinit();
+serialization_init_fail:
 	tdls_deinit();
 tdls_init_fail:
 	p2p_deinit();
@@ -168,6 +174,8 @@ EXPORT_SYMBOL(dispatcher_init);
 QDF_STATUS dispatcher_deinit(void)
 {
 	QDF_BUG(QDF_STATUS_SUCCESS == scheduler_deinit());
+
+	QDF_BUG(QDF_STATUS_SUCCESS == wlan_serialization_deinit());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == tdls_deinit());
 
@@ -194,8 +202,13 @@ QDF_STATUS dispatcher_psoc_open(struct wlan_objmgr_psoc *psoc)
 	if (QDF_STATUS_SUCCESS != tdls_psoc_open(psoc))
 		goto tdls_psoc_open_fail;
 
+	if (QDF_STATUS_SUCCESS != wlan_serialization_psoc_open(psoc))
+		goto serialization_psoc_open_fail;
+
 	return QDF_STATUS_SUCCESS;
 
+serialization_psoc_open_fail:
+	tdls_psoc_close(psoc);
 tdls_psoc_open_fail:
 	p2p_psoc_close(psoc);
 p2p_psoc_open_fail:
@@ -213,6 +226,8 @@ QDF_STATUS dispatcher_psoc_close(struct wlan_objmgr_psoc *psoc)
 	QDF_BUG(QDF_STATUS_SUCCESS == p2p_psoc_close(psoc));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == scm_psoc_close(psoc));
+
+	QDF_BUG(QDF_STATUS_SUCCESS == wlan_serialization_psoc_close(psoc));
 
 	return QDF_STATUS_SUCCESS;
 }
