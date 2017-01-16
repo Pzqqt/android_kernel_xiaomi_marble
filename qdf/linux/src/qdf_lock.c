@@ -673,3 +673,164 @@ void qdf_spin_unlock_bh_outline(qdf_spinlock_t *lock)
 	qdf_spin_unlock_bh(lock);
 }
 EXPORT_SYMBOL(qdf_spin_unlock_bh_outline);
+
+#if QDF_LOCK_STATS_LIST
+struct qdf_lock_cookie {
+	union {
+		struct {
+			struct lock_stats *stats;
+			const char *func;
+			int line;
+		} cookie;
+		struct {
+			struct qdf_lock_cookie *next;
+		} empty_node;
+	} u;
+};
+
+#ifndef QDF_LOCK_STATS_LIST_SIZE
+#define QDF_LOCK_STATS_LIST_SIZE 256
+#endif
+
+static qdf_spinlock_t qdf_lock_list_spinlock;
+static struct qdf_lock_cookie lock_cookies[QDF_LOCK_STATS_LIST_SIZE];
+static struct qdf_lock_cookie *lock_cookie_freelist;
+static qdf_atomic_t lock_cookie_get_failures;
+static qdf_atomic_t lock_cookie_untracked_num;
+/* dummy value */
+#define DUMMY_LOCK_COOKIE 0xc00c1e
+
+/**
+ * qdf_is_lock_cookie - check if memory is a valid lock cookie
+ *
+ * return true if the memory is within the range of the lock cookie
+ * memory.
+ */
+static bool qdf_is_lock_cookie(struct qdf_lock_cookie *lock_cookie)
+{
+	return lock_cookie >= &lock_cookies[0] &&
+		lock_cookie <= &lock_cookies[QDF_LOCK_STATS_LIST_SIZE-1];
+}
+
+/**
+ * qdf_is_lock_cookie_free() -  check if the lock cookie is on the freelist
+ * @lock_cookie: lock cookie to check
+ *
+ * Check that the next field of the lock cookie points to a lock cookie.
+ * currently this is only true if the cookie is on the freelist.
+ *
+ * Checking for the function and line being NULL and 0 should also have worked.
+ */
+static bool qdf_is_lock_cookie_free(struct qdf_lock_cookie *lock_cookie)
+{
+	struct qdf_lock_cookie *tmp = lock_cookie->u.empty_node.next;
+
+	return qdf_is_lock_cookie(tmp) || (tmp == NULL);
+}
+
+static struct qdf_lock_cookie *qdf_get_lock_cookie(void)
+{
+	struct qdf_lock_cookie *lock_cookie;
+
+	qdf_spin_lock_bh(&qdf_lock_list_spinlock);
+	lock_cookie = lock_cookie_freelist;
+	if (lock_cookie_freelist)
+		lock_cookie_freelist = lock_cookie_freelist->u.empty_node.next;
+	qdf_spin_unlock_bh(&qdf_lock_list_spinlock);
+	return lock_cookie;
+}
+
+static void __qdf_put_lock_cookie(struct qdf_lock_cookie *lock_cookie)
+{
+	if (!qdf_is_lock_cookie(lock_cookie))
+		QDF_BUG(0);
+
+	lock_cookie->u.empty_node.next = lock_cookie_freelist;
+	lock_cookie_freelist = lock_cookie;
+}
+
+static void qdf_put_lock_cookie(struct qdf_lock_cookie *lock_cookie)
+{
+	qdf_spin_lock_bh(&qdf_lock_list_spinlock);
+	__qdf_put_lock_cookie(lock_cookie);
+	qdf_spin_unlock_bh(&qdf_lock_list_spinlock);
+}
+
+void qdf_lock_stats_init(void)
+{
+	int i;
+
+	for (i = 0; i < QDF_LOCK_STATS_LIST_SIZE; i++)
+		__qdf_put_lock_cookie(&lock_cookies[i]);
+
+	/* stats must be allocated for the spinlock before the cookie,
+	   otherwise this qdf_lock_list_spinlock wouldnt get intialized
+	   propperly */
+	qdf_spinlock_create(&qdf_lock_list_spinlock);
+	qdf_atomic_init(&lock_cookie_get_failures);
+	qdf_atomic_init(&lock_cookie_untracked_num);
+}
+
+void qdf_lock_stats_deinit(void)
+{
+	int i;
+
+	qdf_spinlock_destroy(&qdf_lock_list_spinlock);
+	for (i = 0; i < QDF_LOCK_STATS_LIST_SIZE; i++) {
+		if (!qdf_is_lock_cookie_free(&lock_cookies[i]))
+			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+				  "%s: lock_not_destroyed, fun: %s, line %d",
+				  __func__, lock_cookies[i].u.cookie.func,
+				  lock_cookies[i].u.cookie.line);
+	}
+}
+
+/* allocated separate memory in case the lock memory is freed without
+	   running the deinitialization code.  The cookie list will not be
+	   corrupted. */
+void qdf_lock_stats_cookie_create(struct lock_stats *stats,
+				  const char *func, int line)
+{
+	struct qdf_lock_cookie *cookie = qdf_get_lock_cookie();
+
+	if (cookie == NULL) {
+		int count;
+		qdf_atomic_inc(&lock_cookie_get_failures);
+		count = qdf_atomic_inc_return(&lock_cookie_untracked_num);
+		stats->cookie = (void *) DUMMY_LOCK_COOKIE;
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "%s: cookie allocation failure, using dummy (%s:%d) count %d",
+			  __func__, func, line, count);
+		return;
+	}
+
+	stats->cookie = cookie;
+	stats->cookie->u.cookie.stats = stats;
+	stats->cookie->u.cookie.func = func;
+	stats->cookie->u.cookie.line = line;
+}
+
+void qdf_lock_stats_cookie_destroy(struct lock_stats *stats)
+{
+	struct qdf_lock_cookie *cookie = stats->cookie;
+
+	if (cookie == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Double cookie destroy", __func__);
+		QDF_ASSERT(0);
+		return;
+	}
+
+	stats->cookie = NULL;
+	if (cookie == (void *)DUMMY_LOCK_COOKIE) {
+		qdf_atomic_dec(&lock_cookie_untracked_num);
+		return;
+	}
+
+	cookie->u.cookie.stats = NULL;
+	cookie->u.cookie.func = NULL;
+	cookie->u.cookie.line = 0;
+
+	qdf_put_lock_cookie(cookie);
+}
+#endif

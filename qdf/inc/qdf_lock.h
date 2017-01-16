@@ -41,6 +41,7 @@
 #define QDF_LOCK_STATS 0
 #define QDF_LOCK_STATS_DESTROY_PRINT 0
 #define QDF_LOCK_STATS_BUG_ON 0
+#define QDF_LOCK_STATS_LIST 0
 
 #define QDF_MAX_HOLD_TIME_ALOWED_SPINLOCK_IRQ 1000
 #define QDF_MAX_HOLD_TIME_ALOWED_SPINLOCK_BH  5000
@@ -55,7 +56,12 @@ struct lock_stats {};
 #define BEFORE_UNLOCK(x...) do {} while (0)
 #define qdf_lock_stats_create(x...) do {} while (0)
 #define qdf_lock_stats_destroy(x...) do {} while (0)
+#define qdf_lock_stats_init(x...) do {} while (0)
+#define qdf_lock_stats_deinit(x...) do {} while (0)
 #else
+void qdf_lock_stats_init(void);
+void qdf_lock_stats_deinit(void);
+struct qdf_lock_cookie;
 struct lock_stats {
 	const char *initialization_fn;
 	int line;
@@ -69,6 +75,7 @@ struct lock_stats {
 	uint64_t max_held_time;
 	int num_large_contentions;
 	int num_large_holds;
+	struct qdf_lock_cookie *cookie;
 };
 #define LARGE_CONTENTION QDF_LOG_TIMESTAMP_CYCLES_PER_10_US
 
@@ -140,6 +147,10 @@ do {\
 	} \
 } while (0)
 
+void qdf_lock_stats_cookie_destroy(struct lock_stats *stats);
+void qdf_lock_stats_cookie_create(struct lock_stats *stats,
+				  const char *func, int line);
+
 static inline void qdf_lock_stats_destroy(struct lock_stats *stats)
 {
 	if (QDF_LOCK_STATS_DESTROY_PRINT) {
@@ -156,14 +167,27 @@ static inline void qdf_lock_stats_destroy(struct lock_stats *stats)
 			qdf_log_timestamp_to_usecs(stats->held_time),
 			qdf_log_timestamp_to_usecs(stats->max_held_time));
 	}
+
+	if (QDF_LOCK_STATS_LIST)
+		qdf_lock_stats_cookie_destroy(stats);
 }
 
+#ifndef MEMORY_DEBUG
+#define qdf_mem_malloc_debug(x, y, z) qdf_mem_malloc(x)
+#endif
+
+/* qdf_lock_stats_create() - initialize the lock stats structure
+ *
+ */
 static inline void qdf_lock_stats_create(struct lock_stats *stats,
 					 const char *func, int line)
 {
 	qdf_mem_zero(stats, sizeof(*stats));
 	stats->initialization_fn = func;
 	stats->line = line;
+
+	if (QDF_LOCK_STATS_LIST)
+		qdf_lock_stats_cookie_create(stats, func, line);
 }
 #endif
 
@@ -221,6 +245,8 @@ static inline void qdf_spinlock_create(qdf_spinlock_t *lock, const char *func,
 				       int line)
 {
 	__qdf_spinlock_create(&lock->lock);
+
+	/* spinlock stats create relies on the spinlock working allread */
 	qdf_lock_stats_create(&lock->stats, func, line);
 }
 
@@ -455,5 +481,4 @@ void qdf_runtime_lock_deinit(qdf_runtime_lock_t lock);
 QDF_STATUS qdf_spinlock_acquire(qdf_spinlock_t *lock);
 
 QDF_STATUS qdf_spinlock_release(qdf_spinlock_t *lock);
-
 #endif /* _QDF_LOCK_H */
