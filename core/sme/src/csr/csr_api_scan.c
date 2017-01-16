@@ -4661,6 +4661,7 @@ QDF_STATUS csr_scan_process_single_bssdescr(tpAniSirGlobal mac_ctx,
 	uint8_t *chanlist = NULL;
 	uint8_t cnt_channels = 0;
 	uint32_t len = sizeof(mac_ctx->roam.validChannelList);
+	tCsrRoamInfo *roam_info;
 
 	sms_log(mac_ctx, LOG4, "CSR: Processing single bssdescr");
 	if (QDF_IS_STATUS_SUCCESS(
@@ -4678,6 +4679,19 @@ QDF_STATUS csr_scan_process_single_bssdescr(tpAniSirGlobal mac_ctx,
 
 	if (csr_scan_validate_scan_result(mac_ctx, chanlist,
 			cnt_channels, bssdescr, &ies)) {
+		roam_info = qdf_mem_malloc(sizeof(*roam_info));
+		if (roam_info) {
+			qdf_mem_zero(roam_info, sizeof(*roam_info));
+			roam_info->pBssDesc = bssdescr;
+
+			csr_roam_call_callback(mac_ctx, 0, roam_info, 0,
+				eCSR_ROAM_UPDATE_SCAN_RESULT,
+				eCSR_ROAM_RESULT_NONE);
+			qdf_mem_free(roam_info);
+		} else {
+			sms_log(mac_ctx, LOG1, "qdf_mem_malloc failed");
+		}
+
 		csr_scan_remove_dup_bss_description_from_interim_list
 			(mac_ctx, bssdescr, ies);
 		csr_scan_save_bss_description_to_interim_list

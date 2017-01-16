@@ -509,6 +509,8 @@ __lim_ext_scan_forward_bcn_probe_rsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 	uint8_t                     *body;
 	struct scheduler_msg         mmh_msg;
 	tpSirMacMgmtHdr              hdr;
+	uint32_t frame_len;
+	tSirBssDescription *bssdescr;
 
 	result = qdf_mem_malloc(sizeof(*result) + ie_len);
 	if (NULL == result) {
@@ -541,6 +543,31 @@ __lim_ext_scan_forward_bcn_probe_rsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 	/* Copy IE fields */
 	qdf_mem_copy((uint8_t *) &result->ap.ieData,
 			body + SIR_MAC_B_PR_SSID_OFFSET, ie_len);
+
+	frame_len = sizeof(*bssdescr) + ie_len - sizeof(bssdescr->ieFields[1]);
+	bssdescr = (tSirBssDescription *) qdf_mem_malloc(frame_len);
+
+	if (NULL == bssdescr) {
+		lim_log(pmac, LOGE,
+			FL("qdf_mem_malloc(length=%d) failed"), frame_len);
+		return;
+	}
+
+	qdf_mem_zero(bssdescr, frame_len);
+
+	lim_collect_bss_description(pmac, bssdescr, frame, rx_pkt_info, false);
+	/*
+	 * Send the beacon to CSR with registered callback routine.
+	 * scan_id and flags parameters are currently unused and set to 0.
+	 * EXT scan results will also be added to scan cache in SME
+	 */
+	if (pmac->lim.add_bssdescr_callback) {
+		(pmac->lim.add_bssdescr_callback) (pmac, bssdescr, 0, 0);
+	} else {
+		lim_log(pmac, LOGE,
+			FL("No CSR callback routine to send beacon/probe response"));
+	}
+	qdf_mem_free(bssdescr);
 
 	mmh_msg.type = msg_type;
 	mmh_msg.bodyptr = result;

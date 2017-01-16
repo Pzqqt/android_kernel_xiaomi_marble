@@ -11320,6 +11320,7 @@ struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 	bss_status =
 		cfg80211_inform_bss_frame(wiphy, chan, mgmt, frame_len, rssi,
 					  GFP_KERNEL);
+	pHddCtx->beacon_probe_rsp_cnt_per_scan++;
 	kfree(mgmt);
 	return bss_status;
 }

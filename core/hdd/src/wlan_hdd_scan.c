@@ -1217,9 +1217,15 @@ static QDF_STATUS hdd_cfg80211_scan_done_callback(tHalHandle halHandle,
 		goto allow_suspend;
 	}
 
-	ret = wlan_hdd_cfg80211_update_bss((WLAN_HDD_GET_CTX(pAdapter))->wiphy,
-					   pAdapter, scan_time);
-	if (0 > ret) {
+	/*
+	 * cfg80211_scan_done informing NL80211 about completion
+	 * of scanning
+	 */
+	if (status == eCSR_SCAN_ABORT || status == eCSR_SCAN_FAILURE) {
+		aborted = true;
+	}
+
+	if (!aborted && !hddctx->beacon_probe_rsp_cnt_per_scan) {
 		hdd_notice("NO SCAN result");
 		if (hddctx->config->bug_report_for_no_scan_results) {
 			current_timestamp = jiffies_to_msecs(jiffies);
@@ -1241,14 +1247,7 @@ static QDF_STATUS hdd_cfg80211_scan_done_callback(tHalHandle halHandle,
 			}
 		}
 	}
-
-	/*
-	 * cfg80211_scan_done informing NL80211 about completion
-	 * of scanning
-	 */
-	if (status == eCSR_SCAN_ABORT || status == eCSR_SCAN_FAILURE) {
-		aborted = true;
-	}
+	hddctx->beacon_probe_rsp_cnt_per_scan = 0;
 
 	if (!wlan_hdd_is_scan_pending(pAdapter)) {
 		/* Scan is no longer pending */
@@ -1864,6 +1863,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	wlan_hdd_scan_request_enqueue(pAdapter, request, source,
 			scan_req.scan_id, scan_req.timestamp);
 	pAdapter->scan_info.mScanPending = true;
+	pHddCtx->beacon_probe_rsp_cnt_per_scan = 0;
 
 free_mem:
 	if (scan_req.SSIDs.SSIDList)

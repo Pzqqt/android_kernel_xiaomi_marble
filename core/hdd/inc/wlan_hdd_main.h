@@ -1605,6 +1605,7 @@ struct hdd_context_s {
 	unsigned long tdls_source_bitmap;
 	/* tdls source timer to enable/disable TDLS on p2p listen */
 	qdf_mc_timer_t tdls_source_timer;
+	uint8_t beacon_probe_rsp_cnt_per_scan;
 };
 
 /*
