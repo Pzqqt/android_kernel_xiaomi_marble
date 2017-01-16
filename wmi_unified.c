@@ -728,7 +728,8 @@ static int debug_wmi_log_size_show(struct seq_file *m, void *v)
 				size_t count, loff_t *ppos)		\
 	{								\
 		int k, ret;						\
-		wmi_unified_t wmi_handle = file->private_data;		\
+		wmi_unified_t wmi_handle =				\
+			((struct seq_file *)file->private_data)->private;\
 		struct wmi_log_buf_t *wmi_log = &wmi_handle->log_info.	\
 				wmi_##func_base##_buf_info;		\
 									\
@@ -777,7 +778,8 @@ GENERATE_DEBUG_WRITE_FUNCS(mgmt_event_log, wmi_mgmt_log_max_entry,
 static ssize_t debug_wmi_enable_write(struct file *file, const char __user *buf,
 					size_t count, loff_t *ppos)
 {
-	wmi_unified_t wmi_handle =  file->private_data;
+	wmi_unified_t wmi_handle =
+		((struct seq_file *)file->private_data)->private;
 	int k, ret;
 
 	ret = sscanf(buf, "%d", &k);
