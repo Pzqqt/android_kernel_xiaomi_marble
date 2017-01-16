@@ -74,9 +74,8 @@
 
 /**
  * enum wlan_umac_comp_id - UMAC component id
- * @WLAN_UMAC_COMP_MLME:        MLME
- * @WLAN_UMAC_COMP_SCANMGR:     SCAN MGR
- * @WLAN_UMAC_COMP_SCANCACHE:   SCAN CACHE
+ * @WLAN_UMAC_COMP_MLME:     MLME
+ * @WLAN_UMAC_COMP_SCAN:     SCAN MGR
  * @WLAN_UMAC_COMP_MGMT_TXRX:   MGMT Tx/Rx
  *
  * This id is static.
@@ -84,9 +83,8 @@
  */
 enum wlan_umac_comp_id {
 	WLAN_UMAC_COMP_MLME       = 0,
-	WLAN_UMAC_COMP_SCANMGR    = 1,
-	WLAN_UMAC_COMP_SCANCACHE  = 2,
-	WLAN_UMAC_COMP_MGMT_TXRX  = 3,
+	WLAN_UMAC_COMP_SCAN       = 1,
+	WLAN_UMAC_COMP_MGMT_TXRX  = 2,
 };
 
 /**
