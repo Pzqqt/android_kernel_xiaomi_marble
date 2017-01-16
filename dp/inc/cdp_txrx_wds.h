@@ -58,4 +58,21 @@ cdp_set_wds_rx_policy(ol_txrx_soc_handle soc,
 	return;
 }
 
+/**
+ * cdp_vdev_set_wds() - Set/unset wds_enable flag in vdev
+ * @soc - data path soc handle
+ * @vdev - data path vap handle
+ * @val - value to be set in wds_en flag
+ *
+ *  This flag enables WDS source port learning feature on a vdev
+ *
+ * return 1 on success
+ */
+static inline int
+cdp_vdev_set_wds(ol_txrx_soc_handle soc, void *vdev, uint32_t val)
+{
+	if (soc->ops->wds_ops->vdev_set_wds)
+		return soc->ops->wds_ops->vdev_set_wds(vdev, val);
+	return 0;
+}
 #endif

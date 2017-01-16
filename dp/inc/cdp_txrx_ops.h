@@ -521,7 +521,7 @@ struct cdp_wds_ops {
 	void
 		(*txrx_set_wds_rx_policy)(struct cdp_vdev *vdev,
 				u_int32_t val);
-
+	int (*vdev_set_wds)(void *vdev, uint32_t val);
 };
 
 struct cdp_raw_ops {

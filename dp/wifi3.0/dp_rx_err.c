@@ -298,7 +298,8 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 		__func__, __LINE__, sgi, rate_mcs, tid);
 
 	/* WDS Source Port Learning */
-	if (qdf_likely(vdev->rx_decap_type == htt_cmn_pkt_type_ethernet))
+	if (qdf_likely(vdev->rx_decap_type == htt_cmn_pkt_type_ethernet) &&
+			(vdev->wds_enabled))
 		dp_rx_wds_srcport_learn(soc, rx_desc->rx_buf_start, peer, nbuf);
 
 	/*
@@ -309,9 +310,6 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 
 	if (l2_hdr_offset)
 		qdf_nbuf_pull_head(nbuf, l2_hdr_offset);
-
-	/* WDS Source Port Learning */
-	dp_rx_wds_srcport_learn(soc, rx_desc->rx_buf_start, peer, nbuf);
 
 	if (hal_rx_mpdu_start_mpdu_qos_control_valid_get(
 		rx_desc->rx_buf_start)) {

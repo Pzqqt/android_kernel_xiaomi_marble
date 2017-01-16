@@ -896,6 +896,9 @@ struct dp_vdev {
 	/* BSS peer */
 	struct dp_peer *vap_bss_peer;
 
+	/* WDS enabled */
+	bool wds_enabled;
+
 	/* NAWDS enabled */
 	bool nawds_enabled;
 

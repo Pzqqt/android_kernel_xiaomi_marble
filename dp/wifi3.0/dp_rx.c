@@ -964,10 +964,11 @@ done:
 #endif /* NAPIER_EMULATION */
 
 			/* WDS Source Port Learning */
-			if (qdf_likely(vdev->rx_decap_type ==
-						htt_cmn_pkt_type_ethernet))
+			if (qdf_likely((vdev->wds_enabled) &&
+						(vdev->rx_decap_type ==
+						htt_cmn_pkt_type_ethernet)))
 				dp_rx_wds_srcport_learn(soc, rx_tlv_hdr, peer,
-									nbuf);
+						nbuf);
 
 			/* Intrabss-fwd */
 			if (vdev->opmode != wlan_op_mode_sta)

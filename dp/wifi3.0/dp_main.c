@@ -2116,8 +2116,22 @@ static void dp_peer_delete_wifi3(void *peer_handle)
 static uint8 *dp_get_vdev_mac_addr_wifi3(struct cdp_vdev *pvdev)
 {
 	struct dp_vdev *vdev = (struct dp_vdev *)pvdev;
-
 	return vdev->mac_addr.raw;
+}
+
+/*
+ * dp_vdev_set_wds() - Enable per packet stats
+ * @vdev_handle: DP VDEV handle
+ * @val: value
+ *
+ * Return: none
+ */
+static int dp_vdev_set_wds(void *vdev_handle, uint32_t val)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+
+	vdev->wds_enabled = val;
+	return 0;
 }
 
 /*
@@ -3332,6 +3346,10 @@ static QDF_STATUS dp_txrx_dump_stats(void *psoc, uint16_t value)
 
 }
 
+static struct cdp_wds_ops dp_ops_wds = {
+	.vdev_set_wds = dp_vdev_set_wds,
+};
+
 static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_soc_attach_target = dp_soc_attach_target_wifi3,
 	.txrx_vdev_attach = dp_vdev_attach_wifi3,
@@ -3397,10 +3415,6 @@ static struct cdp_mon_ops dp_ops_mon = {
 static struct cdp_host_stats_ops dp_ops_host_stats = {
 	.txrx_host_stats_get = dp_print_host_stats,
 	.txrx_per_peer_stats = dp_get_peer_stats,
-	/* TODO */
-};
-
-static struct cdp_wds_ops dp_ops_wds = {
 	/* TODO */
 };
 
