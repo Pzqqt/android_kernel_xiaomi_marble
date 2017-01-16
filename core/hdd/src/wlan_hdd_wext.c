@@ -12152,9 +12152,10 @@ static int __iw_set_pno(struct net_device *dev,
 	struct wlan_objmgr_psoc *psoc;
 	int ret = 0;
 	int offset;
-	char *ptr;
+	char *ptr, *data;
 	uint8_t i, j, params;
 	QDF_STATUS status;
+	size_t len;
 
 	/* request is a large struct, so we make it static to avoid
 	 * stack overflow.  This API is only invoked via ioctl, so it
@@ -12183,9 +12184,18 @@ static int __iw_set_pno(struct net_device *dev,
 
 	hdd_debug("PNO data len %d data %s", wrqu->data.length, extra);
 
-	ptr = extra;
+	/* making sure argument string ends with '\0' */
+	len = (wrqu->data.length + 1);
+	data = qdf_mem_malloc(len);
+	if (!data) {
+		hdd_err("fail to allocate memory %zu", len);
+		return -EINVAL;
+	}
+	qdf_mem_copy(data, extra, (len-1));
+	data[len] = '\0';
+	ptr = data;
 
-	if (1 != sscanf(ptr, "%hhu%n", &value, &offset)) {
+	if (1 != sscanf(ptr, " %hhu %n", &value, &offset)) {
 		hdd_err("PNO enable input is not valid %s", ptr);
 		ret = -EINVAL;
 		goto exit;
@@ -12210,7 +12220,7 @@ static int __iw_set_pno(struct net_device *dev,
 
 	ptr += offset;
 
-	if (1 != sscanf(ptr, "%hhu %n", &value, &offset)) {
+	if (1 != sscanf(ptr, " %hhu %n", &value, &offset)) {
 		hdd_err("PNO count input not valid %s", ptr);
 		ret = -EINVAL;
 		goto exit;
@@ -12234,7 +12244,7 @@ static int __iw_set_pno(struct net_device *dev,
 
 		req.networks_list[i].ssid.length = 0;
 
-		params = sscanf(ptr, "%hhu %n",
+		params = sscanf(ptr, " %hhu %n",
 				  &(req.networks_list[i].ssid.length),
 				  &offset);
 
@@ -12259,7 +12269,7 @@ static int __iw_set_pno(struct net_device *dev,
 		       req.networks_list[i].ssid.length);
 		ptr += req.networks_list[i].ssid.length;
 
-		params = sscanf(ptr, "%u %u %hhu %n",
+		params = sscanf(ptr, " %u %u %hhu %n",
 				  &(req.networks_list[i].authentication),
 				  &(req.networks_list[i].encryption),
 				  &(req.networks_list[i].channel_cnt),
@@ -12292,10 +12302,15 @@ static int __iw_set_pno(struct net_device *dev,
 		if (0 != req.networks_list[i].channel_cnt) {
 			for (j = 0; j < req.networks_list[i].channel_cnt;
 			     j++) {
-				if (1 != sscanf(ptr, "%hhu %n", &value,
+				if (1 != sscanf(ptr, " %hhu %n", &value,
 				   &offset)) {
 					hdd_err("PNO network channel is not valid %s",
 						  ptr);
+					ret = -EINVAL;
+					goto exit;
+				}
+				if (!IS_CHANNEL_VALID(value)) {
+					hdd_err("invalid channel: %hhu", value);
 					ret = -EINVAL;
 					goto exit;
 				}
@@ -12306,11 +12321,17 @@ static int __iw_set_pno(struct net_device *dev,
 			}
 		}
 
-		if (1 != sscanf(ptr, "%u %n",
+		if (1 != sscanf(ptr, " %u %n",
 				&(req.networks_list[i].bc_new_type),
 				&offset)) {
 			hdd_err("PNO broadcast network type is not valid %s",
 				  ptr);
+			ret = -EINVAL;
+			goto exit;
+		}
+		if (req.networks_list[i].bc_new_type > 2) {
+			hdd_err("invalid bcast nw type: %u",
+				req.networks_list[i].bc_new_type);
 			ret = -EINVAL;
 			goto exit;
 		}
@@ -12320,7 +12341,7 @@ static int __iw_set_pno(struct net_device *dev,
 
 		/* Advance to rssi Threshold */
 		ptr += offset;
-		if (1 != sscanf(ptr, "%d %n",
+		if (1 != sscanf(ptr, " %d %n",
 				&(req.networks_list[i].rssi_thresh),
 				&offset)) {
 			hdd_err("PNO rssi threshold input is not valid %s",
@@ -12335,13 +12356,19 @@ static int __iw_set_pno(struct net_device *dev,
 	} /* For ucNetworkCount */
 
 	req.fast_scan_period = 0;
-	if (sscanf(ptr, "%u %n", &(req.fast_scan_period), &offset) > 0) {
+	if (sscanf(ptr, " %u %n", &(req.fast_scan_period), &offset) > 0) {
 		req.fast_scan_period *= MSEC_PER_SEC;
 		ptr += offset;
 	}
+	if (req.fast_scan_period == 0) {
+		hdd_err("invalid fast scan period %u",
+			req.fast_scan_period);
+			ret = -EINVAL;
+			goto exit;
+	}
 
 	req.fast_scan_max_cycles = 0;
-	if (sscanf(ptr, "%hhu %n", &value,
+	if (sscanf(ptr, " %hhu %n", &value,
 		   &offset) > 0)
 		ptr += offset;
 	req.fast_scan_max_cycles = value;
@@ -12362,6 +12389,7 @@ static int __iw_set_pno(struct net_device *dev,
 exit:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 
+	qdf_mem_free(data);
 	return ret;
 }
 

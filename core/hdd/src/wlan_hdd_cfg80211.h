@@ -108,6 +108,9 @@ static inline void wlan_hdd_clear_link_layer_stats(hdd_adapter_t *adapter) {}
 #define MAX_CHANNEL (NUM_24GHZ_CHANNELS + NUM_5GHZ_CHANNELS)
 #define MAX_SCAN_SSID 10
 
+#define IS_CHANNEL_VALID(channel) ((channel >= 0 && channel < 15) \
+			|| (channel >= 36 && channel <= 184))
+
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 12, 0)) \
 	|| defined(BACKPORTED_CHANNEL_SWITCH_PRESENT)
 #define CHANNEL_SWITCH_SUPPORTED

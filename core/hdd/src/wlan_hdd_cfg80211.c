@@ -199,8 +199,6 @@
 
 #define IS_DFS_MODE_VALID(mode) ((mode >= DFS_MODE_NONE && \
 			mode <= DFS_MODE_DEPRIORITIZE))
-#define IS_CHANNEL_VALID(channel) ((channel >= 0 && channel < 15) \
-		|| (channel >= 36 && channel <= 184))
 
 #define MAX_TXPOWER_SCALE 4
 #define CDS_MAX_FEATURE_SET   8
