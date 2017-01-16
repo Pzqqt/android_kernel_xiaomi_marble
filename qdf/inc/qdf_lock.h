@@ -38,10 +38,18 @@
 #include <qdf_time.h>
 #include <i_qdf_trace.h>
 
+#ifndef QDF_LOCK_STATS
 #define QDF_LOCK_STATS 0
+#endif
+#ifndef QDF_LOCK_STATS_DESTROY_PRINT
 #define QDF_LOCK_STATS_DESTROY_PRINT 0
+#endif
+#ifndef QDF_LOCK_STATS_BUG_ON
 #define QDF_LOCK_STATS_BUG_ON 0
+#endif
+#ifndef QDF_LOCK_STATS_LIST
 #define QDF_LOCK_STATS_LIST 0
+#endif
 
 #define QDF_MAX_HOLD_TIME_ALOWED_SPINLOCK_IRQ 1000
 #define QDF_MAX_HOLD_TIME_ALOWED_SPINLOCK_BH  5000
