@@ -70,8 +70,8 @@
 				printk("\n"); \
 			} \
 		} while (0)
-#define QDF_TRACE(x, y, args...) printk(args)
-
+#define QDF_TRACE(x, log_level, args...) \
+	qdf_trace(log_level, args)
 #endif /* CONFIG_MCL */
 
 #define QDF_ENABLE_TRACING

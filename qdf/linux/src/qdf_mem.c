@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -81,7 +81,7 @@ struct s_qdf_mem_struct {
 /* Preprocessor Definitions and Constants */
 #define QDF_GET_MEMORY_TIME_THRESHOLD 300
 
-int qdf_dbg_mask;
+int qdf_dbg_mask = QDF_TRACE_LEVEL_NONE;
 qdf_declare_param(qdf_dbg_mask, int);
 EXPORT_SYMBOL(qdf_dbg_mask);
 
