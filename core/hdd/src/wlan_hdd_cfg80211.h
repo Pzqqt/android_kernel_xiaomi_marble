@@ -124,12 +124,13 @@ typedef struct {
 #if !defined (TDLS_MGMT_VERSION2)
 #define TDLS_MGMT_VERSION2 0
 #endif
+
+#endif
+
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 void wlan_hdd_clear_link_layer_stats(hdd_adapter_t *adapter);
 #else
 static inline void wlan_hdd_clear_link_layer_stats(hdd_adapter_t *adapter) {}
-#endif
-
 #endif
 
 #define MAX_CHANNEL (NUM_24GHZ_CHANNELS + NUM_5GHZ_CHANNELS)
