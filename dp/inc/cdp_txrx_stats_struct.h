@@ -473,6 +473,7 @@ typedef enum _ol_ath_param_t {
 	OL_ATH_PARAM_PRECAC_ENABLE = 345,
 	OL_ATH_PARAM_PRECAC_TIMEOUT = 346,
 	OL_ATH_COEX_VER_CFG = 347,
+	OL_ATH_PARAM_DUMP_TARGET = 348,
 } ol_ath_param_t;
 
 /*
