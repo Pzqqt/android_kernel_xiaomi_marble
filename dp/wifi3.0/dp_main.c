@@ -1683,8 +1683,10 @@ void dp_peer_unref_delete(void *peer_handle)
 		qdf_mem_free(peer);
 #endif
 		if (soc->cdp_soc.ol_ops->peer_unref_delete) {
-			soc->cdp_soc.ol_ops->peer_unref_delete(soc->osif_soc);
+			soc->cdp_soc.ol_ops->peer_unref_delete(soc->osif_soc,
+					vdev->vdev_id, peer->mac_addr.raw);
 		}
+
 	} else {
 		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 	}

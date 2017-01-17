@@ -6506,6 +6506,7 @@ QDF_STATUS wmi_extract_mac_phy_cap_service_ready_ext(
 
 	return QDF_STATUS_E_FAILURE;
 }
+
 /**
  * wmi_extract_reg_cap_service_ready_ext() -
  *       extract REG cap from service ready event
@@ -6548,6 +6549,30 @@ QDF_STATUS wmi_extract_pdev_utf_event(void *wmi_hdl,
 
 	if (wmi_handle->ops->extract_pdev_utf_event)
 		return wmi_handle->ops->extract_pdev_utf_event(
+				wmi_handle,
+				evt_buf, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_extract_peer_delete_response_event() -
+ *       extract vdev id and peer mac addresse from peer delete response event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold evt buf
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS wmi_extract_peer_delete_response_event(
+			void *wmi_hdl,
+			uint8_t *evt_buf,
+			struct wmi_host_peer_delete_response_event *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->extract_peer_delete_response_event)
+		return wmi_handle->ops->extract_peer_delete_response_event(
 				wmi_handle,
 				evt_buf, param);
 

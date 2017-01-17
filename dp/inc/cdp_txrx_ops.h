@@ -489,8 +489,10 @@ struct ol_if_ops {
 	int (*peer_rx_reorder_queue_remove)(void *ol_soc_handle,
 			uint8_t vdev_id, uint8_t *peer_macaddr,
 			uint32_t tid_mask);
-	int (*peer_unref_delete)(void *ol_soc_handle);
+	int (*peer_unref_delete)(void *ol_soc_handle, uint8_t vdev_id,
+			uint8_t *peer_macaddr);
 	bool (*is_hw_dbs_2x2_capable)(void);
+
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };
 
