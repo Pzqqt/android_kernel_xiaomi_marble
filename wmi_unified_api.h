@@ -1375,7 +1375,12 @@ QDF_STATUS wmi_extract_reg_cap_service_ready_ext(
 			void *wmi_hdl,
 			uint8_t *evt_buf, uint8_t phy_idx,
 			struct WMI_HOST_HAL_REG_CAPABILITIES_EXT *param);
+
 QDF_STATUS wmi_extract_pdev_utf_event(void *wmi_hdl,
 				      uint8_t *evt_buf,
 				      struct wmi_host_pdev_utf_event *param);
+
+QDF_STATUS wmi_extract_peer_delete_response_event(void *wmi_hdl,
+		uint8_t *evt_buf,
+		struct wmi_host_peer_delete_response_event *param);
 #endif /* _WMI_UNIFIED_API_H_ */

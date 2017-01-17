@@ -1217,6 +1217,11 @@ QDF_STATUS (*extract_pdev_utf_event)(wmi_unified_t wmi_hdl,
 
 uint16_t (*wmi_set_htc_tx_tag)(wmi_unified_t wmi_handle,
 				wmi_buf_t buf, uint32_t cmd_id);
+
+QDF_STATUS (*extract_peer_delete_response_event)(
+			wmi_unified_t wmi_handle,
+			void *evt_buf,
+			struct wmi_host_peer_delete_response_event *param);
 };
 
 struct target_abi_version {

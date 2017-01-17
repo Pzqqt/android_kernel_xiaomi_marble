@@ -4947,6 +4947,7 @@ typedef enum {
 	wmi_peer_gid_userpos_list_event_id,
 	wmi_pdev_check_cal_version_event_id,
 	wmi_atf_peer_stats_event_id,
+	wmi_peer_delete_response_event_id,
 
 	wmi_events_max,
 } wmi_conv_event_id;
@@ -7199,6 +7200,17 @@ struct action_wakeup_set_param {
 struct wmi_host_pdev_utf_event {
 	uint8_t *data;
 	uint16_t datalen;
+};
+
+/**
+ * struct wmi_host_peer_delete_response_event - Peer Delete response event param
+ * @vdev_id: vdev id
+ * @mac_address: Peer Mac Address
+ *
+ */
+struct wmi_host_peer_delete_response_event {
+	uint32_t vdev_id;
+	struct qdf_mac_addr mac_address;
 };
 
 /**
