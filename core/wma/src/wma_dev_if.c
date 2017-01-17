@@ -754,7 +754,7 @@ send_fail_resp:
  *
  * Return: none
  */
-void wma_find_mcc_ap(tp_wma_handle wma, uint8_t vdev_id, bool add)
+static void wma_find_mcc_ap(tp_wma_handle wma, uint8_t vdev_id, bool add)
 {
 	uint8_t i;
 	uint16_t prev_ch_freq = 0;

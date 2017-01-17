@@ -1529,8 +1529,8 @@ int wma_nan_rsp_event_handler(void *handle, uint8_t *event_buf,
 	return 0;
 }
 #else
-int wma_nan_rsp_event_handler(void *handle, uint8_t *event_buf,
-			      uint32_t len)
+static int wma_nan_rsp_event_handler(void *handle, uint8_t *event_buf,
+				     uint32_t len)
 {
 	return 0;
 }

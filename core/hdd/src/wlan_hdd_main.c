@@ -4988,7 +4988,7 @@ void __hdd_wlan_exit(void)
  *
  * Return: void
  */
-void hdd_skip_acs_scan_timer_handler(void *data)
+static void hdd_skip_acs_scan_timer_handler(void *data)
 {
 	hdd_context_t *hdd_ctx = (hdd_context_t *) data;
 

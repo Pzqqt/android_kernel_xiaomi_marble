@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -80,6 +80,9 @@
 	else \
 		acs_band = eCSR_DOT11_MODE_abg; \
 }
+
+#define GET_IE_LEN_IN_BSS_DESC(lenInBss) (lenInBss + sizeof(lenInBss) - \
+			((uintptr_t)OFFSET_OF(tSirBssDescription, ieFields)))
 
 #ifdef FEATURE_WLAN_CH_AVOID
 sapSafeChannelType safe_channels[NUM_CHANNELS] = {
@@ -186,7 +189,7 @@ sapAcsChannelInfo acs_ht40_channels24_g[] = {
  * Return: true: if channel was added or already present
  *   else false: if channel list was already full.
  */
-bool
+static bool
 sap_check_n_add_channel(ptSapContext sap_ctx,
 			uint8_t new_channel)
 {
@@ -283,7 +286,7 @@ sap_check_n_add_overlapped_chnls(ptSapContext sap_ctx, uint8_t primary_channel)
  *
  * Return: void
  */
-void sap_process_avoid_ie(tHalHandle hal,
+static void sap_process_avoid_ie(tHalHandle hal,
 			  ptSapContext sap_ctx,
 			  tScanResultHandle scan_result,
 			  tSapChSelSpectInfo *spect_info)
