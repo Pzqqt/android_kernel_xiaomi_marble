@@ -2980,6 +2980,16 @@ QDF_STATUS wma_ds_peek_rx_packet_info(cds_pkt_t *pkt, void **pkt_meta,
  *
  * Return: none
  */
+/*
+ * Local prototype added to temporarily address warning caused by
+ * -Wmissing-prototypes. A more correct solution will come later
+ * as a solution to IR-196435 at whihc point this prototype will
+ * be removed.
+ */
+void ol_rx_err(void *pdev, uint8_t vdev_id,
+	       uint8_t *peer_mac_addr, int tid, uint32_t tsf32,
+	       enum ol_rx_err_type err_type, qdf_nbuf_t rx_frame,
+	       uint64_t *pn, uint8_t key_id);
 void ol_rx_err(void *pdev, uint8_t vdev_id,
 	       uint8_t *peer_mac_addr, int tid, uint32_t tsf32,
 	       enum ol_rx_err_type err_type, qdf_nbuf_t rx_frame,
