@@ -276,4 +276,12 @@ int wlan_cfg_get_dma_mon_stat_ring_size(
 int wlan_cfg_get_rx_dma_buf_ring_size(
 		struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_pdev_ctx);
 
+/*
+ * wlan_cfg_get_num_mac_rings - Return the number of MAC RX DMA rings
+ * per pdev
+ * @wlan_cfg_pdev_ctx
+ *
+ * Return: number of mac DMA rings per pdev
+ */
+int wlan_cfg_get_num_mac_rings(struct wlan_cfg_dp_pdev_ctxt *cfg);
 #endif

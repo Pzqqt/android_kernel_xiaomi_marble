@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -71,6 +71,12 @@
 
 #define WLAN_CFG_HTT_PKT_TYPE 2
 #define WLAN_CFG_MAX_PEER_ID 16
+
+#ifdef CONFIG_MCL
+#define NUM_RXDMA_RINGS_PER_PDEV 2
+#else
+#define NUM_RXDMA_RINGS_PER_PDEV 1
+#endif
 
 static const int tx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 						WLAN_CFG_TX_RING_MASK_0,
@@ -146,6 +152,7 @@ struct wlan_cfg_dp_pdev_ctxt {
 	int dma_mon_buf_ring_size;
 	int dma_mon_dest_ring_size;
 	int dma_mon_status_ring_size;
+	int num_mac_rings;
 };
 
 /**
@@ -202,6 +209,7 @@ struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_pdev_attach(void)
 	wlan_cfg_ctx->dma_mon_buf_ring_size = RXDMA_MONITOR_BUF_RING_SIZE;
 	wlan_cfg_ctx->dma_mon_dest_ring_size = RXDMA_MONITOR_DEST_RING_SIZE;
 	wlan_cfg_ctx->dma_mon_status_ring_size = RXDMA_MONITOR_STATUS_RING_SIZE;
+	wlan_cfg_ctx->num_mac_rings = NUM_RXDMA_RINGS_PER_PDEV;
 
 	return wlan_cfg_ctx;
 }
@@ -350,4 +358,9 @@ int wlan_cfg_get_dma_mon_stat_ring_size(struct wlan_cfg_dp_pdev_ctxt *cfg)
 int wlan_cfg_get_rx_dma_buf_ring_size(struct wlan_cfg_dp_pdev_ctxt *cfg)
 {
 	return  cfg->rx_dma_buf_ring_size;
+}
+
+int wlan_cfg_get_num_mac_rings(struct wlan_cfg_dp_pdev_ctxt *cfg)
+{
+	return  cfg->num_mac_rings;
 }

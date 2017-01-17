@@ -35,7 +35,7 @@
  * dp_setup_srng - Internal function to setup SRNG rings used by data path
  */
 static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
-	int ring_type, int ring_num, int pdev_id, uint32_t num_entries)
+	int ring_type, int ring_num, int mac_id, uint32_t num_entries)
 {
 	void *hal_soc = soc->hal_soc;
 	uint32_t entry_size = hal_srng_get_entrysize(hal_soc, ring_type);
@@ -92,7 +92,7 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 	}
 
 	srng->hal_srng = hal_srng_setup(hal_soc, ring_type, ring_num,
-		pdev_id, &ring_params);
+		mac_id, &ring_params);
 	return 0;
 }
 
@@ -696,7 +696,8 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 #define REO_EXCEPTION_RING_SIZE 128
 #define REO_CMD_RING_SIZE 32
 #define REO_STATUS_RING_SIZE 32
-#define RXDMA_BUF_RING_SIZE 2048
+#define RXDMA_BUF_RING_SIZE 1024
+#define RXDMA_REFILL_RING_SIZE 2048
 #define RXDMA_MONITOR_BUF_RING_SIZE 2048
 #define RXDMA_MONITOR_DST_RING_SIZE 2048
 #define RXDMA_MONITOR_STATUS_RING_SIZE 2048
@@ -867,6 +868,43 @@ fail0:
 static void dp_pdev_detach_wifi3(void *txrx_pdev, int force);
 
 /*
+* dp_rxdma_ring_setup() - configure the RX DMA rings
+* @soc: data path SoC handle
+* @pdev: Physical device handle
+*
+* Return: 0 - success, > 0 - failure
+*/
+#ifdef QCA_HOST2FW_RXBUF_RING
+static int dp_rxdma_ring_setup(struct dp_soc *soc,
+	 struct dp_pdev *pdev)
+{
+	int max_mac_rings =
+		 wlan_cfg_get_num_mac_rings
+			(pdev->wlan_cfg_ctx);
+	int i;
+
+	for (i = 0; i < max_mac_rings; i++) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			 "%s: pdev_id %d mac_id %d\n",
+			 __func__, pdev->pdev_id, i);
+		if (dp_srng_setup(soc, &pdev->rx_mac_buf_ring[i],
+			 RXDMA_BUF, 1, i, RXDMA_BUF_RING_SIZE)) {
+			QDF_TRACE(QDF_MODULE_ID_DP,
+				 QDF_TRACE_LEVEL_ERROR,
+				 FL("failed rx mac ring setup"));
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static int dp_rxdma_ring_setup(struct dp_soc *soc,
+	 struct dp_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+/*
 * dp_pdev_attach_wifi3() - attach txrx pdev
 * @osif_pdev: Opaque PDEV handle from OSIF/HDD
 * @txrx_soc: Datapath SOC handle
@@ -949,22 +987,18 @@ static void *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc, void *ctrl_pdev,
 	}
 
 	if (dp_srng_setup(soc, &pdev->rx_refill_buf_ring, RXDMA_BUF, 0, pdev_id,
-		RXDMA_BUF_RING_SIZE)) {
+		RXDMA_REFILL_RING_SIZE)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			 FL("dp_srng_setup failed rx refill ring"));
 		goto fail1;
 	}
-#ifdef QCA_HOST2FW_RXBUF_RING
-	if (dp_srng_setup(soc, &pdev->rx_mac_buf_ring, RXDMA_BUF, 1, pdev_id,
-		RXDMA_BUF_RING_SIZE)) {
+
+	if (dp_rxdma_ring_setup(soc, pdev)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			 FL("dp_srng_setup failed rx mac ring"));
+			 FL("RXDMA ring config failed"));
 		goto fail1;
 	}
-#endif
-	/* TODO: RXDMA destination ring is not planned to be used currently.
-	 * Setup the ring when required
-	 */
+
 	if (dp_srng_setup(soc, &pdev->rxdma_mon_buf_ring, RXDMA_MONITOR_BUF, 0,
 		pdev_id, RXDMA_MONITOR_BUF_RING_SIZE)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -1010,6 +1044,33 @@ fail0:
 }
 
 /*
+* dp_rxdma_ring_cleanup() - configure the RX DMA rings
+* @soc: data path SoC handle
+* @pdev: Physical device handle
+*
+* Return: void
+*/
+#ifdef QCA_HOST2FW_RXBUF_RING
+static void dp_rxdma_ring_cleanup(struct dp_soc *soc,
+	 struct dp_pdev *pdev)
+{
+	int max_mac_rings =
+		 wlan_cfg_get_num_mac_rings(pdev->wlan_cfg_ctx);
+	int i;
+
+	max_mac_rings = max_mac_rings < MAX_RX_MAC_RINGS ?
+				max_mac_rings : MAX_RX_MAC_RINGS;
+	for (i = 0; i < MAX_RX_MAC_RINGS; i++)
+		dp_srng_cleanup(soc, &pdev->rx_mac_buf_ring[i],
+			 RXDMA_BUF, 1);
+}
+#else
+static void dp_rxdma_ring_cleanup(struct dp_soc *soc,
+	 struct dp_pdev *pdev)
+{
+}
+#endif
+/*
 * dp_pdev_detach_wifi3() - detach txrx pdev
 * @txrx_pdev: Datapath PDEV handle
 * @force: Force detach
@@ -1039,9 +1100,8 @@ static void dp_pdev_detach_wifi3(void *txrx_pdev, int force)
 
 	dp_srng_cleanup(soc, &pdev->rx_refill_buf_ring, RXDMA_BUF, 0);
 
-#ifdef QCA_HOST2FW_RXBUF_RING
-	dp_srng_cleanup(soc, &pdev->rx_mac_buf_ring, RXDMA_BUF, 1);
-#endif
+	dp_rxdma_ring_cleanup(soc, pdev);
+
 	dp_srng_cleanup(soc, &pdev->rxdma_mon_buf_ring, RXDMA_MONITOR_BUF, 0);
 
 	dp_srng_cleanup(soc, &pdev->rxdma_mon_dst_ring, RXDMA_MONITOR_DST, 0);
@@ -1134,35 +1194,98 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 }
 
 /*
+* dp_rxdma_ring_config() - configure the RX DMA rings
+*
+* This function is used to configure the MAC rings.
+* On MCL host provides buffers in Host2FW ring
+* FW refills (copies) buffers to the ring and updates
+* ring_idx in register
+*
+* @soc: data path SoC handle
+* @pdev: Physical device handle
+*
+* Return: void
+*/
+#ifdef QCA_HOST2FW_RXBUF_RING
+static void dp_rxdma_ring_config(struct dp_soc *soc,
+	 struct dp_pdev *pdev)
+{
+	int mac_id = 0;
+	int j;
+	int max_mac_rings =
+		 wlan_cfg_get_num_mac_rings
+		(pdev->wlan_cfg_ctx);
+
+	max_mac_rings =
+		 max_mac_rings < MAX_RX_MAC_RINGS ?
+		 max_mac_rings : MAX_RX_MAC_RINGS;
+
+	if (!soc->cdp_soc.ol_ops->
+		is_hw_dbs_2x2_capable()) {
+		max_mac_rings = 1;
+		QDF_TRACE(QDF_MODULE_ID_TXRX,
+			 QDF_TRACE_LEVEL_ERROR,
+			 FL("DBS enabled, max_mac_rings %d\n"),
+			 max_mac_rings);
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_TXRX,
+			 QDF_TRACE_LEVEL_ERROR,
+			 FL("DBS disabled max_mac_rings %d\n"),
+			 max_mac_rings);
+	}
+
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			 FL("pdev_id %d max_mac_rings %d\n"),
+			 pdev->pdev_id, max_mac_rings);
+
+	for (j = 0; j < max_mac_rings; j++) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX,
+			 QDF_TRACE_LEVEL_ERROR,
+			 FL("mac_id %d\n"), mac_id);
+		htt_srng_setup(soc->htt_handle, mac_id,
+			 pdev->rx_mac_buf_ring[j]
+				.hal_srng,
+			 RXDMA_BUF);
+		mac_id++;
+	}
+}
+#else
+static void dp_rxdma_ring_config(struct dp_soc *soc,
+	 struct dp_pdev *pdev)
+{
+}
+#endif
+
+/*
  * dp_soc_attach_target_wifi3() - SOC initialization in the target
  * @txrx_soc: Datapath SOC handle
  */
 static int dp_soc_attach_target_wifi3(struct cdp_soc_t *cdp_soc)
 {
 	struct dp_soc *soc = (struct dp_soc *)cdp_soc;
-	int i;
+	int i; /* variable to track the pdev number */
 
 	htt_soc_attach_target(soc->htt_handle);
 
 	for (i = 0; i < MAX_PDEV_CNT; i++) {
 		struct dp_pdev *pdev = soc->pdev_list[i];
+
 		if (pdev) {
 			htt_srng_setup(soc->htt_handle, i,
 				pdev->rx_refill_buf_ring.hal_srng, RXDMA_BUF);
-#ifdef QCA_HOST2FW_RXBUF_RING
-			htt_srng_setup(soc->htt_handle, i,
-				pdev->rx_mac_buf_ring.hal_srng, RXDMA_BUF);
-#endif
+
+			dp_rxdma_ring_config(soc, pdev);
+
 #ifdef notyet /* FW doesn't handle monitor rings yet */
 			htt_srng_setup(soc->htt_handle, i,
-				pdev->rxdma_mon_buf_ring.hal_srng,
-				RXDMA_MONITOR_BUF);
+					pdev->rxdma_mon_buf_ring.hal_srng,
+					RXDMA_MONITOR_BUF);
 			htt_srng_setup(soc->htt_handle, i,
-				pdev->rxdma_mon_dst_ring.hal_srng,
-				RXDMA_MONITOR_DST);
+					pdev->rxdma_mon_dst_ring.hal_srng,
+					RXDMA_MONITOR_DST);
 			htt_srng_setup(soc->htt_handle, i,
-				pdev->rxdma_mon_status_ring.hal_srng,
-				RXDMA_MONITOR_STATUS);
+					pdev->rxdma_mon_status_ring.hal_srng,
+					RXDMA_MONITOR_STATUS);
 #endif
 		}
 	}

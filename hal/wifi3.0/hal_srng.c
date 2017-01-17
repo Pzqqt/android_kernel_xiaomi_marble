@@ -998,6 +998,10 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 	if (ring_id < 0)
 		return NULL;
 
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			 "%s: mac_id %d ring_id %d\n",
+			 __func__, mac_id, ring_id);
+
 	srng = hal_get_srng(hal_soc, ring_id);
 
 	if (srng->initialized) {

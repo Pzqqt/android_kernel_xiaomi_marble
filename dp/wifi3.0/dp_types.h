@@ -34,7 +34,11 @@
 #include <hal_tx.h>
 #include <hal_reo.h>
 
+#if defined(CONFIG_MCL)
+#define MAX_PDEV_CNT 1
+#else
 #define MAX_PDEV_CNT 3
+#endif
 #define MAX_LINK_DESC_BANKS 8
 #define MAX_TXDESC_POOLS 4
 #define MAX_RXDESC_POOLS 4
@@ -445,6 +449,7 @@ struct dp_soc {
 #endif
 };
 
+#define MAX_RX_MAC_RINGS 2
 
 /* PDEV level structure for data path */
 struct dp_pdev {
@@ -461,7 +466,7 @@ struct dp_pdev {
 	struct dp_srng rx_refill_buf_ring;
 
 	/* Empty ring used by firmware to post rx buffers to the MAC */
-	struct dp_srng rx_mac_buf_ring;
+	struct dp_srng rx_mac_buf_ring[MAX_RX_MAC_RINGS];
 
 	/* wlan_cfg pdev ctxt*/
 	 struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_ctx;

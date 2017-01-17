@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -490,7 +490,7 @@ struct ol_if_ops {
 			uint8_t vdev_id, uint8_t *peer_macaddr,
 			uint32_t tid_mask);
 	int (*peer_unref_delete)(void *ol_soc_handle);
-
+	bool (*is_hw_dbs_2x2_capable)(void);
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };
 
