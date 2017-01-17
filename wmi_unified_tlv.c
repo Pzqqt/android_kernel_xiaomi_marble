@@ -172,6 +172,7 @@ QDF_STATUS send_vdev_stop_cmd_tlv(wmi_unified_t wmi,
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
+	WMI_LOGD("%s:vdev id = %d", __func__, vdev_id);
 
 	return 0;
 }
@@ -13442,6 +13443,36 @@ static QDF_STATUS extract_fips_event_data_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+/*
+ * extract_peer_delete_response_event_tlv() - extract peer delete response event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param vdev_id: Pointer to hold vdev_id
+ * @param mac_addr: Pointer to hold peer mac address
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_peer_delete_response_event_tlv(wmi_unified_t wmi_hdl,
+	void *evt_buf, struct wmi_host_peer_delete_response_event *param)
+{
+	WMI_PEER_DELETE_RESP_EVENTID_param_tlvs *param_buf;
+	wmi_peer_delete_resp_event_fixed_param *ev;
+
+	param_buf = (WMI_PEER_DELETE_RESP_EVENTID_param_tlvs *)evt_buf;
+
+	ev = (wmi_peer_delete_resp_event_fixed_param *) param_buf->fixed_param;
+	if (!ev) {
+		WMI_LOGE("%s: Invalid peer_delete response\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	param->vdev_id = ev->vdev_id;
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&ev->peer_macaddr,
+			&param->mac_address.bytes[0]);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 static bool is_management_record_tlv(uint32_t cmd_id)
 {
@@ -13838,6 +13869,8 @@ struct wmi_ops tlv_ops =  {
 	.extract_dcs_im_tgt_stats = extract_dcs_im_tgt_stats_tlv,
 	.extract_fips_event_data = extract_fips_event_data_tlv,
 	.send_pdev_fips_cmd = send_pdev_fips_cmd_tlv,
+	.extract_peer_delete_response_event =
+				extract_peer_delete_response_event_tlv,
 };
 
 #ifndef CONFIG_MCL
@@ -14013,6 +14046,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_peer_estimated_linkspeed_event_id] =
 				WMI_PEER_ESTIMATED_LINKSPEED_EVENTID;
 	event_ids[wmi_peer_state_event_id] = WMI_PEER_STATE_EVENTID;
+	event_ids[wmi_peer_delete_response_event_id] =
+					WMI_PEER_DELETE_RESP_EVENTID;
 	event_ids[wmi_mgmt_rx_event_id] = WMI_MGMT_RX_EVENTID;
 	event_ids[wmi_host_swba_event_id] = WMI_HOST_SWBA_EVENTID;
 	event_ids[wmi_tbttoffset_update_event_id] =
