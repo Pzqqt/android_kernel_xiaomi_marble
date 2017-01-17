@@ -75,6 +75,7 @@
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_objmgr_pdev_obj.h"
 #include "wlan_objmgr_vdev_obj.h"
+#include "wlan_lmac_if_api.h"
 
 
 /**
@@ -2501,7 +2502,6 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 	qdf_nbuf_t buf = NULL;
 	uint8_t vdev_id = 0;
 	QDF_STATUS ret;
-	struct wlan_lmac_if_mgmt_txrx_rx_ops *mgmt_txrx_rx_ops;
 	tp_wma_packetdump_cb packetdump_cb;
 
 	if (wma_handle == NULL) {
@@ -2518,15 +2518,9 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 		return -EINVAL;
 	}
 
-	mgmt_txrx_rx_ops = &psoc->soc_cb.rx_ops.mgmt_txrx_rx_ops;
+	buf = mgmt_txrx_get_nbuf(psoc, desc_id);
+	vdev_id = mgmt_txrx_get_vdev_id(psoc, desc_id);
 
-	if (mgmt_txrx_rx_ops->mgmt_txrx_get_nbuf_from_desc_id)
-		buf = mgmt_txrx_rx_ops->mgmt_txrx_get_nbuf_from_desc_id(
-					psoc, desc_id);
-
-	if (mgmt_txrx_rx_ops->mgmt_txrx_get_vdev_id_from_desc_id)
-		vdev_id = mgmt_txrx_rx_ops->mgmt_txrx_get_vdev_id_from_desc_id(
-					psoc, desc_id);
 	if (buf)
 		qdf_nbuf_unmap_single(wma_handle->qdf_dev, buf,
 					  QDF_DMA_TO_DEVICE);
@@ -2536,13 +2530,7 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 		packetdump_cb(buf, QDF_STATUS_SUCCESS,
 			vdev_id, TX_MGMT_PKT);
 
-	if (!mgmt_txrx_rx_ops->mgmt_tx_completion_handler) {
-		WMA_LOGE("%s: tx completion callback to mgmt txrx layer is NULL",
-			__func__);
-		return -EINVAL;
-	}
-	ret = mgmt_txrx_rx_ops->mgmt_tx_completion_handler(psoc, desc_id,
-							   status, NULL);
+	ret = mgmt_txrx_tx_completion_handler(psoc, desc_id, status, NULL);
 
 	if (ret != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: Failed to process mgmt tx completion", __func__);
@@ -3409,17 +3397,7 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 		return -EINVAL;
 	}
 
-	if (!psoc->soc_cb.rx_ops.mgmt_txrx_rx_ops.mgmt_rx_frame_handler) {
-		WMA_LOGE("%s: rx callback to mgmt txrx layer is NULL",
-			__func__);
-		qdf_nbuf_free(wbuf);
-		qdf_mem_free(mgmt_rx_params);
-		return -EINVAL;
-	}
-
-	status = psoc->soc_cb.rx_ops.mgmt_txrx_rx_ops.mgmt_rx_frame_handler(
-				psoc, wbuf, mgmt_rx_params);
-
+	status = mgmt_txrx_rx_handler(psoc, wbuf, mgmt_rx_params);
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: Failed to process mgmt rx frame", __func__);
 		qdf_mem_free(mgmt_rx_params);
