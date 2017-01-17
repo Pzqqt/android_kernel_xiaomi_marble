@@ -1898,6 +1898,7 @@ static void ol_txrx_vdev_register(void *pvdev,
 	txrx_ops->tx.tx = ol_tx_data;
 }
 
+#ifdef currently_unused
 /**
  * ol_txrx_set_curchan - Setup the current operating channel of
  * the device
@@ -1912,6 +1913,7 @@ void ol_txrx_set_curchan(ol_txrx_pdev_handle pdev, uint32_t chan_mhz)
 {
 	return;
 }
+#endif
 
 void ol_txrx_set_safemode(ol_txrx_vdev_handle vdev, uint32_t val)
 {
@@ -2408,6 +2410,7 @@ ol_txrx_get_vdev_mac_addr(void *pvdev)
 	return vdev->mac_addr.raw;
 }
 
+#ifdef currently_unused
 /**
  * ol_txrx_get_vdev_struct_mac_addr() - Return handle to struct qdf_mac_addr of
  * vdev
@@ -2420,7 +2423,9 @@ ol_txrx_get_vdev_struct_mac_addr(ol_txrx_vdev_handle vdev)
 {
 	return (struct qdf_mac_addr *)&(vdev->mac_addr);
 }
+#endif
 
+#ifdef currently_unused
 /**
  * ol_txrx_get_pdev_from_vdev() - Return handle to pdev of vdev
  * @vdev: vdev handle
@@ -2431,6 +2436,7 @@ ol_txrx_pdev_handle ol_txrx_get_pdev_from_vdev(ol_txrx_vdev_handle vdev)
 {
 	return vdev->pdev;
 }
+#endif
 
 /**
  * ol_txrx_get_ctrl_pdev_from_vdev() - Return control pdev of vdev
@@ -3300,6 +3306,7 @@ void ol_txrx_discard_tx_pending(ol_txrx_pdev_handle pdev_handle)
 
 unsigned g_txrx_print_level = TXRX_PRINT_LEVEL_ERR;     /* default */
 
+#ifdef currently_unused
 void ol_txrx_print_level_set(unsigned level)
 {
 #ifndef TXRX_PRINT_ENABLE
@@ -3313,6 +3320,7 @@ void ol_txrx_print_level_set(unsigned level)
 	g_txrx_print_level = level;
 #endif
 }
+#endif
 
 struct ol_txrx_stats_req_internal {
 	struct ol_txrx_stats_req base;
@@ -3332,6 +3340,7 @@ struct ol_txrx_stats_req_internal *ol_txrx_u64_to_stats_ptr(uint64_t cookie)
 	return (struct ol_txrx_stats_req_internal *)((size_t) cookie);
 }
 
+#ifdef currently_unused
 void
 ol_txrx_fw_stats_cfg(ol_txrx_vdev_handle vdev,
 		     uint8_t cfg_stats_type, uint32_t cfg_val)
@@ -3341,6 +3350,7 @@ ol_txrx_fw_stats_cfg(ol_txrx_vdev_handle vdev,
 			      0 /* reset mask */,
 			      cfg_stats_type, cfg_val, dummy_cookie);
 }
+#endif
 
 static A_STATUS
 ol_txrx_fw_stats_get(void *pvdev, struct ol_txrx_stats_req *req,
@@ -3617,12 +3627,14 @@ int ol_txrx_debug(ol_txrx_vdev_handle vdev, int debug_specs)
 }
 #endif
 
+#ifdef currently_unused
 int ol_txrx_aggr_cfg(ol_txrx_vdev_handle vdev,
 		     int max_subfrms_ampdu, int max_subfrms_amsdu)
 {
 	return htt_h2t_aggr_cfg_msg(vdev->pdev->htt_pdev,
 				    max_subfrms_ampdu, max_subfrms_amsdu);
 }
+#endif
 
 #if defined(TXRX_DEBUG_LEVEL) && TXRX_DEBUG_LEVEL > 5
 void ol_txrx_pdev_display(ol_txrx_pdev_handle pdev, int indent)
