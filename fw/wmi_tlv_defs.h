@@ -789,6 +789,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_radio_chan_stats,
     WMITLV_TAG_STRUC_wmi_radio_chan_stats_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_roam_per_config_fixed_param,
+    WMITLV_TAG_STRUC_wmi_vdev_add_mac_addr_to_rx_filter_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_vdev_add_mac_addr_to_rx_filter_status_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1106,6 +1108,7 @@ typedef enum {
     OP(WMI_11D_SCAN_STOP_CMDID) \
     OP(WMI_REQUEST_RADIO_CHAN_STATS_CMDID) \
     OP(WMI_ROAM_PER_CONFIG_CMDID) \
+    OP(WMI_VDEV_ADD_MAC_ADDR_TO_RX_FILTER_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1279,6 +1282,7 @@ typedef enum {
     OP(WMI_REG_CHAN_LIST_CC_EVENTID) \
     OP(WMI_11D_NEW_COUNTRY_EVENTID) \
     OP(WMI_RADIO_CHAN_STATS_EVENTID) \
+    OP(WMI_VDEV_ADD_MAC_ADDR_TO_RX_FILTER_STATUS_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -3170,6 +3174,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_11D_SCAN_STOP_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_request_radio_chan_stats_cmd_fixed_param, wmi_request_radio_chan_stats_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_REQUEST_RADIO_CHAN_STATS_CMDID);
 
+/* mac randomization cmd */
+#define WMITLV_TABLE_WMI_VDEV_ADD_MAC_ADDR_TO_RX_FILTER_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_add_mac_addr_to_rx_filter_cmd_fixed_param, wmi_vdev_add_mac_addr_to_rx_filter_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_ADD_MAC_ADDR_TO_RX_FILTER_CMDID);
+
 
 /************************** TLV definitions of WMI events *******************************/
 
@@ -4225,6 +4234,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_RADIO_CHAN_STATS_EVENTID);
 #define WMITLV_TABLE_WMI_PKGID_EVENTID(id, op, buf, len) \
     WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_pkgid_event_fixed_param, wmi_pkgid_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PKGID_EVENTID);
+
+/* mac randomization event */
+#define WMITLV_TABLE_WMI_VDEV_ADD_MAC_ADDR_TO_RX_FILTER_STATUS_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_add_mac_addr_to_rx_filter_status_event_fixed_param, wmi_vdev_add_mac_addr_to_rx_filter_status_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_ADD_MAC_ADDR_TO_RX_FILTER_STATUS_EVENTID);
 
 
 #ifdef __cplusplus
