@@ -495,6 +495,10 @@ ifeq ($(CONFIG_WLAN_FEATURE_11AX),y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_he.o
 endif
 
+ifeq ($(CONFIG_LITHIUM), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_rx_monitor.o
+endif
+
 ########### HOST DIAG LOG ###########
 HOST_DIAG_LOG_DIR :=	$(WLAN_COMMON_ROOT)/utils/host_diag_log
 
