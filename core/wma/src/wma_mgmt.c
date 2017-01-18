@@ -2502,6 +2502,7 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 	uint8_t vdev_id = 0;
 	QDF_STATUS ret;
 	struct wlan_lmac_if_mgmt_txrx_rx_ops *mgmt_txrx_rx_ops;
+	tp_wma_packetdump_cb packetdump_cb;
 
 	if (wma_handle == NULL) {
 		WMA_LOGE("%s: wma handle is NULL", __func__);
@@ -2530,9 +2531,10 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 		qdf_nbuf_unmap_single(wma_handle->qdf_dev, buf,
 					  QDF_DMA_TO_DEVICE);
 
-	if (wma_handle->wma_mgmt_tx_packetdump_cb)
-		wma_handle->wma_mgmt_tx_packetdump_cb(buf,
-			QDF_STATUS_SUCCESS, vdev_id, TX_MGMT_PKT);
+	packetdump_cb = wma_handle->wma_mgmt_tx_packetdump_cb;
+	if (packetdump_cb)
+		packetdump_cb(buf, QDF_STATUS_SUCCESS,
+			vdev_id, TX_MGMT_PKT);
 
 	if (!mgmt_txrx_rx_ops->mgmt_tx_completion_handler) {
 		WMA_LOGE("%s: tx completion callback to mgmt txrx layer is NULL",
@@ -3180,6 +3182,7 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 	int status;
 	tp_wma_handle wma_handle = (tp_wma_handle)
 				cds_get_context(QDF_MODULE_ID_WMA);
+	tp_wma_packetdump_cb packetdump_cb;
 
 	if (!wma_handle) {
 		WMA_LOGE(FL("wma handle is NULL"));
@@ -3294,12 +3297,12 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 		return -EINVAL;
 	}
 
+	packetdump_cb = wma_handle->wma_mgmt_rx_packetdump_cb;
 	if ((mgt_type == IEEE80211_FC0_TYPE_MGT &&
 			mgt_subtype != IEEE80211_FC0_SUBTYPE_BEACON) &&
-			wma_handle->wma_mgmt_rx_packetdump_cb)
-		wma_handle->wma_mgmt_rx_packetdump_cb(rx_pkt->pkt_buf,
-			QDF_STATUS_SUCCESS, rx_pkt->pkt_meta.sessionId,
-			RX_MGMT_PKT);
+			packetdump_cb)
+		packetdump_cb(rx_pkt->pkt_buf, QDF_STATUS_SUCCESS,
+			rx_pkt->pkt_meta.sessionId, RX_MGMT_PKT);
 
 	return 0;
 }

@@ -549,6 +549,7 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 	struct ol_tx_desc_t *tx_desc;
 	uint32_t byte_cnt = 0;
 	qdf_nbuf_t netbuf;
+	tp_ol_packetdump_cb packetdump_cb;
 
 	union ol_tx_desc_list_elem_t *lcl_freelist = NULL;
 	union ol_tx_desc_list_elem_t *tx_desc_last = NULL;
@@ -565,8 +566,9 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 		QDF_NBUF_UPDATE_TX_PKT_COUNT(netbuf, QDF_NBUF_TX_PKT_FREE);
 
 		if (tx_desc->pkt_type != OL_TX_FRM_TSO) {
-			if (pdev->ol_tx_packetdump_cb)
-				pdev->ol_tx_packetdump_cb(netbuf, status,
+			packetdump_cb = pdev->ol_tx_packetdump_cb;
+			if (packetdump_cb)
+				packetdump_cb(netbuf, status,
 					tx_desc->vdev->vdev_id, TX_DATA_PKT);
 		}
 
@@ -775,6 +777,7 @@ ol_tx_single_completion_handler(ol_txrx_pdev_handle pdev,
 {
 	struct ol_tx_desc_t *tx_desc;
 	qdf_nbuf_t netbuf;
+	tp_ol_packetdump_cb packetdump_cb;
 
 	tx_desc = ol_tx_desc_find_check(pdev, tx_desc_id);
 	if (tx_desc == NULL) {
@@ -792,8 +795,9 @@ ol_tx_single_completion_handler(ol_txrx_pdev_handle pdev,
 	/* Do one shot statistics */
 	TXRX_STATS_UPDATE_TX_STATS(pdev, status, 1, qdf_nbuf_len(netbuf));
 
-	if (pdev->ol_tx_packetdump_cb)
-		pdev->ol_tx_packetdump_cb(netbuf, status,
+	packetdump_cb = pdev->ol_tx_packetdump_cb;
+	if (packetdump_cb)
+		packetdump_cb(netbuf, status,
 			tx_desc->vdev->vdev_id, TX_MGMT_PKT);
 
 	if (OL_TX_DESC_NO_REFS(tx_desc)) {
