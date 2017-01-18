@@ -69,7 +69,7 @@ ifeq ($(KERNEL_BUILD), 0)
 	# builds. Other OEMs are also protected using the TARGET_BUILD_VARIANT
 	# config.
 	ifneq ($(TARGET_BUILD_VARIANT),user)
-		ifeq ($(CONFIG_LITHIUM),y)
+		ifeq ($(CONFIG_LITHIUM), y)
 			CONFIG_FEATURE_PKTLOG := n
 		else
 			CONFIG_FEATURE_PKTLOG := y
@@ -836,6 +836,7 @@ ifeq ($(CONFIG_WLAN_TX_FLOW_CONTROL_V2), y)
 TXRX_OBJS +=     $(TXRX_DIR)/ol_txrx_flow_control.o
 endif
 
+ifeq ($(CONFIG_LITHIUM), y)
 ############ DP 3.0 ############
 DP_INC := -I$(WLAN_COMMON_ROOT)/dp/inc \
 	-I$(WLAN_COMMON_ROOT)/dp/wifi3.0
@@ -850,6 +851,7 @@ DP_OBJS := $(DP_SRC)/dp_main.o \
 		$(DP_SRC)/dp_peer.o \
 		$(DP_SRC)/dp_rx_desc.o \
 		$(DP_SRC)/dp_reo.o
+endif
 
 ############ CFG ############
 WCFG_DIR := $(WLAN_COMMON_ROOT)/wlan_cfg
@@ -961,11 +963,11 @@ HIF_CE_OBJS :=  $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_bmi.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_main.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_service.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_tasklet.o \
-                $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/regtable.o \
-                $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_service_srng.o \
+                $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/regtable.o
 
-ifeq ($(CONFIG_LITHIUM),y)
-HIF_CE_OBJS +=  $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/qca6290def.o
+ifeq ($(CONFIG_LITHIUM), y)
+HIF_CE_OBJS +=  $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/qca6290def.o \
+                $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_service_srng.o
 endif
 
 HIF_USB_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_USB_DIR)/usbdrv.o \
@@ -1022,6 +1024,7 @@ HIF_OBJS += $(HIF_COMMON_OBJS)
 HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/multibus_usb.o
 endif
 
+ifeq ($(CONFIG_LITHIUM), y)
 ############ HAL ############
 HAL_DIR :=	hal
 HAL_INC :=	-I$(WLAN_COMMON_INC)/$(HAL_DIR)/inc \
@@ -1031,6 +1034,7 @@ HAL_OBJS :=	$(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/hal_srng.o \
 		$(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/hal_rx.o \
 		$(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/hal_wbm.o \
 		$(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/hal_reo.o
+endif
 
 ############ WMA ############
 WMA_DIR :=	core/wma
@@ -1117,12 +1121,15 @@ INCS +=		$(WMA_INC) \
 		$(SCHEDULER_INC) \
 		$(HTC_INC) \
 		$(DFS_INC) \
-		$(WCFG_INC) \
-		$(DP_INC)
+		$(WCFG_INC)
 
 INCS +=		$(HIF_INC) \
-		$(BMI_INC) \
-		$(HAL_INC)
+		$(BMI_INC)
+
+ifeq ($(CONFIG_LITHIUM), y)
+INCS += 	$(HAL_INC) \
+		$(DP_INC)
+endif
 
 INCS +=		$(UMAC_OBJMGR_INC)
 INCS +=		$(UMAC_MGMT_TXRX_INC)
@@ -1165,8 +1172,11 @@ OBJS +=		$(WMA_OBJS) \
 
 OBJS +=		$(HIF_OBJS) \
 		$(BMI_OBJS) \
-		$(HTT_OBJS) \
-		$(HAL_OBJS)
+		$(HTT_OBJS)
+
+ifeq ($(CONFIG_LITHIUM), y)
+OBJS += 	$(HAL_OBJS)
+endif
 
 OBJS +=		$(UMAC_OBJMGR_OBJS)
 OBJS +=		$(UMAC_MGMT_TXRX_OBJS)
@@ -1186,8 +1196,11 @@ endif
 
 OBJS +=		$(UMAC_DISP_OBJS)
 
-OBJS +=		$(DP_OBJS) \
-		$(WCFG_OBJS)
+OBJS +=		$(WCFG_OBJS)
+
+ifeq ($(CONFIG_LITHIUM), y)
+OBJS +=		$(DP_OBJS)
+endif
 
 EXTRA_CFLAGS += $(INCS)
 
@@ -1711,6 +1724,7 @@ endif
 
 ifeq ($(CONFIG_LITHIUM),y)
 CDEFINES += -DQCA6290_HEADERS_DEF
+CDEFINES += -DQCA_WIFI_QCA6290
 CDEFINES += -DQCA_WIFI_QCA8074
 CDEFINES += -DQCA_WIFI_NAPIER_EMULATION
 CDEFINES += -DQCA_WIFI_QCA8074_VP
