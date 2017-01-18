@@ -5522,13 +5522,11 @@ static void hdd_bus_bw_work_handler(struct work_struct *work)
 	hdd_ipa_set_perf_level(hdd_ctx, tx_packets, rx_packets);
 	hdd_ipa_uc_stat_request(adapter, 2);
 
-	/* restart the periodic timer */
+	/* ensure periodic timer should still be running before restarting it */
 	qdf_spinlock_acquire(&hdd_ctx->bus_bw_timer_lock);
-	if (!hdd_ctx->bus_bw_timer_running) {
-		hdd_ctx->bus_bw_timer_running = true;
+	if (hdd_ctx->bus_bw_timer_running)
 		qdf_timer_start(&hdd_ctx->bus_bw_timer,
 				hdd_ctx->config->busBandwidthComputeInterval);
-	}
 	qdf_spinlock_release(&hdd_ctx->bus_bw_timer_lock);
 }
 
