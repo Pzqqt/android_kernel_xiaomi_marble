@@ -8272,6 +8272,13 @@ typedef struct {
     A_UINT32 rsn_mcastcipherset;
     /** mcast/group management frames cipher set */
     A_UINT32 rsn_mcastmgmtcipherset;
+    /**
+     * rssi_abs_thresold value: the value of the candidate AP should
+     * higher than this absolute RSSI threshold.
+     * Zero means no absolute minimum RSSI is required.
+     * units are the offset from the noise floor in dB.
+     */
+    A_UINT32 rssi_abs_thresh;
 } wmi_ap_profile;
 
 /** Support early stop roaming scanning when finding a strong candidate AP
@@ -8601,6 +8608,7 @@ typedef struct{
 #define WMI_ROAM_INVOKE_SCAN_MODE_FIXED_CH      0   /* scan given channel only */
 #define WMI_ROAM_INVOKE_SCAN_MODE_CACHE_LIST    1   /* scan cached channel list */
 #define WMI_ROAM_INVOKE_SCAN_MODE_FULL_CH       2   /* scan full channel */
+#define WMI_ROAM_INVOKE_SCAN_MODE_SKIP          3   /* no scan is performed. use beacon/probe resp given by the host */
 
 #define WMI_ROAM_INVOKE_AP_SEL_FIXED_BSSID      0   /* roam to given BSSID only */
 #define WMI_ROAM_INVOKE_AP_SEL_ANY_BSSID        1   /* roam to any BSSID */
@@ -8627,11 +8635,14 @@ typedef struct {
     A_UINT32 roam_delay; /** 0 = immediate roam, 1-2^32 = roam after this delay (msec) */
     A_UINT32 num_chan; /** # if channels to scan. In the TLV channel_list[] */
     A_UINT32 num_bssid;  /** number of bssids. In the TLV bssid_list[] */
+    A_UINT32 num_buf; /** number of buffers In the TLV bcn_prb_buf_list[] */
     /**
      * TLV (tag length value) parameters follows roam_invoke_req
      * The TLV's are:
      *     A_UINT32 channel_list[];
      *     wmi_mac_addr bssid_list[];
+     *     wmi_tlv_buf_len_param bcn_prb_buf_list[];
+     *     A_UINT8 bcn_prb_frm[];
      */
 } wmi_roam_invoke_cmd_fixed_param;
 
