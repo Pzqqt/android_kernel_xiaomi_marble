@@ -239,6 +239,7 @@ typedef enum {
     WMI_GRP_PROTOTYPE,      /* 0x38 */
     WMI_GRP_MONITOR,        /* 0x39 */
     WMI_GRP_REGULATORY,     /* 0x3a */
+    WMI_GRP_HW_DATA_FILTER, /* 0x3b */
 } WMI_GRP_ID;
 
 #define WMI_CMD_GRP_START_ID(grp_id) (((grp_id) << 12) | 0x1)
@@ -995,6 +996,7 @@ typedef enum {
     WMI_BPF_GET_VDEV_STATS_CMDID,
     WMI_BPF_SET_VDEV_INSTRUCTIONS_CMDID,
     WMI_BPF_DEL_VDEV_INSTRUCTIONS_CMDID,
+    WMI_BPF_SET_VDEV_ACTIVE_MODE_CMDID,
 
     /** WMI commands related to monitor mode. */
     WMI_MNT_FILTER_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_MONITOR),
@@ -1014,6 +1016,10 @@ typedef enum {
     WMI_NDP_INITIATOR_REQ_CMDID,
     WMI_NDP_RESPONDER_REQ_CMDID,
     WMI_NDP_END_REQ_CMDID,
+
+    /** WMI commands related to HW data filtering **/
+    WMI_HW_DATA_FILTER_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_HW_DATA_FILTER),
+
 } WMI_CMD_ID;
 
 typedef enum {
@@ -15957,6 +15963,12 @@ typedef struct {
  */
 } wmi_scpc_event_fixed_param;
 
+typedef enum {
+    FW_ACTIVE_BPF_MODE_DISABLE =         (1 << 1),
+    FW_ACTIVE_BPF_MODE_FORCE_ENABLE =    (1 << 2),
+    FW_ACTIVE_BPF_MODE_ADAPTIVE_ENABLE = (1 << 3),
+} FW_ACTIVE_BPF_MODE;
+
 /* bpf interface structure */
 typedef struct wmi_bpf_get_capability_cmd_s {
     A_UINT32 tlv_header;
@@ -15968,6 +15980,8 @@ typedef struct wmi_bpf_capability_info_evt_s {
     A_UINT32 bpf_version; /* fw's implement version */
     A_UINT32 max_bpf_filters; /* max filters that fw supports */
     A_UINT32 max_bytes_for_bpf_inst; /* the maximum bytes that can be used as bpf instructions */
+    A_UINT32 fw_active_bpf_support_mcbc_modes; /* multicast/broadcast - refer to FW_ACTIVE_BPF_MODE, it can be 'or' of them */
+    A_UINT32 fw_active_bpf_support_uc_modes; /* unicast - refer to FW_ACTIVE_BPF_MODE, it can be 'or' of them */
 } wmi_bpf_capability_info_evt_fixed_param;
 
 /* bit 0 of flags: report counters */
@@ -16007,6 +16021,13 @@ typedef struct wmi_bpf_del_vdev_instructions_cmd_s {
     A_UINT32 vdev_id;
     A_UINT32 filter_id;  /* BPF_FILTER_ID_ALL means delete all */
 } wmi_bpf_del_vdev_instructions_cmd_fixed_param;
+
+typedef struct wmi_bpf_set_vdev_active_mode_cmd_s {
+    A_UINT32 tlv_header;
+    A_UINT32 vdev_id;
+    A_UINT32 mcbc_mode; /* refer to FW_ACTIVE_BPF_MODE */
+    A_UINT32 uc_mode; /* refer to FW_ACTIVE_BPF_MODE */
+} wmi_bpf_set_vdev_active_mode_cmd_fixed_param;
 
 #define AES_BLOCK_LEN           16  /* in bytes */
 #define FIPS_KEY_LENGTH_128     16  /* in bytes */
@@ -16989,7 +17010,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         /* Scan specific commands */
 
         /* start scan request to FW  */
-         WMI_RETURN_STRING(WMI_START_SCAN_CMDID);
+        WMI_RETURN_STRING(WMI_START_SCAN_CMDID);
         /* stop scan request to FW  */
         WMI_RETURN_STRING(WMI_STOP_SCAN_CMDID);
         /* full list of channels as defined by the regulatory
@@ -17567,6 +17588,8 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_REQUEST_RADIO_CHAN_STATS_CMDID);
         WMI_RETURN_STRING(WMI_ROAM_PER_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_ADD_MAC_ADDR_TO_RX_FILTER_CMDID);
+        WMI_RETURN_STRING(WMI_BPF_SET_VDEV_ACTIVE_MODE_CMDID);
+        WMI_RETURN_STRING(WMI_HW_DATA_FILTER_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -17750,6 +17773,19 @@ typedef struct {
     A_UINT32 vdev_id; /* vdev of id whose mac address was randomized */
     A_UINT32 status; /* status is 1 if success and 0 if failed */
 } wmi_vdev_add_mac_addr_to_rx_filter_status_event_fixed_param;
+
+/* Definition of HW data filtering */
+typedef enum {
+    WMI_HW_DATA_FILTER_DROP_NON_ARP_BC = 0x01,
+    WMI_HW_DATA_FILTER_DROP_NON_ICMPV6_MC = 0x02,
+} WMI_HW_DATA_FILTER_BITMAP_TYPE;
+
+typedef struct {
+    A_UINT32 tlv_header;
+    A_UINT32 vdev_id;
+    A_UINT32 enable;  /* 1 . enable, 0- disable */
+    A_UINT32 hw_filter_bitmap; /* see WMI_HW_DATA_FILTER_BITMAP_TYPE */
+} wmi_hw_data_filter_cmd_fixed_param;
 
 
 /* ADD NEW DEFS HERE */
