@@ -635,6 +635,7 @@ bool ce_srng_based(struct hif_softc *scn)
 	return false;
 }
 
+#if defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6290)
 static struct ce_ops *ce_services_attach(struct hif_softc *scn)
 {
 	if (ce_srng_based(scn))
@@ -642,6 +643,12 @@ static struct ce_ops *ce_services_attach(struct hif_softc *scn)
 
 	return ce_services_legacy();
 }
+#else	/* QCA_LITHIUM */
+static struct ce_ops *ce_services_attach(struct hif_softc *scn)
+{
+	return ce_services_legacy();
+}
+#endif /* QCA_LITHIUM */
 
 static inline uint32_t ce_get_desc_size(struct hif_softc *scn,
 						uint8_t ring_type)
