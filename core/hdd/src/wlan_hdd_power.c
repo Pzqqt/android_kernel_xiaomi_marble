@@ -80,7 +80,6 @@
 #include <wlan_logging_sock_svc.h>
 #include "scheduler_api.h"
 #include "cds_utils.h"
-#include "wlan_pmo_ucfg_api.h"
 
 /* Preprocessor definitions and constants */
 #define HDD_SSR_BRING_UP_TIME 30000
@@ -134,87 +133,54 @@ extern struct notifier_block hdd_netdev_notifier;
 
 static struct timer_list ssr_timer;
 static bool ssr_timer_started;
+
 /**
- * hdd_conf_gtk_offload() - Configure GTK offload
- * @pAdapter:   pointer to the adapter
- * @fenable:    flag set to enable (1) or disable (0) GTK offload
+ * hdd_enable_gtk_offload() - enable GTK offload
+ * @adapter: pointer to the adapter
  *
- * Central function to enable or disable GTK offload.
+ * Central function to enable GTK offload.
  *
  * Return: nothing
  */
-#ifdef WLAN_FEATURE_GTK_OFFLOAD
-static void hdd_conf_gtk_offload(hdd_adapter_t *pAdapter, bool fenable)
+static void hdd_enable_gtk_offload(hdd_adapter_t *adapter)
 {
-	QDF_STATUS ret;
-	tSirGtkOffloadParams hddGtkOffloadReqParams;
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	QDF_STATUS status;
+	status = pmo_ucfg_enable_gtk_offload_in_fwr(adapter->hdd_vdev);
+	if (status != QDF_STATUS_SUCCESS)
+		hdd_info("Failed to enable gtk offload");
+}
 
-	if (fenable) {
-		if ((eConnectionState_Associated ==
-		     pHddStaCtx->conn_info.connState)
-		    && (GTK_OFFLOAD_ENABLE ==
-			pHddStaCtx->gtkOffloadReqParams.ulFlags)) {
-			qdf_mem_copy(&hddGtkOffloadReqParams,
-				     &pHddStaCtx->gtkOffloadReqParams,
-				     sizeof(tSirGtkOffloadParams));
+/**
+ * hdd_disable_gtk_offload() - disable GTK offload
+ * @pAdapter:   pointer to the adapter
+ *
+ * Central function to disable GTK offload.
+ *
+ * Return: nothing
+ */
+static void hdd_disable_gtk_offload(hdd_adapter_t *adapter)
+{
+	struct pmo_gtk_rsp_req gtk_rsp_request;
+	QDF_STATUS status;
 
-			ret = sme_set_gtk_offload(WLAN_HDD_GET_HAL_CTX(pAdapter),
-						  &hddGtkOffloadReqParams,
-						  pAdapter->sessionId);
-			if (QDF_STATUS_SUCCESS != ret) {
-				hdd_err("sme_set_gtk_offload failed, returned %d", ret);
-				return;
-			}
-
-			hdd_notice("sme_set_gtk_offload successfull");
-		}
-
-	} else {
-		if ((eConnectionState_Associated ==
-		     pHddStaCtx->conn_info.connState)
-		    && (qdf_is_macaddr_equal(&pHddStaCtx->gtkOffloadReqParams.bssid,
-			       &pHddStaCtx->conn_info.bssId))
-		    && (GTK_OFFLOAD_ENABLE ==
-			pHddStaCtx->gtkOffloadReqParams.ulFlags)) {
-
-			/* Host driver has previously offloaded GTK rekey  */
-			ret = sme_get_gtk_offload
-				(WLAN_HDD_GET_HAL_CTX(pAdapter),
-				 wlan_hdd_cfg80211_update_replay_counter_callback,
-				 pAdapter, pAdapter->sessionId);
-			if (QDF_STATUS_SUCCESS != ret) {
-				hdd_err("sme_get_gtk_offload failed, returned %d", ret);
-				return;
-			}
-
-			hdd_notice("sme_get_gtk_offload successful");
-
-			/* Sending GTK offload dissable */
-			memcpy(&hddGtkOffloadReqParams,
-			       &pHddStaCtx->gtkOffloadReqParams,
-			       sizeof(tSirGtkOffloadParams));
-			hddGtkOffloadReqParams.ulFlags =
-				GTK_OFFLOAD_DISABLE;
-			ret = sme_set_gtk_offload(WLAN_HDD_GET_HAL_CTX
-						  (pAdapter),
-						  &hddGtkOffloadReqParams,
-						  pAdapter->sessionId);
-			if (QDF_STATUS_SUCCESS != ret) {
-				hdd_err("failed to dissable GTK offload, returned %d",
-					ret);
-				return;
-			}
-			hdd_notice("successfully dissabled GTK offload request to HAL");
-		}
+	/* ensure to get gtk rsp first before disable it*/
+	gtk_rsp_request.callback =
+		wlan_hdd_cfg80211_update_replay_counter_callback;
+	/* Passing as void* as PMO does not know legacy HDD adapter type */
+	gtk_rsp_request.callback_context =
+		(void *)adapter;
+	status = pmo_ucfg_get_gtk_rsp(adapter->hdd_vdev,
+			&gtk_rsp_request);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("Failed to send get gtk rsp status:%d", status);
+		return;
 	}
-	return;
+	hdd_notice("send get_gtk_rsp successful");
+	status = pmo_ucfg_disable_gtk_offload_in_fwr(adapter->hdd_vdev);
+	if (status != QDF_STATUS_SUCCESS)
+		hdd_info("Failed to disable gtk offload");
+
 }
-#else /* WLAN_FEATURE_GTK_OFFLOAD */
-static void hdd_conf_gtk_offload(hdd_adapter_t *pAdapter, bool fenable)
-{
-}
-#endif /*WLAN_FEATURE_GTK_OFFLOAD */
 
 
 /**
@@ -543,7 +509,7 @@ void hdd_enable_host_offloads(hdd_adapter_t *adapter,
 	}
 
 	hdd_info("enable offloads");
-	hdd_conf_gtk_offload(adapter, true);
+	hdd_enable_gtk_offload(adapter);
 	hdd_enable_arp_offload(adapter, trigger);
 	hdd_enable_ns_offload(adapter, trigger);
 	hdd_enable_mc_addr_filtering(adapter, trigger);
@@ -569,7 +535,7 @@ void hdd_disable_host_offloads(hdd_adapter_t *adapter,
 	}
 
 	hdd_info("disable offloads");
-	hdd_conf_gtk_offload(adapter, false);
+	hdd_disable_gtk_offload(adapter);
 	hdd_disable_arp_offload(adapter, trigger);
 	hdd_disable_ns_offload(adapter, trigger);
 	hdd_disable_mc_addr_filtering(adapter, trigger);

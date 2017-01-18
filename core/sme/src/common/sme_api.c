@@ -1150,29 +1150,6 @@ QDF_STATUS sme_update_roam_params(tHalHandle hal,
 	return 0;
 }
 
-#ifdef WLAN_FEATURE_GTK_OFFLOAD
-static void sme_process_get_gtk_info_rsp(tHalHandle hHal,
-				  tpSirGtkOffloadGetInfoRspParams
-				  pGtkOffloadGetInfoRsp)
-{
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	if (NULL == pMac) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
-			  "%s: pMac is null", __func__);
-		return;
-	}
-	if (pMac->sme.gtk_offload_get_info_cb == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: HDD callback is null", __func__);
-		return;
-	}
-	pMac->sme.gtk_offload_get_info_cb(
-			pMac->sme.gtk_offload_get_info_cb_context,
-			pGtkOffloadGetInfoRsp);
-}
-#endif
-
 /*--------------------------------------------------------------------------
 
    \fn    - sme_process_ready_to_suspend
@@ -2357,19 +2334,6 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 							pMsg->bodyptr);
 		qdf_mem_free(pMsg->bodyptr);
 		break;
-#ifdef WLAN_FEATURE_GTK_OFFLOAD
-	case eWNI_PMC_GTK_OFFLOAD_GETINFO_RSP:
-		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_RX_WMA_MSG,
-				 NO_SESSION, pMsg->type));
-		if (pMsg->bodyptr) {
-			sme_process_get_gtk_info_rsp(pMac, pMsg->bodyptr);
-			qdf_mem_free(pMsg->bodyptr);
-		} else {
-			sms_log(pMac, LOGE, FL("Empty message for %d"),
-				pMsg->type);
-		}
-		break;
-#endif
 #ifdef FEATURE_WLAN_LPHB
 	/* LPHB timeout indication arrived, send IND to client */
 	case eWNI_SME_LPHB_IND:
@@ -5973,131 +5937,6 @@ QDF_STATUS sme_set_host_offload(tHalHandle hHal, uint8_t sessionId,
 
 	return status;
 }
-
-#ifdef WLAN_FEATURE_GTK_OFFLOAD
-/**
- * sme_set_gtk_offload(): API to set GTK offload information.
- * @hHal: The handle returned by mac_open.
- * @sessionId: Session Identifier
- * @pGtkOffload: Pointer to the GTK offload request..
- *
- * Return QDF_STATUS
- */
-QDF_STATUS sme_set_gtk_offload(tHalHandle hHal,
-		tpSirGtkOffloadParams pGtkOffload,
-			       uint8_t sessionId)
-{
-	tpSirGtkOffloadParams request_buf;
-	struct scheduler_msg msg;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
-
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: KeyReplayCounter: %lld", __func__,
-		  pGtkOffload->ullKeyReplayCounter);
-
-	if (NULL == pSession) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Session not found ", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	request_buf = qdf_mem_malloc(sizeof(*request_buf));
-	if (NULL == request_buf) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-		  FL("Not able to allocate memory for GTK offload request"));
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	qdf_copy_macaddr(&pGtkOffload->bssid,
-			 &pSession->connectedProfile.bssid);
-
-	*request_buf = *pGtkOffload;
-
-	msg.type = WMA_GTK_OFFLOAD_REQ;
-	msg.reserved = 0;
-	msg.bodyptr = request_buf;
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-			 sessionId, msg.type));
-	if (!QDF_IS_STATUS_SUCCESS
-		    (scheduler_post_msg(QDF_MODULE_ID_WMA, &msg))) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL("Not able to post SIR_HAL_SET_GTK_OFFLOAD message to HAL"));
-		qdf_mem_free(request_buf);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * sme_get_gtk_offload(): API to get GTK offload information
- * @hHal: The handle returned by mac_open.
- * @callback_routine: callback_routine.
- * @sessionId: Session Identifier.
- * callback_context: callback_context.
- *
- * Return QDF_STATUS
- */
-QDF_STATUS sme_get_gtk_offload(tHalHandle hHal,
-			       gtk_offload_get_info_callback callback_routine,
-			       void *callback_context, uint8_t session_id)
-{
-	tpSirGtkOffloadGetInfoRspParams request_buf;
-	struct scheduler_msg msg;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, session_id);
-
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO, "%s: Entered",
-		  __func__);
-
-	if (NULL == pSession) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Session not found", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	request_buf = qdf_mem_malloc(sizeof(*request_buf));
-	if (NULL == request_buf) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			 FL("Not able to allocate memory for Get GTK offload request"));
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	qdf_copy_macaddr(&request_buf->bssid,
-			 &pSession->connectedProfile.bssid);
-
-	msg.type = WMA_GTK_OFFLOAD_GETINFO_REQ;
-	msg.reserved = 0;
-	msg.bodyptr = request_buf;
-
-	/* Cache the Get GTK Offload callback information */
-	if (NULL != pMac->sme.gtk_offload_get_info_cb) {
-
-		/* Do we need to check if the callback is in use? */
-		/* Because we are not sending the same message again
-		 * when it is pending,
-		 * the only case when the callback is not NULL is that
-		 * the previous message was timed out or failed.
-		 * So, it will be safe to set the callback in this case.
-		 */
-	}
-
-	pMac->sme.gtk_offload_get_info_cb = callback_routine;
-	pMac->sme.gtk_offload_get_info_cb_context = callback_context;
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-			 session_id, msg.type));
-	if (!QDF_IS_STATUS_SUCCESS
-		    (scheduler_post_msg(QDF_MODULE_ID_WMA, &msg))) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("Not able to post WMA_GTK_OFFLOAD_GETINFO_REQ message to WMA"));
-		qdf_mem_free(request_buf);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-#endif /* WLAN_FEATURE_GTK_OFFLOAD */
 
 /* ---------------------------------------------------------------------------
     \fn sme_set_keep_alive

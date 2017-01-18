@@ -84,6 +84,7 @@
 #include "wlan_lmac_if_api.h"
 #include "target_if.h"
 #include "wlan_global_lmac_if_api.h"
+#include "target_if_pmo.h"
 
 #include <cdp_txrx_handle.h>
 #define WMA_LOG_COMPLETION_TIMER 10000 /* 10 seconds */
@@ -4684,9 +4685,9 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 				   WMI_SERVICE_GTK_OFFLOAD)) {
 		status =
 			wmi_unified_register_event_handler(wma_handle->wmi_handle,
-						WMI_GTK_OFFLOAD_STATUS_EVENTID,
-						wma_gtk_offload_status_event,
-						WMA_RX_SERIALIZER_CTX);
+					WMI_GTK_OFFLOAD_STATUS_EVENTID,
+					target_if_pmo_gtk_offload_status_event,
+					WMA_RX_WORK_CTX);
 		if (status) {
 			WMA_LOGE("Failed to register GTK offload event cb");
 			return -EINVAL;
@@ -6562,17 +6563,6 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, struct scheduler_msg *msg)
 				(tpSirRcvFltMcAddrList) msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
-#ifdef WLAN_FEATURE_GTK_OFFLOAD
-	case WMA_GTK_OFFLOAD_REQ:
-		wma_process_gtk_offload_req(wma_handle,
-				(tpSirGtkOffloadParams) msg->bodyptr);
-		break;
-
-	case WMA_GTK_OFFLOAD_GETINFO_REQ:
-		wma_process_gtk_offload_getinfo_req(wma_handle,
-				(tpSirGtkOffloadGetInfoRspParams)msg->bodyptr);
-		break;
-#endif /* WLAN_FEATURE_GTK_OFFLOAD */
 	case WMA_ROAM_SCAN_OFFLOAD_REQ:
 		/*
 		 * Main entry point or roaming directives from CSR.

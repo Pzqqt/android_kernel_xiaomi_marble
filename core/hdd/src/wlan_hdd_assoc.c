@@ -62,6 +62,7 @@
 #include <wlan_logging_sock_svc.h>
 #include <wlan_hdd_object_manager.h>
 #include <cdp_txrx_handle.h>
+#include "wlan_pmo_ucfg_api.h"
 
 /* These are needed to recognize WPA and RSN suite types */
 #define HDD_WPA_OUI_SIZE 4
@@ -1695,14 +1696,7 @@ static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 	/* Clear saved connection information in HDD */
 	hdd_conn_remove_connect_info(pHddStaCtx);
 	hdd_conn_set_connection_state(pAdapter, eConnectionState_NotConnected);
-#ifdef WLAN_FEATURE_GTK_OFFLOAD
-	if ((QDF_STA_MODE == pAdapter->device_mode) ||
-	    (QDF_P2P_CLIENT_MODE == pAdapter->device_mode)) {
-		memset(&pHddStaCtx->gtkOffloadReqParams, 0,
-		       sizeof(tSirGtkOffloadParams));
-		pHddStaCtx->gtkOffloadReqParams.ulFlags = GTK_OFFLOAD_DISABLE;
-	}
-#endif
+	pmo_ucfg_flush_gtk_offload_req(pAdapter->hdd_vdev);
 
 #ifdef FEATURE_WLAN_TDLS
 	if (eCSR_ROAM_IBSS_LEAVE != roamStatus)

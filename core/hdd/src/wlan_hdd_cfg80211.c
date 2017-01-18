@@ -104,7 +104,7 @@
 #include <cdp_txrx_cmn.h>
 #include <cdp_txrx_misc.h>
 #include <qca_vendor.h>
-
+#include "wlan_pmo_ucfg_api.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -12997,16 +12997,7 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 			}
 		}
 #endif
-#ifdef WLAN_FEATURE_GTK_OFFLOAD
-		/* Initializing gtkOffloadReqParams */
-		if ((QDF_STA_MODE == pAdapter->device_mode) ||
-		    (QDF_P2P_CLIENT_MODE == pAdapter->device_mode)) {
-			memset(&pHddStaCtx->gtkOffloadReqParams, 0,
-			       sizeof(tSirGtkOffloadParams));
-			pHddStaCtx->gtkOffloadReqParams.ulFlags =
-				GTK_OFFLOAD_DISABLE;
-		}
-#endif
+		pmo_ucfg_flush_gtk_offload_req(pAdapter->hdd_vdev);
 		pRoamProfile->csrPersona = pAdapter->device_mode;
 
 		if (operatingChannel) {
@@ -15671,156 +15662,109 @@ wlan_hdd_cfg80211_update_ft_ies(struct wiphy *wiphy,
 }
 #endif
 
-#ifdef WLAN_FEATURE_GTK_OFFLOAD
-/**
- * wlan_hdd_cfg80211_update_replay_counter_callback() - replay counter callback
- * @callbackContext: Callback context
- * @pGtkOffloadGetInfoRsp: Pointer to gtk offload response parameter
- *
- * Callback rountine called upon receiving response for get offload info
- *
- * Return: none
- */
-void wlan_hdd_cfg80211_update_replay_counter_callback(void *callbackContext,
-						tpSirGtkOffloadGetInfoRspParams
-						pGtkOffloadGetInfoRsp)
+void wlan_hdd_cfg80211_update_replay_counter_callback(
+		void *cb_ctx, struct pmo_gtk_rsp_params *gtk_rsp_param)
+
 {
-	hdd_adapter_t *pAdapter = (hdd_adapter_t *) callbackContext;
-	uint8_t tempReplayCounter[8];
-	hdd_station_ctx_t *pHddStaCtx;
+	hdd_adapter_t *pAdapter = (hdd_adapter_t *)cb_ctx;
+	uint8_t temp_replay_counter[8];
+	int i;
+	uint8_t *p;
 
 	ENTER();
 
-	if (NULL == pAdapter) {
+	if (!pAdapter) {
 		hdd_err("HDD adapter is Null");
-		return;
+		goto out;
 	}
 
-	if (NULL == pGtkOffloadGetInfoRsp) {
-		hdd_err("pGtkOffloadGetInfoRsp is Null");
-		return;
+	if (!gtk_rsp_param) {
+		hdd_err("gtk_rsp_param is Null");
+		goto out;
 	}
 
-	if (QDF_STATUS_SUCCESS != pGtkOffloadGetInfoRsp->ulStatus) {
+	if (gtk_rsp_param->status_flag != QDF_STATUS_SUCCESS) {
 		hdd_err("wlan Failed to get replay counter value");
-		return;
+		goto out;
 	}
 
-	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-	/* Update replay counter */
-	pHddStaCtx->gtkOffloadReqParams.ullKeyReplayCounter =
-		pGtkOffloadGetInfoRsp->ullKeyReplayCounter;
+	hdd_notice("updated replay counter: %llu from fwr",
+		gtk_rsp_param->replay_counter);
+	/* convert little to big endian since supplicant works on big endian */
+	p = (uint8_t *)&gtk_rsp_param->replay_counter;
+	for (i = 0; i < 8; i++)
+		temp_replay_counter[7 - i] = (uint8_t) p[i];
 
-	{
-		/* changing from little to big endian since supplicant
-		 * works on big endian format
-		 */
-		int i;
-		uint8_t *p =
-			(uint8_t *) &pGtkOffloadGetInfoRsp->ullKeyReplayCounter;
-
-		for (i = 0; i < 8; i++) {
-			tempReplayCounter[7 - i] = (uint8_t) p[i];
-		}
-	}
-
+	hdd_notice("gtk_rsp_param bssid %pM", gtk_rsp_param->bssid.bytes);
 	/* Update replay counter to NL */
 	cfg80211_gtk_rekey_notify(pAdapter->dev,
-				  pGtkOffloadGetInfoRsp->bssid.bytes,
-				  tempReplayCounter, GFP_KERNEL);
+					gtk_rsp_param->bssid.bytes,
+					temp_replay_counter, GFP_KERNEL);
+out:
+	EXIT();
+
 }
 
-/**
- * __wlan_hdd_cfg80211_set_rekey_data() - set rekey data
- * @wiphy: Pointer to wiphy
- * @dev: Pointer to network device
- * @data: Pointer to rekey data
- *
- * This function is used to offload GTK rekeying job to the firmware.
- *
- * Return: 0 for success, non-zero for failure
- */
 static
 int __wlan_hdd_cfg80211_set_rekey_data(struct wiphy *wiphy,
-				       struct net_device *dev,
-				       struct cfg80211_gtk_rekey_data *data)
+		struct net_device *dev,
+		struct cfg80211_gtk_rekey_data *data)
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
-	hdd_station_ctx_t *pHddStaCtx;
-	tHalHandle hHal;
-	int result;
-	tSirGtkOffloadParams hddGtkOffloadReqParams;
+	int result, i;
+	struct pmo_gtk_req *gtk_req = NULL;
+	hdd_context_t *hdd_ctx =  WLAN_HDD_GET_CTX(pAdapter);
+	uint8_t *buf;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	ENTER();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
-		return -EINVAL;
+		result = -EINVAL;
+		goto out;
 	}
 
 	if (wlan_hdd_validate_session_id(pAdapter->sessionId)) {
 		hdd_err("invalid session id: %d", pAdapter->sessionId);
-		return -EINVAL;
+		result = -EINVAL;
+		goto out;
 	}
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SET_REKEY_DATA,
 			 pAdapter->sessionId, pAdapter->device_mode));
 
-	result = wlan_hdd_validate_context(pHddCtx);
-
+	result = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != result)
-		return result;
+		goto out;
 
-	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-	hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
-	if (NULL == hHal) {
-		hdd_err("HAL context is Null!!!");
-		return -EAGAIN;
+	gtk_req = qdf_mem_malloc(sizeof(*gtk_req));
+	if (!gtk_req) {
+		hdd_err("cannot allocate gtk_req");
+		result = -ENOMEM;
+		goto out;
 	}
 
-	pHddStaCtx->gtkOffloadReqParams.ulFlags = GTK_OFFLOAD_ENABLE;
-	memcpy(pHddStaCtx->gtkOffloadReqParams.aKCK, data->kck,
-	       NL80211_KCK_LEN);
-	memcpy(pHddStaCtx->gtkOffloadReqParams.aKEK, data->kek,
-	       NL80211_KEK_LEN);
-	qdf_copy_macaddr(&pHddStaCtx->gtkOffloadReqParams.bssid,
-			 &pHddStaCtx->conn_info.bssId);
-	{
-		/* changing from big to little endian since driver
-		 * works on little endian format
-		 */
-		uint8_t *p =
-			(uint8_t *) &pHddStaCtx->gtkOffloadReqParams.
-			ullKeyReplayCounter;
-		int i;
+	/* convert big to little endian since driver work on little endian */
+	buf = (uint8_t *)&gtk_req->replay_counter;
+	for (i = 0; i < 8; i++)
+		buf[7 - i] = data->replay_ctr[i];
 
-		for (i = 0; i < 8; i++) {
-			p[7 - i] = data->replay_ctr[i];
-		}
+	hdd_notice("current replay counter: %llu in user space",
+		gtk_req->replay_counter);
+	qdf_mem_copy(gtk_req->kek, data->kek, NL80211_KEK_LEN);
+	qdf_mem_copy(gtk_req->kck, data->kck, NL80211_KCK_LEN);
+	status = pmo_ucfg_cache_gtk_offload_req(pAdapter->hdd_vdev, gtk_req);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("Failed to cache GTK Offload");
+		result = qdf_status_to_os_return(status);
 	}
-
-	if (true == pHddCtx->hdd_wlan_suspended) {
-		/* if wlan is suspended, enable GTK offload directly from here */
-		memcpy(&hddGtkOffloadReqParams,
-		       &pHddStaCtx->gtkOffloadReqParams,
-		       sizeof(tSirGtkOffloadParams));
-		status =
-			sme_set_gtk_offload(hHal, &hddGtkOffloadReqParams,
-					    pAdapter->sessionId);
-
-		if (QDF_STATUS_SUCCESS != status) {
-			hdd_err("sme_set_gtk_offload failed, status(%d)",
-			       status);
-			return -EINVAL;
-		}
-		hdd_notice("sme_set_gtk_offload successful");
-	} else {
-		hdd_notice("wlan not suspended GTKOffload request is stored");
-	}
+out:
+	if (gtk_req)
+		qdf_mem_free(gtk_req);
 	EXIT();
+
 	return result;
 }
 
@@ -15847,7 +15791,6 @@ int wlan_hdd_cfg80211_set_rekey_data(struct wiphy *wiphy,
 
 	return ret;
 }
-#endif /*WLAN_FEATURE_GTK_OFFLOAD */
 
 /**
  * __wlan_hdd_cfg80211_set_mac_acl() - set access control policy

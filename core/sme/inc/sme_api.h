@@ -561,14 +561,6 @@ bool sme_is_channel_valid(tHalHandle hHal, uint8_t channel);
 QDF_STATUS sme_set_freq_band(tHalHandle hHal, uint8_t sessionId,
 		eCsrBand eBand);
 QDF_STATUS sme_get_freq_band(tHalHandle hHal, eCsrBand *pBand);
-#ifdef WLAN_FEATURE_GTK_OFFLOAD
-QDF_STATUS sme_set_gtk_offload(tHalHandle hal_ctx,
-		tpSirGtkOffloadParams request,
-		uint8_t session_id);
-QDF_STATUS sme_get_gtk_offload(tHalHandle hal_ctx,
-		gtk_offload_get_info_callback callback_routine,
-		void *callback_context, uint8_t session_id);
-#endif /* WLAN_FEATURE_GTK_OFFLOAD */
 uint16_t sme_chn_to_freq(uint8_t chanNum);
 bool sme_is_channel_valid(tHalHandle hHal, uint8_t channel);
 QDF_STATUS sme_set_max_tx_power(tHalHandle hHal, struct qdf_mac_addr pBssid,

@@ -237,11 +237,6 @@
 #define HDD_MOD_EXIT_SSR_MAX_RETRIES 75
 #endif
 
-#ifdef WLAN_FEATURE_GTK_OFFLOAD
-#define GTK_OFFLOAD_ENABLE  0
-#define GTK_OFFLOAD_DISABLE 1
-#endif
-
 #define MAX_USER_COMMAND_SIZE 4096
 
 #define HDD_MIN_TX_POWER (-100) /* minimum tx power */
@@ -651,9 +646,6 @@ struct hdd_station_ctx {
 
 	int ft_carrier_on;
 
-#ifdef WLAN_FEATURE_GTK_OFFLOAD
-	tSirGtkOffloadParams gtkOffloadReqParams;
-#endif
 	/*Increment whenever ibss New peer joins and departs the network */
 	int ibss_sta_generation;
 

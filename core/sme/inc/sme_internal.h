@@ -135,12 +135,6 @@ typedef struct sSelfRecoveryStats {
 	uint8_t cmdStatsIndx;
 } tSelfRecoveryStats;
 
-#ifdef WLAN_FEATURE_GTK_OFFLOAD
-/* GTK Offload Information Callback declaration */
-typedef void (*gtk_offload_get_info_callback)(void *callback_context,
-		tpSirGtkOffloadGetInfoRspParams
-		pGtkOffloadGetInfoRsp);
-#endif
 #ifdef FEATURE_WLAN_SCAN_PNO
 /*Pref netw found Cb declaration*/
 typedef void (*preferred_network_found_ind_cb)(void *callback_context,
@@ -229,12 +223,6 @@ typedef struct tagSmeStruct {
 	void (*pGetTemperatureCb)(int temperature, void *context);
 	uint8_t miracast_value;
 	struct ps_global_info  ps_global_info;
-#ifdef WLAN_FEATURE_GTK_OFFLOAD
-	/* routine to call for GTK Offload Information */
-	gtk_offload_get_info_callback gtk_offload_get_info_cb;
-	/* value to be passed as parameter to routine specified above */
-	void *gtk_offload_get_info_cb_context;
-#endif /* WLAN_FEATURE_GTK_OFFLOAD */
 #ifdef FEATURE_WLAN_SCAN_PNO
 	/* routine to call for Preferred Network Found Indication */
 	preferred_network_found_ind_cb pref_netw_found_cb;

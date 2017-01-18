@@ -945,10 +945,6 @@ int wma_tdls_event_handler(void *handle, uint8_t *event, uint32_t len);
 
 int wma_csa_offload_handler(void *handle, uint8_t *event, uint32_t len);
 
-#ifdef WLAN_FEATURE_GTK_OFFLOAD
-int wma_gtk_offload_status_event(void *handle, uint8_t *event, uint32_t len);
-#endif
-
 #ifdef FEATURE_OEM_DATA_SUPPORT
 int wma_oem_data_response_handler(void *handle, uint8_t *datap,
 				  uint32_t len);
@@ -1022,15 +1018,6 @@ void wma_config_plm(tp_wma_handle wma, tpSirPlmReq plm);
 
 QDF_STATUS wma_process_mcbc_set_filter_req(tp_wma_handle wma_handle,
 					   tSirRcvFltMcAddrList * mcbc_param);
-#ifdef WLAN_FEATURE_GTK_OFFLOAD
-QDF_STATUS wma_process_gtk_offload_req(tp_wma_handle wma,
-					      tpSirGtkOffloadParams params);
-
-QDF_STATUS wma_process_gtk_offload_getinfo_req(tp_wma_handle wma,
-					       tpSirGtkOffloadGetInfoRspParams
-					       params);
-#endif
-
 QDF_STATUS wma_process_cesium_enable_ind(tp_wma_handle wma);
 
 QDF_STATUS wma_process_get_peer_info_req
