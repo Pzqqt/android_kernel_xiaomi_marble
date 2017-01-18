@@ -704,6 +704,9 @@ typedef enum {
     /** One time request for peer stats info */
     WMI_REQUEST_PEER_STATS_INFO_CMDID,
 
+    /** One time request for radio channel stats */
+    WMI_REQUEST_RADIO_CHAN_STATS_CMDID,
+
     /** ARP OFFLOAD REQUEST*/
     WMI_SET_ARP_NS_OFFLOAD_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_ARP_NS_OFL),
 
@@ -1255,6 +1258,9 @@ typedef enum {
      *  and report peer stats info to host */
     WMI_PEER_STATS_INFO_EVENTID,
 
+    /** This event is used to respond to WMI_REQUEST_RADIO_CHAN_STATS_CMDID
+     *  and report radio channel stats to host */
+    WMI_RADIO_CHAN_STATS_EVENTID,
 
     /* NLO specific events */
     /** NLO match event after the first match */
@@ -3870,6 +3876,16 @@ typedef enum {
      */
     WMI_PDEV_PARAM_FAST_PWR_TRANSITION,
 
+    /** Enable/disable radio channel stats mechanism
+     *  A zero value disables; a non-zero value enables.
+     */
+    WMI_PDEV_PARAM_RADIO_CHAN_STATS_ENABLE,
+    /** Enable/disable radio diagnosis feature
+     *  which allows retrieving the status of radio.
+     *  A zero value disables; a non-zero value enables.
+     */
+    WMI_PDEV_PARAM_RADIO_DIAGNOSIS_ENABLE,
+
 } WMI_PDEV_PARAM;
 
 typedef struct {
@@ -5370,6 +5386,48 @@ typedef struct {
      * wmi_peer_stats_info peer_stats_info[];
      */
 } wmi_peer_stats_info_event_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_radio_chan_stats */
+    A_UINT32 tlv_header;
+    /** primary channel freq of the channel whose stats is sent */
+    A_UINT32 chan_mhz;
+    /** accumulation of time the radio is tuned to this channel,
+     *  in units of microseconds */
+    A_UINT32 on_chan_us;
+    /** accumulation of the TX PPDU duration over the measurement period,
+     *  in units of microseconds */
+    A_UINT32 tx_duration_us;
+    /** accumulation of the RX PPDU duration over the measurement period,
+     *  in units of microseconds */
+    A_UINT32 rx_duration_us;
+    /** ratio of channel busy time to on_chan_us, in units of percent */
+    A_UINT32 chan_busy_ratio;
+    /** ratio of on_chan_us to the measurement period, in units of percent */
+    A_UINT32 on_chan_ratio;
+    /** measurement period, in units of microseconds */
+    A_UINT32 measurement_period_us;
+    /** MPDUs transmitted on this channel */
+    A_UINT32 tx_mpdus;
+    /** MSDUs transmitted on this channel */
+    A_UINT32 tx_msdus;
+    /** MPDUS successfully received on this channel */
+    A_UINT32 rx_succ_mpdus;
+    /** Failed MPDUs (CRC failures) received on this channel */
+    A_UINT32 rx_fail_mpdus;
+} wmi_radio_chan_stats;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_radio_chan_stats_event_fixed_param */
+    A_UINT32 tlv_header;
+    /** number of channel stats in radio_chan_stats[] */
+    A_UINT32 num_chans;
+    /* This TLV is followed by another TLV of array of structs
+     * wmi_radio_chan_stats radio_chan_stats[];
+     */
+} wmi_radio_chan_stats_event_fixed_param;
 
 /**
  *  PDEV statistics
@@ -16618,6 +16676,31 @@ typedef struct {
     A_UINT32 reset_after_request;
 } wmi_request_peer_stats_info_cmd_fixed_param;
 
+typedef enum {
+    WMI_REQUEST_ONE_RADIO_CHAN_STATS = 0x01, /* request stats of one specified channel */
+    WMI_REQUEST_ALL_RADIO_CHAN_STATS = 0x02, /* request stats of all channels */
+} wmi_radio_chan_stats_request_type;
+
+/** It is required to issue WMI_PDEV_PARAM_RADIO_CHAN_STATS_ENABLE
+ *  (with a non-zero value) before issuing the first REQUEST_RADIO_CHAN_STATS.
+ */
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_request_radio_chan_stats_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    /** request_type to indicate if only stats of
+     *  one channel or all channels are requested,
+     *  see wmi_radio_chan_stats_request_type.
+     */
+    A_UINT32 request_type;
+    /** Frequency of channel whose stats is requested,
+     *  only used when request_type == WMI_REQUEST_ONE_RADIO_CHAN_STATS
+     */
+    A_UINT32 chan_mhz;
+    /** flag to indicate if FW needs to reset requested stats of specified channel/channels */
+    A_UINT32 reset_after_request;
+} wmi_request_radio_chan_stats_cmd_fixed_param;
+
 typedef struct {
     /** TLV tag and len; tag equals
      * WMITLV_TAG_STRUC_wmi_rmc_set_leader_cmd_fixed_param */
@@ -17439,6 +17522,8 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PDEV_SET_STATS_THRESHOLD_CMDID);
         WMI_RETURN_STRING(WMI_REQUEST_WLAN_STATS_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_ENCRYPT_DECRYPT_DATA_REQ_CMDID);
+        WMI_RETURN_STRING(WMI_REQUEST_PEER_STATS_INFO_CMDID);
+        WMI_RETURN_STRING(WMI_REQUEST_RADIO_CHAN_STATS_CMDID);
     }
 
     return "Invalid WMI cmd";
