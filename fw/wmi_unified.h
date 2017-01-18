@@ -552,6 +552,8 @@ typedef enum {
     WMI_ROAM_CONFIGURE_MAWC_CMDID,
     /** configure MultiBand Operation(refer WFA MBO spec) parameter */
     WMI_ROAM_SET_MBO_PARAM_CMDID, /* DEPRECATED */
+    /** configure packet error rate threshold for triggering roaming */
+    WMI_ROAM_PER_CONFIG_CMDID,
 
     /** offload scan specific commands */
     /** set offload scan AP profile   */
@@ -15559,6 +15561,39 @@ typedef struct {
 
 typedef struct {
     /* TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_roam_per_config_fixed_param */
+    A_UINT32 tlv_header;
+    /* Unique id identifying the VDEV */
+    A_UINT32 vdev_id;
+    /* enable(1) or disable(0) packet error rate trigger for roaming */
+    A_UINT32 enable;
+    /* high_rate_thresh, low_rate_thresh, pkt_err_rate_thresh_pct:
+     * If PER monitoring as a trigger for roaming is enabled,
+     * it is controlled by high_rate_thresh, low_rate_thresh, and
+     * pkt_err_rate_thresh_pct.
+     * PER monitoring is performed only when the time-averaged throughput
+     * is less than high_rate_thresh.
+     * During PER monitoring, the target keeps track of the PHY rate for
+     * each of the first N PPDUs within a time window.
+     * If the number of PPDUs with PHY rate < low_rate_thresh exceeds
+     * N * pkt_err_rate_thresh_pct / 100, roaming will be triggered.
+     *
+     * This PER monitoring as a trigger for roaming is performed
+     * concurrently but independently for rx and tx.
+     */
+    A_UINT32 high_rate_thresh; /* units = Kbps */
+    A_UINT32 low_rate_thresh; /* units = Kbps */
+    A_UINT32 pkt_err_rate_thresh_pct;
+    /*
+     * rest time after associating to a new AP before
+     * starting to monitor PER as a roaming trigger,
+     * (units are seconds)
+     */
+    A_UINT32 per_rest_time;
+} wmi_roam_per_config_fixed_param;
+
+typedef struct {
+    /* TLV tag and len; tag equals
      * WMITLV_TAG_STRUC_wmi_nlo_configure_mawc_cmd_fixed_param */
     A_UINT32 tlv_header;
     /* Unique id identifying the VDEV */
@@ -17524,6 +17559,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_ENCRYPT_DECRYPT_DATA_REQ_CMDID);
         WMI_RETURN_STRING(WMI_REQUEST_PEER_STATS_INFO_CMDID);
         WMI_RETURN_STRING(WMI_REQUEST_RADIO_CHAN_STATS_CMDID);
+        WMI_RETURN_STRING(WMI_ROAM_PER_CONFIG_CMDID);
     }
 
     return "Invalid WMI cmd";

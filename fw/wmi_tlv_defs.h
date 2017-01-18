@@ -788,6 +788,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_request_radio_chan_stats_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_radio_chan_stats,
     WMITLV_TAG_STRUC_wmi_radio_chan_stats_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_roam_per_config_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1104,6 +1105,7 @@ typedef enum {
     OP(WMI_11D_SCAN_START_CMDID) \
     OP(WMI_11D_SCAN_STOP_CMDID) \
     OP(WMI_REQUEST_RADIO_CHAN_STATS_CMDID) \
+    OP(WMI_ROAM_PER_CONFIG_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1450,6 +1452,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_SCAN_CMD);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, non_prefer_ch_attr, WMITLV_SIZE_VAR)
 
 WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_SET_MBO_PARAM_CMDID);
+
+/* Roam PER configure cmd */
+#define WMITLV_TABLE_WMI_ROAM_PER_CONFIG_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_per_config_fixed_param, wmi_roam_per_config_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+ 
+WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_PER_CONFIG_CMDID);
 
 #define WMITLV_TABLE_WMI_VDEV_PLMREQ_START_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_plmreq_start_cmd_fixed_param, wmi_vdev_plmreq_start_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
