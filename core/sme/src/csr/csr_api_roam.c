@@ -12789,8 +12789,9 @@ csr_roam_get_bss_start_parms(tpAniSirGlobal pMac,
 	 * ignore basic and extended rates from hostapd.conf and should
 	 * populate default rates.
 	 */
-	if (!skip_hostapd_rate && (pProfile->supported_rates.numRates ||
-				   pProfile->extended_rates.numRates)) {
+	if (!cds_is_sub_20_mhz_enabled() && !skip_hostapd_rate &&
+			(pProfile->supported_rates.numRates ||
+			pProfile->extended_rates.numRates)) {
 		csr_populate_supported_rates_from_hostapd(opr_rates,
 				ext_rates, pProfile);
 		pParam->operationChn = tmp_opr_ch;

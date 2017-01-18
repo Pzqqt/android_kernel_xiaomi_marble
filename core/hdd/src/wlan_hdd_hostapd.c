@@ -7570,7 +7570,9 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		}
 	}
 
-	wlan_hdd_set_sap_hwmode(pHostapdAdapter);
+	if (!cds_is_sub_20_mhz_enabled())
+		wlan_hdd_set_sap_hwmode(pHostapdAdapter);
+
 	if (pHddCtx->config->sap_force_11n_for_11ac) {
 		if (pConfig->SapHw_mode == eCSR_DOT11_MODE_11ac ||
 		    pConfig->SapHw_mode == eCSR_DOT11_MODE_11ac_ONLY)
@@ -8053,6 +8055,8 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	if (cds_is_sub_20_mhz_enabled()) {
 		enum channel_state ch_state;
 		enum phy_ch_width sub_20_ch_width = CH_WIDTH_INVALID;
+		tsap_Config_t *sap_cfg = &pAdapter->sessionCtx.ap.sapConfig;
+
 		/* Avoid ACS/DFS, and overwrite ch wd to 20 */
 		if (channel == 0) {
 			hdd_err("Can't start SAP-ACS (channel=0) with sub 20 MHz ch width.");
@@ -8081,6 +8085,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 			hdd_err("Given ch width not supported by reg domain.");
 			return -EINVAL;
 		}
+		sap_cfg->SapHw_mode = eCSR_DOT11_MODE_abg;
 	}
 
 	/* check if concurrency is allowed */

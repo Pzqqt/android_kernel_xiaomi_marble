@@ -5871,6 +5871,9 @@ config_exit:
  */
 eCsrPhyMode hdd_cfg_xlate_to_csr_phy_mode(eHddDot11Mode dot11Mode)
 {
+	if (cds_is_sub_20_mhz_enabled())
+		return eCSR_DOT11_MODE_abg;
+
 	switch (dot11Mode) {
 	case (eHDD_DOT11_MODE_abg):
 		return eCSR_DOT11_MODE_abg;

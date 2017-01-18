@@ -796,7 +796,7 @@ static void hdd_update_vdev_nss(hdd_context_t *hdd_ctx)
 	struct hdd_config *cfg_ini = hdd_ctx->config;
 	uint8_t max_supp_nss = 1;
 
-	if (cfg_ini->enable2x2)
+	if (cfg_ini->enable2x2 && !cds_is_sub_20_mhz_enabled())
 		max_supp_nss = 2;
 
 	sme_update_vdev_type_nss(hdd_ctx->hHal, max_supp_nss,
