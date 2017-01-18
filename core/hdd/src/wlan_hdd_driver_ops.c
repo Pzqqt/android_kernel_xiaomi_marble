@@ -420,6 +420,8 @@ static void wlan_hdd_remove(struct device *dev)
 		__hdd_wlan_exit();
 	}
 
+	cds_set_unload_in_progress(false);
+
 	pr_info("%s: Driver De-initialized\n", WLAN_MODULE_NAME);
 }
 
