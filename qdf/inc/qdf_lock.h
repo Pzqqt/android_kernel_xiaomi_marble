@@ -489,15 +489,16 @@ QDF_STATUS qdf_wake_lock_release(qdf_wake_lock_t *lock, uint32_t reason);
 
 QDF_STATUS qdf_wake_lock_destroy(qdf_wake_lock_t *lock);
 
-struct hif_pm_runtime_lock;
-typedef struct hif_pm_runtime_lock *qdf_runtime_lock_t;
-
 QDF_STATUS qdf_runtime_pm_get(void);
 QDF_STATUS qdf_runtime_pm_put(void);
-QDF_STATUS qdf_runtime_pm_prevent_suspend(qdf_runtime_lock_t lock);
-QDF_STATUS qdf_runtime_pm_allow_suspend(qdf_runtime_lock_t lock);
-qdf_runtime_lock_t qdf_runtime_lock_init(const char *name);
-void qdf_runtime_lock_deinit(qdf_runtime_lock_t lock);
+QDF_STATUS qdf_runtime_pm_prevent_suspend(qdf_runtime_lock_t *lock);
+QDF_STATUS qdf_runtime_pm_allow_suspend(qdf_runtime_lock_t *lock);
+
+QDF_STATUS __qdf_runtime_lock_init(qdf_runtime_lock_t *lock, const char *name);
+
+#define qdf_runtime_lock_init(lock) __qdf_runtime_lock_init(lock, #lock)
+
+void qdf_runtime_lock_deinit(qdf_runtime_lock_t *lock);
 
 QDF_STATUS qdf_spinlock_acquire(qdf_spinlock_t *lock);
 

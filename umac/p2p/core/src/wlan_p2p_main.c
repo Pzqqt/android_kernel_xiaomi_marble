@@ -663,8 +663,8 @@ QDF_STATUS p2p_psoc_object_open(struct wlan_objmgr_psoc *soc)
 		p2p_err("failed to create cancel roc done event");
 		goto fail_event;
 	}
-	p2p_soc_obj->roc_runtime_lock = qdf_runtime_lock_init(
-						P2P_MODULE_NAME);
+
+	qdf_runtime_lock_init(&p2p_soc_obj->roc_runtime_lock);
 
 	p2p_debug("p2p psoc object open successful");
 
@@ -694,7 +694,7 @@ QDF_STATUS p2p_psoc_object_close(struct wlan_objmgr_psoc *soc)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	qdf_runtime_lock_deinit(p2p_soc_obj->roc_runtime_lock);
+	qdf_runtime_lock_deinit(&p2p_soc_obj->roc_runtime_lock);
 	qdf_event_destroy(&p2p_soc_obj->cancel_roc_done);
 	qdf_list_destroy(&p2p_soc_obj->tx_q_ack);
 	qdf_list_destroy(&p2p_soc_obj->tx_q_roc);

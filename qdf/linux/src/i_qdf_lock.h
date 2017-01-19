@@ -95,6 +95,11 @@ typedef struct semaphore __qdf_semaphore_t;
 
 typedef struct wakeup_source qdf_wake_lock_t;
 
+struct hif_pm_runtime_lock;
+typedef struct qdf_runtime_lock {
+	struct hif_pm_runtime_lock *lock;
+} qdf_runtime_lock_t;
+
 #define LINUX_LOCK_COOKIE 0x12345678
 
 /* Function declarations and documenation */

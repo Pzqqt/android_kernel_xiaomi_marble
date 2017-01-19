@@ -698,7 +698,7 @@ void hif_fastpath_resume(struct hif_opaque_softc *hif_ctx);
 int hif_pm_runtime_get(struct hif_opaque_softc *hif_ctx);
 void hif_pm_runtime_get_noresume(struct hif_opaque_softc *hif_ctx);
 int hif_pm_runtime_put(struct hif_opaque_softc *hif_ctx);
-struct hif_pm_runtime_lock *hif_runtime_lock_init(const char *name);
+int hif_runtime_lock_init(qdf_runtime_lock_t *lock, const char *name);
 void hif_runtime_lock_deinit(struct hif_opaque_softc *hif_ctx,
 			struct hif_pm_runtime_lock *lock);
 int hif_pm_runtime_prevent_suspend(struct hif_opaque_softc *ol_sc,
@@ -719,9 +719,9 @@ static inline int hif_pm_runtime_get(struct hif_opaque_softc *hif_ctx)
 { return 0; }
 static inline int hif_pm_runtime_put(struct hif_opaque_softc *hif_ctx)
 { return 0; }
-static inline struct hif_pm_runtime_lock *hif_runtime_lock_init(
-		const char *name)
-{ return NULL; }
+static inline int hif_runtime_lock_init(qdf_runtime_lock_t *lock,
+					const char *name)
+{ return 0; }
 static inline void
 hif_runtime_lock_deinit(struct hif_opaque_softc *hif_ctx,
 			struct hif_pm_runtime_lock *lock) {}

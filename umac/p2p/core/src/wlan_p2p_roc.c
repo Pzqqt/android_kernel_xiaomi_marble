@@ -345,7 +345,7 @@ static QDF_STATUS p2p_execute_roc_req(struct p2p_roc_context *roc_ctx)
 		roc_ctx->roc_type, roc_ctx->roc_state);
 
 	/* prevent runtime suspend */
-	qdf_runtime_pm_prevent_suspend(p2p_soc_obj->roc_runtime_lock);
+	qdf_runtime_pm_prevent_suspend(&p2p_soc_obj->roc_runtime_lock);
 
 	status = qdf_mc_timer_init(&roc_ctx->roc_timer,
 			QDF_TIMER_TYPE_SW, p2p_roc_timeout,
@@ -375,7 +375,7 @@ fail:
 	if (status != QDF_STATUS_SUCCESS) {
 		p2p_destroy_roc_ctx(roc_ctx, true, true);
 		qdf_runtime_pm_allow_suspend(
-			p2p_soc_obj->roc_runtime_lock);
+			&p2p_soc_obj->roc_runtime_lock);
 		return status;
 	}
 
@@ -501,7 +501,7 @@ static QDF_STATUS p2p_process_scan_complete_evt(
 		roc_ctx->roc_type, roc_ctx->roc_state);
 
 	/* allow runtime suspend */
-	qdf_runtime_pm_allow_suspend(p2p_soc_obj->roc_runtime_lock);
+	qdf_runtime_pm_allow_suspend(&p2p_soc_obj->roc_runtime_lock);
 
 	if (QDF_TIMER_STATE_RUNNING ==
 		qdf_mc_timer_get_current_state(&roc_ctx->roc_timer)) {
