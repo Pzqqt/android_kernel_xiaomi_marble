@@ -10794,6 +10794,49 @@ QDF_STATUS send_enable_arp_ns_offload_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS send_enable_broadcast_filter_cmd_tlv(wmi_unified_t wmi_handle,
+			   uint8_t vdev_id, bool enable)
+{
+	int32_t res;
+	wmi_hw_data_filter_cmd_fixed_param *cmd;
+	A_UINT8 *buf_ptr;
+	wmi_buf_t buf;
+	int32_t len;
+
+	/*
+	 * TLV place holder size for array of ARP tuples
+	 */
+	len = sizeof(wmi_hw_data_filter_cmd_fixed_param);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (A_UINT8 *) wmi_buf_data(buf);
+	cmd = (wmi_hw_data_filter_cmd_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_hw_data_filter_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_hw_data_filter_cmd_fixed_param));
+	cmd->vdev_id = vdev_id;
+	cmd->enable = enable;
+	cmd->hw_filter_bitmap = WMI_HW_DATA_FILTER_DROP_NON_ARP_BC;
+
+	WMI_LOGD("HW Broadcast Filter vdev_id: %d", cmd->vdev_id);
+
+	res = wmi_unified_cmd_send(wmi_handle, buf, len,
+				     WMI_HW_DATA_FILTER_CMDID);
+	if (res) {
+		WMI_LOGE("Failed to enable ARP NDP/NSffload");
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * send_set_ssid_hotlist_cmd_tlv() - Handle an SSID hotlist set request
  * @wmi_handle: wmi handle
@@ -13519,6 +13562,8 @@ struct wmi_ops tlv_ops =  {
 		 send_pdev_set_dual_mac_config_cmd_tlv,
 	.send_enable_arp_ns_offload_cmd =
 		 send_enable_arp_ns_offload_cmd_tlv,
+	.send_enable_broadcast_filter_cmd =
+		 send_enable_broadcast_filter_cmd_tlv,
 	.send_app_type1_params_in_fw_cmd =
 		 send_app_type1_params_in_fw_cmd_tlv,
 	.send_set_ssid_hotlist_cmd = send_set_ssid_hotlist_cmd_tlv,
