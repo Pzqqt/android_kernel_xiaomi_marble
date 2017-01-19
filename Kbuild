@@ -208,9 +208,11 @@ endif
 
 	# Flag to enable LRO (Large Receive Offload)
 	ifeq ($(CONFIG_INET_LRO), y)
-		CONFIG_WLAN_LRO := y
-	else
-		CONFIG_WLAN_LRO := n
+		ifeq ($(VERSION), 4)
+			CONFIG_WLAN_LRO := y
+		else
+			CONFIG_WLAN_LRO := n
+		endif
 	endif
 endif
 
