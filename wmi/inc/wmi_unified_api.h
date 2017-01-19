@@ -837,6 +837,20 @@ QDF_STATUS wmi_unified_enable_arp_ns_offload_cmd(void *wmi_hdl,
 			   bool arp_only,
 			   uint8_t vdev_id);
 
+/**
+ * wmi_unified_configure_broadcast_filter_cmd() - Enable/Disable Broadcast
+ * filter
+ * when target goes to wow suspend/resume mode
+ * @wmi_hdl: wmi handle
+ * @vdev_id: device identifier
+ * @bc_filter: enable/disable Broadcast filter
+ *
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_configure_broadcast_filter_cmd(void *wmi_hdl,
+			   uint8_t vdev_id, bool bc_filter);
+
 QDF_STATUS wmi_unified_set_led_flashing_cmd(void *wmi_hdl,
 				struct flashing_req_params *flashing);
 
