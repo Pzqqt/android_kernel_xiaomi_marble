@@ -152,6 +152,7 @@ int hdd_add_peer_object(struct wlan_objmgr_vdev *vdev,
 			uint8_t *mac_addr)
 {
 	enum wlan_peer_type peer_type;
+	struct wlan_objmgr_peer *peer;
 
 	if ((adapter_mode == QDF_STA_MODE) ||
 		(adapter_mode == QDF_P2P_CLIENT_MODE)) {
@@ -172,9 +173,11 @@ int hdd_add_peer_object(struct wlan_objmgr_vdev *vdev,
 		return -EFAULT;
 	}
 
-	if (!wlan_objmgr_peer_obj_create(vdev, peer_type, mac_addr))
+	peer = wlan_objmgr_peer_obj_create(vdev, peer_type, mac_addr);
+	if (!peer)
 		return -ENOMEM;
 
+	wlan_objmgr_peer_ref_peer(peer);
 	hdd_info("Peer object "MAC_ADDRESS_STR" add success!",
 					MAC_ADDR_ARRAY(mac_addr));
 
@@ -202,8 +205,16 @@ int hdd_remove_peer_object(struct wlan_objmgr_vdev *vdev,
 
 	peer = wlan_objmgr_find_peer(psoc, mac_addr);
 	if (peer) {
-		if (QDF_IS_STATUS_ERROR(wlan_objmgr_peer_obj_delete(peer)))
-			return -EFAULT;
+		/* Unref to decrement ref happened in find_peer */
+		wlan_objmgr_peer_unref_peer(peer);
+
+		/*
+		 * Unref to decrement ref of create_peer. This
+		 * is needed until new ref count implementation
+		 * is done. Object manager will delete peer once
+		 * ref count is 0.
+		 */
+		wlan_objmgr_peer_unref_peer(peer);
 
 		hdd_info("Peer obj "MAC_ADDRESS_STR" deleted",
 				MAC_ADDR_ARRAY(mac_addr));
