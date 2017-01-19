@@ -1867,6 +1867,11 @@ void ol_tso_seg_list_deinit(struct ol_txrx_pdev_t *pdev)
 	struct qdf_tso_seg_elem_t *c_element;
 	struct qdf_tso_seg_elem_t *temp;
 
+	/* pool size 0 implies that tso seg list is not initialised*/
+	if (pdev->tso_seg_pool.freelist == NULL &&
+	    pdev->tso_seg_pool.pool_size == 0)
+		return;
+
 	qdf_spin_lock_bh(&pdev->tso_seg_pool.tso_mutex);
 	c_element = pdev->tso_seg_pool.freelist;
 	i = pdev->tso_seg_pool.pool_size;
@@ -1946,6 +1951,11 @@ void ol_tso_num_seg_list_deinit(struct ol_txrx_pdev_t *pdev)
 	int i;
 	struct qdf_tso_num_seg_elem_t *c_element;
 	struct qdf_tso_num_seg_elem_t *temp;
+
+	/* pool size 0 implies that tso num seg list is not initialised*/
+	if (pdev->tso_num_seg_pool.freelist == NULL &&
+	    pdev->tso_num_seg_pool.num_seg_pool_size == 0)
+		return;
 
 	qdf_spin_lock_bh(&pdev->tso_num_seg_pool.tso_num_seg_mutex);
 	c_element = pdev->tso_num_seg_pool.freelist;
