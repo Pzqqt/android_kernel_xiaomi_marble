@@ -1338,6 +1338,46 @@ void lim_process_mlm_set_keys_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 } /*** end lim_process_mlm_set_keys_cnf() ***/
 
 /**
+ * lim_join_result_callback() - Callback to handle join rsp
+ * @mac: Pointer to Global MAC structure
+ * @param: callback argument
+ * @status: status
+ *
+ * This callback function is used to delete PE session
+ * entry and send join response to sme.
+ *
+ * Return: None
+ */
+static void lim_join_result_callback(tpAniSirGlobal mac, void *param,
+				     bool status)
+{
+	join_params *link_state_params = (join_params *) param;
+	tpPESession session;
+	uint8_t sme_session_id;
+	uint16_t sme_trans_id;
+
+	if (!link_state_params) {
+		lim_log(mac, LOGE,
+			FL("Link state params is NULL"));
+		return;
+	}
+	session = pe_find_session_by_session_id(mac, link_state_params->
+						pe_session_id);
+	if (!session) {
+		qdf_mem_free(link_state_params);
+		return;
+	}
+	sme_session_id = session->smeSessionId;
+	sme_trans_id = session->transactionId;
+	lim_send_sme_join_reassoc_rsp(mac, eWNI_SME_JOIN_RSP,
+				      link_state_params->result_code,
+				      link_state_params->prot_status_code,
+				      NULL, sme_session_id, sme_trans_id);
+	pe_delete_session(mac, session);
+	qdf_mem_free(link_state_params);
+}
+
+/**
  * lim_handle_sme_join_result() - Handles sme join result
  * @mac_ctx:  Pointer to Global MAC structure
  * @result_code: Failure code to be sent
@@ -1358,6 +1398,7 @@ void lim_handle_sme_join_result(tpAniSirGlobal mac_ctx,
 	tpDphHashNode sta_ds = NULL;
 	uint8_t sme_session_id;
 	uint16_t sme_trans_id;
+	join_params *param = NULL;
 
 	if (session_entry == NULL) {
 		lim_log(mac_ctx, LOGE, FL("psessionEntry is NULL "));
@@ -1403,15 +1444,20 @@ void lim_handle_sme_join_result(tpAniSirGlobal mac_ctx,
 error:
 	/* Delete the session if JOIN failure occurred. */
 	if (result_code != eSIR_SME_SUCCESS) {
+		param = qdf_mem_malloc(sizeof(join_params));
+		if (param != NULL) {
+			param->result_code = result_code;
+			param->prot_status_code = prot_status_code;
+			param->pe_session_id = session_entry->peSessionId;
+		}
 		if (lim_set_link_state
 			(mac_ctx, eSIR_LINK_DOWN_STATE,
 			session_entry->bssId,
-			session_entry->selfMacAddr, NULL,
-			NULL) != eSIR_SUCCESS)
+			session_entry->selfMacAddr, lim_join_result_callback,
+			param) != eSIR_SUCCESS)
 			lim_log(mac_ctx, LOGE,
 				FL("Failed to set the LinkState."));
-		pe_delete_session(mac_ctx, session_entry);
-		session_entry = NULL;
+		return;
 	}
 
 	lim_send_sme_join_reassoc_rsp(mac_ctx, eWNI_SME_JOIN_RSP, result_code,

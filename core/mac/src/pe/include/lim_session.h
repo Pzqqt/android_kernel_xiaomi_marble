@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -89,6 +89,12 @@ typedef struct {
 	uint8_t fLsigTXOPProtectionFullSupport;
 	uint8_t gHTObssMode;
 } tBeaconParams, *tpBeaconParams;
+
+typedef struct join_params {
+	uint16_t prot_status_code;
+	uint16_t pe_session_id;
+	tSirResultCodes result_code;
+} join_params;
 
 typedef struct sPESession       /* Added to Support BT-AMP */
 {
