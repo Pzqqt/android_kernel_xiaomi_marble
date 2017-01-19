@@ -411,7 +411,7 @@ QDF_STATUS lim_p2p_action_cnf(void *context, qdf_nbuf_t buf,
 {
 	QDF_STATUS status;
 	uint32_t mgmt_frame_sessionId;
-	bool tx_complete_ack = (tx_status) ? false : true;
+	bool tx_complete_ack = (tx_status) ? true : false;
 	tpAniSirGlobal pMac = (tpAniSirGlobal)context;
 
 	status = pe_acquire_global_lock(&pMac->lim);
