@@ -12212,7 +12212,6 @@ static int __iw_set_pno(struct net_device *dev,
 		return -EINVAL;
 	}
 	qdf_mem_copy(data, extra, (len-1));
-	data[len] = '\0';
 	ptr = data;
 
 	if (1 != sscanf(ptr, " %hhu %n", &value, &offset)) {
