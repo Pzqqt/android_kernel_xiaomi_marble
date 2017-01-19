@@ -60,6 +60,8 @@
 #include "wlan_hdd_nan_datapath.h"
 #include "pld_common.h"
 #include <cdp_txrx_handle.h>
+#include "wlan_hdd_rx_monitor.h"
+
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 /*
  * Mapping Linux AC interpretation to SME AC.
@@ -1427,6 +1429,7 @@ int hdd_set_mon_rx_cb(struct net_device *dev)
 
 	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
 	txrx_ops.rx.rx = hdd_mon_rx_packet_cbk;
+	hdd_monitor_set_rx_monitor_cb(&txrx_ops, hdd_rx_monitor_callback);
 	cdp_vdev_register(soc,
 		(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
 		(struct cdp_pdev *)pdev, adapter->sessionId),
