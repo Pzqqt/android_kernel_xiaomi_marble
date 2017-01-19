@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -36,11 +36,11 @@
 //	2	key_id_octet[7:0], cce_super_rule[13:8], cce_classify_not_done_truncate[14], cce_classify_not_done_cce_dis[15], ext_wapi_pn_63_48[31:16]
 //	3	ext_wapi_pn_95_64[31:0]
 //	4	ext_wapi_pn_127_96[31:0]
-//	5	reported_mpdu_length[13:0], first_msdu[14], last_msdu[15], sa_idx_timeout[16], da_idx_timeout[17], msdu_limit_error[18], flow_idx_timeout[19], flow_idx_invalid[20], wifi_parser_error[21], amsdu_parser_error[22], sa_is_valid[23], da_is_valid[24], da_is_mcbc[25], reserved_5a[31:26]
+//	5	reported_mpdu_length[13:0], first_msdu[14], last_msdu[15], sa_idx_timeout[16], da_idx_timeout[17], msdu_limit_error[18], flow_idx_timeout[19], flow_idx_invalid[20], wifi_parser_error[21], amsdu_parser_error[22], sa_is_valid[23], da_is_valid[24], da_is_mcbc[25], l3_header_padding[27:26], reserved_5a[31:28]
 //	6	ipv6_options_crc[31:0]
 //	7	tcp_seq_number[31:0]
 //	8	tcp_ack_number[31:0]
-//	9	tcp_flag[8:0], lro_eligible[9], l3_header_padding[12:10], reserved_9a[15:13], window_size[31:16]
+//	9	tcp_flag[8:0], lro_eligible[9], reserved_9a[15:10], window_size[31:16]
 //	10	da_offset[5:0], sa_offset[11:6], da_offset_valid[12], sa_offset_valid[13], type_offset[20:14], reserved_10a[31:21]
 //	11	rule_indication_31_0[31:0]
 //	12	rule_indication_63_32[31:0]
@@ -80,14 +80,14 @@ struct rx_msdu_end {
                       sa_is_valid                     :  1, //[23]
                       da_is_valid                     :  1, //[24]
                       da_is_mcbc                      :  1, //[25]
-                      reserved_5a                     :  6; //[31:26]
+                      l3_header_padding               :  2, //[27:26]
+                      reserved_5a                     :  4; //[31:28]
              uint32_t ipv6_options_crc                : 32; //[31:0]
              uint32_t tcp_seq_number                  : 32; //[31:0]
              uint32_t tcp_ack_number                  : 32; //[31:0]
              uint32_t tcp_flag                        :  9, //[8:0]
                       lro_eligible                    :  1, //[9]
-                      l3_header_padding               :  3, //[12:10]
-                      reserved_9a                     :  3, //[15:13]
+                      reserved_9a                     :  6, //[15:10]
                       window_size                     : 16; //[31:16]
              uint32_t da_offset                       :  6, //[5:0]
                       sa_offset                       :  6, //[11:6]
@@ -368,6 +368,11 @@ da_is_mcbc
 			Indicates the DA address was a Multicast of Broadcast
 			address.
 
+l3_header_padding
+			
+			Number of bytes padded  to make sure that the L3 header
+			will always start of a Dword   boundary
+
 reserved_5a
 			
 			<legal 0>
@@ -395,12 +400,10 @@ lro_eligible
 			Computed out of TCP and IP fields to indicate that this
 			MSDU is eligible for  LRO
 
-l3_header_padding
-			
-			Number of bytes padded  to make sure that the L3 header
-			will always start of a Dword   boundary
-
 reserved_9a
+			
+			NOTE: DO not assign a field... Internally used in
+			RXOLE..
 			
 			<legal 0>
 
@@ -931,13 +934,22 @@ sa_sw_peer_id
 #define RX_MSDU_END_5_DA_IS_MCBC_LSB                                 25
 #define RX_MSDU_END_5_DA_IS_MCBC_MASK                                0x02000000
 
+/* Description		RX_MSDU_END_5_L3_HEADER_PADDING
+			
+			Number of bytes padded  to make sure that the L3 header
+			will always start of a Dword   boundary
+*/
+#define RX_MSDU_END_5_L3_HEADER_PADDING_OFFSET                       0x00000014
+#define RX_MSDU_END_5_L3_HEADER_PADDING_LSB                          26
+#define RX_MSDU_END_5_L3_HEADER_PADDING_MASK                         0x0c000000
+
 /* Description		RX_MSDU_END_5_RESERVED_5A
 			
 			<legal 0>
 */
 #define RX_MSDU_END_5_RESERVED_5A_OFFSET                             0x00000014
-#define RX_MSDU_END_5_RESERVED_5A_LSB                                26
-#define RX_MSDU_END_5_RESERVED_5A_MASK                               0xfc000000
+#define RX_MSDU_END_5_RESERVED_5A_LSB                                28
+#define RX_MSDU_END_5_RESERVED_5A_MASK                               0xf0000000
 
 /* Description		RX_MSDU_END_6_IPV6_OPTIONS_CRC
 			
@@ -982,22 +994,16 @@ sa_sw_peer_id
 #define RX_MSDU_END_9_LRO_ELIGIBLE_LSB                               9
 #define RX_MSDU_END_9_LRO_ELIGIBLE_MASK                              0x00000200
 
-/* Description		RX_MSDU_END_9_L3_HEADER_PADDING
-			
-			Number of bytes padded  to make sure that the L3 header
-			will always start of a Dword   boundary
-*/
-#define RX_MSDU_END_9_L3_HEADER_PADDING_OFFSET                       0x00000024
-#define RX_MSDU_END_9_L3_HEADER_PADDING_LSB                          10
-#define RX_MSDU_END_9_L3_HEADER_PADDING_MASK                         0x00001c00
-
 /* Description		RX_MSDU_END_9_RESERVED_9A
+			
+			NOTE: DO not assign a field... Internally used in
+			RXOLE..
 			
 			<legal 0>
 */
 #define RX_MSDU_END_9_RESERVED_9A_OFFSET                             0x00000024
-#define RX_MSDU_END_9_RESERVED_9A_LSB                                13
-#define RX_MSDU_END_9_RESERVED_9A_MASK                               0x0000e000
+#define RX_MSDU_END_9_RESERVED_9A_LSB                                10
+#define RX_MSDU_END_9_RESERVED_9A_MASK                               0x0000fc00
 
 /* Description		RX_MSDU_END_9_WINDOW_SIZE
 			

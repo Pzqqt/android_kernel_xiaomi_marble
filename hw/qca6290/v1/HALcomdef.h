@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -29,7 +29,7 @@ DESCRIPTION:
 
                              Edit History
 
-$Header: /prj/iceng/SCALe/repository/cvs/scale/source/data/HALcomdef.h,v 1.1.1.1 2012/09/19 22:33:29 rjindal Exp $
+$Header: //depot/prj/qca/lithium/wcss/verif/native/register/include/HALcomdef.h#6 $
 
 when       who     what, where, why
 --------   ---     -----------------------------------------------------------

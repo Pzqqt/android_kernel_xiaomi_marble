@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -318,7 +318,8 @@ rxdma_error_code
 			
 			
 			<enum 3 rxdma_decrypt_err>CRYPTO reported a decryption
-			error
+			error or CRYPTO received an encrypted frame, but did not get
+			a valid corresponding key id in the peer entry.
 			
 			<enum 4 rxdma_tkip_mic_err>CRYPTO reported a TKIP MIC
 			error
@@ -636,6 +637,39 @@ sw_peer_id
 			
 			
 			
+			1) Release of msdu buffer due to drop_frame = 1. Flow is
+			not fetched and hence sw_peer_id and tid = 0
+			
+			buffer_or_desc_type = e_num 0
+			MSDU_rel_buffertqm_release_reason = e_num 1
+			tqm_rr_rem_cmd_rem
+			
+			
+			
+			
+			
+			2) Release of msdu buffer due to Flow is not fetched and
+			hence sw_peer_id and tid = 0
+			
+			buffer_or_desc_type = e_num 0
+			MSDU_rel_buffertqm_release_reason = e_num 1
+			tqm_rr_rem_cmd_rem
+			
+			
+			
+			
+			
+			3) Release of msdu link due to remove_mpdu or acked_mpdu
+			command.
+			
+			buffer_or_desc_type = e_num1
+			msdu_link_descriptortqm_release_reason can be:e_num 1
+			tqm_rr_rem_cmd_reme_num 2 tqm_rr_rem_cmd_tx
+			
+			e_num 3 tqm_rr_rem_cmd_notxe_num 4 tqm_rr_rem_cmd_aged
+			
+			
+			
 			Sw_peer_id from the TX_MSDU_FLOW descriptor or
 			TX_MPDU_QUEUE descriptor
 			
@@ -648,9 +682,47 @@ tid
 			
 			
 			
-			TID of the flow or MPDU queue
+			1) Release of msdu buffer due to drop_frame = 1. Flow is
+			not fetched and hence sw_peer_id and tid = 0
 			
-			<legal all>
+			buffer_or_desc_type = e_num 0
+			MSDU_rel_buffertqm_release_reason = e_num 1
+			tqm_rr_rem_cmd_rem
+			
+			
+			
+			
+			
+			2) Release of msdu buffer due to Flow is not fetched and
+			hence sw_peer_id and tid = 0
+			
+			buffer_or_desc_type = e_num 0
+			MSDU_rel_buffertqm_release_reason = e_num 1
+			tqm_rr_rem_cmd_rem
+			
+			
+			
+			
+			
+			3) Release of msdu link due to remove_mpdu or acked_mpdu
+			command.
+			
+			buffer_or_desc_type = e_num1
+			msdu_link_descriptortqm_release_reason can be:e_num 1
+			tqm_rr_rem_cmd_reme_num 2 tqm_rr_rem_cmd_tx
+			
+			e_num 3 tqm_rr_rem_cmd_notxe_num 4 tqm_rr_rem_cmd_aged
+			
+			
+			
+			
+			
+			This field represents the TID from the TX_MSDU_FLOW
+			descriptor or TX_MPDU_QUEUE descriptor
+			
+			
+			
+			 <legal all>
 
 ring_id
 			
@@ -960,7 +1032,8 @@ looping_count
 			
 			
 			<enum 3 rxdma_decrypt_err>CRYPTO reported a decryption
-			error
+			error or CRYPTO received an encrypted frame, but did not get
+			a valid corresponding key id in the peer entry.
 			
 			<enum 4 rxdma_tkip_mic_err>CRYPTO reported a TKIP MIC
 			error
@@ -1334,6 +1407,39 @@ looping_count
 			
 			
 			
+			1) Release of msdu buffer due to drop_frame = 1. Flow is
+			not fetched and hence sw_peer_id and tid = 0
+			
+			buffer_or_desc_type = e_num 0
+			MSDU_rel_buffertqm_release_reason = e_num 1
+			tqm_rr_rem_cmd_rem
+			
+			
+			
+			
+			
+			2) Release of msdu buffer due to Flow is not fetched and
+			hence sw_peer_id and tid = 0
+			
+			buffer_or_desc_type = e_num 0
+			MSDU_rel_buffertqm_release_reason = e_num 1
+			tqm_rr_rem_cmd_rem
+			
+			
+			
+			
+			
+			3) Release of msdu link due to remove_mpdu or acked_mpdu
+			command.
+			
+			buffer_or_desc_type = e_num1
+			msdu_link_descriptortqm_release_reason can be:e_num 1
+			tqm_rr_rem_cmd_reme_num 2 tqm_rr_rem_cmd_tx
+			
+			e_num 3 tqm_rr_rem_cmd_notxe_num 4 tqm_rr_rem_cmd_aged
+			
+			
+			
 			Sw_peer_id from the TX_MSDU_FLOW descriptor or
 			TX_MPDU_QUEUE descriptor
 			
@@ -1350,9 +1456,47 @@ looping_count
 			
 			
 			
-			TID of the flow or MPDU queue
+			1) Release of msdu buffer due to drop_frame = 1. Flow is
+			not fetched and hence sw_peer_id and tid = 0
 			
-			<legal all>
+			buffer_or_desc_type = e_num 0
+			MSDU_rel_buffertqm_release_reason = e_num 1
+			tqm_rr_rem_cmd_rem
+			
+			
+			
+			
+			
+			2) Release of msdu buffer due to Flow is not fetched and
+			hence sw_peer_id and tid = 0
+			
+			buffer_or_desc_type = e_num 0
+			MSDU_rel_buffertqm_release_reason = e_num 1
+			tqm_rr_rem_cmd_rem
+			
+			
+			
+			
+			
+			3) Release of msdu link due to remove_mpdu or acked_mpdu
+			command.
+			
+			buffer_or_desc_type = e_num1
+			msdu_link_descriptortqm_release_reason can be:e_num 1
+			tqm_rr_rem_cmd_reme_num 2 tqm_rr_rem_cmd_tx
+			
+			e_num 3 tqm_rr_rem_cmd_notxe_num 4 tqm_rr_rem_cmd_aged
+			
+			
+			
+			
+			
+			This field represents the TID from the TX_MSDU_FLOW
+			descriptor or TX_MPDU_QUEUE descriptor
+			
+			
+			
+			 <legal all>
 */
 #define WBM_RELEASE_RING_7_TID_OFFSET                                0x0000001c
 #define WBM_RELEASE_RING_7_TID_LSB                                   16

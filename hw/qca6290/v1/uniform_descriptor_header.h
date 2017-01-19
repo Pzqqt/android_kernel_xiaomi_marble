@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -100,7 +100,7 @@ buffer_type
 			
 			<enum 4 Transmit_flow_descriptor>
 			
-			<enum 5 Transmit_buffer > 
+			<enum 5 Transmit_buffer > NOT TO BE USED: 
 			
 			
 			
@@ -189,7 +189,7 @@ reserved_0a
 			
 			<enum 4 Transmit_flow_descriptor>
 			
-			<enum 5 Transmit_buffer > 
+			<enum 5 Transmit_buffer > NOT TO BE USED: 
 			
 			
 			

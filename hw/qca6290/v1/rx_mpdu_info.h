@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -833,6 +833,9 @@ pre_delim_err_warning
 			
 			
 			
+			In case of ndp or phy_err, this field will indicate at
+			least one of delimiters located after the last MPDU in the
+			previous PPDU has been corrupted.
 
 first_delim_err
 			
@@ -972,7 +975,28 @@ pre_delim_count
 			
 			
 			
-			In case of ndp or phy_err, this field will be set to 0
+			Note that this number is cleared at PPDU start.
+			
+			
+			
+			If this MPDU is the first received MPDU in the PPDU and
+			this MPDU gets filtered-in, this field will indicate the
+			number of delimiters located after the last MPDU in the
+			previous PPDU.
+			
+			
+			
+			If this MPDU is located after the first received MPDU in
+			an PPDU, this field will indicate the number of delimiters
+			located between the previous MPDU and this MPDU.
+			
+			
+			
+			In case of ndp or phy_err, this field will indicate the
+			number of delimiters located after the last MPDU in the
+			previous PPDU.
+			
+			<legal all>
 
 ampdu_flag
 			
@@ -2180,6 +2204,9 @@ mpdu_ht_control_field
 			
 			
 			
+			In case of ndp or phy_err, this field will indicate at
+			least one of delimiters located after the last MPDU in the
+			previous PPDU has been corrupted.
 */
 #define RX_MPDU_INFO_11_PRE_DELIM_ERR_WARNING_OFFSET                 0x0000002c
 #define RX_MPDU_INFO_11_PRE_DELIM_ERR_WARNING_LSB                    24
@@ -2363,7 +2390,28 @@ mpdu_ht_control_field
 			
 			
 			
-			In case of ndp or phy_err, this field will be set to 0
+			Note that this number is cleared at PPDU start.
+			
+			
+			
+			If this MPDU is the first received MPDU in the PPDU and
+			this MPDU gets filtered-in, this field will indicate the
+			number of delimiters located after the last MPDU in the
+			previous PPDU.
+			
+			
+			
+			If this MPDU is located after the first received MPDU in
+			an PPDU, this field will indicate the number of delimiters
+			located between the previous MPDU and this MPDU.
+			
+			
+			
+			In case of ndp or phy_err, this field will indicate the
+			number of delimiters located after the last MPDU in the
+			previous PPDU.
+			
+			<legal all>
 */
 #define RX_MPDU_INFO_12_PRE_DELIM_COUNT_OFFSET                       0x00000030
 #define RX_MPDU_INFO_12_PRE_DELIM_COUNT_LSB                          16
