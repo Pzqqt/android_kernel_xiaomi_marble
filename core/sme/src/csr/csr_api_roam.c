@@ -2609,6 +2609,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->tx_aggregation_size;
 		pMac->roam.configParam.rx_aggregation_size =
 			pParam->rx_aggregation_size;
+		pMac->roam.configParam.enable_bcast_probe_rsp =
+			pParam->enable_bcast_probe_rsp;
 
 	}
 	return status;
@@ -2843,6 +2845,8 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 		pMac->roam.configParam.tx_aggregation_size;
 	pParam->rx_aggregation_size =
 		pMac->roam.configParam.rx_aggregation_size;
+	pParam->enable_bcast_probe_rsp =
+		pMac->roam.configParam.enable_bcast_probe_rsp;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -15317,6 +15321,8 @@ QDF_STATUS csr_issue_add_sta_for_session_req(tpAniSirGlobal pMac,
 			pMac->roam.configParam.tx_aggregation_size;
 	add_sta_self_req->rx_aggregation_size =
 			pMac->roam.configParam.rx_aggregation_size;
+	add_sta_self_req->enable_bcast_probe_rsp =
+			pMac->roam.configParam.enable_bcast_probe_rsp;
 
 	msg.type = WMA_ADD_STA_SELF_REQ;
 	msg.reserved = 0;

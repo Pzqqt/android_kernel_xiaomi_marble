@@ -1802,6 +1802,16 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 						 WMI_ROAM_BMISS_FINAL_SCAN_ENABLE_FLAG));
 		if (QDF_IS_STATUS_ERROR(ret))
 			WMA_LOGE("Failed to set WMI_VDEV_PARAM_ROAM_FW_OFFLOAD");
+
+		/* Pass down enable/disable bcast probe rsp to FW */
+		ret = wma_vdev_set_param(
+				wma_handle->wmi_handle,
+				self_sta_req->session_id,
+				WMI_VDEV_PARAM_ENABLE_BCAST_PROBE_RESPONSE,
+				self_sta_req->enable_bcast_probe_rsp);
+		if (QDF_IS_STATUS_ERROR(ret))
+			WMA_LOGE("Failed to set WMI_VDEV_PARAM_ENABLE_BCAST_PROBE_RESPONSE");
+
 	}
 
 	/* Initialize BMISS parameters */
