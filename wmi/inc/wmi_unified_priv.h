@@ -996,6 +996,9 @@ QDF_STATUS
 (*send_btcoex_duty_cycle_cmd)(wmi_unified_t wmi_handle,
 			struct btcoex_cfg_params *param);
 
+QDF_STATUS
+(*send_coex_ver_cfg_cmd)(wmi_unified_t wmi_handle, coex_ver_cfg_t *param);
+
 QDF_STATUS (*extract_wds_addr_event)(wmi_unified_t wmi_handle,
 	void *evt_buf, uint16_t len, wds_addr_event_t *wds_ev);
 

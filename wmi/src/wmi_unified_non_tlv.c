@@ -5216,6 +5216,40 @@ send_btcoex_duty_cycle_cmd_non_tlv(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * send_coex_ver_cfg_cmd_non_tlv() - send coex ver cfg
+ * @wmi_handle: wmi handle
+ * @param:     coex ver and configuration
+ *
+ * Return: 0 for success or error code
+ */
+QDF_STATUS
+send_coex_ver_cfg_cmd_non_tlv(wmi_unified_t wmi_handle, coex_ver_cfg_t *param)
+{
+	wmi_buf_t buf;
+	coex_ver_cfg_t *cmd;
+	int len = sizeof(wmi_coex_ver_cfg_cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		qdf_print("%s:wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	cmd = (coex_ver_cfg_t *)wmi_buf_data(buf);
+	cmd->coex_version = param->coex_version;
+	cmd->length = param->length;
+	qdf_mem_copy(cmd->config_buf, param->config_buf,
+		     sizeof(cmd->config_buf));
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_COEX_VERSION_CFG_CMID)) {
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * wmi_copy_resource_config_non_tlv() - copy resource configuration function
  * @param resource_cfg: pointer to resource configuration
@@ -7959,6 +7993,7 @@ struct wmi_ops non_tlv_ops =  {
 			send_pdev_caldata_version_check_cmd_non_tlv,
 	.send_btcoex_wlan_priority_cmd = send_btcoex_wlan_priority_cmd_non_tlv,
 	.send_btcoex_duty_cycle_cmd = send_btcoex_duty_cycle_cmd_non_tlv,
+	.send_coex_ver_cfg_cmd = send_coex_ver_cfg_cmd_non_tlv,
 
 	.get_target_cap_from_service_ready = extract_service_ready_non_tlv,
 	.extract_fw_version = extract_fw_version_non_tlv,
@@ -8120,6 +8155,8 @@ static void populate_non_tlv_service(uint32_t *wmi_service)
 				WMI_SERVICE_CHECK_CAL_VERSION;
 	wmi_service[wmi_service_btcoex_duty_cycle] =
 				WMI_SERVICE_BTCOEX_DUTY_CYCLE;
+	wmi_service[wmi_service_4_wire_coex_support] =
+				WMI_SERVICE_4_WIRE_COEX_SUPPORT;
 
 	wmi_service[wmi_service_roam_scan_offload] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_arpns_offload] = WMI_SERVICE_UNAVAILABLE;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -472,6 +472,7 @@ typedef enum _ol_ath_param_t {
 	OL_ATH_PARAM_PREFERRED_UPLINK = 344,
 	OL_ATH_PARAM_PRECAC_ENABLE = 345,
 	OL_ATH_PARAM_PRECAC_TIMEOUT = 346,
+	OL_ATH_COEX_VER_CFG = 347,
 } ol_ath_param_t;
 
 /*
