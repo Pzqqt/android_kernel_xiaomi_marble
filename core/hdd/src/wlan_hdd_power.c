@@ -1918,7 +1918,7 @@ static void hdd_stop_dhcp_ind(hdd_adapter_t *adapter)
 			  adapter->macAddressCurrent.bytes,
 			  adapter->sessionId);
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DHCP);
-	qdf_runtime_pm_allow_suspend(adapter->connect_rpm_ctx.connect);
+	qdf_runtime_pm_allow_suspend(&adapter->connect_rpm_ctx.connect);
 }
 
 /**
@@ -1935,7 +1935,7 @@ static void hdd_start_dhcp_ind(hdd_adapter_t *adapter)
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	hdd_debug("DHCP start indicated through power save");
-	qdf_runtime_pm_prevent_suspend(adapter->connect_rpm_ctx.connect);
+	qdf_runtime_pm_prevent_suspend(&adapter->connect_rpm_ctx.connect);
 	hdd_prevent_suspend_timeout(HDD_WAKELOCK_TIMEOUT_CONNECT,
 				    WIFI_POWER_EVENT_WAKELOCK_DHCP);
 	sme_dhcp_start_ind(hdd_ctx->hHal, adapter->device_mode,

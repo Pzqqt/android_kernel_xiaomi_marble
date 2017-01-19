@@ -4271,7 +4271,7 @@ void wma_acquire_wakelock(qdf_wake_lock_t *wl, uint32_t msec)
 
 	cds_host_diag_log_work(wl, msec, WIFI_POWER_EVENT_WAKELOCK_WMI_CMD_RSP);
 	qdf_wake_lock_timeout_acquire(wl, msec);
-	qdf_runtime_pm_prevent_suspend(wma->wmi_cmd_rsp_runtime_lock);
+	qdf_runtime_pm_prevent_suspend(&wma->wmi_cmd_rsp_runtime_lock);
 }
 
 void wma_release_wakelock(qdf_wake_lock_t *wl)
@@ -4279,7 +4279,7 @@ void wma_release_wakelock(qdf_wake_lock_t *wl)
 	t_wma_handle *wma = cds_get_context(QDF_MODULE_ID_WMA);
 
 	qdf_wake_lock_release(wl, WIFI_POWER_EVENT_WAKELOCK_WMI_CMD_RSP);
-	qdf_runtime_pm_allow_suspend(wma->wmi_cmd_rsp_runtime_lock);
+	qdf_runtime_pm_allow_suspend(&wma->wmi_cmd_rsp_runtime_lock);
 }
 
 QDF_STATUS

@@ -2870,8 +2870,8 @@ static void hdd_runtime_suspend_context_init(hdd_context_t *hdd_ctx)
 {
 	struct hdd_runtime_pm_context *ctx = &hdd_ctx->runtime_context;
 
-	ctx->roc = qdf_runtime_lock_init("roc");
-	ctx->dfs = qdf_runtime_lock_init("dfs");
+	qdf_runtime_lock_init(&ctx->roc);
+	qdf_runtime_lock_init(&ctx->dfs);
 }
 
 /**
@@ -2884,10 +2884,8 @@ static void hdd_runtime_suspend_context_deinit(hdd_context_t *hdd_ctx)
 {
 	struct hdd_runtime_pm_context *ctx = &hdd_ctx->runtime_context;
 
-	qdf_runtime_lock_deinit(ctx->roc);
-	ctx->roc = NULL;
-	qdf_runtime_lock_deinit(ctx->dfs);
-	ctx->dfs = NULL;
+	qdf_runtime_lock_deinit(&ctx->roc);
+	qdf_runtime_lock_deinit(&ctx->dfs);
 
 	wlan_scan_runtime_pm_deinit(hdd_ctx->hdd_pdev);
 }
@@ -2896,15 +2894,14 @@ static void hdd_adapter_runtime_suspend_init(hdd_adapter_t *adapter)
 {
 	struct hdd_connect_pm_context *ctx = &adapter->connect_rpm_ctx;
 
-	ctx->connect = qdf_runtime_lock_init("connect");
+	qdf_runtime_lock_init(&ctx->connect);
 }
 
 static void hdd_adapter_runtime_suspend_denit(hdd_adapter_t *adapter)
 {
 	struct hdd_connect_pm_context *ctx = &adapter->connect_rpm_ctx;
 
-	qdf_runtime_lock_deinit(ctx->connect);
-	ctx->connect = NULL;
+	qdf_runtime_lock_deinit(&ctx->connect);
 }
 #else /* FEATURE_RUNTIME_PM */
 static void hdd_runtime_suspend_context_init(hdd_context_t *hdd_ctx) {}
@@ -4738,7 +4735,7 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 		req_ie_len, resp_ie, resp_ie_len,
 		status, gfp, connect_timeout, timeout_reason);
 
-	qdf_runtime_pm_allow_suspend(padapter->connect_rpm_ctx.connect);
+	qdf_runtime_pm_allow_suspend(&padapter->connect_rpm_ctx.connect);
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_CONNECT);
 }
 #else
@@ -4753,7 +4750,8 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 
 	cfg80211_connect_result(dev, bssid, req_ie, req_ie_len,
 				resp_ie, resp_ie_len, status, gfp);
-	qdf_runtime_pm_allow_suspend(padapter->connect_rpm_ctx.connect);
+
+	qdf_runtime_pm_allow_suspend(&padapter->connect_rpm_ctx.connect);
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_CONNECT);
 }
 #endif
