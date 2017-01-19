@@ -199,7 +199,7 @@ static const struct wiphy_wowlan_support wowlan_support_reg_init = {
 /* internal function declaration */
 
 struct sock *cesium_nl_srv_sock;
-
+struct completion wlan_start_comp;
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 void wlan_hdd_auto_shutdown_cb(void);
 #endif
@@ -8529,6 +8529,7 @@ int hdd_wlan_startup(struct device *dev)
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			hdd_err("Failed to disable Chan Avoidance Indication");
 	}
+	complete(&wlan_start_comp);
 	goto success;
 
 err_close_adapters:
@@ -9476,11 +9477,7 @@ void hdd_deinit(void)
 #endif
 }
 
-#ifdef QCA_WIFI_3_0_ADRASTEA
-#define HDD_WLAN_START_WAIT_TIME (3600 * 1000)
-#else
 #define HDD_WLAN_START_WAIT_TIME (CDS_WMA_TIMEOUT + 5000)
-#endif
 
 /**
  * __hdd_module_init - Module init helper
@@ -9492,6 +9489,7 @@ void hdd_deinit(void)
 static int __hdd_module_init(void)
 {
 	int ret = 0;
+	unsigned long rc;
 
 	pr_err("%s: Loading driver v%s\n", WLAN_MODULE_NAME,
 		QWLAN_VERSIONSTR TIMER_MANAGER_STR MEMORY_DEBUG_STR);
@@ -9510,10 +9508,20 @@ static int __hdd_module_init(void)
 
 	hdd_set_conparam((uint32_t) con_mode);
 
+	init_completion(&wlan_start_comp);
 	ret = wlan_hdd_register_driver();
 	if (ret) {
 		pr_err("%s: driver load failure, err %d\n", WLAN_MODULE_NAME,
 			ret);
+		goto out;
+	}
+
+	rc = wait_for_completion_timeout(&wlan_start_comp,
+				msecs_to_jiffies(HDD_WLAN_START_WAIT_TIME));
+
+	if (!rc) {
+		hdd_alert("Timed-out waiting for wlan_hdd_register_driver");
+		QDF_BUG(0);
 		goto out;
 	}
 
