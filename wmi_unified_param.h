@@ -3457,6 +3457,49 @@ typedef struct {
 	 */
 	uint32_t wlan_priority_gpio;
 
+	/* Host will notify target which coex algorithm has to be
+	 * enabled based on HW, FW capability and device tree config.
+	 * Till now the coex algorithms were target specific. Now the
+	 * same target can choose between multiple coex algorithms
+	 * depending on device tree config on host. For backward
+	 * compatibility, version support will have option 0 and will
+	 * rely on FW compile time flags to decide the coex version
+	 * between VERSION_1, VERSION_2 and VERSION_3. Version info is
+	 * mandatory from VERSION_4 onwards for any new coex algorithms.
+	 *
+	 * 0 = no version support
+	 * 1 = COEX_VERSION_1 (3 wire coex)
+	 * 2 = COEX_VERSION_2 (2.5 wire coex)
+	 * 3 = COEX_VERSION_3 (2.5 wire coex+duty cycle)
+	 * 4 = COEX_VERSION_4 (4 wire coex)
+	 */
+	uint32_t coex_version;
+
+	/* There are multiple coex implementations on FW to support different
+	 * hardwares. Since the coex algos are mutually exclusive, host will
+	 * use below fields to send GPIO info to FW and these GPIO pins will
+	 * have different usages depending on the feature enabled. This is to
+	 * avoid adding multiple GPIO fields here for different features.
+	 *
+	 * COEX VERSION_4 (4 wire coex) :
+	 * 4 wire coex feature uses 1 common input request line from BT/ZB/
+	 * Thread which interrupts the WLAN target processor directly, 1 input
+	 * priority line from BT and ZB each, 1 output line to grant access to
+	 * requesting IOT subsystem. WLAN uses the input priority line to
+	 * identify the requesting IOT subsystem. Request is granted based on
+	 * IOT interface priority and WLAN traffic. GPIO pin usage is as below:
+	 * coex_gpio_pin_1 = BT PRIORITY INPUT GPIO
+	 * coex_gpio_pin_2 = ZIGBEE PRIORITY INPUT GPIO
+	 * coex_gpio_pin_3 = GRANT OUTPUT GPIO
+	 * when a BT active interrupt is raised, WLAN reads
+	 * BT and ZB priority input GPIO pins to compare against the coex
+	 * priority table and accordingly sets the grant output GPIO to give
+	 * access to requesting IOT subsystem.
+	 */
+	uint32_t coex_gpio_pin_1;
+	uint32_t coex_gpio_pin_2;
+	uint32_t coex_gpio_pin_3;
+
 	/* add new members here */
 } wmi_host_ext_resource_config;
 
@@ -4276,6 +4319,25 @@ struct btcoex_cfg_params {
 	uint32_t wlan_duration;
 };
 
+#define WMI_HOST_COEX_CONFIG_BUF_MAX_LEN 32 /* 128 bytes */
+/**
+ * coex_ver_cfg_t
+ * @coex_version: Version for 4 wire coex
+ * @length: Length of payload buffer based on version
+ * @config_buf: Payload Buffer
+ */
+typedef struct {
+	/* VERSION_4 (4 wire coex) */
+	uint32_t coex_version;
+
+	/* No. of A_UINT32 elements in payload buffer. Will depend on the coex
+	 * version
+	 */
+	uint32_t length;
+
+	/* Payload buffer */
+	uint32_t config_buf[WMI_HOST_COEX_CONFIG_BUF_MAX_LEN];
+} coex_ver_cfg_t;
 
 #define WMI_HOST_RTT_REPORT_CFR	0
 #define WMI_HOST_RTT_NO_REPORT_CFR	1
@@ -5120,6 +5182,7 @@ typedef enum {
 	wmi_pdev_param_tx_chain_mask_1ss,
 	wmi_pdev_param_enable_btcoex,
 	wmi_pdev_param_atf_peer_stats,
+	wmi_pdev_param_btcoex_cfg,
 
 	wmi_pdev_param_max,
 } wmi_conv_pdev_params_id;
@@ -5339,6 +5402,7 @@ typedef enum {
 	wmi_service_tx_mode_dynamic,
 	wmi_service_check_cal_version,
 	wmi_service_btcoex_duty_cycle,
+	wmi_service_4_wire_coex_support,
 
 	wmi_services_max,
 } wmi_conv_service_ids;
