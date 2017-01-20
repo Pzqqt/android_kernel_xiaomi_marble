@@ -785,9 +785,12 @@ static int hdd_parse_reassoc_command_v1_data(const uint8_t *pValue,
 }
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-void hdd_wma_send_fastreassoc_cmd(int sessionId, const tSirMacAddr bssid,
-				  int channel)
+void hdd_wma_send_fastreassoc_cmd(hdd_adapter_t *adapter,
+				const tSirMacAddr bssid, int channel)
 {
+	QDF_STATUS status;
+	hdd_wext_state_t *wext_state = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+	tCsrRoamProfile *profile = &wext_state->roamProfile;
 	struct wma_roam_invoke_cmd *fastreassoc;
 	struct scheduler_msg msg = {0};
 
@@ -796,7 +799,7 @@ void hdd_wma_send_fastreassoc_cmd(int sessionId, const tSirMacAddr bssid,
 		hdd_err("qdf_mem_malloc failed for fastreassoc");
 		return;
 	}
-	fastreassoc->vdev_id = sessionId;
+	fastreassoc->vdev_id = adapter->sessionId;
 	fastreassoc->channel = channel;
 	fastreassoc->bssid[0] = bssid[0];
 	fastreassoc->bssid[1] = bssid[1];
@@ -805,13 +808,23 @@ void hdd_wma_send_fastreassoc_cmd(int sessionId, const tSirMacAddr bssid,
 	fastreassoc->bssid[4] = bssid[4];
 	fastreassoc->bssid[5] = bssid[5];
 
+	status = sme_get_beacon_frm(WLAN_HDD_GET_HAL_CTX(adapter), profile,
+						bssid, &fastreassoc->frame_buf,
+						&fastreassoc->frame_len);
+
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_err("sme_get_beacon_frm failed");
+		fastreassoc->frame_buf = NULL;
+		fastreassoc->frame_len = 0;
+	}
+
 	msg.type = SIR_HAL_ROAM_INVOKE;
 	msg.reserved = 0;
 	msg.bodyptr = fastreassoc;
-	if (QDF_STATUS_SUCCESS != scheduler_post_msg(QDF_MODULE_ID_WMA,
-								&msg)) {
-		qdf_mem_free(fastreassoc);
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
+	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Not able to post ROAM_INVOKE_CMD message to WMA");
+		qdf_mem_free(fastreassoc);
 	}
 }
 #endif
@@ -875,7 +888,7 @@ int hdd_reassoc(hdd_adapter_t *adapter, const uint8_t *bssid,
 
 	/* Proceed with reassoc */
 	if (roaming_offload_enabled(hdd_ctx)) {
-		hdd_wma_send_fastreassoc_cmd((int)adapter->sessionId,
+		hdd_wma_send_fastreassoc_cmd(adapter,
 					bssid, (int)channel);
 	} else {
 		tCsrHandoffRequest handoffInfo;
@@ -4405,7 +4418,7 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 				    QDF_MAC_ADDR_SIZE)) {
 		hdd_info("Reassoc BSSID is same as currently associated AP bssid");
 		if (roaming_offload_enabled(hdd_ctx)) {
-			hdd_wma_send_fastreassoc_cmd((int)adapter->sessionId,
+			hdd_wma_send_fastreassoc_cmd(adapter,
 				targetApBssid,
 				pHddStaCtx->conn_info.operationChannel);
 		} else {
@@ -4426,7 +4439,7 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 	}
 
 	if (roaming_offload_enabled(hdd_ctx)) {
-		hdd_wma_send_fastreassoc_cmd((int)adapter->sessionId,
+		hdd_wma_send_fastreassoc_cmd(adapter,
 					targetApBssid, (int)channel);
 		goto exit;
 	}

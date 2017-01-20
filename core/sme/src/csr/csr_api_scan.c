@@ -7417,6 +7417,42 @@ QDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(tpAniSirGlobal pMac,
 #endif
 
 /**
+ * csr_get_fst_bssdescr_ptr() - This function returns the pointer to first bss
+ * description from scan handle
+ * @result_handle: an object for the result.
+ *
+ * Return: first bss descriptor from the scan handle.
+ */
+tpSirBssDescription csr_get_fst_bssdescr_ptr(tScanResultHandle result_handle)
+{
+	tListElem *first_element = NULL;
+	tCsrScanResult *scan_result = NULL;
+	tScanResultList *bss_list = (tScanResultList *)result_handle;
+
+	if (NULL == bss_list) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			FL("Empty bss_list"));
+		return NULL;
+	}
+	if (csr_ll_is_list_empty(&bss_list->List, LL_ACCESS_NOLOCK)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			FL("bss_list->List is empty"));
+		qdf_mem_free(bss_list);
+		return NULL;
+	}
+	first_element = csr_ll_peek_head(&bss_list->List, LL_ACCESS_NOLOCK);
+	if (NULL == first_element) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			FL("peer head return NULL"));
+		return NULL;
+	}
+
+	scan_result = GET_BASE_ADDR(first_element, tCsrScanResult, Link);
+
+	return &scan_result->Result.BssDescriptor;
+}
+
+/**
  * csr_get_bssdescr_from_scan_handle() - This function to extract
  *                                       first bss description from scan handle
  * @result_handle: an object for the result.

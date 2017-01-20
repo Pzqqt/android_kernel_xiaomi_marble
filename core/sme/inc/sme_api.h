@@ -1398,4 +1398,20 @@ QDF_STATUS sme_set_wow_pulse(struct wow_pulse_mode *wow_pulse_set_info);
  */
 void sme_set_chan_info_callback(tHalHandle hal_handle,
 			void (*callback)(struct scan_chan_info *chan_info));
+
+/**
+ * sme_get_beacon_frm() - gets the bss descriptor from scan cache and prepares
+ * beacon frame
+ * @hal: handle returned by mac_open
+ * @profile: current connected profile
+ * @bssid: bssid to look for in scan cache
+ * @frame_buf: frame buffer to populate
+ * @frame_len: length of constructed frame
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_get_beacon_frm(tHalHandle hal, tCsrRoamProfile *profile,
+			    const tSirMacAddr bssid,
+			    uint8_t **frame_buf, uint32_t *frame_len);
+
 #endif /* #if !defined( __SME_API_H ) */

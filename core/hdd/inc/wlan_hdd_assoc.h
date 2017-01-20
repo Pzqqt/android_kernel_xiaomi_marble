@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -343,10 +343,10 @@ int hdd_get_peer_idx(hdd_station_ctx_t *sta_ctx, struct qdf_mac_addr *addr);
 QDF_STATUS hdd_roam_deregister_sta(hdd_adapter_t *adapter, uint8_t sta_id);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-void hdd_wma_send_fastreassoc_cmd(int session_id, const tSirMacAddr bssid,
-				  int channel);
+void hdd_wma_send_fastreassoc_cmd(hdd_adapter_t *adapter,
+				  const tSirMacAddr bssid, int channel);
 #else
-static inline void hdd_wma_send_fastreassoc_cmd(int sessionId,
+static inline void hdd_wma_send_fastreassoc_cmd(hdd_adapter_t *adapter,
 		const tSirMacAddr bssid, int channel)
 {
 }

@@ -16981,3 +16981,129 @@ QDF_STATUS sme_set_wow_pulse(struct wow_pulse_mode *wow_pulse_set_info)
 	return status;
 }
 #endif
+
+/**
+ * sme_prepare_beacon_from_bss_descp() - prepares beacon frame by populating
+ * different fields and IEs from bss descriptor.
+ * @frame_buf: frame buffer to populate
+ * @bss_descp: bss descriptor
+ * @bssid: bssid of the beacon frame to populate
+ * @ie_len: length of IE fields
+ *
+ * Return: None
+ */
+static void sme_prepare_beacon_from_bss_descp(uint8_t *frame_buf,
+					      tSirBssDescription *bss_descp,
+					      const tSirMacAddr bssid,
+					      uint8_t ie_len)
+{
+	tDot11fBeacon1 *bcn_fixed;
+	tpSirMacMgmtHdr mac_hdr = (tpSirMacMgmtHdr)frame_buf;
+
+	/* populate mac header first to indicate beacon */
+	mac_hdr->fc.protVer = SIR_MAC_PROTOCOL_VERSION;
+	mac_hdr->fc.type = SIR_MAC_MGMT_FRAME;
+	mac_hdr->fc.subType = SIR_MAC_MGMT_BEACON;
+	qdf_mem_copy((uint8_t *) mac_hdr->da,
+		     (uint8_t *) "\xFF\xFF\xFF\xFF\xFF\xFF",
+		     sizeof(struct qdf_mac_addr));
+	qdf_mem_copy((uint8_t *) mac_hdr->sa, bssid,
+		     sizeof(struct qdf_mac_addr));
+	qdf_mem_copy((uint8_t *) mac_hdr->bssId, bssid,
+		     sizeof(struct qdf_mac_addr));
+
+	/* now populate fixed params */
+	bcn_fixed = (tDot11fBeacon1 *)(frame_buf + SIR_MAC_HDR_LEN_3A);
+	/* populate timestamp */
+	qdf_mem_copy(&bcn_fixed->TimeStamp.timestamp, &bss_descp->timeStamp,
+			sizeof(bss_descp->timeStamp));
+	/* populate beacon interval */
+	bcn_fixed->BeaconInterval.interval = bss_descp->beaconInterval;
+	/* populate capability */
+	qdf_mem_copy(&bcn_fixed->Capabilities, &bss_descp->capabilityInfo,
+			sizeof(bss_descp->capabilityInfo));
+
+	/* copy IEs now */
+	qdf_mem_copy(frame_buf + SIR_MAC_HDR_LEN_3A
+		     + SIR_MAC_B_PR_SSID_OFFSET,
+		     &bss_descp->ieFields, ie_len);
+}
+
+QDF_STATUS sme_get_beacon_frm(tHalHandle hal, tCsrRoamProfile *profile,
+				const tSirMacAddr bssid,
+				uint8_t **frame_buf, uint32_t *frame_len)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tScanResultHandle result_handle;
+	tCsrScanResultFilter *scan_filter;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	tSirBssDescription *bss_descp;
+	tScanResultList *bss_list;
+	uint32_t ie_len;
+
+	scan_filter = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
+	if (NULL == scan_filter) {
+		sms_log(mac_ctx, LOGE, FL("memory allocation failed"));
+		status = QDF_STATUS_E_NOMEM;
+		goto free_scan_flter;
+	}
+	status = csr_roam_prepare_filter_from_profile(mac_ctx,
+						profile, scan_filter);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sms_log(mac_ctx, LOGE, FL("prepare_filter failed"));
+		goto free_scan_flter;
+	}
+
+	/* update filter to get scan result with just target BSSID */
+	if (NULL == scan_filter->BSSIDs.bssid) {
+		scan_filter->BSSIDs.bssid =
+			qdf_mem_malloc(sizeof(struct qdf_mac_addr));
+		if (scan_filter->BSSIDs.bssid == NULL) {
+			sms_log(mac_ctx, LOGE, FL("malloc failed"));
+			status = QDF_STATUS_E_NOMEM;
+			goto free_scan_flter;
+		}
+	}
+	scan_filter->BSSIDs.numOfBSSIDs = 1;
+	qdf_mem_copy(scan_filter->BSSIDs.bssid[0].bytes,
+		     bssid, sizeof(struct qdf_mac_addr));
+
+	status = csr_scan_get_result(mac_ctx, scan_filter, &result_handle);
+	if (QDF_STATUS_SUCCESS != status) {
+		sms_log(mac_ctx, LOGE, FL("parse_scan_result failed"));
+		goto free_scan_flter;
+	}
+
+	bss_list = (tScanResultList *)result_handle;
+	bss_descp = csr_get_fst_bssdescr_ptr(bss_list);
+
+	/*
+	 * bss_descp->length = sizeof(tSirBssDescription) - sizeof(length_field)
+	 * - sizeof(ieFields) + ie_len;
+	 */
+	ie_len = bss_descp->length - sizeof(tSirBssDescription)
+		+ sizeof(bss_descp->length) + sizeof(bss_descp->ieFields);
+	sms_log(mac_ctx, LOG1, FL("found bss_descriptor ie_len: %d"),
+		ie_len);
+
+	/* include mac header and fixed params along with IEs in frame */
+	*frame_len = SIR_MAC_HDR_LEN_3A + SIR_MAC_B_PR_SSID_OFFSET + ie_len;
+	*frame_buf = qdf_mem_malloc(*frame_len);
+	if (NULL == *frame_buf) {
+		sms_log(mac_ctx, LOGE, FL("memory allocation failed"));
+		status = QDF_STATUS_E_NOMEM;
+		goto free_scan_flter;
+	}
+
+	sme_prepare_beacon_from_bss_descp(*frame_buf, bss_descp, bssid, ie_len);
+
+free_scan_flter:
+	/* free scan filter and exit */
+	if (scan_filter) {
+		csr_free_scan_filter(mac_ctx, scan_filter);
+		qdf_mem_free(scan_filter);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+

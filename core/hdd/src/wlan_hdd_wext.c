@@ -8422,7 +8422,7 @@ static int __iw_setnone_getnone(struct net_device *dev,
 			qdf_mem_copy(bssid,
 				&adapter->sessionCtx.station.conn_info.bssId,
 				sizeof(bssid));
-			hdd_wma_send_fastreassoc_cmd((int)adapter->sessionId,
+			hdd_wma_send_fastreassoc_cmd(adapter,
 						     bssid, operating_ch);
 		} else {
 			sme_roam_reassoc(hdd_ctx->hHal, adapter->sessionId,
