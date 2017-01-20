@@ -260,6 +260,69 @@ int hdd_napi_event(enum qca_napi_event event, void *data)
 
 #ifdef HELIUMPLUS
 /**
+ * hdd_napi_perfd_cpufreq() - set/reset min CPU freq for cores
+ * @req_state:  high/low
+ *
+ * Send a message to cnss-daemon through netlink. cnss-daemon,
+ * in turn, sends a message to perf-daemon.
+ * If freq > 0, this is a set request. It sets the min frequency of the
+ * cores of the specified cluster to provided freq value (in KHz).
+ * If freq == 0, then the freq lock is removed (and frequency returns to
+ * system default).
+ *
+ * Semantical Alert:
+ * There can be at most one lock active at a time. Each "set" request must
+ * be followed by a "reset" request. Perfd behaviour is undefined otherwise.
+ *
+ * Return: == 0: netlink message sent to cnss-daemon
+ *         <  0: failure to send the message
+ */
+static int hdd_napi_perfd_cpufreq(enum qca_napi_tput_state req_state)
+{
+	int rc = 0;
+	struct wlan_core_minfreq req;
+	struct hdd_context *hdd_ctx;
+
+	NAPI_DEBUG("-> (%d)", req_state);
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (unlikely(hdd_ctx == NULL)) {
+		hdd_err("cannot get hdd_context");
+		rc = -EFAULT;
+		goto hnpc_ret;
+	}
+
+	switch (req_state) {
+	case QCA_NAPI_TPUT_LO:
+		req.magic    = WLAN_CORE_MINFREQ_MAGIC;
+		req.reserved = 0; /* unused */
+		req.coremask = 0; /* not valid */
+		req.freq     = 0; /* reset */
+		break;
+	case QCA_NAPI_TPUT_HI:
+		req.magic    = WLAN_CORE_MINFREQ_MAGIC;
+		req.reserved = 0; /* unused */
+		req.coremask = 0x0f0; /* perf cluster */
+		req.freq     = 700;   /* KHz */
+		break;
+	default:
+		hdd_err("invalid req_state (%d)", req_state);
+		rc = -EINVAL;
+		goto hnpc_ret;
+	} /* switch */
+
+	NAPI_DEBUG("CPU min freq to %d",
+		   (req.freq == 0)?"Resetting":"Setting", req.freq);
+	/* the following service function returns void */
+	wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
+				WLAN_SVC_CORE_MINFREQ,
+				&req, sizeof(struct wlan_core_minfreq));
+hnpc_ret:
+	NAPI_DEBUG("<--[rc=%d]", rc);
+	return rc;
+}
+
+/**
  * hdd_napi_apply_throughput_policy() - implement the throughput action policy
  * @hddctx:     HDD context
  * @tx_packets: number of tx packets in the last interval
@@ -285,8 +348,8 @@ int hdd_napi_event(enum qca_napi_event event, void *data)
  */
 static int napi_tput_policy_delay;
 int hdd_napi_apply_throughput_policy(struct hdd_context *hddctx,
-				     uint64_t              tx_packets,
-				     uint64_t              rx_packets)
+				     uint64_t tx_packets,
+				     uint64_t rx_packets)
 {
 	int rc = 0;
 	uint64_t packets = tx_packets + rx_packets;
@@ -325,8 +388,12 @@ int hdd_napi_apply_throughput_policy(struct hdd_context *hddctx,
 	else
 		req_state = QCA_NAPI_TPUT_LO;
 
-	if (req_state != napid->napi_mode)
+	if (req_state != napid->napi_mode) {
+		/* [re]set the floor frequency of high cluster */
+		rc = hdd_napi_perfd_cpufreq(req_state);
+		/* blacklist/boost_mode on/off */
 		rc = hdd_napi_event(NAPI_EVT_TPUT_STATE, (void *)req_state);
+	}
 	return rc;
 }
 

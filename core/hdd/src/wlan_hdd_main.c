@@ -10428,6 +10428,7 @@ void wlan_hdd_send_svc_nlink_msg(int radio, int type, void *data, int len)
 	case WLAN_SVC_WLAN_TP_IND:
 	case WLAN_SVC_WLAN_TP_TX_IND:
 	case WLAN_SVC_RPS_ENABLE_IND:
+	case WLAN_SVC_CORE_MINFREQ:
 		ani_hdr->length = len;
 		nlh->nlmsg_len = NLMSG_LENGTH((sizeof(tAniMsgHdr) + len));
 		nl_data = (char *)ani_hdr + sizeof(tAniMsgHdr);
