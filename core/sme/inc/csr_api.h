@@ -1310,6 +1310,7 @@ typedef struct tagCsrConfigParam {
 	bool enable_ul_mimo;
 #endif
 	bool qcn_ie_support;
+	uint8_t fils_max_chan_guard_time;
 } tCsrConfigParam;
 
 /* Tush */

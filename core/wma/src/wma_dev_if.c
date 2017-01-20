@@ -1826,6 +1826,14 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 		if (QDF_IS_STATUS_ERROR(ret))
 			WMA_LOGE("Failed to set WMI_VDEV_PARAM_ENABLE_BCAST_PROBE_RESPONSE");
 
+		/* Pass down the FILS max channel guard time to FW */
+		ret = wma_vdev_set_param(
+				wma_handle->wmi_handle,
+				self_sta_req->session_id,
+				WMI_VDEV_PARAM_FILS_MAX_CHANNEL_GUARD_TIME,
+				self_sta_req->fils_max_chan_guard_time);
+		if (QDF_IS_STATUS_ERROR(ret))
+			WMA_LOGE("Failed to set WMI_VDEV_PARAM_FILS_MAX_CHANNEL_GUARD_TIME");
 	}
 
 	/* Initialize BMISS parameters */

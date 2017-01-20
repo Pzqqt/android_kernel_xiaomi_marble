@@ -637,6 +637,7 @@ typedef struct tagCsrConfig {
 	bool enable_ul_mimo;
 #endif
 	bool qcn_ie_support;
+	uint8_t fils_max_chan_guard_time;
 } tCsrConfig;
 
 typedef struct tagCsrChannelPowerInfo {

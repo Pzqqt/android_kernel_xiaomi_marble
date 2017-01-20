@@ -4283,6 +4283,12 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_REG_OFFLOAD_DEFAULT,
 		     CFG_ENABLE_REG_OFFLOAD_MIN,
 		     CFG_ENABLE_REG_OFFLOAD_MAX),
+	REG_VARIABLE(CFG_FILS_MAX_CHAN_GUARD_TIME_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, fils_max_chan_guard_time,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_FILS_MAX_CHAN_GUARD_TIME_DEFAULT,
+		CFG_FILS_MAX_CHAN_GUARD_TIME_MIN,
+		CFG_FILS_MAX_CHAN_GUARD_TIME_MAX),
 };
 
 
@@ -7333,6 +7339,8 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 			pHddCtx->config->enable_bcast_probe_rsp;
 	smeConfig->csrConfig.qcn_ie_support =
 			pHddCtx->config->qcn_ie_support;
+	smeConfig->csrConfig.fils_max_chan_guard_time =
+			pHddCtx->config->fils_max_chan_guard_time;
 
 	hdd_he_set_sme_config(smeConfig, pConfig);
 
