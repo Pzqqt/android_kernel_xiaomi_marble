@@ -1755,7 +1755,7 @@ endif
 # Dummy flag for WIN/MCL converged data path compilation
 CDEFINES += -DDP_PRINT_ENABLE=0
 CDEFINES += -DATH_SUPPORT_WRAP=0
-#CDEFINES += -DQCA_HOST2FW_RXBUF_RING=0
+CDEFINES += -DQCA_HOST2FW_RXBUF_RING
 #endof dummy flags
 
 ifeq ($(CONFIG_WLAN_DEBUGFS), y)
