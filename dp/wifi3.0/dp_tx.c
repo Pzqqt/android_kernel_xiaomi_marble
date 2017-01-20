@@ -1217,32 +1217,33 @@ static inline void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc)
 	struct hal_tx_completion_status ts;
 	qdf_mem_zero(&ts, sizeof(struct hal_tx_completion_status));
 	hal_tx_comp_get_status(&tx_desc->comp, &ts);
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-				"--------------------\n"
-				"Tx Completion Stats:\n"
-				"--------------------\n"
-				"ack_frame_rssi = %d\n"
-				"first_msdu = %d\n"
-				"last_msdu = %d\n"
-				"msdu_part_of_amsdu = %d\n"
-				"bw = %d\n"
-				"pkt_type = %d\n"
-				"stbc = %d\n"
-				"ldpc = %d\n"
-				"sgi = %d\n"
-				"mcs = %d\n"
-				"ofdma = %d\n"
-				"tones_in_ru = %d\n"
-				"tsf = %d\n"
-				"ppdu_id = %d\n"
-				"transmit_cnt = %d\n"
-				"tid = %d\n"
-				"peer_id = %d\n",
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+				"-------------------- \n"
+				"Tx Completion Stats: \n"
+				"-------------------- \n"
+				"ack_frame_rssi = %d \n"
+				"first_msdu = %d \n"
+				"last_msdu = %d \n"
+				"msdu_part_of_amsdu = %d \n"
+				"rate_stats valid = %d \n"
+				"bw = %d \n"
+				"pkt_type = %d \n"
+				"stbc = %d \n"
+				"ldpc = %d \n"
+				"sgi = %d \n"
+				"mcs = %d \n"
+				"ofdma = %d \n"
+				"tones_in_ru = %d \n"
+				"tsf = %d \n"
+				"ppdu_id = %d \n"
+				"transmit_cnt = %d \n"
+				"tid = %d \n"
+				"peer_id = %d \n",
 				ts.ack_frame_rssi, ts.first_msdu, ts.last_msdu,
-				ts.msdu_part_of_amsdu,	ts.bw,	ts.pkt_type,
-				ts.stbc, ts.ldpc, ts.sgi,
-				ts.mcs, ts.ofdma, ts.tones_in_ru,
-				ts.tsf, ts.ppdu_id, ts.transmit_cnt, ts.tid,
+				ts.msdu_part_of_amsdu, ts.valid, ts.bw,
+				ts.pkt_type, ts.stbc, ts.ldpc, ts.sgi,
+				ts.mcs, ts.ofdma, ts.tones_in_ru, ts.tsf,
+				ts.ppdu_id, ts.transmit_cnt, ts.tid,
 				ts.peer_id);
 
 	if (qdf_unlikely(tx_desc->vdev->mesh_vdev))
@@ -1651,7 +1652,6 @@ QDF_STATUS dp_tx_soc_attach(struct dp_soc *soc)
 	}
 
 	/*
-	 * Keep the processing of completion stats disabled by default.
 	 * todo - Add a runtime config option to enable this.
 	 */
 	/*
@@ -1659,11 +1659,7 @@ QDF_STATUS dp_tx_soc_attach(struct dp_soc *soc)
 	 * only for NPR EMU, should be removed, once NPR platforms
 	 * are stable.
 	 */
-#ifdef QCA_WIFI_NAPIER_EMULATION
 	soc->process_tx_status = 1;
-#else
-	soc->process_tx_status = 0;
-#endif
 
 	/* Initialize Default DSCP-TID mapping table in TCL */
 	hal_tx_set_dscp_tid_map(soc->hal_soc, default_dscp_tid_map,

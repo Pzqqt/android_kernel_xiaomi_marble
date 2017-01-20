@@ -25,6 +25,12 @@
 #include "hal_api.h"
 #include "wcss_version.h"
 
+
+#define WBM_RELEASE_RING_5_TX_RATE_STATS_OFFSET   0x00000014
+#define WBM_RELEASE_RING_5_TX_RATE_STATS_LSB      0
+#define WBM_RELEASE_RING_5_TX_RATE_STATS_MASK     0xffffffff
+
+
 /*---------------------------------------------------------------------------
   Preprocessor definitions and constants
   ---------------------------------------------------------------------------*/
@@ -155,7 +161,8 @@ struct hal_tx_completion_status {
 		 sgi:2,
 		 mcs:2,
 		 ofdma:1,
-		 tones_in_ru:10;
+		 tones_in_ru:10,
+		 valid:1;
 	uint32_t tsf;
 	uint32_t ppdu_id;
 	uint8_t transmit_cnt;
@@ -851,12 +858,16 @@ static inline void hal_tx_comp_get_status(void *desc,
 
 	ts->peer_id = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_7, SW_PEER_ID);
 	ts->tid = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_7, TID);
+	ts->transmit_cnt = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_3,
+			TRANSMIT_COUNT);
 
-	rate_stats = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_6,
+	rate_stats = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_5,
 			TX_RATE_STATS_INFO_TX_RATE_STATS);
 
 	rate_stats_valid = HAL_TX_MS(TX_RATE_STATS_INFO_0,
 			TX_RATE_STATS_INFO_VALID, rate_stats);
+
+	ts->valid = rate_stats_valid;
 
 	if (rate_stats_valid) {
 		ts->bw = HAL_TX_MS(TX_RATE_STATS_INFO_0, TRANSMIT_BW,
