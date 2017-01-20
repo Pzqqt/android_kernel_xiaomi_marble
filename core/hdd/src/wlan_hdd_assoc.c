@@ -4777,14 +4777,10 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		/* Check if Mcast/Bcast Filters are set, if yes clear the filters here */
 		pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 		if (pHddCtx->hdd_mcastbcast_filter_set == true) {
-			hdd_conf_mcastbcast_filter(pHddCtx, false);
-
-			if (true ==
-			    pHddCtx->sus_res_mcastbcast_filter_valid) {
+			if (pHddCtx->sus_res_mcastbcast_filter_valid) {
 				pHddCtx->configuredMcastBcastFilter =
 					pHddCtx->sus_res_mcastbcast_filter;
-				pHddCtx->
-				sus_res_mcastbcast_filter_valid =
+				pHddCtx->sus_res_mcastbcast_filter_valid =
 					false;
 			}
 

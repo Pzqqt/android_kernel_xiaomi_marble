@@ -483,8 +483,6 @@ QDF_STATUS sme_register_mgmt_frame(tHalHandle hHal, uint8_t sessionId,
 QDF_STATUS sme_deregister_mgmt_frame(tHalHandle hHal, uint8_t sessionId,
 		uint16_t frameType, uint8_t *matchData,
 		uint16_t matchLen);
-QDF_STATUS sme_configure_rxp_filter(tHalHandle hHal,
-		tpSirWlanSetRxpFilters wlanRxpFilterParam);
 QDF_STATUS sme_ConfigureAppsCpuWakeupState(tHalHandle hHal, bool isAppsAwake);
 QDF_STATUS sme_configure_suspend_ind(tHalHandle hHal,
 		uint32_t conn_state_mask,

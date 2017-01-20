@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -414,7 +414,6 @@ uint8_t *mac_trace_get_wma_msg_string(uint16_t wma_msg)
 		CASE_RETURN_STRING(WMA_ENTER_PS_REQ);
 		CASE_RETURN_STRING(WMA_MISSED_BEACON_IND);
 
-		CASE_RETURN_STRING(WMA_CFG_RXP_FILTER_REQ);
 		CASE_RETURN_STRING(WMA_SWITCH_CHANNEL_RSP);
 		CASE_RETURN_STRING(WMA_P2P_NOA_ATTR_IND);
 		CASE_RETURN_STRING(WMA_P2P_NOA_START_IND);

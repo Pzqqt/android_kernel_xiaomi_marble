@@ -7031,56 +7031,6 @@ QDF_STATUS sme_p2p_set_ps(tHalHandle hHal, tP2pPsConfig *data)
 
 /* ---------------------------------------------------------------------------
 
-   \fn    sme_configure_rxp_filter
-
-   \brief
-    SME will pass this request to lower mac to set/reset the filter on RXP for
-    multicast & broadcast traffic.
-
-   \param
-
-    hHal - The handle returned by mac_open.
-
-    filterMask- Currently the API takes a 1 or 0 (set or reset) as filter.
-    Basically to enable/disable the filter (to filter "all" mcbc traffic) based
-    on this param. In future we can use this as a mask to set various types of
-    filters as suggested below:
-    FILTER_ALL_MULTICAST:
-    FILTER_ALL_BROADCAST:
-    FILTER_ALL_MULTICAST_BROADCAST:
-
-   \return QDF_STATUS
-
-   --------------------------------------------------------------------------- */
-QDF_STATUS sme_configure_rxp_filter(tHalHandle hHal,
-				    tpSirWlanSetRxpFilters wlanRxpFilterParam)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_CONFIG_RXPFIL, NO_SESSION, 0));
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		/* serialize the req through MC thread */
-		message.bodyptr = wlanRxpFilterParam;
-		message.type = WMA_CFG_RXP_FILTER_REQ;
-		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 NO_SESSION, message.type));
-		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
-						 &message);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			status = QDF_STATUS_E_FAILURE;
-		}
-		sme_release_global_lock(&pMac->sme);
-	}
-	return status;
-}
-
-/* ---------------------------------------------------------------------------
-
    \fn    sme_configure_suspend_ind
 
    \brief

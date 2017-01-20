@@ -160,7 +160,6 @@ enum suspend_resume_state {
 QDF_STATUS hdd_wlan_shutdown(void);
 QDF_STATUS hdd_wlan_re_init(void);
 
-void hdd_conf_mcastbcast_filter(hdd_context_t *pHddCtx, bool setfilter);
 QDF_STATUS hdd_conf_arp_offload(hdd_adapter_t *pAdapter, bool fenable);
 void hdd_conf_hostoffload(hdd_adapter_t *pAdapter, bool fenable);
 

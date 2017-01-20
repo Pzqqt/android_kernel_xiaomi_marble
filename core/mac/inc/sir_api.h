@@ -2845,12 +2845,6 @@ typedef struct {
 } tSirAppType2Params, *tpSirAppType2Params;
 #endif
 
-typedef struct sSirWlanSetRxpFilters {
-	uint8_t configuredMcstBcstFilterSetting;
-	uint8_t setMcstBcstFilter;
-} tSirWlanSetRxpFilters, *tpSirWlanSetRxpFilters;
-
-
 #define ANI_MAX_IBSS_ROUTE_TABLE_ENTRY   100
 
 typedef struct sAniDestIpNextHopMacPair {

@@ -9400,47 +9400,23 @@ static inline int iw_clear_mc_filter_list(hdd_adapter_t *adapter)
 static int iw_configure_mcbc_filter(hdd_adapter_t *adapter,
 				    struct pkt_filter_mc_addr_list *req)
 {
-	int exit_code;
-	QDF_STATUS status;
 	hdd_context_t *hdd_ctx;
-	tSirWlanSetRxpFilters *req_params;
-	tHalHandle hal;
 
 	ENTER();
 
 	hdd_info("Configuring mc/bc filter; setting:%u",
 		 req->mcbc_filter_setting);
 
-	req_params = qdf_mem_malloc(sizeof(*req_params));
-	if (!req_params) {
-		hdd_err("Out of memory");
-		exit_code = -ENOMEM;
-		goto exit_with_code;
-	}
-
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	hdd_ctx->configuredMcastBcastFilter = req->mcbc_filter_setting;
+
 	hdd_conf_hostoffload(adapter, true);
-
-	req_params->configuredMcstBcstFilterSetting = req->mcbc_filter_setting;
-	req_params->setMcstBcstFilter = true;
-
-	hal = WLAN_HDD_GET_HAL_CTX(adapter);
-	status = sme_configure_rxp_filter(hal, req_params);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Failed to configure HW MC/BC filter");
-		qdf_mem_free(req_params);
-		return -EINVAL;
-	}
 
 	if (hdd_ctx->sus_res_mcastbcast_filter_valid)
 		hdd_ctx->sus_res_mcastbcast_filter = req->mcbc_filter_setting;
 
-	exit_code = 0;
-
-exit_with_code:
 	EXIT();
-	return exit_code;
+	return 0;
 }
 
 /**
@@ -9527,11 +9503,8 @@ static int __iw_clear_dynamic_mcbc_filter(struct net_device *dev,
 					  char *extra)
 {
 	int exit_code;
-	QDF_STATUS status;
 	hdd_adapter_t *adapter;
 	hdd_context_t *hdd_ctx;
-	tHalHandle hal;
-	tSirWlanSetRxpFilters *set_params;
 	uint8_t ini_filter_setting;
 
 	ENTER();
@@ -9542,13 +9515,6 @@ static int __iw_clear_dynamic_mcbc_filter(struct net_device *dev,
 		goto exit_with_code;
 	}
 
-	set_params = qdf_mem_malloc(sizeof(*set_params));
-	if (!set_params) {
-		hdd_err("Out of memory");
-		exit_code = -ENOMEM;
-		goto exit_with_code;
-	}
-
 	/* clear basically means: reset to ini filter settings */
 	adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -9556,18 +9522,6 @@ static int __iw_clear_dynamic_mcbc_filter(struct net_device *dev,
 
 	hdd_ctx->configuredMcastBcastFilter = ini_filter_setting;
 	hdd_conf_hostoffload(adapter, true);
-
-	set_params->configuredMcstBcstFilterSetting = ini_filter_setting;
-	set_params->setMcstBcstFilter = true;
-
-	hal = WLAN_HDD_GET_HAL_CTX(adapter);
-	status = sme_configure_rxp_filter(hal, set_params);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Failed to clear HW mc/bc filter");
-		qdf_mem_free(set_params);
-		exit_code = -EINVAL;
-		goto exit_with_code;
-	}
 
 	if (hdd_ctx->sus_res_mcastbcast_filter_valid)
 		hdd_ctx->sus_res_mcastbcast_filter = ini_filter_setting;
