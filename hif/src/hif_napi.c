@@ -39,6 +39,7 @@
 #include <linux/cpu.h>
 #include <linux/topology.h>
 #include <linux/interrupt.h>
+#include <linux/irq.h>
 #ifdef HELIUMPLUS
 #include <soc/qcom/irq-helper.h>
 #include <linux/sched/core_ctl.h>
@@ -76,7 +77,11 @@ static int hif_napi_cpu_migrate(struct qca_napi_data *napid, int cpu,
 	return 0;
 }
 
-int hif_napi_cpu_blacklist(enum qca_blacklist_op op) { return 0; }
+int hif_napi_cpu_blacklist(struct qca_napi_data *napid,
+					enum qca_blacklist_op op)
+{
+	return 0;
+}
 #endif /* HELIUMPLUS */
 
 /**
@@ -594,21 +599,20 @@ int hif_napi_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 	}; /* switch */
 
 
-	qdf_spin_unlock_bh(&(napid->lock));
-
-	/* Call this API without spin_locks hif_napi_cpu_blacklist */
 	switch (blacklist_pending) {
 	case BLACKLIST_ON_PENDING:
 		/* assume the control of WLAN IRQs */
-		hif_napi_cpu_blacklist(napid->flags, BLACKLIST_ON);
+		hif_napi_cpu_blacklist(napid, BLACKLIST_ON);
 		break;
 	case BLACKLIST_OFF_PENDING:
 		/* yield the control of WLAN IRQs */
-		hif_napi_cpu_blacklist(napid->flags, BLACKLIST_OFF);
+		hif_napi_cpu_blacklist(napid, BLACKLIST_OFF);
 		break;
 	default: /* nothing to do */
 		break;
 	} /* switch blacklist_pending */
+
+	qdf_spin_unlock_bh(&(napid->lock));
 
 	if (prev_state != napid->state) {
 		if (napid->state == ENABLE_NAPI_MASK) {
@@ -724,15 +728,19 @@ bool hif_napi_correct_cpu(struct qca_napi_info *napi_info)
 	if (napid->flags & QCA_NAPI_FEATURE_CPU_CORRECTION) {
 
 		cpu = qdf_get_cpu();
-		if (unlikely((hif_napi_cpu_blacklist(napid->flags,
+		if (unlikely((hif_napi_cpu_blacklist(napid,
 						BLACKLIST_QUERY) > 0) &&
 						(cpu != napi_info->cpu))) {
 			right_cpu = false;
 
 			NAPI_DEBUG("interrupt on wrong CPU, correcting");
 			cpumask.bits[0] = (0x01 << napi_info->cpu);
+
+			irq_modify_status(napi_info->irq, IRQ_NO_BALANCING, 0);
 			rc = irq_set_affinity_hint(napi_info->irq,
 						   &cpumask);
+			irq_modify_status(napi_info->irq, 0, IRQ_NO_BALANCING);
+
 			if (rc)
 				HIF_ERROR("error setting irq affinity hint: %d", rc);
 			else
@@ -907,9 +915,10 @@ void hif_napi_update_yield_stats(struct CE_state *ce_state,
 		return;
 	} else {
 		napi_data = &(hif->napi_data);
-		if (unlikely(NULL == napi_data))
+		if (unlikely(NULL == napi_data)) {
 			QDF_ASSERT(NULL != napi_data);
-		return;
+			return;
+		}
 	}
 
 	ce_id = ce_state->id;
@@ -1330,6 +1339,8 @@ static int hncm_migrate_to(struct qca_napi_data *napid,
 	NAPI_DEBUG("-->%s(napi_cd=%d, didx=%d)", __func__, napi_ce, didx);
 
 	cpumask.bits[0] = (1 << didx);
+
+	irq_modify_status(napid->napis[napi_ce].irq, IRQ_NO_BALANCING, 0);
 	rc = irq_set_affinity_hint(napid->napis[napi_ce].irq, &cpumask);
 
 	/* unmark the napis bitmap in the cpu table */
@@ -1487,20 +1498,56 @@ hncm_return:
 	return rc;
 }
 
+
 /**
- * hif_napi_cpu_blacklist() - calls kernel API to enable/disable blacklisting
- * @flags: NAPI feature flags
+ * hif_napi_bl_irq() - calls irq_modify_status to enable/disable blacklisting
+ * @napid: pointer to qca_napi_data structure
+ * @bl_flag: blacklist flag to enable/disable blacklisting
+ *
+ * The function enables/disables blacklisting for all the copy engine
+ * interrupts on which NAPI is enabled.
+ *
+ * Return: None
+ */
+static inline void hif_napi_bl_irq(struct qca_napi_data *napid, bool bl_flag)
+{
+	int i;
+	for (i = 0; i < CE_COUNT_MAX; i++) {
+		/* check if NAPI is enabled on the CE */
+		if (!(napid->ce_map & (0x01 << i)))
+			continue;
+
+		if (bl_flag == true)
+			irq_modify_status(napid->napis[i].irq,
+					  0, IRQ_NO_BALANCING);
+		else
+			irq_modify_status(napid->napis[i].irq,
+					  IRQ_NO_BALANCING, 0);
+		HIF_INFO("%s: bl_flag %d CE %d", __func__, bl_flag, i);
+	}
+}
+
+/**
+ * hif_napi_cpu_blacklist() - en(dis)ables blacklisting for NAPI RX interrupts.
+ * @napid: pointer to qca_napi_data structure
  * @op: blacklist operation to perform
+ *
+ * The function enables/disables/queries blacklisting for all CE RX
+ * interrupts with NAPI enabled. Besides blacklisting, it also enables/disables
+ * core_ctl_set_boost.
+ * Once blacklisting is enabled, the interrupts will not be managed by the IRQ
+ * balancer.
  *
  * Return: -EINVAL, in case IRQ_BLACKLISTING and CORE_CTL_BOOST is not enabled
  *         for BLACKLIST_QUERY op - blacklist refcount
- *         for BLACKLIST_ON op    - return value from kernel blacklist API
- *         for BLACKLIST_OFF op   - return value from kernel blacklist API
+ *         for BLACKLIST_ON op    - return value from core_ctl_set_boost API
+ *         for BLACKLIST_OFF op   - return value from core_ctl_set_boost API
  */
-int hif_napi_cpu_blacklist(uint8_t flags, enum qca_blacklist_op op)
+int hif_napi_cpu_blacklist(struct qca_napi_data *napid, enum qca_blacklist_op op)
 {
 	int rc = 0;
 	static int ref_count; /* = 0 by the compiler */
+	uint8_t flags = napid->flags;
 	bool bl_en = flags & QCA_NAPI_FEATURE_IRQ_BLACKLISTING;
 	bool ccb_en = flags & QCA_NAPI_FEATURE_CORE_CTL_BOOST;
 
@@ -1517,22 +1564,23 @@ int hif_napi_cpu_blacklist(uint8_t flags, enum qca_blacklist_op op)
 		break;
 	case BLACKLIST_ON:
 		ref_count++;
-		rc = irq_blacklist_on();
-		NAPI_DEBUG("blacklist_on() returns %d", rc);
-
-		rc = core_ctl_set_boost(true);
-		NAPI_DEBUG("boost_on() returns %d - refcnt=%d", rc, ref_count);
+		rc = 0;
+		if (ref_count == 1) {
+			rc = core_ctl_set_boost(true);
+			NAPI_DEBUG("boost_on() returns %d - refcnt=%d",
+				rc, ref_count);
+			hif_napi_bl_irq(napid, true);
+		}
 		break;
-
 	case BLACKLIST_OFF:
-		while (ref_count > 0) {
-			rc = irq_blacklist_off();
-			NAPI_DEBUG("blacklist_off() returns %d", rc);
-
+		if (ref_count)
+			ref_count--;
+		rc = 0;
+		if (ref_count == 0) {
 			rc = core_ctl_set_boost(false);
 			NAPI_DEBUG("boost_off() returns %d - refcnt=%d",
 				   rc, ref_count);
-			ref_count--;
+			hif_napi_bl_irq(napid, false);
 		}
 		break;
 	default:
