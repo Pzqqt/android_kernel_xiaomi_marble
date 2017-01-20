@@ -99,9 +99,6 @@
 #define HDD_SET_MCBC_FILTERS_TO_FW      1
 #define HDD_DELETE_MCBC_FILTERS_FROM_FW 0
 
-static int ioctl_debug;
-module_param(ioctl_debug, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-
 /* To Validate Channel against the Frequency and Vice-Versa */
 static const hdd_freq_chan_map_t freq_chan_map[] = {
 	{2412, 1}, {2417, 2}, {2422, 3}, {2427, 4}, {2432, 5}, {2437, 6},
@@ -1720,11 +1717,6 @@ static void hdd_get_rssi_cb(int8_t rssi, uint32_t staId, void *pContext)
 	struct statsContext *pStatsContext;
 	hdd_adapter_t *pAdapter;
 
-	if (ioctl_debug) {
-		pr_info("%s: rssi [%d] STA [%d] pContext [%p]\n",
-			__func__, (int)rssi, (int)staId, pContext);
-	}
-
 	if (NULL == pContext) {
 		hdd_err("Bad param");
 		return;
@@ -1748,10 +1740,6 @@ static void hdd_get_rssi_cb(int8_t rssi, uint32_t staId, void *pContext)
 		spin_unlock(&hdd_context_lock);
 		hdd_warn("Invalid context, pAdapter [%p] magic [%08x]",
 			 pAdapter, pStatsContext->magic);
-		if (ioctl_debug) {
-			pr_info("%s: Invalid context, pAdapter [%p] magic [%08x]\n",
-				__func__, pAdapter, pStatsContext->magic);
-		}
 		return;
 	}
 
@@ -1787,11 +1775,6 @@ static void hdd_get_snr_cb(int8_t snr, uint32_t staId, void *pContext)
 	struct statsContext *pStatsContext;
 	hdd_adapter_t *pAdapter;
 
-	if (ioctl_debug) {
-		pr_info("%s: snr [%d] STA [%d] pContext [%p]\n",
-			__func__, (int)snr, (int)staId, pContext);
-	}
-
 	if (NULL == pContext) {
 		hdd_err("Bad param");
 		return;
@@ -1814,10 +1797,6 @@ static void hdd_get_snr_cb(int8_t snr, uint32_t staId, void *pContext)
 		spin_unlock(&hdd_context_lock);
 		hdd_warn("Invalid context, pAdapter [%p] magic [%08x]",
 			 pAdapter, pStatsContext->magic);
-		if (ioctl_debug) {
-			pr_info("%s: Invalid context, pAdapter [%p] magic [%08x]\n",
-				__func__, pAdapter, pStatsContext->magic);
-		}
 		return;
 	}
 
@@ -2042,10 +2021,6 @@ hdd_get_link_speed_cb(tSirLinkSpeedInfo *pLinkSpeed, void *pContext)
 		spin_unlock(&hdd_context_lock);
 		hdd_warn("Invalid context, pAdapter [%p] magic [%08x]",
 			 pAdapter, pLinkSpeedContext->magic);
-		if (ioctl_debug) {
-			pr_info("%s: Invalid context, pAdapter [%p] magic [%08x]\n",
-				__func__, pAdapter, pLinkSpeedContext->magic);
-		}
 		return;
 	}
 
@@ -4213,11 +4188,6 @@ static void hdd_get_class_a_statistics_cb(void *pStats, void *pContext)
 	tCsrGlobalClassAStatsInfo *pClassAStats;
 	hdd_adapter_t *pAdapter;
 
-	if (ioctl_debug) {
-		pr_info("%s: pStats [%p] pContext [%p]\n",
-			__func__, pStats, pContext);
-	}
-
 	if ((NULL == pStats) || (NULL == pContext)) {
 		hdd_err("Bad param, pStats [%p] pContext [%p]",
 			pStats, pContext);
@@ -4243,10 +4213,6 @@ static void hdd_get_class_a_statistics_cb(void *pStats, void *pContext)
 		spin_unlock(&hdd_context_lock);
 		hdd_warn("Invalid context, pAdapter [%p] magic [%08x]",
 			 pAdapter, pStatsContext->magic);
-		if (ioctl_debug) {
-			pr_info("%s: Invalid context, pAdapter [%p] magic [%08x]\n",
-				__func__, pAdapter, pStatsContext->magic);
-		}
 		return;
 	}
 
@@ -4349,11 +4315,6 @@ static void hdd_get_station_statistics_cb(void *pStats, void *pContext)
 	struct csr_per_chain_rssi_stats_info *per_chain_rssi_stats;
 	hdd_adapter_t *pAdapter;
 
-	if (ioctl_debug) {
-		pr_info("%s: pStats [%p] pContext [%p]\n",
-			__func__, pStats, pContext);
-	}
-
 	if ((NULL == pStats) || (NULL == pContext)) {
 		hdd_err("Bad param, pStats [%p] pContext [%p]",
 			pStats, pContext);
@@ -4381,10 +4342,6 @@ static void hdd_get_station_statistics_cb(void *pStats, void *pContext)
 		spin_unlock(&hdd_context_lock);
 		hdd_warn("Invalid context, pAdapter [%p] magic [%08x]",
 			 pAdapter, pStatsContext->magic);
-		if (ioctl_debug) {
-			pr_info("%s: Invalid context, pAdapter [%p] magic [%08x]\n",
-				__func__, pAdapter, pStatsContext->magic);
-		}
 		return;
 	}
 
