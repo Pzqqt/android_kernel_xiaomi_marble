@@ -528,12 +528,18 @@ static QDF_STATUS lim_mgmt_tdls_tx_complete(void *context,
 		if (!session_entry) {
 			lim_log(mac_ctx, LOGE, FL("session id %d is not found"),
 				mac_ctx->lim.tdls_frm_session_id);
+			if (buf)
+				qdf_nbuf_free(buf);
 			return QDF_STATUS_E_FAILURE;
 		}
 		lim_send_sme_mgmt_tx_completion(mac_ctx, session_entry,
 						tx_complete);
 		mac_ctx->lim.tdls_frm_session_id = NO_SESSION;
 	}
+
+	if (buf)
+		qdf_nbuf_free(buf);
+
 	return QDF_STATUS_SUCCESS;
 }
 

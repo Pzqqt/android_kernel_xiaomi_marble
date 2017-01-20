@@ -2875,7 +2875,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		status = wlan_mgmt_txrx_mgmt_frame_tx(peer,
 				(tpAniSirGlobal)wma_handle->mac_context,
 				(qdf_nbuf_t)tx_frame,
-				tx_frm_download_comp_cb, tx_frm_ota_comp_cb,
+				NULL, tx_frm_ota_comp_cb,
 				WLAN_UMAC_COMP_MLME, &mgmt_param);
 		if (status != QDF_STATUS_SUCCESS) {
 			WMA_LOGE("%s: mgmt tx failed", __func__);

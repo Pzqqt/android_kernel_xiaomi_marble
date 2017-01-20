@@ -435,6 +435,9 @@ QDF_STATUS lim_p2p_action_cnf(void *context, qdf_nbuf_t buf,
 		}
 	}
 
+	if (buf)
+		qdf_nbuf_free(buf);
+
 	return status;
 }
 

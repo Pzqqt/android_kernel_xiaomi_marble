@@ -2032,6 +2032,10 @@ static QDF_STATUS lim_auth_tx_complete_cnf(void *context,
 	} else {
 		mac_ctx->auth_ack_status = LIM_AUTH_ACK_RCD_FAILURE;
 	}
+
+	if (buf)
+		qdf_nbuf_free(buf);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -2557,6 +2561,10 @@ QDF_STATUS lim_disassoc_tx_complete_cnf(void *context,
 
 	lim_log(pMac, LOG1,
 		FL("txCompleteSuccess: %d"), txCompleteSuccess);
+
+	if (buf)
+		qdf_nbuf_free(buf);
+
 	return lim_send_disassoc_cnf(pMac);
 }
 
@@ -2569,6 +2577,10 @@ QDF_STATUS lim_deauth_tx_complete_cnf(void *context,
 
 	lim_log(pMac, LOG1,
 		FL("txCompleteSuccess: %d"), txCompleteSuccess);
+
+	if (buf)
+		qdf_nbuf_free(buf);
+
 	return lim_send_deauth_cnf(pMac);
 }
 
@@ -3586,6 +3598,10 @@ static QDF_STATUS lim_oper_chan_change_confirm_tx_complete_cnf(
 
 	lim_log(mac_ctx, LOG1,
 		 FL(" tx_complete= %d"), tx_complete);
+
+	if (buf)
+		qdf_nbuf_free(buf);
+
 	return QDF_STATUS_SUCCESS;
 }
 
