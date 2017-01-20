@@ -13156,10 +13156,6 @@ static QDF_STATUS send_per_roam_config_cmd_tlv(wmi_unified_t wmi_handle,
 
 	/* fill in per roam config values */
 	wmi_per_config->vdev_id = req_buf->vdev_id;
-	if (req_buf->per_config.enable) {
-		/* Enable for both Tx and Rx*/
-		req_buf->per_config.enable = 3;
-	}
 
 	wmi_per_config->enable = req_buf->per_config.enable;
 	wmi_per_config->high_rate_thresh =
