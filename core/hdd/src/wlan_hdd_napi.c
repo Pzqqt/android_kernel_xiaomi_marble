@@ -408,7 +408,7 @@ int hdd_display_napi_stats(void)
 	}
 	qdf_print("[NAPI %u][BL %d]:  scheds   polls   comps    done t-lim p-lim  corr napi-buckets(%d)",
 		  napid->napi_mode,
-		  hif_napi_cpu_blacklist(napid->flags, BLACKLIST_QUERY),
+		  hif_napi_cpu_blacklist(napid, BLACKLIST_QUERY),
 		  QCA_NAPI_NUM_BUCKETS);
 
 	for (i = 0; i < CE_COUNT_MAX; i++)
