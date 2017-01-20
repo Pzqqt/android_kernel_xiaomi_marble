@@ -3899,6 +3899,11 @@ typedef enum {
      *  A zero value disables; a non-zero value enables.
      */
     WMI_PDEV_PARAM_RADIO_DIAGNOSIS_ENABLE,
+    /** Enable/Disable mesh mcast traffic
+     * 1 - Allow mesh mcast traffic
+     * 0 - Disallow mesh mcast traffic
+     */
+    WMI_PDEV_PARAM_MESH_MCAST_ENABLE,
 
 } WMI_PDEV_PARAM;
 
