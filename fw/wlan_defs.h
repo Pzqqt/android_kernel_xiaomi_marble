@@ -337,7 +337,7 @@ typedef struct {
     } while (0)
 
 #endif /* !((NUM_SPATIAL_STREAM > 4) || SUPPORT_11AX) */ /* above N/A for Lithium */
-#endif
+#endif /* NUM_SPATIAL_STREAM */
 
 /* NOTE: NUM_DYN_BW and NUM_SCHED_ENTRIES cannot be changed without breaking WMI Compatibility */
 #define NUM_SCHED_ENTRIES           2
