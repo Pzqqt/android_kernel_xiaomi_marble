@@ -109,6 +109,7 @@ dp_tx_desc_release(struct dp_vdev *vdev, struct dp_tx_desc_s *tx_desc,
 {
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
+	uint8_t comp_status = 0;
 
 	if (tx_desc->flags & DP_TX_DESC_FLAG_FRAG)
 		dp_tx_ext_desc_free(soc, tx_desc->msdu_ext_desc, desc_pool_id);
@@ -119,8 +120,15 @@ dp_tx_desc_release(struct dp_vdev *vdev, struct dp_tx_desc_s *tx_desc,
 	if (tx_desc->flags & DP_TX_DESC_FLAG_TO_FW)
 		pdev->num_tx_exception--;
 
+	if (HAL_TX_COMP_RELEASE_SOURCE_TQM ==
+				hal_tx_comp_get_buffer_source(&tx_desc->comp))
+		comp_status = hal_tx_comp_get_release_reason(&tx_desc->comp);
+	else
+		comp_status = HAL_TX_COMP_RELEASE_REASON_FW;
+
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			"Tx Completion Release desc %d\n", tx_desc->id);
+			"Tx Completion Release desc %d status %d\n",
+			tx_desc->id, comp_status);
 
 	dp_tx_desc_free(soc, tx_desc, desc_pool_id);
 	return;
@@ -1547,7 +1555,16 @@ QDF_STATUS dp_tx_soc_attach(struct dp_soc *soc)
 	 * Keep the processing of completion stats disabled by default.
 	 * todo - Add a runtime config option to enable this.
 	 */
+	/*
+	 * Due to multiple issues on NPR EMU, enable it selectively
+	 * only for NPR EMU, should be removed, once NPR platforms
+	 * are stable.
+	 */
+#ifdef QCA_WIFI_NAPIER_EMULATION
+	soc->process_tx_status = 1;
+#else
 	soc->process_tx_status = 0;
+#endif
 
 	/* Initialize Default DSCP-TID mapping table in TCL */
 	hal_tx_set_dscp_tid_map(soc->hal_soc, default_dscp_tid_map,

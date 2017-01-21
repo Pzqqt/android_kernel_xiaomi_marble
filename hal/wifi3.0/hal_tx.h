@@ -76,6 +76,9 @@ do {                                            \
 #define HAL_TX_COMP_RELEASE_SOURCE_TQM 0
 #define HAL_TX_COMP_RELEASE_SOURCE_FW 3
 
+/* Define a place-holder release reason for FW */
+#define HAL_TX_COMP_RELEASE_REASON_FW 99
+
 /*
  * Offset of HTT Tx Descriptor in WBM Completion
  * HTT Tx Desc structure is passed from firmware to host overlayed

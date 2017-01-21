@@ -374,6 +374,16 @@ done:
 			qdf_nbuf_pull_head(nbuf,
 					   RX_PKT_TLVS_LEN + l2_hdr_offset);
 
+#ifdef QCA_WIFI_NAPIER_EMULATION /* Debug code, remove later */
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"p_id %d msdu_len %d hdr_off %d",
+				peer_id, msdu_len, l2_hdr_offset);
+
+			print_hex_dump(KERN_ERR,
+				       "\t Pkt Data:", DUMP_PREFIX_NONE, 32, 4,
+					qdf_nbuf_data(nbuf), 128, false);
+#endif /* NAPIER_EMULATION */
+
 			/* TODO */
 			/* WDS Source Port Learning */
 
