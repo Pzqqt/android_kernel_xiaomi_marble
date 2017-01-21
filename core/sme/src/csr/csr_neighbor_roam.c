@@ -35,7 +35,6 @@
    ========================================================================== */
 
 #include "wma_types.h"
-#include "cds_mq.h"
 #include "csr_inside_api.h"
 #include "sms_debug.h"
 #include "sme_qos_internal.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -36,7 +36,6 @@
 #ifdef FEATURE_WLAN_TDLS
 
 #include "ani_global.h"          /* for tpAniSirGlobal */
-#include "cds_mq.h"
 #include "csr_inside_api.h"
 #include "sme_inside.h"
 #include "sms_debug.h"

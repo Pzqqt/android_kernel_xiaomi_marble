@@ -35,7 +35,6 @@
 #include "ani_global.h"          /* for tpAniSirGlobal */
 #include "wma_types.h"
 #include "wma_if.h"          /* for STA_INVALID_IDX. */
-#include "cds_mq.h"
 #include "csr_inside_api.h"
 #include "sms_debug.h"
 #include "sme_trace.h"
@@ -692,7 +691,7 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 	uint8_t numChan = pScan->base_channels.numChannels;
 	uint8_t num_channel = 0;
 	uint32_t bufLen;
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	uint8_t i, j, social_channel[MAX_SOCIAL_CHANNELS] = { 1, 6, 11 };
 	uint8_t channel_state;
 	uint16_t unsafe_chan[NUM_CHANNELS];
@@ -878,7 +877,7 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 	pChanList->numChan = num_channel;
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
 			 NO_SESSION, msg.type));
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA,
+	if (QDF_STATUS_SUCCESS != scheduler_post_msg(QDF_MODULE_ID_WMA,
 						      &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to post msg to WMA", __func__);
@@ -6184,7 +6183,7 @@ static eCsrPhyMode csr_roamdot11mode_to_phymode(uint8_t dot11mode)
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static void csr_roam_synch_clean_up (tpAniSirGlobal mac, uint8_t session_id)
 {
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	struct roam_offload_synch_fail *roam_offload_failed = NULL;
 	tCsrRoamSession *session = &mac->roam.roamSession[session_id];
 
@@ -6206,7 +6205,7 @@ static void csr_roam_synch_clean_up (tpAniSirGlobal mac, uint8_t session_id)
 	msg.type     = WMA_ROAM_OFFLOAD_SYNCH_FAIL;
 	msg.reserved = 0;
 	msg.bodyptr  = roam_offload_failed;
-	if (!QDF_IS_STATUS_SUCCESS(cds_mq_post_message(QDF_MODULE_ID_WMA,
+	if (!QDF_IS_STATUS_SUCCESS(scheduler_post_msg(QDF_MODULE_ID_WMA,
 						       &msg))) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			"%s: Unable to post WMA_ROAM_OFFLOAD_SYNCH_FAIL to WMA",
@@ -16522,7 +16521,7 @@ QDF_STATUS csr_get_rssi(tpAniSirGlobal pMac,
 			int8_t lastRSSI, void *pContext, void *p_cds_context)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	uint32_t sessionId;
 
 	tAniGetRssiReq *pMsg;
@@ -16557,7 +16556,7 @@ QDF_STATUS csr_get_rssi(tpAniSirGlobal pMac,
 	msg.type = eWNI_SME_GET_RSSI_REQ;
 	msg.bodyptr = pMsg;
 	msg.reserved = 0;
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_SME,
+	if (QDF_STATUS_SUCCESS != scheduler_post_msg(QDF_MODULE_ID_SME,
 						      &msg)) {
 		sms_log(pMac, LOGE, " csr_get_rssi failed to post msg to self ");
 		qdf_mem_free((void *)pMsg);
@@ -16572,7 +16571,7 @@ QDF_STATUS csr_get_snr(tpAniSirGlobal pMac,
 		       uint8_t staId, struct qdf_mac_addr bssId, void *pContext)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	uint32_t sessionId;
 
 	tAniGetSnrReq *pMsg;
@@ -16598,7 +16597,7 @@ QDF_STATUS csr_get_snr(tpAniSirGlobal pMac,
 	msg.bodyptr = pMsg;
 	msg.reserved = 0;
 
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_SME,
+	if (QDF_STATUS_SUCCESS != scheduler_post_msg(QDF_MODULE_ID_SME,
 						      &msg)) {
 		sms_log(pMac, LOGE, "%s failed to post msg to self", __func__);
 		qdf_mem_free((void *)pMsg);
@@ -18574,7 +18573,7 @@ QDF_STATUS csr_handoff_request(tpAniSirGlobal pMac,
 			       tCsrHandoffRequest *pHandoffInfo)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 
 	tAniHandoffReq *pMsg;
 	pMsg = qdf_mem_malloc(sizeof(tAniHandoffReq));
@@ -18592,7 +18591,7 @@ QDF_STATUS csr_handoff_request(tpAniSirGlobal pMac,
 	msg.type = eWNI_SME_HANDOFF_REQ;
 	msg.bodyptr = pMsg;
 	msg.reserved = 0;
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_SME,
+	if (QDF_STATUS_SUCCESS != scheduler_post_msg(QDF_MODULE_ID_SME,
 						      &msg)) {
 		sms_log(pMac, LOGE,
 			" csr_handoff_request failed to post msg to self ");

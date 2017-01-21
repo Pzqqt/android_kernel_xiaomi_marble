@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -45,14 +45,14 @@
  */
 static QDF_STATUS sme_post_ps_msg_to_wma(uint16_t type, void *body)
 {
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 
 	msg.type = type;
 	msg.reserved = 0;
 	msg.bodyptr = body;
 	msg.bodyval = 0;
 
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(
+	if (QDF_STATUS_SUCCESS != scheduler_post_msg(
 				QDF_MODULE_ID_WMA, &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				"%s: Posting message %d failed",
@@ -728,7 +728,7 @@ QDF_STATUS sme_set_ps_preferred_network_list(tHalHandle hal_ctx,
 		void *callback_context)
 {
 	tpSirPNOScanReq request_buf;
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
 	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
 	uint8_t uc_dot11_mode;
@@ -828,7 +828,7 @@ QDF_STATUS sme_set_ps_preferred_network_list(tHalHandle hal_ctx,
 	msg.reserved = 0;
 	msg.bodyptr = request_buf;
 	if (!QDF_IS_STATUS_SUCCESS
-			(cds_mq_post_message(QDF_MODULE_ID_WMA, &msg))) {
+			(scheduler_post_msg(QDF_MODULE_ID_WMA, &msg))) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("Not able to post WMA_SET_PNO_REQ message to WMA"));
 		qdf_mem_free(request_buf);
@@ -861,7 +861,7 @@ QDF_STATUS sme_set_ps_host_offload(tHalHandle hal_ctx,
 		uint8_t session_id)
 {
 	tpSirHostOffloadReq request_buf;
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
 	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
 
@@ -895,7 +895,7 @@ QDF_STATUS sme_set_ps_host_offload(tHalHandle hal_ctx,
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
 			 session_id, msg.type));
 	if (QDF_STATUS_SUCCESS !=
-			cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
+			scheduler_post_msg(QDF_MODULE_ID_WMA, &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 		      FL("Not able to post WMA_SET_HOST_OFFLOAD msg to WMA"));
 		qdf_mem_free(request_buf);
@@ -921,7 +921,7 @@ QDF_STATUS sme_set_ps_ns_offload(tHalHandle hal_ctx,
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
 	tpSirHostOffloadReq request_buf;
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
 
 	if (NULL == session) {
@@ -945,7 +945,7 @@ QDF_STATUS sme_set_ps_ns_offload(tHalHandle hal_ctx,
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
 			 session_id, msg.type));
 	if (QDF_STATUS_SUCCESS !=
-			cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
+			scheduler_post_msg(QDF_MODULE_ID_WMA, &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("Not able to post SIR_HAL_SET_HOST_OFFLOAD message to HAL"));
 		qdf_mem_free(request_buf);
@@ -976,10 +976,11 @@ QDF_STATUS sme_set_ps_ns_offload(tHalHandle hal_ctx,
 tSirRetStatus sme_post_pe_message(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 {
 	QDF_STATUS qdf_status;
-	qdf_status = cds_mq_post_message(QDF_MODULE_ID_PE, (cds_msg_t *) msg);
+	qdf_status = scheduler_post_msg(QDF_MODULE_ID_PE,
+					(struct scheduler_msg *) msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		sms_log(mac_ctx, LOGP,
-			FL("cds_mq_post_message failed with status code %d"),
+			FL("scheduler_post_msg failed with status code %d"),
 			qdf_status);
 		return eSIR_FAILURE;
 	}

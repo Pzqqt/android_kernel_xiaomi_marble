@@ -38,7 +38,6 @@
   Include Files
   ------------------------------------------------------------------------*/
 #include "csr_api.h"
-#include "cds_mq.h"
 #include "qdf_lock.h"
 #include "qdf_types.h"
 #include "sir_api.h"
@@ -242,9 +241,9 @@ QDF_STATUS sme_get_soft_ap_domain(tHalHandle hHal,
 		v_REGDOMAIN_t *domainIdSoftAp);
 QDF_STATUS sme_set_reg_info(tHalHandle hHal, uint8_t *apCntryCode);
 QDF_STATUS sme_hdd_ready_ind(tHalHandle hHal);
-QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg);
+QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg);
 QDF_STATUS sme_mc_process_handler(struct scheduler_msg *msg);
-void sme_free_msg(tHalHandle hHal, cds_msg_t *pMsg);
+void sme_free_msg(tHalHandle hHal, struct scheduler_msg *pMsg);
 QDF_STATUS sme_scan_request(tHalHandle hHal, uint8_t sessionId,
 		tCsrScanRequest *, csr_scan_completeCallback callback,
 		void *pContext);

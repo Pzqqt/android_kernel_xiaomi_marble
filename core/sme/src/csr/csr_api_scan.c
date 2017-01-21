@@ -35,7 +35,6 @@
 
 #include "ani_global.h"
 
-#include "cds_mq.h"
 #include "csr_inside_api.h"
 #include "sme_inside.h"
 #include "sms_debug.h"

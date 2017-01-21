@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -43,7 +43,6 @@
    ------------------------------------------------------------------------*/
 #include <qdf_types.h>
 #include <qdf_status.h>
-#include <scheduler_api.h>
 
 /*--------------------------------------------------------------------------
    Preprocessor definitions and constants

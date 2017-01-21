@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -105,7 +105,7 @@ QDF_STATUS csr_process_ndp_initiator_request(tpAniSirGlobal mac_ctx,
 QDF_STATUS csr_process_ndp_data_end_request(tpAniSirGlobal mac_ctx,
 					    tSmeCmd *cmd);
 
-void sme_ndp_msg_processor(tpAniSirGlobal mac_ctx, cds_msg_t *msg);
+void sme_ndp_msg_processor(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg);
 
 QDF_STATUS csr_process_ndp_responder_request(tpAniSirGlobal mac_ctx,
 							tSmeCmd *cmd);
@@ -163,7 +163,8 @@ static inline QDF_STATUS csr_process_ndp_initiator_request(
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline void sme_ndp_msg_processor(tpAniSirGlobal mac_ctx, cds_msg_t *msg)
+static inline void sme_ndp_msg_processor(tpAniSirGlobal mac_ctx,
+					 struct scheduler_msg *msg)
 {
 }
 

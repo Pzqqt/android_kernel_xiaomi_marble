@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -25,7 +25,6 @@
  */
 
 #include "wma_types.h"
-#include "cds_mq.h"
 #include "csr_inside_api.h"
 #include "sms_debug.h"
 #include "sme_qos_internal.h"

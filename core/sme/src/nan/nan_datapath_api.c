@@ -614,7 +614,7 @@ QDF_STATUS csr_process_ndp_data_end_request(tpAniSirGlobal mac_ctx,
  *
  * Return: nothing
  */
-void sme_ndp_msg_processor(tpAniSirGlobal mac_ctx, cds_msg_t *msg)
+void sme_ndp_msg_processor(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg)
 {
 	tCsrRoamInfo roam_info = {0};
 	eCsrRoamResult result;

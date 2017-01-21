@@ -1960,7 +1960,8 @@ static QDF_STATUS sme_extended_change_channel_ind(tpAniSirGlobal mac_ctx,
  * Return: None
  */
 #ifdef WLAN_FEATURE_MEMDUMP
-static void sme_process_fw_mem_dump_rsp(tpAniSirGlobal mac_ctx, cds_msg_t *msg)
+static void sme_process_fw_mem_dump_rsp(tpAniSirGlobal mac_ctx,
+					struct scheduler_msg *msg)
 {
 	if (msg->bodyptr) {
 		if (mac_ctx->sme.fw_dump_callback)
@@ -1970,7 +1971,8 @@ static void sme_process_fw_mem_dump_rsp(tpAniSirGlobal mac_ctx, cds_msg_t *msg)
 	}
 }
 #else
-static void sme_process_fw_mem_dump_rsp(tpAniSirGlobal mac_ctx, cds_msg_t *msg)
+static void sme_process_fw_mem_dump_rsp(tpAniSirGlobal mac_ctx,
+					struct scheduler_msg *msg)
 {
 }
 #endif
@@ -2035,7 +2037,7 @@ QDF_STATUS sme_set_plm_request(tHalHandle hHal, tpSirPlmReq pPlmReq)
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	uint8_t ch_list[WNI_CFG_VALID_CHANNEL_LIST] = { 0 };
 	uint8_t count, valid_count = 0;
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, pPlmReq->sessionId);
 
 	status = sme_acquire_global_lock(&pMac->sme);
@@ -2101,7 +2103,7 @@ send_plm_start:
 	msg.reserved = 0;
 	msg.bodyptr = pPlmReq;
 
-	if (!QDF_IS_STATUS_SUCCESS(cds_mq_post_message(QDF_MODULE_ID_WMA,
+	if (!QDF_IS_STATUS_SUCCESS(scheduler_post_msg(QDF_MODULE_ID_WMA,
 						       &msg))) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Not able to post WMA_SET_PLM_REQ to WMA"));
@@ -2522,7 +2524,7 @@ static QDF_STATUS sme_process_antenna_mode_resp(tpAniSirGlobal mac,
    \sa
 
    --------------------------------------------------------------------------*/
-QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
+QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -3099,7 +3101,7 @@ QDF_STATUS sme_mc_process_handler(struct scheduler_msg *msg)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	return sme_process_msg((tHalHandle)mac_ctx, (cds_msg_t *)msg);
+	return sme_process_msg((tHalHandle)mac_ctx, msg);
 }
 
 /**
@@ -3174,7 +3176,7 @@ QDF_STATUS sme_process_nss_update_resp(tpAniSirGlobal mac, uint8_t *msg)
 
 /* No need to hold the global lock here because this function can only be called */
 /* after sme_stop. */
-void sme_free_msg(tHalHandle hHal, cds_msg_t *pMsg)
+void sme_free_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 {
 	if (pMsg) {
 		if (pMsg->bodyptr) {
@@ -3353,7 +3355,7 @@ QDF_STATUS sme_scan_request(tHalHandle hal, uint8_t session_id,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	struct ani_scan_req *scan_msg;
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	uint32_t scan_req_id, scan_count;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
@@ -3411,7 +3413,7 @@ QDF_STATUS sme_scan_request(tHalHandle hal, uint8_t session_id,
 	msg.reserved = 0;
 	msg.bodyval = 0;
 	if (QDF_STATUS_SUCCESS !=
-		cds_mq_post_message(QDF_MODULE_ID_SME, &msg)) {
+		scheduler_post_msg(QDF_MODULE_ID_SME, &msg)) {
 		sms_log(mac_ctx, LOGE,
 			" sme_scan_req failed to post msg");
 		csr_scan_free_request(mac_ctx, scan_msg->scan_param);
@@ -5239,7 +5241,7 @@ QDF_STATUS sme_roam_set_key(tHalHandle hal,  uint8_t session_id,
 QDF_STATUS sme_roam_set_default_key_index(tHalHandle hal, uint8_t session_id,
 					  uint8_t default_idx)
 {
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	struct wep_update_default_key_idx *update_key;
 
@@ -5258,7 +5260,7 @@ QDF_STATUS sme_roam_set_default_key_index(tHalHandle hal, uint8_t session_id,
 	msg.bodyptr = (void *)update_key;
 
 	if (QDF_STATUS_SUCCESS !=
-	    cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
+	    scheduler_post_msg(QDF_MODULE_ID_WMA, &msg)) {
 		sms_log(mac_ctx, LOGE,
 			FL("Failed to post WMA_UPDATE_WEP_DEFAULT_KEY to WMA"));
 		qdf_mem_free(update_key);
@@ -5380,7 +5382,7 @@ QDF_STATUS sme_get_link_status(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tAniGetLinkStatus *pMsg;
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -5399,13 +5401,13 @@ QDF_STATUS sme_get_link_status(tHalHandle hHal,
 		pMac->sme.linkStatusContext = pContext;
 		pMac->sme.linkStatusCallback = callback;
 
-		cds_message.type = WMA_LINK_STATUS_GET_REQ;
-		cds_message.bodyptr = pMsg;
-		cds_message.reserved = 0;
+		message.type = WMA_LINK_STATUS_GET_REQ;
+		message.bodyptr = pMsg;
+		message.reserved = 0;
 
 		if (!QDF_IS_STATUS_SUCCESS
-			    (cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message))) {
+			    (scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message))) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Post LINK STATUS MSG fail", __func__);
 			qdf_mem_free(pMsg);
@@ -5518,7 +5520,7 @@ QDF_STATUS sme_change_country_code(tHalHandle hHal,
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	tAniChangeCountryCodeReq *pMsg;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
@@ -5562,7 +5564,7 @@ QDF_STATUS sme_change_country_code(tHalHandle hHal,
 		msg.reserved = 0;
 
 		if (QDF_STATUS_SUCCESS !=
-		    cds_mq_post_message(QDF_MODULE_ID_SME, &msg)) {
+		    scheduler_post_msg(QDF_MODULE_ID_SME, &msg)) {
 			sms_log(pMac, LOGE,
 				" sme_change_country_code failed to post msg to self ");
 			qdf_mem_free((void *)pMsg);
@@ -5598,7 +5600,7 @@ QDF_STATUS sme_generic_change_country_code(tHalHandle hHal,
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	tAniGenericChangeCountryCodeReq *pMsg;
 
 	if (NULL == pMac) {
@@ -5630,7 +5632,7 @@ QDF_STATUS sme_generic_change_country_code(tHalHandle hHal,
 		msg.reserved = 0;
 
 		if (QDF_STATUS_SUCCESS !=
-		    cds_mq_post_message(QDF_MODULE_ID_SME, &msg)) {
+		    scheduler_post_msg(QDF_MODULE_ID_SME, &msg)) {
 			sms_log(pMac, LOGE,
 				"sme_generic_change_country_code failed to post msg to self");
 			qdf_mem_free(pMsg);
@@ -5668,7 +5670,7 @@ QDF_STATUS sme_dhcp_start_ind(tHalHandle hHal,
 	QDF_STATUS status;
 	QDF_STATUS qdf_status;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	tAniDHCPInd *pMsg;
 	tCsrRoamSession *pSession;
 
@@ -5700,13 +5702,13 @@ QDF_STATUS sme_dhcp_start_ind(tHalHandle hHal,
 		qdf_copy_macaddr(&pMsg->peerMacAddr,
 				 &pSession->connectedProfile.bssid);
 
-		cds_message.type = WMA_DHCP_START_IND;
-		cds_message.bodyptr = pMsg;
-		cds_message.reserved = 0;
+		message.type = WMA_DHCP_START_IND;
+		message.bodyptr = pMsg;
+		message.reserved = 0;
 		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 sessionId, cds_message.type));
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+				 sessionId, message.type));
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Post DHCP Start MSG fail", __func__);
@@ -5741,7 +5743,7 @@ QDF_STATUS sme_dhcp_stop_ind(tHalHandle hHal,
 	QDF_STATUS status;
 	QDF_STATUS qdf_status;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	tAniDHCPInd *pMsg;
 	tCsrRoamSession *pSession;
 
@@ -5774,13 +5776,13 @@ QDF_STATUS sme_dhcp_stop_ind(tHalHandle hHal,
 		qdf_copy_macaddr(&pMsg->peerMacAddr,
 				 &pSession->connectedProfile.bssid);
 
-		cds_message.type = WMA_DHCP_STOP_IND;
-		cds_message.bodyptr = pMsg;
-		cds_message.reserved = 0;
+		message.type = WMA_DHCP_STOP_IND;
+		message.bodyptr = pMsg;
+		message.reserved = 0;
 		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 sessionId, cds_message.type));
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+				 sessionId, message.type));
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Post DHCP Stop MSG fail", __func__);
@@ -5809,7 +5811,7 @@ QDF_STATUS sme_tx_fail_monitor_start_stop_ind(tHalHandle hHal, uint8_t tx_fail_c
 	QDF_STATUS status;
 	QDF_STATUS qdf_status;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	tAniTXFailMonitorInd *pMsg;
 
 	status = sme_acquire_global_lock(&pMac->sme);
@@ -5830,12 +5832,12 @@ QDF_STATUS sme_tx_fail_monitor_start_stop_ind(tHalHandle hHal, uint8_t tx_fail_c
 		pMsg->tx_fail_count = tx_fail_count;
 		pMsg->txFailIndCallback = txFailIndCallback;
 
-		cds_message.type = WMA_TX_FAIL_MONITOR_IND;
-		cds_message.bodyptr = pMsg;
-		cds_message.reserved = 0;
+		message.type = WMA_TX_FAIL_MONITOR_IND;
+		message.bodyptr = pMsg;
+		message.reserved = 0;
 
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Post TX Fail monitor Start MSG fail",
@@ -6362,7 +6364,7 @@ QDF_STATUS sme_set_gtk_offload(tHalHandle hHal,
 			       uint8_t sessionId)
 {
 	tpSirGtkOffloadParams request_buf;
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
 
@@ -6394,7 +6396,7 @@ QDF_STATUS sme_set_gtk_offload(tHalHandle hHal,
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
 			 sessionId, msg.type));
 	if (!QDF_IS_STATUS_SUCCESS
-		    (cds_mq_post_message(QDF_MODULE_ID_WMA, &msg))) {
+		    (scheduler_post_msg(QDF_MODULE_ID_WMA, &msg))) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("Not able to post SIR_HAL_SET_GTK_OFFLOAD message to HAL"));
 		qdf_mem_free(request_buf);
@@ -6418,7 +6420,7 @@ QDF_STATUS sme_get_gtk_offload(tHalHandle hHal,
 			       void *callback_context, uint8_t session_id)
 {
 	tpSirGtkOffloadGetInfoRspParams request_buf;
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, session_id);
 
@@ -6462,7 +6464,7 @@ QDF_STATUS sme_get_gtk_offload(tHalHandle hHal,
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
 			 session_id, msg.type));
 	if (!QDF_IS_STATUS_SUCCESS
-		    (cds_mq_post_message(QDF_MODULE_ID_WMA, &msg))) {
+		    (scheduler_post_msg(QDF_MODULE_ID_WMA, &msg))) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Not able to post WMA_GTK_OFFLOAD_GETINFO_REQ message to WMA"));
 		qdf_mem_free(request_buf);
@@ -6484,7 +6486,7 @@ QDF_STATUS sme_set_keep_alive(tHalHandle hHal, uint8_t session_id,
 			      tpSirKeepAliveReq request)
 {
 	tpSirKeepAliveReq request_buf;
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, session_id);
 
@@ -6517,7 +6519,7 @@ QDF_STATUS sme_set_keep_alive(tHalHandle hHal, uint8_t session_id,
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
 			 session_id, msg.type));
 	if (QDF_STATUS_SUCCESS !=
-			cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
+			scheduler_post_msg(QDF_MODULE_ID_WMA, &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				FL("Not able to post WMA_SET_KEEP_ALIVE message to WMA"));
 		qdf_mem_free(request_buf);
@@ -6837,7 +6839,7 @@ QDF_STATUS sme_remain_on_channel(tHalHandle hHal, uint8_t session_id,
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hHal);
 	uint32_t san_req_id, scan_count;
 	struct ani_roc_req *roc_msg;
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
@@ -6875,7 +6877,7 @@ QDF_STATUS sme_remain_on_channel(tHalHandle hHal, uint8_t session_id,
 	msg.reserved = 0;
 	msg.bodyval = 0;
 	if (QDF_STATUS_SUCCESS !=
-		cds_mq_post_message(QDF_MODULE_ID_SME, &msg)) {
+		scheduler_post_msg(QDF_MODULE_ID_SME, &msg)) {
 		sms_log(mac_ctx, LOGE,
 			" sme_scan_req failed to post msg");
 		qdf_mem_free(roc_msg);
@@ -7056,19 +7058,19 @@ QDF_STATUS sme_configure_rxp_filter(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 			 TRACE_CODE_SME_RX_HDD_CONFIG_RXPFIL, NO_SESSION, 0));
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* serialize the req through MC thread */
-		cds_message.bodyptr = wlanRxpFilterParam;
-		cds_message.type = WMA_CFG_RXP_FILTER_REQ;
+		message.bodyptr = wlanRxpFilterParam;
+		message.type = WMA_CFG_RXP_FILTER_REQ;
 		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 NO_SESSION, cds_message.type));
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+				 NO_SESSION, message.type));
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			status = QDF_STATUS_E_FAILURE;
 		}
@@ -7106,7 +7108,7 @@ QDF_STATUS sme_configure_suspend_ind(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 			 TRACE_CODE_SME_RX_HDD_CONFIG_SUSPENDIND, NO_SESSION,
@@ -7118,12 +7120,12 @@ QDF_STATUS sme_configure_suspend_ind(tHalHandle hHal,
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* serialize the req through MC thread */
-		cds_message.bodyval = conn_state_mask;
-		cds_message.type = WMA_WLAN_SUSPEND_IND;
+		message.bodyval = conn_state_mask;
+		message.type = WMA_WLAN_SUSPEND_IND;
 		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 NO_SESSION, cds_message.type));
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+				 NO_SESSION, message.type));
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			pMac->readyToSuspendCallback = NULL;
 			pMac->readyToSuspendContext = NULL;
@@ -7158,7 +7160,7 @@ QDF_STATUS sme_configure_resume_req(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 			 TRACE_CODE_SME_RX_HDD_CONFIG_RESUMEREQ, NO_SESSION,
@@ -7166,12 +7168,12 @@ QDF_STATUS sme_configure_resume_req(tHalHandle hHal,
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* serialize the req through MC thread */
-		cds_message.bodyptr = wlanResumeParam;
-		cds_message.type = WMA_WLAN_RESUME_REQ;
+		message.bodyptr = wlanResumeParam;
+		message.type = WMA_WLAN_RESUME_REQ;
 		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 NO_SESSION, cds_message.type));
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+				 NO_SESSION, message.type));
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			status = QDF_STATUS_E_FAILURE;
 		}
@@ -7199,7 +7201,7 @@ QDF_STATUS sme_configure_ext_wow(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	tpSirExtWoWParams MsgPtr = qdf_mem_malloc(sizeof(*MsgPtr));
 
 	if (!MsgPtr)
@@ -7216,10 +7218,10 @@ QDF_STATUS sme_configure_ext_wow(tHalHandle hHal,
 
 		/* serialize the req through MC thread */
 		qdf_mem_copy(MsgPtr, wlanExtParams, sizeof(*MsgPtr));
-		cds_message.bodyptr = MsgPtr;
-		cds_message.type = WMA_WLAN_EXT_WOW;
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+		message.bodyptr = MsgPtr;
+		message.type = WMA_WLAN_EXT_WOW;
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			pMac->readyToExtWoWCallback = NULL;
 			pMac->readyToExtWoWContext = NULL;
@@ -7258,7 +7260,7 @@ QDF_STATUS sme_configure_app_type1_params(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	tpSirAppType1Params MsgPtr = qdf_mem_malloc(sizeof(*MsgPtr));
 
 	if (!MsgPtr)
@@ -7272,10 +7274,10 @@ QDF_STATUS sme_configure_app_type1_params(tHalHandle hHal,
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* serialize the req through MC thread */
 		qdf_mem_copy(MsgPtr, wlanAppType1Params, sizeof(*MsgPtr));
-		cds_message.bodyptr = MsgPtr;
-		cds_message.type = WMA_WLAN_SET_APP_TYPE1_PARAMS;
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+		message.bodyptr = MsgPtr;
+		message.type = WMA_WLAN_SET_APP_TYPE1_PARAMS;
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			qdf_mem_free(MsgPtr);
 			status = QDF_STATUS_E_FAILURE;
@@ -7310,7 +7312,7 @@ QDF_STATUS sme_configure_app_type2_params(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	tpSirAppType2Params MsgPtr = qdf_mem_malloc(sizeof(*MsgPtr));
 
 	if (!MsgPtr)
@@ -7324,10 +7326,10 @@ QDF_STATUS sme_configure_app_type2_params(tHalHandle hHal,
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* serialize the req through MC thread */
 		qdf_mem_copy(MsgPtr, wlanAppType2Params, sizeof(*MsgPtr));
-		cds_message.bodyptr = MsgPtr;
-		cds_message.type = WMA_WLAN_SET_APP_TYPE2_PARAMS;
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+		message.bodyptr = MsgPtr;
+		message.type = WMA_WLAN_SET_APP_TYPE2_PARAMS;
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			qdf_mem_free(MsgPtr);
 			status = QDF_STATUS_E_FAILURE;
@@ -7631,7 +7633,7 @@ QDF_STATUS sme_reset_tsfcb(tHalHandle h_hal)
 QDF_STATUS sme_set_tsf_gpio(tHalHandle h_hal, uint32_t pinvalue)
 {
 	QDF_STATUS status;
-	cds_msg_t tsf_msg = {0};
+	struct scheduler_msg tsf_msg = {0};
 	tpAniSirGlobal mac = PMAC_STRUCT(h_hal);
 
 	status = sme_acquire_global_lock(&mac->sme);
@@ -7640,7 +7642,7 @@ QDF_STATUS sme_set_tsf_gpio(tHalHandle h_hal, uint32_t pinvalue)
 		tsf_msg.reserved = 0;
 		tsf_msg.bodyval = pinvalue;
 
-		status = cds_mq_post_message(QDF_MODULE_ID_WMA, &tsf_msg);
+		status = scheduler_post_msg(QDF_MODULE_ID_WMA, &tsf_msg);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			sms_log(mac, LOGE, "Unable to post WMA_TSF_GPIO_PIN");
 			status = QDF_STATUS_E_FAILURE;
@@ -7942,7 +7944,7 @@ QDF_STATUS sme_8023_multicast_list(tHalHandle hHal, uint8_t sessionId,
 				   tpSirRcvFltMcAddrList pMulticastAddrs)
 {
 	tpSirRcvFltMcAddrList request_buf;
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tCsrRoamSession *pSession = NULL;
 
@@ -7995,7 +7997,7 @@ QDF_STATUS sme_8023_multicast_list(tHalHandle hHal, uint8_t sessionId,
 	msg.bodyptr = request_buf;
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
 			 sessionId, msg.type));
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA,
+	if (QDF_STATUS_SUCCESS != scheduler_post_msg(QDF_MODULE_ID_WMA,
 						      &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Not able to "
@@ -8014,7 +8016,7 @@ QDF_STATUS sme_receive_filter_set_filter(tHalHandle hHal,
 {
 	tpSirRcvPktFilterCfgType request_buf;
 	int32_t allocSize;
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
 	uint8_t idx = 0;
@@ -8093,7 +8095,7 @@ QDF_STATUS sme_receive_filter_set_filter(tHalHandle hHal,
 
 	}
 
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA,
+	if (QDF_STATUS_SUCCESS != scheduler_post_msg(QDF_MODULE_ID_WMA,
 						      &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Not able to post "
@@ -8111,7 +8113,7 @@ QDF_STATUS sme_receive_filter_clear_filter(tHalHandle hHal,
 					   pRcvFltPktClearParam, uint8_t sessionId)
 {
 	tpSirRcvFltPktClearParam request_buf;
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
 
@@ -8145,7 +8147,7 @@ QDF_STATUS sme_receive_filter_clear_filter(tHalHandle hHal,
 	msg.bodyptr = request_buf;
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
 			 sessionId, msg.type));
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA,
+	if (QDF_STATUS_SUCCESS != scheduler_post_msg(QDF_MODULE_ID_WMA,
 						      &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Not able to post "
@@ -8243,7 +8245,7 @@ QDF_STATUS sme_get_freq_band(tHalHandle hHal, eCsrBand *pBand)
    ----------------------------------------------------------------------------*/
 QDF_STATUS sme_set_max_tx_power_per_band(eCsrBand band, int8_t dB)
 {
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	tpMaxTxPowerPerBandParams pMaxTxPowerPerBandParams = NULL;
 
 	pMaxTxPowerPerBandParams =
@@ -8263,7 +8265,7 @@ QDF_STATUS sme_set_max_tx_power_per_band(eCsrBand band, int8_t dB)
 	msg.bodyptr = pMaxTxPowerPerBandParams;
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
 			 NO_SESSION, msg.type));
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA,
+	if (QDF_STATUS_SUCCESS != scheduler_post_msg(QDF_MODULE_ID_WMA,
 						      &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s:Not able to post WMA_SET_MAX_TX_POWER_PER_BAND_REQ",
@@ -8292,7 +8294,7 @@ QDF_STATUS sme_set_max_tx_power_per_band(eCsrBand band, int8_t dB)
 QDF_STATUS sme_set_max_tx_power(tHalHandle hHal, struct qdf_mac_addr pBssid,
 				struct qdf_mac_addr pSelfMacAddress, int8_t dB)
 {
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	tpMaxTxPowerParams pMaxTxParams = NULL;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
@@ -8313,7 +8315,7 @@ QDF_STATUS sme_set_max_tx_power(tHalHandle hHal, struct qdf_mac_addr pBssid,
 	msg.reserved = 0;
 	msg.bodyptr = pMaxTxParams;
 
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA,
+	if (QDF_STATUS_SUCCESS != scheduler_post_msg(QDF_MODULE_ID_WMA,
 						      &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Not able to post WMA_SET_MAX_TX_POWER_REQ message to WMA",
@@ -8337,7 +8339,7 @@ QDF_STATUS sme_set_max_tx_power(tHalHandle hHal, struct qdf_mac_addr pBssid,
    ---------------------------------------------------------------------------*/
 QDF_STATUS sme_set_custom_mac_addr(tSirMacAddr customMacAddr)
 {
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	tSirMacAddr *pBaseMacAddr;
 
 	pBaseMacAddr = qdf_mem_malloc(sizeof(tSirMacAddr));
@@ -8353,7 +8355,7 @@ QDF_STATUS sme_set_custom_mac_addr(tSirMacAddr customMacAddr)
 	msg.reserved = 0;
 	msg.bodyptr = pBaseMacAddr;
 
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA,
+	if (QDF_STATUS_SUCCESS != scheduler_post_msg(QDF_MODULE_ID_WMA,
 						      &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL
@@ -8379,7 +8381,7 @@ QDF_STATUS sme_set_tx_power(tHalHandle hHal, uint8_t sessionId,
 			   struct qdf_mac_addr pBSSId,
 			   enum tQDF_ADAPTER_MODE dev_mode, int dBm)
 {
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	tpMaxTxPowerParams pTxParams = NULL;
 	int8_t power = (int8_t) dBm;
 
@@ -8408,7 +8410,7 @@ QDF_STATUS sme_set_tx_power(tHalHandle hHal, uint8_t sessionId,
 	msg.reserved = 0;
 	msg.bodyptr = pTxParams;
 
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA,
+	if (QDF_STATUS_SUCCESS != scheduler_post_msg(QDF_MODULE_ID_WMA,
 						      &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: failed to post WMA_SET_TX_POWER_REQ to WMA",
@@ -8473,7 +8475,7 @@ QDF_STATUS sme_set_tm_level(tHalHandle hHal, uint16_t newTMLevel, uint16_t tmMod
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	tAniSetTmLevelReq *setTmLevelReq = NULL;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
@@ -8495,12 +8497,12 @@ QDF_STATUS sme_set_tm_level(tHalHandle hHal, uint16_t newTMLevel, uint16_t tmMod
 		setTmLevelReq->newTmLevel = newTMLevel;
 
 		/* serialize the req through MC thread */
-		cds_message.bodyptr = setTmLevelReq;
-		cds_message.type = WMA_SET_TM_LEVEL_REQ;
+		message.bodyptr = setTmLevelReq;
+		message.type = WMA_SET_TM_LEVEL_REQ;
 		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 NO_SESSION, cds_message.type));
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+				 NO_SESSION, message.type));
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Post Set TM Level MSG fail", __func__);
@@ -10431,7 +10433,7 @@ QDF_STATUS sme_update_fw_tdls_state(tHalHandle hHal, void *psmeTdlsParams,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = NULL;
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 
 	pMac = PMAC_STRUCT(hHal);
 	if (NULL == pMac) {
@@ -10448,9 +10450,9 @@ QDF_STATUS sme_update_fw_tdls_state(tHalHandle hHal, void *psmeTdlsParams,
 	}
 
 	/* serialize the req through MC thread */
-	cds_message.bodyptr = psmeTdlsParams;
-	cds_message.type = WMA_UPDATE_FW_TDLS_STATE;
-	qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_message);
+	message.bodyptr = psmeTdlsParams;
+	message.type = WMA_UPDATE_FW_TDLS_STATE;
+	qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		status = QDF_STATUS_E_FAILURE;
 
@@ -10478,7 +10480,7 @@ QDF_STATUS sme_update_tdls_peer_state(tHalHandle hHal,
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tTdlsPeerStateParams *pTdlsPeerStateParams = NULL;
 	tTdlsPeerCapParams *peer_cap = NULL;
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	uint8_t num;
 	uint8_t peer_chan_len;
 	uint8_t chanId;
@@ -10586,14 +10588,14 @@ QDF_STATUS sme_update_tdls_peer_state(tHalHandle hHal,
 	peer_cap->opClassForPrefOffChan =
 		peerStateParams->peerCap.opClassForPrefOffChan;
 
-	cds_message.type = WMA_UPDATE_TDLS_PEER_STATE;
-	cds_message.reserved = 0;
-	cds_message.bodyptr = pTdlsPeerStateParams;
+	message.type = WMA_UPDATE_TDLS_PEER_STATE;
+	message.reserved = 0;
+	message.bodyptr = pTdlsPeerStateParams;
 
-	qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_message);
+	qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL("cds_mq_post_message failed "));
+			FL("scheduler_post_msg failed "));
 		goto error_return;
 	} else {
 		goto success_return;
@@ -10623,7 +10625,7 @@ QDF_STATUS sme_send_tdls_chan_switch_req(tHalHandle hal,
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac = PMAC_STRUCT(hal);
 	tdls_chan_switch_params *chan_switch_params = NULL;
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 			 TRACE_CODE_SME_RX_HDD_TDLS_CHAN_SWITCH_REQ,
@@ -10672,11 +10674,11 @@ QDF_STATUS sme_send_tdls_chan_switch_req(tHalHandle hal,
 		chan_switch_params->tdls_off_ch_bw_offset,
 		chan_switch_params->oper_class);
 
-	cds_message.type = WMA_TDLS_SET_OFFCHAN_MODE;
-	cds_message.reserved = 0;
-	cds_message.bodyptr = chan_switch_params;
+	message.type = WMA_TDLS_SET_OFFCHAN_MODE;
+	message.reserved = 0;
+	message.bodyptr = chan_switch_params;
 
-	qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_message);
+	qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("Message Post failed status=%d"),
@@ -10698,7 +10700,7 @@ QDF_STATUS sme_get_link_speed(tHalHandle hHal, tSirLinkSpeedInfo *lsReq,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
@@ -10714,10 +10716,10 @@ QDF_STATUS sme_get_link_speed(tHalHandle hHal, tSirLinkSpeedInfo *lsReq,
 			pMac->sme.pLinkSpeedIndCb = pCallbackfn;
 		}
 		/* serialize the req through MC thread */
-		cds_message.bodyptr = lsReq;
-		cds_message.type = WMA_GET_LINK_SPEED;
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+		message.bodyptr = lsReq;
+		message.type = WMA_GET_LINK_SPEED;
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Post Link Speed msg fail", __func__);
@@ -10829,7 +10831,7 @@ QDF_STATUS sme_ipa_offload_enable_disable(tHalHandle hal, uint8_t session_id,
 	tpAniSirGlobal pMac = PMAC_STRUCT(hal);
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct sir_ipa_offload_enable_disable *request_buf;
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
@@ -10849,7 +10851,7 @@ QDF_STATUS sme_ipa_offload_enable_disable(tHalHandle hal, uint8_t session_id,
 		msg.reserved = 0;
 		msg.bodyptr  = request_buf;
 		if (!QDF_IS_STATUS_SUCCESS(
-				cds_mq_post_message(QDF_MODULE_ID_WMA, &msg))) {
+				scheduler_post_msg(QDF_MODULE_ID_WMA, &msg))) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  FL("Not able to post WMA_IPA_OFFLOAD_ENABLE_DISABLE message to WMA"));
 			qdf_mem_free(request_buf);
@@ -10894,7 +10896,7 @@ QDF_STATUS sme_lphb_config_req
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 			 TRACE_CODE_SME_RX_HDD_LPHB_CONFIG_REQ,
@@ -10913,12 +10915,12 @@ QDF_STATUS sme_lphb_config_req
 		}
 
 		/* serialize the req through MC thread */
-		cds_message.bodyptr = lphdReq;
-		cds_message.type = WMA_LPHB_CONF_REQ;
+		message.bodyptr = lphdReq;
+		message.type = WMA_LPHB_CONF_REQ;
 		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 NO_SESSION, cds_message.type));
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+				 NO_SESSION, message.type));
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Post Config LPHB MSG fail", __func__);
@@ -10969,7 +10971,7 @@ sme_add_periodic_tx_ptrn(tHalHandle hal,
 	QDF_STATUS status   = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac  = PMAC_STRUCT(hal);
 	struct sSirAddPeriodicTxPtrn *req_msg;
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 
 	sms_log(mac, LOG1, FL("enter"));
 
@@ -10995,10 +10997,10 @@ sme_add_periodic_tx_ptrn(tHalHandle hal,
 	msg.type    = WMA_ADD_PERIODIC_TX_PTRN_IND;
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
 			 NO_SESSION, msg.type));
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac, LOGE,
-			FL("cds_mq_post_message failed!(err=%d)"),
+			FL("scheduler_post_msg failed!(err=%d)"),
 			status);
 		qdf_mem_free(req_msg);
 	}
@@ -11020,7 +11022,7 @@ sme_del_periodic_tx_ptrn(tHalHandle hal,
 	QDF_STATUS status    = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac   = PMAC_STRUCT(hal);
 	struct sSirDelPeriodicTxPtrn *req_msg;
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 
 	sms_log(mac, LOG1, FL("enter"));
 
@@ -11046,10 +11048,10 @@ sme_del_periodic_tx_ptrn(tHalHandle hal,
 	msg.type    = WMA_DEL_PERIODIC_TX_PTRN_IND;
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
 			 NO_SESSION, msg.type));
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac, LOGE,
-			FL("cds_mq_post_message failed!(err=%d)"),
+			FL("scheduler_post_msg failed!(err=%d)"),
 			status);
 		qdf_mem_free(req_msg);
 	}
@@ -11068,16 +11070,16 @@ QDF_STATUS sme_enable_rmc(tHalHandle hHal, uint32_t sessionId)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
 	sms_log(pMac, LOG1, FL("enable RMC"));
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		cds_message.bodyptr = NULL;
-		cds_message.type = WMA_RMC_ENABLE_IND;
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+		message.bodyptr = NULL;
+		message.type = WMA_RMC_ENABLE_IND;
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: failed to post message to WMA",
@@ -11100,16 +11102,16 @@ QDF_STATUS sme_disable_rmc(tHalHandle hHal, uint32_t sessionId)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
 	sms_log(pMac, LOG1, FL("disable RMC"));
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		cds_message.bodyptr = NULL;
-		cds_message.type = WMA_RMC_DISABLE_IND;
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+		message.bodyptr = NULL;
+		message.type = WMA_RMC_DISABLE_IND;
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: failed to post message to WMA",
@@ -11133,14 +11135,14 @@ QDF_STATUS sme_send_rmc_action_period(tHalHandle hHal, uint32_t sessionId)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
-		cds_message.bodyptr = NULL;
-		cds_message.type = WMA_RMC_ACTION_PERIOD_IND;
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+		message.bodyptr = NULL;
+		message.type = WMA_RMC_ACTION_PERIOD_IND;
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: failed to post message to WMA",
@@ -11170,7 +11172,7 @@ QDF_STATUS sme_request_ibss_peer_info(tHalHandle hHal, void *pUserData,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	tSirIbssGetPeerInfoReqParams *pIbssInfoReqParams;
 
 	status = sme_acquire_global_lock(&pMac->sme);
@@ -11190,12 +11192,12 @@ QDF_STATUS sme_request_ibss_peer_info(tHalHandle hHal, void *pUserData,
 		pIbssInfoReqParams->allPeerInfoReqd = allPeerInfoReqd;
 		pIbssInfoReqParams->staIdx = staIdx;
 
-		cds_message.type = WMA_GET_IBSS_PEER_INFO_REQ;
-		cds_message.bodyptr = pIbssInfoReqParams;
-		cds_message.reserved = 0;
+		message.type = WMA_GET_IBSS_PEER_INFO_REQ;
+		message.bodyptr = pIbssInfoReqParams;
+		message.reserved = 0;
 
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (QDF_STATUS_SUCCESS != qdf_status) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Post WMA_GET_IBSS_PEER_INFO_REQ MSG failed",
@@ -11221,14 +11223,14 @@ QDF_STATUS sme_send_cesium_enable_ind(tHalHandle hHal, uint32_t sessionId)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
-		cds_message.bodyptr = NULL;
-		cds_message.type = WMA_IBSS_CESIUM_ENABLE_IND;
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+		message.bodyptr = NULL;
+		message.type = WMA_IBSS_CESIUM_ENABLE_IND;
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: failed to post message to WMA",
@@ -11360,7 +11362,7 @@ QDF_STATUS sme_ocb_set_config(tHalHandle hHal, void *context,
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t msg = {0};
+	struct scheduler_msg msg = {0};
 	struct sir_ocb_config *msg_body;
 
 	/* Lock the SME structure */
@@ -11391,7 +11393,7 @@ QDF_STATUS sme_ocb_set_config(tHalHandle hHal, void *context,
 	pMac->sme.ocb_set_config_callback = callback;
 	pMac->sme.ocb_set_config_context = context;
 
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 		      FL("Error posting message to WDA: %d"), status);
@@ -11418,7 +11420,7 @@ QDF_STATUS sme_ocb_set_utc_time(tHalHandle hHal, struct sir_ocb_utc *utc)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t msg = {0};
+	struct scheduler_msg msg = {0};
 	struct sir_ocb_utc *sme_utc;
 
 	/* Lock the SME structure */
@@ -11438,7 +11440,7 @@ QDF_STATUS sme_ocb_set_utc_time(tHalHandle hHal, struct sir_ocb_utc *utc)
 	msg.type = WMA_OCB_SET_UTC_TIME_CMD;
 	msg.reserved = 0;
 	msg.bodyptr = sme_utc;
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Not able to post message to WDA"));
@@ -11464,7 +11466,7 @@ QDF_STATUS sme_ocb_start_timing_advert(tHalHandle hHal,
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t msg = {0};
+	struct scheduler_msg msg = {0};
 	void *buf;
 	struct sir_ocb_timing_advert *sme_timing_advert;
 
@@ -11491,7 +11493,7 @@ QDF_STATUS sme_ocb_start_timing_advert(tHalHandle hHal,
 	msg.type = WMA_OCB_START_TIMING_ADVERT_CMD;
 	msg.reserved = 0;
 	msg.bodyptr = buf;
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Not able to post msg to WDA"));
@@ -11516,7 +11518,7 @@ QDF_STATUS sme_ocb_stop_timing_advert(tHalHandle hHal,
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t msg = {0};
+	struct scheduler_msg msg = {0};
 	struct sir_ocb_timing_advert *sme_timing_advert;
 
 	/* Lock the SME structure */
@@ -11536,7 +11538,7 @@ QDF_STATUS sme_ocb_stop_timing_advert(tHalHandle hHal,
 	msg.type = WMA_OCB_STOP_TIMING_ADVERT_CMD;
 	msg.reserved = 0;
 	msg.bodyptr = sme_timing_advert;
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Not able to post msg to WDA"));
@@ -11587,7 +11589,7 @@ QDF_STATUS sme_ocb_get_tsf_timer(tHalHandle hHal, void *context,
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t msg = {0};
+	struct scheduler_msg msg = {0};
 	struct sir_ocb_get_tsf_timer *msg_body;
 
 	/* Lock the SME structure */
@@ -11611,7 +11613,7 @@ QDF_STATUS sme_ocb_get_tsf_timer(tHalHandle hHal, void *context,
 	pMac->sme.ocb_get_tsf_timer_context = context;
 
 	/* Post the message to WDA */
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Error posting message to WDA: %d"), status);
@@ -11642,7 +11644,7 @@ QDF_STATUS sme_dcc_get_stats(tHalHandle hHal, void *context,
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t msg = {0};
+	struct scheduler_msg msg = {0};
 	struct sir_dcc_get_stats *msg_body;
 
 	/* Lock the SME structure */
@@ -11669,7 +11671,7 @@ QDF_STATUS sme_dcc_get_stats(tHalHandle hHal, void *context,
 	pMac->sme.dcc_get_stats_callback = callback;
 	pMac->sme.dcc_get_stats_context = context;
 
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Error posting message to WDA: %d"), status);
@@ -11698,7 +11700,7 @@ QDF_STATUS sme_dcc_clear_stats(tHalHandle hHal, uint32_t vdev_id,
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t msg = {0};
+	struct scheduler_msg msg = {0};
 	struct sir_dcc_clear_stats *request;
 
 	/* Lock the SME structure */
@@ -11720,7 +11722,7 @@ QDF_STATUS sme_dcc_clear_stats(tHalHandle hHal, uint32_t vdev_id,
 	msg.type = WMA_DCC_CLEAR_STATS_CMD;
 	msg.bodyptr = request;
 
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Not able to post msg to WDA"));
@@ -11749,7 +11751,7 @@ QDF_STATUS sme_dcc_update_ndl(tHalHandle hHal, void *context,
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t msg = {0};
+	struct scheduler_msg msg = {0};
 	struct sir_dcc_update_ndl *msg_body;
 
 	/* Lock the SME structure */
@@ -11786,7 +11788,7 @@ QDF_STATUS sme_dcc_update_ndl(tHalHandle hHal, void *context,
 	pMac->sme.dcc_update_ndl_callback = callback;
 	pMac->sme.dcc_update_ndl_context = context;
 
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Error posting message to WDA: %d"), status);
@@ -11982,7 +11984,7 @@ void active_list_cmd_timeout_handle(void *userData)
 
 QDF_STATUS sme_notify_modem_power_state(tHalHandle hHal, uint32_t value)
 {
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	tpSirModemPowerStateInd request_buf;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
@@ -12004,7 +12006,7 @@ QDF_STATUS sme_notify_modem_power_state(tHalHandle hHal, uint32_t value)
 	msg.reserved = 0;
 	msg.bodyptr = request_buf;
 	if (!QDF_IS_STATUS_SUCCESS
-		    (cds_mq_post_message(QDF_MODULE_ID_WMA, &msg))) {
+		    (scheduler_post_msg(QDF_MODULE_ID_WMA, &msg))) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Not able to post WMA_MODEM_POWER_STATE_IND message"
 			  " to WMA", __func__);
@@ -12021,7 +12023,7 @@ QDF_STATUS sme_notify_ht2040_mode(tHalHandle hHal, uint16_t staId,
 				  uint8_t sessionId,
 				  uint8_t channel_type)
 {
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	tUpdateVHTOpMode *pHtOpMode = NULL;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
@@ -12062,7 +12064,7 @@ QDF_STATUS sme_notify_ht2040_mode(tHalHandle hHal, uint16_t staId,
 	msg.reserved = 0;
 	msg.bodyptr = pHtOpMode;
 	if (!QDF_IS_STATUS_SUCCESS
-		    (cds_mq_post_message(QDF_MODULE_ID_WMA, &msg))) {
+		    (scheduler_post_msg(QDF_MODULE_ID_WMA, &msg))) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Not able to post WMA_UPDATE_OP_MODE message"
 			  " to WMA", __func__);
@@ -12237,7 +12239,7 @@ QDF_STATUS sme_send_rate_update_ind(tHalHandle hHal,
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	QDF_STATUS status;
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	tSirRateUpdateInd *rate_upd = qdf_mem_malloc(sizeof(tSirRateUpdateInd));
 
 	if (rate_upd == NULL) {
@@ -12262,7 +12264,7 @@ QDF_STATUS sme_send_rate_update_ind(tHalHandle hHal,
 		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
 				 NO_SESSION, msg.type));
 		if (!QDF_IS_STATUS_SUCCESS
-			    (cds_mq_post_message(QDF_MODULE_ID_WMA, &msg))) {
+			    (scheduler_post_msg(QDF_MODULE_ID_WMA, &msg))) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Not able "
 				  "to post WMA_SET_RMC_RATE_IND to WMA!",
@@ -12341,7 +12343,7 @@ QDF_STATUS sme_update_short_retry_limit_threshold(tHalHandle hal_handle,
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct sme_short_retry_limit *srl;
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 
 	srl = qdf_mem_malloc(sizeof(*srl));
 	if (NULL == srl) {
@@ -12360,7 +12362,7 @@ QDF_STATUS sme_update_short_retry_limit_threshold(tHalHandle hal_handle,
 	msg.type = SIR_HAL_SHORT_RETRY_LIMIT_CNT;
 	msg.reserved = 0;
 	msg.bodyptr = srl;
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
 	if (status != QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("Not able to post short retry limit count to WDA"));
@@ -12388,7 +12390,7 @@ QDF_STATUS sme_update_long_retry_limit_threshold(tHalHandle hal_handle,
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct sme_long_retry_limit *lrl;
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 
 	lrl = qdf_mem_malloc(sizeof(*lrl));
 	if (NULL == lrl) {
@@ -12407,7 +12409,7 @@ QDF_STATUS sme_update_long_retry_limit_threshold(tHalHandle hal_handle,
 	msg.type = SIR_HAL_LONG_RETRY_LIMIT_CNT;
 	msg.reserved = 0;
 	msg.bodyptr = lrl;
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
 
 	if (status != QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -12541,7 +12543,7 @@ QDF_STATUS sme_set_auto_shutdown_timer(tHalHandle hHal, uint32_t timer_val)
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tSirAutoShutdownCmdParams *auto_sh_cmd;
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
@@ -12557,10 +12559,10 @@ QDF_STATUS sme_set_auto_shutdown_timer(tHalHandle hHal, uint32_t timer_val)
 		auto_sh_cmd->timer_val = timer_val;
 
 		/* serialize the req through MC thread */
-		cds_message.bodyptr = auto_sh_cmd;
-		cds_message.type = WMA_SET_AUTO_SHUTDOWN_TIMER_REQ;
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+		message.bodyptr = auto_sh_cmd;
+		message.type = WMA_SET_AUTO_SHUTDOWN_TIMER_REQ;
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Post Auto shutdown MSG fail", __func__);
@@ -12620,7 +12622,7 @@ QDF_STATUS sme_ch_avoid_update_req(tHalHandle hHal)
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tSirChAvoidUpdateReq *cauReq;
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
@@ -12636,10 +12638,10 @@ QDF_STATUS sme_ch_avoid_update_req(tHalHandle hHal)
 		cauReq->reserved_param = 0;
 
 		/* serialize the req through MC thread */
-		cds_message.bodyptr = cauReq;
-		cds_message.type = WMA_CH_AVOID_UPDATE_REQ;
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+		message.bodyptr = cauReq;
+		message.type = WMA_CH_AVOID_UPDATE_REQ;
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Post Ch Avoid Update MSG fail",
@@ -12670,7 +12672,7 @@ QDF_STATUS sme_ch_avoid_update_req(tHalHandle hHal)
  */
 QDF_STATUS sme_set_miracast(tHalHandle hal, uint8_t filter_type)
 {
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	uint32_t *val;
 	tpAniSirGlobal mac_ptr = PMAC_STRUCT(hal);
 
@@ -12688,7 +12690,7 @@ QDF_STATUS sme_set_miracast(tHalHandle hal, uint8_t filter_type)
 	msg.bodyptr = val;
 
 	if (!QDF_IS_STATUS_SUCCESS(
-				cds_mq_post_message(QDF_MODULE_ID_WMA, &msg))) {
+				scheduler_post_msg(QDF_MODULE_ID_WMA, &msg))) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 		    "%s: Not able to post WDA_SET_MAS_ENABLE_DISABLE to WMA!",
 		    __func__);
@@ -12712,7 +12714,7 @@ QDF_STATUS sme_set_miracast(tHalHandle hal, uint8_t filter_type)
  */
 QDF_STATUS sme_set_mas(uint32_t val)
 {
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	uint32_t *ptr_val;
 
 	ptr_val = qdf_mem_malloc(sizeof(*ptr_val));
@@ -12729,7 +12731,7 @@ QDF_STATUS sme_set_mas(uint32_t val)
 	msg.bodyptr = ptr_val;
 
 	if (!QDF_IS_STATUS_SUCCESS(
-				cds_mq_post_message(QDF_MODULE_ID_WMA, &msg))) {
+				scheduler_post_msg(QDF_MODULE_ID_WMA, &msg))) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 		    "%s: Not able to post WDA_SET_MAS_ENABLE_DISABLE to WMA!",
 		    __func__);
@@ -12885,7 +12887,7 @@ QDF_STATUS sme_roam_csa_ie_request(tHalHandle hHal, struct qdf_mac_addr bssid,
 QDF_STATUS sme_init_thermal_info(tHalHandle hHal, tSmeThermalParams thermalParam)
 {
 	t_thermal_mgmt *pWmaParam;
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
 	pWmaParam = (t_thermal_mgmt *) qdf_mem_malloc(sizeof(t_thermal_mgmt));
@@ -12929,7 +12931,7 @@ QDF_STATUS sme_init_thermal_info(tHalHandle hHal, tSmeThermalParams thermalParam
 		msg.bodyptr = pWmaParam;
 
 		if (!QDF_IS_STATUS_SUCCESS
-			    (cds_mq_post_message(QDF_MODULE_ID_WMA, &msg))) {
+			    (scheduler_post_msg(QDF_MODULE_ID_WMA, &msg))) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Not able to post WMA_SET_THERMAL_INFO_CMD to WMA!",
 				  __func__);
@@ -12970,7 +12972,7 @@ void sme_add_set_thermal_level_callback(tHalHandle hal,
  */
 QDF_STATUS sme_set_thermal_level(tHalHandle hal, uint8_t level)
 {
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hal);
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
@@ -12979,7 +12981,7 @@ QDF_STATUS sme_set_thermal_level(tHalHandle hal, uint8_t level)
 		msg.type = WMA_SET_THERMAL_LEVEL;
 		msg.bodyval = level;
 
-		qdf_status =  cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
+		qdf_status =  scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				   "%s: Not able to post WMA_SET_THERMAL_LEVEL to WMA!",
@@ -13004,7 +13006,7 @@ QDF_STATUS sme_txpower_limit(tHalHandle hHal, tSirTxPowerLimit *psmetx)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tSirTxPowerLimit *tx_power_limit;
 
@@ -13020,12 +13022,12 @@ QDF_STATUS sme_txpower_limit(tHalHandle hHal, tSirTxPowerLimit *psmetx)
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		cds_message.type = WMA_TX_POWER_LIMIT;
-		cds_message.reserved = 0;
-		cds_message.bodyptr = tx_power_limit;
+		message.type = WMA_TX_POWER_LIMIT;
+		message.reserved = 0;
+		message.bodyptr = tx_power_limit;
 
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: not able to post WMA_TX_POWER_LIMIT",
@@ -13068,7 +13070,7 @@ QDF_STATUS sme_ap_disable_intra_bss_fwd(tHalHandle hHal, uint8_t sessionId,
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	int status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	tpDisableIntraBssFwd pSapDisableIntraFwd = NULL;
 
 	/* Prepare the request to send to SME. */
@@ -13084,10 +13086,10 @@ QDF_STATUS sme_ap_disable_intra_bss_fwd(tHalHandle hHal, uint8_t sessionId,
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* serialize the req through MC thread */
-		cds_message.bodyptr = pSapDisableIntraFwd;
-		cds_message.type = WMA_SET_SAP_INTRABSS_DIS;
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+		message.bodyptr = pSapDisableIntraFwd;
+		message.type = WMA_SET_SAP_INTRABSS_DIS;
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			status = QDF_STATUS_E_FAILURE;
 			qdf_mem_free(pSapDisableIntraFwd);
@@ -13153,7 +13155,7 @@ void sme_stats_ext_deregister_callback(tHalHandle h_hal)
 ******************************************************************************/
 QDF_STATUS sme_stats_ext_request(uint8_t session_id, tpStatsExtRequestReq input)
 {
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	tpStatsExtRequest data;
 	size_t data_len;
 
@@ -13174,7 +13176,7 @@ QDF_STATUS sme_stats_ext_request(uint8_t session_id, tpStatsExtRequestReq input)
 	msg.reserved = 0;
 	msg.bodyptr = data;
 
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA,
+	if (QDF_STATUS_SUCCESS != scheduler_post_msg(QDF_MODULE_ID_WMA,
 						      &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Not able to post WMA_STATS_EXT_REQUEST message to WMA",
@@ -13584,17 +13586,17 @@ QDF_STATUS sme_ext_scan_get_capabilities(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* Serialize the req through MC thread */
-		cds_message.bodyptr = pReq;
-		cds_message.type = WMA_EXTSCAN_GET_CAPABILITIES_REQ;
+		message.bodyptr = pReq;
+		message.type = WMA_EXTSCAN_GET_CAPABILITIES_REQ;
 		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 NO_SESSION, cds_message.type));
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+				 NO_SESSION, message.type));
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			status = QDF_STATUS_E_FAILURE;
 
@@ -13616,17 +13618,17 @@ QDF_STATUS sme_ext_scan_start(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* Serialize the req through MC thread */
-		cds_message.bodyptr = pStartCmd;
-		cds_message.type = WMA_EXTSCAN_START_REQ;
+		message.bodyptr = pStartCmd;
+		message.type = WMA_EXTSCAN_START_REQ;
 		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 NO_SESSION, cds_message.type));
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+				 NO_SESSION, message.type));
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			status = QDF_STATUS_E_FAILURE;
 
@@ -13647,17 +13649,17 @@ QDF_STATUS sme_ext_scan_stop(tHalHandle hHal, tSirExtScanStopReqParams *pStopReq
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* Serialize the req through MC thread */
-		cds_message.bodyptr = pStopReq;
-		cds_message.type = WMA_EXTSCAN_STOP_REQ;
+		message.bodyptr = pStopReq;
+		message.type = WMA_EXTSCAN_STOP_REQ;
 		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 NO_SESSION, cds_message.type));
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+				 NO_SESSION, message.type));
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			status = QDF_STATUS_E_FAILURE;
 		sme_release_global_lock(&pMac->sme);
@@ -13679,17 +13681,17 @@ QDF_STATUS sme_set_bss_hotlist(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* Serialize the req through MC thread */
-		cds_message.bodyptr = pSetHotListReq;
-		cds_message.type = WMA_EXTSCAN_SET_BSSID_HOTLIST_REQ;
+		message.bodyptr = pSetHotListReq;
+		message.type = WMA_EXTSCAN_SET_BSSID_HOTLIST_REQ;
 		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 NO_SESSION, cds_message.type));
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+				 NO_SESSION, message.type));
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			status = QDF_STATUS_E_FAILURE;
 
@@ -13712,17 +13714,17 @@ QDF_STATUS sme_reset_bss_hotlist(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* Serialize the req through MC thread */
-		cds_message.bodyptr = pResetReq;
-		cds_message.type = WMA_EXTSCAN_RESET_BSSID_HOTLIST_REQ;
+		message.bodyptr = pResetReq;
+		message.type = WMA_EXTSCAN_RESET_BSSID_HOTLIST_REQ;
 		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 NO_SESSION, cds_message.type));
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+				 NO_SESSION, message.type));
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			status = QDF_STATUS_E_FAILURE;
 
@@ -13746,7 +13748,7 @@ QDF_STATUS sme_set_wisa_params(tHalHandle hal,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac = PMAC_STRUCT(hal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	struct sir_wisa_params *cds_msg_wisa_params;
 
 	cds_msg_wisa_params = qdf_mem_malloc(sizeof(struct sir_wisa_params));
@@ -13756,9 +13758,9 @@ QDF_STATUS sme_set_wisa_params(tHalHandle hal,
 	*cds_msg_wisa_params = *wisa_params;
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		cds_message.bodyptr = cds_msg_wisa_params;
-		cds_message.type = WMA_SET_WISA_PARAMS;
-		status = cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_message);
+		message.bodyptr = cds_msg_wisa_params;
+		message.type = WMA_SET_WISA_PARAMS;
+		status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
 		sme_release_global_lock(&mac->sme);
 	}
 	return status;
@@ -13778,17 +13780,17 @@ QDF_STATUS sme_set_significant_change(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* Serialize the req through MC thread */
-		cds_message.bodyptr = pSetSignificantChangeReq;
-		cds_message.type = WMA_EXTSCAN_SET_SIGNF_CHANGE_REQ;
+		message.bodyptr = pSetSignificantChangeReq;
+		message.type = WMA_EXTSCAN_SET_SIGNF_CHANGE_REQ;
 		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 NO_SESSION, cds_message.type));
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+				 NO_SESSION, message.type));
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			status = QDF_STATUS_E_FAILURE;
 
@@ -13811,17 +13813,17 @@ QDF_STATUS sme_reset_significant_change(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* Serialize the req through MC thread */
-		cds_message.bodyptr = pResetReq;
-		cds_message.type = WMA_EXTSCAN_RESET_SIGNF_CHANGE_REQ;
+		message.bodyptr = pResetReq;
+		message.type = WMA_EXTSCAN_RESET_SIGNF_CHANGE_REQ;
 		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 NO_SESSION, cds_message.type));
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+				 NO_SESSION, message.type));
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			status = QDF_STATUS_E_FAILURE;
 
@@ -13844,17 +13846,17 @@ QDF_STATUS sme_get_cached_results(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* Serialize the req through MC thread */
-		cds_message.bodyptr = pCachedResultsReq;
-		cds_message.type = WMA_EXTSCAN_GET_CACHED_RESULTS_REQ;
+		message.bodyptr = pCachedResultsReq;
+		message.type = WMA_EXTSCAN_GET_CACHED_RESULTS_REQ;
 		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 NO_SESSION, cds_message.type));
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+				 NO_SESSION, message.type));
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			status = QDF_STATUS_E_FAILURE;
 
@@ -13878,7 +13880,7 @@ QDF_STATUS sme_set_epno_list(tHalHandle hal,
 {
 	QDF_STATUS status    = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac   = PMAC_STRUCT(hal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	struct wifi_epno_params *req_msg;
 	int len, i;
 
@@ -13929,12 +13931,12 @@ QDF_STATUS sme_set_epno_list(tHalHandle hal,
 	}
 
 	/* Serialize the req through MC thread */
-	cds_message.bodyptr = req_msg;
-	cds_message.type    = WMA_SET_EPNO_LIST_REQ;
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_message);
+	message.bodyptr = req_msg;
+	message.type    = WMA_SET_EPNO_LIST_REQ;
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac, LOGE,
-			FL("cds_mq_post_message failed!(err=%d)"),
+			FL("scheduler_post_msg failed!(err=%d)"),
 			status);
 		qdf_mem_free(req_msg);
 		status = QDF_STATUS_E_FAILURE;
@@ -13958,7 +13960,7 @@ QDF_STATUS sme_set_passpoint_list(tHalHandle hal,
 {
 	QDF_STATUS status  = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac = PMAC_STRUCT(hal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	struct wifi_passpoint_req *req_msg;
 	int len, i;
 
@@ -13998,12 +14000,12 @@ QDF_STATUS sme_set_passpoint_list(tHalHandle hal,
 	}
 
 	/* Serialize the req through MC thread */
-	cds_message.bodyptr = req_msg;
-	cds_message.type    = WMA_SET_PASSPOINT_LIST_REQ;
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_message);
+	message.bodyptr = req_msg;
+	message.type    = WMA_SET_PASSPOINT_LIST_REQ;
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac, LOGE,
-			FL("cds_mq_post_message failed!(err=%d)"),
+			FL("scheduler_post_msg failed!(err=%d)"),
 			status);
 		qdf_mem_free(req_msg);
 		status = QDF_STATUS_E_FAILURE;
@@ -14024,7 +14026,7 @@ QDF_STATUS sme_reset_passpoint_list(tHalHandle hal,
 {
 	QDF_STATUS status   = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac  = PMAC_STRUCT(hal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	struct wifi_passpoint_req *req_msg;
 
 	sms_log(mac, LOG1, FL("enter"));
@@ -14047,12 +14049,12 @@ QDF_STATUS sme_reset_passpoint_list(tHalHandle hal,
 	}
 
 	/* Serialize the req through MC thread */
-	cds_message.bodyptr = req_msg;
-	cds_message.type    = WMA_RESET_PASSPOINT_LIST_REQ;
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_message);
+	message.bodyptr = req_msg;
+	message.type    = WMA_RESET_PASSPOINT_LIST_REQ;
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac, LOGE,
-			FL("cds_mq_post_message failed!(err=%d)"),
+			FL("scheduler_post_msg failed!(err=%d)"),
 			status);
 		qdf_mem_free(req_msg);
 		status = QDF_STATUS_E_FAILURE;
@@ -14074,7 +14076,7 @@ sme_set_ssid_hotlist(tHalHandle hal,
 {
 	QDF_STATUS status   = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac = PMAC_STRUCT(hal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	struct sir_set_ssid_hotlist_request *set_req;
 
 	set_req = qdf_mem_malloc(sizeof(*set_req));
@@ -14087,9 +14089,9 @@ sme_set_ssid_hotlist(tHalHandle hal,
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
 		/* Serialize the req through MC thread */
-		cds_message.bodyptr = set_req;
-		cds_message.type    = WMA_EXTSCAN_SET_SSID_HOTLIST_REQ;
-		status = cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_message);
+		message.bodyptr = set_req;
+		message.type    = WMA_EXTSCAN_SET_SSID_HOTLIST_REQ;
+		status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
 		sme_release_global_lock(&mac->sme);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			qdf_mem_free(set_req);
@@ -14137,7 +14139,7 @@ QDF_STATUS sme_ll_stats_clear_req(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	tSirLLStatsClearReq *clear_stats_req;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
@@ -14161,12 +14163,12 @@ QDF_STATUS sme_ll_stats_clear_req(tHalHandle hHal,
 
 	if (QDF_STATUS_SUCCESS == sme_acquire_global_lock(&pMac->sme)) {
 		/* Serialize the req through MC thread */
-		cds_message.bodyptr = clear_stats_req;
-		cds_message.type = WMA_LINK_LAYER_STATS_CLEAR_REQ;
+		message.bodyptr = clear_stats_req;
+		message.type = WMA_LINK_LAYER_STATS_CLEAR_REQ;
 		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 NO_SESSION, cds_message.type));
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+				 NO_SESSION, message.type));
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: not able to post WMA_LL_STATS_CLEAR_REQ",
@@ -14197,7 +14199,7 @@ QDF_STATUS sme_ll_stats_set_req(tHalHandle hHal, tSirLLStatsSetReq *psetStatsReq
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	tSirLLStatsSetReq *set_stats_req;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
@@ -14220,12 +14222,12 @@ QDF_STATUS sme_ll_stats_set_req(tHalHandle hHal, tSirLLStatsSetReq *psetStatsReq
 
 	if (QDF_STATUS_SUCCESS == sme_acquire_global_lock(&pMac->sme)) {
 		/* Serialize the req through MC thread */
-		cds_message.bodyptr = set_stats_req;
-		cds_message.type = WMA_LINK_LAYER_STATS_SET_REQ;
+		message.bodyptr = set_stats_req;
+		message.type = WMA_LINK_LAYER_STATS_SET_REQ;
 		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 NO_SESSION, cds_message.type));
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+				 NO_SESSION, message.type));
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: not able to post WMA_LL_STATS_SET_REQ",
@@ -14256,7 +14258,7 @@ QDF_STATUS sme_ll_stats_get_req(tHalHandle hHal, tSirLLStatsGetReq *pgetStatsReq
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	tSirLLStatsGetReq *get_stats_req;
 
 	get_stats_req = qdf_mem_malloc(sizeof(*get_stats_req));
@@ -14272,12 +14274,12 @@ QDF_STATUS sme_ll_stats_get_req(tHalHandle hHal, tSirLLStatsGetReq *pgetStatsReq
 
 	if (QDF_STATUS_SUCCESS == sme_acquire_global_lock(&pMac->sme)) {
 		/* Serialize the req through MC thread */
-		cds_message.bodyptr = get_stats_req;
-		cds_message.type = WMA_LINK_LAYER_STATS_GET_REQ;
+		message.bodyptr = get_stats_req;
+		message.type = WMA_LINK_LAYER_STATS_GET_REQ;
 		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 NO_SESSION, cds_message.type));
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+				 NO_SESSION, message.type));
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: not able to post WMA_LL_STATS_GET_REQ",
@@ -14376,7 +14378,7 @@ QDF_STATUS sme_power_debug_stats_req(tHalHandle hal, void (*callback_fn)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -14391,7 +14393,7 @@ QDF_STATUS sme_power_debug_stats_req(tHalHandle hal, void (*callback_fn)
 		mac_ctx->sme.power_stats_resp_callback = callback_fn;
 		msg.bodyptr = NULL;
 		msg.type = WMA_POWER_DEBUG_STATS_REQ;
-		status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
+		status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			sms_log(mac_ctx, LOGE,
 				FL("not able to post WDA_POWER_DEBUG_STATS_REQ"));
@@ -14559,7 +14561,7 @@ QDF_STATUS sme_get_temperature(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
@@ -14575,10 +14577,10 @@ QDF_STATUS sme_get_temperature(tHalHandle hHal,
 			pMac->sme.pGetTemperatureCb = pCallbackfn;
 		}
 		/* serialize the req through MC thread */
-		cds_message.bodyptr = NULL;
-		cds_message.type = WMA_GET_TEMPERATURE_REQ;
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+		message.bodyptr = NULL;
+		message.type = WMA_GET_TEMPERATURE_REQ;
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  FL("Post Get Temperature msg fail"));
@@ -14601,15 +14603,15 @@ QDF_STATUS sme_set_scanning_mac_oui(tHalHandle hHal, tSirScanMacOui *pScanMacOui
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
 		/* Serialize the req through MC thread */
-		cds_message.bodyptr = pScanMacOui;
-		cds_message.type = WMA_SET_SCAN_MAC_OUI_REQ;
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+		message.bodyptr = pScanMacOui;
+		message.type = WMA_SET_SCAN_MAC_OUI_REQ;
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  FL("Msg post Set Scan Mac OUI failed"));
@@ -14631,7 +14633,7 @@ QDF_STATUS sme_set_scanning_mac_oui(tHalHandle hHal, tSirScanMacOui *pScanMacOui
 QDF_STATUS sme_set_dhcp_srv_offload(tHalHandle hHal,
 				    tSirDhcpSrvOffloadInfo *pDhcpSrvInfo)
 {
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	tSirDhcpSrvOffloadInfo *pSmeDhcpSrvInfo;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -14650,12 +14652,12 @@ QDF_STATUS sme_set_dhcp_srv_offload(tHalHandle hHal,
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
 		/* serialize the req through MC thread */
-		cds_message.type = WMA_SET_DHCP_SERVER_OFFLOAD_CMD;
-		cds_message.bodyptr = pSmeDhcpSrvInfo;
+		message.type = WMA_SET_DHCP_SERVER_OFFLOAD_CMD;
+		message.bodyptr = pSmeDhcpSrvInfo;
 
 		if (!QDF_IS_STATUS_SUCCESS
-			    (cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message))) {
+			    (scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message))) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Not able to post WMA_SET_DHCP_SERVER_OFFLOAD_CMD to WMA!",
 				  __func__);
@@ -14687,7 +14689,7 @@ QDF_STATUS sme_set_led_flashing(tHalHandle hHal, uint8_t type,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	tSirLedFlashingReq *ledflashing;
 
 	ledflashing = qdf_mem_malloc(sizeof(*ledflashing));
@@ -14705,10 +14707,10 @@ QDF_STATUS sme_set_led_flashing(tHalHandle hHal, uint8_t type,
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* Serialize the req through MC thread */
-		cds_message.bodyptr = ledflashing;
-		cds_message.type = WMA_LED_FLASHING_REQ;
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
-						 &cds_message);
+		message.bodyptr = ledflashing;
+		message.type = WMA_LED_FLASHING_REQ;
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
+						 &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			status = QDF_STATUS_E_FAILURE;
 		sme_release_global_lock(&pMac->sme);
@@ -14799,7 +14801,7 @@ bool sme_validate_sap_channel_switch(tHalHandle hal,
 QDF_STATUS sme_configure_stats_avg_factor(tHalHandle hal, uint8_t session_id,
 					  uint16_t stats_avg_factor)
 {
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac  = PMAC_STRUCT(hal);
 	struct sir_stats_avg_factor *stats_factor;
@@ -14825,7 +14827,7 @@ QDF_STATUS sme_configure_stats_avg_factor(tHalHandle hal, uint8_t session_id,
 		msg.bodyptr  = stats_factor;
 
 		if (!QDF_IS_STATUS_SUCCESS(
-			    cds_mq_post_message(QDF_MODULE_ID_WMA, &msg))) {
+			    scheduler_post_msg(QDF_MODULE_ID_WMA, &msg))) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Not able to post SIR_HAL_CONFIG_STATS_FACTOR to WMA!",
 				  __func__);
@@ -14856,7 +14858,7 @@ QDF_STATUS sme_configure_stats_avg_factor(tHalHandle hal, uint8_t session_id,
 QDF_STATUS sme_configure_guard_time(tHalHandle hal, uint8_t session_id,
 				    uint32_t guard_time)
 {
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac  = PMAC_STRUCT(hal);
 	struct sir_guard_time_request *g_time;
@@ -14882,7 +14884,7 @@ QDF_STATUS sme_configure_guard_time(tHalHandle hal, uint8_t session_id,
 		msg.bodyptr  = g_time;
 
 		if (!QDF_IS_STATUS_SUCCESS(
-			    cds_mq_post_message(QDF_MODULE_ID_WMA, &msg))) {
+			    scheduler_post_msg(QDF_MODULE_ID_WMA, &msg))) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Not able to post SIR_HAL_CONFIG_GUARD_TIME to WMA!",
 				  __func__);
@@ -14913,7 +14915,7 @@ QDF_STATUS sme_configure_guard_time(tHalHandle hal, uint8_t session_id,
 QDF_STATUS sme_configure_modulated_dtim(tHalHandle h_hal, uint8_t session_id,
 					uint32_t modulated_dtim)
 {
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac  = PMAC_STRUCT(h_hal);
 	wma_cli_set_cmd_t *iwcmd;
@@ -14939,7 +14941,7 @@ QDF_STATUS sme_configure_modulated_dtim(tHalHandle h_hal, uint8_t session_id,
 		msg.bodyptr = (void *)iwcmd;
 
 		if (!QDF_IS_STATUS_SUCCESS(
-			    cds_mq_post_message(QDF_MODULE_ID_WMA, &msg))) {
+			    scheduler_post_msg(QDF_MODULE_ID_WMA, &msg))) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Not able to post GEN_PARAM_DYNAMIC_DTIM to WMA!",
 				  __func__);
@@ -14972,7 +14974,7 @@ QDF_STATUS sme_wifi_start_logger(tHalHandle hal,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac   = PMAC_STRUCT(hal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	struct sir_wifi_start_log *req_msg;
 	uint32_t len;
 
@@ -15000,12 +15002,12 @@ QDF_STATUS sme_wifi_start_logger(tHalHandle hal,
 	}
 
 	/* Serialize the req through MC thread */
-	cds_message.bodyptr = req_msg;
-	cds_message.type    = SIR_HAL_START_STOP_LOGGING;
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_message);
+	message.bodyptr = req_msg;
+	message.type    = SIR_HAL_START_STOP_LOGGING;
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac, LOGE,
-			FL("cds_mq_post_message failed!(err=%d)"),
+			FL("scheduler_post_msg failed!(err=%d)"),
 			status);
 		qdf_mem_free(req_msg);
 		status = QDF_STATUS_E_FAILURE;
@@ -15052,15 +15054,15 @@ bool sme_neighbor_middle_of_roaming(tHalHandle hHal, uint8_t sessionId)
 QDF_STATUS sme_send_flush_logs_cmd_to_fw(tpAniSirGlobal mac)
 {
 	QDF_STATUS status;
-	cds_msg_t message;
+	struct scheduler_msg message;
 
 	/* Serialize the req through MC thread */
 	message.bodyptr = NULL;
 	message.type    = SIR_HAL_FLUSH_LOG_TO_FW;
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &message);
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac, LOGE,
-			FL("cds_mq_post_message failed!(err=%d)"),
+			FL("scheduler_post_msg failed!(err=%d)"),
 			status);
 		status = QDF_STATUS_E_FAILURE;
 	}
@@ -15350,7 +15352,7 @@ QDF_STATUS sme_set_rssi_monitoring(tHalHandle hal,
 {
 	QDF_STATUS status     = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac    = PMAC_STRUCT(hal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	struct rssi_monitor_req *req_msg;
 
 	sms_log(mac, LOG1, FL("enter"));
@@ -15372,12 +15374,12 @@ QDF_STATUS sme_set_rssi_monitoring(tHalHandle hal,
 	}
 
 	/* Serialize the req through MC thread */
-	cds_message.bodyptr = req_msg;
-	cds_message.type    = WMA_SET_RSSI_MONITOR_REQ;
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_message);
+	message.bodyptr = req_msg;
+	message.type    = WMA_SET_RSSI_MONITOR_REQ;
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac, LOGE,
-			FL("cds_mq_post_message failed!(err=%d)"),
+			FL("scheduler_post_msg failed!(err=%d)"),
 			status);
 		qdf_mem_free(req_msg);
 	}
@@ -15402,7 +15404,7 @@ QDF_STATUS sme_fw_mem_dump(tHalHandle hHal, void *recvd_req)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	struct fw_dump_req *send_req;
 	struct fw_dump_seg_req seg_req;
 	int loop;
@@ -15439,7 +15441,7 @@ QDF_STATUS sme_fw_mem_dump(tHalHandle hHal, void *recvd_req)
 		msg.type = WMA_FW_MEM_DUMP_REQ;
 		msg.reserved = 0;
 
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
 		if (QDF_STATUS_SUCCESS != qdf_status) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  FL("Not able to post WMA_FW_MEM_DUMP"));
@@ -15476,7 +15478,7 @@ QDF_STATUS sme_pdev_set_pcl(tHalHandle hal,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac   = PMAC_STRUCT(hal);
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	struct wmi_pcl_chan_weights *req_msg;
 	uint32_t len, i;
 
@@ -15505,12 +15507,12 @@ QDF_STATUS sme_pdev_set_pcl(tHalHandle hal,
 	}
 
 	/* Serialize the req through MC thread */
-	cds_message.bodyptr = req_msg;
-	cds_message.type    = SIR_HAL_PDEV_SET_PCL_TO_FW;
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_message);
+	message.bodyptr = req_msg;
+	message.type    = SIR_HAL_PDEV_SET_PCL_TO_FW;
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac, LOGE,
-				FL("cds_mq_post_message failed!(err=%d)"),
+				FL("scheduler_post_msg failed!(err=%d)"),
 				status);
 		qdf_mem_free(req_msg);
 		status = QDF_STATUS_E_FAILURE;
@@ -15688,7 +15690,7 @@ QDF_STATUS sme_gateway_param_update(tHalHandle Hal,
 			      struct gateway_param_update_req *gw_params)
 {
 	QDF_STATUS qdf_status;
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	struct gateway_param_update_req *request_buf;
 
 	request_buf = qdf_mem_malloc(sizeof(*request_buf));
@@ -15700,10 +15702,10 @@ QDF_STATUS sme_gateway_param_update(tHalHandle Hal,
 
 	*request_buf = *gw_params;
 
-	cds_message.type = WMA_GW_PARAM_UPDATE_REQ;
-	cds_message.reserved = 0;
-	cds_message.bodyptr = request_buf;
-	qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_message);
+	message.type = WMA_GW_PARAM_UPDATE_REQ;
+	message.reserved = 0;
+	message.bodyptr = request_buf;
+	qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("Not able to post WMA_GW_PARAM_UPDATE_REQ message to HAL"));
@@ -16034,7 +16036,7 @@ void sme_get_opclass(tHalHandle hal, uint8_t channel, uint8_t bw_offset,
 QDF_STATUS sme_send_egap_conf_params(uint32_t enable, uint32_t inactivity_time,
 				     uint32_t wait_time, uint32_t flags)
 {
-	cds_msg_t message;
+	struct scheduler_msg message;
 	QDF_STATUS status;
 	struct egap_conf_params *egap_params;
 
@@ -16052,7 +16054,7 @@ QDF_STATUS sme_send_egap_conf_params(uint32_t enable, uint32_t inactivity_time,
 
 	message.type = WMA_SET_EGAP_CONF_PARAMS;
 	message.bodyptr = egap_params;
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &message);
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			"%s: Not able to post msg to WMA!", __func__);
@@ -16178,7 +16180,7 @@ QDF_STATUS sme_add_beacon_filter(tHalHandle hal,
 				 uint32_t session_id,
 				 uint32_t *ie_map)
 {
-	cds_msg_t message;
+	struct scheduler_msg message;
 	QDF_STATUS qdf_status;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	struct beacon_filter_param *filter_param;
@@ -16204,7 +16206,7 @@ QDF_STATUS sme_add_beacon_filter(tHalHandle hal,
 
 	message.type = WMA_ADD_BCN_FILTER_CMDID;
 	message.bodyptr = filter_param;
-	qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
+	qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
 					&message);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -16225,7 +16227,7 @@ QDF_STATUS sme_add_beacon_filter(tHalHandle hal,
  */
 QDF_STATUS sme_remove_beacon_filter(tHalHandle hal, uint32_t session_id)
 {
-	cds_msg_t message;
+	struct scheduler_msg message;
 	QDF_STATUS qdf_status;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	struct beacon_filter_param *filter_param;
@@ -16248,7 +16250,7 @@ QDF_STATUS sme_remove_beacon_filter(tHalHandle hal, uint32_t session_id)
 
 	message.type = WMA_REMOVE_BCN_FILTER_CMDID;
 	message.bodyptr = filter_param;
-	qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA,
+	qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
 					&message);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -16336,7 +16338,7 @@ QDF_STATUS sme_get_bpf_offload_capabilities(tHalHandle hal)
 {
 	QDF_STATUS          status     = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal      mac_ctx      = PMAC_STRUCT(hal);
-	cds_msg_t           cds_msg;
+	struct scheduler_msg           cds_msg;
 
 	sms_log(mac_ctx, LOG1, FL("enter"));
 
@@ -16345,7 +16347,7 @@ QDF_STATUS sme_get_bpf_offload_capabilities(tHalHandle hal)
 		/* Serialize the req through MC thread */
 		cds_msg.bodyptr = NULL;
 		cds_msg.type = WDA_BPF_GET_CAPABILITIES_REQ;
-		status = cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_msg);
+		status = scheduler_post_msg(QDF_MODULE_ID_WMA, &cds_msg);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 					FL("Post bpf get offload msg fail"));
@@ -16373,7 +16375,7 @@ QDF_STATUS sme_set_bpf_instructions(tHalHandle hal,
 {
 	QDF_STATUS          status     = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal      mac_ctx    = PMAC_STRUCT(hal);
-	cds_msg_t           cds_msg;
+	struct scheduler_msg           cds_msg;
 	struct sir_bpf_set_offload *set_offload;
 
 	set_offload = qdf_mem_malloc(sizeof(*set_offload) +
@@ -16401,7 +16403,7 @@ QDF_STATUS sme_set_bpf_instructions(tHalHandle hal,
 		/* Serialize the req through MC thread */
 		cds_msg.bodyptr = set_offload;
 		cds_msg.type = WDA_BPF_SET_INSTRUCTIONS_REQ;
-		status = cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_msg);
+		status = scheduler_post_msg(QDF_MODULE_ID_WMA, &cds_msg);
 
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -16529,7 +16531,7 @@ QDF_STATUS sme_create_mon_session(tHalHandle hal_handle, tSirMacAddr bss_id)
 QDF_STATUS sme_set_adaptive_dwelltime_config(tHalHandle hal,
 			struct adaptive_dwelltime_params *params)
 {
-	cds_msg_t message;
+	struct scheduler_msg message;
 	QDF_STATUS status;
 	struct adaptive_dwelltime_params *dwelltime_params;
 
@@ -16548,7 +16550,7 @@ QDF_STATUS sme_set_adaptive_dwelltime_config(tHalHandle hal,
 
 	message.type = WMA_SET_ADAPT_DWELLTIME_CONF_PARAMS;
 	message.bodyptr = dwelltime_params;
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &message);
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			"%s: Not able to post msg to WMA!", __func__);
@@ -16727,7 +16729,7 @@ QDF_STATUS sme_process_mac_pwr_dbg_cmd(tHalHandle hal, uint32_t session_id,
 				       struct sir_mac_pwr_dbg_cmd*
 				       dbg_args)
 {
-	cds_msg_t message;
+	struct scheduler_msg message;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	struct sir_mac_pwr_dbg_cmd *req;
 	int i;
@@ -16754,7 +16756,7 @@ QDF_STATUS sme_process_mac_pwr_dbg_cmd(tHalHandle hal, uint32_t session_id,
 	message.type = SIR_HAL_POWER_DBG_CMD;
 	message.bodyptr = req;
 
-	if (!QDF_IS_STATUS_SUCCESS(cds_mq_post_message
+	if (!QDF_IS_STATUS_SUCCESS(scheduler_post_msg
 				(QDF_MODULE_ID_WMA, &message))) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Not able to post msg to WDA!",
@@ -16850,15 +16852,15 @@ QDF_STATUS sme_enable_disable_chanavoidind_event(tHalHandle hal,
 {
 	QDF_STATUS status;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 
 	sms_log(mac_ctx, LOG1, FL("set_value: %d"), set_value);
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_STATUS_SUCCESS == status) {
-		qdf_mem_zero(&msg, sizeof(cds_msg_t));
+		qdf_mem_zero(&msg, sizeof(struct scheduler_msg));
 		msg.type = WMA_SEND_FREQ_RANGE_CONTROL_IND;
 		msg.bodyval = set_value;
-		status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
+		status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
 		sme_release_global_lock(&mac_ctx->sme);
 		return status;
 	}
@@ -16928,7 +16930,7 @@ QDF_STATUS sme_encrypt_decrypt_msg(tHalHandle hal,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
-	cds_msg_t cds_msg;
+	struct scheduler_msg cds_msg;
 	struct encrypt_decrypt_req_params *params;
 	uint8_t *ptr;
 
@@ -16956,7 +16958,7 @@ QDF_STATUS sme_encrypt_decrypt_msg(tHalHandle hal,
 		/* Serialize the req through MC thread */
 		cds_msg.bodyptr = params;
 		cds_msg.type = WMA_ENCRYPT_DECRYPT_MSG;
-		status = cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_msg);
+		status = scheduler_post_msg(QDF_MODULE_ID_WMA, &cds_msg);
 
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -17086,7 +17088,7 @@ QDF_STATUS sme_update_tx_fail_cnt_threshold(tHalHandle hal_handle,
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_handle);
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct sme_tx_fail_cnt_threshold *tx_fail_cnt;
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 
 	tx_fail_cnt = qdf_mem_malloc(sizeof(*tx_fail_cnt));
 	if (NULL == tx_fail_cnt) {
@@ -17100,11 +17102,11 @@ QDF_STATUS sme_update_tx_fail_cnt_threshold(tHalHandle hal_handle,
 	tx_fail_cnt->session_id = session_id;
 	tx_fail_cnt->tx_fail_cnt_threshold = tx_fail_count;
 
-	qdf_mem_zero(&msg, sizeof(cds_msg_t));
+	qdf_mem_zero(&msg, sizeof(struct scheduler_msg));
 	msg.type = SIR_HAL_UPDATE_TX_FAIL_CNT_TH;
 	msg.reserved = 0;
 	msg.bodyptr = tx_fail_cnt;
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -17143,7 +17145,7 @@ QDF_STATUS sme_set_lost_link_info_cb(tHalHandle hal,
  */
 QDF_STATUS sme_set_wow_pulse(struct wow_pulse_mode *wow_pulse_set_info)
 {
-	cds_msg_t message;
+	struct scheduler_msg message;
 	QDF_STATUS status;
 	struct wow_pulse_mode *wow_pulse_set_cmd;
 
@@ -17164,7 +17166,7 @@ QDF_STATUS sme_set_wow_pulse(struct wow_pulse_mode *wow_pulse_set_info)
 
 	message.type = WMA_SET_WOW_PULSE_CMD;
 	message.bodyptr = wow_pulse_set_cmd;
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA,
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA,
 					&message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
