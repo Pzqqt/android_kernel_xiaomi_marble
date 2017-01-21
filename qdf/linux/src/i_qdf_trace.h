@@ -57,7 +57,7 @@
 #define QDF_TRACE(arg ...)
 #define QDF_TRACE_HEX_DUMP(arg ...)
 #endif
-#else
+#else /* CONFIG_MCL */
 
 #define qdf_trace(log_level, args...) \
 		do {	\
@@ -69,6 +69,9 @@
 		} while (0)
 #define QDF_TRACE(x, log_level, args...) \
 	qdf_trace(log_level, args)
+
+#define QDF_TRACE_HEX_DUMP(arg ...)
+
 #endif /* CONFIG_MCL */
 
 #define QDF_ENABLE_TRACING

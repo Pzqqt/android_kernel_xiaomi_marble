@@ -11312,10 +11312,12 @@ static QDF_STATUS send_roam_invoke_cmd_tlv(wmi_unified_t wmi_handle,
 	u_int16_t len, args_tlv_len;
 	A_UINT32 *channel_list;
 	wmi_mac_addr *bssid_list;
+	wmi_tlv_buf_len_param *buf_len_tlv;
 
 	/* Host sends only one channel and one bssid */
-	args_tlv_len = 2 * WMI_TLV_HDR_SIZE + sizeof(A_UINT32) +
-			sizeof(wmi_mac_addr);
+	args_tlv_len = (4 * WMI_TLV_HDR_SIZE) + sizeof(A_UINT32) +
+			sizeof(wmi_mac_addr) + sizeof(wmi_tlv_buf_len_param) +
+			roundup(roaminvoke->frame_len, sizeof(uint32_t));
 	len = sizeof(wmi_roam_invoke_cmd_fixed_param) + args_tlv_len;
 	wmi_buf = wmi_buf_alloc(wmi_handle, len);
 	if (!wmi_buf) {
@@ -11330,11 +11332,19 @@ static QDF_STATUS send_roam_invoke_cmd_tlv(wmi_unified_t wmi_handle,
 	WMITLV_GET_STRUCT_TLVLEN(wmi_roam_invoke_cmd_fixed_param));
 	cmd->vdev_id = roaminvoke->vdev_id;
 	cmd->flags = 0;
-	cmd->roam_scan_mode = 0;
+
+	if (roaminvoke->frame_len)
+		cmd->roam_scan_mode = WMI_ROAM_INVOKE_SCAN_MODE_SKIP;
+	else
+		cmd->roam_scan_mode = WMI_ROAM_INVOKE_SCAN_MODE_FIXED_CH;
+
 	cmd->roam_ap_sel_mode = 0;
 	cmd->roam_delay = 0;
 	cmd->num_chan = 1;
 	cmd->num_bssid = 1;
+	/* packing 1 beacon/probe_rsp frame with WMI cmd */
+	cmd->num_buf = 1;
+
 	buf_ptr += sizeof(wmi_roam_invoke_cmd_fixed_param);
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
 				(sizeof(u_int32_t)));
@@ -11345,6 +11355,31 @@ static QDF_STATUS send_roam_invoke_cmd_tlv(wmi_unified_t wmi_handle,
 				(sizeof(wmi_mac_addr)));
 	bssid_list = (wmi_mac_addr *)(buf_ptr + WMI_TLV_HDR_SIZE);
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(roaminvoke->bssid, bssid_list);
+
+	/* move to next tlv i.e. bcn_prb_buf_list */
+	buf_ptr += WMI_TLV_HDR_SIZE + sizeof(wmi_mac_addr);
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_FIXED_STRUC,
+			sizeof(wmi_tlv_buf_len_param));
+
+	buf_len_tlv = (wmi_tlv_buf_len_param *)(buf_ptr + WMI_TLV_HDR_SIZE);
+	buf_len_tlv->buf_len = roaminvoke->frame_len;
+
+	/* move to next tlv i.e. bcn_prb_frm */
+	buf_ptr += WMI_TLV_HDR_SIZE + sizeof(wmi_tlv_buf_len_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
+		roundup(roaminvoke->frame_len, sizeof(uint32_t)));
+
+	/* copy frame after the header */
+	qdf_mem_copy(buf_ptr + WMI_TLV_HDR_SIZE,
+			roaminvoke->frame_buf,
+			roaminvoke->frame_len);
+
+	WMI_LOGD(FL("bcn/prb_rsp frame, length: %d"), roaminvoke->frame_len);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+			buf_ptr + WMI_TLV_HDR_SIZE,
+			roaminvoke->frame_len);
+
 	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
 					WMI_ROAM_INVOKE_CMDID)) {
 		WMI_LOGP("%s: failed to send roam invoke command", __func__);
