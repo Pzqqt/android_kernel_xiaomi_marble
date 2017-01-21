@@ -5070,6 +5070,10 @@ int sap_start_dfs_cac_timer(ptSapContext sapContext)
 		(sap_is_channel_bonding_etsi_weather_channel(sapContext)))) {
 		cacTimeOut = ETSI_WEATHER_CH_CAC_TIMEOUT;
 	}
+
+#ifdef QCA_WIFI_NAPIER_EMULATION
+	cacTimeOut = cacTimeOut / 100;
+#endif
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
 		  "sapdfs: SAP_DFS_CHANNEL_CAC_START on CH - %d, CAC TIMEOUT - %d sec",
 		  sapContext->channel, cacTimeOut / 1000);
