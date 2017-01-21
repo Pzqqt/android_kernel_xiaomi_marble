@@ -3260,7 +3260,7 @@ void lim_send_beacon_ind(tpAniSirGlobal pMac, tpPESession psessionEntry)
  */
 static void lim_send_sme_scan_cache_updated_ind(uint8_t sessionId)
 {
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 
 	msg.type = WMA_SME_SCAN_CACHE_UPDATED;
 	msg.reserved = 0;
@@ -3268,7 +3268,7 @@ static void lim_send_sme_scan_cache_updated_ind(uint8_t sessionId)
 	msg.bodyval = sessionId;
 
 	if (!QDF_IS_STATUS_SUCCESS
-		    (cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)))
+		    (scheduler_post_msg(QDF_MODULE_ID_WMA, &msg)))
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Not able to post WMA_SME_SCAN_CACHE_UPDATED message to WMA",
 			  __func__);

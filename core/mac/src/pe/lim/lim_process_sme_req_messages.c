@@ -132,7 +132,7 @@ static void lim_process_ext_change_channel(tpAniSirGlobal mac_ctx,
 static QDF_STATUS lim_process_set_hw_mode(tpAniSirGlobal mac, uint32_t *msg)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	struct sir_hw_mode *req_msg;
 	uint32_t len;
 	struct s_sir_set_hw_mode *buf;
@@ -161,14 +161,14 @@ static QDF_STATUS lim_process_set_hw_mode(tpAniSirGlobal mac, uint32_t *msg)
 	req_msg->reason = buf->set_hw.reason;
 	/* Other parameters are not needed for WMA */
 
-	cds_message.bodyptr = req_msg;
-	cds_message.type    = SIR_HAL_PDEV_SET_HW_MODE;
+	message.bodyptr = req_msg;
+	message.type    = SIR_HAL_PDEV_SET_HW_MODE;
 
 	lim_log(mac, LOG1, FL("Posting SIR_HAL_SOC_SET_HW_MOD to WMA"));
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_message);
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		lim_log(mac, LOGE,
-			FL("cds_mq_post_message failed!(err=%d)"),
+			FL("scheduler_post_msg failed!(err=%d)"),
 			status);
 		qdf_mem_free(req_msg);
 		goto fail;
@@ -203,7 +203,7 @@ static QDF_STATUS lim_process_set_dual_mac_cfg_req(tpAniSirGlobal mac,
 		uint32_t *msg)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	struct sir_dual_mac_config *req_msg;
 	uint32_t len;
 	struct sir_set_dual_mac_cfg *buf;
@@ -232,16 +232,16 @@ static QDF_STATUS lim_process_set_dual_mac_cfg_req(tpAniSirGlobal mac,
 	req_msg->fw_mode_config = buf->set_dual_mac.fw_mode_config;
 	/* Other parameters are not needed for WMA */
 
-	cds_message.bodyptr = req_msg;
-	cds_message.type    = SIR_HAL_PDEV_DUAL_MAC_CFG_REQ;
+	message.bodyptr = req_msg;
+	message.type    = SIR_HAL_PDEV_DUAL_MAC_CFG_REQ;
 
 	lim_log(mac, LOG1,
 		FL("Post SIR_HAL_PDEV_DUAL_MAC_CFG_REQ to WMA: %x %x"),
 		req_msg->scan_config, req_msg->fw_mode_config);
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_message);
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		lim_log(mac, LOGE,
-				FL("cds_mq_post_message failed!(err=%d)"),
+				FL("scheduler_post_msg failed!(err=%d)"),
 				status);
 		qdf_mem_free(req_msg);
 		goto fail;
@@ -275,7 +275,7 @@ static QDF_STATUS lim_process_set_antenna_mode_req(tpAniSirGlobal mac,
 		uint32_t *msg)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 	struct sir_antenna_mode_param *req_msg;
 	struct sir_set_antenna_mode *buf;
 	tSirMsgQ resp_msg;
@@ -297,17 +297,17 @@ static QDF_STATUS lim_process_set_antenna_mode_req(tpAniSirGlobal mac,
 	req_msg->num_rx_chains = buf->set_antenna_mode.num_rx_chains;
 	req_msg->num_tx_chains = buf->set_antenna_mode.num_tx_chains;
 
-	cds_message.bodyptr = req_msg;
-	cds_message.type    = SIR_HAL_SOC_ANTENNA_MODE_REQ;
+	message.bodyptr = req_msg;
+	message.type    = SIR_HAL_SOC_ANTENNA_MODE_REQ;
 
 	lim_log(mac, LOG1,
 		FL("Post SIR_HAL_SOC_ANTENNA_MODE_REQ to WMA: %d %d"),
 		req_msg->num_rx_chains,
 		req_msg->num_tx_chains);
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_message);
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		lim_log(mac, LOGE,
-				FL("cds_mq_post_message failed!(err=%d)"),
+				FL("scheduler_post_msg failed!(err=%d)"),
 				status);
 		qdf_mem_free(req_msg);
 		goto fail;
@@ -4356,7 +4356,7 @@ static void __lim_process_sme_set_ht2040_mode(tpAniSirGlobal pMac,
 	tpSirSetHT2040Mode pSetHT2040Mode;
 	tpPESession psessionEntry;
 	uint8_t sessionId = 0;
-	cds_msg_t msg;
+	struct scheduler_msg msg;
 	tUpdateVHTOpMode *pHtOpMode = NULL;
 	uint16_t staId = 0;
 	tpDphHashNode pStaDs = NULL;
@@ -4442,7 +4442,7 @@ static void __lim_process_sme_set_ht2040_mode(tpAniSirGlobal pMac,
 			msg.reserved = 0;
 			msg.bodyptr = pHtOpMode;
 			if (!QDF_IS_STATUS_SUCCESS(
-					cds_mq_post_message(QDF_MODULE_ID_WMA,
+					scheduler_post_msg(QDF_MODULE_ID_WMA,
 							    &msg))) {
 				lim_log(pMac, LOGE,
 					FL

@@ -180,7 +180,7 @@ QDF_STATUS sys_stop(v_CONTEXT_t p_cds_context);
    \sa
 
    --------------------------------------------------------------------------*/
-QDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, cds_msg_t *pMsg);
+QDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, struct scheduler_msg *pMsg);
 QDF_STATUS sys_mc_process_handler(struct scheduler_msg *msg);
 
 void wlan_sys_probe(void);

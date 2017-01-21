@@ -6469,7 +6469,7 @@ static QDF_STATUS lim_send_ie(tpAniSirGlobal mac_ctx, uint32_t sme_session_id,
 			      uint8_t *buf, uint32_t len)
 {
 	struct vdev_ie_info *ie_msg;
-	cds_msg_t msg = {0};
+	struct scheduler_msg msg = {0};
 	QDF_STATUS status;
 
 	/* Allocate memory for the WMI request */
@@ -6491,7 +6491,7 @@ static QDF_STATUS lim_send_ie(tpAniSirGlobal mac_ctx, uint32_t sme_session_id,
 	msg.bodyptr = ie_msg;
 	msg.reserved = 0;
 
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
 	if (QDF_STATUS_SUCCESS != status) {
 		lim_log(mac_ctx, LOGE,
 		       FL("Not able to post WMA_SET_IE_INFO to WMA"));
@@ -6623,7 +6623,7 @@ QDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx,
 	uint32_t dot11mode, num_bytes;
 	bool vht_enabled = false;
 	struct vdev_ie_info *vdev_ie;
-	cds_msg_t msg = {0};
+	struct scheduler_msg msg = {0};
 	tSirRetStatus status;
 	uint8_t *temp, i;
 
@@ -6672,7 +6672,7 @@ QDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx,
 	msg.reserved = 0;
 
 	if (QDF_STATUS_SUCCESS !=
-		cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
+		scheduler_post_msg(QDF_MODULE_ID_WMA, &msg)) {
 		lim_log(mac_ctx, LOGE,
 		       FL("Not able to post WMA_SET_IE_INFO to WDA"));
 		qdf_mem_free(vdev_ie);

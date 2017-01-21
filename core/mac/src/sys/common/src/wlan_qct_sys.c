@@ -110,7 +110,7 @@ QDF_STATUS sys_stop(v_CONTEXT_t p_cds_context)
 	sysMsg.bodyptr = (void *)&g_stop_evt;
 
 	/* post the message.. */
-	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SYS, &sysMsg);
+	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SYS, &sysMsg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		qdf_status = QDF_STATUS_E_BADMSG;
 
@@ -132,7 +132,7 @@ QDF_STATUS sys_stop(v_CONTEXT_t p_cds_context)
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, cds_msg_t *pMsg)
+QDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, struct scheduler_msg *pMsg)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac_ctx;
@@ -140,7 +140,7 @@ QDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, cds_msg_t *pMsg)
 
 	if (NULL == pMsg) {
 		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
-			  "%s: NULL pointer to cds_msg_t", __func__);
+			  "%s: NULL pointer to struct scheduler_msg", __func__);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -260,7 +260,7 @@ QDF_STATUS sys_mc_process_handler(struct scheduler_msg *msg)
 			"CDS context is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-	return sys_mc_process_msg(cds_ctx, (cds_msg_t *)msg);
+	return sys_mc_process_msg(cds_ctx, (struct scheduler_msg *)msg);
 }
 
 /**
@@ -345,8 +345,8 @@ void sys_process_mmh_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
 	/*
 	 * Post now the message to the appropriate module for handling
 	 */
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(targetMQ,
-					(cds_msg_t *) pMsg)) {
+	if (QDF_STATUS_SUCCESS != scheduler_post_msg(targetMQ,
+					(struct scheduler_msg *) pMsg)) {
 		/*
 		 * Caller doesn't allocate memory for the pMsg.
 		 * It allocate memory for bodyptr free the mem and return
@@ -366,10 +366,10 @@ void sys_process_mmh_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
  */
 void wlan_sys_probe(void)
 {
-	cds_msg_t cds_message;
+	struct scheduler_msg message;
 
-	cds_message.reserved = SYS_MSG_COOKIE;
-	cds_message.type = SYS_MSG_ID_MC_THR_PROBE;
-	cds_message.bodyptr = NULL;
-	cds_mq_post_message(QDF_MODULE_ID_SYS, &cds_message);
+	message.reserved = SYS_MSG_COOKIE;
+	message.type = SYS_MSG_ID_MC_THR_PROBE;
+	message.bodyptr = NULL;
+	scheduler_post_msg(QDF_MODULE_ID_SYS, &message);
 }

@@ -924,7 +924,7 @@ void pe_free_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
 
 uint32_t lim_post_msg_api(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
 {
-	return cds_mq_post_message(QDF_MODULE_ID_PE, (cds_msg_t *) pMsg);
+	return scheduler_post_msg(QDF_MODULE_ID_PE, (struct scheduler_msg *) pMsg);
 
 } /*** end lim_post_msg_api() ***/
 
@@ -939,8 +939,8 @@ uint32_t lim_post_msg_api(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
  */
 uint32_t lim_post_msg_high_priority(tpAniSirGlobal mac, tSirMsgQ *msg)
 {
-	return cds_mq_post_message_by_priority(QDF_MODULE_ID_PE,
-					       (cds_msg_t *)msg, HIGH_PRIORITY);
+	return scheduler_post_msg_by_priority(QDF_MODULE_ID_PE,
+					       (struct scheduler_msg *)msg, HIGH_PRIORITY);
 }
 
 /*--------------------------------------------------------------------------
