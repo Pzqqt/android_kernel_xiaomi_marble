@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -77,7 +77,7 @@ static A_STATUS pktlog_wma_post_msg(WMI_PKTLOG_EVENT event_types,
 				    WMI_CMD_ID cmd_id, bool ini_triggered,
 				    uint8_t user_triggered)
 {
-	cds_msg_t msg = { 0 };
+	struct scheduler_msg msg = { 0 };
 	QDF_STATUS status;
 	struct ath_pktlog_wmi_params *param;
 
@@ -95,7 +95,7 @@ static A_STATUS pktlog_wma_post_msg(WMI_PKTLOG_EVENT event_types,
 	msg.bodyptr = param;
 	msg.bodyval = 0;
 
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
 
 	if (status != QDF_STATUS_SUCCESS) {
 		qdf_mem_free(param);
