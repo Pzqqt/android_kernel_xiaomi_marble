@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -103,7 +103,8 @@ typedef void (*sysResponseCback)(void *pUserData);
    \sa
 
    --------------------------------------------------------------------------*/
-QDF_STATUS sys_build_message_header(SYS_MSG_ID sysMsgId, cds_msg_t *pMsg);
+QDF_STATUS sys_build_message_header(SYS_MSG_ID sysMsgId,
+				    struct scheduler_msg *pMsg);
 
 /*----------------------------------------------------------------------------
 

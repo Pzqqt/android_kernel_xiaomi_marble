@@ -413,7 +413,7 @@ static void wma_vdev_detach_callback(void *ctx)
 	struct del_sta_self_params *param;
 	struct wma_target_req *req_msg;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	cds_msg_t sme_msg = { 0 };
+	struct scheduler_msg sme_msg = { 0 };
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
 
@@ -450,7 +450,7 @@ static void wma_vdev_detach_callback(void *ctx)
 	sme_msg.bodyptr = param;
 	sme_msg.bodyval = 0;
 
-	status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		WMA_LOGE("Failed to post eWNI_SME_ADD_STA_SELF_RSP");
 		qdf_mem_free(param);
@@ -534,7 +534,7 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 	uint8_t vdev_id = del_sta_self_req_param->session_id;
 	struct wma_txrx_node *iface = &wma_handle->interfaces[vdev_id];
 	struct wma_target_req *msg = NULL;
-	cds_msg_t sme_msg = { 0 };
+	struct scheduler_msg sme_msg = { 0 };
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (!soc) {
@@ -605,7 +605,7 @@ out:
 		sme_msg.bodyptr = del_sta_self_req_param;
 		sme_msg.bodyval = 0;
 
-		status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
+		status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			WMA_LOGE("Failed to post eWNI_SME_DEL_STA_SELF_RSP");
 			qdf_mem_free(del_sta_self_req_param);
@@ -1578,7 +1578,7 @@ void *wma_vdev_attach(tp_wma_handle wma_handle,
 	uint16_t val16;
 	QDF_STATUS ret;
 	tSirMacHTCapabilityInfo *phtCapInfo;
-	cds_msg_t sme_msg = { 0 };
+	struct scheduler_msg sme_msg = { 0 };
 	struct vdev_create_params params = { 0 };
 	u_int8_t vdev_id;
 	struct sir_set_tx_rx_aggregation_size tx_rx_aggregation_size;
@@ -1826,7 +1826,7 @@ end:
 		sme_msg.bodyptr = self_sta_req;
 		sme_msg.bodyval = 0;
 
-		status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
+		status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			WMA_LOGE("Failed to post eWNI_SME_ADD_STA_SELF_RSP");
 			qdf_mem_free(self_sta_req);
@@ -2460,7 +2460,7 @@ void wma_vdev_resp_timer(void *data)
 	uint8_t peer_id;
 	struct wma_target_req *msg;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	cds_msg_t sme_msg = { 0 };
+	struct scheduler_msg sme_msg = { 0 };
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
@@ -2622,7 +2622,7 @@ void wma_vdev_resp_timer(void *data)
 			sme_msg.bodyptr = iface->del_staself_req;
 			sme_msg.bodyval = 0;
 
-			status = cds_mq_post_message(QDF_MODULE_ID_SME,
+			status = scheduler_post_msg(QDF_MODULE_ID_SME,
 						     &sme_msg);
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
 				WMA_LOGE("Failed to post eWNI_SME_ADD_STA_SELF_RSP");

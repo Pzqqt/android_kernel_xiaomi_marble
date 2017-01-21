@@ -1874,7 +1874,7 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 
 		if (roam_req->reason ==
 		    REASON_OS_REQUESTED_ROAMING_NOW) {
-			cds_msg_t cds_msg;
+			struct scheduler_msg cds_msg;
 			tSirRoamOffloadScanRsp *scan_offload_rsp;
 			scan_offload_rsp =
 				qdf_mem_malloc(sizeof(*scan_offload_rsp));
@@ -1894,8 +1894,8 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 			 * SME with proper reason code.
 			 */
 			if (QDF_STATUS_SUCCESS !=
-			    cds_mq_post_message(QDF_MODULE_ID_SME,
-						(cds_msg_t *) &cds_msg)) {
+			    scheduler_post_msg(QDF_MODULE_ID_SME,
+						(struct scheduler_msg *) &cds_msg)) {
 				qdf_mem_free(scan_offload_rsp);
 				QDF_TRACE(QDF_MODULE_ID_WMA,
 					  QDF_TRACE_LEVEL_INFO,
@@ -2653,7 +2653,7 @@ void wma_process_unit_test_cmd(WMA_HANDLE handle,
 static void wma_roam_ho_fail_handler(tp_wma_handle wma, uint32_t vdev_id)
 {
 	tSirSmeHOFailureInd *ho_failure_ind;
-	cds_msg_t sme_msg = { 0 };
+	struct scheduler_msg sme_msg = { 0 };
 	QDF_STATUS qdf_status;
 
 	ho_failure_ind = qdf_mem_malloc(sizeof(tSirSmeHOFailureInd));
@@ -2667,7 +2667,7 @@ static void wma_roam_ho_fail_handler(tp_wma_handle wma, uint32_t vdev_id)
 	sme_msg.bodyptr = ho_failure_ind;
 	sme_msg.bodyval = 0;
 
-	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("Fail to post eWNI_SME_HO_FAIL_IND msg to SME");
 		qdf_mem_free(ho_failure_ind);
@@ -3297,7 +3297,7 @@ void wma_scan_cache_updated_ind(tp_wma_handle wma, uint8_t sessionId)
 {
 	tSirPrefNetworkFoundInd *nw_found_ind;
 	QDF_STATUS status;
-	cds_msg_t cds_msg;
+	struct scheduler_msg cds_msg;
 	uint8_t len, i;
 
 	for (i = 0; i < wma->max_bssid; i++) {
@@ -3329,7 +3329,7 @@ void wma_scan_cache_updated_ind(tp_wma_handle wma, uint8_t sessionId)
 	cds_msg.bodyptr = (void *)nw_found_ind;
 	cds_msg.bodyval = 0;
 
-	status = cds_mq_post_message(QDF_MODULE_ID_SME, &cds_msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_SME, &cds_msg);
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: Failed to post PNO completion match event to SME",
 			 __func__);
@@ -5739,7 +5739,7 @@ int wma_scan_event_callback(WMA_HANDLE handle, uint8_t *data,
  */
 void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 {
-	cds_msg_t cds_msg;
+	struct scheduler_msg cds_msg;
 	tSirSmeCandidateFoundInd *candidate_ind;
 	struct scan_param *params;
 
@@ -5773,8 +5773,8 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 	QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_INFO,
 		  FL("posting candidate ind to SME"));
 
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_SME,
-						(cds_msg_t *) &cds_msg)) {
+	if (QDF_STATUS_SUCCESS != scheduler_post_msg(QDF_MODULE_ID_SME,
+						(struct scheduler_msg *) &cds_msg)) {
 		qdf_mem_free(candidate_ind);
 		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  FL("Failed to post candidate ind to SME"));

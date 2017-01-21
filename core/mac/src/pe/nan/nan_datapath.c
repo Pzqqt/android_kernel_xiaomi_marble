@@ -460,7 +460,8 @@ skip_event:
  *
  * Return: QDF_STATUS_SUCCESS on success; error number otherwise
  */
-QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx, cds_msg_t *msg)
+QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx,
+					struct scheduler_msg *msg)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 

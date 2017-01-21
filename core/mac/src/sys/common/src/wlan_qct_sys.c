@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -50,7 +50,8 @@ static qdf_event_t g_stop_evt;
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sys_build_message_header(SYS_MSG_ID sysMsgId, cds_msg_t *pMsg)
+QDF_STATUS sys_build_message_header(SYS_MSG_ID sysMsgId,
+				    struct scheduler_msg *pMsg)
 {
 	pMsg->type = sysMsgId;
 	pMsg->reserved = SYS_MSG_COOKIE;
@@ -93,7 +94,7 @@ static void sys_stop_complete_cb(void *pUserData)
 QDF_STATUS sys_stop(v_CONTEXT_t p_cds_context)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	cds_msg_t sysMsg;
+	struct scheduler_msg sysMsg;
 
 	/* Initialize the stop event */
 	qdf_status = qdf_event_create(&g_stop_evt);

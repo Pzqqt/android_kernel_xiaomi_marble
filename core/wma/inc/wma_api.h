@@ -96,7 +96,7 @@ typedef void (*wma_peer_authorized_fp) (uint32_t vdev_id);
 
 QDF_STATUS wma_pre_start(void *cds_context);
 
-QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg);
+QDF_STATUS wma_mc_process_msg(void *cds_context, struct scheduler_msg *msg);
 
 QDF_STATUS wma_mc_process_handler(struct scheduler_msg *msg);
 
@@ -279,11 +279,11 @@ QDF_STATUS wma_set_tx_power_scale_decr_db(uint8_t vdev_id, int value);
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 QDF_STATUS wma_register_ndp_cb(QDF_STATUS (*pe_ndp_event_handler)
 					  (tpAniSirGlobal mac_ctx,
-					  cds_msg_t *msg));
+					  struct scheduler_msg *msg));
 #else
 static inline QDF_STATUS wma_register_ndp_cb(QDF_STATUS (*pe_ndp_event_handler)
 							(tpAniSirGlobal mac_ctx,
-							cds_msg_t *msg))
+						struct scheduler_msg *msg))
 {
 	return QDF_STATUS_SUCCESS;
 }

@@ -1904,7 +1904,7 @@ QDF_STATUS wma_process_init_thermal_info(tp_wma_handle wma,
 static void wma_set_thermal_level_ind(u_int8_t level)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	cds_msg_t sme_msg = {0};
+	struct scheduler_msg sme_msg = {0};
 
 	WMA_LOGI(FL("Thermal level: %d"), level);
 
@@ -1912,7 +1912,7 @@ static void wma_set_thermal_level_ind(u_int8_t level)
 	sme_msg.bodyptr = NULL;
 	sme_msg.bodyval = level;
 
-	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		WMA_LOGE(FL(
 			"Fail to post set thermal level ind msg"));
@@ -2141,7 +2141,7 @@ int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event,
 int wma_ibss_peer_info_event_handler(void *handle, uint8_t *data,
 					    uint32_t len)
 {
-	cds_msg_t cds_msg;
+	struct scheduler_msg cds_msg;
 	wmi_peer_info *peer_info;
 	void *pdev;
 	tSirIbssPeerInfoParams *pSmeRsp;
@@ -2216,7 +2216,7 @@ send_response:
 	cds_msg.bodyval = 0;
 
 	if (QDF_STATUS_SUCCESS !=
-	    cds_mq_post_message(QDF_MODULE_ID_SME, (cds_msg_t *) &cds_msg)) {
+	    scheduler_post_msg(QDF_MODULE_ID_SME, (struct scheduler_msg *) &cds_msg)) {
 		WMA_LOGE("%s: could not post peer info rsp msg to SME",
 			 __func__);
 		/* free the mem and return */
@@ -2998,7 +2998,7 @@ void ol_rx_err(void *pdev, uint8_t vdev_id,
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	tpSirSmeMicFailureInd mic_err_ind;
 	struct ether_header *eth_hdr;
-	cds_msg_t cds_msg;
+	struct scheduler_msg cds_msg;
 
 	if (NULL == wma) {
 		WMA_LOGE("%s: Failed to get wma", __func__);
@@ -3037,13 +3037,13 @@ void ol_rx_err(void *pdev, uint8_t vdev_id,
 		IEEE80211_IS_MULTICAST(eth_hdr->ether_dhost);
 	qdf_mem_copy(mic_err_ind->info.TSC, pn, SIR_CIPHER_SEQ_CTR_SIZE);
 
-	qdf_mem_set(&cds_msg, sizeof(cds_msg_t), 0);
+	qdf_mem_set(&cds_msg, sizeof(struct scheduler_msg), 0);
 	cds_msg.type = eWNI_SME_MIC_FAILURE_IND;
 	cds_msg.bodyptr = (void *) mic_err_ind;
 
 	if (QDF_STATUS_SUCCESS !=
-		cds_mq_post_message(QDF_MODULE_ID_SME,
-				    (cds_msg_t *) &cds_msg)) {
+		scheduler_post_msg(QDF_MODULE_ID_SME,
+				    (struct scheduler_msg *) &cds_msg)) {
 		WMA_LOGE("%s: could not post mic failure indication to SME",
 			 __func__);
 		qdf_mem_free((void *)mic_err_ind);
@@ -3148,7 +3148,7 @@ wma_indicate_err(
 	{
 		tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 		tpSirSmeMicFailureInd mic_err_ind;
-		cds_msg_t cds_msg;
+		struct scheduler_msg cds_msg;
 		uint8_t vdev_id;
 
 		if (NULL == wma) {
@@ -3191,12 +3191,12 @@ wma_indicate_err(
 			 (void *)&err_info->
 			 u.mic_err.pn, SIR_CIPHER_SEQ_CTR_SIZE);
 
-		qdf_mem_set(&cds_msg, sizeof(cds_msg_t), 0);
+		qdf_mem_set(&cds_msg, sizeof(struct scheduler_msg), 0);
 		cds_msg.type = eWNI_SME_MIC_FAILURE_IND;
 		cds_msg.bodyptr = (void *) mic_err_ind;
 		if (QDF_STATUS_SUCCESS !=
-			cds_mq_post_message(QDF_MODULE_ID_SME,
-				 (cds_msg_t *) &cds_msg)) {
+			scheduler_post_msg(QDF_MODULE_ID_SME,
+				 (struct scheduler_msg *) &cds_msg)) {
 			WMA_LOGE("%s: mic failure ind post to SME failed",
 					 __func__);
 			qdf_mem_free((void *)mic_err_ind);

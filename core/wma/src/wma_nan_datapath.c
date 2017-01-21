@@ -52,7 +52,7 @@ QDF_STATUS wma_handle_ndp_initiator_req(tp_wma_handle wma_handle, void *req)
 	void *vdev;
 	wmi_buf_t buf;
 	wmi_ndp_initiator_req_fixed_param *cmd;
-	cds_msg_t pe_msg = {0};
+	struct scheduler_msg pe_msg = {0};
 	struct ndp_initiator_req *ndp_req = req;
 	wmi_channel *ch_tlv;
 	uint8_t *tlv_ptr;
@@ -199,7 +199,7 @@ QDF_STATUS wma_handle_ndp_responder_req(tp_wma_handle wma_handle,
 	wmi_ndp_responder_req_fixed_param *cmd;
 	uint16_t len;
 	struct ndp_responder_rsp_event rsp = {0};
-	cds_msg_t pe_msg = {0};
+	struct scheduler_msg pe_msg = {0};
 
 	if (NULL == req_params) {
 		WMA_LOGE(FL("Invalid req_params."));
@@ -329,7 +329,7 @@ QDF_STATUS wma_handle_ndp_end_req(tp_wma_handle wma_handle, void *ptr)
 	uint32_t ndp_end_req_len, i;
 	wmi_ndp_end_req *ndp_end_req_lst;
 	wmi_buf_t buf;
-	cds_msg_t pe_msg = {0};
+	struct scheduler_msg pe_msg = {0};
 	wmi_ndp_end_req_fixed_param *cmd;
 	struct ndp_end_rsp_event end_rsp = {0};
 	struct ndp_end_req *req = ptr;
@@ -407,7 +407,7 @@ send_ndp_end_fail:
 static int wma_ndp_indication_event_handler(void *handle, uint8_t *event_info,
 					    uint32_t len)
 {
-	cds_msg_t pe_msg = {0};
+	struct scheduler_msg pe_msg = {0};
 	WMI_NDP_INDICATION_EVENTID_param_tlvs *event;
 	wmi_ndp_indication_event_fixed_param *fixed_params;
 	struct ndp_indication_event ind_event = {0};
@@ -510,7 +510,7 @@ static int wma_ndp_indication_event_handler(void *handle, uint8_t *event_info,
 static int wma_ndp_responder_rsp_event_handler(void *handle,
 					uint8_t *event_info, uint32_t len)
 {
-	cds_msg_t pe_msg = {0};
+	struct scheduler_msg pe_msg = {0};
 	tp_wma_handle wma_handle = handle;
 	WMI_NDP_RESPONDER_RSP_EVENTID_param_tlvs *event;
 	wmi_ndp_responder_rsp_event_fixed_param  *fixed_params;
@@ -551,7 +551,7 @@ static int wma_ndp_confirm_event_handler(void *handle, uint8_t *event_info,
 					 uint32_t len)
 {
 	struct ndp_confirm_event ndp_confirm = {0};
-	cds_msg_t msg = {0};
+	struct scheduler_msg msg = {0};
 	WMI_NDP_CONFIRM_EVENTID_param_tlvs *event;
 	wmi_ndp_confirm_event_fixed_param *fixed_params;
 	tp_wma_handle wma_handle = handle;
@@ -614,7 +614,7 @@ static int wma_ndp_end_response_event_handler(void *handle,
 {
 	int ret = 0;
 	QDF_STATUS status;
-	cds_msg_t pe_msg = {0};
+	struct scheduler_msg pe_msg = {0};
 	struct ndp_end_rsp_event *end_rsp;
 	WMI_NDP_END_RSP_EVENTID_param_tlvs *event;
 	wmi_ndp_end_rsp_event_fixed_param *fixed_params = NULL;
@@ -666,7 +666,7 @@ static int wma_ndp_end_indication_event_handler(void *handle,
 	tp_wma_handle wma_handle = handle;
 	WMI_NDP_END_INDICATION_EVENTID_param_tlvs *event;
 	wmi_ndp_end_indication *ind;
-	cds_msg_t pe_msg;
+	struct scheduler_msg pe_msg;
 	struct ndp_end_indication_event *ndp_event_buf;
 	int i, ret, buf_size;
 	struct qdf_mac_addr peer_addr;
@@ -740,7 +740,7 @@ static int wma_ndp_end_indication_event_handler(void *handle,
 static int wma_ndp_initiator_rsp_event_handler(void *handle,
 					uint8_t *event_info, uint32_t len)
 {
-	cds_msg_t pe_msg = {0};
+	struct scheduler_msg pe_msg = {0};
 	WMI_NDP_INITIATOR_RSP_EVENTID_param_tlvs *event;
 	wmi_ndp_initiator_rsp_event_fixed_param  *fixed_params;
 	struct ndp_initiator_rsp ndp_rsp = {0};
@@ -1122,7 +1122,7 @@ void wma_delete_all_nan_remote_peers(tp_wma_handle wma, uint32_t vdev_id)
  * Return: Success or Failure Status
  */
 QDF_STATUS wma_register_ndp_cb(QDF_STATUS (*pe_ndp_event_handler)
-				(tpAniSirGlobal mac_ctx, cds_msg_t *msg))
+				(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg))
 {
 
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);

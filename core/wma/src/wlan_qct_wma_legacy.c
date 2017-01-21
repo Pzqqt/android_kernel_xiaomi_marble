@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -57,7 +57,7 @@
 tSirRetStatus wma_post_ctrl_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
 {
 	if (QDF_STATUS_SUCCESS !=
-	    cds_mq_post_message(QDF_MODULE_ID_WMA, (cds_msg_t *) pMsg))
+	    scheduler_post_msg(QDF_MODULE_ID_WMA, (struct scheduler_msg *) pMsg))
 		return eSIR_FAILURE;
 	else
 		return eSIR_SUCCESS;

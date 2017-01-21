@@ -342,7 +342,7 @@ void wma_lost_link_info_handler(tp_wma_handle wma, uint32_t vdev_id,
 {
 	struct sir_lost_link_info *lost_link_info;
 	QDF_STATUS qdf_status;
-	cds_msg_t sme_msg = {0};
+	struct scheduler_msg sme_msg = {0};
 
 	/* report lost link information only for STA mode */
 	if (wma->interfaces[vdev_id].vdev_up &&
@@ -361,7 +361,7 @@ void wma_lost_link_info_handler(tp_wma_handle wma, uint32_t vdev_id,
 		WMA_LOGI("%s: post msg to SME, bss_idx %d, rssi %d",  __func__,
 			 lost_link_info->vdev_id, lost_link_info->rssi);
 
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			WMA_LOGE("%s: fail to post msg to SME", __func__);
 			qdf_mem_free(lost_link_info);
@@ -436,7 +436,7 @@ int wma_stats_ext_event_handler(void *handle, uint8_t *event_buf,
 	tSirStatsExtEvent *stats_ext_event;
 	wmi_stats_ext_event_fixed_param *stats_ext_info;
 	QDF_STATUS status;
-	cds_msg_t cds_msg;
+	struct scheduler_msg cds_msg;
 	uint8_t *buf_ptr;
 	uint32_t alloc_len;
 
@@ -471,7 +471,7 @@ int wma_stats_ext_event_handler(void *handle, uint8_t *event_buf,
 	cds_msg.bodyptr = (void *)stats_ext_event;
 	cds_msg.bodyval = 0;
 
-	status = cds_mq_post_message(QDF_MODULE_ID_SME, &cds_msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_SME, &cds_msg);
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: Failed to post stats ext event to SME", __func__);
 		qdf_mem_free(stats_ext_event);
@@ -1379,7 +1379,7 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 	int8_t rssi = 0;
 	QDF_STATUS qdf_status;
 	tAniGetRssiReq *pGetRssiReq = (tAniGetRssiReq *) wma->pGetRssiReq;
-	cds_msg_t sme_msg = { 0 };
+	struct scheduler_msg sme_msg = { 0 };
 	int8_t bcn_snr, dat_snr;
 
 	bcn_snr = vdev_stats->vdev_snr.bcn_snr;
@@ -1480,7 +1480,7 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 		sme_msg.bodyptr = p_snr_req;
 		sme_msg.bodyval = 0;
 
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			WMA_LOGE("%s: Fail to post snr ind msg", __func__);
 			qdf_mem_free(p_snr_req);
@@ -1582,14 +1582,14 @@ void wma_post_link_status(tAniGetLinkStatus *pGetLinkStatus,
 			  uint8_t link_status)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	cds_msg_t sme_msg = { 0 };
+	struct scheduler_msg sme_msg = { 0 };
 
 	pGetLinkStatus->linkStatus = link_status;
 	sme_msg.type = eWNI_SME_LINK_STATUS_IND;
 	sme_msg.bodyptr = pGetLinkStatus;
 	sme_msg.bodyval = 0;
 
-	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("%s: Fail to post link status ind msg", __func__);
 		qdf_mem_free(pGetLinkStatus);
@@ -1863,7 +1863,7 @@ int wma_stats_event_handler(void *handle, uint8_t *cmd_param_info,
 QDF_STATUS wma_send_link_speed(uint32_t link_speed)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	cds_msg_t sme_msg = { 0 };
+	struct scheduler_msg sme_msg = { 0 };
 	tSirLinkSpeedInfo *ls_ind =
 		(tSirLinkSpeedInfo *) qdf_mem_malloc(sizeof(tSirLinkSpeedInfo));
 	if (!ls_ind) {
@@ -1875,7 +1875,7 @@ QDF_STATUS wma_send_link_speed(uint32_t link_speed)
 		sme_msg.bodyptr = ls_ind;
 		sme_msg.bodyval = 0;
 
-		qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			WMA_LOGE("%s: Fail to post linkspeed ind  msg",
 				 __func__);
@@ -2543,7 +2543,7 @@ static void wma_post_ftm_response(tp_wma_handle wma_handle)
 	int ret;
 	uint8_t *payload;
 	uint32_t data_len;
-	cds_msg_t msg = { 0 };
+	struct scheduler_msg msg = { 0 };
 	QDF_STATUS status;
 
 	ret = wma_utf_rsp(wma_handle, &payload, &data_len);
@@ -2556,7 +2556,7 @@ static void wma_post_ftm_response(tp_wma_handle wma_handle)
 	msg.bodyptr = payload;
 	msg.bodyval = 0;
 
-	status = cds_mq_post_message(QDF_MODULE_ID_SYS, &msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_SYS, &msg);
 
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("failed to post ftm response to SYS");

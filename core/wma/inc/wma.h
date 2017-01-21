@@ -1591,7 +1591,7 @@ typedef struct {
 	/* NAN datapath support enabled in firmware */
 	bool nan_datapath_enabled;
 	QDF_STATUS (*pe_ndp_event_handler)(tpAniSirGlobal mac_ctx,
-					   cds_msg_t *msg);
+					   struct scheduler_msg *msg);
 	bool fw_timeout_crash;
 	bool sub_20_support;
 	tp_wma_packetdump_cb wma_mgmt_tx_packetdump_cb;

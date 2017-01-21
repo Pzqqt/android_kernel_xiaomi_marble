@@ -121,7 +121,7 @@ static int wma_post_auto_shutdown_msg(void)
 {
 	tSirAutoShutdownEvtParams *auto_sh_evt;
 	QDF_STATUS qdf_status;
-	cds_msg_t sme_msg = { 0 };
+	struct scheduler_msg sme_msg = { 0 };
 
 	auto_sh_evt = (tSirAutoShutdownEvtParams *)
 		      qdf_mem_malloc(sizeof(tSirAutoShutdownEvtParams));
@@ -136,7 +136,7 @@ static int wma_post_auto_shutdown_msg(void)
 	sme_msg.bodyptr = auto_sh_evt;
 	sme_msg.bodyval = 0;
 
-	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("Fail to post eWNI_SME_AUTO_SHUTDOWN_IND msg to SME");
 		qdf_mem_free(auto_sh_evt);
@@ -285,7 +285,7 @@ end:
  */
 int wma_vdev_tsf_handler(void *handle, uint8_t *data, uint32_t data_len)
 {
-	cds_msg_t tsf_msg = {0};
+	struct scheduler_msg tsf_msg = {0};
 	WMI_VDEV_TSF_REPORT_EVENTID_param_tlvs *param_buf;
 	wmi_vdev_tsf_report_event_fixed_param *tsf_event;
 	struct stsf *ptsf;
@@ -318,7 +318,7 @@ int wma_vdev_tsf_handler(void *handle, uint8_t *data, uint32_t data_len)
 	tsf_msg.bodyval = 0;
 
 	if (QDF_STATUS_SUCCESS !=
-		cds_mq_post_message(QDF_MODULE_ID_SME, &tsf_msg)) {
+		scheduler_post_msg(QDF_MODULE_ID_SME, &tsf_msg)) {
 
 		WMA_LOGP("%s: Failed to post eWNI_SME_TSF_EVENT", __func__);
 		qdf_mem_free(ptsf);
@@ -1355,7 +1355,7 @@ static int wma_lphb_handler(tp_wma_handle wma, uint8_t *event)
 	wmi_hb_ind_event_fixed_param *hb_fp;
 	tSirLPHBInd *slphb_indication;
 	QDF_STATUS qdf_status;
-	cds_msg_t sme_msg = { 0 };
+	struct scheduler_msg sme_msg = { 0 };
 
 	hb_fp = (wmi_hb_ind_event_fixed_param *) event;
 	if (!hb_fp) {
@@ -1381,7 +1381,7 @@ static int wma_lphb_handler(tp_wma_handle wma, uint8_t *event)
 	sme_msg.bodyptr = slphb_indication;
 	sme_msg.bodyval = 0;
 
-	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("Fail to post eWNI_SME_LPHB_IND msg to SME");
 		qdf_mem_free(slphb_indication);
@@ -1478,7 +1478,7 @@ int wma_nan_rsp_event_handler(void *handle, uint8_t *event_buf,
 	tSirNanEvent *nan_rsp_event;
 	wmi_nan_event_hdr *nan_rsp_event_hdr;
 	QDF_STATUS status;
-	cds_msg_t cds_msg;
+	struct scheduler_msg message;
 	uint8_t *buf_ptr;
 	uint32_t alloc_len;
 
@@ -1514,11 +1514,11 @@ int wma_nan_rsp_event_handler(void *handle, uint8_t *event_buf,
 	qdf_mem_copy(nan_rsp_event->event_data, buf_ptr +
 		     sizeof(wmi_nan_event_hdr) + WMI_TLV_HDR_SIZE,
 		     nan_rsp_event->event_data_len);
-	cds_msg.type = eWNI_SME_NAN_EVENT;
-	cds_msg.bodyptr = (void *)nan_rsp_event;
-	cds_msg.bodyval = 0;
+	message.type = eWNI_SME_NAN_EVENT;
+	message.bodyptr = (void *)nan_rsp_event;
+	message.bodyval = 0;
 
-	status = cds_mq_post_message(QDF_MODULE_ID_SME, &cds_msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_SME, &message);
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: Failed to post NaN response event to SME",
 			 __func__);
@@ -2242,7 +2242,7 @@ static void wma_send_status_to_suspend_ind(tp_wma_handle wma, bool suspended)
 {
 	tSirReadyToSuspendInd *ready_to_suspend;
 	QDF_STATUS status;
-	cds_msg_t cds_msg;
+	struct scheduler_msg message;
 	uint8_t len;
 
 	WMA_LOGD("Posting ready to suspend indication to umac");
@@ -2259,11 +2259,11 @@ static void wma_send_status_to_suspend_ind(tp_wma_handle wma, bool suspended)
 	ready_to_suspend->mesgLen = len;
 	ready_to_suspend->suspended = suspended;
 
-	cds_msg.type = eWNI_SME_READY_TO_SUSPEND_IND;
-	cds_msg.bodyptr = (void *)ready_to_suspend;
-	cds_msg.bodyval = 0;
+	message.type = eWNI_SME_READY_TO_SUSPEND_IND;
+	message.bodyptr = (void *)ready_to_suspend;
+	message.bodyval = 0;
 
-	status = cds_mq_post_message(QDF_MODULE_ID_SME, &cds_msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_SME, &message);
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to post ready to suspend");
 		qdf_mem_free(ready_to_suspend);
@@ -5231,7 +5231,7 @@ int wma_gtk_offload_status_event(void *handle, uint8_t *event,
 	WMI_GTK_OFFLOAD_STATUS_EVENT_fixed_param *status;
 	WMI_GTK_OFFLOAD_STATUS_EVENTID_param_tlvs *param_buf;
 	tpSirGtkOffloadGetInfoRspParams resp;
-	cds_msg_t cds_msg;
+	struct scheduler_msg message;
 	uint8_t *bssid;
 
 	WMA_LOGD("%s Enter", __func__);
@@ -5277,11 +5277,11 @@ int wma_gtk_offload_status_event(void *handle, uint8_t *event,
 	resp->ulIGTKRekeyCount = status->refresh_cnt;
 #endif /* IGTK_OFFLOAD */
 
-	cds_msg.type = eWNI_PMC_GTK_OFFLOAD_GETINFO_RSP;
-	cds_msg.bodyptr = (void *)resp;
-	cds_msg.bodyval = 0;
+	message.type = eWNI_PMC_GTK_OFFLOAD_GETINFO_RSP;
+	message.bodyptr = (void *)resp;
+	message.bodyval = 0;
 
-	if (cds_mq_post_message(QDF_MODULE_ID_SME, (cds_msg_t *) &cds_msg)
+	if (scheduler_post_msg(QDF_MODULE_ID_SME, (struct scheduler_msg *) &message)
 	    != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to post GTK response to SME");
 		qdf_mem_free(resp);
@@ -6007,7 +6007,7 @@ static void wma_send_status_of_ext_wow(tp_wma_handle wma, bool status)
 {
 	tSirReadyToExtWoWInd *ready_to_extwow;
 	QDF_STATUS vstatus;
-	cds_msg_t cds_msg;
+	struct scheduler_msg message;
 	uint8_t len;
 
 	WMA_LOGD("Posting ready to suspend indication to umac");
@@ -6024,11 +6024,11 @@ static void wma_send_status_of_ext_wow(tp_wma_handle wma, bool status)
 	ready_to_extwow->mesgLen = len;
 	ready_to_extwow->status = status;
 
-	cds_msg.type = eWNI_SME_READY_TO_EXTWOW_IND;
-	cds_msg.bodyptr = (void *)ready_to_extwow;
-	cds_msg.bodyval = 0;
+	message.type = eWNI_SME_READY_TO_EXTWOW_IND;
+	message.bodyptr = (void *)ready_to_extwow;
+	message.bodyval = 0;
 
-	vstatus = cds_mq_post_message(QDF_MODULE_ID_SME, &cds_msg);
+	vstatus = scheduler_post_msg(QDF_MODULE_ID_SME, &message);
 	if (vstatus != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to post ready to suspend");
 		qdf_mem_free(ready_to_extwow);
@@ -6316,7 +6316,7 @@ int wma_channel_avoid_evt_handler(void *handle, uint8_t *event,
 	uint32_t num_freq_ranges, freq_range_idx;
 	tSirChAvoidIndType *sca_indication;
 	QDF_STATUS qdf_status;
-	cds_msg_t sme_msg = { 0 };
+	struct scheduler_msg sme_msg = { 0 };
 	WMI_WLAN_FREQ_AVOID_EVENTID_param_tlvs *param_buf =
 		(WMI_WLAN_FREQ_AVOID_EVENTID_param_tlvs *) event;
 
@@ -6372,7 +6372,7 @@ int wma_channel_avoid_evt_handler(void *handle, uint8_t *event,
 	sme_msg.bodyptr = sca_indication;
 	sme_msg.bodyval = 0;
 
-	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("Fail to post eWNI_SME_CH_AVOID_IND msg to SME");
 		qdf_mem_free(sca_indication);
@@ -6491,7 +6491,7 @@ void wma_send_regdomain_info_to_fw(uint32_t reg_dmn, uint16_t regdmn2G,
  */
 static QDF_STATUS wma_post_runtime_resume_msg(WMA_HANDLE handle)
 {
-	cds_msg_t resume_msg;
+	struct scheduler_msg resume_msg;
 	QDF_STATUS status;
 	tp_wma_handle wma = (tp_wma_handle) handle;
 
@@ -6500,7 +6500,7 @@ static QDF_STATUS wma_post_runtime_resume_msg(WMA_HANDLE handle)
 	resume_msg.bodyptr = NULL;
 	resume_msg.type    = WMA_RUNTIME_PM_RESUME_IND;
 
-	status = cds_mq_post_message(QDF_MODULE_ID_WMA, &resume_msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &resume_msg);
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		WMA_LOGE("Failed to post Runtime PM Resume IND to VOS");
@@ -6521,15 +6521,15 @@ static QDF_STATUS wma_post_runtime_resume_msg(WMA_HANDLE handle)
  */
 static QDF_STATUS wma_post_runtime_suspend_msg(WMA_HANDLE handle)
 {
-	cds_msg_t cds_msg;
+	struct scheduler_msg message;
 	QDF_STATUS qdf_status;
 	tp_wma_handle wma = (tp_wma_handle) handle;
 
 	qdf_event_reset(&wma->runtime_suspend);
 
-	cds_msg.bodyptr = NULL;
-	cds_msg.type    = WMA_RUNTIME_PM_SUSPEND_IND;
-	qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_msg);
+	message.bodyptr = NULL;
+	message.type    = WMA_RUNTIME_PM_SUSPEND_IND;
+	qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
 
 	if (qdf_status != QDF_STATUS_SUCCESS)
 		goto failure;
@@ -7782,7 +7782,7 @@ QDF_STATUS wma_process_fw_mem_dump_req(tp_wma_handle wma,
 static QDF_STATUS wma_fw_mem_dump_rsp(uint32_t req_id, uint32_t status)
 {
 	struct fw_dump_rsp *dump_rsp;
-	cds_msg_t sme_msg = {0};
+	struct scheduler_msg sme_msg = {0};
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
 	dump_rsp = qdf_mem_malloc(sizeof(*dump_rsp));
@@ -7803,7 +7803,7 @@ static QDF_STATUS wma_fw_mem_dump_rsp(uint32_t req_id, uint32_t status)
 	sme_msg.bodyptr = dump_rsp;
 	sme_msg.bodyval = 0;
 
-	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE(FL("Fail to post fw mem dump ind msg"));
 		qdf_mem_free(dump_rsp);

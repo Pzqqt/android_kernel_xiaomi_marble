@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -104,7 +104,8 @@ struct ndp_peer_node {
 QDF_STATUS lim_handle_ndp_request_message(tpAniSirGlobal mac_ctx,
 					tpSirMsgQ msg);
 /* Function to process NDP events */
-QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx, cds_msg_t *msg);
+QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx,
+					struct scheduler_msg *msg);
 void lim_process_ndi_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 				     tpSirMsgQ lim_msg_q,
 				     tpPESession session_entry);
@@ -129,7 +130,7 @@ static inline QDF_STATUS lim_handle_ndp_request_message(tpAniSirGlobal mac_ctx,
 
 /* Function to process NDP events */
 static inline QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx,
-						      cds_msg_t *msg)
+						      struct scheduler_msg *msg)
 {
 	return QDF_STATUS_SUCCESS;
 }
