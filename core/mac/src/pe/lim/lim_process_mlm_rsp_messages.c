@@ -834,7 +834,7 @@ lim_fill_assoc_ind_params(tpAniSirGlobal mac_ctx,
 void lim_process_mlm_assoc_ind(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 {
 	uint32_t len;
-	tSirMsgQ msgQ;
+	struct scheduler_msg msgQ;
 	tSirSmeAssocInd *pSirSmeAssocInd;
 	tpDphHashNode pStaDs = 0;
 	tpPESession psessionEntry;
@@ -1432,11 +1432,11 @@ error:
  ***NOTE:
  *
  * @param  pMac      Pointer to Global MAC structure
- * @param  tSirMsgQ  The MsgQ header, which contains the response buffer
+ * @param  struct scheduler_msg  The MsgQ header, which contains the response buffer
  *
  * @return None
  */
-void lim_process_mlm_add_sta_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
+void lim_process_mlm_add_sta_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ,
 				 tpPESession psessionEntry)
 {
 	/* we need to process the deferred message since the initiating req. there might be nested request. */
@@ -1453,7 +1453,7 @@ void lim_process_mlm_add_sta_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
 /**
  * lim_process_sta_mlm_add_sta_rsp () - Process add sta response
  * @mac_ctx:  Pointer to mac context
- * @msg:  tpSirMsgQan Message structure
+ * @msg:  struct scheduler_msg *an Message structure
  * @session_entry: PE session entry
  *
  * Process ADD STA response sent from WMA and posts results
@@ -1463,7 +1463,7 @@ void lim_process_mlm_add_sta_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
  */
 
 void lim_process_sta_mlm_add_sta_rsp(tpAniSirGlobal mac_ctx,
-	tpSirMsgQ msg, tpPESession session_entry)
+	struct scheduler_msg *msg, tpPESession session_entry)
 {
 	tLimMlmAssocCnf mlm_assoc_cnf;
 	tpDphHashNode sta_ds;
@@ -1597,7 +1597,7 @@ end:
 	return;
 }
 
-void lim_process_mlm_del_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
+void lim_process_mlm_del_bss_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ,
 				 tpPESession psessionEntry)
 {
 	/* we need to process the deferred message since the initiating req. there might be nested request. */
@@ -1625,7 +1625,7 @@ void lim_process_mlm_del_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
 #endif
 }
 
-void lim_process_sta_mlm_del_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
+void lim_process_sta_mlm_del_bss_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ,
 				     tpPESession psessionEntry)
 {
 	tpDeleteBssParams pDelBssParams = (tpDeleteBssParams) limMsgQ->bodyptr;
@@ -1703,7 +1703,7 @@ end:
 	return;
 }
 
-void lim_process_ap_mlm_del_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
+void lim_process_ap_mlm_del_bss_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ,
 					   tpPESession psessionEntry)
 {
 	tSirResultCodes rc = eSIR_SME_SUCCESS;
@@ -1780,7 +1780,7 @@ end:
  * Return: None
  */
 void lim_process_mlm_del_sta_rsp(tpAniSirGlobal mac_ctx,
-	tpSirMsgQ msg)
+	struct scheduler_msg *msg)
 {
 	/*
 	 * we need to process the deferred message since the
@@ -1832,7 +1832,7 @@ void lim_process_mlm_del_sta_rsp(tpAniSirGlobal mac_ctx,
  * Retunrn: None
  */
 void lim_process_ap_mlm_del_sta_rsp(tpAniSirGlobal mac_ctx,
-					   tpSirMsgQ msg,
+					   struct scheduler_msg *msg,
 					   tpPESession session_entry)
 {
 	tpDeleteStaParams del_sta_params = (tpDeleteStaParams) msg->bodyptr;
@@ -1926,7 +1926,7 @@ end:
 	return;
 }
 
-void lim_process_sta_mlm_del_sta_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
+void lim_process_sta_mlm_del_sta_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ,
 				     tpPESession psessionEntry)
 {
 	tSirResultCodes statusCode = eSIR_SME_SUCCESS;
@@ -1981,7 +1981,7 @@ end:
 	return;
 }
 
-void lim_process_ap_mlm_add_sta_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
+void lim_process_ap_mlm_add_sta_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ,
 					   tpPESession psessionEntry)
 {
 	tpAddStaParams pAddStaParams = (tpAddStaParams) limMsgQ->bodyptr;
@@ -2003,7 +2003,7 @@ void lim_process_ap_mlm_add_sta_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
 	}
 	/* */
 	/* TODO & FIXME_GEN4 */
-	/* Need to inspect tSirMsgQ.reserved for a valid Dialog token! */
+	/* Need to inspect struct scheduler_msg.reserved for a valid Dialog token! */
 	/* */
 	/* TODO: any check for pMac->lim.gLimMlmState ? */
 	if (eLIM_MLM_WT_ADD_STA_RSP_STATE != pStaDs->mlmStaContext.mlmState) {
@@ -2077,17 +2077,17 @@ end:
  * LIM responds with eWNI_SME_START_BSS_RSP to SME
  *
  ***ASSUMPTIONS:
- * tSirMsgQ.body is allocated by MLME during lim_process_mlm_start_req
- * tSirMsgQ.body will now be freed by this routine
+ * struct scheduler_msg.body is allocated by MLME during lim_process_mlm_start_req
+ * struct scheduler_msg.body will now be freed by this routine
  *
  ***NOTE:
  *
  * @param  pMac      Pointer to Global MAC structure
- * @param  tSirMsgQ  The MsgQ header, which contains the response buffer
+ * @param  struct scheduler_msg  The MsgQ header, which contains the response buffer
  *
  * @return None
  */
-static void lim_process_ap_mlm_add_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ)
+static void lim_process_ap_mlm_add_bss_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ)
 {
 	tLimMlmStartCnf mlmStartCnf;
 	tpPESession psessionEntry;
@@ -2224,18 +2224,18 @@ end:
  * LIM responds with eWNI_SME_START_BSS_RSP to SME
  *
  ***ASSUMPTIONS:
- * tSirMsgQ.body is allocated by MLME during lim_process_mlm_start_req
- * tSirMsgQ.body will now be freed by this routine
+ * struct scheduler_msg.body is allocated by MLME during lim_process_mlm_start_req
+ * struct scheduler_msg.body will now be freed by this routine
  *
  ***NOTE:
  *
  * @param  pMac      Pointer to Global MAC structure
- * @param  tSirMsgQ  The MsgQ header, which contains the response buffer
+ * @param  struct scheduler_msg  The MsgQ header, which contains the response buffer
  *
  * @return None
  */
 static void
-lim_process_ibss_mlm_add_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
+lim_process_ibss_mlm_add_bss_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ,
 				 tpPESession psessionEntry)
 {
 	tLimMlmStartCnf mlmStartCnf;
@@ -2313,7 +2313,7 @@ end:
  */
 static void
 lim_process_sta_add_bss_rsp_pre_assoc(tpAniSirGlobal mac_ctx,
-	tpSirMsgQ msg, tpPESession session_entry)
+	struct scheduler_msg *msg, tpPESession session_entry)
 {
 	tpAddBssParams pAddBssParams = (tpAddBssParams) msg->bodyptr;
 	tAniAuthType cfgAuthType, authMode;
@@ -2429,14 +2429,14 @@ joinFailure:
  * HAL responded with WMA_ADD_BSS_RSP to MLME
  * MLME now sends WMA_ADD_STA_REQ to HAL
  * ASSUMPTIONS:
- * tSirMsgQ.body is allocated by MLME during lim_process_mlm_join_req
- * tSirMsgQ.body will now be freed by this routine
+ * struct scheduler_msg.body is allocated by MLME during lim_process_mlm_join_req
+ * struct scheduler_msg.body will now be freed by this routine
  *
  * Return: None
  */
 static void
 lim_process_sta_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
-	tpSirMsgQ msg, tpPESession session_entry)
+	struct scheduler_msg *msg, tpPESession session_entry)
 {
 	tpAddBssParams add_bss_params = (tpAddBssParams) msg->bodyptr;
 	tLimMlmAssocCnf mlm_assoc_cnf;
@@ -2605,7 +2605,7 @@ end:
  * Return None
  */
 void lim_process_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
-	tpSirMsgQ msg)
+	struct scheduler_msg *msg)
 {
 	tLimMlmStartCnf mlm_start_cnf;
 	tpPESession session_entry;
@@ -2715,7 +2715,7 @@ void lim_process_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
  * Return: None
  */
 void lim_process_mlm_set_sta_key_rsp(tpAniSirGlobal mac_ctx,
-	tpSirMsgQ msg)
+	struct scheduler_msg *msg)
 {
 	uint8_t resp_reqd = 1;
 	tLimMlmSetKeysCnf mlm_set_key_cnf;
@@ -2798,7 +2798,7 @@ void lim_process_mlm_set_sta_key_rsp(tpAniSirGlobal mac_ctx,
  * Return: NULL
  */
 void lim_process_mlm_set_bss_key_rsp(tpAniSirGlobal mac_ctx,
-	tpSirMsgQ msg)
+	struct scheduler_msg *msg)
 {
 	tLimMlmSetKeysCnf set_key_cnf;
 	uint16_t result_status;
@@ -3216,7 +3216,7 @@ void lim_process_switch_channel_rsp(tpAniSirGlobal pMac, void *body)
 void lim_send_beacon_ind(tpAniSirGlobal pMac, tpPESession psessionEntry)
 {
 	tBeaconGenParams *pBeaconGenParams = NULL;
-	tSirMsgQ limMsg;
+	struct scheduler_msg limMsg;
 	/** Allocate the Memory for Beacon Pre Message and for Stations in PoweSave*/
 	if (psessionEntry == NULL) {
 		PELOGE(lim_log(pMac, LOGE,

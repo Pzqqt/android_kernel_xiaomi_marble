@@ -2797,7 +2797,7 @@ static QDF_STATUS lim_send_sme_tdls_add_sta_rsp(tpAniSirGlobal pMac,
 						uint8_t updateSta,
 						tDphHashNode *pStaDs, uint8_t status)
 {
-	tSirMsgQ mmhMsg = { 0 };
+	struct scheduler_msg mmhMsg = { 0 };
 	tSirTdlsAddStaRsp *addStaRsp = NULL;
 	mmhMsg.type = eWNI_SME_TDLS_ADD_STA_RSP;
 
@@ -3010,7 +3010,7 @@ void lim_send_sme_tdls_link_establish_req_rsp(tpAniSirGlobal pMac,
 					      struct qdf_mac_addr *peermac,
 					      tDphHashNode *pStaDs, uint8_t status)
 {
-	tSirMsgQ mmhMsg = { 0 };
+	struct scheduler_msg mmhMsg = { 0 };
 
 	tSirTdlsLinkEstablishReqRsp *pTdlsLinkEstablishReqRsp = NULL;
 
@@ -3042,7 +3042,7 @@ static QDF_STATUS lim_send_sme_tdls_del_sta_rsp(tpAniSirGlobal pMac,
 						struct qdf_mac_addr peerMac,
 						tDphHashNode *pStaDs, uint8_t status)
 {
-	tSirMsgQ mmhMsg = { 0 };
+	struct scheduler_msg mmhMsg = { 0 };
 	tSirTdlsDelStaRsp *pDelSta = NULL;
 	mmhMsg.type = eWNI_SME_TDLS_DEL_STA_RSP;
 
@@ -3258,7 +3258,7 @@ tSirRetStatus lim_process_sme_tdls_link_establish_req(tpAniSirGlobal mac_ctx,
 	tpPESession session_entry;
 	uint8_t session_id;
 	tpTdlsLinkEstablishParams tdls_req_params;
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	uint16_t peer_idx = 0;
 	tpDphHashNode stads = NULL;
 	uint32_t self_num_chan = WNI_CFG_VALID_CHANNEL_LIST_LEN;

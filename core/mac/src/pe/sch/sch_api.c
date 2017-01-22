@@ -128,7 +128,7 @@ void sch_init_globals(tpAniSirGlobal pMac)
  * @return None
  */
 
-tSirRetStatus sch_post_message(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
+tSirRetStatus sch_post_message(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 {
 	sch_process_message(pMac, pMsg);
 
@@ -153,7 +153,7 @@ tSirRetStatus sch_post_message(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
 
 void sch_send_start_scan_rsp(tpAniSirGlobal pMac)
 {
-	tSirMsgQ msgQ;
+	struct scheduler_msg msgQ;
 	uint32_t retCode;
 
 	PELOG1(sch_log(pMac, LOG1, FL("Sending LIM message to go into scan"));)
@@ -193,7 +193,7 @@ void sch_send_start_scan_rsp(tpAniSirGlobal pMac)
 tSirRetStatus sch_send_beacon_req(tpAniSirGlobal pMac, uint8_t *beaconPayload,
 				  uint16_t size, tpPESession psessionEntry)
 {
-	tSirMsgQ msgQ;
+	struct scheduler_msg msgQ;
 	tpSendbeaconParams beaconParams = NULL;
 	tSirRetStatus retCode;
 
@@ -326,7 +326,7 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 					    tpPESession psessionEntry,
 					    uint32_t *IeBitmap)
 {
-	tSirMsgQ msgQ;
+	struct scheduler_msg msgQ;
 	uint8_t *pFrame2Hal = psessionEntry->pSchProbeRspTemplate;
 	tpSendProbeRespParams pprobeRespParams = NULL;
 	uint32_t retCode = eSIR_FAILURE;

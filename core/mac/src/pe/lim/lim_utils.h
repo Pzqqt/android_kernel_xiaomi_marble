@@ -200,14 +200,14 @@ void lim_update_sta_run_time_ht_switch_chnl_params(tpAniSirGlobal pMac,
 void lim_print_mac_addr(tpAniSirGlobal, tSirMacAddr, uint8_t);
 
 /* Deferred Message Queue read/write */
-uint8_t lim_write_deferred_msg_q(tpAniSirGlobal pMac, tpSirMsgQ limMsg);
-tSirMsgQ *lim_read_deferred_msg_q(tpAniSirGlobal pMac);
-void lim_handle_defer_msg_error(tpAniSirGlobal pMac, tpSirMsgQ pLimMsg);
+uint8_t lim_write_deferred_msg_q(tpAniSirGlobal pMac, struct scheduler_msg *limMsg);
+struct scheduler_msg *lim_read_deferred_msg_q(tpAniSirGlobal pMac);
+void lim_handle_defer_msg_error(tpAniSirGlobal pMac, struct scheduler_msg *pLimMsg);
 
 /* Deferred Message Queue Reset */
 void lim_reset_deferred_msg_q(tpAniSirGlobal pMac);
 
-tSirRetStatus lim_sys_process_mmh_msg_api(tpAniSirGlobal, tSirMsgQ *, uint8_t);
+tSirRetStatus lim_sys_process_mmh_msg_api(tpAniSirGlobal, struct scheduler_msg *, uint8_t);
 
 void lim_handle_update_olbc_cache(tpAniSirGlobal pMac);
 
@@ -355,7 +355,7 @@ QDF_STATUS lim_tx_complete(tHalHandle hHal, qdf_nbuf_t buf, bool free);
  * timer fires.
  */
 
-void lim_process_del_ts_ind(tpAniSirGlobal pMac, tpSirMsgQ limMsg);
+void lim_process_del_ts_ind(tpAniSirGlobal pMac, struct scheduler_msg *limMsg);
 tSirRetStatus lim_process_hal_ind_messages(tpAniSirGlobal pMac, uint32_t mesgId,
 		void *mesgParam);
 tSirRetStatus lim_validate_delts_req(tpAniSirGlobal pMac,
@@ -396,7 +396,7 @@ tSirRetStatus lim_post_sm_state_update(tpAniSirGlobal pMac,
 		tSirMacHTMIMOPowerSaveState MIMOPSState,
 		uint8_t *pPeerStaMac, uint8_t sessionId);
 
-void lim_delete_sta_context(tpAniSirGlobal pMac, tpSirMsgQ limMsg);
+void lim_delete_sta_context(tpAniSirGlobal pMac, struct scheduler_msg *limMsg);
 void lim_delete_dialogue_token_list(tpAniSirGlobal pMac);
 void lim_resset_scan_channel_info(tpAniSirGlobal pMac);
 uint8_t lim_get_channel_from_beacon(tpAniSirGlobal pMac,
@@ -411,18 +411,18 @@ void lim_set_tspec_uapsd_mask_per_session(tpAniSirGlobal pMac,
 void lim_handle_heart_beat_timeout_for_session(tpAniSirGlobal pMac,
 		tpPESession psessionEntry);
 
-void lim_process_add_sta_rsp(tpAniSirGlobal pMac, tpSirMsgQ pMsgQ);
+void lim_process_add_sta_rsp(tpAniSirGlobal pMac, struct scheduler_msg *pMsgQ);
 
 void lim_update_beacon(tpAniSirGlobal pMac);
 
-void lim_process_ap_mlm_add_sta_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
+void lim_process_ap_mlm_add_sta_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ,
 		tpPESession psessionEntry);
 void lim_process_ap_mlm_del_bss_rsp(tpAniSirGlobal pMac,
-		tpSirMsgQ limMsgQ,
+		struct scheduler_msg *limMsgQ,
 		tpPESession psessionEntry);
 
 void lim_process_ap_mlm_del_sta_rsp(tpAniSirGlobal pMac,
-		tpSirMsgQ limMsgQ,
+		struct scheduler_msg *limMsgQ,
 		tpPESession psessionEntry);
 
 tpPESession lim_is_ibss_session_active(tpAniSirGlobal pMac);

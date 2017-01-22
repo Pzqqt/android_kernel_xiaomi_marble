@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -657,7 +657,7 @@ lim_send_sme_probe_req_ind(tpAniSirGlobal pMac,
 			   uint32_t ProbeReqIELen, tpPESession psessionEntry)
 {
 	tSirSmeProbeReqInd *pSirSmeProbeReqInd;
-	tSirMsgQ msgQ;
+	struct scheduler_msg msgQ;
 
 	pSirSmeProbeReqInd = qdf_mem_malloc(sizeof(tSirSmeProbeReqInd));
 	if (NULL == pSirSmeProbeReqInd) {

@@ -702,7 +702,7 @@ typedef enum {
 
 #endif /* FEATURE_WLAN_TDLS */
 
-tSirRetStatus wma_post_ctrl_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg);
+tSirRetStatus wma_post_ctrl_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
 
 tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb);
 

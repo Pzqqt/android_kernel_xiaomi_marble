@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2015, 2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -74,13 +74,13 @@ extern void sch_initializeCfPollTemplate(tpAniSirGlobal pMac);
 extern void sch_initializeCfEndTemplate(tpAniSirGlobal pMac);
 
 /* / Process the scheduler messages */
-extern void sch_process_message(tpAniSirGlobal pMac, tpSirMsgQ pSchMsg);
+extern void sch_process_message(tpAniSirGlobal pMac, struct scheduler_msg *pSchMsg);
 
 /* / The beacon Indication handler function */
-extern void sch_process_pre_beacon_ind(tpAniSirGlobal pMac, tpSirMsgQ limMsg);
+extern void sch_process_pre_beacon_ind(tpAniSirGlobal pMac, struct scheduler_msg *limMsg);
 
 /* / Post a message to the scheduler message queue */
-extern tSirRetStatus sch_post_message(tpAniSirGlobal pMac, tpSirMsgQ pMsg);
+extern tSirRetStatus sch_post_message(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
 
 extern void sch_beacon_process(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 			       tpPESession psessionEntry);

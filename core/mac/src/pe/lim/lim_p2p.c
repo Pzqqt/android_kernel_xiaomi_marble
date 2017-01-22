@@ -80,7 +80,7 @@ static QDF_STATUS lim_send_hal_req_remain_on_chan_offload(tpAniSirGlobal pMac,
 							  pRemOnChnReq)
 {
 	tSirScanOffloadReq *pScanOffloadReq;
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	tSirRetStatus rc = eSIR_SUCCESS;
 
 	pScanOffloadReq = qdf_mem_malloc(sizeof(tSirScanOffloadReq));
@@ -522,7 +522,7 @@ static void lim_tx_action_frame(tpAniSirGlobal mac_ctx,
  * Return: NULL
  */
 void lim_send_p2p_action_frame(tpAniSirGlobal mac_ctx,
-		tpSirMsgQ msg)
+		struct scheduler_msg *msg)
 {
 	tSirMbMsgP2p *mb_msg = (tSirMbMsgP2p *) msg->bodyptr;
 	uint32_t msg_len;
@@ -745,7 +745,7 @@ tSirRetStatus __lim_process_sme_no_a_update(tpAniSirGlobal pMac, uint32_t *pMsgB
 {
 	tpP2pPsConfig pNoA;
 	tpP2pPsParams pMsgNoA;
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 
 	pNoA = (tpP2pPsConfig) pMsgBuf;
 

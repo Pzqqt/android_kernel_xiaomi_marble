@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2014, 2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -47,7 +47,7 @@
 /* Function */
 
 extern void sysMACCleanup(void *);
-extern tSirRetStatus sys_bbt_process_message_core(struct sAniSirGlobal *, tpSirMsgQ,
+extern tSirRetStatus sys_bbt_process_message_core(struct sAniSirGlobal *, struct scheduler_msg *,
 						  uint32_t, uint32_t);
 
 #endif /* __SYSSTARTUP_H */

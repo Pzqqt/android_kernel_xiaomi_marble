@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -82,7 +82,7 @@ static void lim_process_auth_retry_timer(tpAniSirGlobal);
  *
  * Return: None
  */
-void lim_process_mlm_req_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
+void lim_process_mlm_req_messages(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg)
 {
 	switch (msg->type) {
 	case LIM_MLM_START_REQ:
@@ -477,7 +477,7 @@ tSirResultCodes
 lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 		tLimMlmStartReq *mlm_start_req, tpPESession session)
 {
-	tSirMsgQ msg_buf;
+	struct scheduler_msg msg_buf;
 	tpAddBssParams addbss_param = NULL;
 	uint32_t retcode;
 	bool is_ch_dfs = false;

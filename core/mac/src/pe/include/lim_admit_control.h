@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -101,6 +101,6 @@ tSirRetStatus lim_send_hal_msg_del_ts(tpAniSirGlobal pMac,
 				      uint8_t tspecIdx,
 				      tSirDeltsReqInfo delts,
 				      uint8_t sessionId, uint8_t *bssId);
-void lim_process_hal_add_ts_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsg);
+void lim_process_hal_add_ts_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsg);
 
 #endif

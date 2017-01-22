@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -874,7 +874,7 @@ lim_ft_send_aggr_qos_rsp(tpAniSirGlobal pMac, uint8_t rspReqd,
 	return;
 }
 
-void lim_process_ft_aggr_qo_s_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsg)
+void lim_process_ft_aggr_qo_s_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsg)
 {
 	tpAggrAddTsParams pAggrQosRspMsg = NULL;
 	tAddTsParams addTsParam = { 0 };
@@ -940,7 +940,7 @@ void lim_process_ft_aggr_qo_s_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsg)
 
 tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 {
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	tSirAggrQosReq *aggrQosReq = (tSirAggrQosReq *) pMsgBuf;
 	tpAggrAddTsParams pAggrAddTsParam;
 	tpPESession psessionEntry = NULL;

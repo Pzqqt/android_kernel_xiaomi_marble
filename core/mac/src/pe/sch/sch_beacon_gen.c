@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -918,7 +918,7 @@ void sch_generate_tim(tpAniSirGlobal pMac, uint8_t **pPtr, uint16_t *timLength,
  * @return None
  */
 
-void sch_process_pre_beacon_ind(tpAniSirGlobal pMac, tpSirMsgQ limMsg)
+void sch_process_pre_beacon_ind(tpAniSirGlobal pMac, struct scheduler_msg *limMsg)
 {
 	tpBeaconGenParams pMsg = (tpBeaconGenParams) limMsg->bodyptr;
 	uint32_t beaconSize;

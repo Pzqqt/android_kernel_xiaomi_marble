@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -448,7 +448,7 @@ err_timer:
 void lim_timer_handler(void *pMacGlobal, uint32_t param)
 {
 	uint32_t statusCode;
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	tpAniSirGlobal pMac = (tpAniSirGlobal) pMacGlobal;
 
 	/* Prepare and post message to LIM Message Queue */
@@ -487,7 +487,7 @@ void lim_timer_handler(void *pMacGlobal, uint32_t param)
 
 void lim_addts_response_timer_handler(void *pMacGlobal, uint32_t param)
 {
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	tpAniSirGlobal pMac = (tpAniSirGlobal) pMacGlobal;
 
 	/* Prepare and post message to LIM Message Queue */
@@ -522,7 +522,7 @@ void lim_addts_response_timer_handler(void *pMacGlobal, uint32_t param)
 
 void lim_auth_response_timer_handler(void *pMacGlobal, uint32_t param)
 {
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	tpAniSirGlobal pMac = (tpAniSirGlobal) pMacGlobal;
 
 	/* Prepare and post message to LIM Message Queue */
@@ -548,7 +548,7 @@ void lim_auth_response_timer_handler(void *pMacGlobal, uint32_t param)
  */
 void lim_assoc_failure_timer_handler(void *mac_global, uint32_t param)
 {
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	tpAniSirGlobal mac_ctx = (tpAniSirGlobal) mac_global;
 	tpPESession session = NULL;
 
@@ -605,7 +605,7 @@ void lim_assoc_failure_timer_handler(void *mac_global, uint32_t param)
  */
 void lim_update_olbc_cache_timer_handler(void *pMacGlobal, uint32_t param)
 {
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	tpAniSirGlobal pMac = (tpAniSirGlobal) pMacGlobal;
 
 	/* Prepare and post message to LIM Message Queue */
@@ -1224,7 +1224,7 @@ void lim_activate_auth_rsp_timer(tpAniSirGlobal pMac, tLimPreAuthNode *pAuthNode
 
 void lim_cnf_wait_tmer_handler(void *pMacGlobal, uint32_t param)
 {
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	uint32_t statusCode;
 	tpAniSirGlobal pMac = (tpAniSirGlobal) pMacGlobal;
 
@@ -1241,7 +1241,7 @@ void lim_cnf_wait_tmer_handler(void *pMacGlobal, uint32_t param)
 
 void lim_channel_switch_timer_handler(void *pMacGlobal, uint32_t param)
 {
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	tpAniSirGlobal pMac = (tpAniSirGlobal) pMacGlobal;
 
 	PELOG1(lim_log(pMac, LOG1,
@@ -1257,7 +1257,7 @@ void lim_channel_switch_timer_handler(void *pMacGlobal, uint32_t param)
 
 void lim_quiet_timer_handler(void *pMacGlobal, uint32_t param)
 {
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	tpAniSirGlobal pMac = (tpAniSirGlobal) pMacGlobal;
 
 	msg.type = SIR_LIM_QUIET_TIMEOUT;
@@ -1270,7 +1270,7 @@ void lim_quiet_timer_handler(void *pMacGlobal, uint32_t param)
 
 void lim_quiet_bss_timer_handler(void *pMacGlobal, uint32_t param)
 {
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	tpAniSirGlobal pMac = (tpAniSirGlobal) pMacGlobal;
 
 	msg.type = SIR_LIM_QUIET_BSS_TIMEOUT;

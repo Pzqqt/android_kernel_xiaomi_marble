@@ -14891,7 +14891,7 @@ QDF_STATUS csr_send_assoc_ind_to_upper_layer_cnf_msg(tpAniSirGlobal pMac,
 						     QDF_STATUS Halstatus,
 						     uint8_t sessionId)
 {
-	tSirMsgQ msgQ;
+	struct scheduler_msg msgQ;
 	tSirSmeAssocIndToUpperLayerCnf *pMsg;
 	uint8_t *pBuf;
 	tSirResultCodes statusCode;
@@ -15385,7 +15385,7 @@ QDF_STATUS csr_process_add_sta_session_command(tpAniSirGlobal pMac,
 	uint8_t nss_2g;
 	uint8_t nss_5g;
 	QDF_STATUS status = QDF_STATUS_E_NOMEM;
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 
 	add_sta_self_req = qdf_mem_malloc(sizeof(struct add_sta_self_params));
 	if (NULL == add_sta_self_req) {
@@ -15719,7 +15719,7 @@ QDF_STATUS csr_process_del_sta_session_command(tpAniSirGlobal pMac,
 					       tSmeCmd *pCommand)
 {
 	struct del_sta_self_params *del_sta_self_req;
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	del_sta_self_req = qdf_mem_malloc(sizeof(struct del_sta_self_params));
 	if (NULL == del_sta_self_req) {
@@ -19322,7 +19322,7 @@ void csr_process_set_hw_mode(tpAniSirGlobal mac, tSmeCmd *command)
 	uint32_t len;
 	struct s_sir_set_hw_mode *cmd;
 	QDF_STATUS status;
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	struct sir_set_hw_mode_resp *param;
 
 	/* Setting HW mode is for the entire system.
@@ -19409,7 +19409,7 @@ void csr_process_set_dual_mac_config(tpAniSirGlobal mac, tSmeCmd *command)
 	uint32_t len;
 	struct sir_set_dual_mac_cfg *cmd;
 	QDF_STATUS status;
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	struct sir_dual_mac_config_resp *param;
 
 	/* Setting MAC configuration is for the entire system.
@@ -19484,7 +19484,7 @@ void csr_process_set_antenna_mode(tpAniSirGlobal mac, tSmeCmd *command)
 	uint32_t len;
 	struct sir_set_antenna_mode *cmd;
 	QDF_STATUS status;
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	struct sir_antenna_mode_resp *param;
 
 	/* Setting MAC configuration is for the entire system.
@@ -19553,7 +19553,7 @@ void csr_process_nss_update_req(tpAniSirGlobal mac, tSmeCmd *command)
 	uint32_t len;
 	struct sir_nss_update_request *msg;
 	QDF_STATUS status;
-	tSirMsgQ msg_return;
+	struct scheduler_msg msg_return;
 	struct sir_beacon_tx_complete_rsp *param;
 	tCsrRoamSession *session;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -75,7 +75,7 @@ cfg_send_host_msg(tpAniSirGlobal pMac, uint16_t msgType, uint32_t msgLen,
 		  uint32_t *pData)
 {
 	uint32_t *pMsg, *pEnd;
-	tSirMsgQ mmhMsg;
+	struct scheduler_msg mmhMsg;
 
 	/* sanity */
 	if ((paramNum > 0) && (NULL == pParamList)) {

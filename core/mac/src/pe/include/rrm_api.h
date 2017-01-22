@@ -89,7 +89,7 @@ extern void rrm_get_start_tsf(tpAniSirGlobal pMac, uint32_t *pStartTSF);
 extern void rrm_update_start_tsf(tpAniSirGlobal pMac, uint32_t startTSF[2]);
 
 extern tSirRetStatus rrm_set_max_tx_power_rsp(tpAniSirGlobal pMac,
-					      tpSirMsgQ limMsgQ);
+					      struct scheduler_msg *limMsgQ);
 
 extern tSirRetStatus
 rrm_process_neighbor_report_req(tpAniSirGlobal pMac,

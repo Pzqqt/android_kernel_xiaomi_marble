@@ -2516,7 +2516,7 @@ static QDF_STATUS sme_process_antenna_mode_resp(tpAniSirGlobal mac,
 
    This is a synchronous call
    \param hHal - The handle returned by mac_open.
-   \param pMsg - A pointer to a caller allocated object of tSirMsgQ.
+   \param pMsg - A pointer to a caller allocated object of struct scheduler_msg.
 
    \return QDF_STATUS_SUCCESS - SME successfully process the message.
 
@@ -4988,7 +4988,7 @@ QDF_STATUS sme_wow_add_pattern(tHalHandle hal,
 	tpAniSirGlobal pMac = PMAC_STRUCT(hal);
 	struct wow_add_pattern *ptrn;
 	tSirRetStatus ret_code = eSIR_SUCCESS;
-	tSirMsgQ msg_q;
+	struct scheduler_msg msg_q;
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 			TRACE_CODE_SME_RX_HDD_WOWL_ADDBCAST_PATTERN, session_id,
 			0));
@@ -5029,7 +5029,7 @@ QDF_STATUS sme_wow_delete_pattern(tHalHandle hal,
 	tpAniSirGlobal pMac = PMAC_STRUCT(hal);
 	struct wow_delete_pattern *delete_ptrn;
 	tSirRetStatus ret_code = eSIR_SUCCESS;
-	tSirMsgQ msg_q;
+	struct scheduler_msg msg_q;
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 			 TRACE_CODE_SME_RX_HDD_WOWL_DELBCAST_PATTERN, sessionId,
 			 0));

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -361,7 +361,7 @@ void lim_process_mlm_reassoc_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
  *Return: None
  */
 void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
-		tpSirMsgQ limMsgQ, tpPESession psessionEntry)
+		struct scheduler_msg *limMsgQ, tpPESession psessionEntry)
 {
 	tLimMlmReassocCnf mlmReassocCnf; /* keep sme */
 	tpDphHashNode pStaDs = NULL;
@@ -606,7 +606,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 	tLimMlmReassocReq *pMlmReassocReq;
 	uint16_t caps;
 	uint32_t val;
-	tSirMsgQ msgQ;
+	struct scheduler_msg msgQ;
 	tSirRetStatus retCode;
 	uint32_t teleBcnEn = 0;
 

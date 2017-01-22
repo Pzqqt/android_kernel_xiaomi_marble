@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -340,7 +340,7 @@ QDF_STATUS p2p_cancel_remain_on_channel(tHalHandle hHal,
 QDF_STATUS p2p_set_ps(tHalHandle hHal, tP2pPsConfig *pNoA)
 {
 	tpP2pPsConfig pNoAParam;
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 

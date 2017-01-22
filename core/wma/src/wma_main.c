@@ -2417,7 +2417,7 @@ end:
 void wma_send_msg(tp_wma_handle wma_handle, uint16_t msg_type,
 			 void *body_ptr, uint32_t body_val)
 {
-	tSirMsgQ msg = { 0 };
+	struct scheduler_msg msg = { 0 };
 	uint32_t status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 	msg.type = msg_type;
@@ -6417,7 +6417,7 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, struct scheduler_msg *msg)
 		break;
 
 	case WMA_CONFIG_PARAM_UPDATE_REQ:
-		wma_update_cfg_params(wma_handle, (tSirMsgQ *) msg);
+		wma_update_cfg_params(wma_handle, (struct scheduler_msg *) msg);
 		break;
 
 	case WMA_UPDATE_OP_MODE:

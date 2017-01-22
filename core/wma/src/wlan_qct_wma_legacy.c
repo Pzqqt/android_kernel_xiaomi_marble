@@ -54,7 +54,7 @@
  * Return: Success or Failure
  */
 
-tSirRetStatus wma_post_ctrl_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
+tSirRetStatus wma_post_ctrl_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 {
 	if (QDF_STATUS_SUCCESS !=
 	    scheduler_post_msg(QDF_MODULE_ID_WMA, (struct scheduler_msg *) pMsg))
@@ -71,7 +71,7 @@ tSirRetStatus wma_post_ctrl_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
  * Return: Success or Failure
  */
 
-static tSirRetStatus wma_post_cfg_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
+static tSirRetStatus wma_post_cfg_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 {
 	tSirRetStatus rc = eSIR_SUCCESS;
 
@@ -107,7 +107,7 @@ static tSirRetStatus wma_post_cfg_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
 
 tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb)
 {
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	tpAniSirGlobal pMac = (tpAniSirGlobal) pSirGlobal;
 
 	tSirMbMsg *pMbLocal;

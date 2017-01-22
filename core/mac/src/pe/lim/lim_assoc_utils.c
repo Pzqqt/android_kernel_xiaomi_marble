@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -2126,7 +2126,7 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 	tpDphHashNode sta_ds, uint8_t update_entry, tpPESession session_entry)
 {
 	tpAddStaParams add_sta_params = NULL;
-	tSirMsgQ msg_q;
+	struct scheduler_msg msg_q;
 	tSirRetStatus ret_code = eSIR_SUCCESS;
 	tSirMacAddr sta_mac, *sta_Addr;
 	uint8_t i, nw_type_11b = 0;
@@ -2546,7 +2546,7 @@ lim_del_sta(tpAniSirGlobal pMac,
 	    tpDphHashNode pStaDs, bool fRespReqd, tpPESession psessionEntry)
 {
 	tpDeleteStaParams pDelStaParams = NULL;
-	tSirMsgQ msgQ;
+	struct scheduler_msg msgQ;
 	tSirRetStatus retCode = eSIR_SUCCESS;
 
 	pDelStaParams = qdf_mem_malloc(sizeof(tDeleteStaParams));
@@ -2669,7 +2669,7 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 		 tpPESession psessionEntry)
 {
 	tpAddStaParams pAddStaParams = NULL;
-	tSirMsgQ msgQ;
+	struct scheduler_msg msgQ;
 	tSirRetStatus retCode = eSIR_SUCCESS;
 	tSirMacAddr staMac;
 	uint32_t listenInterval = WNI_CFG_LISTEN_INTERVAL_STADEF;
@@ -3347,7 +3347,7 @@ lim_del_bss(tpAniSirGlobal pMac, tpDphHashNode pStaDs, uint16_t bssIdx,
 	    tpPESession psessionEntry)
 {
 	tpDeleteBssParams pDelBssParams = NULL;
-	tSirMsgQ msgQ;
+	struct scheduler_msg msgQ;
 	tSirRetStatus retCode = eSIR_SUCCESS;
 
 	pDelBssParams = qdf_mem_malloc(sizeof(tDeleteBssParams));
@@ -3541,7 +3541,7 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 				   tpSirBssDescription bssDescription,
 				   uint8_t updateEntry, tpPESession psessionEntry)
 {
-	tSirMsgQ msgQ;
+	struct scheduler_msg msgQ;
 	tpAddBssParams pAddBssParams = NULL;
 	uint32_t retCode;
 	tpDphHashNode pStaDs = NULL;
@@ -4071,7 +4071,7 @@ returnFailure:
 tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t updateEntry,
 					     tpPESession psessionEntry)
 {
-	tSirMsgQ msgQ;
+	struct scheduler_msg msgQ;
 	tpAddBssParams pAddBssParams = NULL;
 	uint32_t retCode;
 	tSchBeaconStruct *pBeaconStruct;
@@ -4786,7 +4786,7 @@ void lim_send_sme_unprotected_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameT
 					     uint16_t sessionId,
 					     tpPESession psessionEntry)
 {
-	tSirMsgQ mmhMsg;
+	struct scheduler_msg mmhMsg;
 	tSirSmeUnprotMgmtFrameInd *pSirSmeMgmtFrame = NULL;
 	uint16_t length;
 
@@ -4829,7 +4829,7 @@ void lim_send_sme_unprotected_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameT
 void lim_send_sme_tsm_ie_ind(tpAniSirGlobal pMac, tpPESession psessionEntry,
 			     uint8_t tid, uint8_t state, uint16_t measInterval)
 {
-	tSirMsgQ mmhMsg;
+	struct scheduler_msg mmhMsg;
 	tpSirSmeTsmIEInd pSirSmeTsmIeInd = NULL;
 
 	if (!pMac || !psessionEntry)

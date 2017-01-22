@@ -46,7 +46,7 @@
 static void lim_send_ndp_event_to_sme(tpAniSirGlobal mac_ctx, uint32_t msg_type,
 				void *body_ptr, uint32_t len, uint32_t body_val)
 {
-	tSirMsgQ mmh_msg = {0};
+	struct scheduler_msg mmh_msg = {0};
 
 	mmh_msg.type = msg_type;
 	if (len && body_ptr) {
@@ -389,7 +389,7 @@ static QDF_STATUS lim_ndp_end_indication_handler(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-void lim_process_ndi_del_sta_rsp(tpAniSirGlobal mac_ctx, tpSirMsgQ lim_msg,
+void lim_process_ndi_del_sta_rsp(tpAniSirGlobal mac_ctx, struct scheduler_msg *lim_msg,
 						tpPESession pe_session)
 {
 	tpDeleteStaParams del_sta_params = (tpDeleteStaParams) lim_msg->bodyptr;
@@ -536,7 +536,7 @@ QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx,
 static QDF_STATUS lim_process_sme_ndp_initiator_req(tpAniSirGlobal mac_ctx,
 						    void *ndp_msg)
 {
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	QDF_STATUS status;
 
 	struct sir_sme_ndp_initiator_req *sme_req =
@@ -585,7 +585,7 @@ send_initiator_rsp:
 static QDF_STATUS lim_process_sme_ndp_responder_req(tpAniSirGlobal mac_ctx,
 	struct sir_sme_ndp_responder_req *lim_msg)
 {
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct ndp_responder_req *responder_req;
 
@@ -635,7 +635,7 @@ send_failure_rsp:
 static QDF_STATUS lim_process_sme_ndp_data_end_req(tpAniSirGlobal mac_ctx,
 					struct sir_sme_ndp_end_req *sme_msg)
 {
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	uint32_t len;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
@@ -680,7 +680,7 @@ static QDF_STATUS lim_process_sme_ndp_data_end_req(tpAniSirGlobal mac_ctx,
  * Return: QDF_STATUS_SUCCESS on success; error number otherwise
  */
 QDF_STATUS lim_handle_ndp_request_message(tpAniSirGlobal mac_ctx,
-					  tpSirMsgQ msg)
+					  struct scheduler_msg *msg)
 {
 	QDF_STATUS status;
 
@@ -714,7 +714,7 @@ QDF_STATUS lim_handle_ndp_request_message(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-void lim_process_ndi_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx, tpSirMsgQ lim_msgq,
+void lim_process_ndi_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx, struct scheduler_msg *lim_msgq,
 		tpPESession session_entry)
 {
 	tLimMlmStartCnf mlm_start_cnf;
@@ -826,7 +826,7 @@ static QDF_STATUS lim_send_sme_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx,
 					       tpPESession session,
 					       tAddStaParams *add_sta_rsp)
 {
-	tSirMsgQ  mmh_msg = {0};
+	struct scheduler_msg  mmh_msg = {0};
 	struct sme_ndp_peer_ind *new_peer_ind;
 
 	mmh_msg.type = eWNI_SME_NDP_NEW_PEER_IND;

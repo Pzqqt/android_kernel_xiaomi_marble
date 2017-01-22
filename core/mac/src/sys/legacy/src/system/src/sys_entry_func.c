@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -52,7 +52,7 @@
 #include "lim_trace.h"
 #include "wma_types.h"
 
-tSirRetStatus postPTTMsgApi(tpAniSirGlobal pMac, tSirMsgQ *pMsg);
+tSirRetStatus postPTTMsgApi(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
 
 #include "qdf_types.h"
 #include "cds_packet.h"
@@ -99,7 +99,7 @@ tSirRetStatus sys_init_globals(tpAniSirGlobal pMac)
  * Return: None
  */
 tSirRetStatus
-sys_bbt_process_message_core(tpAniSirGlobal mac_ctx, tpSirMsgQ msg,
+sys_bbt_process_message_core(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg,
 		uint32_t type, uint32_t subtype)
 {
 	uint32_t framecount;

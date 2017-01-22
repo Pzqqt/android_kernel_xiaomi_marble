@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -126,7 +126,7 @@ void lim_ft_cleanup_pre_auth_info(tpAniSirGlobal pMac,
  *
  * Return: value to indicate if buffer was consumed
  */
-int lim_process_ft_pre_auth_req(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
+int lim_process_ft_pre_auth_req(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg)
 {
 	int buf_consumed = false;
 	tpPESession session;
@@ -600,7 +600,7 @@ void lim_post_ft_pre_auth_rsp(tpAniSirGlobal mac_ctx,
 			      tpPESession session)
 {
 	tpSirFTPreAuthRsp ft_pre_auth_rsp;
-	tSirMsgQ mmh_msg;
+	struct scheduler_msg mmh_msg;
 	uint16_t rsp_len = sizeof(tSirFTPreAuthRsp);
 
 	ft_pre_auth_rsp = (tpSirFTPreAuthRsp) qdf_mem_malloc(rsp_len);
@@ -681,7 +681,7 @@ QDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
 {
 	tSirScanOffloadReq *scan_offload_req;
 	tSirRetStatus rc = eSIR_SUCCESS;
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 
 	scan_offload_req = qdf_mem_malloc(sizeof(tSirScanOffloadReq));
 	if (NULL == scan_offload_req) {

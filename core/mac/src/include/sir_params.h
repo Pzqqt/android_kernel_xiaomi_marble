@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -111,35 +111,6 @@ typedef enum eSriLinkState {
 	eSIR_LINK_IBSS_STATE = 4,
 	eSIR_LINK_DOWN_STATE = 5,
 } tSirLinkState;
-
-/* / Message queue structure used across Sirius project. */
-/* / NOTE: this structure should be multiples of a word size (4bytes) */
-/* / as this is used in tx_queue where it expects to be multiples of 4 bytes. */
-typedef struct sSirMsgQ {
-	uint16_t type;
-	/*
-	 * This field can be used as sequence number/dialog token for matching
-	 * requests and responses.
-	 */
-	uint16_t reserved;
-	/**
-	 * Based on the type either a bodyptr pointer into
-	 * memory or bodyval as a 32 bit data is used.
-	 * bodyptr: is always a freeable pointer, one should always
-	 * make sure that bodyptr is always freeable.
-	 *
-	 * Messages should use either bodyptr or bodyval; not both !!!.
-	 */
-	void *bodyptr;
-	uint32_t bodyval;
-
-	/*
-	 * Some messages provide a callback function.  The function signature
-	 * must be agreed upon between the two entities exchanging the message
-	 */
-	void *callback;
-
-} tSirMsgQ, *tpSirMsgQ;
 
 /* / Mailbox Message Structure Define */
 typedef struct sSirMbMsg {

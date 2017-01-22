@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1359,7 +1359,7 @@ typedef struct tHalHiddenSsidVdevRestart {
 } tHalHiddenSsidVdevRestart, *tpHalHiddenSsidVdevRestart;
 
 
-extern void sys_process_mmh_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg);
+extern void sys_process_mmh_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
 
 /**
  * struct tBeaconFilterMsg - Beacon Filtering data structure

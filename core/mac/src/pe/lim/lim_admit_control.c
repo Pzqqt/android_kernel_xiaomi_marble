@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -916,7 +916,7 @@ lim_send_hal_msg_add_ts(tpAniSirGlobal pMac,
 			uint8_t tspecIdx, tSirMacTspecIE tspecIE, uint8_t sessionId)
 #endif
 {
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	tpAddTsParams pAddTsParam;
 
 	tpPESession psessionEntry = pe_find_session_by_session_id(pMac, sessionId);
@@ -983,7 +983,7 @@ lim_send_hal_msg_del_ts(tpAniSirGlobal pMac,
 			uint8_t tspecIdx,
 			tSirDeltsReqInfo delts, uint8_t sessionId, uint8_t *bssId)
 {
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	tpDelTsParams pDelTsParam;
 	tpPESession psessionEntry = NULL;
 
@@ -1047,9 +1047,9 @@ err:
  \       then send back SME_ADDTS_RSP.
  \
    \param  tpAniSirGlobal  pMac
-   \param  tpSirMsgQ   limMsg
+   \param  struct scheduler_msg *limMsg
    -------------------------------------------------------------*/
-void lim_process_hal_add_ts_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsg)
+void lim_process_hal_add_ts_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsg)
 {
 	tpAddTsParams pAddTsRspMsg = NULL;
 	tpDphHashNode pSta = NULL;

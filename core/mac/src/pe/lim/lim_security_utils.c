@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -816,7 +816,7 @@ void lim_send_set_bss_key_req(tpAniSirGlobal pMac,
 			      tLimMlmSetKeysReq *pMlmSetKeysReq,
 			      tpPESession psessionEntry)
 {
-	tSirMsgQ msgQ;
+	struct scheduler_msg msgQ;
 	tpSetBssKeyParams pSetBssKeyParams = NULL;
 	tLimMlmSetKeysCnf mlmSetKeysCnf;
 	tSirRetStatus retCode;
@@ -929,7 +929,7 @@ void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 			      uint8_t defWEPIdx,
 			      tpPESession sessionEntry, bool sendRsp)
 {
-	tSirMsgQ msgQ;
+	struct scheduler_msg msgQ;
 	tpSetStaKeyParams pSetStaKeyParams = NULL;
 	tLimMlmSetKeysCnf mlmSetKeysCnf;
 	tSirRetStatus retCode;

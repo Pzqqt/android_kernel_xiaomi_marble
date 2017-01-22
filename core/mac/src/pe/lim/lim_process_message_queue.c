@@ -67,7 +67,7 @@
 
 void lim_log_session_states(tpAniSirGlobal pMac);
 static void lim_process_normal_hdd_msg(tpAniSirGlobal mac_ctx,
-	struct sSirMsgQ *msg, uint8_t rsp_reqd);
+	struct scheduler_msg *msg, uint8_t rsp_reqd);
 
 /**
  * lim_process_dual_mac_cfg_resp() - Process set dual mac config response
@@ -84,7 +84,7 @@ static void lim_process_dual_mac_cfg_resp(tpAniSirGlobal mac, void *body)
 {
 	struct sir_dual_mac_config_resp *resp, *param;
 	uint32_t len, fail_resp = 0;
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 
 	resp = (struct sir_dual_mac_config_resp *)body;
 	if (!resp) {
@@ -139,7 +139,7 @@ static void lim_process_set_hw_mode_resp(tpAniSirGlobal mac, void *body)
 {
 	struct sir_set_hw_mode_resp *resp, *param;
 	uint32_t len, i, fail_resp = 0;
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 
 	resp = (struct sir_set_hw_mode_resp *)body;
 	if (!resp) {
@@ -206,7 +206,7 @@ static void lim_process_set_antenna_resp(tpAniSirGlobal mac, void *body)
 {
 	struct sir_antenna_mode_resp *resp, *param;
 	bool fail_resp = false;
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 
 	resp = (struct sir_antenna_mode_resp *)body;
 	if (!resp) {
@@ -259,7 +259,7 @@ static void lim_process_set_default_scan_ie_request(tpAniSirGlobal mac_ctx,
 	struct vdev_ie_info *wma_ie_params;
 	uint8_t *local_ie_buf;
 	uint16_t local_ie_len;
-	tSirMsgQ msg_q;
+	struct scheduler_msg msg_q;
 	tSirRetStatus ret_code;
 
 	if (!msg_buf) {
@@ -323,7 +323,7 @@ static void lim_process_hw_mode_trans_ind(tpAniSirGlobal mac, void *body)
 {
 	struct sir_hw_mode_trans_ind *ind, *param;
 	uint32_t len, i;
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 
 	ind = (struct sir_hw_mode_trans_ind *)body;
 	if (!ind) {
@@ -364,12 +364,12 @@ static void lim_process_hw_mode_trans_ind(tpAniSirGlobal mac, void *body)
    \fn def_msg_decision
    \brief The function decides whether to defer a message or not in limProcessMessage function
    \param   tpAniSirGlobal pMac
-   \param       tSirMsgQ  limMsg
+   \param       struct scheduler_msg  limMsg
    \param       tSirMacTspecIE   *ppInfo
    \return none
    -------------------------------------------------------------*/
 
-uint8_t static def_msg_decision(tpAniSirGlobal pMac, tpSirMsgQ limMsg)
+uint8_t static def_msg_decision(tpAniSirGlobal pMac, struct scheduler_msg *limMsg)
 {
 
 /* this function should not changed */
@@ -449,7 +449,7 @@ __lim_pno_match_fwd_bcn_probepsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 {
 	struct pno_match_found  *result;
 	uint8_t                 *body;
-	tSirMsgQ                mmh_msg;
+	struct scheduler_msg                mmh_msg;
 	tpSirMacMgmtHdr         hdr;
 	uint32_t num_results = 1, len, i;
 
@@ -507,7 +507,7 @@ __lim_ext_scan_forward_bcn_probe_rsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 {
 	tpSirWifiFullScanResultEvent result;
 	uint8_t                     *body;
-	tSirMsgQ                     mmh_msg;
+	struct scheduler_msg                     mmh_msg;
 	tpSirMacMgmtHdr              hdr;
 
 	result = qdf_mem_malloc(sizeof(*result) + ie_len);
@@ -619,7 +619,7 @@ __lim_process_ext_scan_beacon_probe_rsp(tpAniSirGlobal pmac,
  * Not Scanning,
  */
 static void
-__lim_handle_beacon(tpAniSirGlobal pMac, tpSirMsgQ pMsg,
+__lim_handle_beacon(tpAniSirGlobal pMac, struct scheduler_msg *pMsg,
 		    tpPESession psessionEntry)
 {
 	/* checking for global SME state... */
@@ -658,11 +658,11 @@ __lim_handle_beacon(tpAniSirGlobal pMac, tpSirMsgQ pMsg,
  * NA
  *
  * @param  pMac - Pointer to Global MAC structure
- * @param  pMsg of type tSirMsgQ - Pointer to the message structure
+ * @param  pMsg of type struct scheduler_msg - Pointer to the message structure
  * @return None
  */
 
-uint32_t lim_defer_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
+uint32_t lim_defer_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 {
 	uint32_t retCode = TX_SUCCESS;
 
@@ -845,12 +845,12 @@ lim_check_mgmt_registered_frames(tpAniSirGlobal mac_ctx, uint8_t *buff_desc,
  * NA
  *
  * @param  pMac - Pointer to Global MAC structure
- * @param  pMsg of type tSirMsgQ - Pointer to the message structure
+ * @param  pMsg of type struct scheduler_msg - Pointer to the message structure
  * @return None
  */
 
 static void
-lim_handle80211_frames(tpAniSirGlobal pMac, tpSirMsgQ limMsg, uint8_t *pDeferMsg)
+lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg, uint8_t *pDeferMsg)
 {
 	uint8_t *pRxPacketInfo = NULL;
 	tSirMacFrameCtl fc;
@@ -1141,7 +1141,7 @@ end:
 static QDF_STATUS lim_send_stop_scan_offload_req(tpAniSirGlobal pMac,
 	uint8_t SessionId, uint32_t scan_id, uint32_t scan_requestor_id)
 {
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	tSirRetStatus rc = eSIR_SUCCESS;
 	tAbortScanParams *pAbortScanParams;
 
@@ -1199,7 +1199,7 @@ void lim_process_abort_scan_ind(tpAniSirGlobal mac_ctx,
 }
 
 static void lim_process_sme_obss_scan_ind(tpAniSirGlobal mac_ctx,
-							struct sSirMsgQ *msg)
+							struct scheduler_msg *msg)
 {
 	struct sPESession *session;
 	uint8_t session_id;
@@ -1238,7 +1238,7 @@ static void lim_process_sme_obss_scan_ind(tpAniSirGlobal mac_ctx,
  *
  * Return:  None.
  */
-static void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
+static void lim_process_messages(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg)
 {
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	uint8_t vdev_id = 0;
@@ -1252,7 +1252,7 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	uint16_t pkt_len = 0;
 	cds_pkt_t *body_ptr = NULL;
 	QDF_STATUS qdf_status;
-	tSirMsgQ new_msg;
+	struct scheduler_msg new_msg;
 	tSirSmeScanAbortReq *req_msg = NULL;
 	uint8_t session_id;
 	uint32_t scan_id;
@@ -1348,7 +1348,7 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 			break;
 		}
 		qdf_mem_copy((uint8_t *) &new_msg,
-			(uint8_t *) msg, sizeof(tSirMsgQ));
+			(uint8_t *) msg, sizeof(struct scheduler_msg));
 		body_ptr = (cds_pkt_t *) new_msg.bodyptr;
 		cds_pkt_get_packet_length(body_ptr, &pkt_len);
 
@@ -1961,9 +1961,9 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 
 static void lim_process_deferred_message_queue(tpAniSirGlobal pMac)
 {
-	tSirMsgQ limMsg = { 0, 0, 0 };
+	struct scheduler_msg limMsg = { 0, 0, 0 };
 
-	tSirMsgQ *readMsg;
+	struct scheduler_msg *readMsg;
 	uint16_t size;
 
 	/*
@@ -1973,7 +1973,7 @@ static void lim_process_deferred_message_queue(tpAniSirGlobal pMac)
 	if (size > 0) {
 		while ((readMsg = lim_read_deferred_msg_q(pMac)) != NULL) {
 			qdf_mem_copy((uint8_t *) &limMsg,
-				     (uint8_t *) readMsg, sizeof(tSirMsgQ));
+				     (uint8_t *) readMsg, sizeof(struct scheduler_msg));
 			size--;
 			lim_process_messages(pMac, &limMsg);
 
@@ -1996,7 +1996,7 @@ static void lim_process_deferred_message_queue(tpAniSirGlobal pMac)
  *
  * Return:  None.
  */
-void lim_message_processor(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
+void lim_message_processor(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg)
 {
 	if (eLIM_MLM_OFFLINE_STATE == mac_ctx->lim.gLimMlmState) {
 		pe_free_msg(mac_ctx, msg);
@@ -2024,7 +2024,7 @@ void lim_message_processor(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
  *
  * Return: None
  */
-static void lim_process_normal_hdd_msg(tpAniSirGlobal mac_ctx, tSirMsgQ *msg,
+static void lim_process_normal_hdd_msg(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg,
 	uint8_t rsp_reqd)
 {
 	bool defer_msg = true;

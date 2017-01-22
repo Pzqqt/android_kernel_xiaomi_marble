@@ -818,7 +818,7 @@ void lim_print_mac_addr(tpAniSirGlobal pMac, tSirMacAddr macAddr, uint8_t logLev
 
 void lim_reset_deferred_msg_q(tpAniSirGlobal pMac)
 {
-	tSirMsgQ *read_msg;
+	struct scheduler_msg *read_msg;
 
 	if (pMac->lim.gLimDeferredMsgQ.size > 0) {
 		while ((read_msg = lim_read_deferred_msg_q(pMac)) != NULL) {
@@ -847,7 +847,7 @@ void lim_reset_deferred_msg_q(tpAniSirGlobal pMac)
  * Return: none
  */
 
-uint8_t lim_write_deferred_msg_q(tpAniSirGlobal mac_ctx, tpSirMsgQ lim_msg)
+uint8_t lim_write_deferred_msg_q(tpAniSirGlobal mac_ctx, struct scheduler_msg *lim_msg)
 {
 	lim_log(mac_ctx, LOG1,
 		FL("Queue a deferred message (size %d, write %d) - type 0x%x "),
@@ -929,7 +929,7 @@ uint8_t lim_write_deferred_msg_q(tpAniSirGlobal mac_ctx, tpSirMsgQ lim_msg)
 	/* save the message to the queue and advanced the write pointer */
 	qdf_mem_copy((uint8_t *) &mac_ctx->lim.gLimDeferredMsgQ.
 			deferredQueue[mac_ctx->lim.gLimDeferredMsgQ.write++],
-				(uint8_t *) lim_msg, sizeof(tSirMsgQ));
+				(uint8_t *) lim_msg, sizeof(struct scheduler_msg));
 	return TX_SUCCESS;
 
 }
@@ -956,9 +956,9 @@ uint8_t lim_write_deferred_msg_q(tpAniSirGlobal mac_ctx, tpSirMsgQ lim_msg)
  * Returns the message at the head of the deferred message queue
  */
 
-tSirMsgQ *lim_read_deferred_msg_q(tpAniSirGlobal pMac)
+struct scheduler_msg *lim_read_deferred_msg_q(tpAniSirGlobal pMac)
 {
-	tSirMsgQ *msg;
+	struct scheduler_msg *msg;
 
 	/*
 	** check any messages left. If no, return
@@ -1008,7 +1008,7 @@ tSirMsgQ *lim_read_deferred_msg_q(tpAniSirGlobal pMac)
 }
 
 tSirRetStatus
-lim_sys_process_mmh_msg_api(tpAniSirGlobal pMac, tSirMsgQ *pMsg, uint8_t qType)
+lim_sys_process_mmh_msg_api(tpAniSirGlobal pMac, struct scheduler_msg *pMsg, uint8_t qType)
 {
 	/* FIXME */
 	sys_process_mmh_msg(pMac, pMsg);
@@ -2622,7 +2622,7 @@ lim_util_count_sta_del(tpAniSirGlobal pMac,
 void lim_switch_channel_cback(tpAniSirGlobal pMac, QDF_STATUS status,
 			      uint32_t *data, tpPESession psessionEntry)
 {
-	tSirMsgQ mmhMsg = { 0 };
+	struct scheduler_msg mmhMsg = { 0 };
 	tSirSmeSwitchChannelInd *pSirSmeSwitchChInd;
 
 	psessionEntry->currentOperChannel = psessionEntry->currentReqChannel;
@@ -4703,7 +4703,7 @@ tSirRetStatus lim_process_hal_ind_messages(tpAniSirGlobal pMac, uint32_t msgId,
 					   void *msgParam)
 {
 	/* its PE's responsibility to free msgparam when its done extracting the message parameters. */
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 
 	switch (msgId) {
 	case SIR_LIM_DEL_TS_IND:
@@ -4874,7 +4874,7 @@ lim_validate_delts_req(tpAniSirGlobal mac_ctx, tpSirDeltsReq delts_req,
    -------------------------------------------------------------*/
 void lim_register_hal_ind_call_back(tpAniSirGlobal pMac)
 {
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	tpHalIndCB pHalCB;
 
 	pHalCB = qdf_mem_malloc(sizeof(tHalIndCB));
@@ -4910,7 +4910,7 @@ void lim_register_hal_ind_call_back(tpAniSirGlobal pMac)
  *
  * Return: none
  */
-void lim_process_del_ts_ind(tpAniSirGlobal pMac, tpSirMsgQ limMsg)
+void lim_process_del_ts_ind(tpAniSirGlobal pMac, struct scheduler_msg *limMsg)
 {
 	tpDphHashNode pSta;
 	tpDelTsParams pDelTsParam = (tpDelTsParams) (limMsg->bodyptr);
@@ -5031,7 +5031,7 @@ lim_post_sm_state_update(tpAniSirGlobal pMac,
 			 uint8_t *pPeerStaMac, uint8_t sessionId)
 {
 	tSirRetStatus retCode = eSIR_SUCCESS;
-	tSirMsgQ msgQ;
+	struct scheduler_msg msgQ;
 	tpSetMIMOPS pMIMO_PSParams;
 
 	msgQ.reserved = 0;
@@ -5228,7 +5228,7 @@ void lim_frame_transmission_control(tpAniSirGlobal pMac, tLimQuietTxMode type,
 
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpTxControlParams pTxCtrlMsg;
-	tSirMsgQ msgQ;
+	struct scheduler_msg msgQ;
 	uint8_t nBytes = 0; /* No of bytes required for station bitmap. */
 
 	/** Allocate only required number of bytes for station bitmap
@@ -5596,7 +5596,7 @@ uint8_t lim_get_current_operating_channel(tpAniSirGlobal pMac)
  *
  * @Return: void
  */
-void lim_process_add_sta_rsp(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
+void lim_process_add_sta_rsp(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg)
 {
 	tpPESession session;
 	tpAddStaParams add_sta_params;
@@ -5764,7 +5764,7 @@ tpPESession lim_is_ap_session_active(tpAniSirGlobal pMac)
    \return void
    -----------------------------------------------------------*/
 
-void lim_handle_defer_msg_error(tpAniSirGlobal pMac, tpSirMsgQ pLimMsg)
+void lim_handle_defer_msg_error(tpAniSirGlobal pMac, struct scheduler_msg *pLimMsg)
 {
 	if (SIR_BB_XPORT_MGMT_MSG == pLimMsg->type) {
 		cds_pkt_return_packet((cds_pkt_t *) pLimMsg->bodyptr);
@@ -7190,7 +7190,7 @@ void lim_send_set_dtim_period(tpAniSirGlobal mac_ctx, uint8_t dtim_period,
 {
 	struct set_dtim_params *dtim_params = NULL;
 	tSirRetStatus ret = eSIR_SUCCESS;
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 
 	if (session == NULL) {
 		lim_log(mac_ctx, LOGE, FL("Inavalid parameters"));

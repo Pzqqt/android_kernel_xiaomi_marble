@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -156,7 +156,7 @@ void lim_set_cfg_protection(tpAniSirGlobal pMac, tpPESession pesessionEntry)
  */
 void lim_handle_param_update(tpAniSirGlobal pMac, eUpdateIEsType cfgId)
 {
-	tSirMsgQ msg = { 0 };
+	struct scheduler_msg msg = { 0 };
 	uint32_t status;
 
 	PELOG3(lim_log
@@ -247,7 +247,7 @@ void lim_handle_cf_gparam_update(tpAniSirGlobal pMac, uint32_t cfgId)
 		break;
 	case WNI_CFG_PROBE_RSP_BCN_ADDNIE_FLAG:
 	{
-		tSirMsgQ msg = { 0 };
+		struct scheduler_msg msg = { 0 };
 		uint32_t status;
 
 		msg.type = SIR_LIM_UPDATE_BEACON;

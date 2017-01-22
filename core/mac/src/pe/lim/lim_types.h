@@ -404,8 +404,8 @@ typedef struct sLimMlmLinkTestStopReq {
 
 /* Function templates */
 
-bool lim_process_sme_req_messages(tpAniSirGlobal, tpSirMsgQ);
-void lim_process_mlm_req_messages(tpAniSirGlobal, tpSirMsgQ);
+bool lim_process_sme_req_messages(tpAniSirGlobal, struct scheduler_msg *);
+void lim_process_mlm_req_messages(tpAniSirGlobal, struct scheduler_msg *);
 void lim_process_mlm_rsp_messages(tpAniSirGlobal, uint32_t, uint32_t *);
 void lim_process_sme_del_bss_rsp(tpAniSirGlobal, uint32_t, tpPESession);
 
@@ -569,7 +569,7 @@ void lim_tear_down_link_with_ap(tpAniSirGlobal, uint8_t, tSirMacReasonCodes);
 void limHandleMaxRetriesInterrupt(uint32_t);
 
 /* / Function that defers the messages received */
-uint32_t lim_defer_msg(tpAniSirGlobal, tSirMsgQ *);
+uint32_t lim_defer_msg(tpAniSirGlobal, struct scheduler_msg *);
 
 /* / Function that Switches the Channel and sets the CB Mode */
 void lim_set_channel(tpAniSirGlobal pMac, uint8_t channel,
@@ -596,20 +596,20 @@ void lim_send_tpc_request_frame(tpAniSirGlobal, tSirMacAddr,
 				tpPESession psessionEntry);
 
 /* Function(s) to handle responses received from HAL */
-void lim_process_mlm_add_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ);
-void lim_process_mlm_add_sta_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQt,
+void lim_process_mlm_add_bss_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ);
+void lim_process_mlm_add_sta_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQt,
 				 tpPESession psessionEntry);
-void lim_process_mlm_del_sta_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ);
-void lim_process_mlm_del_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
+void lim_process_mlm_del_sta_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ);
+void lim_process_mlm_del_bss_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ,
 				 tpPESession);
-void lim_process_sta_mlm_add_sta_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
+void lim_process_sta_mlm_add_sta_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ,
 				     tpPESession psessionEntry);
-void lim_process_sta_mlm_del_sta_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
+void lim_process_sta_mlm_del_sta_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ,
 				     tpPESession psessionEntry);
-void lim_process_sta_mlm_del_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
+void lim_process_sta_mlm_del_bss_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ,
 				     tpPESession psessionEntry);
-void lim_process_mlm_set_sta_key_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ);
-void lim_process_mlm_set_bss_key_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ);
+void lim_process_mlm_set_sta_key_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ);
+void lim_process_mlm_set_bss_key_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ);
 
 /* Function to process WMA_SWITCH_CHANNEL_RSP message */
 void lim_process_switch_channel_rsp(tpAniSirGlobal pMac, void *);
@@ -662,7 +662,7 @@ tSirRetStatus lim_send_sa_query_response_frame(tpAniSirGlobal pMac,
 static inline void
 lim_post_sme_message(tpAniSirGlobal pMac, uint32_t msgType, uint32_t *pMsgBuf)
 {
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 
 	if (pMsgBuf == NULL) {
 		lim_log(pMac, LOGE, FL("Buffer is Pointing to NULL"));
@@ -710,7 +710,7 @@ static inline void
 lim_post_mlm_message(tpAniSirGlobal pMac, uint32_t msgType, uint32_t *pMsgBuf)
 {
 
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	if (pMsgBuf == NULL) {
 		lim_log(pMac, LOGE, FL("Buffer is Pointing to NULL"));
 		return;
@@ -841,7 +841,7 @@ void lim_send_sme_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameType,
 void lim_process_remain_on_chn_timeout(tpAniSirGlobal pMac);
 void lim_process_insert_single_shot_noa_timeout(tpAniSirGlobal pMac);
 void lim_convert_active_channel_to_passive_channel(tpAniSirGlobal pMac);
-void lim_send_p2p_action_frame(tpAniSirGlobal pMac, tpSirMsgQ pMsg);
+void lim_send_p2p_action_frame(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
 void lim_abort_remain_on_chan(tpAniSirGlobal pMac, uint8_t sessionId,
 	uint32_t scan_id);
 tSirRetStatus __lim_process_sme_no_a_update(tpAniSirGlobal pMac, uint32_t *pMsgBuf);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1469,7 +1469,7 @@ static void proc_dnld_rsp(tpAniSirGlobal pMac, uint16_t length, uint32_t *pParam
 	uint8_t pStr[CFG_MAX_STR_LEN];
 	tpCfgBinHdr pHdr;
 	uint32_t logLevel;
-	tSirMsgQ mmhMsg;
+	struct scheduler_msg mmhMsg;
 
 	/* First Dword must contain the AP or STA magic dword */
 	PELOGW(cfg_log(pMac, LOGW, FL("CFG size %d bytes MAGIC dword is 0x%x"),

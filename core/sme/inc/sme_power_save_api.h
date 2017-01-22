@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -67,7 +67,7 @@ QDF_STATUS sme_set_ps_ns_offload(tHalHandle hal_ctx,
 
 #endif /* WLAN_NS_OFFLOAD */
 /* / Post a message to PE module */
-tSirRetStatus sme_post_pe_message(tpAniSirGlobal mac_ctx, tpSirMsgQ pMsg);
+tSirRetStatus sme_post_pe_message(tpAniSirGlobal mac_ctx, struct scheduler_msg *pMsg);
 
 QDF_STATUS sme_ps_enable_auto_ps_timer(tHalHandle hal_ctx,
 		uint32_t sessionId,

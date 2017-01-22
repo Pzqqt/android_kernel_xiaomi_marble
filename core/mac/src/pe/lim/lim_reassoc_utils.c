@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -445,7 +445,7 @@ tSirRetStatus lim_add_ft_sta_self(tpAniSirGlobal mac_ctx, uint16_t assoc_id,
 {
 	tpAddStaParams add_sta_params = NULL;
 	tSirRetStatus ret_code = eSIR_SUCCESS;
-	tSirMsgQ msg_q;
+	struct scheduler_msg msg_q;
 
 	add_sta_params = session_entry->ftPEContext.pAddStaReq;
 	add_sta_params->assocId = assoc_id;

@@ -1257,7 +1257,7 @@ wma_process_update_beacon_params(tp_wma_handle wma,
  *
  * Return: none
  */
-void wma_update_cfg_params(tp_wma_handle wma, tSirMsgQ *cfgParam)
+void wma_update_cfg_params(tp_wma_handle wma, struct scheduler_msg *cfgParam)
 {
 	uint8_t vdev_id;
 	uint32_t param_id;

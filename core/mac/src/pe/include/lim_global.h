@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -344,7 +344,7 @@ typedef struct sLimMlmStaContext {
 
 /* Structure definition to hold deferred messages queue parameters */
 typedef struct sLimDeferredMsgQParams {
-	tSirMsgQ deferredQueue[MAX_DEFERRED_QUEUE_LEN];
+	struct scheduler_msg deferredQueue[MAX_DEFERRED_QUEUE_LEN];
 	uint16_t size;
 	uint16_t read;
 	uint16_t write;

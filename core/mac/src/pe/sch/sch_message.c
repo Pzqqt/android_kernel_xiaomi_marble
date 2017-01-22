@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -103,7 +103,7 @@ void sch_set_beacon_interval(tpAniSirGlobal pMac, tpPESession psessionEntry)
  * @return None
  */
 
-void sch_process_message(tpAniSirGlobal pMac, tpSirMsgQ pSchMsg)
+void sch_process_message(tpAniSirGlobal pMac, struct scheduler_msg *pSchMsg)
 {
 	uint32_t val;
 

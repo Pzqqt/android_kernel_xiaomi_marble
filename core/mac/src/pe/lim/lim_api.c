@@ -880,10 +880,10 @@ void pe_stop(tpAniSirGlobal pMac)
  \      This happens when there are messages pending in the PE
  \      queue when system is being stopped and reset.
    \param   tpAniSirGlobal pMac
-   \param   tSirMsgQ       pMsg
+   \param   struct scheduler_msg       pMsg
    \return none
    -----------------------------------------------------------------*/
-void pe_free_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
+void pe_free_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 {
 	if (pMsg != NULL) {
 		if (NULL != pMsg->bodyptr) {
@@ -922,7 +922,7 @@ void pe_free_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
  * @return None
  */
 
-uint32_t lim_post_msg_api(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
+uint32_t lim_post_msg_api(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 {
 	return scheduler_post_msg(QDF_MODULE_ID_PE, (struct scheduler_msg *) pMsg);
 
@@ -937,7 +937,7 @@ uint32_t lim_post_msg_api(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
  *
  * Return: returns value returned by vos_mq_post_message_by_priority
  */
-uint32_t lim_post_msg_high_priority(tpAniSirGlobal mac, tSirMsgQ *msg)
+uint32_t lim_post_msg_high_priority(tpAniSirGlobal mac, struct scheduler_msg *msg)
 {
 	return scheduler_post_msg_by_priority(QDF_MODULE_ID_PE,
 					       (struct scheduler_msg *)msg, HIGH_PRIORITY);
@@ -958,7 +958,7 @@ uint32_t lim_post_msg_high_priority(tpAniSirGlobal mac, tSirMsgQ *msg)
 
    --------------------------------------------------------------------------*/
 
-tSirRetStatus pe_post_msg_api(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
+tSirRetStatus pe_post_msg_api(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 {
 	return (tSirRetStatus) lim_post_msg_api(pMac, pMsg);
 }
@@ -976,7 +976,7 @@ tSirRetStatus pe_post_msg_api(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
 
    --------------------------------------------------------------------------*/
 
-tSirRetStatus pe_process_messages(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
+tSirRetStatus pe_process_messages(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 {
 	if (ANI_DRIVER_TYPE(pMac) == eDRIVER_TYPE_MFG) {
 		return eSIR_SUCCESS;
@@ -1000,7 +1000,7 @@ QDF_STATUS pe_mc_process_handler(struct scheduler_msg *msg)
 	if (mac_ctx == NULL)
 		return QDF_STATUS_E_FAILURE;
 
-	status = pe_process_messages((tHalHandle)mac_ctx, (tSirMsgQ *)msg);
+	status = pe_process_messages((tHalHandle)mac_ctx, (struct scheduler_msg *)msg);
 	if (status == eSIR_SUCCESS)
 		return QDF_STATUS_SUCCESS;
 
@@ -1028,7 +1028,7 @@ static QDF_STATUS pe_handle_mgmt_frame(struct wlan_objmgr_psoc *psoc,
 {
 	tpAniSirGlobal pMac;
 	tpSirMacMgmtHdr mHdr;
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	cds_pkt_t *pVosPkt;
 	QDF_STATUS qdf_status;
 	uint8_t *pRxPacketInfo;
@@ -1705,7 +1705,7 @@ tSirRetStatus lim_update_short_slot(tpAniSirGlobal pMac,
 void lim_send_heart_beat_timeout_ind(tpAniSirGlobal pMac, tpPESession psessionEntry)
 {
 	uint32_t statusCode;
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 
 	/* Prepare and post message to LIM Message Queue */
 	msg.type = (uint16_t) SIR_LIM_HEART_BEAT_TIMEOUT;
@@ -1732,7 +1732,7 @@ void lim_send_heart_beat_timeout_ind(tpAniSirGlobal pMac, tpPESession psessionEn
  *
  * Return: void
  */
-void lim_ps_offload_handle_missed_beacon_ind(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
+void lim_ps_offload_handle_missed_beacon_ind(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 {
 	tpSirSmeMissedBeaconInd pSirMissedBeaconInd =
 		(tpSirSmeMissedBeaconInd) pMsg->bodyptr;
@@ -2242,7 +2242,7 @@ void lim_update_lost_link_info(tpAniSirGlobal mac, tpPESession session,
 				int32_t rssi)
 {
 	struct sir_lost_link_info *lost_link_info;
-	tSirMsgQ mmh_msg;
+	struct scheduler_msg mmh_msg;
 
 	if ((NULL == mac) || (NULL == session)) {
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,

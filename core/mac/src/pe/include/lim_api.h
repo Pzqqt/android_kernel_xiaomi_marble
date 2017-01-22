@@ -121,8 +121,8 @@ void pe_register_tl_handle(tpAniSirGlobal pMac);
 tSirRetStatus lim_start(tpAniSirGlobal pMac);
 tSirRetStatus pe_start(tpAniSirGlobal pMac);
 void pe_stop(tpAniSirGlobal pMac);
-tSirRetStatus pe_post_msg_api(tpAniSirGlobal pMac, tSirMsgQ *pMsg);
-tSirRetStatus peProcessMsg(tpAniSirGlobal pMac, tSirMsgQ *limMsg);
+tSirRetStatus pe_post_msg_api(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
+tSirRetStatus peProcessMsg(tpAniSirGlobal pMac, struct scheduler_msg *limMsg);
 
 /**
  * pe_register_mgmt_rx_frm_callback() - registers callback for receiving
@@ -166,14 +166,14 @@ void pe_register_callbacks_with_wma(tpAniSirGlobal pMac,
  */
 extern void lim_cleanup(tpAniSirGlobal);
 /* / Function to post messages to LIM thread */
-extern uint32_t lim_post_msg_api(tpAniSirGlobal, tSirMsgQ *);
-uint32_t lim_post_msg_high_priority(tpAniSirGlobal mac, tSirMsgQ *msg);
+extern uint32_t lim_post_msg_api(tpAniSirGlobal, struct scheduler_msg *);
+uint32_t lim_post_msg_high_priority(tpAniSirGlobal mac, struct scheduler_msg *msg);
 
 /**
  * Function to process messages posted to LIM thread
  * and dispatch to various sub modules within LIM module.
  */
-extern void lim_message_processor(tpAniSirGlobal, tpSirMsgQ);
+extern void lim_message_processor(tpAniSirGlobal, struct scheduler_msg *);
 /**
  * Function to check the LIM state if system is in Scan/Learn state.
  */
@@ -229,7 +229,7 @@ tSirRetStatus lim_update_short_slot(tpAniSirGlobal pMac,
 				    tpUpdateBeaconParams pBeaconParams,
 				    tpPESession);
 
-void lim_ps_offload_handle_missed_beacon_ind(tpAniSirGlobal pMac, tpSirMsgQ pMsg);
+void lim_ps_offload_handle_missed_beacon_ind(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
 void lim_send_heart_beat_timeout_ind(tpAniSirGlobal pMac, tpPESession psessionEntry);
 tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(tpAniSirGlobal pMac,
 						 uint8_t *pRxPacketInfo,
@@ -300,7 +300,7 @@ static inline void lim_get_rf_band_new(tpAniSirGlobal pMac, tSirRFBand *band,
    \return  uint32_t - TX_SUCCESS for success.
 
    --------------------------------------------------------------------------*/
-tSirRetStatus pe_process_messages(tpAniSirGlobal pMac, tSirMsgQ *pMsg);
+tSirRetStatus pe_process_messages(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
 QDF_STATUS pe_mc_process_handler(struct scheduler_msg *msg);
 
 /** -------------------------------------------------------------
@@ -310,10 +310,10 @@ QDF_STATUS pe_mc_process_handler(struct scheduler_msg *msg);
  \      This happens when there are messages pending in the PE
  \      queue when system is being stopped and reset.
    \param   tpAniSirGlobal pMac
-   \param   tSirMsgQ       pMsg
+   \param   struct scheduler_msg       pMsg
    \return none
    -----------------------------------------------------------------*/
-void pe_free_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg);
+void pe_free_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
 
 /*--------------------------------------------------------------------------
 

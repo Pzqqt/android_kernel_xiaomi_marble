@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -913,7 +913,7 @@ void cfg_cleanup(tpAniSirGlobal pMac)
 static void notify(tpAniSirGlobal pMac, uint16_t cfgId, uint32_t ntfMask)
 {
 
-	tSirMsgQ mmhMsg;
+	struct scheduler_msg mmhMsg;
 
 	mmhMsg.type = SIR_CFG_PARAM_UPDATE_IND;
 	mmhMsg.bodyval = (uint32_t) cfgId;

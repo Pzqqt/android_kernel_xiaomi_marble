@@ -81,7 +81,7 @@
 
 /* SME REQ processing function templates */
 static bool __lim_process_sme_sys_ready_ind(tpAniSirGlobal, uint32_t *);
-static bool __lim_process_sme_start_bss_req(tpAniSirGlobal, tpSirMsgQ pMsg);
+static bool __lim_process_sme_start_bss_req(tpAniSirGlobal, struct scheduler_msg *pMsg);
 static void __lim_process_sme_scan_req(tpAniSirGlobal, uint32_t *);
 static void __lim_process_sme_join_req(tpAniSirGlobal, uint32_t *);
 static void __lim_process_sme_reassoc_req(tpAniSirGlobal, uint32_t *);
@@ -89,7 +89,7 @@ static void __lim_process_sme_disassoc_req(tpAniSirGlobal, uint32_t *);
 static void __lim_process_sme_disassoc_cnf(tpAniSirGlobal, uint32_t *);
 static void __lim_process_sme_deauth_req(tpAniSirGlobal, uint32_t *);
 static void __lim_process_sme_set_context_req(tpAniSirGlobal, uint32_t *);
-static bool __lim_process_sme_stop_bss_req(tpAniSirGlobal, tpSirMsgQ pMsg);
+static bool __lim_process_sme_stop_bss_req(tpAniSirGlobal, struct scheduler_msg *pMsg);
 static void __lim_process_send_disassoc_frame(tpAniSirGlobal mac_ctx,
 				uint32_t *msg_buf);
 static void lim_process_sme_channel_change_request(tpAniSirGlobal pMac,
@@ -136,7 +136,7 @@ static QDF_STATUS lim_process_set_hw_mode(tpAniSirGlobal mac, uint32_t *msg)
 	struct sir_hw_mode *req_msg;
 	uint32_t len;
 	struct s_sir_set_hw_mode *buf;
-	tSirMsgQ resp_msg;
+	struct scheduler_msg resp_msg;
 	struct sir_set_hw_mode_resp *param;
 
 	buf = (struct s_sir_set_hw_mode *) msg;
@@ -207,7 +207,7 @@ static QDF_STATUS lim_process_set_dual_mac_cfg_req(tpAniSirGlobal mac,
 	struct sir_dual_mac_config *req_msg;
 	uint32_t len;
 	struct sir_set_dual_mac_cfg *buf;
-	tSirMsgQ resp_msg;
+	struct scheduler_msg resp_msg;
 	struct sir_dual_mac_config_resp *param;
 
 	buf = (struct sir_set_dual_mac_cfg *) msg;
@@ -278,7 +278,7 @@ static QDF_STATUS lim_process_set_antenna_mode_req(tpAniSirGlobal mac,
 	struct scheduler_msg message;
 	struct sir_antenna_mode_param *req_msg;
 	struct sir_set_antenna_mode *buf;
-	tSirMsgQ resp_msg;
+	struct scheduler_msg resp_msg;
 	struct sir_antenna_mode_resp *param;
 
 	buf = (struct sir_set_antenna_mode *) msg;
@@ -478,7 +478,7 @@ static uint16_t __lim_get_sme_join_req_size_for_alloc(uint8_t *pBuf)
  * Return: true - If defered false - Otherwise
  */
 
-static bool __lim_is_defered_msg_for_learn(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
+static bool __lim_is_defered_msg_for_learn(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 {
 	if (lim_is_system_in_scan_state(pMac)) {
 		if (lim_defer_msg(pMac, pMsg) != TX_SUCCESS) {
@@ -505,7 +505,7 @@ static bool __lim_is_defered_msg_for_learn(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
  * Return: true, if defered otherwise return false.
  */
 static bool
-__lim_is_defered_msg_for_radar(tpAniSirGlobal mac_ctx, tpSirMsgQ message)
+__lim_is_defered_msg_for_radar(tpAniSirGlobal mac_ctx, struct scheduler_msg *message)
 {
 	/*
 	 * fRadarDetCurOperChan will be set only if we
@@ -543,7 +543,7 @@ __lim_is_defered_msg_for_radar(tpAniSirGlobal mac_ctx, tpSirMsgQ message)
 
 static bool __lim_process_sme_sys_ready_ind(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 {
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	tSirSmeReadyReq *ready_req = (tSirSmeReadyReq *) pMsgBuf;
 
 	msg.type = WMA_SYS_READY_IND;
@@ -1171,7 +1171,7 @@ free:
  * return true - If we consumed the buffer
  *        false - If have defered the message.
  */
-static bool __lim_process_sme_start_bss_req(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
+static bool __lim_process_sme_start_bss_req(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 {
 	if (__lim_is_defered_msg_for_learn(pMac, pMsg) ||
 	    __lim_is_defered_msg_for_radar(pMac, pMsg)) {
@@ -1218,7 +1218,7 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 {
 	tSirScanOffloadReq *pScanOffloadReq;
 	uint8_t *p;
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	uint16_t i, len;
 	uint16_t addn_ie_len = 0;
 	tSirRetStatus status, rc = eSIR_SUCCESS;
@@ -1468,7 +1468,7 @@ static void __lim_process_sme_scan_req(tpAniSirGlobal mac_ctx,
  * @param  *pMsgBuf  A pointer to the SME message buffer
  * @return None
  */
-static void __lim_process_clear_dfs_channel_list(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
+static void __lim_process_clear_dfs_channel_list(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 {
 	qdf_mem_set(&pMac->lim.dfschannelList, sizeof(tSirDFSChannelList), 0);
 }
@@ -3456,7 +3456,7 @@ __lim_handle_sme_stop_bss_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
  *         false - If have defered the message.
  */
 
-static bool __lim_process_sme_stop_bss_req(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
+static bool __lim_process_sme_stop_bss_req(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 {
 	if (__lim_is_defered_msg_for_learn(pMac, pMsg)) {
 		/**
@@ -3969,7 +3969,7 @@ static void
 __lim_process_sme_get_statistics_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 {
 	tpAniGetPEStatsReq pPEStatsReq;
-	tSirMsgQ msgQ;
+	struct scheduler_msg msgQ;
 
 	pPEStatsReq = (tpAniGetPEStatsReq) pMsgBuf;
 
@@ -4002,7 +4002,7 @@ __lim_process_sme_get_statistics_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 static void
 __lim_process_sme_get_tsm_stats_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 {
-	tSirMsgQ msgQ;
+	struct scheduler_msg msgQ;
 
 	msgQ.type = WMA_TSM_STATS_REQ;
 	msgQ.reserved = 0;
@@ -4068,7 +4068,7 @@ lim_send_vdev_restart(tpAniSirGlobal pMac,
 		      tpPESession psessionEntry, uint8_t sessionId)
 {
 	tpHalHiddenSsidVdevRestart pHalHiddenSsidVdevRestart = NULL;
-	tSirMsgQ msgQ;
+	struct scheduler_msg msgQ;
 	tSirRetStatus retCode = eSIR_SUCCESS;
 
 	if (psessionEntry == NULL) {
@@ -4117,7 +4117,7 @@ static void __lim_process_roam_scan_offload_req(tpAniSirGlobal mac_ctx,
 						uint32_t *msg_buf)
 {
 	tpPESession pe_session;
-	tSirMsgQ wma_msg;
+	struct scheduler_msg wma_msg;
 	tSirRetStatus status;
 	tSirRoamOffloadScanReq *req_buffer;
 	uint16_t local_ie_len;
@@ -4482,7 +4482,7 @@ static void __lim_process_sme_set_ht2040_mode(tpAniSirGlobal pMac,
  * @return None
  */
 
-static void __lim_process_report_message(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
+static void __lim_process_report_message(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 {
 	switch (pMsg->type) {
 	case eWNI_SME_NEIGHBOR_REPORT_REQ_IND:
@@ -4518,7 +4518,7 @@ lim_send_set_max_tx_power_req(tpAniSirGlobal pMac, int8_t txPower,
 {
 	tpMaxTxPowerParams pMaxTxParams = NULL;
 	tSirRetStatus retCode = eSIR_SUCCESS;
-	tSirMsgQ msgQ;
+	struct scheduler_msg msgQ;
 
 	if (pSessionEntry == NULL) {
 		lim_log(pMac, LOGE, FL("Inavalid parameters"));
@@ -4866,7 +4866,7 @@ static void lim_set_pdev_ht_ie(tpAniSirGlobal mac_ctx, uint8_t pdev_id,
 		uint8_t nss)
 {
 	struct set_ie_param *ie_params;
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	tSirRetStatus rc = eSIR_SUCCESS;
 	uint8_t *p_ie = NULL;
 	tHtCaps *p_ht_cap;
@@ -4940,7 +4940,7 @@ static void lim_set_pdev_vht_ie(tpAniSirGlobal mac_ctx, uint8_t pdev_id,
 		uint8_t nss)
 {
 	struct set_ie_param *ie_params;
-	tSirMsgQ msg;
+	struct scheduler_msg msg;
 	tSirRetStatus rc = eSIR_SUCCESS;
 	uint8_t *p_ie = NULL;
 	tSirMacVHTCapabilityInfo *vht_cap;
@@ -5140,7 +5140,7 @@ static void lim_process_sme_update_access_policy_vendor_ie(
  *                   false - if pMsgBuf is not to be freed.
  */
 
-bool lim_process_sme_req_messages(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
+bool lim_process_sme_req_messages(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 {
 	bool bufConsumed = true;        /* Set this flag to false within case block of any following message, that doesnt want pMsgBuf to be freed. */
 	uint32_t *pMsgBuf = pMsg->bodyptr;
