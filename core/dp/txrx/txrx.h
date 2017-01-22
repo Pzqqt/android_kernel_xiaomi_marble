@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -201,22 +201,4 @@ static inline int wlan_txrx_register_rssi_indcb(void *g_cdsctx,
 	return 0;
 }
 
-/* FIXME: The following stubs will be removed eventually */
-static inline int wlan_txrx_mc_process_msg(void *g_cdsctx, cds_msg_t *msg)
-{
-	return 0;
-}
-
-static inline int wlan_txrx_tx_process_msg(void *g_cdsctx, cds_msg_t *msg)
-{
-	return 0;
-}
-
-static inline void wlan_txrx_mc_free_msg(void *g_cdsctx, cds_msg_t *msg)
-{
-}
-
-static inline void wlan_txrx_tx_free_msg(void *g_cdsctx, cds_msg_t *msg)
-{
-}
 #endif

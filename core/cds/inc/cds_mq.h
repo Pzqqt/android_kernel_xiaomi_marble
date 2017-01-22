@@ -44,53 +44,8 @@
 #include <qdf_types.h>
 #include <qdf_status.h>
 
-/*--------------------------------------------------------------------------
-   Preprocessor definitions and constants
-   ------------------------------------------------------------------------*/
-
-/*--------------------------------------------------------------------------
-   Type declarations
-   ------------------------------------------------------------------------*/
-
-/* cds Message Type.
-   This represnets a message that can be posted to another module through
-   the cds Message Queues.
-   \note This is mapped directly to the tSirMsgQ for backward
-   compatibility with the legacy MAC code */
-typedef struct cds_msg_s {
-	uint16_t type;
-	/*
-	 * This field can be used as sequence number/dialog token for matching
-	 * requests and responses.
-	 */
-	uint16_t reserved;
-	/**
-	 * Based on the type either a bodyptr pointer into
-	 * memory or bodyval as a 32 bit data is used.
-	 * bodyptr: is always a freeable pointer, one should always
-	 * make sure that bodyptr is always freeable.
-	 *
-	 * Messages should use either bodyptr or bodyval; not both !!!.
-	 */
-	void *bodyptr;
-
-	uint32_t bodyval;
-
-	/*
-	 * Some messages provide a callback function.  The function signature
-	 * must be agreed upon between the two entities exchanging the message
-	 */
-	void *callback;
-
-} cds_msg_t;
-
 #define HIGH_PRIORITY 1
 #define LOW_PRIORITY 0
-
-#define cds_mq_post_message_by_priority(_x, _y, _z) \
-	scheduler_post_msg_by_priority((_x), ((struct scheduler_msg *)_y), (_z))
-#define cds_mq_post_message(_x, _y) \
-	scheduler_post_msg((_x), ((struct scheduler_msg *)_y))
 
 /**---------------------------------------------------------------------------
 

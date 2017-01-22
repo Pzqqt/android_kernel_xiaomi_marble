@@ -34,7 +34,6 @@
  */
 
 /* Include Files */
-#include <cds_mq.h>
 #include "cds_sched.h"
 #include <cds_api.h>
 #include "sir_types.h"
@@ -46,93 +45,6 @@
 /* Function declarations and documenation */
 
 tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, void *pMb);
-
-/**
- * cds_mq_put() - add a message to the message queue
- * @pMq: Pointer to the message queue
- * @pMsgWrapper: Msg wrapper containing the message
- *
- * Return: none
- */
-inline void cds_mq_put(p_cds_mq_type pMq, p_cds_msg_wrapper pMsgWrapper)
-{
-	unsigned long flags;
-
-	if ((pMq == NULL) || (pMsgWrapper == NULL)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: NULL pointer passed", __func__);
-		return;
-	}
-
-	spin_lock_irqsave(&pMq->mqLock, flags);
-
-	list_add_tail(&pMsgWrapper->msgNode, &pMq->mqList);
-
-	spin_unlock_irqrestore(&pMq->mqLock, flags);
-
-} /* cds_mq_put() */
-
-/**
- * cds_mq_put_front() - adds a message to the head of message queue
- * @mq: message queue
- * @msg_wrapper: message wrapper
- *
- * This function is used to add a message to the head of message queue
- *
- * Return: None
- */
-void cds_mq_put_front(p_cds_mq_type mq, p_cds_msg_wrapper msg_wrapper)
-{
-	unsigned long flags;
-
-	if ((mq == NULL) || (msg_wrapper == NULL)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			"%s: NULL pointer passed", __func__);
-		return;
-	}
-
-	spin_lock_irqsave(&mq->mqLock, flags);
-	list_add(&msg_wrapper->msgNode, &mq->mqList);
-	spin_unlock_irqrestore(&mq->mqLock, flags);
-}
-
-/**
- * cds_mq_get() - get a message with its wrapper from a message queue
- * @pMq: Pointer to the message queue
- *
- * Return: pointer to the message wrapper
- */
-inline p_cds_msg_wrapper cds_mq_get(p_cds_mq_type pMq)
-{
-	p_cds_msg_wrapper pMsgWrapper = NULL;
-
-	struct list_head *listptr;
-	unsigned long flags;
-
-	if (pMq == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: NULL pointer passed", __func__);
-		return NULL;
-	}
-
-	spin_lock_irqsave(&pMq->mqLock, flags);
-
-	if (list_empty(&pMq->mqList)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_WARN,
-			  "%s: CDS Message Queue is empty", __func__);
-	} else {
-		listptr = pMq->mqList.next;
-		pMsgWrapper =
-			(p_cds_msg_wrapper) list_entry(listptr, cds_msg_wrapper,
-						       msgNode);
-		list_del(pMq->mqList.next);
-	}
-
-	spin_unlock_irqrestore(&pMq->mqLock, flags);
-
-	return pMsgWrapper;
-
-} /* cds_mq_get() */
 
 /**
  * cds_send_mb_message_to_mac() - post a message to a message queue

@@ -31,7 +31,6 @@
  * Connectivity driver services APIs
  */
 
-#include <cds_mq.h>
 #include "cds_sched.h"
 #include <cds_api.h>
 #include "sir_types.h"

@@ -45,7 +45,6 @@
 #if defined(WLAN_OPEN_SOURCE) && defined(CONFIG_HAS_WAKELOCK)
 #include <linux/wakelock.h>
 #endif
-#include <cds_mq.h>
 #include <qdf_types.h>
 #include "qdf_lock.h"
 #include "qdf_mc_timer.h"
@@ -72,18 +71,6 @@
 
 typedef void (*cds_ol_rx_thread_cb)(void *context, void *rxpkt, uint16_t staid);
 #endif
-
-/*
-** QDF Message queue definition.
-*/
-typedef struct _cds_mq_type {
-	/* Lock use to synchronize access to this message queue */
-	spinlock_t mqLock;
-
-	/* List of vOS Messages waiting on this queue */
-	struct list_head mqList;
-
-} cds_mq_type, *p_cds_mq_type;
 
 #ifdef QCA_CONFIG_SMP
 /*
@@ -185,20 +172,6 @@ struct cds_log_complete {
 	bool is_report_in_progress;
 	bool recovery_needed;
 };
-
-/*
-** CDS Sched Msg Wrapper
-** Wrapper messages so that they can be chained to their respective queue
-** in the scheduler.
-*/
-typedef struct _cds_msg_wrapper {
-	/* Message node */
-	struct list_head msgNode;
-
-	/* the Vos message it is associated to */
-	cds_msg_t *pVosMsg;
-
-} cds_msg_wrapper, *p_cds_msg_wrapper;
 
 typedef struct _cds_context_type {
 	/* Scheduler Context */
@@ -477,14 +450,7 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
    ---------------------------------------------------------------------------*/
 QDF_STATUS cds_sched_close(void *p_cds_context);
 
-/* Helper routines provided to other CDS API's */
-void cds_mq_put(p_cds_mq_type pMq, p_cds_msg_wrapper pMsgWrapper);
-void cds_mq_put_front(p_cds_mq_type mq, p_cds_msg_wrapper msg_wrapper);
-p_cds_msg_wrapper cds_mq_get(p_cds_mq_type pMq);
 p_cds_sched_context get_cds_sched_ctxt(void);
-QDF_STATUS cds_sched_init_mqs(p_cds_sched_context pSchedContext);
-void cds_sched_deinit_mqs(p_cds_sched_context pSchedContext);
-void cds_sched_flush_mc_mqs(p_cds_sched_context pSchedContext);
 
 void qdf_timer_module_init(void);
 void qdf_timer_module_deinit(void);

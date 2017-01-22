@@ -29,7 +29,6 @@
 #define WMA_API_H
 
 #include "osdep.h"
-#include "cds_mq.h"
 #include "ani_global.h"
 #include "a_types.h"
 #include "osapi_linux.h"

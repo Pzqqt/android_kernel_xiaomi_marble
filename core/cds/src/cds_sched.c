@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -32,7 +32,6 @@
  */
 
  /* Include Files */
-#include <cds_mq.h>
 #include <cds_api.h>
 #include <ani_global.h>
 #include <sir_types.h>
