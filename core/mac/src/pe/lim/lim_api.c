@@ -924,7 +924,7 @@ void pe_free_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 
 uint32_t lim_post_msg_api(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 {
-	return scheduler_post_msg(QDF_MODULE_ID_PE, (struct scheduler_msg *) pMsg);
+	return scheduler_post_msg(QDF_MODULE_ID_PE,  pMsg);
 
 } /*** end lim_post_msg_api() ***/
 
@@ -940,7 +940,7 @@ uint32_t lim_post_msg_api(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 uint32_t lim_post_msg_high_priority(tpAniSirGlobal mac, struct scheduler_msg *msg)
 {
 	return scheduler_post_msg_by_priority(QDF_MODULE_ID_PE,
-					       (struct scheduler_msg *)msg, HIGH_PRIORITY);
+					       msg, HIGH_PRIORITY);
 }
 
 /*--------------------------------------------------------------------------
@@ -1000,7 +1000,7 @@ QDF_STATUS pe_mc_process_handler(struct scheduler_msg *msg)
 	if (mac_ctx == NULL)
 		return QDF_STATUS_E_FAILURE;
 
-	status = pe_process_messages((tHalHandle)mac_ctx, (struct scheduler_msg *)msg);
+	status = pe_process_messages((tHalHandle)mac_ctx, msg);
 	if (status == eSIR_SUCCESS)
 		return QDF_STATUS_SUCCESS;
 

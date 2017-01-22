@@ -57,7 +57,7 @@
 tSirRetStatus wma_post_ctrl_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 {
 	if (QDF_STATUS_SUCCESS !=
-	    scheduler_post_msg(QDF_MODULE_ID_WMA, (struct scheduler_msg *) pMsg))
+	    scheduler_post_msg(QDF_MODULE_ID_WMA,  pMsg))
 		return eSIR_FAILURE;
 	else
 		return eSIR_SUCCESS;

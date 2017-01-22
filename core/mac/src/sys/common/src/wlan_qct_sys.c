@@ -260,7 +260,7 @@ QDF_STATUS sys_mc_process_handler(struct scheduler_msg *msg)
 			"CDS context is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-	return sys_mc_process_msg(cds_ctx, (struct scheduler_msg *)msg);
+	return sys_mc_process_msg(cds_ctx, msg);
 }
 
 /**
@@ -346,7 +346,7 @@ void sys_process_mmh_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 	 * Post now the message to the appropriate module for handling
 	 */
 	if (QDF_STATUS_SUCCESS != scheduler_post_msg(targetMQ,
-					(struct scheduler_msg *) pMsg)) {
+					 pMsg)) {
 		/*
 		 * Caller doesn't allocate memory for the pMsg.
 		 * It allocate memory for bodyptr free the mem and return

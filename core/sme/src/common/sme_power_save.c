@@ -977,7 +977,7 @@ tSirRetStatus sme_post_pe_message(tpAniSirGlobal mac_ctx, struct scheduler_msg *
 {
 	QDF_STATUS qdf_status;
 	qdf_status = scheduler_post_msg(QDF_MODULE_ID_PE,
-					(struct scheduler_msg *) msg);
+					 msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		sms_log(mac_ctx, LOGP,
 			FL("scheduler_post_msg failed with status code %d"),

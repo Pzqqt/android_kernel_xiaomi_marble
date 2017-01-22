@@ -6417,7 +6417,7 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, struct scheduler_msg *msg)
 		break;
 
 	case WMA_CONFIG_PARAM_UPDATE_REQ:
-		wma_update_cfg_params(wma_handle, (struct scheduler_msg *) msg);
+		wma_update_cfg_params(wma_handle,  msg);
 		break;
 
 	case WMA_UPDATE_OP_MODE:
@@ -7060,7 +7060,7 @@ QDF_STATUS wma_mc_process_handler(struct scheduler_msg *msg)
 			"CDS context is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-	return wma_mc_process_msg(cds_ctx, (struct scheduler_msg *)msg);
+	return wma_mc_process_msg(cds_ctx, msg);
 }
 
 /**

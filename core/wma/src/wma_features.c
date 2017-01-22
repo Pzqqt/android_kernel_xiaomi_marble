@@ -5281,7 +5281,7 @@ int wma_gtk_offload_status_event(void *handle, uint8_t *event,
 	message.bodyptr = (void *)resp;
 	message.bodyval = 0;
 
-	if (scheduler_post_msg(QDF_MODULE_ID_SME, (struct scheduler_msg *) &message)
+	if (scheduler_post_msg(QDF_MODULE_ID_SME, &message)
 	    != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to post GTK response to SME");
 		qdf_mem_free(resp);

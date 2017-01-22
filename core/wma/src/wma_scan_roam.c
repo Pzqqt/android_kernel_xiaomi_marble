@@ -1895,7 +1895,7 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 			 */
 			if (QDF_STATUS_SUCCESS !=
 			    scheduler_post_msg(QDF_MODULE_ID_SME,
-						(struct scheduler_msg *) &cds_msg)) {
+						 &cds_msg)) {
 				qdf_mem_free(scan_offload_rsp);
 				QDF_TRACE(QDF_MODULE_ID_WMA,
 					  QDF_TRACE_LEVEL_INFO,
@@ -5774,7 +5774,7 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 		  FL("posting candidate ind to SME"));
 
 	if (QDF_STATUS_SUCCESS != scheduler_post_msg(QDF_MODULE_ID_SME,
-						(struct scheduler_msg *) &cds_msg)) {
+						 &cds_msg)) {
 		qdf_mem_free(candidate_ind);
 		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  FL("Failed to post candidate ind to SME"));

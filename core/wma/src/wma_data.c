@@ -2216,7 +2216,7 @@ send_response:
 	cds_msg.bodyval = 0;
 
 	if (QDF_STATUS_SUCCESS !=
-	    scheduler_post_msg(QDF_MODULE_ID_SME, (struct scheduler_msg *) &cds_msg)) {
+	    scheduler_post_msg(QDF_MODULE_ID_SME,  &cds_msg)) {
 		WMA_LOGE("%s: could not post peer info rsp msg to SME",
 			 __func__);
 		/* free the mem and return */
@@ -3043,7 +3043,7 @@ void ol_rx_err(void *pdev, uint8_t vdev_id,
 
 	if (QDF_STATUS_SUCCESS !=
 		scheduler_post_msg(QDF_MODULE_ID_SME,
-				    (struct scheduler_msg *) &cds_msg)) {
+				     &cds_msg)) {
 		WMA_LOGE("%s: could not post mic failure indication to SME",
 			 __func__);
 		qdf_mem_free((void *)mic_err_ind);
@@ -3196,7 +3196,7 @@ wma_indicate_err(
 		cds_msg.bodyptr = (void *) mic_err_ind;
 		if (QDF_STATUS_SUCCESS !=
 			scheduler_post_msg(QDF_MODULE_ID_SME,
-				 (struct scheduler_msg *) &cds_msg)) {
+				  &cds_msg)) {
 			WMA_LOGE("%s: mic failure ind post to SME failed",
 					 __func__);
 			qdf_mem_free((void *)mic_err_ind);
