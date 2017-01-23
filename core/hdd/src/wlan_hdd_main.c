@@ -57,6 +57,7 @@
 #include "qdf_types.h"
 #include "qdf_trace.h"
 #include <cdp_txrx_peer_ops.h>
+#include <cdp_txrx_misc.h>
 
 #include <net/addrconf.h>
 #include <linux/wireless.h>
@@ -100,7 +101,6 @@
 #include "wlan_hdd_green_ap.h"
 #include "bmi.h"
 #include <wlan_hdd_regulatory.h>
-#include "ol_rx_fwd.h"
 #include "wlan_hdd_lpass.h"
 #include "nan_api.h"
 #include <wlan_hdd_napi.h>
@@ -5472,7 +5472,8 @@ static void hdd_bus_bw_work_handler(struct work_struct *work)
 				adapter->device_mode == QDF_P2P_GO_MODE ||
 				adapter->device_mode == QDF_IBSS_MODE) {
 
-			ret = ol_get_intra_bss_fwd_pkts_count(
+			ret = cdp_get_intra_bss_fwd_pkts_count(
+				cds_get_context(QDF_MODULE_ID_SOC),
 				adapter->sessionId,
 				&fwd_tx_packets, &fwd_rx_packets);
 			if (ret == A_OK) {

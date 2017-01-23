@@ -75,7 +75,7 @@
 #include "cds_concurrency.h"
 #include "wlan_hdd_tsf.h"
 #include "wlan_hdd_green_ap.h"
-#include "ol_rx_fwd.h"
+#include <cdp_txrx_misc.h>
 #include "wlan_hdd_power.h"
 #include "wlan_hdd_object_manager.h"
 
@@ -1597,10 +1597,13 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				pHostapdAdapter->stats.tx_packets;
 			pHostapdAdapter->prev_rx_packets =
 				pHostapdAdapter->stats.rx_packets;
-			ol_get_intra_bss_fwd_pkts_count(
+
+			cdp_get_intra_bss_fwd_pkts_count(
+				cds_get_context(QDF_MODULE_ID_SOC),
 				pHostapdAdapter->sessionId,
 				&pHostapdAdapter->prev_fwd_tx_packets,
 				&pHostapdAdapter->prev_fwd_rx_packets);
+
 			spin_unlock_bh(&pHddCtx->bus_bw_lock);
 			hdd_start_bus_bw_compute_timer(pHostapdAdapter);
 		}
