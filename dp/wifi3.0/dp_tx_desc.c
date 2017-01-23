@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -158,7 +158,7 @@ QDF_STATUS dp_tx_ext_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
 	QDF_STATUS status;
 
 	/* Coherent tx extension descriptor alloc */
-	soc->tx_ext_desc[pool_id].elem_size = HAL_TX_EXTENSION_DESC_LEN_BYTES;
+	soc->tx_ext_desc[pool_id].elem_size = HAL_TX_EXT_DESC_WITH_META_DATA;
 	soc->tx_ext_desc[pool_id].elem_count = num_elem;
 	qdf_mem_multi_pages_alloc(soc->osdev,
 		&soc->tx_ext_desc[pool_id].desc_pages,

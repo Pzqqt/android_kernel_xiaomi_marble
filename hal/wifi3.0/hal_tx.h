@@ -70,6 +70,10 @@ do {                                            \
 #define HAL_TX_COMPLETION_DESC_LEN_DWORDS (NUM_OF_DWORDS_WBM_RELEASE_RING)
 #define HAL_TX_COMPLETION_DESC_LEN_BYTES (NUM_OF_DWORDS_WBM_RELEASE_RING*4)
 
+#define HTT_META_HEADER_LEN_BYTES 64
+#define HAL_TX_EXT_DESC_WITH_META_DATA \
+	(HTT_META_HEADER_LEN_BYTES + HAL_TX_EXTENSION_DESC_LEN_BYTES)
+
 /* Length of WBM release ring without the status words */
 #define HAL_TX_COMPLETION_DESC_BASE_LEN 12
 
@@ -698,7 +702,7 @@ static inline void hal_tx_ext_desc_sync(uint8_t *desc_cached,
 					uint8_t *hw_desc)
 {
 	qdf_mem_copy(&hw_desc[0], &desc_cached[0],
-		     HAL_TX_EXTENSION_DESC_LEN_BYTES);
+			HAL_TX_EXT_DESC_WITH_META_DATA);
 }
 
 /**

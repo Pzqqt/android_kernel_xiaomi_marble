@@ -205,14 +205,14 @@ struct dp_tx_ext_desc_elem_s *dp_tx_prepare_ext_desc(struct dp_vdev *vdev,
 		struct dp_tx_msdu_info_s *msdu_info, uint8_t desc_pool_id)
 {
 	uint8_t i;
-	uint8_t cached_ext_desc[HAL_TX_EXTENSION_DESC_LEN_BYTES];
+	uint8_t cached_ext_desc[HAL_TX_EXT_DESC_WITH_META_DATA];
 	struct dp_tx_seg_info_s *seg_info;
 	struct dp_tx_ext_desc_elem_s *msdu_ext_desc;
 	struct dp_soc *soc = vdev->pdev->soc;
 
 	/* Allocate an extension descriptor */
 	msdu_ext_desc = dp_tx_ext_desc_alloc(soc, desc_pool_id);
-	qdf_mem_zero(&cached_ext_desc[0], HAL_TX_EXTENSION_DESC_LEN_BYTES);
+	qdf_mem_zero(&cached_ext_desc[0], HAL_TX_EXT_DESC_WITH_META_DATA);
 	if (!msdu_ext_desc)
 		return NULL;
 
@@ -934,6 +934,13 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 	struct dp_tx_seg_info_s seg_info;
 	struct dp_vdev *vdev = (struct dp_vdev *) vap_dev;
 
+	qdf_mem_set(&msdu_info, sizeof(msdu_info), 0x0);
+	qdf_mem_set(&seg_info, sizeof(seg_info), 0x0);
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			"%s , skb %0x:%0x:%0x:%0x:%0x:%0x\n",
+			__func__, nbuf->data[0], nbuf->data[1], nbuf->data[2],
+			nbuf->data[3], nbuf->data[4], nbuf->data[5]);
 	/*
 	 * Set Default Host TID value to invalid TID
 	 * (TID override disabled)
