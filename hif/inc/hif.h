@@ -43,6 +43,9 @@ extern "C" {
 #ifdef HIF_USB
 #include <linux/usb.h>
 #endif /* HIF_USB */
+#ifdef IPA_OFFLOAD
+#include <linux/ipa.h>
+#endif
 #define ENABLE_MBOX_DUMMY_SPACE_FEATURE 1
 
 typedef struct htc_callbacks HTC_CALLBACKS;
@@ -102,6 +105,11 @@ typedef void *hif_handle_t;
 #endif
 #ifndef TARGET_TYPE_QCA6290
 #define TARGET_TYPE_QCA6290   21
+#endif
+
+#ifdef IPA_OFFLOAD
+#define DMA_COHERENT_MASK_IPA_VER_3_AND_ABOVE   37
+#define DMA_COHERENT_MASK_BELOW_IPA_VER_3       32
 #endif
 
 /* enum hif_ic_irq - enum defining integrated chip irq numbers
@@ -695,6 +703,20 @@ void hif_vote_link_down(struct hif_opaque_softc *);
 void hif_vote_link_up(struct hif_opaque_softc *);
 bool hif_can_suspend_link(struct hif_opaque_softc *);
 
+#ifdef IPA_OFFLOAD
+/**
+ * hif_get_ipa_hw_type() - get IPA hw type
+ *
+ * This API return the IPA hw type.
+ *
+ * Return: IPA hw type
+ */
+static inline
+enum ipa_hw_type hif_get_ipa_hw_type(void)
+{
+	return ipa_get_hw_type();
+}
+#endif
 int hif_bus_resume(struct hif_opaque_softc *);
 int hif_bus_suspend(struct hif_opaque_softc *);
 int hif_bus_resume_noirq(struct hif_opaque_softc *);

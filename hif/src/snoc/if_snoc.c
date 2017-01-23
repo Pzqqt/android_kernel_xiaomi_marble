@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -41,6 +41,9 @@
 #include <soc/qcom/icnss.h>
 #include "pld_common.h"
 #include "qdf_util.h"
+#ifdef IPA_OFFLOAD
+#include <uapi/linux/msm_ipa.h>
+#endif
 
 /**
  * hif_disable_isr(): disable isr
@@ -212,6 +215,25 @@ static inline int hif_snoc_get_target_type(struct hif_softc *ol_sc,
 	return 0;
 }
 
+#ifdef IPA_OFFLOAD
+static int hif_set_dma_coherent_mask(struct device *dev)
+{
+	uint8_t addr_bits;
+
+	if (hif_get_ipa_hw_type() < IPA_HW_v3_0)
+		addr_bits = DMA_COHERENT_MASK_BELOW_IPA_VER_3;
+	else
+		addr_bits = DMA_COHERENT_MASK_IPA_VER_3_AND_ABOVE;
+
+	return qdf_set_dma_coherent_mask(dev, addr_bits);
+}
+#else
+static int hif_set_dma_coherent_mask(struct device *dev)
+{
+	return qdf_set_dma_coherent_mask(dev, 37);
+}
+#endif
+
 /**
  * hif_enable_bus(): hif_enable_bus
  * @dev: dev
@@ -235,11 +257,7 @@ QDF_STATUS hif_snoc_enable_bus(struct hif_softc *ol_sc,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0)
-	ret = dma_set_mask_and_coherent(dev, DMA_BIT_MASK(37));
-#else
-	ret = dma_set_coherent_mask(dev, DMA_BIT_MASK(37));
-#endif
+	ret = hif_set_dma_coherent_mask(dev);
 	if (ret) {
 		HIF_ERROR("%s: failed to set dma mask error = %d",
 				__func__, ret);

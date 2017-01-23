@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -362,5 +362,40 @@ unsigned long __qdf_rounddown_pow_of_two(unsigned long n)
 
 	return __rounddown_pow_of_two(n);
 }
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 13, 0)
+
+/**
+ * __qdf_set_dma_coherent_mask() - set max number of bits allowed in dma addr
+ * @dev: device pointer
+ * @addr_bits: max number of bits allowed in dma address
+ *
+ * This API sets the maximum allowed number of bits in the dma address.
+ *
+ * Return: 0 - success, non zero - failure
+ */
+static inline
+int __qdf_set_dma_coherent_mask(struct device *dev, uint8_t addr_bits)
+{
+	return dma_set_mask_and_coherent(dev, DMA_BIT_MASK(addr_bits));
+}
+
+#else
+
+/**
+ * __qdf_set_dma_coherent_mask() - set max number of bits allowed in dma addr
+ * @dev: device pointer
+ * @addr_bits: max number of bits allowed in dma address
+ *
+ * This API sets the maximum allowed number of bits in the dma address.
+ *
+ * Return: 0 - success, non zero - failure
+ */
+static inline
+int __qdf_set_dma_coherent_mask(struct device *dev, uint8_t addr_bits)
+{
+	return dma_set_coherent_mask(dev, DMA_BIT_MASK(addr_bits));
+}
+#endif
 
 #endif /*_I_QDF_UTIL_H*/
