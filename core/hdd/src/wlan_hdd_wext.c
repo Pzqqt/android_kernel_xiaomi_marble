@@ -1647,62 +1647,34 @@ static bool hdd_is_auth_type_rsn(eCsrAuthType authType)
 	return rsnType;
 }
 
+struct rssi_priv {
+	int8_t rssi;
+};
+
 /**
  * hdd_get_rssi_cb() - "Get RSSI" callback function
  * @rssi: Current RSSI of the station
- * @staId: ID of the station
- * @pContext: opaque context originally passed to SME.  HDD always passes
- *	a &struct statsContext
+ * @sta_id: ID of the station
+ * @context: opaque context originally passed to SME.  HDD always passes
+ *	a cookie for the request context
  *
  * Return: None
  */
-static void hdd_get_rssi_cb(int8_t rssi, uint32_t staId, void *pContext)
+static void hdd_get_rssi_cb(int8_t rssi, uint32_t sta_id, void *context)
 {
-	struct statsContext *pStatsContext;
-	hdd_adapter_t *pAdapter;
+	struct hdd_request *request;
+	struct rssi_priv *priv;
 
-	if (NULL == pContext) {
-		hdd_err("Bad param");
+	request = hdd_request_get(context);
+	if (!request) {
+		hdd_err("Obsolete request");
 		return;
 	}
 
-	pStatsContext = pContext;
-	pAdapter = pStatsContext->pAdapter;
-
-	/* there is a race condition that exists between this callback
-	 * function and the caller since the caller could time out
-	 * either before or while this code is executing.  we use a
-	 * spinlock to serialize these actions
-	 */
-	spin_lock(&hdd_context_lock);
-
-	if ((NULL == pAdapter) ||
-	    (RSSI_CONTEXT_MAGIC != pStatsContext->magic)) {
-		/* the caller presumably timed out so there is nothing
-		 * we can do
-		 */
-		spin_unlock(&hdd_context_lock);
-		hdd_warn("Invalid context, pAdapter [%p] magic [%08x]",
-			 pAdapter, pStatsContext->magic);
-		return;
-	}
-
-	/* context is valid so caller is still waiting */
-
-	/* paranoia: invalidate the magic */
-	pStatsContext->magic = 0;
-
-	/* copy over the rssi */
-	pAdapter->rssi = rssi;
-
-	if (pAdapter->rssi > 0)
-		pAdapter->rssi = 0;
-
-	/* notify the caller */
-	complete(&pStatsContext->completion);
-
-	/* serialization is complete */
-	spin_unlock(&hdd_context_lock);
+	priv = hdd_request_priv(request);
+	priv->rssi = rssi;
+	hdd_request_complete(request);
+	hdd_request_put(request);
 }
 
 /**
@@ -1714,11 +1686,17 @@ static void hdd_get_rssi_cb(int8_t rssi, uint32_t staId, void *pContext)
  */
 QDF_STATUS wlan_hdd_get_rssi(hdd_adapter_t *pAdapter, int8_t *rssi_value)
 {
-	static struct statsContext context;
 	hdd_context_t *pHddCtx;
 	hdd_station_ctx_t *pHddStaCtx;
 	QDF_STATUS hstatus;
-	unsigned long rc;
+	int ret;
+	void *cookie;
+	struct hdd_request *request;
+	struct rssi_priv *priv;
+	static const struct hdd_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = WLAN_WAIT_TIME_STATS,
+	};
 
 	if (NULL == pAdapter) {
 		hdd_warn("Invalid context, pAdapter");
@@ -1748,44 +1726,42 @@ QDF_STATUS wlan_hdd_get_rssi(hdd_adapter_t *pAdapter, int8_t *rssi_value)
 		return QDF_STATUS_SUCCESS;
 	}
 
-	init_completion(&context.completion);
-	context.pAdapter = pAdapter;
-	context.magic = RSSI_CONTEXT_MAGIC;
+	request = hdd_request_alloc(&params);
+	if (!request) {
+		hdd_err("Request allocation failure, return cached RSSI");
+		*rssi_value = pAdapter->rssi;
+		return QDF_STATUS_SUCCESS;
+	}
+	cookie = hdd_request_cookie(request);
 
 	hstatus = sme_get_rssi(pHddCtx->hHal, hdd_get_rssi_cb,
 			       pHddStaCtx->conn_info.staId[0],
 			       pHddStaCtx->conn_info.bssId, pAdapter->rssi,
-			       &context, pHddCtx->pcds_context);
+			       cookie, pHddCtx->pcds_context);
 	if (QDF_STATUS_SUCCESS != hstatus) {
 		hdd_err("Unable to retrieve RSSI");
 		/* we'll returned a cached value below */
 	} else {
 		/* request was sent -- wait for the response */
-		rc = wait_for_completion_timeout(&context.completion,
-						 msecs_to_jiffies
-							 (WLAN_WAIT_TIME_STATS));
-		if (!rc) {
-			hdd_err("SME timed out while retrieving RSSI");
-			/* we'll now returned a cached value below */
+		ret = hdd_request_wait_for_response(request);
+		if (ret) {
+			hdd_warn("SME timed out while retrieving RSSI");
+			/* we'll returned a cached value below */
+		} else {
+			/* update the adapter with the fresh results */
+			priv = hdd_request_priv(request);
+			pAdapter->rssi = priv->rssi;
+			if (pAdapter->rssi > 0)
+				pAdapter->rssi = 0;
 		}
 	}
 
-	/* either we never sent a request, we sent a request and
-	 * received a response or we sent a request and timed out.  if
-	 * we never sent a request or if we sent a request and got a
-	 * response, we want to clear the magic out of paranoia.  if
-	 * we timed out there is a race condition such that the
-	 * callback function could be executing at the same time we
-	 * are. of primary concern is if the callback function had
-	 * already verified the "magic" but had not yet set the
-	 * completion variable when a timeout occurred. we serialize
-	 * these activities by invalidating the magic while holding a
-	 * shared spinlock which will cause us to block if the
-	 * callback is currently executing
+	/*
+	 * either we never sent a request, we sent a request and
+	 * received a response or we sent a request and timed out.
+	 * regardless we are done with the request.
 	 */
-	spin_lock(&hdd_context_lock);
-	context.magic = 0;
-	spin_unlock(&hdd_context_lock);
+	hdd_request_put(request);
 
 	*rssi_value = pAdapter->rssi;
 

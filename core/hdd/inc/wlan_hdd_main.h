@@ -324,7 +324,6 @@ struct linkspeedContext {
 extern spinlock_t hdd_context_lock;
 
 #define STATS_CONTEXT_MAGIC 0x53544154  /* STAT */
-#define RSSI_CONTEXT_MAGIC  0x52535349  /* RSSI */
 #define POWER_CONTEXT_MAGIC 0x504F5752  /* POWR */
 #define SNR_CONTEXT_MAGIC   0x534E5200  /* SNR */
 #define LINK_CONTEXT_MAGIC  0x4C494E4B  /* LINKSPEED */
