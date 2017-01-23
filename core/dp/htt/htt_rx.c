@@ -2168,6 +2168,7 @@ static qdf_nbuf_t htt_rx_qdf_noclone_buf(qdf_nbuf_t buf)
 {
 	return buf;
 }
+
 /* This function is used by montior mode code to restitch an MSDU list
  * corresponding to an MPDU back into an MPDU by linking up the skbs.
  */
@@ -2179,7 +2180,6 @@ htt_rx_restitch_mpdu_from_msdus(htt_pdev_handle pdev,
 {
 
 	qdf_nbuf_t msdu, mpdu_buf, prev_buf, msdu_orig, head_frag_list_cloned;
-	qdf_nbuf_t (*clone_nbuf_fn)(qdf_nbuf_t buf);
 	unsigned decap_format, wifi_hdr_len, sec_hdr_len, msdu_llc_len,
 		 mpdu_buf_len, decap_hdr_pull_bytes, frag_list_sum_len, dir,
 		 is_amsdu, is_first_frag, amsdu_pad, msdu_len;
@@ -2188,12 +2188,6 @@ htt_rx_restitch_mpdu_from_msdus(htt_pdev_handle pdev,
 	unsigned char *dest;
 	struct ieee80211_frame *wh;
 	struct ieee80211_qoscntl *qos;
-
-	/* If this packet does not go up the normal stack path we dont need to
-	 * waste cycles cloning the packets
-	 */
-	clone_nbuf_fn =
-		clone_not_reqd ? htt_rx_qdf_noclone_buf : qdf_nbuf_clone;
 
 	/* The nbuf has been pulled just beyond the status and points to the
 	 * payload
@@ -2224,7 +2218,10 @@ htt_rx_restitch_mpdu_from_msdus(htt_pdev_handle pdev,
 		/* Note that this path might suffer from headroom unavailabilty,
 		 * but the RX status is usually enough
 		 */
-		mpdu_buf = clone_nbuf_fn(head_msdu);
+		if (clone_not_reqd)
+			mpdu_buf = htt_rx_qdf_noclone_buf(head_msdu);
+		else
+			mpdu_buf = qdf_nbuf_clone(head_msdu);
 
 		prev_buf = mpdu_buf;
 
@@ -2241,7 +2238,11 @@ htt_rx_restitch_mpdu_from_msdus(htt_pdev_handle pdev,
 		while (msdu_orig) {
 
 			/* TODO: intra AMSDU padding - do we need it ??? */
-			msdu = clone_nbuf_fn(msdu_orig);
+			if (clone_not_reqd)
+				msdu = htt_rx_qdf_noclone_buf(msdu_orig);
+			else
+				msdu = qdf_nbuf_clone(msdu_orig);
+
 			if (!msdu)
 				goto mpdu_stitch_fail;
 
@@ -2359,7 +2360,11 @@ htt_rx_restitch_mpdu_from_msdus(htt_pdev_handle pdev,
 
 		/* TODO: intra AMSDU padding - do we need it ??? */
 
-		msdu = clone_nbuf_fn(msdu_orig);
+		if (clone_not_reqd)
+			msdu = htt_rx_qdf_noclone_buf(msdu_orig);
+		else
+			msdu = qdf_nbuf_clone(msdu_orig);
+
 		if (!msdu)
 			goto mpdu_stitch_fail;
 
